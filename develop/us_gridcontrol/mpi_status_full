@@ -1,0 +1,5 @@
+echo no update > /tmp/mpi_status.out
+chmod 666 /tmp/mpi_status.out
+echo status_full /tmp/mpi_status.out > /share/apps64/ultrascan/etc/us_gridpipe
+cat /tmp/mpi_status.out
+rm -f /tmp/mpi_status.out

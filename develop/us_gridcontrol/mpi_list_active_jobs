@@ -1,0 +1,2 @@
+rcom64 'ps -fu apache | grep us_fe_nnls_t_mpi | grep -v grep'
+ps -fu apache | grep us_fe_nnls_t_mpi | grep -v grep | sed 1d

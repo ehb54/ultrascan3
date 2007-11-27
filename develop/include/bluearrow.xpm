@@ -1,0 +1,22 @@
+/* XPM */
+static const char *bluearrow[] = {
+"    16    13        5            1",
+". c #0000ff",
+"# c #0000cc",
+"a c None",
+"b c #0000aa",
+"c c #000000",
+"...caaaaaaaaaaaa",
+".....caaaaaaaaaa",
+"##.....caaaaaaaa",
+"bb##.....caaaaaa",
+"cbbb##.....caaaa",
+"ccbbbb##.....caa",
+"cccbbbbb##.....c",
+"ccbbbb##.....caa",
+"cbbb##.....caaaa",
+"bb##.....caaaaaa",
+"##.....caaaaaaaa",
+".....caaaaaaaaaa",
+"...caaaaaaaaaaaa"
+};

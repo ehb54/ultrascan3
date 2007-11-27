@@ -1,0 +1,9 @@
+#!/bin/sh
+for each in us*; do
+	if [ -d $each ]; then
+		cd $each
+		echo $each
+		qmake us*.pro
+		cd ..
+	fi
+done

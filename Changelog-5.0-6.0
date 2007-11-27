@@ -1,0 +1,255 @@
+Please mail demeler@biochem.uthscsa.edu if you know of any bugs or 
+if you are missing a feature which isn't listed here.
+
+Changelog for version 5.x (BF = Bug Fix, NF = New Feature, UD = Update, DC = Documentation):
+
+BF us_velocreport.cpp: Module fails to compile on certain platforms,
+   moved code segment from constructor to separate function - seems to
+   fix it.
+
+BF us_minimize.cpp: Changed filename for help file to nls.html (same
+   as fit_ctrl.html)
+
+NF finite1.cpp: Eliminated positive constraint for S to allow for 
+   fitting of floating material.
+
+BF us_rundetails.cpp: fields for wavelengths/scans positions 2 and 3 were
+   not automatically blanked and reset, this is now fixed.
+
+NF us_eqmodelctrl.cpp: Added loading of pre-fitted extinction profiles
+   without the need to regenerate profile each time.
+
+NF us_extinction.cpp: Added feature to delete already loaded scans from
+   project before fitting is enabled
+
+NF simwin.cpp: Added a dc/dt monitor to the finite element simulation 
+   program to allow user to determine more easily when equilibrium is 
+   reached.
+
+NF simwin.cpp: Added feature to change speed during finite element 
+   simulation for single component, equilibrating and isomerizing models.
+
+BF usglobalequil.cpp: Added check to make sure initialization isn't
+   performed when no scans are available
+
+NF usglobalequil.cpp: Scans can now be selected before initialization
+
+BF usglobalequil.cpp: Changes in the active scanlist now automatically
+   requires a new initialization of the fitting variables. This will
+   prevent crashes.
+
+NF usglobalequil.cpp: Reworked initialization routine to provide a 
+   much improved initialization of fitting parameters by using a 
+   one dimensional line search over the monomer molecular weight
+   and using general linear least squares for amplitude and baseline.
+
+NF us_eqfitter.cpp: First stage fitting in multi-component self-
+   associating models is not required for monomer-dimer association
+   and has been eliminated because of improved monomer MW estimation
+   during initialization.
+
+NF us_minimize.cpp: Added Quasi-Newton nonlinear least squares fitting
+   algorithm with BFGS updating and custom line search
+
+NF usglobalequil.cpp: Initialization provides option to use MW in the 
+   model control window as base for the initialization or to calculate
+   new estimate
+
+NF us_config.cpp: Added width and hight dimensions of 6-channel 
+   centerpiece sector dimensions. This will be used in the total mass 
+   integral calculations in the global equilibrium fitting module.
+
+BF usglobalequil.cpp: Modified the button logic to assure proper
+   updating of arrays and vectors if changes are made to selected 
+   scans.
+
+BF usglobalequil.cpp: Modified the initialization of scans so that
+   scans can be selected even before the arrays are initialized.
+   Adjusted the button logic accordingly.
+
+BF usglobalequil.cpp, us_eqfitter.cpp: if scan range is changed after
+   fitting has completed, the fitting window will close to force an
+   update of array bounds for applicable vectors and arrays.
+
+BF finite1.cpp: Fixed an initialization bug that could cause crashes
+   after the program had received a new model control configuration
+
+NF UltraScan: Upgraded namespace to be consistent with us_ prefix to 
+   each module.
+
+NF UltraScan: Upgraded UltraScan to be compatible with the QT-3.x 
+   library
+
+NF UltraScan: Changed UltraScan into a dynamically loadable library
+   and wrote wrapper programs for various functions.
+
+NF us_win.cpp: converted function calls into QProcess() calls to
+   allow parallel and multi-threaded processing of individual
+   modules in UltraScan.
+
+NF us_font.cpp: Added font selection support for UltraScan
+
+NF UltraScan: added centerpiece database support to
+   UltraScan to allow definition and run-time selection of
+   centerpiece properties. Those properties include: number
+   of channels, material, bottom of channel(s), geometry of
+   channel (circular, rectangular, sector shaped, synthetic),
+   radius/width/angle of channel, pathlength and a unique serial
+   number for each make and model ever to be used in the XLx
+
+NF UltraScan: added rotor database support to allow run-time calculation
+   of rotor stretching and meniscus/bottom of cell displacement.
+
+NF UltraScan: added translation classes to all of UltraScan to allow
+   for generation of translation tables for internationalization of
+   UltraScan
+
+BF us_win.cpp, us_util.cpp, us_config.cpp: Fixed initialization bug for
+   loading .usrc from old versions.
+
+BF us_globalequil.cpp: Forced re-initialization if scan has been deleted 
+   or added to fit
+
+BF us_eqfitter.cpp: Fixed runs and runs statistics not being calculated
+   or calculated incorrectly
+
+NF added feature to allow inversion of sign for improperly loaded samples
+
+NF allow for loading of intensity scans under estinction modelling program
+
+BF us_selectmodel10.cpp: Fixed bug that caused model selection to crash
+   program for user-defined monomer-N-mer system.
+
+BF us_globalequil.cpp: Fixed bug that caused crash when speeds where checked
+   from run detail window
+
+BF us_eqilprojectreport.cpp: Now correctly prints equilibrium distribution
+   data and plot.
+
+NF us_combine.cpp: X limits can now be manually defined, and arbitrary 
+   distributions can be removed from the list.
+
+NF us_simwin.cpp: Added capability of exporting scans in XLA format
+
+NF us_merge.cpp: Added new utility that allows re-ordering and merging of 
+   scanfiles from different directories.
+
+NF us_vhwdat.cpp: Added calculation of initial concentration from 
+   extrapolation to t=0 and using plateau absorbance. Only stable
+   plateau scans can be included
+
+NF us_vhwdat.cpp: Added function to automatically generate an input
+   model for finite element fits from vHW data when groups are defined.
+   partial concentrations and S-values are estimated, Diffusion coefficients
+   and v-bar values need to be double-checked before fitting. Other parameters
+   are assumed.
+
+BF us_edit.cpp: when accidentally clicking on excluding range program used
+   to crash.
+
+BF reorder.cpp: program didn't use to reset memory between loading of different
+   directories, this is fixed now.
+
+NF us_config.cpp, us_edit.cpp, us_reorder.cpp: upper/lower case of input
+   file data doesn't need to be specified any longer, the program can now
+   figure this out automatically.
+
+NF us_config.cpp: includes version, if the version doesn't match, a new 
+   configuration file is automatically produced.
+
+NF us_velocdudmc_t.cpp: added terminal-based beowulf driver for DUD-based
+   Monte Carlo analysis.
+
+NF us_dtctrl.cpp/us_win.cpp: Added function to allow copying of edited data to
+   a new run so multiple distributions can be generated.
+
+BF us_dtactrl.cpp: allowed baseline subtraction from plateau only for 
+   run_type == 1 to prevent plateau value to change between copying, cell-ID changes, 
+   export and printing of edited data
+
+BF us_extinction.cpp: made fitting_widget a global variable which prevents
+   crashes when closing the fitter.
+
+NF us_globalequil.cpp: Added a feature which allows the user to choose
+   between plotting the optical density histogram or the
+   enxtinction-corrected molar concentration for an absorbance spectrum.
+
+BF us_rundetails.cpp: now correctly sets the caption to velocity for
+   veloc interference data.
+
+NF us_edit.cpp: includes the cell description in the plot title for editing
+
+UD QWT version 0.4.1 upgrade
+
+NF us_finite_ad.cpp/us_fitfinite.cpp: Added automatic differentiation-based finite 
+   element fitter
+
+NF added SQL database support to UltraScan (big one!). Data can now be served and searched
+   from an online SQL database (Oracle or MySQL) and provide investigator, contents, 
+   description, buffer, protein/DNA information, cell data, wavelength data, diffusion
+   data, equilibrium and velocity scans, as well as centerpiece and rotor data. Data
+   can be retrieved based on multiple criteria, incl. investigator, time/date, data type and
+   experiment type/name/serial number. Ancillary data such as rotor, centerpiece, density,
+   viscosity, vbar, extinction etc. are automatically updated in velocity and equilibrium
+   experiments.
+
+NF us_equil_db.cpp Technician DB upload module: The data acquisition personnel can now
+   enter the data into the database and provide all ancillary data and prepare it ready
+   for the investigator's analysis
+
+NF Windows Win32 Port available (Win 9x/ME/NT/2000/XP) incl. MySQL support
+
+NF us_win.cpp: user license module provides license keys
+
+NF us_config.cpp: database login information entry module added
+
+NF us_equilsim.cpp: new Equilibrium Simulation module allows the simulation of various
+   models of equilibrium systems for different speeds, concentrations and cell dimensions.
+
+BF us_dtactrl.cpp and us_globalequil.cpp: data loading is not crashing anymore 
+   due to uninitialized rotor database entry.
+
+NF us_buffer.cpp: All buffer handling instances changed to use the Database version
+
+NF us_vbar.cpp: All protein/vbar handling instances changed to use the Database version
+
+BF us_buffer_db_tbl.cpp: uninitialized classes in resizeEvent() corrected - no more
+   crashes.
+
+UD All QtMultiLineEdit instances replaced by QTextEdit, QtMultiLineEdit removed from tree
+
+UD QtTable support removed from tree since it isn't necessary in QWT anymore.
+
+NF us_vhwdat.cpp: Added vertical bar to indicate the scan position about to be excluded
+   in the vhw extrapolation plot
+
+BF us_db_tbl_vbar.cpp, us_vbar.cpp: Fixed bugs in vbar calculation routine:
+   Now program can handle files that don't have a blank line at the end
+   and also can handle non-peptide characters in the sequence (i.e.,
+   numbers and characters not in the peptide alphabet are ignored)
+
+BF us_lncr2.cpp: fixed the molecular weight calculation - only the first speed was used
+	to calculate a MW for all scans, even if multiple speeds were used.
+
+BF us_dtactrl.cpp: Channel selection listbox is now disabled for experiments that have
+	less than 2 channels.
+
+BF us_eqfitter.cpp: model calculation for monomer-nmer-mmer updated to correctly
+	parse the second equilibrium constant
+
+BF us_equilmodelctrl.cpp: when generating new extinction profile, all data are
+	correctly imported and apply to all available scans.
+
+BF us_reports: All reports now permit canceling out without creating extraneous
+	files in the root directory
+
+DC major update in the UltraScan documentation and manual -> 6.0 compatible
+
+BF us_selectmodel.cpp: Corrected typo in message window showing incorrect formulas 
+   (bracket missing)
+
+NF QWT library links now provide capability to edit the appearance of each scan
+   on a plot window, either in group or individually. The entire plot
+   window and contents can now be customized.
+
+UD Webpage update for pending UltraScan 6.0 release

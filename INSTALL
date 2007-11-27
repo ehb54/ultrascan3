@@ -1,0 +1,78 @@
+Installation instructions for UltraScan:
+
+Installation Instructions - tar.gz package for any Unix distribution:
+
+NOTE: Before installing ultrascan, please remove all old versions of UltraScan.
+
+To install the tar.gz package for any distribution, please follow
+these steps:
+
+   1. After downloading the tar.gz package, you need to uncompress and
+   extract it in a location of your choice, for example, /usr/lib or
+   /usr/local or /usr/local/lib. For the purpose of this document, it
+   is assumed to are going to install UltraScan in /usr/lib and /path
+   is the path to your downloaded file.
+
+cd /usr/lib 
+gzip -d /path/ultrascan-version.tar.gz
+tar -xvf /path/ultrascan-version.tar
+
+   2. Next, you need to set a dynamic link from /usr/lib/ultrascan to the
+   actual installation name:
+
+ln -s /usr/lib/ultrascan-version /usr/lib/ultrascan
+
+where "version" is the version number, for example: 
+
+ln -s /usr/lib/ultrascan-7.0 /usr/lib/ultrascan
+
+
+   3. Next, you need to set the following environment variables, either
+   in the private login script file, or in a global login script file,
+   or alternatively as shown in option (5):
+
+      For sh, bash:
+
+export ULTRASCAN=/usr/lib/ultrascan
+export PATH=$PATH:$ULTRASCAN/bin
+
+      For csh, tcsh:
+
+setenv ULTRASCAN /usr/lib/ultrascan
+setenv PATH ${PATH}:${ULTRASCAN}/bin
+
+   4. Next, you will have to add the UltraScan library directory to
+   your dynamically shared library list. If your Unix system supports
+   dynamic link path configuration using /etc/ld.so.conf, this can be
+   accomplished by adding /usr/lib/ultrascan to the /etc/ld.so.conf file
+   and running ldconfig.
+
+   5. If your Unix system does not support /etc/ld.so.conf dynamic
+   link configurations, you will need to modify the "LD_LIBRARY_PATH"
+   environment variable and add the UltraScan library directory to it:
+
+      For sh, bash:
+
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib/ultrascan/lib
+
+      For csh, tcsh:
+
+setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/lib/ultrascan/lib
+
+   6. To verify that the environment variables are correctly installed,
+   use the "echo" command:
+
+echo $PATH
+echo $ULTRASCAN
+echo $LD_LIBRARY_PATH
+or
+ldconfig -v | grep ultrascan
+
+Contact: Borries Demeler (demeler@biochem.uthscsa.edu)
+
+This document is part of the UltraScan Software Documentation
+distribution.  The latest version of this document can always be found at:
+
+      http://www.ultrascan.uthscsa.edu
+
+Last modified on February 16, 2005

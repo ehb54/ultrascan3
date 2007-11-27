@@ -1,0 +1,12 @@
+#!/bin/sh
+for each in us*; do
+	if [ -d $each ]; then
+		cd $each
+		echo $each
+		for x in us*.pro; do
+			sed < $x > new 's/the the/the/g'
+	        	mv new $x
+		done
+		cd ..
+	fi
+done

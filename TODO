@@ -1,0 +1,72 @@
+ I have a little suggestion: in the step-by-step wizard for
+> interference data editing the "Check centerpiece and Rotor settings" is
+> missing (after loading the data and closing the "Diagnostics Window"). Maybe
+> Yu could add it. Editing interference data using UltraScan 7.4 for windows
+> having many scans leads to a crash when aligning the scans in the air-to-air
+> region!
+
+
+Change vbar for each solute in fematch and replot with memorized vbar
+allow other methods to be used without requirement for uniform grid between sa2d saves
+Database:
+select user first in database portal, then all experimental data.
+add "search by investigator" to result dialogs
+add "investigator preselected" to vbar dialog in extinction fitter
+make "experiment", not "project request" be the default.
+Allow editing/reviewing of project requests
+integrate Josh's code
+
+
+
+centerpiece/rotor database measurements and calibration utility
+
+when loading database exp. data and target dir already exists, and a 
+different exp. is selected, the error directory string doesn't change from
+the first exp. and the error persists.
+
+see all your data, but don't include in your fit (masking bit for fitted data)
+
+parallelization of finite element.
+
+add database support for data analysis results and generate web pages 
+from database
+
+Implement archive program with QProcess for processing stdout of tar, find win32 tar
+
+The following programs should use result_flag from US_DB, which still needs to
+be implemented:
+us_dtactrl.cpp:         int result_flag = buffer_db_dlg->db_connect();
+us_globalequil.cpp:                     int result_flag = buffer_db_dlg->db_connect();
+
+when querying experimental data, just search the index fields, and dont require
+downloading the entire database
+
+New Grant:
+create code documentation with doxygen
+develop realtime online data analysis modules
+develop multi-wavelength/fluorescence scanning data import
+develop hetero-association models for multi-wavelength surfaces
+develop overlays of exp. data and simulated data to see in which direction
+the exp. data goes. Overlaying allows direct comparison to simulated data
+to decide if the protein is less or more than the simulation.
+develop adaptive mesh FEM for velocity
+develop numerical jacobian calculation for FEM
+develop multi-threaded FEM solutions
+
+
+
+src/us_laser.cpp: In member function `void US_Laser::load()':
+src/us_laser.cpp:866: warning: passing `double' for argument 4 of `bool
+   QwtPlot::setCurveData(long int, double*, double*, int)'
+src/us_vhwenhanced.cpp: In member function `virtual int
+   US_vhwEnhanced::plot_analysis()':
+src/us_vhwenhanced.cpp:347: warning: `int testpoint' might be used
+   uninitialized in this function
+src/us_vhwenhanced2.cpp: In member function `int
+   US_vhwEnhanced2::calc_sed(unsigned int)':
+src/us_vhwenhanced2.cpp:640: warning: `double radD' might be used uninitialized
+   in this function
+src/us_eqfitter.cpp: In method `void US_EqFitter::write_report()':
+src/us_eqfitter.cpp:2493: warning: use of `l' length character with `e' type character
+
+include sa2d distributions in C(s)/D/MW distributions, and add C(f) and C(f/f0) distros.

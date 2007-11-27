@@ -1,0 +1,13 @@
+These are the steps to update a 7.x version database to 9.x+:
+
+The new table is called tblRawExpData
+It needs to be created by hand in the new database
+
+It can be copied from $ULTRASCAN/etc/mysql.dll
+
+execute the MySQL command
+change the default database to the one that needs to be upgraded in the 
+configuration widget.
+go into $ULTRASCAN/develop/us_db_convert
+make sure there is no $HOME/us/data/temp directory, so rm -r  $HOME/us/data/temp
+run us_db_convert

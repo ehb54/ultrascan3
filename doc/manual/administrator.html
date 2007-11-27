@@ -1,0 +1,60 @@
+
+<head>
+   <title>Administrator</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<H2>Administrator Module:</H2>
+<p>
+<center>
+<img src=menu_file0.png>
+</center>
+<p>
+You can start the administrator module from the File menu by clicking on "Administrator".
+You are then presented with a <a href=administrator.png>dialog</a>, which prompts you to
+enter an administrator password. 
+<p>
+<b>NOTE:</b><br>
+<b><i>UltraScan</b></i> should be installed such that the administrator program
+is only executable by the administrator of the UltraScan software package (generally
+root). The password is saved in an encrypted form on the harddrive, but shouldn't be
+considered very secure. Several <b><i>UltraScan</b></i> functions are protected with
+the Administrator password, such as functions that control the deleting of records in
+the database. Those functions cannot be executed by a regular user, unless he/she is 
+in the possession of the administrator's password. To make sure nobody else changes
+the administrator passwords, the module "us_admin" in $ULTRASCAN/bin should be 
+chmod'ed to 700, (chmod 700 $ULTRASCAN/bin/us_admin) and then the ownership should
+be changed to the ownership of UltraScan's administrator (generally root).
+<p>
+On Windows computers no user-based permission change is possible, since Windows 
+has to be considered a single-user computer due to lack of multi-user security.
+Anyone using a Windows computer will be able to change the administrator's 
+password, unless the administrator first creates the password and then deletes the
+file $ULTRASCAN/bin/us_admin.exe. A drastic cure, but the only one possible under Windows.
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

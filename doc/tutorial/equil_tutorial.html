@@ -1,0 +1,237 @@
+<HEAD>
+   <TITLE>Global Equilibrium Analysis Tutorial
+   </TITLE>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="../mainstyle.css" rel="styleSheet" type="text/css">
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=../graphics/ultrascan1.gif border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<H2>Global Equilibrium Analysis Tutorial:<p>
+</H2>
+<p>
+This mini-tutorial discusses ways in which you can optimize the information
+obtained from equilibrium experiments. Factors such as instrument settings,
+sample preparation, data collection, and data selection all play an 
+important role in the design of equilibrium experiments.
+<p>
+<ol>
+<li><b>Instrument Settings:</b><p>
+Since most methods used for analyzing sedimentation equilibrium data 
+utilize some sort of nonlinear least squares fitting algorithm, the 
+quality and amount of experimental data available for fitting is important.
+The following guidelines should help you to design a good experiment:
+<p>
+<ul>
+<li><b>Stepsize settings:</b><br> 
+Select the smallest radial increment available for
+equilibrium scans (0.001 cm/point). This will provide the largest number
+of datapoints for each scan, and hence better define the fitting surface.
+<p>
+<li><b>Repetition/Replicates Setting</b><br>
+Choose the maximum number of replicates (50) when collecting equilibrium
+data. Time is not of the essence (remember, your scan is at equilibrium!)
+and you can safely record 50 averages to improve the signal, even if it
+takes longer. Keep in mind that this means a lot of Xenon Lamp-flashes, 
+which over time will collect lamp dirt. So only measure scans that really
+are at equilibrium and will be used for the data analysis this way, so 
+your lamp emission strength doesn't degrade before you have all your
+data collected. Clean the lamp before the equilibrium run.
+<p>
+<li><b>Wavelength settings:</b><br>
+Select wavelengths that provide emission maxima
+for the Xenon flash lamped used in the XLA. Run an intensity scan on your
+lamp to see where the emission peaks are. Use those wavelengths to make sure
+that you get good signal-to-noise ratio for your measurements. Clean the 
+lamp before each run.
+<p>
+<li><b>Scan Settings:</b><br>
+Scan twice in stepmode with 2-3 hours difference and subtract the
+scans to assure that equilibrium has been reached. Simulate the experiment
+using the <b><i>UltraScan</i></b> <a href=../manual/index.html#simulation>
+simulation programs</a> before the experiment so you can get a good idea
+of when equilibrium may be reached. Add 10% - 20% time to make sure you
+have reached equilibrium. If the change is less than 0.01 OD, which is
+the noise level for a good experiment, any further equilibration will
+be lost in noise and not matter for the purpose of the fit. Equilibrium
+has been reached at that point for all practical purposes.
+<p>
+<li><b>Scan settings and column height:</b><br> If you do not use 6-channel
+centerpieces, you can create a little higher column by loading about
+120-130 microliters.  This will provide more datapoints, and provide more
+information on your scan.  However, a longer column also means that it
+will take longer to achieve equilibrium. Load the reference column just
+a little higher, to make sure your reference meniscus doesn't obliterate
+the sample scan. Do not load much more than the sample side of the cell
+so the pressure differential doesn't become too large, which may bend
+and destroy the septum of the centerpiece.
+<p>
+<li><b>Speed selection:</b><br> Always select multiple speeds for a global
+analysis. When equilibrium is reached at different speeds, the equilibrium
+gradients will have different shapes, but still represent the same system.
+Global analysis takes advantage of this by forcing all scans to be fitted
+to the same model.
+<p>
+<li><b>Initial Scan:</b><br> Always collect an initial scan at low speed (3000 rpm)
+immediately after after the run is started. This scan will allow you to
+determine the total absorption in the cell and serve as a control to determine
+if material has precipitated or leaked. Collect initial scans in continuous 
+mode, with 0.001 cm radial stepsize setting.
+<p>
+<li><b>Multiple Wavelengths:</b><br> While the monochromator of the XLA
+is known not to reset to exactly the same wavelength between different
+wavelength settings, it will at least report the incorrect wavelength
+it has reset itself to. Thus, it is still possible (and prudent)
+to collect data at different wavelengths in equilibrium experiments,
+because <b><i>UltraScan</b></i> has program features built into the
+equilibrium data analysis software which will automatically correct for
+these problems.
+<p>
+Each wavelength will allow you to measure a different concentration range
+of the sample, which presumably has different extinction properties at
+each selected wavelength. In order to be able to compare all collected
+wavelengths in a global fit (especially for self-association models)
+it is important that the extinction coefficients are known.  If you do
+not know the extinction properties of your sample at each wavelength,
+you should also perform wavelength scans for all your samples at the
+beginning of the run. Those wavelength scans can later be globally fitted
+with the <a href=../manual/extinction.html>Extinction Profile Calculator</a> to
+an extinction profile function that describes the exinction properties
+of your sample at each wavelength.
+<p>
+You should collect wavelength scans also at the beginning of the
+experiment (for example, right after the initial scan has been collected
+at 3000 rpm, with the instrument still spinning at this low speed)
+at a point near the middle of the sample column, where the change in
+absorbance is minimal at low speed. Collect data with 1 nm increments, 
+scanning 2 or 3 times with 50 averages.
+<p>
+</ul>
+<li><b>Experimental Design:</b>
+<p>
+<ul>
+<li><b>Data Selection:</b><br>
+To obtain a confident analysis answer for your project, it is advisable to
+analyze the same sample under varying conditions, and to compare all
+of the conditions simultanously in a global fit. Keep in mind that some
+parameters may not be global anylonger when certain run attributes are
+changed, for example, association constant could be quite sensitive to
+buffer conditions and temperature, however, the monomer molecular should
+not be.  
+<p>
+<li><b>Samples</b><br>
+One of the easiest ways to assay the same sample under different conditions
+is to measure the sample at different loading concentrations. For 
+self-associating systems this has the effect that increasing concentration
+of the sample will provide increasing signal on the associated species.
+A further expansion of the concentration range can be obtained by using 
+different wavelength, taking advantage of the various extinction properties
+of the protein at wavelengths such as 208-210 nm, 230 nm, and 278-280 nm.
+For each wavelength, the protein should be loaded at 3-8 different loading 
+concentrations ranging between 0.2 - 0.7 OD. By changing only the 
+concentration, and keeping buffer and temperature the same, the association
+constant can be fitted as a global parameter, since it should be <i>constant</i>
+regardless of concentration.
+<p>
+<li><b>Speeds</b><br>
+Another way to examine a sample at different conditions without changing 
+temperature or buffer is to use different speeds. At equilibrium, each 
+speed will produce a different gradient which still describes the same
+system, and hence both molecular weight and association constants can be
+fitted globally. It appears that for most cases a range of speeds
+using sigmas between 1.5 and 5 provides best results. Sigma in this case is
+the reduced monomer molecular weight as defined by <a href=../references.html>
+Johnson et al.</a>. The <a href=../manual/calc_equil.html>
+<i><b>UltraScan</i></b> equilibrium speed calculation module</a> can 
+assist you in determining the correct speeds for a given sigma. I suggest
+using scans from 4-5 speeeds, at equilibrium.
+</ul>
+<p>
+<li><b>Models and fitting strategies:</b>
+<p>
+Fitting experimental data using a nonlinear least squares model always 
+faces the question of correct model selection. If a model independent 
+analysis is possible, it can be used as a guide for the selection of 
+a more specific model, as can the residual run patterns and the variance.
+In addition, the investigator should be aware of the degrees of freedom
+that the model provides, because additional degrees of freedom may provide
+an improvement of variance, but only through fitting of instrumental noise,
+not because the model is more appropriate for the data.
+<p>
+A general approach may be to start with a model independent fit of the data
+using a <a href= ../manual/equil7.html>Fixed Molecular Weight distribution model</a>
+to get an idea about the molecular weight distribution in the system. This model
+is quite degenerate, because it contains a lot of parameters, and a slight 
+variation of the input parameters can generate a large change in result, with
+almost no change in the variance. But in general it can be used to provide a 
+good overview of the composition of the sample. Next, a <a href= ../manual/equil7.html>
+single ideal species model</a> may be tried, which is the most restrictive model.
+If this model provides a good fit, which can only be marginally improved by going
+to a more relaxed model, chances are that the data is well described by a single
+component. If however the single ideal species model results in run patterns
+indicating systematic noise in the data, it is necessary to attempt a fit with 
+a model allowing for more parameters to be fitted. 
+<p>
+Due to the lack of resolution when describing data by sums of exponentials, the most relaxed model 
+that can provide reasonable results in an equilibrium experiment performed on 
+the Beckman XL-A is a two or three component noninteracting model. It should only
+be chosen as a representation of the data if the variance improves significantly
+when changing the model from an interacting or single ideal species model to 
+the multi-component model. Most systems will generate a good fit when this model 
+is chosen (even when more components are present), so use this model with caution. 
+The molecular weights generated by fits with this model do not necessarily 
+represent the species present in the system, but, when taking together can describe
+well the molecular weight average at each point in the cell. If the molecular weight
+for the two component model corresponds to the expected monomer and dimer molecular
+weight of a system, then a monomer-dimer model should be tried instead.
+<p>
+The difference between the 2-component ideal noninteracting model and the 
+reversibly self-associating models is an additional constraint in the model
+when samples are fit with the interacting (reversibly associating) monomer-oligomer model.
+In fact, there are two additional constraints. In the noninteracting
+model there are no assumptions made about one species being a certain multiple
+in MW of another species. In the reversibly associating model, the MW is constraint
+to be an integer multiple. For each oligomer, the multiple is an integer multiple
+of the monomer. In addition, there is a constraint that enforces that the amplitude
+of each exponential term satisfies the equilibrium constant for the reversible
+association, for example: K1,2 = [dimer]/[monomer]^2 or K1,3 = [trimer]/[monomer]^3.
+<p>
+So the noninteracting model is a much more relaxed fit which should always fit
+better than the constrained model. Sometimes a situation can arise where the
+MW constraint is satisfied, but not the Keq constraint. In such a case 
+often incompetent monomers or dimers (monomers that cannot associate,
+or dimers that cannot dissociate, perhaps due to disulfide bridges) are present.
+<p>
+What decides which model is most appropriate is a balance between degrees of
+freedom in the fit, and the variance observed when applying a particular model.
+The difference in variance between one model and another is a deciding factor
+for selecting one model over another. If the improvement in variance from
+going to a noninteracting model to a reversible model is only marginal, then
+the reversible model should be accepted, otherwise the noninteracting model
+applies.
+</ol>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br>Copyright 1998 - 2001, <a href=http://www.uthscsa.edu>The University of Texas Health Science Center at San Antonio</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 2, 2001.
+</body>
+</html>

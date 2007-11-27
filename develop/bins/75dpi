@@ -1,0 +1,13 @@
+#!/bin/sh
+mkdir newcpp
+for x in *.cpp;do
+        sed<$x>newcpp/$x 's/"Helvetica", 9/configuration->config_list.fontFamily, configuration->config_list.fontSize/'
+        mv newcpp/$x .
+        sed<$x>newcpp/$x 's/"Helvetica", 8/configuration->config_list.fontFamily, configuration->config_list.fontSize - 1/'
+        mv newcpp/$x .
+        sed<$x>newcpp/$x 's/"Helvetica", 10/configuration->config_list.fontFamily, configuration->config_list.fontSize + 1/'
+        mv newcpp/$x .
+        sed<$x>newcpp/$x 's/"Helvetica", 7/configuration->config_list.fontFamily, configuration->config_list.fontSize - 2/'
+        mv newcpp/$x .
+done
+rm -rf newcpp

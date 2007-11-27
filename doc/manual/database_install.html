@@ -1,0 +1,279 @@
+<head>
+   <title>MySQL Database Installation</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<h2>MySQL Database Installation</h2>
+<p>
+<i><b>UltraScan</b></i> supports an SQL database interface for managing the AUC data, such as 
+experimental scans, buffer files, peptide files, investigator information, and so on. MySQL is an
+open source, very capable database engine available for all hardware platforms, and has been
+tested to perform well with <i><b>UltraScan</b></i>. Please follow these instructions to get MySQL properly 
+initialized to work with <i><b>UltraScan</b></i> on your system:
+<p>
+<b>Getting MySQL onto your computer:</b> 
+<p>
+<ol>
+<li>Most distributions of
+Unix come with MySQL and therefore MySQL can be installed using the
+respective package manager. For all other distributions, you can download
+a source distribution and compile it on your system. More information
+is available at <a href=http://www.mysql.com>http://www.mysql.com</a>.
+<p>
+<li>After successfully installing MySQL you will need to start the program
+with the appropriate switches. The default start script does not allow for
+sufficiently large file transfers between <i><b>UltraScan</b></i> and MySQL, and a special
+option needs to be used to enable large file transfers. We have found the 
+following command to work well for us:
+<p>
+<pre>
+safe_mysqld --user=mysql -O key_buffer=16M -O \
+table_cache=128 -O sort_buffer=4M -O record_buffer=1M -O max_allowed_packet=24M &
+</pre>
+<p>
+<li>Now verify that MySQL is working properly by checking for the running mysql process
+on your machine.
+<p>
+<li>Next, use the MySQL command line client to set up permissions for the database.
+You start the client by typing as root at the commandline:
+<p>
+<pre>
+systemprompt#:  mysql -u root
+</pre>
+<p>
+<li>This should open up the <i>"mysql&gt;"</i> command shell. This is where you 
+can enter the MySQL configuration commands:
+<p>
+<pre>
+mysql>
+</pre>
+<p>
+<li>Assuming you wanted to create a database called <b>"mydata"</b> on your 
+MySQL server, you would have to type in the following commands:
+<p>
+<pre>
+mysql> CREATE DATABASE mydata
+mysql> quit
+</pre>
+<p>
+<li>Now that the database is created, you need to set access permissions for
+the users of the database. There are two ways to do that: First, you can assign
+permissions for each existing user that should have access authorization, or second,
+you can use a fictional user name everyone can use to connect to the database.
+In the latter method, only a single user has to be configured in MySQL for access
+permissions. Assuming you wanted to grant access rights to your <b>"mydata"</b>
+database to user <b>"sqluser"</b> with password <b>"secret_word"</b> on your 
+computer, which happens to be named <b>"mycomputer.private.net"</b>, you would 
+have to enter the following commands into the <i>"mysql&gt;"</i> command shell:
+<p>
+<pre>
+systemprompt#:  mysql -u root mydata
+mysql> GRANT ALL PRIVILEGES ON *.* TO sqluser@mycomputer.private.net IDENTIFIED 
+       BY 'secret_word' WITH GRANT OPTION;
+mysql> quit
+</pre>
+<p>
+Repeat for each additional user for which you want to grant access. MySQL will
+not use the system password, <b>"secret_word"</b> in this case will go with 
+the database, not the user name.
+<p>
+<li>If you want to make the database accessible outside of your system, you can
+grant access in the following way:
+<p>
+<pre>
+systemprompt#:  mysql -u root mydata
+mysql> GRANT ALL PRIVILEGES ON *.* TO user@"%" IDENTIFIED
+       BY 'secret_word' WITH GRANT OPTION;
+mysql> quit
+</pre>
+<p>
+<li>Now you need to tell <b><i>UltraScan</b></i> about the new database. You have to do 
+that in the <a href=database_config.html>Database Configuration Module</a>, which is 
+started from the <b>File:Configuration:Database Preferences</b> menu.
+<p>
+<li>Finally, you should run the <a href=database.html#initialize>Initialize Database Template</a>
+command on your database to initialize the database tables. After initialization, MySQL should 
+accept all new data via the UltraScan Database Interface.
+</ol>
+<p>
+<b>PLATFORM SPECIFIC INFORMATION:</b>
+<p>
+<ul>
+<li><font size=+1><b>Linux/RedHat 9.0:</b></font> 
+<p>
+Check to see if you already have an older version of MySQL installed:
+<br>
+rpm -qa |grep MySQL
+<p>
+
+If you do, then remove each of them with:
+<br>
+rpm -e MySQL-something
+<p>
+
+Install these MySQL packages:
+<br>
+MySQL-client-4.0.18-0.i386.rpm
+<br>
+MySQL-server-4.0.18-0.i386.rpm
+<br>
+MySQL-devel-4.0.18-0.i386.rpm
+<br>
+MySQL-shared-4.0.18-0.i386.rpm
+<br>
+MySQL-Max-4.0.18-0.i386.rpm
+<p>
+
+At this address (scroll down to Linux x86 RPM downloads):
+<a href=http://www.mysql.com/downloads/mysql-4.0.html>http://www.mysql.com/downloads/mysql-4.0.html</a>
+<p>
+
+Create a file called /etc/my.cnf with these contents:
+<p>
+[mysqld]
+<br>
+port            = 3306
+<br>
+socket          = /var/lib/mysql/mysql.sock
+<br>
+skip-locking
+<br>
+set-variable    = key_buffer=16M
+<br>
+set-variable    = max_allowed_packet=24M
+<br>
+set-variable    = thread_stack=64K
+<br>
+set-variable    = table_cache=128
+<br>
+set-variable    = sort_buffer=4M
+<br>
+set-variable    = net_buffer_length=2K
+<br>
+set-variable    = record_buffer=1M
+<br>
+server-id       = 1
+<p>
+_dir = /var/lib/mysql/
+<br>
+innodb_data_file_path = ibdata1:10M:autoextend
+<br>
+innodb_log_group_home_dir = /var/lib/mysql/
+<br>
+innodb_log_arch_dir = /var/lib/mysql/
+<br>
+# You can set .._buffer_pool_size up to 50 - 80 %
+<br>
+# of RAM but beware of setting memory usage too high
+<br>
+set-variable = innodb_buffer_pool_size=16M
+<br>
+set-variable = innodb_additional_mem_pool_size=2M
+<br>
+# Set .._log_file_size to 25 % of buffer pool size
+<br>
+set-variable = innodb_log_file_size=5M
+<br>
+set-variable = innodb_log_buffer_size=8M
+<br>
+innodb_flush_log_at_trx_commit=1
+<br>
+set-variable = innodb_lock_wait_timeout=50
+<p>
+
+Restart MySQL with:
+<br>
+/etc/init.d/mysql
+<p>
+
+Make MySQL start at boot time:
+<br>
+chkconfig mysql on
+<p>
+
+Change directory to /usr/lib/mysql. Now we need to make a shared library
+<br>
+with this command:
+<p>
+
+ld --whole-archive -shared -o libmysqlclient.so.11 libmysqlclient.a
+<p>
+
+Add /usr/lib/mysql to /etc/ld.so.conf and run ldconfig.
+<p>
+
+Now, the Qt plugin will work with your new install of MySQL.
+
+<p>
+<li><font size=+1><b>MIPS/Irix:</b></font> If you are using Irix Version 6.5.3 or newer mysqld will only be able to
+create threads if you run it as a user with CAP_SCHED_MGT privileges (like
+root) or give the mysqld server this privilege with the following shell
+command:
+<p>
+<pre>
+shell> chcap "CAP_SCHED_MGT+epi" /opt/mysql/libexec/mysqld
+</pre>
+<p>
+<b>Note:</b> The mysql software may be installed in a different place on your computer
+<p>
+<li><font size=+1><b>Microsoft Windows:</b></font> Please check <a href=win/index.html>here</a> for detailed 
+installation instructions for Windows
+<p>
+</ul>
+<b>Security Configuration Notes:</b>
+<p>
+Please keep in mind the following security considerations:
+<p>
+<ul>
+<li>Every database in MySQL requires the following authentication tokens:
+<p>
+<ul>
+<li>The name of the database
+<li>The user name allowed to access the database
+<li>The password for accessing the data (unless the user is "anonymous", in which case a
+password is not required)
+<li>The host name or IP address where the database is served from.
+</ul>
+<p>UltraScan provides these tokens to the MySQL database from the configuration files.
+<p>
+<li>If you permit other hosts and users to access the data on your
+database there is nothing stopping them from reinitializing the entire
+database with the default setup shown above. It is strongly recommended
+to further restrict users from either intentionally or accidentally
+deleting or initializing database records or the database itself. MySQL
+provides very elaborate permission and access capabilities to customize
+read/write/delete permissions for tables, records for individual
+users. These settings can be set from the MySQL comandline or through a
+third-party administration tool. For detailed information on this please
+refer to the <a href=http://www.mysql.com>MySQL webpage</a>. For Unix,
+a convenient way to configure MySQL, MySQL databases and other servers
+can be provided through <a href=http://www.webmin.net>Webmin</a>.
+</ul>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

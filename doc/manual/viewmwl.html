@@ -1,0 +1,240 @@
+<head>
+   <title>Multiwavelength Data Viewer for 2nd Generation Instrument</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<H2>Multiwavelength Data Viewer for 2nd Generation Instrument</H2>
+<p>
+The Multiwavelength Data Viewer is used to import, display and export
+ASCII and binary multiwavelength data from the second generation
+multiwavelength optics developed at the Max Planck Institute for
+Colloids and Interfaces in Golm, Germany, by Helmut C&ouml;lfen's group.
+The viewer is started by clicking on <a href=edit.html>"<b>View/Edit
+Multiwavelength Data</b>"</a> in the Edit sub-menu of the main menu,
+<a href=viewmwl-0.png>loading up the viewer</a>.
+<p>
+<b>Process:</b>
+<p>
+<ol>
+
+<b><li> Loading Data</b> First, you need to load experimental data. This
+can be accomplished in one of two ways: 1. loading ASCII data as generated
+by the ultracentrifuge, and 2. by loading a previously saved binary
+representation of the data.  Simply select <b>"Load Binary Data"</b> or
+<b>"Load ASCII Data"</b> before clicking on <b>"Load MWL Data"</b>. Before
+loading, you also need to specify the cell and channel from which you
+want to load data. This will reduce the number of files shown in the
+file dialogue. After navigating to the data directory, you can select
+multiple files for loading. While the data loads, the status bar and
+the information label keep you posted about the progress of the loading.
+Keep in mind that loading large data sets from ASCII formatted data is
+very inefficient and may take a long time.
+
+<p>Once data are loaded, the parameter controls will be reset to reflect
+the data's properties, indicating limits for wavelength, radius and time.
+You are now ready to process the data by various means.
+<p>
+<b><li> Saving Data to binary format:</b>
+To save the data by making a binary copy, which loads much quicker
+than the ASCII formatted representation. The information will be 
+identical to the ASCII formatted version and can be reloaded by clicking
+on <b>"Load Binary Data"</b> and <b>"Load MWL Data"</b>. <b>Note:</b>
+Specify <b>"Intensity Mode"</b> or <b>"Absorbance Mode"</b> before saving
+since this information is incorporated into the binary representation for
+future data analysis.
+<p>
+<b><li> Exporting data:</b> Use this function to export the data to an
+ASCII formatted representation compatible with the traditional XLA formatted
+radial and wavelength files. Select the limits for wavelength, radius and
+number of time points before clicking on <b>"Export ASCII"</b>. To export
+wavelength data, select <b>"Plot Wavelength"</b>, to export radial data,
+select <b>"Plot Radius"</b>.
+<p>
+<b><li> Movies:</b> You can display three different movies of the data. All movies
+will only show the data specified by the limit counters for wavelength, radius
+and time. You can crop any subset of data by changing the limits to the desired 
+range. 
+<p>
+<ol>
+<li> Viewing a radial scan and observing the change of the radial profile
+over the wavelength domain: Select <b>"Plot Radius"</b>, <b>"2-Dimensions"</b>
+and <b>"Movie"</b>.
+<li> Viewing a wavelength scan and observing the change of the wavelength profile
+over the radial domain: Select <b>"Plot Wavelength"</b>, <b>"2-Dimensions"</b>
+and <b>"Movie"</b>.
+<li> Viewing a movie of a 3-dimensional surface plot, showing the simultaneous
+change of absorbance over the radial and wavelength domains.
+Select <b>"3-Dimensions"</b> and <b>"Movie"</b>. To speed up the display of
+movie slides it helps to reduce the number of wavelengths scans by averaging
+multiple wavelengths into one. For acquisitions generated with the 2048 CCD
+array, it helps to average 7-12 wavelength scans. Besides speeding up the display,
+the image will also appear smoother because of the averaging. Depending on
+the size of your display resolution may not be gained by not averaging any wavelength
+scans because not enough pixels are dedicated to the screen to show all individual
+points anyway, hence use of the averaging feature greatly enhances movie rendition.
+<p>
+<b><li> Saving movies to an mpg file:</b> All movie frames can be saved
+to individual PNG image files by selecting <b>"Save Movie Frames to PNG
+Images"</b>. The images are saved to separate directories to facilitate
+processing image files later on. You will be prompted to either create
+or select an existing directory for outputting the image files if you
+select this option before the movie is shown.  A string of image files
+can later be assembled into an mpeg movie. Under Linux, such a task can
+be accomplished like this:
+
+<p>
+<b>
+<pre>
+png2yuv -j 3D-surface%05d.png -f 25 -I p -b 00001 -n 20 | mpeg2enc -o 3d-movie.m1v
+</pre>
+</b>
+<p>
+This command will assemble a 3D-surface image sequence into an mpeg movie 
+of original scale. The command will parse the first 20 input files starting
+with image 3D-surface00001.png and ending with 3D-surface00020.png, it will
+use a 25 fps frame rate for the movie, use no interlacing, and assemble the 
+images into a movie file called "3d-movie.m1v".
+<p>
+The corresponding commands for radial- and wavelength files would be:
+<p>
+<b><pre>
+png2yuv -j radius%05d.png -f 25 -I p -b 00001 -n 20 | mpeg2enc -o 3d-movie.m1v
+
+png2yuv -j wavelength%05d.png -f 25 -I p -b 00001 -n 20 | mpeg2enc -o 3d-movie.m1v
+</pre>
+</b>
+<p>
+An alternative encoding method uses mencoder for Linux:
+<b>
+<pre>
+mencoder mf://wavelength*.png -mf fps=25:type=png -ovc lavc -lavcopts vcodec=mpeg2video:vbitrate=1000 -o wavelength.mpg
+
+mencoder mf://radius*.png -mf fps=25:type=png -ovc lavc -lavcopts vcodec=mpeg2video:vbitrate=1000 -o radius.mpg
+
+mencoder mf://3D-surface*.png -mf fps=25:type=png -ovc lavc -lavcopts vcodec=mpeg2video:vbitrate=1000 -o 3D-surface.mpg
+</pre>
+</b>
+<p>
+For playback, use mplayer or xine. To slow the movie down, you can use:
+<b>
+<pre>
+mplayer -fps 10 wavelength.mpg
+</pre>
+</b>
+This would slow the movie down to 10 frames per second.
+</ol>
+<p>
+<b><li> Printing plots:</b> All plots can be exported to either postscript or bitmap
+image, 2-dimensional plots can be sent to the printer with the <b>"Print"</b>
+function. 3-dimensional plots need to be exported to a postscript rendition before
+being printed to a printer by commandline tools.
+<p>
+<b><li> Updating plots:</b> Clicking the function called
+<b>"Update Plot"</b> will apply currently selected parameters
+to either a <a href=viewmwl-2.png>2-dimensional radial plot</a>,
+a <a href=viewmwl-3.png>2-dimensional wavelength plot</a>,or a <a
+href=viewmwl-1.png>3-dimensional surface plot</a>. The 3-dimensional
+data viewer from UltraScan is based on the 3D plotting library <a
+href=http://qwtplot3d.sourceforge.net/>QWTPLOT3D</a> by Micha Bieber
+and allows for detailed manipulation of the 3-dimensional image.
+</ol>
+<p><b>Functions:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF" NOSAVE >
+<tr>
+<td><img SRC="viewmwl-4.png" ></td>
+
+<td>Click on these buttons to control the multiwavelength viewer functions:
+<ul>
+<li>
+<b>Load MWL Data:</b> Load ASCII or binary multiwavelength data as descrbed
+above under (1).
+<li>
+<b>Help:</b> View this help file</li>
+<li>
+<li>
+<b>Save Binary Data:</b> Write out a copy of all data to a binary
+representation for faster loading as explained above under (3). This data
+will be an exact copy of the original ASCII data, and not be affected
+by the selected limits.
+<li>
+<b>Export ASCII:</b> Exporting data to XLA/Beckman-formatted ASCII files
+as explained above under (4)</li>
+<li>
+<b>Movie:</b> Display movies of data as explained above under (5)</li>
+<li>
+<b>Print Data:</b> Printing of plot graphics as explained above under (6)</li>
+<li>
+<b>Update Plot:</b> Update 2-dimensional or 3-dimensional plot graphics 
+according to the selected limits as explained above under (7)</li>
+<li>
+<b>Close:</b> Close this program</li>
+</ul>
+</td>
+</tr>
+</table>
+
+<p><b>Controls 1:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<tr NOSAVE>
+<td NOSAVE><img SRC="viewmwl-5.png" ></td>
+<td NOSAVE>
+The binary/ASCII load descriptor control if binary or 
+ASCII source data are loaded. Both contain the same information,
+but binary data needs to be saved first. The next item selects what
+information is displayed in the 2-D plots or processed in the movies.
+The option is for 
+wavelength vs. radius plots (<b>"Plot Wavelength</b>)are shown
+or radius vs. wavelengths plots (<b>"Plot Radius</b>). The 
+next item controls if updates or movies apply to a 2-dimensional
+representation or a 3-dimensional representation. The data mode
+(Intensity vs. Absorbance mode) determines the control flag 
+written to the binary data (which is not contained in the ASCII data).
+Clicking on <b>"Save Movie Frames to PNG Images"</b> allows you
+to save all frames of a movie to individual PNG images.
+See above descriptions for items 1-7 for further details.</td>
+</tr>
+</table>
+
+<p><b>Controls 2:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<tr NOSAVE>
+<td NOSAVE><img SRC="viewmwl-6.png" ></td>
+<td NOSAVE>
+These controls determine the limits for the wavelength, radius,
+and time displayed or processed by the multiwavelength viewer.
+The Lambda average setting determines how many wavelength scans
+are combined by averaging when displaying 3-D surface profiles of the 
+data. See above descriptions for items 1-7 for additional details.</td>
+</tr>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 10, 2006.
+</body>
+</html>

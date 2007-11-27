@@ -1,0 +1,223 @@
+# This is a Qt message file in .po format.  Each msgid starts with
+# a scope.  This scope should *NOT* be translated - eg. "Foo::Bar"
+# would be translated to "Pub", not "Foo::Pub".
+msgid ""
+msgstr ""
+"Project-Id-Version: example-Qt-message-extraction\n"
+"POT-Creation-Date: 1999-02-23 15:38+0200\n"
+"PO-Revision-Date: 1999-02-23 15:38+0200\n"
+"Last-Translator: \n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+
+#: src/uswin.cpp:206
+msgid "UsWin::&About"
+msgstr ""
+
+#: src/uswin.cpp:92
+msgid "UsWin::&Absorbance Data"
+msgstr ""
+
+#: src/uswin.cpp:173
+msgid "UsWin::&Archive Database"
+msgstr ""
+
+#: src/uswin.cpp:183
+msgid "UsWin::&Buffer Corrections"
+msgstr ""
+
+#: src/uswin.cpp:193
+msgid "UsWin::&CPU Load"
+msgstr ""
+
+#: src/uswin.cpp:181
+msgid "UsWin::&Calculate DNA/RNA MW"
+msgstr ""
+
+#: src/uswin.cpp:177
+msgid "UsWin::&Combine Distribution Plots"
+msgstr ""
+
+#: src/uswin.cpp:74
+msgid "UsWin::&Configuration"
+msgstr ""
+
+#: src/uswin.cpp:68
+msgid "UsWin::&Dataset Info"
+msgstr ""
+
+#: src/uswin.cpp:179
+msgid "UsWin::&Diagnostics"
+msgstr ""
+
+#: src/uswin.cpp:214
+msgid "UsWin::&Edit"
+msgstr ""
+
+#: src/uswin.cpp:103
+msgid "UsWin::&Equilibrium Data"
+msgstr ""
+
+#: src/uswin.cpp:129
+msgid "UsWin::&Equilibrium"
+msgstr ""
+
+#: src/uswin.cpp:70
+msgid "UsWin::&Export Data"
+msgstr ""
+
+#: src/uswin.cpp:213
+msgid "UsWin::&File"
+msgstr ""
+
+#: src/uswin.cpp:126
+msgid "UsWin::&Finite Element Simulation"
+msgstr ""
+
+#: src/uswin.cpp:112
+msgid "UsWin::&Finite Element"
+msgstr ""
+
+#: src/uswin.cpp:219
+msgid "UsWin::&Global Fit"
+msgstr ""
+
+#: src/uswin.cpp:159
+msgid "UsWin::&Global Fitting"
+msgstr ""
+
+#: src/uswin.cpp:225
+msgid "UsWin::&Help"
+msgstr ""
+
+#: src/uswin.cpp:94
+msgid "UsWin::&Interference Data"
+msgstr ""
+
+#: src/uswin.cpp:127
+msgid "UsWin::&Kirkwood Theory"
+msgstr ""
+
+#: src/uswin.cpp:217
+msgid "UsWin::&Laser DLS"
+msgstr ""
+
+#: src/uswin.cpp:158
+msgid "UsWin::&Load Data"
+msgstr ""
+
+#: src/uswin.cpp:146
+msgid "UsWin::&Log(C) vs. r^2"
+msgstr ""
+
+#: src/uswin.cpp:148
+msgid "UsWin::&MW vs. Concentration"
+msgstr ""
+
+#: src/uswin.cpp:194
+msgid "UsWin::&Memory Info"
+msgstr ""
+
+#: src/uswin.cpp:132
+msgid "UsWin::&Model s, D and f from MW for 4 basic shapes"
+msgstr ""
+
+#: src/uswin.cpp:134
+msgid "UsWin::&Predict f and axial ratios for 4 basic shapes"
+msgstr ""
+
+#: src/uswin.cpp:72
+msgid "UsWin::&Print Data"
+msgstr ""
+
+#: src/uswin.cpp:118
+msgid "UsWin::&Radial Derivative"
+msgstr ""
+
+#: src/uswin.cpp:175
+msgid "UsWin::&Re-order Scanfile Sequence"
+msgstr ""
+
+#: src/uswin.cpp:204
+msgid "UsWin::&Register Software"
+msgstr ""
+
+#: src/uswin.cpp:114
+msgid "UsWin::&Second Moment"
+msgstr ""
+
+#: src/uswin.cpp:131
+msgid "UsWin::&Self-Association Equil."
+msgstr ""
+
+#: src/uswin.cpp:142
+msgid "UsWin::&Suggest Best Speed"
+msgstr ""
+
+#: src/uswin.cpp:160
+msgid "UsWin::&Suggest Sample Times"
+msgstr ""
+
+#: src/uswin.cpp:195
+msgid "UsWin::&System Load"
+msgstr ""
+
+#: src/uswin.cpp:222
+msgid "UsWin::&System"
+msgstr ""
+
+#: src/uswin.cpp:116
+msgid "UsWin::&Time Derivative"
+msgstr ""
+
+#: src/uswin.cpp:202
+msgid "UsWin::&UltraScan Home"
+msgstr ""
+
+#: src/uswin.cpp:203
+msgid "UsWin::&UltraScan Manual"
+msgstr ""
+
+#: src/uswin.cpp:205
+msgid "UsWin::&Upgrade UltraScan"
+msgstr ""
+
+#: src/uswin.cpp:221
+msgid "UsWin::&Utilities"
+msgstr ""
+
+#: src/uswin.cpp:102
+msgid "UsWin::&Velocity Data"
+msgstr ""
+
+#: src/uswin.cpp:215
+msgid "UsWin::&Velocity"
+msgstr ""
+
+#: src/uswin.cpp:111
+msgid "UsWin::&van Holde - Weischet"
+msgstr ""
+
+#: src/uswin.cpp:185
+msgid "UsWin::Calculate &Protein MW and vbar"
+msgstr ""
+
+#: src/uswin.cpp:216
+msgid "UsWin::E&quilibrium"
+msgstr ""
+
+#: src/uswin.cpp:77
+msgid "UsWin::E&xit"
+msgstr ""
+
+#: src/uswin.cpp:196
+msgid "UsWin::Helvetica"
+msgstr ""
+
+#: src/uswin.cpp:150
+msgid "UsWin::MW vs. &Radius"
+msgstr ""
+
+#: src/uswin.cpp:223
+msgid "UsWin::S&imulation"
+msgstr ""
+

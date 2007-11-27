@@ -1,0 +1,132 @@
+Please mail demeler@biochem.uthscsa.edu if you know of any bugs or 
+if you are missing a feature which isn't listed here.
+
+Changelog for version 6.x (BF = Bug Fix, NF = New Feature, UD = Update, DC = Documentation):
+
+BF us_equilspeed.cpp: rpm calculation was off by a factor of 2, corrected.
+
+BF us_equilsim.cpp: equilibrium simulation routine displayed incorrect association constant
+   to dissociation constant conversion.
+
+BF us_dtactrl.cpp: fixed cell information display bug when data was excluded and smoothing 
+   applied subsequently.
+
+BF us_equilsim.cpp: fixed error when exporting single step concentration and speed.
+
+NF us_combine.cpp: Added capability to do molecular weight transformations from S20,W
+   distributions
+
+BF us_globalequil.cpp: doubleclicking on the only scan in the scan listbox caused
+   a crash - fixed.
+
+BF us_globalequil.cpp: program now forces loading of fit before allowing
+   a Monte Carlo analysis
+
+BF us_archive.cpp: program failed to include ln(C) vs r^2 data files in
+   EQ-project generation
+
+NF us_minimize.cpp, us_globalequil.cpp, us_equilmc_t.cpp,
+   us_finite_ad.cpp, us_minimize.h us_eqfitter.cpp, us_extinctfitter.cpp:
+   included an automatic convergence optimization, program now can
+   automatically switch between different nonlinear least squares
+   optimization algorithms to further refine the fit.
+
+BF us_globalequil.cpp: UltraScan now returns the appropriate error message when a fit
+   from the incorrect result directory is loaded.
+
+NF	us_matrix.cpp, us_thread.cpp: threading can now be selected at compile time for
+   global fitting calculations of A'A calculations for the information matrix.
+
+BF us_minimize.cpp: Fixed unhandled condition in linesearch for Quasi-Newton
+
+BF us_db_expdata.cpp: Wavelength data was not deposited in database
+   because of filename mismatch, filename corrected from "[Ww]i*" to "[Ww]a".
+
+NF us_rundetails.cpp: directory and run name labels changed to readonly
+   lineedits to allow copy/paste and viewing long strings
+
+UD Maintenance Release: UltraScan 6.0.1
+
+NF us_combine.cpp: run ID labels changed to readonly lineedits to allow
+   copy/paste and viewing long strings
+
+BF	us_globalequil.cpp: fixed scan counter range on main page
+
+NF us_globalequil.cpp, us_eqfitter.cpp, us_selectmodel.cpp: added hetero-
+   associating A+B <=> AB model for equilibrium fits.
+
+BF us_extinction.cpp: wavelength component initialization for fit is
+	now equally spaced out over the entire wavelength range
+
+BF us_eqfitter.cpp: fixed crashing problem when fitting Fixed Molecular 
+	Weight distribution.
+
+NF	us_eqfitter.cpp, us_math.cpp, us_globalequil.cpp: Added nonnegatively
+	constrained least squares fitting algorithm for calculating equilibrium derived
+	continuous distributions. 
+
+NF us_equiltime.cpp: Added equilibrium time predictor for estimating time
+	to equilibrium for different channels and speeds.
+
+BF us_editor.cpp: fixed loading bug
+
+BF us_equilmodelctrl.cpp: fixed crashing bug when canceling out of loading of 
+	extinction data
+
+NF us_vhwsim.cpp: added s-value histogram plot and data
+
+NF us_velocreport.cpp: added s-value histogram plot and data to html reports
+
+BF us_eqfitter.cpp: Fixed bug where residuals/raw data/fitted data ASCII data
+   were never printed to a dat file.
+
+NF us_config.cpp: Directory and file paths are now selectable with a dialog
+
+NF us_equilreport.cpp: Added link for ASCII data file spreadsheets for plotting
+   experimental data, fitted overlays and residuals
+
+NF us_vhwsim.cpp: Added histogram and histogram envelope plotting as well as 
+   controls to select smoothing of the envelope and the sensitivity of the 
+   histogram, added documentation.
+
+NF us_eqfitter.cpp Added an average concentration per datapoint. This number is
+   the weighted average concentration from the concentration histogram for each
+   point in the fit.
+
+UD us_beowulf.cpp: Changed the default location for the Beowulf node definition
+   file to the root directory, so each user can dynamically allocate a different
+   node profile without root permission.
+
+NF us_vhwenhanced.cpp: added plotting of the diffusion line cutoff to the edited
+   data plot.
+
+NF us_simdlg.cpp: added ability to import s, D directly from modeling dialog and
+   to select the appropriate model shape (sphere, oblate, rod, etc...)
+
+NF us_merge.cpp: added wavelength file merging to utility
+
+BF us_diagnostics: fixed failure to read certain interference files
+
+NF us_dtactrl.cpp, us_combine.cpp: Added user-selected fonts to the plot
+   interfaces.
+
+UD documentation updates
+
+BF us_combine.cpp: adjusted the way the x-scale limits are determined - different
+	ranges for MW distributions and S-value distributions
+
+BF us_win.cpp: correctly eliminate /proc file system utilities from non-linux
+   platforms.
+
+BF us_edvint.cpp: Improved algorithm to detect and compensate for 
+   integral fringe jumps during editing.
+
+BF us_dtctrl.cpp: Fixed automatic hydrodynamic correction when multiple
+   cells have different buffers, and when buffers are loaded from DB, and 
+   when "reset" button was clicked.
+
+NF us_editor.cpp: Added richtext editing controls to editor
+
+BF us_globalequil.cpp: fixed scan cropping utility which would only work
+   correctly if left limit was defined first, now either limit can be defined
+   and order doesn't matter anymore.

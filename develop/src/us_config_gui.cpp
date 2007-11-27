@@ -1,0 +1,530 @@
+#include "../include/us_config_gui.h"
+
+US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent, name)
+{
+	USglobal = new US_Config();
+	if (USglobal->config_list.fontFamily == NULL || USglobal->config_list.fontSize == 0 || USglobal->config_list.margin == 0)
+	{
+		USglobal->config_list.fontFamily = "Helvetica";
+		USglobal->config_list.fontSize = 10;
+		USglobal->config_list.margin = 10;
+	}
+
+
+	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+	setCaption("UltraScan Configuration");
+
+	lbl_directions = new QLabel(QObject::tr("UltraScan " + US_Version + " Configuration:"),this);
+	lbl_directions->setFrameStyle(QFrame::WinPanel|Raised);
+	lbl_directions->setAlignment(AlignCenter|AlignVCenter);
+	lbl_directions->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+	lbl_directions->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+
+	lbl_paths = new QLabel(QObject::tr(" Paths and File Names:"),this);
+	lbl_paths->setFrameStyle(QFrame::WinPanel|Raised);
+	lbl_paths->setAlignment(AlignLeft|AlignVCenter);
+	lbl_paths->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+	lbl_paths->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	pb_browser = new QPushButton(QObject::tr("WWW Browser:"),this);
+	pb_browser->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	pb_browser->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	US_Config::connect(pb_browser, SIGNAL(clicked()), this, SLOT(open_browser_dir()));
+
+	le_browser = new QLineEdit(this);
+	le_browser->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_browser->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	US_Config::connect(le_browser, SIGNAL(textChanged(const QString &)), this, SLOT(update_browser(const QString &)));
+
+	pb_tar = new QPushButton(QObject::tr("tar Archiver:"),this);
+	pb_tar->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	pb_tar->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	US_Config::connect(pb_tar, SIGNAL(clicked()), this, SLOT(open_tar_dir()));
+
+	le_tar = new QLineEdit(this);
+	le_tar->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_tar->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	US_Config::connect(le_tar, SIGNAL(textChanged(const QString &)), this, SLOT(update_tar(const QString &)));
+
+	pb_gzip = new QPushButton(QObject::tr("gzip Compression:"),this);
+	pb_gzip->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	pb_gzip->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	US_Config::connect(pb_gzip, SIGNAL(clicked()), this, SLOT(open_gzip_dir()));
+
+	le_gzip = new QLineEdit(this);
+	le_gzip->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_gzip->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	US_Config::connect(le_gzip, SIGNAL(textChanged(const QString &)), this, SLOT(update_gzip(const QString &)));
+
+	pb_root_dir = new QPushButton(QObject::tr("UltraScan Root:"),this);
+	pb_root_dir->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	pb_root_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	US_Config::connect(pb_root_dir, SIGNAL(clicked()), this, SLOT(open_root_dir()));
+
+	le_root_dir = new QLineEdit(this);
+	le_root_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_root_dir->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	US_Config::connect(le_root_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_root_dir(const QString &)));
+
+	pb_data_dir = new QPushButton(QObject::tr(" Data Directory:"),this);
+	pb_data_dir->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	pb_data_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	US_Config::connect(pb_data_dir, SIGNAL(clicked()), this, SLOT(open_data_dir()));
+
+	le_data_dir = new QLineEdit(this);
+	le_data_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_data_dir->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	US_Config::connect(le_data_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_data_dir(const QString &)));
+
+	pb_result_dir = new QPushButton(QObject::tr(" Result Directory:"),this);
+	pb_result_dir->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	pb_result_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	US_Config::connect(pb_result_dir, SIGNAL(clicked()), this, SLOT(open_result_dir()));
+
+	le_result_dir = new QLineEdit(this);
+	le_result_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_result_dir->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	US_Config::connect(le_result_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_result_dir(const QString &)));
+
+	pb_html_dir = new QPushButton(QObject::tr(" HTML Reports:"),this);
+	pb_html_dir->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	pb_html_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	US_Config::connect(pb_html_dir, SIGNAL(clicked()), this, SLOT(open_html_dir()));
+
+	le_html_dir = new QLineEdit(this);
+	le_html_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_html_dir->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	US_Config::connect(le_html_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_html_dir(const QString &)));
+
+	pb_archive_dir = new QPushButton(QObject::tr(" Archive Directory:"),this);
+	pb_archive_dir->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	pb_archive_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	US_Config::connect(pb_archive_dir, SIGNAL(clicked()), this, SLOT(open_archive_dir()));
+
+	le_archive_dir = new QLineEdit(this);
+	le_archive_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_archive_dir->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	US_Config::connect(le_archive_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_archive_dir(const QString &)));
+
+	pb_system_dir = new QPushButton(QObject::tr(" UltraScan System:"),this);
+	pb_system_dir->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	pb_system_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	US_Config::connect(pb_system_dir, SIGNAL(clicked()), this, SLOT(open_system_dir()));
+
+	le_system_dir = new QLineEdit(this);
+	le_system_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_system_dir->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	US_Config::connect(le_system_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_system_dir(const QString &)));
+
+	pb_help_dir = new QPushButton(QObject::tr(" Help Directory:"),this);
+	pb_help_dir->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	pb_help_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	US_Config::connect(pb_help_dir, SIGNAL(clicked()), this, SLOT(open_help_dir()));
+
+	le_help_dir = new QLineEdit(this);
+	le_help_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_help_dir->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	US_Config::connect(le_help_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_help_dir(const QString &)));
+
+	lbl_misc = new QLabel(QObject::tr(" Miscellaneous Settings:"),this);
+	lbl_misc->setFrameStyle(QFrame::WinPanel|Raised);
+	lbl_misc->setAlignment(AlignLeft|AlignVCenter);
+	lbl_misc->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+	lbl_misc->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	lbl_temperature_tol = new QLabel(QObject::tr(" Temperature Tolerance (ºC):"),this);
+	lbl_temperature_tol->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+	lbl_temperature_tol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_temperature_tol->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	le_temperature_tol = new QLineEdit(this);
+	le_temperature_tol->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_temperature_tol->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	US_Config::connect(le_temperature_tol, SIGNAL(textChanged(const QString &)), this, SLOT(update_temperature_tol(const QString &)));
+
+	lbl_beckman_bug = new QLabel(QObject::tr(" Beckman Time Bug Correction:"),this);
+	lbl_beckman_bug->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+	lbl_beckman_bug->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_beckman_bug->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	bt_on = new QRadioButton(this);
+	bt_on->setText(QObject::tr("on"));
+	bt_on->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	bt_on->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	US_Config::connect(bt_on, SIGNAL(clicked()), this, SLOT(update_on_button()));
+
+	bt_off = new QRadioButton(this);
+	bt_off->setText(QObject::tr("off"));
+	bt_off->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	bt_off->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	US_Config::connect(bt_off, SIGNAL(clicked()), this, SLOT(update_off_button()));
+
+	lbl_color = new QLabel(QObject::tr(" Color Preferences:"),this);
+	lbl_color->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+	lbl_color->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_color->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	pb_color = new QPushButton(QObject::tr("Change"), this);
+	Q_CHECK_PTR(pb_color);
+	pb_color->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_color->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	US_Config::connect(pb_color, SIGNAL(clicked()), this, SLOT(update_color()));
+
+	lbl_font = new QLabel(QObject::tr(" Font Preferences:"),this);
+	lbl_font->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+	lbl_font->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_font->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	pb_font = new QPushButton(QObject::tr("Change"), this);
+	Q_CHECK_PTR(pb_font);
+	pb_font->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_font->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	US_Config::connect(pb_font, SIGNAL(clicked()), this, SLOT(update_font()));
+
+	lbl_database = new QLabel(QObject::tr(" Database Preferences:"),this);
+	lbl_database->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+	lbl_database->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_database->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	pb_database = new QPushButton(QObject::tr("Change"), this);
+	pb_database->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_database->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	US_Config::connect(pb_database, SIGNAL(clicked()), this, SLOT(update_database()));
+
+	lbl_numThreads = new QLabel(QObject::tr(" Number of Threads:"),this);
+	lbl_numThreads->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+	lbl_numThreads->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_numThreads->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	cnt_numThreads= new QwtCounter(this);
+	cnt_numThreads->setRange(0, 100, 1);
+	cnt_numThreads->setValue(USglobal->config_list.numThreads);
+	cnt_numThreads->setEnabled(true);
+	cnt_numThreads->setNumButtons(2);
+	cnt_numThreads->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cnt_numThreads, SIGNAL(valueChanged(double)), SLOT(update_numThreads(double)));
+
+	pb_help = new QPushButton(QObject::tr("Help"), this);
+	pb_help->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	US_Config::connect(pb_help, SIGNAL(clicked()), this, SLOT(help()));
+
+	pb_save = new QPushButton(QObject::tr("Save"), this);
+	pb_save->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	US_Config::connect(pb_save, SIGNAL(clicked()), this, SLOT(save()));
+
+	pb_cancel = new QPushButton(QObject::tr("Cancel"), this);
+	pb_cancel->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	US_Config::connect(pb_cancel, SIGNAL(clicked()), this, SLOT(cancel()));
+
+	global_Xpos += 30;
+	global_Ypos += 30;
+	setGeometry(global_Xpos, global_Ypos, 0, 0);
+	setup_GUI();
+	update_screen();
+}
+
+US_Config_GUI::~US_Config_GUI()
+{
+}
+
+void US_Config_GUI::setup_GUI()
+{
+	QBoxLayout *topbox = new QVBoxLayout(this,2);
+	topbox->addWidget(lbl_directions);
+	topbox->addWidget(lbl_paths);
+	unsigned int j=0;
+	QGridLayout * lineGrid = new QGridLayout(topbox,10,2,2);
+	lineGrid->addWidget(pb_browser,j,0);
+	lineGrid->addWidget(le_browser,j,1);
+	j++;
+	lineGrid->addWidget(pb_tar,j,0);
+	lineGrid->addWidget(le_tar,j,1);
+	j++;
+	lineGrid->addWidget(pb_gzip,j,0);
+	lineGrid->addWidget(le_gzip,j,1);
+	j++;
+	lineGrid->addWidget(pb_root_dir,j,0);
+	lineGrid->addWidget(le_root_dir,j,1);
+	j++;
+	lineGrid->addWidget(pb_data_dir,j,0);
+	lineGrid->addWidget(le_data_dir,j,1);
+	j++;
+	lineGrid->addWidget(pb_result_dir,j,0);
+	lineGrid->addWidget(le_result_dir,j,1);
+	j++;
+	lineGrid->addWidget(pb_html_dir,j,0);
+	lineGrid->addWidget(le_html_dir,j,1);
+	j++;
+	lineGrid->addWidget(pb_archive_dir,j,0);
+	lineGrid->addWidget(le_archive_dir,j,1);
+	j++;
+	lineGrid->addWidget(pb_system_dir,j,0);
+	lineGrid->addWidget(le_system_dir,j,1);
+	j++;
+	lineGrid->addWidget(pb_help_dir,j,0);
+	lineGrid->addWidget(le_help_dir,j,1);
+
+	topbox->addWidget(lbl_misc);
+	QGridLayout *lineGrid2 = new QGridLayout(topbox,5,2);
+	j=0;
+	lineGrid2->addWidget(lbl_temperature_tol,j,0);
+	lineGrid2->addWidget(le_temperature_tol,j,1);
+	j++;
+	lineGrid2->addWidget(lbl_beckman_bug,j,0);
+	QBoxLayout *radiobutton = new QHBoxLayout(0);
+	radiobutton->addWidget(bt_on);
+	radiobutton->addWidget(bt_off);
+	lineGrid2->addLayout(radiobutton,j,1);
+	j++;
+	lineGrid2->addWidget(lbl_color,j,0);
+	lineGrid2->addWidget(pb_color,j,1);
+	j++;
+	lineGrid2->addWidget(lbl_font,j,0);
+	lineGrid2->addWidget(pb_font,j,1);
+	j++;
+	lineGrid2->addWidget(lbl_database,j,0);
+	lineGrid2->addWidget(pb_database,j,1);
+	j++;
+	lineGrid2->addWidget(lbl_numThreads,j,0);
+	lineGrid2->addWidget(cnt_numThreads,j,1);
+
+	QBoxLayout *pushbutton = new QHBoxLayout(topbox,2);
+	pushbutton->addWidget(pb_help);
+	pushbutton->addWidget(pb_save);
+	pushbutton->addWidget(pb_cancel);
+	topbox->activate();
+
+}
+
+void US_Config_GUI::closeEvent(QCloseEvent *e)
+{
+	e->accept();
+	global_Xpos -= 30;
+	global_Ypos -= 30;
+}
+
+void US_Config_GUI::cancel()
+{
+	close();
+}
+
+void US_Config_GUI::help()
+{
+	US_Help *online_help; online_help = new US_Help(this);
+	online_help->show_help("manual/config.html");
+}
+
+void US_Config_GUI::save()
+{
+	US_Write_Config *WConfig;
+	WConfig = new US_Write_Config();
+	if (!WConfig->write_config(USglobal->config_list))
+	{
+		delete WConfig;
+		return;
+	}
+	else
+	{
+		delete WConfig;
+		close();
+	}
+}
+
+void US_Config_GUI::update_screen()
+{
+	QString str;
+	le_browser->setText(USglobal->config_list.browser);
+	le_tar->setText(USglobal->config_list.tar);
+	le_gzip->setText(USglobal->config_list.gzip);
+	le_system_dir->setText(USglobal->config_list.system_dir);
+	le_help_dir->setText(USglobal->config_list.help_dir);
+	le_data_dir->setText(USglobal->config_list.data_dir);
+	le_root_dir->setText(USglobal->config_list.root_dir);
+	le_archive_dir->setText(USglobal->config_list.archive_dir);
+	le_result_dir->setText(USglobal->config_list.result_dir);
+	le_html_dir->setText(USglobal->config_list.html_dir);
+	str.sprintf("%4.3f", USglobal->config_list.temperature_tol);
+	le_temperature_tol->setText(str);
+	if (USglobal->config_list.beckman_bug)
+	{
+		bt_on->setChecked(true);
+		bt_off->setChecked(false);
+	}
+	else
+	{
+		bt_on->setChecked(false);
+		bt_off->setChecked(true);
+	}
+}
+
+void US_Config_GUI::update_on_button()
+{
+	bt_off->setChecked(false);
+	USglobal->config_list.beckman_bug = 1;
+}
+
+void US_Config_GUI::update_color()
+{
+	US_Color *uscol;
+	uscol = new US_Color();
+	US_Config::connect(uscol, SIGNAL(marginChanged(int)), this, SLOT(update_margin(int)));
+	uscol->show();
+}
+
+void US_Config_GUI::update_margin(int val)
+{
+	USglobal->config_list.margin = val;
+}
+
+void US_Config_GUI::update_font()
+{
+	US_Font *usfont;
+	QString temp_font = USglobal->config_list.fontFamily;
+	int temp_size = USglobal->config_list.fontSize;
+
+	usfont = new US_Font(&USglobal->config_list.fontFamily, &USglobal->config_list.fontSize);
+	if (usfont->exec() != QDialog::Accepted)
+	{
+		USglobal->config_list.fontSize = temp_size;
+		USglobal->config_list.fontFamily = temp_font;
+	}
+	delete usfont;
+}
+
+void US_Config_GUI::update_database()
+{
+	US_Database *usdb;
+	usdb = new US_Database();
+	usdb->setCaption("Database Configuration");
+	usdb->resize(330,264);
+	usdb->show();
+}
+
+void US_Config_GUI::update_off_button()
+{
+	bt_on->setChecked(false);
+	USglobal->config_list.beckman_bug = 0;
+}
+
+void US_Config_GUI::open_browser_dir()
+{
+	USglobal->config_list.browser = QFileDialog::getOpenFileName(USglobal->config_list.browser, QString::null, 0);
+	le_browser->setText(USglobal->config_list.browser);
+}
+
+void US_Config_GUI::update_browser(const QString &newText)
+{
+	USglobal->config_list.browser = newText;
+}
+
+void US_Config_GUI::open_tar_dir()
+{
+	USglobal->config_list.tar = QFileDialog::getOpenFileName(USglobal->config_list.tar, QString::null, 0);
+	le_tar->setText(USglobal->config_list.tar);
+}
+
+void US_Config_GUI::update_tar(const QString &newText)
+{
+	USglobal->config_list.tar = newText;
+}
+
+void US_Config_GUI::open_gzip_dir()
+{
+	USglobal->config_list.gzip = QFileDialog::getOpenFileName(USglobal->config_list.gzip, QString::null, 0);
+	le_gzip->setText(USglobal->config_list.gzip);
+}
+
+void US_Config_GUI::update_gzip(const QString &newText)
+{
+	USglobal->config_list.gzip = newText;
+}
+
+void US_Config_GUI::open_system_dir()
+{
+	USglobal->config_list.system_dir = QFileDialog::getExistingDirectory(USglobal->config_list.system_dir, 0, 0, QString::null, true);
+	le_system_dir->setText(USglobal->config_list.system_dir);
+}
+
+void US_Config_GUI::update_system_dir(const QString &newText)
+{
+	USglobal->config_list.system_dir = newText;
+}
+
+void US_Config_GUI::open_help_dir()
+{
+	USglobal->config_list.help_dir = QFileDialog::getExistingDirectory(USglobal->config_list.help_dir, 0, 0, QString::null, true);
+	le_help_dir->setText(USglobal->config_list.help_dir);
+}
+
+void US_Config_GUI::update_help_dir(const QString &newText)
+{
+	USglobal->config_list.help_dir = newText;
+}
+
+void US_Config_GUI::update_temperature_tol(const QString &newText)
+{
+	USglobal->config_list.temperature_tol = newText.toFloat();
+}
+
+void US_Config_GUI::open_result_dir()
+{
+	USglobal->config_list.result_dir = QFileDialog::getExistingDirectory(USglobal->config_list.result_dir, 0, 0, QString::null, true);
+	le_result_dir->setText(USglobal->config_list.result_dir);
+}
+
+void US_Config_GUI::update_result_dir(const QString &newText)
+{
+	USglobal->config_list.result_dir = newText;
+}
+
+void US_Config_GUI::open_html_dir()
+{
+	USglobal->config_list.html_dir = QFileDialog::getExistingDirectory(USglobal->config_list.html_dir, 0, 0, QString::null, true);
+	le_html_dir->setText(USglobal->config_list.html_dir);
+}
+
+void US_Config_GUI::update_html_dir(const QString &newText)
+{
+	USglobal->config_list.html_dir = newText;
+}
+
+void US_Config_GUI::open_data_dir()
+{
+	USglobal->config_list.data_dir = QFileDialog::getExistingDirectory(USglobal->config_list.data_dir, 0, 0, QString::null, true);
+	le_data_dir->setText(USglobal->config_list.data_dir);
+}
+
+void US_Config_GUI::update_data_dir(const QString &newText)
+{
+	USglobal->config_list.data_dir = newText;
+}
+
+void US_Config_GUI::open_archive_dir()
+{
+	USglobal->config_list.archive_dir = QFileDialog::getExistingDirectory(USglobal->config_list.archive_dir, 0, 0, QString::null, true);
+	le_archive_dir->setText(USglobal->config_list.archive_dir);
+}
+
+void US_Config_GUI::update_archive_dir(const QString &newText)
+{
+	USglobal->config_list.archive_dir = newText;
+}
+
+void US_Config_GUI::open_root_dir()
+{
+	USglobal->config_list.root_dir = QFileDialog::getExistingDirectory(USglobal->config_list.root_dir, 0, 0, QString::null, true);
+	le_root_dir->setText(USglobal->config_list.root_dir);
+}
+
+void US_Config_GUI::update_root_dir(const QString &newText)
+{
+	USglobal->config_list.root_dir = newText;
+}
+
+void US_Config_GUI::update_numThreads(double val)
+{
+	USglobal->config_list.numThreads = (unsigned int) val;
+}

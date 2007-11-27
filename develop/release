@@ -1,0 +1,20 @@
+#!/bin/sh
+mkdir new
+sed < libus.pro > new/libus.pro 's/debug/release/g'
+mv new/libus.pro .
+rm -rf new
+for each in us*; do
+if [ -d $each ]; then
+cd $each
+echo $each
+grep CONFIG *.pro
+mkdir new
+for x in *.pro; do
+        sed < $x > new/$x 's/debug/release/g'
+        cp new/$x .
+done
+rm -rf new
+qmake us*.pro
+cd ..
+fi
+done

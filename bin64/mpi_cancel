@@ -1,0 +1,11 @@
+echo killing any existing mpi jobs
+/share/apps64/ultrascan/bin64/mpi_killall 2> /dev/null > /dev/null
+sleep 2
+/share/apps64/ultrascan/bin64/mpi_killall 2> /dev/null > /dev/null
+sleep 1
+echo restarting next job
+echo mpi_job_complete > /share/apps64/ultrascan/etc/us_gridpipe
+sleep 2
+echo current status
+/share/apps64/ultrascan/bin64/mpi_status
+

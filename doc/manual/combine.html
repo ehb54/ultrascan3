@@ -1,0 +1,199 @@
+<head>
+   <title>Combining G(s) distributions</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<H2>Combining G(s) distributions:</H2>
+<p>
+<CENTER><img src="combine1.png"></CENTER>
+
+
+<p>To combine integral van Holde - Weischet G(s) distributions from
+multiple datasets (either from different cells of the same run or from
+different runs), use the "Combine Distribution Plots" item from the <A
+HREF="menu_utilities0.png">Utilities</A> menu. This will allow you to compare
+integral distributions from different cells to each other.  This may
+be useful if you analyzed the same sample under different conditions,
+for example, different pH levels or different concentrations. If the
+samples are the same, the distributions should overlay, if the samples
+behave differently, the distributions will be shifted against each other.
+
+<p>All distributions will be plotted relative to the boundary fraction
+they were analyzed. For example, if you analyzed 100% of the boundary,
+the distribution will range from 0 % - 100 % of the Y-axis. A distribution
+that was analyzed from 72 % of the boundary, shifted 8 % from the bottom
+will be plotted from 8 % to 80 % of the Y-axis. It is important that this
+distinction be made, since, for example, concentration dependent samples
+will behave differently depending on the position in the boundary, or heterogeneous
+samples will show different distributions depending which portion of the
+boundary was analyzed.
+<p>
+You can remove erroneously added distributions by double clicking
+on the distribution to remove it. The curve will be highlighted in <a
+href=combine6.png>white</a> and a <a href=combine7.png>message window</a>
+will ask you if you want to delete it. Confirm or cancel.
+
+<p><b><FONT SIZE=+1>Explanation for fields and buttons:</FONT></b>
+
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF" NOSAVE >
+<tr>
+<td><img src="combine2.png"></td>
+
+<td>Click on these buttons to control the van Holde - Weischet analysis.
+<UL>
+<li>
+<b>Load Data:</b> Load edited data sets (with the *.us suffix). A
+<a href=load_sed.png>file dialogue</a> will allow you to select
+a previously edited and saved velocity experiment. If the data was
+edited with a version of UltraScan less than the current version, an <a
+href=version.png>error message</a> will be displayed.
+
+<li>
+<b>Run Details:</b> View the <A HREF="run_details_veloc.png">diagnostic details</A>
+for a particular run.
+
+<li>
+<b>Print Data:</b> Load the printer control panel for printing of plot
+graphics
+
+<li>
+<b>Save Data:</b> Write out a copy of all distributiones to an ASCII formatted
+data file suitable for import into a spreadsheet plotting program. The
+data will be saved in a file called "distrib.dat" in your results directory
+(see <A HREF="config.html">configuration panel</A>). See "<A HREF="file_format.html">File
+Structures and Formats</A>" for details. The descriptions in the legend
+for each dataset is saved in an ASCII file called "distrib.txt". Note:
+These files are overwritten each time this button is clicked. Only the
+last version of the analysis will be saved!
+
+<li>
+<b>Help:</b> This help file
+
+<li>
+<b>Close:</b> Close the "Combine G(s) Distribution" window.
+
+<li>
+<b>Reset:</b> Reset the plot window and delete all distributions and the
+legend. After clicking on "Reset" you can start with a new, empty plot
+window.
+</UL>
+</td>
+</tr>
+</table>
+
+
+<p><b>Run Information:</b>
+<br>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<TR NOSAVE>
+<TD NOSAVE><img src="combine3.png"></td>
+
+<TD NOSAVE>
+<UL>
+<li>
+<b>Run ID:</b> The name of the run given during editing
+
+<li>
+<b>Temperature:</b> The average temperature calculated from the entire run
+
+<li>
+<b>Available Cells:</b> The numbers the cells that contain analyzable data
+<li>
+<b>Distribution Name:</b> The name under which the html report will
+be saved.  If you make this name the same as the dataset, the
+combined distribution data will be included in the html report for
+that dataset. If the default name "distribution" is left unchanged,
+a separate directory called "distribution" will be created under the
+html report directory. For more information on the html reports, please
+see the <a href=html_report.html>html report</a> manual page.
+
+</UL>
+</td>
+</tr>
+</table>
+
+<p><b>Plot Distribution Selection:</b>
+<br>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF" NOSAVE >
+<tr>
+<td><img src="combine12.png"></td>
+<td>
+Select the distribution type to be displayed in the plot. You can overlay different
+types of plots (<a href=combine1.png>integral distribution</a> or 
+<a href=combine1a.png>histogram envelope</a> or <a href=combine1b.png>both</a>) or overlay 
+different distributions. When you click on the checkboxes, the next distribution to
+be added will be displayed in the format identified by the selected checkbox. The default setting is the integral van Holde - Weischet distribution.
+</td>
+</table>
+
+<p><b>Experimental Parameters:</b>
+<br>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF" NOSAVE >
+<tr>
+<td><img src="combine4.png"></td>
+
+<td>Single-clicking on a cell or wavelength will bring up the sample
+description of that cell and wavelength. If no data is available for your
+selection, it will be indicated in the top field. Double-clicking on a
+valid selection will add the integral distribution of that selection to
+the plot area and add an item to the legend. Scroll through this list
+to bring up information for cells > 3. If you double-click on an invalid
+item, an <A HREF="combine8.png"> error message window</A> will appear. If
+the selection is valid, but a distribution plot has not been saved
+from the van Holde - Weischet analysis, an <A HREF="combine9.png">error
+message</A> will appear.
+<p>
+If you decide to eliminate a distribution plot from the combined 
+overlay, simply click on the scan to be removed in the plot area, and 
+you will be asked if you want to delete the highlighted scan. The scan
+about to be deleted will be highlighted in white.</td>
+
+</tr>
+</table>
+
+<br>
+
+<p><b>Analysis Controls:</b>
+<br>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<tr>
+<td><img src="combine5.png"></td>
+
+<td>Sometimes the legend does not appear correctly resized (for example,
+if the item in the description of the sample is too long for the provided
+screen area), In that case, it is necessary to resize the window to a larger
+size to accommodate the longer text. Click on "<A HREF="combine10.png">Zoom
+in</A>" or "<A HREF="combine11.png">Zoom out</A>" to present a smaller or
+larger scale of the item. Clicking on the X-min and X-max counters allows
+you to manually set the X-min/max limits of the data plot.</td>
+</tr>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

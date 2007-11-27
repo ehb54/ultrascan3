@@ -1,0 +1,16 @@
+# Candidate Tigre resources from which to select 
+# us_tigre_job.pl needs to know specifics about each one and
+# requires modifications if this list is added to
+# supported systems, we have tg alloc on lonestar
+lonestar.tacc.utexas.edu
+#gridgate.rtc.rice.edu
+#minigar.hpcc.ttu.edu
+#cosmos.tamu.edu
+#eldorado.acrl.uh.edu
+# unsupported systems
+#gauss.math.tamu.edu 
+#glb-test.hpcc.ttu.edu
+#lela.tacc.utexas.edu
+#rtc.rice.edu
+#weland.hpcc.ttu.edu
+

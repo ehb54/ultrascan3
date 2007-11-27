@@ -1,0 +1,26 @@
+Absorbance:
+Step 0: select directory
+Step 1: show details, enter run identification
+Step 2: load cell(display first scan)
+Step 3: pick meniscus left
+Step 4: pick meniscus right, find max
+Step 5: pick range left
+Step 6: pick range right
+Step 7: pick plateau
+Step 8: pick baseline
+goto step 2
+
+Interference:
+Step 0: select directory
+Step 1: show details, enter run identification
+Step 2: load cell(display first scan) -> use extra button on plat
+panel to zoom meniscus region
+Step 3: pick meniscus 
+Step 4: pick air-to-air range limit left
+Step 5: pick air-to-air range limit right
+Step 6: pick range left
+Step 7: pick range right -> then automatically show integration plot and
+correct radially invariant noise
+Step 8: pick plateau
+Step 9: pick baseline
+goto step 2

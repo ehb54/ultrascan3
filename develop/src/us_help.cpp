@@ -1,0 +1,109 @@
+#include "../include/us_util.h"
+
+US_Help::US_Help(QWidget *parent, const char *name) : QWidget(parent, name)
+{
+	USglobal = new US_Config();
+}
+
+//destructor
+US_Help::~US_Help()
+{
+}
+
+void US_Help::show_help(QString helpFile)
+{
+#ifdef UNIX
+	URL = "file://" + USglobal->config_list.help_dir + "/" + helpFile;
+#endif
+#ifdef WIN32
+	URL = "file://" + USglobal->config_list.help_dir + "\\" + helpFile;
+#endif
+	openBrowser();
+}
+
+void US_Help::show_URL(QString str)
+{
+	URL = str;
+	openBrowser();
+}
+
+void US_Help::show_html_file(QString helpFile)
+{
+	URL = "file://" + helpFile;
+	openBrowser();
+}
+
+void US_Help::openBrowser()
+{
+	QString str;
+	proc = new QProcess(this);
+	connect(proc, SIGNAL(readyReadStdout()), this, SLOT(captureStdout()));
+	connect(proc, SIGNAL(readyReadStderr()), this, SLOT(captureStderr()));
+	connect(proc, SIGNAL(processExited()), this, SLOT(endProcess()));
+	proc->clearArguments();
+	proc->addArgument(USglobal->config_list.browser);
+
+#ifdef UNIX
+	stderrSize = 0;
+	trials = 0;
+	proc->addArgument("-remote");
+	str = "openURL(" + URL + ", new-window)";
+	proc->addArgument(str);	
+	if(!proc->start()) //error
+	{
+		cout << "Error: Can't start browser window...\n"
+		<< "Please make sure you have the configured browser installed\n\n"
+		<< "Currently configured: " << USglobal->config_list.browser 
+		<< endl;
+		QMessageBox::message("UltraScan Error:", "Can't start browser window...\n"
+									"Please make sure you have the configured browser installed\n\n"
+									"Currently configured: " + USglobal->config_list.browser);
+		return;
+	}
+#endif
+#ifdef WIN32
+	proc->addArgument(URL);
+	if(!proc->start()) //error
+	{
+		cout << "Error: Can't start browser window - please make sure you have Explorer installed!\n";
+		QMessageBox::message("UltraScan Error:", "Can't start browser window...\nPlease make sure you have Explorer installed");
+		return;
+	}
+#endif
+}
+
+void US_Help::endProcess()
+{
+#ifdef UNIX
+	trials ++; 
+	if (trials == 1 && stderrSize > 0) // error attaching to already running process, start new
+	{
+		proc->clearArguments();
+		proc->addArgument(USglobal->config_list.browser);
+		proc->addArgument(URL);	
+		if(!proc->start()) //error
+		{
+			cout << "Error: Can't start browser window...\n"
+			<< "Please make sure you have the configured browser installed\n\n"
+			<< "Currently configured: " << USglobal->config_list.browser 
+			<< endl;
+			QMessageBox::message("UltraScan Error:", "Can't start browser window...\n"
+										"Please make sure you have the configured browser installed\n\n"
+										"Currently configured: " + USglobal->config_list.browser);
+			return;
+		}
+	}
+#endif
+}
+
+void US_Help::captureStdout()
+{
+	cout << proc->readLineStdout() << endl;
+}
+
+void US_Help::captureStderr()
+{
+	QByteArray list = proc->readStderr();
+	stderrSize = list.size();
+	cout << "The following error occured while attempting to run Mozilla:\n" << QString(list) << endl;
+}

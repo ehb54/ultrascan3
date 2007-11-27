@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# This script converts the documentation from png to jpg images (100% quality)
+# for use under Windows since Explorer has trouble with png images
+#
+for x in *.png; do
+	convert -quality 100 $x `basename $x png`jpg
+	echo converting $x to `basename $x png`jpg
+done 
+mkdir new
+for x in *.html; do
+        sed < $x > new/$x 's/\.png/\.jpg/g'
+        cp new/$x .
+done
+rm -rf new
+rm -rf *.png

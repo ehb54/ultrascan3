@@ -1,0 +1,305 @@
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <title>Genetic Algorithm Control Module</title>
+<link href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body text="#000000" bgcolor="#FFFFFF" link="#0000EF" vlink="#CF30CF" alink="#FF0000">
+
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="ultrascan1.png" BORDER=0></td>
+
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+Genetic Algorithm Control Module</h2>
+</center>
+
+<center><img SRC="ga_control1.png"></center>
+<p>
+In the Genetic Algorithm Control Module you can define the input parameters for 
+a genetic algorithm optimization approach. This approach is generally carried out
+on a parallel computer cluster, where individual solute "genes" are simulated and
+their solutions are compared with the experimental data in the least squares sense
+to evaluate their "fitness". Using paradigms from darwinian evolution such as 
+mutation, crossover, deletions and insertions, plague and elitism the solute
+combinations of the genes to be simulated will evolve over many "generations"
+into better fitted solute combinations. To avoid lengthy evolution periods it
+helps to initialize the system with known parameters about the system that have been
+derived in other, perhaps model-independent approaches, such as the van Holde - Weischet
+analysis or other distribution methods implemented in UltraScan.
+<p>
+The genetic algorithm approach works best for heterogeneous mixtures
+of non-interacting solutes that may display a varying degree of
+frictional properties which can not be satisfactorily fit by a single
+frictional ratio.  This method permits determination of distributions
+of sedimentation-, diffusion-, and frictional coefficients, as well as
+molecular weight and partial concentration.  More information about this
+method can be found in <i>Emre Brookes and Borries Demeler. Genetic Algorithm
+Optimization for obtaining accurate Molecular Weight Distributions from
+Sedimentation Velocity Experiments. Analytical Ultracentrifugation VIII,
+Progr. Colloid Polym. Sci. C. Wandrey, Editor. Springer</i>
+
+<p>
+This module assists with the definition of the input parameters into the 
+genetic algorithm to prepare a run on a parallel cluster. The steps of the
+initializations are:
+<p>
+<ol>
+<li>Loading an initializing s-value distribution
+<li>Selecting the number of maximum solutes present in the solution
+<li>Either manually or automatically assign individual solute bins
+from the distribution to define areas where the genetic algorithm should
+search for a solute
+<li>Adjust the frictional ratio limits for each solute bin to restrict the 
+search space in the frictional domain to a reasonable value. If 2-dimensional
+spectrum analysis distributions are used for initialization, the distributions
+will also be able to further define the frictional space, otherwise, the 
+frictional initialization needs to be done by the user.
+<li>Adjusting the genetic algorithm parameters for the evolution operators.
+</ol>
+<p>
+<hr WIDTH="100%">
+<center>
+<p><b><font size=+1>Explanation of fields and buttons:</font></b></center>
+<p>
+<table border=1 cellpadding=5>
+<tr>
+	<td rowspan=6>
+		<img src=ga_control2.png>
+	</td>
+	<td>
+		<b>Population Size:</b>
+	</td>
+	<td>
+		This is the number of "genes" competing inside one deme. Each gene contains
+		all solute parameters to define one model
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>Number of Demes:</b>
+	</td>
+	<td>
+		This is the number of populations competing mostly independently from eachother
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>Crossover Rate:</b>
+	</td>
+	<td>
+		The rate with which random crossover events occur between genes, and parameters are
+		swapped with other genes.
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>Mutation Rate:</b>
+	</td>
+	<td>
+		The rate at which random mutation events occur at one parameter location.
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>Plague:</b>
+	</td>
+	<td>
+		The random rate of loss of entire genes.
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>Elitism:</b>
+	</td>
+	<td>
+		The rate at which a favorable parameter is maintained.
+	</td>
+</tr>
+<tr>
+	<td rowspan=3>
+		<img src=ga_control3.png>
+	</td>
+	<td>
+		<b>Random Seed:</b>
+	</td>
+	<td>
+		An integer value used to initialize the random number generator. Use a non-zero
+		value for repeatability.
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>Regularization:</b>
+	</td>
+	<td>
+		Regularization applied to the distribution function.
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>Number of Generations:</b>
+	</td>
+	<td>
+		The number of iterations each deme will be allowed to evolve. The larger this
+		number, the better the final chi-square (up to a limit), however, the compute
+		effort will grow linearly with the generation number.
+	</td>
+</tr>
+<tr>
+	<td rowspan=3>
+		<img src=ga_control4.png>
+	</td>
+	<td>
+		<b>Number of initial Solutes:</b>
+	</td>
+	<td>
+		Select here the number of maximum solute bins in the solution. This number
+		has to be set before auto-assigning solute bins from an s-value distribution.
+		If you select bins manually, the counter will automatically increase as you
+		graphically add new solute bins with the mouse. Adding too many solute bins will
+      significantly slow down the convergence process since more solutes need to be
+      calculated, but it will provide a better chance for a better final solution once
+      the optimization is converged.
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>f/f0 minimum:</b>
+	</td>
+	<td>
+		This is the minimum of the frictional coefficient ratio, defining the most globular
+		shape possible for the selected solute bin.
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>f/f0 maximum:</b>
+	</td>
+	<td>
+		This is the maximum of the frictional coefficient ratio, defining the most 
+		non-globular shape possible for the selected solute bin.
+	</td>
+</tr>
+<tr>
+	<td rowspan=6>
+		<img src=ga_control5.png>
+	</td>
+	<td>
+		<b>Help:</b>
+	</td>
+	<td>
+		Call up this help page.
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>Load Distribution:</b>
+	</td>
+	<td>
+		Retrieve a van Holde - Weischet, C(s), or 2-dimensional spectrum analysis
+		distribution to initialize the genetic algorithm s-value range.
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>Autoassign Solute Bins:</b>
+	</td>
+	<td>
+		This function will attempt to define solute bins based on the integral
+		values of the distribution. The algorithm will add 5% at the top and the 
+		bottom of the given distribution, and then split the range into the number
+		of initial solutes defined above. Instead of equally splitting the s-value
+		range, the range is equally spaced into integral values of the distribution
+		function, so each bin has approximately the same relative signal.
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>Reset Solute Bins:</b>
+	</td>
+	<td>
+		Clicking on this button will erase the existing bin distribution and 
+		allow you to start over.
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>Cancel:</b>
+	</td>
+	<td>
+		Cancel out of the genetic algorithm control module.
+	</td>
+</tr>
+<tr>
+	<td>
+		<b>Accept:</b>
+	</td>
+	<td>
+		Accept the currently defined solute bins and genetic algorithm convergence
+		parameters and exit the control module.
+	</td>
+</tr>
+	<td rowspan=1>
+		<img src=ga_control6.png>
+	</td>
+	<td>
+		<b>Solute Selection Listbox</b>
+	</td>
+	<td>
+		Here you can modify the f/f0 ratios for each solute individually. During 
+		assignment of each bin, the limits for the f/f0 minimum and maximum of the 
+		bin are determined by the setting in the f/f0 min/max counters. If you would
+		like to modify the setting, select the appropriate values in the respective 
+		counters and double-click on the solute in this listbox to update it's f/f0 
+		values with those listed in the counters.
+	</td>
+</tr>
+<tr>
+	<td rowspan=1>
+		<img src=ga_control7.png>
+	</td>
+	<td>
+		<b>Distribution Plot</b>
+	</td>
+	<td>
+		Once a distribution is loaded into the plot window, you can either manually
+		or automatically assign the bins in which the genetic algorithm will search
+		for appropriate parameter values. Using the sedimentation coefficient distribution
+		from the van Holde - Weischet analysis, the C(s) analysis, or the 2-dimensional
+		spectrum analysis as a guide, you can define bins by first clicking on the left 
+		(minimum s-value) and the right (maximum s-value) limit of the bin. You want to
+		bracket a peak to define a solute s-value range. You can exceed either the lower
+		limit or the upper limit of the distribution to allow for s-values that may have
+		not been found in the other analysis methods. Adding too many solute bins will
+		significantly slow down the convergence process since more solutes need to be 
+		calculated, but it will provide a better chance for a better final solution once
+		the optimization is converged.
+	</td>
+</tr>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on November 25, 2005.
+</body>
+</html>

@@ -1,0 +1,172 @@
+#!/bin/sh
+#
+# This script will generate tmake-1.6 Makefiles for UltraScan
+# Please edit the TMAKE env variable to point to you tmake installation
+#
+
+TMAKE=/usr/local/tmake
+
+echo Generating makefile for aix-g++:
+export TMAKEPATH=$TMAKE/lib/aix-g++
+$TMAKE/bin/tmake us.pro -o makefiles/aix-g++
+
+echo Generating makefile for aix-xlc:
+export TMAKEPATH=$TMAKE/lib/aix-xlc
+$TMAKE/bin/tmake us.pro -o makefiles/aix-xlc
+
+echo Generating makefile for bsdi-g++:
+export TMAKEPATH=$TMAKE/lib/bsdi-g++
+$TMAKE/bin/tmake us.pro -o makefiles/bsdi-g++
+
+echo Generating makefile for dgux-g++:
+export TMAKEPATH=$TMAKE/lib/dgux-g++
+$TMAKE/bin/tmake us.pro -o makefiles/dgux-g++
+
+echo Generating makefile for freebsd-g++:
+export TMAKEPATH=$TMAKE/lib/freebsd-g++
+$TMAKE/bin/tmake us.pro -o makefiles/freebsd-g++
+
+echo Generating makefile for hpux-acc:
+export TMAKEPATH=$TMAKE/lib/hpux-acc
+$TMAKE/bin/tmake us.pro -o makefiles/hpux-acc
+
+echo Generating makefile for hpux-cc:
+export TMAKEPATH=$TMAKE/lib/hpux-cc
+$TMAKE/bin/tmake us.pro -o makefiles/hpux-cc
+
+echo Generating makefile for hpux-g++:
+export TMAKEPATH=$TMAKE/lib/hpux-g++
+$TMAKE/bin/tmake us.pro -o makefiles/hpux-g++
+
+echo Generating makefile for hpux-n64:
+export TMAKEPATH=$TMAKE/lib/hpux-n64
+$TMAKE/bin/tmake us.pro -o makefiles/hpux-n64
+
+echo Generating makefile for hpux-o64:
+export TMAKEPATH=$TMAKE/lib/hpux-o64
+$TMAKE/bin/tmake us.pro -o makefiles/hpux-o64
+
+echo Generating makefile for hurd-g++:
+export TMAKEPATH=$TMAKE/lib/hurd-g++
+$TMAKE/bin/tmake us.pro -o makefiles/hurd-g++
+
+echo Generating makefile for irix-64:
+export TMAKEPATH=$TMAKE/lib/irix-64
+$TMAKE/bin/tmake us.pro -o makefiles/irix-64
+
+echo Generating makefile for irix-dcc:
+export TMAKEPATH=$TMAKE/lib/irix-dcc
+$TMAKE/bin/tmake us.pro -o makefiles/irix-dcc
+
+echo Generating makefile for irix-g++:
+export TMAKEPATH=$TMAKE/lib/irix-g++
+$TMAKE/bin/tmake us.pro -o makefiles/irix-g++
+
+echo Generating makefile for irix-n32:
+export TMAKEPATH=$TMAKE/lib/irix-n32
+$TMAKE/bin/tmake us.pro -o makefiles/irix-n32
+
+echo Generating makefile for irix-o32:
+export TMAKEPATH=$TMAKE/lib/irix-o32
+$TMAKE/bin/tmake us.pro -o makefiles/irix-o32
+
+echo Generating makefile for linux-cxx:
+export TMAKEPATH=$TMAKE/lib/linux-cxx
+$TMAKE/bin/tmake us.pro -o makefiles/linux-cxx
+
+echo Generating makefile for linux-g++:
+export TMAKEPATH=$TMAKE/lib/linux-g++
+$TMAKE/bin/tmake us.pro -o makefiles/linux-g++
+
+echo Generating makefile for linux-kcc:
+export TMAKEPATH=$TMAKE/lib/linux-kcc
+$TMAKE/bin/tmake us.pro -o makefiles/linux-kcc
+
+echo Generating makefile for netbsd-g++:
+export TMAKEPATH=$TMAKE/lib/netbsd-g++
+$TMAKE/bin/tmake us.pro -o makefiles/netbsd-g++
+
+echo Generating makefile for openbsd-g++:
+export TMAKEPATH=$TMAKE/lib/openbsd-g++
+$TMAKE/bin/tmake us.pro -o makefiles/openbsd-g++
+
+echo Generating makefile for osf1-cxx:
+export TMAKEPATH=$TMAKE/lib/osf1-cxx
+$TMAKE/bin/tmake us.pro -o makefiles/osf1-cxx
+
+echo Generating makefile for osf1-g++:
+export TMAKEPATH=$TMAKE/lib/osf1-g++
+$TMAKE/bin/tmake us.pro -o makefiles/osf1-g++
+
+echo Generating makefile for qnx-g++:
+export TMAKEPATH=$TMAKE/lib/qnx-g++
+$TMAKE/bin/tmake us.pro -o makefiles/qnx-g++
+
+echo Generating makefile for reliant-cds:
+export TMAKEPATH=$TMAKE/lib/reliant-cds
+$TMAKE/bin/tmake us.pro -o makefiles/reliant-cds
+
+echo Generating makefile for sco-g++:
+export TMAKEPATH=$TMAKE/lib/sco-g++
+$TMAKE/bin/tmake us.pro -o makefiles/sco-g++
+
+echo Generating makefile for solaris-64:
+export TMAKEPATH=$TMAKE/lib/solaris-64
+$TMAKE/bin/tmake us.pro -o makefiles/solaris-64
+
+echo Generating makefile for solaris-cc:
+export TMAKEPATH=$TMAKE/lib/solaris-cc
+$TMAKE/bin/tmake us.pro -o makefiles/solaris-cc
+
+echo Generating makefile for solaris-cc-gcc:
+export TMAKEPATH=$TMAKE/lib/solaris-cc-gcc
+$TMAKE/bin/tmake us.pro -o makefiles/solaris-cc-gcc
+
+echo Generating makefile for solaris-g++:
+export TMAKEPATH=$TMAKE/lib/solaris-g++
+$TMAKE/bin/tmake us.pro -o makefiles/solaris-g++
+
+echo Generating makefile for sunos-g++:
+export TMAKEPATH=$TMAKE/lib/sunos-g++
+$TMAKE/bin/tmake us.pro -o makefiles/sunos-g++
+
+echo Generating makefile for ultrix-g++:
+export TMAKEPATH=$TMAKE/lib/ultrix-g++
+$TMAKE/bin/tmake us.pro -o makefiles/ultrix-g++
+
+echo Generating makefile for unixware-g++:
+export TMAKEPATH=$TMAKE/lib/unixware-g++
+$TMAKE/bin/tmake us.pro -o makefiles/unixware-g++
+
+echo Generating makefile for unixware7-cc:
+export TMAKEPATH=$TMAKE/lib/unixware7-cc
+$TMAKE/bin/tmake us.pro -o makefiles/unixware7-cc
+
+echo Generating makefile for unixware7-g++:
+export TMAKEPATH=$TMAKE/lib/unixware7-g++
+$TMAKE/bin/tmake us.pro -o makefiles/unixware7-g++
+
+echo Generating makefile for win32-borland:
+export TMAKEPATH=$TMAKE/lib/win32-borland
+$TMAKE/bin/tmake us.pro -o makefiles/win32-borland -win32
+
+echo Generating makefile for win32-g++:
+export TMAKEPATH=$TMAKE/lib/win32-g++
+$TMAKE/bin/tmake us.pro -o makefiles/win32-g++ -win32
+
+echo Generating makefile for win32-msvc:
+export TMAKEPATH=$TMAKE/lib/win32-msvc
+$TMAKE/bin/tmake us.pro -o makefiles/win32-msvc -win32
+
+echo Generating makefile for win32-symantec:
+export TMAKEPATH=$TMAKE/lib/win32-symantec
+$TMAKE/bin/tmake us.pro -o makefiles/win32-symantec -win32
+
+echo Generating makefile for win32-visage:
+export TMAKEPATH=$TMAKE/lib/win32-visage
+$TMAKE/bin/tmake us.pro -o makefiles/win32-visage -win32
+
+echo Generating makefile for win32-watcom:
+export TMAKEPATH=$TMAKE/lib/win32-watcom
+$TMAKE/bin/tmake us.pro -o makefiles/win32-watcom -win32
+

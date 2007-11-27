@@ -1,0 +1,50 @@
+<html>
+<title>Installation Instructions - Library Dependencies</title>
+<body bgcolor=white>
+<h2>
+Installation Instructions - Library Dependencies
+</h2>
+<p align=justify>
+<b><i>UltraScan</b></i> requires a number of libraries that are dynamically
+linked to the executables in the UltraScan software package. Normally, these
+libraries are installed by default on the system. However, some libraries
+may not be available in the correct format (certain required options may have
+been excluded during compilation), or may be altogether missing. For the
+convenience of the <b><i>UltraScan</b></i> user we offer precompiled
+versions of the libraries on the download page.
+</ul>
+<p>
+<p align=justify>
+To install the libraries, download the needed library file(s) and extract them
+in a directory that is included in your dynamic link path (/usr/lib, or /usr/local/lib, 
+for example), then run <b>"ldconfig"</b> to reload the dynamically shared library table. 
+Here, </b>"/path"</b> refers to the path to your downloaded library tar.gz file, and it 
+is assumed that you want to extract the files to <b>"/usr/lib/."</b>:
+<pre>
+cd /usr
+tar -xvzf /path/qt-version-distribution.tar.gz
+ldconfig
+</pre>
+<p>
+This will also install all needed dynamic links, and extract to /usr/lib. When extracting
+the qt libraries to a specific directory such as /usr/lib/qt/lib, change directory to 
+/usr/lib/qt instead.
+<p align=justify>
+<b>Note:</b><br>
+When installing qt or qwt libraries please make sure that older versions of the library
+are not laying around that may conflict with the newer version. 
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution.
+<br>
+The latest version of this document can always be found at:
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on April 18, 2005
+</body>
+</html>

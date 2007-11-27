@@ -1,0 +1,7 @@
+#!/bin/sh
+mkdir newcpp
+for x in *.cpp;do
+        sed<$x>newcpp/$x 's/US_Config(1)/US_Config()/'
+        mv newcpp/$x .
+done
+rm -rf newcpp

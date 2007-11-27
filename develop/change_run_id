@@ -1,0 +1,5 @@
+#!/bin/sh
+for x in 00*.W*; do
+	sed < $x > new 's/bovine factor B/Equilibrium Demo Sample 1/g'
+	mv new $x
+done

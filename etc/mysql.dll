@@ -1,0 +1,1004 @@
+--
+-- Table structure for table 'tblInvestigators'
+--
+
+CREATE TABLE tblInvestigators (
+  InvID int(11) NOT NULL auto_increment,
+  FirstName varchar(30) default NULL,
+  LastName varchar(30) default NULL,
+  Address varchar(255) default NULL,
+  City varchar(30) default NULL,
+  State char(2) default NULL,
+  Zip varchar(10) default NULL,
+  Phone varchar(100) default NULL,
+  Email varchar(100) default NULL,
+  Organization varchar(50) default NULL,
+  PRIMARY KEY  (InvID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblBuffer'
+--
+
+CREATE TABLE tblBuffer (
+  BuffID int(11) NOT NULL auto_increment,
+  InvestigatorID int(11),
+  INDEX Invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  BuffFileName varchar(80) NOT NULL default '',
+  BufferDescription varchar(80) NOT NULL default '',
+  BufferData text NOT NULL,
+  RefractiveIndex20 float(6,4) unsigned zerofill default '0.0000',
+  Density20 float(6,4) unsigned zerofill default '0.0000',
+  Viscosity20 float(6,4) unsigned zerofill default '0.0000',
+  PRIMARY KEY  (BuffID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblDNA'
+--
+
+CREATE TABLE tblDNA (
+  DNAID int(11) NOT NULL auto_increment,
+  DNAFileName varchar(50) default NULL,
+  Description varchar(255) default NULL,
+  Sequence text,
+  InvestigatorID int(11) default NULL,
+  `vbar` float(7,5) default '0.00000',
+  `e260` float(12,3) default '0.000',
+  `e280` float(12,3) default '0.000',
+  INDEX Invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  PRIMARY KEY  (DNAID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblPeptide'
+--
+
+CREATE TABLE tblPeptide (
+  PepID int(11) NOT NULL auto_increment,
+  PepFileName varchar(60) default NULL,
+  Description varchar(255) default NULL,
+  Sequence text,
+  `InvestigatorID` int(11) default NULL,
+  `vbar` float(7,5) default '0.00000',
+  `e280` float(12,3) default '0.000',
+  INDEX Invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  PRIMARY KEY  (PepID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblCell'
+--
+
+CREATE TABLE tblCell (
+  CellID int(11) NOT NULL auto_increment,
+  CenterpieceID int(11) default NULL,
+  Position tinyint(1) default NULL,
+  InvestigatorID int(11) default NULL,
+  Description varchar(255) default NULL,
+  Wavelength_1 int(10) default NULL,
+  Wavelength_2 int(10) default NULL,
+  Wavelength_3 int(10) default NULL,
+  Wl_Scans_1 int(10) default NULL,
+  Wl_Scans_2 int(10) default NULL,
+  Wl_Scans_3 int(10) default NULL,
+  DNAID_1 int(11) default NULL,
+  DNA2ID_1 int(11) default NULL,
+  DNA3ID_1 int(11) default NULL,
+  BufferID_1 int(11) default NULL,
+  PeptideID_1 int(11) default NULL,
+  Peptide2ID_1 int(11) default NULL,
+  Peptide3ID_1 int(11) default NULL,
+  DNAID_2 int(11) default NULL,
+  DNA2ID_2 int(11) default NULL,
+  DNA3ID_2 int(11) default NULL,
+  BufferID_2 int(11) default NULL,
+  PeptideID_2 int(11) default NULL,
+  Peptide2ID_2 int(11) default NULL,
+  Peptide3ID_2 int(11) default NULL,
+  DNAID_3 int(11) default NULL,
+  DNA2ID_3 int(11) default NULL,
+  DNA3ID_3 int(11) default NULL,
+  BufferID_3 int(11) default NULL,
+  PeptideID_3 int(11) default NULL,
+  Peptide2ID_3 int(11) default NULL,
+  Peptide3ID_3 int(11) default NULL,
+  DNAID_4 int(11) default NULL,
+  DNA2ID_4 int(11) default NULL,
+  DNA3ID_4 int(11) default NULL,
+  BufferID_4 int(11) default NULL,
+  PeptideID_4 int(11) default NULL,
+  Peptide2ID_4 int(11) default NULL,
+  Peptide3ID_4 int(11) default NULL,
+  Num_Channel tinyint(1) default NULL,
+  ExperimentID int(11) default NULL,
+  INDEX bufid1 (BufferID_1),
+  FOREIGN KEY (BufferID_1) REFERENCES tblBuffer (BuffID) ON DELETE SET NULL,
+  INDEX bufid2 (BufferID_2),
+  FOREIGN KEY (BufferID_2) REFERENCES tblBuffer (BuffID) ON DELETE SET NULL,
+  INDEX bufid3 (BufferID_3),
+  FOREIGN KEY (BufferID_3) REFERENCES tblBuffer (BuffID) ON DELETE SET NULL,
+  INDEX bufid4 (BufferID_4),
+  FOREIGN KEY (BufferID_4) REFERENCES tblBuffer (BuffID) ON DELETE SET NULL,
+  INDEX pepid11 (PeptideID_1),
+  FOREIGN KEY (PeptideID_1) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX pepid21 (Peptide2ID_1),
+  FOREIGN KEY (Peptide2ID_1) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX pepid31 (Peptide3ID_1),
+  FOREIGN KEY (Peptide3ID_1) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX pepid12 (PeptideID_2),
+  FOREIGN KEY (PeptideID_2) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX pepid22 (Peptide2ID_2),
+  FOREIGN KEY (Peptide2ID_2) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX pepid32 (Peptide3ID_2),
+  FOREIGN KEY (Peptide3ID_2) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX pepid13 (PeptideID_3),
+  FOREIGN KEY (PeptideID_3) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX pepid23 (Peptide2ID_3),
+  FOREIGN KEY (Peptide2ID_3) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX pepid33 (Peptide3ID_3),
+  FOREIGN KEY (Peptide3ID_3) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX pepid14 (PeptideID_4),
+  FOREIGN KEY (PeptideID_4) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX pepid24 (Peptide2ID_4),
+  FOREIGN KEY (Peptide2ID_4) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX pepid34 (Peptide3ID_4),
+  FOREIGN KEY (Peptide3ID_4) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX dnaid11 (DNAID_1),
+  FOREIGN KEY (DNAID_1) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX dnaid21 (DNA2ID_1),
+  FOREIGN KEY (DNA2ID_1) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX dnaid31 (DNA3ID_1),
+  FOREIGN KEY (DNA3ID_1) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX dnaid12 (DNAID_2),
+  FOREIGN KEY (DNAID_2) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX dnaid22 (DNA2ID_2),
+  FOREIGN KEY (DNA2ID_2) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX dnaid32 (DNA3ID_2),
+  FOREIGN KEY (DNA3ID_2) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX dnaid13 (DNAID_3),
+  FOREIGN KEY (DNAID_3) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX dnaid23 (DNA2ID_3),
+  FOREIGN KEY (DNA2ID_3) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX dnaid33 (DNA3ID_3),
+  FOREIGN KEY (DNA3ID_3) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX dnaid14 (DNAID_4),
+  FOREIGN KEY (DNAID_4) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX dnaid24 (DNA2ID_4),
+  FOREIGN KEY (DNA2ID_4) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX dnaid34 (DNA3ID_4),
+  FOREIGN KEY (DNA3ID_4) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX Invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  PRIMARY KEY  (CellID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblExpData'
+--
+
+CREATE TABLE tblExpData (
+  ExpdataID int(11) NOT NULL auto_increment,
+  Invid int(11) default NULL,
+  Path varchar(250) default NULL,
+  Date varchar(15) default NULL,
+  Temperature float(6,4) default NULL,
+  Duration float(6,4) default NULL,
+  Edit_type tinyint(1) default NULL,
+  Rotor tinyint(1) default NULL,
+  Runid varchar(100) default NULL,
+  Description varchar(250) default NULL,
+  Cell1 varchar(250) default NULL,
+  Cell2 varchar(250) default NULL,
+  Cell3 varchar(250) default NULL,
+  Cell4 varchar(250) default NULL,
+  Cell5 varchar(250) default NULL,
+  Cell6 varchar(250) default NULL,
+  Cell7 varchar(250) default NULL,
+  Cell8 varchar(250) default NULL,
+  Cell1ID int(11) default NULL,
+  Cell2ID int(11) default NULL,
+  Cell3ID int(11) default NULL,
+  Cell4ID int(11) default NULL,
+  Cell5ID int(11) default NULL,
+  Cell6ID int(11) default NULL,
+  Cell7ID int(11) default NULL,
+  Cell8ID int(11) default NULL,
+  INDEX Invid (Invid),
+  FOREIGN KEY (Invid) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  INDEX cell1 (Cell1ID),
+  FOREIGN KEY (Cell1ID) REFERENCES tblCell (CellID) ON DELETE SET NULL,
+  INDEX cell2 (Cell2ID),
+  FOREIGN KEY (Cell2ID) REFERENCES tblCell (CellID) ON DELETE SET NULL,
+  INDEX cell3 (Cell3ID),
+  FOREIGN KEY (Cell3ID) REFERENCES tblCell (CellID) ON DELETE SET NULL,
+  INDEX cell4 (Cell4ID),
+  FOREIGN KEY (Cell4ID) REFERENCES tblCell (CellID) ON DELETE SET NULL,
+  INDEX cell5 (Cell5ID),
+  FOREIGN KEY (Cell5ID) REFERENCES tblCell (CellID) ON DELETE SET NULL,
+  INDEX cell6 (Cell6ID),
+  FOREIGN KEY (Cell6ID) REFERENCES tblCell (CellID) ON DELETE SET NULL,
+  INDEX cell7 (Cell7ID),
+  FOREIGN KEY (Cell7ID) REFERENCES tblCell (CellID) ON DELETE SET NULL,
+  INDEX cell8 (Cell8ID),
+  FOREIGN KEY (Cell8ID) REFERENCES tblCell (CellID) ON DELETE SET NULL,
+  PRIMARY KEY  (ExpdataID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblExpDataFile'
+--
+
+CREATE TABLE tblExpDataFile (
+  ExpdataID int(11) NOT NULL default '0',
+  File longblob,
+  INDEX expdataid (ExpdataID),
+  FOREIGN KEY (ExpdataID) REFERENCES tblExpData (ExpdataID) ON DELETE CASCADE,
+  PRIMARY KEY  (ExpdataID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblRawExpData'
+--
+
+CREATE TABLE tblRawExpData (
+  ExpdataID int(11) NOT NULL default '0',
+  RawData longblob,
+  PRIMARY KEY  (ExpdataID)
+) TYPE=InnoDB;
+--
+-- Table structure for table 'VelocExpDataTable'
+--
+
+CREATE TABLE VelocExpDataTable (
+  EDtableID int(11) NOT NULL default '0',
+  PepFile blob,
+  BufFile blob,
+  EDPlot longblob,
+  F_EDPlot longblob,
+  PRIMARY KEY  (EDtableID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocExpData'
+--
+
+CREATE TABLE VelocExpData (
+  EDID int(11) NOT NULL default '0',
+  EDtableID_WL1 int(11) default NULL,
+  EDtableID_WL2 int(11) default NULL,
+  EDtableID_WL3 int(11) default NULL,
+  INDEX ed_wl1 (EDtableID_WL1),
+  FOREIGN KEY (EDtableID_WL1) REFERENCES VelocExpDataTable (EDtableID) ON DELETE SET NULL,
+  INDEX ed_wl2 (EDtableID_WL2),
+  FOREIGN KEY (EDtableID_WL2) REFERENCES VelocExpDataTable (EDtableID) ON DELETE SET NULL,
+  INDEX ed_wl3 (EDtableID_WL3),
+  FOREIGN KEY (EDtableID_WL3) REFERENCES VelocExpDataTable (EDtableID) ON DELETE SET NULL,
+  PRIMARY KEY  (EDID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocVHWTable'
+--
+
+CREATE TABLE VelocVHWTable (
+  VHWtableID int(11) NOT NULL default '0',
+  Report blob,
+  ExtraPlot longblob,
+  F_ExtraPlot longblob,
+  DistrPlot longblob,
+  F_DistrPlot longblob,
+  HisPlot longblob,
+  F_HisPlot longblob,
+  EditedPlot longblob,
+  PRIMARY KEY  (VHWtableID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocVHW'
+--
+
+CREATE TABLE VelocVHW (
+  VHWID int(11) NOT NULL default '0',
+  VHWtableID_WL1 int(11) default NULL,
+  VHWtableID_WL2 int(11) default NULL,
+  VHWtableID_WL3 int(11) default NULL,
+  INDEX vhw_wl1 (VHWtableID_WL1),
+  FOREIGN KEY (VHWtableID_WL1) REFERENCES VelocVHWTable (VHWtableID) ON DELETE SET NULL,
+  INDEX vhw_wl2 (VHWtableID_WL2),
+  FOREIGN KEY (VHWtableID_WL2) REFERENCES VelocVHWTable (VHWtableID) ON DELETE SET NULL,
+  INDEX vhw_wl3 (VHWtableID_WL3),
+  FOREIGN KEY (VHWtableID_WL3) REFERENCES VelocVHWTable (VHWtableID) ON DELETE SET NULL,
+  PRIMARY KEY  (VHWID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocCSTable'
+--
+
+CREATE TABLE VelocCSTable (
+  CStableID int(11) NOT NULL default '0',
+  Report blob,
+  DistrPlot longblob,
+  MW_DistrPlot longblob,
+  ResidPlot longblob,
+  ResidPixmap longblob,
+  F_DistrPlot longblob,
+  EditedPlot longblob,
+  PRIMARY KEY  (CStableID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocCS'
+--
+
+CREATE TABLE VelocCS (
+  CSID int(11) NOT NULL default '0',
+  CStableID_WL1 int(11) default NULL,
+  CStableID_WL2 int(11) default NULL,
+  CStableID_WL3 int(11) default NULL,
+  INDEX cs_wl1 (CStableID_WL1),
+  FOREIGN KEY (CStableID_WL1) REFERENCES VelocCSTable (CStableID) ON DELETE SET NULL,
+  INDEX cs_wl2 (CStableID_WL2),
+  FOREIGN KEY (CStableID_WL2) REFERENCES VelocCSTable (CStableID) ON DELETE SET NULL,
+  INDEX cs_wl3 (CStableID_WL3),
+  FOREIGN KEY (CStableID_WL3) REFERENCES VelocCSTable (CStableID) ON DELETE SET NULL,
+  PRIMARY KEY  (CSID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocFiniteElementTable'
+--
+
+CREATE TABLE VelocFiniteElementTable (
+  FEtableID int(11) NOT NULL default '0',
+  Report blob,
+  Residuals longblob,
+  Overlays longblob,
+  F_Residuals longblob,
+  F_Raw longblob,
+  F_Solution longblob,
+  PRIMARY KEY  (FEtableID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocFiniteElement'
+--
+
+CREATE TABLE VelocFiniteElement (
+  FEID int(11) NOT NULL default '0',
+  FEtableID_WL1 int(11) default NULL,
+  FEtableID_WL2 int(11) default NULL,
+  FEtableID_WL3 int(11) default NULL,
+  INDEX fe_wl1 (FEtableID_WL1),
+  FOREIGN KEY (FEtableID_WL1) REFERENCES VelocFiniteElementTable (FEtableID) ON DELETE SET NULL,
+  INDEX fe_wl2 (FEtableID_WL2),
+  FOREIGN KEY (FEtableID_WL2) REFERENCES VelocFiniteElementTable (FEtableID) ON DELETE SET NULL,
+  INDEX fe_wl3 (FEtableID_WL3),
+  FOREIGN KEY (FEtableID_WL3) REFERENCES VelocFiniteElementTable (FEtableID) ON DELETE SET NULL,
+  PRIMARY KEY  (FEID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocSecondMomentTable'
+--
+
+CREATE TABLE VelocSecondMomentTable (
+  SMtableID int(11) NOT NULL default '0',
+  Report blob,
+  SMPlot longblob,
+  F_SMPlot longblob,
+  EditedPlot longblob,
+  PRIMARY KEY  (SMtableID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocSecondMoment'
+--
+
+CREATE TABLE VelocSecondMoment (
+  SMID int(11) NOT NULL default '0',
+  SMtableID_WL1 int(11) default NULL,
+  SMtableID_WL2 int(11) default NULL,
+  SMtableID_WL3 int(11) default NULL,
+  INDEX sm_wl1 (SMtableID_WL1),
+  FOREIGN KEY (SMtableID_WL1) REFERENCES VelocSecondMomentTable (SMtableID) ON DELETE SET NULL,
+  INDEX sm_wl2 (SMtableID_WL2),
+  FOREIGN KEY (SMtableID_WL2) REFERENCES VelocSecondMomentTable (SMtableID) ON DELETE SET NULL,
+  INDEX sm_wl3 (SMtableID_WL3),
+  FOREIGN KEY (SMtableID_WL3) REFERENCES VelocSecondMomentTable (SMtableID) ON DELETE SET NULL,
+  PRIMARY KEY  (SMID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocTimeDerivativeTable'
+--
+
+CREATE TABLE VelocTimeDerivativeTable (
+  TDtableID int(11) NOT NULL default '0',
+  Report blob,
+  TDPlot longblob,
+  F_ScanPlot longblob,
+  F_SvaluePlot longblob,
+  AvgPlot longblob,
+  F_AvgPlot longblob,
+  EditedPlot longblob,
+  PRIMARY KEY  (TDtableID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocTimeDerivative'
+--
+
+CREATE TABLE VelocTimeDerivative (
+  TDID int(11) NOT NULL default '0',
+  TDtableID_WL1 int(11) default NULL,
+  TDtableID_WL2 int(11) default NULL,
+  TDtableID_WL3 int(11) default NULL,
+  INDEX td_wl1 (TDtableID_WL1),
+  FOREIGN KEY (TDtableID_WL1) REFERENCES VelocTimeDerivativeTable (TDtableID) ON DELETE SET NULL,
+  INDEX td_wl2 (TDtableID_WL2),
+  FOREIGN KEY (TDtableID_WL2) REFERENCES VelocTimeDerivativeTable (TDtableID) ON DELETE SET NULL,
+  INDEX td_wl3 (TDtableID_WL3),
+  FOREIGN KEY (TDtableID_WL3) REFERENCES VelocTimeDerivativeTable (TDtableID) ON DELETE SET NULL,
+  PRIMARY KEY  (TDID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocRadialDerivativeTable'
+--
+
+CREATE TABLE VelocRadialDerivativeTable (
+  RDtableID int(11) NOT NULL default '0',
+  Report blob,
+  RDPlot longblob,
+  F_ScanPlot longblob,
+  F_SvaluePlot longblob,
+  AvgPlot longblob,
+  F_AvgPlot longblob,
+  EditedPlot longblob,
+  PRIMARY KEY  (RDtableID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocRadialDerivative'
+--
+
+CREATE TABLE VelocRadialDerivative (
+  RDID int(11) NOT NULL default '0',
+  RDtableID_WL1 int(11) default NULL,
+  RDtableID_WL2 int(11) default NULL,
+  RDtableID_WL3 int(11) default NULL,
+  INDEX rd_wl1 (RDtableID_WL1),
+  FOREIGN KEY (RDtableID_WL1) REFERENCES VelocRadialDerivativeTable (RDtableID) ON DELETE SET NULL,
+  INDEX rd_wl2 (RDtableID_WL2),
+  FOREIGN KEY (RDtableID_WL2) REFERENCES VelocRadialDerivativeTable (RDtableID) ON DELETE SET NULL,
+  INDEX rd_wl3 (RDtableID_WL3),
+  FOREIGN KEY (RDtableID_WL3) REFERENCES VelocRadialDerivativeTable (RDtableID) ON DELETE SET NULL,
+  PRIMARY KEY  (RDID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocCellResult'
+--
+
+CREATE TABLE VelocCellResult (
+  CellRstID int(11) NOT NULL default '0',
+  VelocRstID int(11) default NULL,
+  EDID int(11) default NULL,
+  VHWID int(11) default NULL,
+  CSID int(11) default NULL,
+  FEID int(11) default NULL,
+  SMID int(11) default NULL,
+  TDID int(11) default NULL,
+  RDID int(11) default NULL,
+  Description varchar(250) default NULL,
+  INDEX ed (EDID),
+  FOREIGN KEY (EDID) REFERENCES VelocExpData (EDID) ON DELETE SET NULL,
+  INDEX vhw (VHWID),
+  FOREIGN KEY (VHWID) REFERENCES VelocVHW (VHWID) ON DELETE SET NULL,
+  INDEX cs (CSID),
+  FOREIGN KEY (CSID) REFERENCES VelocCS (CSID) ON DELETE SET NULL,
+  INDEX fe (FEID),
+  FOREIGN KEY (FEID) REFERENCES VelocFiniteElement (FEID) ON DELETE SET NULL, 
+  INDEX sm (SMID),
+  FOREIGN KEY (SMID) REFERENCES VelocSecondMoment (SMID) ON DELETE SET NULL,
+  INDEX td (TDID),
+  FOREIGN KEY (TDID) REFERENCES VelocTimeDerivative (TDID) ON DELETE SET NULL,
+  INDEX rd (RDID),
+  FOREIGN KEY (RDID) REFERENCES VelocRadialDerivative (RDID) ON DELETE SET NULL,
+  PRIMARY KEY  (CellRstID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocResult'
+--
+
+CREATE TABLE VelocResult (
+  VelocRstID int(11) NOT NULL default '0',
+  InvID int(11) default NULL,
+  Date varchar(15) default NULL,
+  Description varchar(250) default NULL,
+  Cell1ID int(11) default NULL,
+  Cell2ID int(11) default NULL,
+  Cell3ID int(11) default NULL,
+  Cell4ID int(11) default NULL,
+  Cell5ID int(11) default NULL,
+  Cell6ID int(11) default NULL,
+  Cell7ID int(11) default NULL,
+  Cell8ID int(11) default NULL,
+  RunRequestID int(11) default NULL,
+  INDEX cell1_id (Cell1ID),
+  FOREIGN KEY (Cell1ID) REFERENCES VelocCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell2_id (Cell2ID),
+  FOREIGN KEY (Cell2ID) REFERENCES VelocCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell3_id (Cell3ID),
+  FOREIGN KEY (Cell3ID) REFERENCES VelocCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell4_id (Cell4ID),
+  FOREIGN KEY (Cell4ID) REFERENCES VelocCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell5_id (Cell5ID),
+  FOREIGN KEY (Cell5ID) REFERENCES VelocCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell6_id (Cell6ID),
+  FOREIGN KEY (Cell6ID) REFERENCES VelocCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell7_id (Cell7ID),
+  FOREIGN KEY (Cell7ID) REFERENCES VelocCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell8_id (Cell8ID),
+  FOREIGN KEY (Cell8ID) REFERENCES VelocCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX Invid (InvID),
+  FOREIGN KEY (InvID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  PRIMARY KEY  (VelocRstID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'VelocResultFile'
+--
+
+CREATE TABLE VelocResultFile (
+  VelocRstID int(11) NOT NULL default '0',
+  RunInfo1 blob,
+  RunInfo2 blob,
+  RunInfo3 blob,
+  VHW1 blob,
+  VHW2 blob,
+  VHW3 blob,
+  MW1 blob,
+  MW2 blob,
+  MW3 blob,
+  DataFile longblob,
+  INDEX velocid (VelocRstID),
+  FOREIGN KEY (VelocRstID) REFERENCES VelocResult (VelocRstID) ON DELETE CASCADE,
+  PRIMARY KEY  (VelocRstID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'EquilExpDataTable'
+--
+
+CREATE TABLE EquilExpDataTable (
+  EEDtableID int(11) NOT NULL default '0',
+  PepFile blob,
+  BufFile blob,
+  EDPlot longblob,
+  F_EDPlot longblob,
+  PRIMARY KEY  (EEDtableID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'EquilExpData'
+--
+
+CREATE TABLE EquilExpData (
+  EEDID int(11) NOT NULL default '0',
+  EEDtableID_WL1 int(11) default NULL,
+  EEDtableID_WL2 int(11) default NULL,
+  EEDtableID_WL3 int(11) default NULL,
+  INDEX eed_wl1 (EEDtableID_WL1),
+  FOREIGN KEY (EEDtableID_WL1) REFERENCES EquilExpDataTable (EEDtableID) ON DELETE SET NULL,
+  INDEX eed_wl2 (EEDtableID_WL2),
+  FOREIGN KEY (EEDtableID_WL2) REFERENCES EquilExpDataTable (EEDtableID) ON DELETE SET NULL,
+  INDEX eed_wl3 (EEDtableID_WL3),
+  FOREIGN KEY (EEDtableID_WL3) REFERENCES EquilExpDataTable (EEDtableID) ON DELETE SET NULL,
+  PRIMARY KEY  (EEDID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'EquilCellResult'
+--
+
+CREATE TABLE EquilCellResult (
+  CellRstID int(11) NOT NULL default '0',
+  EquilRstID int(11) default NULL,
+  EED1ID int(11) default NULL,
+  EED2ID int(11) default NULL,
+  EED3ID int(11) default NULL,
+  EED4ID int(11) default NULL,
+  Description varchar(250) default NULL,
+  INDEX eed1 (EED1ID),
+  FOREIGN KEY (EED1ID) REFERENCES EquilExpData (EEDID) ON DELETE SET NULL,
+  INDEX eed2 (EED2ID),
+  FOREIGN KEY (EED2ID) REFERENCES EquilExpData (EEDID) ON DELETE SET NULL,
+  INDEX eed3 (EED3ID),
+  FOREIGN KEY (EED3ID) REFERENCES EquilExpData (EEDID) ON DELETE SET NULL,
+  INDEX eed4 (EED4ID),
+  FOREIGN KEY (EED4ID) REFERENCES EquilExpData (EEDID) ON DELETE SET NULL,
+  PRIMARY KEY  (CellRstID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'EquilResult'
+--
+
+CREATE TABLE EquilResult (
+  EquilRstID int(11) NOT NULL default '0',
+  InvID int(11) default NULL,
+  Date varchar(15) default NULL,
+  Description varchar(250) default NULL,
+  Cell1ID int(11) default NULL,
+  Cell2ID int(11) default NULL,
+  Cell3ID int(11) default NULL,
+  Cell4ID int(11) default NULL,
+  Cell5ID int(11) default NULL,
+  Cell6ID int(11) default NULL,
+  Cell7ID int(11) default NULL,
+  Cell8ID int(11) default NULL,
+  RunRequestID int(11) default NULL,
+  INDEX cell1id (Cell1ID),
+  FOREIGN KEY (Cell1ID) REFERENCES EquilCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell2id (Cell2ID),
+  FOREIGN KEY (Cell2ID) REFERENCES EquilCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell3id (Cell3ID),
+  FOREIGN KEY (Cell3ID) REFERENCES EquilCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell4id (Cell4ID),
+  FOREIGN KEY (Cell4ID) REFERENCES EquilCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell5id (Cell5ID),
+  FOREIGN KEY (Cell5ID) REFERENCES EquilCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell6id (Cell6ID),
+  FOREIGN KEY (Cell6ID) REFERENCES EquilCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell7id (Cell7ID),
+  FOREIGN KEY (Cell7ID) REFERENCES EquilCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX cell8id (Cell8ID),
+  FOREIGN KEY (Cell8ID) REFERENCES EquilCellResult (CellRstID) ON DELETE SET NULL,
+  INDEX InvId (InvID),
+  FOREIGN KEY (InvID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  PRIMARY KEY  (EquilRstID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'EquilResultFile'
+--
+
+CREATE TABLE EquilResultFile (
+  EquilRstID int(11) NOT NULL default '0',
+  RunInfo1 longblob,
+  RunInfo2 longblob,
+  RunInfo3 longblob,
+  RunInfo4 longblob,
+  RunInfo5 longblob,
+  RunInfo6 longblob,
+  DataFile longblob,
+  INDEX equilrstid (EquilRstID),
+  FOREIGN KEY (EquilRstID) REFERENCES EquilResult (EquilRstID) ON DELETE CASCADE,
+  PRIMARY KEY  (EquilRstID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblVelocResultData'
+--
+
+CREATE TABLE tblVelocResultData (
+  tableID int(11) NOT NULL default '0',
+  Report_Tar longblob,
+  Result_Tar longblob,
+  Rawdata_Tar longblob,
+  PRIMARY KEY  (tableID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblVelocResult'
+--
+
+CREATE TABLE tblVelocResult (
+  VelocRstID int(11) NOT NULL default '0',
+  Date varchar(15) default NULL,
+  RunID varchar(250) default NULL,
+  InvestigatorID int(11) default NULL,
+  RunRequestID int(11) default NULL,
+  DataID int(11) default NULL,
+  INDEX invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  INDEX dataid (DataID),
+  FOREIGN KEY (DataID) REFERENCES tblVelocResultData (tableID) ON DELETE CASCADE,
+  PRIMARY KEY  (VelocRstID)
+) TYPE=InnoDB;
+--
+-- Table structure for table 'tblEquilResultData'
+--
+
+CREATE TABLE tblEquilResultData (
+  tableID int(11) NOT NULL default '0',
+  Report_Tar longblob,
+  Result_Tar longblob,
+  Rawdata_Tar longblob,
+  PRIMARY KEY  (tableID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblEquilResult'
+--
+
+CREATE TABLE tblEquilResult (
+  EquilRstID int(11) NOT NULL default '0',
+  Date varchar(15) default NULL,
+  RunID varchar(250) default NULL,
+  InvestigatorID int(11) default NULL,
+  RunRequestID int(11) default NULL,
+  DataID int(11) default NULL,
+  INDEX invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  INDEX dataid (DataID),
+  FOREIGN KEY (DataID) REFERENCES tblEquilResultData (tableID) ON DELETE CASCADE,
+  PRIMARY KEY  (EquilRstID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'EquilProjectData'
+--
+
+CREATE TABLE EquilProjectData (
+  tableID int(11) NOT NULL default '0',
+  HeadFile text,
+  Report_Tar longblob,
+  Result_Tar longblob,
+  PRIMARY KEY  (tableID)
+) TYPE=InnoDB;
+--
+-- Table structure for table 'EquilProjectResult'
+--
+
+CREATE TABLE EquilProjectResult (
+  EquilProjectID int(11) NOT NULL default '0',
+  ProjectName varchar(250) default NULL,
+  InvestigatorID int(11) default NULL,
+  RunRequestID int(11) default NULL,
+  DataID int(11) default NULL,
+  INDEX invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  INDEX dataid (DataID),
+  FOREIGN KEY (DataID) REFERENCES EquilProjectData (tableID) ON DELETE CASCADE,
+  PRIMARY KEY  (EquilProjectID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'MonteCarloResult'
+--
+
+CREATE TABLE MonteCarloResult (
+  montecarloID int(11) NOT NULL default '0',
+  InvestigatorID int(11) default NULL,
+  RunRequestID int(11) default NULL,
+  parameter_number smallint(6) default NULL,
+  projectName varchar(255) default NULL,
+  INDEX invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  PRIMARY KEY  (montecarloID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'MonteCarloData'
+--
+
+CREATE TABLE MonteCarloData (
+  montecarloID int(11) NOT NULL default '0',
+  report blob,
+  parameterFile blob,
+  data longblob,
+  INDEX montecarloid (montecarloID),
+  FOREIGN KEY (montecarloID) REFERENCES MonteCarloResult (montecarloID) ON DELETE CASCADE,
+  PRIMARY KEY  (montecarloID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblImage'
+--
+
+CREATE TABLE tblImage (
+  GelID int(11) NOT NULL auto_increment,
+  GelPicture longblob NOT NULL,
+  Date datetime default NULL,
+  Description varchar(80) NOT NULL default 'No Description was entered for this image',
+  InvestigatorID int(11) NOT NULL default '0',
+  INDEX Invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  PRIMARY KEY  (GelID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblSample'
+--
+
+CREATE TABLE tblSample (
+  SampleID int(11) NOT NULL auto_increment,
+  Description varchar(80) NOT NULL,
+  PeptideID int(11) default NULL,
+  DNAID int(11) default NULL,
+  BufferID int(11) default NULL,
+  StorageTemperature tinyint(4) default NULL,
+  Vbar float(7,5) unsigned zerofill default '0.00000',
+  RunTemperature tinyint(4) default NULL,
+  Notes text,
+  ImageID int(11) default NULL,
+  INDEX pep_id (PeptideID),
+  FOREIGN KEY (PeptideID) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX buf_id (BufferID),
+  FOREIGN KEY (DNAID) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  INDEX dna_id (DNAID),
+  FOREIGN KEY (BufferID) REFERENCES tblBuffer (BuffID) ON DELETE SET NULL,
+  INDEX img_id (ImageID),
+  FOREIGN KEY (ImageID) REFERENCES tblImage (GelID) ON DELETE SET NULL,
+  InvestigatorID int(11),
+  INDEX Invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  PRIMARY KEY  (SampleID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblLog'
+--
+
+CREATE TABLE tblLog (
+  LogID int(11) NOT NULL auto_increment,
+  InvestigatorID int(11) default NULL,
+  Date datetime default NULL,
+  LogEntry text,
+  INDEX Invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  PRIMARY KEY  (LogID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblRequest'
+--
+
+CREATE TABLE tblRequest (
+  RequestID int(11) NOT NULL auto_increment,
+  InvestigatorID int(11) default NULL,
+  Goals text,
+  Molecules text,
+  Purity varchar(10) default NULL,
+  Expense text,
+  BufferComponents text,
+  SaltInformation text,
+  AUCQuestions text,
+  Notes text,
+  ProjectDescription text,
+  Status varchar(32) default 'submitted',
+  INDEX Invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  PRIMARY KEY  (RequestID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblRunRequest'
+--
+
+CREATE TABLE tblRunRequest (
+  RunRequestID int(11) NOT NULL auto_increment,
+  RunDescription varchar(80) default NULL,
+  SampleID1 int(11) default NULL,
+  SampleID2 int(11) default NULL,
+  SampleID3 int(11) default NULL,
+  SampleID4 int(11) default NULL,
+  SampleID5 int(11) default NULL,
+  SampleID6 int(11) default NULL,
+  SampleID7 int(11) default NULL,
+  SampleID8 int(11) default NULL,
+  RunType varchar(50) default NULL,
+  InvestigatorID int(11) default NULL,
+  RequestID int(11) default NULL,
+  INDEX sampleid1 (SampleID1),
+  FOREIGN KEY (SampleID1) REFERENCES tblSample (SampleID),
+  INDEX sampleid2 (SampleID2),
+  FOREIGN KEY (SampleID2) REFERENCES tblSample (SampleID),
+  INDEX sampleid3 (SampleID3),
+  FOREIGN KEY (SampleID3) REFERENCES tblSample (SampleID),
+  INDEX sampleid4 (SampleID4),
+  FOREIGN KEY (SampleID4) REFERENCES tblSample (SampleID),
+  INDEX sampleid5 (SampleID5),
+  FOREIGN KEY (SampleID5) REFERENCES tblSample (SampleID),
+  INDEX sampleid6 (SampleID6),
+  FOREIGN KEY (SampleID6) REFERENCES tblSample (SampleID),
+  INDEX sampleid7 (SampleID7),
+  FOREIGN KEY (SampleID7) REFERENCES tblSample (SampleID),
+  INDEX sampleid8 (SampleID8),
+  FOREIGN KEY (SampleID8) REFERENCES tblSample (SampleID),
+  INDEX Invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  INDEX reqid (RequestID),
+  FOREIGN KEY (RequestID) REFERENCES tblRequest (RequestID),
+  PRIMARY KEY  (RunRequestID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblAuth'
+--
+
+CREATE TABLE tblAuth (
+  Password varchar(80) NOT NULL default '',
+  InvestigatorID int(11) NOT NULL default '0',
+  Classification varchar(25) default NULL,
+  Status varchar(20) default 'Zero Balance',
+  Balance float(8,2) unsigned zerofill default '00000.00',
+  activated tinyint(4) NOT NULL default '0',
+  Signup datetime NOT NULL default '0000-00-00 00:00:00',
+  LastLogin datetime NOT NULL default '0000-00-00 00:00:00',
+  Userlevel tinyint(4) NOT NULL default '0',
+  INDEX Invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  PRIMARY KEY  (InvestigatorID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblResult'
+--
+
+CREATE TABLE tblResult (
+  ResultID int(11) NOT NULL default '0',
+  InvestigatorID int(11) default NULL,
+  RunRequestID int(11) default NULL,
+  VelocDataID int(11) default NULL,
+  EquilDataID int(11) default NULL,
+  EquilProjectID int(11) default NULL,
+  MontecarloID int(11) default NULL,
+  INDEX Invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  INDEX runrequestid (RunRequestID),
+  FOREIGN KEY (RunRequestID) REFERENCES tblRunRequest (RunRequestID) ON DELETE SET NULL,
+  INDEX velocid (VelocDataID),
+  FOREIGN KEY (VelocDataID) REFERENCES VelocResult (VelocRstID) ON DELETE SET NULL,
+  INDEX equilid (EquilDataID),
+  FOREIGN KEY (EquilDataID) REFERENCES EquilResult (EquilRstID) ON DELETE SET NULL,
+  INDEX projectid (EquilProjectID),
+  FOREIGN KEY (EquilProjectID) REFERENCES EquilProjectResult (ProjectID) ON DELETE SET NULL,
+  INDEX montecarloid (MontecarloID),
+  FOREIGN KEY (MontecarloID) REFERENCES MonteCarloResult (montecarloID) ON DELETE SET NULL,
+  PRIMARY KEY  (ResultID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblLaser'
+--
+
+CREATE TABLE tblLaser (
+  LaserID int(11) NOT NULL auto_increment,
+  SampleName varchar(255) default NULL,
+  Operator varchar(100) default NULL,
+  Date varchar(15) default NULL,
+  InvestigatorID int(11) default NULL,
+  BufferID int(11) default NULL,
+  PeptideID int(11) default NULL,
+  DNAID int(11) default NULL,
+  INDEX Invid (InvestigatorID),
+  FOREIGN KEY (InvestigatorID) REFERENCES tblInvestigators (InvID) ON DELETE CASCADE,
+  INDEX bufid (BufferID),
+  FOREIGN KEY (BufferID) REFERENCES tblBuffer (BuffID) ON DELETE SET NULL,
+  INDEX pepid (PeptideID),
+  FOREIGN KEY (PeptideID) REFERENCES tblPeptide (PepID) ON DELETE SET NULL,
+  INDEX dnaid (DNAID),
+  FOREIGN KEY (DNAID) REFERENCES tblDNA (DNAID) ON DELETE SET NULL,
+  PRIMARY KEY  (LaserID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table 'tblLaserData'
+--
+
+CREATE TABLE tblLaserData (
+  LaserID int(11) NOT NULL default '0',
+  DataFile longblob,
+  INDEX laserid (LaserID),
+  FOREIGN KEY (LaserID) REFERENCES tblLaser (LaserID) ON DELETE CASCADE,
+  PRIMARY KEY  (LaserID)
+) TYPE=InnoDB;

@@ -1,0 +1,6 @@
+rcom64 'killall -15 us_fe_nnls_t_mpi; killall -15 us_fe_nnls_t_mpi_test ; killall -9 us_fe_nnls_t_mpi; killall -9 us_fe_nnls_t_mpi_test'
+killall -15 us_fe_nnls_t_mpi
+killall -15 us_fe_nnls_t_mpi_test
+killall -9 us_fe_nnls_t_mpi
+killall -9 us_fe_nnls_t_mpi_test
+su - apache -c "bash /opt/mpich/gnu/sbin/cleanipcs; rcom64 'bash /opt/mpich/gnu/sbin/cleanipcs'"

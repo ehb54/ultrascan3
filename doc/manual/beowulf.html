@@ -1,0 +1,120 @@
+<head>
+   <title>UltraScan Beowulf Control Panel</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<h2>UltraScan Beowulf Control Panel:</h2>
+<p>
+<center>
+<img src=beowulf1.png>
+</center>
+<p>
+Performing Monte Carlo analysis on nonlinear least squares fitting sessions
+is a CPU-intensive proposition, and such as a task is well suited for 
+parallel execution. A Linux Beowulf Supercomputer is a cluster of Linux 
+workstations, generally connected through a switched 100baseT ethernet 
+or gigabit network, which allows you to perform calculations in parallel,
+by distributing the calculation load over many processors.
+<p>
+UltraScan is designed to take advantage of Beowulf-type supercomputers
+to assist in the speedup of Monte Carlo analysis. You can start the
+Beowulf module from the <a href=monte_carlo1.png>Monte Carlo control window</a>,
+by clicking on "Beowulf Control".
+<p>
+<b>Explanation of Buttons and Fields:</b>
+<p>
+<ul>
+<li><b>Add Host:</b><br>
+Use this button to add a new host, which should be listed in the field to the
+right of the button, to the list of computing nodes used for the
+calculation of the Monte Carlo analysis. Not all available nodes have to be
+used, this way you can control the load on the Beowulf system by only 
+specifying a subset of the available computing nodes. For multiprocessor
+nodes, you can specify multiple copies of the same hostname, which will
+cause UltraScan to issue the job multiple times on the host. You can 
+double-click on any entry in the listbox to copy the name into the edit field.
+<p>
+<li><b>Delete Host:</b><br>
+Delete the host in the edit field from the list of valid nodes.
+<p>
+<li><b>Save Setup:</b><br>
+Save the currently defined list of Beowulf nodes in the file 
+$ULTRASCAN/etc/hosts.beowulf
+<p>
+<li><b>Start Run:</b><br>
+Start a Beowulf Monte Carlo Run using the currently defined Beowulf hosts.
+<p>
+<li><b>Merge Output Files</b><br>
+This function will merge all individual output files into a single file that
+can be read by the Monte Carlo analysis program. Each process operating on
+a remote or local node will receive an individual seed (an integer value)
+that assures that each process will randomize differently, so that individual
+processes do not replicate the same calculations. UltraScan will save the
+output of each individual process with the file name of the Monte Carlo
+output, plus the integer value of the seed, so they can be differentiated.
+The "Merge Output Files" function will merge all of these files into a single
+file.
+<p>
+<li><b>Stop all MC Processes</b><br>
+This function will stop all currently running Monte Carlo processes on
+local or remote nodes to free up resources, if they become needed before
+the application terminates by itself based on the iteration setting in
+the Monte Carlo module.
+
+<p>
+<li><b>Help:</b><br>
+Show this Help File.
+<p>
+<li><b>Close:</b><br>
+Close the Beowulf Control Panel and exit.
+<p>
+<li><b>Use ssh:</b><br>
+If checked, UltraScan will use the ssh remote shell program to start the 
+job. Check the ssh manpage for detailed instructions on how to set up ssh/sshd.
+This is the preferred method if executing over an untrusted network, since all
+communication will be encrypted. ssh/ssd need to be configured to allow
+password-less connections for the user executing this program.
+<p>
+<li><b>Use rsh:</b><br>
+If checked, UltraScan will use rsh/rlogin to start the job. This method doesn't
+require the installation of ssh/sshd, but should only be used on closed
+networks or networks properly secured by a firewall. Check your systems
+manual for configuration options of rsh. rsh needs to be configured to allow
+password-less connections for the user executing this program.
+<p>
+<li><b>Use X-Display:</b><br>
+UltraScan will export the X-display to the host and display specified
+on this line as an environment variable for the program. Please note that
+the X-transport will not be encrypted, even if ssh is selected, but this is
+not a problem since no X-output will be generated anyway.
+<p>
+</ul>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software
+Documentation distribution. <br><a href=copyright.html>Copyright &copy; notice</a>
+<p>
+The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

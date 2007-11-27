@@ -1,0 +1,117 @@
+<head>
+   <title>Global Nonlinear Least-Squares Equilibrium Analysis: 
+   Model Selection
+   </title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<H2>Global Nonlinear Least-Squares Equilibrium Analysis:<p>
+</H2>
+<table border=1 cellpadding=3 bgcolor="CFCFCF">
+<tr>
+   <td>
+      <b>Part 2: Model Selection</b>
+   </td>
+   <td>
+      Previous: <a href=equil1.html>Setting up a Fitting Project</a> 
+   </td>
+   <td>
+      Next: <a href=equil3.html>Scan Diagnostics</a>
+   </td>
+</table> 
+<p>
+After importing experimental data into the Global Fitting
+Control panel, you need to select a model to be fit. Models
+in <b><i>UltraScan</i></b> are indexed, the index for each
+model, which is used in naming associated datafiles, is listed <a
+href=model.html>here</a>. Clicking on the <b>"Select Model"</b> button
+you can select from a number of predefined models as well as define your
+own <a href=global_equil9.png>models</a>. After selecting a model, an <a
+href=global_equil10.png>information page</a> will be shown, which will
+indicate the equation used for this model, and identify all parameters
+used. Parameters with a (*) can be floated so that an optimum value will
+be determined by the nonlinear least squares fitting algorithm. Simply
+click on the "OK" button to continue. Three of the model selections
+require additional user input:
+<p>
+<ul>
+<li><b>Fixed Molecular Weight Distribution:</b> This model considers a linear
+combination of predefined exponential terms, each term defining a separate
+molecular weight. By default, the data will be fit with a generalized 
+linear least squares algorithm, which simply adjusts the amplitude
+of exponential term. Good fits are usually accomplished with 3 - 5 terms,
+spread out through the range of component molecular weights present in 
+the sample. Using the dialog shown below:
+<p>
+<center>
+<img src=global_equil11.png>
+</center>
+<p>
+you can define the number of exponential terms (Number of MW Slots),
+the lower limit of the molecular weight range, the upper limit of the 
+molecular weight range, and enter a partial specific volume (vbar) value
+for each term. You can define a common vbar value for all terms by clicking
+on the "Use common vbar value?" checkbox. If you want to define separate
+vbar values, you can turn this checkbox off, and define the individual
+values in the <a href=global_equil5.png>model control window</a>, more information
+is available in <a href=equil5.html>part 5, Parameter Controls</a>
+<p>
+<li><b>User-Defined Monomer - Nmer Equilibrium:</b>
+In this model you will need to specify the stoichiometry of the first
+association stage. After selecting this model, please enter the value 
+in the dialog shown below:
+<p>
+<center>
+<img src=global_equil12.png>
+</center>
+<p>
+<li><b>User-Defined Monomer - Nmer - Mmer Equilibrium:</b>
+In this model you will need to specify the stoichiometry of the first
+and second association stage. After selecting this model, please enter 
+the value in the dialog shown below:
+<p>
+<center>
+<img src=global_equil13.png>
+</center>
+</ul>
+<p>
+<table border=1 cellpadding=3 bgcolor="CFCFCF">
+<tr>
+   <td>
+      Previous: <a href=equil1.html>Setting up a Fitting Project</a> 
+   </td>
+   <td>
+      Model Selection
+   </td>
+   <td>
+      Next: <a href=equil3.html>Scan Diagnostics</a>
+   </td>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

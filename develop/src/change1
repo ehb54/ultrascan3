@@ -1,0 +1,6 @@
+#!/bin/sh
+
+for x in *.cpp; do
+	sed < $x > new 's/100.0 \* VISC_20W/\(100.0 \* VISC_20W\)/g'
+	mv new $x
+done;

@@ -1,0 +1,8 @@
+#!/bin/sh
+
+mkdir new
+for x in *.h; do
+	sed < $x > new/$x 's/configuration/USglobal/g'
+	mv new/$x .
+done;
+rm -r new
