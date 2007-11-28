@@ -1113,7 +1113,8 @@ US_fe_nnls_t::init_run(const QString & data_file,
 			ds >> temp_experiment.vbar;
 			ds >> temp_experiment.vbar20;
 			ds >> temp_experiment.avg_temperature;
-
+#if defined(DEBUG)
+			
 			printf("experiment time %g avg_temp %.12g vbar %.12g vbar20 %.12g visc %.12g density %.12g\n",
 				   temp_experiment.scan[temp_experiment.scan.size()-1].time,
 				   temp_experiment.avg_temperature,
@@ -1122,6 +1123,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				   temp_experiment.viscosity,
 				   temp_experiment.density);
 
+#endif
 			experiment.push_back(temp_experiment);
 		}
 	}
@@ -3389,6 +3391,8 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 							pow((solutes[i].s * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
 				double D_tb = D_20w/experiment[e].D20w_correction;
 
+#if defined(DEBUG)
+
 				printf("experiment %d s_correction: %.8g D_correction: %.8g\n",
 					   e, experiment[e].s20w_correction, experiment[e].D20w_correction);
 				printf("s_20w: %.8g s_tb: %.8g k: %.8g\n",
@@ -3396,6 +3400,7 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 				printf("D_20w: %.8g D_tb: %.8g\n", D_20w, D_tb);
 				printf("AVOGADRO: %.8g VISC_20W: %.8g DENS_20W: %8g vbar20: %.8g R: %.8g\n\n", AVOGADRO, VISC_20W, DENS_20W, experiment[e].vbar20, R);
 				fflush(stdout);
+#endif
 				mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,
 									(double) experiment[e].rpm,
 									experiment[e].scan[experiment[e].scan.size() - 1].time,
