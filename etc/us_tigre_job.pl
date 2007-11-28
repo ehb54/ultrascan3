@@ -296,7 +296,7 @@ for($i = 0; $i < @systems; $i++) {
 
 @queues = (
 #	   '<queue>normal</queue>' , # lonestar
-	   '' , # lonestar
+	   '<queue>high</queue>' , # lonestar
 	   '<queue>normal</queue>' , # cosmos
 	   '<queue>tigre</queue>' , #antaeus
 	   '' , # gridgate
@@ -408,8 +408,8 @@ if($fit_ti_noise || $fit_ri_noise) {
     $max_time[0] *= 2;
 }
 
-$max_time[0] = 240 if $max_time[0] <= 240;
-$max_time[0] = 1440 if $max_time[0] > 1440;
+$max_time[0] = 5 if $max_time[0] <= 5;
+$max_time[0] = 2880 if $max_time[0] > 2880;
 $max_time[4] = $max_time[0];
 $max_time[2] = $max_time[0];
 $max_time[1] = $max_time[0];
@@ -611,8 +611,8 @@ gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stdout .
 
 if($default_system eq 'meta') {
     $cmd = 
-"cp us_job${id}.stderr /tmp/us_tigre_job${id}.stderr
-cp us_job${id}.stdout /tmp/us_tigre_job${id}.stdout
+"cp us_job${id}.stderr /lustre/tmp/us_tigre_job${id}.stderr
+cp us_job${id}.stdout /lustre/tmp/us_tigre_job${id}.stdout
 ";
 } else {
     $cmd = "gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stderr .

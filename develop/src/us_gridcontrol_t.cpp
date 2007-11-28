@@ -824,7 +824,7 @@ void US_GridControl_T::write_experiment()
             QString cellwave;
             QDateTime startDateTime = QDateTime::currentDateTime();
             cellwave = cellwave.sprintf(".%d%d", experiment[0].cell + 1, experiment[0].wavelength + 1);
-            QFile f("/tmp/" + experiment[0].id + "_" + analysis_type + "_" + startDateTime.toString("yyMMddhhmmss") + "_grid.model" + cellwave);
+            QFile f("/lustre/tmp/" + experiment[0].id + "_" + analysis_type + "_" + startDateTime.toString("yyMMddhhmmss") + "_grid.model" + cellwave);
             unsigned int f_open = 0;
             QTextStream *ts = (QTextStream *)NULL;
             unsigned int total_solutes = 0;
@@ -977,10 +977,10 @@ void US_GridControl_T::write_experiment()
 
         f_name.sprintf(USglobal->config_list.result_dir + "/solutes%s-%d.dat", timestamp_string.ascii(), i);
         write_solutes(f_name); // write the solutions vector to a file
-        QString mpifilebase = "> /tmp/gc_mpi_" + timestamp_string + ".%1";
+        QString mpifilebase = "> /lustre/tmp/gc_mpi_" + timestamp_string + ".%1";
         if(gridopt == "TIGRE")
         {
-            mpifilebase = "> /tmp/gc_tigre_" + timestamp_string + ".%1";
+            mpifilebase = "> /lustre/tmp/gc_tigre_" + timestamp_string + ".%1";
         }
         QString npstring;
         QString machines;

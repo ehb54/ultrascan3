@@ -25,8 +25,8 @@ sub startjob_gc {
     print STDERR "$0: start gc process $_[0]\n" if $debug;
     if(!($child = fork)) {
 	print STDERR "$0: child started gc process job\n" if $debug;
-#	`export DISPLAY=bcf:99; us_gridcontrol $_[0] > /tmp/us_gridcontrol.stdout 2> /tmp/us_gridcontrol.stderr`;
-	`us_gridcontrol_t $_[0] > /tmp/us_gridcontrol.stdout 2> /tmp/us_gridcontrol.stderr`;
+#	`export DISPLAY=bcf:99; us_gridcontrol $_[0] > /lustre/tmp/us_gridcontrol.stdout 2> /lustre/tmp/us_gridcontrol.stderr`;
+	`us_gridcontrol_t $_[0] > /lustre/tmp/us_gridcontrol.stdout 2> /lustre/tmp/us_gridcontrol.stderr`;
 	exit;
     }
     print STDERR "$0: gc child pid is $child\n" if $debug;
@@ -36,8 +36,8 @@ sub startjob_gc_tigre {
     print STDERR "$0: start gc tigre process $_[0]\n" if $debug;
     if(!($child = fork)) {
 	print STDERR "$0: child started gc process job\n" if $debug;
-#	`export DISPLAY=bcf:99; us_gridcontrol $_[0] TIGRE > /tmp/us_gridcontrol.stdout 2> /tmp/us_gridcontrol.stderr`;
-	`us_gridcontrol_t $_[0] TIGRE $_[1] > /tmp/us_gridcontrol.stdout 2> /tmp/us_gridcontrol.stderr`;
+#	`export DISPLAY=bcf:99; us_gridcontrol $_[0] TIGRE > /lustre/tmp/us_gridcontrol.stdout 2> /lustre/tmp/us_gridcontrol.stderr`;
+	`us_gridcontrol_t $_[0] TIGRE $_[1] > /lustre/tmp/us_gridcontrol.stdout 2> /lustre/tmp/us_gridcontrol.stderr`;
 	exit;
     }
     print STDERR "$0: gc tigre child pid is $child\n" if $debug;
