@@ -3,8 +3,8 @@
 #include "../include/us_ga.h"
 #include "../include/us_ga_round.h"
 // #define US_DEBUG_MPI
-#define SLIST
-#define SLIST2
+// #define SLIST
+// #define SLIST2
 #include <mpi.h>
 #include <stdio.h>
 #define MIN_EXPERIMENT_SIZE 100
@@ -228,8 +228,8 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
 								vector <Simulation_values> sve, QString tag, double meniscus, unsigned int iterations)
 {
 	// this one is for the GA with possible global results
-	printf("0: writeresults 1 it %u mc %d\n", iterations, monte_carlo_iterations);
-	fflush(stdout);
+  //	printf("0: writeresults 1 it %u mc %d\n", iterations, monte_carlo_iterations);
+  //	fflush(stdout);
 	unsigned int e;
 	unsigned int ti_noise_offset = 0;
 	unsigned int ri_noise_offset = 0;
@@ -441,8 +441,8 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
 void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment,
 								Simulation_values sv, QString tag, double meniscus, unsigned int iterations)
 {
-	printf("0: writeresults 2 it %u mc %d\n", iterations, monte_carlo_iterations);
-	fflush(stdout);
+  //	printf("0: writeresults 2 it %u mc %d\n", iterations, monte_carlo_iterations);
+  //	fflush(stdout);
 	unsigned int e;
 	unsigned int ti_noise_offset = 0;
 	unsigned int ri_noise_offset = 0;
@@ -610,12 +610,12 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment, vector<So
 								 vector <Simulation_values> sve, QString tag, double meniscus, unsigned int iterations)
 {
 	// this one is for the GA with possible global results
-	printf("0: BufferResults\n");
-	fflush(stdout);
+  //	printf("0: BufferResults\n");
+  //    fflush(stdout);
 	if (monte_carlo_iterations <= 1)
 	{
-		printf("0: no monte carlo\n");
-		fflush(stdout);
+	  //		printf("0: no monte carlo\n");
+	  //		fflush(stdout);
 		WriteResults(experiment, solutes, sve, tag, meniscus, iterations);
 		return;
 	}
@@ -627,8 +627,8 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment, vector<So
 	if ((expdata_iter = find(expdata_list.begin(), expdata_list.end(), expdata)) == expdata_list.end())
 	{
 		// a new one
-		printf("0: BufferResults: new tag %s\n", tag.ascii());
-		fflush(stdout);
+	  //		printf("0: BufferResults: new tag %s\n", tag.ascii());
+	  //		fflush(stdout);
 		for (i = 0; i < solutes.size(); i++)
 		{
 			solutes[i].c /= monte_carlo_iterations * 1e0;
@@ -648,13 +648,13 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment, vector<So
 		{
 			fprintf(stderr, "0: error: unexpected premature end in BufferResults!\n");
 		}
-		printf("0: BufferResults: new tag %s solutes.size %u\n", tag.ascii(), expdata.solutes.size());
-		fflush(stdout);
+		//		printf("0: BufferResults: new tag %s solutes.size %u\n", tag.ascii(), expdata.solutes.size());
+		// fflush(stdout);
 	}
 	else
 	{
-		printf("0: BufferResults: accum to existing tag %s\n", tag.ascii());
-		fflush(stdout);
+	  //		printf("0: BufferResults: accum to existing tag %s\n", tag.ascii());
+	  //		fflush(stdout);
 		for (i = 0; i < solutes.size(); i++)
 		{
 			solutes[i].c /= monte_carlo_iterations * 1e0;
@@ -681,12 +681,12 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment, vector<So
 void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment,
 								 Simulation_values sv, QString tag, double meniscus, unsigned int iterations)
 {
-	printf("0: BufferResults\n");
-	fflush(stdout);
+  //	printf("0: BufferResults\n");
+  //	fflush(stdout);
 	if (monte_carlo_iterations <= 1)
 	{
-		printf("0: no monte carlo\n");
-		fflush(stdout);
+	  //		printf("0: no monte carlo\n");
+	  //		fflush(stdout);
 		WriteResults(experiment, sv, tag, meniscus, iterations);
 		return;
 	}
@@ -698,8 +698,8 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment,
 	{
 		// a new one
 		unsigned int i;
-		printf("0: BufferResults: new tag %s\n", tag.ascii());
-		fflush(stdout);
+		//		printf("0: BufferResults: new tag %s\n", tag.ascii());
+		//		fflush(stdout);
 		for (i = 0; i < sv.solutes.size(); i++)
 		{
 			sv.solutes[i].c /= monte_carlo_iterations * 1e0;
@@ -711,13 +711,13 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment,
 		{
 			fprintf(stderr, "0: error: unexpected premature end in BufferResults!\n");
 		}
-		printf("0: BufferResults: new tag %s solutes.size %u\n", tag.ascii(), expdata.sv.solutes.size());
-		fflush(stdout);
+		//		printf("0: BufferResults: new tag %s solutes.size %u\n", tag.ascii(), expdata.sv.solutes.size());
+		//		fflush(stdout);
 	}
 	else
 	{
-		printf("0: BufferResults: accum to existing tag %s\n", tag.ascii());
-		fflush(stdout);
+	  //		printf("0: BufferResults: accum to existing tag %s\n", tag.ascii());
+	  //		fflush(stdout);
 		unsigned int i;
 		for (i = 0; i < sv.solutes.size(); i++)
 		{
@@ -725,8 +725,8 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment,
 			(*expdata_iter).sv.solutes.push_back(sv.solutes[i]);
 		}
 		// is this our last?
-		printf("0: BufferResults: existing tag %s solutes.size %u\n", tag.ascii(), (*expdata_iter).sv.solutes.size());
-		fflush(stdout);
+		//		printf("0: BufferResults: existing tag %s solutes.size %u\n", tag.ascii(), (*expdata_iter).sv.solutes.size());
+		//		fflush(stdout);
 		if (this_monte_carlo == monte_carlo_iterations - 1)
 		{
 			WriteResults(experiment, (*expdata_iter).sv, tag, meniscus, iterations);
@@ -1268,8 +1268,8 @@ int US_fe_nnls_t::run(int status)
 #endif
 
 				}
-				printf("%d: broadcast monte carlo data\n", myrank);
-				fflush(stdout);
+				//				printf("%d: broadcast monte carlo data\n", myrank);
+				//				fflush(stdout);
 				{
 					unsigned int e, k;
 					for (e = 0; e < experiment.size(); e++)
@@ -1281,8 +1281,8 @@ int US_fe_nnls_t::run(int status)
 						}
 					}
 				}
-				printf("%d: broadcast monte carlo data complete\n", myrank);
-				fflush(stdout);
+				//				printf("%d: broadcast monte carlo data complete\n", myrank);
+				//				fflush(stdout);
 			}
 
 			if (this_monte_carlo)
@@ -1303,8 +1303,8 @@ int US_fe_nnls_t::run(int status)
 
 			if (myrank)
 			{
-				printf("%d: ga_setup called\n", myrank);
-				fflush(stdout);
+			  //				printf("%d: ga_setup called\n", myrank);
+			  //				fflush(stdout);
 				ga_setup(GA_Params, myrank, this);
 			}
 			// the master will keep a list of all demes and their current generations,
@@ -1354,12 +1354,12 @@ int US_fe_nnls_t::run(int status)
 				int return_stat = 0;
 				while(procsleft)
 				{
-					printf("0: master waiting for comm processes left %d\n", procsleft);
+				  //					printf("0: master waiting for comm processes left %d\n", procsleft);
 					fflush(stdout);
 					for (i = 1; i < npes; i++)
 					{
-						printf("0: master has %d at generation %d of %d\n", i, generation[i], GA_Params.generations);
-						fflush(stdout);
+					  printf("0: master has %d at generation %d of %d\n", i, generation[i], GA_Params.generations);
+					  fflush(stdout);
 					}
 
 					// master receives generation completion message from a worker
@@ -1384,7 +1384,7 @@ int US_fe_nnls_t::run(int status)
 					printf("0: MPI returned %d from %d\n", return_stat, mpi_status.MPI_SOURCE);
 					fflush(stdout);
 					printf("0: received %d from %d generation %d length %d\n", mpi_status.MPI_TAG, mpi_status.MPI_SOURCE,
-						   mpi_ga_msg_in.gen, mpi_ga_msg_in.size);
+					       mpi_ga_msg_in.gen, mpi_ga_msg_in.size);
 					fflush(stdout);
 #endif
 
@@ -1410,12 +1410,12 @@ int US_fe_nnls_t::run(int status)
 						}
 						if (max_gen > 10 && fitness_same_count > 5 * (npes - 1) )
 						{
-							printf("0: fitness hasn't improved in the last %d deme results. early termination\n", fitness_same_count);
-							fflush(stdout);
+						  // printf("0: fitness hasn't improved in the last %d deme results. early termination\n", fitness_same_count);
+						  // fflush(stdout);
 							early_termination = 1;
 						}
-						printf("0: early term test max_gen %d same fitness count %d best %.16g last %.16g\n", max_gen, fitness_same_count, best_fitness, mpi_ga_msg_in.fitness);
-						fflush(stdout);
+						// printf("0: early term test max_gen %d same fitness count %d best %.16g last %.16g\n", max_gen, fitness_same_count, best_fitness, mpi_ga_msg_in.fitness);
+						// fflush(stdout);
 					}
 
 					if (mpi_ga_msg_in.gen == -1)
@@ -1521,25 +1521,25 @@ int US_fe_nnls_t::run(int status)
 						printf("0: MPI returned\n");
 						fflush(stdout);
 #endif
-
-						printf("0: migration data received from %d size %d\n", mpi_status.MPI_SOURCE, mpi_ga_msg_in.size);
-						fflush(stdout);
+						//
+						// printf("0: migration data received from %d size %d\n", mpi_status.MPI_SOURCE, mpi_ga_msg_in.size);
+						// fflush(stdout);
 					}
 					else
 					{
-						printf("0: skipping migration in from %d, no data\n", mpi_status.MPI_SOURCE);
-						fflush(stdout);
+					  // printf("0: skipping migration in from %d, no data\n", mpi_status.MPI_SOURCE);
+					  // fflush(stdout);
 					}
 
 					// let worker know about last achieved generation
 
 					mpi_ga_msg_out.gen = last_achieved_gen;
-					printf("0: last acheived gen %d\n", mpi_ga_msg_out.gen);
+					// printf("0: last acheived gen %d\n", mpi_ga_msg_out.gen);
 					if (generation[mpi_status.MPI_SOURCE] > 1.3 * GA_Params.generations)
 					{
-						printf("0: early termination requested for %d - 30%% over max generations\n",
-							   mpi_status.MPI_SOURCE);
-						fflush(stdout);
+					  // printf("0: early termination requested for %d - 30%% over max generations\n",
+					  //	   mpi_status.MPI_SOURCE);
+					  // fflush(stdout);
 						mpi_ga_msg_out.gen = 1;
 					}
 					if (early_termination)
@@ -1551,7 +1551,7 @@ int US_fe_nnls_t::run(int status)
 						last_achieved_gen = mpi_ga_msg_out.gen = 1;
 					}
 					mpi_ga_msg_out.size = migration_size[infrom[mpi_status.MPI_SOURCE][0]];
-					printf("0: sending migrate 1 last_achieved %d=%d size %d\n", last_achieved_gen, mpi_ga_msg_out.gen, mpi_ga_msg_out.size);
+					// printf("0: sending migrate 1 last_achieved %d=%d size %d\n", last_achieved_gen, mpi_ga_msg_out.gen, mpi_ga_msg_out.size);
 #if defined(US_DEBUG_MPI)
 
 					printf("0: MPI_Send immigrants msg 1 %d MPI_CHAR to %d\n", sizeof(mpi_ga_msg_out), mpi_status.MPI_SOURCE);
@@ -1614,7 +1614,7 @@ int US_fe_nnls_t::run(int status)
 						//	printf("0: done sleeping 5\n"); fflush(stdout);
 #endif
 
-						printf("0: sending migrate 2 last_achieved %d=%d size %d\n", last_achieved_gen, mpi_ga_msg_out.gen, sizeof(mpi_ga_msg_out));
+						// printf("0: sending migrate 2 last_achieved %d=%d size %d\n", last_achieved_gen, mpi_ga_msg_out.gen, sizeof(mpi_ga_msg_out));
 						return_stat = MPI_Send(&mpi_ga_msg_out,
 											   sizeof(mpi_ga_msg_out),
 											   MPI_CHAR,
@@ -1652,8 +1652,8 @@ int US_fe_nnls_t::run(int status)
 					}
 				}
 				// write out results
-				printf("0: find best deme\n");
-				fflush(stdout);
+				// printf("0: find best deme\n");
+				// fflush(stdout);
 
 				int best_deme = 0;
 				double best_deme_fitness = 1e99;
@@ -1669,9 +1669,9 @@ int US_fe_nnls_t::run(int status)
 
 				for (unsigned int i = 0; i < demes_results[best_deme].size(); i++)
 				{
-					printf("0: deme %d sol %d %.4g %.4g\n",
-						   best_deme, i, demes_results[best_deme][i].s, demes_results[best_deme][i].k);
-					fflush(stdout);
+				  // printf("0: deme %d sol %d %.4g %.4g\n",
+				  //	   best_deme, i, demes_results[best_deme][i].s, demes_results[best_deme][i].k);
+				  // fflush(stdout);
 				}
 				QFile f("email_text_" + startDateTime.toString("yyMMddhhmmss"));
 				if (this_monte_carlo == 0)
@@ -1768,8 +1768,8 @@ int US_fe_nnls_t::run(int status)
 					use_experiment.push_back(experiment[e]);
 					for (unsigned int l=0; l < final_use_solutes.size(); l++)
 					{
-						printf("0: final_use_solute 1 e%u %u s %g ff0 %g\n", e, l, final_use_solutes[l].s, final_use_solutes[l].k);
-						fflush(stdout);
+					  // printf("0: final_use_solute 1 e%u %u s %g ff0 %g\n", e, l, final_use_solutes[l].s, final_use_solutes[l].k);
+					  //	fflush(stdout);
 					}
 					sve[e] = calc_residuals(use_experiment, final_use_solutes, 0e0, 1);
 				} // for e
@@ -1837,12 +1837,12 @@ int US_fe_nnls_t::run(int status)
 						use_experiment.push_back(experiment[e]);
 						for (unsigned int l=0; l < final_use_solutes.size(); l++)
 						{
-							printf("0: final_use_solute 2 e%u %u s %g ff0 %g\n", e, l, final_use_solutes[l].s, final_use_solutes[l].k);
-							fflush(stdout);
+						  // printf("0: final_use_solute 2 e%u %u s %g ff0 %g\n", e, l, final_use_solutes[l].s, final_use_solutes[l].k);
+						  // fflush(stdout);
 						}
 						sve[e] = calc_residuals(use_experiment, final_use_solutes, 0e0, 1);
-						printf("0: sve exp %u sol %u var %g\n", e, sve[e].solutes.size(), sve[e].variance);
-						fflush(stdout);
+						// printf("0: sve exp %u sol %u var %g\n", e, sve[e].solutes.size(), sve[e].variance);
+						// fflush(stdout);
 						if (monte_carlo_iterations > 1 && !this_monte_carlo)
 						{
 							global_last_residuals.push_back(last_residuals[0]);
