@@ -4,7 +4,7 @@
 TEMPLATE			= lib
 TARGET			= us
 TRANSLATIONS	= lib.ts
-VERSION			= 9.5.0
+VERSION			= 9.5.1
 MOC_DIR			= src/moc
 OBJECTS_DIR		= src/obj
 CONFIG         += qt thread warn release dll

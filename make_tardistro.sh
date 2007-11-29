@@ -9,15 +9,15 @@
 #
 ###########################################################
 
-VERSION=9.4
+VERSION=9.5.1
 TMP=/tmp
 
 # change to QT version:
-QT=3.3.3
+QT=3.3.8
 
 # change to lib64/bin64 for opteron environment
-LIB=lib64
-BIN=bin64
+LIB=lib
+BIN=bin
 
 echo "Using " $QTDIR " for the QT Library..."
 echo "Using " $QWTDIR " for the QWT Library..."
@@ -25,8 +25,8 @@ echo "Using " $QWT3DDIR " for the QWT3D Plotting Library..."
 
 # uncomment one of the following:
 
-#HARDWARE=ix86
-HARDWARE=opteron
+HARDWARE=ix86
+#HARDWARE=opteron
 #HARDWARE=sgi
 #HARDWARE=sparc
 #HARDWARE=mac
@@ -82,7 +82,7 @@ cp -Rpf * $TMP/ultrascan-$VERSION/.
 
 echo "removing CVS stuff..."
 cd $TMP/ultrascan-$VERSION
-find . -name CVS -o -name .cvsignore | xargs rm -Rf
+find . -name .svn | xargs rm -Rf
 
 echo "removing unneeded document files..."
 rm us.spec
