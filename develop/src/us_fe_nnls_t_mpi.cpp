@@ -2056,8 +2056,8 @@ int US_fe_nnls_t::run(int status)
 				{
 					max_experiment_size = thisjob.msg.this_length;
 				}
-				printf("sol %d len %d max_len %d\n", j, solutions[j].component.size(), max_experiment_size);
-				fflush(stdout);
+				//				printf("sol %d len %d max_len %d\n", j, solutions[j].component.size(), max_experiment_size);
+				//				fflush(stdout);
 				thisjob.msg.command = 1;
 				thisjob.msg.depth = 0;
 				thisjob.solutes = solutions[j].component;
@@ -2129,20 +2129,20 @@ int US_fe_nnls_t::run(int status)
 
 			while(procsleft)
 			{
-				printf("master waiting for comm\n");
-				fflush(stdout);
+			  //				printf("master waiting for comm\n");
+			  // fflush(stdout);
 				MPI_Recv(&x, 1, MPI_INT, MPI_ANY_SOURCE, MPI_ANY_TAG, MPI_COMM_WORLD, &mpi_status);
-				printf("master received %d from %d value %d\n", mpi_status.MPI_TAG, mpi_status.MPI_SOURCE, x);
-				fflush(stdout);
+				//				printf("master received %d from %d value %d\n", mpi_status.MPI_TAG, mpi_status.MPI_SOURCE, x);
+				//				fflush(stdout);
 				switch(mpi_status.MPI_TAG)
 				{
 				case 1 : // ready for work
-					printf("jobs outstanding %d queuesize %d\n", jobs_outstanding, jobqueue.size());
-					fflush(stdout);
+				  //					printf("jobs outstanding %d queuesize %d\n", jobs_outstanding, jobqueue.size());
+				  //					fflush(stdout);
 					if (jobqueue.size())
 					{
 						thisjob = jobqueue.front();
-						printf("master wants to send job solu %d depth %d to %d\n",
+						printf("master to send job solu %d depth %d to %d\n",
 							   thisjob.msg.this_solutions,
 							   thisjob.msg.depth,
 							   mpi_status.MPI_SOURCE);
@@ -2163,12 +2163,12 @@ int US_fe_nnls_t::run(int status)
 							printf("p\t\ts\tk\tc\t send solutes\n");
 							for (i = 0; i < sv.solutes.size(); i++)
 							{
-								printf("%d\t%d\t%g\t%g\n",
-									   myrank,
-									   i,
-									   sv.solutes[i].s,
-									   sv.solutes[i].k
-									  );
+							    printf("%d\t%d\t%g\t%g\n",
+								   myrank,
+								   i,
+								   sv.solutes[i].s,
+								   sv.solutes[i].k
+								  );
 							}
 						}
 						fflush(stdout);
@@ -2189,8 +2189,8 @@ int US_fe_nnls_t::run(int status)
 							mpi_work_msgs[mpi_status.MPI_SOURCE].depth = 0;
 							mpi_work_msgs[mpi_status.MPI_SOURCE].meniscus_offset = 0;
 							sleeping[mpi_status.MPI_SOURCE] = 1;
-							printf("master wants to send (sleep) to %d\n", mpi_status.MPI_SOURCE);
-							fflush(stdout);
+							// printf("master wants to send (sleep) to %d\n", mpi_status.MPI_SOURCE);
+							// fflush(stdout);
 							MPI_Send(&mpi_work_msgs[mpi_status.MPI_SOURCE], sizeof(MPI_Work_Msg), MPI_CHAR, mpi_status.MPI_SOURCE, 0, MPI_COMM_WORLD);
 						}
 						else
@@ -2200,8 +2200,8 @@ int US_fe_nnls_t::run(int status)
 							{
 								if (sleeping[i])
 								{ // send wakeup
-									printf("master wants to send (wakeup) to %d\n", i);
-									fflush(stdout);
+								  // printf("master wants to send (wakeup) to %d\n", i);
+								  // fflush(stdout);
 									mpi_work_msgs[i].this_solutions = 0;
 									mpi_work_msgs[i].this_length = 0;
 									mpi_work_msgs[i].command = 4; // wakeup sent
@@ -2217,8 +2217,8 @@ int US_fe_nnls_t::run(int status)
 							mpi_work_msgs[mpi_status.MPI_SOURCE].command = 3; // terminate
 							mpi_work_msgs[mpi_status.MPI_SOURCE].depth = 0;
 							mpi_work_msgs[mpi_status.MPI_SOURCE].meniscus_offset = 0;
-							printf("master wants to send (terminate) to %d\n", mpi_status.MPI_SOURCE);
-							fflush(stdout);
+							// printf("master wants to send (terminate) to %d\n", mpi_status.MPI_SOURCE);
+							// fflush(stdout);
 							MPI_Send(&mpi_work_msgs[mpi_status.MPI_SOURCE], sizeof(MPI_Work_Msg), MPI_CHAR, mpi_status.MPI_SOURCE, 0, MPI_COMM_WORLD);
 						}
 					}
@@ -2233,7 +2233,8 @@ int US_fe_nnls_t::run(int status)
 						//	unsigned int use_length = mpi_work_msgs[mpi_status.MPI_SOURCE].this_length;
 						unsigned int use_depth = mpi_work_msgs[mpi_status.MPI_SOURCE].depth;
 						MPI_Recv(temp_solutes, x * sizeof(Solute), MPI_CHAR, mpi_status.MPI_SOURCE, 0, MPI_COMM_WORLD, &mpi_status2);
-						printf("master received length %d from %d depth %d\n", x, mpi_status.MPI_SOURCE, use_depth);
+						// printf("master received length %d from %d depth %d\n", x, mpi_status.MPI_SOURCE, use_depth);
+						// fflush(stdout);
 #if defined(JOB_TIMING)
 
 						if (use_depth == 0)
@@ -2242,7 +2243,6 @@ int US_fe_nnls_t::run(int status)
 							depth_0_count++;
 						}
 #endif
-						fflush(stdout);
 						Simulation_values sv;
 						for (i = 0; i < x; i++)
 						{
@@ -2307,8 +2307,8 @@ int US_fe_nnls_t::run(int status)
 						}
 						if (union_results)
 						{
-							printf("solutes union_results\n");
-							fflush(stdout);
+						  // printf("solutes union_results\n");
+						  // fflush(stdout);
 							while(unions.size() <= use_depth)
 							{ // vector<Simulation_values> sizes
 								Simulation_values bsv;
@@ -2373,8 +2373,8 @@ int US_fe_nnls_t::run(int status)
 								if (jq->msg.depth <= use_depth)
 								{
 									any_left = 1;
-									printf("found in queue\n");
-									fflush(stdout);
+									// printf("found in queue\n");
+									// fflush(stdout);
 								}
 							}
 							for (i = 0; !any_left && i < (unsigned int)npes; i++)
@@ -2383,18 +2383,18 @@ int US_fe_nnls_t::run(int status)
 										mpi_work_msgs[i].depth <= use_depth)
 								{
 									any_left = 1;
-									printf("found in messages_left\n");
-									fflush(stdout);
+									// printf("found in messages_left\n");
+									// fflush(stdout);
 								}
 							}
 							if (!any_left)
 							{
 								// this union as a job
-								printf("!any_left\n");
-								fflush(stdout);
-								printf("lsi %d use_depth %d\n", last_split_intermediate,
-									   use_depth);
-								fflush(stdout);
+								// printf("!any_left\n");
+								// fflush(stdout);
+								// printf("lsi %d use_depth %d\n", last_split_intermediate,
+								//	   use_depth);
+							        // fflush(stdout);
 								if (last_split_intermediate + 1 >= use_depth)
 								{
 									Jobqueue thisjob;
@@ -2414,12 +2414,12 @@ int US_fe_nnls_t::run(int status)
 								else
 								{
 									// this job is done
-									printf("this job done\n");
-									fflush(stdout);
+									// printf("this job done\n");
+									// fflush(stdout);
 									if (iterative)
 									{
-										printf("iterative union\n");
-										fflush(stdout);
+									  // printf("iterative union\n");
+									  //	fflush(stdout);
 										{
 											Simulation_values sv = calc_residuals(experiment, unions[unions.size()-1].solutes, 0e0, 0);
 											sv = unions[unions.size() - 1];
@@ -2566,8 +2566,8 @@ int US_fe_nnls_t::run(int status)
 										}
 										else
 										{
-											printf("iterative union no change\n");
-											fflush(stdout);
+										  // printf("iterative union no change\n");
+										  // fflush(stdout);
 											if (fit_meniscus)
 											{
 												printf("experiment meniscus_offset %.12g variance %.12g solutes %d\n",
@@ -3140,16 +3140,16 @@ int US_fe_nnls_t::run(int status)
 			while(cont)
 			{
 				x = 0;
-				printf("worker %d polling master\n", myrank);
-				fflush(stdout);
+				// printf("worker %d polling master\n", myrank);
+				// fflush(stdout);
 				MPI_Send(&x, 1, MPI_INT, 0, 1, MPI_COMM_WORLD); // let master know we are ready
 				MPI_Recv(&mpi_work_msg, sizeof(MPI_Work_Msg), MPI_CHAR, 0, 0, MPI_COMM_WORLD, &mpi_status); // get masters' response
-				printf("node %d received value %d %d %d %.12g, from master\n", myrank,
-					   mpi_work_msg.this_solutions,
-					   mpi_work_msg.this_length,
-					   mpi_work_msg.command,
-					   mpi_work_msg.meniscus_offset);
-				fflush(stdout);
+				//printf("node %d received value %d %d %d %.12g, from master\n", myrank,
+				//	   mpi_work_msg.this_solutions,
+				//	   mpi_work_msg.this_length,
+				//	   mpi_work_msg.command,
+				//	   mpi_work_msg.meniscus_offset);
+				// fflush(stdout);
 				switch(mpi_work_msg.command)
 				{
 				case 1 :
@@ -3185,7 +3185,7 @@ int US_fe_nnls_t::run(int status)
 						fflush(stdout);
 #endif
 
-						printf("p %d using meniscus %.12g\n", myrank, mpi_work_msg.meniscus_offset);
+						// printf("p %d using meniscus %.12g\n", myrank, mpi_work_msg.meniscus_offset);
 						sv = calc_residuals(experiment, use_solutes, mpi_work_msg.meniscus_offset, 0);
 						x = sv.solutes.size();
 						MPI_Send(&x, 1, MPI_INT, 0, 3, MPI_COMM_WORLD); // let master know we are ready
