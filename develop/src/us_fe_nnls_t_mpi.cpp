@@ -1113,7 +1113,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
 			ds >> temp_experiment.vbar;
 			ds >> temp_experiment.vbar20;
 			ds >> temp_experiment.avg_temperature;
-#if defined(DEBUG)
+#if defined(DEBUG_HYDRO)
 			
 			printf("experiment time %g avg_temp %.12g vbar %.12g vbar20 %.12g visc %.12g density %.12g\n",
 				   temp_experiment.scan[temp_experiment.scan.size()-1].time,
@@ -3391,7 +3391,7 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 							pow((solutes[i].s * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
 				double D_tb = D_20w/experiment[e].D20w_correction;
 
-#if defined(DEBUG)
+#if defined(DEBUG_HYDRO)
 
 				printf("experiment %d s_correction: %.8g D_correction: %.8g\n",
 					   e, experiment[e].s20w_correction, experiment[e].D20w_correction);
