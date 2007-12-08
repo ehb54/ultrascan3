@@ -304,10 +304,10 @@ struct peptideDetails US_Vbar::export_vbar(int id)
 			}
 			if (vbar_info.vbar > 0.0)
 			{
-				cerr << "Vbar20 assigned from vbar entry, not sequence: " << vbar_info.vbar << endl; 
+				//cerr << "Vbar20 assigned from vbar entry, not sequence: " << vbar_info.vbar << endl; 
 				pep.vbar20 = vbar_info.vbar;
 				pep.vbar = adjust_vbar20(pep.vbar20, temperature);
-				cerr << "Vbar corrected for " << temperature << " Celsius: " << pep.vbar << endl;
+				//cerr << "Vbar corrected for " << temperature << " Celsius: " << pep.vbar << endl;
 			}
 			else
 			{
@@ -353,11 +353,13 @@ struct peptideDetails US_Vbar::export_DNA_vbar(int id)
 			vbar_info.InvID = query.value(2).toInt();
 			vbar_info.vbar = (float) query.value(3).toDouble();
 			vbar_info.e280 = (float) query.value(4).toDouble();
+			//cout << "in us_vbar: vbar:" << vbar_info.vbar << endl;
 			if (!vbar_info.vbar > 0.0)
 			{
 				Vbar.vbar20 = 0.55; // default for DNA
 			}
-			Vbar.vbar = adjust_vbar20(Vbar.vbar20, temperature);
+			Vbar.vbar = vbar_info.vbar; // we don't know how much DNA vbar varies with temperature, so we use the same for 20 and Temperature
+			Vbar.vbar20 = vbar_info.vbar; 
 			Vbar.e280 = vbar_info.e280;
 			emit valueChanged(Vbar.vbar, Vbar.vbar20);
 			emit e280Changed(Vbar.e280);
