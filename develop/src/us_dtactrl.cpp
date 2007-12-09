@@ -1294,7 +1294,11 @@ int Data_Control_W::load_data(const QString &fileName)
 		details();
 		qApp->processEvents();
 	}
-	data_io->load_hydrodynamics(&hydro_inf);
+	int return_flag = data_io->load_hydrodynamics(&hydro_inf);
+	if ( return_flag < 0)
+	{
+		exit(return_flag);
+	};
 	for(i=0; i<8; i++)
 	{
 		for(j=0; j<4; j++)

@@ -1449,6 +1449,10 @@ float US_FeMatch_W::calc_residuals()
 	if(threads < 1) {
 	  threads = 1;
 	}
+	if (threads > components)
+	{
+		threads = components;
+	}
 	struct mfem_data fem_data[threads];
 	US_MovingFEM *mfem[threads];
 	for(i = 0; i < threads; i++) {
