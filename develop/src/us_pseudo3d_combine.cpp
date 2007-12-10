@@ -27,6 +27,22 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine(QWidget *p, const char *name) : QFrame(
 	y_resolution = 300;
 	setup_GUI();
 	move(global_Xpos, global_Ypos);
+	current_gradient.resize(510);
+	unsigned int k, g, b;
+	for (k=0; k<510; k++) // assign default gradient from black to bright cyan over 510 color points
+	{
+		if (k > 255)
+		{
+			g = (unsigned int) (k - 255);
+			b = 255;
+		}
+		else
+		{
+			g = 0;
+			b = k;
+		}
+		current_gradient[k].setRgb(0, g, b);
+	}
 }
 
 US_Pseudo3D_Combine::~US_Pseudo3D_Combine()
@@ -391,21 +407,11 @@ void US_Pseudo3D_Combine::load_distro()
 {
 	QString filename, str;
 	struct distro_system temp_system;
-	temp_system.gradient.resize(510);
-	unsigned int k, g, b;
-	for (k=0; k<510; k++) // assign default gradient from black to bright cyan over 510 color points
+	temp_system.gradient.clear();
+	unsigned int k;
+	for (k=0; k<current_gradient.size(); k++) // assign default gradient from black to bright cyan over 510 color points
 	{
-		if (k > 255)
-		{
-			g = (unsigned int) (k - 255);
-			b = 255;
-		}
-		else
-		{
-			g = 0;
-			b = k;
-		}
-		temp_system.gradient[k].setRgb(0, g, b);
+		temp_system.gradient.push_back(current_gradient[k]);
 	}
 	
 	filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir,
@@ -1158,9 +1164,13 @@ void US_Pseudo3D_Combine::load_color()
 	"*.map", 0);
 	QFile f(filename);
 	QColor col;
-	system[current_distro].gradient.clear();
+	current_gradient.clear();
 	int r, g, b;
 	float val;
+	if (system.size() > 0)
+	{
+		system[current_distro].gradient.clear();
+	}
 	if (f.open(IO_ReadOnly))
 	{
 		QTextStream ts(&f);
@@ -1173,7 +1183,11 @@ void US_Pseudo3D_Combine::load_color()
 			ts >> val;
 			b = (int) val;
 			col.setRgb(r, g, b);
-			system[current_distro].gradient.push_back(col);
+			current_gradient.push_back(col);
+			if (system.size() > 0)
+			{
+				system[current_distro].gradient.push_back(col);
+			}
 		}
 		f.close();
 	}

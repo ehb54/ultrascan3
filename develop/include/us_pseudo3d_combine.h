@@ -44,6 +44,7 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		US_Pseudo3D_Combine(QWidget *p = 0, const char *name = 0);
 		~US_Pseudo3D_Combine();
 		vector <struct distro_system> system;
+		vector <QColor> current_gradient;
 		US_Config *USglobal;	 /*!< A US_Config reference. */
 		float resolution, plot_fmax, plot_fmin, plot_smax, plot_smin;
 		unsigned int x_resolution, y_resolution, x_pixel, y_pixel;
