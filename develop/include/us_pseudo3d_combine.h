@@ -80,8 +80,9 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		QwtCounter *cnt_y_resolution;
 		QwtCounter *cnt_x_pixel;
 		QwtCounter *cnt_y_pixel;
+		QwtCounter *cnt_current_distro;
 		QwtPlot *plot;
-		
+
 		QPushButton *pb_help;
 		QPushButton *pb_color;
 		QPushButton *pb_replot3d;
@@ -107,11 +108,13 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		void update_y_resolution(double);
 		void update_x_pixel(double);
 		void update_y_pixel(double);
+		void update_current_distro(double);
 		void plot_3dim();
 		void select_autolimit();
 		void select_plot_s();
 		void select_plot_mw();
 		void load_distro();
+		void load_distro(const QString &);
 		void common_limits(); // find common limits for plot area
 		void load_color();
 		void help();

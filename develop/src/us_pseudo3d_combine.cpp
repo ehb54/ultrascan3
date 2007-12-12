@@ -5,7 +5,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine(QWidget *p, const char *name) : QFrame(
 	USglobal=new US_Config();
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("Combine Pseudo-3D Distributions"));
-	
+
 	distro_type = -1;
 	minmax = false;
 	zoom = false;
@@ -74,7 +74,7 @@ void US_Pseudo3D_Combine::setup_GUI()
 	cnt_resolution->setNumButtons(3);
 	cnt_resolution->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_resolution, SIGNAL(valueChanged(double)), SLOT(update_resolution(double)));
-	
+
 	lbl_x_resolution = new QLabel(tr(" X Resolution: "), this);
 	Q_CHECK_PTR(lbl_x_resolution);
 	lbl_x_resolution->setAlignment(AlignLeft|AlignVCenter);
@@ -159,6 +159,14 @@ void US_Pseudo3D_Combine::setup_GUI()
 	cnt_plot_fmin->setNumButtons(3);
 	cnt_plot_fmin->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_plot_fmin, SIGNAL(valueChanged(double)), SLOT(update_plot_fmin(double)));
+
+	cnt_current_distro= new QwtCounter(this);
+	Q_CHECK_PTR(cnt_current_distro);
+	cnt_current_distro->setRange(1.0, 50.0, 1.0);
+	cnt_current_distro->setEnabled(false);
+	cnt_current_distro->setNumButtons(3);
+	cnt_current_distro->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cnt_current_distro, SIGNAL(valueChanged(double)), SLOT(update_current_distro(double)));
 
 	lbl_plot_fmax = new QLabel(tr("  Plot Limit f/f0 max.: "), this);
 	Q_CHECK_PTR(lbl_plot_fmax);
@@ -313,7 +321,7 @@ void US_Pseudo3D_Combine::setup_GUI()
 	plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 	plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	plot->setMargin(USglobal->config_list.margin);
-	
+
 	progress = new QProgressBar(this, "Progress Bar");
 	progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
@@ -379,14 +387,15 @@ void US_Pseudo3D_Combine::setup_GUI()
 	controlGrid->setRowStretch(j, 0);
 	j++;
 	controlGrid->addWidget(pb_replot3d, j, 0);
-	controlGrid->addWidget(pb_reset, j, 1);
+	controlGrid->addWidget(pb_common_limits, j, 1);
 	controlGrid->setRowStretch(j, 0);
 	j++;
 	controlGrid->addWidget(pb_load_distro, j, 0);
 	controlGrid->addWidget(pb_color, j, 1);
 	controlGrid->setRowStretch(j, 0);
 	j++;
-	controlGrid->addWidget(pb_common_limits, j, 0);
+	controlGrid->addWidget(pb_reset, j, 0);
+	controlGrid->addWidget(cnt_current_distro, j, 1);
 	controlGrid->setRowStretch(j, 0);
 	j++;
 	controlGrid->addWidget(pb_print, j, 0);
@@ -405,7 +414,24 @@ void US_Pseudo3D_Combine::setup_GUI()
 
 void US_Pseudo3D_Combine::load_distro()
 {
-	QString filename, str;
+	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir,
+														 "*.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.sa2d_mw_dis.* *.ga_dis.* *.ga_mw_dis.* *.ga_mw_mc_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.sa2d_mw_mc_dis.* *.global_dis.* ", 0);
+	if (filename.isEmpty())
+	{
+		return;
+	}
+	else
+	{
+		load_distro(filename);
+	}
+}
+
+void US_Pseudo3D_Combine::load_distro(const QString &filename)
+{
+	QFile f;
+	unsigned int index, i;
+	float temp1, temp2, temp3, temp4;
+	QString str;
 	struct distro_system temp_system;
 	temp_system.gradient.clear();
 	unsigned int k;
@@ -413,16 +439,7 @@ void US_Pseudo3D_Combine::load_distro()
 	{
 		temp_system.gradient.push_back(current_gradient[k]);
 	}
-	
-	filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir,
-														 "*.vhw_his.* *.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.sa2d_mw_dis.* *.ga_dis.* *.ga_mw_dis.* *.ga_mw_mc_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.sa2d_mw_mc_dis.* *.global_dis.* ", 0);
-	if (filename.isEmpty())
-	{
-		return;
-	}
-	QFile f;
-	unsigned int index, i;
-	float temp1, temp2, temp3, temp4;
+
 	temp_system.s_distro.clear();
 	temp_system.mw_distro.clear();
 	class Solute temp_s_distro, temp_mw_distro;
@@ -555,7 +572,7 @@ void US_Pseudo3D_Combine::load_distro()
 		temp_system.mw_distro.sort();
 
 // combine identical solutes:
-		
+
 		list <class Solute> reduced;
 		list <class Solute>::iterator j, j1, j2;
 		reduced.clear();
@@ -599,6 +616,10 @@ void US_Pseudo3D_Combine::load_distro()
 	}
 	system.push_back(temp_system);
 	current_distro = system.size() - 1;
+	cnt_current_distro->setRange(1.0, current_distro+1, 1.0);
+	current_distro = system.size() - 1;
+	cnt_current_distro->setValue(current_distro+1);
+	cnt_current_distro->setEnabled(true);
 	if (autolimit)
 	{
 		set_limits();
@@ -609,6 +630,9 @@ void US_Pseudo3D_Combine::load_distro()
 	}
 	pb_print->setEnabled(true);
 	pb_replot3d->setEnabled(true);
+	pb_reset->setEnabled(true);
+	cb_plot_s->setEnabled(true);
+	cb_plot_mw->setEnabled(true);
 }
 
 void US_Pseudo3D_Combine::set_limits()
@@ -619,8 +643,6 @@ void US_Pseudo3D_Combine::set_limits()
 	if (plot_s)
 	{
 		plot->setAxisTitle(QwtPlot::xBottom, tr("Sedimentation Coefficient corrected for water at 20ºC"));
-		lbl_plot_smin->setText(tr("  Plot Limit s min.: "));
-		lbl_plot_smax->setText(tr("  Plot Limit s max.: "));
 		for (i=0; i<system.size(); i++)
 		{
 			for (iter = system[i].s_distro.begin(); iter != system[i].s_distro.end(); iter++)
@@ -635,8 +657,6 @@ void US_Pseudo3D_Combine::set_limits()
 	else
 	{
 		plot->setAxisTitle(QwtPlot::xBottom, tr("Molecular Weight (Dalton)"));
-		lbl_plot_smin->setText(tr("  Plot Limit MW min.: "));
-		lbl_plot_smax->setText(tr("  Plot Limit MW max.: "));
 		for (i=0; i<system.size(); i++)
 		{
 			for (iter = system[i].mw_distro.begin(); iter != system[i].mw_distro.end(); iter++)
@@ -646,7 +666,7 @@ void US_Pseudo3D_Combine::set_limits()
 				fmin = min(fmin, (double) (*iter).k);
 				fmax = max(fmax, (double) (*iter).k);
 			}
-		}		
+		}
 	}
 	float diff;
 	diff = smax - smin;
@@ -767,7 +787,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 				}
 
 			// create threads
-			
+
 				US_Plot3d_thr_t *plot3d_thr_threads[USglobal->config_list.numThreads];
 				for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
@@ -869,7 +889,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 				}
 
 			// create threads
-			
+
 				US_Plot3d_thr_t *plot3d_thr_threads[USglobal->config_list.numThreads];
 				for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
@@ -930,7 +950,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 				}
 			}
 		}
-	}		
+	}
 	for (i=0; i<x_resolution; i++)
 	{
 		x[i] = plot_smin + i * sstep;
@@ -1002,7 +1022,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 		plot->setCurveStyle(curve[k], QwtCurve::NoCurve);
 		plot->setCurveData(curve[k], xval, yval, count);
 		plot->setTitle(fi.fileName() + cell_info + str1);
-		system[current_distro].name = fi.fileName() + cell_info + str1; 
+		system[current_distro].name = fi.fileName() + cell_info + str1;
 	}
 	plot->replot();
 	delete [] xval;
@@ -1206,6 +1226,84 @@ void US_Pseudo3D_Combine::save()
 
 void US_Pseudo3D_Combine::reset()
 {
+	for (unsigned int i=0; i<system.size(); i++)
+	{
+		system[i].gradient.clear();
+	}
+	system.clear();
+	plot->clear();
+	plot->replot();
+	pb_reset->setEnabled(false);
+	distro_type = -1;
+	minmax = false;
+	zoom = false;
+	monte_carlo = false;
+	plot_s = true;
+	select_plot_s();
+	cb_plot_s->setChecked(true);
+	cb_plot_mw->setChecked(false);
+	cb_plot_s->setEnabled(false);
+	cb_plot_mw->setEnabled(false);
+	current_distro = 0;
+	cnt_plot_fmin->setRange(0, 50, 0.01);
+	plot_fmin = 1.0;
+	cnt_plot_fmin->setValue(plot_fmin);
+	cnt_plot_fmin->setEnabled(false);
+
+	cnt_plot_fmax->setRange(1, 50, 0.01);
+	plot_fmax = 4.0;
+	cnt_plot_fmax->setValue(plot_fmax);
+	cnt_plot_fmax->setEnabled(false);
+
+	cnt_plot_smin->setRange(0.0, 10000.0, 0.1);
+	plot_smin = 1.0;
+	cnt_plot_smin->setValue(plot_smin);
+	cnt_plot_smin->setEnabled(false);
+
+	cnt_plot_smax->setRange(0.0, 10000.0, 0.1);
+	plot_smax = 10.0;
+	cnt_plot_smax->setValue(plot_smax);
+	cnt_plot_smax->setEnabled(false);
+
+	resolution = 90.0;
+	cnt_resolution->setRange(1, 100, 1);
+	cnt_resolution->setValue(resolution);
+	x_pixel = 2;
+	y_pixel = 2;
+	cnt_x_pixel->setRange(2, 50, 1);
+	cnt_x_pixel->setValue(x_pixel);
+	cnt_y_pixel->setRange(2, 50, 1);
+	cnt_y_pixel->setValue(y_pixel);
+	x_resolution = 300;
+	y_resolution = 300;
+	cnt_y_resolution->setRange(10, 1000, 1);
+	cnt_y_resolution->setValue(y_resolution);
+	cnt_x_resolution->setRange(10, 1000, 1);
+	cnt_x_resolution->setValue(x_resolution);
+
+	autolimit = true;
+	cb_autolimit->setChecked(true);
+	current_distro=0;
+	cnt_current_distro->setRange(1.0, 1.0, 1.0);
+	cnt_current_distro->setValue(1.0);
+	cnt_current_distro->setEnabled(false);
+
+	current_gradient.resize(510);
+	unsigned int k, g, b;
+	for (k=0; k<510; k++) // assign default gradient from black to bright cyan over 510 color points
+	{
+		if (k > 255)
+		{
+			g = (unsigned int) (k - 255);
+			b = 255;
+		}
+		else
+		{
+			g = 0;
+			b = k;
+		}
+		current_gradient[k].setRgb(0, g, b);
+	}
 }
 
 void US_Pseudo3D_Combine::print()
@@ -1225,6 +1323,10 @@ void US_Pseudo3D_Combine::select_autolimit()
 	if (cb_autolimit->isChecked())
 	{
 		autolimit = true;
+		cnt_plot_fmin->setEnabled(false);
+		cnt_plot_smin->setEnabled(false);
+		cnt_plot_fmax->setEnabled(false);
+		cnt_plot_smax->setEnabled(false);
 	}
 	else
 	{
@@ -1242,6 +1344,8 @@ void US_Pseudo3D_Combine::select_plot_s()
 	cb_plot_mw->setChecked(false);
 	plot_s = true;
 	set_limits();
+	lbl_plot_smin->setText(tr("  Plot Limit s min.: "));
+	lbl_plot_smax->setText(tr("  Plot Limit s max.: "));
 }
 
 void US_Pseudo3D_Combine::select_plot_mw()
@@ -1250,10 +1354,21 @@ void US_Pseudo3D_Combine::select_plot_mw()
 	cb_plot_s->setChecked(false);
 	plot_s = false;
 	set_limits();
+	lbl_plot_smin->setText(tr("  Plot Limit MW min.: "));
+	lbl_plot_smax->setText(tr("  Plot Limit MW max.: "));
 }
 
 void US_Pseudo3D_Combine::common_limits()
 {
+	cb_autolimit->setChecked(true);
+	select_autolimit();
+
+}
+
+void US_Pseudo3D_Combine::update_current_distro(double val)
+{
+	current_distro = (unsigned int) val;
+	current_distro --;
 }
 
 void US_Pseudo3D_Combine::update_resolution(double val)
