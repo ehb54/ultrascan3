@@ -330,7 +330,7 @@ void US_Pseudo3D_Combine::setup_GUI()
 	progress = new QProgressBar(this, "Progress Bar");
 	progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-	int rows=17, columns = 3, spacing = 2, j=0;
+	int rows=19, columns = 3, spacing = 2, j=0;
 	QGridLayout *controlGrid = new QGridLayout(this, rows, columns, spacing, spacing);
 
 	controlGrid->setColSpacing(0, 120);
@@ -344,7 +344,7 @@ void US_Pseudo3D_Combine::setup_GUI()
 		controlGrid->setRowSpacing(i, 26);
 	}
 	controlGrid->addMultiCellWidget(lbl_info1, j, j, 0, 1);
-	controlGrid->addMultiCellWidget(plot, j, j+rows, 2, 2);
+	controlGrid->addMultiCellWidget(plot, j, j+rows-1, 2, 2);
 	controlGrid->setRowStretch(j, 1);
 	j++;
 	controlGrid->addWidget(lbl_resolution, j, 0);
@@ -983,8 +983,9 @@ void US_Pseudo3D_Combine::plot_3dim()
 		plot->setCurveSymbol(curve[k], symbol);
 		plot->setCurveStyle(curve[k], QwtCurve::NoCurve);
 		plot->setCurveData(curve[k], xval, yval, count);
-		plot->setTitle(system[current_distro].run_name + ", Cell " +
-							system[current_distro].cell + "\n" +
+		plot->setTitle(system[current_distro].run_name + "." +
+							system[current_distro].cell + 
+							system[current_distro].wavelength +	"\n" +
 							system[current_distro].method);
 	}
 	plot->replot();
