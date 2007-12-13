@@ -160,6 +160,12 @@ void US_Pseudo3D_Combine::setup_GUI()
 	cnt_plot_fmin->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_plot_fmin, SIGNAL(valueChanged(double)), SLOT(update_plot_fmin(double)));
 
+	lbl_current_distro = new QLabel(tr(" Current Distro: "), this);
+	Q_CHECK_PTR(lbl_current_distro);
+	lbl_current_distro->setAlignment(AlignLeft|AlignVCenter);
+	lbl_current_distro->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_current_distro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
 	cnt_current_distro= new QwtCounter(this);
 	Q_CHECK_PTR(cnt_current_distro);
 	cnt_current_distro->setRange(1.0, 50.0, 1.0);
@@ -167,6 +173,14 @@ void US_Pseudo3D_Combine::setup_GUI()
 	cnt_current_distro->setNumButtons(3);
 	cnt_current_distro->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_current_distro, SIGNAL(valueChanged(double)), SLOT(update_current_distro(double)));
+
+	le_distro_info = new QLineEdit(tr(""), this);
+	Q_CHECK_PTR(le_distro_info);
+	le_distro_info->setFrameStyle(QFrame::WinPanel|Sunken);
+	le_distro_info->setReadOnly(true);
+	le_distro_info->setAlignment(AlignLeft|AlignVCenter);
+	le_distro_info->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	le_distro_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
 	lbl_plot_fmax = new QLabel(tr("  Plot Limit f/f0 max.: "), this);
 	Q_CHECK_PTR(lbl_plot_fmax);
@@ -261,15 +275,6 @@ void US_Pseudo3D_Combine::setup_GUI()
 	pb_color->setEnabled(true);
 	connect(pb_color, SIGNAL(clicked()), SLOT(load_color()));
 
-	pb_common_limits = new QPushButton(tr("Find Common Limits"), this);
-	Q_CHECK_PTR(pb_common_limits);
-	pb_common_limits->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_common_limits->setEnabled(true);
-	pb_common_limits->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_common_limits->setAutoDefault(false);
-	pb_common_limits->setEnabled(true);
-	connect(pb_common_limits, SIGNAL(clicked()), SLOT(common_limits()));
-
 	pb_replot3d = new QPushButton(tr("Refresh Pseudo-3D Plot"), this);
 	Q_CHECK_PTR(pb_replot3d);
 	pb_replot3d->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -313,7 +318,7 @@ void US_Pseudo3D_Combine::setup_GUI()
 	plot->setCanvasBackground(USglobal->global_colors.plot);		//new version
 	plot->setTitle(tr("Pseudo-3D Distribution Data"));
 	plot->setMinimumSize(550,300);
-	plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+	plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
 	plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 	plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -339,7 +344,7 @@ void US_Pseudo3D_Combine::setup_GUI()
 		controlGrid->setRowSpacing(i, 26);
 	}
 	controlGrid->addMultiCellWidget(lbl_info1, j, j, 0, 1);
-	controlGrid->addMultiCellWidget(plot, j, j+rows-1, 2, 2);
+	controlGrid->addMultiCellWidget(plot, j, j+rows, 2, 2);
 	controlGrid->setRowStretch(j, 1);
 	j++;
 	controlGrid->addWidget(lbl_resolution, j, 0);
@@ -382,20 +387,22 @@ void US_Pseudo3D_Combine::setup_GUI()
 	controlGrid->addWidget(cnt_plot_smax, j, 1);
 	controlGrid->setRowStretch(j, 0);
 	j++;
+	controlGrid->addWidget(lbl_current_distro, j, 0);
+	controlGrid->addWidget(cnt_current_distro, j, 1);
+	controlGrid->setRowStretch(j, 0);
+	j++;
+	controlGrid->addMultiCellWidget(le_distro_info, j, j, 0, 1);
+	j++;
 	controlGrid->addWidget(cb_plot_s, j, 0);
 	controlGrid->addWidget(cb_plot_mw, j, 1);
 	controlGrid->setRowStretch(j, 0);
 	j++;
 	controlGrid->addWidget(pb_replot3d, j, 0);
-	controlGrid->addWidget(pb_common_limits, j, 1);
+	controlGrid->addWidget(pb_reset, j, 1);
 	controlGrid->setRowStretch(j, 0);
 	j++;
 	controlGrid->addWidget(pb_load_distro, j, 0);
 	controlGrid->addWidget(pb_color, j, 1);
-	controlGrid->setRowStretch(j, 0);
-	j++;
-	controlGrid->addWidget(pb_reset, j, 0);
-	controlGrid->addWidget(cnt_current_distro, j, 1);
 	controlGrid->setRowStretch(j, 0);
 	j++;
 	controlGrid->addWidget(pb_print, j, 0);
@@ -444,93 +451,87 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 	temp_system.mw_distro.clear();
 	class Solute temp_s_distro, temp_mw_distro;
 	index = filename.findRev(".", -1, true);
-	cell_info = filename.right(filename.length() - index);
+	str = filename.right(filename.length() - index - 1);
+	temp_system.cell = str.left(1);
+	str = filename.right(filename.length() - index - 1);
+	temp_system.wavelength = str.right(1);
 	f.setName(filename);
 	monte_carlo = false;
-	if (filename.contains("vhw_his", false))
-	{
-		distro_type = 0;
-		index = filename.findRev(".vhw_his.", -1, true);
-		id = filename.left(index);
-	}
-	else if (filename.contains("cofs_dis", false))
+	QFileInfo fi(filename);
+	temp_system.run_name = fi.baseName();
+	if (filename.contains("cofs_dis", false))
 	{
 		distro_type = 1;
-		index = filename.findRev(".cofs_dis.", -1, true);
-		id = filename.left(index);
+		temp_system.method = "C(s)";
 	}
 	else if (filename.contains("fe_dis", false))
 	{
 		distro_type = 2;
-		index = filename.findRev(".fe_dis.", -1, true);
-		id = filename.left(index);
+		temp_system.method = "FE";
 	}
 	else if (filename.contains("sa2d_dis", false))
 	{
 		distro_type = 3;
-		index = filename.findRev(".sa2d_dis.", -1, true);
-		id = filename.left(index);
+		temp_system.method = "2DSA";
 	}
 	else if (filename.contains("ga_mc_dis", false))
 	{
 		distro_type = 4;
 		monte_carlo = true;
-		index = filename.findRev(".ga_mc_dis.", -1, true);
-		id = filename.left(index);
+		temp_system.method = "GA-MC";
 	}
 	else if (filename.contains("sa2d_mc_dis", false))
 	{
 		distro_type = 5;
 		monte_carlo = true;
-		index = filename.findRev(".sa2d_mc_dis.", -1, true);
-		id = filename.left(index);
+		temp_system.method = "2DSA-MC";
 	}
 	else if (filename.contains("ga_dis", false))
 	{
 		distro_type = 6;
 		monte_carlo = false;
-		index = filename.findRev(".ga_dis.", -1, true);
-		id = filename.left(index);
+		temp_system.method = "GA";
 	}
 	else if (filename.contains("global_dis", false))
 	{
 		distro_type = 7;
 		monte_carlo = false;
-		index = filename.findRev(".global_dis.", -1, true);
-		id = filename.left(index);
+		temp_system.method = "Global";
 	}
 	else if (filename.contains("sa2d_mw_dis", false))
 	{
 		distro_type = 8;
 		monte_carlo = false;
-		index = filename.findRev(".sa2d_mw_dis.", -1, true);
-		id = filename.left(index);
+		temp_system.method = "2DSA, MW Constrained";
 	}
 	else if (filename.contains("ga_mw_dis", false))
 	{
 		distro_type = 9;
 		monte_carlo = false;
-		index = filename.findRev(".ga_mw_dis.", -1, true);
-		id = filename.left(index);
+		temp_system.method = "GA, MW Constrained";
 	}
 	else if (filename.contains("sa2d_mw_mc_dis", false))
 	{
 		distro_type = 10;
 		monte_carlo = true;
-		index = filename.findRev(".sa2d_mw_mc_dis.", -1, true);
-		id = filename.left(index);
+		temp_system.method = "2DSA, MW Constrained, Monte Carlo";
 	}
 	else if (filename.contains("ga_mw_mc_dis", false))
 	{
 		distro_type = 11;
 		monte_carlo = true;
-		index = filename.findRev(".ga_mw_mc_dis.", -1, true);
-		id = filename.left(index);
+		temp_system.method = "GA, MW Constrained, Monte Carlo";
 	}
 	else
 	{
 		distro_type = -1; // undefined
 	}
+	str = "Run " + temp_system.run_name +
+			"." + temp_system.cell +
+			temp_system.wavelength +
+			" (" + temp_system.method
+			+")";
+	le_distro_info->setText(str);
 	if (distro_type > 0)
 	{
 		if(f.open(IO_ReadOnly))
@@ -959,47 +960,8 @@ void US_Pseudo3D_Combine::plot_3dim()
 			z[i][j] = (system[current_distro].gradient.size()-1) * z[i][j]/maxval;
 		}
 	}
-	QFileInfo fi(id);
-	QString htmlDir = USglobal->config_list.html_dir + "/" + fi.fileName();
-	QString str1;
-	switch (distro_type)
-	{
-		case 1:
-		{
-			str1 = "\n(C(s))";
-			break;
-		}
-		case 2:
-		{
-			str1 = "\n(FE)";
-			break;
-		}
-		case 3:
-		{
-			str1 = "\n(2DSA)";
-			break;
-		}
-		case 4:
-		{
-			str1 = "\n(GA-MC)";
-			break;
-		}
-		case 5:
-		{
-			str1 = "\n(2DSA-MC)";
-			break;
-		}
-		case 6:
-		{
-			str1 = "\n(GA)";
-			break;
-		}
-		case 7:
-		{
-			str1 = "\n(Global)";
-			break;
-		}
-	}
+	QFileInfo fi();
+	QString htmlDir = USglobal->config_list.html_dir + "/" + system[current_distro].run_name;
 	for (k=0; k<system[current_distro].gradient.size(); k++)
 	{
 		count = 0;
@@ -1021,13 +983,14 @@ void US_Pseudo3D_Combine::plot_3dim()
 		plot->setCurveSymbol(curve[k], symbol);
 		plot->setCurveStyle(curve[k], QwtCurve::NoCurve);
 		plot->setCurveData(curve[k], xval, yval, count);
-		plot->setTitle(fi.fileName() + cell_info + str1);
-		system[current_distro].name = fi.fileName() + cell_info + str1;
+		plot->setTitle(system[current_distro].run_name + ", Cell " +
+							system[current_distro].cell + "\n" +
+							system[current_distro].method);
 	}
 	plot->replot();
 	delete [] xval;
 	delete [] yval;
-//	cout << distro_type << endl;
+	QString cell_info = "." + system[current_distro].cell + system[current_distro].wavelength;
 	switch (distro_type)
 	{
 		case 1:
@@ -1234,6 +1197,8 @@ void US_Pseudo3D_Combine::reset()
 	plot->clear();
 	plot->replot();
 	pb_reset->setEnabled(false);
+	pb_replot3d->setEnabled(false);
+	le_distro_info->setText("");
 	distro_type = -1;
 	minmax = false;
 	zoom = false;
@@ -1358,17 +1323,20 @@ void US_Pseudo3D_Combine::select_plot_mw()
 	lbl_plot_smax->setText(tr("  Plot Limit MW max.: "));
 }
 
-void US_Pseudo3D_Combine::common_limits()
-{
-	cb_autolimit->setChecked(true);
-	select_autolimit();
-
-}
-
 void US_Pseudo3D_Combine::update_current_distro(double val)
 {
-	current_distro = (unsigned int) val;
-	current_distro --;
+	if (system.size() > 0)
+	{
+		QString str;
+		current_distro = (unsigned int) val;
+		current_distro --;
+		str = "Run " + system[current_distro].run_name +
+				"." + system[current_distro].cell +
+				system[current_distro].wavelength +
+				" (" + system[current_distro].method
+				+")";
+		le_distro_info->setText(str);
+	} 
 }
 
 void US_Pseudo3D_Combine::update_resolution(double val)

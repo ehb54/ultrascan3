@@ -19,6 +19,7 @@
 #include <qlabel.h>
 #include <qpushbutton.h>
 #include <qframe.h>
+#include <qlineedit.h>
 #include <qlayout.h>
 #include <qprogressbar.h>
 #include <qtextedit.h>
@@ -32,7 +33,10 @@ struct distro_system
 	list <Solute> s_distro;
 	list <Solute> mw_distro;
 	vector <QColor> gradient;
-	QString name;
+	QString run_name;
+	QString cell;
+	QString wavelength;
+	QString method;
 };
 
 class US_EXTERN US_Pseudo3D_Combine : public QFrame
@@ -48,7 +52,6 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		US_Config *USglobal;	 /*!< A US_Config reference. */
 		float resolution, plot_fmax, plot_fmin, plot_smax, plot_smin;
 		unsigned int x_resolution, y_resolution, x_pixel, y_pixel;
-		QString id, cell_info;
 		bool minmax; //min = false, max = true
 		bool monte_carlo;
 		int current_distro; // distro in system
@@ -71,6 +74,8 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		QLabel *lbl_plot_smax;
 		QLabel *lbl_plot_fmin;
 		QLabel *lbl_plot_fmax;
+		QLabel *lbl_current_distro;
+		QLineEdit *le_distro_info;
 		QwtCounter *cnt_plot_fmin;
 		QwtCounter *cnt_plot_fmax;
 		QwtCounter *cnt_plot_smin;
@@ -91,7 +96,6 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		QPushButton *pb_close;
 		QPushButton *pb_save;
 		QPushButton *pb_reset;
-		QPushButton *pb_common_limits;
 		QCheckBox *cb_autolimit;
 		QCheckBox *cb_plot_s;
 		QCheckBox *cb_plot_mw;
@@ -115,7 +119,6 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		void select_plot_mw();
 		void load_distro();
 		void load_distro(const QString &);
-		void common_limits(); // find common limits for plot area
 		void load_color();
 		void help();
 		void save();
