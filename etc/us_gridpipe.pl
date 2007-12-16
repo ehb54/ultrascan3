@@ -6,9 +6,50 @@ $|=1;
 undef $debug;
 $debug++;
 
-$pipe = "$ENV{'ULTRASCAN'}/etc/us_gridpipe";
+$globustimeout = 5; # seconds to wait for globusrun-ws commands to succeed or timeout
+$statusupdate = 60; # seconds to wait for status update
+
+$us = $ENV{'ULTRASCAN'};
+$status_file = "$us/etc/mpi_queue_status";
+
+$pipe = "$us/etc/us_gridpipe";
 
 $ENV{'DISPLAY'}='';
+
+## @fn $ timedexec($timeout, $command)
+# runs a shell command for timeout seconds and if it has not completed, it returns with 'non-responsive'
+# @param the timeout in seconds and the command
+# @return the results from the command or 'non-responsive'
+
+sub timedexec {
+
+    my $return;
+    my $pid = open(PIPE, "$_[1] |") or die $!;
+
+    eval {
+	local $SIG{ALRM} = sub { die "timeout" };
+	alarm($_[0]);
+	my @results = <PIPE>;
+	$return = join '', @results;
+	close(PIPE);
+	alarm(0);
+    };
+
+    if($@) {
+	alarm(0);
+	if($@ =~ /timeout/) {
+	    $return = "non-responsive";
+	    kill 9, $pid;
+	    close(PIPE); 
+	    print "timed out\n";
+	    # timed out;
+	} else {
+	    print "success\n";
+	    die;
+	}
+    }
+    $return;
+}
 
 sub startjob {
     print STDERR "$0: start job $queue[0]\n" if $debug;
@@ -53,9 +94,93 @@ sub startjob_tigre {
     print STDERR "$0: tigre job child pid is $child\n" if $debug;
 }
 
+## @fn $ status_daemon()
+# forks off a process to ping the gridpipe every $statusupdate seconds to rewrite the $statusfile
+# @param nothing
+# @return nothing
+
+sub status_daemon {
+    print STDERR "$0: start status_daemon\n" if $debug;
+    if(!($child = fork)) {
+	while(1) {
+	    print STDERR "$: internal_status_update\n" if $debug;
+	    &timedexec(10, "echo internal_status_update > $pipe");
+	    sleep $statusupdate;
+	}
+	exit; # should never get here!
+    }
+    print STDERR "$0: status_daemon started as pid $child\n" if $debug;
+}
+
+## @fn $ write_status($filename)
+# forks off a process to write the status to $filename.new and when it is done, locks & copys $filename.new to $filename
+# @param the filename
+# @return nothing
+
+sub write_status {
+    print STDERR "$0: write_status $_[0]\n" if $debug;
+    if(!($child = fork)) {
+	print STDERR "$0: child started write_status\n" if $debug;
+	my $outfile = $_[0];
+	print STDERR "$0: write statusqueue status into $outfile\n" if $debug;
+	if(open(OUT, ">${outfile}.new")) {
+	    flock(OUT, 2) || print STDERR "$0: Warning can not flock ${outfile}.new, proceeding (possible status file mangling!)\n";
+	    $date = `date`;
+	    print OUT "Queue status snapshot as of $date";
+	    my $tjobs = 0;
+	    foreach $i (keys %tigre) {
+		$tjobs++;
+	    }
+	    if(@queue == 0 && $tjobs == 0) {
+		print OUT "No jobs waiting to complete.\n";
+		close OUT;
+	    } else {
+		if(@queue != 0) {
+		    print OUT "id   started             submitted           email\t\texperiment\tanalysis type\n";
+		}
+		for($i = 0; $i < @queue; $i++) {
+		    print OUT sprintf("%-4d ",$ids[$i]);
+		    if($i) {
+			print OUT "waiting          ";
+		    } else {
+			print OUT "$started";
+		    }
+		    print OUT " : $submitted[$i] : $emails[$i]\t$experiments[$i]\t$types[$i]\n";
+		}
+		print OUT $last_status;
+		close OUT;
+		undef $last_status;
+		foreach $i (keys %tigre) {
+#			    if($tigre{$i} =~ /[ meta]/) {
+#				$status = `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
+#			    } else {
+		    my $status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $i");
+#			    }
+		    chomp $status;
+		    $status = "Starting" if !length($status);
+		    $last_status .= "$tigre{$i} $status\n";
+		}
+	    }
+	    open(FH, $outfile);
+	    if(flock(FH, 2)) {
+		system("mv -f ${outfile}.new $outfile");
+	    } else {
+		close(FH);
+		print STDERR "$0: Warning can not flock $outfile\n";
+	    }
+	} else {
+	    print STDERR "$0: write_status could not open \"$outfile\" for writing.\n";
+	}
+	exit;
+    }
+    print STDERR "$0: write status child pid is $child\n" if $debug;
+}
+
 $SIG{CHLD} = "IGNORE";
 
 $seq = 0;
+
+&status_daemon();
 
 while(1) {
 	open(PIPE, $pipe) or die "$0: pipe $pipe open failure\n";
@@ -66,6 +191,12 @@ while(1) {
 #	    close(PIPE);
 	    print STDERR "$0: received $line\n" if $debug;
 	    undef $valid;
+	    if($line =~ /^internal_status_update$/) {
+		$valid++;
+		print STDERR "$0: queue status into $status_file\n" if $debug;
+		&write_status($status_file);
+	    }
+		
 	    if($line =~ /^status (\S*)$/) {
 		close PIPE;
 		$valid++;
@@ -99,7 +230,7 @@ while(1) {
 #			    if($tigre{$i} =~ /[ meta]/) {
 #				$status = `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
 #			    } else {
-				$status = `globusrun-ws -status -job-epr-file $i`;
+				$status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $i");
 #			    }
 			    chomp $status;
 			    $status = "Starting" if !length($status);
@@ -144,7 +275,7 @@ while(1) {
 #			    if($tigre{$i} =~ /[ meta]/) {
 #				$status = `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
 #			    } else {
-				$status = `globusrun-ws -status -job-epr-file $i`;
+				$status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $i");
 #			    }
 			    chomp $status;
 			    $status = "Starting" if !length($status);
@@ -310,8 +441,8 @@ while(1) {
 #		    if($tigre{$i} =~ /[ meta]/) {
 #			print STDERR $tigre{$i} . `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
 #		    } else {
-			$status = `globusrun-ws -status -job-epr-file $i`;
-			print STDERR $tigre{$i} . `globusrun-ws -status -job-epr-file $i`;
+		        $status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $i");
+			print STDERR $tigre{$i} . $status;
 #		    }
 		}
 	    }
@@ -324,7 +455,7 @@ while(1) {
 #		    if($tigre{$i} =~ /[ meta]/) {
 #			print STDERR $tigre{$i} . `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
 #		    } else {
-			print STDERR $tigre{$i} . `globusrun-ws -status -job-epr-file $i`;
+			print STDERR $tigre{$i} . &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $i");
 #		    }
 		}
 		delete $tigre{$eprfile};
@@ -337,7 +468,7 @@ while(1) {
 #		    if($tigre{$i} =~ /[ meta]/) {
 #			$status = `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
 #		    } else {
-			$status = `globusrun-ws -status -job-epr-file $i`;
+		        $status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $i");
 #		    }
 		    chomp $status;
 		    if(!length($status) || $status eq 'FINISHED' || $status eq 'FAILED') {
