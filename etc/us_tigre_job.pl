@@ -8,7 +8,7 @@
 # THIS IS NOT HOW MANY PROCS THE SYSTEM HAS, BUT HOW MANY TIGRE/PBS KNOW ABOUT!!!!
 
 $bcf_no_procs = 42;
-$alamo_no_procs = 16;
+$alamo_no_procs = 31;
 $laredo_no_procs = 36;
 
 # END USER EDITABLE SECTION
@@ -54,15 +54,15 @@ $_[0]
 "
 		 );
 
-    if(-e "us_job${id}.stderr") {
+    if(-e "/lustre/tmp/us_job${id}.stderr") {
 	$msg->attach(Type     => 'TEXT',
-		     Path     => "us_job${id}.stderr",
+		     Path     => "/lustre/tmp/us_job${id}.stderr",
 		     Filename => "us_job${id}.stderr");
     }
 
-    if(-e "us_job${id}.stdout") {
+    if(-e "/lustre/tmp/us_job${id}.stdout") {
 	$msg->attach(Type     => 'TEXT',
-		     Path     => "us_job${id}.stdout",
+		     Path     => "/lustre/tmp/us_job${id}.stdout",
 		     Filename => "us_job${id}.stdout");
     }
     
@@ -408,7 +408,35 @@ if($fit_ti_noise || $fit_ri_noise) {
     $max_time[0] *= 2;
 }
 
+$max_time[0] *= 1.5;
+
 $max_time[0] = 5 if $max_time[0] <= 5;
+if($max_time[0] > 2880 &&
+   $default_system eq 'lonestar.tacc.utexas.edu') {
+    $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
+			   To      =>  "$email, ebrookes@cs.utsa.edu",
+			   Subject =>  "TIGRE job on $default_system set to maximum time",
+			   Data    => 
+"Your TIGRE job on $default system estimated has an estimated run time of " . ($max_time[0]/60) . " which exceeds the maximum 48 hour limit.  
+It has been set to this limit, but the job may terminate prematurely, losing all results.  
+The job info is as follows:
+--------------------------------------------------------------------------------
+jobtype    $jobtype
+expname    $expname
+gcfile     $gcfile
+email      $email
+timestamp  $timestamp
+id         $id
+basedir    $basedir
+experiment $experiment
+solutes    $solutes
+--------------------------------------------------------------------------------
+"
+				   );
+    $msg->send('smtp', 'smtp.uthscsa.edu');
+}    
+    
+
 $max_time[0] = 2880 if $max_time[0] > 2880;
 $max_time[4] = $max_time[0];
 $max_time[2] = $max_time[0];
@@ -570,7 +598,7 @@ if($default_system eq 'meta') {
     
     print `echo tigre_job_start $pr_line > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
 } else {
-    $cmd = "globusrun-ws -submit -batch -F https://${SYSTEM}:${PORT_GLOBUS}/wsrf/services/ManagedJobFactoryService -factory-type $FACTORYTYPE -f $xmlfile > $eprfile\n";
+    $cmd = "globusrun-ws -submit -batch -term 12/31/2099 -F https://${SYSTEM}:${PORT_GLOBUS}/wsrf/services/ManagedJobFactoryService -factory-type $FACTORYTYPE -f $xmlfile > $eprfile\n";
     print $cmd;
     print `$cmd` if $execute;
 }
@@ -611,23 +639,21 @@ gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stdout .
 
 if($default_system eq 'meta') {
     $cmd = 
-"cp us_job${id}.stderr /lustre/tmp/us_tigre_job${id}.stderr
-cp us_job${id}.stdout /lustre/tmp/us_tigre_job${id}.stdout
+"mv us_job${id}.stderr /lustre/tmp/us_job${id}.stderr
+mv us_job${id}.stdout /lustre/tmp/us_job${id}.stdout
 ";
 } else {
-    $cmd = "gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stderr .
-gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stdout .
+    $cmd = "gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
+gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
 gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/email_* .
 gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/*.model* .
 gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/*noise* .
-cp us_job${id}.stderr /tmp/us_tigre_job${id}.stderr
-cp us_job${id}.stdout /tmp/us_tigre_job${id}.stdout
 ";
 }
 print $cmd;
 print `$cmd` if $execute;
 print "----tail us_job${id}.stderr --- from $default_system ---\n";
-print `tail us_job${id}.stderr` if $execute;
+print `tail /lustre/tmp/us_job${id}.stderr` if $execute;
 print "----end us_job${id}.stderr ---\n";
 
 # email results
@@ -650,7 +676,7 @@ if($default_system eq 'meta') {
 }
 
 # check for good completion
-$good_completion = `grep '^0: finalizing' us_job${id}.stdout`;
+$good_completion = `grep '^0: finalizing' /lustre/tmp/us_job${id}.stdout`;
 if(!($good_completion =~ '0: finalizing')) {
     &failmsg("TIGRE job completed successfully, but results indicate job failed");
 }
@@ -658,7 +684,7 @@ if(!($good_completion =~ '0: finalizing')) {
 # accumulate statistics
 $US = $ENV{'ULTRASCAN'};
 require "$US/etc/us_extract_usage.pl";
-&extract_usage("us_job${id}.stdout");
+&extract_usage("/lustre/tmp/us_job${id}.stdout");
 $extra_fields = "$util|$util_ti|$default_system|$np|$total_points|$esttime|$date|$id";
 $extra_fields_title = "util|util_ti|default_system|np|total_points|esttime|date|id";
 
