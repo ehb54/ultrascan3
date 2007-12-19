@@ -6,13 +6,10 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine(QWidget *p, const char *name) : QFrame(
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("Combine Pseudo-3D Distributions"));
 
-	distro_type = -1;
 	minmax = false;
 	zoom = false;
-	monte_carlo = false;
 	autolimit = true;
 	plot_s = true;
-	current_distro = 0;
 	system.clear();
 	plot_fmin = 1.0;
 	plot_fmax = 4.0;
@@ -456,75 +453,77 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 	str = filename.right(filename.length() - index - 1);
 	temp_system.wavelength = str.right(1);
 	f.setName(filename);
-	monte_carlo = false;
 	QFileInfo fi(filename);
 	temp_system.run_name = fi.baseName();
 	if (filename.contains("cofs_dis", false))
 	{
-		distro_type = 1;
+		temp_system.distro_type = 1;
+		temp_system.monte_carlo = false;
 		temp_system.method = "C(s)";
 	}
 	else if (filename.contains("fe_dis", false))
 	{
-		distro_type = 2;
+		temp_system.distro_type = 2;
+		temp_system.monte_carlo = false;
 		temp_system.method = "FE";
 	}
 	else if (filename.contains("sa2d_dis", false))
 	{
-		distro_type = 3;
+		temp_system.distro_type = 3;
+		temp_system.monte_carlo = false;
 		temp_system.method = "2DSA";
 	}
 	else if (filename.contains("ga_mc_dis", false))
 	{
-		distro_type = 4;
-		monte_carlo = true;
+		temp_system.distro_type = 4;
+		temp_system.monte_carlo = true;
 		temp_system.method = "GA-MC";
 	}
 	else if (filename.contains("sa2d_mc_dis", false))
 	{
-		distro_type = 5;
-		monte_carlo = true;
+		temp_system.distro_type = 5;
+		temp_system.monte_carlo = true;
 		temp_system.method = "2DSA-MC";
 	}
 	else if (filename.contains("ga_dis", false))
 	{
-		distro_type = 6;
-		monte_carlo = false;
+		temp_system.distro_type = 6;
+		temp_system.monte_carlo = false;
 		temp_system.method = "GA";
 	}
 	else if (filename.contains("global_dis", false))
 	{
-		distro_type = 7;
-		monte_carlo = false;
+		temp_system.distro_type = 7;
+		temp_system.monte_carlo = false;
 		temp_system.method = "Global";
 	}
 	else if (filename.contains("sa2d_mw_dis", false))
 	{
-		distro_type = 8;
-		monte_carlo = false;
+		temp_system.distro_type = 8;
+		temp_system.monte_carlo = false;
 		temp_system.method = "2DSA, MW Constrained";
 	}
 	else if (filename.contains("ga_mw_dis", false))
 	{
-		distro_type = 9;
-		monte_carlo = false;
+		temp_system.distro_type = 9;
+		temp_system.monte_carlo = false;
 		temp_system.method = "GA, MW Constrained";
 	}
 	else if (filename.contains("sa2d_mw_mc_dis", false))
 	{
-		distro_type = 10;
-		monte_carlo = true;
+		temp_system.distro_type = 10;
+		temp_system.monte_carlo = true;
 		temp_system.method = "2DSA, MW Constrained, Monte Carlo";
 	}
 	else if (filename.contains("ga_mw_mc_dis", false))
 	{
-		distro_type = 11;
-		monte_carlo = true;
+		temp_system.distro_type = 11;
+		temp_system.monte_carlo = true;
 		temp_system.method = "GA, MW Constrained, Monte Carlo";
 	}
 	else
 	{
-		distro_type = -1; // undefined
+		temp_system.distro_type = -1; // undefined
 	}
 	str = "Run " + temp_system.run_name +
 			"." + temp_system.cell +
@@ -532,7 +531,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 			" (" + temp_system.method
 			+")";
 	le_distro_info->setText(str);
-	if (distro_type > 0)
+	if (temp_system.distro_type > 0)
 	{
 		if(f.open(IO_ReadOnly))
 		{
@@ -541,7 +540,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 			{
 				ts.readLine(); // discard header line
 			}
-			if (monte_carlo) // GA Monte Carlo, we need the number of MC iterations
+			if (temp_system.monte_carlo) // GA Monte Carlo, we need the number of MC iterations
 			{
 				QString s1;
 				ts >> s1;
@@ -984,7 +983,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 		plot->setCurveStyle(curve[k], QwtCurve::NoCurve);
 		plot->setCurveData(curve[k], xval, yval, count);
 		plot->setTitle(system[current_distro].run_name + "." +
-							system[current_distro].cell + 
+							system[current_distro].cell +
 							system[current_distro].wavelength +	"\n" +
 							system[current_distro].method);
 	}
@@ -992,7 +991,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 	delete [] xval;
 	delete [] yval;
 	QString cell_info = "." + system[current_distro].cell + system[current_distro].wavelength;
-	switch (distro_type)
+	switch (system[current_distro].distro_type)
 	{
 		case 1:
 		{
@@ -1127,12 +1126,13 @@ void US_Pseudo3D_Combine::plot_3dim()
 			break;
 		}
 	}
-//	cout << str << endl;
+	cout << str << ", system[current_distro]distro_type: " << system[current_distro].distro_type << endl;
 	QPixmap p;
 	US_Pixmap *pm;
 	pm = new US_Pixmap();
 	p = QPixmap::grabWidget(plot, 2, 2, plot->width() - 4, plot->height() - 4);
 	pm->save_file(str, p);
+	qApp->processEvents();
 }
 
 void US_Pseudo3D_Combine::help()
@@ -1200,10 +1200,8 @@ void US_Pseudo3D_Combine::reset()
 	pb_reset->setEnabled(false);
 	pb_replot3d->setEnabled(false);
 	le_distro_info->setText("");
-	distro_type = -1;
 	minmax = false;
 	zoom = false;
-	monte_carlo = false;
 	plot_s = true;
 	select_plot_s();
 	cb_plot_s->setChecked(true);
@@ -1337,7 +1335,7 @@ void US_Pseudo3D_Combine::update_current_distro(double val)
 				" (" + system[current_distro].method
 				+")";
 		le_distro_info->setText(str);
-	} 
+	}
 }
 
 void US_Pseudo3D_Combine::update_resolution(double val)

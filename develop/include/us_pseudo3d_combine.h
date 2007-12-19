@@ -37,6 +37,8 @@ struct distro_system
 	QString cell;
 	QString wavelength;
 	QString method;
+	unsigned int distro_type;
+	bool monte_carlo;
 };
 
 class US_EXTERN US_Pseudo3D_Combine : public QFrame
@@ -53,14 +55,12 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		float resolution, plot_fmax, plot_fmin, plot_smax, plot_smin;
 		unsigned int x_resolution, y_resolution, x_pixel, y_pixel;
 		bool minmax; //min = false, max = true
-		bool monte_carlo;
-		int current_distro; // distro in system
+		unsigned int current_distro;
 		unsigned int initial_solutes, monte_carlo_iterations, dimension;
 		bool zoom, autolimit, plot_s;
 
 	private:
 
-		int distro_type; // 0 = vhw, 1 = cofs, 2 = ASTFEM-FE, 3 = SA2D
 		float k_range, s_range;
 
 		QLabel *lbl_info1;
