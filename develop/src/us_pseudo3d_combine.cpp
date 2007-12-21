@@ -418,15 +418,16 @@ void US_Pseudo3D_Combine::setup_GUI()
 
 void US_Pseudo3D_Combine::load_distro()
 {
-	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir,
-														 "*.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.sa2d_mw_dis.* *.ga_dis.* *.ga_mw_dis.* *.ga_mw_mc_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.sa2d_mw_mc_dis.* *.global_dis.* ", 0);
-	if (filename.isEmpty())
+	QFileDialog fd;
+	QString filter = "*.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.sa2d_mw_dis.* *.ga_dis.* *.ga_mw_dis.* *.ga_mw_mc_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.sa2d_mw_mc_dis.* *.global_dis.* ";
+	QStringList list = fd.getOpenFileNames(filter, USglobal->config_list.result_dir, 0, 0);
+	if (list.empty())
 	{
 		return;
 	}
-	else
+	for (QStringList::Iterator it=list.begin(); it!=list.end(); it++)
 	{
-		load_distro(filename);
+		load_distro(*it);
 	}
 }
 
@@ -523,7 +524,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 	}
 	else
 	{
-		temp_system.distro_type = -1; // undefined
+		temp_system.distro_type = 0; // undefined
 	}
 	str = "Run " + temp_system.run_name +
 			"." + temp_system.cell +
