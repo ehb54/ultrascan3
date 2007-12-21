@@ -303,7 +303,7 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
 		}
 		else
 		{
-			filenametags = experiment[e].id + "_" + analysis_type + "_MonteCarlo_" + QString("%1").arg(monte_carlo_iterations) + "_" + startDateTime.toString("yyMMddhhmmss");
+			filenametags = experiment[e].id + "_" + analysis_type + "_MonteCarlo_" + QString("%1").arg(monte_carlo_iterations) + "_" + tag + "_" - startDateTime.toString("yyMMddhhmmss");
 		}
 		{
 			QFile f(filenametags + ".model" + cellwave);
@@ -457,7 +457,7 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment,
 		}
 		else
 		{
-			filenametags = experiment[e].id + "_" + analysis_type + "_MonteCarlo_" + QString("%1").arg(monte_carlo_iterations) + "_" + startDateTime.toString("yyMMddhhmmss");
+			filenametags = experiment[e].id + "_" + analysis_type + "_MonteCarlo_" + QString("%1").arg(monte_carlo_iterations) + "_" + tag + "_" + startDateTime.toString("yyMMddhhmmss");
 		}
 		{
 			QFile f(filenametags + ".model" + cellwave);
