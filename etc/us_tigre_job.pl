@@ -389,6 +389,12 @@ if($analysis_type =~ /^GA/) {
     }
     print "GA time $max_time[0]\n";
     $max_time[0] = 30 if $max_time[0] < 30;
+    $max_time[0] *= 1.5;
+}
+
+if($analysis_type =~ /^2DSA/) {
+    $max_time[0] = 10;
+    print "2DSA time $max_time[0]\n";
 }
 
 if($monte_carlo) {
@@ -408,7 +414,6 @@ if($fit_ti_noise || $fit_ri_noise) {
     $max_time[0] *= 2;
 }
 
-$max_time[0] *= 1.5;
 
 $max_time[0] = 5 if $max_time[0] <= 5;
 if($max_time[0] > 2880 &&
@@ -700,6 +705,81 @@ open(DBS, ">>$US/etc/tigre_short_db");
 print DBS "$db_minstring|$extract_usage|$extra_fields\n";
 close DBS;
 close FH;
+
+if($db_login_database eq "limstest2" &&
+   $HPCAnalysisID > 0) {
+    print "Updating MySql database $db_login_database for id $HPCAnalysisID\n";
+    $enddate = `date +'\%Y-\%m-\%d \%T'`;
+    chomp $enddate;
+    use DBI;
+
+    my $dbh = DBI->connect("DBI:mysql:database=$db_login_database;host=$db_login_host",
+			   "$db_login_user", "$db_login_password",
+			   {'RaiseError' => 1});
+    $sql = "update tblHPCAnalysis set\n" .
+	"CPU_Number=$np, Datapoints=$total_points, Cluster_Name=\"$default_system\", CPUTime=$jobtime\n, " .
+	"EndDateTime=\"$enddate\",max_rss=$maxrss " .
+	"where HPCAnalysis_ID=$HPCAnalysisID;\n";
+    print "SQL $sql";
+    $dbh->do($sql);
+
+# update tblHPCModel also
+
+    $tid = `echo email_list*`;
+    chomp $tid;
+    ( $tid ) = $tid =~ /email_list_(\d*)/;
+
+    print "tid is $tid\n";
+
+    @list = `cat email_list_$tid`;
+    grep(chomp,@list);
+
+    @models = grep(/$tid\.model\./, @list);
+    @tinoise = @models;
+    @rinoise = @models;
+    grep(s/$tid\.model\./$tid\.ti_noise\./,@tinoise);
+    grep(s/$tid\.model\./$tid\.ri_noise\./,@rinoise);
+
+    @text = `cat email_text_$tid`;
+    grep(chomp,@text);
+    @text = grep(/^Experiment /, @text);
+
+    if($models[0] =~ /_global_/) {
+	print "model global <$models[$i]> ti <> ri <> meniscus <> rmsd <>\n";
+	undef $model;
+	$model = `cat $models[$i]` if -e $models[$i];
+	$sql = "insert into tblHPCModel values (NULL, 0, \"$model\", NULL, NULL, \"$models[$i]\", NULL, NULL, 0, $HPCAnalysisID);\n";
+	print "SQL $sql";
+	$dbh->do($sql);
+	shift @models;
+	shift @tinoise;
+	shift @rinoise;
+	
+    }
+	
+    for($i = 0; $i < @models; $i++) {
+	( $rmsd[$i] ) = $text[$i] =~ /rmsd (.*?),/;
+	( $meniscus[$i] ) = $text[$i] =~ /meniscus (.*?),/;
+	undef $tinoise[$i] if ! -e $tinoise[$i];
+	undef $rinoise[$i] if ! -e $rinoise[$i];
+	print "model $i <$models[$i]> ti <$tinoise[$i]> ri <$rinoise[$i]> meniscus <$meniscus[$i]> rmsd <$rmsd[$i]>\n";
+
+	undef $model;
+	undef $ti;
+	undef $ri;
+	$model = `cat $models[$i]` if -e $models[$i];
+	$ti = `cat $tinoise[$i]` if $tinoise[$i] && -e $tinoise[$i];
+	$ri = `cat $rinoise[$i]` if $rinoise[$i] && -e $rinoise[$i];
+	$sql = "insert into tblHPCModel values (NULL, 0, \"$model\", \"$ti\", \"$ri\", \"$models[$i]\", \"$tinoise[$i]\",  \"$tinoise[$i]\", $rmsd[$i], $HPCAnalysisID);\n";
+	print "SQL $sql";
+	$dbh->do($sql);
+    }
+
+    $dbh->disconnect();
+}
+
+
+
 
 print "Finished\n";
 
