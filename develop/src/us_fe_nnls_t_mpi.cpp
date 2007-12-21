@@ -240,11 +240,11 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
 		QString filenametags;
 		if (monte_carlo_iterations <= 1)
 		{
-			filenametags = experiment[0].id + "_" + analysis_type + "_global_" + tag + "_" + startDateTime.toString("yyMMddhhmmss");
+			filenametags = experiment[0].id + "_" + analysis_type + "_global" + tag + "_" + startDateTime.toString("yyMMddhhmmss");
 		}
 		else
 		{
-			filenametags = experiment[0].id + "_" + analysis_type + "_MonteCarlo_" + QString("%1").arg(monte_carlo_iterations) + "_global_" + tag + "_" + startDateTime.toString("yyMMddhhmmss");
+			filenametags = experiment[0].id + "_" + analysis_type + "_MonteCarlo_" + QString("%1").arg(monte_carlo_iterations) + "_global" + tag + "_" + startDateTime.toString("yyMMddhhmmss");
 		}
 		{
 			QFile f(filenametags + ".model" + cellwave);
@@ -299,11 +299,11 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
 		QString filenametags;
 		if (monte_carlo_iterations <= 1)
 		{
-			filenametags = experiment[e].id + "_" + analysis_type + "_" + tag + "_" + startDateTime.toString("yyMMddhhmmss");
+			filenametags = experiment[e].id + "_" + analysis_type + tag + "_" + startDateTime.toString("yyMMddhhmmss");
 		}
 		else
 		{
-			filenametags = experiment[e].id + "_" + analysis_type + "_MonteCarlo_" + QString("%1").arg(monte_carlo_iterations) + "_" + tag + "_" - startDateTime.toString("yyMMddhhmmss");
+			filenametags = experiment[e].id + "_" + analysis_type + "_MonteCarlo_" + QString("%1").arg(monte_carlo_iterations) + tag + "_" + startDateTime.toString("yyMMddhhmmss");
 		}
 		{
 			QFile f(filenametags + ".model" + cellwave);
@@ -453,11 +453,11 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment,
 		QString filenametags;
 		if (monte_carlo_iterations <= 1)
 		{
-			filenametags = experiment[e].id + "_" + analysis_type + "_" + tag + "_" + startDateTime.toString("yyMMddhhmmss");
+			filenametags = experiment[e].id + "_" + analysis_type + tag + "_" + startDateTime.toString("yyMMddhhmmss");
 		}
 		else
 		{
-			filenametags = experiment[e].id + "_" + analysis_type + "_MonteCarlo_" + QString("%1").arg(monte_carlo_iterations) + "_" + tag + "_" + startDateTime.toString("yyMMddhhmmss");
+			filenametags = experiment[e].id + "_" + analysis_type + "_MonteCarlo_" + QString("%1").arg(monte_carlo_iterations) + tag + "_" + startDateTime.toString("yyMMddhhmmss");
 		}
 		{
 			QFile f(filenametags + ".model" + cellwave);
@@ -1854,7 +1854,7 @@ int US_fe_nnls_t::run(int status)
 					}
 				}
 
-				BufferResults(experiment, final_use_solutes, sve, "best", 0, GA_Params.generations);
+				BufferResults(experiment, final_use_solutes, sve, "", 0, GA_Params.generations);
 
 				if (this_monte_carlo == monte_carlo_iterations - 1)
 				{
@@ -2968,7 +2968,7 @@ int US_fe_nnls_t::run(int status)
 						}
 						printf("buffer results %u\n", j);
 						fflush(stdout);
-						BufferResults(experiment, sv, QString("m%1").arg(j), meniscus_meniscus[j], meniscus_iterations[j]);
+						BufferResults(experiment, sv, QString("_m%1").arg(j), meniscus_meniscus[j], meniscus_iterations[j]);
 						printf("results buffered %u\n", j);
 						fflush(stdout);
 					}
@@ -2987,7 +2987,7 @@ int US_fe_nnls_t::run(int status)
 					{
 						sv = regularize(sv, 0e0);
 					}
-					BufferResults(experiment, sv, "union", 0, iterations);
+					BufferResults(experiment, sv, "", 0, iterations);
 					printf("results buffered\n");
 					fflush(stdout);
 				}
@@ -3004,7 +3004,7 @@ int US_fe_nnls_t::run(int status)
 						{
 							sv = regularize(sv, meniscus_meniscus[j]);
 						}
-						BufferResults(experiment, sv, QString("m%1").arg(j), meniscus_meniscus[j], meniscus_iterations[j]);
+						BufferResults(experiment, sv, QString("_m%1").arg(j), meniscus_meniscus[j], meniscus_iterations[j]);
 					}
 				}
 				else
