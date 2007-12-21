@@ -706,8 +706,7 @@ print DBS "$db_minstring|$extract_usage|$extra_fields\n";
 close DBS;
 close FH;
 
-if ($db_login_database eq "limstest2" &&
-    $HPCAnalysisID > 0) 
+if ($HPCAnalysisID > 0) 
 {
     print "Updating MySql database $db_login_database for id $HPCAnalysisID\n";
     $enddate = `date +'\%Y-\%m-\%d \%T'`;
