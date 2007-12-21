@@ -706,8 +706,9 @@ print DBS "$db_minstring|$extract_usage|$extra_fields\n";
 close DBS;
 close FH;
 
-if($db_login_database eq "limstest2" &&
-   $HPCAnalysisID > 0) {
+if ($db_login_database eq "limstest2" &&
+    $HPCAnalysisID > 0) 
+{
     print "Updating MySql database $db_login_database for id $HPCAnalysisID\n";
     $enddate = `date +'\%Y-\%m-\%d \%T'`;
     chomp $enddate;
@@ -744,25 +745,29 @@ if($db_login_database eq "limstest2" &&
     grep(chomp,@text);
     @text = grep(/^Experiment /, @text);
 
-    if($models[0] =~ /_global_/) {
-	print "model global <$models[$i]> ti <> ri <> meniscus <> rmsd <>\n";
+    if ($models[0] =~ /_global_/) 
+    {
+	print "model global <$models[0]> ti <> ri <> meniscus <> rmsd <>\n";
 	undef $model;
-	$model = `cat $models[$i]` if -e $models[$i];
-	$sql = "insert into tblHPCModel values (NULL, 0, \"$model\", NULL, NULL, \"$models[$i]\", NULL, NULL, 0, $HPCAnalysisID);\n";
+	$model = `cat $models[0]` if -e $models[0];
+	$sql = "insert into tblHPCModel values " . 
+	    "(NULL, 0, \"$model\", NULL, NULL, \"$models[0]\"," . 
+	    " \"\", \"\", 0, $HPCAnalysisID);\n";
 	print "SQL $sql";
 	$dbh->do($sql);
 	shift @models;
 	shift @tinoise;
 	shift @rinoise;
-	
     }
 	
-    for($i = 0; $i < @models; $i++) {
+    for ($i = 0; $i < @models; $i++) 
+    {
 	( $rmsd[$i] ) = $text[$i] =~ /rmsd (.*?),/;
 	( $meniscus[$i] ) = $text[$i] =~ /meniscus (.*?),/;
 	undef $tinoise[$i] if ! -e $tinoise[$i];
 	undef $rinoise[$i] if ! -e $rinoise[$i];
-	print "model $i <$models[$i]> ti <$tinoise[$i]> ri <$rinoise[$i]> meniscus <$meniscus[$i]> rmsd <$rmsd[$i]>\n";
+	print "model $i <$models[$i]> ti <$tinoise[$i]> ri <$rinoise[$i]> " . 
+	    " meniscus <$meniscus[$i]> rmsd <$rmsd[$i]>\n";
 
 	undef $model;
 	undef $ti;
@@ -770,15 +775,15 @@ if($db_login_database eq "limstest2" &&
 	$model = `cat $models[$i]` if -e $models[$i];
 	$ti = `cat $tinoise[$i]` if $tinoise[$i] && -e $tinoise[$i];
 	$ri = `cat $rinoise[$i]` if $rinoise[$i] && -e $rinoise[$i];
-	$sql = "insert into tblHPCModel values (NULL, 0, \"$model\", \"$ti\", \"$ri\", \"$models[$i]\", \"$tinoise[$i]\",  \"$tinoise[$i]\", $rmsd[$i], $HPCAnalysisID);\n";
+	$sql = "insert into tblHPCModel values " . 
+	    "(NULL, 0, \"$model\", \"$ti\", \"$ri\", \"$models[$i]\", \"$tinoise[$i]\", " . 
+	    " \"$rinoise[$i]\", $rmsd[$i], $HPCAnalysisID);\n";
 	print "SQL $sql";
 	$dbh->do($sql);
     }
 
     $dbh->disconnect();
 }
-
-
 
 
 print "Finished\n";
