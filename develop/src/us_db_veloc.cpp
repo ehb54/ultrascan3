@@ -674,12 +674,12 @@ void US_DB_Veloc::query_db()
 	display_Str = new QString[maxID];
 	if(exp_rst.invID>0)
 	{
-		str.sprintf("SELECT VelocRstID, RunID FROM tblVelocResult WHERE InvestigatorID = %d;", exp_rst.invID);
+		str.sprintf("SELECT VelocRstID, RunID FROM tblVelocResult ORDER BY VelocRstID DESC WHERE InvestigatorID = %d;", exp_rst.invID);
 	}
 
 	else
 	{
-		str.sprintf("SELECT VelocRstID, RunID FROM tblVelocResult;");
+		str.sprintf("SELECT VelocRstID, RunID FROM tblVelocResult ORDER BY VelocRstID DESC;");
 	}
 	QSqlQuery query(str);
 	if(query.isActive())

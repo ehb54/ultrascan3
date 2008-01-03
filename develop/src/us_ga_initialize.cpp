@@ -622,6 +622,12 @@ void US_GA_Initialize::shrink()
 	lb_solutes->clear();
 	MC_solute.clear();
 	MC_solute.resize(GA_Solute.size());
+/*
+	cout << "GA_smin: " << GA_Solute[0].s_min;
+	cout << ", GA_smax: " << GA_Solute[0].s_max;
+	cout << ", GA_fmin: " << GA_Solute[0].ff0_min;
+	cout << ", GA_fmax: " << GA_Solute[0].ff0_max << endl;
+*/
 	for (i=0; i<GA_Solute.size(); i++)
 	{
 		minval_s = 1.0e200;
@@ -641,9 +647,16 @@ void US_GA_Initialize::shrink()
 				j++; // count how many solutes are in this bin
 			}
 		}
+/*		cout << "GA_smin2: " << GA_Solute[0].s_min;
+		cout << ", GA_smax2: " << GA_Solute[0].s_max;
+		cout << ", GA_fmin2: " << GA_Solute[0].ff0_min;
+		cout << ", GA_fmax2: " << GA_Solute[0].ff0_max << endl;
+*/		
 		MC_solute[i].clear();
+		bool flag=false;
 		for (comp_it = component.begin(); comp_it != component.end(); comp_it++)
 		{
+			flag = false;
 			if ((*comp_it).s * 1.0e13 >= GA_Solute[i].s_min && (*comp_it).s * 1.0e13 <= GA_Solute[i].s_max
 			&&  (*comp_it).f_f0 >= GA_Solute[i].ff0_min && (*comp_it).f_f0 <= GA_Solute[i].ff0_max)
 			{
@@ -930,6 +943,7 @@ void US_GA_Initialize::load_distro()
 //				cout << temp2 << ", ";
 				temp_component.concentration = temp2;
 				ts >> temp3; // f/f0
+				if (temp3 < 1.0) temp3 = 1.0;
 //				cout << temp3 << "\n";
 				temp_component.f_f0 = temp3;
 				component.push_back(temp_component);
@@ -1327,7 +1341,7 @@ void US_GA_Initialize::plot_3dim()
 	{
 		k_range = fmax/10.0;
 	}
-	cout << s_range << ", " << k_range << endl;
+	//cout << s_range << ", " << k_range << endl;
 	smax += s_range;
 	smin -= s_range;
 	fmax += k_range;
