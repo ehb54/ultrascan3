@@ -674,7 +674,7 @@ void US_DB_Veloc::query_db()
 	display_Str = new QString[maxID];
 	if(exp_rst.invID>0)
 	{
-		str.sprintf("SELECT VelocRstID, RunID FROM tblVelocResult ORDER BY VelocRstID DESC WHERE InvestigatorID = %d;", exp_rst.invID);
+		str.sprintf("SELECT VelocRstID, RunID FROM tblVelocResult WHERE InvestigatorID = %d ORDER BY VelocRstID DESC;", exp_rst.invID);
 	}
 
 	else
