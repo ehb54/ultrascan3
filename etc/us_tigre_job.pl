@@ -7,11 +7,15 @@
 # IF THIS FAILS FOR THE NUMBER OF PROCESSORS YOU HAVE SELECTED, TIGRE JOBS WILL FAIL!
 # THIS IS NOT HOW MANY PROCS THE SYSTEM HAS, BUT HOW MANY TIGRE/PBS KNOW ABOUT!!!!
 
+
 $bcf_no_procs = 42;
 $alamo_no_procs = 31;
 $laredo_no_procs = 36;
 
 # END USER EDITABLE SECTION
+
+$startdate = `date +'\%Y-\%m-\%d \%T'`;
+chomp $startdate;
 
 use MIME::Lite;
 
@@ -706,19 +710,38 @@ print DBS "$db_minstring|$extract_usage|$extra_fields\n";
 close DBS;
 close FH;
 
+
+use Time::Local;
+sub diffdates 
+{
+    my $date1 = $_[0];
+    my $date2 = $_[1];
+    my $y1, $y2, $m1, $m2, $d1, $d2, $h1, $h2, $mm1, $mm2, $s1, $s2;
+    ( $y1, $m1, $d1, $h1, $mm1, $s1 ) = $date1 =~ /(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/;
+    $y1 -= 1900;
+    $m1 -= 1;
+    my $time1 = timegm($s1, $mm1, $h1, $d1, $m1, $y1);
+    ( $y2, $m2, $d2, $h2, $mm2, $s2 ) = $date2 =~ /(\d\d\d\d)-(\d\d)-(\d\d) (\d\d):(\d\d):(\d\d)/;
+    $y2 -= 1900;
+    $m2 -= 1;
+    my $time2 = timegm($s2, $mm2, $h2, $d2, $m2, $y2);
+    return $time2 - $time1;
+}
+    
 if ($HPCAnalysisID > 0) 
 {
     print "Updating MySql database $db_login_database for id $HPCAnalysisID\n";
     $enddate = `date +'\%Y-\%m-\%d \%T'`;
     chomp $enddate;
+    $walltime = &diffdates($startdate, $enddate);
     use DBI;
 
     my $dbh = DBI->connect("DBI:mysql:database=$db_login_database;host=$db_login_host",
 			   "$db_login_user", "$db_login_password",
 			   {'RaiseError' => 1});
     $sql = "update tblHPCAnalysis set\n" .
-	"CPU_Number=$np, Datapoints=$total_points, Cluster_Name=\"$default_system\", CPUTime=$jobtime\n, " .
-	"EndDateTime=\"$enddate\",max_rss=$maxrss " .
+	"CPU_Number=$np, Datapoints=$total_points, Cluster_Name=\"$default_system\", CPUTime=$jobtime,\n" .
+	"EndDateTime=\"$enddate\",max_rss=$maxrss, Walltime=$walltime " .
 	"where HPCAnalysis_ID=$HPCAnalysisID;\n";
     print "SQL $sql";
     $dbh->do($sql);
