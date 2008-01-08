@@ -5,11 +5,13 @@ sub extract_usage {
     $maxrss = <RSS>;
     close(RSS);
     chomp $maxrss;
+    $maxrss = 0 if !$maxrss;
 
     open(JT, "grep 'job time' $_[0] | awk '{ print \$4 }' |"); 
     $jobtime = <JT>;
     close JT;
     chomp $jobtime;
+    $jobtime = 0 if !$jobtime;
     $jobtime /= 1000000;
     $extract_usage_title = "maxrss|jobtime";
     $extract_usage = "$maxrss|$jobtime";
