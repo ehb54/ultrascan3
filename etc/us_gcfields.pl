@@ -72,6 +72,7 @@ sub parsegc {
 	$fit_ti_noise = $gcf[$i]; $i++;
 	$fit_ri_noise = $gcf[$i]; $i++;
 	$email = $gcf[$i]; $i++;
+	$HPCAnalysisID = $gcf[$i]; $i++;
     }
     if($analysis_type eq 'GA_MW') {
 	$ga_params_demes = $gcf[$i]; $i++;
@@ -105,6 +106,7 @@ sub parsegc {
 	$fit_ti_noise = $gcf[$i]; $i++;
 	$fit_ri_noise = $gcf[$i]; $i++;
 	$email = $gcf[$i]; $i++;
+	$HPCAnalysisID = $gcf[$i]; $i++;
     }
     undef $sa2d_params_ff0_min;
     undef $sa2d_params_ff0_max;
@@ -135,6 +137,7 @@ sub parsegc {
 	$sa2d_params_use_iterative = $gcf[$i]; $i++;
 	$sa2d_params_max_iterations = $gcf[$i]; $i++;
 	$monte_carlo = $gcf[$i]; $i++;
+	$HPCAnalysisID = $gcf[$i]; $i++;
     }
     if($analysis_type eq '2DSA_MW') {
 	$sa2d_params_ff0_min = $gcf[$i]; $i++;
@@ -155,6 +158,7 @@ sub parsegc {
 	$sa2d_params_max_iterations = $gcf[$i]; $i++;
 	$monte_carlo = $gcf[$i]; $i++;
 	$sa2d_params_max_mer = $gcf[$i]; $i++;
+	$HPCAnalysisID = $gcf[$i]; $i++;
     }
     $dbstring = "$db_login_user|$db_login_database|$db_login_host|$email|$no_experiments|$exp_file_infos|$exp_dirs|$exp_cells|$exp_lambdas|$exp_channels|$analysis_type|$monte_carlo|$fit_ti_noise|$fit_ri_noise|$fit_meniscus|$meniscus_range|$meniscus_gridpoints";
     $dbstring .= "|$ga_params_demes|$ga_params_generations|$ga_params_crossover|$ga_params_mutation|$ga_params_plague|$ga_Params_elitism|$ga_params_migration_rate|$ga_params_genes|$ga_params_initial_solutes|$ga_params_random_seed";

@@ -12,7 +12,7 @@ $cutoff = 4;
 use Net::Telnet;
 
 $proxy = `env LD_LIBRARY_PATH=/share/apps/tigre/globus/lib:\$LD_LIBRARY_PATH /share/apps/tigre/globus/bin/grid-proxy-info 2>&1`;
-open(LOG, ">>/tmp/us_get_tigre_sysstat.out");
+open(LOG, ">>/lustre/tmp/us_get_tigre_sysstat.out");
 print LOG `date
 echo \$PATH
 echo \$LD_LIBRARY_PATH
@@ -32,14 +32,15 @@ if($proxy =~ /ERROR/) {
     }
 }
 
+
 $ultrascan = $ENV{'ULTRASCAN'};
 open(OUT, ">$ultrascan/etc/tigre_sysstat.new");
 
 for($i = 0; $i < $cutoff; $i++) {
 # no load checking
-	$t = new Net::Telnet(Timeout=>.1, Errmode=>'return', Port=>$globusport[$i]);
+    $t = new Net::Telnet(Timeout=>.1, Errmode=>'return', Port=>$globusport[$i]);
     $t->open($systems[$i]);
-	print OUT "$systems[$i] ";
+    print OUT "$systems[$i] ";
     if(!length($t->errmsg)) {
 	if($systems[$i] =~ /tamu.edux/) {
 	    print OUT 'up TESTING *';
@@ -53,16 +54,51 @@ for($i = 0; $i < $cutoff; $i++) {
     print OUT "\n";
 }
 
+## @fn $ timedexec($timeout, $command)
+# runs a shell command for timeout seconds and if it has not completed, it returns with 'non-responsive'
+# @param the timeout in seconds and the command
+# @return the results from the command or 'non-responsive'
+
+sub timedexec {
+
+    my $return;
+    my $pid = open(PIPE, "$_[1] |") or die $!;
+
+    eval {
+	local $SIG{ALRM} = sub { die "timeout" };
+	alarm($_[0]);
+	my @results = <PIPE>;
+	$return = join '', @results;
+	close(PIPE);
+	alarm(0);
+    };
+
+    if($@) {
+	alarm(0);
+	if($@ =~ /timeout/) {
+	    $return = "NA";
+	    kill 9, $pid;
+	    close(PIPE); 
+#	    print "timed out\n";
+	    # timed out;
+	} else {
+	    print "success\n";
+	    die;
+	}
+    }
+    $return;
+}
+
 for($i = $cutoff; $i < @systems; $i++) {
     print OUT "$systems[$i] ";
     $t = new Net::Telnet(Timeout=>.1, Errmode=>'return', Port=>$globusport[$i]);
     $t->open($systems[$i]);
-    if(!length($t->errmsg)) {
+    if(!length($t->errmsg)) { # && !($systems[$i] =~ /^alamo/)) {
 	print OUT 'up ';
 	if(!$noproxy) { #  && !($systems[$i] =~ /laredo/)) {
-	    $sys1 = `perl $ultrascan/etc/pbsinfo.pl $systems[$i] 15001 2>/dev/null`;
+	    $sys1 = &timedexec(15, "perl $ultrascan/etc/pbsinfo.pl $systems[$i] 15001 2>/dev/null");
 	    chomp $sys1;
-	    $sys2 = `perl $ultrascan/etc/pbsinfo.pl $systems[$i] 36001 2>/dev/null`; # if $systems[$i] ne 'bcf.uthscsa.edu';
+	    $sys2 = &timedexec(15, "perl $ultrascan/etc/pbsinfo.pl $systems[$i] 36001 2>/dev/null"); # if $systems[$i] ne 'bcf.uthscsa.edu';
 	    chomp $sys2;
 	    print OUT "$sys1 $sys2";
 	} else {

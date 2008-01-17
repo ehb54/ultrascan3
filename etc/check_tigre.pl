@@ -116,7 +116,7 @@ if(!($gsissh =~ /test123/)) {
 print "gsissh ok\n";
 
 $globusruncmd = 
-"globusrun-ws -submit -F https://${system}:$ports_globus[$reversesystems{$system}]/wsrf/services/ManagedJobFactoryService -c ultrascan/etc/datetest '$date' $datef 2>&1\n";
+"globusrun-ws -submit -term 12/31/2099 -F https://${system}:$ports_globus[$reversesystems{$system}]/wsrf/services/ManagedJobFactoryService -c ultrascan/etc/datetest '$date' $datef 2>&1\n";
 print $globusruncmd;
 $globusrun = `$globusruncmd`;
 

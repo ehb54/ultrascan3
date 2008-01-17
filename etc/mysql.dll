@@ -1002,3 +1002,221 @@ CREATE TABLE tblLaserData (
   FOREIGN KEY (LaserID) REFERENCES tblLaser (LaserID) ON DELETE CASCADE,
   PRIMARY KEY  (LaserID)
 ) TYPE=InnoDB;
+
+--
+-- Table structure for table tblHPCAnalysis
+--
+
+DROP TABLE IF EXISTS tblHPCAnalysis;
+CREATE TABLE tblHPCAnalysis 
+(
+  HPCAnalysis_ID int(11) NOT NULL auto_increment,
+  DateTime datetime NOT NULL,
+  EndDateTime datetime default NULL,
+  Email varchar(80) NOT NULL,
+  Walltime int(11) NOT NULL default 0,
+  CPUTime double NOT NULL default 0,
+  Architecture varchar(80) default NULL,
+  Cluster_Name varchar(80) default NULL,
+  CPU_Number int(11) default 0,
+  Datapoints int(11) default 0,
+  RI_Noise_Fitted tinyint(1) NOT NULL default 0,
+  TI_Noise_Fitted tinyint(1) NOT NULL default 0,
+  max_rss int(11) default 0,
+  Method enum('2DSA','2DSA_MW','GA','GA_MW') NOT NULL,
+  queue_email varchar(80) NOT NULL,
+  queue_name varchar(80) NOT NULL,
+  Investigator_ID int(11) NOT NULL,
+  Submitter_ID int(11) NOT NULL,
+  PRIMARY KEY  (HPCAnalysis_ID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table tbl2DSA_Settings
+--
+
+DROP TABLE IF EXISTS tbl2DSA_Settings;
+CREATE TABLE tbl2DSA_Settings 
+(
+  2DSA_Settings_ID int(11) NOT NULL auto_increment,
+  s_min double NOT NULL default 1.0,
+  s_max double NOT NULL default 10.0,
+  s_resolution double NOT NULL default 10.0,
+  ff0_min double NOT NULL default 1.0,
+  ff0_max double NOT NULL default 4.0,
+  ff0_resolution double NOT NULL default 10.0,
+  uniform_grid int(11) NOT NULL default 6,
+  montecarlo_value int(11) NOT NULL default 0,
+  tinoise_option tinyint(1) NOT NULL default 0,
+  regularization int(11) NOT NULL default 0,
+  meniscus_option tinyint(1) NOT NULL default 0,
+  meniscus_value double NOT NULL default 0.01,
+  meniscus_points double NOT NULL default 3,
+  iterations_option tinyint(1) NOT NULL default 0,
+  iterations_value int(11) NOT NULL default 3,
+  rinoise_option tinyint(1) NOT NULL default 0,
+  HPCAnalysis_ID int(11) NOT NULL,
+  PRIMARY KEY  (2DSA_Settings_ID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table tbl2DSA_MW_Settings
+--
+
+DROP TABLE IF EXISTS tbl2DSA_MW_Settings;
+CREATE TABLE tbl2DSA_MW_Settings 
+(
+  2DSA_MW_Settings_ID int(11) NOT NULL auto_increment,
+  mw_min double NOT NULL default 100.0,
+  mw_max double NOT NULL default 1000.0,
+  grid_resolution int(11) NOT NULL default 10,
+  oligomer int(11) NOT NULL default 4,
+  ff0_min double NOT NULL default 1.0,
+  ff0_max double NOT NULL default 4.0,
+  ff0_resolution int(11) NOT NULL default 10,
+  uniform_grid int(11) NOT NULL default 6,
+  montecarlo_value int(11) NOT NULL default 0,
+  tinoise_option tinyint(1) NOT NULL default 0,
+  regularization int(11) NOT NULL default 0,
+  meniscus_option tinyint(1) NOT NULL default 0,
+  meniscus_value double NOT NULL default 0.01,
+  meniscus_points int(11) NOT NULL default 3,
+  iterations_option tinyint(1) NOT NULL default 0,
+  iterations_value int(11) NOT NULL default 3,
+  rinoise_option tinyint(1) NOT NULL default 0,
+  HPCAnalysis_ID int(11) NOT NULL,
+  PRIMARY KEY  (2DSA_MW_Settings_ID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table tblGA_Settings
+--
+
+DROP TABLE IF EXISTS tblGA_Settings;
+CREATE TABLE tblGA_Settings 
+(
+  GA_Settings_ID int(11) NOT NULL auto_increment,
+  montecarlo_value int(11) NOT NULL default 0,
+  demes_value int(11) NOT NULL default 31,
+  genes_value int(11) NOT NULL default 100,
+  generations_value int(11) NOT NULL default 100,
+  crossover_value int(11) NOT NULL default 50,
+  mutation_value int(11) NOT NULL default 50,
+  plague_value int(11) NOT NULL default 4,
+  elitism_value int(11) NOT NULL default 2,
+  migration_value int(11) NOT NULL default 3,
+  regularization_value double NOT NULL default 5.0,
+  seed_value int(11) NOT NULL default 0,
+  tinoise_option tinyint(1) NOT NULL default 0,
+  rinoise_option tinyint(1) NOT NULL default 0,
+  meniscus_option tinyint(1) NOT NULL default 0,
+  meniscus_value double NOT NULL default 0,
+  solute_value int(11) NOT NULL default 3,
+  solute_data mediumtext default NULL,
+  HPCAnalysis_ID int(11) NOT NULL,
+  PRIMARY KEY  (GA_Settings_ID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table tblHPCSoluteData
+--
+
+DROP TABLE IF EXISTS tblHPCSoluteData;
+CREATE TABLE tblHPCSoluteData
+(
+  HPCSoluteData_ID int(11) NOT NULL auto_increment,
+  s_value double NOT NULL,
+  s_min double NOT NULL,
+  s_max double NOT NULL,
+  ff0_value double NOT NULL,
+  ff0_min double NOT NULL,
+  ff0_max double NOT NULL,
+  HPCAnalysis_ID int(11) NOT NULL,
+  PRIMARY KEY (HPCSoluteData_ID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table tblGA_MW_Settings
+--
+
+DROP TABLE IF EXISTS tblGA_MW_Settings;
+CREATE TABLE tblGA_MW_Settings 
+(
+  GA_MW_Settings_ID int(11) NOT NULL auto_increment,
+  mw_min double NOT NULL default 100.0,
+  mw_max double NOT NULL default 1000.0,
+  oligomer int(11) NOT NULL default 4,
+  ff0_min double NOT NULL default 1.0,
+  ff0_max double NOT NULL default 4.0,
+  montecarlo_value int(11) NOT NULL default 0,
+  tinoise_option tinyint(1) NOT NULL default 0,
+  demes_value int(11) NOT NULL default 31,
+  genes_value int(11) NOT NULL default 100,
+  generations_value int(11) NOT NULL default 100,
+  crossover_value int(11) NOT NULL default 50,
+  mutation_value int(11) NOT NULL default 50,
+  plague_value int(11) NOT NULL default 4,
+  elitism_value int(11) NOT NULL default 2,
+  migration_value int(11) NOT NULL default 3,
+  regularization_value double NOT NULL default 5.0,
+  seed_value int(11) NOT NULL default 0,
+  rinoise_option tinyint(1) NOT NULL default 0,
+  meniscus_option tinyint(1) NOT NULL default 0,
+  meniscus_value double NOT NULL default 0,
+  HPCAnalysis_ID int(11) NOT NULL,
+  PRIMARY KEY  (GA_MW_Settings_ID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table tblHPCFileData
+--
+
+DROP TABLE IF EXISTS tblHPCFileData;
+CREATE TABLE tblHPCFileData
+(
+  HPCFileData_ID int(11) NOT NULL auto_increment,
+  file_name varchar(64) NOT NULL,
+  path varchar(128) NOT NULL,
+  cell int(11) NOT NULL,
+  channel int(11) NOT NULL,
+  lambda int(11) NOT NULL,
+  HPCAnalysis_ID int(11) NOT NULL,
+  PRIMARY KEY (HPCFileData_ID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table tblHPCAnalysisData
+--
+
+DROP TABLE IF EXISTS tblHPCAnalysisData;
+CREATE TABLE tblHPCAnalysisData 
+(
+  HPCAnalysisData_ID int(11) NOT NULL auto_increment,
+  cell int(11) NOT NULL default 0,
+  channel int(11) NOT NULL default 0,
+  wavelength int(11) NOT NULL default 0,
+  ExpdataID int(11) NOT NULL default 0,
+  HPCAnalysis_ID int(11) NOT NULL,
+  PRIMARY KEY  (HPCAnalysisData_ID)
+) TYPE=InnoDB;
+
+--
+-- Table structure for table tblHPCModel
+--
+
+DROP TABLE IF EXISTS tblHPCModel;
+CREATE TABLE tblHPCModel 
+(
+  HPCModel_ID int(11) NOT NULL auto_increment,
+  meniscus double NOT NULL default 0.0,
+  model mediumblob,
+  ti_noise blob,
+  ri_noise blob,
+  model_filename varchar(256) default NULL,
+  ti_noise_filename varchar(256) default NULL,
+  ri_noise_filename varchar(256) default NULL,
+  RMSD double NOT NULL default 0.0,
+  HPCAnalysis_ID int(11) NOT NULL,
+  PRIMARY KEY  (HPCModel_ID)
+) TYPE=InnoDB;
+

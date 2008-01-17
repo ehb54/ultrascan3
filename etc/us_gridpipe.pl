@@ -394,6 +394,7 @@ while(1) {
 		# process us_gridcontrol
 		$valid++;
 		$file = $1;
+		$args = $2;
 		print STDERR "$0: process us_gridcontrol $file\n" if $debug;
 		&startjob_gc($file);
 	    }
