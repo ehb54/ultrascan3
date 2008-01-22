@@ -39,7 +39,6 @@ struct distro_system
 	QString method;
 	unsigned int distro_type;
 	bool monte_carlo;
-	QColor **col;
 };
 
 class US_EXTERN US_Pseudo3D_Combine : public QFrame
@@ -59,7 +58,6 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		unsigned int current_distro;
 		unsigned int initial_solutes, monte_carlo_iterations, dimension;
 		bool zoom, autolimit, plot_s;
-		
 
 	private:
 
@@ -93,7 +91,6 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		QPushButton *pb_help;
 		QPushButton *pb_color;
 		QPushButton *pb_replot3d;
-		QPushButton *pb_plot_combined;
 		QPushButton *pb_print;
 		QPushButton *pb_load_distro;
 		QPushButton *pb_close;
@@ -117,7 +114,6 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		void update_y_pixel(double);
 		void update_current_distro(double);
 		void plot_3dim();
-		void plot_combined();
 		void select_autolimit();
 		void select_plot_s();
 		void select_plot_mw();
