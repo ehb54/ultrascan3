@@ -93,7 +93,7 @@ for($i = $cutoff; $i < @systems; $i++) {
     print OUT "$systems[$i] ";
     $t = new Net::Telnet(Timeout=>.1, Errmode=>'return', Port=>$globusport[$i]);
     $t->open($systems[$i]);
-    if(!length($t->errmsg)) { # && !($systems[$i] =~ /^alamo/)) {
+    if(!length($t->errmsg) && !($systems[$i] =~ /^laredo/)) {
 	print OUT 'up ';
 	if(!$noproxy) { #  && !($systems[$i] =~ /laredo/)) {
 	    $sys1 = &timedexec(15, "perl $ultrascan/etc/pbsinfo.pl $systems[$i] 15001 2>/dev/null");
