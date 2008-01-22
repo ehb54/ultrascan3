@@ -1913,7 +1913,7 @@ int US_fe_nnls_t::run(int status)
 #endif
 #if defined(GLOBAL_JOB_TIMING)
 					gettimeofday(&end_tv, NULL);
-					printf("0: job time %ld\n",
+					printf("0: job time %lu\n",
 						   1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
 						   start_tv.tv_usec);
 					fflush(stdout);
@@ -3084,7 +3084,7 @@ int US_fe_nnls_t::run(int status)
 #endif
 #if defined(GLOBAL_JOB_TIMING)
 				gettimeofday(&end_tv, NULL);
-				printf("0: job time %ld\n",
+				printf("0: job time %lu\n",
 					   1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
 					   start_tv.tv_usec);
 				fflush(stdout);
