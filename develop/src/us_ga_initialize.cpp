@@ -2553,13 +2553,16 @@ void US_GA_Initialize::save()
 				ts << s1.sprintf(tr("Molecular weight:\t %6.4e (%6.4e, %6.4e)\n"), stats.mode_center, stats.conf95low, stats.conf95high);	// the standard error of the distribution
 				val.clear();
 //				cout << "Monte carlo iterations: " << monte_carlo_iterations << endl;
+				float total=0.0;
 				for (j=0; j<MC_solute[i].size(); j++)
 				{
 					// multiply with the total number of MC iterations to scale back to normal concentration
 					val.push_back(MC_solute[i][j].concentration * monte_carlo_iterations);
+					total += MC_solute[i][j].concentration;
 				}
 				calc_stats(&stats, val, "Concentration");
 				ts << s1.sprintf(tr("Concentration:\t\t %6.4e (%6.4e, %6.4e)\n"), stats.mode_center, stats.conf95low, stats.conf95high);	// the standard error of the distribution
+				ts << s1.sprintf(tr("Total Concentration:\t\t %6.4e\n"), total);	// the standard error of the distribution
 				val.clear();
 				for (j=0; j<MC_solute[i].size(); j++)
 				{

@@ -1111,6 +1111,26 @@ int Data_Control_W::load_data()
 	return(load_data(fn));
 }
 
+//some functions don't need to know hydrodynamic info and can load a local
+//file without requirement for database functions, and can pass db_flag=false
+
+int Data_Control_W::load_data(bool db_flag)
+{
+	step = 0;
+	if (GUI)
+	{
+		if (run_type == 2 || run_type == 4 || run_type == 6 || run_type == 8 || run_type == 10 || run_type == 12)
+		{
+			fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.us.e", 0);
+		}
+		else
+		{
+			fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.us.v", 0);
+		}
+	}
+	return(load_data(fn, db_flag));
+}
+
 int Data_Control_W::load_data(const QString &fileName)
 {
 	US_Data_IO *data_io;
@@ -1298,7 +1318,7 @@ int Data_Control_W::load_data(const QString &fileName)
 	if ( return_flag < 0)
 	{
 		exit(return_flag);
-	};
+	}
 	for(i=0; i<8; i++)
 	{
 		for(j=0; j<4; j++)
@@ -1375,6 +1395,263 @@ int Data_Control_W::load_data(const QString &fileName)
 	&& run_type != 31
 	&& run_type != 32
 	&& !GUI)
+	{
+		if (load_scan() < 0)
+		{
+			return(-3); // -3 error code = scan file is missing
+		}
+	}
+	if ((run_type == 1 || run_type == 2) && GUI)
+	{
+		pb_details->setEnabled(true);
+		pb_second_plot->setEnabled(true);
+		pb_save->setEnabled(true);
+		pb_print->setEnabled(true);
+		pb_view->setEnabled(true);
+		if (extraCounter > 0) // there is no reset button, the second plot button is used for reset
+		{
+			pb_reset->setEnabled(true);
+		}
+		pb_exsingle->setEnabled(true);
+		pb_exrange->setEnabled(true);
+		updateButtons();
+	}
+	if ((run_type == 3 || run_type == 4 || run_type == 5 || run_type == 6) && GUI)
+	{
+		pb_details->setEnabled(true);
+		pb_print->setEnabled(true);
+		if (extraCounter > 0)// there is no reset button, the second plot button is used for reset
+		{
+			pb_reset->setEnabled(true);
+		}
+		pb_exsingle->setEnabled(true);
+		pb_exrange->setEnabled(true);
+		updateButtons();
+	}
+	emit dataLoaded();
+	delete data_io;
+	return(0);
+}
+
+//some functions don't need to know hydrodynamic info and can load a local
+//file without requirement for database functions, and can pass db_flag=false
+
+int Data_Control_W::load_data(const QString &fileName, bool db_flag)
+{
+	US_Data_IO *data_io;
+	data_io = new US_Data_IO(&run_inf, baseline_flag);
+	connect(data_io, SIGNAL(newMessage(QString, int)), this, SLOT(newMessage(QString, int)));
+	QString version, str;
+	unsigned int i, j, k;
+	int result;
+// first clean up before loading a new data set if one has already been loaded
+	plateaus_corrected = false;
+	rad_corrected = false;
+	if (scan_loaded)
+	{
+		cleanup_loaded_scan();
+	}
+	if (scan_copied)
+	{
+		cleanup_copied_scan();
+	}
+	if (run_loaded)
+	{
+		cleanup_loaded_run();
+	}
+	start = true;
+	if (run_type == 1 || run_type == 3 || run_type == 5 || run_type == 7 || run_type == 9 || run_type == 11 || run_type == 31 || run_type == 32)
+	{
+		if ( !fileName.isEmpty() )
+		{
+			result = data_io->load_run(fileName, run_type, has_data, &cp_list);
+			temp_run.temperature.clear();
+			temp_run.rpm.clear();
+			temp_run.time.clear();
+			temp_run.omega_s_t.clear();
+			temp_run.plateau.clear();
+			temp_run.temperature.resize(8);
+			temp_run.rpm.resize(8);
+			temp_run.time.resize(8);
+			temp_run.omega_s_t.resize(8);
+			temp_run.plateau.resize(8);
+			for (i=0; i<8; i++)
+			{
+				temp_run.temperature[i].resize(run_inf.wavelength_count[i]);
+				temp_run.rpm[i].resize(run_inf.wavelength_count[i]);
+				temp_run.time[i].resize(run_inf.wavelength_count[i]);
+				temp_run.omega_s_t[i].resize(run_inf.wavelength_count[i]);
+				temp_run.plateau[i].resize(run_inf.wavelength_count[i]);
+				for (j=0; j<run_inf.wavelength_count[i]; j++)
+				{
+					temp_run.temperature[i][j].resize(run_inf.scans[i][j]);
+					temp_run.rpm[i][j].resize(run_inf.scans[i][j]);
+					temp_run.time[i][j].resize(run_inf.scans[i][j]);
+					temp_run.omega_s_t[i][j].resize(run_inf.scans[i][j]);
+					temp_run.plateau[i][j].resize(run_inf.scans[i][j]);
+				}
+			}
+			for (i=0; i<8; i++)
+			{
+				for (j=0; j<run_inf.wavelength_count[i]; j++)
+				{
+					for (k=0; k<run_inf.scans[i][j]; k++)
+					{
+						temp_run.temperature[i][j][k] = run_inf.temperature[i][j][k];
+						temp_run.rpm[i][j][k] = run_inf.rpm[i][j][k];
+						temp_run.time[i][j][k] = run_inf.time[i][j][k];
+						temp_run.omega_s_t[i][j][k] = run_inf.omega_s_t[i][j][k];
+						temp_run.plateau[i][j][k] = run_inf.plateau[i][j][k];
+					}
+				}
+			}
+			for (i=0; i<8; i++)
+			{
+				for (j=0; j<3; j++)
+				{
+					temp_run.scans[i][j] = run_inf.scans[i][j];
+				}
+			}
+
+//cout << "Loading data RETURNED result code: " << result << endl;
+			if (result < 0)
+			{
+				str.sprintf(tr("Please note:\n\nThere was an error reading\nthe selected velocity datafile!\n\nThe program returned code %d"), result);
+				QMessageBox::warning(this, tr("UltraScan Warning"), str,
+											QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+				cout << "Loading data failed with result code: " << result << endl;
+				return(result);
+			}
+		}
+		else	// didn't select any data, so let's go home.
+		{
+			delete data_io;
+			return(-2);	// -2 error code = no data selected
+		}
+	}
+	if (run_type == 2 || run_type == 4 || run_type == 6 || run_type == 8 || run_type == 10 || run_type == 12)
+	{
+		if ( !fileName.isEmpty() )
+		{
+			result = data_io->load_run(fileName, 2, has_data, &cp_list);
+			if (result < 0)
+			{
+				str.sprintf(tr("Please note:\n\nThere was an error reading\nthe selected equilibrium datafile!\n\nThe program returned code %d"), result);
+				QMessageBox::warning(this, tr("UltraScan Warning"), str,
+											QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+				cout << tr("Loading data failed with result code: ") << result << endl;
+				return(result);
+			}
+		}
+		else	// didn't select any data, so let's go home.
+		{
+			delete data_io;
+			return (-2);
+		}
+	}
+
+	run_loaded = true;
+	createHtmlDir(); 	// create the directory for html reports
+	i=0;
+	while (!has_data[i])	//let's find the first cell with data in it
+	{
+		i++;
+	}
+	first_cell = i;
+	selected_channel = 0;
+	selected_lambda = 0;
+	selected_cell = i;
+	omega_s = pow((double) ((run_inf.rpm[first_cell][0][0]/30)*M_PI), (double) 2);
+	step = 1;
+	if (GUI)	// if we are not resetting, we want to see the detail window
+	{
+		details();
+		qApp->processEvents();
+	}
+	if (db_flag)
+	{
+		int return_flag = data_io->load_hydrodynamics(&hydro_inf);
+		if ( return_flag < 0)
+		{
+			exit(return_flag);
+		}
+		for(i=0; i<8; i++)
+		{
+			for(j=0; j<4; j++)
+			{
+				Density[i][j] = hydro_inf.Density[i][j];
+				Viscosity[i][j] = hydro_inf.Viscosity[i][j];
+				for(k=0; k<3; k++)
+				{
+					Vbar[i][j][k] = hydro_inf.Vbar[i][j][k];
+					Vbar20[i][j][k] = hydro_inf.Vbar20[i][j][k];
+				}
+			}
+		}
+		density = hydro_inf.Density[selected_cell][selected_channel];
+		viscosity = hydro_inf.Viscosity[selected_cell][selected_channel];
+		vbar = hydro_inf.Vbar[selected_cell][selected_channel][0];
+		vbar20 = hydro_inf.Vbar20[selected_cell][selected_channel][0];
+		calc_correction(run_inf.avg_temperature);
+	}
+
+	if ((run_type != 7
+			 && run_type != 8
+			 && run_type != 0
+			 && run_type != 9
+			 && run_type != 10
+			 && run_type != 11
+			 && run_type != 12
+			 && run_type != 31
+			 && run_type != 32) && GUI)
+	{
+		update_screen();
+		//
+// if we are not resetting, set the selection to the first dataset and update the
+// listbox, else keep the current setting:
+		//
+		if ((run_type == 2 || run_type ==4 || run_type == 6) && GUI)
+		{
+			channel_select->setSelected(0, true);
+			if (cp_list[run_inf.centerpiece[selected_cell]].channels > 1) //enable the channel selection dialog
+			{
+				channel_select->setEnabled(true);
+				connect(channel_select, SIGNAL(highlighted(int)), SLOT(show_channel(int)));
+			}
+		}
+		cell_select->setSelected(selected_cell, true);
+		lambda_select->setSelected(selected_lambda, true);
+		if ((run_type == 2 || run_type ==4 || run_type == 6) && GUI)
+		{
+			channel_select->setSelected(selected_channel, true);
+		}
+		updateLabels();
+		if (load_scan() < 0)
+		{
+			return(-3); // -3 error code = scan file is missing
+		}
+		if (GUI)
+		{
+			plot_edit();
+			if (!already)
+			{
+				// cout << "Step 4\n";
+				plot_analysis();
+			}
+		}
+	}
+	/********************************************************************************/
+// if we want to load a scan but no GUI (Terminal based Monte Carlo)
+	if (run_type != 7
+			&& run_type != 8
+			&& run_type != 0
+			&& run_type != 9
+			&& run_type != 10
+			&& run_type != 11
+			&& run_type != 12
+			&& run_type != 31
+			&& run_type != 32
+			&& !GUI)
 	{
 		if (load_scan() < 0)
 		{

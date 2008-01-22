@@ -281,6 +281,15 @@ void US_Pseudo3D_Combine::setup_GUI()
 	pb_replot3d->setEnabled(false);
 	connect(pb_replot3d, SIGNAL(clicked()), SLOT(plot_3dim()));
 
+	pb_plot_combined = new QPushButton(tr("Plot Combined Distros"), this);
+	Q_CHECK_PTR(pb_plot_combined);
+	pb_plot_combined->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_plot_combined->setEnabled(true);
+	pb_plot_combined->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_plot_combined->setAutoDefault(false);
+	pb_plot_combined->setEnabled(false);
+	connect(pb_plot_combined, SIGNAL(clicked()), SLOT(plot_combined()));
+
 	pb_save = new QPushButton(tr("Save"), this);
 	Q_CHECK_PTR(pb_save);
 	pb_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -394,8 +403,11 @@ void US_Pseudo3D_Combine::setup_GUI()
 	controlGrid->addWidget(cb_plot_mw, j, 1);
 	controlGrid->setRowStretch(j, 0);
 	j++;
-	controlGrid->addWidget(pb_replot3d, j, 0);
-	controlGrid->addWidget(pb_reset, j, 1);
+	controlGrid->addWidget(pb_plot_combined, j, 0);
+	controlGrid->addWidget(pb_replot3d, j, 1);
+	controlGrid->setRowStretch(j, 0);
+	j++;
+	controlGrid->addWidget(pb_reset, j, 0);
 	controlGrid->setRowStretch(j, 0);
 	j++;
 	controlGrid->addWidget(pb_load_distro, j, 0);
@@ -617,6 +629,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 	}
 	system.push_back(temp_system);
 	current_distro = system.size() - 1;
+	system[current_distro].col = NULL;
 	cnt_current_distro->setRange(1.0, current_distro+1, 1.0);
 	current_distro = system.size() - 1;
 	cnt_current_distro->setValue(current_distro+1);
@@ -631,6 +644,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 	}
 	pb_print->setEnabled(true);
 	pb_replot3d->setEnabled(true);
+	pb_plot_combined->setEnabled(true);
 	pb_reset->setEnabled(true);
 	cb_plot_s->setEnabled(true);
 	cb_plot_mw->setEnabled(true);
@@ -707,6 +721,103 @@ void US_Pseudo3D_Combine::set_limits()
 	}
 }
 
+void US_Pseudo3D_Combine::plot_combined()
+{
+	unsigned int i, j, k, **values_red, **values_green, **values_blue;
+	unsigned int maxred=0, maxblue=0, maxgreen=0;
+	QColor **color_matrix;
+	QString str;
+	QwtSymbol symbol;
+	color_matrix = new QColor * [x_resolution];
+	values_red = new unsigned int * [x_resolution];
+	values_green = new unsigned int * [x_resolution];
+	values_blue = new unsigned int * [x_resolution];
+	for (i=0; i<x_resolution; i++)
+	{
+		color_matrix[i] = new QColor[y_resolution];
+		values_red[i] = new unsigned int [y_resolution];
+		values_green[i] = new unsigned int [y_resolution];
+		values_blue[i] = new unsigned int [y_resolution];
+	}
+	for (j=0; j<x_resolution; j++)
+	{
+		for (k=0; k<y_resolution; k++)
+		{
+			values_red[j][k] = 0;
+			values_green[j][k] = 0;
+			values_blue[j][k] = 0;
+			for (i=0; i<system.size(); i++)
+			{
+				if (system[i].col[j][k].red() != 0)
+				{
+					cout << system[i].col[j][k].red() << endl;
+				}
+				values_red[j][k] += system[i].col[j][k].red();
+				values_green[j][k] += system[i].col[j][k].green();
+				values_blue[j][k] += system[i].col[j][k].blue();
+			}
+			maxred = max(maxred, values_red[j][k]);
+			maxblue = max(maxblue, values_red[j][k]);
+			maxgreen = max(maxgreen, values_red[j][k]);
+		}
+	}
+	cout << "maxred: " << maxred << ", maxgreen: " << maxgreen << ", maxblue: " << maxblue << endl;
+	for (i=0; i<x_resolution; i++)
+	{
+		for (j=0; j<y_resolution; j++)
+		{
+			if (maxred != 0 && values_red[i][j] != 0)
+			{
+				values_red[i][j] = (unsigned int)(255 * values_red[i][j]/maxred);
+			}
+			if (maxgreen != 0 && values_green[i][j] != 0)
+			{
+				values_green[i][j] = (unsigned int)(255 * values_green[i][j]/maxgreen);
+			}
+			if (maxblue != 0 && values_blue[i][j] != 0)
+			{
+				values_blue[i][j] = (unsigned int)(255 * values_blue[i][j]/maxblue);
+			}
+		}
+	}
+	QColor temp_color;
+	unsigned int curve[x_resolution * y_resolution], count=0;
+	double x[1], y[1];
+	symbol.setStyle(QwtSymbol::Ellipse);
+	for (i=0; i<x_resolution; i++)
+	{
+		for (j=0; j<y_resolution; j++)
+		{
+			temp_color.setRgb(values_red[i][j], values_green[i][j], values_blue[i][j]);
+			curve[count] = plot->insertCurve(str.sprintf("pixel x=%d, y=%d", i, j));
+			symbol.setPen(temp_color);
+			symbol.setBrush(temp_color);
+			plot->setCurveSymbol(curve[count], symbol);
+			plot->setCurveStyle(curve[count], QwtCurve::NoCurve);
+			x[0] = (double) i;
+			y[0] = (double) j;
+			plot->setCurveData(curve[count], x, y, 1);
+			plot->setTitle(system[current_distro].run_name + "." +
+				system[current_distro].cell +
+				system[current_distro].wavelength +	"\n" +
+				system[current_distro].method);
+			count ++;
+		}
+	}
+	plot->replot();
+	for (i=0; i<y_resolution; i++)
+	{
+		delete [] color_matrix[i];
+		delete [] values_red[i];
+		delete [] values_green[i];
+		delete [] values_blue[i];
+	}
+	delete [] color_matrix;
+	delete [] values_red;
+	delete [] values_green;
+	delete [] values_blue;
+}
+
 void US_Pseudo3D_Combine::plot_3dim()
 {
 	QString str;
@@ -720,6 +831,25 @@ void US_Pseudo3D_Combine::plot_3dim()
 	unsigned int i, j, k, count;
 	unsigned int curve[system[current_distro].gradient.size()];
 	double x[x_resolution], y[y_resolution], z[x_resolution][y_resolution];
+	if (system[current_distro].col == NULL)
+	{
+		for (i=0; i<x_resolution; i++)
+		{
+			system[current_distro].col = new QColor * [x_resolution] ;
+			for (j=0; j<x_resolution; j++)
+			{
+				system[current_distro].col[j] = new QColor [y_resolution];
+			}
+
+		}
+		for (i=0; i<x_resolution; i++)
+		{
+			for (j=0; j<x_resolution; j++)
+			{
+				system[current_distro].col[i][j] = Qt::black;
+			}
+		}
+	} 
 	double frange, srange, sstep, fstep, ssigma, fsigma;
 	double *xval, *yval;
 	xval = new double [x_resolution*y_resolution];
@@ -960,6 +1090,8 @@ void US_Pseudo3D_Combine::plot_3dim()
 			z[i][j] = (system[current_distro].gradient.size()-1) * z[i][j]/maxval;
 		}
 	}
+	// z[][] contains a double ranging between zero and the number of total colors in the gradient
+	// for each grid point
 	QFileInfo fi();
 	QString htmlDir = USglobal->config_list.html_dir + "/" + system[current_distro].run_name;
 	for (k=0; k<system[current_distro].gradient.size(); k++)
@@ -969,10 +1101,12 @@ void US_Pseudo3D_Combine::plot_3dim()
 		{
 			for (j=0; j<y_resolution; j++)
 			{
-				if ((unsigned int) (z[i][j]) == k) // filter out the points with color k
+				if ((unsigned int) (z[i][j]) == k) // filter out the points with gradient color k
 				{
 					xval[count] = x[i];
 					yval[count] = y[j];
+					system[current_distro].col[i][j] = system[current_distro].gradient[k];
+					//cout <<  "in assignment... " << system[current_distro].col[i][j].red() << endl;
 					count++;
 				}
 			}
@@ -1191,15 +1325,22 @@ void US_Pseudo3D_Combine::save()
 
 void US_Pseudo3D_Combine::reset()
 {
-	for (unsigned int i=0; i<system.size(); i++)
+	unsigned int i, j;
+	for (i=0; i<system.size(); i++)
 	{
 		system[i].gradient.clear();
+		for (j=0; j<x_resolution; j++)
+		{
+			delete [] system[i].col[j];
+		}
+		delete [] system[i].col;
 	}
 	system.clear();
 	plot->clear();
 	plot->replot();
 	pb_reset->setEnabled(false);
 	pb_replot3d->setEnabled(false);
+	pb_plot_combined->setEnabled(false);
 	le_distro_info->setText("");
 	minmax = false;
 	zoom = false;

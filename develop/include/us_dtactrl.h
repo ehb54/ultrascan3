@@ -180,6 +180,8 @@ class US_EXTERN Data_Control_W : public QFrame
 		void show_channel(int);
 		int load_data();
 		int load_data(const QString &);
+		int load_data(bool);
+		int load_data(const QString &, bool);
 		int write_data();
 		void details();
 		void updateLabels();

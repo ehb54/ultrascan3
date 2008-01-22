@@ -16,7 +16,7 @@ US_Report_Veloc::~US_Report_Veloc()
 void US_Report_Veloc::load()
 {
 	data_control = new Data_Control_W(7);
-	data_control->load_data();
+	data_control->load_data(false);
 	write_file(data_control);
 }
 
