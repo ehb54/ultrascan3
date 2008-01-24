@@ -103,6 +103,7 @@ UsWin::UsWin(QWidget *parent, const char *name)
 #ifdef OPTERON
 #endif
 	}
+	cout << "Flash image file search path: " << splash_image << endl;
 	if (splash.load(splash_image))
 	{
 		splash_b->setGeometry((unsigned int) ((width/2)-230), 110, 460, 276);
