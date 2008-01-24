@@ -35,6 +35,7 @@ UsWin::UsWin(QWidget *parent, const char *name)
 
 	QPixmap splash;
 	QString splash_image = getenv("ULTRASCAN");
+	cout << "UltraScan environment variable value: " << splash_image << endl;
 	if (splash_image.isEmpty())
 	{
 #ifdef UNIX
