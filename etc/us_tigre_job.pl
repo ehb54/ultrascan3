@@ -385,6 +385,7 @@ for($i = 0; $i < @systems; $i++) {
 # here is where we would select the system to run on via load levels
 # for debugging, otherwise, parse $gcfile for utilization to get $np
 
+
 if($analysis_type =~ /^GA/) {
     if($fit_ti_noise || $fit_ri_noise) {
 	$max_time[0] = (($ga_params_initial_solutes ** 2) * $ga_params_generations * $ga_params_genes) / 7403;

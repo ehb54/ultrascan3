@@ -1112,7 +1112,7 @@ CREATE TABLE tblGA_Settings
   meniscus_option tinyint(1) NOT NULL default 0,
   meniscus_value double NOT NULL default 0,
   solute_value int(11) NOT NULL default 3,
-  solute_data mediumtext default NULL,
+  solute_data mediumtext,
   HPCAnalysis_ID int(11) NOT NULL,
   PRIMARY KEY  (GA_Settings_ID)
 ) TYPE=InnoDB;
@@ -1125,10 +1125,8 @@ DROP TABLE IF EXISTS tblHPCSoluteData;
 CREATE TABLE tblHPCSoluteData
 (
   HPCSoluteData_ID int(11) NOT NULL auto_increment,
-  s_value double NOT NULL,
   s_min double NOT NULL,
   s_max double NOT NULL,
-  ff0_value double NOT NULL,
   ff0_min double NOT NULL,
   ff0_max double NOT NULL,
   HPCAnalysis_ID int(11) NOT NULL,
@@ -1168,23 +1166,6 @@ CREATE TABLE tblGA_MW_Settings
 ) TYPE=InnoDB;
 
 --
--- Table structure for table tblHPCFileData
---
-
-DROP TABLE IF EXISTS tblHPCFileData;
-CREATE TABLE tblHPCFileData
-(
-  HPCFileData_ID int(11) NOT NULL auto_increment,
-  file_name varchar(64) NOT NULL,
-  path varchar(128) NOT NULL,
-  cell int(11) NOT NULL,
-  channel int(11) NOT NULL,
-  lambda int(11) NOT NULL,
-  HPCAnalysis_ID int(11) NOT NULL,
-  PRIMARY KEY (HPCFileData_ID)
-) TYPE=InnoDB;
-
---
 -- Table structure for table tblHPCAnalysisData
 --
 
@@ -1192,6 +1173,8 @@ DROP TABLE IF EXISTS tblHPCAnalysisData;
 CREATE TABLE tblHPCAnalysisData 
 (
   HPCAnalysisData_ID int(11) NOT NULL auto_increment,
+  file_name varchar(64) default NULL,
+  path varchar(128) default NULL,
   cell int(11) NOT NULL default 0,
   channel int(11) NOT NULL default 0,
   wavelength int(11) NOT NULL default 0,
@@ -1219,4 +1202,3 @@ CREATE TABLE tblHPCModel
   HPCAnalysis_ID int(11) NOT NULL,
   PRIMARY KEY  (HPCModel_ID)
 ) TYPE=InnoDB;
-
