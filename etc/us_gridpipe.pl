@@ -38,7 +38,7 @@ sub timedexec {
     if($@) {
 	alarm(0);
 	if($@ =~ /timeout/) {
-	    $return = "Current job state: non-responsive";
+	    $return = "Current job state: Non-responsive";
 	    kill 9, $pid;
 	    close(PIPE); 
 	    print "timed out\n";
@@ -53,7 +53,8 @@ sub timedexec {
 
 sub startjob {
     print STDERR "$0: start job $queue[0]\n" if $debug;
-    $started = `date '+%D %T'`; chomp $started;
+    my $started = `date '+%D %T'`; chomp $started;
+    my $child;
     if(!($child = fork)) {
 	print STDERR "$0: child started job\n" if $debug;
 	`$queue[0]`;
@@ -64,6 +65,7 @@ sub startjob {
 
 sub startjob_gc {
     print STDERR "$0: start gc process $_[0]\n" if $debug;
+    my $child;
     if(!($child = fork)) {
 	print STDERR "$0: child started gc process job\n" if $debug;
 #	`export DISPLAY=bcf:99; us_gridcontrol $_[0] > /lustre/tmp/us_gridcontrol.stdout 2> /lustre/tmp/us_gridcontrol.stderr`;
@@ -75,6 +77,7 @@ sub startjob_gc {
 
 sub startjob_gc_tigre {
     print STDERR "$0: start gc tigre process $_[0]\n" if $debug;
+    my $child;
     if(!($child = fork)) {
 	print STDERR "$0: child started gc process job\n" if $debug;
 #	`export DISPLAY=bcf:99; us_gridcontrol $_[0] TIGRE > /lustre/tmp/us_gridcontrol.stdout 2> /lustre/tmp/us_gridcontrol.stderr`;
@@ -86,12 +89,14 @@ sub startjob_gc_tigre {
 
 sub startjob_tigre {
     print STDERR "$0: start tigre job process $_[0]\n" if $debug;
+    my $child;
     if(!($child = fork)) {
 	print STDERR "$0: child started tigre job\n" if $debug;
 	`$_[0]`;
 	exit;
     }
     print STDERR "$0: tigre job child pid is $child\n" if $debug;
+    $child;
 }
 
 ## @fn $ status_daemon()
@@ -101,6 +106,7 @@ sub startjob_tigre {
 
 sub status_daemon {
     print STDERR "$0: start status_daemon\n" if $debug;
+    my $child;
     if(!($child = fork)) {
 	while(1) {
 	    print STDERR "$: internal_status_update\n" if $debug;
@@ -119,13 +125,14 @@ sub status_daemon {
 
 sub write_status {
     print STDERR "$0: write_status $_[0]\n" if $debug;
+    my $child;
     if(!($child = fork)) {
 	print STDERR "$0: child started write_status\n" if $debug;
 	my $outfile = $_[0];
 	print STDERR "$0: write statusqueue status into $outfile\n" if $debug;
 	if(open(OUT, ">${outfile}.new")) {
 	    flock(OUT, 2) || print STDERR "$0: Warning can not flock ${outfile}.new, proceeding (possible status file mangling!)\n";
-	    $date = `date`;
+	    my $date = `date`;
 	    print OUT "Queue status snapshot as of $date\n";
 	    my $tjobs = 0;
 	    foreach $i (keys %tigre) {
@@ -147,6 +154,7 @@ sub write_status {
 		    }
 		    print OUT " : $submitted[$i] : $emails[$i]\t$experiments[$i]\t$types[$i]\n";
 		}
+		my @unsorted;
 		foreach $i (keys %tigre) {
 #			    if($tigre{$i} =~ /[ meta]/) {
 #				$status = `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
@@ -155,8 +163,16 @@ sub write_status {
 #			    }
 		    chomp $status;
 		    $status = "Starting" if !length($status);
-		    print OUT "$tigre{$i} $status\n";
+		    push @unsorted, "$tigre{$i} $status\n";
 		}
+		print OUT sort 
+		{ 
+		    my $a1;
+		    my $b1;
+		    ( $a1 ) = $a =~ /(\d*)/;
+		    ( $b1 ) = $b =~ /(\d*)/;
+		    $a1 <=> $b1;
+		} @unsorted;
 		close OUT;
 	    }
 	    open(FH, $outfile);
@@ -172,6 +188,20 @@ sub write_status {
 	exit;
     }
     print STDERR "$0: write status child pid is $child\n" if $debug;
+}
+
+## @fn $ tigre_kill($eprfile)
+# forks off a process to kill the tigre job
+# @param the eprfile
+# @return nothing
+
+sub tigre_kill {
+    print STDERR "$0: tigre_kill $_[0]\n" if $debug;
+    if(!(my $child = fork)) {
+	my $status = &timedexec(300, "globusrun-ws -kill -job-epr-file $_[0]");
+	print STDERR "$0: tigre_kill $_[0] returned <$status>\n" if $debug;
+	exit;
+    }
 }
 
 $SIG{CHLD} = "IGNORE";
@@ -394,7 +424,6 @@ while(1) {
 		# process us_gridcontrol
 		$valid++;
 		$file = $1;
-		$args = $2;
 		print STDERR "$0: process us_gridcontrol $file\n" if $debug;
 		&startjob_gc($file);
 	    }
@@ -423,6 +452,7 @@ while(1) {
 	    if($line =~ /^tigre_job_start (.*)$/) {
 		# just run this one
 		$valid++;
+		$seq++;
 		$job = $1;
 		$job =~ /^\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]$/;
 		$experiment = $1;
@@ -432,9 +462,13 @@ while(1) {
 		$date = $5;
 		$eprfile = $6;
 		$analysis_type =~ s/SA2D/2DSA/;
-		$pr_line = sprintf("%s %-26s %-25s %-20s %-4s",
-				   $date, $system, $email, $experiment, $analysis_type);
+		$pr_line = sprintf("%d %s %-26s %-25s %-20s %-4s",
+				   $seq, $date, $system, $email, $experiment, $analysis_type);
 		$tigre{$eprfile} = $pr_line;
+		$tigre_system{$eprfile} = $system;
+		$tigre_seq{$eprfile} = $seq;
+		$tigre_epr{$seq} = $eprfile;
+
 		print STDERR "$0: tigre_job_start $eprfile\n" if $debug;
 		foreach $i (keys %tigre) {
 #		    if($tigre{$i} =~ /[ meta]/) {
@@ -458,6 +492,9 @@ while(1) {
 #		    }
 		}
 		delete $tigre{$eprfile};
+		delete $tigre_epr{$tigre_seq{$eprfile}};
+		delete $tigre_seq{$eprfile};
+		delete $tigre_system{$eprfile};
 		print STDERR "$0: tigre_job_end $eprfile\n" if $debug;
 	    }
 	    if($line =~ /^tigre_job_clear$/) {
@@ -472,8 +509,25 @@ while(1) {
 		    chomp $status;
 		    if(!length($status) || $status eq 'FINISHED' || $status eq 'FAILED') {
 			delete $tigre{$i};
+			delete $tigre_epr{$tigre_seq{$i}};
+			delete $tigre_seq{$i};
+			delete $tigre_system{$i};
 			print STDERR "$0: tigre_job_clear removed $tigre{$i}\n" if $debug;
 		    }
+		}
+	    }
+	    if($line =~ /^tigre_job_cancel (.*)$/) {
+		# cancel one job
+		$seq = $1;
+		$valid++;
+		$eprfile = $tigre_epr{$seq};
+		print STDERR "$0: tigre_job_cancel eprfile $eprfile\n";
+		if($eprfile) {
+		    &tigre_kill($eprfile);
+		    delete $tigre{$eprfile};
+		    delete $tigre_epr{$tigre_seq{$eprfile}};
+		    delete $tigre_seq{$eprfile};
+		    delete $tigre_system{$eprfile};
 		}
 	    }
 	    if(!$valid) {

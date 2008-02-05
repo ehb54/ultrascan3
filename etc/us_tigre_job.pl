@@ -96,6 +96,25 @@ We apologize for any inconvience this may have caused.
     $msg->send('smtp', 'smtp.uthscsa.edu');
 };
 
+sub cancelmsg 
+{
+    $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
+			   To      => "$email",
+			   Cc      =>  'ebrookes@cs.utsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
+#			   To      =>  'ebrookes@cs.utsa.edu',
+			   Subject =>  "Your TIGRE job running on $default_system has been canceled.",
+			   Data => "
+It appears the TIGRE $jobtype job using experiment $expname you recently submitted to $default_system has been canceled.  
+It is also possible that this job failed for some other reason, and if you believe this is the case, please inform
+our staff by replying to the addresses CC'd in this email.  
+
+Do not reply to gridcontrol\@ultrascan.uthscsa.edu, as that email address will bounce.
+"
+		 );
+    
+    $msg->send('smtp', 'smtp.uthscsa.edu');
+};
+
 # end user configuration
 
 $|=1;
@@ -625,6 +644,10 @@ do {
     if($default_system ne 'meta') {
 	$status =~ /.* (\w*)/;
 	$status = $1;
+    }
+    if($status =~ /^$/) {
+	&cancelmsg("Tigre job was canceled or terminated abnormally\n");
+	die "tigre job was canceled or abnormally terminated\n";
     }
     if($status eq 'Failed' ||
        $status eq 'FAILED') {
