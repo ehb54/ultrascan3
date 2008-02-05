@@ -454,16 +454,18 @@ while(1) {
 		$valid++;
 		$seq++;
 		$job = $1;
-		$job =~ /^\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]$/;
+		$job =~ /^\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]$/;
 		$experiment = $1;
 		$analysis_type = $2;
 		$system = $3;
 		$email = $4;
 		$date = $5;
 		$eprfile = $6;
+		$db = $7;
+ 		$analysisid = $8;
 		$analysis_type =~ s/SA2D/2DSA/;
-		$pr_line = sprintf("%d %s %-26s %-25s %-20s %-4s",
-				   $seq, $date, $system, $email, $experiment, $analysis_type);
+		$pr_line = sprintf("%d %s %s %s %-26s %-25s %-20s %-4s",
+				   $seq, $db, $analysisid, $date, $system, $email, $experiment, $analysis_type);
 		$tigre{$eprfile} = $pr_line;
 		$tigre_system{$eprfile} = $system;
 		$tigre_seq{$eprfile} = $seq;
