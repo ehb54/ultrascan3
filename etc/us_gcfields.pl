@@ -12,7 +12,11 @@ sub parsegc {
     $db_login_database = $gcf[$i]; $i++;
     $db_login_host = $gcf[$i]; $i++;
     $no_experiments = $gcf[$i]; $i++;
-    undef @exp_file_info, @exp_dir, @exp_cell, @exp_lambda, @exp_channel;
+    undef @exp_file_info;
+    undef @exp_dir; 
+    undef @exp_cell;
+    undef @exp_lambda;
+    undef @exp_channel;
     for(my $j = 0; $j < $no_experiments; $j++) {
 	$exp_file_info[$j] = $gcf[$i]; $i++;
 	$exp_dir[$j] = $gcf[$i]; $i++;
@@ -25,7 +29,12 @@ sub parsegc {
     $exp_cells = join ', ', @exp_cell;
     $exp_lambdas = join ', ', @exp_lambda;
     $exp_channels = join ', ', @exp_channel;
-    undef @ga_s, @ga_s_min, @ga_s_max, @ga_ff0, @ga_ff0_min, @ga_ff0_max;
+    undef @ga_s;
+    undef @ga_s_min;
+    undef @ga_s_max; 
+    undef @ga_ff0;
+    undef @ga_ff0_min;
+    undef @ga_ff0_max;
     undef $ga_params_demes;
     undef $ga_params_generations;
     undef $ga_params_crossover;
@@ -38,7 +47,12 @@ sub parsegc {
     undef $ga_params_random_seed;
     undef $ga_params_monte_carlo;
     undef $ga_params_regularization;
-    undef $ga_ss, $ga_s_mins, $ga_smaxs, $ga_ff0s, $ga_ff0_mins, $ga_ff0_maxs;
+    undef $ga_ss;
+    undef $ga_s_mins;
+    undef $ga_smaxs;
+    undef $ga_ff0s;
+    undef $ga_ff0_mins;
+    undef $ga_ff0_maxs;
     if($analysis_type eq 'GA') {
 	$ga_params_demes = $gcf[$i]; $i++;
 	$ga_params_generations = $gcf[$i]; $i++;
