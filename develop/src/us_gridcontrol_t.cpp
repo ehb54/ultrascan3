@@ -1010,7 +1010,7 @@ void US_GridControl_T::write_experiment()
 
 #ifdef BIN64
         QString syscall = "echo 'mpi_job_run [" + experiment[0].id + "-" + QString("%1").arg(experiment[0].cell + 1) + "]["
-                          + email + "][" + gp_analysis_type
+                          + email + "][" + gp_analysis_type + "][" + gcfile +
                           + "] nohup rsh -n -l apache bcf.uthscsa.edu \". /etc/profile; cd " + USglobal->config_list.result_dir + "; mpirun -np "
                           + npstring + machines + " $ULTRASCAN/bin64/us_fe_nnls_t_mpi "
                           + USglobal->config_list.result_dir + QString("/experiments%1.dat ").arg(timestamp_string)
@@ -1020,7 +1020,7 @@ void US_GridControl_T::write_experiment()
 #else
 
         QString syscall = "echo 'mpi_job_run [" + experiment[0].id + "-" + QString("%1").arg(experiment[0].cell + 1) + "]["
-                          + email + "][" + gp_analysis_type
+                          + email + "][" + gp_analysis_type + "][" + gcfile +
                           + "] nohup rsh -n -l apache bcf.uthscsa.edu \". /etc/profile; cd " + USglobal->config_list.result_dir + "; mpirun -np "
                           + npstring + machines
                           + " $ULTRASCAN/bin/us_fe_nnls_t_mpi "
@@ -1033,7 +1033,7 @@ void US_GridControl_T::write_experiment()
         if(gridopt == "TIGRE")
         {
             syscall = "echo 'tigre_job_run [" + experiment[0].id + QString("%1").arg(experiment[0].cell + 1) + "]["
-                      + email + "][" + gp_analysis_type
+	              + email + "][" + gp_analysis_type + "][" + gcfile +
                       + "] nohup perl -I$ULTRASCAN/etc $ULTRASCAN/etc/us_tigre_job.pl "
                       + gcfile + " " + QString("%1").arg(total_points)
                       + " " + email + " " + timestamp_string + " " + USglobal->config_list.result_dir
