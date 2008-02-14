@@ -1027,12 +1027,14 @@ if (sed_app[i][div] <= 0)
 		{					// use it for determining the back diffusion point, assuming the particle has a f/f0 ration of 1.0
 			diff = (R * (K0 + run_inf.avg_temperature))/(AVOGADRO * 0.06 * M_PI * viscosity_tb 
 			* pow((double) (0.045 * intercept[0] * vbar * viscosity_tb/(1.0 - vbar * density_tb)), (double) 0.5));
-/*
+			/*
 cout 	<< "Temp: " <<  run_inf.avg_temperature
 		<< ", visc: " <<  viscosity_tb
 		<< ", icpt: " << intercept[0]
-		<< ", dens: " << density_tb << endl;
-*/
+		<< ", dens: " << density_tb 
+		<< ", k0: " << K0
+		<< ", vbar: " << vbar << endl;
+			*/
 			for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 			{
 // tolerance is defined as 2 * the concentration gradient divided by the initial concentration

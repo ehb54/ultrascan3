@@ -3128,85 +3128,75 @@ void US_Astfem_RSA::IntQT1_ellam(vector <double> vx, double D, double sw2, doubl
       }
 	   clear_2d(npts, Lam);
 
-   } else {				// Q_{0,4,3,2} is non-degenerate
-
-	    // elements for integration
-	    //
-	    Qx.clear();
-	    Qy.clear();
-	    Qx.push_back(vx[0]);	// vertices of Q on right
-	    Qx.push_back(vx[4]);
-	    Qx.push_back(vx[3]);
-	    Qx.push_back(vx[2]);
-
-	    Qy.push_back(0.0);
-	    Qy.push_back(0.0);
-	    Qy.push_back(af_params.dt);
-	    Qy.push_back(af_params.dt);
-
-	    double **Gs=NULL;
-	    npts = 5 * 5;
-	    initialize_2d(npts, 3, &Gs);
-	    DefineGaussian(5, Gs);
-
-	    double psi[4], psi1[4], psi2[4], jac[4];
-	    for (k=0; k<npts; k++)
-	    {
-		    BasisQS(Gs[k][0], Gs[k][1], psi, psi1, psi2);
-
-		    x_gauss = 0.0;
-		    y_gauss = 0.0;
-		    for (i=0; i<4; i++)
-		    {
-			    jac[i] = 0.0;
-		    }
-		    for (i=0; i<4; i++)
-		    {
-			    x_gauss += psi[i] * Qx[i];
-			    y_gauss += psi[i] * Qy[i];
-			    jac[0] += Qx[i] * psi1[i];
-			    jac[1] += Qx[i] * psi2[i];
-			    jac[2] += Qy[i] * psi1[i];
-			    jac[3] += Qy[i] * psi2[i];
-		    }
-
-		    DJac = jac[0] * jac[3] - jac[1] * jac[2];
-
-		    //
-		    // find phi, phi_x, phi_y on L and C at (x,y)
-		    //
-
-		    BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
-
-          xn1 = x_gauss + slope * ( af_params.dt - y_gauss );	// trace-forward point at t_n+1 from (x_g, y_g)
-          phiC  = ( xn1 - vx[2] )/hh;		// hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
-          phiCx = 1./hh;
-
-		    for (i=0; i<4; i++)
-		    {
-			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], 1.-phiC, -phiCx);
-			    StifR[i][0] += Gs[k][2] * DJac * dval;
-
-			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],    phiC,  phiCx);
-			    StifR[i][1] += Gs[k][2] * DJac * dval;
-		    }
-	    }
-	    clear_2d(npts, Gs);
-
    }
+	else
+	{	// Q_{0,4,3,2} is non-degenerate
+		// elements for integration
+		//
+		Qx.clear();
+		Qy.clear();
+		Qx.push_back(vx[0]);	// vertices of Q on right
+		Qx.push_back(vx[4]);
+		Qx.push_back(vx[3]);
+		Qx.push_back(vx[2]);
 
+		Qy.push_back(0.0);
+		Qy.push_back(0.0);
+		Qy.push_back(af_params.dt);
+		Qy.push_back(af_params.dt);
+
+		double **Gs=NULL;
+		npts = 5 * 5;
+		initialize_2d(npts, 3, &Gs);
+		DefineGaussian(5, Gs);
+
+		double psi[4], psi1[4], psi2[4], jac[4];
+		for (k=0; k<npts; k++)
+		{
+			BasisQS(Gs[k][0], Gs[k][1], psi, psi1, psi2);
+			x_gauss = 0.0;
+			y_gauss = 0.0;
+			for (i=0; i<4; i++)
+			{
+				jac[i] = 0.0;
+			}
+			for (i=0; i<4; i++)
+			{
+				x_gauss += psi[i] * Qx[i];
+				y_gauss += psi[i] * Qy[i];
+				jac[0] += Qx[i] * psi1[i];
+				jac[1] += Qx[i] * psi2[i];
+				jac[2] += Qy[i] * psi1[i];
+				jac[3] += Qy[i] * psi2[i];
+			}
+			DJac = jac[0] * jac[3] - jac[1] * jac[2];
+			//
+			// find phi, phi_x, phi_y on L and C at (x,y)
+			//
+			BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
+			xn1 = x_gauss + slope * ( af_params.dt - y_gauss );	// trace-forward point at t_n+1 from (x_g, y_g)
+			phiC  = ( xn1 - vx[2] )/hh;		// hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
+			phiCx = 1./hh;
+			for (i=0; i<4; i++)
+			{
+				dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], 1.-phiC, -phiCx);
+				StifR[i][0] += Gs[k][2] * DJac * dval;
+				dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],    phiC,  phiCx);
+				StifR[i][1] += Gs[k][2] * DJac * dval;
+			}
+		}
+		clear_2d(npts, Gs);
+	}
 	for (i=0; i<2; i++)
 	{
-	    Stif[0][i] = StifR[0][i];
-		 Stif[1][i] = StifR[1][i];
-		 Stif[2][i] = StifR[3][i];
-		 Stif[3][i] = StifR[2][i];
+		Stif[0][i] = StifR[0][i];
+		Stif[1][i] = StifR[1][i];
+		Stif[2][i] = StifR[3][i];
+		Stif[3][i] = StifR[2][i];
 	}
-
 	delete [] phiR;
 	delete [] phiRx;
 	delete [] phiRy;
-
 	clear_2d(4, StifR);
 }
 
@@ -3553,10 +3543,9 @@ void US_Astfem_RSA::QuadSolver_ellam(double *ai, double *bi, double *ci, double 
 		cr[i] = cr[i]-cr[i+1]*tmp;
 	}
    i=0;
-		tmp = cd[i]/cc[i+1];
-		cc[i] = cc[i]-cb[i+1]*tmp;
-		cr[i] = cr[i]-cr[i+1]*tmp;
-
+	tmp = cd[i]/cc[i+1];
+	cc[i] = cc[i]-cb[i+1]*tmp;
+	cr[i] = cr[i]-cr[i+1]*tmp;
 	solu[0] = cr[0] / cc[0];
 	solu[1] = (cr[1] - cb[1] * solu[0]) / cc[1];
 	i = 1;
@@ -3565,7 +3554,6 @@ void US_Astfem_RSA::QuadSolver_ellam(double *ai, double *bi, double *ci, double 
 		i++;
 		solu[i] = (cr[i] - ca[i] * solu[i-2] - cb[i] * solu[i-1]) / cc[i];
 	} while (i != N-1);
-
 }
 
 // ******* end of ELLAM *********************
@@ -3897,7 +3885,6 @@ double ts, double *phi, double *phix, double *phiy)
 	phi1 = new double [4];
 	phi2 = new double [4];
 
-	//
 	BasisQS(xi, et, phi, phi1, phi2);
 
 	double Jac[4], JacN[4], det;
@@ -4137,11 +4124,11 @@ double US_Astfem_RSA::cube_root(double a0, double a1, double a2)
 void US_Astfem_RSA::DefInitCond(double **C0)
 {
 	unsigned int j;
-	for(j=0; j<N; j++) {
+	for(j=0; j<N; j++)
+	{
 		C0[0][j] = 0.3;
 		C0[1][j] = 0.7;
 	}
-
 }
 
 
@@ -4249,101 +4236,6 @@ float *scantimes, double *radius, double **c)
 	return 0;
 }
 
-/****
-int US_Astfem_RSA::interpolate_C0(struct mfem_initial *C0, double *cnew)
-{
-// this routine also considers cases where C0 doesn't start until past the
-// meniscus or stops before the bottom is reached. In those cases it will
-// fill the cnew vector with the first and/or last value of C0, respectively,
-// for the missing points.
-	unsigned int i, j=0;
-	double slope, intercept;
-	for (i=0; i<N; i++)
-	{
-		while ((*C0).radius[j] < x[i] && j < (*C0).radius.size()-1)
-		{
-			j++;
-		}
-		if ((*C0).radius[j] == x[i] || j == 0)
-		{
-			cnew[i] = (*C0).concentration[j];
-			cout << i << ": " << cnew[i] << ", " << x[i] << " (case 1)" << endl;
-		}
-		else // check to see if we are at the last point, or do a linear interpolation
-		{
-			if (j == (*C0).radius.size()-1) // we are at the last point
-			{
-				cnew[i] = (*C0).concentration[j];
-				cout << i << ": " << cnew[i] << ", " << x[i] << " (case 2)" << endl;
-			}
-			else // do a linear interpolation
-			{
-				slope = ((*C0).concentration[j] - (*C0).concentration[j-1])
-				/((*C0).radius[j] - (*C0).radius[j-1]);
-
-				intercept = (*C0).concentration[j] - (*C0).radius[j] * slope;
-				cnew[i] = slope * x[i] + intercept;
-				cout << i << ": " << cnew[i] << ", " << x[i] << " (case 3)" << endl;
-			}
-		}
-	}
-}
-****/
-
-/****
-int US_Astfem_RSA::interpolate_Cfinal(struct mfem_initial *C0, double *cfinal)
-{
-// this routine also considers cases where C0 starts before the meniscus or stops
-// after the bottom is reached, however, C0 needs to cover both meniscus and bottom
-// In those cases it will fill the C0 vector with the first and/or last value of C0,
-// respectively, for the missing points.
-
-	unsigned int i, j=0;
-	double slope, intercept;
-
-	for (i=0; i<N; i++)
-	{
-		cout << "final (i=" << i << "): " << cfinal[i] << endl;
-	}
-	for (i=0; i<(*C0).radius.size(); i++)
-	{
-		while (x[j] < (*C0).radius[i]) // if C0 radius is past the first x point
-		{
-			j++;
-		}
-		if ((*C0).radius[i] < x[j] && j == 0) // we haven't reached the meniscus yet
-		{
-			(*C0).concentration[i] = cfinal[j]; // just put meniscus value in front
-			cout << i << ": " << (*C0).concentration[i] << ", " << (*C0).radius[i] << " remap (case 0)" << endl;
-		}
-		else if ((*C0).radius[i] == x[j])
-		{
-			(*C0).concentration[i] = cfinal[j];
-			cout << i << ": " << (*C0).concentration[i] << ", " << (*C0).radius[i] << " remap (case 1)" << endl;
-		}
-		else // check to see if we are at the last point, or do a linear interpolation
-		{
-			if (j == N-1) // we are at the last point
-			{
-				while (i<(*C0).concentration.size())
-				{
-					(*C0).concentration[i] = cfinal[j];
-					cout << i << ": " << (*C0).concentration[i] << ", " << (*C0).radius[i] << " remap (case 2)" << endl;
-					i++;
-				}
-			}
-			else // do a linear interpolation
-			{
-				slope = (cfinal[j] - cfinal[j-1])/(x[j] - x[j-1]);
-				intercept = cfinal[j] - x[j] * slope;
-				(*C0).concentration[i] = slope * (*C0).radius[i] + intercept;
-				cout << i << ": " << (*C0).concentration[i] << ", " << (*C0).radius[i] << " remap (case 3)" << endl;
-			}
-		}
-	}
-}
-****/
-
 // new version: Weiming 05/27/06
 int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simdata)
 {
@@ -4425,94 +4317,6 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
    clear_2d((*simdata).scan.size(), tmpC);
 	return(0);
 }
-
-/*****
-int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simdata)
-{
-
-// ********************************************************************************************
-// * interpolates simdata onto expdata. On exit, expdata is overwritten with the simulation	*
-// * values in simdata, but with the same radial- and time grid as expdata.						*
-// *																														*
-// * First, we need to interpolate the time. Create a new array with the same time dimensions *
-// * as the raw data and the same radius dimensions as the simulated data. Then find the time *
-// * steps from the simulated data that bracket the experimental data from the left and right.*
-// * Then make a linear interpolation for the concentration values at each radius point from  *
-// * the simulated data. Then interpolate the radius points by linear interpolation.			*
-// *																														*
-// ********************************************************************************************
-
-// NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
-// before using this routine! The radius also has to be assigned!
-
-	if ((*expdata).scan.size() == 0 || (*expdata).scan[0].conc.size() == 0)
-	{
-		return -1;
-	}
-	unsigned int i, j;
-	double slope, intercept;
-	double **ip_array;
-	ip_array	= 	new double* [(*expdata).scan.size()];
-	for (i=0; i<(*expdata).scan.size(); i++)
-	{
-		ip_array[i] = new double [(*simdata).radius.size()];
-	}
-	unsigned int count = 0; // counting the number of time steps of the raw data
-	for (i=0; i<(*expdata).scan.size(); i++)
-	{
-		while (count < (*simdata).scan.size()-1
-				&& (*expdata).scan[i].time >= (*simdata).scan[count].time)
-		{
-			count++;
-		}
-		if ((*expdata).scan[i].time == (*simdata).scan[count].time)
-		{
-			for (j=0; j<(*simdata).radius.size(); j++)
-			{
-				ip_array[i][j] = (*simdata).scan[count].conc[j];
-			}
-		}
-		else  // else, perform a linear time interpolation:
-		{
-			for (j=0; j<(*simdata).radius.size(); j++)
-			{
-				slope = ((*simdata).scan[count].conc[j] - (*simdata).scan[count-1].conc[j])
-							/((*simdata).scan[count].time - (*simdata).scan[count-1].time);
-				intercept = (*simdata).scan[count].conc[j] - slope * (*simdata).scan[count].time;
-				ip_array[i][j] = slope * (*expdata).scan[i].time + intercept;
-			}
-		}
-	}
-	// all points may need interpolation:
-	for (i=0; i<(*expdata).scan.size(); i++)
-	{
-		count = 0;
-		for (j=0; j<(unsigned int) (*expdata).radius.size(); j++)
-		{
-			while ((*expdata).radius[j] > (*simdata).radius[count] && count < (*simdata).radius.size()-1)
-			{
-				count++;
-			}
-			if ((*expdata).radius[j] == (*simdata).radius[count])
-			{
-				(*expdata).scan[i].conc[j] += ip_array[i][count];
-			}
-			else
-			{
-				slope = (ip_array[i][count] - ip_array[i][count-1])/((*simdata).radius[count] - (*simdata).radius[count-1]);
-				intercept = ip_array[i][count] - (*simdata).radius[count] * slope;
-				(*expdata).scan[i].conc[j] += slope * (*expdata).radius[j] + intercept;
-			}
-		}
-	}
-	for (i=0; i<(*expdata).scan.size(); i++)
-	{
-		delete [] ip_array[i];
-	}
-	delete [] ip_array;
-	return 0;
-}
-*****/
 
 
 void US_Astfem_RSA::ReactionOneStep_ODE(double **C1)
