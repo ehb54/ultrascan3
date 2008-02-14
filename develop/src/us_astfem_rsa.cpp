@@ -92,12 +92,13 @@ vector <struct mfem_data> *exp_data)
 				double dr = ((*simparams).bottom - (*simparams).meniscus)/((*simparams).simpoints - 1);
 				if (synthetic)
 				{
-					CT0.radius.push_back((*simparams).meniscus);
-					CT0.concentration.push_back((*system).component_vector[i].concentration);
-					for (j=1; j<(*simparams).simpoints; j++)
+					for (j=0; j<(*simparams).simpoints; j++)
 					{
 						CT0.radius.push_back((*simparams).meniscus + j * dr );
-						CT0.concentration.push_back(0.0);
+					}
+					for (j=0; j<(*simparams).simpoints; j++)
+					{
+						CT0.concentration.push_back(exp(-pow((CT0.radius[j] - (*simparams).meniscus)/0.05, 2.0)));
 					}
 				}
 				else
@@ -1008,9 +1009,6 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
       // finite reaction rate: linear interpolation of instantaneous reaction
 		      ReactionOneStep_Euler_imp(C1, 2*af_params.dt);
       //
-      // finite reaction rate: ODE time integrator
-      //     ReactionOneStep_ODE(C1);
-
       //
       // for next half time-step in SNI operator splitting scheme
       //
@@ -1227,7 +1225,7 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 	{
 		printf("IndLayer=%d \n", IndLayer);
 // steep region
-		int indp = 0, Mp=0; 	// index for a grid point
+		unsigned int indp = 0, Mp=0; 	// index for a grid point
 		double HL, HR, Hf, alpha, beta, xi;
 		for (i=0; i<IndLayer; i++)  // consider i-th steep region
 		{
@@ -1276,18 +1274,19 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 		y = ytmp;
 // transition region
 // smallest step size in transit region
-		int Nm = floor(log(af_params.bottom/((af_params.simpoints - 1) * Hf)
-				* log(af_params.bottom/af_params.meniscus))/log(2.0))+1 ; // number of pts in trans region
+		Hf = y[NfTotal - 2] - y[NfTotal-1];
+		unsigned int Nm = (unsigned int) (floor(log(af_params.bottom/((af_params.simpoints - 1) * Hf)
+				* log(af_params.bottom/af_params.meniscus))/log(2.0))+1) ; // number of pts in trans region
 		xa = y[NfTotal-1] - Hf * (pow(2.0, (double)Nm) -1.);
-		int Js = floor(0.0 + (af_params.simpoints - 1)
-				* log(xa/af_params.meniscus)/log(af_params.bottom/af_params.meniscus));
+		unsigned int Js = (unsigned int) (floor(0.0 + (af_params.simpoints - 1)
+				* log(xa/af_params.meniscus)/log(af_params.bottom/af_params.meniscus)));
 // xa is  modified so that y[NfTotal-Nm] matches xa exactly
 		xa = af_params.meniscus*pow((double)(af_params.bottom/af_params.meniscus),
 				(((double) Js - 0.0)/((double)af_params.simpoints - 1.0)));
       tmp_xc = y[NfTotal-1];
       HL = xa * (1.-af_params.meniscus/af_params.bottom);
 		HR = y[NfTotal - 2]- y[NfTotal-1];
-		Mp = int ((tmp_xc - xa) * 2.0/(HL + HR))+1;
+		Mp = (unsigned int) (((tmp_xc - xa) * 2.0/(HL + HR))+1);
       if ( Mp>1 ) {
 			beta = ((HR-HL)/2.0) * Mp ;
          alpha = (tmp_xc - xa) -beta;
@@ -1494,7 +1493,7 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 {
 	cout << "using adaptive mesh...\n";
-	int j, Js, Nf, Nm;
+	unsigned int j, Js, Nf, Nm;
 	double uth = 1.0/af_params.simpoints;		// threshold of u for steep region
 	double xc, xa, Hstar;
 	vector <double> yr, ys, yt;
@@ -1510,19 +1509,19 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 	double nu0 = nu[0];
 	xc = af_params.meniscus + 1./(fabs(nu0) * af_params.meniscus) *
 	log((pow(af_params.bottom, 2.0) - pow(af_params.meniscus, 2.0)) * fabs(nu0)/(2.0*uth));
-	Nf = 1 + (floor)( (xc - af_params.meniscus) * fabs(nu0) * af_params.meniscus * M_PI/4.0);
+	Nf = (unsigned int) (1 + (floor)( (xc - af_params.meniscus) * fabs(nu0) * af_params.meniscus * M_PI/4.0));
 	Hstar = (xc - af_params.meniscus)/Nf * M_PI/2.0;
-	Nm = 1 + (floor) (log(af_params.meniscus/((af_params.simpoints - 1.) * Hstar)
-		* log(af_params.bottom/af_params.meniscus))/log(2.0));
+	Nm = (unsigned int) (1 + (floor) (log(af_params.meniscus/((af_params.simpoints - 1.) * Hstar)
+			* log(af_params.bottom/af_params.meniscus))/log(2.0)));
 	xa = xc + (pow(2.0, (double) Nm) - 1.0) * Hstar;
-	Js = (floor)((af_params.simpoints - 1) * log(af_params.bottom/xa)/log(af_params.bottom/af_params.meniscus) + 0.5 );
+	Js = (unsigned int) ((floor)((af_params.simpoints - 1) * log(af_params.bottom/xa)/log(af_params.bottom/af_params.meniscus) + 0.5 ));
 	printf("Nf=%d Nm=%d Js=%d \n", Nf, Nm, Js);
 	printf("xc=%12.5e xa=%12.5e \n", xc, xa);
 
 // all grdi points at exponentials
 	yr.push_back(af_params.bottom);
 //	for(j=1; j<(int) af_params.simpoints-1; j++)		// standard Schuck's grids
-	for(j=1; j<(int) af_params.simpoints-0; j++)		// add one more point to Schuck's grids
+	for(j=1; j<af_params.simpoints; j++)		// add one more point to Schuck's grids
 	{
 		yr.push_back(af_params.bottom * pow(af_params.meniscus/af_params.bottom, (j - 0.5)/(af_params.simpoints - 1.0)));
 	}
@@ -1531,7 +1530,7 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 	- pow(af_params.meniscus/af_params.bottom, (af_params.simpoints - 2.5)/(af_params.simpoints - 1.0))) < Hstar || Nf <= 2 )
 	{
 // no need for steep region
-		for(j=0; j< (int) af_params.simpoints; j++)
+		for(j=0; j<af_params.simpoints; j++)
 		{
 			x.push_back(yr[af_params.simpoints - 1 - j]);
 		}
@@ -1557,9 +1556,9 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 		{
 			x.push_back(yt[j]);
 		}
-		for(j=Js; j>=0; j--)
+		for(j=Js+1; j>0; j--)
 		{
-			x.push_back(yr[j]);
+			x.push_back(yr[j-1]);
 		}
 // smooth out
 		x[Nf + Nm] = (x[Nf + Nm - 1] + x[Nf + Nm + 1])/2.0;
@@ -2199,7 +2198,7 @@ double D, double sw2)
 void US_Astfem_RSA::DefineGaussian(unsigned int nGauss, double **Gs2)
 {
 	unsigned int i, j, k;
-	double *Gs1, *w, dval;
+	double *Gs1, *w;
 	Gs1 = new double [nGauss];
 	w = new double [nGauss];
 
@@ -3789,7 +3788,7 @@ void US_Astfem_RSA::DefineFkp(unsigned int npts, double **Lam)
 			return;
 		}
 	}
-   for(int i=0; i<npts; i++)
+   for(unsigned int i=0; i<npts; i++)
    {
       Lam[i][2] = 1. - Lam[i][0] - Lam[i][1];
       Lam[i][3] /= 2.; 			// to make the sum( wt ) = 0.5 = area of standard elem
@@ -4317,830 +4316,3 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
    clear_2d((*simdata).scan.size(), tmpC);
 	return(0);
 }
-
-
-void US_Astfem_RSA::ReactionOneStep_ODE(double **C1)
-{
-   unsigned int i, j;
-	double eps=1.0e-8;
-   NR_ODE_tools ODE_integrator;
-
-	double *y0, *y1;
-	y0 = new double [af_params.s.size()];
-	y1 = new double [af_params.s.size()];
-	for (j=0; j<N; j++)
-	{
-		for (i=0; i<af_params.s.size(); i++)
-		{
-			y0[i] = C1[i][j];
-		}
-
-      /* note: use y0-1 and y1-1 because in NumericalRecipe all array starts from index 1 */
-		ODE_integrator.odeint(y0-1, (int)(af_params.s.size()), 0.0, af_params.dt,
-            eps, 1.e-2*af_params.dt, af_params.dt*1.e-8, y1-1, &af_params );
-
-		for (i=0; i<af_params.s.size(); i++)
-		{
-			C1[i][j] = y1[i];
-		}
-	}
-	delete [] y0;
-	delete [] y1;
-}
-
-/*
-void US_Astfem_RSA::Rosenbrock_45(double *y, double eps, unsigned int Cyscal, unsigned int MaxSteps, (*void)DyDt(double *, double *), (*void)DfDy(double *, double, double *) )
-{
-	double x_current, h_next, *y_scale;
-	double h_used;
-	unsigned int i;
-	x_current = 0.0; // time
-	y_scale = new double [af_params.s.size()];
-	for (i=0; i<af_params.s.size(); i++)
-	{
-		y_scale[i] = 1.0;
-	}
-	h_next = af_params.dt/10.0;
-	for (i=0; i<MaxSteps; i++)
-	{
-		if (!Rosenbrock_45_OneStep(y, x_current, &h_next, &h_used, eps, y_scale, DyDt, DfDy))
-		{
-			cout << "Error: problem here with maxtry exceeded in Rosenbrock 45" << endl;
-			exit(-2); // problem here with maxtry exceeded
-		}
-		x_current += h_used;
-		if (x_current >= af_params.dt)
-		{
-			break;
-		}
-		if (x_current + h_next > af_params.dt)
-		{
-			h_next = af_params.dt - x_current;
-		}
-	}
-	for (i=0; i<af_params.s.size(); i++)
-	{// complete the interpolation code
-	}
-	delete [] y_scale;
-}
-
-bool US_Astfem_RSA::Rosenbrock_45_OneStep(double *y_current, double x_current,
-double *h_next, double *h_used, double eps, double *y_scale,
-(*void)DyDt(double *, double *), (*void)DfDy(double *, double, double *) )
-{
-	unsigned int i, j;
-	double SAFETY=0.9, GROW =1.5, PGROW=-.25, SHRNK=0.5, PSHRNK=-1.0/3.0, ERRCON=.1296;
-	unsigned int MAXTRY=40;
-	int *index;
-	bool parity;
-	double GAM=1.0/2.0, A2=2.0;
-	double A31 = 48.0/25.0, A32 = 6.0/25.0;
-	double C2 = -8.0;
-	double C31 = 372.0/25.0, C32 = 12.0/5.0;
-	double C41=-112.0/125.0, C42 = -54.0/125.0, C43 = -2.0/5.0;
-	double B1 = 19.0/9.0, B2 =1.0/2.0, B3 = 25.0/108.0, B4 = 125.0/108.0;
-	double E1 = 17.0/54.0, E2 = 7.0/36.0, E3 = 0.0, E4 = 125.0/108.0;
-	double **g, *err, *y_save, *dy_save, **dfdy, **a, *dydt;
-	y_save = new double [af_params.s.size()];
-	err = new double [af_params.s.size()];
-	dy_save = new double [af_params.s.size()];
-	dfdy = new double *[af_params.s.size()];
-	dydt = new double [af_params.s.size()];
-	g = new double *[4];
-	index = new int [af_params.s.size()];
-	a = new double *[af_params.s.size()];
-	for (i=0; i<4; i++)
-	{
-		g[i] = new double [af_params.s.size()];
-	}
-	for (i=0; i<af_params.s.size(); i++)
-	{
-		dfdy[i] = new double [af_params.s.size()];
-		a[i] = new double [af_params.s.size()];
-		y_save[i] = y_current[i];
-	}
-	double x_save = x_current, h = *h_next;
-	(*DyDt)(x_save, y_current, dy_save);
-	(*DfDy)(x_save, y_save, dfdy);
-	for (unsigned int jtry=0; jtry < MAXTRY; jtry++)
-	{
-		for (i=0; i<af_params.s.size(); i++)
-		{
-			for (j=0; j<af_params.s.size(); j++)
-			{
-				a[i][j] = -dfdy[i][j];
-			}
-			a[i][i] += 1.0/(GAM*h);
-			g[0][i] = dy_save[i];
-		}
-		parity = true;
-		LU_Decomposition(a, index, parity, af_params.s.size());
-		LU_BackSubstitute(a, g[0], index, af_params.s.size());
-
-		for (i=0; i<af_params.s.size(); i++)
-		{
-			y_current[i] = y_save[i] + g[0][i] * A2;
-		}
-		(*DyDt)(x_save, y_current, dydt);
-		for (i=0; i<af_params.s.size(); i++)
-		{
-			g[1][i] = dydt[i] + g[0][i] * C2/h;
-		}
-		LU_BackSubstitute(a, g[1], index, af_params.s.size());
-
-		for (i=0; i<af_params.s.size(); i++)
-		{
-			y_current[i] = y_save[i] + g[0][i] * A31 + g[1][i] * A32;
-		}
-		(*DyDt)(dydt, y_current);
-		for (i=0; i<af_params.s.size(); i++)
-		{
-			g[2][i] = dydt[i] + (g[0][i] * C31 + g[1][i] * C32)/h;
-		}
-		LU_BackSubstitute(a, g[2], index, af_params.s.size());
-
-		for (i=0; i<af_params.s.size(); i++)
-		{
-			g[3][i] = dydt[i] + (g[0][i] * C41 + g[1][i] * C42 + g[2][i] * C43)/h;
-		}
-		LU_BackSubstitute(a, g[3], index, af_params.s.size());
-
-		for (i=0; i<af_params.s.size(); i++)
-		{
-			y_current[i] = y_save[i] + g[0][i] * B1 + g[1][i] * B2 + g[2][i] * B3 + g[3][i] * B4;
-			err[i] = g[0][i] * E1 + g[1][i] * E2 + g[2][i] * E3 + g[3][i] * E4;
-		}
-		if (h < 1.e-14)
-		{
-			cout << "stepsize not significant in stif" << endl;
-			delete [] err;
-			delete [] y_save;
-			delete [] dy_save;
-			delete [] dydt;
-			for (i=0; i<4; i++)
-			{
-				delete [] g[i];
-			}
-			for (i=0; i<af_params.s.size(); i++)
-			{
-				delete [] dfdy[i];
-				delete [] a[i];
-			}
-			delete [] dfdy;
-			delete [] a;
-			delete [] g;
-			delete [] index;
-			return(false);
-		}
-
-		double errmax = 0.0;
-		for (i=0; i<af_params.s.size(); i++)
-		{
-			if (errmax < fabs(err[i]/y_scale[i]))
-			{
-				errmax = fabs(err[i]/y_scale[i]);
-			}
-		}
-		errmax = errmax/eps;
-
-		if (errmax <= 1.0)
-		{
-			*h_used = h;
-			if (errmax > ERRCON)
-			{
-				*h_next = SAFETY * h * pow(errmax, PGROW);
-			}
-			else
-			{
-				*h_next = GROW * h;
-			}
-			delete [] err;
-			delete [] y_save;
-			delete [] dy_save;
-			delete [] dydt;
-			for (i=0; i<4; i++)
-			{
-				delete [] g[i];
-			}
-			for (i=0; i<af_params.s.size(); i++)
-			{
-				delete [] dfdy[i];
-				delete [] a[i];
-			}
-			delete [] dfdy;
-			delete [] a;
-			delete [] g;
-			delete [] index;
-			return(true);
-		}
-		else  // Truncation error too large, reduce stepsize.
-		{
-			*h_next = SAFETY * h * pow(errmax, PSHRNK);
-			h = max((*h_next), SHRNK * h);
-		}
-	}  // Go back and re-try step.
-	cout << "exceeded MAXTRY in stiff" << endl;
-	delete [] err;
-	delete [] y_save;
-	delete [] dy_save;
-	delete [] dydt;
-	for (i=0; i<4; i++)
-	{
-		delete [] g[i];
-	}
-	for (i=0; i<af_params.s.size(); i++)
-	{
-		delete [] dfdy[i];
-		delete [] a[i];
-	}
-	delete [] dfdy;
-	delete [] a;
-	delete [] g;
-	delete [] index;
-	return (false);
-}
-*/
-
-//////////////////////////////////////////////////////////////////////////////
-//
-// NR_ODE_tools
-//
-//////////////////////////////////////////////////////////////////////////////
-
-#define NR_END 1
-#define FREE_ARG char*
-
-void NR_ODE_tools::nrerror(char error_text[])
-/* Numerical Recipes standard error handler */
-{
-    fprintf(stderr,"Numerical Recipes run-time error...\n");
-    fprintf(stderr,"%s\n",error_text);
-    fprintf(stderr,"...now exiting to system...\n");
-    exit(1);
-}
-
-int *NR_ODE_tools::ivector(long nl, long nh)
-/* allocate an int vector with subscript range v[nl..nh] */
-{
-    int *v;
-    v=(int *)malloc((size_t) ((nh-nl+1+NR_END)*sizeof(int)));
-    if (!v) nrerror("allocation failure in ivector()");
-    return v-nl+NR_END;
-}
-
-double *NR_ODE_tools::dvector(long nl, long nh)
-/* allocate a double vector with subscript range v[nl..nh] */
-{
-    double *v;
-    v=(double *)malloc((size_t) ((nh-nl+1+NR_END)*sizeof(double)));
-    if (!v) nrerror("allocation failure in dvector()");
-    return v-nl+NR_END;
-}
-
-
-double **NR_ODE_tools::dmatrix(long nrl, long nrh, long ncl, long nch)
-/* allocate a double matrix with subscript range m[nrl..nrh][ncl..nch] */
-{
-    long i, nrow=nrh-nrl+1,ncol=nch-ncl+1;
-    double **m;
-
-    /* allocate pointers to rows */
-    m=(double **) malloc((size_t)((nrow+NR_END)*sizeof(double*)));
-    if (!m) nrerror("allocation failure 1 in matrix()");
-    m += NR_END;
-    m -= nrl;
-
-    /* allocate rows and set pointers to them */
-    m[nrl]=(double *) malloc((size_t)((nrow*ncol+NR_END)*sizeof(double)));
-    if (!m[nrl]) nrerror("allocation failure 2 in matrix()");
-    m[nrl] += NR_END;
-    m[nrl] -= ncl;
-
-    for(i=nrl+1;i<=nrh;i++) m[i]=m[i-1]+ncol;
-
-    /* return pointer to array of pointers to rows */
-    return m;
-}
-
-void NR_ODE_tools::free_ivector(int *v, long nl, long nh)
-/* free an int vector allocated with ivector() */
-{
-    free((FREE_ARG) (v+nl-NR_END));
-}
-
-void NR_ODE_tools::free_dvector(double *v, long nl, long nh)
-/* free a double vector allocated with dvector() */
-{
-    free((FREE_ARG) (v+nl-NR_END));
-}
-
-void NR_ODE_tools::free_dmatrix(double **m, long nrl, long nrh, long ncl, long nch)
-/* free a double matrix allocated by dmatrix() */
-{
-    free((FREE_ARG) (m[nrl]+ncl-NR_END));
-    free((FREE_ARG) (m+nrl-NR_END));
-}
-
-void NR_ODE_tools::pzextr(int iest, double xest, double yest[], double yz[], double dy[], int nv)
-{
-    int k1,j;
-    double q,f2,f1,delta,*c;
-
-    c=dvector(1,nv);
-    x[iest]=xest;
-    for (j=1;j<=nv;j++)
-    dy[j]=yz[j]=yest[j];
-    if (iest == 1) {
-      for (j=1;j<=nv;j++) d[j][1]=yest[j];
-    } else {
-      for (j=1;j<=nv;j++) c[j]=yest[j];
-      for (k1=1;k1<iest;k1++) {
-        delta=1.0/(x[iest-k1]-xest);
-        f1=xest*delta;
-        f2=x[iest-k1]*delta;
-        for (j=1;j<=nv;j++) {
-          q=d[j][k1];
-          d[j][k1]=dy[j];
-          delta=c[j]-q;
-          dy[j]=f1*delta;
-          c[j]=f2*delta;
-          yz[j] += dy[j];
-        }
-      }
-      for (j=1;j<=nv;j++) d[j][iest]=dy[j];
-    }
-    free_dvector(c,1,nv);
-}
-
-
-void NR_ODE_tools::mmid(double y[], double dydx[], int nvar, double xs,
-                        double htot, int nstep, double yout[])
-{
-
-    int n,i;
-    double x,swap,h2,h,*ym,*yn;
-
-    ym=dvector(1,nvar);
-    yn=dvector(1,nvar);
-    h=htot/nstep;
-    for (i=1;i<=nvar;i++) {
-      ym[i]=y[i];
-      yn[i]=y[i]+h*dydx[i];
-    }
-    x=xs+h;
-    Reaction_DyDt(x,yn,yout);
-    h2=2.0*h;
-    for (n=2;n<=nstep;n++) {
-      for (i=1;i<=nvar;i++) {
-        swap=ym[i]+h2*yout[i];
-        ym[i]=yn[i];
-        yn[i]=swap;
-      }
-      x += h;
-      Reaction_DyDt(x,yn,yout);
-    }
-    for (i=1;i<=nvar;i++)
-    yout[i]=0.5*(ym[i]+yn[i]+h*yout[i]);
-    free_dvector(yn,1,nvar);
-    free_dvector(ym,1,nvar);
-}
-
-void NR_ODE_tools::bsstep(double y[], double dydx[], int nv, double *xx, double htry,
-                          double eps, double yscal[], double *hdid, double *hnext)
-{
-    int i,iq,k,kk,km;
-    static int first=1,kmax,kopt;
-    static double epsold = -1.0,xnew;
-    double eps1,errmax,fact,h,red,scale,work,wrkmin,xest;
-    double *err,*yerr,*ysav,*yseq;
-    static double a[IMAXX+1];
-    static double alf[KMAXX+1][KMAXX+1];
-    // static int nseq[IMAXX+1]={0,2,4,6,8,10,12,14,16,18};	// original sequence with IMAXX = 8
-    static int nseq[IMAXX+1]={0,2,4,6,8,10,12,14,16}; // to be cosistent with stifbs with IMAXX = 7
-    int reduct,exitflag=0;
-
-    d=dmatrix(1,nv,1,KMAXX);
-    err=dvector(1,KMAXX);
-    x=dvector(1,KMAXX);
-    yerr=dvector(1,nv);
-    ysav=dvector(1,nv);
-    yseq=dvector(1,nv);
-    if (eps != epsold) {
-      *hnext = xnew = -1.0e29; 		// ¡°Impossible¡± values.
-      eps1=SAFE1*eps;
-      a[1]=nseq[1]+1; 				// Compute work coefficients Ak.
-      for (k=1;k<=KMAXX;k++) a[k+1]=a[k]+nseq[k+1];
-      for (iq=2;iq<=KMAXX;iq++) {
-        for (k=1;k<iq;k++) alf[k][iq]=pow(eps1,(a[k+1]-a[iq+1])/ ((a[iq+1]-a[1]+1.0)*(2*k+1)));
-      }
-      epsold=eps;
-      for (kopt=2;kopt<KMAXX;kopt++)
-        if (a[kopt+1] > a[kopt]*alf[kopt-1][kopt]) break;
-        kmax=kopt;
-    }
-    h=htry;
-    for (i=1;i<=nv;i++) ysav[i]=y[i];
-    if (*xx != xnew || h != (*hnext)) {
-      first=1;
-      kopt=kmax;
-    }
-    reduct=0;
-    for (;;) {
-      for (k=1;k<=kmax;k++) {
-        xnew=(*xx)+h;
-        if (xnew == (*xx))
-        nrerror("step size underflow in bsstep");
-        mmid(ysav,dydx,nv,*xx,h,nseq[k],yseq);
-        xest=DSQR(h/nseq[k]);
-        pzextr(k,xest,yseq,y,yerr,nv);
-        if(k != 1) {
-          errmax=TINY;
-          for (i=1;i<=nv;i++)
-          errmax=DMAX(errmax,fabs(yerr[i]/yscal[i]));
-          errmax /= eps;
-          km=k-1;
-          err[km]=pow(errmax/SAFE1,1.0/(2*km+1));
-        }
-        if (k != 1 && (k >= kopt-1 || first)) {
-          if (errmax < 1.0) {
-            exitflag=1;
-            break;
-        }
-        if (k == kmax || k == kopt+1) {
-          red=SAFE2/err[km];
-          break;
-        }
-        else if (k == kopt && alf[kopt-1][kopt] < err[km]) {
-            red=1.0/err[km];
-            break;
-          }
-        else if (kopt == kmax && alf[km][kmax-1] < err[km]) {
-            red=alf[km][kmax-1]*SAFE2/err[km];
-            break;
-            }
-        else if (alf[km][kopt] < err[km]) {
-            red=alf[km][kopt-1]/err[km];
-            break;
-            }
-        }
-      }
-      if (exitflag) break;
-      red=DMIN(red,REDMIN);
-      red=DMAX(red,REDMAX);
-      h *= red;
-      reduct=1;
-    }
-    *xx=xnew;
-    *hdid=h;
-    first=0;
-    wrkmin=1.0e35;
-    for (kk=1;kk<=km;kk++) {
-      fact=DMAX(err[kk],SCALMX);
-      work=fact*a[kk+1];
-      if (work < wrkmin) {
-        scale=fact;
-        wrkmin=work;
-        kopt=kk+1;
-      }
-    }
-    *hnext=h/scale;
-    if (kopt >= k && kopt != kmax && !reduct) {
-      fact=DMAX(scale/alf[kopt-1][kopt],SCALMX);
-      if (a[kopt+1]*fact <= wrkmin) {
-        *hnext=h/fact;
-        kopt++;
-      }
-    }
-    free_dvector(yseq,1,nv);
-    free_dvector(ysav,1,nv);
-    free_dvector(yerr,1,nv);
-    free_dvector(x,1,KMAXX);
-    free_dvector(err,1,KMAXX);
-    free_dmatrix(d,1,nv,1,KMAXX);
-}
-
-void NR_ODE_tools::ludcmp(double **a, int n, int *indx, double *d)
-{
-    int i,imax,j,k;
-    double big,dum,sum,temp;
-    double *vv;
-    vv=dvector(1,n);
-    *d=1.0;
-    for (i=1;i<=n;i++) {
-      big=0.0;
-      for (j=1;j<=n;j++)
-      if ((temp=fabs(a[i][j])) > big) big=temp;
-      if (big == 0.0) nrerror("Singular matrix in routine ludcmp");
-      vv[i]=1.0/big;
-    }
-
-    for (j=1;j<=n;j++) {
-      for (i=1;i<j;i++) {
-      sum=a[i][j];
-      for (k=1;k<i;k++) sum -= a[i][k]*a[k][j];
-      a[i][j]=sum;
-    }
-    big=0.0;
-    for (i=j;i<=n;i++) {
-      sum=a[i][j];
-      for (k=1;k<j;k++)
-      sum -= a[i][k]*a[k][j];
-      a[i][j]=sum;
-      if ( (dum=vv[i]*fabs(sum)) >= big) {
-        big=dum;
-        imax=i;
-      }
-    }
-    if (j != imax) {
-      for (k=1;k<=n;k++) {
-        dum=a[imax][k];
-        a[imax][k]=a[j][k];
-        a[j][k]=dum;
-      }
-      *d = -(*d);
-    }
-    indx[j]=imax;
-    if (a[j][j] == 0.0) a[j][j]=TINY;
-    if (j != n) {
-      dum=1.0/(a[j][j]);
-      for (i=j+1;i<=n;i++) a[i][j] *= dum;
-      }
-    }
-    free_dvector(vv,1,n);
-}
-
-
-void NR_ODE_tools::lubksb(double **a, int n, int *indx, double b[])
-{
-    int i,ii=0,ip,j;
-    double sum;
-    for (i=1;i<=n;i++) {
-      ip=indx[i];
-      sum=b[ip];
-      b[ip]=b[i];
-      if (ii) for (j=ii;j<=i-1;j++) sum -= a[i][j]*b[j];
-      else if (sum) ii=i;
-      b[i]=sum;
-    }
-
-    for (i=n;i>=1;i--) {
-      sum=b[i];
-      for (j=i+1;j<=n;j++) sum -= a[i][j]*b[j];
-      b[i]=sum/a[i][i];
-    }
-}
-
-
-void NR_ODE_tools::simpr(double y[], double dydx[], double dfdx[], double **dfdy,
-           int n, double xs, double htot, int nstep, double yout[])
-{
-    int i,j,nn,*indx;
-    double d,h,x,**a,*del,*ytemp;
-
-    indx=ivector(1,n);
-    a=dmatrix(1,n,1,n);
-    del=dvector(1,n);
-    ytemp=dvector(1,n);
-    h=htot/nstep;
-    for (i=1;i<=n;i++) {
-      for (j=1;j<=n;j++) a[i][j] = -h*dfdy[i][j];
-      ++a[i][i];
-    }
-    ludcmp(a,n,indx,&d);
-    for (i=1;i<=n;i++) yout[i]=h*(dydx[i]+h*dfdx[i]);
-    lubksb(a,n,indx,yout);
-    for (i=1;i<=n;i++) ytemp[i]=y[i]+(del[i]=yout[i]);
-    x=xs+h;
-    Reaction_DyDt(x,ytemp,yout);
-    for (nn=2;nn<=nstep;nn++) {
-      for (i=1;i<=n;i++) yout[i]=h*yout[i]-del[i];
-      lubksb(a,n,indx,yout);
-      for (i=1;i<=n;i++) ytemp[i] += (del[i] += 2.0*yout[i]);
-      x+= h;
-      Reaction_DyDt(x,ytemp,yout);
-    }
-    for (i=1;i<=n;i++) yout[i]=h*yout[i]-del[i];
-    lubksb(a,n,indx,yout);
-    for (i=1;i<=n;i++) yout[i] += ytemp[i];
-    free_dvector(ytemp,1,n);
-    free_dvector(del,1,n);
-    free_dmatrix(a,1,n,1,n);
-    free_ivector(indx,1,n);
-}
-
-
-void NR_ODE_tools::stifbs(double y[], double dydx[], int nv, double *xx, double htry,
-                          double eps, double yscal[], double *hdid, double *hnext)
-{
-    int i,iq,k,kk,km;
-    static int first=1,kmax,kopt,nvold = -1;
-    static double epsold = -1.0,xnew;
-    double eps1,errmax,fact,h,red,scale,work,wrkmin,xest;
-    double *dfdx,**dfdy,*err,*yerr,*ysav,*yseq;
-    static double a[IMAXX+1];
-    static double alf[KMAXX+1][KMAXX+1];
-    static int nseq[IMAXX+1]={0,2,6,10,14,22,34,50,70};
-    int reduct,exitflag=0;
-    d=dmatrix(1,nv,1,KMAXX);
-    dfdx=dvector(1,nv);
-    dfdy=dmatrix(1,nv,1,nv);
-    err=dvector(1,KMAXX);
-    x=dvector(1,KMAXX);
-    yerr=dvector(1,nv);
-    ysav=dvector(1,nv);
-    yseq=dvector(1,nv);
-
-    if(eps != epsold || nv != nvold) {
-      *hnext = xnew = -1.0e29;
-      eps1=SAFE1*eps;
-      a[1]=nseq[1]+1;
-      for (k=1;k<=KMAXX;k++) a[k+1]=a[k]+nseq[k+1];
-      for (iq=2;iq<=KMAXX;iq++) {
-        for (k=1;k<iq;k++)
-        alf[k][iq]=pow(eps1,((a[k+1]-a[iq+1]) / ((a[iq+1]-a[1]+1.0)*(2*k+1))));
-      }
-      epsold=eps;
-      nvold=nv;
-      a[1] += nv;
-      for (k=1;k<=KMAXX;k++) a[k+1]=a[k]+nseq[k+1];
-      for (kopt=2;kopt<KMAXX;kopt++) if (a[kopt+1] > a[kopt]*alf[kopt-1][kopt]) break;
-      kmax=kopt;
-    }
-    h=htry;
-    for (i=1;i<=nv;i++) ysav[i]=y[i];
-    Reaction_DfDy(*xx,y,dfdx,dfdy,nv);
-    if (*xx != xnew || h != (*hnext)) {
-      first=1;
-      kopt=kmax;
-    }
-    reduct=0;
-    for (;;) {
-      for (k=1;k<=kmax;k++) {
-        xnew=(*xx)+h;
-        if (xnew == (*xx)) nrerror("step size underflow in stifbs");
-        simpr(ysav,dydx,dfdx,dfdy,nv,*xx,h,nseq[k],yseq);
-        xest=DSQR(h/nseq[k]);
-        pzextr(k,xest,yseq,y,yerr,nv);
-        if(k != 1) {
-          errmax=TINY;
-          for (i=1;i<=nv;i++) errmax=DMAX(errmax,fabs(yerr[i]/yscal[i]));
-          errmax /= eps;
-          km=k-1;
-          err[km]=pow(errmax/SAFE1,1.0/(2*km+1));
-        }
-        if (k != 1 && (k >= kopt- 1 || first)) {
-          if (errmax < 1.0) {
-            exitflag=1;
-            break;
-          }
-          if (k == kmax || k == kopt+1) {
-            red=SAFE2/err[km];
-            break;
-          }
-          else if (k == kopt && alf[kopt-1][kopt] < err[km]) {
-            red=1.0/err[km];
-            break;
-          }
-          else if (kopt == kmax && alf[km][kmax-1] < err[km]) {
-            red=alf[km][kmax-1]*SAFE2/err[km];
-            break;
-          }
-          else if (alf[km][kopt] < err[km]) {
-            red=alf[km][kopt-1]/err[km];
-            break;
-          }
-        }
-      }
-      if (exitflag) break;
-      red=DMIN(red,REDMIN);
-      red=DMAX(red,REDMAX);
-      h *= red;
-      reduct=1;
-    }
-    *xx=xnew;
-    *hdid=h;
-    first=0;
-    wrkmin=1.0e35;
-    for (kk=1;kk<=km;kk++) {
-      fact=DMAX(err[kk],SCALMX);
-      work=fact*a[kk+1];
-      if (work < wrkmin) {
-        scale=fact;
-        wrkmin=work;
-        kopt=kk+1;
-      }
-    }
-    *hnext=h/scale;
-    if (kopt >= k && kopt != kmax && !reduct) {
-      fact=DMAX(scale/alf[kopt-1][kopt],SCALMX);
-      if (a[kopt+1]*fact <= wrkmin) {
-        *hnext=h/fact;
-        kopt++;
-      }
-    }
-    free_dvector(yseq,1,nv);
-    free_dvector(ysav,1,nv);
-    free_dvector(yerr,1,nv);
-    free_dvector(x,1,KMAXX);
-    free_dvector(err,1,KMAXX);
-    free_dmatrix(dfdy,1,nv,1,nv);
-    free_dvector(dfdx,1,nv);
-    free_dmatrix(d,1,nv,1,KMAXX);
-}
-
-
-void NR_ODE_tools::odeint(double ystart[], int nvar, double x1, double x2,
-            double eps, double h1, double hmin, double yend[],  AstFemParameters *af_params_in)
-{
-    int nstp,i;
-    double xsav,x,hnext,hdid,h;
-    double *yscal,*y,*dydx;
-
-    int kmax, nok, nbad, kount;
-    double *xp, **yp, dxsav;
-    dxsav = x2 - x1;
-    kmax = (int)((x2-x1)/dxsav)+1;
-    xp = dvector(1, kmax);
-    yp = dmatrix(1, nvar, 1, kmax);
-
-    af_params = af_params_in;
-
-    yscal=dvector(1,nvar);
-    y=dvector(1,nvar);
-    dydx=dvector(1,nvar);
-    x=x1;
-    h=SIGN(h1,x2-x1);
-    nok = nbad = kount = 0;
-
-    for (i=1;i<=nvar;i++) y[i]=ystart[i];
-    if (kmax > 0) xsav=x-dxsav*2.0;
-    for (nstp=1;nstp<=MAXSTP;nstp++) {
-      Reaction_DyDt(x,y,dydx);
-//      for (i=1;i<=nvar;i++) yscal[i]=fabs(y[i])+fabs(dydx[i]*h)+1.0;
-      for (i=1;i<=nvar;i++) yscal[i]=fabs(y[i])+1.0;
-      if (kmax > 0 && kount < kmax- 1 && fabs(x-xsav) > fabs(dxsav)) {
-        xp[++kount]=x;
-        for (i=1;i<=nvar;i++) yp[i][kount]=y[i];
-        xsav=x;
-      }
-      if ((x+h-x2)*(x+h-x1) > 0.0) h=x2-x;
-
-      /* this part can be replaced with other one-step ODE integrators */
-      //  bsstep(y,dydx,nvar,&x,h,eps,yscal,&hdid,&hnext);
-       stifbs(y,dydx,nvar,&x,h,eps,yscal,&hdid,&hnext);
-
-      if (hdid == h) ++nok; else ++nbad;
-
-      if ((x-x2)*(x2-x1) >= 0.0) {
-        for (i=1;i<=nvar;i++) ystart[i]=y[i];
-        if (kmax) {
-          xp[++kount]=x;
-          for (i=1;i<=nvar;i++) yp[i][kount]=y[i];
-        }
-        for (i=1;i<=nvar;i++) yend[i] = y[i];
-
-        free_dvector(dydx, 1, nvar);
-        free_dvector(y, 1, nvar);
-        free_dvector(yscal, 1, nvar);
-        free_dmatrix(yp, 1, nvar, 1, kmax);
-        free_dvector(xp, 1, kmax);
-
-        return;
-      }
-      if (fabs(hnext) <= hmin) nrerror("Step size too small in odeint");
-      h=hnext;
-    }
-    nrerror("Too many steps in routine odeint");
-}
-
-
-void NR_ODE_tools::Reaction_DyDt(double t, double *y, double *dydt)
-{
-	double stoich;
-	if ((*af_params).model >= 4 && (*af_params).model < 11)
-	{
-		stoich = (double)((*af_params).n[1]);
-		dydt[1] = (*af_params).koff[0] * (y[2] - (*af_params).keq[0] * pow(y[1], stoich));
-		dydt[2] = - dydt[1];
-		return;
-	}
-}
-
-void NR_ODE_tools::Reaction_DfDy(double t, double *y, double *dfdt, double **dfdy, int n)
-{
-	double stoich;
-
-   for(int i=1; i<=n; i++) dfdt[i] = 0.;
-
-	if ((*af_params).model >= 4 && (*af_params).model < 11)
-	{
-		stoich = (double)((*af_params).n[1]);
-		dfdy[1][1] = -(*af_params).koff[0] * (*af_params).keq[0] * stoich * pow(y[1], stoich-1.);
-		dfdy[1][2] = (*af_params).koff[0];
-		dfdy[2][1] = - dfdy[1][1];
-		dfdy[2][2] = - dfdy[1][2];
-		return;
-	}
-}
-
-

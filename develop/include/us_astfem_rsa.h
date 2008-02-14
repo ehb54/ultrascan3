@@ -129,7 +129,6 @@ class US_EXTERN US_Astfem_RSA : public QObject
 		void DefineGaussian(unsigned int, double **);
 		void DefInitCond(double **);
 		void ReactionOneStep_Euler_imp(double **, double);
-		void ReactionOneStep_ODE(double **);
       int DecomposeCT(double , double *);
       double find_C1_mono_Nmer(int, double, double);
 		double cube_root(double, double, double);
@@ -155,77 +154,6 @@ class US_EXTERN US_Astfem_RSA : public QObject
 //		void Reaction_DfDy(AstFemParameters *, double, double *, double **);
 		void print_af();
 };
-
-
-class NR_ODE_tools 
-{
-		#define KMAXX 7  			// Maximum row number used in the extrapolation. 
-                              // if odeint use stifbs
-/*
-		#define KMAXX 8  			// Maximum row number used in the extrapolation. 
-                              // if odeint use bsstep
-*/
-
-		#define IMAXX (KMAXX+1) 
-		#define SAFE1 0.25 		// Safety factors. 
-		#define SAFE2 0.7 
-		#define REDMAX 1.0e-5   // Maximum factor for stepsize reduction. 
-		#define REDMIN 0.7      // Minimum factor for stepsize reduction. 
-		#define TINY 1.0e-30    // Prevents division by zero. 
-		#define SCALMX 0.1      // 1/SCALMX is the maximum factor by which 
-                              // a stepsize can be increased. 
-		#define MAXSTP 10000
-
-
-	public:
-
-      AstFemParameters *af_params;
-
-		void odeint(double [], int , double , double , double , double , double , 
-            double *, AstFemParameters * );
-
-	private:
-		double **d,*x; 				// Pointers to matrix and vector used by pzextr 
-
-		double DSQR(double a) { return a*a; }
-		double DMAX(double a, double b) { return ( (a>b)? a:b ); }
-		double DMIN(double a, double b) { return ( (a<b)? a:b ); }
-		double SIGN(double a, double b) { return ( b>= 0.0 ? fabs(a) : -fabs(a) ); }
-
-
-		void nrerror(char error_text[]);
-		int *ivector(long nl, long nh);
-		double *dvector(long nl, long nh);
-		double **dmatrix(long nrl, long nrh, long ncl, long nch);
-		void free_ivector(int *v, long nl, long nh); 
-		void free_dvector(double *v, long nl, long nh); 
-		void free_dmatrix(double **m, long nrl, long nrh, long ncl, long nch); 
-
-
-		void pzextr(int , double , double [], double [], double [], int ); 
-
-		void mmid(double [], double [], int , double , double , int , double []);
-
-		void bsstep(double [], double [], int , double *, double , double , double [],
-            double *, double * );
-
-
-
-      void ludcmp(double **a, int n, int *indx, double *d);
-
-      void lubksb(double **a, int n, int *indx, double b[]);
-
-      void simpr(double y[], double dydx[], double dfdx[], double **dfdy, 
-                 int n, double xs, double htot, int nstep, double yout[]);
- 
-      void stifbs(double y[], double dydx[], int nv, double *xx, double htry, 
-                  double eps, double yscal[], double *hdid, double *hnext); 
-
-		void Reaction_DyDt(double, double *, double *);
-		void Reaction_DfDy(double, double *, double *, double **, int);
-
-};
-
 
 
 #endif
