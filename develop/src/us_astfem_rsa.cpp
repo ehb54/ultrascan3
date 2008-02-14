@@ -73,7 +73,7 @@ vector <struct mfem_data> *exp_data)
 	mfem_data simdata;
 	mfem_initial CT0;			// initial total concentration
 	af_params.model = (*system).model;
-	bool synthetic = true;
+	bool synthetic = false;
 	if (af_params.model < 4) // non-interacting single or multicomponent systems
 	{
 		for (i=0; i<(*system).component_vector.size(); i++)
