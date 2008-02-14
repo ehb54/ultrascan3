@@ -72,8 +72,8 @@ vector <struct mfem_data> *exp_data)
 	unsigned int duration, delay;
 	mfem_data simdata;
 	mfem_initial CT0;			// initial total concentration
-	af_params.model = (*system).model; 
-
+	af_params.model = (*system).model;
+	bool synthetic = true;
 	if (af_params.model < 4) // non-interacting single or multicomponent systems
 	{
 		for (i=0; i<(*system).component_vector.size(); i++)
@@ -90,10 +90,23 @@ vector <struct mfem_data> *exp_data)
 			if ((*system).component_vector[i].c0.concentration.size() == 0) // we don't have an existing CT0 concentration vector
 			{ // build up the initial concentration vector with constant concentration
 				double dr = ((*simparams).bottom - (*simparams).meniscus)/((*simparams).simpoints - 1);
-				for (j=0; j<(*simparams).simpoints; j++)
+				if (synthetic)
 				{
-					CT0.radius.push_back((*simparams).meniscus + j * dr );
+					CT0.radius.push_back((*simparams).meniscus);
 					CT0.concentration.push_back((*system).component_vector[i].concentration);
+					for (j=1; j<(*simparams).simpoints; j++)
+					{
+						CT0.radius.push_back((*simparams).meniscus + j * dr );
+						CT0.concentration.push_back(0.0);
+					}
+				}
+				else
+				{
+					for (j=0; j<(*simparams).simpoints; j++)
+					{
+						CT0.radius.push_back((*simparams).meniscus + j * dr );
+						CT0.concentration.push_back((*system).component_vector[i].concentration);
+					}
 				}
 			}
 			else
@@ -117,7 +130,7 @@ vector <struct mfem_data> *exp_data)
 					af_params.start_time = current_time;
 					af_params.meniscus = (*simparams).meniscus;
 					af_params.bottom = (*simparams).bottom;
-					af_params.mesh = (*simparams).mesh;		
+					af_params.mesh = (*simparams).mesh;
 					af_params.moving_grid = false;
 					af_params.acceleration = true;
 					vector <double> rpm;
@@ -168,9 +181,9 @@ vector <struct mfem_data> *exp_data)
 				}
 				af_params.time_steps = 1 + (unsigned int) (duration/af_params.dt);
 cout << "speed step:\t" << j << ", component: " << i << endl;
-cout << "speed:\t\t" << (*simparams).speed_step[j].rotorspeed << endl;				
-cout << "hours:\t\t" << (*simparams).speed_step[j].duration_hours << endl;				
-cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;				
+cout << "speed:\t\t" << (*simparams).speed_step[j].rotorspeed << endl;
+cout << "hours:\t\t" << (*simparams).speed_step[j].duration_hours << endl;
+cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 				af_params.start_time = current_time;
 				af_params.meniscus = (*exp_data)[j].meniscus;
 				af_params.bottom = (*exp_data)[j].bottom;
@@ -186,18 +199,18 @@ cout << "simdata scan size: " << simdata.scan.size() << endl;
 cout << "expdata scan size: " << (*exp_data)[j].scan.size() << endl;
 cout << endl;
 				interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
-			
+
 				// set the current time to the last scan of this speed step
 				current_time = (*simparams).speed_step[j].duration_hours * 3600
 				+ (*simparams).speed_step[j].duration_minutes * 60;
-			
+
 				// set the current speed to the constant rotor speed of the current speed step
 				current_speed = (*simparams).speed_step[j].rotorspeed;
 				qApp->processEvents();
 				if (*stopFlag)
 				{
 					return(1); // early termination = 1
-				}			
+				}
 			} // speed step loop
 			if (guiFlag)
 			{
@@ -257,7 +270,7 @@ cout << endl;
 		}
 
       // find the largest sedimenting or floating speed
-      s_max_abs = fabs(maxval(af_params.s)) > fabs(minval(af_params.s))? 
+      s_max_abs = fabs(maxval(af_params.s)) > fabs(minval(af_params.s))?
                   fabs(maxval(af_params.s)) : fabs(minval(af_params.s));
 
 
@@ -265,26 +278,26 @@ cout << endl;
 	   mfem_initial *C0;		// inital partial concentration decomposed from initial total concentration CT0
       C0 = new mfem_initial [ (*system).component_vector.size() ];
 
-      for( i=0; i<(*system).component_vector.size(); i++) 
+      for( i=0; i<(*system).component_vector.size(); i++)
       {
          C0[i].radius.clear();
          C0[i].concentration.clear();
       }
       double *vtmp ;
       vtmp = new double [ (*system).component_vector.size() ];
-	   for (j=0; j< CT0.radius.size(); j++) 
+	   for (j=0; j< CT0.radius.size(); j++)
       {
          DecomposeCT( CT0.concentration[j], vtmp);
-         for( i=0; i<(*system).component_vector.size(); i++) 
+         for( i=0; i<(*system).component_vector.size(); i++)
          {
             C0[i].radius.push_back( CT0.radius[j] );
             C0[i].concentration.push_back( vtmp[i] );
          }
       }
       delete [] vtmp;
-  
 
-      // start the simulation 
+
+      // start the simulation
 		for (j=0; j<(*simparams).speed_step.size(); j++)
 		{
 			if (guiFlag)
@@ -335,7 +348,7 @@ cout << endl;
 			af_params.dt = (duration - delay)/(*simparams).speed_step[j].scans;
 // find out the minimum number of simpoints needed to provide the necessary dt:
 
-			af_params.simpoints = 1 + (unsigned int) (log((*exp_data)[j].bottom/(*exp_data)[j].meniscus)/( af_params.omega_s * s_max_abs * af_params.dt)); 
+			af_params.simpoints = 1 + (unsigned int) (log((*exp_data)[j].bottom/(*exp_data)[j].meniscus)/( af_params.omega_s * s_max_abs * af_params.dt));
 
 
 // if calculated # of simpoints is smaller than user selected number of simpoints, follow user's request:
@@ -363,11 +376,11 @@ cout << endl;
 			rpm.push_back((*simparams).speed_step[j].rotorspeed);
 			calculate_ra2(rpm[0], rpm[0], C0, &simdata);
 			interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
-			
+
 				// set the current time to the last scan of this speed step
 			current_time = (*simparams).speed_step[j].duration_hours * 3600
 					+ (*simparams).speed_step[j].duration_minutes * 60;
-			
+
 				// set the current speed to the constant rotor speed of the current speed step
 			current_speed = (*simparams).speed_step[j].rotorspeed;
 			qApp->processEvents();
@@ -602,7 +615,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 	{
 		rpm_current = rpm_start + (rpm_stop - rpm_start) * (i+0.5)/af_params.time_steps;
 		emit current_speed((unsigned int) rpm_current);
-		
+
 
 		if(af_params.acceleration) // then we have acceleration
 		{
@@ -646,7 +659,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
       }
 //***/
 		//
-		// sedimentation part:		
+		// sedimentation part:
 		// Calculate thr right hand side vector //
 
 		if (!af_params.moving_grid)
@@ -713,7 +726,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 }
 
 
-// *** 
+// ***
 // *** this is the SNI version of operator scheme
 // ***
 
@@ -813,7 +826,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 	}
 	else		// constant sedimentation speed
 	{
-		if (!af_params.moving_grid )		
+		if (!af_params.moving_grid )
 		{
 			for( i=0; i<Mcomp; i++)
 			{
@@ -822,8 +835,8 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
                /****
                double tmpa=0, tmpb=0.;
 					for (j=0; j<N; j++) {
-                 tmpa += CA[i][0][j] + CA[i][1][j] + CA[i][2][j] + CA[i][3][j] ; 
-                 tmpb += CB[i][0][j] + CB[i][1][j] + CB[i][2][j] + CB[i][3][j] ; 
+                 tmpa += CA[i][0][j] + CA[i][1][j] + CA[i][2][j] + CA[i][3][j] ;
+                 tmpb += CB[i][0][j] + CB[i][1][j] + CB[i][2][j] + CB[i][3][j] ;
                }
                printf("fix mesh: comp[%d]: Ca=%20.10e Cb=%20.10e \n", i, tmpa, tmpb);
                ****/
@@ -850,8 +863,8 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
                //****
                double tmpa=0, tmpb=0.;
 					for (j=0; j<N; j++) {
-                 tmpa += CA[i][0][j] + CA[i][1][j] + CA[i][2][j] + CA[i][3][j] ; 
-                 tmpb += CB[i][0][j] + CB[i][1][j] + CB[i][2][j] + CB[i][3][j] ; 
+                 tmpa += CA[i][0][j] + CA[i][1][j] + CA[i][2][j] + CA[i][3][j] ;
+                 tmpb += CB[i][0][j] + CB[i][1][j] + CB[i][2][j] + CB[i][3][j] ;
                }
                printf("mov mesh: comp[%d]: Ca=%20.10e Cb=%20.10e \n", i, tmpa, tmpb);
                //****/
@@ -877,7 +890,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 	CT1 = new double [N];
 
 // here we need the interpolatie the initial partial concentration onto new grid x[j]
-   for( i=0; i<Mcomp; i++) 
+   for( i=0; i<Mcomp; i++)
    {
 	  interpolate_C0(&(C_init[i]), C0[i]); //interpolate the given C_init vector on the new C0 grid
    }
@@ -1174,7 +1187,7 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 	xc.clear();
 	Hstar.clear();
 	Nf.clear();
-			
+
 	for (i=0; i<af_params.s.size(); i++) 	// markers for steep regions
 	{
 		tmp_xc = af_params.bottom - (1.0/(nu[i] * af_params.bottom)) * log(nu[i]
@@ -1198,7 +1211,7 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 	xc.push_back(af_params.bottom);
 	print_vector(&xc);
 
-	if (IndLayer == 0)	// use Schuck's grid only 
+	if (IndLayer == 0)	// use Schuck's grid only
 	{
 		x.push_back(af_params.meniscus);
 //		for(i=1; i<af_params.simpoints ; i++)	// add one more point to Schuck's grids
@@ -1337,7 +1350,7 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 	xc.clear();
 	Hstar.clear();
 	Nf.clear();
-			
+
 	for (i=0; i<af_params.s.size(); i++) 	// markers for steep regions
 	{
 		tmp_xc = af_params.bottom - (1.0/(nu[i] * af_params.bottom)) * log(nu[i]
@@ -1360,7 +1373,7 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 	xc.push_back(af_params.bottom);
 	print_vector(&xc);
 
-	if (IndLayer == 0)	// use Schuck's grid only 
+	if (IndLayer == 0)	// use Schuck's grid only
 	{
 		x.push_back(af_params.meniscus);
 //		for(i=1; i<af_params.simpoints - 1; i++)	// standard Schuck's grids
@@ -1493,7 +1506,7 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 	yr.clear();
 	ys.clear();
 	yt.clear();
-	
+
 	double nu0 = nu[0];
 	xc = af_params.meniscus + 1./(fabs(nu0) * af_params.meniscus) *
 	log((pow(af_params.bottom, 2.0) - pow(af_params.meniscus, 2.0)) * fabs(nu0)/(2.0*uth));
@@ -1635,7 +1648,7 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 // generate the mesh
 ////////////////////%
 
-	
+
 	x.clear();
 	sort(nu.begin(), nu.end());	// put nu in ascending order
 	switch ( MeshOpt )
@@ -1697,7 +1710,7 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 			{
 				QTextStream ts(&f);
 				while(!ts.atEnd())
-				{				
+				{
 					str = ts.readLine();
 					x.push_back(str.toDouble());
 				}
@@ -1725,7 +1738,7 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 		default:
 		{
 			cerr << "undefined mesh option\n";
-		}	
+		}
 	}
 
 	N = x.size();
@@ -1819,7 +1832,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(double D, double sw2, double **
 	stfb0.CompLocalStif(3, xd, D, sw2, Stif[N-1]);
 
 	// assembly coefficient matrices
-	
+
 	k = 0;
 	CA[1][k] = Stif[k][2][2] ;
 	CA[2][k] = Stif[k][1][2] ;
@@ -1856,9 +1869,9 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshR(double D, double sw2, double **
 	CA[1][k]  = Stif[k-1][2][1] + Stif[k-1][2][2];	// j=2;
 	CB[0][k]  = Stif[k-1][0][1] + Stif[k-1][0][2];	// j=0;
 	CB[1][k]  = Stif[k-1][1][1] + Stif[k-1][1][2];	// j=1;
-	
+
 	// elem[k]: triangle
-	CA[1][k] += Stif[k][2][0] + Stif[k][2][1] + Stif[k][2][2];	
+	CA[1][k] += Stif[k][2][0] + Stif[k][2][1] + Stif[k][2][2];
 	CB[1][k] += Stif[k][0][0] + Stif[k][0][1] + Stif[k][0][2];
 	CB[2][k]  = Stif[k][1][0] + Stif[k][1][1] + Stif[k][1][2];
 	clear_3d(N, (unsigned int) 4, Stif);
@@ -1897,7 +1910,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(double D, double sw2, double **
 
 
 	// assembly coefficient matrices
-	
+
 	k = 0;
 	CA[1][0] = Stif[0][2][0] + Stif[0][2][1] + Stif[0][2][2];
 	CB[0][0] = Stif[0][0][0] + Stif[0][0][1] + Stif[0][0][2] ;
@@ -2064,7 +2077,7 @@ double D, double sw2)
 		vx.push_back((*xb)[i+1]);
 		IntQTm(vx, D, sw2, Stif[i]);
 	}
-	
+
 // 2nd last elems
 	vx.clear();
 	vx.push_back(x[N-3]);
@@ -2074,9 +2087,9 @@ double D, double sw2)
 	vx.push_back(x[N-1]);
 	vx.push_back((*xb)[N-2]);
 	vx.push_back((*xb)[N-1]);
-	
+
 	IntQTn2(vx, D, sw2, Stif[N-2]);
-	
+
 	// last elems
 	vx.clear();
 	vx.push_back(x[N-2]);
@@ -2088,7 +2101,7 @@ double D, double sw2)
 	//
 	// assembly into global stiffness matrix
 	//
-	
+
 	ca[0][0] = 0.0;
 	ca[1][0] = Stif[0][2][0];
 	ca[2][0] = Stif[0][3][0];
@@ -2165,7 +2178,7 @@ double D, double sw2)
 			for (unsigned int jj=0; jj<6; jj++)
 			{
 		      fprintf(outf, "%12.5e ", Stif[ii][jj][kk] );
-			}			
+			}
 		   fprintf(outf, "\n");
 		}
 		fprintf(outf, "\n");
@@ -2201,8 +2214,8 @@ void US_Astfem_RSA::DefineGaussian(unsigned int nGauss, double **Gs2)
 		}
 		case 5:
 		{
-         Gs1[0] = 0.906179845938664 ; 	w[0] = 0.236926885056189;         
-         Gs1[1] = 0.538469310105683 ; 	w[1] = 0.478628670499366;         
+         Gs1[0] = 0.906179845938664 ; 	w[0] = 0.236926885056189;
+         Gs1[1] = 0.538469310105683 ; 	w[1] = 0.478628670499366;
          Gs1[2] = 0.000000000000000 ; 	w[2] = 0.568888888888889;
 			Gs1[3] = -Gs1[1]; 				w[3] = w[1];
 			Gs1[4] = -Gs1[0]; 				w[4] = w[0];
@@ -2210,10 +2223,10 @@ void US_Astfem_RSA::DefineGaussian(unsigned int nGauss, double **Gs2)
 		}
 		case 7:
 		{
-         Gs1[0] = 0.949107912342759 ;	w[0] = 0.129484966168870;        
-         Gs1[1] = 0.741531185599394 ;	w[1] = 0.279705391489277;        
-         Gs1[2] = 0.405845151377397 ;	w[2] = 0.381830050505119;        
-         Gs1[3] = 0.000000000000000 ;	w[3] = 0.417959183673469;        
+         Gs1[0] = 0.949107912342759 ;	w[0] = 0.129484966168870;
+         Gs1[1] = 0.741531185599394 ;	w[1] = 0.279705391489277;
+         Gs1[2] = 0.405845151377397 ;	w[2] = 0.381830050505119;
+         Gs1[3] = 0.000000000000000 ;	w[3] = 0.417959183673469;
 			Gs1[4] = -Gs1[2]; 				w[4] = w[2];
 			Gs1[5] = -Gs1[1]; 				w[5] = w[1];
 			Gs1[6] = -Gs1[0]; 				w[6] = w[0];
@@ -2221,10 +2234,10 @@ void US_Astfem_RSA::DefineGaussian(unsigned int nGauss, double **Gs2)
 		}
 		case 10:
 		{
-   		Gs1[0] = 0.973906528517172 ;	w[0] = 0.066671344308688;        
-      	Gs1[1] = 0.865063366688985 ;	w[1] = 0.149451349150581;        
-      	Gs1[2] = 0.679409568299024 ;	w[2] = 0.219086362515982;        
-      	Gs1[3] = 0.433395394129247 ;	w[3] = 0.269266719309996;        
+   		Gs1[0] = 0.973906528517172 ;	w[0] = 0.066671344308688;
+      	Gs1[1] = 0.865063366688985 ;	w[1] = 0.149451349150581;
+      	Gs1[2] = 0.679409568299024 ;	w[2] = 0.219086362515982;
+      	Gs1[3] = 0.433395394129247 ;	w[3] = 0.269266719309996;
       	Gs1[4] = 0.148874338981631 ;	w[4] = 0.295524224714753;
 			Gs1[5] = -Gs1[4]; 				w[5] = w[4];
 			Gs1[6] = -Gs1[3]; 				w[6] = w[3];
@@ -2265,7 +2278,7 @@ double u, double ux, double ut, double v, double vx)
 }
 
 
-// 
+//
 // old version: perform integration on supp(test function) separately on left Q and right T
 //
 void US_Astfem_RSA::IntQT1(vector <double> vx, double D, double sw2, double **Stif)
@@ -2300,7 +2313,7 @@ void US_Astfem_RSA::IntQT1(vector <double> vx, double D, double sw2, double **St
 
 	Ly.push_back(0.0);
 	Ly.push_back(af_params.dt);
-	Ly.push_back(af_params.dt); 			
+	Ly.push_back(af_params.dt);
 
 	Rx.push_back(vx[0]);	// vertices of Q on right quadrilateral
 	Rx.push_back(vx[1]);
@@ -2315,7 +2328,7 @@ void US_Astfem_RSA::IntQT1(vector <double> vx, double D, double sw2, double **St
 	initialize_2d(3, 2, &StifL);
 	initialize_2d(4, 2, &StifR);
    hh = vx[3] - vx[2];
-   slope = (vx[3] - vx[5])/af_params.dt;  	
+   slope = (vx[3] - vx[5])/af_params.dt;
 	npts = 28;
 	initialize_2d(npts, 4, &Lam);
 	DefineFkp(npts, Lam);
@@ -2342,11 +2355,11 @@ void US_Astfem_RSA::IntQT1(vector <double> vx, double D, double sw2, double **St
 		//
 		// find phi, phi_x, phi_y on L and C at (x,y)
 		//
-		
+
 		BasisTR(Lx, Ly, x_gauss, y_gauss, phiL, phiLx, phiLy);
       phiC  = ( xn1 - vx[2] )/hh;		// hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
       phiCx = 1./hh;
-      
+
 		for (i=0; i<3; i++)
 		{
 			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i], 1.-phiC, -phiCx );
@@ -2381,7 +2394,7 @@ void US_Astfem_RSA::IntQT1(vector <double> vx, double D, double sw2, double **St
 		//
 		// find phi, phi_x, phi_y on R and C at (x,y)
 		//
-		
+
 		BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
       phiC  = ( xn1 - vx[2] )/hh;		// hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
       phiCx = 1./hh;
@@ -2413,11 +2426,11 @@ void US_Astfem_RSA::IntQT1(vector <double> vx, double D, double sw2, double **St
 	delete [] phiL;
 	delete [] phiLx;
 	delete [] phiLy;
-	
+
 	clear_2d(3, StifL);
 	clear_2d(4, StifR);
 
-	
+
 }
 
 void US_Astfem_RSA::IntQTm(vector <double> vx, double D, double sw2, double **Stif)
@@ -2500,7 +2513,7 @@ void US_Astfem_RSA::IntQTm(vector <double> vx, double D, double sw2, double **St
 	npts = 5 * 5;
 	initialize_2d(npts, 3, &Gs);
 	DefineGaussian(5, Gs);
-	
+
 	double psi[4], psi1[4], psi2[4], jac[4];
 	for (k=0; k<npts; k++)
 	{
@@ -2521,27 +2534,27 @@ void US_Astfem_RSA::IntQTm(vector <double> vx, double D, double sw2, double **St
 			jac[2] += Qy[i] * psi1[i];
 			jac[3] += Qy[i] * psi2[i];
 		}
-		
+
 		DJac = jac[0] * jac[3] - jac[1] * jac[2];
 
 		//
 		// find phi, phi_x, phi_y on L and C at (x,y)
 		//
-		
+
 		BasisQR(Lx, x_gauss, y_gauss, phiL, phiLx, phiLy);
 		BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
 		for (i=0; i<4; i++)
 		{
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i], 
+			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
  											phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
 			StifL[i][0] += Gs[k][2] * DJac * dval;
-			
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i], 
+
+			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
 											phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
 			StifL[i][1] += Gs[k][2] * DJac * dval;
 		}
 	}
-	clear_2d(npts, Gs);	
+	clear_2d(npts, Gs);
 
 	//
 	// integration over T:
@@ -2557,7 +2570,7 @@ void US_Astfem_RSA::IntQTm(vector <double> vx, double D, double sw2, double **St
 	npts = 28;
 	initialize_2d(npts, 4, &Lam);
 	DefineFkp(npts, Lam);
-	
+
 	for (k=0; k<npts; k++)
 	{
 		x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
@@ -2569,7 +2582,7 @@ void US_Astfem_RSA::IntQTm(vector <double> vx, double D, double sw2, double **St
 		//
 		// find phi, phi_x, phi_y on R and C at (x,y)
 		//
-		
+
 		BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
 		BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
 
@@ -2584,7 +2597,7 @@ void US_Astfem_RSA::IntQTm(vector <double> vx, double D, double sw2, double **St
 			StifR[i][1] += Lam[k][3] * DJac * dval;
 		}
 	}
-	clear_2d(npts, Lam);	
+	clear_2d(npts, Lam);
 
 
 	for (i=0; i<2; i++)
@@ -2674,7 +2687,7 @@ void US_Astfem_RSA::IntQTn2(vector <double> vx, double D, double sw2, double **S
 	initialize_2d(4, 2, &StifR);
 
    //
-   // integration over element Q 
+   // integration over element Q
    //
 	Qx.push_back(vx[5]);	// vertices of Q on right
 	Qx.push_back(vx[1]);
@@ -2684,12 +2697,12 @@ void US_Astfem_RSA::IntQTn2(vector <double> vx, double D, double sw2, double **S
 	Qy.push_back(0.0);
 	Qy.push_back(0.0);
 	Qy.push_back(af_params.dt);
-	Qy.push_back(af_params.dt);	
+	Qy.push_back(af_params.dt);
 
 	npts = 5 * 5;
 	initialize_2d(npts, 3, &Gs);
 	DefineGaussian(5, Gs);
-	
+
 	double psi[4], psi1[4], psi2[4], jac[4];
 	for (k=0; k<npts; k++)
 	{
@@ -2710,22 +2723,22 @@ void US_Astfem_RSA::IntQTn2(vector <double> vx, double D, double sw2, double **S
 			jac[2] += Qy[i] * psi1[i];
 			jac[3] += Qy[i] * psi2[i];
 		}
-		
+
 		DJac = jac[0] * jac[3] - jac[1] * jac[2];
 
 		//
 		// find phi, phi_x, phi_y on L and C at (x,y)
 		//
-		
+
 		BasisQR(Lx, x_gauss, y_gauss, phiL, phiLx, phiLy);
 		BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
 		for (i=0; i<4; i++)
 		{
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i], 
+			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
 											phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
 			StifL[i][0] += Gs[k][2] * DJac * dval;
-			
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i], 
+
+			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
 											phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
 			StifL[i][1] += Gs[k][2] * DJac * dval;
 		}
@@ -2746,7 +2759,7 @@ void US_Astfem_RSA::IntQTn2(vector <double> vx, double D, double sw2, double **S
 	npts = 28;
 	initialize_2d(npts, 4, &Lam);
 	DefineFkp(npts, Lam);
-	
+
 	for (k=0; k<npts; k++)
 	{
 		x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
@@ -2758,7 +2771,7 @@ void US_Astfem_RSA::IntQTn2(vector <double> vx, double D, double sw2, double **S
 		//
 		// find phi, phi_x, phi_y on R and C at (x,y)
 		//
-		
+
 		BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
 		BasisTR(Rx, Ry, x_gauss, y_gauss, phiR, phiRx, phiRy);
 
@@ -2792,7 +2805,7 @@ void US_Astfem_RSA::IntQTn2(vector <double> vx, double D, double sw2, double **S
 	delete [] phiCx;
 	delete [] phiCy;
 	delete [] phiC;
-	
+
 	clear_2d(3, StifL);
 	clear_2d(4, StifR);
 }
@@ -2849,7 +2862,7 @@ void US_Astfem_RSA::IntQTn1(vector <double> vx, double D, double sw2, double **S
 		//
 		// find phi, phi_x, phi_y on R and C at (x,y)
 		//
-		
+
 		BasisTR(Lx, Ly, x_gauss, y_gauss, phiL, phiLx, phiLy);
 
 		for (i=0; i<3; i++)
@@ -2859,7 +2872,7 @@ void US_Astfem_RSA::IntQTn1(vector <double> vx, double D, double sw2, double **S
 		}
 	}
 	clear_2d(npts, Lam);
-	
+
 	for (i=0; i<2; i++)
 	{
 		Stif[0][i] = StifR[0][i];
@@ -2869,7 +2882,7 @@ void US_Astfem_RSA::IntQTn1(vector <double> vx, double D, double sw2, double **S
 	delete [] phiL;
 	delete [] phiLx;
 	delete [] phiLy;
-	
+
 	clear_2d(4, StifR);
 }
 
@@ -2930,7 +2943,7 @@ void US_Astfem_RSA::QuadSolver(double *ai, double *bi, double *ci, double *di, d
 }
 
 
-// 
+//
 // ************* ELLAM ***********
 //
 //
@@ -2972,8 +2985,8 @@ void US_Astfem_RSA::GlobalStiff_ellam(vector <double> *xb, double **ca, double *
 		vx.push_back((*xb)[i+1]);
 		IntQTm_ellam(vx, D, sw2, Stif[i]);
 	}
-	
-	
+
+
 	// last elems
 	vx.clear();
 	vx.push_back(x[N-2]);
@@ -3065,13 +3078,13 @@ void US_Astfem_RSA::IntQT1_ellam(vector <double> vx, double D, double sw2, doubl
 
 	initialize_2d(4, 2, &StifR);
    hh = vx[3] - vx[2];
-   slope = (vx[3] - vx[4])/af_params.dt;  	
+   slope = (vx[3] - vx[4])/af_params.dt;
 
    //
    // integration over quadrilateral element Q :
    //
-   if( (vx[1]-vx[4])/(vx[1]-vx[0]) <1.e-3 ) 		// Q_{0,4,3,2} is almost degenerated into a triangle 
-   {  
+   if( (vx[1]-vx[4])/(vx[1]-vx[0]) <1.e-3 ) 		// Q_{0,4,3,2} is almost degenerated into a triangle
+   {
 	    // elements for integration
 	    //
 	    Qx.clear();
@@ -3081,8 +3094,8 @@ void US_Astfem_RSA::IntQT1_ellam(vector <double> vx, double D, double sw2, doubl
 	    Qx.push_back(vx[2]);
 	    Qy.push_back(0.0);
 	    Qy.push_back(af_params.dt);
-	    Qy.push_back(af_params.dt);	
- 
+	    Qy.push_back(af_params.dt);
+
        double **Lam;
 	    npts = 28;
 	    initialize_2d(npts, 4, &Lam);
@@ -3097,7 +3110,7 @@ void US_Astfem_RSA::IntQT1_ellam(vector <double> vx, double D, double sw2, doubl
 		    //
 		    // find phi, phi_x, phi_y on R and C at (x,y)
 		    //
-		
+
 	     	 BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
 
           xn1 = x_gauss + slope * ( af_params.dt - y_gauss );	// trace-forward point at t_n+1 from (x_g, y_g)
@@ -3108,12 +3121,12 @@ void US_Astfem_RSA::IntQT1_ellam(vector <double> vx, double D, double sw2, doubl
 		    {
 			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], 1.-phiC, -phiCx);
 			    StifR[i][0] += Lam[k][3] * DJac * dval;
-			
+
 			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],    phiC,  phiCx);
 			    StifR[i][1] += Lam[k][3] * DJac * dval;
 		    }
       }
-	   clear_2d(npts, Lam);	
+	   clear_2d(npts, Lam);
 
    } else {				// Q_{0,4,3,2} is non-degenerate
 
@@ -3129,18 +3142,18 @@ void US_Astfem_RSA::IntQT1_ellam(vector <double> vx, double D, double sw2, doubl
 	    Qy.push_back(0.0);
 	    Qy.push_back(0.0);
 	    Qy.push_back(af_params.dt);
-	    Qy.push_back(af_params.dt);	
+	    Qy.push_back(af_params.dt);
 
 	    double **Gs=NULL;
 	    npts = 5 * 5;
 	    initialize_2d(npts, 3, &Gs);
 	    DefineGaussian(5, Gs);
-	
+
 	    double psi[4], psi1[4], psi2[4], jac[4];
 	    for (k=0; k<npts; k++)
 	    {
 		    BasisQS(Gs[k][0], Gs[k][1], psi, psi1, psi2);
-    
+
 		    x_gauss = 0.0;
 		    y_gauss = 0.0;
 		    for (i=0; i<4; i++)
@@ -3156,13 +3169,13 @@ void US_Astfem_RSA::IntQT1_ellam(vector <double> vx, double D, double sw2, doubl
 			    jac[2] += Qy[i] * psi1[i];
 			    jac[3] += Qy[i] * psi2[i];
 		    }
-		
+
 		    DJac = jac[0] * jac[3] - jac[1] * jac[2];
 
 		    //
 		    // find phi, phi_x, phi_y on L and C at (x,y)
 		    //
-		
+
 		    BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
 
           xn1 = x_gauss + slope * ( af_params.dt - y_gauss );	// trace-forward point at t_n+1 from (x_g, y_g)
@@ -3173,12 +3186,12 @@ void US_Astfem_RSA::IntQT1_ellam(vector <double> vx, double D, double sw2, doubl
 		    {
 			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], 1.-phiC, -phiCx);
 			    StifR[i][0] += Gs[k][2] * DJac * dval;
-			
+
 			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],    phiC,  phiCx);
 			    StifR[i][1] += Gs[k][2] * DJac * dval;
 		    }
 	    }
-	    clear_2d(npts, Gs);	
+	    clear_2d(npts, Gs);
 
    }
 
@@ -3276,7 +3289,7 @@ void US_Astfem_RSA::IntQTm_ellam(vector <double> vx, double D, double sw2, doubl
 	npts = 28;
 	initialize_2d(npts, 4, &Lam);
 	DefineFkp(npts, Lam);
-	
+
 	for (k=0; k<npts; k++)
 	{
 		x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
@@ -3288,7 +3301,7 @@ void US_Astfem_RSA::IntQTm_ellam(vector <double> vx, double D, double sw2, doubl
 		//
 		// find phi, phi_x, phi_y on R and C at (x,y)
 		//
-		
+
 		BasisQR(Lx, x_gauss, y_gauss, phiL, phiLx, phiLy);
 		BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
 
@@ -3303,19 +3316,19 @@ void US_Astfem_RSA::IntQTm_ellam(vector <double> vx, double D, double sw2, doubl
 			StifL[i][1] += Lam[k][3] * DJac * dval;
 		}
 	}
-	clear_2d(npts, Lam);	
+	clear_2d(npts, Lam);
 
    //
    // integration over quadrilateral element Q :
    //
-   if( (vx[7]-vx[1])/(vx[2]-vx[1]) <1.e-3 ) 		// Q_{1,7,5,4} is almost degenerated into a triangle 
-   {  
+   if( (vx[7]-vx[1])/(vx[2]-vx[1]) <1.e-3 ) 		// Q_{1,7,5,4} is almost degenerated into a triangle
+   {
 	    Qx.push_back(vx[1]);	// vertices of Q on right
 	    Qx.push_back(vx[5]);
 	    Qx.push_back(vx[4]);
 	    Qy.push_back(0.0);
 	    Qy.push_back(af_params.dt);
-	    Qy.push_back(af_params.dt);	
+	    Qy.push_back(af_params.dt);
 
 	    npts = 28;
 	    initialize_2d(npts, 4, &Lam);
@@ -3330,22 +3343,22 @@ void US_Astfem_RSA::IntQTm_ellam(vector <double> vx, double D, double sw2, doubl
 		    //
 		    // find phi, phi_x, phi_y on R and C at (x,y)
 		    //
-		
+
 	     	 BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
 		    BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
 		    for (i=0; i<4; i++)
 		    {
-			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], 
+			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
 											    phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
 			    StifR[i][0] += Lam[k][3] * DJac * dval;
-			
-			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], 
+
+			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
 											    phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
 			    StifR[i][1] += Lam[k][3] * DJac * dval;
 		    }
        }
-	    clear_2d(npts, Lam);	
-   } 
+	    clear_2d(npts, Lam);
+   }
    else 				// Q is a non-degenerate quadrilateral
    {
 	    Qx.push_back(vx[1]);	// vertices of Q on right
@@ -3356,12 +3369,12 @@ void US_Astfem_RSA::IntQTm_ellam(vector <double> vx, double D, double sw2, doubl
 	    Qy.push_back(0.0);
 	    Qy.push_back(0.0);
 	    Qy.push_back(af_params.dt);
-	    Qy.push_back(af_params.dt);	
+	    Qy.push_back(af_params.dt);
 
 	    npts = 5 * 5;
 	    initialize_2d(npts, 3, &Gs);
 	    DefineGaussian(5, Gs);
-	
+
 	    double psi[4], psi1[4], psi2[4], jac[4];
 	    for (k=0; k<npts; k++)
 	    {
@@ -3382,27 +3395,27 @@ void US_Astfem_RSA::IntQTm_ellam(vector <double> vx, double D, double sw2, doubl
 			    jac[2] += Qy[i] * psi1[i];
 			    jac[3] += Qy[i] * psi2[i];
 		    }
-		
+
 		    DJac = jac[0] * jac[3] - jac[1] * jac[2];
 
 		    //
 		    // find phi, phi_x, phi_y on L and C at (x,y)
 		    //
-	    	
+
 		    BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
 		    BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
 		    for (i=0; i<4; i++)
 		    {
-			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], 
+			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
 											    phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
 			    StifR[i][0] += Gs[k][2] * DJac * dval;
-		    	
-			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], 
+
+			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
 											    phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
 			    StifR[i][1] += Gs[k][2] * DJac * dval;
 		    }
 	    }
-	    clear_2d(npts, Gs);	
+	    clear_2d(npts, Gs);
    }
 
 	for (i=0; i<2; i++)
@@ -3483,7 +3496,7 @@ void US_Astfem_RSA::IntQTn1_ellam(vector <double> vx, double D, double sw2, doub
 		//
 		// find phi, phi_x, phi_y on R and C at (x,y)
 		//
-		
+
 		BasisQR(Lx, x_gauss, y_gauss, phiL, phiLx, phiLy);
 
 		for (i=0; i<4; i++)
@@ -3494,7 +3507,7 @@ void US_Astfem_RSA::IntQTn1_ellam(vector <double> vx, double D, double sw2, doub
 	}
 	clear_2d(npts, Lam);
 
-	
+
 	for (i=0; i<2; i++)
 	{
 		Stif[0][i] = StifL[0][i];
@@ -3505,7 +3518,7 @@ void US_Astfem_RSA::IntQTn1_ellam(vector <double> vx, double D, double sw2, doub
 	delete [] phiL;
 	delete [] phiLx;
 	delete [] phiLy;
-	
+
 	clear_2d(4, StifL);
 }
 
@@ -3569,11 +3582,11 @@ void US_Astfem_RSA::BasisTS(double xi, double et, double *phi, double *phi1, dou
 	phi[0] = 1.0 - xi - et;
 	phi1[0] = -1.0;
 	phi2[0]= -1.0;
-	
+
 	phi[1] = xi;
 	phi1[1] = 1.0;
 	phi2[1] = 0.0;
-	
+
 	phi[2] = et;
 	phi1[2] = 0.0;
 	phi2[2] = 1.0;
@@ -3588,11 +3601,11 @@ void US_Astfem_RSA::BasisQS(double xi, double et, double *phi, double *phi1, dou
 	phi[0] = (1.0 - xi) * (1.0 - et);
 	phi1[0] = -1.0 * (1.0 - et);
 	phi2[0]= -1.0 * (1.0 - xi);
-	
+
 	phi[1] = xi * (1.0 - et);
 	phi1[1] = 1.0 - et;
 	phi2[1] = -xi;
-	
+
 	phi[2] = xi * et;
 	phi1[2] = et;
 	phi2[2] = xi;
@@ -3609,8 +3622,8 @@ void US_Astfem_RSA::DefineFkp(unsigned int npts, double **Lam)
    //
 	switch (npts)
 	{
-		case 12:			
-      //  STRANG9, order 12, degree of precision 6. 
+		case 12:
+      //  STRANG9, order 12, degree of precision 6.
 		{
   				Lam[ 0][0] = 0.873821971016996;	Lam[ 0][1] = 0.063089014491502;
   				Lam[ 1][0] = 0.063089014491502;	Lam[ 1][1] = 0.873821971016996;
@@ -3639,7 +3652,7 @@ void US_Astfem_RSA::DefineFkp(unsigned int npts, double **Lam)
   				Lam[11][3] = 0.082851075618374;
 			break;
 		}
-		case 28:					
+		case 28:
       // TOMS612_28, order 28, degree of precision 11, a rule from ACM TOMS algorithm #612
 		{
   			Lam[ 0][0] = 0.33333333333333333  ;	Lam[ 0][1] = 0.333333333333333333 ;
@@ -3701,8 +3714,8 @@ void US_Astfem_RSA::DefineFkp(unsigned int npts, double **Lam)
   			Lam[27][3] = 0.007362383783300573 ;
 			break;
 		}
-		case 37:					
-      //   TOMS706_37, order 37, degree of precision 13, a rule from ACM TOMS algorithm #706. 
+		case 37:
+      //   TOMS706_37, order 37, degree of precision 13, a rule from ACM TOMS algorithm #706.
 		{
   			Lam[ 0][0] = 0.333333333333333333333333333333; 	Lam[ 0][1] = 0.333333333333333333333333333333;
   			Lam[ 1][0] = 0.950275662924105565450352089520;  Lam[ 1][1] = 0.024862168537947217274823955239;
@@ -3788,10 +3801,10 @@ void US_Astfem_RSA::DefineFkp(unsigned int npts, double **Lam)
 			return;
 		}
 	}
-   for(int i=0; i<npts; i++) 
+   for(int i=0; i<npts; i++)
    {
       Lam[i][2] = 1. - Lam[i][0] - Lam[i][1];
-      Lam[i][3] /= 2.; 			// to make the sum( wt ) = 0.5 = area of standard elem 
+      Lam[i][3] /= 2.; 			// to make the sum( wt ) = 0.5 = area of standard elem
    }
 }
 
@@ -3837,23 +3850,23 @@ double ys, double *phi, double *phix, double *phiy)
 	tempv2.push_back(vy[1]);
 
 	double et = AreaT(&tempv1, &tempv2)/AreaK;
-	
+
 	double *phi1, *phi2;
-	
+
 	phi1 = new double [3];
 	phi2 = new double [3];
 
 	BasisTS(xi, et, phi, phi1, phi2);
-	
+
 	double Jac[4], JacN[4], det;
-	
+
 	Jac[0] = vx[0] * phi1[0] + vx[1] * phi1[1] + vx[2] * phi1[2];
 	Jac[1] = vx[0] * phi2[0] + vx[1] * phi2[1] + vx[2] * phi2[2];
 	Jac[2] = vy[0] * phi1[0] + vy[1] * phi1[1] + vy[2] * phi1[2];
 	Jac[3] = vy[0] * phi2[0] + vy[1] * phi2[1] + vy[2] * phi2[2];
-	
+
 	det = Jac[0] * Jac[3] - Jac[1] * Jac [2];
-	
+
 	JacN[0] = Jac[3]/det;
 	JacN[1] = -Jac[1]/det;
 	JacN[2] = -Jac[2]/det;
@@ -3872,7 +3885,7 @@ void US_Astfem_RSA::BasisQR(vector <double> vx, double xs,
 double ts, double *phi, double *phix, double *phiy)
 {
 	unsigned int i;
-	
+
 	// find (xi,et) corresponding to (xs, ts)
 	double et = ts/af_params.dt;
 	double A = vx[0] * (1.0 - et) + vx[3] * et;
@@ -3880,7 +3893,7 @@ double ts, double *phi, double *phix, double *phiy)
 	double xi = (xs - A)/(B - A);
 
 	double *phi1, *phi2;
-	
+
 	phi1 = new double [4];
 	phi2 = new double [4];
 
@@ -3888,14 +3901,14 @@ double ts, double *phi, double *phix, double *phiy)
 	BasisQS(xi, et, phi, phi1, phi2);
 
 	double Jac[4], JacN[4], det;
-	
+
 	Jac[0] = vx[0] * phi1[0] + vx[1] * phi1[1] + vx[2] * phi1[2] + vx[3] * phi1[3];
 	Jac[1] = vx[0] * phi2[0] + vx[1] * phi2[1] + vx[2] * phi2[2] + vx[3] * phi2[3];
 	Jac[2] = af_params.dt * phi1[2] + af_params.dt * phi1[3];
 	Jac[3] = af_params.dt * phi2[2] + af_params.dt * phi2[3];
-	
+
 	det = Jac[0] * Jac[3] - Jac[1] * Jac [2];
-	
+
 	JacN[0] = Jac[3]/det;
 	JacN[1] = -Jac[1]/det;
 	JacN[2] = -Jac[2]/det;
@@ -3906,8 +3919,8 @@ double ts, double *phi, double *phix, double *phiy)
 		phix[i] = JacN[0] * phi1[i] + JacN[2] * phi2[i];
 		phiy[i] = JacN[1] * phi1[i] + JacN[3] * phi2[i];
 	}
-	delete [] phi1;		
-	delete [] phi2;		
+	delete [] phi1;
+	delete [] phi2;
 }
 
 
@@ -3934,7 +3947,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 {
 //////////////////////////////%
 //
-// ReactionOneStep_Euler_imp:  implicit Mid-point Euler 
+// ReactionOneStep_Euler_imp:  implicit Mid-point Euler
 //
 //////////////////////////////%
 
@@ -3954,8 +3967,8 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 			ct += C1[i][j];
 //         if(C1[i][j]<0) NegComp = 1;
 		}
-      
-//      if(NegComp==0) 
+
+//      if(NegComp==0)
 //      {
 
 	   if(af_params.model >= 4 && af_params.model <= 10)  // monomer - (n)mer
@@ -3970,7 +3983,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
          }
          else
          {
-            switch(af_params.model) 
+            switch(af_params.model)
             {
                case 4:	// mono <--> dimer
                   uhat = 2*dvc / ( dvb+sqrt(dvb*dvb+4.*dva*dvc) );
@@ -4004,7 +4017,7 @@ int US_Astfem_RSA::DecomposeCT(double CT, double *C)
 {
 	double dval, C1;
 
-		dval = CT; 
+		dval = CT;
 
 		if (af_params.model == 4) // monomer-dimer
 		{
@@ -4056,7 +4069,7 @@ double US_Astfem_RSA::find_C1_mono_Nmer( int n, double K, double CT )
    if ( CT<=0. ) return( 0. );
    if ( CT<=1.e-12 ) return( CT );
 
-	for ( i=1; i < MaxNumIt; i++) 
+	for ( i=1; i < MaxNumIt; i++)
    {
 		x1 = ( K * (n-1.0) * pow(x0,(double)n) + CT ) / ( 1. + K * n * pow(x0, n-1.) );
 	   if ( fabs(x1 - x0)/(1.+fabs(x1)) < 1.e-12 ) break;
@@ -4155,7 +4168,7 @@ void US_Astfem_RSA::print_vector(vector <double> *dval)
 int US_Astfem_RSA::interpolate(struct mfem_data *simdata, unsigned int scans, unsigned int points,
 float *scantimes, double *radius, double **c)
 {
-	
+
 /********************************************************************************************
  * interpolation:																									*
  *																														*
@@ -4267,7 +4280,7 @@ int US_Astfem_RSA::interpolate_C0(struct mfem_initial *C0, double *cnew)
 			{
 				slope = ((*C0).concentration[j] - (*C0).concentration[j-1])
 				/((*C0).radius[j] - (*C0).radius[j-1]);
-				
+
 				intercept = (*C0).concentration[j] - (*C0).radius[j] * slope;
 				cnew[i] = slope * x[i] + intercept;
 				cout << i << ": " << cnew[i] << ", " << x[i] << " (case 3)" << endl;
@@ -4287,7 +4300,7 @@ int US_Astfem_RSA::interpolate_Cfinal(struct mfem_initial *C0, double *cfinal)
 
 	unsigned int i, j=0;
 	double slope, intercept;
-	
+
 	for (i=0; i<N; i++)
 	{
 		cout << "final (i=" << i << "): " << cfinal[i] << endl;
@@ -4365,7 +4378,7 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 		   ja = (i>0)? i-1 : 0;
       }
 	}
-      
+
    // interpolation between 2 time scans across the expdata.scan[].time
 
    ja=0;
@@ -4385,7 +4398,7 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
          }
          ja = 0;
          (*expdata).scan[kkk].omega_s_t = (*simdata).scan[0].omega_s_t;
-      } 
+      }
       else if ( i >= (*simdata).scan.size()-1 )		// time after the last scan of simdata
       {
          for( j=0; j<(*expdata).radius.size(); j++)
@@ -4416,7 +4429,7 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 /*****
 int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simdata)
 {
-	
+
 // ********************************************************************************************
 // * interpolates simdata onto expdata. On exit, expdata is overwritten with the simulation	*
 // * values in simdata, but with the same radial- and time grid as expdata.						*
@@ -4499,7 +4512,7 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 	delete [] ip_array;
 	return 0;
 }
-*****/  
+*****/
 
 
 void US_Astfem_RSA::ReactionOneStep_ODE(double **C1)
@@ -4647,7 +4660,7 @@ double *h_next, double *h_used, double eps, double *y_scale,
 			g[3][i] = dydt[i] + (g[0][i] * C41 + g[1][i] * C42 + g[2][i] * C43)/h;
 		}
 		LU_BackSubstitute(a, g[3], index, af_params.s.size());
-		
+
 		for (i=0; i<af_params.s.size(); i++)
 		{
 			y_current[i] = y_save[i] + g[0][i] * B1 + g[1][i] * B2 + g[2][i] * B3 + g[3][i] * B4;
@@ -4675,7 +4688,7 @@ double *h_next, double *h_used, double eps, double *y_scale,
 			delete [] index;
 			return(false);
 		}
-		
+
 		double errmax = 0.0;
 		for (i=0; i<af_params.s.size(); i++)
 		{
@@ -4774,7 +4787,7 @@ int *NR_ODE_tools::ivector(long nl, long nh)
 double *NR_ODE_tools::dvector(long nl, long nh)
 /* allocate a double vector with subscript range v[nl..nh] */
 {
-    double *v; 
+    double *v;
     v=(double *)malloc((size_t) ((nh-nl+1+NR_END)*sizeof(double)));
     if (!v) nrerror("allocation failure in dvector()");
     return v-nl+NR_END;
@@ -4801,9 +4814,9 @@ double **NR_ODE_tools::dmatrix(long nrl, long nrh, long ncl, long nch)
 
     for(i=nrl+1;i<=nrh;i++) m[i]=m[i-1]+ncol;
 
-    /* return pointer to array of pointers to rows */ 
-    return m; 
-} 
+    /* return pointer to array of pointers to rows */
+    return m;
+}
 
 void NR_ODE_tools::free_ivector(int *v, long nl, long nh)
 /* free an int vector allocated with ivector() */
@@ -4811,37 +4824,37 @@ void NR_ODE_tools::free_ivector(int *v, long nl, long nh)
     free((FREE_ARG) (v+nl-NR_END));
 }
 
-void NR_ODE_tools::free_dvector(double *v, long nl, long nh) 
-/* free a double vector allocated with dvector() */ 
-{ 
-    free((FREE_ARG) (v+nl-NR_END)); 
-} 
+void NR_ODE_tools::free_dvector(double *v, long nl, long nh)
+/* free a double vector allocated with dvector() */
+{
+    free((FREE_ARG) (v+nl-NR_END));
+}
 
 void NR_ODE_tools::free_dmatrix(double **m, long nrl, long nrh, long ncl, long nch)
 /* free a double matrix allocated by dmatrix() */
 {
-    free((FREE_ARG) (m[nrl]+ncl-NR_END)); 
-    free((FREE_ARG) (m+nrl-NR_END)); 
-} 
+    free((FREE_ARG) (m[nrl]+ncl-NR_END));
+    free((FREE_ARG) (m+nrl-NR_END));
+}
 
-void NR_ODE_tools::pzextr(int iest, double xest, double yest[], double yz[], double dy[], int nv) 
-{ 
-    int k1,j; 
-    double q,f2,f1,delta,*c; 
+void NR_ODE_tools::pzextr(int iest, double xest, double yest[], double yz[], double dy[], int nv)
+{
+    int k1,j;
+    double q,f2,f1,delta,*c;
 
     c=dvector(1,nv);
-    x[iest]=xest; 
-    for (j=1;j<=nv;j++) 
+    x[iest]=xest;
+    for (j=1;j<=nv;j++)
     dy[j]=yz[j]=yest[j];
-    if (iest == 1) { 
-      for (j=1;j<=nv;j++) d[j][1]=yest[j]; 
+    if (iest == 1) {
+      for (j=1;j<=nv;j++) d[j][1]=yest[j];
     } else {
       for (j=1;j<=nv;j++) c[j]=yest[j];
       for (k1=1;k1<iest;k1++) {
         delta=1.0/(x[iest-k1]-xest);
         f1=xest*delta;
         f2=x[iest-k1]*delta;
-        for (j=1;j<=nv;j++) { 
+        for (j=1;j<=nv;j++) {
           q=d[j][k1];
           d[j][k1]=dy[j];
           delta=c[j]-q;
@@ -4851,29 +4864,29 @@ void NR_ODE_tools::pzextr(int iest, double xest, double yest[], double yz[], dou
         }
       }
       for (j=1;j<=nv;j++) d[j][iest]=dy[j];
-    } 
-    free_dvector(c,1,nv); 
-} 
+    }
+    free_dvector(c,1,nv);
+}
 
 
-void NR_ODE_tools::mmid(double y[], double dydx[], int nvar, double xs, 
+void NR_ODE_tools::mmid(double y[], double dydx[], int nvar, double xs,
                         double htot, int nstep, double yout[])
-{ 
+{
 
-    int n,i; 
-    double x,swap,h2,h,*ym,*yn; 
+    int n,i;
+    double x,swap,h2,h,*ym,*yn;
 
     ym=dvector(1,nvar);
     yn=dvector(1,nvar);
-    h=htot/nstep; 
+    h=htot/nstep;
     for (i=1;i<=nvar;i++) {
-      ym[i]=y[i]; 
-      yn[i]=y[i]+h*dydx[i]; 
-    } 
-    x=xs+h; 
-    Reaction_DyDt(x,yn,yout); 
-    h2=2.0*h; 
-    for (n=2;n<=nstep;n++) { 
+      ym[i]=y[i];
+      yn[i]=y[i]+h*dydx[i];
+    }
+    x=xs+h;
+    Reaction_DyDt(x,yn,yout);
+    h2=2.0*h;
+    for (n=2;n<=nstep;n++) {
       for (i=1;i<=nvar;i++) {
         swap=ym[i]+h2*yout[i];
         ym[i]=yn[i];
@@ -4882,15 +4895,15 @@ void NR_ODE_tools::mmid(double y[], double dydx[], int nvar, double xs,
       x += h;
       Reaction_DyDt(x,yn,yout);
     }
-    for (i=1;i<=nvar;i++) 
+    for (i=1;i<=nvar;i++)
     yout[i]=0.5*(ym[i]+yn[i]+h*yout[i]);
     free_dvector(yn,1,nvar);
     free_dvector(ym,1,nvar);
-} 
+}
 
-void NR_ODE_tools::bsstep(double y[], double dydx[], int nv, double *xx, double htry, 
+void NR_ODE_tools::bsstep(double y[], double dydx[], int nv, double *xx, double htry,
                           double eps, double yscal[], double *hdid, double *hnext)
-{ 
+{
     int i,iq,k,kk,km;
     static int first=1,kmax,kopt;
     static double epsold = -1.0,xnew;
@@ -4908,290 +4921,63 @@ void NR_ODE_tools::bsstep(double y[], double dydx[], int nv, double *xx, double 
     yerr=dvector(1,nv);
     ysav=dvector(1,nv);
     yseq=dvector(1,nv);
-    if (eps != epsold) { 
+    if (eps != epsold) {
       *hnext = xnew = -1.0e29; 		// ¡°Impossible¡± values.
       eps1=SAFE1*eps;
       a[1]=nseq[1]+1; 				// Compute work coefficients Ak.
       for (k=1;k<=KMAXX;k++) a[k+1]=a[k]+nseq[k+1];
-      for (iq=2;iq<=KMAXX;iq++) { 
-        for (k=1;k<iq;k++) alf[k][iq]=pow(eps1,(a[k+1]-a[iq+1])/ ((a[iq+1]-a[1]+1.0)*(2*k+1))); 
-      } 
-      epsold=eps; 
-      for (kopt=2;kopt<KMAXX;kopt++) 
-        if (a[kopt+1] > a[kopt]*alf[kopt-1][kopt]) break; 
-        kmax=kopt; 
-    } 
-    h=htry; 
-    for (i=1;i<=nv;i++) ysav[i]=y[i]; 
-    if (*xx != xnew || h != (*hnext)) { 
-      first=1; 
+      for (iq=2;iq<=KMAXX;iq++) {
+        for (k=1;k<iq;k++) alf[k][iq]=pow(eps1,(a[k+1]-a[iq+1])/ ((a[iq+1]-a[1]+1.0)*(2*k+1)));
+      }
+      epsold=eps;
+      for (kopt=2;kopt<KMAXX;kopt++)
+        if (a[kopt+1] > a[kopt]*alf[kopt-1][kopt]) break;
+        kmax=kopt;
+    }
+    h=htry;
+    for (i=1;i<=nv;i++) ysav[i]=y[i];
+    if (*xx != xnew || h != (*hnext)) {
+      first=1;
       kopt=kmax;
     }
     reduct=0;
     for (;;) {
-      for (k=1;k<=kmax;k++) { 
-        xnew=(*xx)+h; 
-        if (xnew == (*xx)) 
-        nrerror("step size underflow in bsstep"); 
-        mmid(ysav,dydx,nv,*xx,h,nseq[k],yseq);
-        xest=DSQR(h/nseq[k]); 
-        pzextr(k,xest,yseq,y,yerr,nv); 
-        if(k != 1) { 
-          errmax=TINY; 
-          for (i=1;i<=nv;i++) 
-          errmax=DMAX(errmax,fabs(yerr[i]/yscal[i]));
-          errmax /= eps; 
-          km=k-1;
-          err[km]=pow(errmax/SAFE1,1.0/(2*km+1));
-        }
-        if (k != 1 && (k >= kopt-1 || first)) { 
-          if (errmax < 1.0) { 
-            exitflag=1; 
-            break; 
-        } 
-        if (k == kmax || k == kopt+1) { 
-          red=SAFE2/err[km]; 
-          break; 
-        } 
-        else if (k == kopt && alf[kopt-1][kopt] < err[km]) { 
-            red=1.0/err[km]; 
-            break; 
-          } 
-        else if (kopt == kmax && alf[km][kmax-1] < err[km]) { 
-            red=alf[km][kmax-1]*SAFE2/err[km]; 
-            break; 
-            } 
-        else if (alf[km][kopt] < err[km]) { 
-            red=alf[km][kopt-1]/err[km]; 
-            break; 
-            } 
-        } 
-      } 
-      if (exitflag) break; 
-      red=DMIN(red,REDMIN); 
-      red=DMAX(red,REDMAX); 
-      h *= red; 
-      reduct=1; 
-    } 
-    *xx=xnew; 
-    *hdid=h;
-    first=0;
-    wrkmin=1.0e35; 
-    for (kk=1;kk<=km;kk++) { 
-      fact=DMAX(err[kk],SCALMX);
-      work=fact*a[kk+1];
-      if (work < wrkmin) {
-        scale=fact;
-        wrkmin=work;
-        kopt=kk+1;
-      }
-    }
-    *hnext=h/scale;
-    if (kopt >= k && kopt != kmax && !reduct) {
-      fact=DMAX(scale/alf[kopt-1][kopt],SCALMX); 
-      if (a[kopt+1]*fact <= wrkmin) {
-        *hnext=h/fact;
-        kopt++;
-      }
-    }
-    free_dvector(yseq,1,nv);
-    free_dvector(ysav,1,nv);
-    free_dvector(yerr,1,nv);
-    free_dvector(x,1,KMAXX);
-    free_dvector(err,1,KMAXX);
-    free_dmatrix(d,1,nv,1,KMAXX);
-} 
-
-void NR_ODE_tools::ludcmp(double **a, int n, int *indx, double *d)
-{ 
-    int i,imax,j,k; 
-    double big,dum,sum,temp; 
-    double *vv; 
-    vv=dvector(1,n);
-    *d=1.0; 
-    for (i=1;i<=n;i++) { 
-      big=0.0; 
-      for (j=1;j<=n;j++) 
-      if ((temp=fabs(a[i][j])) > big) big=temp; 
-      if (big == 0.0) nrerror("Singular matrix in routine ludcmp"); 
-      vv[i]=1.0/big; 
-    } 
-
-    for (j=1;j<=n;j++) { 
-      for (i=1;i<j;i++) { 
-      sum=a[i][j]; 
-      for (k=1;k<i;k++) sum -= a[i][k]*a[k][j]; 
-      a[i][j]=sum; 
-    } 
-    big=0.0; 
-    for (i=j;i<=n;i++) { 
-      sum=a[i][j]; 
-      for (k=1;k<j;k++) 
-      sum -= a[i][k]*a[k][j];
-      a[i][j]=sum;
-      if ( (dum=vv[i]*fabs(sum)) >= big) {
-        big=dum;
-        imax=i;
-      }
-    }
-    if (j != imax) { 
-      for (k=1;k<=n;k++) { 
-        dum=a[imax][k];
-        a[imax][k]=a[j][k];
-        a[j][k]=dum;
-      }
-      *d = -(*d); 
-    }
-    indx[j]=imax;
-    if (a[j][j] == 0.0) a[j][j]=TINY;
-    if (j != n) { 
-      dum=1.0/(a[j][j]);
-      for (i=j+1;i<=n;i++) a[i][j] *= dum;
-      } 
-    } 
-    free_dvector(vv,1,n); 
-} 
-
-
-void NR_ODE_tools::lubksb(double **a, int n, int *indx, double b[]) 
-{ 
-    int i,ii=0,ip,j; 
-    double sum; 
-    for (i=1;i<=n;i++) { 
-      ip=indx[i]; 
-      sum=b[ip]; 
-      b[ip]=b[i]; 
-      if (ii) for (j=ii;j<=i-1;j++) sum -= a[i][j]*b[j]; 
-      else if (sum) ii=i; 
-      b[i]=sum; 
-    } 
-
-    for (i=n;i>=1;i--) { 
-      sum=b[i]; 
-      for (j=i+1;j<=n;j++) sum -= a[i][j]*b[j]; 
-      b[i]=sum/a[i][i]; 
-    } 
-} 
-
-
-void NR_ODE_tools::simpr(double y[], double dydx[], double dfdx[], double **dfdy, 
-           int n, double xs, double htot, int nstep, double yout[]) 
-{ 
-    int i,j,nn,*indx; 
-    double d,h,x,**a,*del,*ytemp; 
-
-    indx=ivector(1,n); 
-    a=dmatrix(1,n,1,n); 
-    del=dvector(1,n); 
-    ytemp=dvector(1,n); 
-    h=htot/nstep; 
-    for (i=1;i<=n;i++) { 
-      for (j=1;j<=n;j++) a[i][j] = -h*dfdy[i][j]; 
-      ++a[i][i]; 
-    } 
-    ludcmp(a,n,indx,&d); 
-    for (i=1;i<=n;i++) yout[i]=h*(dydx[i]+h*dfdx[i]); 
-    lubksb(a,n,indx,yout);
-    for (i=1;i<=n;i++) ytemp[i]=y[i]+(del[i]=yout[i]); 
-    x=xs+h; 
-    Reaction_DyDt(x,ytemp,yout); 
-    for (nn=2;nn<=nstep;nn++) { 
-      for (i=1;i<=n;i++) yout[i]=h*yout[i]-del[i];
-      lubksb(a,n,indx,yout);
-      for (i=1;i<=n;i++) ytemp[i] += (del[i] += 2.0*yout[i]);
-      x+= h;
-      Reaction_DyDt(x,ytemp,yout);
-    }
-    for (i=1;i<=n;i++) yout[i]=h*yout[i]-del[i];
-    lubksb(a,n,indx,yout);
-    for (i=1;i<=n;i++) yout[i] += ytemp[i];
-    free_dvector(ytemp,1,n);
-    free_dvector(del,1,n);
-    free_dmatrix(a,1,n,1,n);
-    free_ivector(indx,1,n);
-} 
-
-
-void NR_ODE_tools::stifbs(double y[], double dydx[], int nv, double *xx, double htry, 
-                          double eps, double yscal[], double *hdid, double *hnext) 
-{ 
-    int i,iq,k,kk,km; 
-    static int first=1,kmax,kopt,nvold = -1; 
-    static double epsold = -1.0,xnew; 
-    double eps1,errmax,fact,h,red,scale,work,wrkmin,xest; 
-    double *dfdx,**dfdy,*err,*yerr,*ysav,*yseq; 
-    static double a[IMAXX+1]; 
-    static double alf[KMAXX+1][KMAXX+1]; 
-    static int nseq[IMAXX+1]={0,2,6,10,14,22,34,50,70}; 
-    int reduct,exitflag=0; 
-    d=dmatrix(1,nv,1,KMAXX); 
-    dfdx=dvector(1,nv); 
-    dfdy=dmatrix(1,nv,1,nv); 
-    err=dvector(1,KMAXX); 
-    x=dvector(1,KMAXX); 
-    yerr=dvector(1,nv); 
-    ysav=dvector(1,nv); 
-    yseq=dvector(1,nv); 
-
-    if(eps != epsold || nv != nvold) { 
-      *hnext = xnew = -1.0e29; 
-      eps1=SAFE1*eps; 
-      a[1]=nseq[1]+1; 
-      for (k=1;k<=KMAXX;k++) a[k+1]=a[k]+nseq[k+1]; 
-      for (iq=2;iq<=KMAXX;iq++) { 
-        for (k=1;k<iq;k++) 
-        alf[k][iq]=pow(eps1,((a[k+1]-a[iq+1]) / ((a[iq+1]-a[1]+1.0)*(2*k+1)))); 
-      } 
-      epsold=eps; 
-      nvold=nv; 
-      a[1] += nv; 
-      for (k=1;k<=KMAXX;k++) a[k+1]=a[k]+nseq[k+1]; 
-      for (kopt=2;kopt<KMAXX;kopt++) if (a[kopt+1] > a[kopt]*alf[kopt-1][kopt]) break; 
-      kmax=kopt; 
-    } 
-    h=htry; 
-    for (i=1;i<=nv;i++) ysav[i]=y[i]; 
-    Reaction_DfDy(*xx,y,dfdx,dfdy,nv); 
-    if (*xx != xnew || h != (*hnext)) { 
-      first=1; 
-      kopt=kmax; 
-    } 
-    reduct=0; 
-    for (;;) { 
-      for (k=1;k<=kmax;k++) { 
+      for (k=1;k<=kmax;k++) {
         xnew=(*xx)+h;
-        if (xnew == (*xx)) nrerror("step size underflow in stifbs");
-        simpr(ysav,dydx,dfdx,dfdy,nv,*xx,h,nseq[k],yseq);
-        xest=DSQR(h/nseq[k]); 
-        pzextr(k,xest,yseq,y,yerr,nv); 
+        if (xnew == (*xx))
+        nrerror("step size underflow in bsstep");
+        mmid(ysav,dydx,nv,*xx,h,nseq[k],yseq);
+        xest=DSQR(h/nseq[k]);
+        pzextr(k,xest,yseq,y,yerr,nv);
         if(k != 1) {
           errmax=TINY;
-          for (i=1;i<=nv;i++) errmax=DMAX(errmax,fabs(yerr[i]/yscal[i]));
+          for (i=1;i<=nv;i++)
+          errmax=DMAX(errmax,fabs(yerr[i]/yscal[i]));
           errmax /= eps;
           km=k-1;
           err[km]=pow(errmax/SAFE1,1.0/(2*km+1));
         }
-        if (k != 1 && (k >= kopt- 1 || first)) {
+        if (k != 1 && (k >= kopt-1 || first)) {
           if (errmax < 1.0) {
             exitflag=1;
             break;
-          } 
-          if (k == kmax || k == kopt+1) {
-            red=SAFE2/err[km];
+        }
+        if (k == kmax || k == kopt+1) {
+          red=SAFE2/err[km];
+          break;
+        }
+        else if (k == kopt && alf[kopt-1][kopt] < err[km]) {
+            red=1.0/err[km];
             break;
-          } 
-          else if (k == kopt && alf[kopt-1][kopt] < err[km]) { 
-            red=1.0/err[km]; 
-            break; 
-          } 
-          else if (kopt == kmax && alf[km][kmax-1] < err[km]) { 
-            red=alf[km][kmax-1]*SAFE2/err[km]; 
-            break; 
-          } 
-          else if (alf[km][kopt] < err[km]) {
+          }
+        else if (kopt == kmax && alf[km][kmax-1] < err[km]) {
+            red=alf[km][kmax-1]*SAFE2/err[km];
+            break;
+            }
+        else if (alf[km][kopt] < err[km]) {
             red=alf[km][kopt-1]/err[km];
             break;
-          } 
+            }
         }
       }
       if (exitflag) break;
@@ -5211,17 +4997,244 @@ void NR_ODE_tools::stifbs(double y[], double dydx[], int nv, double *xx, double 
         scale=fact;
         wrkmin=work;
         kopt=kk+1;
-      } 
-    } 
-    *hnext=h/scale; 
-    if (kopt >= k && kopt != kmax && !reduct) { 
-      fact=DMAX(scale/alf[kopt-1][kopt],SCALMX); 
+      }
+    }
+    *hnext=h/scale;
+    if (kopt >= k && kopt != kmax && !reduct) {
+      fact=DMAX(scale/alf[kopt-1][kopt],SCALMX);
       if (a[kopt+1]*fact <= wrkmin) {
         *hnext=h/fact;
         kopt++;
-      } 
-    } 
-    free_dvector(yseq,1,nv); 
+      }
+    }
+    free_dvector(yseq,1,nv);
+    free_dvector(ysav,1,nv);
+    free_dvector(yerr,1,nv);
+    free_dvector(x,1,KMAXX);
+    free_dvector(err,1,KMAXX);
+    free_dmatrix(d,1,nv,1,KMAXX);
+}
+
+void NR_ODE_tools::ludcmp(double **a, int n, int *indx, double *d)
+{
+    int i,imax,j,k;
+    double big,dum,sum,temp;
+    double *vv;
+    vv=dvector(1,n);
+    *d=1.0;
+    for (i=1;i<=n;i++) {
+      big=0.0;
+      for (j=1;j<=n;j++)
+      if ((temp=fabs(a[i][j])) > big) big=temp;
+      if (big == 0.0) nrerror("Singular matrix in routine ludcmp");
+      vv[i]=1.0/big;
+    }
+
+    for (j=1;j<=n;j++) {
+      for (i=1;i<j;i++) {
+      sum=a[i][j];
+      for (k=1;k<i;k++) sum -= a[i][k]*a[k][j];
+      a[i][j]=sum;
+    }
+    big=0.0;
+    for (i=j;i<=n;i++) {
+      sum=a[i][j];
+      for (k=1;k<j;k++)
+      sum -= a[i][k]*a[k][j];
+      a[i][j]=sum;
+      if ( (dum=vv[i]*fabs(sum)) >= big) {
+        big=dum;
+        imax=i;
+      }
+    }
+    if (j != imax) {
+      for (k=1;k<=n;k++) {
+        dum=a[imax][k];
+        a[imax][k]=a[j][k];
+        a[j][k]=dum;
+      }
+      *d = -(*d);
+    }
+    indx[j]=imax;
+    if (a[j][j] == 0.0) a[j][j]=TINY;
+    if (j != n) {
+      dum=1.0/(a[j][j]);
+      for (i=j+1;i<=n;i++) a[i][j] *= dum;
+      }
+    }
+    free_dvector(vv,1,n);
+}
+
+
+void NR_ODE_tools::lubksb(double **a, int n, int *indx, double b[])
+{
+    int i,ii=0,ip,j;
+    double sum;
+    for (i=1;i<=n;i++) {
+      ip=indx[i];
+      sum=b[ip];
+      b[ip]=b[i];
+      if (ii) for (j=ii;j<=i-1;j++) sum -= a[i][j]*b[j];
+      else if (sum) ii=i;
+      b[i]=sum;
+    }
+
+    for (i=n;i>=1;i--) {
+      sum=b[i];
+      for (j=i+1;j<=n;j++) sum -= a[i][j]*b[j];
+      b[i]=sum/a[i][i];
+    }
+}
+
+
+void NR_ODE_tools::simpr(double y[], double dydx[], double dfdx[], double **dfdy,
+           int n, double xs, double htot, int nstep, double yout[])
+{
+    int i,j,nn,*indx;
+    double d,h,x,**a,*del,*ytemp;
+
+    indx=ivector(1,n);
+    a=dmatrix(1,n,1,n);
+    del=dvector(1,n);
+    ytemp=dvector(1,n);
+    h=htot/nstep;
+    for (i=1;i<=n;i++) {
+      for (j=1;j<=n;j++) a[i][j] = -h*dfdy[i][j];
+      ++a[i][i];
+    }
+    ludcmp(a,n,indx,&d);
+    for (i=1;i<=n;i++) yout[i]=h*(dydx[i]+h*dfdx[i]);
+    lubksb(a,n,indx,yout);
+    for (i=1;i<=n;i++) ytemp[i]=y[i]+(del[i]=yout[i]);
+    x=xs+h;
+    Reaction_DyDt(x,ytemp,yout);
+    for (nn=2;nn<=nstep;nn++) {
+      for (i=1;i<=n;i++) yout[i]=h*yout[i]-del[i];
+      lubksb(a,n,indx,yout);
+      for (i=1;i<=n;i++) ytemp[i] += (del[i] += 2.0*yout[i]);
+      x+= h;
+      Reaction_DyDt(x,ytemp,yout);
+    }
+    for (i=1;i<=n;i++) yout[i]=h*yout[i]-del[i];
+    lubksb(a,n,indx,yout);
+    for (i=1;i<=n;i++) yout[i] += ytemp[i];
+    free_dvector(ytemp,1,n);
+    free_dvector(del,1,n);
+    free_dmatrix(a,1,n,1,n);
+    free_ivector(indx,1,n);
+}
+
+
+void NR_ODE_tools::stifbs(double y[], double dydx[], int nv, double *xx, double htry,
+                          double eps, double yscal[], double *hdid, double *hnext)
+{
+    int i,iq,k,kk,km;
+    static int first=1,kmax,kopt,nvold = -1;
+    static double epsold = -1.0,xnew;
+    double eps1,errmax,fact,h,red,scale,work,wrkmin,xest;
+    double *dfdx,**dfdy,*err,*yerr,*ysav,*yseq;
+    static double a[IMAXX+1];
+    static double alf[KMAXX+1][KMAXX+1];
+    static int nseq[IMAXX+1]={0,2,6,10,14,22,34,50,70};
+    int reduct,exitflag=0;
+    d=dmatrix(1,nv,1,KMAXX);
+    dfdx=dvector(1,nv);
+    dfdy=dmatrix(1,nv,1,nv);
+    err=dvector(1,KMAXX);
+    x=dvector(1,KMAXX);
+    yerr=dvector(1,nv);
+    ysav=dvector(1,nv);
+    yseq=dvector(1,nv);
+
+    if(eps != epsold || nv != nvold) {
+      *hnext = xnew = -1.0e29;
+      eps1=SAFE1*eps;
+      a[1]=nseq[1]+1;
+      for (k=1;k<=KMAXX;k++) a[k+1]=a[k]+nseq[k+1];
+      for (iq=2;iq<=KMAXX;iq++) {
+        for (k=1;k<iq;k++)
+        alf[k][iq]=pow(eps1,((a[k+1]-a[iq+1]) / ((a[iq+1]-a[1]+1.0)*(2*k+1))));
+      }
+      epsold=eps;
+      nvold=nv;
+      a[1] += nv;
+      for (k=1;k<=KMAXX;k++) a[k+1]=a[k]+nseq[k+1];
+      for (kopt=2;kopt<KMAXX;kopt++) if (a[kopt+1] > a[kopt]*alf[kopt-1][kopt]) break;
+      kmax=kopt;
+    }
+    h=htry;
+    for (i=1;i<=nv;i++) ysav[i]=y[i];
+    Reaction_DfDy(*xx,y,dfdx,dfdy,nv);
+    if (*xx != xnew || h != (*hnext)) {
+      first=1;
+      kopt=kmax;
+    }
+    reduct=0;
+    for (;;) {
+      for (k=1;k<=kmax;k++) {
+        xnew=(*xx)+h;
+        if (xnew == (*xx)) nrerror("step size underflow in stifbs");
+        simpr(ysav,dydx,dfdx,dfdy,nv,*xx,h,nseq[k],yseq);
+        xest=DSQR(h/nseq[k]);
+        pzextr(k,xest,yseq,y,yerr,nv);
+        if(k != 1) {
+          errmax=TINY;
+          for (i=1;i<=nv;i++) errmax=DMAX(errmax,fabs(yerr[i]/yscal[i]));
+          errmax /= eps;
+          km=k-1;
+          err[km]=pow(errmax/SAFE1,1.0/(2*km+1));
+        }
+        if (k != 1 && (k >= kopt- 1 || first)) {
+          if (errmax < 1.0) {
+            exitflag=1;
+            break;
+          }
+          if (k == kmax || k == kopt+1) {
+            red=SAFE2/err[km];
+            break;
+          }
+          else if (k == kopt && alf[kopt-1][kopt] < err[km]) {
+            red=1.0/err[km];
+            break;
+          }
+          else if (kopt == kmax && alf[km][kmax-1] < err[km]) {
+            red=alf[km][kmax-1]*SAFE2/err[km];
+            break;
+          }
+          else if (alf[km][kopt] < err[km]) {
+            red=alf[km][kopt-1]/err[km];
+            break;
+          }
+        }
+      }
+      if (exitflag) break;
+      red=DMIN(red,REDMIN);
+      red=DMAX(red,REDMAX);
+      h *= red;
+      reduct=1;
+    }
+    *xx=xnew;
+    *hdid=h;
+    first=0;
+    wrkmin=1.0e35;
+    for (kk=1;kk<=km;kk++) {
+      fact=DMAX(err[kk],SCALMX);
+      work=fact*a[kk+1];
+      if (work < wrkmin) {
+        scale=fact;
+        wrkmin=work;
+        kopt=kk+1;
+      }
+    }
+    *hnext=h/scale;
+    if (kopt >= k && kopt != kmax && !reduct) {
+      fact=DMAX(scale/alf[kopt-1][kopt],SCALMX);
+      if (a[kopt+1]*fact <= wrkmin) {
+        *hnext=h/fact;
+        kopt++;
+      }
+    }
+    free_dvector(yseq,1,nv);
     free_dvector(ysav,1,nv);
     free_dvector(yerr,1,nv);
     free_dvector(x,1,KMAXX);
@@ -5229,15 +5242,15 @@ void NR_ODE_tools::stifbs(double y[], double dydx[], int nv, double *xx, double 
     free_dmatrix(dfdy,1,nv,1,nv);
     free_dvector(dfdx,1,nv);
     free_dmatrix(d,1,nv,1,KMAXX);
-} 
+}
 
 
-void NR_ODE_tools::odeint(double ystart[], int nvar, double x1, double x2, 
+void NR_ODE_tools::odeint(double ystart[], int nvar, double x1, double x2,
             double eps, double h1, double hmin, double yend[],  AstFemParameters *af_params_in)
-{ 
-    int nstp,i; 
-    double xsav,x,hnext,hdid,h; 
-    double *yscal,*y,*dydx; 
+{
+    int nstp,i;
+    double xsav,x,hnext,hdid,h;
+    double *yscal,*y,*dydx;
 
     int kmax, nok, nbad, kount;
     double *xp, **yp, dxsav;
@@ -5248,25 +5261,25 @@ void NR_ODE_tools::odeint(double ystart[], int nvar, double x1, double x2,
 
     af_params = af_params_in;
 
-    yscal=dvector(1,nvar); 
-    y=dvector(1,nvar); 
-    dydx=dvector(1,nvar); 
-    x=x1; 
-    h=SIGN(h1,x2-x1); 
-    nok = nbad = kount = 0; 
+    yscal=dvector(1,nvar);
+    y=dvector(1,nvar);
+    dydx=dvector(1,nvar);
+    x=x1;
+    h=SIGN(h1,x2-x1);
+    nok = nbad = kount = 0;
 
-    for (i=1;i<=nvar;i++) y[i]=ystart[i]; 
-    if (kmax > 0) xsav=x-dxsav*2.0; 
-    for (nstp=1;nstp<=MAXSTP;nstp++) { 
-      Reaction_DyDt(x,y,dydx); 
-//      for (i=1;i<=nvar;i++) yscal[i]=fabs(y[i])+fabs(dydx[i]*h)+1.0; 
-      for (i=1;i<=nvar;i++) yscal[i]=fabs(y[i])+1.0; 
-      if (kmax > 0 && kount < kmax- 1 && fabs(x-xsav) > fabs(dxsav)) { 
-        xp[++kount]=x; 
-        for (i=1;i<=nvar;i++) yp[i][kount]=y[i]; 
-        xsav=x; 
+    for (i=1;i<=nvar;i++) y[i]=ystart[i];
+    if (kmax > 0) xsav=x-dxsav*2.0;
+    for (nstp=1;nstp<=MAXSTP;nstp++) {
+      Reaction_DyDt(x,y,dydx);
+//      for (i=1;i<=nvar;i++) yscal[i]=fabs(y[i])+fabs(dydx[i]*h)+1.0;
+      for (i=1;i<=nvar;i++) yscal[i]=fabs(y[i])+1.0;
+      if (kmax > 0 && kount < kmax- 1 && fabs(x-xsav) > fabs(dxsav)) {
+        xp[++kount]=x;
+        for (i=1;i<=nvar;i++) yp[i][kount]=y[i];
+        xsav=x;
       }
-      if ((x+h-x2)*(x+h-x1) > 0.0) h=x2-x; 
+      if ((x+h-x2)*(x+h-x1) > 0.0) h=x2-x;
 
       /* this part can be replaced with other one-step ODE integrators */
       //  bsstep(y,dydx,nvar,&x,h,eps,yscal,&hdid,&hnext);
@@ -5274,11 +5287,11 @@ void NR_ODE_tools::odeint(double ystart[], int nvar, double x1, double x2,
 
       if (hdid == h) ++nok; else ++nbad;
 
-      if ((x-x2)*(x2-x1) >= 0.0) { 
-        for (i=1;i<=nvar;i++) ystart[i]=y[i]; 
-        if (kmax) { 
-          xp[++kount]=x; 
-          for (i=1;i<=nvar;i++) yp[i][kount]=y[i]; 
+      if ((x-x2)*(x2-x1) >= 0.0) {
+        for (i=1;i<=nvar;i++) ystart[i]=y[i];
+        if (kmax) {
+          xp[++kount]=x;
+          for (i=1;i<=nvar;i++) yp[i][kount]=y[i];
         }
         for (i=1;i<=nvar;i++) yend[i] = y[i];
 
@@ -5288,13 +5301,13 @@ void NR_ODE_tools::odeint(double ystart[], int nvar, double x1, double x2,
         free_dmatrix(yp, 1, nvar, 1, kmax);
         free_dvector(xp, 1, kmax);
 
-        return; 
+        return;
       }
       if (fabs(hnext) <= hmin) nrerror("Step size too small in odeint");
       h=hnext;
-    } 
-    nrerror("Too many steps in routine odeint"); 
-} 
+    }
+    nrerror("Too many steps in routine odeint");
+}
 
 
 void NR_ODE_tools::Reaction_DyDt(double t, double *y, double *dydt)

@@ -27,11 +27,11 @@ struct mfem_data 					// a data set comprised of scans from one sample taken at 
 	unsigned int channel;		// channel number from centerpiece
 	unsigned int wavelength;	// single wavelength at which data was acquired (for UV/Vis)
 	unsigned int rpm;				// constant rotor speed
-	float s20w_correction;		// this is the number with which a s20,w value needs 
+	float s20w_correction;		// this is the number with which a s20,w value needs
 										// to be multiplied to get the s value in experimental space
-										// sT,B = s20,W * s20W_correction: 
+										// sT,B = s20,W * s20W_correction:
 										// sT,B = [s_20,W * [(1-vbar*rho)_T,B * eta_20,W] / [(1-vbar*rho)_20,W * eta_T,B]
-	float D20w_correction;		// this is the number with which a D20,w value needs 
+	float D20w_correction;		// this is the number with which a D20,w value needs
 										// to be multiplied to get the s value in experimental space
 										// DT,B = D20,W * D20w_correction
 										// DT,B = [D20,W * T * eta_20,W] / [293.15 * eta_T,B]
@@ -102,13 +102,13 @@ struct SpeedProfile
 struct SimulationParameters
 {
 	vector <double> mesh_radius; // the radii from a user-selected mesh file (mesh == 3)
-	
+
 	// Note: the radius points of c0 do not have to match the radii in the mesh file. The
 	// radius values of the c0 vector will be interpolated onto whatever mesh the user has selected.
 	// however, the first and last point of either the c0 or mesh_radius should match the
 	// meniscus, otherwise they will be ignored or interpolated to the actual meniscus and bottom
 	// position set by the user, which will take precedence.
-	
+
 	vector <struct SpeedProfile> speed_step;
 	unsigned int simpoints;
 	unsigned int mesh; 			// 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 3 = user-selected mesh, 4 = nonuniform constant mesh
@@ -119,6 +119,8 @@ struct SimulationParameters
 	float rnoise;					// random noise
 	float inoise;					// time invariant noise
 	float rinoise;					// radially invariant noise
+	int centerpiece;
+	int rotor;
 };
 
 #endif
