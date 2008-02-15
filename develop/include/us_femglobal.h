@@ -2,6 +2,11 @@
 #define US_FEMGLOBAL_H
 
 #include <vector>
+#include <iostream>
+#include "us_extern.h"
+#include <qstring.h>
+#include <qfile.h>
+#include <qtextstream.h>
 
 using namespace std;
 
@@ -123,6 +128,16 @@ struct SimulationParameters
 	int rotor;						// rotor serial number in database
 	bool band_forming;			// true for band-forming centerpieces
 	float band_volume;			// loding volume (of lamella) in a band-forming centerpiece
+};
+
+class US_EXTERN US_FemGlobal
+{
+	public:
+
+		US_FemGlobal();
+		~US_FemGlobal();
+		int write(struct ModelSystem *, struct SimulationParameters *, QString);
+		int read(struct ModelSystem *, struct SimulationParameters *, QString);
 };
 
 #endif

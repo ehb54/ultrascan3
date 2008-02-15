@@ -247,6 +247,7 @@ SOURCES += src/us_2dplot.cpp \
 #	src/us_fefitter_ad.cpp \
 	src/us_fefitter_single.cpp \
 	src/us_fematch.cpp \
+	src/us_femglobal.cpp \
 	src/us_finite_single.cpp \
 	src/us_finite1.cpp \
 	src/us_finite2.cpp \
