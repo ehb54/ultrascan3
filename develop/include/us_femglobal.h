@@ -119,8 +119,10 @@ struct SimulationParameters
 	float rnoise;					// random noise
 	float inoise;					// time invariant noise
 	float rinoise;					// radially invariant noise
-	int centerpiece;
-	int rotor;
+	int centerpiece;				// centerpiece serial number in database
+	int rotor;						// rotor serial number in database
+	bool band_forming;			// true for band-forming centerpieces
+	float band_volume;			// loding volume (of lamella) in a band-forming centerpiece
 };
 
 #endif

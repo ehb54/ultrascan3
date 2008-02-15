@@ -23,6 +23,10 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 	simparams.rnoise = 0.0;
 	simparams.inoise = 0.0;
 	simparams.rinoise = 0.0;
+	simparams.band_volume = 0.015;
+	simparams.rotor = 0;
+	simparams.centerpiece = 0;
+	simparams.band_forming = false;
 	stopFlag = false;
 	movieFlag = true;
 	int minHeight1 = 26;

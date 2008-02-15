@@ -74,6 +74,54 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
 	lbl_title->setMinimumHeight(minHeight2);
 	lbl_title->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+	
+	cb_standard = new QCheckBox(tr(" Standard Centerpiece"), this);
+	cb_standard->setMinimumHeight(minHeight1);
+	cb_standard->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cb_standard->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	cb_band = new QCheckBox(tr(" Band-forming Centerpiece"), this);
+	cb_band->setMinimumHeight(minHeight1);
+	cb_band->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cb_band->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	
+	bg_centerpiece_selection = new QButtonGroup(2, Qt::Horizontal);
+	bg_centerpiece_selection->setExclusive(true);
+	connect(bg_centerpiece_selection, SIGNAL(clicked(int)), this, SLOT(select_centerpiece(int)));
+	bg_centerpiece_selection->insert(cb_standard, 0);
+	bg_centerpiece_selection->insert(cb_band, 1);
+	if ((*simparams).band_forming)
+	{
+		bg_centerpiece_selection->setButton(1);
+	}
+	else
+	{
+		bg_centerpiece_selection->setButton(0);
+	}
+		
+	lbl_lamella = new QLabel(tr(" Band loading volume (ml):"), this);
+	lbl_lamella->setAlignment(AlignLeft|AlignVCenter);
+	lbl_lamella->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_lamella->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_lamella->setMinimumHeight(minHeight1);
+
+	cnt_lamella = new QwtCounter(this);
+	cnt_lamella->setRange(0.001, 0.1, 0.0001);
+	cnt_lamella->setNumButtons(3);
+	cnt_lamella->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cnt_lamella->setValue(current_speed_step);
+	cnt_lamella->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cnt_lamella->setValue((*simparams).band_volume);
+	cnt_lamella->setMinimumHeight(minHeight1);
+	if ((*simparams).band_forming)
+	{
+		cnt_lamella->setEnabled(true);
+	}
+	else
+	{
+		cnt_lamella->setEnabled(false);
+	}		
+	connect(cnt_lamella, SIGNAL(valueChanged(double)), SLOT(select_lamella(double)));
 
 	lbl_number_of_speeds = new QLabel(tr(" Number of Speed Profiles:"), this);
 	lbl_number_of_speeds->setAlignment(AlignLeft|AlignVCenter);
@@ -390,9 +438,14 @@ void US_SimulationParameters::setupGUI()
 	unsigned int j=0;
 	grid->addMultiCellWidget(lbl_title, j, j, 0, 5, 0);
 	j++;
+	grid->addWidget(lbl_number_of_speeds, j, 0, 0);
+	grid->addWidget(cnt_number_of_speeds, j, 1, 0);
+	grid->addMultiCellWidget(cb_standard, j, j, 2, 3, 0);
+	grid->addMultiCellWidget(cb_band, j, j, 4, 5, 0);
+	j++;
 	grid->addMultiCellWidget(cmb_speeds, j, j, 0, 1, 0);
-	grid->addMultiCellWidget(lbl_number_of_speeds, j, j, 2, 3, 0);
-	grid->addMultiCellWidget(cnt_number_of_speeds, j, j, 4, 5, 0);
+	grid->addMultiCellWidget(lbl_lamella, j, j, 2, 3, 0);
+	grid->addMultiCellWidget(cnt_lamella, j, j, 4, 5, 0);
 	j++;
 	grid->addWidget(lbl_duration_hours, j, 0, 0);
 	grid->addWidget(cnt_duration_hours, j, 1, 0);
@@ -885,6 +938,11 @@ void US_SimulationParameters::select_speed_profile(double temp_var)
 	select_speed_profile(i);
 }
 
+void US_SimulationParameters::select_lamella(double temp_var)
+{
+	(*simparams).band_volume = (float) temp_var;
+}
+
 void US_SimulationParameters::select_speed_profile(int temp_var)
 {
 	current_speed_step = (unsigned int) temp_var;
@@ -1083,4 +1141,18 @@ void US_SimulationParameters::revert()
 	(*simparams).inoise = backup_simparams.inoise;
 	(*simparams).rinoise = backup_simparams.rinoise;
 	reject();
+}
+
+void US_SimulationParameters::select_centerpiece(int cp)
+{
+	if (cp == 0)
+	{
+		cnt_lamella->setEnabled(false);
+		(*simparams).band_forming = false;
+	}
+	else
+	{
+		cnt_lamella->setEnabled(true);
+		(*simparams).band_forming = true;
+	}
 }

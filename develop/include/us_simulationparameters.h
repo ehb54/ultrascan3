@@ -16,6 +16,7 @@
 #include <qtextstream.h>
 #include <qcheckbox.h>
 #include <qcombobox.h>
+#include <qbuttongroup.h>
 
 #include <qwt_counter.h>
 #include "us_util.h"
@@ -38,7 +39,10 @@ class US_SimulationParameters : public QDialog
 	private:
 	
 		struct SimulationParameters backup_simparams;
+		QButtonGroup *bg_centerpiece_selection;
 		QCheckBox *cb_acceleration_flag;
+		QCheckBox *cb_standard;
+		QCheckBox *cb_band;
 		QComboBox *cmb_speeds;
 		QComboBox *cmb_mesh;
 		QComboBox *cmb_moving;
@@ -47,6 +51,7 @@ class US_SimulationParameters : public QDialog
 		QLabel *lbl_number_of_speeds;
 		QLabel *lbl_title;
 		QLabel *lbl_duration_hours;
+		QLabel *lbl_lamella;
 		QLabel *lbl_duration_minutes;
 		QLabel *lbl_delay_hours;
 		QLabel *lbl_delay_minutes;
@@ -69,6 +74,7 @@ class US_SimulationParameters : public QDialog
 		QwtCounter *cnt_rotorspeed;
 		QwtCounter *cnt_acceleration;
 		QwtCounter *cnt_simpoints;
+		QwtCounter *cnt_lamella;
 		QwtCounter *cnt_radial_resolution;
 		QwtCounter *cnt_meniscus;
 		QwtCounter *cnt_bottom;
@@ -107,6 +113,7 @@ class US_SimulationParameters : public QDialog
 		void update_inoise(double);
 		void update_rinoise(double);
 		void select_speed_profile(double);
+		void select_lamella(double);
 		void select_speed_profile(int);
 		void load();
 		void acceleration_flag();
@@ -118,6 +125,7 @@ class US_SimulationParameters : public QDialog
 		void update_combobox();
 		void update_mesh(int);
 		void update_moving(int);
+		void select_centerpiece(int);
 		void save(const QString &);
 		void printError(const int &);
 };
