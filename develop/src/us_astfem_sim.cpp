@@ -1726,7 +1726,14 @@ void US_Astfem_Sim::start_simulation()
 	{
 		total_conc += system.component_vector[i].concentration;
 	}
-	scan_plot->setAxisScale(QwtPlot::yLeft, 0, total_conc * 2.0);
+	if (simparams.band_forming)
+	{
+		scan_plot->setAxisScale(QwtPlot::yLeft, 0, total_conc);
+	}
+	else
+	{
+		scan_plot->setAxisScale(QwtPlot::yLeft, 0, total_conc * 2.0);
+	}
 	unsigned int curve[j];
 	double *x, **y;
 	for (i=0; i<simparams.speed_step.size(); i++)

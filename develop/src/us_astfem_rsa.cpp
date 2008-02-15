@@ -73,7 +73,6 @@ vector <struct mfem_data> *exp_data)
 	mfem_data simdata;
 	mfem_initial CT0;			// initial total concentration
 	af_params.model = (*system).model;
-	bool synthetic = false;
 	if (af_params.model < 4) // non-interacting single or multicomponent systems
 	{
 		for (i=0; i<(*system).component_vector.size(); i++)
@@ -87,32 +86,40 @@ vector <struct mfem_data> *exp_data)
 			current_speed = 0.0; // start at rest
 			CT0.radius.clear();
 			CT0.concentration.clear();
+			double dr = ((*simparams).bottom - (*simparams).meniscus)/((*simparams).simpoints - 1);
+			for (j=0; j<(*simparams).simpoints; j++)
+			{
+				CT0.radius.push_back((*simparams).meniscus + j * dr );
+				CT0.concentration.push_back(0.0);
+			}
 			if ((*system).component_vector[i].c0.concentration.size() == 0) // we don't have an existing CT0 concentration vector
 			{ // build up the initial concentration vector with constant concentration
-				double dr = ((*simparams).bottom - (*simparams).meniscus)/((*simparams).simpoints - 1);
-				if (synthetic)
+				if ((*simparams).band_forming)
 				{
-					for (j=0; j<(*simparams).simpoints; j++)
+					cout << "Band Forming centerpiece selected\n";
+//					CT0.concentration.push_back(exp(-pow((CT0.radius[j] - (*simparams).meniscus)/0.05, 2.0)));
+					j = 0;
+// find the width of the band and fill those concentration points with initial concentration:
+					while (CT0.radius[j] < pow((*simparams).meniscus*(*simparams).meniscus
+							 + (*simparams).band_volume * 360.0/(2.5 * 1.2 * M_PI), 0.5))
 					{
-						CT0.radius.push_back((*simparams).meniscus + j * dr );
-					}
-					for (j=0; j<(*simparams).simpoints; j++)
-					{
-						CT0.concentration.push_back(exp(-pow((CT0.radius[j] - (*simparams).meniscus)/0.05, 2.0)));
+						CT0.concentration[j] += (*system).component_vector[i].concentration;
+						j++;
 					}
 				}
 				else
 				{
 					for (j=0; j<(*simparams).simpoints; j++)
 					{
-						CT0.radius.push_back((*simparams).meniscus + j * dr );
-						CT0.concentration.push_back((*system).component_vector[i].concentration);
+						CT0.concentration[j] += (*system).component_vector[i].concentration;
 					}
 				}
 			}
 			else
 			{
 				// take the existing initial concentration vector and copy it to the temporary CT0 vector:
+				CT0.radius.clear();
+				CT0.concentration.clear();
 				CT0 = (*system).component_vector[i].c0;
 			}
 			af_params.s.clear();
