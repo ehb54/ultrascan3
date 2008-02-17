@@ -177,24 +177,24 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename)
 			if ((*ms).model > 3) // we can only read noninteracting models
 			(*ms).model = 3; // set to fixed molecular weight distribution by default
 			str = ts.readLine();
-			if (str.isNull()) return(-6);
+			if (str.isNull()) return(-34);
 			(*ms).component_vector.resize(str.toInt()); // number of components
 			for (i=0; i<(*ms).component_vector.size(); i++)
 			{
 				str = ts.readLine();
-				if (str.isNull()) return(-6);
+				if (str.isNull()) return(-35);
 				(*ms).component_vector[i].concentration = str.toFloat();
 				str = ts.readLine();
-				if (str.isNull()) return(-6);
+				if (str.isNull()) return(-36);
 				(*ms).component_vector[i].s = str.toFloat();
 				str = ts.readLine();
-				if (str.isNull()) return(-6);
+				if (str.isNull()) return(-37);
 				(*ms).component_vector[i].D = str.toFloat();
 				str = ts.readLine();
-				if (str.isNull()) return(-6);
+				if (str.isNull()) return(-38);
 				(*ms).component_vector[i].sigma = str.toFloat();
 				str = ts.readLine();
-				if (str.isNull()) return(-6);
+				if (str.isNull()) return(-39);
 				(*ms).component_vector[i].delta = str.toFloat();
 				(*ms).component_vector[i].vbar20 = 0.72;
 				(*ms).component_vector[i].extinction = 1.0;
@@ -216,7 +216,7 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename)
 	}
 	else
 	{
-		return(-34);
+		return(-40);
 	}
 }
 
@@ -290,10 +290,296 @@ int US_FemGlobal::write_modelSystem(struct ModelSystem *ms, QString filename)
 
 int US_FemGlobal::read_simulationParamaters(struct SimulationParameters *sp, QString filename)
 {
+	QFile f(filename);
+	int ival;
+	if (f.open(IO_ReadOnly))
+	{
+		QTextStream ts(&f);
+		if (!ts.atEnd())
+		{
+			unsigned int ival;
+			ts >> ival;
+			(*sp).speed_step.resize(ival);
+			ts.readLine();
+		}
+		else
+		{
+			f.close();
+			return (-51);
+		}
+		for (unsigned int i=0; i<(*sp).speed_step.size(); i++)
+		{
+			QTextStream ts(&f);
+			if (!ts.atEnd())
+			{
+				ts >> (*sp).speed_step[i].duration_hours;
+				ts.readLine();
+			}
+			else
+			{
+				f.close();
+				return(-52);
+			}
+			if (!ts.atEnd())
+			{
+				ts >> (*sp).speed_step[i].duration_minutes;
+				ts.readLine();
+			}
+			else
+			{
+				f.close();
+				return(-53);
+			}
+			if (!ts.atEnd())
+			{
+				ts >> (*sp).speed_step[i].delay_hours;
+				ts.readLine();
+			}
+			else
+			{
+				f.close();
+				return(-54);
+			}
+			if (!ts.atEnd())
+			{
+				ts >> (*sp).speed_step[i].delay_minutes;
+				ts.readLine();
+			}
+			else
+			{
+				f.close();
+				return(-55);
+			}
+			if (!ts.atEnd())
+			{
+				ts >> (*sp).speed_step[i].rotorspeed;
+				ts.readLine();
+			}
+			else
+			{
+				f.close();
+				return(-56);
+			}
+			if (!ts.atEnd())
+			{
+				ts >> (*sp).speed_step[i].acceleration;
+				ts.readLine();
+			}
+			else
+			{
+				f.close();
+				return(-57);
+			}
+			if (!ts.atEnd())
+			{
+				int ival;
+				ts >> ival;
+				(*sp).speed_step[i].acceleration_flag = ival;
+				ts.readLine();
+			}
+			else
+			{
+				f.close();
+				return(-58);
+			}
+			if (!ts.atEnd())
+			{
+				ts >> (*sp).speed_step[i].scans;
+				ts.readLine();
+			}
+			else
+			{
+				f.close();
+				return(-59);
+			}
+		}
+		if (!ts.atEnd())
+		{
+			ts >> (*sp).simpoints;
+			ts.readLine();
+		}
+		else
+		{
+			f.close();
+			return(-60);
+		}
+		if (!ts.atEnd())
+		{
+			ts >> (*sp).radial_resolution;
+			ts.readLine();
+		}
+		else
+		{
+			f.close();
+			return(-61);
+		}
+		if (!ts.atEnd())
+		{
+			ts >> (*sp).meniscus;
+			ts.readLine();
+		}
+		else
+		{
+			f.close();
+			return(-62);
+		}
+		if (!ts.atEnd())
+		{
+			ts >> (*sp).bottom;
+			ts.readLine();
+		}
+		else
+		{
+			f.close();
+			return(-63);
+		}
+		if (!ts.atEnd())
+		{
+			ts >> (*sp).rnoise;
+			ts.readLine();
+		}
+		else
+		{
+			f.close();
+			return(-64);
+		}
+		if (!ts.atEnd())
+		{
+			ts >> (*sp).inoise;
+			ts.readLine();
+		}
+		else
+		{
+			f.close();
+			return(-65);
+		}
+		if (!ts.atEnd())
+		{
+			ts >> (*sp).rinoise;
+			ts.readLine();
+		}
+		else
+		{
+			f.close();
+			return(-66);
+		}
+		if (!ts.atEnd())
+		{
+			ts >> (*sp).mesh;
+		}
+		else
+		{
+			f.close();
+			return(-67);
+		}
+		if (!ts.atEnd())
+		{
+			ts >> (*sp).moving_grid;
+		}
+		else
+		{
+			f.close();
+			return(-68);
+		}
+		if (!ts.atEnd())
+		{
+			ts >> (*sp).centerpiece;
+		}
+		else
+		{
+			f.close();
+			return(-69);
+		}
+		if (!ts.atEnd())
+		{
+			ts >> (*sp).rotor;
+		}
+		else
+		{
+			f.close();
+			return(-70);
+		}
+		if (!ts.atEnd())
+		{
+			ts >> ival;
+			if (ival == 1)
+			{
+				(*sp).band_forming = true;
+				if (!ts.atEnd())
+				{
+					ts >> (*sp).band_volume;
+				}
+				else
+				{
+					f.close();
+					return(-71);
+				}
+			}
+			else
+			{
+				(*sp).band_forming = false;
+			}
+		}
+		else
+		{
+			f.close();
+			return(-71);
+		}
+		f.close();
+		return(0);
+	}
+	else
+	{
+		return(-72);
+	}
 }
 
 int US_FemGlobal::write_simulationParamaters(struct SimulationParameters *sp, QString filename)
 {
+	QString str = QString(filename);
+	QFile f(str);
+	if (f.open(IO_WriteOnly | IO_Translate))
+	{
+		QTextStream ts(&f);
+		ts << (*sp).speed_step.size() << "\t\t# Number of speed step profiles" << "\n";
+		for (unsigned int i=0; i<(*sp).speed_step.size(); i++)
+		{
+			ts << (*sp).speed_step[i].duration_hours << str.sprintf("\t\t# run duration hours for profile %d\n", i+1);
+			ts << (*sp).speed_step[i].duration_minutes << str.sprintf("\t\t# run duration minutes for profile %d\n", i+1);
+			ts << (*sp).speed_step[i].delay_hours << str.sprintf("\t\t# run delay hours for profile %d\n", i+1);
+			ts << (*sp).speed_step[i].delay_minutes << str.sprintf("\t\t# run delay minutes for profile %d\n", i+1);
+			ts << (*sp).speed_step[i].rotorspeed << str.sprintf("\t\t# rotor speed for profile %d\n", i+1);
+			ts << (*sp).speed_step[i].acceleration << str.sprintf("\t\t# acceleration profile in revs/sec for profile %d\n", i+1);
+			ts << (int) (*sp).speed_step[i].acceleration_flag << str.sprintf("\t\t# flag for checking if rotor acceleration is used for profile %d\n", i+1);
+			ts << (*sp).speed_step[i].scans << str.sprintf("\t\t# number of scans to save for profile %d\n", i+1);
+		}
+		ts << (*sp).simpoints << "\t\t# radial discretization simulation points" << "\n";
+		ts << (*sp).radial_resolution << "\t\t# radial resolution (cm)" << "\n";
+		ts << (*sp).meniscus << "\t\t# meniscus position (cm)" << "\n";
+		ts << (*sp).bottom << "\t\t# bottom of cell position (cm)" << "\n";
+		ts << (*sp).rnoise << "\t\t# random noise (in percent OD)" << "\n";
+		ts << (*sp).inoise << "\t\t# time invariant systematic noise (in percent OD)" << "\n";
+		ts << (*sp).rinoise << "\t\t# radial invariant systematic noise (in percent OD)" << "\n";
+		ts << (*sp).mesh << "\t\t# Selected simulation mesh" << "\n";
+		ts << (*sp).moving_grid << "\t\t# moving time grid (0 = Astfem, 1 = fixed)" << "\n";
+		ts << (*sp).centerpiece << "\t\t# Centerpiece serial number" << "\n";
+		ts << (*sp).rotor << "\t\t# Rotor serial number" << "\n";
+		if ((*sp).band_forming)
+		{
+			ts << "1\t\t# Band-forming centerpiece is used\n";
+			ts << (*sp).band_volume << "\t\t# Band loading volume in ml" << "\n";
+		}
+		else
+		{
+			ts << "0\t\t# Standard centerpiece is used\n";
+		}
+		f.close();
+		return(0);
+	}
+	else
+	{
+		return(-1);
+	}
 }
 
 int US_FemGlobal::read_experiment(struct ModelSystem *ms, struct SimulationParameters *sp, QString filename)
