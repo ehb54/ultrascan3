@@ -3,10 +3,17 @@
 
 #include <vector>
 #include <iostream>
-#include "us_extern.h"
+
+#include <qobject.h>
 #include <qstring.h>
 #include <qfile.h>
 #include <qtextstream.h>
+#include <qapp.h>
+
+#include "us_extern.h"
+#include "us_math.h"
+#include "us_util.h"
+//#include "us_global.h"
 
 using namespace std;
 
@@ -130,14 +137,27 @@ struct SimulationParameters
 	float band_volume;			// loding volume (of lamella) in a band-forming centerpiece
 };
 
-class US_EXTERN US_FemGlobal
+class US_EXTERN US_FemGlobal : public QObject
 {
+	Q_OBJECT
 	public:
 
-		US_FemGlobal();
+		US_FemGlobal(QObject * parent=0, const char * name=0);
 		~US_FemGlobal();
-		int write(struct ModelSystem *, struct SimulationParameters *, QString);
-		int read(struct ModelSystem *, struct SimulationParameters *, QString);
+
+	public slots:
+		
+		int read_experiment(struct ModelSystem *, struct SimulationParameters *, QString);
+		int write_experiment(struct ModelSystem *, struct SimulationParameters *, QString);
+		
+		int read_simulationParamaters(struct SimulationParameters *, QString);
+		int write_simulationParamaters(struct SimulationParameters *, QString);
+		
+		int read_modelSystem(struct ModelSystem *, QString);
+		int write_modelSystem(struct ModelSystem *, QString);
+		
+	signals:
+		void new_error(QString);
 };
 
 #endif

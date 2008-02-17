@@ -25,7 +25,7 @@
 extern int global_Xpos;
 extern int global_Ypos;
 
-class US_SimulationParameters : public QDialog
+class US_EXTERN US_SimulationParameters : public QDialog
 {
 	Q_OBJECT
 	public:

@@ -428,6 +428,7 @@ HEADERS +=include/bluearrow.xpm \
 #	include/us_fefitter_ad.h \
 	include/us_fefitter_single.h \
 	include/us_fematch.h \
+	include/us_femglobal.h \
 	include/us_finite_single.h \
 	include/us_finite1.h \
 	include/us_finite2.h \
