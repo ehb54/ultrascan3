@@ -128,6 +128,7 @@ class US_SimulationParameters : public QDialog
 		void select_centerpiece(int);
 		void save(const QString &);
 		void printError(const int &);
+		void check_params();
 };
 
 #endif

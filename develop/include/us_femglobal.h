@@ -97,7 +97,7 @@ struct SpeedProfile
 	unsigned int duration_hours;
 	unsigned int duration_minutes;
 	unsigned int delay_hours;
-	unsigned int delay_minutes;
+	float delay_minutes;
 	unsigned int scans;
 	unsigned int acceleration;
 	unsigned int rotorspeed;
@@ -117,7 +117,7 @@ struct SimulationParameters
 	vector <struct SpeedProfile> speed_step;
 	unsigned int simpoints;
 	unsigned int mesh; 			// 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 3 = user-selected mesh, 4 = nonuniform constant mesh
-	int moving_grid; 			// Use moving or fixed time grid
+	int moving_grid; 				// Use moving or fixed time grid
 	float radial_resolution;	// the radial datapoint increment/resolution of the final data
 	float meniscus;				// meniscus position without rotor stretch
 	float bottom;					// bottom of cell position without rotor stretch

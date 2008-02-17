@@ -37,8 +37,6 @@ struct AstFemParameters
 	int moving_grid;				// use adaptive time steps = 1, fixed time steps = 0
 	bool acceleration;			// true if acceleration is used
 	unsigned int model;			// model number
- 
-   void print_af(FILE *);				// output all params 
 };
 
 
@@ -52,9 +50,11 @@ class US_EXTERN US_Astfem_RSA : public QObject
 		US_Astfem_RSA();
 		US_Astfem_RSA(bool * /*stopFlag*/, bool /*GUIflag*/, bool * /*movieFlag*/, QObject * parent=0, const char * name=0);
 		~US_Astfem_RSA();
-		bool *stopFlag;	// stop calculation, interpolate and return
-		bool *movieFlag;	// output time and movies if true
-		bool guiFlag;		// if true, signals will be emitted
+		bool *stopFlag;			// stop calculation, interpolate and return
+		bool *movieFlag;			// output time and movies if true
+		bool guiFlag;				// if true, signals will be emitted
+		double last_time;			// keep track of time globally for w2t_integral calculation
+		double w2t_integral;		// keep track of w2t_integral value globally
 		
 		
 	private:
@@ -132,8 +132,6 @@ class US_EXTERN US_Astfem_RSA : public QObject
       int DecomposeCT(double , double *);
       double find_C1_mono_Nmer(int, double, double);
 		double cube_root(double, double, double);
-		void print_vector(vector <double> *);
-		void print_vector(double *, unsigned int);
 
 		// interpolate maps a simulated grid with a variable delta_r grid onto a 
 		// fixed delta_r grid from experimental data, and also interpolates time
@@ -152,7 +150,13 @@ class US_EXTERN US_Astfem_RSA : public QObject
 //		bool Rosenbrock_45_OneStep(double *, double, double *, double *, double, double *);
 //		void Reaction_DyDt(AstFemParameters *, double, double *, double *);
 //		void Reaction_DfDy(AstFemParameters *, double, double *, double **);
-		void print_af();
+		
+// output functions:
+		void print_af();						// output all af params
+		void print_af(FILE *);				// output all af params to file
+		void print_simparams();				// print simparams
+		void print_vector(vector <double> *);
+		void print_vector(double *, unsigned int);
 };
 
 

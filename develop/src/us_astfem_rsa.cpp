@@ -1,54 +1,5 @@
 #include "../include/us_astfem_rsa.h"
 
-void AstFemParameters::print_af(FILE *outf)
-{
-   unsigned int i;
-
-	fprintf(outf, "#####################################################\n");
-	fprintf(outf, "#  \n");
-	fprintf(outf, "#  Model Number: %d \n", model);
-	fprintf(outf, "#  Number of species = %d\n", s.size() );
-	for (i=0; i<s.size(); i++)
-	{
-	   fprintf(outf, "#  s[%d]=%20.12e D[%d]=%20.12e \n", i, s[i], i, D[i]);
-	}
-	fprintf(outf, "#  \n");
-	fprintf(outf, "#  parameters for reactions:\n");
-	for (i=0; i<keq.size(); i++)
-	{
-	   fprintf(outf, "#  keq[%d]=%12.5e \t",  i, keq[i]);
-	}
-	fprintf(outf, "\n");
-	for (i=0; i<koff.size(); i++)
-	{
-	   fprintf(outf, "#  koff[%d]=%12.5e \t", i, koff[i]);
-	}
-	fprintf(outf, "\n");
-	for (i=0; i<n.size(); i++)
-	{
-	   fprintf(outf, "#  exponent[%d]=%d \n", i, n[i]);
-	}
-	fprintf(outf, "#  \n");
-	fprintf(outf, "#  parameters for simulation:\n");
-   fprintf(outf, "#  meniscus =%12.5e \n",  meniscus);
-   fprintf(outf, "#  bottom =%12.5e \n",  bottom);
-   fprintf(outf, "#  start time =%12.5e \n",  start_time);
-   fprintf(outf, "#  mesh opt =%d \n",  mesh);
-   if (moving_grid) fprintf(outf, "#  grids = moving \n");
-   else fprintf(outf, "#  grids = fixed \n");
-   if (acceleration) fprintf(outf, "#  acceleration = True \n");
-   else fprintf(outf, "#  acceleration = False \n");
-   fprintf(outf, "#  simpoints =%d \n",  simpoints);
-   fprintf(outf, "#  dt =%12.5e \n",  dt);
-   fprintf(outf, "#  Total Number of Steps =%d \n",  time_steps);
-
-	fprintf(outf, "#  \n");
-	fprintf(outf, "#####################################################\n");
-
-   return;
-}
-
-
 US_Astfem_RSA::US_Astfem_RSA(bool *stopFlag, bool guiFlag, bool *movieFlag, QObject *parent, const char *name) : QObject(parent, name)
 {
 	this->stopFlag = stopFlag;
@@ -63,8 +14,6 @@ US_Astfem_RSA::~US_Astfem_RSA()
 int US_Astfem_RSA::calculate(struct ModelSystem *system, struct SimulationParameters *simparams,
 vector <struct mfem_data> *exp_data)
 {
-	cout << "Meniscus: " << (*simparams).meniscus << endl;
-	cout << "Bottom: " << (*simparams).bottom << endl;
 	unsigned int i, j;
 	float current_time = 0.0;
 	double current_speed;
@@ -84,6 +33,8 @@ vector <struct mfem_data> *exp_data)
 			}
 			current_time = 0.0; // reset time, which now tracks the beginning of each speed step (duration)
 			current_speed = 0.0; // start at rest
+			last_time = 0.0;
+			w2t_integral = 0.0;
 			CT0.radius.clear();
 			CT0.concentration.clear();
 			double dr = ((*simparams).bottom - (*simparams).meniscus)/((*simparams).simpoints - 1);
@@ -96,7 +47,6 @@ vector <struct mfem_data> *exp_data)
 			{ // build up the initial concentration vector with constant concentration
 				if ((*simparams).band_forming)
 				{
-					cout << "Band Forming centerpiece selected\n";
 //					CT0.concentration.push_back(exp(-pow((CT0.radius[j] - (*simparams).meniscus)/0.05, 2.0)));
 					j = 0;
 // find the width of the band and fill those concentration points with initial concentration:
@@ -126,6 +76,7 @@ vector <struct mfem_data> *exp_data)
 			af_params.D.clear();
 			af_params.s.push_back((double) (*system).component_vector[i].s);
 			af_params.D.push_back((double) (*system).component_vector[i].D);
+			// before going into acceleration phase set w2t and last_time to zero, increment in function caculate_ni()
 			for (j=0; j<(*simparams).speed_step.size(); j++)
 			{
 				//fabs( (*simparams).speed_step[j].rotorspeed - current_speed ) > (*simparams).speed_step[j].acceleration)
@@ -167,15 +118,15 @@ vector <struct mfem_data> *exp_data)
 				}  // end of for acceleration
 				duration = ((*simparams).speed_step[j].duration_hours * 3600
 				+ (*simparams).speed_step[j].duration_minutes * 60);
-				delay = ((*simparams).speed_step[j].delay_hours * 3600
+				delay = (unsigned int) ((*simparams).speed_step[j].delay_hours * 3600
 				+ (*simparams).speed_step[j].delay_minutes * 60);
 				af_params.omega_s = pow((*simparams).speed_step[j].rotorspeed * M_PI/30.0, 2.0);
-// find out the minimum dt between actual scans
+				// find out the minimum dt between actual scans
 				af_params.dt = (duration - delay)/(*simparams).speed_step[j].scans;
-// find out the minimum number of simpoints needed to provide the necessary dt:
+				// find out the minimum number of simpoints needed to provide the necessary dt:
 				af_params.simpoints = 1 + (unsigned int) (log((*exp_data)[j].bottom/(*exp_data)[j].meniscus)
 				/(af_params.omega_s * fabs((*system).component_vector[i].s) * af_params.dt));
-// if calculated # of simpoints is smaller than user selected number of simpoints, follow user's request:
+				// if calculated # of simpoints is smaller than user selected number of simpoints, follow user's request:
 				if (af_params.simpoints < (*simparams).simpoints)
 				{
 					af_params.simpoints = (*simparams).simpoints;
@@ -198,14 +149,11 @@ cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 				af_params.mesh = (*simparams).mesh;
 				af_params.moving_grid = (*simparams).moving_grid;
 				af_params.acceleration = false;
-				print_af();
+//				print_af();
 				vector <double> rpm;
 				rpm.clear();
 				rpm.push_back((*simparams).speed_step[j].rotorspeed);
 				calculate_ni(rpm[0], rpm[0], af_params.s[0], af_params.D[0], &CT0, &simdata);
-cout << "simdata scan size: " << simdata.scan.size() << endl;
-cout << "expdata scan size: " << (*exp_data)[j].scan.size() << endl;
-cout << endl;
 				interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
 
 				// set the current time to the last scan of this speed step
@@ -232,6 +180,8 @@ cout << endl;
 	{
 		current_time = 0.0; // reset time, which now tracks the beginning of each speed step (duration)
 		current_speed = 0.0; // start at rest
+		last_time = 0.0; // initialize to zero
+		w2t_integral = 0.0; // initialize to zero, will be incremented in calculate_ra2
 		CT0.radius.clear();
 		CT0.concentration.clear();
 
@@ -259,9 +209,6 @@ cout << endl;
 // take the existing initial concentration vector and copy it to the temporary CT0 vector:
 			CT0 = (*system).component_vector[1].c0;
 		}
-
-/**********************/
-
 		af_params.s.clear();
 		af_params.D.clear();
 		af_params.keq.clear();
@@ -349,7 +296,7 @@ cout << endl;
 			}  // end of for acceleration
 			duration = ((*simparams).speed_step[j].duration_hours * 3600
 					+ (*simparams).speed_step[j].duration_minutes * 60);
-			delay = ((*simparams).speed_step[j].delay_hours * 3600
+			delay = (unsigned int) ((*simparams).speed_step[j].delay_hours * 3600
 					+ (*simparams).speed_step[j].delay_minutes * 60);
 			af_params.omega_s = pow((*simparams).speed_step[j].rotorspeed * M_PI/30.0, 2.0);
 // find out the minimum dt between actual scans
@@ -378,7 +325,7 @@ cout << endl;
 			af_params.mesh = (*simparams).mesh;
 			af_params.moving_grid = (*simparams).moving_grid;
 			af_params.acceleration = false;
-			print_af();
+//			print_af();
 			vector <double> rpm;
 			rpm.clear();
 			rpm.push_back((*simparams).speed_step[j].rotorspeed);
@@ -397,9 +344,7 @@ cout << endl;
 				return(1); // early termination = 1
 			}
 		} // speed step loop
-
       delete [] C0;
-
 	}
 	else
 	{
@@ -462,26 +407,6 @@ void US_Astfem_RSA::interpolate_Cfinal(struct mfem_initial *C0, double *cfinal)
 	}
 }
 
-void US_Astfem_RSA::print_af()
-{
-	cout << "Model Number:\t" << af_params.model << endl;
-	cout << "Simpoints:\t" << af_params.simpoints << endl;
-	for (unsigned int i=0; i< af_params.s.size(); i++)
-	{
-		cout << "s[" << i << "]:\t\t" << af_params.s[i] << endl;
-		cout << "D[" << i << "]:\t\t" << af_params.D[i] << endl;
-	}
-	cout << "dt:\t\t" << af_params.dt << endl;
-	cout << "time_steps:\t" << af_params.time_steps << endl;
-	cout << "omega_s:\t" << af_params.omega_s << endl;
-	cout << "start_time:\t" << af_params.start_time << endl;
-	cout << "meniscus:\t" << af_params.meniscus << endl;
-	cout << "bottom:\t\t" << af_params.bottom << endl;
-	cout << "mesh:\t\t" << af_params.mesh << endl;
-	cout << "moving grid\t\t" << af_params.moving_grid << endl;
-}
-
-
 int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, double D, mfem_initial *C_init, mfem_data *simdata) // non-interacting solute, constant speed
 {
 	unsigned int i, j;
@@ -493,6 +418,8 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 	double *C0, *C1;			// C[m][j]: current/next concentration of m-th component at x_j
 									// C[0...Ms-1][0....N-1]:
 	double **CA1, **CA2, **CB1, **CB2;		// for matrices used in acceleration
+	
+	FILE *outf = fopen("tmp.out", "w");
 
 	CA = NULL;
 	CB = NULL;
@@ -501,11 +428,9 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 	(*simdata).radius.clear();
 	(*simdata).scan.clear();
 	mfem_scan simscan;
-
 //
 // generate the adaptive mesh
 //
-
 	sw2 = s * pow(rpm_stop * M_PI/30.0, 2.0);
 	vector <double> nu;
 	nu.clear();
@@ -542,7 +467,6 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 	for (i=0; i<N; i++)
 	{
 		(*simdata).radius.push_back(x[i]);
-		cout << "Mesh radius [" << i+1 << "]: " << x[i] << endl;
 	}
 
 //
@@ -610,15 +534,11 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 	C1 = new double [N];
 	interpolate_C0(C_init, C0); //interpolate the given C_init vector on the new C0 grid
 
-	FILE *outf = fopen("tmp.out", "w");
-   af_params.print_af(outf);
-
 //
 // time evolution
 //
 	double *right_hand_side;
 	right_hand_side = new double [N];
-	print_af();
 	for (i=0; i<af_params.time_steps; i++) // calculate all time steps f
 	{
 		rpm_current = rpm_start + (rpm_stop - rpm_start) * (i+0.5)/af_params.time_steps;
@@ -636,10 +556,12 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 				}
 			}
 		}
+		simscan.rpm = (unsigned int) rpm_current;
 		simscan.time = af_params.start_time + i * af_params.dt;
-		simscan.omega_s_t = simscan.time * pow(rpm_current * M_PI/30.0, 2.0);
-
-/**** delete to see if it the leak of mem
+		w2t_integral += (simscan.time - last_time) * pow(rpm_current * M_PI/30.0, 2.0);
+		last_time = simscan.time;
+		simscan.omega_s_t = w2t_integral;
+//		cout << "rpm: " << simscan.rpm << ", t: " << simscan.time << ", w2t: " << simscan.omega_s_t << ", dt: " << af_params.dt << endl;
 		if (guiFlag)
 		{
 			if(*movieFlag)
@@ -649,27 +571,26 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 				qApp->processEvents();
 			}
 		}
-*****/
 		simscan.conc.clear();
 		for (j=0; j<N; j++)
 		{
 			simscan.conc.push_back(C0[j]);
 		}
 		(*simdata).scan.push_back(simscan);
-//***
-	   if(i%10 == 0 || i<5) {		// output for n=101
-//      if( i%1000 == 0 || i<5) {		// output for n=10001
-		  for (j=0; j<N; j++)
-		  {
-		  		fprintf(outf, "%12.5e %15.8e %15.8e\n", simscan.time, x[j], C0[j]);
-		  }
-		  fprintf(outf, "\n\n");
-      }
-//***/
+/*
+		if(i%10 == 0 || i<5)
+		{
+			for (j=0; j<N; j++)
+			{
+				fprintf(outf, "%12.5e %15.8e %15.8e\n", simscan.time, x[j], C0[j]);
+			}
+			fprintf(outf, "\n\n");
+		}
+*/
 		//
 		// sedimentation part:
 		// Calculate thr right hand side vector //
-
+		//
 		if (!af_params.moving_grid)
 		{
 			right_hand_side[0] = -CB[1][0] * C0[0] - CB[2][0] * C0[1];
@@ -751,13 +672,13 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 											// C[0...Ms-1][0....N-1]:
 	double *CT0, *CT1;				// total concentration at current and next time step
 	vector <double> xb;				// grid for moving adaptive FEM for faster sedimentation
+	FILE *outf = fopen("tmp.out", "w");
 
 	Mcomp = af_params.s.size();
 	s_max = maxval( af_params.s );  	// used for mesh and dt
 	s_min = minval( af_params.s );  	// used for mesh and dt
 
-	FILE *outf = fopen("tmp.out", "w");
-   af_params.print_af(outf);
+//	print_af(outf);
 
 	(*simdata).radius.clear();
 	(*simdata).scan.clear();
@@ -920,8 +841,11 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 		rpm_current = rpm_start + (rpm_stop - rpm_start) * (kkk+0.5)/af_params.time_steps;
 		emit current_speed((unsigned int) rpm_current);
 		simscan.time = af_params.start_time + kkk * af_params.dt;
-		simscan.omega_s_t = simscan.time * pow(rpm_current * M_PI/30.0, 2.0);
-/**** delete to see if it the leak of mem
+		simscan.rpm = (unsigned int) rpm_current;
+		w2t_integral += (simscan.time - last_time) * pow(rpm_current * M_PI/30.0, 2.0);
+		last_time = simscan.time;
+		simscan.omega_s_t = w2t_integral;
+//		cout << "rpm: " << simscan.rpm << ", t: " << simscan.time << ", w2t: " << simscan.omega_s_t << ", dt: " << af_params.dt << endl;
 		if (guiFlag)
 		{
 			if(*movieFlag)
@@ -931,16 +855,14 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 				qApp->processEvents();
 			}
 		}
-****/
 		simscan.conc.clear();
 		for (j=0; j<N; j++)
 		{
 			simscan.conc.push_back(CT0[j]);
 		}
 		(*simdata).scan.push_back(simscan);
-
+/*
 		if(kkk%10 == 0 || kkk<5)
-//		if(kkk%1000 == 0 || kkk<5)		// output for n=10001
 		{
 			for(j=0; j<N; j++)
 			{
@@ -951,7 +873,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 			fprintf(outf, "\n\n");
          printf("t=%12.5e C_ttl=%15.8e \n", simscan.time, IntConcentration(x, CT0));
 		}
-
+*/
       //
       // first half step of sedimentation:
       //
@@ -2952,7 +2874,6 @@ void US_Astfem_RSA::QuadSolver(double *ai, double *bi, double *ci, double *di, d
 //
 // ************* ELLAM ***********
 //
-//
 
 void US_Astfem_RSA::GlobalStiff_ellam(vector <double> *xb, double **ca, double **cb,
 											     double D, double sw2)
@@ -3561,10 +3482,7 @@ void US_Astfem_RSA::QuadSolver_ellam(double *ai, double *bi, double *ci, double 
 		solu[i] = (cr[i] - ca[i] * solu[i-2] - cb[i] * solu[i-1]) / cc[i];
 	} while (i != N-1);
 }
-
 // ******* end of ELLAM *********************
-
-
 
 //
 // computer basis on standard element
@@ -3916,12 +3834,12 @@ double ts, double *phi, double *phix, double *phiy)
 	delete [] phi2;
 }
 
-
 ////////////////////////////////////////////////////////////////////////%
 // calculate total mass
 // (r,u) concentration defined at r(1), ...., r(M)
 //  M: r(1).... r(M): the interval for total mass, (M-1) subintervals
 ////////////////////////////////////////////////////////////////////////%
+
 double US_Astfem_RSA::IntConcentration(vector<double> r, double *u)
 {
 //function T=IntConcentration(r,M,u)
@@ -3945,11 +3863,9 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 //////////////////////////////%
 
 	// the following parameters should be supplied outside
-
 	// instantanuous association
 	//
 	double ct;
-//   int NegComp=0;
 	unsigned int i, j;
 
 	for (j=0; j<N; j++)
@@ -3958,45 +3874,39 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 		for (i=0; i<af_params.s.size(); i++)
 		{
 			ct += C1[i][j];
-//         if(C1[i][j]<0) NegComp = 1;
 		}
-
-//      if(NegComp==0)
-//      {
-
-	   if(af_params.model >= 4 && af_params.model <= 10)  // monomer - (n)mer
-      {
-	      double dva, dvb, dvc, uhat;
-         dva = TimeStep * af_params.koff[0] * af_params.keq[0];
-         dvb = TimeStep * af_params.koff[0] + 2.;
-         dvc = TimeStep * af_params.koff[0] * ct + 2. * C1[0][j];
-         if(dva<1.e-12)
-         {
-            uhat = dvc / dvb;
-         }
-         else
-         {
-            switch(af_params.model)
-            {
-               case 4:	// mono <--> dimer
-                  uhat = 2*dvc / ( dvb+sqrt(dvb*dvb+4.*dva*dvc) );
-                  break;
-               case 5:	// mono <--> trimer
-                  uhat = cube_root(-dvc/dva, dvb/dva, 0.0);
-                  break;
-               default:	// mono <--> (n)mer
-			         uhat = find_C1_mono_Nmer( af_params.n[1], dva/dvb, dvc/dvb);
-            }
-         }
-         C1[0][j] = 2.*uhat - C1[0][j];
-         C1[1][j] = ct - C1[0][j];
-       }
-	    else
-	    {
-	   	cout<<"warning: finite reation not implemeted"<<endl;
-	    }
-//    }	// end if
-    }
+		if(af_params.model >= 4 && af_params.model <= 10)  // monomer - (n)mer
+		{
+			double dva, dvb, dvc, uhat;
+			dva = TimeStep * af_params.koff[0] * af_params.keq[0];
+			dvb = TimeStep * af_params.koff[0] + 2.;
+			dvc = TimeStep * af_params.koff[0] * ct + 2. * C1[0][j];
+			if(dva<1.e-12)
+			{
+				uhat = dvc / dvb;
+			}
+			else
+			{
+				switch(af_params.model)
+				{
+					case 4:	// mono <--> dimer
+						uhat = 2*dvc / ( dvb+sqrt(dvb*dvb+4.*dva*dvc) );
+						break;
+					case 5:	// mono <--> trimer
+						uhat = cube_root(-dvc/dva, dvb/dva, 0.0);
+						break;
+					default:	// mono <--> (n)mer
+						uhat = find_C1_mono_Nmer( af_params.n[1], dva/dvb, dvc/dvb);
+				}
+			}
+			C1[0][j] = 2.*uhat - C1[0][j];
+			C1[1][j] = ct - C1[0][j];
+		}
+		else
+		{
+			cerr << "warning: The reaction for model " << af_params.model << " has not yet been implemented" << endl;
+		}
+	}
 }
 
 
@@ -4134,27 +4044,6 @@ void US_Astfem_RSA::DefInitCond(double **C0)
 	{
 		C0[0][j] = 0.3;
 		C0[1][j] = 0.7;
-	}
-}
-
-
-void US_Astfem_RSA::print_vector(double *dval, unsigned int ival)
-{
-	unsigned int i;
-	for (i=0; i<ival; i++)
-	{
-//WMC		cout << i << ": " << dval[i] << endl;
-		printf("x[%d]=%20.10e \n", i, dval[i]);
-	}
-}
-
-void US_Astfem_RSA::print_vector(vector <double> *dval)
-{
-	unsigned int i;
-	for (i=0; i<(*dval).size(); i++)
-	{
-//WMC		cout << i << ": " << (*dval)[i] << endl;
-		printf("x[%d]=%20.10e \n", i, (*dval)[i]);
 	}
 }
 
@@ -4296,7 +4185,8 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
          }
          ja = 0;
          (*expdata).scan[kkk].omega_s_t = (*simdata).scan[0].omega_s_t;
-      }
+			(*expdata).scan[kkk].rpm = (*simdata).scan[0].rpm;
+		}
       else if ( i >= (*simdata).scan.size()-1 )		// time after the last scan of simdata
       {
          for( j=0; j<(*expdata).radius.size(); j++)
@@ -4305,7 +4195,8 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
          }
          ja = (*simdata).scan.size()-2;
          (*expdata).scan[kkk].omega_s_t = (*simdata).scan[(*simdata).scan.size()-1].omega_s_t;
-      }
+			(*expdata).scan[kkk].rpm = (*simdata).scan[(*simdata).scan.size()-1].rpm;
+		}
       else 		// time between scan i-1 and i
       {
 		   a = (*simdata).scan[i-1].time;
@@ -4317,9 +4208,125 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
          }
          ja = i-1;
          (*expdata).scan[kkk].omega_s_t = (*simdata).scan[i-1].omega_s_t*(1.-tmp) + (*simdata).scan[i].omega_s_t*tmp;
-      }
+			(*expdata).scan[kkk].rpm = (unsigned int) ((*simdata).scan[i-1].rpm*(1.-tmp) + (*simdata).scan[i].rpm*tmp);
+		}
 
    }
    clear_2d((*simdata).scan.size(), tmpC);
 	return(0);
+}
+
+void US_Astfem_RSA::print_vector(double *dval, unsigned int ival)
+{
+	unsigned int i;
+	for (i=0; i<ival; i++)
+	{
+		printf("x[%d]=%20.10e \n", i, dval[i]);
+	}
+}
+
+void US_Astfem_RSA::print_vector(vector <double> *dval)
+{
+	unsigned int i;
+	for (i=0; i<(*dval).size(); i++)
+	{
+		printf("x[%d]=%20.10e \n", i, (*dval)[i]);
+	}
+}
+
+void US_Astfem_RSA::print_simparams()
+{
+}
+
+void US_Astfem_RSA::print_af()
+{
+	unsigned int i;
+	QString str;
+	cout << "Model Number:\t" << af_params.model << endl;
+	cout << "Simpoints:\t" << af_params.simpoints << endl;
+	cout << "\nHydrodynamic Parameters:\n";
+	for (i=0; i< af_params.s.size(); i++)
+	{
+		cout << "s[" << i << "]:\t\t" << af_params.s[i] << endl;
+		cout << "D[" << i << "]:\t\t" << af_params.D[i] << endl;
+	}
+	cout << "\nEquilibrium constants:\n";
+	for (i=0; i<af_params.keq.size(); i++)
+	{
+		cout <<  str.sprintf("#  keq[%d]=%12.5e \t",  i, af_params.keq[i]) << endl;
+	}
+	cout << "\nK_off rates:\n";
+			for (i=0; i<af_params.koff.size(); i++)
+	{
+		cout << str.sprintf("#  koff[%d]=%12.5e \t", i, af_params.koff[i]) << endl;
+	}
+	cout << "\nExponents:\n";
+	for (i=0; i<af_params.n.size(); i++)
+	{
+		cout << str.sprintf("#  exponent[%d]=%d \n", i, af_params.n[i]) << endl;
+	}
+	cout << "\ndt:\t\t" << af_params.dt << endl;
+	cout << "time_steps:\t" << af_params.time_steps << endl;
+	cout << "omega_s:\t" << af_params.omega_s << endl;
+	cout << "start_time:\t" << af_params.start_time << endl;
+	cout << "meniscus:\t" << af_params.meniscus << endl;
+	cout << "bottom:\t\t" << af_params.bottom << endl;
+	cout << "mesh:\t\t" << af_params.mesh << endl;
+	cout << "moving grid\t\t" << af_params.moving_grid << endl;
+	if (af_params.acceleration)
+	{
+		cout << "Acceleration is *on*\n";
+	}
+	else
+	{
+		cout << "Acceleration is *off*\n";
+	}
+}
+
+void US_Astfem_RSA::print_af(FILE *outf)
+{
+	unsigned int i;
+
+	fprintf(outf, "#####################################################\n");
+	fprintf(outf, "#  \n");
+	fprintf(outf, "#  Model Number: %d \n", af_params.model);
+	fprintf(outf, "#  Number of species = %d\n", af_params.s.size() );
+	for (i=0; i<af_params.s.size(); i++)
+	{
+		fprintf(outf, "#  s[%d]=%20.12e D[%d]=%20.12e \n", i, af_params.s[i], i, af_params.D[i]);
+	}
+	fprintf(outf, "#  \n");
+	fprintf(outf, "#  parameters for reactions:\n");
+	for (i=0; i<af_params.keq.size(); i++)
+	{
+		fprintf(outf, "#  keq[%d]=%12.5e \t",  i, af_params.keq[i]);
+	}
+	fprintf(outf, "\n");
+	for (i=0; i<af_params.koff.size(); i++)
+	{
+		fprintf(outf, "#  koff[%d]=%12.5e \t", i, af_params.koff[i]);
+	}
+	fprintf(outf, "\n");
+	for (i=0; i<af_params.n.size(); i++)
+	{
+		fprintf(outf, "#  exponent[%d]=%d \n", i, af_params.n[i]);
+	}
+	fprintf(outf, "#  \n");
+	fprintf(outf, "#  parameters for simulation:\n");
+	fprintf(outf, "#  meniscus =%12.5e \n",  af_params.meniscus);
+	fprintf(outf, "#  bottom =%12.5e \n",  af_params.bottom);
+	fprintf(outf, "#  start time =%12.5e \n",  af_params.start_time);
+	fprintf(outf, "#  mesh opt =%d \n",  af_params.mesh);
+	if (af_params.moving_grid) fprintf(outf, "#  grids = moving \n");
+	else fprintf(outf, "#  grids = fixed \n");
+	if (af_params.acceleration) fprintf(outf, "#  acceleration = True \n");
+	else fprintf(outf, "#  acceleration = False \n");
+	fprintf(outf, "#  simpoints =%d \n",  af_params.simpoints);
+	fprintf(outf, "#  dt =%12.5e \n",  af_params.dt);
+	fprintf(outf, "#  Total Number of Steps =%d \n",  af_params.time_steps);
+
+	fprintf(outf, "#  \n");
+	fprintf(outf, "#####################################################\n");
+
+	return;
 }

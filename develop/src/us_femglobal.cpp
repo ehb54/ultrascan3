@@ -17,7 +17,7 @@ int US_FemGlobal::read(struct ModelSystem *ms, struct SimulationParameters *sp, 
 	}
 	else
 	{
-		return (-1); // couldn't open file
+		return (-1); // couldn't read file
 	}
 }
 

@@ -1791,6 +1791,7 @@ void US_Astfem_Sim::update_movie_plot(vector <double> *x, double *c)
 	movie_plot->setCurvePen(scan, Qt::yellow);
 	movie_plot->replot();
 	qApp->processEvents();
+	delete [] r;
 }
 
 void US_Astfem_Sim::stop_simulation()
@@ -1916,6 +1917,7 @@ void US_Astfem_Sim::save_xla(const QString &fileName)
 			{
 				QTextStream ts(&f);
 				ts << "Simulated Velocity Data" << endl;
+				cout << "k=" << k << ", i=" << i << ": " << astfem_data[k].scan[i].rpm << endl;
 				ts << "R 1 20.0 " << str1.sprintf("%5u %7ld %1.5e %d %d\n", astfem_data[k].scan[i].rpm, (long int) astfem_data[k].scan[i].time, astfem_data[k].scan[i].omega_s_t, 999, 1);
 				for (j=0; j<30; j++) // the region in front of the meniscus
 				{

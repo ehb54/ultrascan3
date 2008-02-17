@@ -160,7 +160,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	lbl_duration_hours->setMinimumHeight(minHeight1);
 
 	cnt_duration_hours = new QwtCounter(this);
-	cnt_duration_hours->setRange(0, 500, 1);
+	cnt_duration_hours->setRange(0, 5000, 1);
 	cnt_duration_hours->setNumButtons(3);
 	cnt_duration_hours->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_duration_hours->setValue((*simparams).speed_step[0].duration_hours);
@@ -190,7 +190,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	lbl_delay_hours->setMinimumHeight(minHeight1);
 
 	cnt_delay_hours= new QwtCounter(this);
-	cnt_delay_hours->setRange(0, 500, 1);
+	cnt_delay_hours->setRange(0, 5000, 1);
 	cnt_delay_hours->setValue((*simparams).speed_step[0].delay_hours);
 	cnt_delay_hours->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_delay_hours->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -325,7 +325,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 
 	cnt_scans= new QwtCounter(this);
 	cnt_scans->setNumButtons(3);
-	cnt_scans->setRange(1,1000,1);
+	cnt_scans->setRange(2,1000,1);
 	cnt_scans->setValue((*simparams).speed_step[0].scans);
 	cnt_scans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_scans->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -383,7 +383,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	pb_ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_ok->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	pb_ok->setMinimumHeight(minHeight1);
-	connect(pb_ok, SIGNAL(clicked()), SLOT(accept()));
+	connect(pb_ok, SIGNAL(clicked()), SLOT(check_params()));
 
 	pb_cancel = new QPushButton( tr("Cancel"), this );
 	pb_cancel->setAutoDefault(false);
@@ -427,9 +427,9 @@ US_SimulationParameters::~US_SimulationParameters()
 
 void US_SimulationParameters::closeEvent(QCloseEvent *e)
 {
-	e->accept();
 	global_Xpos -= 30;
 	global_Ypos -= 30;
+	e->accept();
 }
 
 void US_SimulationParameters::setupGUI()
@@ -504,6 +504,26 @@ void US_SimulationParameters::help()
 	online_help->show_help("manual/simulation_parameters.html");
 }
 
+void US_SimulationParameters::check_params()
+{
+	QString str;
+	if ((*simparams).speed_step.size() > 1)
+	{
+		for (unsigned int i=1; i<(*simparams).speed_step.size(); i++)
+		{
+			str.sprintf("speed profiles %d and %d\n", i, i+1);
+			if(abs((int)((*simparams).speed_step[i].rotorspeed - (*simparams).speed_step[i-1].rotorspeed))
+						< (*simparams).speed_step[i].acceleration)
+			{
+				QMessageBox::query( tr("Warning"), tr("Attention:\nThe difference between the rotor speeds of " + str +
+						"is smaller than the acceleration rate, please decrease the acceleration rate!"));
+				return;
+			}
+		}
+	}
+	accept();
+}
+
 void US_SimulationParameters::save()
 {
 	QFileDialog fd;
@@ -557,6 +577,17 @@ void US_SimulationParameters::save(const QString &filename)
 		ts << (*simparams).rinoise << "\t\t# radial invariant systematic noise (in percent OD)" << "\n";
 		ts << (*simparams).mesh << "\t\t# Selected simulation mesh" << "\n";
 		ts << (*simparams).moving_grid << "\t\t# moving time grid (0 = Astfem, 1 = fixed)" << "\n";
+		ts << (*simparams).centerpiece << "\t\t# Centerpiece serial number" << "\n";
+		ts << (*simparams).rotor << "\t\t# Rotor serial number" << "\n";
+		if ((*simparams).band_forming)
+		{
+			ts << "1\t\t# Band-forming centerpiece is used\n";
+			ts << (*simparams).band_volume << "\t\t# Band loading volume in ml" << "\n";
+		}
+		else
+		{
+			ts << "0\t\t# Standard centerpiece is used\n";
+		}
 		QMessageBox::information(this, tr("UltraScan Information"),
 		tr("Please note:\n\nThe Simulation Profile was successfully saved to:\n\n" + filename),
 		QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
@@ -576,6 +607,7 @@ void US_SimulationParameters::load()
 void US_SimulationParameters::load(const QString &fileName)
 {
 	QFile f(fileName);
+	int ival;
 	if (f.open(IO_ReadOnly))
 	{
 		QTextStream ts(&f);
@@ -815,6 +847,52 @@ void US_SimulationParameters::load(const QString &fileName)
 			printError(0);
 			return;
 		}
+		if (!ts.atEnd())
+		{
+			ts >> (*simparams).centerpiece;
+		}
+		else
+		{
+			printError(0);
+			return;
+		}
+		if (!ts.atEnd())
+		{
+			ts >> (*simparams).rotor;
+		}
+		else
+		{
+			printError(0);
+			return;
+		}
+		if (!ts.atEnd())
+		{
+			ts >> ival;
+			if (ival == 1)
+			{
+				(*simparams).band_forming = true;
+				bg_centerpiece_selection->setButton(1);
+				if (!ts.atEnd())
+				{
+					ts >> (*simparams).band_volume;
+				}
+				else
+				{
+					printError(0);
+					return;
+				}
+			}
+			else
+			{
+				(*simparams).band_forming = false;
+				bg_centerpiece_selection->setButton(0);
+			}
+		}
+		else
+		{
+			printError(0);
+			return;
+		}
 		f.close();
 		QMessageBox::information(this, tr("UltraScan Information"),
 		tr("Please note:\n\nThe Simulation Profile:\n\n" + fileName + "\n\nwas successfully loaded."),
@@ -845,7 +923,7 @@ void US_SimulationParameters::update_delay_hours(double temp_var)
 
 void US_SimulationParameters::update_delay_minutes(double temp_var)
 {
-	(*simparams).speed_step[current_speed_step].delay_minutes = (unsigned int) temp_var;
+	(*simparams).speed_step[current_speed_step].delay_minutes = (float) temp_var;
 }
 
 void US_SimulationParameters::update_rotorspeed(double temp_var)
@@ -862,13 +940,22 @@ void US_SimulationParameters::update_rotorspeed(double temp_var)
 
 void US_SimulationParameters::check_delay()
 {
-	unsigned int lower_limit = 1 + ((*simparams).speed_step[current_speed_step].rotorspeed
-	/(60 * (*simparams).speed_step[current_speed_step].acceleration));
-	unsigned int hours, minutes;
-	hours = (unsigned int) lower_limit/60;
-	minutes = lower_limit - hours * 60;
-	cnt_delay_minutes->setRange((double) minutes, 60, 1);
-	cnt_delay_hours->setRange((double) hours, 500, 1);
+	unsigned int i, lower_limit, hours;
+	float minutes;
+	vector <unsigned int> speed;
+	speed.clear();
+	speed.push_back(0);
+	for (i=0; i<(*simparams).speed_step.size(); i++)
+	{
+		speed.push_back((*simparams).speed_step[i].rotorspeed);
+		lower_limit = (unsigned int)(1 + (abs((int)(speed[i+1] - speed[i])) + 1)/(*simparams).speed_step[i].acceleration);
+		hours = (unsigned int) lower_limit/3600;
+		minutes = (float) (1.0/60.0 + (lower_limit - hours * 3600)/60.0);
+		cnt_delay_minutes->setRange((double) minutes, 60, 0.1);
+		cnt_delay_hours->setRange((double) hours, 5000, 1);
+		//cout << "Profile: " << i+1 << ", speed1: " << speed[i] << ", speed2: " << speed[i+1] << ", lower limit: " << lower_limit << ", hours: " << hours << ", mins: " << minutes << endl;
+	}
+	cout << endl;
 	if ((*simparams).speed_step[current_speed_step].delay_minutes < minutes)
 	{
 		(*simparams).speed_step[current_speed_step].delay_minutes = minutes;
