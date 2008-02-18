@@ -18,7 +18,11 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename)
 		QTextStream ts(&f);
 		ts.readLine(); // FE, SA2D, COFS, SIM or GA
 		(*ms).description = ts.readLine();
-		if ((*ms).description.isNull()) return(-1);
+		if ((*ms).description.isNull())
+		{
+			f.close();
+			return(-1);
+		}
 		str = ts.readLine();
 		if (str.find("#", 0, true) == 0) // a new model has a comment line in the second line starting with "#"
 		{
@@ -27,83 +31,159 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename)
 			ts.readLine(); // read rest of line
 			ts >> str;
 			ts.readLine(); // read rest of line
-			if (str.isNull()) return(-2);
+			if (str.isNull())
+			{
+				f.close();
+				return(-2);
+			}
 			(*ms).model = str.toInt();
 			ts >> str;
-			if (str.isNull()) return(-3);
+			if (str.isNull())
+			{
+				f.close();
+				return(-3);
+			}
 			ts.readLine();
 			(*ms).component_vector.resize(str.toInt());
 			for (i=0; i<(*ms).component_vector.size(); i++)
 			{
 				str = ts.readLine();
-				if (str.isNull()) return(-4);
+				if (str.isNull())
+				{
+					f.close();
+					return(-4);
+				}
 				int pos = str.find("#", 0, true);
 				str.truncate(pos);
 				(*ms).component_vector[i].name = str.stripWhiteSpace();
 				ts >> str;
-				if (str.isNull()) return(-5);
+				if (str.isNull())
+				{
+					f.close();
+					return(-5);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].concentration = str.toFloat();
 				ts >> str;
-				if (str.isNull()) return(-6);
+				if (str.isNull())
+				{
+					f.close();
+					return(-6);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].s = str.toFloat();
 				ts >> str;
-				if (str.isNull()) return(-7);
+				if (str.isNull())
+				{
+					f.close();
+					return(-7);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].D = str.toFloat();
 				ts >> str;
-				if (str.isNull()) return(-8);
+				if (str.isNull())
+				{
+					f.close();
+					return(-8);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].sigma = str.toFloat();
 				ts >> str;
-				if (str.isNull()) return(-9);
+				if (str.isNull())
+				{
+					f.close();
+					return(-9);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].delta = str.toFloat();
 				ts >> str;
-				if (str.isNull()) return(-10);
+				if (str.isNull())
+				{
+					f.close();
+					return(-10);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].mw = str.toFloat();
 				ts >> str;
-				if (str.isNull()) return(-11);
+				if (str.isNull())
+				{
+					f.close();
+					return(-11);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].vbar20 = str.toFloat();
 				ts >> str;
-				if (str.isNull()) return(-12);
+				if (str.isNull())
+				{
+					f.close();
+					return(-12);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].shape = str;
 				ts >> str;
-				if (str.isNull()) return(-13);
+				if (str.isNull())
+				{
+					f.close();
+					return(-13);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].f_f0 = str.toFloat();
 				ts >> str;
-				if (str.isNull()) return(-14);
+				if (str.isNull())
+				{
+					f.close();
+					return(-14);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].extinction = str.toFloat();
 				ts >> str;
-				if (str.isNull()) return(-15);
+				if (str.isNull())
+				{
+					f.close();
+					return(-15);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].show_conc = (bool) str.toInt();
 				ts >> str;
-				if (str.isNull()) return(-16);
+				if (str.isNull())
+				{
+					f.close();
+					return(-16);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].show_stoich = str.toInt();
 				ts >> str;
-				if (str.isNull()) return(-17);
+				if (str.isNull())
+				{
+					f.close();
+					return(-17);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].show_keq = (bool) str.toInt();
 				ts >> str;
-				if (str.isNull()) return(-18);
+				if (str.isNull())
+				{
+					f.close();
+					return(-18);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].show_koff = (bool) str.toInt();
 				ts >> str;
-				if (str.isNull()) return(-19);
+				if (str.isNull())
+				{
+					f.close();
+					return(-19);
+				}
 				ts.readLine();
 				(*ms).component_vector[i].show_component.resize(str.toUInt());
 				for (j=0; j<(*ms).component_vector[i].show_component.size(); j++)
 				{
 					ts >> str;
-					if (str.isNull()) return(20);
+					if (str.isNull())
+					{
+						f.close();
+						return(-20);
+					}
 					ts.readLine();
 					(*ms).component_vector[i].show_component[j] = str.toInt();
 				}
@@ -112,61 +192,113 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename)
 					(*ms).component_vector[i].c0.radius.clear();
 					(*ms).component_vector[i].c0.concentration.clear();
 					ts >> str;
-					if (str.isNull()) return(-21);
+					if (str.isNull())
+					{
+						f.close();
+						return(-21);
+					}
 					ts.readLine();
 					unsigned int ival = str.toUInt();
 					for (j=0; j<ival; j++)
 					{
 						ts >> str;
-						if (str.isNull()) return(-22);
+						if (str.isNull())
+						{
+							f.close();
+							return(-22);
+						}
 						(*ms).component_vector[i].c0.radius.push_back(str.toDouble());
 						ts >> str;
-						if (str.isNull()) return(-23);
+						if (str.isNull())
+						{
+							f.close();
+							return(-23);
+						}
 						(*ms).component_vector[i].c0.concentration.push_back(str.toDouble());
 					}
 					ts.readLine(); //read the rest of the last linee
 				}
 			}
 			ts >> str;
-			if (str.isNull()) return(-24);
+			if (str.isNull())
+			{
+				f.close();
+				return(-24);
+			}
 			ts.readLine();
 			(*ms).assoc_vector.resize(str.toUInt());
 			for (i=0; i<(*ms).assoc_vector.size(); i++)
 			{
 				ts >> str;
-				if (str.isNull()) return(-25);
+				if (str.isNull())
+				{
+					f.close();
+					return(-25);
+				}
 				ts.readLine();
 				(*ms).assoc_vector[i].keq = str.toFloat();
 				ts >> str;
-				if (str.isNull()) return(-26);
+				if (str.isNull())
+				{
+					f.close();
+					return(-26);
+				}
 				ts.readLine();
 				(*ms).assoc_vector[i].units = str;
 				ts >> str;
-				if (str.isNull()) return(-27);
+				if (str.isNull())
+				{
+					f.close();
+					return(-27);
+				}
 				ts.readLine();
 				(*ms).assoc_vector[i].k_off = str.toFloat();
 				ts >> str;
-				if (str.isNull()) return(-28);
+				if (str.isNull())
+				{
+					f.close();
+					return(-28);
+				}
 				ts.readLine();
 				(*ms).assoc_vector[i].component1 = str.toInt();
 				ts >> str;
-				if (str.isNull()) return(-29);
+				if (str.isNull())
+				{
+					f.close();
+					return(-29);
+				}
 				ts.readLine();
 				(*ms).assoc_vector[i].component2 = str.toInt();
 				ts >> str;
-				if (str.isNull()) return(-30);
+				if (str.isNull())
+				{
+					f.close();
+					return(-30);
+				}
 				ts.readLine();
 				(*ms).assoc_vector[i].component3 = str.toInt();
 				ts >> str;
-				if (str.isNull()) return(-31);
+				if (str.isNull())
+				{
+					f.close();
+					return(-31);
+				}
 				ts.readLine();
 				(*ms).assoc_vector[i].stoichiometry1 = str.toUInt();
 				ts >> str;
-				if (str.isNull()) return(-32);
+				if (str.isNull())
+				{
+					f.close();
+					return(-32);
+				}
 				ts.readLine();
 				(*ms).assoc_vector[i].stoichiometry2 = str.toUInt();
 				ts >> str;
-				if (str.isNull()) return(-33);
+				if (str.isNull())
+				{
+					f.close();
+					return(-33);
+				}
 				ts.readLine();
 				(*ms).assoc_vector[i].stoichiometry3 = str.toUInt();
 			}
@@ -177,24 +309,48 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename)
 			if ((*ms).model > 3) // we can only read noninteracting models
 			(*ms).model = 3; // set to fixed molecular weight distribution by default
 			str = ts.readLine();
-			if (str.isNull()) return(-34);
+			if (str.isNull())
+			{
+				f.close();
+				return(-34);
+			}
 			(*ms).component_vector.resize(str.toInt()); // number of components
 			for (i=0; i<(*ms).component_vector.size(); i++)
 			{
 				str = ts.readLine();
-				if (str.isNull()) return(-35);
+				if (str.isNull())
+				{
+					f.close();
+					return(-35);
+				}
 				(*ms).component_vector[i].concentration = str.toFloat();
 				str = ts.readLine();
-				if (str.isNull()) return(-36);
+				if (str.isNull())
+				{
+					f.close();
+					return(-36);
+				}
 				(*ms).component_vector[i].s = str.toFloat();
 				str = ts.readLine();
-				if (str.isNull()) return(-37);
+				if (str.isNull())
+				{
+					f.close();
+					return(-37);
+				}
 				(*ms).component_vector[i].D = str.toFloat();
 				str = ts.readLine();
-				if (str.isNull()) return(-38);
+				if (str.isNull())
+				{
+					f.close();
+					return(-38);
+				}
 				(*ms).component_vector[i].sigma = str.toFloat();
 				str = ts.readLine();
-				if (str.isNull()) return(-39);
+				if (str.isNull())
+				{
+					f.close();
+					return(-39);
+				}
 				(*ms).component_vector[i].delta = str.toFloat();
 				(*ms).component_vector[i].vbar20 = 0.72;
 				(*ms).component_vector[i].extinction = 1.0;
