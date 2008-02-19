@@ -104,7 +104,7 @@ void US_CreateGlobal::add()
 	bool MonteCarlo = false;
 	temp_distro.line.clear();
 	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir,
-			"*.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.ga_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.global_dis.*", 0);
+			"*.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.ga_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.global_dis.* *.sa2d_mw_mc_dis.* *.ga_mw_mc_dis.* *.sa2d_mw_dis.* *.ga_mw_dis.*", 0);
 	QFileInfo fi(filename);
 	if (filename.contains("_mc_", false))
 	{

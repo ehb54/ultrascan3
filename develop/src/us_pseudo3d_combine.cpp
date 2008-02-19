@@ -522,6 +522,12 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 		temp_system.monte_carlo = true;
 		temp_system.method = "GA, MW Constrained, Monte Carlo";
 	}
+	else if (filename.contains("global_mc_dis", false))
+	{
+		temp_system.distro_type = 12;
+		temp_system.monte_carlo = true;
+		temp_system.method = "Global MC";
+	}
 	else
 	{
 		temp_system.distro_type = 0; // undefined

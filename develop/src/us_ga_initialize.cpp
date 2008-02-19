@@ -916,6 +916,20 @@ void US_GA_Initialize::load_distro()
 			{
 				ts.readLine(); // discard header line
 			}
+			if (distro_type == 7) // global distro, could be Monte Carlo, so check...
+			{
+				QString s1;
+				ts >> s1;
+				ts >> s1;
+				if (s1 == "#")
+				{
+					ts.readLine();
+					monte_carlo = true;
+				}
+				ts.setDevice(0);
+				ts.setDevice(&f);
+				ts.readLine();
+			}
 			if (monte_carlo) // GA Monte Carlo, we need the number of MC iterations
 			{
 				QString s1;
