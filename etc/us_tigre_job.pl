@@ -10,7 +10,7 @@
 
 $bcf_no_procs = 42;
 $alamo_no_procs = 31;
-$laredo_no_procs = 34;
+$laredo_no_procs = 36;
 
 # END USER EDITABLE SECTION
 
