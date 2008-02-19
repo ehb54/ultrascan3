@@ -150,8 +150,8 @@ class US_EXTERN US_FemGlobal : public QObject
 		int read_experiment(struct ModelSystem *, struct SimulationParameters *, QString);
 		int write_experiment(struct ModelSystem *, struct SimulationParameters *, QString);
 		
-		int read_simulationParamaters(struct SimulationParameters *, QString);
-		int write_simulationParamaters(struct SimulationParameters *, QString);
+		int read_simulationParameters(struct SimulationParameters *, QString);
+		int write_simulationParameters(struct SimulationParameters *, QString);
 		
 		int read_modelSystem(struct ModelSystem *, QString);
 		int write_modelSystem(struct ModelSystem *, QString);

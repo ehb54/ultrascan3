@@ -37,6 +37,19 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 	connect(astfem_rsa, SIGNAL(new_time(float)), this, SLOT(update_time(float)));
 	connect(astfem_rsa, SIGNAL(current_speed(unsigned int)), this, SLOT(update_speed(unsigned int)));
 	
+	pb_load_system = new QPushButton( tr("Load Experiment"), this );
+	pb_load_system->setAutoDefault(false);
+	pb_load_system->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_load_system->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	connect(pb_load_system, SIGNAL(clicked()), SLOT(load_system()) );
+
+	pb_save_system = new QPushButton( tr("Save Experiment"), this );
+	pb_save_system->setAutoDefault(false);
+	pb_save_system->setEnabled(false);
+	pb_save_system->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled,  	USglobal->global_colors.cg_pushb_active));
+	pb_save_system->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	connect(pb_save_system, SIGNAL(clicked()), SLOT(save_system()) );
+
 	pb_new_model = new QPushButton( tr("New Model"), this );
 	pb_new_model->setAutoDefault(false);
 	pb_new_model->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -212,6 +225,8 @@ void US_Astfem_Sim::setup_GUI()
 	topBox->setRowSpacing(1, 30);
 	topBox->setRowSpacing(3, 30);
 	QVBoxLayout *buttonBox = new QVBoxLayout();
+	buttonBox->addWidget(pb_load_system);
+	buttonBox->addWidget(pb_save_system);
 	buttonBox->addWidget(pb_new_model);
 	buttonBox->addWidget(pb_load_model);
 	buttonBox->addWidget(pb_change_model);
@@ -1561,6 +1576,65 @@ void US_Astfem_Sim::load_model(const QString &fileName)
 	}
 }
 
+
+void US_Astfem_Sim::load_system()
+{
+	QString fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.us_system", 0);
+	if ( !fn.isEmpty() )
+	{
+		load_system(fn);
+	}
+}
+
+void US_Astfem_Sim::load_system(const QString &filename)
+{
+	int error_code;
+	US_FemGlobal fg;
+	QString str;
+	error_code = fg.read_experiment(&system, &simparams, filename);
+	if (error_code < 0)
+	{
+		str.sprintf("Unable to load System: " + filename + "\n\nError code: %d", error_code);
+		QMessageBox::information(this, tr("Simulation Module"), tr(str), QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+		return;
+	}
+	else
+	{	
+		pb_simulation_parameters->setEnabled(true);
+		pb_change_model->setEnabled(true);
+		pb_simulation_parameters->setEnabled(true);
+		printError(5);
+	}
+}
+
+
+void US_Astfem_Sim::save_system()
+{
+	QString str, fn = QFileDialog::getSaveFileName(USglobal->config_list.result_dir, "*.us_system", 0);
+	if ( !fn.isEmpty() )
+	{
+		save_system(fn);		// the user gave a file name
+	}
+}
+
+void US_Astfem_Sim::save_system(const QString &filename)
+{
+	int error_code;
+	US_FemGlobal fg;
+	QString str;
+	error_code = fg.write_experiment(&system, &simparams, filename);
+	if (error_code < 0)
+	{
+		str.sprintf("Unable to save System: " + filename + "\n\nError code: %d", error_code);
+		QMessageBox::information(this, tr("Simulation Module"), tr(str), QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+		return;
+	}
+	else
+	{
+		printError(6);
+	}
+}
+
 void US_Astfem_Sim::printError(const int &ival)
 {
 	switch (ival)
@@ -1600,6 +1674,18 @@ void US_Astfem_Sim::printError(const int &ival)
 			+ system.description, QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
 			break;
 		}
+		case 5:
+		{
+			QMessageBox::information(this, tr("Simulation Module"), tr("Successfully loaded System:\n\n")
+					+ system.description, QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+			break;
+		}
+		case 6:
+		{
+			QMessageBox::information(this, tr("Simulation Module"), tr("Successfully saved System:\n\n")
+					+ system.description, QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+			break;
+		}
 	}
 }
 
@@ -1621,6 +1707,7 @@ void US_Astfem_Sim::simulation_parameters()
 	if (sp->exec())
 	{
 		pb_start_simulation->setEnabled(true);
+		pb_save_system->setEnabled(true);
 	}
 }
 

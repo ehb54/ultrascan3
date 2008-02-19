@@ -444,7 +444,7 @@ int US_FemGlobal::write_modelSystem(struct ModelSystem *ms, QString filename)
 	}
 }
 
-int US_FemGlobal::read_simulationParamaters(struct SimulationParameters *sp, QString filename)
+int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, QString filename)
 {
 	QFile f(filename);
 	int ival;
@@ -690,7 +690,7 @@ int US_FemGlobal::read_simulationParamaters(struct SimulationParameters *sp, QSt
 	}
 }
 
-int US_FemGlobal::write_simulationParamaters(struct SimulationParameters *sp, QString filename)
+int US_FemGlobal::write_simulationParameters(struct SimulationParameters *sp, QString filename)
 {
 	QString str = QString(filename);
 	QFile f(str);
@@ -740,9 +740,58 @@ int US_FemGlobal::write_simulationParamaters(struct SimulationParameters *sp, QS
 
 int US_FemGlobal::read_experiment(struct ModelSystem *ms, struct SimulationParameters *sp, QString filename)
 {
+	QString str;
+	int flag1, flag2;
+	QFile f;
+	f.setName(filename);
+	if (f.open(IO_ReadOnly))
+	{
+		QTextStream ts(&f);
+		ts >> str;
+		flag1 = read_simulationParameters(sp, str);
+		ts >> str;
+		flag2 = read_modelSystem(ms, str);
+		f.close();
+		if (flag1 < 0)
+		{
+			return (flag1);
+		}
+		if (flag2 < 0)
+		{
+			return (flag2);
+		}
+		return(0);
+	}
+	else
+	{
+		return(-1); // can't read input file
+	}
 }
 
 int US_FemGlobal::write_experiment(struct ModelSystem *ms, struct SimulationParameters *sp, QString filename)
 {
+	QFile f;
+	QString str;
+	if (filename.right(10) == ".us_system")
+	{
+		filename.truncate(filename.length()-10);
+	}
+	f.setName(filename + ".us_system");
+	if (f.open(IO_WriteOnly | IO_Translate))
+	{
+		QTextStream ts(&f);
+		str = filename + ".us_system.simulation_parameters";
+		ts << str << " ";
+		write_simulationParameters(sp, str);
+		str.sprintf(filename + ".us_system.model-%d.00", (*ms).model);
+		ts << str << endl;
+		write_modelSystem(ms, str);
+		f.close();
+		return(0);
+	}
+	else
+	{
+		return(-1); // can't open output file
+	}
 }
 

@@ -48,6 +48,8 @@ class US_EXTERN US_Astfem_Sim : public QFrame
 		struct SimulationParameters simparams;
 		vector <struct mfem_data> astfem_data;
 		QwtPlot *movie_plot, *scan_plot;
+		QPushButton *pb_load_system;
+		QPushButton *pb_save_system;
 		QPushButton *pb_new_model;
 		QPushButton *pb_load_model;
 		QPushButton *pb_change_model;
@@ -77,6 +79,10 @@ class US_EXTERN US_Astfem_Sim : public QFrame
 		void assign_model();
 		void load_model();
 		void load_model(const QString &);
+		void load_system();
+		void load_system(const QString &);
+		void save_system();
+		void save_system(const QString &);
 		void change_model();
 		void simulation_parameters();
 		void start_simulation();
