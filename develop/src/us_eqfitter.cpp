@@ -1280,6 +1280,7 @@ int US_EqFitter::calc_model(double *guess_par)
 		lbl_status2->setText(str);
 		qApp->processEvents();
 	}
+
 	if ((which_model >= 0) && (which_model <= 3))
 	{
 		vbar		= new float[(*runfit).components];
@@ -1315,7 +1316,11 @@ int US_EqFitter::calc_model(double *guess_par)
 //cout << "yguess[" << point_counter << ", " <<k<< "]: " << y_guess[point_counter] << ", mw: " << (*runfit).mw[k] << ", a: " << (*scanfit_vector)[i].amplitude[k] << endl;
 					}
 					argument = y_guess[point_counter] - (*scanfit_vector)[i].baseline;
-					if (!isnormal(argument)) noerror = false;
+					if (!isnormal(argument))
+					{
+						cout << "Argument 1: " << argument << endl;
+						noerror = false;
+					}
 					if (argument > 0)
 					{
 						lncr2[dataset_counter][log_counter] = log(argument);
@@ -1402,7 +1407,11 @@ int US_EqFitter::calc_model(double *guess_par)
 					+ exp ((*runfit).stoich1 * (*scanfit_vector)[i].amplitude[0] + (*runfit).eq[0]
 					+ OD_correction1 + (*runfit).stoich1 * (*runfit).mw[0] * constant * x * buoyancy[0]);
 					argument = y_guess[point_counter] - (*scanfit_vector)[i].baseline;
-					if (!isnormal(argument)) noerror=false;
+					if (!isnormal(argument))
+					{
+						cout << "Argument 2: " << argument << endl;
+						noerror = false;
+					}
 					if (argument > 0)
 					{
 						lncr2[dataset_counter][log_counter] = log(argument);
@@ -1480,7 +1489,11 @@ int US_EqFitter::calc_model(double *guess_par)
 						return(-2);
 					}*/
 					argument = y_guess[point_counter] - (*scanfit_vector)[i].baseline;
-					if (!isnormal(argument)) noerror=false;
+					if (!isnormal(argument))
+					{
+						cout << "Argument 3: " << argument << endl;
+						noerror = false;
+					}
 					if (argument > 0)
 					{
 						lncr2[dataset_counter][log_counter] = log(argument);
@@ -1552,7 +1565,11 @@ int US_EqFitter::calc_model(double *guess_par)
 												  + (*runfit).eq[0] + OD_correction1
 												  + mw_ab * constant * x * buoyancy_ab);
 					argument = y_guess[point_counter] - (*scanfit_vector)[i].baseline;
-					if (!isnormal(argument)) noerror=false;
+					if (!isnormal(argument))
+					{
+						cout << "Argument 4: " << argument << endl;
+						noerror = false;
+					}
 					if (argument > 0)
 					{
 						lncr2[dataset_counter][log_counter] = log(argument);
@@ -1628,7 +1645,11 @@ int US_EqFitter::calc_model(double *guess_par)
 												  + (*runfit).eq[1] + OD_correction2
 												  + (*runfit).stoich1 * (*runfit).mw[0] * constant * x * buoyancy[0]);
 					argument = y_guess[point_counter] - (*scanfit_vector)[i].baseline;
-					if (!isnormal(argument)) noerror=false;
+					if (!isnormal(argument))
+					{
+						cout << "Argument 5: " << argument << endl;
+						noerror = false;
+					}
 					if (argument > 0)
 					{
 						lncr2[dataset_counter][log_counter] = log(argument);
@@ -1692,7 +1713,11 @@ int US_EqFitter::calc_model(double *guess_par)
 					+ exp ((*runfit).stoich1 * (*scanfit_vector)[i].amplitude[0] + (*runfit).eq[0]
 					+ OD_correction1 + (*runfit).mw[1] * constant_x * buoyancy[0]);
 					argument = y_guess[point_counter] - (*scanfit_vector)[i].baseline;
-					if (!isnormal(argument)) noerror=false;
+					if (!isnormal(argument))
+					{
+						cout << "Argument 6: " << argument << endl;
+						noerror = false;
+					}
 					if (argument > 0)
 					{
 						lncr2[dataset_counter][log_counter] = log(argument);
@@ -1746,7 +1771,11 @@ int US_EqFitter::calc_model(double *guess_par)
 					+ exp ((*scanfit_vector)[i].amplitude[0] + ((*runfit).mw[0] * constant * x * buoyancy[0]))
 					+ exp ((*scanfit_vector)[i].amplitude[1] + ((*runfit).mw[1] * constant * x * buoyancy[0]));
 					argument = y_guess[point_counter] - (*scanfit_vector)[i].baseline;
-					if (!isnormal(argument)) noerror=false;
+					if (!isnormal(argument))
+					{
+						cout << "Argument 7: " << argument << endl;
+						noerror = false;
+					}
 					if (argument > 0)
 					{
 						lncr2[dataset_counter][log_counter] = log(argument);
@@ -1803,7 +1832,11 @@ int US_EqFitter::calc_model(double *guess_par)
 					+ exp ((*runfit).stoich1 * (*scanfit_vector)[i].amplitude[0] + (*runfit).eq[0]
 					+ OD_correction1 + (*runfit).stoich1 * (*runfit).mw[0] * constant * x * buoyancy[0]);
 					argument = y_guess[point_counter] - (*scanfit_vector)[i].baseline;
-					if (!isnormal(argument)) noerror=false;
+					if (!isnormal(argument))
+					{
+						cout << "Argument 8: " << argument << endl;
+						noerror = false;
+					}
 					if (argument > 0)
 					{
 						lncr2[dataset_counter][log_counter] = log(argument);
@@ -1826,7 +1859,6 @@ int US_EqFitter::calc_model(double *guess_par)
 		delete [] vbar;
 		delete [] buoyancy;
 	}
-
 	function_evaluations++;
 	if (GUI)
 	{
@@ -1834,12 +1866,14 @@ int US_EqFitter::calc_model(double *guess_par)
 		lbl_evaluations2->setText(str);
 		qApp->processEvents();
 	}
-	if (errno == 0 && noerror)
+	if (noerror)
 	{
+		cout << "errno is set to: " << errno << endl;
 		return(0);
 	}
 	else
 	{
+		cout << "errno: " << errno <<  ", noerror: " << noerror << endl;
 		return(-1); // a mathematical exception has occured
 	}
 }

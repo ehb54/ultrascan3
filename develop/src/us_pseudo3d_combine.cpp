@@ -419,7 +419,7 @@ void US_Pseudo3D_Combine::setup_GUI()
 void US_Pseudo3D_Combine::load_distro()
 {
 	QFileDialog fd;
-	QString filter = "*.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.sa2d_mw_dis.* *.ga_dis.* *.ga_mw_dis.* *.ga_mw_mc_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.sa2d_mw_mc_dis.* *.global_dis.* ";
+	QString filter = "*.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.sa2d_mw_dis.* *.ga_dis.* *.ga_mw_dis.* *.ga_mw_mc_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.sa2d_mw_mc_dis.* *.global_dis.* *.global_mc_dis.*";
 	QStringList list = fd.getOpenFileNames(filter, USglobal->config_list.result_dir, 0, 0);
 	if (list.empty())
 	{

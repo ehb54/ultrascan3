@@ -651,7 +651,7 @@ void US_GA_Initialize::shrink()
 		cout << ", GA_smax2: " << GA_Solute[0].s_max;
 		cout << ", GA_fmin2: " << GA_Solute[0].ff0_min;
 		cout << ", GA_fmax2: " << GA_Solute[0].ff0_max << endl;
-*/		
+*/
 		MC_solute[i].clear();
 		bool flag=false;
 		for (comp_it = component.begin(); comp_it != component.end(); comp_it++)
@@ -787,7 +787,7 @@ void US_GA_Initialize::load_distro()
 	component.clear(); // save monte carlo data for statistics and sort them from this vector
 	Solute temp_solute;
 	filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir,
-	"*.vhw_his.* *.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.sa2d_mw_dis.* *.ga_dis.* *.ga_mw_dis.* *.ga_mw_mc_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.sa2d_mw_mc_dis.* *.global_dis.* ", 0);
+	"*.vhw_his.* *.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.sa2d_mw_dis.* *.ga_dis.* *.ga_mw_dis.* *.ga_mw_mc_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.sa2d_mw_mc_dis.* *.global_dis.* *.global_mc_dis.* ", 0);
 	index = filename.findRev(".", -1, true);
 	cell_info = filename.right(filename.length() - index);
 	f.setName(filename);
@@ -870,6 +870,13 @@ void US_GA_Initialize::load_distro()
 		distro_type = 11;
 		monte_carlo = true;
 		index = filename.findRev(".ga_mw_mc_dis.", -1, true);
+		id = filename.left(index);
+	}
+	else if (filename.contains("global_mc_dis", false))
+	{
+		distro_type = 12;
+		monte_carlo = true;
+		index = filename.findRev(".global_mc_dis.", -1, true);
 		id = filename.left(index);
 	}
 	else

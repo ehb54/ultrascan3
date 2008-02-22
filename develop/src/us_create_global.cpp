@@ -6,6 +6,7 @@ US_CreateGlobal::US_CreateGlobal(QWidget *parent, const char* name) : QFrame(par
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("Create Global Distribution"));
 	unsigned int minHeight1 = 26, minHeight2 = 50;
+	iterations = 0;
 
 	distro.clear();
 
@@ -101,7 +102,8 @@ void US_CreateGlobal::closeEvent(QCloseEvent *e)
 void US_CreateGlobal::add()
 {
 	struct single_distro temp_distro;
-	bool MonteCarlo = false;
+	bool MonteCarlo = false, flag = false;
+	unsigned int iter;
 	temp_distro.line.clear();
 	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir,
 			"*.fe_dis.* *.cofs_dis.* *.sa2d_dis.* *.ga_dis.* *.ga_mc_dis.* *.sa2d_mc_dis.* *.global_dis.* *.sa2d_mw_mc_dis.* *.ga_mw_mc_dis.* *.sa2d_mw_dis.* *.ga_mw_dis.*", 0);
@@ -109,6 +111,7 @@ void US_CreateGlobal::add()
 	if (filename.contains("_mc_", false))
 	{
 		MonteCarlo = true;
+		flag = true;
 	}
 	temp_distro.name = fi.fileName();
 	if (!filename.isEmpty())
@@ -124,13 +127,20 @@ void US_CreateGlobal::add()
 			ts.readLine();
 			if (MonteCarlo) // we need to discard an additional line (the line with the number of MC iterations)
 			{
-				ts.readLine();
+				ts >> iter;
+				cout << ts.readLine();
+				iterations += iter;
+				flag = true;
 			}
 			while (!ts.atEnd())
 			{
 				temp_distro.line.push_back(ts.readLine());
 			}
 			distro.push_back(temp_distro);
+			if (!flag)
+			{
+				iterations ++;
+			}
 			f.close();
 		}
 	}
@@ -146,6 +156,7 @@ void US_CreateGlobal::reset()
 {
 	distro.clear();
 	lb_distro->clear();
+	iterations = 0;
 	pb_save->setEnabled(false);
 	pb_reset->setEnabled(false);
 }
@@ -155,7 +166,15 @@ void US_CreateGlobal::save()
 	QString str;
 	str = distro[distro.size()-1].name;
 	int index = str.find(".");
-	QString filename = str.left(index) + ".global_dis.dat";
+	QString filename;
+	if (iterations >= 5)
+	{
+		filename = str.left(index) + ".global_mc_dis.dat";
+	}
+	else
+	{
+		filename = str.left(index) + ".global_dis.dat";
+	}
 	OneLiner ol_descr(tr("Please confirm or\nmodify the file name\nfor the GA distribution:"));
 	ol_descr.show();
 	ol_descr.parameter1->setText(filename);
@@ -173,6 +192,10 @@ void US_CreateGlobal::save()
 	{
 		QTextStream ts(&f);
 		ts << "S_apparent\tS_20,W    \tD_apparent\tD_20,W    \tMW        \tFrequency\tf/f0(20,W)\n";
+		if (iterations > 5)
+		{
+			ts << iterations << "\t\t# Number of Monte Carlo Iterations\n";
+		}
 		for (unsigned int i=0; i<distro.size(); i++)
 		{
 			for (unsigned int j=0; j<distro[i].line.size(); j++)

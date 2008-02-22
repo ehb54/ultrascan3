@@ -35,7 +35,7 @@ UsWin::UsWin(QWidget *parent, const char *name)
 
 	QPixmap splash;
 	QString splash_image = getenv("ULTRASCAN");
-	cout << "UltraScan environment variable value: " << splash_image << endl;
+	//cout << "UltraScan environment variable value: " << splash_image << endl;
 	if (splash_image.isEmpty())
 	{
 #ifdef UNIX
@@ -103,7 +103,7 @@ UsWin::UsWin(QWidget *parent, const char *name)
 #ifdef OPTERON
 #endif
 	}
-	cout << "Flash image file search path: " << splash_image << endl;
+	//cout << "Flash image file search path: " << splash_image << endl;
 	if (splash.load(splash_image))
 	{
 		splash_b->setGeometry((unsigned int) ((width/2)-230), 110, 460, 276);

@@ -31,7 +31,7 @@ class US_EXTERN US_CreateGlobal : public QFrame
 		~US_CreateGlobal();
 
 	private:
-		vector <struct single_distro> distro; 
+		vector <struct single_distro> distro;
 		QLabel *lbl_info;
 		QListBox *lb_distro;
 		QPushButton *pb_add;
@@ -40,6 +40,7 @@ class US_EXTERN US_CreateGlobal : public QFrame
 		QPushButton *pb_save;
 		QPushButton *pb_quit;
 		US_Config *USglobal;
+		unsigned int iterations;
 
 	protected slots:
 		void setup_GUI();
