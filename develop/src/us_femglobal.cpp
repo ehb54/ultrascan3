@@ -639,15 +639,6 @@ int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, QSt
 		}
 		if (!ts.atEnd())
 		{
-			ts >> (*sp).centerpiece;
-		}
-		else
-		{
-			f.close();
-			return(-69);
-		}
-		if (!ts.atEnd())
-		{
 			ts >> (*sp).rotor;
 		}
 		else
@@ -718,7 +709,6 @@ int US_FemGlobal::write_simulationParameters(struct SimulationParameters *sp, QS
 		ts << (*sp).rinoise << "\t\t# radial invariant systematic noise (in percent OD)" << "\n";
 		ts << (*sp).mesh << "\t\t# Selected simulation mesh" << "\n";
 		ts << (*sp).moving_grid << "\t\t# moving time grid (0 = Astfem, 1 = fixed)" << "\n";
-		ts << (*sp).centerpiece << "\t\t# Centerpiece serial number" << "\n";
 		ts << (*sp).rotor << "\t\t# Rotor serial number" << "\n";
 		if ((*sp).band_forming)
 		{
@@ -794,4 +784,3 @@ int US_FemGlobal::write_experiment(struct ModelSystem *ms, struct SimulationPara
 		return(-1); // can't open output file
 	}
 }
-

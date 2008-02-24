@@ -25,7 +25,6 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 	simparams.rinoise = 0.0;
 	simparams.band_volume = 0.015;
 	simparams.rotor = 0;
-	simparams.centerpiece = 0;
 	simparams.band_forming = false;
 	stopFlag = false;
 	movieFlag = true;
@@ -36,7 +35,7 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 	connect(astfem_rsa, SIGNAL(current_component(int)), this, SLOT(update_progress(int)));
 	connect(astfem_rsa, SIGNAL(new_time(float)), this, SLOT(update_time(float)));
 	connect(astfem_rsa, SIGNAL(current_speed(unsigned int)), this, SLOT(update_speed(unsigned int)));
-	
+
 	pb_load_system = new QPushButton( tr("Load Experiment"), this );
 	pb_load_system->setAutoDefault(false);
 	pb_load_system->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
@@ -142,7 +141,7 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 	movie_plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 	movie_plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	movie_plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	movie_plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));		
+	movie_plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	movie_plot->setMargin(USglobal->config_list.margin);
 	movie_plot->setMinimumSize(600, 275);
 
@@ -165,7 +164,7 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 	scan_plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 	scan_plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	scan_plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	scan_plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));		
+	scan_plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	scan_plot->setMargin(USglobal->config_list.margin);
 	scan_plot->setMinimumSize(600, 275);
 
@@ -238,7 +237,7 @@ void US_Astfem_Sim::setup_GUI()
 	buttonBox->addWidget(pb_save_scans);
 	buttonBox->addWidget(pb_help);
 	buttonBox->addWidget(pb_close);
-	
+
 	topBox->addMultiCellLayout(buttonBox, 0, 2, 0, 0, Qt::AlignTop|Qt::AlignLeft);
 	topBox->addWidget(movie_plot, 0, 1, 0);
 
@@ -310,7 +309,7 @@ void US_Astfem_Sim::new_model()
 			{
 				US_SelectModel3 *SelectModel3;
 				unsigned int species;
-				SelectModel3 = new US_SelectModel3(&mw_upperLimit, &mw_lowerLimit, &species, 
+				SelectModel3 = new US_SelectModel3(&mw_upperLimit, &mw_lowerLimit, &species,
 				&model3_vbar, &model3_vbarflag, -1);
 				if (!SelectModel3->exec())
 				{
@@ -347,7 +346,7 @@ void US_Astfem_Sim::new_model()
 				system.assoc_vector[0].stoichiometry1 = 1;
 				system.assoc_vector[0].stoichiometry2 = 2;
 				system.assoc_vector[0].stoichiometry3 = 0;
-				initializeAssociation1(system.assoc_vector[0].component1, 
+				initializeAssociation1(system.assoc_vector[0].component1,
 											  system.assoc_vector[0].component2,
 											  system.assoc_vector[0].stoichiometry2);
 				break;
@@ -371,7 +370,7 @@ void US_Astfem_Sim::new_model()
 				system.assoc_vector[0].stoichiometry1 = 1;
 				system.assoc_vector[0].stoichiometry2 = 3;
 				system.assoc_vector[0].stoichiometry3 = 0;
-				initializeAssociation1(system.assoc_vector[0].component1, 
+				initializeAssociation1(system.assoc_vector[0].component1,
 											  system.assoc_vector[0].component2,
 											  system.assoc_vector[0].stoichiometry2);
 				break;
@@ -395,7 +394,7 @@ void US_Astfem_Sim::new_model()
 				system.assoc_vector[0].stoichiometry1 = 1;
 				system.assoc_vector[0].stoichiometry2 = 4;
 				system.assoc_vector[0].stoichiometry3 = 0;
-				initializeAssociation1(system.assoc_vector[0].component1, 
+				initializeAssociation1(system.assoc_vector[0].component1,
 											  system.assoc_vector[0].component2,
 											  system.assoc_vector[0].stoichiometry2);
 				break;
@@ -419,7 +418,7 @@ void US_Astfem_Sim::new_model()
 				system.assoc_vector[0].stoichiometry1 = 1;
 				system.assoc_vector[0].stoichiometry2 = 5;
 				system.assoc_vector[0].stoichiometry3 = 0;
-				initializeAssociation1(system.assoc_vector[0].component1, 
+				initializeAssociation1(system.assoc_vector[0].component1,
 											  system.assoc_vector[0].component2,
 											  system.assoc_vector[0].stoichiometry2);
 				break;
@@ -443,7 +442,7 @@ void US_Astfem_Sim::new_model()
 				system.assoc_vector[0].stoichiometry1 = 1;
 				system.assoc_vector[0].stoichiometry2 = 6;
 				system.assoc_vector[0].stoichiometry3 = 0;
-				initializeAssociation1(system.assoc_vector[0].component1, 
+				initializeAssociation1(system.assoc_vector[0].component1,
 											  system.assoc_vector[0].component2,
 											  system.assoc_vector[0].stoichiometry2);
 				break;
@@ -467,7 +466,7 @@ void US_Astfem_Sim::new_model()
 				system.assoc_vector[0].stoichiometry1 = 1;
 				system.assoc_vector[0].stoichiometry2 = 2;
 				system.assoc_vector[0].stoichiometry3 = 0;
-				initializeAssociation1(system.assoc_vector[0].component1, 
+				initializeAssociation1(system.assoc_vector[0].component1,
 											  system.assoc_vector[0].component2,
 											  system.assoc_vector[0].stoichiometry2);
 				break;
@@ -500,7 +499,7 @@ void US_Astfem_Sim::new_model()
 					system.assoc_vector[0].stoichiometry1 = 1;
 					system.assoc_vector[0].stoichiometry2 = (unsigned int) stoich;
 					system.assoc_vector[0].stoichiometry3 = 0;
-					initializeAssociation1(system.assoc_vector[0].component1, 
+					initializeAssociation1(system.assoc_vector[0].component1,
 												  system.assoc_vector[0].component2,
 												  system.assoc_vector[0].stoichiometry2);
 				}
@@ -537,10 +536,10 @@ void US_Astfem_Sim::new_model()
 				system.assoc_vector[1].stoichiometry1 = 1;
 				system.assoc_vector[1].stoichiometry2 = 3;
 				system.assoc_vector[1].stoichiometry3 = 0;
-				initializeAssociation1(system.assoc_vector[0].component1, 
+				initializeAssociation1(system.assoc_vector[0].component1,
 											  system.assoc_vector[0].component2,
 											  system.assoc_vector[0].stoichiometry2);
-				initializeAssociation1(system.assoc_vector[1].component1, 
+				initializeAssociation1(system.assoc_vector[1].component1,
 											  system.assoc_vector[1].component2,
 											  system.assoc_vector[1].stoichiometry2);
 				break;
@@ -576,10 +575,10 @@ void US_Astfem_Sim::new_model()
 				system.assoc_vector[1].stoichiometry1 = 1;
 				system.assoc_vector[1].stoichiometry2 = 4;
 				system.assoc_vector[1].stoichiometry3 = 0;
-				initializeAssociation1(system.assoc_vector[0].component1, 
+				initializeAssociation1(system.assoc_vector[0].component1,
 											  system.assoc_vector[0].component2,
 											  system.assoc_vector[0].stoichiometry2);
-				initializeAssociation1(system.assoc_vector[1].component1, 
+				initializeAssociation1(system.assoc_vector[1].component1,
 											  system.assoc_vector[1].component2,
 											  system.assoc_vector[1].stoichiometry2);
 				break;
@@ -625,10 +624,10 @@ void US_Astfem_Sim::new_model()
 					system.assoc_vector[1].stoichiometry1 = 1;
 					system.assoc_vector[1].stoichiometry2 = (unsigned int) stoich2;
 					system.assoc_vector[1].stoichiometry3 = 0;
-					initializeAssociation1(system.assoc_vector[0].component1, 
+					initializeAssociation1(system.assoc_vector[0].component1,
 												  system.assoc_vector[0].component2,
 												  system.assoc_vector[0].stoichiometry2);
-					initializeAssociation1(system.assoc_vector[1].component1, 
+					initializeAssociation1(system.assoc_vector[1].component1,
 												  system.assoc_vector[1].component2,
 												  system.assoc_vector[1].stoichiometry2);
 					break;
@@ -795,10 +794,10 @@ void US_Astfem_Sim::new_model()
 					system.assoc_vector[1].component1 = 0;
 					system.assoc_vector[1].component2 = 2;
 					system.assoc_vector[1].component3 = -1;
-					system.assoc_vector[1].stoichiometry1 = 1; 
+					system.assoc_vector[1].stoichiometry1 = 1;
 					system.assoc_vector[1].stoichiometry2 = 1;
 					system.assoc_vector[1].stoichiometry3 = 0;
-					initializeAssociation1(system.assoc_vector[0].component1, 
+					initializeAssociation1(system.assoc_vector[0].component1,
 												  system.assoc_vector[0].component2,
 												  system.assoc_vector[0].stoichiometry2);
 
@@ -852,7 +851,7 @@ void US_Astfem_Sim::new_model()
 					system.assoc_vector[0].stoichiometry1 = 1;
 					system.assoc_vector[0].stoichiometry2 = (unsigned int) stoich;
 					system.assoc_vector[0].stoichiometry3 = 0;
-					initializeAssociation1(system.assoc_vector[0].component1, 
+					initializeAssociation1(system.assoc_vector[0].component1,
 												  system.assoc_vector[0].component2,
 												  system.assoc_vector[0].stoichiometry2);
 
@@ -862,9 +861,9 @@ void US_Astfem_Sim::new_model()
 					system.assoc_vector[1].component1 = 0;
 					system.assoc_vector[1].component2 = 2;
 					system.assoc_vector[1].component3 = -1;
-					system.assoc_vector[1].stoichiometry1 = 1;  
+					system.assoc_vector[1].stoichiometry1 = 1;
 					system.assoc_vector[1].stoichiometry2 = (unsigned int) stoich;
-					system.assoc_vector[1].stoichiometry3 = 0;  
+					system.assoc_vector[1].stoichiometry3 = 0;
 					system.component_vector[2].mw = system.component_vector[1].mw;
 					system.component_vector[2].s = system.component_vector[1].s;
 					system.component_vector[2].D = system.component_vector[1].D;
@@ -912,7 +911,7 @@ void US_Astfem_Sim::new_model()
 					system.assoc_vector[0].stoichiometry1 = 1;
 					system.assoc_vector[0].stoichiometry2 = (unsigned int) stoich;
 					system.assoc_vector[0].stoichiometry3 = 0;
-					initializeAssociation1(system.assoc_vector[0].component1, 
+					initializeAssociation1(system.assoc_vector[0].component1,
 												  system.assoc_vector[0].component2,
 												  system.assoc_vector[0].stoichiometry2);
 					system.component_vector[0].concentration = 0.7;
@@ -959,7 +958,7 @@ void US_Astfem_Sim::new_model()
 					system.assoc_vector[0].stoichiometry1 = 1;
 					system.assoc_vector[0].stoichiometry2 = (unsigned int) stoich;
 					system.assoc_vector[0].stoichiometry3 = 0;
-					initializeAssociation1(system.assoc_vector[0].component1, 
+					initializeAssociation1(system.assoc_vector[0].component1,
 												  system.assoc_vector[0].component2,
 												  system.assoc_vector[0].stoichiometry2);
 					system.component_vector[2].mw = 22000.0;
@@ -1012,11 +1011,11 @@ void US_Astfem_Sim::new_model()
 					system.component_vector[i].mw = mw_lowerLimit;
 					system.component_vector[i].f_f0 = 1.25;
 					system.component_vector[i].s = (system.component_vector[i].mw * (1.0 - system.component_vector[i].vbar20 * DENS_20W))
-					/ (AVOGADRO * system.component_vector[i].f_f0 * 6.0 * VISC_20W * pow((0.75/AVOGADRO) 
+					/ (AVOGADRO * system.component_vector[i].f_f0 * 6.0 * VISC_20W * pow((0.75/AVOGADRO)
 					* system.component_vector[i].mw * system.component_vector[i].vbar20 * M_PI * M_PI, 1.0/3.0));
 
-					system.component_vector[i].D = (R * K20)/(AVOGADRO * system.component_vector[i].f_f0 
-					* 9.0 * VISC_20W * M_PI * pow((2.0 * system.component_vector[i].s * system.component_vector[i].f_f0 
+					system.component_vector[i].D = (R * K20)/(AVOGADRO * system.component_vector[i].f_f0
+					* 9.0 * VISC_20W * M_PI * pow((2.0 * system.component_vector[i].s * system.component_vector[i].f_f0
 					* system.component_vector[i].vbar20 * VISC_20W) / (1.0-system.component_vector[i].vbar20 * DENS_20W), 0.5));
 					system.component_vector[i].concentration = 1.0;
 				}
@@ -1025,11 +1024,11 @@ void US_Astfem_Sim::new_model()
 					system.component_vector[i].mw = mw_lowerLimit + (i * (mw_upperLimit - mw_lowerLimit)/(system.component_vector.size() - 1));
 					system.component_vector[i].f_f0 = 1.25;
 					system.component_vector[i].s = (system.component_vector[i].mw * (1.0 - system.component_vector[i].vbar20 * DENS_20W))
-					/ (AVOGADRO * system.component_vector[i].f_f0 * 6.0 * VISC_20W * pow((0.75/AVOGADRO) 
+					/ (AVOGADRO * system.component_vector[i].f_f0 * 6.0 * VISC_20W * pow((0.75/AVOGADRO)
 					* system.component_vector[i].mw * system.component_vector[i].vbar20 * M_PI * M_PI, 1.0/3.0));
 
-					system.component_vector[i].D = (R * K20)/(AVOGADRO * system.component_vector[i].f_f0 
-					* 9.0 * VISC_20W * M_PI * pow((2.0 * system.component_vector[i].s * system.component_vector[i].f_f0 
+					system.component_vector[i].D = (R * K20)/(AVOGADRO * system.component_vector[i].f_f0
+					* 9.0 * VISC_20W * M_PI * pow((2.0 * system.component_vector[i].s * system.component_vector[i].f_f0
 					* system.component_vector[i].vbar20 * VISC_20W) / (1.0-system.component_vector[i].vbar20 * DENS_20W), 0.5));
 
 					system.component_vector[i].concentration = 1.0/system.component_vector.size();;
@@ -1097,17 +1096,17 @@ void US_Astfem_Sim::initializeAssociation1(unsigned int comp1, unsigned int comp
 	system.component_vector[comp2].c0.concentration.clear();
 
 	system.component_vector[comp1].s = (system.component_vector[comp1].mw * (1.0 - system.component_vector[comp1].vbar20 * DENS_20W))
-	/ (AVOGADRO * system.component_vector[comp1].f_f0 * 6.0 * VISC_20W * pow((0.75/AVOGADRO) 
+	/ (AVOGADRO * system.component_vector[comp1].f_f0 * 6.0 * VISC_20W * pow((0.75/AVOGADRO)
 	* system.component_vector[comp1].mw * system.component_vector[comp1].vbar20 * M_PI * M_PI, 1.0/3.0));
 
-	system.component_vector[comp1].D = (R * K20)/(AVOGADRO * system.component_vector[comp1].f_f0 
-	* 9.0 * VISC_20W * M_PI * pow((2.0 * system.component_vector[comp1].s * system.component_vector[comp1].f_f0 
+	system.component_vector[comp1].D = (R * K20)/(AVOGADRO * system.component_vector[comp1].f_f0
+	* 9.0 * VISC_20W * M_PI * pow((2.0 * system.component_vector[comp1].s * system.component_vector[comp1].f_f0
 	* system.component_vector[comp1].vbar20 * VISC_20W) / (1.0-system.component_vector[comp1].vbar20 * DENS_20W), 0.5));
-	
+
 	system.component_vector[comp2].s = system.component_vector[comp1].s * pow((double) stoich1, 0.75);  // apply M^2/3 rule ( s2/s1 = (M2/M1)^2/3)
 	system.component_vector[comp2].f_f0 = 1.25; // f/f0 stays constant for M^2/3 rule, f changes M^1/3
-	system.component_vector[comp2].D = (R * K20)/(AVOGADRO * system.component_vector[comp2].f_f0 
-	* 9.0 * VISC_20W * M_PI * pow((2.0 * system.component_vector[comp2].s * system.component_vector[comp2].f_f0 
+	system.component_vector[comp2].D = (R * K20)/(AVOGADRO * system.component_vector[comp2].f_f0
+	* 9.0 * VISC_20W * M_PI * pow((2.0 * system.component_vector[comp2].s * system.component_vector[comp2].f_f0
 	* system.component_vector[comp2].vbar20 * VISC_20W) / (1.0-system.component_vector[comp2].vbar20 * DENS_20W), 0.5));
 }
 
@@ -1124,10 +1123,10 @@ void US_Astfem_Sim::initializeAssociation2()
 	system.component_vector[0].concentration = 1.0;
 	system.component_vector[0].extinction = 1.0;
 	system.component_vector[0].s = (system.component_vector[0].mw * (1.0 - system.component_vector[0].vbar20 * DENS_20W))
-	/ (AVOGADRO * system.component_vector[0].f_f0 * 6.0 * VISC_20W * pow((0.75/AVOGADRO) 
+	/ (AVOGADRO * system.component_vector[0].f_f0 * 6.0 * VISC_20W * pow((0.75/AVOGADRO)
 	* system.component_vector[0].mw * system.component_vector[0].vbar20 * M_PI * M_PI, 1.0/3.0));
-	system.component_vector[0].D = (R * K20)/(AVOGADRO * system.component_vector[0].f_f0 
-	* 9.0 * VISC_20W * M_PI * pow((2.0 * system.component_vector[0].s * system.component_vector[0].f_f0 
+	system.component_vector[0].D = (R * K20)/(AVOGADRO * system.component_vector[0].f_f0
+	* 9.0 * VISC_20W * M_PI * pow((2.0 * system.component_vector[0].s * system.component_vector[0].f_f0
 	* system.component_vector[0].vbar20 * VISC_20W) / (1.0-system.component_vector[0].vbar20 * DENS_20W), 0.5));
 
 // Component B:
@@ -1163,7 +1162,7 @@ void US_Astfem_Sim::initializeAssociation2()
 void US_Astfem_Sim::load_model()
 {
 	QString fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.model.?? *.model-?.?? *model-??.??", 0);
-	if ( !fn.isEmpty() ) 
+	if ( !fn.isEmpty() )
 	{
 		load_model(fn);
 	}
@@ -1199,7 +1198,7 @@ void US_Astfem_Sim::load_model(const QString &fileName)
 			ts.readLine(); // read rest of line
 			if (fval < 8.0) // provisional if statement when changes are made in the format
 			{
-				
+
 			}
 			ts >> str;
 			if (str.isNull())
@@ -1552,13 +1551,13 @@ void US_Astfem_Sim::load_model(const QString &fileName)
 				system.component_vector[i].vbar20 = 0.72;
 				system.component_vector[i].extinction = 1.0;
 				system.component_vector[i].name = str.sprintf("Component %d", i+1);
-				
+
 				system.component_vector[i].mw = (system.component_vector[i].s/system.component_vector[i].D)
 				*((R*K20)/(1.0 - system.component_vector[i].vbar20 * DENS_20W));
-				
-				system.component_vector[i].f_f0 = ((system.component_vector[i].mw * 
+
+				system.component_vector[i].f_f0 = ((system.component_vector[i].mw *
 				(1.0 - system.component_vector[i].vbar20 * DENS_20W))/(system.component_vector[i].s * AVOGADRO))
-				/(6 * VISC_20W * pow((system.component_vector[i].mw * M_PI * M_PI * 3.0 
+				/(6 * VISC_20W * pow((system.component_vector[i].mw * M_PI * M_PI * 3.0
 				* system.component_vector[i].vbar20)/(4.0 * AVOGADRO), 1.0/3.0));
 				system.component_vector[i].show_conc = true;
 				system.component_vector[i].show_keq = false;
@@ -1599,7 +1598,7 @@ void US_Astfem_Sim::load_system(const QString &filename)
 		return;
 	}
 	else
-	{	
+	{
 		pb_simulation_parameters->setEnabled(true);
 		pb_change_model->setEnabled(true);
 		pb_simulation_parameters->setEnabled(true);
@@ -1648,7 +1647,7 @@ void US_Astfem_Sim::printError(const int &ival)
 		}
 		case 1:
 		{
-			QMessageBox::warning(this, tr("UltraScan Warning"), 
+			QMessageBox::warning(this, tr("UltraScan Warning"),
 			tr("Sorry, for old-style model files only\nnon-interacting model loading is supported.\n\n") +
 			tr("Please recreate this model by clicking on:\n\n\"New Model\""),
 			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
@@ -1734,7 +1733,7 @@ void US_Astfem_Sim::start_simulation()
 // Each speed is a separate mfem_data set.
 
 	astfem_data.resize(simparams.speed_step.size());
-	
+
 	for (i=0; i<simparams.speed_step.size(); i++)
 	{
 		astfem_data[i].scan.clear();
@@ -1754,10 +1753,10 @@ void US_Astfem_Sim::start_simulation()
 		astfem_data[i].D20w_correction = 1.0;
 		astfem_data[i].id = str.sprintf(tr("Simulated data set %u (of %u) for speed %u"), i+1,
 		simparams.speed_step.size(), simparams.speed_step[i].rotorspeed);
-		
+
 // to get the right time, we need to take the last scan time from the previous speed step
 // and add the delays to it
-		current_time += simparams.speed_step[i].delay_hours * 3600 
+		current_time += simparams.speed_step[i].delay_hours * 3600
 		+ simparams.speed_step[i].delay_minutes * 60; // first time point of this speed step in secs
 
 		astfem_data[i].wavelength = 999; // simulation wavelength
@@ -1771,7 +1770,7 @@ void US_Astfem_Sim::start_simulation()
 		}
 
 // calculate the elapsed time between scans (total time - delay)/(scans-1):
-		increment = (simparams.speed_step[i].duration_hours * 3600 
+		increment = (simparams.speed_step[i].duration_hours * 3600
 		+ simparams.speed_step[i].duration_minutes * 60
 		- simparams.speed_step[i].delay_hours * 3600
 		- simparams.speed_step[i].delay_minutes * 60)/(simparams.speed_step[i].scans - 1);
@@ -1853,7 +1852,7 @@ void US_Astfem_Sim::start_simulation()
 		{
 			delete [] y[j];
 		}
-		delete [] y;		
+		delete [] y;
 	}
 	scan_plot->replot();
 }
@@ -1901,12 +1900,12 @@ void US_Astfem_Sim::save_scans()
 	mb.setButtonText(QMessageBox::No, "XLA");
 	mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
 
-	
+
 	switch(mb.exec())
 	{
 		case QMessageBox::Yes: // save in UltraScan format
 		{
-			/*			
+			/*
 			QString fn = QFileDialog::getSaveFileName(USglobal->config_list.result_dir, "*.us.v", 0);
 			int k=0;
 			if ( !fn.isEmpty() )

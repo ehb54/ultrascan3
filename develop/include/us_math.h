@@ -1,11 +1,11 @@
-#ifndef US_MATH_H 
-#define US_MATH_H 
+#ifndef US_MATH_H
+#define US_MATH_H
 
 /******************************************************************************
   Copyright (c) 2002 by Turku PET Centre
 
   nnls.h
-  
+
   Version:
   2002-08-19 Vesa Oikonen
 
@@ -162,6 +162,7 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
                     int /* centerpiece list index */,
                     int /* channel */,
                     unsigned int /* rpm */);
+	float stretch(int /*rotor id*/, unsigned int /*rotor speed*/);
 
 #endif
 

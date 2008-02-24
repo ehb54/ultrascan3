@@ -16,7 +16,10 @@ vector <struct mfem_data> *exp_data)
 {
 	unsigned int i, j;
 	float current_time = 0.0;
-	double current_speed;
+	float current_speed;
+	float current_meniscus;
+	float current_bottom;
+	float stretch;
 	double s_max_abs;			// largest sedimenting or floating speed (absolute value)
 	unsigned int duration, delay;
 	mfem_data simdata;
@@ -418,7 +421,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 	double *C0, *C1;			// C[m][j]: current/next concentration of m-th component at x_j
 									// C[0...Ms-1][0....N-1]:
 	double **CA1, **CA2, **CB1, **CB2;		// for matrices used in acceleration
-	
+
 	FILE *outf = fopen("tmp.out", "w");
 
 	CA = NULL;

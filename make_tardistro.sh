@@ -133,11 +133,11 @@ rm out
 rm tigre*
 rm flash-freebsd.png
 rm flash-irix.png
-rm flash-linux.png
+#rm flash-linux.png
 rm flash-macosx.png
 rm flash-netbsd.png
 rm flash-openbsd.png
-#rm flash-opteron.png
+rm flash-opteron.png
 rm flash-solaris.png
 rm flash-windows.png
 cd $TMP/ultrascan-$VERSION/bin64

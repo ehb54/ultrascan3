@@ -7,7 +7,7 @@
 # Field 2: Material
 # Field 3: Number of channels
 # variable Fields: bottom position for each channel in cm
-# next sector property: 0 = standard, 1 = synthetic 
+# next sector property: 0 = standard, 1 = rectangular, 2 = circular, 3 = synthetic 
 # next Field: pathlength in cm
 # next Field: angle in degrees of sector width
 # next Field: width of channel if centerpiece is rectanglar

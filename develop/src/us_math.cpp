@@ -144,7 +144,7 @@ float box_muller(float m, float s)      /* normal random variate generator */
    }
    else
    {
-      do 
+      do
       {
          x1 = 2.0 * ranf() - 1.0;
          x2 = 2.0 * ranf() - 1.0;
@@ -201,8 +201,8 @@ float normal_distribution(float sigma, float mean, float x)
 //
 // overloaded function find_index(f|r):
 // finds the subscript of an array entry that matches most closely the value
-// of the testvalue testx. 
-// To enhance efficiency, find_indexf starts searching at the beginning of the 
+// of the testvalue testx.
+// To enhance efficiency, find_indexf starts searching at the beginning of the
 // array (forward), while find_indexr starts searching from the end (reverse).
 // The function willl check the array bounds and return (-1) if the array
 // bounds where exceeded (i.e., the searched value testx was not found in the array)
@@ -414,7 +414,7 @@ void gaussian_smoothing(float **array, unsigned int smooth, unsigned int points)
 	unsigned int i, j, k;
 	float sum, *temp_array;
 	temp_array = new float [points];
-	
+
 	for (i=0; i<points; i++)
 	{
 		temp_array[i] = (*array)[i];
@@ -583,7 +583,7 @@ void calc_vbar(struct peptide *pep, QString *sequence, float *temperature)
 						+ pep->w
 						+ pep->z
 						+ pep->x;
-						
+
 	pep->mw     	+= pep->a * 71.1;
 	pep->weight 	+= pep->a * 71.1 * .74;
 	pep->vbar_sum 	+= pep->a * .74;
@@ -675,7 +675,7 @@ void calc_vbar(struct peptide *pep, QString *sequence, float *temperature)
 	pep->weight 	+= pep->w * 186.2*.74;
 	pep->vbar_sum 	+= pep->w * .74;
 	pep->e280		+= pep->w * 5690;
-	
+
 	pep->mw     	+= pep->x * 119.75;
 	pep->weight 	+= pep->x * 119.75*.722;
 	pep->vbar_sum 	+= pep->x * .722;
@@ -744,13 +744,26 @@ float calc_bottom(vector <struct rotorInfo> rotor_list,
 	return bottom;
 }
 
+float stretch(int rotor, unsigned int rpm)
+{
+	vector <struct rotorInfo> rotor_list;
+	float stretch = 0.0;
+	readRotorInfo(&rotor_list);
+	for (unsigned int i=0; i<5; i++)
+	{
+		stretch += rotor_list[rotor].coefficient[i] * pow((double) rpm, (double) i);
+	}
+	return (stretch);
+}
+
+
 /*****************************************************************************
 
   nnls.c  (c) 2002 Turku PET Centre
 
   This file contains the routine NNLS (nonnegative least squares)
   and the subroutines required by it.
-  
+
   This routine is based on the text and fortran code in
   C.L. Lawson and R.J. Hanson, Solving Least Squares Problems,
   Prentice-Hall, Englewood Cliffs, New Jersey, 1974.

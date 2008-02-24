@@ -1,6 +1,6 @@
 #include "../include/us_simulationparameters.h"
 
-US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *simparams, QWidget *parent, const char *name) 
+US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *simparams, QWidget *parent, const char *name)
 : QDialog( parent, name, true)
 {
 	USglobal = new US_Config();
@@ -19,7 +19,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	cmb_speeds->setMinimumHeight(minHeight1);
 	for (unsigned int i=0; i<(*simparams).speed_step.size(); i++)
 	{
-		str.sprintf("Speed Profile %d: %d hr %d min, %d rpm", i+1, 
+		str.sprintf("Speed Profile %d: %d hr %d min, %d rpm", i+1,
 		(*simparams).speed_step[i].duration_hours,
 		(*simparams).speed_step[i].duration_minutes,
 		(*simparams).speed_step[i].rotorspeed);
@@ -74,7 +74,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
 	lbl_title->setMinimumHeight(minHeight2);
 	lbl_title->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-	
+
 	cb_standard = new QCheckBox(tr(" Standard Centerpiece"), this);
 	cb_standard->setMinimumHeight(minHeight1);
 	cb_standard->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -84,7 +84,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	cb_band->setMinimumHeight(minHeight1);
 	cb_band->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	cb_band->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	
+
 	bg_centerpiece_selection = new QButtonGroup(2, Qt::Horizontal);
 	bg_centerpiece_selection->setExclusive(true);
 	connect(bg_centerpiece_selection, SIGNAL(clicked(int)), this, SLOT(select_centerpiece(int)));
@@ -98,7 +98,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	{
 		bg_centerpiece_selection->setButton(0);
 	}
-		
+
 	lbl_lamella = new QLabel(tr(" Band loading volume (ml):"), this);
 	lbl_lamella->setAlignment(AlignLeft|AlignVCenter);
 	lbl_lamella->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -120,7 +120,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	else
 	{
 		cnt_lamella->setEnabled(false);
-	}		
+	}
 	connect(cnt_lamella, SIGNAL(valueChanged(double)), SLOT(select_lamella(double)));
 
 	lbl_number_of_speeds = new QLabel(tr(" Number of Speed Profiles:"), this);
@@ -361,7 +361,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	cnt_inoise->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	cnt_inoise->setMinimumHeight(minHeight1);
 	connect(cnt_inoise, SIGNAL(valueChanged(double)), SLOT(update_inoise(double)));
-	
+
 	lbl_rinoise = new QLabel(tr(" Radially Invariant Noise (% Conc.):"), this);
 	lbl_rinoise->setAlignment(AlignLeft|AlignVCenter);
 	lbl_rinoise->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -413,7 +413,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	pb_save->setMinimumHeight(minHeight1);
 	connect(pb_save, SIGNAL(clicked()), SLOT(save()) );
 
-	setupGUI();	
+	setupGUI();
 
 	global_Xpos += 30;
 	global_Ypos += 30;
@@ -513,7 +513,7 @@ void US_SimulationParameters::check_params()
 		{
 			str.sprintf("speed profiles %d and %d\n", i, i+1);
 			if(abs((int)((*simparams).speed_step[i].rotorspeed - (*simparams).speed_step[i-1].rotorspeed))
-						< (*simparams).speed_step[i].acceleration)
+						< (int) (*simparams).speed_step[i].acceleration)
 			{
 				QMessageBox::query( tr("Warning"), tr("Attention:\nThe difference between the rotor speeds of " + str +
 						"is smaller than the acceleration rate, please decrease the acceleration rate!"));
@@ -529,14 +529,14 @@ void US_SimulationParameters::save()
 	QFileDialog fd;
 	QString fn = fd.getSaveFileName(USglobal->config_list.result_dir, "*.simulation_parameters", 0);
 	int k;
-	if ( !fn.isEmpty() ) 
+	if ( !fn.isEmpty() )
 	{
 		k = fn.findRev(".", -1, false);
 		if (k != -1) 	//if an extension was given, strip it.
 		{
 			fn.truncate(k);
 		}
-		fn.append(".simulation_parameters");	
+		fn.append(".simulation_parameters");
 		save(fn);		// the user gave a file name
 	}
 }
@@ -577,7 +577,6 @@ void US_SimulationParameters::save(const QString &filename)
 		ts << (*simparams).rinoise << "\t\t# radial invariant systematic noise (in percent OD)" << "\n";
 		ts << (*simparams).mesh << "\t\t# Selected simulation mesh" << "\n";
 		ts << (*simparams).moving_grid << "\t\t# moving time grid (0 = Astfem, 1 = fixed)" << "\n";
-		ts << (*simparams).centerpiece << "\t\t# Centerpiece serial number" << "\n";
 		ts << (*simparams).rotor << "\t\t# Rotor serial number" << "\n";
 		if ((*simparams).band_forming)
 		{
@@ -598,7 +597,7 @@ void US_SimulationParameters::save(const QString &filename)
 void US_SimulationParameters::load()
 {
 	QString fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.simulation_parameters", 0);
-	if ( !fn.isEmpty() ) 
+	if ( !fn.isEmpty() )
 	{
 		load(fn);
 	}
@@ -720,7 +719,7 @@ void US_SimulationParameters::load(const QString &fileName)
 				return;
 			}
 			QString str;
-			str.sprintf("Speed Profile %d: %d hr %d min, %d rpm", i+1, 
+			str.sprintf("Speed Profile %d: %d hr %d min, %d rpm", i+1,
 			(*simparams).speed_step[i].duration_hours,
 			(*simparams).speed_step[i].duration_minutes,
 			(*simparams).speed_step[i].rotorspeed);
@@ -849,15 +848,6 @@ void US_SimulationParameters::load(const QString &fileName)
 		}
 		if (!ts.atEnd())
 		{
-			ts >> (*simparams).centerpiece;
-		}
-		else
-		{
-			printError(0);
-			return;
-		}
-		if (!ts.atEnd())
-		{
 			ts >> (*simparams).rotor;
 		}
 		else
@@ -940,31 +930,33 @@ void US_SimulationParameters::update_rotorspeed(double temp_var)
 
 void US_SimulationParameters::check_delay()
 {
-	unsigned int i, lower_limit, hours;
-	float minutes;
+	unsigned int i, lower_limit;
+	vector <unsigned int> hours;
+	vector <float> minutes;
 	vector <unsigned int> speed;
 	speed.clear();
 	speed.push_back(0);
+	hours.resize((*simparams).speed_step.size());
+	minutes.resize((*simparams).speed_step.size());
 	for (i=0; i<(*simparams).speed_step.size(); i++)
 	{
 		speed.push_back((*simparams).speed_step[i].rotorspeed);
 		lower_limit = (unsigned int)(1 + (abs((int)(speed[i+1] - speed[i])) + 1)/(*simparams).speed_step[i].acceleration);
-		hours = (unsigned int) lower_limit/3600;
-		minutes = (float) (1.0/60.0 + (lower_limit - hours * 3600)/60.0);
-		cnt_delay_minutes->setRange((double) minutes, 60, 0.1);
-		cnt_delay_hours->setRange((double) hours, 5000, 1);
+		hours[i] = (unsigned int) lower_limit/3600;
+		minutes[i] = (float) (1.0/60.0 + (lower_limit - hours[i] * 3600)/60.0);
+		cnt_delay_minutes->setRange((double) minutes[i], 60, 0.1);
+		cnt_delay_hours->setRange((double) hours[i], 5000, 1);
 		//cout << "Profile: " << i+1 << ", speed1: " << speed[i] << ", speed2: " << speed[i+1] << ", lower limit: " << lower_limit << ", hours: " << hours << ", mins: " << minutes << endl;
 	}
-	cout << endl;
-	if ((*simparams).speed_step[current_speed_step].delay_minutes < minutes)
+	if ((*simparams).speed_step[current_speed_step].delay_minutes < minutes[current_speed_step])
 	{
-		(*simparams).speed_step[current_speed_step].delay_minutes = minutes;
-		cnt_delay_minutes->setValue((double) minutes);
+		(*simparams).speed_step[current_speed_step].delay_minutes = minutes[current_speed_step];
+		cnt_delay_minutes->setValue((double) minutes[current_speed_step]);
 	}
-	if ((*simparams).speed_step[current_speed_step].delay_hours < hours)
+	if ((*simparams).speed_step[current_speed_step].delay_hours < hours[current_speed_step])
 	{
-		(*simparams).speed_step[current_speed_step].delay_hours = hours;
-		cnt_delay_hours->setValue((double) hours);
+		(*simparams).speed_step[current_speed_step].delay_hours = hours[current_speed_step];
+		cnt_delay_hours->setValue((double) hours[current_speed_step]);
 	}
 }
 
@@ -1084,7 +1076,7 @@ void US_SimulationParameters::acceleration_flag()
 	{
 		(*simparams).speed_step[current_speed_step].acceleration_flag = true;
 		cnt_acceleration->setEnabled(true);
-		
+
 		// if there is acceleration we need to set the scan delay
 		// minimum to the time it takes to accelerate:
 		check_delay();

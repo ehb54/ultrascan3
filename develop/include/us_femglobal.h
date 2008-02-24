@@ -126,12 +126,13 @@ struct SimulationParameters
 	unsigned int mesh; 			// 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 3 = user-selected mesh, 4 = nonuniform constant mesh
 	int moving_grid; 				// Use moving or fixed time grid
 	float radial_resolution;	// the radial datapoint increment/resolution of the final data
-	float meniscus;				// meniscus position without rotor stretch
+	float meniscus;				// meniscus position at first constant speed
+										// for multiple speeds, the user must measure the meniscus at
+										// the first constant speed and use that to initialize the routine
 	float bottom;					// bottom of cell position without rotor stretch
 	float rnoise;					// random noise
 	float inoise;					// time invariant noise
 	float rinoise;					// radially invariant noise
-	int centerpiece;				// centerpiece serial number in database
 	int rotor;						// rotor serial number in database
 	bool band_forming;			// true for band-forming centerpieces
 	float band_volume;			// loding volume (of lamella) in a band-forming centerpiece
@@ -146,16 +147,16 @@ class US_EXTERN US_FemGlobal : public QObject
 		~US_FemGlobal();
 
 	public slots:
-		
+
 		int read_experiment(struct ModelSystem *, struct SimulationParameters *, QString);
 		int write_experiment(struct ModelSystem *, struct SimulationParameters *, QString);
-		
+
 		int read_simulationParameters(struct SimulationParameters *, QString);
 		int write_simulationParameters(struct SimulationParameters *, QString);
-		
+
 		int read_modelSystem(struct ModelSystem *, QString);
 		int write_modelSystem(struct ModelSystem *, QString);
-		
+
 	signals:
 		void new_error(QString);
 };
