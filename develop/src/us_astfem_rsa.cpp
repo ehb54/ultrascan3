@@ -19,7 +19,7 @@ vector <struct mfem_data> *exp_data)
 	float current_speed;
 	float current_meniscus;
 	float current_bottom;
-	float stretch;
+	float delta_stretch;
 	double s_max_abs;			// largest sedimenting or floating speed (absolute value)
 	unsigned int duration, delay;
 	mfem_data simdata;
@@ -100,6 +100,7 @@ vector <struct mfem_data> *exp_data)
 					for (unsigned int step=0; step<af_params.time_steps; step++)
 					{
 						rpm.push_back(current_speed + (step + 1) * (*simparams).speed_step[j].acceleration);
+
 					}
 
 					// on exit, contains final concentration in CT0
