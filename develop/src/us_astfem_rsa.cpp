@@ -60,7 +60,11 @@ vector <struct mfem_data> *exp_data)
 					double sigma = lamella_width/(sqrt(2.0) * inverse_error_function(0.99, dr/10.0));
 					for (j=0; j<initial_npts; j++)
 					{
-						CT0.concentration[j] = 2.0 * (*system).component_vector[i].concentration/(sigma * sqrt(2.0 * M_PI)) * exp(-pow(CT0.radius[j] - af_params.current_meniscus, 2.0)/(2.0 * sigma * sigma));
+//						CT0.concentration[j] = 2.0 * (*system).component_vector[i].concentration/(sigma * sqrt(2.0 * M_PI)) * exp(-pow(CT0.radius[j] - af_params.current_meniscus, 2.0)/(2.0 * sigma * sigma));
+						if (CT0.radius[j] < af_params.current_meniscus + lamella_width)
+						{
+							CT0.concentration[j] = (*system).component_vector[i].concentration;
+						}
 					}
 				}
 				else
