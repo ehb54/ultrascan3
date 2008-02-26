@@ -17,14 +17,16 @@ vector <struct mfem_data> *exp_data)
 	unsigned int i, j;
 	float current_time = 0.0;
 	float current_speed;
-	float current_meniscus;
-	float current_bottom;
-	float delta_stretch;
 	double s_max_abs;			// largest sedimenting or floating speed (absolute value)
-	unsigned int duration, delay;
+	unsigned int duration, delay, initial_npts=5000;
 	mfem_data simdata;
 	mfem_initial CT0;			// initial total concentration
+	af_params.mesh = (*simparams).mesh;
 	af_params.model = (*system).model;
+	af_params.rotor = (*simparams).rotor;
+	af_params.first_speed = (*simparams).speed_step[0].rotorspeed;
+	af_params.meniscus = (*simparams).meniscus;
+	af_params.bottom = (*simparams).bottom;
 	if (af_params.model < 4) // non-interacting single or multicomponent systems
 	{
 		for (i=0; i<(*system).component_vector.size(); i++)
@@ -40,37 +42,39 @@ vector <struct mfem_data> *exp_data)
 			w2t_integral = 0.0;
 			CT0.radius.clear();
 			CT0.concentration.clear();
-			double dr = ((*simparams).bottom - (*simparams).meniscus)/((*simparams).simpoints - 1);
-			for (j=0; j<(*simparams).simpoints; j++)
+			adjust_limits((*simparams).speed_step[0].rotorspeed);
+			double dr = (af_params.current_bottom - af_params.current_meniscus)/(initial_npts-1);
+			for (j=0; j<initial_npts; j++)
 			{
-				CT0.radius.push_back((*simparams).meniscus + j * dr );
+				CT0.radius.push_back(af_params.current_meniscus + j * dr );
 				CT0.concentration.push_back(0.0);
 			}
 			if ((*system).component_vector[i].c0.concentration.size() == 0) // we don't have an existing CT0 concentration vector
 			{ // build up the initial concentration vector with constant concentration
 				if ((*simparams).band_forming)
 				{
-//					CT0.concentration.push_back(exp(-pow((CT0.radius[j] - (*simparams).meniscus)/0.05, 2.0)));
-					j = 0;
-// find the width of the band and fill those concentration points with initial concentration:
-					while (CT0.radius[j] < pow((*simparams).meniscus*(*simparams).meniscus
-							 + (*simparams).band_volume * 360.0/(2.5 * 1.2 * M_PI), 0.5))
+					// calculate the width of the lamella 
+					double lamella_width = pow(af_params.current_meniscus * af_params.current_meniscus
+								+ (*simparams).band_volume * 360.0/(2.5 * 1.2 * M_PI), 0.5) - af_params.current_meniscus;
+					// calculate the spread of the lamella:
+					double sigma = lamella_width/(sqrt(2.0) * inverse_error_function(0.99, dr/10.0));
+					for (j=0; j<initial_npts; j++)
 					{
-						CT0.concentration[j] += (*system).component_vector[i].concentration;
-						j++;
+						CT0.concentration[j] = 2.0 * (*system).component_vector[i].concentration/(sigma * sqrt(2.0 * M_PI)) * exp(-pow(CT0.radius[j] - af_params.current_meniscus, 2.0)/(2.0 * sigma * sigma));
 					}
 				}
 				else
 				{
-					for (j=0; j<(*simparams).simpoints; j++)
+					for (j=0; j<initial_npts; j++)
 					{
-						CT0.concentration[j] += (*system).component_vector[i].concentration;
+						CT0.concentration[j] = (*system).component_vector[i].concentration;
 					}
 				}
 			}
 			else
 			{
 				// take the existing initial concentration vector and copy it to the temporary CT0 vector:
+				// needs rubber band to make sure meniscus and bottom equal current_meniscus and current_bottom 
 				CT0.radius.clear();
 				CT0.concentration.clear();
 				CT0 = (*system).component_vector[i].c0;
@@ -82,7 +86,7 @@ vector <struct mfem_data> *exp_data)
 			// before going into acceleration phase set w2t and last_time to zero, increment in function caculate_ni()
 			for (j=0; j<(*simparams).speed_step.size(); j++)
 			{
-				//fabs( (*simparams).speed_step[j].rotorspeed - current_speed ) > (*simparams).speed_step[j].acceleration)
+				adjust_limits((*simparams).speed_step[j].rotorspeed);
 				if((*simparams).speed_step[j].acceleration_flag) // we need to simulate acceleration
 				{// if the speed difference is larger than acceleration rate then we have at least 1 acceleration step
 					af_params.time_steps = (unsigned int) fabs((*simparams).speed_step[j].rotorspeed
@@ -90,9 +94,6 @@ vector <struct mfem_data> *exp_data)
 					af_params.dt = 1.0; // each simulation step is 1 second long in the acceleration phase
 					af_params.simpoints = 2 * (*simparams).simpoints; // use a fixed grid with refinement at both ends and with twice the number of points
 					af_params.start_time = current_time;
-					af_params.meniscus = (*simparams).meniscus;
-					af_params.bottom = (*simparams).bottom;
-					af_params.mesh = (*simparams).mesh;
 					af_params.moving_grid = false;
 					af_params.acceleration = true;
 					vector <double> rpm;
@@ -148,8 +149,8 @@ cout << "speed:\t\t" << (*simparams).speed_step[j].rotorspeed << endl;
 cout << "hours:\t\t" << (*simparams).speed_step[j].duration_hours << endl;
 cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 				af_params.start_time = current_time;
-				af_params.meniscus = (*exp_data)[j].meniscus;
-				af_params.bottom = (*exp_data)[j].bottom;
+				(*exp_data)[j].meniscus = af_params.current_meniscus;
+				(*exp_data)[j].bottom = af_params.current_bottom;
 				af_params.mesh = (*simparams).mesh;
 				af_params.moving_grid = (*simparams).moving_grid;
 				af_params.acceleration = false;
@@ -188,30 +189,42 @@ cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 		w2t_integral = 0.0; // initialize to zero, will be incremented in calculate_ra2
 		CT0.radius.clear();
 		CT0.concentration.clear();
-
-		if ((*system).component_vector[0].c0.concentration.size() == 0
-		&&  (*system).component_vector[1].c0.concentration.size() == 0) // we don't have an existing CT0 concentration vector
-		{ // build up the initial concentration vector with constant concentration from the two components
-			double dr = ((*simparams).bottom - (*simparams).meniscus)/((*simparams).simpoints - 1);
-			for (j=0; j<(*simparams).simpoints; j++)
+		adjust_limits((*simparams).speed_step[0].rotorspeed);
+		double dr = (af_params.current_bottom - af_params.current_meniscus)/(initial_npts-1);
+		for (j=0; j<initial_npts; j++)
+		{
+			CT0.radius.push_back(af_params.current_meniscus + j * dr );
+			CT0.concentration.push_back(0.0);
+		}
+		if ((*system).component_vector[0].c0.concentration.size() == 0) // we don't have an existing CT0 concentration vector
+		{ // build up the initial concentration vector with constant concentration
+			if ((*simparams).band_forming)
 			{
-				CT0.radius.push_back((*simparams).meniscus + j * dr );
-				CT0.concentration.push_back((*system).component_vector[0].concentration + (*system).component_vector[1].concentration);
+					// calculate the width of the lamella 
+				double lamella_width = pow(af_params.current_meniscus * af_params.current_meniscus
+							+ (*simparams).band_volume * 360.0/(2.5 * 1.2 * M_PI), 0.5) - af_params.current_meniscus;
+					// calculate the spread of the lamella:
+				double sigma = lamella_width/(sqrt(2.0) * inverse_error_function(0.99, dr/10.0));
+				for (j=0; j<initial_npts; j++)
+				{
+					CT0.concentration[j] = 2.0 * (*system).component_vector[0].concentration/(sigma * sqrt(2.0 * M_PI)) * exp(-pow(CT0.radius[j] - af_params.current_meniscus, 2.0)/(2.0 * sigma * sigma));
+				}
+			}
+			else
+			{
+				for (j=0; j<initial_npts; j++)
+				{
+					CT0.concentration[j] = (*system).component_vector[0].concentration;
+				}
 			}
 		}
 		else
-		if ((*system).component_vector[0].c0.concentration.size() > 0
-		&&  (*system).component_vector[1].c0.concentration.size() == 0) // we only have an existing CT0 concentration vector for component 1
 		{
-// take the existing initial concentration vector and copy it to the temporary CT0 vector:
+				// take the existing initial concentration vector and copy it to the temporary CT0 vector:
+				// needs rubber band to make sure meniscus and bottom equal current_meniscus and current_bottom 
+			CT0.radius.clear();
+			CT0.concentration.clear();
 			CT0 = (*system).component_vector[0].c0;
-		}
-		else
-		if ((*system).component_vector[0].c0.concentration.size() == 0
-		&&  (*system).component_vector[1].c0.concentration.size() > 0) // we only have an existing CT0 concentration vector for component 1
-		{
-// take the existing initial concentration vector and copy it to the temporary CT0 vector:
-			CT0 = (*system).component_vector[1].c0;
 		}
 		af_params.s.clear();
 		af_params.D.clear();
@@ -264,6 +277,7 @@ cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 				emit current_component(-1);
 				qApp->processEvents();
 			}
+			adjust_limits((*simparams).speed_step[j].rotorspeed);
 			if((*simparams).speed_step[j].acceleration_flag) // we need to simulate acceleration
 			{// if the speed difference is larger than acceleration rate then we have at least 1 acceleration step
 				af_params.time_steps = (unsigned int) fabs((*simparams).speed_step[j].rotorspeed
@@ -271,9 +285,6 @@ cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 				af_params.dt = 1.0; // each simulation step is 1 second long in the acceleration phase
 				af_params.simpoints = 2 * (*simparams).simpoints; // use a fixed grid with refinement at both ends and with twice the number of points
 				af_params.start_time = current_time;
-				af_params.meniscus = (*simparams).meniscus;
-				af_params.bottom = (*simparams).bottom;
-				af_params.mesh = (*simparams).mesh;
 				af_params.moving_grid = false;
 				af_params.acceleration = true;
 				vector <double> rpm;
@@ -307,14 +318,14 @@ cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 			af_params.dt = (duration - delay)/(*simparams).speed_step[j].scans;
 // find out the minimum number of simpoints needed to provide the necessary dt:
 
-			af_params.simpoints = 1 + (unsigned int) (log((*exp_data)[j].bottom/(*exp_data)[j].meniscus)/( af_params.omega_s * s_max_abs * af_params.dt));
+			af_params.simpoints = 1 + (unsigned int) (log(af_params.current_bottom/af_params.current_meniscus)/( af_params.omega_s * s_max_abs * af_params.dt));
 
 
 // if calculated # of simpoints is smaller than user selected number of simpoints, follow user's request:
 			if ( af_params.simpoints < (*simparams).simpoints )
 			{
 				af_params.simpoints = (*simparams).simpoints;
-				af_params.dt = log((*exp_data)[j].bottom/(*exp_data)[j].meniscus)
+				af_params.dt = log(af_params.current_bottom/af_params.current_meniscus)
 				    /(af_params.omega_s * s_max_abs * ((*simparams).simpoints - 1)); // delta_t
 			}
 			else
@@ -324,8 +335,8 @@ cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 			}
 			af_params.time_steps = 1 + (unsigned int) (duration/af_params.dt);
 			af_params.start_time = current_time;
-			af_params.meniscus = (*exp_data)[j].meniscus;
-			af_params.bottom = (*exp_data)[j].bottom;
+			(*exp_data)[j].meniscus = af_params.current_meniscus; 
+			(*exp_data)[j].bottom = af_params.current_bottom;
 			af_params.mesh = (*simparams).mesh;
 			af_params.moving_grid = (*simparams).moving_grid;
 			af_params.acceleration = false;
@@ -4226,6 +4237,30 @@ void US_Astfem_RSA::print_vector(double *dval, unsigned int ival)
 	for (i=0; i<ival; i++)
 	{
 		printf("x[%d]=%20.10e \n", i, dval[i]);
+	}
+}
+
+void US_Astfem_RSA::adjust_limits(unsigned int speed)
+{
+	// first correct meniscus to theoretical position at rest:
+	double stretch_val = stretch(af_params.rotor, af_params.first_speed);
+	// this is the meniscus at rest
+	af_params.current_meniscus = af_params.meniscus - stretch_val;
+	// calculate rotor stretch at current speed
+	stretch_val = stretch(af_params.rotor, speed);
+	// add current stretch to meniscus at rest
+	af_params.current_meniscus +=  stretch_val;
+	// add current stretch to bottom at rest
+	af_params.current_bottom = af_params.bottom + stretch_val;
+}
+
+void US_Astfem_RSA::adjust_grid(unsigned int old_speed, unsigned int new_speed, vector <double> *radius)
+{
+	double stretch_val1 = stretch(af_params.rotor, old_speed);
+	double stretch_val2 = stretch(af_params.rotor, new_speed);
+	for (unsigned int i=0; i<(*radius).size(); i++)
+	{
+		(*radius)[i] += stretch_val2 - stretch_val1;
 	}
 }
 

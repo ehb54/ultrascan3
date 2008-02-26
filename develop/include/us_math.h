@@ -162,7 +162,7 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
                     int /* centerpiece list index */,
                     int /* channel */,
                     unsigned int /* rpm */);
-	float stretch(int /*rotor id*/, unsigned int /*rotor speed*/);
+	double stretch(int /*rotor id*/, unsigned int /*rotor speed*/);
 
 #endif
 

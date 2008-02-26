@@ -31,15 +31,17 @@ struct AstFemParameters
 	unsigned int time_steps;	// number of time steps for simulation
 	double omega_s;				// omega^2
 	double start_time;			// start time in seconds of simulation at constant speed
-	double meniscus;
-	double bottom;
+	double meniscus;				// meniscus for the constant speed of the first speed step
+	double bottom;					// bottom of cell based on rotor at rest
+	double current_meniscus;	// actual meniscus for current speed
+	double current_bottom;		// actual bottom for current speed
 	unsigned int mesh;			// radial mesh option
 	int moving_grid;				// use adaptive time steps = 1, fixed time steps = 0
 	bool acceleration;			// true if acceleration is used
 	unsigned int model;			// model number
+	unsigned int first_speed;	// constant speed at first speed step
+	unsigned int rotor;			// rotor serial number
 };
-
-
 
 class US_EXTERN US_Astfem_RSA : public QObject
 {
@@ -150,6 +152,8 @@ class US_EXTERN US_Astfem_RSA : public QObject
 //		bool Rosenbrock_45_OneStep(double *, double, double *, double *, double, double *);
 //		void Reaction_DyDt(AstFemParameters *, double, double *, double *);
 //		void Reaction_DfDy(AstFemParameters *, double, double *, double **);
+		void adjust_limits(unsigned int /*rotor speed*/);
+		void adjust_grid(unsigned int /*old speed*/, unsigned int /*new speed*/, vector <double> * /*radial grid*/);
 		
 // output functions:
 		void print_af();						// output all af params

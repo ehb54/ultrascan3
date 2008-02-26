@@ -744,10 +744,10 @@ float calc_bottom(vector <struct rotorInfo> rotor_list,
 	return bottom;
 }
 
-float stretch(int rotor, unsigned int rpm)
+double stretch(int rotor, unsigned int rpm)
 {
 	vector <struct rotorInfo> rotor_list;
-	float stretch = 0.0;
+	double stretch = 0.0;
 	readRotorInfo(&rotor_list);
 	for (unsigned int i=0; i<5; i++)
 	{
