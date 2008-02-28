@@ -458,7 +458,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 		double xc ;
 		if (s > 0)
 		{ // radial distance from meniscus how far the boundary will move during this acceleration step (without diffusion)
-			xc = af_params.meniscus + sw2 * (af_params.time_steps * af_params.dt) /3.;
+			xc = af_params.current_meniscus + sw2 * (af_params.time_steps * af_params.dt) /3.;
 			for (j=0; j<N-3; j++)
 			{
 				if (x[j] > xc)
@@ -469,7 +469,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 		}
 		else
 		{
-			xc = af_params.bottom + sw2 * (af_params.time_steps * af_params.dt) /3.;
+			xc = af_params.current_bottom + sw2 * (af_params.time_steps * af_params.dt) /3.;
 			for (j=0; j<N-3; j++)
 			{
 				if (x[N-j-1] < xc)
@@ -719,7 +719,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 		if ( s_min > 0 )  				// all sediment towards bottom
 		{
 			sw2 = s_max * pow( rpm_stop * M_PI/30., 2.0);
-			xc = af_params.meniscus + sw2 * (af_params.time_steps * af_params.dt) /3.;
+			xc = af_params.current_meniscus + sw2 * (af_params.time_steps * af_params.dt) /3.;
 			for (j=0; j<N-3; j++)
 			{
 				if (x[j] > xc )
@@ -732,7 +732,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 		else if ( s_max < 0 )		// all float towards meniscus
 		{
 			sw2 = s_min * pow( rpm_stop * M_PI/30., 2.0);	// s_min corresponds to fastest component
-			xc = af_params.bottom + sw2 * (af_params.time_steps * af_params.dt) /3.;
+			xc = af_params.current_bottom + sw2 * (af_params.time_steps * af_params.dt) /3.;
 			for (j=0; j<N-3; j++)
 			{
 				if (x[N-j-1] < xc )
@@ -796,10 +796,10 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 				{
 					sw2 = af_params.s[i] * pow(rpm_stop * M_PI/30.0, 2.0);
 					xb.clear();
-					xb.push_back(af_params.meniscus);
+					xb.push_back(af_params.current_meniscus);
 					for (j=0; j<N-1; j++)
 					{
-						dval = 0.1*exp( sw2/af_params.D[i]*( pow(0.5*(x[j]+x[j+1]), 2.0) - pow(af_params.bottom, 2.0) )/2. );
+						dval = 0.1*exp( sw2/af_params.D[i]*( pow(0.5*(x[j]+x[j+1]), 2.0) - pow(af_params.current_bottom, 2.0) )/2. );
 						alpha = af_params.s[i]/s_max * (1.-dval) + dval;
 						// alpha = af_params.s[i]/s_max ;
 						xb.push_back( pow(x[j], alpha) * pow(x[j+1], (1.0 - alpha) ) );
@@ -1134,15 +1134,15 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 
 	for (i=0; i<af_params.s.size(); i++) 	// markers for steep regions
 	{
-		tmp_xc = af_params.bottom - (1.0/(nu[i] * af_params.bottom)) * log(nu[i]
-				* (pow((double) af_params.bottom, (double) 2.0)
-				- pow((double) af_params.meniscus, (double) 2.0))/(2.0 * uth));
-		tmp_Nf = (int) (M_PI/2.0 * (af_params.bottom - tmp_xc)
-				* nu[i] * af_params.bottom/2.0 + 0.5) + 1; // # of pts for i-th layer
-		tmp_Hstar = (af_params.bottom - tmp_xc)/tmp_Nf * M_PI/2.0;			// step required by Pac(i)<1
-		if ((tmp_xc > af_params.meniscus) &&
-			(af_params.bottom - af_params.meniscus *
-			pow((double) af_params.bottom/af_params.meniscus,
+		tmp_xc = af_params.current_bottom - (1.0/(nu[i] * af_params.current_bottom)) * log(nu[i]
+				* (pow((double) af_params.current_bottom, (double) 2.0)
+				- pow((double) af_params.current_meniscus, (double) 2.0))/(2.0 * uth));
+		tmp_Nf = (int) (M_PI/2.0 * (af_params.current_bottom - tmp_xc)
+				* nu[i] * af_params.current_bottom/2.0 + 0.5) + 1; // # of pts for i-th layer
+		tmp_Hstar = (af_params.current_bottom - tmp_xc)/tmp_Nf * M_PI/2.0;			// step required by Pac(i)<1
+		if ((tmp_xc > af_params.current_meniscus) &&
+			(af_params.current_bottom - af_params.current_meniscus *
+			pow((double) af_params.current_bottom/af_params.current_meniscus,
 			(double)((af_params.simpoints-4.0/2.0)/(af_params.simpoints-1.0))) > tmp_Hstar))
 //			(double)((af_params.simpoints-5.0/2.0)/(af_params.simpoints-1.0))) > tmp_Hstar))
 		{
@@ -1152,20 +1152,20 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 			IndLayer ++;
 		}
 	}
-	xc.push_back(af_params.bottom);
+	xc.push_back(af_params.current_bottom);
 	print_vector(&xc);
 
 	if (IndLayer == 0)	// use Schuck's grid only
 	{
-		x.push_back(af_params.meniscus);
+		x.push_back(af_params.current_meniscus);
 //		for(i=1; i<af_params.simpoints ; i++)	// add one more point to Schuck's grids
 		for(i=1; i<af_params.simpoints -1 ; i++)	// add one more point to Schuck's grids
 		{
-			x.push_back(af_params.meniscus * pow((double) (af_params.bottom/af_params.meniscus),
+			x.push_back(af_params.current_meniscus * pow((double) (af_params.current_bottom/af_params.current_meniscus),
 			(((double) i - 0.0)/((double)(af_params.simpoints - 1)))));	// Schuck's mesh
 //			(((double) i - 0.5)/((double)(af_params.simpoints - 1)))));	// Schuck's mesh
 		}
-		x.push_back(af_params.bottom);
+		x.push_back(af_params.current_bottom);
 	}
 	else				// need a composite grid
 	{
@@ -1198,7 +1198,7 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 				for (j=0; j<=Nf[i]-1; j++)
 				{
 					indp++;
-					y.push_back(xc[i] + (af_params.bottom - xc[i]) * sin(j/(Nf[i] - 1.0) * M_PI/2.0));
+					y.push_back(xc[i] + (af_params.current_bottom - xc[i]) * sin(j/(Nf[i] - 1.0) * M_PI/2.0));
 					if (y[indp-1] > xc[i+1])
 					{
 						break;
@@ -1221,16 +1221,16 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 // transition region
 // smallest step size in transit region
 		Hf = y[NfTotal - 2] - y[NfTotal-1];
-		unsigned int Nm = (unsigned int) (floor(log(af_params.bottom/((af_params.simpoints - 1) * Hf)
-				* log(af_params.bottom/af_params.meniscus))/log(2.0))+1) ; // number of pts in trans region
+		unsigned int Nm = (unsigned int) (floor(log(af_params.current_bottom/((af_params.simpoints - 1) * Hf)
+				* log(af_params.current_bottom/af_params.current_meniscus))/log(2.0))+1) ; // number of pts in trans region
 		xa = y[NfTotal-1] - Hf * (pow(2.0, (double)Nm) -1.);
 		unsigned int Js = (unsigned int) (floor(0.0 + (af_params.simpoints - 1)
-				* log(xa/af_params.meniscus)/log(af_params.bottom/af_params.meniscus)));
+				* log(xa/af_params.current_meniscus)/log(af_params.current_bottom/af_params.current_meniscus)));
 // xa is  modified so that y[NfTotal-Nm] matches xa exactly
-		xa = af_params.meniscus*pow((double)(af_params.bottom/af_params.meniscus),
+		xa = af_params.current_meniscus*pow((double)(af_params.current_bottom/af_params.current_meniscus),
 				(((double) Js - 0.0)/((double)af_params.simpoints - 1.0)));
       tmp_xc = y[NfTotal-1];
-      HL = xa * (1.-af_params.meniscus/af_params.bottom);
+      HL = xa * (1.-af_params.current_meniscus/af_params.current_bottom);
 		HR = y[NfTotal - 2]- y[NfTotal-1];
 		Mp = (unsigned int) (((tmp_xc - xa) * 2.0/(HL + HR))+1);
       if ( Mp>1 ) {
@@ -1247,11 +1247,11 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 		printf("xa=%15.8e Hf=%12.5e Nm=%d, Js=%d, NfTotal=%d\n", xa, HR, Nm, Js, NfTotal);
 
 // regular region
-		x.push_back(af_params.meniscus);
+		x.push_back(af_params.current_meniscus);
 		for (j=1; j<=Js; j++)
 		{
-			x.push_back(af_params.meniscus*
-			pow((double) (af_params.bottom/af_params.meniscus),
+			x.push_back(af_params.current_meniscus*
+			pow((double) (af_params.current_bottom/af_params.current_meniscus),
 			(((double) j - 0.0)/((double)af_params.simpoints - 1.0))));
 		}
 
@@ -1445,7 +1445,7 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 	vector <double> yr, ys, yt;
 
 	printf("m=%12.5e b=%12.5e nu=%12.5e Nr=%d \n",
-	af_params.meniscus, af_params.bottom, nu[0], af_params.simpoints);
+	af_params.current_meniscus, af_params.current_bottom, nu[0], af_params.simpoints);
 
 	x.clear();
 	yr.clear();
@@ -1453,27 +1453,27 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 	yt.clear();
 
 	double nu0 = nu[0];
-	xc = af_params.meniscus + 1./(fabs(nu0) * af_params.meniscus) *
-	log((pow(af_params.bottom, 2.0) - pow(af_params.meniscus, 2.0)) * fabs(nu0)/(2.0*uth));
-	Nf = (unsigned int) (1 + (floor)( (xc - af_params.meniscus) * fabs(nu0) * af_params.meniscus * M_PI/4.0));
-	Hstar = (xc - af_params.meniscus)/Nf * M_PI/2.0;
-	Nm = (unsigned int) (1 + (floor) (log(af_params.meniscus/((af_params.simpoints - 1.) * Hstar)
-			* log(af_params.bottom/af_params.meniscus))/log(2.0)));
+	xc = af_params.current_meniscus + 1./(fabs(nu0) * af_params.current_meniscus) *
+	log((pow(af_params.current_bottom, 2.0) - pow(af_params.current_meniscus, 2.0)) * fabs(nu0)/(2.0*uth));
+	Nf = (unsigned int) (1 + (floor)( (xc - af_params.current_meniscus) * fabs(nu0) * af_params.current_meniscus * M_PI/4.0));
+	Hstar = (xc - af_params.current_meniscus)/Nf * M_PI/2.0;
+	Nm = (unsigned int) (1 + (floor) (log(af_params.current_meniscus/((af_params.simpoints - 1.) * Hstar)
+			* log(af_params.current_bottom/af_params.current_meniscus))/log(2.0)));
 	xa = xc + (pow(2.0, (double) Nm) - 1.0) * Hstar;
-	Js = (unsigned int) ((floor)((af_params.simpoints - 1) * log(af_params.bottom/xa)/log(af_params.bottom/af_params.meniscus) + 0.5 ));
+	Js = (unsigned int) ((floor)((af_params.simpoints - 1) * log(af_params.current_bottom/xa)/log(af_params.current_bottom/af_params.current_meniscus) + 0.5 ));
 	printf("Nf=%d Nm=%d Js=%d \n", Nf, Nm, Js);
 	printf("xc=%12.5e xa=%12.5e \n", xc, xa);
 
 // all grdi points at exponentials
-	yr.push_back(af_params.bottom);
+	yr.push_back(af_params.current_bottom);
 //	for(j=1; j<(int) af_params.simpoints-1; j++)		// standard Schuck's grids
 	for(j=1; j<af_params.simpoints; j++)		// add one more point to Schuck's grids
 	{
-		yr.push_back(af_params.bottom * pow(af_params.meniscus/af_params.bottom, (j - 0.5)/(af_params.simpoints - 1.0)));
+		yr.push_back(af_params.current_bottom * pow(af_params.meniscus/af_params.current_bottom, (j - 0.5)/(af_params.simpoints - 1.0)));
 	}
-	yr.push_back(af_params.meniscus);
-	if(af_params.bottom * (pow(af_params.meniscus/af_params.bottom, (af_params.simpoints - 3.5)/(af_params.simpoints - 1.0))
-	- pow(af_params.meniscus/af_params.bottom, (af_params.simpoints - 2.5)/(af_params.simpoints - 1.0))) < Hstar || Nf <= 2 )
+	yr.push_back(af_params.current_meniscus);
+	if(af_params.current_bottom * (pow(af_params.current_meniscus/af_params.current_bottom, (af_params.simpoints - 3.5)/(af_params.simpoints - 1.0))
+	- pow(af_params.current_meniscus/af_params.current_bottom, (af_params.simpoints - 2.5)/(af_params.simpoints - 1.0))) < Hstar || Nf <= 2 )
 	{
 // no need for steep region
 		for(j=0; j<af_params.simpoints; j++)
@@ -1486,9 +1486,9 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 	{// Nf>2
 		for(j=1;j<Nf;j++)
 		{
-			ys.push_back(xc - (xc - af_params.meniscus) * sin((j - 1.0)/(Nf - 1.0) * M_PI/2.0));
+			ys.push_back(xc - (xc - af_params.current_meniscus) * sin((j - 1.0)/(Nf - 1.0) * M_PI/2.0));
 		}
-		ys.push_back(af_params.meniscus);
+		ys.push_back(af_params.current_meniscus);
 		for (j=0; j<Nm; j++)
 		{
 			yt.push_back(xc + (pow(2.0, (double) j) - 1.0) * Hstar);
@@ -1618,8 +1618,8 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 				cout << "multicomponent system with sedimentation and floating mixed, use uniform mesh...\n";
 				for ( unsigned int i=0; i<af_params.simpoints; i++)
 				{
-					x.push_back(af_params.meniscus + (af_params.bottom -
-					af_params.meniscus) * i/(af_params.simpoints-1));
+					x.push_back(af_params.current_meniscus + (af_params.current_bottom -
+					af_params.current_meniscus) * i/(af_params.simpoints-1));
 				}
 			}
 			break;
@@ -1629,21 +1629,21 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 			cout << "using uniform mesh ...\n";
 			for ( unsigned int i=0; i<af_params.simpoints; i++)
 			{
-				x.push_back(af_params.meniscus + (af_params.bottom -
-				af_params.meniscus) * i/(af_params.simpoints-1));
+				x.push_back(af_params.current_meniscus + (af_params.current_bottom -
+				af_params.current_meniscus) * i/(af_params.simpoints-1));
 			}
 			break;
 		}
 		case 2: //Moving Hat (Peter Schuck's Mesh) without left hand side refinement
 		{
 			cout << "using moving hat mesh...\n";
-			x.push_back(af_params.meniscus);
+			x.push_back(af_params.current_meniscus);
 			for(unsigned int i=1; i<af_params.simpoints-1; i++)  // standard Schuck's grids
 			{
-				x.push_back(af_params.meniscus * pow((double) (af_params.bottom/af_params.meniscus),
+				x.push_back(af_params.current_meniscus * pow((double) (af_params.current_bottom/af_params.current_meniscus),
 				(((double) i - 0.5)/((double)(af_params.simpoints-1)))));	// Schuck's mesh
 			}
-			x.push_back(af_params.bottom);
+			x.push_back(af_params.current_bottom);
 			break;
 		}
 		case 3: // user defined mesh generated from data file
@@ -1660,11 +1660,11 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 					x.push_back(str.toDouble());
 				}
 				f.close();
-				if (fabs(x[0] - af_params.meniscus) > 1.0e7)
+				if (fabs(x[0] - af_params.current_meniscus) > 1.0e7)
 				{
 					cout << "The meniscus from the mesh file does not match the set meniscus - using Claverie Mesh instead\n";
 				}
-				if (fabs(x[x.size()-1] - af_params.bottom) > 1.0e7)
+				if (fabs(x[x.size()-1] - af_params.current_bottom) > 1.0e7)
 				{
 					cout << "The cell bottom from the mesh file does not match the set cell bottom - using Claverie Mesh instead\n";
 				}
@@ -1674,8 +1674,8 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 				cerr << tr("Could not read the mesh file - using Claverie Mesh instead\n");
 				for (unsigned int i=0; i<af_params.simpoints; i++)
 				{
-					x.push_back(af_params.meniscus + (af_params.bottom -
-					af_params.meniscus) * i/(af_params.simpoints-1));
+					x.push_back(af_params.current_meniscus + (af_params.current_bottom -
+					af_params.current_meniscus) * i/(af_params.simpoints-1));
 				}
 			}
 			break;
@@ -4310,8 +4310,8 @@ void US_Astfem_RSA::print_af()
 	cout << "time_steps:\t" << af_params.time_steps << endl;
 	cout << "omega_s:\t" << af_params.omega_s << endl;
 	cout << "start_time:\t" << af_params.start_time << endl;
-	cout << "meniscus:\t" << af_params.meniscus << endl;
-	cout << "bottom:\t\t" << af_params.bottom << endl;
+	cout << "current meniscus:\t" << af_params.current_meniscus << endl;
+	cout << "current bottom:\t\t" << af_params.current_bottom << endl;
 	cout << "mesh:\t\t" << af_params.mesh << endl;
 	cout << "moving grid\t\t" << af_params.moving_grid << endl;
 	if (af_params.acceleration)
@@ -4354,8 +4354,8 @@ void US_Astfem_RSA::print_af(FILE *outf)
 	}
 	fprintf(outf, "#  \n");
 	fprintf(outf, "#  parameters for simulation:\n");
-	fprintf(outf, "#  meniscus =%12.5e \n",  af_params.meniscus);
-	fprintf(outf, "#  bottom =%12.5e \n",  af_params.bottom);
+	fprintf(outf, "#  current meniscus =%12.5e \n",  af_params.current_meniscus);
+	fprintf(outf, "#  current bottom =%12.5e \n",  af_params.current_bottom);
 	fprintf(outf, "#  start time =%12.5e \n",  af_params.start_time);
 	fprintf(outf, "#  mesh opt =%d \n",  af_params.mesh);
 	if (af_params.moving_grid) fprintf(outf, "#  grids = moving \n");
