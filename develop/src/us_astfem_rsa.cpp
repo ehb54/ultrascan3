@@ -57,14 +57,13 @@ vector <struct mfem_data> *exp_data)
 					double lamella_width = pow(af_params.current_meniscus * af_params.current_meniscus
 								+ (*simparams).band_volume * 360.0/(2.5 * 1.2 * M_PI), 0.5) - af_params.current_meniscus;
 					// calculate the spread of the lamella:
-					double sigma = lamella_width/(sqrt(2.0) * inverse_error_function(0.99, dr/10.0));
 					for (j=0; j<initial_npts; j++)
 					{
-//						CT0.concentration[j] = 2.0 * (*system).component_vector[i].concentration/(sigma * sqrt(2.0 * M_PI)) * exp(-pow(CT0.radius[j] - af_params.current_meniscus, 2.0)/(2.0 * sigma * sigma));
-						if (CT0.radius[j] < af_params.current_meniscus + lamella_width)
-						{
-							CT0.concentration[j] = (*system).component_vector[i].concentration;
-						}
+						CT0.concentration[j] = (*system).component_vector[i].concentration * exp(-pow( (CT0.radius[j] - af_params.current_meniscus) / lamella_width, 4.0 ) );
+						// if (CT0.radius[j] < af_params.current_meniscus + lamella_width)
+						// {
+							// CT0.concentration[j] = (*system).component_vector[i].concentration;
+						// }
 					}
 				}
 				else
@@ -208,10 +207,9 @@ cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 				double lamella_width = pow(af_params.current_meniscus * af_params.current_meniscus
 							+ (*simparams).band_volume * 360.0/(2.5 * 1.2 * M_PI), 0.5) - af_params.current_meniscus;
 					// calculate the spread of the lamella:
-				double sigma = lamella_width/(sqrt(2.0) * inverse_error_function(0.99, dr/10.0));
 				for (j=0; j<initial_npts; j++)
 				{
-					CT0.concentration[j] = 2.0 * (*system).component_vector[0].concentration/(sigma * sqrt(2.0 * M_PI)) * exp(-pow(CT0.radius[j] - af_params.current_meniscus, 2.0)/(2.0 * sigma * sigma));
+					CT0.concentration[j] = (*system).component_vector[0].concentration * exp(-pow( (CT0.radius[j] - af_params.current_meniscus) / lamella_width, 4.0));
 				}
 			}
 			else
