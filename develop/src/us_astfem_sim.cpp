@@ -2041,6 +2041,212 @@ void US_Astfem_Sim::save_xla(const QString &fileName)
 
 void US_Astfem_Sim::save_ultrascan(const QString &filename)
 {
+	float maxc = 0.0;
+	unsigned int total_scans = 0, points, i, j, k;
+	for (k=0; k<simparams.speed_step.size(); k++)
+	{
+		maxc = max(maxc, (float) astfem_data[k].scan[astfem_data[k].scan.size()-1].conc[astfem_data[k].scan[astfem_data[k].scan.size()-1].conc.size()-1]);
+		total_scans += astfem_data[k].scan.size();
+	}
+	US_ClipData *cd;
+	float maxrad = simparams.bottom;
+	cd = new US_ClipData(&maxc, &maxrad, simparams.meniscus, total_conc);
+	cd->exec();
+	progress->setTotalSteps(total_scans);
+	progress->reset();
+	lbl_progress->setText("Writing...");
+	points = astfem_data[0].scan[0].conc.size();
+	QString temp_str = filename;
+	QString run_file = temp_str.copy();
+	QString data_file = temp_str.copy();
+	QString scan_file = temp_str.copy();
+	QString temp = temp_str.copy();
+	int position = temp.findRev("/", -1, false);
+	i = temp.length();
+	j = i - position - 1;		// -1 because we dont want to count the null terminating character
+	QString run_name = temp.right(j);	// run name without leading path
+	run_file.append(".us.v");
+	data_file.append(".veloc.11");
+	scan_file.append(".scn");
+	QFile f1(run_file);
+	if (f1.exists())
+	{
+		if(!QMessageBox::query( tr("Warning"), tr("Attention:\nThis file exists already!\n\nDo you want to overwrite it?"), tr("Yes"), tr("No")))
+		{
+			f1.close();
+			return;
+		}
+	}
+	/*
+	if (f1.open(IO_WriteOnly))	// write the binary run file *.us.v
+	{
+		QDataStream ds(&f1);
+		ds << US_Version;
+		ds << USglobal->config_list.data_dir + "/simulation";	// data directory
+		int k = temp_str.findRev("/", -1, false);
+		if (k != -1) //strip the path
+		{
+			temp_str = temp_str.mid(k+1, temp_str.length());
+		}
+		ds << temp_str;
+		ds << (float) 20.0;							// average temperature
+		ds << (int) 1; 								// run_inf.temperature_check;
+		ds << (float) 0.0;							// run_inf.time_correction;
+		ds << (float) (simparams.time * 60);	// run_inf.duration;
+		ds << (unsigned int) simparams.scans;	// for simulated data, total scans = scans for simulation, since only one "cell" is simuulated
+		ds << (float) simparams.resolution;		// run_inf.delta_r
+		ds << (int) -1; 								// experimental data ID
+		ds << (int) -1;								// Investigator ID
+		QDate today = QDate::currentDate();
+		QString current_date;
+		current_date.sprintf( "%d/%d/%d", today.month(), today.day(), today.year() );
+		ds << current_date;
+		ds << (QString) "Simulated Velocity Data";
+		ds << (QString) "ultrascan";
+		ds << (QString) "192.168.0.1";
+		ds << (QString) "QMYSQL3";
+		ds << (int) 1; // run_inf.exp_type.velocity;
+		ds << (int) 0; // run_inf.exp_type.equilibrium;
+		ds << (int) 0; // run_inf.exp_type.diffusion;
+		ds << (int) 1; // run_inf.exp_type.simulation;
+		ds << (int) 0; // run_inf.exp_type.interference;
+		ds << (int) 1; // run_inf.exp_type.absorbance;
+		ds << (int) 0; // run_inf.exp_type.fluorescence;
+		ds << (int) 0; // run_inf.exp_type.intensity;
+		ds << (int) 0; // run_inf.exp_type.wavelength;
+		for (i=0; i<8; i++)
+		{
+			if (i == 0)
+			{
+				ds << (int) 0;	//centerpiece = simulation cell is zero
+				ds << (float) simparams.meniscus;
+				QString temp_string = QString(tr("Simulated Data - see corresponding model"));	// data discription
+				ds << temp_string;
+				ds << (unsigned int) 1;	//how many wavelengths?
+			}
+			else
+			{
+				ds << (unsigned int) 0;	//centerpiece = conventional 2 channel epon
+				ds << (float) 0.0;
+				QString temp_string = QString("");	// data description
+				ds << temp_string;
+				ds << (unsigned int) 0;
+			}
+		}
+		int serial_number = -1;
+		for (i=0; i<8; i++)
+		{
+			for (j=0; j<4; j++)
+			{
+				ds << serial_number;	//buffer serial number
+				for(int k=0; k<3; k++)
+				{
+					ds << serial_number;	//peptide serial number
+					ds << serial_number;	//DNA serial number
+				}
+			}
+			for (j=0; j<3; j++)
+			{
+				if (i == 0 && j == 0)
+				{
+					ds << (unsigned int) 999;	// run_inf.wavelength[i][j]
+					ds << (unsigned int) simparams.scans;
+					ds << (float) 0.0;	// baseline
+					ds << (float) simparams.meniscus;
+					ds << (float) new_bottom;
+					ds << (unsigned int) new_points;
+					ds << (float) (new_bottom - simparams.meniscus)/new_points;
+				}
+				else
+				{
+					ds << (unsigned int) 0;
+					ds << (unsigned int) 0;
+					ds << (float) 0.0;	// baseline
+					ds << (float) 0.0;
+					ds << (float) 0.0;
+					ds << (unsigned int) 0;
+					ds << (float) 0.0;
+				}
+			}
+		}
+		for (i=0; i<simparams.scans; i++)
+		{
+			plateau[i] = 0.0;
+			for (j=0; j<components.size(); j++)
+			{
+				//
+// This is the equation for radial dilution:
+				//
+				plateau[i] += components[j].conc * exp(-2.0 *
+						components[j].sed * omega_sqr * scantimes[i]);
+			}
+		}
+		for (i=0; i<8; i++)
+		{
+			for (j=0; j<simparams.scans; j++)
+			{
+				if (i == 0)
+				{
+					ds << (uint) simparams.speed;
+					ds << (float) 20.0; 		// temperature
+					ds << (unsigned int) scantimes[j];
+					ds << (float) scantimes[j] * omega_sqr;
+					ds << (float) plateau[j];
+				}
+				else
+				{
+					ds << (uint) 0;
+					ds << (float) 0.0;
+					ds << (unsigned int) 0.0;
+					ds << (float) 0.0;
+					ds << (float) 0.0;
+				}
+			}
+		}
+		ds << (int) -1; 	// run_inf.rotor;
+		f1.flush();
+		f1.close();
+	}
+	QFile f2(data_file);
+	if (f2.open(IO_WriteOnly))	// write the binary scan data file *.veloc.11
+	{
+		QDataStream ds2(&f2);
+		for (j=0; j<simparams.scans; j++)
+		{
+			for (i=0; i<new_points; i++)
+			{
+				ds2 << (float) c[j][i];
+			}
+		}
+		f2.flush();
+		f2.close();
+	}
+	QFile f3(scan_file);
+	if (f3.open(IO_WriteOnly | IO_Translate))
+	{
+		QTextStream ts(&f3);
+		//
+// Calculate expected plateaus for each scan by summing the plateau contributions 
+// of each component:
+		//
+		for (i=0; i<simparams.scans; i++)
+		{
+			ts << plateau[i] << "\t";
+		}
+		ts << "\n";
+		for (i=0; i<new_points; i++)
+		{
+			ts << radius[i] << "\t";
+			for (j=0; j<(simparams.scans-1); j++)
+			{
+				ts << c[j][i] << "\t";
+			}
+			ts << c[simparams.scans-1][i] << "\n";
+		}
+		f3.close();
+	}
+	component_reset();
+	*/
 }
 
 void US_Astfem_Sim::update_progress(int ival)
