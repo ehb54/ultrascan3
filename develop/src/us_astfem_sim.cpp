@@ -1575,7 +1575,6 @@ void US_Astfem_Sim::load_model(const QString &fileName)
 	}
 }
 
-
 void US_Astfem_Sim::load_system()
 {
 	QString fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.us_system", 0);
@@ -1602,10 +1601,10 @@ void US_Astfem_Sim::load_system(const QString &filename)
 		pb_simulation_parameters->setEnabled(true);
 		pb_change_model->setEnabled(true);
 		pb_simulation_parameters->setEnabled(true);
+		pb_start_simulation->setEnabled(true);
 		printError(5);
 	}
 }
-
 
 void US_Astfem_Sim::save_system()
 {
@@ -1896,7 +1895,7 @@ void US_Astfem_Sim::save_scans()
 	QMessageBox::Yes | QMessageBox::Default,
 	QMessageBox::No,
 	QMessageBox::Cancel | QMessageBox::Escape);
-	mb.setButtonText(QMessageBox::Yes, "UltraScan\n(Not Implemented)");
+	mb.setButtonText(QMessageBox::Yes, "UltraScan");
 	mb.setButtonText(QMessageBox::No, "XLA");
 	mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
 
@@ -1905,7 +1904,6 @@ void US_Astfem_Sim::save_scans()
 	{
 		case QMessageBox::Yes: // save in UltraScan format
 		{
-			/*
 			QString fn = QFileDialog::getSaveFileName(USglobal->config_list.result_dir, "*.us.v", 0);
 			int k=0;
 			if ( !fn.isEmpty() )
@@ -1920,7 +1918,6 @@ void US_Astfem_Sim::save_scans()
 				}
 				save_ultrascan(fn);	// the user gave a file name, save in UltraScan format
 			}
-			*/
 			return;
 			break;
 		}
@@ -2041,21 +2038,39 @@ void US_Astfem_Sim::save_xla(const QString &fileName)
 
 void US_Astfem_Sim::save_ultrascan(const QString &filename)
 {
-	float maxc = 0.0;
-	unsigned int total_scans = 0, points, i, j, k;
+	float maxc = 0.0, maxrad = simparams.bottom, plateau, new_bottom;
+	unsigned int total_scans = 0, new_points, i, j, k, l;
 	for (k=0; k<simparams.speed_step.size(); k++)
 	{
 		maxc = max(maxc, (float) astfem_data[k].scan[astfem_data[k].scan.size()-1].conc[astfem_data[k].scan[astfem_data[k].scan.size()-1].conc.size()-1]);
 		total_scans += astfem_data[k].scan.size();
 	}
 	US_ClipData *cd;
-	float maxrad = simparams.bottom;
 	cd = new US_ClipData(&maxc, &maxrad, simparams.meniscus, total_conc);
 	cd->exec();
+//	QMessageBox:message(tr("Additional Information Needed:"), tr("Please pick a point now in the lower plot\nthat best represents the plateau..."));
 	progress->setTotalSteps(total_scans);
 	progress->reset();
-	lbl_progress->setText("Writing...");
-	points = astfem_data[0].scan[0].conc.size();
+	lbl_progress->setText(tr("Writing..."));
+	new_points = astfem_data[0].scan[0].conc.size();
+	i=0;
+	for (k=0; k<simparams.speed_step.size(); k++)
+	{
+		i=0;
+		while (i<astfem_data[0].scan[0].conc.size() && astfem_data[k].scan[astfem_data[k].scan.size()-1].conc[i] < maxc)
+		{				// find the radius from the last scan where the
+			i++;		// concentration is higher than the threshold (if at all)
+		}
+		if (i < new_points)
+		{
+			new_points = i;
+		}
+	}
+	while (maxrad < astfem_data[0].radius[new_points])	// then check to see if this radius is larger than the maxrad
+	{												// if it is, then decrease the point count until the max radius
+		new_points --;							// matches.
+	}
+	new_bottom = astfem_data[0].radius[new_points];
 	QString temp_str = filename;
 	QString run_file = temp_str.copy();
 	QString data_file = temp_str.copy();
@@ -2077,24 +2092,23 @@ void US_Astfem_Sim::save_ultrascan(const QString &filename)
 			return;
 		}
 	}
-	/*
 	if (f1.open(IO_WriteOnly))	// write the binary run file *.us.v
 	{
 		QDataStream ds(&f1);
 		ds << US_Version;
 		ds << USglobal->config_list.data_dir + "/simulation";	// data directory
-		int k = temp_str.findRev("/", -1, false);
-		if (k != -1) //strip the path
+		int pos = temp_str.findRev("/", -1, false);
+		if (pos != -1) //strip the path
 		{
-			temp_str = temp_str.mid(k+1, temp_str.length());
+			temp_str = temp_str.mid(pos+1, temp_str.length());
 		}
 		ds << temp_str;
 		ds << (float) 20.0;							// average temperature
 		ds << (int) 1; 								// run_inf.temperature_check;
 		ds << (float) 0.0;							// run_inf.time_correction;
-		ds << (float) (simparams.time * 60);	// run_inf.duration;
-		ds << (unsigned int) simparams.scans;	// for simulated data, total scans = scans for simulation, since only one "cell" is simuulated
-		ds << (float) simparams.resolution;		// run_inf.delta_r
+		ds << (float) (astfem_data[astfem_data.size()-1].scan[astfem_data[astfem_data.size()-1].scan.size()-1].time);	// run_inf.duration;
+		ds << (unsigned int) total_scans;	// for simulated data, total scans = scans for simulation, since only one "cell" is simulated
+		ds << (float) simparams.radial_resolution;		// run_inf.delta_r
 		ds << (int) -1; 								// experimental data ID
 		ds << (int) -1;								// Investigator ID
 		QDate today = QDate::currentDate();
@@ -2139,7 +2153,7 @@ void US_Astfem_Sim::save_ultrascan(const QString &filename)
 			for (j=0; j<4; j++)
 			{
 				ds << serial_number;	//buffer serial number
-				for(int k=0; k<3; k++)
+				for(k=0; k<3; k++)
 				{
 					ds << serial_number;	//peptide serial number
 					ds << serial_number;	//DNA serial number
@@ -2150,7 +2164,7 @@ void US_Astfem_Sim::save_ultrascan(const QString &filename)
 				if (i == 0 && j == 0)
 				{
 					ds << (unsigned int) 999;	// run_inf.wavelength[i][j]
-					ds << (unsigned int) simparams.scans;
+					ds << (unsigned int) total_scans;
 					ds << (float) 0.0;	// baseline
 					ds << (float) simparams.meniscus;
 					ds << (float) new_bottom;
@@ -2169,37 +2183,40 @@ void US_Astfem_Sim::save_ultrascan(const QString &filename)
 				}
 			}
 		}
-		for (i=0; i<simparams.scans; i++)
-		{
-			plateau[i] = 0.0;
-			for (j=0; j<components.size(); j++)
-			{
-				//
-// This is the equation for radial dilution:
-				//
-				plateau[i] += components[j].conc * exp(-2.0 *
-						components[j].sed * omega_sqr * scantimes[i]);
-			}
-		}
 		for (i=0; i<8; i++)
 		{
-			for (j=0; j<simparams.scans; j++)
+			for (k=0; k<simparams.speed_step.size(); k++)
 			{
-				if (i == 0)
+				for (j=0; j<astfem_data[k].scan.size(); j++)
 				{
-					ds << (uint) simparams.speed;
-					ds << (float) 20.0; 		// temperature
-					ds << (unsigned int) scantimes[j];
-					ds << (float) scantimes[j] * omega_sqr;
-					ds << (float) plateau[j];
-				}
-				else
-				{
-					ds << (uint) 0;
-					ds << (float) 0.0;
-					ds << (unsigned int) 0.0;
-					ds << (float) 0.0;
-					ds << (float) 0.0;
+					plateau = 0.0;
+					for (l=0; l<system.component_vector.size(); l++)
+					{
+					//
+// This is the equation for radial dilution:
+					//
+						plateau += system.component_vector[l].concentration *	exp(-2.0 * system.component_vector[l].s
+								* astfem_data[k].scan[j].omega_s_t);
+//cerr << "Conc["<<l+1<<"]: " << system.component_vector[l].concentration << endl;
+					}
+//cerr << "plateau["<<j+1<<"]: " << plateau << endl;
+					if (i == 0)
+					{
+						ds << (uint) astfem_data[k].rpm;
+						ds << (float) 20.0; 		// temperature
+						ds << (unsigned int) astfem_data[k].scan[j].time;
+						ds << (float) astfem_data[k].scan[j].omega_s_t;
+//cerr << "cell: " << i+1 << ", speed step: " << k+1 << ", scan: " << j+1 << ", plateau: " << plateau << " (time, omega, conc, s1, s2: " << astfem_data[k].scan[j].time << ", " << astfem_data[k].scan[j].omega_s_t << ", " <<  system.component_vector[0].concentration + system.component_vector[1].concentration << ", " << system.component_vector[0].s << ", " << system.component_vector[1].s << ")" << endl;
+						ds << (float) (1.0);//plateau;
+					}
+					else
+					{
+						ds << (uint) 0;
+						ds << (float) 0.0;
+						ds << (unsigned int) 0.0;
+						ds << (float) 0.0;
+						ds << (float) 0.0;
+					}
 				}
 			}
 		}
@@ -2211,42 +2228,19 @@ void US_Astfem_Sim::save_ultrascan(const QString &filename)
 	if (f2.open(IO_WriteOnly))	// write the binary scan data file *.veloc.11
 	{
 		QDataStream ds2(&f2);
-		for (j=0; j<simparams.scans; j++)
+		for (k=0; k<simparams.speed_step.size(); k++)
 		{
-			for (i=0; i<new_points; i++)
+			for (j=0; j<astfem_data[k].scan.size(); j++)
 			{
-				ds2 << (float) c[j][i];
+				for (i=0; i<new_points; i++)
+				{
+					ds2 << (float) astfem_data[k].scan[j].conc[i];
+				}
 			}
 		}
 		f2.flush();
 		f2.close();
 	}
-	QFile f3(scan_file);
-	if (f3.open(IO_WriteOnly | IO_Translate))
-	{
-		QTextStream ts(&f3);
-		//
-// Calculate expected plateaus for each scan by summing the plateau contributions 
-// of each component:
-		//
-		for (i=0; i<simparams.scans; i++)
-		{
-			ts << plateau[i] << "\t";
-		}
-		ts << "\n";
-		for (i=0; i<new_points; i++)
-		{
-			ts << radius[i] << "\t";
-			for (j=0; j<(simparams.scans-1); j++)
-			{
-				ts << c[j][i] << "\t";
-			}
-			ts << c[simparams.scans-1][i] << "\n";
-		}
-		f3.close();
-	}
-	component_reset();
-	*/
 }
 
 void US_Astfem_Sim::update_progress(int ival)

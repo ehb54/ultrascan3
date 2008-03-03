@@ -135,30 +135,46 @@ vector <struct centerpieceInfo> *cp_list)
 		ds >> (*run_inf).delta_r;
 //cerr << "Delta-r: " << (*run_inf).delta_r << endl;
 		ds >> (*run_inf).expdata_id;
+//cerr << "data id: " << (*run_inf).expdata_id << endl;
 		ds >> (*run_inf).investigator;
+//cerr << "investigator: " << (*run_inf).investigator << endl;
 		ds >> (*run_inf).date;
+//cerr << "date: " << (*run_inf).date << endl;
 		ds >> (*run_inf).description;
+//cerr << "description: " << (*run_inf).description << endl;
 		ds >> (*run_inf).dbname;
+//cerr << "dbname: " << (*run_inf).dbname << endl;
 		ds >> (*run_inf).dbhost;
+//cerr << "dbhost: " << (*run_inf).dbhost << endl;
 		ds >> (*run_inf).dbdriver;
+//cerr << "dbdriver: " << (*run_inf).dbdriver << endl;
 		ds >> et;
 		(*run_inf).exp_type.velocity = (bool) et;
+//cerr << "velocity: " << (*run_inf).exp_type.velocity << endl;
 		ds >> et;
 		(*run_inf).exp_type.equilibrium = (bool) et;
+//cerr << "equilibrium: " << (*run_inf).exp_type.equilibrium << endl;
 		ds >> et;
 		(*run_inf).exp_type.diffusion = (bool) et;
+//cerr << "diffusion: " << (*run_inf).exp_type.diffusion << endl;
 		ds >> et;
 		(*run_inf).exp_type.simulation = (bool) et;
+//cerr << "simulation: " << (*run_inf).exp_type.simulation << endl;
 		ds >> et;
 		(*run_inf).exp_type.interference = (bool) et;
+//cerr << "interference: " << (*run_inf).exp_type.interference << endl;
 		ds >> et;
 		(*run_inf).exp_type.absorbance = (bool) et;
+//cerr << "absorbance: " << (*run_inf).exp_type.absorbance << endl;
 		ds >> et;
 		(*run_inf).exp_type.fluorescence = (bool) et;
+//cerr << "fluorescence: " << (*run_inf).exp_type.fluorescence << endl;
 		ds >> et;
 		(*run_inf).exp_type.intensity = (bool) et;
+//cerr << "intensity: " << (*run_inf).exp_type.intensity << endl;
 		ds >> et;
 		(*run_inf).exp_type.wavelength = (bool) et;
+//cerr << "wavelength: " << (*run_inf).exp_type.wavelength << endl;
 		for (i=0; i<8; i++)
 		{
 			ds >> (*run_inf).centerpiece[i];
@@ -179,6 +195,7 @@ vector <struct centerpieceInfo> *cp_list)
 					ds >> (*run_inf).DNA_serialnumber[i][j][0];
 					ds >> (*run_inf).buffer_serialnumber[i][j];
 					ds >> (*run_inf).peptide_serialnumber[i][j][0];
+//cerr << "Cell " << i+1 <<", Channel " << j+1 << " DNA, buffer, peptide: " << (*run_inf).DNA_serialnumber[i][j][0] << ", " <<  (*run_inf).buffer_serialnumber[i][j] << ", " << (*run_inf).peptide_serialnumber[i][j][0] << "\n";
 				}
 			}
 			else
@@ -190,6 +207,7 @@ vector <struct centerpieceInfo> *cp_list)
 					{
 						ds >> (*run_inf).peptide_serialnumber[i][j][k];
 						ds >> (*run_inf).DNA_serialnumber[i][j][k];
+//cerr << "Cell " << i+1 <<", Channel " << j+1 << " DNA, buffer, peptide: " << (*run_inf).DNA_serialnumber[i][j][k] << ", " <<  (*run_inf).buffer_serialnumber[i][j] << ", " << (*run_inf).peptide_serialnumber[i][j][k] << "\n";
 					}
 				}
 			}
@@ -243,6 +261,7 @@ vector <struct centerpieceInfo> *cp_list)
 					(*run_inf).time[i][j][k] -= (unsigned int) ((*run_inf).time_correction + 0.5);
 					ds >> (*run_inf).omega_s_t[i][j][k];
 					ds >> (*run_inf).plateau[i][j][k];
+//cerr << "Cell " << i+1 <<", wavelength " << j+1 << ", scan " << k+1 << " (rpm, temp, time, omega, plateau: " << (*run_inf).rpm[i][j][k] << ", " << (*run_inf).temperature[i][j][k] << ", " << (*run_inf).time[i][j][k] << ", " << (*run_inf).omega_s_t[i][j][k] << ", " << (*run_inf).plateau[i][j][k] << "\n";
 					if (run_type == 1 && baseline_flag)
 					{
 //						cout << "subtracting baseline in data_io...\n";
