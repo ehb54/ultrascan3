@@ -1049,8 +1049,8 @@ void US_Astfem_Sim::new_model()
 
 void US_Astfem_Sim::assign_model()
 {
-	US_Component_Dialog *component_dialog;
-	component_dialog = new US_Component_Dialog(&system);
+	US_ModelEditor *component_dialog;
+	component_dialog = new US_ModelEditor(&system);
 	if (component_dialog->exec())
 	{
 		pb_simulation_parameters->setEnabled(true);
@@ -1689,8 +1689,8 @@ void US_Astfem_Sim::printError(const int &ival)
 
 void US_Astfem_Sim::change_model()
 {
-	US_Component_Dialog *component_dialog;
-	component_dialog = new US_Component_Dialog(&system);
+	US_ModelEditor *component_dialog;
+	component_dialog = new US_ModelEditor(&system);
 	if (component_dialog->exec())
 	{
 		pb_simulation_parameters->setEnabled(true);

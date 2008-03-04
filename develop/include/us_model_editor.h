@@ -1,5 +1,5 @@
-#ifndef US_COMPONENT_DIALOG_H
-#define US_COMPONENT_DIALOG_H
+#ifndef US_MODEL_EDITOR_H
+#define US_MODEL_EDITOR_H
 
 #include <iostream>
 #include <vector>
@@ -21,13 +21,13 @@
 
 using namespace std;
 
-class US_Component_Dialog : public QDialog
+class US_ModelEditor : public QDialog
 {
 	Q_OBJECT
 	
 	public:
-		US_Component_Dialog(struct ModelSystem *, QWidget *parent=0, const char *name=0);
-		~US_Component_Dialog();
+		US_ModelEditor(struct ModelSystem *, QWidget *parent=0, const char *name=0);
+		~US_ModelEditor();
 		US_Config *USglobal;
 		struct ModelSystem *system;
 		unsigned int current_component, shape;

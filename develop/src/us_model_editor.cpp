@@ -1,6 +1,6 @@
-#include "../include/us_component_dialog.h"
+#include "../include/us_model_editor.h"
 
-US_Component_Dialog::US_Component_Dialog(struct ModelSystem *system, 
+US_ModelEditor::US_ModelEditor(struct ModelSystem *system,
 QWidget *parent, const char *name) : QDialog( parent, name, false )
 {
 	this->system = system;
@@ -308,18 +308,18 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	move(global_Xpos, global_Ypos);
 }
 
-US_Component_Dialog::~US_Component_Dialog()
+US_ModelEditor::~US_ModelEditor()
 {
 }
 
-void US_Component_Dialog::closeEvent(QCloseEvent *e)
+void US_ModelEditor::closeEvent(QCloseEvent *e)
 {
 	e->accept();
 	global_Xpos -= 30;
 	global_Ypos -= 30;
 }
 
-void US_Component_Dialog::setup_GUI()
+void US_ModelEditor::setup_GUI()
 {
 	unsigned int j=3;
 	QGridLayout *grid = new QGridLayout(this, 11, 4, 4, 2);
@@ -379,7 +379,7 @@ void US_Component_Dialog::setup_GUI()
 */
 }
 
-void US_Component_Dialog::load_model()
+void US_ModelEditor::load_model()
 {
 	QString fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.model.?? *.model-?.?? *model-??.??", 0);
 	if ( !fn.isEmpty() ) 
@@ -388,7 +388,7 @@ void US_Component_Dialog::load_model()
 	}
 }
 
-void US_Component_Dialog::load_model(const QString &fileName)
+void US_ModelEditor::load_model(const QString &fileName)
 {
 
 	QFile f(fileName);
@@ -772,7 +772,7 @@ void US_Component_Dialog::load_model(const QString &fileName)
 	}
 }
 
-void US_Component_Dialog::load_c0()
+void US_ModelEditor::load_c0()
 {
 	QMessageBox::information(this, tr("UltraScan Information"),
 	tr("Please note:\n\nThe initial concentration file should have\n"
@@ -825,7 +825,7 @@ void US_Component_Dialog::load_c0()
 	}
 }
 
-void US_Component_Dialog::simulate_component()
+void US_ModelEditor::simulate_component()
 {
 	US_Hydro1 *hydro1;
 	hydro1 = new US_Hydro1(&simcomp);
@@ -837,7 +837,7 @@ void US_Component_Dialog::simulate_component()
 	cb_sphere->setEnabled(true);
 }
 
-void US_Component_Dialog::select_prolate()
+void US_ModelEditor::select_prolate()
 {
 	shape = 1;
 	cb_prolate->setChecked(true);
@@ -847,7 +847,7 @@ void US_Component_Dialog::select_prolate()
 	update_component();
 }
 
-void US_Component_Dialog::select_oblate()
+void US_ModelEditor::select_oblate()
 {
 	shape = 2;
 	cb_prolate->setChecked(false);
@@ -857,7 +857,7 @@ void US_Component_Dialog::select_oblate()
 	update_component();
 }
 
-void US_Component_Dialog::select_rod()
+void US_ModelEditor::select_rod()
 {
 	shape = 3;
 	cb_prolate->setChecked(false);
@@ -867,7 +867,7 @@ void US_Component_Dialog::select_rod()
 	update_component();
 }
 
-void US_Component_Dialog::select_sphere()
+void US_ModelEditor::select_sphere()
 {
 	shape = 4;
 	cb_prolate->setChecked(false);
@@ -877,7 +877,7 @@ void US_Component_Dialog::select_sphere()
 	update_component();
 }
 
-void US_Component_Dialog::update_component()
+void US_ModelEditor::update_component()
 {
 	switch(shape)
 	{
@@ -923,13 +923,13 @@ void US_Component_Dialog::update_component()
 	cb_sphere->setEnabled(true);
 }
 
-void US_Component_Dialog::select_component(double val)
+void US_ModelEditor::select_component(double val)
 {
 	int i = (int) (val - 1);
 	select_component(i);
 }
 
-void US_Component_Dialog::select_component(int val)
+void US_ModelEditor::select_component(int val)
 {
 	current_component = (unsigned int) val;
 	cnt_item->setValue(current_component + 1);
@@ -1052,7 +1052,7 @@ void US_Component_Dialog::select_component(int val)
 	}
 }
 
-void US_Component_Dialog::update_conc(const QString &newText)
+void US_ModelEditor::update_conc(const QString &newText)
 {
 	if (newText == "")
 	{
@@ -1081,7 +1081,7 @@ void US_Component_Dialog::update_conc(const QString &newText)
 	}
 }
 
-void US_Component_Dialog::printError(const int &ival)
+void US_ModelEditor::printError(const int &ival)
 {
 	switch (ival)
 	{
@@ -1130,7 +1130,7 @@ void US_Component_Dialog::printError(const int &ival)
 	}
 }
 
-void US_Component_Dialog::update_sed(const QString &newText)
+void US_ModelEditor::update_sed(const QString &newText)
 {
 	if (newText == "")
 	{
@@ -1139,7 +1139,7 @@ void US_Component_Dialog::update_sed(const QString &newText)
 	(*system).component_vector[current_component].s = newText.toFloat();
 }
 
-void US_Component_Dialog::update_diff(const QString &newText)
+void US_ModelEditor::update_diff(const QString &newText)
 {
 	if (newText == "")
 	{
@@ -1148,7 +1148,7 @@ void US_Component_Dialog::update_diff(const QString &newText)
 	(*system).component_vector[current_component].D = newText.toFloat();
 }
 
-void US_Component_Dialog::update_sigma(const QString &newText)
+void US_ModelEditor::update_sigma(const QString &newText)
 {
 	if (newText == "")
 	{
@@ -1157,7 +1157,7 @@ void US_Component_Dialog::update_sigma(const QString &newText)
 	(*system).component_vector[current_component].sigma = newText.toFloat();
 }
 
-void US_Component_Dialog::update_keq(const QString &newText)
+void US_ModelEditor::update_keq(const QString &newText)
 {
 	if (newText == "")
 	{
@@ -1179,7 +1179,7 @@ void US_Component_Dialog::update_keq(const QString &newText)
 	}
 }
 
-void US_Component_Dialog::update_koff(const QString &newText)
+void US_ModelEditor::update_koff(const QString &newText)
 {
 	if (newText == "")
 	{
@@ -1201,7 +1201,7 @@ void US_Component_Dialog::update_koff(const QString &newText)
 	}
 }
 
-void US_Component_Dialog::update_delta(const QString &newText)
+void US_ModelEditor::update_delta(const QString &newText)
 {
 	if (newText == "")
 	{
@@ -1210,14 +1210,14 @@ void US_Component_Dialog::update_delta(const QString &newText)
 	(*system).component_vector[current_component].delta = newText.toFloat();
 }
 
-void US_Component_Dialog::help()
+void US_ModelEditor::help()
 {
 	US_Help *online_help;
 	online_help = new US_Help(this);
 	online_help->show_help("manual/astfem_component.html");
 }
 
-void US_Component_Dialog::accept_model()
+void US_ModelEditor::accept_model()
 {
 	if (!verify_model())
 	{
@@ -1226,7 +1226,7 @@ void US_Component_Dialog::accept_model()
 	this->accept();
 }
 
-bool US_Component_Dialog::verify_model()
+bool US_ModelEditor::verify_model()
 {
 	bool flag = true;
 	QString str1, str2;
@@ -1276,7 +1276,7 @@ bool US_Component_Dialog::verify_model()
 	return (flag);
 }
 
-void US_Component_Dialog::save_model()
+void US_ModelEditor::save_model()
 {
 	if (!verify_model())
 	{
@@ -1285,7 +1285,7 @@ void US_Component_Dialog::save_model()
 	savefile();
 }
 
-void US_Component_Dialog::savefile()
+void US_ModelEditor::savefile()
 {
 	QString str, fn = QFileDialog::getSaveFileName(USglobal->config_list.result_dir, "*.model.?? *.model-?.?? *model-??.??", 0);
 	int k;
@@ -1302,7 +1302,7 @@ void US_Component_Dialog::savefile()
 	}
 }
 
-void US_Component_Dialog::savefile(const QString &fileName)
+void US_ModelEditor::savefile(const QString &fileName)
 {
 	QFile f(fileName);
 	QString str;

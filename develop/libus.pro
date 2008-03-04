@@ -176,7 +176,6 @@ SOURCES += src/us_2dplot.cpp \
 	src/us_color.cpp \
 	src/us_colorgradient.cpp \
 	src/us_combine.cpp \
-	src/us_component_dialog.cpp \
 	src/us_config.cpp \
 	src/us_config_gui.cpp \
 	src/us_create_global.cpp \
@@ -276,6 +275,7 @@ SOURCES += src/us_2dplot.cpp \
 	src/us_merge.cpp \
 	src/us_mfem.cpp \
 	src/us_minimize.cpp \
+	src/us_model_editor.cpp \
 	src/us_montecarlo.cpp \
 	src/us_montecarloreport.cpp \
 	src/us_montecarlostats.cpp \
@@ -358,7 +358,6 @@ HEADERS +=include/bluearrow.xpm \
 	include/us_color.h \
 	include/us_colorgradient.h \
 	include/us_combine.h \
-	include/us_component_dialog.h \
 	include/us_config_gui.h \
 	include/us_create_global.h \
 	include/us_data_io.h \
@@ -458,6 +457,7 @@ HEADERS +=include/bluearrow.xpm \
 	include/us_merge.h \
 	include/us_mfem.h \
 	include/us_minimize.h \
+	include/us_model_editor.h \
 	include/us_montecarlo.h \
 	include/us_montecarloreport.h \
 	include/us_montecarlostats.h \

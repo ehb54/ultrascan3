@@ -13,7 +13,7 @@
 #include "us_extern.h"
 #include "us_matrix.h"
 #include "us_femglobal.h"
-#include "us_component_dialog.h"
+#include "us_model_editor.h"
 #include "us_simulationparameters.h"
 #include "us_stiffbase.h"
 

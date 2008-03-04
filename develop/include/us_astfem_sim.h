@@ -26,7 +26,7 @@
 #include "us_selectmodel10.h"
 #include "us_selectmodel13.h"
 #include "us_selectmodel3.h"
-#include "us_component_dialog.h"
+#include "us_model_editor.h"
 #include "us_simulationparameters.h"
 #include "us_clipdata.h"
 
