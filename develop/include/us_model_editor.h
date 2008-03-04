@@ -34,8 +34,6 @@ class US_ModelEditor : public QDialog
 		struct hydrosim simcomp;
 		QString c0_file;
 
-	private:
-	
 		QwtCounter *cnt_item;
 
 		QComboBox *cmb_component1;
@@ -84,7 +82,7 @@ class US_ModelEditor : public QDialog
 	protected slots:
 		void closeEvent(QCloseEvent *e);
 	
-	private slots:
+	public slots:
 		void simulate_component();
 		void update_component();
 		void select_component(double);

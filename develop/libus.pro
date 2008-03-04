@@ -254,6 +254,7 @@ SOURCES += src/us_2dplot.cpp \
 #	src/us_finite_ad.cpp \
 	src/us_font.cpp \
 	src/us_ga_initialize.cpp \
+	src/us_ga_model_editor.cpp \
 	src/us_global.cpp \
 	src/us_globalequil.cpp \
 	src/us_globallaser.cpp \
@@ -436,6 +437,7 @@ HEADERS +=include/bluearrow.xpm \
 #	include/us_finite_ad.h \
 	include/us_font.h \
 	include/us_ga_initialize.h \
+	include/us_ga_model_editor.h \
 	include/us_global.h \
 	include/us_globalequil.h \
 	include/us_globallaser.h \

@@ -17,6 +17,13 @@
 
 using namespace std;
 
+struct constraint
+{
+	bool fit;
+	float low;
+	float high;
+};
+
 struct mfem_initial
 {
 	std::vector <double> radius;
@@ -78,6 +85,18 @@ struct SimulationComponent
 	struct mfem_initial c0; // the radius/concentration points for a user-defined initial concentration grid
 };
 
+struct SimulationComponentConstraints
+{
+	struct constraint vbar20;
+	struct constraint mw;
+	struct constraint s;
+	struct constraint D;
+	struct constraint sigma;
+	struct constraint delta;
+	struct constraint concentration;
+	struct constraint f_f0;
+};
+
 struct Association
 {
 	float keq;
@@ -91,12 +110,24 @@ struct Association
 	unsigned int stoichiometry3;	// stoichiometry of the third component
 };
 
+struct AssociationConstraints
+{
+	struct constraint keq;
+	struct constraint koff;
+};
+
 struct ModelSystem
 {
 	QString description;
 	int model;
 	vector <struct SimulationComponent> component_vector;
 	vector <struct Association> assoc_vector;
+};
+
+struct ModelSystemConstraints
+{
+	vector <struct SimulationComponentConstraints> component_vector_constraints;
+	vector <struct AssociationConstraints> assoc_vector_constraints;
 };
 
 struct SpeedProfile
