@@ -108,6 +108,7 @@ vector <struct mfem_data> *exp_data)
 					}
 
 					// on exit, contains final concentration in CT0
+print_af();
 					calculate_ni(rpm[0], rpm[rpm.size()-1], af_params.s[0], af_params.D[0], &CT0, &simdata);
 
 					// add the acceleration time:
@@ -160,6 +161,7 @@ cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 //				print_af();
 				vector <double> rpm;
 				rpm.clear();
+print_af();
 				rpm.push_back((*simparams).speed_step[j].rotorspeed);
 				calculate_ni(rpm[0], rpm[0], af_params.s[0], af_params.D[0], &CT0, &simdata);
 				interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
@@ -296,6 +298,7 @@ cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 					rpm.push_back(current_speed + (step + 1) * (*simparams).speed_step[j].acceleration);
 				}
 // on exit, contains final concentration in C0
+print_af();
 				calculate_ra2(rpm[0], rpm[rpm.size()-1], C0, &simdata);
 // add the acceleration time:
 				current_time += af_params.dt * af_params.time_steps;
@@ -346,6 +349,7 @@ cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 			vector <double> rpm;
 			rpm.clear();
 			rpm.push_back((*simparams).speed_step[j].rotorspeed);
+print_af();
 			calculate_ra2(rpm[0], rpm[0], C0, &simdata);
 			interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
 
@@ -386,13 +390,24 @@ void US_Astfem_RSA::interpolate_C0(struct mfem_initial *C0, double *C1)
 				break;
 			}
 		}
-		a = (*C0).radius[i-1];
-		b = (*C0).radius[i];
-		tmp = (xs - a)/(b - a);
-		C1[j] = (*C0).concentration[i-1] * (1. - tmp) + (*C0).concentration[i] * tmp;
-		ja = i-1;
+
+      if ( i == 0 ) 				// x[j] < C0.radius[0]
+      {
+         C1[j] = 0.;
+      }
+      else if ( i == (*C0).radius.size() ) 	// x[j] > last point in (*C0).radius
+      {
+         C1[j] = (*C0).radius[ i-1 ];
+      }
+      else 
+      {
+		   a = (*C0).radius[i-1];
+		   b = (*C0).radius[i];
+		   tmp = (xs - a)/(b - a);
+		   C1[j] = (*C0).concentration[i-1] * (1. - tmp) + (*C0).concentration[i] * tmp;
+		   ja = i-1;
+      }
 	}
-	C1[N-1] = (*C0).concentration[(*C0).radius.size() - 1];
 }
 
 void US_Astfem_RSA::interpolate_Cfinal(struct mfem_initial *C0, double *cfinal)
@@ -416,11 +431,23 @@ void US_Astfem_RSA::interpolate_Cfinal(struct mfem_initial *C0, double *cfinal)
 				break;
 			}
 		}
-		a = x[i-1];
-		b = x[i];
-		tmp = (xs-a)/(b-a);
-		(*C0).concentration[j] = cfinal[i-1] * (1. - tmp) + cfinal[i] * tmp;
-		ja = i-1;
+
+      if ( i == 0 ) 				// xs < x[0]
+      {
+         (*C0).concentration[j] = 0.;
+      }
+      else if ( i == N ) 	   // xs > x[N]
+      {
+         (*C0).concentration[j] = cfinal[ i-1 ];
+      }
+      else 							// x[i-1] < xs <x[i]
+      {
+		   a = x[i-1];
+		   b = x[i];
+		   tmp = (xs-a)/(b-a);
+		   (*C0).concentration[j] = cfinal[i-1] * (1. - tmp) + cfinal[i] * tmp;
+		   ja = i-1;
+      }
 	}
 }
 
@@ -595,7 +622,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 		}
 		(*simdata).scan.push_back(simscan);
 /*
-		if(i%10 == 0 || i<5)
+		if(i%100 == 0 || i<5)
 		{
 			for (j=0; j<N; j++)
 			{
@@ -778,14 +805,6 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 			{
 				sw2 = af_params.s[i] * pow(rpm_stop * M_PI/30.0, 2.0);
 				ComputeCoefMatrixFixedMesh(af_params.D[i], sw2, CA[i], CB[i]);
-               /****
-               double tmpa=0, tmpb=0.;
-					for (j=0; j<N; j++) {
-                 tmpa += CA[i][0][j] + CA[i][1][j] + CA[i][2][j] + CA[i][3][j] ;
-                 tmpb += CB[i][0][j] + CB[i][1][j] + CB[i][2][j] + CB[i][3][j] ;
-               }
-               printf("fix mesh: comp[%d]: Ca=%20.10e Cb=%20.10e \n", i, tmpa, tmpb);
-               ****/
 			}
 		}
 		else	// moving grid
@@ -806,14 +825,6 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 					}
 					GlobalStiff(&xb, CA[i], CB[i], af_params.D[i], sw2 );
 					// GlobalStiff_ellam(&xb, CA[i], CB[i], af_params.D[i], sw2 );
-               //****
-               double tmpa=0, tmpb=0.;
-					for (j=0; j<N; j++) {
-                 tmpa += CA[i][0][j] + CA[i][1][j] + CA[i][2][j] + CA[i][3][j] ;
-                 tmpb += CB[i][0][j] + CB[i][1][j] + CB[i][2][j] + CB[i][3][j] ;
-               }
-               printf("mov mesh: comp[%d]: Ca=%20.10e Cb=%20.10e \n", i, tmpa, tmpb);
-               //****/
 				}
 			}
 			else if (s_max <0) 		// all components floating
@@ -878,8 +889,9 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 			simscan.conc.push_back(CT0[j]);
 		}
 		(*simdata).scan.push_back(simscan);
-/*
-		if(kkk%10 == 0 || kkk<5)
+
+/**
+		if(kkk%1 == 0 || kkk<5)
 		{
 			for(j=0; j<N; j++)
 			{
@@ -888,9 +900,10 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 			   fprintf(outf, "\n");
 			}
 			fprintf(outf, "\n\n");
-         printf("t=%12.5e C_ttl=%15.8e \n", simscan.time, IntConcentration(x, CT0));
+         // printf("t=%12.5e C_ttl=%15.8e \n", simscan.time, IntConcentration(x, CT0));
 		}
-*/
+**/
+ 
       //
       // first half step of sedimentation:
       //
@@ -1153,7 +1166,7 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 		}
 	}
 	xc.push_back(af_params.current_bottom);
-	print_vector(&xc);
+	// print_vector(&xc);
 
 	if (IndLayer == 0)	// use Schuck's grid only
 	{
@@ -1169,7 +1182,6 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 	}
 	else				// need a composite grid
 	{
-		printf("IndLayer=%d \n", IndLayer);
 // steep region
 		unsigned int indp = 0, Mp=0; 	// index for a grid point
 		double HL, HR, Hf, alpha, beta, xi;
@@ -1244,7 +1256,7 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
       }
       Nm = Mp;
 
-		printf("xa=%15.8e Hf=%12.5e Nm=%d, Js=%d, NfTotal=%d\n", xa, HR, Nm, Js, NfTotal);
+		// printf("xa=%15.8e Hf=%12.5e Nm=%d, Js=%d, NfTotal=%d\n", xa, HR, Nm, Js, NfTotal);
 
 // regular region
 		x.push_back(af_params.current_meniscus);
@@ -1259,19 +1271,6 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 		{
 			x.push_back(y[NfTotal+Nm-j-2]);
 		}
-
-/*** smooth out the grids in transition region ***
-      for (j=0; j<Nm-1; j++)
-      {
-	      x[j + Js]=(x[j + Js - 1] + x[j + Js +1])/2.0;
-      }
-
-      for (j=0; j<x.size()-1; j++)
-      {
-	      printf("x[%d]=%15.8e dx=%12.5e\n", j, x[j], x[j+1]-x[j]);
-      }
-      printf("x[%d]=%15.8e dx=%12.5e\n", j, x[j], 0.);
-***/
 
 	}
 }
@@ -1331,7 +1330,7 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 	}
 	else				// need a composite grid
 	{
-		printf("IndLayer=%d \n", IndLayer);
+		// printf("IndLayer=%d \n", IndLayer);
 // steep region
 		int indp = 0, Mp=0; 	// index for a grid point
 		double HL, HR, Hf, alpha, beta, xi;
@@ -1395,7 +1394,7 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
       Nm += 1;		// use one more element to ensure the elem size in transition region is smaller than in regular region
 		Hf = ( y[NfTotal-1] - xa )/(pow(2.0, (double)Nm) - 1.0);
 
-		printf("xa=%15.8e Hf=%12.5e Nm=%d, Js=%d, NfTotal=%d\n", xa, Hf, Nm, Js, NfTotal);
+		// printf("xa=%15.8e Hf=%12.5e Nm=%d, Js=%d, NfTotal=%d\n", xa, Hf, Nm, Js, NfTotal);
 		for (j=1; j<Nm; j++)
 		{
 			y.push_back(y[NfTotal-1] - Hf * (pow(2.0, (double) j) - 1));
@@ -1444,9 +1443,6 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 	double xc, xa, Hstar;
 	vector <double> yr, ys, yt;
 
-	printf("m=%12.5e b=%12.5e nu=%12.5e Nr=%d \n",
-	af_params.current_meniscus, af_params.current_bottom, nu[0], af_params.simpoints);
-
 	x.clear();
 	yr.clear();
 	ys.clear();
@@ -1461,8 +1457,8 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 			* log(af_params.current_bottom/af_params.current_meniscus))/log(2.0)));
 	xa = xc + (pow(2.0, (double) Nm) - 1.0) * Hstar;
 	Js = (unsigned int) ((floor)((af_params.simpoints - 1) * log(af_params.current_bottom/xa)/log(af_params.current_bottom/af_params.current_meniscus) + 0.5 ));
-	printf("Nf=%d Nm=%d Js=%d \n", Nf, Nm, Js);
-	printf("xc=%12.5e xa=%12.5e \n", xc, xa);
+	// printf("Nf=%d Nm=%d Js=%d \n", Nf, Nm, Js);
+	// printf("xc=%12.5e xa=%12.5e \n", xc, xa);
 
 // all grdi points at exponentials
 	yr.push_back(af_params.current_bottom);
@@ -2105,33 +2101,6 @@ double D, double sw2)
 	cb[1][i] = Stif[i-1][1][1] + Stif[i][0][0];
 	cb[2][i] = Stif[i-1][2][1] + Stif[i][1][0];
 	cb[3][i] = 0.0;
-
-/*****************
-
-  FILE *outf=fopen("tmp.out1","w");
-  fprintf(outf, "dt=%20.12e  diff=%20.12e  sw2=%20.12e \n", af_params.dt, D, sw2);
-  for (unsigned int ii=0; ii<N; ii++) {
-	 fprintf(outf, "x[%d]=%20.12e  xb=%20.12e \n", ii, x[ii], (*xb)[ii]);
-  }
-  fprintf(outf, "\n");
-
-	for (unsigned int ii=0; ii<N; ii++)
-	{
-		fprintf(outf, "i=[%d]\n", ii);
-		for (unsigned int kk=0; kk<2; kk++)
-		{
-			for (unsigned int jj=0; jj<6; jj++)
-			{
-		      fprintf(outf, "%12.5e ", Stif[ii][jj][kk] );
-			}
-		   fprintf(outf, "\n");
-		}
-		fprintf(outf, "\n");
-	}
-   fclose(outf);
-   exit(1);
-********************/
-
 
 	clear_3d(N, 6, Stif);
 }
@@ -3907,7 +3876,14 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 				switch(af_params.model)
 				{
 					case 4:	// mono <--> dimer
-						uhat = 2*dvc / ( dvb+sqrt(dvb*dvb+4.*dva*dvc) );
+                  if (dvb*dvb+4*dva*dvc<=0)
+                  {
+						   uhat = C1[0][j];
+                  } 
+                  else
+                  {
+						   uhat = 2*dvc / ( dvb+sqrt(dvb*dvb+4.*dva*dvc) );
+                  }
 						break;
 					case 5:	// mono <--> trimer
 						uhat = cube_root(-dvc/dva, dvb/dva, 0.0);
@@ -4154,7 +4130,8 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 // NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
 // before using this routine! The radius also has to be assigned!
 
-	if ((*expdata).scan.size() == 0 || (*expdata).scan[0].conc.size() == 0)
+	if ( (*expdata).scan.size() == 0 || (*expdata).scan[0].conc.size() == 0 || 
+        (*simdata).scan.size() == 0 || (*simdata).radius.size() == 0  )
 	{
 		return -1;
 	}
@@ -4162,7 +4139,7 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 	unsigned int i, j, kkk, ja;
    double a, b, tmp, xs, **tmpC;
 
-   initialize_2d((*simdata).scan.size(), (*expdata).radius.size(), &tmpC);
+   initialize_2d( (*simdata).scan.size(), (*expdata).radius.size(), &tmpC);
 
    // interpolate all simdata scan onto the grid of expdata.radius
 	for (kkk=0; kkk<(*simdata).scan.size(); kkk++)
@@ -4173,13 +4150,25 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 		   xs = (*expdata).radius[j];
 		   for(i=ja; i<(*simdata).radius.size(); i++)
 		   {
-			   if((*simdata).radius[i] > xs + 1.e-12) break;
+			   if((*simdata).radius[i] > xs ) break;
 		   }
-		   a = (i>0)? (*simdata).radius[i-1] : (*simdata).radius[0];
-		   b = (*simdata).radius[i];
-		   tmp = (xs - a)/(b - a);
-		   tmpC[kkk][j] = (*simdata).scan[kkk].conc[i-1] * (1. - tmp) + (*simdata).scan[kkk].conc[i] * tmp;
-		   ja = (i>0)? i-1 : 0;
+
+         if ( i==0 ) 	// the expdata point is left of the simdata.radius points
+         {
+		      tmpC[kkk][j] = (*simdata).scan[kkk].conc[0];
+         }
+         else if ( i == (*simdata).radius.size() )  			// i>=last simdata point
+         {
+		      tmpC[kkk][j] = (*simdata).scan[kkk].conc[i-1] ;
+         }
+         else 																// simdata[i-1]< xs <simdata[i]
+         {
+		      a = (*simdata).radius[i-1];
+		      b = (*simdata).radius[i];
+		      tmp = (xs - a)/(b - a);
+		      tmpC[kkk][j] = (*simdata).scan[kkk].conc[i-1] * (1. - tmp) + (*simdata).scan[kkk].conc[i] * tmp;
+		      ja = i-1;
+         }
       }
 	}
 
@@ -4200,17 +4189,15 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
          {
             (*expdata).scan[kkk].conc[j] += tmpC[0][j];
          }
-         ja = 0;
          (*expdata).scan[kkk].omega_s_t = (*simdata).scan[0].omega_s_t;
 			(*expdata).scan[kkk].rpm = (*simdata).scan[0].rpm;
 		}
-      else if ( i >= (*simdata).scan.size()-1 )		// time after the last scan of simdata
+      else if ( i >= (*simdata).scan.size() )		// time after the last scan of simdata
       {
          for( j=0; j<(*expdata).radius.size(); j++)
          {
             (*expdata).scan[kkk].conc[j] += tmpC[(*simdata).scan.size()-1][j];
          }
-         ja = (*simdata).scan.size()-2;
          (*expdata).scan[kkk].omega_s_t = (*simdata).scan[(*simdata).scan.size()-1].omega_s_t;
 			(*expdata).scan[kkk].rpm = (*simdata).scan[(*simdata).scan.size()-1].rpm;
 		}
