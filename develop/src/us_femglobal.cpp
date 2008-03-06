@@ -758,6 +758,10 @@ int US_FemGlobal::read_experiment(struct ModelSystem *ms, struct SimulationParam
 	}
 }
 
+// read a model system, and the associated constraints needed for initialization of the fitting process.
+// all associated files should start with the "filename" string
+
+
 int US_FemGlobal::write_experiment(struct ModelSystem *ms, struct SimulationParameters *sp, QString filename)
 {
 	QFile f;
@@ -784,3 +788,61 @@ int US_FemGlobal::write_experiment(struct ModelSystem *ms, struct SimulationPara
 		return(-1); // can't open output file
 	}
 }
+
+
+// read a model system, and the associated constraints needed for initialization of the fitting process.
+// all associated files should start with the "filename" string
+
+int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemConstraints *msc, QString filename)
+{
+	return 0;
+}
+
+// write a model system, and the associated constraints needed for initialization of the fitting process.
+// all associated files should start with the "filename" string
+
+int US_FemGlobal::write_constraints(struct ModelSystem *ms, struct ModelSystemConstraints *msc, QString filename)
+{
+/*
+	QFile f(filename);
+	QString str;
+	unsigned int i, j;
+	if (f.open(IO_WriteOnly | IO_Translate))
+	{
+		QTextStream ts(&f);
+		ts << "SIM" << "\n";
+		ts << "Model written by US_FEMGLOBAL\n";
+		ts << "# This file is computer-generated, please do not edit unless you know what you are doing\n";
+		ts << US_Version << "\t\t# UltraScan Version Number\n";
+		ts << (*ms).model << "\t\t# model number/identifier\n";
+		ts << (*ms).component_vector.size() << "\t\t# number of components in the model\n";
+		for (i=0; i<(*ms).component_vector.size(); i++)}
+*/
+	return 0;
+}
+
+/*
+struct ModelSystemConstraints
+{
+	vector <struct SimulationComponentConstraints> component_vector_constraints;
+	vector <struct AssociationConstraints> assoc_vector_constraints;
+};
+
+struct AssociationConstraints
+{
+	struct constraint keq;
+	struct constraint koff;
+};
+
+struct SimulationComponentConstraints
+{
+	struct constraint vbar20;
+	struct constraint mw;
+	struct constraint s;
+	struct constraint D;
+	struct constraint sigma;
+	struct constraint delta;
+	struct constraint concentration;
+	struct constraint f_f0;
+};
+*/

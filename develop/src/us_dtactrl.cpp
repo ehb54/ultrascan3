@@ -2512,6 +2512,7 @@ void Data_Control_W::update_viscosity(const QString &val)
 	}
 	viscosity = val.toFloat();
 	calc_correction(run_inf.avg_temperature);
+cout << "Viscosity: " << viscosity << endl;
 	if (!dont_plot)
 	{
 		if (step != 0)
@@ -2572,6 +2573,9 @@ void Data_Control_W::update_buffer_lbl(float dens, float visc)
 	}
 	dont_plot = false;
 	calc_correction(run_inf.avg_temperature);
+	//update_viscosity(viscosity_le->text());
+	//update_density(density_le->text());
+	cout << "Viscosity: " << viscosity << ", density: " << density << endl;
 	// cout << "Step 10\n";
 	plot_analysis();
 }
