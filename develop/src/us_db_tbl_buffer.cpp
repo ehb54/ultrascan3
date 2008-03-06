@@ -435,6 +435,8 @@ void US_Buffer_DB::read_buffer()
 			le_density->setReadOnly(false);
 		}
 	}
+	emit valueChanged(Buffer.density, Buffer.viscosity, Buffer.refractive_index);
+	emit valueChanged(Buffer.density, Buffer.viscosity);
 }
 
 /*! Save buffer data to disk drive in *.buf format. */
