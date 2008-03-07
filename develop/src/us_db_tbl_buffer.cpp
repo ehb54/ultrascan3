@@ -43,6 +43,7 @@ void US_Buffer_DB::buf_init()
 	Buffer.investigatorID = -1;
 	lbl_investigator->setText(" Not Selected");
 }
+
 /*!
 	If temp_GUI is <var>true</var>, This function will create an interface for US_Buffer_DB.
 */
@@ -146,7 +147,7 @@ void US_Buffer_DB::setup_GUI()
 	le_viscosity->setText(" 0.0");
 	le_viscosity->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(le_viscosity, SIGNAL(textChanged(const QString &)), this, SLOT(update_viscosity(const QString &)));
-
+	
 	lbl_refractive_index = new QLabel(tr(" Refractive Index (20ºC): "),this);
 	lbl_refractive_index->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_refractive_index->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -413,8 +414,12 @@ void US_Buffer_DB::read_buffer()
 			{
 				Buffer.density = DENS_20W; // assume water
 			}
-			le_viscosity->setText(str1.sprintf(" %6.4f ", Buffer.viscosity));
+			le_density->disconnect();
+			le_viscosity->disconnect();
 			le_density->setText(str1.sprintf(" %6.4f ", Buffer.density));
+			le_viscosity->setText(str1.sprintf(" %6.4f ", Buffer.viscosity));
+			connect(le_viscosity, SIGNAL(textChanged(const QString &)), this, SLOT(update_viscosity(const QString &)));
+			connect(le_density, SIGNAL(textChanged(const QString &)), this, SLOT(update_density(const QString &)));
 			le_refractive_index->setText(str1.sprintf(" %6.4f ", Buffer.refractive_index));
 			f.close();
 		}
@@ -555,8 +560,12 @@ void US_Buffer_DB::select_buff(int item)
 	get_buffer(db_list[item].bufferID);
 	lbl_investigator->setText(show_investigator(Buffer.investigatorID));
 	le_description->setText(Buffer.description);
-	le_density->setText(str.sprintf(" %6.4f", Buffer.density));
-	le_viscosity->setText(str.sprintf(" %6.4f", Buffer.viscosity));
+	le_density->disconnect();
+	le_viscosity->disconnect();
+	le_density->setText(str.sprintf(" %6.4f ", Buffer.density));
+	le_viscosity->setText(str.sprintf(" %6.4f ", Buffer.viscosity));
+	connect(le_viscosity, SIGNAL(textChanged(const QString &)), this, SLOT(update_viscosity(const QString &)));
+	connect(le_density, SIGNAL(textChanged(const QString &)), this, SLOT(update_density(const QString &)));
 	le_refractive_index->setText(str.sprintf(" %6.4f", Buffer.refractive_index));
 	le_viscosity->setReadOnly(true);
 	le_density->setReadOnly(true);
@@ -853,8 +862,12 @@ void US_Buffer_DB::add_component()
 	}
 	recalc_density();
 	recalc_viscosity();
+	le_density->disconnect();
+	le_viscosity->disconnect();
 	le_density->setText(str.sprintf(" %6.4f ", Buffer.density));
 	le_viscosity->setText(str.sprintf(" %6.4f ", Buffer.viscosity));
+	connect(le_viscosity, SIGNAL(textChanged(const QString &)), this, SLOT(update_viscosity(const QString &)));
+	connect(le_density, SIGNAL(textChanged(const QString &)), this, SLOT(update_density(const QString &)));
 	emit valueChanged(Buffer.density, Buffer.viscosity);
 	le_concentration->setText("");
 	if(Buffer.component.size() > 0)
@@ -867,6 +880,7 @@ void US_Buffer_DB::add_component()
 		le_viscosity->setReadOnly(false);
 		le_density->setReadOnly(false);
 	}
+
 }
 
 
@@ -881,8 +895,12 @@ void US_Buffer_DB::remove_component(int i)
 	Buffer.component.erase(Buffer.component.begin() + i);
 	recalc_viscosity();
 	recalc_density();
+	le_density->disconnect();
+	le_viscosity->disconnect();
 	le_density->setText(str.sprintf(" %6.4f ", Buffer.density));
 	le_viscosity->setText(str.sprintf(" %6.4f ", Buffer.viscosity));
+	connect(le_viscosity, SIGNAL(textChanged(const QString &)), this, SLOT(update_viscosity(const QString &)));
+	connect(le_density, SIGNAL(textChanged(const QString &)), this, SLOT(update_density(const QString &)));
 	lb_current_buffer->removeItem(i);
 	if(Buffer.component.size() == 0)
 	{
@@ -944,8 +962,12 @@ void US_Buffer_DB::reset()
 	le_density->setReadOnly(false);
 	lb_current_buffer->clear();
 	buf_init();
+	le_density->disconnect();
+	le_viscosity->disconnect();
 	le_density->setText(str.sprintf(" %6.4f ", Buffer.density));
 	le_viscosity->setText(str.sprintf(" %6.4f ", Buffer.viscosity));
+	connect(le_viscosity, SIGNAL(textChanged(const QString &)), this, SLOT(update_viscosity(const QString &)));
+	connect(le_density, SIGNAL(textChanged(const QString &)), this, SLOT(update_density(const QString &)));
 	emit valueChanged(Buffer.density, Buffer.viscosity);
 	lbl_buffer2->setText("");
 	lbl_unit->setText("");
