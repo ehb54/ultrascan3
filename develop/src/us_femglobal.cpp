@@ -795,7 +795,31 @@ int US_FemGlobal::write_experiment(struct ModelSystem *ms, struct SimulationPara
 
 int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemConstraints *msc, QString filename)
 {
-	return 0;
+	QString str;
+	unsigned int i, j;
+	int flag1;
+	QFile f;
+	f.setName(filename);
+	if (f.open(IO_ReadOnly))
+	{
+		QTextStream ts(&f);
+		ts >> str;
+		flag1 = read_modelSystem(ms, str);
+		if (flag1 < 0)
+		{
+			f.close();
+			return (flag1);
+		}
+		ts >> j;
+		ts.readLine();
+//		for (i=0; i<
+		f.close();
+		return(0);
+	}
+	else
+	{
+		return(-1); // can't read input file
+	}
 }
 
 // write a model system, and the associated constraints needed for initialization of the fitting process.
@@ -803,46 +827,63 @@ int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemCon
 
 int US_FemGlobal::write_constraints(struct ModelSystem *ms, struct ModelSystemConstraints *msc, QString filename)
 {
-/*
-	QFile f(filename);
+	QFile f;
 	QString str;
-	unsigned int i, j;
+	unsigned int i;
+	if (filename.right(10) != ".constraints")
+	{
+		f.setName(filename + ".constraints");
+	}
 	if (f.open(IO_WriteOnly | IO_Translate))
 	{
 		QTextStream ts(&f);
-		ts << "SIM" << "\n";
-		ts << "Model written by US_FEMGLOBAL\n";
-		ts << "# This file is computer-generated, please do not edit unless you know what you are doing\n";
-		ts << US_Version << "\t\t# UltraScan Version Number\n";
-		ts << (*ms).model << "\t\t# model number/identifier\n";
-		ts << (*ms).component_vector.size() << "\t\t# number of components in the model\n";
-		for (i=0; i<(*ms).component_vector.size(); i++)}
-*/
+		str.sprintf(filename + ".constraints.model-%d.00", (*ms).model);
+		ts << str << endl;
+		write_modelSystem(ms, str); // write the corresponding model to disc
+		ts << (*msc).component_vector_constraints.size() << "\t\t# Number of components in the model\n";
+		for (i=0; i<(*msc).component_vector_constraints.size(); i++)
+		{
+			ts << (*msc).component_vector_constraints[i].vbar20.fit << "\t\t# Is the vbar20 of component " << i+1 << " fitted?\n";
+			ts << (*msc).component_vector_constraints[i].vbar20.low << "\t\t# vbar20 lower limit\n";
+			ts << (*msc).component_vector_constraints[i].vbar20.high << "\t\t# vbar20 upper limit\n";
+			ts << (*msc).component_vector_constraints[i].mw.fit << "\t\t# Is molecular weight of component " << i+1 << " fitted?\n";
+			ts << (*msc).component_vector_constraints[i].mw.low << "\t\t# molecular weight lower limit\n";
+			ts << (*msc).component_vector_constraints[i].mw.high << "\t\t# molecular weight upper limit\n";
+			ts << (*msc).component_vector_constraints[i].s.fit << "\t\t# Is the sedimentation coefficient of component " << i+1 << " fitted?\n";
+			ts << (*msc).component_vector_constraints[i].s.low << "\t\t# sedimentation coefficient lower limit\n";
+			ts << (*msc).component_vector_constraints[i].s.high << "\t\t# sedimentation coefficient upper limit\n";
+			ts << (*msc).component_vector_constraints[i].D.fit << "\t\t# Is the diffusion coefficient of component " << i+1 << " fitted?\n";
+			ts << (*msc).component_vector_constraints[i].D.low << "\t\t# diffusion coefficient lower limit\n";
+			ts << (*msc).component_vector_constraints[i].D.high << "\t\t# diffusion coefficient upper limit\n";
+			ts << (*msc).component_vector_constraints[i].sigma.fit << "\t\t# Is concentration dependency of s of component " << i+1 << " fitted?\n";
+			ts << (*msc).component_vector_constraints[i].sigma.low << "\t\t# concentration dependency of s lower limit\n";
+			ts << (*msc).component_vector_constraints[i].sigma.high << "\t\t# concentration dependency of s upper limit\n";
+			ts << (*msc).component_vector_constraints[i].delta.fit << "\t\t# Is concentration dependency of D of component " << i+1 << " fitted?\n";
+			ts << (*msc).component_vector_constraints[i].delta.low << "\t\t# concentration dependency of D lower limit\n";
+			ts << (*msc).component_vector_constraints[i].delta.high << "\t\t# concentration dependency of D upper limit\n";
+			ts << (*msc).component_vector_constraints[i].concentration.fit << "\t\t# Is the concentration of component " << i+1 << " fitted?\n";
+			ts << (*msc).component_vector_constraints[i].concentration.low << "\t\t# concentration lower limit\n";
+			ts << (*msc).component_vector_constraints[i].concentration.high << "\t\t# concentration upper limit\n";
+			ts << (*msc).component_vector_constraints[i].f_f0.fit << "\t\t# Is the frictional ratio of component " << i+1 << " fitted?\n";
+			ts << (*msc).component_vector_constraints[i].f_f0.low << "\t\t# frictional ratio lower limit\n";
+			ts << (*msc).component_vector_constraints[i].f_f0.high << "\t\t# frictional ratio upper limit\n";
+		}
+		ts << (*msc).assoc_vector_constraints.size() << "\t\t# Number of reactions in the model\n";
+		for (i=0; i<(*msc).assoc_vector_constraints.size(); i++)
+		{
+			ts << (*msc).assoc_vector_constraints[i].keq.fit << "\t\t# Is the equilibrium constant of association reaction " << i+1 << " fitted?\n";
+			ts << (*msc).assoc_vector_constraints[i].keq.low << "\t\t# equilibrium constant lower limit\n";
+			ts << (*msc).assoc_vector_constraints[i].keq.high << "\t\t# equilibrium constant upper limit\n";
+			ts << (*msc).assoc_vector_constraints[i].koff.fit << "\t\t# Is the k_off rate constant of association reaction " << i+1 << " fitted?\n";
+			ts << (*msc).assoc_vector_constraints[i].koff.low << "\t\t# k_off rate constant lower limit\n";
+			ts << (*msc).assoc_vector_constraints[i].koff.high << "\t\t# k_off rate constant upper limit\n";
+		}
+		f.close();
+		return(0);
+	}
+	else
+	{
+		return(-1); // can't open output file
+	}
 	return 0;
 }
-
-/*
-struct ModelSystemConstraints
-{
-	vector <struct SimulationComponentConstraints> component_vector_constraints;
-	vector <struct AssociationConstraints> assoc_vector_constraints;
-};
-
-struct AssociationConstraints
-{
-	struct constraint keq;
-	struct constraint koff;
-};
-
-struct SimulationComponentConstraints
-{
-	struct constraint vbar20;
-	struct constraint mw;
-	struct constraint s;
-	struct constraint D;
-	struct constraint sigma;
-	struct constraint delta;
-	struct constraint concentration;
-	struct constraint f_f0;
-};
-*/
