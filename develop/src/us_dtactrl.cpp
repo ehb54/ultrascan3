@@ -1846,7 +1846,7 @@ int Data_Control_W::write_data()
 					f2.setName(USglobal->config_list.result_dir + "/" + run_inf.run_id + str1.sprintf(".veloc.%d%d", i, j));
 					if (ri || ti)
 					{
-						cout << "rewriting cell " << i << endl;
+						//cout << "rewriting cell " << i << endl;
 						if (f2.open(IO_WriteOnly))
 						{
 							QDataStream s(&f2);
@@ -2390,7 +2390,7 @@ void Data_Control_W::calc_correction(float t)
 					 + 1.000028e-3 * ((105.56302e-9 * pow((double) t, (double) 4.0) - 280.54253e-12 * pow((double) t, (double) 5.0))
 										/ (1.0 + 16.87985e-3 * t));
 	density_wt_20 = DENS_20W;
-	cout << "density_w_20: " << density_wt_20 << endl;
+	//cout << "density_w_20: " << density_wt_20 << endl;
 	if (t < 20.0)
 	{
 		viscosity_wt = 100.0 * pow((double) 10.0, (double) (1301 / (998.333 + 8.1855 * (t - 20.0)
@@ -2405,14 +2405,14 @@ void Data_Control_W::calc_correction(float t)
 	density_tb   = density * density_wt / density_wt_20;
 	viscosity_tb = viscosity * viscosity_wt / (100.0 * VISC_20W);
 	cout.precision(8);
-	cout << "density tb: " << density_tb << ", viscosity_tb: " << viscosity_tb << ", vbar_t: " << vbar << endl;
-	cout << "density: " << density << ", viscosity: " << viscosity << ", density_wt_20: " << density_wt_20 << ", viscosity_w: " << viscosity_wt << endl;
-	cout << "Temperature: " << t << ", vbar: " << vbar << ", vbar20: " << vbar20 << endl;
+	//cout << "density tb: " << density_tb << ", viscosity_tb: " << viscosity_tb << ", vbar_t: " << vbar << endl;
+	//cout << "density: " << density << ", viscosity: " << viscosity << ", density_wt_20: " << density_wt_20 << ", viscosity_w: " << viscosity_wt << endl;
+	//cout << "Temperature: " << t << ", vbar: " << vbar << ", vbar20: " << vbar20 << endl;
 	buoyancyb	 = 1.0 - vbar * density_tb;
 	buoyancyw	 = 1.0 - vbar20 * density_wt_20;
 	correction   = (buoyancyw / buoyancyb) * (viscosity_tb / (100.0 * VISC_20W));
-	cout << "buoyancyb: " << buoyancyb << ", buoyancyw: " << buoyancyw << ", vbar: " << vbar << ", vbar20: " << vbar20 << endl;
-	cout << "density_w_20: " << density_wt_20 << endl;
+	//cout << "buoyancyb: " << buoyancyb << ", buoyancyw: " << buoyancyw << ", vbar: " << vbar << ", vbar20: " << vbar20 << endl;
+	//cout << "density_w_20: " << density_wt_20 << endl;
 
 /*
 cerr << "in Data Control: densitytb:" <<	density_tb
@@ -2512,7 +2512,7 @@ void Data_Control_W::update_viscosity(const QString &val)
 	}
 	viscosity = val.toFloat();
 	calc_correction(run_inf.avg_temperature);
-cout << "Viscosity: " << viscosity << endl;
+	//cout << "Viscosity: " << viscosity << endl;
 	if (!dont_plot)
 	{
 		if (step != 0)
@@ -2575,7 +2575,7 @@ void Data_Control_W::update_buffer_lbl(float dens, float visc)
 	calc_correction(run_inf.avg_temperature);
 	//update_viscosity(viscosity_le->text());
 	//update_density(density_le->text());
-	cout << "Viscosity: " << viscosity << ", density: " << density << endl;
+	//cout << "Viscosity: " << viscosity << ", density: " << density << endl;
 	// cout << "Step 10\n";
 	plot_analysis();
 }
