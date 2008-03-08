@@ -128,6 +128,10 @@ struct ModelSystemConstraints
 {
 	vector <struct SimulationComponentConstraints> component_vector_constraints;
 	vector <struct AssociationConstraints> assoc_vector_constraints;
+	unsigned int simpoints;		// number of radial grid points used in simulation
+	unsigned int mesh; 			// 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 3 = user-selected mesh, 4 = nonuniform constant mesh
+	int moving_grid; 				// Use moving or fixed time grid
+	float band_volume;			// loading volume (of lamella) in a band-forming centerpiece
 };
 
 struct SpeedProfile
@@ -153,7 +157,7 @@ struct SimulationParameters
 	// position set by the user, which will take precedence.
 
 	vector <struct SpeedProfile> speed_step;
-	unsigned int simpoints;
+	unsigned int simpoints;		// number of radial grid points used in simulation
 	unsigned int mesh; 			// 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 3 = user-selected mesh, 4 = nonuniform constant mesh
 	int moving_grid; 				// Use moving or fixed time grid
 	float radial_resolution;	// the radial datapoint increment/resolution of the final data
@@ -166,7 +170,7 @@ struct SimulationParameters
 	float rinoise;					// radially invariant noise
 	int rotor;						// rotor serial number in database
 	bool band_forming;			// true for band-forming centerpieces
-	float band_volume;			// loding volume (of lamella) in a band-forming centerpiece
+	float band_volume;			// loading volume (of lamella) in a band-forming centerpiece
 };
 
 class US_EXTERN US_FemGlobal : public QObject

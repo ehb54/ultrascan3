@@ -761,7 +761,6 @@ int US_FemGlobal::read_experiment(struct ModelSystem *ms, struct SimulationParam
 // read a model system, and the associated constraints needed for initialization of the fitting process.
 // all associated files should start with the "filename" string
 
-
 int US_FemGlobal::write_experiment(struct ModelSystem *ms, struct SimulationParameters *sp, QString filename)
 {
 	QFile f;
@@ -789,14 +788,13 @@ int US_FemGlobal::write_experiment(struct ModelSystem *ms, struct SimulationPara
 	}
 }
 
-
 // read a model system, and the associated constraints needed for initialization of the fitting process.
 // all associated files should start with the "filename" string
 
 int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemConstraints *msc, QString filename)
 {
 	QString str;
-	unsigned int i, j;
+	unsigned int i, j, k;
 	int flag1;
 	QFile f;
 	f.setName(filename);
@@ -811,8 +809,94 @@ int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemCon
 			return (flag1);
 		}
 		ts >> j;
+		ts.readLine(); // j is the number of components in this model
+		(*msc).component_vector_constraints.resize(j);
+		for (i=0; i<j; i++)
+		{
+			ts >> k;
+			ts.readLine();
+			(*msc).component_vector_constraints[i].vbar20.fit = k;
+			ts >> (*msc).component_vector_constraints[i].vbar20.low;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].vbar20.high;
+			ts.readLine();
+			ts >> k;
+			(*msc).component_vector_constraints[i].mw.fit = k;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].mw.low;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].mw.high;
+			ts.readLine();
+			ts >> k;
+			(*msc).component_vector_constraints[i].s.fit = k;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].s.low;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].s.high;
+			ts.readLine();
+			ts >> k;
+			(*msc).component_vector_constraints[i].D.fit = k;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].D.low;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].D.high;
+			ts.readLine();
+			ts >> k;
+			(*msc).component_vector_constraints[i].sigma.fit = k;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].sigma.low;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].sigma.high;
+			ts.readLine();
+			ts >> k;
+			(*msc).component_vector_constraints[i].delta.fit = k;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].delta.low;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].delta.high;
+			ts.readLine();
+			ts >> k;
+			(*msc).component_vector_constraints[i].concentration.fit = k;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].concentration.low;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].concentration.high;
+			ts.readLine();
+			ts >> k;
+			(*msc).component_vector_constraints[i].f_f0.fit = k;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].f_f0.low;
+			ts.readLine();
+			ts >> (*msc).component_vector_constraints[i].f_f0.high;
+			ts.readLine();
+		}
+		ts >> j; // j is the number of reactions in this model
 		ts.readLine();
-//		for (i=0; i<
+		(*msc).assoc_vector_constraints.resize(j);
+		for (i=0; i<j; i++)
+		{
+			ts >> k;
+			ts.readLine();
+			(*msc).assoc_vector_constraints[i].keq.fit = k;
+			ts >> (*msc).assoc_vector_constraints[i].keq.low;
+			ts.readLine();
+			ts >> (*msc).assoc_vector_constraints[i].keq.high;
+			ts.readLine();
+			ts >> k;
+			ts.readLine();
+			(*msc).assoc_vector_constraints[i].koff.fit = k;
+			ts >> (*msc).assoc_vector_constraints[i].koff.low;
+			ts.readLine();
+			ts >> (*msc).assoc_vector_constraints[i].koff.high;
+			ts.readLine();
+		}
+		ts >> (*msc).simpoints;
+		ts.readLine();
+		ts >> (*msc).mesh;
+		ts.readLine();
+		ts >> (*msc).moving_grid;
+		ts.readLine();
+		ts >> (*msc).band_volume;
 		f.close();
 		return(0);
 	}
@@ -878,6 +962,10 @@ int US_FemGlobal::write_constraints(struct ModelSystem *ms, struct ModelSystemCo
 			ts << (*msc).assoc_vector_constraints[i].koff.low << "\t\t# k_off rate constant lower limit\n";
 			ts << (*msc).assoc_vector_constraints[i].koff.high << "\t\t# k_off rate constant upper limit\n";
 		}
+		ts << (*msc).simpoints << "\t\t# the number of grid points\n";
+		ts << (*msc).mesh << "\t\t# the type of radial mesh used: 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 3 = user-selected mesh, 4 = nonuniform constant mesh\n";
+		ts << (*msc).moving_grid << "\t\t# using moving (0) or fixed time grid (1)\n";
+		ts << (*msc).band_volume << "\t\t# loading volume (of lamella) in a band-forming centerpiece, if used\n";
 		f.close();
 		return(0);
 	}
