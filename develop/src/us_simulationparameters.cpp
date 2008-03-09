@@ -109,7 +109,6 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	cnt_lamella->setRange(0.001, 0.1, 0.0001);
 	cnt_lamella->setNumButtons(3);
 	cnt_lamella->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cnt_lamella->setValue(current_speed_step);
 	cnt_lamella->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	cnt_lamella->setValue((*simparams).band_volume);
 	cnt_lamella->setMinimumHeight(minHeight1);

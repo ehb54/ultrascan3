@@ -1050,6 +1050,7 @@ void US_ModelEditor::select_component(int val)
 		le_stoich->setText("");
 		le_stoich->setEnabled(false);
 	}
+	emit componentChanged(current_component);
 }
 
 void US_ModelEditor::update_conc(const QString &newText)

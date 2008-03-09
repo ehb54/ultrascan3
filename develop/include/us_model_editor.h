@@ -84,7 +84,7 @@ class US_ModelEditor : public QDialog
 	
 	public slots:
 		void simulate_component();
-		void update_component();
+		virtual void update_component();
 		void select_component(double);
 		void select_component(int);
 		void update_conc(const QString &);
@@ -100,15 +100,18 @@ class US_ModelEditor : public QDialog
 		void select_prolate();
 		void select_oblate();
 		void select_sphere();
-		void setup_GUI();
-		void help();
+		virtual void setup_GUI();
+		virtual void help();
 		void load_c0();
 		void load_model();
 		void load_model(const QString &);
 		void printError(const int &);
 		void save_model();
 		void accept_model();
-		bool verify_model();
+		virtual bool verify_model();
+
+	signals:
+		void componentChanged(unsigned int);
 };
 
 #endif

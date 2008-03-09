@@ -178,6 +178,7 @@ SOURCES += src/us_2dplot.cpp \
 	src/us_combine.cpp \
 	src/us_config.cpp \
 	src/us_config_gui.cpp \
+	src/us_constraint_control.cpp \
 	src/us_create_global.cpp \
 	src/us_data_io.cpp \
 	src/us_database.cpp \
@@ -360,6 +361,7 @@ HEADERS +=include/bluearrow.xpm \
 	include/us_colorgradient.h \
 	include/us_combine.h \
 	include/us_config_gui.h \
+	include/us_constraint_control.h \
 	include/us_create_global.h \
 	include/us_data_io.h \
 	include/us_database.h \

@@ -1,10 +1,20 @@
 #include "../include/us_ga_model_editor.h"
 
-US_GAModelEditor::US_GAModelEditor(struct ModelSystem*            system, 
-                                   //struct ModelSystemConstraints* constraints,
-                                   QWidget*                       parent, 
-                                   const char*                    name) 
-  : US_ModelEditor(system, parent, name)
+US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, struct ModelSystemConstraints *msc,
+QWidget *parent, const char *name) : US_ModelEditor(system, parent, name)
+{
+	this->ms = ms;
+	this->msc = msc;
+	setup_GUI();
+	select_component((int) 0);
+	
+	global_Xpos += 30;
+	global_Ypos += 30;
+
+	move(global_Xpos, global_Ypos);
+}
+
+US_GAModelEditor::US_GAModelEditor(QWidget *parent, const char *name) : US_ModelEditor(system, parent, name)
 {
 	setup_GUI();
 	select_component((int) 0);
@@ -21,6 +31,119 @@ US_GAModelEditor::~US_GAModelEditor()
 
 void US_GAModelEditor::setup_GUI()
 {
+	int minHeight1 = 30, minHeight2 = 26;
+	
+	lbl_constraints = new QLabel(tr("Constraints for Current Component:"), this);
+	lbl_constraints->setAlignment(AlignLeft|AlignVCenter);
+	lbl_constraints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_constraints->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_constraints->setMinimumHeight(minHeight2);
+	
+	lbl_low = new QLabel(tr("Low:"), this);
+	lbl_low->setAlignment(AlignLeft|AlignVCenter);
+	lbl_low->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_low->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_low->setMinimumHeight(minHeight2);
+	
+	lbl_high = new QLabel(tr("High:"), this);
+	lbl_high->setAlignment(AlignLeft|AlignVCenter);
+	lbl_high->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_high->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_high->setMinimumHeight(minHeight2);
+	
+	lbl_fit = new QLabel(tr("Fit?"), this);
+	lbl_fit->setAlignment(AlignLeft|AlignVCenter);
+	lbl_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_fit->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_fit->setMinimumHeight(minHeight2);
+	
+	lbl_bandVolume = new QLabel(tr("Band-loading Volume:"), this);
+	lbl_bandVolume->setAlignment(AlignLeft|AlignVCenter);
+	lbl_bandVolume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_bandVolume->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_bandVolume->setMinimumHeight(minHeight2);
+	
+	lbl_simpoints = new QLabel(tr("# of Simulation Points:"), this);
+	lbl_simpoints->setAlignment(AlignLeft|AlignVCenter);
+	lbl_simpoints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_simpoints->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_simpoints->setMinimumHeight(minHeight2);
+
+	us_cc_mw = new US_ConstraintControl(0.0, &c_mw.low, &c_mw.high, &c_mw.fit);
+	us_cc_f_f0 = new US_ConstraintControl(0.0, &c_f_f0.low, &c_f_f0.high, &c_f_f0.fit);
+	us_cc_conc = new US_ConstraintControl(0.0, &c_conc.low, &c_conc.high, &c_conc.fit);
+	us_cc_keq = new US_ConstraintControl(0.0, &c_keq.low, &c_keq.high, &c_keq.fit);
+	us_cc_koff = new US_ConstraintControl(0.0, &c_koff.low, &c_koff.high, &c_koff.fit);
+	
+	cmb_radialGrid = new QComboBox(false, this, "Radial Grid" );
+	cmb_radialGrid->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cmb_radialGrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cmb_radialGrid->setSizeLimit(5);
+	cmb_radialGrid->setMinimumHeight(minHeight1);
+	cmb_radialGrid->insertItem("Adaptive Space Mesh (ASTFEM)", -1);
+	cmb_radialGrid->insertItem("Claverie Fixed Mesh", -1);
+	cmb_radialGrid->insertItem("Moving Hat Mesh", -1);
+	cmb_radialGrid->insertItem("File: \"$ULTRASCAN/mesh.dat\"", -1);
+	cmb_radialGrid->setCurrentItem((*msc).mesh);
+	connect(cmb_radialGrid, SIGNAL(activated(int)), this, SLOT(update_radialGrid(int)));
+
+	cmb_timeGrid = new QComboBox(false, this, "Time Grid" );
+	cmb_timeGrid->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cmb_timeGrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cmb_timeGrid->setSizeLimit(5);
+	cmb_timeGrid->setMinimumHeight(minHeight1);
+	cmb_timeGrid->insertItem("Constant Time Grid (Claverie/Acceleration)", -1);
+	cmb_timeGrid->insertItem("Moving Time Grid (ASTFEM/Moving Hat)", -1);
+	cmb_timeGrid->setCurrentItem((*msc).moving_grid);
+	connect(cmb_timeGrid, SIGNAL(activated(int)), this, SLOT(update_timeGrid(int)));
+
+	cnt_simpoints= new QwtCounter(this);
+	cnt_simpoints->setNumButtons(3);
+	cnt_simpoints->setRange(50, 5000, 10);
+	cnt_simpoints->setValue((double)(*msc).simpoints);
+	cnt_simpoints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cnt_simpoints->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cnt_simpoints->setMinimumHeight(minHeight1);
+	connect(cnt_simpoints, SIGNAL(valueChanged(double)), SLOT(update_simpoints(double)));
+
+	cnt_lamella = new QwtCounter(this);
+	cnt_lamella->setRange(0.001, 0.1, 0.0001);
+	cnt_lamella->setNumButtons(3);
+	cnt_lamella->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cnt_lamella->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cnt_lamella->setValue((*msc).band_volume);
+	cnt_lamella->setMinimumHeight(minHeight1);
+	connect(cnt_lamella, SIGNAL(valueChanged(double)), SLOT(update_lamella(double)));
+
+	pb_selectModel = new QPushButton( tr("Select Model"), this );
+	pb_selectModel->setAutoDefault(false);
+	pb_selectModel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_selectModel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_selectModel->setMinimumHeight(minHeight1);
+	connect(pb_selectModel, SIGNAL(clicked()), SLOT(load_model()) );
+
+	pb_selectModel = new QPushButton( tr("Load Initialization"), this );
+	pb_selectModel->setAutoDefault(false);
+	pb_selectModel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_selectModel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_selectModel->setMinimumHeight(minHeight1);
+	connect(pb_selectModel, SIGNAL(clicked()), SLOT(load_model()) );
+
+	pb_selectModel = new QPushButton( tr("Select Model"), this );
+	pb_selectModel->setAutoDefault(false);
+	pb_selectModel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_selectModel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_selectModel->setMinimumHeight(minHeight1);
+	connect(pb_selectModel, SIGNAL(clicked()), SLOT(load_model()) );
+
+	pb_selectModel = new QPushButton( tr("Select Model"), this );
+	pb_selectModel->setAutoDefault(false);
+	pb_selectModel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_selectModel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_selectModel->setMinimumHeight(minHeight1);
+	connect(pb_selectModel, SIGNAL(clicked()), SLOT(load_model()) );
+
+	
 	unsigned int j=3;
 	QGridLayout *grid = new QGridLayout(this, 11, 4, 4, 2);
 	grid->addMultiCellWidget(lbl_model, 0, 0, 0, 3, 0);
@@ -68,530 +191,46 @@ void US_GAModelEditor::setup_GUI()
 	grid->addWidget(pb_help, j, 2, 0);
 	grid->addWidget(pb_cancel, j, 3, 0);
 	j++;
-	grid->addMultiCellWidget(pb_load_model, j, j, 0, 1, 0);
+	grid->addMultiCellWidget(pb_selectModel, j, j, 0, 1, 0);
 	grid->addWidget(pb_save, j, 2, 0);
 	grid->addWidget(pb_accept, j, 3, 0);
 }
 
-void US_GAModelEditor::load_model(const QString &fileName)
+void US_GAModelEditor::load_constraints()
 {
+}
 
-	QFile f(fileName);
-	QString str;
-	bool flag;
-	unsigned int i, j;
-	if (f.open(IO_ReadOnly | IO_Translate))
-	{
-		flag = true;
-		QTextStream ts(&f);
-		ts.readLine(); // FE, SA2D, COFS, SIM or GA
-		(*system).description = ts.readLine();
-		if ((*system).description.isNull())
-		{
-			printError(3);
-			return;
-		}
-		str = ts.readLine();
-		if (str.find("#", 0, true) == 0) // a new model has a comment line in the second line starting with "#"
-		{
-			float fval;
-			ts >> fval; // UltraScan version
-			ts.readLine(); // read rest of line
-			ts >> str;
-			ts.readLine(); // read rest of line
-			if (str.isNull())
-			{
-				printError(0);
-				return;
-			}
-			(*system).model = str.toInt();
-			ts >> str;
-			if (str.isNull())
-			{
-				printError(0);
-				return;
-			}
-			ts.readLine();
-			(*system).component_vector.resize(str.toInt());
-			for (i=0; i<(*system).component_vector.size(); i++)
-			{
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				int pos = str.find("#", 0, true);
-				str.truncate(pos);
-				(*system).component_vector[i].name = str.stripWhiteSpace();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].concentration = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].s = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].D = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].sigma = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].delta = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].mw = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].vbar20 = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].shape = str;
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].f_f0 = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].extinction = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].show_conc = (bool) str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].show_stoich = str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].show_keq = (bool) str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].show_koff = (bool) str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].show_component.resize(str.toUInt());
-				for (j=0; j<(*system).component_vector[i].show_component.size(); j++)
-				{
-					ts >> str;
-					if (str.isNull())
-					{
-						printError(0);
-						return;
-					}
-					ts.readLine();
-					(*system).component_vector[i].show_component[j] = str.toInt();
-				}
-				if ((*system).component_vector[i].concentration < 0)
-				{
-					(*system).component_vector[i].c0.radius.clear();
-					(*system).component_vector[i].c0.concentration.clear();
-					ts >> str;
-					if (str.isNull())
-					{
-						printError(0);
-						return;
-					}
-					ts.readLine();
-					unsigned int ival = str.toUInt();
-					for (j=0; j<ival; j++)
-					{
-						ts >> str;
-						if (str.isNull())
-						{
-							printError(0);
-							return;
-						}
-						(*system).component_vector[i].c0.radius.push_back(str.toDouble());
-						ts >> str;
-						if (str.isNull())
-						{
-							printError(0);
-							return;
-						}
-						(*system).component_vector[i].c0.concentration.push_back(str.toDouble());
-					}
-					ts.readLine(); //read the rest of the last linee
-				}			}
-			ts >> str;
-			if (str.isNull())
-			{
-				printError(0);
-				return;
-			}
-			ts.readLine();
-			(*system).assoc_vector.resize(str.toUInt());
-			for (i=0; i<(*system).assoc_vector.size(); i++)
-			{
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].keq = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].units = str;
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].k_off = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].component1 = str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].component2 = str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].component3 = str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].stoichiometry1 = str.toUInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].stoichiometry2 = str.toUInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].stoichiometry3 = str.toUInt();
-			}
-		}
-		else // load an old-style model file for noninteracting models
-		{
-			(*system).model = str.toInt();
-			if ((*system).model > 3) // we can only read noninteracting models
-			{
-				printError(1);
-				return;
-			}
-			(*system).model = 3; // set to fixed molecular weight distribution by default
-			str = ts.readLine();
-			if (str.isNull())
-			{
-				printError(0);
-				return;
-			}
-			(*system).component_vector.resize(str.toInt()); // number of components
-			for (i=0; i<(*system).component_vector.size(); i++)
-			{
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				(*system).component_vector[i].concentration = str.toFloat();
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				(*system).component_vector[i].s = str.toFloat();
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				(*system).component_vector[i].D = str.toFloat();
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				(*system).component_vector[i].sigma = str.toFloat();
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				(*system).component_vector[i].delta = str.toFloat();
-				(*system).component_vector[i].vbar20 = (float) 0.72;
-				(*system).component_vector[i].extinction = 1.0;
-				(*system).component_vector[i].name = str.sprintf("Component %d", i+1);
-				
-				(*system).component_vector[i].mw = ((*system).component_vector[i].s/(*system).component_vector[i].D)
-				*((R*K20)/(1.0 - (*system).component_vector[i].vbar20 * DENS_20W));
-				
-				(*system).component_vector[i].f_f0 = (((*system).component_vector[i].mw * 
-				(1.0 - (*system).component_vector[i].vbar20 * DENS_20W))/((*system).component_vector[i].s * AVOGADRO))
-				/(6 * VISC_20W * pow(((*system).component_vector[i].mw * M_PI * M_PI * 3.0 
-				* (*system).component_vector[i].vbar20)/(4.0 * AVOGADRO), 1.0/3.0));
-				(*system).component_vector[i].show_conc = true;
-				(*system).component_vector[i].show_keq = false;
-				(*system).component_vector[i].show_koff = false;
-				(*system).component_vector[i].show_stoich = 0;
-			}
-		}
-		lbl_model->setText(modelString[(*system).model]);
-		cmb_component1->clear();
-		cmb_component2->clear();
-		for (unsigned int i=0; i<(*system).component_vector.size(); i++)
-		{
-			cmb_component1->insertItem((*system).component_vector[i].name);
-		}
-		cnt_item->setValue(1);
-		select_component((int) 0);
-		printError(4);
-	}
-	else
-	{
-		printError(2);
-	}
+bool US_GAModelEditor::verify_constraints()
+{
+}
+
+void US_GAModelEditor::save_constraints()
+{
 }
 
 void US_GAModelEditor::help()
 {
 	US_Help *online_help;
 	online_help = new US_Help(this);
-	online_help->show_help("manual/astfem_component.html");
+	online_help->show_help("manual/ga_model_editor.html");
 }
 
-bool US_GAModelEditor::verify_model()
+void US_GAModelEditor::update_radialGrid(int val)
 {
-	bool flag = true;
-	QString str1, str2;
-	for (unsigned int i=0; i<(*system).assoc_vector.size(); i++)
-	{
-		if ((*system).assoc_vector[i].stoichiometry2 > 0 && (*system).assoc_vector[i].stoichiometry3 != 1) // then we need to check if the MWs match
-		{
-			if (fabs	((*system).component_vector[(*system).assoc_vector[i].component2].mw
-			 - ((*system).component_vector[(*system).assoc_vector[i].component1].mw * (*system).assoc_vector[i].stoichiometry2 / (*system).assoc_vector[i].stoichiometry1
-				)) > 1.0) // MWs don't match within 1 dalton
-			{
-				str2.sprintf(tr("The molecular weights of the reacting species\nin reaction %d do not agree:\n\n"), i+1);
-				str1 = str2;
-				str2.sprintf(tr("Molecular weight of species 1: %6.4e\n"), (*system).component_vector[(*system).assoc_vector[i].component1].mw);
-				str1 += str2;
-				str2.sprintf(tr("Molecular weight of species 2: %6.4e\n"), (*system).component_vector[(*system).assoc_vector[i].component2].mw);
-				str1 += str2;
-				str2.sprintf(tr("Stoichiometry of reaction %d: MW(1) * %d = MW(2)\n\n"), i+1, (*system).assoc_vector[i].stoichiometry2);
-				str1 += str2;
-				str1 += tr("Please adjust either MW(1) or MW(2) before proceeding...");
-				QMessageBox::warning(this, "Model Definition Error", str1, QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-				flag = false;
-			}
-		}
-		if ((*system).assoc_vector[i].stoichiometry3 == 1) // then we need to check if the sum of MW(1) + MW(2) = MW(3)
-		{
-			if (fabs	((*system).component_vector[(*system).assoc_vector[i].component3].mw
-			 - (*system).component_vector[(*system).assoc_vector[i].component2].mw 
-			 - (*system).component_vector[(*system).assoc_vector[i].component1].mw) > 1.0) // MWs don't match within 10 dalton
-			{
-				str2.sprintf(tr("The molecular weights of the reacting species\nin reaction %d do not agree:\n\n"), i+1);
-				str1 = str2;
-				str2.sprintf(tr("Molecular weight of species 1: %6.4e\n"), (*system).component_vector[(*system).assoc_vector[i].component1].mw);
-				str1 += str2;
-				str2.sprintf(tr("Molecular weight of species 2: %6.4e\n"), (*system).component_vector[(*system).assoc_vector[i].component2].mw);
-				str1 += str2;
-				str2.sprintf(tr("Molecular weight of species 3: %6.4e\n"), (*system).component_vector[(*system).assoc_vector[i].component3].mw);
-				str1 += str2;
-				str2.sprintf(tr("Stoichiometry of reaction %d: MW(1) + MW(2) = MW(3)\n\n"), i+1, (*system).assoc_vector[i].stoichiometry2);
-				str1 += str2;
-				str1 += tr("Please adjust the molecular weight of the appropriate\ncomponent before proceeding...");
-				QMessageBox::warning(this, "Model Definition Error", str1, QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-				flag = false;
-			}
-		}
-	}
-	return (flag);
+	(*msc).moving_grid = val;
 }
 
-void US_GAModelEditor::savefile(const QString &fileName)
+void US_GAModelEditor::update_timeGrid(int val)
 {
-	QFile f(fileName);
-	QString str;
-	unsigned int i, j;
-	if (f.exists())
-	{
-		if(!QMessageBox::query( tr("Warning"), tr("Attention:\nThis file exists already!\n\nDo you want to overwrite it?"), tr("Yes"), tr("No")))
-		{
-			f.close();
-			return;
-		}
-	}
-	if (f.open(IO_WriteOnly | IO_Translate))
-	{
-		QTextStream ts(&f);
-		QString message = tr("Please enter a description\nfor your model:");
-		OneLiner ol_descr(message);
-		ol_descr.parameter1->setText((*system).description);
-		ol_descr.show();
-		if (ol_descr.exec())
-		{
-			if (ol_descr.string.isEmpty())
-			{
-				ol_descr.string = "not specified";
-			}
-			ts << "SIM" << "\n";
-			ts << ol_descr.string << "\n";
-			ts << "# This file is computer-generated, please do not edit unless you know what you are doing\n";
-		}
-		ts << US_Version << "\t\t# UltraScan Version Number\n";
-		ts << (*system).model << "\t\t# model number/identifier\n";
-		ts << (*system).component_vector.size() << "\t\t# number of components in the model\n";
-		for (i=0; i<(*system).component_vector.size(); i++)
-		{
-			ts << (*system).component_vector[i].name << "\t\t# name of component\n";
-			ts << (*system).component_vector[i].concentration << "\t\t# concentration\n";
-			ts << (*system).component_vector[i].s << "\t\t# sedimentation coefficient\n";
-			ts << (*system).component_vector[i].D << "\t\t# diffusion coefficient\n";
-			ts << (*system).component_vector[i].sigma << "\t\t# sigma\n";
-			ts << (*system).component_vector[i].delta << "\t\t# delta\n";
-			ts << (*system).component_vector[i].mw << "\t\t# molecular Weight \n";
-			ts << (*system).component_vector[i].vbar20 << "\t\t# vbar at 20C \n";
-			ts << (*system).component_vector[i].shape << "\t\t# shape \n";
-			ts << (*system).component_vector[i].f_f0 << "\t\t# frictional ratio \n";
-			ts << (*system).component_vector[i].extinction << "\t\t# extinction\n";
-			ts << (int) (*system).component_vector[i].show_conc << "\t\t# show concentration?\n";
-			ts << (*system).component_vector[i].show_stoich << "\t\t# show Stoichiometry?\n";
-			ts << (int) (*system).component_vector[i].show_keq << "\t\t# show k equilibrium?\n";
-			ts << (int) (*system).component_vector[i].show_koff << "\t\t# show k_off?\n";
-			ts << (*system).component_vector[i].show_component.size() << "\t\t# number of linked components\n";
-			for (j=0; j<(*system).component_vector[i].show_component.size(); j++)
-			{
-				ts << (*system).component_vector[i].show_component[j] << str.sprintf("\t\t# linked component (%d)\n", j+1);
-			}
-			if((*system).component_vector[i].concentration < 0)
-			{
-				ts << (*system).component_vector[i].c0.radius.size() << "\t\t# number of initial concentration points\n";
-				for (j=0; j<(*system).component_vector[i].c0.radius.size(); j++)
-				{
-					ts << (*system).component_vector[i].c0.radius[j] << " " 
-					<< (*system).component_vector[i].c0.concentration[j] << endl;
-				}
-			}
-		}
-		ts << (*system).assoc_vector.size() << "\t\t# number of association reactions in the model\n";
-		for (i=0; i<(*system).assoc_vector.size(); i++)
-		{
-			ts << (*system).assoc_vector[i].keq << "\t\t# equilibrium constant\n";
-			ts << (*system).assoc_vector[i].units << "\t\t# units for equilibrium constant\n";
-			ts << (*system).assoc_vector[i].k_off << "\t\t# rate constant\n";
-			ts << (*system).assoc_vector[i].component1 << "\t\t# component 1 in this association\n";
-			ts << (*system).assoc_vector[i].component2 << "\t\t# component 2 in this association\n";
-			ts << (*system).assoc_vector[i].component3 << "\t\t# component 3 in this association\n";
-			ts << (*system).assoc_vector[i].stoichiometry1 << "\t\t# stoichiometry for component 1 in this association\n";
-			ts << (*system).assoc_vector[i].stoichiometry2 << "\t\t# stoichiometry for component 2 in this association\n";
-			ts << (*system).assoc_vector[i].stoichiometry3 << "\t\t# stoichiometry for component 3 in this association\n";
-		}
-		f.close();
-	}
+	(*msc).mesh = val;
+}
+
+void US_GAModelEditor::update_simpoints(double val)
+{
+	(*msc).simpoints = (unsigned int) val;
+}
+
+void US_GAModelEditor::update_lamella(double val)
+{
+	(*msc).band_volume = (float) val;
 }
