@@ -354,7 +354,7 @@ struct peptideDetails US_Vbar::export_DNA_vbar(int id)
 			vbar_info.vbar = (float) query.value(3).toDouble();
 			vbar_info.e280 = (float) query.value(4).toDouble();
 			//cout << "in us_vbar: vbar:" << vbar_info.vbar << endl;
-			if ( ! vbar_info.vbar > 0.0 )
+			if (!(vbar_info.vbar > 0.0))
 			{
 				Vbar.vbar20 = (float) 0.55; // default for DNA
 			}

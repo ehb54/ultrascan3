@@ -115,7 +115,8 @@ unsigned int scans, unsigned int points)
 
 void US_ResidualPlot::paintEvent(QPaintEvent *)
 {
-	unsigned int i, j, val;
+	unsigned int i, j;
+	int val;
 	double/* maxval = -1.0, minval = 1.0,*/ sigma = 0.0, k;
 	QColor col;
 	QPainter paint( this );
