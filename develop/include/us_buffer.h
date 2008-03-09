@@ -52,7 +52,16 @@ class US_EXTERN US_Buffer : public US_DB_T
 		~US_Buffer();
 
 		struct BufferData Buffer;		/*!< A BufferData structure for the currently active Buffer Data. */
+
+#ifdef WIN32
+  #pragma warning( disable: 4251 )
+#endif
+
 		vector <struct BufferIngredient> component_list;	/*!< A BufferIngredient vector structure for all components in template list (stored in $ULTRASCAN/etc/buffer.dat)). */
+
+#ifdef WIN32
+  #pragma warning( default: 4251 )
+#endif
 
 	public slots:
 

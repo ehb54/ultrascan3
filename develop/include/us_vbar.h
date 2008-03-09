@@ -46,9 +46,18 @@ class US_EXTERN US_Vbar : public US_DB_T
 		struct US_VbarData vbar_info;			/*!< A struct US_VbarData for storing Peptide Data. */
 		struct peptide pep;
 		float temperature;
+
+#ifdef WIN32
+  #pragma warning( disable: 4251 )
+#endif
+
 		vector <int> item_PepID;							/*!< A Integer Array to store Peptide ID.*/
 		vector <QString> item_Description;	/*!< A String Array to store Peptide description.*/
 		vector <QString> display_Str;			/*!< A String Array to store peptide name dispaly.*/
+
+#ifdef WIN32
+      #pragma warning( default: 4251 )
+#endif
 
 	public slots:
 		bool read_file(const QString &);

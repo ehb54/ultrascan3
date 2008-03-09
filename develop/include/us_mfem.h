@@ -4,9 +4,6 @@
 // c++ class for US_MovingFEM
 // Written by E. Brookes 2004. ebrookes@cs.utsa.edu
 // adapted for UltraScan by Borries Demeler (2004)
-#ifdef WIN32
-#include <mem.h>
-#endif
 #include <vector>
 #include <iostream>
 #include <qapp.h>

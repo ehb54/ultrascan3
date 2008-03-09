@@ -64,7 +64,7 @@ public:
 
 	US_Calendar(QWidget *parent=0);
 	~US_Calendar();
-  	US_Config *USglobal;
+ 	US_Config *USglobal;
 	QPushButton *pb_cancel;
 	QPushButton *pb_accept;
 	QLabel *date_lbl;
@@ -147,12 +147,13 @@ private:
 
   QDate myQDate;
 
-  friend struct CalendarTip;
+  friend class CalendarTip;
 };
 
 class CalendarTip : public QToolTip {
 public:
   CalendarTip(QWidget*,Calendar*);
+  virtual ~CalendarTip();
 protected:
   void maybeTip(const QPoint&);
 private:

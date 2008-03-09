@@ -27,11 +27,20 @@ extern int global_Ypos;
 struct currentRun
 {
 	unsigned int scans[8][3];
+
+#ifdef WIN32
+    #pragma warning( disable: 4251 )
+#endif
+
 	vector < vector < vector <float> > > temperature;	// temperature of each scan
 	vector < vector < vector <unsigned int> > > time;	// time stamp of each scan
 	vector < vector < vector <float> > > omega_s_t;		// omega-square-t of each scan
 	vector < vector < vector <float> > > plateau;		// plateau value of each scan
 	vector < vector < vector <unsigned int> > > rpm;	// Rotor speed in rotation per minute
+
+#ifdef WIN32
+    #pragma warning( default: 4251 )
+#endif
 };
 
 class US_EXTERN Data_Control_W : public QFrame
@@ -52,8 +61,17 @@ class US_EXTERN Data_Control_W : public QFrame
 		bool plateaus_corrected, rad_corrected;
 		unsigned int first_cell, old_local_scans;
 		int run_type;		// 0 = no run, 1 = Velocity Run, 2 = Equilibrium Run, 3 = Light Scattering Run
-		vector <struct rotorInfo> rotor_list;
+
+#ifdef WIN32
+    #pragma warning( disable: 4251 )
+#endif
+		
+    vector <struct rotorInfo> rotor_list;
 		vector <struct centerpieceInfo> cp_list;
+
+#ifdef WIN32
+    #pragma warning( default: 4251 )
+#endif
 		struct runinfo run_inf;
 		struct currentRun temp_run;
 		unsigned int selected_cell;

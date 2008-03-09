@@ -89,8 +89,17 @@ class US_EXTERN US_Database : public QFrame
 		~US_Database();
 		
 		struct US_LoginData login_list;	/*!< A struct LoginData for storing DB login information */
+
+#ifdef WIN32
+  #pragma warning( disable: 4251 )
+#endif
 		vector <struct US_LoginData> dblist;
-		int count, selected_item;
+		
+#ifdef WIN32
+  #pragma warning( default: 4251 )
+#endif
+    
+    int count, selected_item;
 		QListBox *lb_dbname;			/*!< A ListBox shows a database name list. */
 		QLabel *lbl_title; 			/*!< A raised Label shows 'Database Configuration'. */
 		QLabel *lbl_blank; 			/*!< A raised Label shows 'User Information'. */

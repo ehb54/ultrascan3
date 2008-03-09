@@ -33,9 +33,19 @@ class US_EXTERN US_Buffer_DB : public US_DB
 		~US_Buffer_DB();
 
 		struct BufferData Buffer;		/*!< A BufferData structure for the currently active Buffer Data. */
+
+#ifdef WIN32
+      #pragma warning( disable: 4251 )
+#endif
+
 		vector <struct BufferData> db_list;		/*!< A vector of a BufferData structure for the contents of the database. */
 		vector <struct BufferIngredient> component_list;	/*!< A BufferIngredient vector structure for all components in template list (stored in $ULTRASCAN/etc/buffer.dat)). */
-		float partial_concentration;			/*!< A variable to keep track of the current partial concentration. */
+
+#ifdef WIN32
+      #pragma warning( default: 4251 )
+#endif
+
+    float partial_concentration;			/*!< A variable to keep track of the current partial concentration. */
 		bool cell_flag;							/*!< A flag to indicate if the class is called from the us_db_tbl_cell module. */
 		QPushButton *pb_load;					/*!< A PushButton connect to read_buffer(). */
 		QPushButton *pb_save;					/*!< A PushButton connect to save_buffer(). */

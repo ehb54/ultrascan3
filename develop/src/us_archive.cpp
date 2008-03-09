@@ -804,7 +804,7 @@ void US_Archive::endCreateProcess()
 			{
 				mle->insert(tr("\nCreating Archive of UltraScan Data for Run ") + data_control->run_inf.run_id + "...\n\n");
 #ifdef WIN32
-				u_cmd.append(filename + "\*");
+				u_cmd.append(filename + "/*");
 #endif
 #ifdef UNIX
 		//		u_cmd.append(filename + "*");				
@@ -826,12 +826,12 @@ void US_Archive::endCreateProcess()
 				mle->insert(tr("\nCreating Archive of Equilibrium Fitting Project Data:\n\n ") + projectName + "...\n\n");
 #ifdef WIN32				
 				u_cmd.append(projectName + ".eq-project");
-				u_cmd.append(projectName + "\*.dat");
-				u_cmd.append(projectName + "\*.eq_fit");
-				u_cmd.append(projectName + "\*.res");
-				u_cmd.append(projectName + "\*.dis");
-				u_cmd.append(projectName + "\*.lncr2");
-				u_cmd.append(projectName + "\*.mw\*");
+				u_cmd.append(projectName + "/*.dat");
+				u_cmd.append(projectName + "/*.eq_fit");
+				u_cmd.append(projectName + "/*.res");
+				u_cmd.append(projectName + "/*.dis");
+				u_cmd.append(projectName + "/*.lncr2");
+				u_cmd.append(projectName + "/*.mw/*");
 #endif
 #ifdef UNIX	
 				QDir dat_dir;
@@ -1059,7 +1059,7 @@ void US_Archive::endCreateProcess()
 			}
 			t_cmd.append(str);
 #ifdef WIN32
-			t_cmd.append(filename + "\*.tar");
+			t_cmd.append(filename + "/*.tar");
 #endif
 #ifdef UNIX			
 			QDir dat_dir;

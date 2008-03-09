@@ -49,6 +49,11 @@ class  US_EXTERN US_CofDistro_W : public Data_Control_W
 		bool fit_status, fit_par_c;
 		double s_min, s_max, par_a, par_b, par_c, ff0_min, ff0_max;
 		unsigned int resolution, shape_distro;
+
+#ifdef WIN32
+  #pragma warning( disable: 4251 )
+#endif
+
 		vector <double> s_distribution;
 		vector <double> D_distribution;
 		vector <double> frequency;
@@ -56,6 +61,10 @@ class  US_EXTERN US_CofDistro_W : public Data_Control_W
 		vector <double> D20w;
 		vector <double> mw;
 		vector <double> ff0;
+#ifdef WIN32
+  #pragma warning( default: 4251 )
+#endif
+
 		struct mfem_data residuals;
 		unsigned int iteration;
 		
