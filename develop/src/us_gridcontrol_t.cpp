@@ -1,5 +1,6 @@
 #include "../include/us_gridcontrol_t.h"
 #include "string.h"
+#include <sys/file.h>
 
 // this constructor is used for non-gui calls from the command line. It
 // reads an input file with all the details assigned from a web interface
@@ -474,6 +475,31 @@ void US_GridControl_T::write_experiment()
 
     QFile f(USglobal->config_list.result_dir + QString("/experiments%1.dat").arg(timestamp_string));
     cerr << "try to write experiment data for " << analysis_type << "\n";
+
+    {
+      char *US = getenv("ULTRASCAN");
+      char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
+      sprintf(lockfile, "%s/tigre.lock", US);
+      int lfd = open(lockfile, O_RDONLY);
+      flock(lfd, LOCK_EX);
+      int increment = 0;
+      while (f.open(IO_ReadOnly))
+      {
+	f.close();
+	increment++;
+	f.setName(USglobal->config_list.result_dir + QString("/experiments%1%2.dat").arg(timestamp_string).arg(increment));
+      }
+      f.close();
+      f.open(IO_WriteOnly);
+      f.close();
+      flock(lfd, LOCK_UN);
+      close(lfd);
+      if (increment) 
+      {
+	timestamp_string = QString("%1%2").arg(timestamp_string).arg(increment);
+      }
+    }
+	    
     if(f.open(IO_WriteOnly))
     {
         cerr << "write experiment data for " << analysis_type << "\n";
