@@ -576,7 +576,7 @@ while(1) {
 		$tigre_seq{$eprfile} = $seq;
 		$tigre_epr{$seq} = $eprfile;
 
-		print STDERR "$0: tigre_job_start $eprfile\n" if $debug;
+		print STDERR "$0: tigre_job_start SEQ=$seq $eprfile\n" if $debug;
 		foreach $i (keys %tigre) {
 #		    if($tigre{$i} =~ /[ meta]/) {
 #			print STDERR $tigre{$i} . `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
@@ -625,12 +625,12 @@ while(1) {
 	    }
 	    if($line =~ /^tigre_job_cancel (.*)$/) {
 		# cancel one job
-		$seq = $1;
+		my $cancel_seq = $1;
 		$valid++;
-		$eprfile = $tigre_epr{$seq};
+		$eprfile = $tigre_epr{$cancel_seq};
 		print STDERR "$0: tigre_job_cancel eprfile $eprfile\n";
 		if($eprfile) {
-		    &remove_status($status_file, $seq);
+		    &remove_status($status_file, $cancel_seq);
 		    &tigre_kill($eprfile);
 		    delete $tigre{$eprfile};
 		    delete $tigre_epr{$tigre_seq{$eprfile}};
