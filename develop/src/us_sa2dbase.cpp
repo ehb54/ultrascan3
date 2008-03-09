@@ -966,10 +966,10 @@ vector<double> SA2D::get_f_ratio() {
   return k;
 }
 
-static float Rb = 8.314e7;
-static float T = K20;
-static float eta = 0.01;
-static float N = 6.022e23;
+static float Rb  = 8.314e7;
+static float T   = (float) K20;
+static float eta = (float) 0.01;
+static float N   = (float) 6.022e23;
 static float rho = 1.0;
 
 static float D_calc(float s, float vbar, float k) {

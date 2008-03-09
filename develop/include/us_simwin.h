@@ -105,8 +105,18 @@ class US_EXTERN SimWin : public QWidget
 		MovieLegend_F *m_legend;
 		ScanLegend_F *s_legend;
 		vHW_Sim *vhw;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif    
+
 		vector <float> speedTimeV;
 		vector <unsigned int> speedV;
+
+#ifdef WIN32
+#pragma warning ( default: 4251 )
+#endif
+
 		SecondMoment *secm;
 		dCdT *dcdt;
 		dCdr *dcdr;
@@ -147,8 +157,18 @@ class US_EXTERN SimWin : public QWidget
 		~SimWin();
 		unsigned int comp;
 		int model;	// 1 = non-interacting, 2 = monomer-dimer, 3 = isomerization
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif    
+
 		vector <struct component> components;
 		vector <struct component> copy_components;
+
+#ifdef WIN32
+#pragma warning ( default: 4251 )
+#endif
+
 		struct simulation_parameters simparams;
 		bool simflag;
 		bool calc_flag;

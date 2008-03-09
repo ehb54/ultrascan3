@@ -15,7 +15,7 @@ US_Minimize::US_Minimize(bool *temp_fitting_widget, bool temp_GUI, QWidget *p, c
 	lambdaStart = 1.0e5;
 	lambdaStep = 10.0;
 	maxIterations = 1000;
-	tolerance = 1.0e-6;
+	tolerance =  (float) 1.0e-6;
 	nlsMethod = 0;
 	GUI = temp_GUI;
 	constrained = false;
@@ -1508,7 +1508,7 @@ for (unsigned int i=0; i<parameters; i++)
 						{
 							if (!dostep)
 							{
-								step = 0.01;
+								step =  (float) 0.01;
 							}
 							lambda = 0.0;
 							step *= 2.0;
@@ -1676,7 +1676,7 @@ void US_Minimize::update_nlsMethod(int item)
 		}
 		case 1:
 		{
-			lambdaStart = 1.0e-6;
+			lambdaStart =  (float) 1.0e-6;
 			lambdaStep = 2.0;
 			if (GUI)
 			{
@@ -2149,7 +2149,7 @@ float US_Minimize::linesearch(float **search, float f0)
 // then find an x1 in the middle between x0 and x2 and calculate f1(x1) and f2(x2), where
 // shift to the right
 // f is the residual of the function.
-	float x0 = 0.0, x1 = 0.5, x2 = 1.0, h = 0.01,xmin, fmin;
+	float x0 = 0.0, x1 =  (float) 0.5, x2 = 1.0, h =  (float) 0.01, xmin, fmin;
 	unsigned int iter = 0;
 //cout << "calling calc_testParameter from ctp1...\n";
 	float f1 = calc_testParameter(search, x1);

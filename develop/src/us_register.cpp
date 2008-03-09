@@ -154,7 +154,7 @@ bool US_Register::read()
 	lcfile.append(".uslicense");
 #endif
 #ifdef WIN32
-	lcfile = "C:\\Program\ Files\\Ultrascan\\etc\\uslicense";
+	lcfile = "C:/Program Files/Ultrascan/etc/uslicense";
 #endif
 	
 	QFile f(lcfile);	
@@ -496,13 +496,13 @@ QString US_Register::encode(QString str1, QString str2)
 	STR2 = str2.upper();
 	for(unsigned int i=0; i<STR1.length(); i++)
 	{
-		c = STR1[i];
+		c = STR1.at(i);
 		sum1 += c.unicode();	
 	}
 	SUM1 = QString::number(sum1);
 	for(unsigned int i=0; i<STR2.length(); i++)
 	{
-		c = STR2[i];
+		c = STR2.at(i);
 		sum2 += c.unicode();
 	}
 	SUM2 = QString::number(sum2);

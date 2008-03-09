@@ -8,9 +8,9 @@ US_Hydro1::US_Hydro1(QWidget *p, const char* name) : QDialog(p, name)
 	data_control = new Data_Control_W(101);
 	data_control->step=1;
 	data_control->run_inf.investigator=0;
-	data_control->density = DENS_20W;
-	data_control->viscosity = (100.0 * VISC_20W);
-	data_control->vbar20 = 0.72;
+	data_control->density   = (float) DENS_20W;
+	data_control->viscosity = (float) (100.0 * VISC_20W);
+	data_control->vbar20    =  (float) 0.72;
 	data_control->run_inf.avg_temperature = 20;
 	data_control->vbar = data_control->vbar20 + (4.25e-4 * (data_control->run_inf.avg_temperature - 20));
 	data_control->calc_correction(data_control->run_inf.avg_temperature);
@@ -25,9 +25,9 @@ US_Hydro1::US_Hydro1(struct hydrosim *temp_allparams, QWidget *p, const char* na
 	data_control = new Data_Control_W(101);
 	data_control->step=1;
 	data_control->run_inf.investigator=0;
-	data_control->density = DENS_20W;
-	data_control->viscosity = (100.0 * VISC_20W);
-	data_control->vbar20 = 0.72;
+	data_control->density   =  (float) DENS_20W;
+	data_control->viscosity =  (float) (100.0 * VISC_20W);
+	data_control->vbar20    =  (float) 0.72;
 	data_control->run_inf.avg_temperature = 20;
 	data_control->vbar = data_control->vbar20 + (4.25e-4 * (data_control->run_inf.avg_temperature - 20));
 	data_control->calc_correction(data_control->run_inf.avg_temperature);
@@ -551,7 +551,7 @@ void US_Hydro1::update_ratio_lbl(const QString &str)
 	if (ratio < 1.1)
 	{
 		lbl_text->setText(tr("Attention:\n\nThe lower axial ratio limit is 1.1!"));
-		ratio = 1.1;
+		ratio =  (float) 1.1;
 	}
 	if (ratio >= 6.0 && ratio <=100)
 	{
@@ -891,7 +891,7 @@ US_Hydro2::US_Hydro2(QWidget *p, const char* name) : QFrame(p, name)
 	data_control = new Data_Control_W(0);
 	data_control->step=1;
 
-	data_control->density = DENS_20W;
+	data_control->density =  (float) DENS_20W;
 	pb_density = new QPushButton(tr("Density:"), this);
 	Q_CHECK_PTR(pb_density);
 	pb_density->setAutoDefault(false);
@@ -914,7 +914,7 @@ US_Hydro2::US_Hydro2(QWidget *p, const char* name) : QFrame(p, name)
 	ypos += height + spacing;
 	xpos = 5;	
 
-	data_control->viscosity = (100.0 * VISC_20W);
+	data_control->viscosity =  (float) (100.0 * VISC_20W);
 	pb_viscosity = new QPushButton(tr("Viscosity:"), this);
 	Q_CHECK_PTR(pb_viscosity);
 	pb_viscosity->setAutoDefault(false);
@@ -944,7 +944,7 @@ US_Hydro2::US_Hydro2(QWidget *p, const char* name) : QFrame(p, name)
 	connect(pb_vbar, SIGNAL(clicked()), data_control, SLOT(read_vbar()));
 	xpos += width + spacing;
 
-	data_control->vbar20 = 0.72;
+	data_control->vbar20 =  (float) 0.72;
 	le_vbar = new QLineEdit(this);
 	le_vbar->setGeometry(xpos, ypos, (unsigned int) width/2, height);
 	le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));

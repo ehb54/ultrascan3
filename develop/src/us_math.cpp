@@ -693,7 +693,7 @@ void calc_vbar(struct peptide *pep, QString *sequence, float *temperature)
 	pep->vbar = ((pep->weight / pep->mw) + 4.25e-4 * (*temperature - 25));
 
 //add one water:
-	pep->mw += 18.01;
+	pep->mw +=  (float) 18.01;
 }
 
 float adjust_vbar20(float vbar20, float temperature)

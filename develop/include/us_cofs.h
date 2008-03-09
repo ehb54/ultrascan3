@@ -46,12 +46,22 @@ class  US_EXTERN US_CofS_W : public Data_Control_W
 		bool fit_status, fit_ff0, fit_posBaseline, fit_negBaseline;
 		double bottom, top;
 		unsigned int resolution;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <double> s_distribution;
 		vector <double> D_distribution;
 		vector <double> frequency;
 		vector <double> s20w;
 		vector <double> D20w;
 		vector <double> mw;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
 		struct mfem_data residuals;
 		float f_f0;
 		unsigned int iteration;

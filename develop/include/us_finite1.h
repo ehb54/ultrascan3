@@ -36,6 +36,11 @@ class US_EXTERN US_Finite_W : public Data_Control_W
 		US_VelocModelControl *model_control;
 		US_Fefit_FitControl *fit_control;
 		US_Pixmap *pm;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+    
 		vector <struct fefit_component> component_vector;
 		fefit_run *run_vector;
 		vector <struct rotorInfo> rotor_list;
@@ -61,9 +66,16 @@ class US_EXTERN US_Finite_W : public Data_Control_W
 
 // Finite Element variables:
 
-		Q_UINT16 sim_points;			// number of radial points/scan in the simulation ('points' is for raw data)
+		Q_UINT16 sim_points;			// number of radial points/scan in the simulation 
+                              // ('points' is for raw data)
 		struct mfem_initial initCvector; // initial concentration vector
-		vector <float> vbar_model;	// vbar array containing all vbar20's for a current cell and current channel
+		vector <float> vbar_model;	// vbar array containing all vbar20's for a current 
+                                //cell and current channel
+                                
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
 		float *sim_radius;			// radius positions used in the simulation
 		float *c_current;				// temporary holding variable for current concentration for conc. dep. calculation
 		float *cu, *cv, *cw;			// concentration dependency of diffusion

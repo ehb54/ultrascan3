@@ -267,7 +267,7 @@ QWidget *parent, const char *name) : QFrame(parent, name)
 
 	xpos += column2 + spacing;
 
-	(*fef_run)->slope_range = 0.001;
+	(*fef_run)->slope_range = (float) 0.001;
 	le_slope_range = new QLineEdit(this);
 	le_slope_range->setGeometry(xpos, ypos, column3, buttonh-1);
 	le_slope_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -330,7 +330,7 @@ QWidget *parent, const char *name) : QFrame(parent, name)
 
 	xpos += column2 + spacing;
 
-	(*fef_run)->stray_range = 0.001;
+	(*fef_run)->stray_range = (float) 0.001;
 	le_stray_range = new QLineEdit(this);
 	le_stray_range->setGeometry(xpos, ypos, column3, buttonh-1);
 	le_stray_range->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -2292,21 +2292,21 @@ void US_VelocModelControl::reset()
 
 // Run parameters:
 
-	(*fef_run)->meniscus = meniscus;
-	(*fef_run)->meniscus_range = 0.003;
-	(*fef_run)->meniscus_fit = false;
-	(*fef_run)->baseline = baseline;
-	(*fef_run)->baseline_range = 0.05;
-	(*fef_run)->baseline_fit = true;
-	(*fef_run)->slope = 0.0;
-	(*fef_run)->slope_range = 0.001;
-	(*fef_run)->slope_fit = true;
-	(*fef_run)->stray = 0.0;
-	(*fef_run)->stray_range = 0.001;
-	(*fef_run)->stray_fit = true;
-	(*fef_run)->delta_t = 20.0;
-	(*fef_run)->delta_r = 0.001;
-	(*fef_run)->sim_points = 100;
+	(*fef_run)->meniscus       = meniscus;
+	(*fef_run)->meniscus_range = (float) 0.003;
+	(*fef_run)->meniscus_fit   = false;
+	(*fef_run)->baseline       = baseline;
+	(*fef_run)->baseline_range = (float) 0.05;
+	(*fef_run)->baseline_fit   = true;
+	(*fef_run)->slope          = 0.0;
+	(*fef_run)->slope_range    = (float) 0.001;
+	(*fef_run)->slope_fit      = true;
+	(*fef_run)->stray          = 0.0;
+	(*fef_run)->stray_range    = (float) 0.001;
+	(*fef_run)->stray_fit      = true;
+	(*fef_run)->delta_t        = 20.0;
+	(*fef_run)->delta_r        = (float) 0.001;
+	(*fef_run)->sim_points     = (float) 100;
 
 	
 // concentration:
@@ -2386,10 +2386,10 @@ void US_VelocModelControl::reset()
 
 void US_VelocModelControl::reset_range()
 {
-	(*fef_run)->meniscus_range = 0.003;
-	(*fef_run)->baseline_range = 0.05;
-	(*fef_run)->slope_range = 0.001;
-	(*fef_run)->stray_range = 0.001;
+	(*fef_run)->meniscus_range = (float) 0.003;
+	(*fef_run)->baseline_range = (float) 0.05;
+	(*fef_run)->slope_range    = (float) 0.001;
+	(*fef_run)->stray_range    = (float) 0.001;
 
 	for (int i=0; i<components; i++)
 	{

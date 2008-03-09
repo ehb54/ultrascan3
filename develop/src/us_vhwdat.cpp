@@ -380,8 +380,9 @@ void vhw_dat_W::getAnalysisPlotMouseReleased(const QMouseEvent &e)
 					group_percent[groups-1] = ((float) count/ (float) divisions) * 100;
 					if (group_percent[groups-1] != 0)
 					{
-						str.sprintf(tr("Group %d: %6.2fs (%5.2f"), groups, group_sval[groups-1], group_percent[groups-1]);
-						str += "\%)";
+						str.sprintf(tr("Group %d: %6.2fs (%5.2f"), groups, group_sval[groups-1], 
+                group_percent[groups-1]);
+						str += "%)";
 						sval_label[groups-1] = analysis_plot->insertMarker();
 						analysis_plot->setMarkerLabelAlign(sval_label[groups-1], AlignRight);
 						analysis_plot->setMarkerLabel(sval_label[groups-1], str);

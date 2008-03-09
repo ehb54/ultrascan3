@@ -61,7 +61,15 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		US_AddAtom *addAtom;
 		US_AddResidue *addResidue;
 		
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <struct model> model_vector;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
 	private slots:
 		void load_pdb();

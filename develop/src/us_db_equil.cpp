@@ -453,7 +453,7 @@ void US_DB_Equil::endCompressProcess()
 			cmd.append("-cvf");
 			cmd.append(tarfile);
 #ifdef WIN32
-			QString filter=run_id + "\*";
+			QString filter=run_id + "*";
 			cmd.append(filter);
 #endif
 #ifdef UNIX

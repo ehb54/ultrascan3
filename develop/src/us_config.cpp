@@ -42,7 +42,7 @@ bool US_Config::write_default_colors()
    colfile.append(".uscolors");
 #endif
 #ifdef WIN32
-   colfile.append("Program\ Files\\ultrascan\\etc\\uscolors");
+   colfile.append("Program Files/ultrascan/etc/uscolors");
 #endif
    QFile f(colfile);
    color_defaults();
@@ -131,7 +131,7 @@ bool US_Config::col_exists()
 	colfile.append(".uscolors");
 #endif
 #ifdef WIN32
-	colfile.append("Program\ Files\\ultrascan\\etc\\uscolors");
+	colfile.append("Program Files/ultrascan/etc/uscolors");
 #endif
 	QFile f(colfile);
 	if(f.open(IO_ReadOnly))
@@ -412,15 +412,15 @@ void US_Config::setDefault()
 #endif
 #ifdef WIN32
 	//config_list.browser = "C:\\Program\ Files\\Netscape\\Netscape\ 6\\netscp6.exe";
-  	config_list.browser = "C:\\Program\ Files\\Internet\ Explorer\\IEXPLORE.EXE";
-	config_list.tar = "C:\\Program\ Files\\Ultrascan\\bin\\tar.exe";
-	config_list.gzip = "C:\\Program\ Files\\Ultrascan\\bin\\gzip.exe";
+  	config_list.browser = "C:/Program Files/Internet Explorer/IEXPLORE.EXE";
+	config_list.tar = "C:/Program Files/Ultrascan/bin/tar.exe";
+	config_list.gzip = "C:/Program Files/Ultrascan/bin/gzip.exe";
 	config_list.system_dir = getenv("ULTRASCAN");
 	if (config_list.system_dir.isEmpty())
 	{
-		config_list.system_dir = "C:\\Program\ Files\\Ultrascan";
+		config_list.system_dir = "C:/Program Files/Ultrascan";
 	}
-	config_list.help_dir = config_list.system_dir + "\\doc";
+	config_list.help_dir = config_list.system_dir + "/doc";
 	config_list.root_dir = home;
 	config_list.root_dir.append("us");
 	config_list.data_dir = config_list.root_dir + "/data";
@@ -444,7 +444,7 @@ bool US_Config::read()
 	rcfile.append("/.usrc");
 #endif
 #ifdef WIN32
-	rcfile.append("Program\ Files\\ultrascan\\etc\\usrc");
+	rcfile.append("Program Files/ultrascan/etc/usrc");
 #endif
 	QFile f(rcfile);
 	if (f.exists())

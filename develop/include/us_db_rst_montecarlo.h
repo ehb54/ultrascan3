@@ -37,7 +37,16 @@ class US_EXTERN US_DB_RST_Montecarlo : public US_DB
 		QProgressDialog *pd;
 		QProcess *compress_proc;
 
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <QString> parameter_name;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
 		QString fileName, parameterFile, projectName, htmlDir, baseName, dirName, indexFile;
 		QString *item_projectName;
 		int investigatorID;

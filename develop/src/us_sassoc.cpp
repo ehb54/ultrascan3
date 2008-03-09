@@ -472,7 +472,7 @@ void US_Sassoc::write_data()
 	if(f.open(IO_WriteOnly | IO_Translate))
 	{
 		QTextStream ts(&f);
-		ts << tr("\"Total Concentration\"\t\"\% Monomer\"\t\"\% ") << stoich[0] << "-mer\"\t\"\% " 
+		ts << tr("\"Total Concentration\"\t\"% Monomer\"\t\"% ") << stoich[0] << "-mer\"\t\"% " 
 		<< stoich[1] << "-mer\"\t\"\n";
 		unsigned int i;
 		for (i=0; i<ARRAY_SIZE; i++)

@@ -675,7 +675,7 @@ void US_Cell_DB::update_buffer_lbl(int BuffID)
 */
 void US_Cell_DB::sel_vbar1()
 {
-	float vbar = .72, temp = 20, vbar20 = .72;
+	float vbar = (float) 0.72, temp = 20, vbar20 = (float) 0.72;
 	US_Vbar_DB *vbar1_dlg;
 	vbar1_dlg = new US_Vbar_DB(temp, &vbar, &vbar20, true, from_cell, cell_info.InvID);
 	vbar1_dlg->setCaption("Peptide 1 Information");
@@ -688,7 +688,7 @@ void US_Cell_DB::sel_vbar1()
 */
 void US_Cell_DB::sel_vbar2()
 {
-	float vbar = .72, temp = 20, vbar20 = .72;
+	float vbar = (float) 0.72, temp = 20, vbar20 = (float) 0.72;
 	US_Vbar_DB *vbar2_dlg;
 	vbar2_dlg = new US_Vbar_DB(temp, &vbar, &vbar20, true, from_cell, cell_info.InvID);
 	vbar2_dlg->setCaption("Peptide 2 Information");
@@ -701,7 +701,7 @@ void US_Cell_DB::sel_vbar2()
 */
 void US_Cell_DB::sel_vbar3()
 {
-	float vbar = .72, temp = 20, vbar20 = .72;
+	float vbar = (float) 0.72, temp = 20, vbar20 = (float) 0.72;
 	US_Vbar_DB *vbar3_dlg;
 	vbar3_dlg = new US_Vbar_DB(temp, &vbar, &vbar20, true, from_cell, cell_info.InvID);
 	vbar3_dlg->setCaption("Peptide 3 Information");

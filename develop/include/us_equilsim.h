@@ -30,8 +30,17 @@
 
 struct xlaScan
 {
-	vector <float> radius, absorbance, sigma;
-	QString mode;
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+  vector <float> radius, absorbance, sigma;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
+  QString mode;
 	float temperature, omega;
 	unsigned int speed, lambda, averages, time;
 };
@@ -48,7 +57,20 @@ class US_EXTERN US_EquilSim : public QFrame
 		QString fileName;
 		unsigned int components;
 		int model;
-		vector <struct xlaScan> scans;
+		
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+    vector <struct xlaScan> scans;
+		vector <float> mw, concentration, vbar20, extinction;
+		vector <float> concs, od, bin, frequency;
+		vector <unsigned int> speeds;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
 		unsigned int species, current_species, conc_steps, speed_start;
 		unsigned int speed_stop, speed_steps, datapoints, bin_number;
 		bool assoc1, assoc2, assoc3, export_format;  // true for ultrascan
@@ -58,9 +80,6 @@ class US_EXTERN US_EquilSim : public QFrame
 		float equil1, equil2, equil3, baseline, conc_increment, max_od;
 		float pathlength, meniscus, delta_r, noise, nonlin_noise, lambda;
 		float density, temperature, column, bottom;
-		vector <float> mw, concentration, vbar20, extinction;
-		vector <float> concs, od, bin, frequency;
-		vector <unsigned int> speeds;
 		QLabel *lbl_model;
 		QLabel *lbl_blank1,*lbl_blank2,*lbl_blank3,*lbl_blank4;
 		QLabel *lbl_species;

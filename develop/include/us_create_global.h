@@ -19,7 +19,16 @@ extern int global_Ypos;
 struct single_distro
 {
 	QString name;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 	vector <QString> line;
+
+#ifdef WIN32
+#pragma warning ( default: 4251 )
+#endif
 };
 
 class US_EXTERN US_CreateGlobal : public QFrame
@@ -31,8 +40,18 @@ class US_EXTERN US_CreateGlobal : public QFrame
 		~US_CreateGlobal();
 
 	private:
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <struct single_distro> distro;
-		QLabel *lbl_info;
+		
+#ifdef WIN32
+#pragma warning ( default: 4251 )
+#endif
+
+    QLabel *lbl_info;
 		QListBox *lb_distro;
 		QPushButton *pb_add;
 		QPushButton *pb_reset;

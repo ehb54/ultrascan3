@@ -128,8 +128,18 @@ class US_EXTERN US_DMA60 : public QWidget
 		double temperature, constant, T_air, T_water, T_sample, pressure, concentration;
 		float conc_limit_low, conc_limit_high, select_conc, select_density;
 		bool k_changed, density_changed; // keep track of it if need to be saved
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <struct dma_constant> dma;
 		vector <struct measurement> recording;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
 		QString description, units;
 
 	protected slots:

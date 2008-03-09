@@ -10,7 +10,10 @@ class US_GAModelEditor : public US_ModelEditor
 	Q_OBJECT
 	
 	public:
-		US_GAModelEditor(struct ModelSystem *, struct ModelSystemConstraints *, QWidget *parent=0, const char *name=0);
+		US_GAModelEditor(struct ModelSystem*, 
+//                     struct ModelSystemConstraints*, 
+                     QWidget*    parent  = 0, 
+                     const char* name = 0 );
 		~US_GAModelEditor();
 
 	private slots:

@@ -175,7 +175,7 @@ void EditFloVeloc_Win::get_x(const QMouseEvent &e)
 			filename = USglobal->config_list.result_dir.copy();
 			filename.append("/");
 			filename.append(run_inf.run_id);
-			run_inf.delta_r = 0.001;
+			run_inf.delta_r = (float) 0.001;
 			str.sprintf(".veloc.%d%d",cell+1, lambda+1);
 			filename.append(str);
 			QFile f(filename);

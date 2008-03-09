@@ -340,7 +340,11 @@ void US_EditWavelengthScan::saveScan()
 		{
 			str1.sprintf("%d.wa", currentScan + 1);
 		}
-		filename = target + str1 + WavelengthFile[currentScan].filename[WavelengthFile[currentScan].filename.length() - 1];
+
+    int last = WavelengthFile[currentScan].filename.length() - 1;
+
+		filename = target + str1 + 
+      WavelengthFile[currentScan].filename[last];
 	}
 	else
 	{

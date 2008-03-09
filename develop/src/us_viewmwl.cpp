@@ -9,23 +9,23 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
 	progress = new QProgressBar(this, "File Processing Progress");
 	progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-	max_lambda = 800.0;
-	max_time = 1;
-	max_radius = 7.3;
-	min_lambda = 200.0;
-	min_time = 1;
-	min_radius = 5.8;
-	average = 1;
-	view_mode = true; //  plot 2D by default
-	export_mode = false; // plot radius by default
-	file_format = true; // load ASCII data by default
-	current_cell = 0; //select cell 1 by default
-	current_channel = 0; //select channel 1 by default
-	measurement_mode = 0; //select absorbance by default
-	widget3d_flag = false;
-	pngs = false;
-	loading = true;
-	pm = new US_Pixmap();
+	max_lambda       = 800.0;
+	max_time         = 1;
+	max_radius       = (float) 7.3;
+	min_lambda       = 200.0;
+	min_time         = 1;
+	min_radius       = (float) 5.8;
+	average          = 1;
+	view_mode        = true;    // plot 2D by default
+	export_mode      = false;   // plot radius by default
+	file_format      = true;    // load ASCII data by default
+	current_cell     = 0;       // select cell 1 by default
+	current_channel  = 0;       // select channel 1 by default
+	measurement_mode = 0;       // select absorbance by default
+	widget3d_flag    = false;
+	pngs             = false;
+	loading          = true;
+	pm               = new US_Pixmap();
 
 	lbl_info = new QLabel(tr("Multiwavelength Data Viewer"), this);
 	Q_CHECK_PTR(lbl_info);
@@ -436,11 +436,11 @@ void US_ViewMWL::load()
 							fval = str1.toFloat();
 							if (fval > 3.27) //make sure it fits into a short
 							{
-								fval = 3.27;
+								fval = (float) 3.27;
 							}
 							if (fval < -3.27)
 							{
-								fval = -3.27;
+								fval = (float) -3.27;
 							}
 							max_od = max(max_od, fval);
 							min_od = min(min_od, fval);

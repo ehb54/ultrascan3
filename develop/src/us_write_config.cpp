@@ -82,7 +82,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 #endif
 #ifdef WIN32
 	rcfile = "C:\\";
-	rcfile.append("\\Program\ Files\\Ultrascan\\etc\\usrc");
+	rcfile.append("\\Program Files\\Ultrascan\\etc\\usrc");
 #endif
 	QFile f(rcfile);
 	QTextStream ts (&f);

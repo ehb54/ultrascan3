@@ -21,8 +21,17 @@ class US_EXTERN US_Report_MonteCarlo : public QWidget
 
 	private:
 		US_Config *USglobal;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <QString> parameter_name;
 	
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
 	public slots:
 		void generate(QString);	
 	private slots:

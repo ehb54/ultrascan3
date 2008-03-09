@@ -482,7 +482,7 @@ void US_Vbar_DB::update_vbar()
 		}
 		else
 		{
-			pep.vbar = 0.72;
+			pep.vbar = (float) 0.72;
 			lbl_vbar2->setText(test.sprintf("%7.5f ccm/g", pep.vbar));
 	//		emit valueChanged(pep.vbar, pep.vbar20);
 		}

@@ -412,7 +412,7 @@ void US_DB_Sample::view_buff()
 
 void US_DB_Sample::view_pep()
 {
-	float vbar = .72, temp = 20, vbar20 = .72;
+	float vbar = (float) 0.72, temp = 20, vbar20 = (float) 0.72;
 	US_Vbar_DB *vbar_dlg;
 	vbar_dlg = new US_Vbar_DB(temp, &vbar, &vbar20, true, false, InvID);
 	vbar_dlg->setCaption("Peptide Information");

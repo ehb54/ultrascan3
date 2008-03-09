@@ -406,7 +406,7 @@ void US_DB_RST_EquilProject::endCompressProcess()
 			cmd.append("-cvf");
 			cmd.append(tarfile);
 #ifdef WIN32
-			QString filter=projectName + "\*";
+			QString filter=projectName + "/*";
 			cmd.append(filter);
 #endif
 #ifdef UNIX

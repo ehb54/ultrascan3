@@ -11,8 +11,17 @@
 
 struct opticalProfile
 {
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 	vector <float> absorbance;
 	vector <float> residual;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 };
 
 class US_EXTERN US_EqFitter : public US_Minimize
@@ -29,19 +38,29 @@ class US_EXTERN US_EqFitter : public US_Minimize
 		
 		struct opticalProfile profile_230, profile_280, profile_220, profile_215, profile_210;
 		struct opticalProfile profile_208, profile_205, profile_260, profile_262;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <struct EquilScan_FitProfile> *scanfit_vector;
 		vector <struct runinfo> *run_information;
 		vector <struct rotorInfo> rotor_list;
 		vector <struct centerpieceInfo> cp_list;
 		vector <unsigned int> logpoints_per_dataset;
 		vector <float> mwpoints;
-		struct EquilRun_FitProfile *runfit;
+		vector <QString> *scan_info;
+		
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+    
+    struct EquilRun_FitProfile *runfit;
 		class US_EqModelControl **model_control;
 		US_Sassoc *sas_w;
 		US_Pixmap *pm;
 		unsigned int first_fitted_scan;
 		QString *projectName;
-		vector <QString> *scan_info;
 		US_Editor *e;
 		double **lncr2, **dcr2, **dlncr2;
 		bool GUI, print_plot, initialized_1, initialized_2;

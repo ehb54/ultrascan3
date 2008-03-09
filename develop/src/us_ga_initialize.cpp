@@ -613,7 +613,8 @@ void US_GA_Initialize::shrink()
 	plot->enableGridYMin(true);
 	plot->enableGridX(true);
 	plot->enableGridY(true);
-	list <struct Solute>::iterator sol_it;
+	//list <struct Solute>::iterator sol_it;
+	list <Solute>::iterator sol_it;
 	vector <struct SimulationComponent>::iterator comp_it;
 	initial_solutes = GA_Solute.size();
 	cnt_initial_solutes->disconnect();
@@ -950,8 +951,8 @@ void US_GA_Initialize::load_distro()
 //				cout << temp1 << ", ";
 				ts >> temp1; // s_20,W
 //				cout << temp1 << ", ";
-				temp_component.s = temp1;
-				temp1 *= 1.0e13; // change to proper scale
+				temp_component.s = (float) temp1;
+				temp1 *= (float) 1.0e13; // change to proper scale
 				ts >> temp2; // D_apparent
 //				cout << temp2 << ", ";
 				ts >> temp2; // D_20,W
@@ -1063,7 +1064,8 @@ void US_GA_Initialize::load_distro()
 		connect(cnt_k_range, SIGNAL(valueChanged(double)), SLOT(update_k_range(double)));
 	}
 	double smin=1.0e30, smax=-1.0e30, fmin=1.0e30, fmax=-1.0e30;
-	list <struct Solute>::iterator iter;
+	//list <struct Solute>::iterator iter;
+	list <Solute>::iterator iter;
 	for (iter = distro_solute.begin(); iter != distro_solute.end(); iter++)
 	{
 		smin = min(smin, (double) (*iter).s);
@@ -1095,7 +1097,8 @@ void US_GA_Initialize::load_distro()
 	x = new double [distro_solute.size()];
 	y = new double [distro_solute.size()];
 	i = 0;
-	list <struct Solute>::iterator j;
+	//list <struct Solute>::iterator j;
+	list <Solute>::iterator j;
 	for (j = distro_solute.begin(); j != distro_solute.end(); j++)
 	{
 		x[i] = (*j).s;
@@ -1144,7 +1147,8 @@ void US_GA_Initialize::plot_1dim()
 	unsigned int curve, i;
 	x = new double [distro_solute.size()];
 	y = new double [distro_solute.size()];
-	list <struct Solute>::iterator j;
+	//list <struct Solute>::iterator j;
+	list <Solute>::iterator j;
 	i = 0;
 	for (j = distro_solute.begin(); j != distro_solute.end(); j++)
 	{
@@ -1194,7 +1198,8 @@ void US_GA_Initialize::plot_2dim()
 	double *x, *y;
 	x = new double [distro_solute.size()];
 	y = new double [distro_solute.size()];
-	list <struct Solute>::iterator sol_it;
+	//list <struct Solute>::iterator sol_it;
+	list <Solute>::iterator sol_it;
 	unsigned int j=0;
 	for (sol_it = distro_solute.begin(); sol_it != distro_solute.end(); sol_it++)
 	{
@@ -1344,7 +1349,7 @@ void US_GA_Initialize::plot_3dim()
 	double *xval, *yval;
 	xval = new double [x_resolution*y_resolution];
 	yval = new double [x_resolution*y_resolution];
-	list <struct Solute>::iterator iter;
+	list <Solute>::iterator iter;
 	for (iter = distro_solute.begin(); iter != distro_solute.end(); iter++)
 	{
 		smin = min(smin, (double) (*iter).s);
@@ -1783,7 +1788,7 @@ void US_GA_Initialize::assign_peaks()
 		QString str;
 		float integral=0.0, range, temp, sum;
 		unsigned int i, j;
-		list <struct Solute>::iterator j1, j2, j3;
+		list <Solute>::iterator j1, j2, j3;
 		for (j1 = distro_solute.begin(); j1 != distro_solute.end(); j1++)
 		{
 			integral += (*j1).c;
@@ -1805,7 +1810,7 @@ void US_GA_Initialize::assign_peaks()
 		temp = (*j1).s - range;
 		if (temp < 0)
 		{
-			temp = 1.0e-16;
+			temp =  (float) 1.0e-16;
 		}
 		j3 = distro_solute.begin();
 		GA_Solute.resize(initial_solutes);
@@ -1919,14 +1924,14 @@ void US_GA_Initialize::update_initial_solutes(double val)
 void US_GA_Initialize::calc_distro()
 {
 	GA_Solute.clear();
-	struct bucket temp_bucket;
-	struct bucket temp_bucket2;
-	list <struct bucket> storage;
+	bucket temp_bucket;
+	bucket temp_bucket2;
+	list <bucket> storage;
 	int index1, index2;
 	distro_solute.sort();
-	vector <class bucket>::iterator i;
-	list <struct Solute>::iterator j;
-	list <class bucket>::iterator k;
+	vector <bucket>::iterator i;
+	list <Solute>::iterator j;
+	list <bucket>::iterator k;
 
 	j = distro_solute.begin();
 	k = storage.begin();
@@ -1935,7 +1940,7 @@ void US_GA_Initialize::calc_distro()
 	temp_bucket.s_min = temp_bucket.s - s_range;
 	if (temp_bucket.s_min < 0.1)
 	{
-		temp_bucket.s_min = 0.1;
+		temp_bucket.s_min =  (float) 0.1;
 	}
 	temp_bucket.s_max = temp_bucket.s + s_range;
 	temp_bucket.ff0 = (*j).k;
@@ -1966,7 +1971,7 @@ void US_GA_Initialize::calc_distro()
 		temp_bucket.s_min		= (*j).s - s_range;
 		if (temp_bucket.s_min < 0.1)
 		{
-			temp_bucket.s_min = 0.1;
+			temp_bucket.s_min =  (float) 0.1;
 		}
 		temp_bucket.s_max		= (*j).s + s_range;
 		temp_bucket.ff0 		= (*j).k;
@@ -2034,7 +2039,7 @@ void US_GA_Initialize::calc_distro()
 				temp_bucket2.s_min	= temp_bucket.s_min;
 				if (temp_bucket2.s_min < 0.1)
 				{
-					temp_bucket2.s_min = 0.1;
+					temp_bucket2.s_min =  (float) 0.1;
 				}
 				temp_bucket2.s_max	= (*i).s_max;
 				temp_bucket2.s			= temp_bucket2.s_min + (temp_bucket2.s_max - temp_bucket2.s_min)/2.0;
@@ -2063,7 +2068,7 @@ void US_GA_Initialize::calc_distro()
 				temp_bucket2.s_min	= temp_bucket.s_min;
 				if (temp_bucket2.s_min < 0.1)
 				{
-					temp_bucket2.s_min = 0.1;
+					temp_bucket2.s_min =  (float) 0.1;
 				}
 				temp_bucket2.s_max	= (*i).s_max;
 				temp_bucket2.s			= temp_bucket2.s_min + (temp_bucket2.s_max - temp_bucket2.s_min)/2.0;
@@ -2100,7 +2105,7 @@ void US_GA_Initialize::calc_distro()
 				temp_bucket2.s_min	= temp_bucket.s_min;
 				if (temp_bucket2.s_min < 0.1)
 				{
-					temp_bucket2.s_min = 0.1;
+					temp_bucket2.s_min =  (float) 0.1;
 				}
 				temp_bucket2.s_max	= (*i).s_max;
 				temp_bucket2.s			= temp_bucket2.s_min + (temp_bucket2.s_max - temp_bucket2.s_min)/2.0;
@@ -2118,7 +2123,7 @@ void US_GA_Initialize::calc_distro()
 				temp_bucket2.s_min	= temp_bucket.s_min;
 				if (temp_bucket2.s_min < 0.1)
 				{
-					temp_bucket2.s_min = 0.1;
+					temp_bucket2.s_min =  (float) 0.1;
 				}
 //cerr << "Case 8a: " << temp_bucket2.s_min << ", " << temp_bucket2.s_max << " -- "  << temp_bucket2.ff0_min << ", " << temp_bucket2.ff0_max << "\n";
 //cerr << "         " << (*i).s_min << ", " << (*i).s_max << " -- "  << (*i).ff0_min << ", " << (*i).ff0_max << "\n\n";
@@ -2143,7 +2148,7 @@ void US_GA_Initialize::calc_distro()
 			}
 			if (temp_bucket.s_min < 0.1)
 			{
-				temp_bucket.s_min = 0.1;
+				temp_bucket.s_min =  (float) 0.1;
 			}
 			if (temp_bucket.ff0_min < 1.0)
 			{
@@ -2272,7 +2277,7 @@ void US_GA_Initialize::edit_solute(int index)
 void US_GA_Initialize::getMouseReleased(const QMouseEvent &e)
 {
 	QString str;
-	struct bucket temp_solute;
+	bucket temp_solute;
 	if (zoom)
 	{
 		p2.x = plot->invTransform(QwtPlot::xBottom, e.x());
@@ -2689,8 +2694,8 @@ QString US_GA_Initialize::calc_stats(struct MonteCarloStats *stats, vector <doub
 	unsigned int i, j, points, bins=50;
 	double *xplot, *yplot;
 	double intercept, slope, sigma, corr;
-	(*stats).low = 9.9e30;
-	(*stats).high = -9.9e30;
+	(*stats).low  =  (float)  9.9e30;
+	(*stats).high =  (float) -9.9e30;
 	(*stats).area = val.size();
 	(*stats).points = val.size();
 	xplot = new double [(*stats).points];

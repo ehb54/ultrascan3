@@ -28,6 +28,10 @@
 extern int global_Xpos;
 extern int global_Ypos;
 
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 struct intensity_scan
 {
 	QString header2;
@@ -58,8 +62,8 @@ class US_EXTERN US_PseudoAbs : public QFrame
 		int scan_count[8];
 		struct vertex p1, p2;
 		vector <double> average;
-		QString directory, extension, extension1, extension2;
 		vector <struct intensity_cell> icell;
+		QString directory, extension, extension1, extension2;
 
 		QLabel *absorbance;
 		QLabel *interference;
@@ -110,6 +114,10 @@ class US_EXTERN US_PseudoAbs : public QFrame
 		void help();
 		void quit();
 };
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
 #endif
 

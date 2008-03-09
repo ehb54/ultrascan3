@@ -44,13 +44,24 @@ class US_EXTERN US_Minimize : public QFrame
 		int nlsMethod, return_value;
 		unsigned int plotGroup;
 // plotgroup = 0 means plot all scans, plotGroup=1 means plot 1 scan, plotGroup=5 means plot 5
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <unsigned int> points_per_dataset;
+
+#ifdef WIN32
+#pragma warning ( default: 4251 )
+#endif
+
 		bool *fitting_widget, plotResiduals, showGuiFit, GUI, constrained;
 		bool autoconverge;
 		bool suspend_flag, aborted, converged, completed, first_plot, init_simulation;
 		float *y_raw;
 		float lambdaStart, lambdaStep, runs_percent, variance, tolerance;
-		double **LL_transpose, *B, *y_guess, **jacobian, *guess,  *test_guess, **information_matrix, *y_delta;
+		double **LL_transpose, *B, *y_guess, **jacobian, *guess,  *test_guess, 
+           **information_matrix, *y_delta;
 		int buttonh;
 
 		US_Config *USglobal;

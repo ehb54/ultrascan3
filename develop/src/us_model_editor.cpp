@@ -738,7 +738,7 @@ void US_ModelEditor::load_model(const QString &fileName)
 					return;
 				}
 				(*system).component_vector[i].delta = str.toFloat();
-				(*system).component_vector[i].vbar20 = 0.72;
+				(*system).component_vector[i].vbar20 =  (float) 0.72;
 				(*system).component_vector[i].extinction = 1.0;
 				(*system).component_vector[i].name = str.sprintf("Component %d", i+1);
 				

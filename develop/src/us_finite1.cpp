@@ -296,7 +296,7 @@ void US_Finite_W::second_plot()
 	mc.percent_gaussian = 50;
 	mc.parameters = 1;
 	mc.parameterNoise = 8.0;	// add noise to the parameter value with a STDD of 10 percent of absolute parameter value
-	mc.varianceThreshold = 1.0e-4;
+	mc.varianceThreshold = (float) 1.0e-4;
 	mc.addNoise = 0; // use parameters from previous fit as initial guess
 	str.sprintf(tr("%d: Variance"), mc.parameters);
 	mc.parameter.push_back(str);
@@ -1317,7 +1317,7 @@ void US_Finite_W::dud()
 			}
 			theta[parameters+1][i] += theta[parameters][i];
 		}
-		d = 0.1;
+		d = (float) 0.1;
 		for (i=0; i<parameters; i++)
 		{
 			theta[parameters+1][i] = d * theta[parameters+1][i] + (1.0 - d) * theta[parameters][i];
@@ -2266,8 +2266,8 @@ void US_Finite_W::update_simulation_parameters_unconstrained(const unsigned int 
 			component_vector[k].diff = theta[i][parameter_count];
 			if (component_vector[k].diff < 5.0e-10)
 			{
-				component_vector[k].diff = 5.0e-10;
-				theta[i][parameter_count] = 5.0e-10;
+				component_vector[k].diff  = (float) 5.0e-10;
+				theta[i][parameter_count] = (float) 5.0e-10;
 			}
 			parameter_count++;
 		}
@@ -2276,8 +2276,8 @@ void US_Finite_W::update_simulation_parameters_unconstrained(const unsigned int 
 			component_vector[k].conc = theta[i][parameter_count];
 			if (component_vector[k].conc < 5.0e-3)
 			{
-				component_vector[k].conc = 5.0e-3;
-				theta[i][parameter_count] = 5.0e-3;
+				component_vector[k].conc  = (float) 5.0e-3;
+				theta[i][parameter_count] = (float) 5.0e-3;
 			}
 			parameter_count++;
 		}

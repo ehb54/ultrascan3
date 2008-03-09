@@ -433,7 +433,7 @@ void US_vhwEnhanced::getAnalysisPlotMouseReleased(const QMouseEvent &e)
 					if (group_percent[groups-1] != 0)
 					{
 						str.sprintf(tr("Group %d: %6.2fs (%5.2f"), groups, group_sval[groups-1], group_percent[groups-1]);
-						str += "\%)";
+						str += "%)";
 						sval_label[groups-1] = analysis_plot->insertMarker();
 						analysis_plot->setMarkerLabelAlign(sval_label[groups-1], AlignRight);
 						analysis_plot->setMarkerLabel(sval_label[groups-1], str);
@@ -520,7 +520,8 @@ int US_vhwEnhanced::plot_analysis()
 		float bottom = calc_bottom(rotor_list, cp_list, run_inf.rotor, run_inf.centerpiece[selected_cell], 
 				0, run_inf.rpm[selected_cell][0][0]);
 		stop_point.clear();
-		float Davg = 5e-7, radD;
+		float Davg = (float) 5e-7;
+    float radD;
 		for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 		{
 // tolerance is defined as 2 * the concentration gradient divided by the initial concentration

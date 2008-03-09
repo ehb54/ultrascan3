@@ -34,13 +34,24 @@ class US_EXTERN US_Finite_single : public Data_Control_W
 		US_VelocModelControl *model_control;
 		US_FeFitter_Single *velocFitter;
 		US_Pixmap *pm;
-		vector <struct fefit_component> component_vector;
 		fefit_run *runData;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+    
+    vector <struct fefit_component> component_vector;
 		vector <struct rotorInfo> rotor_list;
 		vector <struct centerpieceInfo> cp_list;
 		vector <float> residuals_v;// vector of residuals for Monte Carlo
-		vector <float> vbar_model;	// vbar array containing all vbar20's for a current cell and current channel
-		bool fitting_widget;			// keeps track of the fitting widget's state
+		vector <float> vbar_model;	// vbar array containing all vbar20's for a 
+                                //current cell and current channel
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
+    
+    bool fitting_widget;			// keeps track of the fitting widget's state
 		bool model_widget;			// keeps track of the model widget's state
 		bool monte_carlo_widget;	// keeps track of the Monte Carlo widget's state
 		bool suspend_flag;			// flag to allow temporary suspension of fitting process

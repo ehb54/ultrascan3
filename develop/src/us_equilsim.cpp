@@ -31,31 +31,31 @@ US_EquilSim::US_EquilSim(QWidget *p, const char *name) : QFrame( p, name)
 	vbar20.clear();
 	extinction.clear();
 	od.clear();
-	pathlength = 1.2;
+	pathlength = (float) 1.2;
 	bin_number = 50;
 
 	mw.push_back(50000);
-	concentration.push_back(0.05);
-	vbar20.push_back(0.72);
-	extinction.push_back(4000);
+	concentration.push_back( (float) 0.05 );
+	vbar20.push_back( (float) 0.72 );
+	extinction.push_back( (float) 4000 );
 	od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 
-	baseline = 0;
-	conc_increment = 0.1;
-	conc_steps = 3;
-	speed_start = 10000;
-	speed_stop = 30000;
-	speed_steps = 4;
-	temperature = 20;
-	density = DENS_20W;
-	max_od = 1.0;
-	column = 3;
-	bottom = 7.2;
-	meniscus = bottom - column/10;
-	datapoints = 180;
-	delta_r = column/(10 * (datapoints-1));
-	noise = 2.0e-3;
-	nonlin_noise = 1.5e-2;
+	baseline       = 0;
+	conc_increment = (float) 0.1;
+	conc_steps     = 3;
+	speed_start    = 10000;
+	speed_stop     = 30000;
+	speed_steps    = 4;
+	temperature    = 20;
+	density        = (float) DENS_20W;
+	max_od         = 1.0;
+	column         = 3;
+	bottom         = (float) 7.2;
+	meniscus       = bottom - column/10;
+	datapoints     = 180;
+	delta_r        = column/(10 * (datapoints-1));
+	noise          = (float) 2.0e-3;
+	nonlin_noise   = (float) 1.5e-2;
 
 	pb_model = new QPushButton(tr("Select Model"), this);
 	pb_model->setAutoDefault(false);
@@ -842,25 +842,25 @@ void US_EquilSim::select_model()
 		{
 			case 0:
 			{
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72 );
 				mw.push_back(50000);
 				species = 1;
 				cnt_species->setRange(1, species, 1);
-				concentration.push_back(0.05);
+				concentration.push_back( (float) 0.05 );
 				extinction.push_back(4000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 				break;
 			}
 			case 1:
 			{
-				vbar20.push_back(0.72);
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72);
+				vbar20.push_back( (float) 0.72);
 				mw.push_back(50000);
 				mw.push_back(75000);
 				species = 2;
 				cnt_species->setRange(1, species, 1);
-				concentration.push_back(0.05);
-				concentration.push_back(0.05);
+				concentration.push_back( (float) 0.05 );
+				concentration.push_back( (float) 0.05 );
 				extinction.push_back(4000);
 				extinction.push_back(6000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
@@ -869,17 +869,17 @@ void US_EquilSim::select_model()
 			}
 			case 2:
 			{
-				vbar20.push_back(0.72);
-				vbar20.push_back(0.72);
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72 );
+				vbar20.push_back( (float) 0.72 );
+				vbar20.push_back( (float) 0.72 );
 				mw.push_back(50000);
 				mw.push_back(80000);
 				mw.push_back(120000);
 				species = 3;
 				cnt_species->setRange(1, species, 1);
-				concentration.push_back(0.03);
-				concentration.push_back(0.05);
-				concentration.push_back(0.07);
+				concentration.push_back( (float) 0.03 );
+				concentration.push_back( (float) 0.05 );
+				concentration.push_back( (float) 0.07 );
 				extinction.push_back(3000);
 				extinction.push_back(6000);
 				extinction.push_back(9000);
@@ -891,7 +891,7 @@ void US_EquilSim::select_model()
 			case 3:	// fixed molecular weight distribution, we need some addtl. info from the user
 			{
 				US_SelectModel3 *SelectModel3;
-				model3_vbar = 0.72;
+				model3_vbar =  (float) 0.72;
 				model3_vbar_flag = true;
 				SelectModel3 = new US_SelectModel3(&mw_upperLimit, &mw_lowerLimit, &species,
 				&model3_vbar, &model3_vbar_flag, -1);
@@ -903,15 +903,15 @@ void US_EquilSim::select_model()
 				cnt_species->setRange(1, species, 1);
 				mw.push_back(mw_lowerLimit);
 				vbar20.push_back(model3_vbar);
-				concentration.push_back(0.03);
+				concentration.push_back( (float) 0.03 );
 				extinction.push_back(3000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 				float step = (mw_upperLimit - mw_lowerLimit)/(species - 1);
 				for (unsigned int i=1; i<species; i++)
 				{
 					mw.push_back(mw[i-1] + step);
-					vbar20.push_back(0.72);
-					concentration.push_back(0.03);
+					vbar20.push_back( (float) 0.72 );
+					concentration.push_back( (float) 0.03 );
 					extinction.push_back(3000);
 					od.push_back((concentration[i]/1000) * pathlength * extinction[i]);
 				}
@@ -920,10 +920,10 @@ void US_EquilSim::select_model()
 			case 4: // Monomer-Dimer Equilibrium
 			{
 				stoich1 = 2;
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72 );
 				mw.push_back(50000);
 				species = 1;
-				concentration.push_back(0.05);
+				concentration.push_back( (float) 0.05 );
 				extinction.push_back(4000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 				equil1 = 13;
@@ -935,10 +935,10 @@ void US_EquilSim::select_model()
 			case 5: // Monomer-Trimer Equilibrium
 			{
 				stoich1 = 3;
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72 );
 				mw.push_back(50000);
 				species = 1;
-				concentration.push_back(0.05);
+				concentration.push_back( (float) 0.05 );
 				extinction.push_back(4000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 				pb_equil1->setEnabled(true);
@@ -950,10 +950,10 @@ void US_EquilSim::select_model()
 			case 6: // Monomer-Tetramer Equilibrium
 			{
 				stoich1 = 4;
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72 );
 				mw.push_back(50000);
 				species = 1;
-				concentration.push_back(0.05);
+				concentration.push_back( (float) 0.05 );
 				extinction.push_back(4000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 				pb_equil1->setEnabled(true);
@@ -965,10 +965,10 @@ void US_EquilSim::select_model()
 			case 7: // Monomer-Pentamer Equilibrium
 			{
 				stoich1 = 5;
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72 );
 				mw.push_back(50000);
 				species = 1;
-				concentration.push_back(0.05);
+				concentration.push_back( (float) 0.05 );
 				extinction.push_back(4000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 				pb_equil1->setEnabled(true);
@@ -980,10 +980,10 @@ void US_EquilSim::select_model()
 			case 8: // Monomer-Hexamer Equilibrium
 			{
 				stoich1 = 6;
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72 );
 				mw.push_back(50000);
 				species = 1;
-				concentration.push_back(0.05);
+				concentration.push_back( (float) 0.05 );
 				extinction.push_back(4000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 				pb_equil1->setEnabled(true);
@@ -995,10 +995,10 @@ void US_EquilSim::select_model()
 			case 9: // Monomer-Heptamer Equilibrium
 			{
 				stoich1 = 7;
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72 );
 				mw.push_back(50000);
 				species = 1;
-				concentration.push_back(0.05);
+				concentration.push_back( (float) 0.05 );
 				extinction.push_back(4000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 				pb_equil1->setEnabled(true);
@@ -1016,10 +1016,10 @@ void US_EquilSim::select_model()
 					model = 0;
 					break;
 				}
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72 );
 				mw.push_back(50000);
 				species = 1;
-				concentration.push_back(0.05);
+				concentration.push_back( (float) 0.05 );
 				extinction.push_back(4000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 				pb_equil1->setEnabled(true);
@@ -1032,10 +1032,10 @@ void US_EquilSim::select_model()
 			{
 				stoich1 = 2;
 				stoich2 = 3;
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72 );
 				mw.push_back(50000);
 				species = 1;
-				concentration.push_back(0.05);
+				concentration.push_back( (float) 0.05 );
 				extinction.push_back(4000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 				pb_equil1->setEnabled(true);
@@ -1053,10 +1053,10 @@ void US_EquilSim::select_model()
 			{
 				stoich1 = 2;
 				stoich2 = 4;
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72 );
 				mw.push_back(50000);
 				species = 1;
-				concentration.push_back(0.05);
+				concentration.push_back( (float) 0.05 );
 				extinction.push_back(4000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 				pb_equil1->setEnabled(true);
@@ -1079,10 +1079,10 @@ void US_EquilSim::select_model()
 					model = 0;
 					break;
 				}
-				vbar20.push_back(0.72);
+				vbar20.push_back( (float) 0.72 );
 				mw.push_back(50000);
 				species = 1;
-				concentration.push_back(0.05);
+				concentration.push_back( (float) 0.05 );
 				extinction.push_back(4000);
 				od.push_back((concentration[0]/1000) * pathlength * extinction[0]);
 				pb_equil1->setEnabled(true);

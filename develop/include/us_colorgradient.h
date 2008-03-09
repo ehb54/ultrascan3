@@ -71,7 +71,16 @@ class US_EXTERN US_ColorGradient : public QWidget
 		QwtCounter *cnt_points;
 		struct Gradient gradient;
 		unsigned int current_step;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <QColor> color_array;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
 		US_Config *USglobal;
 

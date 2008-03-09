@@ -35,9 +35,19 @@ struct EditScan
 	QString filename;
 	QString header1;
 	QString header2;
-	vector <QString> line;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+  vector <QString> line;
 	vector <float> concentration;
 	vector <float> wavelength;
+
+#ifdef WIN32
+#pragma warning ( default: 4251 )
+#endif
+
 	unsigned int startLineIndex;
 	unsigned int stopLineIndex;
 };
@@ -59,8 +69,18 @@ class US_EXTERN US_EditWavelengthScan : public QFrame
 
 	private:
 		US_Config *USglobal;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <struct EditScan> WavelengthFile;
-		QwtPlot *wavelength_plot;
+
+#ifdef WIN32
+#pragma warning ( default: 4251 )
+#endif
+    
+    QwtPlot *wavelength_plot;
 		bool copyFlag;
 
 		QLabel *lbl_banner1;

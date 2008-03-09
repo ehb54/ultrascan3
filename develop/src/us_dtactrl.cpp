@@ -128,7 +128,7 @@ Data_Control_W::Data_Control_W(const int temp_run_type, QWidget *p, const char *
 	vbar_from_seq = false;
 	buffer_from_seq = false;
 	dont_plot = false;
-	vbar20 = .72;
+	vbar20 = (float) 0.72;
 	scan_loaded = false;
 	run_loaded = false;
 	scan_copied = false;
@@ -173,12 +173,13 @@ Data_Control_W::Data_Control_W(const int temp_run_type, QWidget *p, const char *
 	{
 		for(int j=0; j<4; j++)
 		{
-			Density[i][j] = DENS_20W;
-			Viscosity[i][j] = (100.0 * VISC_20W);
-			for(int k=0; k<3; k++)
+			Density  [i][j] = (float) DENS_20W;
+			Viscosity[i][j] = (float) (100.0 * VISC_20W);
+			
+      for(int k=0; k<3; k++)
 			{
-				Vbar[i][j][k] = 0.72;
-				Vbar20[i][j][k] = 0.72;
+				Vbar  [i][j][k] = (float) 0.72;
+				Vbar20[i][j][k] = (float) 0.72;
 			}
 		}
 	}
@@ -521,7 +522,7 @@ void Data_Control_W::create_GUI()
 
 		ypos += buttonh + spacing + 2;
 
-		density = DENS_20W;
+		density = (float) DENS_20W;
 		pb_density = new QPushButton(tr(" Density:"), this);
 		Q_CHECK_PTR(pb_density);
 		pb_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -544,7 +545,7 @@ void Data_Control_W::create_GUI()
 
 	if (run_type == 1)
 	{
-		viscosity = (100.0 * VISC_20W);
+		viscosity = (float) (100.0 * VISC_20W);
 		pb_viscosity = new QPushButton(tr(" Viscosity:"), this);
 		Q_CHECK_PTR(pb_viscosity);
 		pb_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));

@@ -13,8 +13,18 @@
 
 struct distribution
 {
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 	vector <double> sval;
 	vector <double> fraction;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
 	QString id;
 };
 
@@ -34,14 +44,24 @@ class US_EXTERN US_Combine : public QFrame
 		struct runinfo run_inf;
 		QString analysis_type;
 		int first_cell;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <struct centerpieceInfo> cp_list;
 		vector <struct rotorInfo> rotor_list;
 		vector <struct distribution> distro;
-		float ff0;
+		vector <bool> is_integral;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+    
+    float ff0;
 		float vbar;
 		int prog_flag;
 		QColor col[20];
-		vector <bool> is_integral;
 		distribution_type distro_type;
 		QString distribName;
 		US_Config *USglobal;

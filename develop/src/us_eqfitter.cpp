@@ -1,5 +1,6 @@
 #include "../include/us_eqfitter.h"
 #include <cerrno>
+#include "../include/us_math.h"
 
 US_EqFitter::US_EqFitter(	vector <struct EquilScan_FitProfile> *temp_scanfit_vector,
 									vector <struct runinfo> *temp_run_information,
@@ -3960,7 +3961,7 @@ void US_EqFitter::plot_residuals()
 			data_plot->setMarkerPos(scanMarker[l], line_x[1] + xmax/40, offset);
 			data_plot->setMarkerPen(scanMarker[l], p_zero);
 			data_plot->setMarkerFont(scanMarker[l], QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-			offset += 0.03;
+			offset += (float) 0.03;
 			l++;
 		}
 		data_plot->setAxisScale(QwtPlot::xBottom, line_x[0], xmax + xmax/10, 0);

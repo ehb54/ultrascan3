@@ -558,7 +558,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 			{
 				ts >> temp1; // s_apparent
 				ts >> temp1; // s_20,W
-				temp1 *= 1.0e13; // change to proper scale
+				temp1 *= (float) 1.0e13; // change to proper scale
 				ts >> temp2; // D_apparent
 				ts >> temp2; // D_20,W
 				ts >> temp2; // MW
@@ -646,7 +646,7 @@ void US_Pseudo3D_Combine::set_limits()
 {
 	double smin=1.0e30, smax=-1.0e30, fmin=1.0e30, fmax=-1.0e30;
 	unsigned int i;
-	list <struct Solute>::iterator iter;
+	list <Solute>::iterator iter;
 	if (plot_s)
 	{
 		plot->setAxisTitle(QwtPlot::xBottom, tr("Sedimentation Coefficient corrected for water at 20ºC"));
@@ -730,7 +730,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 	double *xval, *yval;
 	xval = new double [x_resolution*y_resolution];
 	yval = new double [x_resolution*y_resolution];
-	list <struct Solute>::iterator iter;
+	list <Solute>::iterator iter;
 	progress->setTotalSteps(system[current_distro].s_distro.size());
 	srange = plot_smax - plot_smin;
 	sstep = srange/(double) x_resolution;

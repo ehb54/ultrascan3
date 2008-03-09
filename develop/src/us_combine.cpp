@@ -13,8 +13,8 @@ US_Combine::US_Combine(int tmp_prog_flag, QWidget *p, const char *name) : QFrame
 	                            //              3 = C(MW) distribution
 	                            //              4 = C(D) distribution
 	int minHeight1=26, minHeight2=30;
-	ff0 = 1.2;
-	vbar = 0.72;
+	ff0 = (float) 1.2;
+	vbar = (float) 0.72;
 	min_s = 1.0e10;
 	max_s = -1.0e-10;
 	curve = new uint [20];

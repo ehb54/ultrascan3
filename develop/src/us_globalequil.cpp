@@ -852,7 +852,7 @@ cout << "Range_left: " << run_inf.range_left[i][j][k] << ", Range_right: " << ru
 					exit(0);
 				}
 				buffer_db_dlg = new US_Buffer(run_inf.investigator);
-				float vbar = .72, vbar20 = .72;
+				float vbar = (float) 0.72, vbar20 =  (float) 0.72;
 				vbar_db_dlg = new US_Vbar_DB(run_inf.avg_temperature, &vbar, &vbar20, false, false, run_inf.investigator);
 				int result_flag = buffer_db_dlg->db_connect();
 				if(result_flag < 0) // Error!
@@ -911,7 +911,7 @@ cout << "Range_left: " << run_inf.range_left[i][j][k] << ", Range_right: " << ru
 						}
 						else
 						{
-							Vbar20[i][j][k]= 0.72;
+							Vbar20[i][j][k]=  (float) 0.72;
 						}
 					//	cout<<"run_inf.peptide_serialnumber["<<i<<"]["<<j<<"]["<<k<<"]= "<<run_inf.peptide_serialnumber[i][j][k]<<endl;
 					//	cout<<"Vbar20["<<i<<"]["<<j<<"]["<<k<<"]= "<<Vbar20[i][j][k]<<endl;
@@ -962,7 +962,7 @@ cout << "Range_left: " << run_inf.range_left[i][j][k] << ", Range_right: " << ru
 		}
 		if(run_inf.exp_type.absorbance)
 		{
-			od_limit = 0.9;
+			od_limit =  (float) 0.9;
 			InfoPanel->le_max_od->setText("0.90");
 		}
 		if(run_inf.exp_type.interference)
@@ -1281,7 +1281,8 @@ void US_GlobalEquil::histogram()
 {
 	QPixmap pix;
 	QString filename, str;
-	float temp_od_limit, min_extinction = 1.0e28, max_extinction = - 1.0, lowest_bin, highest_bin;
+	float temp_od_limit, min_extinction =  (float) 1.0e28, 
+        max_extinction = (float) -1.0, lowest_bin, highest_bin;
 	double *xplot, *yplot;
 	unsigned int i, j;
 	unsigned int ARRAY_SIZE = 50;
@@ -1554,10 +1555,10 @@ void US_GlobalEquil::diagnostics()
 
 	for (unsigned int i=0; i<scanfit_vector.size(); i++)
 	{
-		scanfit_vector[i].pathlength = 1.2;
+		scanfit_vector[i].pathlength =  (float) 1.2;
 		if(!buffer_from_db)
 		{
-			scanfit_vector[i].density = DENS_20W;
+			scanfit_vector[i].density =  (float) DENS_20W;
 		}
 	}
 	QString filename = USglobal->config_list.result_dir.copy() + "/diagnostics.res";
@@ -1630,7 +1631,7 @@ void US_GlobalEquil::diagnostics()
 				delete [] y_temp;
 				if (slope1 == 0)
 				{
-					slope1 = 9.999999e-21;
+					slope1 =  (float) 9.999999e-21;
 				}
 				ratio = slope2/slope1;
 				ts << tr("Slope at beginning: ") << slope1 << tr(", Slope at end: ") << slope2
@@ -2406,7 +2407,7 @@ void US_GlobalEquil::monte_carlo()
 	mc.percent_gaussian = 50;
 	mc.parameters = 1;
 	mc.parameterNoise = 8.0;	// add noise to the parameter value with a STDD of 10 percent of absolute parameter value
-	mc.varianceThreshold = 1.0e-4;
+	mc.varianceThreshold =  (float) 1.0e-4;
 	mc.addNoise = 1; // add random noise to parameters from original fit
 	str.sprintf(tr("%d: Variance"), mc.parameters);
 	mc.parameter.push_back(str);
@@ -3555,9 +3556,9 @@ void US_GlobalEquil::setup_vectors()
 		runfit.mw_range.push_back(0.0);
 		runfit.mw_fit.push_back(false);
 		runfit.mw_bound.push_back(false);
-		runfit.vbar20.push_back(.72);
+		runfit.vbar20.push_back( (float) 0.72 );
 		runfit.vbar20_index.push_back(0);
-		runfit.vbar20_range.push_back(.144);
+		runfit.vbar20_range.push_back( (float) 0.144 );
 		runfit.vbar20_fit.push_back(false);
 		runfit.vbar20_bound.push_back(false);
 		runfit.virial.push_back(0.0);
@@ -3816,7 +3817,7 @@ void US_GlobalEquil::initialize()
 							runfit.mw[i] = mw_lowerLimit + (i * (mw_upperLimit - mw_lowerLimit)/(runfit.components-1));
 						}
 						(*sfv_it).baseline = 0.0;
-						(*sfv_it).baseline_range = 0.05;
+						(*sfv_it).baseline_range =  (float) 0.05;
 						if (model3_vbar_flag)
 						{
 							runfit.vbar20[i] = model3_vbar;
@@ -3824,8 +3825,8 @@ void US_GlobalEquil::initialize()
 						}
 						else
 						{
-							runfit.vbar20[i] = 0.72;
-							runfit.vbar20_range[i] = 0.72/5.0;
+							runfit.vbar20[i] =  (float) 0.72;
+							runfit.vbar20_range[i] = (float) (0.72/5.0);
 						}
 					}
 				}
@@ -3907,10 +3908,10 @@ void US_GlobalEquil::initialize()
 		}
 		runfit.vbar20_range[1] = runfit.vbar20[1]/5.0;
 		runfit.eq[0] = -1.0e4;
-		runfit.eq_range[0] = 5.0e-2;
+		runfit.eq_range[0] =  (float) 5.0e-2;
 		model_control->fp_eqconst1->updateValue(runfit.eq[0]);
 		runfit.eq[1] = -1.0e4;
-		runfit.eq_range[0] = 5.0e-2;
+		runfit.eq_range[0] =  (float) 5.0e-2;
 		model_control->fp_eqconst2->updateValue(runfit.eq[1]);
 	}
 	if (model == 16)	// monomer - N-mer plus incompetent monomer
@@ -3920,13 +3921,13 @@ void US_GlobalEquil::initialize()
 			if((*sfv_it).FitScanFlag)
 			{
 				(*sfv_it).amplitude[1] = -1e4;
-				(*sfv_it).amplitude_range[1] = 1e-3;
+				(*sfv_it).amplitude_range[1] =  (float) 1e-3;
 			}
 		}
 		runfit.mw[1] = runfit.mw[0];	// incompetent monomer
 		runfit.mw_range[0] = runfit.mw[0]/5.0;
 		runfit.mw_range[1] = runfit.mw[1]/5.0;
-		runfit.eq[0] = -0.1;
+		runfit.eq[0] =  (float) -0.1;
 		runfit.eq_range[0] = 5.0;
 		runfit.vbar20[0] = Vbar20[current_cell][current_channel][0];
 		runfit.vbar20_range[0] = Vbar20[current_cell][current_channel][0]/5.0;
@@ -3943,7 +3944,7 @@ void US_GlobalEquil::initialize()
 			if((*sfv_it).FitScanFlag)
 			{
 				(*sfv_it).amplitude[1] = -1e4;
-				(*sfv_it).amplitude_range[1] = 1e-3;
+				(*sfv_it).amplitude_range[1] =  (float) 1e-3;
 /*
 				portion = exp((*sfv_it).amplitude[0])/2;
 				(*sfv_it).amplitude[0] = log(portion*.7);
@@ -3957,7 +3958,7 @@ void US_GlobalEquil::initialize()
 		runfit.mw[1] = runfit.stoich1 * runfit.mw[0];	// incompetent N-mer
 		runfit.mw_range[0] = runfit.mw[0]/5.0;
 		runfit.mw_range[1] = runfit.mw[1]/5.0;
-		runfit.eq[0] = -0.1;
+		runfit.eq[0] =  (float) -0.1;
 //		runfit.eq[0] = -1.0e4;
 		runfit.eq_range[0] = 5.0;
 		runfit.vbar20[0] = Vbar20[current_cell][current_channel][0];
@@ -3999,7 +4000,7 @@ void US_GlobalEquil::initialize()
 			if((*sfv_it).FitScanFlag)
 			{
 				(*sfv_it).amplitude[1] = -1e4;
-				(*sfv_it).amplitude_range[1] = 1e-3;
+				(*sfv_it).amplitude_range[1] =  (float) 1e-3;
 
 /*
 				portion = exp((*sfv_it).amplitude[0])/2;
@@ -4133,7 +4134,7 @@ float US_GlobalEquil::linesearch()
 // f is the residual of the function.
 	bool check_flag=true;
 	double old_f0=0.0, old_f1=0.0, old_f2=0.0;
-	float x0 = 100, x1 = 5000, x2 = 10000, h = 0.01, xmin, fmin, tolerance=100, maxerror;
+	float x0 = 100, x1 = 5000, x2 = 10000, h =  (float) 0.01, xmin, fmin, tolerance=100, maxerror;
 	unsigned int iter = 1;
 	errno = 0;
 	float f0 = calc_testParameter(x0);
@@ -4145,7 +4146,7 @@ float US_GlobalEquil::linesearch()
 	}
 	else
 	{
-		maxerror = 1.0e12; // allow a larger error for interference data
+		maxerror =  (float) 1.0e12; // allow a larger error for interference data
 	}
 // make the initial step size smaller if we have very large residuals
 	while (errno != 0 || (f0 >= maxerror || f0 < 0 || f1 >= maxerror || f1 < 0 || f2 >= maxerror || f2 < 0))
@@ -4341,7 +4342,7 @@ float US_GlobalEquil::calc_testParameter(float mw)
 			delete [] M;
 			delete [] yraw;
 			(*sfv_it).baseline = coeff[0];
-			(*sfv_it).baseline_range = 0.05;
+			(*sfv_it).baseline_range =  (float) 0.05;
 //QMessageBox::message("warning", "calc_testParameter(), coeff[1] = "+QString::number(coeff[1]));
 			if (coeff[1] < fabs(FLT_MIN) || isnotanumber(coeff[1]))
 			{

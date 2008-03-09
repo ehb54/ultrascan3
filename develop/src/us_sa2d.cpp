@@ -596,7 +596,7 @@ void US_SA2D_W::loadfit(QString filename)
 	pb_save->setEnabled(true);
 	pb_view->setEnabled(true);
 	pb_print->setEnabled(true);
-	vector <struct Solute> tempSolutes;
+	vector <Solute> tempSolutes;
 	tempSolutes.clear();
 	tempSolutes.resize(SA_control->solutes.size());
 	for (i=0; i<SA_control->solutes.size(); i++)

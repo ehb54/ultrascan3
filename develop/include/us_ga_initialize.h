@@ -92,8 +92,23 @@ class US_EXTERN US_GA_Initialize : public QFrame
 	
 		US_GA_Initialize(QWidget *p = 0, const char *name = 0);
 		~US_GA_Initialize();
-		vector <struct bucket> GA_Solute;
+
+#ifdef WIN32
+#pragma warning ( disable: 4251 )
+#endif
+
+    vector <bucket> GA_Solute;
 		vector <QColor> gradient;
+		vector <struct line> limits;
+		vector <struct SimulationComponent> component;
+		vector <vector <struct SimulationComponent> > MC_solute;
+
+		list <Solute> distro_solute;
+
+#ifdef WIN32
+#pragma warning ( default: 4251 )
+#endif
+
 		US_Config *USglobal;	 /*!< A US_Config reference. */
 		float ff0_max, ff0_min, resolution, plot_fmax, plot_fmin, plot_smax, plot_smin;
 		unsigned int x_resolution, y_resolution, x_pixel, y_pixel;
@@ -102,10 +117,6 @@ class US_EXTERN US_GA_Initialize : public QFrame
 		bool minmax; //min = false, max = true
 		bool monte_carlo;
 		unsigned int current_solute, dimension;
-		vector <struct line> limits;
-		vector <struct SimulationComponent> component;
-		list <class Solute> distro_solute;
-		vector <vector <struct SimulationComponent> > MC_solute;
 		unsigned int initial_solutes, monte_carlo_iterations;
 		struct vertex p1, p2;
 		bool zoom, autolimit;

@@ -6,6 +6,12 @@
 
 #include "lightingdlg.h"
 
+// For some reson WIN32 is not picking up M_PI from math.h...
+
+#ifndef M_PI  
+#define M_PI       3.14159265358979323846
+#endif
+
 using namespace Qwt3D;
 
 class Sphere : public ParametricSurface

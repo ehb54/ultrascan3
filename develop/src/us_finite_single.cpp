@@ -230,7 +230,7 @@ void US_Finite_single::second_plot()
 	mc.percent_gaussian = 50;
 	mc.parameters = 1;
 	mc.parameterNoise = 8.0;	// add noise to the parameter value with a STDD of 10 percent of absolute parameter value
-	mc.varianceThreshold = 1.0e-4;
+	mc.varianceThreshold = (float) 1.0e-4;
 	mc.addNoise = 0; // use parameters from previous fit as initial guess
 	str.sprintf(tr("%d: Variance"), mc.parameters);
 	mc.parameter.push_back(str);

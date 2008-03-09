@@ -233,7 +233,7 @@ void US_SelectModel3::closeEvent(QCloseEvent *e)
 
 void US_SelectModel3::cancel()
 {
-	*model3Vbar = 0.72;
+	*model3Vbar = (float) 0.72;
 	*mwUpperLimit = 0.0;
 	*mwLowerLimit = 0.0;
 	*mwSlots = 0;

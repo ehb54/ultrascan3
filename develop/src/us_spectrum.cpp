@@ -1303,7 +1303,7 @@ void US_Spectrum::fit()
 	for (i=0; i<basis.size(); i++)
 	{
 		results.push_back(100.0 * nnls_x[i]/fval);
-		str.sprintf("%3.2f\% (%6.4e): " + lb_basis->text(i), results[i], nnls_x[i]);
+		str.sprintf("%3.2f%% (%6.4e): " + lb_basis->text(i), results[i], nnls_x[i]);
 		lb_basis->changeItem(str, i);
 		basis[i].nnls_factor = nnls_x[i];
 		basis[i].nnls_percentage = results[i];

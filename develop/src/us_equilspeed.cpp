@@ -10,9 +10,9 @@ US_EquilSpeed::US_EquilSpeed(QWidget *parent, const char *name)
 	mw = 35000;
 	volume = 120;
 	temperature = 20;
-	vbar20 = 0.72;
-	vbar = 0.72;
-	density_w20 = DENS_20W;
+	vbar20      = (float) 0.72;
+	vbar        = (float) 0.72;
+	density_w20 = (float) DENS_20W;
 	an50 = false;
 	alu_centerpiece = false;
 	flash_time1 = new QTimer(this);
@@ -516,11 +516,11 @@ void US_EquilSpeed::calc()
 	}
 	if (alu_centerpiece)
 	{
-		bottom += 7.15;
+		bottom += (float) 7.15;
 	}
 	else
 	{
-		bottom += 7.195;
+		bottom += (float) 7.195;
 	}
 	lbl_bottom2->setText(str.sprintf(" %1.3f cm", bottom));
 //

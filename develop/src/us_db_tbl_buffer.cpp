@@ -408,11 +408,11 @@ void US_Buffer_DB::read_buffer()
 			}
 			if (Buffer.component.size() == 0 && Buffer.viscosity == 0.0)
 			{
-				Buffer.viscosity = (100.0 * VISC_20W); // assume water
+				Buffer.viscosity = (float) (100.0 * VISC_20W); // assume water
 			}
 			if (Buffer.component.size() == 0 && Buffer.density == 0.0)
 			{
-				Buffer.density = DENS_20W; // assume water
+				Buffer.density = (float) DENS_20W; // assume water
 			}
 			le_density->disconnect();
 			le_viscosity->disconnect();
@@ -627,11 +627,11 @@ bool US_Buffer_DB::get_buffer(int id)
 			}
 			if (Buffer.component.size() == 0 && Buffer.viscosity == 0.0)
 			{
-				Buffer.viscosity = (100.0 * VISC_20W); // assume water
+				Buffer.viscosity = (float) (100.0 * VISC_20W); // assume water
 			}
 			if (Buffer.component.size() == 0 && Buffer.density == 0.0)
 			{
-				Buffer.density = DENS_20W; // assume water
+				Buffer.density = (float) DENS_20W; // assume water
 			}
 		}
 	}
@@ -1067,7 +1067,7 @@ void US_Buffer_DB::setInvestigator(const int investigatorID) // if called withou
  */
 void US_Buffer_DB::recalc_density()
 {
-	Buffer.density = DENS_20W;
+	Buffer.density = (float) DENS_20W;
 	for (unsigned int i=0; i<Buffer.component.size(); i++) // iterate over all components in this buffer
 	{
 		for (unsigned int j=0; j<component_list.size(); j++) // find the component in the Buffer database file
@@ -1110,7 +1110,7 @@ void US_Buffer_DB::recalc_density()
  */
 void US_Buffer_DB::recalc_viscosity()
 {
-	Buffer.viscosity = (100.0 * VISC_20W);
+	Buffer.viscosity = (float) (100.0 * VISC_20W);
 	for (unsigned int i=0; i<Buffer.component.size(); i++) // iterate over all components in this buffer
 	{
 		for (unsigned int j=0; j<component_list.size(); j++) // find the component in the Buffer database file

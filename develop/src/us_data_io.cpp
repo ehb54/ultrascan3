@@ -551,8 +551,8 @@ int US_Data_IO::load_hydrodynamics(struct hydrodynamicData *hydro_inf)
 			}
 			else
 			{
-				(*hydro_inf).Density[i][j] = DENS_20W;
-				(*hydro_inf).Viscosity[i][j] = (100.0 * VISC_20W);
+				(*hydro_inf).Density[i][j] = (float) DENS_20W;
+				(*hydro_inf).Viscosity[i][j] = (float) (100.0 * VISC_20W);
 			}
 			for(int k=0; k<3; k++)
 			{
@@ -567,8 +567,8 @@ int US_Data_IO::load_hydrodynamics(struct hydrodynamicData *hydro_inf)
 					Vbar_info = VBAR->export_DNA_vbar((*run_inf).DNA_serialnumber[i][j][k]);
 					if (Vbar_info.vbar == 0.0 || Vbar_info.vbar20 == 0.0)
 					{
-						Vbar_info.vbar = .55;
-						Vbar_info.vbar20 = .55;
+						Vbar_info.vbar   = (float) 0.55;
+						Vbar_info.vbar20 = (float) 0.55;
 					}
 					(*hydro_inf).Vbar[i][j][k] = Vbar_info.vbar;
 					(*hydro_inf).Vbar20[i][j][k] = Vbar_info.vbar20;
@@ -576,7 +576,7 @@ int US_Data_IO::load_hydrodynamics(struct hydrodynamicData *hydro_inf)
 				}
 				else
 				{
-					(*hydro_inf).Vbar20[i][j][k] = 0.72;
+					(*hydro_inf).Vbar20[i][j][k] = (float) 0.72;
 					(*hydro_inf).Vbar[i][j][k] = (*hydro_inf).Vbar20[i][j][k] + (4.25e-4 * ((*run_inf).avg_temperature - 20));
 				}
 			}
@@ -644,8 +644,8 @@ cerr << "loading hydrodynamics from the database using db_login information...\n
 			}
 			else
 			{
-				(*hydro_inf).Density[i][j] = DENS_20W;
-				(*hydro_inf).Viscosity[i][j] = (100.0 * VISC_20W);
+				(*hydro_inf).Density  [i][j] = (float) DENS_20W;
+				(*hydro_inf).Viscosity[i][j] = (float) (100.0 * VISC_20W);
 			}
 			for(int k=0; k<3; k++)
 			{
@@ -663,7 +663,7 @@ cerr << "loading hydrodynamics from the database using db_login information...\n
 				}
 				else
 				{
-					(*hydro_inf).Vbar20[i][j][k] = 0.72;
+					(*hydro_inf).Vbar20[i][j][k] = (float) 0.72;
 					(*hydro_inf).Vbar[i][j][k] = (*hydro_inf).Vbar20[i][j][k] + (4.25e-4 * ((*run_inf).avg_temperature - 20));
 				}
 			}
@@ -681,7 +681,7 @@ void US_Data_IO::calc_correction(struct correctionTerms *corr_inf)
 										/ (1.0 + 16.87985e-3 * t))
 					 + 1.000028e-3 * ((105.56302e-9 * pow((double) t, (double) 4.0) - 280.54253e-12 * pow((double) t, (double) 5.0))
 										/ (1.0 + 16.87985e-3 * t));
-	(*corr_inf).density_wt_20	 = DENS_20W;
+	(*corr_inf).density_wt_20	 = (float) DENS_20W;
 
 	if (t < 20.0)
 	{

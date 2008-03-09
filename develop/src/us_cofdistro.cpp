@@ -1243,7 +1243,8 @@ float US_CofDistro_W::linesearch()
 // f is the residual of the function.
 	bool check_flag=true;
 	double old_f0=0.0, old_f1=0.0, old_f2=0.0;
-	float x0 = 0.0, x1 = 0.5, x2 = 2.0, h = 0.01, xmin, fmin, tolerance=0.01, maxerror;
+	float x0 = 0.0, x1 = (float) 0.5, x2 = (float) 2.0, h = (float) 0.01, xmin, 
+        fmin, tolerance=(float) 0.01, maxerror;
 	unsigned int iter = 1;
 	errno = 0;
 	float f0 = calc_testParameter(x0);
@@ -1254,11 +1255,11 @@ float US_CofDistro_W::linesearch()
 	if (f2 == -1.0) return (-1.0);
 	if(run_inf.exp_type.absorbance)
 	{
-		maxerror = 1.0e4;
+		maxerror = (float) 1.0e4;
 	}
 	else
 	{
-		maxerror = 1.0e12; // allow a larger error for interference data
+		maxerror = (float) 1.0e12; // allow a larger error for interference data
 	}
 // make the initial step size smaller if we have very large residuals
 	while (errno != 0 || (f0 >= maxerror || f0 < 0 || f1 >= maxerror || f1 < 0 || f2 >= maxerror || f2 < 0))

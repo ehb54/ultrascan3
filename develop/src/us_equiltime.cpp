@@ -5,23 +5,24 @@ US_EquilTime::US_EquilTime(QWidget *parent, const char *name)
 {
 	USglobal = new US_Config();
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-	molecule = 1; // 1=prolate, 2=oblate, 3=rod, 4=sphere
-	rpm_start = 18000;
-	rpm_stop = 36000;
-	use_sigma = true;
-	sigma_start = 1;
-	sigma_stop = 4;
-	speed_steps = 5;
+	molecule       = 1; // 1=prolate, 2=oblate, 3=rod, 4=sphere
+	rpm_start      = 18000;
+	rpm_stop       = 36000;
+	use_sigma      = true;
+	sigma_start    = 1;
+	sigma_stop     = 4;
+	speed_steps    = 5;
 	time_increment = 15;
-	monitor_flag = true;
-	delta_t = 15;
-	delta_r = 0.001;
-	tolerance = 5e-4;
-	sigma = new float [100];
-	rpm = new unsigned int [100];
-	meniscus = 5.9;
-	bottom = 6.2;
-	conc = 0.15;
+	monitor_flag   = true;
+	delta_t        = 15;
+	delta_r        = (float) 0.001;
+	tolerance      = (float) 5e-4;
+	sigma          = new float [100];
+	rpm            = new unsigned int [100];
+	meniscus       = 5.9;
+	bottom         = 6.2;
+	conc           = (float) 0.15;
+
 	GUI();	
 	global_Xpos += 30;
 	global_Ypos += 30;

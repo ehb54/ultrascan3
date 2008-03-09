@@ -602,11 +602,11 @@ void US_Nucleotide_DB::update()
 	{
 		total *= 2;
 	}
-	float mw_A = 313.209;
-	float mw_C = 289.184;
-	float mw_G = 329.208;
-	float mw_T = 304.196;
-	float mw_U = 274.170;
+	float mw_A = (float) 313.209;
+	float mw_C = (float) 289.184;
+	float mw_G = (float) 329.208;
+	float mw_T = (float) 304.196;
+	float mw_U = (float) 274.170;
 	if(isDNA)
 	{
 		if (doubleStranded)
@@ -670,26 +670,26 @@ void US_Nucleotide_DB::update()
 	MW += calcium * total * 40.08;
 	if (_3prime_oh)
 	{
-		MW += 17.01;
+		MW += (float) 17.01;
 		if (doubleStranded)
 		{
-			MW += 17.01;
+			MW += (float) 17.01;
 		}
 	}
 	else // we have phosphate
 	{
-		MW += 94.87;
+		MW += (float) 94.87;
 		if (doubleStranded)
 		{
-			MW += 94.87;
+			MW += (float) 94.87;
 		}
 	}
 	if (_5prime_oh)
 	{
-		MW -= 77.96;
+		MW -= (float) 77.96;
 		if (doubleStranded)
 		{
-			MW -= 77.96;
+			MW -= (float) 77.96;
 		}
 	}
 	if (doubleStranded)

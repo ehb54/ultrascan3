@@ -603,7 +603,7 @@ void US_Color::selected_scheme(int scheme)
 		colfile = home + ".uscolors";
 #endif
 #ifdef WIN32
-		colfile = "C:\\Program\ Files\\Ultrascan\\etc\\uscolors";
+		colfile = "C:/Program Files/Ultrascan/etc/uscolors";
 #endif
 		f.setName(colfile);
 	}
@@ -1445,7 +1445,7 @@ void US_Color::apply()
 	colfile = home + ".uscolors";
 #endif
 #ifdef WIN32
-	colfile = "C:\\Program\ Files\\Ultrascan\\etc\\uscolors";
+	colfile = "C:/Program Files/Ultrascan/etc/uscolors";
 #endif
 	f.setName(colfile);
 

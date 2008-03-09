@@ -45,11 +45,21 @@ class US_MonteCarlo : public QFrame
 		bool dont_show;
 		bool print_plot;
 		QString plot_status;
-		vector <float> amplitude, mw;
 		unsigned int bins, entries;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+		vector <float> amplitude, mw;
 		vector <struct lines> parameter_value;
 		vector <unsigned int> parameter_bin;
-		int border, spacing, plot_start, column1, column2, current_item;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+    
+    int border, spacing, plot_start, column1, column2, current_item;
 		QString htmlDir;
 		US_Config *USglobal;
 #ifdef UNIX

@@ -1208,8 +1208,8 @@ void US_MonteCarlo::show_parameter(int item)
    double *xplot, *yplot, *xnormal, *ynormal;
    unsigned int points=0;
    parameter_bin.clear();
-   stats.low = 9.9e30;
-   stats.high = -9.9e30;
+   stats.low  =  (float)  9.9e30;
+   stats.high =  (float) -9.9e30;
    double sum = 0.0, m2 = 0.0, m3 = 0.0, m4 = 0.0;
    xplot = new double [stats.points];
    yplot = new double [stats.points];

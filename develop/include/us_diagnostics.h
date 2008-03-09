@@ -22,7 +22,17 @@ class US_EXTERN US_Diagnostics : public QFrame
 	private:
 		QString cell_info, scanmode, cell, temperature, time;
 		bool converted;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <float> rad, abs;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
 		QwtPlot *delta_plot;
 		QwtPlot *scan_plot;
 		US_Config *USglobal;

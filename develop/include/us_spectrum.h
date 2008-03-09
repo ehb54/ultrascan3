@@ -30,7 +30,17 @@ struct Gaussian
 
 struct WavelengthProfile
 {
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 	vector <struct Gaussian> gaussian;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
 	float scale;
 	unsigned int lambda_scale;
 	unsigned int lambda_min;
@@ -55,11 +65,21 @@ class US_EXTERN US_Spectrum : public QFrame
 		
 	private:
 		QwtPlot *data_plot, *residuals_plot;
-		vector <struct WavelengthProfile> basis;
 		struct WavelengthProfile target;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+		vector <struct WavelengthProfile> basis;
 		vector <unsigned int> curve;
 		vector <unsigned int> lambda_min;
 		vector <unsigned int> lambda_max;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
 		unsigned int min, max, lambda_scale;
 		int current_scan;
 		float scale;

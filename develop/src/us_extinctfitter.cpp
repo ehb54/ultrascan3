@@ -560,7 +560,7 @@ void US_ExtinctionFitter::plot_residuals()
 			data_plot->setMarkerPos(scanMarker[l], line_x[1] + 7, offset);
 			data_plot->setMarkerPen(scanMarker[l], p_zero);
 			data_plot->setMarkerFont(scanMarker[l], QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold)); 
-			offset += 0.03;
+			offset += (float) 0.03;
 			l++;
 		}
 		data_plot->setAxisScale(QwtPlot::xBottom, xmin - 10, xmax + 15, 0);

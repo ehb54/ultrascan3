@@ -12,7 +12,7 @@ US_Extinction::US_Extinction(QString temp_projectName, int temp_investigatorID, 
 	lambdaCutoff = 220.0;
 	lambda_min = 1000;
 	lambda_max = -1000;
-	pathlength = 1.2;
+	pathlength = (float) 1.2;
 	odCutoff = 1.0;
 	projectName = temp_projectName;
 	investigatorID=temp_investigatorID;
@@ -850,7 +850,7 @@ void US_Extinction::reset()
 
 void US_Extinction::selectPeptide()
 {
-	float vbar=.72, temp=20, vbar20=.72;
+	float vbar= (float) 0.72, temp=20, vbar20= (float) 0.72;
 	US_Vbar_DB *vbar_dlg;
 	vbar_dlg = new US_Vbar_DB(temp, &vbar, &vbar20,true, false, investigatorID);
 	vbar_dlg->setCaption(tr("V-bar Calculation"));

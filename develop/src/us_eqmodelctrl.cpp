@@ -1628,7 +1628,7 @@ void US_EqModelControl::baseline_float(bool choice)
 		(*scanfit_vector)[*selected_scan].baseline_fit = true;
 		if((*scanfit_vector)[*selected_scan].baseline_range == 0.0)
 		{
-			(*scanfit_vector)[*selected_scan].baseline_range = 0.05;
+			(*scanfit_vector)[*selected_scan].baseline_range = (float) 0.05;
 		}
 		str.sprintf("%1.5e", (*scanfit_vector)[*selected_scan].baseline_range);
 		fp_baseline->le_range->setText(str);

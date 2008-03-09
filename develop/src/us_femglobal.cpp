@@ -352,7 +352,7 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename)
 					return(-39);
 				}
 				(*ms).component_vector[i].delta = str.toFloat();
-				(*ms).component_vector[i].vbar20 = 0.72;
+				(*ms).component_vector[i].vbar20 =  (float) 0.72;
 				(*ms).component_vector[i].extinction = 1.0;
 				(*ms).component_vector[i].name = str.sprintf("Component %d", i+1);
 				(*ms).component_vector[i].mw = ((*ms).component_vector[i].s/(*ms).component_vector[i].D)

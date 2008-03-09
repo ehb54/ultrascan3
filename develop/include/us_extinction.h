@@ -79,14 +79,24 @@ class US_EXTERN US_Extinction : public QFrame
 		US_ExtinctionFitter *fitter;
 		QString projectName;
 		int investigatorID;
-		vector <struct WavelengthScan> wavelengthScan_vector;
+		
+#ifdef WIN32
+#pragma warning ( disable: 4251 )
+#endif
+
+    vector <struct WavelengthScan> wavelengthScan_vector;
 		vector <QString> filenames;
-		float  xmin, xmax, lambda_min, lambda_max;
-		double *fitparameters; 
-		unsigned int order, parameters;
 		vector <float> parameter_vector;
 		vector <float> lambda;
 		vector <float> extinction;
+
+#ifdef WIN32
+#pragma warning ( default: 4251 )
+#endif
+
+		float  xmin, xmax, lambda_min, lambda_max;
+		double *fitparameters; 
+		unsigned int order, parameters;
 		bool fitted, fitting_widget;
 		QwtPlot *data_plot;
 		QLabel *lbl_banner1;

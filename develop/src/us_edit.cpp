@@ -2357,7 +2357,7 @@ void EditData_Win::write_equil_file()
 	filename = USglobal->config_list.result_dir.copy();
 	filename.append("/");
 	filename.append(run_inf.run_id);
-	run_inf.delta_r = 0.001;
+	run_inf.delta_r = (float) 0.001;
 //cout << "cell: " << cell << ", channel: " << current_channel << endl;
 	str.sprintf(".equil.%d%d%d", cell+1, lambda+1, current_channel+1);
 	filename.append(str);

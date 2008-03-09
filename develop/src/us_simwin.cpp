@@ -263,39 +263,42 @@ SimWin::SimWin(QWidget *p , const char *name) : QWidget(p, name)
 	stop_calculation = false;
 	dcdtWindow = false;
 	saveTimes = false; 	// if we change speeds during the equilibrium simulation we need to save the times
-	speedChanged = false;
-	comp=1;
-	model=0;
-	lastscans=0;
+	speedChanged        = false;
+	comp                = 1;
+	model               = 0;
+	lastscans           = 0;
+
 	components.clear();
 	components.resize(1);
-	components[0].conc=1.0;
-	components[0].sed=5.0e-13;
-	components[0].diff=7.0e-7;
-	components[0].sigma=0.0;
-	components[0].delta=0.0;
-	simparams.time=240;
-	simparams.delay=3;
-	simparams.speed=45000;
-	simparams.delta_t=10;
-	simparams.delta_r=100;
-	simparams.meniscus=5.8;
-	simparams.scans=30;
-	simparams.bottom=7.2;
-	simparams.rnoise=0;
-	simparams.inoise=0;
-	simparams.rinoise=0;
-	scantimes = new float [1];
-	inoise = new float [1];
-	rinoise = new float [1];
-	scan_index = 1;
+	components[0].conc  = 1.0;
+
+	components[0].sed   = (float) 5.0e-13;
+	components[0].diff  = (float) 7.0e-7;
+	components[0].sigma = 0.0;
+	components[0].delta = 0.0;
+	simparams.time      = 240;
+	simparams.delay     = 3;
+	simparams.speed     = 45000;
+	simparams.delta_t   = 10;
+	simparams.delta_r   = 100;
+	simparams.meniscus  = (float) 5.8;
+	simparams.scans     = 30;
+	simparams.bottom    = (float) 7.2;
+	simparams.rnoise    = 0;
+	simparams.inoise    = 0;
+	simparams.rinoise   = 0;
+
+	scantimes   = new float [1];
+	inoise      = new float [1];
+	rinoise     = new float [1];
+	scan_index  = 1;
 	point_index = 1;
-	c = new double * [1];
-	c[0] = new double [1];
-	radius = new double [1];
-	dcdtData = new double [1];
-	oldScan = new double [1];
-	curve = new unsigned int [1];
+	c           = new double* [1];
+	c[0]        = new double  [1];
+	radius      = new double  [1];
+	dcdtData    = new double  [1];
+	oldScan     = new double  [1];
+	curve       = new unsigned int [1];
 	
 	frmInp = new SimControl_F(&simflag, &comp, &model, &components, &simparams, this);
 	frmInp->setFrameStyle(QFrame::Panel|QFrame::Raised);
@@ -1167,7 +1170,7 @@ void SimWin::show_speeds()
 
 void SimWin::init()
 {
-	simparams.resolution = 0.001;
+	simparams.resolution = (float) 0.001;
 	QFile f;
 	unsigned int i, j;
 	points = (unsigned int) (1.5+(simparams.bottom - simparams.meniscus)/simparams.resolution);

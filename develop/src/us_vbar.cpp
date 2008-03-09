@@ -204,14 +204,14 @@ bool US_Vbar::read_db()
 		str = tr("No peptide file found in this database!\nUsing default value of 0.72 ccm/g...");
 		cerr << str << endl;
 		emit newMessage(str, 2);
-		emit valueChanged(.72 + (4.25e-4 * (temperature - 20)), .72);
+		emit valueChanged( (float) (0.72 + (4.25e-4 * (temperature - 20))), (float) 0.72 );
 		return false;
 	}
 	if(count == 0 && vbar_info.InvID >0)
 	{
 		str.sprintf(tr("No peptide file found for investigator %d!\nUsing default value of 0.72 ccm/g..."), vbar_info.InvID);
 		cerr << str << endl;
-		emit valueChanged(.72 + (4.25e-4 * (temperature - 20)), .72);
+		emit valueChanged( (float) (0.72 + (4.25e-4 * (temperature - 20))), (float) 0.72 );
 		emit newMessage(str, 2);
 		return false;
 	}
@@ -354,9 +354,9 @@ struct peptideDetails US_Vbar::export_DNA_vbar(int id)
 			vbar_info.vbar = (float) query.value(3).toDouble();
 			vbar_info.e280 = (float) query.value(4).toDouble();
 			//cout << "in us_vbar: vbar:" << vbar_info.vbar << endl;
-			if (!vbar_info.vbar > 0.0)
+			if ( ! vbar_info.vbar > 0.0 )
 			{
-				Vbar.vbar20 = 0.55; // default for DNA
+				Vbar.vbar20 = (float) 0.55; // default for DNA
 			}
 			Vbar.vbar = vbar_info.vbar; // we don't know how much DNA vbar varies with temperature, so we use the same for 20 and Temperature
 			Vbar.vbar20 = vbar_info.vbar; 

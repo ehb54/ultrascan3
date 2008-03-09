@@ -319,7 +319,7 @@ void US_DB_Laser::update_buffer_lbl(int BuffID)
 */
 void US_DB_Laser::sel_vbar()
 {
-	float vbar = .72, temp = 20, vbar20 = .72;
+	float vbar = (float) 0.72, temp = 20, vbar20 = (float) 0.72;
 	US_Vbar_DB *vbar_dlg;
 	vbar_dlg = new US_Vbar_DB(temp, &vbar, &vbar20, true, false, data_list.InvID);
 	vbar_dlg->setCaption("Peptide Information");

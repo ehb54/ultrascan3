@@ -2,10 +2,16 @@
 #include <stdio.h>
 #include "D_calc.h"
 
-static float R = 8.314e7;
-static float T = 293.15;
-static float eta = 0.01;
-static float N = 6.022e23;
+// For some reson WIN32 is not picking up M_PI from math.h...
+
+#ifndef M_PI  
+#define M_PI       3.14159265358979323846
+#endif
+
+static float R   = 8.314e7;
+static float T   = (float) 293.15;
+static float eta = (float) 0.01;
+static float N   = (float) 6.022e23;
 static float rho = 1.0;
 
 float D_calc(float s, float vbar, float k) {

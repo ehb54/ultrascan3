@@ -1,9 +1,11 @@
 #include "../include/us_ga_model_editor.h"
 
-US_GAModelEditor::US_GAModelEditor(struct ModelSystem *system, struct ModelSystemConstraints *constraints,
-QWidget *parent, const char *name) : US_ModelEditor(system, parent, name)
+US_GAModelEditor::US_GAModelEditor(struct ModelSystem*            system, 
+                                   //struct ModelSystemConstraints* constraints,
+                                   QWidget*                       parent, 
+                                   const char*                    name) 
+  : US_ModelEditor(system, parent, name)
 {
-
 	setup_GUI();
 	select_component((int) 0);
 	
@@ -421,7 +423,7 @@ void US_GAModelEditor::load_model(const QString &fileName)
 					return;
 				}
 				(*system).component_vector[i].delta = str.toFloat();
-				(*system).component_vector[i].vbar20 = 0.72;
+				(*system).component_vector[i].vbar20 = (float) 0.72;
 				(*system).component_vector[i].extinction = 1.0;
 				(*system).component_vector[i].name = str.sprintf("Component %d", i+1);
 				

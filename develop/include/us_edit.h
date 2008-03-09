@@ -60,8 +60,17 @@ class US_EXTERN EditData_Win : public QFrame
 		QProgressBar *progress;
 		QwtPlot *edit_plt;
 		RunDetails_F *edit_details;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
 		vector <struct rotorInfo> rotor_list;
 		vector <struct centerpieceInfo> cp_list;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
 		struct rotorInfo rotor;
 		struct centerpieceInfo centerpiece;
 
@@ -146,8 +155,17 @@ class US_EXTERN EditData_Win : public QFrame
 		void getMousePressed(const QMouseEvent &e);
 		void update_rotor(int);
 		void update_centerpiece(int);
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		void update_exclude_profile(vector <bool>);
 		void final_exclude_profile(vector <bool>);
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
 
 	protected slots:
 //		virtual void resizeEvent(QResizeEvent *e);
