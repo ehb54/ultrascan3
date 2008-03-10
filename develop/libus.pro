@@ -142,7 +142,7 @@ INCLUDEPATH = $(QWTDIR)/include $(QTDIR)/include $(QWT3DDIR)/include $(ZLIB)
 DEPENDPATH += src include
 DEFINES    += QWT_USE_DLL US_MAKE_DLL
 
-FORMS = 3dplot/mesh2mainwindowbase.ui 3dplot/lightingdlgbase.ui
+#FORMS = 3dplot/mesh2mainwindowbase.ui 3dplot/lightingdlgbase.ui
 
 unix: { 
 	SOURCES +=src/us_beowulf.cpp \
@@ -159,8 +159,10 @@ unix: {
 }
 
 SOURCES += src/us_2dplot.cpp \
+	3dplot/mesh2mainwindowbase.cpp \
 	3dplot/mesh2mainwindow.cpp \
 	3dplot/colormapreader.cpp \
+	3dplot/lightingdlgbase.cpp \
 	3dplot/lightingdlg.cpp \
 	3dplot/mesh.cpp \
 	3dplot/D_calc.cpp \
@@ -340,9 +342,11 @@ unix:{
 HEADERS +=include/bluearrow.xpm \
 	include/greenarrow.xpm \
 	include/redarrow.xpm \
+	3dplot/mesh2mainwindowbase.h \
 	3dplot/mesh2mainwindow.h \
 	3dplot/functions.h \
 	3dplot/colormapreader.h \
+	3dplot/lightingdlgbase.h \
 	3dplot/lightingdlg.h \
 	3dplot/femreader.h \
 	3dplot/D_calc.h \
@@ -527,7 +531,7 @@ unix:contains(UNAME,x86_64) {
         DEFINES += BIN64
 } else {
 	win32 {
-		LIBS += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib
+		LIBS += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib opengl32.lib glu32.lib glaux.lib
 	}
 	unix {
 		LIBS += -L$(QWTDIR)/lib -lqwt -L$(QWT3DDIR)/lib -lqwtplot3d

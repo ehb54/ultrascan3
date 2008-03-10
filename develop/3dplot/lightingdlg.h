@@ -30,7 +30,12 @@ private:
 
 struct SColor : public Qwt3D::Color
 {
-  Qwt3D::RGBA operator()(double x, double y, double z) const {return Qwt3D::RGBA(0.8,0,0,0.5);}
+  Qwt3D::RGBA operator()(double x, double y, double z) const 
+  {
+    // Get rid of a stupid warnign about not using x, y, z
+    // Is this function ever used?
+    return Qwt3D::RGBA(0.8, 0, 0, 0.5 + (x+y+z) * 0 );
+  }
 };
 
 typedef Qwt3D::SurfacePlot SPlot;

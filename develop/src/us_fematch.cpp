@@ -1453,8 +1453,10 @@ float US_FeMatch_W::calc_residuals()
 	{
 		threads = components;
 	}
-	struct mfem_data fem_data[threads];
-	US_MovingFEM *mfem[threads];
+	//struct mfem_data fem_data[threads];
+	vector<struct mfem_data> fem_data(threads);
+	//US_MovingFEM *mfem[threads];
+	vector<US_MovingFEM*> mfem(threads);
 	for(i = 0; i < threads; i++) {
 	  mfem[i] = new US_MovingFEM(&(fem_data[i]), false);
 	}
@@ -1485,9 +1487,14 @@ float US_FeMatch_W::calc_residuals()
 	// parallelize this emre
 	if(threads > 1) {
 	  // create threads
-	  struct mfem_data z_experiment[USglobal->config_list.numThreads];
-	  struct mfem_data z_residuals[USglobal->config_list.numThreads];
-	  for(j = 0; j < threads; j++) {
+	  //struct mfem_data z_experiment[USglobal->config_list.numThreads];
+	  vector<struct mfem_data> z_experiment(USglobal->config_list.numThreads);
+
+	  //struct mfem_data z_residuals[USglobal->config_list.numThreads];
+	  vector<struct mfem_data> z_residuals(USglobal->config_list.numThreads);
+	  
+    
+    for(j = 0; j < threads; j++) {
 	    z_experiment[j] = experiment;
 	    z_experiment[j].scan = experiment.scan;
 	    z_residuals[j] = residuals;
@@ -1495,7 +1502,8 @@ float US_FeMatch_W::calc_residuals()
 //	    printf("z_exp.scan %d %lx %lx\n", j, &(z_experiment[j].scan), &(experiment.scan));
 	  }
 	  
-	  fematch_thr_t *fematch_thr_threads[USglobal->config_list.numThreads];
+	  //fematch_thr_t *fematch_thr_threads[USglobal->config_list.numThreads];
+	  vector<fematch_thr_t*> fematch_thr_threads(USglobal->config_list.numThreads);
 	  
 	  for(j = 0; j < threads; j++) {
 	    fematch_thr_threads[j] = new fematch_thr_t(j);

@@ -83,6 +83,7 @@ public slots:
 	void closeEvent(QCloseEvent *e);
 
 
+public:
 	bool *widget_flag;
 	
 private:

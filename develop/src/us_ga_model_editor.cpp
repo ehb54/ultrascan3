@@ -202,6 +202,7 @@ void US_GAModelEditor::load_constraints()
 
 bool US_GAModelEditor::verify_constraints()
 {
+  return true;
 }
 
 void US_GAModelEditor::save_constraints()

@@ -1777,7 +1777,8 @@ void calc_A_transpose_A(double ***A, double ***product, unsigned int rows, unsig
      // create threads
      unsigned int j;
      
-     ata_d_thr_t *ata_d_thr_threads[threads];
+     //ata_d_thr_t *ata_d_thr_threads[threads];
+     vector < ata_d_thr_t* > ata_d_thr_threads( threads );
      
      for(j = 0; j < threads; j++) {
        ata_d_thr_threads[j] = new ata_d_thr_t(j);

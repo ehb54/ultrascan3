@@ -724,9 +724,19 @@ void US_Pseudo3D_Combine::plot_3dim()
 	symbol.setStyle(QwtSymbol::Rect);
 	symbol.setSize(size);
 	unsigned int i, j, k, count;
-	unsigned int curve[system[current_distro].gradient.size()];
-	double x[x_resolution], y[y_resolution], z[x_resolution][y_resolution];
-	double frange, srange, sstep, fstep, ssigma, fsigma;
+
+	//unsigned int curve[system[current_distro].gradient.size()];
+	vector<unsigned int> curve( system[ current_distro].gradient.size() );
+	
+  
+  //double x[x_resolution], y[y_resolution], z[x_resolution][y_resolution];
+  double*  x = new double [ x_resolution ];
+	double*  y = new double [ y_resolution ];
+  double** z = new double* [x_resolution];
+  for ( unsigned int i = 0; i < x_resolution; i++ ) z[i] = new double[ y_resolution ];
+  
+  
+  double frange, srange, sstep, fstep, ssigma, fsigma;
 	double *xval, *yval;
 	xval = new double [x_resolution*y_resolution];
 	yval = new double [x_resolution*y_resolution];
@@ -782,12 +792,18 @@ void US_Pseudo3D_Combine::plot_3dim()
 		{
 			if(USglobal->config_list.numThreads > 1)
 			{
-				double maxvals[USglobal->config_list.numThreads];
-				double *zz[x_resolution];
+				//double maxvals[USglobal->config_list.numThreads];
+				vector<double> maxvals( USglobal->config_list.numThreads );
+        
+				//double* zz[x_resolution];
+
+        double** zz = new double* [ x_resolution ];
+
 				for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
 					maxvals[j] = 0;
 				}
+
 				for(j = 0; j < x_resolution; j++)
 				{
 					zz[j] = z[j];
@@ -795,7 +811,9 @@ void US_Pseudo3D_Combine::plot_3dim()
 
 			// create threads
 
-				US_Plot3d_thr_t *plot3d_thr_threads[USglobal->config_list.numThreads];
+				//US_Plot3d_thr_t *plot3d_thr_threads[USglobal->config_list.numThreads];
+				vector<US_Plot3d_thr_t*> plot3d_thr_threads( USglobal->config_list.numThreads );
+
 				for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
 					plot3d_thr_threads[j] = new US_Plot3d_thr_t(j);
@@ -812,7 +830,9 @@ void US_Pseudo3D_Combine::plot_3dim()
 					{
 						x_end = x_resolution - 1;
 					}
-					plot3d_thr_threads[j]->plot3d_thr_setup(j, zz, system[current_distro].s_distro, x, y, x_start, x_end, y_resolution, &maxvals[j], ssigma, fsigma, progress);
+					plot3d_thr_threads[j]->plot3d_thr_setup( j, zz, 
+              system[current_distro].s_distro, x, y, x_start, x_end, y_resolution, 
+              &maxvals[j], ssigma, fsigma, progress );
 				}
 				for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
@@ -836,6 +856,8 @@ void US_Pseudo3D_Combine::plot_3dim()
 					maxval = max(maxval,maxvals[j]);
 					delete plot3d_thr_threads[j];
 				}
+
+        delete [] zz;
 			}
 			else
 			{
@@ -884,21 +906,29 @@ void US_Pseudo3D_Combine::plot_3dim()
 		{
 			if(USglobal->config_list.numThreads > 1)
 			{
-				double maxvals[USglobal->config_list.numThreads];
-				double *zz[x_resolution];
-				for(j = 0; j < USglobal->config_list.numThreads; j++)
+				//double maxvals[USglobal->config_list.numThreads];
+				
+        vector<double> maxvals( USglobal->config_list.numThreads );
+				//double *zz[x_resolution];
+				double** zz = new double* [ x_resolution ];
+				
+        for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
 					maxvals[j] = 0;
 				}
-				for(j = 0; j < x_resolution; j++)
+				
+        for(j = 0; j < x_resolution; j++)
 				{
 					zz[j] = z[j];
 				}
 
 			// create threads
 
-				US_Plot3d_thr_t *plot3d_thr_threads[USglobal->config_list.numThreads];
-				for(j = 0; j < USglobal->config_list.numThreads; j++)
+				//US_Plot3d_thr_t *plot3d_thr_threads[USglobal->config_list.numThreads];
+				
+        vector< US_Plot3d_thr_t* > plot3d_thr_threads( USglobal->config_list.numThreads );
+				
+        for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
 					plot3d_thr_threads[j] = new US_Plot3d_thr_t(j);
 					plot3d_thr_threads[j]->start();
@@ -966,7 +996,10 @@ void US_Pseudo3D_Combine::plot_3dim()
 			z[i][j] = (system[current_distro].gradient.size()-1) * z[i][j]/maxval;
 		}
 	}
-	QFileInfo fi();
+
+  // Never used
+	// QFileInfo fi();
+
 	QString htmlDir = USglobal->config_list.html_dir + "/" + system[current_distro].run_name;
 	for (k=0; k<system[current_distro].gradient.size(); k++)
 	{
@@ -997,6 +1030,12 @@ void US_Pseudo3D_Combine::plot_3dim()
 	plot->replot();
 	delete [] xval;
 	delete [] yval;
+  delete [] x;
+  delete [] y;
+  
+  for ( unsigned int i = 0; i < x_resolution; i++ ) delete [] z[i];
+  delete [] z;
+
 	QString cell_info = "." + system[current_distro].cell + system[current_distro].wavelength;
 	switch (system[current_distro].distro_type)
 	{

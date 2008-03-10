@@ -1342,8 +1342,16 @@ void US_GA_Initialize::plot_3dim()
 	symbol.setStyle(QwtSymbol::Rect);
 	symbol.setSize(size);
 	unsigned int i, j, k, count;
-	unsigned int curve[gradient.size()];
-	double x[x_resolution], y[y_resolution], z[x_resolution][y_resolution];
+	//unsigned int curve[gradient.size()];
+	vector<unsigned int> curve( gradient.size() );
+	//double x[x_resolution], y[y_resolution], z[x_resolution][y_resolution];
+	double* x = new double [ x_resolution ];
+  double* y = new double [ y_resolution ];
+
+  double** z;
+  z = new double* [x_resolution];
+  for ( unsigned int i = 0; i < x_resolution; i++ ) z[i] = new double [ y_resolution ];
+
 	double smin=1.0e30, smax=-1.0e30, fmin=1.0e30, fmax=-1.0e30;
 	double frange, srange, sstep, fstep, ssigma, fsigma;
 	double *xval, *yval;
@@ -1441,19 +1449,25 @@ void US_GA_Initialize::plot_3dim()
 	{
 	  if(USglobal->config_list.numThreads > 1)
 	  {
-	    double maxvals[USglobal->config_list.numThreads];
-	    double *zz[x_resolution];
+	    //double maxvals[USglobal->config_list.numThreads];
+	    vector<double> maxvals( USglobal->config_list.numThreads );
+	    //double *zz[x_resolution];
+	    double** zz = new double* [ x_resolution ];
+
 	    for(j = 0; j < USglobal->config_list.numThreads; j++)
-		 {
-			maxvals[j] = 0;
+		  {
+			  maxvals[j] = 0;
 	    }
-	    for(j = 0; j < x_resolution; j++) {
+
+	    for(j = 0; j < x_resolution; j++) 
+      {
 	      zz[j] = z[j];
 	    }
 
 	    // create threads
 
-		 US_Plot3d_thr_t *plot3d_thr_threads[USglobal->config_list.numThreads];
+		 //US_Plot3d_thr_t *plot3d_thr_threads[USglobal->config_list.numThreads];
+		 vector<US_Plot3d_thr_t*> plot3d_thr_threads( USglobal->config_list.numThreads );
 		 for(j = 0; j < USglobal->config_list.numThreads; j++)
 		 {
 			 plot3d_thr_threads[j] = new US_Plot3d_thr_t(j);
@@ -1463,14 +1477,20 @@ void US_GA_Initialize::plot_3dim()
 	    unsigned int x_inc = x_resolution / USglobal->config_list.numThreads;
 	    unsigned int x_end;
 	    unsigned int x_start;
-	    for(j = 0; j < USglobal->config_list.numThreads; j++) {
+
+	    for(j = 0; j < USglobal->config_list.numThreads; j++) 
+      {
 	      x_start = x_inc * j;
-	      x_end = (x_inc * (j + 1)) - 1;
-	      if(j + 1 == USglobal->config_list.numThreads) {
-		x_end = x_resolution - 1;
+	      x_end   = (x_inc * (j + 1)) - 1;
+	      
+        if ( j + 1 == USglobal->config_list.numThreads ) 
+        {
+		      x_end = x_resolution - 1;
 	      }
-	      //	      cout << "thread " << j << " x range " << x_start << " - " << x_end << endl;
-	      plot3d_thr_threads[j]->plot3d_thr_setup(j, zz, distro_solute, x, y, x_start, x_end, y_resolution, &maxvals[j], ssigma, fsigma, progress);
+	      
+        //	      cout << "thread " << j << " x range " << x_start << " - " << x_end << endl;
+	      plot3d_thr_threads[j]->plot3d_thr_setup(j, zz, distro_solute, x, y, 
+            x_start, x_end, y_resolution, &maxvals[j], ssigma, fsigma, progress);
 	    }
 
 	    for(j = 0; j < USglobal->config_list.numThreads; j++) {
@@ -1490,6 +1510,7 @@ void US_GA_Initialize::plot_3dim()
 	      //	      cout << "maxval " << j << " " << maxvals[j] << endl;
 	      maxval = max(maxval,maxvals[j]);
 	      delete plot3d_thr_threads[j];
+        delete [] zz;
 	    }
 
 	  }
@@ -1503,7 +1524,8 @@ void US_GA_Initialize::plot_3dim()
 				{
 					z[i][j] += (*iter).c * exp(-pow((x[i] - (*iter).s), 2.0)/(pow(2.0 * ssigma, 2.0)))
 								* exp(-pow((y[j] - (*iter).k), 2.0)/(pow(2.0 * fsigma, 2.0)));
-					maxval = max(maxval, z[i][j]);
+					
+          maxval = max( maxval, z[i][j] );
 //					cout << "z[" << i << "][" << j << "]: " << z[i][j] << ", maxval: " << maxval <<endl;
 				}
 			}
@@ -1587,6 +1609,11 @@ void US_GA_Initialize::plot_3dim()
 	plot->replot();
 	delete [] xval;
 	delete [] yval;
+  for ( unsigned int i = 0; i < x_resolution; i++ ) delete [] z[i];
+  delete [] z;
+  delete [] x;
+  delete [] y;
+
 //	cout << distro_type << endl;
 	switch (distro_type)
 	{

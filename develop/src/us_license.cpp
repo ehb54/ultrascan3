@@ -437,7 +437,7 @@ void US_License::save()
 		lcfile.append(".uslicense");
 #endif
 #ifdef WIN32
-		lcfile = "C:\\Program\ Files\\UltraScan\\etc\\uslicense";
+		lcfile = "C:\\Program Files\\UltraScan\\etc\\uslicense";
 #endif
 	QFile f(lcfile);
 	if(f.open(IO_WriteOnly | IO_Translate))

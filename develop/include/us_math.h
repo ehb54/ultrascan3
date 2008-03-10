@@ -171,7 +171,7 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
 
 #ifdef WIN32
   /* The following was derived from glibc source for IA32 architecture. */
-
+int __fpclassifyf (float x);
 
   /* All floating-point numbers can be put in one of these categories.  */
   enum
@@ -190,38 +190,7 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
 
 # define isnormal(x) ( __fpclassifyf (x) == FP_NORMAL)
 
-typedef unsigned int u_int32_t;
-typedef union
-{
-    float value;
-      u_int32_t word;
-} ieee_float_shape_type;
-
-#define GET_FLOAT_WORD(i,d)         \
-  do {                              \
-      ieee_float_shape_type gf_u;   \
-      gf_u.value = (d);             \
-      (i) = gf_u.word;              \
-  } while (0)
-
-int __fpclassifyf (float x)
-{
-    u_int32_t wx;
-    int retval = FP_NORMAL;
-
-    GET_FLOAT_WORD (wx, x);
-    wx &= 0x7fffffff;
-    if (wx == 0)
-      retval = FP_ZERO;
-    else if (wx < 0x800000)
-      retval = FP_SUBNORMAL;
-    else if (wx >= 0x7f800000)
-      retval = wx > 0x7f800000 ? FP_NAN : FP_INFINITE;
-
-    return retval;
-}
 #endif // WIN32
-
 
 
 #endif
