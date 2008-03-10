@@ -744,6 +744,7 @@ float calc_bottom(vector <struct rotorInfo> rotor_list,
 	return bottom;
 }
 
+#if !defined(USE_MPI)
 double stretch(int rotor, unsigned int rpm)
 {
 	vector <struct rotorInfo> rotor_list;
@@ -755,7 +756,7 @@ double stretch(int rotor, unsigned int rpm)
 	}
 	return (stretch);
 }
-
+#endif
 
 /*****************************************************************************
 
