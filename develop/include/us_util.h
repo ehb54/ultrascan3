@@ -218,7 +218,7 @@ class US_EXTERN OneLiner : public QDialog
 		QPushButton *cancel;
 };
 
-class US_FitParameter : public QWidget
+class US_EXTERN US_FitParameter : public QWidget
 {
 	Q_OBJECT
 

@@ -12,12 +12,13 @@
 #include <qapplication.h>
 #include <qclipboard.h>
 
+#include "us_extern.h"
 
 class QLabel;
 class QMenuBar;
 class QPopupMenu;
 
-class US_ImageViewer : public QWidget
+class US_EXTERN US_ImageViewer : public QWidget
 {
     Q_OBJECT
 public:
