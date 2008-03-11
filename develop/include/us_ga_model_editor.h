@@ -11,8 +11,8 @@ class US_GAModelEditor : public US_ModelEditor
 	Q_OBJECT
 	
 	public:
-		US_GAModelEditor(struct ModelSystem*, struct ModelSystemConstraints*, QWidget* parent=0, const char* name=0);
-		US_GAModelEditor(QWidget *parent=0, const char *name=0);
+		US_GAModelEditor(struct ModelSystem *, struct ModelSystemConstraints *, QWidget *parent=0, const char *name=0);
+		US_GAModelEditor(struct ModelSystem *, QWidget *parent=0, const char *name=0);
 		~US_GAModelEditor();
 		struct ModelSystem *ms;
 		struct ModelSystemConstraints *msc;
@@ -56,6 +56,7 @@ class US_GAModelEditor : public US_ModelEditor
 		void update_timeGrid(int);
 		void update_simpoints(double val);
 		void update_lamella(double val);
+		void select_model();
 
 // re-implemented functions:
 		void setup_GUI();

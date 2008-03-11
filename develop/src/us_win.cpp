@@ -230,8 +230,10 @@ UsWin::UsWin(QWidget *parent, const char *name)
 	veloc->setItemEnabled(cofdistroID, true);
 	int fematchID = veloc->insertItem(tr("&Finite Element Model Viewer"), this, SLOT(fematch()));
 	veloc->setItemEnabled(fematchID, true);
-	int ga_initID = veloc->insertItem(tr("&Initialize GA Grid"), this, SLOT(ga_initialize()));
-	veloc->setItemEnabled(ga_initID, true);
+	int ga_init1ID = veloc->insertItem(tr("&Initialize GA with 2DSA Distribution"), this, SLOT(ga_initialize1()));
+	veloc->setItemEnabled(ga_init1ID, true);
+	int ga_init2ID = veloc->insertItem(tr("&Initialize GA with nonlinear Model"), this, SLOT(ga_initialize2()));
+	veloc->setItemEnabled(ga_init2ID, true);
 	int sec_momID = veloc->insertItem(tr("&Second Moment"), this, SLOT(secm()));
 	veloc->setItemEnabled(sec_momID, true);
 	int dcdtID = veloc->insertItem(tr("&Time Derivative"), this, SLOT(dcdt()));
@@ -506,7 +508,8 @@ UsWin::UsWin(QWidget *parent, const char *name)
 	us_finite_single_proc = NULL;
 	us_findat_ad_proc = NULL;
 	us_fematch_proc = NULL;
-	us_gainit_proc = NULL;
+	us_gainit1_proc = NULL;
+	us_gainit2_proc = NULL;
 	us_hydrodyn_proc = NULL;
 	us_secdat_proc = NULL;
 	us_cofs_proc = NULL;
@@ -785,12 +788,20 @@ void UsWin::closeEvent(QCloseEvent *)
 			closeAttnt(us_fematch_proc, str);
 		}
 	}
-	if (us_gainit_proc != NULL)
+	if (us_gainit1_proc != NULL)
 	{
-		if (us_gainit_proc->isRunning())
+		if (us_gainit1_proc->isRunning())
 		{
-			str = tr("Genetic Algorithm Initializer");
-			closeAttnt(us_gainit_proc, str);
+			str = tr("Genetic Algorithm Initializer from 2DSA distribution");
+			closeAttnt(us_gainit1_proc, str);
+		}
+	}
+	if (us_gainit2_proc != NULL)
+	{
+		if (us_gainit2_proc->isRunning())
+		{
+			str = tr("Genetic Algorithm Initializer for nonlinear Model");
+			closeAttnt(us_gainit2_proc, str);
 		}
 	}
 	if (us_hydrodyn_proc != NULL)
@@ -2626,17 +2637,33 @@ void UsWin::us_license()
 	emit explain( " " );
 }
 
-void UsWin::ga_initialize()
+void UsWin::ga_initialize1()
 {
-	emit explain( tr("Loading Genetic Algorithm Grid Definition Module...") );
+	emit explain( tr("Loading Genetic Algorithm Module for GA initialization from 2DSA distribution...") );
 
-	us_gainit_proc = new QProcess(this);
-	us_gainit_proc->addArgument("us_gainit");
-	if (!us_gainit_proc->start())
+	us_gainit1_proc = new QProcess(this);
+	us_gainit1_proc->addArgument("us_gainit");
+	if (!us_gainit1_proc->start())
 	{
 		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
 														 "for US_GAINIT\n\n"
 														 "Please check and try again..."));
+		return;
+	}
+	emit explain( " " );
+}
+
+void UsWin::ga_initialize2()
+{
+	emit explain( tr("Loading Genetic Algorithm Module for GA initialization from a nonlinear model...") );
+
+	us_gainit2_proc = new QProcess(this);
+	us_gainit2_proc->addArgument("us_ga_model_editor");
+	if (!us_gainit2_proc->start())
+	{
+		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
+				"for US_GA_MODEL_EDITOR\n\n"
+						"Please check and try again..."));
 		return;
 	}
 	emit explain( " " );

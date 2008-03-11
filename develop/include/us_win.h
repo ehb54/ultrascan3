@@ -69,7 +69,8 @@ public:
    QProcess *us_findat_ad_proc;
    QProcess *us_finite_single_proc;
 	QProcess *us_fematch_proc;
-	QProcess *us_gainit_proc;
+	QProcess *us_gainit1_proc;
+	QProcess *us_gainit2_proc;
 	QProcess *us_hydrodyn_proc;
 	QProcess *us_secdat_proc;
 	QProcess *us_cofs_proc;
@@ -142,7 +143,8 @@ public slots:
 	void credits();
 	void help();
 	void grid_control();
-	void ga_initialize();
+	void ga_initialize1();
+	void ga_initialize2();
 	void us_register();
 	void us_home();
 	void us_upgrade();

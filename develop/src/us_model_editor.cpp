@@ -1,6 +1,6 @@
 #include "../include/us_model_editor.h"
 
-US_ModelEditor::US_ModelEditor(struct ModelSystem *system,
+US_ModelEditor::US_ModelEditor(bool show_gui, struct ModelSystem *system,
 QWidget *parent, const char *name) : QDialog( parent, name, false )
 {
 	this->system = system;
@@ -60,8 +60,8 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_conc = new QLineEdit(this, " Concentration Line Edit");
 	le_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_conc->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(le_conc, SIGNAL(textChanged(const QString &)), 
-				SLOT(update_conc(const QString &)));	
+	connect(le_conc, SIGNAL(textChanged(const QString &)),
+			  SLOT(update_conc(const QString &)));
 	le_conc->setMinimumHeight(minHeight2);
 	le_conc->setEnabled(false);
 	
@@ -74,8 +74,8 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_keq = new QLineEdit(this, " Equilibrium Constant Line Edit");
 	le_keq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_keq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(le_keq, SIGNAL(textChanged(const QString &)), 
-				SLOT(update_keq(const QString &)));	
+	connect(le_keq, SIGNAL(textChanged(const QString &)),
+			  SLOT(update_keq(const QString &)));
 	le_keq->setMinimumHeight(minHeight2);
 	le_keq->setEnabled(false);
 	
@@ -88,8 +88,8 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_sed = new QLineEdit(this, "Sedimentation Line Edit");
 	le_sed->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_sed->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	connect(le_sed, SIGNAL(textChanged(const QString &)), 
-				SLOT(update_sed(const QString &)));	
+	connect(le_sed, SIGNAL(textChanged(const QString &)),
+			  SLOT(update_sed(const QString &)));
 	le_sed->setMinimumHeight(minHeight2);
 
 	lbl_diff = new QLabel(tr(" Diffusion Coeff. (cm^2/sec):"), this);
@@ -101,8 +101,8 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_diff = new QLineEdit(this, "Diffusion Line Edit");
 	le_diff->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_diff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	connect(le_diff, SIGNAL(textChanged(const QString &)), 
-				SLOT(update_diff(const QString &)));	
+	connect(le_diff, SIGNAL(textChanged(const QString &)),
+			  SLOT(update_diff(const QString &)));
 	le_diff->setMinimumHeight(minHeight2);
 
 	lbl_koff = new QLabel(tr(" K_off Rate Constant (1/sec):"), this);
@@ -114,49 +114,52 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_koff = new QLineEdit(this, "Rate Constant Line Edit");
 	le_koff->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_koff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	connect(le_koff, SIGNAL(textChanged(const QString &)), 
-				SLOT(update_koff(const QString &)));
+	connect(le_koff, SIGNAL(textChanged(const QString &)),
+			  SLOT(update_koff(const QString &)));
 	le_koff->setMinimumHeight(minHeight2);
 	le_koff->setEnabled(false);
 
-	lbl_f_f01 = new QLabel(tr(" Frictional Ratio (f/f0):"), this);
-	lbl_f_f01->setAlignment(AlignLeft|AlignVCenter);
-	lbl_f_f01->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_f_f01->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	lbl_f_f01->setMinimumHeight(minHeight2);
+	lbl_f_f0 = new QLabel(tr(" Frictional Ratio (f/f0):"), this);
+	lbl_f_f0->setAlignment(AlignLeft|AlignVCenter);
+	lbl_f_f0->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_f_f0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_f_f0->setMinimumHeight(minHeight2);
 
-	lbl_f_f02 = new QLabel(this);
-	lbl_f_f02->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-	lbl_f_f02->setAlignment(AlignLeft|AlignVCenter);
-	lbl_f_f02->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
-	lbl_f_f02->setMinimumHeight(minHeight2);
-	lbl_f_f02->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_f_f0 = new QLineEdit(this, tr("Frictional Ratio"));
+	le_f_f0->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_f_f0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_f_f0->setMinimumHeight(minHeight2);
+	le_f_f0->setEnabled(true);
+	le_f_f0->setReadOnly(true);
 
-	lbl_vbar1 = new QLabel(tr(" Vbar (ccm/g):"), this);
-	lbl_vbar1->setAlignment(AlignLeft|AlignVCenter);
-	lbl_vbar1->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_vbar1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	lbl_vbar1->setMinimumHeight(minHeight2);
+	pb_vbar = new QPushButton(tr("vbar (ccm/g, 20C)"), this );
+	pb_vbar->setAutoDefault(false);
+	pb_vbar->setPalette(QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_vbar->setMinimumHeight(minHeight2);
+	pb_vbar->setEnabled(true);
+	connect(pb_vbar, SIGNAL(clicked()), SLOT(get_vbar()));
 
-	lbl_vbar2 = new QLabel(this);
-	lbl_vbar2->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-	lbl_vbar2->setAlignment(AlignLeft|AlignVCenter);
-	lbl_vbar2->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
-	lbl_vbar2->setMinimumHeight(minHeight2);
-	lbl_vbar2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_vbar = new QLineEdit(this, tr("vbar (ccm/g, 20C)"));
+	le_vbar->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_vbar->setMinimumHeight(minHeight2);
+	le_vbar->setEnabled(true);
+	connect(le_vbar, SIGNAL(textChanged(const QString &)),
+			  SLOT(get_vbar(const QString &)));
+	
+	lbl_mw = new QLabel(tr(" Molecular Weight (Da):"), this);
+	lbl_mw->setAlignment(AlignLeft|AlignVCenter);
+	lbl_mw->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_mw->setMinimumHeight(minHeight2);
 
-	lbl_mw1 = new QLabel(tr(" Molecular Weight (Da):"), this);
-	lbl_mw1->setAlignment(AlignLeft|AlignVCenter);
-	lbl_mw1->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_mw1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	lbl_mw1->setMinimumHeight(minHeight2);
-
-	lbl_mw2 = new QLabel(this);
-	lbl_mw2->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-	lbl_mw2->setAlignment(AlignLeft|AlignVCenter);
-	lbl_mw2->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
-	lbl_mw2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	lbl_mw2->setMinimumHeight(minHeight2);
+	le_mw = new QLineEdit(this, tr("Molecular Weight"));
+	le_mw->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_mw->setMinimumHeight(minHeight2);
+	le_mw->setEnabled(true);
+	le_mw->setReadOnly(true);
 
 	lbl_stoich = new QLabel(tr(" Stoichiometry:"), this);
 	lbl_stoich->setAlignment(AlignLeft|AlignVCenter);
@@ -220,8 +223,8 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_sigma->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_sigma->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_sigma->setMinimumHeight(minHeight2);
-	connect(le_sigma, SIGNAL(textChanged(const QString &)), 
-				SLOT(update_sigma(const QString &)));
+	connect(le_sigma, SIGNAL(textChanged(const QString &)),
+			  SLOT(update_sigma(const QString &)));
 	le_sigma->setEnabled(false);
 
 	lbl_delta = new QLabel(tr(" Conc. Dependency of D (delta):"), this);
@@ -234,8 +237,8 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_delta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_delta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_delta->setMinimumHeight(minHeight2);
-	connect(le_delta, SIGNAL(textChanged(const QString &)), 
-				SLOT(update_delta(const QString &)));	
+	connect(le_delta, SIGNAL(textChanged(const QString &)),
+			  SLOT(update_delta(const QString &)));
 	le_delta->setEnabled(false);
 
 	cnt_item= new QwtCounter(this);
@@ -299,7 +302,10 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	pb_help->setMinimumHeight(minHeight2);
 	connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-	setup_GUI();
+	if(show_gui)
+	{
+		setup_GUI();
+	}
 	select_component((int) 0);
 	
 	global_Xpos += 30;
@@ -321,6 +327,7 @@ void US_ModelEditor::closeEvent(QCloseEvent *e)
 
 void US_ModelEditor::setup_GUI()
 {
+
 	unsigned int j=3;
 	QGridLayout *grid = new QGridLayout(this, 11, 4, 4, 2);
 	grid->addMultiCellWidget(lbl_model, 0, 0, 0, 3, 0);
@@ -338,18 +345,18 @@ void US_ModelEditor::setup_GUI()
 	grid->addWidget(pb_load_c0, j, 2, 0);
 	grid->addWidget(lbl_load_c0, j, 3, 0);
 	j++;
-	grid->addWidget(lbl_vbar1, j, 0, 0);
-	grid->addWidget(lbl_vbar2, j, 1, 0);
+	grid->addWidget(pb_vbar, j, 0, 0);
+	grid->addWidget(le_vbar, j, 1, 0);
 	grid->addWidget(lbl_keq, j, 2, 0);
 	grid->addWidget(le_keq, j, 3, 0);
 	j++;
-	grid->addWidget(lbl_mw1, j, 0, 0);
-	grid->addWidget(lbl_mw2, j, 1, 0);
+	grid->addWidget(lbl_mw, j, 0, 0);
+	grid->addWidget(le_mw, j, 1, 0);
 	grid->addWidget(lbl_koff, j, 2, 0);
 	grid->addWidget(le_koff, j, 3, 0);
 	j++;
-	grid->addWidget(lbl_f_f01, j, 0, 0);
-	grid->addWidget(lbl_f_f02, j, 1, 0);
+	grid->addWidget(lbl_f_f0, j, 0, 0);
+	grid->addWidget(le_f_f0, j, 1, 0);
 	grid->addWidget(lbl_stoich, j, 2, 0);
 	grid->addWidget(le_stoich, j, 3, 0);
 	j++;
@@ -428,6 +435,8 @@ void US_ModelEditor::load_model(const QString &fileName)
 			}
 			ts.readLine();
 			(*system).component_vector.resize(str.toInt());
+			cnt_item->setRange(1, (*system).component_vector.size(), 1);
+			cnt_item->setValue(1);
 			for (i=0; i<(*system).component_vector.size(); i++)
 			{
 				str = ts.readLine();
@@ -701,6 +710,8 @@ void US_ModelEditor::load_model(const QString &fileName)
 				return;
 			}
 			(*system).component_vector.resize(str.toInt()); // number of components
+			cnt_item->setRange(1, (*system).component_vector.size(), 1);
+			cnt_item->setValue(1);
 			for (i=0; i<(*system).component_vector.size(); i++)
 			{
 				str = ts.readLine();
@@ -942,9 +953,9 @@ void US_ModelEditor::select_component(int val)
 
 	le_sed->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].s));
 	le_diff->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].D));
-	lbl_vbar2->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].vbar20));
-	lbl_mw2->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].mw));
-	lbl_f_f02->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].f_f0));
+	le_vbar->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].vbar20));
+	le_mw->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].mw));
+	le_f_f0->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].f_f0));
 	
 	if((*system).component_vector[current_component].shape == "sphere")
 	{
@@ -1082,6 +1093,30 @@ void US_ModelEditor::update_conc(const QString &newText)
 	}
 }
 
+void US_ModelEditor::get_vbar(const QString &val)
+{
+	(*system).component_vector[current_component].vbar20 = val.toFloat();
+}
+
+void US_ModelEditor::get_vbar()
+{
+	float vbar, vbar20;
+	US_Vbar_DB *vbar_dlg;
+	vbar_dlg = new US_Vbar_DB((float) 20.0, &vbar, &vbar20, true, false, 0);
+	vbar_dlg->show();
+	connect(vbar_dlg, SIGNAL(valueChanged(float, float)), SLOT(update_vbar(float, float)));
+}
+
+void US_ModelEditor::update_vbar(float vbar, float vbar20)
+{
+	QString str;
+	if (vbar20 != vbar)
+	{
+		cerr << "error with temperature...\n";
+	}
+	le_vbar->setText(str.sprintf("%6.4f", vbar20));
+}
+
 void US_ModelEditor::printError(const int &ival)
 {
 	switch (ival)
@@ -1156,6 +1191,24 @@ void US_ModelEditor::update_sigma(const QString &newText)
 		return;
 	}
 	(*system).component_vector[current_component].sigma = newText.toFloat();
+}
+
+void US_ModelEditor::update_mw(const QString &newText)
+{
+	if (newText == "")
+	{
+		return;
+	}
+	(*system).component_vector[current_component].mw = newText.toFloat();
+}
+
+void US_ModelEditor::update_f_f0(const QString &newText)
+{
+	if (newText == "")
+	{
+		return;
+	}
+	(*system).component_vector[current_component].f_f0 = newText.toFloat();
 }
 
 void US_ModelEditor::update_keq(const QString &newText)

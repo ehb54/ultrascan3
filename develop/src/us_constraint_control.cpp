@@ -9,19 +9,19 @@ QWidget *parent, const char *name) : QWidget(parent, name)
 	this->high = high;
 	this->fit = fit;
 	
-	le_low = new QLineEdit(this, "low Line Edit");
+	le_low = new QLineEdit(parent, "low Line Edit");
 	le_low->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_low->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(le_low, SIGNAL(textChanged(const QString &)), SLOT(set_low(const QString &)));
 	le_low->setEnabled(*fit);
 	
-	le_high = new QLineEdit(this, "low Line Edit");
+	le_high = new QLineEdit(parent, "low Line Edit");
 	le_high->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_high->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(le_high, SIGNAL(textChanged(const QString &)), SLOT(set_high(const QString &)));
 	le_high->setEnabled(*fit);
 
-	cb_fit = new QCheckBox(this);
+	cb_fit = new QCheckBox(parent);
 	cb_fit->setChecked(*fit);
 	cb_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_fit->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));

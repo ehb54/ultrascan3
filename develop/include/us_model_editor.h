@@ -18,6 +18,7 @@
 #include "us_util.h"
 #include "us_hydro.h"
 #include "us_femglobal.h"
+#include "us_db_tbl_vbar.h"
 
 using namespace std;
 
@@ -26,7 +27,7 @@ class US_ModelEditor : public QDialog
 	Q_OBJECT
 	
 	public:
-		US_ModelEditor(struct ModelSystem *, QWidget *parent=0, const char *name=0);
+		US_ModelEditor(bool, struct ModelSystem *, QWidget *parent=0, const char *name=0);
 		~US_ModelEditor();
 		US_Config *USglobal;
 		struct ModelSystem *system;
@@ -44,6 +45,9 @@ class US_ModelEditor : public QDialog
 		QLineEdit *le_diff;
 		QLineEdit *le_koff;
 		QLineEdit *le_keq;
+		QLineEdit *le_mw;
+		QLineEdit *le_vbar;
+		QLineEdit *le_f_f0;
 		QLineEdit *le_sigma;
 		QLineEdit *le_delta;
 		QLineEdit *le_stoich;
@@ -58,12 +62,8 @@ class US_ModelEditor : public QDialog
 		QLabel *lbl_delta;
 		QLabel *lbl_keq;
 		QLabel *lbl_koff;
-		QLabel *lbl_vbar1;
-		QLabel *lbl_vbar2;
-		QLabel *lbl_f_f01;
-		QLabel *lbl_f_f02;
-		QLabel *lbl_mw1;
-		QLabel *lbl_mw2;
+		QLabel *lbl_f_f0;
+		QLabel *lbl_mw;
 		QLabel *lbl_stoich;
 		QLabel *lbl_msg1;
 		QLabel *lbl_load_c0;
@@ -73,6 +73,7 @@ class US_ModelEditor : public QDialog
 		QPushButton *pb_next;
 		QPushButton *pb_help;
 		QPushButton *pb_save;
+		QPushButton *pb_vbar;
 		QPushButton *pb_accept;
 		QPushButton *pb_load_c0;
 		QPushButton *pb_load_model;
@@ -88,12 +89,14 @@ class US_ModelEditor : public QDialog
 		void select_component(double);
 		void select_component(int);
 		void update_conc(const QString &);
-		void update_sed(const QString &);
-		void update_diff(const QString &);
+		virtual void update_sed(const QString &);
+		virtual void update_diff(const QString &);
 		void update_koff(const QString &);
 		void update_keq(const QString &);
 		void update_sigma(const QString &);
 		void update_delta(const QString &);
+		virtual void update_mw(const QString &);
+		virtual void update_f_f0(const QString &);
 		void savefile(const QString &);
 		void savefile();
 		void select_rod();
@@ -105,9 +108,12 @@ class US_ModelEditor : public QDialog
 		void load_c0();
 		void load_model();
 		void load_model(const QString &);
+		void get_vbar(const QString &);
+		void get_vbar();
 		void printError(const int &);
 		void save_model();
 		void accept_model();
+		void update_vbar(float, float);
 		virtual bool verify_model();
 
 	signals:

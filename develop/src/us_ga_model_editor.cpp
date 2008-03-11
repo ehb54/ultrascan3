@@ -1,7 +1,7 @@
 #include "../include/us_ga_model_editor.h"
 
 US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, struct ModelSystemConstraints *msc,
-QWidget *parent, const char *name) : US_ModelEditor(system, parent, name)
+QWidget *parent, const char *name) : US_ModelEditor(false, system, parent, name)
 {
 	this->ms = ms;
 	this->msc = msc;
@@ -14,8 +14,10 @@ QWidget *parent, const char *name) : US_ModelEditor(system, parent, name)
 	move(global_Xpos, global_Ypos);
 }
 
-US_GAModelEditor::US_GAModelEditor(QWidget *parent, const char *name) : US_ModelEditor(system, parent, name)
+US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, QWidget *parent, const char *name) : US_ModelEditor(false, ms, parent, name)
 {
+	this->ms = ms;
+
 	setup_GUI();
 	select_component((int) 0);
 	
@@ -32,49 +34,57 @@ US_GAModelEditor::~US_GAModelEditor()
 void US_GAModelEditor::setup_GUI()
 {
 	int minHeight1 = 30, minHeight2 = 26;
+	delete pb_accept;
+	delete pb_save;
+	delete pb_cancel;
 	
 	lbl_constraints = new QLabel(tr("Constraints for Current Component:"), this);
-	lbl_constraints->setAlignment(AlignLeft|AlignVCenter);
+	lbl_constraints->setAlignment(AlignHCenter|AlignVCenter);
 	lbl_constraints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_constraints->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_constraints->setMinimumHeight(minHeight2);
 	
 	lbl_low = new QLabel(tr("Low:"), this);
-	lbl_low->setAlignment(AlignLeft|AlignVCenter);
+	lbl_low->setAlignment(AlignHCenter|AlignVCenter);
 	lbl_low->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_low->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_low->setMinimumHeight(minHeight2);
 	
 	lbl_high = new QLabel(tr("High:"), this);
-	lbl_high->setAlignment(AlignLeft|AlignVCenter);
+	lbl_high->setAlignment(AlignHCenter|AlignVCenter);
 	lbl_high->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_high->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_high->setMinimumHeight(minHeight2);
 	
 	lbl_fit = new QLabel(tr("Fit?"), this);
-	lbl_fit->setAlignment(AlignLeft|AlignVCenter);
+	lbl_fit->setAlignment(AlignHCenter|AlignVCenter);
 	lbl_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_fit->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_fit->setMinimumHeight(minHeight2);
 	
-	lbl_bandVolume = new QLabel(tr("Band-loading Volume:"), this);
+	lbl_bandVolume = new QLabel(tr(" Band-loading Volume:"), this);
 	lbl_bandVolume->setAlignment(AlignLeft|AlignVCenter);
 	lbl_bandVolume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_bandVolume->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_bandVolume->setMinimumHeight(minHeight2);
 	
-	lbl_simpoints = new QLabel(tr("# of Simulation Points:"), this);
+	lbl_simpoints = new QLabel(tr(" # of Simulation Points:"), this);
 	lbl_simpoints->setAlignment(AlignLeft|AlignVCenter);
 	lbl_simpoints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_simpoints->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_simpoints->setMinimumHeight(minHeight2);
 
-	us_cc_mw = new US_ConstraintControl(0.0, &c_mw.low, &c_mw.high, &c_mw.fit);
-	us_cc_f_f0 = new US_ConstraintControl(0.0, &c_f_f0.low, &c_f_f0.high, &c_f_f0.fit);
-	us_cc_conc = new US_ConstraintControl(0.0, &c_conc.low, &c_conc.high, &c_conc.fit);
-	us_cc_keq = new US_ConstraintControl(0.0, &c_keq.low, &c_keq.high, &c_keq.fit);
-	us_cc_koff = new US_ConstraintControl(0.0, &c_koff.low, &c_koff.high, &c_koff.fit);
-	
+	us_cc_mw = new US_ConstraintControl(0.0, &c_mw.low, &c_mw.high, &c_mw.fit, this);
+	us_cc_mw->hide();
+	us_cc_f_f0 = new US_ConstraintControl(0.0, &c_f_f0.low, &c_f_f0.high, &c_f_f0.fit, this);
+	us_cc_f_f0->hide();
+	us_cc_conc = new US_ConstraintControl(0.0, &c_conc.low, &c_conc.high, &c_conc.fit, this);
+	us_cc_conc->hide();
+	us_cc_keq = new US_ConstraintControl(0.0, &c_keq.low, &c_keq.high, &c_keq.fit, this);
+	us_cc_keq->hide();
+	us_cc_koff = new US_ConstraintControl(0.0, &c_koff.low, &c_koff.high, &c_koff.fit, this);
+	us_cc_koff->hide();
+
 	cmb_radialGrid = new QComboBox(false, this, "Radial Grid" );
 	cmb_radialGrid->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	cmb_radialGrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -84,7 +94,7 @@ void US_GAModelEditor::setup_GUI()
 	cmb_radialGrid->insertItem("Claverie Fixed Mesh", -1);
 	cmb_radialGrid->insertItem("Moving Hat Mesh", -1);
 	cmb_radialGrid->insertItem("File: \"$ULTRASCAN/mesh.dat\"", -1);
-	cmb_radialGrid->setCurrentItem((*msc).mesh);
+	cmb_radialGrid->setCurrentItem(0);
 	connect(cmb_radialGrid, SIGNAL(activated(int)), this, SLOT(update_radialGrid(int)));
 
 	cmb_timeGrid = new QComboBox(false, this, "Time Grid" );
@@ -94,13 +104,13 @@ void US_GAModelEditor::setup_GUI()
 	cmb_timeGrid->setMinimumHeight(minHeight1);
 	cmb_timeGrid->insertItem("Constant Time Grid (Claverie/Acceleration)", -1);
 	cmb_timeGrid->insertItem("Moving Time Grid (ASTFEM/Moving Hat)", -1);
-	cmb_timeGrid->setCurrentItem((*msc).moving_grid);
+	cmb_timeGrid->setCurrentItem(1);
 	connect(cmb_timeGrid, SIGNAL(activated(int)), this, SLOT(update_timeGrid(int)));
 
 	cnt_simpoints= new QwtCounter(this);
 	cnt_simpoints->setNumButtons(3);
 	cnt_simpoints->setRange(50, 5000, 10);
-	cnt_simpoints->setValue((double)(*msc).simpoints);
+	cnt_simpoints->setValue(100.0);
 	cnt_simpoints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_simpoints->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	cnt_simpoints->setMinimumHeight(minHeight1);
@@ -111,7 +121,7 @@ void US_GAModelEditor::setup_GUI()
 	cnt_lamella->setNumButtons(3);
 	cnt_lamella->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_lamella->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	cnt_lamella->setValue((*msc).band_volume);
+	cnt_lamella->setValue(0.015);
 	cnt_lamella->setMinimumHeight(minHeight1);
 	connect(cnt_lamella, SIGNAL(valueChanged(double)), SLOT(update_lamella(double)));
 
@@ -120,93 +130,111 @@ void US_GAModelEditor::setup_GUI()
 	pb_selectModel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_selectModel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	pb_selectModel->setMinimumHeight(minHeight1);
-	connect(pb_selectModel, SIGNAL(clicked()), SLOT(load_model()) );
+	connect(pb_selectModel, SIGNAL(clicked()), SLOT(select_model()) );
 
-	pb_selectModel = new QPushButton( tr("Load Initialization"), this );
-	pb_selectModel->setAutoDefault(false);
-	pb_selectModel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_selectModel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_selectModel->setMinimumHeight(minHeight1);
-	connect(pb_selectModel, SIGNAL(clicked()), SLOT(load_model()) );
+	pb_loadInit = new QPushButton( tr("Load Initialization"), this );
+	pb_loadInit->setAutoDefault(false);
+	pb_loadInit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_loadInit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_loadInit->setMinimumHeight(minHeight1);
+	connect(pb_loadInit, SIGNAL(clicked()), SLOT(load_constraints()) );
 
-	pb_selectModel = new QPushButton( tr("Select Model"), this );
-	pb_selectModel->setAutoDefault(false);
-	pb_selectModel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_selectModel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_selectModel->setMinimumHeight(minHeight1);
-	connect(pb_selectModel, SIGNAL(clicked()), SLOT(load_model()) );
+	pb_saveInit = new QPushButton( tr("Save Initialization"), this );
+	pb_saveInit->setAutoDefault(false);
+	pb_saveInit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_saveInit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_saveInit->setMinimumHeight(minHeight1);
+	connect(pb_saveInit, SIGNAL(clicked()), SLOT(save_constraints()) );
 
-	pb_selectModel = new QPushButton( tr("Select Model"), this );
-	pb_selectModel->setAutoDefault(false);
-	pb_selectModel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_selectModel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_selectModel->setMinimumHeight(minHeight1);
-	connect(pb_selectModel, SIGNAL(clicked()), SLOT(load_model()) );
+	pb_close = new QPushButton( tr("Close"), this );
+	pb_close->setAutoDefault(false);
+	pb_close->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_close->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_close->setMinimumHeight(minHeight1);
+	connect(pb_close, SIGNAL(clicked()), SLOT(accept()));
 
-	
-	unsigned int j=3;
-	QGridLayout *grid = new QGridLayout(this, 11, 4, 4, 2);
-	grid->addMultiCellWidget(lbl_model, 0, 0, 0, 3, 0);
+	unsigned int j;
+	QGridLayout *grid = new QGridLayout(this, 17, 5, 4, 2);
+	grid->addMultiCellWidget(lbl_model, 0, 0, 0, 4, 0);
 	grid->addMultiCellWidget(lbl_current, 1, 1, 0, 1, 0);
-	grid->addMultiCellWidget(lbl_linked, 1, 1, 2, 3, 0);
+	grid->addMultiCellWidget(lbl_linked, 1, 1, 2, 4, 0);
 	grid->addMultiCellWidget(cmb_component1, 2, 2, 0, 1, 0);
-	grid->addMultiCellWidget(cmb_component2, 2, 2, 2, 3, 0);
-	grid->addWidget(lbl_sed, j, 0, 0);
-	grid->addWidget(le_sed, j, 1, 0);
-	grid->addWidget(lbl_conc, j, 2, 0);
-	grid->addWidget(le_conc, j, 3, 0);
-	j++;
-	grid->addWidget(lbl_diff, j, 0, 0);
-	grid->addWidget(le_diff, j, 1, 0);
-	grid->addWidget(pb_load_c0, j, 2, 0);
-	grid->addWidget(lbl_load_c0, j, 3, 0);
-	j++;
-	grid->addWidget(lbl_vbar1, j, 0, 0);
-	grid->addWidget(lbl_vbar2, j, 1, 0);
-	grid->addWidget(lbl_keq, j, 2, 0);
-	grid->addWidget(le_keq, j, 3, 0);
-	j++;
-	grid->addWidget(lbl_mw1, j, 0, 0);
-	grid->addWidget(lbl_mw2, j, 1, 0);
-	grid->addWidget(lbl_koff, j, 2, 0);
-	grid->addWidget(le_koff, j, 3, 0);
-	j++;
-	grid->addWidget(lbl_f_f01, j, 0, 0);
-	grid->addWidget(lbl_f_f02, j, 1, 0);
-	grid->addWidget(lbl_stoich, j, 2, 0);
-	grid->addWidget(le_stoich, j, 3, 0);
-	j++;
+	grid->addMultiCellWidget(cmb_component2, 2, 2, 2, 4, 0);
+	j = 3;
 	grid->addWidget(pb_simulateComponent, j, 0, 0);
 	grid->addWidget(cnt_item, j, 1, 0);
-	grid->addWidget(lbl_sigma, j, 2, 0);
-	grid->addWidget(le_sigma, j, 3, 0);
+	grid->addWidget(lbl_stoich, j, 2, 0);
+	grid->addMultiCellWidget(le_stoich, j, j, 3, 4, 0);
 	j++;
 	grid->addWidget(cb_prolate, j, 0, 0);
 	grid->addWidget(cb_oblate, j, 1, 0);
-	grid->addWidget(lbl_delta, j, 2, 0);
-	grid->addWidget(le_delta, j, 3, 0);
-	j++;
+	grid->addWidget(pb_load_c0, j, 2, 0);
+	grid->addMultiCellWidget(lbl_load_c0, j, j, 3, 4, 0);
+	j++;	
 	grid->addWidget(cb_rod, j, 0, 0);
 	grid->addWidget(cb_sphere, j, 1, 0);
-	grid->addWidget(pb_help, j, 2, 0);
-	grid->addWidget(pb_cancel, j, 3, 0);
+	grid->addWidget(pb_vbar, j, 2, 0);
+	grid->addMultiCellWidget(le_vbar, j, j, 3, 4, 0);
 	j++;
-	grid->addMultiCellWidget(pb_selectModel, j, j, 0, 1, 0);
-	grid->addWidget(pb_save, j, 2, 0);
-	grid->addWidget(pb_accept, j, 3, 0);
-}
-
-void US_GAModelEditor::load_constraints()
-{
-}
-
-bool US_GAModelEditor::verify_constraints()
-{
-  return true;
-}
-
-void US_GAModelEditor::save_constraints()
-{
+	grid->addWidget(lbl_sed, j, 0, 0);
+	grid->addWidget(le_sed, j, 1, 0);
+	grid->addWidget(lbl_sigma, j, 2, 0);
+	grid->addMultiCellWidget(le_sigma, j, j, 3, 4, 0);
+	j++;
+	grid->addWidget(lbl_diff, j, 0, 0);
+	grid->addWidget(le_diff, j, 1, 0);
+	grid->addWidget(lbl_delta, j, 2, 0);
+	grid->addMultiCellWidget(le_delta, j, j, 3, 4, 0);
+	j++;
+	grid->addMultiCellWidget(lbl_constraints, j, j, 0, 1, 0);
+	grid->addWidget(lbl_low, j, 2, 0);
+	grid->addWidget(lbl_high, j, 3, 0);
+	grid->addWidget(lbl_fit, j, 4, 0);
+	j++;
+	grid->addWidget(lbl_mw, j, 0, 0);
+	grid->addWidget(le_mw, j, 1, 0);
+	grid->addWidget(us_cc_mw->le_low, j, 2, 0);
+	grid->addWidget(us_cc_mw->le_high, j, 3, 0);
+	grid->addWidget(us_cc_mw->cb_fit, j, 4, 0);
+	j++;
+	grid->addWidget(lbl_f_f0, j, 0, 0);
+	grid->addWidget(le_f_f0, j, 1, 0);
+	grid->addWidget(us_cc_f_f0->le_low, j, 2, 0);
+	grid->addWidget(us_cc_f_f0->le_high, j, 3, 0);
+	grid->addWidget(us_cc_f_f0->cb_fit, j, 4, 0);
+	j++;
+	grid->addWidget(lbl_conc, j, 0, 0);
+	grid->addWidget(le_conc, j, 1, 0);
+	grid->addWidget(us_cc_conc->le_low, j, 2, 0);
+	grid->addWidget(us_cc_conc->le_high, j, 3, 0);
+	grid->addWidget(us_cc_conc->cb_fit, j, 4, 0);
+	j++;
+	grid->addWidget(lbl_keq, j, 0, 0);
+	grid->addWidget(le_keq, j, 1, 0);
+	grid->addWidget(us_cc_keq->le_low, j, 2, 0);
+	grid->addWidget(us_cc_keq->le_high, j, 3, 0);
+	grid->addWidget(us_cc_keq->cb_fit, j, 4, 0);
+	j++;
+	grid->addWidget(lbl_koff, j, 0, 0);
+	grid->addWidget(le_koff, j, 1, 0);
+	grid->addWidget(us_cc_koff->le_low, j, 2, 0);
+	grid->addWidget(us_cc_koff->le_high, j, 3, 0);
+	grid->addWidget(us_cc_koff->cb_fit, j, 4, 0);
+	j++;
+	grid->addWidget(lbl_simpoints, j, 0, 0);
+	grid->addWidget(cnt_simpoints, j, 1, 0);
+	grid->addMultiCellWidget(cmb_radialGrid, j, j, 2, 3, 0);
+	grid->addWidget(pb_help, j, 4, 0);
+	j++;
+	grid->addWidget(lbl_bandVolume, j, 0, 0);
+	grid->addWidget(cnt_lamella, j, 1, 0);
+	grid->addMultiCellWidget(cmb_timeGrid, j, j, 2, 3, 0);
+	grid->addWidget(pb_close, j, 4, 0);
+	j++;
+	grid->addWidget(pb_selectModel, j, 0, 0);
+	grid->addWidget(pb_load_model, j, 1, 0);
+	grid->addWidget(pb_loadInit, j, 2, 0);
+	grid->addMultiCellWidget(pb_saveInit, j, j, 3, 4, 0);
 }
 
 void US_GAModelEditor::help()
@@ -234,4 +262,25 @@ void US_GAModelEditor::update_simpoints(double val)
 void US_GAModelEditor::update_lamella(double val)
 {
 	(*msc).band_volume = (float) val;
+}
+
+void US_GAModelEditor::load_constraints()
+{
+}
+
+bool US_GAModelEditor::verify_constraints()
+{
+	return true;
+}
+
+void US_GAModelEditor::save_constraints()
+{
+}
+
+void US_GAModelEditor::select_model()
+{
+	US_FemGlobal *fg;
+	fg = new US_FemGlobal();
+	fg->select_model(ms);
+	delete fg;
 }

@@ -22,10 +22,6 @@
 #include "us_util.h"
 #include "us_femglobal.h"
 #include "us_astfem_rsa.h"
-#include "us_selectmodel.h"
-#include "us_selectmodel10.h"
-#include "us_selectmodel13.h"
-#include "us_selectmodel3.h"
 #include "us_model_editor.h"
 #include "us_simulationparameters.h"
 #include "us_clipdata.h"
@@ -95,8 +91,6 @@ class US_EXTERN US_Astfem_Sim : public QFrame
 		void update_time(float);
 		void update_progress(int);
 		void update_speed(unsigned int);
-		void initializeAssociation1(unsigned int, unsigned int, unsigned int);
-		void initializeAssociation2();
 		void printError(const int &);
 		void save_xla(const QString &);
 		void save_ultrascan(const QString &);
