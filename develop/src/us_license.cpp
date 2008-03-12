@@ -223,6 +223,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 	cbb_version->insertItem("9.0");
 	cbb_version->insertItem("9.2");
 	cbb_version->insertItem("9.3");
+	cbb_version->insertItem("9.4");
+	cbb_version->insertItem("9.5");
 	connect(cbb_version, SIGNAL(activated(int)), SLOT(update_version(int)));
 	connect(cbb_version, SIGNAL(highlighted(int)), SLOT(update_version(int)));
 

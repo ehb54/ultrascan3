@@ -13,8 +13,12 @@ class US_GAModelEditor : public US_ModelEditor
 	public:
 		US_GAModelEditor(struct ModelSystem *, struct ModelSystemConstraints *, QWidget *parent=0, const char *name=0);
 		~US_GAModelEditor();
+
+		unsigned int current_assoc;
+
 		struct ModelSystem *ms;
 		struct ModelSystemConstraints *msc;
+		
 
 		struct constraint c_mw;
 		struct constraint c_conc;
@@ -40,11 +44,11 @@ class US_GAModelEditor : public US_ModelEditor
 		QPushButton *pb_saveInit;
 		QPushButton *pb_close;
 
-		US_ConstraintControl *us_cc_mw;
-		US_ConstraintControl *us_cc_f_f0;
-		US_ConstraintControl *us_cc_conc;
-		US_ConstraintControl *us_cc_keq;
-		US_ConstraintControl *us_cc_koff;
+		US_ConstraintControl *cc_mw;
+		US_ConstraintControl *cc_f_f0;
+		US_ConstraintControl *cc_conc;
+		US_ConstraintControl *cc_keq;
+		US_ConstraintControl *cc_koff;
 		
 	private slots:
 
@@ -57,6 +61,12 @@ class US_GAModelEditor : public US_ModelEditor
 		void update_simpoints(double val);
 		void update_lamella(double val);
 		void select_model();
+
+		void mw_constraintChanged(struct constraint);
+		void f_f0_constraintChanged(struct constraint);
+		void conc_constraintChanged(struct constraint);
+		void keq_constraintChanged(struct constraint);
+		void koff_constraintChanged(struct constraint);
 
 // re-implemented functions:
 		void setup_GUI();

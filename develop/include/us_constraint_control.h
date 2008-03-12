@@ -16,10 +16,9 @@ class US_ConstraintControl : public QWidget
 	
 	public:
 		
-		US_ConstraintControl(float /*center*/, struct constraint *, QWidget *parent=0, const char *name=0);
+		US_ConstraintControl(QWidget *parent=0, const char *name=0);
 		~US_ConstraintControl();
-		float center;
-		struct constraint *c;
+		struct constraint c;
 		QLineEdit *le_high;
 		QLineEdit *le_low;
 		QCheckBox *cb_fit;
@@ -27,13 +26,18 @@ class US_ConstraintControl : public QWidget
 		
 	public slots:
 
-		void set_default(float);
+		void setDefault(float /*center*/, float /*fraction*/);
+		void setEnabled(bool);
 		
 	private slots:
 
-		void set_high(const QString &);
-		void set_low(const QString &);
-		void set_fit();
+		void setHigh(const QString &);
+		void setLow(const QString &);
+		void setFit();
+
+	signals:
+		
+		void constraintChanged(struct constraint);
 };
 
 #endif

@@ -6,7 +6,9 @@ QWidget *parent, const char *name) : US_ModelEditor(false, ms, parent, name)
 	this->ms = ms;
 	this->msc = msc;
 	setup_GUI();
-	select_component((int) 0);
+	current_component = 0;
+	current_assoc = 0;
+	select_component((int) current_component);
 	
 	global_Xpos += 30;
 	global_Ypos += 30;
@@ -62,32 +64,33 @@ void US_GAModelEditor::setup_GUI()
 	lbl_simpoints->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_simpoints->setMinimumHeight(minHeight2);
 
-	c_mw.low = (*msc).component_vector_constraints[0].mw.low;
-	c_mw.high = (*msc).component_vector_constraints[0].mw.high;
-	c_mw.fit = (*msc).component_vector_constraints[0].mw.fit;
-	c_conc.low = (*msc).component_vector_constraints[0].concentration.low;
-	c_conc.high = (*msc).component_vector_constraints[0].concentration.high;
-	c_conc.fit = (*msc).component_vector_constraints[0].concentration.fit;
-	c_f_f0.low = (*msc).component_vector_constraints[0].f_f0.low;
-	c_f_f0.high = (*msc).component_vector_constraints[0].f_f0.high;
-	c_f_f0.fit = (*msc).component_vector_constraints[0].f_f0.fit;
-	c_keq.low = 0.0;
-	c_keq.high = 0.0;
-	c_keq.fit = false;
-	c_koff.low = 0.0;
-	c_koff.high = 0.0;
-	c_koff.fit = false;
+	cc_mw = new US_ConstraintControl(this);
+	cc_mw->setEnabled(true); // initial model is model "0" with mw fittable
+	cc_mw->setDefault((*ms).component_vector[current_component].mw, 0.2);
+	connect(cc_mw, SIGNAL(constraintChanged(struct constraint)), this, SLOT(mw_constraintChanged(struct constraint)));
+	cc_mw->hide();
 	
-	us_cc_mw = new US_ConstraintControl(0.0, &c_mw, this);
-	us_cc_mw->hide();
-	us_cc_f_f0 = new US_ConstraintControl(0.0, &c_conc, this);
-	us_cc_f_f0->hide();
-	us_cc_conc = new US_ConstraintControl(0.0, &c_f_f0, this);
-	us_cc_conc->hide();
-	us_cc_keq = new US_ConstraintControl(0.0, &c_keq, this);
-	us_cc_keq->hide();
-	us_cc_koff = new US_ConstraintControl(0.0, &c_koff, this);
-	us_cc_koff->hide();
+	cc_f_f0 = new US_ConstraintControl(this);
+	cc_f_f0->setEnabled(true); // initial model is model "0" with f_f0 fittable
+	cc_f_f0->setDefault((*ms).component_vector[current_component].f_f0, 0.2);
+	connect(cc_f_f0, SIGNAL(constraintChanged(struct constraint)), this, SLOT(f_f0_constraintChanged(struct constraint)));
+	cc_f_f0->hide();
+	
+	cc_conc = new US_ConstraintControl(this);
+	cc_conc->setEnabled(true); // initial model is model "0" with conc fittable
+	cc_conc->setDefault((*ms).component_vector[current_component].concentration, 0.2);
+	connect(cc_conc, SIGNAL(constraintChanged(struct constraint)), this, SLOT(conc_constraintChanged(struct constraint)));
+	cc_conc->hide();
+	
+	cc_keq = new US_ConstraintControl(this);
+	cc_keq->setEnabled(false); // initial model is model "0" without associations
+	connect(cc_keq, SIGNAL(constraintChanged(struct constraint)), this, SLOT(keq_constraintChanged(struct constraint)));
+	cc_keq->hide();
+	
+	cc_koff = new US_ConstraintControl(this);
+	cc_koff->setEnabled(false); // initial model is model "0" without associations
+	connect(cc_koff, SIGNAL(constraintChanged(struct constraint)), this, SLOT(koff_constraintChanged(struct constraint)));
+	cc_koff->hide();
 
 	cmb_radialGrid = new QComboBox(false, this, "Radial Grid" );
 	cmb_radialGrid->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -200,33 +203,33 @@ void US_GAModelEditor::setup_GUI()
 	j++;
 	grid->addWidget(lbl_mw, j, 0, 0);
 	grid->addWidget(le_mw, j, 1, 0);
-	grid->addWidget(us_cc_mw->le_low, j, 2, 0);
-	grid->addWidget(us_cc_mw->le_high, j, 3, 0);
-	grid->addWidget(us_cc_mw->cb_fit, j, 4, 0);
+	grid->addWidget(cc_mw->le_low, j, 2, 0);
+	grid->addWidget(cc_mw->le_high, j, 3, 0);
+	grid->addWidget(cc_mw->cb_fit, j, 4, 0);
 	j++;
 	grid->addWidget(lbl_f_f0, j, 0, 0);
 	grid->addWidget(le_f_f0, j, 1, 0);
-	grid->addWidget(us_cc_f_f0->le_low, j, 2, 0);
-	grid->addWidget(us_cc_f_f0->le_high, j, 3, 0);
-	grid->addWidget(us_cc_f_f0->cb_fit, j, 4, 0);
+	grid->addWidget(cc_f_f0->le_low, j, 2, 0);
+	grid->addWidget(cc_f_f0->le_high, j, 3, 0);
+	grid->addWidget(cc_f_f0->cb_fit, j, 4, 0);
 	j++;
 	grid->addWidget(lbl_conc, j, 0, 0);
 	grid->addWidget(le_conc, j, 1, 0);
-	grid->addWidget(us_cc_conc->le_low, j, 2, 0);
-	grid->addWidget(us_cc_conc->le_high, j, 3, 0);
-	grid->addWidget(us_cc_conc->cb_fit, j, 4, 0);
+	grid->addWidget(cc_conc->le_low, j, 2, 0);
+	grid->addWidget(cc_conc->le_high, j, 3, 0);
+	grid->addWidget(cc_conc->cb_fit, j, 4, 0);
 	j++;
 	grid->addWidget(lbl_keq, j, 0, 0);
 	grid->addWidget(le_keq, j, 1, 0);
-	grid->addWidget(us_cc_keq->le_low, j, 2, 0);
-	grid->addWidget(us_cc_keq->le_high, j, 3, 0);
-	grid->addWidget(us_cc_keq->cb_fit, j, 4, 0);
+	grid->addWidget(cc_keq->le_low, j, 2, 0);
+	grid->addWidget(cc_keq->le_high, j, 3, 0);
+	grid->addWidget(cc_keq->cb_fit, j, 4, 0);
 	j++;
 	grid->addWidget(lbl_koff, j, 0, 0);
 	grid->addWidget(le_koff, j, 1, 0);
-	grid->addWidget(us_cc_koff->le_low, j, 2, 0);
-	grid->addWidget(us_cc_koff->le_high, j, 3, 0);
-	grid->addWidget(us_cc_koff->cb_fit, j, 4, 0);
+	grid->addWidget(cc_koff->le_low, j, 2, 0);
+	grid->addWidget(cc_koff->le_high, j, 3, 0);
+	grid->addWidget(cc_koff->cb_fit, j, 4, 0);
 	j++;
 	grid->addWidget(lbl_simpoints, j, 0, 0);
 	grid->addWidget(cnt_simpoints, j, 1, 0);
@@ -282,6 +285,46 @@ bool US_GAModelEditor::verify_constraints()
 
 void US_GAModelEditor::save_constraints()
 {
+}
+
+void US_GAModelEditor::mw_constraintChanged(struct constraint c)
+{
+	(*msc).component_vector_constraints[current_component].mw.low = c.low;
+	(*msc).component_vector_constraints[current_component].mw.high = c.high;
+	(*msc).component_vector_constraints[current_component].mw.fit = c.fit;
+}
+
+void US_GAModelEditor::f_f0_constraintChanged(struct constraint c)
+{
+	if (c.low < 1.0)
+	{
+		cc_f_f0->le_low->setText("1.000");
+		return;
+	}
+	(*msc).component_vector_constraints[current_component].f_f0.low = c.low;
+	(*msc).component_vector_constraints[current_component].f_f0.high = c.high;
+	(*msc).component_vector_constraints[current_component].f_f0.fit = c.fit;
+}
+
+void US_GAModelEditor::conc_constraintChanged(struct constraint c)
+{
+	(*msc).component_vector_constraints[current_component].concentration.low = c.low;
+	(*msc).component_vector_constraints[current_component].concentration.high = c.high;
+	(*msc).component_vector_constraints[current_component].concentration.fit = c.fit;
+}
+
+void US_GAModelEditor::keq_constraintChanged(struct constraint c)
+{
+	(*msc).assoc_vector_constraints[current_assoc].keq.low = c.low;
+	(*msc).assoc_vector_constraints[current_assoc].keq.high = c.high;
+	(*msc).assoc_vector_constraints[current_assoc].keq.fit = c.fit;
+}
+
+void US_GAModelEditor::koff_constraintChanged(struct constraint c)
+{
+	(*msc).assoc_vector_constraints[current_assoc].koff.low = c.low;
+	(*msc).assoc_vector_constraints[current_assoc].koff.high = c.high;
+	(*msc).assoc_vector_constraints[current_assoc].koff.fit = c.fit;
 }
 
 void US_GAModelEditor::update_constraints(unsigned int c)
