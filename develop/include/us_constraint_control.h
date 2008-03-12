@@ -8,6 +8,7 @@
 #include <qlayout.h>
 
 #include "us_util.h"
+#include "us_femglobal.h"
 
 class US_ConstraintControl : public QWidget
 {
@@ -15,10 +16,10 @@ class US_ConstraintControl : public QWidget
 	
 	public:
 		
-		US_ConstraintControl(float /*center*/, float * /*low*/, float * /*high*/, bool * /*fit*/, QWidget *parent=0, const char *name=0);
+		US_ConstraintControl(float /*center*/, struct constraint *, QWidget *parent=0, const char *name=0);
 		~US_ConstraintControl();
-		float *low, *high, center;
-		bool *fit;
+		float center;
+		struct constraint *c;
 		QLineEdit *le_high;
 		QLineEdit *le_low;
 		QCheckBox *cb_fit;

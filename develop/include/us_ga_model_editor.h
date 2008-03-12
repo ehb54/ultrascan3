@@ -12,7 +12,6 @@ class US_GAModelEditor : public US_ModelEditor
 	
 	public:
 		US_GAModelEditor(struct ModelSystem *, struct ModelSystemConstraints *, QWidget *parent=0, const char *name=0);
-		US_GAModelEditor(struct ModelSystem *, QWidget *parent=0, const char *name=0);
 		~US_GAModelEditor();
 		struct ModelSystem *ms;
 		struct ModelSystemConstraints *msc;
@@ -51,6 +50,7 @@ class US_GAModelEditor : public US_ModelEditor
 
 		void load_constraints();
 		void save_constraints();
+		void update_constraints(unsigned int);
 		bool verify_constraints();
 		void update_radialGrid(int);
 		void update_timeGrid(int);

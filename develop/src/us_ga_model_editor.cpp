@@ -1,7 +1,7 @@
 #include "../include/us_ga_model_editor.h"
 
 US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, struct ModelSystemConstraints *msc,
-QWidget *parent, const char *name) : US_ModelEditor(false, system, parent, name)
+QWidget *parent, const char *name) : US_ModelEditor(false, ms, parent, name)
 {
 	this->ms = ms;
 	this->msc = msc;
@@ -12,19 +12,7 @@ QWidget *parent, const char *name) : US_ModelEditor(false, system, parent, name)
 	global_Ypos += 30;
 
 	move(global_Xpos, global_Ypos);
-}
-
-US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, QWidget *parent, const char *name) : US_ModelEditor(false, ms, parent, name)
-{
-	this->ms = ms;
-
-	setup_GUI();
-	select_component((int) 0);
-	
-	global_Xpos += 30;
-	global_Ypos += 30;
-
-	move(global_Xpos, global_Ypos);
+	connect(this, SIGNAL(componentChanged(unsigned int)), SLOT(update_constraints(unsigned int)));
 }
 
 US_GAModelEditor::~US_GAModelEditor()
@@ -74,15 +62,31 @@ void US_GAModelEditor::setup_GUI()
 	lbl_simpoints->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_simpoints->setMinimumHeight(minHeight2);
 
-	us_cc_mw = new US_ConstraintControl(0.0, &c_mw.low, &c_mw.high, &c_mw.fit, this);
+	c_mw.low = (*msc).component_vector_constraints[0].mw.low;
+	c_mw.high = (*msc).component_vector_constraints[0].mw.high;
+	c_mw.fit = (*msc).component_vector_constraints[0].mw.fit;
+	c_conc.low = (*msc).component_vector_constraints[0].concentration.low;
+	c_conc.high = (*msc).component_vector_constraints[0].concentration.high;
+	c_conc.fit = (*msc).component_vector_constraints[0].concentration.fit;
+	c_f_f0.low = (*msc).component_vector_constraints[0].f_f0.low;
+	c_f_f0.high = (*msc).component_vector_constraints[0].f_f0.high;
+	c_f_f0.fit = (*msc).component_vector_constraints[0].f_f0.fit;
+	c_keq.low = 0.0;
+	c_keq.high = 0.0;
+	c_keq.fit = false;
+	c_koff.low = 0.0;
+	c_koff.high = 0.0;
+	c_koff.fit = false;
+	
+	us_cc_mw = new US_ConstraintControl(0.0, &c_mw, this);
 	us_cc_mw->hide();
-	us_cc_f_f0 = new US_ConstraintControl(0.0, &c_f_f0.low, &c_f_f0.high, &c_f_f0.fit, this);
+	us_cc_f_f0 = new US_ConstraintControl(0.0, &c_conc, this);
 	us_cc_f_f0->hide();
-	us_cc_conc = new US_ConstraintControl(0.0, &c_conc.low, &c_conc.high, &c_conc.fit, this);
+	us_cc_conc = new US_ConstraintControl(0.0, &c_f_f0, this);
 	us_cc_conc->hide();
-	us_cc_keq = new US_ConstraintControl(0.0, &c_keq.low, &c_keq.high, &c_keq.fit, this);
+	us_cc_keq = new US_ConstraintControl(0.0, &c_keq, this);
 	us_cc_keq->hide();
-	us_cc_koff = new US_ConstraintControl(0.0, &c_koff.low, &c_koff.high, &c_koff.fit, this);
+	us_cc_koff = new US_ConstraintControl(0.0, &c_koff, this);
 	us_cc_koff->hide();
 
 	cmb_radialGrid = new QComboBox(false, this, "Radial Grid" );
@@ -152,6 +156,9 @@ void US_GAModelEditor::setup_GUI()
 	pb_close->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	pb_close->setMinimumHeight(minHeight1);
 	connect(pb_close, SIGNAL(clicked()), SLOT(accept()));
+
+	le_sed->setReadOnly(true);
+	le_diff->setReadOnly(true);
 
 	unsigned int j;
 	QGridLayout *grid = new QGridLayout(this, 17, 5, 4, 2);
@@ -277,10 +284,78 @@ void US_GAModelEditor::save_constraints()
 {
 }
 
+void US_GAModelEditor::update_constraints(unsigned int c)
+{
+	current_component = c;
+	/*
+	QString str;
+	if ((*ms).component_vector[current_component].show_conc)
+	{
+		le_conc->setText(str.sprintf("%6.4e", (*ms).component_vector[current_component].concentration));
+	}
+	else
+	{
+		le_conc->setEnabled(false);
+		le_conc->setText("");
+		pb_load_c0->setEnabled(false);
+		lbl_load_c0->setText("");
+	}
+	if ((*ms).component_vector[current_component].show_keq)
+	{
+		for (unsigned int i=0; i<(*ms).assoc_vector.size(); i++)
+		{ // only check the dissociating species
+			if ((*ms).assoc_vector[i].component2 == (int) current_component
+							||  (*ms).assoc_vector[i].component3 == (int) current_component)
+			{
+				le_keq->setText(str.sprintf("%6.4e", (*ms).assoc_vector[i].keq));
+				le_keq->setEnabled(true);
+				le_koff->setText(str.sprintf("%6.4e", (*ms).assoc_vector[i].k_off));
+				le_koff->setEnabled(true);
+			}
+		}
+	}
+	else
+	{
+		le_keq->setEnabled(false);
+		le_keq->setText("");
+		le_koff->setEnabled(false);
+		le_koff->setText("");
+	}
+	if ((*ms).component_vector[current_component].show_stoich != 0)
+	{
+		if ((*ms).component_vector[current_component].show_stoich > 0)
+		{
+			le_stoich->setEnabled(true);
+			le_stoich->setText(str.sprintf("%d", (*ms).component_vector[current_component].show_stoich));
+		}
+		else
+		{
+			le_stoich->setText("hetero-associating");
+		}
+	}
+	else
+	{
+		le_stoich->setText("");
+		le_stoich->setEnabled(false);
+	}
+	*/
+}
+
 void US_GAModelEditor::select_model()
 {
 	US_FemGlobal *fg;
 	fg = new US_FemGlobal();
 	fg->select_model(ms);
 	delete fg;
+	lbl_model->setText(modelString[(*ms).model]);
+	cmb_component1->clear();
+	for (unsigned int i=0; i<(*ms).component_vector.size(); i++)
+	{
+		cmb_component1->insertItem((*ms).component_vector[i].name);
+	}
+	cnt_item->setRange(1, (*ms).component_vector.size(), 1);
+	current_component = 0;
+	select_component((int) current_component);
 }
+
+
