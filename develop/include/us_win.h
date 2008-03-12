@@ -21,13 +21,6 @@
 #include "us_equilprojectreport.h"
 #include "us_montecarloreport.h"
 #include "us_extern.h"
-
-
-#ifdef UNIX 
-  #include "us_gridcontrol.h"
-  #include "us_ga_gridcontrol.h"
-#endif
-
 #include "us_config_gui.h"
 
 /*
@@ -147,7 +140,6 @@ public slots:
 	void about();
 	void credits();
 	void help();
-	void grid_control();
 	void ga_initialize1();
 	void ga_initialize2();
 	void us_register();

@@ -291,9 +291,6 @@ UsWin::UsWin(QWidget *parent, const char *name)
 	global_menu->insertItem(tr("Global &Equilibrium Fit"), this, SLOT(global_fit()));
 	global_menu->insertItem(tr("Global E&xtinction Fit"), this, SLOT(calc_extinction()));
 	global_menu->insertItem(tr("Global &Spectrum Fit"), this, SLOT(spectrum()));
-//#ifdef UNIX
-//	global_menu->insertItem(tr("&Parallel Cluster Interface"), this, SLOT(grid_control()));
-//#endif
 //	global_menu->insertItem(tr("Global &Light Scattering"), this, SLOT(laser_global()));
 	global_menu->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
@@ -2667,17 +2664,6 @@ void UsWin::ga_initialize2()
 		return;
 	}
 	emit explain( " " );
-}
-
-void UsWin::grid_control()
-{
-#ifdef UNIX
-	emit explain( tr("Loading Genetic Algorithm Grid Definition Module...") );
-	US_GridControl *grid;
-	grid = new US_GridControl();
-	grid->show();
-	emit explain( " " );
-#endif
 }
 
 void UsWin::config()
