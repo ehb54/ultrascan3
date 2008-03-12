@@ -1459,7 +1459,7 @@ void US_GA_Initialize::plot_3dim()
 			  maxvals[j] = 0;
 	    }
 
-	    for(j = 0; j < x_resolution; j++) 
+	    for(j = 0; j < x_resolution; j++)
       {
 	      zz[j] = z[j];
 	    }
@@ -1478,18 +1478,18 @@ void US_GA_Initialize::plot_3dim()
 	    unsigned int x_end;
 	    unsigned int x_start;
 
-	    for(j = 0; j < USglobal->config_list.numThreads; j++) 
+	    for(j = 0; j < USglobal->config_list.numThreads; j++)
       {
 	      x_start = x_inc * j;
 	      x_end   = (x_inc * (j + 1)) - 1;
-	      
-        if ( j + 1 == USglobal->config_list.numThreads ) 
+
+        if ( j + 1 == USglobal->config_list.numThreads )
         {
 		      x_end = x_resolution - 1;
 	      }
-	      
+
         //	      cout << "thread " << j << " x range " << x_start << " - " << x_end << endl;
-	      plot3d_thr_threads[j]->plot3d_thr_setup(j, zz, distro_solute, x, y, 
+	      plot3d_thr_threads[j]->plot3d_thr_setup(j, zz, distro_solute, x, y,
             x_start, x_end, y_resolution, &maxvals[j], ssigma, fsigma, progress);
 	    }
 
@@ -1524,7 +1524,7 @@ void US_GA_Initialize::plot_3dim()
 				{
 					z[i][j] += (*iter).c * exp(-pow((x[i] - (*iter).s), 2.0)/(pow(2.0 * ssigma, 2.0)))
 								* exp(-pow((y[j] - (*iter).k), 2.0)/(pow(2.0 * fsigma, 2.0)));
-					
+
           maxval = max( maxval, z[i][j] );
 //					cout << "z[" << i << "][" << j << "]: " << z[i][j] << ", maxval: " << maxval <<endl;
 				}
@@ -2505,9 +2505,10 @@ void US_GA_Initialize::save()
 	QFile f;
 	unsigned int i, j;
 	float sum;
-	vector <double> val;
+	vector <double> val, conc;
 	struct MonteCarloStats stats;
 	line.clear();
+	conc.clear();
 
 	for (i=0; i<GA_Solute.size(); i++)
 	{
@@ -2566,7 +2567,7 @@ void US_GA_Initialize::save()
 			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
 			return;
 		}
-
+		float conc_sum=0.0;
 		for (i=0; i<GA_Solute.size(); i++)
 		{
 			ts << "\nSolute " << i + 1 << ":\n";
@@ -2615,7 +2616,9 @@ void US_GA_Initialize::save()
 				}
 				calc_stats(&stats, val, "Concentration");
 				ts << s1.sprintf(tr("Concentration:\t\t %6.4e (%6.4e, %6.4e)\n"), stats.mode_center, stats.conf95low, stats.conf95high);	// the standard error of the distribution
-				ts << s1.sprintf(tr("Total Concentration:\t\t %6.4e\n"), total);	// the standard error of the distribution
+				ts << s1.sprintf(tr("Total Concentration:\t\t %6.4e\n"), total);	// the total concentration of the solute
+				conc.push_back(total); // add each solute's concentration to a vector to keep track of all of them for summaries
+				conc_sum += total; // keep track of the total concentration
 				val.clear();
 				for (j=0; j<MC_solute[i].size(); j++)
 				{
@@ -2638,6 +2641,12 @@ void US_GA_Initialize::save()
 				calc_stats(&stats, val, "Frictional Ratio, f/f0");
 				ts << s1.sprintf(tr("Frictional Ratio, f/f0:\t %6.4e (%6.4e, %6.4e)\n"), stats.mode_center, stats.conf95low, stats.conf95high);	// the standard error of the distribution
 			}
+		}
+		ts << "\n\nRelative Concentrations:\n\n";
+		ts << "Total concentration: " << conc_sum << " OD\n";
+		for (i=0; i<conc.size(); i++)
+		{
+			ts << "Relative percentage of Solute " << i+1 << ": " << 100 * conc[i]/conc_sum << " %\n";
 		}
 		ts << "\n\nDetailed Results:\n";
 		for (i=0; i<GA_Solute.size(); i++)
