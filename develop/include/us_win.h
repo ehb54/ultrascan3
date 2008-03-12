@@ -21,8 +21,13 @@
 #include "us_equilprojectreport.h"
 #include "us_montecarloreport.h"
 #include "us_extern.h"
-#include "us_gridcontrol.h"
-#include "us_ga_gridcontrol.h"
+
+
+#ifdef UNIX 
+  #include "us_gridcontrol.h"
+  #include "us_ga_gridcontrol.h"
+#endif
+
 #include "us_config_gui.h"
 
 /*

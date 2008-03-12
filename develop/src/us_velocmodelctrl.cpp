@@ -2306,7 +2306,7 @@ void US_VelocModelControl::reset()
 	(*fef_run)->stray_fit      = true;
 	(*fef_run)->delta_t        = 20.0;
 	(*fef_run)->delta_r        = (float) 0.001;
-	(*fef_run)->sim_points     = (float) 100;
+	(*fef_run)->sim_points     = 100;
 
 	
 // concentration:

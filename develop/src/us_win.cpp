@@ -54,7 +54,7 @@ UsWin::UsWin(QWidget *parent, const char *name)
 		splash_image = "/usr/lib/ultrascan/etc/flash-irix.png";
 #endif
 #ifdef WIN32
-		splash_image = "C:\\Program\ Files\\UltraScan\\etc\\flash-windows.png";
+		splash_image = "C:\\Program Files\\UltraScan\\etc\\flash-windows.png";
 #endif
 #ifdef FREEBSD
 		splash_image = "/usr/lib/ultrascan/etc/flash-freebsd.png";

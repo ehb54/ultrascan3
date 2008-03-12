@@ -988,7 +988,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 	(*ms).component_vector.clear();
 	(*ms).assoc_vector.clear();
 	float mw_upperLimit=1.0e5, mw_lowerLimit=1.0e4;
-	float model3_vbar = 0.72;
+	float model3_vbar = (float) 0.72;
 	if (SelectModel->exec())
 	{
 		switch ((*ms).model)
@@ -1518,7 +1518,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 					(*ms).component_vector[2].sigma = (*ms).component_vector[0].sigma;
 					(*ms).component_vector[2].delta = (*ms).component_vector[0].delta;
 					(*ms).component_vector[2].shape = "";
-					(*ms).component_vector[2].concentration = 0.3;
+					(*ms).component_vector[2].concentration = (float) 0.3;
 					(*ms).component_vector[2].extinction = (*ms).component_vector[0].extinction;
 					(*ms).component_vector[2].show_conc = true;
 					(*ms).component_vector[2].show_stoich = 1;
@@ -1581,7 +1581,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 					(*ms).component_vector[2].sigma = (*ms).component_vector[1].sigma;
 					(*ms).component_vector[2].delta = (*ms).component_vector[1].delta;
 					(*ms).component_vector[2].shape = "";
-					(*ms).component_vector[2].concentration = 0.3;
+					(*ms).component_vector[2].concentration = (float) 0.3;
 					(*ms).component_vector[2].extinction = (*ms).component_vector[1].extinction;
 					(*ms).component_vector[2].show_conc = true;
 					(*ms).component_vector[2].show_stoich = (int) stoich;
@@ -1623,8 +1623,8 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 					initializeAssociation1(ms, (*ms).assoc_vector[0].component1,
 													 (*ms).assoc_vector[0].component2,
 													 (*ms).assoc_vector[0].stoichiometry2);
-					(*ms).component_vector[0].concentration = 0.7;
-					(*ms).component_vector[1].concentration = 0.3;
+					(*ms).component_vector[0].concentration = (float) 0.7;
+					(*ms).component_vector[1].concentration = (float) 0.3;
 					(*ms).component_vector[0].show_conc = true;
 					(*ms).component_vector[0].show_stoich = 0;
 					(*ms).component_vector[0].show_keq = false;
@@ -1671,19 +1671,19 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 													 (*ms).assoc_vector[0].component2,
 													 (*ms).assoc_vector[0].stoichiometry2);
 					(*ms).component_vector[2].mw = 22000.0;
-					(*ms).component_vector[2].s = 1.9802e-13;
-					(*ms).component_vector[2].D = 7.7981e-7;
-					(*ms).component_vector[2].f_f0 = 1.4893;
-					(*ms).component_vector[2].vbar20 = 0.72;
-					(*ms).component_vector[2].sigma = 0.0;
-					(*ms).component_vector[2].delta = 0.0;
-					(*ms).component_vector[2].shape = "prolate";
-					(*ms).component_vector[2].concentration = 0.3;
-					(*ms).component_vector[2].extinction = 0.5;
-					(*ms).component_vector[2].show_conc = true;
-					(*ms).component_vector[2].show_stoich = 0;
-					(*ms).component_vector[2].show_keq = false;
-					(*ms).component_vector[2].show_koff = false;
+					(*ms).component_vector[2].s      = (float) 1.9802e-13;
+					(*ms).component_vector[2].D      = (float) 7.7981e-7;
+					(*ms).component_vector[2].f_f0   = (float) 1.4893;
+					(*ms).component_vector[2].vbar20 = (float) 0.72;
+					(*ms).component_vector[2].sigma  = 0.0;
+					(*ms).component_vector[2].delta  = 0.0;
+					(*ms).component_vector[2].shape  = "prolate";
+					(*ms).component_vector[2].concentration = (float) 0.3;
+					(*ms).component_vector[2].extinction    = 0.5;
+					(*ms).component_vector[2].show_conc     = true;
+					(*ms).component_vector[2].show_stoich   = 0;
+					(*ms).component_vector[2].show_keq      = false;
+					(*ms).component_vector[2].show_koff     = false;
 				}
 				break;
 			}
@@ -1745,7 +1745,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 			}
 			else
 			{
-				(*ms).component_vector[i].vbar20 = 0.72;
+				(*ms).component_vector[i].vbar20 = (float) 0.72;
 			}
 			(*ms).component_vector[i].sigma = 0.0;
 			(*ms).component_vector[i].delta = 0.0;
@@ -1772,8 +1772,8 @@ void US_FemGlobal::initializeAssociation1(struct ModelSystem *ms, unsigned int c
 	(*ms).component_vector[comp1].mw = 5.0e4;
 	(*ms).component_vector[comp2].mw = 5.0e4 * stoich1;
 	(*ms).component_vector[comp1].f_f0 = 1.25;
-	(*ms).component_vector[comp1].vbar20 = 0.72;
-	(*ms).component_vector[comp2].vbar20 = 0.72;
+	(*ms).component_vector[comp1].vbar20 = (float) 0.72;
+	(*ms).component_vector[comp2].vbar20 = (float) 0.72;
 	(*ms).component_vector[comp1].sigma = 0.0;
 	(*ms).component_vector[comp2].delta = 0.0;
 	(*ms).component_vector[comp1].shape = "not defined";
@@ -1809,7 +1809,7 @@ void US_FemGlobal::initializeAssociation2(struct ModelSystem *ms)
 // Component A:
 	(*ms).component_vector[0].mw = 5.0e4;
 	(*ms).component_vector[0].f_f0 = 1.25;
-	(*ms).component_vector[0].vbar20 = 0.72;
+	(*ms).component_vector[0].vbar20 = (float) 0.72;
 	(*ms).component_vector[0].sigma = 0.0;
 	(*ms).component_vector[0].shape = "not defined";
 	(*ms).component_vector[0].concentration = 1.0;
@@ -1823,22 +1823,22 @@ void US_FemGlobal::initializeAssociation2(struct ModelSystem *ms)
 
 // Component B:
 	(*ms).component_vector[1].mw = 22000.0;
-	(*ms).component_vector[1].s = 1.9802e-13;
-	(*ms).component_vector[1].D = 7.7981e-7;
-	(*ms).component_vector[1].f_f0 = 1.4893;
-	(*ms).component_vector[1].vbar20 = 0.72;
+	(*ms).component_vector[1].s = (float) 1.9802e-13;
+	(*ms).component_vector[1].D = (float) 7.7981e-7;
+	(*ms).component_vector[1].f_f0 = (float) 1.4893;
+	(*ms).component_vector[1].vbar20 = (float) 0.72;
 	(*ms).component_vector[1].sigma = 0.0;
 	(*ms).component_vector[1].delta = 0.0;
 	(*ms).component_vector[1].shape = "prolate";
-	(*ms).component_vector[1].concentration = 0.3;
+	(*ms).component_vector[1].concentration = (float) 0.3;
 	(*ms).component_vector[1].extinction = 0.5;
 
 // Component AB:
 	(*ms).component_vector[2].mw = 72000.0;
-	(*ms).component_vector[2].s = 4.7276e-13;
-	(*ms).component_vector[2].D = 5.6886e-7;
-	(*ms).component_vector[2].f_f0 = 1.3751;
-	(*ms).component_vector[2].vbar20 = 0.72;
+	(*ms).component_vector[2].s = (float) 4.7276e-13;
+	(*ms).component_vector[2].D = (float) 5.6886e-7;
+	(*ms).component_vector[2].f_f0 = (float) 1.3751;
+	(*ms).component_vector[2].vbar20 = (float) 0.72;
 	(*ms).component_vector[2].sigma = 0.0;
 	(*ms).component_vector[2].delta = 0.0;
 	(*ms).component_vector[2].shape = "prolate";
