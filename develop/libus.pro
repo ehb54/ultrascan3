@@ -532,6 +532,7 @@ unix {
   } else {
     LIBS += -L$(QWTDIR)/lib -lqwt -L$(QWT3DDIR)/lib -lqwtplot3d
   }
+}
 
 win32 {
     LIBS += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib opengl32.lib glu32.lib glaux.lib
