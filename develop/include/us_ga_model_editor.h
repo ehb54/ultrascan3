@@ -3,10 +3,11 @@
 
 #include "us_model_editor.h"
 #include "us_constraint_control.h"
+#include "us_extern.h"
 
 using namespace std;
 
-class US_GAModelEditor : public US_ModelEditor
+class US_EXTERN US_GAModelEditor : public US_ModelEditor
 {
 	Q_OBJECT
 	

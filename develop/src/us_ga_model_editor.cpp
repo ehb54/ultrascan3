@@ -66,19 +66,19 @@ void US_GAModelEditor::setup_GUI()
 
 	cc_mw = new US_ConstraintControl(this);
 	cc_mw->setEnabled(true); // initial model is model "0" with mw fittable
-	cc_mw->setDefault((*ms).component_vector[current_component].mw, 0.2);
+	cc_mw->setDefault((*ms).component_vector[current_component].mw, (float) 0.2);
 	connect(cc_mw, SIGNAL(constraintChanged(struct constraint)), this, SLOT(mw_constraintChanged(struct constraint)));
 	cc_mw->hide();
 	
 	cc_f_f0 = new US_ConstraintControl(this);
 	cc_f_f0->setEnabled(true); // initial model is model "0" with f_f0 fittable
-	cc_f_f0->setDefault((*ms).component_vector[current_component].f_f0, 0.2);
+	cc_f_f0->setDefault((*ms).component_vector[current_component].f_f0, (float) 0.2);
 	connect(cc_f_f0, SIGNAL(constraintChanged(struct constraint)), this, SLOT(f_f0_constraintChanged(struct constraint)));
 	cc_f_f0->hide();
 	
 	cc_conc = new US_ConstraintControl(this);
 	cc_conc->setEnabled(true); // initial model is model "0" with conc fittable
-	cc_conc->setDefault((*ms).component_vector[current_component].concentration, 0.2);
+	cc_conc->setDefault((*ms).component_vector[current_component].concentration, (float) 0.2);
 	connect(cc_conc, SIGNAL(constraintChanged(struct constraint)), this, SLOT(conc_constraintChanged(struct constraint)));
 	cc_conc->hide();
 	
@@ -349,7 +349,7 @@ void US_GAModelEditor::update_constraints(unsigned int c)
 		if ((*msc).component_vector_constraints[current_component].concentration.low <= 0.0
 		 || (*msc).component_vector_constraints[current_component].concentration.high <= 0.0)
 		{ // initialize the constraints with defaults if no low/high values exist
-			cc_conc->setDefault((*ms).component_vector[current_component].concentration, 0.2);
+			cc_conc->setDefault((*ms).component_vector[current_component].concentration, (float) 0.2);
 		}
 	}
 	else
@@ -369,12 +369,12 @@ void US_GAModelEditor::update_constraints(unsigned int c)
 				if ((*msc).assoc_vector_constraints[i].keq.low <= 0.0
 				||  (*msc).assoc_vector_constraints[i].keq.high <= 0.0)
 				{ // initialize the constraints with defaults if no low/high values exist
-					cc_keq->setDefault((*ms).assoc_vector[i].keq, 0.9);
+					cc_keq->setDefault((*ms).assoc_vector[i].keq, (float) 0.9);
 				}
 				if ((*msc).assoc_vector_constraints[i].koff.low <= 0.0
 				||  (*msc).assoc_vector_constraints[i].koff.high <= 0.0)
 				{ // initialize the constraints with defaults if no low/high values exist
-					cc_keq->setDefault((*ms).assoc_vector[i].k_off, 0.99);
+					cc_keq->setDefault((*ms).assoc_vector[i].k_off, (float) 0.99);
 				}
 			}
 		}
@@ -392,7 +392,7 @@ void US_GAModelEditor::update_constraints(unsigned int c)
 			if ((*msc).component_vector_constraints[current_component].mw.low <= 0.0
 			||  (*msc).component_vector_constraints[current_component].mw.high <= 0.0)
 			{ // initialize the constraints with defaults if no low/high values exist
-				cc_mw->setDefault((*ms).component_vector[current_component].mw, 0.2);
+				cc_mw->setDefault((*ms).component_vector[current_component].mw, (float) 0.2);
 			}
 		}
 	}
