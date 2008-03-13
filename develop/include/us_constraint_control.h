@@ -27,7 +27,8 @@ class US_ConstraintControl : public QWidget
 	public slots:
 
 		void setDefault(float /*center*/, float /*fraction*/);
-		void setEnabled(bool);
+		void clear();
+		void setFit(bool);
 		
 	private slots:
 

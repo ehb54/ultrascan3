@@ -67,6 +67,7 @@ class US_GAModelEditor : public US_ModelEditor
 		void conc_constraintChanged(struct constraint);
 		void keq_constraintChanged(struct constraint);
 		void koff_constraintChanged(struct constraint);
+		void initialize_msc();
 
 // re-implemented functions:
 		void setup_GUI();

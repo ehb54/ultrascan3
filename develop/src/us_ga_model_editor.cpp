@@ -315,73 +315,87 @@ void US_GAModelEditor::conc_constraintChanged(struct constraint c)
 
 void US_GAModelEditor::keq_constraintChanged(struct constraint c)
 {
-	(*msc).assoc_vector_constraints[current_assoc].keq.low = c.low;
-	(*msc).assoc_vector_constraints[current_assoc].keq.high = c.high;
-	(*msc).assoc_vector_constraints[current_assoc].keq.fit = c.fit;
+	if ((*msc).assoc_vector_constraints.size() > 0)
+	{
+		(*msc).assoc_vector_constraints[current_assoc].keq.low = c.low;
+		(*msc).assoc_vector_constraints[current_assoc].keq.high = c.high;
+		(*msc).assoc_vector_constraints[current_assoc].keq.fit = c.fit;
+	}
 }
 
 void US_GAModelEditor::koff_constraintChanged(struct constraint c)
 {
-	(*msc).assoc_vector_constraints[current_assoc].koff.low = c.low;
-	(*msc).assoc_vector_constraints[current_assoc].koff.high = c.high;
-	(*msc).assoc_vector_constraints[current_assoc].koff.fit = c.fit;
+	if ((*msc).assoc_vector_constraints.size() > 0)
+	{
+		(*msc).assoc_vector_constraints[current_assoc].koff.low = c.low;
+		(*msc).assoc_vector_constraints[current_assoc].koff.high = c.high;
+		(*msc).assoc_vector_constraints[current_assoc].koff.fit = c.fit;
+	}
 }
 
 void US_GAModelEditor::update_constraints(unsigned int c)
 {
 	current_component = c;
-	/*
 	QString str;
+	le_f_f0->setReadOnly(false);
+	if ((*msc).component_vector_constraints[current_component].f_f0.low <= 1.0
+			  || (*msc).component_vector_constraints[current_component].f_f0.high <= 1.0)
+	{ // initialize the constraints with defaults if no low/high values exist
+		cc_f_f0->setDefault((*ms).component_vector[current_component].f_f0,
+						  1.0 - (*ms).component_vector[current_component].f_f0 * 0.5);
+	}
 	if ((*ms).component_vector[current_component].show_conc)
 	{
-		le_conc->setText(str.sprintf("%6.4e", (*ms).component_vector[current_component].concentration));
+		if ((*msc).component_vector_constraints[current_component].concentration.low <= 0.0
+		 || (*msc).component_vector_constraints[current_component].concentration.high <= 0.0)
+		{ // initialize the constraints with defaults if no low/high values exist
+			cc_conc->setDefault((*ms).component_vector[current_component].concentration, 0.2);
+		}
 	}
 	else
 	{
-		le_conc->setEnabled(false);
-		le_conc->setText("");
-		pb_load_c0->setEnabled(false);
-		lbl_load_c0->setText("");
+		cc_conc->setFit(false);
+		cc_conc->clear();
 	}
 	if ((*ms).component_vector[current_component].show_keq)
 	{
 		for (unsigned int i=0; i<(*ms).assoc_vector.size(); i++)
-		{ // only check the dissociating species
+		{ // only check the dissociating species to set keq/koff
 			if ((*ms).assoc_vector[i].component2 == (int) current_component
-							||  (*ms).assoc_vector[i].component3 == (int) current_component)
+			||  (*ms).assoc_vector[i].component3 == (int) current_component)
 			{
-				le_keq->setText(str.sprintf("%6.4e", (*ms).assoc_vector[i].keq));
-				le_keq->setEnabled(true);
-				le_koff->setText(str.sprintf("%6.4e", (*ms).assoc_vector[i].k_off));
-				le_koff->setEnabled(true);
+				cc_keq->setEnabled(true);
+				cc_koff->setEnabled(true);
+				if ((*msc).assoc_vector_constraints[i].keq.low <= 0.0
+				||  (*msc).assoc_vector_constraints[i].keq.high <= 0.0)
+				{ // initialize the constraints with defaults if no low/high values exist
+					cc_keq->setDefault((*ms).assoc_vector[i].keq, 0.9);
+				}
+				if ((*msc).assoc_vector_constraints[i].koff.low <= 0.0
+				||  (*msc).assoc_vector_constraints[i].koff.high <= 0.0)
+				{ // initialize the constraints with defaults if no low/high values exist
+					cc_keq->setDefault((*ms).assoc_vector[i].k_off, 0.99);
+				}
 			}
 		}
 	}
 	else
 	{
-		le_keq->setEnabled(false);
-		le_keq->setText("");
-		le_koff->setEnabled(false);
-		le_koff->setText("");
+		cc_keq->clear();
+		cc_koff->clear();
 	}
-	if ((*ms).component_vector[current_component].show_stoich != 0)
-	{
-		if ((*ms).component_vector[current_component].show_stoich > 0)
+	for (unsigned int i=0; i<(*ms).assoc_vector.size(); i++)
+	{ // only check the dissociating species to set keq/koff
+		if ((*ms).assoc_vector[i].component1 == (int) current_component)
 		{
-			le_stoich->setEnabled(true);
-			le_stoich->setText(str.sprintf("%d", (*ms).component_vector[current_component].show_stoich));
-		}
-		else
-		{
-			le_stoich->setText("hetero-associating");
+			cc_mw->setEnabled(true);
+			if ((*msc).component_vector_constraints[current_component].mw.low <= 0.0
+			||  (*msc).component_vector_constraints[current_component].mw.high <= 0.0)
+			{ // initialize the constraints with defaults if no low/high values exist
+				cc_mw->setDefault((*ms).component_vector[current_component].mw, 0.2);
+			}
 		}
 	}
-	else
-	{
-		le_stoich->setText("");
-		le_stoich->setEnabled(false);
-	}
-	*/
 }
 
 void US_GAModelEditor::select_model()
@@ -397,8 +411,15 @@ void US_GAModelEditor::select_model()
 		cmb_component1->insertItem((*ms).component_vector[i].name);
 	}
 	cnt_item->setRange(1, (*ms).component_vector.size(), 1);
+	// after selecting a model we need to allocate memory for msc in initialize_msc
+	initialize_msc();
 	current_component = 0;
 	select_component((int) current_component);
 }
 
+void US_GAModelEditor::initialize_msc()
+{
+	(*msc).component_vector_constraints.resize((*ms).component_vector.size());
+	(*msc).assoc_vector_constraints.resize((*ms).assoc_vector.size());
+}
 

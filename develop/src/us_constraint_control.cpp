@@ -11,22 +11,43 @@ US_ConstraintControl::US_ConstraintControl(QWidget *parent, const char *name) : 
 	le_low = new QLineEdit(parent, "low Line Edit");
 	le_low->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_low->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_low->setEnabled(false);
 	connect(le_low, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
 	
 	le_high = new QLineEdit(parent, "low Line Edit");
 	le_high->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_high->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_high->setEnabled(false);
 	connect(le_high, SIGNAL(textChanged(const QString &)), SLOT(setHigh(const QString &)));
 
 	cb_fit = new QCheckBox(parent);
 	cb_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_fit->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cb_fit->setChecked(false);
 	connect(cb_fit, SIGNAL(clicked()), SLOT(setFit()));
 	setEnabled(false);
 }
 
 US_ConstraintControl::~US_ConstraintControl()
 {
+}
+
+void US_ConstraintControl::clear()
+{
+	c.fit = false;
+	cb_fit->disconnect();
+	cb_fit->setChecked(false);
+	connect(cb_fit, SIGNAL(clicked()), SLOT(setFit()));
+
+	le_high->disconnect();
+	le_high->setEnabled(false);
+	le_high->setText("");
+	connect(le_high, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
+
+	le_low->disconnect();
+	le_low->setEnabled(false);
+	le_low->setText("");
+	connect(le_low, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
 }
 
 void US_ConstraintControl::setLow(const QString &val)
@@ -45,23 +66,19 @@ void US_ConstraintControl::setFit()
 {
 	if (cb_fit->isChecked())
 	{
-		c.fit = true;
-		le_high->setEnabled(true);
-		le_low->setEnabled(true);
+		setFit(true);
 	}
 	else
 	{
-		c.fit = false;
-		le_high->setEnabled(false);
-		le_low->setEnabled(false);
+		setFit(false);
 	}
 }
 
-void US_ConstraintControl::setEnabled(bool flag)
+void US_ConstraintControl::setFit(bool flag)
 {
+	c.fit = flag;
 	le_high->setEnabled(flag);
 	le_low->setEnabled(flag);
-	cb_fit->setEnabled(flag);
 }
 
 void US_ConstraintControl::setDefault(float center, float fraction)

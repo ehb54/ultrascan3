@@ -84,7 +84,7 @@ struct SimulationComponent
 	bool show_keq;
 	bool show_koff;
 	int show_stoich;
-	vector <unsigned int> show_component;
+	vector <unsigned int> show_component; // list of associated components for combobox
 	QString shape;
 	QString name;
 	struct mfem_initial c0; // the radius/concentration points for a user-defined initial concentration grid
@@ -112,7 +112,7 @@ struct Association
 	int component3;					// which component is dissociating (for heteroassoc., if -1 it means self-assoc)
 	unsigned int stoichiometry1;	// stoichiometry of the first component
 	unsigned int stoichiometry2;	// stoichiometry of the second component
-	unsigned int stoichiometry3;	// stoichiometry of the third component
+	unsigned int stoichiometry3;	// stoichiometry of the third component (0 if reaction only has 2 components)
 };
 
 struct AssociationConstraints
