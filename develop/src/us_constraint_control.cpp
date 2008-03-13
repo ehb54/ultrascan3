@@ -13,7 +13,7 @@ US_ConstraintControl::US_ConstraintControl(QWidget *parent, const char *name) : 
 	le_low->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_low->setEnabled(false);
 	connect(le_low, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
-	
+
 	le_high = new QLineEdit(parent, "low Line Edit");
 	le_high->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_high->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -87,6 +87,6 @@ void US_ConstraintControl::setDefault(float center, float fraction)
 	float range = center * fraction;
 	le_high->setEnabled(false);
 	le_low->setEnabled(false);
-	le_high->setText(str.sprintf("%6.4f", center + range));
-	le_low->setText(str.sprintf("%6.4f", center - range));
+	le_high->setText(str.sprintf("%6.4e", center + range));
+	le_low->setText(str.sprintf("%6.4e", center - range));
 }

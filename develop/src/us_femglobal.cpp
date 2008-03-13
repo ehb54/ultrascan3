@@ -1047,7 +1047,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 				(*ms).component_vector[1].name = "Dimer";
 				(*ms).assoc_vector.resize(1);
 				(*ms).assoc_vector[0].keq = 1.0;
-				(*ms).assoc_vector[0].k_off = 1.0;
+				(*ms).assoc_vector[0].k_off = 1.0e-4;
 				(*ms).assoc_vector[0].units = "OD";
 				(*ms).assoc_vector[0].component1 = 0;
 				(*ms).assoc_vector[0].component2 = 1;
@@ -1071,7 +1071,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 				(*ms).component_vector[1].name = "Trimer";
 				(*ms).assoc_vector.resize(1);
 				(*ms).assoc_vector[0].keq = 1.0;
-				(*ms).assoc_vector[0].k_off = 1.0;
+				(*ms).assoc_vector[0].k_off = 1.0e-4;
 				(*ms).assoc_vector[0].units = "OD";
 				(*ms).assoc_vector[0].component1 = 0;
 				(*ms).assoc_vector[0].component2 = 1;
@@ -1095,7 +1095,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 				(*ms).component_vector[1].name = "Tetramer";
 				(*ms).assoc_vector.resize(1);
 				(*ms).assoc_vector[0].keq = 1.0;
-				(*ms).assoc_vector[0].k_off = 1.0;
+				(*ms).assoc_vector[0].k_off = 1.0e-4;
 				(*ms).assoc_vector[0].units = "OD";
 				(*ms).assoc_vector[0].component1 = 0;
 				(*ms).assoc_vector[0].component2 = 1;
@@ -1119,7 +1119,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 				(*ms).component_vector[1].name = "Pentamer";
 				(*ms).assoc_vector.resize(1);
 				(*ms).assoc_vector[0].keq = 1.0;
-				(*ms).assoc_vector[0].k_off = 1.0;
+				(*ms).assoc_vector[0].k_off = 1.0e-4;
 				(*ms).assoc_vector[0].units = "OD";
 				(*ms).assoc_vector[0].component1 = 0;
 				(*ms).assoc_vector[0].component2 = 1;
@@ -1143,7 +1143,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 				(*ms).component_vector[1].name = "Hexamer";
 				(*ms).assoc_vector.resize(1);
 				(*ms).assoc_vector[0].keq = 1.0;
-				(*ms).assoc_vector[0].k_off = 1.0;
+				(*ms).assoc_vector[0].k_off = 1.0e-4;
 				(*ms).assoc_vector[0].units = "OD";
 				(*ms).assoc_vector[0].component1 = 0;
 				(*ms).assoc_vector[0].component2 = 1;
@@ -1167,7 +1167,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 				(*ms).component_vector[1].name = "Heptamer";
 				(*ms).assoc_vector.resize(1);
 				(*ms).assoc_vector[0].keq = 1.0;
-				(*ms).assoc_vector[0].k_off = 1.0;
+				(*ms).assoc_vector[0].k_off = 1.0e-4;
 				(*ms).assoc_vector[0].units = "OD";
 				(*ms).assoc_vector[0].component1 = 0;
 				(*ms).assoc_vector[0].component2 = 1;
@@ -1200,7 +1200,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 					(*ms).component_vector[1].name = str.sprintf("N-mer (%d)", (unsigned int) stoich);
 					(*ms).assoc_vector.resize(1);
 					(*ms).assoc_vector[0].keq = 1.0;
-					(*ms).assoc_vector[0].k_off = 1.0;
+					(*ms).assoc_vector[0].k_off = 1.0e-4;
 					(*ms).assoc_vector[0].units = "OD";
 					(*ms).assoc_vector[0].component1 = 0;
 					(*ms).assoc_vector[0].component2 = 1;
@@ -1228,7 +1228,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 				(*ms).component_vector[2].name = "Trimer";
 				(*ms).assoc_vector.resize(2);
 				(*ms).assoc_vector[0].keq = 1.0;
-				(*ms).assoc_vector[0].k_off = 1.0;
+				(*ms).assoc_vector[0].k_off = 1.0e-4;
 				(*ms).assoc_vector[0].units = "OD";
 				(*ms).assoc_vector[0].component1 = 0;
 				(*ms).assoc_vector[0].component2 = 1;
@@ -1237,7 +1237,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 				(*ms).assoc_vector[0].stoichiometry2 = 2;
 				(*ms).assoc_vector[0].stoichiometry3 = 0;
 				(*ms).assoc_vector[1].keq = 1.0;
-				(*ms).assoc_vector[1].k_off = 1.0;
+				(*ms).assoc_vector[1].k_off = 1.0e-4;
 				(*ms).assoc_vector[1].units = "OD";
 				(*ms).assoc_vector[1].component1 = 0;
 				(*ms).assoc_vector[1].component2 = 2;
@@ -1267,7 +1267,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 				(*ms).component_vector[2].show_component.clear();
 				(*ms).assoc_vector.resize(2);
 				(*ms).assoc_vector[0].keq = 1.0;
-				(*ms).assoc_vector[0].k_off = 1.0;
+				(*ms).assoc_vector[0].k_off = 1.0e-4;
 				(*ms).assoc_vector[0].units = "OD";
 				(*ms).assoc_vector[0].component1 = 0;
 				(*ms).assoc_vector[0].component2 = 1;
@@ -1276,7 +1276,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 				(*ms).assoc_vector[0].stoichiometry2 = 2;
 				(*ms).assoc_vector[0].stoichiometry3 = 0;
 				(*ms).assoc_vector[1].keq = 1.0;
-				(*ms).assoc_vector[1].k_off = 1.0;
+				(*ms).assoc_vector[1].k_off = 1.0e-4;
 				(*ms).assoc_vector[1].units = "OD";
 				(*ms).assoc_vector[1].component1 = 0;
 				(*ms).assoc_vector[1].component2 = 2;
@@ -1316,7 +1316,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 					(*ms).component_vector[2].name = str.sprintf("M-mer (%d)", (unsigned int) stoich2);
 					(*ms).assoc_vector.resize(2);
 					(*ms).assoc_vector[0].keq = 1.0;
-					(*ms).assoc_vector[0].k_off = 1.0;
+					(*ms).assoc_vector[0].k_off = 1.0e-4;
 					(*ms).assoc_vector[0].units = "OD";
 					(*ms).assoc_vector[0].component1 = 0;
 					(*ms).assoc_vector[0].component2 = 1;
@@ -1325,7 +1325,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 					(*ms).assoc_vector[0].stoichiometry2 = (unsigned int) stoich1;
 					(*ms).assoc_vector[0].stoichiometry3 = 0;
 					(*ms).assoc_vector[1].keq = 1.0;
-					(*ms).assoc_vector[1].k_off = 1.0;
+					(*ms).assoc_vector[1].k_off = 1.0e-4;
 					(*ms).assoc_vector[1].units = "OD";
 					(*ms).assoc_vector[1].component1 = 0;
 					(*ms).assoc_vector[1].component2 = 2;
@@ -1356,7 +1356,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 				(*ms).component_vector[2].show_component.clear();
 				(*ms).assoc_vector.resize(1);
 				(*ms).assoc_vector[0].keq = 1.0;
-				(*ms).assoc_vector[0].k_off = 1.0;
+				(*ms).assoc_vector[0].k_off = 1.0e-4;
 				(*ms).assoc_vector[0].units = "OD";
 				(*ms).assoc_vector[0].component1 = 0;
 				(*ms).assoc_vector[0].component2 = 1;
@@ -1414,7 +1414,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 					(*ms).assoc_vector.resize(2);
 // Hetero-Association:
 					(*ms).assoc_vector[0].keq = 1.0;
-					(*ms).assoc_vector[0].k_off = 1.0;
+					(*ms).assoc_vector[0].k_off = 1.0e-4;
 					(*ms).assoc_vector[0].units = "OD";
 					(*ms).assoc_vector[0].component1 = 0;
 					(*ms).assoc_vector[0].component2 = 1;
@@ -1424,7 +1424,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 					(*ms).assoc_vector[0].stoichiometry3 = 1;
 // Self-Association:
 					(*ms).assoc_vector[1].keq = 1.0;
-					(*ms).assoc_vector[1].k_off = 1.0;
+					(*ms).assoc_vector[1].k_off = 1.0e-4;
 					(*ms).assoc_vector[1].units = "OD";
 					(*ms).assoc_vector[1].component1 = 0;
 					(*ms).assoc_vector[1].component2 = 3;
@@ -1488,7 +1488,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 					(*ms).assoc_vector.resize(2);
 
 					(*ms).assoc_vector[0].keq = 1.0;
-					(*ms).assoc_vector[0].k_off = 1.0;
+					(*ms).assoc_vector[0].k_off = 1.0e-4;
 					(*ms).assoc_vector[0].units = "OD";
 					(*ms).assoc_vector[0].component1 = 0;
 					(*ms).assoc_vector[0].component2 = 1;
@@ -1552,7 +1552,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 					(*ms).component_vector[2].name = "Incompetent N-mer";
 					(*ms).assoc_vector.resize(2);
 					(*ms).assoc_vector[0].keq = 1.0;
-					(*ms).assoc_vector[0].k_off = 1.0;
+					(*ms).assoc_vector[0].k_off = 1.0e-4;
 					(*ms).assoc_vector[0].units = "OD";
 					(*ms).assoc_vector[0].component1 = 0;
 					(*ms).assoc_vector[0].component2 = 1;
@@ -1659,7 +1659,7 @@ void US_FemGlobal::select_model(struct ModelSystem *ms)
 					(*ms).component_vector[2].shape = "not defined";
 					(*ms).assoc_vector.resize(1);
 					(*ms).assoc_vector[0].keq = 1.0;
-					(*ms).assoc_vector[0].k_off = 1.0;
+					(*ms).assoc_vector[0].k_off = 1.0e-4;
 					(*ms).assoc_vector[0].units = "OD";
 					(*ms).assoc_vector[0].component1 = 0;
 					(*ms).assoc_vector[0].component2 = 1;

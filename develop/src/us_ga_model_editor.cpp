@@ -9,7 +9,7 @@ QWidget *parent, const char *name) : US_ModelEditor(false, ms, parent, name)
 	current_component = 0;
 	current_assoc = 0;
 	select_component((int) current_component);
-	
+
 	global_Xpos += 30;
 	global_Ypos += 30;
 
@@ -27,37 +27,37 @@ void US_GAModelEditor::setup_GUI()
 	delete pb_accept;
 	delete pb_save;
 	delete pb_cancel;
-	
+
 	lbl_constraints = new QLabel(tr("Constraints for Current Component:"), this);
 	lbl_constraints->setAlignment(AlignHCenter|AlignVCenter);
 	lbl_constraints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_constraints->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_constraints->setMinimumHeight(minHeight2);
-	
+
 	lbl_low = new QLabel(tr("Low:"), this);
 	lbl_low->setAlignment(AlignHCenter|AlignVCenter);
 	lbl_low->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_low->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_low->setMinimumHeight(minHeight2);
-	
+
 	lbl_high = new QLabel(tr("High:"), this);
 	lbl_high->setAlignment(AlignHCenter|AlignVCenter);
 	lbl_high->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_high->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_high->setMinimumHeight(minHeight2);
-	
+
 	lbl_fit = new QLabel(tr("Fit?"), this);
 	lbl_fit->setAlignment(AlignHCenter|AlignVCenter);
 	lbl_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_fit->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_fit->setMinimumHeight(minHeight2);
-	
+
 	lbl_bandVolume = new QLabel(tr(" Band-loading Volume:"), this);
 	lbl_bandVolume->setAlignment(AlignLeft|AlignVCenter);
 	lbl_bandVolume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_bandVolume->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_bandVolume->setMinimumHeight(minHeight2);
-	
+
 	lbl_simpoints = new QLabel(tr(" # of Simulation Points:"), this);
 	lbl_simpoints->setAlignment(AlignLeft|AlignVCenter);
 	lbl_simpoints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -66,27 +66,27 @@ void US_GAModelEditor::setup_GUI()
 
 	cc_mw = new US_ConstraintControl(this);
 	cc_mw->setEnabled(true); // initial model is model "0" with mw fittable
-	cc_mw->setDefault((*ms).component_vector[current_component].mw, (float) 0.2);
+	cc_mw->setDefault((*ms).component_vector[current_component].mw, 0.2);
 	connect(cc_mw, SIGNAL(constraintChanged(struct constraint)), this, SLOT(mw_constraintChanged(struct constraint)));
 	cc_mw->hide();
-	
+
 	cc_f_f0 = new US_ConstraintControl(this);
 	cc_f_f0->setEnabled(true); // initial model is model "0" with f_f0 fittable
-	cc_f_f0->setDefault((*ms).component_vector[current_component].f_f0, (float) 0.2);
+	cc_f_f0->setDefault((*ms).component_vector[current_component].f_f0, 0.2);
 	connect(cc_f_f0, SIGNAL(constraintChanged(struct constraint)), this, SLOT(f_f0_constraintChanged(struct constraint)));
 	cc_f_f0->hide();
-	
+
 	cc_conc = new US_ConstraintControl(this);
 	cc_conc->setEnabled(true); // initial model is model "0" with conc fittable
-	cc_conc->setDefault((*ms).component_vector[current_component].concentration, (float) 0.2);
+	cc_conc->setDefault((*ms).component_vector[current_component].concentration, 0.2);
 	connect(cc_conc, SIGNAL(constraintChanged(struct constraint)), this, SLOT(conc_constraintChanged(struct constraint)));
 	cc_conc->hide();
-	
+
 	cc_keq = new US_ConstraintControl(this);
 	cc_keq->setEnabled(false); // initial model is model "0" without associations
 	connect(cc_keq, SIGNAL(constraintChanged(struct constraint)), this, SLOT(keq_constraintChanged(struct constraint)));
 	cc_keq->hide();
-	
+
 	cc_koff = new US_ConstraintControl(this);
 	cc_koff->setEnabled(false); // initial model is model "0" without associations
 	connect(cc_koff, SIGNAL(constraintChanged(struct constraint)), this, SLOT(koff_constraintChanged(struct constraint)));
@@ -180,7 +180,7 @@ void US_GAModelEditor::setup_GUI()
 	grid->addWidget(cb_oblate, j, 1, 0);
 	grid->addWidget(pb_load_c0, j, 2, 0);
 	grid->addMultiCellWidget(lbl_load_c0, j, j, 3, 4, 0);
-	j++;	
+	j++;
 	grid->addWidget(cb_rod, j, 0, 0);
 	grid->addWidget(cb_sphere, j, 1, 0);
 	grid->addWidget(pb_vbar, j, 2, 0);
@@ -349,7 +349,7 @@ void US_GAModelEditor::update_constraints(unsigned int c)
 		if ((*msc).component_vector_constraints[current_component].concentration.low <= 0.0
 		 || (*msc).component_vector_constraints[current_component].concentration.high <= 0.0)
 		{ // initialize the constraints with defaults if no low/high values exist
-			cc_conc->setDefault((*ms).component_vector[current_component].concentration, (float) 0.2);
+			cc_conc->setDefault((*ms).component_vector[current_component].concentration, 0.2);
 		}
 	}
 	else
@@ -369,12 +369,12 @@ void US_GAModelEditor::update_constraints(unsigned int c)
 				if ((*msc).assoc_vector_constraints[i].keq.low <= 0.0
 				||  (*msc).assoc_vector_constraints[i].keq.high <= 0.0)
 				{ // initialize the constraints with defaults if no low/high values exist
-					cc_keq->setDefault((*ms).assoc_vector[i].keq, (float) 0.9);
+					cc_keq->setDefault((*ms).assoc_vector[i].keq, 0.9);
 				}
 				if ((*msc).assoc_vector_constraints[i].koff.low <= 0.0
 				||  (*msc).assoc_vector_constraints[i].koff.high <= 0.0)
 				{ // initialize the constraints with defaults if no low/high values exist
-					cc_keq->setDefault((*ms).assoc_vector[i].k_off, (float) 0.99);
+					cc_koff->setDefault((*ms).assoc_vector[i].k_off, 0.99);
 				}
 			}
 		}
@@ -392,7 +392,7 @@ void US_GAModelEditor::update_constraints(unsigned int c)
 			if ((*msc).component_vector_constraints[current_component].mw.low <= 0.0
 			||  (*msc).component_vector_constraints[current_component].mw.high <= 0.0)
 			{ // initialize the constraints with defaults if no low/high values exist
-				cc_mw->setDefault((*ms).component_vector[current_component].mw, (float) 0.2);
+				cc_mw->setDefault((*ms).component_vector[current_component].mw, 0.2);
 			}
 		}
 	}
