@@ -20,7 +20,7 @@ int main (int argc, char **argv)
 	ms.component_vector[0].mw = 0.0;
 	ms.component_vector[0].c0.radius.clear();
 	ms.component_vector[0].c0.concentration.clear();
-	ms.component_vector[0].vbar20 = 0.72;
+	ms.component_vector[0].vbar20 = (float) 0.72;
 	ms.component_vector[0].sigma = 0.0;
 	ms.component_vector[0].delta = 0.0;
 	ms.component_vector[0].extinction = 1.0;
@@ -42,11 +42,11 @@ int main (int argc, char **argv)
 	msc.component_vector_constraints[0].mw.low  = 40000.0;
 	msc.component_vector_constraints[0].mw.high = 60000.0;
 	msc.component_vector_constraints[0].mw.fit = true;
-	msc.component_vector_constraints[0].concentration.low = 0.8;
-	msc.component_vector_constraints[0].concentration.high = 1.2;
+	msc.component_vector_constraints[0].concentration.low = (float) 0.8;
+	msc.component_vector_constraints[0].concentration.high = (float) 1.2;
 	msc.component_vector_constraints[0].concentration.fit = true;
-	msc.component_vector_constraints[0].f_f0.low = 1.3;
-	msc.component_vector_constraints[0].f_f0.high = 1.8;
+	msc.component_vector_constraints[0].f_f0.low = (float) 1.3;
+	msc.component_vector_constraints[0].f_f0.high = (float) 1.8;
 	msc.component_vector_constraints[0].f_f0.fit = true;
 	init_constraint(&msc.component_vector_constraints[0].vbar20);
 	init_constraint(&msc.component_vector_constraints[0].s);
@@ -57,7 +57,7 @@ int main (int argc, char **argv)
 	msc.mesh = 0; 				// 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 
 									// 3 = user-selected mesh, 4 = nonuniform constant mesh
 	msc.moving_grid = 1; 	// Use moving (1) or fixed time grid (0)
-	msc.band_volume = 0.15;
+	msc.band_volume = (float) 0.15;
 
 	QApplication a(argc, argv);
   	US_Register *us_register;

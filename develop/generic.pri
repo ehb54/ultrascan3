@@ -117,6 +117,7 @@ win32 {
   DEFINES        += WIN32 
 	QMAKE_CXXFLAGS += /EHsc
   LIBS           += ../../lib/us951.lib 
+  INCLUDEPATH    += $(ZLIB)/include
 }
 
 macx { RC_FILE = ultrascan.icns }
