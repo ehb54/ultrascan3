@@ -1,5 +1,0 @@
-Don't to forget to export QMAKESPEC for the mpi versions
-
-bcf - QMAKESPEC=linux-g++-64-mpi
-cosmos.tamu - QMAKESPEC= 
-
