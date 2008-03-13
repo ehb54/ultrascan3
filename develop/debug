@@ -1,20 +1,20 @@
 #!/bin/sh
-mkdir new
-sed < libus.pro > new/libus.pro 's/release/debug/g'
-mv new/libus.pro .
-rm -rf new
+
+sed -i  's/release/debug/g' libus.pro
+sed -i  's/release/debug/g' generic.pri
+
+
 for each in us*; do
-if [ -d $each ]; then
-cd $each
-echo $each
-grep CONFIG *.pro
-mkdir new
-for x in *.pro; do
-        sed < $x > new/$x 's/release/debug/g'
-        cp new/$x .
-done
-rm -rf new
-qmake us*.pro
-cd ..
-fi
+  if [ -d $each ]; then
+    cd $each
+    echo $each
+
+#  This should not be necessary when the .pro files all use generic.pri
+    for f in *.pro; do
+        sed -i 's/release/debug/g' $f
+    done
+
+    qmake us*.pro
+    cd ..
+  fi
 done

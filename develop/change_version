@@ -1,11 +1,13 @@
 #!/bin/sh
+
+#  This should ontly be necessary in generic.pri when all directories are updated
+
 for each in us*; do
 	if [ -d $each ]; then
 		cd $each
 		echo $each
 		for x in *.pro; do
-			sed < $x > new 's/us930.lib/us940.lib/g'
-			mv new $x
+			sed -i 's/us930.lib/us940.lib/g' $x
 		done
 		qmake us*.pro
 		cd ..
