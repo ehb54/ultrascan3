@@ -1,13 +1,17 @@
 #include "../include/us_ga_model_editor.h"
 
-US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, struct ModelSystemConstraints *msc,
-QWidget *parent, const char *name) : US_ModelEditor(false, ms, parent, name)
+US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, QWidget *parent, const char *name) : US_ModelEditor(false, ms, parent, name)
 {
 	this->ms = ms;
-	this->msc = msc;
 	setup_GUI();
 	current_component = 0;
 	current_assoc = 0;
+	msc.simpoints = 200;    // number of radial grid points used in simulation
+	msc.mesh = 0;           // 0 = ASTFEM, 1 = Claverie, 2 = moving hat,
+                           // 3 = user-selected mesh, 4 = nonuniform constant mesh
+	msc.moving_grid = 1;    // Use moving (1) or fixed time grid (0)
+	msc.band_volume = (float) 0.15;
+	initialize_msc();
 	select_component((int) current_component);
 
 	global_Xpos += 30;
@@ -65,30 +69,22 @@ void US_GAModelEditor::setup_GUI()
 	lbl_simpoints->setMinimumHeight(minHeight2);
 
 	cc_mw = new US_ConstraintControl(this);
-	cc_mw->setEnabled(true); // initial model is model "0" with mw fittable
-	cc_mw->setDefault((*ms).component_vector[current_component].mw, 0.2);
 	connect(cc_mw, SIGNAL(constraintChanged(struct constraint)), this, SLOT(mw_constraintChanged(struct constraint)));
 	cc_mw->hide();
 
 	cc_f_f0 = new US_ConstraintControl(this);
-	cc_f_f0->setEnabled(true); // initial model is model "0" with f_f0 fittable
-	cc_f_f0->setDefault((*ms).component_vector[current_component].f_f0, 0.2);
 	connect(cc_f_f0, SIGNAL(constraintChanged(struct constraint)), this, SLOT(f_f0_constraintChanged(struct constraint)));
 	cc_f_f0->hide();
 
 	cc_conc = new US_ConstraintControl(this);
-	cc_conc->setEnabled(true); // initial model is model "0" with conc fittable
-	cc_conc->setDefault((*ms).component_vector[current_component].concentration, 0.2);
 	connect(cc_conc, SIGNAL(constraintChanged(struct constraint)), this, SLOT(conc_constraintChanged(struct constraint)));
 	cc_conc->hide();
 
 	cc_keq = new US_ConstraintControl(this);
-	cc_keq->setEnabled(false); // initial model is model "0" without associations
 	connect(cc_keq, SIGNAL(constraintChanged(struct constraint)), this, SLOT(keq_constraintChanged(struct constraint)));
 	cc_keq->hide();
 
 	cc_koff = new US_ConstraintControl(this);
-	cc_koff->setEnabled(false); // initial model is model "0" without associations
 	connect(cc_koff, SIGNAL(constraintChanged(struct constraint)), this, SLOT(koff_constraintChanged(struct constraint)));
 	cc_koff->hide();
 
@@ -256,22 +252,22 @@ void US_GAModelEditor::help()
 
 void US_GAModelEditor::update_radialGrid(int val)
 {
-	(*msc).moving_grid = val;
+	msc.moving_grid = val;
 }
 
 void US_GAModelEditor::update_timeGrid(int val)
 {
-	(*msc).mesh = val;
+	msc.mesh = val;
 }
 
 void US_GAModelEditor::update_simpoints(double val)
 {
-	(*msc).simpoints = (unsigned int) val;
+	msc.simpoints = (unsigned int) val;
 }
 
 void US_GAModelEditor::update_lamella(double val)
 {
-	(*msc).band_volume = (float) val;
+	msc.band_volume = (float) val;
 }
 
 void US_GAModelEditor::load_constraints()
@@ -289,9 +285,9 @@ void US_GAModelEditor::save_constraints()
 
 void US_GAModelEditor::mw_constraintChanged(struct constraint c)
 {
-	(*msc).component_vector_constraints[current_component].mw.low = c.low;
-	(*msc).component_vector_constraints[current_component].mw.high = c.high;
-	(*msc).component_vector_constraints[current_component].mw.fit = c.fit;
+	msc.component_vector_constraints[current_component].mw.low = c.low;
+	msc.component_vector_constraints[current_component].mw.high = c.high;
+	msc.component_vector_constraints[current_component].mw.fit = c.fit;
 }
 
 void US_GAModelEditor::f_f0_constraintChanged(struct constraint c)
@@ -301,61 +297,55 @@ void US_GAModelEditor::f_f0_constraintChanged(struct constraint c)
 		cc_f_f0->le_low->setText("1.000");
 		return;
 	}
-	(*msc).component_vector_constraints[current_component].f_f0.low = c.low;
-	(*msc).component_vector_constraints[current_component].f_f0.high = c.high;
-	(*msc).component_vector_constraints[current_component].f_f0.fit = c.fit;
+	msc.component_vector_constraints[current_component].f_f0.low = c.low;
+	msc.component_vector_constraints[current_component].f_f0.high = c.high;
+	msc.component_vector_constraints[current_component].f_f0.fit = c.fit;
 }
 
 void US_GAModelEditor::conc_constraintChanged(struct constraint c)
 {
-	(*msc).component_vector_constraints[current_component].concentration.low = c.low;
-	(*msc).component_vector_constraints[current_component].concentration.high = c.high;
-	(*msc).component_vector_constraints[current_component].concentration.fit = c.fit;
+	msc.component_vector_constraints[current_component].concentration.low = c.low;
+	msc.component_vector_constraints[current_component].concentration.high = c.high;
+	msc.component_vector_constraints[current_component].concentration.fit = c.fit;
 }
 
 void US_GAModelEditor::keq_constraintChanged(struct constraint c)
 {
-	if ((*msc).assoc_vector_constraints.size() > 0)
+	if (msc.assoc_vector_constraints.size() > 0)
 	{
-		(*msc).assoc_vector_constraints[current_assoc].keq.low = c.low;
-		(*msc).assoc_vector_constraints[current_assoc].keq.high = c.high;
-		(*msc).assoc_vector_constraints[current_assoc].keq.fit = c.fit;
+		msc.assoc_vector_constraints[current_assoc].keq.low = c.low;
+		msc.assoc_vector_constraints[current_assoc].keq.high = c.high;
+		msc.assoc_vector_constraints[current_assoc].keq.fit = c.fit;
 	}
 }
 
 void US_GAModelEditor::koff_constraintChanged(struct constraint c)
 {
-	if ((*msc).assoc_vector_constraints.size() > 0)
+	if (msc.assoc_vector_constraints.size() > 0)
 	{
-		(*msc).assoc_vector_constraints[current_assoc].koff.low = c.low;
-		(*msc).assoc_vector_constraints[current_assoc].koff.high = c.high;
-		(*msc).assoc_vector_constraints[current_assoc].koff.fit = c.fit;
+		msc.assoc_vector_constraints[current_assoc].koff.low = c.low;
+		msc.assoc_vector_constraints[current_assoc].koff.high = c.high;
+		msc.assoc_vector_constraints[current_assoc].koff.fit = c.fit;
 	}
 }
 
+// this slot is triggered by signal component_changed() in us_model_editor
 void US_GAModelEditor::update_constraints(unsigned int c)
 {
 	current_component = c;
 	QString str;
 	le_f_f0->setReadOnly(false);
-	if ((*msc).component_vector_constraints[current_component].f_f0.low <= 1.0
-			  || (*msc).component_vector_constraints[current_component].f_f0.high <= 1.0)
-	{ // initialize the constraints with defaults if no low/high values exist
-		cc_f_f0->setDefault((*ms).component_vector[current_component].f_f0,
-						  1.0 - (*ms).component_vector[current_component].f_f0 * 0.5);
-	}
+	cc_f_f0->cb_fit->setEnabled(true);
+	cc_f_f0->update(msc.component_vector_constraints[current_component].f_f0);
 	if ((*ms).component_vector[current_component].show_conc)
 	{
-		if ((*msc).component_vector_constraints[current_component].concentration.low <= 0.0
-		 || (*msc).component_vector_constraints[current_component].concentration.high <= 0.0)
-		{ // initialize the constraints with defaults if no low/high values exist
-			cc_conc->setDefault((*ms).component_vector[current_component].concentration, 0.2);
-		}
+		cc_conc->cb_fit->setEnabled(true);
+		cc_conc->update(msc.component_vector_constraints[current_component].concentration);
 	}
 	else
 	{
-		cc_conc->setFit(false);
 		cc_conc->clear();
+		cc_conc->cb_fit->setEnabled(false);
 	}
 	if ((*ms).component_vector[current_component].show_keq)
 	{
@@ -364,36 +354,31 @@ void US_GAModelEditor::update_constraints(unsigned int c)
 			if ((*ms).assoc_vector[i].component2 == (int) current_component
 			||  (*ms).assoc_vector[i].component3 == (int) current_component)
 			{
-				cc_keq->setEnabled(true);
-				cc_koff->setEnabled(true);
-				if ((*msc).assoc_vector_constraints[i].keq.low <= 0.0
-				||  (*msc).assoc_vector_constraints[i].keq.high <= 0.0)
-				{ // initialize the constraints with defaults if no low/high values exist
-					cc_keq->setDefault((*ms).assoc_vector[i].keq, 0.9);
-				}
-				if ((*msc).assoc_vector_constraints[i].koff.low <= 0.0
-				||  (*msc).assoc_vector_constraints[i].koff.high <= 0.0)
-				{ // initialize the constraints with defaults if no low/high values exist
-					cc_koff->setDefault((*ms).assoc_vector[i].k_off, 0.99);
-				}
+				cc_koff->cb_fit->setEnabled(true);
+				cc_koff->update(msc.assoc_vector_constraints[current_assoc].koff);
+				cc_keq->cb_fit->setEnabled(true);
+				cc_keq->update(msc.assoc_vector_constraints[current_assoc].keq);
 			}
 		}
 	}
 	else
 	{
 		cc_keq->clear();
+		cc_keq->cb_fit->setEnabled(false);
 		cc_koff->clear();
+		cc_koff->cb_fit->setEnabled(false);
 	}
 	for (unsigned int i=0; i<(*ms).assoc_vector.size(); i++)
-	{ // only check the dissociating species to set keq/koff
+	{ // only check the associating species to set mw
 		if ((*ms).assoc_vector[i].component1 == (int) current_component)
 		{
-			cc_mw->setEnabled(true);
-			if ((*msc).component_vector_constraints[current_component].mw.low <= 0.0
-			||  (*msc).component_vector_constraints[current_component].mw.high <= 0.0)
-			{ // initialize the constraints with defaults if no low/high values exist
-				cc_mw->setDefault((*ms).component_vector[current_component].mw, 0.2);
-			}
+			cc_mw->cb_fit->setEnabled(true);
+			cc_mw->update(msc.component_vector_constraints[current_component].mw);
+		}
+		else
+		{
+			cc_mw->clear();
+			cc_mw->cb_fit->setEnabled(false);
 		}
 	}
 }
@@ -412,14 +397,39 @@ void US_GAModelEditor::select_model()
 	}
 	cnt_item->setRange(1, (*ms).component_vector.size(), 1);
 	// after selecting a model we need to allocate memory for msc in initialize_msc
-	initialize_msc();
 	current_component = 0;
+	current_assoc = 0;
+	initialize_msc();
 	select_component((int) current_component);
 }
 
 void US_GAModelEditor::initialize_msc()
 {
-	(*msc).component_vector_constraints.resize((*ms).component_vector.size());
-	(*msc).assoc_vector_constraints.resize((*ms).assoc_vector.size());
+	cout << "vector size: " << (*ms).component_vector.size()<< endl;
+	unsigned int i;
+	msc.component_vector_constraints.resize((*ms).component_vector.size());
+	msc.assoc_vector_constraints.resize((*ms).assoc_vector.size());
+	for (i=0; i<(*ms).component_vector.size(); i++)
+	{
+		current_component = i;
+		msc.component_vector_constraints[i].f_f0.fit = false;
+		le_f_f0->setReadOnly(false);
+		cout << (*ms).component_vector[i].f_f0 << ", " <<msc.component_vector_constraints[i].f_f0.low << ", "<<msc.component_vector_constraints[i].f_f0.high <<endl;
+		cc_f_f0->setDefault((*ms).component_vector[i].f_f0 - 1.0, 0.5, 1.0);
+		if ((*ms).component_vector[i].show_conc)
+		{
+			msc.component_vector_constraints[i].concentration.fit = false;
+			msc.component_vector_constraints[i].mw.fit = false;
+			cc_conc->setDefault((*ms).component_vector[i].concentration, 0.2);
+			cc_mw->setDefault((*ms).component_vector[i].mw, 0.2);
+		}
+	}
+	for (i=0; i<(*ms).assoc_vector.size(); i++)
+	{
+		current_assoc = i;
+		msc.assoc_vector_constraints[i].keq.fit = false;
+		msc.assoc_vector_constraints[i].koff.fit = false;
+		cc_keq->setDefault((*ms).assoc_vector[i].keq, 0.9);
+		cc_koff->setDefault((*ms).assoc_vector[i].k_off, 0.99);
+	}
 }
-

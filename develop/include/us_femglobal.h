@@ -84,7 +84,7 @@ struct SimulationComponent
 	bool show_keq;
 	bool show_koff;
 	int show_stoich;
-	vector <unsigned int> show_component; // list of associated components for combobox
+	vector <unsigned int> show_component; // list of associated components for combobox, if size == zero component is non-interacting
 	QString shape;
 	QString name;
 	struct mfem_initial c0; // the radius/concentration points for a user-defined initial concentration grid

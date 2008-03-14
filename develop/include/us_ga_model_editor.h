@@ -12,13 +12,13 @@ class US_EXTERN US_GAModelEditor : public US_ModelEditor
 	Q_OBJECT
 	
 	public:
-		US_GAModelEditor(struct ModelSystem *, struct ModelSystemConstraints *, QWidget *parent=0, const char *name=0);
+		US_GAModelEditor(struct ModelSystem *, QWidget *parent=0, const char *name=0);
 		~US_GAModelEditor();
 
 		unsigned int current_assoc;
 
 		struct ModelSystem *ms;
-		struct ModelSystemConstraints *msc;
+		struct ModelSystemConstraints msc;
 		
 
 		struct constraint c_mw;

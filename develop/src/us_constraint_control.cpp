@@ -50,6 +50,23 @@ void US_ConstraintControl::clear()
 	connect(le_low, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
 }
 
+void US_ConstraintControl::update(struct constraint c)
+{
+	QString str;
+	cb_fit->disconnect();
+	cb_fit->setChecked(c.fit);
+	connect(cb_fit, SIGNAL(clicked()), SLOT(setFit()));
+
+	le_high->disconnect();
+	le_high->setText(str.sprintf("%6.4e", c.high));
+	connect(le_high, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
+
+	le_low->disconnect();
+	le_low->setEnabled(false);
+	le_low->setText(str.sprintf("%6.4e", c.low));
+	connect(le_low, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
+}
+
 void US_ConstraintControl::setLow(const QString &val)
 {
 	c.low = val.toFloat();
@@ -81,12 +98,13 @@ void US_ConstraintControl::setFit(bool flag)
 	le_low->setEnabled(flag);
 }
 
-void US_ConstraintControl::setDefault(float center, float fraction)
+void US_ConstraintControl::setDefault(float center, float fraction, float constant)
 {
 	QString str;
 	float range = center * fraction;
 	le_high->setEnabled(false);
 	le_low->setEnabled(false);
-	le_high->setText(str.sprintf("%6.4e", center + range));
-	le_low->setText(str.sprintf("%6.4e", center - range));
+	cout << "in setDefault " << center << ", " << fraction << ", " << center + range + constant << ", " << center - range + constant << endl;
+	le_high->setText(str.sprintf("%6.4e", center + range + constant));
+	le_low->setText(str.sprintf("%6.4e", center - range + constant));
 }

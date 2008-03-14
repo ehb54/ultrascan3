@@ -5,7 +5,7 @@
 #include <qwidget.h>
 #include <qlineedit.h>
 #include <qcheckbox.h>
-#include <qlayout.h>
+#include <qstring.h>
 
 #include "us_util.h"
 #include "us_femglobal.h"
@@ -26,9 +26,10 @@ class US_ConstraintControl : public QWidget
 		
 	public slots:
 
-		void setDefault(float /*center*/, float /*fraction*/);
+		void setDefault(float /*center*/, float /*fraction*/, float constant=0);
 		void clear();
 		void setFit(bool);
+		void update(struct constraint);
 		
 	private slots:
 
