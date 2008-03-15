@@ -66,6 +66,17 @@ cout << "updating low to " << c.low << " and high to " << c.high << endl;
 	le_low->setEnabled(false);
 	le_low->setText(str.sprintf("%6.4e", c.low));
 	connect(le_low, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
+	
+	if (c.fit)
+	{
+		le_high->setEnabled(true);
+		le_low->setEnabled(true);
+	}
+	else
+	{
+		le_high->setEnabled(false);
+		le_low->setEnabled(false);
+	}
 }
 
 void US_ConstraintControl::setLow(const QString &val)
@@ -92,6 +103,7 @@ void US_ConstraintControl::setFit()
 	{
 		setFit(false);
 	}
+	emit constraintChanged(c);
 }
 
 void US_ConstraintControl::setFit(bool flag)

@@ -402,6 +402,10 @@ void US_GAModelEditor::select_model()
 	fg = new US_FemGlobal();
 	fg->select_model(ms);
 	delete fg;
+	if ((*ms).model < 0)
+	{
+		return;
+	}
 	lbl_model->setText(modelString[(*ms).model]);
 	cmb_component1->clear();
 	for (unsigned int i=0; i<(*ms).component_vector.size(); i++)

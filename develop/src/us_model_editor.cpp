@@ -846,6 +846,7 @@ void US_ModelEditor::simulate_component()
 	cb_oblate->setEnabled(true);
 	cb_rod->setEnabled(true);
 	cb_sphere->setEnabled(true);
+	delete hydro1;
 }
 
 void US_ModelEditor::select_prolate()
