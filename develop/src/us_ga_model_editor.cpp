@@ -288,6 +288,7 @@ void US_GAModelEditor::mw_constraintChanged(struct constraint c)
 	msc.component_vector_constraints[current_component].mw.low = c.low;
 	msc.component_vector_constraints[current_component].mw.high = c.high;
 	msc.component_vector_constraints[current_component].mw.fit = c.fit;
+	cout << "Set constraintChanged for comp. " << current_component << ", mw to " << c.low << ", " << c.high << endl;
 }
 
 void US_GAModelEditor::f_f0_constraintChanged(struct constraint c)
@@ -300,6 +301,7 @@ void US_GAModelEditor::f_f0_constraintChanged(struct constraint c)
 	msc.component_vector_constraints[current_component].f_f0.low = c.low;
 	msc.component_vector_constraints[current_component].f_f0.high = c.high;
 	msc.component_vector_constraints[current_component].f_f0.fit = c.fit;
+	cout << "Set constraintChanged for comp. " << current_component << ", f_f0 to " << c.low << ", " << c.high << endl;
 }
 
 void US_GAModelEditor::conc_constraintChanged(struct constraint c)
@@ -307,6 +309,7 @@ void US_GAModelEditor::conc_constraintChanged(struct constraint c)
 	msc.component_vector_constraints[current_component].concentration.low = c.low;
 	msc.component_vector_constraints[current_component].concentration.high = c.high;
 	msc.component_vector_constraints[current_component].concentration.fit = c.fit;
+	cout << "Set constraintChanged for comp. " << current_component << ", conc to " << c.low << ", " << c.high << endl;
 }
 
 void US_GAModelEditor::keq_constraintChanged(struct constraint c)
@@ -316,6 +319,7 @@ void US_GAModelEditor::keq_constraintChanged(struct constraint c)
 		msc.assoc_vector_constraints[current_assoc].keq.low = c.low;
 		msc.assoc_vector_constraints[current_assoc].keq.high = c.high;
 		msc.assoc_vector_constraints[current_assoc].keq.fit = c.fit;
+		cout << "Set constraintChanged for comp. " << current_component << ", keq to " << c.low << ", " << c.high << endl;
 	}
 }
 
@@ -326,24 +330,33 @@ void US_GAModelEditor::koff_constraintChanged(struct constraint c)
 		msc.assoc_vector_constraints[current_assoc].koff.low = c.low;
 		msc.assoc_vector_constraints[current_assoc].koff.high = c.high;
 		msc.assoc_vector_constraints[current_assoc].koff.fit = c.fit;
+		cout << "Set constraintChanged for comp. " << current_component << ", koff to " << c.low << ", " << c.high << endl;
 	}
 }
 
 // this slot is triggered by signal component_changed() in us_model_editor
 void US_GAModelEditor::update_constraints(unsigned int c)
 {
+cout << "updating constraints for component " << c << endl;
 	current_component = c;
 	QString str;
 	le_f_f0->setReadOnly(false);
 	cc_f_f0->cb_fit->setEnabled(true);
 	cc_f_f0->update(msc.component_vector_constraints[current_component].f_f0);
+	cc_mw->update(msc.component_vector_constraints[current_component].mw);
 	if ((*ms).component_vector[current_component].show_conc)
 	{
+		le_mw->setEnabled(true);
+		le_mw->setReadOnly(false);
+		cc_mw->cb_fit->setEnabled(true);
 		cc_conc->cb_fit->setEnabled(true);
 		cc_conc->update(msc.component_vector_constraints[current_component].concentration);
 	}
 	else
 	{
+		le_mw->setReadOnly(true);
+		le_mw->setEnabled(false);
+		cc_mw->cb_fit->setEnabled(false);
 		cc_conc->clear();
 		cc_conc->cb_fit->setEnabled(false);
 	}
@@ -414,7 +427,6 @@ void US_GAModelEditor::initialize_msc()
 		current_component = i;
 		msc.component_vector_constraints[i].f_f0.fit = false;
 		le_f_f0->setReadOnly(false);
-		cout << (*ms).component_vector[i].f_f0 << ", " <<msc.component_vector_constraints[i].f_f0.low << ", "<<msc.component_vector_constraints[i].f_f0.high <<endl;
 		cc_f_f0->setDefault((*ms).component_vector[i].f_f0 - 1.0, 0.5, 1.0);
 		if ((*ms).component_vector[i].show_conc)
 		{
@@ -422,6 +434,7 @@ void US_GAModelEditor::initialize_msc()
 			msc.component_vector_constraints[i].mw.fit = false;
 			cc_conc->setDefault((*ms).component_vector[i].concentration, 0.2);
 			cc_mw->setDefault((*ms).component_vector[i].mw, 0.2);
+			cout << (*ms).component_vector[i].mw << ", " <<msc.component_vector_constraints[i].mw.low << "," << msc.component_vector_constraints[i].mw.high << endl;
 		}
 	}
 	for (i=0; i<(*ms).assoc_vector.size(); i++)
@@ -432,4 +445,6 @@ void US_GAModelEditor::initialize_msc()
 		cc_keq->setDefault((*ms).assoc_vector[i].keq, 0.9);
 		cc_koff->setDefault((*ms).assoc_vector[i].k_off, 0.99);
 	}
+	current_component = 0; // reset to the first component
+	current_assoc = 0;
 }

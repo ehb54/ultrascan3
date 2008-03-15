@@ -12,13 +12,13 @@ US_ConstraintControl::US_ConstraintControl(QWidget *parent, const char *name) : 
 	le_low->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_low->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_low->setEnabled(false);
-	connect(le_low, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
+	connect(le_low, SIGNAL(textChanged(const QString &)), this, SLOT(setLow(const QString &)));
 
-	le_high = new QLineEdit(parent, "low Line Edit");
+	le_high = new QLineEdit(parent, "high Line Edit");
 	le_high->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_high->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_high->setEnabled(false);
-	connect(le_high, SIGNAL(textChanged(const QString &)), SLOT(setHigh(const QString &)));
+	connect(le_high, SIGNAL(textChanged(const QString &)), this, SLOT(setHigh(const QString &)));
 
 	cb_fit = new QCheckBox(parent);
 	cb_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -42,7 +42,7 @@ void US_ConstraintControl::clear()
 	le_high->disconnect();
 	le_high->setEnabled(false);
 	le_high->setText("");
-	connect(le_high, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
+	connect(le_high, SIGNAL(textChanged(const QString &)), SLOT(setHigh(const QString &)));
 
 	le_low->disconnect();
 	le_low->setEnabled(false);
@@ -52,6 +52,7 @@ void US_ConstraintControl::clear()
 
 void US_ConstraintControl::update(struct constraint c)
 {
+cout << "updating low to " << c.low << " and high to " << c.high << endl;
 	QString str;
 	cb_fit->disconnect();
 	cb_fit->setChecked(c.fit);
@@ -59,7 +60,7 @@ void US_ConstraintControl::update(struct constraint c)
 
 	le_high->disconnect();
 	le_high->setText(str.sprintf("%6.4e", c.high));
-	connect(le_high, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
+	connect(le_high, SIGNAL(textChanged(const QString &)), SLOT(setHigh(const QString &)));
 
 	le_low->disconnect();
 	le_low->setEnabled(false);
@@ -70,12 +71,14 @@ void US_ConstraintControl::update(struct constraint c)
 void US_ConstraintControl::setLow(const QString &val)
 {
 	c.low = val.toFloat();
+cout << "setting low to " << c.low << endl;
 	emit constraintChanged(c);
 }
 
 void US_ConstraintControl::setHigh(const QString &val)
 {
 	c.high = val.toFloat();
+cout << "setting high to " << c.high << endl;
 	emit constraintChanged(c);
 }
 
@@ -104,7 +107,15 @@ void US_ConstraintControl::setDefault(float center, float fraction, float consta
 	float range = center * fraction;
 	le_high->setEnabled(false);
 	le_low->setEnabled(false);
-	cout << "in setDefault " << center << ", " << fraction << ", " << center + range + constant << ", " << center - range + constant << endl;
-	le_high->setText(str.sprintf("%6.4e", center + range + constant));
-	le_low->setText(str.sprintf("%6.4e", center - range + constant));
+	cout << "in setDefault center: " << center << ", fract:" << fraction << ", high: " << center + range + constant << ", low:" << center - range + constant << endl;
+	c.high = center + range + constant;
+	c.low = center - range + constant;
+	c.fit = false;
+	le_low->disconnect();
+	le_high->disconnect();
+	le_high->setText(str.sprintf("%6.4e", c.high));
+	le_low->setText(str.sprintf("%6.4e", c.low));
+	connect(le_low, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
+	connect(le_high, SIGNAL(textChanged(const QString &)), SLOT(setHigh(const QString &)));
+	emit constraintChanged(c);
 }
