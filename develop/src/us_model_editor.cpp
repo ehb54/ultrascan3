@@ -38,7 +38,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	}
 	connect(cmb_component1, SIGNAL(activated(int)), this, SLOT(select_component(int)));
 	connect(cmb_component1, SIGNAL(highlighted(int)), this, SLOT(select_component(int)));
-		
+
 	lbl_linked = new QLabel(tr(" This component is linked to:"), this);
 	lbl_linked->setAlignment(AlignLeft|AlignVCenter);
 	lbl_linked->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -64,7 +64,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 			  SLOT(update_conc(const QString &)));
 	le_conc->setMinimumHeight(minHeight2);
 	le_conc->setEnabled(false);
-	
+
 	lbl_keq = new QLabel(tr(" Equilibrium Const. (in OD):"), this);
 	lbl_keq->setAlignment(AlignLeft|AlignVCenter);
 	lbl_keq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -78,7 +78,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 			  SLOT(update_keq(const QString &)));
 	le_keq->setMinimumHeight(minHeight2);
 	le_keq->setEnabled(false);
-	
+
 	lbl_sed = new QLabel(tr(" Sedimentation Coeff. (sec):"), this);
 	lbl_sed->setAlignment(AlignLeft|AlignVCenter);
 	lbl_sed->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -131,6 +131,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_f_f0->setMinimumHeight(minHeight2);
 	le_f_f0->setEnabled(true);
 	le_f_f0->setReadOnly(true);
+	connect(le_f_f0, SIGNAL(textChanged(const QString &)), SLOT(get_f_f0(const QString &)));
 
 	pb_vbar = new QPushButton(tr("vbar (ccm/g, 20C)"), this );
 	pb_vbar->setAutoDefault(false);
@@ -147,7 +148,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_vbar->setEnabled(true);
 	connect(le_vbar, SIGNAL(textChanged(const QString &)),
 			  SLOT(get_vbar(const QString &)));
-	
+
 	lbl_mw = new QLabel(tr(" Molecular Weight (Da):"), this);
 	lbl_mw->setAlignment(AlignLeft|AlignVCenter);
 	lbl_mw->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -307,7 +308,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 		setup_GUI();
 	}
 	select_component((int) 0);
-	
+
 	global_Xpos += 30;
 	global_Ypos += 30;
 
@@ -389,7 +390,7 @@ void US_ModelEditor::setup_GUI()
 void US_ModelEditor::load_model()
 {
 	QString fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.model.?? *.model-?.?? *model-??.??", 0);
-	if ( !fn.isEmpty() ) 
+	if ( !fn.isEmpty() )
 	{
 		load_model(fn);
 	}
@@ -752,13 +753,13 @@ void US_ModelEditor::load_model(const QString &fileName)
 				(*system).component_vector[i].vbar20 =  (float) 0.72;
 				(*system).component_vector[i].extinction = 1.0;
 				(*system).component_vector[i].name = str.sprintf("Component %d", i+1);
-				
+
 				(*system).component_vector[i].mw = ((*system).component_vector[i].s/(*system).component_vector[i].D)
 				*((R*K20)/(1.0 - (*system).component_vector[i].vbar20 * DENS_20W));
-				
-				(*system).component_vector[i].f_f0 = (((*system).component_vector[i].mw * 
+
+				(*system).component_vector[i].f_f0 = (((*system).component_vector[i].mw *
 				(1.0 - (*system).component_vector[i].vbar20 * DENS_20W))/((*system).component_vector[i].s * AVOGADRO))
-				/(6 * VISC_20W * pow(((*system).component_vector[i].mw * M_PI * M_PI * 3.0 
+				/(6 * VISC_20W * pow(((*system).component_vector[i].mw * M_PI * M_PI * 3.0
 				* (*system).component_vector[i].vbar20)/(4.0 * AVOGADRO), 1.0/3.0));
 				(*system).component_vector[i].show_conc = true;
 				(*system).component_vector[i].show_keq = false;
@@ -797,7 +798,7 @@ void US_ModelEditor::load_c0()
 		"excluded from the concentration vector."),
 	QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
 	QString fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*", 0);
-	if (!fn.isEmpty()) 
+	if (!fn.isEmpty())
 	{
 		lbl_load_c0->setText(fn);
 		QFile f;
@@ -943,9 +944,15 @@ void US_ModelEditor::select_component(double val)
 
 void US_ModelEditor::select_component(int val)
 {
+	//cout << "Entering select_component("<<val<<")\n";
 	current_component = (unsigned int) val;
+	cnt_item->disconnect();
+	cmb_component1->disconnect();
 	cnt_item->setValue(current_component + 1);
 	cmb_component1->setCurrentItem(current_component);
+	connect(cnt_item, SIGNAL(valueChanged(double)), SLOT(select_component(double)));
+	connect(cmb_component1, SIGNAL(activated(int)), this, SLOT(select_component(int)));
+	connect(cmb_component1, SIGNAL(highlighted(int)), this, SLOT(select_component(int)));
 	cb_prolate->setEnabled(false);
 	cb_oblate->setEnabled(false);
 	cb_rod->setEnabled(false);
@@ -957,7 +964,7 @@ void US_ModelEditor::select_component(int val)
 	le_vbar->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].vbar20));
 	le_mw->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].mw));
 	le_f_f0->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].f_f0));
-	
+
 	if((*system).component_vector[current_component].shape == "sphere")
 	{
 		cb_prolate->setChecked(false);
@@ -1062,7 +1069,30 @@ void US_ModelEditor::select_component(int val)
 		le_stoich->setText("");
 		le_stoich->setEnabled(false);
 	}
+	//cout << "emitting componentChanged("<<current_component<<")\n";
 	emit componentChanged(current_component);
+}
+
+void US_ModelEditor::update_sD()
+{
+	QString str;
+	(*system).component_vector[current_component].s =
+	((*system).component_vector[current_component].mw *
+	(1.0 - (*system).component_vector[current_component].vbar20 * DENS_20W))
+	/ (AVOGADRO * (*system).component_vector[current_component].f_f0 *
+	6.0 * VISC_20W * pow((0.75/AVOGADRO) * (*system).component_vector[current_component].mw * (*system).component_vector[current_component].vbar20 * M_PI * M_PI, 1.0/3.0));
+
+	(*system).component_vector[current_component].D = (R * K20)/(AVOGADRO *
+	(*system).component_vector[current_component].f_f0 * 9.0 * VISC_20W * M_PI *
+	pow((2.0 * (*system).component_vector[current_component].s *
+	(*system).component_vector[current_component].f_f0 * (*system).component_vector[current_component].vbar20
+	* VISC_20W) / (1.0-(*system).component_vector[current_component].vbar20 * DENS_20W), 0.5));
+	le_sed->disconnect();
+	le_diff->disconnect();
+	le_sed->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].s));
+	le_diff->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].D));
+	connect(le_sed, SIGNAL(textChanged(const QString &)), SLOT(update_sed(const QString &)));
+	connect(le_diff, SIGNAL(textChanged(const QString &)), SLOT(update_diff(const QString &)));
 }
 
 void US_ModelEditor::update_conc(const QString &newText)
@@ -1096,7 +1126,27 @@ void US_ModelEditor::update_conc(const QString &newText)
 
 void US_ModelEditor::get_vbar(const QString &val)
 {
+	if (val.toFloat() <= 0.0)
+	{
+		return;
+	}
 	(*system).component_vector[current_component].vbar20 = val.toFloat();
+	update_sD();
+}
+
+void US_ModelEditor::get_f_f0(const QString &val)
+{
+	if (val.toFloat() <= 0.0)
+	{
+		return;
+	}
+	if (val.toFloat() < 1.0)
+	{
+		QMessageBox::message("Attention:", "Invalid Entry!\nf/f0 < 1.0");
+		return;
+	}
+	(*system).component_vector[current_component].f_f0 = val.toFloat();
+	update_sD();
 }
 
 void US_ModelEditor::get_vbar()
@@ -1110,6 +1160,10 @@ void US_ModelEditor::get_vbar()
 
 void US_ModelEditor::update_vbar(float vbar, float vbar20)
 {
+	if (vbar20 <= 0.0)
+	{
+		return;
+	}
 	QString str;
 	if (vbar20 != vbar)
 	{
@@ -1131,7 +1185,7 @@ void US_ModelEditor::printError(const int &ival)
 		}
 		case 1:
 		{
-			QMessageBox::warning(this, tr("UltraScan Warning"), 
+			QMessageBox::warning(this, tr("UltraScan Warning"),
 			tr("Sorry, for old-style model files only\nnon-interacting model loading is supported.\n\n") +
 			tr("Please recreate this model by clicking on:\n\n\"New Model\""),
 			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
@@ -1223,7 +1277,7 @@ void US_ModelEditor::update_keq(const QString &newText)
 	{
 		// check to see if there is an dissociation linked to this component
 		if ((*system).assoc_vector[i].component2 == (int) current_component)
-		{ 	
+		{
 			// check to make sure this component is not an irreversible component
 			if ((*system).assoc_vector[i].stoichiometry1 != (*system).assoc_vector[i].stoichiometry2 // self-association
 			|| ((*system).assoc_vector[i].stoichiometry1 == 0 && (*system).assoc_vector[i].stoichiometry2 == 0))  // hetero-association
@@ -1245,8 +1299,8 @@ void US_ModelEditor::update_koff(const QString &newText)
 	{
 		// check to see if there is an dissociation linked to this component
 		if ((*system).assoc_vector[i].component2 == (int) current_component)
-		{ 	
-			// check to make sure this component is not an irreversible component 
+		{
+			// check to make sure this component is not an irreversible component
 			if ((*system).assoc_vector[i].stoichiometry1 != (*system).assoc_vector[i].stoichiometry2 // self-association
 			|| ((*system).assoc_vector[i].stoichiometry1 == 0 && (*system).assoc_vector[i].stoichiometry2 == 0))  // hetero-association
 			{
@@ -1309,7 +1363,7 @@ bool US_ModelEditor::verify_model()
 		if ((*system).assoc_vector[i].stoichiometry3 == 1) // then we need to check if the sum of MW(1) + MW(2) = MW(3)
 		{
 			if (fabs	((*system).component_vector[(*system).assoc_vector[i].component3].mw
-			 - (*system).component_vector[(*system).assoc_vector[i].component2].mw 
+			 - (*system).component_vector[(*system).assoc_vector[i].component2].mw
 			 - (*system).component_vector[(*system).assoc_vector[i].component1].mw) > 1.0) // MWs don't match within 10 dalton
 			{
 				str2.sprintf(tr("The molecular weights of the reacting species\nin reaction %d do not agree:\n\n"), i+1);
@@ -1344,15 +1398,15 @@ void US_ModelEditor::savefile()
 {
 	QString str, fn = QFileDialog::getSaveFileName(USglobal->config_list.result_dir, "*.model.?? *.model-?.?? *model-??.??", 0);
 	int k;
-	
-	if ( !fn.isEmpty() ) 
+
+	if ( !fn.isEmpty() )
 	{
 		k = fn.findRev(".", -1, false);
 		if (k != -1) 	//if an extension was given, strip it.
 		{
 			fn.truncate(k);
 		}
-		fn.append(str.sprintf(".model-%d.11", (*system).model));	
+		fn.append(str.sprintf(".model-%d.11", (*system).model));
 		savefile(fn);		// the user gave a file name
 	}
 }
@@ -1417,7 +1471,7 @@ void US_ModelEditor::savefile(const QString &fileName)
 				ts << (*system).component_vector[i].c0.radius.size() << "\t\t# number of initial concentration points\n";
 				for (j=0; j<(*system).component_vector[i].c0.radius.size(); j++)
 				{
-					ts << (*system).component_vector[i].c0.radius[j] << " " 
+					ts << (*system).component_vector[i].c0.radius[j] << " "
 					<< (*system).component_vector[i].c0.concentration[j] << endl;
 				}
 			}

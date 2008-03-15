@@ -37,6 +37,7 @@ void US_ConstraintControl::clear()
 	c.fit = false;
 	cb_fit->disconnect();
 	cb_fit->setChecked(false);
+	cb_fit->setEnabled(false);
 	connect(cb_fit, SIGNAL(clicked()), SLOT(setFit()));
 
 	le_high->disconnect();
@@ -52,19 +53,21 @@ void US_ConstraintControl::clear()
 
 void US_ConstraintControl::update(struct constraint c)
 {
-cout << "updating low to " << c.low << " and high to " << c.high << endl;
+	//	cout << "updating low to " << c.low << " and high to " << c.high << endl;
 	QString str;
 	cb_fit->disconnect();
 	cb_fit->setChecked(c.fit);
+	cb_fit->setEnabled(true);
 	connect(cb_fit, SIGNAL(clicked()), SLOT(setFit()));
 
 	le_high->disconnect();
 	le_high->setText(str.sprintf("%6.4e", c.high));
+	le_high->setEnabled(c.fit);
 	connect(le_high, SIGNAL(textChanged(const QString &)), SLOT(setHigh(const QString &)));
 
 	le_low->disconnect();
-	le_low->setEnabled(false);
 	le_low->setText(str.sprintf("%6.4e", c.low));
+	le_low->setEnabled(c.fit);
 	connect(le_low, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
 	
 	if (c.fit)
@@ -82,14 +85,14 @@ cout << "updating low to " << c.low << " and high to " << c.high << endl;
 void US_ConstraintControl::setLow(const QString &val)
 {
 	c.low = val.toFloat();
-cout << "setting low to " << c.low << endl;
+	//	cout << "setting low to " << c.low << endl;
 	emit constraintChanged(c);
 }
 
 void US_ConstraintControl::setHigh(const QString &val)
 {
 	c.high = val.toFloat();
-cout << "setting high to " << c.high << endl;
+	//	cout << "setting high to " << c.high << endl;
 	emit constraintChanged(c);
 }
 
@@ -111,6 +114,7 @@ void US_ConstraintControl::setFit(bool flag)
 	c.fit = flag;
 	le_high->setEnabled(flag);
 	le_low->setEnabled(flag);
+	emit constraintChanged(c);
 }
 
 void US_ConstraintControl::setDefault(float center, float fraction, float constant)
@@ -119,7 +123,7 @@ void US_ConstraintControl::setDefault(float center, float fraction, float consta
 	float range = center * fraction;
 	le_high->setEnabled(false);
 	le_low->setEnabled(false);
-	cout << "in setDefault center: " << center << ", fract:" << fraction << ", high: " << center + range + constant << ", low:" << center - range + constant << endl;
+	//	cout << "in setDefault center: " << center << ", fract:" << fraction << ", high: " << center + range + constant << ", low:" << center - range + constant << endl;
 	c.high = center + range + constant;
 	c.low = center - range + constant;
 	c.fit = false;

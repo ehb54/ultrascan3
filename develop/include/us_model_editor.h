@@ -25,7 +25,7 @@ using namespace std;
 class US_ModelEditor : public QDialog
 {
 	Q_OBJECT
-	
+
 	public:
 		US_ModelEditor(bool, struct ModelSystem *, QWidget *parent=0, const char *name=0);
 		~US_ModelEditor();
@@ -51,7 +51,7 @@ class US_ModelEditor : public QDialog
 		QLineEdit *le_sigma;
 		QLineEdit *le_delta;
 		QLineEdit *le_stoich;
-		
+
 		QLabel *lbl_current;
 		QLabel *lbl_model;
 		QLabel *lbl_linked;
@@ -67,7 +67,7 @@ class US_ModelEditor : public QDialog
 		QLabel *lbl_stoich;
 		QLabel *lbl_msg1;
 		QLabel *lbl_load_c0;
-		
+
 		QPushButton *pb_simulateComponent;
 		QPushButton *pb_cancel;
 		QPushButton *pb_next;
@@ -82,7 +82,7 @@ class US_ModelEditor : public QDialog
 
 	protected slots:
 		void closeEvent(QCloseEvent *e);
-	
+
 	public slots:
 		void simulate_component();
 		virtual void update_component();
@@ -106,9 +106,11 @@ class US_ModelEditor : public QDialog
 		virtual void setup_GUI();
 		virtual void help();
 		void load_c0();
+		void update_sD();
 		void load_model();
 		void load_model(const QString &);
 		void get_vbar(const QString &);
+		void get_f_f0(const QString &);
 		void get_vbar();
 		void printError(const int &);
 		void save_model();
