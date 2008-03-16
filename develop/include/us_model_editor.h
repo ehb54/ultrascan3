@@ -97,7 +97,6 @@ class US_ModelEditor : public QDialog
 		void update_delta(const QString &);
 		void update_mw(const QString &);
 		virtual void update_f_f0(const QString &);
-		void savefile(const QString &);
 		void savefile();
 		void select_rod();
 		void select_prolate();
@@ -108,7 +107,6 @@ class US_ModelEditor : public QDialog
 		void load_c0();
 		void update_sD();
 		void load_model();
-		void load_model(const QString &);
 		void get_vbar(const QString &);
 		void get_f_f0(const QString &);
 		void get_vbar();
@@ -120,6 +118,7 @@ class US_ModelEditor : public QDialog
 
 	signals:
 		void componentChanged(unsigned int);
+		void modelLoaded();
 };
 
 #endif

@@ -146,8 +146,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_vbar->setMinimumHeight(minHeight2);
 	le_vbar->setEnabled(true);
-	connect(le_vbar, SIGNAL(textChanged(const QString &)),
-			  SLOT(get_vbar(const QString &)));
+	connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(get_vbar(const QString &)));
 
 	lbl_mw = new QLabel(tr(" Molecular Weight (Da):"), this);
 	lbl_mw->setAlignment(AlignLeft|AlignVCenter);
@@ -392,395 +391,37 @@ void US_ModelEditor::load_model()
 	QString fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.model.?? *.model-?.?? *model-??.??", 0);
 	if ( !fn.isEmpty() )
 	{
-		load_model(fn);
-	}
-}
-
-void US_ModelEditor::load_model(const QString &fileName)
-{
-
-	QFile f(fileName);
-	QString str;
-	bool flag;
-	unsigned int i, j;
-	if (f.open(IO_ReadOnly | IO_Translate))
-	{
-		flag = true;
-		QTextStream ts(&f);
-		ts.readLine(); // FE, SA2D, COFS, SIM or GA
-		(*system).description = ts.readLine();
-		if ((*system).description.isNull())
+		US_FemGlobal *fg;
+		int code;
+		fg = new US_FemGlobal(this);
+		code = fg->read_modelSystem(system, fn);
+		if (code == 0)
 		{
-			printError(3);
-			return;
-		}
-		str = ts.readLine();
-		if (str.find("#", 0, true) == 0) // a new model has a comment line in the second line starting with "#"
-		{
-			float fval;
-			ts >> fval; // UltraScan version
-			ts.readLine(); // read rest of line
-			ts >> str;
-			ts.readLine(); // read rest of line
-			if (str.isNull())
+			printError(4); // successfully loaded a new model
+			lbl_model->setText(modelString[(*system).model]);
+			cmb_component1->clear();
+			for (unsigned int i=0; i<(*system).component_vector.size(); i++)
 			{
-				printError(0);
-				return;
+				cmb_component1->insertItem((*system).component_vector[i].name);
 			}
-			(*system).model = str.toInt();
-			ts >> str;
-			if (str.isNull())
-			{
-				printError(0);
-				return;
-			}
-			ts.readLine();
-			(*system).component_vector.resize(str.toInt());
 			cnt_item->setRange(1, (*system).component_vector.size(), 1);
-			cnt_item->setValue(1);
-			for (i=0; i<(*system).component_vector.size(); i++)
-			{
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				int pos = str.find("#", 0, true);
-				str.truncate(pos);
-				(*system).component_vector[i].name = str.stripWhiteSpace();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].concentration = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].s = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].D = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].sigma = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].delta = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].mw = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].vbar20 = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].shape = str;
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].f_f0 = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].extinction = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].show_conc = (bool) str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].show_stoich = str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].show_keq = (bool) str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].show_koff = (bool) str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).component_vector[i].show_component.resize(str.toUInt());
-				for (j=0; j<(*system).component_vector[i].show_component.size(); j++)
-				{
-					ts >> str;
-					if (str.isNull())
-					{
-						printError(0);
-						return;
-					}
-					ts.readLine();
-					(*system).component_vector[i].show_component[j] = str.toInt();
-				}
-				if ((*system).component_vector[i].concentration < 0)
-				{
-					(*system).component_vector[i].c0.radius.clear();
-					(*system).component_vector[i].c0.concentration.clear();
-					ts >> str;
-					if (str.isNull())
-					{
-						printError(0);
-						return;
-					}
-					ts.readLine();
-					unsigned int ival = str.toUInt();
-					for (j=0; j<ival; j++)
-					{
-						ts >> str;
-						if (str.isNull())
-						{
-							printError(0);
-							return;
-						}
-						(*system).component_vector[i].c0.radius.push_back(str.toDouble());
-						ts >> str;
-						if (str.isNull())
-						{
-							printError(0);
-							return;
-						}
-						(*system).component_vector[i].c0.concentration.push_back(str.toDouble());
-					}
-					ts.readLine(); //read the rest of the last linee
-				}			}
-			ts >> str;
-			if (str.isNull())
-			{
-				printError(0);
-				return;
-			}
-			ts.readLine();
-			(*system).assoc_vector.resize(str.toUInt());
-			for (i=0; i<(*system).assoc_vector.size(); i++)
-			{
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].keq = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].units = str;
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].k_off = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].component1 = str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].component2 = str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].component3 = str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].stoichiometry1 = str.toUInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].stoichiometry2 = str.toUInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				ts.readLine();
-				(*system).assoc_vector[i].stoichiometry3 = str.toUInt();
-			}
+			current_component = 0;
+			emit modelLoaded();
+			select_component((int) 0);
 		}
-		else // load an old-style model file for noninteracting models
+		if (code == -40)
 		{
-			(*system).model = str.toInt();
-			if ((*system).model > 3) // we can only read noninteracting models
-			{
-				printError(1);
-				return;
-			}
-			(*system).model = 3; // set to fixed molecular weight distribution by default
-			str = ts.readLine();
-			if (str.isNull())
-			{
-				printError(0);
-				return;
-			}
-			(*system).component_vector.resize(str.toInt()); // number of components
-			cnt_item->setRange(1, (*system).component_vector.size(), 1);
-			cnt_item->setValue(1);
-			for (i=0; i<(*system).component_vector.size(); i++)
-			{
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				(*system).component_vector[i].concentration = str.toFloat();
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				(*system).component_vector[i].s = str.toFloat();
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				(*system).component_vector[i].D = str.toFloat();
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				(*system).component_vector[i].sigma = str.toFloat();
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					printError(0);
-					return;
-				}
-				(*system).component_vector[i].delta = str.toFloat();
-				(*system).component_vector[i].vbar20 =  (float) 0.72;
-				(*system).component_vector[i].extinction = 1.0;
-				(*system).component_vector[i].name = str.sprintf("Component %d", i+1);
-
-				(*system).component_vector[i].mw = ((*system).component_vector[i].s/(*system).component_vector[i].D)
-				*((R*K20)/(1.0 - (*system).component_vector[i].vbar20 * DENS_20W));
-
-				(*system).component_vector[i].f_f0 = (((*system).component_vector[i].mw *
-				(1.0 - (*system).component_vector[i].vbar20 * DENS_20W))/((*system).component_vector[i].s * AVOGADRO))
-				/(6 * VISC_20W * pow(((*system).component_vector[i].mw * M_PI * M_PI * 3.0
-				* (*system).component_vector[i].vbar20)/(4.0 * AVOGADRO), 1.0/3.0));
-				(*system).component_vector[i].show_conc = true;
-				(*system).component_vector[i].show_keq = false;
-				(*system).component_vector[i].show_koff = false;
-				(*system).component_vector[i].show_stoich = 0;
-			}
+			printError(2); // couldn't open file
 		}
-		lbl_model->setText(modelString[(*system).model]);
-		cmb_component1->clear();
-		cmb_component2->clear();
-		for (unsigned int i=0; i<(*system).component_vector.size(); i++)
+		if (code == 1)
 		{
-			cmb_component1->insertItem((*system).component_vector[i].name);
+			printError(6); // old model is not supported
 		}
-		cnt_item->setValue(1);
-		select_component((int) 0);
-		printError(4);
-	}
-	else
-	{
-		printError(2);
+		if (code < 0 && code > -40)
+		{
+			printError(0); // corrupted file
+		}
+		delete fg;
 	}
 }
 
@@ -1013,6 +654,8 @@ void US_ModelEditor::select_component(int val)
 		le_conc->setEnabled(true);
 		pb_load_c0->setEnabled(true);
 		le_mw->setEnabled(true);
+		le_vbar->setEnabled(true);
+		pb_vbar->setEnabled(true);
 		if ((*system).component_vector[current_component].concentration == -1.0)
 		{
 			le_conc->setText("from file");
@@ -1028,6 +671,8 @@ void US_ModelEditor::select_component(int val)
 	else
 	{
 		le_mw->setEnabled(false); // can't edit an associated species' molecular weight
+		le_vbar->setEnabled(false); // can't edit an associated species' vbar
+		pb_vbar->setEnabled(false); // can't edit an associated species' vbar
 		le_conc->setEnabled(false);
 		le_conc->setText("");
 		pb_load_c0->setEnabled(false);
@@ -1064,6 +709,11 @@ void US_ModelEditor::select_component(int val)
 		le_mw->disconnect();
 		le_mw->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].mw));
 		connect(le_mw, SIGNAL(textChanged(const QString &)), SLOT(update_mw(const QString &)));
+		(*system).component_vector[current_component].vbar20 =
+				(*system).component_vector[(*system).component_vector[current_component].show_component[0]].vbar20;
+		le_vbar->disconnect();
+		le_vbar->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].vbar20));
+		connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(get_vbar(const QString &)));
 		update_sD();
 	}
 	else if ((*system).component_vector[current_component].show_stoich == -1)
@@ -1075,6 +725,17 @@ void US_ModelEditor::select_component(int val)
 		le_mw->disconnect();
 		le_mw->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].mw));
 		connect(le_mw, SIGNAL(textChanged(const QString &)), SLOT(update_mw(const QString &)));
+		float fraction1, fraction2;
+		fraction1 = (*system).component_vector[(*system).component_vector[current_component].show_component[0]].mw/
+				(*system).component_vector[current_component].mw;
+		fraction2 = (*system).component_vector[(*system).component_vector[current_component].show_component[1]].mw/
+				(*system).component_vector[current_component].mw;
+		(*system).component_vector[current_component].vbar20 =
+				(*system).component_vector[(*system).component_vector[current_component].show_component[0]].vbar20 * fraction1 +
+				(*system).component_vector[(*system).component_vector[current_component].show_component[1]].vbar20 * fraction2;
+		le_vbar->disconnect();
+		le_vbar->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].vbar20));
+		connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(get_vbar(const QString &)));
 		update_sD();
 	}
 	else
@@ -1177,12 +838,13 @@ void US_ModelEditor::get_vbar()
 	float vbar, vbar20;
 	US_Vbar_DB *vbar_dlg;
 	vbar_dlg = new US_Vbar_DB((float) 20.0, &vbar, &vbar20, true, false, 0);
-	vbar_dlg->show();
 	connect(vbar_dlg, SIGNAL(valueChanged(float, float)), SLOT(update_vbar(float, float)));
+	vbar_dlg->exec();
 }
 
 void US_ModelEditor::update_vbar(float vbar, float vbar20)
 {
+	cout << "update_vbar(float, float) is signalled...\n";
 	if (vbar20 <= 0.0)
 	{
 		return;
@@ -1239,6 +901,14 @@ void US_ModelEditor::printError(const int &ival)
 			QMessageBox::warning(this, tr("UltraScan Warning"),
 			tr("Please note:\n\nYou provided an invalid entry!\n\nPlease try again..."),
 			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+			break;
+		}
+		case 6:
+		{
+			QMessageBox::warning(this, tr("UltraScan Warning"),
+										tr("Sorry, old-style models are no longer supported.\n\n") +
+												tr("Please load a different model or create a new Model"),
+										QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
 			break;
 		}
 	}
@@ -1421,88 +1091,19 @@ void US_ModelEditor::savefile()
 			fn.truncate(k);
 		}
 		fn.append(str.sprintf(".model-%d.11", (*system).model));
-		savefile(fn);		// the user gave a file name
-	}
-}
-
-void US_ModelEditor::savefile(const QString &fileName)
-{
-	QFile f(fileName);
-	QString str;
-	unsigned int i, j;
-	if (f.exists())
-	{
-		if(!QMessageBox::query( tr("Warning"), tr("Attention:\nThis file exists already!\n\nDo you want to overwrite it?"), tr("Yes"), tr("No")))
+		QFile f(fn);
+		QString str;
+		if (f.exists())
 		{
-			f.close();
-			return;
-		}
-	}
-	if (f.open(IO_WriteOnly | IO_Translate))
-	{
-		QTextStream ts(&f);
-		QString message = tr("Please enter a description\nfor your model:");
-		OneLiner ol_descr(message);
-		ol_descr.parameter1->setText((*system).description);
-		ol_descr.show();
-		if (ol_descr.exec())
-		{
-			if (ol_descr.string.isEmpty())
+			if(!QMessageBox::query( tr("Warning"), tr("Attention:\nThis file exists already!\n\nDo you want to overwrite it?"), tr("Yes"), tr("No")))
 			{
-				ol_descr.string = "not specified";
-			}
-			ts << "SIM" << "\n";
-			ts << ol_descr.string << "\n";
-			ts << "# This file is computer-generated, please do not edit unless you know what you are doing\n";
-		}
-		ts << US_Version << "\t\t# UltraScan Version Number\n";
-		ts << (*system).model << "\t\t# model number/identifier\n";
-		ts << (*system).component_vector.size() << "\t\t# number of components in the model\n";
-		for (i=0; i<(*system).component_vector.size(); i++)
-		{
-			ts << (*system).component_vector[i].name << "\t\t# name of component\n";
-			ts << (*system).component_vector[i].concentration << "\t\t# concentration\n";
-			ts << (*system).component_vector[i].s << "\t\t# sedimentation coefficient\n";
-			ts << (*system).component_vector[i].D << "\t\t# diffusion coefficient\n";
-			ts << (*system).component_vector[i].sigma << "\t\t# sigma\n";
-			ts << (*system).component_vector[i].delta << "\t\t# delta\n";
-			ts << (*system).component_vector[i].mw << "\t\t# molecular Weight \n";
-			ts << (*system).component_vector[i].vbar20 << "\t\t# vbar at 20C \n";
-			ts << (*system).component_vector[i].shape << "\t\t# shape \n";
-			ts << (*system).component_vector[i].f_f0 << "\t\t# frictional ratio \n";
-			ts << (*system).component_vector[i].extinction << "\t\t# extinction\n";
-			ts << (int) (*system).component_vector[i].show_conc << "\t\t# show concentration?\n";
-			ts << (*system).component_vector[i].show_stoich << "\t\t# show Stoichiometry?\n";
-			ts << (int) (*system).component_vector[i].show_keq << "\t\t# show k equilibrium?\n";
-			ts << (int) (*system).component_vector[i].show_koff << "\t\t# show k_off?\n";
-			ts << (*system).component_vector[i].show_component.size() << "\t\t# number of linked components\n";
-			for (j=0; j<(*system).component_vector[i].show_component.size(); j++)
-			{
-				ts << (*system).component_vector[i].show_component[j] << str.sprintf("\t\t# linked component (%d)\n", j+1);
-			}
-			if((*system).component_vector[i].concentration < 0)
-			{
-				ts << (*system).component_vector[i].c0.radius.size() << "\t\t# number of initial concentration points\n";
-				for (j=0; j<(*system).component_vector[i].c0.radius.size(); j++)
-				{
-					ts << (*system).component_vector[i].c0.radius[j] << " "
-					<< (*system).component_vector[i].c0.concentration[j] << endl;
-				}
+				f.close();
+				return;
 			}
 		}
-		ts << (*system).assoc_vector.size() << "\t\t# number of association reactions in the model\n";
-		for (i=0; i<(*system).assoc_vector.size(); i++)
-		{
-			ts << (*system).assoc_vector[i].keq << "\t\t# equilibrium constant\n";
-			ts << (*system).assoc_vector[i].units << "\t\t# units for equilibrium constant\n";
-			ts << (*system).assoc_vector[i].k_off << "\t\t# rate constant\n";
-			ts << (*system).assoc_vector[i].component1 << "\t\t# component 1 in this association\n";
-			ts << (*system).assoc_vector[i].component2 << "\t\t# component 2 in this association\n";
-			ts << (*system).assoc_vector[i].component3 << "\t\t# component 3 in this association\n";
-			ts << (*system).assoc_vector[i].stoichiometry1 << "\t\t# stoichiometry for component 1 in this association\n";
-			ts << (*system).assoc_vector[i].stoichiometry2 << "\t\t# stoichiometry for component 2 in this association\n";
-			ts << (*system).assoc_vector[i].stoichiometry3 << "\t\t# stoichiometry for component 3 in this association\n";
-		}
-		f.close();
+		US_FemGlobal *fg;
+		fg = new US_FemGlobal(this);
+		fg->write_modelSystem(system, fn);
+		delete fg;
 	}
 }

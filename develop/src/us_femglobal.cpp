@@ -302,6 +302,8 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename)
 				ts.readLine();
 				(*ms).assoc_vector[i].stoichiometry3 = str.toUInt();
 			}
+			f.close();
+			return(0);
 		}
 		else // load an old-style model file for noninteracting models
 		{
@@ -368,11 +370,11 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename)
 			}
 		}
 		f.close();
-		return(0);
+		return(1); // loaded an old-style model
 	}
 	else
 	{
-		return(-40);
+		return(-40); // unabled to open file
 	}
 }
 
@@ -914,7 +916,7 @@ int US_FemGlobal::write_constraints(struct ModelSystem *ms, struct ModelSystemCo
 	QFile f;
 	QString str;
 	unsigned int i;
-	if (filename.right(10) != ".constraints")
+	if (filename.right(12) != ".constraints")
 	{
 		f.setName(filename + ".constraints");
 	}

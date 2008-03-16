@@ -12,7 +12,8 @@ US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, QWidget *parent, cons
 	msc.moving_grid = 1;    // Use moving (1) or fixed time grid (0)
 	msc.band_volume = (float) 0.15;
 
-	connect(this, SIGNAL(componentChanged(unsigned int)), SLOT(update_constraints(unsigned int)));
+	connect(this, SIGNAL(componentChanged(unsigned int)), this, SLOT(update_constraints(unsigned int)));
+	connect(this, SIGNAL(modelLoaded()), this, SLOT(initialize_msc()));
 
 	initialize_msc();
 	select_component((int) current_component);
@@ -274,6 +275,29 @@ void US_GAModelEditor::update_lamella(double val)
 
 void US_GAModelEditor::load_constraints()
 {
+	QString fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.constraints", 0);
+	if ( !fn.isEmpty() )
+	{
+		US_FemGlobal *fg;
+		fg = new US_FemGlobal(this);
+		(*ms).component_vector.clear();
+		(*ms).assoc_vector.clear();
+		msc.component_vector_constraints.clear();
+		msc.assoc_vector_constraints.clear();
+		fg->read_constraints(ms, &msc, fn);
+		delete fg;
+		lbl_model->setText(modelString[(*ms).model]);
+		cmb_component1->clear();
+		for (unsigned int i=0; i<(*ms).component_vector.size(); i++)
+		{
+			cmb_component1->insertItem((*ms).component_vector[i].name);
+		}
+		cnt_item->setRange(1, (*ms).component_vector.size(), 1);
+	// after selecting a model we need to allocate memory for msc in initialize_msc
+		current_component = 0; // reset to the first component
+		current_assoc = 0;
+		select_component((int) current_component);		
+	}
 }
 
 bool US_GAModelEditor::verify_constraints()
@@ -283,6 +307,14 @@ bool US_GAModelEditor::verify_constraints()
 
 void US_GAModelEditor::save_constraints()
 {
+	QString str, fn = QFileDialog::getSaveFileName(USglobal->config_list.result_dir, "*.constraints", 0);
+	if ( !fn.isEmpty() )
+	{
+		US_FemGlobal *fg;
+		fg = new US_FemGlobal(this);
+		fg->write_constraints(ms, &msc, fn);
+		delete fg;
+	}
 }
 
 void US_GAModelEditor::mw_constraintChanged(struct constraint c)
@@ -411,7 +443,6 @@ void US_GAModelEditor::select_model()
 	current_component = 0;
 	current_assoc = 0;
 	initialize_msc();
-	select_component((int) current_component);
 }
 
 void US_GAModelEditor::initialize_msc()
@@ -444,4 +475,5 @@ void US_GAModelEditor::initialize_msc()
 	}
 	current_component = 0; // reset to the first component
 	current_assoc = 0;
+	select_component((int) current_component);
 }
