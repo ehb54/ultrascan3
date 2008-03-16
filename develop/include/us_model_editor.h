@@ -95,7 +95,7 @@ class US_ModelEditor : public QDialog
 		void update_keq(const QString &);
 		void update_sigma(const QString &);
 		void update_delta(const QString &);
-		virtual void update_mw(const QString &);
+		void update_mw(const QString &);
 		virtual void update_f_f0(const QString &);
 		void savefile(const QString &);
 		void savefile();

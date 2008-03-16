@@ -160,7 +160,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_mw->setMinimumHeight(minHeight2);
 	le_mw->setEnabled(true);
-	le_mw->setReadOnly(true);
+	connect(le_mw, SIGNAL(textChanged(const QString &)), SLOT(update_mw(const QString &)));
 
 	lbl_stoich = new QLabel(tr(" Stoichiometry:"), this);
 	lbl_stoich->setAlignment(AlignLeft|AlignVCenter);
@@ -1012,6 +1012,7 @@ void US_ModelEditor::select_component(int val)
 	{
 		le_conc->setEnabled(true);
 		pb_load_c0->setEnabled(true);
+		le_mw->setEnabled(true);
 		if ((*system).component_vector[current_component].concentration == -1.0)
 		{
 			le_conc->setText("from file");
@@ -1026,6 +1027,7 @@ void US_ModelEditor::select_component(int val)
 	}
 	else
 	{
+		le_mw->setEnabled(false); // can't edit an associated species' molecular weight
 		le_conc->setEnabled(false);
 		le_conc->setText("");
 		pb_load_c0->setEnabled(false);
@@ -1052,17 +1054,28 @@ void US_ModelEditor::select_component(int val)
 		le_koff->setEnabled(false);
 		le_koff->setText("");
 	}
-	if ((*system).component_vector[current_component].show_stoich != 0)
-	{
-		if ((*system).component_vector[current_component].show_stoich > 0)
-		{
-			le_stoich->setEnabled(true);
-			le_stoich->setText(str.sprintf("%d", (*system).component_vector[current_component].show_stoich));
-		}
-		else
-		{
-			le_stoich->setText("hetero-associating");
-		}
+	if ((*system).component_vector[current_component].show_stoich > 0)
+	{ // This species is the dissociating species in a self-associating system
+		le_stoich->setEnabled(true);
+		le_stoich->setText(str.sprintf("%d", (*system).component_vector[current_component].show_stoich));
+		(*system).component_vector[current_component].mw =
+				(*system).component_vector[(*system).component_vector[current_component].show_component[0]].mw *
+				(*system).component_vector[current_component].show_stoich;
+		le_mw->disconnect();
+		le_mw->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].mw));
+		connect(le_mw, SIGNAL(textChanged(const QString &)), SLOT(update_mw(const QString &)));
+		update_sD();
+	}
+	else if ((*system).component_vector[current_component].show_stoich == -1)
+	{ // This species is the dissociating species in a 2-component hetero-associating system
+		le_stoich->setText("hetero-associating");
+		(*system).component_vector[current_component].mw =
+				(*system).component_vector[(*system).component_vector[current_component].show_component[0]].mw +
+				(*system).component_vector[(*system).component_vector[current_component].show_component[1]].mw;
+		le_mw->disconnect();
+		le_mw->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].mw));
+		connect(le_mw, SIGNAL(textChanged(const QString &)), SLOT(update_mw(const QString &)));
+		update_sD();
 	}
 	else
 	{
@@ -1146,6 +1159,16 @@ void US_ModelEditor::get_f_f0(const QString &val)
 		return;
 	}
 	(*system).component_vector[current_component].f_f0 = val.toFloat();
+	update_sD();
+}
+
+void US_ModelEditor::update_mw(const QString &val)
+{
+	if (val.toFloat() <= 0.0)
+	{
+		return;
+	}
+	(*system).component_vector[current_component].mw = val.toFloat();
 	update_sD();
 }
 
@@ -1246,15 +1269,6 @@ void US_ModelEditor::update_sigma(const QString &newText)
 		return;
 	}
 	(*system).component_vector[current_component].sigma = newText.toFloat();
-}
-
-void US_ModelEditor::update_mw(const QString &newText)
-{
-	if (newText == "")
-	{
-		return;
-	}
-	(*system).component_vector[current_component].mw = newText.toFloat();
 }
 
 void US_ModelEditor::update_f_f0(const QString &newText)
