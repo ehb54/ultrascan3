@@ -14,7 +14,11 @@ US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, QWidget *parent, cons
 
 	connect(this, SIGNAL(componentChanged(unsigned int)), this, SLOT(update_constraints(unsigned int)));
 	connect(this, SIGNAL(modelLoaded()), this, SLOT(initialize_msc()));
-
+	connect(le_mw, SIGNAL(returnPressed()), this, SLOT(verify_constraints()));
+	connect(le_conc, SIGNAL(returnPressed()), this, SLOT(verify_constraints()));
+	connect(le_f_f0, SIGNAL(returnPressed()), this, SLOT(verify_constraints()));
+	connect(le_keq, SIGNAL(returnPressed()), this, SLOT(verify_constraints()));
+	connect(le_koff, SIGNAL(returnPressed()), this, SLOT(verify_constraints()));
 	initialize_msc();
 	select_component((int) current_component);
 
@@ -303,7 +307,8 @@ void US_GAModelEditor::load_constraints()
 bool US_GAModelEditor::verify_constraints()
 {
 	unsigned int i;
-	QString str;
+	QString str, message;
+	message = tr("The following constraints did not have the proper range and were adjusted:\n\n");
 	bool flag=true;
 	float low, high;
 	for (i=0; i<(*ms).component_vector.size(); i++)
@@ -318,11 +323,7 @@ bool US_GAModelEditor::verify_constraints()
 				cc_f_f0->update((*ms).component_vector[i].f_f0 - 1.0, 0.5, &low, &high, 1.0);
 				msc.component_vector_constraints[i].f_f0.low = low;
 				msc.component_vector_constraints[i].f_f0.high = high;
-				QMessageBox::warning(this, tr("UltraScan Warning"),
-				tr(str.sprintf("Please note:\n\nPlease check the constraints for the frictional ratio of component %d.\n\n"
-				"The constraints did not match and were adjusted.", i+1)),
-				QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-				cc_conc->update((*ms).component_vector[i].concentration, 0.2, &low, &high, 0.0);
+				message += tr(str.sprintf("The constraints for the frictional ratio of component %d\n", i+1));
 				flag = false;
 			}
 		}
@@ -336,10 +337,7 @@ bool US_GAModelEditor::verify_constraints()
 				cc_mw->update((*ms).component_vector[i].mw, 0.2, &low, &high, 0.0);
 				msc.component_vector_constraints[i].mw.low = low;
 				msc.component_vector_constraints[i].mw.high = high;
-				QMessageBox::warning(this, tr("UltraScan Warning"),
-				tr(str.sprintf("Please note:\n\nPlease check the constraints for the molecular weight of component %d.\n\n"
-				"The constraints did not match and were adjusted.", i+1)),
-				QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+				message += tr(str.sprintf("The constraints for the molecular weight of component %d\n", i+1));
 				flag = false;
 			}
 		}
@@ -353,10 +351,7 @@ bool US_GAModelEditor::verify_constraints()
 				cc_conc->update((*ms).component_vector[i].concentration, 0.2, &low, &high, 0.0);
 				msc.component_vector_constraints[i].concentration.low = low;
 				msc.component_vector_constraints[i].concentration.high = high;
-				QMessageBox::warning(this, tr("UltraScan Warning"),
-				tr(str.sprintf("Please note:\n\nPlease check the constraints for the concentration of component %d.\n\n"
-				"The constraints did not match and were adjusted.", i+1)),
-				QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+				message += tr(str.sprintf("The constraints for the concentration of component %d\n", i+1));
 				flag = false;
 			}
 		}
@@ -373,10 +368,7 @@ bool US_GAModelEditor::verify_constraints()
 				cc_keq->update((*ms).assoc_vector[i].keq, 0.9, &low, &high, 0.0);
 				msc.assoc_vector_constraints[i].keq.low = low;
 				msc.assoc_vector_constraints[i].keq.high = high;
-				QMessageBox::warning(this, tr("UltraScan Warning"),
-				tr(str.sprintf("Please note:\n\nPlease check the constraints for the equilibrium constant\n\n"
-						"for association %d. The constraints did not match and were adjusted.", i+1)),
-				QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+				message += tr(str.sprintf("The constraints for the equilibrium constant of reaction %d\n", i+1));
 				flag = false;
 			}
 			if ( msc.assoc_vector_constraints[i].koff.low >
@@ -387,14 +379,20 @@ bool US_GAModelEditor::verify_constraints()
 				cc_koff->update((*ms).assoc_vector[i].k_off, 0.99, &low, &high, 0.0);
 				msc.assoc_vector_constraints[i].koff.low = low;
 				msc.assoc_vector_constraints[i].koff.high = high;
-				QMessageBox::warning(this, tr("UltraScan Warning"),
-				tr(str.sprintf("Please note:\n\nPlease check the constraints for the k_off rate\n\n"
-				"for association %d. The constraints did not match and were adjusted.", i+1)),
-				QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+				message += tr(str.sprintf("The constraints for the rate constant of reaction %d\n", i+1));
 				flag = false;
 			}
 		}
 	}
+	if (!flag)
+	{
+		message += tr("\nPlease check these constraints and adjust if necessary...");
+		QMessageBox::warning(this, tr("UltraScan Warning"), message,
+		QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+	}
+	current_component = 0; // reset to the first component
+	current_assoc = 0;
+	select_component((int) current_component);
 	return flag;
 }
 
@@ -476,6 +474,7 @@ void US_GAModelEditor::update_constraints(unsigned int c)
 	if ((*ms).component_vector[current_component].show_conc)
 	{
 		le_mw->setEnabled(true);
+		pb_simulateComponent->setEnabled(true);
 		le_mw->setReadOnly(false);
 		cc_mw->update(msc.component_vector_constraints[current_component].mw);
 		cc_conc->update(msc.component_vector_constraints[current_component].concentration);
@@ -484,6 +483,7 @@ void US_GAModelEditor::update_constraints(unsigned int c)
 	{
 		le_mw->setReadOnly(true);
 		le_mw->setEnabled(false);
+		pb_simulateComponent->setEnabled(false);
 		cc_mw->clear();
 		cc_conc->clear();
 	}

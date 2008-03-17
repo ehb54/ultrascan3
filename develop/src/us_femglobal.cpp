@@ -988,7 +988,9 @@ int US_FemGlobal::write_constraints(struct ModelSystem *ms, struct ModelSystemCo
 		ts << (*msc).moving_grid << "\t\t# using moving (0) or fixed time grid (1)\n";
 		ts << (*msc).band_volume << "\t\t# loading volume (of lamella) in a band-forming centerpiece, if used\n";
 		f.close();
-		write_modelSystem(ms, filename, true); // write the corresponding model to disc
+		write_modelSystem(ms, filename, true); // append the corresponding model to the constraints file
+		str.sprintf(filename + ".model-%d.00", (*ms).model);
+		write_modelSystem(ms, str); // write the corresponding model to a separate file
 		return(0);
 	}
 	else

@@ -60,8 +60,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_conc = new QLineEdit(this, " Concentration Line Edit");
 	le_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_conc->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(le_conc, SIGNAL(textChanged(const QString &)),
-			  SLOT(update_conc(const QString &)));
+	connect(le_conc, SIGNAL(textChanged(const QString &)), SLOT(update_conc(const QString &)));
 	le_conc->setMinimumHeight(minHeight2);
 	le_conc->setEnabled(false);
 
@@ -74,8 +73,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_keq = new QLineEdit(this, " Equilibrium Constant Line Edit");
 	le_keq->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_keq->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(le_keq, SIGNAL(textChanged(const QString &)),
-			  SLOT(update_keq(const QString &)));
+	connect(le_keq, SIGNAL(textChanged(const QString &)), SLOT(update_keq(const QString &)));
 	le_keq->setMinimumHeight(minHeight2);
 	le_keq->setEnabled(false);
 
@@ -88,8 +86,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_sed = new QLineEdit(this, "Sedimentation Line Edit");
 	le_sed->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_sed->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	connect(le_sed, SIGNAL(textChanged(const QString &)),
-			  SLOT(update_sed(const QString &)));
+	connect(le_sed, SIGNAL(textChanged(const QString &)), SLOT(update_sed(const QString &)));
 	le_sed->setMinimumHeight(minHeight2);
 
 	lbl_diff = new QLabel(tr(" Diffusion Coeff. (cm^2/sec):"), this);
@@ -101,8 +98,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_diff = new QLineEdit(this, "Diffusion Line Edit");
 	le_diff->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_diff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	connect(le_diff, SIGNAL(textChanged(const QString &)),
-			  SLOT(update_diff(const QString &)));
+	connect(le_diff, SIGNAL(textChanged(const QString &)), SLOT(update_diff(const QString &)));
 	le_diff->setMinimumHeight(minHeight2);
 
 	lbl_koff = new QLabel(tr(" K_off Rate Constant (1/sec):"), this);
@@ -114,8 +110,7 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	le_koff = new QLineEdit(this, "Rate Constant Line Edit");
 	le_koff->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_koff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	connect(le_koff, SIGNAL(textChanged(const QString &)),
-			  SLOT(update_koff(const QString &)));
+	connect(le_koff, SIGNAL(textChanged(const QString &)), SLOT(update_koff(const QString &)));
 	le_koff->setMinimumHeight(minHeight2);
 	le_koff->setEnabled(false);
 
