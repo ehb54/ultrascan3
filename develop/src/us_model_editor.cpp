@@ -1075,11 +1075,6 @@ void US_ModelEditor::save_model()
 	{
 		return;
 	}
-	savefile();
-}
-
-void US_ModelEditor::savefile()
-{
 	QString str, fn = QFileDialog::getSaveFileName(USglobal->config_list.result_dir, "*.model.?? *.model-?.?? *model-??.??", 0);
 	int k;
 

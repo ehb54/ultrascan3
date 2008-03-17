@@ -8,14 +8,21 @@ US_FemGlobal::~US_FemGlobal()
 {
 }
 
-int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename)
+int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename, bool flag)
 {
 	QFile f(filename);
-	QString str;
+	QString str="";
 	unsigned int i, j;
 	if (f.open(IO_ReadOnly | IO_Translate))
 	{
 		QTextStream ts(&f);
+		if (flag) // if we are reading this model as part of a different file, we need
+		{ // to find the beginning point first so the file is correctly off-set: 
+			while (str != "#!__Begin_ModelSystem__!")
+			{
+				str = ts.readLine();
+			}
+		}
 		ts.readLine(); // FE, SA2D, COFS, SIM or GA
 		(*ms).description = ts.readLine();
 		if ((*ms).description.isNull())
@@ -378,72 +385,83 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename)
 	}
 }
 
-int US_FemGlobal::write_modelSystem(struct ModelSystem *ms, QString filename)
+int US_FemGlobal::write_modelSystem(struct ModelSystem *ms, QString filename, bool flag)
 {
 	QFile f(filename);
 	QString str;
 	unsigned int i, j;
-	if (f.open(IO_WriteOnly | IO_Translate))
+	if (flag)
 	{
-		QTextStream ts(&f);
-		ts << "SIM" << "\n";
-		ts << "Model written by US_FEMGLOBAL\n";
-		ts << "# This file is computer-generated, please do not edit unless you know what you are doing\n";
-		ts << US_Version << "\t\t# UltraScan Version Number\n";
-		ts << (*ms).model << "\t\t# model number/identifier\n";
-		ts << (*ms).component_vector.size() << "\t\t# number of components in the model\n";
-		for (i=0; i<(*ms).component_vector.size(); i++)
+		if (!f.open(IO_WriteOnly | IO_Translate | IO_Append))
 		{
-			ts << (*ms).component_vector[i].name << "\t\t# name of component\n";
-			ts << (*ms).component_vector[i].concentration << "\t\t# concentration\n";
-			ts << (*ms).component_vector[i].s << "\t\t# sedimentation coefficient\n";
-			ts << (*ms).component_vector[i].D << "\t\t# diffusion coefficient\n";
-			ts << (*ms).component_vector[i].sigma << "\t\t# sigma\n";
-			ts << (*ms).component_vector[i].delta << "\t\t# delta\n";
-			ts << (*ms).component_vector[i].mw << "\t\t# molecular Weight \n";
-			ts << (*ms).component_vector[i].vbar20 << "\t\t# vbar at 20C \n";
-			ts << (*ms).component_vector[i].shape << "\t\t# shape \n";
-			ts << (*ms).component_vector[i].f_f0 << "\t\t# frictional ratio \n";
-			ts << (*ms).component_vector[i].extinction << "\t\t# extinction\n";
-			ts << (int) (*ms).component_vector[i].show_conc << "\t\t# show concentration?\n";
-			ts << (*ms).component_vector[i].show_stoich << "\t\t# show Stoichiometry?\n";
-			ts << (int) (*ms).component_vector[i].show_keq << "\t\t# show k equilibrium?\n";
-			ts << (int) (*ms).component_vector[i].show_koff << "\t\t# show k_off?\n";
-			ts << (*ms).component_vector[i].show_component.size() << "\t\t# number of linked components\n";
-			for (j=0; j<(*ms).component_vector[i].show_component.size(); j++)
-			{
-				ts << (*ms).component_vector[i].show_component[j] << str.sprintf("\t\t# linked component (%d)\n", j+1);
-			}
-			if((*ms).component_vector[i].concentration < 0)
-			{
-				ts << (*ms).component_vector[i].c0.radius.size() << "\t\t# number of initial concentration points\n";
-				for (j=0; j<(*ms).component_vector[i].c0.radius.size(); j++)
-				{
-					ts << (*ms).component_vector[i].c0.radius[j] << " "
-							<< (*ms).component_vector[i].c0.concentration[j] << endl;
-				}
-			}
+			return -35;
 		}
-		ts << (*ms).assoc_vector.size() << "\t\t# number of association reactions in the model\n";
-		for (i=0; i<(*ms).assoc_vector.size(); i++)
-		{
-			ts << (*ms).assoc_vector[i].keq << "\t\t# equilibrium constant\n";
-			ts << (*ms).assoc_vector[i].units << "\t\t# units for equilibrium constant\n";
-			ts << (*ms).assoc_vector[i].k_off << "\t\t# rate constant\n";
-			ts << (*ms).assoc_vector[i].component1 << "\t\t# component 1 in this association\n";
-			ts << (*ms).assoc_vector[i].component2 << "\t\t# component 2 in this association\n";
-			ts << (*ms).assoc_vector[i].component3 << "\t\t# component 3 in this association\n";
-			ts << (*ms).assoc_vector[i].stoichiometry1 << "\t\t# stoichiometry for component 1 in this association\n";
-			ts << (*ms).assoc_vector[i].stoichiometry2 << "\t\t# stoichiometry for component 2 in this association\n";
-			ts << (*ms).assoc_vector[i].stoichiometry3 << "\t\t# stoichiometry for component 3 in this association\n";
-		}
-		f.close();
-		return(0);
 	}
 	else
 	{
-		return(-35);
+		if (!f.open(IO_WriteOnly | IO_Translate))
+		{
+			return -35;
+		}
 	}
+	QTextStream ts(&f);
+	if (flag)
+	{
+		ts << "#!__Begin_ModelSystem__!\n";
+	}
+	ts << "SIM" << "\n";
+	ts << "Model written by US_FEMGLOBAL\n";
+	ts << "# This file is computer-generated, please do not edit unless you know what you are doing\n";
+	ts << US_Version << "\t\t# UltraScan Version Number\n";
+	ts << (*ms).model << "\t\t# model number/identifier\n";
+	ts << (*ms).component_vector.size() << "\t\t# number of components in the model\n";
+	for (i=0; i<(*ms).component_vector.size(); i++)
+	{
+		ts << (*ms).component_vector[i].name << "\t\t# name of component\n";
+		ts << (*ms).component_vector[i].concentration << "\t\t# concentration\n";
+		ts << (*ms).component_vector[i].s << "\t\t# sedimentation coefficient\n";
+		ts << (*ms).component_vector[i].D << "\t\t# diffusion coefficient\n";
+		ts << (*ms).component_vector[i].sigma << "\t\t# sigma\n";
+		ts << (*ms).component_vector[i].delta << "\t\t# delta\n";
+		ts << (*ms).component_vector[i].mw << "\t\t# molecular Weight \n";
+		ts << (*ms).component_vector[i].vbar20 << "\t\t# vbar at 20C \n";
+		ts << (*ms).component_vector[i].shape << "\t\t# shape \n";
+		ts << (*ms).component_vector[i].f_f0 << "\t\t# frictional ratio \n";
+		ts << (*ms).component_vector[i].extinction << "\t\t# extinction\n";
+		ts << (int) (*ms).component_vector[i].show_conc << "\t\t# show concentration?\n";
+		ts << (*ms).component_vector[i].show_stoich << "\t\t# show Stoichiometry?\n";
+		ts << (int) (*ms).component_vector[i].show_keq << "\t\t# show k equilibrium?\n";
+		ts << (int) (*ms).component_vector[i].show_koff << "\t\t# show k_off?\n";
+		ts << (*ms).component_vector[i].show_component.size() << "\t\t# number of linked components\n";
+		for (j=0; j<(*ms).component_vector[i].show_component.size(); j++)
+		{
+			ts << (*ms).component_vector[i].show_component[j] << str.sprintf("\t\t# linked component (%d)\n", j+1);
+		}
+		if((*ms).component_vector[i].concentration < 0)
+		{
+			ts << (*ms).component_vector[i].c0.radius.size() << "\t\t# number of initial concentration points\n";
+			for (j=0; j<(*ms).component_vector[i].c0.radius.size(); j++)
+			{
+				ts << (*ms).component_vector[i].c0.radius[j] << " "
+						<< (*ms).component_vector[i].c0.concentration[j] << endl;
+			}
+		}
+	}
+	ts << (*ms).assoc_vector.size() << "\t\t# number of association reactions in the model\n";
+	for (i=0; i<(*ms).assoc_vector.size(); i++)
+	{
+		ts << (*ms).assoc_vector[i].keq << "\t\t# equilibrium constant\n";
+		ts << (*ms).assoc_vector[i].units << "\t\t# units for equilibrium constant\n";
+		ts << (*ms).assoc_vector[i].k_off << "\t\t# rate constant\n";
+		ts << (*ms).assoc_vector[i].component1 << "\t\t# component 1 in this association\n";
+		ts << (*ms).assoc_vector[i].component2 << "\t\t# component 2 in this association\n";
+		ts << (*ms).assoc_vector[i].component3 << "\t\t# component 3 in this association\n";
+		ts << (*ms).assoc_vector[i].stoichiometry1 << "\t\t# stoichiometry for component 1 in this association\n";
+		ts << (*ms).assoc_vector[i].stoichiometry2 << "\t\t# stoichiometry for component 2 in this association\n";
+		ts << (*ms).assoc_vector[i].stoichiometry3 << "\t\t# stoichiometry for component 3 in this association\n";
+	}
+	f.close();
+	return(0);
 }
 
 int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, QString filename)
@@ -803,13 +821,6 @@ int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemCon
 	if (f.open(IO_ReadOnly))
 	{
 		QTextStream ts(&f);
-		ts >> str;
-		flag1 = read_modelSystem(ms, str);
-		if (flag1 < 0)
-		{
-			f.close();
-			return (flag1);
-		}
 		ts >> j;
 		ts.readLine(); // j is the number of components in this model
 		(*msc).component_vector_constraints.resize(j);
@@ -900,6 +911,12 @@ int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemCon
 		ts.readLine();
 		ts >> (*msc).band_volume;
 		f.close();
+		flag1 = read_modelSystem(ms, filename, true);
+		if (flag1 < 0)
+		{
+			f.close();
+			return (flag1);
+		}
 		return(0);
 	}
 	else
@@ -914,18 +931,20 @@ int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemCon
 int US_FemGlobal::write_constraints(struct ModelSystem *ms, struct ModelSystemConstraints *msc, QString filename)
 {
 	QFile f;
+//	QFileInfo fi(filename);
+//	filename = fi.fileName(); // strip leading path
 	QString str;
 	unsigned int i;
 	if (filename.right(12) != ".constraints")
 	{
-		f.setName(filename + ".constraints");
+		filename += ".constraints";
 	}
+	f.setName(filename);
 	if (f.open(IO_WriteOnly | IO_Translate))
 	{
 		QTextStream ts(&f);
-		str.sprintf(filename + ".constraints.model-%d.00", (*ms).model);
-		ts << str << endl;
-		write_modelSystem(ms, str); // write the corresponding model to disc
+//		str.sprintf(filename + ".constraints.model-%d.00", (*ms).model);
+//		ts << str << endl;
 		ts << (*msc).component_vector_constraints.size() << "\t\t# Number of components in the model\n";
 		for (i=0; i<(*msc).component_vector_constraints.size(); i++)
 		{
@@ -969,6 +988,7 @@ int US_FemGlobal::write_constraints(struct ModelSystem *ms, struct ModelSystemCo
 		ts << (*msc).moving_grid << "\t\t# using moving (0) or fixed time grid (1)\n";
 		ts << (*msc).band_volume << "\t\t# loading volume (of lamella) in a band-forming centerpiece, if used\n";
 		f.close();
+		write_modelSystem(ms, filename, true); // write the corresponding model to disc
 		return(0);
 	}
 	else

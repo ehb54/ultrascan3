@@ -302,11 +302,108 @@ void US_GAModelEditor::load_constraints()
 
 bool US_GAModelEditor::verify_constraints()
 {
-	return true;
+	unsigned int i;
+	QString str;
+	bool flag=true;
+	float low, high;
+	for (i=0; i<(*ms).component_vector.size(); i++)
+	{
+		if (msc.component_vector_constraints[i].f_f0.fit)
+		{
+			if ( msc.component_vector_constraints[i].f_f0.low >
+				(*ms).component_vector[i].f_f0
+			||   msc.component_vector_constraints[i].f_f0.high <
+				(*ms).component_vector[i].f_f0)
+			{
+				cc_f_f0->update((*ms).component_vector[i].f_f0 - 1.0, 0.5, &low, &high, 1.0);
+				msc.component_vector_constraints[i].f_f0.low = low;
+				msc.component_vector_constraints[i].f_f0.high = high;
+				QMessageBox::warning(this, tr("UltraScan Warning"),
+				tr(str.sprintf("Please note:\n\nPlease check the constraints for the frictional ratio of component %d.\n\n"
+				"The constraints did not match and were adjusted.", i+1)),
+				QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+				cc_conc->update((*ms).component_vector[i].concentration, 0.2, &low, &high, 0.0);
+				flag = false;
+			}
+		}
+		if (msc.component_vector_constraints[i].mw.fit)
+		{
+			if ( msc.component_vector_constraints[i].mw.low >
+				(*ms).component_vector[i].mw
+			||   msc.component_vector_constraints[i].mw.high <
+				(*ms).component_vector[i].mw)
+			{
+				cc_mw->update((*ms).component_vector[i].mw, 0.2, &low, &high, 0.0);
+				msc.component_vector_constraints[i].mw.low = low;
+				msc.component_vector_constraints[i].mw.high = high;
+				QMessageBox::warning(this, tr("UltraScan Warning"),
+				tr(str.sprintf("Please note:\n\nPlease check the constraints for the molecular weight of component %d.\n\n"
+				"The constraints did not match and were adjusted.", i+1)),
+				QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+				flag = false;
+			}
+		}
+		if (msc.component_vector_constraints[i].concentration.fit)
+		{
+			if ( msc.component_vector_constraints[i].concentration.low >
+				(*ms).component_vector[i].concentration
+			||   msc.component_vector_constraints[i].concentration.high <
+				(*ms).component_vector[i].concentration)
+			{
+				cc_conc->update((*ms).component_vector[i].concentration, 0.2, &low, &high, 0.0);
+				msc.component_vector_constraints[i].concentration.low = low;
+				msc.component_vector_constraints[i].concentration.high = high;
+				QMessageBox::warning(this, tr("UltraScan Warning"),
+				tr(str.sprintf("Please note:\n\nPlease check the constraints for the concentration of component %d.\n\n"
+				"The constraints did not match and were adjusted.", i+1)),
+				QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+				flag = false;
+			}
+		}
+	}
+	for (i=0; i<(*ms).assoc_vector.size(); i++)
+	{
+		if (msc.assoc_vector_constraints[i].keq.fit)
+		{
+			if ( msc.assoc_vector_constraints[i].keq.low >
+				(*ms).assoc_vector[i].keq
+			||   msc.assoc_vector_constraints[i].keq.high <
+				(*ms).assoc_vector[i].keq)
+			{
+				cc_keq->update((*ms).assoc_vector[i].keq, 0.9, &low, &high, 0.0);
+				msc.assoc_vector_constraints[i].keq.low = low;
+				msc.assoc_vector_constraints[i].keq.high = high;
+				QMessageBox::warning(this, tr("UltraScan Warning"),
+				tr(str.sprintf("Please note:\n\nPlease check the constraints for the equilibrium constant\n\n"
+						"for association %d. The constraints did not match and were adjusted.", i+1)),
+				QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+				flag = false;
+			}
+			if ( msc.assoc_vector_constraints[i].koff.low >
+				(*ms).assoc_vector[i].k_off
+			||   msc.assoc_vector_constraints[i].koff.high <
+			   (*ms).assoc_vector[i].k_off)
+			{
+				cc_koff->update((*ms).assoc_vector[i].k_off, 0.99, &low, &high, 0.0);
+				msc.assoc_vector_constraints[i].koff.low = low;
+				msc.assoc_vector_constraints[i].koff.high = high;
+				QMessageBox::warning(this, tr("UltraScan Warning"),
+				tr(str.sprintf("Please note:\n\nPlease check the constraints for the k_off rate\n\n"
+				"for association %d. The constraints did not match and were adjusted.", i+1)),
+				QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+				flag = false;
+			}
+		}
+	}
+	return flag;
 }
 
 void US_GAModelEditor::save_constraints()
 {
+	if (!verify_constraints())
+	{
+		return;
+	}
 	QString str, fn = QFileDialog::getSaveFileName(USglobal->config_list.result_dir, "*.constraints", 0);
 	if ( !fn.isEmpty() )
 	{
@@ -477,3 +574,4 @@ void US_GAModelEditor::initialize_msc()
 	current_assoc = 0;
 	select_component((int) current_component);
 }
+

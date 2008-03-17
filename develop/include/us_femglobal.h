@@ -194,8 +194,8 @@ class US_EXTERN US_FemGlobal : public QObject
 		int read_simulationParameters(struct SimulationParameters *, QString);
 		int write_simulationParameters(struct SimulationParameters *, QString);
 
-		int read_modelSystem(struct ModelSystem *, QString);
-		int write_modelSystem(struct ModelSystem *, QString);
+		int read_modelSystem(struct ModelSystem *, QString, bool flag=false);
+		int write_modelSystem(struct ModelSystem *, QString, bool flag=false);
 
 		int read_constraints(struct ModelSystem *, struct ModelSystemConstraints *, QString);
 		int write_constraints(struct ModelSystem *, struct ModelSystemConstraints *, QString);

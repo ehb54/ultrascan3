@@ -27,6 +27,7 @@ class US_ConstraintControl : public QWidget
 	public slots:
 
 		void setDefault(float /*center*/, float /*fraction*/, float constant=0);
+		void update(float /*center*/, float /*fraction*/, float *, float *, float constant=0);
 		void clear();
 		void setFit(bool);
 		void update(struct constraint);

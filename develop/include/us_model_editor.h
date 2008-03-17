@@ -97,7 +97,6 @@ class US_ModelEditor : public QDialog
 		void update_delta(const QString &);
 		void update_mw(const QString &);
 		virtual void update_f_f0(const QString &);
-		void savefile();
 		void select_rod();
 		void select_prolate();
 		void select_oblate();

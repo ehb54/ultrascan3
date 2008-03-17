@@ -135,3 +135,10 @@ void US_ConstraintControl::setDefault(float center, float fraction, float consta
 	connect(le_high, SIGNAL(textChanged(const QString &)), SLOT(setHigh(const QString &)));
 	emit constraintChanged(c);
 }
+
+void US_ConstraintControl::update(float center, float fraction, float *low, float *high, float constant)
+{
+	float range = center * fraction;
+	*high = center + range + constant;
+	*low = center - range + constant;
+}
