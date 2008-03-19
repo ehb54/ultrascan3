@@ -522,11 +522,17 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 		temp_system.monte_carlo = true;
 		temp_system.method = "GA, MW Constrained, Monte Carlo";
 	}
-	else if (filename.contains("global_mc_dis", false))
+	else if (filename.contains("global_dis", false))
 	{
 		temp_system.distro_type = 12;
 		temp_system.monte_carlo = true;
-		temp_system.method = "Global MC";
+		temp_system.method = "Global Distro";
+	}
+	else if (filename.contains("global_mc_dis", false))
+	{
+		temp_system.distro_type = 13;
+		temp_system.monte_carlo = true;
+		temp_system.method = "Global MC Distro";
 	}
 	else
 	{
@@ -1022,10 +1028,23 @@ void US_Pseudo3D_Combine::plot_3dim()
 		plot->setCurveSymbol(curve[k], symbol);
 		plot->setCurveStyle(curve[k], QwtCurve::NoCurve);
 		plot->setCurveData(curve[k], xval, yval, count);
-		plot->setTitle(system[current_distro].run_name + "." +
-							system[current_distro].cell +
-							system[current_distro].wavelength +	"\n" +
-							system[current_distro].method);
+		if (system[current_distro].distro_type == 12)
+		{
+			plot->setTitle(system[current_distro].run_name + ".global_dis.dat" +
+			"\n" + system[current_distro].method);
+		}
+		else if (system[current_distro].distro_type == 13)
+		{
+			plot->setTitle(system[current_distro].run_name + ".global_mc_dis.dat" +
+					"\n" + system[current_distro].method);
+		}
+		else
+		{
+			plot->setTitle(system[current_distro].run_name + "." +
+			system[current_distro].cell +
+			system[current_distro].wavelength +	"\n" +
+			system[current_distro].method);
+		}
 	}
 	plot->replot();
 	delete [] xval;
@@ -1037,6 +1056,8 @@ void US_Pseudo3D_Combine::plot_3dim()
   delete [] z;
 
 	QString cell_info = "." + system[current_distro].cell + system[current_distro].wavelength;
+	//cout << "Cell Info: " << cell_info << endl;
+	
 	switch (system[current_distro].distro_type)
 	{
 		case 1:
@@ -1171,8 +1192,32 @@ void US_Pseudo3D_Combine::plot_3dim()
 			}
 			break;
 		}
+		case 12:
+		{
+			if (plot_s)
+			{
+				str = htmlDir + "/global_pseudo3d_fs.00.";
+			}
+			else
+			{
+				str = htmlDir + "/global_pseudo3d_fmw.00.";
+			}
+			break;
+		}
+		case 13:
+		{
+			if (plot_s)
+			{
+				str = htmlDir + "/global_mc_pseudo3d_fs.00.";
+			}
+			else
+			{
+				str = htmlDir + "/global_mc_pseudo3d_fmw.00.";
+			}
+			break;
+		}
 	}
-	cout << str << ", system[current_distro]distro_type: " << system[current_distro].distro_type << endl;
+//	cout << str << ", system[current_distro]distro_type: " << system[current_distro].distro_type << endl;
 	QPixmap p;
 	US_Pixmap *pm;
 	pm = new US_Pixmap();
