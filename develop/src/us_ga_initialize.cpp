@@ -1447,92 +1447,94 @@ void US_GA_Initialize::plot_3dim()
 	}
 	else
 	{
-	  if(USglobal->config_list.numThreads > 1)
-	  {
-	    //double maxvals[USglobal->config_list.numThreads];
-	    vector<double> maxvals( USglobal->config_list.numThreads );
-	    //double *zz[x_resolution];
-	    double** zz = new double* [ x_resolution ];
-
-	    for(j = 0; j < USglobal->config_list.numThreads; j++)
-		  {
-			  maxvals[j] = 0;
-	    }
-
-	    for(j = 0; j < x_resolution; j++)
-      {
-	      zz[j] = z[j];
-	    }
-
-	    // create threads
-
-		 //US_Plot3d_thr_t *plot3d_thr_threads[USglobal->config_list.numThreads];
-		 vector<US_Plot3d_thr_t*> plot3d_thr_threads( USglobal->config_list.numThreads );
-		 for(j = 0; j < USglobal->config_list.numThreads; j++)
-		 {
-			 plot3d_thr_threads[j] = new US_Plot3d_thr_t(j);
-			 plot3d_thr_threads[j]->start();
-		 }
-
-	    unsigned int x_inc = x_resolution / USglobal->config_list.numThreads;
-	    unsigned int x_end;
-	    unsigned int x_start;
-
-	    for(j = 0; j < USglobal->config_list.numThreads; j++)
-      {
-	      x_start = x_inc * j;
-	      x_end   = (x_inc * (j + 1)) - 1;
-
-        if ( j + 1 == USglobal->config_list.numThreads )
-        {
-		      x_end = x_resolution - 1;
-	      }
-
-        //	      cout << "thread " << j << " x range " << x_start << " - " << x_end << endl;
-	      plot3d_thr_threads[j]->plot3d_thr_setup(j, zz, distro_solute, x, y,
-            x_start, x_end, y_resolution, &maxvals[j], ssigma, fsigma, progress);
-	    }
-
-	    for(j = 0; j < USglobal->config_list.numThreads; j++) {
-	      plot3d_thr_threads[j]->plot3d_thr_wait();
-	    }
-
-	    // destroy
-	    for(j = 0; j < USglobal->config_list.numThreads; j++) {
-	      plot3d_thr_threads[j]->plot3d_thr_shutdown();
-	    }
-
-	    for(j = 0; j < USglobal->config_list.numThreads; j++) {
-	      plot3d_thr_threads[j]->wait();
-	    }
-
-	    for(j = 0; j < USglobal->config_list.numThreads; j++) {
-	      //	      cout << "maxval " << j << " " << maxvals[j] << endl;
-	      maxval = max(maxval,maxvals[j]);
-	      delete plot3d_thr_threads[j];
-        delete [] zz;
-	    }
-
-	  }
-	  else
-	  {
-		for (iter = distro_solute.begin(); iter != distro_solute.end(); iter++)
+		if(USglobal->config_list.numThreads > 1)
 		{
-			for (i=0; i<x_resolution; i++)
-			{
-				for (j=0; j<y_resolution; j++)
-				{
-					z[i][j] += (*iter).c * exp(-pow((x[i] - (*iter).s), 2.0)/(pow(2.0 * ssigma, 2.0)))
-								* exp(-pow((y[j] - (*iter).k), 2.0)/(pow(2.0 * fsigma, 2.0)));
+			//double maxvals[USglobal->config_list.numThreads];
+			vector<double> maxvals( USglobal->config_list.numThreads );
+			//double *zz[x_resolution];
+			double** zz = new double* [ x_resolution ];
 
-          maxval = max( maxval, z[i][j] );
-//					cout << "z[" << i << "][" << j << "]: " << z[i][j] << ", maxval: " << maxval <<endl;
-				}
+			for(j = 0; j < USglobal->config_list.numThreads; j++)
+			{
+				maxvals[j] = 0;
 			}
-			count++;
-			progress->setProgress(count);
+
+			for(j = 0; j < x_resolution; j++)
+			{
+				zz[j] = z[j];
+			}
+
+			// create threads
+
+			//US_Plot3d_thr_t *plot3d_thr_threads[USglobal->config_list.numThreads];
+			vector<US_Plot3d_thr_t*> plot3d_thr_threads( USglobal->config_list.numThreads );
+			for(j = 0; j < USglobal->config_list.numThreads; j++)
+			{
+				plot3d_thr_threads[j] = new US_Plot3d_thr_t(j);
+				plot3d_thr_threads[j]->start();
+			}
+
+			unsigned int x_inc = x_resolution / USglobal->config_list.numThreads;
+			unsigned int x_end;
+			unsigned int x_start;
+
+			for(j = 0; j < USglobal->config_list.numThreads; j++)
+			{
+				x_start = x_inc * j;
+				x_end   = (x_inc * (j + 1)) - 1;
+
+				if ( j + 1 == USglobal->config_list.numThreads )
+				{
+					x_end = x_resolution - 1;
+				}
+
+			//	      cout << "thread " << j << " x range " << x_start << " - " << x_end << endl;
+				plot3d_thr_threads[j]->plot3d_thr_setup(j, zz, distro_solute, x, y,
+					x_start, x_end, y_resolution, &maxvals[j], ssigma, fsigma, progress);
+			}
+
+			for(j = 0; j < USglobal->config_list.numThreads; j++)
+			{
+				plot3d_thr_threads[j]->plot3d_thr_wait();
+			}
+
+			// destroy
+			for(j = 0; j < USglobal->config_list.numThreads; j++)
+			{
+				plot3d_thr_threads[j]->plot3d_thr_shutdown();
+			}
+
+			for(j = 0; j < USglobal->config_list.numThreads; j++)
+			{
+				plot3d_thr_threads[j]->wait();
+			}
+
+			for(j = 0; j < USglobal->config_list.numThreads; j++)
+			{
+				//	      cout << "maxval " << j << " " << maxvals[j] << endl;
+				maxval = max(maxval,maxvals[j]);
+				delete plot3d_thr_threads[j];
+			}
+			delete [] zz;
 		}
-	  }
+		else
+		{
+			for (iter = distro_solute.begin(); iter != distro_solute.end(); iter++)
+			{
+				for (i=0; i<x_resolution; i++)
+				{
+					for (j=0; j<y_resolution; j++)
+					{
+						z[i][j] += (*iter).c * exp(-pow((x[i] - (*iter).s), 2.0)/(pow(2.0 * ssigma, 2.0)))
+									* exp(-pow((y[j] - (*iter).k), 2.0)/(pow(2.0 * fsigma, 2.0)));
+						maxval = max( maxval, z[i][j] );
+	//					cout << "z[" << i << "][" << j << "]: " << z[i][j] << ", maxval: " << maxval <<endl;
+					}
+				}
+				count++;
+				progress->setProgress(count);
+			}
+		}
 	}
 	for (i=0; i<x_resolution; i++)
 	{
