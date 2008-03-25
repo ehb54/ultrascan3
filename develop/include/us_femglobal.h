@@ -164,7 +164,7 @@ struct SimulationParameters
 	vector <struct SpeedProfile> speed_step;
 	unsigned int simpoints;		// number of radial grid points used in simulation
 	unsigned int mesh; 			// 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 3 = user-selected mesh, 4 = nonuniform constant mesh
-	int moving_grid; 				// Use moving or fixed time grid
+	int moving_grid; 				// use adaptive time steps = 1, fixed time steps = 0
 	float radial_resolution;	// the radial datapoint increment/resolution of the final data
 	float meniscus;				// meniscus position at first constant speed
 										// for multiple speeds, the user must measure the meniscus at

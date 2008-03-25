@@ -10,6 +10,7 @@
 #include "us_buffer.h"
 #include "us_vbar.h"
 #include "us_extern.h"
+#include "us_femglobal.h"
 
 struct channelData
 {
@@ -54,6 +55,7 @@ class US_EXTERN US_Data_IO : public QObject
 		struct US_buffer export_buffer(int);
 		struct peptideDetails export_vbar(int id);
 		void calc_correction(struct correctionTerms * /*defined in us_util.h*/);
+		void assign_simparams(struct SimulationParameters *, unsigned int, unsigned int, unsigned int);
 
 	signals:
 
