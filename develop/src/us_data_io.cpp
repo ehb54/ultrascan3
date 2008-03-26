@@ -24,32 +24,25 @@ void US_Data_IO::assign_simparams(struct SimulationParameters *sp, unsigned int 
 {
 	(*sp).mesh_radius.resize(0); // the radii from a user-selected mesh file (mesh == 3)
 	(*sp).speed_step.resize(1);
-	/*
 	unsigned int secs = (*run_inf).time[cell][lambda][(*run_inf).scans[i][j]-1];
 	(*sp).speed_step[0].duration_hours = (int) secs/3600;
-	(*sp).speed_step[0].duration_minutes = ;
-	(*sp).speed_step[0].delay_hours;
-	(*sp).speed_step[0].delay_minutes;
+	(*sp).speed_step[0].duration_minutes = 1 + (secs - ((*sp).speed_step[0].duration_hours * 3600))/60;
+	(*sp).speed_step[0].delay_hours = 0;
+	(*sp).speed_step[0].delay_minutes = 0;
 	(*sp).speed_step[0].scans = (*run_inf).scans[i][j];
-	(*sp).speed_step[0].acceleration = true;
-	(*sp).speed_step[0].rotorspeed = (*run_inf).rpm[cell][lambda][0];
+	(*sp).speed_step[0].acceleration = false;
+	(*sp).speed_step[0].rotorspeed = (*run_inf).rpm[cell][lambda][channel];
 	(*sp).speed_step[0].acceleration_flag = true;
 
-	(*sp).simpoints;			// number of radial grid points used in simulation
+	(*sp).simpoints = 0;			// number of radial grid points for simulation are assigned in the constraint GUI
 	(*sp).mesh = 0; 			// 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 3 = user-selected mesh, 4 = nonuniform constant mesh
 	(*sp).moving_grid = 1; 	// use adaptive time steps = 1, fixed time steps = 0
-	(*sp).radial_resolution;	// the radial datapoint increment/resolution of the final data
-	(*sp).meniscus;				// meniscus position at first constant speed
-										// for multiple speeds, the user must measure the meniscus at
-										// the first constant speed and use that to initialize the routine
-	(*sp).bottom;					// bottom of cell position without rotor stretch
+	(*sp).radial_resolution = 0.001;	// the radial datapoint increment/resolution of the final data
+	(*sp).meniscus = (*run_inf).meniscus[cell];				// meniscus position at first constant speed
 	(*sp).rnoise = 0.0;					// random noise
 	(*sp).inoise = 0.0;					// time invariant noise
 	(*sp).rinoise = 0.0;					// radially invariant noise
-	(*sp).rotor;						// rotor serial number in database
-	(*sp).band_forming = false;			// true for band-forming centerpieces
-	(*sp).band_volume = 0.0;			// loading volume (of lamella) in a band-forming centerpiece
-	*/
+	(*sp).rotor = (*run_inf).rotor;						// rotor serial number in database
 }
 
 int US_Data_IO::load_run(QString fn, int run_type, bool *has_data,
