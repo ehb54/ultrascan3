@@ -113,9 +113,9 @@ bool US_Write_Config::write_config(struct Config config_list)
   rcfile.append( "_usrc" );
 #endif
 
-  QMessageBox::message(
-     tr( "Debug:" ),
-     tr( "rcfile = " + rcfile ) );
+  //QMessageBox::message(
+  //   tr( "Debug:" ),
+  //   tr( "rcfile = " + rcfile ) );
      
 	QFile f( rcfile );
 	QTextStream ts ( &f );
