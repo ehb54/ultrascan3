@@ -1076,7 +1076,7 @@ void EditData_Win::fluorescence_directory()
 							ts >> run_inf.centerpiece[i];	// get centerpiece info
 							trashcan = ts.readLine();		// get rid of the rest of line
 							update_centerpiece(run_inf.centerpiece[i]);
-							if(US_Version.toFloat()<7.0)
+							if ( strcmp( US_Version, "7.0" ) < 0 )
 							{
 								for(int j=0; j<4; j++)
 								{
@@ -1652,7 +1652,7 @@ wavelengths are not available, and in that order.
 							ts >> run_inf.centerpiece[i];	// get centerpiece info
 							trashcan = ts.readLine();		// get rid of the rest of line
 							update_centerpiece(run_inf.centerpiece[i]);
-							if(US_Version.toFloat()<7.0)
+							if ( strcmp( US_Version,  "7.0" ) < 0 )
 							{
 								for(int j=0; j<4; j++)
 								{

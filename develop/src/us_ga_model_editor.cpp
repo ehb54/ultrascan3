@@ -334,7 +334,7 @@ bool US_GAModelEditor::verify_constraints()
 			||   msc.component_vector_constraints[i].mw.high <
 				(*ms).component_vector[i].mw)
 			{
-				cc_mw->update((*ms).component_vector[i].mw, 0.2, &low, &high, 0.0);
+				cc_mw->update((*ms).component_vector[i].mw, (float) 0.2, &low, &high, 0.0);
 				msc.component_vector_constraints[i].mw.low = low;
 				msc.component_vector_constraints[i].mw.high = high;
 				message += tr(str.sprintf("The constraints for the molecular weight of component %d\n", i+1));
@@ -348,7 +348,7 @@ bool US_GAModelEditor::verify_constraints()
 			||   msc.component_vector_constraints[i].concentration.high <
 				(*ms).component_vector[i].concentration)
 			{
-				cc_conc->update((*ms).component_vector[i].concentration, 0.2, &low, &high, 0.0);
+				cc_conc->update((*ms).component_vector[i].concentration, (float) 0.2, &low, &high, 0.0);
 				msc.component_vector_constraints[i].concentration.low = low;
 				msc.component_vector_constraints[i].concentration.high = high;
 				message += tr(str.sprintf("The constraints for the concentration of component %d\n", i+1));
@@ -365,7 +365,7 @@ bool US_GAModelEditor::verify_constraints()
 			||   msc.assoc_vector_constraints[i].keq.high <
 				(*ms).assoc_vector[i].keq)
 			{
-				cc_keq->update((*ms).assoc_vector[i].keq, 0.9, &low, &high, 0.0);
+				cc_keq->update((*ms).assoc_vector[i].keq, (float) 0.9, &low, &high, 0.0);
 				msc.assoc_vector_constraints[i].keq.low = low;
 				msc.assoc_vector_constraints[i].keq.high = high;
 				message += tr(str.sprintf("The constraints for the equilibrium constant of reaction %d\n", i+1));
@@ -376,7 +376,7 @@ bool US_GAModelEditor::verify_constraints()
 			||   msc.assoc_vector_constraints[i].koff.high <
 			   (*ms).assoc_vector[i].k_off)
 			{
-				cc_koff->update((*ms).assoc_vector[i].k_off, 0.99, &low, &high, 0.0);
+				cc_koff->update((*ms).assoc_vector[i].k_off, (float) 0.99, &low, &high, 0.0);
 				msc.assoc_vector_constraints[i].koff.low = low;
 				msc.assoc_vector_constraints[i].koff.high = high;
 				message += tr(str.sprintf("The constraints for the rate constant of reaction %d\n", i+1));
@@ -557,8 +557,8 @@ void US_GAModelEditor::initialize_msc()
 		{
 			msc.component_vector_constraints[i].concentration.fit = false;
 			msc.component_vector_constraints[i].mw.fit = false;
-			cc_conc->setDefault((*ms).component_vector[i].concentration, 0.2);
-			cc_mw->setDefault((*ms).component_vector[i].mw, 0.2);
+			cc_conc->setDefault((*ms).component_vector[i].concentration, (float) 0.2);
+			cc_mw->setDefault((*ms).component_vector[i].mw, (float) 0.2);
 			//cout << (*ms).component_vector[i].mw << ", " <<msc.component_vector_constraints[i].mw.low << "," << msc.component_vector_constraints[i].mw.high << endl;
 		}
 	}
@@ -567,8 +567,8 @@ void US_GAModelEditor::initialize_msc()
 		current_assoc = i;
 		msc.assoc_vector_constraints[i].keq.fit = false;
 		msc.assoc_vector_constraints[i].koff.fit = false;
-		cc_keq->setDefault((*ms).assoc_vector[i].keq, 0.9);
-		cc_koff->setDefault((*ms).assoc_vector[i].k_off, 0.99);
+		cc_keq->setDefault((*ms).assoc_vector[i].keq, (float) 0.9);
+		cc_koff->setDefault((*ms).assoc_vector[i].k_off, (float) 0.99);
 	}
 	current_component = 0; // reset to the first component
 	current_assoc = 0;

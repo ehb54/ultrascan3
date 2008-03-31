@@ -14,7 +14,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption("UltraScan Configuration");
 
-	lbl_directions = new QLabel(QObject::tr("UltraScan " + US_Version + " Configuration:"),this);
+	lbl_directions = new QLabel(QObject::tr("UltraScan " US_Version " Configuration:"),this);
 	lbl_directions->setFrameStyle(QFrame::WinPanel|Raised);
 	lbl_directions->setAlignment(AlignCenter|AlignVCenter);
 	lbl_directions->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
