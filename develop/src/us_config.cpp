@@ -636,7 +636,7 @@ QString US_Config::get_home_dir(  )
 #ifdef WIN32
     home += "/ultrascan/";
 #else
-    home += "/us/";
+    home += "/";
 #endif
 
     return ( QDir::convertSeparators( home ) );
