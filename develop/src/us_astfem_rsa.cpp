@@ -53,7 +53,7 @@ vector <struct mfem_data> *exp_data)
 			{ // build up the initial concentration vector with constant concentration
 				if ((*simparams).band_forming)
 				{
-					// calculate the width of the lamella 
+					// calculate the width of the lamella
 					double lamella_width = pow(af_params.current_meniscus * af_params.current_meniscus
 								+ (*simparams).band_volume * 360.0/(2.5 * 1.2 * M_PI), 0.5) - af_params.current_meniscus;
 					// calculate the spread of the lamella:
@@ -77,7 +77,7 @@ vector <struct mfem_data> *exp_data)
 			else
 			{
 				// take the existing initial concentration vector and copy it to the temporary CT0 vector:
-				// needs rubber band to make sure meniscus and bottom equal current_meniscus and current_bottom 
+				// needs rubber band to make sure meniscus and bottom equal current_meniscus and current_bottom
 				CT0.radius.clear();
 				CT0.concentration.clear();
 				CT0 = (*system).component_vector[i].c0;
@@ -205,7 +205,7 @@ print_af();
 		{ // build up the initial concentration vector with constant concentration
 			if ((*simparams).band_forming)
 			{
-					// calculate the width of the lamella 
+					// calculate the width of the lamella
 				double lamella_width = pow(af_params.current_meniscus * af_params.current_meniscus
 							+ (*simparams).band_volume * 360.0/(2.5 * 1.2 * M_PI), 0.5) - af_params.current_meniscus;
 					// calculate the spread of the lamella:
@@ -225,7 +225,7 @@ print_af();
 		else
 		{
 				// take the existing initial concentration vector and copy it to the temporary CT0 vector:
-				// needs rubber band to make sure meniscus and bottom equal current_meniscus and current_bottom 
+				// needs rubber band to make sure meniscus and bottom equal current_meniscus and current_bottom
 			CT0.radius.clear();
 			CT0.concentration.clear();
 			CT0 = (*system).component_vector[0].c0;
@@ -340,7 +340,7 @@ print_af();
 			}
 			af_params.time_steps = 1 + (unsigned int) (duration/af_params.dt);
 			af_params.start_time = current_time;
-			(*exp_data)[j].meniscus = af_params.current_meniscus; 
+			(*exp_data)[j].meniscus = af_params.current_meniscus;
 			(*exp_data)[j].bottom = af_params.current_bottom;
 			af_params.mesh = (*simparams).mesh;
 			af_params.moving_grid = (*simparams).moving_grid;
@@ -399,7 +399,7 @@ void US_Astfem_RSA::interpolate_C0(struct mfem_initial *C0, double *C1)
       {
          C1[j] = (*C0).radius[ i-1 ];
       }
-      else 
+      else
       {
 		   a = (*C0).radius[i-1];
 		   b = (*C0).radius[i];
@@ -463,7 +463,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 									// C[0...Ms-1][0....N-1]:
 	double **CA1, **CA2, **CB1, **CB2;		// for matrices used in acceleration
 
-	FILE *outf = fopen("tmp.out", "w");
+//	FILE *outf = fopen("tmp.out", "w");
 
 	CA = NULL;
 	CB = NULL;
@@ -674,7 +674,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 			C0[j] = C1[j];
 		}
 	} // time loop
-	fclose(outf);
+//	fclose(outf);
 
 	(*C_init).radius.clear();
 	(*C_init).concentration.clear();
@@ -716,7 +716,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 											// C[0...Ms-1][0....N-1]:
 	double *CT0, *CT1;				// total concentration at current and next time step
 	vector <double> xb;				// grid for moving adaptive FEM for faster sedimentation
-	FILE *outf = fopen("tmp.out", "w");
+//	FILE *outf = fopen("tmp.out", "w");
 
 	Mcomp = af_params.s.size();
 	s_max = maxval( af_params.s );  	// used for mesh and dt
@@ -903,7 +903,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
          // printf("t=%12.5e C_ttl=%15.8e \n", simscan.time, IntConcentration(x, CT0));
 		}
 **/
- 
+
       //
       // first half step of sedimentation:
       //
@@ -1056,7 +1056,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 
 	} // time loop
 	emit new_scan(&x, CT0);
-	fclose(outf);
+//	fclose(outf);
    for(i=0;i<Mcomp;i++)
    {
 	  C_init[i].radius.clear();
@@ -3879,7 +3879,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
                   if (dvb*dvb+4*dva*dvc<=0)
                   {
 						   uhat = C1[0][j];
-                  } 
+                  }
                   else
                   {
 						   uhat = 2*dvc / ( dvb+sqrt(dvb*dvb+4.*dva*dvc) );
@@ -4130,7 +4130,7 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 // NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
 // before using this routine! The radius also has to be assigned!
 
-	if ( (*expdata).scan.size() == 0 || (*expdata).scan[0].conc.size() == 0 || 
+	if ( (*expdata).scan.size() == 0 || (*expdata).scan[0].conc.size() == 0 ||
         (*simdata).scan.size() == 0 || (*simdata).radius.size() == 0  )
 	{
 		return -1;
