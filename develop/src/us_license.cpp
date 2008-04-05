@@ -431,7 +431,7 @@ void US_License::save()
 {
   QString temp_license, str;
 
-  QString lcfile = US_Config::get_home_dir() + "uslicense";
+  QString lcfile = US_Config::get_home_dir() + USLICENSE;
 
   QFile f(lcfile);
   if(f.open(IO_WriteOnly | IO_Translate))

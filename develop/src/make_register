@@ -1,4 +1,0 @@
-#!/bin/sh
-g++ us-wwwregister.cpp -o us-wwwregister -L/usr/lib -lcgicc -L/usr/lib/qt/lib -lqt-mt -lm -I/usr/lib/qt/include -I/usr/include/cgicc -pipe -Wall -W -g -fPIC  -DUNIX
-
-

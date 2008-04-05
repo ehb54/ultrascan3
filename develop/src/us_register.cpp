@@ -46,7 +46,7 @@ bool US_Register::read()
   QString str;
   bool    flag = false;
 
-  QString lcfile = US_Config::get_home_dir() + "uslicense";
+  QString lcfile = US_Config::get_home_dir() + USLICENSE;
 
   QFile f( lcfile );  
 
