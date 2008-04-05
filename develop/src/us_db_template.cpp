@@ -111,11 +111,10 @@ void US_DB_Template::setup_GUI()
 */
 void US_DB_Template::read()
 {
-	QString dbfile;
+	QString dbfile  = US_Config::get_home_dir() + USDB;
 
-	dbfile = USglobal->home.copy();
-	dbfile.append("us.db");
-	QFile f(dbfile);
+	QFile f( dbfile );
+
 	if (f.exists())
 	{
 		f.open(IO_ReadOnly);

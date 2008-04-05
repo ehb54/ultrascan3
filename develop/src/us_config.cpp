@@ -4,8 +4,7 @@
 US_Config::US_Config( QObject* parent, const char* name) 
    : QObject (parent, name)
 {
-  //US_Version = "9.5";
-  home       = get_home_dir(  );
+  //home = get_home_dir(  );
 
   if ( ! read( ) )
   {
@@ -26,18 +25,10 @@ US_Config::~US_Config()
 
 bool US_Config::write_default_colors()
 {
-   QString  colfile;
-   colfile = home.copy();
+   QString  colfile = US_Config::get_home_dir() + USCOLORS;
 
-#ifdef UNIX
-   colfile.append(".uscolors");
-#endif
-#ifdef WIN32
-   colfile.append("_uscolors");
-#endif
-   
    color_defaults();
-   QFile f(colfile);
+   QFile f( colfile );
    if ( f.open( IO_WriteOnly ) )
    {
       QDataStream ds( &f );
@@ -81,11 +72,11 @@ bool US_Config::write_default_colors()
       ds << global_colors.cg_bunt;
       ds << US_Version;
       f.close();
-      return(true);
+      return( true );
    }
    else
    {
-      return(false);
+      return( false );
    }
 }
 
@@ -125,17 +116,8 @@ bool US_Config::col_exists()
 {
   QString version = "0.0";
   bool    flag    = false;
-  QString colfile;
 
-  colfile = home.copy(  );
-
-#ifdef UNIX
-  colfile.append( ".uscolors" );
-#endif
-
-#ifdef WIN32
-  colfile.append("_uscolors");
-#endif
+  QString  colfile = US_Config::get_home_dir() + USCOLORS;
 
   QFile f( colfile );
 
@@ -442,7 +424,7 @@ void US_Config::setDefault()
 
   config_list.version = US_Version;
 
-  config_list.browser = "/usr/bin/mozilla";
+  config_list.browser = "/usr/bin/firefox";
   config_list.tar     = "/bin/tar";
   config_list.gzip    = "/bin/gzip";
 
@@ -494,16 +476,8 @@ void US_Config::setDefault()
 
 bool US_Config::read()
 {
-  QString rcfile = get_home_dir(  );
+  QString rcfile = get_home_dir(  ) + USRC;
   QString str;
-
-#ifdef UNIX
-  rcfile.append( ".usrc" );
-#endif
-
-#ifdef WIN32
-  rcfile.append( "_usrc" );
-#endif
 
   QFile f( rcfile );
 
@@ -631,14 +605,7 @@ else // ! f.exists(  )
 
 QString US_Config::get_home_dir(  )
 {
-    QString home = QDir::homeDirPath(  );
-
-#ifdef WIN32
-    home += "/ultrascan/";
-#else
-    home += "/";
-#endif
-
+    QString home = QDir::homeDirPath(  ) + USER_DIR;
     return ( QDir::convertSeparators( home ) );
 }
 

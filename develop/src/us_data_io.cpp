@@ -743,39 +743,36 @@ cerr << "in data_IO: densitytb:" <<	(*corr_inf).density_tb
 
 bool check_dbname(QString dbname, QString *defaultdb)
 {
-   QString dbfile, temp_dbname;
+   QString temp_dbname;
    bool flag = false;
-#ifdef UNIX
-	dbfile = (getenv("HOME"));
-	if (dbfile != "/")
-	{
-		dbfile += "/";
-	}
-#endif
-#ifdef WIN32
-	dbfile = "C:\\";
-#endif
-   dbfile.append("us.db");
-   QFile f(dbfile);
-   if (f.exists())
+
+   QString dbfile = US_Config::get_home_dir() + USDB;
+
+   QFile f( dbfile );
+
+   if ( f.exists() )
    {
-      f.open(IO_ReadOnly);
-      QDataStream ds (&f);
+      f.open( IO_ReadOnly );
+      QDataStream ds( &f );
+      
       double num[64];
       int code[64];
       int i,length;
 
       ds >> length;
+      
       for(i=0; i<length; i++)
       {
          ds >> num[i];
          code[i] = (int)(num[i]+0.5);
          temp_dbname[i] = QChar(code[i]);
       }
+      
       if(temp_dbname == dbname)
       {
          flag = true;
       }
+      
       *defaultdb = temp_dbname;
    }
    return (flag);

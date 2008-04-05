@@ -251,3 +251,25 @@ void US_Encryption::md5_finish( md5_context *ctx, uint8 digest[16] )
     PUT_UINT32( ctx->state[2], digest,  8 );
     PUT_UINT32( ctx->state[3], digest, 12 );
 }
+
+
+// Returns md5 message digest of input string
+QString US_Encryption::md5( QString& string )
+{
+  md5_context   ctx;
+  unsigned char md5sum[16];
+
+  md5_starts( &ctx );
+  md5_update( &ctx, (unsigned char*) string.ascii(), string.length() );
+  md5_finish( &ctx, md5sum );
+
+  char output[33];
+
+  for ( int j = 0; j < 16; j++ )
+  {
+    sprintf( output + j * 2, "%02x", md5sum[j] );
+  }
+
+  return ( QString( output ) );
+}
+

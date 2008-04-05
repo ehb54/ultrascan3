@@ -162,18 +162,20 @@ class US_EXTERN US_Config : public QObject
   public:
     US_Config( QObject* parent=0, const char* name=0 );
     virtual ~US_Config();
-    struct Config config_list;
-    struct us_colors global_colors;
-    QString home;
 
-  friend
-    class US_Config_Gui;
+    struct Config    config_list;
+    struct us_colors global_colors;
+    
+  //friend
+  //  class US_Config_Gui;
 
   public slots:
     virtual bool read();
     void setModelString();
-    bool col_exists();
     void color_defaults();
+
+  private:
+    bool col_exists();
     bool write_default_colors();
     void setDefault();
   
@@ -181,6 +183,11 @@ class US_EXTERN US_Config : public QObject
     static QString get_home_dir();
 };
 
+#define USER_DIR  "/ultrascan/"
+#define USRC      "usrc.conf"
+#define USCOLORS  "uscolorsconf.bin"
+#define USLICENSE "uslicense"
+#define USDB      "usdbconf.bin"
 
 class US_EXTERN US_Help : public QWidget
 {

@@ -60,25 +60,19 @@ public:
   struct US_RegisterData register_list; /*!< A struct US_RegisterData for 
                                              storing register information. */
   
-  QProcess *proc;                       /*! <A new process reference. */
-  QString license;                      /*! <A string variable for license key. */
-  int stderrSize, trials;
+  QProcess* proc;                       /*! <A new process reference. */
   
 private:
 
   US_Config* USConfig;
 
 private slots:
-  void license_info(const QString &);
-  void online();
-  void captureStdout();
-  void captureStderr();
-  void endProcess();
+  void license_info( const QString& );
   void us_license();    
   
 public slots:
-    QString encode(QString, QString);
-    bool read();
+  QString encode( QString, QString );
+  bool read();
 };
 
 #endif

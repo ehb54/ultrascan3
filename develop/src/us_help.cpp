@@ -12,22 +12,20 @@ US_Help::~US_Help()
 
 void US_Help::show_help( QString helpFile )
 {
-#ifdef UNIX
-  URL = "file://" + USglobal->config_list.help_dir + "/" + helpFile;
-#endif
-#ifdef WIN32
-  URL = "file://" + USglobal->config_list.help_dir + "\\" + helpFile;
-#endif
+  QString help = QDir::convertSeparators( 
+      USglobal->config_list.help_dir + "/" + helpFile );
+
+  URL = "file://" + help;
   openBrowser();
 }
 
-void US_Help::show_URL(QString str)
+void US_Help::show_URL( QString location )
 {
-  URL = str;
+  URL = location;
   openBrowser();
 }
 
-void US_Help::show_html_file(QString helpFile)
+void US_Help::show_html_file( QString helpFile )
 {
   URL = "file://" + helpFile;
   openBrowser();
@@ -35,8 +33,6 @@ void US_Help::show_html_file(QString helpFile)
 
 void US_Help::openBrowser()
 {
-  QString str;
-  
   proc = new QProcess( this );
   
   connect(proc, SIGNAL(readyReadStdout()), 
@@ -54,10 +50,10 @@ void US_Help::openBrowser()
   stderrSize = 0;
   trials     = 0;
 
+  proc->addArgument( USglobal->config_list.browser );
   proc->addArgument( "-remote" );
   
-  str = "openURL(" + URL + ", new-window)";
-  proc->addArgument(str); 
+  proc->addArgument( "openURL(" + URL + ", new-window)" ); 
   
   if ( ! proc->start() ) // Error
   {
@@ -79,10 +75,6 @@ void US_Help::openBrowser()
   
   if ( ! proc->start() ) // Error
   {
-    cout << "Error: Can't start browser window - "
-            "please make sure you have the configured browser installed\n\n"
-            "Currently configured: " + USglobal->config_list.browser;
-    
     QMessageBox::message(
         tr( "UltraScan Error:" ), 
         tr( "Can't start browser window...\n"
@@ -95,7 +87,7 @@ void US_Help::openBrowser()
 void US_Help::endProcess()
 {
 #ifdef UNIX
-  trials ++; 
+  trials++; 
   
   if ( trials == 1 && stderrSize > 0 ) // Error attaching to already running
                                        // process, start new
@@ -123,7 +115,7 @@ void US_Help::endProcess()
 
 void US_Help::captureStdout()
 {
-  cout << proc->readLineStdout() << endl;
+  //cout << proc->readLineStdout() << endl;
 }
 
 void US_Help::captureStderr()
@@ -131,7 +123,7 @@ void US_Help::captureStderr()
   QByteArray list = proc->readStderr();
   stderrSize      = list.size();
   
-  cout << "The following error occured while attempting to run Mozilla:\n" 
-       << QString(list) << endl;
+  //cout << "The following error occured while attempting to run Mozilla:\n" 
+  //     << QString(list) << endl;
 }
 

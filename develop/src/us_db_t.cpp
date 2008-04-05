@@ -3,7 +3,7 @@
 //! Constructor
 /*! 
 	Constructor a basic class <var>US_DB_T</var>, 
-	with <var>p</var> as a parent and <var>us_db</var> as object name. 
+	with <var>p</var> as a parent and <var>usdbconf.bin</var> as object name. 
 */ 
 US_DB_T::US_DB_T(QObject *p, const char *name) : QObject(p, name)
 {
@@ -26,11 +26,9 @@ US_DB_T::~US_DB_T()
 */
 int US_DB_T::db_connect()
 {
-	QString dbfile;
+	QString dbfile = US_Config::get_home_dir() + USDB;
+	QFile f( dbfile );
 
-	dbfile = USglobal->home.copy(); 
-	dbfile.append("us.db");
-	QFile f(dbfile);
 	if (f.exists())
 	{
 		f.open(IO_ReadOnly);

@@ -146,6 +146,11 @@ class US_EXTERN US_License : public QDialog
 
 	protected slots:
 		void closeEvent(QCloseEvent *);
+
+  private:
+
+      bool start_browser( const QString&, const QString&, const QString& );
+
 };
 
 #endif

@@ -742,17 +742,9 @@ void US_Color::selected_scheme(int scheme)
     return;
   }
   
-  if (scheme == 0)  // this is our default definition in $HOME/.uscolors
+  if ( scheme == 0 )
   {
-    QString home = US_Config::get_home_dir(  );
-
-#ifdef UNIX
-    colfile = home + ".uscolors";
-#endif
-#ifdef WIN32
-    colfile = home + "_uscolors";
-#endif
-
+    QString colfile = US_Config::get_home_dir(  ) + USCOLORS;
     f.setName(colfile);
   }
   else
@@ -1607,15 +1599,8 @@ void US_Color::apply()
   setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 
   QFile f;
-  QString colfile;
-  QString home = US_Config::get_home_dir(  );
 
-#ifdef UNIX
-  colfile = home + ".uscolors";
-#endif
-#ifdef WIN32
-  colfile = home + "_uscolors";
-#endif
+  QString colfile = US_Config::get_home_dir(  ) + USCOLORS;
 
   f.setName( colfile );
 

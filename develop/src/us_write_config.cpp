@@ -104,14 +104,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 		}
 	}
 
-  QString rcfile = config_list.root_dir;
-
-#ifdef UNIX
-  rcfile.append( ".usrc" );
-#endif
-#ifdef WIN32
-  rcfile.append( "_usrc" );
-#endif
+  QString rcfile = US_Config::get_home_dir() + USRC;
 
   //QMessageBox::message(
   //   tr( "Debug:" ),
