@@ -4,9 +4,6 @@
 US_Config::US_Config( QObject* parent, const char* name) 
 	: QObject (parent, name)
 {
-// Make sure old files are in the new locations with new names
-	move_files();
-
 	if ( ! read( ) )
 	{
 		setDefault();
@@ -20,6 +17,14 @@ US_Config::US_Config( QObject* parent, const char* name)
 	col_exists();
 	setModelString();
 }
+
+// This is for us_register only
+US_Config::US_Config( QString dummy, QObject* parent, const char* name )
+  : QObject (parent, name)
+{
+  config_list.tar = dummy;  // Dummy to avoid compiler complaint  
+}
+
 
 US_Config::~US_Config()
 {

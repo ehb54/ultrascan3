@@ -429,7 +429,21 @@ void US_License::help()
 
 void US_License::save()
 {
-  QString temp_license, str;
+	QString home    = US_Config::get_home_dir();	
+
+//	create new $HOME/ultrascan directory, if it doesn't exist
+	if ( ! QDir( home ).exists() )
+	{
+		QDir tmp;
+		tmp.mkdir(home);
+	}
+
+// Make sure user's etc directory exists
+	if ( ! QDir( home + ETC_DIR ).exists() )
+	{
+		QDir etc;
+		etc.mkdir( home + ETC_DIR );
+	}
 
   QString lcfile = US_Config::get_home_dir() + USLICENSE;
 

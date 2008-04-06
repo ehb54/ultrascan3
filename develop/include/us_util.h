@@ -161,6 +161,7 @@ class US_EXTERN US_Config : public QObject
 
   public:
     US_Config( QObject* parent=0, const char* name=0 );
+    US_Config( const QString, QObject* parent=0, const char* name=0 );
     virtual ~US_Config();
 
     struct Config    config_list;
@@ -171,17 +172,17 @@ class US_EXTERN US_Config : public QObject
 
   public slots:
     virtual bool read();
-    void setModelString();
-    void color_defaults();
+    void         setModelString();
+    void         color_defaults();
 
   private:
     bool col_exists();
     bool write_default_colors();
     void setDefault();
-    void move_files();
   
   public:
     static QString get_home_dir();
+    void           move_files();
 };
 
 #define USER_DIR  "/ultrascan/"

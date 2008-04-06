@@ -10,7 +10,14 @@
 */  
 US_Register::US_Register(QWidget *p, const char *name) : QFrame(p, name)
 {
-  USConfig = new US_Config();
+  // The following checks the old license location and moves
+  // files if necessary.
+
+  QString    d1;
+  US_Config* custom = new US_Config( d1 );
+  
+  QFile uslicense( QDir::homeDirPath() + "/.uslicense" );
+  if ( uslicense.exists() ) custom->move_files();
 }
 
 //! Destructor
