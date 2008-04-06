@@ -612,7 +612,7 @@ QString US_Config::get_home_dir(  )
 
 // Move files from old locations to new if necessary
 // At some time in the future, when all users have updated,
-// theis function can be removed
+// this function can be removed
 void  US_Config::move_files(  )
 {
   QString home    = get_home_dir();
@@ -640,7 +640,8 @@ void  US_Config::move_files(  )
     {
       QDir file;
       file.rename( oldhome + oldfile[i], home + newfile[i], true );
-      cout << "Moved " << oldhome + oldfile[i] << " to " << home + newfile[i] << endl;
+      //cout << "Moved " << oldhome + oldfile[i] << " to " 
+      //     << home + newfile[i] << endl;
     }
 
     i++;
