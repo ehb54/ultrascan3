@@ -4,11 +4,13 @@
 US_Config::US_Config( QObject* parent, const char* name) 
    : QObject (parent, name)
 {
-  //home = get_home_dir(  );
-
+  // Make sure old files are in the new locations with new names
+  move_files();
+  
   if ( ! read( ) )
   {
     setDefault();
+
     if ( ! US_Write_Config::write_config( config_list ) ) 
     {
       exit( 1 );
@@ -429,7 +431,7 @@ void US_Config::setDefault()
   config_list.gzip    = "/bin/gzip";
 
 #ifdef WIN32
-  config_list.browser = "C:\\Program Files\\Internet Explorer\\iexplore.exe";
+  config_list.browser = "C:/Program Files/Internet Explorer/iexplore.exe";
   config_list.tar     = "tar";
   config_list.gzip    = "gzip";
 #endif
@@ -476,13 +478,12 @@ void US_Config::setDefault()
 
 bool US_Config::read()
 {
-  QString rcfile = get_home_dir(  ) + USRC;
-  QString str;
+  QFile f( get_home_dir() + USRC );
 
-  QFile f( rcfile );
-
-  if ( f.exists(  ) )
+  if ( f.exists() )
   {
+    QString str;
+
     f.open( IO_ReadOnly );
     QTextStream ts( &f );
     config_list.version = ts.readLine(  );
@@ -607,5 +608,87 @@ QString US_Config::get_home_dir(  )
 {
     QString home = QDir::homeDirPath(  ) + USER_DIR;
     return ( QDir::convertSeparators( home ) );
+}
+
+// Move files from old locations to new if necessary
+// At some time in the future, when all users have updated,
+// theis function can be removed
+void  US_Config::move_files(  )
+{
+  QString home    = get_home_dir();
+  QString oldhome = QDir::homeDirPath(  );
+
+  // Make sure uesr's etc directory exists
+
+  if ( ! QDir( home + ETC_DIR ).exists() )
+  {
+    QDir etc;
+    etc.mkdir( home + ETC_DIR );
+  }
+
+  // Move 4 files if appropriate
+
+  QString oldfile[] = { "/.usrc", "/.uscolors", "/.uslicense", "/us.db", "" };
+  QString newfile[] = { USRC,     USCOLORS,     USLICENSE,     USDB };
+
+  int i = 0;
+
+  while ( oldfile[i] != "" )
+  {
+    if (   QFile( oldhome + oldfile[i] ).exists()  &&
+         ! QFile( home    + newfile[i] ).exists() )
+    {
+      QDir file;
+      file.rename( oldhome + oldfile[i], home + newfile[i], true );
+      cout << "Moved " << oldhome + oldfile[i] << " to " << home + newfile[i] << endl;
+    }
+
+    i++;
+  }
+
+  // Move 4 directories as required
+
+  QString dir[]   = { "archive", "data", "reports", "results", "" };
+  bool    moved[] = { false,     false,  false,     false,     false };
+   
+  i = 0;
+
+  while ( dir[i] != "" )
+  {
+    QString olddir = oldhome + "/us/" + dir[i];
+    QString newdir = home    + dir[i];
+  
+    if ( QDir(olddir).exists()  &&  ! QDir(newdir).exists() ) 
+    {
+      QDir movedir;
+      movedir.rename( olddir, newdir, true );
+      moved[i] = true;
+      moved[4] = true;
+      cout << "Moved " << olddir << " to " << newdir << endl;
+    }
+
+    i++;
+  }
+
+  // Rewrite USRC if necessary
+  if ( moved[4] )
+  {
+     read();
+/*
+     cout <<   " system: " << config_list.system_dir 
+          << "\n   help: " << config_list.help_dir
+          << "\n   data: " << config_list.data_dir
+          << "\n   root: " << config_list.root_dir
+          << "\n   html: " << config_list.html_dir
+          << "\narchive: " << config_list.archive_dir
+          << "\n result: " << config_list.result_dir << endl;
+*/
+     if ( moved[0] ) config_list.archive_dir = home + "archive";
+     if ( moved[1] ) config_list.data_dir    = home + "data";
+     if ( moved[2] ) config_list.html_dir    = home + "reports";
+     if ( moved[3] ) config_list.result_dir  = home + "results";
+
+     US_Write_Config::write_config( config_list );
+  }
 }
 

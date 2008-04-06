@@ -178,16 +178,18 @@ class US_EXTERN US_Config : public QObject
     bool col_exists();
     bool write_default_colors();
     void setDefault();
+    void move_files();
   
   public:
     static QString get_home_dir();
 };
 
 #define USER_DIR  "/ultrascan/"
-#define USRC      "usrc.conf"
-#define USCOLORS  "uscolorsconf.bin"
-#define USLICENSE "uslicense"
-#define USDB      "usdbconf.bin"
+#define ETC_DIR   "etc"
+#define USRC      "etc/usrc.conf"
+#define USCOLORS  "etc/uscolorsconf.bin"
+#define USLICENSE "etc/uslicense"
+#define USDB      "etc/usdbconf.bin"
 
 class US_EXTERN US_Help : public QWidget
 {
