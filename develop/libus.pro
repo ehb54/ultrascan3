@@ -246,7 +246,7 @@ SOURCES += src/us_2dplot.cpp \
 # src/us_fefitter_ad.cpp \
   src/us_fefitter_single.cpp \
   src/us_fematch.cpp \
-  src/us_fematch_ra.cpp \
+#  src/us_fematch_ra.cpp \
   src/us_femglobal.cpp \
   src/us_finite_single.cpp \
   src/us_finite1.cpp \
@@ -433,7 +433,7 @@ HEADERS +=include/bluearrow.xpm \
 # include/us_fefitter_ad.h \
   include/us_fefitter_single.h \
   include/us_fematch.h \
-  include/us_fematch_ra.h \
+#  include/us_fematch_ra.h \
   include/us_femglobal.h \
   include/us_finite_single.h \
   include/us_finite1.h \

@@ -32,21 +32,10 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		SA2d_control_variables sa2d_ctrl_vars;
 		vector <double> ri_noise, ti_noise;
 		QString analysis_type;
-		QLabel *lbl_s;
-		QLabel *lbl_D;
-		QLabel *lbl_C;
-		QLabel *lbl_s2;
-		QLabel *lbl_D2;
-		QLabel *lbl_C2;
 		QLabel *lbl_variance;
 		QLabel *lbl_variance2;
-		QLabel *lbl_MW_ff01;
-		QLabel *lbl_component;
-		QLineEdit *le_baseline;
-		QLabel *lbl_MW_ff02;
 		QPushButton *pb_fit;
 		QPushButton *pb_loadModel;
-		QwtCounter *cnt_component;
 		US_ResidualPlot *resplot;
 		US_Pixmap *pm;
 		US_3d_Solutes *us_3d_solutes;
@@ -68,11 +57,6 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 	private slots:
 		
 		void setup_GUI();
-		void update_component(double);
-		void update_s(const QString &);
-		void update_D(const QString &);
-		void update_C(const QString &);
-		void update_baseline(const QString &);
 		void cofs_GUI();
 		void enableButtons();
 		void update_distribution();
