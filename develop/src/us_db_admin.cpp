@@ -167,12 +167,6 @@ void US_DB_Admin::submit()
     QString pw1_md5 = QString(pw_hash);
     QString pw2_md5 = US_Encryption::md5( input_password );
 
-    QMessageBox::message( 
-        tr("Debug"),
-        tr("PW1 hash=" + pw1_md5 + "\nPW2 hash=" + pw2_md5 + 
-         "\npw_hash =" + pw_hash + "\npassword=" + input_password ) );
-
-
     if ( QString::compare( pw1_md5, pw2_md5 ) == 0 )
     {
       emit issue_permission( true );
@@ -192,10 +186,6 @@ void US_DB_Admin::submit()
   {
     QString pw1_md5 = US_Encryption::md5( input_password );
   
-    QMessageBox::message( 
-        tr("Debug"),
-        tr("PW1 hash=" + pw1_md5 + "\npassword=" + password ) );
-
     if ( QString::compare( pw1_md5, password) == 0 )
     {
       emit issue_pass( input_password );
