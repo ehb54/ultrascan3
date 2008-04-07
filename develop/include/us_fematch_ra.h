@@ -13,22 +13,28 @@
 #include <qcheckbox.h>
 #include <qwt_symbol.h>
 #include <cerrno>
+
+#ifndef WIN32
+#include <unistd.h>
+#endif
+#include <math.h>
+#include <float.h>
+
+
 using namespace std;
 
 class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 {
 	Q_OBJECT
-	
+
 	public:
-	
+
 		US_FeMatchRa_W(QWidget *p = 0, const char *name = 0);
 		~US_FeMatchRa_W();
-		
+
 	private:
-	
-		int plot2;
+
 		unsigned int monte_carlo_iterations;
-		bool window_3d_flag;
 		SA2d_control_variables sa2d_ctrl_vars;
 		vector <double> ri_noise, ti_noise;
 		QString analysis_type;
@@ -38,39 +44,24 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		QPushButton *pb_loadModel;
 		US_ResidualPlot *resplot;
 		US_Pixmap *pm;
-		US_3d_Solutes *us_3d_solutes;
-		float rmsd, baseline;
+		float rmsd;
 		int model;
-		unsigned int components, current_component;
-		vector <double> s_distribution;
-		vector <double> D_distribution;
-		vector <double> partial_concentration;
-		vector <double> s20w;
-		vector <double> D20w;
-		vector <double> sigma;
-		vector <double> delta;
-		vector <double> mw;
-		vector <double> f_f0;
-		vector <double> fv;
 		struct mfem_data residuals, fem_model;
-		
+
 	private slots:
-		
+
 		void setup_GUI();
-		void cofs_GUI();
 		void enableButtons();
 		void update_distribution();
 		void clear_data(struct mfem_data *);
 		void updateParameters();
 		void fit();
 		float calc_residuals();
-		void second_plot(int);
 		void write_cofs();
 		void write_res();
 		void calc_distros();
 		void load_model();
 		void load_model(const QString &);
-		void update_labels();
 		void clearDisplay();
 
 // re-implemented Functions:
@@ -78,67 +69,6 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		void view();
 		void help();
 		void save();
-		void second_plot();
-};
-
-
-#include <qthread.h>
-#include <qwaitcondition.h>
-#include <qmutex.h>
-
-class fematch_ra_thr_t : public QThread
-{
- public:
-  fematch_ra_thr_t(int);
-  void fematch_ra_thr_setup(QProgressBar *,
-			 struct mfem_data *,
-			 struct mfem_data *,
-			 struct mfem_data *,
-			 struct mfem_initial *,
-			 US_MovingFEM *,
-			 struct runinfo *,
-			 vector <double> *,
-			 vector <double> *,
-			 unsigned int ,
-			 unsigned int ,
-			 vector <double> *,
-			 double ,
-			 unsigned int ,
-			 unsigned int ,
-			 unsigned int 
-			 );
-  void fematch_ra_thr_shutdown();
-  void fematch_ra_thr_wait();
-  virtual void run();
-
- private:
-  QProgressBar *progress;
-  struct mfem_data *fem_data;
-  struct mfem_data *experiment;
-  struct mfem_data *residuals;
-  struct mfem_initial *initCVector;
-  US_MovingFEM *mfem;
-  struct runinfo *run_inf;
-  vector <double> *s_distribution;
-  vector <double> *D_distribution;
-  unsigned int selected_cell;
-  unsigned int selected_lambda;
-  vector <double> *partial_concentration;
-  double bottom;
-  unsigned int points;
-  unsigned int j_start;
-  unsigned int j_end;
-
-  int thread;
-  unsigned int i;
-  unsigned int j;
-  QMutex work_mutex;
-  int work_to_do;
-  QWaitCondition cond_work_to_do;
-  int work_done;
-  QWaitCondition cond_work_done;
-  int work_to_do_waiters;
-  int work_done_waiters;
 };
 
 #endif

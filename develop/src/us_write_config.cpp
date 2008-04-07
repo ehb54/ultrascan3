@@ -10,16 +10,16 @@ US_Write_Config::~US_Write_Config()
 
 bool US_Write_Config::write_config(struct Config config_list)
 {
+	QString warning=tr("Warning"), message;
 	QDir temp_dir = config_list.help_dir;
 	if ( ! temp_dir.exists() )
 	{
 		if ( ! temp_dir.mkdir( config_list.help_dir, true ) )
 		{
-			QMessageBox::message(
-          tr("Warning"), 
-          tr("Could not create the Help File Directory!\n\n"
-              + config_list.help_dir + "\n"
-             "Please check your write permissions!"));
+			message = tr("Could not create the Help File Directory!\n\n"
+			+ config_list.help_dir + "\nPlease check your write permissions!");
+			emit errorMessage(warning, message);
+			cerr << warning << ":\n" << message << endl;
 			return( false );
 		}
 	}
@@ -29,12 +29,11 @@ bool US_Write_Config::write_config(struct Config config_list)
 	{
 		if (!temp_dir.mkdir(config_list.root_dir, true))
 		{
-			QMessageBox::message(
-          tr("Warning"), 
-          tr("Could not create the Root Directory!\n\n"
-            + config_list.root_dir + "\n"
-            "Please check your write permissions!"));
-			return(false);
+			message = tr("Could not create the Root Directory!\n\n"
+			+ config_list.help_dir + "\nPlease check your write permissions!");
+			emit errorMessage(warning, message);
+			cerr << warning << ":\n" << message << endl;
+			return( false );
 		}
 	}
 
@@ -43,12 +42,11 @@ bool US_Write_Config::write_config(struct Config config_list)
 	{
 		if (!temp_dir.mkdir(config_list.data_dir, true))
 		{
-			QMessageBox::message(
-          tr("Warning"), 
-          tr("Could not create the Data Directory!\n\n"
-            + config_list.data_dir + "\n"
-            "Please check your write permissions!"));
-			return(false);
+			message = tr("Could not create the Data Directory!\n\n"
+			+ config_list.help_dir + "\nPlease check your write permissions!");
+			emit errorMessage(warning, message);
+			cerr << warning << ":\n" << message << endl;
+			return( false );
 		}
 	}
 
@@ -57,24 +55,22 @@ bool US_Write_Config::write_config(struct Config config_list)
 	{
 		if (!temp_dir.mkdir(config_list.archive_dir, true))
 		{
-			QMessageBox::message(
-          tr("Warning"), 
-          tr("Could not create the Archive Directory!\n\n"
-            + config_list.archive_dir + "\n"
-            "Please check your write permissions!"));
-			return(false);
+			message = tr("Could not create the Archive Directory!\n\n"
+			+ config_list.help_dir + "\nPlease check your write permissions!");
+			emit errorMessage(warning, message);
+			cerr << warning << ":\n" << message << endl;
+			return( false );
 		}
 	}
 
 	temp_dir = config_list.system_dir;
 	if ( ! temp_dir.exists() )
 	{
-		QMessageBox::message(
-        tr("Warning"), 
-        tr("The UltraScan System Directory could not be found!\n\n"
-            + config_list.system_dir + "\n"
-          "Please check your settings!"));
-		return(false);
+		message = tr("The UltraScan System Directory could not be found!\n\n"
+		+ config_list.help_dir + "\nPlease check your settings!");
+		emit errorMessage(warning, message);
+		cerr << warning << ":\n" << message << endl;
+		return( false );
 	}
 
 	temp_dir = config_list.html_dir;
@@ -82,12 +78,11 @@ bool US_Write_Config::write_config(struct Config config_list)
 	{
 		if ( ! temp_dir.mkdir(config_list.html_dir, true) )
 		{
-			QMessageBox::message(
-          tr("Warning"), 
-          tr("Could not create the Reports Directory!\n\n"
-            + config_list.html_dir + "\n"
-            "Please check your write permissions!"));
-			return(false);
+			message = tr("Could not create the Reports Directory!\n\n"
+			+ config_list.help_dir + "\nPlease check your write permissions!");
+			emit errorMessage(warning, message);
+			cerr << warning << ":\n" << message << endl;
+			return( false );
 		}
 	}
 
@@ -96,24 +91,18 @@ bool US_Write_Config::write_config(struct Config config_list)
 	{
 		if ( ! temp_dir.mkdir( config_list.result_dir, true ) )
 		{
-			QMessageBox::message(
-          tr("Warning"), 
-          tr("Could not create the Result Directory!\n\n"
-            "Please check your write permissions!"));
-			return(false);
+			message = tr("Could not create the Results Directory!\n\n"
+			+ config_list.help_dir + "\nPlease check your write permissions!");
+			emit errorMessage(warning, message);
+			cerr << warning << ":\n" << message << endl;
+			return( false );
 		}
 	}
 
-  QString rcfile = US_Config::get_home_dir() + USRC;
-
-  //QMessageBox::message(
-  //   tr( "Debug:" ),
-  //   tr( "rcfile = " + rcfile ) );
-     
+	QString rcfile = US_Config::get_home_dir() + USRC;
 	QFile f( rcfile );
 	QTextStream ts ( &f );
-	
-  if (f.open(IO_WriteOnly | IO_Translate))
+	if (f.open(IO_WriteOnly | IO_Translate))
 	{
 		QTextStream ts (&f);
 		ts << US_Version << "\n";
@@ -137,12 +126,11 @@ bool US_Write_Config::write_config(struct Config config_list)
 	}
 	else
 	{
-		QMessageBox::message(
-        tr("Warning"), 
-        tr("Could not open Configuration File for update.\n\n"
-           + rcfile + "\n"
-           "Please check your write permissions!" ) );
-		return(false);
+		message = tr("Could not open Configuration File for update.\n\n"
+		+ config_list.help_dir + "\nPlease check your write permissions!");
+		emit errorMessage(warning, message);
+		cerr << warning << ":\n" << message << endl;
+		return( false );
 	}
 	return (true);
 }

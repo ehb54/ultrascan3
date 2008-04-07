@@ -17,6 +17,7 @@ UsWin::UsWin(QWidget *parent, const char *name)
         : QWidget(parent, name)
 {
   USglobal = new US_Config();
+  connect (USglobal, SIGNAL(errorMessage(QString, QString)), SLOT(errorMessage(QString, QString)));
 //  config_check();
 
   int width=710, height=532;
@@ -2508,7 +2509,7 @@ void UsWin::credits()
 {
   emit explain( tr("UltraScan Credits...") );
   QMessageBox::message(
-      tr("UltraScan Credits"), 
+      tr("UltraScan Credits"),
       tr("UltraScan II version " + US_Version + "\n"
          "Copyright 1998 - 2005\n"
          "Borries Demeler and the University of Texas System\n\n"
@@ -2738,6 +2739,11 @@ void UsWin::resizeEvent(QResizeEvent *e)
   QRect r(0, 0, e->size().width(), e->size().height());
   bigframe->setGeometry(2, 36, r.width()-4, r.height()-66);
   stat_bar->setGeometry(2, r.height()-28, r.width()-4, 26);
+}
+
+void UsWin::errorMessage(QString str1, QString str2)
+{
+	QMessageBox::warning(this, str1, str2, QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
 }
 /*
 US_Publish::US_Publish(QWidget *parent, const char *name) : QDialog( parent, name, TRUE )

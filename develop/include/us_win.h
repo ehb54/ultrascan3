@@ -238,6 +238,7 @@ public slots:
 //	void publish();
 	void closeAttnt(QProcess *, QString);
 	void closeEvent(QCloseEvent *);
+	void errorMessage(QString, QString);
 
 
 protected:

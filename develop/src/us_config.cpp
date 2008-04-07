@@ -1,16 +1,18 @@
 #include "../include/us_util.h"
 #include "../include/us_write_config.h"
 
-US_Config::US_Config( QObject* parent, const char* name) 
+US_Config::US_Config( QObject* parent, const char* name)
 	: QObject (parent, name)
 {
 	US_Version = "9.5";
 	if ( ! read( ) )
 	{
 		setDefault();
-
-		if ( ! US_Write_Config::write_config( config_list ) )
+		US_Write_Config *w_config;
+		w_config = new US_Write_Config(this);
+		if ( ! w_config->write_config( config_list ) )
 		{
+			delete w_config;
 			exit( 1 );
 		}
 	}
@@ -23,7 +25,7 @@ US_Config::US_Config( QObject* parent, const char* name)
 US_Config::US_Config( QString dummy, QObject* parent, const char* name )
   : QObject (parent, name)
 {
-  config_list.tar = dummy;  // Dummy to avoid compiler complaint  
+  config_list.tar = dummy;  // Dummy to avoid compiler complaint
 }
 
 
@@ -447,9 +449,11 @@ config_list.gzip    = "gzip";
 // Set system directory
 	if ( ultrascan == "" )
 	{
-		QMessageBox::message(tr( "Error:" ),
-									tr( "The required environment variable ULTRASCAN is not set.\n"
-											"Please add it and restart the program.  Exiting." ) );
+		QString warning = tr( "Error:" ), message;
+		message = tr( "The required environment variable ULTRASCAN is not set.\n"
+		"Please add it and restart the program.  Exiting." );
+		cerr << warning << "\n" << message << endl;
+		emit errorMessage(warning, message);
 		exit( -1 );
 	}
 
@@ -659,7 +663,7 @@ void  US_Config::move_files(  )
 
 	QString dir[]   = { "archive", "data", "reports", "results", "" };
 	bool    moved[] = { false,     false,  false,     false,     false };
-	
+
 	for (i=0; i<4; i++)
 	{
 		QString olddir = oldhome + "/us/" + dir[i];
@@ -692,7 +696,10 @@ void  US_Config::move_files(  )
 		if ( moved[1] ) config_list.data_dir    = home + "data";
 		if ( moved[2] ) config_list.html_dir    = home + "reports";
 		if ( moved[3] ) config_list.result_dir  = home + "results";
-		US_Write_Config::write_config( config_list );
+		US_Write_Config *w_config;
+		w_config = new US_Write_Config(this);
+		w_config->write_config( config_list );
+		delete w_config;
 	}
 }
 

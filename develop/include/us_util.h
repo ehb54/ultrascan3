@@ -123,9 +123,9 @@ struct centerpieceInfo
   int serial_number;        // the centerpiece's serial number (series starts zero)
   QString material;         // epon, aluminum, titanium
   unsigned int channels;    // number of channels divided by 2
-  float bottom_position[4]; // bottom position of each channel, max 4., 
+  float bottom_position[4]; // bottom position of each channel, max 4.,
                             // if sector==3: position for synth. boundary
-  int sector;               // 0 sector shaped, 1 for rectangular, 2 for circular, 
+  int sector;               // 0 sector shaped, 1 for rectangular, 2 for circular,
                             // 3 for synthetic boundary cells
   float pathlength;         // pathlength of centerpiece in cm, default: 1.2 cm
   float angle;              // angle of sector, if sector shaped, default: 2.5 degrees
@@ -166,9 +166,6 @@ class US_EXTERN US_Config : public QObject
 
     struct Config    config_list;
     struct us_colors global_colors;
-    
-  //friend
-  //  class US_Config_Gui;
 
   public slots:
     virtual bool read();
@@ -179,10 +176,14 @@ class US_EXTERN US_Config : public QObject
     bool col_exists();
     bool write_default_colors();
     void setDefault();
-  
+
   public:
     static QString get_home_dir();
     void           move_files();
+
+	signals:
+		void errorMessage(QString, QString);
+
 };
 
 #define USER_DIR  "/ultrascan/"

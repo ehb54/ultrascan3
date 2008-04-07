@@ -70,6 +70,7 @@ SUBDIRS +=  us \
         us_equiltime \
         us_extinction \
         us_fematch \
+        us_fematch_ra \
         us_ga_model_editor \
         us_gainit \
         us_findat \
