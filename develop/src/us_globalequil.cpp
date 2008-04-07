@@ -697,7 +697,7 @@ int US_GlobalEquil::load(const QString &filename)
         QMessageBox::message(
             tr("Attention:"), 
             tr("These data were edited with a previous release\n"
-               "of UltraScan (version < " US_Version "), which is not\n"
+               "of UltraScan (version < " + US_Version + "), which is not\n"
                "binary compatible with the current version\n\n"
                "Please re-edit the experimental data before\n"
                "using the data for data analysis."));

@@ -8,7 +8,7 @@
 
 int US_EXTERN global_Xpos;
 int US_EXTERN global_Ypos;
-//QString US_EXTERN US_Version;
+QString US_EXTERN US_Version;
 vector <QString> modelString;
 
 void global();

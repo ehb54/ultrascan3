@@ -43,9 +43,9 @@ using namespace std;
 extern int US_EXTERN global_Xpos;
 extern int US_EXTERN global_Ypos;
 
-#define US_Version "9.5"
+//#define US_Version "9.5"
 
-//extern QString US_EXTERN US_Version;
+extern QString US_EXTERN US_Version;
 
 
 extern vector <QString> US_EXTERN modelString;

@@ -2488,7 +2488,7 @@ void UsWin::about()
   emit explain( tr("About...") );
   QMessageBox::message(
       tr("About UltraScan..."),
-      tr("UltraScan II version " US_Version "\n"
+      tr("UltraScan II version " + US_Version + "\n"
          "Copyright 1989 - 2005\n"
          "Borries Demeler and the University of Texas System\n\n"
          "For more information, please visit:\n"
@@ -2509,7 +2509,7 @@ void UsWin::credits()
   emit explain( tr("UltraScan Credits...") );
   QMessageBox::message(
       tr("UltraScan Credits"), 
-      tr("UltraScan II version " US_Version "\n"
+      tr("UltraScan II version " + US_Version + "\n"
          "Copyright 1998 - 2005\n"
          "Borries Demeler and the University of Texas System\n\n"
          " - Credits -\n\n"
