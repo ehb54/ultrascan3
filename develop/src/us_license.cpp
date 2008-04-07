@@ -701,8 +701,8 @@ void US_License::request()
 #ifdef WIN32
 #define BROWSERS "Internet Explorer"
       { "explorer", "", 
-        "http://www.ultrascan.uthscsa.edu/register.html" }
-      { "C:\\Program Files\\Internet Explorer\\iexplore.exe", "",
+        "http://www.ultrascan.uthscsa.edu/register.html" },
+      { "C:/Program Files/Internet Explorer/iexplore.exe", "",
         "http://www.ultrascan.uthscsa.edu/register.html" },
       { "", "", "" }
 #endif

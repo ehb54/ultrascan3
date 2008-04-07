@@ -20,6 +20,7 @@
 
 #include "../include/us_encryption.h"
 #include <string.h>
+#include <stdio.h>
 
 #define GET_UINT32(n,b,i)                       \
 {                                               \

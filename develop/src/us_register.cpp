@@ -106,7 +106,7 @@ bool US_Register::read()
 #define TITLE    "Sun Sparc"
 #endif
 
-#ifdef INTEL
+#if defined(INTEL) || defined(WIN32) 
 #define PLATFORM "intel"
 #define TITLE    "Intel"
 #endif
