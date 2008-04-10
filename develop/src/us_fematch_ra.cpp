@@ -78,16 +78,15 @@ void US_FeMatchRa_W::setup_GUI()
 	lbl_variance2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	lbl_variance2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
 	lbl_variance2->setText("0.0");
+	lbl_variance2->setAlignment(AlignCenter|AlignVCenter);
+
+	analysis_plot->setTitle(tr("Fitting Residuals"));
 
 	int j=0;
 	int rows = 15, columns = 4, spacing = 2;
 
 	QGridLayout * background = new QGridLayout(this,2,2,spacing);
 	QGridLayout * subGrid1 = new QGridLayout(rows, columns, spacing);
-	for (int i=0; i<rows; i++)
-	{
-		subGrid1->setRowSpacing(i, 26);
-	}
 	subGrid1->addMultiCellWidget(pb_load,j,j,0,1);
 	subGrid1->addMultiCellWidget(pb_details,j,j,2,3);
 	j++;
@@ -122,39 +121,36 @@ void US_FeMatchRa_W::setup_GUI()
 	subGrid1->addWidget(density_le,j,1);
 	subGrid1->addWidget(pb_viscosity,j,2);
 	subGrid1->addWidget(viscosity_le,j,3);
-
-	rows = 10, columns = 4, spacing = 2, j=0;
-	QGridLayout * subGrid2 = new QGridLayout(rows, columns, spacing);
-	for (int i=0; i<rows; i++)
+	j++;
+	subGrid1->addMultiCellWidget(pb_loadModel,j,j,0,1);
+	subGrid1->addMultiCellWidget(pb_fit,j,j,2,3);
+	j++;
+	subGrid1->addMultiCellWidget(lbl_variance, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(lbl_variance2, j, j, 2, 3);
+	j++;
+	subGrid1->addMultiCellWidget(lbl1_excluded, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(lbl2_excluded, j, j, 2, 3);
+	j++;
+	subGrid1->addMultiCellWidget(pb_exsingle,j,j,0,1);
+	subGrid1->addMultiCellWidget(cnt_exsingle,j,j,2,3);
+	j++;
+	subGrid1->addMultiCellWidget(pb_exrange,j,j,0,1);
+	subGrid1->addMultiCellWidget(cnt_exrange,j,j,2,3);
+	j++;
+	subGrid1->addWidget(lbl_status,j,0);
+	subGrid1->addMultiCellWidget(progress,j,j,1,3);
+	for (int i=0; i<j; i++)
 	{
-		subGrid2->setRowSpacing(i, 26);
+		subGrid1->setRowSpacing(i, 26);
 	}
-	subGrid2->addMultiCellWidget(pb_loadModel,j,j,0,1);
-	subGrid2->addMultiCellWidget(pb_fit,j,j,2,3);
-	j++;
-	subGrid2->addMultiCellWidget(lbl_variance, j, j, 0, 1);
-	subGrid2->addMultiCellWidget(lbl_variance2, j, j, 2, 3);
-	j++;
-	subGrid2->addMultiCellWidget(lbl1_excluded, j, j, 0, 1);
-	subGrid2->addMultiCellWidget(lbl2_excluded, j, j, 2, 3);
-	j++;
-	subGrid2->addMultiCellWidget(pb_exsingle,j,j,0,1);
-	subGrid2->addMultiCellWidget(cnt_exsingle,j,j,2,3);
-	j++;
-	subGrid2->addMultiCellWidget(pb_exrange,j,j,0,1);
-	subGrid2->addMultiCellWidget(cnt_exrange,j,j,2,3);
-	j++;
-	subGrid2->addWidget(lbl_status,j,0);
-	subGrid2->addMultiCellWidget(progress,j,j,1,3);
 
-	background->addLayout(subGrid1,0,0);
-	background->addWidget(analysis_plot,0,1);
-	background->addLayout(subGrid2,1,0);
-	background->addWidget(edit_plot,1,1);
-	background->setColStretch(0,1);
-	background->setColStretch(1,4);
-	background->setColSpacing(0,350);
-	background->setColSpacing(1,550);
+	background->addMultiCellLayout(subGrid1, 0, 1, 0, 0);
+	background->addWidget(analysis_plot, 0, 1);
+	background->addWidget(edit_plot, 1, 1);
+	background->setColStretch(0, 1);
+	background->setColStretch(1, 3);
+	background->setColSpacing(0, 350);
+	background->setColSpacing(1, 550);
 
 	qApp->processEvents();
 	QRect r = background->cellGeometry(0, 0);
@@ -175,10 +171,6 @@ void US_FeMatchRa_W::enableButtons()
 }
 
 void US_FeMatchRa_W::save()
-{
-}
-
-void US_FeMatchRa_W::update_distribution()
 {
 }
 
@@ -218,22 +210,9 @@ void US_FeMatchRa_W::write_res()
 {
 }
 
-void US_FeMatchRa_W::write_cofs()
-{
-}
-
-void US_FeMatchRa_W::fit()
-{
-	calc_residuals();
-}
-
-float US_FeMatchRa_W::calc_residuals()
+float US_FeMatchRa_W::fit()
 {
 	return rmsd;
-}
-
-void US_FeMatchRa_W::calc_distros()
-{
 }
 
 void US_FeMatchRa_W::clear_data(mfem_data *d)
@@ -257,10 +236,5 @@ void US_FeMatchRa_W::load_model()
 }
 
 void US_FeMatchRa_W::load_model(const QString &fileName)
-{
-}
-
-//void US_FeMatchRa_W::updateParameters(float val1, float val2)
-void US_FeMatchRa_W::updateParameters()
 {
 }

@@ -52,14 +52,9 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 
 		void setup_GUI();
 		void enableButtons();
-		void update_distribution();
 		void clear_data(struct mfem_data *);
-		void updateParameters();
-		void fit();
-		float calc_residuals();
-		void write_cofs();
+		float fit();
 		void write_res();
-		void calc_distros();
 		void load_model();
 		void load_model(const QString &);
 		void clearDisplay();
