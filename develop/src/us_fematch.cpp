@@ -1289,7 +1289,8 @@ void US_FeMatch_W::update_labels()
 	lbl_MW_ff02->setText(str);
 }
 
-fematch_thr_t::fematch_thr_t(int a_thread) : QThread() {
+fematch_thr_t::fematch_thr_t(int a_thread) : QThread()
+{
   thread = a_thread;
   work_to_do = 0;
   work_done = 1;
@@ -1312,8 +1313,8 @@ void fematch_thr_t::fematch_thr_setup(QProgressBar *a_progress,
 				      double a_bottom,
 				      unsigned int a_points,
 				      unsigned int a_j_start,
-				      unsigned int a_j_end
-				    ) {
+				      unsigned int a_j_end)
+{
   /* this starts up a new work load for the thread */
   progress = a_progress;
   fem_data = a_fem_data;
@@ -1341,7 +1342,8 @@ void fematch_thr_t::fematch_thr_setup(QProgressBar *a_progress,
   //  cerr << "thread " << thread << " has new work to do\n";
 }
 
-void fematch_thr_t::fematch_thr_shutdown() {
+void fematch_thr_t::fematch_thr_shutdown()
+{
   /* this signals the thread to exit the run method */
   work_mutex.lock();
   work_to_do = -1;
@@ -1351,7 +1353,8 @@ void fematch_thr_t::fematch_thr_shutdown() {
   //  cerr << "thread " << thread << " shutdown requested\n";
 }
 
-void fematch_thr_t::fematch_thr_wait() {
+void fematch_thr_t::fematch_thr_wait()
+{
   /* this is for the master thread to wait until the work is done */
   work_mutex.lock();
 
@@ -1366,76 +1369,86 @@ void fematch_thr_t::fematch_thr_wait() {
   //  cerr << "thread " << thread << " waiter released\n";
 }
 
-void fematch_thr_t::run() {
-  while(1) {
-    work_mutex.lock();
-    //    cerr << "thread " << thread << " waiting for work\n";
-    work_to_do_waiters++;
-    while(!work_to_do) {
-      cond_work_to_do.wait(&work_mutex);
-    }
-    if(work_to_do == -1) {
-      //      cerr << "thread " << thread << " shutting down\n";
-      work_mutex.unlock();
-      return;
-    }
-
-    work_to_do_waiters = 0;
-    work_mutex.unlock();
-    //    cerr << "thread " << thread << " starting work\n";
-    unsigned int i, j, k;
-
-    for (i = j_start; i <= j_end; i++) {
-      //      printf("thread %u working on comp %u\n", thread, i);
-      // for each term in the linear combination we need to reset the
-      // simulation vectors, the experimental vector simply keeps getting overwritten:
-      //      clear_data(&(fem_data));
-      {
-	unsigned int i;
-	for (i=0; i<(*fem_data).scan.size(); i++)
+void fematch_thr_t::run()
+{
+	while(1)
 	{
-		(*fem_data).scan[i].conc.clear();
-	}
-	(*fem_data).radius.clear();
-	(*fem_data).scan.clear();
-      }
-      for (j=0; j<(*experiment).scan.size(); j++) {
-	for (k=0; k<points; k++) {
-	  // reset concentration to zero:
-	  (*experiment).scan[j].conc[k] = 0.0;
-	}
-      }
-      
-      mfem->set_params(100, (*s_distribution)[i], (*D_distribution)[i],
-		      (double) (*run_inf).rpm[selected_cell][selected_lambda][0],
-		      (*experiment).scan[(*experiment).scan.size()-1].time,
-		      (double) (*run_inf).meniscus[selected_cell], bottom, (double) (*partial_concentration)[i], initCVector);
-      
-      // generate the next term of the linear combination:
-      mfem->skipEvents = true;
-      mfem->run();
-      
-      // interpolate model function to the experimental data so dimension 1 in A matches dimension of B:
-      mfem->interpolate(experiment, fem_data);
+		work_mutex.lock();
+		//    cerr << "thread " << thread << " waiting for work\n";
+		work_to_do_waiters++;
+		while(!work_to_do)
+		{
+			cond_work_to_do.wait(&work_mutex);
+		}
+		if(work_to_do == -1)
+		{
+			//      cerr << "thread " << thread << " shutting down\n";
+			work_mutex.unlock();
+			return;
+		}
 
-      for (j=0; j<(*experiment).scan.size(); j++) {
-	for (k=0; k<points; k++) {
-	  (*residuals).scan[j].conc[k] += (*experiment).scan[j].conc[k];
-	}
-      }
+		work_to_do_waiters = 0;
+		work_mutex.unlock();
+		//    cerr << "thread " << thread << " starting work\n";
+		unsigned int i, j, k;
 
-      if(thread == 0) {
-	progress->setProgress(i+1);
-      }
-    }
-    
-    //    cerr << "thread " << thread << " finished work\n";
-    work_mutex.lock();
-    work_done = 1;
-    work_to_do = 0;
-    work_mutex.unlock();
-    cond_work_done.wakeOne();
-  }
+		for (i = j_start; i <= j_end; i++)
+		{
+			//      printf("thread %u working on comp %u\n", thread, i);
+			// for each term in the linear combination we need to reset the
+			// simulation vectors, the experimental vector simply keeps getting overwritten:
+			//      clear_data(&(fem_data));
+			{
+				unsigned int i;
+				for (i=0; i<(*fem_data).scan.size(); i++)
+				{
+					(*fem_data).scan[i].conc.clear();
+				}
+				(*fem_data).radius.clear();
+				(*fem_data).scan.clear();
+			}
+			for (j=0; j<(*experiment).scan.size(); j++)
+			{
+				for (k=0; k<points; k++)
+				{
+					// reset concentration to zero:
+					(*experiment).scan[j].conc[k] = 0.0;
+				}
+			}
+
+			mfem->set_params(100, (*s_distribution)[i], (*D_distribution)[i],
+			(double) (*run_inf).rpm[selected_cell][selected_lambda][0],
+			(*experiment).scan[(*experiment).scan.size()-1].time,
+			(double) (*run_inf).meniscus[selected_cell], bottom, (double) (*partial_concentration)[i], initCVector);
+
+			// generate the next term of the linear combination:
+			mfem->skipEvents = true;
+			mfem->run();
+
+			// interpolate model function to the experimental data so dimension 1 in A matches dimension of B:
+			mfem->interpolate(experiment, fem_data);
+
+			for (j=0; j<(*experiment).scan.size(); j++)
+			{
+				for (k=0; k<points; k++)
+				{
+					(*residuals).scan[j].conc[k] += (*experiment).scan[j].conc[k];
+				}
+			}
+
+			if(thread == 0)
+			{
+				progress->setProgress(i+1);
+			}
+		}
+
+		//    cerr << "thread " << thread << " finished work\n";
+		work_mutex.lock();
+		work_done = 1;
+		work_to_do = 0;
+		work_mutex.unlock();
+		cond_work_done.wakeOne();
+	}
 }
 
 float US_FeMatch_W::calc_residuals()
@@ -1447,7 +1460,7 @@ float US_FeMatch_W::calc_residuals()
 	unsigned int i, j, k, count;
 	unsigned threads = USglobal->config_list.numThreads;
 	if(threads < 1) {
-	  threads = 1;
+	threads = 1;
 	}
 	if (threads > components)
 	{
@@ -1458,7 +1471,7 @@ float US_FeMatch_W::calc_residuals()
 	//US_MovingFEM *mfem[threads];
 	vector<US_MovingFEM*> mfem(threads);
 	for(i = 0; i < threads; i++) {
-	  mfem[i] = new US_MovingFEM(&(fem_data[i]), false);
+	mfem[i] = new US_MovingFEM(&(fem_data[i]), false);
 	}
 
 // initialize experimental data array sizes and radius positions:
@@ -1485,134 +1498,150 @@ float US_FeMatch_W::calc_residuals()
 	}
 	count = 0;
 	// parallelize this emre
-	if(threads > 1) {
-	  // create threads
-	  //struct mfem_data z_experiment[USglobal->config_list.numThreads];
-	  vector<struct mfem_data> z_experiment(USglobal->config_list.numThreads);
+	if(threads > 1)
+	{
+	// create threads
+	//struct mfem_data z_experiment[USglobal->config_list.numThreads];
+	vector<struct mfem_data> z_experiment(USglobal->config_list.numThreads);
 
-	  //struct mfem_data z_residuals[USglobal->config_list.numThreads];
-	  vector<struct mfem_data> z_residuals(USglobal->config_list.numThreads);
-	  
-    
-    for(j = 0; j < threads; j++) {
-	    z_experiment[j] = experiment;
-	    z_experiment[j].scan = experiment.scan;
-	    z_residuals[j] = residuals;
-	    z_residuals[j].scan = residuals.scan;
+	//struct mfem_data z_residuals[USglobal->config_list.numThreads];
+	vector<struct mfem_data> z_residuals(USglobal->config_list.numThreads);
+
+
+	for(j = 0; j < threads; j++)
+	{
+		z_experiment[j] = experiment;
+		z_experiment[j].scan = experiment.scan;
+		z_residuals[j] = residuals;
+		z_residuals[j].scan = residuals.scan;
 //	    printf("z_exp.scan %d %lx %lx\n", j, &(z_experiment[j].scan), &(experiment.scan));
-	  }
-	  
-	  //fematch_thr_t *fematch_thr_threads[USglobal->config_list.numThreads];
-	  vector<fematch_thr_t*> fematch_thr_threads(USglobal->config_list.numThreads);
-	  
-	  for(j = 0; j < threads; j++) {
-	    fematch_thr_threads[j] = new fematch_thr_t(j);
-	    fematch_thr_threads[j]->start();
-	  }
-	  
-	  unsigned int j_inc = components / threads;
-	  unsigned int j_end;
-	  unsigned int j_start;
-	  unsigned int maxprog = 0;
-	  for(j = 0; j < threads; j++) {
-	    j_start = j_inc * j;
-	    j_end = (j_inc * (j + 1)) - 1;
-	    if(j + 1 == threads) {
-	      j_end = components - 1;
-	    }
-	    if(!j) {
-	      maxprog = j_end + 3;
-	      progress->setTotalSteps(maxprog); // add for sum up
-	      progress->reset();
-	    }
-	    //	    cout << "thread " << j << " j range " << j_start << " - " << j_end << endl;
-	    fematch_thr_threads[j]->fematch_thr_setup(progress,
-						      &fem_data[j],
-						      &z_experiment[j],
-						      &z_residuals[j],
-						      &initCVector,
-						      mfem[j],
-						      &run_inf,
-						      &s_distribution,
-						      &D_distribution,
-						      selected_cell,
-						      selected_lambda,
-						      &partial_concentration,
-						      bottom,
-						      points,
-						      j_start,
-						      j_end
-						      );
-	  }
-	  
-	  for(j = 0; j < threads; j++) {
-	    qApp->processEvents();
-	    fematch_thr_threads[j]->fematch_thr_wait();
-	  }
-	  
-	  // destroy
-	  for(j = 0; j < threads; j++) {
-	    qApp->processEvents();
-	    fematch_thr_threads[j]->fematch_thr_shutdown();
-	  }
-	  
-	  for(j = 0; j < threads; j++) {
-	    qApp->processEvents();
-	    fematch_thr_threads[j]->wait();
-	  }
-	  
-	  progress->setProgress(maxprog - 1);
-	  qApp->processEvents();
+	}
 
-	  for(i = 0; i < threads; i++) {
-	    for (j=0; j<experiment.scan.size(); j++) {
-	      for (k=0; k<points; k++) {
-		residuals.scan[j].conc[k] += z_residuals[i].scan[j].conc[k];
-	      }
-	    }
-	  }
+	//fematch_thr_t *fematch_thr_threads[USglobal->config_list.numThreads];
+	vector<fematch_thr_t*> fematch_thr_threads(USglobal->config_list.numThreads);
 
-	  progress->setProgress(maxprog);
-	  qApp->processEvents();
+	for(j = 0; j < threads; j++)
+	{
+		fematch_thr_threads[j] = new fematch_thr_t(j);
+		fematch_thr_threads[j]->start();
+	}
 
-	  for(j = 0; j < USglobal->config_list.numThreads; j++) {
-	    delete fematch_thr_threads[j];
-	  }
-	  
-	} else {
-	  for (i=0; i<components; i++) {
+	unsigned int j_inc = components / threads;
+	unsigned int j_end;
+	unsigned int j_start;
+	unsigned int maxprog = 0;
+	for(j = 0; j < threads; j++)
+	{
+		j_start = j_inc * j;
+		j_end = (j_inc * (j + 1)) - 1;
+		if(j + 1 == threads)
+		{
+			j_end = components - 1;
+		}
+		if(!j)
+		{
+			maxprog = j_end + 3;
+			progress->setTotalSteps(maxprog); // add for sum up
+			progress->reset();
+		}
+		//	    cout << "thread " << j << " j range " << j_start << " - " << j_end << endl;
+		fematch_thr_threads[j]->fematch_thr_setup(progress,
+								&fem_data[j],
+								&z_experiment[j],
+								&z_residuals[j],
+								&initCVector,
+								mfem[j],
+								&run_inf,
+								&s_distribution,
+								&D_distribution,
+								selected_cell,
+								selected_lambda,
+								&partial_concentration,
+								bottom,
+								points,
+								j_start,
+								j_end
+								);
+	}
+
+	for(j = 0; j < threads; j++)
+	{
 		qApp->processEvents();
-		// for each term in the linear combination we need to reset the
-		// simulation vectors, the experimental vector simply keeps getting overwritten:
-		clear_data(&(fem_data[0]));
+		fematch_thr_threads[j]->fematch_thr_wait();
+	}
+
+	// destroy
+	for(j = 0; j < threads; j++)
+	{
+		qApp->processEvents();
+		fematch_thr_threads[j]->fematch_thr_shutdown();
+	}
+
+	for(j = 0; j < threads; j++)
+	{
+		qApp->processEvents();
+		fematch_thr_threads[j]->wait();
+	}
+
+	progress->setProgress(maxprog - 1);
+	qApp->processEvents();
+
+	for(i = 0; i < threads; i++)
+	{
 		for (j=0; j<experiment.scan.size(); j++)
 		{
 			for (k=0; k<points; k++)
 			{
-				// reset concentration to zero:
-				experiment.scan[j].conc[k] = 0.0;
+				residuals.scan[j].conc[k] += z_residuals[i].scan[j].conc[k];
 			}
 		}
+	}
 
-		mfem[0]->set_params(100, s_distribution[i], D_distribution[i],
-		(double) run_inf.rpm[selected_cell][selected_lambda][0],
-		experiment.scan[experiment.scan.size()-1].time,
-		(double) run_inf.meniscus[selected_cell], bottom, (double) partial_concentration[i], &initCVector);
+	progress->setProgress(maxprog);
+	qApp->processEvents();
 
-		// generate the next term of the linear combination:
-		mfem[0]->run();
+	for(j = 0; j < USglobal->config_list.numThreads; j++)
+	{
+		delete fematch_thr_threads[j];
+	}
 
-		// interpolate model function to the experimental data so dimension 1 in A matches dimension of B:
-		mfem[0]->interpolate(&experiment, &(fem_data[0]));
-		for (j=0; j<experiment.scan.size(); j++)
+	}
+	else
+	{
+		for (i=0; i<components; i++)
 		{
-			for (k=0; k<points; k++)
+			qApp->processEvents();
+			// for each term in the linear combination we need to reset the
+			// simulation vectors, the experimental vector simply keeps getting overwritten:
+			clear_data(&(fem_data[0]));
+			for (j=0; j<experiment.scan.size(); j++)
 			{
-				residuals.scan[j].conc[k] += experiment.scan[j].conc[k];
+				for (k=0; k<points; k++)
+				{
+					// reset concentration to zero:
+					experiment.scan[j].conc[k] = 0.0;
+				}
 			}
+
+			mfem[0]->set_params(100, s_distribution[i], D_distribution[i],
+			(double) run_inf.rpm[selected_cell][selected_lambda][0],
+			experiment.scan[experiment.scan.size()-1].time,
+			(double) run_inf.meniscus[selected_cell], bottom, (double) partial_concentration[i], &initCVector);
+
+			// generate the next term of the linear combination:
+			mfem[0]->run();
+
+			// interpolate model function to the experimental data so dimension 1 in A matches dimension of B:
+			mfem[0]->interpolate(&experiment, &(fem_data[0]));
+			for (j=0; j<experiment.scan.size(); j++)
+			{
+				for (k=0; k<points; k++)
+				{
+					residuals.scan[j].conc[k] += experiment.scan[j].conc[k];
+				}
+			}
+			progress->setProgress(i+1);
 		}
-		progress->setProgress(i+1);
-	  }
 	}
 	qApp->processEvents();
 // subtract ti/ri noise later graphically in additional plots
@@ -1926,7 +1955,7 @@ void US_FeMatch_W::load_model(const QString &fileName)
 		f.close();
 		cnt_component->setRange(1.0, (double) components, 1.0);
 		cnt_component->setEnabled(true);
-		
+
 		str.sprintf(" %10.6e kD, %4.2f", mw[0]/1000, f_f0[0]);
 		lbl_MW_ff02->setText(str);
 		pb_fit->setEnabled(true);

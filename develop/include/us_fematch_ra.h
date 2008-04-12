@@ -3,23 +3,23 @@
 
 #include "us_dtactrl.h"
 #include "us_extern.h"
-#include "us_mfem.h"
 #include "us_resplot.h"
 #include "us_util.h"
 #include "us_plotdata.h"
 #include "us_3dsolutes.h"
+#include "us_astfem_rsa.h"
 #include "../3dplot/mesh2mainwindow.h"
 
-#include <qcheckbox.h>
-#include <qwt_symbol.h>
-#include <cerrno>
+//#include <qcheckbox.h>
+//#include <qmessagebox.h>
+//#include <qwt_symbol.h>
 
 #ifndef WIN32
 #include <unistd.h>
 #endif
 #include <math.h>
 #include <float.h>
-
+#include <cerrno>
 
 using namespace std;
 
@@ -46,7 +46,12 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		US_Pixmap *pm;
 		float rmsd;
 		int model;
-		struct mfem_data residuals, fem_model;
+		bool stopFlag, movieFlag;
+		struct mfem_data residuals;
+		vector <struct mfem_data> simdata;
+		struct ModelSystem ms;
+		struct SimulationParameters sp;
+		US_Astfem_RSA *astfem_rsa;
 
 	private slots:
 
@@ -56,8 +61,8 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		float fit();
 		void write_res();
 		void load_model();
-		void load_model(const QString &);
 		void clearDisplay();
+		void printError(const int &);
 
 // re-implemented Functions:
 

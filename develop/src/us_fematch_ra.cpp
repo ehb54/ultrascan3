@@ -203,7 +203,9 @@ void US_FeMatchRa_W::view()
 	e->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
 	e->load(filestr);
 	e->show();
-
+	stopFlag = false;
+	movieFlag = false;
+	astfem_rsa = new US_Astfem_RSA(&stopFlag, false, &movieFlag);
 }
 
 void US_FeMatchRa_W::write_res()
@@ -212,6 +214,29 @@ void US_FeMatchRa_W::write_res()
 
 float US_FeMatchRa_W::fit()
 {
+	QString str;
+	struct mfem_scan single_scan;
+	struct mfem_data experiment;
+	unsigned int i;
+	clear_data(&experiment);
+	clear_data(&residuals);
+	simdata.clear();
+//	progress->setTotalSteps(); // one extra column for the baseline
+//	progress->reset();
+	for (i=0; i<points; i++)
+	{
+		experiment.radius.push_back(radius[i]);
+		residuals.radius.push_back(radius[i]);
+		single_scan.conc.push_back(0.0); // populate with zeros
+	}
+	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+	{
+		single_scan.time = (double) run_inf.time[selected_cell][selected_lambda][i];
+		experiment.scan.push_back(single_scan);
+		residuals.scan.push_back(single_scan);
+	}
+	simdata.push_back(experiment);
+	astfem_rsa->calculate(&ms, &sp, &simdata);
 	return rmsd;
 }
 
@@ -228,13 +253,83 @@ void US_FeMatchRa_W::clear_data(mfem_data *d)
 
 void US_FeMatchRa_W::load_model()
 {
-	QString fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.model.??", 0);
+	QString fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.us_system", 0);
 	if ( !fn.isEmpty() )
 	{
-		load_model(fn);		// the user gave a file name
+		US_FemGlobal *fg;
+		int error_code;
+		QString str;
+		fg = new US_FemGlobal(this);
+		error_code = fg->read_experiment(&ms, &sp, fn);
+		delete fg;
+		if (error_code < 0)
+		{
+			str.sprintf("Unable to load System: " + fn + "\n\nError code: %d", error_code);
+			QMessageBox::information(this, tr("Simulation Module"), tr(str), QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+			return;
+		}
+		else
+		{
+			printError(4); // successfully loaded a new model
+			pb_fit->setEnabled(true);
+		}
 	}
 }
 
-void US_FeMatchRa_W::load_model(const QString &fileName)
+void US_FeMatchRa_W::printError(const int &ival)
 {
+	switch (ival)
+	{
+		case 0:
+		{
+			QMessageBox::warning(this, tr("UltraScan Warning"),
+			tr("Please note:\n\nThere was an error reading\nthe selected Model File!\n\nThis file appears to be corrupted"),
+			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+			break;
+		}
+		case 1:
+		{
+			QMessageBox::warning(this, tr("UltraScan Warning"),
+			tr("Sorry, for old-style model files only\nnon-interacting model loading is supported.\n\n") +
+			tr("Please recreate this model by clicking on:\n\n\"New Model\""),
+			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+			break;
+		}
+		case 2:
+		{
+			QMessageBox::warning(this, tr("UltraScan Warning"), tr("Please note:\n\n") +
+			tr("UltraScan could not open\nthe selected Model File!"),
+			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+			break;
+		}
+		case 3:
+		{
+			QMessageBox::warning(this, tr("UltraScan Warning"),
+			tr("Please note:\n\nUltraScan could not read\nthe selected Model File!"),
+			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+			break;
+		}
+		case 4:
+		{
+			QMessageBox::information(this, tr("Simulation Module"), tr("Successfully loaded Model:\n\n")
+			+ ms.description, QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+			break;
+		}
+		case 5:
+		{
+			QMessageBox::warning(this, tr("UltraScan Warning"),
+			tr("Please note:\n\nYou provided an invalid entry!\n\nPlease try again..."),
+			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+			break;
+		}
+		case 6:
+		{
+			QMessageBox::warning(this, tr("UltraScan Warning"),
+										tr("Sorry, old-style models are no longer supported.\n\n") +
+												tr("Please load a different model or create a new Model"),
+										QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+			break;
+		}
+	}
 }
+

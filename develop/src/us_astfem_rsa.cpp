@@ -43,6 +43,8 @@ vector <struct mfem_data> *exp_data)
 			CT0.radius.clear();
 			CT0.concentration.clear();
 			adjust_limits((*simparams).speed_step[0].rotorspeed);
+			(*exp_data)[0].meniscus = af_params.current_meniscus;
+			(*exp_data)[0].bottom = af_params.current_bottom;
 			double dr = (af_params.current_bottom - af_params.current_meniscus)/(initial_npts-1);
 			for (j=0; j<initial_npts; j++)
 			{
@@ -90,6 +92,8 @@ vector <struct mfem_data> *exp_data)
 			for (j=0; j<(*simparams).speed_step.size(); j++)
 			{
 				adjust_limits((*simparams).speed_step[j].rotorspeed);
+				(*exp_data)[j].meniscus = af_params.current_meniscus;
+				(*exp_data)[j].bottom = af_params.current_bottom;
 				if((*simparams).speed_step[j].acceleration_flag) // we need to simulate acceleration
 				{// if the speed difference is larger than acceleration rate then we have at least 1 acceleration step
 					af_params.time_steps = (unsigned int) fabs((*simparams).speed_step[j].rotorspeed
@@ -153,8 +157,6 @@ cout << "speed:\t\t" << (*simparams).speed_step[j].rotorspeed << endl;
 cout << "hours:\t\t" << (*simparams).speed_step[j].duration_hours << endl;
 cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 				af_params.start_time = current_time;
-				(*exp_data)[j].meniscus = af_params.current_meniscus;
-				(*exp_data)[j].bottom = af_params.current_bottom;
 				af_params.mesh = (*simparams).mesh;
 				af_params.moving_grid = (*simparams).moving_grid;
 				af_params.acceleration = false;
@@ -282,6 +284,8 @@ print_af();
 				qApp->processEvents();
 			}
 			adjust_limits((*simparams).speed_step[j].rotorspeed);
+			(*exp_data)[j].meniscus = af_params.current_meniscus;
+			(*exp_data)[j].bottom = af_params.current_bottom;
 			if((*simparams).speed_step[j].acceleration_flag) // we need to simulate acceleration
 			{// if the speed difference is larger than acceleration rate then we have at least 1 acceleration step
 				af_params.time_steps = (unsigned int) fabs((*simparams).speed_step[j].rotorspeed
@@ -340,8 +344,6 @@ print_af();
 			}
 			af_params.time_steps = 1 + (unsigned int) (duration/af_params.dt);
 			af_params.start_time = current_time;
-			(*exp_data)[j].meniscus = af_params.current_meniscus;
-			(*exp_data)[j].bottom = af_params.current_bottom;
 			af_params.mesh = (*simparams).mesh;
 			af_params.moving_grid = (*simparams).moving_grid;
 			af_params.acceleration = false;
