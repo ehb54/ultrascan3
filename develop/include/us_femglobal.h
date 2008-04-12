@@ -192,12 +192,15 @@ class US_EXTERN US_FemGlobal : public QObject
 		int write_experiment(struct ModelSystem *, struct SimulationParameters *, QString);
 
 		int read_simulationParameters(struct SimulationParameters *, QString);
+		int read_simulationParameters(struct SimulationParameters *, vector <QString>);
 		int write_simulationParameters(struct SimulationParameters *, QString);
 
 		int read_modelSystem(struct ModelSystem *, QString, bool flag=false);
+		int read_modelSystem(struct ModelSystem *, vector <QString>, bool flag=false);
 		int write_modelSystem(struct ModelSystem *, QString, bool flag=false);
 
 		int read_constraints(struct ModelSystem *, struct ModelSystemConstraints *, QString);
+		int read_constraints(struct ModelSystem *, struct ModelSystemConstraints *, vector <QString>);
 		int write_constraints(struct ModelSystem *, struct ModelSystemConstraints *, QString);
 
 		void select_model(struct ModelSystem *);

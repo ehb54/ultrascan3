@@ -1,4 +1,5 @@
 #include "../include/us_femglobal.h"
+#include <qregexp.h>
 
 US_FemGlobal::US_FemGlobal(QObject *parent, const char *name) : QObject(parent, name)
 {
@@ -10,380 +11,365 @@ US_FemGlobal::~US_FemGlobal()
 
 int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename, bool flag)
 {
-	QFile f(filename);
-	QString str="";
-	unsigned int i, j;
+	QString str;
+	vector <QString> qsv;
+	QFile f;
+	f.setName(filename);
 	if (f.open(IO_ReadOnly | IO_Translate))
 	{
 		QTextStream ts(&f);
-		if (flag) // if we are reading this model as part of a different file, we need
-		{ // to find the beginning point first so the file is correctly off-set: 
-			while (str != "#!__Begin_ModelSystem__!")
-			{
-				str = ts.readLine();
-			}
-		}
-		ts.readLine(); // FE, SA2D, COFS, SIM or GA
-		(*ms).description = ts.readLine();
-		if ((*ms).description.isNull())
+		while (str = ts.readLine())
 		{
-			f.close();
-			return(-1);
-		}
-		str = ts.readLine();
-		if (str.find("#", 0, true) == 0) // a new model has a comment line in the second line starting with "#"
-		{
-			float fval;
-			ts >> fval; // UltraScan version
-			ts.readLine(); // read rest of line
-			ts >> str;
-			ts.readLine(); // read rest of line
-			if (str.isNull())
-			{
-				f.close();
-				return(-2);
-			}
-			(*ms).model = str.toInt();
-			ts >> str;
-			if (str.isNull())
-			{
-				f.close();
-				return(-3);
-			}
-			ts.readLine();
-			(*ms).component_vector.resize(str.toInt());
-			for (i=0; i<(*ms).component_vector.size(); i++)
-			{
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					f.close();
-					return(-4);
-				}
-				int pos = str.find("#", 0, true);
-				str.truncate(pos);
-				(*ms).component_vector[i].name = str.stripWhiteSpace();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-5);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].concentration = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-6);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].s = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-7);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].D = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-8);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].sigma = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-9);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].delta = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-10);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].mw = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-11);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].vbar20 = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-12);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].shape = str;
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-13);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].f_f0 = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-14);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].extinction = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-15);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].show_conc = (bool) str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-16);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].show_stoich = str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-17);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].show_keq = (bool) str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-18);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].show_koff = (bool) str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-19);
-				}
-				ts.readLine();
-				(*ms).component_vector[i].show_component.resize(str.toUInt());
-				for (j=0; j<(*ms).component_vector[i].show_component.size(); j++)
-				{
-					ts >> str;
-					if (str.isNull())
-					{
-						f.close();
-						return(-20);
-					}
-					ts.readLine();
-					(*ms).component_vector[i].show_component[j] = str.toInt();
-				}
-				if ((*ms).component_vector[i].concentration < 0)
-				{
-					(*ms).component_vector[i].c0.radius.clear();
-					(*ms).component_vector[i].c0.concentration.clear();
-					ts >> str;
-					if (str.isNull())
-					{
-						f.close();
-						return(-21);
-					}
-					ts.readLine();
-					unsigned int ival = str.toUInt();
-					for (j=0; j<ival; j++)
-					{
-						ts >> str;
-						if (str.isNull())
-						{
-							f.close();
-							return(-22);
-						}
-						(*ms).component_vector[i].c0.radius.push_back(str.toDouble());
-						ts >> str;
-						if (str.isNull())
-						{
-							f.close();
-							return(-23);
-						}
-						(*ms).component_vector[i].c0.concentration.push_back(str.toDouble());
-					}
-					ts.readLine(); //read the rest of the last linee
-				}
-			}
-			ts >> str;
-			if (str.isNull())
-			{
-				f.close();
-				return(-24);
-			}
-			ts.readLine();
-			(*ms).assoc_vector.resize(str.toUInt());
-			for (i=0; i<(*ms).assoc_vector.size(); i++)
-			{
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-25);
-				}
-				ts.readLine();
-				(*ms).assoc_vector[i].keq = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-26);
-				}
-				ts.readLine();
-				(*ms).assoc_vector[i].units = str;
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-27);
-				}
-				ts.readLine();
-				(*ms).assoc_vector[i].k_off = str.toFloat();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-28);
-				}
-				ts.readLine();
-				(*ms).assoc_vector[i].component1 = str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-29);
-				}
-				ts.readLine();
-				(*ms).assoc_vector[i].component2 = str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-30);
-				}
-				ts.readLine();
-				(*ms).assoc_vector[i].component3 = str.toInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-31);
-				}
-				ts.readLine();
-				(*ms).assoc_vector[i].stoichiometry1 = str.toUInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-32);
-				}
-				ts.readLine();
-				(*ms).assoc_vector[i].stoichiometry2 = str.toUInt();
-				ts >> str;
-				if (str.isNull())
-				{
-					f.close();
-					return(-33);
-				}
-				ts.readLine();
-				(*ms).assoc_vector[i].stoichiometry3 = str.toUInt();
-			}
-			f.close();
-			return(0);
-		}
-		else // load an old-style model file for noninteracting models
-		{
-			(*ms).model = str.toInt();
-			if ((*ms).model > 3) // we can only read noninteracting models
-			(*ms).model = 3; // set to fixed molecular weight distribution by default
-			str = ts.readLine();
-			if (str.isNull())
-			{
-				f.close();
-				return(-34);
-			}
-			(*ms).component_vector.resize(str.toInt()); // number of components
-			for (i=0; i<(*ms).component_vector.size(); i++)
-			{
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					f.close();
-					return(-35);
-				}
-				(*ms).component_vector[i].concentration = str.toFloat();
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					f.close();
-					return(-36);
-				}
-				(*ms).component_vector[i].s = str.toFloat();
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					f.close();
-					return(-37);
-				}
-				(*ms).component_vector[i].D = str.toFloat();
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					f.close();
-					return(-38);
-				}
-				(*ms).component_vector[i].sigma = str.toFloat();
-				str = ts.readLine();
-				if (str.isNull())
-				{
-					f.close();
-					return(-39);
-				}
-				(*ms).component_vector[i].delta = str.toFloat();
-				(*ms).component_vector[i].vbar20 =  (float) 0.72;
-				(*ms).component_vector[i].extinction = 1.0;
-				(*ms).component_vector[i].name = str.sprintf("Component %d", i+1);
-				(*ms).component_vector[i].mw = ((*ms).component_vector[i].s/(*ms).component_vector[i].D)
-						*((R*K20)/(1.0 - (*ms).component_vector[i].vbar20 * DENS_20W));
-				(*ms).component_vector[i].f_f0 = (((*ms).component_vector[i].mw *
-						(1.0 - (*ms).component_vector[i].vbar20 * DENS_20W))/((*ms).component_vector[i].s * AVOGADRO))
-				/(6 * VISC_20W * pow(((*ms).component_vector[i].mw * M_PI * M_PI * 3.0
-						* (*ms).component_vector[i].vbar20)/(4.0 * AVOGADRO), 1.0/3.0));
-				(*ms).component_vector[i].show_conc = true;
-				(*ms).component_vector[i].show_keq = false;
-				(*ms).component_vector[i].show_koff = false;
-				(*ms).component_vector[i].show_stoich = 0;
-			}
+		    str.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+		    qsv.push_back(str);
 		}
 		f.close();
-		return(1); // loaded an old-style model
+		return(read_modelSystem(ms, qsv, flag));
+	} else {
+		return(-40); // can't open input file
 	}
-	else
+}    
+
+int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv, bool flag)
+{
+	QString str="";
+	unsigned int i, j;
+	unsigned int pos = 0;
+	bool ok;
+	if (flag) // if we are reading this model as part of a different file, we need
+	{ // to find the beginning point first so the file is correctly off-set: 
+	    while (str != "#!__Begin_ModelSystem__!" && pos < qsv.size())
+	    {
+		str = qsv[pos++];
+	    }
+	}
+	pos++; // FE, SA2D, COFS, SIM or GA
+	if (pos >= qsv.size()) return -1;
+	(*ms).description = qsv[pos++];
+	if ((*ms).description.isNull())
 	{
-		return(-40); // unabled to open file
+	    return(-1);
 	}
+	if (pos >= qsv.size()) return -1;
+	str = qsv[pos++];
+	if (str.find("#", 0, true) == 0) // a new model has a comment line in the second line starting with "#"
+	{
+	    float fval;
+	    if (pos >= qsv.size()) return -1;
+	    fval = qsv[pos++].toFloat(&ok); // UltraScan version
+	    if (pos >= qsv.size()) return -2;
+	    str = qsv[pos++];
+	    if (str.isNull())
+	    {
+		return(-2);
+	    }
+	    (*ms).model = str.toInt();
+	    if (pos >= qsv.size()) return -3;
+	    str = qsv[pos++];
+	    if (str.isNull())
+	    {
+		return(-3);
+	    }
+	    (*ms).component_vector.resize(str.toInt());
+	    for (i=0; i<(*ms).component_vector.size(); i++)
+	    {
+		if (pos >= qsv.size()) return -3;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-4);
+		}
+		// the qsv vector has these already stripped off..
+		// int lpos = str.find("#", 0, true);
+		// str.truncate(lpos);
+		(*ms).component_vector[i].name = str.stripWhiteSpace();
+		if (pos >= qsv.size()) return -5;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-5);
+		}
+		(*ms).component_vector[i].concentration = str.toFloat();
+		if (pos >= qsv.size()) return -6;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-6);
+		}
+		(*ms).component_vector[i].s = str.toFloat();
+		if (pos >= qsv.size()) return -7;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-7);
+		}
+		(*ms).component_vector[i].D = str.toFloat();
+		if (pos >= qsv.size()) return -8;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-8);
+		}
+		(*ms).component_vector[i].sigma = str.toFloat();
+		if (pos >= qsv.size()) return -9;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-9);
+		}
+		(*ms).component_vector[i].delta = str.toFloat();
+		if (pos >= qsv.size()) return -10;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-10);
+		}
+		(*ms).component_vector[i].mw = str.toFloat();
+		if (pos >= qsv.size()) return -11;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-11);
+		}
+		(*ms).component_vector[i].vbar20 = str.toFloat();
+		if (pos >= qsv.size()) return -12;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-12);
+		}
+		(*ms).component_vector[i].shape = str;
+		if (pos >= qsv.size()) return -13;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-13);
+		}
+		(*ms).component_vector[i].f_f0 = str.toFloat();
+		if (pos >= qsv.size()) return -14;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-14);
+		}
+		(*ms).component_vector[i].extinction = str.toFloat();
+		if (pos >= qsv.size()) return -15;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-15);
+		}
+		(*ms).component_vector[i].show_conc = (bool) str.toInt();
+		if (pos >= qsv.size()) return -16;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-16);
+		}
+		(*ms).component_vector[i].show_stoich = str.toInt();
+		if (pos >= qsv.size()) return -17;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-17);
+		}
+		(*ms).component_vector[i].show_keq = (bool) str.toInt();
+		if (pos >= qsv.size()) return -18;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-18);
+		}
+		(*ms).component_vector[i].show_koff = (bool) str.toInt();
+		if (pos >= qsv.size()) return -19;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-19);
+		}
+		(*ms).component_vector[i].show_component.resize(str.toUInt());
+		for (j=0; j<(*ms).component_vector[i].show_component.size(); j++)
+		{
+		    if (pos >= qsv.size()) return -20;
+		    str = qsv[pos++];
+		    if (str.isNull())
+		    {
+			return(-20);
+		    }
+		    (*ms).component_vector[i].show_component[j] = str.toInt();
+		}
+		if ((*ms).component_vector[i].concentration < 0)
+		{
+		    (*ms).component_vector[i].c0.radius.clear();
+		    (*ms).component_vector[i].c0.concentration.clear();
+		    if (pos >= qsv.size()) return -21;
+		    str = qsv[pos++];
+		    if (str.isNull())
+		    {
+			return(-21);
+		    }
+		    unsigned int ival = str.toUInt();
+		    for (j=0; j<ival; j++)
+		    {
+			if (pos >= qsv.size()) return -22;
+			str = qsv[pos++];
+			if (str.isNull())
+			{
+			    return(-22);
+			}
+			(*ms).component_vector[i].c0.radius.push_back(str.toDouble());
+			if (pos >= qsv.size()) return -23;
+			str = qsv[pos++];
+			if (str.isNull())
+			{
+			    return(-23);
+			}
+			(*ms).component_vector[i].c0.concentration.push_back(str.toDouble());
+		    }
+		}
+	    }
+	    if (pos >= qsv.size()) return -24;
+	    str = qsv[pos++];
+	    if (str.isNull())
+	    {
+		return(-24);
+	    }
+	    (*ms).assoc_vector.resize(str.toUInt());
+	    for (i=0; i<(*ms).assoc_vector.size(); i++)
+	    {
+		if (pos >= qsv.size()) return -25;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-25);
+		}
+		(*ms).assoc_vector[i].keq = str.toFloat();
+		if (pos >= qsv.size()) return -26;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-26);
+		}
+		(*ms).assoc_vector[i].units = str;
+		if (pos >= qsv.size()) return -27;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-27);
+		}
+		(*ms).assoc_vector[i].k_off = str.toFloat();
+		if (pos >= qsv.size()) return -28;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-28);
+		}
+		(*ms).assoc_vector[i].component1 = str.toInt();
+		if (pos >= qsv.size()) return -29;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-29);
+		}
+		(*ms).assoc_vector[i].component2 = str.toInt();
+		if (pos >= qsv.size()) return -30;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-30);
+		}
+		(*ms).assoc_vector[i].component3 = str.toInt();
+		if (pos >= qsv.size()) return -31;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-31);
+		}
+		(*ms).assoc_vector[i].stoichiometry1 = str.toUInt();
+		if (pos >= qsv.size()) return -32;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-32);
+		}
+		(*ms).assoc_vector[i].stoichiometry2 = str.toUInt();
+		if (pos >= qsv.size()) return -33;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-33);
+		}
+		(*ms).assoc_vector[i].stoichiometry3 = str.toUInt();
+	    }
+	    return(0);
+	}
+	else // load an old-style model file for noninteracting models
+	{
+	    (*ms).model = str.toInt();
+	    if ((*ms).model > 3) // we can only read noninteracting models
+		(*ms).model = 3; // set to fixed molecular weight distribution by default
+	    if (pos >= qsv.size()) return -34;
+	    str = qsv[pos++];
+	    if (str.isNull())
+	    {
+		return(-34);
+	    }
+	    (*ms).component_vector.resize(str.toInt()); // number of components
+	    for (i=0; i<(*ms).component_vector.size(); i++)
+	    {
+		if (pos >= qsv.size()) return -35;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-35);
+		}
+		(*ms).component_vector[i].concentration = str.toFloat();
+		if (pos >= qsv.size()) return -36;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-36);
+		}
+		(*ms).component_vector[i].s = str.toFloat();
+		if (pos >= qsv.size()) return -37;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-37);
+		}
+		(*ms).component_vector[i].D = str.toFloat();
+		if (pos >= qsv.size()) return -38;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-38);
+		}
+		(*ms).component_vector[i].sigma = str.toFloat();
+		if (pos >= qsv.size()) return -39;
+		str = qsv[pos++];
+		if (str.isNull())
+		{
+		    return(-39);
+		}
+		(*ms).component_vector[i].delta = str.toFloat();
+		(*ms).component_vector[i].vbar20 =  (float) 0.72;
+		(*ms).component_vector[i].extinction = 1.0;
+		(*ms).component_vector[i].name = str.sprintf("Component %d", i+1);
+		(*ms).component_vector[i].mw = ((*ms).component_vector[i].s/(*ms).component_vector[i].D)
+		    *((R*K20)/(1.0 - (*ms).component_vector[i].vbar20 * DENS_20W));
+		(*ms).component_vector[i].f_f0 = (((*ms).component_vector[i].mw *
+						   (1.0 - (*ms).component_vector[i].vbar20 * DENS_20W))/((*ms).component_vector[i].s * AVOGADRO))
+		    /(6 * VISC_20W * pow(((*ms).component_vector[i].mw * M_PI * M_PI * 3.0
+					  * (*ms).component_vector[i].vbar20)/(4.0 * AVOGADRO), 1.0/3.0));
+		(*ms).component_vector[i].show_conc = true;
+		(*ms).component_vector[i].show_keq = false;
+		(*ms).component_vector[i].show_koff = false;
+		(*ms).component_vector[i].show_stoich = 0;
+	    }
+	}
+	return(1); // loaded an old-style model
 }
+
 
 int US_FemGlobal::write_modelSystem(struct ModelSystem *ms, QString filename, bool flag)
 {
@@ -466,239 +452,214 @@ int US_FemGlobal::write_modelSystem(struct ModelSystem *ms, QString filename, bo
 
 int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, QString filename)
 {
-	QFile f(filename);
-	int ival;
-	if (f.open(IO_ReadOnly))
+	QString str;
+	vector <QString> qsv;
+	QFile f;
+	f.setName(filename);
+	if (f.open(IO_ReadOnly | IO_Translate))
 	{
 		QTextStream ts(&f);
-		if (!ts.atEnd())
+		while (str = ts.readLine())
 		{
-			unsigned int ival;
-			ts >> ival;
-			(*sp).speed_step.resize(ival);
-			ts.readLine();
-		}
-		else
-		{
-			f.close();
-			return (-51);
-		}
-		for (unsigned int i=0; i<(*sp).speed_step.size(); i++)
-		{
-			QTextStream ts(&f);
-			if (!ts.atEnd())
-			{
-				ts >> (*sp).speed_step[i].duration_hours;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				return(-52);
-			}
-			if (!ts.atEnd())
-			{
-				ts >> (*sp).speed_step[i].duration_minutes;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				return(-53);
-			}
-			if (!ts.atEnd())
-			{
-				ts >> (*sp).speed_step[i].delay_hours;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				return(-54);
-			}
-			if (!ts.atEnd())
-			{
-				ts >> (*sp).speed_step[i].delay_minutes;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				return(-55);
-			}
-			if (!ts.atEnd())
-			{
-				ts >> (*sp).speed_step[i].rotorspeed;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				return(-56);
-			}
-			if (!ts.atEnd())
-			{
-				ts >> (*sp).speed_step[i].acceleration;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				return(-57);
-			}
-			if (!ts.atEnd())
-			{
-				int ival;
-				ts >> ival;
-				(*sp).speed_step[i].acceleration_flag = ival;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				return(-58);
-			}
-			if (!ts.atEnd())
-			{
-				ts >> (*sp).speed_step[i].scans;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				return(-59);
-			}
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*sp).simpoints;
-			ts.readLine();
-		}
-		else
-		{
-			f.close();
-			return(-60);
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*sp).radial_resolution;
-			ts.readLine();
-		}
-		else
-		{
-			f.close();
-			return(-61);
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*sp).meniscus;
-			ts.readLine();
-		}
-		else
-		{
-			f.close();
-			return(-62);
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*sp).bottom;
-			ts.readLine();
-		}
-		else
-		{
-			f.close();
-			return(-63);
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*sp).rnoise;
-			ts.readLine();
-		}
-		else
-		{
-			f.close();
-			return(-64);
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*sp).inoise;
-			ts.readLine();
-		}
-		else
-		{
-			f.close();
-			return(-65);
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*sp).rinoise;
-			ts.readLine();
-		}
-		else
-		{
-			f.close();
-			return(-66);
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*sp).mesh;
-		}
-		else
-		{
-			f.close();
-			return(-67);
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*sp).moving_grid;
-		}
-		else
-		{
-			f.close();
-			return(-68);
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*sp).rotor;
-		}
-		else
-		{
-			f.close();
-			return(-70);
-		}
-		if (!ts.atEnd())
-		{
-			ts >> ival;
-			if (ival == 1)
-			{
-				(*sp).band_forming = true;
-				if (!ts.atEnd())
-				{
-					ts >> (*sp).band_volume;
-				}
-				else
-				{
-					f.close();
-					return(-71);
-				}
-			}
-			else
-			{
-				(*sp).band_forming = false;
-			}
-		}
-		else
-		{
-			f.close();
-			return(-71);
+		    str.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+		    qsv.push_back(str);
 		}
 		f.close();
-		return(0);
+		return(read_simulationParameters(sp, qsv));
+	} else {
+		return(-72); // can't open input file
+	}
+}    
+
+int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, vector <QString> qsv)
+{
+	int ival;
+	unsigned int pos = 0;
+	bool ok;
+	if (pos < qsv.size())
+	{
+	    unsigned int ival;
+	    ival = qsv[pos++].toUInt(&ok);
+	    (*sp).speed_step.resize(ival);
 	}
 	else
 	{
-		return(-72);
+	    return (-51);
 	}
+	for (unsigned int i=0; i<(*sp).speed_step.size(); i++)
+	{
+	    if (pos < qsv.size())
+	    {
+		(*sp).speed_step[i].duration_hours = qsv[pos++].toUInt(&ok);
+	    }
+	    else
+	    {
+		return(-52);
+	    }
+	    if (pos < qsv.size())
+	    {
+		(*sp).speed_step[i].duration_minutes = qsv[pos++].toUInt(&ok);
+	    }
+	    else
+	    {
+		return(-53);
+	    }
+	    if (pos < qsv.size())
+	    {
+		(*sp).speed_step[i].delay_hours = qsv[pos++].toUInt(&ok);
+	    }
+	    else
+	    {
+		return(-54);
+	    }
+	    if (pos < qsv.size())
+	    {
+		(*sp).speed_step[i].delay_minutes = qsv[pos++].toFloat(&ok);
+	    }
+	    else
+	    {
+		return(-55);
+	    }
+	    if (pos < qsv.size())
+	    {
+		(*sp).speed_step[i].rotorspeed = qsv[pos++].toUInt(&ok);
+	    }
+	    else
+	    {
+		return(-56);
+	    }
+	    if (pos < qsv.size())
+	    {
+		(*sp).speed_step[i].acceleration = qsv[pos++].toUInt(&ok);
+	    }
+	    else
+	    {
+		return(-57);
+	    }
+	    if (pos < qsv.size())
+	    {
+		int ival;
+		ival = qsv[pos++].toInt(&ok);
+		(*sp).speed_step[i].acceleration_flag = ival;
+	    }
+	    else
+	    {
+		return(-58);
+	    }
+	    if (pos < qsv.size())
+	    {
+		(*sp).speed_step[i].scans = qsv[pos++].toUInt(&ok);
+	    }
+	    else
+	    {
+		return(-59);
+	    }
+	}
+	if (pos < qsv.size())
+	{
+	    (*sp).simpoints = qsv[pos++].toUInt(&ok);
+	}
+	else
+	{
+	    return(-60);
+	}
+	if (pos < qsv.size())
+	{
+	    (*sp).radial_resolution = qsv[pos++].toFloat(&ok);
+	}
+	else
+	{
+	    return(-61);
+	}
+	if (pos < qsv.size())
+	{
+	    (*sp).meniscus = qsv[pos++].toFloat(&ok);
+	}
+	else
+	{
+	    return(-62);
+	}
+	if (pos < qsv.size())
+	{
+	    (*sp).bottom = qsv[pos++].toFloat(&ok);
+	}
+	else
+	{
+	    return(-63);
+	}
+	if (pos < qsv.size())
+	{
+	    (*sp).rnoise = qsv[pos++].toFloat(&ok);
+	}
+	else
+	{
+	    return(-64);
+	}
+	if (pos < qsv.size())
+	{
+	    (*sp).inoise = qsv[pos++].toFloat(&ok);
+	}
+	else
+	{
+	    return(-65);
+	}
+	if (pos < qsv.size())
+	{
+	    (*sp).rinoise = qsv[pos++].toFloat(&ok);
+	}
+	else
+	{
+	    return(-66);
+	}
+	if (pos < qsv.size())
+	{
+	    (*sp).mesh = qsv[pos++].toUInt(&ok);
+	}
+	else
+	{
+	    return(-67);
+	}
+	if (pos < qsv.size())
+	{
+	    (*sp).moving_grid = qsv[pos++].toInt(&ok);
+	}
+	else
+	{
+	    return(-68);
+	}
+	if (pos < qsv.size())
+	{
+	    (*sp).rotor = qsv[pos++].toInt(&ok);
+	}
+	else
+	{
+	    return(-70);
+	}
+	if (pos < qsv.size())
+	{
+	    ival = qsv[pos++].toInt(&ok);
+	    if (ival == 1)
+	    {
+		(*sp).band_forming = true;
+		if (pos < qsv.size())
+		{
+		    (*sp).band_volume = qsv[pos++].toFloat(&ok);
+		}
+		else
+		{
+		    return(-71);
+		}
+	    }
+	    else
+	    {
+		(*sp).band_forming = false;
+	    }
+	}
+	else
+	{
+	    return(-71);
+	}
+	return(0);
 }
 
 int US_FemGlobal::write_simulationParameters(struct SimulationParameters *sp, QString filename)
@@ -814,115 +775,127 @@ int US_FemGlobal::write_experiment(struct ModelSystem *ms, struct SimulationPara
 int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemConstraints *msc, QString filename)
 {
 	QString str;
-	unsigned int i, j, k;
-	int flag1;
+	vector <QString> qsv;
 	QFile f;
 	f.setName(filename);
-	if (f.open(IO_ReadOnly))
+	if (f.open(IO_ReadOnly | IO_Translate))
 	{
 		QTextStream ts(&f);
-		ts >> j;
-		ts.readLine(); // j is the number of components in this model
-		(*msc).component_vector_constraints.resize(j);
-		for (i=0; i<j; i++)
+		while (str = ts.readLine())
 		{
-			ts >> k;
-			ts.readLine();
-			(*msc).component_vector_constraints[i].vbar20.fit = k;
-			ts >> (*msc).component_vector_constraints[i].vbar20.low;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].vbar20.high;
-			ts.readLine();
-			ts >> k;
-			(*msc).component_vector_constraints[i].mw.fit = k;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].mw.low;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].mw.high;
-			ts.readLine();
-			ts >> k;
-			(*msc).component_vector_constraints[i].s.fit = k;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].s.low;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].s.high;
-			ts.readLine();
-			ts >> k;
-			(*msc).component_vector_constraints[i].D.fit = k;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].D.low;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].D.high;
-			ts.readLine();
-			ts >> k;
-			(*msc).component_vector_constraints[i].sigma.fit = k;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].sigma.low;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].sigma.high;
-			ts.readLine();
-			ts >> k;
-			(*msc).component_vector_constraints[i].delta.fit = k;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].delta.low;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].delta.high;
-			ts.readLine();
-			ts >> k;
-			(*msc).component_vector_constraints[i].concentration.fit = k;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].concentration.low;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].concentration.high;
-			ts.readLine();
-			ts >> k;
-			(*msc).component_vector_constraints[i].f_f0.fit = k;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].f_f0.low;
-			ts.readLine();
-			ts >> (*msc).component_vector_constraints[i].f_f0.high;
-			ts.readLine();
+		    str.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+		    qsv.push_back(str);
 		}
-		ts >> j; // j is the number of reactions in this model
-		ts.readLine();
-		(*msc).assoc_vector_constraints.resize(j);
-		for (i=0; i<j; i++)
-		{
-			ts >> k;
-			ts.readLine();
-			(*msc).assoc_vector_constraints[i].keq.fit = k;
-			ts >> (*msc).assoc_vector_constraints[i].keq.low;
-			ts.readLine();
-			ts >> (*msc).assoc_vector_constraints[i].keq.high;
-			ts.readLine();
-			ts >> k;
-			ts.readLine();
-			(*msc).assoc_vector_constraints[i].koff.fit = k;
-			ts >> (*msc).assoc_vector_constraints[i].koff.low;
-			ts.readLine();
-			ts >> (*msc).assoc_vector_constraints[i].koff.high;
-			ts.readLine();
-		}
-		ts >> (*msc).simpoints;
-		ts.readLine();
-		ts >> (*msc).mesh;
-		ts.readLine();
-		ts >> (*msc).moving_grid;
-		ts.readLine();
-		ts >> (*msc).band_volume;
 		f.close();
-		flag1 = read_modelSystem(ms, filename, true);
-		if (flag1 < 0)
-		{
-			f.close();
-			return (flag1);
-		}
-		return(0);
+		return(read_constraints(ms, msc, qsv));
+	} else {
+		return(-1); // can't open input file
 	}
-	else
+}    
+
+int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemConstraints *msc, vector <QString> qsv)
+{
+	QString str;
+	unsigned int i, j, k;
+	unsigned int pos = 0;
+	bool ok;
+	if (pos >= qsv.size()) return -2;
+	j = qsv[pos++].toUInt(&ok);
+	(*msc).component_vector_constraints.resize(j);
+	for (i=0; i<j; i++)
 	{
-		return(-1); // can't read input file
+	    if (pos >= qsv.size()) return -3;
+	    k = qsv[pos++].toUInt(&ok);
+	    (*msc).component_vector_constraints[i].vbar20.fit = k;
+	    if (pos >= qsv.size()) return -4;
+	    (*msc).component_vector_constraints[i].vbar20.low = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -5;
+	    (*msc).component_vector_constraints[i].vbar20.high = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -6;
+	    k = qsv[pos++].toUInt(&ok);
+	    (*msc).component_vector_constraints[i].mw.fit = k;
+	    if (pos >= qsv.size()) return -7;
+	    (*msc).component_vector_constraints[i].mw.low = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -8;
+	    (*msc).component_vector_constraints[i].mw.high = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -9;
+	    k = qsv[pos++].toUInt(&ok);
+	    (*msc).component_vector_constraints[i].s.fit = k;
+	    if (pos >= qsv.size()) return -10;
+	    (*msc).component_vector_constraints[i].s.low = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -11;
+	    (*msc).component_vector_constraints[i].s.high = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -12;
+	    k = qsv[pos++].toUInt(&ok);
+	    (*msc).component_vector_constraints[i].D.fit = k;
+	    if (pos >= qsv.size()) return -13;
+	    (*msc).component_vector_constraints[i].D.low = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -14;
+	    (*msc).component_vector_constraints[i].D.high = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -15;
+	    k = qsv[pos++].toUInt(&ok);
+	    (*msc).component_vector_constraints[i].sigma.fit = k;
+	    if (pos >= qsv.size()) return -16;
+	    (*msc).component_vector_constraints[i].sigma.low = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -17;
+	    (*msc).component_vector_constraints[i].sigma.high = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -18;
+	    k = qsv[pos++].toUInt(&ok);
+	    (*msc).component_vector_constraints[i].delta.fit = k;
+	    if (pos >= qsv.size()) return -19;
+	    (*msc).component_vector_constraints[i].delta.low = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -20;
+	    (*msc).component_vector_constraints[i].delta.high = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -21;
+	    k = qsv[pos++].toUInt(&ok);
+	    (*msc).component_vector_constraints[i].concentration.fit = k;
+	    if (pos >= qsv.size()) return -22;
+	    (*msc).component_vector_constraints[i].concentration.low = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -23;
+	    (*msc).component_vector_constraints[i].concentration.high = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -24;
+	    k = qsv[pos++].toUInt(&ok);
+	    (*msc).component_vector_constraints[i].f_f0.fit = k;
+	    if (pos >= qsv.size()) return -25;
+	    (*msc).component_vector_constraints[i].f_f0.low = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -26;
+	    (*msc).component_vector_constraints[i].f_f0.high = qsv[pos++].toFloat(&ok);
 	}
+	if (pos >= qsv.size()) return -27;
+	j = qsv[pos++].toUInt(&ok); // j is the number of reactions in this model
+	(*msc).assoc_vector_constraints.resize(j);
+	for (i=0; i<j; i++)
+	{
+	    if (pos >= qsv.size()) return -28;
+	    k = qsv[pos++].toUInt(&ok);
+	    (*msc).assoc_vector_constraints[i].keq.fit = k;
+	    if (pos >= qsv.size()) return -29;
+	    (*msc).assoc_vector_constraints[i].keq.low = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -30;
+	    (*msc).assoc_vector_constraints[i].keq.high = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -31;
+	    k = qsv[pos++].toUInt(&ok);
+	    (*msc).assoc_vector_constraints[i].koff.fit = k;
+	    if (pos >= qsv.size()) return -32;
+	    (*msc).assoc_vector_constraints[i].koff.low = qsv[pos++].toFloat(&ok);
+	    if (pos >= qsv.size()) return -33;
+	    (*msc).assoc_vector_constraints[i].koff.high = qsv[pos++].toFloat(&ok);
+	}
+	if (pos >= qsv.size()) return -34;
+	(*msc).simpoints = qsv[pos++].toUInt(&ok);
+	if (pos >= qsv.size()) return -35;
+	(*msc).mesh = qsv[pos++].toUInt(&ok);
+	if (pos >= qsv.size()) return -36;
+	(*msc).moving_grid = qsv[pos++].toInt(&ok);
+	if (pos >= qsv.size()) return -37;
+	(*msc).band_volume = qsv[pos++].toFloat(&ok);
+
+	int flag1 = read_modelSystem(ms, qsv, true);
+	if (flag1 < 0)
+	{
+	    return (flag1);
+	}
+	return(0);
 }
 
 // write a model system, and the associated constraints needed for initialization of the fitting process.
