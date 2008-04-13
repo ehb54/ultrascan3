@@ -174,10 +174,7 @@ print_af();
 
 				// set the current speed to the constant rotor speed of the current speed step
 				current_speed = (*simparams).speed_step[j].rotorspeed;
-				if (guiFlag) 
-				{
-				    qApp->processEvents();
-				}
+				qApp->processEvents();
 				if (*stopFlag)
 				{
 					return(1); // early termination = 1
@@ -235,11 +232,6 @@ print_af();
 			CT0.concentration.clear();
 			CT0 = (*system).component_vector[0].c0;
 		}
-		af_params.s.resize(0);
-		af_params.D.resize(0);
-		af_params.n.resize(0);
-		af_params.keq.resize(0);
-		af_params.koff.resize(0);
 		af_params.s.clear();
 		af_params.D.clear();
 		af_params.n.clear();
@@ -373,10 +365,7 @@ print_af();
 
 				// set the current speed to the constant rotor speed of the current speed step
 			current_speed = (*simparams).speed_step[j].rotorspeed;
-			if (guiFlag)
-			{
-			    qApp->processEvents();
-			}
+			qApp->processEvents();
 			if (*stopFlag)
 			{
 				return(1); // early termination = 1

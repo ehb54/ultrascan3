@@ -236,6 +236,11 @@ float US_FeMatchRa_W::fit()
 		residuals.scan.push_back(single_scan);
 	}
 	simdata.push_back(experiment);
+	US_FemGlobal *fg;
+	fg = new US_FemGlobal();
+	fg->write_simulationParameters(&sp, "test1.dat");
+	fg->write_modelSystem(&ms, "test2.dat");
+	delete fg;
 	astfem_rsa->calculate(&ms, &sp, &simdata);
 	return rmsd;
 }
