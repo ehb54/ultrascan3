@@ -174,7 +174,10 @@ print_af();
 
 				// set the current speed to the constant rotor speed of the current speed step
 				current_speed = (*simparams).speed_step[j].rotorspeed;
-				qApp->processEvents();
+				if (guiFlag) 
+				{
+				    qApp->processEvents();
+				}
 				if (*stopFlag)
 				{
 					return(1); // early termination = 1
@@ -361,7 +364,10 @@ print_af();
 
 				// set the current speed to the constant rotor speed of the current speed step
 			current_speed = (*simparams).speed_step[j].rotorspeed;
-			qApp->processEvents();
+			if (guiFlag)
+			{
+			    qApp->processEvents();
+			}
 			if (*stopFlag)
 			{
 				return(1); // early termination = 1
