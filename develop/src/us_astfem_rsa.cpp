@@ -174,7 +174,10 @@ print_af();
 
 				// set the current speed to the constant rotor speed of the current speed step
 				current_speed = (*simparams).speed_step[j].rotorspeed;
-				qApp->processEvents();
+				if (guiFlag)
+				{
+				    qApp->processEvents();
+				}
 				if (*stopFlag)
 				{
 					return(1); // early termination = 1
@@ -232,6 +235,11 @@ print_af();
 			CT0.concentration.clear();
 			CT0 = (*system).component_vector[0].c0;
 		}
+		af_params.s.resize(0);
+		af_params.D.resize(0);
+		af_params.n.resize(0);
+		af_params.keq.resize(0);
+		af_params.koff.resize(0);
 		af_params.s.clear();
 		af_params.D.clear();
 		af_params.n.clear();
@@ -241,12 +249,9 @@ print_af();
 		af_params.koff.push_back((double) (*system).assoc_vector[0].k_off);
 		af_params.n.push_back((*system).assoc_vector[0].stoichiometry1);
 		af_params.n.push_back((*system).assoc_vector[0].stoichiometry2);
-		cout << "Size (system): " << (*system).component_vector.size() << endl;
-		cout << "Size (afparams.s): " << af_params.s.size() << endl;
-		cout << "Size (afparams.D): " << af_params.D.size() << endl;
 		for (i=0; i<2; i++)
 		{
-			//cout << "s[" << i<< "]: " << (*system).component_vector[i].s << 
+			//cout << "s[" << i<< "]: " << (*system).component_vector[i].s <<
 			//", D[" << i << "]: " << (*system).component_vector[i].D << endl;
 			af_params.s.push_back((*system).component_vector[i].s);
 			af_params.D.push_back((*system).component_vector[i].D);
@@ -365,7 +370,10 @@ print_af();
 
 				// set the current speed to the constant rotor speed of the current speed step
 			current_speed = (*simparams).speed_step[j].rotorspeed;
-			qApp->processEvents();
+			if (guiFlag)
+			{
+			    qApp->processEvents();
+			}
 			if (*stopFlag)
 			{
 				return(1); // early termination = 1

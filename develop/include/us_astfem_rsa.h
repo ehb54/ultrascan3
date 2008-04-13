@@ -46,9 +46,9 @@ struct AstFemParameters
 class US_EXTERN US_Astfem_RSA : public QObject
 {
 	Q_OBJECT
-	
+
 	public:
-	
+
 		US_Astfem_RSA();
 		US_Astfem_RSA(bool * /*stopFlag*/, bool /*GUIflag*/, bool * /*movieFlag*/, QObject * parent=0, const char * name=0);
 		~US_Astfem_RSA();
@@ -57,17 +57,17 @@ class US_EXTERN US_Astfem_RSA : public QObject
 		bool guiFlag;				// if true, signals will be emitted
 		double last_time;			// keep track of time globally for w2t_integral calculation
 		double w2t_integral;		// keep track of w2t_integral value globally
-		
-		
+
+
 	private:
 
 		// FEM discretization related parameters:
 		unsigned int N;			// number of points used in radial direction in ASTFEM
 		vector <double> x; 		// radii of grid points; x[0...N-1]
-		AstFemParameters af_params;
+		struct AstFemParameters af_params;
 
 	public slots:
-	
+
 		int calculate(struct ModelSystem *, struct SimulationParameters *, vector <struct mfem_data> *);
 		int calculate_ni(double, 				// rpm_start
 							  double, 				// rpm_stop
@@ -81,13 +81,13 @@ class US_EXTERN US_Astfem_RSA : public QObject
 								mfem_initial *,	// C0
 								mfem_data *);		// simdata
 	signals:
-	
+
 		void new_scan(vector <double> *, double *);
 		void new_time(float);
 		void current_component(int);
 		void current_speed(unsigned int);
-		
-		
+
+
 	private slots:
 
 		double IntConcentration(vector<double>, double *);
@@ -135,7 +135,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
       double find_C1_mono_Nmer(int, double, double);
 		double cube_root(double, double, double);
 
-		// interpolate maps a simulated grid with a variable delta_r grid onto a 
+		// interpolate maps a simulated grid with a variable delta_r grid onto a
 		// fixed delta_r grid from experimental data, and also interpolates time
 
 		int interpolate (struct mfem_data *, /* simulated solution */
@@ -154,7 +154,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
 //		void Reaction_DfDy(AstFemParameters *, double, double *, double **);
 		void adjust_limits(unsigned int /*rotor speed*/);
 		void adjust_grid(unsigned int /*old speed*/, unsigned int /*new speed*/, vector <double> * /*radial grid*/);
-		
+
 // output functions:
 		void print_af();						// output all af params
 		void print_af(FILE *);				// output all af params to file

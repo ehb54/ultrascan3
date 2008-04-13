@@ -8,6 +8,9 @@ US_FeMatchRa_W::US_FeMatchRa_W(QWidget *p, const char *name) : Data_Control_W(13
 	connect(this, SIGNAL(dataLoaded()), this, SLOT(enableButtons()));
 	connect(this, SIGNAL(datasetChanged()), this, SLOT(clearDisplay()));
 	resplot = NULL;
+	stopFlag = false;
+	movieFlag = false;
+	astfem_rsa = new US_Astfem_RSA(&stopFlag, false, &movieFlag);
 }
 
 US_FeMatchRa_W::~US_FeMatchRa_W()
@@ -203,9 +206,6 @@ void US_FeMatchRa_W::view()
 	e->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
 	e->load(filestr);
 	e->show();
-	stopFlag = false;
-	movieFlag = false;
-	astfem_rsa = new US_Astfem_RSA(&stopFlag, false, &movieFlag);
 }
 
 void US_FeMatchRa_W::write_res()
@@ -215,35 +215,69 @@ void US_FeMatchRa_W::write_res()
 float US_FeMatchRa_W::fit()
 {
 	QString str;
+	unsigned int i, j;
+	long *s_curve, *r_curve;
+	double **sim, **res;
 	struct mfem_scan single_scan;
-	struct mfem_data experiment;
-	unsigned int i;
-	clear_data(&experiment);
-	clear_data(&residuals);
-	simdata.clear();
-//	progress->setTotalSteps(); // one extra column for the baseline
-//	progress->reset();
+
+	sim = new double * [run_inf.scans[selected_cell][selected_lambda]];
+	res = new double * [run_inf.scans[selected_cell][selected_lambda]];
+	s_curve = new long   [run_inf.scans[selected_cell][selected_lambda]];
+	r_curve = new long   [run_inf.scans[selected_cell][selected_lambda]];
+	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+	{
+		sim[i] = new double [points];
+		res[i] = new double [points];
+	}
+	simdata.resize(1);
+	single_scan.conc.clear();
 	for (i=0; i<points; i++)
 	{
-		experiment.radius.push_back(radius[i]);
-		residuals.radius.push_back(radius[i]);
+		simdata[0].radius.push_back(radius[i]);
 		single_scan.conc.push_back(0.0); // populate with zeros
 	}
 	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 	{
 		single_scan.time = (double) run_inf.time[selected_cell][selected_lambda][i];
-		experiment.scan.push_back(single_scan);
-		residuals.scan.push_back(single_scan);
+		simdata[0].scan.push_back(single_scan);
 	}
-	simdata.push_back(experiment);
-	US_FemGlobal *fg;
-	fg = new US_FemGlobal();
-	fg->write_simulationParameters(&sp, "test1.dat");
-	fg->write_modelSystem(&ms, "test2.dat");
-	delete fg;
 	astfem_rsa->calculate(&ms, &sp, &simdata);
+	rmsd = 0.0;
+	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+	{
+		for (j=0; j<points; j++)
+		{
+			sim[i][j] = simdata[0].scan[i].conc[j];
+			res[i][j] = absorbance[i][j] - sim[i][j];
+			rmsd += pow(res[i][j], 2.0);
+		}
+		s_curve[i] = edit_plot->insertCurve("Simulated Model Data");
+		r_curve[i] = analysis_plot->insertCurve("Residual Data");
+		edit_plot->setCurvePen(s_curve[i], QPen(Qt::red, 1, SolidLine));
+		edit_plot->setCurveData(s_curve[i], radius, sim[i], points);
+		analysis_plot->setCurvePen(r_curve[i], QPen(Qt::yellow, 1, SolidLine));
+		analysis_plot->setCurveData(r_curve[i], radius, res[i], points);
+	}
+	edit_plot->replot();
+	analysis_plot->replot();
+	rmsd /= (run_inf.scans[selected_cell][selected_lambda] * points);
+	str.sprintf("%6.4e", rmsd);
+	lbl_variance2->setText(str);
+	rmsd = pow((double)rmsd, 0.5);
+	str.sprintf("%6.4e", rmsd);
+	lbl2_excluded->setText(str);
+	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+	{
+		delete [] sim[i];
+		delete [] res[i];
+	}
+	delete [] sim;
+	delete [] res;
+	delete [] s_curve;
+	delete [] r_curve;
 	return rmsd;
 }
+
 
 void US_FeMatchRa_W::clear_data(mfem_data *d)
 {

@@ -1594,6 +1594,7 @@ void US_ViewMWL::update(unsigned int time, QString imageDir)
 	controlvar_3d.minx = min_lambda;
 	controlvar_3d.maxy = max_radius;
 	controlvar_3d.miny = min_radius;
+	controlvar_3d.zscaling = 1e-10;
 	controlvar_3d.meshx = rows;
 	controlvar_3d.meshy = columns;
 
