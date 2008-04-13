@@ -235,21 +235,30 @@ print_af();
 			CT0.concentration.clear();
 			CT0 = (*system).component_vector[0].c0;
 		}
+		af_params.s.resize(0);
+		af_params.D.resize(0);
+		af_params.n.resize(0);
+		af_params.keq.resize(0);
+		af_params.koff.resize(0);
 		af_params.s.clear();
 		af_params.D.clear();
+		af_params.n.clear();
 		af_params.keq.clear();
 		af_params.koff.clear();
-		af_params.n.clear();
 		af_params.keq.push_back((double) (*system).assoc_vector[0].keq);
 		af_params.koff.push_back((double) (*system).assoc_vector[0].k_off);
 		af_params.n.push_back((*system).assoc_vector[0].stoichiometry1);
 		af_params.n.push_back((*system).assoc_vector[0].stoichiometry2);
+		cout << "Size (system): " << (*system).component_vector.size() << endl;
+		cout << "Size (afparams.s): " << af_params.s.size() << endl;
+		cout << "Size (afparams.D): " << af_params.D.size() << endl;
 		for (i=0; i<2; i++)
 		{
-			af_params.s.push_back((double) (*system).component_vector[i].s);
-			af_params.D.push_back((double) (*system).component_vector[i].D);
+			//cout << "s[" << i<< "]: " << (*system).component_vector[i].s << 
+			//", D[" << i << "]: " << (*system).component_vector[i].D << endl;
+			af_params.s.push_back((*system).component_vector[i].s);
+			af_params.D.push_back((*system).component_vector[i].D);
 		}
-
       // find the largest sedimenting or floating speed
       s_max_abs = fabs(maxval(af_params.s)) > fabs(minval(af_params.s))?
                   fabs(maxval(af_params.s)) : fabs(minval(af_params.s));

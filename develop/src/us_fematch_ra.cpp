@@ -261,7 +261,11 @@ void US_FeMatchRa_W::load_model()
 		QString str;
 		fg = new US_FemGlobal(this);
 		error_code = fg->read_experiment(&ms, &sp, fn);
-		delete fg;
+		cout << "s1: " << ms.component_vector[0].s
+		<< ", s2: " << ms.component_vector[1].s
+		<< ", D1: " << ms.component_vector[0].D
+				<< ", D2: " << ms.component_vector[1].D << endl;
+				delete fg;
 		if (error_code < 0)
 		{
 			str.sprintf("Unable to load System: " + fn + "\n\nError code: %d", error_code);
