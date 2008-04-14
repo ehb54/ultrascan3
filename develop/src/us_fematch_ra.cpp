@@ -247,12 +247,25 @@ float US_FeMatchRa_W::fit()
 	analysis_plot->clear();
 	edit_plot->clear();
 	plot_edit();
+	cerr.precision(10);
+	/*
+	for  (j=0; j<points; j++)
+	{
+		cerr << simdata[0].radius[j] << endl;
+	}
+	*/
+	/*
+	for  (j=0; j<run_inf.scans[selected_cell][selected_lambda]; j++)
+	{
+		cerr << simdata[0].scan[j].time << ", " << run_inf.time[0][0][j] << endl;
+	}
+	*/
 	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 	{
 		for (j=0; j<points; j++)
 		{
 			sim[i][j] = simdata[0].scan[i].conc[j];
-			//cout << absorbance[i][j] << ", " <<  sim[i][j] << endl;
+			//cerr << simdata[0].scan[i].conc[j] << endl;
 			res[i][j] = absorbance[i][j] - sim[i][j];
 			rmsd += pow(res[i][j], 2.0);
 		}
@@ -305,11 +318,7 @@ void US_FeMatchRa_W::load_model()
 		QString str;
 		fg = new US_FemGlobal(this);
 		error_code = fg->read_experiment(&ms, &sp, fn);
-		cout << "s1: " << ms.component_vector[0].s
-		<< ", s2: " << ms.component_vector[1].s
-		<< ", D1: " << ms.component_vector[0].D
-				<< ", D2: " << ms.component_vector[1].D << endl;
-				delete fg;
+		delete fg;
 		if (error_code < 0)
 		{
 			str.sprintf("Unable to load System: " + fn + "\n\nError code: %d", error_code);

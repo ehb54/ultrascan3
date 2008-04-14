@@ -15,7 +15,7 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system, struct SimulationParame
 vector <struct mfem_data> *exp_data)
 {
 	US_FemGlobal fg;
-	//fg.write_experiment(system, simparams, "/root/astfem_rsa.dat");
+	//fg.write_experiment(system, simparams, "/root/astfem_rsa-output");
 	unsigned int i, j;
 	float current_time = 0.0;
 	float current_speed;
@@ -114,7 +114,6 @@ vector <struct mfem_data> *exp_data)
 					}
 
 					// on exit, contains final concentration in CT0
-print_af();
 					calculate_ni(rpm[0], rpm[rpm.size()-1], af_params.s[0], af_params.D[0], &CT0, &simdata);
 
 					// add the acceleration time:
@@ -150,22 +149,20 @@ print_af();
 				}
 				else
 				{
-					cout << "Number of simpoints adjusted to " << af_params.simpoints
-					<< " for component " << i + 1 << " and speed step " << j + 1 << endl;
+//					cout << "Number of simpoints adjusted to " << af_params.simpoints
+//					<< " for component " << i + 1 << " and speed step " << j + 1 << endl;
 				}
 				af_params.time_steps = 1 + (unsigned int) (duration/af_params.dt);
-cout << "speed step:\t" << j << ", component: " << i << endl;
-cout << "speed:\t\t" << (*simparams).speed_step[j].rotorspeed << endl;
-cout << "hours:\t\t" << (*simparams).speed_step[j].duration_hours << endl;
-cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
+//cout << "speed step:\t" << j << ", component: " << i << endl;
+//cout << "speed:\t\t" << (*simparams).speed_step[j].rotorspeed << endl;
+//cout << "hours:\t\t" << (*simparams).speed_step[j].duration_hours << endl;
+//cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 				af_params.start_time = current_time;
 				af_params.mesh = (*simparams).mesh;
 				af_params.moving_grid = (*simparams).moving_grid;
 				af_params.acceleration = false;
-//				print_af();
 				vector <double> rpm;
 				rpm.clear();
-print_af();
 				rpm.push_back((*simparams).speed_step[j].rotorspeed);
 				calculate_ni(rpm[0], rpm[0], af_params.s[0], af_params.D[0], &CT0, &simdata);
 				interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
@@ -188,7 +185,7 @@ print_af();
 			if (guiFlag)
 			{
 				emit current_component(i+1);
-				cout << "Current component: " << i+1 << endl;
+				//cout << "Current component: " << i+1 << endl;
 				qApp->processEvents();
 			}
 		} // component loop
@@ -203,9 +200,12 @@ print_af();
 		CT0.concentration.clear();
 		adjust_limits((*simparams).speed_step[0].rotorspeed);
 		double dr = (af_params.current_bottom - af_params.current_meniscus)/(initial_npts-1);
+		//cerr.precision(10);
+		//cerr << "Initial points: " << initial_npts << endl;
 		for (j=0; j<initial_npts; j++)
 		{
 			CT0.radius.push_back(af_params.current_meniscus + j * dr );
+			//cerr << af_params.current_meniscus + j * dr << endl;
 			CT0.concentration.push_back(0.0);
 		}
 		if ((*system).component_vector[0].c0.concentration.size() == 0) // we don't have an existing CT0 concentration vector
@@ -313,8 +313,8 @@ print_af();
 					rpm.push_back(current_speed + (step + 1) * (*simparams).speed_step[j].acceleration);
 				}
 // on exit, contains final concentration in C0
-print_af();
 				calculate_ra2(rpm[0], rpm[rpm.size()-1], C0, &simdata);
+				print_af();
 // add the acceleration time:
 				current_time += af_params.dt * af_params.time_steps;
 				if (guiFlag)
@@ -358,12 +358,11 @@ print_af();
 			af_params.mesh = (*simparams).mesh;
 			af_params.moving_grid = (*simparams).moving_grid;
 			af_params.acceleration = false;
-//			print_af();
 			vector <double> rpm;
 			rpm.clear();
 			rpm.push_back((*simparams).speed_step[j].rotorspeed);
-print_af();
 			calculate_ra2(rpm[0], rpm[0], C0, &simdata);
+			print_af();
 			interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
 
 				// set the current time to the last scan of this speed step
@@ -751,7 +750,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 	{
 		sw2 = af_params.s[i] * pow( rpm_stop * M_PI/30., 2.0);
 		nu.push_back( sw2 / af_params.D[i]);
-      printf("s[%d]=%20.12e  D=%20.12e, sw2=%20.12e\n", i, af_params.s[i], af_params.D[i], sw2);
+      //printf("s[%d]=%20.12e  D=%20.12e, sw2=%20.12e\n", i, af_params.s[i], af_params.D[i], sw2);
 	}
 	mesh_gen(nu, af_params.mesh);
 
@@ -1150,7 +1149,6 @@ double US_Astfem_RSA::maxval(vector <SimulationComponent> val)
 //////////////////////////////////////////////////////////////%
 void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 {
-	cout << "using adaptive mesh...\n";
 	double uth = 1.0/af_params.simpoints;		// threshold of u for steep region
 	double tmp_xc, tmp_Hstar, xa;
 	unsigned int IndLayer=0;		// number of layers for grids in steep region
@@ -1453,7 +1451,6 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 //////////////////////////////////////////////////////////////%
 void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 {
-	cout << "using adaptive mesh...\n";
 	unsigned int j, Js, Nf, Nm;
 	double uth = 1.0/af_params.simpoints;		// threshold of u for steep region
 	double xc, xa, Hstar;
@@ -1476,7 +1473,7 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 	// printf("Nf=%d Nm=%d Js=%d \n", Nf, Nm, Js);
 	// printf("xc=%12.5e xa=%12.5e \n", xc, xa);
 
-// all grdi points at exponentials
+// all grid points at exponentials
 	yr.push_back(af_params.current_bottom);
 //	for(j=1; j<(int) af_params.simpoints-1; j++)		// standard Schuck's grids
 	for(j=1; j<af_params.simpoints; j++)		// add one more point to Schuck's grids
@@ -1492,7 +1489,7 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 		{
 			x.push_back(yr[af_params.simpoints - 1 - j]);
 		}
-		printf("use exponential grid only!\n");
+		cerr << "use exponential grid only!\n" << endl;
 	}
 	else
 	{// Nf>2
@@ -1617,17 +1614,17 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 		{
 			if( nu[0]>0 )
 			{
-				cout << "exponential mesh plus refinement at bottom, for s>0 ...\n";
+//				cout << "exponential mesh plus refinement at bottom, for s>0 ...\n";
 				mesh_gen_s_pos(nu);
 			}
 			else if ( nu[ nu.size()-1 ] < 0 )
 			{
-				cout << "exponential mesh plus refinement at meniscus, for s<0 ...\n";
+//				cout << "exponential mesh plus refinement at meniscus, for s<0 ...\n";
 				mesh_gen_s_neg(nu);
 			}
 			else							// some species with s<0 and some with s>0
 			{
-				cout << "multicomponent system with sedimentation and floating mixed, use uniform mesh...\n";
+//				cout << "multicomponent system with sedimentation and floating mixed, use uniform mesh...\n";
 				for ( unsigned int i=0; i<af_params.simpoints; i++)
 				{
 					x.push_back(af_params.current_meniscus + (af_params.current_bottom -
@@ -1638,7 +1635,7 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 		}
 		case 1: //Claverie mesh without left hand refinement
 		{
-			cout << "using uniform mesh ...\n";
+//			cout << "using uniform mesh ...\n";
 			for ( unsigned int i=0; i<af_params.simpoints; i++)
 			{
 				x.push_back(af_params.current_meniscus + (af_params.current_bottom -
@@ -1648,7 +1645,7 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 		}
 		case 2: //Moving Hat (Peter Schuck's Mesh) without left hand side refinement
 		{
-			cout << "using moving hat mesh...\n";
+			//cout << "using moving hat mesh...\n";
 			x.push_back(af_params.current_meniscus);
 			for(unsigned int i=1; i<af_params.simpoints-1; i++)  // standard Schuck's grids
 			{
@@ -1660,7 +1657,7 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 		}
 		case 3: // user defined mesh generated from data file
 		{
-			cout << "using mesh from file $ULTRASCAN/mesh.dat...\n";
+			//cout << "using mesh from file $ULTRASCAN/mesh.dat...\n";
 			QString str = getenv("ULTRASCAN");
 			QFile f(str + "/mesh.dat");
 			if (f.open(IO_ReadOnly))
@@ -1699,7 +1696,7 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 	}
 
 	N = x.size();
-	cout << "total number of points = " << N << "\n";
+	//cout << "total number of points = " << N << "\n";
 }
 
 //
@@ -1919,7 +1916,7 @@ void US_Astfem_RSA::tridiag(double *a, double *b, double *c, double *r, double *
 	int j;
 	double bet, *gam;
 	gam = new double [N];
-	if (b[0] == 0.0) printf("Error 1 in tridag");
+	if (b[0] == 0.0) cerr << "Error 1 in tridag" << endl;
 
 	u[0] = r[0]/(bet = b[0]);
 	for (j=1; j<(int) N; j++)
@@ -1928,7 +1925,7 @@ void US_Astfem_RSA::tridiag(double *a, double *b, double *c, double *r, double *
 		bet = b[j] - a[j] * gam[j];
 		if (bet == 0.0)
 		{
-			printf("Error 2 in tridag");
+			cerr << "Error 2 in tridag" << endl;
 		}
 		u[j] = (r[j] - a[j] * u[j-1])/bet;
 	}
@@ -4155,6 +4152,14 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 	unsigned int i, j, kkk, ja;
    double a, b, tmp, xs, **tmpC;
 
+	cerr.precision(10);
+	for (i=0; i<(*simdata).scan.size(); i++)
+	{
+		for (j=0; j<(*simdata).radius.size(); j++)
+		{
+			cerr << (*simdata).scan[i].conc[j] << endl;
+		}
+	}
    initialize_2d( (*simdata).scan.size(), (*expdata).radius.size(), &tmpC);
 
    // interpolate all simdata scan onto the grid of expdata.radius
@@ -4286,7 +4291,10 @@ void US_Astfem_RSA::print_af()
 {
 	unsigned int i;
 	QString str;
+	cout.precision(10);
 	cout << "Model Number:\t" << af_params.model << endl;
+	cout << "Rotor:\t" << af_params.rotor << endl;
+	cout << "First speed:\t" << af_params.first_speed << endl;
 	cout << "Simpoints:\t" << af_params.simpoints << endl;
 	cout << "\nHydrodynamic Parameters:\n";
 	for (i=0; i< af_params.s.size(); i++)

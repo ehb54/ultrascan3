@@ -131,8 +131,6 @@ vector <struct centerpieceInfo> *cp_list)
 			return(-2); // empty file
 		}
 		ds >> version;
-		cout << "Version: " << version << endl;
-//cerr << "Version: " << version.latin1() << endl;
 		if (version.toFloat() < 6.0)
 		{
 			str = tr("These data were edited with an usupported release\n"

@@ -849,8 +849,8 @@ void US_Astfem_Sim::simulation_parameters()
 
 void US_Astfem_Sim::start_simulation()
 {
-	double current_time = 0.0;
-	double increment;
+	unsigned int current_time = 0;
+	unsigned int increment;
 	double r;
 	unsigned int i, j, k;
 	QString str;
@@ -893,8 +893,8 @@ void US_Astfem_Sim::start_simulation()
 
 // to get the right time, we need to take the last scan time from the previous speed step
 // and add the delays to it
-		current_time += simparams.speed_step[i].delay_hours * 3600
-		+ simparams.speed_step[i].delay_minutes * 60; // first time point of this speed step in secs
+		current_time += (unsigned int) (simparams.speed_step[i].delay_hours * 3600
+				+ simparams.speed_step[i].delay_minutes * 60); // first time point of this speed step in secs
 
 		astfem_data[i].wavelength = 999; // simulation wavelength
 
@@ -907,10 +907,10 @@ void US_Astfem_Sim::start_simulation()
 		}
 
 // calculate the elapsed time between scans (total time - delay)/(scans-1):
-		increment = (simparams.speed_step[i].duration_hours * 3600
+		increment = (unsigned int) ((simparams.speed_step[i].duration_hours * 3600
 		+ simparams.speed_step[i].duration_minutes * 60
 		- simparams.speed_step[i].delay_hours * 3600
-		- simparams.speed_step[i].delay_minutes * 60)/(simparams.speed_step[i].scans - 1);
+				- simparams.speed_step[i].delay_minutes * 60)/(simparams.speed_step[i].scans - 1));
 		for (j=0; j<simparams.speed_step[i].scans; j++)
 		{
 			temp_scan.conc.clear();
@@ -959,6 +959,19 @@ void US_Astfem_Sim::start_simulation()
 	}
 	unsigned int curve[j];
 	double *x, **y;
+	cerr.precision(10);
+	/*
+	for (j=0; j<astfem_data[0].radius.size(); j++)
+	{
+		cerr << astfem_data[0].radius[j] << endl;
+	}
+	*/
+	/*
+	for (j=0; j<astfem_data[0].scan.size(); j++)
+	{
+		cerr << astfem_data[0].scan[j].time << endl;
+	}
+	*/
 	for (i=0; i<simparams.speed_step.size(); i++)
 	{
 		x = new double [astfem_data[i].radius.size()];
@@ -976,6 +989,7 @@ void US_Astfem_Sim::start_simulation()
 			for (k=0; k<astfem_data[i].radius.size(); k++)
 			{
 				y[j][k] = astfem_data[i].scan[j].conc[k];
+				//cerr << astfem_data[i].scan[j].conc[k] << endl;
 			}
 		}
 		for (j=0; j<astfem_data[i].scan.size(); j++)
