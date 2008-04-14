@@ -15,7 +15,7 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system, struct SimulationParame
 vector <struct mfem_data> *exp_data)
 {
 	US_FemGlobal fg;
-	fg.write_experiment(system, simparams, "/root/astfem_rsa.dat");
+	//fg.write_experiment(system, simparams, "/root/astfem_rsa.dat");
 	unsigned int i, j;
 	float current_time = 0.0;
 	float current_speed;
