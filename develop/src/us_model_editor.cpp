@@ -839,7 +839,6 @@ void US_ModelEditor::get_vbar()
 
 void US_ModelEditor::update_vbar(float vbar, float vbar20)
 {
-	cout << "update_vbar(float, float) is signalled...\n";
 	if (vbar20 <= 0.0)
 	{
 		return;

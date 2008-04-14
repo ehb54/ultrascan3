@@ -229,6 +229,7 @@ float US_FeMatchRa_W::fit()
 		sim[i] = new double [points];
 		res[i] = new double [points];
 	}
+	simdata.clear();
 	simdata.resize(1);
 	single_scan.conc.clear();
 	for (i=0; i<points; i++)
@@ -243,11 +244,15 @@ float US_FeMatchRa_W::fit()
 	}
 	astfem_rsa->calculate(&ms, &sp, &simdata);
 	rmsd = 0.0;
+	analysis_plot->clear();
+	edit_plot->clear();
+	plot_edit();
 	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 	{
 		for (j=0; j<points; j++)
 		{
 			sim[i][j] = simdata[0].scan[i].conc[j];
+			//cout << absorbance[i][j] << ", " <<  sim[i][j] << endl;
 			res[i][j] = absorbance[i][j] - sim[i][j];
 			rmsd += pow(res[i][j], 2.0);
 		}

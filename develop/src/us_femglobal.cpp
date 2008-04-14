@@ -1772,6 +1772,8 @@ void US_FemGlobal::initializeAssociation1(struct ModelSystem *ms, unsigned int c
 	(*ms).component_vector[comp1].vbar20 = (float) 0.72;
 	(*ms).component_vector[comp2].vbar20 = (float) 0.72;
 	(*ms).component_vector[comp1].sigma = 0.0;
+	(*ms).component_vector[comp2].sigma = 0.0;
+	(*ms).component_vector[comp1].delta = 0.0;
 	(*ms).component_vector[comp2].delta = 0.0;
 	(*ms).component_vector[comp1].shape = "not defined";
 	(*ms).component_vector[comp2].shape = "not defined";
