@@ -96,7 +96,8 @@ vector <struct mfem_data> *exp_data)
 				adjust_limits((*simparams).speed_step[j].rotorspeed);
 				(*exp_data)[j].meniscus = af_params.current_meniscus;
 				(*exp_data)[j].bottom = af_params.current_bottom;
-				if((*simparams).speed_step[j].acceleration_flag) // we need to simulate acceleration
+				if((*simparams).speed_step[j].acceleration_flag &&
+                                   (*simparams).speed_step[j].acceleration) // we need to simulate acceleration
 				{// if the speed difference is larger than acceleration rate then we have at least 1 acceleration step
 					af_params.time_steps = (unsigned int) fabs((*simparams).speed_step[j].rotorspeed
 					- current_speed)/(*simparams).speed_step[j].acceleration;
@@ -125,7 +126,10 @@ vector <struct mfem_data> *exp_data)
 					}
 					if (*stopFlag)
 					{
-						qApp->processEvents();
+					        if (guiFlag)
+						{
+						    qApp->processEvents();
+						}
 						interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
 						return(1); // early termination = 1
 					}
@@ -298,7 +302,8 @@ vector <struct mfem_data> *exp_data)
 			adjust_limits((*simparams).speed_step[j].rotorspeed);
 			(*exp_data)[j].meniscus = af_params.current_meniscus;
 			(*exp_data)[j].bottom = af_params.current_bottom;
-			if((*simparams).speed_step[j].acceleration_flag) // we need to simulate acceleration
+			if((*simparams).speed_step[j].acceleration_flag &&
+			   (*simparams).speed_step[j].acceleration) // we need to simulate acceleration
 			{// if the speed difference is larger than acceleration rate then we have at least 1 acceleration step
 				af_params.time_steps = (unsigned int) fabs((*simparams).speed_step[j].rotorspeed
 				- current_speed)/(*simparams).speed_step[j].acceleration;
@@ -325,7 +330,10 @@ vector <struct mfem_data> *exp_data)
 				}
 				if (*stopFlag)
 				{
-					qApp->processEvents();
+				        if (guiFlag)
+					{
+					    qApp->processEvents();
+					}
 					interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
 					return(1); // early termination = 1
 				}
@@ -351,8 +359,11 @@ vector <struct mfem_data> *exp_data)
 			}
 			else
 			{
-				cout << "Number of simpoints adjusted to " << af_params.simpoints
+			        if (guiFlag)
+				{
+				    cout << "Number of simpoints adjusted to " << af_params.simpoints
 						<< " for component " << i + 1 << " and speed step " << j + 1 << endl;
+				}
 			}
 			af_params.time_steps = 1 + (unsigned int) (duration/af_params.dt);
 			af_params.start_time = current_time;
@@ -628,7 +639,10 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 			{
 				emit new_scan(&x, C0);
 				emit new_time((float) simscan.time);
-				qApp->processEvents();
+				if (guiFlag)
+				{
+				    qApp->processEvents();
+				}
 			}
 		}
 		simscan.conc.clear();
@@ -896,7 +910,10 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 			{
 				emit new_scan(&x, CT0);
 				emit new_time((float) simscan.time);
-				qApp->processEvents();
+				if (guiFlag)
+				{
+				    qApp->processEvents();
+				}
 			}
 		}
 		simscan.conc.clear();
@@ -1490,7 +1507,10 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 		{
 			x.push_back(yr[af_params.simpoints - 1 - j]);
 		}
-		cerr << "use exponential grid only!\n" << endl;
+		if (guiFlag)
+		{
+		    cerr << "use exponential grid only!\n" << endl;
+		}
 	}
 	else
 	{// Nf>2
