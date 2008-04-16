@@ -242,6 +242,12 @@ float US_FeMatchRa_W::fit()
 		single_scan.time = (double) run_inf.time[selected_cell][selected_lambda][i];
 		simdata[0].scan.push_back(single_scan);
 	}
+	SimulationParameters simparams;
+	US_Data_IO *data_io;
+	data_io = new US_Data_IO(&run_inf, false); // (baseline flag can be false, we don't need it)
+	data_io->assign_simparams(&simparams, selected_cell, selected_lambda, selected_channel);
+	data_io->assign_simparams(&sp, selected_cell, selected_lambda, selected_channel);
+	delete data_io;
 	astfem_rsa->calculate(&ms, &sp, &simdata);
 	rmsd = 0.0;
 	analysis_plot->clear();

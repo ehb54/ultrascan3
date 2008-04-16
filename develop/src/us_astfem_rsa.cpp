@@ -40,6 +40,7 @@ vector <struct mfem_data> *exp_data)
 			}
 			current_time = 0.0; // reset time, which now tracks the beginning of each speed step (duration)
 			current_speed = 0.0; // start at rest
+			// before going into acceleration phase set w2t and last_time to zero, increment in function caculate_ni()
 			last_time = 0.0;
 			w2t_integral = 0.0;
 			CT0.radius.clear();
@@ -90,7 +91,6 @@ vector <struct mfem_data> *exp_data)
 			af_params.D.clear();
 			af_params.s.push_back((double) (*system).component_vector[i].s);
 			af_params.D.push_back((double) (*system).component_vector[i].D);
-			// before going into acceleration phase set w2t and last_time to zero, increment in function caculate_ni()
 			for (j=0; j<(*simparams).speed_step.size(); j++)
 			{
 				adjust_limits((*simparams).speed_step[j].rotorspeed);
@@ -194,6 +194,7 @@ vector <struct mfem_data> *exp_data)
 	{
 		current_time = 0.0; // reset time, which now tracks the beginning of each speed step (duration)
 		current_speed = 0.0; // start at rest
+		// before going into acceleration phase set w2t and last_time to zero, increment in function caculate_ni()
 		last_time = 0.0; // initialize to zero
 		w2t_integral = 0.0; // initialize to zero, will be incremented in calculate_ra2
 		CT0.radius.clear();
@@ -314,7 +315,7 @@ vector <struct mfem_data> *exp_data)
 				}
 // on exit, contains final concentration in C0
 				calculate_ra2(rpm[0], rpm[rpm.size()-1], C0, &simdata);
-				print_af();
+//				print_af();
 // add the acceleration time:
 				current_time += af_params.dt * af_params.time_steps;
 				if (guiFlag)
@@ -362,7 +363,7 @@ vector <struct mfem_data> *exp_data)
 			rpm.clear();
 			rpm.push_back((*simparams).speed_step[j].rotorspeed);
 			calculate_ra2(rpm[0], rpm[0], C0, &simdata);
-			print_af();
+//			print_af();
 			interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
 
 				// set the current time to the last scan of this speed step
@@ -598,7 +599,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 //
 	double *right_hand_side;
 	right_hand_side = new double [N];
-	for (i=0; i<af_params.time_steps; i++) // calculate all time steps f
+	for (i=0; i<af_params.time_steps+1; i++) // calculate all time steps f
 	{
 		rpm_current = rpm_start + (rpm_stop - rpm_start) * (i+0.5)/af_params.time_steps;
 		emit current_speed((unsigned int) rpm_current);
@@ -879,7 +880,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 // time evolution
 	double *right_hand_side;
 	right_hand_side = new double [N];
-	for (kkk=0; kkk<af_params.time_steps; kkk +=2)		// two steps in together
+	for (kkk=0; kkk<af_params.time_steps+2; kkk +=2)		// two steps in together
 	{
 		rpm_current = rpm_start + (rpm_stop - rpm_start) * (kkk+0.5)/af_params.time_steps;
 		emit current_speed((unsigned int) rpm_current);
@@ -4157,7 +4158,7 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 	{
 		for (j=0; j<(*simdata).radius.size(); j++)
 		{
-			cerr << (*simdata).scan[i].conc[j] << endl;
+			//cerr << (*simdata).scan[i].conc[j] << endl;
 		}
 	}
    initialize_2d( (*simdata).scan.size(), (*expdata).radius.size(), &tmpC);
@@ -4201,8 +4202,9 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
       xs = (*expdata).scan[kkk].time;
       for( i=ja; i<(*simdata).scan.size(); i++)
       {
-         if( (*simdata).scan[i].time>xs+1.e-12 ) break;
-      }
+			//if( (*simdata).scan[i].time>xs+1.e-12 ) break;
+			if( (*simdata).scan[i].time>xs) break;
+		}
 
       if ( i<=0 )		// time before the first scan of simdata
       {
@@ -4254,14 +4256,17 @@ void US_Astfem_RSA::adjust_limits(unsigned int speed)
 {
 	// first correct meniscus to theoretical position at rest:
 	double stretch_val = stretch(af_params.rotor, af_params.first_speed);
+	cout << "rotor: " << af_params.rotor << ", stretch: " << stretch_val << endl;
 	// this is the meniscus at rest
 	af_params.current_meniscus = af_params.meniscus - stretch_val;
+	cout << "1st speed meniscus: " << af_params.meniscus << ", rest meniscus: " << af_params.current_meniscus << endl;
 	// calculate rotor stretch at current speed
 	stretch_val = stretch(af_params.rotor, speed);
 	// add current stretch to meniscus at rest
 	af_params.current_meniscus +=  stretch_val;
 	// add current stretch to bottom at rest
 	af_params.current_bottom = af_params.bottom + stretch_val;
+	cout << "corrected meniscus: " << af_params.current_meniscus << ", current_bottom: " << af_params.current_bottom << endl;
 }
 
 void US_Astfem_RSA::adjust_grid(unsigned int old_speed, unsigned int new_speed, vector <double> *radius)

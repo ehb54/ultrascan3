@@ -19,6 +19,7 @@ EditData_Win::EditData_Win(QWidget *p , const char *name)
 	curve = new unsigned int [1];
 	int i, j, k;
 // initialize all static run_inf struct members:
+	run_inf.rotor = 0;
 	for (i=0; i<8; i++)
 	{
 		run_inf.centerpiece[i] = -2;
@@ -1031,7 +1032,6 @@ void EditData_Win::fluorescence_directory()
 			run_inf.dbname = "ultrascan";
 			run_inf.dbhost = "192.168.0.1";
 			run_inf.dbdriver = "QMYSQL3";
-			run_inf.rotor = 0;
 			for(int i=0; i<8; i++)
 			{
 				for(int j=0; j<4; j++)
@@ -1607,7 +1607,7 @@ wavelengths are not available, and in that order.
 			run_inf.dbname = "ultrascan";
 			run_inf.dbhost = "192.168.0.1";
 			run_inf.dbdriver = "QMYSQL3";
-			run_inf.rotor = 0;
+			//run_inf.rotor = 0;
 			for(int i=0; i<8; i++)
 			{
 				for(int j=0; j<4; j++)

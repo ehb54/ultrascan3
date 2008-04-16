@@ -161,12 +161,14 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
    float adjust_vbar20(float vbar20, float temperature);
    float adjust_vbar(float vbar, float temperature);
    float calc_buoyancy_tb(float, float, float);
+   float calc_bottom(int /* rotor */, int /* centerpiece */, 
+						   int /* channel */, unsigned int /* rpm */);
    float calc_bottom(vector <struct rotorInfo>,
-                    vector <struct centerpieceInfo> cp_list,
-                    int /* rotor list index */,
-                    int /* centerpiece list index */,
-                    int /* channel */,
-                    unsigned int /* rpm */);
+                     vector <struct centerpieceInfo> cp_list,
+                     int /* rotor list index */,
+                     int /* centerpiece list index */,
+                     int /* channel */,
+                     unsigned int /* rpm */);
 	double stretch(int /*rotor id*/, unsigned int /*rotor speed*/);
 
 #ifdef WIN32

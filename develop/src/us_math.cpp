@@ -737,10 +737,57 @@ float calc_bottom(vector <struct rotorInfo> rotor_list,
 	}
 	float bottom;
 	bottom = cp_list[centerpiece].bottom_position[channel];
-	for (unsigned int i=0; i<5; i++)
+	if (rpm != 0)
 	{
-		bottom += rotor_list[rotor].coefficient[i] * pow((double) rpm, (double) i);
+		for (unsigned int i=0; i<5; i++)
+		{
+			bottom += rotor_list[rotor].coefficient[i] * pow((double) rpm, (double) i);
+		}
 	}
+	return bottom;
+}
+
+float calc_bottom(int rotor, int centerpiece, int channel, unsigned int rpm)
+{
+	if (centerpiece < 0)
+	{
+		return(-1.0);
+	}
+	US_Config *USglobal;
+	USglobal = new US_Config();
+	vector <struct rotorInfo> rotor_list;
+	vector <struct centerpieceInfo> cp_list;
+	cp_list.clear();
+	rotor_list.clear();
+	if (!readCenterpieceInfo(&cp_list))
+	{
+		cerr << "UltraScan Fatal Error: There was a problem opening the\n"
+						"centerpiece database file:\n\n" + USglobal->config_list.system_dir + "/etc/centerpiece.dat\n\n"
+						"Please install the centerpiece database file\n"
+				"before proceeding. Exiting with -2..." << endl;
+		delete USglobal;
+		return(-2.0); // centerpiece could not be read
+	}
+	if (!readRotorInfo(&rotor_list))
+	{
+		cerr << "UltraScan Fatal Error: There was a problem opening the\n"
+				"rotor database file:\n\n" + USglobal->config_list.system_dir + "/etc/rotor.dat\n\n"
+						"Please install the rotor database file\n"
+				"before proceeding. Exiting with -3..." << endl;
+		delete USglobal;
+		return(-3.0);
+	}
+
+	float bottom;
+	bottom = cp_list[centerpiece].bottom_position[channel];
+	if (rpm != 0)
+	{
+		for (unsigned int i=0; i<5; i++)
+		{
+			bottom += rotor_list[rotor].coefficient[i] * pow((double) rpm, (double) i);
+		}
+	}
+	delete USglobal;
 	return bottom;
 }
 

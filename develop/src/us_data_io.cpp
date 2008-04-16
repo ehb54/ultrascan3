@@ -24,34 +24,37 @@ void US_Data_IO::assign_simparams(struct SimulationParameters *sp, unsigned int 
 {
 	(*sp).mesh_radius.resize(0); // the radii from a user-selected mesh file (mesh == 3)
 	(*sp).speed_step.resize(1);
-	unsigned int secs = (*run_inf).time[cell][lambda][(*run_inf).scans[i][j]-1];
+	unsigned int secs = (*run_inf).time[cell][lambda][(*run_inf).scans[cell][lambda]-1];
 	(*sp).speed_step[0].duration_hours = (int) secs/3600;
 	(*sp).speed_step[0].duration_minutes = 1 + (secs - ((*sp).speed_step[0].duration_hours * 3600))/60;
+	(*sp).speed_step[0].acceleration = 400; // 400 rpm/sec is the default
 	(*sp).speed_step[0].delay_hours = 0;
-	(*sp).speed_step[0].delay_minutes = 0;
-	(*sp).speed_step[0].scans = (*run_inf).scans[i][j];
-	(*sp).speed_step[0].acceleration = false;
+	(*sp).speed_step[0].delay_minutes = ((*run_inf).rpm[cell][lambda][channel]/(*sp).speed_step[0].acceleration)/60.0;
+	(*sp).speed_step[0].scans = (*run_inf).scans[cell][lambda];
 	(*sp).speed_step[0].rotorspeed = (*run_inf).rpm[cell][lambda][channel];
-	(*sp).speed_step[0].acceleration_flag = true;
+	(*sp).speed_step[0].acceleration_flag = false;
 
-	(*sp).simpoints = 0;			// number of radial grid points for simulation 
-                            // are assigned in the constraint GUI
-	(*sp).mesh = 0; 			    // 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 
-                            // 3 = user-selected mesh, 4 = nonuniform constant mesh
-	(*sp).moving_grid = 1; 	  // use adaptive time steps = 1, fixed time steps = 0
+	(*sp).simpoints = 100;				// number of radial grid points for simulation (should be overridden by user) 
+                            			// are assigned in the constraint GUI
+	(*sp).mesh = 0; 			    		// 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 
+                           			// 3 = user-selected mesh, 4 = nonuniform constant mesh
+	(*sp).moving_grid = 1; 	  			// use adaptive time steps = 1, fixed time steps = 0
 	(*sp).radial_resolution = (float) 0.001;	// the radial datapoint increment/resolution 
-                                            // of the final data
+                                    // of the final data
 	(*sp).meniscus = (*run_inf).meniscus[cell];				// meniscus position at first constant speed
-	(*sp).rnoise = 0.0;					                      // random noise
-	(*sp).inoise = 0.0;					                      // time invariant noise
-	(*sp).rinoise = 0.0;					                    // radially invariant noise
-	(*sp).rotor = (*run_inf).rotor;						        // rotor serial number in database
+	(*sp).bottom = calc_bottom((*run_inf).rotor, (*run_inf).centerpiece[cell], channel, 0); // bottom position at rest
+	(*sp).rnoise = 0.0;					// random noise
+	(*sp).inoise = 0.0;					// time invariant noise
+	(*sp).rinoise = 0.0;					// radially invariant noise
+	(*sp).rotor = (*run_inf).rotor;	// rotor serial number in database
+	(*sp).band_forming = false;		// should be overridden by user
+	(*sp).band_volume = 0.015;			// should be overridden by user
 }
 
 int US_Data_IO::load_run(QString fn, int run_type, bool *has_data,
 vector <struct centerpieceInfo> *cp_list)
 {
-	unsigned int i, j;
+	unsigned int i, j, k;
 	if ((*run_inf).temperature != NULL)
 	{
 		for (i=0; i<8; i++)
@@ -531,9 +534,10 @@ int US_Data_IO::load_hydrodynamics(struct hydrodynamicData *hydro_inf)
 	struct US_DatabaseLogin db_login;
 	struct BufferData Buffer;
 	QString str;
-	for(int i=0; i<8; i++)
+	unsigned int i, j, k;
+	for(i=0; i<8; i++)
 	{
-		for(int j=0; j<4; j++)
+		for(j=0; j<4; j++)
 		{
 			if((*run_inf).buffer_serialnumber[i][j] != -1)
 			{
@@ -566,9 +570,9 @@ int US_Data_IO::load_hydrodynamics(struct hydrodynamicData *hydro_inf)
 			return (-2);
 		}
 	}
-	for(int i=0; i<8; i++)
+	for(i=0; i<8; i++)
 	{
-		for(int j=0; j<4; j++)
+		for(j=0; j<4; j++)
 		{
 			if((*run_inf).buffer_serialnumber[i][j] > 0)
 			{
@@ -581,7 +585,7 @@ int US_Data_IO::load_hydrodynamics(struct hydrodynamicData *hydro_inf)
 				(*hydro_inf).Density[i][j] = (float) DENS_20W;
 				(*hydro_inf).Viscosity[i][j] = (float) (100.0 * VISC_20W);
 			}
-			for(int k=0; k<3; k++)
+			for(k=0; k<3; k++)
 			{
 				if((*run_inf).peptide_serialnumber[i][j][k] > 0)
 				{
@@ -616,11 +620,12 @@ int US_Data_IO::load_hydrodynamics(struct hydrodynamicData *hydro_inf)
 int US_Data_IO::load_hydrodynamics(struct US_DatabaseLogin db_login, struct hydrodynamicData *hydro_inf)
 {
 	bool db_used = false;
+	unsigned int i, j, k;
 	struct BufferData Buffer;
 	QString str;
-	for(int i=0; i<8; i++)
+	for(i=0; i<8; i++)
 	{
-		for(int j=0; j<4; j++)
+		for(j=0; j<4; j++)
 		{
 			if((*run_inf).buffer_serialnumber[i][j] != -1)
 			{
@@ -659,9 +664,9 @@ cerr << "loading hydrodynamics from the database using db_login information...\n
 			return (-3);
    	}
 	}
-	for(int i=0; i<8; i++)
+	for(i=0; i<8; i++)
 	{
-		for(int j=0; j<4; j++)
+		for(j=0; j<4; j++)
 		{
 			if((*run_inf).buffer_serialnumber[i][j] > 0)
 			{
@@ -674,7 +679,7 @@ cerr << "loading hydrodynamics from the database using db_login information...\n
 				(*hydro_inf).Density  [i][j] = (float) DENS_20W;
 				(*hydro_inf).Viscosity[i][j] = (float) (100.0 * VISC_20W);
 			}
-			for(int k=0; k<3; k++)
+			for(k=0; k<3; k++)
 			{
 				if((*run_inf).peptide_serialnumber[i][j][k] > 0)
 				{

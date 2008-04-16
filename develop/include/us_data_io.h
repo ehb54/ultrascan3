@@ -38,7 +38,6 @@ class US_EXTERN US_Data_IO : public QObject
 		US_DB_T *terminalDB;
 		float temperature;
 		bool baseline_flag;
-		unsigned int i, j, k;
 		struct runinfo *run_inf;
 		struct peptideDetails Vbar_info;
 		struct BufferData buff_info;
