@@ -609,10 +609,12 @@ void US_Database::del( bool permission )
     return;
   }
 
+  QString selected_db_name = dblist[selected_item].dbname;
+
   vector <struct US_LoginData>::iterator item = dblist.begin() + selected_item;
   dblist.erase(item);
 
-  if ( db_name == dblist[selected_item].dbname )   //remove usdbconf.bin
+  if ( db_name == selected_db_name )   //remove usdbconf.bin
   {
     QString filename = US_Config::get_home_dir(  ) + USDB;
     QFile f( filename );
