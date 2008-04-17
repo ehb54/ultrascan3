@@ -3,14 +3,19 @@
 US_FeMatchRa_W::US_FeMatchRa_W(QWidget *p, const char *name) : Data_Control_W(13, p, name)
 {
 	setCaption(tr("Finite Element Analysis:"));
+	band_volume = 0.015;
+	mesh = 0;
+	moving_grid = 1;
+	simpoints = 200;
+	rmsd = 0.0;
 	pm = new US_Pixmap();
-	setup_GUI();
 	connect(this, SIGNAL(dataLoaded()), this, SLOT(enableButtons()));
 	connect(this, SIGNAL(datasetChanged()), this, SLOT(clearDisplay()));
 	resplot = NULL;
 	stopFlag = false;
 	movieFlag = false;
 	astfem_rsa = new US_Astfem_RSA(&stopFlag, false, &movieFlag);
+	setup_GUI();
 }
 
 US_FeMatchRa_W::~US_FeMatchRa_W()
@@ -33,7 +38,7 @@ void US_FeMatchRa_W::setup_GUI()
 {
 	if (resplot == NULL)
 	{
-		resplot = new US_ResidualPlot(0,0);
+		resplot = new US_ResidualPlot(0, 0);
 	}
 
 	pb_second_plot->setText(tr("s20,W distribution"));
@@ -83,65 +88,125 @@ void US_FeMatchRa_W::setup_GUI()
 	lbl_variance2->setText("0.0");
 	lbl_variance2->setAlignment(AlignCenter|AlignVCenter);
 
+	lbl_bandVolume = new QLabel(tr(" Band-loading Volume:"), this);
+	lbl_bandVolume->setAlignment(AlignLeft|AlignVCenter);
+	lbl_bandVolume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_bandVolume->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+
+	lbl_simpoints = new QLabel(tr(" Simulation Points:"), this);
+	lbl_simpoints->setAlignment(AlignLeft|AlignVCenter);
+	lbl_simpoints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_simpoints->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+
+	cmb_radialGrid = new QComboBox(false, this, "Radial Grid" );
+	cmb_radialGrid->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cmb_radialGrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cmb_radialGrid->setSizeLimit(5);
+	cmb_radialGrid->insertItem("Adaptive Space Mesh (ASTFEM)", -1);
+	cmb_radialGrid->insertItem("Claverie Fixed Mesh", -1);
+	cmb_radialGrid->insertItem("Moving Hat Mesh", -1);
+	cmb_radialGrid->insertItem("File: \"$ULTRASCAN/mesh.dat\"", -1);
+	cmb_radialGrid->setCurrentItem(mesh);
+	connect(cmb_radialGrid, SIGNAL(activated(int)), this, SLOT(update_radialGrid(int)));
+
+	cmb_timeGrid = new QComboBox(false, this, "Time Grid" );
+	cmb_timeGrid->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cmb_timeGrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cmb_timeGrid->setSizeLimit(5);
+	cmb_timeGrid->insertItem("Constant Time Grid", -1);
+	cmb_timeGrid->insertItem("Adaptive Time Grid", -1);
+	cmb_timeGrid->setCurrentItem(moving_grid);
+	connect(cmb_timeGrid, SIGNAL(activated(int)), this, SLOT(update_timeGrid(int)));
+
+	cnt_simpoints= new QwtCounter(this);
+	cnt_simpoints->setNumButtons(3);
+	cnt_simpoints->setRange(50, 5000, 10);
+	cnt_simpoints->setValue(simpoints);
+	cnt_simpoints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cnt_simpoints->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cnt_simpoints, SIGNAL(valueChanged(double)), SLOT(update_simpoints(double)));
+
+	cnt_lamella = new QwtCounter(this);
+	cnt_lamella->setRange(0.001, 0.1, 0.0001);
+	cnt_lamella->setNumButtons(3);
+	cnt_lamella->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cnt_lamella->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cnt_lamella->setValue(band_volume);
+	connect(cnt_lamella, SIGNAL(valueChanged(double)), SLOT(update_lamella(double)));
+
 	analysis_plot->setTitle(tr("Fitting Residuals"));
+	rmsd = 0.0;
+	QString str;
+	str.sprintf("%3.1f", rmsd);
+	lbl_variance2->setText(str);
+	lbl2_excluded->setText(str);
 
 	int j=0;
 	int rows = 15, columns = 4, spacing = 2;
 
-	QGridLayout * background = new QGridLayout(this,2,2,spacing);
+	QGridLayout * background = new QGridLayout(this, 2, 2,spacing);
 	QGridLayout * subGrid1 = new QGridLayout(rows, columns, spacing);
-	subGrid1->addMultiCellWidget(pb_load,j,j,0,1);
-	subGrid1->addMultiCellWidget(pb_details,j,j,2,3);
+	subGrid1->addMultiCellWidget(pb_load, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(pb_details, j, j, 2, 3);
 	j++;
-	subGrid1->addMultiCellWidget(pb_second_plot,j,j,0,1);
-	subGrid1->addMultiCellWidget(pb_save,j,j,2,3);
+	subGrid1->addMultiCellWidget(pb_second_plot, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(pb_save, j, j, 2, 3);
 	j++;
-	subGrid1->addMultiCellWidget(pb_print,j,j,0,1);
-	subGrid1->addMultiCellWidget(pb_view,j,j,2,3);
+	subGrid1->addMultiCellWidget(pb_print, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(pb_view, j, j, 2, 3);
 	j++;
-	subGrid1->addMultiCellWidget(pb_help,j,j,0,1);
-	subGrid1->addMultiCellWidget(pb_close,j,j,2,3);
+	subGrid1->addMultiCellWidget(pb_help, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(pb_close, j, j, 2, 3);
 	j++;
-	subGrid1->addMultiCellWidget(banner1,j,j,0,3);
+	subGrid1->addMultiCellWidget(banner1, j, j, 0, 3);
 	j++;
-	subGrid1->addMultiCellWidget(lbl_run_id1,j,j,0,1);
-	subGrid1->addMultiCellWidget(lbl_run_id2,j,j,2,3);
+	subGrid1->addMultiCellWidget(lbl_run_id1, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(lbl_run_id2, j, j, 2, 3);
 	j++;
-	subGrid1->addMultiCellWidget(lbl_temperature1,j,j,0,1);
-	subGrid1->addMultiCellWidget(lbl_temperature2,j,j,2,3);
+	subGrid1->addMultiCellWidget(lbl_temperature1, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(lbl_temperature2, j, j, 2, 3);
 	j++;
-	subGrid1->addMultiCellWidget(lbl_cell_info1,j,j,0,1);
-	subGrid1->addMultiCellWidget(lbl_cell_info2,j,j,2,3);
+	subGrid1->addMultiCellWidget(lbl_cell_info1, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(lbl_cell_info2, j, j, 2, 3);
 	j++;
-	subGrid1->addMultiCellWidget(lbl_cell_descr,j,j,0,3);
+	subGrid1->addMultiCellWidget(lbl_cell_descr, j, j, 0, 3);
 	j++;
-	subGrid1->addMultiCellWidget(cell_select,j,j+2,0,1);
-	subGrid1->addMultiCellWidget(lambda_select,j,j+2,2,3);
+	subGrid1->addMultiCellWidget(cell_select, j, j+2, 0, 1);
+	subGrid1->addMultiCellWidget(lambda_select, j, j+2, 2, 3);
 	j=j+3;
-	subGrid1->addMultiCellWidget(banner2,j,j,0,3);
+	subGrid1->addMultiCellWidget(banner2, j, j, 0, 3);
 	j++;
-	subGrid1->addWidget(pb_density,j,0);
-	subGrid1->addWidget(density_le,j,1);
-	subGrid1->addWidget(pb_viscosity,j,2);
-	subGrid1->addWidget(viscosity_le,j,3);
+	subGrid1->addWidget(pb_density, j, 0);
+	subGrid1->addWidget(density_le, j, 1);
+	subGrid1->addWidget(pb_viscosity, j, 2);
+	subGrid1->addWidget(viscosity_le, j, 3);
 	j++;
-	subGrid1->addMultiCellWidget(pb_loadModel,j,j,0,1);
-	subGrid1->addMultiCellWidget(pb_fit,j,j,2,3);
+	subGrid1->addMultiCellWidget(lbl_simpoints, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(cnt_simpoints, j, j, 2, 3);
 	j++;
-	subGrid1->addMultiCellWidget(lbl_variance, j, j, 0, 1);
-	subGrid1->addMultiCellWidget(lbl_variance2, j, j, 2, 3);
+	subGrid1->addMultiCellWidget(lbl_bandVolume, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(cnt_lamella, j, j, 2, 3);
 	j++;
-	subGrid1->addMultiCellWidget(lbl1_excluded, j, j, 0, 1);
-	subGrid1->addMultiCellWidget(lbl2_excluded, j, j, 2, 3);
+	subGrid1->addMultiCellWidget(cmb_radialGrid, j, j, 0, 3);
 	j++;
-	subGrid1->addMultiCellWidget(pb_exsingle,j,j,0,1);
-	subGrid1->addMultiCellWidget(cnt_exsingle,j,j,2,3);
+	subGrid1->addMultiCellWidget(cmb_timeGrid, j, j, 0, 3);
 	j++;
-	subGrid1->addMultiCellWidget(pb_exrange,j,j,0,1);
-	subGrid1->addMultiCellWidget(cnt_exrange,j,j,2,3);
+	subGrid1->addMultiCellWidget(pb_loadModel, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(pb_fit, j, j, 2, 3);
 	j++;
-	subGrid1->addWidget(lbl_status,j,0);
-	subGrid1->addMultiCellWidget(progress,j,j,1,3);
+	subGrid1->addWidget(lbl_variance, j, 0);
+	subGrid1->addWidget(lbl_variance2, j, 1);
+	subGrid1->addWidget(lbl1_excluded, j, 2);
+	subGrid1->addWidget(lbl2_excluded, j, 3);
+	j++;
+	subGrid1->addMultiCellWidget(pb_exsingle, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(cnt_exsingle, j, j, 2, 3);
+	j++;
+	subGrid1->addMultiCellWidget(pb_exrange, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(cnt_exrange, j, j, 2, 3);
+	j++;
+	subGrid1->addWidget(lbl_status, j, 0);
+	subGrid1->addMultiCellWidget(progress, j, j, 1, 3);
 	for (int i=0; i<j; i++)
 	{
 		subGrid1->setRowSpacing(i, 26);
@@ -246,7 +311,10 @@ float US_FeMatchRa_W::fit()
 	data_io = new US_Data_IO(&run_inf, false); // (baseline flag can be false, we don't need it)
 	data_io->assign_simparams(&sp, selected_cell, selected_lambda, selected_channel);
 	delete data_io;
-	sp.simpoints = 500;
+	sp.moving_grid = moving_grid;
+	sp.mesh = mesh;
+	sp.simpoints = simpoints;
+	sp. band_volume = band_volume;
 	astfem_rsa->calculate(&ms, &sp, &simdata);
 	rmsd = 0.0;
 	analysis_plot->clear();
@@ -261,13 +329,13 @@ float US_FeMatchRa_W::fit()
 		cerr << simdata[0].radius[j] << ", " << radius[j] << endl;
 	}
 	*/
-	
+
 	//cout << "run_inf.scans: " << run_inf.scans[selected_cell][selected_lambda] << ", simdata[0].scan.size(): " <<  simdata[0].scan.size() << endl;
 	for  (j=0; j<run_inf.scans[selected_cell][selected_lambda]; j++)
 	{
 		cerr << simdata[0].scan[j].time << ", " << run_inf.time[0][0][j] << ", " << simdata[0].scan[j].omega_s_t << ", " << run_inf.omega_s_t[0][0][j] <<  endl;
 	}
-	
+
 	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 	{
 		for (j=0; j<points; j++)
@@ -398,3 +466,22 @@ void US_FeMatchRa_W::printError(const int &ival)
 	}
 }
 
+void US_FeMatchRa_W::update_radialGrid(int val)
+{
+	moving_grid = val;
+}
+
+void US_FeMatchRa_W::update_timeGrid(int val)
+{
+	mesh = val;
+}
+
+void US_FeMatchRa_W::update_simpoints(double val)
+{
+	simpoints = (unsigned int) val;
+}
+
+void US_FeMatchRa_W::update_lamella(double val)
+{
+	band_volume = (float) val;
+}

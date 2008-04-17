@@ -10,7 +10,7 @@ US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, QWidget *parent, cons
 	msc.mesh = 0;           // 0 = ASTFEM, 1 = Claverie, 2 = moving hat,
                            // 3 = user-selected mesh, 4 = nonuniform constant mesh
 	msc.moving_grid = 1;    // Use moving (1) or fixed time grid (0)
-	msc.band_volume = (float) 0.15;
+	msc.band_volume = (float) 0.015;
 
 	connect(this, SIGNAL(componentChanged(unsigned int)), this, SLOT(update_constraints(unsigned int)));
 	connect(this, SIGNAL(modelLoaded()), this, SLOT(initialize_msc()));
@@ -63,7 +63,7 @@ void US_GAModelEditor::setup_GUI()
 	lbl_fit->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_fit->setMinimumHeight(minHeight2);
 
-	lbl_bandVolume = new QLabel(tr(" Band-loading Volume:"), this);
+	lbl_bandVolume = new QLabel(tr(" Band-loading Volume (ml):"), this);
 	lbl_bandVolume->setAlignment(AlignLeft|AlignVCenter);
 	lbl_bandVolume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_bandVolume->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -104,7 +104,7 @@ void US_GAModelEditor::setup_GUI()
 	cmb_radialGrid->insertItem("Claverie Fixed Mesh", -1);
 	cmb_radialGrid->insertItem("Moving Hat Mesh", -1);
 	cmb_radialGrid->insertItem("File: \"$ULTRASCAN/mesh.dat\"", -1);
-	cmb_radialGrid->setCurrentItem(0);
+	cmb_radialGrid->setCurrentItem(msc.mesh);
 	connect(cmb_radialGrid, SIGNAL(activated(int)), this, SLOT(update_radialGrid(int)));
 
 	cmb_timeGrid = new QComboBox(false, this, "Time Grid" );
@@ -114,13 +114,13 @@ void US_GAModelEditor::setup_GUI()
 	cmb_timeGrid->setMinimumHeight(minHeight1);
 	cmb_timeGrid->insertItem("Constant Time Grid (Claverie/Acceleration)", -1);
 	cmb_timeGrid->insertItem("Moving Time Grid (ASTFEM/Moving Hat)", -1);
-	cmb_timeGrid->setCurrentItem(1);
+	cmb_timeGrid->setCurrentItem(msc.moving_grid);
 	connect(cmb_timeGrid, SIGNAL(activated(int)), this, SLOT(update_timeGrid(int)));
 
 	cnt_simpoints= new QwtCounter(this);
 	cnt_simpoints->setNumButtons(3);
 	cnt_simpoints->setRange(50, 5000, 10);
-	cnt_simpoints->setValue(100.0);
+	cnt_simpoints->setValue(msc.simpoints);
 	cnt_simpoints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_simpoints->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	cnt_simpoints->setMinimumHeight(minHeight1);
@@ -131,7 +131,7 @@ void US_GAModelEditor::setup_GUI()
 	cnt_lamella->setNumButtons(3);
 	cnt_lamella->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_lamella->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	cnt_lamella->setValue(0.015);
+	cnt_lamella->setValue(msc.band_volume);
 	cnt_lamella->setMinimumHeight(minHeight1);
 	connect(cnt_lamella, SIGNAL(valueChanged(double)), SLOT(update_lamella(double)));
 
@@ -300,7 +300,7 @@ void US_GAModelEditor::load_constraints()
 	// after selecting a model we need to allocate memory for msc in initialize_msc
 		current_component = 0; // reset to the first component
 		current_assoc = 0;
-		select_component((int) current_component);		
+		select_component((int) current_component);
 	}
 }
 

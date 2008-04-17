@@ -34,8 +34,10 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 
 	private:
 
-		unsigned int monte_carlo_iterations;
+		unsigned int monte_carlo_iterations, simpoints;
 		SA2d_control_variables sa2d_ctrl_vars;
+		int mesh, moving_grid;
+		float band_volume;
 
 #ifdef WIN32
 		  #pragma warning ( disable: 4251 )
@@ -47,12 +49,23 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 #ifdef WIN32
 		  #pragma warning ( default: 4251 )
 #endif
-		
+
 		QString analysis_type;
+
 		QLabel *lbl_variance;
 		QLabel *lbl_variance2;
+		QLabel *lbl_bandVolume;
+		QLabel *lbl_simpoints;
+
 		QPushButton *pb_fit;
 		QPushButton *pb_loadModel;
+
+		QwtCounter *cnt_simpoints;
+		QwtCounter *cnt_lamella;
+
+		QComboBox *cmb_radialGrid;
+		QComboBox *cmb_timeGrid;
+
 		US_ResidualPlot *resplot;
 		US_Pixmap *pm;
 		float rmsd;
@@ -73,6 +86,10 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		void load_model();
 		void clearDisplay();
 		void printError(const int &);
+		void update_radialGrid(int);
+		void update_timeGrid(int);
+		void update_simpoints(double val);
+		void update_lamella(double val);
 
 // re-implemented Functions:
 
