@@ -30,7 +30,6 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
 		unsigned int monte_carlo_iterations;
 		bool window_3d_flag;
 		SA2d_control_variables sa2d_ctrl_vars;
-		vector <double> ri_noise, ti_noise;
 		QString analysis_type;
 		QLabel *lbl_s;
 		QLabel *lbl_D;
@@ -53,6 +52,12 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
 		float rmsd, baseline;
 		int model;
 		unsigned int components, current_component;
+
+#ifdef WIN32
+		    #pragma warning ( disable: 4251 )
+#endif
+
+		vector <double> ri_noise, ti_noise;
 		vector <double> s_distribution;
 		vector <double> D_distribution;
 		vector <double> partial_concentration;
@@ -63,6 +68,11 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
 		vector <double> mw;
 		vector <double> f_f0;
 		vector <double> fv;
+		
+#ifdef WIN32
+		    #pragma warning ( default: 4251 )
+#endif
+
 		struct mfem_data residuals, fem_model;
 		
 	private slots:
