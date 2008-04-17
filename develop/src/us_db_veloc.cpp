@@ -873,7 +873,7 @@ void US_DB_Veloc::endUncompressProcess()
 			uncompress_proc->setWorkingDirectory(work_dir);
 			QStringList cmd;
 			cmd.append("tar");
-			cmd.append("-xvf");
+			cmd.append("-xf");
 			cmd.append(tar_filename);
 			uncompress_proc->setArguments(cmd);
 			uc_step=2;
@@ -914,7 +914,7 @@ void US_DB_Veloc::endUncompressProcess()
 			uncompress_proc->setWorkingDirectory(work_dir);
 			QStringList cmd;
 			cmd.append("tar");
-			cmd.append("-xvf");
+			cmd.append("-xf");
 			cmd.append(tar_filename);
 			uncompress_proc->setArguments(cmd);
 			uc_step=4;
@@ -955,7 +955,7 @@ void US_DB_Veloc::endUncompressProcess()
 			uncompress_proc->setWorkingDirectory(work_dir);
 			QStringList cmd;
 			cmd.append("tar");
-			cmd.append("-xvf");
+			cmd.append("-xf");
 			cmd.append(tar_filename);
 			uncompress_proc->setArguments(cmd);
 			uc_step=6;

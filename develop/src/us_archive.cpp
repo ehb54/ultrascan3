@@ -1568,7 +1568,7 @@ void US_Archive::endExtractProcess()
 			}
 			break;
 		}
-		case 1:			//tar -xvf *.tar file
+		case 1:			//tar -xf *.tar file
 		{	
 			extract_filename=extract_filename.left(extract_filename.length()-3);
 			extract_proc->clearArguments();
@@ -1577,7 +1577,7 @@ void US_Archive::endExtractProcess()
 			extract_proc->setWorkingDirectory(work_dir);
 			QStringList u_cmd;
 			u_cmd.append("tar");
-			u_cmd.append("-xvvf");
+			u_cmd.append("-xf");
 			u_cmd.append(extract_filename);
 			extract_proc->setArguments(u_cmd);
 			
@@ -1628,7 +1628,7 @@ void US_Archive::endExtractProcess()
 			extract_proc->setWorkingDirectory(work_dir);
 			QStringList r_cmd;
 			r_cmd.append("tar");
-			r_cmd.append("-xvvf");
+			r_cmd.append("-xf");
 			r_cmd.append(result_file);
 			extract_proc->setArguments(r_cmd);
 			if (reportFile.exists())	//result file exists
@@ -1659,7 +1659,7 @@ void US_Archive::endExtractProcess()
 			extract_proc->setWorkingDirectory(work_dir);
 			QStringList r_cmd;
 			r_cmd.append("tar");
-			r_cmd.append("-xvvf");
+			r_cmd.append("-xf");
 			r_cmd.append(report_file);
 			extract_proc->setArguments(r_cmd);
 			
@@ -1689,7 +1689,7 @@ void US_Archive::endExtractProcess()
 			extract_proc->setWorkingDirectory(work_dir);
 			QStringList r_cmd;
 			r_cmd.append("tar");
-			r_cmd.append("-xvvf");
+			r_cmd.append("-xf");
 			r_cmd.append(raw_file);
 			extract_proc->setArguments(r_cmd);
 			e_step=5;			
@@ -1784,7 +1784,7 @@ void US_Archive::extract_archive()
 		{
 			mle->insert(tr("\n\nRestoring Sub-Archive ") + current_file + ": \n\n");
 			str = "cd " + USglobal->config_list.result_dir + ";"
-			+ "tar -xvvf " + current_file;
+			+ "tar -xf " + current_file;
 			FILE *f2 = popen(str, "r");
 			while (fgets(cstr, 500, f2))
 			{
@@ -1809,7 +1809,7 @@ void US_Archive::extract_archive()
 		{
 			mle->insert(tr("\n\nRestoring Sub-Archive ") + current_file + ": \n\n");
 			str = "cd " + USglobal->config_list.html_dir + ";"
-			+ "tar -xvvf " + current_file;
+			+ "tar -xf " + current_file;
 			FILE *f3 = popen(str, "r");
 			while (fgets(cstr, 500, f3))
 			{
@@ -1834,7 +1834,7 @@ void US_Archive::extract_archive()
 		{
 			mle->insert(tr("\n\nRestoring Sub-Archive ") + current_file + ": \n\n");
 			str = "cd " + USglobal->config_list.data_dir + ";"
-			+ "tar -xvvf " + current_file;
+			+ "tar -xf " + current_file;
 			FILE *f4 = popen(str, "r");
 			while (fgets(cstr, 500, f4))
 			{

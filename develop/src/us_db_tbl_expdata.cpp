@@ -1357,7 +1357,7 @@ void US_ExpData_DB::endUncompressProcess()
 
 			QStringList cmd;
 			cmd.append("tar");
-			cmd.append("-xvf");
+			cmd.append("-xf");
 			cmd.append(tar_filename);
 			uncompress_proc->setArguments(cmd);
 			uc_step=2;

@@ -638,7 +638,7 @@ void US_DB_RST_Montecarlo::endCompressProcess()
 					compress_proc->setWorkingDirectory(work_dir);
 					QStringList cmd;
 					cmd.append("tar");
-					cmd.append("-xvf");
+					cmd.append("-xf");
 					cmd.append("montecarlo.tar");
 					compress_proc->setArguments(cmd);
 					c_step = 102;
@@ -728,7 +728,7 @@ void US_DB_RST_Montecarlo::endCompressProcess()
          compress_proc->setWorkingDirectory(work_dir);
 			QStringList cmd;
 			cmd.append("tar");
-			cmd.append("-xvf");
+			cmd.append("-xf");
 			cmd.append(tarfile);
 			compress_proc->setArguments(cmd);
 			c_step = 105;
@@ -755,7 +755,7 @@ void US_DB_RST_Montecarlo::endCompressProcess()
          compress_proc->setWorkingDirectory(work_dir);
 			QStringList cmd;
 			cmd.append("tar");
-			cmd.append("-xvf");
+			cmd.append("-xf");
 			cmd.append(tarfile);
 			compress_proc->setArguments(cmd);
 			c_step = 1000;
