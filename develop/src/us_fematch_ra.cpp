@@ -242,30 +242,32 @@ float US_FeMatchRa_W::fit()
 		single_scan.time = (double) run_inf.time[selected_cell][selected_lambda][i];
 		simdata[0].scan.push_back(single_scan);
 	}
-	SimulationParameters simparams;
 	US_Data_IO *data_io;
 	data_io = new US_Data_IO(&run_inf, false); // (baseline flag can be false, we don't need it)
-	data_io->assign_simparams(&simparams, selected_cell, selected_lambda, selected_channel);
 	data_io->assign_simparams(&sp, selected_cell, selected_lambda, selected_channel);
 	delete data_io;
+	sp.simpoints = 500;
 	astfem_rsa->calculate(&ms, &sp, &simdata);
 	rmsd = 0.0;
 	analysis_plot->clear();
 	edit_plot->clear();
 	plot_edit();
 	cerr.precision(10);
+	cout.precision(10);
 	/*
+	cout << "points: " << points << ", radius.size(): " << simdata[0].radius.size() << endl;
 	for  (j=0; j<points; j++)
 	{
-		cerr << simdata[0].radius[j] << endl;
+		cerr << simdata[0].radius[j] << ", " << radius[j] << endl;
 	}
 	*/
-	/*
+	
+	//cout << "run_inf.scans: " << run_inf.scans[selected_cell][selected_lambda] << ", simdata[0].scan.size(): " <<  simdata[0].scan.size() << endl;
 	for  (j=0; j<run_inf.scans[selected_cell][selected_lambda]; j++)
 	{
-		cerr << simdata[0].scan[j].time << ", " << run_inf.time[0][0][j] << endl;
+		cerr << simdata[0].scan[j].time << ", " << run_inf.time[0][0][j] << ", " << simdata[0].scan[j].omega_s_t << ", " << run_inf.omega_s_t[0][0][j] <<  endl;
 	}
-	*/
+	
 	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 	{
 		for (j=0; j<points; j++)

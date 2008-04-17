@@ -913,7 +913,7 @@ void US_Astfem_Sim::start_simulation()
 		increment = (unsigned int) ((simparams.speed_step[i].duration_hours * 3600
 		+ simparams.speed_step[i].duration_minutes * 60
 		- simparams.speed_step[i].delay_hours * 3600
-				- simparams.speed_step[i].delay_minutes * 60)/(simparams.speed_step[i].scans - 1));
+				- simparams.speed_step[i].delay_minutes * 60)/(simparams.speed_step[i].scans));
 		for (j=0; j<simparams.speed_step[i].scans; j++)
 		{
 			temp_scan.conc.clear();
@@ -969,12 +969,12 @@ void US_Astfem_Sim::start_simulation()
 		cerr << astfem_data[0].radius[j] << endl;
 	}
 	*/
-	/*
+	
 	for (j=0; j<astfem_data[0].scan.size(); j++)
 	{
 		cerr << astfem_data[0].scan[j].time << endl;
 	}
-	*/
+	
 	for (i=0; i<simparams.speed_step.size(); i++)
 	{
 		x = new double [astfem_data[i].radius.size()];

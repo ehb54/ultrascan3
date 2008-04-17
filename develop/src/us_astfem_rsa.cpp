@@ -120,6 +120,7 @@ vector <struct mfem_data> *exp_data)
 
 					// add the acceleration time:
 					current_time += af_params.dt * af_params.time_steps;
+					//cout << "Current time: " << current_time << endl;
 					if (guiFlag)
 					{
 						emit new_time(current_time);
@@ -170,11 +171,12 @@ vector <struct mfem_data> *exp_data)
 				rpm.clear();
 				rpm.push_back((*simparams).speed_step[j].rotorspeed);
 				calculate_ni(rpm[0], rpm[0], af_params.s[0], af_params.D[0], &CT0, &simdata);
-				interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
 
 				// set the current time to the last scan of this speed step
 				current_time = (*simparams).speed_step[j].duration_hours * 3600
 				+ (*simparams).speed_step[j].duration_minutes * 60;
+				//cout << "Current time: " << current_time << ", duration: " << duration << endl;
+				interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
 
 				// set the current speed to the constant rotor speed of the current speed step
 				current_speed = (*simparams).speed_step[j].rotorspeed;
@@ -360,7 +362,7 @@ vector <struct mfem_data> *exp_data)
 			}
 			else
 			{
-			        if (guiFlag)
+				if (guiFlag)
 				{
 				    cout << "Number of simpoints adjusted to " << af_params.simpoints
 						<< " for component " << i + 1 << " and speed step " << j + 1 << endl;
@@ -4159,6 +4161,121 @@ float *scantimes, double *radius, double **c)
 	return 0;
 }
 
+
+// interpolation routine By B. Demeler 041708
+int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simdata)
+{
+// NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
+// before using this routine! The radius also has to be assigned!
+
+	if ( (*expdata).scan.size() == 0 || (*expdata).scan[0].conc.size() == 0 ||
+				(*simdata).scan.size() == 0 || (*simdata).radius.size() == 0  )
+	{
+		return -1;
+	}
+
+	unsigned int i, j, simscan, expscan;
+	double a, b;
+
+	// first, create a temporary mfem_data structure (tmp_data) that has the same radial
+	// grid as simdata, but the same time grid as the experimental data. The time
+	// and w2t integral values are interpolated for the tmp_data structure.
+
+	mfem_data tmp_data;
+	mfem_scan tmp_scan;
+	tmp_data.scan.clear();
+	tmp_data.radius.clear();
+	// fill tmp_data.radius with radius positions from the simdata array:
+
+	for (i=0; i<(*simdata).radius.size(); i++)
+	{
+		tmp_data.radius.push_back((*simdata).radius[i]);
+	}
+
+	// iterate through all experimental data scans and find the first time point in simdata
+	// that is higher or equal to each time point in expdata:
+
+	simscan = 0;
+	
+	for (expscan = 0; expscan < (*expdata).scan.size(); expscan++)
+	{
+		while ((*simdata).scan[simscan].time < (*expdata).scan[expscan].time)
+		{
+			simscan ++;
+			// make sure we don't overrun bounds:
+			if (simscan == (*simdata).scan.size())
+			{
+				cerr << "simulation time scan[" << simscan << "]: " << (*simdata).scan[simscan-1].time
+						<< ", expdata scan time[" << expscan << "]: " << (*expdata).scan[expscan].time << endl;
+				cerr << tr("The simulated data does not cover the entire experimental time range and ends too early!\nexiting...\n");
+				exit(-1);
+			}
+		}
+		// check to see if the time is equal or larger:
+		if ((*simdata).scan[simscan].time == (*expdata).scan[expscan].time)
+		{ // they are the same, so take this scan and push it onto the tmp_data array.
+			tmp_data.scan.push_back((*simdata).scan[simscan]);
+		}
+		else // interpolation is needed
+		{
+			tmp_scan.conc.clear();
+			// interpolate the concentration points:
+			for (i=0; i<(*simdata).radius.size(); i++)
+			{
+				a = ((*simdata).scan[simscan].conc[i] - (*simdata).scan[simscan-1].conc[i])
+				/ ((*simdata).scan[simscan].time - (*simdata).scan[simscan-1].time);
+				b = (*simdata).scan[simscan].conc[i] - a *(*simdata).scan[simscan].time;
+				tmp_scan.conc.push_back(a * (*expdata).scan[expscan].time + b);
+			}
+			// interpolate the omega_square_t integral data:
+			a = ((*simdata).scan[simscan].omega_s_t - (*simdata).scan[simscan-1].omega_s_t)
+				/ ((*simdata).scan[simscan].time - (*simdata).scan[simscan-1].time);
+			b = (*simdata).scan[simscan].omega_s_t - a *(*simdata).scan[simscan].time;
+			(*expdata).scan[expscan].omega_s_t = a * (*expdata).scan[expscan].time + b;
+			tmp_data.scan.push_back(tmp_scan);
+		}
+	}
+   // interpolate all radial points from each scan in tmp_data onto expdata
+	for (expscan = 0; expscan<(*expdata).scan.size(); expscan++)
+	{
+		j = 0;
+		if (j == 0 && tmp_data.radius[0] > (*expdata).radius[0])
+		{
+			cout << "Radius comparison: " << tmp_data.radius[0] << " (simulated), " << (*expdata).radius[0] << " (experimental)\n";
+			cerr << "j = " << j << ", simdata radius: " << tmp_data.radius[j] << ", expdata radius: " << (*expdata).radius[i] << endl;
+			cerr << tr("The simulated data radial range does not include the beginning of the experimental data's radii!\nexiting...\n");
+			exit(-3);
+		}
+		for (i=0; i<(*expdata).radius.size(); i++)
+		{
+			while (tmp_data.radius[j] < (*expdata).radius[i])
+			{
+				j ++;
+				// make sure we don't overrun bounds:
+				if (j == tmp_data.radius.size())
+				{
+					cerr << tr("The simulated data does not have enough radial points and ends too early!\nexiting...\n");
+					exit(-2);
+				}
+			}
+			// check to see if the radius is equal or larger:
+			if (tmp_data.radius[j] == (*expdata).radius[i])
+			{ // they are the same, so simply update the concentration value:
+				(*expdata).scan[expscan].conc[i] = tmp_data.scan[expscan].conc[j];
+			}
+			else // interpolation is needed
+			{
+				a = (tmp_data.scan[expscan].conc[j] - tmp_data.scan[expscan].conc[j-1])
+				/ (tmp_data.radius[j] - tmp_data.radius[j-1]);
+				b = tmp_data.scan[expscan].conc[j] - a * tmp_data.radius[j];
+				(*expdata).scan[expscan].conc[i] = a * (*expdata).radius[i] + b;
+			}
+		}
+	}
+	return(0);
+}
+
+/*
 // new version: Weiming 05/27/06
 int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simdata)
 {
@@ -4263,6 +4380,8 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
    clear_2d((*simdata).scan.size(), tmpC);
 	return(0);
 }
+*/
+
 
 void US_Astfem_RSA::print_vector(double *dval, unsigned int ival)
 {
@@ -4277,17 +4396,17 @@ void US_Astfem_RSA::adjust_limits(unsigned int speed)
 {
 	// first correct meniscus to theoretical position at rest:
 	double stretch_val = stretch(af_params.rotor, af_params.first_speed);
-	cout << "rotor: " << af_params.rotor << ", stretch: " << stretch_val << endl;
+//	cout << "rotor: " << af_params.rotor << ", stretch: " << stretch_val << endl;
 	// this is the meniscus at rest
 	af_params.current_meniscus = af_params.meniscus - stretch_val;
-	cout << "1st speed meniscus: " << af_params.meniscus << ", rest meniscus: " << af_params.current_meniscus << endl;
+//	cout << "1st speed meniscus: " << af_params.meniscus << ", rest meniscus: " << af_params.current_meniscus << endl;
 	// calculate rotor stretch at current speed
 	stretch_val = stretch(af_params.rotor, speed);
 	// add current stretch to meniscus at rest
 	af_params.current_meniscus +=  stretch_val;
 	// add current stretch to bottom at rest
 	af_params.current_bottom = af_params.bottom + stretch_val;
-	cout << "corrected meniscus: " << af_params.current_meniscus << ", current_bottom: " << af_params.current_bottom << endl;
+//	cout << "corrected meniscus: " << af_params.current_meniscus << ", current_bottom: " << af_params.current_bottom << endl;
 }
 
 void US_Astfem_RSA::adjust_grid(unsigned int old_speed, unsigned int new_speed, vector <double> *radius)
