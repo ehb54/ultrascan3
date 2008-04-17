@@ -22,12 +22,22 @@ using namespace std;
 struct AstFemParameters
 {
 	unsigned int simpoints;
+
+#ifdef WIN32
+	  #pragma warning ( disable: 4251 )
+#endif
+
 	vector <double> s;			// sedimentation coefficient
 	vector <double> D;			// Diffusion coefficient
 	vector <double> keq;			// Equilibrium constants
 	vector <double> koff;		// off rates
 	vector <unsigned int> n;	// exponents
- 	double dt;						// time step size;
+
+#ifdef WIN32
+	  #pragma warning ( default: 4251 )
+#endif
+
+	double dt;						// time step size;
 	unsigned int time_steps;	// number of time steps for simulation
 	double omega_s;				// omega^2
 	double start_time;			// start time in seconds of simulation at constant speed
@@ -50,7 +60,10 @@ class US_EXTERN US_Astfem_RSA : public QObject
 	public:
 
 		US_Astfem_RSA();
-		US_Astfem_RSA(bool * /*stopFlag*/, bool /*GUIflag*/, bool * /*movieFlag*/, QObject * parent=0, const char * name=0);
+		US_Astfem_RSA(bool * /*stopFlag*/, 
+				          bool /*GUIflag*/, 
+									bool * /*movieFlag*/, 
+									QObject * parent=0, const char * name=0);
 		~US_Astfem_RSA();
 		bool *stopFlag;			// stop calculation, interpolate and return
 		bool *movieFlag;			// output time and movies if true
@@ -62,8 +75,16 @@ class US_EXTERN US_Astfem_RSA : public QObject
 	private:
 
 		// FEM discretization related parameters:
+
+#ifdef WIN32
+		#pragma warning ( disable: 4251 )
+#endif
 		unsigned int N;			// number of points used in radial direction in ASTFEM
 		vector <double> x; 		// radii of grid points; x[0...N-1]
+#ifdef WIN32
+	  #pragma warning ( default: 4251 )
+#endif
+
 		struct AstFemParameters af_params;
 
 	public slots:
