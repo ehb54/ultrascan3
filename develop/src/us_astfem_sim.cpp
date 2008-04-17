@@ -276,7 +276,10 @@ void US_Astfem_Sim::new_model()
 	fg = new US_FemGlobal();
 	fg->select_model(&system);
 	delete fg;
-	assign_model();
+	if (system.model >= 0)
+	{
+		assign_model();
+	}
 }
 
 // load the model editor to edit the default values of the newly selected model:
