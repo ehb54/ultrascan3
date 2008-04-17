@@ -526,10 +526,11 @@ unix {
 
 win32 {
   message ("Configuring for the Microsoft Windows Platform...")
-  DESTDIR = ../bin
-  #CONFIG += qt thread warn exceptions dll release
-  CONFIG  += qt thread warn exceptions dll debug
-  DEFINES += WIN32 QT_DLL -GX WIN32 QWT_USE_DLL US_MAKE_DLL
-  LIBS    += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib opengl32.lib glu32.lib glaux.lib
+  DESTDIR            = ../bin
+  QMAKE_LFLAGS_DEBUG += /NODEFAULTLIB:"msvcrt.lib"
+  #CONFIG            += qt thread warn exceptions dll release
+  CONFIG             += qt thread warn exceptions dll debug
+  DEFINES            += WIN32 QT_DLL -GX WIN32 QWT_USE_DLL US_MAKE_DLL
+  LIBS               += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib opengl32.lib glu32.lib glaux.lib
 }
 
