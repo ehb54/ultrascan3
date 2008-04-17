@@ -1,4 +1,5 @@
 #include "../include/us_astfem_rsa.h"
+#include <algorithm>
 
 US_Astfem_RSA::US_Astfem_RSA(bool *stopFlag, bool guiFlag, bool *movieFlag, QObject *parent, const char *name) : QObject(parent, name)
 {

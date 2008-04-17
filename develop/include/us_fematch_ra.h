@@ -36,7 +36,18 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 
 		unsigned int monte_carlo_iterations;
 		SA2d_control_variables sa2d_ctrl_vars;
+
+#ifdef WIN32
+		  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <double> ri_noise, ti_noise;
+		vector <struct mfem_data> simdata;
+
+#ifdef WIN32
+		  #pragma warning ( default: 4251 )
+#endif
+		
 		QString analysis_type;
 		QLabel *lbl_variance;
 		QLabel *lbl_variance2;
@@ -48,7 +59,6 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		int model;
 		bool stopFlag, movieFlag;
 		struct mfem_data residuals;
-		vector <struct mfem_data> simdata;
 		struct ModelSystem ms;
 		struct SimulationParameters sp;
 		US_Astfem_RSA *astfem_rsa;
