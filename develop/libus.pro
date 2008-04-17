@@ -526,7 +526,7 @@ unix {
 
 win32 {
   message ("Configuring for the Microsoft Windows Platform...")
-  DESTDIR = ../lib
+  DESTDIR = ../bin
   #CONFIG += qt thread warn exceptions dll release
   CONFIG  += qt thread warn exceptions dll debug
   DEFINES += WIN32 QT_DLL -GX WIN32 QWT_USE_DLL US_MAKE_DLL
