@@ -516,10 +516,10 @@ DEPENDPATH += src include
 
 unix {
   DEFINES  += UNIX
-  
+  CONFIG  += qt thread warn release 
+  #CONFIG += qt thread warn debug
+
 	contains(UNAME,x86_64) {
-    CONFIG  += qt thread warn release 
-    #CONFIG += qt thread warn debug
     LIBS    += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d
     DEFINES += BIN64
   } else {
