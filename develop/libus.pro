@@ -126,7 +126,6 @@ unix:contains (UNAME, sparc) {
 
 unix: { 
   SOURCES +=src/us_beowulf.cpp \
-  src/us_astfem_rsa.cpp \
   src/us_astfem_sim.cpp \
   src/us_cluster.cpp \
   src/us_cpuload.cpp \
@@ -146,6 +145,7 @@ SOURCES += src/us_2dplot.cpp \
   3dplot/lightingdlg.cpp \
   3dplot/mesh.cpp \
   3dplot/D_calc.cpp \
+  src/us_astfem_rsa.cpp \
   src/us_3dsolutes.cpp \
   src/us_admin.cpp \
   src/us_archive.cpp \
@@ -307,7 +307,6 @@ SOURCES += src/us_2dplot.cpp \
 unix:{ 
   HEADERS \
   +=include/us_beowulf.h \
-  include/us_astfem_rsa.h \
   include/us_astfem_sim.h \
   include/us_cluster.h \
   include/us_cpuload.h \
@@ -321,6 +320,7 @@ unix:{
 }
     
 HEADERS +=include/bluearrow.xpm \
+  include/us_astfem_rsa.h \
   include/greenarrow.xpm \
   include/redarrow.xpm \
   3dplot/mesh2mainwindowbase.h \
