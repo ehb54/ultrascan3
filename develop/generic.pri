@@ -98,9 +98,9 @@ DEPENDPATH     += ../src \
                   ../include
 
 SOURCES         = main.cpp 
-CONFIG         += qt warn thread release
 
 unix {
+ CONFIG                += qt warn thread release
  DEFINES               += UNIX
  QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
 
@@ -114,8 +114,11 @@ unix {
 
 win32 {
   message ("Configuring for the Microsoft Windows Platform...")
+  #CONFIG         += qt warn thread release
+  CONFIG         += qt warn thread debug
   DEFINES        += WIN32 
 	QMAKE_CXXFLAGS += /EHsc
+	QMAKE_LFLAGS_DEBUG += /NODEFAULTLIB:"msvcrt.lib"
   LIBS           += ../../lib/us951.lib 
   INCLUDEPATH    += $(ZLIB)/include
 }

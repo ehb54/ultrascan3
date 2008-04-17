@@ -7,11 +7,6 @@ TRANSLATIONS   = lib.ts
 VERSION        = 9.5.1
 MOC_DIR        = src/moc
 OBJECTS_DIR    = src/obj
-CONFIG        += qt thread warn release dll
-#CONFIG       += qt thread warn debug dll
-win32:CONFIG  += exceptions
-unix:DEFINES  += UNIX
-win32:DEFINES += WIN32 QT_DLL -GX
 
 linux-g++:QMAKE_CXXFLAGS += -fno-exceptions
 #RC_FILE = ../icon.rc
@@ -20,10 +15,6 @@ linux-g++:QMAKE_CXXFLAGS += -fno-exceptions
 DEFINES += THREAD
 
 # Automatic hardware platform and operating system configurations:
-
-win32 { 
-  UNAME = WINDOWS 
-}
 
 unix {
   UNAME                   = $$system(uname -a)
@@ -128,15 +119,7 @@ unix:contains (UNAME, sparc) {
   DESTDIR = ../lib
   message ("Configuring for the Sun Sparc Platform...")
 }
-win32:contains (UNAME, WINDOWS) {
-  DEFINES += WIN32
-  DESTDIR = ../lib
-  message ("Configuring for the Microsoft Windows Platform...")
-}
 
-INCLUDEPATH = $(QWTDIR)/include $(QTDIR)/include $(QWT3DDIR)/include $(ZLIB)
-DEPENDPATH += src include
-DEFINES    += QWT_USE_DLL US_MAKE_DLL
 
 # Do not remake cpp and h files from ui files
 #FORMS = 3dplot/mesh2mainwindowbase.ui 3dplot/lightingdlgbase.ui
@@ -525,8 +508,15 @@ IMAGES = include/editcopy.xpm \
   include/textright.xpm \
   include/textunder.xpm
 
+INCLUDEPATH = $(QWTDIR)/include $(QTDIR)/include $(QWT3DDIR)/include $(ZLIB)
+DEPENDPATH += src include
+
 unix {
-  contains(UNAME,x86_64) {
+  DEFINES  += UNIX
+  
+	contains(UNAME,x86_64) {
+    CONFIG  += qt thread warn release 
+    #CONFIG += qt thread warn debug
     LIBS    += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d
     DEFINES += BIN64
   } else {
@@ -535,6 +525,11 @@ unix {
 }
 
 win32 {
-    LIBS += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib opengl32.lib glu32.lib glaux.lib
+  message ("Configuring for the Microsoft Windows Platform...")
+  DESTDIR = ../lib
+  #CONFIG += qt thread warn exceptions dll release
+  CONFIG  += qt thread warn exceptions dll debug
+  DEFINES += WIN32 QT_DLL -GX WIN32 QWT_USE_DLL US_MAKE_DLL
+  LIBS    += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib opengl32.lib glu32.lib glaux.lib
 }
 
