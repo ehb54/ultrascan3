@@ -25,8 +25,8 @@ using namespace std;
 struct constraint
 {
 	bool fit;
-	float low;
-	float high;
+	double low;
+	double high;
 };
 
 struct mfem_initial
@@ -40,7 +40,7 @@ struct mfem_scan
 	double time;
 	double omega_s_t;
 	unsigned int rpm;
-	float temperature;
+	double temperature;
 	std::vector <double> conc;
 };
 
@@ -51,11 +51,11 @@ struct mfem_data 					// a data set comprised of scans from one sample taken at 
 	unsigned int channel;		// channel number from centerpiece
 	unsigned int wavelength;	// single wavelength at which data was acquired (for UV/Vis)
 	unsigned int rpm;				// constant rotor speed
-	float s20w_correction;		// this is the number with which a s20,w value needs
+	double s20w_correction;		// this is the number with which a s20,w value needs
 										// to be multiplied to get the s value in experimental space
 										// sT,B = s20,W * s20W_correction:
 										// sT,B = [s_20,W * [(1-vbar*rho)_T,B * eta_20,W] / [(1-vbar*rho)_20,W * eta_T,B]
-	float D20w_correction;		// this is the number with which a D20,w value needs
+	double D20w_correction;		// this is the number with which a D20,w value needs
 										// to be multiplied to get the s value in experimental space
 										// DT,B = D20,W * D20w_correction
 										// DT,B = [D20,W * T * eta_20,W] / [293.15 * eta_T,B]
@@ -71,15 +71,15 @@ struct mfem_data 					// a data set comprised of scans from one sample taken at 
 
 struct SimulationComponent
 {
-	float vbar20;
-	float mw;
-	float s;
-	float D;
-	float sigma;
-	float delta;
-	float extinction;
-	float concentration;
-	float f_f0;
+	double vbar20;
+	double mw;
+	double s;
+	double D;
+	double sigma;
+	double delta;
+	double extinction;
+	double concentration;
+	double f_f0;
 	bool show_conc;
 	bool show_keq;
 	bool show_koff;
@@ -104,8 +104,8 @@ struct SimulationComponentConstraints
 
 struct Association
 {
-	float keq;
-	float k_off;
+	double keq;
+	double k_off;
 	QString units; 					// OpticalDensity, MolecularWeight, MgPerMl, Fringes, Fluorescence
 	int component1;					// which component is associating
 	int component2;					// which component is dissociating
@@ -136,7 +136,7 @@ struct ModelSystemConstraints
 	unsigned int simpoints;		// number of radial grid points used in simulation
 	unsigned int mesh; 			// 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 3 = user-selected mesh, 4 = nonuniform constant mesh
 	int moving_grid; 				// Use moving or fixed time grid
-	float band_volume;			// loading volume (of lamella) in a band-forming centerpiece
+	double band_volume;			// loading volume (of lamella) in a band-forming centerpiece
 };
 
 struct SpeedProfile
@@ -144,7 +144,7 @@ struct SpeedProfile
 	unsigned int duration_hours;
 	unsigned int duration_minutes;
 	unsigned int delay_hours;
-	float delay_minutes;
+	double delay_minutes;
 	unsigned int scans;
 	unsigned int acceleration;
 	unsigned int rotorspeed;
@@ -165,17 +165,17 @@ struct SimulationParameters
 	unsigned int simpoints;		// number of radial grid points used in simulation
 	unsigned int mesh; 			// 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 3 = user-selected mesh, 4 = nonuniform constant mesh
 	int moving_grid; 				// use adaptive time steps = 1, fixed time steps = 0
-	float radial_resolution;	// the radial datapoint increment/resolution of the final data
-	float meniscus;				// meniscus position at first constant speed
+	double radial_resolution;	// the radial datapoint increment/resolution of the final data
+	double meniscus;				// meniscus position at first constant speed
 										// for multiple speeds, the user must measure the meniscus at
 										// the first constant speed and use that to initialize the routine
-	float bottom;					// bottom of cell position without rotor stretch
-	float rnoise;					// random noise
-	float inoise;					// time invariant noise
-	float rinoise;					// radially invariant noise
+	double bottom;					// bottom of cell position without rotor stretch
+	double rnoise;					// random noise
+	double inoise;					// time invariant noise
+	double rinoise;					// radially invariant noise
 	int rotor;						// rotor serial number in database
 	bool band_forming;			// true for band-forming centerpieces
-	float band_volume;			// loading volume (of lamella) in a band-forming centerpiece
+	double band_volume;			// loading volume (of lamella) in a band-forming centerpiece
 };
 
 class US_EXTERN US_FemGlobal : public QObject

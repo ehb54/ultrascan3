@@ -15,7 +15,9 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 	simparams.speed_step[0].acceleration = 400;
 	simparams.speed_step[0].acceleration_flag = true;
 	simparams.simpoints = 100;
-	simparams.radial_resolution = 0.001;
+	simparams.radial_resolution = 0.0010000000000000000000000;
+	cerr.precision(10);
+	cerr << "Radial res (1): " << simparams.radial_resolution << endl; 
 	simparams.mesh = 0;
 	simparams.moving_grid = 1;
 	simparams.meniscus = 5.8;
@@ -903,6 +905,8 @@ void US_Astfem_Sim::start_simulation()
 
 // assign radius for the i'th dataset:
 		r = simparams.meniscus;
+		cerr.precision(10);
+		cerr << "Radial resolution: " << simparams.radial_resolution << "\n"; 
 		while (r <= simparams.bottom)
 		{
 			astfem_data[i].radius.push_back(r);
@@ -1151,6 +1155,7 @@ void US_Astfem_Sim::save_xla(const QString &fileName)
 				return;
 			}
 			f.setName(str2);
+			cerr.precision(10);
 			if (f.open(IO_WriteOnly | IO_Translate))
 			{
 				QTextStream ts(&f);
@@ -1177,6 +1182,7 @@ void US_Astfem_Sim::save_xla(const QString &fileName)
 					while (j<pts && astfem_data[k].scan[i].conc[j-30] <= maxc && temp_radius[j] <= maxrad)
 					{
 						ts << str1.sprintf("%9.4f %12.5e %12.5e", temp_radius[j], astfem_data[k].scan[i].conc[j-30], 0.0) << endl;
+						cerr << temp_radius[j] << ", " << astfem_data[k].scan[i].conc[j-30] << endl;
 						j++;
 					}
 				}

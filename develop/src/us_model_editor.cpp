@@ -778,7 +778,7 @@ void US_ModelEditor::update_conc(const QString &newText)
 	{
 		bool ok;
 		float val;
-		val = newText.toFloat(&ok);
+		val = newText.toDouble(&ok);
 		if (!ok)
 		{
 			printError(5);
@@ -795,36 +795,36 @@ void US_ModelEditor::update_conc(const QString &newText)
 
 void US_ModelEditor::get_vbar(const QString &val)
 {
-	if (val.toFloat() <= 0.0)
+	if (val.toDouble() <= 0.0)
 	{
 		return;
 	}
-	(*system).component_vector[current_component].vbar20 = val.toFloat();
+	(*system).component_vector[current_component].vbar20 = val.toDouble();
 	update_sD();
 }
 
 void US_ModelEditor::get_f_f0(const QString &val)
 {
-	if (val.toFloat() <= 0.0)
+	if (val.toDouble() <= 0.0)
 	{
 		return;
 	}
-	if (val.toFloat() < 1.0)
+	if (val.toDouble() < 1.0)
 	{
 		QMessageBox::message("Attention:", "Invalid Entry!\nf/f0 < 1.0");
 		return;
 	}
-	(*system).component_vector[current_component].f_f0 = val.toFloat();
+	(*system).component_vector[current_component].f_f0 = val.toDouble();
 	update_sD();
 }
 
 void US_ModelEditor::update_mw(const QString &val)
 {
-	if (val.toFloat() <= 0.0)
+	if (val.toDouble() <= 0.0)
 	{
 		return;
 	}
-	(*system).component_vector[current_component].mw = val.toFloat();
+	(*system).component_vector[current_component].mw = val.toDouble();
 	update_sD();
 }
 
@@ -914,7 +914,7 @@ void US_ModelEditor::update_sed(const QString &newText)
 	{
 		return;
 	}
-	(*system).component_vector[current_component].s = newText.toFloat();
+	(*system).component_vector[current_component].s = newText.toDouble();
 }
 
 void US_ModelEditor::update_diff(const QString &newText)
@@ -923,7 +923,7 @@ void US_ModelEditor::update_diff(const QString &newText)
 	{
 		return;
 	}
-	(*system).component_vector[current_component].D = newText.toFloat();
+	(*system).component_vector[current_component].D = newText.toDouble();
 }
 
 void US_ModelEditor::update_sigma(const QString &newText)
@@ -932,7 +932,7 @@ void US_ModelEditor::update_sigma(const QString &newText)
 	{
 		return;
 	}
-	(*system).component_vector[current_component].sigma = newText.toFloat();
+	(*system).component_vector[current_component].sigma = newText.toDouble();
 }
 
 void US_ModelEditor::update_f_f0(const QString &newText)
@@ -941,7 +941,7 @@ void US_ModelEditor::update_f_f0(const QString &newText)
 	{
 		return;
 	}
-	(*system).component_vector[current_component].f_f0 = newText.toFloat();
+	(*system).component_vector[current_component].f_f0 = newText.toDouble();
 }
 
 void US_ModelEditor::update_keq(const QString &newText)
@@ -960,7 +960,7 @@ void US_ModelEditor::update_keq(const QString &newText)
 			if ((*system).assoc_vector[i].stoichiometry1 != (*system).assoc_vector[i].stoichiometry2 // self-association
 			|| ((*system).assoc_vector[i].stoichiometry1 == 0 && (*system).assoc_vector[i].stoichiometry2 == 0))  // hetero-association
 			{
-				(*system).assoc_vector[i].keq = newText.toFloat();
+				(*system).assoc_vector[i].keq = newText.toDouble();
 			}
 		}
 	}
@@ -982,7 +982,7 @@ void US_ModelEditor::update_koff(const QString &newText)
 			if ((*system).assoc_vector[i].stoichiometry1 != (*system).assoc_vector[i].stoichiometry2 // self-association
 			|| ((*system).assoc_vector[i].stoichiometry1 == 0 && (*system).assoc_vector[i].stoichiometry2 == 0))  // hetero-association
 			{
-				(*system).assoc_vector[i].k_off = newText.toFloat();
+				(*system).assoc_vector[i].k_off = newText.toDouble();
 			}
 		}
 	}
@@ -994,7 +994,7 @@ void US_ModelEditor::update_delta(const QString &newText)
 	{
 		return;
 	}
-	(*system).component_vector[current_component].delta = newText.toFloat();
+	(*system).component_vector[current_component].delta = newText.toDouble();
 }
 
 void US_ModelEditor::help()

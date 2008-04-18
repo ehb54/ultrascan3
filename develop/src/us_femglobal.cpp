@@ -56,7 +56,7 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv,
 	{
 	    float fval;
 	    if (pos >= qsv.size()) return -1;
-	    fval = qsv[pos++].toFloat(&ok); // UltraScan version
+	    fval = qsv[pos++].toDouble(&ok); // UltraScan version
 	    if (pos >= qsv.size()) return -2;
 	    str = qsv[pos++];
 	    if (str.isNull())
@@ -89,49 +89,49 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv,
 		{
 		    return(-5);
 		}
-		(*ms).component_vector[i].concentration = str.toFloat();
+		(*ms).component_vector[i].concentration = str.toDouble();
 		if (pos >= qsv.size()) return -6;
 		str = qsv[pos++];
 		if (str.isNull())
 		{
 		    return(-6);
 		}
-		(*ms).component_vector[i].s = str.toFloat();
+		(*ms).component_vector[i].s = str.toDouble();
 		if (pos >= qsv.size()) return -7;
 		str = qsv[pos++];
 		if (str.isNull())
 		{
 		    return(-7);
 		}
-		(*ms).component_vector[i].D = str.toFloat();
+		(*ms).component_vector[i].D = str.toDouble();
 		if (pos >= qsv.size()) return -8;
 		str = qsv[pos++];
 		if (str.isNull())
 		{
 		    return(-8);
 		}
-		(*ms).component_vector[i].sigma = str.toFloat();
+		(*ms).component_vector[i].sigma = str.toDouble();
 		if (pos >= qsv.size()) return -9;
 		str = qsv[pos++];
 		if (str.isNull())
 		{
 		    return(-9);
 		}
-		(*ms).component_vector[i].delta = str.toFloat();
+		(*ms).component_vector[i].delta = str.toDouble();
 		if (pos >= qsv.size()) return -10;
 		str = qsv[pos++];
 		if (str.isNull())
 		{
 		    return(-10);
 		}
-		(*ms).component_vector[i].mw = str.toFloat();
+		(*ms).component_vector[i].mw = str.toDouble();
 		if (pos >= qsv.size()) return -11;
 		str = qsv[pos++];
 		if (str.isNull())
 		{
 		    return(-11);
 		}
-		(*ms).component_vector[i].vbar20 = str.toFloat();
+		(*ms).component_vector[i].vbar20 = str.toDouble();
 		if (pos >= qsv.size()) return -12;
 		str = qsv[pos++];
 		if (str.isNull())
@@ -145,14 +145,14 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv,
 		{
 		    return(-13);
 		}
-		(*ms).component_vector[i].f_f0 = str.toFloat();
+		(*ms).component_vector[i].f_f0 = str.toDouble();
 		if (pos >= qsv.size()) return -14;
 		str = qsv[pos++];
 		if (str.isNull())
 		{
 		    return(-14);
 		}
-		(*ms).component_vector[i].extinction = str.toFloat();
+		(*ms).component_vector[i].extinction = str.toDouble();
 		if (pos >= qsv.size()) return -15;
 		str = qsv[pos++];
 		if (str.isNull())
@@ -243,7 +243,7 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv,
 		{
 		    return(-25);
 		}
-		(*ms).assoc_vector[i].keq = str.toFloat();
+		(*ms).assoc_vector[i].keq = str.toDouble();
 		if (pos >= qsv.size()) return -26;
 		str = qsv[pos++];
 		if (str.isNull())
@@ -257,7 +257,7 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv,
 		{
 		    return(-27);
 		}
-		(*ms).assoc_vector[i].k_off = str.toFloat();
+		(*ms).assoc_vector[i].k_off = str.toDouble();
 		if (pos >= qsv.size()) return -28;
 		str = qsv[pos++];
 		if (str.isNull())
@@ -323,35 +323,35 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv,
 		{
 		    return(-35);
 		}
-		(*ms).component_vector[i].concentration = str.toFloat();
+		(*ms).component_vector[i].concentration = str.toDouble();
 		if (pos >= qsv.size()) return -36;
 		str = qsv[pos++];
 		if (str.isNull())
 		{
 		    return(-36);
 		}
-		(*ms).component_vector[i].s = str.toFloat();
+		(*ms).component_vector[i].s = str.toDouble();
 		if (pos >= qsv.size()) return -37;
 		str = qsv[pos++];
 		if (str.isNull())
 		{
 		    return(-37);
 		}
-		(*ms).component_vector[i].D = str.toFloat();
+		(*ms).component_vector[i].D = str.toDouble();
 		if (pos >= qsv.size()) return -38;
 		str = qsv[pos++];
 		if (str.isNull())
 		{
 		    return(-38);
 		}
-		(*ms).component_vector[i].sigma = str.toFloat();
+		(*ms).component_vector[i].sigma = str.toDouble();
 		if (pos >= qsv.size()) return -39;
 		str = qsv[pos++];
 		if (str.isNull())
 		{
 		    return(-39);
 		}
-		(*ms).component_vector[i].delta = str.toFloat();
+		(*ms).component_vector[i].delta = str.toDouble();
 		(*ms).component_vector[i].vbar20 =  (float) 0.72;
 		(*ms).component_vector[i].extinction = 1.0;
 		(*ms).component_vector[i].name = str.sprintf("Component %d", i+1);
@@ -514,7 +514,7 @@ int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, vec
 	    }
 	    if (pos < qsv.size())
 	    {
-		(*sp).speed_step[i].delay_minutes = qsv[pos++].toFloat(&ok);
+		(*sp).speed_step[i].delay_minutes = qsv[pos++].toDouble(&ok);
 	    }
 	    else
 	    {
@@ -565,7 +565,7 @@ int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, vec
 	}
 	if (pos < qsv.size())
 	{
-	    (*sp).radial_resolution = qsv[pos++].toFloat(&ok);
+	    (*sp).radial_resolution = qsv[pos++].toDouble(&ok);
 	}
 	else
 	{
@@ -573,7 +573,7 @@ int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, vec
 	}
 	if (pos < qsv.size())
 	{
-	    (*sp).meniscus = qsv[pos++].toFloat(&ok);
+	    (*sp).meniscus = qsv[pos++].toDouble(&ok);
 	}
 	else
 	{
@@ -581,7 +581,7 @@ int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, vec
 	}
 	if (pos < qsv.size())
 	{
-	    (*sp).bottom = qsv[pos++].toFloat(&ok);
+	    (*sp).bottom = qsv[pos++].toDouble(&ok);
 	}
 	else
 	{
@@ -589,7 +589,7 @@ int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, vec
 	}
 	if (pos < qsv.size())
 	{
-	    (*sp).rnoise = qsv[pos++].toFloat(&ok);
+	    (*sp).rnoise = qsv[pos++].toDouble(&ok);
 	}
 	else
 	{
@@ -597,7 +597,7 @@ int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, vec
 	}
 	if (pos < qsv.size())
 	{
-	    (*sp).inoise = qsv[pos++].toFloat(&ok);
+	    (*sp).inoise = qsv[pos++].toDouble(&ok);
 	}
 	else
 	{
@@ -605,7 +605,7 @@ int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, vec
 	}
 	if (pos < qsv.size())
 	{
-	    (*sp).rinoise = qsv[pos++].toFloat(&ok);
+	    (*sp).rinoise = qsv[pos++].toDouble(&ok);
 	}
 	else
 	{
@@ -643,7 +643,7 @@ int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, vec
 		(*sp).band_forming = true;
 		if (pos < qsv.size())
 		{
-		    (*sp).band_volume = qsv[pos++].toFloat(&ok);
+		    (*sp).band_volume = qsv[pos++].toDouble(&ok);
 		}
 		else
 		{
@@ -808,58 +808,58 @@ int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemCon
 	    k = qsv[pos++].toUInt(&ok);
 	    (*msc).component_vector_constraints[i].vbar20.fit = k;
 	    if (pos >= qsv.size()) return -4;
-	    (*msc).component_vector_constraints[i].vbar20.low = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].vbar20.low = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -5;
-	    (*msc).component_vector_constraints[i].vbar20.high = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].vbar20.high = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -6;
 	    k = qsv[pos++].toUInt(&ok);
 	    (*msc).component_vector_constraints[i].mw.fit = k;
 	    if (pos >= qsv.size()) return -7;
-	    (*msc).component_vector_constraints[i].mw.low = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].mw.low = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -8;
-	    (*msc).component_vector_constraints[i].mw.high = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].mw.high = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -9;
 	    k = qsv[pos++].toUInt(&ok);
 	    (*msc).component_vector_constraints[i].s.fit = k;
 	    if (pos >= qsv.size()) return -10;
-	    (*msc).component_vector_constraints[i].s.low = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].s.low = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -11;
-	    (*msc).component_vector_constraints[i].s.high = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].s.high = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -12;
 	    k = qsv[pos++].toUInt(&ok);
 	    (*msc).component_vector_constraints[i].D.fit = k;
 	    if (pos >= qsv.size()) return -13;
-	    (*msc).component_vector_constraints[i].D.low = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].D.low = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -14;
-	    (*msc).component_vector_constraints[i].D.high = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].D.high = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -15;
 	    k = qsv[pos++].toUInt(&ok);
 	    (*msc).component_vector_constraints[i].sigma.fit = k;
 	    if (pos >= qsv.size()) return -16;
-	    (*msc).component_vector_constraints[i].sigma.low = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].sigma.low = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -17;
-	    (*msc).component_vector_constraints[i].sigma.high = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].sigma.high = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -18;
 	    k = qsv[pos++].toUInt(&ok);
 	    (*msc).component_vector_constraints[i].delta.fit = k;
 	    if (pos >= qsv.size()) return -19;
-	    (*msc).component_vector_constraints[i].delta.low = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].delta.low = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -20;
-	    (*msc).component_vector_constraints[i].delta.high = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].delta.high = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -21;
 	    k = qsv[pos++].toUInt(&ok);
 	    (*msc).component_vector_constraints[i].concentration.fit = k;
 	    if (pos >= qsv.size()) return -22;
-	    (*msc).component_vector_constraints[i].concentration.low = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].concentration.low = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -23;
-	    (*msc).component_vector_constraints[i].concentration.high = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].concentration.high = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -24;
 	    k = qsv[pos++].toUInt(&ok);
 	    (*msc).component_vector_constraints[i].f_f0.fit = k;
 	    if (pos >= qsv.size()) return -25;
-	    (*msc).component_vector_constraints[i].f_f0.low = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].f_f0.low = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -26;
-	    (*msc).component_vector_constraints[i].f_f0.high = qsv[pos++].toFloat(&ok);
+	    (*msc).component_vector_constraints[i].f_f0.high = qsv[pos++].toDouble(&ok);
 	}
 	if (pos >= qsv.size()) return -27;
 	j = qsv[pos++].toUInt(&ok); // j is the number of reactions in this model
@@ -870,16 +870,16 @@ int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemCon
 	    k = qsv[pos++].toUInt(&ok);
 	    (*msc).assoc_vector_constraints[i].keq.fit = k;
 	    if (pos >= qsv.size()) return -29;
-	    (*msc).assoc_vector_constraints[i].keq.low = qsv[pos++].toFloat(&ok);
+	    (*msc).assoc_vector_constraints[i].keq.low = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -30;
-	    (*msc).assoc_vector_constraints[i].keq.high = qsv[pos++].toFloat(&ok);
+	    (*msc).assoc_vector_constraints[i].keq.high = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -31;
 	    k = qsv[pos++].toUInt(&ok);
 	    (*msc).assoc_vector_constraints[i].koff.fit = k;
 	    if (pos >= qsv.size()) return -32;
-	    (*msc).assoc_vector_constraints[i].koff.low = qsv[pos++].toFloat(&ok);
+	    (*msc).assoc_vector_constraints[i].koff.low = qsv[pos++].toDouble(&ok);
 	    if (pos >= qsv.size()) return -33;
-	    (*msc).assoc_vector_constraints[i].koff.high = qsv[pos++].toFloat(&ok);
+	    (*msc).assoc_vector_constraints[i].koff.high = qsv[pos++].toDouble(&ok);
 	}
 	if (pos >= qsv.size()) return -34;
 	(*msc).simpoints = qsv[pos++].toUInt(&ok);
@@ -888,7 +888,7 @@ int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemCon
 	if (pos >= qsv.size()) return -36;
 	(*msc).moving_grid = qsv[pos++].toInt(&ok);
 	if (pos >= qsv.size()) return -37;
-	(*msc).band_volume = qsv[pos++].toFloat(&ok);
+	(*msc).band_volume = qsv[pos++].toDouble(&ok);
 
 	int flag1 = read_modelSystem(ms, qsv, true);
 	if (flag1 < 0)
