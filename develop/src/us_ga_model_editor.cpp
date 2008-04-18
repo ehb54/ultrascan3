@@ -3,7 +3,6 @@
 US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, QWidget *parent, const char *name) : US_ModelEditor(false, ms, parent, name)
 {
 	this->ms = ms;
-	setup_GUI();
 	current_component = 0;
 	current_assoc = 0;
 	msc.simpoints = 200;    // number of radial grid points used in simulation
@@ -19,6 +18,7 @@ US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, QWidget *parent, cons
 	connect(le_f_f0, SIGNAL(returnPressed()), this, SLOT(verify_constraints()));
 	connect(le_keq, SIGNAL(returnPressed()), this, SLOT(verify_constraints()));
 	connect(le_koff, SIGNAL(returnPressed()), this, SLOT(verify_constraints()));
+	setup_GUI();
 	initialize_msc();
 	select_component((int) current_component);
 
@@ -126,14 +126,14 @@ void US_GAModelEditor::setup_GUI()
 	cnt_simpoints->setMinimumHeight(minHeight1);
 	connect(cnt_simpoints, SIGNAL(valueChanged(double)), SLOT(update_simpoints(double)));
 
-	cnt_lamella = new QwtCounter(this);
-	cnt_lamella->setRange(0.001, 0.1, 0.0001);
-	cnt_lamella->setNumButtons(3);
-	cnt_lamella->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cnt_lamella->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	cnt_lamella->setValue(msc.band_volume);
-	cnt_lamella->setMinimumHeight(minHeight1);
-	connect(cnt_lamella, SIGNAL(valueChanged(double)), SLOT(update_lamella(double)));
+	cnt_band_volume = new QwtCounter(this);
+	cnt_band_volume->setRange(0.001, 0.1, 0.0001);
+	cnt_band_volume->setNumButtons(3);
+	cnt_band_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cnt_band_volume->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cnt_band_volume->setValue(msc.band_volume);
+	cnt_band_volume->setMinimumHeight(minHeight1);
+	connect(cnt_band_volume, SIGNAL(valueChanged(double)), SLOT(update_band_volume(double)));
 
 	pb_selectModel = new QPushButton( tr("Select Model"), this );
 	pb_selectModel->setAutoDefault(false);
@@ -240,7 +240,7 @@ void US_GAModelEditor::setup_GUI()
 	grid->addWidget(pb_help, j, 4, 0);
 	j++;
 	grid->addWidget(lbl_bandVolume, j, 0, 0);
-	grid->addWidget(cnt_lamella, j, 1, 0);
+	grid->addWidget(cnt_band_volume, j, 1, 0);
 	grid->addMultiCellWidget(cmb_timeGrid, j, j, 2, 3, 0);
 	grid->addWidget(pb_close, j, 4, 0);
 	j++;
@@ -259,12 +259,12 @@ void US_GAModelEditor::help()
 
 void US_GAModelEditor::update_radialGrid(int val)
 {
-	msc.moving_grid = val;
+	msc.mesh = val;
 }
 
 void US_GAModelEditor::update_timeGrid(int val)
 {
-	msc.mesh = val;
+	msc.moving_grid = val;
 }
 
 void US_GAModelEditor::update_simpoints(double val)
@@ -272,7 +272,7 @@ void US_GAModelEditor::update_simpoints(double val)
 	msc.simpoints = (unsigned int) val;
 }
 
-void US_GAModelEditor::update_lamella(double val)
+void US_GAModelEditor::update_band_volume(double val)
 {
 	msc.band_volume = (float) val;
 }
@@ -290,6 +290,10 @@ void US_GAModelEditor::load_constraints()
 		msc.assoc_vector_constraints.clear();
 		fg->read_constraints(ms, &msc, fn);
 		delete fg;
+		cnt_simpoints->setValue(msc.simpoints);
+		cnt_band_volume->setValue(msc.band_volume);
+		cmb_timeGrid->setCurrentItem(msc.moving_grid);
+		cmb_radialGrid->setCurrentItem(msc.mesh);
 		lbl_model->setText(modelString[(*ms).model]);
 		cmb_component1->clear();
 		for (unsigned int i=0; i<(*ms).component_vector.size(); i++)

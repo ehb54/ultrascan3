@@ -229,8 +229,10 @@ UsWin::UsWin(QWidget *parent, const char *name)
 */
   int cofdistroID = veloc->insertItem(tr("&Distribution Analysis"), this, SLOT(cofdistro()));
   veloc->setItemEnabled(cofdistroID, true);
-  int fematchID = veloc->insertItem(tr("&Finite Element Model Viewer"), this, SLOT(fematch()));
+  int fematchID = veloc->insertItem(tr("&Finite Element Model Viewer (old)"), this, SLOT(fematch()));
   veloc->setItemEnabled(fematchID, true);
+  int fematch_raID = veloc->insertItem(tr("&Finite Element Model Viewer (new)"), this, SLOT(fematch_ra()));
+  veloc->setItemEnabled(fematch_raID, true);
   int ga_init1ID = veloc->insertItem(tr("&Initialize GA with 2DSA Distribution"), this, SLOT(ga_initialize1()));
   veloc->setItemEnabled(ga_init1ID, true);
   int ga_init2ID = veloc->insertItem(tr("&Initialize GA with nonlinear Model"), this, SLOT(ga_initialize2()));
@@ -506,6 +508,7 @@ UsWin::UsWin(QWidget *parent, const char *name)
   us_finite_single_proc = NULL;
   us_findat_ad_proc = NULL;
   us_fematch_proc = NULL;
+  us_fematch_ra_proc = NULL;
   us_gainit1_proc = NULL;
   us_gainit2_proc = NULL;
   us_hydrodyn_proc = NULL;
@@ -784,6 +787,14 @@ void UsWin::closeEvent(QCloseEvent *)
     {
       str = tr("Finite Element Model and Data Viewer");
       closeAttnt(us_fematch_proc, str);
+    }
+  }
+  if (us_fematch_ra_proc != NULL)
+  {
+    if (us_fematch_ra_proc->isRunning())
+    {
+      str = tr("Finite Element Model and Data Viewer");
+      closeAttnt(us_fematch_ra_proc, str);
     }
   }
   if (us_gainit1_proc != NULL)
@@ -1676,6 +1687,22 @@ void UsWin::fematch()
     return;
   }
   emit explain( " " );
+}
+
+void UsWin::fematch_ra()
+{
+	emit explain( tr("Loading Finite Element matching routine to compare experimental data...") );
+
+	us_fematch_ra_proc = new QProcess(this);
+	us_fematch_ra_proc->addArgument("us_fematch_ra");
+	if (!us_fematch_ra_proc->start())
+	{
+		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
+				"for US_FEMATCH_RA\n\n"
+						"Please check and try again..."));
+		return;
+	}
+	emit explain( " " );
 }
 
 void UsWin::hydrodyn()

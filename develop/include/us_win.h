@@ -67,6 +67,7 @@ public:
    QProcess *us_findat_ad_proc;
    QProcess *us_finite_single_proc;
 	QProcess *us_fematch_proc;
+	QProcess *us_fematch_ra_proc;
 	QProcess *us_gainit1_proc;
 	QProcess *us_gainit2_proc;
 	QProcess *us_hydrodyn_proc;
@@ -167,6 +168,7 @@ public slots:
 	void vhw_enhanced();
 	void secm();
 	void fematch();
+	void fematch_ra();
 	void hydrodyn();
 	void spectrum();
 	void cofs();

@@ -35,7 +35,7 @@ class US_EXTERN US_GAModelEditor : public US_ModelEditor
 		QLabel *lbl_simpoints;
 
 		QwtCounter *cnt_simpoints;
-		QwtCounter *cnt_lamella;
+		QwtCounter *cnt_band_volume;
 		
 		QComboBox *cmb_radialGrid;
 		QComboBox *cmb_timeGrid;
@@ -60,7 +60,7 @@ class US_EXTERN US_GAModelEditor : public US_ModelEditor
 		void update_radialGrid(int);
 		void update_timeGrid(int);
 		void update_simpoints(double val);
-		void update_lamella(double val);
+		void update_band_volume(double val);
 		void select_model();
 
 		void mw_constraintChanged(struct constraint);
