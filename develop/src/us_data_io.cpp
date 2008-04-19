@@ -32,7 +32,7 @@ void US_Data_IO::assign_simparams(struct SimulationParameters *sp, unsigned int 
 	(*sp).speed_step[0].delay_minutes = ((*run_inf).rpm[cell][lambda][channel]/(*sp).speed_step[0].acceleration)/60.0;
 	(*sp).speed_step[0].scans = (*run_inf).scans[cell][lambda];
 	(*sp).speed_step[0].rotorspeed = (*run_inf).rpm[cell][lambda][channel];
-	(*sp).speed_step[0].acceleration_flag = false;
+	(*sp).speed_step[0].acceleration_flag = true;
 
 	(*sp).simpoints = 100;				// number of radial grid points for simulation (should be overridden by user) 
                             			// are assigned in the constraint GUI

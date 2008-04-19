@@ -61,7 +61,7 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		QPushButton *pb_loadModel;
 
 		QwtCounter *cnt_simpoints;
-		QwtCounter *cnt_lamella;
+		QwtCounter *cnt_band_volume;
 
 		QComboBox *cmb_radialGrid;
 		QComboBox *cmb_timeGrid;
@@ -89,7 +89,7 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		void update_radialGrid(int);
 		void update_timeGrid(int);
 		void update_simpoints(double val);
-		void update_lamella(double val);
+		void update_band_volume(double val);
 
 // re-implemented Functions:
 

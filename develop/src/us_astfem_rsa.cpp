@@ -16,7 +16,7 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system, struct SimulationParame
 vector <struct mfem_data> *exp_data)
 {
 	US_FemGlobal fg;
-	//fg.write_experiment(system, simparams, "/root/astfem_rsa-output");
+	fg.write_experiment(system, simparams, "/root/astfem_rsa-output");
 	unsigned int i, j;
 	float current_time = 0.0;
 	float current_speed;
@@ -97,8 +97,7 @@ vector <struct mfem_data> *exp_data)
 				adjust_limits((*simparams).speed_step[j].rotorspeed);
 				(*exp_data)[j].meniscus = af_params.current_meniscus;
 				(*exp_data)[j].bottom = af_params.current_bottom;
-				if((*simparams).speed_step[j].acceleration_flag &&
-                                   (*simparams).speed_step[j].acceleration) // we need to simulate acceleration
+				if((*simparams).speed_step[j].acceleration_flag) // we need to simulate acceleration
 				{// if the speed difference is larger than acceleration rate then we have at least 1 acceleration step
 					af_params.time_steps = (unsigned int) fabs((*simparams).speed_step[j].rotorspeed
 					- current_speed)/(*simparams).speed_step[j].acceleration;

@@ -15,7 +15,7 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 	simparams.speed_step[0].acceleration = 400;
 	simparams.speed_step[0].acceleration_flag = true;
 	simparams.simpoints = 100;
-	simparams.radial_resolution = 0.0010000000000000000000000;
+	simparams.radial_resolution = 0.001;
 	cerr.precision(10);
 	cerr << "Radial res (1): " << simparams.radial_resolution << endl; 
 	simparams.mesh = 0;

@@ -126,14 +126,14 @@ void US_FeMatchRa_W::setup_GUI()
 	cnt_simpoints->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_simpoints, SIGNAL(valueChanged(double)), SLOT(update_simpoints(double)));
 
-	cnt_lamella = new QwtCounter(this);
-	cnt_lamella->setRange(0.001, 0.1, 0.0001);
-	cnt_lamella->setNumButtons(3);
-	cnt_lamella->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cnt_lamella->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	cnt_lamella->setValue(band_volume);
-	connect(cnt_lamella, SIGNAL(valueChanged(double)), SLOT(update_lamella(double)));
-
+	cnt_band_volume = new QwtCounter(this);
+	cnt_band_volume->setRange(0.001, 0.1, 0.0001);
+	cnt_band_volume->setNumButtons(3);
+	cnt_band_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cnt_band_volume->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cnt_band_volume->setValue(band_volume);
+	connect(cnt_band_volume, SIGNAL(valueChanged(double)), SLOT(update_band_volume(double)));
+	
 	analysis_plot->setTitle(tr("Fitting Residuals"));
 	rmsd = 0.0;
 	QString str;
@@ -185,7 +185,7 @@ void US_FeMatchRa_W::setup_GUI()
 	subGrid1->addMultiCellWidget(cnt_simpoints, j, j, 2, 3);
 	j++;
 	subGrid1->addMultiCellWidget(lbl_bandVolume, j, j, 0, 1);
-	subGrid1->addMultiCellWidget(cnt_lamella, j, j, 2, 3);
+	subGrid1->addMultiCellWidget(cnt_band_volume, j, j, 2, 3);
 	j++;
 	subGrid1->addMultiCellWidget(cmb_radialGrid, j, j, 0, 3);
 	j++;
@@ -307,6 +307,7 @@ float US_FeMatchRa_W::fit()
 		single_scan.time = (double) run_inf.time[selected_cell][selected_lambda][i];
 		simdata[0].scan.push_back(single_scan);
 	}
+	double tmp = sp.speed_step[0].delay_minutes;
 	US_Data_IO *data_io;
 	data_io = new US_Data_IO(&run_inf, false); // (baseline flag can be false, we don't need it)
 	data_io->assign_simparams(&sp, selected_cell, selected_lambda, selected_channel);
@@ -314,7 +315,8 @@ float US_FeMatchRa_W::fit()
 	sp.moving_grid = moving_grid;
 	sp.mesh = mesh;
 	sp.simpoints = simpoints;
-	sp. band_volume = band_volume;
+	sp.band_volume = band_volume;
+	sp.speed_step[0].delay_minutes = tmp;
 	astfem_rsa->calculate(&ms, &sp, &simdata);
 	rmsd = 0.0;
 	analysis_plot->clear();
@@ -331,17 +333,13 @@ float US_FeMatchRa_W::fit()
 	*/
 
 	//cout << "run_inf.scans: " << run_inf.scans[selected_cell][selected_lambda] << ", simdata[0].scan.size(): " <<  simdata[0].scan.size() << endl;
-	for  (j=0; j<run_inf.scans[selected_cell][selected_lambda]; j++)
-	{
-		cerr << simdata[0].scan[j].time << ", " << run_inf.time[0][0][j] << ", " << simdata[0].scan[j].omega_s_t << ", " << run_inf.omega_s_t[0][0][j] <<  endl;
-	}
 
 	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 	{
+		cerr << i <<": " << simdata[0].scan[i].time << ", " << run_inf.time[0][0][i] << ", " << simdata[0].scan[i].omega_s_t << ", " << run_inf.omega_s_t[0][0][i] <<  endl;
 		for (j=0; j<points; j++)
 		{
 			sim[i][j] = simdata[0].scan[i].conc[j];
-			//cerr << simdata[0].scan[i].conc[j] << endl;
 			res[i][j] = absorbance[i][j] - sim[i][j];
 			rmsd += pow(res[i][j], 2.0);
 		}
@@ -394,6 +392,12 @@ void US_FeMatchRa_W::load_model()
 		QString str;
 		fg = new US_FemGlobal(this);
 		error_code = fg->read_experiment(&ms, &sp, fn);
+		cmb_timeGrid->setCurrentItem(sp.moving_grid);
+		cnt_band_volume->setValue(sp.band_volume);
+		cout << "Band volume: " << sp.band_volume << endl;
+		cnt_simpoints->setValue(sp.simpoints);
+		cmb_radialGrid->setCurrentItem(sp.mesh);
+		fg->write_experiment(&ms, &sp, "/root/fematch_ra-output");
 		delete fg;
 		if (error_code < 0)
 		{
@@ -481,7 +485,7 @@ void US_FeMatchRa_W::update_simpoints(double val)
 	simpoints = (unsigned int) val;
 }
 
-void US_FeMatchRa_W::update_lamella(double val)
+void US_FeMatchRa_W::update_band_volume(double val)
 {
 	band_volume = (float) val;
 }
