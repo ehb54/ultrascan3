@@ -10,7 +10,7 @@
 
 $bcf_no_procs = 42;
 $alamo_no_procs = 31;
-$laredo_no_procs = 36;
+$laredo_no_procs = 36; 
 
 # END USER EDITABLE SECTION
 
@@ -58,6 +58,18 @@ $_[0]
 "
 		 );
 
+    if(-e "/lustre/tmp/gc_tigre_${id}.2") {
+	$msg->attach(Type     => 'TEXT',
+		     Path     => "/lustre/tmp/gc_tigre_${id}.2",
+		     Filename => "gc_tigre_${id}.stderr");
+    }
+
+    if(-e "/lustre/tmp/gc_tigre_${id}.1") {
+	$msg->attach(Type     => 'TEXT',
+		     Path     => "/lustre/tmp/gc_tigre_${id}.1",
+		     Filename => "gc_tigre_${id}.stdout");
+    }
+
     if(-e "/lustre/tmp/us_job${id}.stderr") {
 	$msg->attach(Type     => 'TEXT',
 		     Path     => "/lustre/tmp/us_job${id}.stderr",
@@ -69,6 +81,8 @@ $_[0]
 		     Path     => "/lustre/tmp/us_job${id}.stdout",
 		     Filename => "us_job${id}.stdout");
     }
+
+
     
     $msg->send('smtp', 'smtp.uthscsa.edu');
 
@@ -439,6 +453,8 @@ if($fit_ti_noise || $fit_ri_noise) {
 }
 
 
+# $max_time[0] = 7 * 60 if $max_time[0] > 7 * 60;
+
 $max_time[0] = 5 if $max_time[0] <= 5;
 if($max_time[0] > 2880 &&
    $default_system eq 'lonestar.tacc.utexas.edu') {
@@ -479,6 +495,8 @@ print $cmd;
 $np = `$cmd`;
 chomp $np;
 $np = 2 if $np < 2;
+
+# $np = 31;
 
 $esttime = 120; # we should do better
 $hostfile = "$ENV{'ULTRASCAN'}/etc/us_tigre_hosts";
