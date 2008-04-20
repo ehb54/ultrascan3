@@ -336,7 +336,7 @@ float US_FeMatchRa_W::fit()
 
 	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 	{
-		cerr << i <<": " << simdata[0].scan[i].time << ", " << run_inf.time[0][0][i] << ", " << simdata[0].scan[i].omega_s_t << ", " << run_inf.omega_s_t[0][0][i] <<  endl;
+		//cerr << i <<": " << simdata[0].scan[i].time << ", " << run_inf.time[0][0][i] << ", " << simdata[0].scan[i].omega_s_t << ", " << run_inf.omega_s_t[0][0][i] <<  endl;
 		for (j=0; j<points; j++)
 		{
 			sim[i][j] = simdata[0].scan[i].conc[j];
@@ -370,7 +370,6 @@ float US_FeMatchRa_W::fit()
 	return rmsd;
 }
 
-
 void US_FeMatchRa_W::clear_data(mfem_data *d)
 {
 	unsigned int i;
@@ -394,10 +393,9 @@ void US_FeMatchRa_W::load_model()
 		error_code = fg->read_experiment(&ms, &sp, fn);
 		cmb_timeGrid->setCurrentItem(sp.moving_grid);
 		cnt_band_volume->setValue(sp.band_volume);
-		cout << "Band volume: " << sp.band_volume << endl;
 		cnt_simpoints->setValue(sp.simpoints);
 		cmb_radialGrid->setCurrentItem(sp.mesh);
-		fg->write_experiment(&ms, &sp, "/root/fematch_ra-output");
+		//fg->write_experiment(&ms, &sp, "/root/fematch_ra-output");
 		delete fg;
 		if (error_code < 0)
 		{

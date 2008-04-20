@@ -15,8 +15,8 @@ US_Astfem_RSA::~US_Astfem_RSA()
 int US_Astfem_RSA::calculate(struct ModelSystem *system, struct SimulationParameters *simparams,
 vector <struct mfem_data> *exp_data)
 {
-	US_FemGlobal fg;
-	fg.write_experiment(system, simparams, "/root/astfem_rsa-output");
+	//US_FemGlobal fg;
+	//fg.write_experiment(system, simparams, "/root/astfem_rsa-output");
 	unsigned int i, j;
 	float current_time = 0.0;
 	float current_speed;
@@ -175,6 +175,7 @@ vector <struct mfem_data> *exp_data)
 				current_time = (*simparams).speed_step[j].duration_hours * 3600
 				+ (*simparams).speed_step[j].duration_minutes * 60;
 				//cout << "Current time: " << current_time << ", duration: " << duration << endl;
+				af_params.acceleration = (*simparams).speed_step[j].acceleration_flag; // reset acceleration flag for correct time correction interpolation
 				interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
 
 				// set the current speed to the constant rotor speed of the current speed step
@@ -377,6 +378,7 @@ vector <struct mfem_data> *exp_data)
 			rpm.push_back((*simparams).speed_step[j].rotorspeed);
 			calculate_ra2(rpm[0], rpm[0], C0, &simdata);
 //			print_af();
+			af_params.acceleration = (*simparams).speed_step[j].acceleration_flag; // reset acceleration flag for correct time correction interpolation
 			interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
 
 				// set the current time to the last scan of this speed step
@@ -4175,6 +4177,20 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 
 	unsigned int i, j, simscan, expscan;
 	double a, b;
+	if (af_params.acceleration) // we model rotor acceleration and need to correct the time
+	{
+		double time_correction = 0.0;
+		for (i=0; i<(*simdata).scan.size(); i++)
+		{
+			time_correction += (*simdata).scan[i].time - ((*simdata).scan[i].omega_s_t/af_params.omega_s); 
+		}
+		time_correction /= (*simdata).scan.size();
+		cout << "Time correction in astfem: " << time_correction << endl;
+		for (i=0; i<(*simdata).scan.size(); i++)
+		{
+			(*simdata).scan[i].time -= time_correction;
+		}
+	}
 
 	// first, create a temporary mfem_data structure (tmp_data) that has the same radial
 	// grid as simdata, but the same time grid as the experimental data. The time
