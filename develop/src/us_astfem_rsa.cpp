@@ -4169,8 +4169,8 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 // NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
 // before using this routine! The radius also has to be assigned!
 
-	if ( (*expdata).scan.size() == 0 || (*expdata).scan[0].conc.size() == 0 ||
-				(*simdata).scan.size() == 0 || (*simdata).radius.size() == 0  )
+	if ((*expdata).scan.size() == 0 || (*expdata).scan[0].conc.size() == 0 ||
+		 (*simdata).scan.size() == 0 || (*simdata).radius.size() == 0)
 	{
 		return -1;
 	}
@@ -4185,7 +4185,6 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 			time_correction += (*simdata).scan[i].time - ((*simdata).scan[i].omega_s_t/af_params.omega_s); 
 		}
 		time_correction /= (*simdata).scan.size();
-		cout << "Time correction in astfem: " << time_correction << endl;
 		for (i=0; i<(*simdata).scan.size(); i++)
 		{
 			(*simdata).scan[i].time -= time_correction;
