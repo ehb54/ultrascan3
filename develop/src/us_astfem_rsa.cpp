@@ -4283,8 +4283,13 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 				/ (tmp_data.radius[j] - tmp_data.radius[j-1]);
 				b = tmp_data.scan[expscan].conc[j] - a * tmp_data.radius[j];
 				(*expdata).scan[expscan].conc[i] = a * (*expdata).radius[i] + b;
+				if (i>(*expdata).radius.size()-8)
+				{
+					cout << "c[" << j-1 << "]: " << tmp_data.scan[expscan].conc[j-1] << ", c[" << j << "]: " <<  tmp_data.scan[expscan].conc[j] <<  ", c[" << j+1 << "]: " << tmp_data.scan[expscan].conc[j] << ", r[" << j-1 << "]: " << tmp_data.radius[j-1] << ", r[" << j <<"]: " << tmp_data.radius[j] << ", r_exp[" << i << "]: " << (*expdata).radius[i] <<", r[" << j+1 <<"]: " << tmp_data.radius[j+1] <<  ", a: " << a << ", b: " << b << endl;
+				}
 			}
 		}
+		cout << endl;
 	}
 	return(0);
 }
