@@ -2,6 +2,11 @@
 #define US_EDVABS_H
 #include "us_edit.h"
 
+struct absscan
+{
+	vector <float> rad;
+	vector <float> abs;
+};
 
 class US_EXTERN EditAbsVeloc_Win : public EditData_Win
 {
@@ -20,6 +25,8 @@ class US_EXTERN EditAbsVeloc_Win : public EditData_Win
 		QLabel *lbl_subtract_ri_noise;
 		bool residuals_defined;
 		unsigned int order;
+		vector <struct absscan> oldscan;
+
 
 	public slots:
 	

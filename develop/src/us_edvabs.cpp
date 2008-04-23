@@ -220,7 +220,7 @@ void EditAbsVeloc_Win::get_x(const QMouseEvent &e)
 			}
 			run_inf.centerpiece[cell] = centerpiece.serial_number;
 			run_inf.baseline[cell][lambda] = sum/11;
-			unsigned int *count;	 // write all scans from this dataset to file
+			unsigned int count;
 			QString filename;
 			filename = USglobal->config_list.result_dir.copy();
 			filename.append("/");
@@ -231,66 +231,41 @@ void EditAbsVeloc_Win::get_x(const QMouseEvent &e)
 			QFile f(filename);
 			f.open( IO_WriteOnly );
 			QDataStream s( &f );
-			count = new unsigned int [run_inf.scans[cell][lambda]];
-			for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
-			{
-				count[scan]=0;
-			}
 			run_inf.points[cell][lambda][current_channel] = 1 + (unsigned int) ((run_inf.range_right[cell][lambda][current_channel]
 							 - run_inf.range_left[cell][lambda][current_channel])/run_inf.delta_r);
 			for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
 			{
+				count = 0;
 				for (i=0; i<run_inf.points[cell][lambda][current_channel]; i++)
 				{
+					//cout << "Count: " << count << ", scan #: " << scan << ", size of oldscan: " << oldscan.size() << endl;
 					rad = run_inf.range_left[cell][lambda][current_channel] + i * run_inf.delta_r;
 // only compare the first 3 significant digits
 // Sometimes there are increments smaller than 0.001, so we need to skip those
-//					while ((unsigned int) (radius[scan][count[scan]] * 1000) < (unsigned int) (rad * 1000))
-					while (radius[scan][count[scan]] < rad)
+					while ((int) (oldscan[scan].rad[count] * 1000) < (int) (rad * 1000)
+					&& rad <= run_inf.range_right[cell][lambda][current_channel]
+					&& count <= oldscan[scan].rad.size())
 					{
-						count[scan] ++;
+						count ++;
 					}
-// if the first point was smaller, but the second point was larger, we need to go back one. If the
-// first point was the first point in the scan and it is larger than required we cannot go back and we got to keep the value
-//					if ((unsigned int) (radius[scan][count[scan]] * 1000) > (unsigned int) (rad * 1000) && count[scan] !=0)
-					if (radius[scan][count[scan]] > rad && count[scan] != 0)
+					if (oldscan[scan].rad[count] == rad)
 					{
-						count[scan] --;
-					}
-//					if ((unsigned int) (radius[scan][count[scan]] * 1000) == (unsigned int) (rad * 1000))
-					if (radius[scan][count[scan]] == rad)
-					{
-						s << (float) (absorbance[scan][count[scan]]);
-						count[scan] ++;
+						s << oldscan[scan].abs[count];
+						count ++;
 					}
 					else
 					{
-// if we are at the beginning of the scan, and the first datapoints is past "rad", fill in with
-// the first data point's value:
-						if (count[scan] == 0)
-						{
-							newpoint = absorbance[scan][0];
-						}
-// if we are in the middle of the scan, we linearly interpolate missing datapoints (newpoint = m * rad + b)
-// make sure that we are not outside bounds
-						if ((count[scan] < (unsigned int) points[scan] - 2))
-						{
-							m = (absorbance[scan][count[scan]+1] - absorbance[scan][count[scan]]) /
-						 	    (radius[scan][count[scan]+1] - radius[scan][count[scan]]);
-							b = absorbance[scan][count[scan]] - m * radius[scan][count[scan]];
-							newpoint = m * rad + b;
-						}
-						if (count[scan] == (unsigned int) points[scan] - 1)
-						{
-							newpoint = absorbance[scan][points[scan]-1]; // we are at the end of the scan
-						}
+// we are in the middle of the scan, and we we need to linearly interpolate missing datapoints (newpoint = m * rad + b)
+						m = (oldscan[scan].abs[count] - oldscan[scan].abs[count-1]) /
+								(oldscan[scan].rad[count] - oldscan[scan].rad[count-1]);
+						b = oldscan[scan].abs[count] - m * oldscan[scan].rad[count];
+						newpoint = m * rad + b;
 						s << (float) newpoint;
 					}
 				}
 			}
 			f.flush();
 			f.close();
-			delete [] count;
 			cleanup_dataset();
 			load_dataset();
 			return;
@@ -434,6 +409,19 @@ void EditAbsVeloc_Win::get_x(const QMouseEvent &e)
 		}
 		case 5:	// pick range-left
 		{
+			oldscan.clear();
+			struct absscan temp_scan; // make a copy of the original data
+			for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
+			{
+				temp_scan.rad.clear();
+				temp_scan.abs.clear();
+				for (i=0; i<points[scan]; i++)
+				{
+					temp_scan.abs.push_back(absorbance[scan][i]);
+					temp_scan.rad.push_back(radius[scan][i]);
+				}
+				oldscan.push_back(temp_scan);
+			}
 			i = (unsigned int) (current_R * 1000);	//make sure we only have 3 significant digits
 			limit_left = 1e-3 * (float) i;
 			run_inf.range_left[cell][lambda][current_channel] = limit_left;
