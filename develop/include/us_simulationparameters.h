@@ -117,7 +117,6 @@ class US_EXTERN US_SimulationParameters : public QDialog
 		void select_speed_profile(int);
 		void load();
 		void acceleration_flag();
-		void load(const QString &);
 		void save();
 		void revert();
 		void check_delay();
