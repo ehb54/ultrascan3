@@ -552,344 +552,84 @@ void US_SimulationParameters::save(const QString &filename)
 			return;
 		}
 	}
-	if (f.open(IO_WriteOnly | IO_Translate))
+	US_FemGlobal fg;
+	if (fg.write_simulationParameters(simparams, filename) == 0)
 	{
-		QTextStream ts(&f);
-		ts << (*simparams).speed_step.size() << "\t\t# Number of speed step profiles" << "\n";
-		for (unsigned int i=0; i<(*simparams).speed_step.size(); i++)
-		{
-			ts << (*simparams).speed_step[i].duration_hours << str.sprintf("\t\t# run duration hours for profile %d\n", i+1);
-			ts << (*simparams).speed_step[i].duration_minutes << str.sprintf("\t\t# run duration minutes for profile %d\n", i+1);
-			ts << (*simparams).speed_step[i].delay_hours << str.sprintf("\t\t# run delay hours for profile %d\n", i+1);
-			ts << (*simparams).speed_step[i].delay_minutes << str.sprintf("\t\t# run delay minutes for profile %d\n", i+1);
-			ts << (*simparams).speed_step[i].rotorspeed << str.sprintf("\t\t# rotor speed for profile %d\n", i+1);
-			ts << (*simparams).speed_step[i].acceleration << str.sprintf("\t\t# acceleration profile in revs/sec for profile %d\n", i+1);
-			ts << (int) (*simparams).speed_step[i].acceleration_flag << str.sprintf("\t\t# flag for checking if rotor acceleration is used for profile %d\n", i+1);
-			ts << (*simparams).speed_step[i].scans << str.sprintf("\t\t# number of scans to save for profile %d\n", i+1);
-		}
-		ts << (*simparams).simpoints << "\t\t# radial discretization simulation points" << "\n";
-		ts << (*simparams).radial_resolution << "\t\t# radial resolution (cm)" << "\n";
-		ts << (*simparams).meniscus << "\t\t# meniscus position (cm)" << "\n";
-		ts << (*simparams).bottom << "\t\t# bottom of cell position (cm)" << "\n";
-		ts << (*simparams).rnoise << "\t\t# random noise (in percent OD)" << "\n";
-		ts << (*simparams).inoise << "\t\t# time invariant systematic noise (in percent OD)" << "\n";
-		ts << (*simparams).rinoise << "\t\t# radial invariant systematic noise (in percent OD)" << "\n";
-		ts << (*simparams).mesh << "\t\t# Selected simulation mesh" << "\n";
-		ts << (*simparams).moving_grid << "\t\t# moving time grid (0 = Astfem, 1 = fixed)" << "\n";
-		ts << (*simparams).rotor << "\t\t# Rotor serial number" << "\n";
-		if ((*simparams).band_forming)
-		{
-			ts << "1\t\t# Band-forming centerpiece is used\n";
-			ts << (*simparams).band_volume << "\t\t# Band loading volume in ml" << "\n";
-		}
-		else
-		{
-			ts << "0\t\t# Standard centerpiece is used\n";
-		}
 		QMessageBox::information(this, tr("UltraScan Information"),
 		tr("Please note:\n\nThe Simulation Profile was successfully saved to:\n\n" + filename),
 		QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-		f.close();
+	}
+	else
+	{
+		QMessageBox::information(this, tr("UltraScan Error"),
+		tr("Please note:\n\nThe Simulation Profile could not be saved to:\n\n" + filename),
+		QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
 	}
 }
 
 void US_SimulationParameters::load()
 {
-	QString fn = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.simulation_parameters", 0);
-	if ( !fn.isEmpty() )
+	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.simulation_parameters", 0);
+	if ( !filename.isEmpty() )
 	{
-		load(fn);
-	}
-}
-
-void US_SimulationParameters::load(const QString &fileName)
-{
-	QFile f(fileName);
-	int ival;
-	if (f.open(IO_ReadOnly))
-	{
-		QTextStream ts(&f);
-		if (!ts.atEnd())
+		US_FemGlobal fg;
+		if (fg.read_simulationParameters(simparams, filename) == 0)
 		{
-			unsigned int ival;
-			ts >> ival;
-			(*simparams).speed_step.resize(ival);
-			ts.readLine();
 			cnt_number_of_speeds->setValue((*simparams).speed_step.size());
-		}
-		else
-		{
-			f.close();
-			printError(0);
-			return;
-		}
-		cmb_speeds->clear();
-		for (unsigned int i=0; i<(*simparams).speed_step.size(); i++)
-		{
-			QTextStream ts(&f);
-			if (!ts.atEnd())
+			cmb_speeds->clear();
+			for (unsigned int i=0; i<(*simparams).speed_step.size(); i++)
 			{
-				ts >> (*simparams).speed_step[i].duration_hours;
-				ts.readLine();
+				QString str;
+				str.sprintf("Speed Profile %d: %d hr %d min, %d rpm", i+1,
+								(*simparams).speed_step[i].duration_hours,
+								(*simparams).speed_step[i].duration_minutes,
+								(*simparams).speed_step[i].rotorspeed);
+				cmb_speeds->insertItem(str, -1);
 			}
-			else
-			{
-				f.close();
-				printError(0);
-				return;
-			}
-			if (!ts.atEnd())
-			{
-				ts >> (*simparams).speed_step[i].duration_minutes;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				printError(0);
-				return;
-			}
-			if (!ts.atEnd())
-			{
-				ts >> (*simparams).speed_step[i].delay_hours;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				printError(0);
-				return;
-			}
-			if (!ts.atEnd())
-			{
-				ts >> (*simparams).speed_step[i].delay_minutes;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				printError(0);
-				return;
-			}
-			if (!ts.atEnd())
-			{
-				ts >> (*simparams).speed_step[i].rotorspeed;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				printError(0);
-				return;
-			}
-			if (!ts.atEnd())
-			{
-				ts >> (*simparams).speed_step[i].acceleration;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				printError(0);
-				return;
-			}
-			if (!ts.atEnd())
-			{
-				int ival;
-				ts >> ival;
-				(*simparams).speed_step[i].acceleration_flag = ival;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				printError(0);
-				return;
-			}
-			if (!ts.atEnd())
-			{
-				ts >> (*simparams).speed_step[i].scans;
-				ts.readLine();
-			}
-			else
-			{
-				f.close();
-				printError(0);
-				return;
-			}
-			QString str;
-			str.sprintf("Speed Profile %d: %d hr %d min, %d rpm", i+1,
-			(*simparams).speed_step[i].duration_hours,
-			(*simparams).speed_step[i].duration_minutes,
-			(*simparams).speed_step[i].rotorspeed);
-			cmb_speeds->insertItem(str, -1);
-		}
 // initialize all counters with the first speed profile:
-		cnt_duration_hours->setValue((*simparams).speed_step[0].duration_hours);
-		cnt_duration_minutes->setValue((*simparams).speed_step[0].duration_minutes);
-		cnt_delay_hours->setValue((*simparams).speed_step[0].delay_hours);
-		cnt_delay_minutes->setValue((*simparams).speed_step[0].delay_minutes);
-		cnt_rotorspeed->setValue((*simparams).speed_step[0].rotorspeed);
-		cnt_acceleration->setValue((double)(*simparams).speed_step[0].acceleration);
-		cb_acceleration_flag->setChecked((*simparams).speed_step[0].acceleration_flag);
-		if (cb_acceleration_flag->isChecked())
-		{
-			cnt_acceleration->setEnabled(true);
-		}
-		else
-		{
-			cnt_acceleration->setEnabled(false);
-		}
-		cnt_scans->setValue((*simparams).speed_step[0].scans);
-		if (!ts.atEnd())
-		{
-			ts >> (*simparams).simpoints;
-			ts.readLine();
-			cnt_simpoints->setValue((*simparams).simpoints);
-		}
-		else
-		{
-			f.close();
-			printError(0);
-			return;
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*simparams).radial_resolution;
-			ts.readLine();
-			cnt_radial_resolution->setValue((*simparams).radial_resolution);
-		}
-		else
-		{
-			f.close();
-			printError(0);
-			return;
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*simparams).meniscus;
-			ts.readLine();
-			cnt_meniscus->setValue((*simparams).meniscus);
-		}
-		else
-		{
-			f.close();
-			printError(0);
-			return;
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*simparams).bottom;
-			ts.readLine();
-			cnt_bottom->setValue((*simparams).bottom);
-		}
-		else
-		{
-			f.close();
-			printError(0);
-			return;
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*simparams).rnoise;
-			ts.readLine();
-			cnt_rnoise->setValue((*simparams).rnoise);
-		}
-		else
-		{
-			f.close();
-			printError(0);
-			return;
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*simparams).inoise;
-			ts.readLine();
-			cnt_inoise->setValue((*simparams).inoise);
-		}
-		else
-		{
-			f.close();
-			printError(0);
-			return;
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*simparams).rinoise;
-			ts.readLine();
-			cnt_rinoise->setValue((*simparams).rinoise);
-		}
-		else
-		{
-			f.close();
-			printError(0);
-			return;
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*simparams).mesh;
-			cmb_mesh->setCurrentItem((*simparams).mesh);
-		}
-		else
-		{
-			printError(0);
-			return;
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*simparams).moving_grid;
-			cmb_moving->setCurrentItem((*simparams).moving_grid);
-		}
-		else
-		{
-			printError(0);
-			return;
-		}
-		if (!ts.atEnd())
-		{
-			ts >> (*simparams).rotor;
-		}
-		else
-		{
-			printError(0);
-			return;
-		}
-		if (!ts.atEnd())
-		{
-			ts >> ival;
-			if (ival == 1)
+			cnt_duration_hours->setValue((*simparams).speed_step[0].duration_hours);
+			cnt_duration_minutes->setValue((*simparams).speed_step[0].duration_minutes);
+			cnt_delay_hours->setValue((*simparams).speed_step[0].delay_hours);
+			cnt_delay_minutes->setValue((*simparams).speed_step[0].delay_minutes);
+			cnt_rotorspeed->setValue((*simparams).speed_step[0].rotorspeed);
+			cnt_acceleration->setValue((double)(*simparams).speed_step[0].acceleration);
+			cb_acceleration_flag->setChecked((*simparams).speed_step[0].acceleration_flag);
+			if (cb_acceleration_flag->isChecked())
 			{
-				(*simparams).band_forming = true;
-				bg_centerpiece_selection->setButton(1);
-				if (!ts.atEnd())
-				{
-					ts >> (*simparams).band_volume;
-				}
-				else
-				{
-					printError(0);
-					return;
-				}
+				cnt_acceleration->setEnabled(true);
 			}
 			else
 			{
-				(*simparams).band_forming = false;
+				cnt_acceleration->setEnabled(false);
+			}
+			cnt_scans->setValue((*simparams).speed_step[0].scans);
+			cnt_simpoints->setValue((*simparams).simpoints);
+			cnt_radial_resolution->setValue((*simparams).radial_resolution);
+			cnt_meniscus->setValue((*simparams).meniscus);
+			cnt_bottom->setValue((*simparams).bottom);
+			cnt_rnoise->setValue((*simparams).rnoise);
+			cnt_inoise->setValue((*simparams).inoise);
+			cnt_rinoise->setValue((*simparams).rinoise);
+			cmb_mesh->setCurrentItem((*simparams).mesh);
+			cmb_moving->setCurrentItem((*simparams).moving_grid);
+			if ((*simparams).band_forming)
+			{
+				bg_centerpiece_selection->setButton(1);
+			}
+			else
+			{
 				bg_centerpiece_selection->setButton(0);
 			}
+			QMessageBox::information(this, tr("UltraScan Information"),
+			tr("Please note:\n\nThe Simulation Profile was successfully loaded from:\n\n" + filename),
+			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
 		}
 		else
 		{
-			printError(0);
-			return;
+			QMessageBox::information(this, tr("UltraScan Error"),
+			tr("Please note:\n\nCould not read the Simulation Profile:\n\n" + filename),
+			QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
 		}
-		f.close();
-		QMessageBox::information(this, tr("UltraScan Information"),
-		tr("Please note:\n\nThe Simulation Profile:\n\n" + fileName + "\n\nwas successfully loaded."),
-		QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-	}
-	else
-	{
-		printError(1);
 	}
 }
 

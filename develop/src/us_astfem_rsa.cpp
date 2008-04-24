@@ -364,7 +364,7 @@ vector <struct mfem_data> *exp_data)
 			{
 				if (guiFlag)
 				{
-				    cout << "Number of simpoints adjusted to " << af_params.simpoints
+				    cerr << "Number of simpoints adjusted to " << af_params.simpoints
 						<< " for component " << i + 1 << " and speed step " << j + 1 << endl;
 				}
 			}
@@ -400,7 +400,7 @@ vector <struct mfem_data> *exp_data)
 	}
 	else
 	{
-		cout << "This model is not yet supported..." << endl;
+		cerr << "This model is not yet supported..." << endl;
 	}
 	return(0);
 }
@@ -805,7 +805,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 		}
 		else
 		{
-			cout << "multicomponent system with sedimentation and floating mixed, use uniform mesh" << endl;
+			cerr << "multicomponent system with sedimentation and floating mixed, use uniform mesh" << endl;
 		}
 	}
 	for (i=0; i<N; i++)
@@ -863,12 +863,12 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 			}
 			else if (s_max <0) 		// all components floating
 			{
-				cout << "all components floating, not implemented yet" << endl;
+				cerr << "all components floating, not implemented yet" << endl;
 				return(-1);
 			}
 			else 		// sedmientation and floating mixed
 			{
-				cout << "sedimentation and floating mixed, suppose use fixed grid!" << endl;
+				cerr << "sedimentation and floating mixed, suppose use fixed grid!" << endl;
 				return(-1);
 			}
 		} // moving mesh
@@ -1600,7 +1600,7 @@ void US_Astfem_RSA::mesh_gen_RefL(int N0, int M0)
 	}
 	else								// sedimentation and floating mixed up
 	{
-		cout << "no refinement at ends since sedimentation and floating mixed ...\n" ;
+		cerr << "no refinement at ends since sedimentation and floating mixed ...\n" ;
 	}
 	N = x.size();
 }
@@ -1696,11 +1696,11 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 				f.close();
 				if (fabs(x[0] - af_params.current_meniscus) > 1.0e7)
 				{
-					cout << "The meniscus from the mesh file does not match the set meniscus - using Claverie Mesh instead\n";
+					cerr << "The meniscus from the mesh file does not match the set meniscus - using Claverie Mesh instead\n";
 				}
 				if (fabs(x[x.size()-1] - af_params.current_bottom) > 1.0e7)
 				{
-					cout << "The cell bottom from the mesh file does not match the set cell bottom - using Claverie Mesh instead\n";
+					cerr << "The cell bottom from the mesh file does not match the set cell bottom - using Claverie Mesh instead\n";
 				}
 			}
 			else
@@ -3980,7 +3980,7 @@ int US_Astfem_RSA::DecomposeCT(double CT, double *C)
 		}
 		else
 		{
-			cout << "warning: model #" << af_params.model << " is not yet supported in find_C1()" << endl;
+			cerr << "warning: model #" << af_params.model << " is not yet supported in find_C1()" << endl;
 			return (-1);
 		}
 	   return (0);
@@ -4012,7 +4012,7 @@ double US_Astfem_RSA::find_C1_mono_Nmer( int n, double K, double CT )
 
    if( i == MaxNumIt )
    {
-      cout<<"warning: Newton's method did not coonverges in find_C1_mono_Nmer"<<endl;
+      cerr << "warning: Newton's method did not coonverges in find_C1_mono_Nmer"<<endl;
       return( -1.0 );
    }
    return( 0.5*(x0+x1) );
@@ -4255,7 +4255,7 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 		j = 0;
 		if (j == 0 && tmp_data.radius[0] > (*expdata).radius[0])
 		{
-			cout << "Radius comparison: " << tmp_data.radius[0] << " (simulated), " << (*expdata).radius[0] << " (experimental)\n";
+			cerr << "Radius comparison: " << tmp_data.radius[0] << " (simulated), " << (*expdata).radius[0] << " (experimental)\n";
 			cerr << "j = " << j << ", simdata radius: " << tmp_data.radius[j] << ", expdata radius: " << (*expdata).radius[i] << endl;
 			cerr << tr("The simulated data radial range does not include the beginning of the experimental data's radii!\nexiting...\n");
 			exit(-3);
@@ -4283,13 +4283,8 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 				/ (tmp_data.radius[j] - tmp_data.radius[j-1]);
 				b = tmp_data.scan[expscan].conc[j] - a * tmp_data.radius[j];
 				(*expdata).scan[expscan].conc[i] = a * (*expdata).radius[i] + b;
-				if (i>(*expdata).radius.size()-8)
-				{
-					cout << "c[" << j-1 << "]: " << tmp_data.scan[expscan].conc[j-1] << ", c[" << j << "]: " <<  tmp_data.scan[expscan].conc[j] <<  ", c[" << j+1 << "]: " << tmp_data.scan[expscan].conc[j] << ", r[" << j-1 << "]: " << tmp_data.radius[j-1] << ", r[" << j <<"]: " << tmp_data.radius[j] << ", r_exp[" << i << "]: " << (*expdata).radius[i] <<", r[" << j+1 <<"]: " << tmp_data.radius[j+1] <<  ", a: " << a << ", b: " << b << endl;
-				}
 			}
 		}
-		cout << endl;
 	}
 	return(0);
 }
