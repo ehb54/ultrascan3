@@ -28,7 +28,7 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename, boo
 	} else {
 		return(-40); // can't open input file
 	}
-}    
+}
 
 int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv, bool flag)
 {
@@ -599,7 +599,7 @@ int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, vec
 	}
 	if (pos < qsv.size())
 	{
-		(*sp).inoise = qsv[pos++].toDouble(&ok);
+		(*sp).tinoise = qsv[pos++].toDouble(&ok);
 	}
 	else
 	{
@@ -684,7 +684,7 @@ int US_FemGlobal::write_simulationParameters(struct SimulationParameters *sp, QS
 		ts << (*sp).meniscus << "\t\t# meniscus position (cm)" << "\n";
 		ts << (*sp).bottom << "\t\t# bottom of cell position (cm)" << "\n";
 		ts << (*sp).rnoise << "\t\t# random noise (in percent OD)" << "\n";
-		ts << (*sp).inoise << "\t\t# time invariant systematic noise (in percent OD)" << "\n";
+		ts << (*sp).tinoise << "\t\t# time invariant systematic noise (in percent OD)" << "\n";
 		ts << (*sp).rinoise << "\t\t# radial invariant systematic noise (in percent OD)" << "\n";
 		ts << (*sp).mesh << "\t\t# radial grid" << "(0 = adaptive (ASTFEM), 1 = fixed (Claverie), 2 = moving hat (sedfit), 3 = file: $ULTRASCAN/mesh.dat)\n";
 		ts << (*sp).moving_grid << "\t\t# time grid (0 = fixed (Claverie), 1 = adaptive (ASTFEM)" << "\n";
@@ -790,7 +790,7 @@ int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemCon
 	} else {
 		return(-1); // can't open input file
 	}
-}    
+}
 
 int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemConstraints *msc, vector <QString> qsv)
 {

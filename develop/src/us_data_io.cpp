@@ -34,17 +34,17 @@ void US_Data_IO::assign_simparams(struct SimulationParameters *sp, unsigned int 
 	(*sp).speed_step[0].rotorspeed = (*run_inf).rpm[cell][lambda][channel];
 	(*sp).speed_step[0].acceleration_flag = true;
 
-	(*sp).simpoints = 100;				// number of radial grid points for simulation (should be overridden by user) 
+	(*sp).simpoints = 100;				// number of radial grid points for simulation (should be overridden by user)
                             			// are assigned in the constraint GUI
-	(*sp).mesh = 0; 			    		// 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 
+	(*sp).mesh = 0; 			    		// 0 = ASTFEM, 1 = Claverie, 2 = moving hat,
                            			// 3 = user-selected mesh, 4 = nonuniform constant mesh
 	(*sp).moving_grid = 1; 	  			// use adaptive time steps = 1, fixed time steps = 0
-	(*sp).radial_resolution = (float) 0.001;	// the radial datapoint increment/resolution 
+	(*sp).radial_resolution = (float) 0.001;	// the radial datapoint increment/resolution
                                     // of the final data
 	(*sp).meniscus = (*run_inf).meniscus[cell];				// meniscus position at first constant speed
 	(*sp).bottom = calc_bottom((*run_inf).rotor, (*run_inf).centerpiece[cell], channel, 0); // bottom position at rest
 	(*sp).rnoise = 0.0;					// random noise
-	(*sp).inoise = 0.0;					// time invariant noise
+	(*sp).tinoise = 0.0;					// time invariant noise
 	(*sp).rinoise = 0.0;					// radially invariant noise
 	(*sp).rotor = (*run_inf).rotor;	// rotor serial number in database
 	(*sp).band_forming = false;		// should be overridden by user
@@ -758,25 +758,25 @@ bool check_dbname(QString dbname, QString *defaultdb)
    {
       f.open( IO_ReadOnly );
       QDataStream ds( &f );
-      
+
       double num[64];
       int code[64];
       int i,length;
 
       ds >> length;
-      
+
       for(i=0; i<length; i++)
       {
          ds >> num[i];
          code[i] = (int)(num[i]+0.5);
          temp_dbname[i] = QChar(code[i]);
       }
-      
+
       if(temp_dbname == dbname)
       {
          flag = true;
       }
-      
+
       *defaultdb = temp_dbname;
    }
    return (flag);

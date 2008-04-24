@@ -22,7 +22,7 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 	simparams.meniscus = 5.8;
 	simparams.bottom = 7.2;
 	simparams.rnoise = 0.0;
-	simparams.inoise = 0.0;
+	simparams.tinoise = 0.0;
 	simparams.rinoise = 0.0;
 	simparams.band_volume = 0.015;
 	simparams.rotor = 0;
@@ -930,6 +930,61 @@ void US_Astfem_Sim::start_simulation()
 	progress->reset();
 	progress->setTotalSteps(system.component_vector.size());
 	astfem_rsa->calculate(&system, &simparams, &astfem_data);
+	// add noise:
+	float maxconc = 0.0;
+	for (i=0; i<system.component_vector.size(); i++)
+	{
+		maxconc += system.component_vector[i].concentration;
+	}
+	if (simparams.rinoise != 0.0)
+	{
+		float rinoise;
+		for (i=0; i<simparams.speed_step.size(); i++)
+		{
+			for (j=0; j<astfem_data[i].scan.size(); j++)
+			{
+				rinoise = box_muller(0, maxconc * simparams.rinoise/100);
+				for (k=0; k<astfem_data[i].radius.size(); k++)
+				{
+					astfem_data[i].scan[j].conc[k] += rinoise;
+				}
+			}
+		}
+	}
+	if (simparams.rnoise != 0.0)
+	{
+		for (i=0; i<simparams.speed_step.size(); i++)
+		{
+			for (j=0; j<astfem_data[i].scan.size(); j++)
+			{
+				for (k=0; k<astfem_data[i].radius.size(); k++)
+				{
+					astfem_data[i].scan[j].conc[k] += box_muller(0, maxconc * simparams.rnoise/100);
+				}
+			}
+		}
+	}
+	if (simparams.tinoise != 0.0)
+	{
+		vector <float> tinoise;
+		float val = box_muller(0, maxconc * simparams.tinoise/100);
+		tinoise.clear();
+		for (k=0; k<astfem_data[0].radius.size(); k++)
+		{
+			val += box_muller(0, maxconc * simparams.tinoise/100);
+			tinoise.push_back(val);
+		}
+		for (i=0; i<simparams.speed_step.size(); i++)
+		{
+			for (j=0; j<astfem_data[i].scan.size(); j++)
+			{
+				for (k=0; k<astfem_data[i].radius.size(); k++)
+				{
+					astfem_data[i].scan[j].conc[k] += tinoise[k];
+				}
+			}
+		}
+	}
 	if (!stopFlag)
 	{
 		progress->setProgress(system.component_vector.size()); // if we didn't interrupt, we need to set to 100 % complete at end of run'
@@ -963,7 +1018,7 @@ void US_Astfem_Sim::start_simulation()
 	}
 	unsigned int curve[j];
 	double *x, **y;
-	
+
 	for (i=0; i<simparams.speed_step.size(); i++)
 	{
 		x = new double [astfem_data[i].radius.size()];

@@ -65,7 +65,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	backup_simparams.meniscus = (*simparams).meniscus;
 	backup_simparams.bottom = (*simparams).bottom;
 	backup_simparams.rnoise = (*simparams).rnoise;
-	backup_simparams.inoise = (*simparams).inoise;
+	backup_simparams.tinoise = (*simparams).tinoise;
 	backup_simparams.rinoise = (*simparams).rinoise;
 
 	lbl_title = new QLabel(tr("Simulation Run Parameter Setup:"), this);
@@ -355,7 +355,7 @@ US_SimulationParameters::US_SimulationParameters(struct SimulationParameters *si
 	cnt_inoise= new QwtCounter(this);
 	cnt_inoise->setNumButtons(3);
 	cnt_inoise->setRange(0,10,0.01);
-	cnt_inoise->setValue((*simparams).inoise);
+	cnt_inoise->setValue((*simparams).tinoise);
 	cnt_inoise->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_inoise->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	cnt_inoise->setMinimumHeight(minHeight1);
@@ -608,7 +608,7 @@ void US_SimulationParameters::load()
 			cnt_meniscus->setValue((*simparams).meniscus);
 			cnt_bottom->setValue((*simparams).bottom);
 			cnt_rnoise->setValue((*simparams).rnoise);
-			cnt_inoise->setValue((*simparams).inoise);
+			cnt_inoise->setValue((*simparams).tinoise);
 			cnt_rinoise->setValue((*simparams).rinoise);
 			cmb_mesh->setCurrentItem((*simparams).mesh);
 			cmb_moving->setCurrentItem((*simparams).moving_grid);
@@ -742,7 +742,7 @@ void US_SimulationParameters::update_rnoise(double temp_var)
 
 void US_SimulationParameters::update_inoise(double temp_var)
 {
-	(*simparams).inoise = (float) temp_var;
+	(*simparams).tinoise = (float) temp_var;
 }
 
 void US_SimulationParameters::update_rinoise(double temp_var)
@@ -956,7 +956,7 @@ void US_SimulationParameters::revert()
 	(*simparams).meniscus = backup_simparams.meniscus;
 	(*simparams).bottom = backup_simparams.bottom;
 	(*simparams).rnoise = backup_simparams.rnoise;
-	(*simparams).inoise = backup_simparams.inoise;
+	(*simparams).tinoise = backup_simparams.tinoise;
 	(*simparams).rinoise = backup_simparams.rinoise;
 	reject();
 }

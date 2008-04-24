@@ -165,8 +165,8 @@ struct SimulationParameters
 										// the first constant speed and use that to initialize the routine
 	double bottom;					// bottom of cell position without rotor stretch
 	double rnoise;					// random noise
-	double inoise;					// time invariant noise
-	double rinoise;					// radially invariant noise
+	double tinoise;				// time invariant noise
+	double rinoise;				// radially invariant noise
 	int rotor;						// rotor serial number in database
 	bool band_forming;			// true for band-forming centerpieces
 	double band_volume;			// loading volume (of lamella) in a band-forming centerpiece
