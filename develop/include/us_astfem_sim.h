@@ -25,6 +25,7 @@
 #include "us_model_editor.h"
 #include "us_simulationparameters.h"
 #include "us_clipdata.h"
+#include "us_modelselection.h"
 
 class US_EXTERN US_Astfem_Sim : public QFrame
 {

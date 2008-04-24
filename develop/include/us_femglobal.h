@@ -13,12 +13,6 @@
 #include "us_extern.h"
 #include "us_math.h"
 #include "us_util.h"
-#include "us_selectmodel.h"
-#include "us_selectmodel10.h"
-#include "us_selectmodel13.h"
-#include "us_selectmodel3.h"
-
-//#include "us_global.h"
 
 using namespace std;
 
@@ -202,10 +196,6 @@ class US_EXTERN US_FemGlobal : public QObject
 		int read_constraints(struct ModelSystem *, struct ModelSystemConstraints *, QString);
 		int read_constraints(struct ModelSystem *, struct ModelSystemConstraints *, vector <QString>);
 		int write_constraints(struct ModelSystem *, struct ModelSystemConstraints *, QString);
-
-		void select_model(struct ModelSystem *);
-		void initializeAssociation1(struct ModelSystem *, unsigned int, unsigned int, unsigned int);
-		void initializeAssociation2(struct ModelSystem *);
 
 	signals:
 		void new_error(QString);

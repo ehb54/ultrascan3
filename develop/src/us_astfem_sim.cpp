@@ -273,10 +273,10 @@ void US_Astfem_Sim::closeEvent(QCloseEvent *e)
 // load a model from the list
 void US_Astfem_Sim::new_model()
 {
-	US_FemGlobal *fg;
-	fg = new US_FemGlobal();
-	fg->select_model(&system);
-	delete fg;
+	US_ModelSelection *model_sel;
+	model_sel = new US_ModelSelection();
+	model_sel->select_model(&system);
+	delete model_sel;
 	if (system.model >= 0)
 	{
 		assign_model();

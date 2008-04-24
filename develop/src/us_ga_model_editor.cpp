@@ -525,10 +525,10 @@ void US_GAModelEditor::update_constraints(unsigned int c)
 
 void US_GAModelEditor::select_model()
 {
-	US_FemGlobal *fg;
-	fg = new US_FemGlobal();
-	fg->select_model(ms);
-	delete fg;
+	US_ModelSelection *model_sel;
+	model_sel = new US_ModelSelection();
+	model_sel->select_model(ms);
+	delete model_sel;
 	if ((*ms).model < 0)
 	{
 		return;

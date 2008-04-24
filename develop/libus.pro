@@ -263,6 +263,7 @@ SOURCES += src/us_2dplot.cpp \
   src/us_mfem.cpp \
   src/us_minimize.cpp \
   src/us_model_editor.cpp \
+  src/us_modelselection.cpp \
   src/us_montecarlo.cpp \
   src/us_montecarloreport.cpp \
   src/us_montecarlostats.cpp \
@@ -450,6 +451,7 @@ HEADERS +=include/bluearrow.xpm \
   include/us_mfem.h \
   include/us_minimize.h \
   include/us_model_editor.h \
+  include/us_modelselection.h \
   include/us_montecarlo.h \
   include/us_montecarloreport.h \
   include/us_montecarlostats.h \

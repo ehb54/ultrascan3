@@ -4,6 +4,7 @@
 #include "us_model_editor.h"
 #include "us_constraint_control.h"
 #include "us_extern.h"
+#include "us_modelselection.h"
 
 using namespace std;
 
