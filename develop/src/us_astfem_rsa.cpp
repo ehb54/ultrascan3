@@ -4275,14 +4275,14 @@ int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simd
 			// check to see if the radius is equal or larger:
 			if (tmp_data.radius[j] == (*expdata).radius[i])
 			{ // they are the same, so simply update the concentration value:
-				(*expdata).scan[expscan].conc[i] = tmp_data.scan[expscan].conc[j];
+				(*expdata).scan[expscan].conc[i] += tmp_data.scan[expscan].conc[j];
 			}
 			else // interpolation is needed
 			{
 				a = (tmp_data.scan[expscan].conc[j] - tmp_data.scan[expscan].conc[j-1])
 				/ (tmp_data.radius[j] - tmp_data.radius[j-1]);
 				b = tmp_data.scan[expscan].conc[j] - a * tmp_data.radius[j];
-				(*expdata).scan[expscan].conc[i] = a * (*expdata).radius[i] + b;
+				(*expdata).scan[expscan].conc[i] += a * (*expdata).radius[i] + b;
 			}
 		}
 	}
