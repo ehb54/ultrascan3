@@ -1016,7 +1016,10 @@ void US_Astfem_Sim::start_simulation()
 	{
 		scan_plot->setAxisScale(QwtPlot::yLeft, 0, total_conc * 2.0);
 	}
-	unsigned int curve[j];
+
+	//unsigned int curve[j];
+	unsigned int* curve = new unsigned int[j];
+	
 	double *x, **y;
 
 	for (i=0; i<simparams.speed_step.size(); i++)
@@ -1051,6 +1054,8 @@ void US_Astfem_Sim::start_simulation()
 		}
 		delete [] y;
 	}
+
+	delete [] curve;
 	scan_plot->replot();
 }
 

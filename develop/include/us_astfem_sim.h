@@ -43,7 +43,17 @@ class US_EXTERN US_Astfem_Sim : public QFrame
 		US_Astfem_RSA *astfem_rsa;
 		struct ModelSystem system;
 		struct SimulationParameters simparams;
+
+#ifdef WIN32
+	  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <struct mfem_data> astfem_data;
+		
+#ifdef WIN32
+	  #pragma warning ( default: 4251 )
+#endif
+		
 		QwtPlot *movie_plot, *scan_plot;
 		QPushButton *pb_load_system;
 		QPushButton *pb_save_system;

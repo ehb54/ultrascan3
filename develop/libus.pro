@@ -129,7 +129,6 @@ unix:contains (UNAME, sparc) {
 
 unix: { 
   SOURCES +=src/us_beowulf.cpp \
-  src/us_astfem_sim.cpp \
   src/us_cluster.cpp \
   src/us_cpuload.cpp \
   src/us_ga_gridcontrol.cpp \
@@ -152,6 +151,7 @@ SOURCES += src/us_2dplot.cpp \
   src/us_3dsolutes.cpp \
   src/us_admin.cpp \
   src/us_archive.cpp \
+  src/us_astfem_sim.cpp \
   src/us_average.cpp \
   src/us_buffer.cpp \
   src/us_calendar.cpp \ 
@@ -311,7 +311,6 @@ SOURCES += src/us_2dplot.cpp \
 unix:{ 
   HEADERS \
   +=include/us_beowulf.h \
-  include/us_astfem_sim.h \
   include/us_cluster.h \
   include/us_cpuload.h \
   include/us_fe_nnls_t.h \
@@ -340,6 +339,7 @@ HEADERS +=include/bluearrow.xpm \
   include/us_3dsolutes.h \
   include/us_admin.h \
   include/us_archive.h \
+  include/us_astfem_sim.h \
   include/us_average.h \
   include/us_buffer.h \
   include/us_calendar.h \
