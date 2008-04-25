@@ -3,7 +3,7 @@
 US_FeMatchRa_W::US_FeMatchRa_W(QWidget *p, const char *name) : Data_Control_W(13, p, name)
 {
 	setCaption(tr("Finite Element Analysis:"));
-	band_volume = 0.015;
+	band_volume = (float) 0.015;
 	mesh = 0;
 	moving_grid = 1;
 	simpoints = 200;

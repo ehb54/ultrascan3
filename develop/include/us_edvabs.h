@@ -25,7 +25,16 @@ class US_EXTERN EditAbsVeloc_Win : public EditData_Win
 		QLabel *lbl_subtract_ri_noise;
 		bool residuals_defined;
 		unsigned int order;
+
+#ifdef WIN32
+		  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <struct absscan> oldscan;
+
+#ifdef WIN32
+		  #pragma warning ( default: 4251 )
+#endif
 
 
 	public slots:
