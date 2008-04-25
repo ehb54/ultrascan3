@@ -594,6 +594,8 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 		temp_system.s_distro.clear();
 		j1 = reduced.begin();
 		j2 = reduced.begin();
+
+		/*
 		while (j2 != reduced.end())
 		{
 			j2++;
@@ -607,6 +609,25 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 			}
 			j1++;
 		}
+		*/
+
+		if ( reduced.size() > 1 )
+		{
+			while ( ++j2 != reduced.end() )
+			{
+				if ( (*j1).s == (*j2).s && (*j1).k == (*j2).k )
+				{
+					(*j2).c += (*j1).c;
+				}
+				else
+				{
+					temp_system.s_distro.push_back(*j1);
+				}
+
+				j1++;
+			}
+		}
+
 		reduced.clear();
 		reduced = temp_system.mw_distro;
 		temp_system.mw_distro.clear();
