@@ -633,7 +633,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 		temp_system.mw_distro.clear();
 		j1 = reduced.begin();
 		j2 = reduced.begin();
-		while (j2 != reduced.end())
+		while (j2 < reduced.end())
 		{
 			j2++;
 			if ((*j1).s == (*j2).s && (*j1).k == (*j2).k)
