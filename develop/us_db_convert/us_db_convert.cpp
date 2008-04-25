@@ -263,7 +263,7 @@ void US_Convert_DB::convert_db()
 			}
 			sleep(1);
 			str="cd "+data_path +"/temp/";
-			str +="; tar -cvvf "+exp_info.Runid+".tar " + exp_info.Runid;
+			str +="; tar -cf "+exp_info.Runid+".tar " + exp_info.Runid;
 			str+="; gzip -f9 "+exp_info.Runid+".tar ";
 			str+="; rm -r "+exp_info.Runid;
 			system(str);

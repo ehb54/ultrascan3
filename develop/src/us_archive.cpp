@@ -789,7 +789,7 @@ void US_Archive::endCreateProcess()
 			create_proc->setWorkingDirectory(work_dir);
 			QStringList u_cmd;
 			u_cmd.append("tar");
-			u_cmd.append("-cvvf");
+			u_cmd.append("-cf");
 			if ((run_type == 0) || (run_type == 1)) // velocity or equilibrium data
 			{
 				str = data_control->run_inf.run_id + ".ultrascan-data.tar";
@@ -887,7 +887,7 @@ void US_Archive::endCreateProcess()
 			QStringList r_cmd;
 			r_cmd.append("tar");
 			r_cmd.append("--mode=u+X");
-			r_cmd.append("-cvvf");
+			r_cmd.append("-cf");
 			if ((run_type == 0) || (run_type == 1)) // velocity or equilibrium data
 			{
 				mle->insert(tr("\nCreating Archive of HTML Reports for Run ") + data_control->run_inf.run_id + "...\n\n");
@@ -967,7 +967,7 @@ void US_Archive::endCreateProcess()
 			QStringList c_cmd;
 			c_cmd.append("tar");
 			c_cmd.append("--mode=u+X");
-			c_cmd.append("-cvvf");
+			c_cmd.append("-cf");
 			c_cmd.append(data_control->run_inf.run_id + ".raw-data.tar");
 			c_cmd.append(dirname);
 			create_proc->setArguments(c_cmd);
@@ -1044,7 +1044,7 @@ void US_Archive::endCreateProcess()
 			create_proc->setWorkingDirectory(work_dir);
 			QStringList t_cmd;
 			t_cmd.append("tar");
-			t_cmd.append("-cvvf");
+			t_cmd.append("-cf");
 			if ((run_type == 0) || (run_type == 1)) // velocity or equilibrium data
 			{
 				str = data_control->run_inf.run_id + ".tar";
@@ -1287,7 +1287,7 @@ void US_Archive::create_archive()
 			mle->insert(tr("\nCreating Archive of Equilibrium Fitting Project Data:\n\n ") + 
 			projectName + "...\n\n");
 			str = "cd " + USglobal->config_list.result_dir + "; " 
-			+ "tar -cvvf " + USglobal->config_list.root_dir 
+			+ "tar -cf " + USglobal->config_list.root_dir 
 			+ "/temp/" + projectName + ".ultrascan-data.tar"
 			+ " " + projectName + "*.dat" + " " + projectName + "*.eq_fit" + " " + projectName + ".res" + " " + projectName + ".dis" ;
 
@@ -1309,7 +1309,7 @@ void US_Archive::create_archive()
 			mle->insert(tr("\nCreating Archive of HTML Reports for Equilibrium Fitting Project:\n\n") + 
 			projectName + "...\n\n");
 			str = "cd " + USglobal->config_list.html_dir + "; " 
-			+ "tar -cvvf " + USglobal->config_list.root_dir 
+			+ "tar -vf " + USglobal->config_list.root_dir 
 			+ "/temp/" + data_control->run_inf.run_id + ".report-files.tar"
 			+ " " + projectName;
 			char cstr[500];
@@ -1324,7 +1324,7 @@ void US_Archive::create_archive()
 		mle->insert(tr("\nCombining Sub-Archives...\n\n"));
 		qApp->processEvents();
 		str = "cd " + USglobal->config_list.root_dir + "/temp;"
-		+ "tar -cvvf " + USglobal->config_list.archive_dir + "/" 
+		+ "tar -cf " + USglobal->config_list.archive_dir + "/" 
 		+ projectName + ".tar *; rm *";
 		FILE *f1 = popen(str, "r");
 		while (fgets(cstr, 500, f1))
@@ -1360,7 +1360,7 @@ void US_Archive::create_archive()
 			mle->insert(tr("\nCreating Archive of Monte Carlo Project Data:\n\n ") + 
 			projectName + "...\n\n");
 			str = "cd " + USglobal->config_list.result_dir + "; " 
-			+ "tar -cvvf " + USglobal->config_list.root_dir 
+			+ "tar -cf " + USglobal->config_list.root_dir 
 			+ "/temp/" + projectName + ".ultrascan-data.tar"
 			+ " " + projectName + ".Monte-Carlo" + " " + projectName + ".mc";
 			FILE *f = popen(str, "r");
@@ -1376,7 +1376,7 @@ void US_Archive::create_archive()
 			mle->insert(tr("\nCreating Archive of HTML Reports for Monte Carlo Project:\n\n") + 
 			projectName + "...\n\n");
 			str = "cd " + USglobal->config_list.html_dir + "; " 
-			+ "tar -cvvf " + USglobal->config_list.root_dir 
+			+ "tar -cf " + USglobal->config_list.root_dir 
 			+ "/temp/" + projectName + ".report-files.tar"
 			+ " " + projectName + ".mc";
 			char cstr[500];
@@ -1391,7 +1391,7 @@ void US_Archive::create_archive()
 		mle->insert(tr("\nCombining Sub-Archives...\n\n"));
 		qApp->processEvents();
 		str = "cd " + USglobal->config_list.root_dir + "/temp;"
-		+ "tar -cvvf " + USglobal->config_list.archive_dir + "/" 
+		+ "tar -cf " + USglobal->config_list.archive_dir + "/" 
 		+ projectName + ".mc.tar *; rm *";
 		FILE *f1 = popen(str, "r");
 		while (fgets(cstr, 500, f1))
@@ -1425,7 +1425,7 @@ void US_Archive::create_archive()
 			mle->insert(tr("\nCreating Archive of UltraScan Data for Run ") + 
 			data_control->run_inf.run_id + "...\n\n");
 			str = "cd " + USglobal->config_list.result_dir + "; " 
-			+ "tar -cvvf " + USglobal->config_list.root_dir 
+			+ "tar -cf " + USglobal->config_list.root_dir 
 			+ "/temp/" + data_control->run_inf.run_id + ".ultrascan-data.tar"
 			+ " " + filename + "*";
 			FILE *f = popen(str, "r");
@@ -1441,7 +1441,7 @@ void US_Archive::create_archive()
 			mle->insert(tr("\nCreating Archive of HTML Reports for Run ") + 
 			data_control->run_inf.run_id + "...\n\n");
 			str = "cd " + USglobal->config_list.html_dir + "; " 
-			+ "tar -cvvf " + USglobal->config_list.root_dir 
+			+ "tar -cf " + USglobal->config_list.root_dir 
 			+ "/temp/" + data_control->run_inf.run_id + ".report-files.tar"
 			+ " " + filename;
 			char cstr[500];
@@ -1459,7 +1459,7 @@ void US_Archive::create_archive()
 		mle->insert(tr("\nCreating Archive of Raw Experimental Datafiles for Run ") + 
 		data_control->run_inf.run_id + "...\n\n");
 		str = "cd " + data_control->run_inf.data_dir + "; cd .. ; " 
-		+ "tar -cvvf " + USglobal->config_list.root_dir 
+		+ "tar -cf " + USglobal->config_list.root_dir 
 		+ "/temp/" + data_control->run_inf.run_id + ".raw-data.tar"
 		+ " " + dirname;
 		FILE *f = popen(str, "r");
@@ -1471,7 +1471,7 @@ void US_Archive::create_archive()
 		mle->insert(tr("\nCombining Sub-Archives...\n\n"));
 		qApp->processEvents();
 		str = "cd " + USglobal->config_list.root_dir + "/temp;"
-		+ "tar -cvvf " + USglobal->config_list.archive_dir + "/" 
+		+ "tar -cf " + USglobal->config_list.archive_dir + "/" 
 		+ data_control->run_inf.run_id + ".tar *; rm *";
 		FILE *f1 = popen(str, "r");
 		while (fgets(cstr, 500, f1))
