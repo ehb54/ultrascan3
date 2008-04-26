@@ -5,7 +5,6 @@ win32{ QMAKE_MAKE = nmake /NOLOGO }
 
 unix:{
 SUBDIRS   = us_equilmc_t \
-        us_gridcontrol_t \
 }
 
 SUBDIRS +=  us \
@@ -13,7 +12,6 @@ SUBDIRS +=  us \
         us_admin \
         us_archive \
         us_buffer \
-        us_calcnucleotide \
         us_calendar \
         us_cofs \
 #        us_cofdistro \
@@ -71,12 +69,12 @@ SUBDIRS +=  us \
         us_gainit \
         us_findat \
 #       us_findat_ad \
-#        us_finite_single \
-        us_finsim \
+#       us_finite_single \
+#       us_finsim \
         us_globalequil \
-#        us_globallaser \
+#       us_globallaser \
 #        us_hydrodyn \
-        us_kirkwood \
+#        us_kirkwood \
 #        us_laser \
         us_license \
         us_lncr2 \
@@ -89,7 +87,6 @@ SUBDIRS +=  us \
         us_sassoc \
         us_secdat \
         us_spectrum \
-        us_vbar \
         us_vhwdat \
         us_vhwenhanced \
         us_viewmwl

@@ -100,9 +100,7 @@ public:
 	QProcess *us_combine_cofd_proc;
 	QProcess *us_create_global_proc;
 	QProcess *us_diagnostics_proc;
-	QProcess *us_calcnucleotide_proc;
 	QProcess *us_buffer_proc;
-	QProcess *us_vbar_proc;
 	QProcess *us_config_proc;
 	QProcess *us_admin_proc;
 	QProcess *us_extinction_proc;
@@ -224,8 +222,6 @@ public slots:
 	void merge();
 	void diagnostics();
 	void calc_extinction();
-	void calc_protein();
-	void calc_nucleotide();
 	void close_splash();
 	void config_check();
 	void calc_hydro();

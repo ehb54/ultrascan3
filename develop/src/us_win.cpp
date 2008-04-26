@@ -346,11 +346,11 @@ file->setItemEnabled(combine_distroID, true);
 
 int diagID = util->insertItem(tr("Scan &Diagnostics"), this, SLOT(diagnostics()));
 util->setItemEnabled(diagID, true);
-int calcID = util->insertItem(tr("Calculate &DNA/RNA MW"), this, SLOT(calc_nucleotide()));
+int calcID = util->insertItem(tr("Calculate &DNA/RNA MW"), this, SLOT(nucleotide_db()));
 util->setItemEnabled(calcID, true);
 int calcHydro = util->insertItem(tr("&Buffer Corrections"), this, SLOT(calc_hydro()));
 util->setItemEnabled(calcHydro, true);
-int vbarID = util->insertItem(tr("Calculate &Protein MW and vbar"), this, SLOT(calc_protein()));
+int vbarID = util->insertItem(tr("Calculate &Protein MW and vbar"), this, SLOT(vbar_db()));
 util->setItemEnabled(vbarID, true);
 int dma60ID = util->insertItem(tr("Start Anton Paar DMA 60"), this, SLOT(us_dma60()));
 util->setItemEnabled(dma60ID, true);
@@ -529,9 +529,7 @@ us_combine_cofmw_proc = NULL;
 us_combine_cofd_proc = NULL;
 us_create_global_proc = NULL;
 us_diagnostics_proc = NULL;
-us_calcnucleotide_proc = NULL;
 us_buffer_proc = NULL;
-us_vbar_proc = NULL;
 us_config_proc = NULL;
 us_admin_proc = NULL;
 us_extinction_proc = NULL;
@@ -836,7 +834,7 @@ void UsWin::closeEvent(QCloseEvent *)
 			closeAttnt(us_cofdistro_proc, str);
 		}
 	}
-	
+
 	if (us_sa2d_proc != NULL)
 	{
 		if (us_sa2d_proc->isRunning())
@@ -1042,28 +1040,12 @@ void UsWin::closeEvent(QCloseEvent *)
 			closeAttnt(us_diagnostics_proc, str);
 		}
 	}
-	if (us_calcnucleotide_proc != NULL)
-	{
-		if (us_calcnucleotide_proc->isRunning())
-		{
-			str = tr("DNA/RNA Calculation program");
-			closeAttnt(us_calcnucleotide_proc, str);
-		}
-	}
 	if (us_buffer_proc != NULL)
 	{
 		if (us_buffer_proc->isRunning())
 		{
 			str = tr("UltraScan Buffer Utility");
 			closeAttnt(us_buffer_proc, str);
-		}
-	}
-	if (us_vbar_proc != NULL)
-	{
-		if (us_vbar_proc->isRunning())
-		{
-			str = tr("UltraScan Peptide Utility");
-			closeAttnt(us_vbar_proc, str);
 		}
 	}
 	if (us_config_proc != NULL)
@@ -2452,19 +2434,6 @@ void UsWin::diagnostics()
 	}
 }
 
-void UsWin::calc_nucleotide()
-{
-	us_calcnucleotide_proc = new QProcess(this);
-	us_calcnucleotide_proc->addArgument("us_calcnucleotide");
-	if (!us_calcnucleotide_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_CALCNUCLEOTIDE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
 void UsWin::calc_hydro()
 {
 	us_buffer_proc = new QProcess(this);
@@ -2473,19 +2442,6 @@ void UsWin::calc_hydro()
 	{
 		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
 				"for US_BUFFER\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::calc_protein()
-{
-	us_vbar_proc = new QProcess(this);
-	us_vbar_proc->addArgument("us_vbar");
-	if (!us_vbar_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_VBAR\n\n"
 						"Please check and try again..."));
 		return;
 	}
