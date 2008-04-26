@@ -19,11 +19,35 @@
 #include <qprogbar.h>
 
 #include "us_util.h"
-#include "us_simdlg.h"
 #include "us_pixmap.h"
 #include "us_math.h"
 #include "us_selectplot.h"
 #include "us_printfilter.h"
+
+struct simulation_parameters
+{
+	unsigned long time;
+	unsigned long delay;
+	unsigned long speed;
+	float delta_t;
+	unsigned int delta_r;
+	float resolution;
+	float meniscus;
+	float bottom;
+	unsigned int scans;
+	float rnoise;
+	float inoise;
+	float rinoise;
+};
+
+struct component
+{
+	float conc;		// partial concentration
+	float sed;		// sedimentation coefficient (s)
+	float diff;		// diffusion coefficient (D)
+	float sigma;	// concentration dependency factor for (s)
+	float delta;	// concentration dependency factor for (D)
+};
 
 class Extrapolation_Legend_F : public QFrame
 {
@@ -81,7 +105,7 @@ class Distribution : public QWidget
 	Q_OBJECT
 
 	public:
-		Distribution(QString temp_run_name, unsigned int *pts, double **boundary_fractions, 
+		Distribution(QString temp_run_name, unsigned int *pts, double **boundary_fractions,
 		double **intercepts, const QString temp_htmlDir, const QString temp_title, const int temp_cell,
 		const int temp_lambda, QWidget *p = 0, const char *name = 0);
 		~Distribution();

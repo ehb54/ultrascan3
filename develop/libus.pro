@@ -189,11 +189,8 @@ SOURCES += src/us_2dplot.cpp \
   src/us_db_tbl_vbar.cpp \
   src/us_db_template.cpp \
   src/us_dcdrdat.cpp \
-  src/us_dcdrsim.cpp \
   src/us_dcdtdat.cpp \
-  src/us_dcdtsim.cpp \
   src/us_diagnostics.cpp \
-  src/us_displp.cpp \
   src/us_dma60.cpp \
   src/us_dtactrl.cpp \
   src/us_edeabs.cpp \
@@ -277,11 +274,8 @@ SOURCES += src/us_2dplot.cpp \
   src/us_selectmodel3.cpp \
   src/us_selectplot.cpp \
   src/us_showdetails.cpp \
-  src/us_simdlg.cpp \
   src/us_simulationparameters.cpp \
-  src/us_simwin.cpp \
   src/us_smdat.cpp \
-  src/us_smsim.cpp \
   src/us_spectrum.cpp \
   src/us_stiffbase.cpp \
   src/us_thread.cpp \
@@ -290,8 +284,8 @@ SOURCES += src/us_2dplot.cpp \
   src/us_velocreport.cpp \
   src/us_velocmodelctrl.cpp \
   src/us_vhwdat.cpp \
-  src/us_vhwenhanced.cpp \
   src/us_vhwsim.cpp \
+  src/us_vhwenhanced.cpp \
   src/us_viewmwl.cpp \
   src/us_win.cpp \
   src/us_write_config.cpp
@@ -365,11 +359,8 @@ HEADERS += \
   include/us_db_tbl_vbar.h \
   include/us_db_template.h \
   include/us_dcdrdat.h \
-  include/us_dcdrsim.h \
   include/us_dcdtdat.h \
-  include/us_dcdtsim.h \
   include/us_diagnostics.h \
-  include/us_displp.h \
   include/us_dma60.h \
   include/us_dtactrl.h \
   include/us_edeabs.h \
@@ -454,11 +445,8 @@ HEADERS += \
   include/us_selectmodel3.h \
   include/us_selectplot.h \
   include/us_showdetails.h \
-  include/us_simdlg.h \
   include/us_simulationparameters.h \
-  include/us_simwin.h \
   include/us_smdat.h \
-  include/us_smsim.h \
   include/us_spectrum.h \
   include/us_stiffbase.h \
   include/us_thread.h \
@@ -467,8 +455,8 @@ HEADERS += \
   include/us_velocreport.h \
   include/us_velocmodelctrl.h \
   include/us_vhwdat.h \
-  include/us_vhwenhanced.h \
   include/us_vhwsim.h \
+  include/us_vhwenhanced.h \
   include/us_viewmwl.h \
   include/us_win.h \
   include/us_write_config.h 

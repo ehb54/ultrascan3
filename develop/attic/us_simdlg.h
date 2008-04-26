@@ -30,31 +30,6 @@
 extern int global_Xpos;
 extern int global_Ypos;
 
-struct component
-{
-	float conc;		// partial concentration
-	float sed;		// sedimentation coefficient (s)
-	float diff;		// diffusion coefficient (D)
-	float sigma;	// concentration dependency factor for (s)
-	float delta;	// concentration dependency factor for (D)
-};
-
-struct simulation_parameters
-{
-	unsigned long time;
-	unsigned long delay;
-	unsigned long speed;
-	float delta_t;
-	unsigned int delta_r;
-	float resolution;
-	float meniscus;
-	float bottom;
-	unsigned int scans;
-	float rnoise;
-	float inoise;
-	float rinoise;
-};
-
 class SimControl_F : public QFrame
 {
 	Q_OBJECT
@@ -94,7 +69,7 @@ class SimControl_F : public QFrame
 		QLabel *delta_r_lb1;
 		QLabel *delta_r_lb2;
 		bool *temp_simflag;
-		SimControl_F(bool *simflag, unsigned int *comp, int *model, vector <struct component> *components, 
+		SimControl_F(bool *simflag, unsigned int *comp, int *model, vector <struct component> *components,
 						struct simulation_parameters *simparams, QWidget *p = 0, const char *name = 0);
 		~SimControl_F();
 
@@ -114,11 +89,11 @@ class SimControl_F : public QFrame
 		void create_model();
 		void load_model();
 		void run_parameters();
-	
+
 	private slots:
 		void setup_GUI();
-		
-	private:	
+
+	private:
 		void load_model(const QString &);
 		int *temp_model;
 		unsigned int *temp_comp;
@@ -169,7 +144,7 @@ class CompDialog : public QDialog
 
 	protected slots:
 		void closeEvent(QCloseEvent *e);
-	
+
 	private slots:
 		void simulate_component();
 		void update_component();
@@ -184,7 +159,7 @@ class CompDialog : public QDialog
 		void select_sphere();
 };
 
-class EquilDialog : public QDialog 
+class EquilDialog : public QDialog
 {
 	Q_OBJECT
 	public:
@@ -316,7 +291,7 @@ class SimDialog : public QDialog
 	protected slots:
 		void setup_GUI();
 		void closeEvent(QCloseEvent *e);
-	
+
 	private slots:
 		void update_duration_h(double);
 		void update_duration_m(double);
@@ -337,17 +312,17 @@ class SimDialog : public QDialog
 		void save(const QString &);
 };
 
-class ModelDialog : public QDialog 
+class ModelDialog : public QDialog
 {
 	Q_OBJECT
 	public:
-		ModelDialog(unsigned int *comp, int *model, 
-		vector <struct component> *components, QWidget *parent=0, 
+		ModelDialog(unsigned int *comp, int *model,
+		vector <struct component> *components, QWidget *parent=0,
 		const char *name=0);
 		~ModelDialog();
 		QString *s1, *s2;
 		US_Config *USglobal;
-		
+
 	private:
 		QListBox *lb_model;
 		QLabel *model_lbl;
@@ -366,7 +341,7 @@ class ModelDialog : public QDialog
 
 	signals:
 		void textChanged(const QString &);
-	
+
 	public slots:
 		void assign_comp(double);
 		void load_model();
@@ -374,7 +349,7 @@ class ModelDialog : public QDialog
 
 	protected slots:
 		void closeEvent(QCloseEvent *e);
-			
+
 	private slots:
 		void newmodel(int);
 		void savefile();
