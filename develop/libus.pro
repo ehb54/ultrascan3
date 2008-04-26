@@ -128,15 +128,7 @@ unix:contains (UNAME, sparc) {
 #FORMS = 3dplot/mesh2mainwindowbase.ui 3dplot/lightingdlgbase.ui
 
 unix: { 
-  SOURCES +=src/us_beowulf.cpp \
-  src/us_cluster.cpp \
-  src/us_cpuload.cpp \
-  src/us_ga_gridcontrol.cpp \
-  src/us_gridcontrol.cpp \
-  src/us_gridcontrol_t.cpp \
-  src/us_meminfo.cpp \
-  src/us_sa2d_gridcontrol.cpp \
-  src/us_sysload.cpp 
+  SOURCES +=src/us_beowulf.cpp us_gridcontrol_t.cpp
 }
 
 SOURCES += src/us_2dplot.cpp \
@@ -147,16 +139,16 @@ SOURCES += src/us_2dplot.cpp \
   3dplot/lightingdlg.cpp \
   3dplot/mesh.cpp \
   3dplot/D_calc.cpp \
-  src/us_astfem_rsa.cpp \
   src/us_3dsolutes.cpp \
   src/us_admin.cpp \
   src/us_archive.cpp \
+  src/us_astfem_rsa.cpp \
   src/us_astfem_sim.cpp \
   src/us_average.cpp \
   src/us_buffer.cpp \
   src/us_calendar.cpp \ 
   src/us_clipdata.cpp \ 
-  src/us_cofdistro.cpp \ 
+#  src/us_cofdistro.cpp \ 
   src/us_cofs.cpp \ 
   src/us_color.cpp \
   src/us_colorgradient.cpp \
@@ -171,7 +163,7 @@ SOURCES += src/us_2dplot.cpp \
   src/us_db_admin.cpp \
   src/us_db_veloc.cpp \
   src/us_db_equil.cpp \
-  src/us_db_laser.cpp \
+#  src/us_db_laser.cpp \
   src/us_db_rst_cell.cpp \
   src/us_db_rst_channel.cpp \
   src/us_db_rst_equil.cpp \
@@ -229,31 +221,27 @@ SOURCES += src/us_2dplot.cpp \
   src/us_extinctfitter.cpp \
   src/us_extinction.cpp \
   src/us_fefit.cpp \
-# src/us_fefitter_ad.cpp \
-  src/us_fefitter_single.cpp \
   src/us_fematch.cpp \
   src/us_fematch_ra.cpp \
   src/us_femglobal.cpp \
-  src/us_finite_single.cpp \
   src/us_finite1.cpp \
   src/us_finite2.cpp \
-# src/us_finite_ad.cpp \
   src/us_font.cpp \
   src/us_ga_initialize.cpp \
   src/us_ga_model_editor.cpp \
   src/us_global.cpp \
   src/us_globalequil.cpp \
-  src/us_globallaser.cpp \
+# src/us_globallaser.cpp \
   src/us_help.cpp \
   src/us_htmledit.cpp \
   src/us_hydro.cpp \
-  src/us_hydrodyn.cpp \
-  src/us_hydrodyn_addatom.cpp \
-  src/us_hydrodyn_addresidue.cpp \
+#  src/us_hydrodyn.cpp \
+#  src/us_hydrodyn_addatom.cpp \
+#  src/us_hydrodyn_addresidue.cpp \
   src/us_imgviewer.cpp \
   src/us_infopanel.cpp \
-  src/us_kirkwood.cpp \
-  src/us_laser.cpp \
+#  src/us_kirkwood.cpp \
+#  src/us_laser.cpp \
   src/us_license.cpp \
   src/us_lncr2.cpp \
   src/us_math.cpp \
@@ -309,23 +297,12 @@ SOURCES += src/us_2dplot.cpp \
   src/us_write_config.cpp
 
 unix:{ 
-  HEADERS \
-  +=include/us_beowulf.h \
-  include/us_cluster.h \
-  include/us_cpuload.h \
-  include/us_fe_nnls_t.h \
-  include/us_ga_gridcontrol.h \
-  include/us_gridcontrol.h \
-  include/us_gridcontrol_t.h \
-  include/us_meminfo.h \
-  include/us_sa2d_gridcontrol.h \
-  include/us_sysload.h 
+  HEADERS += \
+  include/us_beowulf.h \
+  include/us_gridcontrol_t.h
 }
     
-HEADERS +=include/bluearrow.xpm \
-  include/us_astfem_rsa.h \
-  include/greenarrow.xpm \
-  include/redarrow.xpm \
+HEADERS += \
   3dplot/mesh2mainwindowbase.h \
   3dplot/mesh2mainwindow.h \
   3dplot/functions.h \
@@ -334,17 +311,21 @@ HEADERS +=include/bluearrow.xpm \
   3dplot/lightingdlg.h \
   3dplot/femreader.h \
   3dplot/D_calc.h \
+  include/bluearrow.xpm \
+  include/greenarrow.xpm \
+  include/redarrow.xpm \
   include/us.h \
   include/us_2dplot.h \
   include/us_3dsolutes.h \
   include/us_admin.h \
   include/us_archive.h \
+  include/us_astfem_rsa.h \
   include/us_astfem_sim.h \
   include/us_average.h \
   include/us_buffer.h \
   include/us_calendar.h \
   include/us_clipdata.h \
-  include/us_cofdistro.h \
+#  include/us_cofdistro.h \
   include/us_cofs.h \
   include/us_color.h \
   include/us_colorgradient.h \
@@ -358,7 +339,7 @@ HEADERS +=include/bluearrow.xpm \
   include/us_db_admin.h \
   include/us_db_veloc.h \
   include/us_db_equil.h \
-  include/us_db_laser.h \
+#  include/us_db_laser.h \
   include/us_db_rst_cell.h \
   include/us_db_rst_channel.h \
   include/us_db_rst_equil.h \
@@ -417,31 +398,27 @@ HEADERS +=include/bluearrow.xpm \
   include/us_extinctfitter.h \
   include/us_extinction.h \
   include/us_fefit.h \
-# include/us_fefitter_ad.h \
-  include/us_fefitter_single.h \
   include/us_fematch.h \
   include/us_fematch_ra.h \
   include/us_femglobal.h \
-  include/us_finite_single.h \
   include/us_finite1.h \
   include/us_finite2.h \
-# include/us_finite_ad.h \
   include/us_font.h \
   include/us_ga_initialize.h \
   include/us_ga_model_editor.h \
   include/us_global.h \
   include/us_globalequil.h \
-  include/us_globallaser.h \
+#  include/us_globallaser.h \
   include/us_htmledit.h \
   include/us_hydro.h \
-  include/us_hydrodyn.h \
-  include/us_hydrodyn_addatom.h \
-  include/us_hydrodyn_addresidue.h \
-  include/us_hydrodyn_pdbdefs.h \
+#  include/us_hydrodyn.h \
+#  include/us_hydrodyn_addatom.h \
+#  include/us_hydrodyn_addresidue.h \
+#  include/us_hydrodyn_pdbdefs.h \
   include/us_imgviewer.h \
   include/us_infopanel.h \
-  include/us_kirkwood.h \
-  include/us_laser.h \
+#  include/us_kirkwood.h \
+#  include/us_laser.h \
   include/us_license.h \
   include/us_lncr2.h \
   include/us_math.h \

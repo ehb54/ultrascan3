@@ -15,6 +15,7 @@ US_FeMatchRa_W::US_FeMatchRa_W(QWidget *p, const char *name) : Data_Control_W(13
 	stopFlag = false;
 	movieFlag = false;
 	astfem_rsa = new US_Astfem_RSA(&stopFlag, false, &movieFlag);
+	component_dialog = NULL;
 	setup_GUI();
 }
 
@@ -41,7 +42,7 @@ void US_FeMatchRa_W::setup_GUI()
 		resplot = new US_ResidualPlot(0, 0);
 	}
 
-	pb_second_plot->setText(tr("s20,W distribution"));
+	pb_second_plot->setText(tr("Review Model"));
 	delete pb_reset;
 	delete smoothing_lbl;
 	delete smoothing_counter;
@@ -242,6 +243,15 @@ void US_FeMatchRa_W::save()
 {
 }
 
+void US_FeMatchRa_W::second_plot()
+{
+	if (component_dialog == NULL)
+	{
+		component_dialog = new US_ModelEditor(true, &ms);
+	}
+	component_dialog->exec();
+}
+
 void US_FeMatchRa_W::help()
 {
 	US_Help *online_help;
@@ -407,6 +417,7 @@ void US_FeMatchRa_W::load_model()
 		{
 			printError(4); // successfully loaded a new model
 			pb_fit->setEnabled(true);
+			pb_second_plot->setEnabled(true);
 		}
 	}
 }

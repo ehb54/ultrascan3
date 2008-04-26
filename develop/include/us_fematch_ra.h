@@ -75,6 +75,7 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		struct ModelSystem ms;
 		struct SimulationParameters sp;
 		US_Astfem_RSA *astfem_rsa;
+		US_ModelEditor *component_dialog;
 
 	private slots:
 
@@ -96,6 +97,7 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		void view();
 		void help();
 		void save();
+		void second_plot();
 };
 
 #endif

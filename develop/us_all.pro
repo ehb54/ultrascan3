@@ -5,25 +5,21 @@ win32{ QMAKE_MAKE = nmake /NOLOGO }
 
 unix:{
 SUBDIRS   = us_equilmc_t \
-        us_astfem_sim \
-        us_meminfo \
-        us_gridcontrol \
         us_gridcontrol_t \
-        us_cpuload \
-        us_sysload 
 }
 
 SUBDIRS +=  us \
+        us_astfem_sim \
         us_admin \
         us_archive \
         us_buffer \
         us_calcnucleotide \
         us_calendar \
         us_cofs \
-        us_cofdistro \
+#        us_cofdistro \
         us_colorgradient \
         us_db_equil \
-        us_db_laser \
+#        us_db_laser \
         us_db_rst_veloc \
         us_db_rst_equil \
         us_db_rst_equilproject \
@@ -75,13 +71,13 @@ SUBDIRS +=  us \
         us_gainit \
         us_findat \
 #       us_findat_ad \
-        us_finite_single \
+#        us_finite_single \
         us_finsim \
         us_globalequil \
-        us_globallaser \
-        us_hydrodyn \
+#        us_globallaser \
+#        us_hydrodyn \
         us_kirkwood \
-        us_laser \
+#        us_laser \
         us_license \
         us_lncr2 \
         us_merge \

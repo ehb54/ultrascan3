@@ -45,7 +45,7 @@ public:
 	~UsWin();
 //	US_Publish *publish_dialog;
 //QProcess variables:
-	QProcess *us_finsim_proc;
+//	QProcess *us_finsim_proc;
 	QProcess *us_astfem_sim_proc;
 	QProcess *us_dma60_proc;
 	QProcess *us_pseudo3d_combine_proc;
@@ -73,8 +73,8 @@ public:
 	QProcess *us_hydrodyn_proc;
 	QProcess *us_secdat_proc;
 	QProcess *us_cofs_proc;
-	QProcess *us_cofdistro_proc;
-	QProcess *us_sa2d_proc;
+//	QProcess *us_cofdistro_proc;
+//	QProcess *us_sa2d_proc;
 	QProcess *us_viewmwl_proc;
 	QProcess *us_dcdtdat_proc;
 	QProcess *us_dcdrdat_proc;
@@ -85,9 +85,9 @@ public:
 	QProcess *us_equiltime_proc;
 	QProcess *us_spectrum_proc;
 	QProcess *us_globalequil_proc;
-	QProcess *us_globallaser_proc;
+//	QProcess *us_globallaser_proc;
 	QProcess *us_lncr2_proc;
-	QProcess *us_kirkwood_proc;
+//	QProcess *us_kirkwood_proc;
    QProcess *us_archive_proc;
 	QProcess *us_reorder_proc;
 	QProcess *us_pseudoabs_proc;
@@ -111,7 +111,7 @@ public:
 	QProcess *us_vbar_db_proc;
 	QProcess *us_nucleotide_db_proc;
 	QProcess *us_expdata_db_proc;
-	QProcess *us_laser_db_proc;
+//	QProcess *us_laser_db_proc;
 	QProcess *us_rtv_investigator_proc;
 	QProcess *us_rtv_date_proc;
 	QProcess *us_rtv_description_proc;
@@ -136,7 +136,7 @@ public slots:
 	void us_colorgradient();
 	void admin();
 	void quit();
-	void simulate();
+//	void simulate();
 	void sassoc();
 	void about();
 	void credits();
@@ -172,15 +172,15 @@ public slots:
 	void hydrodyn();
 	void spectrum();
 	void cofs();
-	void cofdistro();
-	void sa2d();
+//	void cofdistro();
+//	void sa2d();
 	void viewmwl();
 	void dcdt();
 	void dcdr();
 	void finite_element_dud();
 	void finite_element_ad();
 	void finite_element_single();
-	void kirkwood();
+//	void kirkwood();
 	void equilibrium();
 	void model1();
 	void model2();
@@ -188,9 +188,9 @@ public slots:
 	void predict();
 	void global_fit();
 	void lnc();
-	void laser_load();
-	void laser_global();
-	void laser_predict();
+//	void laser_load();
+//	void laser_global();
+//	void laser_predict();
 	void archive();
 	void database();
 	void investigator_db();
@@ -198,7 +198,7 @@ public slots:
 	void vbar_db();
 	void nucleotide_db();
 	void expdata_db();
-	void laser_db();
+//	void laser_db();
 	void rtv_investigator();
 	void rtv_date();
 	void rtv_description();
