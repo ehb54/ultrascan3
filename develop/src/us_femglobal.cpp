@@ -30,7 +30,47 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename, boo
 	}
 }
 
-int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv, bool flag)
+int US_FemGlobal::read_modelSystem(vector<ModelSystem> *vms, QString filename)
+{
+	QString str;
+	vector <QString> qsv;
+	QFile f;
+	f.setName(filename);
+	ModelSystem ms;
+	int retval = -1;
+	vms->clear();
+	vector<unsigned int> offset;
+	unsigned int i;
+	if (f.open(IO_ReadOnly | IO_Translate))
+	{
+		QTextStream ts(&f);
+		while (str = ts.readLine())
+		{
+		    str.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+		    qsv.push_back(str);
+		    if (str == "#!__Begin_ModelSystem__!")
+		    {
+			offset.push_back(qsv.size());
+		    }
+		}
+		f.close();
+		for (i = 0; i < offset.size(); i++) 
+		{
+		    retval = read_modelSystem(&ms, qsv, false, offset[i]);
+		    printf("read modelSystem %u retval %d\n", i, retval); fflush(stdout);
+		    vms->push_back(ms);
+		    if (retval) 
+		    {
+			return(retval);
+		    }
+		}
+		return(retval);
+	} else {
+		return(-40); // can't open input file
+	}
+}
+
+int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv, bool flag, int offset)
 {
 	QString str="";
 	unsigned int i, j;
@@ -40,8 +80,12 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv,
 	{ // to find the beginning point first so the file is correctly off-set:
 		while (str != "#!__Begin_ModelSystem__!" && pos < qsv.size())
 		{
-			str = qsv[pos++];
+		    str = qsv[pos++];
 		}
+	}
+	if (offset) // we are given an offset position to start in the string
+	{ 
+	    pos = offset;
 	}
 	pos++; // FE, SA2D, COFS, SIM or GA
 	if (pos >= qsv.size()) return -1;
@@ -398,7 +442,11 @@ int US_FemGlobal::write_modelSystem(struct ModelSystem *ms, QString filename, bo
 	ts << "SIM" << "\n";
 	ts << "Model written by US_FEMGLOBAL\n";
 	ts << "# This file is computer-generated, please do not edit unless you know what you are doing\n";
+#if defined(USE_MPI) 
+	ts << 9.5 << "\t\t# UltraScan Version Number\n";
+#else
 	ts << US_Version << "\t\t# UltraScan Version Number\n";
+#endif
 	ts << (*ms).model << "\t\t# model number/identifier\n";
 	ts << (*ms).component_vector.size() << "\t\t# number of components in the model\n";
 	for (i=0; i<(*ms).component_vector.size(); i++)
