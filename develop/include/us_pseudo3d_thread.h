@@ -33,7 +33,7 @@ class US_Plot3d_thr_t : public QThread
 
   private:
     double **z;
-    list <class Solute> distro;
+    list <Solute> distro;
     double *x;
     double *y;
     unsigned int x_start;

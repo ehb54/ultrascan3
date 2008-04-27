@@ -586,8 +586,8 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 
 // combine identical solutes:
 
-		list <class Solute> reduced;
-		list <class Solute>::iterator j, j1, j2;
+		list <Solute> reduced;
+		list <Solute>::iterator j, j1, j2;
 		reduced.clear();
 		i = 0;
 		reduced = temp_system.s_distro;

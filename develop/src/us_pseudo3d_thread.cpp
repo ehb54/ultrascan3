@@ -12,7 +12,7 @@ US_Plot3d_thr_t::US_Plot3d_thr_t(int a_thread) : QThread()
 
 void US_Plot3d_thr_t::plot3d_thr_setup(unsigned int a_thread,
 						double **a_z,
-						list <class Solute> a_distro,
+						list <Solute> a_distro,
 						double *a_x,
 						double *a_y,
 						unsigned int a_x_start,
@@ -84,7 +84,7 @@ void US_Plot3d_thr_t::run()
 		}
 		work_to_do_waiters = 0;
 		work_mutex.unlock();
-		list <class Solute>::iterator iter;
+		list <Solute>::iterator iter;
 
 		unsigned int i, j, count = 0;
 		for (iter = distro.begin(); iter != distro.end(); iter++)

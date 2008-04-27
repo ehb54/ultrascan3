@@ -53,7 +53,7 @@ class US_EXTERN US_Ga_GridControl : public QDialog
 		vector <float> frequency;
 		vector <float> ff0;
 		vector <struct line> limits;
-		list <class Solute> distro_solute;
+		list <Solute> distro_solute;
 		
 	private:
 	

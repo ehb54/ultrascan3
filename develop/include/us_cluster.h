@@ -40,7 +40,7 @@ class US_Cluster : public QObject
 		QString nodefile;
 
 		US_Config *USglobal;
-		list <class cluster_node> grid;
+		list <cluster_node> grid;
 		QString popen_string;
 		QProcess *p;
 		

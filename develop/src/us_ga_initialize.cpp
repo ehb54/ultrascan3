@@ -984,9 +984,9 @@ void US_GA_Initialize::load_distro()
 		distro_solute.sort();
 
 // combine identical solutes:
-		list <class Solute> reduced;
+		list <Solute> reduced;
 		reduced.clear();
-		list <class Solute>::iterator j, j1, j2;
+		list <Solute>::iterator j, j1, j2;
 		i = 0;
 		reduced = distro_solute;
 		distro_solute.clear();
