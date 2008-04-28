@@ -4,7 +4,7 @@
 TEMPLATE       = lib
 TARGET         = us
 TRANSLATIONS   = lib.ts
-VERSION        = 9.5.1
+VERSION        = 9.6
 MOC_DIR        = src/moc
 OBJECTS_DIR    = src/obj
 CONFIG        += release
