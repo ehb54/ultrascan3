@@ -7,8 +7,8 @@ TRANSLATIONS   = lib.ts
 VERSION        = 9.5.1
 MOC_DIR        = src/moc
 OBJECTS_DIR    = src/obj
-#CONFIG        += release
-CONFIG			+= debug
+CONFIG        += release
+#CONFIG			+= debug
 
 
 linux-g++:QMAKE_CXXFLAGS += -fno-exceptions
