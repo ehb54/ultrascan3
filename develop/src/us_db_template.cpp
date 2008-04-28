@@ -290,7 +290,7 @@ void US_DB_Template::create()
 {
 	QSqlQuery q;
 	QString test, cmd;
-	QString sqlFile = USglobal->config_list.system_dir +"/etc/mysql.dll";
+	QString sqlFile = USglobal->config_list.system_dir +"/etc/mysql.sql";
 	QFile f(sqlFile);
 	if(f.exists())
 	{
@@ -337,7 +337,7 @@ void US_DB_Template::create()
 	cmd += login_list.password;
 	cmd += " < ";
 	cmd += USglobal->config_list.system_dir;
-	cmd += "/etc/mysql.dll";
+	cmd += "/etc/mysql.sql";
 	cout<<cmd<<endl;
 	system(cmd);
 */
