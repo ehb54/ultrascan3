@@ -10,9 +10,7 @@
 #include "us_astfem_rsa.h"
 #include "../3dplot/mesh2mainwindow.h"
 
-//#include <qcheckbox.h>
-//#include <qmessagebox.h>
-//#include <qwt_symbol.h>
+#include <qbuttongroup.h>
 
 #ifndef WIN32
 #include <unistd.h>
@@ -22,6 +20,13 @@
 #include <cerrno>
 
 using namespace std;
+
+struct par
+{
+	QString name;
+	double val;
+};
+
 
 class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 {
@@ -34,9 +39,9 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 
 	private:
 
-		unsigned int monte_carlo_iterations, simpoints;
+		unsigned int monte_carlo_iterations, simpoints, current_parameter, current_model;
 		SA2d_control_variables sa2d_ctrl_vars;
-		int mesh, moving_grid;
+		int mesh, moving_grid, plotmode;
 		float band_volume;
 
 #ifdef WIN32
@@ -45,6 +50,7 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 
 		vector <double> ri_noise, ti_noise;
 		vector <struct mfem_data> simdata;
+		vector <par> ga_param; // struct
 
 #ifdef WIN32
 		  #pragma warning ( default: 4251 )
@@ -56,23 +62,36 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		QLabel *lbl_variance2;
 		QLabel *lbl_bandVolume;
 		QLabel *lbl_simpoints;
+		QLabel *lbl_parameter;
 
 		QPushButton *pb_fit;
 		QPushButton *pb_loadModel;
+		QPushButton *pb_model;
+		QPushButton *pb_parameter;
 
 		QwtCounter *cnt_simpoints;
 		QwtCounter *cnt_band_volume;
+		QwtCounter *cnt_model;
+		QwtCounter *cnt_parameter;
 
 		QComboBox *cmb_radialGrid;
 		QComboBox *cmb_timeGrid;
 
+		QButtonGroup *bg_plotmode;
+
+		QCheckBox  *cb_mode;
+		QCheckBox  *cb_median;
+		QCheckBox  *cb_mean;
+		QCheckBox  *cb_current_model;
+		
 		US_ResidualPlot *resplot;
 		US_Pixmap *pm;
 		float rmsd;
 		int model;
 		bool stopFlag, movieFlag;
 		struct mfem_data residuals;
-		struct ModelSystem ms;
+		vector <ModelSystem> msv;
+		ModelSystem ms;
 		struct SimulationParameters sp;
 		US_Astfem_RSA *astfem_rsa;
 		US_ModelEditor *component_dialog;
@@ -91,6 +110,14 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		void update_timeGrid(int);
 		void update_simpoints(double val);
 		void update_band_volume(double val);
+		void update_model(double val);
+		void update_parameter(double val);
+		void assign_parameters();
+		void assign_model();
+		void show_model();
+		void show_parameter();
+		void select_plotmode(int);
+		//void update_plot();
 
 // re-implemented Functions:
 

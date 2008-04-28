@@ -16,6 +16,11 @@ US_FeMatchRa_W::US_FeMatchRa_W(QWidget *p, const char *name) : Data_Control_W(13
 	movieFlag = false;
 	astfem_rsa = new US_Astfem_RSA(&stopFlag, false, &movieFlag);
 	component_dialog = NULL;
+	ga_param.clear();
+	msv.clear();
+	current_parameter = 0;
+	current_model = 0;
+	plotmode = 0;
 	setup_GUI();
 }
 
@@ -42,7 +47,7 @@ void US_FeMatchRa_W::setup_GUI()
 		resplot = new US_ResidualPlot(0, 0);
 	}
 
-	pb_second_plot->setText(tr("Review Model"));
+	pb_second_plot->setText(tr("Plot Simulation"));
 	delete pb_reset;
 	delete smoothing_lbl;
 	delete smoothing_counter;
@@ -63,7 +68,6 @@ void US_FeMatchRa_W::setup_GUI()
 	pb_loadModel->setAutoDefault(false);
 	pb_loadModel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_loadModel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_loadModel->setGeometry(xpos, ypos, buttonw, buttonh);
 	pb_loadModel->setEnabled(false);
 	connect(pb_loadModel, SIGNAL(clicked()), SLOT(load_model()));
 
@@ -72,22 +76,61 @@ void US_FeMatchRa_W::setup_GUI()
 	pb_fit->setAutoDefault(false);
 	pb_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_fit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_fit->setGeometry(xpos, ypos, buttonw, buttonh);
 	pb_fit->setEnabled(false);
 	connect(pb_fit, SIGNAL(clicked()), SLOT(fit()));
 
 	lbl_variance = new QLabel(tr(" Variance:"),this);
 	lbl_variance->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
-	lbl_variance->setGeometry(xpos, ypos, buttonw, buttonh);
 	lbl_variance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
 	lbl_variance2 = new QLabel(this);
-	lbl_variance2->setGeometry(xpos, ypos, buttonw, buttonh);
 	lbl_variance2->setFrameStyle(QFrame::WinPanel|Sunken);
 	lbl_variance2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	lbl_variance2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
 	lbl_variance2->setText("0.0");
 	lbl_variance2->setAlignment(AlignCenter|AlignVCenter);
+
+	pb_model = new QPushButton(tr("Show Model #"), this);
+	Q_CHECK_PTR(pb_model);
+	pb_model->setAutoDefault(false);
+	pb_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_model->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_model->setEnabled(false);
+	connect(pb_model, SIGNAL(clicked()), SLOT(show_model()));
+	
+	cnt_model= new QwtCounter(this);
+	cnt_model->setNumButtons(3);
+	cnt_model->setRange(0, 0, 0);
+	cnt_model->setValue(current_model);
+	cnt_model->setEnabled(false);
+	cnt_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cnt_model->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cnt_model, SIGNAL(valueChanged(double)), SLOT(update_model(double)));
+
+	pb_parameter = new QPushButton(tr("Show Parameter #"), this);
+	Q_CHECK_PTR(pb_parameter);
+	pb_parameter->setAutoDefault(false);
+	pb_parameter->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_parameter->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_parameter->setEnabled(false);
+	connect(pb_parameter, SIGNAL(clicked()), SLOT(show_parameter()));
+
+	cnt_parameter= new QwtCounter(this);
+	cnt_parameter->setNumButtons(3);
+	cnt_parameter->setRange(0, 0, 0);
+	cnt_parameter->setEnabled(false);
+	cnt_parameter->setValue(current_parameter);
+	cnt_parameter->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cnt_parameter->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cnt_parameter, SIGNAL(valueChanged(double)), SLOT(update_parameter(double)));
+
+	lbl_parameter = new QLabel(this);
+	lbl_parameter->setFrameStyle(QFrame::WinPanel|Sunken);
+	lbl_parameter->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	lbl_parameter->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+	lbl_parameter->setText("");
+	lbl_parameter->setMinimumHeight(26);
+	lbl_parameter->setAlignment(AlignCenter|AlignVCenter);
 
 	lbl_bandVolume = new QLabel(tr(" Band-loading Volume:"), this);
 	lbl_bandVolume->setAlignment(AlignLeft|AlignVCenter);
@@ -135,6 +178,30 @@ void US_FeMatchRa_W::setup_GUI()
 	cnt_band_volume->setValue(band_volume);
 	connect(cnt_band_volume, SIGNAL(valueChanged(double)), SLOT(update_band_volume(double)));
 	
+	bg_plotmode = new QButtonGroup(4, Qt::Horizontal, "Plot Monte Carlo distribution statistics based on:", this);
+	bg_plotmode->setExclusive(true);
+	bg_plotmode->setEnabled(false);
+	connect(bg_plotmode, SIGNAL(clicked(int)), this, SLOT(select_plotmode(int)));
+
+	plotmode = 0;
+	cb_current_model = new QCheckBox(tr(" Current Model"), bg_plotmode);
+	cb_current_model->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cb_current_model->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	cb_mode = new QCheckBox(tr(" Mode"), bg_plotmode);
+	cb_mode->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cb_mode->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	cb_mean = new QCheckBox(tr(" Mean"), bg_plotmode);
+	cb_mean->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cb_mean->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	cb_median = new QCheckBox(tr(" Median"), bg_plotmode);
+	cb_median->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cb_median->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	bg_plotmode->setButton(0);
+
 	analysis_plot->setTitle(tr("Fitting Residuals"));
 	rmsd = 0.0;
 	QString str;
@@ -188,6 +255,12 @@ void US_FeMatchRa_W::setup_GUI()
 	subGrid1->addMultiCellWidget(lbl_bandVolume, j, j, 0, 1);
 	subGrid1->addMultiCellWidget(cnt_band_volume, j, j, 2, 3);
 	j++;
+	subGrid1->addMultiCellWidget(pb_model, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(cnt_model, j, j, 2, 3);
+	j++;
+	subGrid1->addMultiCellWidget(pb_parameter, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(cnt_parameter, j, j, 2, 3);
+	j++;
 	subGrid1->addMultiCellWidget(cmb_radialGrid, j, j, 0, 3);
 	j++;
 	subGrid1->addMultiCellWidget(cmb_timeGrid, j, j, 0, 3);
@@ -213,9 +286,11 @@ void US_FeMatchRa_W::setup_GUI()
 		subGrid1->setRowSpacing(i, 26);
 	}
 
-	background->addMultiCellLayout(subGrid1, 0, 1, 0, 0);
+	background->addMultiCellLayout(subGrid1, 0, 3, 0, 0);
 	background->addWidget(analysis_plot, 0, 1);
-	background->addWidget(edit_plot, 1, 1);
+	background->addWidget(lbl_parameter, 1, 1);
+	background->addWidget(bg_plotmode, 2, 1);
+	background->addWidget(edit_plot, 3, 1);
 	background->setColStretch(0, 1);
 	background->setColStretch(1, 3);
 	background->setColSpacing(0, 350);
@@ -232,7 +307,8 @@ void US_FeMatchRa_W::setup_GUI()
 
 void US_FeMatchRa_W::enableButtons()
 {
-	pb_second_plot->setEnabled(false);
+	pb_model->setEnabled(false);
+	pb_parameter->setEnabled(false);
 	pb_save->setEnabled(false);
 	pb_view->setEnabled(false);
 	pb_print->setEnabled(false);
@@ -245,11 +321,7 @@ void US_FeMatchRa_W::save()
 
 void US_FeMatchRa_W::second_plot()
 {
-	if (component_dialog == NULL)
-	{
-		component_dialog = new US_ModelEditor(true, &ms);
-	}
-	component_dialog->exec();
+	fit(); // simply re-simulate the data according to current settings
 }
 
 void US_FeMatchRa_W::help()
@@ -332,21 +404,8 @@ float US_FeMatchRa_W::fit()
 	analysis_plot->clear();
 	edit_plot->clear();
 	plot_edit();
-	cerr.precision(10);
-	cout.precision(10);
-	/*
-	cout << "points: " << points << ", radius.size(): " << simdata[0].radius.size() << endl;
-	for  (j=0; j<points; j++)
-	{
-		cerr << simdata[0].radius[j] << ", " << radius[j] << endl;
-	}
-	*/
-
-	//cout << "run_inf.scans: " << run_inf.scans[selected_cell][selected_lambda] << ", simdata[0].scan.size(): " <<  simdata[0].scan.size() << endl;
-
 	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 	{
-		//cerr << i <<": " << simdata[0].scan[i].time << ", " << run_inf.time[0][0][i] << ", " << simdata[0].scan[i].omega_s_t << ", " << run_inf.omega_s_t[0][0][i] <<  endl;
 		for (j=0; j<points; j++)
 		{
 			sim[i][j] = simdata[0].scan[i].conc[j];
@@ -400,7 +459,7 @@ void US_FeMatchRa_W::load_model()
 		int error_code;
 		QString str;
 		fg = new US_FemGlobal(this);
-		error_code = fg->read_experiment(&ms, &sp, fn);
+		error_code = fg->read_experiment(&msv, &sp, fn);
 		cmb_timeGrid->setCurrentItem(sp.moving_grid);
 		cnt_band_volume->setValue(sp.band_volume);
 		cnt_simpoints->setValue(sp.simpoints);
@@ -416,6 +475,19 @@ void US_FeMatchRa_W::load_model()
 		else
 		{
 			printError(4); // successfully loaded a new model
+			update_model(1);
+			if (msv.size() > 1)
+			{
+				bg_plotmode->setEnabled(true);
+				assign_parameters();
+				cnt_model->setRange(1, msv.size(), 1);
+				current_model = 0;
+				cnt_model->setValue(current_model + 1);
+				pb_model->setEnabled(true);
+				pb_parameter->setEnabled(true);
+				cnt_parameter->setEnabled(true);
+				cnt_model->setEnabled(true);
+			}
 			pb_fit->setEnabled(true);
 			pb_second_plot->setEnabled(true);
 		}
@@ -458,7 +530,7 @@ void US_FeMatchRa_W::printError(const int &ival)
 		case 4:
 		{
 			QMessageBox::information(this, tr("Simulation Module"), tr("Successfully loaded Model:\n\n")
-			+ ms.description, QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+			+ msv[0].description, QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
 			break;
 		}
 		case 5:
@@ -497,4 +569,182 @@ void US_FeMatchRa_W::update_simpoints(double val)
 void US_FeMatchRa_W::update_band_volume(double val)
 {
 	band_volume = (float) val;
+}
+
+void US_FeMatchRa_W::update_model(double val)
+{
+	current_model = (unsigned int) (val - 1);
+	ms = msv[current_model];
+}
+		
+void US_FeMatchRa_W::update_parameter(double val)
+{
+	current_parameter = (unsigned int) val - 1;
+	lbl_parameter->setText(ga_param[current_parameter].name);
+}
+		
+void US_FeMatchRa_W::assign_parameters()
+{
+	unsigned int j;
+	QString str;
+	par temp_par;
+	ga_param.clear();
+	for (j=0; j<msv[0].component_vector.size(); j++)
+	{
+		temp_par.name = msv[0].component_vector[j].name + " concentration";
+		temp_par.val = msv[0].component_vector[j].concentration;
+		ga_param.push_back(temp_par);
+		temp_par.name = msv[0].component_vector[j].name + " sedimentation coefficient";
+		temp_par.val = msv[0].component_vector[j].s;
+		ga_param.push_back(temp_par);
+		temp_par.name = msv[0].component_vector[j].name + " diffusion coefficient";
+		temp_par.val = msv[0].component_vector[j].D;
+		ga_param.push_back(temp_par);
+		temp_par.name = msv[0].component_vector[j].name + " molecular weight";
+		temp_par.val = msv[0].component_vector[j].mw;
+		ga_param.push_back(temp_par);
+		temp_par.name = msv[0].component_vector[j].name + " frictional ratio";
+		temp_par.val = msv[0].component_vector[j].f_f0;
+		ga_param.push_back(temp_par);
+	}
+	for (j=0; j<msv[0].assoc_vector.size(); j++)
+	{
+		temp_par.name = str.sprintf("Reaction %d: equilibrium constant", j+1);
+		temp_par.val = msv[0].assoc_vector[j].keq;
+		ga_param.push_back(temp_par);
+		temp_par.name = str.sprintf("Reaction %d: k_off rate", j+1);
+		temp_par.val = msv[0].assoc_vector[j].k_off;
+		ga_param.push_back(temp_par);
+	}
+	cnt_parameter->setRange(1, ga_param.size(), 1);
+	current_parameter = 0;
+	cnt_parameter->setValue(current_parameter + 1);
+	lbl_parameter->setText(ga_param[0].name);
+}
+
+void US_FeMatchRa_W::select_plotmode(int val)
+{
+	plotmode = val;
+	show_parameter();
+}
+
+void US_FeMatchRa_W::assign_model()
+{
+	switch (plotmode)
+	{
+		case 0: // current model
+		{
+			ms = msv[current_model];
+		}
+		case 1: // mode
+		{
+			
+		}
+		case 2: // mean
+		{
+			
+		}
+		case 3: // median
+		{
+		}
+	}
+}
+
+void US_FeMatchRa_W::show_model()
+{
+	if (component_dialog == NULL)
+	{
+		component_dialog = new US_ModelEditor(true, &msv[current_model]);
+	}
+	component_dialog->exec();
+	delete component_dialog;
+	component_dialog = NULL;
+}
+
+void US_FeMatchRa_W::show_parameter()
+{
+	unsigned int i, j, count=0;
+	double *x, *y;
+	x = new double [msv.size()];
+	y = new double [msv.size()];
+	// first find the correct parameter:
+	for (j=0; j<msv[current_model].component_vector.size(); j++)
+	{
+		if (current_parameter == count)
+		{
+			for (i=0; i<msv.size(); i++)
+			{
+				x[i] = msv[i].component_vector[j].concentration;
+				y[i] = 1.0;
+			}
+			break;
+		}
+		count ++;
+		if (current_parameter == count)
+		{
+			for (i=0; i<msv.size(); i++)
+			{
+				x[i] = msv[i].component_vector[j].s;
+				y[i] = 1.0;
+			}
+			break;
+		}
+		count ++;
+		if (current_parameter == count)
+		{
+			for (i=0; i<msv.size(); i++)
+			{
+				x[i] = msv[i].component_vector[j].D;
+				y[i] = 1.0;
+			}
+			break;
+		}		
+		count ++;
+		if (current_parameter == count)
+		{
+			for (i=0; i<msv.size(); i++)
+			{
+				x[i] = msv[i].component_vector[j].mw;
+				y[i] = 1.0;
+			}
+			break;
+		}
+		count ++;
+		if (current_parameter == count)
+		{
+			for (i=0; i<msv.size(); i++)
+			{
+				x[i] = msv[i].component_vector[j].f_f0;
+				y[i] = 1.0;
+			}
+			break;
+		}
+		count ++;
+	}
+	if (current_parameter >= count)
+	{
+		for (j=0; j<msv[current_model].assoc_vector.size(); j++)
+		{
+			if (current_parameter == count)
+			{
+				for (i=0; i<msv.size(); i++)
+				{
+					x[i] = msv[i].assoc_vector[j].keq;
+					y[i] = 1.0;
+				}
+				break;
+			}
+			count ++;
+			if (current_parameter == count)
+			{
+				for (i=0; i<msv.size(); i++)
+				{
+					x[i] = msv[i].assoc_vector[j].k_off;
+					y[i] = 1.0;
+				}
+				break;
+			}
+			count ++;
+		}
+	} 
 }

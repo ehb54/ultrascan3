@@ -46,26 +46,31 @@ int US_FemGlobal::read_modelSystem(vector<ModelSystem> *vms, QString filename)
 		QTextStream ts(&f);
 		while (str = ts.readLine())
 		{
-		    str.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
-		    qsv.push_back(str);
-		    if (str == "#!__Begin_ModelSystem__!")
-		    {
-			offset.push_back(qsv.size());
-		    }
+			str.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+			qsv.push_back(str);
+			if (str == "#!__Begin_ModelSystem__!")
+			{
+				offset.push_back(qsv.size());
+			}
 		}
 		f.close();
-		for (i = 0; i < offset.size(); i++) 
+		for (i = 0; i < offset.size(); i++)
 		{
-		    retval = read_modelSystem(&ms, qsv, false, offset[i]);
-		    printf("read modelSystem %u retval %d\n", i, retval); fflush(stdout);
-		    vms->push_back(ms);
-		    if (retval) 
-		    {
-			return(retval);
-		    }
+			retval = read_modelSystem(&ms, qsv, false, offset[i]);
+			if (retval < 0)
+			{
+				cerr << "Reading modelsystem " << i << " failed with return value: " << retval << endl;
+			}
+			vms->push_back(ms);
+			if (retval)
+			{
+				return(retval);
+			}
 		}
 		return(retval);
-	} else {
+	}
+	else
+	{
 		return(-40); // can't open input file
 	}
 }
@@ -92,7 +97,7 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv,
 	(*ms).description = qsv[pos++];
 	if ((*ms).description.isNull())
 	{
-		return(-1);
+		return(-100);
 	}
 	if (pos >= qsv.size()) return -1;
 	str = qsv[pos++];
@@ -752,7 +757,7 @@ int US_FemGlobal::write_simulationParameters(struct SimulationParameters *sp, QS
 	}
 	else
 	{
-		return(-1);
+		return(-1000);
 	}
 }
 
@@ -786,6 +791,38 @@ int US_FemGlobal::read_experiment(struct ModelSystem *ms, struct SimulationParam
 	}
 }
 
+int US_FemGlobal::read_experiment(vector <struct ModelSystem> *vms, struct SimulationParameters *sp, QString filename)
+{
+	QString str;
+	int flag1, flag2;
+	QFile f;
+	f.setName(filename);
+	if (f.open(IO_ReadOnly))
+	{
+		QTextStream ts(&f);
+		ts >> str;
+		flag1 = read_simulationParameters(sp, str);
+		ts >> str;
+		flag2 = read_modelSystem(vms, str);
+		f.close();
+		if (flag1 < 0)
+		{
+			cerr << filename << ", couldn't read simulation parameters..."<<endl;
+			return (flag1);
+		}
+		if (flag2 < 0)
+		{
+			cerr << filename << ", couldn't read models..."<<endl;
+			return (flag2);
+		}
+		return(0);
+	}
+	else
+	{
+		return(-200); // can't read input file
+	}
+}
+
 // read a model system, and the associated constraints needed for initialization of the fitting process.
 // all associated files should start with the "filename" string
 
@@ -812,7 +849,7 @@ int US_FemGlobal::write_experiment(struct ModelSystem *ms, struct SimulationPara
 	}
 	else
 	{
-		return(-1); // can't open output file
+		return(-300); // can't open output file
 	}
 }
 
@@ -836,7 +873,7 @@ int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemCon
 		f.close();
 		return(read_constraints(ms, msc, qsv));
 	} else {
-		return(-1); // can't open input file
+		return(-200); // can't open input file
 	}
 }
 
@@ -1015,7 +1052,7 @@ int US_FemGlobal::write_constraints(struct ModelSystem *ms, struct ModelSystemCo
 	}
 	else
 	{
-		return(-1); // can't open output file
+		return(-400); // can't open output file
 	}
 	return 0;
 }

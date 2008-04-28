@@ -183,6 +183,7 @@ class US_EXTERN US_FemGlobal : public QObject
 	public slots:
 
 		int read_experiment(struct ModelSystem *, struct SimulationParameters *, QString);
+		int read_experiment(vector <struct ModelSystem> *, struct SimulationParameters *, QString);
 		int write_experiment(struct ModelSystem *, struct SimulationParameters *, QString);
 
 		int read_simulationParameters(struct SimulationParameters *, QString);
