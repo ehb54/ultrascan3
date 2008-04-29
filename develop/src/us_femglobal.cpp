@@ -54,18 +54,29 @@ int US_FemGlobal::read_modelSystem(vector<ModelSystem> *vms, QString filename)
 			}
 		}
 		f.close();
-		for (i = 0; i < offset.size(); i++)
+		if (offset.size())
 		{
+		    for (i = 0; i < offset.size(); i++)
+		    {
 			retval = read_modelSystem(&ms, qsv, false, offset[i]);
 			if (retval < 0)
 			{
-				cerr << "Reading modelsystem " << i << " failed with return value: " << retval << endl;
+			    cerr << "Reading modelsystem " << i << " failed with return value: " << retval << endl;
 			}
 			vms->push_back(ms);
 			if (retval)
 			{
-				return(retval);
+			    return(retval);
 			}
+		    }
+		} else {
+		    retval = read_modelSystem(&ms, qsv, false, 0);
+		    if (retval < 0)
+		    {
+			cerr << "Reading modelsystem " << i << " failed with return value: " << retval << endl;
+			return(retval);
+		    }
+		    vms->push_back(ms);
 		}
 		return(retval);
 	}
@@ -448,7 +459,7 @@ int US_FemGlobal::write_modelSystem(struct ModelSystem *ms, QString filename, bo
 	ts << "Model written by US_FEMGLOBAL\n";
 	ts << "# This file is computer-generated, please do not edit unless you know what you are doing\n";
 #if defined(USE_MPI) 
-	ts << 9.5 << "\t\t# UltraScan Version Number\n";
+	ts << 9.6 << "\t\t# UltraScan Version Number\n";
 #else
 	ts << US_Version << "\t\t# UltraScan Version Number\n";
 #endif
@@ -767,6 +778,7 @@ int US_FemGlobal::read_experiment(struct ModelSystem *ms, struct SimulationParam
 	int flag1, flag2;
 	QFile f;
 	f.setName(filename);
+	printf("trying to open %s\n", filename.ascii());
 	if (f.open(IO_ReadOnly))
 	{
 		QTextStream ts(&f);
@@ -797,6 +809,7 @@ int US_FemGlobal::read_experiment(vector <struct ModelSystem> *vms, struct Simul
 	int flag1, flag2;
 	QFile f;
 	f.setName(filename);
+	printf("trying to open %s\n", filename.ascii());
 	if (f.open(IO_ReadOnly))
 	{
 		QTextStream ts(&f);
