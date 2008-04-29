@@ -3,6 +3,11 @@
 -- Host: localhost    Database: cauma
 -- ------------------------------------------------------
 -- Server version	4.1.20-log
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8 */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
@@ -12,6 +17,7 @@
 -- Table structure for table `EquilCellResult`
 --
 
+DROP TABLE IF EXISTS `EquilCellResult`;
 CREATE TABLE `EquilCellResult` (
   `CellRstID` int(11) NOT NULL default '0',
   `EquilRstID` int(11) default NULL,
@@ -35,6 +41,7 @@ CREATE TABLE `EquilCellResult` (
 -- Table structure for table `EquilExpData`
 --
 
+DROP TABLE IF EXISTS `EquilExpData`;
 CREATE TABLE `EquilExpData` (
   `EEDID` int(11) NOT NULL default '0',
   `EEDtableID_WL1` int(11) default NULL,
@@ -53,6 +60,7 @@ CREATE TABLE `EquilExpData` (
 -- Table structure for table `EquilExpDataTable`
 --
 
+DROP TABLE IF EXISTS `EquilExpDataTable`;
 CREATE TABLE `EquilExpDataTable` (
   `EEDtableID` int(11) NOT NULL default '0',
   `PepFile` blob,
@@ -66,6 +74,7 @@ CREATE TABLE `EquilExpDataTable` (
 -- Table structure for table `EquilProjectData`
 --
 
+DROP TABLE IF EXISTS `EquilProjectData`;
 CREATE TABLE `EquilProjectData` (
   `tableID` int(11) NOT NULL default '0',
   `HeadFile` text,
@@ -78,6 +87,7 @@ CREATE TABLE `EquilProjectData` (
 -- Table structure for table `EquilProjectResult`
 --
 
+DROP TABLE IF EXISTS `EquilProjectResult`;
 CREATE TABLE `EquilProjectResult` (
   `EquilProjectID` int(11) NOT NULL default '0',
   `ProjectName` varchar(250) default NULL,
@@ -95,6 +105,7 @@ CREATE TABLE `EquilProjectResult` (
 -- Table structure for table `EquilResult`
 --
 
+DROP TABLE IF EXISTS `EquilResult`;
 CREATE TABLE `EquilResult` (
   `EquilRstID` int(11) NOT NULL default '0',
   `InvID` int(11) default NULL,
@@ -134,6 +145,7 @@ CREATE TABLE `EquilResult` (
 -- Table structure for table `EquilResultFile`
 --
 
+DROP TABLE IF EXISTS `EquilResultFile`;
 CREATE TABLE `EquilResultFile` (
   `EquilRstID` int(11) NOT NULL default '0',
   `RunInfo1` longblob,
@@ -152,6 +164,7 @@ CREATE TABLE `EquilResultFile` (
 -- Table structure for table `MonteCarloData`
 --
 
+DROP TABLE IF EXISTS `MonteCarloData`;
 CREATE TABLE `MonteCarloData` (
   `montecarloID` int(11) NOT NULL default '0',
   `report` blob,
@@ -164,6 +177,7 @@ CREATE TABLE `MonteCarloData` (
 -- Table structure for table `MonteCarloResult`
 --
 
+DROP TABLE IF EXISTS `MonteCarloResult`;
 CREATE TABLE `MonteCarloResult` (
   `montecarloID` int(11) NOT NULL default '0',
   `InvestigatorID` int(11) default NULL,
@@ -179,6 +193,7 @@ CREATE TABLE `MonteCarloResult` (
 -- Table structure for table `VelocCS`
 --
 
+DROP TABLE IF EXISTS `VelocCS`;
 CREATE TABLE `VelocCS` (
   `CSID` int(11) NOT NULL default '0',
   `CStableID_WL1` int(11) default NULL,
@@ -197,6 +212,7 @@ CREATE TABLE `VelocCS` (
 -- Table structure for table `VelocCSTable`
 --
 
+DROP TABLE IF EXISTS `VelocCSTable`;
 CREATE TABLE `VelocCSTable` (
   `CStableID` int(11) NOT NULL default '0',
   `Report` blob,
@@ -213,6 +229,7 @@ CREATE TABLE `VelocCSTable` (
 -- Table structure for table `VelocCellResult`
 --
 
+DROP TABLE IF EXISTS `VelocCellResult`;
 CREATE TABLE `VelocCellResult` (
   `CellRstID` int(11) NOT NULL default '0',
   `VelocRstID` int(11) default NULL,
@@ -245,6 +262,7 @@ CREATE TABLE `VelocCellResult` (
 -- Table structure for table `VelocExpData`
 --
 
+DROP TABLE IF EXISTS `VelocExpData`;
 CREATE TABLE `VelocExpData` (
   `EDID` int(11) NOT NULL default '0',
   `EDtableID_WL1` int(11) default NULL,
@@ -263,6 +281,7 @@ CREATE TABLE `VelocExpData` (
 -- Table structure for table `VelocExpDataTable`
 --
 
+DROP TABLE IF EXISTS `VelocExpDataTable`;
 CREATE TABLE `VelocExpDataTable` (
   `EDtableID` int(11) NOT NULL default '0',
   `PepFile` blob,
@@ -276,6 +295,7 @@ CREATE TABLE `VelocExpDataTable` (
 -- Table structure for table `VelocFiniteElement`
 --
 
+DROP TABLE IF EXISTS `VelocFiniteElement`;
 CREATE TABLE `VelocFiniteElement` (
   `FEID` int(11) NOT NULL default '0',
   `FEtableID_WL1` int(11) default NULL,
@@ -294,6 +314,7 @@ CREATE TABLE `VelocFiniteElement` (
 -- Table structure for table `VelocFiniteElementTable`
 --
 
+DROP TABLE IF EXISTS `VelocFiniteElementTable`;
 CREATE TABLE `VelocFiniteElementTable` (
   `FEtableID` int(11) NOT NULL default '0',
   `Report` blob,
@@ -309,6 +330,7 @@ CREATE TABLE `VelocFiniteElementTable` (
 -- Table structure for table `VelocRadialDerivative`
 --
 
+DROP TABLE IF EXISTS `VelocRadialDerivative`;
 CREATE TABLE `VelocRadialDerivative` (
   `RDID` int(11) NOT NULL default '0',
   `RDtableID_WL1` int(11) default NULL,
@@ -327,6 +349,7 @@ CREATE TABLE `VelocRadialDerivative` (
 -- Table structure for table `VelocRadialDerivativeTable`
 --
 
+DROP TABLE IF EXISTS `VelocRadialDerivativeTable`;
 CREATE TABLE `VelocRadialDerivativeTable` (
   `RDtableID` int(11) NOT NULL default '0',
   `Report` blob,
@@ -343,6 +366,7 @@ CREATE TABLE `VelocRadialDerivativeTable` (
 -- Table structure for table `VelocResult`
 --
 
+DROP TABLE IF EXISTS `VelocResult`;
 CREATE TABLE `VelocResult` (
   `VelocRstID` int(11) NOT NULL default '0',
   `InvID` int(11) default NULL,
@@ -382,6 +406,7 @@ CREATE TABLE `VelocResult` (
 -- Table structure for table `VelocResultFile`
 --
 
+DROP TABLE IF EXISTS `VelocResultFile`;
 CREATE TABLE `VelocResultFile` (
   `VelocRstID` int(11) NOT NULL default '0',
   `RunInfo1` blob,
@@ -403,6 +428,7 @@ CREATE TABLE `VelocResultFile` (
 -- Table structure for table `VelocSecondMoment`
 --
 
+DROP TABLE IF EXISTS `VelocSecondMoment`;
 CREATE TABLE `VelocSecondMoment` (
   `SMID` int(11) NOT NULL default '0',
   `SMtableID_WL1` int(11) default NULL,
@@ -421,6 +447,7 @@ CREATE TABLE `VelocSecondMoment` (
 -- Table structure for table `VelocSecondMomentTable`
 --
 
+DROP TABLE IF EXISTS `VelocSecondMomentTable`;
 CREATE TABLE `VelocSecondMomentTable` (
   `SMtableID` int(11) NOT NULL default '0',
   `Report` blob,
@@ -434,6 +461,7 @@ CREATE TABLE `VelocSecondMomentTable` (
 -- Table structure for table `VelocTimeDerivative`
 --
 
+DROP TABLE IF EXISTS `VelocTimeDerivative`;
 CREATE TABLE `VelocTimeDerivative` (
   `TDID` int(11) NOT NULL default '0',
   `TDtableID_WL1` int(11) default NULL,
@@ -452,6 +480,7 @@ CREATE TABLE `VelocTimeDerivative` (
 -- Table structure for table `VelocTimeDerivativeTable`
 --
 
+DROP TABLE IF EXISTS `VelocTimeDerivativeTable`;
 CREATE TABLE `VelocTimeDerivativeTable` (
   `TDtableID` int(11) NOT NULL default '0',
   `Report` blob,
@@ -468,6 +497,7 @@ CREATE TABLE `VelocTimeDerivativeTable` (
 -- Table structure for table `VelocVHW`
 --
 
+DROP TABLE IF EXISTS `VelocVHW`;
 CREATE TABLE `VelocVHW` (
   `VHWID` int(11) NOT NULL default '0',
   `VHWtableID_WL1` int(11) default NULL,
@@ -486,6 +516,7 @@ CREATE TABLE `VelocVHW` (
 -- Table structure for table `VelocVHWTable`
 --
 
+DROP TABLE IF EXISTS `VelocVHWTable`;
 CREATE TABLE `VelocVHWTable` (
   `VHWtableID` int(11) NOT NULL default '0',
   `Report` blob,
@@ -503,6 +534,7 @@ CREATE TABLE `VelocVHWTable` (
 -- Table structure for table `tbl2DSA_MW_Settings`
 --
 
+DROP TABLE IF EXISTS `tbl2DSA_MW_Settings`;
 CREATE TABLE `tbl2DSA_MW_Settings` (
   `2DSA_MW_Settings_ID` int(11) NOT NULL auto_increment,
   `mw_min` double NOT NULL default '100',
@@ -530,6 +562,7 @@ CREATE TABLE `tbl2DSA_MW_Settings` (
 -- Table structure for table `tbl2DSA_Settings`
 --
 
+DROP TABLE IF EXISTS `tbl2DSA_Settings`;
 CREATE TABLE `tbl2DSA_Settings` (
   `2DSA_Settings_ID` int(11) NOT NULL auto_increment,
   `s_min` double NOT NULL default '1',
@@ -556,6 +589,7 @@ CREATE TABLE `tbl2DSA_Settings` (
 -- Table structure for table `tblAuth`
 --
 
+DROP TABLE IF EXISTS `tblAuth`;
 CREATE TABLE `tblAuth` (
   `Password` varchar(80) NOT NULL default '',
   `InvestigatorID` int(11) NOT NULL default '0',
@@ -578,6 +612,7 @@ CREATE TABLE `tblAuth` (
 -- Table structure for table `tblBuffer`
 --
 
+DROP TABLE IF EXISTS `tblBuffer`;
 CREATE TABLE `tblBuffer` (
   `BuffID` int(11) NOT NULL auto_increment,
   `InvestigatorID` int(11) default NULL,
@@ -597,6 +632,7 @@ CREATE TABLE `tblBuffer` (
 -- Table structure for table `tblCell`
 --
 
+DROP TABLE IF EXISTS `tblCell`;
 CREATE TABLE `tblCell` (
   `CellID` int(11) NOT NULL auto_increment,
   `CenterpieceID` int(11) default NULL,
@@ -704,6 +740,7 @@ CREATE TABLE `tblCell` (
 -- Table structure for table `tblDNA`
 --
 
+DROP TABLE IF EXISTS `tblDNA`;
 CREATE TABLE `tblDNA` (
   `DNAID` int(11) NOT NULL auto_increment,
   `DNAFileName` varchar(50) default NULL,
@@ -724,6 +761,7 @@ CREATE TABLE `tblDNA` (
 -- Table structure for table `tblEquilResult`
 --
 
+DROP TABLE IF EXISTS `tblEquilResult`;
 CREATE TABLE `tblEquilResult` (
   `EquilRstID` int(11) NOT NULL default '0',
   `Date` varchar(15) default NULL,
@@ -742,6 +780,7 @@ CREATE TABLE `tblEquilResult` (
 -- Table structure for table `tblEquilResultData`
 --
 
+DROP TABLE IF EXISTS `tblEquilResultData`;
 CREATE TABLE `tblEquilResultData` (
   `tableID` int(11) NOT NULL default '0',
   `Report_Tar` longblob,
@@ -754,6 +793,7 @@ CREATE TABLE `tblEquilResultData` (
 -- Table structure for table `tblExpData`
 --
 
+DROP TABLE IF EXISTS `tblExpData`;
 CREATE TABLE `tblExpData` (
   `ExpdataID` int(11) NOT NULL auto_increment,
   `Invid` int(11) default NULL,
@@ -807,6 +847,7 @@ CREATE TABLE `tblExpData` (
 -- Table structure for table `tblExpDataFile`
 --
 
+DROP TABLE IF EXISTS `tblExpDataFile`;
 CREATE TABLE `tblExpDataFile` (
   `ExpdataID` int(11) NOT NULL default '0',
   `File` longblob,
@@ -817,6 +858,7 @@ CREATE TABLE `tblExpDataFile` (
 -- Table structure for table `tblGA_MW_Settings`
 --
 
+DROP TABLE IF EXISTS `tblGA_MW_Settings`;
 CREATE TABLE `tblGA_MW_Settings` (
   `GA_MW_Settings_ID` int(11) NOT NULL auto_increment,
   `mw_min` double NOT NULL default '100',
@@ -847,6 +889,7 @@ CREATE TABLE `tblGA_MW_Settings` (
 -- Table structure for table `tblGA_SC_Settings`
 --
 
+DROP TABLE IF EXISTS `tblGA_SC_Settings`;
 CREATE TABLE `tblGA_SC_Settings` (
   `GA_SC_Settings_ID` int(11) NOT NULL auto_increment,
   `montecarlo_value` int(11) NOT NULL default '0',
@@ -873,6 +916,7 @@ CREATE TABLE `tblGA_SC_Settings` (
 -- Table structure for table `tblGA_Settings`
 --
 
+DROP TABLE IF EXISTS `tblGA_Settings`;
 CREATE TABLE `tblGA_Settings` (
   `GA_Settings_ID` int(11) NOT NULL auto_increment,
   `montecarlo_value` int(11) NOT NULL default '0',
@@ -900,6 +944,7 @@ CREATE TABLE `tblGA_Settings` (
 -- Table structure for table `tblHPCAnalysis`
 --
 
+DROP TABLE IF EXISTS `tblHPCAnalysis`;
 CREATE TABLE `tblHPCAnalysis` (
   `HPCAnalysis_ID` int(11) NOT NULL auto_increment,
   `DateTime` datetime NOT NULL default '0000-00-00 00:00:00',
@@ -926,6 +971,7 @@ CREATE TABLE `tblHPCAnalysis` (
 -- Table structure for table `tblHPCAnalysisData`
 --
 
+DROP TABLE IF EXISTS `tblHPCAnalysisData`;
 CREATE TABLE `tblHPCAnalysisData` (
   `HPCAnalysisData_ID` int(11) NOT NULL auto_increment,
   `file_name` varchar(64) default NULL,
@@ -942,6 +988,7 @@ CREATE TABLE `tblHPCAnalysisData` (
 -- Table structure for table `tblHPCModel`
 --
 
+DROP TABLE IF EXISTS `tblHPCModel`;
 CREATE TABLE `tblHPCModel` (
   `HPCModel_ID` int(11) NOT NULL auto_increment,
   `meniscus` double NOT NULL default '0',
@@ -960,6 +1007,7 @@ CREATE TABLE `tblHPCModel` (
 -- Table structure for table `tblHPCSoluteData`
 --
 
+DROP TABLE IF EXISTS `tblHPCSoluteData`;
 CREATE TABLE `tblHPCSoluteData` (
   `HPCSoluteData_ID` int(11) NOT NULL auto_increment,
   `s_min` double NOT NULL default '0',
@@ -974,6 +1022,7 @@ CREATE TABLE `tblHPCSoluteData` (
 -- Table structure for table `tblImage`
 --
 
+DROP TABLE IF EXISTS `tblImage`;
 CREATE TABLE `tblImage` (
   `GelID` int(11) NOT NULL auto_increment,
   `GelPicture` longblob NOT NULL,
@@ -991,6 +1040,7 @@ CREATE TABLE `tblImage` (
 -- Table structure for table `tblInvestigators`
 --
 
+DROP TABLE IF EXISTS `tblInvestigators`;
 CREATE TABLE `tblInvestigators` (
   `InvID` int(11) NOT NULL auto_increment,
   `FirstName` varchar(30) default NULL,
@@ -1006,9 +1056,43 @@ CREATE TABLE `tblInvestigators` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
+-- Table structure for table `tblLaser`
+--
+
+DROP TABLE IF EXISTS `tblLaser`;
+CREATE TABLE `tblLaser` (
+  `LaserID` int(11) NOT NULL default '0',
+  `SampleName` varchar(255) default NULL,
+  `Operator` varchar(100) default NULL,
+  `Date` varchar(15) default NULL,
+  `InvestigatorID` int(11) default NULL,
+  `BufferID` int(11) default NULL,
+  `PeptideID` int(11) default NULL,
+  `DNAID` int(11) default NULL,
+  PRIMARY KEY  (`LaserID`),
+  KEY `Invid` (`InvestigatorID`),
+  KEY `bufid` (`BufferID`),
+  KEY `pepid` (`PeptideID`),
+  KEY `dnaid` (`DNAID`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+--
+-- Table structure for table `tblLaserData`
+--
+
+DROP TABLE IF EXISTS `tblLaserData`;
+CREATE TABLE `tblLaserData` (
+  `LaserID` int(11) NOT NULL default '0',
+  `DataFile` longblob,
+  PRIMARY KEY  (`LaserID`),
+  KEY `laserid` (`LaserID`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
+
+--
 -- Table structure for table `tblLog`
 --
 
+DROP TABLE IF EXISTS `tblLog`;
 CREATE TABLE `tblLog` (
   `LogID` int(11) NOT NULL auto_increment,
   `InvestigatorID` int(11) default NULL,
@@ -1025,6 +1109,7 @@ CREATE TABLE `tblLog` (
 -- Table structure for table `tblPeptide`
 --
 
+DROP TABLE IF EXISTS `tblPeptide`;
 CREATE TABLE `tblPeptide` (
   `PepID` int(11) NOT NULL auto_increment,
   `PepFileName` varchar(60) default NULL,
@@ -1044,6 +1129,7 @@ CREATE TABLE `tblPeptide` (
 -- Table structure for table `tblPermits`
 --
 
+DROP TABLE IF EXISTS `tblPermits`;
 CREATE TABLE `tblPermits` (
   `providerID` int(11) default NULL,
   `collaboratorID` int(11) default NULL
@@ -1053,6 +1139,7 @@ CREATE TABLE `tblPermits` (
 -- Table structure for table `tblRawExpData`
 --
 
+DROP TABLE IF EXISTS `tblRawExpData`;
 CREATE TABLE `tblRawExpData` (
   `ExpdataID` int(11) NOT NULL default '0',
   `RawData` longblob,
@@ -1063,6 +1150,7 @@ CREATE TABLE `tblRawExpData` (
 -- Table structure for table `tblRequest`
 --
 
+DROP TABLE IF EXISTS `tblRequest`;
 CREATE TABLE `tblRequest` (
   `RequestID` int(11) NOT NULL auto_increment,
   `InvestigatorID` int(11) default NULL,
@@ -1087,6 +1175,7 @@ CREATE TABLE `tblRequest` (
 -- Table structure for table `tblResult`
 --
 
+DROP TABLE IF EXISTS `tblResult`;
 CREATE TABLE `tblResult` (
   `ResultID` int(11) NOT NULL default '0',
   `RunRequestID` int(11) default NULL,
@@ -1102,6 +1191,7 @@ CREATE TABLE `tblResult` (
 -- Table structure for table `tblRunRequest`
 --
 
+DROP TABLE IF EXISTS `tblRunRequest`;
 CREATE TABLE `tblRunRequest` (
   `RunRequestID` int(11) NOT NULL auto_increment,
   `RunDescription` varchar(80) default NULL,
@@ -1145,6 +1235,7 @@ CREATE TABLE `tblRunRequest` (
 -- Table structure for table `tblSample`
 --
 
+DROP TABLE IF EXISTS `tblSample`;
 CREATE TABLE `tblSample` (
   `SampleID` int(11) NOT NULL auto_increment,
   `Description` varchar(80) NOT NULL default '',
@@ -1176,6 +1267,7 @@ CREATE TABLE `tblSample` (
 -- Table structure for table `tblVelocResult`
 --
 
+DROP TABLE IF EXISTS `tblVelocResult`;
 CREATE TABLE `tblVelocResult` (
   `VelocRstID` int(11) NOT NULL default '0',
   `Date` varchar(15) default NULL,
@@ -1194,6 +1286,7 @@ CREATE TABLE `tblVelocResult` (
 -- Table structure for table `tblVelocResultData`
 --
 
+DROP TABLE IF EXISTS `tblVelocResultData`;
 CREATE TABLE `tblVelocResultData` (
   `tableID` int(11) NOT NULL default '0',
   `Report_Tar` longblob,
@@ -1205,5 +1298,8 @@ CREATE TABLE `tblVelocResultData` (
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
