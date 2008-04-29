@@ -399,6 +399,7 @@ float US_FeMatchRa_W::fit()
 	sp.simpoints = simpoints;
 	sp.band_volume = band_volume;
 	sp.speed_step[0].delay_minutes = tmp;
+	assign_model();
 	astfem_rsa->calculate(&ms, &sp, &simdata);
 	rmsd = 0.0;
 	analysis_plot->clear();
@@ -587,34 +588,89 @@ void US_FeMatchRa_W::assign_parameters()
 {
 	unsigned int j;
 	QString str;
-	par temp_par;
-	ga_param.clear();
+	Parameter temp_param;
+	par temp_ga_param;
+	ga_param.clear(); // this structure needs to be populated. Each parameter has 1 name and a reduced vector of values (identical values are added) 
 	for (j=0; j<msv[0].component_vector.size(); j++)
 	{
-		temp_par.name = msv[0].component_vector[j].name + " concentration";
-		temp_par.val = msv[0].component_vector[j].concentration;
-		ga_param.push_back(temp_par);
-		temp_par.name = msv[0].component_vector[j].name + " sedimentation coefficient";
-		temp_par.val = msv[0].component_vector[j].s;
-		ga_param.push_back(temp_par);
-		temp_par.name = msv[0].component_vector[j].name + " diffusion coefficient";
-		temp_par.val = msv[0].component_vector[j].D;
-		ga_param.push_back(temp_par);
-		temp_par.name = msv[0].component_vector[j].name + " molecular weight";
-		temp_par.val = msv[0].component_vector[j].mw;
-		ga_param.push_back(temp_par);
-		temp_par.name = msv[0].component_vector[j].name + " frictional ratio";
-		temp_par.val = msv[0].component_vector[j].f_f0;
-		ga_param.push_back(temp_par);
+		temp_ga_param.name = msv[0].component_vector[j].name + " concentration";
+		for (i=0; i<msv.size(); i++)
+		{
+			temp_param.x = msv[i].component_vector[j].concentration;
+			temp_param.y = 1.0;
+			temp_ga_param.parameter_list.push_back(temp_param);
+		}
+		reduce(&temp_ga_param.parameter_list, &temp_ga_param.mode, &temp_ga_param.mean, &temp_ga_param.median);
+		ga_param.push_back(temp_ga_param);
+		temp_ga_param.parameter_list.clear();
+
+		temp_ga_param.name = msv[0].component_vector[j].name + " sedimentation coefficient";
+		for (i=0; i<msv.size(); i++)
+		{
+			temp_param.x = msv[i].component_vector[j].s;
+			temp_param.y = 1.0;
+			temp_ga_param.parameter_list.push_back(temp_param);
+		}
+  		reduce(&temp_ga_param.parameter_list, &temp_ga_param.mode, &temp_ga_param.mean, &temp_ga_param.median);
+		ga_param.push_back(temp_ga_param);
+		temp_ga_param.parameter_list.clear();
+
+		temp_ga_param.name = msv[0].component_vector[j].name + " diffusion coefficient";
+		for (i=0; i<msv.size(); i++)
+		{
+			temp_param.x = msv[i].component_vector[j].D;
+			temp_param.y = 1.0;
+			temp_ga_param.parameter_list.push_back(temp_param);
+		}
+  		reduce(&temp_ga_param.parameter_list, &temp_ga_param.mode, &temp_ga_param.mean, &temp_ga_param.median);
+		ga_param.push_back(temp_ga_param);
+		temp_ga_param.parameter_list.clear();
+
+		temp_ga_param.name = msv[0].component_vector[j].name + " molecular weight";
+		for (i=0; i<msv.size(); i++)
+		{
+			temp_param.x = msv[i].component_vector[j].mw;
+			temp_param.y = 1.0;
+			temp_ga_param.parameter_list.push_back(temp_param);
+		}
+  		reduce(&temp_ga_param.parameter_list, &temp_ga_param.mode, &temp_ga_param.mean, &temp_ga_param.median);
+		ga_param.push_back(temp_ga_param);
+		temp_ga_param.parameter_list.clear();
+
+		temp_ga_param.name = msv[0].component_vector[j].name + " frictional ratio";
+		for (i=0; i<msv.size(); i++)
+		{
+			temp_param.x = msv[i].component_vector[j].f_f0;
+			temp_param.y = 1.0;
+			temp_ga_param.parameter_list.push_back(temp_param);
+		}
+		reduce(&temp_ga_param.parameter_list, &temp_ga_param.mode, &temp_ga_param.mean, &temp_ga_param.median);
+		ga_param.push_back(temp_ga_param);
+		temp_ga_param.parameter_list.clear();
 	}
 	for (j=0; j<msv[0].assoc_vector.size(); j++)
 	{
-		temp_par.name = str.sprintf("Reaction %d: equilibrium constant", j+1);
-		temp_par.val = msv[0].assoc_vector[j].keq;
-		ga_param.push_back(temp_par);
-		temp_par.name = str.sprintf("Reaction %d: k_off rate", j+1);
-		temp_par.val = msv[0].assoc_vector[j].k_off;
-		ga_param.push_back(temp_par);
+		temp_ga_param.name = str.sprintf("Reaction %d: equilibrium constant", j+1);
+		for (i=0; i<msv.size(); i++)
+		{
+			temp_param.x = msv[i].assoc_vector[j].keq;
+			temp_param.y = 1.0;
+			temp_ga_param.parameter_list.push_back(temp_param);
+		}
+  		reduce(&temp_ga_param.parameter_list, &temp_ga_param.mode, &temp_ga_param.mean, &temp_ga_param.median);
+		ga_param.push_back(temp_ga_param);
+		temp_ga_param.parameter_list.clear();
+
+		temp_ga_param.name = str.sprintf("Reaction %d: k_off rate", j+1);
+		for (i=0; i<msv.size(); i++)
+		{
+			temp_param.x = msv[i].assoc_vector[j].k_off;
+			temp_param.y = 1.0;
+			temp_ga_param.parameter_list.push_back(temp_param);
+		}
+  		reduce(&temp_ga_param.parameter_list, &temp_ga_param.mode, &temp_ga_param.mean, &temp_ga_param.median);
+		ga_param.push_back(temp_ga_param);
+		temp_ga_param.parameter_list.clear();
 	}
 	cnt_parameter->setRange(1, ga_param.size(), 1);
 	current_parameter = 0;
@@ -625,27 +681,92 @@ void US_FeMatchRa_W::assign_parameters()
 void US_FeMatchRa_W::select_plotmode(int val)
 {
 	plotmode = val;
-	show_parameter();
 }
 
 void US_FeMatchRa_W::assign_model()
 {
+	unsigned int count;
 	switch (plotmode)
 	{
 		case 0: // current model
 		{
 			ms = msv[current_model];
+			break;
 		}
 		case 1: // mode
 		{
-			
+			ms = msv[current_model];
+			count = 0; // now update the relevant variables with the statistical averages
+			for (j=0; j<msv[0].component_vector.size(); j++)
+			{
+				ms.component_vector[j].concentration = ga_param[count].mode;
+				count ++;
+				ms.component_vector[j].s = ga_param[count].mode;
+				count ++;
+				ms.component_vector[j].D = ga_param[count].mode;
+				count ++;
+				ms.component_vector[j].mw = ga_param[count].mode;
+				count ++;
+				ms.component_vector[j].f_f0 = ga_param[count].mode;
+				count ++;
+			}
+			for (j=0; j<msv[0].assoc_vector.size(); j++)
+			{
+				ms.assoc_vector[j].keq = ga_param[count].mode;
+				count ++;
+				ms.assoc_vector[j].k_off = ga_param[count].mode;
+			}
+			break;
 		}
 		case 2: // mean
 		{
-			
+			ms = msv[current_model];
+			count = 0; // now update the relevant variables with the statistical averages
+			for (j=0; j<msv[0].component_vector.size(); j++)
+			{
+				ms.component_vector[j].concentration = ga_param[count].mean;
+				count ++;
+				ms.component_vector[j].s = ga_param[count].mean;
+				count ++;
+				ms.component_vector[j].D = ga_param[count].mean;
+				count ++;
+				ms.component_vector[j].mw = ga_param[count].mean;
+				count ++;
+				ms.component_vector[j].f_f0 = ga_param[count].mean;
+				count ++;
+			}
+			for (j=0; j<msv[0].assoc_vector.size(); j++)
+			{
+				ms.assoc_vector[j].keq = ga_param[count].mean;
+				count ++;
+				ms.assoc_vector[j].k_off = ga_param[count].mean;
+			}
+			break;
 		}
 		case 3: // median
 		{
+			ms = msv[current_model];
+			count = 0; // now update the relevant variables with the statistical averages
+			for (j=0; j<msv[0].component_vector.size(); j++)
+			{
+				ms.component_vector[j].concentration = ga_param[count].median;
+				count ++;
+				ms.component_vector[j].s = ga_param[count].median;
+				count ++;
+				ms.component_vector[j].D = ga_param[count].median;
+				count ++;
+				ms.component_vector[j].mw = ga_param[count].median;
+				count ++;
+				ms.component_vector[j].f_f0 = ga_param[count].median;
+				count ++;
+			}
+			for (j=0; j<msv[0].assoc_vector.size(); j++)
+			{
+				ms.assoc_vector[j].keq = ga_param[count].median;
+				count ++;
+				ms.assoc_vector[j].k_off = ga_param[count].median;
+			}
+			break;
 		}
 	}
 }
@@ -663,88 +784,69 @@ void US_FeMatchRa_W::show_model()
 
 void US_FeMatchRa_W::show_parameter()
 {
-	unsigned int i, j, count=0;
+	unsigned int count=0;
 	double *x, *y;
-	x = new double [msv.size()];
-	y = new double [msv.size()];
-	// first find the correct parameter:
-	for (j=0; j<msv[current_model].component_vector.size(); j++)
+	x = new double [ga_param[current_parameter].parameter_list.size()];
+	y = new double [ga_param[current_parameter].parameter_list.size()];
+	list <Parameter>::iterator pit1;
+	for (pit1 = ga_param[current_parameter].parameter_list.begin(); pit1 != ga_param[current_parameter].parameter_list.end(); pit1++)
 	{
-		if (current_parameter == count)
-		{
-			for (i=0; i<msv.size(); i++)
-			{
-				x[i] = msv[i].component_vector[j].concentration;
-				y[i] = 1.0;
-			}
-			break;
-		}
-		count ++;
-		if (current_parameter == count)
-		{
-			for (i=0; i<msv.size(); i++)
-			{
-				x[i] = msv[i].component_vector[j].s;
-				y[i] = 1.0;
-			}
-			break;
-		}
-		count ++;
-		if (current_parameter == count)
-		{
-			for (i=0; i<msv.size(); i++)
-			{
-				x[i] = msv[i].component_vector[j].D;
-				y[i] = 1.0;
-			}
-			break;
-		}		
-		count ++;
-		if (current_parameter == count)
-		{
-			for (i=0; i<msv.size(); i++)
-			{
-				x[i] = msv[i].component_vector[j].mw;
-				y[i] = 1.0;
-			}
-			break;
-		}
-		count ++;
-		if (current_parameter == count)
-		{
-			for (i=0; i<msv.size(); i++)
-			{
-				x[i] = msv[i].component_vector[j].f_f0;
-				y[i] = 1.0;
-			}
-			break;
-		}
+		x[count] = (*pit1).x;
+		y[count] = (*pit1).y;
 		count ++;
 	}
-	if (current_parameter >= count)
+	long curve;
+	analysis_plot->clear();
+	curve = analysis_plot->insertCurve(ga_param[current_parameter].name);
+	analysis_plot->setCurveData(curve, x, y, count);
+	analysis_plot->setCurveStyle(curve, QwtCurve::Sticks);
+	analysis_plot->setCurvePen(curve, QPen(Qt::yellow, 6, SolidLine));
+	analysis_plot->replot();
+}
+
+
+void US_FeMatchRa_W::reduce(list <Parameter> *p, double *mode, double *mean, double *median)
+{
+	list <Parameter> par1, par2;
+	Parameter high;
+	Parameter low;
+	list <Parameter>::iterator pit1, pit2;
+	for (pit1 = (*p).begin(); pit1 != (*p).end(); pit1++)
 	{
-		for (j=0; j<msv[current_model].assoc_vector.size(); j++)
+		par1.push_back(*pit1);
+	}
+	double sum = 0.0;
+	(*mode) = -1.0e300;
+	for (pit1 = par1.begin(); pit1 != par1.end(); pit1++)
+	{
+		sum += (*pit1).x;
+	}
+	(*mean) = sum/par1.size(); // all values have weight 1 at this point
+	par1.sort();
+	high = par1.back();
+	low = par1.front();
+	(*median) = low.x + (high.x - low.x)/2.0;
+	par2 = par1; // make backup copy
+	par1.clear(); // clear for repopulation with combined parameters that are identical
+	pit1 = par2.begin();
+	pit2 = par2.begin();
+	while (pit2 != par2.end())
+	{
+		pit2++; // increment one so we can compare with the next higher up
+		if ((*pit1).x == (*pit2).x)
 		{
-			if (current_parameter == count)
-			{
-				for (i=0; i<msv.size(); i++)
-				{
-					x[i] = msv[i].assoc_vector[j].keq;
-					y[i] = 1.0;
-				}
-				break;
-			}
-			count ++;
-			if (current_parameter == count)
-			{
-				for (i=0; i<msv.size(); i++)
-				{
-					x[i] = msv[i].assoc_vector[j].k_off;
-					y[i] = 1.0;
-				}
-				break;
-			}
-			count ++;
+			(*pit1).y += (*pit2).y; // if they are the same, add frequencies
 		}
-	} 
+		else
+		{
+			par1.push_back(*pit1); // if they are not the same
+			pit1 = pit2; // jump to next higher point in list and set iterator to next point.
+		}
+	}
+	(*p).clear();
+	for (pit1 = par1.begin(); pit1 != par1.end(); pit1++)
+	{
+		(*mode) = max((*pit1).x, (*mode));
+		(*p).push_back(*pit1);
+	}
 }

@@ -997,13 +997,13 @@ void US_GA_Initialize::load_distro()
 			j2++;
 			if ((*j1).s == (*j2).s && (*j1).k == (*j2).k)
 			{
-				(*j2).c += (*j1).c;
+				(*j1).c += (*j2).c;
 			}
 			else
 			{
 				distro_solute.push_back(*j1);
+				j1 = j2;
 			}
-			j1++;
 		}
 		reduced.clear();
 		float low_s, high_s, val_k, low_k=1.0e6, high_k = -1.0e6;

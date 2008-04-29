@@ -21,12 +21,42 @@
 
 using namespace std;
 
+class Parameter
+{
+	public:
+		double x;
+		double y;
+		Parameter() {};
+		~Parameter() {};
+		bool operator==(const Parameter& objIn)
+		{
+			return (x == objIn.x);
+		}
+		bool operator!=(const Parameter& objIn)
+		{
+			return (x != objIn.x);
+		}
+		bool operator < (const Parameter& objIn) const
+		{
+			if (x < objIn.x)
+			{
+				return (true);
+			}
+			else
+			{
+				return(false);
+			}
+		}
+};
+
 struct par
 {
 	QString name;
-	double val;
+	double mode;
+	double mean;
+	double median;
+	list <Parameter> parameter_list;
 };
-
 
 class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 {
@@ -43,7 +73,7 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		SA2d_control_variables sa2d_ctrl_vars;
 		int mesh, moving_grid, plotmode;
 		float band_volume;
-
+		
 #ifdef WIN32
 		  #pragma warning ( disable: 4251 )
 #endif
@@ -117,6 +147,7 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		void show_model();
 		void show_parameter();
 		void select_plotmode(int);
+		void reduce(list <Parameter> *, double * /*mode*/, double * /*mean*/, double * /*median*/);
 		//void update_plot();
 
 // re-implemented Functions:
