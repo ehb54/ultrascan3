@@ -51,6 +51,7 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		vector <double> ri_noise, ti_noise;
 		vector <struct mfem_data> simdata;
 		vector <par> ga_param; // struct
+		vector <ModelSystem> msv;
 
 #ifdef WIN32
 		  #pragma warning ( default: 4251 )
@@ -90,7 +91,6 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		int model;
 		bool stopFlag, movieFlag;
 		struct mfem_data residuals;
-		vector <ModelSystem> msv;
 		ModelSystem ms;
 		struct SimulationParameters sp;
 		US_Astfem_RSA *astfem_rsa;
