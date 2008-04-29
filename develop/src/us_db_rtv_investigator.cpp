@@ -372,7 +372,7 @@ void US_DB_RtvInvestigator::select_data(int item)
 	{
 		ExpdataID = item_ExpdataID[item];
 		Display = display_Str[item];		
-		str.sprintf("Retrieve: "+ Display);
+		str = "Retrieve: " + Display;
 		lbl_item->setText(str);
 		retrieve_flag = true;			
 	}
