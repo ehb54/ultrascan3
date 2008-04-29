@@ -9,15 +9,15 @@
 #
 ###########################################################
 
-VERSION=9.5.1
+VERSION=9.6
 TMP=/tmp
 
 # change to QT version:
-QT=3.3.3
+QT=3.3.8
 
 # change to lib64/bin64 for opteron environment
-LIB=lib64
-BIN=bin64
+LIB=lib
+BIN=bin
 
 echo "Using " $QTDIR " for the QT Library..."
 echo "Using " $QWTDIR " for the QWT Library..."
@@ -25,8 +25,8 @@ echo "Using " $QWT3DDIR " for the QWT3D Plotting Library..."
 
 # uncomment one of the following:
 
-#HARDWARE=ix86
-HARDWARE=opteron
+HARDWARE=ix86
+#HARDWARE=opteron
 #HARDWARE=sgi
 #HARDWARE=sparc
 #HARDWARE=mac
