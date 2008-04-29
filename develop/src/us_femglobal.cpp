@@ -20,12 +20,14 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, QString filename, boo
 		QTextStream ts(&f);
 		while (str = ts.readLine())
 		{
-		    str.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
-		    qsv.push_back(str);
+			str.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+			qsv.push_back(str);
 		}
 		f.close();
 		return(read_modelSystem(ms, qsv, flag));
-	} else {
+	}
+	else
+	{
 		return(-40); // can't open input file
 	}
 }
@@ -56,27 +58,29 @@ int US_FemGlobal::read_modelSystem(vector<ModelSystem> *vms, QString filename)
 		f.close();
 		if (offset.size())
 		{
-		    for (i = 0; i < offset.size(); i++)
-		    {
-			retval = read_modelSystem(&ms, qsv, false, offset[i]);
+			for (i = 0; i < offset.size(); i++)
+			{
+				retval = read_modelSystem(&ms, qsv, false, offset[i]);
+				if (retval < 0)
+				{
+					cerr << "Reading modelsystem " << i << " failed with return value: " << retval << endl;
+				}
+				vms->push_back(ms);
+				if (retval)
+				{
+					return(retval);
+				}
+			}
+		}
+		else
+		{
+			retval = read_modelSystem(&ms, qsv, false, 0);
 			if (retval < 0)
 			{
-			    cerr << "Reading modelsystem " << i << " failed with return value: " << retval << endl;
+				cerr << "Reading modelsystem failed with return value: " << retval << endl;
+				return(retval);
 			}
 			vms->push_back(ms);
-			if (retval)
-			{
-			    return(retval);
-			}
-		    }
-		} else {
-		    retval = read_modelSystem(&ms, qsv, false, 0);
-		    if (retval < 0)
-		    {
-			cerr << "Reading modelsystem " << i << " failed with return value: " << retval << endl;
-			return(retval);
-		    }
-		    vms->push_back(ms);
 		}
 		return(retval);
 	}
@@ -493,7 +497,7 @@ int US_FemGlobal::write_modelSystem(struct ModelSystem *ms, QString filename, bo
 			for (j=0; j<(*ms).component_vector[i].c0.radius.size(); j++)
 			{
 				ts << (*ms).component_vector[i].c0.radius[j] << " "
-						<< (*ms).component_vector[i].c0.concentration[j] << endl;
+					<< (*ms).component_vector[i].c0.concentration[j] << endl;
 			}
 		}
 	}
@@ -880,12 +884,14 @@ int US_FemGlobal::read_constraints(struct ModelSystem *ms, struct ModelSystemCon
 		QTextStream ts(&f);
 		while (str = ts.readLine())
 		{
-		    str.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
-		    qsv.push_back(str);
+			str.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+			qsv.push_back(str);
 		}
 		f.close();
 		return(read_constraints(ms, msc, qsv));
-	} else {
+	}
+	else
+	{
 		return(-200); // can't open input file
 	}
 }
