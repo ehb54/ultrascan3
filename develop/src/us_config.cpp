@@ -241,7 +241,7 @@ void US_Config::color_defaults()
 // For splash screen window
 	cg_pushb.setColor( QColorGroup::Background, global_colors.pushb );
 
-	QColorGroup& cg_pushb_disabled = global_colors.cg_pushb;  // Convenience
+	QColorGroup& cg_pushb_disabled = global_colors.cg_pushb_disabled;  // Convenience
 
 	cg_pushb_disabled.setColor( QColorGroup::ButtonText, Qt::white );
 	cg_pushb_disabled.setColor( QColorGroup::Button,     global_colors.pushb );
