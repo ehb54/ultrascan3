@@ -753,28 +753,34 @@ float calc_bottom(int rotor, int centerpiece, int channel, unsigned int rpm)
 	{
 		return(-1.0);
 	}
+#if !defined(USE_MPI)
 	US_Config *USglobal;
 	USglobal = new US_Config();
+#endif
 	vector <struct rotorInfo> rotor_list;
 	vector <struct centerpieceInfo> cp_list;
 	cp_list.clear();
 	rotor_list.clear();
 	if (!readCenterpieceInfo(&cp_list))
 	{
+#if !defined(USE_MPI)
 		cerr << "UltraScan Fatal Error: There was a problem opening the\n"
 						"centerpiece database file:\n\n" + USglobal->config_list.system_dir + "/etc/centerpiece.dat\n\n"
 						"Please install the centerpiece database file\n"
 				"before proceeding. Exiting with -2..." << endl;
 		delete USglobal;
+#endif
 		return(-2.0); // centerpiece could not be read
 	}
 	if (!readRotorInfo(&rotor_list))
 	{
+#if !defined(USE_MPI)
 		cerr << "UltraScan Fatal Error: There was a problem opening the\n"
 				"rotor database file:\n\n" + USglobal->config_list.system_dir + "/etc/rotor.dat\n\n"
 						"Please install the rotor database file\n"
 				"before proceeding. Exiting with -3..." << endl;
 		delete USglobal;
+#endif
 		return(-3.0);
 	}
 
@@ -787,11 +793,12 @@ float calc_bottom(int rotor, int centerpiece, int channel, unsigned int rpm)
 			bottom += rotor_list[rotor].coefficient[i] * pow((double) rpm, (double) i);
 		}
 	}
+#if !defined(USE_MPI)
 	delete USglobal;
+#endif
 	return bottom;
 }
 
-#if !defined(USE_MPI)
 double stretch(int rotor, unsigned int rpm)
 {
 	vector <struct rotorInfo> rotor_list;
@@ -803,7 +810,6 @@ double stretch(int rotor, unsigned int rpm)
 	}
 	return (stretch);
 }
-#endif
 
 /*****************************************************************************
 
