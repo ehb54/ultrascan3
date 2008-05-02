@@ -745,6 +745,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
 	// -2: couldn't open solute file
 	// -3: some undefined error happened in calc_residuals
 	this->gridopt = gridopt;
+	this->gridopt = "no";
 	maxrss = 0l;
 
 	startDateTime = QDateTime::currentDateTime();
@@ -4541,4 +4542,125 @@ long getrss(int pid)
 	if (P_pid != pid)
 		return 0;
 	return P_rss;
+}
+
+QString getToken(QString *str, const QString &separator)
+{
+	int pos;
+	QString token;
+	pos = str->find(separator, 0, false);
+	if (pos < 0)
+	{
+		if (str->length() > 0)
+		{
+			token = (*str);
+			(*str) = "";
+			return (token);
+		}
+		else
+		{
+			return((QString) "");
+		}
+	}
+	while (pos == 0)
+	{
+		(*str) = str->mid(pos + 1, str->length());	
+		pos = str->find(separator, 0, false);
+		if (pos < 0)
+		{
+			if (str->length() > 0)
+			{
+				token = (*str);
+				(*str) = "";
+				return (token);
+			}
+			else
+			{
+				return((QString) "");
+			}
+		}
+	}
+	token = str->left(pos);
+	(*str) = str->mid(pos + 1, str->length());
+	return(token);
+}
+
+bool readRotorInfo(vector <struct rotorInfo> *rotor_info_vector)
+{
+	struct rotorInfo temp_rotor_info;
+	QString str1, str2;
+	bool ok;
+	char *US = getenv("ULTRASCAN");
+	QFile rotor_file(QString("%1").arg(US) + "/etc/rotor.dat");
+	if( rotor_file.open(IO_ReadOnly))
+	{
+		QTextStream ts(&rotor_file);
+		while (!ts.atEnd())
+		{
+			str1 = ts.readLine();	// process line by line
+			str2 = getToken(&str1, " "); // get the first token of the line
+			temp_rotor_info.serial_number = str2.toInt(&ok, 10);
+			if (ok)  // if the first token is not an integer, we got a comment and we'll skip this line
+			{
+				temp_rotor_info.type = getToken(&str1, " ");
+				for (int i=0; i<5; i++)
+				{
+					str2 = getToken(&str1, " ");
+					temp_rotor_info.coefficient[i] = str2.toFloat(&ok);
+				}
+				(*rotor_info_vector).push_back(temp_rotor_info);
+			}
+		}
+		rotor_file.close();
+		return (true);
+	}
+	else
+	{
+		return(false);
+	}
+}
+
+bool readCenterpieceInfo(vector <struct centerpieceInfo> *cp_info_vector)
+{
+	struct centerpieceInfo temp_cp_info;
+	QString str1, str2;
+	bool ok;
+	char *US = getenv("ULTRASCAN");
+	QFile cp_file(QString("%1").arg(US) + "/etc/centerpiece.dat");
+	if(cp_file.open(IO_ReadOnly))
+	{
+		QTextStream ts(&cp_file);
+		while(!ts.atEnd())
+		{
+			str1 = ts.readLine();	// process line by line
+			str2 = getToken(&str1, " "); // get the first token of the line
+			temp_cp_info.serial_number = str2.toInt(&ok, 10);
+			if (ok)  // if the first token is not an integer, we got a comment and we'll skip this line
+			{
+				temp_cp_info.material = getToken(&str1, " ");
+				str2 = getToken(&str1, " ");
+				temp_cp_info.channels = str2.toInt(&ok, 10);
+				for (unsigned int i=0; i<temp_cp_info.channels; i++)
+				{
+					str2 = getToken(&str1, " ");
+					temp_cp_info.bottom_position[i] = str2.toFloat(&ok);
+				}
+				str2 = getToken(&str1, " ");
+				temp_cp_info.sector = str2.toInt(&ok, 10);
+				str2 = getToken(&str1, " ");
+				temp_cp_info.pathlength = str2.toFloat(&ok);
+				str2 = getToken(&str1, " ");
+				temp_cp_info.angle = str2.toFloat(&ok);
+				str2 = getToken(&str1, " ");
+				temp_cp_info.width = str2.toFloat(&ok);
+				(*cp_info_vector).push_back(temp_cp_info);
+			}
+		}
+		cp_file.close();
+		return(true);
+	}
+	else
+	{
+		return(false);
+	}
 }
