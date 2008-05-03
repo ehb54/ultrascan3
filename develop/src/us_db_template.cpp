@@ -162,9 +162,9 @@ void US_DB_Template::read()
 	else
 	{
 		QMessageBox::message(
-				tr("Attention:"), 
-				tr("The data file with your login info could not be found.\n"
-				   "Please check: 'File/Configuration/Database Preferences'."));
+			tr("Attention:"), 
+			tr("The data file with your login info could not be found.\n"
+			   "Please check: 'File/Configuration/Database Preferences'."));
 		return;
 		
 	}
@@ -191,8 +191,8 @@ void US_DB_Template::initialize(bool permission)
 	if(!permission)
 	{
 		QMessageBox::message(
-				tr("Attention:"), 
-				tr("Permission denied, please contact your system administrator"));
+			tr("Attention:"), 
+			tr("Permission denied, please contact your system administrator"));
 		return;
 	}
 
@@ -200,11 +200,11 @@ void US_DB_Template::initialize(bool permission)
 	if ( ! defaultDB ) 
 	{
 		QMessageBox::message(
-				tr("Attention:"), 
-				tr("The database selected in your login information is not\n"
-				   "available on the selected host.\n"
-				   "Please select the correct database in:\n"
-				   "'File/Configuration/Database Preferences'"));
+			tr("Attention:"), 
+			tr("The database selected in your login information is not\n"
+			   "available on the selected host.\n"
+			   "Please select the correct database in:\n"
+			   "'File/Configuration/Database Preferences'"));
 		
 		return;
 	}
@@ -256,9 +256,9 @@ void US_DB_Template::initialize(bool permission)
 		                "It contains %1 tables: \n" + Str ).arg( count );
 
 		switch( QMessageBox::information( this, 
-					tr("Attention!"), str1 +
-					tr("\n\nDelete the existing database and create a new database template?"),
-					tr("OK"), tr("CANCEL"),	0,1))
+			tr("Attention!"), str1 +
+			tr("\n\nDelete the existing database and create a new database template?"),
+			tr("OK"), tr("CANCEL"),	0,1))
 		{ 
 			case 0:
 				q.exec( "SET FOREIGN_KEY_CHECKS=0" );
@@ -280,9 +280,9 @@ void US_DB_Template::initialize(bool permission)
 	else			// It is an empty database
 	{	
 		switch(QMessageBox::information( this, 
-					tr("Initialize the database?"), 
-					tr("Clicking 'OK' will initialize the database\nand delete existing data."),
-					tr("OK"), tr("CANCEL"),	0,1))
+			tr("Initialize the database?"), 
+			tr("Clicking 'OK' will initialize the database\nand delete existing data."),
+			tr("OK"), tr("CANCEL"),	0,1))
 		{
 			case 0:
 				create();
@@ -338,21 +338,21 @@ void US_DB_Template::create()
 			}
 
 			QMessageBox::message(
-					tr( "Message" ), 
-					tr( "Successful Initialization!" ) );
+				tr( "Message" ), 
+				tr( "Successful Initialization!" ) );
 		}
 		else
 		{
 			QMessageBox::message(
-					tr( "Warning:" ), 
-					tr( "Can not read the MySQL script file" ) );
+				tr( "Warning:" ), 
+				tr( "Can not read the MySQL script file" ) );
 		}
 	}
 	else
 	{
 		QMessageBox::message(
-				tr( "Warning:" ), 
-				tr( "The MySql Script file : '"+ sqlFile + "' not exists" ) );
+			tr( "Warning:" ), 
+			tr( "The MySql Script file : '"+ sqlFile + "' not exists" ) );
 	}
 }
 
