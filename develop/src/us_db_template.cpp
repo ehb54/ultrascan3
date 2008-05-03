@@ -24,8 +24,6 @@ US_DB_Template::US_DB_Template(QWidget *p, const char *name) : QFrame( p, name)
 	lbl_blank->setGeometry(xpos, ypos, buttonw*2 + spacing, buttonh);
 	lbl_blank->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-
-
 	xpos = border;
 	ypos += buttonh + spacing;
 
@@ -64,13 +62,16 @@ US_DB_Template::US_DB_Template(QWidget *p, const char *name) : QFrame( p, name)
 	pb_help->setEnabled(true);
 	connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-		
+
 	xpos += buttonw + spacing;
-		
+
 	pb_close = new QPushButton(tr("Close"), this);
 	pb_close->setAutoDefault(false);
-	pb_close->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_close->setPalette(QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_close->setFont(QFont( USglobal->config_list.fontFamily, 
+	                         USglobal->config_list.fontSize));
+	pb_close->setPalette(QPalette(USglobal->global_colors.cg_pushb, 
+	                              USglobal->global_colors.cg_pushb_disabled, 
+	                              USglobal->global_colors.cg_pushb_active));
 	pb_close->setGeometry(xpos, ypos, buttonw, buttonh);
 	pb_close->setEnabled(true);
 	connect(pb_close, SIGNAL(clicked()), SLOT(quit()));
@@ -102,7 +103,6 @@ void US_DB_Template::setup_GUI()
 	Grid->addWidget(pb_help,3,0);
 	Grid->addWidget(pb_close,3,1);
 	Grid->activate();
-
 }
 
 /*!
@@ -111,11 +111,10 @@ void US_DB_Template::setup_GUI()
 */
 void US_DB_Template::read()
 {
-	QString dbfile  = US_Config::get_home_dir() + USDB;
+	QString dbfile  = US_Config::get_home_dir() + '/' + USDB;
+	QFile   f( dbfile );
 
-	QFile f( dbfile );
-
-	if (f.exists())
+	if ( f.exists() )
 	{
 		f.open(IO_ReadOnly);
 		QDataStream ds (&f);
@@ -158,14 +157,15 @@ void US_DB_Template::read()
 				code[i] = (int)(num[i]+0.5);
 				login_list.driver[i] = QChar(code[i]);
 			}
-			f.close();				
+			f.close();
 	}
 	else
-	{															
-		QMessageBox::message(tr("Attention:"), 
-									tr("The data file with your login info could not be found.\n"
-									"Please check: 'File/Configuration/Database Preferences'."));
-		return;				
+	{
+		QMessageBox::message(
+				tr("Attention:"), 
+				tr("The data file with your login info could not be found.\n"
+				   "Please check: 'File/Configuration/Database Preferences'."));
+		return;
 		
 	}
 }
@@ -190,97 +190,108 @@ void US_DB_Template::initialize(bool permission)
 {
 	if(!permission)
 	{
-		QMessageBox::message(tr("Attention:"), 
-									tr("Permission denied, please contact your system administrator"));
+		QMessageBox::message(
+				tr("Attention:"), 
+				tr("Permission denied, please contact your system administrator"));
 		return;
 	}
 
 	QSqlDatabase *defaultDB = QSqlDatabase::addDatabase(login_list.driver );
-   if ( ! defaultDB ) 
+	if ( ! defaultDB ) 
 	{
-   	QMessageBox::message(tr("Attention:"), 
-									tr("The database selected in your login information is not\n"
-										"available on the selected host.\n"
-										"Please select the correct database in:\n"
-										"'File/Configuration/Database Preferences'"));
+		QMessageBox::message(
+				tr("Attention:"), 
+				tr("The database selected in your login information is not\n"
+				   "available on the selected host.\n"
+				   "Please select the correct database in:\n"
+				   "'File/Configuration/Database Preferences'"));
 		
-      return;
-   }
-	defaultDB->setDatabaseName( login_list.dbname );
-   defaultDB->setUserName(login_list.username );
-   defaultDB->setPassword( login_list.password );
-   defaultDB->setHostName( login_list.host );
-   if ( ! defaultDB->open() )
+		return;
+	}
+		defaultDB->setDatabaseName( login_list.dbname );
+		defaultDB->setUserName(login_list.username );
+		defaultDB->setPassword( login_list.password );
+		defaultDB->setHostName( login_list.host );
+		if ( ! defaultDB->open() )
 	{
 		qWarning( defaultDB->lastError().driverText() );
+
 		QString str = defaultDB->lastError().databaseText();
+
 		str.append("\n\nThe information saved in your database login information\n");
 		str.append("\ndoes not match your database settings.\n");
 		str.append("\nAlso, check access permissions for the database.\n");
 		str.append("\nContact your system administrator for assistance.");
-		QMessageBox::message(tr( "Failed to open database:"),str);
-      return;
-   }
-	int count = 0;
-	table_name = new QString[64];		//now only have six tables
-	QString Str = "";
+		
+		QMessageBox::message(
+				tr( "Failed to open database:" ),
+				tr( str ) );
+		return;
+	}
+
+	table_name       = new QString[64];	
+	int     count    = 0;
+	QString Str      = "";
+
 	QStringList list = defaultDB->tables();
-	for (QStringList::Iterator it = list.begin(); it != list.end(); ++it ) 
+	
+	QStringList::Iterator it;
+	for ( it = list.begin(); it != list.end(); ++it ) 
 	{
 		Str.append("<");
 		table_name[count] = (*it).latin1();
 		Str.append(table_name[count]);
 		Str.append(">");
-		Str.append("\n");
+
+		if ( count % 2 == 1 ) Str.append("\n");
 		count++;
-   }
-	if(count>0)	//there are some tables exist
+	}
+
+	if ( count > 0 )	// Some tables exist
 	{
-		QString str1;
-		str1="The Database '";
-		str1.append(login_list.dbname);
-		str1.append("' already exists. ");
-		str1.append("It contains tables: \n");
-		str1.append(Str);
-		switch(QMessageBox::information(this, tr("Attention!"), str1 +
-										tr("\n\nDelete the existing database and create a new database template?"),
-										tr("OK"), tr("CANCEL"),	0,1))
+		QSqlQuery q;
+		QString   str1;
+
+		str1 = QString( "The Database '" + login_list.dbname + "' already exists. "
+		                "It contains %1 tables: \n" + Str ).arg( count );
+
+		switch( QMessageBox::information( this, 
+					tr("Attention!"), str1 +
+					tr("\n\nDelete the existing database and create a new database template?"),
+					tr("OK"), tr("CANCEL"),	0,1))
 		{ 
 			case 0:
-			{
-				QSqlQuery q;
+				q.exec( "SET FOREIGN_KEY_CHECKS=0" );
+
 				for(int i=0; i<count; i++)
 				{
 					QString str2 = "DROP TABLE ";
 					str2.append(table_name[i]);
-   				q.exec( str2 );				
+					q.exec( str2 );				
 				}
+
 				create();
 				break;
-			}	
-			case 1:
-			{
+
+			default:
 				break;
-			}		
 		}			
 	}
-	else			//it is an empty database name
+	else			// It is an empty database
 	{	
-		switch(QMessageBox::information(this, tr("Initialize the database?"), 
-										tr("Clicking 'OK' will initialize the database\nand delete existing data."),
-										tr("OK"), tr("CANCEL"),	0,1))
+		switch(QMessageBox::information( this, 
+					tr("Initialize the database?"), 
+					tr("Clicking 'OK' will initialize the database\nand delete existing data."),
+					tr("OK"), tr("CANCEL"),	0,1))
 		{
 			case 0:
-			{
 				create();
 				break;
-			}	
-			case 1:
-			{
+	
+			default:
 				break;
-			}		
 		}
-	}								
+	}
 }
 
 /*!
@@ -289,64 +300,66 @@ void US_DB_Template::initialize(bool permission)
 void US_DB_Template::create()
 {
 	QSqlQuery q;
-	QString test, cmd;
-	QString sqlFile = USglobal->config_list.system_dir +"/etc/mysql.sql";
-	QFile f(sqlFile);
-	if(f.exists())
+	QString   test;
+	QString   cmd;
+	QString   sqlFile = USglobal->config_list.system_dir + '/' + USDBINIT;
+	QFile     f(sqlFile);
+
+	if ( f.exists() )
 	{
-		if(f.open(IO_ReadOnly))
+		if ( f.open(IO_ReadOnly) )
 		{
+			q.exec( "SET FOREIGN_KEY_CHECKS=0" );
+			//bool ok = q.exec( "SET FOREIGN_KEY_CHECKS=0" );
+			//if ( ok )
+			//	cout << "SET FOREIGN_KEY_CHECKS=0 OK" << endl;
+			//else
+			//	cout << "SET FOREIGN_KEY_CHECKS=0 FAIL" << endl;
+
 			QTextStream ts(&f);
-			while(!f.atEnd())
+
+			while ( ! f.atEnd() )
 			{
 				cmd ="";
 				test = ts.readLine();
-				if(test.contains("CREATE", false))
+
+				if ( test.contains( "CREATE" ) )
 				{
-					cmd.append(test);
+					cmd.append( test );
 					do
 					{
 						test = ts.readLine();
 						cmd.append(test);
 					}
-					while(!test.contains(';', false));
+					while ( ! test.contains(';') );
+
 					q.exec(cmd);	
 				}
 			}
-			QMessageBox::message(tr("Congratulation"), "Successful Initialization!" );
+
+			QMessageBox::message(
+					tr( "Message" ), 
+					tr( "Successful Initialization!" ) );
 		}
 		else
 		{
-			QMessageBox::message(tr("Warning:"), "Can not read the MySQL script file" );
-			return;
+			QMessageBox::message(
+					tr( "Warning:" ), 
+					tr( "Can not read the MySQL script file" ) );
 		}
-			
 	}
 	else
 	{
-		QMessageBox::message(tr("Warning:"), "The MySql Script file : '"+ sqlFile + "' not exists" );
-		return;
+		QMessageBox::message(
+				tr( "Warning:" ), 
+				tr( "The MySql Script file : '"+ sqlFile + "' not exists" ) );
 	}
-	
-/*	QString cmd;
-	cmd = "mysql -D ";
-	cmd += login_list.dbname;
-	cmd += " -u ";
-	cmd += login_list.username;
-	cmd += " --password=";
-	cmd += login_list.password;
-	cmd += " < ";
-	cmd += USglobal->config_list.system_dir;
-	cmd += "/etc/mysql.sql";
-	cout<<cmd<<endl;
-	system(cmd);
-*/
 }
 
 void US_DB_Template::readFromStderr()
 {
 	QString str = proc->readLineStderr(); 
-	QMessageBox::message("UltraScan Error:", str);
+	QMessageBox::message( "UltraScan Error:", str );
 }
 
 /*!
@@ -354,8 +367,8 @@ void US_DB_Template::readFromStderr()
 */
 void US_DB_Template::help()
 {
-	US_Help *online_help; online_help = new US_Help(this);
-	online_help->show_help("manual/db_template.html");
+	US_Help* online_help = new US_Help( this );
+	online_help->show_help( "manual/db_template.html" );
 }
 
 /*! Close the interface. */
@@ -363,6 +376,4 @@ void US_DB_Template::quit()
 {
 	close();
 }
-
-
 

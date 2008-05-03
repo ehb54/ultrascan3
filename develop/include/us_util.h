@@ -192,6 +192,7 @@ class US_EXTERN US_Config : public QObject
 #define USCOLORS  "etc/uscolorsconf.bin"
 #define USLICENSE "etc/uslicense"
 #define USDB      "etc/usdbconf.bin"
+#define USDBINIT  "etc/mysql.sql"
 
 class US_EXTERN US_Help : public QWidget
 {
