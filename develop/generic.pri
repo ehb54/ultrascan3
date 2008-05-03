@@ -5,6 +5,40 @@
 # The only thing the perent needs to supply is TARGET and
 # possibly HEADERS
 
+TEMPLATE        = app
+INCLUDEPATH     = $(QWTDIR)/include \
+                  $(QWT3DDIR)/include 
+            
+DEPENDPATH     += ../src \
+                  ../include
+
+SOURCES         = main.cpp 
+
+unix {
+ CONFIG                += qt warn thread release
+ DEFINES               += UNIX
+ QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
+
+ contains(UNAME,x86_64) {
+    LIBS   += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d -L$(ULTRASCAN)/lib64 -lus
+ } else {
+    LIBS   += -L$(QWTDIR)/lib -lqwt -L$(QWT3DDIR)/lib -lqwtplot3d -L$(ULTRASCAN)/lib -lus
+ }
+}
+
+
+win32 {
+  message ("Configuring for the Microsoft Windows Platform...")
+  #CONFIG             += qt warn thread release
+  CONFIG             += qt warn thread debug
+  DEFINES            += WIN32 
+  QMAKE_CXXFLAGS     += /EHsc
+  QMAKE_LFLAGS_DEBUG += /NODEFAULTLIB:"msvcrt.lib"
+  LIBS               += ../../bin/us96.lib 
+  INCLUDEPATH        += $(ZLIB)/include
+}
+
+macx { RC_FILE = ultrascan.icns }
 unix {
 UNAME = $$system(uname -a)
 }
@@ -90,39 +124,5 @@ unix:contains (UNAME, sparc) {
   message ("Configuring for the Sun Sparc Platform...")
 }
 
-TEMPLATE        = app
-INCLUDEPATH     = $(QWTDIR)/include \
-                  $(QWT3DDIR)/include 
-            
-DEPENDPATH     += ../src \
-                  ../include
-
-SOURCES         = main.cpp 
-
-unix {
- CONFIG                += qt warn thread release
- DEFINES               += UNIX
- QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
-
- contains(UNAME,x86_64) {
-    LIBS   += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d -L$(ULTRASCAN)/lib64 -lus
- } else {
-    LIBS   += -L$(QWTDIR)/lib -lqwt -L$(QWT3DDIR)/lib -lqwtplot3d -L$(ULTRASCAN)/lib -lus
- }
-}
-
-
-win32 {
-  message ("Configuring for the Microsoft Windows Platform...")
-  #CONFIG             += qt warn thread release
-  CONFIG             += qt warn thread debug
-  DEFINES            += WIN32 
-  QMAKE_CXXFLAGS     += /EHsc
-  QMAKE_LFLAGS_DEBUG += /NODEFAULTLIB:"msvcrt.lib"
-  LIBS               += ../../bin/us951.lib 
-  INCLUDEPATH        += $(ZLIB)/include
-}
-
-macx { RC_FILE = ultrascan.icns }
 
 

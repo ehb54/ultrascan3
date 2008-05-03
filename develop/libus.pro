@@ -7,21 +7,47 @@ TRANSLATIONS   = lib.ts
 VERSION        = 9.6
 MOC_DIR        = src/moc
 OBJECTS_DIR    = src/obj
-CONFIG        += release
-#CONFIG			+= debug
 
 
-linux-g++:QMAKE_CXXFLAGS += -fno-exceptions
-#RC_FILE = ../icon.rc
+#RC_FILE        = ../icon.rc
 
 # enabled threading in fitting algorithm:
 DEFINES += THREAD
 
 # Automatic hardware platform and operating system configurations:
 
+INCLUDEPATH = $(QWTDIR)/include $(QTDIR)/include $(QWT3DDIR)/include $(ZLIB)
+DEPENDPATH += src include
+
 unix {
-  UNAME                   = $$system(uname -a)
   QMAKE_CXXFLAGS_WARN_ON += -Wno-non-virtual-dtor
+  DEFINES                += UNIX
+  CONFIG                 += qt thread warn release 
+  #CONFIG                 += qt thread warn debug
+
+	contains(UNAME,x86_64) {
+    LIBS    += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d
+    DEFINES += BIN64
+  } else {
+    LIBS += -L$(QWTDIR)/lib -lqwt -L$(QWT3DDIR)/lib -lqwtplot3d
+  }
+}
+
+linux-g++: QMAKE_CXXFLAGS += -fno-exceptions
+
+win32 {
+  message ("Configuring for the Microsoft Windows Platform...")
+  DESTDIR            = ../bin
+  QMAKE_LFLAGS_DEBUG += /NODEFAULTLIB:"msvcrt.lib"
+  #CONFIG            += qt thread warn exceptions dll release
+  CONFIG             += qt thread warn exceptions dll debug
+  DEFINES            += WIN32 QT_DLL -GX WIN32 QWT_USE_DLL US_MAKE_DLL
+  LIBS               += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib 
+	LIBS               += opengl32.lib glu32.lib glaux.lib
+}
+
+unix {
+  UNAME = $$system(uname -a)
 }
 
 unix:contains(UNAME,Linux) {
@@ -128,7 +154,8 @@ unix:contains (UNAME, sparc) {
 #FORMS = 3dplot/mesh2mainwindowbase.ui 3dplot/lightingdlgbase.ui
 
 unix: { 
-  SOURCES +=src/us_beowulf.cpp us_gridcontrol_t.cpp
+  SOURCES +=src/us_beowulf.cpp \
+	src/us_gridcontrol_t.cpp
 }
 
 SOURCES += src/us_2dplot.cpp \
@@ -478,29 +505,4 @@ IMAGES = include/editcopy.xpm \
   include/textright.xpm \
   include/textunder.xpm
 
-INCLUDEPATH = $(QWTDIR)/include $(QTDIR)/include $(QWT3DDIR)/include $(ZLIB)
-DEPENDPATH += src include
-
-unix {
-  DEFINES  += UNIX
-  CONFIG  += qt thread warn release 
-  #CONFIG += qt thread warn debug
-
-	contains(UNAME,x86_64) {
-    LIBS    += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d
-    DEFINES += BIN64
-  } else {
-    LIBS += -L$(QWTDIR)/lib -lqwt -L$(QWT3DDIR)/lib -lqwtplot3d
-  }
-}
-
-win32 {
-  message ("Configuring for the Microsoft Windows Platform...")
-  DESTDIR            = ../bin
-  QMAKE_LFLAGS_DEBUG += /NODEFAULTLIB:"msvcrt.lib"
-  #CONFIG            += qt thread warn exceptions dll release
-  CONFIG             += qt thread warn exceptions dll debug
-  DEFINES            += WIN32 QT_DLL -GX WIN32 QWT_USE_DLL US_MAKE_DLL
-  LIBS               += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib opengl32.lib glu32.lib glaux.lib
-}
 
