@@ -907,7 +907,7 @@ US_Hydro2::US_Hydro2(QWidget *p, const char* name) : QFrame(p, name)
 	le_density = new QLineEdit(this);
 	le_density->setGeometry(xpos, ypos, (unsigned int) width/2, height);
 	le_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	le_density->setText(" DENS_20W");
+	le_density->setText( str.sprintf( "%8.6f", DENS_20W ) );
 	le_density->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(le_density, SIGNAL(textChanged(const QString &)), SLOT(update_density_lbl(const QString &)));
 

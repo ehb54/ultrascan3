@@ -101,7 +101,8 @@ US_EquilSpeed::US_EquilSpeed(QWidget *parent, const char *name)
 	le_density = new QLineEdit(this);
 	le_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	le_density->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	le_density->setText(" DENS_20W");
+	QString str;
+	le_density->setText( str.sprintf( "%8.6f", DENS_20W ) );
 	connect(le_density, SIGNAL(textChanged(const QString &)), SLOT(update_density(const QString &)));
 
 	lbl_ratio1 = new QLabel(tr(" Conc. Ratio Rb/Rm:"),this);
