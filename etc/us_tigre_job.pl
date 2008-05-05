@@ -516,7 +516,11 @@ if( $systems[$usesys] ne $default_system) {
 print "using tigre system $default_system\n";
 print "max np $max_np[$usesys]\n";
 $np = $max_np[$usesys] if $np > $max_np[$usesys];
-
+print "systems (use_sys) $systems[$usesys]\n";
+if( $systems[$usesys] =~ /^(bcf|alamo|laredo)/) {
+    print "overriding recommended optimal np of $np\n";
+    $np = $max_np[$usesys];
+}
 print "np is $np\n";
 
 $SYSTEM = $systems[$usesys];
