@@ -992,9 +992,9 @@ void US_GA_Initialize::load_distro()
 		distro_solute.clear();
 		j1 = reduced.begin();
 		j2 = reduced.begin();
-		while (j2 != reduced.end())
+		while ( ++j2 != reduced.end() )
 		{
-			j2++;
+			//j2++;
 			if ((*j1).s == (*j2).s && (*j1).k == (*j2).k)
 			{
 				(*j1).c += (*j2).c;
@@ -1822,16 +1822,22 @@ void US_GA_Initialize::assign_peaks()
 		{
 			integral += (*j1).c;
 		}
+		
 		j1 = distro_solute.begin();
+		
 		while ((*j1).c < 1.0e-2)
 		{
 			j1++;
 		}
+		
 		j2 = distro_solute.end();
+		j2--;  // Can't dereference while at end()
+
 		while ((*j2).c < 1.0e-2)
 		{
 			j2--;
 		}
+		
 		integral = integral/initial_solutes;
 //cout << "integral: " << integral << endl;
 		range = ((*j2).s - (*j1).s)/20.0;
