@@ -120,16 +120,26 @@ Distribution_Legend_F::Distribution_Legend_F(QWidget *p, const char* name)
 
 	lbl_sensitivity_histogram = new QLabel(tr("Sensitivity:"),this);
 	lbl_sensitivity_histogram->setFrameStyle(QFrame::WinPanel|Sunken);
-	lbl_sensitivity_histogram->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_sensitivity_histogram->setPalette(QPalette( USglobal->global_colors.cg_label, 
+	                                                USglobal->global_colors.cg_label, 
+	                                                USglobal->global_colors.cg_label));
 	lbl_sensitivity_histogram->setGeometry(xpos, ypos, buttonw, buttonh);
-	lbl_sensitivity_histogram->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_sensitivity_histogram->setFont(QFont( USglobal->config_list.fontFamily, 
+	                                          USglobal->config_list.fontSize - 1, 
+	                                          QFont::Bold));
 
 	xpos += buttonw + spacing;
 
 	ct_histogram= new QwtCounter(this);
 	Q_CHECK_PTR(ct_histogram);
 	ct_histogram->setRange(10, 100, 1);
-	ct_histogram->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	ct_histogram->setPalette( QPalette( USglobal->global_colors.cg_normal, 
+	                                    USglobal->global_colors.cg_normal, 
+	                                    USglobal->global_colors.cg_normal) );
+
+	ct_histogram->setFont(QFont( USglobal->config_list.fontFamily, 
+	                             USglobal->config_list.fontSize - 1) );
+
 	ct_histogram->setGeometry(xpos, ypos, buttonw, buttonh);
 
 	xpos += buttonw + spacing;
@@ -157,14 +167,22 @@ Distribution_Legend_F::Distribution_Legend_F(QWidget *p, const char* name)
 	lbl_sensitivity_envelope->setFrameStyle(QFrame::WinPanel|Sunken);
 	lbl_sensitivity_envelope->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_sensitivity_envelope->setGeometry(xpos, ypos, buttonw, buttonh);
-	lbl_sensitivity_envelope->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_sensitivity_envelope->setFont(QFont( USglobal->config_list.fontFamily, 
+	                                         USglobal->config_list.fontSize - 1, 
+	                                         QFont::Bold));
 
 	xpos += buttonw + spacing;
 
 	ct_envelope= new QwtCounter(this);
 	Q_CHECK_PTR(ct_envelope);
 	ct_envelope->setRange(10, 100, 1);
-	ct_envelope->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	ct_envelope->setPalette( QPalette( USglobal->global_colors.cg_normal, 
+	                                   USglobal->global_colors.cg_normal, 
+	                                   USglobal->global_colors.cg_normal));
+
+	ct_envelope->setFont(QFont( USglobal->config_list.fontFamily, 
+	                            USglobal->config_list.fontSize - 1 ) );
+
 	ct_envelope->setGeometry(xpos, ypos, buttonw, buttonh);
 
 	xpos += buttonw + spacing;
@@ -193,9 +211,9 @@ Distribution_Legend_F::~Distribution_Legend_F()
 }
 
 vHW_Sim::vHW_Sim(int mod, unsigned int *comps, unsigned int *pts, int *run_flag,
-						vector <struct component> *components, double ***concentration, 
-						struct simulation_parameters *simparams, float **scan_t,
-						float temp_conc, float temp_k, QWidget *p , const char *name) : QWidget(p, name)
+                 vector <struct component> *components, double ***concentration, 
+                 struct simulation_parameters *simparams, float **scan_t,
+                 float temp_conc, float temp_k, QWidget *p , const char *name) : QWidget(p, name)
 {
 	
 	USglobal = new US_Config();
