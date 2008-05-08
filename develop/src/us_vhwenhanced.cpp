@@ -65,8 +65,12 @@ US_vhwEnhanced::US_vhwEnhanced(QWidget *p, const char *name) : Data_Control_W(1,
 	tolerance_lbl = new QLabel(tr("Back Diffusion Toler.:"), this);
 	Q_CHECK_PTR(tolerance_lbl);
 	tolerance_lbl->setAlignment(AlignLeft|AlignVCenter);
-	tolerance_lbl->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	tolerance_lbl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	tolerance_lbl->setPalette( QPalette (USglobal->global_colors.cg_label, 
+				                               USglobal->global_colors.cg_label, 
+																			 USglobal->global_colors.cg_label));
+	tolerance_lbl->setFont(QFont( USglobal->config_list.fontFamily, 
+				                        USglobal->config_list.fontSize - 1, 
+																QFont::Bold));
 //	tolerance_lbl->setMinimumSize(buttonw, buttonh);
 //	tolerance_lbl->setGeometry(xpos, ypos, buttonw, buttonh);
 
@@ -78,7 +82,12 @@ US_vhwEnhanced::US_vhwEnhanced(QWidget *p, const char *name) : Data_Control_W(1,
 	tolerance_counter->setRange(0, 10, 1e-3);
 	tolerance_counter->setValue(tolerance);
 	tolerance_counter->setNumButtons(3);
-	tolerance_counter->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	tolerance_counter->setPalette( QPalette( USglobal->global_colors.cg_normal, 
+				                                   USglobal->global_colors.cg_normal, 
+																					 USglobal->global_colors.cg_normal));
+	tolerance_counter->setFont(QFont( USglobal->config_list.fontFamily,
+				                            USglobal->config_list.fontSize - 1 ) );
+
 //	tolerance_counter->setGeometry(xpos, ypos, buttonw, buttonh);
 	connect(tolerance_counter, SIGNAL(valueChanged(double)), SLOT(update_tolerance(double)));
 
@@ -88,8 +97,12 @@ US_vhwEnhanced::US_vhwEnhanced(QWidget *p, const char *name) : Data_Control_W(1,
 	division_lbl = new QLabel(tr(" Divisions:"), this);
 	Q_CHECK_PTR(division_lbl);
 	division_lbl->setAlignment(AlignLeft|AlignVCenter);
-	division_lbl->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	division_lbl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	division_lbl->setPalette( QPalette( USglobal->global_colors.cg_label, 
+			                                USglobal->global_colors.cg_label, 
+																			USglobal->global_colors.cg_label));
+	division_lbl->setFont(QFont( USglobal->config_list.fontFamily, 
+				                       USglobal->config_list.fontSize - 1, 
+															 QFont::Bold));
 //	division_lbl->setGeometry(xpos, ypos, buttonw, buttonh);
 
 	xpos += buttonw + spacing;
@@ -100,7 +113,11 @@ US_vhwEnhanced::US_vhwEnhanced(QWidget *p, const char *name) : Data_Control_W(1,
 	division_counter->setRange(2, 1000, 1);
 	division_counter->setValue(50);
 	division_counter->setNumButtons(3);
-	division_counter->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	division_counter->setPalette( QPalette( USglobal->global_colors.cg_normal, 
+				                                  USglobal->global_colors.cg_normal, 
+																					USglobal->global_colors.cg_normal ) );
+	division_counter->setFont(QFont( USglobal->config_list.fontFamily,
+				                           USglobal->config_list.fontSize - 1 ) );
 //	division_counter->setGeometry(xpos, ypos, buttonw, buttonh);
 	connect(division_counter, SIGNAL(valueChanged(double)), SLOT(update_divisions(double)));
 
