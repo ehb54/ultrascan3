@@ -263,7 +263,7 @@ void US_Config_GUI::setup_GUI()
 	
 	QGridLayout* lineGrid = new QGridLayout(topbox,10,2,2);
 
-	lineGrid->setColSpacing( 1, cwidth * 50 );  // Set width for 50 characters
+	//lineGrid->setColSpacing( 1, cwidth * 50 );  // Set width for 50 characters
 	
 	lineGrid->addWidget(pb_browser,j,0);
 	lineGrid->addWidget(le_browser,j,1);

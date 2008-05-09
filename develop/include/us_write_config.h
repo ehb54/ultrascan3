@@ -11,11 +11,9 @@ public:
   US_Write_Config( QObject* parent = 0, const char* name = 0 );
   ~US_Write_Config();
 
-public slots:
+public:
 	bool write_config(struct Config);
-
-signals:
-	void errorMessage(QString, QString);
+	void errorMessage( QString&, QString& );
 };
 
 #endif

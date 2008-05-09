@@ -1,4 +1,5 @@
 #include "../include/us_write_config.h"
+#include <qmessagebox.h>
 
 US_Write_Config::US_Write_Config(QObject *parent, const char *name) : QObject(parent, name)
 {
@@ -18,7 +19,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 		{
 			message = tr("Could not create the Help File Directory!\n\n"
 			+ config_list.help_dir + "\nPlease check your write permissions!");
-			emit errorMessage(warning, message);
+			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
 			return( false );
 		}
@@ -31,7 +32,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 		{
 			message = tr("Could not create the Root Directory!\n\n"
 			+ config_list.help_dir + "\nPlease check your write permissions!");
-			emit errorMessage(warning, message);
+			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
 			return( false );
 		}
@@ -44,7 +45,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 		{
 			message = tr("Could not create the Data Directory!\n\n"
 			+ config_list.help_dir + "\nPlease check your write permissions!");
-			emit errorMessage(warning, message);
+			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
 			return( false );
 		}
@@ -57,7 +58,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 		{
 			message = tr("Could not create the Archive Directory!\n\n"
 			+ config_list.help_dir + "\nPlease check your write permissions!");
-			emit errorMessage(warning, message);
+			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
 			return( false );
 		}
@@ -68,7 +69,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 	{
 		message = tr("The UltraScan System Directory could not be found!\n\n"
 		+ config_list.help_dir + "\nPlease check your settings!");
-		emit errorMessage(warning, message);
+		errorMessage(warning, message);
 		cerr << warning << ":\n" << message << endl;
 		return( false );
 	}
@@ -80,7 +81,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 		{
 			message = tr("Could not create the Reports Directory!\n\n"
 			+ config_list.help_dir + "\nPlease check your write permissions!");
-			emit errorMessage(warning, message);
+			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
 			return( false );
 		}
@@ -93,7 +94,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 		{
 			message = tr("Could not create the Results Directory!\n\n"
 			+ config_list.help_dir + "\nPlease check your write permissions!");
-			emit errorMessage(warning, message);
+			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
 			return( false );
 		}
@@ -128,11 +129,15 @@ bool US_Write_Config::write_config(struct Config config_list)
 	{
 		message = tr("Could not open Configuration File for update.\n\n"
 		+ config_list.help_dir + "\nPlease check your write permissions!");
-		emit errorMessage(warning, message);
+		errorMessage(warning, message);
 		cerr << warning << ":\n" << message << endl;
 		return( false );
 	}
 	return (true);
 }
 
+void US_Write_Config::errorMessage( QString& str1, QString& str2 )
+{
+	  QMessageBox::message( str1, str2 ); 
+}
 
