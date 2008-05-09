@@ -7,9 +7,6 @@ TRANSLATIONS   = lib.ts
 VERSION        = 9.6
 MOC_DIR        = src/moc
 OBJECTS_DIR    = src/obj
-CONFIG 		+= release
-#CONFIG		+= debug
-
 
 #RC_FILE        = ../icon.rc
 
@@ -22,6 +19,7 @@ INCLUDEPATH = $(QWTDIR)/include $(QTDIR)/include $(QWT3DDIR)/include $(ZLIB)
 DEPENDPATH += src include
 
 unix {
+  UNAME                   = $$system(uname -a)
   QMAKE_CXXFLAGS_WARN_ON += -Wno-non-virtual-dtor
   DEFINES                += UNIX
   CONFIG                 += qt thread warn release 
@@ -46,10 +44,6 @@ win32 {
   DEFINES            += WIN32 QT_DLL -GX WIN32 QWT_USE_DLL US_MAKE_DLL
   LIBS               += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib 
 	LIBS               += opengl32.lib glu32.lib glaux.lib
-}
-
-unix {
-  UNAME = $$system(uname -a)
 }
 
 unix:contains(UNAME,Linux) {

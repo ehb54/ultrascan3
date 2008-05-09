@@ -15,6 +15,7 @@ DEPENDPATH     += ../src \
 SOURCES         = main.cpp 
 
 unix {
+ UNAME                  = $$system(uname -a)
  CONFIG                += qt warn thread release
  DEFINES               += UNIX
  QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
@@ -39,9 +40,6 @@ win32 {
 }
 
 macx { RC_FILE = ultrascan.icns }
-unix {
-UNAME = $$system(uname -a)
-}
 
 unix:contains(UNAME,Linux) {
   DEFINES  += LINUX
