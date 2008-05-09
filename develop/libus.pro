@@ -7,6 +7,8 @@ TRANSLATIONS   = lib.ts
 VERSION        = 9.6
 MOC_DIR        = src/moc
 OBJECTS_DIR    = src/obj
+CONFIG 		+= release
+#CONFIG		+= debug
 
 
 #RC_FILE        = ../icon.rc
