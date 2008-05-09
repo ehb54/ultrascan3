@@ -179,7 +179,6 @@ void US_Hydrodyn::select_residue_file()
 		lbl_table->setText(filename);
 		read_table(filename);
 	}
-	cout << "Model size: " << model_vector.size() << endl;
 }
 
 void US_Hydrodyn::read_table(const QString &filename)
@@ -195,7 +194,6 @@ void US_Hydrodyn::load_pdb()
 		lbl_pdb_file->setText(filename);
 		read_pdb(filename);
 	}
-	cout << "Model size: " << model_vector.size() << endl;
 }
 
 void US_Hydrodyn::read_pdb(const QString &filename)
