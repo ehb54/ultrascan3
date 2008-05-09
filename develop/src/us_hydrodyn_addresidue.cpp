@@ -28,8 +28,8 @@ US_AddResidue::US_AddResidue(bool *widget_flag, QWidget *p, const char *name) : 
 	existing_residue = false;
 	current_atom = 0;
 	current_bead = 0;
-	atom_filename = USglobal->config_list.root_dir + "/etc/somolist.atom";
-	residue_filename = USglobal->config_list.root_dir + "/etc/somolist.residue";
+	atom_filename = USglobal->config_list.system_dir + "/etc/somo.atom";
+	residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("SoMo: Modify Residue Lookup Tables"));
 	setupGUI();
@@ -590,8 +590,8 @@ void US_AddResidue::add()
 			for (unsigned int j=0; j<residue_list[i].r_atom.size(); j++)
 			{
 				ts << residue_list[i].r_atom[j].name.upper()
-					<< "\t" << residue_list[i].r_atom[j].mw
-					<< "\t" << residue_list[i].r_atom[j].radius
+					<< "\t" << residue_list[i].r_atom[j].hybrid.mw
+					<< "\t" << residue_list[i].r_atom[j].hybrid.radius
 					<< "\t" << residue_list[i].r_atom[j].bead_assignment
 					<< "\t" << (unsigned int) residue_list[i].r_atom[j].positioner
 					<< "\t" << residue_list[i].r_atom[j].serial_number
@@ -652,8 +652,8 @@ void US_AddResidue::select_residue_file()
 				for (j=0; j<numatoms; j++)
 				{
 					ts >> new_atom.name;
-					ts >> new_atom.mw;
-					ts >> new_atom.radius;
+					ts >> new_atom.hybrid.mw;
+					ts >> new_atom.hybrid.radius;
 					ts >> new_atom.bead_assignment;
 					ts >> positioner;
 //					cout << "Atom: " << new_atom.name << ": " << new_atom.mw << ", " << new_atom.radius << ", " 
@@ -669,7 +669,7 @@ void US_AddResidue::select_residue_file()
 					ts >> new_atom.serial_number;
 					ts >> new_atom.chain;
 					str2 = ts.readLine(); // read rest of line
-					if (!new_atom.name.isEmpty() && new_atom.radius > 0.0 && new_atom.mw > 0.0)
+					if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
 					{
 						new_residue.r_atom.push_back(new_atom);
 /*						str1.sprintf("%d: ", j+1);
@@ -711,18 +711,10 @@ void US_AddResidue::select_residue_file()
 			f.close();
 			pb_select_atom_file->setEnabled(false);
 			pb_select_residue_file->setEnabled(false);
-			cnt_numatoms->setEnabled(true);
-			cnt_numbeads->setEnabled(true);
-			le_asa->setEnabled(true);
-			le_molvol->setEnabled(true);
-			cmb_type->setEnabled(true);
-			le_residue_name->setEnabled(true);
-			pb_reset->setEnabled(true);
 		}
 	}
 	str1.sprintf(tr(" Number of Residues in File: %d"), residue_list.size());
 	lbl_numresidues->setText(str1);
-	pb_accept_residue->setEnabled(true);
 }
 
 void US_AddResidue::select_atom_file()
@@ -746,21 +738,33 @@ void US_AddResidue::select_atom_file()
 			while (!ts.atEnd())
 			{
 				ts >> new_atom.name;
-				ts >> new_atom.mw;
-				ts >> new_atom.radius;
+				ts >> new_atom.hybrid.name;
+				ts >> new_atom.hybrid.mw;
+				ts >> new_atom.hybrid.radius;
 				ts >> new_atom.chain;
 				str2 = ts.readLine(); // read rest of line
-				if (!new_atom.name.isEmpty() && new_atom.radius > 0.0 && new_atom.mw > 0.0)
+				if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
 				{
 					atom_list.push_back(new_atom);
 					str1.sprintf("%d: ", i);
 					str1 += new_atom.name;
+					str1 += " (";
+					str1 += new_atom.hybrid.name.upper();
+					str1 += ")";
 					cmb_atoms->insertItem(str1);
 					i++;
 				}
 			}
 			f.close();
 			pb_select_residue_file->setEnabled(true);
+			cnt_numatoms->setEnabled(true);
+			cnt_numbeads->setEnabled(true);
+			le_asa->setEnabled(true);
+			le_molvol->setEnabled(true);
+			cmb_type->setEnabled(true);
+			le_residue_name->setEnabled(true);
+			pb_reset->setEnabled(true);
+			pb_accept_residue->setEnabled(true);
 		}
 	}
 }
@@ -942,8 +946,8 @@ void US_AddResidue::print_residue(struct residue res)
 	{
 		cout << "Atom " << i+1 << ":\n";
 		cout << "\tName:" << res.r_atom[i].name << endl;
-		cout << "\tMW:" << res.r_atom[i].mw << endl;
-		cout << "\tRadius:" << res.r_atom[i].radius << endl;
+		cout << "\tMW:" << res.r_atom[i].hybrid.mw << endl;
+		cout << "\tRadius:" << res.r_atom[i].hybrid.radius << endl;
 		cout << "\tBead Assignment:" << res.r_atom[i].bead_assignment << endl;
 		cout << "\tPositioner:" << res.r_atom[i].positioner << endl;
 		cout << "\tSerial #:" << res.r_atom[i].serial_number << endl;

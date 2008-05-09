@@ -7,6 +7,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	setCaption(tr("SOMO Solution Bead Modeler"));
 	atom_widget = false;
 	residue_widget = false;
+	hybrid_widget = false;
 	setupGUI();
 	global_Xpos += 30;
 	global_Ypos += 30;
@@ -29,12 +30,12 @@ void US_Hydrodyn::setupGUI()
 	lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-	pb_select_file = new QPushButton(tr("Select Lookup Table"), this);
-	Q_CHECK_PTR(pb_select_file);
-	pb_select_file->setMinimumHeight(minHeight1);
-	pb_select_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-	pb_select_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	connect(pb_select_file, SIGNAL(clicked()), SLOT(select_file()));
+	pb_select_residue_file = new QPushButton(tr("Select Lookup Table"), this);
+	Q_CHECK_PTR(pb_select_residue_file);
+	pb_select_residue_file->setMinimumHeight(minHeight1);
+	pb_select_residue_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_select_residue_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_select_residue_file, SIGNAL(clicked()), SLOT(select_residue_file()));
 
 	lbl_table = new QLabel(tr(" not selected"),this);
 	lbl_table->setMinimumHeight(minHeight1);
@@ -93,6 +94,13 @@ void US_Hydrodyn::setupGUI()
 	pb_residue->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_residue, SIGNAL(clicked()), SLOT(residue()));
 
+	pb_hybrid = new QPushButton(tr("Add/Edit Hybridization"), this);
+	Q_CHECK_PTR(pb_hybrid);
+	pb_hybrid->setMinimumHeight(minHeight1);
+	pb_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_hybrid->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_hybrid, SIGNAL(clicked()), SLOT(hybrid()));
+
 	int rows=6, columns = 2, spacing = 2, j=0, margin=4;
 	QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
@@ -101,17 +109,18 @@ void US_Hydrodyn::setupGUI()
 	background->addWidget(pb_load_pdb, j, 0);
 	background->addWidget(lbl_pdb_file, j, 1);
 	j++;
-	background->addWidget(pb_select_file, j, 0);
+	background->addWidget(pb_select_residue_file, j, 0);
 	background->addWidget(lbl_table, j, 1);
-	j++;
-	background->addWidget(pb_help, j, 0);
-	background->addWidget(pb_cancel, j, 1);
 	j++;
 	background->addMultiCellWidget(lbl_tabletabs, j, j, 0, 1);
 	j++;
 	background->addWidget(pb_atom, j, 0);
 	background->addWidget(pb_residue, j, 1);
 	j++;
+	background->addMultiCellWidget(pb_hybrid, j, j, 0, 1);
+	j++;
+	background->addWidget(pb_help, j, 0);
+	background->addWidget(pb_cancel, j, 1);
 }
 
 void US_Hydrodyn::cancel()
@@ -149,7 +158,20 @@ void US_Hydrodyn::residue()
 	}
 }
 
-void US_Hydrodyn::select_file()
+void US_Hydrodyn::hybrid()
+{
+	if (hybrid_widget)
+	{
+		addHybrid->raise();
+	}
+	else
+	{
+		addHybrid = new US_AddHybridization(&hybrid_widget, 0);
+		addHybrid->show();
+	}
+}
+
+void US_Hydrodyn::select_residue_file()
 {
 	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo *.SOMO", this);
 	if (!filename.isEmpty())

@@ -5,7 +5,7 @@ US_AddAtom::US_AddAtom(bool *widget_flag, QWidget *p, const char *name) : QWidge
 	this->widget_flag = widget_flag;
 	*widget_flag = true;
 	USglobal = new US_Config();
-	atom_filename = USglobal->config_list.root_dir + "/etc/somolist.atom";
+	atom_filename = USglobal->config_list.system_dir + "/etc/somo.atom";
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("SoMo: Modify Atom Lookup Tables"));
 	setupGUI();
@@ -30,33 +30,89 @@ void US_AddAtom::setupGUI()
 	lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-	pb_select_file = new QPushButton(tr("Load Atom Definition File"), this);
-	Q_CHECK_PTR(pb_select_file);
-	pb_select_file->setMinimumHeight(minHeight1);
-	pb_select_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-	pb_select_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	connect(pb_select_file, SIGNAL(clicked()), SLOT(select_file()));
+	pb_select_atom_file = new QPushButton(tr("Load Atom Definition File"), this);
+	Q_CHECK_PTR(pb_select_atom_file);
+	pb_select_atom_file->setMinimumHeight(minHeight1);
+	pb_select_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_select_atom_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_select_atom_file, SIGNAL(clicked()), SLOT(select_atom_file()));
 
-	lbl_table = new QLabel(tr(" not selected"),this);
-	lbl_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-	lbl_table->setAlignment(AlignCenter|AlignVCenter);
-	lbl_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-	lbl_table->setMinimumHeight(minHeight1);
-	lbl_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_select_hybrid_file = new QPushButton(tr("Load Hybridization File"), this);
+	Q_CHECK_PTR(pb_select_hybrid_file);
+	pb_select_hybrid_file->setMinimumHeight(minHeight1);
+	pb_select_hybrid_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_select_hybrid_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_select_hybrid_file, SIGNAL(clicked()), SLOT(select_hybrid_file()));
 
-	cmb_atoms = new QComboBox(false, this, "Atom Listing" );
-	cmb_atoms->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	cmb_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cmb_atoms->setSizeLimit(5);
-	cmb_atoms->setMinimumHeight(minHeight1);
-	connect(cmb_atoms, SIGNAL(activated(int)), this, SLOT(select_atom(int)));
+	lbl_atom_table = new QLabel(tr(" not selected"),this);
+	lbl_atom_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+	lbl_atom_table->setAlignment(AlignCenter|AlignVCenter);
+	lbl_atom_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+	lbl_atom_table->setMinimumHeight(minHeight1);
+	lbl_atom_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-	lbl_mw = new QLabel(tr(" Molecular Weight:"), this);
-	Q_CHECK_PTR(lbl_mw);
-	lbl_mw->setMinimumHeight(minHeight1);
-	lbl_mw->setAlignment(AlignLeft|AlignVCenter);
-	lbl_mw->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_hybrid_table = new QLabel(tr(" not selected"),this);
+	lbl_hybrid_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+	lbl_hybrid_table->setAlignment(AlignCenter|AlignVCenter);
+	lbl_hybrid_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+	lbl_hybrid_table->setMinimumHeight(minHeight1);
+	lbl_hybrid_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+	cmb_atom = new QComboBox(false, this, "Atom Listing" );
+	cmb_atom->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cmb_atom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cmb_atom->setSizeLimit(5);
+	cmb_atom->setMinimumHeight(minHeight1);
+	connect(cmb_atom, SIGNAL(activated(int)), this, SLOT(select_atom(int)));
+
+	cmb_hybrid = new QComboBox(false, this, "Hybrid Listing" );
+	cmb_hybrid->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cmb_hybrid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cmb_hybrid->setSizeLimit(5);
+	cmb_hybrid->setMinimumHeight(minHeight1);
+	connect(cmb_hybrid, SIGNAL(activated(int)), this, SLOT(select_hybrid(int)));
+
+	lbl_mw1 = new QLabel(tr(" Molecular Weight:"), this);
+	Q_CHECK_PTR(lbl_mw1);
+	lbl_mw1->setMinimumHeight(minHeight1);
+	lbl_mw1->setAlignment(AlignLeft|AlignVCenter);
+	lbl_mw1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_mw1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	lbl_mw2 = new QLabel("", this);
+	Q_CHECK_PTR(lbl_mw2);
+	lbl_mw2->setMinimumHeight(minHeight1);
+	lbl_mw2->setAlignment(AlignLeft|AlignVCenter);
+	lbl_mw2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+	lbl_mw2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+	lbl_radius1 = new QLabel(tr(" Radius (A):"), this);
+	Q_CHECK_PTR(lbl_radius1);
+	lbl_radius1->setMinimumHeight(minHeight1);
+	lbl_radius1->setAlignment(AlignLeft|AlignVCenter);
+	lbl_radius1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_radius1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	lbl_radius2 = new QLabel("", this);
+	Q_CHECK_PTR(lbl_radius2);
+	lbl_radius2->setMinimumHeight(minHeight1);
+	lbl_radius2->setAlignment(AlignLeft|AlignVCenter);
+	lbl_radius2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+	lbl_radius2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+	lbl_hybrid1 = new QLabel(tr(" Hybridization:"), this);
+	Q_CHECK_PTR(lbl_hybrid1);
+	lbl_hybrid1->setMinimumHeight(minHeight1);
+	lbl_hybrid1->setAlignment(AlignLeft|AlignVCenter);
+	lbl_hybrid1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_hybrid1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	lbl_hybrid2 = new QLabel("", this);
+	Q_CHECK_PTR(lbl_hybrid2);
+	lbl_hybrid2->setMinimumHeight(minHeight1);
+	lbl_hybrid2->setAlignment(AlignLeft|AlignVCenter);
+	lbl_hybrid2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+	lbl_hybrid2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
 	lbl_number_of_atoms = new QLabel(tr(" Number of Atoms in File: 0"), this);
 	Q_CHECK_PTR(lbl_number_of_atoms);
@@ -65,12 +121,12 @@ void US_AddAtom::setupGUI()
 	lbl_number_of_atoms->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_number_of_atoms->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-	lbl_radius = new QLabel(tr(" Radius (A):"), this);
-	Q_CHECK_PTR(lbl_radius);
-	lbl_radius->setMinimumHeight(minHeight1);
-	lbl_radius->setAlignment(AlignLeft|AlignVCenter);
-	lbl_radius->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_number_of_hybrids = new QLabel(tr(" Number of Hybridizations in File: 0"), this);
+	Q_CHECK_PTR(lbl_number_of_hybrids);
+	lbl_number_of_hybrids->setMinimumHeight(minHeight1);
+	lbl_number_of_hybrids->setAlignment(AlignLeft|AlignVCenter);
+	lbl_number_of_hybrids->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_number_of_hybrids->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
 	lbl_name = new QLabel(tr(" Atom Name:"), this);
 	Q_CHECK_PTR(lbl_name);
@@ -79,6 +135,12 @@ void US_AddAtom::setupGUI()
 	lbl_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
+	le_name = new QLineEdit(this, "Atom name Line Edit");
+	le_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	le_name->setMinimumHeight(minHeight1);
+	connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(update_name(const QString &)));	
+				
 	lbl_chain = new QLabel(tr(" Atom Assignment:"), this);
 	Q_CHECK_PTR(lbl_chain);
 	lbl_chain->setAlignment(AlignLeft|AlignVCenter);
@@ -86,24 +148,6 @@ void US_AddAtom::setupGUI()
 	lbl_chain->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-	le_mw = new QLineEdit(this, "Molecular Weight Line Edit");
-	le_mw->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	le_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	le_mw->setMinimumHeight(minHeight1);
-	connect(le_mw, SIGNAL(textChanged(const QString &)), SLOT(update_mw(const QString &)));	
-
-	le_radius = new QLineEdit(this, "Radius Line Edit");
-	le_radius->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	le_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	le_radius->setMinimumHeight(minHeight1);
-	connect(le_radius, SIGNAL(textChanged(const QString &)), SLOT(update_radius(const QString &)));	
-
-	le_name = new QLineEdit(this, "Atom name Line Edit");
-	le_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	le_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	le_name->setMinimumHeight(minHeight1);
-	connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(update_name(const QString &)));	
-				
 	cmb_chain = new QComboBox(false, this, "chain Listing" );
 	cmb_chain->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	cmb_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -136,20 +180,29 @@ void US_AddAtom::setupGUI()
 
 	background->addMultiCellWidget(lbl_info, j, j, 0, 1);
 	j++;
-	background->addWidget(pb_select_file, j, 0);
-	background->addWidget(lbl_table, j, 1);
+	background->addWidget(pb_select_atom_file, j, 0);
+	background->addWidget(lbl_atom_table, j, 1);
+	j++;
+	background->addWidget(pb_select_hybrid_file, j, 0);
+	background->addWidget(lbl_hybrid_table, j, 1);
 	j++;
 	background->addWidget(lbl_number_of_atoms, j, 0);
-	background->addWidget(cmb_atoms, j, 1);
+	background->addWidget(cmb_atom, j, 1);
+	j++;
+	background->addWidget(lbl_number_of_hybrids, j, 0);
+	background->addWidget(cmb_hybrid, j, 1);
 	j++;
 	background->addWidget(lbl_name, j, 0);
 	background->addWidget(le_name, j, 1);
 	j++;
-	background->addWidget(lbl_mw, j, 0);
-	background->addWidget(le_mw, j, 1);
+	background->addWidget(lbl_hybrid1, j, 0);
+	background->addWidget(lbl_hybrid2, j, 1);
 	j++;
-	background->addWidget(lbl_radius, j, 0);
-	background->addWidget(le_radius, j, 1);
+	background->addWidget(lbl_mw1, j, 0);
+	background->addWidget(lbl_mw2, j, 1);
+	j++;
+	background->addWidget(lbl_radius1, j, 0);
+	background->addWidget(lbl_radius2, j, 1);
 	j++;
 	background->addWidget(lbl_chain, j, 0);
 	background->addWidget(cmb_chain, j, 1);
@@ -163,38 +216,47 @@ void US_AddAtom::add()
 {
 	int item = -1;
 	QString str1;
-	for (int i=0; i<(int) atom_list.size(); i++)
+	for (int i=0; i<(int) atom_list.size(); i++) //check if the same atom was defined previously
 	{
-		if (atom_list[i].name.upper() == new_atom.name.upper())
+		if (atom_list[i].name.upper() == current_atom.name.upper()
+		&&  atom_list[i].hybrid.name.upper() == current_atom.hybrid.name.upper())
 		{
 			item = i;
-			atom_list[i].mw = new_atom.mw;
-			atom_list[i].radius = new_atom.radius;
-			atom_list[i].chain = new_atom.chain;
+			atom_list[i].hybrid.mw = current_atom.hybrid.mw;
+			atom_list[i].hybrid.radius = current_atom.hybrid.radius;
+			atom_list[i].chain = current_atom.chain;
 		} 
 	}
 	if (item < 0)
 	{
-		atom_list.push_back(new_atom);
+		atom_list.push_back(current_atom);
 	}
 	QFile f(atom_filename);
 	if (f.open(IO_WriteOnly|IO_Translate))
 	{
-		cmb_atoms->clear();
+		cmb_atom->clear();
 		str1.sprintf(tr(" Number of Atoms in File: %d"), atom_list.size());
 		QTextStream ts(&f);
 		for (unsigned int i=0; i<atom_list.size(); i++)
 		{
-			ts << atom_list[i].name.upper() << "\t" << atom_list[i].mw << "\t" << atom_list[i].radius << "\t" << atom_list[i].chain << endl;
+			ts << atom_list[i].name.upper() << "\t" << atom_list[i].hybrid.name.upper() << "\t" <<
+					atom_list[i].hybrid.mw << "\t" << atom_list[i].hybrid.radius << "\t" << atom_list[i].chain << endl;
 			str1.sprintf("%d: ", i+1);
 			str1 += atom_list[i].name.upper();
-			cmb_atoms->insertItem(str1);
+			str1 += " (";
+			str1 += atom_list[i].hybrid.name.upper();
+			str1 += ")";
+			cmb_atom->insertItem(str1);
 		}
 		f.close();
 	}
+	else
+	{
+		QMessageBox::message("Attention:", "Could not open the atom file:\n\n" + atom_filename);
+	}
 }
 
-void US_AddAtom::select_file()
+void US_AddAtom::select_atom_file()
 {
 	QString old_filename = atom_filename, str1, str2;
 	atom_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.atom *.ATOM", this);
@@ -204,27 +266,31 @@ void US_AddAtom::select_file()
 	}
 	else
 	{
-		lbl_table->setText(atom_filename);
+		lbl_atom_table->setText(atom_filename);
 		QFile f(atom_filename);
 		atom_list.clear();
-		cmb_atoms->clear();
+		cmb_atom->clear();
 		unsigned int i=1;
 		if (f.open(IO_ReadOnly|IO_Translate))
 		{
 			QTextStream ts(&f);
 			while (!ts.atEnd())
 			{
-				ts >> new_atom.name;
-				ts >> new_atom.mw;
-				ts >> new_atom.radius;
-				ts >> new_atom.chain;
+				ts >> current_atom.name;
+				ts >> current_atom.hybrid.name;
+				ts >> current_atom.hybrid.mw;
+				ts >> current_atom.hybrid.radius;
+				ts >> current_atom.chain;
 				str2 = ts.readLine(); // read rest of line
-				if (!new_atom.name.isEmpty() && new_atom.radius > 0.0 && new_atom.mw > 0.0)
+				if (!current_atom.name.isEmpty() && current_atom.hybrid.radius > 0.0 && current_atom.hybrid.mw > 0.0)
 				{
-					atom_list.push_back(new_atom);
+					atom_list.push_back(current_atom);
 					str1.sprintf("%d: ", i);
-					str1 += new_atom.name;
-					cmb_atoms->insertItem(str1);
+					str1 += current_atom.name;
+					str1 += " (";
+					str1 += current_atom.hybrid.name.upper();
+					str1 += ")";
+					cmb_atom->insertItem(str1);
 					i++;
 				}
 			}
@@ -236,35 +302,85 @@ void US_AddAtom::select_file()
 	pb_add->setEnabled(true);
 }
 
-void US_AddAtom::update_mw(const QString &str)
+void US_AddAtom::select_hybrid_file()
 {
-	new_atom.mw = str.toFloat();
+	QString old_filename = hybrid_filename, str1, str2;
+	hybrid_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.hybrid *.HYBRID", this);
+	if (hybrid_filename.isEmpty())
+	{
+		hybrid_filename = old_filename;
+	}
+	else
+	{
+		lbl_hybrid_table->setText(hybrid_filename);
+		QFile f(hybrid_filename);
+		hybrid_list.clear();
+		cmb_hybrid->clear();
+		unsigned int i=1;
+		if (f.open(IO_ReadOnly|IO_Translate))
+		{
+			QTextStream ts(&f);
+			while (!ts.atEnd())
+			{
+				ts >> current_hybrid.name;
+				ts >> current_hybrid.mw;
+				ts >> current_hybrid.radius;
+				str2 = ts.readLine(); // read rest of line
+				if (!current_hybrid.name.isEmpty() && current_hybrid.radius > 0.0 && current_hybrid.mw > 0.0)
+				{
+					hybrid_list.push_back(current_hybrid);
+					str1.sprintf("%d: ", i);
+					str1 += current_hybrid.name;
+					cmb_hybrid->insertItem(str1);
+					i++;
+				}
+			}
+			f.close();
+		}
+	}
+	str1.sprintf(tr(" Number of Hybridizations in File: %d"), hybrid_list.size());
+	lbl_number_of_hybrids->setText(str1);
+	pb_add->setEnabled(true);
 }
 
-void US_AddAtom::update_radius(const QString &str)
+void US_AddAtom::select_hybrid(int i)
 {
-	new_atom.radius = str.toFloat();
+	QString str;
+	current_atom.hybrid.mw = hybrid_list[i].mw;
+	current_atom.hybrid.name = hybrid_list[i].name;
+	current_atom.hybrid.radius = hybrid_list[i].radius;
+	str.sprintf("%f: ", current_atom.hybrid.mw);
+	lbl_mw2->setText(str);
+	str.sprintf("%f: ", current_atom.hybrid.radius);
+	lbl_radius2->setText(str);
+	lbl_hybrid2->setText(current_atom.hybrid.name);
 }
 
 void US_AddAtom::update_name(const QString &str)
 {
-	new_atom.name = str;
+	current_atom.name = str;
+}
+
+void US_AddAtom::update_hybridization_name(const QString &str)
+{
+	current_atom.hybrid.name = str;
 }
 
 void US_AddAtom::select_atom(int val)
 {
 	QString str;
-	str.sprintf("%3.4f", atom_list[val].mw);
-	le_mw->setText(str);
-	str.sprintf("%3.4f", atom_list[val].radius);
-	le_radius->setText(str);
+	str.sprintf("%3.4f", atom_list[val].hybrid.mw);
+	lbl_mw2->setText(str);
+	str.sprintf("%3.4f", atom_list[val].hybrid.radius);
+	lbl_radius2->setText(str);
 	le_name->setText(atom_list[val].name.upper());
+	lbl_hybrid2->setText(atom_list[val].hybrid.name.upper());
 	cmb_chain->setCurrentItem(atom_list[val].chain);
 }
 
 void US_AddAtom::select_chain(int val)
 {
-	new_atom.chain = (unsigned int) val;
+	current_atom.chain = (unsigned int) val;
 }
 
 void US_AddAtom::closeEvent(QCloseEvent *e)

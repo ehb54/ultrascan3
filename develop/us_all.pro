@@ -73,7 +73,7 @@ SUBDIRS +=  us \
 #       us_finsim \
         us_globalequil \
 #       us_globallaser \
-#        us_hydrodyn \
+        us_hydrodyn \
 #        us_kirkwood \
 #        us_laser \
         us_license \

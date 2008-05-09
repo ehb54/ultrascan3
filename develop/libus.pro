@@ -259,9 +259,10 @@ SOURCES += src/us_2dplot.cpp \
   src/us_help.cpp \
   src/us_htmledit.cpp \
   src/us_hydro.cpp \
-#  src/us_hydrodyn.cpp \
-#  src/us_hydrodyn_addatom.cpp \
-#  src/us_hydrodyn_addresidue.cpp \
+  src/us_hydrodyn.cpp \
+  src/us_hydrodyn_addatom.cpp \
+  src/us_hydrodyn_addhybrid.cpp \
+  src/us_hydrodyn_addresidue.cpp \
   src/us_imgviewer.cpp \
   src/us_infopanel.cpp \
 #  src/us_kirkwood.cpp \
@@ -429,10 +430,11 @@ HEADERS += \
 #  include/us_globallaser.h \
   include/us_htmledit.h \
   include/us_hydro.h \
-#  include/us_hydrodyn.h \
-#  include/us_hydrodyn_addatom.h \
-#  include/us_hydrodyn_addresidue.h \
-#  include/us_hydrodyn_pdbdefs.h \
+  include/us_hydrodyn.h \
+  include/us_hydrodyn_addatom.h \
+  include/us_hydrodyn_addhybrid.h \
+  include/us_hydrodyn_addresidue.h \
+  include/us_hydrodyn_pdbdefs.h \
   include/us_imgviewer.h \
   include/us_infopanel.h \
 #  include/us_kirkwood.h \

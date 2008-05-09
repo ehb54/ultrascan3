@@ -55,11 +55,17 @@ struct bead
 //	vector <struct atom> atom;
 };
 
-struct atom
+struct hybridization
 {
-	QString name; // for example, Ca
+	QString name; 						// for example, Ca
 	float mw;
 	float radius;
+};
+
+struct atom
+{
+	QString name; 						// for example, Ca
+	hybridization hybrid;			// hybridization of atom
 	unsigned int bead_assignment;
 	bool positioner;
 	unsigned int serial_number;	// the serial number the atom occupies in the residue 

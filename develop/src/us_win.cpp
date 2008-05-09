@@ -252,8 +252,8 @@ UsWin::UsWin(QWidget *parent, const char *name)
 	sim->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //  int kirkID = sim->insertItem(tr("&Kirkwood Theory"), this, SLOT(kirkwood()));
 //  sim->setItemEnabled(kirkID, true);
-// int hydrodynID = sim->insertItem(tr("&SOMO Bead Modeling"), this, SLOT(hydrodyn()));
-//sim->setItemEnabled(hydrodynID, true);
+	int hydrodynID = sim->insertItem(tr("&SOMO Bead Modeling"), this, SLOT(hydrodyn()));
+	sim->setItemEnabled(hydrodynID, true);
 
 	QPopupMenu *equil = new QPopupMenu;
 	Q_CHECK_PTR(equil);
@@ -306,168 +306,168 @@ util->insertSeparator(-1);
 #endif
 
 
-QPopupMenu *combine_distros = new QPopupMenu;
-Q_CHECK_PTR(combine_distros);
-combine_distros->setLineWidth(1);
-int combineID = combine_distros->insertItem(tr("&Combine G/g(s) Distribution Plots (vHW)"), this, SLOT(combine()));
-combine_distros->setItemEnabled(combineID, true);
-int combinemwID = combine_distros->insertItem(tr("&Combine G/g(MW) Distributions (vHW)"), this, SLOT(combine_mw()));
-combine_distros->setItemEnabled(combinemwID, true);
-int combinecofsID = combine_distros->insertItem(tr("&Combine discrete s20,W Distributions"), this, SLOT(combine_cofs()));
-combine_distros->setItemEnabled(combinecofsID, true);
-int combinecofmwID = combine_distros->insertItem(tr("&Combine discrete MW Distributions"), this, SLOT(combine_cofmw()));
-combine_distros->setItemEnabled(combinecofmwID, true);
-int combinecofdID = combine_distros->insertItem(tr("&Combine discrete D Distributions"), this, SLOT(combine_cofd()));
-combine_distros->setItemEnabled(combinecofdID, true);
-int pseudo3d_combineID = combine_distros->insertItem(tr("&Combine Pseudo-3D Distributions"), this, SLOT(pseudo3d_combine()));
-combine_distros->setItemEnabled(pseudo3d_combineID, true);
-int createGlobalID = combine_distros->insertItem(tr("Create &Global Distributions"), this, SLOT(create_global()));
-combine_distros->setItemEnabled(createGlobalID, true);
-combine_distros->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	QPopupMenu *combine_distros = new QPopupMenu;
+	Q_CHECK_PTR(combine_distros);
+	combine_distros->setLineWidth(1);
+	int combineID = combine_distros->insertItem(tr("&Combine G/g(s) Distribution Plots (vHW)"), this, SLOT(combine()));
+	combine_distros->setItemEnabled(combineID, true);
+	int combinemwID = combine_distros->insertItem(tr("&Combine G/g(MW) Distributions (vHW)"), this, SLOT(combine_mw()));
+	combine_distros->setItemEnabled(combinemwID, true);
+	int combinecofsID = combine_distros->insertItem(tr("&Combine discrete s20,W Distributions"), this, SLOT(combine_cofs()));
+	combine_distros->setItemEnabled(combinecofsID, true);
+	int combinecofmwID = combine_distros->insertItem(tr("&Combine discrete MW Distributions"), this, SLOT(combine_cofmw()));
+	combine_distros->setItemEnabled(combinecofmwID, true);
+	int combinecofdID = combine_distros->insertItem(tr("&Combine discrete D Distributions"), this, SLOT(combine_cofd()));
+	combine_distros->setItemEnabled(combinecofdID, true);
+	int pseudo3d_combineID = combine_distros->insertItem(tr("&Combine Pseudo-3D Distributions"), this, SLOT(pseudo3d_combine()));
+	combine_distros->setItemEnabled(pseudo3d_combineID, true);
+	int createGlobalID = combine_distros->insertItem(tr("Create &Global Distributions"), this, SLOT(create_global()));
+	combine_distros->setItemEnabled(createGlobalID, true);
+	combine_distros->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
 
-int archiveID = util->insertItem(tr("&Archive Manager"), this, SLOT(archive()));
-util->setItemEnabled(archiveID, true);
-int reorderID = util->insertItem(tr("&Re-order Scanfile Sequence"), this, SLOT(reorder()));
-util->setItemEnabled(reorderID, true);
-int mergeID = util->insertItem(tr("&Merge Scanfiles from 2 Directories"), this, SLOT(merge()));
-util->setItemEnabled(mergeID, true);
-int pseudoabsID = util->insertItem(tr("&Convert Intensity to Pseudo-Absorbance"), this, SLOT(pseudoabs()));
-util->setItemEnabled(pseudoabsID, true);
-util->insertItem(tr("Edit Cell ID (&Velocity)"), this, SLOT(edit_cell_id_veloc()));
-util->insertItem(tr("Edit Cell &ID (Equilibrium)"), this, SLOT(edit_cell_id_equil()));
-util->insertItem(tr("&Copy Velocity Run"), this, SLOT(copy_run_veloc()));
-util->insertItem(tr("Copy &Equilibrium Run"), this, SLOT(copy_run_equil()));
-util->insertSeparator(-1);
-util->insertItem(tr("&RI/TI Noise Subtraction from Velocity Run"), this, SLOT(riti_veloc()));
-util->insertItem(tr("&Update Meniscus for Velocity Run"), this, SLOT(meniscus_veloc()));
-int combine_distroID = util->insertItem(tr("&Combine Distribution Data"), combine_distros);
-file->setItemEnabled(combine_distroID, true);
+	int archiveID = util->insertItem(tr("&Archive Manager"), this, SLOT(archive()));
+	util->setItemEnabled(archiveID, true);
+	int reorderID = util->insertItem(tr("&Re-order Scanfile Sequence"), this, SLOT(reorder()));
+	util->setItemEnabled(reorderID, true);
+	int mergeID = util->insertItem(tr("&Merge Scanfiles from 2 Directories"), this, SLOT(merge()));
+	util->setItemEnabled(mergeID, true);
+	int pseudoabsID = util->insertItem(tr("&Convert Intensity to Pseudo-Absorbance"), this, SLOT(pseudoabs()));
+	util->setItemEnabled(pseudoabsID, true);
+	util->insertItem(tr("Edit Cell ID (&Velocity)"), this, SLOT(edit_cell_id_veloc()));
+	util->insertItem(tr("Edit Cell &ID (Equilibrium)"), this, SLOT(edit_cell_id_equil()));
+	util->insertItem(tr("&Copy Velocity Run"), this, SLOT(copy_run_veloc()));
+	util->insertItem(tr("Copy &Equilibrium Run"), this, SLOT(copy_run_equil()));
+	util->insertSeparator(-1);
+	util->insertItem(tr("&RI/TI Noise Subtraction from Velocity Run"), this, SLOT(riti_veloc()));
+	util->insertItem(tr("&Update Meniscus for Velocity Run"), this, SLOT(meniscus_veloc()));
+	int combine_distroID = util->insertItem(tr("&Combine Distribution Data"), combine_distros);
+	file->setItemEnabled(combine_distroID, true);
 
-int diagID = util->insertItem(tr("Scan &Diagnostics"), this, SLOT(diagnostics()));
-util->setItemEnabled(diagID, true);
-int calcID = util->insertItem(tr("Calculate &DNA/RNA MW"), this, SLOT(nucleotide_db()));
-util->setItemEnabled(calcID, true);
-int calcHydro = util->insertItem(tr("&Buffer Corrections"), this, SLOT(calc_hydro()));
-util->setItemEnabled(calcHydro, true);
-int vbarID = util->insertItem(tr("Calculate &Protein MW and vbar"), this, SLOT(vbar_db()));
-util->setItemEnabled(vbarID, true);
-int dma60ID = util->insertItem(tr("Start Anton Paar DMA 60"), this, SLOT(us_dma60()));
-util->setItemEnabled(dma60ID, true);
-int gradientID = util->insertItem(tr("Gradient Color Editor"), this, SLOT(us_colorgradient()));
-util->setItemEnabled(gradientID, true);
-int extinctionID = util->insertItem(tr("Global &Extinction Fit"), this, SLOT(calc_extinction()));
-util->setItemEnabled(extinctionID, true);
-util->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	int diagID = util->insertItem(tr("Scan &Diagnostics"), this, SLOT(diagnostics()));
+	util->setItemEnabled(diagID, true);
+	int calcID = util->insertItem(tr("Calculate &DNA/RNA MW"), this, SLOT(nucleotide_db()));
+	util->setItemEnabled(calcID, true);
+	int calcHydro = util->insertItem(tr("&Buffer Corrections"), this, SLOT(calc_hydro()));
+	util->setItemEnabled(calcHydro, true);
+	int vbarID = util->insertItem(tr("Calculate &Protein MW and vbar"), this, SLOT(vbar_db()));
+	util->setItemEnabled(vbarID, true);
+	int dma60ID = util->insertItem(tr("Start Anton Paar DMA 60"), this, SLOT(us_dma60()));
+	util->setItemEnabled(dma60ID, true);
+	int gradientID = util->insertItem(tr("Gradient Color Editor"), this, SLOT(us_colorgradient()));
+	util->setItemEnabled(gradientID, true);
+	int extinctionID = util->insertItem(tr("Global &Extinction Fit"), this, SLOT(calc_extinction()));
+	util->setItemEnabled(extinctionID, true);
+	util->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-QPopupMenu *rtv = new QPopupMenu;
-Q_CHECK_PTR(rtv);
-rtv->setLineWidth(1);
-rtv->insertItem(tr("&Investigator"), this, SLOT(rtv_investigator()));
-rtv->insertItem(tr("&Date"), this, SLOT(rtv_date()));
-rtv->insertItem(tr("&Description"), this, SLOT(rtv_description()));
-rtv->insertItem(tr("&Edit Type"), this, SLOT(rtv_edittype()));
-rtv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	QPopupMenu *rtv = new QPopupMenu;
+	Q_CHECK_PTR(rtv);
+	rtv->setLineWidth(1);
+	rtv->insertItem(tr("&Investigator"), this, SLOT(rtv_investigator()));
+	rtv->insertItem(tr("&Date"), this, SLOT(rtv_date()));
+	rtv->insertItem(tr("&Description"), this, SLOT(rtv_description()));
+	rtv->insertItem(tr("&Edit Type"), this, SLOT(rtv_edittype()));
+	rtv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-QPopupMenu *project = new QPopupMenu;
-Q_CHECK_PTR(rtv);
-project->setLineWidth(1);
-project->insertItem(tr("&Project Request"), this, SLOT(rtv_request()));
-project->insertItem(tr("Project Status"), this, SLOT(rtv_requeststatus()));
-project->insertItem(tr("&Images"), this, SLOT(rtv_image()));
-project->insertItem(tr("&Sample Info"), this, SLOT(rtv_sample()));
-project->insertItem(tr("&Run Request"), this, SLOT(rtv_runrequest()));
-project->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	QPopupMenu *project = new QPopupMenu;
+	Q_CHECK_PTR(rtv);
+	project->setLineWidth(1);
+	project->insertItem(tr("&Project Request"), this, SLOT(rtv_request()));
+	project->insertItem(tr("Project Status"), this, SLOT(rtv_requeststatus()));
+	project->insertItem(tr("&Images"), this, SLOT(rtv_image()));
+	project->insertItem(tr("&Sample Info"), this, SLOT(rtv_sample()));
+	project->insertItem(tr("&Run Request"), this, SLOT(rtv_runrequest()));
+	project->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-QPopupMenu *result = new QPopupMenu;
-Q_CHECK_PTR(result);
-result->setLineWidth(1);
-int result_velocID = result->insertItem(tr("&Velocity Data"), this, SLOT(db_rst_veloc()));
-result->setItemEnabled(result_velocID, true);
-int result_equilID = result->insertItem(tr("&Equilibrium Data"), this, SLOT(db_rst_equil()));
-result->setItemEnabled(result_equilID, true);
-int result_equilprojectID = result->insertItem(tr("&Equilibrium Fitting Project"), this, SLOT(db_rst_equilproject()));
-result->setItemEnabled(result_equilprojectID, true);
-int result_montecarloID = result->insertItem(tr("&Monte Carlo Project"), this, SLOT(db_rst_montecarlo()));
-result->setItemEnabled(result_montecarloID, true);
-result->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	QPopupMenu *result = new QPopupMenu;
+	Q_CHECK_PTR(result);
+	result->setLineWidth(1);
+	int result_velocID = result->insertItem(tr("&Velocity Data"), this, SLOT(db_rst_veloc()));
+	result->setItemEnabled(result_velocID, true);
+	int result_equilID = result->insertItem(tr("&Equilibrium Data"), this, SLOT(db_rst_equil()));
+	result->setItemEnabled(result_equilID, true);
+	int result_equilprojectID = result->insertItem(tr("&Equilibrium Fitting Project"), this, SLOT(db_rst_equilproject()));
+	result->setItemEnabled(result_equilprojectID, true);
+	int result_montecarloID = result->insertItem(tr("&Monte Carlo Project"), this, SLOT(db_rst_montecarlo()));
+	result->setItemEnabled(result_montecarloID, true);
+	result->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-QPopupMenu *cmmt = new QPopupMenu;
-Q_CHECK_PTR(cmmt);
-cmmt->setLineWidth(1);
-cmmt->insertItem(tr("&Investigator"), this, SLOT(investigator_db()));
-cmmt->insertItem(tr("&Buffer"), this, SLOT(buffer_db()));
-cmmt->insertItem(tr("&Peptide"), this, SLOT(vbar_db()));
-cmmt->insertItem(tr("&Nucleotide Sequence"), this, SLOT(nucleotide_db()));
-cmmt->insertItem(tr("&Experimental Data"), this, SLOT(expdata_db()));
+	QPopupMenu *cmmt = new QPopupMenu;
+	Q_CHECK_PTR(cmmt);
+	cmmt->setLineWidth(1);
+	cmmt->insertItem(tr("&Investigator"), this, SLOT(investigator_db()));
+	cmmt->insertItem(tr("&Buffer"), this, SLOT(buffer_db()));
+	cmmt->insertItem(tr("&Peptide"), this, SLOT(vbar_db()));
+	cmmt->insertItem(tr("&Nucleotide Sequence"), this, SLOT(nucleotide_db()));
+	cmmt->insertItem(tr("&Experimental Data"), this, SLOT(expdata_db()));
 //  cmmt->insertItem(tr("&Laser Experimental Data"), this, SLOT(laser_db()));
-cmmt->insertSeparator(-1);
-cmmt->insertItem(tr("&Result Data"), result);
-cmmt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	cmmt->insertSeparator(-1);
+	cmmt->insertItem(tr("&Result Data"), result);
+	cmmt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
 
 
-QPopupMenu *db = new QPopupMenu;
-Q_CHECK_PTR(db);
-db->setLineWidth(1);
-int commitID = db->insertItem(tr("&Commit Data to DB"), cmmt);
-db->setItemEnabled(commitID, true);
-db->insertSeparator(-1);
-int retrieveID = db->insertItem(tr("&Retrieve Experimental Data from DB"), rtv);
-db->setItemEnabled(retrieveID, true);
-db->insertSeparator(-1);
-int projectID = db->insertItem(tr("&Project Info"), project);
-db->setItemEnabled(projectID, true);
-db->insertSeparator(-1);
-int templateID = db->insertItem(tr("&Initialize Database Template"), this, SLOT(db_template()));
-db->setItemEnabled(templateID, true);
-db->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	QPopupMenu *db = new QPopupMenu;
+	Q_CHECK_PTR(db);
+	db->setLineWidth(1);
+	int commitID = db->insertItem(tr("&Commit Data to DB"), cmmt);
+	db->setItemEnabled(commitID, true);
+	db->insertSeparator(-1);
+	int retrieveID = db->insertItem(tr("&Retrieve Experimental Data from DB"), rtv);
+	db->setItemEnabled(retrieveID, true);
+	db->insertSeparator(-1);
+	int projectID = db->insertItem(tr("&Project Info"), project);
+	db->setItemEnabled(projectID, true);
+	db->insertSeparator(-1);
+	int templateID = db->insertItem(tr("&Initialize Database Template"), this, SLOT(db_template()));
+	db->setItemEnabled(templateID, true);
+	db->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-QPopupMenu *help = new QPopupMenu;
-Q_CHECK_PTR(help);
-help->setLineWidth(1);
-help->insertItem(tr("UltraScan &Home"), this, SLOT(us_home()));
-help->insertItem(tr("UltraScan &Manual"), this, SLOT(help()));
-help->insertItem(tr("&Register Software"), this, SLOT(us_register()));
-help->insertItem(tr("&Upgrade UltraScan"), this, SLOT(us_upgrade()));
-help->insertItem(tr("UltraScan &License"), this, SLOT(us_license()));
-help->insertItem(tr("&About"), this, SLOT(about()));
-help->insertItem(tr("&Credits"), this, SLOT(credits()));
-help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	QPopupMenu *help = new QPopupMenu;
+	Q_CHECK_PTR(help);
+	help->setLineWidth(1);
+	help->insertItem(tr("UltraScan &Home"), this, SLOT(us_home()));
+	help->insertItem(tr("UltraScan &Manual"), this, SLOT(help()));
+	help->insertItem(tr("&Register Software"), this, SLOT(us_register()));
+	help->insertItem(tr("&Upgrade UltraScan"), this, SLOT(us_upgrade()));
+	help->insertItem(tr("UltraScan &License"), this, SLOT(us_license()));
+	help->insertItem(tr("&About"), this, SLOT(about()));
+	help->insertItem(tr("&Credits"), this, SLOT(credits()));
+	help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-menu = new QMenuBar(this);
-Q_CHECK_PTR(menu);
-menu->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-menu->insertItem(tr("&File"), file);
-menu->insertItem(tr("&Edit"), edit);
-menu->insertItem(tr("&Velocity"), veloc);
-menu->insertItem(tr("E&quilibrium"), equil);
+	menu = new QMenuBar(this);
+	Q_CHECK_PTR(menu);
+	menu->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	menu->insertItem(tr("&File"), file);
+	menu->insertItem(tr("&Edit"), edit);
+	menu->insertItem(tr("&Velocity"), veloc);
+	menu->insertItem(tr("E&quilibrium"), equil);
 /*
-int laserID = menu->insertItem(tr("&DLS"), laser);
-menu->setItemEnabled(laserID, true);
+	int laserID = menu->insertItem(tr("&DLS"), laser);
+	menu->setItemEnabled(laserID, true);
 */
-int globalID = menu->insertItem(tr("&Global Fit"), global_menu);
-menu->setItemEnabled(globalID, true);
-menu->insertItem(tr("&Utilities"), util);
-menu->insertItem(tr("S&imulation"), sim);
-menu->insertItem(tr("&Database"), db);
-menu->insertSeparator();
-menu->insertItem(tr("&Help"), help);
-menu->setGeometry(2, 2, width-4, 22);
+	int globalID = menu->insertItem(tr("&Global Fit"), global_menu);
+	menu->setItemEnabled(globalID, true);
+	menu->insertItem(tr("&Utilities"), util);
+	menu->insertItem(tr("S&imulation"), sim);
+	menu->insertItem(tr("&Database"), db);
+	menu->insertSeparator();
+	menu->insertItem(tr("&Help"), help);
+	menu->setGeometry(2, 2, width-4, 22);
 
-stat_bar = new QLabel(this);
-Q_CHECK_PTR(stat_bar);
-stat_bar->setFrameStyle(QFrame::Box | QFrame::Sunken);
-stat_bar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-stat_bar->setLineWidth(1);
-stat_bar->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
-stat_bar->setAlignment(AlignLeft|AlignVCenter);
+	stat_bar = new QLabel(this);
+	Q_CHECK_PTR(stat_bar);
+	stat_bar->setFrameStyle(QFrame::Box | QFrame::Sunken);
+	stat_bar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	stat_bar->setLineWidth(1);
+	stat_bar->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	stat_bar->setAlignment(AlignLeft|AlignVCenter);
 
-connect(this,  SIGNAL(explain(const QString &)), stat_bar, SLOT(setText(const QString &)));
+	connect(this,  SIGNAL(explain(const QString &)), stat_bar, SLOT(setText(const QString &)));
 
 /*
-if (config_is_open)
-{
+	if (config_is_open)
+	{
 	US_Config_GUI us_config_gui;
 
 	us_config_gui.show();
@@ -476,94 +476,94 @@ if (config_is_open)
 }
 */
 //us_finsim_proc = NULL;
-us_astfem_sim_proc = NULL;
-us_dma60_proc = NULL;
-us_pseudo3d_combine_proc = NULL;
-us_colorgradient_proc = NULL;
-us_sassoc_proc = NULL;
-us_cpuload_proc = NULL;
-us_sysload_proc = NULL;
-us_meminfo_proc = NULL;
-us_edeabs_proc = NULL;
-us_edeint_proc = NULL;
-us_edeflo_proc = NULL;
-us_editwavelength_proc = NULL;
-us_edvabs_proc = NULL;
-us_edvint_proc = NULL;
-us_edvflo_proc = NULL;
-us_vhwdat_proc = NULL;
-us_vhwenhanced_proc = NULL;
-us_findat_proc = NULL;
-us_finite_single_proc = NULL;
-us_findat_ad_proc = NULL;
-us_fematch_proc = NULL;
-us_fematch_ra_proc = NULL;
-us_gainit1_proc = NULL;
-us_gainit2_proc = NULL;
-us_hydrodyn_proc = NULL;
-us_secdat_proc = NULL;
-us_cofs_proc = NULL;
+	us_astfem_sim_proc = NULL;
+	us_dma60_proc = NULL;
+	us_pseudo3d_combine_proc = NULL;
+	us_colorgradient_proc = NULL;
+	us_sassoc_proc = NULL;
+	us_cpuload_proc = NULL;
+	us_sysload_proc = NULL;
+	us_meminfo_proc = NULL;
+	us_edeabs_proc = NULL;
+	us_edeint_proc = NULL;
+	us_edeflo_proc = NULL;
+	us_editwavelength_proc = NULL;
+	us_edvabs_proc = NULL;
+	us_edvint_proc = NULL;
+	us_edvflo_proc = NULL;
+	us_vhwdat_proc = NULL;
+	us_vhwenhanced_proc = NULL;
+	us_findat_proc = NULL;
+	us_finite_single_proc = NULL;
+	us_findat_ad_proc = NULL;
+	us_fematch_proc = NULL;
+	us_fematch_ra_proc = NULL;
+	us_gainit1_proc = NULL;
+	us_gainit2_proc = NULL;
+	us_hydrodyn_proc = NULL;
+	us_secdat_proc = NULL;
+	us_cofs_proc = NULL;
 //us_cofdistro_proc = NULL;
 //us_sa2d_proc = NULL;
-us_spectrum_proc = NULL;
-us_viewmwl_proc = NULL;
-us_dcdtdat_proc = NULL;
-us_dcdrdat_proc = NULL;
-us_predict1_proc = NULL;
-us_predict2_proc = NULL;
-us_equilspeed_proc = NULL;
-us_equilsim_proc = NULL;
-us_equiltime_proc = NULL;
-us_globalequil_proc = NULL;
+	us_spectrum_proc = NULL;
+	us_viewmwl_proc = NULL;
+	us_dcdtdat_proc = NULL;
+	us_dcdrdat_proc = NULL;
+	us_predict1_proc = NULL;
+	us_predict2_proc = NULL;
+	us_equilspeed_proc = NULL;
+	us_equilsim_proc = NULL;
+	us_equiltime_proc = NULL;
+	us_globalequil_proc = NULL;
 //us_globallaser_proc = NULL;
 //us_kirkwood_proc = NULL;
-us_lncr2_proc = NULL;
-us_archive_proc = NULL;
-us_reorder_proc = NULL;
-us_pseudoabs_proc = NULL;
-us_merge_proc = NULL;
-us_combine_proc = NULL;
-us_combine_mw_proc = NULL;
-us_combine_cofs_proc = NULL;
-us_combine_cofmw_proc = NULL;
-us_combine_cofd_proc = NULL;
-us_create_global_proc = NULL;
-us_diagnostics_proc = NULL;
-us_buffer_proc = NULL;
-us_config_proc = NULL;
-us_admin_proc = NULL;
-us_extinction_proc = NULL;
-us_investigator_db_proc = NULL;
-us_buffer_db_proc = NULL;
-us_vbar_db_proc = NULL;
-us_nucleotide_db_proc = NULL;
-us_expdata_db_proc = NULL;
+	us_lncr2_proc = NULL;
+	us_archive_proc = NULL;
+	us_reorder_proc = NULL;
+	us_pseudoabs_proc = NULL;
+	us_merge_proc = NULL;
+	us_combine_proc = NULL;
+	us_combine_mw_proc = NULL;
+	us_combine_cofs_proc = NULL;
+	us_combine_cofmw_proc = NULL;
+	us_combine_cofd_proc = NULL;
+	us_create_global_proc = NULL;
+	us_diagnostics_proc = NULL;
+	us_buffer_proc = NULL;
+	us_config_proc = NULL;
+	us_admin_proc = NULL;
+	us_extinction_proc = NULL;
+	us_investigator_db_proc = NULL;
+	us_buffer_db_proc = NULL;
+	us_vbar_db_proc = NULL;
+	us_nucleotide_db_proc = NULL;
+	us_expdata_db_proc = NULL;
 //us_laser_db_proc = NULL;
-us_rtv_investigator_proc = NULL;
-us_rtv_date_proc = NULL;
-us_rtv_description_proc = NULL;
-us_rtv_edittype_proc = NULL;
-us_rtv_request_proc = NULL;
-us_rtv_requeststatus_proc = NULL;
-us_rtv_image_proc = NULL;
-us_rtv_sample_proc = NULL;
-us_rtv_runrequest_proc = NULL;
-us_db_template_proc = NULL;
-us_db_rst_veloc_proc = NULL;
-us_db_rst_equil_proc = NULL;
-us_db_rst_equilproject_proc = NULL;
-us_db_rst_montecarlo_proc = NULL;
+	us_rtv_investigator_proc = NULL;
+	us_rtv_date_proc = NULL;
+	us_rtv_description_proc = NULL;
+	us_rtv_edittype_proc = NULL;
+	us_rtv_request_proc = NULL;
+	us_rtv_requeststatus_proc = NULL;
+	us_rtv_image_proc = NULL;
+	us_rtv_sample_proc = NULL;
+	us_rtv_runrequest_proc = NULL;
+	us_db_template_proc = NULL;
+	us_db_rst_veloc_proc = NULL;
+	us_db_rst_equil_proc = NULL;
+	us_db_rst_equilproject_proc = NULL;
+	us_db_rst_montecarlo_proc = NULL;
 
-if (env_missing)
-{
-	QMessageBox::message("Attention:",  "The environment variable \"ULTRASCAN\" is not defined!\n"
-			"Please set it to the root directory of your UltraScan\n"
-					"installation, for example:\n\n"
-					"export ULTRASCAN=/usr/lib/ultrascan (sh, bash)\n"
-					"setenv ULTRASCAN /usr/lib/ultrascan (csh, tcsh)\n\n"
-					"If you do not set the environment variable now, \n"
-					"UltraScan may not run properly.");
-}
+	if (env_missing)
+	{
+		QMessageBox::message("Attention:",  "The environment variable \"ULTRASCAN\" is not defined!\n"
+				"Please set it to the root directory of your UltraScan\n"
+						"installation, for example:\n\n"
+						"export ULTRASCAN=/usr/lib/ultrascan (sh, bash)\n"
+						"setenv ULTRASCAN /usr/lib/ultrascan (csh, tcsh)\n\n"
+						"If you do not set the environment variable now, \n"
+						"UltraScan may not run properly.");
+	}
 }
 
 UsWin::~UsWin()

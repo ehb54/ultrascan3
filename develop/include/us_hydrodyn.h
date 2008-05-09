@@ -39,7 +39,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		~US_Hydrodyn();
 
 	private:
-		bool residue_widget, atom_widget;
+		bool residue_widget, atom_widget, hybrid_widget;
 
 		US_Config *USglobal;
 		
@@ -49,10 +49,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QLabel *lbl_pdb_file;
 		
 		QPushButton *pb_save;
-		QPushButton *pb_select_file;
+		QPushButton *pb_select_residue_file;
 		QPushButton *pb_load_pdb;
 		QPushButton *pb_atom;
 		QPushButton *pb_residue;
+		QPushButton *pb_hybrid;
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;
 		
@@ -60,6 +61,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		
 		US_AddAtom *addAtom;
 		US_AddResidue *addResidue;
+		US_AddHybridization *addHybrid;
 		
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
@@ -75,13 +77,14 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void load_pdb();
 		void read_pdb(const QString &);
 		void setupGUI();
-		void select_file();
+		void select_residue_file();
 		void read_table(const QString &);
 	   void clear_temp_chain(struct chain *);
 	   void assign_chain(const QString &, struct chain *);
 		void cancel();
 		void help();
 		void atom();
+		void hybrid();
 		void residue();
 
 	protected slots:
