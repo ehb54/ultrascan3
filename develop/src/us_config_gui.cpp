@@ -1,15 +1,19 @@
 #include "../include/us_config_gui.h"
+#include <qfontmetrics.h>
+#include <qmessagebox.h>
 
 US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent, name)
 {
 	USglobal = new US_Config();
-	if (USglobal->config_list.fontFamily == NULL || USglobal->config_list.fontSize == 0 || USglobal->config_list.margin == 0)
+
+	if (USglobal->config_list.fontFamily == NULL || 
+			USglobal->config_list.fontSize == 0      || 
+			USglobal->config_list.margin == 0)
 	{
 		USglobal->config_list.fontFamily = "Helvetica";
 		USglobal->config_list.fontSize = 10;
 		USglobal->config_list.margin = 10;
 	}
-
 
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption("UltraScan Configuration");
@@ -32,8 +36,13 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
 	US_Config::connect(pb_browser, SIGNAL(clicked()), this, SLOT(open_browser_dir()));
 
 	le_browser = new QLineEdit(this);
-	le_browser->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	le_browser->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	le_browser->setFont( QFont( USglobal->config_list.fontFamily, 
+	                            USglobal->config_list.fontSize - 1));
+
+	le_browser->setPalette( QPalette( USglobal->global_colors.cg_edit, 
+	                                  USglobal->global_colors.cg_edit, 
+	                                  USglobal->global_colors.cg_edit));
+
 	US_Config::connect(le_browser, SIGNAL(textChanged(const QString &)), this, SLOT(update_browser(const QString &)));
 
 	pb_tar = new QPushButton(QObject::tr("tar Archiver:"),this);
@@ -56,7 +65,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
 	le_gzip->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
 	US_Config::connect(le_gzip, SIGNAL(textChanged(const QString &)), this, SLOT(update_gzip(const QString &)));
 
-	pb_root_dir = new QPushButton(QObject::tr("UltraScan Root:"),this);
+	pb_root_dir = new QPushButton(QObject::tr("User's UltraScan Directory:"),this);
 	pb_root_dir->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
 	pb_root_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	US_Config::connect(pb_root_dir, SIGNAL(clicked()), this, SLOT(open_root_dir()));
@@ -201,7 +210,13 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
 	cnt_numThreads->setValue(USglobal->config_list.numThreads);
 	cnt_numThreads->setEnabled(true);
 	cnt_numThreads->setNumButtons(2);
-	cnt_numThreads->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cnt_numThreads->setPalette( QPalette( USglobal->global_colors.cg_normal, 
+	                                      USglobal->global_colors.cg_normal, 
+	                                      USglobal->global_colors.cg_normal));
+
+	cnt_numThreads->setFont( QFont( USglobal->config_list.fontFamily, 
+	                                USglobal->config_list.fontSize - 1));
+
 	connect(cnt_numThreads, SIGNAL(valueChanged(double)), SLOT(update_numThreads(double)));
 
 	pb_help = new QPushButton(QObject::tr("Help"), this);
@@ -232,11 +247,24 @@ US_Config_GUI::~US_Config_GUI()
 
 void US_Config_GUI::setup_GUI()
 {
+	QFont*        font    = new QFont( USglobal->config_list.fontFamily, 
+	                                  USglobal->config_list.fontSize);
+
+	QFontMetrics* fm      = new QFontMetrics ( *font );
+
+	// Get the average character width ( max / 2 )
+	int           cwidth  = fm->maxWidth() / 2;
+
 	QBoxLayout *topbox = new QVBoxLayout(this,2);
 	topbox->addWidget(lbl_directions);
 	topbox->addWidget(lbl_paths);
+
 	unsigned int j=0;
-	QGridLayout * lineGrid = new QGridLayout(topbox,10,2,2);
+	
+	QGridLayout* lineGrid = new QGridLayout(topbox,10,2,2);
+
+	lineGrid->setColSpacing( 1, cwidth * 50 );  // Set width for 50 characters
+	
 	lineGrid->addWidget(pb_browser,j,0);
 	lineGrid->addWidget(le_browser,j,1);
 	j++;
@@ -268,6 +296,7 @@ void US_Config_GUI::setup_GUI()
 	lineGrid->addWidget(le_help_dir,j,1);
 
 	topbox->addWidget(lbl_misc);
+
 	QGridLayout *lineGrid2 = new QGridLayout(topbox,5,2);
 	j=0;
 	lineGrid2->addWidget(lbl_temperature_tol,j,0);
@@ -411,68 +440,110 @@ void US_Config_GUI::update_off_button()
 
 void US_Config_GUI::open_browser_dir()
 {
-	USglobal->config_list.browser = QFileDialog::getOpenFileName(USglobal->config_list.browser, QString::null, 0);
-	le_browser->setText(USglobal->config_list.browser);
+	QString browser = QFileDialog::getOpenFileName(
+		USglobal->config_list.browser, QString::null, 0);
+
+	if ( browser != "" )
+	{
+		USglobal->config_list.browser = browser;
+		le_browser->setText( browser );
+	}
 }
 
-void US_Config_GUI::update_browser(const QString &newText)
+void US_Config_GUI::update_browser(const QString& newText)
 {
-	USglobal->config_list.browser = newText;
+	if ( newText != "" )
+		USglobal->config_list.browser = newText;
 }
 
 void US_Config_GUI::open_tar_dir()
 {
-	USglobal->config_list.tar = QFileDialog::getOpenFileName(USglobal->config_list.tar, QString::null, 0);
-	le_tar->setText(USglobal->config_list.tar);
+	QString tar = QFileDialog::getOpenFileName(
+		USglobal->config_list.tar, QString::null, 0);
+
+	if ( tar != "" )
+	{
+		le_tar->setText( tar );
+		USglobal->config_list.tar = tar ;
+	}
 }
 
-void US_Config_GUI::update_tar(const QString &newText)
+void US_Config_GUI::update_tar(const QString& newText)
 {
-	USglobal->config_list.tar = newText;
+	if ( newText != "" )
+		USglobal->config_list.tar = newText;
 }
 
 void US_Config_GUI::open_gzip_dir()
 {
-	USglobal->config_list.gzip = QFileDialog::getOpenFileName(USglobal->config_list.gzip, QString::null, 0);
-	le_gzip->setText(USglobal->config_list.gzip);
+	QString gzip = QFileDialog::getOpenFileName(
+		USglobal->config_list.gzip, QString::null, 0);
+
+	if ( gzip != "" )
+	{
+		le_gzip->setText( gzip );
+		USglobal->config_list.gzip = gzip;
+	}
 }
 
-void US_Config_GUI::update_gzip(const QString &newText)
+void US_Config_GUI::update_gzip( const QString& newText )
 {
-	USglobal->config_list.gzip = newText;
+	if ( newText != "" )
+		USglobal->config_list.gzip = newText;
 }
 
 void US_Config_GUI::open_system_dir()
 {
-	USglobal->config_list.system_dir = QFileDialog::getExistingDirectory(USglobal->config_list.system_dir, 0, 0, QString::null, true);
-	le_system_dir->setText(USglobal->config_list.system_dir);
+	QString system = QFileDialog::getExistingDirectory(
+			USglobal->config_list.system_dir, 0, 0, QString::null, true);
+
+	if ( system != "" )
+	{
+		le_system_dir->setText( system );
+		USglobal->config_list.system_dir = system;
+	}
 }
 
-void US_Config_GUI::update_system_dir(const QString &newText)
+void US_Config_GUI::update_system_dir( const QString& newText )
 {
-	USglobal->config_list.system_dir = newText;
+	if ( newText != "" )
+		USglobal->config_list.system_dir = newText;
 }
 
 void US_Config_GUI::open_help_dir()
 {
-	USglobal->config_list.help_dir = QFileDialog::getExistingDirectory(USglobal->config_list.help_dir, 0, 0, QString::null, true);
-	le_help_dir->setText(USglobal->config_list.help_dir);
+	QString help = QFileDialog::getExistingDirectory(
+		USglobal->config_list.help_dir, 0, 0, QString::null, true);
+
+	if ( help != "" )
+	{
+		le_help_dir->setText( help );
+		USglobal->config_list.help_dir = help;
+	}
 }
 
-void US_Config_GUI::update_help_dir(const QString &newText)
+void US_Config_GUI::update_help_dir( const QString& newText )
 {
-	USglobal->config_list.help_dir = newText;
+	if ( newText != "" )
+		USglobal->config_list.help_dir = newText;
 }
 
-void US_Config_GUI::update_temperature_tol(const QString &newText)
+void US_Config_GUI::update_temperature_tol( const QString& newText )
 {
-	USglobal->config_list.temperature_tol = newText.toFloat();
+	if ( newText != "" )
+		USglobal->config_list.temperature_tol = newText.toFloat();
 }
 
 void US_Config_GUI::open_result_dir()
 {
-	USglobal->config_list.result_dir = QFileDialog::getExistingDirectory(USglobal->config_list.result_dir, 0, 0, QString::null, true);
-	le_result_dir->setText(USglobal->config_list.result_dir);
+	QString result = QFileDialog::getExistingDirectory(
+		USglobal->config_list.result_dir, 0, 0, QString::null, true);
+
+	if ( result != "" )
+	{
+		le_result_dir->setText( result );
+		USglobal->config_list.result_dir = result;
+	}
 }
 
 void US_Config_GUI::update_result_dir(const QString &newText)
@@ -482,49 +553,77 @@ void US_Config_GUI::update_result_dir(const QString &newText)
 
 void US_Config_GUI::open_html_dir()
 {
-	USglobal->config_list.html_dir = QFileDialog::getExistingDirectory(USglobal->config_list.html_dir, 0, 0, QString::null, true);
-	le_html_dir->setText(USglobal->config_list.html_dir);
+	QString html = QFileDialog::getExistingDirectory(
+		USglobal->config_list.html_dir, 0, 0, QString::null, true);
+
+	if ( html != "" )
+	{
+		le_html_dir->setText( html );
+		USglobal->config_list.html_dir = html;
+	}
 }
 
-void US_Config_GUI::update_html_dir(const QString &newText)
+void US_Config_GUI::update_html_dir( const QString& newText )
 {
-	USglobal->config_list.html_dir = newText;
+	if ( newText != "" )
+		USglobal->config_list.html_dir = newText;
 }
 
 void US_Config_GUI::open_data_dir()
 {
-	USglobal->config_list.data_dir = QFileDialog::getExistingDirectory(USglobal->config_list.data_dir, 0, 0, QString::null, true);
-	le_data_dir->setText(USglobal->config_list.data_dir);
+	QString data = QFileDialog::getExistingDirectory(
+		USglobal->config_list.data_dir, 0, 0, QString::null, true);
+	
+	if ( data != "" )
+	{
+		le_data_dir->setText( data );
+		USglobal->config_list.data_dir = data;
+	}
 }
 
-void US_Config_GUI::update_data_dir(const QString &newText)
+void US_Config_GUI::update_data_dir( const QString& newText )
 {
-	USglobal->config_list.data_dir = newText;
+	if ( newText != "" )
+		USglobal->config_list.data_dir = newText;
 }
 
 void US_Config_GUI::open_archive_dir()
 {
-	USglobal->config_list.archive_dir = QFileDialog::getExistingDirectory(USglobal->config_list.archive_dir, 0, 0, QString::null, true);
-	le_archive_dir->setText(USglobal->config_list.archive_dir);
+	QString archive = QFileDialog::getExistingDirectory(
+		USglobal->config_list.archive_dir, 0, 0, QString::null, true);
+	
+	if ( archive != "" )
+	{
+		le_archive_dir->setText( archive );
+		USglobal->config_list.archive_dir = archive ;
+	}
 }
 
-void US_Config_GUI::update_archive_dir(const QString &newText)
+void US_Config_GUI::update_archive_dir( const QString& newText )
 {
-	USglobal->config_list.archive_dir = newText;
+	if ( newText != "" )
+		USglobal->config_list.archive_dir = newText;
 }
 
 void US_Config_GUI::open_root_dir()
 {
-	USglobal->config_list.root_dir = QFileDialog::getExistingDirectory(USglobal->config_list.root_dir, 0, 0, QString::null, true);
-	le_root_dir->setText(USglobal->config_list.root_dir);
+	QString root = QFileDialog::getExistingDirectory(
+		USglobal->config_list.root_dir, 0, 0, QString::null, true);
+
+	if ( root != "" ) 
+	{
+	  le_root_dir->setText( root );
+		USglobal->config_list.root_dir = root;
+	}
 }
 
-void US_Config_GUI::update_root_dir(const QString &newText)
+void US_Config_GUI::update_root_dir( const QString& newText )
 {
-	USglobal->config_list.root_dir = newText;
+	if ( newText != "" )
+	  USglobal->config_list.root_dir = newText;
 }
 
-void US_Config_GUI::update_numThreads(double val)
+void US_Config_GUI::update_numThreads( double val )
 {
 	USglobal->config_list.numThreads = (unsigned int) val;
 }
