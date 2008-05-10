@@ -882,11 +882,11 @@ void US_AddResidue::select_r_bead(int val)
 			str += new_residue.r_atom[i].name;
 			if (new_residue.r_atom[i].positioner)
 			{
-				str += " (Positioning: yes)";
+				str += " (" + new_residue.r_atom[i].hybrid.name + ", Positioning: yes)";
 			}
 			else
 			{
-				str += " (Positioning: no)";
+				str += " (" + new_residue.r_atom[i].hybrid.name + ", Positioning: no)";
 			}
 			lb_list_beadatom->insertItem(str);
 		}
@@ -1060,11 +1060,11 @@ void US_AddResidue::accept_residue()
 			str += new_residue.r_atom[i].name;
 			if (new_residue.r_atom[i].positioner)
 			{
-				str += " (Positioning: yes)";
+				str += " (" + new_residue.r_atom[i].hybrid.name + ", Positioning: yes)";
 			}
 			else
 			{
-				str += " (Positioning: no)";
+				str += " (" + new_residue.r_atom[i].hybrid.name + ", Positioning: no)";
 			}
 			cmb_r_atoms->insertItem(str);
 		}
@@ -1191,7 +1191,7 @@ void US_AddResidue::accept_atom()
 	new_residue.r_atom[current_item1].serial_number = current_item1;
 	new_residue.r_atom[current_item1].positioner = position_flag;
 	str.sprintf("Atom %d: " + atom_list[current_item2].name, current_item1+1);
-	str += " (Positioning: ";
+	str += " (" + new_residue.r_atom[current_item1].hybrid.name + ", Positioning: ";
 	if (new_residue.r_atom[current_item1].positioner)
 	{
 		str += "yes)";
