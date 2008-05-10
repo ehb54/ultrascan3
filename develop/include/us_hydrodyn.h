@@ -67,7 +67,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
   #pragma warning ( disable: 4251 )
 #endif
 
-		vector <struct model> model_vector;
+		vector <struct PDB_model> model_vector;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -79,8 +79,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void setupGUI();
 		void select_residue_file();
 		void read_table(const QString &);
-	   void clear_temp_chain(struct chain *);
-	   void assign_chain(const QString &, struct chain *);
+	   void clear_temp_chain(struct PDB_chain *);
+	   void assign_atom(const QString &, struct PDB_chain *);
 		void cancel();
 		void help();
 		void atom();

@@ -17,28 +17,35 @@ struct matrix
    float element[3][3];
 };
 
-struct model
+struct PDB_atom
 {
-	vector <struct chain> molecule;
+	unsigned int serial;
+	QString name;
+	QString altLoc;
+	QString resName;
+	unsigned int resSeq;
+	QString iCode;
+	struct point coordinate;
+	float occupancy;
+	float tempFactor;
+	QString element;
+	QString charge;
+	unsigned int accessibility;
+};
+
+struct PDB_chain	// chain in PDB file
+{
+   vector <struct PDB_atom> atom;
+   QString chainID;
+   QString segID;
+};
+
+struct PDB_model
+{
+	vector <struct PDB_chain> molecule;
 	unsigned int model_id;
 };
 
-struct chain	// chain in PDB file
-{
-   vector <unsigned int> serial;
-   vector <QString> name;
-   vector <QString> altLoc;
-   vector <QString> resName;
-   QString chainID;
-   vector <unsigned int> resSeq;
-   vector <QString> iCode;
-   vector <struct point> coordinate;
-   vector <float> occupancy;
-   vector <float> tempFactor;
-   QString segID;
-   vector <QString> element;
-   vector <QString> charge;
-};
 
 struct bead
 {
@@ -51,7 +58,8 @@ struct bead
 	unsigned int visibility;		// 0 = hidden
 											// 1 = exposed
 	unsigned int chain;				// 0 = main chain
-											// 1 = side chain							
+											// 1 = side chain
+	float	       volume;				// anhydrous bead volume						
 //	vector <struct atom> atom;
 };
 

@@ -173,7 +173,7 @@ void US_Hydrodyn::hybrid()
 
 void US_Hydrodyn::select_residue_file()
 {
-	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo *.SOMO", this);
+	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.residue *.RESIDUE", this);
 	if (!filename.isEmpty())
 	{
 		lbl_table->setText(filename);
@@ -200,9 +200,9 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 {
 	QString str1, str2, temp;
 	model_vector.clear();
-	chain temp_chain;
+	struct PDB_chain temp_chain;
 	QFile f(filename);
-	struct model temp_model;
+	struct PDB_model temp_model;
 	bool chain_flag = false;
 	bool model_flag = false;
 	temp_model.molecule.clear();
@@ -246,7 +246,7 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 						temp_chain.segID = str2.stripWhiteSpace();
 					}
 				}
-				assign_chain(str1, &temp_chain);
+				assign_atom(str1, &temp_chain); // parse the current line and add it to temp_chain
 			}
 		}
 		f.close();
@@ -259,23 +259,14 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 	}
 }
 
-void US_Hydrodyn::clear_temp_chain(struct chain *temp_chain) // clear all the memory from the vectors in temp_chain
+void US_Hydrodyn::clear_temp_chain(struct PDB_chain *temp_chain) // clear all the memory from the vectors in temp_chain
 {
-	(*temp_chain).serial.clear();
-	(*temp_chain).name.clear();
-	(*temp_chain).altLoc.clear();
-	(*temp_chain).resName.clear();
-	(*temp_chain).resSeq.clear();
-	(*temp_chain).iCode.clear();
-	(*temp_chain).coordinate.clear();
-	(*temp_chain).occupancy.clear();
-	(*temp_chain).tempFactor.clear();
-	(*temp_chain).element.clear();
-	(*temp_chain).charge.clear();
+	(*temp_chain).atom.clear();
 	(*temp_chain).chainID = "";
+	(*temp_chain).segID = "";
 }
 
-void US_Hydrodyn::assign_chain(const QString &str1, struct chain *temp_chain)
+void US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain)
 {
 /*
 http://www.rcsb.org/pdb/docs/format/pdbguide2.2/part_11.html
@@ -301,36 +292,45 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 79 - 80        LString(2)      charge        Charge on the atom.
 */
 	QString str2;
-	point temp_point;
+	struct PDB_atom temp_atom;
 	str2 = str1.mid(6, 5);
-	(*temp_chain).serial.push_back(str2.toUInt());
+	temp_atom.serial = str2.toUInt();
+	
 	str2 = str1.mid(13, 4);
-	(*temp_chain).name.push_back(str2.stripWhiteSpace());
-	(*temp_chain).altLoc.push_back(str1.mid(16, 1));
-	(*temp_chain).resName.push_back(str1.mid(17, 3));
+	temp_atom.name = str2.stripWhiteSpace();
+
+	temp_atom.altLoc = str1.mid(16, 1);
+
+	temp_atom.resName = str1.mid(17, 3);
+
 	str2 = str1.mid(22, 4);
-	(*temp_chain).resSeq.push_back(str2.toUInt());
-	(*temp_chain).iCode.push_back(str1.mid(26, 1));
+	temp_atom.resSeq = str2.toUInt();
+
+	temp_atom.iCode = str1.mid(26, 1);
+
 	str2 = str1.mid(30, 8);
-	temp_point.axis[0] = str2.toFloat();
+	temp_atom.coordinate.axis[0] = str2.toFloat();
 	str2 = str1.mid(38, 8);
-	temp_point.axis[1] = str2.toFloat();
+	temp_atom.coordinate.axis[1] = str2.toFloat();
 	str2 = str1.mid(46, 8);
-	temp_point.axis[2] = str2.toFloat();
-	(*temp_chain).coordinate.push_back(temp_point);
+	temp_atom.coordinate.axis[2] = str2.toFloat();
+	
 	str2 = str1.mid(54, 6);
-	(*temp_chain).occupancy.push_back(str2.toFloat());
+	temp_atom.occupancy = str2.toFloat();
+	
 	str2 = str1.mid(60, 6);
-	(*temp_chain).tempFactor.push_back(str2.toFloat());
-	(*temp_chain).element.push_back(str1.mid(76, 2));
+	temp_atom.tempFactor = str2.toFloat();
+	
+	temp_atom.element = str1.mid(76, 2);
 	if (str1.length() >= 80)
 	{
-		(*temp_chain).charge.push_back(str1.mid(78, 2));
+		temp_atom.charge = str1.mid(78, 2);
 	}
 	else
 	{
-		(*temp_chain).charge.push_back("  ");
+		temp_atom.charge = "  ";
 	}
+	(*temp_chain).atom.push_back(temp_atom);
 }
 
 void US_Hydrodyn::closeEvent(QCloseEvent *e)

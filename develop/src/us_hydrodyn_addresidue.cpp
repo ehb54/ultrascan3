@@ -170,7 +170,7 @@ void US_AddResidue::setupGUI()
 	cmb_type->setMinimumHeight(minHeight1);
 	connect(cmb_type, SIGNAL(activated(int)), this, SLOT(select_type(int)));
 
-	lbl_molvol = new QLabel(tr(" Residue Molar Volume (ccm):"), this);
+	lbl_molvol = new QLabel(tr(" Residue Molec. anhydrous Vol. (A^3):"), this);
 	Q_CHECK_PTR(lbl_molvol);
 	lbl_molvol->setAlignment(AlignLeft|AlignVCenter);
 	lbl_molvol->setMinimumHeight(minHeight1);
