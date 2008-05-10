@@ -237,8 +237,8 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
 	global_Xpos += 30;
 	global_Ypos += 30;
 	setGeometry(global_Xpos, global_Ypos, 0, 0);
-	setup_GUI();
 	update_screen();
+	setup_GUI();
 }
 
 US_Config_GUI::~US_Config_GUI()
@@ -248,22 +248,50 @@ US_Config_GUI::~US_Config_GUI()
 void US_Config_GUI::setup_GUI()
 {
 	QFont*        font    = new QFont( USglobal->config_list.fontFamily, 
-	                                  USglobal->config_list.fontSize);
+	                                   USglobal->config_list.fontSize);
 
 	QFontMetrics* fm      = new QFontMetrics ( *font );
 
-	// Get the average character width ( max / 2 )
-	int           cwidth  = fm->maxWidth() / 2;
+	int cwidth  = fm->width( USglobal->config_list.browser );
+	int w       = fm->width( USglobal->config_list.tar );
+	
+	w = ( cwidth > w ) ? cwidth : w;
 
-	QBoxLayout *topbox = new QVBoxLayout(this,2);
+	w = fm->width( USglobal->config_list.gzip );
+	w = ( cwidth > w ) ? cwidth : w;
+
+	w = fm->width( USglobal->config_list.system_dir );
+	w = ( cwidth > w ) ? cwidth : w;
+
+	w = fm->width( USglobal->config_list.help_dir );
+	w = ( cwidth > w ) ? cwidth : w;
+
+	w = fm->width( USglobal->config_list.data_dir );
+	w = ( cwidth > w ) ? cwidth : w;
+
+	w = fm->width( USglobal->config_list.root_dir );
+	w = ( cwidth > w ) ? cwidth : w;
+
+	w = fm->width( USglobal->config_list.archive_dir );
+	w = ( cwidth > w ) ? cwidth : w;
+
+	w = fm->width( USglobal->config_list.result_dir );
+	w = ( cwidth > w ) ? cwidth : w;
+
+	w = fm->width( USglobal->config_list.html_dir );
+	w = ( cwidth > w ) ? cwidth : w;
+
+
+	QBoxLayout*   topbox = new QVBoxLayout(this,2);
+	
 	topbox->addWidget(lbl_directions);
 	topbox->addWidget(lbl_paths);
 
 	unsigned int j=0;
 	
-	QGridLayout* lineGrid = new QGridLayout(topbox,10,2,2);
+	QGridLayout* lineGrid = new QGridLayout( topbox, 10, 2, 2 );
 
-	//lineGrid->setColSpacing( 1, cwidth * 50 );  // Set width for 50 characters
+	lineGrid->setColSpacing( 1, w + 10 );  // Set width + 10 pixels
 	
 	lineGrid->addWidget(pb_browser,j,0);
 	lineGrid->addWidget(le_browser,j,1);
