@@ -640,7 +640,6 @@ void EditAbsVeloc_Win::next_step()
 
 void EditAbsVeloc_Win::update_oldscan()
 {
-	cout << "updating oldscan\n";
 	unsigned int scan, i, count;
 	for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
 	{

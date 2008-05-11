@@ -40,6 +40,7 @@ US_AddResidue::US_AddResidue(bool *widget_flag, QWidget *p, const char *name) : 
 	new_bead.placing_method = 0;
 	new_bead.hydration = 0;
 	new_bead.visibility = 0;
+	new_bead.volume = 0;
 	setGeometry(global_Xpos, global_Ypos, 0, 0);
 	hybrids.clear();
 	atoms.clear();
@@ -436,6 +437,20 @@ void US_AddResidue::setupGUI()
 	bg_chain->setMinimumHeight(minHeight1);
 	connect(bg_chain, SIGNAL(clicked(int)), SLOT(set_chain(int)));
 
+	lbl_bead_volume = new QLabel(tr(" Bead Volume: "), this);
+	Q_CHECK_PTR(lbl_bead_volume);
+	lbl_bead_volume->setAlignment(AlignLeft|AlignVCenter);
+	lbl_bead_volume->setMinimumHeight(minHeight1);
+	lbl_bead_volume->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_bead_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+	le_bead_volume = new QLineEdit(this, "Residue asa Line Edit");
+	le_bead_volume->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_bead_volume->setMinimumHeight(minHeight1);
+	le_bead_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	le_bead_volume->setEnabled(false);
+	connect(le_bead_volume, SIGNAL(textChanged(const QString &)), SLOT(update_bead_volume(const QString &)));
+
 	pb_accept_bead = new QPushButton(tr("Accept Bead Definition"), this);
 	Q_CHECK_PTR(pb_accept_bead);
 	pb_accept_bead->setMinimumHeight(minHeight1);
@@ -549,6 +564,9 @@ void US_AddResidue::setupGUI()
 	bl->addWidget(rb_sidechain);
 	background->addLayout(bl, j, 4);
 	j++;
+	background->addWidget(lbl_bead_volume, j, 3);
+	background->addWidget(le_bead_volume, j, 4);
+	j++;
 	background->addWidget(lbl_list_beadatom, j, 3);
 	background->addWidget(lbl_select_beadatom, j, 4);
 	j++;
@@ -569,6 +587,17 @@ void US_AddResidue::add()
 	int item = -1;
 	unsigned int i, j;
 	QString str1;
+	float sum=0.0;
+	for (i=0; i<new_residue.r_bead.size(); i++)
+	{
+		sum += new_residue.r_bead[i].volume;
+	}
+	str1.sprintf("Residue volume: %f A^3, Sum of beads: %f A^3\n\nPlease correct the bead volume and try again...", new_residue.molvol, sum);
+	if (sum != new_residue.molvol)
+	{
+		QMessageBox::message("Attention:", "The residue volume does not match the volume of the beads:\n\n" + str1);
+		return;
+	}
 	for (i=0; i<residue_list.size(); i++)
 	{
 		if (residue_list[i].name.upper() == new_residue.name.upper())
@@ -1138,6 +1167,8 @@ void US_AddResidue::atom_continue()
 	cmb_bead_color->setEnabled(true);
 	cmb_placing->setEnabled(true);
 	lb_select_beadatom->setEnabled(true);
+	le_bead_volume->setEnabled(true);
+	le_bead_volume->setText("0.0");
 	cb_positioning->setEnabled(false);
 	rb_backbone->setEnabled(true);
 	rb_backbone->setChecked(true);
@@ -1186,6 +1217,11 @@ void US_AddResidue::atom_continue()
 
 void US_AddResidue::accept_bead()
 {
+	if (new_bead.volume == 0.0)
+	{
+		QMessageBox::message("Attention:", "No bead volume entered for this bead!\nPlease correct this and try again...");
+		return;
+	}
 	QString str;
 	str.sprintf("Bead %d: defined", current_bead + 1);
 	cmb_r_beads->changeItem(str, current_bead);
@@ -1203,6 +1239,8 @@ void US_AddResidue::accept_bead()
 		pb_add->setEnabled(true);
 	}
 	new_residue.r_bead[current_bead] = new_bead;
+	new_bead.volume = 0.0;
+	le_bead_volume->setText("0.0");
 }
 
 void US_AddResidue::accept_atom()
@@ -1299,3 +1337,8 @@ void US_AddResidue::closeEvent(QCloseEvent *e)
 	e->accept();
 }
 
+
+void US_AddResidue::update_bead_volume(const QString & val)
+{
+	new_bead.volume = val.toFloat();
+}
