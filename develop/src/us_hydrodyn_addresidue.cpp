@@ -638,6 +638,7 @@ void US_AddResidue::add()
 			for (unsigned int j=0; j<residue_list[i].r_atom.size(); j++)
 			{
 				ts << residue_list[i].r_atom[j].name.upper()
+					<< "\t" << residue_list[i].r_atom[j].hybrid.name
 					<< "\t" << residue_list[i].r_atom[j].hybrid.mw
 					<< "\t" << residue_list[i].r_atom[j].hybrid.radius
 					<< "\t" << residue_list[i].r_atom[j].bead_assignment
@@ -651,8 +652,7 @@ void US_AddResidue::add()
 					<< "\t" << residue_list[i].r_bead[j].color
 					<< "\t" << residue_list[i].r_bead[j].placing_method
 					<< "\t" << residue_list[i].r_bead[j].chain
-					<< "\t" << residue_list[i].r_bead[j].volume
-					<< "\t" << residue_list[i].r_bead[j].visibility << endl;
+					<< "\t" << residue_list[i].r_bead[j].volume << endl;
 			}
 			str1.sprintf("%d: ", i+1);
 			str1 += residue_list[i].name.upper();

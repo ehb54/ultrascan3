@@ -52,15 +52,14 @@ struct bead
 	unsigned int hydration;			// number of waters bound
 	unsigned int color;				// color of bead
 	unsigned int placing_method;	// baric method
-											// 0: place the bead at the center of gravity of all atoms  
+											// 0: place the bead at the center of gravity of all atoms
 											// 1: placing the bead at the position of the furthest atom specified in the p3 file
 											// 2: no positioning necessary (only one atom to place)
 	unsigned int visibility;		// 0 = hidden
 											// 1 = exposed
 	unsigned int chain;				// 0 = main chain
 											// 1 = side chain
-	float	       volume;				// anhydrous bead volume						
-//	vector <struct atom> atom;
+	float	       volume;				// anhydrous bead volume
 };
 
 struct hybridization
@@ -76,7 +75,7 @@ struct atom
 	hybridization hybrid;			// hybridization of atom
 	unsigned int bead_assignment;
 	bool positioner;
-	unsigned int serial_number;	// the serial number the atom occupies in the residue 
+	unsigned int serial_number;	// the serial number the atom occupies in the residue
 	unsigned int chain;				// 0 = main chain
 											// 1 = side chain
 											// 2 = prosthetic group
@@ -90,6 +89,9 @@ struct residue
 	unsigned int type;				// 0: amino acid
 											// 1: sugar
 											// 2: nucleotide
+											// 3: lipid
+											// 4: detergent
+											// 5: other
 	float molvol;						// the molecular volume of the residue
 	float asa;							// maximum accessible surface area (A^2)
 	vector <struct atom> r_atom;	// the atoms in the residue
