@@ -45,6 +45,7 @@ class US_EXTERN EditAbsVeloc_Win : public EditData_Win
 		void next_step();
 		void subtract_residuals();
 		void fit_ls(double);
+		void update_oldscan();
 };
 
 #endif

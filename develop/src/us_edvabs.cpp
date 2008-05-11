@@ -55,7 +55,7 @@ EditAbsVeloc_Win::EditAbsVeloc_Win(QWidget *p , const char *name)
 	lbl_subtract_ri_noise->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_subtract_ri_noise->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-
+	connect(this, SIGNAL(absorbance_changed()), this, SLOT(update_oldscan()));
 	setup_GUI();
 }
 
@@ -238,7 +238,6 @@ void EditAbsVeloc_Win::get_x(const QMouseEvent &e)
 				count = 0;
 				for (i=0; i<run_inf.points[cell][lambda][current_channel]; i++)
 				{
-					//cout << "Count: " << count << ", scan #: " << scan << ", size of oldscan: " << oldscan.size() << endl;
 					rad = run_inf.range_left[cell][lambda][current_channel] + i * run_inf.delta_r;
 // only compare the first 3 significant digits
 // Sometimes there are increments smaller than 0.001, so we need to skip those
@@ -637,5 +636,24 @@ void EditAbsVeloc_Win::next_step()
 											"dataset. Please note that a stable plateau is not required for all\n"
 											"scans. Certain analysis methods do not require a stable plateau."));
 	return;
+}
+
+void EditAbsVeloc_Win::update_oldscan()
+{
+	cout << "updating oldscan\n";
+	unsigned int scan, i, count;
+	for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
+	{
+		count = 0;
+		while (oldscan[scan].rad[count] < radius[scan][0])
+		{
+			count ++;
+		}
+		for (i=0; i<points[scan]; i++)
+		{
+			oldscan[scan].abs[count] = absorbance[scan][i];
+			count ++;
+		}
+	}
 }
 

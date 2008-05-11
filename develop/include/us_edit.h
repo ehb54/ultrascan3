@@ -177,6 +177,7 @@ class US_EXTERN EditData_Win : public QFrame
 		void explain(const QString &);
 		void clicked();
 		void channel_selected(const QString &);
+		void absorbance_changed();
 };
 
 #endif

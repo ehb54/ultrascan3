@@ -347,7 +347,7 @@ void EditData_Win::remove_spikes()
 		step_check();
 		return;
 	}
-	float threshold = 7;
+	float threshold = 10;
 	float *x, *y, slope, intercept, sigma, correlation;
 	x = new float [10];
 	y = new float [10];
@@ -414,6 +414,7 @@ void EditData_Win::remove_spikes()
 	delete [] x;
 	delete [] y;
 	plot_dataset();
+	emit absorbance_changed();
 }
 
 void EditData_Win::update_rotor(int index)
@@ -513,6 +514,7 @@ void EditData_Win::edSingle()
 	edit_win->setCaption(tr("Data Editing Window"));
 	edit_win->show();
 	connect(edit_win->frm->pb_accept, SIGNAL(clicked()), SLOT(plot_dataset()));
+	connect(edit_win->frm->pb_accept, SIGNAL(clicked()), SIGNAL(absorbance_changed()));
 }
 
 void EditData_Win::set_range1(const double value)
