@@ -651,6 +651,7 @@ void US_AddResidue::add()
 					<< "\t" << residue_list[i].r_bead[j].color
 					<< "\t" << residue_list[i].r_bead[j].placing_method
 					<< "\t" << residue_list[i].r_bead[j].chain
+					<< "\t" << residue_list[i].r_bead[j].volume
 					<< "\t" << residue_list[i].r_bead[j].visibility << endl;
 			}
 			str1.sprintf("%d: ", i+1);
@@ -739,6 +740,7 @@ void US_AddResidue::select_residue_file()
 					ts >> new_bead.color;
 					ts >> new_bead.placing_method;
 					ts >> new_bead.chain;
+					ts >> new_bead.volume;
 					ts >> new_bead.visibility;
 					str2 = ts.readLine(); // read rest of line
 					new_residue.r_bead.push_back(new_bead);
