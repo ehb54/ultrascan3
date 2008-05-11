@@ -25,13 +25,13 @@
 class US_AddResidue : public QWidget
 {
 	Q_OBJECT
-	
+
 	public:
 		US_AddResidue(bool *, QWidget *p=0, const char *name=0);
 		~US_AddResidue();
-		
+
 	private:
-		
+
 		US_Config *USglobal;
 		US_Help *online_help;
 		bool *widget_flag;
@@ -39,7 +39,9 @@ class US_AddResidue : public QWidget
 		bool position_flag; // 0 = not involved, 1 = determines position
 		unsigned int current_atom;
 		unsigned int current_bead;
-		
+		vector <QString> hybrids;
+		vector <QString> atoms;
+
 		QPushButton *pb_add;
 		QPushButton *pb_accept_residue;
 		QPushButton *pb_accept_atom;
@@ -66,6 +68,7 @@ class US_AddResidue : public QWidget
 		QLabel *lbl_info2;
 		QLabel *lbl_r_atoms;
 		QLabel *lbl_define_atom;
+		QLabel *lbl_define_hybrid;
 
 		QLabel *lbl_info3;
 		QLabel *lbl_r_beads;
@@ -80,16 +83,17 @@ class US_AddResidue : public QWidget
 		QComboBox *cmb_type;
 		QComboBox *cmb_r_atoms;
 		QComboBox *cmb_atoms;
+		QComboBox *cmb_hybrids;
 		QComboBox *cmb_r_beads;
 		QComboBox *cmb_bead_color;
 		QComboBox *cmb_placing;
-		
+
 		QCheckBox *cb_positioning;
-		
+
 		QRadioButton *rb_sidechain;
 		QRadioButton *rb_backbone;
 		QButtonGroup *bg_chain;
-				
+
 		QListBox *lb_residues;
 		QListBox *lb_select_beadatom;
 		QListBox *lb_list_beadatom;
@@ -108,7 +112,7 @@ class US_AddResidue : public QWidget
 		vector <struct atom> atom_list;
 		vector <struct bead> bead_list;
 		QString atom_filename, residue_filename;
-		
+
 
 	private slots:
 		void add();
@@ -134,6 +138,7 @@ class US_AddResidue : public QWidget
 		void update_hydration(double);
 		void update_numatoms(double);
 		void update_numbeads(double);
+		void update_hybrid(int);
 		void set_positioning();
 		void set_chain(int);
 		void atom_continue();

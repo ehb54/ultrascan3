@@ -19,18 +19,19 @@
 class US_AddAtom : public QWidget
 {
 	Q_OBJECT
-	
+
 	public:
 		US_AddAtom(bool *, QWidget *p=0, const char *name=0);
 		~US_AddAtom();
-		
+
 	private:
-		
+
 		US_Config *USglobal;
 		bool *widget_flag;
 
 		QPushButton *pb_add;
 		QPushButton *pb_close;
+		QPushButton *pb_delete;
 		QPushButton *pb_select_atom_file;
 		QPushButton *pb_select_hybrid_file;
 
@@ -51,7 +52,6 @@ class US_AddAtom : public QWidget
 		QComboBox *cmb_atom;
 		QComboBox *cmb_hybrid;
 		QComboBox *cmb_chain;
-		
 		QLineEdit *le_name;
 		struct atom current_atom;
 		struct hybridization current_hybrid;
@@ -59,7 +59,7 @@ class US_AddAtom : public QWidget
 		vector <struct hybridization> hybrid_list;
 		QString atom_filename;
 		QString hybrid_filename;
-		
+
 	private slots:
 		void add();
 		void select_atom_file();
@@ -70,6 +70,8 @@ class US_AddAtom : public QWidget
 		void select_hybrid(int);
 		void select_atom(int);
 		void select_chain(int);
+		void delete_atom();
+		void write_atom_file();
 
 	protected slots:
 		void closeEvent(QCloseEvent *);

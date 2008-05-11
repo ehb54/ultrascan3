@@ -12,7 +12,7 @@ US_AddAtom::US_AddAtom(bool *widget_flag, QWidget *p, const char *name) : QWidge
 	global_Xpos += 30;
 	global_Ypos += 30;
 	setGeometry(global_Xpos, global_Ypos, 0, 0);
-}	
+}
 
 US_AddAtom::~US_AddAtom()
 {
@@ -139,8 +139,8 @@ void US_AddAtom::setupGUI()
 	le_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	le_name->setMinimumHeight(minHeight1);
-	connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(update_name(const QString &)));	
-				
+	connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(update_name(const QString &)));
+
 	lbl_chain = new QLabel(tr(" Atom Assignment:"), this);
 	Q_CHECK_PTR(lbl_chain);
 	lbl_chain->setAlignment(AlignLeft|AlignVCenter);
@@ -167,6 +167,14 @@ void US_AddAtom::setupGUI()
 	pb_add->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
 	pb_add->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_add, SIGNAL(clicked()), SLOT(add()));
+
+	pb_delete = new QPushButton(tr("Delete Atom"), this);
+	Q_CHECK_PTR(pb_delete);
+	pb_delete->setEnabled(false);
+	pb_delete->setMinimumHeight(minHeight1);
+	pb_delete->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_delete->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_delete, SIGNAL(clicked()), SLOT(delete_atom()));
 
 	pb_close = new QPushButton(tr("Close"), this);
 	Q_CHECK_PTR(pb_close);
@@ -208,14 +216,14 @@ void US_AddAtom::setupGUI()
 	background->addWidget(cmb_chain, j, 1);
 	j++;
 	background->addWidget(pb_add, j, 0);
-	background->addWidget(pb_close, j, 1);
-	
+	background->addWidget(pb_delete, j, 1);
+	j++;
+	background->addMultiCellWidget(pb_close, j, j, 0, 1);
 }
 
 void US_AddAtom::add()
 {
 	int item = -1;
-	QString str1;
 	for (int i=0; i<(int) atom_list.size(); i++) //check if the same atom was defined previously
 	{
 		if (atom_list[i].name.upper() == current_atom.name.upper()
@@ -225,12 +233,19 @@ void US_AddAtom::add()
 			atom_list[i].hybrid.mw = current_atom.hybrid.mw;
 			atom_list[i].hybrid.radius = current_atom.hybrid.radius;
 			atom_list[i].chain = current_atom.chain;
-		} 
+		}
 	}
 	if (item < 0)
 	{
 		atom_list.push_back(current_atom);
 	}
+	write_atom_file();
+	pb_delete->setEnabled(true);
+}
+
+void US_AddAtom::write_atom_file()
+{
+	QString str1;
 	QFile f(atom_filename);
 	if (f.open(IO_WriteOnly|IO_Translate))
 	{
@@ -369,6 +384,12 @@ void US_AddAtom::update_hybridization_name(const QString &str)
 void US_AddAtom::select_atom(int val)
 {
 	QString str;
+	current_atom.name = atom_list[val].name.upper();
+	current_atom.hybrid.mw = atom_list[val].hybrid.mw;
+	current_atom.hybrid.name = atom_list[val].hybrid.name;
+	current_atom.hybrid.radius = atom_list[val].hybrid.radius;
+	current_atom.chain = atom_list[val].chain;
+
 	str.sprintf("%3.4f", atom_list[val].hybrid.mw);
 	lbl_mw2->setText(str);
 	str.sprintf("%3.4f", atom_list[val].hybrid.radius);
@@ -376,6 +397,7 @@ void US_AddAtom::select_atom(int val)
 	le_name->setText(atom_list[val].name.upper());
 	lbl_hybrid2->setText(atom_list[val].hybrid.name.upper());
 	cmb_chain->setCurrentItem(atom_list[val].chain);
+	pb_delete->setEnabled(true);
 }
 
 void US_AddAtom::select_chain(int val)
@@ -391,3 +413,18 @@ void US_AddAtom::closeEvent(QCloseEvent *e)
 	*widget_flag = false;
 	e->accept();
 }
+
+void US_AddAtom::delete_atom()
+{
+	vector <struct atom>::iterator it;
+	for (it=atom_list.begin(); it != atom_list.end(); it++)
+	{
+		if ((*it).name == current_atom.name && (*it).hybrid.name == current_atom.hybrid.name)
+		{
+			atom_list.erase(it);
+			break;
+		}
+	}
+	write_atom_file();
+}
+
