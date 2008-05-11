@@ -1177,7 +1177,7 @@ void US_AddResidue::atom_continue()
 	rb_sidechain->setEnabled(true);
 	rb_sidechain->setChecked(false);
 	bg_chain->setEnabled(true);
-	bg_chain->setChecked(1);
+	bg_chain->setButton(0);
 	lb_list_beadatom->setEnabled(true);
 	lb_list_beadatom->clear();
 	lb_select_beadatom->setEnabled(true);
@@ -1243,6 +1243,7 @@ void US_AddResidue::accept_bead()
 	new_residue.r_bead[current_bead] = new_bead;
 	new_bead.volume = 0.0;
 	le_bead_volume->setText("0.0");
+	bg_chain->setButton(0);
 }
 
 void US_AddResidue::accept_atom()
