@@ -434,7 +434,7 @@ void US_Pseudo3D_Combine::load_distro()
 void US_Pseudo3D_Combine::load_distro(const QString &filename)
 {
 	QFile f;
-	unsigned int index, i;
+	unsigned int index;
 	float temp1, temp2, temp3, temp4;
 	QString str;
 	struct distro_system temp_system;
@@ -544,6 +544,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 			" (" + temp_system.method
 			+")";
 	le_distro_info->setText(str);
+	cout << "-2. Size of temp_distro: " << temp_system.s_distro.size() << endl;
 	if (temp_system.distro_type > 0)
 	{
 		if(f.open(IO_ReadOnly))
@@ -562,6 +563,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 			}
 			while (!ts.atEnd())
 			{
+				cout << "reading lines...\n";
 				ts >> temp1; // s_apparent
 				ts >> temp1; // s_20,W
 				temp1 *= (float) 1.0e13; // change to proper scale
@@ -584,33 +586,14 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 		temp_system.s_distro.sort();
 		temp_system.mw_distro.sort();
 
-// combine identical solutes:
-
+// combine identical solutes in the s-distribution:
 		list <Solute> reduced;
 		list <Solute>::iterator j, j1, j2;
 		reduced.clear();
-		i = 0;
 		reduced = temp_system.s_distro;
-		temp_system.s_distro.clear();
 		j1 = reduced.begin();
 		j2 = reduced.begin();
-
-		/*
-		while (j2 != reduced.end())
-		{
-			j2++;
-			if ((*j1).s == (*j2).s && (*j1).k == (*j2).k)
-			{
-				(*j2).c += (*j1).c;
-			}
-			else
-			{
-				temp_system.s_distro.push_back(*j1);
-			}
-			j1++;
-		}
-		*/
-
+		temp_system.s_distro.clear();
 		if ( reduced.size() > 1 )
 		{
 			while ( ++j2 != reduced.end() )
@@ -627,13 +610,16 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 				j1++;
 			}
 		}
-
+		else if (reduced.size() == 1)
+		{
+			temp_system.s_distro = reduced;
+		}
+// combine identical solutes in the mw-distribution:
 		reduced.clear();
 		reduced = temp_system.mw_distro;
 		temp_system.mw_distro.clear();
 		j1 = reduced.begin();
 		j2 = reduced.begin();
-
 		if ( reduced.size() > 1 )
 		{
 			while ( ++j2 != reduced.end() )
@@ -650,12 +636,17 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 				j1++;
 			}
 		}
+		else if (reduced.size() == 1)
+		{
+			temp_system.mw_distro = reduced;
+		}
+			
+		cout << "3. Size of temp_distro: " << temp_system.s_distro.size() << ", reduced: " <<reduced.size() << endl;
 
 		reduced.clear();
 	}
-
-
 	system.push_back(temp_system);
+	cout << "4. Size of s_distro: " << temp_system.s_distro.size() << ", mw_distro: " << temp_system.mw_distro.size() << endl;
 	current_distro = system.size() - 1;
 	cnt_current_distro->setRange(1.0, current_distro+1, 1.0);
 	current_distro = system.size() - 1;
@@ -736,6 +727,11 @@ void US_Pseudo3D_Combine::set_limits()
 		{
 			fmax += fmax/10.0;
 		}
+		if ((smax - smin) < 1.0e-100)
+		{
+			smax += smax/30.0;
+			smin -= smin/30.0;
+		}
 		cnt_plot_fmin->setValue(fmin);
 		plot_fmin = fmin;
 		cnt_plot_smin->setValue(smin);
@@ -759,26 +755,33 @@ void US_Pseudo3D_Combine::plot_3dim()
 	symbol.setSize(size);
 	unsigned int i, j, k, count;
 
-	//unsigned int curve[system[current_distro].gradient.size()];
+//unsigned int curve[system[current_distro].gradient.size()];
 	vector<unsigned int> curve( system[ current_distro].gradient.size() );
-	
-  
-  //double x[x_resolution], y[y_resolution], z[x_resolution][y_resolution];
-  double*  x = new double [ x_resolution ];
+
+//double x[x_resolution], y[y_resolution], z[x_resolution][y_resolution];
+	double*  x = new double [ x_resolution ];
 	double*  y = new double [ y_resolution ];
-  double** z = new double* [x_resolution];
-  for ( unsigned int i = 0; i < x_resolution; i++ ) z[i] = new double[ y_resolution ];
-  
-  
-  double frange, srange, sstep, fstep, ssigma, fsigma;
+	double** z = new double* [x_resolution];
+	for ( unsigned int i = 0; i < x_resolution; i++ ) z[i] = new double[ y_resolution ];
+	double frange, srange, sstep, fstep, ssigma, fsigma;
 	double *xval, *yval;
 	xval = new double [x_resolution*y_resolution];
 	yval = new double [x_resolution*y_resolution];
 	list <Solute>::iterator iter;
 	progress->setTotalSteps(system[current_distro].s_distro.size());
 	srange = plot_smax - plot_smin;
+	// if only 1 solute is present, the srange needs to be manually set
+	if (srange < 1e-100)
+	{
+		srange = plot_smax/20;
+	}
 	sstep = srange/(double) x_resolution;
 	frange = plot_fmax - plot_fmin;
+	// if only 1 solute is present, the srange needs to be manually set
+	if (frange < 1e-100)
+	{
+		frange = plot_fmax/20;
+	}
 	fstep = frange/(double) y_resolution;
 	ssigma = srange/resolution;
 	fsigma = frange/resolution;
@@ -800,22 +803,26 @@ void US_Pseudo3D_Combine::plot_3dim()
 	count = 0;
 	if (plot_s)
 	{
+//		cout << "plots\n";
 		if (resolution == 100)
 		{
+//			cout << "resolution==100\n";
+//			cout << "current_distro: " << current_distro << ", size: " << system[current_distro].s_distro.size() << endl;
 			for (iter = system[current_distro].s_distro.begin(); iter != system[current_distro].s_distro.end(); iter++)
 			{
+				cout << (*iter).c << endl;
 				for (i=0; i<x_resolution; i++)
 				{
 					for (j=0; j<y_resolution; j++)
 					{
-//				cout << "y: " << y[i] << ", it: " <<  (*iter).k  << ", x: " << x[i] << ", it: " <<  (*iter).k << endl;
+//						cout << "y: " << y[i] << ", it_k: " <<  (*iter).k  << ", x: " << x[i] << ", it_s: " <<  (*iter).s << ", sig_f: " << fsigma << ", sig_s: " << ssigma ;
 						if (y[j] > (*iter).k - fsigma && y[j] < (*iter).k + fsigma
 											 && x[i] > (*iter).s - ssigma && x[i] < (*iter).s + ssigma)
 						{
 							z[i][j] += (*iter).c;
 						}
 						maxval = max(maxval, z[i][j]);
-//					cout << "z[" << i << "][" << j << "]: " << z[i][j] << ", maxval: " << maxval <<endl;
+//cout << ", z[" << i << "][" << j << "]: " << z[i][j] << ", maxval: " << maxval <<endl;
 					}
 				}
 				count++;
@@ -828,10 +835,10 @@ void US_Pseudo3D_Combine::plot_3dim()
 			{
 				//double maxvals[USglobal->config_list.numThreads];
 				vector<double> maxvals( USglobal->config_list.numThreads );
-        
+		
 				//double* zz[x_resolution];
 
-        double** zz = new double* [ x_resolution ];
+				double** zz = new double* [ x_resolution ];
 
 				for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
@@ -864,9 +871,9 @@ void US_Pseudo3D_Combine::plot_3dim()
 					{
 						x_end = x_resolution - 1;
 					}
-					plot3d_thr_threads[j]->plot3d_thr_setup( j, zz, 
-              system[current_distro].s_distro, x, y, x_start, x_end, y_resolution, 
-              &maxvals[j], ssigma, fsigma, progress );
+					plot3d_thr_threads[j]->plot3d_thr_setup( j, zz,
+							system[current_distro].s_distro, x, y, x_start, x_end, y_resolution,
+							&maxvals[j], ssigma, fsigma, progress );
 				}
 				for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
@@ -891,7 +898,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 					delete plot3d_thr_threads[j];
 				}
 
-        delete [] zz;
+				delete [] zz;
 			}
 			else
 			{
@@ -942,16 +949,16 @@ void US_Pseudo3D_Combine::plot_3dim()
 			{
 				//double maxvals[USglobal->config_list.numThreads];
 				
-        vector<double> maxvals( USglobal->config_list.numThreads );
+				vector<double> maxvals( USglobal->config_list.numThreads );
 				//double *zz[x_resolution];
 				double** zz = new double* [ x_resolution ];
 				
-        for(j = 0; j < USglobal->config_list.numThreads; j++)
+				for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
 					maxvals[j] = 0;
 				}
 				
-        for(j = 0; j < x_resolution; j++)
+				for(j = 0; j < x_resolution; j++)
 				{
 					zz[j] = z[j];
 				}
@@ -960,9 +967,9 @@ void US_Pseudo3D_Combine::plot_3dim()
 
 				//US_Plot3d_thr_t *plot3d_thr_threads[USglobal->config_list.numThreads];
 				
-        vector< US_Plot3d_thr_t* > plot3d_thr_threads( USglobal->config_list.numThreads );
+				vector< US_Plot3d_thr_t* > plot3d_thr_threads( USglobal->config_list.numThreads );
 				
-        for(j = 0; j < USglobal->config_list.numThreads; j++)
+				for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
 					plot3d_thr_threads[j] = new US_Plot3d_thr_t(j);
 					plot3d_thr_threads[j]->start();
@@ -1031,7 +1038,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 		}
 	}
 
-  // Never used
+// Never used
 	// QFileInfo fi();
 
 	QString htmlDir = USglobal->config_list.html_dir + "/" + system[current_distro].run_name;
@@ -1059,7 +1066,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 		if (system[current_distro].distro_type == 12)
 		{
 			plot->setTitle(system[current_distro].run_name + ".global_dis.dat" +
-			"\n" + system[current_distro].method);
+					"\n" + system[current_distro].method);
 		}
 		else if (system[current_distro].distro_type == 13)
 		{
@@ -1069,19 +1076,19 @@ void US_Pseudo3D_Combine::plot_3dim()
 		else
 		{
 			plot->setTitle(system[current_distro].run_name + "." +
-			system[current_distro].cell +
-			system[current_distro].wavelength +	"\n" +
-			system[current_distro].method);
+					system[current_distro].cell +
+					system[current_distro].wavelength +	"\n" +
+					system[current_distro].method);
 		}
 	}
 	plot->replot();
 	delete [] xval;
 	delete [] yval;
-  delete [] x;
-  delete [] y;
-  
-  for ( unsigned int i = 0; i < x_resolution; i++ ) delete [] z[i];
-  delete [] z;
+	delete [] x;
+	delete [] y;
+
+	for ( unsigned int i = 0; i < x_resolution; i++ ) delete [] z[i];
+	delete [] z;
 
 	QString cell_info = "." + system[current_distro].cell + system[current_distro].wavelength;
 	//cout << "Cell Info: " << cell_info << endl;
