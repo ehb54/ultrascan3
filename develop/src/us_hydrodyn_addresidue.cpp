@@ -701,6 +701,7 @@ void US_AddResidue::select_residue_file()
 				for (j=0; j<numatoms; j++)
 				{
 					ts >> new_atom.name;
+					ts >> new_atom.hybrid.name;
 					ts >> new_atom.hybrid.mw;
 					ts >> new_atom.hybrid.radius;
 					ts >> new_atom.bead_assignment;
@@ -741,7 +742,6 @@ void US_AddResidue::select_residue_file()
 					ts >> new_bead.placing_method;
 					ts >> new_bead.chain;
 					ts >> new_bead.volume;
-					ts >> new_bead.visibility;
 					str2 = ts.readLine(); // read rest of line
 					new_residue.r_bead.push_back(new_bead);
 //					str1.sprintf("Bead %d: defined", j+1);
@@ -1155,6 +1155,22 @@ void US_AddResidue::accept_residue()
 			cb_positioning->setChecked(false);
 		}
 	}
+	// if we loaded an existing residue for editing and all atoms have been defined, we can activate the
+	// Continue button at this point. First, we need to check that the atoms all have been defined.
+	QString str;
+	bool flag = true;
+	for (int i=0; i<cmb_r_atoms->count(); i++)
+	{
+		str = cmb_r_atoms->text(i);
+		if (str.contains("undefined"))
+		{
+			flag = false;
+		}
+	}
+	if (flag)
+	{
+		pb_atom_continue->setEnabled(true); // all atoms are defined now
+	}
 }
 
 void US_AddResidue::atom_continue()
@@ -1308,7 +1324,7 @@ void US_AddResidue::accept_atom()
 	}
 	if (flag)
 	{
-		pb_atom_continue->setEnabled(true);
+		pb_atom_continue->setEnabled(true); // all atoms are defined now
 	}
 //	cout << "Residue print accept_atom() - 2: \n";
 //	print_residue(new_residue);
