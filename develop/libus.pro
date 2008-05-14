@@ -4,7 +4,7 @@
 TEMPLATE       = lib
 TARGET         = us
 TRANSLATIONS   = lib.ts
-VERSION        = 9.6
+VERSION        = 9.7
 MOC_DIR        = src/moc
 OBJECTS_DIR    = src/obj
 

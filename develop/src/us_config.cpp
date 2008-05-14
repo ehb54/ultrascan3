@@ -4,7 +4,7 @@
 US_Config::US_Config( QObject* parent, const char* name)
 	: QObject (parent, name)
 {
-	US_Version = "9.6";
+	US_Version = "9.7";
 	if ( ! read( ) )
 	{
 		setDefault();
