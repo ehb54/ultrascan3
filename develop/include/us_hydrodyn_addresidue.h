@@ -52,6 +52,7 @@ class US_AddResidue : public QWidget
 		QPushButton *pb_reset;
 		QPushButton *pb_select_residue_file;
 		QPushButton *pb_select_atom_file;
+		QPushButton *pb_delete_residue;
 
 		QLabel *lbl_info1;
 		QLabel *lbl_atom_file;
@@ -129,6 +130,7 @@ class US_AddResidue : public QWidget
 		void select_placing_method(int);
 		void select_type(int);
 		void select_beadatom();
+		void delete_residue();
 		void print_residue(struct residue);
 		void setupGUI();
 		void accept_bead();
@@ -145,6 +147,7 @@ class US_AddResidue : public QWidget
 		void set_positioning();
 		void set_chain(int);
 		void atom_continue();
+		void write_residue_file();
 
 	protected slots:
 		void closeEvent(QCloseEvent *);

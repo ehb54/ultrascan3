@@ -482,6 +482,14 @@ void US_AddResidue::setupGUI()
 	pb_add->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_add, SIGNAL(clicked()), SLOT(add()));
 
+	pb_delete_residue = new QPushButton(tr("Delete Residue"), this);
+	Q_CHECK_PTR(pb_delete_residue);
+	pb_delete_residue->setMinimumHeight(minHeight1);
+	pb_delete_residue->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_delete_residue->setEnabled(false);
+	pb_delete_residue->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_delete_residue, SIGNAL(clicked()), SLOT(delete_residue()));
+
 	pb_close = new QPushButton(tr("Close"), this);
 	Q_CHECK_PTR(pb_close);
 	pb_close->setMinimumHeight(minHeight1);
@@ -570,13 +578,14 @@ void US_AddResidue::setupGUI()
 	background->addWidget(lbl_list_beadatom, j, 3);
 	background->addWidget(lbl_select_beadatom, j, 4);
 	j++;
-	background->addMultiCellWidget(lb_list_beadatom, j, j+5, 3, 3);
+	background->addMultiCellWidget(lb_list_beadatom, j, j+6, 3, 3);
 	background->addMultiCellWidget(lb_select_beadatom, j, j+6, 4, 4);
 	j+=6;
 	background->addWidget(pb_accept_bead, j, 3);
+	background->addWidget(pb_reset, j, 4);
 	j++;
 	background->addWidget(pb_add, j, 3);
-	background->addWidget(pb_reset, j, 4);
+	background->addWidget(pb_delete_residue, j, 4);
 	j++;
 	background->addWidget(pb_help, j, 3);
 	background->addWidget(pb_close, j, 4);
@@ -596,6 +605,7 @@ void US_AddResidue::add()
 	if (sum != new_residue.molvol)
 	{
 		QMessageBox::message("Attention:", "The residue volume does not match the volume of the beads:\n\n" + str1);
+		pb_add->setEnabled(false);
 		return;
 	}
 	for (i=0; i<residue_list.size(); i++)
@@ -622,44 +632,7 @@ void US_AddResidue::add()
 	{
 		residue_list.push_back(new_residue);
 	}
-	QFile f(residue_filename);
-	if (f.open(IO_WriteOnly|IO_Translate))
-	{
-		lb_residues->clear();
-		QTextStream ts(&f);
-		for (unsigned int i=0; i<residue_list.size(); i++)
-		{
-			ts << residue_list[i].name.upper()
-				<< "\t" << residue_list[i].type
-				<< "\t" << residue_list[i].molvol
-				<< "\t" << residue_list[i].asa
-				<< "\t" << residue_list[i].r_atom.size()
-				<< "\t" << residue_list[i].r_bead.size() << endl;
-			for (unsigned int j=0; j<residue_list[i].r_atom.size(); j++)
-			{
-				ts << residue_list[i].r_atom[j].name.upper()
-					<< "\t" << residue_list[i].r_atom[j].hybrid.name
-					<< "\t" << residue_list[i].r_atom[j].hybrid.mw
-					<< "\t" << residue_list[i].r_atom[j].hybrid.radius
-					<< "\t" << residue_list[i].r_atom[j].bead_assignment
-					<< "\t" << (unsigned int) residue_list[i].r_atom[j].positioner
-					<< "\t" << residue_list[i].r_atom[j].serial_number
-					<< "\t" << residue_list[i].r_atom[j].chain << endl;
-			}
-			for (unsigned int j=0; j<residue_list[i].r_bead.size(); j++)
-			{
-				ts << residue_list[i].r_bead[j].hydration
-					<< "\t" << residue_list[i].r_bead[j].color
-					<< "\t" << residue_list[i].r_bead[j].placing_method
-					<< "\t" << residue_list[i].r_bead[j].chain
-					<< "\t" << residue_list[i].r_bead[j].volume << endl;
-			}
-			str1.sprintf("%d: ", i+1);
-			str1 += residue_list[i].name.upper();
-			lb_residues->insertItem(str1);
-		}
-		f.close();
-	}
+	write_residue_file();
 	str1.sprintf(tr(" Number of Residues in File: %d"), residue_list.size());
 	lbl_numresidues->setText(str1);
 	pb_accept_bead->setEnabled(false);
@@ -936,17 +909,20 @@ void US_AddResidue::select_r_bead(int val)
 		new_bead.chain = new_residue.r_bead[current_bead].chain;
 		new_bead.placing_method = new_residue.r_bead[current_bead].placing_method;
 		new_bead.hydration = new_residue.r_bead[current_bead].hydration;
-	}
-	cmb_bead_color->setCurrentItem(new_residue.r_bead[current_bead].color);
-	cmb_placing->setCurrentItem(new_residue.r_bead[current_bead].placing_method);
-	cnt_hydration->setValue(new_residue.r_bead[current_bead].hydration);
-	if (new_residue.r_bead[current_bead].chain)
-	{
-		bg_chain->setButton(1);
-	}
-	else
-	{
-		bg_chain->setButton(0);
+		new_bead.volume = new_residue.r_bead[current_bead].volume;
+		cmb_bead_color->setCurrentItem(new_residue.r_bead[current_bead].color);
+		cmb_placing->setCurrentItem(new_residue.r_bead[current_bead].placing_method);
+		cnt_hydration->setValue(new_residue.r_bead[current_bead].hydration);
+		str.sprintf("%f", new_residue.r_bead[current_bead].volume);
+		le_bead_volume->setText(str);
+		if (new_residue.r_bead[current_bead].chain)
+		{
+			bg_chain->setButton(1);
+		}
+		else
+		{
+			bg_chain->setButton(0);
+		}
 	}
 	unsigned int i;
 	lb_list_beadatom->clear();
@@ -1054,10 +1030,12 @@ void US_AddResidue::help()
 
 void US_AddResidue::reset()
 {
+	pb_delete_residue->setEnabled(false);
 	pb_select_atom_file->setEnabled(false);
 	pb_select_residue_file->setEnabled(false);
 	le_residue_name->setEnabled(true);
 	le_residue_name->setText("");
+	le_bead_volume->setText("0.0");
 	cnt_numbeads->setEnabled(true);
 	cnt_numbeads->setValue(0);
 	cnt_numatoms->setEnabled(true);
@@ -1082,13 +1060,16 @@ void US_AddResidue::reset()
 	cmb_bead_color->setCurrentItem(0);
 	cnt_hydration->setEnabled(false);
 	cnt_hydration->setValue(0);
+	cmb_placing->setCurrentItem(0);
 	cmb_placing->setEnabled(false);
+	/*	
 	rb_backbone->setEnabled(false);
 	rb_backbone->setChecked(true);
 	rb_sidechain->setEnabled(false);
 	rb_sidechain->setChecked(false);
+	*/
 	bg_chain->setEnabled(false);
-	bg_chain->setButton(1);
+	bg_chain->setButton(0);
 	lb_select_beadatom->setEnabled(false);
 	lb_select_beadatom->clear();
 	lb_list_beadatom->setEnabled(false);
@@ -1175,18 +1156,14 @@ void US_AddResidue::accept_residue()
 
 void US_AddResidue::atom_continue()
 {
-//cout << "Residue print atom_continue -1 : \n";
-//print_residue (new_residue);
+	QString str;
 	pb_accept_atom->setEnabled(false);
 	cnt_hydration->setEnabled(true);
 	cmb_r_beads->setEnabled(true);
-	cmb_r_beads->setCurrentItem(0);
-	current_bead = 0;
 	cmb_bead_color->setEnabled(true);
 	cmb_placing->setEnabled(true);
 	lb_select_beadatom->setEnabled(true);
 	le_bead_volume->setEnabled(true);
-	le_bead_volume->setText("0.0");
 	cb_positioning->setEnabled(false);
 	rb_backbone->setEnabled(true);
 	rb_backbone->setChecked(true);
@@ -1198,17 +1175,36 @@ void US_AddResidue::atom_continue()
 	lb_list_beadatom->clear();
 	lb_select_beadatom->setEnabled(true);
 	lb_select_beadatom->clear();
+	cmb_r_beads->clear();
+	if(existing_residue)
+	{
+		for (unsigned int i=0; i<new_residue.r_bead.size(); i++)
+		{
+			str.sprintf("Bead %d: defined", i + 1);
+			cmb_r_beads->insertItem(str);
+		}
+	}
+	else
+	{
+		for (unsigned int i=0; i<new_residue.r_bead.size(); i++)
+		{
+			str.sprintf("Bead %d: undefined", i + 1);
+			cmb_r_beads->insertItem(str);
+		}
+	}
+	cmb_r_beads->setCurrentItem(0);
+	current_bead = 0;
+	current_atom = 0;
+	select_r_bead(0);
 	for (int i=0; i<cmb_r_atoms->count(); i++)
 	{
 		lb_select_beadatom->insertItem(cmb_r_atoms->text(i));
 	}
-	current_atom = 0;
-	lb_select_beadatom->setCurrentItem(0);
 	pb_accept_bead->setEnabled(true);
 	pb_atom_continue->setEnabled(false);
-	if(existing_residue)
-	{
-		QString str;
+	/*
+		lb_select_beadatom->setCurrentItem(0);
+		
 		cmb_r_beads->clear();
 		for (unsigned int i=0; i<new_residue.r_bead.size(); i++)
 		{
@@ -1219,18 +1215,24 @@ void US_AddResidue::atom_continue()
 		cmb_bead_color->setCurrentItem(new_residue.r_bead[0].color);
 		cnt_hydration->setValue(new_residue.r_bead[0].hydration);
 		cmb_placing->setCurrentItem(new_residue.r_bead[0].placing_method);
+		if (new_residue.r_bead[0].chain)
+		{
+			bg_chain->setButton(1);
+		}
+		else
+		{
+			bg_chain->setButton(0);
+		}
+		str.sprintf("%f", new_residue.r_bead[0].volume);
+		le_bead_volume->setText(str);		
 		for (unsigned int i=0; i<new_residue.r_atom.size(); i++)
 		{
-//cout << "i=" << i << ": " << new_residue.r_atom[i].name << " (" <<
-//new_residue.r_atom[i].bead_assignment << ")" << endl;
 			if(new_residue.r_atom[i].bead_assignment == 0)
 			{
 				lb_list_beadatom->insertItem(lb_select_beadatom->text(i));
 			}
 		}
-	}
-//cout << "Residue print atom_continue - 2: \n";
-//print_residue (new_residue);
+	*/
 }
 
 void US_AddResidue::accept_bead()
@@ -1238,6 +1240,7 @@ void US_AddResidue::accept_bead()
 	if (new_bead.volume == 0.0)
 	{
 		QMessageBox::message("Attention:", "No bead volume entered for this bead!\nPlease correct this and try again...");
+		pb_add->setEnabled(false);
 		return;
 	}
 	QString str;
@@ -1255,11 +1258,10 @@ void US_AddResidue::accept_bead()
 	if (flag)
 	{
 		pb_add->setEnabled(true);
+		pb_delete_residue->setEnabled(true);
 	}
 	new_residue.r_bead[current_bead] = new_bead;
 	new_bead.volume = 0.0;
-	le_bead_volume->setText("0.0");
-	bg_chain->setButton(0);
 }
 
 void US_AddResidue::accept_atom()
@@ -1356,8 +1358,72 @@ void US_AddResidue::closeEvent(QCloseEvent *e)
 	e->accept();
 }
 
-
 void US_AddResidue::update_bead_volume(const QString & val)
 {
 	new_bead.volume = val.toFloat();
 }
+
+void US_AddResidue::delete_residue()
+{
+	QString str1;
+	vector <struct residue>::iterator it;
+	for (it=residue_list.begin(); it != residue_list.end(); it++)
+	{
+		if ((*it).name.upper() == new_residue.name.upper())
+		{
+			residue_list.erase(it);
+			break;
+		}
+	}
+	write_residue_file();
+	str1.sprintf(tr(" Number of Residues in File: %d"), residue_list.size());
+	lbl_numresidues->setText(str1);
+	pb_accept_bead->setEnabled(false);
+	pb_add->setEnabled(false);
+	existing_residue = false;
+	reset();
+}
+
+void US_AddResidue::write_residue_file()
+{
+	QString str1;
+	QFile f(residue_filename);
+	if (f.open(IO_WriteOnly|IO_Translate))
+	{
+		lb_residues->clear();
+		QTextStream ts(&f);
+		for (unsigned int i=0; i<residue_list.size(); i++)
+		{
+			ts << residue_list[i].name.upper()
+					<< "\t" << residue_list[i].type
+					<< "\t" << residue_list[i].molvol
+					<< "\t" << residue_list[i].asa
+					<< "\t" << residue_list[i].r_atom.size()
+					<< "\t" << residue_list[i].r_bead.size() << endl;
+			for (unsigned int j=0; j<residue_list[i].r_atom.size(); j++)
+			{
+				ts << residue_list[i].r_atom[j].name.upper()
+						<< "\t" << residue_list[i].r_atom[j].hybrid.name
+						<< "\t" << residue_list[i].r_atom[j].hybrid.mw
+						<< "\t" << residue_list[i].r_atom[j].hybrid.radius
+						<< "\t" << residue_list[i].r_atom[j].bead_assignment
+						<< "\t" << (unsigned int) residue_list[i].r_atom[j].positioner
+						<< "\t" << residue_list[i].r_atom[j].serial_number
+						<< "\t" << residue_list[i].r_atom[j].chain << endl;
+			}
+			for (unsigned int j=0; j<residue_list[i].r_bead.size(); j++)
+			{
+				ts << residue_list[i].r_bead[j].hydration
+						<< "\t" << residue_list[i].r_bead[j].color
+						<< "\t" << residue_list[i].r_bead[j].placing_method
+						<< "\t" << residue_list[i].r_bead[j].chain
+						<< "\t" << residue_list[i].r_bead[j].volume << endl;
+			}
+			str1.sprintf("%d: ", i+1);
+			str1 += residue_list[i].name.upper();
+			lb_residues->insertItem(str1);
+		}
+		f.close();
+	}
+}
+
