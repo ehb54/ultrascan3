@@ -2495,7 +2495,7 @@ void UsWin::credits()
 	QMessageBox::message(
 			tr("UltraScan Credits"),
 	tr("UltraScan II version " + US_Version + "\n"
-			"Copyright 1998 - 2005\n"
+			"Copyright 1998 - 2008\n"
 			"Borries Demeler and the University of Texas System\n\n"
 			" - Credits -\n\n"
 			"The development of this software has been supported by\n"
