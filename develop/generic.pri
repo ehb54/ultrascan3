@@ -35,7 +35,7 @@ win32 {
   DEFINES            += WIN32 
   QMAKE_CXXFLAGS     += /EHsc
   QMAKE_LFLAGS_DEBUG += /NODEFAULTLIB:"msvcrt.lib"
-  LIBS               += ../../bin/us96.lib 
+  LIBS               += ../../bin/us97.lib 
   INCLUDEPATH        += $(ZLIB)/include
 }
 
