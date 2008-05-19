@@ -81,6 +81,7 @@ struct atom
 											// 2 = prosthetic group
 											// 3 = undefined
 											// 4 = other
+	float asa;                      // accessable surface area of this atom
 };
 
 struct residue
