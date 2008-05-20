@@ -95,5 +95,23 @@ extern unsigned long total_fitness_time;
 extern double regularization_factor;
 extern int regularize_on_RMSD;
 extern int ga_mw;
+extern int ga_sc;
 extern double s_rounding;
+
+// rounding 
+
+// NOTICE: these need to be dealt with or simply replace the mechanism
+// to round to x significant digits regardless of magnitude
+
+#define ROUNDING_VBAR             1
+#define ROUNDING_MW               100
+#define ROUNDING_S                1e-13
+#define ROUNDING_D                1e-7
+#define ROUNDING_SIGMA            1
+#define ROUNDING_DELTA            1
+#define ROUNDING_CONCENTRATION    1
+#define ROUNDING_F_F0             1
+#define ROUNDING_KEQ              1
+#define ROUNDING_KOFF             1e-6
+
 #endif

@@ -43,6 +43,7 @@ class US_EXTERN US_fe_nnls_t
 		void WriteResults(struct mfem_data, Simulation_values, QString, double, unsigned int);
 		void WriteResults(vector<struct mfem_data>, Simulation_values, QString, double, unsigned int);
 		void WriteResults(vector<struct mfem_data>, vector<Solute>, vector<Simulation_values>, QString, double, unsigned int);
+		void WriteResultsSC(vector<struct mfem_data>, vector<Solute>, vector<Simulation_values>, QString, double, unsigned int, int);
 		void BufferResults(vector<struct mfem_data>, Simulation_values, QString, double, unsigned int);
 		void BufferResults(vector<struct mfem_data>, vector<Solute>, vector<Simulation_values>, QString, double, unsigned int);
 		Simulation_values buffer_sv;
@@ -50,6 +51,9 @@ class US_EXTERN US_fe_nnls_t
 		struct ga_data GA_Params;
 		struct sa2d_data SA2D_Params;
 		QString gridopt;
+		vector <QString> constraints_full_text;
+		vector <QString> simulation_parameters_full_text;
+		
 
 	public:
 		Simulation_values calc_residuals(vector <struct mfem_data>, vector <Solute>, double, int);
@@ -69,5 +73,9 @@ typedef struct _MPI_GA_Work_Msg {
 
 extern long getrss(int pid);
 extern long maxrss;
+extern SimulationParameters simulation_parameters;
+extern ModelSystem model_system;
+extern ModelSystemConstraints model_system_constraints;
+extern vector<struct mfem_data> last_residuals;
 
 #endif

@@ -65,6 +65,14 @@ class US_EXTERN US_GridControl_T : public QObject
 		float meniscus_range;
 		float regularization;
 		
+		vector <QString> constraints_full_text;
+		vector <QString> simulation_parameters_full_text;
+		SimulationParameters simulation_parameters;
+		QString constraints_file_name;
+		QString simulation_parameters_file_name;
+		ModelSystem model_system;
+		ModelSystemConstraints model_system_constraints;
+
 	private slots:
 	
 		void add_experiment();
