@@ -69,6 +69,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
 		vector <struct PDB_model> model_vector;
 
+		int compute_asa();
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif

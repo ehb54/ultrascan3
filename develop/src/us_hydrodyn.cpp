@@ -340,3 +340,8 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
 	e->accept();
 }
 
+int US_Hydrodyn::compute_asa()
+{
+	// run the surfracer code
+	return 0;  
+}
