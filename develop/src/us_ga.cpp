@@ -20,6 +20,7 @@
 #include "../include/us_ga_random_normal.h"
 #include "../include/us_ga_s_estimate.h"
 #include "../include/us_ga_gsm.h"
+#include "../include/us_ga_interacting.h"
 
 int fitness_mfem_calls = 0;
 
@@ -28,6 +29,7 @@ using namespace std;
 int debug_level;
 int this_rank;
 
+#define USE_GSM
 /* user configuration section */
 
 #define TOLERANCE 1e-6   /* fitness below this is success */
@@ -207,6 +209,7 @@ int centered_points;
 QString analysis_type;
 double s_rounding;
 int ga_mw = 0;
+int ga_sc = 0;
 
 typedef struct _Solute_center
 {
@@ -228,13 +231,13 @@ vector <vector <Simulation_values> > ga_best_sve;
 
 value f_solute(value *, void *v)
 {
-	// maybe push values onto stack
+        // maybe push values onto stack
 	// then, fitness evaluation can pop off stack & run the fem stuff
 	node *n = (node *)v;
 	if(((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS])
 	{
 		double *d = (double *)n->data;
-		if(s_proximity_limit && sp[RESULT_STACK])
+		if(!ga_sc && s_proximity_limit && sp[RESULT_STACK])
 		{
 			int i;
 			for(i = 0; i < sp[RESULT_STACK]; i+=2)
@@ -297,11 +300,15 @@ void f_init_solute(void *v)
 	d[4] = ff0_estimates[i][0];
 	d[5] = ff0_estimates[i][1];
 	// find a uniform (for now) value of s
+	if (ga_sc) 
+	{
+	    s_rounding = d[4];
+	}
 	d[0] = roundn((drand48() * (d[3] - d[2])) + d[2], s_rounding, solute_rounding);
 	d[1] = roundn((drand48() * (d[5] - d[4])) + d[4], 1, solute_rounding);
 	if(debug_level > 1 &&
 			(d[0] < d[2] || d[0] > d[3] ||
-			 d[1] < d[4] || d[1] > d[5]))
+			 (!ga_sc && (d[1] < d[4] || d[1] > d[5]))))
 	{
 		printf("%d: f_init_solute unexpected range error!\n", this_rank);
 	}
@@ -321,7 +328,7 @@ void f_init_solute(void *v)
 	{
 		d[1] = d[5];
 	}
-	if(d[0] < 1e-14)
+	if(d[0] < 1e-14 && !ga_sc)
 	{
 		printf("%d: init solute d[0] %.4g d[2] %.4g d[3] %.4g\n", this_rank, d[0], d[2], d[3]);
 		fflush(stdout);
@@ -345,8 +352,9 @@ void f_node_mutate_solute(void *v)
 		node *n = (node *)v;
 		double *d = (double *)(n->data);
 		double sel = drand48(); // so we have a 60% chance of hitting the s or the D and a 20% chance of hitting both
+		// for ga_sc, 100% chance of hitting just the s value, which is the only value mutated
 		node_mutate_count++;
-		if(use_random_normal)
+		if(use_random_normal || ga_sc)
 		{
 			double_pair v;
 			random_normal_sd_1 = (d[3] - d[2])/(6.0 * log(2.0 + 2.0 * this_generation) / log(2.0));
@@ -359,7 +367,7 @@ void f_node_mutate_solute(void *v)
 			//	 v.y, random_normal_sd_2,
 			//	 d[1], d[4], d[5]); fflush(stdout);
 
-			if(sel > .4)
+			if(sel > .4 || ga_sc)
 			{
 				node_mutate_count_D++;
 				d[1] = v.y;
@@ -374,9 +382,13 @@ void f_node_mutate_solute(void *v)
 						d[1] = d[5];
 					}
 				}
+				if (ga_sc) 
+				{
+				    s_rounding = d[4];
+				}
 				d[1] = roundn(d[1], 1, solute_rounding);
 			}
-			if(sel < .6)
+			if(sel < .6 && !ga_sc)
 			{
 				node_mutate_count_s++;
 				d[0] = v.x;
@@ -439,7 +451,7 @@ void f_node_mutate_solute(void *v)
 				d[0] = roundn(d[0], s_rounding, solute_rounding);
 			}
 		}
-		if(d[0] < 1e-14)
+		if(d[0] < 1e-14 && !ga_sc)
 		{
 			printf("%d: mutate solute d[0] %.4g d[2] %.4g d[3] %.4g\n", this_rank, d[0], d[2], d[3]);
 			fflush(stdout);
@@ -2302,7 +2314,26 @@ double fitness_solute(node *n)
 		use_experiment.push_back(our_us_fe_nnls_t->experiment[e]);
 		//  printf("%d: call calc_residuals %lx\n", this_rank, &our_us_fe_nnls_t->experiment); fflush(stdout);
 		//	Simulation_values sv = our_us_fe_nnls_t->calc_residuals(our_us_fe_nnls_t->experiment, solute_vector, 0e0, 1);
-		sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1);
+		if(ga_sc) {
+		    if (solute_vector.size() != s_estimate_solutes) 
+		    {
+			printf("%d: !! solute_vector.size() (%u) != s_estimate_solutes (%u)\n", 
+			       this_rank, solute_vector.size(), s_estimate_solutes); fflush(stdout);
+			Simulation_values sv;
+			vector<double> no_noise;
+			vector<double> variances;
+			sv.solutes = solute_vector;
+			sv.variance = 1e99;
+			variances.push_back(sv.variance);
+			sv.ti_noise = no_noise;
+			sv.ri_noise = no_noise;
+			sve[e] = sv;
+		    } else {
+			sve[e] = us_ga_interacting_calc(use_experiment, solute_vector, 0e0);
+		    }
+		} else {
+		    sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1);
+		}
 		if(debug_level > 1)
 		{
 			printf("%d: exp %d variance %g\n", this_rank, e, sve[e].variance);
@@ -2333,8 +2364,10 @@ double fitness_solute(node *n)
 	}
 	//  printf("sv.variance %g\n", sv.variance);
 	//  printf("sv.variance %g\n", sv.variance);
-	if(tot_solutes.size())
+	if (!ga_sc) 
 	{
+	    if (tot_solutes.size())
+	    {
 		//	result = sv.variance;
 		for(u = 0; u < tot_solutes.size(); u++)
 		{
@@ -2368,16 +2401,18 @@ double fitness_solute(node *n)
 			}
 			m = m->children[0];
 		}
-	}
-	else
-	{
+	    }
+	    else
+	    {
 		result = 1e100;
+	    }
+	} else {
+	    result = sqrt(result);
 	}
 	//  puts("fitness_solute done");
 	gettimeofday(&end_tv, NULL);
 	total_fitness_time += 1000000l * (end_tv.tv_sec - start_tv.tv_sec) +  end_tv.tv_usec - start_tv.tv_usec;
-	//  printf("result %g\n", result);
-	if(regularization_factor && nonzeros)
+	if(!ga_sc && regularization_factor && nonzeros)
 	{
 		if(regularize_on_RMSD)
 		{
@@ -2390,6 +2425,7 @@ double fitness_solute(node *n)
 	}
 	//  printf("result regularized %g\n", result);
 	//  fflush(stdout);
+	printf("%d: result %g\n", this_rank, result); fflush(stdout);
 	return result;
 }
 
@@ -3332,7 +3368,26 @@ Simulation_values node_to_sv(node *n)
 		sve.push_back(sv);
 		vector <struct mfem_data> use_experiment;
 		use_experiment.push_back(our_us_fe_nnls_t->experiment[e]);
-		sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1);
+		if(ga_sc) {
+		    if (solute_vector.size() != s_estimate_solutes) 
+		    {
+			printf("%d: !! solute_vector.size() (%u) != s_estimate_solutes (%u)\n", 
+			       this_rank, solute_vector.size(), s_estimate_solutes); fflush(stdout);
+			Simulation_values sv;
+			vector<double> no_noise;
+			vector<double> variances;
+			sv.solutes = solute_vector;
+			sv.variance = 1e99;
+			variances.push_back(sv.variance);
+			sv.ti_noise = no_noise;
+			sv.ri_noise = no_noise;
+			sve[e] = sv;
+		    } else {
+			sve[e] = us_ga_interacting_calc(use_experiment, solute_vector, 0e0);
+		    }
+		} else {
+		    sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1);
+		}
 	} // for e
 	if(our_us_fe_nnls_t->experiment.size() > 1)
 	{
@@ -3639,10 +3694,10 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
 	int last_pos;
 	double tot_individual_size;
 	double avg_individual_size;
-	//  int best[elitist_gsm + 1][new_tree_depth];  // ok, there's an extra row for when elitism gsm is off
-	//  int best_index[new_tree_depth];
-	//  char gsm_this_index[pop_size];
-	//  char use_gsm_type[GSM_MAX_SEARCH_TYPE];
+	int best[elitist_gsm + 1][new_tree_depth];  // ok, there's an extra row for when elitism gsm is off
+	int best_index[new_tree_depth];
+	char gsm_this_index[pop_size];
+	char use_gsm_type[GSM_MAX_SEARCH_TYPE];
 	char any_gsm;
 	double best_fitness = 1e99;
 	MPI_GA_Work_Msg mpi_ga_msg_in, mpi_ga_msg_out;
@@ -3986,80 +4041,85 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
 				// and read in the in populations
 
 				any_gsm = 0;
+				if(ga_sc)
+				{
+				    any_gsm = 0;
+				}
 				// todo gsm not active
-				/*
-				if(g >= elitist_gsm_generation_start &&
-				(inverse_hessian_prob ||
-				conjugate_gradient_prob ||
-				steepest_descent_prob)) {
-				for(i = 0; i < GSM_MAX_SEARCH_TYPE; i++) {
-				use_gsm_type[i] = 0;
-				if(inverse_hessian_prob &&
-				inverse_hessian_prob > drand48()) {
-				use_gsm_type[INVERSE_HESSIAN]++;
-				any_gsm++;
-				}
-				if(conjugate_gradient_prob &&
-				conjugate_gradient_prob > drand48()) {
-				use_gsm_type[CONJUGATE_GRADIENT]++;
-				any_gsm++;
-				}
-				if(steepest_descent_prob &&
-				steepest_descent_prob > drand48()) {
-				use_gsm_type[STEEPEST_DESCENT]++;
-				any_gsm++;
-				}
-				}
-				if(any_gsm) {
-				int j, active_points_index;
-				puts("will gsm");
-				for(i = 0; i < new_tree_depth; i++) {
-				best_index[i] = 0;
-				for(j = 0; j < elitist_gsm; j++) {
-				 best[j][i] = -1;
-				}
-				}
-				puts("any_gsm 1");
-				for(i = 0; i < pop_size; i++) {
-				if(debug_level > 1) {
-				 if(pn[i]->active_points != count_tree_active_points(pn[i]->root)) {
-				printf("active points match error\n");
-				pn[i]->active_points = count_tree_active_points(pn[i]->root);
-				 }
-				}
-				gsm_this_index[i] = 0;
-				active_points_index = pn[i]->active_points - 1;
-				if(best[best_index[active_points_index]][active_points_index] == -1) {
-				 gsm_this_index[i] = 1;
-				 best[best_index[active_points_index]][active_points_index] = i;
-				 if(best_index[active_points_index] < elitist_gsm - 1) {
-				best_index[active_points_index]++;
-				printf("best_index[%d] = %d\n", active_points_index, best_index[active_points_index]);
-				 }
-				}
+
+				if(any_gsm &&
+				   g >= elitist_gsm_generation_start &&
+				   (inverse_hessian_prob ||
+				    conjugate_gradient_prob ||
+				    steepest_descent_prob)) {
+				    for(i = 0; i < GSM_MAX_SEARCH_TYPE; i++) {
+					use_gsm_type[i] = 0;
+					if(inverse_hessian_prob &&
+					   inverse_hessian_prob > drand48()) {
+					    use_gsm_type[INVERSE_HESSIAN]++;
+					    any_gsm++;
+					}
+					if(conjugate_gradient_prob &&
+					   conjugate_gradient_prob > drand48()) {
+					    use_gsm_type[CONJUGATE_GRADIENT]++;
+					    any_gsm++;
+					}
+					if(steepest_descent_prob &&
+					   steepest_descent_prob > drand48()) {
+					    use_gsm_type[STEEPEST_DESCENT]++;
+					    any_gsm++;
+					}
+				    }
+				    if(any_gsm) {
+					int j, active_points_index;
+					puts("will gsm");
+					for(i = 0; i < new_tree_depth; i++) {
+					    best_index[i] = 0;
+					    for(j = 0; j < elitist_gsm; j++) {
+						best[j][i] = -1;
+					    }
+					}
+					puts("any_gsm 1");
+					for(i = 0; i < pop_size; i++) {
+					    if(debug_level > 1) {
+						if(pn[i]->active_points != count_tree_active_points(pn[i]->root)) {
+						    printf("active points match error\n");
+						    pn[i]->active_points = count_tree_active_points(pn[i]->root);
+						}
+					    }
+					    gsm_this_index[i] = 0;
+					    active_points_index = pn[i]->active_points - 1;
+					    if(best[best_index[active_points_index]][active_points_index] == -1) {
+						gsm_this_index[i] = 1;
+						best[best_index[active_points_index]][active_points_index] = i;
+						if(best_index[active_points_index] < elitist_gsm - 1) {
+						    best_index[active_points_index]++;
+						    printf("best_index[%d] = %d\n", active_points_index, best_index[active_points_index]);
+						}
+					    }
+					}
+
+					puts("any_gsm 2");
+					for(i = 0; i < new_tree_depth; i++) {
+					    for(j = 0; j < elitist_gsm; j++) {
+						if(best[j][i] != -1) {
+						    printf("best[%d][%d]: %g %d %d %u ", 
+							   j, i, 
+							   A[best[j][i]], 
+							   pn[best[j][i]]->points, 
+							   pn[best[j][i]]->active_points, 
+							   B[best[j][i]]);
+						    list_tree(pn[best[j][i]]->root);
+						    puts("");
+						} else {
+						    //		  printf("best[%d][%d]: unset\n", j, i);
+						}
+					    }
+					}
+				    }
 				}
 
-				puts("any_gsm 2");
-				for(i = 0; i < new_tree_depth; i++) {
-				for(j = 0; j < elitist_gsm; j++) {
-				 if(best[j][i] != -1) {
-				printf("best[%d][%d]: %g %d %d %u ", 
-					j, i, 
-					A[best[j][i]], 
-					pn[best[j][i]]->points, 
-					pn[best[j][i]]->active_points, 
-					B[best[j][i]]);
-				list_tree(pn[best[j][i]]->root);
-				puts("");
-				 } else {
-				//		  printf("best[%d][%d]: unset\n", j, i);
-				 }
-				}
-				}
-				}
-				}
-				*/
-				//	  puts("any_gsm 3");
+				 puts("any_gsm 3");
 
 				for(i = 0; i < pop_size; i++)
 				{
@@ -4073,6 +4133,7 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
 					{
 						if(pn[i]->no_gsm_improvement)
 						{
+						    puts("any_gsm 3a");
 							puts("gsm skipped, no improvement");
 							p = insert_population_node(p, dup_tree(pn[i]->root));
 							p->fitness = pn[i]->fitness;
@@ -4083,6 +4144,7 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
 						}
 						else
 						{
+						    puts("any_gsm 3b");
 							node *n = pn[i]->root, *m;
 							double *d, *e;
 							char any_improvement = 0;
@@ -4665,7 +4727,7 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
 						use_gsm = 0;
 #endif
 
-						if(use_gsm)
+						if(/* !ga_sc &&  */ use_gsm)
 						{
 							printf("%d: start use_gsm %d %g\n", this_rank, inverse_hessian_iter, inverse_hessian_h);
 							fflush(stdout);
@@ -5717,6 +5779,10 @@ void ga_setup(struct ga_data GA_Params, int myrank, US_fe_nnls_t *pass_us_fe_nnl
 		s_rounding = 100;
 		ga_mw = 1;
 	}
+	if(analysis_type == "GA_SC")
+	{
+		ga_sc = 1;
+	}
 	our_us_fe_nnls_t = pass_us_fe_nnls_t;
 	unsigned int i;
 	this_rank = myrank;
@@ -5819,24 +5885,43 @@ void ga_setup(struct ga_data GA_Params, int myrank, US_fe_nnls_t *pass_us_fe_nnl
 	conjugate_gradient_prob = 0e0;
 	steepest_descent_prob = 0e0;
 
-	inverse_hessian_iter = 20;
-	conjugate_gradient_iter = 20;
-	steepest_descent_iter = 20;
+	elitist_gsm = 0;
+	elitist_gsm_generation_start = 0;
+
+	if (ga_sc)
+	{
+	    inverse_hessian_prob = .05;
+	    conjugate_gradient_prob = .05;
+	    steepest_descent_prob = .05;
+	    elitist_gsm = 1;
+	    elitist_gsm_generation_start = 25;
+	    inverse_hessian_iter = 10;
+	    conjugate_gradient_iter = 10;
+	    steepest_descent_iter = 10;
+	} else {
+	    inverse_hessian_iter = 20;
+	    conjugate_gradient_iter = 20;
+	    steepest_descent_iter = 20;
+	}
 
 	inverse_hessian_h = .01;
 	conjugate_gradient_h = .01;
 	steepest_descent_h = .01;
 
-	elitist_gsm = 0;
-	elitist_gsm_generation_start = 0;
 
 	solute_early_l2_termination = 0e0;
 	solute_max_mfem_calls = 0l;
 
 	base_directory = "";
 
-	concentration_inactivate_prob = 1;
-	generation_inactivate_prob = .3;
+	if (ga_sc)
+	{
+	    concentration_inactivate_prob = 0;
+	    generation_inactivate_prob = 0;
+	} else {
+	    concentration_inactivate_prob = 1;
+	    generation_inactivate_prob = .3;
+	}
 	node_mutate_reactivates = 1;
 	inactive_control = 0;
 

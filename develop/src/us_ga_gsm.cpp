@@ -4,6 +4,7 @@
 #include <sys/time.h>
 #include <math.h>
 #include <string.h>
+#include <mpi.h>
 
 #include "../include/us_ga.h"
 #include "../include/us_ga_stacks.h"
@@ -11,6 +12,7 @@
 #include "../include/us_ga_random_normal.h"
 #include "../include/us_ga_s_estimate.h"
 #include "../include/us_ga_gsm.h"
+#include "../include/us_ga_interacting.h"
 
 using namespace std;
 
@@ -111,6 +113,8 @@ our_vector *new_our_vector(int len) {
   }
   return(v);
 }
+
+our_vector *vmin, *vmax, *vlen;
 
 void free_our_vector(our_vector *v) {
   free(v->d);
@@ -310,24 +314,36 @@ void clip_our_vector_scaled(our_vector *v) {
   for(i = 0; i < v->len; i+=2) {
     solute = s_estimate_indices[i / 2];
     j = i+1;
-    if(ga_mw) {
-	if(v->d[i] < .01) {
-	    v->d[i] = .01;
-	} 
-    } else {
-	if(v->d[i] < .1) {
+    if (ga_sc) 
+    {
+	if (v->d[i] < 0) 
+	{
+	    v->d[i] = 0;
+	}
+	if (v->d[i] > 1) 
+	{
 	    v->d[i] = 1;
+	}
+    } else {
+	if(ga_mw) {
+	    if(v->d[i] < .01) {
+		v->d[i] = .01;
+	    } 
 	} else {
-	    if(v->d[i] > 200) {
-		v->d[i] = 200;
+	    if(v->d[i] < .1) {
+		v->d[i] = 1;
+	    } else {
+		if(v->d[i] > 200) {
+		    v->d[i] = 200;
+		}
 	    }
 	}
-    }
-    if(v->d[j] < 1) {
-      v->d[j] = 1;
-    } else {
-	if(v->d[j] > 50) {
-	    v->d[j] = 50;
+	if(v->d[j] < 1) {
+	    v->d[j] = 1;
+	} else {
+	    if(v->d[j] > 50) {
+		v->d[j] = 50;
+	    }
 	}
     }
   }
@@ -1523,13 +1539,23 @@ double lamm_gsm_f(our_vector *v) {
   stacks_init();
   clip_our_vector_scaled(v);
   for(i = 0; i < v->len; i++) {
-    if(i % 2) {
-	push_stack(RESULT_STACK, v->d[i] * 1e0);
-    } else {
-	if(ga_mw) {
-	    push_stack(RESULT_STACK, v->d[i]);
+    if (ga_sc) 
+    {
+	if(i % 2) {
+	    push_stack(RESULT_STACK, ff0_estimates[(i - 1)/2][0]);
 	} else {
-	    push_stack(RESULT_STACK, v->d[i] * s_rounding);
+//	    printf("lamm_gsm_f push value vdi %d %g %g %g %g\n", i, v->d[i], vlen->d[i], vmin->d[i], v->d[i] *  vlen->d[i] + vmin->d[i]);
+	    push_stack(RESULT_STACK, v->d[i] * vlen->d[i] + vmin->d[i]);
+	}
+    } else {
+	if(i % 2) {
+	    push_stack(RESULT_STACK, v->d[i] * 1e0);
+	} else {
+	    if(ga_mw) {
+		push_stack(RESULT_STACK, v->d[i]);
+	    } else {
+		push_stack(RESULT_STACK, v->d[i] * s_rounding);
+	    }
 	}
     }
   }
@@ -1556,6 +1582,18 @@ double lamm_gsm_f(our_vector *v) {
     }
     solute_vector.push_back(solute);
   }
+  if (ga_sc) 
+  {
+      // reverse
+      vector<Solute> reverse;
+      for (u = 0; u < solute_vector.size(); u++) 
+      {
+//	  printf("pushing back u=%u\n", solute_vector.size() - u - 1); fflush(stdout);
+	  reverse.push_back(solute_vector[solute_vector.size() - u - 1]);
+      }
+      solute_vector = reverse;
+  }
+	  
   if(debug_level > 1) {
     for(u = 0; u < solute_vector.size(); u++) {
       printf("%d: gsm solute_vector[%u] = %g %g\n", this_rank, u, solute_vector[u].s, solute_vector[u].k); fflush(stdout);
@@ -1570,7 +1608,26 @@ double lamm_gsm_f(our_vector *v) {
     use_experiment.push_back(our_us_fe_nnls_t->experiment[e]);
     //    printf("%d: call calc_residuals\n", this_rank); fflush(stdout);
     //    Simulation_values sv = our_us_fe_nnls_t->calc_residuals(our_us_fe_nnls_t->experiment, solute_vector, 0e0, 1);
-    sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1);
+    if(ga_sc) {
+	if (solute_vector.size() != s_estimate_solutes) 
+	{
+	    printf("%d: !! solute_vector.size() (%u) != s_estimate_solutes (%u)\n", 
+		   this_rank, solute_vector.size(), s_estimate_solutes); fflush(stdout);
+	    Simulation_values sv;
+	    vector<double> no_noise;
+	    vector<double> variances;
+	    sv.solutes = solute_vector;
+	    sv.variance = 1e99;
+	    variances.push_back(sv.variance);
+	    sv.ti_noise = no_noise;
+	    sv.ri_noise = no_noise;
+	    sve[e] = sv;
+	} else {
+	    sve[e] = us_ga_interacting_calc(use_experiment, solute_vector, 0e0);
+	}
+    } else {
+	sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1);
+    }
     if(debug_level > 1) {
       printf("%d: exp %d variance %g\n", this_rank, e, sve[e].variance); fflush(stdout);
     }
@@ -1590,18 +1647,21 @@ double lamm_gsm_f(our_vector *v) {
   if(debug_level > 0) {
     printf("%d: gsm results %g\n", this_rank, result); fflush(stdout);
   }
-  if(tot_solutes.size()) {
-    for(u = 0; u < tot_solutes.size(); u++) {
-      //      printf("results tot_solutes[%d] = %g %g %g\n", u, tot_solutes[u].s, tot_solutes[u].k, tot_solutes[u].c);
-      if(tot_solutes[u].c > SOLUTE_CONCENTRATION_THRESHOLD) {
-	nonzeros++;
+  if (!ga_sc) 
+  {
+      if(tot_solutes.size()) {
+	  for(u = 0; u < tot_solutes.size(); u++) {
+	      //      printf("results tot_solutes[%d] = %g %g %g\n", u, tot_solutes[u].s, tot_solutes[u].k, tot_solutes[u].c);
+	      if(tot_solutes[u].c > SOLUTE_CONCENTRATION_THRESHOLD) {
+		  nonzeros++;
+	      }
+	  }
+      } else {
+	  result = 1e100;
       }
-    }
-  } else {
-    result = 1e100;
   }
   //  printf("%d: gsm fitness_solute done\n", this_rank); fflush(stdout);
-  if(regularization_factor && nonzeros) {
+  if(!ga_sc && regularization_factor && nonzeros) {
     if(regularize_on_RMSD) {
       result += result * regularization_factor * nonzeros;
     } else {
@@ -1641,6 +1701,11 @@ void lamm_gsm_df(our_vector *vd, our_vector *v) {
     v->d[i] = sav_ve;
     //    printf("end:", i);
     //    print_our_vector(v);
+    if (ga_sc) 
+    {
+	vd->d[i+1] = 0;
+	i++;
+    }
   }
   //  printf("after gradient search:");
   //  print_our_vector(vd);
@@ -1658,14 +1723,21 @@ void node_set_to_our_vector(node *n, our_vector *v) {
       exit(-1);
     }
     d = (double *)(n->data);
-    d[0] = floorn(v->d[i], s_rounding, solute_rounding);
-    d[1] = floorn(v->d[i+1], 1, solute_rounding);
+    if (ga_sc)
+    {
+	d[0] = floorn(v->d[i], ff0_estimates[i / 2][0], solute_rounding);
+	d[1] = ff0_estimates[i / 2][0];
+    } else {
+	d[0] = floorn(v->d[i], s_rounding, solute_rounding);
+	d[1] = floorn(v->d[i+1], 1, solute_rounding);
+    }
     n = n->children[0];
   }
 }
 
 double eps;
-#define EPS_DEFAULT 1e-7
+// #define EPS_DEFAULT 1e-7
+#define EPS_DEFAULT 1e-10
 
 void gsm_this_node(int gsm_method, node *n, int iter, double use_h) {
   int i, j;
@@ -1674,6 +1746,10 @@ void gsm_this_node(int gsm_method, node *n, int iter, double use_h) {
 
   global_iter = 0;
 
+  if (ga_sc) 
+  {
+      use_h /= 10;
+  }
   h = use_h;
   h2_r =  (1e0 / (2e0 * h));
 
@@ -1687,6 +1763,12 @@ void gsm_this_node(int gsm_method, node *n, int iter, double use_h) {
 
   v = new_our_vector(sp[RESULT_STACK]);
   vd = new_our_vector(sp[RESULT_STACK]);
+  if (ga_sc)
+  {
+      vmin = new_our_vector(sp[RESULT_STACK]);
+      vmax = new_our_vector(sp[RESULT_STACK]);
+      vlen = new_our_vector(sp[RESULT_STACK]);
+  }
 
   printf("%d: gsm this node 0\n", this_rank); fflush(stdout);
   for(i = 0; i < v->len; i+= 2, j++) {
@@ -1709,11 +1791,31 @@ void gsm_this_node(int gsm_method, node *n, int iter, double use_h) {
 
   for(i = 0; i < v->len; i += 2) {
     v->d[i] = stack[RESULT_STACK][v->len - i - 2];
-    if(!ga_mw) {
+    if(!ga_mw && !ga_sc) {
 	v->d[i] /= s_rounding;
     }
     v->d[i+1] = stack[RESULT_STACK][v->len - 1 - i];
     v->d[i+1] *= 1e0;
+    if(ga_sc) {
+// ga_sc we need to rescale 
+	double scale;
+	scale = fabs(v->d[i] - 2*v->d[i]);
+	vmin->d[i] = v->d[i] - scale;
+	if (vmin->d[i] < s_estimates[i / 2][0]) 
+	{
+	    vmin->d[i] = s_estimates[i / 2][0];
+	}
+	vmax->d[i] = v->d[i] + scale;
+	if (vmax->d[i] > s_estimates[i / 2][1]) 
+	{
+	    vmax->d[i] = s_estimates[i / 2][1];
+	}
+	vlen->d[i] = vmax->d[i] - vmin->d[i];
+	printf("scale pos %d scale %g vmin %g vmax %g vlen %g\n",
+	       i, scale, vmin->d[i], vmax->d[i], vlen->d[i]); fflush(stdout);
+	v->d[i] = (v->d[i] - vmin->d[i]) / vlen->d[i]; // so we have from zero to 1
+	v->d[i+1] = 0;
+    }
   }
   /*  {
     our_vector *t;
@@ -1750,9 +1852,18 @@ void gsm_this_node(int gsm_method, node *n, int iter, double use_h) {
   for(i = 0; i < v->len; i++) {
     if(i % 2) {
 	v->d[i] *= 1e0;
+	if(ga_sc) {
+	    v->d[i] = ff0_estimates[(i - 1) / 2][0];
+	}
     } else {
-	if(!ga_mw) {
-	    v->d[i] *= s_rounding;
+	if (ga_sc) 
+	{
+	    v->d[i] = v->d[i] * vlen->d[i] + vmin->d[i];
+	} else {
+	    if (!ga_mw) 
+	    {
+		v->d[i] *= s_rounding;
+	    }
 	}
     }
   }
@@ -1764,5 +1875,17 @@ void gsm_this_node(int gsm_method, node *n, int iter, double use_h) {
   puts(""); fflush(stdout);
   free_our_vector(vd);
   free_our_vector(v);
+  if (ga_sc) 
+  {
+      free_our_vector(vmin);
+      free_our_vector(vmax);
+      free_our_vector(vlen);
+  }
   printf("fitness calls %lu\n", gsm_fitness_calls); fflush(stdout);
+//  if (ga_sc) 
+//  {
+//      printf("aborting\n"); fflush(stdout);
+//      MPI_Abort(MPI_COMM_WORLD, -9990);
+//      exit(-1);
+//  }
 }

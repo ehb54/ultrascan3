@@ -2,11 +2,13 @@
 #include "../include/us_fe_nnls_t.h"
 #include "../include/us_ga.h"
 #include "../include/us_ga_round.h"
+#include "../include/us_ga_interacting.h"
 // #define US_DEBUG_MPI
 // #define SLIST
 // #define SLIST2
 #include <mpi.h>
 #include <stdio.h>
+#include <qregexp.h>
 #define MIN_EXPERIMENT_SIZE 100
 // MIN_EXPERIMENT_SIZE is so that unions have room to work with extremely small grids
 // #define MAX_ITERATIONS 15
@@ -15,6 +17,7 @@
 // USE_ALPHA is for meniscus fitting regularization
 #define VARIANCE_IMPROVEMENT_TOLERANCE 1e-100
 
+// #define DEBUG_HYDRO
 
 #if defined(TESTING)
 double float_mc_edge_max = 20;
@@ -30,8 +33,12 @@ int monte_carlo_iterations = 1;
 int this_monte_carlo = 0;
 
 static vector<struct mfem_data> org_experiment;
-static vector<struct mfem_data> last_residuals;
+vector<struct mfem_data> last_residuals;
 static vector<struct mfem_data> save_gaussians;
+
+SimulationParameters simulation_parameters;
+ModelSystem model_system;
+ModelSystemConstraints model_system_constraints;
 
 // only define one of these _TIMING!
 #define GLOBAL_JOB_TIMING
@@ -223,9 +230,91 @@ static vector <struct mfem_data> get_monte_carlo(vector <struct mfem_data> exp, 
 	return ret;
 }
 
+void US_fe_nnls_t::WriteResultsSC(vector <struct mfem_data> experiment, vector<Solute> solutes,
+				vector <Simulation_values> sve, QString tag, double meniscus, unsigned int iterations, int mc)
+{
+// this one is for GA_SC model systems
+    unsigned int e = 0; // only 1 experiment for now
+    QString cellwave;
+    cellwave = cellwave.sprintf(".%d%d", experiment[e].cell + 1, experiment[e].wavelength + 1);
+    QString filenametags;
+    if (monte_carlo_iterations <= 1)
+    {
+	filenametags = experiment[e].id + "_" + analysis_type + tag + "_" + startDateTime.toString("yyMMddhhmmss");
+    }
+    else
+    {
+	filenametags = experiment[e].id + "_" + analysis_type + "_MonteCarlo_" + QString("%1").arg(monte_carlo_iterations) + tag + "_" + startDateTime.toString("yyMMddhhmmss");
+    }
+
+    QString modelsystemname = filenametags + QString(".model-%1").arg(last_model_system.model) + cellwave;
+    US_FemGlobal us_femglobal;
+    if (!mc)
+    {
+	us_femglobal.write_simulationParameters(&last_simulation_parameters, filenametags + cellwave + ".simulation_parameters");
+	QFile f(modelsystemname);
+	unsigned int i;
+	if (f.open(IO_WriteOnly))
+	{
+	    QTextStream ts(&f);
+	    if (monte_carlo_iterations > 1)
+	    {
+		ts << analysis_type << "_MC" << endl;
+		ts << monte_carlo_iterations << endl;
+	    }
+	    else
+	    {
+		ts << analysis_type << endl;
+	    }
+	    ts << experiment[e].id << endl;
+	}
+	f.close();
+	QFile f2("email_list_" + startDateTime.toString("yyMMddhhmmss"));
+	if (f2.open(IO_WriteOnly | IO_Append))
+	{
+	    QTextStream ts(&f2);
+	    ts << filenametags + QString(".model-%1").arg(last_model_system.model) + cellwave << endl;
+	    ts << filenametags + cellwave + ".simulation_parameters" << endl;
+	}
+	f2.close();
+    }
+    us_femglobal.write_modelSystem(&last_model_system, modelsystemname, true);
+    if (mc == monte_carlo_iterations - 1)
+    {
+	QFile f3("email_text_" + startDateTime.toString("yyMMddhhmmss"));
+	if (f3.open(IO_WriteOnly | IO_Append))
+	{
+	    QTextStream ts(&f3);
+	    if (meniscus != 0)
+	    {
+		ts << QString("Experiment %1, cell %2, wavelength %3, meniscus %7,"
+			      " search parameters %4, rmsd %5, iterations %6\n").
+		    arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
+		    arg(sve[e].solutes.size()).
+		    arg(sqrt(sve[e].variance)).
+		    arg(iterations).
+		    arg(meniscus + experiment[e].meniscus);
+	    } else {
+		ts << QString("Experiment %1, cell %2, wavelength %3,"
+			      " search parameters %4, rmsd %5, iterations %6\n").
+		    arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
+		    arg(sve[e].solutes.size()).
+		    arg(sqrt(sve[e].variance)).
+		    arg(iterations);
+	    }
+	    f3.close();
+	}
+    }
+    {
+	printf("0: testing readmodelsystem vector<modelsystem>*, filename %s\n", modelsystemname.ascii()); fflush(stdout);
+	vector<ModelSystem> vms;
+	printf("0: retval = %d\n", us_femglobal.read_modelSystem(&vms, modelsystemname)); fflush(stdout);
+	printf("0: vms.size() %u\n", vms.size()); fflush(stdout);
+    }
+}
 
 void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Solute> solutes,
-								vector <Simulation_values> sve, QString tag, double meniscus, unsigned int iterations)
+				vector <Simulation_values> sve, QString tag, double meniscus, unsigned int iterations)
 {
 	// this one is for the GA with possible global results
   //	printf("0: writeresults 1 it %u mc %d\n", iterations, monte_carlo_iterations);
@@ -409,27 +498,46 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
 				//		arg(sqrt(sve.variance)).
 				//		arg(meniscus);
 				//	}
-				ts << QString("Experiment %1, cell %2, wavelength %3, meniscus %7,"
-							  " solutes %4, rmsd %5, iterations %6\n").
-				arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
-				arg(sve[e].solutes.size()).
-				//		arg(sqrt(sve[e].variances[e])).
-				arg(sqrt(sve[e].variance)).
-				arg(iterations).
-				arg(meniscus + experiment[e].meniscus);
+			        if (analysis_type == "GA_SC")
+				{
+				    ts << QString("Experiment %1, cell %2, wavelength %3, meniscus %7,"
+						  " search parameters %4, rmsd %5, iterations %6\n").
+					arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
+					arg(sve[e].solutes.size()).
+					arg(sqrt(sve[e].variance)).
+					arg(iterations).
+					arg(meniscus + experiment[e].meniscus);
+				} else {
+				    ts << QString("Experiment %1, cell %2, wavelength %3, meniscus %7,"
+						  " solutes %4, rmsd %5, iterations %6\n").
+					arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
+					arg(sve[e].solutes.size()).
+					arg(sqrt(sve[e].variance)).
+					arg(iterations).
+					arg(meniscus + experiment[e].meniscus);
+				}
 			}
 			else
 			{
 				//	if (!e && experiment.size() > 1) {
 				//	ts << QString("Global rmsd %1\n").arg(sqrt(sv.variance));
 				//	}
-				ts << QString("Experiment %1, cell %2, wavelength %3,"
-							  " solutes %4, rmsd %5, iterations %6\n").
-				arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
-				arg(sve[e].solutes.size()).
-				//		arg(sqrt(sve[e].variances[e])).
-				arg(sqrt(sve[e].variance)).
-				arg(iterations);
+			        if (analysis_type == "GA_SC")
+				{
+				    ts << QString("Experiment %1, cell %2, wavelength %3,"
+						  " search parameters %4, rmsd %5, iterations %6\n").
+					arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
+					arg(sve[e].solutes.size()).
+					arg(sqrt(sve[e].variance)).
+					arg(iterations);
+				} else {
+				    ts << QString("Experiment %1, cell %2, wavelength %3,"
+						  " solutes %4, rmsd %5, iterations %6\n").
+					arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
+					arg(sve[e].solutes.size()).
+					arg(sqrt(sve[e].variance)).
+					arg(iterations);
+				}			
 			}
 		}
 		f3.close();
@@ -439,7 +547,7 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
 }
 
 void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment,
-								Simulation_values sv, QString tag, double meniscus, unsigned int iterations)
+				Simulation_values sv, QString tag, double meniscus, unsigned int iterations)
 {
   //	printf("0: writeresults 2 it %u mc %d\n", iterations, monte_carlo_iterations);
   //	fflush(stdout);
@@ -606,12 +714,13 @@ public:
 
 list <Expdata> expdata_list;
 
+
 void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment, vector<Solute> solutes,
-								 vector <Simulation_values> sve, QString tag, double meniscus, unsigned int iterations)
+				 vector <Simulation_values> sve, QString tag, double meniscus, unsigned int iterations)
 {
-	// this one is for the GA with possible global results
-  //	printf("0: BufferResults\n");
-  //    fflush(stdout);
+    //  this one is for the GA with possible global results
+    //	printf("0: BufferResults\n");
+    //  fflush(stdout);
 	if (monte_carlo_iterations <= 1)
 	{
 	  //		printf("0: no monte carlo\n");
@@ -1074,6 +1183,278 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				fflush(stdout);
 			}
 		}
+		if (analysis_type == "GA_SC")
+		{
+		    cout << "GA_SC\n"; fflush(stdout);
+			GA_Params.analysis_type = analysis_type;
+			ds >> GA_Params.monte_carlo;
+			if (GA_Params.monte_carlo < 1)
+			{
+				GA_Params.monte_carlo = 1;
+			}
+			cout << "Monte carlo: " << GA_Params.monte_carlo << endl;
+			monte_carlo_iterations = GA_Params.monte_carlo;
+			ds >> GA_Params.demes;
+			ds >> GA_Params.generations;
+			//	GA_Params.generations = 2;
+			ds >> GA_Params.crossover;
+			ds >> GA_Params.mutation;
+			ds >> GA_Params.plague;
+			ds >> GA_Params.elitism;
+			ds >> GA_Params.migration_rate;
+			ds >> GA_Params.genes;
+			ds >> GA_Params.random_seed;
+			if (!myrank)
+			{
+				cout << "reading GA demes:" << GA_Params.demes << endl;
+				cout << "generations:" << GA_Params.generations << endl;
+				cout << "crossover:" << GA_Params.crossover << endl;
+				cout << "mutation:" << GA_Params.mutation << endl;
+				cout << "plague:" << GA_Params.plague << endl;
+				cout << "elitism:" << GA_Params.elitism << endl;
+				cout << "migration_rate:" << GA_Params.migration_rate << endl;
+				cout << "genes:" << GA_Params.genes << endl;
+				cout << "seed:" << GA_Params.random_seed << endl;
+				cout << "regularization:" << GA_Params.regularization << endl;
+				cout << "sizeof(unsigned long):" << sizeof(unsigned long) << endl;
+				fflush(stdout);
+			}
+			{
+			    unsigned int i, j;
+			    QString qs_tmp;
+			    constraints_full_text.clear();
+			    ds >> i;
+			    if (!myrank)
+			    {
+				printf("------constraints--%d--lines-----\n", i);
+				fflush(stdout);
+			    }
+			    for (j = 0; j < i; j++) 
+			    {
+				ds >> qs_tmp;
+				if (!myrank)
+				{
+				    cout << qs_tmp << endl;	fflush(stdout);
+				}
+				qs_tmp.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+				constraints_full_text.push_back(qs_tmp);
+			    }
+			    simulation_parameters_full_text.clear();
+			    ds >> i;
+			    printf("------simulation_parameters--%d--lines-----\n", i);
+			    fflush(stdout);
+			    for (j = 0; j < i; j++) 
+			    {
+				ds >> qs_tmp;
+				if (!myrank)
+				{
+				    cout << qs_tmp << endl;	fflush(stdout);
+				}
+				qs_tmp.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+				simulation_parameters_full_text.push_back(qs_tmp);
+			    }
+			    US_FemGlobal us_femglobal;
+			    us_femglobal.read_constraints(&model_system, &model_system_constraints, constraints_full_text);
+			    us_femglobal.read_simulationParameters(&simulation_parameters, simulation_parameters_full_text);
+			    us_femglobal.write_constraints(&model_system, &model_system_constraints, "tmp.constraints");
+			    us_femglobal.write_simulationParameters(&simulation_parameters, "tmp.simulation_parameters");
+			}
+			// ok, now setup the buckets & resolution of the buckets
+			{
+			    unsigned int i;
+			    SimulationComponentConstraints *scp;
+			    AssociationConstraints *acp;
+			    struct bucket temp_bucket;
+			    GA_Params.solute.clear();
+			    for (i = 0; i < model_system_constraints.component_vector_constraints.size(); i++) 
+			    {
+				scp = &model_system_constraints.component_vector_constraints[i];
+
+				if (scp->vbar20.fit) 
+				{
+				    temp_bucket.s_min = scp->vbar20.low;
+				    temp_bucket.s_max = scp->vbar20.high;
+				    temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+				    temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_VBAR;
+				    if (!myrank)
+				    {
+					cout << "0:element:" << GA_Params.solute.size() << endl;
+					cout << "0: vbar:" << temp_bucket.s << endl;
+					cout << "0: vbarmin:" << temp_bucket.s_min << endl;
+					cout << "0: vbarmax:" << temp_bucket.s_max << endl;
+					cout << "0: rounding:" << temp_bucket.ff0 << endl;
+				    }
+				    GA_Params.solute.push_back(temp_bucket);
+				}
+
+				if (scp->mw.fit) 
+				{
+				    temp_bucket.s_min = scp->mw.low;
+				    temp_bucket.s_max = scp->mw.high;
+				    temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+				    temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_MW;
+				    if (!myrank)
+				    {
+					cout << "0:element:" << GA_Params.solute.size() << endl;
+					cout << "0: mw:" << temp_bucket.s << endl;
+					cout << "0: mwmin:" << temp_bucket.s_min << endl;
+					cout << "0: mwmax:" << temp_bucket.s_max << endl;
+					cout << "0: rounding:" << temp_bucket.ff0 << endl;
+				    }
+				    GA_Params.solute.push_back(temp_bucket);
+				}
+
+				if (scp->s.fit) 
+				{
+				    temp_bucket.s_min = scp->s.low;
+				    temp_bucket.s_max = scp->s.high;
+				    temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+				    temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_S;
+				    if (!myrank)
+				    {
+					cout << "0:element:" << GA_Params.solute.size() << endl;
+					cout << "0: s:" << temp_bucket.s << endl;
+					cout << "0: smin:" << temp_bucket.s_min << endl;
+					cout << "0: smax:" << temp_bucket.s_max << endl;
+					cout << "0: rounding:" << temp_bucket.ff0 << endl;
+				    }
+				    GA_Params.solute.push_back(temp_bucket);
+				}
+
+				if (scp->D.fit) 
+				{
+				    temp_bucket.s_min = scp->D.low;
+				    temp_bucket.s_max = scp->D.high;
+				    temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+				    temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_D;
+				    if (!myrank)
+				    {
+					cout << "0:element:" << GA_Params.solute.size() << endl;
+					cout << "0: D:" << temp_bucket.s << endl;
+					cout << "0: Dmin:" << temp_bucket.s_min << endl;
+					cout << "0: Dmax:" << temp_bucket.s_max << endl;
+					cout << "0: rounding:" << temp_bucket.ff0 << endl;
+				    }
+				    GA_Params.solute.push_back(temp_bucket);
+				}
+
+				if (scp->sigma.fit) 
+				{
+				    temp_bucket.s_min = scp->sigma.low;
+				    temp_bucket.s_max = scp->sigma.high;
+				    temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+				    temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_SIGMA;
+				    if (!myrank)
+				    {
+					cout << "0:element:" << GA_Params.solute.size() << endl;
+					cout << "0: sigma:" << temp_bucket.s << endl;
+					cout << "0: sigmamin:" << temp_bucket.s_min << endl;
+					cout << "0: sigmamax:" << temp_bucket.s_max << endl;
+					cout << "0: rounding:" << temp_bucket.ff0 << endl;
+				    }
+				    GA_Params.solute.push_back(temp_bucket);
+				}
+
+				if (scp->delta.fit) 
+				{
+				    temp_bucket.s_min = scp->delta.low;
+				    temp_bucket.s_max = scp->delta.high;
+				    temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+				    temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_DELTA;
+				    if (!myrank)
+				    {
+					cout << "0:element:" << GA_Params.solute.size() << endl;
+					cout << "0: delta:" << temp_bucket.s << endl;
+					cout << "0: deltamin:" << temp_bucket.s_min << endl;
+					cout << "0: deltamax:" << temp_bucket.s_max << endl;
+					cout << "0: rounding:" << temp_bucket.ff0 << endl;
+				    }
+				    GA_Params.solute.push_back(temp_bucket);
+				}
+
+				if (scp->concentration.fit) 
+				{
+				    temp_bucket.s_min = scp->concentration.low;
+				    temp_bucket.s_max = scp->concentration.high;
+				    temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+				    temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_CONCENTRATION;
+				    if (!myrank)
+				    {
+					cout << "0:element:" << GA_Params.solute.size() << endl;
+					cout << "0: concentration:" << temp_bucket.s << endl;
+					cout << "0: concentrationmin:" << temp_bucket.s_min << endl;
+					cout << "0: concentrationmax:" << temp_bucket.s_max << endl;
+					cout << "0: rounding:" << temp_bucket.ff0 << endl;
+				    }
+				    GA_Params.solute.push_back(temp_bucket);
+				}
+
+				if (scp->f_f0.fit) 
+				{
+				    temp_bucket.s_min = scp->f_f0.low;
+				    temp_bucket.s_max = scp->f_f0.high;
+				    temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+				    temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_F_F0;
+				    if (!myrank)
+				    {
+					cout << "0:element:" << GA_Params.solute.size() << endl;
+					cout << "0: f_f0:" << temp_bucket.s << endl;
+					cout << "0: f_f0min:" << temp_bucket.s_min << endl;
+					cout << "0: f_f0max:" << temp_bucket.s_max << endl;
+					cout << "0: rounding:" << temp_bucket.ff0 << endl;
+				    }
+				    GA_Params.solute.push_back(temp_bucket);
+				}
+
+			    }
+
+			    for (i = 0; i < model_system_constraints.assoc_vector_constraints.size(); i++) 
+			    {
+				acp = &model_system_constraints.assoc_vector_constraints[i];
+
+				if (acp->keq.fit) 
+				{
+				    temp_bucket.s_min = acp->keq.low;
+				    temp_bucket.s_max = acp->keq.high;
+				    temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+				    temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_KEQ;
+				    if (!myrank)
+				    {
+					cout << "0:element:" << GA_Params.solute.size() << endl;
+					cout << "0: keq:" << temp_bucket.s << endl;
+					cout << "0: keqmin:" << temp_bucket.s_min << endl;
+					cout << "0: keqmax:" << temp_bucket.s_max << endl;
+					cout << "0: rounding:" << temp_bucket.ff0 << endl;
+				    }
+				    GA_Params.solute.push_back(temp_bucket);
+				}
+
+				if (acp->koff.fit) 
+				{
+				    temp_bucket.s_min = acp->koff.low;
+				    temp_bucket.s_max = acp->koff.high;
+				    temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+				    temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_KOFF;
+				    if (!myrank)
+				    {
+					cout << "0:element:" << GA_Params.solute.size() << endl;
+					cout << "0: koff:" << temp_bucket.s << endl;
+					cout << "0: koffmin:" << temp_bucket.s_min << endl;
+					cout << "0: koffmax:" << temp_bucket.s_max << endl;
+					cout << "0: rounding:" << temp_bucket.ff0 << endl;
+				    }
+				    GA_Params.solute.push_back(temp_bucket);
+				}
+
+			    }
+			    GA_Params.initial_solutes = GA_Params.solute.size();
+			    if (!myrank) 
+			    {
+				cout << "0:total gene size:" << GA_Params.solute.size() << endl;
+				fflush(stdout);
+			    }
+			}
+		}
 
 		for (unsigned int i = 0; i < count1; i++)
 		{
@@ -1236,7 +1617,8 @@ int US_fe_nnls_t::run(int status)
 	}
 
 	if (analysis_type == "GA" ||
-			analysis_type == "GA_MW")
+	    analysis_type == "GA_MW" ||
+	    analysis_type == "GA_SC")
 	{
 		// temporary overrides
 		//	GA_Params.generations = 2;
@@ -1409,11 +1791,12 @@ int US_fe_nnls_t::run(int status)
 						{
 							fitness_same_count++;
 						}
-						if (max_gen > 10 && fitness_same_count > 5 * (npes - 1) )
+						if (((analysis_type == "GA_SC" && max_gen > 50) || 
+						     (analysis_type != "GA_SC" && max_gen > 10)) && fitness_same_count > (5 * (npes - 1)))
 						{
-						  // printf("0: fitness hasn't improved in the last %d deme results. early termination\n", fitness_same_count);
-						  // fflush(stdout);
-							early_termination = 1;
+						    printf("0: fitness hasn't improved in the last %d deme results. early termination\n", fitness_same_count);
+						    fflush(stdout);
+						    early_termination = 1;
 						}
 						// printf("0: early term test max_gen %d same fitness count %d best %.16g last %.16g\n", max_gen, fitness_same_count, best_fitness, mpi_ga_msg_in.fitness);
 						// fflush(stdout);
@@ -1725,7 +2108,7 @@ int US_fe_nnls_t::run(int status)
 							ts << "Initial # of solutes:        " << GA_Params.initial_solutes << endl;
 						}
 						ts << "Random seed:                 " << GA_Params.random_seed << endl;
-						if (GA_Params.regularization > 0)
+						if (analysis_type != "GA_SC" && GA_Params.regularization > 0)
 						{
 							ts << "Regularization factor:       " << GA_Params.regularization << endl;
 						}
@@ -1772,7 +2155,12 @@ int US_fe_nnls_t::run(int status)
 					  // printf("0: final_use_solute 1 e%u %u s %g ff0 %g\n", e, l, final_use_solutes[l].s, final_use_solutes[l].k);
 					  //	fflush(stdout);
 					}
-					sve[e] = calc_residuals(use_experiment, final_use_solutes, 0e0, 1);
+					if (analysis_type == "GA_SC")
+					{
+					    sve[e] = us_ga_interacting_calc(use_experiment, final_use_solutes, 0e0);
+					} else {
+					    sve[e] = calc_residuals(use_experiment, final_use_solutes, 0e0, 1);
+					}
 				} // for e
 
 				//	Simulation_values sv = calc_residuals(experiment, demes_results[best_deme], 0e0, 0);
@@ -1841,7 +2229,12 @@ int US_fe_nnls_t::run(int status)
 						  // printf("0: final_use_solute 2 e%u %u s %g ff0 %g\n", e, l, final_use_solutes[l].s, final_use_solutes[l].k);
 						  // fflush(stdout);
 						}
-						sve[e] = calc_residuals(use_experiment, final_use_solutes, 0e0, 1);
+						if (analysis_type == "GA_SC")
+						{
+						    sve[e] = us_ga_interacting_calc(use_experiment, final_use_solutes, 0e0);
+						} else {
+						    sve[e] = calc_residuals(use_experiment, final_use_solutes, 0e0, 1);
+						}
 						// printf("0: sve exp %u sol %u var %g\n", e, sve[e].solutes.size(), sve[e].variance);
 						// fflush(stdout);
 						if (monte_carlo_iterations > 1 && !this_monte_carlo)
@@ -1855,7 +2248,12 @@ int US_fe_nnls_t::run(int status)
 					}
 				}
 
-				BufferResults(experiment, final_use_solutes, sve, "", 0, GA_Params.generations);
+				if (analysis_type == "GA_SC") 
+				{
+				    WriteResultsSC(experiment, final_use_solutes, sve, "", 0, GA_Params.generations, this_monte_carlo);
+				} else {
+				    BufferResults(experiment, final_use_solutes, sve, "", 0, GA_Params.generations);
+				}
 
 				if (this_monte_carlo == monte_carlo_iterations - 1)
 				{
