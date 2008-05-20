@@ -2,6 +2,9 @@
 #include "string.h"
 #include <sys/file.h>
 
+// NOTICE : GA_SC can only handle 1 experiment at this time!
+
+
 // this constructor is used for non-gui calls from the command line. It
 // reads an input file with all the details assigned from a web interface
 US_GridControl_T::US_GridControl_T(const QString &control_file,
@@ -137,6 +140,48 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
                 cerr << str << endl;
                 exit(-3);
             }
+	    if (analysis_type == "GA_SC") 
+	    {
+		QString constraint_file;
+		dataIO->assign_simparams(&simulation_parameters, selected_cell, selected_lambda, selected_channel);
+		ts >> constraint_file;
+		US_FemGlobal us_femglobal;
+		printf("read constraints %d\n", us_femglobal.read_constraints(&model_system, &model_system_constraints, constraint_file));
+		simulation_parameters.simpoints = model_system_constraints.simpoints;
+		simulation_parameters.mesh = model_system_constraints.mesh;
+		simulation_parameters.moving_grid = model_system_constraints.moving_grid;
+		// NOTICE: we need a band forming flag value for this to be relevant
+		simulation_parameters.band_volume = model_system_constraints.band_volume;
+
+		constraints_file_name = file_info + ".tmp.constraints";
+		simulation_parameters_file_name = file_info + ".tmp.simulation_parameters";
+
+		QFile f1(constraints_file_name);
+		QFile f2(simulation_parameters_file_name);
+		char *US = getenv("ULTRASCAN");
+		char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
+		sprintf(lockfile, "%s/tigre.lock", US);
+		int lfd = open(lockfile, O_RDONLY);
+		flock(lfd, LOCK_EX);
+		int increment = 0;
+		while (f1.open(IO_ReadOnly) || f2.open(IO_ReadOnly))
+		{
+		    f1.close();
+		    f2.close();
+		    increment++;
+		    constraints_file_name = file_info + QString(".tmp-%1.constraints").arg(increment);
+		    simulation_parameters_file_name = file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
+		    f1.setName(constraints_file_name);
+		    f2.setName(simulation_parameters_file_name);
+		}
+		f1.close();
+		f2.close();
+		flock(lfd, LOCK_UN);
+		close(lfd);
+
+		us_femglobal.write_constraints(&model_system, &model_system_constraints, constraints_file_name);
+		us_femglobal.write_simulationParameters(&simulation_parameters, simulation_parameters_file_name);
+	    }	    
             points = run_inf.points[selected_cell][selected_lambda][selected_channel];
             cerr << " there are " << points << " in this dataset...\n";
             total_points += points * run_inf.scans[selected_cell][selected_lambda];
@@ -302,6 +347,97 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
             printf("fit_ri: %d\n", fit_rinoise);
             ts >> email;
             cerr << "Email: " << email << endl;
+            printf("email: %s\n", email.ascii());
+            {
+                analysis_defined = true;
+                data_loaded = true;
+                write_experiment();
+            }
+        }
+        if (analysis_type == "GA_SC")
+        {
+            ts >> GA_Params.demes;
+            cerr << "demes:" << GA_Params.demes << endl;
+            ts >> GA_Params.generations;
+            cerr << "generations:" << GA_Params.generations << endl;
+            ts >> GA_Params.crossover;
+            cerr << "crossover:" << GA_Params.crossover << endl;
+            ts >> GA_Params.mutation;
+            cerr << "mutation:" << GA_Params.mutation << endl;
+            ts >> GA_Params.plague;
+            cerr << "plague:" << GA_Params.plague << endl;
+            ts >> GA_Params.elitism;
+            cerr << "elitism:" << GA_Params.elitism << endl;
+            ts >> GA_Params.migration_rate;
+            cerr << "Migration Rate:" << GA_Params.migration_rate << endl;
+            ts >> GA_Params.genes;
+            cerr << "Poplulation:" << GA_Params.genes << endl;
+            ts >> GA_Params.random_seed;
+            cerr << "seed:" << GA_Params.random_seed << endl;
+            ts >> GA_Params.monte_carlo;
+            cerr << "Monte Carlo Iterations:" << GA_Params.monte_carlo << endl;
+            printf("monte carlo:%d\n", GA_Params.monte_carlo);
+            ts >> GA_Params.regularization;
+            cerr << "regularization:" << GA_Params.regularization << endl;
+            regularization = GA_Params.regularization;
+            printf("regularization:%f\n", GA_Params.regularization);
+	    ts >> count;
+            cerr << "Fit meniscus?: " << count << endl;
+            GA_Params.fit_meniscus = count;
+            fit_meniscus = count;
+            printf("fit_meniscus: %d\n", fit_meniscus);
+            ts >> GA_Params.meniscus_range;
+            cerr << "Meniscus range: " << GA_Params.meniscus_range << endl;
+            meniscus_range = GA_Params.meniscus_range;
+            ts >> count;
+            cerr << "Fit ti noise?: " << count << endl;
+            fit_tinoise = count;
+            printf("fit_ti: %d\n", fit_rinoise);
+            ts >> count;
+            cerr << "Fit ri noise?: " << count << endl;
+            fit_rinoise = count;
+            printf("fit_ri: %d\n", fit_rinoise);
+            ts >> email;
+            cerr << "Email: " << email << endl;
+
+	    { // read constraints
+	      QFile fconstraints(constraints_file_name);
+	      if (!fconstraints.open(IO_ReadOnly))
+	      {
+		cerr << "Failed to open constraints file!\n";
+		exit(-3);
+	      }
+	      constraints_full_text.clear();
+	      QTextStream ts(&fconstraints);
+	      QString qs_tmp;
+	      while(!ts.atEnd())
+	      {
+		qs_tmp = ts.readLine();
+		printf("constr line: %s\n", qs_tmp.ascii());
+		constraints_full_text.push_back(qs_tmp);
+	      }
+	      fconstraints.close();
+	    }
+
+	    { // read simulation parameters
+	      QFile fsimulation_parameters(simulation_parameters_file_name);
+	      if (!fsimulation_parameters.open(IO_ReadOnly))
+	      {
+		cerr << "Failed to open simulation_parameters file!\n";
+		exit(-4);
+	      }
+	      simulation_parameters_full_text.clear();
+	      QTextStream ts(&fsimulation_parameters);
+	      QString qs_tmp;
+	      while(!ts.atEnd())
+	      {
+		qs_tmp = ts.readLine();
+		printf("simu line: %s\n", qs_tmp.ascii());
+		simulation_parameters_full_text.push_back(qs_tmp);
+	      }
+	      fsimulation_parameters.close();
+	    }
+
             printf("email: %s\n", email.ascii());
             {
                 analysis_defined = true;
@@ -621,6 +757,40 @@ void US_GridControl_T::write_experiment()
             cerr << "mw_max:" << GA_Params.mw_max << endl;
             cerr << "ff0_min:" << GA_Params.ff0_min << endl;
             cerr << "ff0_max:" << GA_Params.ff0_max << endl;
+        }
+        if(analysis_type == "GA_SC")
+        {
+            ds << GA_Params.monte_carlo;
+            ds << GA_Params.demes;
+            ds << GA_Params.generations;
+            ds << GA_Params.crossover;
+            ds << GA_Params.mutation;
+            ds << GA_Params.plague;
+            ds << GA_Params.elitism;
+            ds << GA_Params.migration_rate;
+            ds << GA_Params.genes;
+            ds << GA_Params.random_seed;
+            cerr << "writing demes:" << GA_Params.demes << endl;
+            cerr << "generations:" << GA_Params.generations << endl;
+            cerr << "crossover:" << GA_Params.crossover << endl;
+            cerr << "mutation:" << GA_Params.mutation << endl;
+            cerr << "plague:" << GA_Params.plague << endl;
+            cerr << "elitism:" << GA_Params.elitism << endl;
+            cerr << "migration:" << GA_Params.migration_rate << endl;
+            cerr << "genes:" << GA_Params.genes << endl;
+            cerr << "seed:" << GA_Params.random_seed << endl;
+	    ds << (unsigned int)constraints_full_text.size();
+	    for (i = 0; i < constraints_full_text.size(); i++) 
+	    {
+		ds << constraints_full_text[i];
+		cout << constraints_full_text[i] << "\n";
+	    }
+	    ds << (unsigned int)simulation_parameters_full_text.size();
+	    for (i = 0; i < simulation_parameters_full_text.size(); i++) 
+	    {
+		ds << simulation_parameters_full_text[i];
+		cout << simulation_parameters_full_text[i] << "\n";
+	    }
         }
         for (i=0; i<experiment.size(); i++)
         {
@@ -1218,9 +1388,16 @@ void US_GridControl_T::add_experiment()
     temp_experiment.channel = selected_channel;
     temp_experiment.wavelength = selected_lambda;
     temp_experiment.meniscus = run_inf.meniscus[selected_cell];
-    temp_experiment.bottom = calc_bottom(rotor_list,
+    if (analysis_type == "GA_SC") 
+    {
+	temp_experiment.bottom = calc_bottom(rotor_list,
+                                         cp_list, run_inf.rotor, run_inf.centerpiece[selected_cell],
+					     selected_channel, 0);
+    } else {
+	temp_experiment.bottom = calc_bottom(rotor_list,
                                          cp_list, run_inf.rotor, run_inf.centerpiece[selected_cell],
                                          selected_channel, run_inf.rpm[selected_cell][selected_lambda][0]);
+    }
     temp_experiment.rpm = run_inf.rpm[selected_cell][selected_lambda][0];
     printf("absorbance[0][0] %.12g baseline %12g\n", channel_data.absorbance[0][0], run_inf.baseline[selected_cell][selected_lambda]);
 
