@@ -1686,8 +1686,13 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 			//cout << "using mesh from file $ULTRASCAN/mesh.dat...\n";
 			// QString str = getenv("ULTRASCAN");
 
+#if defined(USE_MPI)
+			cout << "using mesh from file $ULTRASCAN/mesh.dat...\n";
+			QString str = getenv("ULTRASCAN");
+#else
 			US_Config* USglobal = new US_Config();
 			QString    str      = USglobal->config_list.system_dir;
+#endif
 
 			QFile f(str + "/mesh.dat");
 			if (f.open(IO_ReadOnly))
