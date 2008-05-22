@@ -18,6 +18,8 @@ unix {
 UNAME = $$system(uname -a)
 }
 
+DEFINES += USE_MPI
+
 unix:contains(UNAME,Linux) {
   DEFINES  += LINUX
   message ("Configuring for the Linux operating system...")
