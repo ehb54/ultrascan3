@@ -114,9 +114,9 @@ unix {
  QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
 
  contains(UNAME,x86_64) {
-    LIBS   += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -L$(ULTRASCAN)/lib64
+    LIBS   += -L$(QWTDIR)/lib64/ -L$(QWT3DDIR)/lib64 -L$(ULTRASCAN)/lib64
  } else {
-    LIBS   += -L$(QWTDIR)/lib -lqwt -L$(QWT3DDIR)/lib -L$(ULTRASCAN)/lib
+    LIBS   += -L$(QWTDIR)/lib -L$(QWT3DDIR)/lib -L$(ULTRASCAN)/lib
  }
 }
 
