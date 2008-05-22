@@ -8,6 +8,6 @@ contains(UNAME,x86_64) {
 
 win32 { RC_FILE = us.rc }
 
-SOURCES				= ../src/us.cpp 
-TRANSLATIONS	=	us.ts
+SOURCES      = us.cpp 
+TRANSLATIONS = us.ts
 

@@ -1,4 +1,5 @@
 #include "../include/us_astfem_rsa.h"
+#include "../include/us_util.h"
 #include <algorithm>
 
 US_Astfem_RSA::US_Astfem_RSA(bool *stopFlag, bool guiFlag, bool *movieFlag, QObject *parent, const char *name) : QObject(parent, name)
@@ -1683,7 +1684,11 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 		case 3: // user defined mesh generated from data file
 		{
 			//cout << "using mesh from file $ULTRASCAN/mesh.dat...\n";
-			QString str = getenv("ULTRASCAN");
+			// QString str = getenv("ULTRASCAN");
+
+			US_Config* USglobal = new US_Config();
+			QString    str      = USglobal->config_list.system_dir;
+
 			QFile f(str + "/mesh.dat");
 			if (f.open(IO_ReadOnly))
 			{

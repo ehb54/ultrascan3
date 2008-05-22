@@ -4,9 +4,11 @@
 US_Config::US_Config( QObject* parent, const char* name)
 	: QObject (parent, name)
 {
-	US_Version = "9.7";
+	US_Version = US_Version_string; // Defined in us_util.h
+	
 	if ( ! read( ) )
 	{
+		// This should never happen.  Created in us main program.
 		setDefault();
 		US_Write_Config *w_config;
 		w_config = new US_Write_Config(this);
@@ -432,7 +434,7 @@ void US_Config::setDefault()
 {
 	QString str;
 
-	config_list.version = US_Version;
+	config_list.version = US_Version_string;  // Defined in us_util.h
 
 	config_list.browser = "/usr/bin/firefox";
 	config_list.tar     = "/bin/tar";

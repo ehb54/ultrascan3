@@ -9,38 +9,43 @@
 #include <qplatinumstyle.h>
 #include <qsgistyle.h>
 
-#define MONOLITH
-
-
-
 UsWin::UsWin(QWidget *parent, const char *name)
 	: QWidget(parent, name)
 {
 	USglobal = new US_Config();
-	connect (USglobal, SIGNAL(errorMessage(QString, QString)), SLOT(errorMessage(QString, QString)));
-//  config_check();
+	connect ( USglobal, SIGNAL( errorMessage( QString, QString ) ), 
+	                    SLOT  ( errorMessage( QString, QString ) ) );
 
 	int width=710, height=532;
-	bool env_missing=false;
-//  setMinimumSize(width,height);
+	//bool env_missing=false;
+
 	setGeometry(50, 50, width, height);
 
 	QTimer *splash_time = new QTimer(this);
 	bigframe = new QLabel(this);
 	bigframe->setFrameStyle(QFrame::Box | QFrame::Raised);
-	bigframe->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+	bigframe->setPalette( QPalette( USglobal->global_colors.cg_frame, 
+	                                USglobal->global_colors.cg_frame, 
+	                                USglobal->global_colors.cg_frame ) );
 	smallframe = new QLabel(this);
 	smallframe->setGeometry((unsigned int) ((width/2)-210) , 130, 460, 276);
-	smallframe->setPalette(QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	
+	smallframe->setPalette( QPalette( USglobal->global_colors.cg_pushb, 
+	                                  USglobal->global_colors.cg_pushb_disabled,
+	                                  USglobal->global_colors.cg_pushb_active));
 	splash_b = new QLabel(this);
 
 	QPixmap splash;
-	QString splash_image = getenv("ULTRASCAN");
-//cout << "UltraScan environment variable value: " << splash_image << endl;
-	if (splash_image.isEmpty())
+
+	//QString splash_image = getenv("ULTRASCAN");
+	//cout << "UltraScan environment variable value: " << splash_image << endl;
+	QString splash_image = USglobal->config_list.system_dir;
+	
+
+	if ( splash_image.isEmpty() ) // Should never happen
 	{
 #ifdef UNIX
-	env_missing = true;
+	//env_missing = true;
 #endif
 #ifdef LINUX
 	splash_image = "/usr/lib/ultrascan/etc/flash-linux.png";
@@ -74,12 +79,15 @@ UsWin::UsWin(QWidget *parent, const char *name)
 	else
 	{
 #ifdef LINUX
+
 #ifdef OPTERON
 	splash_image += "/etc/flash-opteron.png";
 #else
 	splash_image += "/etc/flash-linux.png";
 #endif
+
 #endif
+
 #ifdef OSX
 	splash_image += "/etc/flash-macosx.png";
 #endif
@@ -101,10 +109,10 @@ UsWin::UsWin(QWidget *parent, const char *name)
 #ifdef WIN32
 	splash_image += "\\etc\\flash-windows.png";
 #endif
-#ifdef OPTERON
-#endif
+
 	}
-//cout << "Flash image file search path: " << splash_image << endl;
+	//cout << "Flash image file search path: " << splash_image << endl;
+
 	if (splash.load(splash_image))
 	{
 		splash_b->setGeometry((unsigned int) ((width/2)-230), 110, 460, 276);
@@ -554,16 +562,24 @@ util->insertSeparator(-1);
 	us_db_rst_equilproject_proc = NULL;
 	us_db_rst_montecarlo_proc = NULL;
 
+	/*
 	if (env_missing)
 	{
-		QMessageBox::message("Attention:",  "The environment variable \"ULTRASCAN\" is not defined!\n"
-				"Please set it to the root directory of your UltraScan\n"
-						"installation, for example:\n\n"
-						"export ULTRASCAN=/usr/lib/ultrascan (sh, bash)\n"
-						"setenv ULTRASCAN /usr/lib/ultrascan (csh, tcsh)\n\n"
-						"If you do not set the environment variable now, \n"
-						"UltraScan may not run properly.");
+	  // This will fail because the application has not called exec() yet
+		// It should never happen anyway becasue the program now handles this
+		// earlier.
+		
+
+		QMessageBox::message("Attention:",  
+			"The environment variable \"ULTRASCAN\" is not defined!\n"
+			"Please set it to the root directory of your UltraScan\n"
+			"installation, for example:\n\n"
+			"export ULTRASCAN=/usr/lib/ultrascan (sh, bash)\n"
+			"setenv ULTRASCAN /usr/lib/ultrascan (csh, tcsh)\n\n"
+			"If you do not set the environment variable now, \n"
+			"UltraScan may not run properly.");
 	}
+	*/
 }
 
 UsWin::~UsWin()
@@ -572,12 +588,13 @@ UsWin::~UsWin()
 
 void UsWin::closeAttnt(QProcess *proc, QString message)
 {
-	switch( QMessageBox::information( this, tr("Attention!"),tr( "The ") +
-				 message + tr(" is still running.\n"
-						 "Do you want to close it?"),
-				 tr("&Kill"), tr("&Close gracefully"), tr("Leave running"),
-				 0,      // Enter == button 0
-				 2 ) )   // Escape == button 2
+	switch( QMessageBox::information( this, 
+		tr("Attention!"),
+		tr( "The ") + message + tr(" is still running.\n"
+		    "Do you want to close it?"),
+		tr("&Kill"), tr("&Close gracefully"), tr("Leave running"),
+		 0,      // Enter == button 0
+		 2 ) )   // Escape == button 2
 	{
 		case 0:
 		{

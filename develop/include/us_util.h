@@ -43,7 +43,7 @@ using namespace std;
 extern int US_EXTERN global_Xpos;
 extern int US_EXTERN global_Ypos;
 
-//#define US_Version "9.5"
+#define US_Version_string "9.7"
 
 extern QString US_EXTERN US_Version;
 
@@ -173,9 +173,10 @@ class US_EXTERN US_Config : public QObject
     void         color_defaults();
 
   private:
-    bool col_exists();
-    bool write_default_colors();
-    void setDefault();
+    bool    col_exists();
+    bool    write_default_colors();
+    void    setDefault();
+    QString getSystemDir();
 
   public:
     static QString get_home_dir();

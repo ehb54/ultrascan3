@@ -25,7 +25,7 @@ unix {
   CONFIG                 += qt thread warn release 
   #CONFIG                 += qt thread warn debug
 
-	contains(UNAME,x86_64) {
+  contains(UNAME,x86_64) {
     LIBS    += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d
     DEFINES += BIN64
   } else {
@@ -39,11 +39,14 @@ win32 {
   message ("Configuring for the Microsoft Windows Platform...")
   DESTDIR            = ../bin
   QMAKE_LFLAGS_DEBUG += /NODEFAULTLIB:"msvcrt.lib"
-  #CONFIG            += qt thread warn exceptions dll release
-  CONFIG             += qt thread warn exceptions dll debug
+  CONFIG             += qt thread warn exceptions dll release
+  #CONFIG             += qt thread warn exceptions dll debug
   DEFINES            += WIN32 QT_DLL -GX WIN32 QWT_USE_DLL US_MAKE_DLL
   LIBS               += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib 
-	LIBS               += opengl32.lib glu32.lib glaux.lib
+  LIBS               += opengl32.lib glu32.lib glaux.lib
+  release {
+    QMAKE_LFLAGS_RELEASE = 
+  }
 }
 
 unix:contains(UNAME,Linux) {
@@ -151,7 +154,7 @@ unix:contains (UNAME, sparc) {
 
 unix: { 
   SOURCES +=src/us_beowulf.cpp \
-	src/us_gridcontrol_t.cpp
+  src/us_gridcontrol_t.cpp
 }
 
 SOURCES += src/us_2dplot.cpp \

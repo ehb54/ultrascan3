@@ -1,8 +1,6 @@
 TEMPLATE  = subdirs
 DEFINES += ADOLC
 
-win32{ QMAKE_MAKE = nmake /NOLOGO }
-
 unix:{
 SUBDIRS   = us_equilmc_t 
 }

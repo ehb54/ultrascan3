@@ -103,26 +103,27 @@ bool US_Write_Config::write_config(struct Config config_list)
 	QString rcfile = US_Config::get_home_dir() + USRC;
 	QFile f( rcfile );
 	QTextStream ts ( &f );
-	if (f.open(IO_WriteOnly | IO_Translate))
+	
+	if ( f.open( IO_WriteOnly | IO_Translate ) )
 	{
-		QTextStream ts (&f);
-		ts << US_Version << "\n";
-		ts << config_list.browser << "\n";
-		ts << config_list.tar << "\n";
-		ts << config_list.gzip << "\n";
-		ts << config_list.help_dir << "\n";
-		ts << config_list.data_dir << "\n";
-		ts << config_list.root_dir << "\n";
-		ts << config_list.archive_dir << "\n";
-		ts << config_list.result_dir << "\n";
-		ts << config_list.beckman_bug << "\n";
+		QTextStream ts ( &f );
+		ts << config_list.version         << "\n";
+		ts << config_list.browser         << "\n";
+		ts << config_list.tar             << "\n";
+		ts << config_list.gzip            << "\n";
+		ts << config_list.help_dir        << "\n";
+		ts << config_list.data_dir        << "\n";
+		ts << config_list.root_dir        << "\n";
+		ts << config_list.archive_dir     << "\n";
+		ts << config_list.result_dir      << "\n";
+		ts << config_list.beckman_bug     << "\n";
 		ts << config_list.temperature_tol << "\n";
-		ts << config_list.html_dir << "\n";
-		ts << config_list.system_dir << "\n";
-		ts << config_list.fontFamily << "\n";
-		ts << config_list.fontSize << "\n";
-		ts << config_list.margin << "\n";
-		ts << config_list.numThreads << "\n";
+		ts << config_list.html_dir        << "\n";
+		ts << config_list.system_dir      << "\n";
+		ts << config_list.fontFamily      << "\n";
+		ts << config_list.fontSize        << "\n";
+		ts << config_list.margin          << "\n";
+		ts << config_list.numThreads      << "\n";
 		f.close();
 	}
 	else

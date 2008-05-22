@@ -30,13 +30,16 @@ unix {
 
 win32 {
   message ("Configuring for the Microsoft Windows Platform...")
-  #CONFIG             += qt warn thread release
-  CONFIG             += qt warn thread debug
+  CONFIG             += qt warn thread release
+  #CONFIG             += qt warn thread debug
   DEFINES            += WIN32 
   QMAKE_CXXFLAGS     += /EHsc
   QMAKE_LFLAGS_DEBUG += /NODEFAULTLIB:"msvcrt.lib"
   LIBS               += ../../bin/us97.lib 
   INCLUDEPATH        += $(ZLIB)/include
+  release {
+    QMAKE_LFLAGS_RELEASE = 
+  }
 }
 
 macx { RC_FILE = ultrascan.icns }
