@@ -145,6 +145,8 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		QString constraint_file;
 		dataIO->assign_simparams(&simulation_parameters, selected_cell, selected_lambda, selected_channel);
 		ts >> constraint_file;
+		constraint_file = USglobal->config_list.result_dir + "/" + constraint_file;
+		
 		US_FemGlobal us_femglobal;
 		printf("read constraints %d\n", us_femglobal.read_constraints(&model_system, &model_system_constraints, constraint_file));
 		simulation_parameters.simpoints = model_system_constraints.simpoints;
