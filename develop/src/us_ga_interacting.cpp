@@ -358,7 +358,7 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
     sv.solutes = solutes;
     sv.variance = rmsd;
     rmsd = pow((double) rmsd, 0.5);
-    printf("rmsd %g\n", rmsd); fflush(stdout);
+    //    printf("rmsd %g\n", rmsd); fflush(stdout);
     variances.push_back(sv.variance);
     sv.variances = sv.variances;
     sv.ti_noise = no_noise;

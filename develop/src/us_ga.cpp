@@ -2425,7 +2425,7 @@ double fitness_solute(node *n)
 	}
 	//  printf("result regularized %g\n", result);
 	//  fflush(stdout);
-	printf("%d: result %g\n", this_rank, result); fflush(stdout);
+	//	printf("%d: result %g\n", this_rank, result); fflush(stdout);
 	return result;
 }
 
