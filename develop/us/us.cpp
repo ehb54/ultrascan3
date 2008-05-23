@@ -149,7 +149,7 @@ bool USconfig_check::check_config()
 #endif
 
 #ifdef WIN32
-	QString dir = "C:/ultrascan";
+	QString dir = "C:/Program Files/UltraScan";
 #endif
 
 	if ( exists ( dir + "/etc/ultra.xpm" ) )
