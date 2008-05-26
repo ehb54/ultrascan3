@@ -477,14 +477,17 @@ void US_ViewMWL::load()
 		unsigned int seconds = (unsigned int) (elapsed_time/1000);
 		QString elapsed;
 		elapsed.sprintf("%d min and %d sec, with %d radius points and %d wavelengths",
-		minutes, seconds, channel_data.data[0].radius.size(), channel_data.data[0].scan.size());
+		minutes, seconds, (int) channel_data.data[0].radius.size(), 
+		  (int) channel_data.data[0].scan.size());
 		if (channel_data.data.size() == 1)
 		{
-			lbl_update->setText(tr(str1.sprintf("Loaded %d file in ", channel_data.data.size()) + elapsed));
+			lbl_update->setText(tr(str1.sprintf("Loaded %d file in ", 
+			  (int) channel_data.data.size()) + elapsed));
 		}
 		else
 		{
-			lbl_update->setText(tr(str1.sprintf("Loaded %d files in ", channel_data.data.size()) + elapsed));
+			lbl_update->setText(tr(str1.sprintf("Loaded %d files in ", 
+			  (int) channel_data.data.size()) + elapsed));
 		}
 		pb_load->disconnect();
 		pb_load->setText(tr("Load MWL Data"));
@@ -572,7 +575,8 @@ void US_ViewMWL::load()
 			}
 			cell_data.cell_channel.push_back(channel_data);
 			f.close();
-			lbl_update->setText(tr(str1.sprintf("Read %d scans from ", cell_data.cell_channel[0].data.size())) + filename);
+			lbl_update->setText(tr(str1.sprintf("Read %d scans from ", 
+			  (int) cell_data.cell_channel[0].data.size())) + filename);
 		}
 	}
 	cnt_min_time->setRange(1, (double) channel_data.data.size(), 1);
@@ -678,7 +682,8 @@ void US_ViewMWL::save()
 			}
 		}
 		f.close();
-		lbl_update->setText(tr(str1.sprintf("Wrote %d scans to ", cell_data.cell_channel[0].data.size())) + filename);
+		lbl_update->setText(tr(str1.sprintf("Wrote %d scans to ", 
+		  (int) cell_data.cell_channel[0].data.size())) + filename);
 	}
 }
 

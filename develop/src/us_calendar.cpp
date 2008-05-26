@@ -1064,7 +1064,7 @@ void WorkTime::dump(void)
     }
   }
   printf("\n");
-  printf("sizeof (DAY) = %d\n",sizeof(DAY));
+  printf("sizeof (DAY) = %d\n", (int) sizeof(DAY) );
 }
 
 int WorkTime::numDaysInMonth(int mon, int year)

@@ -712,7 +712,7 @@ void US_Buffer_DB::update_db()
 		return;
 	}
 
-	Buffer.data.sprintf("%d", Buffer.component.size());
+	Buffer.data.sprintf("%d", (int) Buffer.component.size());
 	for (unsigned int i=0; i<Buffer.component.size(); i++)
 	{
 		Buffer.data += "\n" + Buffer.component[i].name;

@@ -4,7 +4,7 @@ for each in us*; do
     cd $each
     echo $each
     [ -f us*.pro ] && qmake us*.pro
-		[ -e *.vcproj ] && sed -i -e 's/Release\\\\/..\\..\\bin\\/' *.vcproj
+    [ -e *.vcproj ] && sed -i -e 's/Release\\\\/..\\..\\bin\\/' *.vcproj
     cd ..
   fi
 done

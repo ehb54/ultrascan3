@@ -188,7 +188,8 @@ int SA2D::uniform_run(unsigned int steps, bool use_iterative) {
 	}
 #if defined(DEBUG)
 	if(!use_merge && saved_sv.size() + sv_added_count > max_solutes) {
-	  printf("note - intermediate solutes large vector %d > %d\n", saved_sv.size() + sv_added_count, max_solutes);
+		printf("note - intermediate solutes large vector %d > %d\n", 
+		    (int) ( saved_sv.size() + sv_added_count ), max_solutes);
 	}
 #endif
 	if(use_merge && saved_sv.size() + sv_added_count > max_solutes) {
@@ -198,8 +199,9 @@ int SA2D::uniform_run(unsigned int steps, bool use_iterative) {
 	  // solute solution again ?
 	  
 #if defined(DEBUG)
-	  printf("merging size due to large vector %d > %d\n", saved_sv.size() + sv_added_count, max_solutes);
-	  printf("merge mfem start!\n");
+		printf("merging size due to large vector %d > %d\n", 
+		    (int) ( saved_sv.size() + sv_added_count ), max_solutes);
+		printf("merge mfem start!\n");
 #endif
 	  
 	  sv.solutes = saved_sv;
@@ -222,7 +224,7 @@ int SA2D::uniform_run(unsigned int steps, bool use_iterative) {
 	  
 #if defined(DEBUG)
 	  printf("fitness = %g\n", sv.variance);
-	  printf("size after merge %d\n", saved_sv.size());
+	  printf("size after merge %d\n", (int) saved_sv.size() );
 #endif
 	  runs_since_merge = 1;
 	}
@@ -266,7 +268,7 @@ int SA2D::uniform_run(unsigned int steps, bool use_iterative) {
       
 #if defined(DEBUG)
       printf("fitness = %g\n", sv.variance);
-      printf("size after merge %d\n", saved_sv.size());
+      printf("size after merge %d\n", (int) saved_sv.size());
       fflush(stdout);
 #endif
     }
@@ -386,7 +388,7 @@ int SA2D::local_uniform_run(unsigned int steps, double initial_scaling, double s
 	   "start_s %g start_k %g\n"
 	   "delta_s %g delta_k %g\n", 
 	   max_solutes,
-	   L.size(),
+	   (int) L.size(),
 	   size_per, root_size_per,
 	   start_s, start_k,
 	   delta_s, delta_k);
@@ -404,7 +406,7 @@ int SA2D::local_uniform_run(unsigned int steps, double initial_scaling, double s
 	L2.push_back(solute.s);
 	L2.push_back(solute.k);
 #if defined(DEBUG)
-	printf("main solute %d %g %g\n", sv.solutes.size(), solute.s, solute.k);
+	printf("main solute %d %g %g\n", (int) sv.solutes.size(), solute.s, solute.k);
       } else {
 	printf("main skipped solute %g %g\n", solute.s, solute.k);
 #endif
@@ -423,7 +425,7 @@ int SA2D::local_uniform_run(unsigned int steps, double initial_scaling, double s
 		L2.push_back(solute.s);
 		L2.push_back(solute.k);
 #if defined(DEBUG)
-		printf("solute %d %g %g\n", sv.solutes.size(), solute.s, solute.k);
+		printf("solute %d %g %g\n", (int) sv.solutes.size(), solute.s, solute.k);
 #endif
 	      }
 	    }
@@ -543,7 +545,7 @@ int SA2D::local_random_run(unsigned int steps, double parameter) {
 #if defined(DEBUG)
     printf("max_solutes = %d L.size()/2 %d size per point %d\n",
 	   max_solutes,
-	   L.size() / 2,
+	   (int) L.size() / 2,
 	   size_per);
 #endif
     
@@ -560,7 +562,7 @@ int SA2D::local_random_run(unsigned int steps, double parameter) {
 	L2.push_back(solute.s);
 	L2.push_back(solute.k);
 #if defined(DEBUG)
-	printf("solute %d %g %g\n", sv.solutes.size(), solute.s, solute.k);
+	printf("solute %d %g %g\n", (int) sv.solutes.size(), solute.s, solute.k);
       } else {
 	printf("main skipped solute %g %g\n", solute.s, solute.k);
 #endif
@@ -612,7 +614,7 @@ int SA2D::local_random_run(unsigned int steps, double parameter) {
 	L2.push_back(solute.s);
 	L2.push_back(solute.k);
 #if defined(DEBUG)
-	printf("solute %d %g %g\n", sv.solutes.size(), solute.s, solute.k);
+	printf("solute %d %g %g\n", (int) sv.solutes.size(), solute.s, solute.k);
 #endif
       }
     }
@@ -717,7 +719,7 @@ int SA2D::regularize(double alpha) {
     solute_vector.reg_fitness = reg_fitness;
     solute_vectors.push_back(solute_vector);
 #if defined(DEBUG)
-    printf("solutes %d fitness %g regularized %g\n", solutes.size(), fitness, reg_fitness);
+    printf("solutes %d fitness %g regularized %g\n", (int) solutes.size(), fitness, reg_fitness);
     printf("min_c_pos %d %g\n", min_c_pos, min_c);
 #endif
     
@@ -784,7 +786,7 @@ coalesced = new int [solutes.size()];
 
 #if defined(DEBUG)
   puts("coalesce");
-  printf("size of vector = %d\n", solutes.size());
+  printf("size of vector = %d\n", (int) solutes.size());
 #endif
 
   if(concentration) {

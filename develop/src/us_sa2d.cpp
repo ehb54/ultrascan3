@@ -1449,8 +1449,9 @@ float US_SA2D_W::calc_residuals()
 	       absorbance[5][0]);
 	if(SA_control->fit_ti)
 	{
-		printf("s size %d d_size %d\n", s_distribution.size(), D_distribution.size());
-		printf("points %d exp_scans %d b_size %d a_size %d\n", points, experiment.scan.size(), b_size, a_size);
+		printf("s size %d d_size %d\n", (int) s_distribution.size(), (int) D_distribution.size());
+		printf("points %d exp_scans %d b_size %d a_size %d\n", points, 
+		    (int) experiment.scan.size(), b_size, a_size);
 		double *L = new double [b_size]; // this is Sum(concentration * Lamm) for the models after NNLS
 		double *L_bars = new double [points * s_distribution.size()]; // an average for each distribution
 		double *L_tildes = new double [experiment.scan.size() * s_distribution.size()]; // an average for each distribution
