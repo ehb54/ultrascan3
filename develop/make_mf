@@ -1,10 +1,10 @@
 #!/bin/sh
 for each in us*; do
-if [ -d $each ]; then
-cd $each
-echo $each
-[ -f us*.pro ] && qmake us*.pro
-#grep unix:CONFIG *.pro
-cd ..
-fi
+  if [ -d $each ]; then
+    cd $each
+    echo $each
+    [ -f us*.pro ] && qmake us*.pro
+		[ -e *.vcproj ] && sed -i -e 's/Release\\\\/..\\..\\bin\\/' *.vcproj
+    cd ..
+  fi
 done

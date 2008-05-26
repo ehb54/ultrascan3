@@ -28,9 +28,4 @@ HEADERS		+= ../include/us_astfem_rsa.h
 HEADERS		+= ../include/us_stiffbase.h
 HEADERS		+= ../include/us_ga_interacting.h
 
-contains (UNAME,x86_64) {
-	TARGET		= ../../bin64/us_fe_nnls_t_mpi
-        DEFINES         += BIN64
-} else {
-	TARGET		= ../../bin/us_fe_nnls_t_mpi
-}
+TARGET     = us_fe_nnls_t_mpi

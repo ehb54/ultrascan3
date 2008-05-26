@@ -1,9 +1,3 @@
 !include ( ../generic.pri ) error( "../generic.pri missing.  Aborting..." )
 
-PROG = us_extinction
-
-contains(UNAME,x86_64) {
-    TARGET  = ../../bin64/$$PROG
-} else {
-    TARGET  = ../../bin/$$PROG
-}
+TARGET = us_extinction

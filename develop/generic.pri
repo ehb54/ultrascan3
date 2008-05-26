@@ -5,14 +5,14 @@
 # The only thing the perent needs to supply is TARGET and
 # possibly HEADERS
 
-TEMPLATE        = app
-INCLUDEPATH     = $(QWTDIR)/include \
-                  $(QWT3DDIR)/include 
-            
-DEPENDPATH     += ../src \
-                  ../include
+# Messages
+!include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
 
+TEMPLATE        = app
+INCLUDEPATH     = $(QWTDIR)/include $(QWT3DDIR)/include 
+DEPENDPATH     += ../src ../include
 SOURCES         = main.cpp 
+DESTDIR         = ../../bin
 
 unix {
  UNAME                  = $$system(uname -a)
@@ -21,109 +21,27 @@ unix {
  QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
 
  contains(UNAME,x86_64) {
-    LIBS   += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d -L$(ULTRASCAN)/lib64 -lus
+    LIBS    += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d -L$(ULTRASCAN)/lib64 -lus
+		DESTDIR  = ../../bin64
  } else {
-    LIBS   += -L$(QWTDIR)/lib -lqwt -L$(QWT3DDIR)/lib -lqwtplot3d -L$(ULTRASCAN)/lib -lus
+    LIBS    += -L$(QWTDIR)/lib -lqwt -L$(QWT3DDIR)/lib -lqwtplot3d -L$(ULTRASCAN)/lib -lus
  }
 }
 
-
 win32 {
   message ("Configuring for the Microsoft Windows Platform...")
-  CONFIG             += qt warn thread release
-  #CONFIG             += qt warn thread debug
-  DEFINES            += WIN32 
-  QMAKE_CXXFLAGS     += /EHsc
-  QMAKE_LFLAGS_DEBUG += /NODEFAULTLIB:"msvcrt.lib"
-  LIBS               += ../../bin/us97.lib 
-  INCLUDEPATH        += $(ZLIB)/include
-  release {
-    QMAKE_LFLAGS_RELEASE = 
-  }
+  TEMPLATE             = vcapp          # Visual C application (creates .vcproj file)
+  CONFIG              += qt warn thread release
+  #CONFIG              += qt warn thread debug
+  QMAKE_CXXFLAGS      += /EHsc          # Assume extern C functions never throw exceptions
+  QMAKE_CXXFLAGS      += /Fd$(IntDir)\  # Put intermediate directories in separate location
+  QMAKE_LFLAGS_DEBUG  += /NODEFAULTLIB:"msvcrt.lib"
+  QMAKE_LFLAGS_RELEASE =                # Remove //DELAYLOAD: statements
+  LIBS                += ../../bin/libus97.lib 
+  INCLUDEPATH         += $(ZLIB)/include
+	DESTDIR              = ..\..\bin\
 }
 
 macx { RC_FILE = ultrascan.icns }
-
-unix:contains(UNAME,Linux) {
-  DEFINES  += LINUX
-  message ("Configuring for the Linux operating system...")
-} 
-unix:contains(UNAME,FreeBSD) {
-  DEFINES  += FREEBSD
-  message ("Configuring for the FreeBSD operating system...")
-} 
-unix:contains(UNAME,NetBSD) {
-  DEFINES  += NETBSD
-  message ("Configuring for the NetBSD operating system...")
-} 
-unix:contains(UNAME,OpenBSD) {
-  DEFINES  += OPENBSD
-  message ("Configuring for the OpenBSD operating system...")
-} 
-unix:contains(UNAME,SunOS) {
-  DEFINES  += SOLARIS
-  message ("Configuring for the Sun Solaris operating system...")
-} 
-unix:contains(UNAME,IRIX) {
-  DEFINES  += IRIX
-  message ("Configuring for SGI Irix operating system...")
-} 
-unix:contains (UNAME,IRIX64) {
-  DEFINES += IRIX
-  UNAME = $$system(uname -ap)
-  DESTDIR  = ../lib
-  message ("Configuring for SGI Irix 64-bit operating system...")
-}
-unix:contains(UNAME,Darwin) {
-  DEFINES  += OSX
-  UNAME = $$system(uname -p)
-  message ("Configuring for the Darwin Macintosh OS-X operating system...")
-} 
-unix:contains (UNAME, pentium4) {
-  DEFINES  += INTEL
-  UNAME = $$system(uname -p)
-  message ("Configuring for the Intel Pentium IV Platform...")
-}
-unix:contains (UNAME, i686) {
-  UNAME = $$system(uname -p)
-  DEFINES += INTEL
-  message ("Configuring for the Intel i686 Platform...")
-}
-unix:contains (UNAME, i586) {
-  UNAME = $$system(uname -p)
-  DEFINES += INTEL
-  message ("Configuring for the Intel i586 Platform...")
-}
-unix:contains (UNAME, i486) {
-  UNAME = $$system(uname -p)
-  DEFINES += INTEL
-  message ("Configuring for the Intel i486 Platform...")
-}
-unix:contains (UNAME, i386) {
-  UNAME = $$system(uname -p)
-  DEFINES += INTEL
-  message ("Configuring for the Intel i386 Platform...")
-}
-unix:contains (UNAME, x86_64) {
-  DEFINES += OPTERON
-  message ("Configuring for the Opteron 64-bit Platform...")
-}
-unix:contains (UNAME, mips) {
-  DEFINES += SGI
-  message ("Configuring for the SGI mips Platform...")
-}
-unix:contains (UNAME, ppc) {
-  DEFINES += MAC
-  message ("Configuring for the Macintosh PowerPC Platform...")
-}
-unix:contains (UNAME, powerpc) {
-  DEFINES += MAC
-  message ("Configuring for the Macintosh PowerPC Platform...")
-}
-unix:contains (UNAME, sparc) {
-  DEFINES += SPARC
-  message ("Configuring for the Sun Sparc Platform...")
-}
-
 
 
