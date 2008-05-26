@@ -199,7 +199,7 @@ void StiffBase::SetGauss()
           break;
        
         default:
-          printf("Gauss Quadrature on Quad elem with %d points not implemented\n");
+          printf("Gauss Quadrature on Quad elem with %d points not implemented\n", n_gaussQ );
           return;
       }
 
@@ -245,7 +245,7 @@ void StiffBase::SetGauss()
           break;
        
         default:
-          printf("Gauss Quadrature on Quad elem with %d points not implemented\n");
+          printf("Gauss Quadrature on Triangular elem with %d points not implemented\n", n_gaussT );
           return;
       }
 }
