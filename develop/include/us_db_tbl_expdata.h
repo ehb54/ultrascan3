@@ -1,8 +1,9 @@
 #ifndef US_DB_TBL_EXPDATA_H
 #define US_DB_TBL_EXPDATA_H
 #ifdef WIN32
-//#define ZLIB_DLL
-#define _WINDOWS
+  #ifndef _WINDOWS
+    #define _WINDOWS
+  #endif
 #endif
 // under Unix we get zlib.h from $QTDIR/src/3rdparty/zlib/zlib.h
 #include <zlib.h>
