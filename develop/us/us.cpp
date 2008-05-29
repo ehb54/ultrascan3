@@ -15,16 +15,25 @@
 class USconfig_check : public QWidget
 {
 	public:
-    USconfig_check();
+    USconfig_check(){};
 		~USconfig_check(){};
 
 		struct Config config;
 
-		static bool check_config();
+		bool check_config();
 
-	private:
-    static bool exists     ( const QString& );
-		void        set_default( const QString& );
+	protected:
+    bool exists       ( const QString& );
+		void set_default  ( const QString& );
+		void write_default( const QString& );
+
+};
+
+class USconfig_setup : public USconfig_check
+{
+	public:
+		USconfig_setup();
+		~USconfig_setup(){};
 };
 
 
@@ -46,26 +55,29 @@ int main (int argc, char **argv)
 	{
 		delete us_register;
 
-		// Check that we know at least the base system directory
-    if ( ! USconfig_check::check_config() )
-		{
-			cout << "Starting USconfig_check()" << endl;
+		// Check to see if we are configured
+		USconfig_check* check = new USconfig_check();
+		bool OK               = check->check_config();
+		delete check;
 
+		// Check that we know at least the base system directory
+    if ( ! OK )
+		{
+			cout << "Starting USconfig_set()" << endl;
+      USconfig_setup* set = new USconfig_setup();
 			// Not found, ask the user
-      USconfig_check* c = new USconfig_check();
-			c->move( global_Xpos, global_Ypos );
-			c->show();
-			a.setMainWidget( c );
+			set->move( global_Xpos, global_Ypos );
+			set->show();
+			a.setMainWidget( set );
 		}
     else  // OK to continue
 		{
-			UsWin* w = new UsWin();
-			w->setCaption( "UltraScan Analysis" );
-			w->move( global_Xpos, global_Ypos );
-			w->show();
-			a.setMainWidget( w );
+			UsWin* us = new UsWin();
+			us->setCaption( "UltraScan Analysis" );
+			us->move( global_Xpos, global_Ypos );
+			us->show();
+			a.setMainWidget( us );
 		}
-
 	}
 	else		
 	{
@@ -74,63 +86,6 @@ int main (int argc, char **argv)
 
 	a.setDesktopSettingsAware( false );
 	return a.exec();
-}
-
-
-USconfig_check::USconfig_check()
-{
-	QMessageBox::information( this, 
-		tr( "Setup Error" ), 
-		tr( "You need to specify the location of the UltraScan\n" 
-		    "system directory") );
-
-  int     result = QMessageBox::Ok;
-	QString msg    = "Configuration initialized.  Please restart to continue.";
-
-	do
-	{
-		// Ask for the directory
-	  QString dir = QFileDialog::getExistingDirectory(
-			QString::null, this, NULL, "Select the UltraScan System Directory" );
-	
-		// Check it
-	  if ( exists( dir + "/etc/ultra.xpm" ) )
-		{
-			// Found.  Create the config file.
-			set_default( dir );
-			US_Write_Config* w_config = new US_Write_Config( this );
-
-			if ( ! w_config->write_config( config ) )
-			{
-				delete w_config;
-				msg = "Could not create configuration file.  Aborting.";
-				exit ( -1 );
-			}
-
-			delete w_config;
-			break;
-		}
-
-		// Not a valid directory
-		QMessageBox::information( this,
-			tr( "Setup" ),
-			tr( "The selected directory is not the UltraScan system diredtory.\n"
-			    "Try again." ),
-			QMessageBox::Ok, QMessageBox::Cancel );
-
-	} while ( result != QMessageBox::Cancel );
-
-  if ( result ==  QMessageBox::Cancel )
-	{
-		msg = "System directory not found.  Aborting.";
-	}
-
-	// Show results
-	QMessageBox::information( this,
-	   tr( "Setup" ),
-	   tr( msg ) );
-
-	exit(0);
 }
 
 bool USconfig_check::check_config()
@@ -154,6 +109,9 @@ bool USconfig_check::check_config()
 
 	if ( exists ( dir + "/etc/ultra.xpm" ) )
 	{
+		// If we got here,  ETC_DIR + "/usrc.conf" does not yet exist
+    write_default( dir );
+
 		cout << "Ultrascan is installed in the default location: " + dir << endl;
 		return true;
 	}
@@ -167,6 +125,23 @@ bool USconfig_check::exists( const QString& file )
 {
   QFile f( file );
 	return f.exists();
+}
+
+void USconfig_check::write_default( const QString& dir )
+{
+  set_default( dir );
+	US_Write_Config* w_config = new US_Write_Config( this );
+  bool OK = w_config->write_config( config );
+	delete w_config;
+
+	if ( ! OK )
+	{
+		QMessageBox::information( this,
+		  tr( "Setup" ),
+		  tr( "Could not create configuration file.  Aborting." ) );
+
+		exit ( -1 );
+	}
 }
 
 void USconfig_check::set_default( const QString& system_dir )
@@ -205,4 +180,52 @@ void USconfig_check::set_default( const QString& system_dir )
 	config.margin          = 10;
 	config.numThreads      = 1;   // Default: 1 thread
 }
+
+USconfig_setup::USconfig_setup()
+{
+	QMessageBox::information( this, 
+		tr( "Setup Error" ), 
+		tr( "You need to specify the location of the UltraScan\n" 
+		    "system directory") );
+
+  int     result = QMessageBox::Ok;
+	QString msg    = "Configuration initialized.  Please restart to continue.";
+
+	do
+	{
+		// Ask for the directory
+	  QString dir = QFileDialog::getExistingDirectory(
+			QString::null, this, NULL, "Select the UltraScan System Directory" );
+	
+		// Check it
+	  if ( exists( dir + "/etc/ultra.xpm" ) )
+		{
+			// Found.  Create the config file.
+			write_default( dir );
+			break;
+		}
+
+		// Not a valid directory
+		QMessageBox::information( this,
+			tr( "Setup" ),
+			tr( "The selected directory is not the UltraScan system diredtory.\n"
+			    "Try again." ),
+			QMessageBox::Ok, QMessageBox::Cancel );
+
+	} while ( result != QMessageBox::Cancel );
+
+  if ( result ==  QMessageBox::Cancel )
+	{
+		msg = "System directory not found.  Aborting.";
+	}
+
+	// Show results
+	QMessageBox::information( this,
+	   tr( "Setup" ),
+	   tr( msg ) );
+
+	exit(0);
+}
+
+
 
