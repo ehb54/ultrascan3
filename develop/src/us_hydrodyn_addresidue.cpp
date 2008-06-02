@@ -924,6 +924,10 @@ void US_AddResidue::select_r_bead(int val)
 			bg_chain->setButton(0);
 		}
 	}
+	else
+	{
+		set_chain(0); // default is backbone for a new bead
+	}
 	unsigned int i;
 	lb_list_beadatom->clear();
 //	cout << "Current bead 2: " << current_bead << endl;
