@@ -397,16 +397,20 @@ void US_AddResidue::setupGUI()
 	lb_select_beadatom = new QListBox(this, "beadatom selection listbox" );
 	lb_select_beadatom->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	lb_select_beadatom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	lb_select_beadatom->setEnabled(false);
+	//lb_select_beadatom->setEnabled(false);
 	lb_select_beadatom->setSelectionMode(QListBox::Extended);
 	lb_select_beadatom->setMinimumHeight(minHeight1);
+	lb_select_beadatom->setHScrollBarMode(QScrollView::Auto);
+	lb_select_beadatom->setVScrollBarMode(QScrollView::Auto);
 	connect(lb_select_beadatom, SIGNAL(selectionChanged()), this, SLOT(select_beadatom()));
 
 	lb_list_beadatom = new QListBox(this, "beadatom list listbox" );
 	lb_list_beadatom->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	lb_list_beadatom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	lb_list_beadatom->setEnabled(false);
+	//lb_list_beadatom->setEnabled(false);
 	lb_list_beadatom->setSelectionMode(QListBox::Extended);
+	lb_list_beadatom->setHScrollBarMode(QScrollView::Auto);
+	lb_list_beadatom->setVScrollBarMode(QScrollView::Auto);
 	lb_list_beadatom->setMinimumHeight(minHeight1);
 
 	lbl_beadchain = new QLabel(tr(" This Bead is part of the: "), this);
@@ -578,8 +582,8 @@ void US_AddResidue::setupGUI()
 	background->addWidget(lbl_list_beadatom, j, 3);
 	background->addWidget(lbl_select_beadatom, j, 4);
 	j++;
-	background->addMultiCellWidget(lb_list_beadatom, j, j+6, 3, 3);
-	background->addMultiCellWidget(lb_select_beadatom, j, j+6, 4, 4);
+	background->addMultiCellWidget(lb_list_beadatom, j, j+5, 3, 3);
+	background->addMultiCellWidget(lb_select_beadatom, j, j+5, 4, 4);
 	j+=6;
 	background->addWidget(pb_accept_bead, j, 3);
 	background->addWidget(pb_reset, j, 4);
