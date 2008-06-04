@@ -325,22 +325,22 @@ void US_AddResidue::setupGUI()
 	cmb_bead_color->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cmb_bead_color->setSizeLimit(5);
 	cmb_bead_color->setMinimumHeight(minHeight1);
-	cmb_bead_color->insertItem(QPixmap(color_black), " (1)");
-	cmb_bead_color->insertItem(QPixmap(color_blue), " (2)");
-	cmb_bead_color->insertItem(QPixmap(color_green), " (3)");
-	cmb_bead_color->insertItem(QPixmap(color_cyan), " (4)");
-	cmb_bead_color->insertItem(QPixmap(color_red), " (5)");
-	cmb_bead_color->insertItem(QPixmap(color_magenta), " (6)");
-	cmb_bead_color->insertItem(QPixmap(color_brown), " (7)");
-	cmb_bead_color->insertItem(QPixmap(color_white), " (8)");
-	cmb_bead_color->insertItem(QPixmap(color_grey), " (9)");
-	cmb_bead_color->insertItem(QPixmap(color_lightblue), " (10)");
-	cmb_bead_color->insertItem(QPixmap(color_lightgreen), " (11)");
-	cmb_bead_color->insertItem(QPixmap(color_lightcyan), " (12)");
-	cmb_bead_color->insertItem(QPixmap(color_lightred), " (13)");
-	cmb_bead_color->insertItem(QPixmap(color_lightmagenta), " (14)");
-	cmb_bead_color->insertItem(QPixmap(color_yellow), " (15)");
-	cmb_bead_color->insertItem(QPixmap(color_brightwhite), " (16)");
+	cmb_bead_color->insertItem(QPixmap(color_black), " (0)");
+	cmb_bead_color->insertItem(QPixmap(color_blue), " (1)");
+	cmb_bead_color->insertItem(QPixmap(color_green), " (2)");
+	cmb_bead_color->insertItem(QPixmap(color_cyan), " (3)");
+	cmb_bead_color->insertItem(QPixmap(color_red), " (4)");
+	cmb_bead_color->insertItem(QPixmap(color_magenta), " (5)");
+	cmb_bead_color->insertItem(QPixmap(color_brown), " (6)");
+	cmb_bead_color->insertItem(QPixmap(color_white), " (7)");
+	cmb_bead_color->insertItem(QPixmap(color_grey), " (8)");
+	cmb_bead_color->insertItem(QPixmap(color_lightblue), " (9)");
+	cmb_bead_color->insertItem(QPixmap(color_lightgreen), " (10)");
+	cmb_bead_color->insertItem(QPixmap(color_lightcyan), " (11)");
+	cmb_bead_color->insertItem(QPixmap(color_lightred), " (12)");
+	cmb_bead_color->insertItem(QPixmap(color_lightmagenta), " (13)");
+	cmb_bead_color->insertItem(QPixmap(color_yellow), " (14)");
+	cmb_bead_color->insertItem(QPixmap(color_brightwhite), " (15)");
 	cmb_bead_color->setEnabled(false);
 	connect(cmb_bead_color, SIGNAL(activated(int)), this, SLOT(select_bead_color(int)));
 
@@ -1066,7 +1066,7 @@ void US_AddResidue::reset()
 	cnt_hydration->setValue(0);
 	cmb_placing->setCurrentItem(0);
 	cmb_placing->setEnabled(false);
-	/*	
+	/*
 	rb_backbone->setEnabled(false);
 	rb_backbone->setChecked(true);
 	rb_sidechain->setEnabled(false);
@@ -1208,7 +1208,7 @@ void US_AddResidue::atom_continue()
 	pb_atom_continue->setEnabled(false);
 	/*
 		lb_select_beadatom->setCurrentItem(0);
-		
+
 		cmb_r_beads->clear();
 		for (unsigned int i=0; i<new_residue.r_bead.size(); i++)
 		{
@@ -1228,7 +1228,7 @@ void US_AddResidue::atom_continue()
 			bg_chain->setButton(0);
 		}
 		str.sprintf("%f", new_residue.r_bead[0].volume);
-		le_bead_volume->setText(str);		
+		le_bead_volume->setText(str);
 		for (unsigned int i=0; i<new_residue.r_atom.size(); i++)
 		{
 			if(new_residue.r_atom[i].bead_assignment == 0)

@@ -53,7 +53,8 @@ struct bead
 	unsigned int color;				// color of bead
 	unsigned int placing_method;	// baric method
 											// 0: place the bead at the center of gravity of all atoms
-											// 1: placing the bead at the position of the furthest atom specified in the p3 file
+											// 1: placing the bead at the position of the furthest atom
+											// specified in the p3 file
 											// 2: no positioning necessary (only one atom to place)
 	unsigned int visibility;		// 0 = hidden
 											// 1 = exposed
@@ -64,17 +65,17 @@ struct bead
 
 struct hybridization
 {
-	QString name; 						// for example, Ca
-	float mw;
-	float radius;
+	QString name; 						// for example, N4H3
+	float mw;							// molecular weight of hybridization
+	float radius;						// radius of hybridization
 };
 
 struct atom
 {
-	QString name; 						// for example, Ca
+	QString name; 						// for example, CA
 	hybridization hybrid;			// hybridization of atom
-	unsigned int bead_assignment;
-	bool positioner;
+	unsigned int bead_assignment;	// which bead this atom belongs to
+	bool positioner;					// does this atom control position? (yes=1, no=0)
 	unsigned int serial_number;	// the serial number the atom occupies in the residue
 	unsigned int chain;				// 0 = main chain
 											// 1 = side chain

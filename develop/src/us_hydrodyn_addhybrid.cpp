@@ -12,7 +12,7 @@ US_AddHybridization::US_AddHybridization(bool *widget_flag, QWidget *p, const ch
 	global_Xpos += 30;
 	global_Ypos += 30;
 	setGeometry(global_Xpos, global_Ypos, 0, 0);
-}	
+}
 
 US_AddHybridization::~US_AddHybridization()
 {
@@ -95,8 +95,8 @@ void US_AddHybridization::setupGUI()
 	le_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	le_name->setMinimumHeight(minHeight1);
-	connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(update_name(const QString &)));	
-				
+	connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(update_name(const QString &)));
+
 	pb_add = new QPushButton(tr("Add Hybridization to File"), this);
 	Q_CHECK_PTR(pb_add);
 	pb_add->setEnabled(true);
@@ -134,7 +134,7 @@ void US_AddHybridization::setupGUI()
 	j++;
 	background->addWidget(pb_add, j, 0);
 	background->addWidget(pb_close, j, 1);
-	
+
 }
 
 void US_AddHybridization::add()
@@ -163,7 +163,7 @@ void US_AddHybridization::add()
 		for (unsigned int i=0; i<hybrid_list.size(); i++)
 		{
 			ts << hybrid_list[i].name.upper() << "\t" << hybrid_list[i].mw << "\t" << hybrid_list[i].radius << endl;
-			cout << "item: " << item << ", " << hybrid_list[i].name.upper() << "\t" << hybrid_list[i].mw << "\t" << hybrid_list[i].radius << ", " <<  hybrid_filename << endl;
+//			cout << "item: " << item << ", " << hybrid_list[i].name.upper() << "\t" << hybrid_list[i].mw << "\t" << hybrid_list[i].radius << ", " <<  hybrid_filename << endl;
 			str1.sprintf("%d: ", i+1);
 			str1 += hybrid_list[i].name.upper();
 			cmb_hybrid->insertItem(str1);
