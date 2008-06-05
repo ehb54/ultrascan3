@@ -13,7 +13,9 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   setCaption("UltraScan License Configuration");
 
-  lbl_blank = new QLabel(tr("Please enter all fields exactly as shown in the issued license,\nor import a license from an E-mail text file:"),this);
+  lbl_blank = new QLabel(
+    tr( "Please enter all fields exactly as shown in the issued license,\n"
+        "or import a license from an E-mail text file:" ), this );
   lbl_blank->setAlignment(AlignCenter|AlignVCenter);
   lbl_blank->setGeometry(xpos, ypos, span+buttonw+spacing, 2*buttonh+spacing);
   lbl_blank->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -28,7 +30,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_firstname = new QLineEdit(this);
   le_firstname->setGeometry(xpos, ypos, half_buttonw, buttonh);
-  connect(le_firstname, SIGNAL(textChanged(const QString &)), SLOT(update_firstname(const QString &)));
+  connect(le_firstname, SIGNAL(textChanged(const QString &)), 
+                        SLOT(update_firstname(const QString &)));
 
   xpos += half_buttonw + spacing;
 
@@ -40,7 +43,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_lastname = new QLineEdit(this);
   le_lastname->setGeometry(xpos, ypos, half_buttonw, buttonh);
-  connect(le_lastname, SIGNAL(textChanged(const QString &)), SLOT(update_lastname(const QString &)));
+  connect(le_lastname, SIGNAL(textChanged(const QString &)), 
+                       SLOT(update_lastname(const QString &)));
 
   xpos = spacing;
   ypos += buttonh + spacing;
@@ -53,7 +57,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_email = new QLineEdit(this);
   le_email->setGeometry(xpos, ypos, full_buttonw, buttonh);
-  connect(le_email, SIGNAL(textChanged(const QString &)), SLOT(update_email(const QString &)));
+  connect(le_email, SIGNAL(textChanged(const QString &)), 
+                    SLOT(update_email(const QString &)));
 
   xpos = spacing;
   ypos += buttonh + spacing;
@@ -66,7 +71,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_institution = new QLineEdit(this);
   le_institution->setGeometry(xpos, ypos, full_buttonw, buttonh);
-  connect(le_institution, SIGNAL(textChanged(const QString &)), SLOT(update_institution(const QString &)));
+  connect(le_institution, SIGNAL(textChanged(const QString &)), 
+                          SLOT(update_institution(const QString &)));
 
   xpos = spacing;
   ypos += buttonh + spacing;
@@ -79,7 +85,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_address = new QLineEdit(this);
   le_address->setGeometry(xpos, ypos, full_buttonw, buttonh);
-  connect(le_address, SIGNAL(textChanged(const QString &)), SLOT(update_address(const QString &)));
+  connect(le_address, SIGNAL(textChanged(const QString &)), 
+                      SLOT(update_address(const QString &)));
 
   xpos = spacing;
   ypos += buttonh + spacing;
@@ -92,7 +99,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_city = new QLineEdit(this);
   le_city->setGeometry(xpos, ypos, buttonw, buttonh);
-  connect(le_city, SIGNAL(textChanged(const QString &)), SLOT(update_city(const QString &)));
+  connect(le_city, SIGNAL(textChanged(const QString &)), 
+                   SLOT(update_city(const QString &)));
 
   xpos += buttonw + spacing;
 
@@ -170,7 +178,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_zip = new QLineEdit(this);
   le_zip->setGeometry(xpos, ypos, column3, buttonh);
-  connect(le_zip, SIGNAL(textChanged(const QString &)), SLOT(update_zip(const QString &)));
+  connect(le_zip, SIGNAL(textChanged(const QString &)), 
+                  SLOT(update_zip(const QString &)));
 
   xpos = spacing;
   ypos += buttonh + spacing;
@@ -183,7 +192,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_phone = new QLineEdit(this);
   le_phone->setGeometry(xpos, ypos, buttonw, buttonh);
-  connect(le_phone, SIGNAL(textChanged(const QString &)), SLOT(update_phone(const QString &)));
+  connect(le_phone, SIGNAL(textChanged(const QString &)), 
+                    SLOT(update_phone(const QString &)));
 
   xpos += buttonw + spacing;
 
@@ -198,8 +208,12 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
   cbb_licensetype->insertItem("academic");
   cbb_licensetype->insertItem("commercial");
   cbb_licensetype->insertItem("trial");
-  connect(cbb_licensetype, SIGNAL(activated(int)), SLOT(update_licensetype(int)));
-  connect(cbb_licensetype, SIGNAL(highlighted(int)), SLOT(update_licensetype(int)));
+  
+  connect(cbb_licensetype, SIGNAL(activated(int)), 
+                           SLOT(update_licensetype(int)));
+  
+  connect(cbb_licensetype, SIGNAL(highlighted(int)), 
+                           SLOT(update_licensetype(int)));
 
   xpos += spacing + column3;
 
@@ -253,6 +267,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
   lb_os->insertItem("FreeBSD");
   lb_os->insertItem("NetBSD");
   lb_os->insertItem("OpenBSD");
+
   connect(lb_os, SIGNAL(selected(int)), SLOT(update_os(int)));
   connect(lb_os, SIGNAL(highlighted(int)), SLOT(update_os(int)));
 
@@ -293,7 +308,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_code1 = new QLineEdit(this);
   le_code1->setGeometry(xpos, ypos, column4, buttonh);
-  connect(le_code1, SIGNAL(textChanged(const QString &)), SLOT(update_code1(const QString &)));
+  connect(le_code1, SIGNAL(textChanged(const QString &)), 
+                    SLOT(update_code1(const QString &)));
 
   xpos += column4 + spacing;
 
@@ -305,7 +321,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_code2 = new QLineEdit(this);
   le_code2->setGeometry(xpos, ypos, column4, buttonh);
-  connect(le_code2, SIGNAL(textChanged(const QString &)), SLOT(update_code2(const QString &)));
+  connect(le_code2, SIGNAL(textChanged(const QString &)), 
+                    SLOT(update_code2(const QString &)));
 
   xpos += column4 + spacing;
 
@@ -317,7 +334,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_code3 = new QLineEdit(this);
   le_code3->setGeometry(xpos, ypos, column4, buttonh);
-  connect(le_code3, SIGNAL(textChanged(const QString &)), SLOT(update_code3(const QString &)));
+  connect(le_code3, SIGNAL(textChanged(const QString &)), 
+                    SLOT(update_code3(const QString &)));
 
   xpos += column4 + spacing;
 
@@ -329,7 +347,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_code4 = new QLineEdit(this);
   le_code4->setGeometry(xpos, ypos, column4, buttonh);
-  connect(le_code4, SIGNAL(textChanged(const QString &)), SLOT(update_code4(const QString &)));
+  connect(le_code4, SIGNAL(textChanged(const QString &)), 
+                    SLOT(update_code4(const QString &)));
 
   xpos += column4 + spacing;
 
@@ -341,7 +360,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_code5 = new QLineEdit(this);
   le_code5->setGeometry(xpos, ypos, column4, buttonh);
-  connect(le_code5, SIGNAL(textChanged(const QString &)), SLOT(update_code5(const QString &)));
+  connect(le_code5, SIGNAL(textChanged(const QString &)), 
+                    SLOT(update_code5(const QString &)));
 
   ypos += spacing + buttonh;
   xpos = spacing;
@@ -354,7 +374,8 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
 
   le_expiration = new QLineEdit(this);
   le_expiration->setGeometry(xpos, ypos, buttonw, buttonh);
-  connect(le_expiration, SIGNAL(textChanged(const QString &)), SLOT(update_expiration(const QString &)));
+  connect(le_expiration, SIGNAL(textChanged(const QString &)), 
+                         SLOT(update_expiration(const QString &)));
 
   xpos = spacing;
   ypos += spacing + 2*buttonh;
@@ -400,7 +421,7 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
   ypos +=30;
   global_Xpos += 30;
   global_Ypos += 30;
-  setGeometry(global_Xpos, global_Ypos, buttonw+span+3*spacing, ypos);
+  setGeometry( global_Xpos, global_Ypos, buttonw+span+3*spacing, ypos );
   setMinimumSize(buttonw+span+3*spacing, ypos);
 
 }
@@ -409,7 +430,7 @@ US_License::~US_License()
 {
 }
 
-void US_License::closeEvent(QCloseEvent *e)
+void US_License::closeEvent(QCloseEvent* e)
 {
   e->accept();
   global_Xpos -= 30;
@@ -429,26 +450,26 @@ void US_License::help()
 
 void US_License::save()
 {
-	QString home    = US_Config::get_home_dir();	
+  QString home    = US_Config::get_home_dir();
 
 //	create new $HOME/ultrascan directory, if it doesn't exist
-	if ( ! QDir( home ).exists() )
-	{
-		QDir tmp;
-		tmp.mkdir(home);
-	}
+  if ( ! QDir( home ).exists() )
+  {
+    QDir tmp;
+    tmp.mkdir(home);
+  }
 
 // Make sure user's etc directory exists
-	if ( ! QDir( home + ETC_DIR ).exists() )
-	{
-		QDir etc;
-		etc.mkdir( home + ETC_DIR );
-	}
+  if ( ! QDir( home + ETC_DIR ).exists() )
+  {
+    QDir etc;
+    etc.mkdir( home + ETC_DIR );
+  }
 
   QString lcfile = US_Config::get_home_dir() + USLICENSE;
 
-  QFile f(lcfile);
-  if(f.open(IO_WriteOnly | IO_Translate))
+  QFile f( lcfile );
+  if( f.open( IO_WriteOnly | IO_Translate ) )
   {
     QTextStream ts (&f);
     ts<<lastname<<"\n";
@@ -470,7 +491,7 @@ void US_License::save()
     QMessageBox::message(
         tr( "Thanks!" ), 
         tr( "Your license information was saved to the following file:\n\n"
-            + lcfile ) );
+            + QDir::convertSeparators( lcfile ) ) );
     pb_cancel->setText("Close");
   }
   else
@@ -490,9 +511,10 @@ void US_License::import()
   int count=0;
   QFile texfile;
   QString filename, line="";
-  filename=fd.getOpenFileName("", "", this, "", 
-      "Please select an e-mail file containing an UltraScan license...");
+  filename = fd.getOpenFileName( "", "", this, "", 
+      "Please select an e-mail file containing an UltraScan license..." );
   texfile.setName(filename);
+
   if (texfile.open(IO_ReadOnly))
   {
     QTextStream ts(&texfile);
@@ -766,16 +788,23 @@ void US_License::captureStderr()
 void US_License::endProcess()
 {
   trials ++;
-  if (trials == 1 && stderrSize > 0) // error attaching to already running process, start new
+
+  // error attaching to already running process, start new$
+  if ( trials == 1 && stderrSize > 0 )
   {
     proc->clearArguments();
-    proc->addArgument("mozilla");
-    proc->addArgument("http://www.ultrascan.uthscsa.edu/register.html");
-    if(!proc->start()) //error
+    proc->addArgument( "mozilla" );
+    proc->addArgument( "http://www.ultrascan.uthscsa.edu/register.html" );
+    
+    if ( ! proc->start() ) //error
     {
       cout << "Error: Can't start browser window\n";
-      QMessageBox::message("UltraScan Error:", "Can't start browser window...");
-      return;
+
+			QMessageBox::message(
+        tr( "UltraScan Error:" ), 
+        tr( "Can't start browser window..." ) );
+      
+    return;
     }
   }
   else

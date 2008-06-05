@@ -1,4 +1,5 @@
 #include <qapplication.h>
+#include <qtextstream.h>
 #include "../include/us_win.h"
 #include "../include/us_register.h"
 
@@ -26,6 +27,7 @@ class USconfig_check : public QWidget
     bool exists       ( const QString& );
 		void set_default  ( const QString& );
 		void write_default( const QString& );
+    void debug        ( const QString& );
 
 };
 
@@ -57,7 +59,7 @@ int main (int argc, char **argv)
 
 		// Check to see if we are configured
 		USconfig_check* check = new USconfig_check();
-		bool OK               = check->check_config();
+		bool            OK    = check->check_config();
 		delete check;
 
 		// Check that we know at least the base system directory
@@ -88,12 +90,28 @@ int main (int argc, char **argv)
 	return a.exec();
 }
 
+void USconfig_check::debug( const QString& str )
+{
+  //QFile f( "debug.txt" );
+  //f.open( IO_WriteOnly | IO_Append );
+  //QTextStream debug( &f );
+  //debug << str << "\r\n";
+  //f.close();
+  cout << str << "\n";
+}
+
 bool USconfig_check::check_config()
 {
 	// If we have a config file, retrun true
 	if ( exists( US_Config::get_home_dir() + ETC_DIR + "/usrc.conf" ) ||
 			 exists( QDir::homeDirPath() + "/.usrc" ) )
 	{
+    QString msg;
+    if ( exists( US_Config::get_home_dir() + ETC_DIR + "/usrc.conf" ) )
+       debug( "exists( US_Config::get_home_dir() + ETC_DIR + /usrc.conf" );
+    else
+       debug( "exists( QDir::homeDirPath() + /.usrc )" );
+
 		cout << "config file exists" << endl;
 		return true;
 	}
@@ -110,14 +128,17 @@ bool USconfig_check::check_config()
 	if ( exists ( dir + "/etc/ultra.xpm" ) )
 	{
 		// If we got here,  ETC_DIR + "/usrc.conf" does not yet exist
+		debug( "Writing usrc.conf with system dir=" + dir );
     write_default( dir );
 
 		cout << "Ultrascan is installed in the default location: " + dir << endl;
 		return true;
 	}
 
+  debug( "system dir=" + dir + "/etc/ultra.xpm not found" );
 	// Check the environment variable
   QString ultrascan = getenv( "ULTRASCAN" );
+  debug( "returning exists( " + ultrascan + "/etc/ultra.xpm" );
 	return  exists( ultrascan + "/etc/ultra.xpm" ); 
 }
 
