@@ -61,6 +61,7 @@ struct bead
 	unsigned int chain;				// 0 = main chain
 											// 1 = side chain
 	float	       volume;				// anhydrous bead volume
+	float	       mw;					// bead mw
 };
 
 struct hybridization

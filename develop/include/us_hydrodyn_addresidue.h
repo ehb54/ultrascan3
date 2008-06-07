@@ -66,6 +66,7 @@ class US_AddResidue : public QWidget
 		QLabel *lbl_asa;
 		QLabel *lbl_beadchain;
 		QLabel *lbl_bead_volume;
+		QLabel *lbl_bead_mw;
 
 		QLabel *lbl_info2;
 		QLabel *lbl_r_atoms;
@@ -108,6 +109,7 @@ class US_AddResidue : public QWidget
 		QLineEdit *le_asa;
 		QLineEdit *le_residue_name;
 		QLineEdit *le_bead_volume;
+		QLineEdit *le_bead_mw;
 		struct residue new_residue;
 		struct atom new_atom;
 		struct bead new_bead;
@@ -148,6 +150,7 @@ class US_AddResidue : public QWidget
 		void set_chain(int);
 		void atom_continue();
 		void write_residue_file();
+		void calc_bead_mw(struct residue *);
 
 	protected slots:
 		void closeEvent(QCloseEvent *);

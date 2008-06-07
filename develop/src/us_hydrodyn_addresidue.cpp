@@ -448,12 +448,26 @@ void US_AddResidue::setupGUI()
 	lbl_bead_volume->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_bead_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-	le_bead_volume = new QLineEdit(this, "Residue asa Line Edit");
+	le_bead_volume = new QLineEdit(this, "Bead Volume Line Edit");
 	le_bead_volume->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_bead_volume->setMinimumHeight(minHeight1);
 	le_bead_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	le_bead_volume->setEnabled(false);
 	connect(le_bead_volume, SIGNAL(textChanged(const QString &)), SLOT(update_bead_volume(const QString &)));
+
+	lbl_bead_mw = new QLabel(tr(" Bead Mol. Weight: "), this);
+	Q_CHECK_PTR(lbl_bead_mw);
+	lbl_bead_mw->setAlignment(AlignLeft|AlignVCenter);
+	lbl_bead_mw->setMinimumHeight(minHeight1);
+	lbl_bead_mw->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_bead_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+	le_bead_mw = new QLineEdit(this, "Bead MW Line Edit");
+	le_bead_mw->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_bead_mw->setMinimumHeight(minHeight1);
+	le_bead_mw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	le_bead_mw->setEnabled(true);
+	le_bead_mw->setReadOnly(true);
 
 	pb_accept_bead = new QPushButton(tr("Accept Bead Definition"), this);
 	Q_CHECK_PTR(pb_accept_bead);
@@ -579,12 +593,15 @@ void US_AddResidue::setupGUI()
 	background->addWidget(lbl_bead_volume, j, 3);
 	background->addWidget(le_bead_volume, j, 4);
 	j++;
+	background->addWidget(lbl_bead_mw, j, 3);
+	background->addWidget(le_bead_mw, j, 4);
+	j++;
 	background->addWidget(lbl_list_beadatom, j, 3);
 	background->addWidget(lbl_select_beadatom, j, 4);
 	j++;
-	background->addMultiCellWidget(lb_list_beadatom, j, j+5, 3, 3);
-	background->addMultiCellWidget(lb_select_beadatom, j, j+5, 4, 4);
-	j+=6;
+	background->addMultiCellWidget(lb_list_beadatom, j, j+4, 3, 3);
+	background->addMultiCellWidget(lb_select_beadatom, j, j+4, 4, 4);
+	j+=5;
 	background->addWidget(pb_accept_bead, j, 3);
 	background->addWidget(pb_reset, j, 4);
 	j++;
@@ -600,13 +617,14 @@ void US_AddResidue::add()
 	int item = -1;
 	unsigned int i, j;
 	QString str1;
-	float sum=0.0;
+	int sum=0;
 	for (i=0; i<new_residue.r_bead.size(); i++)
 	{
-		sum += new_residue.r_bead[i].volume;
+		sum += (int) (new_residue.r_bead[i].volume * 100 + 0.5); //
 	}
-	str1.sprintf("Residue volume: %f A^3, Sum of beads: %f A^3\n\nPlease correct the bead volume and try again...", new_residue.molvol, sum);
-	if (sum != new_residue.molvol)
+	str1.sprintf("Residue volume: %7.2f A^3, Sum of beads: %7.2f A^3\n\n"
+			"Please correct the bead volume and try again...", new_residue.molvol, (float) (sum/100));
+	if (sum != (int) (new_residue.molvol * 100 + 0.5))
 	{
 		QMessageBox::message("Attention:", "The residue volume does not match the volume of the beads:\n\n" + str1);
 		pb_add->setEnabled(false);
@@ -724,6 +742,7 @@ void US_AddResidue::select_residue_file()
 //					str1.sprintf("Bead %d: defined", j+1);
 //					cmb_r_beads->insertItem(str1);
 				}
+				calc_bead_mw(&new_residue);
 				if ( !new_residue.name.isEmpty()
 					&& new_residue.molvol > 0.0
 					&& new_residue.asa > 0.0)
@@ -742,6 +761,21 @@ void US_AddResidue::select_residue_file()
 	}
 	str1.sprintf(tr(" Number of Residues in File: %d"), residue_list.size());
 	lbl_numresidues->setText(str1);
+}
+
+void US_AddResidue::calc_bead_mw(struct residue *res)
+{
+	for (unsigned int i=0; i<(*res).r_bead.size(); i++)
+	{
+		(*res).r_bead[i].mw = 0.0;
+		for (unsigned int j=0; j<(*res).r_atom.size(); j++)
+		{
+			if ((*res).r_atom[j].bead_assignment == i)
+			{
+				(*res).r_bead[i].mw += (*res).r_atom[j].hybrid.mw;
+			}
+		}	
+	}
 }
 
 void US_AddResidue::select_atom_file()
@@ -876,7 +910,15 @@ void US_AddResidue::update_hybrid(int val)
 void US_AddResidue::select_beadatom()
 {
 	unsigned int i;
+	QString str;
 	lb_list_beadatom->clear();
+	for (i=0; i<lb_select_beadatom->count(); i++)
+	{
+		if (new_residue.r_atom[i].bead_assignment == current_bead)
+		{
+			new_residue.r_atom[i].bead_assignment = 100000; // reset all atoms previously assigned to this bead to a different value
+		}
+	}
 	for (i=0; i<lb_select_beadatom->count(); i++)
 	{
 		if(lb_select_beadatom->isSelected(i))
@@ -886,6 +928,9 @@ void US_AddResidue::select_beadatom()
 			new_residue.r_atom[i].bead_assignment = current_bead;
 		}
 	}
+	calc_bead_mw(&new_residue);
+	str.sprintf("%6.4e", new_residue.r_bead[current_bead].mw);
+	le_bead_mw->setText(str);	
 }
 
 void US_AddResidue::update_hydration(double val)
@@ -917,8 +962,10 @@ void US_AddResidue::select_r_bead(int val)
 		cmb_bead_color->setCurrentItem(new_residue.r_bead[current_bead].color);
 		cmb_placing->setCurrentItem(new_residue.r_bead[current_bead].placing_method);
 		cnt_hydration->setValue(new_residue.r_bead[current_bead].hydration);
-		str.sprintf("%f", new_residue.r_bead[current_bead].volume);
+		str.sprintf("%7.2f", new_residue.r_bead[current_bead].volume);
 		le_bead_volume->setText(str);
+		str.sprintf("%6.4e", new_residue.r_bead[current_bead].mw);
+		le_bead_mw->setText(str);
 		if (new_residue.r_bead[current_bead].chain)
 		{
 			bg_chain->setButton(1);
@@ -988,7 +1035,7 @@ void US_AddResidue::select_residue(int val)
 	cnt_numatoms->setValue(residue_list[val].r_atom.size());
 	cnt_numbeads->setValue(residue_list[val].r_bead.size());
 	cmb_type->setCurrentItem(residue_list[val].type);
-	le_molvol->setText(str.sprintf("%6.4e", residue_list[val].molvol));
+	le_molvol->setText(str.sprintf("%7.2f", residue_list[val].molvol));
 	le_asa->setText(str.sprintf("%6.4e", residue_list[val].asa));
 	new_residue = residue_list[val];
 //	print_residue (new_residue);
@@ -1044,6 +1091,7 @@ void US_AddResidue::reset()
 	le_residue_name->setEnabled(true);
 	le_residue_name->setText("");
 	le_bead_volume->setText("0.0");
+	le_bead_mw->setText("0.0");
 	cnt_numbeads->setEnabled(true);
 	cnt_numbeads->setValue(0);
 	cnt_numatoms->setEnabled(true);
@@ -1404,7 +1452,7 @@ void US_AddResidue::write_residue_file()
 		{
 			ts << residue_list[i].name.upper()
 					<< "\t" << residue_list[i].type
-					<< "\t" << residue_list[i].molvol
+					<< "\t" << str1.sprintf("%7.2f", residue_list[i].molvol)
 					<< "\t" << residue_list[i].asa
 					<< "\t" << residue_list[i].r_atom.size()
 					<< "\t" << residue_list[i].r_bead.size() << endl;
