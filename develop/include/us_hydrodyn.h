@@ -89,8 +89,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
 		vector <struct PDB_model> model_vector;
 
-		int compute_asa();
-
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
@@ -108,14 +106,15 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void hybrid();
 		void residue();
 		void select_model(int);
-		void calc_bead_mw(struct residue *);
-		void bead_check();
+		void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
 		void update_probe_radius(double);
 		void update_asa_threshold(double);
 		void update_asa_threshold_percent(double);
 		void set_asa_calculation();
 		void set_bead_check();
-		int calc_somo();
+		int calc_somo(); // build bead model
+		int compute_asa(); // calculate maximum accessible surface area
+		void bead_check(); // recheck beads
 
 	protected slots:
 	

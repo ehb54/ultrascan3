@@ -532,12 +532,6 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
 	e->accept();
 }
 
-int US_Hydrodyn::compute_asa()
-{
-	// run the surfracer code
-	return 0;
-}
-
 void US_Hydrodyn::select_model(int val)
 {
 	current_model = val;
@@ -559,8 +553,15 @@ void US_Hydrodyn::calc_bead_mw(struct residue *res)
 	}
 }
 
+int US_Hydrodyn::compute_asa()
+{
+	// run the surfracer code
+	return 0;
+}
+
 void US_Hydrodyn::bead_check()
 {
+	// recheck beads here
 }
 
 void US_Hydrodyn::update_probe_radius(double val)
@@ -579,14 +580,24 @@ void US_Hydrodyn::update_asa_threshold_percent(double val)
 }
 
 void US_Hydrodyn::set_asa_calculation()
-{	
+{
+	asa_calculation = cb_asa_calculation->isChecked();
 }
 
 void US_Hydrodyn::set_bead_check()
 {
+	recheck_beads = cb_bead_check->isChecked();
 }
 
 int US_Hydrodyn::calc_somo()
 {
+	if (recheck_beads)
+	{
+		bead_check();
+	}
+	if (asa_calculation)
+	{
+		compute_asa();
+	}
 	return 0;
 }
