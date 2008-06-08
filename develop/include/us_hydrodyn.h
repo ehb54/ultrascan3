@@ -18,7 +18,6 @@
 #include "us_util.h"
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_addatom.h"
-
 #include "us_hydrodyn_addresidue.h"
 
 //standard C and C++ defs:
@@ -39,7 +38,14 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		~US_Hydrodyn();
 
 	private:
-		bool residue_widget, atom_widget, hybrid_widget;
+		bool residue_widget, atom_widget, hybrid_widget, recheck_beads, asa_calculation;
+		unsigned int current_model;
+		QString residue_filename;
+		vector <struct residue> residue_list;
+		struct residue new_residue;
+		struct atom new_atom;
+		struct bead new_bead;
+		double probe_radius, asa_threshold, asa_threshold_percent;
 
 		US_Config *USglobal;
 		
@@ -47,6 +53,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QLabel *lbl_table;
 		QLabel *lbl_tabletabs;
 		QLabel *lbl_pdb_file;
+		QLabel *lbl_model;
+		QLabel *lbl_probe_radius;
+		QLabel *lbl_asa_threshold;
+		QLabel *lbl_asa_threshold_percent;
+
+		QCheckBox *cb_asa_calculation;
+		QCheckBox *cb_bead_check;
 		
 		QPushButton *pb_save;
 		QPushButton *pb_select_residue_file;
@@ -56,12 +69,19 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QPushButton *pb_hybrid;
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;
+		QPushButton *pb_somo;
+
+		QListBox *lb_model;
 		
 		QTabWidget *Tab;
 		
 		US_AddAtom *addAtom;
 		US_AddResidue *addResidue;
 		US_AddHybridization *addHybrid;
+
+		QwtCounter *cnt_probe_radius;
+		QwtCounter *cnt_asa_threshold;
+		QwtCounter *cnt_asa_threshold_percent;
 		
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
@@ -80,14 +100,22 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void read_pdb(const QString &);
 		void setupGUI();
 		void select_residue_file();
-		void read_table(const QString &);
-	   void clear_temp_chain(struct PDB_chain *);
+		void clear_temp_chain(struct PDB_chain *);
 	   void assign_atom(const QString &, struct PDB_chain *);
 		void cancel();
 		void help();
 		void atom();
 		void hybrid();
 		void residue();
+		void select_model(int);
+		void calc_bead_mw(struct residue *);
+		void bead_check();
+		void update_probe_radius(double);
+		void update_asa_threshold(double);
+		void update_asa_threshold_percent(double);
+		void set_asa_calculation();
+		void set_bead_check();
+		int calc_somo();
 
 	protected slots:
 	
