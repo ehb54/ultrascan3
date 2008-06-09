@@ -2,21 +2,15 @@
 #define US_EDVABS_H
 #include "us_edit.h"
 
-struct absscan
-{
-	vector <float> rad;
-	vector <float> abs;
-};
-
 class US_EXTERN EditAbsVeloc_Win : public EditData_Win
 {
 
 	Q_OBJECT
-	
+
 	public:
 		EditAbsVeloc_Win(QWidget *p = 0, const char *name = 0);
 		~EditAbsVeloc_Win();
-		
+
 		double *absorbance_integral, *residuals;
 
 		QPushButton *pb_subtract;
@@ -26,19 +20,10 @@ class US_EXTERN EditAbsVeloc_Win : public EditData_Win
 		bool residuals_defined;
 		unsigned int order;
 
-#ifdef WIN32
-		  #pragma warning ( disable: 4251 )
-#endif
-
-		vector <struct absscan> oldscan;
-
-#ifdef WIN32
-		  #pragma warning ( default: 4251 )
-#endif
 
 
 	public slots:
-	
+
 		void help();
 		void get_x(const QMouseEvent &e);
 		void setup_GUI();

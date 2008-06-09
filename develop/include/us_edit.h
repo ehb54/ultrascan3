@@ -23,6 +23,13 @@
 #include "us_select_channel.h"
 #include "us_exclude_profile.h"
 
+struct absscan
+{
+	vector <float> rad;
+	vector <float> abs;
+};
+
+
 class US_EXTERN EditData_Win : public QFrame
 {
 	Q_OBJECT
@@ -64,8 +71,10 @@ class US_EXTERN EditData_Win : public QFrame
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
+
 		vector <struct rotorInfo> rotor_list;
 		vector <struct centerpieceInfo> cp_list;
+		vector <struct absscan> oldscan;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
