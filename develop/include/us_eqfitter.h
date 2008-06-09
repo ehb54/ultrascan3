@@ -73,6 +73,7 @@ class US_EXTERN US_EqFitter : public US_Minimize
 	
 		void cleanup();
 		void updateRange(double);
+		void setRange(double);
 		void saveFit();
 		void saveFit(const QString &);
 		int calc_jacobian();

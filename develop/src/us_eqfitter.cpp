@@ -3936,7 +3936,7 @@ void US_EqFitter::plot_residuals()
 		symbol.setSize(8);
 		line_x[0] = -xmax/30.0;
 		line_x[1] = xmax/30.0 + xmax;
-		for (unsigned int i = firstScan - 1; i< numScans + firstScan - 1; i++)
+		for (unsigned int i=firstScan - 1; i<numScans + firstScan - 1; i++)
 		{
 			curve_res[i] = data_plot->insertCurve("residuals");
 			data_plot->setCurveStyle(curve_res[i], QwtCurve::Lines);
@@ -4128,11 +4128,11 @@ void US_EqFitter::plot_residuals()
 			}
 		}
 	}
+	setRange(1.0);
 }
 
-void US_EqFitter::updateRange(double scan)
+void US_EqFitter::setRange(double scan)
 {
-	unsigned int modulus;
 	if (!GUI)
 	{
 		return;
@@ -4142,14 +4142,21 @@ void US_EqFitter::updateRange(double scan)
 	{
 		firstScan = 1;
 	}
-	if (plotGroup == 0)
+	if (plotGroup == 0) // this is for plotting all residuals
 	{
-		modulus = 0;
+		cnt_scan->setRange(1, 1, 1);
 	}
-	else
+	else if (plotGroup == 1) // this is for plotting single scans
 	{
-		modulus = datasets % plotGroup;
+		cnt_scan->setRange(1, datasets, 1);
 	}
+	else if (plotGroup == 5) // this is for plotting 5 scans at a time
+	{
+		cnt_scan->setRange(1, datasets-(datasets % plotGroup), plotGroup);
+	}
+	cout << "PlotGroup: " << plotGroup << ", datasets: " << datasets << endl;
+	/*
+	cout << "Modulus: " << modulus << endl;
 	switch (modulus)
 	{
 		case 0:
@@ -4178,7 +4185,13 @@ void US_EqFitter::updateRange(double scan)
 			break;
 		}
 	}
-	cnt_scan->setValue(firstScan);
+	*/
+}
+
+void US_EqFitter::updateRange(double scan)
+{
+	setRange(scan);
+	//cnt_scan->setValue(firstScan);
 	if (plotResiduals)
 	{
 		plot_residuals();

@@ -1916,7 +1916,7 @@ void US_Minimize::update_plotSingle()
 		return;
 	}
 	plotGroup = 1;
-	cnt_scan->setRange(1, 1, 1);
+	cnt_scan->setRange(1, 2, 1);
 	bt_plotAll->setChecked(false);
 	bt_plotGroup->setChecked(false);
 	bt_plotSingle->setChecked(true);
