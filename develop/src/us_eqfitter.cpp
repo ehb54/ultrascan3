@@ -4128,7 +4128,6 @@ void US_EqFitter::plot_residuals()
 			}
 		}
 	}
-	setRange(1.0);
 }
 
 void US_EqFitter::setRange(double scan)
@@ -4154,38 +4153,6 @@ void US_EqFitter::setRange(double scan)
 	{
 		cnt_scan->setRange(1, datasets-(datasets % plotGroup), plotGroup);
 	}
-	cout << "PlotGroup: " << plotGroup << ", datasets: " << datasets << endl;
-	/*
-	cout << "Modulus: " << modulus << endl;
-	switch (modulus)
-	{
-		case 0:
-		{
-			cnt_scan->setRange(1, datasets-plotGroup-1, plotGroup);
-			break;
-		}
-		case 1:
-		{
-			cnt_scan->setRange(1, datasets, plotGroup);
-			break;
-		}
-		case 2:
-		{
-			cnt_scan->setRange(1, datasets-1, plotGroup);
-			break;
-		}
-		case 3:
-		{
-			cnt_scan->setRange(1, datasets-2, plotGroup);
-			break;
-		}
-		case 4:
-		{
-			cnt_scan->setRange(1, datasets-3, plotGroup);
-			break;
-		}
-	}
-	*/
 }
 
 void US_EqFitter::updateRange(double scan)
