@@ -25,6 +25,7 @@
 
 struct absscan
 {
+	unsigned int time;
 	vector <float> rad;
 	vector <float> abs;
 };

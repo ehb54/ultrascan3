@@ -231,6 +231,14 @@ void EditAbsVeloc_Win::get_x(const QMouseEvent &e)
 			QFile f(filename);
 			f.open( IO_WriteOnly );
 			QDataStream s( &f );
+			// delete all excluded scans from oldscan, keep only those scans whose time matches:
+			for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
+			{
+				while (run_inf.time[cell][lambda][scan] != oldscan[scan].time)
+				{
+					oldscan.erase(oldscan.begin() + scan);
+				}
+			}
 			run_inf.points[cell][lambda][current_channel] = 1 + (unsigned int) ((run_inf.range_right[cell][lambda][current_channel]
 							 - run_inf.range_left[cell][lambda][current_channel])/run_inf.delta_r);
 			for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
@@ -414,6 +422,7 @@ void EditAbsVeloc_Win::get_x(const QMouseEvent &e)
 			{
 				temp_scan.rad.clear();
 				temp_scan.abs.clear();
+				temp_scan.time = run_inf.time[cell][lambda][scan];
 				for (i=0; i<points[scan]; i++)
 				{
 					temp_scan.abs.push_back(absorbance[scan][i]);
