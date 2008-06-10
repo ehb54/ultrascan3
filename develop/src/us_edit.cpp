@@ -427,7 +427,6 @@ void EditData_Win::update_rotor(int index)
 
 void EditData_Win::exSingle()
 {
-cout << "Exclude_single: " << exclude_single << endl;
 	unsigned int i;
 	if (exclude_single == 0)
 	{

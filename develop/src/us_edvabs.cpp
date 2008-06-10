@@ -649,19 +649,27 @@ void EditAbsVeloc_Win::next_step()
 
 void EditAbsVeloc_Win::update_oldscan()
 {
-	oldscan.clear();
-	unsigned int scan, i;
-	struct absscan temp_scan; // make a copy of the original data
+	unsigned int scan, i, count;
+	// delete all excluded scans from oldscan, keep only those scans whose time matches:
 	for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
 	{
-		temp_scan.rad.clear();
-		temp_scan.abs.clear();
+		while (run_inf.time[cell][lambda][scan] != oldscan[scan].time)
+		{
+			oldscan.erase(oldscan.begin() + scan);
+		}
+	}
+	for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
+	{
+		count = 0;
+		while (oldscan[scan].rad[count] < radius[scan][0])
+		{
+			count ++;
+		}
 		for (i=0; i<points[scan]; i++)
 		{
-			temp_scan.abs.push_back(absorbance[scan][i]);
-			temp_scan.rad.push_back(radius[scan][i]);
+			oldscan[scan].abs[count] = absorbance[scan][i];
+			count ++;
 		}
-		oldscan.push_back(temp_scan);
 	}
 }
 
