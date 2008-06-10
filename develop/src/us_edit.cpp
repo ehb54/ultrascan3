@@ -433,12 +433,6 @@ cout << "Exclude_single: " << exclude_single << endl;
 	{
 		return;
 	}
-	/*
-	if (edit_type == 1)
-	{
-		oldscan.erase(oldscan.begin() + (unsigned int) (exclude_single-1));
-	}
-	*/
 	for (i=(unsigned int) exclude_single-1; i<(unsigned int) run_inf.scans[cell][lambda]-1; i++)
 	{
 		radius[i] 										= radius[i+1];
@@ -490,12 +484,6 @@ void EditData_Win::exRange()
 		return;
 	}
 	excluded_scans = exclude_range - exclude_single + 1;
-	/*
-	if (edit_type == 1)
-	{
-		oldscan.erase(oldscan.begin() + (unsigned int) (exclude_single-1), oldscan.begin() + (unsigned int) (exclude_range-1));
-	}
-	*/
 	for (i=(unsigned int) exclude_single-1; i<(unsigned int) run_inf.scans[cell][lambda]-excluded_scans; i++)
 	{
 		radius[i] 										= radius[i+excluded_scans];
@@ -2571,15 +2559,6 @@ void EditData_Win::final_exclude_profile(vector <bool> include_flag)
 	unsigned int i, count=0;
 	for (i=0; i<include_flag.size(); i++)
 	{
-		/*
-		if(!include_flag[i])
-		{
-			if (edit_type == 1)
-			{
-				oldscan.erase(oldscan.begin() + i-1);
-			}
-		}
-		*/
 		if(include_flag[i])
 		{
 			radius[count] 										= radius[i];

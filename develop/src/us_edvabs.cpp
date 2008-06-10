@@ -650,7 +650,7 @@ void EditAbsVeloc_Win::next_step()
 void EditAbsVeloc_Win::update_oldscan()
 {
 	oldscan.clear();
-	unsigned int scan, i, count;
+	unsigned int scan, i;
 	struct absscan temp_scan; // make a copy of the original data
 	for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
 	{
@@ -663,23 +663,5 @@ void EditAbsVeloc_Win::update_oldscan()
 		}
 		oldscan.push_back(temp_scan);
 	}
-	/*
-
-	
-	unsigned int scan, i, count;
-	for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
-	{
-		count = 0;
-		while (oldscan[scan].rad[count] < radius[scan][0])
-		{
-			count ++;
-		}
-		for (i=0; i<points[scan]; i++)
-		{
-			oldscan[scan].abs[count] = absorbance[scan][i];
-			count ++;
-		}
-	}
-	*/
 }
 
