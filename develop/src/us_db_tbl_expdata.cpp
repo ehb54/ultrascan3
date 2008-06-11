@@ -969,7 +969,9 @@ void US_ExpData_DB::add_db()
 	pd_add->setProgress(1);
 	if(!compress_proc->start())
 	{
-			QMessageBox::message("UltraScan Error:", "Unable to start process to tar raw data archive.");
+			QMessageBox::message(
+        tr( "UltraScan Error:" ), 
+        tr( "Unable to start process to copy data." ) );
 			return;
 	}
 	c_step=0;   

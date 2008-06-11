@@ -2487,6 +2487,10 @@ void UsWin::quit()
 
 void UsWin::about()
 {
+#ifdef WIN32
+  US_Version += WIN32Version;
+#endif
+
 	emit explain( tr("About...") );
 	QMessageBox::message(
 			tr("About UltraScan..."),
