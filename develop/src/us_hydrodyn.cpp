@@ -121,7 +121,7 @@ void US_Hydrodyn::setupGUI()
 	cnt_asa_threshold->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_asa_threshold, SIGNAL(valueChanged(double)), SLOT(update_asa_threshold(double)));
 
-	lbl_asa_threshold_percent = new QLabel(tr(" ASA Threshold %: "), this);
+	lbl_asa_threshold_percent = new QLabel(tr(" Bead ASA Threshold %: "), this);
 	Q_CHECK_PTR(lbl_asa_threshold_percent);
 	lbl_asa_threshold_percent->setAlignment(AlignLeft|AlignVCenter);
 	lbl_asa_threshold_percent->setMinimumHeight(minHeight1);
@@ -148,7 +148,7 @@ void US_Hydrodyn::setupGUI()
 	connect(cb_asa_calculation, SIGNAL(clicked()), SLOT(set_asa_calculation()));
 
 	cb_bead_check = new QCheckBox(this);
-	cb_bead_check->setText(tr(" Re-check beads "));
+	cb_bead_check->setText(tr(" Re-check bead ASA "));
 	cb_bead_check->setChecked(recheck_beads);
 	cb_bead_check->setEnabled(true);
 	cb_bead_check->setMinimumHeight(minHeight1);

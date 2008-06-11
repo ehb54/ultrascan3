@@ -173,7 +173,7 @@ void US_AddResidue::setupGUI()
 	cmb_type->setMinimumHeight(minHeight1);
 	connect(cmb_type, SIGNAL(activated(int)), this, SLOT(select_type(int)));
 
-	lbl_molvol = new QLabel(tr(" Residue Molec. anhydrous Vol. (A^3):"), this);
+	lbl_molvol = new QLabel(tr(" Residue anhydrous mol. vol. (A^3):"), this);
 	Q_CHECK_PTR(lbl_molvol);
 	lbl_molvol->setAlignment(AlignLeft|AlignVCenter);
 	lbl_molvol->setMinimumHeight(minHeight1);
@@ -929,7 +929,7 @@ void US_AddResidue::select_beadatom()
 		}
 	}
 	calc_bead_mw(&new_residue);
-	str.sprintf("%6.4e", new_residue.r_bead[current_bead].mw);
+	str.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
 	le_bead_mw->setText(str);	
 }
 
@@ -964,7 +964,7 @@ void US_AddResidue::select_r_bead(int val)
 		cnt_hydration->setValue(new_residue.r_bead[current_bead].hydration);
 		str.sprintf("%7.2f", new_residue.r_bead[current_bead].volume);
 		le_bead_volume->setText(str);
-		str.sprintf("%6.4e", new_residue.r_bead[current_bead].mw);
+		str.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
 		le_bead_mw->setText(str);
 		if (new_residue.r_bead[current_bead].chain)
 		{
@@ -1036,7 +1036,7 @@ void US_AddResidue::select_residue(int val)
 	cnt_numbeads->setValue(residue_list[val].r_bead.size());
 	cmb_type->setCurrentItem(residue_list[val].type);
 	le_molvol->setText(str.sprintf("%7.2f", residue_list[val].molvol));
-	le_asa->setText(str.sprintf("%6.4e", residue_list[val].asa));
+	le_asa->setText(str.sprintf("%7.2f", residue_list[val].asa));
 	new_residue = residue_list[val];
 //	print_residue (new_residue);
 //	print_residue (residue_list[val]);
