@@ -41,7 +41,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		bool residue_widget, atom_widget, hybrid_widget, recheck_beads, asa_calculation;
 		unsigned int current_model;
 		QString residue_filename;
-		vector <struct residue> residue_list;
 		struct residue new_residue;
 		struct atom new_atom;
 		struct bead new_bead;
@@ -87,6 +86,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
   #pragma warning ( disable: 4251 )
 #endif
 
+		vector <struct residue>   residue_list;
 		vector <struct PDB_model> model_vector;
 
 #ifdef WIN32

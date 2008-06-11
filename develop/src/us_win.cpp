@@ -2487,14 +2487,15 @@ void UsWin::quit()
 
 void UsWin::about()
 {
+	QString ver = US_Version;
 #ifdef WIN32
-  US_Version += WIN32Version;
+  ver = US_Version + WIN32Version;
 #endif
 
 	emit explain( tr("About...") );
 	QMessageBox::message(
 			tr("About UltraScan..."),
-	tr("UltraScan II version " + US_Version + "\n"
+	tr("UltraScan II version " + ver + "\n"
 			"Copyright 1989 - 2008\n"
 			"Borries Demeler and the University of Texas System\n\n"
 			"For more information, please visit:\n"
