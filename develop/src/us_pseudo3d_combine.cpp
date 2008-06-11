@@ -563,7 +563,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 			}
 			while (!ts.atEnd())
 			{
-				cout << "reading lines...\n";
+
 				ts >> temp1; // s_apparent
 				ts >> temp1; // s_20,W
 				temp1 *= (float) 1.0e13; // change to proper scale
@@ -580,6 +580,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 				temp_mw_distro.k = temp4;
 				temp_system.s_distro.push_back(temp_s_distro);
 				temp_system.mw_distro.push_back(temp_mw_distro);
+				cout << "s: " << temp1 << "..reading lines...\n";
 			}
 			f.close();
 		}
@@ -600,15 +601,15 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 			{
 				if ( (*j1).s == (*j2).s && (*j1).k == (*j2).k )
 				{
-					(*j2).c += (*j1).c;
+					(*j1).c += (*j2).c;
 				}
 				else
 				{
 					temp_system.s_distro.push_back(*j1);
 				}
-
 				j1++;
 			}
+			temp_system.s_distro.push_back(*j1);
 		}
 		else if (reduced.size() == 1)
 		{
@@ -632,15 +633,15 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 				{
 					temp_system.mw_distro.push_back(*j1);
 				}
-
 				j1++;
 			}
+			temp_system.mw_distro.push_back(*j1);
 		}
 		else if (reduced.size() == 1)
 		{
 			temp_system.mw_distro = reduced;
 		}
-			
+
 		cout << "3. Size of temp_distro: " << temp_system.s_distro.size() << ", reduced: " <<reduced.size() << endl;
 
 		reduced.clear();
@@ -835,7 +836,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 			{
 				//double maxvals[USglobal->config_list.numThreads];
 				vector<double> maxvals( USglobal->config_list.numThreads );
-		
+
 				//double* zz[x_resolution];
 
 				double** zz = new double* [ x_resolution ];
@@ -948,16 +949,16 @@ void US_Pseudo3D_Combine::plot_3dim()
 			if(USglobal->config_list.numThreads > 1)
 			{
 				//double maxvals[USglobal->config_list.numThreads];
-				
+
 				vector<double> maxvals( USglobal->config_list.numThreads );
 				//double *zz[x_resolution];
 				double** zz = new double* [ x_resolution ];
-				
+
 				for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
 					maxvals[j] = 0;
 				}
-				
+
 				for(j = 0; j < x_resolution; j++)
 				{
 					zz[j] = z[j];
@@ -966,9 +967,9 @@ void US_Pseudo3D_Combine::plot_3dim()
 			// create threads
 
 				//US_Plot3d_thr_t *plot3d_thr_threads[USglobal->config_list.numThreads];
-				
+
 				vector< US_Plot3d_thr_t* > plot3d_thr_threads( USglobal->config_list.numThreads );
-				
+
 				for(j = 0; j < USglobal->config_list.numThreads; j++)
 				{
 					plot3d_thr_threads[j] = new US_Plot3d_thr_t(j);
@@ -1092,7 +1093,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 
 	QString cell_info = "." + system[current_distro].cell + system[current_distro].wavelength;
 	//cout << "Cell Info: " << cell_info << endl;
-	
+
 	switch (system[current_distro].distro_type)
 	{
 		case 1:
