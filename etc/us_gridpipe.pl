@@ -10,7 +10,9 @@ $debug++;
 $globustimeout = 15; # seconds to wait for globusrun-ws commands to succeed or timeout
 $statusupdate = 60; # seconds to wait for status update
 
-$us = $ENV{'ULTRASCAN'};
+$us = $ENV{'ULTRASCAN'} || die "The environment variable ULTRASCAN must be set.  Terminating\n";
+open(SYS_LOCK, "$us/etc/us_gridpipe.lock") || die "$0: lockfile $us/etc/us_gridpipe.lock error: $!.  Terminating\n";
+flock(SYS_LOCK, 6) || die "$0: lockfile $us/etc/us_gridpipe.lock is already in use ($!).  Terminating\n";
 
 require "$us/etc/us_gcfields.pl";
 
