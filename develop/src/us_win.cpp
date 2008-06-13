@@ -21,27 +21,80 @@ UsWin::UsWin(QWidget *parent, const char *name)
 
 	setGeometry(50, 50, width, height);
 
-	QTimer *splash_time = new QTimer(this);
+#if defined(WIN32)
+  #define OS_TITLE "Microsoft Windows"
+#elif defined(LINUX)
+  #define OS_TITLE "Linux"
+#elif defined(OSX)
+  #define OS_TITLE "Macintosh OS-X"
+#elif defined(FREEBSD)
+  #define OS_TITLE "FreeBSD"
+#elif defined(OPENBSD)
+  #define OS_TITLE "OpenBSD"
+#elif defined(NETBSD)
+  #define OS_TITLE "NetBSD"
+#elif defined(IRIX)
+  #define OS_TITLE "Silicon Graphics Irix"
+#elif defined(SOLARIS)
+  #define OS_TITLE "Sun Solaris"
+#else
+  #define OS_TITLE "Unknown"
+#endif
+
+#define DROP    20
+
+	QPixmap rawpix( USglobal->config_list.system_dir + "/etc/flash-combined.png" );
+	int ph = rawpix.height() + DROP;
+	int pw = rawpix.width() + DROP;
+
+	QPixmap  pixmap( pw, ph );
+	QPainter painter( &pixmap );
+ 
+	painter.fillRect( 0, 0, pw, ph, QBrush( Qt::black) );
+	painter.fillRect( DROP, DROP, pw, ph, QBrush( Qt::cyan) );
+
+	painter.drawPixmap( 0, 0, rawpix );
+
+	painter.setPen( QPen( Qt::blue, 4 ) );
+	painter.drawRect( QRect( 0, 0, pw, ph ) );
+
+	painter.setFont( QFont( "Arial", 16, QFont::Normal ) );
+	painter.setPen( Qt::white );
+
+	QString version = "UltraScan " + US_Version +  " for " OS_TITLE;
+	QFontMetrics metrics( QFont( "Arial", 16, QFont::Normal ) );
+	int sWidth = metrics.boundingRect( version ).width();
+	int x      = ( pw - sWidth ) / 2;
+
+	painter.drawText( x, 140, version );
+
+	splash = new QSplashScreen( pixmap );
+	splash->show();
+
+	QTimer* splash_time = new QTimer( this );
+	splash_time->start( 6000, true );
+	connect( splash_time, SIGNAL( timeout() ), this, SLOT( close_splash() ) );
+
 	bigframe = new QLabel(this);
 	bigframe->setFrameStyle(QFrame::Box | QFrame::Raised);
 	bigframe->setPalette( QPalette( USglobal->global_colors.cg_frame, 
 	                                USglobal->global_colors.cg_frame, 
 	                                USglobal->global_colors.cg_frame ) );
-	smallframe = new QLabel(this);
-	smallframe->setGeometry((unsigned int) ((width/2)-210) , 130, 460, 276);
+	//smallframe = new QLabel(this);
+	//smallframe->setGeometry((unsigned int) ((width/2)-210) , 130, 460, 276);
 	
-	smallframe->setPalette( QPalette( USglobal->global_colors.cg_pushb, 
-	                                  USglobal->global_colors.cg_pushb_disabled,
-	                                  USglobal->global_colors.cg_pushb_active));
-	splash_b = new QLabel(this);
+	//smallframe->setPalette( QPalette( USglobal->global_colors.cg_pushb, 
+	//                                  USglobal->global_colors.cg_pushb_disabled,
+	//                                  USglobal->global_colors.cg_pushb_active));
+	//splash_b = new QLabel(this);
 
-	QPixmap splash;
+	//QPixmap splash;
 
 	//QString splash_image = getenv("ULTRASCAN");
 	//cout << "UltraScan environment variable value: " << splash_image << endl;
-	QString splash_image = USglobal->config_list.system_dir;
+	//QString splash_image = USglobal->config_list.system_dir;
 	
-
+/*
 	if ( splash_image.isEmpty() ) // Should never happen
 	{
 #ifdef UNIX
@@ -115,12 +168,11 @@ UsWin::UsWin(QWidget *parent, const char *name)
 
 	if (splash.load(splash_image))
 	{
-		splash_b->setGeometry((unsigned int) ((width/2)-230), 110, 460, 276);
-		splash_b->setPixmap(splash);
+		//splash_b->setGeometry((unsigned int) ((width/2)-230), 110, 460, 276);
+		//splash_b->setPixmap(splash);
 	}
-
-	splash_time->start(6000, true);
-	connect (splash_time, SIGNAL(timeout()), this, SLOT(close_splash()));
+/////////////
+*/
 
 	QPopupMenu *file_info = new QPopupMenu;
 	Q_CHECK_PTR(file_info);
@@ -1419,9 +1471,10 @@ void UsWin::meminfo()
 
 void UsWin::close_splash()
 {
-	delete smallframe;
-	delete splash_b;
-	bigframe->show();
+	//delete smallframe;
+	//delete splash_b;
+	//bigframe->show();
+	splash->close();
 }
 
 void UsWin::veloc_absorbance()

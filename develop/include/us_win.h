@@ -13,6 +13,7 @@
 #include <qprocess.h>
 #include <qtranslator.h>
 #include <qevent.h>
+#include <qsplashscreen.h>
 #include "us_dtactrl.h"
 #include "us_util.h"
 #include "us_export.h"
@@ -64,8 +65,8 @@ public:
 	QProcess *us_vhwdat_proc;
 	QProcess *us_vhwenhanced_proc;
 	QProcess *us_findat_proc;
-   QProcess *us_findat_ad_proc;
-   QProcess *us_finite_single_proc;
+	QProcess *us_findat_ad_proc;
+	QProcess *us_finite_single_proc;
 	QProcess *us_fematch_proc;
 	QProcess *us_fematch_ra_proc;
 	QProcess *us_gainit1_proc;
@@ -88,7 +89,7 @@ public:
 //	QProcess *us_globallaser_proc;
 	QProcess *us_lncr2_proc;
 //	QProcess *us_kirkwood_proc;
-   QProcess *us_archive_proc;
+	QProcess *us_archive_proc;
 	QProcess *us_reorder_proc;
 	QProcess *us_pseudoabs_proc;
 	QProcess *us_merge_proc;
@@ -247,22 +248,23 @@ signals:
 
 private:
 
-	QLabel *splash_b;
-	QLabel *bigframe;
-	QLabel *smallframe;
-	QMenuBar *menu;
-	QLabel   *stat_bar;
-	bool config_is_open;
-	US_Config *USglobal;
-	Data_Control_W *dataset_i;
-	US_Export_Veloc *export_veloc;
-	US_Export_Equil *export_equil;
-	US_Print_Veloc *print_veloc;
-	US_Print_Equil *print_equil;
-	US_Report_Veloc *report_veloc;
-	US_Report_Equil *report_equil;
-	US_Report_EquilProject *report_equilproject;
-	US_Report_MonteCarlo *report_montecarlo;
+	QSplashScreen*          splash;
+	QLabel*                 splash_b;
+	QLabel*                 bigframe;
+	QLabel*                 smallframe;
+	QMenuBar*               menu;
+	QLabel*                 stat_bar;
+	bool                    config_is_open;
+	US_Config*              USglobal;
+	Data_Control_W*         dataset_i;
+	US_Export_Veloc*        export_veloc;
+	US_Export_Equil*        export_equil;
+	US_Print_Veloc*         print_veloc;
+	US_Print_Equil*         print_equil;
+	US_Report_Veloc*        report_veloc;
+	US_Report_Equil*        report_equil;
+	US_Report_EquilProject* report_equilproject;
+	US_Report_MonteCarlo*   report_montecarlo;
 };
 
 #endif // USWIN_H
