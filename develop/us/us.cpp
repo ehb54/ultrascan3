@@ -106,6 +106,7 @@ bool USconfig_check::check_config()
 	if ( exists( US_Config::get_home_dir() + ETC_DIR + "/usrc.conf" ) ||
 			 exists( QDir::homeDirPath() + "/.usrc" ) )
 	{
+/*
     QString msg;
     if ( exists( US_Config::get_home_dir() + ETC_DIR + "/usrc.conf" ) )
        debug( "exists( US_Config::get_home_dir() + ETC_DIR + /usrc.conf" );
@@ -113,6 +114,7 @@ bool USconfig_check::check_config()
        debug( "exists( QDir::homeDirPath() + /.usrc )" );
 
 		cout << "config file exists" << endl;
+*/
 		return true;
 	}
 

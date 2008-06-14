@@ -992,6 +992,29 @@ void US_GA_Initialize::load_distro()
 		distro_solute.clear();
 		j1 = reduced.begin();
 		j2 = reduced.begin();
+
+		if ( reduced.size() > 1 )
+		{
+			while ( ++j2 != reduced.end() )
+			{
+				if ( (*j1).s == (*j2).s && (*j1).k == (*j2).k )
+				{
+					(*j2).c += (*j1).c;
+				}
+				else
+				{
+					distro_solute.push_back(*j1);
+				}
+				j1++;
+			}
+			distro_solute.push_back(*j1);
+		}
+		else if (reduced.size() == 1)
+		{
+			distro_solute = reduced;
+		}
+
+		/* old code:
 		while ( ++j2 != reduced.end() )
 		{
 			//j2++;
@@ -1005,6 +1028,8 @@ void US_GA_Initialize::load_distro()
 				j1 = j2;
 			}
 		}
+		*/
+		
 		reduced.clear();
 		float low_s, high_s, val_k, low_k=1.0e6, high_k = -1.0e6;
 		for (j = distro_solute.begin(); j != distro_solute.end(); j++)
