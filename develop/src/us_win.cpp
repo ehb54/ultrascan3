@@ -44,25 +44,27 @@ UsWin::UsWin(QWidget *parent, const char *name)
 #define DROP    20
 
 	QPixmap rawpix( USglobal->config_list.system_dir + "/etc/flash-combined.png" );
-	int ph = rawpix.height() + DROP;
-	int pw = rawpix.width() + DROP;
+//	int ph = rawpix.height() + DROP;
+//	int pw = rawpix.width() + DROP;
+	int ph = rawpix.height();
+	int pw = rawpix.width();
 
 	QPixmap  pixmap( pw, ph );
 	QPainter painter( &pixmap );
  
 	painter.fillRect( 0, 0, pw, ph, QBrush( Qt::black) );
-	painter.fillRect( DROP, DROP, pw, ph, QBrush( Qt::cyan) );
+//	painter.fillRect( DROP, DROP, pw, ph, QBrush( Qt::cyan) );
 
 	painter.drawPixmap( 0, 0, rawpix );
 
 	painter.setPen( QPen( Qt::blue, 4 ) );
 	painter.drawRect( QRect( 0, 0, pw, ph ) );
 
-	painter.setFont( QFont( "Arial", 16, QFont::Normal ) );
+	painter.setFont( QFont( "Arial", 11, QFont::Bold ) );
 	painter.setPen( Qt::white );
 
 	QString version = "UltraScan " + US_Version +  " for " OS_TITLE;
-	QFontMetrics metrics( QFont( "Arial", 16, QFont::Normal ) );
+	QFontMetrics metrics( QFont( "Arial", 11, QFont::Bold ) );
 	int sWidth = metrics.boundingRect( version ).width();
 	int x      = ( pw - sWidth ) / 2;
 
