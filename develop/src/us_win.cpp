@@ -13,7 +13,7 @@ UsWin::UsWin(QWidget *parent, const char *name)
 	: QWidget(parent, name)
 {
 	USglobal = new US_Config();
-	connect ( USglobal, SIGNAL( errorMessage( QString, QString ) ), 
+	connect ( USglobal, SIGNAL( errorMessage( QString, QString ) ),
 	                    SLOT  ( errorMessage( QString, QString ) ) );
 
 	int width=710, height=532;
@@ -51,27 +51,27 @@ UsWin::UsWin(QWidget *parent, const char *name)
 
 	QPixmap  pixmap( pw, ph );
 	QPainter painter( &pixmap );
- 
-	painter.fillRect( 0, 0, pw, ph, QBrush( Qt::black) );
-//	painter.fillRect( DROP, DROP, pw, ph, QBrush( Qt::cyan) );
+
+//	painter.fillRect( 0, 0, pw, ph, QBrush( Qt::black) );
+//	painter.fillRect( DROP, DROP, pw+DROP, ph+DROP, QBrush( Qt::cyan) );
 
 	painter.drawPixmap( 0, 0, rawpix );
 
-	painter.setPen( QPen( Qt::blue, 4 ) );
-	painter.drawRect( QRect( 0, 0, pw, ph ) );
+	//painter.setPen( QPen( Qt::blue, 4 ) );
+	//painter.drawRect( QRect( 0, 0, pw, ph ) );
 
 	painter.setFont( QFont( "Arial", 11, QFont::Bold ) );
 	painter.setPen( Qt::white );
 
 	QString version = "UltraScan " + US_Version +  " for " OS_TITLE;
-	QFontMetrics metrics( QFont( "Arial", 11, QFont::Bold ) );
+	QFontMetrics metrics( QFont( "Arial", 12, QFont::Bold ) );
 	int sWidth = metrics.boundingRect( version ).width();
 	int x      = ( pw - sWidth ) / 2;
 
 	painter.drawText( x, 140, version );
 
-	splash = new QSplashScreen( pixmap );
-	splash->show();
+	//splash = new QSplashScreen( pixmap );
+	//splash->show();
 
 	QTimer* splash_time = new QTimer( this );
 	splash_time->start( 6000, true );
@@ -79,102 +79,21 @@ UsWin::UsWin(QWidget *parent, const char *name)
 
 	bigframe = new QLabel(this);
 	bigframe->setFrameStyle(QFrame::Box | QFrame::Raised);
-	bigframe->setPalette( QPalette( USglobal->global_colors.cg_frame, 
-	                                USglobal->global_colors.cg_frame, 
+	bigframe->setPalette( QPalette( USglobal->global_colors.cg_frame,
+	                                USglobal->global_colors.cg_frame,
 	                                USglobal->global_colors.cg_frame ) );
-	//smallframe = new QLabel(this);
-	//smallframe->setGeometry((unsigned int) ((width/2)-210) , 130, 460, 276);
-	
-	//smallframe->setPalette( QPalette( USglobal->global_colors.cg_pushb, 
-	//                                  USglobal->global_colors.cg_pushb_disabled,
-	//                                  USglobal->global_colors.cg_pushb_active));
-	//splash_b = new QLabel(this);
 
-	//QPixmap splash;
+	smallframe = new QLabel(this);
+	smallframe->setGeometry((unsigned int) ((width/2)-210) , 130, 460, 276);
 
-	//QString splash_image = getenv("ULTRASCAN");
-	//cout << "UltraScan environment variable value: " << splash_image << endl;
-	//QString splash_image = USglobal->config_list.system_dir;
-	
-/*
-	if ( splash_image.isEmpty() ) // Should never happen
-	{
-#ifdef UNIX
-	//env_missing = true;
-#endif
-#ifdef LINUX
-	splash_image = "/usr/lib/ultrascan/etc/flash-linux.png";
-#endif
-#ifdef OSX
-	splash_image = "/usr/lib/ultrascan/etc/flash-macosx.png";
-#endif
-#ifdef SOLARIS
-	splash_image = "/usr/lib/ultrascan/etc/flash-solaris.png";
-#endif
-#ifdef IRIX
-	splash_image = "/usr/lib/ultrascan/etc/flash-irix.png";
-#endif
-#ifdef WIN32
-	splash_image = "C:\\Program Files\\UltraScan\\etc\\flash-windows.png";
-#endif
-#ifdef FREEBSD
-	splash_image = "/usr/lib/ultrascan/etc/flash-freebsd.png";
-#endif
-#ifdef NETBSD
-	splash_image = "/usr/lib/ultrascan/etc/flash-netbsd.png";
-#endif
-#ifdef OPENBSD
-	splash_image = "/usr/lib/ultrascan/etc/flash-openbsd.png";
-#endif
-#ifdef OPTERON
-	splash_image = "/usr/lib/ultrascan/etc/flash-opteron.png";
-#endif
-	}
+	smallframe->setPalette( QPalette( USglobal->global_colors.cg_pushb,
+	                                  USglobal->global_colors.cg_pushb_disabled,
+	                                  USglobal->global_colors.cg_pushb_active));
 
-	else
-	{
-#ifdef LINUX
+	splash_b = new QLabel(this);
+	splash_b->setPixmap(pixmap);
+	splash_b->setGeometry((unsigned int) ((width/2)-230), 110, 460, 276);
 
-#ifdef OPTERON
-	splash_image += "/etc/flash-opteron.png";
-#else
-	splash_image += "/etc/flash-linux.png";
-#endif
-
-#endif
-
-#ifdef OSX
-	splash_image += "/etc/flash-macosx.png";
-#endif
-#ifdef SOLARIS
-	splash_image += "/etc/flash-solaris.png";
-#endif
-#ifdef IRIX
-	splash_image += "/etc/flash-irix.png";
-#endif
-#ifdef FREEBSD
-	splash_image += "/etc/flash-freebsd.png";
-#endif
-#ifdef NETBSD
-	splash_image += "/etc/flash-netbsd.png";
-#endif
-#ifdef OPENBSD
-	splash_image += "/etc/flash-openbsd.png";
-#endif
-#ifdef WIN32
-	splash_image += "\\etc\\flash-windows.png";
-#endif
-
-	}
-	//cout << "Flash image file search path: " << splash_image << endl;
-
-	if (splash.load(splash_image))
-	{
-		//splash_b->setGeometry((unsigned int) ((width/2)-230), 110, 460, 276);
-		//splash_b->setPixmap(splash);
-	}
-/////////////
-*/
 
 	QPopupMenu *file_info = new QPopupMenu;
 	Q_CHECK_PTR(file_info);
@@ -622,9 +541,9 @@ util->insertSeparator(-1);
 	  // This will fail because the application has not called exec() yet
 		// It should never happen anyway becasue the program now handles this
 		// earlier.
-		
 
-		QMessageBox::message("Attention:",  
+
+		QMessageBox::message("Attention:",
 			"The environment variable \"ULTRASCAN\" is not defined!\n"
 			"Please set it to the root directory of your UltraScan\n"
 			"installation, for example:\n\n"
@@ -642,7 +561,7 @@ UsWin::~UsWin()
 
 void UsWin::closeAttnt(QProcess *proc, QString message)
 {
-	switch( QMessageBox::information( this, 
+	switch( QMessageBox::information( this,
 		tr("Attention!"),
 		tr( "The ") + message + tr(" is still running.\n"
 		    "Do you want to close it?"),
@@ -1473,10 +1392,10 @@ void UsWin::meminfo()
 
 void UsWin::close_splash()
 {
-	//delete smallframe;
-	//delete splash_b;
-	//bigframe->show();
-	splash->close();
+	delete smallframe;
+	delete splash_b;
+	bigframe->show();
+	//splash->close();
 }
 
 void UsWin::veloc_absorbance()
