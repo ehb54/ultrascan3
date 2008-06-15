@@ -175,7 +175,7 @@ Data_Control_W::Data_Control_W(const int temp_run_type, QWidget *p, const char *
 		{
 			Density  [i][j] = (float) DENS_20W;
 			Viscosity[i][j] = (float) (100.0 * VISC_20W);
-			
+
       for(int k=0; k<3; k++)
 			{
 				Vbar  [i][j][k] = (float) 0.72;
@@ -2196,7 +2196,7 @@ int Data_Control_W::load_scan()
 		if (smoothing_counter != NULL)
 		{
 			smoothing_counter->disconnect();
-			smoothing_counter->setRange(1, 55, 2);
+			smoothing_counter->setRange(1, 50, 1);
 			smoothing_counter->setValue(1);
 			connect(smoothing_counter, SIGNAL(valueChanged(double)), SLOT(update_smoothing(double)));
 		}
@@ -3379,7 +3379,7 @@ void Data_Control_W::reset()
 	{
 		smoothing_counter->disconnect();
 		smooth=1;
-		smoothing_counter->setRange(1, 55, 2);
+		smoothing_counter->setRange(1, 50, 1);
 		smoothing_counter->setValue(1);
 		update_smoothing(1.0);
 		connect(smoothing_counter, SIGNAL(valueChanged(double)), SLOT(update_smoothing(double)));
