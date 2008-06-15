@@ -233,8 +233,8 @@ UsWin::UsWin(QWidget *parent, const char *name)
 	sim->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 //  int kirkID = sim->insertItem(tr("&Kirkwood Theory"), this, SLOT(kirkwood()));
 //  sim->setItemEnabled(kirkID, true);
-	int hydrodynID = sim->insertItem(tr("&SOMO Bead Modeling"), this, SLOT(hydrodyn()));
-	sim->setItemEnabled(hydrodynID, true);
+//	int hydrodynID = sim->insertItem(tr("&SOMO Bead Modeling"), this, SLOT(hydrodyn()));
+//	sim->setItemEnabled(hydrodynID, true);
 
 	QPopupMenu *equil = new QPopupMenu;
 	Q_CHECK_PTR(equil);

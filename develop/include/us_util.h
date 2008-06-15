@@ -43,7 +43,7 @@ using namespace std;
 extern int US_EXTERN global_Xpos;
 extern int US_EXTERN global_Ypos;
 
-#define US_Version_string "9.7"
+#define US_Version_string "9.8"
 #define WIN32Version      "-WIN32-beta5"
 
 extern QString US_EXTERN US_Version;

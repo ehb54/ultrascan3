@@ -3,7 +3,7 @@
 
 TEMPLATE       = lib
 TRANSLATIONS   = lib.ts
-VERSION        = 9.7
+VERSION        = 9.8
 MOC_DIR        = src/moc
 OBJECTS_DIR    = src/obj
 
