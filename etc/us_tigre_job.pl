@@ -104,6 +104,8 @@ If you are in a hurry to get results - we suggest you resubmit your job to a
 different TIGRE cluster.
 
 We apologize for any inconvience this may have caused.
+
+jid $id
 "
 		 );
     
@@ -123,6 +125,8 @@ It is also possible that this job failed for some other reason, and if you belie
 our staff by replying to the addresses CC'd in this email.  
 
 Do not reply to gridcontrol\@ultrascan.uthscsa.edu, as that email address will bounce.
+
+jid $id
 "
 		 );
     
@@ -516,11 +520,13 @@ if( $systems[$usesys] ne $default_system) {
 print "using tigre system $default_system\n";
 print "max np $max_np[$usesys]\n";
 $np = $max_np[$usesys] if $np > $max_np[$usesys];
+
 print "systems (use_sys) $systems[$usesys]\n";
 if( $systems[$usesys] =~ /^(bcf|alamo|laredo)/) {
-    print "overriding recommended optimal np of $np\n";
+    print "overriding recommended max_np of $np\n" if $max_np[$usesys] != $np;
     $np = $max_np[$usesys];
 }
+
 print "np is $np\n";
 
 $SYSTEM = $systems[$usesys];
@@ -656,6 +662,7 @@ if($default_system eq 'meta') {
     print `$cmd` if $execute;
 }
 
+$dups_blank = 0;
 do {
     sleep 10;
     if($default_system eq 'meta') {
@@ -670,8 +677,17 @@ do {
 	$status = $1;
     }
     if($status =~ /^$/) {
-	&cancelmsg("Tigre job was canceled or terminated abnormally\n");
-	die "tigre job was canceled or abnormally terminated\n";
+	$dups_blank++;
+	if($dups_blank < 10) {
+	    print "bad response from checking status, sleep, retry $dups_blank of 10\n";
+	    print STDERR "bad response from checking status, sleep, retry $dups_blank of 10\n";
+	    sleep ($dups_blank * 20);
+	} else {
+	    &cancelmsg("Tigre job was canceled or terminated abnormally\n");
+	    die "tigre job was canceled or abnormally terminated\n";
+	}
+    } else {
+	$dups_blank = 0;
     }
     if($status eq 'Failed' ||
        $status eq 'FAILED') {
@@ -705,6 +721,7 @@ gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
 gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/email_* .
 gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/*.model* .
 gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/*noise* .
+gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/*.simulation_parameters .
 ";
 }
 print $cmd;
