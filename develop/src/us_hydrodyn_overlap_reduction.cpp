@@ -153,18 +153,60 @@ void US_Hydrodyn_OR::set_remove()
 
 void US_Hydrodyn_OR::set_fuse()
 {
+	if (cb_fuse->isChecked())
+	{
+		(*o_r).fuse_beads = true;
+	}
+	else
+	{
+		(*o_r).fuse_beads = false;
+	}
 }
 
 void US_Hydrodyn_OR::set_hierarch()
 {
+	if (cb_hierarch->isChecked())
+	{
+		(*o_r).remove_hierarch = true;
+		(*o_r).remove_sync = false;
+	}
+	else
+	{
+		(*o_r).remove_hierarch = false;
+		(*o_r).remove_sync = true;
+	}
+	cb_sync->disconnect();
+	cb_sync->setChecked((*o_r).remove_sync);
+	connect(cb_sync, SIGNAL(clicked()), SLOT(set_sync()));
 }
 
 void US_Hydrodyn_OR::set_sync()
 {
+	if (cb_sync->isChecked())
+	{
+		(*o_r).remove_sync = true;
+		(*o_r).remove_hierarch = false;
+	}
+	else
+	{
+		(*o_r).remove_sync = false;
+		(*o_r).remove_hierarch = true;
+	}
+	cb_hierarch->disconnect();
+	cb_hierarch->setChecked((*o_r).remove_hierarch);
+	connect(cb_hierarch, SIGNAL(clicked()), SLOT(set_hierarch()));
 }
 
 void US_Hydrodyn_OR::set_translate()
 {
+	if (cb_translate->isChecked())
+	{
+		(*o_r).translate_out = true;
+	}
+	else
+	{
+		(*o_r).translate_out = false;
+	}
 }
 
 void US_Hydrodyn_OR::update_fuse(double val)
