@@ -164,6 +164,7 @@ SOURCES += \
   src/us_hydrodyn_addatom.cpp \
   src/us_hydrodyn_addhybrid.cpp \
   src/us_hydrodyn_addresidue.cpp \
+  src/us_hydrodyn_overlap_reduction.cpp \
   src/us_imgviewer.cpp \
   src/us_infopanel.cpp \
   src/us_license.cpp \
@@ -336,6 +337,7 @@ HEADERS += \
   include/us_hydrodyn_addatom.h \
   include/us_hydrodyn_addhybrid.h \
   include/us_hydrodyn_addresidue.h \
+  include/us_hydrodyn_overlap_reduction.h \
   include/us_hydrodyn_pdbdefs.h \
   include/us_imgviewer.h \
   include/us_infopanel.h \
