@@ -34,7 +34,7 @@ void US_Hydrodyn_OR::setupGUI()
 	connect(cb_remove, SIGNAL(clicked()), SLOT(set_remove()));
 
 	cb_fuse = new QCheckBox(this);
-	cb_fuse->setText(tr(" Fuse Beads that overlap by more than "));
+	cb_fuse->setText(tr(" Fuse Beads that overlap by more than: "));
 	cb_fuse->setChecked((*o_r).fuse_beads);
 	cb_fuse->setEnabled((*o_r).remove_overlap);
 	cb_fuse->setMinimumHeight(minHeight1);

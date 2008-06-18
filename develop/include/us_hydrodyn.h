@@ -20,6 +20,7 @@
 #include "us_hydrodyn_addatom.h"
 #include "us_hydrodyn_addresidue.h"
 #include "us_hydrodyn_overlap_reduction.h"
+#include "us_db_tbl_vbar.h"
 
 //standard C and C++ defs:
 
@@ -41,7 +42,15 @@ class US_EXTERN US_Hydrodyn : public QFrame
 	private:
 		bool residue_widget, atom_widget, hybrid_widget, recheck_beads, asa_calculation;
 		unsigned int current_model;
-		QString residue_filename;
+		int output; 				// 0 = SOMO
+										// 1 = BEAMS
+										// 2 = HYDRO
+		int sequence;				// 0 = as in original pdb file
+										// 1 = exposed sidechain -> exposed main chain -> buried
+										// 2 = include bead-original residue correspondence
+		bool compute_vbar;		// true = compute
+		 								// false = use user specified value
+		QString residue_filename, output_filename;
 		struct residue new_residue;
 		struct atom new_atom;
 		struct bead new_bead;
@@ -51,24 +60,42 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		US_Hydrodyn_OR *sidechain_OR;
 		US_Hydrodyn_OR *mainchain_OR;
 		US_Hydrodyn_OR *buried_OR;
-		double probe_radius, asa_threshold, asa_threshold_percent;
+		US_Vbar_DB *vbar_dlg;
+		double probe_radius, asa_threshold, asa_threshold_percent, vbar;
 
 		US_Config *USglobal;
 		
 		QLabel *lbl_info;
 		QLabel *lbl_table;
 		QLabel *lbl_tabletabs;
+		QLabel *lbl_output;
+		QLabel *lbl_sequence_format;
 		QLabel *lbl_pdb_file;
 		QLabel *lbl_model;
 		QLabel *lbl_probe_radius;
 		QLabel *lbl_asa_threshold;
 		QLabel *lbl_asa_threshold_percent;
 
+		QLineEdit *le_vbar;
+		QLineEdit *le_output_file;
+
 		QCheckBox *cb_asa_calculation;
 		QCheckBox *cb_bead_check;
+		QCheckBox *cb_somo_output;
+		QCheckBox *cb_beams_output;
+		QCheckBox *cb_hydro_output;
+		QCheckBox *cb_pdb_sequence;
+		QCheckBox *cb_chain_sequence;
+		QCheckBox *cb_correspondence_sequence;
+		QCheckBox *cb_vbar;
+
+		QButtonGroup *bg_output;
+		QButtonGroup *bg_sequence;
 		
 		QPushButton *pb_save;
+		QPushButton *pb_vbar;
 		QPushButton *pb_select_residue_file;
+		QPushButton *pb_select_output_file;
 		QPushButton *pb_load_pdb;
 		QPushButton *pb_atom;
 		QPushButton *pb_residue;
@@ -76,6 +103,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;
 		QPushButton *pb_somo;
+		QPushButton *pb_visualize;
 
 		QListBox *lb_model;
 		
@@ -105,6 +133,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void read_pdb(const QString &);
 		void setupGUI();
 		void select_residue_file();
+		void select_output_file();
 		void clear_temp_chain(struct PDB_chain *);
 	   void assign_atom(const QString &, struct PDB_chain *);
 		void cancel();
@@ -113,6 +142,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void hybrid();
 		void residue();
 		void select_model(int);
+		void select_output(int);
+		void select_sequence(int);
 		void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
 		void update_probe_radius(double);
 		void update_asa_threshold(double);
@@ -125,7 +156,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void read_config();
 		void write_config();
 		void reset();
-
+		void visualize();
+		void set_vbar();
+		void select_vbar();
+		void update_vbar(const QString &);
+		void update_output_file(const QString &);
+		void update_vbar_signal(float, float);
+		
 	protected slots:
 	
 		void closeEvent(QCloseEvent *);		
