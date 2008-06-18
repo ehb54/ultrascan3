@@ -28,4 +28,10 @@ HEADERS		+= ../include/us_astfem_rsa.h
 HEADERS		+= ../include/us_stiffbase.h
 HEADERS		+= ../include/us_ga_interacting.h
 
-TARGET = us_fe_nnls_t_mpi
+unix {
+ contains(UNAME,x86_64) {
+    TARGET = $(ULTRASCAN)/bin64/us_fe_nnls_t_mpi
+ } else {
+    TARGET = $(ULTRASCAN)/bin/us_fe_nnls_t_mpi
+ }
+}
