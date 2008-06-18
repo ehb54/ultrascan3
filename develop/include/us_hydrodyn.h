@@ -93,6 +93,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QButtonGroup *bg_sequence;
 		
 		QPushButton *pb_save;
+		QPushButton *pb_reset;		
 		QPushButton *pb_vbar;
 		QPushButton *pb_select_residue_file;
 		QPushButton *pb_select_output_file;

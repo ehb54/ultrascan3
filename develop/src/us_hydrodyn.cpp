@@ -9,11 +9,6 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	atom_widget = false;
 	residue_widget = false;
 	hybrid_widget = false;
-	probe_radius = 1.4;
-	asa_threshold = 10.0;
-	asa_threshold_percent = 30.0;
-	asa_calculation = true;
-	recheck_beads = true;
 	setupGUI();
 	global_Xpos += 30;
 	global_Ypos += 30;
@@ -295,6 +290,13 @@ void US_Hydrodyn::setupGUI()
 	pb_select_output_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_select_output_file, SIGNAL(clicked()), SLOT(select_output_file()));
 
+	pb_reset = new QPushButton(tr("Reset to Default Options"), this);
+	Q_CHECK_PTR(pb_reset);
+	pb_reset->setMinimumHeight(minHeight1);
+	pb_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_reset->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_reset, SIGNAL(clicked()), SLOT(reset()));
+
 	pb_atom = new QPushButton(tr("Add/Edit Atom"), this);
 	Q_CHECK_PTR(pb_atom);
 	pb_atom->setMinimumHeight(minHeight1);
@@ -355,7 +357,8 @@ void US_Hydrodyn::setupGUI()
 	j++;
 	j++;
 	background->addWidget(pb_select_output_file, j, 2);
-	background->addMultiCellWidget(le_output_file, j, j, 3, 4);
+	background->addWidget(le_output_file, j, 3);
+	background->addWidget(pb_reset, j, 4);
 	j++;
 	background->addMultiCellWidget(lbl_tabletabs, j, j, 2, 4);
 	j++;
@@ -889,6 +892,21 @@ void US_Hydrodyn::read_config()
 		ts >> str;
 		ts.readLine();
 		compute_vbar = (bool) str.toInt();
+		ts >> str;
+		ts.readLine();
+		probe_radius = str.toFloat();
+		ts >> str;
+		ts.readLine();
+		asa_threshold = str.toFloat();
+		ts >> str;
+		ts.readLine();
+		asa_threshold_percent = str.toFloat();
+		ts >> str;
+		ts.readLine();
+		asa_calculation = (bool) str.toInt();
+		ts >> str;
+		ts.readLine();
+		recheck_beads = (bool) str.toInt();
 
 		f.close();
 	}
@@ -976,6 +994,21 @@ void US_Hydrodyn::read_config()
 			ts >> str;
 			ts.readLine();
 			compute_vbar = (bool) str.toInt();
+			ts >> str;
+			ts.readLine();
+			probe_radius = str.toFloat();
+			ts >> str;
+			ts.readLine();
+			asa_threshold = str.toFloat();
+			ts >> str;
+			ts.readLine();
+			asa_threshold_percent = str.toFloat();
+			ts >> str;
+			ts.readLine();
+			asa_calculation = (bool) str.toInt();
+			ts >> str;
+			ts.readLine();
+			recheck_beads = (bool) str.toInt();
 
 			f.close();
 		}
@@ -1025,6 +1058,11 @@ void US_Hydrodyn::reset()
 	sequence = 0;
 	output = 0;
 	compute_vbar = true;
+	probe_radius = 1.4;
+	asa_threshold = 10.0;
+	asa_threshold_percent = 30.0;
+	asa_calculation = true;
+	recheck_beads = true;
 }
 
 void US_Hydrodyn::write_config()
@@ -1066,6 +1104,11 @@ void US_Hydrodyn::write_config()
 		ts << output << "\t\t# flag for selecting output format\n";
 		ts << sequence << "\t\t# flag for selecting sequence format\n";
 		ts << compute_vbar << "\t\t# flag for selecting vbar calculation\n";
+		ts << probe_radius << "\t\t# probe radius in angstrom\n";
+		ts << asa_threshold << "\t\t# ASA threshold\n";
+		ts << asa_threshold_percent << "\t\t# ASA threshold percent\n";
+		ts << asa_calculation << "\t\t# flag for calculation of ASA\n";
+		ts << recheck_beads << "\t\t# flag for rechecking beads\n";
 
 		f.close();
 	}
