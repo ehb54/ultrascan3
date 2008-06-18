@@ -5,6 +5,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	USglobal=new US_Config();
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("SOMO Solution Bead Modeler"));
+	read_config();
 	atom_widget = false;
 	residue_widget = false;
 	hybrid_widget = false;
@@ -27,7 +28,10 @@ void US_Hydrodyn::setupGUI()
 {
 	int minHeight1 = 30;
 	residue_filename = "";
-
+	sidechain_OR = new US_Hydrodyn_OR(&sidechain_overlap, this);
+	mainchain_OR = new US_Hydrodyn_OR(&mainchain_overlap, this);
+	buried_OR = new US_Hydrodyn_OR(&buried_overlap, this);
+	
 	lbl_info = new QLabel(tr("SOMO Solution Bead Modeler"), this);
 	Q_CHECK_PTR(lbl_info);
 	lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -35,6 +39,13 @@ void US_Hydrodyn::setupGUI()
 	lbl_info->setMinimumHeight(minHeight1);
 	lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+	tw_overlap = new QTabWidget(this);
+	tw_overlap->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	tw_overlap->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+	tw_overlap->addTab(sidechain_OR, "Side chain beads");
+	tw_overlap->addTab(mainchain_OR, "Main and side chain beads");
+	tw_overlap->addTab(buried_OR, "Buried beads");
 
 	pb_select_residue_file = new QPushButton(tr("Select Lookup Table"), this);
 	Q_CHECK_PTR(pb_select_residue_file);
@@ -199,13 +210,14 @@ void US_Hydrodyn::setupGUI()
 	pb_hybrid->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_hybrid, SIGNAL(clicked()), SLOT(hybrid()));
 
-	int rows=6, columns = 2, spacing = 2, j=0, margin=4;
+	int rows=6, columns = 4, spacing = 2, j=0, margin=4;
 	QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 	
-	background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+	background->addMultiCellWidget(lbl_info, j, j, 0, 3);
 	j++;
 	background->addWidget(pb_select_residue_file, j, 0);
 	background->addWidget(lbl_table, j, 1);
+	background->addMultiCellWidget(tw_overlap, j, j+5, 2, 3);
 	j++;
 	background->addWidget(pb_load_pdb, j, 0);
 	background->addWidget(lbl_pdb_file, j, 1);
@@ -529,6 +541,7 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
 {
 	global_Xpos -= 30;
 	global_Ypos -= 30;
+	write_config();
 	e->accept();
 }
 
@@ -601,3 +614,246 @@ int US_Hydrodyn::calc_somo()
 	}
 	return 0;
 }
+
+void US_Hydrodyn::read_config()
+{
+	QFile f;
+	QString str;
+	f.setName(USglobal->config_list.root_dir + "/etc/somo.config");
+	if (f.open(IO_ReadOnly)) // first try user's directory for default settings
+	{
+		QTextStream ts(&f);
+		ts.readLine(); // first line is comment
+		ts >> str;
+		ts.readLine();
+		sidechain_overlap.remove_overlap = (bool) str.toInt();
+		ts >> str;
+		ts.readLine();
+		sidechain_overlap.fuse_beads = (bool) str.toInt();
+		ts >> sidechain_overlap.fuse_beads_percent;
+		ts.readLine();
+		ts >> str;
+		ts.readLine();
+		sidechain_overlap.remove_hierarch = (bool) str.toInt();
+		ts >> str;
+		ts.readLine();
+		sidechain_overlap.remove_sync = (bool) str.toInt();
+		ts >> sidechain_overlap.remove_sync_percent;
+		ts.readLine();
+		ts >> str;
+		ts.readLine();
+		sidechain_overlap.translate_out = (bool) str.toInt();
+		ts >> str;
+		ts.readLine();
+		sidechain_overlap.show_translate = (bool) str.toInt();
+
+		ts >> str;
+		ts.readLine();
+		mainchain_overlap.remove_overlap = (bool) str.toInt();
+		ts >> str;
+		ts.readLine();
+		mainchain_overlap.fuse_beads = (bool) str.toInt();
+		ts >> mainchain_overlap.fuse_beads_percent;
+		ts.readLine();
+		ts >> str;
+		ts.readLine();
+		mainchain_overlap.remove_hierarch = (bool) str.toInt();
+		ts >> str;
+		ts.readLine();
+		mainchain_overlap.remove_sync = (bool) str.toInt();
+		ts >> mainchain_overlap.remove_sync_percent;
+		ts.readLine();
+		ts >> str;
+		ts.readLine();
+		mainchain_overlap.translate_out = (bool) str.toInt();
+		ts >> str;
+		ts.readLine();
+		mainchain_overlap.show_translate = (bool) str.toInt();
+
+		ts >> str;
+		ts.readLine();
+		buried_overlap.remove_overlap = (bool) str.toInt();
+		ts >> str;
+		ts.readLine();
+		buried_overlap.fuse_beads = (bool) str.toInt();
+		ts >> buried_overlap.fuse_beads_percent;
+		ts.readLine();
+		ts >> str;
+		ts.readLine();
+		buried_overlap.remove_hierarch = (bool) str.toInt();
+		ts >> str;
+		ts.readLine();
+		buried_overlap.remove_sync = (bool) str.toInt();
+		ts >> buried_overlap.remove_sync_percent;
+		ts.readLine();
+		ts >> str;
+		ts.readLine();
+		buried_overlap.translate_out = (bool) str.toInt();
+		ts >> str;
+		ts.readLine();
+		buried_overlap.show_translate = (bool) str.toInt();
+
+		f.close();
+	}
+	else
+	{
+		f.setName(USglobal->config_list.system_dir + "/etc/somo.config");
+		if (f.open(IO_ReadOnly)) // read system directory
+		{
+			QTextStream ts(&f);
+			ts.readLine(); // first line is comment
+			ts >> str;
+			ts.readLine();
+			sidechain_overlap.remove_overlap = (bool) str.toInt();
+			ts >> str;
+			ts.readLine();
+			sidechain_overlap.fuse_beads = (bool) str.toInt();
+			ts >> sidechain_overlap.fuse_beads_percent;
+			ts.readLine();
+			ts >> str;
+			ts.readLine();
+			sidechain_overlap.remove_hierarch = (bool) str.toInt();
+			ts >> str;
+			ts.readLine();
+			sidechain_overlap.remove_sync = (bool) str.toInt();
+			ts >> sidechain_overlap.remove_sync_percent;
+			ts.readLine();
+			ts >> str;
+			ts.readLine();
+			sidechain_overlap.translate_out = (bool) str.toInt();
+			ts >> str;
+			ts.readLine();
+			sidechain_overlap.show_translate = (bool) str.toInt();
+		
+			ts >> str;
+			ts.readLine();
+			mainchain_overlap.remove_overlap = (bool) str.toInt();
+			ts >> str;
+			ts.readLine();
+			mainchain_overlap.fuse_beads = (bool) str.toInt();
+			ts >> mainchain_overlap.fuse_beads_percent;
+			ts.readLine();
+			ts >> str;
+			ts.readLine();
+			mainchain_overlap.remove_hierarch = (bool) str.toInt();
+			ts >> str;
+			ts.readLine();
+			mainchain_overlap.remove_sync = (bool) str.toInt();
+			ts >> mainchain_overlap.remove_sync_percent;
+			ts.readLine();
+			ts >> str;
+			ts.readLine();
+			mainchain_overlap.translate_out = (bool) str.toInt();
+			ts >> str;
+			ts.readLine();
+			mainchain_overlap.show_translate = (bool) str.toInt();
+		
+			ts >> str;
+			ts.readLine();
+			buried_overlap.remove_overlap = (bool) str.toInt();
+			ts >> str;
+			ts.readLine();
+			buried_overlap.fuse_beads = (bool) str.toInt();
+			ts >> buried_overlap.fuse_beads_percent;
+			ts.readLine();
+			ts >> str;
+			ts.readLine();
+			buried_overlap.remove_hierarch = (bool) str.toInt();
+			ts >> str;
+			ts.readLine();
+			buried_overlap.remove_sync = (bool) str.toInt();
+			ts >> buried_overlap.remove_sync_percent;
+			ts.readLine();
+			ts >> str;
+			ts.readLine();
+			buried_overlap.translate_out = (bool) str.toInt();
+			ts >> str;
+			ts.readLine();
+			buried_overlap.show_translate = (bool) str.toInt();
+
+			f.close();
+		}
+		else // assign default values
+		{
+			reset();
+		}
+	}
+	sidechain_overlap.title = "exposed side chain beads";
+	mainchain_overlap.title = "exposed main/main and main/side chain beads";
+	buried_overlap.title = "buried beads";
+}
+
+void US_Hydrodyn::reset()
+{
+	sidechain_overlap.remove_overlap = true;
+	sidechain_overlap.fuse_beads = true;
+	sidechain_overlap.fuse_beads_percent = 70.0;
+	sidechain_overlap.remove_hierarch = true;
+	sidechain_overlap.remove_sync = false;
+	sidechain_overlap.remove_sync_percent = 70.0;
+	sidechain_overlap.translate_out = true;
+	sidechain_overlap.show_translate = true;
+
+	mainchain_overlap.remove_overlap = true;
+	mainchain_overlap.fuse_beads = true;
+	mainchain_overlap.fuse_beads_percent = 70.0;
+	mainchain_overlap.remove_hierarch = true;
+	mainchain_overlap.remove_sync = false;
+	mainchain_overlap.remove_sync_percent = 70.0;
+	mainchain_overlap.translate_out = false;
+	mainchain_overlap.show_translate = false;
+
+	buried_overlap.remove_overlap = true;
+	buried_overlap.fuse_beads = true;
+	buried_overlap.fuse_beads_percent = 70.0;
+	buried_overlap.remove_hierarch = true;
+	buried_overlap.remove_sync = false;
+	buried_overlap.remove_sync_percent = 70.0;
+	buried_overlap.translate_out = false;
+	buried_overlap.show_translate = false;
+	
+	sidechain_overlap.title = "exposed side chain beads";
+	mainchain_overlap.title = "exposed main/main and main/side chain beads";
+	buried_overlap.title = "buried beads";
+}
+
+void US_Hydrodyn::write_config()
+{
+	QFile f;
+	QString str;
+	f.setName(USglobal->config_list.root_dir + "/etc/somo.config");
+	if (f.open(IO_WriteOnly | IO_Translate)) // first try user's directory for default settings
+	{
+		QTextStream ts(&f);
+		ts << "SOMO Config file - computer generated, please do not edit...\n";
+		ts << sidechain_overlap.remove_overlap << "\t\t# Remove overlaps flag\n";
+		ts << sidechain_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
+		ts << sidechain_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
+		ts << sidechain_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+		ts << sidechain_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
+		ts << sidechain_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
+		ts << sidechain_overlap.translate_out << "\t\t# Outward translation flag\n";
+		ts << sidechain_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
+
+		ts << mainchain_overlap.remove_overlap << "\t\t# Remove overlaps flag\n";
+		ts << mainchain_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
+		ts << mainchain_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
+		ts << mainchain_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+		ts << mainchain_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
+		ts << mainchain_overlap.remove_sync_percent << "\t\t# percent synchronously step\n";
+		ts << mainchain_overlap.translate_out << "\t\t# Outward translation flag\n";
+		ts << mainchain_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
+
+		ts << buried_overlap.remove_overlap << "\t\t# Remove overlaps flag\n";
+		ts << buried_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
+		ts << buried_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
+		ts << buried_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+		ts << buried_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
+		ts << buried_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
+		ts << buried_overlap.translate_out << "\t\t# Outward translation flag\n";
+		ts << buried_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
+
+		f.close();
+	}
+}
+

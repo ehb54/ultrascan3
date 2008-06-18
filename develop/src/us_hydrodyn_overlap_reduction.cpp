@@ -16,7 +16,7 @@ void US_Hydrodyn_OR::setupGUI()
 {
 	int minHeight1 = 30;
 
-	lbl_title = new QLabel(tr((*o_r).title), this);
+	lbl_title = new QLabel(tr("Overlap reduction between " + (*o_r).title), this);
 	Q_CHECK_PTR(lbl_title);
 	lbl_title->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
 	lbl_title->setAlignment(AlignCenter|AlignVCenter);
@@ -80,14 +80,17 @@ void US_Hydrodyn_OR::setupGUI()
 	cnt_sync->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_sync, SIGNAL(valueChanged(double)), SLOT(update_sync(double)));
 
-	cb_sync = new QCheckBox(this);
-	cb_translate->setText(tr(" Outward Translation "));
-	cb_translate->setChecked((*o_r).translate_out);
-	cb_translate->setEnabled((*o_r).remove_overlap);
-	cb_translate->setMinimumHeight(minHeight1);
-	cb_translate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_translate->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(cb_translate, SIGNAL(clicked()), SLOT(set_translate()));
+	if ((*o_r).show_translate)
+	{
+		cb_translate = new QCheckBox(this);
+		cb_translate->setText(tr(" Outward Translation "));
+		cb_translate->setChecked((*o_r).translate_out);
+		cb_translate->setEnabled((*o_r).remove_overlap);
+		cb_translate->setMinimumHeight(minHeight1);
+		cb_translate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+		cb_translate->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+		connect(cb_translate, SIGNAL(clicked()), SLOT(set_translate()));
+	}
 
 	int rows=6, columns = 2, spacing = 2, j=0, margin=2;
 	QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
@@ -114,40 +117,15 @@ void US_Hydrodyn_OR::setupGUI()
 
 void US_Hydrodyn_OR::set_remove()
 {
-	if (cb_remove->isChecked())
+	(*o_r).remove_overlap = cb_remove->isChecked();
+	cnt_sync->setEnabled((*o_r).remove_overlap);
+	cb_sync->setEnabled((*o_r).remove_overlap);
+	cb_hierarch->setEnabled((*o_r).remove_overlap);
+	cnt_fuse->setEnabled((*o_r).remove_overlap);
+	cb_fuse->setEnabled((*o_r).remove_overlap);
+	if ((*o_r).show_translate)
 	{
-		(*o_r).remove_overlap = true;
-		if ((*o_r).remove_sync)
-		{
-			cnt_sync->setEnabled(true);
-			cb_sync->setEnabled(true);
-			cb_hierarch->setEnabled(false);
-		}
-		else
-		{
-			cnt_sync->setEnabled(false);
-			cb_sync->setEnabled(false);
-			cb_hierarch->setEnabled(true);
-		}
-		cnt_fuse->setEnabled((*o_r).remove_overlap);
-		cb_fuse->setEnabled((*o_r).remove_overlap);
-		if ((*o_r).show_translate)
-		{
-			cb_translate->setEnabled((*o_r).remove_overlap);
-		}
-	}
-	else
-	{
-		(*o_r).remove_overlap = false;
-		cnt_sync->setEnabled((*o_r).remove_overlap);
-		cb_sync->setEnabled((*o_r).remove_overlap);
-		cb_hierarch->setEnabled((*o_r).remove_overlap);
-		cnt_fuse->setEnabled((*o_r).remove_overlap);
-		cb_fuse->setEnabled((*o_r).remove_overlap);
-		if ((*o_r).show_translate)
-		{
-			cb_translate->setEnabled((*o_r).remove_overlap);
-		}
+		cb_translate->setEnabled((*o_r).remove_overlap);
 	}
 }
 

@@ -19,6 +19,7 @@
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_addatom.h"
 #include "us_hydrodyn_addresidue.h"
+#include "us_hydrodyn_overlap_reduction.h"
 
 //standard C and C++ defs:
 
@@ -44,6 +45,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		struct residue new_residue;
 		struct atom new_atom;
 		struct bead new_bead;
+		struct overlap_reduction sidechain_overlap;
+		struct overlap_reduction mainchain_overlap;
+		struct overlap_reduction buried_overlap;
+		US_Hydrodyn_OR *sidechain_OR;
+		US_Hydrodyn_OR *mainchain_OR;
+		US_Hydrodyn_OR *buried_OR;
 		double probe_radius, asa_threshold, asa_threshold_percent;
 
 		US_Config *USglobal;
@@ -72,7 +79,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
 		QListBox *lb_model;
 		
-		QTabWidget *Tab;
+		QTabWidget *tw_overlap;
 		
 		US_AddAtom *addAtom;
 		US_AddResidue *addResidue;
@@ -115,6 +122,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		int calc_somo(); // build bead model
 		int compute_asa(); // calculate maximum accessible surface area
 		void bead_check(); // recheck beads
+		void read_config();
+		void write_config();
+		void reset();
 
 	protected slots:
 	
