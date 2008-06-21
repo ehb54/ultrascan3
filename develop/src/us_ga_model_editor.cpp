@@ -199,6 +199,10 @@ void US_GAModelEditor::setup_GUI()
 	grid->addWidget(lbl_delta, j, 2, 0);
 	grid->addMultiCellWidget(le_delta, j, j, 3, 4, 0);
 	j++;
+	grid->addWidget(lbl_extinction, j, 0, 0);
+	grid->addWidget(le_extinction, j, 1, 0);
+	grid->addMultiCellWidget(lbl_extinction2, j, j, 2, 4, 0);
+	j++;
 	grid->addMultiCellWidget(lbl_constraints, j, j, 0, 1, 0);
 	grid->addWidget(lbl_low, j, 2, 0);
 	grid->addWidget(lbl_high, j, 3, 0);

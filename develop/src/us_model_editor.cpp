@@ -101,6 +101,24 @@ QWidget *parent, const char *name) : QDialog( parent, name, false )
 	connect(le_diff, SIGNAL(textChanged(const QString &)), SLOT(update_diff(const QString &)));
 	le_diff->setMinimumHeight(minHeight2);
 
+	lbl_extinction = new QLabel(tr(" Extinction Coeff. (OD/mol):"), this);
+	lbl_extinction->setAlignment(AlignLeft|AlignVCenter);
+	lbl_extinction->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_extinction->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_extinction->setMinimumHeight(minHeight2);
+
+	le_extinction = new QLineEdit(this, "Extinction Line Edit");
+	le_extinction->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_extinction->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	connect(le_extinction, SIGNAL(textChanged(const QString &)), SLOT(update_extinction(const QString &)));
+	le_extinction->setMinimumHeight(minHeight2);
+
+	lbl_extinction2 = new QLabel(tr("(Please adjust for correct pathlength!)"), this);
+	lbl_extinction2->setAlignment(AlignCenter|AlignVCenter);
+	lbl_extinction2->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_extinction2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+	lbl_extinction2->setMinimumHeight(minHeight2);
+
 	lbl_koff = new QLabel(tr(" K_off Rate Constant (1/sec):"), this);
 	lbl_koff->setAlignment(AlignLeft|AlignVCenter);
 	lbl_koff->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -339,6 +357,10 @@ void US_ModelEditor::setup_GUI()
 	grid->addWidget(le_diff, j, 1, 0);
 	grid->addWidget(pb_load_c0, j, 2, 0);
 	grid->addWidget(lbl_load_c0, j, 3, 0);
+	j++;
+	grid->addWidget(lbl_extinction, j, 0, 0);
+	grid->addWidget(le_extinction, j, 1, 0);
+	grid->addMultiCellWidget(lbl_extinction2, j, j, 2, 3, 0);
 	j++;
 	grid->addWidget(pb_vbar, j, 0, 0);
 	grid->addWidget(le_vbar, j, 1, 0);
@@ -597,6 +619,7 @@ void US_ModelEditor::select_component(int val)
 
 	le_sed->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].s));
 	le_diff->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].D));
+	le_extinction->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].extinction));
 	le_vbar->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].vbar20));
 	le_mw->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].mw));
 	le_f_f0->setText(str.sprintf("%6.4e", (*system).component_vector[current_component].f_f0));
@@ -816,6 +839,15 @@ void US_ModelEditor::get_f_f0(const QString &val)
 	}
 	(*system).component_vector[current_component].f_f0 = val.toDouble();
 	update_sD();
+}
+
+void US_ModelEditor::update_extinction(const QString &val)
+{
+	if (val.toDouble() <= 0.0)
+	{
+		return;
+	}
+	(*system).component_vector[current_component].extinction = val.toDouble();
 }
 
 void US_ModelEditor::update_mw(const QString &val)

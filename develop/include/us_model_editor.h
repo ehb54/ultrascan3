@@ -51,6 +51,7 @@ class US_ModelEditor : public QDialog
 		QLineEdit *le_sigma;
 		QLineEdit *le_delta;
 		QLineEdit *le_stoich;
+		QLineEdit *le_extinction;
 
 		QLabel *lbl_current;
 		QLabel *lbl_model;
@@ -67,6 +68,8 @@ class US_ModelEditor : public QDialog
 		QLabel *lbl_stoich;
 		QLabel *lbl_msg1;
 		QLabel *lbl_load_c0;
+		QLabel *lbl_extinction;
+		QLabel *lbl_extinction2;
 
 		QPushButton *pb_simulateComponent;
 		QPushButton *pb_cancel;
@@ -96,6 +99,7 @@ class US_ModelEditor : public QDialog
 		void update_sigma(const QString &);
 		void update_delta(const QString &);
 		void update_mw(const QString &);
+		void update_extinction(const QString &);
 		virtual void update_f_f0(const QString &);
 		void select_rod();
 		void select_prolate();
