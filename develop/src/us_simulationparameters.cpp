@@ -683,10 +683,9 @@ void US_SimulationParameters::check_delay()
 		lower_limit = (unsigned int)(1 + (abs((int)(speed[i+1] - speed[i])) + 1)/(*simparams).speed_step[i].acceleration);
 		hours[i] = (unsigned int) lower_limit/3600;
 		minutes[i] = (float) (1.0/60.0 + (lower_limit - hours[i] * 3600)/60.0);
-		cnt_delay_minutes->setRange((double) minutes[i], 60, 0.1);
-		cnt_delay_hours->setRange((double) hours[i], 5000, 1);
-		//cout << "Profile: " << i+1 << ", speed1: " << speed[i] << ", speed2: " << speed[i+1] << ", lower limit: " << lower_limit << ", hours: " << hours << ", mins: " << minutes << endl;
 	}
+	cnt_delay_minutes->setRange((double) minutes[current_speed_step], 60, 0.1);
+	cnt_delay_hours->setRange((double) hours[current_speed_step], 5000, 1);
 	if ((*simparams).speed_step[current_speed_step].delay_minutes < minutes[current_speed_step])
 	{
 		(*simparams).speed_step[current_speed_step].delay_minutes = minutes[current_speed_step];
@@ -765,15 +764,6 @@ void US_SimulationParameters::select_speed_profile(int temp_var)
 {
 	current_speed_step = (unsigned int) temp_var;
 	cnt_selected_speed->setValue(current_speed_step + 1);
-	cmb_speeds->setCurrentItem(current_speed_step);
-	cnt_duration_hours->setValue((*simparams).speed_step[current_speed_step].duration_hours);
-	cnt_duration_minutes->setValue((*simparams).speed_step[current_speed_step].duration_minutes);
-	cnt_delay_hours->setValue((*simparams).speed_step[current_speed_step].delay_hours);
-	cnt_delay_minutes->setValue((*simparams).speed_step[current_speed_step].delay_minutes);
-	cnt_rotorspeed->setValue((*simparams).speed_step[current_speed_step].rotorspeed);
-	cnt_acceleration->setValue((double)(*simparams).speed_step[current_speed_step].acceleration);
-	cb_acceleration_flag->setChecked((*simparams).speed_step[current_speed_step].acceleration_flag);
-	cnt_scans->setValue((*simparams).speed_step[current_speed_step].scans);
 	if (cb_acceleration_flag->isChecked())
 	{
 		cnt_acceleration->setEnabled(true);
@@ -785,6 +775,15 @@ void US_SimulationParameters::select_speed_profile(int temp_var)
 	{
 		cnt_acceleration->setEnabled(false);
 	}
+	cmb_speeds->setCurrentItem(current_speed_step);
+	cnt_duration_hours->setValue((*simparams).speed_step[current_speed_step].duration_hours);
+	cnt_duration_minutes->setValue((*simparams).speed_step[current_speed_step].duration_minutes);
+	cnt_delay_hours->setValue((*simparams).speed_step[current_speed_step].delay_hours);
+	cnt_delay_minutes->setValue((*simparams).speed_step[current_speed_step].delay_minutes);
+	cnt_rotorspeed->setValue((*simparams).speed_step[current_speed_step].rotorspeed);
+	cnt_acceleration->setValue((double)(*simparams).speed_step[current_speed_step].acceleration);
+	cb_acceleration_flag->setChecked((*simparams).speed_step[current_speed_step].acceleration_flag);
+	cnt_scans->setValue((*simparams).speed_step[current_speed_step].scans);
 }
 
 void US_SimulationParameters::update_number_of_speeds(double temp_var)
