@@ -60,11 +60,23 @@ UsWin::UsWin(QWidget *parent, const char *name)
 	//painter.setPen( QPen( Qt::blue, 4 ) );
 	//painter.drawRect( QRect( 0, 0, pw, ph ) );
 
-	painter.setFont( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
 	painter.setPen( Qt::white );
 
+  QPaintDeviceMetrics dev_metrics( this );
+	int devDPI = dev_metrics.logicalDpiX();
+
 	QString version = "UltraScan " + US_Version +  " for " OS_TITLE;
-	QFontMetrics metrics( QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold ) );
+	
+	//QFontMetrics metrics( QFont( USglobal->config_list.fontFamily, 
+	//                             USglobal->config_list.fontSize, QFont::Bold ) );
+	
+	painter.setFont( QFont( "Arial", devDPI / 6, QFont::Bold ) );
+	QFontMetrics metrics( QFont( "Arial", devDPI / 6, QFont::Bold ) ); 
+	//painter.setFont( QFont( USglobal->config_list.fontFamily, 
+	//                        USglobal->config_list.fontSize, QFont::Bold ) );
+	//QFontMetrics metrics( QFont( USglobal->config_list.fontFamily, 
+	//                             USglobal->config_list.fontSize, QFont::Bold ) );
+	
 	int sWidth = metrics.boundingRect( version ).width();
 	int x      = ( pw - sWidth ) / 2;
 
