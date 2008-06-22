@@ -43,7 +43,7 @@ UsWin::UsWin(QWidget *parent, const char *name)
 
 #define DROP    20
 
-	QPixmap rawpix( USglobal->config_list.system_dir + "/etc/flash-combined.png" );
+	QPixmap rawpix( USglobal->config_list.system_dir + "/etc/flash-combined-no-text.png" );
 //	int ph = rawpix.height() + DROP;
 //	int pw = rawpix.width() + DROP;
 	int ph = rawpix.height();
@@ -60,18 +60,19 @@ UsWin::UsWin(QWidget *parent, const char *name)
 	//painter.setPen( QPen( Qt::blue, 4 ) );
 	//painter.drawRect( QRect( 0, 0, pw, ph ) );
 
-	painter.setPen( Qt::white );
+	painter.setPen( QPen( Qt::white, 3 ) );
 
-  QPaintDeviceMetrics dev_metrics( this );
+	QPaintDeviceMetrics dev_metrics( this );
 	int devDPI = dev_metrics.logicalDpiX();
 
 	QString version = "UltraScan " + US_Version +  " for " OS_TITLE;
-	
+
 	//QFontMetrics metrics( QFont( USglobal->config_list.fontFamily, 
 	//                             USglobal->config_list.fontSize, QFont::Bold ) );
-	
-	painter.setFont( QFont( "Arial", devDPI / 6, QFont::Bold ) );
-	QFontMetrics metrics( QFont( "Arial", devDPI / 6, QFont::Bold ) ); 
+
+	QFont font( "Arial", devDPI / 6, QFont::DemiBold );
+	painter.setFont( font );
+	QFontMetrics metrics( font ); 
 	//painter.setFont( QFont( USglobal->config_list.fontFamily, 
 	//                        USglobal->config_list.fontSize, QFont::Bold ) );
 	//QFontMetrics metrics( QFont( USglobal->config_list.fontFamily, 
@@ -80,7 +81,26 @@ UsWin::UsWin(QWidget *parent, const char *name)
 	int sWidth = metrics.boundingRect( version ).width();
 	int x      = ( pw - sWidth ) / 2;
 
-	painter.drawText( x, 140, version );
+	painter.drawLine( 0, 111, pw, 111);
+	painter.drawText( x, 139, version );
+	painter.drawLine( 0, 153, pw, 153);
+
+	QString s = "Author: Borries Demeler";
+	sWidth    = metrics.boundingRect( s ).width();
+	painter.drawText( ( pw - sWidth ) / 2, 177, s );
+
+	s      = "The University of Texas";
+	sWidth = metrics.boundingRect( s ).width();
+	painter.drawText( ( pw - sWidth ) / 2, 207, s );
+
+	s      = "Health Science Center at San Antonio";
+	sWidth = metrics.boundingRect( s ).width();
+	painter.drawText( ( pw - sWidth ) / 2, 227, s );
+
+	s      = "Department of Biochemistry";
+	sWidth = metrics.boundingRect( s ).width();
+	painter.drawText( ( pw - sWidth ) / 2, 247, s );
+
 
 	//splash = new QSplashScreen( pixmap );
 	//splash->show();
