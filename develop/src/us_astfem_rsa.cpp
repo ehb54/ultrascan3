@@ -116,6 +116,7 @@ vector <struct mfem_data> *exp_data)
 					}
 
 					// on exit, contains final concentration in CT0
+
 					calculate_ni(rpm[0], rpm[rpm.size()-1], af_params.s[0], af_params.D[0], &CT0, &simdata);
 
 					// add the acceleration time:
@@ -132,33 +133,33 @@ vector <struct mfem_data> *exp_data)
 						{
 						    qApp->processEvents();
 						}
-						interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
+						interpolate(&(*exp_data)[j], &simdata, af_params.omega_s, af_params.acceleration); // interpolate the simulated data onto the experimental time- and radius grid
 						return(1); // early termination = 1
 					}
 				}  // end of for acceleration
 				duration = ((*simparams).speed_step[j].duration_hours * 3600
-				+ (*simparams).speed_step[j].duration_minutes * 60);
+  				          + (*simparams).speed_step[j].duration_minutes * 60);
 				delay = (unsigned int) ((*simparams).speed_step[j].delay_hours * 3600
-				+ (*simparams).speed_step[j].delay_minutes * 60);
+				                      + (*simparams).speed_step[j].delay_minutes * 60);
 				af_params.omega_s = pow((*simparams).speed_step[j].rotorspeed * M_PI/30.0, 2.0);
 				// find out the minimum dt between actual scans
-				af_params.dt = (duration - delay)/(*simparams).speed_step[j].scans;
+            if(duration<=delay) {printf("duration is less than delay! \n"); return(1); }
+				af_params.dt = log((*exp_data)[j].bottom/(*exp_data)[j].meniscus)
+								/((af_params.omega_s * fabs((*system).component_vector[i].s)) *((*simparams).simpoints - 1));
+				if (af_params.dt > (duration - delay))
+				{
+					af_params.dt = duration - delay;
+					af_params.simpoints = 1 + (unsigned int) (log((*exp_data)[j].bottom/(*exp_data)[j].meniscus)
+            	/(af_params.omega_s * fabs((*system).component_vector[i].s) * af_params.dt));
+				}
+				if (af_params.simpoints > 10000)
+				{
+					af_params.simpoints = 10000;
+				}
+            printf("std: duration=%d delay=%d, scans=%d\n", duration, delay, (*simparams).speed_step[j].scans);
 				// find out the minimum number of simpoints needed to provide the necessary dt:
-				af_params.simpoints = 1 + (unsigned int) (log((*exp_data)[j].bottom/(*exp_data)[j].meniscus)
-				/(af_params.omega_s * fabs((*system).component_vector[i].s) * af_params.dt));
-				// if calculated # of simpoints is smaller than user selected number of simpoints, follow user's request:
-				if (af_params.simpoints < (*simparams).simpoints)
-				{
-					af_params.simpoints = (*simparams).simpoints;
-					af_params.dt = log((*exp_data)[j].bottom/(*exp_data)[j].meniscus)
-					/(af_params.omega_s * fabs((*system).component_vector[i].s) * ((*simparams).simpoints - 1)); // delta_t
-				}
-				else
-				{
-//					cout << "Number of simpoints adjusted to " << af_params.simpoints
-//					<< " for component " << i + 1 << " and speed step " << j + 1 << endl;
-				}
-				af_params.time_steps = 1 + (unsigned int) (duration/af_params.dt);
+				af_params.simpoints = (*simparams).simpoints;
+				af_params.time_steps = (unsigned int) (1+duration/af_params.dt);
 //cout << "speed step:\t" << j << ", component: " << i << endl;
 //cout << "speed:\t\t" << (*simparams).speed_step[j].rotorspeed << endl;
 //cout << "hours:\t\t" << (*simparams).speed_step[j].duration_hours << endl;
@@ -170,6 +171,10 @@ vector <struct mfem_data> *exp_data)
 				vector <double> rpm;
 				rpm.clear();
 				rpm.push_back((*simparams).speed_step[j].rotorspeed);
+
+//WMC
+            printf("std: time_steps=%d duration=%d dt=%12.5e \n", af_params.time_steps, duration, af_params.dt);
+
 				calculate_ni(rpm[0], rpm[0], af_params.s[0], af_params.D[0], &CT0, &simdata);
 
 				// set the current time to the last scan of this speed step
@@ -177,7 +182,7 @@ vector <struct mfem_data> *exp_data)
 				+ (*simparams).speed_step[j].duration_minutes * 60;
 				//cout << "Current time: " << current_time << ", duration: " << duration << endl;
 				af_params.acceleration = (*simparams).speed_step[j].acceleration_flag; // reset acceleration flag for correct time correction interpolation
-				interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
+				interpolate(&(*exp_data)[j], &simdata, af_params.omega_s, af_params.acceleration); // interpolate the simulated data onto the experimental time- and radius grid
 
 				// set the current speed to the constant rotor speed of the current speed step
 				current_speed = (*simparams).speed_step[j].rotorspeed;
@@ -246,26 +251,24 @@ vector <struct mfem_data> *exp_data)
 			CT0.concentration.clear();
 			CT0 = (*system).component_vector[0].c0;
 		}
-		af_params.s.resize(0);
-		af_params.D.resize(0);
-		af_params.n.resize(0);
-		af_params.keq.resize(0);
-		af_params.koff.resize(0);
 		af_params.s.clear();
 		af_params.D.clear();
 		af_params.n.clear();
 		af_params.keq.clear();
 		af_params.koff.clear();
+		af_params.kext.clear();
+		af_params.pathlength = 1.2;
 		af_params.keq.push_back((double) (*system).assoc_vector[0].keq);
 		af_params.koff.push_back((double) (*system).assoc_vector[0].k_off);
 		af_params.n.push_back((*system).assoc_vector[0].stoichiometry1);
 		af_params.n.push_back((*system).assoc_vector[0].stoichiometry2);
-		for (i=0; i<2; i++)
+		for (i=0; i<(*system).component_vector.size(); i++)
 		{
 			//cout << "s[" << i<< "]: " << (*system).component_vector[i].s <<
 			//", D[" << i << "]: " << (*system).component_vector[i].D << endl;
 			af_params.s.push_back((*system).component_vector[i].s);
 			af_params.D.push_back((*system).component_vector[i].D);
+			af_params.kext.push_back((double) (*system).component_vector[i].extinction);
 		}
       // find the largest sedimenting or floating speed
       s_max_abs = fabs(maxval(af_params.s)) > fabs(minval(af_params.s))?
@@ -338,7 +341,7 @@ vector <struct mfem_data> *exp_data)
 					{
 					    qApp->processEvents();
 					}
-					interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
+					interpolate(&(*exp_data)[j], &simdata, af_params.omega_s, af_params.acceleration); // interpolate the simulated data onto the experimental time- and radius grid
 					return(1); // early termination = 1
 				}
 			}  // end of for acceleration
@@ -369,7 +372,7 @@ vector <struct mfem_data> *exp_data)
 						<< " for component " << i + 1 << " and speed step " << j + 1 << endl;
 				}
 			}
-			af_params.time_steps = 1 + (unsigned int) (duration/af_params.dt);
+			af_params.time_steps = (unsigned int) (1+duration/af_params.dt);
 			af_params.start_time = current_time;
 			af_params.mesh = (*simparams).mesh;
 			af_params.moving_grid = (*simparams).moving_grid;
@@ -380,7 +383,7 @@ vector <struct mfem_data> *exp_data)
 			calculate_ra2(rpm[0], rpm[0], C0, &simdata);
 //			print_af();
 			af_params.acceleration = (*simparams).speed_step[j].acceleration_flag; // reset acceleration flag for correct time correction interpolation
-			interpolate(&(*exp_data)[j], &simdata); // interpolate the simulated data onto the experimental time- and radius grid
+			interpolate(&(*exp_data)[j], &simdata, af_params.omega_s, af_params.acceleration); // interpolate the simulated data onto the experimental time- and radius grid
 
 				// set the current time to the last scan of this speed step
 			current_time = (*simparams).speed_step[j].duration_hours * 3600
@@ -406,83 +409,6 @@ vector <struct mfem_data> *exp_data)
 	return(0);
 }
 
-void US_Astfem_RSA::interpolate_C0(struct mfem_initial *C0, double *C1)
-{
-	unsigned int i, j, ja;
-	double a, b, xs, tmp;
-
-	ja = 0;
-	for(j=0; j<N; j++)
-	{
-		xs = x[j];
-		for(i=ja; i<(*C0).radius.size(); i++)
-		{
-			if((*C0).radius[i] > xs + 1.e-12)
-			{
-				break;
-			}
-		}
-
-      if ( i == 0 ) 				// x[j] < C0.radius[0]
-      {
-         C1[j] = 0.;
-      }
-      else if ( i == (*C0).radius.size() ) 	// x[j] > last point in (*C0).radius
-      {
-         C1[j] = (*C0).radius[ i-1 ];
-      }
-      else
-      {
-		   a = (*C0).radius[i-1];
-		   b = (*C0).radius[i];
-		   tmp = (xs - a)/(b - a);
-		   C1[j] = (*C0).concentration[i-1] * (1. - tmp) + (*C0).concentration[i] * tmp;
-		   ja = i-1;
-      }
-	}
-}
-
-void US_Astfem_RSA::interpolate_Cfinal(struct mfem_initial *C0, double *cfinal)
-{
-// this routine also considers cases where C0 starts before the meniscus or stops
-// after the bottom is reached, however, C0 needs to cover both meniscus and bottom
-// In those cases it will fill the C0 vector with the first and/or last value of C0,
-// respectively, for the missing points.
-
-	unsigned int i, j, ja;
-	double a, b, xs, tmp;
-
-	ja = 0;
-	for(j=0; j<(*C0).radius.size(); j++)
-	{
-		xs = (*C0).radius[j];
-		for (i=ja; i<N; i++)
-		{
-			if( x[i] > xs + 1.e-12)
-			{
-				break;
-			}
-		}
-
-      if ( i == 0 ) 				// xs < x[0]
-      {
-         (*C0).concentration[j] = 0.;
-      }
-      else if ( i == N ) 	   // xs > x[N]
-      {
-         (*C0).concentration[j] = cfinal[ i-1 ];
-      }
-      else 							// x[i-1] < xs <x[i]
-      {
-		   a = x[i-1];
-		   b = x[i];
-		   tmp = (xs-a)/(b-a);
-		   (*C0).concentration[j] = cfinal[i-1] * (1. - tmp) + cfinal[i] * tmp;
-		   ja = i-1;
-      }
-	}
-}
-
 int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, double D, mfem_initial *C_init, mfem_data *simdata) // non-interacting solute, constant speed
 {
 	unsigned int i, j;
@@ -495,7 +421,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 									// C[0...Ms-1][0....N-1]:
 	double **CA1, **CA2, **CB1, **CB2;		// for matrices used in acceleration
 
-//	FILE *outf = fopen("tmp.out", "w");
+	FILE *outf = fopen("tmp.out", "a");
 
 	CA = NULL;
 	CB = NULL;
@@ -613,6 +539,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 //
 // time evolution
 //
+
 	double *right_hand_side;
 	right_hand_side = new double [N];
 	for (i=0; i<af_params.time_steps+1; i++) // calculate all time steps f
@@ -620,6 +547,8 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 		rpm_current = rpm_start + (rpm_stop - rpm_start) * (i+0.5)/af_params.time_steps;
 		emit current_speed((unsigned int) rpm_current);
 
+      printf("rpm=%12.5e time_steps i=%d C_ttl=%20.10e \n", rpm_current, i,
+             IntConcentration(x, C0));
 
 		if(af_params.acceleration) // then we have acceleration
 		{
@@ -656,8 +585,8 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 			simscan.conc.push_back(C0[j]);
 		}
 		(*simdata).scan.push_back(simscan);
-/*
-		if(i%100 == 0 || i<5)
+
+		if(i%1 == 0 || i<5)
 		{
 			for (j=0; j<N; j++)
 			{
@@ -665,7 +594,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 			}
 			fprintf(outf, "\n\n");
 		}
-*/
+
 		//
 		// sedimentation part:
 		// Calculate thr right hand side vector //
@@ -703,13 +632,13 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 				right_hand_side[j] = -CB[0][j] * C0[j];
 			}
 		}
-		tridiag(CA[0], CA[1], CA[2], right_hand_side, C1);
+		tridiag(CA[0], CA[1], CA[2], right_hand_side, C1, N);
 		for (j=0; j<N; j++)
 		{
 			C0[j] = C1[j];
 		}
 	} // time loop
-//	fclose(outf);
+	fclose(outf);
 
 	(*C_init).radius.clear();
 	(*C_init).concentration.clear();
@@ -971,7 +900,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 				}
 				j = N-1;
 				right_hand_side[j] = -CB[i][0][j] * C0[i][j-1] - CB[i][1][j] * C0[i][j];
-				tridiag(CA[i][0], CA[i][1], CA[i][2], right_hand_side, C1[i]);
+				tridiag(CA[i][0], CA[i][1], CA[i][2], right_hand_side, C1[i], N);
 			}
 		}
 		else // moving grid
@@ -993,8 +922,8 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 											- CB[i][1][j] * C0[i][j-1]
 											- CB[i][2][j] * C0[i][j];
 
-				QuadSolver(CA[i][0], CA[i][1], CA[i][2], CA[i][3], right_hand_side, C1[i]);
-				// QuadSolver_ellam(CA[i][0], CA[i][1], CA[i][2], CA[i][3], right_hand_side, C1[i]);
+				QuadSolver(CA[i][0], CA[i][1], CA[i][2], CA[i][3], right_hand_side, C1[i], N);
+				// QuadSolver_ellam(CA[i][0], CA[i][1], CA[i][2], CA[i][3], right_hand_side, C1[i], N);
 			}
 		}
       //
@@ -1050,7 +979,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 				}
 				j = N-1;
 				right_hand_side[j] = -CB[i][0][j] * C0[i][j-1] - CB[i][1][j] * C0[i][j];
-				tridiag(CA[i][0], CA[i][1], CA[i][2], right_hand_side, C1[i]);
+				tridiag(CA[i][0], CA[i][1], CA[i][2], right_hand_side, C1[i], N);
 			}
 		}
 		else // moving grid
@@ -1071,8 +1000,8 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 				right_hand_side[j] = - CB[i][0][j] * C0[i][j-2]
 											- CB[i][1][j] * C0[i][j-1]
 											- CB[i][2][j] * C0[i][j];
-				QuadSolver(CA[i][0], CA[i][1], CA[i][2], CA[i][3], right_hand_side, C1[i]);
-				// QuadSolver_ellam(CA[i][0], CA[i][1], CA[i][2], CA[i][3], right_hand_side, C1[i]);
+				QuadSolver(CA[i][0], CA[i][1], CA[i][2], CA[i][3], right_hand_side, C1[i], N);
+				// QuadSolver_ellam(CA[i][0], CA[i][1], CA[i][2], CA[i][3], right_hand_side, C1[i], N);
 			}
 		}
       // end of 2nd half step of sendimentation
@@ -1122,46 +1051,6 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 	return(0);
 }
 
-
-double US_Astfem_RSA::minval(vector <double> val)
-{
-	double minimum=1.0e300;
-	for (unsigned int i=0; i<val.size(); i++)
-	{
-		minimum = min(minimum, val[i]);
-	}
-	return minimum;
-}
-
-double US_Astfem_RSA::minval(vector <SimulationComponent> val)
-{
-	double minimum=1.0e300;
-	for (unsigned int i=0; i<val.size(); i++)
-	{
-		minimum = min(minimum, (double) val[i].s);
-	}
-	return minimum;
-}
-
-double US_Astfem_RSA::maxval(vector <double> val)
-{
-	double maximum = -1.0e300;
-	for (unsigned int i=0; i<val.size(); i++)
-	{
-		maximum = max(maximum, val[i]);
-	}
-	return maximum;
-}
-
-double US_Astfem_RSA::maxval(vector <SimulationComponent> val)
-{
-	double maximum = -1.0e300;
-	for (unsigned int i=0; i<val.size(); i++)
-	{
-		maximum = max(maximum, (double) val[i].s);
-	}
-	return maximum;
-}
 
 //************ new version *************
 
@@ -1311,161 +1200,6 @@ void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
 
 	}
 }
-
-/*********************** old version **********
-
-//////////////////////////////////////////////////////////////%
-//
-// Generate exponential mesh and refine cell bottom (for s>0)
-//
-//////////////////////////////////////////////////////////////%
-void US_Astfem_RSA::mesh_gen_s_pos(vector <double> nu)
-{
-	cout << "using adaptive mesh...\n";
-	double uth = 1.0/af_params.simpoints;		// threshold of u for steep region
-	double tmp_xc, tmp_Hstar, xa;
-	unsigned int IndLayer=0;		// number of layers for grids in steep region
-	unsigned int i, j, tmp_Nf;
-	vector <double> xc, Hstar, y;
-	vector <unsigned int> Nf;
-	xc.clear();
-	Hstar.clear();
-	Nf.clear();
-
-	for (i=0; i<af_params.s.size(); i++) 	// markers for steep regions
-	{
-		tmp_xc = af_params.bottom - (1.0/(nu[i] * af_params.bottom)) * log(nu[i]
-				* (pow((double) af_params.bottom, (double) 2.0)
-				- pow((double) af_params.meniscus, (double) 2.0))/(2.0 * uth));
-		tmp_Nf = (int) (M_PI/2.0 * (af_params.bottom - tmp_xc)
-				* nu[i] * af_params.bottom/2.0 + 0.5) + 1; // # of pts for i-th layer
-		tmp_Hstar = (af_params.bottom - tmp_xc)/tmp_Nf * M_PI/2.0;			// step required by Pac(i)<1
-		if ((tmp_xc > af_params.meniscus) &&
-			(af_params.bottom - af_params.meniscus *
-			pow((double) af_params.bottom/af_params.meniscus,
-			(double)((af_params.simpoints-5.0/2.0)/(af_params.simpoints-1.0))) > tmp_Hstar))
-		{
-			xc.push_back(tmp_xc);
-			Nf.push_back(tmp_Nf);
-			Hstar.push_back(tmp_Hstar);
-			IndLayer ++;
-		}
-	}
-	xc.push_back(af_params.bottom);
-	print_vector(&xc);
-
-	if (IndLayer == 0)	// use Schuck's grid only
-	{
-		x.push_back(af_params.meniscus);
-//		for(i=1; i<af_params.simpoints - 1; i++)	// standard Schuck's grids
-		for(i=1; i<af_params.simpoints - 0; i++)	// add one more point to Schuck's grids
-		{
-			x.push_back(af_params.meniscus * pow((double) (af_params.bottom/af_params.meniscus),
-			(((double) i - 0.5)/((double)(af_params.simpoints - 1)))));	// Schuck's mesh
-		}
-		x.push_back(af_params.bottom);
-	}
-	else				// need a composite grid
-	{
-		// printf("IndLayer=%d \n", IndLayer);
-// steep region
-		int indp = 0, Mp=0; 	// index for a grid point
-		double HL, HR, Hf, alpha, beta, xi;
-		for (i=0; i<IndLayer; i++)  // consider i-th steep region
-		{
-			if (i < IndLayer-1)	// use linear distribution for step size distrib
-			{
-				HL = Hstar[i];
-				HR = Hstar[i+1];
-				Mp = int ((xc[i+1] - xc[i]) * 2.0/(HL + HR));
-            if ( Mp>1 ) {
-				   // alpha = Mp * HL - ((HR - HL)/2.0) * Mp/(Mp - 1.0);
-				   // beta = ((HR-HL)/2.0) * pow(Mp, 2.0)/(Mp - 1.0);
-				   beta = ((HR-HL)/2.0) * Mp ;
-               alpha = (xc[i+1]-xc[i])-beta;
-				   for (j=0; j<=Mp-1; j++)
-				   {
-				 	   xi = (double) j/ (double) Mp;
-				 	   y.push_back(xc[i] + alpha * xi + beta * pow(xi, 2.0));
-					   indp++;
-				   }
-            }
-			}
-			else		// last layer, use sine distribution for grids
-			{
-				for (j=0; j<=Nf[i]-1; j++)
-				{
-					indp++;
-					y.push_back(xc[i] + (af_params.bottom - xc[i]) * sin(j/(Nf[i] - 1.0) * M_PI/2.0));
-					if (y[indp-1] > xc[i+1])
-					{
-						break;
-					}
-				}
-			}
-		}
-		int NfTotal = indp;
-		vector <double> ytmp;
-		ytmp.clear();
-// reverse the order of y
-		j = NfTotal;
-		do
-		{
-			j--;
-			ytmp.push_back(y[j]);
-		} while (j != 0);
-		y.clear();
-		y = ytmp;
-// transition region
-// smallest step size in transit region
-		Hf = y[NfTotal - 2]- y[NfTotal-1];
-		int Nm = floor(log(af_params.bottom/((af_params.simpoints - 1) * Hf)
-				* log(af_params.bottom/af_params.meniscus))/log(2.0))+1 ; // number of pts in trans region
-		xa = y[NfTotal-1] - Hf * (pow(2.0, (double)Nm) -1.);
-		int Js = floor(0.5 + (af_params.simpoints - 1)
-				* log(xa/af_params.meniscus)/log(af_params.bottom/af_params.meniscus));
-
-// xa and Hf are modified so that y[NfTotal-Nm] matches xa exactly
-		xa = af_params.meniscus*pow((double)(af_params.bottom/af_params.meniscus),
-				(((double) Js - 0.5)/((double)af_params.simpoints - 1.0)));
-      Nm += 1;		// use one more element to ensure the elem size in transition region is smaller than in regular region
-		Hf = ( y[NfTotal-1] - xa )/(pow(2.0, (double)Nm) - 1.0);
-
-		// printf("xa=%15.8e Hf=%12.5e Nm=%d, Js=%d, NfTotal=%d\n", xa, Hf, Nm, Js, NfTotal);
-		for (j=1; j<Nm; j++)
-		{
-			y.push_back(y[NfTotal-1] - Hf * (pow(2.0, (double) j) - 1));
-		}
-// regular region
-		x.push_back(af_params.meniscus);
-		for (j=1; j<=Js; j++)
-		{
-			x.push_back(af_params.meniscus*
-			pow((double) (af_params.bottom/af_params.meniscus),
-			(((double) j - 0.5)/((double)af_params.simpoints - 1.0))));
-		}
-
-		for (j=0; j<NfTotal+Nm-1; j++)
-		{
-			x.push_back(y[NfTotal+Nm-j-2]);
-		}
-
-// *** smooth out the grids in transition region ***
-//      for (j=0; j<NfTotal+Nm-2; j++)
-//      {
-//	      x[j + Js - 1]=(x[j + Js - 2] + x[j + Js])/2.0;
-//      }
-//
-//      for (j=0; j<x.size()-1; j++)
-//      {
-//	      printf("x[%d]=%15.8e dx=%12.5e\n", j, x[j], x[j+1]-x[j]);
-//      }
-//      printf("x[%d]=%15.8e dx=%12.5e\n", j, x[j], 0.);
-// ***
-
-	}
-}
-******************end of old version ************/
 
 //////////////////////////////////////////////////////////////%
 //
@@ -1946,86 +1680,6 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(double D, double sw2, double **
 	clear_3d(N, (unsigned int) 4, Stif);
 }
 
-void US_Astfem_RSA::tridiag(double *a, double *b, double *c, double *r, double *u)
-{
-	int j;
-	double bet, *gam;
-	gam = new double [N];
-	if (b[0] == 0.0) cerr << "Error 1 in tridag" << endl;
-
-	u[0] = r[0]/(bet = b[0]);
-	for (j=1; j<(int) N; j++)
-	{
-		gam[j] = c[j-1]/bet;
-		bet = b[j] - a[j] * gam[j];
-		if (bet == 0.0)
-		{
-			cerr << "Error 2 in tridag" << endl;
-		}
-		u[j] = (r[j] - a[j] * u[j-1])/bet;
-	}
-	for (j=(N-2); j>=0; j--)
-	{
-		u[j] -= gam[j+1] * u[j+1];
-	}
-	delete [] gam;
-}
-
-void US_Astfem_RSA::initialize_3d(unsigned int val1, unsigned int val2, unsigned int val3, double ****matrix)
-{
-	unsigned int i, j, k;
-	*matrix = new double **[val1];
-	for (i=0; i<val1; i++)
-	{
-		(*matrix)[i] = new double *[val2];
-		for (j=0; j<val2; j++)
-		{
-			(*matrix)[i][j] = new double [val3];
-			for (k=0; k<val3; k++)
-			{
-				(*matrix)[i][j][k] = 0.0;
-			}
-		}
-	}
-}
-
-void US_Astfem_RSA::initialize_2d(unsigned int val1, unsigned int val2, double ***matrix)
-{
-	unsigned int i, j;
-	*matrix = new double *[val1];
-	for (i=0; i<val1; i++)
-	{
-		(*matrix)[i] = new double [val2];
-		for (j=0; j<val2; j++)
-		{
-			(*matrix)[i][j] = 0.0;
-		}
-	}
-}
-
-void US_Astfem_RSA::clear_3d(unsigned int val1, unsigned int val2, double ***matrix)
-{
-	unsigned int i, j;
-	for (i=0; i<val1; i++)
-	{
-		for (j=0; j<val2; j++)
-		{
-			delete [] matrix[i][j];
-		}
-		delete [] matrix[i];
-	}
-	delete [] matrix;
-}
-
-void US_Astfem_RSA::clear_2d(unsigned int val1, double **matrix)
-{
-	unsigned int i;
-	for (i=0; i<val1; i++)
-	{
-		delete [] matrix[i];
-	}
-	delete [] matrix;
-}
 
 void US_Astfem_RSA::GlobalStiff(vector <double> *xb, double **ca, double **cb,
 double D, double sw2)
@@ -2050,7 +1704,7 @@ double D, double sw2)
 	vx.push_back(x[1]);
 	vx.push_back(x[2]);
 	vx.push_back((*xb)[1]);
-	IntQT1(vx, D, sw2, Stif[0]);
+	IntQT1(vx, D, sw2, Stif[0], af_params.dt);
 
 	// elems in middle
 	for (i=1; i<(N-2); i++)
@@ -2064,7 +1718,7 @@ double D, double sw2)
 		vx.push_back(x[i+2]);
 		vx.push_back((*xb)[i]);
 		vx.push_back((*xb)[i+1]);
-		IntQTm(vx, D, sw2, Stif[i]);
+		IntQTm(vx, D, sw2, Stif[i], af_params.dt);
 	}
 
 // 2nd last elems
@@ -2077,7 +1731,7 @@ double D, double sw2)
 	vx.push_back((*xb)[N-2]);
 	vx.push_back((*xb)[N-1]);
 
-	IntQTn2(vx, D, sw2, Stif[N-2]);
+	IntQTn2(vx, D, sw2, Stif[N-2], af_params.dt);
 
 	// last elems
 	vx.clear();
@@ -2085,7 +1739,7 @@ double D, double sw2)
 	vx.push_back(x[N-1]);
 	vx.push_back(x[N-1]);
 	vx.push_back((*xb)[N-1]);
-	IntQTn1(vx, D, sw2, Stif[N-1]);
+	IntQTn1(vx, D, sw2, Stif[N-1], af_params.dt);
 
 	//
 	// assembly into global stiffness matrix
@@ -2154,757 +1808,6 @@ double D, double sw2)
 }
 
 
-
-//
-// source: http://www.math.ntnu.no/num/nnm/Program/Numlibc/
-//
-void US_Astfem_RSA::DefineGaussian(unsigned int nGauss, double **Gs2)
-{
-	unsigned int i, j, k;
-	double *Gs1, *w;
-	Gs1 = new double [nGauss];
-	w = new double [nGauss];
-
-	switch (nGauss)
-	{
-		case 3:
-		{
-			Gs1[0] = -0.774596669241483; 	w[0] = 5.0/9.0;
-			Gs1[1] = 0.0; 						w[1] = 8.0/9.0;
-			Gs1[2] = 0.774596669241483; 	w[2] = 5.0/9.0;
-			break;
-		}
-		case 5:
-		{
-         Gs1[0] = 0.906179845938664 ; 	w[0] = 0.236926885056189;
-         Gs1[1] = 0.538469310105683 ; 	w[1] = 0.478628670499366;
-         Gs1[2] = 0.000000000000000 ; 	w[2] = 0.568888888888889;
-			Gs1[3] = -Gs1[1]; 				w[3] = w[1];
-			Gs1[4] = -Gs1[0]; 				w[4] = w[0];
-			break;
-		}
-		case 7:
-		{
-         Gs1[0] = 0.949107912342759 ;	w[0] = 0.129484966168870;
-         Gs1[1] = 0.741531185599394 ;	w[1] = 0.279705391489277;
-         Gs1[2] = 0.405845151377397 ;	w[2] = 0.381830050505119;
-         Gs1[3] = 0.000000000000000 ;	w[3] = 0.417959183673469;
-			Gs1[4] = -Gs1[2]; 				w[4] = w[2];
-			Gs1[5] = -Gs1[1]; 				w[5] = w[1];
-			Gs1[6] = -Gs1[0]; 				w[6] = w[0];
-			break;
-		}
-		case 10:
-		{
-   		Gs1[0] = 0.973906528517172 ;	w[0] = 0.066671344308688;
-      	Gs1[1] = 0.865063366688985 ;	w[1] = 0.149451349150581;
-      	Gs1[2] = 0.679409568299024 ;	w[2] = 0.219086362515982;
-      	Gs1[3] = 0.433395394129247 ;	w[3] = 0.269266719309996;
-      	Gs1[4] = 0.148874338981631 ;	w[4] = 0.295524224714753;
-			Gs1[5] = -Gs1[4]; 				w[5] = w[4];
-			Gs1[6] = -Gs1[3]; 				w[6] = w[3];
-			Gs1[7] = -Gs1[2]; 				w[7] = w[2];
-			Gs1[8] = -Gs1[1]; 				w[8] = w[1];
-			Gs1[9] = -Gs1[0]; 				w[9] = w[0];
-			break;
-      }
-		default:
-		{
-			return;
-		}
-	}
-
-	for (i=0; i<nGauss; i++)
-	{
-		for (j=0; j<nGauss; j++) 	// map to [0,1] x [0,1]
-		{
-			k = j + (i) * nGauss;
-			Gs2[k][0] = (Gs1[i] + 1.0)/2.0;
-			Gs2[k][1] = (Gs1[j] + 1.0)/2.0;
-			Gs2[k][2] = w[i] * w[j]/4.0;
-		}
-	}
-	delete [] w;
-	delete [] Gs1;
-}
-
-
-//
-// integrand for Lamm equation
-//
-double US_Astfem_RSA::Integrand(double x_gauss, double D, double sw2,
-double u, double ux, double ut, double v, double vx)
-{
-	return (x_gauss * ut * v + D * x_gauss * ux * vx -
-	sw2 * pow(x_gauss, 2.0) * u * vx);
-}
-
-
-//
-// old version: perform integration on supp(test function) separately on left Q and right T
-//
-void US_Astfem_RSA::IntQT1(vector <double> vx, double D, double sw2, double **Stif)
-{
-	// element to define basis functions
-	//
-	unsigned int npts, i, k;
-	double x_gauss, y_gauss, dval;
-   double hh, slope, xn1, phiC, phiCx;
-	vector <double> Lx, Ly, Rx, Ry, Qx, Qy, Tx, Ty;
-	double *phiL, *phiLx, *phiLy, *phiR, *phiRx, *phiRy;
-	double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
-	Lx.clear();
-	Ly.clear();
-	Rx.clear();
-	Ry.clear();
-	Qx.clear();
-	Qy.clear();
-	Tx.clear();
-	Ty.clear();
-   phiL  = new double [3];
-   phiLx = new double [3];
-   phiLy = new double [3];
-   phiR  = new double [4];
-   phiRx = new double [4];
-   phiRy = new double [4];
-
-	// elements for define the trial function phi
-	Lx.push_back(vx[0]); 	// vertices of left Triangle
-	Lx.push_back(vx[3]);
-	Lx.push_back(vx[2]);
-
-	Ly.push_back(0.0);
-	Ly.push_back(af_params.dt);
-	Ly.push_back(af_params.dt);
-
-	Rx.push_back(vx[0]);	// vertices of Q on right quadrilateral
-	Rx.push_back(vx[1]);
-	Rx.push_back(vx[4]);
-	Rx.push_back(vx[3]);
-
-	Ry.push_back(0.0);
-	Ry.push_back(0.0);
-	Ry.push_back(af_params.dt);
-	Ry.push_back(af_params.dt);
-
-	initialize_2d(3, 2, &StifL);
-	initialize_2d(4, 2, &StifR);
-   hh = vx[3] - vx[2];
-   slope = (vx[3] - vx[5])/af_params.dt;
-	npts = 28;
-	initialize_2d(npts, 4, &Lam);
-	DefineFkp(npts, Lam);
-
-   //
-   // integration over element Q (a triangle):
-   //
-	Qx.push_back(vx[0]);	// vertices of Q on left
-	Qx.push_back(vx[3]);
-	Qx.push_back(vx[2]);
-
-	Qy.push_back(0.0);
-	Qy.push_back(af_params.dt);
-	Qy.push_back(af_params.dt);	// vertices of left T
-
-	for (k=0; k<npts; k++)
-	{
-		x_gauss = Lam[k][0] * Qx[0] + Lam[k][1] * Qx[1] + Lam[k][2] * Qx[2];
-		y_gauss = Lam[k][0] * Qy[0] + Lam[k][1] * Qy[1] + Lam[k][2] * Qy[2];
-		DJac = 2.0 * AreaT(&Qx, &Qy);
-
-      xn1 = x_gauss + slope * ( af_params.dt - y_gauss );	// trace-forward point at t_n+1 from (x_g, y_g)
-
-		//
-		// find phi, phi_x, phi_y on L and C at (x,y)
-		//
-
-		BasisTR(Lx, Ly, x_gauss, y_gauss, phiL, phiLx, phiLy);
-      phiC  = ( xn1 - vx[2] )/hh;		// hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
-      phiCx = 1./hh;
-
-		for (i=0; i<3; i++)
-		{
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i], 1.-phiC, -phiCx );
-			StifL[i][0] += Lam[k][3] * DJac * dval;
-
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i], phiC, phiCx );
-			StifL[i][1] += Lam[k][3] * DJac * dval;
-		}
-	}
-
-	//
-	// integration over T:
-	//
-	Tx.push_back(vx[0]);	// vertices of T on right
-	Tx.push_back(vx[5]);
-	Tx.push_back(vx[3]);
-
-	Ty.push_back(0.0);
-	Ty.push_back(0.0);
-	Ty.push_back(af_params.dt);
-
-	for (k=0; k<npts; k++)
-	{
-		x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
-		y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-		DJac = 2.0 * AreaT(&Tx, &Ty);
-
-      if(DJac<1.e-22) break;
-
-      xn1 = x_gauss + slope * ( af_params.dt - y_gauss );	// trace-forward point at t_n+1 from (x_g, y_g)
-
-		//
-		// find phi, phi_x, phi_y on R and C at (x,y)
-		//
-
-		BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
-      phiC  = ( xn1 - vx[2] )/hh;		// hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
-      phiCx = 1./hh;
-
-		for (i=0; i<4; i++)
-		{
-			dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], 1.-phiC, -phiCx);
-			StifR[i][0] += Lam[k][3] * DJac * dval;
-
-			dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], phiC, phiCx);
-			StifR[i][1] += Lam[k][3] * DJac * dval;
-		}
-	}
-
-	clear_2d(npts, Lam);
-
-	for (i=0; i<2; i++)
-	{
-		Stif[0][i] = StifL[0][i] + StifR[0][i];
-		Stif[1][i] =               StifR[1][i];
-		Stif[2][i] = StifL[2][i];
-		Stif[3][i] = StifL[1][i] + StifR[3][i];
-		Stif[4][i] =               StifR[2][i];
-	}
-
-	delete [] phiR;
-	delete [] phiRx;
-	delete [] phiRy;
-	delete [] phiL;
-	delete [] phiLx;
-	delete [] phiLy;
-
-	clear_2d(3, StifL);
-	clear_2d(4, StifR);
-
-
-}
-
-void US_Astfem_RSA::IntQTm(vector <double> vx, double D, double sw2, double **Stif)
-{
-	// element to define basis functions
-	//
-	unsigned int npts, i, k;
-	double x_gauss, y_gauss, dval;
-	vector <double> Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
-	double *phiR, *phiRx, *phiRy;
-	double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
-	double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
-	double **Gs=NULL;
-	phiL = new double [4];
-	phiLx = new double [4];
-	phiLy = new double [4];
-	phiCx = new double [4];
-	phiCy = new double [4];
-	phiC = new double [4];
-	phiR = new double [4];
-	phiRx = new double [4];
-	phiRy = new double [4];
-	Lx.clear();
-	Ly.clear();
-	Cx.clear();
-	Cy.clear();
-	Rx.clear();
-	Ry.clear();
-	Qx.clear();
-	Qy.clear();
-	Tx.clear();
-	Ty.clear();
-
-	Lx.push_back(vx[0]);
-	Lx.push_back(vx[1]);
-	Lx.push_back(vx[4]);
-	Lx.push_back(vx[3]);
-
-	Ly.push_back(0.0);
-	Ly.push_back(0.0);
-	Ly.push_back(af_params.dt);
-	Ly.push_back(af_params.dt); 			// vertices of left T
-
-	Cx.push_back(vx[6]);
-	Cx.push_back(vx[7]);
-	Cx.push_back(vx[4]);
-	Cx.push_back(vx[3]);
-
-	Cy.push_back(0.0);
-	Cy.push_back(0.0);
-	Cy.push_back(af_params.dt);
-	Cy.push_back(af_params.dt);
-
-	Rx.push_back(vx[1]);	// vertices of Q on right
-	Rx.push_back(vx[2]);
-	Rx.push_back(vx[5]);
-	Rx.push_back(vx[4]);
-
-	Ry.push_back(0.0);
-	Ry.push_back(0.0);
-	Ry.push_back(af_params.dt);
-	Ry.push_back(af_params.dt);
-
-	initialize_2d(4, 2, &StifL);
-	initialize_2d(4, 2, &StifR);
-
-   //
-   // integration over element Q :
-   //
-	Qx.push_back(vx[6]);	// vertices of Q on right
-	Qx.push_back(vx[1]);
-	Qx.push_back(vx[4]);
-	Qx.push_back(vx[3]);
-
-	Qy.push_back(0.0);
-	Qy.push_back(0.0);
-	Qy.push_back(af_params.dt);
-	Qy.push_back(af_params.dt);	// vertices of left T
-
-	npts = 5 * 5;
-	initialize_2d(npts, 3, &Gs);
-	DefineGaussian(5, Gs);
-
-	double psi[4], psi1[4], psi2[4], jac[4];
-	for (k=0; k<npts; k++)
-	{
-		BasisQS(Gs[k][0], Gs[k][1], psi, psi1, psi2);
-
-		x_gauss = 0.0;
-		y_gauss = 0.0;
-		for (i=0; i<4; i++)
-		{
-			jac[i] = 0.0;
-		}
-		for (i=0; i<4; i++)
-		{
-			x_gauss += psi[i] * Qx[i];
-			y_gauss += psi[i] * Qy[i];
-			jac[0] += Qx[i] * psi1[i];
-			jac[1] += Qx[i] * psi2[i];
-			jac[2] += Qy[i] * psi1[i];
-			jac[3] += Qy[i] * psi2[i];
-		}
-
-		DJac = jac[0] * jac[3] - jac[1] * jac[2];
-
-		//
-		// find phi, phi_x, phi_y on L and C at (x,y)
-		//
-
-		BasisQR(Lx, x_gauss, y_gauss, phiL, phiLx, phiLy);
-		BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
-		for (i=0; i<4; i++)
-		{
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
- 											phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
-			StifL[i][0] += Gs[k][2] * DJac * dval;
-
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
-											phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
-			StifL[i][1] += Gs[k][2] * DJac * dval;
-		}
-	}
-	clear_2d(npts, Gs);
-
-	//
-	// integration over T:
-	//
-	Tx.push_back(vx[1]);	// vertices of T on right
-	Tx.push_back(vx[7]);
-	Tx.push_back(vx[4]);
-
-	Ty.push_back(0.0);
-	Ty.push_back(0.0);
-	Ty.push_back(af_params.dt);
-
-	npts = 28;
-	initialize_2d(npts, 4, &Lam);
-	DefineFkp(npts, Lam);
-
-	for (k=0; k<npts; k++)
-	{
-		x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
-		y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-		DJac = 2.0 * AreaT(&Tx, &Ty);
-
-      if(DJac<1.e-22) break;
-
-		//
-		// find phi, phi_x, phi_y on R and C at (x,y)
-		//
-
-		BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
-		BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
-
-		for (i=0; i<4; i++)
-		{
-			dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
-			       						phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
-			StifR[i][0] += Lam[k][3] * DJac * dval;
-
-			dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
-					 						phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
-			StifR[i][1] += Lam[k][3] * DJac * dval;
-		}
-	}
-	clear_2d(npts, Lam);
-
-
-	for (i=0; i<2; i++)
-	{
-		Stif[0][i] = StifL[0][i];
-		Stif[1][i] = StifL[1][i] + StifR[0][i];
-		Stif[2][i] = 					StifR[1][i];
-		Stif[3][i] = StifL[3][i];
-		Stif[4][i] = StifL[2][i] + StifR[3][i];
-		Stif[5][i] = 					StifR[2][i];
-	}
-	delete [] phiR;
-	delete [] phiRx;
-	delete [] phiRy;
-	delete [] phiL;
-	delete [] phiLx;
-	delete [] phiLy;
-	delete [] phiCx;
-	delete [] phiCy;
-	delete [] phiC;
-
-	clear_2d(3, StifL);
-	clear_2d(4, StifR);
-}
-
-
-void US_Astfem_RSA::IntQTn2(vector <double> vx, double D, double sw2, double **Stif)
-{
-	// element to define basis functions
-	//
-	unsigned int npts, i, k;
-	double x_gauss, y_gauss, dval;
-	vector <double> Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
-	double *phiR, *phiRx, *phiRy;
-	double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
-	double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
-	double **Gs=NULL;
-	phiL = new double [4];
-	phiLx = new double [4];
-	phiLy = new double [4];
-	phiCx = new double [4];
-	phiCy = new double [4];
-	phiC = new double [4];
-	phiR = new double [3];
-	phiRx = new double [3];
-	phiRy = new double [3];
-	Lx.clear();
-	Ly.clear();
-	Cx.clear();
-	Cy.clear();
-	Rx.clear();
-	Ry.clear();
-	Qx.clear();
-	Qy.clear();
-	Tx.clear();
-	Ty.clear();
-
-	Lx.push_back(vx[0]);
-	Lx.push_back(vx[1]);
-	Lx.push_back(vx[4]);
-	Lx.push_back(vx[3]);
-
-	Ly.push_back(0.0);
-	Ly.push_back(0.0);
-	Ly.push_back(af_params.dt);
-	Ly.push_back(af_params.dt); 			// vertices of left T
-
-	Cx.push_back(vx[5]);
-	Cx.push_back(vx[6]);
-	Cx.push_back(vx[4]);
-	Cx.push_back(vx[3]);
-
-	Cy.push_back(0.0);
-	Cy.push_back(0.0);
-	Cy.push_back(af_params.dt);
-	Cy.push_back(af_params.dt);
-
-	Rx.push_back(vx[1]);	// vertices of Q on right
-	Rx.push_back(vx[2]);
-	Rx.push_back(vx[4]);
-
-	Ry.push_back(0.0);
-	Ry.push_back(0.0);
-	Ry.push_back(af_params.dt);
-
-	initialize_2d(4, 2, &StifL);
-	initialize_2d(4, 2, &StifR);
-
-   //
-   // integration over element Q
-   //
-	Qx.push_back(vx[5]);	// vertices of Q on right
-	Qx.push_back(vx[1]);
-	Qx.push_back(vx[4]);
-	Qx.push_back(vx[3]);
-
-	Qy.push_back(0.0);
-	Qy.push_back(0.0);
-	Qy.push_back(af_params.dt);
-	Qy.push_back(af_params.dt);
-
-	npts = 5 * 5;
-	initialize_2d(npts, 3, &Gs);
-	DefineGaussian(5, Gs);
-
-	double psi[4], psi1[4], psi2[4], jac[4];
-	for (k=0; k<npts; k++)
-	{
-		BasisQS(Gs[k][0], Gs[k][1], psi, psi1, psi2);
-
-		x_gauss = 0.0;
-		y_gauss = 0.0;
-		for (i=0; i<4; i++)
-		{
-			jac[i] = 0.0;
-		}
-		for (i=0; i<4; i++)
-		{
-			x_gauss += psi[i] * Qx[i];
-			y_gauss += psi[i] * Qy[i];
-			jac[0] += Qx[i] * psi1[i];
-			jac[1] += Qx[i] * psi2[i];
-			jac[2] += Qy[i] * psi1[i];
-			jac[3] += Qy[i] * psi2[i];
-		}
-
-		DJac = jac[0] * jac[3] - jac[1] * jac[2];
-
-		//
-		// find phi, phi_x, phi_y on L and C at (x,y)
-		//
-
-		BasisQR(Lx, x_gauss, y_gauss, phiL, phiLx, phiLy);
-		BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
-		for (i=0; i<4; i++)
-		{
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
-											phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
-			StifL[i][0] += Gs[k][2] * DJac * dval;
-
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
-											phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
-			StifL[i][1] += Gs[k][2] * DJac * dval;
-		}
-	}
-	clear_2d(npts, Gs);
-
-	//
-	// integration over T:
-	//
-	Tx.push_back(vx[1]);	// vertices of T on right
-	Tx.push_back(vx[6]);
-	Tx.push_back(vx[4]);
-
-	Ty.push_back(0.0);
-	Ty.push_back(0.0);
-	Ty.push_back(af_params.dt);
-
-	npts = 28;
-	initialize_2d(npts, 4, &Lam);
-	DefineFkp(npts, Lam);
-
-	for (k=0; k<npts; k++)
-	{
-		x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
-		y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-		DJac = 2.0 * AreaT(&Tx, &Ty);
-
-      if(DJac<1.e-22) break;
-
-		//
-		// find phi, phi_x, phi_y on R and C at (x,y)
-		//
-
-		BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
-		BasisTR(Rx, Ry, x_gauss, y_gauss, phiR, phiRx, phiRy);
-
-		for (i=0; i<3; i++)
-		{
-			dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
-											phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
-			StifR[i][0] += Lam[k][3] * DJac * dval;
-
-			dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
-											phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
-			StifR[i][1] += Lam[k][3] * DJac * dval;
-		}
-	}
-	clear_2d(npts, Lam);
-
-	for (i=0; i<2; i++)
-	{
-		Stif[0][i] = StifL[0][i];
-		Stif[1][i] = StifL[1][i] + StifR[0][i] ;
-		Stif[2][i] = 					StifR[1][i];
-		Stif[3][i] = StifL[3][i];
-		Stif[4][i] = StifL[2][i] + StifR[2][i];
-	}
-	delete [] phiR;
-	delete [] phiRx;
-	delete [] phiRy;
-	delete [] phiL;
-	delete [] phiLx;
-	delete [] phiLy;
-	delete [] phiCx;
-	delete [] phiCy;
-	delete [] phiC;
-
-	clear_2d(3, StifL);
-	clear_2d(4, StifR);
-}
-
-void US_Astfem_RSA::IntQTn1(vector <double> vx, double D, double sw2, double **Stif)
-{
-	// element to define basis functions
-	//
-	unsigned int npts, i, k;
-	double x_gauss, y_gauss, dval;
-	vector <double> Lx, Ly, Tx, Ty;
-	double **StifR=NULL, **Lam=NULL, DJac;
-	double *phiL, *phiLx, *phiLy;
-	phiL = new double [4];
-	phiLx = new double [4];
-	phiLy = new double [4];
-	Lx.clear();
-	Ly.clear();
-	Tx.clear();
-	Ty.clear();
-
-	Lx.push_back(vx[0]);
-	Lx.push_back(vx[1]);
-	Lx.push_back(vx[2]);
-
-	Ly.push_back(0.0);
-	Ly.push_back(0.0);
-	Ly.push_back(af_params.dt);
-
-	initialize_2d(4, 2, &StifR);
-
-	//
-	// integration over T:
-	//
-	Tx.push_back(vx[3]);	// vertices of T on right
-	Tx.push_back(vx[1]);
-	Tx.push_back(vx[2]);
-
-	Ty.push_back(0.0);
-	Ty.push_back(0.0);
-	Ty.push_back(af_params.dt);
-
-	npts = 28;
-	initialize_2d(npts, 4, &Lam);
-	DefineFkp(npts, Lam);
-
-	for (k=0; k<npts; k++)
-	{
-		x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
-		y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-		DJac = 2.0 * AreaT(&Tx, &Ty);
-
-      if(DJac<1.e-22) break;
-		//
-		// find phi, phi_x, phi_y on R and C at (x,y)
-		//
-
-		BasisTR(Lx, Ly, x_gauss, y_gauss, phiL, phiLx, phiLy);
-
-		for (i=0; i<3; i++)
-		{
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i], 1.0, 0.0);
-			StifR[i][0] += Lam[k][3] * DJac * dval;
-		}
-	}
-	clear_2d(npts, Lam);
-
-	for (i=0; i<2; i++)
-	{
-		Stif[0][i] = StifR[0][i];
-		Stif[1][i] = StifR[1][i];
-		Stif[2][i] = StifR[2][i];
-	}
-	delete [] phiL;
-	delete [] phiLx;
-	delete [] phiLy;
-
-	clear_2d(4, StifR);
-}
-
-
-void US_Astfem_RSA::QuadSolver(double *ai, double *bi, double *ci, double *di, double *cr, double *solu)
-{
-//
-// solve Quad-diagonal system [a_i, *b_i*, c_i, d_i]*[x]=[r_i]
-// b_i ar e on the main diagonal line
-//
-// test
-//	n=100; a=-1+rand(100,1); b=2+rand(200,1); c=-0.7*rand(100,1); d=-0.3*rand(100,1);
-//	xs=rand(100,1);
-//	r(1)=b(1)*xs(1)+c(1)*xs(2)+d(1)*xs(3);
-//	for i=2:n-2,
-//	r(i)=a(i)*xs(i-1)+b(i)*xs(i)+c(i)*xs(i+1)+d(i)*xs(i+2);
-//	end;
-//	i=n-1; r(i)=a(i)*xs(i-1)+b(i)*xs(i)+c(i)*xs(i+1);
-//	i=n;	r(i)=a(i)*xs(i-1)+b(i)*xs(i);
-//
-
-	unsigned int i;
-	double tmp;
-	vector<double> ca, cb, cc, cd;
-	ca.clear();
-	cb.clear();
-	cc.clear();
-	cd.clear();
-	for (i=0; i<N; i++)
-	{
-		ca.push_back( ai[i] );
-		cb.push_back( bi[i] );
-		cc.push_back( ci[i] );
-		cd.push_back( di[i] );
-	}
-
-	for (i=1; i<=N-2; i++)
-	{
-		tmp = ca[i]/cb[i-1];
-		cb[i] = cb[i]-cc[i-1]*tmp;
-		cc[i] = cc[i]-cd[i-1]*tmp;
-		cr[i] = cr[i]-cr[i-1]*tmp;
-	}
-   i=N-1;
-		tmp = ca[i]/cb[i-1];
-		cb[i] = cb[i]-cc[i-1]*tmp;
-		cr[i] = cr[i]-cr[i-1]*tmp;
-
-
-	solu[N-1] = cr[N-1] / cb[N-1];
-	solu[N-2] = (cr[N-2] - cc[N-2] * solu[N-1]) / cb[N-2];
-	i = N - 2;
-	do
-	{
-		i--;
-		solu[i] = (cr[i] - cc[i] * solu[i+1] - cd[i] * solu[i+2]) / cb[i];
-	} while (i != 0);
-}
-
-
 //
 // ************* ELLAM ***********
 //
@@ -2930,7 +1833,7 @@ void US_Astfem_RSA::GlobalStiff_ellam(vector <double> *xb, double **ca, double *
 	vx.push_back(x[0]);
 	vx.push_back(x[1]);
 	vx.push_back((*xb)[1]);
-	IntQT1_ellam(vx, D, sw2, Stif[0]);
+	IntQT1_ellam(vx, D, sw2, Stif[0], af_params.dt);
 
 	// elems in middle
 	for (i=1; i<=(N-2); i++)
@@ -2944,7 +1847,7 @@ void US_Astfem_RSA::GlobalStiff_ellam(vector <double> *xb, double **ca, double *
 		vx.push_back(x[i+1]);
 		vx.push_back((*xb)[i]);
 		vx.push_back((*xb)[i+1]);
-		IntQTm_ellam(vx, D, sw2, Stif[i]);
+		IntQTm_ellam(vx, D, sw2, Stif[i], af_params.dt);
 	}
 
 
@@ -2955,7 +1858,7 @@ void US_Astfem_RSA::GlobalStiff_ellam(vector <double> *xb, double **ca, double *
 	vx.push_back(x[N-2]);
 	vx.push_back(x[N-1]);
 	vx.push_back((*xb)[N-1]);
-	IntQTn1_ellam(vx, D, sw2, Stif[N-1]);
+	IntQTn1_ellam(vx, D, sw2, Stif[N-1], af_params.dt);
 
 	//
 	// assembly into global stiffness matrix
@@ -3009,884 +1912,6 @@ void US_Astfem_RSA::GlobalStiff_ellam(vector <double> *xb, double **ca, double *
 
 	clear_3d(N, 6, Stif);
 }
-
-
-void US_Astfem_RSA::IntQT1_ellam(vector <double> vx, double D, double sw2, double **Stif)
-{
-	// element to define basis functions
-	//
-	unsigned int npts, i, k;
-	double x_gauss, y_gauss, dval;
-	vector <double>  Rx, Ry, Qx, Qy;
-	double **StifR=NULL, DJac;
-	double *phiR, *phiRx, *phiRy;
-   double hh, slope, xn1, phiC, phiCx;
-	phiR = new double [4];
-	phiRx = new double [4];
-	phiRy = new double [4];
-
-	Rx.clear();
-	Ry.clear();
-	Rx.push_back(vx[0]);	// vertices of Q on right
-	Rx.push_back(vx[1]);
-	Rx.push_back(vx[3]);
-	Rx.push_back(vx[2]);
-
-	Ry.push_back(0.0);
-	Ry.push_back(0.0);
-	Ry.push_back(af_params.dt);
-	Ry.push_back(af_params.dt);
-
-	initialize_2d(4, 2, &StifR);
-   hh = vx[3] - vx[2];
-   slope = (vx[3] - vx[4])/af_params.dt;
-
-   //
-   // integration over quadrilateral element Q :
-   //
-   if( (vx[1]-vx[4])/(vx[1]-vx[0]) <1.e-3 ) 		// Q_{0,4,3,2} is almost degenerated into a triangle
-   {
-	    // elements for integration
-	    //
-	    Qx.clear();
-	    Qy.clear();
-	    Qx.push_back(vx[0]);	// vertices of Q on right
-	    Qx.push_back(vx[3]);
-	    Qx.push_back(vx[2]);
-	    Qy.push_back(0.0);
-	    Qy.push_back(af_params.dt);
-	    Qy.push_back(af_params.dt);
-
-       double **Lam;
-	    npts = 28;
-	    initialize_2d(npts, 4, &Lam);
-	    DefineFkp(npts, Lam);
-
-	    for (k=0; k<npts; k++)
-	    {
-		    x_gauss = Lam[k][0] * Qx[0] + Lam[k][1] * Qx[1] + Lam[k][2] * Qx[2];
-		    y_gauss = Lam[k][0] * Qy[0] + Lam[k][1] * Qy[1] + Lam[k][2] * Qy[2];
-		    DJac = 2.0 * AreaT(&Qx, &Qy);
-
-		    //
-		    // find phi, phi_x, phi_y on R and C at (x,y)
-		    //
-
-	     	 BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
-
-          xn1 = x_gauss + slope * ( af_params.dt - y_gauss );	// trace-forward point at t_n+1 from (x_g, y_g)
-          phiC  = ( xn1 - vx[2] )/hh;		// hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
-          phiCx = 1./hh;
-
-		    for (i=0; i<4; i++)
-		    {
-			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], 1.-phiC, -phiCx);
-			    StifR[i][0] += Lam[k][3] * DJac * dval;
-
-			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],    phiC,  phiCx);
-			    StifR[i][1] += Lam[k][3] * DJac * dval;
-		    }
-      }
-	   clear_2d(npts, Lam);
-
-   }
-	else
-	{	// Q_{0,4,3,2} is non-degenerate
-		// elements for integration
-		//
-		Qx.clear();
-		Qy.clear();
-		Qx.push_back(vx[0]);	// vertices of Q on right
-		Qx.push_back(vx[4]);
-		Qx.push_back(vx[3]);
-		Qx.push_back(vx[2]);
-
-		Qy.push_back(0.0);
-		Qy.push_back(0.0);
-		Qy.push_back(af_params.dt);
-		Qy.push_back(af_params.dt);
-
-		double **Gs=NULL;
-		npts = 5 * 5;
-		initialize_2d(npts, 3, &Gs);
-		DefineGaussian(5, Gs);
-
-		double psi[4], psi1[4], psi2[4], jac[4];
-		for (k=0; k<npts; k++)
-		{
-			BasisQS(Gs[k][0], Gs[k][1], psi, psi1, psi2);
-			x_gauss = 0.0;
-			y_gauss = 0.0;
-			for (i=0; i<4; i++)
-			{
-				jac[i] = 0.0;
-			}
-			for (i=0; i<4; i++)
-			{
-				x_gauss += psi[i] * Qx[i];
-				y_gauss += psi[i] * Qy[i];
-				jac[0] += Qx[i] * psi1[i];
-				jac[1] += Qx[i] * psi2[i];
-				jac[2] += Qy[i] * psi1[i];
-				jac[3] += Qy[i] * psi2[i];
-			}
-			DJac = jac[0] * jac[3] - jac[1] * jac[2];
-			//
-			// find phi, phi_x, phi_y on L and C at (x,y)
-			//
-			BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
-			xn1 = x_gauss + slope * ( af_params.dt - y_gauss );	// trace-forward point at t_n+1 from (x_g, y_g)
-			phiC  = ( xn1 - vx[2] )/hh;		// hat function on t_n+1, =1 at vx[3]; =0 at vx[2]
-			phiCx = 1./hh;
-			for (i=0; i<4; i++)
-			{
-				dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i], 1.-phiC, -phiCx);
-				StifR[i][0] += Gs[k][2] * DJac * dval;
-				dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],    phiC,  phiCx);
-				StifR[i][1] += Gs[k][2] * DJac * dval;
-			}
-		}
-		clear_2d(npts, Gs);
-	}
-	for (i=0; i<2; i++)
-	{
-		Stif[0][i] = StifR[0][i];
-		Stif[1][i] = StifR[1][i];
-		Stif[2][i] = StifR[3][i];
-		Stif[3][i] = StifR[2][i];
-	}
-	delete [] phiR;
-	delete [] phiRx;
-	delete [] phiRy;
-	clear_2d(4, StifR);
-}
-
-void US_Astfem_RSA::IntQTm_ellam(vector <double> vx, double D, double sw2, double **Stif)
-{
-	// element to define basis functions
-	//
-	unsigned int npts, i, k;
-	double x_gauss, y_gauss, dval;
-	vector <double> Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
-	double *phiR, *phiRx, *phiRy;
-	double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
-	double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
-	double **Gs=NULL;
-	phiL = new double [4];
-	phiLx = new double [4];
-	phiLy = new double [4];
-	phiCx = new double [4];
-	phiCy = new double [4];
-	phiC = new double [4];
-	phiR = new double [4];
-	phiRx = new double [4];
-	phiRy = new double [4];
-	Lx.clear();
-	Ly.clear();
-	Cx.clear();
-	Cy.clear();
-	Rx.clear();
-	Ry.clear();
-	Qx.clear();
-	Qy.clear();
-	Tx.clear();
-	Ty.clear();
-
-	Lx.push_back(vx[0]);
-	Lx.push_back(vx[1]);
-	Lx.push_back(vx[4]);
-	Lx.push_back(vx[3]);
-
-	Ly.push_back(0.0);
-	Ly.push_back(0.0);
-	Ly.push_back(af_params.dt);
-	Ly.push_back(af_params.dt); 			// vertices of left T
-
-	Cx.push_back(vx[6]);
-	Cx.push_back(vx[7]);
-	Cx.push_back(vx[5]);
-	Cx.push_back(vx[4]);
-
-	Cy.push_back(0.0);
-	Cy.push_back(0.0);
-	Cy.push_back(af_params.dt);
-	Cy.push_back(af_params.dt);
-
-	Rx.push_back(vx[1]);	// vertices of Q on right
-	Rx.push_back(vx[2]);
-	Rx.push_back(vx[5]);
-	Rx.push_back(vx[4]);
-
-	Ry.push_back(0.0);
-	Ry.push_back(0.0);
-	Ry.push_back(af_params.dt);
-	Ry.push_back(af_params.dt);
-
-
-	initialize_2d(4, 2, &StifL);
-	initialize_2d(4, 2, &StifR);
-
-	//
-	// integration over triangle T:
-	//
-	Tx.push_back(vx[6]);	// vertices of T on left
-	Tx.push_back(vx[1]);
-	Tx.push_back(vx[4]);
-
-	Ty.push_back(0.0);
-	Ty.push_back(0.0);
-	Ty.push_back(af_params.dt);
-
-	npts = 28;
-	initialize_2d(npts, 4, &Lam);
-	DefineFkp(npts, Lam);
-
-	for (k=0; k<npts; k++)
-	{
-		x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
-		y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-		DJac = 2.0 * AreaT(&Tx, &Ty);
-
-      if(DJac<1.e-22) break;
-
-		//
-		// find phi, phi_x, phi_y on R and C at (x,y)
-		//
-
-		BasisQR(Lx, x_gauss, y_gauss, phiL, phiLx, phiLy);
-		BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
-
-		for (i=0; i<4; i++)
-		{
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
-			       						phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
-			StifL[i][0] += Lam[k][3] * DJac * dval;
-
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i],
-					 						phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
-			StifL[i][1] += Lam[k][3] * DJac * dval;
-		}
-	}
-	clear_2d(npts, Lam);
-
-   //
-   // integration over quadrilateral element Q :
-   //
-   if( (vx[7]-vx[1])/(vx[2]-vx[1]) <1.e-3 ) 		// Q_{1,7,5,4} is almost degenerated into a triangle
-   {
-	    Qx.push_back(vx[1]);	// vertices of Q on right
-	    Qx.push_back(vx[5]);
-	    Qx.push_back(vx[4]);
-	    Qy.push_back(0.0);
-	    Qy.push_back(af_params.dt);
-	    Qy.push_back(af_params.dt);
-
-	    npts = 28;
-	    initialize_2d(npts, 4, &Lam);
-	    DefineFkp(npts, Lam);
-
-	    for (k=0; k<npts; k++)
-	    {
-		    x_gauss = Lam[k][0] * Qx[0] + Lam[k][1] * Qx[1] + Lam[k][2] * Qx[2];
-		    y_gauss = Lam[k][0] * Qy[0] + Lam[k][1] * Qy[1] + Lam[k][2] * Qy[2];
-		    DJac = 2.0 * AreaT(&Qx, &Qy);
-
-		    //
-		    // find phi, phi_x, phi_y on R and C at (x,y)
-		    //
-
-	     	 BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
-		    BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
-		    for (i=0; i<4; i++)
-		    {
-			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
-											    phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
-			    StifR[i][0] += Lam[k][3] * DJac * dval;
-
-			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
-											    phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
-			    StifR[i][1] += Lam[k][3] * DJac * dval;
-		    }
-       }
-	    clear_2d(npts, Lam);
-   }
-   else 				// Q is a non-degenerate quadrilateral
-   {
-	    Qx.push_back(vx[1]);	// vertices of Q on right
-	    Qx.push_back(vx[7]);
-	    Qx.push_back(vx[5]);
-	    Qx.push_back(vx[4]);
-
-	    Qy.push_back(0.0);
-	    Qy.push_back(0.0);
-	    Qy.push_back(af_params.dt);
-	    Qy.push_back(af_params.dt);
-
-	    npts = 5 * 5;
-	    initialize_2d(npts, 3, &Gs);
-	    DefineGaussian(5, Gs);
-
-	    double psi[4], psi1[4], psi2[4], jac[4];
-	    for (k=0; k<npts; k++)
-	    {
-		    BasisQS(Gs[k][0], Gs[k][1], psi, psi1, psi2);
-
-		    x_gauss = 0.0;
-		    y_gauss = 0.0;
-		    for (i=0; i<4; i++)
-		    {
-			    jac[i] = 0.0;
-		    }
-		    for (i=0; i<4; i++)
-		    {
-			    x_gauss += psi[i] * Qx[i];
-			    y_gauss += psi[i] * Qy[i];
-			    jac[0] += Qx[i] * psi1[i];
-			    jac[1] += Qx[i] * psi2[i];
-			    jac[2] += Qy[i] * psi1[i];
-			    jac[3] += Qy[i] * psi2[i];
-		    }
-
-		    DJac = jac[0] * jac[3] - jac[1] * jac[2];
-
-		    //
-		    // find phi, phi_x, phi_y on L and C at (x,y)
-		    //
-
-		    BasisQR(Rx, x_gauss, y_gauss, phiR, phiRx, phiRy);
-		    BasisQR(Cx, x_gauss, y_gauss, phiC, phiCx, phiCy);
-		    for (i=0; i<4; i++)
-		    {
-			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
-											    phiC[0] + phiC[3], phiCx[0] + phiCx[3]);
-			    StifR[i][0] += Gs[k][2] * DJac * dval;
-
-			    dval = Integrand(x_gauss, D, sw2, phiR[i], phiRx[i], phiRy[i],
-											    phiC[1] + phiC[2], phiCx[1] + phiCx[2]);
-			    StifR[i][1] += Gs[k][2] * DJac * dval;
-		    }
-	    }
-	    clear_2d(npts, Gs);
-   }
-
-	for (i=0; i<2; i++)
-	{
-		Stif[0][i] = StifL[0][i];
-		Stif[1][i] = StifL[1][i] + StifR[0][i];
-		Stif[2][i] = 					StifR[1][i];
-		Stif[3][i] = StifL[3][i];
-		Stif[4][i] = StifL[2][i] + StifR[3][i];
-		Stif[5][i] = 					StifR[2][i];
-	}
-	delete [] phiR;
-	delete [] phiRx;
-	delete [] phiRy;
-	delete [] phiL;
-	delete [] phiLx;
-	delete [] phiLy;
-	delete [] phiCx;
-	delete [] phiCy;
-	delete [] phiC;
-
-	clear_2d(3, StifL);
-	clear_2d(4, StifR);
-}
-
-void US_Astfem_RSA::IntQTn1_ellam(vector <double> vx, double D, double sw2, double **Stif)
-{
-	// element to define basis functions
-	//
-	unsigned int npts, i, k;
-	double x_gauss, y_gauss, dval;
-	vector <double> Lx, Ly, Tx, Ty;
-	double **StifL=NULL, **Lam=NULL, DJac;
-	double *phiL, *phiLx, *phiLy;
-	phiL = new double [4];
-	phiLx = new double [4];
-	phiLy = new double [4];
-	Lx.clear();
-	Ly.clear();
-	Tx.clear();
-	Ty.clear();
-
-	Lx.push_back(vx[0]);
-	Lx.push_back(vx[1]);
-	Lx.push_back(vx[3]);
-	Lx.push_back(vx[2]);
-
-	Ly.push_back(0.0);
-	Ly.push_back(0.0);
-	Ly.push_back(af_params.dt);
-	Ly.push_back(af_params.dt);
-
-	initialize_2d(4, 2, &StifL);
-
-	//
-	// integration over T:
-	//
-
-	Tx.push_back(vx[4]);	// triangle for integration
-	Tx.push_back(vx[1]);
-	Tx.push_back(vx[3]);
-
-	Ty.push_back(0.0);
-	Ty.push_back(0.0);
-	Ty.push_back(af_params.dt);
-
-	npts = 28;
-	initialize_2d(npts, 4, &Lam);
-	DefineFkp(npts, Lam);
-
-	for (k=0; k<npts; k++)
-	{
-		x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
-		y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-		DJac = 2.0 * AreaT(&Tx, &Ty);
-
-      if(DJac<1.e-22) break;
-		//
-		// find phi, phi_x, phi_y on R and C at (x,y)
-		//
-
-		BasisQR(Lx, x_gauss, y_gauss, phiL, phiLx, phiLy);
-
-		for (i=0; i<4; i++)
-		{
-			dval = Integrand(x_gauss, D, sw2, phiL[i], phiLx[i], phiLy[i], 1.0, 0.0);
-			StifL[i][0] += Lam[k][3] * DJac * dval;
-		}
-	}
-	clear_2d(npts, Lam);
-
-
-	for (i=0; i<2; i++)
-	{
-		Stif[0][i] = StifL[0][i];
-		Stif[1][i] = StifL[1][i];
-		Stif[2][i] = StifL[3][i];
-		Stif[3][i] = StifL[2][i];
-	}
-	delete [] phiL;
-	delete [] phiLx;
-	delete [] phiLy;
-
-	clear_2d(4, StifL);
-}
-
-
-void US_Astfem_RSA::QuadSolver_ellam(double *ai, double *bi, double *ci, double *di, double *cr, double *solu)
-{
-//
-// solve Quad-diagonal system [a_i, b_i, *c_i*, d_i]*[x]=[r_i]
-// c_i are on the main diagonal line
-//
-
-	unsigned int i;
-	double tmp;
-	vector<double> ca, cb, cc, cd;
-	ca.clear();
-	cb.clear();
-	cc.clear();
-	cd.clear();
-	for (i=0; i<N; i++)
-	{
-		ca.push_back( ai[i] );
-		cb.push_back( bi[i] );
-		cc.push_back( ci[i] );
-		cd.push_back( di[i] );
-	}
-
-	for (i=N-2; i>=1; i--)
-	{
-		tmp = cd[i]/cc[i+1];
-		cc[i] = cc[i]-cb[i+1]*tmp;
-		cb[i] = cb[i]-ca[i+1]*tmp;
-		cr[i] = cr[i]-cr[i+1]*tmp;
-	}
-   i=0;
-	tmp = cd[i]/cc[i+1];
-	cc[i] = cc[i]-cb[i+1]*tmp;
-	cr[i] = cr[i]-cr[i+1]*tmp;
-	solu[0] = cr[0] / cc[0];
-	solu[1] = (cr[1] - cb[1] * solu[0]) / cc[1];
-	i = 1;
-	do
-	{
-		i++;
-		solu[i] = (cr[i] - ca[i] * solu[i-2] - cb[i] * solu[i-1]) / cc[i];
-	} while (i != N-1);
-}
-// ******* end of ELLAM *********************
-
-//
-// computer basis on standard element
-//
-void US_Astfem_RSA::BasisTS(double xi, double et, double *phi, double *phi1, double *phi2)
-{
-//function [phi, phi1, phi2] = BasisTS(xi,et)
-
-	phi[0] = 1.0 - xi - et;
-	phi1[0] = -1.0;
-	phi2[0]= -1.0;
-
-	phi[1] = xi;
-	phi1[1] = 1.0;
-	phi2[1] = 0.0;
-
-	phi[2] = et;
-	phi1[2] = 0.0;
-	phi2[2] = 1.0;
-}
-
-//
-// computer basis on standard element
-//
-void US_Astfem_RSA::BasisQS(double xi, double et, double *phi, double *phi1, double *phi2)
-{
-
-	phi[0] = (1.0 - xi) * (1.0 - et);
-	phi1[0] = -1.0 * (1.0 - et);
-	phi2[0]= -1.0 * (1.0 - xi);
-
-	phi[1] = xi * (1.0 - et);
-	phi1[1] = 1.0 - et;
-	phi2[1] = -xi;
-
-	phi[2] = xi * et;
-	phi1[2] = et;
-	phi2[2] = xi;
-
-	phi[3] = (1.0 - xi) * et;
-	phi1[3] = -et;
-	phi2[3] = 1.0 - xi;
-}
-
-void US_Astfem_RSA::DefineFkp(unsigned int npts, double **Lam)
-{
-   //
-   // source: http://people.scs.fsu.edu/~burkardt/datasets/quadrature_rules_tri/quadrature_rules_tri.html
-   //
-	switch (npts)
-	{
-		case 12:
-      //  STRANG9, order 12, degree of precision 6.
-		{
-  				Lam[ 0][0] = 0.873821971016996;	Lam[ 0][1] = 0.063089014491502;
-  				Lam[ 1][0] = 0.063089014491502;	Lam[ 1][1] = 0.873821971016996;
-  				Lam[ 2][0] = 0.063089014491502;	Lam[ 2][1] = 0.063089014491502;
-  				Lam[ 3][0] = 0.501426509658179;	Lam[ 3][1] = 0.249286745170910;
-  				Lam[ 4][0] = 0.249286745170910;	Lam[ 4][1] = 0.501426509658179;
-  				Lam[ 5][0] = 0.249286745170910;	Lam[ 5][1] = 0.249286745170910;
-  				Lam[ 6][0] = 0.636502499121399;	Lam[ 6][1] = 0.310352451033785;
-  				Lam[ 7][0] = 0.636502499121399;	Lam[ 7][1] = 0.053145049844816;
-  				Lam[ 8][0] = 0.310352451033785;	Lam[ 8][1] = 0.636502499121399;
-  				Lam[ 9][0] = 0.310352451033785;	Lam[ 9][1] = 0.053145049844816;
-  				Lam[10][0] = 0.053145049844816;	Lam[10][1] = 0.636502499121399;
-  				Lam[11][0] = 0.053145049844816;	Lam[11][1] = 0.310352451033785;
-
-  				Lam[ 0][3] = 0.050844906370207;
-  				Lam[ 1][3] = 0.050844906370207;
-  				Lam[ 2][3] = 0.050844906370207;
-  				Lam[ 3][3] = 0.116786275726379;
-  				Lam[ 4][3] = 0.116786275726379;
-  				Lam[ 5][3] = 0.116786275726379;
-  				Lam[ 6][3] = 0.082851075618374;
-  				Lam[ 7][3] = 0.082851075618374;
-  				Lam[ 8][3] = 0.082851075618374;
-  				Lam[ 9][3] = 0.082851075618374;
-  				Lam[10][3] = 0.082851075618374;
-  				Lam[11][3] = 0.082851075618374;
-			break;
-		}
-		case 28:
-      // TOMS612_28, order 28, degree of precision 11, a rule from ACM TOMS algorithm #612
-		{
-  			Lam[ 0][0] = 0.33333333333333333  ;	Lam[ 0][1] = 0.333333333333333333 ;
-  			Lam[ 1][0] = 0.9480217181434233   ;	Lam[ 1][1] = 0.02598914092828833 ;
-  			Lam[ 2][0] = 0.02598914092828833  ;	Lam[ 2][1] = 0.9480217181434233 ;
-  			Lam[ 3][0] = 0.02598914092828833  ;	Lam[ 3][1] = 0.02598914092828833 ;
-  			Lam[ 4][0] = 0.8114249947041546   ;	Lam[ 4][1] = 0.09428750264792270 ;
-  			Lam[ 5][0] = 0.09428750264792270  ;	Lam[ 5][1] = 0.8114249947041546 ;
-  			Lam[ 6][0] = 0.09428750264792270  ;	Lam[ 6][1] = 0.09428750264792270 ;
-  			Lam[ 7][0] = 0.01072644996557060  ;	Lam[ 7][1] = 0.4946367750172147 ;
-  			Lam[ 8][0] = 0.4946367750172147   ;	Lam[ 8][1] = 0.01072644996557060 ;
-  			Lam[ 9][0] = 0.4946367750172147   ;	Lam[ 9][1] = 0.4946367750172147 ;
-  			Lam[10][0] = 0.5853132347709715   ;	Lam[10][1] = 0.2073433826145142 ;
-  			Lam[11][0] = 0.2073433826145142   ;	Lam[11][1] = 0.5853132347709715 ;
-  			Lam[12][0] = 0.2073433826145142   ;	Lam[12][1] = 0.2073433826145142 ;
-  			Lam[13][0] = 0.1221843885990187   ;	Lam[13][1] = 0.4389078057004907 ;
-  			Lam[14][0] = 0.4389078057004907   ;	Lam[14][1] = 0.1221843885990187 ;
-  			Lam[15][0] = 0.4389078057004907   ;	Lam[15][1] = 0.4389078057004907 ;
-  			Lam[16][0] = 0.6779376548825902   ;	Lam[16][1] = 0.04484167758913055 ;
-  			Lam[17][0] = 0.6779376548825902   ;	Lam[17][1] = 0.27722066752827925 ;
-  			Lam[18][0] = 0.04484167758913055  ;	Lam[18][1] = 0.6779376548825902 ;
-  			Lam[19][0] = 0.04484167758913055  ;	Lam[19][1] = 0.27722066752827925 ;
-  			Lam[20][0] = 0.27722066752827925  ;	Lam[20][1] = 0.6779376548825902 ;
-  			Lam[21][0] = 0.27722066752827925  ;	Lam[21][1] = 0.04484167758913055 ;
-  			Lam[22][0] = 0.8588702812826364   ;	Lam[22][1] = 0.00000000000000000 ;
-  			Lam[23][0] = 0.8588702812826364   ;	Lam[23][1] = 0.1411297187173636 ;
-  			Lam[24][0] = 0.0000000000000000   ;	Lam[24][1] = 0.8588702812826364 ;
-  			Lam[25][0] = 0.0000000000000000   ;	Lam[25][1] = 0.1411297187173636 ;
-  			Lam[26][0] = 0.1411297187173636   ; Lam[26][1] = 0.8588702812826364 ;
-  			Lam[27][0] = 0.1411297187173636   ;	Lam[27][1] = 0.0000000000000000 ;
-
-  			Lam[ 0][3] = 0.08797730116222190 ;
-  			Lam[ 1][3] = 0.008744311553736190 ;
-  			Lam[ 2][3] = 0.008744311553736190 ;
-  			Lam[ 3][3] = 0.008744311553736190 ;
-  			Lam[ 4][3] = 0.03808157199393533 ;
-  			Lam[ 5][3] = 0.03808157199393533 ;
-  			Lam[ 6][3] = 0.03808157199393533 ;
-  			Lam[ 7][3] = 0.01885544805613125 ;
-  			Lam[ 8][3] = 0.01885544805613125 ;
-  			Lam[ 9][3] = 0.01885544805613125 ;
-  			Lam[10][3] = 0.07215969754474100 ;
-  			Lam[11][3] = 0.07215969754474100 ;
-  			Lam[12][3] = 0.07215969754474100 ;
-  			Lam[13][3] = 0.06932913870553720 ;
-  			Lam[14][3] = 0.06932913870553720 ;
-  			Lam[15][3] = 0.06932913870553720 ;
-  			Lam[16][3] = 0.04105631542928860 ;
-  			Lam[17][3] = 0.04105631542928860 ;
-  			Lam[18][3] = 0.04105631542928860 ;
-  			Lam[19][3] = 0.04105631542928860 ;
-  			Lam[20][3] = 0.04105631542928860 ;
-  			Lam[21][3] = 0.04105631542928860 ;
-  			Lam[22][3] = 0.007362383783300573 ;
-  			Lam[23][3] = 0.007362383783300573 ;
-  			Lam[24][3] = 0.007362383783300573 ;
-  			Lam[25][3] = 0.007362383783300573 ;
-  			Lam[26][3] = 0.007362383783300573 ;
-  			Lam[27][3] = 0.007362383783300573 ;
-			break;
-		}
-		case 37:
-      //   TOMS706_37, order 37, degree of precision 13, a rule from ACM TOMS algorithm #706.
-		{
-  			Lam[ 0][0] = 0.333333333333333333333333333333; 	Lam[ 0][1] = 0.333333333333333333333333333333;
-  			Lam[ 1][0] = 0.950275662924105565450352089520;  Lam[ 1][1] = 0.024862168537947217274823955239;
-  			Lam[ 2][0] = 0.024862168537947217274823955239;  Lam[ 2][1] = 0.950275662924105565450352089520;
-  			Lam[ 3][0] = 0.024862168537947217274823955239;  Lam[ 3][1] = 0.024862168537947217274823955239;
-  			Lam[ 4][0] = 0.171614914923835347556304795551;  Lam[ 4][1] = 0.414192542538082326221847602214;
-  			Lam[ 5][0] = 0.414192542538082326221847602214;  Lam[ 5][1] = 0.171614914923835347556304795551;
-  			Lam[ 6][0] = 0.414192542538082326221847602214;  Lam[ 6][1] = 0.414192542538082326221847602214;
-  			Lam[ 7][0] = 0.539412243677190440263092985511;  Lam[ 7][1] = 0.230293878161404779868453507244;
-  			Lam[ 8][0] = 0.230293878161404779868453507244;  Lam[ 8][1] = 0.539412243677190440263092985511;
-  			Lam[ 9][0] = 0.230293878161404779868453507244;  Lam[ 9][1] = 0.230293878161404779868453507244;
-  			Lam[10][0] = 0.772160036676532561750285570113;  Lam[10][1] = 0.113919981661733719124857214943;
-         Lam[11][0] = 0.113919981661733719124857214943;  Lam[11][1] = 0.772160036676532561750285570113;
-         Lam[12][0] = 0.113919981661733719124857214943;  Lam[12][1] = 0.113919981661733719124857214943;
-         Lam[13][0] = 0.009085399949835353883572964740;  Lam[13][1] = 0.495457300025082323058213517632;
-         Lam[14][0] = 0.495457300025082323058213517632;  Lam[14][1] = 0.009085399949835353883572964740;
-         Lam[15][0] = 0.495457300025082323058213517632;  Lam[15][1] = 0.495457300025082323058213517632;
-         Lam[16][0] = 0.062277290305886993497083640527;  Lam[16][1] = 0.468861354847056503251458179727;
-         Lam[17][0] = 0.468861354847056503251458179727;  Lam[17][1] = 0.062277290305886993497083640527;
-         Lam[18][0] = 0.468861354847056503251458179727;  Lam[18][1] = 0.468861354847056503251458179727;
-         Lam[19][0] = 0.022076289653624405142446876931;  Lam[19][1] = 0.851306504174348550389457672223;
-         Lam[20][0] = 0.022076289653624405142446876931;  Lam[20][1] = 0.126617206172027096933163647918;
-         Lam[21][0] = 0.851306504174348550389457672223;  Lam[21][1] = 0.022076289653624405142446876931;
-         Lam[22][0] = 0.851306504174348550389457672223;  Lam[22][1] = 0.126617206172027096933163647918;
-         Lam[23][0] = 0.126617206172027096933163647918;  Lam[23][1] = 0.022076289653624405142446876931;
-         Lam[24][0] = 0.126617206172027096933163647918;  Lam[24][1] = 0.851306504174348550389457672223;
-         Lam[25][0] = 0.018620522802520968955913511549;  Lam[25][1] = 0.689441970728591295496647976487;
-         Lam[26][0] = 0.018620522802520968955913511549;  Lam[26][1] = 0.291937506468887771754472382212;
-         Lam[27][0] = 0.689441970728591295496647976487;  Lam[27][1] = 0.018620522802520968955913511549;
-         Lam[28][0] = 0.689441970728591295496647976487;  Lam[28][1] = 0.291937506468887771754472382212;
-         Lam[29][0] = 0.291937506468887771754472382212;  Lam[29][1] = 0.018620522802520968955913511549;
-         Lam[30][0] = 0.291937506468887771754472382212;  Lam[30][1] = 0.689441970728591295496647976487;
-         Lam[31][0] = 0.096506481292159228736516560903;  Lam[31][1] = 0.635867859433872768286976979827;
-         Lam[32][0] = 0.096506481292159228736516560903;  Lam[32][1] = 0.267625659273967961282458816185;
-         Lam[33][0] = 0.635867859433872768286976979827;  Lam[33][1] = 0.096506481292159228736516560903;
-         Lam[34][0] = 0.635867859433872768286976979827;  Lam[34][1] = 0.267625659273967961282458816185;
-         Lam[35][0] = 0.267625659273967961282458816185;  Lam[35][1] = 0.096506481292159228736516560903;
-         Lam[36][0] = 0.267625659273967961282458816185;  Lam[36][1] = 0.635867859433872768286976979827;
-
-
-  			Lam[ 0][3] = 0.051739766065744133555179145422;
-  			Lam[ 1][3] = 0.008007799555564801597804123460;
-  			Lam[ 2][3] = 0.008007799555564801597804123460;
-  			Lam[ 3][3] = 0.008007799555564801597804123460;
-  			Lam[ 4][3] = 0.046868898981821644823226732071;
-  			Lam[ 5][3] = 0.046868898981821644823226732071;
-  			Lam[ 6][3] = 0.046868898981821644823226732071;
-  			Lam[ 7][3] = 0.046590940183976487960361770070;
-  			Lam[ 8][3] = 0.046590940183976487960361770070;
-  			Lam[ 9][3] = 0.046590940183976487960361770070;
-  			Lam[10][3] = 0.031016943313796381407646220131;
-  			Lam[11][3] = 0.031016943313796381407646220131;
-  			Lam[12][3] = 0.031016943313796381407646220131;
-  			Lam[13][3] = 0.010791612736631273623178240136;
-  			Lam[14][3] = 0.010791612736631273623178240136;
-  			Lam[15][3] = 0.010791612736631273623178240136;
-  			Lam[16][3] = 0.032195534242431618819414482205;
-  			Lam[17][3] = 0.032195534242431618819414482205;
-  			Lam[18][3] = 0.032195534242431618819414482205;
-  			Lam[19][3] = 0.015445834210701583817692900053;
-  			Lam[20][3] = 0.015445834210701583817692900053;
-  			Lam[21][3] = 0.015445834210701583817692900053;
-         Lam[22][3] = 0.015445834210701583817692900053;
-         Lam[23][3] = 0.015445834210701583817692900053;
-         Lam[24][3] = 0.015445834210701583817692900053;
-         Lam[25][3] = 0.017822989923178661888748319485;
-         Lam[26][3] = 0.017822989923178661888748319485;
-         Lam[27][3] = 0.017822989923178661888748319485;
-         Lam[28][3] = 0.017822989923178661888748319485;
-         Lam[29][3] = 0.017822989923178661888748319485;
-         Lam[30][3] = 0.017822989923178661888748319485;
-         Lam[31][3] = 0.037038683681384627918546472190;
-         Lam[32][3] = 0.037038683681384627918546472190;
-         Lam[33][3] = 0.037038683681384627918546472190;
-         Lam[34][3] = 0.037038683681384627918546472190;
-         Lam[35][3] = 0.037038683681384627918546472190;
-         Lam[36][3] = 0.037038683681384627918546472190;
-
-			break;
-      }
-		default:
-		{
-			return;
-		}
-	}
-   for(unsigned int i=0; i<npts; i++)
-   {
-      Lam[i][2] = 1. - Lam[i][0] - Lam[i][1];
-      Lam[i][3] /= 2.; 			// to make the sum( wt ) = 0.5 = area of standard elem
-   }
-}
-
-
-//
-// AreaT: area of a triangle (v1, v2, v3)
-//
-double US_Astfem_RSA::AreaT(vector <double> *xv, vector <double> *yv)
-{
-	return (0.5 * (((*xv)[1] - (*xv)[0]) * ((*yv)[2] - (*yv)[0])
-					- ((*xv)[2] - (*xv)[0]) * ((*yv)[1] - (*yv)[0])));
-}
-
-//
-// function BasisTR: compute basis on real element T:
-//	phi, phi_x, phi_t at a given (xs,ts) point
-//	the triangular is assumed to be (x1,y1), (x2, y2), (x3, y3)
-//
-void US_Astfem_RSA::BasisTR(vector <double> vx, vector <double> vy, double xs,
-double ys, double *phi, double *phix, double *phiy)
-{
-	// find (xi,et) corresponding to (xs, ts)
-	//
-	unsigned int i;
-	vector <double> tempv1, tempv2;
-	tempv1.clear();
-	tempv2.clear();
-	tempv1.push_back(xs);
-	tempv1.push_back(vx[2]);
-	tempv1.push_back(vx[0]);
-	tempv2.push_back(ys);
-	tempv2.push_back(vy[2]);
-	tempv2.push_back(vy[0]);
-	double AreaK = AreaT(&vx, &vy);
-	double xi = AreaT(&tempv1, &tempv2)/AreaK;
-	tempv1.clear();
-	tempv2.clear();
-	tempv1.push_back(xs);
-	tempv1.push_back(vx[0]);
-	tempv1.push_back(vx[1]);
-	tempv2.push_back(ys);
-	tempv2.push_back(vy[0]);
-	tempv2.push_back(vy[1]);
-
-	double et = AreaT(&tempv1, &tempv2)/AreaK;
-
-	double *phi1, *phi2;
-
-	phi1 = new double [3];
-	phi2 = new double [3];
-
-	BasisTS(xi, et, phi, phi1, phi2);
-
-	double Jac[4], JacN[4], det;
-
-	Jac[0] = vx[0] * phi1[0] + vx[1] * phi1[1] + vx[2] * phi1[2];
-	Jac[1] = vx[0] * phi2[0] + vx[1] * phi2[1] + vx[2] * phi2[2];
-	Jac[2] = vy[0] * phi1[0] + vy[1] * phi1[1] + vy[2] * phi1[2];
-	Jac[3] = vy[0] * phi2[0] + vy[1] * phi2[1] + vy[2] * phi2[2];
-
-	det = Jac[0] * Jac[3] - Jac[1] * Jac [2];
-
-	JacN[0] = Jac[3]/det;
-	JacN[1] = -Jac[1]/det;
-	JacN[2] = -Jac[2]/det;
-	JacN[3] = Jac[0]/det;
-
-	for (i=0; i<3; i++)
-	{
-		phix[i] = JacN[0] * phi1[i] + JacN[2] * phi2[i];
-		phiy[i] = JacN[1] * phi1[i] + JacN[3] * phi2[i];
-	}
-	delete [] phi1;
-	delete [] phi2;
-}
-
-void US_Astfem_RSA::BasisQR(vector <double> vx, double xs,
-double ts, double *phi, double *phix, double *phiy)
-{
-	unsigned int i;
-
-	// find (xi,et) corresponding to (xs, ts)
-	double et = ts/af_params.dt;
-	double A = vx[0] * (1.0 - et) + vx[3] * et;
-	double B = vx[1] * (1.0 - et) + vx[2] * et;
-	double xi = (xs - A)/(B - A);
-
-	double *phi1, *phi2;
-
-	phi1 = new double [4];
-	phi2 = new double [4];
-
-	BasisQS(xi, et, phi, phi1, phi2);
-
-	double Jac[4], JacN[4], det;
-
-	Jac[0] = vx[0] * phi1[0] + vx[1] * phi1[1] + vx[2] * phi1[2] + vx[3] * phi1[3];
-	Jac[1] = vx[0] * phi2[0] + vx[1] * phi2[1] + vx[2] * phi2[2] + vx[3] * phi2[3];
-	Jac[2] = af_params.dt * phi1[2] + af_params.dt * phi1[3];
-	Jac[3] = af_params.dt * phi2[2] + af_params.dt * phi2[3];
-
-	det = Jac[0] * Jac[3] - Jac[1] * Jac [2];
-
-	JacN[0] = Jac[3]/det;
-	JacN[1] = -Jac[1]/det;
-	JacN[2] = -Jac[2]/det;
-	JacN[3] = Jac[0]/det;
-
-	for (i=0; i<4; i++)
-	{
-		phix[i] = JacN[0] * phi1[i] + JacN[2] * phi2[i];
-		phiy[i] = JacN[1] * phi1[i] + JacN[3] * phi2[i];
-	}
-	delete [] phi1;
-	delete [] phi2;
-}
-
-////////////////////////////////////////////////////////////////////////%
-// calculate total mass
-// (r,u) concentration defined at r(1), ...., r(M)
-//  M: r(1).... r(M): the interval for total mass, (M-1) subintervals
-////////////////////////////////////////////////////////////////////////%
-
-double US_Astfem_RSA::IntConcentration(vector<double> r, double *u)
-{
-//function T=IntConcentration(r,M,u)
-	double T = 0.0;
-	for (unsigned int j=0; j<r.size()-1; j++)
-	{
-		T += (r[j+1] - r[j]) * ((r[j+1] - r[j]) * (u[j+1]/3.0 + u[j]/6.0)
-			+ r[j] * (u[j] + u[j+1])/2.0);
-	}
-	return T;
-}
-
-
 
 void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 {
@@ -3943,6 +1968,91 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 			C1[0][j] = 2.*uhat - C1[0][j];
 			C1[1][j] = ct - C1[0][j];
 		}
+		else if(af_params.model == 11 )  	//  A + B <--> AB
+		{
+         double exta = 1.0, extb=1.0;			// extinction rate for A and B, should be specified outside
+         double K1, K_1;			// reation rates
+			double dva, dvb, dvc, dC[3];
+
+         K1  = af_params.koff[0] * af_params.keq[0];
+         K_1 = af_params.koff[0] ;
+
+			dva = TimeStep * K1 * extb;
+			dvb = 2 + TimeStep * ( K1*(extb*C1[0][j] + exta*C1[1][j]) + K_1*(exta+extb) );
+			dvc = TimeStep * exta * ( K1*C1[0][j]*C1[1][j] - K_1*C1[2][j] );
+
+         dC[0] = -2*dvc / ( dvb + sqrt( dvb*dvb - 4*dva*dvc ) );
+         dC[1] = extb / exta * dC[0];
+         dC[2] = - ( dC[0] + dC[1] );
+
+			C1[0][j] += 2*dC[0];
+			C1[1][j] += 2*dC[1];
+			C1[2][j] += 2*dC[2];
+		}
+		else if(af_params.model == 12 )  	//  general reaction
+      {
+         unsigned int Nspec = af_params.s.size();	// number of species
+         unsigned int iter_max = 20; 		// maximum number of Newton iteration allowed
+         unsigned int i, k, iter;
+         double **A, *y0, *delta_n, *b, diff;
+
+         y0 = new double [Nspec];
+         delta_n = new double [Nspec];
+         b = new double [Nspec];
+         A = new double* [Nspec];
+         for(i=0;i<Nspec;i++) A[i] = new double [Nspec];
+
+         for(i=0;i<Nspec;i++)
+         {
+            y0[i]=C1[i][j];
+            delta_n[i]=0.;
+         }
+
+         for(iter=0; iter<iter_max;iter++) 		// Newton iteration
+         {
+            for(i=0;i<Nspec;i++)
+              y0[i]=C1[i][j]+delta_n[i];
+
+            Reaction_dydt(y0, b);						// b=dy/dt
+
+            Reaction_dfdy(y0, A);						// A=df/dy
+
+            for(i=0;i<Nspec;i++)
+            {
+              for(k=0;k<Nspec;k++) A[i][k] = -TimeStep * A[i][k];
+              A[i][i] += 2.;
+              b[i] = 2.*delta_n[i] - TimeStep * b[i];
+            }
+
+            if( GaussElim(Nspec, A, b) ==-1 )
+            {
+              printf("Matrix singular in Reaction_Euler_imp: model 12\n");
+              break;
+            }
+            else
+            {
+              diff = 0.;
+              for(i=0;i<Nspec;i++)
+              {
+                delta_n[i] += b[i];
+                diff += fabs(delta_n[i]);
+              }
+            }
+
+            if(diff <1.e-7*ct) break;
+
+         } // end of Newton iteration;
+         for(i=0;i<Nspec;i++) C1[i][j] += delta_n[i];
+
+         for(i=0;i<Nspec;i++)
+			{
+				delete [] A[i];
+			}
+         delete [] A;
+         delete [] b;
+         delete [] delta_n;
+         delete [] y0;
+      }
 		else
 		{
 			cerr << "warning: The reaction for model " << af_params.model << " has not yet been implemented" << endl;
@@ -3996,423 +2106,149 @@ int US_Astfem_RSA::DecomposeCT(double CT, double *C)
 	   return (0);
 }
 
-////////////////////////////////////////
-//
-// find_C1_mono_Nmer:	find C1 from    C1 + K * C1^n = CT
-//
-////////////////////////////////////////
-double US_Astfem_RSA::find_C1_mono_Nmer( int n, double K, double CT )
+
+void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
 {
-   //
-   // use Newton's method for f(x) = x + K*x^n - CT
-   //    x_{i+1} = x_i - f(x_i)/f'(x_i)
-   //
-   double x0=0., x1;
-	unsigned int i, MaxNumIt = 1000;
-
-   if ( CT<=0. ) return( 0. );
-   if ( CT<=1.e-12 ) return( CT );
-
-	for ( i=1; i < MaxNumIt; i++)
+	switch ( af_params.model )
    {
-		x1 = ( K * (n-1.0) * pow(x0,(double)n) + CT ) / ( 1. + K * n * pow(x0, n-1.) );
-	   if ( fabs(x1 - x0)/(1.+fabs(x1)) < 1.e-12 ) break;
-      x0 = x1;
-	}
+      case 12:						// n A <--> An,   m An <--> Anm
+      {
+         int n, m;			// should be supplied by the model
+			double extA;		// extinction rate of A, should be supplied by the model
+			double K1, K_1, K2, K_2, Q1, Q2;
 
-   if( i == MaxNumIt )
-   {
-      cerr << "warning: Newton's method did not coonverges in find_C1_mono_Nmer"<<endl;
-      return( -1.0 );
+         K1  = af_params.koff[0] * af_params.keq[0];
+         K2  = af_params.koff[1] * af_params.keq[1];
+         K_1 = af_params.koff[0] ;
+         K_2 = af_params.koff[1] ;
+
+         Q1 = K1 * pow(y[0], n) - K_1 * y[1];
+         Q2 = K2 * pow(y[1], m) - K_2 * y[2];
+
+         yt[0] = -double(n) * extA * Q1;
+         yt[1] =  double(n) * extA * ( Q1 - double(m) * Q2);
+         yt[2] =  double(m*n) * extA * Q2;
+
+         break;
+      }
+		default:
+		{
+			cerr << "undefined reaction model \n";
+      }
    }
-   return( 0.5*(x0+x1) );
+}
+
+void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
+{
+	switch ( af_params.model )
+   {
+      case 12:						// n A <--> An,   m An <--> Anm
+      {
+         int n, m;			// should be supplied by the model
+			double extA;		// extinction rate of A, should be supplied by the model
+			double K1, K_1, K2, K_2;
+
+         K1  = af_params.koff[0] * af_params.keq[0];
+         K2  = af_params.koff[1] * af_params.keq[1];
+         K_1 = af_params.koff[0] ;
+         K_2 = af_params.koff[1] ;
+
+         dfdy[0][0] = -double(n) * extA * ( K1 * double(n) * pow(y[0], n-1) );
+         dfdy[0][1] = -double(n) * extA * ( -K_1 );
+         dfdy[0][2] =  0.;
+
+         dfdy[2][0] =  0.;
+         dfdy[2][1] =  double(m*n) * extA * ( K2 * double(m) * pow(y[1], m-1) );
+         dfdy[2][2] =  double(m*n) * extA * ( -K_2 );
+
+         dfdy[1][0] =  dfdy[0][0] - dfdy[2][0];
+         dfdy[1][1] =  dfdy[0][1] - dfdy[2][1];
+         dfdy[1][2] =  dfdy[0][2] - dfdy[2][2];
+
+         break;
+      }
+		default:
+		{
+			cerr << "undefined reaction model \n";
+		}
+   }
 }
 
 
-
-//////////////////////////////////////////////////////////////////
-//
-// cub_root: find the positive cubic-root of a cubic polynomial
-//			p(x)=a0+a1*x+a2*x^2+x^3
-//
-// with: a0<=0,  and  a1, a2>=0;
-//
-//////////////////////////////////////////////////////////////////
-double US_Astfem_RSA::cube_root(double a0, double a1, double a2)
+void US_Astfem_RSA::interpolate_C0(struct mfem_initial *C0, double *C1)
 {
-	double B, Q, S, D, Dc, Dc2, theta, x;
-	Q = (3.0 * a1 - pow(a2, 2.0)) / 9.0;
-	S = (9.0 * a1 * a2 - 27.0 * a0 - 2.0 * pow(a2, 3.0)) / 54.0;
-	D = pow(Q, 3.0) + pow(S, 2.0);
-	if (D < 0)
-	{
-		theta = acos(S / sqrt(pow(-Q, 3.0)));
-		x = 2.0 * sqrt(-Q) * cos(theta / 3.0);
-	}
-	else
-	{
-		Dc = sqrt(D);
-		if (S + Dc < 0)
-		{
-			B = - pow(-(S + Dc), 1.0/3.0) - pow(Dc - S, 1.0/3.0);
-		}
-		else if (S - Dc < 0)
-		{
-			B = pow(S+Dc, 1.0/3.0) - pow(Dc - S, 1.0/3.0);
-		}
-		else
-		{
-			B = pow(S + Dc, 1.0/3.0) + pow(S - Dc, 1.0/3.0);
-		}
-		Dc2 = -3.0 * (pow(B, 2.0) + 4 * Q);
-		if (Dc2 > 0)
-		{
-			x = max(B, 0.5 * (-B + sqrt(Dc2)));
-		}
-		else
-		{
-			x = B;
-		}
-	}
-	x = x - a2 / 3.0;
-	return(x);
-}
+	unsigned int i, j, ja;
+	double a, b, xs, tmp;
 
-void US_Astfem_RSA::DefInitCond(double **C0)
-{
-	unsigned int j;
+	ja = 0;
 	for(j=0; j<N; j++)
 	{
-		C0[0][j] = 0.3;
-		C0[1][j] = 0.7;
-	}
-}
-
-int US_Astfem_RSA::interpolate(struct mfem_data *simdata, unsigned int scans, unsigned int points,
-float *scantimes, double *radius, double **c)
-{
-
-/********************************************************************************************
- * interpolation:																									*
- *																														*
- * First, we need to interpolate the time. Create a new array with the same time dimensions *
- * as the raw data and the same radius dimensions as the simulated data. Then find the time *
- * steps from the simulated data that bracket the experimental data from the left and right.*
- * Then make a linear interpolation for the concentration values at each radius point from  *
- * the simulated data. Then interpolate the radius points by linear interpolation.			*
- *																														*
- ********************************************************************************************/
-
-	unsigned int i, j;
-	double slope, intercept;
-	double **ip_array;
-	ip_array	= 	new double* [scans];
-	for (i=0; i<scans; i++)
-	{
-		ip_array[i] = new double [(*simdata).radius.size()];
-	}
-	unsigned int count = 0; // counting the number of time steps of the raw data
-	for (i=0; i<scans; i++)
-	{
-		while (count < (*simdata).scan.size()-1
-				&& scantimes[i] >= (*simdata).scan[count].time)
+		xs = x[j];
+		for(i=ja; i<(*C0).radius.size(); i++)
 		{
-			count++;
-		}
-		if (scantimes[i] == (*simdata).scan[count].time)
-		{
-			for (j=0; j<(*simdata).radius.size(); j++)
+			if((*C0).radius[i] > xs + 1.e-12)
 			{
-				ip_array[i][j] = (*simdata).scan[count].conc[j];
+				break;
 			}
 		}
-		else  // else, perform a linear time interpolation:
-		{
-			for (j=0; j<(*simdata).radius.size(); j++)
-			{
-				slope = ((*simdata).scan[count].conc[j] - (*simdata).scan[count-1].conc[j])
-							/((*simdata).scan[count].time - (*simdata).scan[count-1].time);
-				intercept = (*simdata).scan[count].conc[j] - slope * (*simdata).scan[count].time;
-				ip_array[i][j] = slope * scantimes[i] + intercept;
-			}
-		}
-	}
-	//interpolate radius then add to concentration vector
-	for (i=0; i<scans; i++)
-	{
-		c[i][0] += ip_array[i][0]; // meniscus position is identical for all scans
-	}
-	// all other points may need interpolation:
-	for (i=0; i<scans; i++)
-	{
-		count = 1;
-		for (j=1; j<(unsigned int) points; j++)
-		{
-			while (radius[j] > (*simdata).radius[count] && count < (*simdata).radius.size()-1)
-			{
-				count++;
-			}
-			if (radius[j] == (*simdata).radius[count])
-			{
-				c[i][j] += ip_array[i][count];
-			}
-			else
-			{
-				slope = (ip_array[i][count] - ip_array[i][count-1])/((*simdata).radius[count] - (*simdata).radius[count-1]);
-				intercept = ip_array[i][count] - (*simdata).radius[count] * slope;
-				c[i][j] += slope * radius[j] + intercept;
-			}
-		}
-	}
-	for (i=0; i<scans; i++)
-	{
-		delete [] ip_array[i];
-	}
-	delete [] ip_array;
-	return 0;
-}
 
-
-// interpolation routine By B. Demeler 041708
-int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simdata)
-{
-// NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
-// before using this routine! The radius also has to be assigned!
-
-	if ((*expdata).scan.size() == 0 || (*expdata).scan[0].conc.size() == 0 ||
-		 (*simdata).scan.size() == 0 || (*simdata).radius.size() == 0)
-	{
-		return -1;
-	}
-
-	unsigned int i, j, simscan, expscan;
-	double a, b;
-	if (af_params.acceleration) // we model rotor acceleration and need to correct the time
-	{
-		double time_correction = 0.0;
-		for (i=0; i<(*simdata).scan.size(); i++)
-		{
-			time_correction += (*simdata).scan[i].time - ((*simdata).scan[i].omega_s_t/af_params.omega_s); 
-		}
-		time_correction /= (*simdata).scan.size();
-		for (i=0; i<(*simdata).scan.size(); i++)
-		{
-			(*simdata).scan[i].time -= time_correction;
-		}
-	}
-
-	// first, create a temporary mfem_data structure (tmp_data) that has the same radial
-	// grid as simdata, but the same time grid as the experimental data. The time
-	// and w2t integral values are interpolated for the tmp_data structure.
-
-	mfem_data tmp_data;
-	mfem_scan tmp_scan;
-	tmp_data.scan.clear();
-	tmp_data.radius.clear();
-	// fill tmp_data.radius with radius positions from the simdata array:
-
-	for (i=0; i<(*simdata).radius.size(); i++)
-	{
-		tmp_data.radius.push_back((*simdata).radius[i]);
-	}
-
-	// iterate through all experimental data scans and find the first time point in simdata
-	// that is higher or equal to each time point in expdata:
-
-	simscan = 0;
-	
-	for (expscan = 0; expscan < (*expdata).scan.size(); expscan++)
-	{
-		while ((*simdata).scan[simscan].time < (*expdata).scan[expscan].time)
-		{
-			simscan ++;
-			// make sure we don't overrun bounds:
-			if (simscan == (*simdata).scan.size())
-			{
-				cerr << "simulation time scan[" << simscan << "]: " << (*simdata).scan[simscan-1].time
-						<< ", expdata scan time[" << expscan << "]: " << (*expdata).scan[expscan].time << endl;
-				cerr << tr("The simulated data does not cover the entire experimental time range and ends too early!\nexiting...\n");
-				exit(-1);
-			}
-		}
-		// check to see if the time is equal or larger:
-		if ((*simdata).scan[simscan].time == (*expdata).scan[expscan].time)
-		{ // they are the same, so take this scan and push it onto the tmp_data array.
-			tmp_data.scan.push_back((*simdata).scan[simscan]);
-		}
-		else // interpolation is needed
-		{
-			tmp_scan.conc.clear();
-			// interpolate the concentration points:
-			for (i=0; i<(*simdata).radius.size(); i++)
-			{
-				a = ((*simdata).scan[simscan].conc[i] - (*simdata).scan[simscan-1].conc[i])
-				/ ((*simdata).scan[simscan].time - (*simdata).scan[simscan-1].time);
-				b = (*simdata).scan[simscan].conc[i] - a *(*simdata).scan[simscan].time;
-				tmp_scan.conc.push_back(a * (*expdata).scan[expscan].time + b);
-			}
-			// interpolate the omega_square_t integral data:
-			a = ((*simdata).scan[simscan].omega_s_t - (*simdata).scan[simscan-1].omega_s_t)
-				/ ((*simdata).scan[simscan].time - (*simdata).scan[simscan-1].time);
-			b = (*simdata).scan[simscan].omega_s_t - a *(*simdata).scan[simscan].time;
-			(*expdata).scan[expscan].omega_s_t = a * (*expdata).scan[expscan].time + b;
-			tmp_data.scan.push_back(tmp_scan);
-		}
-	}
-   // interpolate all radial points from each scan in tmp_data onto expdata
-	for (expscan = 0; expscan<(*expdata).scan.size(); expscan++)
-	{
-		j = 0;
-		if (j == 0 && tmp_data.radius[0] > (*expdata).radius[0])
-		{
-			cerr << "Radius comparison: " << tmp_data.radius[0] << " (simulated), " << (*expdata).radius[0] << " (experimental)\n";
-			cerr << "j = " << j << ", simdata radius: " << tmp_data.radius[j] << ", expdata radius: " << (*expdata).radius[i] << endl;
-			cerr << tr("The simulated data radial range does not include the beginning of the experimental data's radii!\nexiting...\n");
-			exit(-3);
-		}
-		for (i=0; i<(*expdata).radius.size(); i++)
-		{
-			while (tmp_data.radius[j] < (*expdata).radius[i])
-			{
-				j ++;
-				// make sure we don't overrun bounds:
-				if (j == tmp_data.radius.size())
-				{
-					cerr << tr("The simulated data does not have enough radial points and ends too early!\nexiting...\n");
-					exit(-2);
-				}
-			}
-			// check to see if the radius is equal or larger:
-			if (tmp_data.radius[j] == (*expdata).radius[i])
-			{ // they are the same, so simply update the concentration value:
-				(*expdata).scan[expscan].conc[i] += tmp_data.scan[expscan].conc[j];
-			}
-			else // interpolation is needed
-			{
-				a = (tmp_data.scan[expscan].conc[j] - tmp_data.scan[expscan].conc[j-1])
-				/ (tmp_data.radius[j] - tmp_data.radius[j-1]);
-				b = tmp_data.scan[expscan].conc[j] - a * tmp_data.radius[j];
-				(*expdata).scan[expscan].conc[i] += a * (*expdata).radius[i] + b;
-			}
-		}
-	}
-	return(0);
-}
-
-/*
-// new version: Weiming 05/27/06
-int US_Astfem_RSA::interpolate(struct mfem_data *expdata, struct mfem_data *simdata)
-{
-// NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
-// before using this routine! The radius also has to be assigned!
-
-	if ( (*expdata).scan.size() == 0 || (*expdata).scan[0].conc.size() == 0 ||
-        (*simdata).scan.size() == 0 || (*simdata).radius.size() == 0  )
-	{
-		return -1;
-	}
-
-	unsigned int i, j, kkk, ja;
-   double a, b, tmp, xs, **tmpC;
-
-	cerr.precision(10);
-	for (i=0; i<(*simdata).scan.size(); i++)
-	{
-		for (j=0; j<(*simdata).radius.size(); j++)
-		{
-			//cerr << (*simdata).scan[i].conc[j] << endl;
-		}
-	}
-   initialize_2d( (*simdata).scan.size(), (*expdata).radius.size(), &tmpC);
-
-   // interpolate all simdata scan onto the grid of expdata.radius
-	for (kkk=0; kkk<(*simdata).scan.size(); kkk++)
-   {
-      ja=0;
-      for(j=0; j<(*expdata).radius.size();j++)
+      if ( i == 0 ) 				// x[j] < C0.radius[0]
       {
-		   xs = (*expdata).radius[j];
-		   for(i=ja; i<(*simdata).radius.size(); i++)
-		   {
-			   if((*simdata).radius[i] > xs ) break;
-		   }
-
-         if ( i==0 ) 	// the expdata point is left of the simdata.radius points
-         {
-		      tmpC[kkk][j] = (*simdata).scan[kkk].conc[0];
-         }
-         else if ( i == (*simdata).radius.size() )  			// i>=last simdata point
-         {
-		      tmpC[kkk][j] = (*simdata).scan[kkk].conc[i-1] ;
-         }
-         else 																// simdata[i-1]< xs <simdata[i]
-         {
-		      a = (*simdata).radius[i-1];
-		      b = (*simdata).radius[i];
-		      tmp = (xs - a)/(b - a);
-		      tmpC[kkk][j] = (*simdata).scan[kkk].conc[i-1] * (1. - tmp) + (*simdata).scan[kkk].conc[i] * tmp;
-		      ja = i-1;
-         }
+         C1[j] = (*C0).concentration[0];		// use the first value
+      }
+      else if ( i == (*C0).radius.size() ) 	// x[j] > last point in (*C0).radius
+      {
+         C1[j] = (*C0).concentration[ i-1 ];
+      }
+      else
+      {
+		   a = (*C0).radius[i-1];
+		   b = (*C0).radius[i];
+		   tmp = (xs - a)/(b - a);
+		   C1[j] = (*C0).concentration[i-1] * (1. - tmp) + (*C0).concentration[i] * tmp;
+		   ja = i-1;
       }
 	}
-
-   // interpolation between 2 time scans across the expdata.scan[].time
-
-   ja=0;
-	for (kkk=0; kkk<(*expdata).scan.size(); kkk++)
-   {
-      xs = (*expdata).scan[kkk].time;
-      for( i=ja; i<(*simdata).scan.size(); i++)
-      {
-			//if( (*simdata).scan[i].time>xs+1.e-12 ) break;
-			if( (*simdata).scan[i].time>xs) break;
-		}
-
-      if ( i<=0 )		// time before the first scan of simdata
-      {
-         for( j=0; j<(*expdata).radius.size(); j++)
-         {
-            (*expdata).scan[kkk].conc[j] += tmpC[0][j];
-         }
-         (*expdata).scan[kkk].omega_s_t = (*simdata).scan[0].omega_s_t;
-			(*expdata).scan[kkk].rpm = (*simdata).scan[0].rpm;
-		}
-      else if ( i >= (*simdata).scan.size() )		// time after the last scan of simdata
-      {
-         for( j=0; j<(*expdata).radius.size(); j++)
-         {
-            (*expdata).scan[kkk].conc[j] += tmpC[(*simdata).scan.size()-1][j];
-         }
-         (*expdata).scan[kkk].omega_s_t = (*simdata).scan[(*simdata).scan.size()-1].omega_s_t;
-			(*expdata).scan[kkk].rpm = (*simdata).scan[(*simdata).scan.size()-1].rpm;
-		}
-      else 		// time between scan i-1 and i
-      {
-		   a = (*simdata).scan[i-1].time;
-		   b = (*simdata).scan[i  ].time;
-		   tmp = (xs - a)/(b - a);
-         for( j=0; j<(*expdata).radius.size(); j++)
-         {
-            (*expdata).scan[kkk].conc[j] += tmpC[i-1][j]*(1.-tmp) + tmpC[i][j]*tmp;
-         }
-         ja = i-1;
-         (*expdata).scan[kkk].omega_s_t = (*simdata).scan[i-1].omega_s_t*(1.-tmp) + (*simdata).scan[i].omega_s_t*tmp;
-			(*expdata).scan[kkk].rpm = (unsigned int) ((*simdata).scan[i-1].rpm*(1.-tmp) + (*simdata).scan[i].rpm*tmp);
-		}
-
-   }
-   clear_2d((*simdata).scan.size(), tmpC);
-	return(0);
 }
-*/
 
-
-void US_Astfem_RSA::print_vector(double *dval, unsigned int ival)
+void US_Astfem_RSA::interpolate_Cfinal(struct mfem_initial *C0, double *cfinal)
 {
-	unsigned int i;
-	for (i=0; i<ival; i++)
+// this routine also considers cases where C0 starts before the meniscus or stops
+// after the bottom is reached, however, C0 needs to cover both meniscus and bottom
+// In those cases it will fill the C0 vector with the first and/or last value of C0,
+// respectively, for the missing points.
+
+	unsigned int i, j, ja;
+	double a, b, xs, tmp;
+
+	ja = 0;
+	for(j=0; j<(*C0).radius.size(); j++)
 	{
-		printf("x[%d]=%20.10e \n", i, dval[i]);
+		xs = (*C0).radius[j];
+		for (i=ja; i<N; i++)
+		{
+			if( x[i] > xs + 1.e-12)
+			{
+				break;
+			}
+		}
+
+      if ( i == 0 ) 				// xs < x[0]
+      {
+         (*C0).concentration[j] = cfinal[0];		// use the first value
+      }
+      else if ( i == N ) 	   // xs > x[N]
+      {
+         (*C0).concentration[j] = cfinal[ i-1 ];
+      }
+      else 							// x[i-1] < xs <x[i]
+      {
+		   a = x[i-1];
+		   b = x[i];
+		   tmp = (xs-a)/(b-a);
+		   (*C0).concentration[j] = cfinal[i-1] * (1. - tmp) + cfinal[i] * tmp;
+		   ja = i-1;
+      }
 	}
 }
 
@@ -4440,6 +2276,15 @@ void US_Astfem_RSA::adjust_grid(unsigned int old_speed, unsigned int new_speed, 
 	for (unsigned int i=0; i<(*radius).size(); i++)
 	{
 		(*radius)[i] += stretch_val2 - stretch_val1;
+	}
+}
+
+void US_Astfem_RSA::print_vector(double *dval, unsigned int ival)
+{
+	unsigned int i;
+	for (i=0; i<ival; i++)
+	{
+		printf("x[%d]=%20.10e \n", i, dval[i]);
 	}
 }
 
@@ -4551,3 +2396,4 @@ void US_Astfem_RSA::print_af(FILE *outf)
 
 	return;
 }
+

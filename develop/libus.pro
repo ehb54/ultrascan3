@@ -73,6 +73,7 @@ SOURCES += \
   src/us_3dsolutes.cpp \
   src/us_admin.cpp \
   src/us_archive.cpp \
+  src/us_astfem_math.cpp \
   src/us_astfem_rsa.cpp \
   src/us_astfem_sim.cpp \
   src/us_average.cpp \
@@ -247,6 +248,7 @@ HEADERS += \
   include/us_3dsolutes.h \
   include/us_admin.h \
   include/us_archive.h \
+  include/us_astfem_math.h \
   include/us_astfem_rsa.h \
   include/us_astfem_sim.h \
   include/us_average.h \
