@@ -7,7 +7,12 @@
 # Field 2: Material
 # Field 3: Number of channels
 # variable Fields: bottom position for each channel in cm
-# next sector property: 0 = standard, 1 = rectangular, 2 = circular, 3 = synthetic 
+# next sector property: 
+#      0 = standard
+#      1 = rectangular
+#      2 = circular
+#      3 = synthetic
+#      4 = band forming
 # next Field: pathlength in cm
 # next Field: angle in degrees of sector width
 # next Field: width of channel if centerpiece is rectanglar
@@ -18,3 +23,4 @@
 3 Epon 3 6.111 6.613 7.104 1 1.2 0 0.323
 4 Titanium 1 7.15 0 1.2 2.5 0
 5 Titanium 3 6.170 6.690 7.210 1 1.2 0 0.320
+6 Epon 4 7.2 0 1.2 2.5 0
