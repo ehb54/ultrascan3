@@ -26,6 +26,8 @@ void US_Hydrodyn::setupGUI()
 	sidechain_OR = new US_Hydrodyn_OR(&sidechain_overlap, this);
 	mainchain_OR = new US_Hydrodyn_OR(&mainchain_overlap, this);
 	buried_OR = new US_Hydrodyn_OR(&buried_overlap, this);
+	buried_OR->cnt_fuse->setEnabled(false);
+	buried_OR->cb_fuse->setEnabled(false);
 	
 	lbl_info = new QLabel(tr("Bead Overlap Reduction Options:"), this);
 	Q_CHECK_PTR(lbl_info);
@@ -117,7 +119,7 @@ void US_Hydrodyn::setupGUI()
 	cnt_probe_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_probe_radius, SIGNAL(valueChanged(double)), SLOT(update_probe_radius(double)));
 
-	lbl_asa_threshold = new QLabel(tr(" ASA Threshold: "), this);
+	lbl_asa_threshold = new QLabel(tr(" ASA Threshold (A^2)): "), this);
 	Q_CHECK_PTR(lbl_asa_threshold);
 	lbl_asa_threshold->setAlignment(AlignLeft|AlignVCenter);
 	lbl_asa_threshold->setMinimumHeight(minHeight1);
@@ -1043,8 +1045,8 @@ void US_Hydrodyn::reset()
 	mainchain_overlap.show_translate = false;
 
 	buried_overlap.remove_overlap = true;
-	buried_overlap.fuse_beads = true;
-	buried_overlap.fuse_beads_percent = 70.0;
+	buried_overlap.fuse_beads = false;
+	buried_overlap.fuse_beads_percent = 0.0;
 	buried_overlap.remove_hierarch = true;
 	buried_overlap.remove_sync = false;
 	buried_overlap.remove_sync_percent = 70.0;
