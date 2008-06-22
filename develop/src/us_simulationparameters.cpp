@@ -636,12 +636,14 @@ void US_SimulationParameters::load()
 void US_SimulationParameters::update_duration_hours(double temp_var)
 {
 	(*simparams).speed_step[current_speed_step].duration_hours = (unsigned int) temp_var;
+	check_delay();
 	update_combobox();
 }
 
 void US_SimulationParameters::update_duration_minutes(double temp_var)
 {
 	(*simparams).speed_step[current_speed_step].duration_minutes = (unsigned int) temp_var;
+	check_delay();
 	update_combobox();
 }
 
@@ -653,6 +655,7 @@ void US_SimulationParameters::update_delay_hours(double temp_var)
 void US_SimulationParameters::update_delay_minutes(double temp_var)
 {
 	(*simparams).speed_step[current_speed_step].delay_minutes = (float) temp_var;
+	check_delay();
 }
 
 void US_SimulationParameters::update_rotorspeed(double temp_var)
@@ -695,6 +698,25 @@ void US_SimulationParameters::check_delay()
 	{
 		(*simparams).speed_step[current_speed_step].delay_hours = hours[current_speed_step];
 		cnt_delay_hours->setValue((double) hours[current_speed_step]);
+	}
+	if ((*simparams).speed_step[current_speed_step].duration_hours == 0 &&
+	(*simparams).speed_step[current_speed_step].duration_minutes <
+	((*simparams).speed_step[current_speed_step].delay_minutes + 1))
+	{
+		(*simparams).speed_step[current_speed_step].duration_minutes =
+		(unsigned int) ((*simparams).speed_step[current_speed_step].delay_minutes + 1);
+		cnt_duration_minutes->setValue((unsigned int)(*simparams).speed_step[current_speed_step].duration_minutes);
+		cnt_duration_minutes->setRange((unsigned int)(*simparams).speed_step[current_speed_step].delay_minutes + 1, 60, 1);
+	}
+	else if ((*simparams).speed_step[current_speed_step].duration_hours > 0)
+	{
+		cnt_duration_minutes->setRange(0, 60, 1);
+	}
+	else if ((*simparams).speed_step[current_speed_step].duration_hours == 0 &&
+	(*simparams).speed_step[current_speed_step].duration_minutes >
+	((*simparams).speed_step[current_speed_step].delay_minutes + 1))
+	{
+		cnt_duration_minutes->setRange((unsigned int)(*simparams).speed_step[current_speed_step].delay_minutes + 1, 60, 1);
 	}
 }
 
