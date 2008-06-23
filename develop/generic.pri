@@ -37,7 +37,7 @@ win32 {
   QMAKE_CXXFLAGS      += /Fd$(IntDir)\  # Put intermediate directories in separate location
   QMAKE_LFLAGS_DEBUG  += /NODEFAULTLIB:"msvcrt.lib"
   QMAKE_LFLAGS_RELEASE =                # Remove //DELAYLOAD: statements
-  LIBS                += ../../bin/libus97.lib 
+  LIBS                += ../../bin/libus98.lib 
   INCLUDEPATH         += $(ZLIB)/include
 	DESTDIR              = ..\..\bin\
 }
