@@ -403,6 +403,8 @@ int US_Hydrodyn::compute_asa()
 	 }
        }
 
+       // pass 1 assign bead #'s, chain #'s
+
        for (unsigned int i = 0; i < model_vector.size (); i++)
 	 {
 	   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
@@ -411,7 +413,106 @@ int US_Hydrodyn::compute_asa()
 		 {
 		   PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 
-		   printf("model %d molecule %d atom %d name %s resname %s coord [%f,%f,%f] active %s radius %f asa %f\n",
+		   this_atom->bead_assignment = 
+		     (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
+		   this_atom->chain = 
+		     ((this_atom->p_residue && this_atom->p_atom) ? 
+		      (int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
+		 }
+	     }
+	 }
+
+       // pass 2 determine beads
+
+       int last_bead_assignment = -1;
+       int last_chain = -1;
+       PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
+       PDB_atom *last_main_bead = (PDB_atom *) 0;
+
+       for (unsigned int i = 0; i < model_vector.size (); i++)
+	 {
+	   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
+	     {
+	       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
+		 {
+		   PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+		   if (this_atom->active)
+		     {
+		       // do we have a new bead?
+		       if (this_atom->bead_assignment != last_bead_assignment ||
+			   this_atom->chain != last_chain)
+			 {
+			   this_atom->is_bead = true;
+			   last_main_bead = this_atom;
+			   last_bead_assignment = this_atom->bead_assignment;
+			   last_chain = this_atom->chain;
+			 } else {
+			   this_atom->is_bead = false;
+			   this_atom->bead_asa = 0;
+			 }
+
+		       // special nitrogen asa handling
+		       if (this_atom->chain == 0 &&
+			   this_atom->name == "N")
+			 {
+			   if (last_main_chain_bead) 
+			     {
+			       last_main_chain_bead->bead_asa += this_atom->asa;
+			     }
+			   last_main_chain_bead = this_atom;
+			 } else {
+			   last_main_bead->bead_asa += this_atom->asa;
+			 }
+		     } else {
+		       this_atom->is_bead = false;
+		     }
+		 }
+	     }
+	 }
+
+       // pass 3 determine visibility, exposed code
+
+       for (unsigned int i = 0; i < model_vector.size (); i++)
+	 {
+	   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
+	     {
+	       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
+		 {
+		   PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+		   this_atom->exposed_code = -1;
+		   if (this_atom->active &&
+		       this_atom->is_bead)
+		     {
+		       this_atom->visibility = (this_atom->bead_asa >= asa_threshold);
+		       if (this_atom->visibility)
+			 {
+			   this_atom->exposed_code = 1;  // exposed
+			 } else {
+			   if (this_atom->chain == 0) 
+			     {
+			       this_atom->exposed_code = 10;  // main chain, buried
+			     }
+			   if (this_atom->chain == 1) 
+			     {
+			       this_atom->exposed_code = 6;   // side chain, buried
+			     }
+			 }
+		     }
+		 }
+	     }
+	 }
+
+       // pass 4 print results
+
+       for (unsigned int i = 0; i < model_vector.size (); i++)
+	 {
+	   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
+	     {
+	       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
+		 {
+		   PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+
+		   printf("model %d mol %d atm %d nam %s res %s xyz [%f,%f,%f] act %s rads %f asa %f bead # %d chain %d serl %d is_bead %s bead_asa %f vis %s code %d\n",
 			  i, j, k, 
 			  this_atom->name.ascii(),
 			  this_atom->resName.ascii(),
@@ -420,7 +521,14 @@ int US_Hydrodyn::compute_asa()
 			  this_atom->coordinate.axis[2],
 			  this_atom->active ? "Y" : "N",
 			  this_atom->radius,
-			  this_atom->asa);
+			  this_atom->asa,
+			  this_atom->bead_assignment,
+			  this_atom->chain,
+			  this_atom->serial,
+			  this_atom->is_bead ? "Y" : "N",
+			  this_atom->bead_asa,
+			  this_atom->visibility ? "Y" : "N",
+			  this_atom->exposed_code);
 
 		 }
 	     }

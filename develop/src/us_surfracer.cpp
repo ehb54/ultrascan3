@@ -1517,6 +1517,8 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 	ar[i] += prober;
     }
 
+    // need to check why he is doing this? 
+
     for (i = 0; i <= atomnumber / 2.; i++)
     {
 	a[i * 3] += 0.01;
