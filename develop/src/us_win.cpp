@@ -44,16 +44,16 @@ UsWin::UsWin(QWidget *parent, const char *name)
 #define DROP    20
 
 	QPixmap rawpix( USglobal->config_list.system_dir + "/etc/flash-combined-no-text.png" );
-//	int ph = rawpix.height() + DROP;
-//	int pw = rawpix.width() + DROP;
+	//int ph = rawpix.height() + DROP;
+	//int pw = rawpix.width() + DROP;
 	int ph = rawpix.height();
 	int pw = rawpix.width();
 
 	QPixmap  pixmap( pw, ph );
 	QPainter painter( &pixmap );
 
-//	painter.fillRect( 0, 0, pw, ph, QBrush( Qt::black) );
-//	painter.fillRect( DROP, DROP, pw+DROP, ph+DROP, QBrush( Qt::cyan) );
+	//painter.fillRect( 0, 0, pw, ph, QBrush( Qt::black) );
+	//painter.fillRect( DROP, DROP, pw+DROP, ph+DROP, QBrush( Qt::cyan) );
 
 	painter.drawPixmap( 0, 0, rawpix );
 
@@ -62,15 +62,17 @@ UsWin::UsWin(QWidget *parent, const char *name)
 
 	painter.setPen( QPen( Qt::white, 3 ) );
 
-	QPaintDeviceMetrics dev_metrics( this );
-	int devDPI = dev_metrics.logicalDpiX();
+	//QPaintDeviceMetrics dev_metrics( this );
+	//int devDPI = dev_metrics.logicalDpiX();
 
 	QString version = "UltraScan " + US_Version +  " for " OS_TITLE;
 
 	//QFontMetrics metrics( QFont( USglobal->config_list.fontFamily, 
 	//                             USglobal->config_list.fontSize, QFont::Bold ) );
 
-	QFont font( "Arial", devDPI / 6, QFont::DemiBold );
+	QFont font( "Arial" );
+	font.setWeight( QFont::DemiBold );
+	font.setPixelSize( 15 );
 	painter.setFont( font );
 	QFontMetrics metrics( font ); 
 	//painter.setFont( QFont( USglobal->config_list.fontFamily, 
