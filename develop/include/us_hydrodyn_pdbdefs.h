@@ -31,6 +31,22 @@ struct PDB_atom
 	QString element;
 	QString charge;
 	unsigned int accessibility;
+
+        // assigned in surfracer
+        bool active;
+        float asa;			  // maximum accessible surface area (A^2)
+        struct residue *p_residue;        // NULL if not found
+        struct atom *p_atom;              // NULL if not found
+        float radius;
+
+        // assigned after return from compute_asa()
+        bool is_bead;                     // 0 = no, 1 = yes this is the bead info
+        int bead_number;                  // sequence of bead #'s
+        int bead_assignment;              // number in residue->r_bead[]
+        int visibility;                   // 0 = hidden, 1 = exposed
+        int chain;                        // 0 = main, 1 = side
+        float bead_asa;
+        int exposed_code;                 // 1 exposed, 6 side chain buried, 10 main chain buried
 };
 
 struct PDB_chain	// chain in PDB file
@@ -83,7 +99,6 @@ struct atom
 											// 2 = prosthetic group
 											// 3 = undefined
 											// 4 = other
-	float asa;                      // accessable surface area of this atom
 };
 
 struct residue
