@@ -127,7 +127,7 @@ struct centerpieceInfo
   float bottom_position[4]; // bottom position of each channel, max 4.,
                             // if sector==3: position for synth. boundary
   int sector;               // 0 sector shaped, 1 for rectangular, 2 for circular,
-                            // 3 for synthetic boundary cells
+                            // 3 for synthetic boundary cells, 4 for band-forming centerpiece
   float pathlength;         // pathlength of centerpiece in cm, default: 1.2 cm
   float angle;              // angle of sector, if sector shaped, default: 2.5 degrees
   float width;              // width of channel, if rectangular, or radius if sector==2, 0 otherwise.
