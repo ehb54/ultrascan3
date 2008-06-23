@@ -207,6 +207,7 @@ SOURCES += \
   src/us_smdat.cpp \
   src/us_spectrum.cpp \
   src/us_stiffbase.cpp \
+  src/us_surfracer.cpp \
   src/us_thread.cpp \
   src/us_util.cpp \
   src/us_vbar.cpp \
@@ -218,7 +219,6 @@ SOURCES += \
   src/us_viewmwl.cpp \
   src/us_win.cpp \
   src/us_write_config.cpp
-
 #  src/us_cofdistro.cpp \ 
 #  src/us_db_laser.cpp \
 #  src/us_globallaser.cpp \
@@ -382,6 +382,7 @@ HEADERS += \
   include/us_smdat.h \
   include/us_spectrum.h \
   include/us_stiffbase.h \
+  include/us_surfracer.h \
   include/us_thread.h \
   include/us_util.h \
   include/us_vbar.h \

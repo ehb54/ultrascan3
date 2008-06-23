@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn.h"
+#include "../include/us_surfracer.h"
 
 US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 {
@@ -373,8 +374,59 @@ void US_Hydrodyn::setupGUI()
 
 int US_Hydrodyn::compute_asa()
 {
-	// run the surfracer code
-	return 0;
+       // run the surfracer code
+
+       int retval = surfracer_main(probe_radius, residue_list, &model_vector);
+
+       if ( retval ) 
+       {
+	 switch ( retval ) 
+	 {
+	
+	 case US_SURFRACER_ERR_MISSING_RESIDUE :
+	   return US_SURFRACER_ERR_MISSING_RESIDUE;
+	   break;
+
+	 case US_SURFRACER_ERR_MISSING_ATOM :
+	   return US_SURFRACER_ERR_MISSING_ATOM;
+	   break;
+
+	 case US_SURFRACER_ERR_MEMORY_ALLOC :
+	   return US_SURFRACER_ERR_MEMORY_ALLOC;
+	   break;
+
+	 default :
+	   // unknown error
+	   return -1;
+	   break;
+
+	 }
+       }
+
+       for (unsigned int i = 0; i < model_vector.size (); i++)
+	 {
+	   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
+	     {
+	       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
+		 {
+		   PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+
+		   printf("model %d molecule %d atom %d name %s resname %s coord [%f,%f,%f] active %s radius %f asa %f\n",
+			  i, j, k, 
+			  this_atom->name.ascii(),
+			  this_atom->resName.ascii(),
+			  this_atom->coordinate.axis[0],
+			  this_atom->coordinate.axis[1],
+			  this_atom->coordinate.axis[2],
+			  this_atom->active ? "Y" : "N",
+			  this_atom->radius,
+			  this_atom->asa);
+
+		 }
+	     }
+	 }
+
+       return 0;
 }
 
 void US_Hydrodyn::bead_check()
