@@ -439,39 +439,42 @@ int US_Hydrodyn::compute_asa()
        QString last_resName = "not a residue";
        PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
        PDB_atom *last_main_bead = (PDB_atom *) 0;
-       float tot_mw = 0;
+       int count_actives;
 
        for (unsigned int i = 0; i < model_vector.size (); i++)
 	 {
 	   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
 	     {
+	       count_actives = 0;
 	       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
 		 {
 		   PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 		   this_atom->bead_positioner = false;
 		   if (this_atom->active)
 		     {
-		       // do we have a new bead?
-		       if (this_atom->bead_assignment != last_bead_assignment ||
-			   this_atom->chain != last_chain ||
-			   this_atom->resName != last_resName)
-			 {
-			   this_atom->bead_positioner = this_atom->p_atom->positioner;
-			   // compute cog coordinates
-			   if (last_main_bead)
-			     {
-			       for (unsigned int m = 0; m < 3; m++) 
-				 {
-				   if (tot_mw)
-				     {
-				       last_main_bead->bead_cog_coordinate.axis[m] /= tot_mw;
-				     } else {
-				       last_main_bead->bead_cog_coordinate.axis[m] = 0;
-				     }
-				 }
-			     }
+		       printf("pass 2 active %s %s %d\n",
+			      this_atom->name.ascii(), 
+			      this_atom->resName.ascii(),
+			      this_atom->serial); fflush(stdout);
 
-			   tot_mw = this_atom->p_atom->hybrid.mw;
+		       this_atom->mw = this_atom->p_atom->hybrid.mw;
+
+		       // do we have a new bead?
+		       // we want to put the N on a previous bead unless it is the first one of the molecule
+
+		       if ((this_atom->bead_assignment != last_bead_assignment ||
+			    this_atom->chain != last_chain ||
+			    this_atom->resName != last_resName) &&
+			    !(this_atom->chain == 0 &&
+			      this_atom->name == "N" &&
+			      count_actives))
+			 {
+			   printf("pass 2 active %s %s %d new bead\n",
+				  this_atom->name.ascii(), 
+				  this_atom->resName.ascii(),
+				  this_atom->serial); fflush(stdout);
+
+			   this_atom->bead_positioner = this_atom->p_atom->positioner;
 
 			   this_atom->is_bead = true;
 			   last_main_bead = this_atom;
@@ -479,6 +482,10 @@ int US_Hydrodyn::compute_asa()
 			   last_chain = this_atom->chain;
 			   last_resName = this_atom->resName;
 			 } else {
+			   printf("pass 2 active %s %s %d not a new bead\n",
+				  this_atom->name.ascii(), 
+				  this_atom->resName.ascii(),
+				  this_atom->serial); fflush(stdout);
 			   if (this_atom->p_atom->positioner)
 			     {
 			       if (last_main_bead->bead_positioner)
@@ -493,50 +500,70 @@ int US_Hydrodyn::compute_asa()
 			     }
 
 			   this_atom->is_bead = false;
+			   this_atom->bead_mw = 0;
 			 }
 
 		       this_atom->bead_asa = 0;
+		       this_atom->bead_mw = 0;
+
+		       // special nitrogen asa handling
+		       PDB_atom *use_atom;
+		       if (this_atom->chain == 0 &&
+			   this_atom->name == "N" &&
+			   last_main_chain_bead) 
+			 {
+			   use_atom = last_main_chain_bead;
+			 } else {
+			   use_atom = last_main_bead;
+			 }
+
+		       use_atom->bead_asa += this_atom->asa;
+		       use_atom->bead_mw += this_atom->p_atom->hybrid.mw;
 
 		       // accum 
 		       for (unsigned int m = 0; m < 3; m++) 
 			 {
-			   last_main_bead->bead_cog_coordinate.axis[m] = 
+			   use_atom->bead_cog_coordinate.axis[m] += 
 			     this_atom->coordinate.axis[m] * this_atom->p_atom->hybrid.mw;
 			 }
-
-		       // special nitrogen asa handling
-		       if (this_atom->chain == 0 &&
-			   this_atom->name == "N")
+		       if (this_atom->p_atom->positioner)
 			 {
-			   if (last_main_chain_bead) 
+			   if (use_atom->bead_positioner)
 			     {
-			       last_main_chain_bead->bead_asa += this_atom->asa;
+			       fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n", 
+				       use_atom->name.ascii(), 
+				       use_atom->resName.ascii(),
+				       use_atom->serial);
 			     }
-			   last_main_chain_bead = this_atom;
-			 } else {
-			   last_main_bead->bead_asa += this_atom->asa;
+			   use_atom->bead_positioner = true;
+			   use_atom->bead_position_coordinate = this_atom->coordinate;
 			 }
+
+		       if (this_atom->chain == 0 &&
+			   this_atom->name == "N" &&
+			   !count_actives)
+			 {
+			   last_resName = "first N";
+			 }
+
+		       if (this_atom->chain == 0 &&
+			   this_atom->name == "CA")
+			 {
+			   last_main_chain_bead = this_atom;
+			 }
+
+		       count_actives++;
+		   
 		     } else {
 		       this_atom->is_bead = false;
-		     }
-		 }
-	       // close off molecule
-	       if (last_main_bead)
-		 {
-		   for (unsigned int m = 0; m < 3; m++) 
-		     {
-		       if (tot_mw)
-			 {
-			   last_main_bead->bead_cog_coordinate.axis[m] /= tot_mw;
-			 } else {
-			   last_main_bead->bead_cog_coordinate.axis[m] = 0;
-			 }
 		     }
 		 }
 	     }
 	 }
 
-       // pass 3 determine visibility, exposed code, final position
+       // pass 3 determine visibility, exposed code, normalize cog position, final position determination
+
+       printf("pass 3\n"); fflush(stdout);
 
        for (unsigned int i = 0; i < model_vector.size (); i++)
 	 {
@@ -549,9 +576,31 @@ int US_Hydrodyn::compute_asa()
 		   if (this_atom->active &&
 		       this_atom->is_bead)
 		     {
+		       printf("pass 3 active is bead %s %s %d\n",
+			      this_atom->name.ascii(), 
+			      this_atom->resName.ascii(),
+			      this_atom->serial); fflush(stdout);
+
+		       for (unsigned int m = 0; m < 3; m++) 
+			 {
+			   if (this_atom->bead_mw)
+			     {
+			       this_atom->bead_cog_coordinate.axis[m] /= this_atom->bead_mw;
+			     } else {
+			       this_atom->bead_cog_coordinate.axis[m] = 0;
+			     }
+			 }
+
 		       if (this_atom->p_residue && this_atom->p_atom)
 			 {
-			   switch (this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method) 
+			   printf("pass 3 active is bead %s %s %d bead assignment %d placing method %d\n",
+				  this_atom->name.ascii(), 
+				  this_atom->resName.ascii(),
+				  this_atom->serial,
+				  this_atom->bead_assignment,
+				  this_atom->placing_method
+				  ); fflush(stdout);
+			   switch (this_atom->placing_method) 
 			     {
 			     case 0 : // cog
 			       this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
@@ -572,7 +621,7 @@ int US_Hydrodyn::compute_asa()
 			     default :
 			       this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
 			       fprintf(stderr, "warning: unknown bead placing method %d %s %s %d <using cog!>\n",
-				       this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method,
+				       this_atom->placing_method,
 				       this_atom->name.ascii(), 
 				       this_atom->resName.ascii(),
 				       this_atom->serial);
@@ -586,9 +635,17 @@ int US_Hydrodyn::compute_asa()
 			   exit(-1);
 			   break;
 			 }
+		       printf("pass 3 active is bead %s %s %d checkpoint 1\n",
+			      this_atom->name.ascii(), 
+			      this_atom->resName.ascii(),
+			      this_atom->serial); fflush(stdout);
 		     
-
 		       this_atom->visibility = (this_atom->bead_asa >= asa_threshold);
+
+		       printf("pass 3 active is bead %s %s %d checkpoint 2\n",
+			      this_atom->name.ascii(), 
+			      this_atom->resName.ascii(),
+			      this_atom->serial); fflush(stdout);
 		       if (this_atom->visibility)
 			 {
 			   this_atom->exposed_code = 1;  // exposed
@@ -602,6 +659,12 @@ int US_Hydrodyn::compute_asa()
 			       this_atom->exposed_code = 6;   // side chain, buried
 			     }
 			 }
+		       printf("pass 3 active is bead %s %s %d checkpoint 3\n",
+			      this_atom->name.ascii(), 
+			      this_atom->resName.ascii(),
+			      this_atom->serial); fflush(stdout);
+		     } else {
+		       this_atom->placing_method = -1;
 		     }
 		 }
 	     }
@@ -609,7 +672,7 @@ int US_Hydrodyn::compute_asa()
 
        // pass 4 print results
 
-       printf("model~molecule~atom~name~residue~position~active~radius~asa~ bead #~chain~serial~is_bead~ bead_asa~visible~code/color~position controlled?~position_coordinate~cog position~use position\n");
+       printf("model~molecule~atom~name~residue~position~active~radius~asa~mw~bead #~chain~serial~is_bead~ bead_asa~visible~code/color~bead mw~position controlled?~baric method~position_coordinate~cog position~use position\n");
        for (unsigned int i = 0; i < model_vector.size (); i++)
 	 {
 	   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
@@ -619,7 +682,7 @@ int US_Hydrodyn::compute_asa()
 		   PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 
 		   //		   printf("model %d mol %d atm %d nam %s res %s xyz [%f,%f,%f] act %s rads %f asa %f bead # %d chain %d serl %d is_bead %s bead_asa %f vis %s code %d pos? %s pos_co [%f,%f,%f] cog [%f,%f,%f] use [%f, %f, %f]\n",
-		   printf("%d~%d~%d~%s~%s~[%f,%f,%f]~%s~%f~%f~%d~%d~%d~%s~%f~%s~%d~%s~[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]\n",			  
+		   printf("%d~%d~%d~%s~%s~[%f,%f,%f]~%s~%f~%f~%f~%d~%d~%d~%s~%f~%s~%d~%f~%s~%d~[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]\n",			  
 			  i, j, k, 
 			  this_atom->name.ascii(),
 			  this_atom->resName.ascii(),
@@ -629,6 +692,7 @@ int US_Hydrodyn::compute_asa()
 			  this_atom->active ? "Y" : "N",
 			  this_atom->radius,
 			  this_atom->asa,
+			  this_atom->mw,
 			  this_atom->bead_assignment,
 			  this_atom->chain,
 			  this_atom->serial,
@@ -636,7 +700,9 @@ int US_Hydrodyn::compute_asa()
 			  this_atom->bead_asa,
 			  this_atom->visibility ? "Y" : "N",
 			  this_atom->exposed_code,
+			  this_atom->bead_mw,
 			  this_atom->bead_positioner ? "Y" : "N",
+			  this_atom->placing_method,
 			  this_atom->bead_position_coordinate.axis[0],
 			  this_atom->bead_position_coordinate.axis[1],
 			  this_atom->bead_position_coordinate.axis[2],
@@ -848,6 +914,9 @@ void US_Hydrodyn::select_residue_file()
 					ts >> new_bead.chain;
 					ts >> new_bead.volume;
 					str2 = ts.readLine(); // read rest of line
+					printf("residue name %s loading bead %d placing method %d\n",
+					       new_residue.name.ascii(),
+					       j, new_bead.placing_method); fflush(stdout);
 					new_residue.r_bead.push_back(new_bead);
 				}
 				calc_bead_mw(&new_residue);

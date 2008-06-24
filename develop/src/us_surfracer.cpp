@@ -1414,9 +1414,14 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 		    }
 		    else
 		    {
-			//      printf("found atom in residue %d pos %d\n", respos, atompos);
+		      // printf("found atom %s %s in residue %d pos %d bead asgn %d placing info %d\n", 
+		      //      this_atom->name.ascii(), this_atom->resName.ascii(), respos, atompos,
+		      //       this_atom->p_atom->bead_assignment,
+		      //       this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method
+		      //       );
 			this_atom->active = true;
 			this_atom->radius = residue_list[respos].r_atom[atompos].hybrid.radius;
+			this_atom->placing_method =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method;
 			//  printf("radius %f\n", residue_list[respos].r_atom[atompos].hybrid.radius);
 		    }
 		}

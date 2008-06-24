@@ -48,9 +48,12 @@ struct PDB_atom
         float bead_asa;
         int exposed_code;                 // 1 exposed, 6 side chain buried, 10 main chain buried
         bool bead_positioner;             // true if an atom had a bead positioner
+        float mw;
+        float bead_mw;
 	point bead_position_coordinate;
 	point bead_cog_coordinate;
 	point bead_coordinate;
+	int placing_method;	          // baric method (see struct bead->placing method, -1 undefined
 };
 
 struct PDB_chain	// chain in PDB file
