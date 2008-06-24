@@ -72,7 +72,7 @@ UsWin::UsWin(QWidget *parent, const char *name)
 
 	QFont font( "Arial" );
 	font.setWeight( QFont::DemiBold );
-	font.setPixelSize( 15 );
+	font.setPixelSize( 18 );
 	painter.setFont( font );
 	QFontMetrics metrics( font ); 
 	//painter.setFont( QFont( USglobal->config_list.fontFamily, 
