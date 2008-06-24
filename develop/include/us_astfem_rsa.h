@@ -21,6 +21,8 @@ class US_EXTERN US_Astfem_RSA : public QObject
 		bool guiFlag;				// if true, signals will be emitted
 		double last_time;			// keep track of time globally for w2t_integral calculation
 		double w2t_integral;		// keep track of w2t_integral value globally
+		struct SimulationParameters *simparams;
+		struct ModelSystem *system;
 
 	private:
 		unsigned int N;			// number of points used in radial direction in ASTFEM

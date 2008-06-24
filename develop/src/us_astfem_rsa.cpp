@@ -18,6 +18,8 @@ vector <struct mfem_data> *exp_data)
 {
 	//US_FemGlobal fg;
 	//fg.write_experiment(system, simparams, "/root/astfem_rsa-output");
+	this->simparams = simparams;
+	this->system = system;
 	unsigned int i, j;
 	float current_time = 0.0;
 	float current_speed;
@@ -25,13 +27,8 @@ vector <struct mfem_data> *exp_data)
 	unsigned int duration, delay, initial_npts=5000;
 	mfem_data simdata;
 	mfem_initial CT0;			// initial total concentration
-	af_params.mesh = (*simparams).mesh;
-	af_params.model = (*system).model;
-	af_params.rotor = (*simparams).rotor;
 	af_params.first_speed = (*simparams).speed_step[0].rotorspeed;
-	af_params.meniscus = (*simparams).meniscus;
-	af_params.bottom = (*simparams).bottom;
-	if (af_params.model < 4) // non-interacting single or multicomponent systems
+	if ((*system).model < 4) // non-interacting single or multicomponent systems
 	{
 		for (i=0; i<(*system).component_vector.size(); i++)
 		{
@@ -165,7 +162,7 @@ vector <struct mfem_data> *exp_data)
 //cout << "hours:\t\t" << (*simparams).speed_step[j].duration_hours << endl;
 //cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 				af_params.start_time = current_time;
-				af_params.mesh = (*simparams).mesh;
+				(*simparams).mesh = (*simparams).mesh;
 				af_params.moving_grid = (*simparams).moving_grid;
 				af_params.acceleration = false;
 				vector <double> rpm;
@@ -203,7 +200,7 @@ vector <struct mfem_data> *exp_data)
 			}
 		} // component loop
 	}  // end of non-interacting case
-	else if (af_params.model >= 4 && af_params.model <= 10) // A + nA = An
+	else if ((*system).model >= 4 && (*system).model <= 10) // A + nA = An
 	{
 		current_time = 0.0; // reset time, which now tracks the beginning of each speed step (duration)
 		current_speed = 0.0; // start at rest
@@ -374,7 +371,7 @@ vector <struct mfem_data> *exp_data)
 			}
 			af_params.time_steps = (unsigned int) (1+duration/af_params.dt);
 			af_params.start_time = current_time;
-			af_params.mesh = (*simparams).mesh;
+			(*simparams).mesh = (*simparams).mesh;
 			af_params.moving_grid = (*simparams).moving_grid;
 			af_params.acceleration = false;
 			vector <double> rpm;
@@ -437,7 +434,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 	vector <double> nu;
 	nu.clear();
 	nu.push_back(sw2/D);
-	mesh_gen(nu, af_params.mesh);
+	mesh_gen(nu, (*simparams).mesh);
 	if (af_params.acceleration)  		// refine left hand side (when s>0) or
 	{										// right hand side (when s<0) for acceleration
 		double xc ;
@@ -701,7 +698,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 		nu.push_back( sw2 / af_params.D[i]);
       //printf("s[%d]=%20.12e  D=%20.12e, sw2=%20.12e\n", i, af_params.s[i], af_params.D[i], sw2);
 	}
-	mesh_gen(nu, af_params.mesh);
+	mesh_gen(nu, (*simparams).mesh);
 
 	// refine left hand side (when s_max>0) or  right hand side (when s<0) for acceleration
 	if (af_params.acceleration)
@@ -1235,7 +1232,7 @@ void US_Astfem_RSA::mesh_gen_s_neg(vector <double> nu)
 //	for(j=1; j<(int) af_params.simpoints-1; j++)		// standard Schuck's grids
 	for(j=1; j<af_params.simpoints; j++)		// add one more point to Schuck's grids
 	{
-		yr.push_back(af_params.current_bottom * pow(af_params.meniscus/af_params.current_bottom, (j - 0.5)/(af_params.simpoints - 1.0)));
+		yr.push_back(af_params.current_bottom * pow((*simparams).meniscus/af_params.current_bottom, (j - 0.5)/(af_params.simpoints - 1.0)));
 	}
 	yr.push_back(af_params.current_meniscus);
 	if(af_params.current_bottom * (pow(af_params.current_meniscus/af_params.current_bottom, (af_params.simpoints - 3.5)/(af_params.simpoints - 1.0))
@@ -1934,7 +1931,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 		{
 			ct += C1[i][j];
 		}
-		if(af_params.model >= 4 && af_params.model <= 10)  // monomer - (n)mer
+		if((*system).model >= 4 && (*system).model <= 10)  // monomer - (n)mer
 		{
 			double dva, dvb, dvc, uhat;
 			dva = TimeStep * af_params.koff[0] * af_params.keq[0];
@@ -1946,7 +1943,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 			}
 			else
 			{
-				switch(af_params.model)
+				switch((*system).model)
 				{
 					case 4:	// mono <--> dimer
                   if (dvb*dvb+4*dva*dvc<=0)
@@ -1968,7 +1965,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 			C1[0][j] = 2.*uhat - C1[0][j];
 			C1[1][j] = ct - C1[0][j];
 		}
-		else if(af_params.model == 11 )  	//  A + B <--> AB
+		else if((*system).model == 11 )  	//  A + B <--> AB
 		{
          double exta = 1.0, extb=1.0;			// extinction rate for A and B, should be specified outside
          double K1, K_1;			// reation rates
@@ -1989,7 +1986,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 			C1[1][j] += 2*dC[1];
 			C1[2][j] += 2*dC[2];
 		}
-		else if(af_params.model == 12 )  	//  general reaction
+		else if((*system).model == 12 )  	//  general reaction
       {
          unsigned int Nspec = af_params.s.size();	// number of species
          unsigned int iter_max = 20; 		// maximum number of Newton iteration allowed
@@ -2055,7 +2052,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
       }
 		else
 		{
-			cerr << "warning: The reaction for model " << af_params.model << " has not yet been implemented" << endl;
+			cerr << "warning: The reaction for model " << (*system).model << " has not yet been implemented" << endl;
 		}
 	}
 }
@@ -2073,25 +2070,25 @@ int US_Astfem_RSA::DecomposeCT(double CT, double *C)
 
 		dval = CT;
 
-		if (af_params.model == 4) // monomer-dimer
+		if ((*system).model == 4) // monomer-dimer
 		{
 			C1 = (sqrt(1.0 + 4.0 * af_params.keq[0] * dval) - 1.0)/(2.0 * af_params.keq[0]) ;
 			C[0] = C1;
 			C[1] = af_params.keq[0] * pow(C1, (double) af_params.n[1]);
 		}
-		else if (af_params.model == 5) // monomer-trimer
+		else if ((*system).model == 5) // monomer-trimer
 		{
 			C1 = cube_root(-dval/af_params.keq[0], 1.0/af_params.keq[0], 0.0);
 			C[0] = C1;
 			C[1] = af_params.keq[0] * pow(C1, (double) af_params.n[1]);
 		}
-		else if (af_params.model > 5 && af_params.model < 11)
+		else if ((*system).model > 5 && (*system).model < 11)
 		{
 			C1 = find_C1_mono_Nmer( af_params.n[1], af_params.keq[0], dval );
 			C[0] = C1;
 			C[1] = af_params.keq[0] * pow(C1, (double) af_params.n[1]);
 		}
-		else if (af_params.model == 11)// monomer-dimer-trimer system
+		else if ((*system).model == 11)// monomer-dimer-trimer system
 		{
 			C1 = cube_root(-dval/af_params.keq[1], 1.0/af_params.keq[1], af_params.keq[0]/af_params.keq[1]);
 			C[0] = C1;
@@ -2100,7 +2097,7 @@ int US_Astfem_RSA::DecomposeCT(double CT, double *C)
 		}
 		else
 		{
-			cerr << "warning: model #" << af_params.model << " is not yet supported in find_C1()" << endl;
+			cerr << "warning: model #" << (*system).model << " is not yet supported in find_C1()" << endl;
 			return (-1);
 		}
 	   return (0);
@@ -2109,7 +2106,7 @@ int US_Astfem_RSA::DecomposeCT(double CT, double *C)
 
 void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
 {
-	switch ( af_params.model )
+	switch ( (*system).model )
    {
       case 12:						// n A <--> An,   m An <--> Anm
       {
@@ -2140,7 +2137,7 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
 
 void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
 {
-	switch ( af_params.model )
+	switch ( (*system).model )
    {
       case 12:						// n A <--> An,   m An <--> Anm
       {
@@ -2255,24 +2252,24 @@ void US_Astfem_RSA::interpolate_Cfinal(struct mfem_initial *C0, double *cfinal)
 void US_Astfem_RSA::adjust_limits(unsigned int speed)
 {
 	// first correct meniscus to theoretical position at rest:
-	double stretch_val = stretch(af_params.rotor, af_params.first_speed);
-//	cout << "rotor: " << af_params.rotor << ", stretch: " << stretch_val << endl;
+	double stretch_val = stretch((*simparams).rotor, af_params.first_speed);
+//	cout << "rotor: " << (*simparams).rotor << ", stretch: " << stretch_val << endl;
 	// this is the meniscus at rest
-	af_params.current_meniscus = af_params.meniscus - stretch_val;
-//	cout << "1st speed meniscus: " << af_params.meniscus << ", rest meniscus: " << af_params.current_meniscus << endl;
+	af_params.current_meniscus = (*simparams).meniscus - stretch_val;
+//	cout << "1st speed meniscus: " << (*simparams).meniscus << ", rest meniscus: " << af_params.current_meniscus << endl;
 	// calculate rotor stretch at current speed
-	stretch_val = stretch(af_params.rotor, speed);
+	stretch_val = stretch((*simparams).rotor, speed);
 	// add current stretch to meniscus at rest
 	af_params.current_meniscus +=  stretch_val;
 	// add current stretch to bottom at rest
-	af_params.current_bottom = af_params.bottom + stretch_val;
+	af_params.current_bottom = (*simparams).bottom + stretch_val;
 //	cout << "corrected meniscus: " << af_params.current_meniscus << ", current_bottom: " << af_params.current_bottom << endl;
 }
 
 void US_Astfem_RSA::adjust_grid(unsigned int old_speed, unsigned int new_speed, vector <double> *radius)
 {
-	double stretch_val1 = stretch(af_params.rotor, old_speed);
-	double stretch_val2 = stretch(af_params.rotor, new_speed);
+	double stretch_val1 = stretch((*simparams).rotor, old_speed);
+	double stretch_val2 = stretch((*simparams).rotor, new_speed);
 	for (unsigned int i=0; i<(*radius).size(); i++)
 	{
 		(*radius)[i] += stretch_val2 - stretch_val1;
@@ -2306,8 +2303,8 @@ void US_Astfem_RSA::print_af()
 	unsigned int i;
 	QString str;
 	cout.precision(10);
-	cout << "Model Number:\t" << af_params.model << endl;
-	cout << "Rotor:\t" << af_params.rotor << endl;
+	cout << "Model Number:\t" << (*system).model << endl;
+	cout << "Rotor:\t" << (*simparams).rotor << endl;
 	cout << "First speed:\t" << af_params.first_speed << endl;
 	cout << "Simpoints:\t" << af_params.simpoints << endl;
 	cout << "\nHydrodynamic Parameters:\n";
@@ -2337,7 +2334,7 @@ void US_Astfem_RSA::print_af()
 	cout << "start_time:\t" << af_params.start_time << endl;
 	cout << "current meniscus:\t" << af_params.current_meniscus << endl;
 	cout << "current bottom:\t\t" << af_params.current_bottom << endl;
-	cout << "mesh:\t\t" << af_params.mesh << endl;
+	cout << "mesh:\t\t" << (*simparams).mesh << endl;
 	cout << "moving grid\t\t" << af_params.moving_grid << endl;
 	if (af_params.acceleration)
 	{
@@ -2355,7 +2352,7 @@ void US_Astfem_RSA::print_af(FILE *outf)
 
 	fprintf(outf, "#####################################################\n");
 	fprintf(outf, "#  \n");
-	fprintf(outf, "#  Model Number: %d \n", af_params.model);
+	fprintf(outf, "#  Model Number: %d \n", (*system).model);
 	fprintf(outf, "#  Number of species = %d\n", af_params.s.size() );
 	for (i=0; i<af_params.s.size(); i++)
 	{
@@ -2382,7 +2379,7 @@ void US_Astfem_RSA::print_af(FILE *outf)
 	fprintf(outf, "#  current meniscus =%12.5e \n",  af_params.current_meniscus);
 	fprintf(outf, "#  current bottom =%12.5e \n",  af_params.current_bottom);
 	fprintf(outf, "#  start time =%12.5e \n",  af_params.start_time);
-	fprintf(outf, "#  mesh opt =%d \n",  af_params.mesh);
+	fprintf(outf, "#  mesh opt =%d \n",  (*simparams).mesh);
 	if (af_params.moving_grid) fprintf(outf, "#  grids = moving \n");
 	else fprintf(outf, "#  grids = fixed \n");
 	if (af_params.acceleration) fprintf(outf, "#  acceleration = True \n");

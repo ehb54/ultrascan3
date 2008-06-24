@@ -42,16 +42,11 @@ struct AstFemParameters
 	unsigned int time_steps;	// number of time steps for simulation
 	double omega_s;				// omega^2
 	double start_time;			// start time in seconds of simulation at constant speed
-	double meniscus;				// meniscus for the constant speed of the first speed step
-	double bottom;					// bottom of cell based on rotor at rest
 	double current_meniscus;	// actual meniscus for current speed
 	double current_bottom;		// actual bottom for current speed
-	unsigned int mesh;			// radial mesh option
 	int moving_grid;				// use adaptive time steps = 1, fixed time steps = 0
 	bool acceleration;			// true if acceleration is used
-	unsigned int model;			// model number
 	unsigned int first_speed;	// constant speed at first speed step
-	unsigned int rotor;			// rotor serial number
 };
 
 
