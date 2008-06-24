@@ -47,6 +47,10 @@ struct PDB_atom
         int chain;                        // 0 = main, 1 = side
         float bead_asa;
         int exposed_code;                 // 1 exposed, 6 side chain buried, 10 main chain buried
+        bool bead_positioner;             // true if an atom had a bead positioner
+	point bead_position_coordinate;
+	point bead_cog_coordinate;
+	point bead_coordinate;
 };
 
 struct PDB_chain	// chain in PDB file
@@ -83,7 +87,7 @@ struct bead
 struct hybridization
 {
 	QString name; 						// for example, N4H3
-	float mw;							// molecular weight of hybridization
+	float mw;						// molecular weight of hybridization
 	float radius;						// radius of hybridization
 };
 
