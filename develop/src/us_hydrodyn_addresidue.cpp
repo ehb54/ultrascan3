@@ -18,9 +18,10 @@
 
 
 
-US_AddResidue::US_AddResidue(bool *widget_flag, QWidget *p, const char *name) : QWidget( p, name)
+US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *p, const char *name) : QWidget( p, name)
 {
 	this->widget_flag = widget_flag;
+	this->hydrovol = hydrovol;
 	*widget_flag = true;
 	online_help = NULL;
 	USglobal = new US_Config();
@@ -469,6 +470,20 @@ void US_AddResidue::setupGUI()
 	le_bead_mw->setEnabled(true);
 	le_bead_mw->setReadOnly(true);
 
+	lbl_bead_hydrovol = new QLabel(tr(" Bead hydrated Volume, Radius: "), this);
+	Q_CHECK_PTR(lbl_bead_hydrovol);
+	lbl_bead_hydrovol->setAlignment(AlignLeft|AlignVCenter);
+	lbl_bead_hydrovol->setMinimumHeight(minHeight1);
+	lbl_bead_hydrovol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_bead_hydrovol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+	le_bead_hydrovol = new QLineEdit(this, "Residue Volume Line Edit");
+	le_bead_hydrovol->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_bead_hydrovol->setMinimumHeight(minHeight1);
+	le_bead_hydrovol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	le_bead_hydrovol->setEnabled(true);
+	le_bead_hydrovol->setReadOnly(true);
+
 	pb_accept_bead = new QPushButton(tr("Accept Bead Definition"), this);
 	Q_CHECK_PTR(pb_accept_bead);
 	pb_accept_bead->setMinimumHeight(minHeight1);
@@ -596,12 +611,15 @@ void US_AddResidue::setupGUI()
 	background->addWidget(lbl_bead_mw, j, 3);
 	background->addWidget(le_bead_mw, j, 4);
 	j++;
+	background->addWidget(lbl_bead_hydrovol, j, 3);
+	background->addWidget(le_bead_hydrovol, j, 4);
+	j++;
 	background->addWidget(lbl_list_beadatom, j, 3);
 	background->addWidget(lbl_select_beadatom, j, 4);
 	j++;
-	background->addMultiCellWidget(lb_list_beadatom, j, j+4, 3, 3);
-	background->addMultiCellWidget(lb_select_beadatom, j, j+4, 4, 4);
-	j+=5;
+	background->addMultiCellWidget(lb_list_beadatom, j, j+3, 3, 3);
+	background->addMultiCellWidget(lb_select_beadatom, j, j+3, 4, 4);
+	j+=4;
 	background->addWidget(pb_accept_bead, j, 3);
 	background->addWidget(pb_reset, j, 4);
 	j++;
@@ -774,7 +792,7 @@ void US_AddResidue::calc_bead_mw(struct residue *res)
 			{
 				(*res).r_bead[i].mw += (*res).r_atom[j].hybrid.mw;
 			}
-		}	
+		}
 	}
 }
 
@@ -930,7 +948,7 @@ void US_AddResidue::select_beadatom()
 	}
 	calc_bead_mw(&new_residue);
 	str.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
-	le_bead_mw->setText(str);	
+	le_bead_mw->setText(str);
 }
 
 void US_AddResidue::update_hydration(double val)
@@ -966,6 +984,12 @@ void US_AddResidue::select_r_bead(int val)
 		le_bead_volume->setText(str);
 		str.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
 		le_bead_mw->setText(str);
+		float h_volume;
+		h_volume = new_residue.r_bead[current_bead].hydration * hydrovol + new_residue.r_bead[current_bead].volume;
+		float radius = pow((h_volume * (3.0/(4.0*M_PI))), 1.0/3.0);
+		str.sprintf("%7.2f A^3, %7.2f A", h_volume, radius);
+		le_bead_hydrovol->setText(str);
+
 		if (new_residue.r_bead[current_bead].chain)
 		{
 			bg_chain->setButton(1);
@@ -1092,6 +1116,7 @@ void US_AddResidue::reset()
 	le_residue_name->setText("");
 	le_bead_volume->setText("0.0");
 	le_bead_mw->setText("0.0");
+	le_bead_hydrovol->setText("0.0, 0.0");
 	cnt_numbeads->setEnabled(true);
 	cnt_numbeads->setValue(0);
 	cnt_numatoms->setEnabled(true);

@@ -61,10 +61,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		US_Hydrodyn_OR *mainchain_OR;
 		US_Hydrodyn_OR *buried_OR;
 		US_Vbar_DB *vbar_dlg;
-		double probe_radius, asa_threshold, asa_threshold_percent, vbar;
+		double probe_radius, asa_threshold, asa_threshold_percent, vbar, hydrovol;
 
 		US_Config *USglobal;
-		
+
 		QLabel *lbl_info;
 		QLabel *lbl_table;
 		QLabel *lbl_tabletabs;
@@ -75,6 +75,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QLabel *lbl_probe_radius;
 		QLabel *lbl_asa_threshold;
 		QLabel *lbl_asa_threshold_percent;
+		QLabel *lbl_hydrovol;
 
 		QLineEdit *le_vbar;
 		QLineEdit *le_output_file;
@@ -91,9 +92,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
 		QButtonGroup *bg_output;
 		QButtonGroup *bg_sequence;
-		
+
 		QPushButton *pb_save;
-		QPushButton *pb_reset;		
+		QPushButton *pb_reset;
 		QPushButton *pb_vbar;
 		QPushButton *pb_select_residue_file;
 		QPushButton *pb_select_output_file;
@@ -107,9 +108,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QPushButton *pb_visualize;
 
 		QListBox *lb_model;
-		
+
 		QTabWidget *tw_overlap;
-		
+
 		US_AddAtom *addAtom;
 		US_AddResidue *addResidue;
 		US_AddHybridization *addHybrid;
@@ -117,7 +118,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QwtCounter *cnt_probe_radius;
 		QwtCounter *cnt_asa_threshold;
 		QwtCounter *cnt_asa_threshold_percent;
-		
+		QwtCounter *cnt_hydrovol;
+
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
@@ -149,6 +151,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void update_probe_radius(double);
 		void update_asa_threshold(double);
 		void update_asa_threshold_percent(double);
+		void update_hydrovol(double);
 		void set_asa_calculation();
 		void set_bead_check();
 		int calc_somo(); // build bead model
@@ -163,10 +166,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void update_vbar(const QString &);
 		void update_output_file(const QString &);
 		void update_vbar_signal(float, float);
-		
+
 	protected slots:
-	
-		void closeEvent(QCloseEvent *);		
+
+		void closeEvent(QCloseEvent *);
 };
 
 #endif

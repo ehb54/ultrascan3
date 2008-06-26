@@ -21,13 +21,14 @@
 #include <qmessagebox.h>
 #include <qpixmap.h>
 #include <qwt_counter.h>
+#include <math.h>
 
 class US_AddResidue : public QWidget
 {
 	Q_OBJECT
 
 	public:
-		US_AddResidue(bool *, QWidget *p=0, const char *name=0);
+		US_AddResidue(bool *, const double, QWidget *p=0, const char *name=0);
 		~US_AddResidue();
 
 	private:
@@ -39,6 +40,7 @@ class US_AddResidue : public QWidget
 		bool position_flag; // 0 = not involved, 1 = determines position
 		unsigned int current_atom;
 		unsigned int current_bead;
+		double hydrovol;
 		vector <QString> hybrids;
 		vector <QString> atoms;
 
@@ -67,6 +69,7 @@ class US_AddResidue : public QWidget
 		QLabel *lbl_beadchain;
 		QLabel *lbl_bead_volume;
 		QLabel *lbl_bead_mw;
+		QLabel *lbl_bead_hydrovol;
 
 		QLabel *lbl_info2;
 		QLabel *lbl_r_atoms;
@@ -110,6 +113,7 @@ class US_AddResidue : public QWidget
 		QLineEdit *le_residue_name;
 		QLineEdit *le_bead_volume;
 		QLineEdit *le_bead_mw;
+		QLineEdit *le_bead_hydrovol;
 		struct residue new_residue;
 		struct atom new_atom;
 		struct bead new_bead;

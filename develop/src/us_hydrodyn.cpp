@@ -29,7 +29,7 @@ void US_Hydrodyn::setupGUI()
 	buried_OR = new US_Hydrodyn_OR(&buried_overlap, this);
 	buried_OR->cnt_fuse->setEnabled(false);
 	buried_OR->cb_fuse->setEnabled(false);
-	
+
 	lbl_info = new QLabel(tr("Bead Overlap Reduction Options:"), this);
 	Q_CHECK_PTR(lbl_info);
 	lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -102,7 +102,7 @@ void US_Hydrodyn::setupGUI()
 	lb_model->setHScrollBarMode(QScrollView::Auto);
 	lb_model->setVScrollBarMode(QScrollView::Auto);
 	connect(lb_model, SIGNAL(selected(int)), this, SLOT(select_model(int)));
-	
+
 	lbl_probe_radius = new QLabel(tr(" ASA Probe Radius (A): "), this);
 	Q_CHECK_PTR(lbl_probe_radius);
 	lbl_probe_radius->setAlignment(AlignLeft|AlignVCenter);
@@ -153,6 +153,23 @@ void US_Hydrodyn::setupGUI()
 	cnt_asa_threshold_percent->setNumButtons(3);
 	cnt_asa_threshold_percent->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_asa_threshold_percent, SIGNAL(valueChanged(double)), SLOT(update_asa_threshold_percent(double)));
+
+	lbl_hydrovol = new QLabel(tr(" Hydration Water Vol. (A^3): "), this);
+	Q_CHECK_PTR(lbl_hydrovol);
+	lbl_hydrovol->setAlignment(AlignLeft|AlignVCenter);
+	lbl_hydrovol->setMinimumHeight(minHeight1);
+	lbl_hydrovol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_hydrovol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+	cnt_hydrovol= new QwtCounter(this);
+	Q_CHECK_PTR(cnt_hydrovol);
+	cnt_hydrovol->setRange(0, 100, 0.001);
+	cnt_hydrovol->setValue(hydrovol);
+	cnt_hydrovol->setMinimumHeight(minHeight1);
+	cnt_hydrovol->setEnabled(true);
+	cnt_hydrovol->setNumButtons(3);
+	cnt_hydrovol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cnt_hydrovol, SIGNAL(valueChanged(double)), SLOT(update_hydrovol(double)));
 
 	cb_asa_calculation = new QCheckBox(this);
 	cb_asa_calculation->setText(tr(" Perform ASA Calculation "));
@@ -205,7 +222,7 @@ void US_Hydrodyn::setupGUI()
 	bg_output = new QButtonGroup(3, Qt::Horizontal, "Output Format:", this);
 	bg_output->setExclusive(true);
 	connect(bg_output, SIGNAL(clicked(int)), this, SLOT(select_output(int)));
-	
+
 	cb_somo_output = new QCheckBox(bg_output);
 	cb_somo_output->setText(tr(" SOMO "));
 	cb_somo_output->setEnabled(true);
@@ -228,11 +245,11 @@ void US_Hydrodyn::setupGUI()
 	cb_hydro_output->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
 	bg_output->setButton(output);
-	
+
 	bg_sequence = new QButtonGroup(3, Qt::Vertical, "Bead Sequence Format:", this);
 	bg_sequence->setExclusive(true);
 	connect(bg_sequence, SIGNAL(clicked(int)), this, SLOT(select_sequence(int)));
-	
+
 	cb_pdb_sequence = new QCheckBox(bg_sequence);
 	cb_pdb_sequence->setText(tr(" as in original PDB  "));
 	cb_pdb_sequence->setEnabled(true);
@@ -255,7 +272,7 @@ void US_Hydrodyn::setupGUI()
 	cb_correspondence_sequence->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
 	bg_sequence->setButton(sequence);
-	
+
 	cb_vbar = new QCheckBox(this);
 	cb_vbar->setText(tr(" Calculate vbar "));
 	cb_vbar->setChecked(compute_vbar);
@@ -271,7 +288,7 @@ void US_Hydrodyn::setupGUI()
 	pb_vbar->setMinimumHeight(minHeight1);
 	pb_vbar->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_vbar, SIGNAL(clicked()), SLOT(select_vbar()));
-	
+
 	le_vbar = new QLineEdit(this, "vbar Line Edit");
 	le_vbar->setMinimumHeight(minHeight1);
 	le_vbar->setEnabled(!compute_vbar);
@@ -323,7 +340,7 @@ void US_Hydrodyn::setupGUI()
 
 	int rows=7, columns = 4, spacing = 2, j=0, margin=4;
 	QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
-	
+
 	background->addWidget(pb_select_residue_file, j, 0);
 	background->addWidget(lbl_table, j, 1);
 	background->addMultiCellWidget(lbl_info, j, j, 2, 4);
@@ -346,19 +363,21 @@ void US_Hydrodyn::setupGUI()
 	background->addWidget(cnt_asa_threshold_percent, j, 1);
 	background->addMultiCellWidget(bg_output, j, j+1, 2, 4);
 	j++;
+	background->addWidget(lbl_hydrovol, j, 0);
+	background->addWidget(cnt_hydrovol, j, 1);
+	j++;
 	background->addWidget(cb_asa_calculation, j, 0);
 	background->addWidget(cb_bead_check, j, 1);
+	background->addMultiCellWidget(bg_sequence, j, j+3, 2, 4);
 	j++;
 	background->addWidget(cb_vbar, j, 0);
-	background->addMultiCellWidget(bg_sequence, j, j+3, 2, 4);
 	j++;
 	background->addWidget(pb_vbar, j, 0);
 	background->addWidget(le_vbar, j, 1);
 	j++;
+	j++;
 	background->addWidget(pb_somo, j, 0);
 	background->addWidget(pb_visualize, j, 1);
-	j++;
-	j++;
 	background->addWidget(pb_select_output_file, j, 2);
 	background->addWidget(le_output_file, j, 3);
 	background->addWidget(pb_reset, j, 4);
@@ -374,350 +393,352 @@ void US_Hydrodyn::setupGUI()
 
 int US_Hydrodyn::compute_asa()
 {
-       // run the surfracer code
+// run the surfracer code
 
-       int retval = surfracer_main(probe_radius, residue_list, &model_vector);
+	int retval = surfracer_main(probe_radius, residue_list, &model_vector);
+	if ( retval )
+	{
+		switch ( retval )
+		{
+			case US_SURFRACER_ERR_MISSING_RESIDUE:
+			{
+				return US_SURFRACER_ERR_MISSING_RESIDUE;
+				break;
+			}
+			case US_SURFRACER_ERR_MISSING_ATOM:
+			{
+				return US_SURFRACER_ERR_MISSING_ATOM;
+				break;
+			}
+			case US_SURFRACER_ERR_MEMORY_ALLOC:
+			{
+				return US_SURFRACER_ERR_MEMORY_ALLOC;
+				break;
+			}
+			default:
+			{
+				// unknown error
+				return -1;
+				break;
+			}
+		}
+	}
 
-       if ( retval ) 
-       {
-	 switch ( retval ) 
-	 {
-	
-	 case US_SURFRACER_ERR_MISSING_RESIDUE :
-	   return US_SURFRACER_ERR_MISSING_RESIDUE;
-	   break;
+	// pass 1 assign bead #'s, chain #'s, initialize data
 
-	 case US_SURFRACER_ERR_MISSING_ATOM :
-	   return US_SURFRACER_ERR_MISSING_ATOM;
-	   break;
+	for (unsigned int i = 0; i < model_vector.size (); i++)
+	{
+		for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
+		{
+			for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
+			{
+			PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 
-	 case US_SURFRACER_ERR_MEMORY_ALLOC :
-	   return US_SURFRACER_ERR_MEMORY_ALLOC;
-	   break;
+			this_atom->bead_assignment =
+			(this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
+			this_atom->chain =
+			((this_atom->p_residue && this_atom->p_atom) ?
+				(int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
 
-	 default :
-	   // unknown error
-	   return -1;
-	   break;
+			// initialize data
+			this_atom->bead_positioner = false;
 
-	 }
-       }
+				for (unsigned int m = 0; m < 3; m++)
+				{
+				this_atom->bead_cog_coordinate.axis[m] = 0;
+				this_atom->bead_position_coordinate.axis[m] = 0;
+				this_atom->bead_coordinate.axis[m] = 0;
+				}
+			}
+		}
+	}
 
-       // pass 1 assign bead #'s, chain #'s, initialize data
+		// pass 2 determine beads, cog_position, fixed_position
 
-       for (unsigned int i = 0; i < model_vector.size (); i++)
-	 {
-	   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
-	     {
-	       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
-		 {
-		   PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+		int last_bead_assignment = -1;
+		int last_chain = -1;
+		QString last_resName = "not a residue";
+		PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
+		PDB_atom *last_main_bead = (PDB_atom *) 0;
+		int count_actives;
 
-		   this_atom->bead_assignment = 
-		     (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
-		   this_atom->chain = 
-		     ((this_atom->p_residue && this_atom->p_atom) ? 
-		      (int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
+		for (unsigned int i = 0; i < model_vector.size (); i++)
+	{
+		for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
+		{
+			count_actives = 0;
+			for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
+		{
+			PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+			this_atom->bead_positioner = false;
+			if (this_atom->active)
+			{
+				printf("pass 2 active %s %s %d\n",
+					this_atom->name.ascii(),
+					this_atom->resName.ascii(),
+					this_atom->serial); fflush(stdout);
 
-		   // initialize data
-		   this_atom->bead_positioner = false;
+				this_atom->mw = this_atom->p_atom->hybrid.mw;
 
-		   for (unsigned int m = 0; m < 3; m++) 
-		     {
-		       this_atom->bead_cog_coordinate.axis[m] = 0;
-		       this_atom->bead_position_coordinate.axis[m] = 0;
-		       this_atom->bead_coordinate.axis[m] = 0;
-		     }
-		 }
-	     }
-	 }
+				// do we have a new bead?
+				// we want to put the N on a previous bead unless it is the first one of the molecule
 
-       // pass 2 determine beads, cog_position, fixed_position
+				if ((this_atom->bead_assignment != last_bead_assignment ||
+				this_atom->chain != last_chain ||
+				this_atom->resName != last_resName) &&
+				!(this_atom->chain == 0 &&
+					this_atom->name == "N" &&
+					count_actives))
+			{
+				printf("pass 2 active %s %s %d new bead\n",
+				this_atom->name.ascii(),
+				this_atom->resName.ascii(),
+				this_atom->serial); fflush(stdout);
 
-       int last_bead_assignment = -1;
-       int last_chain = -1;
-       QString last_resName = "not a residue";
-       PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
-       PDB_atom *last_main_bead = (PDB_atom *) 0;
-       int count_actives;
+				this_atom->bead_positioner = this_atom->p_atom->positioner;
 
-       for (unsigned int i = 0; i < model_vector.size (); i++)
-	 {
-	   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
-	     {
-	       count_actives = 0;
-	       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
-		 {
-		   PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-		   this_atom->bead_positioner = false;
-		   if (this_atom->active)
-		     {
-		       printf("pass 2 active %s %s %d\n",
-			      this_atom->name.ascii(), 
-			      this_atom->resName.ascii(),
-			      this_atom->serial); fflush(stdout);
+				this_atom->is_bead = true;
+				last_main_bead = this_atom;
+				last_bead_assignment = this_atom->bead_assignment;
+				last_chain = this_atom->chain;
+				last_resName = this_atom->resName;
+			} else {
+				printf("pass 2 active %s %s %d not a new bead\n",
+				this_atom->name.ascii(),
+				this_atom->resName.ascii(),
+				this_atom->serial); fflush(stdout);
+				if (this_atom->p_atom->positioner)
+				{
+					if (last_main_bead->bead_positioner)
+				{
+					fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
+						last_main_bead->name.ascii(),
+						last_main_bead->resName.ascii(),
+						last_main_bead->serial);
+				}
+					last_main_bead->bead_positioner = true;
+					last_main_bead->bead_position_coordinate = this_atom->coordinate;
+				}
 
-		       this_atom->mw = this_atom->p_atom->hybrid.mw;
+				this_atom->is_bead = false;
+				this_atom->bead_mw = 0;
+			}
 
-		       // do we have a new bead?
-		       // we want to put the N on a previous bead unless it is the first one of the molecule
+				this_atom->bead_asa = 0;
+				this_atom->bead_mw = 0;
 
-		       if ((this_atom->bead_assignment != last_bead_assignment ||
-			    this_atom->chain != last_chain ||
-			    this_atom->resName != last_resName) &&
-			    !(this_atom->chain == 0 &&
-			      this_atom->name == "N" &&
-			      count_actives))
-			 {
-			   printf("pass 2 active %s %s %d new bead\n",
-				  this_atom->name.ascii(), 
-				  this_atom->resName.ascii(),
-				  this_atom->serial); fflush(stdout);
+				// special nitrogen asa handling
+				PDB_atom *use_atom;
+				if (this_atom->chain == 0 &&
+				this_atom->name == "N" &&
+				last_main_chain_bead)
+			{
+				use_atom = last_main_chain_bead;
+			} else {
+				use_atom = last_main_bead;
+			}
 
-			   this_atom->bead_positioner = this_atom->p_atom->positioner;
+				use_atom->bead_asa += this_atom->asa;
+				use_atom->bead_mw += this_atom->p_atom->hybrid.mw;
 
-			   this_atom->is_bead = true;
-			   last_main_bead = this_atom;
-			   last_bead_assignment = this_atom->bead_assignment;
-			   last_chain = this_atom->chain;
-			   last_resName = this_atom->resName;
-			 } else {
-			   printf("pass 2 active %s %s %d not a new bead\n",
-				  this_atom->name.ascii(), 
-				  this_atom->resName.ascii(),
-				  this_atom->serial); fflush(stdout);
-			   if (this_atom->p_atom->positioner)
-			     {
-			       if (last_main_bead->bead_positioner)
-				 {
-				   fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n", 
-					   last_main_bead->name.ascii(), 
-					   last_main_bead->resName.ascii(),
-					   last_main_bead->serial);
-				 }
-			       last_main_bead->bead_positioner = true;
-			       last_main_bead->bead_position_coordinate = this_atom->coordinate;
-			     }
+				// accum
+				for (unsigned int m = 0; m < 3; m++)
+			{
+				use_atom->bead_cog_coordinate.axis[m] +=
+				this_atom->coordinate.axis[m] * this_atom->p_atom->hybrid.mw;
+			}
+				if (this_atom->p_atom->positioner)
+			{
+				if (use_atom->bead_positioner)
+				{
+					fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
+						use_atom->name.ascii(),
+						use_atom->resName.ascii(),
+						use_atom->serial);
+				}
+				use_atom->bead_positioner = true;
+				use_atom->bead_position_coordinate = this_atom->coordinate;
+			}
 
-			   this_atom->is_bead = false;
-			   this_atom->bead_mw = 0;
-			 }
+				if (this_atom->chain == 0 &&
+				this_atom->name == "N" &&
+				!count_actives)
+			{
+				last_resName = "first N";
+			}
 
-		       this_atom->bead_asa = 0;
-		       this_atom->bead_mw = 0;
+				if (this_atom->chain == 0 &&
+				this_atom->name == "CA")
+			{
+				last_main_chain_bead = this_atom;
+			}
 
-		       // special nitrogen asa handling
-		       PDB_atom *use_atom;
-		       if (this_atom->chain == 0 &&
-			   this_atom->name == "N" &&
-			   last_main_chain_bead) 
-			 {
-			   use_atom = last_main_chain_bead;
-			 } else {
-			   use_atom = last_main_bead;
-			 }
+				count_actives++;
 
-		       use_atom->bead_asa += this_atom->asa;
-		       use_atom->bead_mw += this_atom->p_atom->hybrid.mw;
+			} else {
+				this_atom->is_bead = false;
+			}
+		}
+		}
+	}
 
-		       // accum 
-		       for (unsigned int m = 0; m < 3; m++) 
-			 {
-			   use_atom->bead_cog_coordinate.axis[m] += 
-			     this_atom->coordinate.axis[m] * this_atom->p_atom->hybrid.mw;
-			 }
-		       if (this_atom->p_atom->positioner)
-			 {
-			   if (use_atom->bead_positioner)
-			     {
-			       fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n", 
-				       use_atom->name.ascii(), 
-				       use_atom->resName.ascii(),
-				       use_atom->serial);
-			     }
-			   use_atom->bead_positioner = true;
-			   use_atom->bead_position_coordinate = this_atom->coordinate;
-			 }
+		// pass 3 determine visibility, exposed code, normalize cog position, final position determination
 
-		       if (this_atom->chain == 0 &&
-			   this_atom->name == "N" &&
-			   !count_actives)
-			 {
-			   last_resName = "first N";
-			 }
+		printf("pass 3\n"); fflush(stdout);
 
-		       if (this_atom->chain == 0 &&
-			   this_atom->name == "CA")
-			 {
-			   last_main_chain_bead = this_atom;
-			 }
+		for (unsigned int i = 0; i < model_vector.size (); i++)
+	{
+		for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
+		{
+			for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
+		{
+			PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+			this_atom->exposed_code = -1;
+			if (this_atom->active &&
+				this_atom->is_bead)
+			{
+				printf("pass 3 active is bead %s %s %d\n",
+					this_atom->name.ascii(),
+					this_atom->resName.ascii(),
+					this_atom->serial); fflush(stdout);
 
-		       count_actives++;
-		   
-		     } else {
-		       this_atom->is_bead = false;
-		     }
-		 }
-	     }
-	 }
+				for (unsigned int m = 0; m < 3; m++)
+			{
+				if (this_atom->bead_mw)
+				{
+					this_atom->bead_cog_coordinate.axis[m] /= this_atom->bead_mw;
+				} else {
+					this_atom->bead_cog_coordinate.axis[m] = 0;
+				}
+			}
 
-       // pass 3 determine visibility, exposed code, normalize cog position, final position determination
+				if (this_atom->p_residue && this_atom->p_atom)
+			{
+				printf("pass 3 active is bead %s %s %d bead assignment %d placing method %d\n",
+				this_atom->name.ascii(),
+				this_atom->resName.ascii(),
+				this_atom->serial,
+				this_atom->bead_assignment,
+				this_atom->placing_method
+				); fflush(stdout);
+				switch (this_atom->placing_method)
+				{
+				case 0 : // cog
+					this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
+					if (this_atom->bead_positioner)
+				{
+					fprintf(stderr, "warning: this bead had a atom claiming position & a bead placing method of cog! %s %s %d\n",
+						this_atom->name.ascii(),
+						this_atom->resName.ascii(),
+						this_atom->serial);
+				}
+					break;
+				case 1 : // positioner
+					this_atom->bead_coordinate = this_atom->bead_position_coordinate;
+					break;
+				case 2 : // no positioning necessary
+					this_atom->bead_coordinate = this_atom->coordinate;
+					break;
+				default :
+					this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
+					fprintf(stderr, "warning: unknown bead placing method %d %s %s %d <using cog!>\n",
+						this_atom->placing_method,
+						this_atom->name.ascii(),
+						this_atom->resName.ascii(),
+						this_atom->serial);
+					break;
+				}
+			} else {
+				fprintf(stderr, "serious internal error 1 on %s %s %d, quitting\n",
+					this_atom->name.ascii(),
+					this_atom->resName.ascii(),
+					this_atom->serial);
+				exit(-1);
+				break;
+			}
+				printf("pass 3 active is bead %s %s %d checkpoint 1\n",
+					this_atom->name.ascii(),
+					this_atom->resName.ascii(),
+					this_atom->serial); fflush(stdout);
 
-       printf("pass 3\n"); fflush(stdout);
+				this_atom->visibility = (this_atom->bead_asa >= asa_threshold);
 
-       for (unsigned int i = 0; i < model_vector.size (); i++)
-	 {
-	   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
-	     {
-	       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
-		 {
-		   PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-		   this_atom->exposed_code = -1;
-		   if (this_atom->active &&
-		       this_atom->is_bead)
-		     {
-		       printf("pass 3 active is bead %s %s %d\n",
-			      this_atom->name.ascii(), 
-			      this_atom->resName.ascii(),
-			      this_atom->serial); fflush(stdout);
+				printf("pass 3 active is bead %s %s %d checkpoint 2\n",
+					this_atom->name.ascii(),
+					this_atom->resName.ascii(),
+					this_atom->serial); fflush(stdout);
+				if (this_atom->visibility)
+			{
+				this_atom->exposed_code = 1;  // exposed
+			} else {
+				if (this_atom->chain == 0)
+				{
+					this_atom->exposed_code = 10;  // main chain, buried
+				}
+				if (this_atom->chain == 1)
+				{
+					this_atom->exposed_code = 6;   // side chain, buried
+				}
+			}
+				printf("pass 3 active is bead %s %s %d checkpoint 3\n",
+					this_atom->name.ascii(),
+					this_atom->resName.ascii(),
+					this_atom->serial); fflush(stdout);
+			} else {
+				this_atom->placing_method = -1;
+			}
+		}
+		}
+	}
 
-		       for (unsigned int m = 0; m < 3; m++) 
-			 {
-			   if (this_atom->bead_mw)
-			     {
-			       this_atom->bead_cog_coordinate.axis[m] /= this_atom->bead_mw;
-			     } else {
-			       this_atom->bead_cog_coordinate.axis[m] = 0;
-			     }
-			 }
+		// pass 4 print results
 
-		       if (this_atom->p_residue && this_atom->p_atom)
-			 {
-			   printf("pass 3 active is bead %s %s %d bead assignment %d placing method %d\n",
-				  this_atom->name.ascii(), 
-				  this_atom->resName.ascii(),
-				  this_atom->serial,
-				  this_atom->bead_assignment,
-				  this_atom->placing_method
-				  ); fflush(stdout);
-			   switch (this_atom->placing_method) 
-			     {
-			     case 0 : // cog
-			       this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
-			       if (this_atom->bead_positioner)
-				 {
-				   fprintf(stderr, "warning: this bead had a atom claiming position & a bead placing method of cog! %s %s %d\n",
-					   this_atom->name.ascii(), 
-					   this_atom->resName.ascii(),
-					   this_atom->serial);
-				 }
-			       break;
-			     case 1 : // positioner
-			       this_atom->bead_coordinate = this_atom->bead_position_coordinate;
-			       break;
-			     case 2 : // no positioning necessary
-			       this_atom->bead_coordinate = this_atom->coordinate;
-			       break;
-			     default :
-			       this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
-			       fprintf(stderr, "warning: unknown bead placing method %d %s %s %d <using cog!>\n",
-				       this_atom->placing_method,
-				       this_atom->name.ascii(), 
-				       this_atom->resName.ascii(),
-				       this_atom->serial);
-			       break;
-			     }
-			 } else {
-			   fprintf(stderr, "serious internal error 1 on %s %s %d, quitting\n",
-				   this_atom->name.ascii(), 
-				   this_atom->resName.ascii(),
-				   this_atom->serial);
-			   exit(-1);
-			   break;
-			 }
-		       printf("pass 3 active is bead %s %s %d checkpoint 1\n",
-			      this_atom->name.ascii(), 
-			      this_atom->resName.ascii(),
-			      this_atom->serial); fflush(stdout);
-		     
-		       this_atom->visibility = (this_atom->bead_asa >= asa_threshold);
+		printf("model~molecule~atom~name~residue~position~active~radius~asa~mw~bead #~chain~serial~is_bead~ bead_asa~visible~code/color~bead mw~position controlled?~baric method~position_coordinate~cog position~use position\n");
+		for (unsigned int i = 0; i < model_vector.size (); i++)
+	{
+		for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
+		{
+			for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
+		{
+			PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 
-		       printf("pass 3 active is bead %s %s %d checkpoint 2\n",
-			      this_atom->name.ascii(), 
-			      this_atom->resName.ascii(),
-			      this_atom->serial); fflush(stdout);
-		       if (this_atom->visibility)
-			 {
-			   this_atom->exposed_code = 1;  // exposed
-			 } else {
-			   if (this_atom->chain == 0) 
-			     {
-			       this_atom->exposed_code = 10;  // main chain, buried
-			     }
-			   if (this_atom->chain == 1) 
-			     {
-			       this_atom->exposed_code = 6;   // side chain, buried
-			     }
-			 }
-		       printf("pass 3 active is bead %s %s %d checkpoint 3\n",
-			      this_atom->name.ascii(), 
-			      this_atom->resName.ascii(),
-			      this_atom->serial); fflush(stdout);
-		     } else {
-		       this_atom->placing_method = -1;
-		     }
-		 }
-	     }
-	 }
+			//		   printf("model %d mol %d atm %d nam %s res %s xyz [%f,%f,%f] act %s rads %f asa %f bead # %d chain %d serl %d is_bead %s bead_asa %f vis %s code %d pos? %s pos_co [%f,%f,%f] cog [%f,%f,%f] use [%f, %f, %f]\n",
+			printf("%d~%d~%d~%s~%s~[%f,%f,%f]~%s~%f~%f~%f~%d~%d~%d~%s~%f~%s~%d~%f~%s~%d~[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]\n",
+			i, j, k,
+			this_atom->name.ascii(),
+			this_atom->resName.ascii(),
+			this_atom->coordinate.axis[0],
+			this_atom->coordinate.axis[1],
+			this_atom->coordinate.axis[2],
+			this_atom->active ? "Y" : "N",
+			this_atom->radius,
+			this_atom->asa,
+			this_atom->mw,
+			this_atom->bead_assignment,
+			this_atom->chain,
+			this_atom->serial,
+			this_atom->is_bead ? "Y" : "N",
+			this_atom->bead_asa,
+			this_atom->visibility ? "Y" : "N",
+			this_atom->exposed_code,
+			this_atom->bead_mw,
+			this_atom->bead_positioner ? "Y" : "N",
+			this_atom->placing_method,
+			this_atom->bead_position_coordinate.axis[0],
+			this_atom->bead_position_coordinate.axis[1],
+			this_atom->bead_position_coordinate.axis[2],
+			this_atom->bead_cog_coordinate.axis[0],
+			this_atom->bead_cog_coordinate.axis[1],
+			this_atom->bead_cog_coordinate.axis[2],
+			this_atom->bead_coordinate.axis[0],
+			this_atom->bead_coordinate.axis[1],
+			this_atom->bead_coordinate.axis[2]
+			);
+		}
+		}
+	}
 
-       // pass 4 print results
-
-       printf("model~molecule~atom~name~residue~position~active~radius~asa~mw~bead #~chain~serial~is_bead~ bead_asa~visible~code/color~bead mw~position controlled?~baric method~position_coordinate~cog position~use position\n");
-       for (unsigned int i = 0; i < model_vector.size (); i++)
-	 {
-	   for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
-	     {
-	       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
-		 {
-		   PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-
-		   //		   printf("model %d mol %d atm %d nam %s res %s xyz [%f,%f,%f] act %s rads %f asa %f bead # %d chain %d serl %d is_bead %s bead_asa %f vis %s code %d pos? %s pos_co [%f,%f,%f] cog [%f,%f,%f] use [%f, %f, %f]\n",
-		   printf("%d~%d~%d~%s~%s~[%f,%f,%f]~%s~%f~%f~%f~%d~%d~%d~%s~%f~%s~%d~%f~%s~%d~[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]\n",			  
-			  i, j, k, 
-			  this_atom->name.ascii(),
-			  this_atom->resName.ascii(),
-			  this_atom->coordinate.axis[0],
-			  this_atom->coordinate.axis[1],
-			  this_atom->coordinate.axis[2],
-			  this_atom->active ? "Y" : "N",
-			  this_atom->radius,
-			  this_atom->asa,
-			  this_atom->mw,
-			  this_atom->bead_assignment,
-			  this_atom->chain,
-			  this_atom->serial,
-			  this_atom->is_bead ? "Y" : "N",
-			  this_atom->bead_asa,
-			  this_atom->visibility ? "Y" : "N",
-			  this_atom->exposed_code,
-			  this_atom->bead_mw,
-			  this_atom->bead_positioner ? "Y" : "N",
-			  this_atom->placing_method,
-			  this_atom->bead_position_coordinate.axis[0],
-			  this_atom->bead_position_coordinate.axis[1],
-			  this_atom->bead_position_coordinate.axis[2],
-			  this_atom->bead_cog_coordinate.axis[0],
-			  this_atom->bead_cog_coordinate.axis[1],
-			  this_atom->bead_cog_coordinate.axis[2],
-			  this_atom->bead_coordinate.axis[0],
-			  this_atom->bead_coordinate.axis[1],
-			  this_atom->bead_coordinate.axis[2]
-			  );
-		 }
-	     }
-	 }
-
-       return 0;
+		return 0;
 }
 
 void US_Hydrodyn::bead_check()
@@ -784,7 +805,7 @@ void US_Hydrodyn::residue()
 	}
 	else
 	{
-		addResidue = new US_AddResidue(&residue_widget, 0);
+		addResidue = new US_AddResidue(&residue_widget, hydrovol, 0);
 		addResidue->show();
 	}
 }
@@ -974,7 +995,7 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 			}
 			if (str1.left(4) == "ATOM" || str1.left(6) == "HETATM") // need to add TER
 			{
-				if (!chain_flag) 	// at the first time we encounter the word ATOM 
+				if (!chain_flag) 	// at the first time we encounter the word ATOM
 				{ 				// we don't have a chain yet, so let's start a new one
 					temp_chain.chainID = str1.mid(21, 1);
 					str2 = str1.mid(72, 4);
@@ -1050,7 +1071,7 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 	struct PDB_atom temp_atom;
 	str2 = str1.mid(6, 5);
 	temp_atom.serial = str2.toUInt();
-	
+
 	str2 = str1.mid(13, 4);
 	temp_atom.name = str2.stripWhiteSpace();
 
@@ -1069,13 +1090,13 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 	temp_atom.coordinate.axis[1] = str2.toFloat();
 	str2 = str1.mid(46, 8);
 	temp_atom.coordinate.axis[2] = str2.toFloat();
-	
+
 	str2 = str1.mid(54, 6);
 	temp_atom.occupancy = str2.toFloat();
-	
+
 	str2 = str1.mid(60, 6);
 	temp_atom.tempFactor = str2.toFloat();
-	
+
 	temp_atom.element = str1.mid(76, 2);
 	if (str1.length() >= 80)
 	{
@@ -1143,6 +1164,11 @@ void US_Hydrodyn::update_asa_threshold_percent(double val)
 	asa_threshold_percent = val;
 }
 
+void US_Hydrodyn::update_hydrovol(double val)
+{
+	hydrovol = val;
+}
+
 void US_Hydrodyn::set_asa_calculation()
 {
 	asa_calculation = cb_asa_calculation->isChecked();
@@ -1173,6 +1199,8 @@ void US_Hydrodyn::read_config()
 		ts >> str;
 		ts.readLine();
 		sidechain_overlap.remove_hierarch = (bool) str.toInt();
+		ts >> sidechain_overlap.remove_hierarch_percent;
+		ts.readLine();
 		ts >> str;
 		ts.readLine();
 		sidechain_overlap.remove_sync = (bool) str.toInt();
@@ -1196,6 +1224,8 @@ void US_Hydrodyn::read_config()
 		ts >> str;
 		ts.readLine();
 		mainchain_overlap.remove_hierarch = (bool) str.toInt();
+		ts >> mainchain_overlap.remove_hierarch_percent;
+		ts.readLine();
 		ts >> str;
 		ts.readLine();
 		mainchain_overlap.remove_sync = (bool) str.toInt();
@@ -1219,6 +1249,8 @@ void US_Hydrodyn::read_config()
 		ts >> str;
 		ts.readLine();
 		buried_overlap.remove_hierarch = (bool) str.toInt();
+		ts >> buried_overlap.remove_hierarch_percent;
+		ts.readLine();
 		ts >> str;
 		ts.readLine();
 		buried_overlap.remove_sync = (bool) str.toInt();
@@ -1242,19 +1274,22 @@ void US_Hydrodyn::read_config()
 		compute_vbar = (bool) str.toInt();
 		ts >> str;
 		ts.readLine();
-		probe_radius = str.toFloat();
+		probe_radius = str.toDouble();
 		ts >> str;
 		ts.readLine();
-		asa_threshold = str.toFloat();
+		asa_threshold = str.toDouble();
 		ts >> str;
 		ts.readLine();
-		asa_threshold_percent = str.toFloat();
+		asa_threshold_percent = str.toDouble();
 		ts >> str;
 		ts.readLine();
 		asa_calculation = (bool) str.toInt();
 		ts >> str;
 		ts.readLine();
 		recheck_beads = (bool) str.toInt();
+		ts >> str;
+		ts.readLine();
+		hydrovol = str.toDouble();
 
 		f.close();
 	}
@@ -1276,6 +1311,8 @@ void US_Hydrodyn::read_config()
 			ts >> str;
 			ts.readLine();
 			sidechain_overlap.remove_hierarch = (bool) str.toInt();
+			ts >> sidechain_overlap.remove_hierarch_percent;
+			ts.readLine();
 			ts >> str;
 			ts.readLine();
 			sidechain_overlap.remove_sync = (bool) str.toInt();
@@ -1287,7 +1324,7 @@ void US_Hydrodyn::read_config()
 			ts >> str;
 			ts.readLine();
 			sidechain_overlap.show_translate = (bool) str.toInt();
-		
+
 			ts >> str;
 			ts.readLine();
 			mainchain_overlap.remove_overlap = (bool) str.toInt();
@@ -1299,6 +1336,8 @@ void US_Hydrodyn::read_config()
 			ts >> str;
 			ts.readLine();
 			mainchain_overlap.remove_hierarch = (bool) str.toInt();
+			ts >> mainchain_overlap.remove_hierarch_percent;
+			ts.readLine();
 			ts >> str;
 			ts.readLine();
 			mainchain_overlap.remove_sync = (bool) str.toInt();
@@ -1310,7 +1349,7 @@ void US_Hydrodyn::read_config()
 			ts >> str;
 			ts.readLine();
 			mainchain_overlap.show_translate = (bool) str.toInt();
-		
+
 			ts >> str;
 			ts.readLine();
 			buried_overlap.remove_overlap = (bool) str.toInt();
@@ -1322,6 +1361,8 @@ void US_Hydrodyn::read_config()
 			ts >> str;
 			ts.readLine();
 			buried_overlap.remove_hierarch = (bool) str.toInt();
+			ts >> buried_overlap.remove_hierarch_percent;
+			ts.readLine();
 			ts >> str;
 			ts.readLine();
 			buried_overlap.remove_sync = (bool) str.toInt();
@@ -1344,19 +1385,22 @@ void US_Hydrodyn::read_config()
 			compute_vbar = (bool) str.toInt();
 			ts >> str;
 			ts.readLine();
-			probe_radius = str.toFloat();
+			probe_radius = str.toDouble();
 			ts >> str;
 			ts.readLine();
-			asa_threshold = str.toFloat();
+			asa_threshold = str.toDouble();
 			ts >> str;
 			ts.readLine();
-			asa_threshold_percent = str.toFloat();
+			asa_threshold_percent = str.toDouble();
 			ts >> str;
 			ts.readLine();
 			asa_calculation = (bool) str.toInt();
 			ts >> str;
 			ts.readLine();
 			recheck_beads = (bool) str.toInt();
+			ts >> str;
+			ts.readLine();
+			hydrovol = str.toDouble();
 
 			f.close();
 		}
@@ -1376,6 +1420,7 @@ void US_Hydrodyn::reset()
 	sidechain_overlap.fuse_beads = true;
 	sidechain_overlap.fuse_beads_percent = 70.0;
 	sidechain_overlap.remove_hierarch = true;
+	sidechain_overlap.remove_hierarch_percent = 70.0;
 	sidechain_overlap.remove_sync = false;
 	sidechain_overlap.remove_sync_percent = 70.0;
 	sidechain_overlap.translate_out = true;
@@ -1385,6 +1430,7 @@ void US_Hydrodyn::reset()
 	mainchain_overlap.fuse_beads = true;
 	mainchain_overlap.fuse_beads_percent = 70.0;
 	mainchain_overlap.remove_hierarch = true;
+	mainchain_overlap.remove_hierarch_percent = 70.0;
 	mainchain_overlap.remove_sync = false;
 	mainchain_overlap.remove_sync_percent = 70.0;
 	mainchain_overlap.translate_out = false;
@@ -1394,11 +1440,12 @@ void US_Hydrodyn::reset()
 	buried_overlap.fuse_beads = false;
 	buried_overlap.fuse_beads_percent = 0.0;
 	buried_overlap.remove_hierarch = true;
+	buried_overlap.remove_hierarch_percent = 70.0;
 	buried_overlap.remove_sync = false;
 	buried_overlap.remove_sync_percent = 70.0;
 	buried_overlap.translate_out = false;
 	buried_overlap.show_translate = false;
-	
+
 	sidechain_overlap.title = "exposed side chain beads";
 	mainchain_overlap.title = "exposed main/main and main/side chain beads";
 	buried_overlap.title = "buried beads";
@@ -1411,6 +1458,7 @@ void US_Hydrodyn::reset()
 	asa_threshold_percent = 30.0;
 	asa_calculation = true;
 	recheck_beads = true;
+	hydrovol = 24.041;
 }
 
 void US_Hydrodyn::write_config()
@@ -1426,6 +1474,7 @@ void US_Hydrodyn::write_config()
 		ts << sidechain_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
 		ts << sidechain_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
 		ts << sidechain_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+		ts << sidechain_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
 		ts << sidechain_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
 		ts << sidechain_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
 		ts << sidechain_overlap.translate_out << "\t\t# Outward translation flag\n";
@@ -1435,6 +1484,7 @@ void US_Hydrodyn::write_config()
 		ts << mainchain_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
 		ts << mainchain_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
 		ts << mainchain_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+		ts << mainchain_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
 		ts << mainchain_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
 		ts << mainchain_overlap.remove_sync_percent << "\t\t# percent synchronously step\n";
 		ts << mainchain_overlap.translate_out << "\t\t# Outward translation flag\n";
@@ -1444,6 +1494,7 @@ void US_Hydrodyn::write_config()
 		ts << buried_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
 		ts << buried_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
 		ts << buried_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+		ts << buried_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
 		ts << buried_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
 		ts << buried_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
 		ts << buried_overlap.translate_out << "\t\t# Outward translation flag\n";
@@ -1457,6 +1508,7 @@ void US_Hydrodyn::write_config()
 		ts << asa_threshold_percent << "\t\t# ASA threshold percent\n";
 		ts << asa_calculation << "\t\t# flag for calculation of ASA\n";
 		ts << recheck_beads << "\t\t# flag for rechecking beads\n";
+		ts << hydrovol << "\t\t# hydration volume\n";
 
 		f.close();
 	}

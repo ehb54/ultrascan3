@@ -61,6 +61,16 @@ void US_Hydrodyn_OR::setupGUI()
 	cb_hierarch->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cb_hierarch, SIGNAL(clicked()), SLOT(set_hierarch()));
 
+	cnt_hierarch = new QwtCounter(this);
+	Q_CHECK_PTR(cnt_hierarch);
+	cnt_hierarch->setRange(0, 100, 0.1);
+	cnt_hierarch->setValue((*o_r).remove_hierarch_percent);
+	cnt_hierarch->setMinimumHeight(minHeight1);
+	cnt_hierarch->setEnabled((*o_r).remove_overlap);
+	cnt_hierarch->setNumButtons(3);
+	cnt_hierarch->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cnt_hierarch, SIGNAL(valueChanged(double)), SLOT(update_hierarch(double)));
+
 	cb_sync = new QCheckBox(this);
 	cb_sync->setText(tr(" Remove Overlaps synchronously with step size: "));
 	cb_sync->setChecked((*o_r).remove_sync);
@@ -106,6 +116,7 @@ void US_Hydrodyn_OR::setupGUI()
 	background->addWidget(cnt_sync, j, 1);
 	j++;
 	background->addWidget(cb_hierarch, j, 0);
+	background->addWidget(cnt_hierarch, j, 1);
 	j++;
 
 	if ((*o_r).show_translate)
@@ -120,6 +131,7 @@ void US_Hydrodyn_OR::set_remove()
 	(*o_r).remove_overlap = cb_remove->isChecked();
 	cnt_sync->setEnabled((*o_r).remove_overlap);
 	cb_sync->setEnabled((*o_r).remove_overlap);
+	cnt_hierarch->setEnabled((*o_r).remove_overlap);
 	cb_hierarch->setEnabled((*o_r).remove_overlap);
 	cnt_fuse->setEnabled((*o_r).remove_overlap);
 	cb_fuse->setEnabled((*o_r).remove_overlap);
@@ -195,4 +207,9 @@ void US_Hydrodyn_OR::update_fuse(double val)
 void US_Hydrodyn_OR::update_sync(double val)
 {
 	(*o_r).remove_sync_percent = val;
+}
+
+void US_Hydrodyn_OR::update_hierarch(double val)
+{
+	(*o_r).remove_hierarch_percent = val;
 }

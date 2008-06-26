@@ -29,7 +29,7 @@ struct overlap_reduction
 	bool remove_sync;
 	bool translate_out, show_translate;
 	bool remove_overlap;
-	float fuse_beads_percent, remove_sync_percent;
+	double fuse_beads_percent, remove_sync_percent, remove_hierarch_percent;
 };
 
 class US_EXTERN US_Hydrodyn_OR : public QFrame
@@ -44,7 +44,7 @@ class US_EXTERN US_Hydrodyn_OR : public QFrame
 		struct overlap_reduction *o_r;
 
 		US_Config *USglobal;
-		
+
 		QLabel *lbl_title;
 
 		QCheckBox *cb_fuse;
@@ -52,10 +52,11 @@ class US_EXTERN US_Hydrodyn_OR : public QFrame
 		QCheckBox *cb_sync;
 		QCheckBox *cb_translate;
 		QCheckBox *cb_remove;
-		
+
 		QwtCounter *cnt_fuse;
 		QwtCounter *cnt_sync;
-		
+		QwtCounter *cnt_hierarch;
+
 
 	private slots:
 		void setupGUI();
@@ -66,6 +67,7 @@ class US_EXTERN US_Hydrodyn_OR : public QFrame
 		void set_remove();
 		void update_fuse(double);
 		void update_sync(double);
+		void update_hierarch(double);
 
 };
 
