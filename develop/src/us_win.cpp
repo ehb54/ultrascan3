@@ -1,4 +1,5 @@
 #include "../include/us_win.h"
+#include "../include/revision.h"
 #include <qtimer.h>
 #include <qmotifstyle.h>
 #include <qmotifplusstyle.h>
@@ -2504,6 +2505,7 @@ void UsWin::about()
 	QMessageBox::message(
 			tr("About UltraScan..."),
 	tr("UltraScan II version " + ver + "\n"
+			REVISION "\n"
 			"Copyright 1989 - 2008\n"
 			"Borries Demeler and the University of Texas System\n\n"
 			"For more information, please visit:\n"

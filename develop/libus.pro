@@ -1,6 +1,10 @@
 # Messages
 !include ( uname.pri ) error( "uname.pri missing.  Aborting..." )
 
+revision.target            = include/us_revision.h
+revision.commands          = sh revision.sh
+QMAKE_EXTRA_UNIX_TARGETS += revision
+
 TEMPLATE       = lib
 TRANSLATIONS   = lib.ts
 VERSION        = 9.8
@@ -366,6 +370,7 @@ HEADERS += \
   include/us_register.h \
   include/us_reorder.h \
   include/us_resplot.h \
+	include/us_revision.h \
   include/us_rundetails.h \
   include/us_sa2d.h \
   include/us_sa2d_control.h \
