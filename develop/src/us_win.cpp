@@ -1,5 +1,5 @@
 #include "../include/us_win.h"
-#include "../include/revision.h"
+#include "../include/us_revision.h"
 #include <qtimer.h>
 #include <qmotifstyle.h>
 #include <qmotifplusstyle.h>
