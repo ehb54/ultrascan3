@@ -14,7 +14,7 @@
 #include "us_db.h"
 
 //! A Struct for storing required info for investigator register in DB.
-/*! 
+/*!
 	Each element is according to an entry field in Database Table <tt>tblInvestigators</tt>.
 */
 struct US_InvestigatorData
@@ -41,23 +41,23 @@ struct US_InvestigatorData
 class US_EXTERN US_DB_TblInvestigator : public US_DB
 {
 	Q_OBJECT
-	
+
 	public:
 		US_DB_TblInvestigator(QWidget *p=0, const char *name="us_tblinvestigator");
 		~US_DB_TblInvestigator();
-		
+
 		struct US_InvestigatorData info_list;	/*!< A struct US_InvestigatorData for storing Inverstigator register information. */
 //		struct US_LoginData login_list;			/*!< A struct US_LoginData for storing DB login information. */
 
-		QString *nameString, 			/*!< A String Array stores name dispaly.*/
-				  *item_firstname,		/*!< A String Array stores first name.*/
-				  *item_lastname;			/*!< A String Array stores last name.*/
-		int *item_InvID;					/*!< A Integer Array stores investigator ID.*/
+		vector <QString> nameString; 			/*!< A String Array stores name dispaly.*/
+		vector <QString> item_firstname;		/*!< A String Array stores first name.*/
+		vector <QString> item_lastname;			/*!< A String Array stores last name.*/
+		vector <int> item_InvID;					/*!< A Integer Array stores investigator ID.*/
 		int newInvID,						/*!< A Integer variable for new investigator ID.*/
 			 changed_flag, 				/*!< A flag for update(), 0 no change and 1 changed. */
 			 new_register;					/*!< A flag for save(), 0 existed guy and 1 new guy. */
 		bool select_flag;					/*!< A flag for query listbox select, default set to <var>false</var> */
-		
+
 		QLabel *lbl_blank;				/*!< A raised Label shows 'Investigator Information'. */
 		QLabel *lbl_InvID;				/*!< A Label shows 'INvestigator ID:'. */
 		QLabel *lbl_IdNumber;			/*!< A Label shows the number of Investigator ID. */
@@ -78,7 +78,7 @@ class US_EXTERN US_DB_TblInvestigator : public US_DB
 		QPushButton *pb_reset;			/*!< A PushButton connect to reset(). */
 		QPushButton *pb_delete;			/*!< A PushButton connect to del(). */
 		QPushButton *pb_exit;			/*!< A PushButton connect to quit(). */
-		
+
 		QLineEdit *le_LastName;			/*!< A LineEdit used by update_lastname() */
 		QLineEdit *le_FirstName;		/*!< A LineEdit used by update_firstname() */
 		QLineEdit *le_Address;			/*!< A LineEdit used by update_address() */
@@ -87,7 +87,7 @@ class US_EXTERN US_DB_TblInvestigator : public US_DB
 		QLineEdit *le_Zip;				/*!< A LineEdit used by update_zip() */
 		QLineEdit *le_Phone;				/*!< A LineEdit used by update_phone() */
 		QLineEdit *le_Email;				/*!< A LineEdit used by update_email() */
-	
+
 	private slots:
 		void GUI();
 // pushbuttons:
@@ -113,13 +113,13 @@ class US_EXTERN US_DB_TblInvestigator : public US_DB
 // other:
 		bool check_fields();
 		void clear();
-		
+
 	signals:
 /*!
 	This signal is emitted whenever the name record is selected or closing the interface.\n
 	The argument is String <var>Display</var> (InvID(#):+ FirstName + LastName) and integer <var>InvID</var>.
 */
-		void valueChanged(QString Display, int InvID);	
+		void valueChanged(QString Display, int InvID);
 };
 
 #endif

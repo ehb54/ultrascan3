@@ -1,10 +1,10 @@
 #include "../include/us_db_tbl_investigator.h"
 
 //! Constructor
-/*! 
-	Constractor a new <var>US_DB_TblInvestigator</var> interface, 
-	with <var>p</var> as a parent and <var>us_tblinvestigator</var> as object name. 
-*/ 
+/*!
+	Constractor a new <var>US_DB_TblInvestigator</var> interface,
+	with <var>p</var> as a parent and <var>us_tblinvestigator</var> as object name.
+*/
 US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_DB( p, name)
 {
 	int xpos, ypos, column1 = 160, column2 = 220,  buttonh = 26;
@@ -14,7 +14,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 
 	select_flag = false;		// use for query listbox select
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-	
+
  	changed_flag = 0; //0 no change and 1 changed, flag for update()
 	new_register = 0; //0 existed guy and 1 new guy, flag for save()
 	info_list.InvID = -1;
@@ -27,10 +27,10 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 	info_list.Phone = "";
 	info_list.Email = "";
 	info_list.Display = "";
-		
+
 	xpos = border;
-	ypos = border;	
-	
+	ypos = border;
+
 	lbl_blank = new QLabel(tr("Investigator Information:"), this);
 	lbl_blank->setAlignment(AlignCenter|AlignVCenter);
 //	lbl_blank->setFrameStyle(QFrame::WinPanel|Raised);
@@ -48,18 +48,18 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 	lbl_InvID->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_InvID->setGeometry(xpos, ypos, column1, buttonh);
 	lbl_InvID->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	
+
 	xpos += column1 + spacing;
-	 
- 
-	newInvID =get_newID("tblInvestigators", "InvID");     
+
+
+	newInvID =get_newID("tblInvestigators", "InvID");
 	lbl_IdNumber = new QLabel("",this);
 	lbl_IdNumber->setAlignment(AlignVCenter);
 	lbl_IdNumber->setGeometry(xpos, ypos, column2, buttonh);
 	lbl_IdNumber->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
 	lbl_IdNumber->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1));
 	lbl_IdNumber->setNum(newInvID);
-	
+
 	xpos = border;
 	ypos += buttonh + spacing;
 
@@ -68,9 +68,9 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 	lbl_LastName->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_LastName->setGeometry(xpos, ypos, column1, buttonh);
 	lbl_LastName->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	
+
 	xpos += column1 + spacing;
-	
+
 	le_LastName = new QLineEdit(this, "LastName");
 	le_LastName->setGeometry(xpos, ypos, column2, buttonh);
 	le_LastName->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -90,7 +90,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 	connect(pb_chkname, SIGNAL(clicked()), SLOT(checkname()));
 
 	xpos +=column1 + spacing;
-	
+
 	lb_name = new QListBox(this, "Names");
 	lb_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	lb_name->setGeometry(xpos, ypos, column2, (buttonh*4));
@@ -107,9 +107,9 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 	lbl_FirstName->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_FirstName->setGeometry(xpos, ypos, column1, buttonh);
 	lbl_FirstName->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	
+
 	xpos += column1 + spacing;
-	
+
 	le_FirstName = new QLineEdit(this, "FirstName");
 	le_FirstName->setGeometry(xpos, ypos, column2, buttonh);
 	le_FirstName->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -118,15 +118,15 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 
 	xpos = border;
 	ypos += buttonh + spacing;
-	
+
 	lbl_Address = new QLabel(tr(" Address:"),this);
 	lbl_Address->setAlignment(AlignLeft|AlignVCenter);
 	lbl_Address->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_Address->setGeometry(xpos, ypos, column1, buttonh);
 	lbl_Address->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	
+
 	xpos += column1 + spacing;
-	
+
 	le_Address = new QLineEdit(this, "address");
 	le_Address->setGeometry(xpos, ypos, column2, buttonh);
 	le_Address->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -141,9 +141,9 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 	lbl_City->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_City->setGeometry(xpos, ypos, column1, buttonh);
 	lbl_City->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	
+
 	xpos += column1 + spacing;
-	
+
 	le_City = new QLineEdit(this, "city");
 	le_City->setGeometry(xpos, ypos, column2, buttonh);
 	le_City->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -152,15 +152,15 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 
 	ypos += buttonh + spacing;
 	xpos = border;
-	
+
 	lbl_State = new QLabel(tr(" State:"), this);
 	lbl_State->setAlignment(AlignLeft|AlignVCenter);
 	lbl_State->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_State->setGeometry(xpos, ypos, column1, buttonh);
 	lbl_State->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	
+
 	xpos += column1 + spacing;
-	
+
 	le_State = new QLineEdit(this, "state");
 	le_State->setGeometry(xpos, ypos, column2, buttonh);
 	le_State->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -187,7 +187,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 
 	xpos = border;
 	ypos += buttonh + spacing;
-	
+
 	lbl_Phone = new QLabel(tr(" Phone:"),this);
 	lbl_Phone->setAlignment(AlignLeft|AlignVCenter);
 	lbl_Phone->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -204,7 +204,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 
 	xpos = border;
 	ypos += buttonh + spacing;
-	
+
 	lbl_Email = new QLabel(tr(" Email:"),this);
 	lbl_Email->setAlignment(AlignLeft|AlignVCenter);
 	lbl_Email->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -240,7 +240,7 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 	pb_update->setGeometry(xpos, ypos, buttonw3, buttonh);
 	pb_update->setEnabled(false);
 	connect(pb_update, SIGNAL(clicked()), SLOT(update()));
-	
+
 	xpos +=buttonw3 + spacing;
 
 	pb_commit = new QPushButton(tr("Commit"), this);
@@ -254,16 +254,16 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 
 	xpos = border;
 	ypos += buttonh + spacing;
-	
+
 	pb_delete = new QPushButton(tr("Delete"), this);
 	pb_delete->setAutoDefault(false);
 	pb_delete->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_delete->setPalette(QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	pb_delete->setGeometry(xpos, ypos, buttonw3, buttonh);
 	connect(pb_delete, SIGNAL(clicked()), SLOT(check_permission()));
-		
+
 	xpos += buttonw3 + spacing;
-	
+
 	pb_help = new QPushButton(tr("Help"), this);
 	pb_help->setAutoDefault(false);
 	pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -281,11 +281,11 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 	pb_exit->setGeometry(xpos, ypos, buttonw3, buttonh);
 	pb_exit->setEnabled(true);
 	connect(pb_exit, SIGNAL(clicked()), SLOT(quit()));
-	
+
 	xpos = column1+column2 + spacing +2*border;
 	ypos += buttonh + spacing;
 	setMinimumSize(xpos, ypos);
-	
+
 	global_Xpos += 30;
 	global_Ypos += 30;
 	setGeometry(global_Xpos, global_Ypos, xpos, ypos);
@@ -296,10 +296,6 @@ US_DB_TblInvestigator::US_DB_TblInvestigator(QWidget *p, const char *name) : US_
 /*! destroy the <var>US_DB_TblInvestigator</var>. */
 US_DB_TblInvestigator::~US_DB_TblInvestigator()
 {
-	delete nameString;
-	delete item_InvID;
-	delete item_firstname;
-	delete item_lastname;
 }
 
 void US_DB_TblInvestigator::GUI()
@@ -333,7 +329,7 @@ void US_DB_TblInvestigator::GUI()
 	buttonGrid->addWidget(pb_commit,0,2);
 	buttonGrid->addWidget(pb_delete,1,0);
 	buttonGrid->addWidget(pb_help,1,1);
-	buttonGrid->addWidget(pb_exit,1,2);	
+	buttonGrid->addWidget(pb_exit,1,2);
 	mainbox->activate();
 }
 /*!Replace struct US_InvestigatorData <var>FirstName</var> value with newText only if old value has been changed.*/
@@ -353,7 +349,7 @@ void US_DB_TblInvestigator::update_lastname(const QString &newText)
 	{
 		info_list.LastName = newText;
 		changed_flag = 1;
-	}	
+	}
 }
 
 /*!Replace struct US_InvestigatorData <var>Address</var> value with newText only if old value has been changed.*/
@@ -421,6 +417,66 @@ void US_DB_TblInvestigator::update_email(const QString &newText)
 */
 void US_DB_TblInvestigator::checkname()
 {
+	QString str;
+	int maxID = get_newID("tblInvestigators", "InvID");
+	item_firstname.resize(maxID);
+	item_lastname.resize(maxID);
+	item_InvID.resize(maxID);
+	nameString.resize(maxID);
+	QString checkstr = le_LastName->text();
+	if(!checkstr.isEmpty())
+	{
+		str = "SELECT InvID, FirstName, LastName FROM tblInvestigators WHERE LastName LIKE '" + checkstr +
+				"' OR FirstName LIKE '" + checkstr + "' ORDER BY LastName;";
+	}
+	else
+	{
+		str = "SELECT InvID, FirstName, LastName FROM tblInvestigators ORDER BY LastName;";
+	}
+	QSqlQuery query(str);
+	int nameCount = 0;
+	if(query.isActive())
+	{
+		while(query.next())
+		{
+			item_InvID[nameCount] = query.value(0).toInt();
+			item_firstname[nameCount] = query.value(1).toString();
+			item_lastname[nameCount] = query.value(2).toString();
+			nameString[nameCount] = "InvID (" + QString::number( item_InvID[nameCount] ) + "), "+
+							 item_firstname[nameCount] + " " + item_lastname[nameCount];
+			nameCount++;
+		}
+	}
+
+	if(nameCount > 0)
+	{
+		lb_name->clear();
+		for ( int i=0; i<nameCount; i++)
+		{
+			lb_name->insertItem(nameString[i]);
+		}
+		select_flag = true;
+		pb_commit->setEnabled(false);
+	}
+	else
+	{
+		lb_name->clear();
+		lb_name->insertItem("Name not found in DB");
+		lb_name->insertItem("Please try again...");
+		pb_update->setEnabled(false);
+		pb_commit->setEnabled(true);
+		lbl_IdNumber->setText("");
+		le_FirstName->setText("");
+		le_Address->setText("");
+		le_City->setText("");
+		le_State->setText("");
+		le_Zip->setText("");
+		le_Phone->setText("");
+		le_Email->setText("");
+		new_register = 1;
+	}
+
+/*
 	QSqlCursor cur_i( "tblInvestigators" );
    QStringList orderFields = QStringList() <<"FirstName" << "LastName";
    QSqlIndex order = cur_i.index( orderFields );
@@ -442,49 +498,23 @@ void US_DB_TblInvestigator::checkname()
 	int nameCount = 0;
    while ( cur_i.next() )
    {
-		
+
    	int id = cur_i.value( "InvID" ).toInt();
 		//Display on QListBox
       nameString[nameCount] = "InvID (" + QString::number( id ) + "): "+
 							 cur_i.value( "FirstName" ).toString() +
  							 " " + cur_i.value( "LastName" ).toString();
-  
+
 		item_InvID[nameCount] = id;
 		item_firstname[nameCount] = cur_i.value("FirstName").toString();
 		item_lastname[nameCount] = cur_i.value("LastName").toString();
 		nameCount++;
    }
-	if(nameCount > 0)
-	{
-		lb_name->clear();
-		for ( int i=0; i<nameCount; i++)
-		{
-			lb_name->insertItem(nameString[i]);
-		}
-		select_flag = true;
-		pb_commit->setEnabled(false);
-	}
-	else
-	{
-		lb_name->clear();
-		lb_name->insertItem("Name not found in DB");
-		lb_name->insertItem("Please register");
-		pb_update->setEnabled(false);
-		pb_commit->setEnabled(true);
-		lbl_IdNumber->setText("");
-		le_FirstName->setText("");
-		le_Address->setText("");
-		le_City->setText("");
-		le_State->setText("");
-		le_Zip->setText("");
-		le_Phone->setText("");
-		le_Email->setText("");
-		new_register = 1;
-	}
+*/
 }
 
 /*!
-	If you find your name in the ListBox by checkname(). Doubleclick it, 
+	If you find your name in the ListBox by checkname(). Doubleclick it,
 	you will get your all register information.
 	\param item The number of items in ListBox, count start from 0.
 */
@@ -512,7 +542,7 @@ void US_DB_TblInvestigator::select_name(int item)
 			info_list.Phone = cur.value("Phone").toString();
 			info_list.Email = cur.value("Email").toString();
 		}
-	
+
 		lbl_IdNumber->setNum(info_list.InvID);
 		le_FirstName->setText(info_list.FirstName);
 		le_LastName->setText(info_list.LastName);
@@ -523,12 +553,12 @@ void US_DB_TblInvestigator::select_name(int item)
 		le_Phone->setText(info_list.Phone);
 		le_Email->setText(info_list.Email);
 		pb_commit->setEnabled(false);
-		pb_update->setEnabled(true);	
-		changed_flag = 0;			
+		pb_update->setEnabled(true);
+		changed_flag = 0;
 	}
 	else
 	{
-		QMessageBox::message(tr("Attention:"), 
+		QMessageBox::message(tr("Attention:"),
 									tr("No records available\n"));
 		return;
 	}
@@ -551,17 +581,17 @@ void US_DB_TblInvestigator::del(bool permission)
 	QString str;
 	if(!permission)
 	{
-		QMessageBox::message(tr("Attention:"), 
+		QMessageBox::message(tr("Attention:"),
 									tr("Permission denied"));
 		return;
 	}
 	int id = info_list.InvID;
 	if(id == -1)
 	{
-		QMessageBox::message(tr("Attention:"), 
+		QMessageBox::message(tr("Attention:"),
 									tr("First select a database entry\n"
 										"to be deleted from the database"));
-										
+
 	}
 	else
 	{
@@ -573,7 +603,7 @@ void US_DB_TblInvestigator::del(bool permission)
 		cur.select(filter);
 		cur.primeDelete();
 */
-		switch(QMessageBox::information(this, tr("Do you want to delete this entry?"), 
+		switch(QMessageBox::information(this, tr("Do you want to delete this entry?"),
 										tr("Clicking 'OK' will delete the information from the database"),
 										tr("OK"), tr("CANCEL"),	0,1))
 		{
@@ -596,13 +626,13 @@ void US_DB_TblInvestigator::del(bool permission)
 				lb_name->clear();
 				clear();
 				break;
-			}	
+			}
 			case 1:
 			{
 				break;
 			}
 		}
-	}		  	
+	}
 }
 
 
@@ -645,7 +675,7 @@ void US_DB_TblInvestigator::update()
 		cur.setValue("InvID", info_list.InvID);
 		cur.select(filter);
 		QSqlRecord *buf = cur.primeUpdate();
-   	
+
    	buf->setValue( "FirstName", info_list.FirstName );
    	buf->setValue( "LastName", info_list.LastName );
  		buf->setValue( "Address", info_list.Address );
@@ -657,7 +687,7 @@ void US_DB_TblInvestigator::update()
 
 		info_list.Display = "InvID (" +QString::number(info_list.InvID) + "): " +
 							 info_list.FirstName + " " + info_list.LastName;
-		switch(QMessageBox::information(this, tr("Save the updated entry?"), 
+		switch(QMessageBox::information(this, tr("Save the updated entry?"),
 										tr("Clicking 'OK' will update the information\n"
 											"for this investigator in the database."),
 										tr("OK"), tr("CANCEL"),	0,1))
@@ -667,18 +697,18 @@ void US_DB_TblInvestigator::update()
 				cur.update();
 				quit();
 				break;
-			}	
+			}
 			case 1:
 			{
 				break;
-			}		
-		}							
+			}
+		}
 	}
 	else
 	{
 		QMessageBox::message(tr("Attention:"), tr("No changes recorded for this entry."));
 		return;
-	} 
+	}
 }
 
 /*!
@@ -704,11 +734,11 @@ void US_DB_TblInvestigator::save()
  		buffer->setValue( "Zip", info_list.Zip );
  		buffer->setValue( "Phone", info_list.Phone );
  		buffer->setValue( "Email", info_list.Email );
-		
+
 		info_list.Display = "InvID (" +QString::number(newInvID) + "): " +
 							 info_list.FirstName + " " + info_list.LastName;
-  	  	info_list.InvID = newInvID; 
-		switch(QMessageBox::information(this, tr("Save this entry?"), 
+  	  	info_list.InvID = newInvID;
+		switch(QMessageBox::information(this, tr("Save this entry?"),
 										tr("Clicking 'OK' will save the information\n"
 											"for this investigator to the database."),
 										tr("OK"), tr("CANCEL"),	0,1))
@@ -716,7 +746,7 @@ void US_DB_TblInvestigator::save()
 			case 0:
 			{
 				cur.insert();
-				
+
 				//Insert investigator information into tblAuth
 				QDateTime now = QDateTime::currentDateTime();
 				QSqlQuery target;
@@ -731,12 +761,12 @@ void US_DB_TblInvestigator::save()
 
 				quit();
 				break;
-			}	
+			}
 			case 1:
 			{
 				break;
 			}
-		}											
+		}
 	}
 	else
 	{
@@ -758,7 +788,7 @@ void US_DB_TblInvestigator::clear()
 	info_list.Phone = "";
 	info_list.Email = "";
 	info_list.Display = "";
-	
+
 	lbl_IdNumber->setText("");
 	le_FirstName->setText("");
 	le_LastName->setText("");
