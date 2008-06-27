@@ -426,8 +426,8 @@ void US_DB_TblInvestigator::checkname()
 	QString checkstr = le_LastName->text();
 	if(!checkstr.isEmpty())
 	{
-		str = "SELECT InvID, FirstName, LastName FROM tblInvestigators WHERE LastName LIKE '" + checkstr +
-				"' OR FirstName LIKE '" + checkstr + "' ORDER BY LastName;";
+		str = "SELECT InvID, FirstName, LastName FROM tblInvestigators WHERE LastName LIKE '%" + checkstr +
+				"%' OR FirstName LIKE '%" + checkstr + "%' ORDER BY LastName;";
 	}
 	else
 	{
