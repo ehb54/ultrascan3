@@ -49,6 +49,7 @@ void US_Hydrodyn_OR::setupGUI()
 	cnt_fuse->setMinimumHeight(minHeight1);
 	cnt_fuse->setEnabled((*o_r).remove_overlap);
 	cnt_fuse->setNumButtons(3);
+	cnt_fuse->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_fuse->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_fuse, SIGNAL(valueChanged(double)), SLOT(update_fuse(double)));
 
@@ -68,6 +69,7 @@ void US_Hydrodyn_OR::setupGUI()
 	cnt_hierarch->setMinimumHeight(minHeight1);
 	cnt_hierarch->setEnabled((*o_r).remove_overlap);
 	cnt_hierarch->setNumButtons(3);
+	cnt_hierarch->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_hierarch->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_hierarch, SIGNAL(valueChanged(double)), SLOT(update_hierarch(double)));
 
@@ -87,6 +89,7 @@ void US_Hydrodyn_OR::setupGUI()
 	cnt_sync->setMinimumHeight(minHeight1);
 	cnt_sync->setEnabled((*o_r).remove_overlap);
 	cnt_sync->setNumButtons(3);
+	cnt_sync->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_sync->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_sync, SIGNAL(valueChanged(double)), SLOT(update_sync(double)));
 

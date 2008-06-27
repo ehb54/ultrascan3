@@ -61,7 +61,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		US_Hydrodyn_OR *mainchain_OR;
 		US_Hydrodyn_OR *buried_OR;
 		US_Vbar_DB *vbar_dlg;
-		double probe_radius, asa_threshold, asa_threshold_percent, vbar, hydrovol;
+		double probe_radius, asa_threshold, asa_threshold_percent, vbar, hydrovol, overlap_tolerance;
 
 		US_Config *USglobal;
 
@@ -76,6 +76,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QLabel *lbl_asa_threshold;
 		QLabel *lbl_asa_threshold_percent;
 		QLabel *lbl_hydrovol;
+		QLabel *lbl_overlap_tolerance;
 
 		QLineEdit *le_vbar;
 		QLineEdit *le_output_file;
@@ -119,6 +120,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QwtCounter *cnt_asa_threshold;
 		QwtCounter *cnt_asa_threshold_percent;
 		QwtCounter *cnt_hydrovol;
+		QwtCounter *cnt_overlap_tolerance;
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
@@ -152,6 +154,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void update_asa_threshold(double);
 		void update_asa_threshold_percent(double);
 		void update_hydrovol(double);
+		void update_overlap_tolerance(double);
 		void set_asa_calculation();
 		void set_bead_check();
 		int calc_somo(); // build bead model

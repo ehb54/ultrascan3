@@ -40,7 +40,6 @@ void US_Hydrodyn::setupGUI()
 
 	tw_overlap = new QTabWidget(this);
 	tw_overlap->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	tw_overlap->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 	tw_overlap->addTab(sidechain_OR, "Side chain beads");
 	tw_overlap->addTab(mainchain_OR, "Main and side chain beads");
 	tw_overlap->addTab(buried_OR, "Buried beads");
@@ -117,6 +116,7 @@ void US_Hydrodyn::setupGUI()
 	cnt_probe_radius->setMinimumHeight(minHeight1);
 	cnt_probe_radius->setEnabled(true);
 	cnt_probe_radius->setNumButtons(3);
+	cnt_probe_radius->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_probe_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_probe_radius, SIGNAL(valueChanged(double)), SLOT(update_probe_radius(double)));
 
@@ -134,6 +134,7 @@ void US_Hydrodyn::setupGUI()
 	cnt_asa_threshold->setMinimumHeight(minHeight1);
 	cnt_asa_threshold->setEnabled(true);
 	cnt_asa_threshold->setNumButtons(3);
+	cnt_asa_threshold->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_asa_threshold->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_asa_threshold, SIGNAL(valueChanged(double)), SLOT(update_asa_threshold(double)));
 
@@ -151,6 +152,7 @@ void US_Hydrodyn::setupGUI()
 	cnt_asa_threshold_percent->setMinimumHeight(minHeight1);
 	cnt_asa_threshold_percent->setEnabled(true);
 	cnt_asa_threshold_percent->setNumButtons(3);
+	cnt_asa_threshold_percent->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_asa_threshold_percent->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_asa_threshold_percent, SIGNAL(valueChanged(double)), SLOT(update_asa_threshold_percent(double)));
 
@@ -168,8 +170,27 @@ void US_Hydrodyn::setupGUI()
 	cnt_hydrovol->setMinimumHeight(minHeight1);
 	cnt_hydrovol->setEnabled(true);
 	cnt_hydrovol->setNumButtons(3);
+	cnt_hydrovol->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_hydrovol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_hydrovol, SIGNAL(valueChanged(double)), SLOT(update_hydrovol(double)));
+
+	lbl_overlap_tolerance = new QLabel(tr(" Bead Overlap Tolerance: "), this);
+	Q_CHECK_PTR(lbl_overlap_tolerance);
+	lbl_overlap_tolerance->setAlignment(AlignLeft|AlignVCenter);
+	lbl_overlap_tolerance->setMinimumHeight(minHeight1);
+	lbl_overlap_tolerance->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_overlap_tolerance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+	cnt_overlap_tolerance= new QwtCounter(this);
+	Q_CHECK_PTR(cnt_overlap_tolerance);
+	cnt_overlap_tolerance->setRange(0, 1, 0.0001);
+	cnt_overlap_tolerance->setValue(overlap_tolerance);
+	cnt_overlap_tolerance->setMinimumHeight(minHeight1);
+	cnt_overlap_tolerance->setEnabled(true);
+	cnt_overlap_tolerance->setNumButtons(3);
+	cnt_overlap_tolerance->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cnt_overlap_tolerance->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cnt_overlap_tolerance, SIGNAL(valueChanged(double)), SLOT(update_overlap_tolerance(double)));
 
 	cb_asa_calculation = new QCheckBox(this);
 	cb_asa_calculation->setText(tr(" Perform ASA Calculation "));
@@ -347,48 +368,51 @@ void US_Hydrodyn::setupGUI()
 	j++;
 	background->addWidget(pb_load_pdb, j, 0);
 	background->addWidget(lbl_pdb_file, j, 1);
-	background->addMultiCellWidget(tw_overlap, j, j+5, 2, 4);
+	background->addMultiCellWidget(tw_overlap, j, j+6, 2, 4);
 	j++;
 	background->addWidget(lbl_model, j, 0);
-	background->addMultiCellWidget(lb_model, j, j+3, 1, 1);
-	j+=4;
+	background->addMultiCellWidget(lb_model, j, j+1, 1, 1);
+	j+=2;
 	background->addWidget(lbl_probe_radius, j, 0);
 	background->addWidget(cnt_probe_radius, j, 1);
 	j++;
 	background->addWidget(lbl_asa_threshold, j, 0);
 	background->addWidget(cnt_asa_threshold, j, 1);
-	background->addMultiCellWidget(lbl_output, j, j, 2, 4);
 	j++;
 	background->addWidget(lbl_asa_threshold_percent, j, 0);
 	background->addWidget(cnt_asa_threshold_percent, j, 1);
-	background->addMultiCellWidget(bg_output, j, j+1, 2, 4);
 	j++;
 	background->addWidget(lbl_hydrovol, j, 0);
 	background->addWidget(cnt_hydrovol, j, 1);
 	j++;
+	background->addWidget(lbl_overlap_tolerance, j, 0);
+	background->addWidget(cnt_overlap_tolerance, j, 1);
+	background->addMultiCellWidget(lbl_output, j, j, 2, 4);
+	j++;
 	background->addWidget(cb_asa_calculation, j, 0);
 	background->addWidget(cb_bead_check, j, 1);
-	background->addMultiCellWidget(bg_sequence, j, j+3, 2, 4);
+	background->addMultiCellWidget(bg_output, j, j+1, 2, 4);
 	j++;
 	background->addWidget(cb_vbar, j, 0);
+	background->addWidget(pb_help, j, 1);
 	j++;
 	background->addWidget(pb_vbar, j, 0);
 	background->addWidget(le_vbar, j, 1);
-	j++;
+	background->addMultiCellWidget(bg_sequence, j, j+3, 2, 4);
 	j++;
 	background->addWidget(pb_somo, j, 0);
 	background->addWidget(pb_visualize, j, 1);
+	j++;
+	background->addMultiCellWidget(lbl_tabletabs, j, j, 0, 1);
+	j++;
+	background->addWidget(pb_hybrid, j, 0);
+	background->addWidget(pb_atom, j, 1);
+	j++;
+	background->addWidget(pb_residue, j, 0);
+	background->addWidget(pb_cancel, j, 1);
 	background->addWidget(pb_select_output_file, j, 2);
 	background->addWidget(le_output_file, j, 3);
 	background->addWidget(pb_reset, j, 4);
-	j++;
-	background->addMultiCellWidget(lbl_tabletabs, j, j, 2, 4);
-	j++;
-	background->addWidget(pb_help, j, 0);
-	background->addWidget(pb_cancel, j, 1);
-	background->addWidget(pb_atom, j, 2);
-	background->addWidget(pb_residue, j, 3);
-	background->addWidget(pb_hybrid, j, 4);
 }
 
 int US_Hydrodyn::compute_asa()
@@ -1169,6 +1193,11 @@ void US_Hydrodyn::update_hydrovol(double val)
 	hydrovol = val;
 }
 
+void US_Hydrodyn::update_overlap_tolerance(double val)
+{
+	overlap_tolerance = val;
+}
+
 void US_Hydrodyn::set_asa_calculation()
 {
 	asa_calculation = cb_asa_calculation->isChecked();
@@ -1290,6 +1319,9 @@ void US_Hydrodyn::read_config()
 		ts >> str;
 		ts.readLine();
 		hydrovol = str.toDouble();
+		ts >> str;
+		ts.readLine();
+		overlap_tolerance = str.toDouble();
 
 		f.close();
 	}
@@ -1401,6 +1433,9 @@ void US_Hydrodyn::read_config()
 			ts >> str;
 			ts.readLine();
 			hydrovol = str.toDouble();
+			ts >> str;
+			ts.readLine();
+			overlap_tolerance = str.toDouble();
 
 			f.close();
 		}
@@ -1459,6 +1494,7 @@ void US_Hydrodyn::reset()
 	asa_calculation = true;
 	recheck_beads = true;
 	hydrovol = 24.041;
+	overlap_tolerance = 0.001;
 }
 
 void US_Hydrodyn::write_config()
@@ -1509,6 +1545,7 @@ void US_Hydrodyn::write_config()
 		ts << asa_calculation << "\t\t# flag for calculation of ASA\n";
 		ts << recheck_beads << "\t\t# flag for rechecking beads\n";
 		ts << hydrovol << "\t\t# hydration volume\n";
+		ts << overlap_tolerance << "\t\t# bead overlap tolerance\n";
 
 		f.close();
 	}

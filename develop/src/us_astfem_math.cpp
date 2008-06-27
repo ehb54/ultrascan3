@@ -1996,6 +1996,7 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, double ome
 
 	unsigned int i, j, simscan, expscan;
 	double a, b;
+	/*
 	if (acceleration) // we model rotor acceleration and need to correct the time
 	{
 		double time_correction = 0.0;
@@ -2009,7 +2010,7 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, double ome
 			(*simdata).scan[i].time -= time_correction;
 		}
 	}
-
+	*/
 	// first, create a temporary mfem_data structure (tmp_data) that has the same radial
 	// grid as simdata, but the same time grid as the experimental data. The time
 	// and w2t integral values are interpolated for the tmp_data structure.
