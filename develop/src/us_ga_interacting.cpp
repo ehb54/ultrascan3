@@ -448,10 +448,10 @@ void print_AstFemParameters(struct AstFemParameters *s) {
   printf("AstFemParameters.time_steps          \t%u\n", s->time_steps);
   printf("AstFemParameters.omega_s             \t%e\n", s->omega_s);
   printf("AstFemParameters.start_time          \t%e\n", s->start_time);
-  printf("AstFemParameters.meniscus            \t%e\n", s->meniscus);
-  printf("AstFemParameters.bottom              \t%e\n", s->bottom);
-  printf("AstFemParameters.mesh                \t%u\n", s->mesh);
+//  printf("AstFemParameters.meniscus            \t%e\n", s->meniscus);
+//  printf("AstFemParameters.bottom              \t%e\n", s->bottom);
+//  printf("AstFemParameters.mesh                \t%u\n", s->mesh);
   printf("AstFemParameters.moving_grid         \t%d\n", s->moving_grid);
   printf("AstFemParameters.acceleration        \t%d\n", s->acceleration);
-  printf("AstFemParameters.model               \t%u\n", s->model);
+//  printf("AstFemParameters.model               \t%u\n", s->model);
 }

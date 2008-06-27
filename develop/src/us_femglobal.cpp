@@ -463,7 +463,7 @@ int US_FemGlobal::write_modelSystem(struct ModelSystem *ms, QString filename, bo
 	ts << "Model written by US_FEMGLOBAL\n";
 	ts << "# This file is computer-generated, please do not edit unless you know what you are doing\n";
 #if defined(USE_MPI) 
-	ts << 9.7 << "\t\t# UltraScan Version Number\n";
+	ts << US_Version_string << "\t\t# UltraScan Version Number\n";
 #else
 	ts << US_Version << "\t\t# UltraScan Version Number\n";
 #endif
