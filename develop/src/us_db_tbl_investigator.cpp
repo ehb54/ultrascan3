@@ -443,7 +443,7 @@ void US_DB_TblInvestigator::checkname()
 			item_firstname[nameCount] = query.value(1).toString();
 			item_lastname[nameCount] = query.value(2).toString();
 			nameString[nameCount] = "InvID (" + QString::number( item_InvID[nameCount] ) + "), "+
-							 item_firstname[nameCount] + " " + item_lastname[nameCount];
+							 item_lastname[nameCount] + ", " + item_firstname[nameCount];
 			nameCount++;
 		}
 	}
