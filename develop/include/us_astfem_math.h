@@ -115,7 +115,7 @@ int interpolate (struct mfem_data *, /* simulated solution */
 		                 double *,     /* radius values from expt. data */
 		                 double **);   /* concentration values from expt. data, first dimension = time, second dimension radius */
 int interpolate (struct mfem_data *, /* simulated solution */
-					 struct mfem_data *, double, bool); /* experimental solution */
+					 struct mfem_data *, double, bool, bool); /* experimental solution */
 
 #endif
 

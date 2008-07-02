@@ -11,13 +11,19 @@ class US_EXTERN US_Astfem_RSA : public QObject
 	public:
 
 		US_Astfem_RSA();
-		US_Astfem_RSA(bool * /*stopFlag*/,
-				          bool /*GUIflag*/,
-									bool * /*movieFlag*/,
-									QObject * parent=0, const char * name=0);
+		US_Astfem_RSA( bool *,	// stopFlag
+							bool,		// GUIflag
+							bool *,	// movieFlag
+							bool,		// time_correction
+							QObject * parent=0, const char * name=0);
+		US_Astfem_RSA( bool *,	// stopFlag
+							bool,		// GUIflag
+							bool *,	// movieFlag
+							QObject * parent=0, const char * name=0);
 		~US_Astfem_RSA();
 		bool *stopFlag;			// stop calculation, interpolate and return
 		bool *movieFlag;			// output time and movies if true
+		bool time_correction;	// decides if output data is time corrected for acceleration (true=yes, false=no)
 		bool guiFlag;				// if true, signals will be emitted
 		double last_time;			// keep track of time globally for w2t_integral calculation
 		double w2t_integral;		// keep track of w2t_integral value globally

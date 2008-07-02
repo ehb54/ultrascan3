@@ -1983,7 +1983,7 @@ float *scantimes, double *radius, double **c)
 
 
 // interpolation routine By B. Demeler 041708
-int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, double omega_s, bool acceleration)
+int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, double omega_s, bool acceleration, bool time_correction)
 {
 // NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
 // before using this routine! The radius also has to be assigned!
@@ -1996,21 +1996,23 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, double ome
 
 	unsigned int i, j, simscan, expscan;
 	double a, b;
-	/*
-	if (acceleration) // we model rotor acceleration and need to correct the time
+	if(time_correction)
 	{
-		double time_correction = 0.0;
-		for (i=0; i<(*simdata).scan.size(); i++)
+		if (acceleration) // we model rotor acceleration and need to correct the time
 		{
-			time_correction += (*simdata).scan[i].time - ((*simdata).scan[i].omega_s_t/omega_s);
-		}
-		time_correction /= (*simdata).scan.size();
-		for (i=0; i<(*simdata).scan.size(); i++)
-		{
-			(*simdata).scan[i].time -= time_correction;
+			double time_correction = 0.0;
+			for (i=0; i<(*simdata).scan.size(); i++)
+			{
+				time_correction += (*simdata).scan[i].time - ((*simdata).scan[i].omega_s_t/omega_s);
+			}
+			time_correction /= (*simdata).scan.size();
+			for (i=0; i<(*simdata).scan.size(); i++)
+			{
+				(*simdata).scan[i].time -= time_correction;
+			}
 		}
 	}
-	*/
+
 	// first, create a temporary mfem_data structure (tmp_data) that has the same radial
 	// grid as simdata, but the same time grid as the experimental data. The time
 	// and w2t integral values are interpolated for the tmp_data structure.

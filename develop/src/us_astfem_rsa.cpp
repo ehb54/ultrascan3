@@ -2,11 +2,22 @@
 #include "../include/us_util.h"
 #include <algorithm>
 
-US_Astfem_RSA::US_Astfem_RSA(bool *stopFlag, bool guiFlag, bool *movieFlag, QObject *parent, const char *name) : QObject(parent, name)
+US_Astfem_RSA::US_Astfem_RSA(bool *stopFlag, bool guiFlag, bool *movieFlag,
+QObject *parent, const char *name) : QObject(parent, name)
 {
 	this->stopFlag = stopFlag;
 	this->guiFlag = guiFlag;
 	this->movieFlag = movieFlag;
+	time_correction = true;
+}
+
+US_Astfem_RSA::US_Astfem_RSA(bool *stopFlag, bool guiFlag, bool *movieFlag, bool time_correction,
+QObject *parent, const char *name) : QObject(parent, name)
+{
+	this->stopFlag = stopFlag;
+	this->guiFlag = guiFlag;
+	this->movieFlag = movieFlag;
+	this->time_correction = time_correction;
 }
 
 US_Astfem_RSA::~US_Astfem_RSA()
@@ -95,7 +106,7 @@ vector <struct mfem_data> *exp_data)
 						{
 							qApp->processEvents();
 						}
-						interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, true); // interpolate the simulated data onto the experimental time- and radius grid
+						interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, true, time_correction); // interpolate the simulated data onto the experimental time- and radius grid
 						return(1); // early termination = 1
 					}
 				}  // end of for acceleration
@@ -133,8 +144,8 @@ vector <struct mfem_data> *exp_data)
 				current_time = (*simparams).speed_step[ss].duration_hours * 3600
 						+ (*simparams).speed_step[ss].duration_minutes * 60;
 				//cout << "Current time: " << current_time << ", duration: " << duration << endl;
-				interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, false); // interpolate the simulated data onto the experimental time- and radius grid
-
+				// interpolate the simulated data onto the experimental time- and radius grid
+				interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, false, time_correction);
 				// set the current speed to the constant rotor speed of the current speed step
 				current_speed = (*simparams).speed_step[ss].rotorspeed;
 				if (guiFlag)
@@ -164,7 +175,7 @@ vector <struct mfem_data> *exp_data)
 		af_params.role.resize(num_comp);
 		af_params.rg_index = group;
 		for (j=0; j<num_comp; j++)
-		{ 
+		{
 			af_params.s[j] = (*system).component_vector[rg[group].GroupComponent[j]].s;
 			af_params.D[j] = (*system).component_vector[rg[group].GroupComponent[j]].D;
 			af_params.kext[j] = (*system).component_vector[rg[group].GroupComponent[j]].extinction;
@@ -231,7 +242,8 @@ vector <struct mfem_data> *exp_data)
 					{
 						qApp->processEvents();
 					}
-					interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, true); // interpolate the simulated data onto the experimental time- and radius grid
+					// interpolate the simulated data onto the experimental time- and radius grid
+					interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, true, time_correction);
 					return(1); // early termination = 1
 				}
 			}  // end of for acceleration
@@ -264,14 +276,13 @@ vector <struct mfem_data> *exp_data)
 			af_params.start_time = current_time;
 			print_af();
 			calculate_ni((*simparams).speed_step[ss].rotorspeed, (*simparams).speed_step[ss].rotorspeed, &CT0, &simdata, false);
-
-				// set the current time to the last scan of this speed step
+			// set the current time to the last scan of this speed step
 			current_time = (*simparams).speed_step[ss].duration_hours * 3600
-					+ (*simparams).speed_step[ss].duration_minutes * 60;
-				//cout << "Current time: " << current_time << ", duration: " << duration << endl;
-			interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, false); // interpolate the simulated data onto the experimental time- and radius grid
-
-				// set the current speed to the constant rotor speed of the current speed step
+			+ (*simparams).speed_step[ss].duration_minutes * 60;
+			//cout << "Current time: " << current_time << ", duration: " << duration << endl;
+			// interpolate the simulated data onto the experimental time- and radius grid
+			interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, false, time_correction);
+			// set the current speed to the constant rotor speed of the current speed step
 			current_speed = (*simparams).speed_step[ss].rotorspeed;
 			if (guiFlag)
 			{
@@ -290,7 +301,7 @@ vector <struct mfem_data> *exp_data)
 	}
 	return 0;
 }
-	
+
 void US_Astfem_RSA::update_assocv()
 {
 	for (unsigned int i=0; i<(*system).assoc_vector.size(); i++)
@@ -1987,7 +1998,7 @@ void US_Astfem_RSA::GlobalStiff_ellam(vector <double> *xb, double **ca, double *
 
 void US_Astfem_RSA::decompose(vector <mfem_initial> *vC0)
 {
-	
+
 }
 
 void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)

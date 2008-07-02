@@ -1113,7 +1113,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 	}
 	plot->setCanvasBackground(system[current_distro].gradient[0]);
 /*
-	long int tag;
+	long int tag1, tag2;
 	double xtag[5];
 	double ytag[5];
 	xtag[0] = 2.86838;
@@ -1129,14 +1129,23 @@ void US_Pseudo3D_Combine::plot_3dim()
 	QPen pen;
 	pen.setWidth(2);
 	pen.setColor(Qt::black);
-	tag = plot->insertCurve("tagline");
+	tag1 = plot->insertCurve("tagline1");
 	symbol.setPen(pen);
 	symbol.setBrush(Qt::black);
 	symbol.setStyle(QwtSymbol::Cross);
 	symbol.setSize(20);
-	plot->setCurveSymbol(tag, symbol);
-	plot->setCurveStyle(tag, QwtCurve::NoCurve);
-	plot->setCurveData(tag, xtag, ytag, 5);
+	plot->setCurveSymbol(tag1, symbol);
+	plot->setCurveStyle(tag1, QwtCurve::NoCurve);
+	plot->setCurveData(tag1, xtag, ytag, 5);
+	tag2 = plot->insertCurve("tagline2");
+	pen.setWidth(1);
+	symbol.setPen(pen);
+	symbol.setBrush(Qt::white);
+	symbol.setStyle(QwtSymbol::Ellipse);
+	symbol.setSize(7);
+	plot->setCurveSymbol(tag2, symbol);
+	plot->setCurveStyle(tag2, QwtCurve::NoCurve);
+	plot->setCurveData(tag2, xtag, ytag, 5);
 */	
 	plot->replot();
 	delete [] xval;
