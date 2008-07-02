@@ -833,8 +833,8 @@ void US_Pseudo3D_Combine::plot_3dim()
 					for (j=0; j<y_resolution; j++)
 					{
 //cout << "y: " << y[i] << ", it_k: " <<  (*iter).k  << ", x: " << x[i] << ", it_s: " <<  (*iter).s << ", sig_f: " << fsigma << ", sig_s: " << ssigma << endl;
-						if (y[j] > (*iter).k - fsigma && y[j] < (*iter).k + fsigma
-											 && x[i] > (*iter).s - ssigma && x[i] < (*iter).s + ssigma)
+						if (y[j] > (*iter).k - fsigma*2 && y[j] < (*iter).k + fsigma*2
+											 && x[i] > (*iter).s - ssigma*1.5 && x[i] < (*iter).s + ssigma*1.5)
 						{
 							z[i][j] += (*iter).c;
 						}
@@ -957,8 +957,8 @@ void US_Pseudo3D_Combine::plot_3dim()
 					for (j=0; j<y_resolution; j++)
 					{
 //				cout << "y: " << y[i] << ", it: " <<  (*iter).k  << ", x: " << x[i] << ", it: " <<  (*iter).k << endl;
-						if (y[j] > (*iter).k - fsigma && y[j] < (*iter).k + fsigma
-											 && x[i] > (*iter).s - ssigma && x[i] < (*iter).s + ssigma)
+						if (y[j] > (*iter).k - fsigma*2 && y[j] < (*iter).k + fsigma*2
+											 && x[i] > (*iter).s - ssigma*1.5 && x[i] < (*iter).s + ssigma*1.5)
 						{
 							z[i][j] += (*iter).c;
 						}
