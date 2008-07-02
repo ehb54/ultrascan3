@@ -24,6 +24,9 @@ sub parsegc {
 	$exp_lambda[$j] = $gcf[$i]; $i++;
 	$exp_channel[$j] = $gcf[$i]; $i++;
     }
+    if($analysis_type eq 'GA_SC') {
+	$ga_sc_constraint_file = $gcf[$i]; $i++;
+    }
     $exp_file_infos = join ', ', @exp_file_info;
     $exp_dirs = join ', ', @exp_dir;
     $exp_cells = join ', ', @exp_cell;
@@ -122,6 +125,26 @@ sub parsegc {
 	$email = $gcf[$i]; $i++;
 	$HPCAnalysisID = $gcf[$i]; $i++;
     }
+    if($analysis_type eq 'GA_SC') {
+	$ga_params_demes = $gcf[$i]; $i++;
+	$ga_params_generations = $gcf[$i]; $i++;
+	$ga_params_crossover = $gcf[$i]; $i++;
+	$ga_params_mutation = $gcf[$i]; $i++;
+	$ga_params_plague = $gcf[$i]; $i++;
+	$ga_Params_elitism = $gcf[$i]; $i++;
+	$ga_params_migration_rate = $gcf[$i]; $i++;
+	$ga_params_genes = $gcf[$i]; $i++;
+	$ga_params_random_seed = $gcf[$i]; $i++;
+	$monte_carlo = $gcf[$i]; $i++;
+	$ga_params_regularization = $gcf[$i]; $i++;
+	$fit_meniscus = $gcf[$i]; $i++;
+	$meniscus_range = $gcf[$i]; $i++;
+	$meniscus_gridpoints = 0;
+	$fit_ti_noise = $gcf[$i]; $i++;
+	$fit_ri_noise = $gcf[$i]; $i++;
+	$email = $gcf[$i]; $i++;
+	$HPCAnalysisID = $gcf[$i]; $i++;
+    }
     undef $sa2d_params_ff0_min;
     undef $sa2d_params_ff0_max;
     undef $sa2d_params_ff0_resolution;
@@ -174,6 +197,10 @@ sub parsegc {
 	$sa2d_params_max_mer = $gcf[$i]; $i++;
 	$HPCAnalysisID = $gcf[$i]; $i++;
     }
+
+
+
+
     $dbstring = "$db_login_user|$db_login_database|$db_login_host|$email|$no_experiments|$exp_file_infos|$exp_dirs|$exp_cells|$exp_lambdas|$exp_channels|$analysis_type|$monte_carlo|$fit_ti_noise|$fit_ri_noise|$fit_meniscus|$meniscus_range|$meniscus_gridpoints";
     $dbstring .= "|$ga_params_demes|$ga_params_generations|$ga_params_crossover|$ga_params_mutation|$ga_params_plague|$ga_Params_elitism|$ga_params_migration_rate|$ga_params_genes|$ga_params_initial_solutes|$ga_params_random_seed";
     $dbstring .= "|$ga_ss|$ga_s_mins|$ga_s_maxs|$ga_ff0s|$ga_ff0_mins|$ga_ff0_maxs";
@@ -192,8 +219,14 @@ sub parsegc {
 }
 
 return 1;
-# comment for testing 
 __END__
+$file = shift;
+chomp $file;
+&parsegc($file);
+print "hpcanalysis id $HPCAnalysisID contraintfile $ga_sc_constraint_file\n";
+
+# return 1;
+# comment for testing 
 
 $file = shift;
 chomp $file;
