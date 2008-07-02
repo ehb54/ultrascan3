@@ -71,6 +71,7 @@ struct AstFemParameters
 	double current_bottom;		// actual bottom for current speed
 	unsigned int first_speed;	// constant speed at first speed step
 	unsigned int rg_index;		// reaction group index
+	vector <unsigned int> local_index;	// local index of each GroupComponent involved in a reaction group
 };
 
 

@@ -31,30 +31,30 @@ vector <struct mfem_data> *exp_data)
 	//fg.write_experiment(system, simparams, "/root/astfem_rsa-output");
 	this->simparams = simparams;
 	this->system = system;
-	unsigned int i, j, k, m, ss;
-	float current_time=0.0;
-	float current_speed=0.0;
-	double accel_time;
-	double dr=0.0;
 	unsigned int duration, initial_npts=5000, current_assoc;
+	unsigned int i, j, k, m, n, ss;
+	float current_time, current_speed;
+	double accel_time, dr;
 	mfem_data simdata;
 	mfem_initial CT0;			// initial total concentration
-	vector <mfem_initial> vC0;			// initial total concentration
+	mfem_initial *vC0;		// initial concentration for multiple components
+	vector <bool> reacting;
+	reacting.resize( (*system).component_vector.size() );
 	af_params.first_speed = (*simparams).speed_step[0].rotorspeed;
-	bool *reacting;
-	reacting = new bool [(*system).component_vector.size()];
+
 	for (k=0; k<(*system).component_vector.size(); k++)
 	{
 		reacting[k] = false;
 		for (j=0; j<(*system).assoc_vector.size(); j++)
 		{
-			if (k == (*system).assoc_vector[j].component1
-				|| k == (*system).assoc_vector[j].component2
-				|| ((*system).assoc_vector[j].component3 >=0
-					&& k == (unsigned int) (*system).assoc_vector[j].component3))
-			{
-				reacting[k] = true;
-				current_assoc = j;
+         for(n=0; n< (*system).assoc_vector[j].comp.size(); n++) 
+         {
+			   if (k == (*system).assoc_vector[j].comp[n]) 
+            {
+				    reacting[k] = true;
+				    current_assoc = j;
+                break;						// since a comp appears at most once in an assoc rule 
+            }
 			}
 		}
 		current_time = 0.0;
@@ -70,11 +70,16 @@ vector <struct mfem_data> *exp_data)
 		}
 		if (!reacting[k]) // noninteracting
 		{
+
+         printf("in _ni_: k=%d\n", k);
+
 			initialize_conc(k, &CT0, true);
 			af_params.s.resize(1);
 			af_params.D.resize(1);
+		   af_params.kext.resize(1);
 			af_params.s[0] = (*system).component_vector[k].s;
 			af_params.D[0] = (*system).component_vector[k].D;
+			af_params.kext[j] = (*system).component_vector[k].extinction;
 			for (ss=0; ss<(*simparams).speed_step.size(); ss++)
 			{
 				adjust_limits((*simparams).speed_step[ss].rotorspeed);
@@ -88,7 +93,7 @@ vector <struct mfem_data> *exp_data)
 					af_params.dt = 1.0; // each simulation step is 1 second long in the acceleration phase
 					af_params.simpoints = 2 * (*simparams).simpoints; // use a fixed grid with refinement at both ends and with twice the number of points
 					af_params.start_time = current_time;
-					print_af();
+					// print_af();
 					calculate_ni(current_speed, (*simparams).speed_step[ss].rotorspeed, &CT0, &simdata, true);
 
 					// add the acceleration time:
@@ -137,7 +142,7 @@ vector <struct mfem_data> *exp_data)
 				// find out the minimum number of simpoints needed to provide the necessary dt:
 				af_params.time_steps = (unsigned int) (1+duration/af_params.dt);
 				af_params.start_time = current_time;
-				print_af();
+				// print_af();
 				calculate_ni((*simparams).speed_step[ss].rotorspeed, (*simparams).speed_step[ss].rotorspeed, &CT0, &simdata, false);
 
 				// set the current time to the last scan of this speed step
@@ -166,9 +171,22 @@ vector <struct mfem_data> *exp_data)
 	}
 	update_assocv();
 	initialize_rg();
+   print_rg();
+
+   // vector <unsigned int> local_index: mapping from global index to local index in each rg.
+   af_params.local_index.resize( (*system).component_vector.size() );
+   unsigned int num_comp, rule;
+   double s_max;
+
 	for (unsigned int group=0; group<rg.size(); group++)
 	{
-		unsigned int num_comp = rg[group].GroupComponent.size();
+         printf("in rg: group=%d\n", group);
+
+		current_time = 0.0;
+		current_speed = 0.0;
+		w2t_integral = 0.0;
+		dr = (af_params.current_bottom - af_params.current_meniscus)/(initial_npts-1);
+		num_comp = rg[group].GroupComponent.size();
 		af_params.s.resize(num_comp);
 		af_params.D.resize(num_comp);
 		af_params.kext.resize(num_comp);
@@ -179,25 +197,29 @@ vector <struct mfem_data> *exp_data)
 			af_params.s[j] = (*system).component_vector[rg[group].GroupComponent[j]].s;
 			af_params.D[j] = (*system).component_vector[rg[group].GroupComponent[j]].D;
 			af_params.kext[j] = (*system).component_vector[rg[group].GroupComponent[j]].extinction;
+         af_params.local_index[ rg[group].GroupComponent[j] ] = j;   	// global to local index
 			af_params.role[j].comp_index = rg[group].GroupComponent[j];
-			af_params.role[j].assoc.resize(rg[group].association.size());
-			af_params.role[j].react.resize(rg[group].association.size());
-			af_params.role[j].st.resize(rg[group].association.size());
-			for(i=0; i<rg[group].association.size(); i++)
+			af_params.role[j].assoc.clear();
+			af_params.role[j].react.clear();
+			af_params.role[j].st.clear();
+			for(m=0; m<rg[group].association.size(); m++) 	// check all assoc rule in this rg
 			{
-				af_params.role[j].assoc[i] = rg[group].association[i];
-				for (m=0; m<(*system).assoc_vector[af_params.role[j].assoc[i]].comp.size(); m++)
+            rule = rg[group].association[m];
+				for (n=0; n<(*system).assoc_vector[rule].comp.size(); n++)	// check all comp in rule[m]
 				{
-					if(af_params.role[j].comp_index == (*system).assoc_vector[af_params.role[j].assoc[i]].comp[m])
+					if(af_params.role[j].comp_index == (*system).assoc_vector[rule].comp[n])
 					{
-						af_params.role[j].react[i] = (*system).assoc_vector[af_params.role[j].assoc[i]].react[m];
-						af_params.role[j].st[i] = (*system).assoc_vector[af_params.role[j].assoc[i]].stoich[m];
+			         af_params.role[j].assoc.push_back( m ); 		// local index for the rule
+						af_params.role[j].react.push_back( (*system).assoc_vector[rule].react[n] );
+						af_params.role[j].st.push_back(    (*system).assoc_vector[rule].stoich[m] );
 						break;
 					}
 				}
 			}
 		}
-		vC0.clear();
+
+
+		vC0 = new mfem_initial [ rg[group].GroupComponent.size() ];
 		for (j=0; j<rg[group].GroupComponent.size(); j++)
 		{
 			CT0.radius.clear();
@@ -208,9 +230,9 @@ vector <struct mfem_data> *exp_data)
 				CT0.concentration.push_back(0.0);
 			}
 			initialize_conc(rg[group].GroupComponent[j], &CT0, false);
-			vC0.push_back(CT0);
+			vC0[j] = CT0;
 		}
-		decompose(&vC0);
+		decompose(vC0);
 		for (ss=0; ss<(*simparams).speed_step.size(); ss++)
 		{
 			adjust_limits((*simparams).speed_step[ss].rotorspeed);
@@ -224,8 +246,8 @@ vector <struct mfem_data> *exp_data)
 				af_params.dt = 1.0; // each simulation step is 1 second long in the acceleration phase
 				af_params.simpoints = 2 * (*simparams).simpoints; // use a fixed grid with refinement at both ends and with twice the number of points
 				af_params.start_time = current_time;
-				print_af();
-				calculate_ni(current_speed, (*simparams).speed_step[ss].rotorspeed, &CT0, &simdata, true);
+				// print_af();
+				calculate_ra2(current_speed, (*simparams).speed_step[ss].rotorspeed, vC0, &simdata, true);
 
 					// add the acceleration time:
 				accel_time = af_params.dt * af_params.time_steps;
@@ -258,14 +280,19 @@ vector <struct mfem_data> *exp_data)
 			{
 				duration -= (unsigned int) accel_time;
 			}
+         s_max = fabs( af_params.s[0] );		// find the largest s
+         for (m=1;m<af_params.s.size();m++)
+         {
+             if( s_max < fabs( af_params.s[m] ) ) s_max = fabs( af_params.s[m] );
+         }
 			af_params.omega_s = pow((*simparams).speed_step[ss].rotorspeed * M_PI/30.0, 2.0);
 			af_params.dt = log((*exp_data)[ss].bottom/(*exp_data)[ss].meniscus)
-								/((af_params.omega_s * fabs((*system).component_vector[k].s)) *((*simparams).simpoints - 1));
+								/(af_params.omega_s * s_max *((*simparams).simpoints - 1));
 			if (af_params.dt > duration)
 			{
 				af_params.dt = duration;
 				af_params.simpoints = 1 + (unsigned int) (log((*exp_data)[ss].bottom/(*exp_data)[ss].meniscus)
-            	/(af_params.omega_s * fabs((*system).component_vector[k].s) * af_params.dt));
+            	/(af_params.omega_s * s_max * af_params.dt));
 			}
 			if (af_params.simpoints > 10000)
 			{
@@ -274,8 +301,8 @@ vector <struct mfem_data> *exp_data)
 				// find out the minimum number of simpoints needed to provide the necessary dt:
 			af_params.time_steps = (unsigned int) (1+duration/af_params.dt);
 			af_params.start_time = current_time;
-			print_af();
-			calculate_ni((*simparams).speed_step[ss].rotorspeed, (*simparams).speed_step[ss].rotorspeed, &CT0, &simdata, false);
+			// print_af();
+			calculate_ra2((*simparams).speed_step[ss].rotorspeed, (*simparams).speed_step[ss].rotorspeed, vC0, &simdata, false);
 			// set the current time to the last scan of this speed step
 			current_time = (*simparams).speed_step[ss].duration_hours * 3600
 			+ (*simparams).speed_step[ss].duration_minutes * 60;
@@ -631,8 +658,8 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
 		rpm_current = rpm_start + (rpm_stop - rpm_start) * (i+0.5)/af_params.time_steps;
 		emit current_speed((unsigned int) rpm_current);
 
-		printf("rpm=%12.5e time_steps i=%d C_ttl=%20.10e \n", rpm_current, i,
-				 IntConcentration(x, C0));
+//		printf("rpm=%12.5e time_steps i=%d C_ttl=%20.10e \n", rpm_current, i,
+//				 IntConcentration(x, C0));
 
 		if(accel) // then we have acceleration
 		{
@@ -1016,7 +1043,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
       // [C1]=ReactionOneStep_inst(C1);
       //
       // finite reaction rate: linear interpolation of instantaneous reaction
-		      ReactionOneStep_Euler_imp(C1, 2*af_params.dt);
+		      ReactionOneStep_Euler_imp(N, C1, 2*af_params.dt);
       //
       //
       // for next half time-step in SNI operator splitting scheme
@@ -1996,212 +2023,379 @@ void US_Astfem_RSA::GlobalStiff_ellam(vector <double> *xb, double **ca, double *
 	clear_3d(N, 6, Stif);
 }
 
-void US_Astfem_RSA::decompose(vector <mfem_initial> *vC0)
-{
 
-}
-
-void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
-{
-	/*
 //////////////////////////////%
 //
 // ReactionOneStep_Euler_imp:  implicit Mid-point Euler
 //
 //////////////////////////////%
+void US_Astfem_RSA::ReactionOneStep_Euler_imp(unsigned int Npts, double **C1, double TimeStep)
+{
+   unsigned int num_comp;
+   unsigned int i, j, k;
+   double ct;
 
-	// the following parameters should be supplied outside
-	// instantanuous association
-	//
-	double ct;
-	unsigned int i, j;
+   num_comp = af_params.role.size();
 
-	for (j=0; j<N; j++)
+   // special case:  self-association  n A <--> An
+   if( num_comp==2 ) 		 		// only  2 components and one association rule
+   {
+       unsigned int rule, st0, st1;
+       double keq, koff;
+		 double dva, dvb, dvc, uhat;
+       rule = rg[af_params.rg_index].association[0];	// current rule used 
+       st0 = (*system).assoc_vector[rule].stoich[0];
+       st1 = (*system).assoc_vector[rule].stoich[1];
+       keq = (*system).assoc_vector[rule].keq;
+       koff = (*system).assoc_vector[rule].k_off;
+
+	    for (j=0; j<Npts; j++)
+	    {
+          ct = C1[0][j] + C1[1][j] ;
+		    dva = TimeStep * koff * keq;
+		    dvb = TimeStep * koff + 2.;
+		    dvc = TimeStep * koff * ct + 2. * C1[0][j];
+          if (st0 ==2 && st1 == 1 ) 					// mono <--> dimer 
+          {
+				 uhat = 2*dvc / ( dvb+sqrt(dvb*dvb+4.*dva*dvc) );
+		    }
+          else if (st0 ==3 && st1 == 1 ) 				// mono <--> trimer 
+	       {
+				 uhat = cube_root(-dvc/dva, dvb/dva, 0.0);
+          }
+          else if (st0 > 3 && st1 == 1 ) 				// mono <--> n-mer 
+	       {
+				 uhat = find_C1_mono_Nmer( st0, dva/dvb, dvc/dvb);
+          }
+          else
+          {
+			    cerr << "warning: invalid stoichiometry in decompose()" << endl;
+             return;
+          }
+
+          if (af_params.role[0].react[0] == 1) 			// c1=reactant
+          {
+			     C1[0][j] = 2.*uhat - C1[0][j];
+			     C1[1][j] = ct - C1[0][j];
+          } 
+          else
+          {
+			     C1[1][j] = 2.*uhat - C1[1][j];
+			     C1[0][j] = ct - C1[1][j];
+          }
+	   }
+       return;
+   }
+
+   // general cases
+   unsigned int iter, iter_max = 20; 		// maximum number of Newton iteration allowed
+   double **A, *y0, *delta_n, *b, diff;
+
+   y0 = new double [num_comp];
+   delta_n = new double [num_comp];
+   b = new double [num_comp];
+   A = new double* [num_comp];
+   for(i=0;i<num_comp;i++) A[i] = new double [num_comp];
+
+	for (j=0; j<Npts; j++)
 	{
-		ct = 0.;
-		for (i=0; i<af_params.s.size(); i++)
-		{
-			ct += C1[i][j];
-		}
-		if((*system).model >= 4 && (*system).model <= 10)  // monomer - (n)mer
-		{
-			double dva, dvb, dvc, uhat;
-			dva = TimeStep * af_params.koff[0] * af_params.keq[0];
-			dvb = TimeStep * af_params.koff[0] + 2.;
-			dvc = TimeStep * af_params.koff[0] * ct + 2. * C1[0][j];
-			if(dva<1.e-12)
-			{
-				uhat = dvc / dvb;
-			}
-			else
-			{
-				switch((*system).model)
-				{
-					case 4:	// mono <--> dimer
-                  if (dvb*dvb+4*dva*dvc<=0)
-                  {
-						   uhat = C1[0][j];
-                  }
-                  else
-                  {
-						   uhat = 2*dvc / ( dvb+sqrt(dvb*dvb+4.*dva*dvc) );
-                  }
-						break;
-					case 5:	// mono <--> trimer
-						uhat = cube_root(-dvc/dva, dvb/dva, 0.0);
-						break;
-					default:	// mono <--> (n)mer
-						uhat = find_C1_mono_Nmer( af_params.n[1], dva/dvb, dvc/dvb);
-				}
-			}
-			C1[0][j] = 2.*uhat - C1[0][j];
-			C1[1][j] = ct - C1[0][j];
-		}
-		else if((*system).model == 11 )  	//  A + B <--> AB
-		{
-         double exta = 1.0, extb=1.0;			// extinction rate for A and B, should be specified outside
-         double K1, K_1;			// reation rates
-			double dva, dvb, dvc, dC[3];
-
-         K1  = af_params.koff[0] * af_params.keq[0];
-         K_1 = af_params.koff[0] ;
-
-			dva = TimeStep * K1 * extb;
-			dvb = 2 + TimeStep * ( K1*(extb*C1[0][j] + exta*C1[1][j]) + K_1*(exta+extb) );
-			dvc = TimeStep * exta * ( K1*C1[0][j]*C1[1][j] - K_1*C1[2][j] );
-
-         dC[0] = -2*dvc / ( dvb + sqrt( dvb*dvb - 4*dva*dvc ) );
-         dC[1] = extb / exta * dC[0];
-         dC[2] = - ( dC[0] + dC[1] );
-
-			C1[0][j] += 2*dC[0];
-			C1[1][j] += 2*dC[1];
-			C1[2][j] += 2*dC[2];
-		}
-		else if((*system).model == 12 )  	//  general reaction
+      for(i=0;i<num_comp;i++)
       {
-         unsigned int Nspec = af_params.s.size();	// number of species
-         unsigned int iter_max = 20; 		// maximum number of Newton iteration allowed
-         unsigned int i, k, iter;
-         double **A, *y0, *delta_n, *b, diff;
+         y0[i]=C1[i][j];
+         delta_n[i]=0.;
+      }
 
-         y0 = new double [Nspec];
-         delta_n = new double [Nspec];
-         b = new double [Nspec];
-         A = new double* [Nspec];
-         for(i=0;i<Nspec;i++) A[i] = new double [Nspec];
+      for(iter=0; iter<iter_max;iter++) 		// Newton iteration
+      {
+         for(i=0;i<num_comp;i++)
+         y0[i]=C1[i][j]+delta_n[i];
 
-         for(i=0;i<Nspec;i++)
+         Reaction_dydt(y0, b);						// b=dy/dt
+
+         Reaction_dfdy(y0, A);						// A=df/dy
+
+         for(i=0;i<num_comp;i++)
          {
-            y0[i]=C1[i][j];
-            delta_n[i]=0.;
+            for(k=0;k<num_comp;k++) A[i][k] = -TimeStep * A[i][k];
+            A[i][i] += 2.;
+            b[i] = 2.*delta_n[i] - TimeStep * b[i];
          }
 
-         for(iter=0; iter<iter_max;iter++) 		// Newton iteration
+         if( GaussElim(num_comp, A, b) ==-1 )
          {
-            for(i=0;i<Nspec;i++)
-              y0[i]=C1[i][j]+delta_n[i];
-
-            Reaction_dydt(y0, b);						// b=dy/dt
-
-            Reaction_dfdy(y0, A);						// A=df/dy
-
-            for(i=0;i<Nspec;i++)
+            printf("Matrix singular in Reaction_Euler_imp: model 12\n");
+            break;
+         }
+         else
+         {
+            diff = 0.;
+            ct = 0.;
+            for(i=0;i<num_comp;i++)
             {
-              for(k=0;k<Nspec;k++) A[i][k] = -TimeStep * A[i][k];
-              A[i][i] += 2.;
-              b[i] = 2.*delta_n[i] - TimeStep * b[i];
+               delta_n[i] += b[i];
+               diff += fabs(delta_n[i]);
+               ct += C1[i][j];
             }
+         }
+         if( diff < 1.e-7*ct ) break;
+      } // end of Newton iteration;
 
-            if( GaussElim(Nspec, A, b) ==-1 )
-            {
-              printf("Matrix singular in Reaction_Euler_imp: model 12\n");
-              break;
-            }
-            else
-            {
-              diff = 0.;
-              for(i=0;i<Nspec;i++)
-              {
-                delta_n[i] += b[i];
-                diff += fabs(delta_n[i]);
-              }
-            }
+      for(i=0;i<num_comp;i++) C1[i][j] += delta_n[i];
 
-            if(diff <1.e-7*ct) break;
+   } // end of j (pts)
 
-         } // end of Newton iteration;
-         for(i=0;i<Nspec;i++) C1[i][j] += delta_n[i];
-
-         for(i=0;i<Nspec;i++)
-			{
-				delete [] A[i];
-			}
-         delete [] A;
-         delete [] b;
-         delete [] delta_n;
-         delete [] y0;
-      }
-		else
-		{
-			cerr << "warning: The reaction for model " << (*system).model << " has not yet been implemented" << endl;
-		}
+   for(i=0;i<num_comp;i++)
+	{
+		delete [] A[i];
 	}
-	*/
+   delete [] A;
+   delete [] b;
+   delete [] delta_n;
+   delete [] y0;
 }
 
 
-////////////////////////////////////////
 //
-// DecomposeCT according to
-//		K_1*C1^1+K2_C1^2+...+K_mC_1^m=CT
+// given total concentration of a group of components involved, 
+// find the concentration of each component by equlibrium condition
 //
-////////////////////////////////////////
-int US_Astfem_RSA::DecomposeCT(double CT, double *C)
+void US_Astfem_RSA::decompose(struct mfem_initial *C0)
 {
-	/*
-	double dval, C1;
+   unsigned int num_comp, Npts;
+   unsigned int i, j;
 
-		dval = CT;
+   num_comp = af_params.role.size();
+   Npts = C0[0].radius.size();	// note: all components must be defined on the same radial grids
 
-		if ((*system).model == 4) // monomer-dimer
-		{
-			C1 = (sqrt(1.0 + 4.0 * af_params.keq[0] * dval) - 1.0)/(2.0 * af_params.keq[0]) ;
-			C[0] = C1;
-			C[1] = af_params.keq[0] * pow(C1, (double) af_params.n[1]);
-		}
-		else if ((*system).model == 5) // monomer-trimer
-		{
-			C1 = cube_root(-dval/af_params.keq[0], 1.0/af_params.keq[0], 0.0);
-			C[0] = C1;
-			C[1] = af_params.keq[0] * pow(C1, (double) af_params.n[1]);
-		}
-		else if ((*system).model > 5 && (*system).model < 11)
-		{
-			C1 = find_C1_mono_Nmer( af_params.n[1], af_params.keq[0], dval );
-			C[0] = C1;
-			C[1] = af_params.keq[0] * pow(C1, (double) af_params.n[1]);
-		}
-		else if ((*system).model == 11)// monomer-dimer-trimer system
-		{
-			C1 = cube_root(-dval/af_params.keq[1], 1.0/af_params.keq[1], af_params.keq[0]/af_params.keq[1]);
-			C[0] = C1;
-			C[1] = af_params.keq[0] * pow(C1, (double) af_params.n[1]);
-			C[2] = af_params.keq[1] * pow(C1, (double) af_params.n[2]);
-		}
-		else
-		{
-			cerr << "warning: model #" << (*system).model << " is not yet supported in find_C1()" << endl;
-			return (-1);
-		}
-	   return (0);
-	*/
+   // special case:  self-association  n A <--> An
+   if( num_comp==2 ) 		 		// only  2 components and one association rule
+   {
+       double c1, c2, ct, keq;
+       unsigned int rule, st0, st1;
+       rule = rg[af_params.rg_index].association[0];	// current rule used 
+       st0 = (*system).assoc_vector[rule].stoich[0];
+       st1 = (*system).assoc_vector[rule].stoich[1];
+       keq = (*system).assoc_vector[rule].keq;
+
+	   for (j=0; j<Npts; j++)
+	   {
+          ct = C0[0].concentration[j] + C0[1].concentration[j] ;
+          if (st0 ==2 && st1 == 1 ) 					// mono <--> dimer 
+          {
+			    c1 = (sqrt(1.0 + 4.0 * keq * ct) - 1.0)/(2.0 * keq) ;
+		    }
+          else if (st0 ==3 && st1 == 1 ) 				// mono <--> trimer 
+	       {
+			    c1 = cube_root(-ct/keq, 1.0/keq, 0.0);
+          }
+          else if (st0 > 3 && st1 == 1 ) 				// mono <--> n-mer 
+	       {
+			    c1 = find_C1_mono_Nmer( st0, keq, ct );
+          }
+          else
+          {
+			    cerr << "warning: invalid stoichiometry in decompose()" << endl;
+             return;
+          }
+		    c2 = keq * pow(c1, (double) st0 );
+
+          if (af_params.role[0].react[0] == 1) 			// c1=reactant
+          {
+              C0[0].concentration[j] = c1 ;
+              C0[1].concentration[j] = c2 ;
+          } 
+          else
+          {
+              C0[0].concentration[j] = c2 ;	// c1=product
+              C0[1].concentration[j] = c1 ;
+          }
+	   }
+       return;
+   }
+
+   // general cases
+   unsigned int time_max = 16000; 		// maximum number of time steps for reacing equlibrium
+   double TimeStepSize = 1.;				// time step size 
+   double **C1, **C2;						// array for all component at all radius position
+   double diff, ct ;				
+
+   initialize_2d(num_comp, Npts, &C1);
+   initialize_2d(num_comp, Npts, &C2);
+
+   for(i=0; i<num_comp; i++) 
+   {
+      for(j=0; j<Npts; j++) 
+      {
+          C1[i][j] = C0[i].concentration[j];
+          C2[i][j] = C1[i][j];
+      }
+   }
+
+   // time loop 
+   for(unsigned int ti=0; ti<time_max; ti++) 
+   {
+      ReactionOneStep_Euler_imp(Npts, C1, TimeStepSize);
+
+      diff = 0.;
+      ct = 0.;
+      for(i=0; i<num_comp; i++) 
+      {
+         for(j=0; j<Npts; j++) 
+         {
+             diff += fabs( C2[i][j] - C1[i][j] );
+             ct += fabs( C1[i][j] );
+             C2[i][j] = C1[i][j];
+         }
+      }
+
+      if(diff < 1.e-5*ct ) break;
+   } // end time steps
+
+   for(i=0; i<num_comp; i++) 
+   {
+      for(j=0; j<Npts; j++) 
+      {
+          C0[i].concentration[j] = C1[i][j];
+      }
+   }
+
+   clear_2d(num_comp, C1);
+   clear_2d(num_comp, C2);
 }
 
 
 void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
 {
-	/*
+    unsigned int num_comp, num_rule; 
+    unsigned int i, m, n, rule, ind_cn;
+    double k1, k_1, stn;
+    double *Q, Q_reactant, Q_product;
+
+    num_comp = rg[af_params.rg_index].GroupComponent.size();
+    num_rule = rg[af_params.rg_index].association.size();
+    Q = new double [num_rule];
+
+    for(m=0; m<num_rule; m++) 
+    {
+        rule = rg[af_params.rg_index].association[m];
+        k_1  = (*system).assoc_vector[rule].k_off;
+        k1   = (*system).assoc_vector[rule].keq * k_1;
+        Q_reactant = 1 ;
+        Q_product  = 1;
+        for(n=0;n<(*system).assoc_vector[rule].comp.size();n++)
+        {
+           // local index of the n-th component in assoc[rule]
+           ind_cn = af_params.local_index [ (*system).assoc_vector[rule].comp[n] ] ; 
+           // stoich of n-th comp in the rule
+           stn = (double)(*system).assoc_vector[rule].stoich[n];	
+
+           if( (*system).assoc_vector[rule].react[n] == 1 ) 	   // comp[n] here is reactant
+           {
+              Q_reactant *= pow( y[ind_cn], stn );
+           } 
+           else 																   // comp[n] here is reactant
+           {
+              Q_product  *= pow( y[ind_cn], stn );
+           }
+        }
+        Q[m] = k1 * Q_reactant - k_1 * Q_product;
+    }
+
+    for(i=0; i<num_comp; i++) 
+    { 
+        yt[i] = 0.;
+        for(m=0; m<af_params.role[i].assoc.size(); m++)
+        {
+            rule = af_params.role[i].assoc[m];
+            yt[i] += -af_params.role[i].react[m] * af_params.role[i].st[m] * 
+                   Q[ af_params.local_index[ rule] ];
+        }
+    }
+
+    delete [] Q;
+}
+
+void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
+{
+    unsigned int num_comp, num_rule; 
+    unsigned int i, j, m, n, rule, ind_cn;
+    double k1, k_1, stn;
+    double **QC, Q_reactant, Q_product, deriv_r, deriv_p;
+
+    num_comp = rg[af_params.rg_index].GroupComponent.size();
+    num_rule = rg[af_params.rg_index].association.size();
+
+    initialize_2d(num_rule, num_comp, &QC);
+
+    for(m=0; m<num_rule; m++) 
+    {
+        rule = rg[af_params.rg_index].association[m];
+        k_1  = (*system).assoc_vector[rule].k_off;
+        k1   = (*system).assoc_vector[rule].keq * k_1;
+
+        for(j=0; j<num_comp; j++)
+        {
+           Q_reactant = 1 ;
+           Q_product  = 1;
+           deriv_r = 0.;
+           deriv_p = 0.;
+           for(n=0;n<(*system).assoc_vector[rule].comp.size();n++)
+           {
+              // local index of the n-th component in assoc[rule]
+              ind_cn = af_params.local_index [ (*system).assoc_vector[rule].comp[n] ] ; 
+              // stoich of n-th comp in the rule
+              stn = (double)(*system).assoc_vector[rule].stoich[n];	
+
+              if( (*system).assoc_vector[rule].react[n] == 1 ) 	// comp[n] is reactant
+              {
+                  if( af_params.role[j].comp_index ==  (*system).assoc_vector[rule].comp[n] ) 
+                  {
+                      deriv_r = stn * pow( y[ind_cn], stn - 1. );
+                  }
+                  else
+                  {
+                      Q_reactant *= pow( y[ind_cn], stn );
+                  }
+              }
+              else
+              {
+                  if( af_params.role[j].comp_index ==  (*system).assoc_vector[rule].comp[n] ) 
+                  {
+                      deriv_p = stn * pow( y[ind_cn], stn - 1. );
+                  }
+                  else 																   // comp[n] in this rule is reactant
+                  {
+                     Q_product  *= pow( y[ind_cn], stn );
+                  }
+              }
+           }
+           QC[m][j] = k1 * Q_reactant * deriv_r - k_1 * Q_product * deriv_p;
+       }  // C_j
+    } 	// m-rule
+
+
+    for(i=0; i<num_comp; i++) 
+    { 
+        for(j=0; j<num_comp; j++)
+        {
+            dfdy[i][j] = 0.;
+            for(m=0; m<af_params.role[i].assoc.size(); m++)
+            {
+                rule = af_params.role[i].assoc[m];
+                dfdy[i][j] += -af_params.role[i].react[m] * af_params.role[i].st[m] 
+                         * QC[ af_params.local_index[rule] ][j] ;
+            }
+        }
+    }
+
+   clear_2d(num_rule, QC);
+}
+
+
+
+/*
+void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
+{
 	switch ( (*system).model )
    {
       case 12:						// n A <--> An,   m An <--> Anm
@@ -2229,12 +2423,12 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
 			cerr << "undefined reaction model \n";
       }
    }
-	*/
 }
+*/
 
+/*
 void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
 {
-	/*
 	switch ( (*system).model )
    {
       case 12:						// n A <--> An,   m An <--> Anm
@@ -2267,8 +2461,8 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
 			cerr << "undefined reaction model \n";
 		}
    }
-	*/
 }
+*/
 
 void US_Astfem_RSA::adjust_limits(unsigned int speed)
 {
@@ -2317,6 +2511,32 @@ void US_Astfem_RSA::print_vector(vector <double> *dval)
 
 void US_Astfem_RSA::print_simparams()
 {
+}
+
+void US_Astfem_RSA::print_rg()
+{
+	unsigned int i, k ;
+
+   cout << "Reaction Group Info: " << endl;
+	for (k=0; k< rg.size(); k++) 
+   {
+      cout << "Group ["<< k << "] "<< endl;
+
+      cout << "Assoc Rule: " ;
+	   for (i=0; i< rg[k].association.size(); i++) 
+      {  
+         cout << "[" << rg[k].association[i] << "] ";
+      }
+      cout << endl;
+
+      cout << "Group Components: ";
+	   for (i=0; i< rg[k].GroupComponent.size(); i++) 
+      {  
+         cout << "[" << rg[k].GroupComponent[i] << "] ";
+      }
+      cout << endl;
+   }
+   cout << "End of Reaction Group Info" << endl;
 }
 
 void US_Astfem_RSA::print_af()

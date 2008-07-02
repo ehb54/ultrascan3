@@ -79,8 +79,8 @@ class US_EXTERN US_Astfem_RSA : public QObject
 		void ComputeCoefMatrixMovingMeshR(double, double, double **, double **);
 		void ComputeCoefMatrixMovingMeshL(double, double, double **, double **);
 
-		void ReactionOneStep_Euler_imp(double **, double);
-      int DecomposeCT(double , double *);
+		void ReactionOneStep_Euler_imp(unsigned int, double **, double);
+      // int DecomposeCT(double , double *);
 
 		// interpolate maps a simulated grid with a variable delta_r grid onto a
 		// fixed delta_r grid from experimental data, and also interpolates time
@@ -92,13 +92,14 @@ class US_EXTERN US_Astfem_RSA : public QObject
 
 // output functions:
 		void print_af();						// output all af params
+		void print_rg();						// output all params in a reaction group
 		void print_af(FILE *);				// output all af params to file
 		void print_simparams();				// print simparams
 		void print_vector(vector <double> *);
 		void print_vector(double *, unsigned int);
 		void initialize_rg();
 		void update_assocv();
-		void decompose(vector <mfem_initial> *);
+		void decompose(struct mfem_initial *);
 };
 
 
