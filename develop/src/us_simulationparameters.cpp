@@ -716,7 +716,9 @@ void US_SimulationParameters::check_delay()
 	(*simparams).speed_step[current_speed_step].duration_minutes >
 	((*simparams).speed_step[current_speed_step].delay_minutes + 1))
 	{
+		cnt_duration_minutes->disconnect();
 		cnt_duration_minutes->setRange((unsigned int)(*simparams).speed_step[current_speed_step].delay_minutes + 1, 60, 1);
+		connect(cnt_duration_minutes, SIGNAL(valueChanged(double)), SLOT(update_duration_minutes(double)));
 	}
 }
 

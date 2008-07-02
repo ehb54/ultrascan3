@@ -101,12 +101,15 @@ struct Association
 	double keq;
 	double k_off;
 	QString units; 					// OpticalDensity, MolecularWeight, MgPerMl, Fringes, Fluorescence
-	int component1;					// which component is associating
-	int component2;					// which component is dissociating
-	int component3;					// which component is dissociating (for heteroassoc., if -1 it means self-assoc)
+	unsigned int component1;		// which component is associating
+	unsigned int component2;		// which component is dissociating (in heteroassociation this component is associating)
+	int component3;					// which component is dissociating (only for heteroassoc., otherwise, if -1 it means self-assoc)
 	unsigned int stoichiometry1;	// stoichiometry of the first component
 	unsigned int stoichiometry2;	// stoichiometry of the second component
 	unsigned int stoichiometry3;	// stoichiometry of the third component (0 if reaction only has 2 components)
+	vector <unsigned int> comp;	// vector of all components involved in this reaction (new)
+	vector <unsigned int> stoich; // vector of stoichiometry of each component (new)
+	vector <int> react;				// =1 for reactant, = -1 for product
 };
 
 struct AssociationConstraints

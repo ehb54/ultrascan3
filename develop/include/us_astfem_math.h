@@ -17,6 +17,33 @@
 
 
 using namespace std;
+struct ComponentRole
+{
+	unsigned int comp_index;		// index of this component
+#ifdef WIN32
+#pragma warning ( disable: 4251 )
+#endif
+	vector <unsigned int> assoc;	// assoc vector index where this component occurs
+	vector <int> react;				// role of component in each association, = 1: if as reactant; =-1, if as product
+	vector <unsigned int> st;		// stoichiometry of each component in each assoc., index is linked to assoc.
+#ifdef WIN32
+#pragma warning ( disable: 4251 )
+#endif
+};
+
+struct ReactionGroup
+{
+#ifdef WIN32
+#pragma warning ( disable: 4251 )
+#endif
+
+	vector <unsigned int> association;
+	vector <unsigned int> GroupComponent;
+
+#ifdef WIN32
+#pragma warning ( default: 4251 )
+#endif
+};
 
 struct AstFemParameters
 {
@@ -28,10 +55,8 @@ struct AstFemParameters
 
 	vector <double> s;			// sedimentation coefficient
 	vector <double> D;			// Diffusion coefficient
-	vector <double> keq;			// Equilibrium constants
-	vector <double> koff;		// off rates
 	vector <double> kext;		// extinctiom coefficient
-	vector <unsigned int> n;	// exponents
+	vector <struct ComponentRole> role; // role of each component in various reactions
 
 #ifdef WIN32
 	  #pragma warning ( default: 4251 )
@@ -44,9 +69,8 @@ struct AstFemParameters
 	double start_time;			// start time in seconds of simulation at constant speed
 	double current_meniscus;	// actual meniscus for current speed
 	double current_bottom;		// actual bottom for current speed
-	int moving_grid;				// use adaptive time steps = 1, fixed time steps = 0
-	bool acceleration;			// true if acceleration is used
 	unsigned int first_speed;	// constant speed at first speed step
+	unsigned int rg_index;		// reaction group index
 };
 
 
@@ -81,6 +105,9 @@ double find_C1_mono_Nmer(int, double, double);
 double cube_root(double, double, double);
 int GaussElim (int, double **, double *);
 void DefInitCond(double **, unsigned int);
+void interpolate_C0(mfem_initial *, double *, vector <double> *); // interpolate starting concentration vector mfem_initial onto C0
+void interpolate_C0(struct mfem_initial *, struct mfem_initial *); // interpolate first onto second
+void interpolate_Cfinal(struct mfem_initial *, double *, vector <double> *); // interpolate final concentration back onto mfem_initial
 int interpolate (struct mfem_data *, /* simulated solution */
 		                 unsigned int, /* number of scans in expt. data, time dimension */
 		                 unsigned int, /* number of points in expt. data, radius dimension */

@@ -2109,3 +2109,115 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, double ome
 	return(0);
 }
 
+void interpolate_C0(struct mfem_initial *C0, double *C1, vector <double> *x )
+{
+	unsigned int i, j, ja;
+	double a, b, xs, tmp;
+
+	ja = 0;
+	for(j=0; j<(*x).size(); j++)
+	{
+		xs = (*x)[j];
+		for(i=ja; i<(*C0).radius.size(); i++)
+		{
+			if((*C0).radius[i] > xs + 1.e-12)
+			{
+				break;
+			}
+		}
+
+		if ( i == 0 ) 				// x[j] < C0.radius[0]
+		{
+			C1[j] = (*C0).concentration[0];		// use the first value
+		}
+		else if ( i == (*C0).radius.size() ) 	// x[j] > last point in (*C0).radius
+		{
+			C1[j] = (*C0).concentration[ i-1 ];
+		}
+		else
+		{
+			a = (*C0).radius[i-1];
+			b = (*C0).radius[i];
+			tmp = (xs - a)/(b - a);
+			C1[j] = (*C0).concentration[i-1] * (1. - tmp) + (*C0).concentration[i] * tmp;
+			ja = i-1;
+		}
+	}
+}
+
+void interpolate_C0(struct mfem_initial *C0, struct mfem_initial *C1 ) // original grid: C0, final grid: C1
+{
+	unsigned int i, j, ja;
+	double a, b, xs, tmp;
+
+	ja = 0;
+	for(j=0; j<(*C1).radius.size(); j++)
+	{
+		xs = (*C1).radius[j];
+		for(i=ja; i<(*C0).radius.size(); i++)
+		{
+			if((*C0).radius[i] > xs + 1.e-12)
+			{
+				break;
+			}
+		}
+
+		if ( i == 0 ) 				// x[j] < C0.radius[0]
+		{
+			(*C1).concentration[j] = (*C0).concentration[0];		// use the first value
+		}
+		else if ( i == (*C0).radius.size() ) 	// x[j] > last point in (*C0).radius
+		{
+			(*C1).concentration[j] = (*C0).concentration[ i-1 ];
+		}
+		else
+		{
+			a = (*C0).radius[i-1];
+			b = (*C0).radius[i];
+			tmp = (xs - a)/(b - a);
+			(*C1).concentration[j] = (*C0).concentration[i-1] * (1. - tmp) + (*C0).concentration[i] * tmp;
+			ja = i-1;
+		}
+	}
+}
+
+void interpolate_Cfinal(struct mfem_initial *C0, double *cfinal, vector <double> *x )
+{
+// this routine also considers cases where C0 starts before the meniscus or stops
+// after the bottom is reached, however, C0 needs to cover both meniscus and bottom
+// In those cases it will fill the C0 vector with the first and/or last value of C0,
+// respectively, for the missing points.
+
+	unsigned int i, j, ja;
+	double a, b, xs, tmp;
+
+	ja = 0;
+	for(j=0; j<(*C0).radius.size(); j++)
+	{
+		xs = (*C0).radius[j];
+		for (i=ja; i<(*x).size(); i++)
+		{
+			if( (*x)[i] > xs + 1.e-12)
+			{
+				break;
+			}
+		}
+
+		if ( i == 0 ) 				// xs < x[0]
+		{
+			(*C0).concentration[j] = cfinal[0];		// use the first value
+		}
+		else if ( i == (*x).size() ) 	   // xs > x[N]
+		{
+			(*C0).concentration[j] = cfinal[ i-1 ];
+		}
+		else 							// x[i-1] < xs <x[i]
+		{
+			a = (*x)[i-1];
+			b = (*x)[i];
+			tmp = (xs-a)/(b-a);
+			(*C0).concentration[j] = cfinal[i-1] * (1. - tmp) + cfinal[i] * tmp;
+			ja = i-1;
+		}
+	}
+}

@@ -499,7 +499,7 @@ void US_GAModelEditor::update_constraints(unsigned int c)
 	{
 		for (unsigned int i=0; i<(*ms).assoc_vector.size(); i++)
 		{ // only check the dissociating species to set keq/koff
-			if ((*ms).assoc_vector[i].component2 == (int) current_component
+			if ((*ms).assoc_vector[i].component2 == current_component
 			||  (*ms).assoc_vector[i].component3 == (int) current_component)
 			{
 				cc_koff->update(msc.assoc_vector_constraints[current_assoc].koff);

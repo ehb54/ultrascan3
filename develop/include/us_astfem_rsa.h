@@ -31,6 +31,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
 		#pragma warning ( disable: 4251 )
 #endif
 		vector <double> x; 		// radii of grid points; x[0...N-1]
+		vector <struct ReactionGroup> rg;
 #ifdef WIN32
 	  #pragma warning ( default: 4251 )
 #endif
@@ -40,15 +41,15 @@ class US_EXTERN US_Astfem_RSA : public QObject
 		int calculate(struct ModelSystem *, struct SimulationParameters *, vector <struct mfem_data> *);
 		int calculate_ni(double, 				// rpm_start
 							  double, 				// rpm_stop
-							  double, 				// s
-							  double, 				// D
 							  mfem_initial *,		// C0
-							  mfem_data *);		// simdata
+							  mfem_data *,			// simdata
+							  bool);					// acceleration? (1=acceleration, 0=no acceleration)
 
 		int calculate_ra2(double, 				// rpm_start
 								double, 				// rpm_stop
 								mfem_initial *,	// C0
-								mfem_data *);		// simdata
+								mfem_data *,		// simdata
+								bool);				// acceleration? (1=acceleration, 0=no acceleration)
 	signals:
 
 		void new_scan(vector <double> *, double *);
@@ -59,6 +60,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
 
 	private slots:
 
+		void initialize_conc(unsigned int, struct mfem_initial *, bool); // initializes total concentration vector
 		void mesh_gen(vector <double>, unsigned int);
 		void mesh_gen_s_pos(vector <double>);
 		void mesh_gen_s_neg(vector <double>);
@@ -77,8 +79,6 @@ class US_EXTERN US_Astfem_RSA : public QObject
 		// interpolate maps a simulated grid with a variable delta_r grid onto a
 		// fixed delta_r grid from experimental data, and also interpolates time
 
-		void interpolate_C0(mfem_initial *, double *); // interpolate starting concentration vector mfem_initial onto C0
-		void interpolate_Cfinal(mfem_initial *, double *); // interpolate final concentration back onto mfem_initial
 		void Reaction_dydt(double *, double *);
 		void Reaction_dfdy(double *, double **);
 		void adjust_limits(unsigned int /*rotor speed*/);
@@ -90,7 +90,9 @@ class US_EXTERN US_Astfem_RSA : public QObject
 		void print_simparams();				// print simparams
 		void print_vector(vector <double> *);
 		void print_vector(double *, unsigned int);
-
+		void initialize_rg();
+		void update_assocv();
+		void decompose(vector <mfem_initial> *);
 };
 
 

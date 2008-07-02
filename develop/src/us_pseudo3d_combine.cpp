@@ -544,7 +544,6 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 			" (" + temp_system.method
 			+")";
 	le_distro_info->setText(str);
-	cout << "-2. Size of temp_distro: " << temp_system.s_distro.size() << endl;
 	if (temp_system.distro_type > 0)
 	{
 		if(f.open(IO_ReadOnly))
@@ -580,7 +579,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 				temp_mw_distro.k = temp4;
 				temp_system.s_distro.push_back(temp_s_distro);
 				temp_system.mw_distro.push_back(temp_mw_distro);
-				cout << "s: " << temp1 << "..reading lines...\n";
+				//cout << "s: " << temp1 << "..reading lines...\n";
 			}
 			f.close();
 		}
@@ -595,19 +594,23 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 		j1 = reduced.begin();
 		j2 = reduced.begin();
 		temp_system.s_distro.clear();
+//		cout << "size before s-val combine: " << reduced.size() << endl;
 		if ( reduced.size() > 1 )
 		{
-			while ( ++j2 != reduced.end() )
+			j2++;
+			while ( j2 != reduced.end() )
 			{
 				if ( (*j1).s == (*j2).s && (*j1).k == (*j2).k )
 				{
 					(*j1).c += (*j2).c;
+					j2++;
 				}
 				else
 				{
 					temp_system.s_distro.push_back(*j1);
+					j1 = j2;
+					j2++;
 				}
-				j1++;
 			}
 			temp_system.s_distro.push_back(*j1);
 		}
@@ -616,24 +619,29 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 			temp_system.s_distro = reduced;
 		}
 // combine identical solutes in the mw-distribution:
+//		cout << "size after s-val combine: " << temp_system.s_distro.size() << endl;
 		reduced.clear();
 		reduced = temp_system.mw_distro;
 		temp_system.mw_distro.clear();
+//		cout << "size before mw combine: " << reduced.size() << endl;
 		j1 = reduced.begin();
 		j2 = reduced.begin();
 		if ( reduced.size() > 1 )
 		{
-			while ( ++j2 != reduced.end() )
+			j2++;
+			while ( j2 != reduced.end() )
 			{
 				if ( (*j1).s == (*j2).s && (*j1).k == (*j2).k )
 				{
-					(*j2).c += (*j1).c;
+					(*j1).c += (*j2).c;
+					j2++;
 				}
 				else
 				{
 					temp_system.mw_distro.push_back(*j1);
+					j1 = j2;
+					j2++;
 				}
-				j1++;
 			}
 			temp_system.mw_distro.push_back(*j1);
 		}
@@ -641,13 +649,10 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 		{
 			temp_system.mw_distro = reduced;
 		}
-
-		cout << "3. Size of temp_distro: " << temp_system.s_distro.size() << ", reduced: " <<reduced.size() << endl;
-
+//		cout << "size after mw combine: " << temp_system.mw_distro.size() << endl;
 		reduced.clear();
 	}
 	system.push_back(temp_system);
-	cout << "4. Size of s_distro: " << temp_system.s_distro.size() << ", mw_distro: " << temp_system.mw_distro.size() << endl;
 	current_distro = system.size() - 1;
 	cnt_current_distro->setRange(1.0, current_distro+1, 1.0);
 	current_distro = system.size() - 1;
@@ -666,6 +671,13 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 	pb_reset->setEnabled(true);
 	cb_plot_s->setEnabled(true);
 	cb_plot_mw->setEnabled(true);
+	list <Solute>::iterator iter;
+	/*
+	for (iter = temp_system.s_distro.begin(); iter != temp_system.s_distro.end(); iter++)
+	{
+		cout <<"c: " << (*iter).c << endl;
+	}
+	*/
 }
 
 void US_Pseudo3D_Combine::set_limits()
@@ -786,6 +798,8 @@ void US_Pseudo3D_Combine::plot_3dim()
 	fstep = frange/(double) y_resolution;
 	ssigma = srange/resolution;
 	fsigma = frange/resolution;
+	ssigma /= 2;
+	fsigma /= 2;
 	plot->setAxisScale(QwtPlot::xBottom, plot_smin, plot_smax);
 	plot->setAxisScale(QwtPlot::yLeft, plot_fmin, plot_fmax);
 	for (i=0; i<x_resolution; i++)
@@ -802,6 +816,8 @@ void US_Pseudo3D_Combine::plot_3dim()
 	}
 	double maxval = 0;
 	count = 0;
+//	cout << "Resolution: " << resolution << ", size: " << system[current_distro].s_distro.size() << ", x: " << x_resolution
+//			<< ", y: " << y_resolution << ", ssigma: " << ssigma << ", fsigma: " << fsigma << endl;
 	if (plot_s)
 	{
 //		cout << "plots\n";
@@ -811,12 +827,12 @@ void US_Pseudo3D_Combine::plot_3dim()
 //			cout << "current_distro: " << current_distro << ", size: " << system[current_distro].s_distro.size() << endl;
 			for (iter = system[current_distro].s_distro.begin(); iter != system[current_distro].s_distro.end(); iter++)
 			{
-				cout << (*iter).c << endl;
+				//cout << (*iter).c << endl;
 				for (i=0; i<x_resolution; i++)
 				{
 					for (j=0; j<y_resolution; j++)
 					{
-//						cout << "y: " << y[i] << ", it_k: " <<  (*iter).k  << ", x: " << x[i] << ", it_s: " <<  (*iter).s << ", sig_f: " << fsigma << ", sig_s: " << ssigma ;
+//cout << "y: " << y[i] << ", it_k: " <<  (*iter).k  << ", x: " << x[i] << ", it_s: " <<  (*iter).s << ", sig_f: " << fsigma << ", sig_s: " << ssigma << endl;
 						if (y[j] > (*iter).k - fsigma && y[j] < (*iter).k + fsigma
 											 && x[i] > (*iter).s - ssigma && x[i] < (*iter).s + ssigma)
 						{
@@ -829,6 +845,16 @@ void US_Pseudo3D_Combine::plot_3dim()
 				count++;
 				progress->setProgress(count);
 			}
+			/*
+			cout << "maxval: " << maxval << endl;
+			for (i=0; i<x_resolution; i++)
+			{
+				for (j=0; j<y_resolution; j++)
+				{
+					cout << z[i][j] << endl;
+				}
+			}
+			*/
 		}
 		else
 		{
@@ -1035,10 +1061,13 @@ void US_Pseudo3D_Combine::plot_3dim()
 		x[i] = plot_smin + i * sstep;
 		for (j=0; j<y_resolution; j++)
 		{
-			z[i][j] = (system[current_distro].gradient.size()-1) * z[i][j]/maxval;
+			if (z[i][j] != 0)
+			{
+				z[i][j] = 1 + (system[current_distro].gradient.size()-2) * z[i][j]/maxval;
+			}
 		}
 	}
-
+//	cout << "i: " << i << ", j: " << j << ", size: " << system[current_distro].gradient.size() << ", Max: " << maxval << endl;
 // Never used
 	// QFileInfo fi();
 
@@ -1082,6 +1111,33 @@ void US_Pseudo3D_Combine::plot_3dim()
 					system[current_distro].method);
 		}
 	}
+	plot->setCanvasBackground(system[current_distro].gradient[0]);
+/*
+	long int tag;
+	double xtag[5];
+	double ytag[5];
+	xtag[0] = 2.86838;
+	ytag[0] = 1.202;
+	xtag[1] = 3.64469;
+	ytag[1] = 1.3987;
+	xtag[2] = 5.05896;
+	ytag[2] = 1.5996;
+	xtag[3] = 7.14366;
+	ytag[3] = 1.7982;
+	xtag[4] = 10.1999;
+	ytag[4] = 1.99917;
+	QPen pen;
+	pen.setWidth(2);
+	pen.setColor(Qt::black);
+	tag = plot->insertCurve("tagline");
+	symbol.setPen(pen);
+	symbol.setBrush(Qt::black);
+	symbol.setStyle(QwtSymbol::Cross);
+	symbol.setSize(20);
+	plot->setCurveSymbol(tag, symbol);
+	plot->setCurveStyle(tag, QwtCurve::NoCurve);
+	plot->setCurveData(tag, xtag, ytag, 5);
+*/	
 	plot->replot();
 	delete [] xval;
 	delete [] yval;

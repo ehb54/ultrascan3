@@ -700,7 +700,7 @@ void US_ModelEditor::select_component(int val)
 	{
 		for (unsigned int i=0; i<(*system).assoc_vector.size(); i++)
 		{ // only check the dissociating species
-			if ((*system).assoc_vector[i].component2 == (int) current_component
+			if ((*system).assoc_vector[i].component2 == current_component
 			||  (*system).assoc_vector[i].component3 == (int) current_component)
 			{
 				le_keq->setText(str.sprintf("%6.4e", (*system).assoc_vector[i].keq));
@@ -986,7 +986,7 @@ void US_ModelEditor::update_keq(const QString &newText)
 	for (unsigned int i=0; i<(*system).assoc_vector.size(); i++)
 	{
 		// check to see if there is an dissociation linked to this component
-		if ((*system).assoc_vector[i].component2 == (int) current_component)
+		if ((*system).assoc_vector[i].component2 == current_component)
 		{
 			// check to make sure this component is not an irreversible component
 			if ((*system).assoc_vector[i].stoichiometry1 != (*system).assoc_vector[i].stoichiometry2 // self-association
@@ -1008,7 +1008,7 @@ void US_ModelEditor::update_koff(const QString &newText)
 	for (unsigned int i=0; i<(*system).assoc_vector.size(); i++)
 	{
 		// check to see if there is an dissociation linked to this component
-		if ((*system).assoc_vector[i].component2 == (int) current_component)
+		if ((*system).assoc_vector[i].component2 == current_component)
 		{
 			// check to make sure this component is not an irreversible component
 			if ((*system).assoc_vector[i].stoichiometry1 != (*system).assoc_vector[i].stoichiometry2 // self-association

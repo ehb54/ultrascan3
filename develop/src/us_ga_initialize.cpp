@@ -992,20 +992,23 @@ void US_GA_Initialize::load_distro()
 		distro_solute.clear();
 		j1 = reduced.begin();
 		j2 = reduced.begin();
-
+		//cout << "size before ga_init: " << reduced.size() << endl;
 		if ( reduced.size() > 1 )
 		{
-			while ( ++j2 != reduced.end() )
+			j2++;
+			while ( j2 != reduced.end() )
 			{
 				if ( (*j1).s == (*j2).s && (*j1).k == (*j2).k )
 				{
-					(*j2).c += (*j1).c;
+					(*j1).c += (*j2).c;
+					j2++;
 				}
 				else
 				{
 					distro_solute.push_back(*j1);
+					j1 = j2;
+					j2++;
 				}
-				j1++;
 			}
 			distro_solute.push_back(*j1);
 		}
@@ -1013,23 +1016,7 @@ void US_GA_Initialize::load_distro()
 		{
 			distro_solute = reduced;
 		}
-
-		/* old code:
-		while ( ++j2 != reduced.end() )
-		{
-			//j2++;
-			if ((*j1).s == (*j2).s && (*j1).k == (*j2).k)
-			{
-				(*j1).c += (*j2).c;
-			}
-			else
-			{
-				distro_solute.push_back(*j1);
-				j1 = j2;
-			}
-		}
-		*/
-		
+		//cout << "size after ga_init: " << distro_solute.size() << endl;
 		reduced.clear();
 		float low_s, high_s, val_k, low_k=1.0e6, high_k = -1.0e6;
 		for (j = distro_solute.begin(); j != distro_solute.end(); j++)
@@ -1097,8 +1084,7 @@ void US_GA_Initialize::load_distro()
 		smax = max(smax, (double) (*iter).s);
 		fmin = min(fmin, (double) (*iter).k);
 		fmax = max(fmax, (double) (*iter).k);
-		//cout  << "s: " << (*iter).s << ", ff0: " << (*iter).k << ", smax: " << smax << ", smin: " << smin << ", fmin: " << fmin << ", fmax: " << fmax << endl;
-
+//		cout <<"c: " << (*iter).c << "s: " << (*iter).s << ", ff0: " << (*iter).k << ", smax: " << smax << ", smin: " << smin << ", fmin: " << fmin << ", fmax: " << fmax << endl;
 	}
 	float diff;
 	diff = smax - smin;
@@ -1448,6 +1434,8 @@ void US_GA_Initialize::plot_3dim()
 	double maxval = 0;
 	progress->setTotalSteps(distro_solute.size());
 	count = 0;
+//	cout << "Resolution: " << resolution << ", size: " << distro_solute.size() << ", x: " << x_resolution
+//			<< ", y: " << y_resolution << ", ssigma: " << ssigma << ", fsigma: " << fsigma << endl;
 	if (resolution == 100)
 	{
 		for (iter = distro_solute.begin(); iter != distro_solute.end(); iter++)
@@ -1456,7 +1444,7 @@ void US_GA_Initialize::plot_3dim()
 			{
 				for (j=0; j<y_resolution; j++)
 				{
-//				cout << "y: " << y[i] << ", it: " <<  (*iter).k  << ", x: " << x[i] << ", it: " <<  (*iter).k << endl;
+					//cout << "y: " << y[i] << ", it_k: " <<  (*iter).k  << ", x: " << x[i] << ", it_s: " <<  (*iter).s <<  ", sig_f: " << fsigma << ", sig_s: " << ssigma << endl;
 					if (y[j] > (*iter).k - fsigma && y[j] < (*iter).k + fsigma
 					  && x[i] > (*iter).s - ssigma && x[i] < (*iter).s + ssigma)
 					{
@@ -1469,6 +1457,16 @@ void US_GA_Initialize::plot_3dim()
 			count++;
 			progress->setProgress(count);
 		}
+		/*		
+		cout << "maxval: " << maxval << endl;
+		for (i=0; i<x_resolution; i++)
+		{
+			for (j=0; j<y_resolution; j++)
+			{
+				cout << z[i][j] << endl;
+			}
+		}
+		*/
 	}
 	else
 	{
@@ -1566,9 +1564,13 @@ void US_GA_Initialize::plot_3dim()
 		x[i] = smin + i * sstep;
 		for (j=0; j<y_resolution; j++)
 		{
-			z[i][j] = (gradient.size()-1) * z[i][j]/maxval;
+			if (z[i][j] !=0)
+			{
+				z[i][j] = 1 + (gradient.size()-1) * z[i][j]/maxval;
+			}
 		}
 	}
+//	cout << "i: " << i << ", j: " << j << ", size: " << gradient.size() << ", Max: " << maxval << endl;
 	QFileInfo fi(id);
 	QString htmlDir = USglobal->config_list.html_dir + "/" + fi.fileName();
 	QString str1;
@@ -1633,6 +1635,7 @@ void US_GA_Initialize::plot_3dim()
 		plot->setCurveData(curve[k], xval, yval, count);
 		plot->setTitle(fi.fileName() + cell_info + str1);
 	}
+	plot->setCanvasBackground(gradient[0]);
 	plot->replot();
 	delete [] xval;
 	delete [] yval;

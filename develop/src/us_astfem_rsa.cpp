@@ -20,104 +20,69 @@ vector <struct mfem_data> *exp_data)
 	//fg.write_experiment(system, simparams, "/root/astfem_rsa-output");
 	this->simparams = simparams;
 	this->system = system;
-	unsigned int i, j;
-	float current_time = 0.0;
-	float current_speed;
-	double s_max_abs;			// largest sedimenting or floating speed (absolute value)
-	unsigned int duration, delay, initial_npts=5000;
+	unsigned int i, j, k, m, ss;
+	float current_time=0.0;
+	float current_speed=0.0;
+	double accel_time;
+	double dr=0.0;
+	unsigned int duration, initial_npts=5000, current_assoc;
 	mfem_data simdata;
 	mfem_initial CT0;			// initial total concentration
+	vector <mfem_initial> vC0;			// initial total concentration
 	af_params.first_speed = (*simparams).speed_step[0].rotorspeed;
-	if ((*system).model < 4) // non-interacting single or multicomponent systems
+	bool *reacting;
+	reacting = new bool [(*system).component_vector.size()];
+	for (k=0; k<(*system).component_vector.size(); k++)
 	{
-		for (i=0; i<(*system).component_vector.size(); i++)
+		reacting[k] = false;
+		for (j=0; j<(*system).assoc_vector.size(); j++)
 		{
-			if (guiFlag)
+			if (k == (*system).assoc_vector[j].component1
+				|| k == (*system).assoc_vector[j].component2
+				|| ((*system).assoc_vector[j].component3 >=0
+					&& k == (unsigned int) (*system).assoc_vector[j].component3))
 			{
-				emit current_component((int) i+1);
-				qApp->processEvents();
+				reacting[k] = true;
+				current_assoc = j;
 			}
-			current_time = 0.0; // reset time, which now tracks the beginning of each speed step (duration)
-			current_speed = 0.0; // start at rest
-			// before going into acceleration phase set w2t and last_time to zero, increment in function caculate_ni()
-			last_time = 0.0;
-			w2t_integral = 0.0;
-			CT0.radius.clear();
-			CT0.concentration.clear();
-			adjust_limits((*simparams).speed_step[0].rotorspeed);
-			(*exp_data)[0].meniscus = af_params.current_meniscus;
-			(*exp_data)[0].bottom = af_params.current_bottom;
-			double dr = (af_params.current_bottom - af_params.current_meniscus)/(initial_npts-1);
-			for (j=0; j<initial_npts; j++)
+		}
+		current_time = 0.0;
+		current_speed = 0.0;
+		w2t_integral = 0.0;
+		CT0.radius.clear();
+		CT0.concentration.clear();
+		dr = (af_params.current_bottom - af_params.current_meniscus)/(initial_npts-1);
+		for (j=0; j<initial_npts; j++)
+		{
+			CT0.radius.push_back(af_params.current_meniscus + j * dr );
+			CT0.concentration.push_back(0.0);
+		}
+		if (!reacting[k]) // noninteracting
+		{
+			initialize_conc(k, &CT0, true);
+			af_params.s.resize(1);
+			af_params.D.resize(1);
+			af_params.s[0] = (*system).component_vector[k].s;
+			af_params.D[0] = (*system).component_vector[k].D;
+			for (ss=0; ss<(*simparams).speed_step.size(); ss++)
 			{
-				CT0.radius.push_back(af_params.current_meniscus + j * dr );
-				CT0.concentration.push_back(0.0);
-			}
-			if ((*system).component_vector[i].c0.concentration.size() == 0) // we don't have an existing CT0 concentration vector
-			{ // build up the initial concentration vector with constant concentration
-				if ((*simparams).band_forming)
-				{
-					// calculate the width of the lamella
-					double lamella_width = pow(af_params.current_meniscus * af_params.current_meniscus
-								+ (*simparams).band_volume * 360.0/(2.5 * 1.2 * M_PI), 0.5) - af_params.current_meniscus;
-					// calculate the spread of the lamella:
-					for (j=0; j<initial_npts; j++)
-					{
-						CT0.concentration[j] = (*system).component_vector[i].concentration * exp(-pow( (CT0.radius[j] - af_params.current_meniscus) / lamella_width, 4.0 ) );
-						// if (CT0.radius[j] < af_params.current_meniscus + lamella_width)
-						// {
-							// CT0.concentration[j] = (*system).component_vector[i].concentration;
-						// }
-					}
-				}
-				else
-				{
-					for (j=0; j<initial_npts; j++)
-					{
-						CT0.concentration[j] = (*system).component_vector[i].concentration;
-					}
-				}
-			}
-			else
-			{
-				// take the existing initial concentration vector and copy it to the temporary CT0 vector:
-				// needs rubber band to make sure meniscus and bottom equal current_meniscus and current_bottom
-				CT0.radius.clear();
-				CT0.concentration.clear();
-				CT0 = (*system).component_vector[i].c0;
-			}
-			af_params.s.clear();
-			af_params.D.clear();
-			af_params.s.push_back((double) (*system).component_vector[i].s);
-			af_params.D.push_back((double) (*system).component_vector[i].D);
-			for (j=0; j<(*simparams).speed_step.size(); j++)
-			{
-				adjust_limits((*simparams).speed_step[j].rotorspeed);
-				(*exp_data)[j].meniscus = af_params.current_meniscus;
-				(*exp_data)[j].bottom = af_params.current_bottom;
-				if((*simparams).speed_step[j].acceleration_flag) // we need to simulate acceleration
+				adjust_limits((*simparams).speed_step[ss].rotorspeed);
+				(*exp_data)[ss].meniscus = af_params.current_meniscus;
+				(*exp_data)[ss].bottom = af_params.current_bottom;
+				accel_time = 0.0;
+				if((*simparams).speed_step[ss].acceleration_flag) // we need to simulate acceleration
 				{// if the speed difference is larger than acceleration rate then we have at least 1 acceleration step
-					af_params.time_steps = (unsigned int) fabs((*simparams).speed_step[j].rotorspeed
-					- current_speed)/(*simparams).speed_step[j].acceleration;
+					af_params.time_steps = (unsigned int) fabs((*simparams).speed_step[ss].rotorspeed
+							- current_speed)/(*simparams).speed_step[ss].acceleration;
 					af_params.dt = 1.0; // each simulation step is 1 second long in the acceleration phase
 					af_params.simpoints = 2 * (*simparams).simpoints; // use a fixed grid with refinement at both ends and with twice the number of points
 					af_params.start_time = current_time;
-					af_params.moving_grid = false;
-					af_params.acceleration = true;
-					vector <double> rpm;
-					rpm.clear();
-					for (unsigned int step=0; step<af_params.time_steps; step++)
-					{
-						rpm.push_back(current_speed + (step + 1) * (*simparams).speed_step[j].acceleration);
-
-					}
-
-					// on exit, contains final concentration in CT0
-
-					calculate_ni(rpm[0], rpm[rpm.size()-1], af_params.s[0], af_params.D[0], &CT0, &simdata);
+					print_af();
+					calculate_ni(current_speed, (*simparams).speed_step[ss].rotorspeed, &CT0, &simdata, true);
 
 					// add the acceleration time:
-					current_time += af_params.dt * af_params.time_steps;
+					accel_time = af_params.dt * af_params.time_steps;
+					current_time += accel_time;
 					//cout << "Current time: " << current_time << endl;
 					if (guiFlag)
 					{
@@ -126,66 +91,55 @@ vector <struct mfem_data> *exp_data)
 					}
 					if (*stopFlag)
 					{
-					        if (guiFlag)
+						if (guiFlag)
 						{
-						    qApp->processEvents();
+							qApp->processEvents();
 						}
-						interpolate(&(*exp_data)[j], &simdata, af_params.omega_s, af_params.acceleration); // interpolate the simulated data onto the experimental time- and radius grid
+						interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, true); // interpolate the simulated data onto the experimental time- and radius grid
 						return(1); // early termination = 1
 					}
 				}  // end of for acceleration
-				duration = ((*simparams).speed_step[j].duration_hours * 3600
-  				          + (*simparams).speed_step[j].duration_minutes * 60);
-				delay = (unsigned int) ((*simparams).speed_step[j].delay_hours * 3600
-				                      + (*simparams).speed_step[j].delay_minutes * 60);
-				af_params.omega_s = pow((*simparams).speed_step[j].rotorspeed * M_PI/30.0, 2.0);
-				// find out the minimum dt between actual scans
-            if(duration<=delay) {printf("duration is less than delay! \n"); return(1); }
-				af_params.dt = log((*exp_data)[j].bottom/(*exp_data)[j].meniscus)
-								/((af_params.omega_s * fabs((*system).component_vector[i].s)) *((*simparams).simpoints - 1));
-				if (af_params.dt > (duration - delay))
+				duration = (unsigned int) ((*simparams).speed_step[ss].duration_hours * 3600
+						+ (*simparams).speed_step[ss].duration_minutes * 60);
+				if (accel_time > duration)
 				{
-					af_params.dt = duration - delay;
-					af_params.simpoints = 1 + (unsigned int) (log((*exp_data)[j].bottom/(*exp_data)[j].meniscus)
-            	/(af_params.omega_s * fabs((*system).component_vector[i].s) * af_params.dt));
+					cerr << "Attention: acceleration time exceeds duration - please check initialization\n";
+					return (-1);
+				}
+				else
+				{
+					duration -= (unsigned int) accel_time;
+				}
+				af_params.omega_s = pow((*simparams).speed_step[ss].rotorspeed * M_PI/30.0, 2.0);
+				af_params.dt = log((*exp_data)[ss].bottom/(*exp_data)[ss].meniscus)
+								/((af_params.omega_s * fabs((*system).component_vector[k].s)) *((*simparams).simpoints - 1));
+				if (af_params.dt > duration)
+				{
+					af_params.dt = duration;
+					af_params.simpoints = 1 + (unsigned int) (log((*exp_data)[ss].bottom/(*exp_data)[ss].meniscus)
+            	/(af_params.omega_s * fabs((*system).component_vector[k].s) * af_params.dt));
 				}
 				if (af_params.simpoints > 10000)
 				{
 					af_params.simpoints = 10000;
 				}
-            printf("std: duration=%d delay=%d, scans=%d\n", duration, delay, (*simparams).speed_step[j].scans);
 				// find out the minimum number of simpoints needed to provide the necessary dt:
-				af_params.simpoints = (*simparams).simpoints;
 				af_params.time_steps = (unsigned int) (1+duration/af_params.dt);
-//cout << "speed step:\t" << j << ", component: " << i << endl;
-//cout << "speed:\t\t" << (*simparams).speed_step[j].rotorspeed << endl;
-//cout << "hours:\t\t" << (*simparams).speed_step[j].duration_hours << endl;
-//cout << "minutes:\t" << (*simparams).speed_step[j].duration_minutes << endl;
 				af_params.start_time = current_time;
-				(*simparams).mesh = (*simparams).mesh;
-				af_params.moving_grid = (*simparams).moving_grid;
-				af_params.acceleration = false;
-				vector <double> rpm;
-				rpm.clear();
-				rpm.push_back((*simparams).speed_step[j].rotorspeed);
-
-//WMC
-            printf("std: time_steps=%d duration=%d dt=%12.5e \n", af_params.time_steps, duration, af_params.dt);
-
-				calculate_ni(rpm[0], rpm[0], af_params.s[0], af_params.D[0], &CT0, &simdata);
+				print_af();
+				calculate_ni((*simparams).speed_step[ss].rotorspeed, (*simparams).speed_step[ss].rotorspeed, &CT0, &simdata, false);
 
 				// set the current time to the last scan of this speed step
-				current_time = (*simparams).speed_step[j].duration_hours * 3600
-				+ (*simparams).speed_step[j].duration_minutes * 60;
+				current_time = (*simparams).speed_step[ss].duration_hours * 3600
+						+ (*simparams).speed_step[ss].duration_minutes * 60;
 				//cout << "Current time: " << current_time << ", duration: " << duration << endl;
-				af_params.acceleration = (*simparams).speed_step[j].acceleration_flag; // reset acceleration flag for correct time correction interpolation
-				interpolate(&(*exp_data)[j], &simdata, af_params.omega_s, af_params.acceleration); // interpolate the simulated data onto the experimental time- and radius grid
+				interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, false); // interpolate the simulated data onto the experimental time- and radius grid
 
 				// set the current speed to the constant rotor speed of the current speed step
-				current_speed = (*simparams).speed_step[j].rotorspeed;
+				current_speed = (*simparams).speed_step[ss].rotorspeed;
 				if (guiFlag)
 				{
-				    qApp->processEvents();
+					qApp->processEvents();
 				}
 				if (*stopFlag)
 				{
@@ -194,139 +148,78 @@ vector <struct mfem_data> *exp_data)
 			} // speed step loop
 			if (guiFlag)
 			{
-				emit current_component(i+1);
-				//cout << "Current component: " << i+1 << endl;
+				emit current_component(k+1);
 				qApp->processEvents();
 			}
-		} // component loop
-	}  // end of non-interacting case
-	else if ((*system).model >= 4 && (*system).model <= 10) // A + nA = An
+		}
+	}
+	update_assocv();
+	initialize_rg();
+	for (unsigned int group=0; group<rg.size(); group++)
 	{
-		current_time = 0.0; // reset time, which now tracks the beginning of each speed step (duration)
-		current_speed = 0.0; // start at rest
-		// before going into acceleration phase set w2t and last_time to zero, increment in function caculate_ni()
-		last_time = 0.0; // initialize to zero
-		w2t_integral = 0.0; // initialize to zero, will be incremented in calculate_ra2
-		CT0.radius.clear();
-		CT0.concentration.clear();
-		adjust_limits((*simparams).speed_step[0].rotorspeed);
-		double dr = (af_params.current_bottom - af_params.current_meniscus)/(initial_npts-1);
-		//cerr.precision(10);
-		//cerr << "Initial points: " << initial_npts << endl;
-		for (j=0; j<initial_npts; j++)
-		{
-			CT0.radius.push_back(af_params.current_meniscus + j * dr );
-			//cerr << af_params.current_meniscus + j * dr << endl;
-			CT0.concentration.push_back(0.0);
-		}
-		if ((*system).component_vector[0].c0.concentration.size() == 0) // we don't have an existing CT0 concentration vector
-		{ // build up the initial concentration vector with constant concentration
-			if ((*simparams).band_forming)
+		unsigned int num_comp = rg[group].GroupComponent.size();
+		af_params.s.resize(num_comp);
+		af_params.D.resize(num_comp);
+		af_params.kext.resize(num_comp);
+		af_params.role.resize(num_comp);
+		af_params.rg_index = group;
+		for (j=0; j<num_comp; j++)
+		{ 
+			af_params.s[j] = (*system).component_vector[rg[group].GroupComponent[j]].s;
+			af_params.D[j] = (*system).component_vector[rg[group].GroupComponent[j]].D;
+			af_params.kext[j] = (*system).component_vector[rg[group].GroupComponent[j]].extinction;
+			af_params.role[j].comp_index = rg[group].GroupComponent[j];
+			af_params.role[j].assoc.resize(rg[group].association.size());
+			af_params.role[j].react.resize(rg[group].association.size());
+			af_params.role[j].st.resize(rg[group].association.size());
+			for(i=0; i<rg[group].association.size(); i++)
 			{
-					// calculate the width of the lamella
-				double lamella_width = pow(af_params.current_meniscus * af_params.current_meniscus
-							+ (*simparams).band_volume * 360.0/(2.5 * 1.2 * M_PI), 0.5) - af_params.current_meniscus;
-					// calculate the spread of the lamella:
-				for (j=0; j<initial_npts; j++)
+				af_params.role[j].assoc[i] = rg[group].association[i];
+				for (m=0; m<(*system).assoc_vector[af_params.role[j].assoc[i]].comp.size(); m++)
 				{
-					CT0.concentration[j] = (*system).component_vector[0].concentration * exp(-pow( (CT0.radius[j] - af_params.current_meniscus) / lamella_width, 4.0));
-				}
-			}
-			else
-			{
-				for (j=0; j<initial_npts; j++)
-				{
-					CT0.concentration[j] = (*system).component_vector[0].concentration;
+					if(af_params.role[j].comp_index == (*system).assoc_vector[af_params.role[j].assoc[i]].comp[m])
+					{
+						af_params.role[j].react[i] = (*system).assoc_vector[af_params.role[j].assoc[i]].react[m];
+						af_params.role[j].st[i] = (*system).assoc_vector[af_params.role[j].assoc[i]].stoich[m];
+						break;
+					}
 				}
 			}
 		}
-		else
+		vC0.clear();
+		for (j=0; j<rg[group].GroupComponent.size(); j++)
 		{
-				// take the existing initial concentration vector and copy it to the temporary CT0 vector:
-				// needs rubber band to make sure meniscus and bottom equal current_meniscus and current_bottom
 			CT0.radius.clear();
 			CT0.concentration.clear();
-			CT0 = (*system).component_vector[0].c0;
-		}
-		af_params.s.clear();
-		af_params.D.clear();
-		af_params.n.clear();
-		af_params.keq.clear();
-		af_params.koff.clear();
-		af_params.kext.clear();
-		af_params.pathlength = 1.2;
-		af_params.keq.push_back((double) (*system).assoc_vector[0].keq);
-		af_params.koff.push_back((double) (*system).assoc_vector[0].k_off);
-		af_params.n.push_back((*system).assoc_vector[0].stoichiometry1);
-		af_params.n.push_back((*system).assoc_vector[0].stoichiometry2);
-		for (i=0; i<(*system).component_vector.size(); i++)
-		{
-			//cout << "s[" << i<< "]: " << (*system).component_vector[i].s <<
-			//", D[" << i << "]: " << (*system).component_vector[i].D << endl;
-			af_params.s.push_back((*system).component_vector[i].s);
-			af_params.D.push_back((*system).component_vector[i].D);
-			af_params.kext.push_back((double) (*system).component_vector[i].extinction);
-		}
-      // find the largest sedimenting or floating speed
-      s_max_abs = fabs(maxval(af_params.s)) > fabs(minval(af_params.s))?
-                  fabs(maxval(af_params.s)) : fabs(minval(af_params.s));
-
-
-      // decompose the initial total concentration CT0 into partial concentration C0
-	   mfem_initial *C0;		// inital partial concentration decomposed from initial total concentration CT0
-      C0 = new mfem_initial [ (*system).component_vector.size() ];
-
-      for( i=0; i<(*system).component_vector.size(); i++)
-      {
-         C0[i].radius.clear();
-         C0[i].concentration.clear();
-      }
-      double *vtmp ;
-      vtmp = new double [ (*system).component_vector.size() ];
-	   for (j=0; j< CT0.radius.size(); j++)
-      {
-         DecomposeCT( CT0.concentration[j], vtmp);
-         for( i=0; i<(*system).component_vector.size(); i++)
-         {
-            C0[i].radius.push_back( CT0.radius[j] );
-            C0[i].concentration.push_back( vtmp[i] );
-         }
-      }
-      delete [] vtmp;
-
-
-      // start the simulation
-		for (j=0; j<(*simparams).speed_step.size(); j++)
-		{
-			if (guiFlag)
+			for (i=0; i<initial_npts; i++)
 			{
-				emit current_component(-1);
-				qApp->processEvents();
+				CT0.radius.push_back(af_params.current_meniscus + i * dr );
+				CT0.concentration.push_back(0.0);
 			}
-			adjust_limits((*simparams).speed_step[j].rotorspeed);
-			(*exp_data)[j].meniscus = af_params.current_meniscus;
-			(*exp_data)[j].bottom = af_params.current_bottom;
-			if((*simparams).speed_step[j].acceleration_flag &&
-			   (*simparams).speed_step[j].acceleration) // we need to simulate acceleration
+			initialize_conc(rg[group].GroupComponent[j], &CT0, false);
+			vC0.push_back(CT0);
+		}
+		decompose(&vC0);
+		for (ss=0; ss<(*simparams).speed_step.size(); ss++)
+		{
+			adjust_limits((*simparams).speed_step[ss].rotorspeed);
+			(*exp_data)[ss].meniscus = af_params.current_meniscus;
+			(*exp_data)[ss].bottom = af_params.current_bottom;
+			accel_time = 0.0;
+			if((*simparams).speed_step[ss].acceleration_flag) // we need to simulate acceleration
 			{// if the speed difference is larger than acceleration rate then we have at least 1 acceleration step
-				af_params.time_steps = (unsigned int) fabs((*simparams).speed_step[j].rotorspeed
-				- current_speed)/(*simparams).speed_step[j].acceleration;
+				af_params.time_steps = (unsigned int) fabs((*simparams).speed_step[ss].rotorspeed
+						- current_speed)/(*simparams).speed_step[ss].acceleration;
 				af_params.dt = 1.0; // each simulation step is 1 second long in the acceleration phase
 				af_params.simpoints = 2 * (*simparams).simpoints; // use a fixed grid with refinement at both ends and with twice the number of points
 				af_params.start_time = current_time;
-				af_params.moving_grid = false;
-				af_params.acceleration = true;
-				vector <double> rpm;
-				rpm.clear();
-				for (unsigned int step=0; step<af_params.time_steps; step++)
-				{
-					rpm.push_back(current_speed + (step + 1) * (*simparams).speed_step[j].acceleration);
-				}
-// on exit, contains final concentration in C0
-				calculate_ra2(rpm[0], rpm[rpm.size()-1], C0, &simdata);
-//				print_af();
-// add the acceleration time:
-				current_time += af_params.dt * af_params.time_steps;
+				print_af();
+				calculate_ni(current_speed, (*simparams).speed_step[ss].rotorspeed, &CT0, &simdata, true);
+
+					// add the acceleration time:
+				accel_time = af_params.dt * af_params.time_steps;
+				current_time += accel_time;
+					//cout << "Current time: " << current_time << endl;
 				if (guiFlag)
 				{
 					emit new_time(current_time);
@@ -334,79 +227,282 @@ vector <struct mfem_data> *exp_data)
 				}
 				if (*stopFlag)
 				{
-				        if (guiFlag)
+					if (guiFlag)
 					{
-					    qApp->processEvents();
+						qApp->processEvents();
 					}
-					interpolate(&(*exp_data)[j], &simdata, af_params.omega_s, af_params.acceleration); // interpolate the simulated data onto the experimental time- and radius grid
+					interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, true); // interpolate the simulated data onto the experimental time- and radius grid
 					return(1); // early termination = 1
 				}
 			}  // end of for acceleration
-			duration = ((*simparams).speed_step[j].duration_hours * 3600
-					+ (*simparams).speed_step[j].duration_minutes * 60);
-			delay = (unsigned int) ((*simparams).speed_step[j].delay_hours * 3600
-					+ (*simparams).speed_step[j].delay_minutes * 60);
-			af_params.omega_s = pow((*simparams).speed_step[j].rotorspeed * M_PI/30.0, 2.0);
-// find out the minimum dt between actual scans
-			af_params.dt = (duration - delay)/(*simparams).speed_step[j].scans;
-// find out the minimum number of simpoints needed to provide the necessary dt:
-
-			af_params.simpoints = 1 + (unsigned int) (log(af_params.current_bottom/af_params.current_meniscus)/( af_params.omega_s * s_max_abs * af_params.dt));
-
-
-// if calculated # of simpoints is smaller than user selected number of simpoints, follow user's request:
-			if ( af_params.simpoints < (*simparams).simpoints )
+			duration = (unsigned int) ((*simparams).speed_step[ss].duration_hours * 3600
+					+ (*simparams).speed_step[ss].duration_minutes * 60);
+			if (accel_time > duration)
 			{
-				af_params.simpoints = (*simparams).simpoints;
-				af_params.dt = log(af_params.current_bottom/af_params.current_meniscus)
-				    /(af_params.omega_s * s_max_abs * ((*simparams).simpoints - 1)); // delta_t
+				cerr << "Attention: acceleration time exceeds duration - please check initialization\n";
+				return (-1);
 			}
 			else
 			{
-				if (guiFlag)
-				{
-				    cerr << "Number of simpoints adjusted to " << af_params.simpoints
-						<< " for component " << i + 1 << " and speed step " << j + 1 << endl;
-				}
+				duration -= (unsigned int) accel_time;
 			}
+			af_params.omega_s = pow((*simparams).speed_step[ss].rotorspeed * M_PI/30.0, 2.0);
+			af_params.dt = log((*exp_data)[ss].bottom/(*exp_data)[ss].meniscus)
+								/((af_params.omega_s * fabs((*system).component_vector[k].s)) *((*simparams).simpoints - 1));
+			if (af_params.dt > duration)
+			{
+				af_params.dt = duration;
+				af_params.simpoints = 1 + (unsigned int) (log((*exp_data)[ss].bottom/(*exp_data)[ss].meniscus)
+            	/(af_params.omega_s * fabs((*system).component_vector[k].s) * af_params.dt));
+			}
+			if (af_params.simpoints > 10000)
+			{
+				af_params.simpoints = 10000;
+			}
+				// find out the minimum number of simpoints needed to provide the necessary dt:
 			af_params.time_steps = (unsigned int) (1+duration/af_params.dt);
 			af_params.start_time = current_time;
-			(*simparams).mesh = (*simparams).mesh;
-			af_params.moving_grid = (*simparams).moving_grid;
-			af_params.acceleration = false;
-			vector <double> rpm;
-			rpm.clear();
-			rpm.push_back((*simparams).speed_step[j].rotorspeed);
-			calculate_ra2(rpm[0], rpm[0], C0, &simdata);
-//			print_af();
-			af_params.acceleration = (*simparams).speed_step[j].acceleration_flag; // reset acceleration flag for correct time correction interpolation
-			interpolate(&(*exp_data)[j], &simdata, af_params.omega_s, af_params.acceleration); // interpolate the simulated data onto the experimental time- and radius grid
+			print_af();
+			calculate_ni((*simparams).speed_step[ss].rotorspeed, (*simparams).speed_step[ss].rotorspeed, &CT0, &simdata, false);
 
 				// set the current time to the last scan of this speed step
-			current_time = (*simparams).speed_step[j].duration_hours * 3600
-					+ (*simparams).speed_step[j].duration_minutes * 60;
+			current_time = (*simparams).speed_step[ss].duration_hours * 3600
+					+ (*simparams).speed_step[ss].duration_minutes * 60;
+				//cout << "Current time: " << current_time << ", duration: " << duration << endl;
+			interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, false); // interpolate the simulated data onto the experimental time- and radius grid
 
 				// set the current speed to the constant rotor speed of the current speed step
-			current_speed = (*simparams).speed_step[j].rotorspeed;
+			current_speed = (*simparams).speed_step[ss].rotorspeed;
 			if (guiFlag)
 			{
-			    qApp->processEvents();
+				qApp->processEvents();
 			}
 			if (*stopFlag)
 			{
 				return(1); // early termination = 1
 			}
 		} // speed step loop
-      delete [] C0;
+		if (guiFlag)
+		{
+			emit current_component(k+1);
+			qApp->processEvents();
+		}
+	}
+	return 0;
+}
+	
+void US_Astfem_RSA::update_assocv()
+{
+	for (unsigned int i=0; i<(*system).assoc_vector.size(); i++)
+	{
+		(*system).assoc_vector[i].comp.clear();
+		(*system).assoc_vector[i].stoich.clear();
+		(*system).assoc_vector[i].react.clear();
+		if ((*system).assoc_vector[i].component3 == -1)
+		{
+			(*system).assoc_vector[i].comp.push_back((*system).assoc_vector[i].component1);
+			(*system).assoc_vector[i].comp.push_back((*system).assoc_vector[i].component2);
+			(*system).assoc_vector[i].stoich.push_back((*system).assoc_vector[i].stoichiometry2);
+			(*system).assoc_vector[i].stoich.push_back((*system).assoc_vector[i].stoichiometry1);
+			(*system).assoc_vector[i].react.push_back(1);
+			(*system).assoc_vector[i].react.push_back(-1);
+		}
+		else
+		{
+			(*system).assoc_vector[i].comp.push_back((*system).assoc_vector[i].component1);
+			(*system).assoc_vector[i].comp.push_back((*system).assoc_vector[i].component2);
+			(*system).assoc_vector[i].comp.push_back((*system).assoc_vector[i].component3);
+			(*system).assoc_vector[i].stoich.push_back((*system).assoc_vector[i].stoichiometry1);
+			(*system).assoc_vector[i].stoich.push_back((*system).assoc_vector[i].stoichiometry2);
+			(*system).assoc_vector[i].stoich.push_back((*system).assoc_vector[i].stoichiometry3);
+			(*system).assoc_vector[i].react.push_back(1);
+			(*system).assoc_vector[i].react.push_back(1);
+			(*system).assoc_vector[i].react.push_back(-1);
+		}
+	}
+}
+
+void US_Astfem_RSA::initialize_rg() // Setup reaction groups
+{
+	if ((*system).assoc_vector.size() == 0) return; // if there are no reactions, then it is all noninteracting
+	struct ReactionGroup tmp_rg;
+	unsigned int counter, i, j;
+	bool flag1=false, flag2, flag3;
+	vector <bool> reaction_used;
+	reaction_used.clear();
+	for (i=0; i<(*system).assoc_vector.size(); i++)
+	{
+		reaction_used.push_back(false);
+	}
+	// initialize the first reaction group and put it into a temporary reaction group, use as test against all assoc vector entries:
+	tmp_rg.GroupComponent.clear();
+	tmp_rg.association.clear();
+	rg.clear();
+	tmp_rg.association.push_back(0);
+	tmp_rg.GroupComponent.push_back((*system).assoc_vector[0].component1);
+	tmp_rg.GroupComponent.push_back((*system).assoc_vector[0].component2);
+	if ((*system).assoc_vector[0].component3  != -1) // only 2 components react in first reaction
+	{
+		tmp_rg.GroupComponent.push_back((*system).assoc_vector[0].component3);
+	}
+	reaction_used[0] = true;
+	flag3 = false;
+	for (i=0; i<(*system).assoc_vector.size(); i++)
+	{
+		for (counter=1; counter<(*system).assoc_vector.size(); counter++) // check each association rule to see if it contains components that match tmp_rg components
+		{
+			while (reaction_used[counter])
+			{
+				counter++;
+				if (counter == (*system).assoc_vector.size()) return;
+			}
+			for (j=0; j<tmp_rg.GroupComponent.size(); j++) // check if any component already present in tmp_rg matches any of the three components in current (*system).assoc_vector entry
+			{
+				flag1 = false;
+				if((*system).assoc_vector[counter].component1 == tmp_rg.GroupComponent[j]
+							  ||(*system).assoc_vector[counter].component2 == tmp_rg.GroupComponent[j]
+							  ||(*system).assoc_vector[counter].component3 == (int) tmp_rg.GroupComponent[j])
+				{
+					flag1 = true;
+					break;
+				}
+			}
+			if (flag1) 	// if the component from tmp_rg is present in another (*system).assoc_vector entry,
+			{				//find out if the component from (*system).assoc_vector is already in tmp_rg.GroupComponent
+				tmp_rg.association.push_back(counter); // it is present (flag1=true) so add this rule to the tmp_rg vector
+				reaction_used[counter] = true;
+				flag3 = true; // there is at least one of all (*system).assoc_vector entries in this reaction_group, so set flag3 to true
+				flag2 = false;
+				for (j=0; j<tmp_rg.GroupComponent.size(); j++) // check if 1st component is already in the GroupVector from tmp_rg
+				{
+					if((*system).assoc_vector[counter].component1 == tmp_rg.GroupComponent[j])
+					{
+						flag2 = true;
+					}
+				}
+				if (!flag2) // add if not present already
+				{
+					tmp_rg.GroupComponent.push_back((*system).assoc_vector[counter].component1);
+				}
+				flag2 = false;
+				for (j=0; j<tmp_rg.GroupComponent.size(); j++)  // check if 2nd component is already in the GroupVector from tmp_rg
+				{
+					if((*system).assoc_vector[counter].component2 == tmp_rg.GroupComponent[j])
+					{
+						flag2 = true;
+					}
+				}
+				if (!flag2) // add if not present already
+				{
+					tmp_rg.GroupComponent.push_back((*system).assoc_vector[counter].component2);
+				}
+				flag2 = false;
+				if ((*system).assoc_vector[counter].component3 != -1)  // check if 3rd component is already in the GroupVector from tmp_rg (but only if non-zero)
+				{
+					for (j=0; j<tmp_rg.GroupComponent.size(); j++)
+					{
+						if((*system).assoc_vector[counter].component3 == (int) tmp_rg.GroupComponent[j])
+						{
+							flag2 = true;
+						}
+					}
+					if (!flag2) // add if not present already
+					{
+						tmp_rg.GroupComponent.push_back((*system).assoc_vector[counter].component3);
+					}
+				}
+			} //flag1 = true
+		}
+		if (flag3)
+		{
+			flag3 = false;
+			rg.push_back(tmp_rg);
+			tmp_rg.GroupComponent.clear();
+			tmp_rg.association.clear();
+			// make the next unused reaction the test reaction
+			j=1;
+			while (reaction_used[j])
+			{
+				j++;
+			}
+			cout << "j: " << j << endl;
+			if (j < (*system).assoc_vector.size())
+			{
+				tmp_rg.association.push_back(j);
+				tmp_rg.GroupComponent.push_back((*system).assoc_vector[j].component1);
+				tmp_rg.GroupComponent.push_back((*system).assoc_vector[j].component2);
+				if ((*system).assoc_vector[j].component3  != -1) // only 2 components react in first reaction
+				{
+					tmp_rg.GroupComponent.push_back((*system).assoc_vector[j].component3);
+				}
+				reaction_used[j] = true;
+				counter ++;
+			}
+			if (j == (*system).assoc_vector.size() - 1)
+			{
+				rg.push_back(tmp_rg);
+				return;
+			}
+		}
+	}
+}
+
+void US_Astfem_RSA::initialize_conc(unsigned int k, struct mfem_initial *CT0, bool noninteracting) // initializes total concentration vector
+{
+	unsigned int j;
+	if ((*system).component_vector[k].c0.concentration.size() == 0) // we don't have an existing CT0 concentration vector
+	{ // build up the initial concentration vector with constant concentration
+		if ((*simparams).band_forming)
+		{
+					// calculate the width of the lamella
+			double lamella_width = pow(af_params.current_meniscus * af_params.current_meniscus
+						+ (*simparams).band_volume * 360.0/(2.5 * 1.2 * M_PI), 0.5) - af_params.current_meniscus;
+					// calculate the spread of the lamella:
+			for (j=0; j<(*CT0).concentration.size(); j++)
+			{
+				(*CT0).concentration[j] += (*system).component_vector[k].concentration * exp(-pow( ((*CT0).radius[j] - af_params.current_meniscus) / lamella_width, 4.0));
+			}
+		}
+		else
+		{
+			for (j=0; j<(*CT0).concentration.size(); j++)
+			{
+				(*CT0).concentration[j] += (*system).component_vector[k].concentration;
+			}
+		}
 	}
 	else
 	{
-		cerr << "This model is not yet supported..." << endl;
+		if (noninteracting)
+		{
+		// take the existing initial concentration vector and copy it to the temporary CT0 vector:
+		// needs rubber band to make sure meniscus and bottom equal current_meniscus and current_bottom
+			(*CT0).radius.clear();
+			(*CT0).concentration.clear();
+			(*CT0) = (*system).component_vector[k].c0;
+		}
+		else // interpolation
+		{
+			mfem_initial C;
+			C.radius.clear();
+			C.concentration.clear();
+			double dr = (af_params.current_bottom - af_params.current_meniscus)/((*CT0).concentration.size()-1);
+			for (j=0; j<(*CT0).concentration.size(); j++)
+			{
+				C.radius.push_back(af_params.current_meniscus + j * dr );
+				C.concentration.push_back(0.0);
+			}
+			interpolate_C0(&(*system).component_vector[k].c0, &C);
+			for (j=0; j<(*CT0).concentration.size(); j++)
+			{
+				(*CT0).concentration[j] += C.concentration[j];
+			}
+		}
 	}
-	return(0);
 }
 
-int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, double D, mfem_initial *C_init, mfem_data *simdata) // non-interacting solute, constant speed
+
+int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial *C_init, mfem_data *simdata, bool accel) // non-interacting solute, constant speed
 {
 	unsigned int i, j;
 	double sw2, rpm_current;
@@ -427,18 +523,18 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 	(*simdata).radius.clear();
 	(*simdata).scan.clear();
 	mfem_scan simscan;
-//
+	//
 // generate the adaptive mesh
-//
-	sw2 = s * pow(rpm_stop * M_PI/30.0, 2.0);
+	//
+	sw2 = af_params.s[0] * pow(rpm_stop * M_PI/30.0, 2.0);
 	vector <double> nu;
 	nu.clear();
-	nu.push_back(sw2/D);
+	nu.push_back(sw2/af_params.D[0]);
 	mesh_gen(nu, (*simparams).mesh);
-	if (af_params.acceleration)  		// refine left hand side (when s>0) or
+	if (accel)  		// refine left hand side (when s>0) or
 	{										// right hand side (when s<0) for acceleration
 		double xc ;
-		if (s > 0)
+		if (af_params.s[0] > 0)
 		{ // radial distance from meniscus how far the boundary will move during this acceleration step (without diffusion)
 			xc = af_params.current_meniscus + sw2 * (af_params.time_steps * af_params.dt) /3.;
 			for (j=0; j<N-3; j++)
@@ -468,28 +564,28 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 		(*simdata).radius.push_back(x[i]);
 	}
 
-//
+	//
 // initialize the coefficient matrices
-//
+	//
 	initialize_2d(3, N, &CA);
 	initialize_2d(3, N, &CB);
 
-	if(!af_params.acceleration) // no acceleration
+	if(!accel) // no acceleration
 	{
-		sw2 = s * pow(rpm_stop * M_PI/30.0, 2.0);
-		if (!af_params.moving_grid)
+		sw2 = af_params.s[0] * pow(rpm_stop * M_PI/30.0, 2.0);
+		if (!(*simparams).moving_grid)
 		{
-			ComputeCoefMatrixFixedMesh(D, sw2, CA, CB);
+			ComputeCoefMatrixFixedMesh(af_params.D[0], sw2, CA, CB);
 		}
 		else
 		{
-			if (s > 0)
+			if (af_params.s[0] > 0)
 			{
-				ComputeCoefMatrixMovingMeshR(D, sw2, CA, CB);
+				ComputeCoefMatrixMovingMeshR(af_params.D[0], sw2, CA, CB);
 			}
 			else
 			{
-				ComputeCoefMatrixMovingMeshL(D, sw2, CA, CB);
+				ComputeCoefMatrixMovingMeshL(af_params.D[0], sw2, CA, CB);
 			}
 		}
 	}
@@ -500,42 +596,22 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 		initialize_2d(3, N, &CA2);
 		initialize_2d(3, N, &CB2);
 
-		if (!af_params.moving_grid)
-		{
-			sw2 = 0.;
-			ComputeCoefMatrixFixedMesh(D, sw2, CA1, CB1);
-			sw2 = s * pow(rpm_stop * M_PI/30.0, 2.0);
-			ComputeCoefMatrixFixedMesh(D, sw2, CA2, CB2);
-		}
-		else
-		{
-			if (s > 0)
-			{
-				sw2 = 0.;
-				ComputeCoefMatrixMovingMeshR(D, sw2, CA1, CB1);
-				sw2 = s * pow(rpm_stop * M_PI/30.0, 2.0);
-				ComputeCoefMatrixMovingMeshR(D, sw2, CA2, CB2);
-			}
-			else
-			{
-				sw2 = 0.;
-				ComputeCoefMatrixMovingMeshL(D, sw2, CA1, CB1);
-				sw2 = s * pow(rpm_stop * M_PI/30.0, 2.0);
-				ComputeCoefMatrixMovingMeshL(D, sw2, CA2, CB2);
-			}
-		}
+		sw2 = 0.;
+		ComputeCoefMatrixFixedMesh(af_params.D[0], sw2, CA1, CB1);
+		sw2 = af_params.s[0] * pow(rpm_stop * M_PI/30.0, 2.0);
+		ComputeCoefMatrixFixedMesh(af_params.D[0], sw2, CA2, CB2);
 	}
 
-//
+	//
 // Initial condition
-//
+	//
 	C0 = new double [N];
 	C1 = new double [N];
-	interpolate_C0(C_init, C0); //interpolate the given C_init vector on the new C0 grid
+	interpolate_C0(C_init, C0, &x); //interpolate the given C_init vector on the new C0 grid
 
-//
+	//
 // time evolution
-//
+	//
 
 	double *right_hand_side;
 	right_hand_side = new double [N];
@@ -544,10 +620,10 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 		rpm_current = rpm_start + (rpm_stop - rpm_start) * (i+0.5)/af_params.time_steps;
 		emit current_speed((unsigned int) rpm_current);
 
-      printf("rpm=%12.5e time_steps i=%d C_ttl=%20.10e \n", rpm_current, i,
-             IntConcentration(x, C0));
+		printf("rpm=%12.5e time_steps i=%d C_ttl=%20.10e \n", rpm_current, i,
+				 IntConcentration(x, C0));
 
-		if(af_params.acceleration) // then we have acceleration
+		if(accel) // then we have acceleration
 		{
 			for(unsigned int j1=0; j1<3; j1++)
 			{
@@ -572,7 +648,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 				emit new_time((float) simscan.time);
 				if (guiFlag)
 				{
-				    qApp->processEvents();
+					qApp->processEvents();
 				}
 			}
 		}
@@ -596,7 +672,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 		// sedimentation part:
 		// Calculate thr right hand side vector //
 		//
-		if (!af_params.moving_grid)
+		if (accel || !(*simparams).moving_grid)
 		{
 			right_hand_side[0] = -CB[1][0] * C0[0] - CB[2][0] * C0[1];
 			for(j=1; j<N-1; j++)
@@ -649,7 +725,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 	delete [] C1;
 	clear_2d(3, CA);
 	clear_2d(3, CB);
-	if(af_params.acceleration) // then we have acceleration
+	if(accel) // then we have acceleration
 	{
 		clear_2d(3, CA1);
 		clear_2d(3, CB1);
@@ -659,12 +735,11 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, double s, dou
 	return (0);
 }
 
-
 // ***
 // *** this is the SNI version of operator scheme
 // ***
 
-int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial *C_init, mfem_data *simdata)
+int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial *C_init, mfem_data *simdata, bool accel)
 {
 	unsigned int Mcomp, i, j, kkk;
 	double sw2, rpm_current, dval;
@@ -701,7 +776,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 	mesh_gen(nu, (*simparams).mesh);
 
 	// refine left hand side (when s_max>0) or  right hand side (when s<0) for acceleration
-	if (af_params.acceleration)
+	if (accel)
 	{
 		double xc ;
 		if ( s_min > 0 )  				// all sediment towards bottom
@@ -744,7 +819,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 	initialize_3d(Mcomp, 4, N, &CA);
 	initialize_3d(Mcomp, 4, N, &CB);
 
-	if(af_params.acceleration) //  acceleration, so use fixed grid
+	if(accel) //  acceleration, so use fixed grid
 	{
 		initialize_3d(Mcomp, 3, N, &CA1);
 		initialize_3d(Mcomp, 3, N, &CA2);
@@ -760,7 +835,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 	}
 	else		// constant sedimentation speed
 	{
-		if (!af_params.moving_grid )
+		if (!(*simparams).moving_grid )
 		{
 			for( i=0; i<Mcomp; i++)
 			{
@@ -810,7 +885,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 // here we need the interpolatie the initial partial concentration onto new grid x[j]
    for( i=0; i<Mcomp; i++)
    {
-	  interpolate_C0(&(C_init[i]), C0[i]); //interpolate the given C_init vector on the new C0 grid
+	  interpolate_C0(&(C_init[i]), C0[i], &x); //interpolate the given C_init vector on the new C0 grid
    }
    for (j=0; j<N; j++)
    {
@@ -871,7 +946,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
       //
       // first half step of sedimentation:
       //
-		if( af_params.acceleration ) // need to reconstruct CA and CB by linear interpolation
+		if( accel ) // need to reconstruct CA and CB by linear interpolation
 		{
 			dval =  pow(rpm_current/rpm_stop, 2.0) ;
 			for(i=0; i<Mcomp; i++)
@@ -886,7 +961,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 				}
 			}
 		}
-		if (!af_params.moving_grid)   // for fixed grid
+		if (accel || !(*simparams).moving_grid)   // for fixed grid
 		{
 			for (i=0; i<Mcomp; i++)
 			{
@@ -950,7 +1025,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
       // 2nd half step of sedimentation:
       //
 		rpm_current = rpm_start + (rpm_stop - rpm_start) * (kkk+1.5)/af_params.time_steps;
-		if( af_params.acceleration ) // need to reconstruct CA and CB by linear interpolation
+		if( accel ) // need to reconstruct CA and CB by linear interpolation
 		{
 			dval =  pow(rpm_current/rpm_stop, 2.0) ;
 			for(i=0; i<Mcomp; i++)
@@ -965,7 +1040,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 				}
 			}
 		}
-		if (!af_params.moving_grid)   // for fixed grid
+		if (accel || !(*simparams).moving_grid)   // for fixed grid
 		{
 			for (i=0; i<Mcomp; i++)
 			{
@@ -1038,7 +1113,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 	clear_2d(Mcomp, C1);
 	clear_3d(Mcomp, 4, CA);
 	clear_3d(Mcomp, 4, CB);
-	if( af_params.acceleration ) // then we have acceleration
+	if( accel ) // then we have acceleration
 	{
 		clear_3d(Mcomp, 3, CA1);
 		clear_3d(Mcomp, 3, CB1);
@@ -1352,7 +1427,7 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 //					= 1 Claverie (uniform), etc,
 //					= 2 Exponential mesh (Schuck's formular, no refinement at bottom)
 //					= 3 input from data file: "mesh_data.dat"
-//					= 10, af_params.acceleration mesh (left and right refinement)
+//					= 10, acceleration mesh (left and right refinement)
 //////////////////////////////////////////////////////////////%
 
 ////////////////////%
@@ -1910,8 +1985,14 @@ void US_Astfem_RSA::GlobalStiff_ellam(vector <double> *xb, double **ca, double *
 	clear_3d(N, 6, Stif);
 }
 
+void US_Astfem_RSA::decompose(vector <mfem_initial> *vC0)
+{
+	
+}
+
 void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 {
+	/*
 //////////////////////////////%
 //
 // ReactionOneStep_Euler_imp:  implicit Mid-point Euler
@@ -2055,6 +2136,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 			cerr << "warning: The reaction for model " << (*system).model << " has not yet been implemented" << endl;
 		}
 	}
+	*/
 }
 
 
@@ -2066,6 +2148,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(double **C1, double TimeStep)
 ////////////////////////////////////////
 int US_Astfem_RSA::DecomposeCT(double CT, double *C)
 {
+	/*
 	double dval, C1;
 
 		dval = CT;
@@ -2101,11 +2184,13 @@ int US_Astfem_RSA::DecomposeCT(double CT, double *C)
 			return (-1);
 		}
 	   return (0);
+	*/
 }
 
 
 void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
 {
+	/*
 	switch ( (*system).model )
    {
       case 12:						// n A <--> An,   m An <--> Anm
@@ -2133,10 +2218,12 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
 			cerr << "undefined reaction model \n";
       }
    }
+	*/
 }
 
 void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
 {
+	/*
 	switch ( (*system).model )
    {
       case 12:						// n A <--> An,   m An <--> Anm
@@ -2169,84 +2256,7 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
 			cerr << "undefined reaction model \n";
 		}
    }
-}
-
-
-void US_Astfem_RSA::interpolate_C0(struct mfem_initial *C0, double *C1)
-{
-	unsigned int i, j, ja;
-	double a, b, xs, tmp;
-
-	ja = 0;
-	for(j=0; j<N; j++)
-	{
-		xs = x[j];
-		for(i=ja; i<(*C0).radius.size(); i++)
-		{
-			if((*C0).radius[i] > xs + 1.e-12)
-			{
-				break;
-			}
-		}
-
-      if ( i == 0 ) 				// x[j] < C0.radius[0]
-      {
-         C1[j] = (*C0).concentration[0];		// use the first value
-      }
-      else if ( i == (*C0).radius.size() ) 	// x[j] > last point in (*C0).radius
-      {
-         C1[j] = (*C0).concentration[ i-1 ];
-      }
-      else
-      {
-		   a = (*C0).radius[i-1];
-		   b = (*C0).radius[i];
-		   tmp = (xs - a)/(b - a);
-		   C1[j] = (*C0).concentration[i-1] * (1. - tmp) + (*C0).concentration[i] * tmp;
-		   ja = i-1;
-      }
-	}
-}
-
-void US_Astfem_RSA::interpolate_Cfinal(struct mfem_initial *C0, double *cfinal)
-{
-// this routine also considers cases where C0 starts before the meniscus or stops
-// after the bottom is reached, however, C0 needs to cover both meniscus and bottom
-// In those cases it will fill the C0 vector with the first and/or last value of C0,
-// respectively, for the missing points.
-
-	unsigned int i, j, ja;
-	double a, b, xs, tmp;
-
-	ja = 0;
-	for(j=0; j<(*C0).radius.size(); j++)
-	{
-		xs = (*C0).radius[j];
-		for (i=ja; i<N; i++)
-		{
-			if( x[i] > xs + 1.e-12)
-			{
-				break;
-			}
-		}
-
-      if ( i == 0 ) 				// xs < x[0]
-      {
-         (*C0).concentration[j] = cfinal[0];		// use the first value
-      }
-      else if ( i == N ) 	   // xs > x[N]
-      {
-         (*C0).concentration[j] = cfinal[ i-1 ];
-      }
-      else 							// x[i-1] < xs <x[i]
-      {
-		   a = x[i-1];
-		   b = x[i];
-		   tmp = (xs-a)/(b-a);
-		   (*C0).concentration[j] = cfinal[i-1] * (1. - tmp) + cfinal[i] * tmp;
-		   ja = i-1;
-      }
-	}
+	*/
 }
 
 void US_Astfem_RSA::adjust_limits(unsigned int speed)
@@ -2312,21 +2322,7 @@ void US_Astfem_RSA::print_af()
 	{
 		cout << "s[" << i << "]:\t\t" << af_params.s[i] << endl;
 		cout << "D[" << i << "]:\t\t" << af_params.D[i] << endl;
-	}
-	cout << "\nEquilibrium constants:\n";
-	for (i=0; i<af_params.keq.size(); i++)
-	{
-		cout <<  str.sprintf("#  keq[%d]=%12.5e \t",  i, af_params.keq[i]) << endl;
-	}
-	cout << "\nK_off rates:\n";
-			for (i=0; i<af_params.koff.size(); i++)
-	{
-		cout << str.sprintf("#  koff[%d]=%12.5e \t", i, af_params.koff[i]) << endl;
-	}
-	cout << "\nExponents:\n";
-	for (i=0; i<af_params.n.size(); i++)
-	{
-		cout << str.sprintf("#  exponent[%d]=%d \n", i, af_params.n[i]) << endl;
+		cout << "ext[" << i << "]:\t\t" << af_params.kext[i] << endl;
 	}
 	cout << "\ndt:\t\t" << af_params.dt << endl;
 	cout << "time_steps:\t" << af_params.time_steps << endl;
@@ -2335,15 +2331,7 @@ void US_Astfem_RSA::print_af()
 	cout << "current meniscus:\t" << af_params.current_meniscus << endl;
 	cout << "current bottom:\t\t" << af_params.current_bottom << endl;
 	cout << "mesh:\t\t" << (*simparams).mesh << endl;
-	cout << "moving grid\t\t" << af_params.moving_grid << endl;
-	if (af_params.acceleration)
-	{
-		cout << "Acceleration is *on*\n";
-	}
-	else
-	{
-		cout << "Acceleration is *off*\n";
-	}
+	cout << "moving grid\t\t" << (*simparams).moving_grid << endl;
 }
 
 void US_Astfem_RSA::print_af(FILE *outf)
@@ -2359,31 +2347,13 @@ void US_Astfem_RSA::print_af(FILE *outf)
 		fprintf(outf, "#  s[%d]=%20.12e D[%d]=%20.12e \n", i, af_params.s[i], i, af_params.D[i]);
 	}
 	fprintf(outf, "#  \n");
-	fprintf(outf, "#  parameters for reactions:\n");
-	for (i=0; i<af_params.keq.size(); i++)
-	{
-		fprintf(outf, "#  keq[%d]=%12.5e \t",  i, af_params.keq[i]);
-	}
-	fprintf(outf, "\n");
-	for (i=0; i<af_params.koff.size(); i++)
-	{
-		fprintf(outf, "#  koff[%d]=%12.5e \t", i, af_params.koff[i]);
-	}
-	fprintf(outf, "\n");
-	for (i=0; i<af_params.n.size(); i++)
-	{
-		fprintf(outf, "#  exponent[%d]=%d \n", i, af_params.n[i]);
-	}
-	fprintf(outf, "#  \n");
 	fprintf(outf, "#  parameters for simulation:\n");
 	fprintf(outf, "#  current meniscus =%12.5e \n",  af_params.current_meniscus);
 	fprintf(outf, "#  current bottom =%12.5e \n",  af_params.current_bottom);
 	fprintf(outf, "#  start time =%12.5e \n",  af_params.start_time);
 	fprintf(outf, "#  mesh opt =%d \n",  (*simparams).mesh);
-	if (af_params.moving_grid) fprintf(outf, "#  grids = moving \n");
+	if ((*simparams).moving_grid) fprintf(outf, "#  grids = moving \n");
 	else fprintf(outf, "#  grids = fixed \n");
-	if (af_params.acceleration) fprintf(outf, "#  acceleration = True \n");
-	else fprintf(outf, "#  acceleration = False \n");
 	fprintf(outf, "#  simpoints =%d \n",  af_params.simpoints);
 	fprintf(outf, "#  dt =%12.5e \n",  af_params.dt);
 	fprintf(outf, "#  Total Number of Steps =%d \n",  af_params.time_steps);
