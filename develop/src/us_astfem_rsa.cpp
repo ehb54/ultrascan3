@@ -31,7 +31,7 @@ vector <struct mfem_data> *exp_data)
 	//fg.write_experiment(system, simparams, "/root/astfem_rsa-output");
 	this->simparams = simparams;
 	this->system = system;
-	unsigned int duration, initial_npts=5000, current_assoc;
+	unsigned int duration, initial_npts=500, current_assoc;
 	unsigned int i, j, k, m, n, ss;
 	float current_time, current_speed;
 	double accel_time, dr;
@@ -41,6 +41,9 @@ vector <struct mfem_data> *exp_data)
 	vector <bool> reacting;
 	reacting.resize( (*system).component_vector.size() );
 	af_params.first_speed = (*simparams).speed_step[0].rotorspeed;
+	update_assocv();
+	initialize_rg();
+	print_rg();
 
 	for (k=0; k<(*system).component_vector.size(); k++)
 	{
@@ -169,9 +172,6 @@ vector <struct mfem_data> *exp_data)
 			}
 		}
 	}
-	update_assocv();
-	initialize_rg();
-   print_rg();
 
    // vector <unsigned int> local_index: mapping from global index to local index in each rg.
    af_params.local_index.resize( (*system).component_vector.size() );
@@ -384,6 +384,11 @@ void US_Astfem_RSA::initialize_rg() // Setup reaction groups
 		tmp_rg.GroupComponent.push_back((*system).assoc_vector[0].component3);
 	}
 	reaction_used[0] = true;
+	if ((*system).assoc_vector.size() == 1)  // there is only one reaction, so add it and return
+	{
+		rg.push_back(tmp_rg);
+		return;
+	}
 	flag3 = false;
 	for (i=0; i<(*system).assoc_vector.size(); i++)
 	{
@@ -2096,7 +2101,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(unsigned int Npts, double **C1, do
    b = new double [num_comp];
    A = new double* [num_comp];
    for(i=0;i<num_comp;i++) A[i] = new double [num_comp];
-
+	cout << "Npts: " << Npts << endl;
 	for (j=0; j<Npts; j++)
 	{
       for(i=0;i<num_comp;i++)
@@ -2214,8 +2219,8 @@ void US_Astfem_RSA::decompose(struct mfem_initial *C0)
    }
 
    // general cases
-   unsigned int time_max = 16000; 		// maximum number of time steps for reacing equlibrium
-   double TimeStepSize = 1.;				// time step size 
+   unsigned int time_max = 160; 		// maximum number of time steps for reacing equlibrium
+   double TimeStepSize = 100.;				// time step size 
    double **C1, **C2;						// array for all component at all radius position
    double diff, ct ;				
 
@@ -2274,8 +2279,7 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
     num_comp = rg[af_params.rg_index].GroupComponent.size();
     num_rule = rg[af_params.rg_index].association.size();
     Q = new double [num_rule];
-
-    for(m=0; m<num_rule; m++) 
+    for(m=0; m<num_rule; m++)
     {
         rule = rg[af_params.rg_index].association[m];
         k_1  = (*system).assoc_vector[rule].k_off;
@@ -2390,79 +2394,6 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
 
    clear_2d(num_rule, QC);
 }
-
-
-
-/*
-void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
-{
-	switch ( (*system).model )
-   {
-      case 12:						// n A <--> An,   m An <--> Anm
-      {
-         int n, m;			// should be supplied by the model
-			double extA;		// extinction rate of A, should be supplied by the model
-			double K1, K_1, K2, K_2, Q1, Q2;
-
-         K1  = af_params.koff[0] * af_params.keq[0];
-         K2  = af_params.koff[1] * af_params.keq[1];
-         K_1 = af_params.koff[0] ;
-         K_2 = af_params.koff[1] ;
-
-         Q1 = K1 * pow(y[0], n) - K_1 * y[1];
-         Q2 = K2 * pow(y[1], m) - K_2 * y[2];
-
-         yt[0] = -double(n) * extA * Q1;
-         yt[1] =  double(n) * extA * ( Q1 - double(m) * Q2);
-         yt[2] =  double(m*n) * extA * Q2;
-
-         break;
-      }
-		default:
-		{
-			cerr << "undefined reaction model \n";
-      }
-   }
-}
-*/
-
-/*
-void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
-{
-	switch ( (*system).model )
-   {
-      case 12:						// n A <--> An,   m An <--> Anm
-      {
-         int n, m;			// should be supplied by the model
-			double extA;		// extinction rate of A, should be supplied by the model
-			double K1, K_1, K2, K_2;
-
-         K1  = af_params.koff[0] * af_params.keq[0];
-         K2  = af_params.koff[1] * af_params.keq[1];
-         K_1 = af_params.koff[0] ;
-         K_2 = af_params.koff[1] ;
-
-         dfdy[0][0] = -double(n) * extA * ( K1 * double(n) * pow(y[0], n-1) );
-         dfdy[0][1] = -double(n) * extA * ( -K_1 );
-         dfdy[0][2] =  0.;
-
-         dfdy[2][0] =  0.;
-         dfdy[2][1] =  double(m*n) * extA * ( K2 * double(m) * pow(y[1], m-1) );
-         dfdy[2][2] =  double(m*n) * extA * ( -K_2 );
-
-         dfdy[1][0] =  dfdy[0][0] - dfdy[2][0];
-         dfdy[1][1] =  dfdy[0][1] - dfdy[2][1];
-         dfdy[1][2] =  dfdy[0][2] - dfdy[2][2];
-
-         break;
-      }
-		default:
-		{
-			cerr << "undefined reaction model \n";
-		}
-   }
-}
-*/
 
 void US_Astfem_RSA::adjust_limits(unsigned int speed)
 {

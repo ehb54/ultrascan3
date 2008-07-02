@@ -26,8 +26,8 @@ unix {
   TARGET                  = us
   QMAKE_CXXFLAGS_WARN_ON += -Wno-non-virtual-dtor
   DEFINES                += UNIX
-  CONFIG                 += qt thread warn release 
- #CONFIG                 += qt thread warn debug
+  #CONFIG                 += qt thread warn release 
+ CONFIG                 += qt thread warn debug
 
   contains(UNAME,x86_64) {
     LIBS    += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d
