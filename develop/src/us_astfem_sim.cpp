@@ -29,9 +29,10 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 	simparams.band_forming = false;
 	stopFlag = false;
 	movieFlag = true;
+	time_correctionFlag = true;
 	int minHeight1 = 26;
 
-	astfem_rsa = new US_Astfem_RSA(&stopFlag, true, &movieFlag);
+	astfem_rsa = new US_Astfem_RSA(true);
 	connect(astfem_rsa, SIGNAL(new_scan(vector <double> *, double *)), this, SLOT(update_movie_plot(vector <double> *, double *)));
 	connect(astfem_rsa, SIGNAL(current_component(int)), this, SLOT(update_progress(int)));
 	connect(astfem_rsa, SIGNAL(new_time(float)), this, SLOT(update_time(float)));
@@ -103,6 +104,13 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 	cb_movie->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_movie->setMinimumHeight(minHeight1);
 	connect(cb_movie, SIGNAL(clicked()), SLOT(update_movieFlag()));
+
+	cb_time_correction = new QCheckBox(" Use Time Correction ", this);
+	cb_time_correction->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cb_time_correction->setChecked(time_correctionFlag);
+	cb_time_correction->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cb_time_correction->setMinimumHeight(minHeight1);
+	connect(cb_time_correction, SIGNAL(clicked()), SLOT(update_time_correctionFlag()));
 
 	pb_save_scans = new QPushButton( tr("Save Simulation"), this );
 	pb_save_scans->setAutoDefault(false);
@@ -231,9 +239,10 @@ void US_Astfem_Sim::setup_GUI()
 	buttonBox->addWidget(pb_load_model);
 	buttonBox->addWidget(pb_change_model);
 	buttonBox->addWidget(pb_simulation_parameters);
+	buttonBox->addWidget(cb_movie);
+	buttonBox->addWidget(cb_time_correction);
 	buttonBox->addWidget(pb_start_simulation);
 	buttonBox->addWidget(pb_stop_simulation);
-	buttonBox->addWidget(cb_movie);
 	buttonBox->addWidget(pb_dcdt_window);
 	buttonBox->addWidget(pb_save_scans);
 	buttonBox->addWidget(pb_help);
@@ -929,6 +938,12 @@ void US_Astfem_Sim::start_simulation()
 	}
 	progress->reset();
 	progress->setTotalSteps(system.component_vector.size());
+	astfem_rsa->setTimeCorrection(time_correctionFlag);
+	astfem_rsa->setTimeInterpolation(true); // interpolate simulation onto desired grid based on time, not based on omega-square-t integral
+	astfem_rsa->setMovie(movieFlag); // show movie
+	stopFlag = false;
+	pb_stop_simulation->setText("Stop Simulation");
+	astfem_rsa->setStopFlag(stopFlag);
 	astfem_rsa->calculate(&system, &simparams, &astfem_data);
 	// add noise:
 	float maxconc = 0.0;
@@ -1017,46 +1032,49 @@ void US_Astfem_Sim::start_simulation()
 		scan_plot->setAxisScale(QwtPlot::yLeft, 0, total_conc * 2.0);
 	}
 
-	//unsigned int curve[j];
-	unsigned int* curve = new unsigned int[j];
-	
-	double *x, **y;
-
-	for (i=0; i<simparams.speed_step.size(); i++)
+	if(!stopFlag)
 	{
-		x = new double [astfem_data[i].radius.size()];
-		y = new double * [astfem_data[i].scan.size()];
-		for (j=0; j<astfem_data[i].radius.size(); j++)
-		{
-			x[j] = astfem_data[i].radius[j];
-		}
-		for (j=0; j<astfem_data[i].scan.size(); j++)
-		{
-			y[j] = new double [astfem_data[i].radius.size()];
-		}
-		for (j=0; j<astfem_data[i].scan.size(); j++)
-		{
-			for (k=0; k<astfem_data[i].radius.size(); k++)
-			{
-				y[j][k] = astfem_data[i].scan[j].conc[k];
-			}
-		}
-		for (j=0; j<astfem_data[i].scan.size(); j++)
-		{
-			curve[j] = scan_plot->insertCurve("Concentration");
-			scan_plot->setCurveData(curve[j], x, y[j], astfem_data[i].radius.size());
-			scan_plot->setCurvePen(curve[j], Qt::yellow);
-		}
-		delete [] x;
-		for (j=0; j<astfem_data[i].scan.size(); j++)
-		{
-			delete [] y[j];
-		}
-		delete [] y;
-	}
+	//unsigned int curve[j];
+		unsigned int* curve = new unsigned int[j];
+	
+		double *x, **y;
 
-	delete [] curve;
-	scan_plot->replot();
+		for (i=0; i<simparams.speed_step.size(); i++)
+		{
+			x = new double [astfem_data[i].radius.size()];
+			y = new double * [astfem_data[i].scan.size()];
+			for (j=0; j<astfem_data[i].radius.size(); j++)
+			{
+				x[j] = astfem_data[i].radius[j];
+			}
+			for (j=0; j<astfem_data[i].scan.size(); j++)
+			{
+				y[j] = new double [astfem_data[i].radius.size()];
+			}
+			for (j=0; j<astfem_data[i].scan.size(); j++)
+			{
+				for (k=0; k<astfem_data[i].radius.size(); k++)
+				{
+					y[j][k] = astfem_data[i].scan[j].conc[k];
+				}
+			}
+			for (j=0; j<astfem_data[i].scan.size(); j++)
+			{
+				curve[j] = scan_plot->insertCurve("Concentration");
+				scan_plot->setCurveData(curve[j], x, y[j], astfem_data[i].radius.size());
+				scan_plot->setCurvePen(curve[j], Qt::yellow);
+			}
+			delete [] x;
+			for (j=0; j<astfem_data[i].scan.size(); j++)
+			{
+				delete [] y[j];
+			}
+			delete [] y;
+		}
+
+		delete [] curve;
+		scan_plot->replot();
+	}
 }
 
 void US_Astfem_Sim::update_movie_plot(vector <double> *x, double *c)
@@ -1084,7 +1102,17 @@ void US_Astfem_Sim::update_movie_plot(vector <double> *x, double *c)
 
 void US_Astfem_Sim::stop_simulation()
 {
-	stopFlag = true;
+	if (stopFlag)
+	{
+		pb_stop_simulation->setText("Stop Simulation");
+		stopFlag = false;
+	}
+	else
+	{
+		pb_stop_simulation->setText("Start Simulation");
+		stopFlag = true;
+	}
+	astfem_rsa->setStopFlag(stopFlag);
 }
 
 void US_Astfem_Sim::dcdt_window()
@@ -1472,14 +1500,12 @@ void US_Astfem_Sim::update_speed(unsigned int ival)
 
 void US_Astfem_Sim::update_movieFlag()
 {
-	if (cb_movie->isChecked())
-	{
-		movieFlag = true;
-	}
-	else
-	{
-		movieFlag = false;
-	}
+	movieFlag = cb_movie->isChecked();
+}
+
+void US_Astfem_Sim::update_time_correctionFlag()
+{
+	time_correctionFlag = cb_time_correction->isChecked();
 }
 
 void US_Astfem_Sim::help()

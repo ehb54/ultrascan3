@@ -11,19 +11,12 @@ class US_EXTERN US_Astfem_RSA : public QObject
 	public:
 
 		US_Astfem_RSA();
-		US_Astfem_RSA( bool *,	// stopFlag
-							bool,		// GUIflag
-							bool *,	// movieFlag
-							bool,		// time_correction
-							QObject * parent=0, const char * name=0);
-		US_Astfem_RSA( bool *,	// stopFlag
-							bool,		// GUIflag
-							bool *,	// movieFlag
-							QObject * parent=0, const char * name=0);
+		US_Astfem_RSA(bool, QObject * parent=0, const char * name=0);
 		~US_Astfem_RSA();
-		bool *stopFlag;			// stop calculation, interpolate and return
-		bool *movieFlag;			// output time and movies if true
+		bool stopFlag;			// stop calculation, interpolate and return
+		bool movieFlag;			// output time and movies if true
 		bool time_correction;	// decides if output data is time corrected for acceleration (true=yes, false=no)
+		bool use_time;				// decides if output data is interpolated based on time (=true) or on omega-square-t integral (=false)
 		bool guiFlag;				// if true, signals will be emitted
 		double last_time;			// keep track of time globally for w2t_integral calculation
 		double w2t_integral;		// keep track of w2t_integral value globally
@@ -56,6 +49,11 @@ class US_EXTERN US_Astfem_RSA : public QObject
 								mfem_initial *,	// C0
 								mfem_data *,		// simdata
 								bool);				// acceleration? (1=acceleration, 0=no acceleration)
+		void setTimeCorrection(bool);
+		void setTimeInterpolation(bool);
+		void setMovie(bool);
+		void setStopFlag(bool);
+	
 	signals:
 
 		void new_scan(vector <double> *, double *);

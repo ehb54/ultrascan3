@@ -1983,7 +1983,7 @@ float *scantimes, double *radius, double **c)
 
 
 // interpolation routine By B. Demeler 041708
-int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, double omega_s, bool acceleration, bool time_correction)
+int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, double omega_s, bool acceleration, bool time_correction, bool use_time)
 {
 // NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
 // before using this routine! The radius also has to be assigned!

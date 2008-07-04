@@ -53,10 +53,8 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
 //  our_simulation_parameters.meniscus = experiment[0].meniscus;
 //  our_simulation_parameters.bottom = experiment[0].bottom;
 
-  bool stopFlag = false;
-  bool movieFlag = false;
 
-  US_Astfem_RSA astfem_rsa(&stopFlag, false, &movieFlag);
+  US_Astfem_RSA astfem_rsa(false);
 
   double rmsd = 0e0;
   unsigned int i, j;

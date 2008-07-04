@@ -37,6 +37,7 @@ class US_EXTERN US_Astfem_Sim : public QFrame
 		US_Config *USglobal;
 		bool stopFlag;
 		bool movieFlag;
+		bool time_correctionFlag;
 		float total_conc;
 		
 	private:
@@ -75,6 +76,7 @@ class US_EXTERN US_Astfem_Sim : public QFrame
 		QLCDNumber *lcd_component;
 		QLCDNumber *lcd_time;
 		QCheckBox *cb_movie;
+		QCheckBox *cb_time_correction;
 		QProgressBar *progress;
 
 	protected slots:
@@ -99,6 +101,7 @@ class US_EXTERN US_Astfem_Sim : public QFrame
 		void help();
 		void update_movie_plot(vector <double> *, double *);
 		void update_movieFlag();
+		void update_time_correctionFlag();
 		void update_time(float);
 		void update_progress(int);
 		void update_speed(unsigned int);

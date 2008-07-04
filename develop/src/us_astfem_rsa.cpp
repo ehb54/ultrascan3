@@ -2,22 +2,13 @@
 #include "../include/us_util.h"
 #include <algorithm>
 
-US_Astfem_RSA::US_Astfem_RSA(bool *stopFlag, bool guiFlag, bool *movieFlag,
-QObject *parent, const char *name) : QObject(parent, name)
+US_Astfem_RSA::US_Astfem_RSA(bool guiFlag, QObject *parent, const char *name) : QObject(parent, name)
 {
-	this->stopFlag = stopFlag;
 	this->guiFlag = guiFlag;
-	this->movieFlag = movieFlag;
+	stopFlag = false;
+	movieFlag = false;
+	use_time = false;
 	time_correction = true;
-}
-
-US_Astfem_RSA::US_Astfem_RSA(bool *stopFlag, bool guiFlag, bool *movieFlag, bool time_correction,
-QObject *parent, const char *name) : QObject(parent, name)
-{
-	this->stopFlag = stopFlag;
-	this->guiFlag = guiFlag;
-	this->movieFlag = movieFlag;
-	this->time_correction = time_correction;
 }
 
 US_Astfem_RSA::~US_Astfem_RSA()
@@ -108,13 +99,12 @@ vector <struct mfem_data> *exp_data)
 						emit new_time(current_time);
 						qApp->processEvents();
 					}
-					if (*stopFlag)
+					if (stopFlag)
 					{
 						if (guiFlag)
 						{
 							qApp->processEvents();
 						}
-						interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, true, time_correction); // interpolate the simulated data onto the experimental time- and radius grid
 						return(1); // early termination = 1
 					}
 				}  // end of for acceleration
@@ -153,14 +143,14 @@ vector <struct mfem_data> *exp_data)
 						+ (*simparams).speed_step[ss].duration_minutes * 60;
 				//cout << "Current time: " << current_time << ", duration: " << duration << endl;
 				// interpolate the simulated data onto the experimental time- and radius grid
-				interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, false, time_correction);
+				interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, false, time_correction, use_time);
 				// set the current speed to the constant rotor speed of the current speed step
 				current_speed = (*simparams).speed_step[ss].rotorspeed;
 				if (guiFlag)
 				{
 					qApp->processEvents();
 				}
-				if (*stopFlag)
+				if (stopFlag)
 				{
 					return(1); // early termination = 1
 				}
@@ -258,14 +248,12 @@ vector <struct mfem_data> *exp_data)
 					emit new_time(current_time);
 					qApp->processEvents();
 				}
-				if (*stopFlag)
+				if (stopFlag)
 				{
 					if (guiFlag)
 					{
 						qApp->processEvents();
 					}
-					// interpolate the simulated data onto the experimental time- and radius grid
-					interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, true, time_correction);
 					return(1); // early termination = 1
 				}
 			}  // end of for acceleration
@@ -308,14 +296,14 @@ vector <struct mfem_data> *exp_data)
 			+ (*simparams).speed_step[ss].duration_minutes * 60;
 			//cout << "Current time: " << current_time << ", duration: " << duration << endl;
 			// interpolate the simulated data onto the experimental time- and radius grid
-			interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, false, time_correction);
+			interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, false, time_correction, use_time);
 			// set the current speed to the constant rotor speed of the current speed step
 			current_speed = (*simparams).speed_step[ss].rotorspeed;
 			if (guiFlag)
 			{
 				qApp->processEvents();
 			}
-			if (*stopFlag)
+			if (stopFlag)
 			{
 				return(1); // early termination = 1
 			}
@@ -685,7 +673,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
 //		cout << "rpm: " << simscan.rpm << ", t: " << simscan.time << ", w2t: " << simscan.omega_s_t << ", dt: " << af_params.dt << endl;
 		if (guiFlag)
 		{
-			if(*movieFlag)
+			if(movieFlag)
 			{
 				emit new_scan(&x, C0);
 				emit new_time((float) simscan.time);
@@ -955,7 +943,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 //		cout << "rpm: " << simscan.rpm << ", t: " << simscan.time << ", w2t: " << simscan.omega_s_t << ", dt: " << af_params.dt << endl;
 		if (guiFlag)
 		{
-			if(*movieFlag)
+			if(movieFlag)
 			{
 				emit new_scan(&x, CT0);
 				emit new_time((float) simscan.time);
@@ -2420,6 +2408,26 @@ void US_Astfem_RSA::adjust_grid(unsigned int old_speed, unsigned int new_speed, 
 	{
 		(*radius)[i] += stretch_val2 - stretch_val1;
 	}
+}
+
+void US_Astfem_RSA::setTimeCorrection(bool flag)
+{
+	time_correction = flag; // correct time for rotor acceleration
+}
+
+void US_Astfem_RSA::setTimeInterpolation(bool flag)
+{
+	use_time = flag; // use time interpolation if true, omega-square-t integral interpolation otherwise
+}
+	
+void US_Astfem_RSA::setMovie(bool flag)
+{
+	movieFlag = flag; // plot movie
+}
+
+void US_Astfem_RSA::setStopFlag(bool flag)
+{
+	stopFlag = flag; // stop calculation
 }
 
 void US_Astfem_RSA::print_vector(double *dval, unsigned int ival)

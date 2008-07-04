@@ -14,7 +14,7 @@ US_FeMatchRa_W::US_FeMatchRa_W(QWidget *p, const char *name) : Data_Control_W(13
 	resplot = NULL;
 	stopFlag = false;
 	movieFlag = false;
-	astfem_rsa = new US_Astfem_RSA(&stopFlag, false, &movieFlag);
+	astfem_rsa = new US_Astfem_RSA(false);
 	component_dialog = NULL;
 	ga_param.clear();
 	msv.clear();
