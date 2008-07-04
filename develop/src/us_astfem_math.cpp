@@ -1983,7 +1983,8 @@ float *scantimes, double *radius, double **c)
 
 
 // interpolation routine By B. Demeler 041708
-int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, double omega_s, bool acceleration, bool time_correction, bool use_time)
+int interpolate(struct mfem_data *expdata, struct mfem_data *simdata,
+double omega_s, bool acceleration, bool time_correction, bool use_time)
 {
 // NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
 // before using this routine! The radius also has to be assigned!
@@ -2032,45 +2033,89 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, double ome
 	// that is higher or equal to each time point in expdata:
 
 	simscan = 0;
-
-	for (expscan = 0; expscan < (*expdata).scan.size(); expscan++)
+	if (use_time)
 	{
-		while ((*simdata).scan[simscan].time < (*expdata).scan[expscan].time)
+		for (expscan = 0; expscan < (*expdata).scan.size(); expscan++)
 		{
-			simscan ++;
-			// make sure we don't overrun bounds:
-			if (simscan == (*simdata).scan.size())
+			while ((*simdata).scan[simscan].time < (*expdata).scan[expscan].time)
 			{
-				cerr << "simulation time scan[" << simscan << "]: " << (*simdata).scan[simscan-1].time
-						<< ", expdata scan time[" << expscan << "]: " << (*expdata).scan[expscan].time << endl;
-				cerr << QObject::tr("The simulated data does not cover the entire experimental time range and ends too early!\nexiting...\n");
-				exit(-1);
+				simscan ++;
+				// make sure we don't overrun bounds:
+				if (simscan == (*simdata).scan.size())
+				{
+					cerr << "simulation time scan[" << simscan << "]: " << (*simdata).scan[simscan-1].time
+							<< ", expdata scan time[" << expscan << "]: " << (*expdata).scan[expscan].time << endl;
+					cerr << QObject::tr("The simulated data does not cover the entire experimental time range and ends too early!\nexiting...\n");
+					exit(-1);
+				}
 			}
-		}
-		// check to see if the time is equal or larger:
-		if ((*simdata).scan[simscan].time == (*expdata).scan[expscan].time)
-		{ // they are the same, so take this scan and push it onto the tmp_data array.
-			tmp_data.scan.push_back((*simdata).scan[simscan]);
-		}
-		else // interpolation is needed
-		{
-			tmp_scan.conc.clear();
-			// interpolate the concentration points:
-			for (i=0; i<(*simdata).radius.size(); i++)
+			// check to see if the time is equal or larger:
+			if ((*simdata).scan[simscan].time == (*expdata).scan[expscan].time)
+			{ // they are the same, so take this scan and push it onto the tmp_data array.
+				tmp_data.scan.push_back((*simdata).scan[simscan]);
+			}
+			else // interpolation is needed
 			{
-				a = ((*simdata).scan[simscan].conc[i] - (*simdata).scan[simscan-1].conc[i])
-				/ ((*simdata).scan[simscan].time - (*simdata).scan[simscan-1].time);
-				b = (*simdata).scan[simscan].conc[i] - a *(*simdata).scan[simscan].time;
-				tmp_scan.conc.push_back(a * (*expdata).scan[expscan].time + b);
+				tmp_scan.conc.clear();
+				// interpolate the concentration points:
+				for (i=0; i<(*simdata).radius.size(); i++)
+				{
+					a = ((*simdata).scan[simscan].conc[i] - (*simdata).scan[simscan-1].conc[i])
+					/ ((*simdata).scan[simscan].time - (*simdata).scan[simscan-1].time);
+					b = (*simdata).scan[simscan].conc[i] - a *(*simdata).scan[simscan].time;
+					tmp_scan.conc.push_back(a * (*expdata).scan[expscan].time + b);
+				}
+				// interpolate the omega_square_t integral data:
+				a = ((*simdata).scan[simscan].omega_s_t - (*simdata).scan[simscan-1].omega_s_t)
+					/ ((*simdata).scan[simscan].time - (*simdata).scan[simscan-1].time);
+				b = (*simdata).scan[simscan].omega_s_t - a *(*simdata).scan[simscan].time;
+				(*expdata).scan[expscan].omega_s_t = a * (*expdata).scan[expscan].time + b;
+				tmp_data.scan.push_back(tmp_scan);
 			}
-			// interpolate the omega_square_t integral data:
-			a = ((*simdata).scan[simscan].omega_s_t - (*simdata).scan[simscan-1].omega_s_t)
-				/ ((*simdata).scan[simscan].time - (*simdata).scan[simscan-1].time);
-			b = (*simdata).scan[simscan].omega_s_t - a *(*simdata).scan[simscan].time;
-			(*expdata).scan[expscan].omega_s_t = a * (*expdata).scan[expscan].time + b;
-			tmp_data.scan.push_back(tmp_scan);
 		}
 	}
+	else // use omega^2t integral for interpolation
+	{
+		for (expscan = 0; expscan < (*expdata).scan.size(); expscan++)
+		{
+			while ((*simdata).scan[simscan].omega_s_t < (*expdata).scan[expscan].omega_s_t)
+			{
+				simscan ++;
+				// make sure we don't overrun bounds:
+				if (simscan == (*simdata).scan.size())
+				{
+					cerr << "simulation time scan[" << simscan << "]: " << (*simdata).scan[simscan-1].omega_s_t
+							<< ", expdata scan time[" << expscan << "]: " << (*expdata).scan[expscan].omega_s_t << endl;
+					cerr << QObject::tr("The simulated data does not cover the entire experimental time range and ends too early!\nexiting...\n");
+					exit(-1);
+				}
+			}
+			// check to see if the time is equal or larger:
+			if ((*simdata).scan[simscan].omega_s_t == (*expdata).scan[expscan].omega_s_t)
+			{ // they are the same, so take this scan and push it onto the tmp_data array.
+				tmp_data.scan.push_back((*simdata).scan[simscan]);
+			}
+			else // interpolation is needed
+			{
+				tmp_scan.conc.clear();
+				// interpolate the concentration points:
+				for (i=0; i<(*simdata).radius.size(); i++)
+				{
+					a = ((*simdata).scan[simscan].conc[i] - (*simdata).scan[simscan-1].conc[i])
+					/ ((*simdata).scan[simscan].omega_s_t - (*simdata).scan[simscan-1].omega_s_t);
+					b = (*simdata).scan[simscan].conc[i] - a *(*simdata).scan[simscan].omega_s_t;
+					tmp_scan.conc.push_back(a * (*expdata).scan[expscan].omega_s_t + b);
+				}
+				// interpolate the omega_square_t integral data:
+				a = ((*simdata).scan[simscan].time - (*simdata).scan[simscan-1].time)
+					/ ((*simdata).scan[simscan].omega_s_t - (*simdata).scan[simscan-1].omega_s_t);
+				b = (*simdata).scan[simscan].time - a *(*simdata).scan[simscan].omega_s_t;
+				(*expdata).scan[expscan].time = a * (*expdata).scan[expscan].omega_s_t + b;
+				tmp_data.scan.push_back(tmp_scan);
+			}
+		}
+	}
+
    // interpolate all radial points from each scan in tmp_data onto expdata
 	for (expscan = 0; expscan<(*expdata).scan.size(); expscan++)
 	{
