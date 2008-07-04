@@ -1994,7 +1994,7 @@ double omega_s, bool acceleration, bool time_correction, bool use_time)
 	{
 		return -1;
 	}
-
+cout << "Time correction: " << time_correction << ", interpolation: " << use_time << ", acceleration: " << acceleration << endl;
 	unsigned int i, j, simscan, expscan;
 	double a, b;
 	if(time_correction)
