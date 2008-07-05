@@ -72,6 +72,7 @@ struct AstFemParameters
 	unsigned int first_speed;	// constant speed at first speed step
 	unsigned int rg_index;		// reaction group index
 	vector <unsigned int> local_index;	// local index of each GroupComponent involved in a reaction group
+	vector <struct Association> association;	// all association rules in a reaction group, with comp expressed in local index
 };
 
 

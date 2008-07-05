@@ -22,7 +22,7 @@ vector <struct mfem_data> *exp_data)
 	//fg.write_experiment(system, simparams, "/root/astfem_rsa-output");
 	this->simparams = simparams;
 	this->system = system;
-	unsigned int duration, initial_npts=500, current_assoc;
+	unsigned int duration, initial_npts=1000, current_assoc;
 	unsigned int i, j, k, m, n, ss;
 	float current_time, current_speed;
 	double accel_time, dr;
@@ -36,6 +36,7 @@ vector <struct mfem_data> *exp_data)
 	initialize_rg();
 	print_rg();
 
+	adjust_limits( 0 );
 	for (k=0; k<(*system).component_vector.size(); k++)
 	{
 		reacting[k] = false;
@@ -165,23 +166,25 @@ vector <struct mfem_data> *exp_data)
 
    // vector <unsigned int> local_index: mapping from global index to local index in each rg.
    af_params.local_index.resize( (*system).component_vector.size() );
-   unsigned int num_comp, rule;
+   unsigned int num_comp, num_rule, rule;
    double s_max;
 
 	for (unsigned int group=0; group<rg.size(); group++)
 	{
-         printf("in rg: group=%d\n", group);
+      printf("in rg: group=%d\n", group);
 
-		current_time = 0.0;
-		current_speed = 0.0;
-		w2t_integral = 0.0;
-		dr = (af_params.current_bottom - af_params.current_meniscus)/(initial_npts-1);
 		num_comp = rg[group].GroupComponent.size();
+		num_rule = rg[group].association.size();
+		af_params.rg_index = group;
 		af_params.s.resize(num_comp);
 		af_params.D.resize(num_comp);
 		af_params.kext.resize(num_comp);
 		af_params.role.resize(num_comp);
-		af_params.rg_index = group;
+		af_params.association.resize(num_rule);
+      for(m=0; m<num_rule; m++)
+      {
+		    af_params.association[m] = (*system).assoc_vector[ rg[group].association[m] ];
+      }
 		for (j=0; j<num_comp; j++)
 		{
 			af_params.s[j] = (*system).component_vector[rg[group].GroupComponent[j]].s;
@@ -201,13 +204,49 @@ vector <struct mfem_data> *exp_data)
 					{
 			         af_params.role[j].assoc.push_back( m ); 		// local index for the rule
 						af_params.role[j].react.push_back( (*system).assoc_vector[rule].react[n] );
-						af_params.role[j].st.push_back(    (*system).assoc_vector[rule].stoich[m] );
+						af_params.role[j].st.push_back(    (*system).assoc_vector[rule].stoich[n] );
 						break;
 					}
 				}
 			}
 		}
+      for(m=0; m<num_rule; m++)
+      {
+			 for (n=0; n<af_params.association[m].comp.size(); n++)
+          {
+		      af_params.association[m].comp[n] = af_params.local_index[  af_params.association[m].comp[n] ];
+          }
+      }
 
+/*** print
+	   for(m=0; m<rg[group].association.size(); m++) 	// check all assoc rule in this rg
+      {
+        rule = rg[group].association[m];
+        printf("assoc[%d]:\n", rule);
+	     for (n=0; n<(*system).assoc_vector[rule].comp.size(); n++)	// check all comp in rule[m]
+        {
+            printf("comp=%d react=%d st=%d \n", (*system).assoc_vector[rule].comp[n], (*system).assoc_vector[rule].react[n],
+	             (*system).assoc_vector[rule].stoich[n]);
+        }
+      }
+
+		for (j=0; j<num_comp; j++)
+      {
+         printf("comp local_index[%d] = %d\n", af_params.local_index[ rg[group].GroupComponent[j] ], j);
+         printf("comp index = [%d] \n", af_params.role[j].comp_index);
+			for(m=0; m<af_params.role[j].assoc.size(); m++) 
+			{
+            printf("assoc=[%d] react=[%d] st=[%d]\n", af_params.role[j].assoc[m],
+                    af_params.role[j].react[m], af_params.role[j].st[m]);
+			}
+      }
+      printf(" end of role\n");
+***/
+
+		current_time = 0.0;
+		current_speed = 0.0;
+		w2t_integral = 0.0;
+		dr = (af_params.current_bottom - af_params.current_meniscus)/(initial_npts-1);
 
 		vC0 = new mfem_initial [ rg[group].GroupComponent.size() ];
 		for (j=0; j<rg[group].GroupComponent.size(); j++)
@@ -218,11 +257,28 @@ vector <struct mfem_data> *exp_data)
 			{
 				CT0.radius.push_back(af_params.current_meniscus + i * dr );
 				CT0.concentration.push_back(0.0);
+				// vC0[j].radius.push_back(af_params.current_meniscus + i * dr );
+				// vC0[j].concentration.push_back(1.0);
 			}
 			initialize_conc(rg[group].GroupComponent[j], &CT0, false);
 			vC0[j] = CT0;
 		}
+    
 		decompose(vC0);
+
+/*
+      printf(" *** after decompose ***\n", dr);
+	   for (i=0; i<initial_npts; i++)
+	   {
+         printf("%12.5e ", vC0[0].radius[i] );
+	    	for (j=0; j<rg[group].GroupComponent.size(); j++)
+         {
+             printf("%12.5e ", vC0[j].concentration[i] );
+         }
+         printf(" \n");
+      }
+*/
+
 		for (ss=0; ss<(*simparams).speed_step.size(); ss++)
 		{
 			adjust_limits((*simparams).speed_step[ss].rotorspeed);
@@ -651,8 +707,8 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
 		rpm_current = rpm_start + (rpm_stop - rpm_start) * (i+0.5)/af_params.time_steps;
 		emit current_speed((unsigned int) rpm_current);
 
-//		printf("rpm=%12.5e time_steps i=%d C_ttl=%20.10e \n", rpm_current, i,
-//				 IntConcentration(x, C0));
+		// printf("rpm=%12.5e time_steps i=%d C_ttl=%20.10e \n", rpm_current, i,
+	   // 			 IntConcentration(x, C0));
 
 		if(accel) // then we have acceleration
 		{
@@ -783,7 +839,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 											// C[0...Ms-1][0....N-1]:
 	double *CT0, *CT1;				// total concentration at current and next time step
 	vector <double> xb;				// grid for moving adaptive FEM for faster sedimentation
-//	FILE *outf = fopen("tmp.out", "w");
+	FILE *outf = fopen("tmp.out", "w");
 
 	Mcomp = af_params.s.size();
 	s_max = maxval( af_params.s );  	// used for mesh and dt
@@ -960,8 +1016,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 		}
 		(*simdata).scan.push_back(simscan);
 
-/**
-		if(kkk%1 == 0 || kkk<5)
+		if(kkk%10 == 0 || kkk<5)
 		{
 			for(j=0; j<N; j++)
 			{
@@ -972,7 +1027,6 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 			fprintf(outf, "\n\n");
          // printf("t=%12.5e C_ttl=%15.8e \n", simscan.time, IntConcentration(x, CT0));
 		}
-**/
 
       //
       // first half step of sedimentation:
@@ -2039,8 +2093,8 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(unsigned int Npts, double **C1, do
        rule = rg[af_params.rg_index].association[0];	// current rule used
        st0 = (*system).assoc_vector[rule].stoich[0];
        st1 = (*system).assoc_vector[rule].stoich[1];
-       keq = (*system).assoc_vector[rule].keq;
-       koff = (*system).assoc_vector[rule].k_off;
+       keq = (double)(*system).assoc_vector[rule].keq;
+       koff = (double)(*system).assoc_vector[rule].k_off;
 
 	    for (j=0; j<Npts; j++)
 	    {
@@ -2087,21 +2141,22 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(unsigned int Npts, double **C1, do
    y0 = new double [num_comp];
    delta_n = new double [num_comp];
    b = new double [num_comp];
-   A = new double* [num_comp];
+   initialize_2d(num_comp, num_comp, &A);
    for(i=0;i<num_comp;i++) A[i] = new double [num_comp];
-	cout << "Npts: " << Npts << endl;
+//	cout << "Npts: " << Npts << "num_comp: " << num_comp << endl;
 	for (j=0; j<Npts; j++)
 	{
+      ct = 0.;
       for(i=0;i<num_comp;i++)
       {
          y0[i]=C1[i][j];
          delta_n[i]=0.;
+         ct += fabs(y0[i]);
       }
 
       for(iter=0; iter<iter_max;iter++) 		// Newton iteration
       {
-         for(i=0;i<num_comp;i++)
-         y0[i]=C1[i][j]+delta_n[i];
+         for(i=0;i<num_comp;i++) y0[i]=C1[i][j]+delta_n[i];
 
          Reaction_dydt(y0, b);						// b=dy/dt
 
@@ -2109,9 +2164,9 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(unsigned int Npts, double **C1, do
 
          for(i=0;i<num_comp;i++)
          {
-            for(k=0;k<num_comp;k++) A[i][k] = -TimeStep * A[i][k];
+            for(k=0;k<num_comp;k++) A[i][k] *= (-TimeStep);
             A[i][i] += 2.;
-            b[i] = 2.*delta_n[i] - TimeStep * b[i];
+            b[i] = -(2.*delta_n[i] - TimeStep * b[i]);
          }
 
          if( GaussElim(num_comp, A, b) ==-1 )
@@ -2122,12 +2177,10 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(unsigned int Npts, double **C1, do
          else
          {
             diff = 0.;
-            ct = 0.;
             for(i=0;i<num_comp;i++)
             {
                delta_n[i] += b[i];
                diff += fabs(delta_n[i]);
-               ct += C1[i][j];
             }
          }
          if( diff < 1.e-7*ct ) break;
@@ -2164,11 +2217,10 @@ void US_Astfem_RSA::decompose(struct mfem_initial *C0)
    if( num_comp==2 ) 		 		// only  2 components and one association rule
    {
        double c1, c2, ct, keq;
-       unsigned int rule, st0, st1;
-       rule = rg[af_params.rg_index].association[0];	// current rule used
-       st0 = (*system).assoc_vector[rule].stoich[0];
-       st1 = (*system).assoc_vector[rule].stoich[1];
-       keq = (*system).assoc_vector[rule].keq;
+       unsigned int st0, st1;
+       st0 = af_params.association[0].stoich[0];
+       st1 = af_params.association[0].stoich[1];
+       keq = af_params.association[0].keq;
 
 	   for (j=0; j<Npts; j++)
 	   {
@@ -2207,8 +2259,6 @@ void US_Astfem_RSA::decompose(struct mfem_initial *C0)
    }
 
    // general cases
-   unsigned int time_max = 160; 		// maximum number of time steps for reacing equlibrium
-   double TimeStepSize = 100.;				// time step size
    double **C1, **C2;						// array for all component at all radius position
    double diff, ct ;
 
@@ -2224,8 +2274,20 @@ void US_Astfem_RSA::decompose(struct mfem_initial *C0)
       }
    }
 
-   // time loop
-   for(unsigned int ti=0; ti<time_max; ti++)
+   // estimate max time to reach equilibrium and suitable step size:
+   // using e^{-k_min * N * dt ) < 1.e-7	
+   unsigned int time_max = 100 ; 			// maximum number of time steps for reacing equlibrium
+   double TimeStepSize ;						// time step size 
+   double k_min = 1.e12;
+   for(i=0; i<af_params.association.size(); i++)
+   {
+      if (k_min > af_params.association[i].k_off) k_min = af_params.association[i].k_off;
+   }
+   if(k_min<1.e-12) k_min=1.e-12;
+   TimeStepSize = -log(1.e-7) / ( k_min * (double)time_max );
+
+   // time loop 
+   for(unsigned int ti=0; ti<time_max; ti++) 
    {
       ReactionOneStep_Euler_imp(Npts, C1, TimeStepSize);
 
@@ -2260,7 +2322,7 @@ void US_Astfem_RSA::decompose(struct mfem_initial *C0)
 void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
 {
     unsigned int num_comp, num_rule;
-    unsigned int i, m, n, rule, ind_cn;
+    unsigned int i, m, n, ind_cn;
     double k1, k_1, stn;
     double *Q, Q_reactant, Q_product;
 
@@ -2269,23 +2331,21 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
     Q = new double [num_rule];
     for(m=0; m<num_rule; m++)
     {
-        rule = rg[af_params.rg_index].association[m];
-        k_1  = (*system).assoc_vector[rule].k_off;
-        k1   = (*system).assoc_vector[rule].keq * k_1;
+        k_1  = (double)af_params.association[m].k_off;
+        k1   = (double)af_params.association[m].keq * k_1;
         Q_reactant = 1 ;
         Q_product  = 1;
-        for(n=0;n<(*system).assoc_vector[rule].comp.size();n++)
+        for(n=0;n<af_params.association[m].comp.size();n++)
         {
            // local index of the n-th component in assoc[rule]
-           ind_cn = af_params.local_index [ (*system).assoc_vector[rule].comp[n] ] ;
+           ind_cn = af_params.association[m].comp[n] ; 
            // stoich of n-th comp in the rule
-           stn = (double)(*system).assoc_vector[rule].stoich[n];
-
-           if( (*system).assoc_vector[rule].react[n] == 1 ) 	   // comp[n] here is reactant
+           stn = (double)af_params.association[m].stoich[n] ; 
+           if( af_params.association[m].react[n] == 1 ) 	   // comp[n] here is reactant
            {
               Q_reactant *= pow( y[ind_cn], stn );
            }
-           else 																   // comp[n] here is reactant
+           else 															// comp[n] here is reactant
            {
               Q_product  *= pow( y[ind_cn], stn );
            }
@@ -2298,11 +2358,21 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
         yt[i] = 0.;
         for(m=0; m<af_params.role[i].assoc.size(); m++)
         {
-            rule = af_params.role[i].assoc[m];
-            yt[i] += -af_params.role[i].react[m] * af_params.role[i].st[m] *
-                   Q[ af_params.local_index[ rule] ];
+            yt[i] += -af_params.role[i].react[m] * (double)af_params.role[i].st[m] 
+                     * Q[ af_params.role[i].assoc[m] ];
         }
     }
+
+/*  print
+    FILE *outf=fopen("tmp1.out","a");
+    fprintf(outf, "y[i]\n");
+    for(i=0; i<num_comp; i++) fprintf(outf, " %12.5e ", y[i]);
+    fprintf(outf, "\n");
+    fprintf(outf, "yt[i]\n");
+    for(i=0; i<num_comp; i++) fprintf(outf, " %12.5e ", yt[i]);
+    fprintf(outf, "\n");
+    fclose(outf);
+*/
 
     delete [] Q;
 }
@@ -2310,7 +2380,7 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
 void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
 {
     unsigned int num_comp, num_rule;
-    unsigned int i, j, m, n, rule, ind_cn;
+    unsigned int i, j, m, n, ind_cn;
     double k1, k_1, stn;
     double **QC, Q_reactant, Q_product, deriv_r, deriv_p;
 
@@ -2321,9 +2391,8 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
 
     for(m=0; m<num_rule; m++)
     {
-        rule = rg[af_params.rg_index].association[m];
-        k_1  = (*system).assoc_vector[rule].k_off;
-        k1   = (*system).assoc_vector[rule].keq * k_1;
+        k_1  = (double)af_params.association[m].k_off;
+        k1   = (double)af_params.association[m].keq * k_1;
 
         for(j=0; j<num_comp; j++)
         {
@@ -2331,31 +2400,30 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
            Q_product  = 1;
            deriv_r = 0.;
            deriv_p = 0.;
-           for(n=0;n<(*system).assoc_vector[rule].comp.size();n++)
+           for(n=0;n<af_params.association[m].comp.size();n++)
            {
               // local index of the n-th component in assoc[rule]
-              ind_cn = af_params.local_index [ (*system).assoc_vector[rule].comp[n] ] ;
+              ind_cn = af_params.association[m].comp[n] ; 
               // stoich of n-th comp in the rule
-              stn = (double)(*system).assoc_vector[rule].stoich[n];
-
-              if( (*system).assoc_vector[rule].react[n] == 1 ) 	// comp[n] is reactant
+              stn = (double)af_params.association[m].stoich[n];	
+              if( af_params.association[m].comp[n] == j ) 			// comp[j] is in the rule
               {
-                  if( af_params.role[j].comp_index ==  (*system).assoc_vector[rule].comp[n] )
+                  if( af_params.association[m].react[n] == 1 ) 	// comp[n] is reactant
                   {
                       deriv_r = stn * pow( y[ind_cn], stn - 1. );
                   }
-                  else
-                  {
-                      Q_reactant *= pow( y[ind_cn], stn );
-                  }
-              }
-              else
-              {
-                  if( af_params.role[j].comp_index ==  (*system).assoc_vector[rule].comp[n] )
+                  else 														   // comp[n] in this rule is reactant
                   {
                       deriv_p = stn * pow( y[ind_cn], stn - 1. );
                   }
-                  else 																   // comp[n] in this rule is reactant
+              }
+              else																// comp[j] is not in the rule
+              {
+                  if( af_params.association[m].react[n] == 1 ) 	// comp[n] is reactant
+                  {
+                      Q_reactant *= pow( y[ind_cn], stn );
+                  }
+                  else 														   // comp[n] in this rule is reactant
                   {
                      Q_product  *= pow( y[ind_cn], stn );
                   }
@@ -2366,19 +2434,47 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
     } 	// m-rule
 
 
-    for(i=0; i<num_comp; i++)
-    {
+    for(i=0; i<num_comp; i++) 
+    { 
         for(j=0; j<num_comp; j++)
         {
             dfdy[i][j] = 0.;
             for(m=0; m<af_params.role[i].assoc.size(); m++)
             {
-                rule = af_params.role[i].assoc[m];
-                dfdy[i][j] += -af_params.role[i].react[m] * af_params.role[i].st[m]
-                         * QC[ af_params.local_index[rule] ][j] ;
+                dfdy[i][j] += -af_params.role[i].react[m] * (double)af_params.role[i].st[m] * QC[ af_params.role[i].assoc[m] ][j];
             }
         }
     }
+
+/* print
+    FILE *outf = fopen("tmp1.out","a");
+    for(i=0; i<num_comp; i++) 
+    { 
+        for(j=0; j<num_comp; j++)
+        {
+            for(m=0; m<af_params.role[i].assoc.size(); m++)
+            {
+                fprintf(outf, "dfdy[%d][%d]: react=%d st=%d ru=%d\n", i, j, 
+                        af_params.role[i].react[m], af_params.role[i].st[m],  af_params.role[i].assoc[m]);
+            }
+        }
+    }
+    fprintf(outf, "y[i]\n");
+    for(i=0; i<num_comp; i++) fprintf(outf, " %12.5e ", y[i]);
+    fprintf(outf, "\n");
+    fprintf(outf, "matrix QC[m][j]\n");
+    for(m=0; m<num_rule; m++) {
+        for(j=0; j<num_comp; j++) fprintf(outf, " %12.5e ", QC[m][j]);
+        fprintf(outf, "\n");
+    }
+    fprintf(outf, "matrix dfdy[i][j]\n");
+    for(i=0; i<num_comp; i++) {
+        for(j=0; j<num_comp; j++) fprintf(outf, " %12.5e ", dfdy[i][j]);
+        fprintf(outf, "\n");
+    }
+    fprintf(outf, "\n");
+    fclose(outf);
+*/
 
    clear_2d(num_rule, QC);
 }
