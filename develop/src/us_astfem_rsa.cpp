@@ -144,7 +144,7 @@ vector <struct mfem_data> *exp_data)
 						+ (*simparams).speed_step[ss].duration_minutes * 60;
 				//cout << "Current time: " << current_time << ", duration: " << duration << endl;
 				// interpolate the simulated data onto the experimental time- and radius grid
-				interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, (*simparams).speed_step[ss].acceleration_flag, time_correction, use_time);
+				interpolate(&(*exp_data)[ss], &simdata, use_time);
 				// set the current speed to the constant rotor speed of the current speed step
 				current_speed = (*simparams).speed_step[ss].rotorspeed;
 				if (guiFlag)
@@ -352,7 +352,7 @@ vector <struct mfem_data> *exp_data)
 			+ (*simparams).speed_step[ss].duration_minutes * 60;
 			//cout << "Current time: " << current_time << ", duration: " << duration << endl;
 			// interpolate the simulated data onto the experimental time- and radius grid
-			interpolate(&(*exp_data)[ss], &simdata, af_params.omega_s, (*simparams).speed_step[ss].acceleration_flag, time_correction, use_time);
+			interpolate(&(*exp_data)[ss], &simdata, use_time);
 			// set the current speed to the constant rotor speed of the current speed step
 			current_speed = (*simparams).speed_step[ss].rotorspeed;
 			if (guiFlag)
@@ -368,6 +368,29 @@ vector <struct mfem_data> *exp_data)
 		{
 			emit current_component(k+1);
 			qApp->processEvents();
+		}
+	}
+	if(time_correction)
+	{
+		for (ss=0; ss<(*simparams).speed_step.size(); ss++) // check each speed step to see if it contains acceleration
+		{
+			if((*simparams).speed_step[ss].acceleration_flag) // we need to correct time
+			{
+				// correct time for each speed step by extrapolating w^2t values from that speed step to zero force, and
+				// then subtracting the difference from each time point in the final expdata structure.
+				/*
+				a = 0.0;
+				for (i=0; i<(*expdata).scan.size(); i++)
+				{
+					a += (*simdata).scan[i].time - ((*simdata).scan[i].omega_s_t/omega_s);
+				}
+				a /= (*simdata).scan.size();
+				for (i=0; i<(*simdata).scan.size(); i++)
+				{
+					(*simdata).scan[i].time -= a;
+				}
+				*/
+			}
 		}
 	}
 	return 0;

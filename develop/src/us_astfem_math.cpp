@@ -1983,8 +1983,7 @@ float *scantimes, double *radius, double **c)
 
 
 // interpolation routine By B. Demeler 041708
-int interpolate(struct mfem_data *expdata, struct mfem_data *simdata,
-double omega_s, bool acceleration, bool time_correction, bool use_time)
+int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, bool use_time)
 {
 // NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
 // before using this routine! The radius also has to be assigned!
@@ -1994,25 +1993,8 @@ double omega_s, bool acceleration, bool time_correction, bool use_time)
 	{
 		return -1;
 	}
-cout << "Time correction: " << time_correction << ", interpolation: " << use_time << ", acceleration: " << acceleration << endl;
 	unsigned int i, j, simscan, expscan;
 	double a, b;
-	if(time_correction)
-	{
-		if (acceleration) // we model rotor acceleration and need to correct the time
-		{
-			double time_correction = 0.0;
-			for (i=0; i<(*simdata).scan.size(); i++)
-			{
-				time_correction += (*simdata).scan[i].time - ((*simdata).scan[i].omega_s_t/omega_s);
-			}
-			time_correction /= (*simdata).scan.size();
-			for (i=0; i<(*simdata).scan.size(); i++)
-			{
-				(*simdata).scan[i].time -= time_correction;
-			}
-		}
-	}
 
 	// first, create a temporary mfem_data structure (tmp_data) that has the same radial
 	// grid as simdata, but the same time grid as the experimental data. The time
@@ -2131,7 +2113,7 @@ cout << "Time correction: " << time_correction << ", interpolation: " << use_tim
 		{
 			while (tmp_data.radius[j] < (*expdata).radius[i])
 			{
-				j ++;
+				j++;
 				// make sure we don't overrun bounds:
 				if (j == tmp_data.radius.size())
 				{

@@ -110,15 +110,17 @@ void DefInitCond(double **, unsigned int);
 void interpolate_C0(mfem_initial *, double *, vector <double> *); // interpolate starting concentration vector mfem_initial onto C0
 void interpolate_C0(struct mfem_initial *, struct mfem_initial *); // interpolate first onto second
 void interpolate_Cfinal(struct mfem_initial *, double *, vector <double> *); // interpolate final concentration back onto mfem_initial
-int interpolate (struct mfem_data *, /* simulated solution */
-		                 unsigned int, /* number of scans in expt. data, time dimension */
-		                 unsigned int, /* number of points in expt. data, radius dimension */
-		                 float *,      /* scan times */
-		                 double *,     /* radius values from expt. data */
-		                 double **);   /* concentration values from expt. data, first dimension = time, second dimension radius */
-int interpolate (struct mfem_data *, /* simulated solution */
-					 struct mfem_data *, double, bool, bool, bool); /* experimental solution */
 
+int interpolate (	struct mfem_data *,	// simulated solution
+						unsigned int,			// number of scans in expt. data, time dimension
+						unsigned int,			// number of points in expt. data, radius dimension
+						float *,					// scan times
+						double *,				// radius values from expt. data
+						double **);				// concentration values from expt. data, first dimension = time, second dimension radius
+
+int interpolate (	struct mfem_data *,	// simulated solution
+					  	struct mfem_data *,	// experimental solution
+						bool);					// use time or w^2t for interpolation
 #endif
 
 
