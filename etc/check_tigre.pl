@@ -74,6 +74,7 @@ chomp $date;
 	    'antaeus.hpcc.ttu.edu' ,
 	    'gridgate.rtc.rice.edu' ,
 	    'eldorado.acrl.uh.edu' ,
+	    'a01.hlrb2.lrz-muenchen.de' ,
 	    'bcf.uthscsa.edu' ,
 	    'alamo.uthscsa.edu' ,
 	    'laredo.uthscsa.edu'
@@ -89,6 +90,7 @@ for($i = 0; $i < @systems; $i++) {
 		 9443 ,
 		 9443 ,
 		 8443 ,
+		 8443 , 
 		 9443 ,
 		 9443 ,
 		 9443
@@ -100,6 +102,7 @@ for($i = 0; $i < @systems; $i++) {
 	      49922 ,
 	      22 ,
 	      22 ,
+	      2222 ,
 	      22 ,
 	      22 ,
 	      22

@@ -4,10 +4,28 @@ $ENV{'GLOBUS_LOCATION'} = '/share/apps/tigre/globus';
 
 
 # @systems = ( 'bcf.uthscsa.edu' , 'alamo.uthscsa.edu');
-@systems = ( 'lonestar.tacc.utexas.edu', 'eldorado.acrl.uh.edu', 'antaeus.hpcc.ttu.edu', 'cosmos.tamu.edu', 'bcf.uthscsa.edu', 'alamo.uthscsa.edu', 'laredo.uthscsa.edu' );
-$cutoff = 4;
-@systemssize = ( 4, 2, 2 );
-@globusport = ( 8443, 8443, 9443, 8443, 9443, 9443, 9443 );
+@systems = ( 
+	     'lonestar.tacc.utexas.edu', 
+	     'eldorado.acrl.uh.edu', 
+	     'antaeus.hpcc.ttu.edu', 
+	     'cosmos.tamu.edu', 
+	     'a01.hlrb2.lrz-muenchen.de', 
+	     'bcf.uthscsa.edu', 
+	     'alamo.uthscsa.edu', 
+	     'laredo.uthscsa.edu' 
+	     );
+$cutoff = 5;
+# @systemssize = ( 4, 2, 2 );
+@globusport = ( 
+		8443, # lonestar
+		8443, # eldorado
+		9443, # antaeus
+		8443, # cosmos
+		8443, # hlrb2
+		9443, # bcf
+		9443, # alamo
+		9443  # laredo
+		);
 
 use Net::Telnet;
 
@@ -90,6 +108,7 @@ sub timedexec {
 }
 
 for($i = $cutoff; $i < @systems; $i++) {
+    next if $systems[$i] =~ /^(alamo)/;
     print OUT "$systems[$i] ";
     $t = new Net::Telnet(Timeout=>.1, Errmode=>'return', Port=>$globusport[$i]);
     $t->open($systems[$i]);

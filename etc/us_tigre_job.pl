@@ -10,7 +10,7 @@
 
 $bcf_no_procs = 42;
 $alamo_no_procs = 31;
-$laredo_no_procs = 36; 
+$laredo_no_procs = 36;
 
 # END USER EDITABLE SECTION
 
@@ -267,6 +267,7 @@ solutes    $solutes
 	    'bcf.uthscsa.edu' ,
 	    'alamo.uthscsa.edu' ,
 	    'laredo.uthscsa.edu' ,
+	    'a01.hlrb2.lrz-muenchen.de' ,
 	    'meta'
 	    );
 
@@ -283,6 +284,7 @@ for($i = 0; $i < @systems; $i++) {
 		 9443 ,
 		 9443 ,
 		 9443 ,
+		 8443 ,
 		 0
 		 );
 
@@ -295,6 +297,7 @@ for($i = 0; $i < @systems; $i++) {
 	      22 ,
 	      22 ,
 	      22 ,
+	      2222 ,
 	      0
 	      );
 
@@ -307,6 +310,7 @@ for($i = 0; $i < @systems; $i++) {
 	 '/home/tigre' ,
 	 '/home/tigre' ,
 	 '/home/tigre' ,
+	 '/home/hlrb2/pr28ci/lu65cen' ,
 	 ''
 	 );
 
@@ -319,7 +323,8 @@ for($i = 0; $i < @systems; $i++) {
 	       'PBS' ,
 	       'PBS' ,
 	       'PBS' ,
-	       'LSF' ,
+	       'PBS' ,
+	       'PBS' ,
 		 ''
 	       );
 
@@ -332,7 +337,20 @@ for($i = 0; $i < @systems; $i++) {
        'bin64' ,
        'bin' ,
        'bin'   ,
+       'bin'   ,
 	 'bin64'
+       );
+@executable = (
+       'us_fe_nnls_t_mpi' , #lonestar
+       'us_fe_nnls_t_mpi' , #cosmos
+       'us_fe_nnls_t_mpi' , #antaeus
+       'us_fe_nnls_t_mpi' , #gridgate
+       'us_fe_nnls_t_mpi' , #eldorado
+       'us_fe_nnls_t_mpi' , #bcf
+       'us_fe_nnls_t_mpi' , #alamo
+       'us_fe_nnls_t_mpi' , #laredo
+       'us_fe_nnls_t' , #a01.hlrb2
+       'us_fe_nnls_t_mpi' , #meta
        );
 
 @queues = (
@@ -345,6 +363,7 @@ for($i = 0; $i < @systems; $i++) {
 	   '' , #bcf
 	   '' , #alamo
 	   '' ,  #laredo
+	   '' ,  #hlrb2
 	   '' #meta
 	   );
 
@@ -373,6 +392,7 @@ for($i = 0; $i < @systems; $i++) {
 	   '' , # bcf
 	   '' , # alamo
 	   '' , # laredo
+	   '' , # hlrb2
 	   '' # meta
 	   );
 
@@ -403,6 +423,7 @@ for($i = 0; $i < @systems; $i++) {
 	   $bcf_no_procs ,
 	   $alamo_no_procs ,
 	   $laredo_no_procs ,
+	   32 ,
 	   64 #meta
 	   );
 
@@ -415,7 +436,8 @@ for($i = 0; $i < @systems; $i++) {
 	   60000 ,
 	   60000 ,
 	   60000 ,
-	   1440
+	   2880 ,
+	   2880
 	   );
 
 
@@ -455,7 +477,6 @@ if($meniscus_gridpoints) {
 if($fit_ti_noise || $fit_ri_noise) {
     $max_time[0] *= 2;
 }
-
 
 # $max_time[0] = 7 * 60 if $max_time[0] > 7 * 60;
 
@@ -624,7 +645,7 @@ if($default_system eq 'meta') {
 } else {
     print JD
 "<job>
-  <executable>${WORK}/ultrascan/${BIN}/us_fe_nnls_t_mpi</executable>
+  <executable>${WORK}/ultrascan/${BIN}/$executable[$usesys]</executable>
   <directory>$WORKRUN</directory>
   <argument>$WORKRUN/experiments${timestamp}.dat</argument>
   <argument>$WORKRUN/solutes${timestamp}.dat</argument>
