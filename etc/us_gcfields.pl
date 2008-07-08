@@ -56,7 +56,8 @@ sub parsegc {
     undef $ga_ff0s;
     undef $ga_ff0_mins;
     undef $ga_ff0_maxs;
-    if($analysis_type eq 'GA') {
+    if($analysis_type eq 'GA' ||
+       $analysis_type eq 'GA_RA') {
 	$ga_params_demes = $gcf[$i]; $i++;
 	$ga_params_generations = $gcf[$i]; $i++;
 	$ga_params_crossover = $gcf[$i]; $i++;
@@ -89,9 +90,16 @@ sub parsegc {
 	$fit_ti_noise = $gcf[$i]; $i++;
 	$fit_ri_noise = $gcf[$i]; $i++;
 	$email = $gcf[$i]; $i++;
+	if($analysis_type eq 'GA_RA') {
+	    $simpoints = $gcf[$i]; $i++;
+	    $band_volume = $gcf[$i]; $i++;
+	    $radial_grid = $gcf[$i]; $i++;
+	    $moving_grid = $gcf[$i]; $i++;
+	}
 	$HPCAnalysisID = $gcf[$i]; $i++;
     }
-    if($analysis_type eq 'GA_MW') {
+    if($analysis_type eq 'GA_MW' ||
+       $analysis_type eq 'GA_MW_RA') {
 	$ga_params_demes = $gcf[$i]; $i++;
 	$ga_params_generations = $gcf[$i]; $i++;
 	$ga_params_crossover = $gcf[$i]; $i++;
@@ -123,6 +131,12 @@ sub parsegc {
 	$fit_ti_noise = $gcf[$i]; $i++;
 	$fit_ri_noise = $gcf[$i]; $i++;
 	$email = $gcf[$i]; $i++;
+	if($analysis_type eq 'GA_MW_RA') {
+	    $simpoints = $gcf[$i]; $i++;
+	    $band_volume = $gcf[$i]; $i++;
+	    $radial_grid = $gcf[$i]; $i++;
+	    $moving_grid = $gcf[$i]; $i++;
+	}
 	$HPCAnalysisID = $gcf[$i]; $i++;
     }
     if($analysis_type eq 'GA_SC') {
@@ -156,7 +170,8 @@ sub parsegc {
     undef $sa2d_params_use_iterative;
     undef $sa2d_params_max_iterations;
     if($analysis_type eq 'SA2D' ||
-       $analysis_type eq '2DSA') {
+       $analysis_type eq '2DSA' || 
+       $analysis_type eq '2DSA_RA') {
 	$sa2d_params_ff0_min = $gcf[$i]; $i++;
 	$sa2d_params_ff0_max = $gcf[$i]; $i++;
 	$sa2d_params_ff0_resolution = $gcf[$i]; $i++;
@@ -174,9 +189,16 @@ sub parsegc {
 	$sa2d_params_use_iterative = $gcf[$i]; $i++;
 	$sa2d_params_max_iterations = $gcf[$i]; $i++;
 	$monte_carlo = $gcf[$i]; $i++;
+	if($analysis_type eq '2DSA_RA') {
+	    $simpoints = $gcf[$i]; $i++;
+	    $band_volume = $gcf[$i]; $i++;
+	    $radial_grid = $gcf[$i]; $i++;
+	    $moving_grid = $gcf[$i]; $i++;
+	}
 	$HPCAnalysisID = $gcf[$i]; $i++;
     }
-    if($analysis_type eq '2DSA_MW') {
+    if($analysis_type eq '2DSA_MW' ||
+       $analysis_type eq '2DSA_MW_RA') {
 	$sa2d_params_ff0_min = $gcf[$i]; $i++;
 	$sa2d_params_ff0_max = $gcf[$i]; $i++;
 	$sa2d_params_ff0_resolution = $gcf[$i]; $i++;
@@ -195,11 +217,14 @@ sub parsegc {
 	$sa2d_params_max_iterations = $gcf[$i]; $i++;
 	$monte_carlo = $gcf[$i]; $i++;
 	$sa2d_params_max_mer = $gcf[$i]; $i++;
+	if($analysis_type eq '2DSA_MW_RA') {
+	    $simpoints = $gcf[$i]; $i++;
+	    $band_volume = $gcf[$i]; $i++;
+	    $radial_grid = $gcf[$i]; $i++;
+	    $moving_grid = $gcf[$i]; $i++;
+	}
 	$HPCAnalysisID = $gcf[$i]; $i++;
     }
-
-
-
 
     $dbstring = "$db_login_user|$db_login_database|$db_login_host|$email|$no_experiments|$exp_file_infos|$exp_dirs|$exp_cells|$exp_lambdas|$exp_channels|$analysis_type|$monte_carlo|$fit_ti_noise|$fit_ri_noise|$fit_meniscus|$meniscus_range|$meniscus_gridpoints";
     $dbstring .= "|$ga_params_demes|$ga_params_generations|$ga_params_crossover|$ga_params_mutation|$ga_params_plague|$ga_Params_elitism|$ga_params_migration_rate|$ga_params_genes|$ga_params_initial_solutes|$ga_params_random_seed";
