@@ -240,7 +240,7 @@ vector <struct mfem_data> *exp_data)
       {
          printf("comp local_index[%d] = %d\n", af_params.local_index[ rg[group].GroupComponent[j] ], j);
          printf("comp index = [%d] \n", af_params.role[j].comp_index);
-			for(m=0; m<af_params.role[j].assoc.size(); m++) 
+			for(m=0; m<af_params.role[j].assoc.size(); m++)
 			{
             printf("assoc=[%d] react=[%d] st=[%d]\n", af_params.role[j].assoc[m],
                     af_params.role[j].react[m], af_params.role[j].st[m]);
@@ -269,7 +269,7 @@ vector <struct mfem_data> *exp_data)
 			initialize_conc(rg[group].GroupComponent[j], &CT0, false);
 			vC0[j] = CT0;
 		}
-    
+
 		decompose(vC0);
 
 /*
@@ -378,24 +378,30 @@ vector <struct mfem_data> *exp_data)
 	}
 	if(time_correction)
 	{
+		int scans = 0;
 		for (ss=0; ss<(*simparams).speed_step.size(); ss++) // check each speed step to see if it contains acceleration
 		{
 			if((*simparams).speed_step[ss].acceleration_flag) // we need to correct time
 			{
-				// correct time for each speed step by extrapolating w^2t values from that speed step to zero force, and
-				// then subtracting the difference from each time point in the final expdata structure.
-				/*
-				a = 0.0;
-				for (i=0; i<(*expdata).scan.size(); i++)
+				float *xtmp, *ytmp, slope, intercept, correlation, sigma, correction;
+				xtmp = new float [(*simparams).speed_step[ss].scans];
+				ytmp = new float [(*simparams).speed_step[ss].scans];
+				for (i=0; i<(*simparams).speed_step[ss].scans; i++) // only fit the scans that belong to this speed step
 				{
-					a += (*simdata).scan[i].time - ((*simdata).scan[i].omega_s_t/omega_s);
+					xtmp[i] = (*exp_data)[ss].scan[i+scans].time;
+					ytmp[i] = (*exp_data)[ss].scan[i+scans].omega_s_t;
+					cout << "Time: " << xtmp[i] << ", w^2t: " << ytmp[i] << endl;
 				}
-				a /= (*simdata).scan.size();
-				for (i=0; i<(*simdata).scan.size(); i++)
+				linefit( &xtmp, &ytmp, &slope, &intercept, &sigma, &correlation, (*simparams).speed_step[ss].scans);
+				correction = -intercept/slope;
+				cout << "slope: " << slope << ", intercept: " << intercept << ", Time correction: " << correction << endl;
+				for (i=0; i<(*simparams).speed_step[ss].scans; i++) // only fit the scans that belong to this speed step
 				{
-					(*simdata).scan[i].time -= a;
+					(*exp_data)[ss].scan[i+scans].time -= correction;
 				}
-				*/
+				delete [] xtmp;
+				delete [] ytmp;
+				scans += (*simparams).speed_step[ss].scans;
 			}
 		}
 	}
@@ -2318,9 +2324,9 @@ void US_Astfem_RSA::decompose(struct mfem_initial *C0)
    }
 
    // estimate max time to reach equilibrium and suitable step size:
-   // using e^{-k_min * N * dt ) < 1.e-7	
+   // using e^{-k_min * N * dt ) < 1.e-7
    unsigned int time_max = 100 ; 			// maximum number of time steps for reacing equlibrium
-   double TimeStepSize ;						// time step size 
+   double TimeStepSize ;						// time step size
    double k_min = 1.e12;
    for(i=0; i<af_params.association.size(); i++)
    {
@@ -2329,8 +2335,8 @@ void US_Astfem_RSA::decompose(struct mfem_initial *C0)
    if(k_min<1.e-12) k_min=1.e-12;
    TimeStepSize = -log(1.e-7) / ( k_min * (double)time_max );
 
-   // time loop 
-   for(unsigned int ti=0; ti<time_max; ti++) 
+   // time loop
+   for(unsigned int ti=0; ti<time_max; ti++)
    {
       ReactionOneStep_Euler_imp(Npts, C1, TimeStepSize);
 
@@ -2381,9 +2387,9 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
         for(n=0;n<af_params.association[m].comp.size();n++)
         {
            // local index of the n-th component in assoc[rule]
-           ind_cn = af_params.association[m].comp[n] ; 
+           ind_cn = af_params.association[m].comp[n] ;
            // stoich of n-th comp in the rule
-           stn = (double)af_params.association[m].stoich[n] ; 
+           stn = (double)af_params.association[m].stoich[n] ;
            if( af_params.association[m].react[n] == 1 ) 	   // comp[n] here is reactant
            {
               Q_reactant *= pow( y[ind_cn], stn );
@@ -2401,7 +2407,7 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
         yt[i] = 0.;
         for(m=0; m<af_params.role[i].assoc.size(); m++)
         {
-            yt[i] += -af_params.role[i].react[m] * (double)af_params.role[i].st[m] 
+            yt[i] += -af_params.role[i].react[m] * (double)af_params.role[i].st[m]
                      * Q[ af_params.role[i].assoc[m] ];
         }
     }
@@ -2450,9 +2456,9 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
            for(n=0;n<af_params.association[m].comp.size();n++)
            {
               // local index of the n-th component in assoc[rule]
-              ind_cn = af_params.association[m].comp[n] ; 
+              ind_cn = af_params.association[m].comp[n] ;
               // stoich of n-th comp in the rule
-              stn = (double)af_params.association[m].stoich[n];	
+              stn = (double)af_params.association[m].stoich[n];
               if( af_params.association[m].comp[n] == j ) 			// comp[j] is in the rule
               {
                   if( af_params.association[m].react[n] == 1 ) 	// comp[n] is reactant
@@ -2481,8 +2487,8 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
     } 	// m-rule
 
 
-    for(i=0; i<num_comp; i++) 
-    { 
+    for(i=0; i<num_comp; i++)
+    {
         for(j=0; j<num_comp; j++)
         {
             dfdy[i][j] = 0.;
@@ -2495,13 +2501,13 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
 
 /* print
     FILE *outf = fopen("tmp1.out","a");
-    for(i=0; i<num_comp; i++) 
-    { 
+    for(i=0; i<num_comp; i++)
+    {
         for(j=0; j<num_comp; j++)
         {
             for(m=0; m<af_params.role[i].assoc.size(); m++)
             {
-                fprintf(outf, "dfdy[%d][%d]: react=%d st=%d ru=%d\n", i, j, 
+                fprintf(outf, "dfdy[%d][%d]: react=%d st=%d ru=%d\n", i, j,
                         af_params.role[i].react[m], af_params.role[i].st[m],  af_params.role[i].assoc[m]);
             }
         }

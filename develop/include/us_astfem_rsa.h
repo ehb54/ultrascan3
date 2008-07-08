@@ -49,11 +49,15 @@ class US_EXTERN US_Astfem_RSA : public QObject
 								mfem_initial *,	// C0
 								mfem_data *,		// simdata
 								bool);				// acceleration? (1=acceleration, 0=no acceleration)
-		void setTimeCorrection(bool);
-		void setTimeInterpolation(bool);
-		void setMovie(bool);
-		void setStopFlag(bool);
-	
+		void setTimeCorrection(bool);			// true if time correction is done
+														// (this sets scan times to what would have been observed if the rotor
+														// could have started up instantaneously at the desired speed without
+														// an acceleration phase
+		void setTimeInterpolation(bool);		// if true, use time values from experimental data to interpolate simulated data
+														// if false, use omega^2*t integral values from experimental data to interpolate simulated data
+		void setMovie(bool);						// emit movie signals if true
+		void setStopFlag(bool);					// stop calculation and exit if true
+
 	signals:
 
 		void new_scan(vector <double> *, double *);

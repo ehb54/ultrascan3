@@ -2094,6 +2094,7 @@ int Data_Control_W::load_scan()
 					run_inf.rpm[i][j][k] = temp_run.rpm[i][j][k];
 					run_inf.time[i][j][k] = temp_run.time[i][j][k];
 					run_inf.omega_s_t[i][j][k] = temp_run.omega_s_t[i][j][k];
+//					cout << run_inf.omega_s_t[i][j][k] << endl;
 					run_inf.plateau[i][j][k] = temp_run.plateau[i][j][k];
 //					cout << "loading scan plateau: [i=" << i << "][j=" << j << "][k=" << k << "]: " << temp_run.plateau[i][j][k] << endl;
 				}
