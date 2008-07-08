@@ -282,6 +282,9 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
 
 //	  print_ModelSystem(&model_system);
 
+	  astfem_rsa.setTimeCorrection(true);
+	  astfem_rsa.setTimeInterpolation(false);
+
 	  astfem_rsa.calculate(&our_model_system, &our_simulation_parameters, &experiment);
 
 	  printf("points %u scans %u\n", org_experiment[0].radius.size(), org_experiment[0].scan.size()); fflush(stdout);
@@ -331,6 +334,9 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
 
   last_model_system = our_model_system;
   last_simulation_parameters = our_simulation_parameters;
+
+  astfem_rsa.setTimeCorrection(true);
+  astfem_rsa.setTimeInterpolation(false);
 
   astfem_rsa.calculate(&our_model_system, &our_simulation_parameters, &experiment);
 //  printf("rss: exit astfem_rsa_calculate %lu\n", getrss(0)); fflush(stdout);
@@ -438,9 +444,9 @@ void print_AstFemParameters(struct AstFemParameters *s) {
   for (i = 0; i < s->s.size(); i++) {
     printf("  AstFemParameters.s[%u]           \t%e\n", i, s->s[i]);
     printf("  AstFemParameters.D[%u]           \t%e\n", i, s->D[i]);
-    printf("  AstFemParameters.keq[%u]         \t%e\n", i, s->keq[i]);
-    printf("  AstFemParameters.koff[%u]        \t%e\n", i, s->koff[i]);
-    printf("  AstFemParameters.n[%u]           \t%u\n", i, s->n[i]);
+//    printf("  AstFemParameters.keq[%u]         \t%e\n", i, s->keq[i]);
+//    printf("  AstFemParameters.koff[%u]        \t%e\n", i, s->koff[i]);
+//    printf("  AstFemParameters.n[%u]           \t%u\n", i, s->n[i]);
   }
   printf("AstFemParameters.dt                  \t%e\n", s->dt);
   printf("AstFemParameters.time_steps          \t%u\n", s->time_steps);
@@ -449,7 +455,7 @@ void print_AstFemParameters(struct AstFemParameters *s) {
 //  printf("AstFemParameters.meniscus            \t%e\n", s->meniscus);
 //  printf("AstFemParameters.bottom              \t%e\n", s->bottom);
 //  printf("AstFemParameters.mesh                \t%u\n", s->mesh);
-  printf("AstFemParameters.moving_grid         \t%d\n", s->moving_grid);
-  printf("AstFemParameters.acceleration        \t%d\n", s->acceleration);
+//  printf("AstFemParameters.moving_grid         \t%d\n", s->moving_grid);
+//  printf("AstFemParameters.acceleration        \t%d\n", s->acceleration);
 //  printf("AstFemParameters.model               \t%u\n", s->model);
 }

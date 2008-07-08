@@ -32,6 +32,10 @@ struct sa2d_data
 	bool use_iterative;
 	unsigned int max_iterations;
 	unsigned int monte_carlo;
+        unsigned int simpoints;
+        double band_volume;
+        unsigned int radial_grid;
+        int moving_grid;
 };
 
 class US_EXTERN US_SA2D_GridControl : public QDialog

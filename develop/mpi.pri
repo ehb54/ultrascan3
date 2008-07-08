@@ -26,12 +26,6 @@ unix {
  CONFIG                += qt warn thread release
  DEFINES               += UNIX
  QMAKE_CXXFLAGS_WARN_ON = -Wno-non-virtual-dtor
-
- contains(UNAME,x86_64) {
-    LIBS   += -L$(QWTDIR)/lib64/ -L$(QWT3DDIR)/lib64 -L$(ULTRASCAN)/lib64
- } else {
-    LIBS   += -L$(QWTDIR)/lib -L$(QWT3DDIR)/lib -L$(ULTRASCAN)/lib
- }
 }
 
 win32 {

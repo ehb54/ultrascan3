@@ -3,6 +3,7 @@
 #include "../include/us_ga.h"
 #include "../include/us_ga_round.h"
 #include "../include/us_ga_interacting.h"
+#include "../include/us_astfem_rsa.h"
 // #define US_DEBUG_MPI
 // #define SLIST
 // #define SLIST2
@@ -31,6 +32,7 @@ extern int myrank;
 MPI_Status mpi_status, mpi_status2;
 int monte_carlo_iterations = 1;
 int this_monte_carlo = 0;
+int use_ra = 0;
 
 static vector<struct mfem_data> org_experiment;
 vector<struct mfem_data> last_residuals;
@@ -39,6 +41,56 @@ static vector<struct mfem_data> save_gaussians;
 SimulationParameters simulation_parameters;
 ModelSystem model_system;
 ModelSystemConstraints model_system_constraints;
+
+static ModelSystem model_system_1comp;
+ModelSystem use_model_system;
+SimulationParameters use_simulation_parameters;
+
+static void setup_model_system_1comp() {
+    unsigned int i;
+    vector<QString> model_sys_1comp_full_text;
+#   define MOD_SYS_1COMP_LEN 23
+    QString model_sys_1comp_tmp[MOD_SYS_1COMP_LEN] = 
+	{
+	    "SIM",
+	    "Model written by US_FEMGLOBAL",
+	    "# This file is computer-generated, please do not edit unless you know what you are doing",
+	    "9.8             # UltraScan Version Number",
+	    "0               # model number/identifier",
+	    "1               # number of components in the model",
+	    "Component 1             # name of component",
+	    "1               # concentration",
+	    "1.39475e-13             # sedimentation coefficient",
+	    "1.20863e-06             # diffusion coefficient",
+	    "0               # sigma",
+	    "0               # delta",
+	    "10000           # molecular Weight",
+	    "0.72            # vbar at 20C",
+	    "not defined             # shape",
+	    "1.25            # frictional ratio",
+	    "1               # extinction",
+	    "1               # show concentration?",
+	    "0               # show Stoichiometry?",
+	    "0               # show k equilibrium?",
+	    "0               # show k_off?",
+	    "0               # number of linked components",
+	    "0               # number of association reactions in the model"
+	};
+    model_sys_1comp_full_text.clear();
+    for (i = 0; i < MOD_SYS_1COMP_LEN; i++) 
+    {
+	model_sys_1comp_tmp[i].replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+	model_sys_1comp_full_text.push_back(model_sys_1comp_tmp[i]);
+    }
+    US_FemGlobal us_femglobal;
+    printf("readmodel system returns %d\n", us_femglobal.read_modelSystem(&model_system_1comp, model_sys_1comp_full_text, false, 0)); 
+    fflush(stdout);
+    if(!myrank) {
+	us_femglobal.write_modelSystem(&model_system_1comp, "tmp.model_system");
+    }
+    printf("setup cvs %u\n", model_system_1comp.component_vector.size()); fflush(stdout);
+}
+    
 
 // only define one of these _TIMING!
 #define GLOBAL_JOB_TIMING
@@ -927,14 +979,15 @@ US_fe_nnls_t::init_run(const QString & data_file,
 		//	cout << "sizeof(count1): " << sizeof(count1) << "\n";
 		//	cout << "sizeof(unsigned int): " << sizeof(unsigned int) << "\n";
 		fflush(stdout);
-		if (analysis_type == "2DSA")
+		if (analysis_type == "2DSA" ||
+		    analysis_type == "2DSA_RA")
 		{
 			ds >> SA2D_Params.monte_carlo;
 			if (SA2D_Params.monte_carlo < 1)
 			{
 				SA2D_Params.monte_carlo = 1;
 			}
-			cout << "Monte carlo: " << SA2D_Params.monte_carlo << endl;
+			cout << "Monte carlo: " << SA2D_Params.monte_carlo << endl; fflush(stdout);
 			monte_carlo_iterations = SA2D_Params.monte_carlo;
 			ds >> SA2D_Params.ff0_min;
 			ds >> SA2D_Params.ff0_max;
@@ -954,8 +1007,45 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				cout << "SA2D_Params.uniform_grid_repetition: " << SA2D_Params.uniform_grid_repetition << endl;
 				fflush(stdout);
 			}
+			if (analysis_type == "2DSA_RA")
+			{
+			    ds >> SA2D_Params.simpoints;
+			    ds >> SA2D_Params.band_volume;
+			    ds >> SA2D_Params.radial_grid;
+			    ds >> SA2D_Params.moving_grid;
+			    if (!myrank)
+			    {
+				cout << "Simpoints:" << SA2D_Params.simpoints << endl;
+				cout << "Band volume:" << SA2D_Params.band_volume << endl;
+				cout << "Radial grid:" << SA2D_Params.radial_grid << endl;
+				cout << "Moving grid:" << SA2D_Params.moving_grid << endl;
+				fflush(stdout);
+			    }
+			    {
+				unsigned int i, j;
+				QString qs_tmp;
+				simulation_parameters_full_text.clear();
+				ds >> i;
+				printf("------simulation_parameters--%d--lines-----\n", i);
+				fflush(stdout);
+				for (j = 0; j < i; j++) 
+				{
+				    ds >> qs_tmp;
+				    if (!myrank)
+				    {
+					cout << qs_tmp << endl;	fflush(stdout);
+				    }
+				    qs_tmp.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+				    simulation_parameters_full_text.push_back(qs_tmp);
+				}
+				US_FemGlobal us_femglobal;
+				us_femglobal.read_simulationParameters(&simulation_parameters, simulation_parameters_full_text);
+				us_femglobal.write_simulationParameters(&simulation_parameters, "tmp.simulation_parameters");
+			    }
+			}
 		}
-		if (analysis_type == "2DSA_MW")
+		if (analysis_type == "2DSA_MW" ||
+		    analysis_type == "2DSA_MW_RA")
 		{
 			ds >> SA2D_Params.monte_carlo;
 			if (SA2D_Params.monte_carlo < 1)
@@ -984,8 +1074,45 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				cout << "2DSA_Params.max_mer: " << SA2D_Params.max_mer << endl;
 				fflush(stdout);
 			}
+			if (analysis_type == "2DSA_MW_RA")
+			{
+			    ds >> SA2D_Params.simpoints;
+			    ds >> SA2D_Params.band_volume;
+			    ds >> SA2D_Params.radial_grid;
+			    ds >> SA2D_Params.moving_grid;
+			    if (!myrank)
+			    {
+				cout << "Simpoints:" << SA2D_Params.simpoints << endl;
+				cout << "Band volume:" << SA2D_Params.band_volume << endl;
+				cout << "Radial grid:" << SA2D_Params.radial_grid << endl;
+				cout << "Moving grid:" << SA2D_Params.moving_grid << endl;
+				fflush(stdout);
+			    }
+			    {
+				unsigned int i, j;
+				QString qs_tmp;
+				simulation_parameters_full_text.clear();
+				ds >> i;
+				printf("------simulation_parameters--%d--lines-----\n", i);
+				fflush(stdout);
+				for (j = 0; j < i; j++) 
+				{
+				    ds >> qs_tmp;
+				    if (!myrank)
+				    {
+					cout << qs_tmp << endl;	fflush(stdout);
+				    }
+				    qs_tmp.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+				    simulation_parameters_full_text.push_back(qs_tmp);
+				}
+				US_FemGlobal us_femglobal;
+				us_femglobal.read_simulationParameters(&simulation_parameters, simulation_parameters_full_text);
+				us_femglobal.write_simulationParameters(&simulation_parameters, "tmp.simulation_parameters");
+			    }
+			}
 		}
-		if (analysis_type == "GA")
+		if (analysis_type == "GA" ||
+		    analysis_type == "GA_RA")
 		{
 			GA_Params.analysis_type = analysis_type;
 			ds >> GA_Params.monte_carlo;
@@ -1075,8 +1202,45 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				}
 				fflush(stdout);
 			}
+			if (analysis_type == "GA_RA")
+			{
+			    ds >> GA_Params.simpoints;
+			    ds >> GA_Params.band_volume;
+			    ds >> GA_Params.radial_grid;
+			    ds >> GA_Params.moving_grid;
+			    if (!myrank)
+			    {
+				cout << "Simpoints:" << GA_Params.simpoints << endl;
+				cout << "Band volume:" << GA_Params.band_volume << endl;
+				cout << "Radial grid:" << GA_Params.radial_grid << endl;
+				cout << "Moving grid:" << GA_Params.moving_grid << endl;
+				fflush(stdout);
+			    }
+			    {
+				unsigned int i, j;
+				QString qs_tmp;
+				simulation_parameters_full_text.clear();
+				ds >> i;
+				printf("------simulation_parameters--%d--lines-----\n", i);
+				fflush(stdout);
+				for (j = 0; j < i; j++) 
+				{
+				    ds >> qs_tmp;
+				    if (!myrank)
+				    {
+					cout << qs_tmp << endl;	fflush(stdout);
+				    }
+				    qs_tmp.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+				    simulation_parameters_full_text.push_back(qs_tmp);
+				}
+				US_FemGlobal us_femglobal;
+				us_femglobal.read_simulationParameters(&simulation_parameters, simulation_parameters_full_text);
+				us_femglobal.write_simulationParameters(&simulation_parameters, "tmp.simulation_parameters");
+			    }
+			}
 		}
-		if (analysis_type == "GA_MW")
+		if (analysis_type == "GA_MW" ||
+		    analysis_type == "GA_MW_RA")
 		{
 			GA_Params.analysis_type = analysis_type;
 			ds >> GA_Params.monte_carlo;
@@ -1181,6 +1345,42 @@ US_fe_nnls_t::init_run(const QString & data_file,
 					cout << myrank << ":solute ff0max:" << GA_Params.solute[i].ff0_max << endl;
 				}
 				fflush(stdout);
+			}
+			if (analysis_type == "GA_MW_RA")
+			{
+			    ds >> GA_Params.simpoints;
+			    ds >> GA_Params.band_volume;
+			    ds >> GA_Params.radial_grid;
+			    ds >> GA_Params.moving_grid;
+			    if (!myrank)
+			    {
+				cout << "Simpoints:" << GA_Params.simpoints << endl;
+				cout << "Band volume:" << GA_Params.band_volume << endl;
+				cout << "Radial grid:" << GA_Params.radial_grid << endl;
+				cout << "Moving grid:" << GA_Params.moving_grid << endl;
+				fflush(stdout);
+			    }
+			    {
+				unsigned int i, j;
+				QString qs_tmp;
+				simulation_parameters_full_text.clear();
+				ds >> i;
+				printf("------simulation_parameters--%d--lines-----\n", i);
+				fflush(stdout);
+				for (j = 0; j < i; j++) 
+				{
+				    ds >> qs_tmp;
+				    if (!myrank)
+				    {
+					cout << qs_tmp << endl;	fflush(stdout);
+				    }
+				    qs_tmp.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
+				    simulation_parameters_full_text.push_back(qs_tmp);
+				}
+				US_FemGlobal us_femglobal;
+				us_femglobal.read_simulationParameters(&simulation_parameters, simulation_parameters_full_text);
+				us_femglobal.write_simulationParameters(&simulation_parameters, "tmp.simulation_parameters");
+			    }
 			}
 		}
 		if (analysis_type == "GA_SC")
@@ -1455,6 +1655,16 @@ US_fe_nnls_t::init_run(const QString & data_file,
 			    }
 			}
 		}
+		if (analysis_type == "GA_RA" ||
+		    analysis_type == "GA_MW_RA" ||
+		    analysis_type == "2DSA_RA" ||
+		    analysis_type == "2DSA_MW_RA")
+		{
+		    use_ra = 1;
+		    setup_model_system_1comp();
+		} else {
+		    use_ra = 0;
+		}
 
 		for (unsigned int i = 0; i < count1; i++)
 		{
@@ -1480,6 +1690,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
 			for (unsigned int j = 0; j < count2; j++)
 			{
 				ds >> temp_scan.time;
+				ds >> temp_scan.omega_s_t;
 				temp_scan.conc.clear();
 				for (unsigned int k = 0; k < temp_experiment.radius.size();
 						k++)
@@ -1618,7 +1829,9 @@ int US_fe_nnls_t::run(int status)
 
 	if (analysis_type == "GA" ||
 	    analysis_type == "GA_MW" ||
-	    analysis_type == "GA_SC")
+	    analysis_type == "GA_SC" ||
+	    analysis_type == "GA_RA" ||
+	    analysis_type == "GA_MW_RA")
 	{
 		// temporary overrides
 		//	GA_Params.generations = 2;
@@ -2076,7 +2289,8 @@ int US_fe_nnls_t::run(int status)
 							ts << "Monte Carlo iterations:   " << monte_carlo_iterations << endl;
 						}
 
-						if (analysis_type == "GA_MW")
+						if (analysis_type == "GA_MW" ||
+						    analysis_type == "GA_MW_RA")
 						{
 							ts << "MW minimum:                  " << GA_Params.mw_min << endl;
 							ts << "MW maximum:                  " << GA_Params.mw_max << endl;
@@ -2084,6 +2298,15 @@ int US_fe_nnls_t::run(int status)
 							ts << "f/f0 maximum:                " << GA_Params.ff0_max << endl;
 							ts << "Largest oligomer             " << GA_Params.largest_oligomer << endl;
 							ts << "Oligomer selection bitmap    " << GA_Params.largest_oligomer_string << endl;
+
+						}
+						if (analysis_type == "GA_RA" ||
+						    analysis_type == "GA_MW_RA")
+						{
+							ts << "Simpoints:                   " << GA_Params.simpoints << endl;
+							ts << "Band volume                  " << GA_Params.band_volume << endl;
+							ts << "Radial grid:                 " << GA_Params.radial_grid << endl;
+							ts << "Time grid  :                 " << GA_Params.moving_grid << endl;
 
 						}
 						ts << "Population (Genes per deme): " << GA_Params.genes << endl;
@@ -2103,7 +2326,8 @@ int US_fe_nnls_t::run(int status)
 						{
 							ts << "Migration %:                 " << GA_Params.migration_rate << endl;
 						}
-						if (analysis_type == "GA")
+						if (analysis_type == "GA" ||
+						    analysis_type == "GA_RA")
 						{
 							ts << "Initial # of solutes:        " << GA_Params.initial_solutes << endl;
 						}
@@ -2135,7 +2359,8 @@ int US_fe_nnls_t::run(int status)
 				Simulation_values sv;
 				vector<Simulation_values> sve;
 				vector <Solute> final_use_solutes = demes_results[best_deme];
-				if (analysis_type == "GA_MW")
+				if (analysis_type == "GA_MW" ||
+				    analysis_type == "GA_MW_RA")
 				{
 					for (unsigned int i = 0; i < final_use_solutes.size(); i++)
 					{
@@ -2206,7 +2431,8 @@ int US_fe_nnls_t::run(int status)
 					}
 				}
 				final_use_solutes = demes_results[best_deme];
-				if (analysis_type == "GA_MW")
+				if (analysis_type == "GA_MW" ||
+				    analysis_type == "GA_MW_RA")
 				{
 					for (unsigned int i = 0; i < final_use_solutes.size(); i++)
 					{
@@ -3294,18 +3520,29 @@ int US_fe_nnls_t::run(int status)
 						ts << "Monte Carlo iterations:     " << monte_carlo_iterations << endl;
 					}
 
-					if (analysis_type == "2DSA")
+					if (analysis_type == "2DSA" ||
+					    analysis_type == "2DSA_RA")
 					{
 						ts << "s minimum:                  " << SA2D_Params.s_min << endl;
 						ts << "s maximum:                  " << SA2D_Params.s_max << endl;
 						ts << "s resolution:               " << SA2D_Params.s_resolution << endl;
 					}
-					if (analysis_type == "2DSA_MW")
+					if (analysis_type == "2DSA_MW" ||
+					    analysis_type == "2DSA_MW_RA")
 					{
-						ts << "MW minimum:                 " << SA2D_Params.mw_min << endl;
+					    ts << "MW minimum:                 " << SA2D_Params.mw_min << endl;
 						ts << "MW maximum:                 " << SA2D_Params.mw_max << endl;
 						ts << "Largest oligomer            " << SA2D_Params.max_mer << endl;
 						ts << "grid resolution:            " << SA2D_Params.grid_resolution << endl;
+					}
+					if (analysis_type == "2DSA_RA" ||
+					    analysis_type == "2DSA_MW_RA")
+					{
+					    ts << "Simulation points:          " << SA2D_Params.simpoints << endl;
+					    ts << "Band volume                 " << SA2D_Params.band_volume << endl;
+					    ts << "Radial grid:                " << SA2D_Params.radial_grid << endl;
+					    ts << "Time grid:                  " << SA2D_Params.moving_grid << endl;
+					    
 					}
 
 					ts << "f/f0 minimum:               " << SA2D_Params.ff0_min << endl;
@@ -3800,20 +4037,35 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 				printf("AVOGADRO: %.8g VISC_20W: %.8g DENS_20W: %8g vbar20: %.8g R: %.8g\n\n", AVOGADRO, VISC_20W, DENS_20W, experiment[e].vbar20, R);
 				fflush(stdout);
 #endif
-				mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,
-									(double) experiment[e].rpm,
-									experiment[e].scan[experiment[e].scan.size() - 1].time,
-									experiment[e].meniscus,
-									experiment[e].bottom,
-									initial_concentration,
-									&initCVector[e]);
+				if (use_ra)
+				{
+				    US_Astfem_RSA astfem_rsa(false);
+				    use_model_system = model_system_1comp;
+				    use_model_system.component_vector[0].s = solutes[i].s / experiment[e].s20w_correction;
+				    use_model_system.component_vector[0].D = D_tb;
+				    use_simulation_parameters = simulation_parameters;
+				    use_simulation_parameters.meniscus += meniscus_offset;
+				    vector<mfem_data> use_experiment;
+				    use_experiment.push_back(experiment[e]);
+				    astfem_rsa.setTimeCorrection(true);
+				    astfem_rsa.setTimeInterpolation(false);
+				    astfem_rsa.calculate(&use_model_system, &use_simulation_parameters, &use_experiment);
+				    experiment[e] = use_experiment[0];
+				} else {
+				    mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,
+							(double) experiment[e].rpm,
+							experiment[e].scan[experiment[e].scan.size() - 1].time,
+							experiment[e].meniscus,
+							experiment[e].bottom,
+							initial_concentration,
+							&initCVector[e]);
 				// generate the next term of the linear combination:
 				//		printf("%d: calc_residuals 4\n", myrank); fflush(stdout);
 				//	puts("p5-1");fflush(stdout);
 				//	mfem[e]->fprintinitparams(stdout, myrank); fflush(stdout);
-				mfem[e]->skipEvents = true;
-
-				mfem[e]->run();
+				    mfem[e]->skipEvents = true;
+				    
+				    mfem[e]->run();
 
 				//	puts("p5-2");fflush(stdout);
 
@@ -3827,7 +4079,8 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 				//	fflush(stdout);
 
 				//	printf("%d: calc_residuals 5 interpolate\n", myrank); fflush(stdout);
-				mfem[e]->interpolate(&experiment[e], &fem_data[e]);
+				    mfem[e]->interpolate(&experiment[e], &fem_data[e]);
+				} 
 
 				// puts("p5-3");fflush(stdout);
 				//	cerr << "p6\n";
@@ -4698,19 +4951,34 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 								pow((solutes[i].s * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
 					double D_tb = D_20w/experiment[e].D20w_correction;
 
-					mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,
-										(double) experiment[e].rpm,
-										experiment[e].scan[experiment[e].scan.size() - 1].time,
-										experiment[e].meniscus,
-										experiment[e].bottom, initial_concentration,
-										&initCVector[e]);
-					mfem[e]->skipEvents = true;
-					mfem[e]->run();
+					if (use_ra) {
+					    US_Astfem_RSA astfem_rsa(false);
+					    use_model_system = model_system_1comp;
+					    use_model_system.component_vector[0].s = solutes[i].s / experiment[e].s20w_correction;
+					    use_model_system.component_vector[0].D = D_tb;
+					    use_simulation_parameters = simulation_parameters;
+					    use_simulation_parameters.meniscus += meniscus_offset;
+					    vector<mfem_data> use_experiment;
+					    use_experiment.push_back(experiment[e]);
+					    astfem_rsa.setTimeCorrection(true);
+					    astfem_rsa.setTimeInterpolation(false);
+					    astfem_rsa.calculate(&use_model_system, &use_simulation_parameters, &use_experiment);
+					    experiment[e] = use_experiment[0];
+					} else {
+					    mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,
+								(double) experiment[e].rpm,
+								experiment[e].scan[experiment[e].scan.size() - 1].time,
+								experiment[e].meniscus,
+								experiment[e].bottom, initial_concentration,
+								&initCVector[e]);
+					    mfem[e]->skipEvents = true;
+					    mfem[e]->run();
 					//		mfem[e]->fprintparams(stdout);
 
 					// interpolate model function to the experimental data so
 					// dimension 1 in A matches dimension of B:
-					mfem[e]->interpolate(&experiment[e], &fem_data[e]);
+					    mfem[e]->interpolate(&experiment[e], &fem_data[e]);
+					}
 					double cks4 = 0e0;
 					for (j = 0; j < experiment[e].scan.size(); j++)
 					{

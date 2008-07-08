@@ -32,6 +32,10 @@ struct ga_data
     float regularization, meniscus_range;
     vector <struct bucket> solute;
     QString analysis_type;
+    unsigned int simpoints;
+    double band_volume;
+    unsigned int radial_grid;
+    int moving_grid;
 };
 
 class US_EXTERN US_Ga_GridControl : public QDialog

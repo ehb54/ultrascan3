@@ -34,7 +34,10 @@ vector <struct mfem_data> *exp_data)
 	af_params.first_speed = (*simparams).speed_step[0].rotorspeed;
 	update_assocv();
 	initialize_rg();
-	print_rg();
+	if (guiFlag) 
+	{
+	    print_rg();
+	}
 
 	adjust_limits( 0 );
 	for (k=0; k<(*system).component_vector.size(); k++)
@@ -171,7 +174,10 @@ vector <struct mfem_data> *exp_data)
 
 	for (unsigned int group=0; group<rg.size(); group++)
 	{
-      printf("in rg: group=%d\n", group);
+	    if (guiFlag)
+	    {
+		printf("in rg: group=%d\n", group);
+	    }
 
 		num_comp = rg[group].GroupComponent.size();
 		num_rule = rg[group].association.size();
@@ -624,7 +630,11 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
 									// C[0...Ms-1][0....N-1]:
 	double **CA1, **CA2, **CB1, **CB2;		// for matrices used in acceleration
 
-	FILE *outf = fopen("tmp.out", "a");
+	FILE *outf;
+	if (guiFlag)
+	{
+	    outf = fopen("tmp.out", "a");
+	}
 
 	CA = NULL;
 	CB = NULL;
@@ -769,13 +779,16 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
 		}
 		(*simdata).scan.push_back(simscan);
 
-		if(i%1 == 0 || i<5)
+		if(guiFlag) 
 		{
+		    if(i%1 == 0 || i<5)
+		    {
 			for (j=0; j<N; j++)
 			{
-				fprintf(outf, "%12.5e %15.8e %15.8e\n", simscan.time, x[j], C0[j]);
+			    fprintf(outf, "%12.5e %15.8e %15.8e\n", simscan.time, x[j], C0[j]);
 			}
 			fprintf(outf, "\n\n");
+		    }
 		}
 
 		//
@@ -821,7 +834,10 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
 			C0[j] = C1[j];
 		}
 	} // time loop
-	fclose(outf);
+	if (guiFlag)
+	{
+	    fclose(outf);
+	}
 
 	(*C_init).radius.clear();
 	(*C_init).concentration.clear();
@@ -862,7 +878,11 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 											// C[0...Ms-1][0....N-1]:
 	double *CT0, *CT1;				// total concentration at current and next time step
 	vector <double> xb;				// grid for moving adaptive FEM for faster sedimentation
-	FILE *outf = fopen("tmp.out", "w");
+	FILE *outf;
+	if (guiFlag)
+	{
+	    outf = fopen("tmp.out", "w");
+	}
 
 	Mcomp = af_params.s.size();
 	s_max = maxval( af_params.s );  	// used for mesh and dt
@@ -1039,7 +1059,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 		}
 		(*simdata).scan.push_back(simscan);
 
-		if(kkk%10 == 0 || kkk<5)
+		if (guiFlag && (kkk%10 == 0 || kkk<5))
 		{
 			for(j=0; j<N; j++)
 			{
@@ -2387,14 +2407,18 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
     }
 
 /*  print
-    FILE *outf=fopen("tmp1.out","a");
-    fprintf(outf, "y[i]\n");
-    for(i=0; i<num_comp; i++) fprintf(outf, " %12.5e ", y[i]);
-    fprintf(outf, "\n");
-    fprintf(outf, "yt[i]\n");
-    for(i=0; i<num_comp; i++) fprintf(outf, " %12.5e ", yt[i]);
-    fprintf(outf, "\n");
-    fclose(outf);
+    FILE *outf;
+    if (guiFlag) 
+    {
+        outf = fopen("tmp1.out","a");
+	fprintf(outf, "y[i]\n");
+	for(i=0; i<num_comp; i++) fprintf(outf, " %12.5e ", y[i]);
+	fprintf(outf, "\n");
+	fprintf(outf, "yt[i]\n");
+	for(i=0; i<num_comp; i++) fprintf(outf, " %12.5e ", yt[i]);
+	fprintf(outf, "\n");
+	fclose(outf);
+    }
 */
 
     delete [] Q;
