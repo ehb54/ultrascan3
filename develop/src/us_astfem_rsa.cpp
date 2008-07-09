@@ -56,6 +56,7 @@ vector <struct mfem_data> *exp_data)
 			}
 		}
 		current_time = 0.0;
+		last_time = 0.0;
 		current_speed = 0.0;
 		w2t_integral = 0.0;
 		CT0.radius.clear();
@@ -68,12 +69,6 @@ vector <struct mfem_data> *exp_data)
 		}
 		if (!reacting[k]) // noninteracting
 		{
-
-		    if (guiFlag)
-		    {
-			printf("in _ni_: k=%d\n", k);
-		    }
-
 			initialize_conc(k, &CT0, true);
 			af_params.s.resize(1);
 			af_params.D.resize(1);
@@ -142,13 +137,11 @@ vector <struct mfem_data> *exp_data)
 				// find out the minimum number of simpoints needed to provide the necessary dt:
 				af_params.time_steps = (unsigned int) (1+duration/af_params.dt);
 				af_params.start_time = current_time;
-				// print_af();
 				calculate_ni((*simparams).speed_step[ss].rotorspeed, (*simparams).speed_step[ss].rotorspeed, &CT0, &simdata, false);
 
 				// set the current time to the last scan of this speed step
 				current_time = (*simparams).speed_step[ss].duration_hours * 3600
 						+ (*simparams).speed_step[ss].duration_minutes * 60;
-				//cout << "Current time: " << current_time << ", duration: " << duration << endl;
 				// interpolate the simulated data onto the experimental time- and radius grid
 				interpolate(&(*exp_data)[ss], &simdata, use_time);
 				// set the current speed to the constant rotor speed of the current speed step
@@ -177,11 +170,6 @@ vector <struct mfem_data> *exp_data)
 
 	for (unsigned int group=0; group<rg.size(); group++)
 	{
-	    if (guiFlag)
-	    {
-		printf("in rg: group=%d\n", group);
-	    }
-
 		num_comp = rg[group].GroupComponent.size();
 		num_rule = rg[group].association.size();
 		af_params.rg_index = group;
@@ -255,6 +243,8 @@ vector <struct mfem_data> *exp_data)
 		current_time = 0.0;
 		current_speed = 0.0;
 		w2t_integral = 0.0;
+		last_time = 0.0;
+
 		dr = (af_params.current_bottom - af_params.current_meniscus)/(initial_npts-1);
 
 		vC0 = new mfem_initial [ rg[group].GroupComponent.size() ];
@@ -266,28 +256,13 @@ vector <struct mfem_data> *exp_data)
 			{
 				CT0.radius.push_back(af_params.current_meniscus + i * dr );
 				CT0.concentration.push_back(0.0);
-				// vC0[j].radius.push_back(af_params.current_meniscus + i * dr );
-				// vC0[j].concentration.push_back(1.0);
 			}
 			initialize_conc(rg[group].GroupComponent[j], &CT0, false);
 			vC0[j] = CT0;
 		}
 
 		decompose(vC0);
-
-/*
-      printf(" *** after decompose ***\n", dr);
-	   for (i=0; i<initial_npts; i++)
-	   {
-         printf("%12.5e ", vC0[0].radius[i] );
-	    	for (j=0; j<rg[group].GroupComponent.size(); j++)
-         {
-             printf("%12.5e ", vC0[j].concentration[i] );
-         }
-         printf(" \n");
-      }
-*/
-
+		
 		for (ss=0; ss<(*simparams).speed_step.size(); ss++)
 		{
 			adjust_limits((*simparams).speed_step[ss].rotorspeed);
@@ -301,13 +276,11 @@ vector <struct mfem_data> *exp_data)
 				af_params.dt = 1.0; // each simulation step is 1 second long in the acceleration phase
 				af_params.simpoints = 2 * (*simparams).simpoints; // use a fixed grid with refinement at both ends and with twice the number of points
 				af_params.start_time = current_time;
-				// print_af();
 				calculate_ra2(current_speed, (*simparams).speed_step[ss].rotorspeed, vC0, &simdata, true);
 
-					// add the acceleration time:
+				// add the acceleration time:
 				accel_time = af_params.dt * af_params.time_steps;
 				current_time += accel_time;
-					//cout << "Current time: " << current_time << endl;
 				if (guiFlag)
 				{
 					emit new_time(current_time);
@@ -354,12 +327,10 @@ vector <struct mfem_data> *exp_data)
 				// find out the minimum number of simpoints needed to provide the necessary dt:
 			af_params.time_steps = (unsigned int) (1+duration/af_params.dt);
 			af_params.start_time = current_time;
-			// print_af();
 			calculate_ra2((*simparams).speed_step[ss].rotorspeed, (*simparams).speed_step[ss].rotorspeed, vC0, &simdata, false);
 			// set the current time to the last scan of this speed step
 			current_time = (*simparams).speed_step[ss].duration_hours * 3600
 			+ (*simparams).speed_step[ss].duration_minutes * 60;
-			//cout << "Current time: " << current_time << ", duration: " << duration << endl;
 			// interpolate the simulated data onto the experimental time- and radius grid
 			interpolate(&(*exp_data)[ss], &simdata, use_time);
 			// set the current speed to the constant rotor speed of the current speed step
@@ -381,7 +352,6 @@ vector <struct mfem_data> *exp_data)
 	}
 	if(time_correction)
 	{
-		int scans = 0;
 		for (ss=0; ss<(*simparams).speed_step.size(); ss++) // check each speed step to see if it contains acceleration
 		{
 			if((*simparams).speed_step[ss].acceleration_flag) // we need to correct time
@@ -391,26 +361,17 @@ vector <struct mfem_data> *exp_data)
 				ytmp = new float [(*simparams).speed_step[ss].scans];
 				for (i=0; i<(*simparams).speed_step[ss].scans; i++) // only fit the scans that belong to this speed step
 				{
-					xtmp[i] = (*exp_data)[ss].scan[i+scans].time;
-					ytmp[i] = (*exp_data)[ss].scan[i+scans].omega_s_t;
-					if (guiFlag) 
-					{
-					    cout << "Time: " << xtmp[i] << ", w^2t: " << ytmp[i] << endl;
-					}
+					xtmp[i] = (*exp_data)[ss].scan[i].time;
+					ytmp[i] 	= (*exp_data)[ss].scan[i].omega_s_t;
 				}
 				linefit( &xtmp, &ytmp, &slope, &intercept, &sigma, &correlation, (*simparams).speed_step[ss].scans);
 				correction = -intercept/slope;
-				if (guiFlag) 
+				for (i=0; i<(*simparams).speed_step[ss].scans; i++)
 				{
-				    cout << "slope: " << slope << ", intercept: " << intercept << ", Time correction: " << correction << endl;
-				}
-				for (i=0; i<(*simparams).speed_step[ss].scans; i++) // only fit the scans that belong to this speed step
-				{
-					(*exp_data)[ss].scan[i+scans].time -= correction;
+					(*exp_data)[ss].scan[i].time -= correction;
 				}
 				delete [] xtmp;
 				delete [] ytmp;
-				scans += (*simparams).speed_step[ss].scans;
 			}
 		}
 	}
@@ -645,12 +606,13 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
 									// C[0...Ms-1][0....N-1]:
 	double **CA1, **CA2, **CB1, **CB2;		// for matrices used in acceleration
 
+	/*
 	FILE *outf;
 	if (guiFlag)
 	{
 	    outf = fopen("tmp.out", "a");
 	}
-
+	*/
 	CA = NULL;
 	CB = NULL;
 	C0 = NULL;
@@ -793,7 +755,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
 			simscan.conc.push_back(C0[j]);
 		}
 		(*simdata).scan.push_back(simscan);
-
+		/*
 		if(guiFlag) 
 		{
 		    if(i%1 == 0 || i<5)
@@ -805,7 +767,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
 			fprintf(outf, "\n\n");
 		    }
 		}
-
+		*/
 		//
 		// sedimentation part:
 		// Calculate thr right hand side vector //
@@ -849,11 +811,12 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
 			C0[j] = C1[j];
 		}
 	} // time loop
+	/*
 	if (guiFlag)
 	{
 	    fclose(outf);
 	}
-
+	*/
 	(*C_init).radius.clear();
 	(*C_init).concentration.clear();
 	for (j=0; j<N; j++)
@@ -893,12 +856,13 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 											// C[0...Ms-1][0....N-1]:
 	double *CT0, *CT1;				// total concentration at current and next time step
 	vector <double> xb;				// grid for moving adaptive FEM for faster sedimentation
+	/*
 	FILE *outf;
 	if (guiFlag)
 	{
 	    outf = fopen("tmp.out", "w");
 	}
-
+	*/
 	Mcomp = af_params.s.size();
 	s_max = maxval( af_params.s );  	// used for mesh and dt
 	s_min = minval( af_params.s );  	// used for mesh and dt
@@ -1073,7 +1037,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 			simscan.conc.push_back(CT0[j]);
 		}
 		(*simdata).scan.push_back(simscan);
-
+		/*
 		if (guiFlag && (kkk%10 == 0 || kkk<5))
 		{
 			for(j=0; j<N; j++)
@@ -1085,7 +1049,7 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 			fprintf(outf, "\n\n");
          // printf("t=%12.5e C_ttl=%15.8e \n", simscan.time, IntConcentration(x, CT0));
 		}
-
+		*/
       //
       // first half step of sedimentation:
       //
