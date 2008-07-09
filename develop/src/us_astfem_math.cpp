@@ -2059,12 +2059,8 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, bool use_t
 	}
 	else // use omega^2t integral for interpolation
 	{
-	    puts("interpolate omega t 0"); fflush(stdout);
 		for (expscan = 0; expscan < (*expdata).scan.size(); expscan++)
 		{
-		    printf("interpolate omega t 0 omega t sim %f exp %f",
-			   (*simdata).scan[simscan].omega_s_t,(*expdata).scan[expscan].omega_s_t
-			   ); fflush(stdout);
 			while ((*simdata).scan[simscan].omega_s_t < (*expdata).scan[expscan].omega_s_t)
 			{
 				simscan ++;

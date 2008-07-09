@@ -69,7 +69,10 @@ vector <struct mfem_data> *exp_data)
 		if (!reacting[k]) // noninteracting
 		{
 
-         printf("in _ni_: k=%d\n", k);
+		    if (guiFlag)
+		    {
+			printf("in _ni_: k=%d\n", k);
+		    }
 
 			initialize_conc(k, &CT0, true);
 			af_params.s.resize(1);
@@ -390,11 +393,17 @@ vector <struct mfem_data> *exp_data)
 				{
 					xtmp[i] = (*exp_data)[ss].scan[i+scans].time;
 					ytmp[i] = (*exp_data)[ss].scan[i+scans].omega_s_t;
-					cout << "Time: " << xtmp[i] << ", w^2t: " << ytmp[i] << endl;
+					if (guiFlag) 
+					{
+					    cout << "Time: " << xtmp[i] << ", w^2t: " << ytmp[i] << endl;
+					}
 				}
 				linefit( &xtmp, &ytmp, &slope, &intercept, &sigma, &correlation, (*simparams).speed_step[ss].scans);
 				correction = -intercept/slope;
-				cout << "slope: " << slope << ", intercept: " << intercept << ", Time correction: " << correction << endl;
+				if (guiFlag) 
+				{
+				    cout << "slope: " << slope << ", intercept: " << intercept << ", Time correction: " << correction << endl;
+				}
 				for (i=0; i<(*simparams).speed_step[ss].scans; i++) // only fit the scans that belong to this speed step
 				{
 					(*exp_data)[ss].scan[i+scans].time -= correction;
