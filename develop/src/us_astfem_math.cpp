@@ -1,5 +1,9 @@
 #include "../include/us_astfem_math.h"
 
+#if defined(USE_MPI)
+# include "mpi.h"
+#endif
+
 
 double minval(vector <double> val)
 {
@@ -2028,6 +2032,9 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, bool use_t
 				{
 					cerr << "simulation time scan[" << simscan << "]: " << (*simdata).scan[simscan-1].time
 							<< ", expdata scan time[" << expscan << "]: " << (*expdata).scan[expscan].time << endl;
+#if defined(USE_MPI)
+					MPI_Abort(MPI_COMM_WORLD, -1);
+#endif
 					cerr << QObject::tr("The simulated data does not cover the entire experimental time range and ends too early!\nexiting...\n");
 					exit(-1);
 				}
@@ -2069,6 +2076,9 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, bool use_t
 				{
 					cerr << "simulation time scan[" << simscan << "]: " << (*simdata).scan[simscan-1].omega_s_t
 							<< ", expdata scan time[" << expscan << "]: " << (*expdata).scan[expscan].omega_s_t << endl;
+#if defined(USE_MPI)
+					MPI_Abort(MPI_COMM_WORLD, -1);
+#endif
 					cerr << QObject::tr("The simulated data does not cover the entire experimental time range and ends too early!\nexiting...\n");
 					exit(-1);
 				}
@@ -2108,6 +2118,9 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, bool use_t
 			cerr << "Radius comparison: " << tmp_data.radius[0] << " (simulated), " << (*expdata).radius[0] << " (experimental)\n";
 			cerr << "j = " << j << ", simdata radius: " << tmp_data.radius[j] << ", expdata radius: " << (*expdata).radius[i] << endl;
 			cerr << QObject::tr("The simulated data radial range does not include the beginning of the experimental data's radii!\nexiting...\n");
+#if defined(USE_MPI)
+			MPI_Abort(MPI_COMM_WORLD, -3);
+#endif
 			exit(-3);
 		}
 		for (i=0; i<(*expdata).radius.size(); i++)
@@ -2119,6 +2132,9 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, bool use_t
 				if (j == tmp_data.radius.size())
 				{
 					cerr << QObject::tr("The simulated data does not have enough radial points and ends too early!\nexiting...\n");
+#if defined(USE_MPI)
+					MPI_Abort(MPI_COMM_WORLD, -2);
+#endif
 					exit(-2);
 				}
 			}
