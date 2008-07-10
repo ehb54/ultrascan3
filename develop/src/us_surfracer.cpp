@@ -295,7 +295,7 @@ phis(int i, int j, int nvert1, int nvert2)	/*saddle wrap angle */
     if (scp >= 1.)
 	answer = 0.;
     else if (scp <= -1.)
-	answer = M_PI;
+	answer = (float) M_PI;
     else
 	answer = acos(scp);
 
@@ -333,7 +333,7 @@ betav(int i, int j, int k, int nvert)	/*concave triangle angle */
     if (sp >= 1.)
 	return (0.);
     else if (sp <= -1.)
-	return (M_PI);
+	return ( (float) M_PI );
     else
 
 	return (acos(sp));
@@ -361,7 +361,7 @@ saddle(int nedge, int natom, int atom2)	/*saddle part of the molecular surface; 
     float ratio, phi, rij, theti, thetj, theta1, a1, a2, si, sj;
 
     if (edge[nedge * 2] == -2)
-	phi = 2. * M_PI;	/*it's a circle */
+	phi = 2. * (float) M_PI;	/*it's a circle */
     else
 	phi = phis(natom, atom2, edge[nedge * 2 + 1], edge[nedge * 2]);	/*it's an arc */
 
@@ -392,7 +392,7 @@ saddle(int nedge, int natom, int atom2)	/*saddle part of the molecular surface; 
 	if (ratio >= 1.)
 	    theta1 = 0.;
 	else if (ratio <= -1.)
-	    theta1 = M_PI;
+	    theta1 = (float) M_PI;
 	else
 	    theta1 = acos(ratio);
 
@@ -460,7 +460,7 @@ checkcycle(int j, int nver, float cycle[][3], float *point)
 	if (ssp >= 1.)
 	    c = 0;
 	else if (ssp <= -1.)
-	    c = M_PI;
+	    c = (float) M_PI;
 	else
 	    c = acos(ssp);
 
@@ -475,7 +475,7 @@ checkcycle(int j, int nver, float cycle[][3], float *point)
     if (sp >= 1.)
 	c = 0.;
     else if (sp <= -1.)
-	c = M_PI;
+	c = (float) M_PI;
     else
 	c = acos(sp);
 
@@ -684,7 +684,7 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
 
     if (vc >= 2)
     {				/*finding the next vertex */
-	minangle = 3. * M_PI;
+	minangle = (float)( 3. * M_PI );
 	*v1 = vercom[0];
 
 	toruscenter(natom, corratom, tni);
@@ -704,7 +704,7 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
 	    if (sssp >= 1.)
 		ang = 0.;
 	    else if (sssp <= -1.)
-		ang = M_PI;
+		ang = (float) M_PI;
 	    else
 		ang = acos(sssp);
 
@@ -1526,7 +1526,7 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 
     for (i = 0; i <= atomnumber / 2.; i++)
     {
-	a[i * 3] += 0.01;
+	a[i * 3] += (float) 0.01;
     }
 
     atomcon = (int *) calloc(atomnumber - 1, sizeof(int));	/*allocating memory for array storing contacts for an atom */
@@ -2016,7 +2016,7 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
     if (asar >= 0.001)
 	aarea[atom0] += asar;	/*this is the water accessible surface area of atom0 *//*accessible convex area */
     else
-	aarea[atom0] += 0.0001;
+	aarea[atom0] += (float) 0.0001;
     if (calcmode > 1)
 	molarea[atom0] += asar * (ar[atom0] - prober) * (ar[atom0] - prober) / (ar[atom0] * ar[atom0]);	/*molecular convex area */
 
@@ -2059,7 +2059,7 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 	    if (asar >= 0.001)
 		aarea[edgeatom[i]] += asar;
 	    else
-		aarea[edgeatom[i]] += 0.0001;
+		aarea[edgeatom[i]] += (float) 0.0001;
 	    if (calcmode > 1)
 		molarea[edgeatom[i]] +=
 		    asar * (ar[edgeatom[i]] - prober) * (ar[edgeatom[i]] - prober) / (ar[edgeatom[i]] * ar[edgeatom[i]]);

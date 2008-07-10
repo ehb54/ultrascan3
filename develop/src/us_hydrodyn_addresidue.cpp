@@ -1,4 +1,6 @@
 #include "../include/us_hydrodyn_addresidue.h"
+#include "../include/us_math.h"
+
 #include "../include/color_black.xpm"
 #include "../include/color_blue.xpm"
 #include "../include/color_brightwhite.xpm"
