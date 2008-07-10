@@ -75,7 +75,7 @@ vector <struct mfem_data> *exp_data)
 		   af_params.kext.resize(1);
 			af_params.s[0] = (*system).component_vector[k].s;
 			af_params.D[0] = (*system).component_vector[k].D;
-			af_params.kext[j] = (*system).component_vector[k].extinction;
+			af_params.kext[0] = (*system).component_vector[k].extinction;
 			for (ss=0; ss<(*simparams).speed_step.size(); ss++)
 			{
 				adjust_limits((*simparams).speed_step[ss].rotorspeed);
