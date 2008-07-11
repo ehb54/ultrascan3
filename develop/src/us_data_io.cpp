@@ -47,7 +47,16 @@ void US_Data_IO::assign_simparams(struct SimulationParameters *sp, unsigned int 
 	(*sp).tinoise = 0.0;					// time invariant noise
 	(*sp).rinoise = 0.0;					// radially invariant noise
 	(*sp).rotor = (*run_inf).rotor;	// rotor serial number in database
-	(*sp).band_forming = false;		// should be overridden by user
+	vector <struct centerpieceInfo> cp_info;
+	readCenterpieceInfo(&cp_info);
+	if (cp_info[(*run_inf).centerpiece[cell]].sector == 4)
+	{
+		(*sp).band_forming = true;
+	}
+	else
+	{
+		(*sp).band_forming = false;
+	}
 	(*sp).band_volume = 0.015;			// should be overridden by user
 }
 

@@ -152,7 +152,8 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		simulation_parameters.simpoints = model_system_constraints.simpoints;
 		simulation_parameters.mesh = model_system_constraints.mesh;
 		simulation_parameters.moving_grid = model_system_constraints.moving_grid;
-		// NOTICE: we need a band forming flag value for this to be relevant
+		// NOTICE: the centerpiece type assigned in US_Data_IO::assign_simparams() sets the flag for band forming centerpieces.
+		// if the flag is true, then the band_volume set below should be used. The band_volume needs to be set by the user.
 		simulation_parameters.band_volume = model_system_constraints.band_volume;
 
 		constraints_file_name = file_info + ".tmp.constraints";
