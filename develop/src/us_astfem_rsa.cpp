@@ -32,6 +32,7 @@ vector <struct mfem_data> *exp_data)
 	vector <bool> reacting;
 	reacting.resize( (*system).component_vector.size() );
 	af_params.first_speed = (*simparams).speed_step[0].rotorspeed;
+	af_params.simpoints = simparams->simpoints;
 	update_assocv();
 	initialize_rg();
 	if (guiFlag) 
