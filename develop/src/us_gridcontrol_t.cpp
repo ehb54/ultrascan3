@@ -1511,7 +1511,16 @@ void US_GridControl_T::write_experiment()
                             if(use_s <= (SA2D_Params.s_max*1.0e-13) && use_s >= (SA2D_Params.s_min*1.0e-13) &&
                                     use_k <= SA2D_Params.ff0_max && use_k >= SA2D_Params.ff0_min)
                             {
-                                solutes.component.push_back(solute);
+			        if (find(solutes.component.begin(),
+				         solutes.component.end(),
+				         solute) == solutes.component.end())
+		                {
+			  	    solutes.component.push_back(solute);
+			        }
+			        else
+			        {
+				    printf("skipped, dup on file %g %g\n", use_s, use_k);
+			        }
                             }
                         } // n
                     } // m
