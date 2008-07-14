@@ -1076,3 +1076,236 @@ int US_FemGlobal::write_constraints(struct ModelSystem *ms, struct ModelSystemCo
 	return 0;
 }
 
+int US_FemGlobal::read_model_data(vector <mfem_data> *model, QString filename, bool ignore_errors) {
+  unsigned int no_of_models;
+  unsigned int no_of_radial_points;
+  unsigned int no_of_scans;
+
+  // short int short_int_val;
+  double double_val;
+
+  QFile f(filename);
+  if (!f.open(IO_ReadOnly))
+  {
+    if (!ignore_errors)
+    {
+      cout << "Could not open data file: " << filename << " for input\n";
+      cout << "Please check the path, file name and read permissions...\n\n";
+    }
+    return (-1);
+  }
+  (*model).clear();
+  struct mfem_data temp_model;
+  struct mfem_scan temp_scan;
+  vector <double> concentration;
+  
+  unsigned int i;
+  unsigned int j;
+  unsigned int k;
+
+  QDataStream ds(&f);
+
+  ds >> no_of_models;
+  cout << "no of models: " << no_of_models << endl;
+  for (i = 0; i < no_of_models; i++)
+  {
+    ds >> temp_model.id;
+    ds >> temp_model.cell;
+    ds >> temp_model.channel;
+    ds >> temp_model.wavelength;
+    ds >> temp_model.meniscus;
+    ds >> temp_model.bottom;
+    ds >> temp_model.rpm;
+    ds >> temp_model.s20w_correction;
+    ds >> temp_model.D20w_correction;
+    ds >> no_of_radial_points;
+    temp_model.radius.clear();
+    for (j = 0; j < no_of_radial_points; j++)
+    {
+      ds >> double_val;
+      temp_model.radius.push_back(double_val);
+    }
+    ds >> no_of_scans;
+    temp_model.scan.clear();
+    for (j = 0; j < no_of_scans; j++)
+    {
+      ds >> temp_scan.time;
+      ds >> temp_scan.omega_s_t;
+      temp_scan.conc.clear();
+      for (k = 0; k < temp_model.radius.size(); k++)
+      {
+	ds >> double_val;
+	temp_scan.conc.push_back(double_val);
+	// ds >> short_int_val;
+	// temp_scan.ignore.push_back(short_int_val);
+      }
+      temp_model.scan.push_back(temp_scan);
+    }
+    ds >> temp_model.viscosity;
+    ds >> temp_model.density;
+    ds >> temp_model.vbar;
+    ds >> temp_model.vbar20;
+    ds >> temp_model.avg_temperature;
+#if defined(DEBUG_HYDRO)
+			
+    printf("model time %g avg_temp %.12g vbar %.12g vbar20 %.12g visc %.12g density %.12g\n",
+	   temp_model.scan[temp_model.scan.size()-1].time,
+	   temp_model.avg_temperature,
+	   temp_model.vbar,
+	   temp_model.vbar20,
+	   temp_model.viscosity,
+	   temp_model.density);
+
+#endif
+    (*model).push_back(temp_model);
+  }
+  return 0;
+}
+
+int US_FemGlobal::write_model_data(vector <mfem_data> *model, QString filename) {
+  unsigned int i;
+  unsigned int j;
+  unsigned int k;
+  QFile f(filename);
+  if (!f.open(IO_WriteOnly))
+  {
+    cout << "Could not open data file: " << filename << " for output\n";
+    cout << "Please check the path, file name and write permissions...\n\n";
+    return (-1);
+  }
+
+  QDataStream ds(&f);
+  ds << (unsigned int)(*model).size();
+  for (i=0; i<(*model).size(); i++)
+  {
+    ds << (*model)[i].id;
+    ds << (*model)[i].cell;
+    ds << (*model)[i].channel;
+    ds << (*model)[i].wavelength;
+    ds << (*model)[i].meniscus;
+    ds << (*model)[i].bottom;
+    ds << (*model)[i].rpm;
+    ds << (*model)[i].s20w_correction;
+    ds << (*model)[i].D20w_correction;
+    ds << (unsigned int) (*model)[i].radius.size();
+    for (j=0; j<(*model)[i].radius.size(); j++)
+    {
+      ds << (*model)[i].radius[j];
+    }
+    ds << (unsigned int)(*model)[i].scan.size();
+
+    for (j=0; j<(*model)[i].scan.size(); j++)
+    {
+      ds << (*model)[i].scan[j].time;
+      ds << (*model)[i].scan[j].omega_s_t;
+      for (k=0; k<(*model)[i].radius.size(); k++)
+      {
+	ds << (*model)[i].scan[j].conc[k];
+	// ds << (*model)[i].scan[j].ignore[k];
+      }
+    }
+
+    fprintf(stderr,"model last time %g avg_temp %g vbar %g visc %g density %g vbar %g vbar20 %g rpm %u bottom %g meniscus %g scorr %g Dcorr %g\n",
+                    (*model)[i].scan[(*model)[i].scan.size()-1].time,
+                    (*model)[i].avg_temperature,
+                    (*model)[i].vbar,
+                    (*model)[i].viscosity,
+                    (*model)[i].density,
+                    (*model)[i].vbar,
+                    (*model)[i].vbar20,
+                    (*model)[i].rpm,
+                    (*model)[i].bottom,
+                    (*model)[i].meniscus,
+                    (*model)[i].s20w_correction,
+                    (*model)[i].D20w_correction);
+    ds << (*model)[i].viscosity;
+    ds << (*model)[i].density;
+    ds << (*model)[i].vbar;
+    ds << (*model)[i].vbar20;
+    ds << (*model)[i].avg_temperature;
+  }
+  f.close();
+  return 0;
+}
+
+int US_FemGlobal::accumulate_model_monte_carlo_data(vector <mfem_data> *accumulated_model, vector <mfem_data> *source_model, unsigned int monte_carlo_iterations) 
+{
+  if (!monte_carlo_iterations)
+  {
+    cout << "Notice: US_FemGlobal::accumulate_model_monte_carlo_data monte carlo iterations == 0, setting to 1\n";
+    monte_carlo_iterations = 1;
+  }
+
+  if ((*accumulated_model).size() && 
+      (*accumulated_model).size() != (*source_model).size()) 
+  {
+    cout << "Internal Error: US_FemGlobal::accumulate_model_monte_carlo_data model size incompability\n";
+    return (-2);
+  }
+  
+  unsigned int i;
+  unsigned int j;
+  unsigned int k;
+
+  if (!(*accumulated_model).size())
+  {
+    struct mfem_data temp_model;
+    for (i = 0; i < (*source_model).size(); i++)
+    {
+      temp_model = (*source_model)[i];
+      for (j=0; j<temp_model.scan.size(); j++)
+      {
+	for (k=0; k<temp_model.radius.size(); k++)
+        {
+	  temp_model.scan[j].conc[k] /= (double) monte_carlo_iterations;
+	}
+      }
+      accumulated_model->push_back(temp_model);
+    }
+    return 0;
+  }
+
+  for (i=0; i<(*source_model).size(); i++)
+  {
+    if ((*accumulated_model)[i].scan.size() != (*source_model)[i].scan.size()) 
+    {
+      cout << "Internal Error: US_FemGlobal::accumulate_model_monte_carlo_data scan size incompability\n";
+      return (-3);
+    }
+    if ((*accumulated_model)[i].radius.size() != (*source_model)[i].radius.size()) 
+    {
+      cout << "Internal Error: US_FemGlobal::accumulate_model_monte_carlo_data radius size incompability\n";
+      return (-4);
+    }
+    if ((*accumulated_model)[i].radius != (*source_model)[i].radius) 
+    {
+      cout << "Internal Error: US_FemGlobal::accumulate_model_monte_carlo_data radius value incompability\n";
+      return (-5);
+    }
+    for (j=0; j<(*source_model)[i].scan.size(); j++)
+    {
+      for (k=0; k<(*source_model)[i].radius.size(); k++)
+      {
+	(*accumulated_model)[i].scan[j].conc[k] += (*source_model)[i].scan[j].conc[k] / (double) monte_carlo_iterations;
+      }
+    }
+  }
+  return 0;
+}
+
+int US_FemGlobal::read_mwl_model_data(vector <mfem_data> *model, QString filenamebase, unsigned int start_lambda, unsigned int end_lambda)
+{
+  unsigned int i;
+  unsigned int no_of_models_loaded = 0;
+  vector <mfem_data> temp_model;
+  for (i = start_lambda; i <= end_lambda; i++) 
+  {
+    if (!read_model_data(&temp_model, filenamebase + QString("-model-%1.dat").arg(i), true))
+    {
+      model->push_back(temp_model[0]);
+      no_of_models_loaded++;
+    }
+  }
+  return no_of_models_loaded;
+}
+ 
