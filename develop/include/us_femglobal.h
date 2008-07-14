@@ -35,7 +35,7 @@ struct mfem_scan
 	double omega_s_t;
 	unsigned int rpm;
 	double temperature;
-        vector <short> ignore; // set to Y if this point should be ignored
+  // vector <short> ignore; // set to Y if this point should be ignored
 	std::vector <double> conc;
 };
 
