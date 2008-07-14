@@ -2603,11 +2603,15 @@ void US_Astfem_RSA::print_rg()
 
 void US_Astfem_RSA::print_af()
 {
-	unsigned int i;
+	unsigned int i, j;
 	QString str;
 	cout.precision(10);
+	cout << "Simparams and system variables:\n";
 	cout << "Model Number:\t" << (*system).model << endl;
 	cout << "Rotor:\t" << (*simparams).rotor << endl;
+	cout << "mesh:\t\t" << (*simparams).mesh << endl;
+	cout << "moving grid\t\t" << (*simparams).moving_grid << endl;
+	cout << "\n\naf_params variables:\n";
 	cout << "First speed:\t" << af_params.first_speed << endl;
 	cout << "Simpoints:\t" << af_params.simpoints << endl;
 	cout << "\nHydrodynamic Parameters:\n";
@@ -2618,13 +2622,42 @@ void US_Astfem_RSA::print_af()
 		cout << "ext[" << i << "]:\t\t" << af_params.kext[i] << endl;
 	}
 	cout << "\ndt:\t\t" << af_params.dt << endl;
+	cout << "pathlength:\t" << af_params.pathlength << endl;
 	cout << "time_steps:\t" << af_params.time_steps << endl;
 	cout << "omega_s:\t" << af_params.omega_s << endl;
 	cout << "start_time:\t" << af_params.start_time << endl;
 	cout << "current meniscus:\t" << af_params.current_meniscus << endl;
 	cout << "current bottom:\t\t" << af_params.current_bottom << endl;
-	cout << "mesh:\t\t" << (*simparams).mesh << endl;
-	cout << "moving grid\t\t" << (*simparams).moving_grid << endl;
+	cout << "reaction group index:\t\t" << af_params.rg_index << endl;
+	for (i=0; i< af_params.local_index.size(); i++)
+	{
+		cout << "local index[" << i << "]:\t\t" << af_params.local_index[i] << endl;
+	}
+	for (i=0; i< af_params.association.size(); i++)
+	{
+		cout << "\n\nAssociation " << i << ":\t\t\n";
+		cout << "keq[" << i << "]:\t\t" << af_params.association[i].keq << endl;
+		cout << "koff[" << i << "]:\t\t" << af_params.association[i].k_off << endl;
+		cout << "units[" << i << "]:\t\t" << af_params.association[i].units << endl;
+		cout << "component1[" << i << "]:\t\t" << af_params.association[i].component1 << endl;
+		cout << "component2[" << i << "]:\t\t" << af_params.association[i].component2 << endl;
+		cout << "component3[" << i << "]:\t\t" << af_params.association[i].component3 << endl;
+		cout << "stoichiometry1[" << i << "]:\t\t" << af_params.association[i].stoichiometry1 << endl;
+		cout << "stoichiometry2[" << i << "]:\t\t" << af_params.association[i].stoichiometry2 << endl;
+		cout << "stoichiometry3[" << i << "]:\t\t" << af_params.association[i].stoichiometry3 << endl;
+		for (j=0; j<af_params.association[i].comp.size(); j++)
+		{
+			cout << "component involved in this reaction[" << j << "]:\t\t" << af_params.association[i].comp[j] << endl;
+		}
+		for (j=0; j<af_params.association[i].stoich.size(); j++)
+		{
+			cout << "stoichiometry of component[" << j << "]:\t\t" << af_params.association[i].stoich[j] << endl;
+		}
+		for (j=0; j<af_params.association[i].react.size(); j++)
+		{
+			cout << "reaction position[" << j << "]:\t\t" << af_params.association[i].react[j] << endl;
+		}
+	}
 }
 
 void US_Astfem_RSA::print_af(FILE *outf)
