@@ -68,7 +68,7 @@ struct experiment
 class US_EXTERN US_ViewMWL : public QFrame
 {
 	Q_OBJECT
-	
+
 	public:
 		US_ViewMWL(QWidget *p=0, const char *name = 0);
 		~US_ViewMWL();
@@ -84,11 +84,13 @@ class US_EXTERN US_ViewMWL : public QFrame
 		unsigned int min_radius_element, max_radius_element, min_lambda_element, max_lambda_element;
 		float max_lambda, min_lambda, max_radius, min_radius, min_od, max_od;
 		unsigned int average;
-		struct experiment MWL_experiment; 
-		struct cell cell_data; 
+		struct experiment MWL_experiment;
+		struct cell cell_data;
 		struct SA2d_control_variables controlvar_3d;
 		vector <struct mfem_data> model_vector;
 		vector <struct element_3D> abs_val;
+		vector <int> lambda_flag;
+
 		bool widget3d_flag, pngs;
 		US_Pixmap *pm;
 		QProgressBar *progress;
@@ -99,7 +101,7 @@ class US_EXTERN US_ViewMWL : public QFrame
 
 		QLabel *lbl_info;
 		QLabel *lbl_status;
-		
+
 		QLabel *lbl_max_lambda;
 		QLabel *lbl_max_time;
 		QLabel *lbl_max_radius;
@@ -138,7 +140,7 @@ class US_EXTERN US_ViewMWL : public QFrame
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;
 		QPushButton *pb_model;
-		
+
 		US_Config *USglobal;	 /*!< A US_Config reference. */
 
 	public slots:
@@ -147,7 +149,7 @@ class US_EXTERN US_ViewMWL : public QFrame
 		void save();
 
 	private slots:
-	
+
 		void update_max_lambda(double);
 		void update_min_lambda(double);
 		void update_max_time(double);
@@ -181,11 +183,11 @@ class US_EXTERN US_ViewMWL : public QFrame
 		void movie();
 		void select_cell(int);
 		void select_channel(int);
-		
+
 	protected slots:
 		void setup_GUI();
 		void closeEvent(QCloseEvent *);
-		
+
 };
 
 #endif

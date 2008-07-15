@@ -273,6 +273,7 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
 	pb_model = new QPushButton(tr("Load MWL Model"), this);
 	Q_CHECK_PTR(pb_model);
 	pb_model->setAutoDefault(true);
+	pb_model->setEnabled(false);
 	pb_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
 	pb_model->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_model, SIGNAL(clicked()), SLOT(load_model()));
@@ -351,7 +352,7 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
 	plot_residual->setMargin(USglobal->config_list.margin);
 	plot_residual->setTitle(tr("Residuals"));
 	plot_residual->setCanvasBackground(USglobal->global_colors.plot);		//new version
-	
+
 	global_Xpos += 30;
 	global_Ypos += 30;
 	setGeometry(global_Xpos, global_Ypos, 0, 0);
@@ -370,7 +371,39 @@ void US_ViewMWL::set_model()
 
 void US_ViewMWL::load_model()
 {
-	
+	unsigned int i, j, count;
+	QString s = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*-model*.dat",
+   this, "open file dialog", "Please select a Model" );
+	if (s.isEmpty())
+	{
+		return;
+	}
+	int pos = s.find("-model-", 0, false);
+	US_FemGlobal *fg;
+	fg = new US_FemGlobal(this);
+	model_vector.clear();
+	count = fg->read_mwl_model_data(&model_vector, s.left(pos));
+	delete fg;
+	if (count > 0)
+	{
+		cb_model->setEnabled(true);
+		lambda_flag.resize(cell_data.cell_channel[0].data[0].scan.size());
+		for (i=0; i<lambda_flag.size(); i++)
+		{
+			lambda_flag[i] = -1;
+		}
+		for (i=0; i<model_vector.size(); i++)
+		{
+			for (j=0; j<cell_data.cell_channel[0].data[0].scan.size(); j++)
+			{
+				if(model_vector[i].wavelength == j)
+				{ // identify the wavelength index for which corresponding model data exists
+					lambda_flag[j] = i;
+					cout << cell_data.cell_channel[0].data[0].scan[j].wavelength << endl;
+				}
+			}
+		}
+	}
 }
 
 void US_ViewMWL::setLoading()
@@ -525,16 +558,16 @@ void US_ViewMWL::load()
 		unsigned int seconds = (unsigned int) (elapsed_time/1000);
 		QString elapsed;
 		elapsed.sprintf("%d min and %d sec, with %d radius points and %d wavelengths",
-		minutes, seconds, (int) channel_data.data[0].radius.size(), 
+		minutes, seconds, (int) channel_data.data[0].radius.size(),
 		  (int) channel_data.data[0].scan.size());
 		if (channel_data.data.size() == 1)
 		{
-			lbl_update->setText(tr(str1.sprintf("Loaded %d file in ", 
+			lbl_update->setText(tr(str1.sprintf("Loaded %d file in ",
 			  (int) channel_data.data.size()) + elapsed));
 		}
 		else
 		{
-			lbl_update->setText(tr(str1.sprintf("Loaded %d files in ", 
+			lbl_update->setText(tr(str1.sprintf("Loaded %d files in ",
 			  (int) channel_data.data.size()) + elapsed));
 		}
 		pb_load->disconnect();
@@ -623,7 +656,7 @@ void US_ViewMWL::load()
 			}
 			cell_data.cell_channel.push_back(channel_data);
 			f.close();
-			lbl_update->setText(tr(str1.sprintf("Read %d scans from ", 
+			lbl_update->setText(tr(str1.sprintf("Read %d scans from ",
 			  (int) cell_data.cell_channel[0].data.size())) + filename);
 		}
 	}
@@ -654,11 +687,12 @@ void US_ViewMWL::load()
 	pb_print->setEnabled(true);
 	pb_export_data->setEnabled(true);
 	pb_save->setEnabled(true);
+	pb_model->setEnabled(true);
 }
 
 void US_ViewMWL::save()
 {
-	if(cell_data.cell_channel.size() == 0) // nothing is loaaded yet
+	if(cell_data.cell_channel.size() == 0) // nothing is loaded yet
 	{
 		return;
 	}
@@ -730,7 +764,7 @@ void US_ViewMWL::save()
 			}
 		}
 		f.close();
-		lbl_update->setText(tr(str1.sprintf("Wrote %d scans to ", 
+		lbl_update->setText(tr(str1.sprintf("Wrote %d scans to ",
 		  (int) cell_data.cell_channel[0].data.size())) + filename);
 	}
 }
@@ -1096,12 +1130,12 @@ void US_ViewMWL::setup_GUI()
 {
 
 	int rows = 18, columns = 2, spacing = 2, j=0;
-	
+
 	QGridLayout *background = new QGridLayout(this, 2, 2, spacing);
 	background->addWidget(plot_2d, 0, 1);
 	background->addWidget(plot_residual, 1, 1);
 	background->addWidget(lbl_update, 2, 1);
-	
+
 	QGridLayout *controlGrid = new QGridLayout(rows, columns, spacing);
 	for (int i=0; i<rows; i++)
 	{
@@ -1598,6 +1632,55 @@ void US_ViewMWL::update(unsigned int time)
 				plot_2d->setCurveData(curves[j], x, data[j], radius_points);
 				plot_2d->setCurvePen(curves[j], Qt::yellow);
 				j++;
+			}
+			if(cb_model->isChecked() && lambda_flag[min_lambda_element] > -1)
+			{
+				double **model_data=NULL;
+				double *model_x=NULL;
+				unsigned int *model_curves=NULL;
+				model_curves = new unsigned int [max_time - min_time + 1];
+				model_data = new double *[max_time - min_time + 1];
+				model_x = new double [model_vector[lambda_flag[min_lambda_element]].radius.size()];
+				j=0;
+				for (i=min_time; i<=max_time; i++)
+				{
+					model_data[j] = new double [model_vector[lambda_flag[min_lambda_element]].radius.size()];
+					j++;
+				}
+				j=0;
+				cout << "minlambda: " << min_lambda_element << ", lambda flag: " << lambda_flag[min_lambda_element] << endl;
+				for (i=min_time; i<=max_time; i++)
+				{
+					for (k=0; k<model_vector[lambda_flag[min_lambda_element]].radius.size(); k++)
+					{
+						model_data[j][k] = model_vector[lambda_flag[min_lambda_element]].scan[i-1].conc[k];
+						//cout << "Abs: " << model_vector[lambda_flag[min_lambda_element]].scan[i-1].conc[k] << endl;
+					}
+					j++;
+				}
+				for (k=0; k<model_vector[lambda_flag[min_lambda_element]].radius.size(); k++)
+				{
+					model_x[k] = model_vector[lambda_flag[min_lambda_element]].radius[k];
+				}
+				j=0;
+				for (i=min_time; i<=max_time; i++)
+				{
+					model_curves[j] = plot_2d->insertCurve(tr(str.sprintf("Model data Scan %d", j)));
+					plot_2d->setCurveStyle(model_curves[j], QwtCurve::Lines);
+					plot_2d->setCurveData(model_curves[j], model_x, model_data[j], model_vector[lambda_flag[min_lambda_element]].radius.size());
+					plot_2d->setCurvePen(model_curves[j], Qt::red);
+					j++;
+				}
+				plot_2d->replot();
+				delete [] model_curves;
+				delete [] model_x;
+				j=0;
+				for (i=min_time; i<=max_time; i++)
+				{
+					delete [] model_data[j];
+					j++;
+				}
+				delete [] model_data;
 			}
 			plot_2d->replot();
 			delete [] curves;

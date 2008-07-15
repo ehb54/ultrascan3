@@ -238,7 +238,35 @@ EditData_Win::EditData_Win(QWidget *p , const char *name)
 	cmbb_centerpiece->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	for (unsigned int i=0; i<cp_list.size(); i++)
 	{
-		str.sprintf(cp_list[i].material + tr(", %d channels, %3.2f mm"),  cp_list[i].channels * 2, cp_list[i].pathlength);
+		str.sprintf(cp_list[i].material + tr(", %d channels, %3.2f mm "),  cp_list[i].channels * 2, cp_list[i].pathlength);
+		switch (cp_list[i].sector)
+		{
+			case 0:
+			{
+				str += "(standard)";
+				break;
+			}
+			case 1:
+			{
+				str += "(rectangular)";
+				break;
+			}
+			case 2:
+			{
+				str += "(circular)";
+				break;
+			}
+			case 3:
+			{
+				str += "(synthetic)";
+				break;
+			}
+			case 4:
+			{
+				str += "(band-forming)";
+				break;
+			}
+		}
 		cmbb_centerpiece->insertItem(str);
 	}
 	cmbb_centerpiece->setCurrentItem(current_centerpiece);
