@@ -1293,12 +1293,12 @@ int US_FemGlobal::accumulate_model_monte_carlo_data(vector <mfem_data> *accumula
   return 0;
 }
 
-int US_FemGlobal::read_mwl_model_data(vector <mfem_data> *model, QString filenamebase, unsigned int start_lambda, unsigned int end_lambda)
+int US_FemGlobal::read_mwl_model_data(vector <mfem_data> *model, QString filenamebase)
 {
   unsigned int i;
   unsigned int no_of_models_loaded = 0;
   vector <mfem_data> temp_model;
-  for (i = start_lambda; i <= end_lambda; i++) 
+  for (i = 0; i < 2048; i++) 
   {
     if (!read_model_data(&temp_model, filenamebase + QString("-model-%1.dat").arg(i), true))
     {
