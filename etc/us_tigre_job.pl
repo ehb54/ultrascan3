@@ -374,6 +374,10 @@ for($i = 0; $i < @systems; $i++) {
     <name>LD_LIBRARY_PATH</name>
     <value>/work/teragrid/tg457210/qt/lib:/work/teragrid/tg457210/qwt/lib:/work/teragrid/tg457210/qwt3d/lib:/work/teragrid/tg457210/ultrascan/lib64:/opt/MPI/intel9/mvapich/0.9.7/lib:/opt/intel/compiler9.1/cc/lib:/opt/intel/compiler9.1/fc/lib:/data/TG/globus-4.0.1-r3/lib:/data/TG/globus-4.0.1-r3/myproxy-3.4/lib:/data/TG/gsi-openssh-3.6-r1/lib:/usr/lib:/usr/X11R6/lib:/usr/local/lib:/data/TG/lib:/data/TG/srb-client-3.4.1-r1/lib:/data/TG/64bit/globus-4.0.1-r3/lib:/data/TG/hdf4-4.2r1-r1/lib:/opt/apps/hdf5/hdf5-1.6.5/lib:/data/TG/phdf5-1.6.5/lib:</value>
   </environment>
+  <environment>
+    <name>ULTRASCAN</name>
+    <value>/work/teragrid/tg457210/ultrascan</value>
+  </environment>
 '   , # lonestar
 	   '  <environment>
     <name>LD_LIBRARY_PATH</name>
