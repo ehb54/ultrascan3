@@ -24,6 +24,7 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
 	measurement_mode = 0;       // select absorbance by default
 	widget3d_flag    = false;
 	pngs             = false;
+	show_model       = false;
 	loading          = true;
 	pm               = new US_Pixmap();
 
@@ -202,6 +203,14 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
 	cb_pngs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_pngs, SIGNAL(clicked()), SLOT(set_pngs()));
 
+	cb_model = new QCheckBox(this);
+	cb_model->setText(tr(" Show Model"));
+	cb_model->setChecked(show_model);
+	cb_model->setEnabled(false);
+	cb_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cb_model->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cb_model, SIGNAL(clicked()), SLOT(set_model()));
+
 	pb_save = new QPushButton(tr("Save Binary Data"), this);
 	Q_CHECK_PTR(pb_save);
 	pb_save->setEnabled(false);
@@ -261,6 +270,13 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
 	pb_load->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_load, SIGNAL(clicked()), SLOT(load()));
 
+	pb_model = new QPushButton(tr("Load MWL Model"), this);
+	Q_CHECK_PTR(pb_model);
+	pb_model->setAutoDefault(true);
+	pb_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_model->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_model, SIGNAL(clicked()), SLOT(load_model()));
+
 	lb_cell = new QListBox(this, "Cell");
 	lb_cell->insertItem(tr("Cell 1"));
 	lb_cell->insertItem(tr("Cell 2"));
@@ -307,6 +323,7 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
 	plot_2d->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 	plot_2d->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	plot_2d->setMargin(USglobal->config_list.margin);
+	plot_2d->setTitle(tr("Experimental Data"));
 	plot_2d->setCanvasBackground(USglobal->global_colors.plot);		//new version
 /*
 	connect(plot_2d, SIGNAL(plotMouseReleased(const QMouseEvent &)),
@@ -314,6 +331,27 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
 	connect(plot_2d, SIGNAL(plotMousePressed(const QMouseEvent &)),
 			  SLOT(getMousePressed(const QMouseEvent &)));
 */
+	plot_residual = new QwtPlot(this);
+	plot_residual->enableOutline(true);
+	plot_residual->setOutlinePen(white);
+	plot_residual->setOutlineStyle(Qwt::VLine);
+	plot_residual->enableGridXMin();
+	plot_residual->enableGridYMin();
+	plot_residual->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
+	plot_residual->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
+	plot_residual->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
+	plot_residual->setAxisTitle(QwtPlot::xBottom, tr("Radius (in cm)"));
+	plot_residual->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+	plot_residual->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+	plot_residual->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	plot_residual->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+	plot_residual->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	plot_residual->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+	plot_residual->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	plot_residual->setMargin(USglobal->config_list.margin);
+	plot_residual->setTitle(tr("Residuals"));
+	plot_residual->setCanvasBackground(USglobal->global_colors.plot);		//new version
+	
 	global_Xpos += 30;
 	global_Ypos += 30;
 	setGeometry(global_Xpos, global_Ypos, 0, 0);
@@ -323,6 +361,16 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
 
 US_ViewMWL::~US_ViewMWL()
 {
+}
+
+void US_ViewMWL::set_model()
+{
+	show_model = cb_model->isChecked();
+}
+
+void US_ViewMWL::load_model()
+{
+	
 }
 
 void US_ViewMWL::setLoading()
@@ -1047,12 +1095,14 @@ void US_ViewMWL::export_data()
 void US_ViewMWL::setup_GUI()
 {
 
-	QBoxLayout *topbox=new QVBoxLayout(this, 3);
-	topbox->addWidget(lbl_info);
-	topbox->addWidget(plot_2d);
-
-	int rows = 9, columns = 5, spacing = 2, j=0;
-	QGridLayout *controlGrid = new QGridLayout(topbox, rows, columns, spacing);
+	int rows = 18, columns = 2, spacing = 2, j=0;
+	
+	QGridLayout *background = new QGridLayout(this, 2, 2, spacing);
+	background->addWidget(plot_2d, 0, 1);
+	background->addWidget(plot_residual, 1, 1);
+	background->addWidget(lbl_update, 2, 1);
+	
+	QGridLayout *controlGrid = new QGridLayout(rows, columns, spacing);
 	for (int i=0; i<rows; i++)
 	{
 		controlGrid->setRowSpacing(i, 26);
@@ -1061,51 +1111,69 @@ void US_ViewMWL::setup_GUI()
 	{
 		controlGrid->setColStretch(i, 0);
 	}
-	controlGrid->addWidget(pb_load, j, 0);
-	controlGrid->addWidget(cb_binary, j, 1);
-	controlGrid->addWidget(cb_ascii, j, 2);
-	controlGrid->addWidget(lbl_min_lambda, j, 3);
-	controlGrid->addWidget(cnt_min_lambda, j, 4);
+	controlGrid->addMultiCellWidget(lbl_info, j, j, 0, 1);
 	j++;
-	controlGrid->addWidget(pb_help, j, 0);
-	controlGrid->addWidget(cb_set_wavelength, j, 1);
-	controlGrid->addWidget(cb_set_radius, j, 2);
-	controlGrid->addWidget(lbl_max_lambda, j, 3);
-	controlGrid->addWidget(cnt_max_lambda, j, 4);
+	controlGrid->addWidget(pb_load, j, 0);
+	controlGrid->addWidget(pb_update, j, 1);
 	j++;
 	controlGrid->addWidget(pb_save, j, 0);
-	controlGrid->addWidget(cb_set_2d, j, 1);
-	controlGrid->addWidget(cb_set_3d, j, 2);
-	controlGrid->addWidget(lbl_min_radius, j, 3);
-	controlGrid->addWidget(cnt_min_radius, j, 4);
-	j++;
-	controlGrid->addWidget(pb_export_data, j, 0);
-	controlGrid->addWidget(cb_intensity, j, 1);
-	controlGrid->addWidget(cb_absorbance, j, 2);
-	controlGrid->addWidget(lbl_max_radius, j, 3);
-	controlGrid->addWidget(cnt_max_radius, j, 4);
+	controlGrid->addWidget(pb_export_data, j, 1);
 	j++;
 	controlGrid->addWidget(pb_movie, j, 0);
-	controlGrid->addMultiCellWidget(cb_pngs, j, j, 1, 2);
-	controlGrid->addWidget(lbl_min_time, j, 3);
-	controlGrid->addWidget(cnt_min_time, j, 4);
+	controlGrid->addWidget(pb_print, j, 1);
 	j++;
-	controlGrid->addWidget(pb_print, j, 0);
-	controlGrid->addMultiCellWidget(lb_cell, j, j+2, 1, 1);
-	controlGrid->addMultiCellWidget(lb_channel, j, j+2, 2, 2);
-	controlGrid->addWidget(lbl_max_time, j, 3);
-	controlGrid->addWidget(cnt_max_time, j, 4);
+	controlGrid->addWidget(pb_help, j, 0);
+	controlGrid->addWidget(pb_cancel, j, 1);
 	j++;
-	controlGrid->addWidget(pb_update, j, 0);
-	controlGrid->addWidget(lbl_average, j, 3);
-	controlGrid->addWidget(cnt_average, j, 4);
+	controlGrid->addWidget(pb_model, j, 0);
+	controlGrid->addWidget(cb_model, j, 1);
 	j++;
-	controlGrid->addWidget(pb_cancel, j, 0);
-	controlGrid->addWidget(lbl_status, j, 3);
-	controlGrid->addWidget(progress, j, 4);
+	controlGrid->addWidget(cb_binary, j, 0);
+	controlGrid->addWidget(cb_ascii, j, 1);
 	j++;
-	controlGrid->addMultiCellWidget(lbl_update, j, j, 0, 4);
-	controlGrid->setColStretch(4, 1);
+	controlGrid->addWidget(cb_set_wavelength, j, 0);
+	controlGrid->addWidget(cb_set_radius, j, 1);
+	j++;
+	controlGrid->addWidget(cb_set_2d, j, 0);
+	controlGrid->addWidget(cb_set_3d, j, 1);
+	j++;
+	controlGrid->addWidget(cb_intensity, j, 0);
+	controlGrid->addWidget(cb_absorbance, j, 1);
+	j++;
+	controlGrid->addMultiCellWidget(cb_pngs, j, j, 0, 1);
+	j++;
+	controlGrid->addMultiCellWidget(lb_cell, j, j+2, 0, 0);
+	controlGrid->addMultiCellWidget(lb_channel, j, j+2, 1, 1);
+	j+=3;
+	controlGrid->addWidget(lbl_min_lambda, j, 0);
+	controlGrid->addWidget(cnt_min_lambda, j, 1);
+	j++;
+	controlGrid->addWidget(lbl_max_lambda, j, 0);
+	controlGrid->addWidget(cnt_max_lambda, j, 1);
+	j++;
+	controlGrid->addWidget(lbl_min_radius, j, 0);
+	controlGrid->addWidget(cnt_min_radius, j, 1);
+	j++;
+	controlGrid->addWidget(lbl_max_radius, j, 0);
+	controlGrid->addWidget(cnt_max_radius, j, 1);
+	j++;
+	controlGrid->addWidget(lbl_min_time, j, 0);
+	controlGrid->addWidget(cnt_min_time, j, 1);
+	j++;
+	controlGrid->addWidget(lbl_max_time, j, 0);
+	controlGrid->addWidget(cnt_max_time, j, 1);
+	j++;
+	controlGrid->addWidget(lbl_average, j, 0);
+	controlGrid->addWidget(cnt_average, j, 1);
+	j++;
+	controlGrid->addWidget(lbl_status, j, 0);
+	controlGrid->addWidget(progress, j, 1);
+	//controlGrid->setColStretch(1, 1);
+	background->addMultiCellLayout(controlGrid, 0, 2, 0, 0);
+	background->setColStretch(0,1);
+	background->setColStretch(1,2);
+	background->setColSpacing(0,350);
+	background->setColSpacing(1,550);
 }
 
 void US_ViewMWL::closeEvent(QCloseEvent *e)

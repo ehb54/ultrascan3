@@ -5,6 +5,7 @@
 #include "us_extern.h"
 #include "us_util.h"
 #include "us_pixmap.h"
+#include "us_femglobal.h"
 #include "../3dplot/mesh2mainwindow.h"
 
 #include <vector>
@@ -77,6 +78,7 @@ class US_EXTERN US_ViewMWL : public QFrame
 		bool view_mode; // 2D=false or 3D=true
 		bool file_format; // ASCII=true, Binary=false
 		bool loading; // controls aborting of loading process
+		bool show_model; // controls if a loaded model is shown
 		int measurement_mode; // Absorbance=0, Intensity=1
 		unsigned int current_cell, current_channel, max_time, min_time;
 		unsigned int min_radius_element, max_radius_element, min_lambda_element, max_lambda_element;
@@ -85,11 +87,12 @@ class US_EXTERN US_ViewMWL : public QFrame
 		struct experiment MWL_experiment; 
 		struct cell cell_data; 
 		struct SA2d_control_variables controlvar_3d;
+		vector <struct mfem_data> model_vector;
 		vector <struct element_3D> abs_val;
 		bool widget3d_flag, pngs;
 		US_Pixmap *pm;
 		QProgressBar *progress;
-		QwtPlot *plot_2d;
+		QwtPlot *plot_2d, *plot_residual;
 
 		QListBox *lb_channel;
 		QListBox *lb_cell;
@@ -116,6 +119,7 @@ class US_EXTERN US_ViewMWL : public QFrame
 		QCheckBox *cb_intensity;
 		QCheckBox *cb_absorbance;
 		QCheckBox *cb_pngs;
+		QCheckBox *cb_model;
 
 		QwtCounter *cnt_max_lambda;
 		QwtCounter *cnt_min_lambda;
@@ -133,6 +137,7 @@ class US_EXTERN US_ViewMWL : public QFrame
 		QPushButton *pb_movie;
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;
+		QPushButton *pb_model;
 		
 		US_Config *USglobal;	 /*!< A US_Config reference. */
 
@@ -152,6 +157,7 @@ class US_EXTERN US_ViewMWL : public QFrame
 		void update_average(double);
 
 		void set_radius();
+		void set_model();
 		void set_wavelength();
 		void set_absorbance();
 		void set_intensity();
@@ -165,6 +171,7 @@ class US_EXTERN US_ViewMWL : public QFrame
 		void find_elements();
 		void find_minmax_od();
 		void cancel();
+		void load_model();
 		void help();
 		void export_data();
 		void print();
