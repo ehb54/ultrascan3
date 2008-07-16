@@ -281,6 +281,15 @@ void US_Pseudo3D_Combine::setup_GUI()
 	pb_replot3d->setEnabled(false);
 	connect(pb_replot3d, SIGNAL(clicked()), SLOT(plot_3dim()));
 
+	pb_loop = new QPushButton(tr("Plot all Distros"), this);
+	Q_CHECK_PTR(pb_loop);
+	pb_loop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_loop->setEnabled(true);
+	pb_loop->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_loop->setAutoDefault(false);
+	pb_loop->setEnabled(false);
+	connect(pb_loop, SIGNAL(clicked()), SLOT(loop()));
+
 	pb_save = new QPushButton(tr("Save"), this);
 	Q_CHECK_PTR(pb_save);
 	pb_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -327,7 +336,7 @@ void US_Pseudo3D_Combine::setup_GUI()
 	progress = new QProgressBar(this, "Progress Bar");
 	progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-	int rows=19, columns = 3, spacing = 2, j=0;
+	int rows=20, columns = 3, spacing = 2, j=0;
 	QGridLayout *controlGrid = new QGridLayout(this, rows, columns, spacing, spacing);
 
 	controlGrid->setColSpacing(0, 120);
@@ -394,6 +403,8 @@ void US_Pseudo3D_Combine::setup_GUI()
 	controlGrid->addWidget(cb_plot_mw, j, 1);
 	controlGrid->setRowStretch(j, 0);
 	j++;
+	controlGrid->addWidget(pb_loop, j, 0);
+	j++;
 	controlGrid->addWidget(pb_replot3d, j, 0);
 	controlGrid->addWidget(pb_reset, j, 1);
 	controlGrid->setRowStretch(j, 0);
@@ -451,8 +462,8 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 	index = filename.findRev(".", -1, true);
 	str = filename.right(filename.length() - index - 1);
 	temp_system.cell = str.left(1);
-	str = filename.right(filename.length() - index - 1);
-	temp_system.wavelength = str.right(1);
+	str = filename.right(filename.length() - index - 2);
+	temp_system.wavelength = str;
 	f.setName(filename);
 	QFileInfo fi(filename);
 	temp_system.run_name = fi.baseName();
@@ -668,6 +679,7 @@ void US_Pseudo3D_Combine::load_distro(const QString &filename)
 	}
 	pb_print->setEnabled(true);
 	pb_replot3d->setEnabled(true);
+	pb_loop->setEnabled(true);
 	pb_reset->setEnabled(true);
 	cb_plot_s->setEnabled(true);
 	cb_plot_mw->setEnabled(true);
@@ -753,6 +765,17 @@ void US_Pseudo3D_Combine::set_limits()
 		plot_fmax = fmax;
 		cnt_plot_smax->setValue(smax);
 		plot_smax = smax;
+	}
+}
+
+void US_Pseudo3D_Combine::loop()
+{
+	unsigned int i;
+	for (i=0; i<system.size(); i++)
+	{
+		current_distro = i;
+		cnt_current_distro->setValue(i+1);		
+		plot_3dim();
 	}
 }
 
@@ -1322,6 +1345,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 	QPixmap p;
 	US_Pixmap *pm;
 	pm = new US_Pixmap();
+	cout << str << endl;
 	p = QPixmap::grabWidget(plot, 2, 2, plot->width() - 4, plot->height() - 4);
 	pm->save_file(str, p);
 	qApp->processEvents();
@@ -1391,6 +1415,7 @@ void US_Pseudo3D_Combine::reset()
 	plot->replot();
 	pb_reset->setEnabled(false);
 	pb_replot3d->setEnabled(false);
+	pb_loop->setEnabled(false);
 	le_distro_info->setText("");
 	minmax = false;
 	zoom = false;

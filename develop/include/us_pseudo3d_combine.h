@@ -106,6 +106,7 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		QPushButton *pb_close;
 		QPushButton *pb_save;
 		QPushButton *pb_reset;
+		QPushButton *pb_loop;
 		QCheckBox *cb_autolimit;
 		QCheckBox *cb_plot_s;
 		QCheckBox *cb_plot_mw;
@@ -124,6 +125,7 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 		void update_y_pixel(double);
 		void update_current_distro(double);
 		void plot_3dim();
+		void loop();
 		void select_autolimit();
 		void select_plot_s();
 		void select_plot_mw();
