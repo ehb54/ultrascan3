@@ -98,35 +98,17 @@ be accomplished like this:
 <p>
 <b>
 <pre>
-png2yuv -j 3D-surface%05d.png -f 25 -I p -b 00001 -n 20 | mpeg2enc -o 3d-movie.m1v
+<!png2yuv -j 3D-surface%05d.png -f 25 -I p -b 00001 -n 20 | mpeg2enc -o 3d-movie.m1v  !>
+mogrify -format jpg *.png
+mencoder mf://*.jpg -mf fps=10:type=jpg -o 3d-movie.mpg -ovc lavc -lavcopts vcodec=mpeg2video:vbitrate=1800
 </pre>
 </b>
 <p>
 This command will assemble a 3D-surface image sequence into an mpeg movie 
-of original scale. The command will parse the first 20 input files starting
-with image 3D-surface00001.png and ending with 3D-surface00020.png, it will
-use a 25 fps frame rate for the movie, use no interlacing, and assemble the 
+of original scale. The command will <!parse the first 20 input files starting
+with image 3D-surface00001.png and ending with 3D-surface00020.png,> 
+use a 10 fps frame rate for the movie, use no interlacing, and assemble the 
 images into a movie file called "3d-movie.m1v".
-<p>
-The corresponding commands for radial- and wavelength files would be:
-<p>
-<b><pre>
-png2yuv -j radius%05d.png -f 25 -I p -b 00001 -n 20 | mpeg2enc -o 3d-movie.m1v
-
-png2yuv -j wavelength%05d.png -f 25 -I p -b 00001 -n 20 | mpeg2enc -o 3d-movie.m1v
-</pre>
-</b>
-<p>
-An alternative encoding method uses mencoder for Linux:
-<b>
-<pre>
-mencoder mf://wavelength*.png -mf fps=25:type=png -ovc lavc -lavcopts vcodec=mpeg2video:vbitrate=1000 -o wavelength.mpg
-
-mencoder mf://radius*.png -mf fps=25:type=png -ovc lavc -lavcopts vcodec=mpeg2video:vbitrate=1000 -o radius.mpg
-
-mencoder mf://3D-surface*.png -mf fps=25:type=png -ovc lavc -lavcopts vcodec=mpeg2video:vbitrate=1000 -o 3D-surface.mpg
-</pre>
-</b>
 <p>
 For playback, use mplayer or xine. To slow the movie down, you can use:
 <b>
