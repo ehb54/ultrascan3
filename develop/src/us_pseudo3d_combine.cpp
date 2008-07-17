@@ -179,7 +179,7 @@ void US_Pseudo3D_Combine::setup_GUI()
 	le_distro_info->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
 	le_distro_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
-	lbl_plot_fmax = new QLabel(tr("  Plot Limit f/f0 max.: "), this);
+	lbl_plot_fmax = new QLabel(tr(" Plot Limit f/f0 max.: "), this);
 	Q_CHECK_PTR(lbl_plot_fmax);
 	lbl_plot_fmax->setAlignment(AlignLeft|AlignVCenter);
 	lbl_plot_fmax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -194,7 +194,7 @@ void US_Pseudo3D_Combine::setup_GUI()
 	cnt_plot_fmax->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_plot_fmax, SIGNAL(valueChanged(double)), SLOT(update_plot_fmax(double)));
 
-	lbl_plot_smin = new QLabel(tr("  Plot Limit s min.: "), this);
+	lbl_plot_smin = new QLabel(tr(" Plot Limit s min.: "), this);
 	Q_CHECK_PTR(lbl_plot_smin);
 	lbl_plot_smin->setAlignment(AlignLeft|AlignVCenter);
 	lbl_plot_smin->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -209,7 +209,7 @@ void US_Pseudo3D_Combine::setup_GUI()
 	cnt_plot_smin->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_plot_smin, SIGNAL(valueChanged(double)), SLOT(update_plot_smin(double)));
 
-	lbl_plot_smax = new QLabel(tr("  Plot Limit s max.: "), this);
+	lbl_plot_smax = new QLabel(tr(" Plot Limit s max.: "), this);
 	Q_CHECK_PTR(lbl_plot_smax);
 	lbl_plot_smax->setAlignment(AlignLeft|AlignVCenter);
 	lbl_plot_smax->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -1169,7 +1169,7 @@ void US_Pseudo3D_Combine::plot_3dim()
 	plot->setCurveSymbol(tag2, symbol);
 	plot->setCurveStyle(tag2, QwtCurve::NoCurve);
 	plot->setCurveData(tag2, xtag, ytag, 5);
-*/	
+*/
 	plot->replot();
 	delete [] xval;
 	delete [] yval;
@@ -1525,8 +1525,8 @@ void US_Pseudo3D_Combine::select_plot_s()
 	cb_plot_mw->setChecked(false);
 	plot_s = true;
 	set_limits();
-	lbl_plot_smin->setText(tr("  Plot Limit s min.: "));
-	lbl_plot_smax->setText(tr("  Plot Limit s max.: "));
+	lbl_plot_smin->setText(tr(" Plot Limit s min.: "));
+	lbl_plot_smax->setText(tr(" Plot Limit s max.: "));
 }
 
 void US_Pseudo3D_Combine::select_plot_mw()
@@ -1535,8 +1535,8 @@ void US_Pseudo3D_Combine::select_plot_mw()
 	cb_plot_s->setChecked(false);
 	plot_s = false;
 	set_limits();
-	lbl_plot_smin->setText(tr("  Plot Limit MW min.: "));
-	lbl_plot_smax->setText(tr("  Plot Limit MW max.: "));
+	lbl_plot_smin->setText(tr(" Plot Limit MW min.: "));
+	lbl_plot_smax->setText(tr(" Plot Limit MW max.: "));
 }
 
 void US_Pseudo3D_Combine::update_current_distro(double val)

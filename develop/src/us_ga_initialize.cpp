@@ -1416,6 +1416,8 @@ void US_GA_Initialize::plot_3dim()
 	fstep = frange/(double) y_resolution;
 	ssigma = srange/resolution;
 	fsigma = frange/resolution;
+	ssigma /= 2.0;
+	fsigma /= 2.0;
 	plot->setAxisScale(QwtPlot::xBottom, smin, smax);
 	plot->setAxisScale(QwtPlot::yLeft, fmin, fmax);
 	//cout << "ssigma: " << ssigma << ", fsigma: " << fsigma << ", srange: " << srange << ", frange: " << frange << ", resolution: " << resolution << endl;
@@ -1457,7 +1459,7 @@ void US_GA_Initialize::plot_3dim()
 			count++;
 			progress->setProgress(count);
 		}
-		/*		
+		/*
 		cout << "maxval: " << maxval << endl;
 		for (i=0; i<x_resolution; i++)
 		{
@@ -1850,14 +1852,14 @@ void US_GA_Initialize::assign_peaks()
 		{
 			integral += (*j1).c;
 		}
-		
+
 		j1 = distro_solute.begin();
-		
+
 		while ((*j1).c < 1.0e-2)
 		{
 			j1++;
 		}
-		
+
 		j2 = distro_solute.end();
 		j2--;  // Can't dereference while at end()
 
@@ -1865,7 +1867,7 @@ void US_GA_Initialize::assign_peaks()
 		{
 			j2--;
 		}
-		
+
 		integral = integral/initial_solutes;
 //cout << "integral: " << integral << endl;
 		range = ((*j2).s - (*j1).s)/20.0;
