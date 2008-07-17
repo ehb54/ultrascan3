@@ -1642,19 +1642,26 @@ void US_ViewMWL::update(unsigned int time)
 				model_data = new double *[max_time - min_time + 1];
 				model_x = new double [model_vector[lambda_flag[min_lambda_element]].radius.size()];
 				j=0;
+				printf("min_time %u max_time %u\n", min_time, max_time);
 				for (i=min_time; i<=max_time; i++)
 				{
 					model_data[j] = new double [model_vector[lambda_flag[min_lambda_element]].radius.size()];
 					j++;
 				}
 				j=0;
-				cout << "minlambda: " << min_lambda_element << ", lambda flag: " << lambda_flag[min_lambda_element] << endl;
+				// cout << "minlambda: " << min_lambda_element << ", lambda flag: " << lambda_flag[min_lambda_element] << endl;
 				for (i=min_time; i<=max_time; i++)
 				{
 					for (k=0; k<model_vector[lambda_flag[min_lambda_element]].radius.size(); k++)
 					{
+					  if(i - 1 < model_vector[lambda_flag[min_lambda_element]].scan.size()) 
+					  {
 						model_data[j][k] = model_vector[lambda_flag[min_lambda_element]].scan[i-1].conc[k];
-						//cout << "Abs: " << model_vector[lambda_flag[min_lambda_element]].scan[i-1].conc[k] << endl;
+						// cout << "Abs: " << model_vector[lambda_flag[min_lambda_element]].scan[i-1].conc[k] << endl;
+					  } else {
+					    model_data[j][k] = 0;
+					  }
+					  // cout << "Abs: " << model_data[j][k] << endl;
 					}
 					j++;
 				}
