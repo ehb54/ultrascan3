@@ -16,20 +16,12 @@ US_Extinction::US_Extinction(QString temp_projectName, int temp_investigatorID, 
 	odCutoff = 1.0;
 	projectName = temp_projectName;
 	investigatorID=temp_investigatorID;
-	e280 = 1.0;
+	extinction_coefficient = 1.0;
+	selected_wavelength = 280;
 	factor = 1.0;
 	fitted = false;
 	print_plot = false;
 	order = 5;
-	
-	spacing = 2;
-	buttonh = 26;
-	buttonw = 220;
-	int column1 = 130;
-	int column2 = buttonw - column1 - spacing;
-	border = 4;
-	xpos = 4;
-	ypos = 4;
 	
 	data_plot = new QwtPlot(this);
 	Q_CHECK_PTR(data_plot);
@@ -70,85 +62,58 @@ US_Extinction::US_Extinction(QString temp_projectName, int temp_investigatorID, 
 	lbl_banner1->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
 	lbl_banner1->setAlignment(AlignCenter|AlignVCenter);
 	lbl_banner1->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-	lbl_banner1->setGeometry(xpos, ypos, buttonw, buttonh);
 	lbl_banner1->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-	ypos += buttonh + 2 * spacing;
-	
 	pb_selectScans = new QPushButton(tr("Add Wavelength Scanfile"), this);
 	Q_CHECK_PTR(pb_selectScans);
 	pb_selectScans->setAutoDefault(false);
 	pb_selectScans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_selectScans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_selectScans->setGeometry(xpos, ypos, buttonw, buttonh);
 	connect(pb_selectScans, SIGNAL(clicked()), SLOT(selectScans()));
 
-	ypos += buttonh + 2 * spacing;
-
 	lb_scans = new QListBox(this, "Scans");
-	lb_scans->setGeometry(xpos, ypos, buttonw, 4 * buttonh);
 	lb_scans->setSelected(0, true);
 	lb_scans->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	lb_scans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	
-	ypos += 4 * buttonh + 2 * spacing;
-
 	lbl_project = new QLabel(tr(" Associate with Run:"), this);
 	Q_CHECK_PTR(lbl_project);
 	lbl_project->setAlignment(AlignLeft|AlignVCenter);
 	lbl_project->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_project->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	lbl_project->setGeometry(xpos, ypos, column1, buttonh);
 
-	xpos += column1 + spacing;
-	
 	le_project = new QLineEdit(this, "project");
-	le_project->setGeometry(xpos, ypos, column2, buttonh);
 	le_project->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_project->setText(str.sprintf(" " + projectName));
 	connect(le_project, SIGNAL(textChanged(const QString &)), 
 				SLOT(update_project(const QString &)));	
 
-	ypos += buttonh + spacing;
-	xpos = border;
 	pb_reset = new QPushButton(tr("Reset Scanlist"), this);
 	Q_CHECK_PTR(pb_reset);
 	pb_reset->setAutoDefault(false);
 	pb_reset->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_reset->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_reset->setGeometry(xpos, ypos, buttonw, buttonh);
 	connect(pb_reset, SIGNAL(clicked()), SLOT(reset()));
-
-	ypos += buttonh + spacing;
 
 	pb_plot = new QPushButton(tr("Update Data Plot"), this);
 	Q_CHECK_PTR(pb_plot);
 	pb_plot->setAutoDefault(false);
 	pb_plot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_plot->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_plot->setGeometry(xpos, ypos, buttonw, buttonh);
 	connect(pb_plot, SIGNAL(clicked()), SLOT(plot()));
-
-	ypos += buttonh + spacing;
 
 	pb_fit = new QPushButton(tr("Perform Global Fit"), this);
 	Q_CHECK_PTR(pb_fit);
 	pb_fit->setAutoDefault(false);
 	pb_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_fit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_fit->setGeometry(xpos, ypos, buttonw, buttonh);
 	connect(pb_fit, SIGNAL(clicked()), SLOT(fit()));
 
-	ypos += buttonh + spacing;
-	
 	lbl_order = new QLabel(tr(" # of Gaussians:"), this);
 	Q_CHECK_PTR(lbl_order);
 	lbl_order->setAlignment(AlignLeft|AlignVCenter);
 	lbl_order->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_order->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	lbl_order->setGeometry(xpos, ypos, column1, buttonh);
-
-	xpos += column1 + spacing;
 
 	cnt_order= new QwtCounter(this);
 	Q_CHECK_PTR(cnt_order);
@@ -156,164 +121,117 @@ US_Extinction::US_Extinction(QString temp_projectName, int temp_investigatorID, 
 	cnt_order->setNumButtons(1);
 	cnt_order->setValue(order);
 	cnt_order->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	cnt_order->setGeometry(xpos, ypos, column2, buttonh);
-//	connect(cnt_order, SIGNAL(buttonReleased(double)), SLOT(update_order(double)));
 	connect(cnt_order, SIGNAL(valueChanged(double)), SLOT(update_order(double)));
 
-	ypos += buttonh + spacing;
-	xpos = border;
+	cnt_wavelength= new QwtCounter(this);
+	Q_CHECK_PTR(cnt_wavelength);
+	cnt_wavelength->setRange(200, 750, 1);
+	cnt_wavelength->setNumButtons(2);
+	cnt_wavelength->setValue(selected_wavelength);
+	cnt_wavelength->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cnt_wavelength, SIGNAL(valueChanged(double)), SLOT(update_wavelength(double)));
 
 	lbl_odCutoff = new QLabel(tr(" OD Cutoff:"), this);
 	Q_CHECK_PTR(lbl_odCutoff);
 	lbl_odCutoff->setAlignment(AlignLeft|AlignVCenter);
 	lbl_odCutoff->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_odCutoff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	lbl_odCutoff->setGeometry(xpos, ypos, column1, buttonh);
-
-	xpos += column1 + spacing;
 	
 	le_odCutoff = new QLineEdit(this, "odCutoff");
-	le_odCutoff->setGeometry(xpos, ypos, column2, buttonh);
 	le_odCutoff->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_odCutoff->setText(str.sprintf(" %2.3f", odCutoff));
 	connect(le_odCutoff, SIGNAL(textChanged(const QString &)), 
 				SLOT(update_odCutoff(const QString &)));	
 
-	ypos += buttonh + spacing;
-	xpos = border;
-	
 	lbl_lambdaCutoff = new QLabel(tr(" Lambda Cutoff:"), this);
 	Q_CHECK_PTR(lbl_lambdaCutoff);
 	lbl_lambdaCutoff->setAlignment(AlignLeft|AlignVCenter);
 	lbl_lambdaCutoff->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_lambdaCutoff->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	lbl_lambdaCutoff->setGeometry(xpos, ypos, column1, buttonh);
-
-	xpos += column1 + spacing;
 	
 	le_lambdaCutoff = new QLineEdit(this, "lambdaCutoff");
-	le_lambdaCutoff->setGeometry(xpos, ypos, column2, buttonh);
 	le_lambdaCutoff->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_lambdaCutoff->setText(str.sprintf(" %2.3f", lambdaCutoff));
 	connect(le_lambdaCutoff, SIGNAL(textChanged(const QString &)), 
 				SLOT(update_lambdaCutoff(const QString &)));	
-
-	ypos += buttonh + spacing;
-	xpos = border;
 
 	lbl_pathlength = new QLabel(tr(" Pathlength:"), this);
 	Q_CHECK_PTR(lbl_pathlength);
 	lbl_pathlength->setAlignment(AlignLeft|AlignVCenter);
 	lbl_pathlength->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_pathlength->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	lbl_pathlength->setGeometry(xpos, ypos, column1, buttonh);
-
-	xpos += column1 + spacing;
 	
 	le_pathlength = new QLineEdit(this, "pathlength");
-	le_pathlength->setGeometry(xpos, ypos, column2, buttonh);
 	le_pathlength->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_pathlength->setText(str.sprintf(" %2.4f", pathlength));
 	connect(le_pathlength, SIGNAL(textChanged(const QString &)), 
 				SLOT(update_pathlength(const QString &)));	
 
-	xpos = border;
-	ypos += buttonh + 2 * spacing;
-	
 	lbl_banner2 = new QLabel(tr("Peptide Information:"), this);
 	Q_CHECK_PTR(lbl_banner2);
 	lbl_banner2->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
 	lbl_banner2->setAlignment(AlignCenter|AlignVCenter);
 	lbl_banner2->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-	lbl_banner2->setGeometry(xpos, ypos, buttonw, buttonh);
 	lbl_banner2->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-
-	ypos += buttonh + 2 * spacing;
 
 	pb_selectPeptide = new QPushButton(tr("Calculate E280 from Peptide File"), this);
 	Q_CHECK_PTR(pb_selectPeptide);
 	pb_selectPeptide->setAutoDefault(false);
 	pb_selectPeptide->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_selectPeptide->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_selectPeptide->setGeometry(xpos, ypos, buttonw, buttonh);
 	connect(pb_selectPeptide, SIGNAL(clicked()), SLOT(selectPeptide()));
 
-	ypos += buttonh + spacing;
-
-	lbl_extinction = new QLabel(tr(" Extinction (280nm):"), this);
+	lbl_extinction = new QLabel(tr(" Extinction Coeff.:"), this);
 	Q_CHECK_PTR(lbl_extinction);
 	lbl_extinction->setAlignment(AlignLeft|AlignVCenter);
 	lbl_extinction->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_extinction->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	lbl_extinction->setGeometry(xpos, ypos, column1, buttonh);
-
-	xpos += column1 + spacing;
 	
 	le_extinction = new QLineEdit(this, "extinction");
-	le_extinction->setGeometry(xpos, ypos, column2, buttonh);
 	le_extinction->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_extinction->setText(str.sprintf(" %2.4f", 1.0));
 	connect(le_extinction, SIGNAL(textChanged(const QString &)), 
 				SLOT(update_extinction(const QString &)));	
 
-	xpos = border;
-	ypos += buttonh + spacing;
-	
 	pb_save = new QPushButton(tr("Save"), this);
 	Q_CHECK_PTR(pb_save);
 	pb_save->setAutoDefault(false);
 	pb_save->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_save->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_save->setGeometry(xpos, ypos, buttonw, buttonh);
 	connect(pb_save, SIGNAL(clicked()), SLOT(save()));
 
-	ypos += buttonh + spacing;
-	
 	pb_view = new QPushButton(tr("View Result File"), this);
 	Q_CHECK_PTR(pb_view);
 	pb_view->setAutoDefault(false);
 	pb_view->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_view->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_view->setGeometry(xpos, ypos, buttonw, buttonh);
 	connect(pb_view, SIGNAL(clicked()), SLOT(view()));
 
-	ypos += buttonh + spacing;
-	
 	pb_print = new QPushButton(tr("Print Plot Window"), this);
 	Q_CHECK_PTR(pb_print);
 	pb_print->setAutoDefault(false);
 	pb_print->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_print->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_print->setGeometry(xpos, ypos, buttonw, buttonh);
 	connect(pb_print, SIGNAL(clicked()), SLOT(print()));
 
-	ypos += buttonh + spacing;
-	
 	pb_help = new QPushButton(tr("Help"), this);
 	Q_CHECK_PTR(pb_help);
 	pb_help->setAutoDefault(false);
 	pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_help->setGeometry(xpos, ypos, buttonw, buttonh);
 	connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-	ypos += buttonh + spacing;
-	
 	pb_close = new QPushButton(tr("Close"), this);
 	Q_CHECK_PTR(pb_close);
 	pb_close->setAutoDefault(false);
 	pb_close->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	pb_close->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_close->setGeometry(xpos, ypos, buttonw, buttonh);
 	connect(pb_close, SIGNAL(clicked()), SLOT(cancel()));
-
-	ypos += buttonh + border;
 
 	global_Xpos += 30;
 	global_Ypos += 30;
 
 	move(global_Xpos, global_Ypos);
-	setMinimumSize(831, ypos);
 	
 	setup_GUI();
 }
@@ -365,9 +283,10 @@ void US_Extinction::setup_GUI()
 	j++;
 	subGrid1->addMultiCellWidget(pb_selectPeptide,j,j,0,1);
 	j++;
-	subGrid1->addWidget(lbl_extinction,j,0);
-	subGrid1->addWidget(le_extinction,j,1);
-	j++;
+	subGrid1->addMultiCellWidget(lbl_extinction, j, j+1, 0, 0);
+	subGrid1->addWidget(cnt_wavelength, j, 1);
+	subGrid1->addWidget(le_extinction, j+1, 1);
+	j+=2;
 	subGrid1->addMultiCellWidget(pb_save,j,j,0,1);
 	j++;
 	subGrid1->addMultiCellWidget(pb_view,j,j,0,1);
@@ -525,6 +444,11 @@ bool US_Extinction::loadScan(const QString &fileName)
 void US_Extinction::update_order(double val)
 {
 	order = (int) val;
+}
+
+void US_Extinction::update_wavelength(double val)
+{
+	selected_wavelength = (float) val;
 }
 
 void US_Extinction::fit()
@@ -855,16 +779,16 @@ void US_Extinction::selectPeptide()
 	vbar_dlg = new US_Vbar_DB(temp, &vbar, &vbar20,true, false, investigatorID);
 	vbar_dlg->setCaption(tr("V-bar Calculation"));
 	vbar_dlg->pb_ok->setText(tr(" Close "));
-	connect(vbar_dlg, SIGNAL(e280Changed(float)), SLOT(update_e280(float)));
+	connect(vbar_dlg, SIGNAL(e280Changed(float)), SLOT(update_extinction_coefficient(float)));
 	vbar_dlg->show();
 
 }
 
-void US_Extinction::update_e280(float val)
+void US_Extinction::update_extinction_coefficient(float val)
 {
 	QString str;
-	e280 = val;
-	le_extinction->setText(str.sprintf("%7.1f", e280));
+	extinction_coefficient = val;
+	le_extinction->setText(str.sprintf("%7.1f", extinction_coefficient));
 	if (fitted)
 	{
 		calc_extinction();
@@ -883,7 +807,7 @@ void US_Extinction::calc_extinction()
 		lambda.clear();
 		extinction.clear();
 	}
-	float od280=0, od;
+	float od_wavelength=0, od;
 	xmax = -1.0;
 	xmin = 1e6;
 	for (i=0; i<wavelengthScan_vector.size(); i++)
@@ -904,14 +828,14 @@ void US_Extinction::calc_extinction()
 					/ ( 2 * pow(fitparameters[wavelengthScan_vector.size() + (3 * j) + 2], 2))));
 		}
 		extinction.push_back(od);
-		if((unsigned int) lambda[i] == 280)
+		if((unsigned int) lambda[i] == selected_wavelength)
 		{
-			od280 = od;
+			od_wavelength = od;
 		}
 	}
 	for (i=0; i<maxrange; i++)
 	{
-		extinction[i] = e280 * (extinction[i]/od280);
+		extinction[i] = extinction_coefficient * (extinction[i]/od_wavelength);
 	}
 }
 
@@ -946,7 +870,7 @@ void US_Extinction::save()
 		QTextStream ts(&f);
 		ts << tr("Results for global wavelength scan/extinction coefficient fit:\n\n");
 		ts << tr("Number of Gaussian terms: ") << order << "\n\n";
-		ts << tr("Extinction coeffcient at 280 nm used for normalization of Data: ") << e280 << "\n\n";
+		ts << tr("Extinction coeffcient at ") << selected_wavelength << tr(" nm used for normalization of Data: ") << extinction_coefficient << "\n\n";
 		ts << tr("Parameters for each Gaussian term:\n");
 		for (i=0; i<order; i++)
 		{
@@ -1077,7 +1001,7 @@ void US_Extinction::update_pathlength(const QString &str)
 
 void US_Extinction::update_extinction(const QString &str)
 {
-	e280 = str.toFloat();
+	extinction_coefficient = str.toFloat();
 	if (fitted)
 	{
 		calc_extinction();

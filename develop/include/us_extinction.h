@@ -108,6 +108,7 @@ class US_EXTERN US_Extinction : public QFrame
 		QLabel *lbl_project;
 		QLabel *lbl_order;
 		QwtCounter *cnt_order;
+		QwtCounter *cnt_wavelength;
 		QPushButton *pb_selectScans;
 		QPushButton *pb_reset;
 		QPushButton *pb_plot;
@@ -131,7 +132,7 @@ class US_EXTERN US_Extinction : public QFrame
 		int xpos, buttonh, buttonw, ypos, spacing, border, model;
 		unsigned int maxrange;
 		bool print_plot;
-		float odCutoff, lambdaCutoff, pathlength, e280, factor;
+		float odCutoff, lambdaCutoff, pathlength, extinction_coefficient, factor, selected_wavelength;
 		QString htmlDir;
 		
 	protected slots:
@@ -160,11 +161,12 @@ class US_EXTERN US_Extinction : public QFrame
 		void update_lambdaCutoff(const QString &);
 		void update_pathlength(const QString &);
 		void update_extinction(const QString &);
-		void update_e280(float);
+		void update_extinction_coefficient(float);
 		void calc_extinction();
 		void update_project(const QString &);
 		void update_scale();
 		void update_order(double);
+		void update_wavelength(double);
 		bool createHtmlDir();
 
 	signals:
