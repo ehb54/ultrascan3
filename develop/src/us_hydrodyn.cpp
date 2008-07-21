@@ -232,7 +232,7 @@ void US_Hydrodyn::setupGUI()
 	lbl_tabletabs->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	lbl_tabletabs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-	lbl_output = new QLabel(tr("Output Options:"), this);
+	lbl_output = new QLabel(tr("Bead Model Output Options:"), this);
 	Q_CHECK_PTR(lbl_output);
 	lbl_output->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
 	lbl_output->setAlignment(AlignCenter|AlignVCenter);
