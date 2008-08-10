@@ -39,7 +39,7 @@ unix {
   }
 }
 
-linux-g++: QMAKE_CXXFLAGS += -fno-exceptions
+#linux-g++: QMAKE_CXXFLAGS += -fno-exceptions
 
 win32 {
   message ("Configuring for the Microsoft Windows Platform...")
@@ -164,6 +164,7 @@ SOURCES += \
   src/us_global.cpp \
   src/us_globalequil.cpp \
   src/us_help.cpp \
+  src/us_gzip.cpp \
   src/us_htmledit.cpp \
   src/us_hydro.cpp \
   src/us_hydrodyn.cpp \
@@ -213,6 +214,7 @@ SOURCES += \
   src/us_spectrum.cpp \
   src/us_stiffbase.cpp \
   src/us_surfracer.cpp \
+  src/us_tar.cpp \
   src/us_thread.cpp \
   src/us_util.cpp \
   src/us_vbar.cpp \
@@ -338,6 +340,7 @@ HEADERS += \
   include/us_ga_model_editor.h \
   include/us_global.h \
   include/us_globalequil.h \
+  include/us_gzip.h \
   include/us_htmledit.h \
   include/us_hydro.h \
   include/us_hydrodyn.h \
@@ -389,6 +392,7 @@ HEADERS += \
   include/us_spectrum.h \
   include/us_stiffbase.h \
   include/us_surfracer.h \
+  include/us_tar.h \
   include/us_thread.h \
   include/us_util.h \
   include/us_vbar.h \
