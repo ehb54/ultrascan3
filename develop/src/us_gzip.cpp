@@ -110,88 +110,88 @@ namespace gzip_data
     /* Tables for deflate from PKZIP's appnote.txt. */
     unsigned border[] =     /* Order of the bit length code lengths */
     {
-			16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
-		};
+      16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
+    };
           
     ush cplens[] =          /* Copy lengths for literal codes 257..285 */
     {
-			3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
+      3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 15, 17, 19, 23, 27, 31,
       35, 43, 51, 59, 67, 83, 99, 115, 131, 163, 195, 227, 258, 0, 0
-		};
+    };
       /* note: see note #13 above about the 258 in this list. */
     
     ush cplext[]=          /* Extra bits for literal codes 257..285 */
     {
-			0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2,
+      0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2,
       3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 0, 99, 99 /* 99==invalid */
     };
 
     ush cpdist[] =          /* Copy offsets for distance codes 0..29 */
-		{
+    {
       1, 2, 3, 4, 5, 7, 9, 13, 17, 25, 33, 49, 65, 97, 129, 193,
       257, 385, 513, 769, 1025, 1537, 2049, 3073, 4097, 6145,
       8193, 12289, 16385, 24577
-		};
+    };
       
     ush cpdext[] =           /* Extra bits for distance codes */
-		{
+    {
       0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6,
       7, 7, 8, 8, 9, 9, 10, 10, 11, 11,
       12, 12, 13, 13
-		};
+    };
 
     ush mask_bits[] = 
-		{
+    {
       0x0000,
       0x0001, 0x0003, 0x0007, 0x000f, 0x001f, 0x003f, 0x007f, 0x00ff,
       0x01ff, 0x03ff, 0x07ff, 0x0fff, 0x1fff, 0x3fff, 0x7fff, 0xffff
     };
 
     typedef struct config 
-		{
+    {
       ush good_length; /* reduce lazy search above this match length */
-	    ush max_lazy;    /* do not perform lazy search above this match length */
-			ush nice_length; /* quit search above this match length */
-			ush max_chain;
-		} config;
+      ush max_lazy;    /* do not perform lazy search above this match length */
+      ush nice_length; /* quit search above this match length */
+      ush max_chain;
+    } config;
 
     config configuration_table[] = 
-		{
-			/*      good lazy nice chain */
-			/* 0 */ {0,    0,  0,    0},  /* store only */
-			/* 1 */ {4,    4,  8,    4},  /* maximum speed, no lazy matches */
-			/* 2 */ {4,    5, 16,    8},
-			/* 3 */ {4,    6, 32,   32},
-			/* 4 */ {4,    4, 16,   16},  /* lazy matches */
-			/* 5 */ {8,   16, 32,   32},
-			/* 6 */ {8,   16, 128, 128},
-			/* 7 */ {8,   32, 128, 256},
-			/* 8 */ {32, 128, 258, 1024},
-			/* 9 */ {32, 258, 258, 4096} /* maximum compression */
-		};
+    {
+      /*      good lazy nice chain */
+      /* 0 */ {0,    0,  0,    0},  /* store only */
+      /* 1 */ {4,    4,  8,    4},  /* maximum speed, no lazy matches */
+      /* 2 */ {4,    5, 16,    8},
+      /* 3 */ {4,    6, 32,   32},
+      /* 4 */ {4,    4, 16,   16},  /* lazy matches */
+      /* 5 */ {8,   16, 32,   32},
+      /* 6 */ {8,   16, 128, 128},
+      /* 7 */ {8,   32, 128, 256},
+      /* 8 */ {32, 128, 258, 1024},
+      /* 9 */ {32, 258, 258, 4096} /* maximum compression */
+    };
 
     int extra_lbits[] = /* extra bits for each length code */
     {
       0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0
-		};
+    };
 
     int extra_dbits[] = /* extra bits for each distance code */
     {
-			0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13
-		};
+      0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13
+    };
 
     int extra_blbits[] = /* extra bits for each bit length code */
     {
-			0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7
-		};
+      0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,3,7
+    };
 
     unsigned char bl_order[] = 
     {
-			16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15
-		};
-		/* The lengths of the bit length codes are sent in order of decreasing
+      16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15
+    };
+    /* The lengths of the bit length codes are sent in order of decreasing
      * probability, to avoid transmitting the lengths for unused bit length codes.
- 	   */
+     */
 
 }
 
@@ -227,14 +227,17 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
   // Get the times and other data
   QDateTime    lastRead   = filename.lastRead();
   QDateTime    lastMod    = filename.lastModified();
-  unsigned int time_stamp = filename.size();
+  
+  filetime = lastMod.toTime_t();
   //unsigned int ownerID    = filename.ownerId();
   //unsigned int groupID    = filename.groupId();
 
   //printf( "time_stamp=%d, ownerID=%d, groupID=%d\n", time_stamp, ownerID, groupID );
+  //cout << "Modi time = " << lastMod.toString() << endl;
+  //cout << "Read time = " << lastRead.toString() << endl;
 
   ifd = open( iname.ascii(), O_RDONLY );
-	if ( ifd < 0 ) return GZIP_READERROR;
+  if ( ifd < 0 ) return GZIP_READERROR;
 
   // Generate output file name. 
   QString oname = make_ofname( iname, decompress );
@@ -248,13 +251,13 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
     // Two byte signature
     char signature[2];
-		count = read( ifd, signature, 2 );
-		
-		if ( count != 2 )
-		{
-			close( ifd );
-			return GZIP_READERROR;
-		}
+    count = read( ifd, signature, 2 );
+    
+    if ( count != 2 )
+    {
+      close( ifd );
+      return GZIP_READERROR;
+    }
 
     if ( signature[0] != (char) 0x1f  || 
          signature[1] != (char) 0x8b ) return GZIP_NOTGZ;
@@ -264,39 +267,39 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
     // One byte method.  Only 0x08, deflate, is supported
     char method;
-		count = read( ifd, &method, 1 );
+    count = read( ifd, &method, 1 );
 
-		if ( count != 1 )
-		{
-			close( ifd );
-			return GZIP_READERROR;
-		}
-		
-		// printf( "Method = 0x%02x\n", (unsigned char) method );
+    if ( count != 1 )
+    {
+      close( ifd );
+      return GZIP_READERROR;
+    }
+    
+    // printf( "Method = 0x%02x\n", (unsigned char) method );
 
     // One byte flags.  00111111.  Only bit 3 ( file name present ) is supported
     // Bit 0 is ignored.  Bits 1,2,4,5 (multi-part, extra field, comment,
     // encrypyion) are flagged as unsupported.
 
     char flags;
-		count = read( ifd, &flags, 1 );
+    count = read( ifd, &flags, 1 );
 
-		if ( count != 1 )
-		{
-			close( ifd );
-			return GZIP_READERROR;
-		}
+    if ( count != 1 )
+    {
+      close( ifd );
+      return GZIP_READERROR;
+    }
 
     if ( flags & 0x36 ) return GZIP_OPTIONNOTSUPPORTED;
 
     // Four bytes.  File modification time in Unix format.
     count = read( ifd, (char*) &filetime, 4 );
 
-		if ( count != 4 )
-		{
-			close( ifd );
-			return GZIP_READERROR;
-		}
+    if ( count != 4 )
+    {
+      close( ifd );
+      return GZIP_READERROR;
+    }
 
     char timestring[40];
 #ifdef WIN32
@@ -307,71 +310,30 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
     timestring[24] = 0;
 
-    //printf( "File time = %s, (0x%8.8lx)\n", timestring, filetime );
-
     // One byte.   Extra flags (depend on compression method).
     // FAST = 4 ( -1 compression ) or SLOW = 2 ( -9 compression )
 
     char extra;
-    QString extraString;
+    // QString extraString;
 
     count = read( ifd, &extra, 1 );
-		if ( count != 1 )
-		{
-			close( ifd );
-			return GZIP_READERROR;
-		}
-
-    switch ( extra )
+    if ( count != 1 )
     {
-      case 2:
-        extraString = "SLOW";
-        break;
-
-      case 4:
-        extraString = "FAST";
-        break;
-
-      default:
-        extraString = "other";
-        break;
+      close( ifd );
+      return GZIP_READERROR;
     }
 
-    //printf( "extra=%s (0x%02x)\n", extraString.ascii(),  
-    //         (unsigned char) extra );
-    
     // One byte OS.  0x03 = UNIX, 0x0b = WIN32
     // This parameter can be ignored.
 
     char OS;
     count = read( ifd, &OS, 1 );
-		
-		if ( count != 1 )
-		{
-			close( ifd );
-			return GZIP_READERROR;
-		}
-
-    /*
-		QString OSstring;
     
-    switch ( OS )
+    if ( count != 1 )
     {
-      case 0x03:
-        OSstring = "UNIX";
-        break;
-
-      case 0x0b:
-        OSstring = "WIN32";
-        break;
-
-      default:
-        OSstring = "other";
-        break;
+      close( ifd );
+      return GZIP_READERROR;
     }
-    
-    printf( "OS=%s (0x%02x)\n", OSstring.ascii(), (unsigned char) OS );
-    */
 
     // Variable bytes  Optional original file name, zero terminated.
 
@@ -383,12 +345,12 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
       while ( TRUE )
       {
         count = read( ifd, &c, 1 );
-		    
-				if ( count != 1 )
-				{
-					close( ifd );
-					return GZIP_READERROR;
-				}
+        
+        if ( count != 1 )
+        {
+          close( ifd );
+          return GZIP_READERROR;
+        }
 
         if ( c == 0 ) break;
         embedded_name.append( c );
@@ -397,16 +359,15 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
       oname = embedded_name;
     }
 
-		// Open the output file but check that it doesn't exist first
+    // Open the output file but check that it doesn't exist first
     QFileInfo output_file( oname );
-    //printf( "Embedded name = %s\n", embedded_name.ascii() );
 
     if ( output_file.exists() ) return GZIP_OUTFILEEXISTS;
 
-    ofd    = open( oname.ascii(), O_CREAT | O_WRONLY | O_TRUNC, 0664 );
-		outcnt = 0;
+    ofd    = open( oname.ascii(), O_CREAT | O_WRONLY | O_BINARY , 0664 );
+    outcnt = 0;
 
-		updcrc(NULL, 0);           /* initialize crc */
+    updcrc( NULL, 0 );           /* initialize crc */
 
     // Expand compressd data
     try
@@ -423,21 +384,21 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
 #define wp outcnt
 #define GETBYTE() (inptr < insize ? inbuf[inptr++] : (wp = w, fill_inbuf(0)))
-		unsigned w = 0;  // Dummy to make define above work
+    unsigned w = 0;  // Dummy to make define above work
 
     // CRC
-		char*        p_crc = (char*) &crc;
-		
+    char*        p_crc = (char*) &crc;
+    
     for ( int i = 0; i < 4; i++ ) *( p_crc + i ) = GETBYTE();
 
-		/* Validate decompression */
-if ( crc != updcrc(outbuf, 0) ) 
-		{
-			close( ifd );
-			close( ofd );
-			unlink( oname.ascii() );
-			return GZIP_CRCERROR;
-		}
+    /* Validate decompression */
+    if ( crc != updcrc(outbuf, 0) ) 
+    {
+      close( ifd );
+      close( ofd );
+      unlink( oname.ascii() );
+      return GZIP_CRCERROR;
+    }
 
     // uncompressed input size modulo 2^32
 
@@ -445,23 +406,23 @@ if ( crc != updcrc(outbuf, 0) )
     char*         p_size = (char*) &size;
     for ( int i = 0; i < 4; i++ ) *( p_size + i ) = GETBYTE();
 
-		if ( size != (unsigned int) bytes_out )
-		{
-			close( ifd );
-			close( ofd );
-			unlink( oname.ascii() );
-			return GZIP_LENGTHERROR;
-		}
+    if ( size != (unsigned int) bytes_out )
+    {
+      close( ifd );
+      close( ofd );
+      unlink( oname.ascii() );
+      return GZIP_LENGTHERROR;
+    }
   }
 //////////////////////////////////////////////////////
-	else  // compress the input file
-	{
-  	// Check output file -- exists? writable?
-  	QFileInfo filename( oname );
-//// 		if ( filename.exists() ) return GZIP_OUTFILEEXISTS;
+  else  // compress the input file
+  {
+    // Check output file -- exists? writable?
+    QFileInfo filename( oname );
+////    if ( filename.exists() ) return GZIP_OUTFILEEXISTS;
 
-  	ofd = open( oname.ascii(), O_CREAT | O_WRONLY | O_BINARY, 0664 );
-		if ( ofd < 0 ) return GZIP_WRITEERROR;
+    ofd = open( oname.ascii(), O_CREAT | O_WRONLY | O_BINARY, 0664 );
+    if ( ofd < 0 ) return GZIP_WRITEERROR;
 
     outcnt   = 0;
     bytes_in = 0;
@@ -469,56 +430,56 @@ if ( crc != updcrc(outbuf, 0) )
 #define flush_output(w) (wp=(w),flush_window())
 
 #define put_byte(c) \
-		{ \
-			outbuf[ outcnt++ ] = (uch)(c); \
-			if ( outcnt == OUTBUFSIZ ) flush_outbuf();\
-		}
+    { \
+      outbuf[ outcnt++ ] = (uch)(c); \
+      if ( outcnt == OUTBUFSIZ ) flush_outbuf();\
+    }
 
 /* Output a 16 bit value, lsb first */
 #define put_short(w) \
-		{ \
-		if ( outcnt < OUTBUFSIZ-2 ) \
-		{ \
-		 	outbuf[ outcnt++ ] = (uch) ((w) & 0xff); \
-		 	outbuf[ outcnt++ ] = (uch) ((ush)(w) >> 8); \
-		} \
-		else \
-		{ \
-			put_byte( (uch) ( (w) & 0xff) ); \
-			put_byte( (uch) ( (ush) (w) >> 8 ) ); \
-		 } \
-		}
+    { \
+    if ( outcnt < OUTBUFSIZ-2 ) \
+    { \
+      outbuf[ outcnt++ ] = (uch) ((w) & 0xff); \
+      outbuf[ outcnt++ ] = (uch) ((ush)(w) >> 8); \
+    } \
+    else \
+    { \
+      put_byte( (uch) ( (w) & 0xff) ); \
+      put_byte( (uch) ( (ush) (w) >> 8 ) ); \
+     } \
+    }
 
 /* Output a 32 bit value to the bit stream, lsb first */
 #define put_long(n) \
-		{ \
-	    put_short( (n) & 0xffff ); \
-	    put_short( ( (ulg) (n) ) >> 16) ; \
+    { \
+      put_short( (n) & 0xffff ); \
+      put_short( ( (ulg) (n) ) >> 16) ; \
     }
 
 #define GZIP_MAGIC  "\037\213" /* Magic header for gzip files, 1F 8B */
 #define DEFLATED    8
 #define ORIG_NAME   0x08       /* bit 3 set: original file name present */
 
-		try
-		{
-			/* Write the header to the gzip file. See algorithm.doc for the format */
-			put_byte( GZIP_MAGIC[0] ); /* magic header */
-			put_byte( GZIP_MAGIC[1] );
-			put_byte( DEFLATED );      /* compression method */
+    try
+    {
+      /* Write the header to the gzip file. See algorithm.doc for the format */
+      put_byte( GZIP_MAGIC[0] ); /* magic header */
+      put_byte( GZIP_MAGIC[1] );
+      put_byte( DEFLATED );      /* compression method */
 
-			uch flags = ORIG_NAME;     /* general purpose bit flags */
-			put_byte( flags );         /* general flags */
+      uch flags = ORIG_NAME;     /* general purpose bit flags */
+      put_byte( flags );         /* general flags */
 
-			/* original time stamp (modification time) */
-			time_t time_stamp = lastMod.toTime_t();  
-			put_long( (ulg) time_stamp == ( time_stamp & 0xffffffff ) ? 
-					(ulg) time_stamp : (ulg) 0);
+      /* original time stamp (modification time) */
+      time_t time_stamp = lastMod.toTime_t();  
+      put_long( (ulg) time_stamp == ( time_stamp & 0xffffffff ) ? 
+          (ulg) time_stamp : (ulg) 0);
 
 #define SLOW 2
-			uch deflate_flags = SLOW;  // Compression level 9
-			/* Write deflated file to zip file */
-			put_byte( (uch) deflate_flags ); /* extra flags */
+      uch deflate_flags = SLOW;  // Compression level 9
+      /* Write deflated file to zip file */
+      put_byte( (uch) deflate_flags ); /* extra flags */
 
 #ifdef WIN32
 #  define OS_CODE 0x0b 
@@ -526,63 +487,61 @@ if ( crc != updcrc(outbuf, 0) )
 #  define OS_CODE 0x03
 #endif
 
-			put_byte( OS_CODE );                  /* OS identifier */
+      put_byte( OS_CODE );                  /* OS identifier */
 
-			if ( strlen( iname.ascii() ) > 255 ) return GZIP_FILENAMEERROR;
-			char f[256];
-			strcpy( f, iname.ascii() );
-			char* p = base_name( f ); /* Don't save the directory part. */
-			do { put_byte( *p ); } while ( *p++ );
-												
-			crc = updcrc( 0, 0 );
+      if ( strlen( iname.ascii() ) > 255 ) return GZIP_FILENAMEERROR;
+      char f[256];
+      strcpy( f, iname.ascii() );
+      char* p = base_name( f ); /* Don't save the directory part. */
+      do { put_byte( *p ); } while ( *p++ );
+                        
+      crc = updcrc( 0, 0 );
 
-			bi_init();
+      bi_init();
       ct_init();
-			lm_init();
+      lm_init();
       deflate();
-		
-			/* Write the crc and uncompressed size */
-	    put_long( crc );
-	    put_long( (ulg) bytes_in );
-		}
-		catch ( int error )
-		{
-			close( ifd );
-			close( ofd );
-			return error;
-		}
+    
+      /* Write the crc and uncompressed size */
+      put_long( crc );
+      put_long( (ulg) bytes_in );
+    }
+    catch ( int error )
+    {
+      close( ifd );
+      close( ofd );
+      return error;
+    }
 
     flush_outbuf();
-	}
+  }
 
-	// Get input file data
-	struct stat ifstat;
-	fstat( ifd, &ifstat );
+  // Get input file data
+  struct stat ifstat;
+  fstat( ifd, &ifstat );
 
-	// Close files
+  // Close files
   close( ifd );
   close( ofd );
 
-	// Reset oname metadata to ifile metadata
-	ifstat.st_mtime = (time_t) time_stamp;
-  
-	struct utimbuf timep;
-
-  /* Copy the time stamp */
-  timep.actime  = ifstat.st_atime;
-	timep.modtime = filetime;
-  utime( oname.ascii(), &timep );
-
-	// Set the permissions
-	chmod( oname.ascii(), ifstat.st_mode & 07777 );
+  // Set the permissions 
+  chmod( oname.ascii(), ifstat.st_mode & 07777 );
 
 #ifndef WIN32
-	// Change the ownership (may fail if not root)
+  // Change the ownership (may fail if not root)
   chown( oname.ascii(), ifstat.st_uid, ifstat.st_gid );
 #endif
 
-	// Now delete the input file
-	unlink( iname.ascii() );
+  // Reset oname metadata to ifile metadata
+  
+  struct utimbuf timep;
+
+  timep.actime  = ifstat.st_atime;
+  timep.modtime = filetime;
+  utime( oname.ascii(), &timep );
+
+  // Now delete the input file
+  unlink( iname.ascii() );
 
   return GZIP_OK;
 }
@@ -774,9 +733,9 @@ QString US_Gzip::make_ofname( const QString& filename, bool decompress )
 #define NEEDBITS(n) 
 {
   while ( k < (n) )
-	{
-	  b |= ( (ulg)NEXTBYTE()) << k;
-		k += 8;
+  {
+    b |= ( (ulg)NEXTBYTE()) << k;
+    k += 8;
   }
 }
  
@@ -786,11 +745,11 @@ QString US_Gzip::make_ofname( const QString& filename, bool decompress )
 #define NEEDBITS(n) 
 {
   while ( k < (n) )
-	{ 
-	  b |= ( (ulg) (uch)( inptr < insize   ? 
-		                    inbuf[ inptr++ ] : 
-												( wp = w, fill_inbuf( 0 ) ) ) ) << k;
-		k += 8;
+  { 
+    b |= ( (ulg) (uch)( inptr < insize   ? 
+                        inbuf[ inptr++ ] : 
+                        ( wp = w, fill_inbuf( 0 ) ) ) ) << k;
+    k += 8;
   }
 }
 
@@ -803,7 +762,7 @@ QString US_Gzip::make_ofname( const QString& filename, bool decompress )
 #define DUMPBITS(n) 
 {
   b >>= (n);
-	k  -= (n);
+  k  -= (n);
 }
 
 */
@@ -1576,7 +1535,6 @@ int US_Gzip::inflate( )
   
   do 
   {
-		cerr << "Inflate loop" << endl;
     hufts = 0;
     if ( (r = inflate_block( &e ) ) != 0 ) return r;
     if ( hufts > h ) h = hufts;
@@ -1720,19 +1678,19 @@ void US_Gzip::write_buf( int fd, void* buf, unsigned cnt )
 char* US_Gzip::base_name( char* fname )
 {
   char* p;
-	char* f = fname;
+  char* f = fname;
 
-	if ( ( p = strrchr( f, PATH_SEP  ) ) != NULL ) f = p + 1;
+  if ( ( p = strrchr( f, PATH_SEP  ) ) != NULL ) f = p + 1;
 
 #ifdef PATH_SEP2
-	if ( ( p = strrchr( f, PATH_SEP2 ) ) != NULL ) f = p + 1;
+  if ( ( p = strrchr( f, PATH_SEP2 ) ) != NULL ) f = p + 1;
 #endif
 
 #ifdef PATH_SEP3
   if ( ( p = strrchr( f, PATH_SEP3 ) ) != NULL ) f = p + 1;
 #endif
 
-	return f;
+  return f;
 }
 
 /* ===========================================================================
@@ -1743,9 +1701,9 @@ void US_Gzip::flush_outbuf()
 {
   if ( outcnt == 0) return;
 
-	write_buf( ofd, (char *) outbuf, outcnt );
-	bytes_out += (off_t) outcnt;
-	outcnt     = 0;
+  write_buf( ofd, (char *) outbuf, outcnt );
+  bytes_out += (off_t) outcnt;
+  outcnt     = 0;
 }
 
 /* ===========================================================================
@@ -1796,8 +1754,8 @@ void US_Gzip::flush_outbuf()
 
 #define INSERT_STRING(s, match_head) \
    ( UPDATE_HASH( ins_h, window[ (s) + MIN_MATCH - 1 ] ), \
-	                prev[ (s) & WMASK ] = match_head = head[ ins_h ], \
-			            head[ ins_h ] = (s) )
+                  prev[ (s) & WMASK ] = match_head = head[ ins_h ], \
+                  head[ ins_h ] = (s) )
 
 /* ===========================================================================
  * Flush the current block, with given end-of-file flag.
@@ -1805,7 +1763,7 @@ void US_Gzip::flush_outbuf()
 
 #define FLUSH_BLOCK(eof) \
    flush_block( block_start >= 0L ? (char*) &window[ (unsigned) block_start ] : \
-	                 (char*) NULL, (long) strstart - block_start, (eof) )
+                   (char*) NULL, (long) strstart - block_start, (eof) )
 
 
 off_t US_Gzip::deflate( void )
@@ -1818,7 +1776,7 @@ off_t US_Gzip::deflate( void )
 
     /* Process the input block. */
     while ( lookahead != 0 ) 
-		{
+    {
       /* Insert the string window[strstart .. strstart+2] in the
        * dictionary, and set hash_head to the head of the hash chain: */
 
@@ -1826,28 +1784,28 @@ off_t US_Gzip::deflate( void )
 
       /* Find the longest match, discarding those <= prev_length. */
       
-			prev_length  = match_length, prev_match = match_start;
+      prev_length  = match_length, prev_match = match_start;
       match_length = MIN_MATCH-1;
 
       if ( hash_head != (ush) 0         && 
-			     prev_length < max_lazy_match &&
+           prev_length < max_lazy_match &&
            strstart - hash_head <= MAX_DIST ) 
-		  {    
-				/* To simplify the code, we prevent matches with the string
+      {    
+        /* To simplify the code, we prevent matches with the string
          * of window index 0 (in particular we have to avoid a match
          * of the string with itself at the start of the input file). */
 
         match_length = longest_match( hash_head );
             
-				/* longest_match() sets match_start */
+        /* longest_match() sets match_start */
         
-				if ( match_length > lookahead ) match_length = lookahead;
+        if ( match_length > lookahead ) match_length = lookahead;
 
         /* Ignore a length 3 match if it is too distant: */
             
-				#define TOO_FAR 4096
-				if ( match_length == MIN_MATCH && strstart - match_start > TOO_FAR )
-				{
+        #define TOO_FAR 4096
+        if ( match_length == MIN_MATCH && strstart - match_start > TOO_FAR )
+        {
           /* If prev_match is also MIN_MATCH, match_start is garbage
            * but we will ignore the current match anyway.  */
 
@@ -1855,11 +1813,11 @@ off_t US_Gzip::deflate( void )
         }
       }
         
-			/* If there was a match at the previous step and the current
+      /* If there was a match at the previous step and the current
        * match is not better, output the previous match: */
         
-			if ( prev_length >= MIN_MATCH && match_length <= prev_length ) 
-			{
+      if ( prev_length >= MIN_MATCH && match_length <= prev_length ) 
+      {
         flush = ct_tally( strstart - 1 - prev_match, prev_length - MIN_MATCH );
 
         /* Insert in hash table all strings up to the end of the match.
@@ -1868,12 +1826,12 @@ off_t US_Gzip::deflate( void )
         lookahead   -= prev_length - 1;
         prev_length -= 2;
             
-				do 
-				{
+        do 
+        {
           strstart++;
           INSERT_STRING(strstart, hash_head);
                 
-				  /* strstart never exceeds WSIZE-MAX_MATCH, so there are
+          /* strstart never exceeds WSIZE-MAX_MATCH, so there are
            * always MIN_MATCH bytes ahead. If lookahead < MIN_MATCH
            * these bytes are garbage, but it does not matter since the
            * next lookahead bytes will always be emitted as literals.  */
@@ -1883,25 +1841,25 @@ off_t US_Gzip::deflate( void )
         match_length    = MIN_MATCH - 1;
         strstart++;
         
-				if ( flush ) FLUSH_BLOCK(0), block_start = strstart;
+        if ( flush ) FLUSH_BLOCK(0), block_start = strstart;
 
         } 
-				else if ( match_available ) 
-				{
+        else if ( match_available ) 
+        {
           /* If there was no match at the previous position, output a
            * single literal. If there was a match but the current match
            * is longer, truncate the previous match to a single literal.  */
 
           if ( ct_tally ( 0, window[ strstart - 1 ] ) ) 
-					{
+          {
             FLUSH_BLOCK(0), block_start = strstart;
           }
 
           strstart++;
           lookahead--;
         } 
-				else 
-				{
+        else 
+        {
           /* There is no previous match to compare with, wait for
            * the next step to decide. */
 
@@ -1932,10 +1890,10 @@ void US_Gzip::lm_init( void )
 {
 
 
-	// While we are at it, initilize other variables needed 
-	// These were globals inthe original
-	
-	/* tree_desc l_desc =
+  // While we are at it, initilize other variables needed 
+  // These were globals inthe original
+  
+  /* tree_desc l_desc =
     {
       dyn_ltree, static_ltree, extra_lbits, LITERALS + 1, L_CODES, MAX_BITS, 0
     }; */
@@ -1991,13 +1949,13 @@ void US_Gzip::lm_init( void )
   strstart    = 0;
   block_start = 0L;
   
-	updcrc( NULL, 0 );           /* initialize crc */
+  updcrc( NULL, 0 );           /* initialize crc */
   lookahead = file_read( (char*) window,  2 * WSIZE );
 
   if ( lookahead == 0 ) 
-	{
+  {
      eofile    = 1;
-		 lookahead = 0;
+     lookahead = 0;
      return;
   }
 
@@ -2006,14 +1964,14 @@ void US_Gzip::lm_init( void )
   /* Make sure that we always have enough lookahead. This is important
    * if input comes from a device such as a tty.   */
   
-	while ( lookahead < MIN_LOOKAHEAD && ! eofile ) fill_window();
+  while ( lookahead < MIN_LOOKAHEAD && ! eofile ) fill_window();
 
   ins_h = 0;
 
   register unsigned j;
   for ( j = 0; j < MIN_MATCH - 1; j++ ) UPDATE_HASH( ins_h, window[ j ] );
   
-	/* If lookahead < MIN_MATCH, ins_h is garbage, but this is
+  /* If lookahead < MIN_MATCH, ins_h is garbage, but this is
    * not important since only literal bytes will be emitted.  */
 }
 
@@ -2028,9 +1986,9 @@ int US_Gzip::file_read( char* buf, unsigned int size )
     len = read( ifd, buf, size );
     if ( len == 0 ) return (int) len;
     
-		if ( len == (unsigned) -1 ) 
-		{
-  		throw GZIP_READERROR;
+    if ( len == (unsigned) -1 ) 
+    {
+      throw GZIP_READERROR;
     }
 
     crc       = updcrc( (uch*)buf, len );
@@ -2050,42 +2008,42 @@ int US_Gzip::file_read( char* buf, unsigned int size )
 void US_Gzip::fill_window( void )
 {
     register unsigned n;
-		register unsigned m;
+    register unsigned m;
     
-		unsigned more = (unsigned) ( 2L * WSIZE - (ulg) lookahead - (ulg) strstart );
+    unsigned more = (unsigned) ( 2L * WSIZE - (ulg) lookahead - (ulg) strstart );
     /* Amount of free space at the end of the window. */
 
     /* If the window is almost full and there is insufficient lookahead,
      *      * move the upper half to the lower one to make room in the upper half.
      *           */
     if ( more == (unsigned) EOF ) 
-		{
+    {
         /* Very unlikely, but possible on 16 bit machine if strstart == 0
          * and lookahead == 1 (input done one byte at time)  */
         more--;
     } 
-		else 
-		{
-			if ( strstart >= WSIZE + MAX_DIST ) 
-			{
+    else 
+    {
+      if ( strstart >= WSIZE + MAX_DIST ) 
+      {
         /* By the IN assertion, the window is not empty so we can't confuse
          * more == 0 with more == 64K on a 16 bit machine.  */
 
         memcpy( (char*) window, (char*) window + WSIZE, (unsigned) WSIZE );
         
-				match_start -= WSIZE;
+        match_start -= WSIZE;
         strstart    -= WSIZE; /* we now have strstart >= MAX_DIST: */
 
         block_start -= (long) WSIZE;
 
         for ( n = 0; n < HASH_SIZE; n++ ) 
-				{
+        {
             m       = head[n];
             head[n] = (Pos)(m >= WSIZE ? m - WSIZE : 0 );
         }
 
         for ( n = 0; n < WSIZE; n++ ) 
-				{
+        {
             m       = prev[n];
             prev[n] = (Pos)(m >= WSIZE ? m - WSIZE : 0 );
             /* If n is not on any hash chain, prev[n] is garbage but
@@ -2093,19 +2051,19 @@ void US_Gzip::fill_window( void )
         }
 
         more += WSIZE;
-			}
+      }
     }
 
     /* At this point, more >= 2 */
     if ( ! eofile ) 
-		{
+    {
         n = file_read( (char*) window + strstart + lookahead, more );
         if ( n == 0 || n == (unsigned) EOF) 
-				{
+        {
             eofile = 1;
         } 
-				else 
-				{
+        else 
+        {
             lookahead += n;
         }
     }
@@ -2122,7 +2080,7 @@ int US_Gzip::longest_match( IPos cur_match )
 
     IPos limit = strstart > (IPos) MAX_DIST ? strstart - (IPos) MAX_DIST : 0;
     
-		/* Stop when cur_match becomes <= limit. To simplify the code,
+    /* Stop when cur_match becomes <= limit. To simplify the code,
      * we prevent matches with the string of window index 0. */
 
     /* The code is optimized for HASH_BITS >= 8 and MAX_MATCH-2 multiple of 16.
@@ -2142,14 +2100,14 @@ int US_Gzip::longest_match( IPos cur_match )
 #endif
 
     /* Do not waste too much time if we already have a good match: */
-		
-		if ( prev_length >= good_match ) 
-		{
-		  chain_length >>= 2;
-		}
+    
+    if ( prev_length >= good_match ) 
+    {
+      chain_length >>= 2;
+    }
 
     do 
-		{
+    {
       match = window + cur_match;
 
       /* Skip to next match if the match length cannot increase
@@ -2171,18 +2129,18 @@ int US_Gzip::longest_match( IPos cur_match )
        * necessary to put more guard bytes at the end of the window, or
        * to check more often for insufficient lookahead.  */
         
-			scan++;
-			match++;
+      scan++;
+      match++;
         
-			do 
-			{
+      do 
+      {
       } while ( *(ush*) ( scan += 2 ) == *(ush*) ( match += 2 ) &&
                 *(ush*) ( scan += 2 ) == *(ush*) ( match += 2 ) &&
                 *(ush*) ( scan += 2 ) == *(ush*) ( match += 2 ) &&
                 *(ush*) ( scan += 2 ) == *(ush*) ( match += 2 ) &&
                 scan < strend);
         
-				/* The funny "do {}" generates better code on most compilers */
+        /* The funny "do {}" generates better code on most compilers */
 
         /* Here, scan <= window+strstart + 257 */
         if ( *scan == *match ) scan++;
@@ -2208,7 +2166,7 @@ int US_Gzip::longest_match( IPos cur_match )
          * the 256th check will be made at strstart+258. */
 
         do 
-				{
+        {
         } while ( * ++scan == * ++match && * ++scan == * ++match &&
                   * ++scan == * ++match && * ++scan == * ++match &&
                   * ++scan == * ++match && * ++scan == * ++match &&
@@ -2221,7 +2179,7 @@ int US_Gzip::longest_match( IPos cur_match )
 #endif /* UNALIGNED_OK */
 
         if ( len > best_len ) 
-				{
+        {
           match_start = cur_match;
           best_len    = len;
           if ( len >= nice_match ) break;
@@ -2253,9 +2211,9 @@ void US_Gzip::bi_init ( void )
 
 #define d_code(dist) \
    ( (dist) < 256 ? dist_code[ dist ] : dist_code[ 256 + ( ( dist ) >> 7 ) ] )
-	 /* Mapping from a distance to a distance code. dist is the distance - 1 and
-		* must not have side effects. dist_code[256] and dist_code[257] are never
-		* used. */
+   /* Mapping from a distance to a distance code. dist is the distance - 1 and
+    * must not have side effects. dist_code[256] and dist_code[257] are never
+    * used. */
 
 #define STORED_BLOCK 0
 #define STORED STORED_BLOCK
@@ -2266,25 +2224,25 @@ void US_Gzip::bi_init ( void )
 #ifndef DIST_BUFSIZE
 #  define DIST_BUFSIZE  LIT_BUFSIZE
 #endif
-		/* Sizes of match buffers for literals/lengths and distances.  There are
-		 * 4 reasons for limiting LIT_BUFSIZE to 64K:
-		 *   - frequencies can be kept in 16 bit counters
-		 *   - if compression is not successful for the first block, all input data is
-		 *     still in the window so we can still emit a stored block even when input
-		 *     comes from standard input.  (This can also be done for all blocks if
-		 *     LIT_BUFSIZE is not greater than 32K.)
-		 *   - if compression is not successful for a file smaller than 64K, we can
-		 *     even emit a stored file instead of a stored block (saving 5 bytes).
-		 *   - creating new Huffman trees less frequently may not provide fast
-		 *     adaptation to changes in the input data statistics. (Take for
-		 *     example a binary file with poorly compressible code followed by
-		 *     a highly compressible string table.) Smaller buffer sizes give
-		 *     fast adaptation but have of course the overhead of transmitting trees
-		 *     more frequently.
-		 *   - I can't count above 4
-		 * The current code is general and allows DIST_BUFSIZE < LIT_BUFSIZE (to save
-		 * memory at the expense of compression). Some optimizations would be possible
-		 * if we rely on DIST_BUFSIZE == LIT_BUFSIZE.  */
+    /* Sizes of match buffers for literals/lengths and distances.  There are
+     * 4 reasons for limiting LIT_BUFSIZE to 64K:
+     *   - frequencies can be kept in 16 bit counters
+     *   - if compression is not successful for the first block, all input data is
+     *     still in the window so we can still emit a stored block even when input
+     *     comes from standard input.  (This can also be done for all blocks if
+     *     LIT_BUFSIZE is not greater than 32K.)
+     *   - if compression is not successful for a file smaller than 64K, we can
+     *     even emit a stored file instead of a stored block (saving 5 bytes).
+     *   - creating new Huffman trees less frequently may not provide fast
+     *     adaptation to changes in the input data statistics. (Take for
+     *     example a binary file with poorly compressible code followed by
+     *     a highly compressible string table.) Smaller buffer sizes give
+     *     fast adaptation but have of course the overhead of transmitting trees
+     *     more frequently.
+     *   - I can't count above 4
+     * The current code is general and allows DIST_BUFSIZE < LIT_BUFSIZE (to save
+     * memory at the expense of compression). Some optimizations would be possible
+     * if we rely on DIST_BUFSIZE == LIT_BUFSIZE.  */
 
 /* ===========================================================================
  * Allocate the match buffer, initialize the various tables and save the
@@ -2378,13 +2336,13 @@ int US_Gzip::ct_tally ( int dist, int lc )
 {
     inbuf[ last_lit++ ] = (uch) lc;
     
-		if ( dist == 0) 
-		{
+    if ( dist == 0) 
+    {
       /* lc is the unmatched char */
       dyn_ltree[ lc ].Freq++;
     } 
-		else 
-		{
+    else 
+    {
         /* Here, lc is the match length - MIN_MATCH */
       dist--;             /* dist = match distance - 1 */
 
@@ -2399,23 +2357,23 @@ int US_Gzip::ct_tally ( int dist, int lc )
 
     /* Output the flags if they fill a byte: */
     if ( ( last_lit & 7 ) == 0 ) 
-		{
+    {
       flag_buf[ last_flags++ ] = flags;
       flags                    = 0;
-	    flag_bit                 = 1;
+      flag_bit                 = 1;
     }
 
     /* Try to guess if it is profitable to stop the current block here */
 #define level 9
     if ( level > 2 && ( last_lit & 0xfff ) == 0) 
-		{
+    {
       /* Compute an upper bound for the compressed length */
       ulg out_length = (ulg) last_lit * 8L;
       ulg in_length  = (ulg) strstart - block_start;
       int dcode;
       
-			for ( dcode = 0; dcode < D_CODES; dcode++ ) 
-			{
+      for ( dcode = 0; dcode < D_CODES; dcode++ ) 
+      {
         out_length += (ulg)dyn_dtree[dcode].Freq*(5L+extra_dbits[dcode]);
       }
 
@@ -2477,7 +2435,7 @@ off_t US_Gzip::flush_block( char* buf, ulg stored_len, int eof )
     if (level == 1 && eof && compressed_len == 0L) { /* force stored file */
 #else
     if ( stored_len <= opt_lenb && eof && compressed_len == 0L && seekable() ) 
-		{
+    {
 #endif
 
       /* Since LIT_BUFSIZE <= 2*WSIZE, the input data must be there: */
@@ -2490,13 +2448,13 @@ off_t US_Gzip::flush_block( char* buf, ulg stored_len, int eof )
 #ifdef FORCE_METHOD
     } 
     else 
-			if (level == 2 && buf != (char*)0) 
+      if (level == 2 && buf != (char*)0) 
       { /* force stored block */
 #else
     } 
-		else 
-			if ( stored_len + 4 <= opt_lenb && buf != (char*) 0 ) 
-			{
+    else 
+      if ( stored_len + 4 <= opt_lenb && buf != (char*) 0 ) 
+      {
          /* 4: two words for the lengths */
 #endif
         /* The test buf != NULL is only necessary if LIT_BUFSIZE > WSIZE.
@@ -2513,19 +2471,19 @@ off_t US_Gzip::flush_block( char* buf, ulg stored_len, int eof )
 
 #ifdef FORCE_METHOD
     } 
-		else 
-		  if ( level == 3 ) 
-			{ /* force static trees */
+    else 
+      if ( level == 3 ) 
+      { /* force static trees */
 #else
     } else 
-			if ( static_lenb == opt_lenb ) 
-			{
+      if ( static_lenb == opt_lenb ) 
+      {
 #endif
         send_bits( ( STATIC_TREES << 1 ) + eof, 3 );
         compress_block( (ct_data*) static_ltree, ( ct_data*) static_dtree );
         compressed_len += 3 + static_len;
     } else 
-		{
+    {
         send_bits( (DYN_TREES << 1 ) + eof, 3 );
         send_all_trees( l_desc.max_code + 1, d_desc.max_code + 1, max_blindex + 1 );
         compress_block( (ct_data*) dyn_ltree, (ct_data*) dyn_dtree );
@@ -2535,7 +2493,7 @@ off_t US_Gzip::flush_block( char* buf, ulg stored_len, int eof )
     init_block();
 
     if ( eof ) 
-		{
+    {
         bi_windup();
         compressed_len += 7;  /* align on byte boundary */
     }
@@ -2583,44 +2541,44 @@ void US_Gzip::compress_block( ct_data* ltree, ct_data* dtree)
   int      extra;     /* number of extra bits to send */
 
   if ( last_lit != 0 ) 
-	do 
-	{
+  do 
+  {
     if ( ( lx & 7 ) == 0 ) flag = flag_buf[ fx++ ];
     lc = l_buf[ lx++ ];
 
     if ( ( flag & 1 ) == 0 ) 
-		{
+    {
       send_code( lc, ltree ); /* send a literal byte */
     } 
-		else 
-		{
+    else 
+    {
       /* Here, lc is the match length - MIN_MATCH */
       code = length_code[ lc ];
       send_code( code + LITERALS + 1, ltree ); /* send the length code */
       extra = extra_lbits[ code ];
       
-			if ( extra != 0 ) 
-			{
+      if ( extra != 0 ) 
+      {
         lc -= base_length[ code ];
         send_bits( lc, extra );        /* send the extra length bits */
       }
 
       dist = d_buf[ dx++ ];
       
-			/* Here, dist is the match distance - 1 */
+      /* Here, dist is the match distance - 1 */
       code = d_code( dist );
 
       send_code( code, dtree );       /* send the distance code */
       extra = extra_dbits[ code ];
       
-			if ( extra != 0 ) 
-			{
+      if ( extra != 0 ) 
+      {
         dist -= base_dist[ code ];
         send_bits( dist, extra );   /* send the extra distance bits */
       }
     } /* literal or match pair ? */
     
-		flag >>= 1;
+    flag >>= 1;
 
   } while ( lx < last_lit );
 
@@ -2640,14 +2598,14 @@ void US_Gzip::send_bits( int value, int length )
    * unused bits in value.  */
 
   if ( bi_valid > (int) Buf_size - length ) 
-	{
+  {
       bi_buf   |= (value << bi_valid);
       put_short( bi_buf );
       bi_buf    = (ush)value >> ( (ush) Buf_size - bi_valid );
       bi_valid += length - Buf_size;
   } 
-	else
-	{
+  else
+  {
       bi_buf   |= value << bi_valid;
       bi_valid += length;
   }
@@ -2664,11 +2622,11 @@ unsigned US_Gzip::bi_reverse( unsigned code, int len )
 {
   register unsigned res = 0;
   
-	do 
-	{
+  do 
+  {
     res  |= code & 1;
     code >>= 1;
-		res  <<= 1;
+    res  <<= 1;
   } while ( --len > 0 );
 
   return res >> 1;
@@ -2679,11 +2637,11 @@ unsigned US_Gzip::bi_reverse( unsigned code, int len )
 void US_Gzip::bi_windup( void )
 {
   if ( bi_valid > 8 ) 
-	{
+  {
     put_short( bi_buf );
   } 
-	else if ( bi_valid > 0 ) 
-	{
+  else if ( bi_valid > 0 ) 
+  {
       put_byte( bi_buf );
   }
 
@@ -2703,14 +2661,14 @@ void US_Gzip::copy_block( char* buf, unsigned len, int header )
   bi_windup();              /* align on byte boundary */
 
   if ( header ) 
-	{
+  {
       put_short( (ush)  len );
       put_short( (ush) ~len );
   }  
-	
-	while ( len-- ) 
-	{
-		put_byte( *buf++ );
+  
+  while ( len-- ) 
+  {
+    put_byte( *buf++ );
   }
 }
 
@@ -2723,8 +2681,8 @@ void US_Gzip::copy_block( char* buf, unsigned len, int header )
 #define pqremove(tree, top) \
 {\
   top              = heap[ SMALLEST ]; \
-	heap[ SMALLEST ] = heap[ heap_len--] ; \
-	pqdownheap( tree, SMALLEST ); \
+  heap[ SMALLEST ] = heap[ heap_len--] ; \
+  pqdownheap( tree, SMALLEST ); \
 }
 
 #define MAX(a,b) ( a >= b ? a : b )
@@ -2753,17 +2711,17 @@ void US_Gzip::build_tree( tree_desc* desc )
    * heap[0] is not used.  */
 
   heap_len = 0;
-	heap_max = HEAP_SIZE;
+  heap_max = HEAP_SIZE;
 
   for ( n = 0; n < elems; n++ ) 
-	{
+  {
     if ( tree[ n ].Freq != 0 ) 
-		{
+    {
       heap[ ++heap_len ] = max_code = n;
       depth[ n ] = 0;
     } 
-		else 
-		{
+    else 
+    {
       tree[ n ].Len = 0;
     }
   }
@@ -2774,13 +2732,13 @@ void US_Gzip::build_tree( tree_desc* desc )
    * two codes of non zero frequency.  */
 
   while ( heap_len < 2 ) 
-	{
+  {
     int new1 = heap[ ++heap_len ] = ( max_code < 2 ? ++max_code : 0 );
     
-		tree [ new1 ].Freq = 1;
+    tree [ new1 ].Freq = 1;
     depth[ new1 ]      = 0;
     opt_len--; 
-		if ( stree ) static_len -= stree[ new1 ].Len;
+    if ( stree ) static_len -= stree[ new1 ].Len;
       /* new is 0 or 1 so it does not have extra bits */
   }
 
@@ -2794,8 +2752,8 @@ void US_Gzip::build_tree( tree_desc* desc )
   /* Construct the Huffman tree by repeatedly combining the least two
    * frequent nodes.  */
   
-	do 
-	{
+  do 
+  {
       pqremove( tree, n );   /* n = node of least frequency */
       m = heap[ SMALLEST ];  /* m = node of next least frequency */
 
@@ -2807,7 +2765,7 @@ void US_Gzip::build_tree( tree_desc* desc )
       depth[ node ]      = (uch) ( MAX( depth[ n ], depth[ m ] ) + 1 );
       tree [ n    ].Dad  = tree[ m ].Dad = (ush) node;
       
-			/* and insert the new node in the heap */
+      /* and insert the new node in the heap */
       heap[ SMALLEST ] = node++;
       pqdownheap( tree, SMALLEST );
 
@@ -2848,7 +2806,7 @@ int US_Gzip::build_bl_tree( void )
    * 3 but the actual value used is 4.)  */
 
   for ( max_blindex = BL_CODES - 1; max_blindex >= 3; max_blindex-- ) 
-	{
+  {
     if ( bl_tree[ bl_order[ max_blindex ] ].Len != 0 ) break;
   }
 
@@ -2878,7 +2836,7 @@ void US_Gzip::gen_bitlen( tree_desc* desc )
   ct_data* stree      = desc->static_tree;
   int      h;              /* heap index */
   int      n;
-	int      m;              /* iterate over the tree elements */
+  int      m;              /* iterate over the tree elements */
   int      bits;           /* bit length */
   int      xbits;          /* extra bits */
   ush      f;              /* frequency */
@@ -2892,17 +2850,17 @@ void US_Gzip::gen_bitlen( tree_desc* desc )
   tree[ heap[ heap_max ] ].Len = 0; /* root of the heap */
 
   for ( h = heap_max + 1; h < HEAP_SIZE; h++ ) 
-	{
+  {
     n    = heap[ h ];
     bits = tree[ tree[ n ].Dad ].Len + 1;
     
-		if ( bits > max_length) 
-		{
-			bits = max_length;
-			overflow++;
-		}
+    if ( bits > max_length) 
+    {
+      bits = max_length;
+      overflow++;
+    }
     
-		tree[ n ].Len = (ush) bits;
+    tree[ n ].Len = (ush) bits;
     /* We overwrite tree[ n ].Dad which is no longer needed */
 
     if ( n > max_code ) continue; /* not a leaf node */
@@ -2912,26 +2870,26 @@ void US_Gzip::gen_bitlen( tree_desc* desc )
 
     if ( n >= base ) xbits = extra[ n - base ];
     
-		f        = tree[ n ].Freq;
+    f        = tree[ n ].Freq;
     opt_len += (ulg) f * ( bits + xbits );
     
-		if ( stree ) static_len += (ulg) f * ( stree[ n ].Len + xbits );
+    if ( stree ) static_len += (ulg) f * ( stree[ n ].Len + xbits );
   }
 
   if ( overflow == 0) return;
 
   /* Find the first bit length which could increase: */
   do 
-	{
+  {
     bits = max_length-1;
     
-		while ( bl_count[ bits ] == 0 ) bits--;
+    while ( bl_count[ bits ] == 0 ) bits--;
 
     bl_count[ bits       ]--;       /* move one leaf down the tree */
     bl_count[ bits + 1   ]    += 2; /* move one overflow item as its brother */
     bl_count[ max_length ]--;
     
-		/* The brother of the overflow item also moves one step up,
+    /* The brother of the overflow item also moves one step up,
      * but this does not affect bl_count[max_length]  */
 
     overflow -= 2;
@@ -2944,17 +2902,17 @@ void US_Gzip::gen_bitlen( tree_desc* desc )
    * from 'ar' written by Haruhiko Okumura.)  */
 
   for ( bits = max_length; bits != 0; bits-- ) 
-	{
+  {
     n = bl_count[bits];
 
     while ( n != 0 ) 
-		{
+    {
       m = heap[--h];
 
       if ( m > max_code ) continue;
       
-			if ( tree[ m ].Len != (unsigned) bits ) 
-			{
+      if ( tree[ m ].Len != (unsigned) bits ) 
+      {
         opt_len      += ( (long) bits - (long) tree[ m ].Len ) * (long) tree[ m ].Freq;
         tree[ m ].Len = (ush) bits;
       }
@@ -2984,7 +2942,7 @@ void US_Gzip::gen_codes ( ct_data* tree, int max_code )
    * without bit reversal. */
 
   for ( bits = 1; bits <= MAX_BITS; bits++ ) 
-	{
+  {
     next_code[ bits ] = code = ( code + bl_count[ bits - 1 ] ) << 1;
   }
 
@@ -2992,12 +2950,12 @@ void US_Gzip::gen_codes ( ct_data* tree, int max_code )
    * must be all ones.  */
 
   for ( n = 0;  n <= max_code; n++ ) 
-	{
+  {
     int len = tree[ n ].Len;
 
     if ( len == 0 ) continue;
     
-	  /* Now reverse the bits */
+    /* Now reverse the bits */
     tree[ n ].Code = bi_reverse( next_code[ len ]++, len );
   }
 }
@@ -3024,7 +2982,7 @@ void US_Gzip::pqdownheap( ct_data* tree, int k )
   int j = k << 1;      /* left son of k */
 
   while ( j <= heap_len )
-	{
+  {
     /* Set j to the smallest of the two sons: */
     if ( j < heap_len && smaller( tree, heap[ j + 1 ], heap[ j ] ) ) j++;
 
@@ -3033,7 +2991,7 @@ void US_Gzip::pqdownheap( ct_data* tree, int k )
 
     /* Exchange v with the smallest son */
     heap[ k ] = heap[ j ];  
-		k = j;
+    k = j;
 
     /* And continue down the tree, setting j to the left son of k */
     j <<= 1;
@@ -3055,8 +3013,8 @@ void US_Gzip::send_all_trees( int lcodes, int dcodes, int blcodes )
   send_bits( dcodes -   1, 5 );
   send_bits( blcodes -  4, 4 ); /* not -3 as stated in appnote.txt */
   
-	for ( rank = 0; rank < blcodes; rank++ ) 
-	{
+  for ( rank = 0; rank < blcodes; rank++ ) 
+  {
     send_bits( bl_tree[ bl_order[ rank ] ].Len, 3 );
   }
 
@@ -3092,57 +3050,57 @@ void US_Gzip::scan_tree( ct_data* tree, int max_code )
   int min_count = 4;           /* min repeat count */
 
   if ( nextlen == 0 ) 
-	{
-		max_count = 138;
-		min_count = 3;
-	}
+  {
+    max_count = 138;
+    min_count = 3;
+  }
 
   tree[ max_code + 1 ].Len = (ush) 0xffff; /* guard */
 
   for ( n = 0; n <= max_code; n++ ) 
-	{
+  {
     curlen  = nextlen; 
-		nextlen = tree[ n + 1 ].Len;
+    nextlen = tree[ n + 1 ].Len;
     
-		if ( ++count < max_count && curlen == nextlen ) 
-		{
+    if ( ++count < max_count && curlen == nextlen ) 
+    {
       continue;
     } 
-		else if ( count < min_count ) 
-		{
+    else if ( count < min_count ) 
+    {
       bl_tree[ curlen ].Freq += count;
     } 
-		else if ( curlen != 0 ) 
-		{
+    else if ( curlen != 0 ) 
+    {
       if ( curlen != prevlen ) bl_tree[ curlen ].Freq++;
       bl_tree[REP_3_6].Freq++;
     } 
-		else if ( count <= 10 ) 
-		{
+    else if ( count <= 10 ) 
+    {
       bl_tree[ REPZ_3_10 ].Freq++;
     } 
-		else 
-		{
+    else 
+    {
       bl_tree[ REPZ_11_138 ].Freq++;
     }
 
     count   = 0; 
-		prevlen = curlen;
+    prevlen = curlen;
 
     if ( nextlen == 0 ) 
-		{
+    {
       max_count = 138;
-			min_count = 3;
+      min_count = 3;
     } 
-		else if ( curlen == nextlen ) 
-		{
+    else if ( curlen == nextlen ) 
+    {
       max_count = 6;
-			min_count = 3;
+      min_count = 3;
     } 
-		else 
-		{
+    else 
+    {
       max_count = 7;
-			min_count = 4;
+      min_count = 4;
     }
   }
 }
@@ -3166,66 +3124,66 @@ void US_Gzip::send_tree( ct_data* tree, int max_code )
   /* tree[max_code+1].Len = -1; */  /* guard already set */
 
   if ( nextlen == 0 )
-	{
-		max_count = 138;
-		min_count = 3;
-	}
+  {
+    max_count = 138;
+    min_count = 3;
+  }
 
   for ( n = 0; n <= max_code; n++ ) 
-	{
+  {
     curlen  = nextlen; 
-		nextlen = tree[ n + 1 ].Len;
+    nextlen = tree[ n + 1 ].Len;
 
     if ( ++count < max_count && curlen == nextlen ) 
-		{
+    {
       continue;
     } 
-		else if ( count < min_count ) 
-		{
+    else if ( count < min_count ) 
+    {
       do 
-			{ 
-				send_code( curlen, bl_tree ); 
-			} while ( --count != 0 );
-    } 
-		else if ( curlen != 0 ) 
-		{
-      if ( curlen != prevlen ) 
-			{
+      { 
         send_code( curlen, bl_tree ); 
-				count--;
+      } while ( --count != 0 );
+    } 
+    else if ( curlen != 0 ) 
+    {
+      if ( curlen != prevlen ) 
+      {
+        send_code( curlen, bl_tree ); 
+        count--;
       }
 
       send_code( REP_3_6, bl_tree ); 
-			send_bits( count - 3, 2 );
+      send_bits( count - 3, 2 );
     } 
-		else if ( count <= 10 ) 
-		{
+    else if ( count <= 10 ) 
+    {
       send_code( REPZ_3_10, bl_tree ); 
-			send_bits( count - 3, 3 );
+      send_bits( count - 3, 3 );
     } 
-		else 
-		{
+    else 
+    {
       send_code( REPZ_11_138, bl_tree ); 
-			send_bits( count - 11, 7 );
+      send_bits( count - 11, 7 );
     }
 
     count   = 0; 
-		prevlen = curlen;
+    prevlen = curlen;
 
     if ( nextlen == 0 ) 
-		{
+    {
       max_count = 138;
-		  min_count = 3;
-		}
-		else if ( curlen == nextlen ) 
-		{
+      min_count = 3;
+    }
+    else if ( curlen == nextlen ) 
+    {
       max_count = 6;
-			min_count = 3;
+      min_count = 3;
     } 
-		else 
-		{
+    else 
+    {
       max_count = 7;
-			min_count = 4;
+      min_count = 4;
     }
   }
 }

@@ -53,7 +53,7 @@ struct huft
 class US_EXTERN US_Gzip
 {
   public:
-  	US_Gzip();
+		US_Gzip();
     ~US_Gzip(){};
 
 		int gzip  ( const QString& );
@@ -92,7 +92,7 @@ class US_EXTERN US_Gzip
 		int     treat_file     ( const QString&, bool );
 		QString make_ofname    ( const QString&, bool );
 		int     huft_build     ( unsigned*, unsigned, unsigned, ush*, ush*,
-					                   struct huft**, int* );
+														 struct huft**, int* );
 		int     huft_free      ( struct huft * );
 		int     inflate_codes  ( struct huft*, struct huft*, int, int );
 		int     inflate_stored ( void );
@@ -113,11 +113,11 @@ class US_EXTERN US_Gzip
 		typedef ush      Pos;
 		typedef unsigned IPos;
 		/* A Pos is an index in the character window. We use short instead of int to
- 		 * save space in the various tables. IPos is used only for parameter passing.  */
+		 * save space in the various tables. IPos is used only for parameter passing.  */
 
 		long             block_start;
 		/* window position at the beginning of the current output block. Gets
- 		 * negative when the window is moved backwards.  */
+		 * negative when the window is moved backwards.  */
 
 		unsigned         ins_h;         /* hash index of string to be inserted */
 		unsigned         lookahead;     /* number of valid bytes ahead in window */
@@ -202,41 +202,41 @@ class US_EXTERN US_Gzip
 /* Data structure describing a single value and its code string. */
 		typedef struct ct_data 
 		{
-		  union 
+			union 
 			{
-			  ush  freq;       /* frequency count */
+				ush  freq;       /* frequency count */
 				ush  code;       /* bit string */
 			} fc;
 			union 
 			{
-		  	ush  dad;          /* father node in Huffman tree */
+				ush  dad;          /* father node in Huffman tree */
 				ush  len;          /* length of bit string */
-																    
+
 			} dl;
 		} ct_data;
-	
-    ct_data          dyn_ltree[ HEAP_SIZE ];       /* literal and length tree */
-    ct_data          dyn_dtree[ 2 * D_CODES + 1 ]; /* distance tree */
 
-    ct_data          static_ltree[ L_CODES + 2 ];
+		ct_data          dyn_ltree[ HEAP_SIZE ];       /* literal and length tree */
+		ct_data          dyn_dtree[ 2 * D_CODES + 1 ]; /* distance tree */
+
+		ct_data          static_ltree[ L_CODES + 2 ];
 		/* The static literal tree. Since the bit lengths are imposed, there is no
 		 * need for the L_CODES extra codes used during heap construction. However
 		 * The codes 286 and 287 are needed to build a canonical tree (see ct_init
 		 * below).  */
 
-    ct_data          static_dtree[ D_CODES ];
+		ct_data          static_dtree[ D_CODES ];
 		/* The static distance tree. (Actually a trivial tree since all codes use
 		 * 5 bits.) */
 
-    ct_data          bl_tree[ 2 * BL_CODES + 1 ];
+		ct_data          bl_tree[ 2 * BL_CODES + 1 ];
 		/* Huffman tree for the bit lengths */
 
 #define MIN_MATCH    3
 #define MAX_MATCH  258
 		/* The minimum and maximum match lengths */
 
-    uch              length_code[ MAX_MATCH - MIN_MATCH + 1 ];
-    /* length code for each normalized match length (0 == MIN_MATCH) */
+		uch              length_code[ MAX_MATCH - MIN_MATCH + 1 ];
+		/* length code for each normalized match length (0 == MIN_MATCH) */
 
 		uch              dist_code[ 512 ];
 		/* distance codes. The first 256 values correspond to the distances
@@ -252,7 +252,7 @@ class US_EXTERN US_Gzip
 		 * take advantage of DIST_BUFSIZE == LIT_BUFSIZE.  */
 
 #define DIST_BUFSIZE 0x8000 /* buffer for distances, see trees.c */
-    ush              d_buf[ DIST_BUFSIZE ];
+		ush              d_buf[ DIST_BUFSIZE ];
 
 #ifndef LIT_BUFSIZE
 #  ifdef SMALL_MEM
@@ -268,44 +268,44 @@ class US_EXTERN US_Gzip
 
 		uch              flag_buf[ LIT_BUFSIZE / 8 ];
 
-    typedef struct tree_desc
-    {
-      ct_data*       dyn_tree;      /* the dynamic tree */
-      ct_data*       static_tree;   /* corresponding static tree or NULL */
-      int*           extra_bits;    /* extra bits for each code or NULL */
-      int            extra_base;    /* base index for extra_bits */
-      int            elems;         /* max number of elements in the tree */
-      int            max_length;    /* max bit length for the codes */
-      int            max_code;      /* largest code with non zero frequency */
-    } tree_desc;
+		typedef struct tree_desc
+		{
+			ct_data*       dyn_tree;      /* the dynamic tree */
+			ct_data*       static_tree;   /* corresponding static tree or NULL */
+			int*           extra_bits;    /* extra bits for each code or NULL */
+			int            extra_base;    /* base index for extra_bits */
+			int            elems;         /* max number of elements in the tree */
+			int            max_length;    /* max bit length for the codes */
+			int            max_code;      /* largest code with non zero frequency */
+		} tree_desc;
 
-    tree_desc        l_desc; 
-    tree_desc        d_desc;
-    tree_desc        bl_desc;
+		tree_desc        l_desc; 
+		tree_desc        d_desc;
+		tree_desc        bl_desc;
 
-    ulg              opt_len;       /* bit length of current block with optimal trees */
-    ulg              static_len;    /* bit length of current block with static trees */
-    off_t            compressed_len; /* total bit length of compressed file */
-    int*             file_method;   /* pointer to DEFLATE or STORE */
+		ulg              opt_len;       /* bit length of current block with optimal trees */
+		ulg              static_len;    /* bit length of current block with static trees */
+		off_t            compressed_len; /* total bit length of compressed file */
+		int*             file_method;   /* pointer to DEFLATE or STORE */
 
-    int              base_length[ LENGTH_CODES ];
-    int              base_dist[ D_CODES ];
+		int              base_length[ LENGTH_CODES ];
+		int              base_dist[ D_CODES ];
 
 		int              heap[ 2 * L_CODES + 1 ]; /* heap used to build the Huffman trees */
-    int              heap_len;      /* number of elements in the heap */
-    int              heap_max;      /* element of largest frequency */
-    /* The sons of heap[n] are heap[ 2 * n ] and heap[ 2 * n + 1 ]. heap[ 0 ] 
-     * is not used.  The same heap array is used to build all trees.  */
+		int              heap_len;      /* number of elements in the heap */
+		int              heap_max;      /* element of largest frequency */
+		/* The sons of heap[n] are heap[ 2 * n ] and heap[ 2 * n + 1 ]. heap[ 0 ] 
+		 * is not used.  The same heap array is used to build all trees.  */
 
-    uch              depth[ 2 * L_CODES + 1 ];
-    /* Depth of each subtree used as tie breaker for trees of equal frequency */
+		uch              depth[ 2 * L_CODES + 1 ];
+		/* Depth of each subtree used as tie breaker for trees of equal frequency */
 
-    ush              bl_count[ MAX_BITS + 1 ];
-    /* number of codes at each bit length for an optimal tree */
+		ush              bl_count[ MAX_BITS + 1 ];
+		/* number of codes at each bit length for an optimal tree */
 
 		// deflate methods
 		off_t    deflate        ( void );
-    void     lm_init        ( void );
+		void     lm_init        ( void );
 		int      file_read      ( char*, unsigned int );
 		void     fill_window    ( void );
 		int      longest_match  ( IPos );
@@ -313,20 +313,20 @@ class US_EXTERN US_Gzip
 		int      ct_tally       ( int, int );
 		off_t    flush_block    ( char*, ulg, int );
 		void     bi_init        ( void );
-    void     build_tree     ( tree_desc* );
-    int      build_bl_tree  ( void );
-    void     copy_block     ( char*, unsigned, int );
-    void     send_bits      ( int, int );
-    void     compress_block ( ct_data*, ct_data* );
-    void     send_all_trees ( int, int, int );
-    void     send_tree      ( ct_data*, int );
-		void 	   init_block     ( void );
+		void     build_tree     ( tree_desc* );
+		int      build_bl_tree  ( void );
+		void     copy_block     ( char*, unsigned, int );
+		void     send_bits      ( int, int );
+		void     compress_block ( ct_data*, ct_data* );
+		void     send_all_trees ( int, int, int );
+		void     send_tree      ( ct_data*, int );
+		void		 init_block     ( void );
 		void     bi_windup      ( void );
-    unsigned bi_reverse     ( unsigned, int );
-    void     gen_bitlen     ( tree_desc* );
-    void     gen_codes      ( ct_data*, int );
-    void     pqdownheap     ( ct_data*, int );
-    void     scan_tree      ( ct_data*, int );
+		unsigned bi_reverse     ( unsigned, int );
+		void     gen_bitlen     ( tree_desc* );
+		void     gen_codes      ( ct_data*, int );
+		void     pqdownheap     ( ct_data*, int );
+		void     scan_tree      ( ct_data*, int );
 
 };
 #endif
