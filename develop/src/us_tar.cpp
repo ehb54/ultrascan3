@@ -373,7 +373,7 @@ void US_Tar::flush_buffer( void )
 	blocks_written = 0;
 }
 
-
+///////////////////////////
 int US_Tar::extract( const QString& archive )
 {
 	/* 1. Open the archve
@@ -408,61 +408,25 @@ int US_Tar::extract( const QString& archive )
 			if ( size != BLOCK_SIZE ) throw TAR_READERROR;
 
 			// Validate checksum
-			unsigned char* p = tar_header.h;
-		  int            unsigned_sum;
-			unsigned int   i;
-
-      unsigned_sum = 0;
-
-			for ( i = sizeof tar_header; i-- != 0; )
-			{
-			   unsigned_sum += (unsigned char) (*p++);
-			}
-
-			// Signal that the end of archive has arived.  Verify with another
-			// empty block
-      
-			if ( unsigned_sum == 0 )
+			bool zero = validate_header();
+	
+			// The archive ends with two zero blocks
+			if ( zero )
 			{
 				size = read( ifd, tar_header.h, BLOCK_SIZE );
-			  if ( size != BLOCK_SIZE ) throw TAR_READERROR;
+	  		if ( size != BLOCK_SIZE ) throw TAR_READERROR;
 
-        p = tar_header.h;
-				for ( i = sizeof tar_header; i-- != 0; )
-			  {
-				   unsigned_sum += (unsigned char) *p;
-				}
+				bool second_zero = validate_header();
 				
-				if ( unsigned_sum == 0 ) break;
+				if ( second_zero ) 
+				{
+					break;
+				}
 				else 
-        {
-          throw TAR_ARCHIVEERROR;
-        }
+    		{
+      		throw TAR_ARCHIVEERROR;
+    		}
 			}
-
-			// Adjust checksum to count the "chksum" field as blanks.
-			for ( i = sizeof tar_header.header.chksum; i-- != 0; )
-			{
-				unsigned_sum -= (unsigned char) tar_header.header.chksum[i];
-			}
-
-			unsigned_sum += ' ' * sizeof tar_header.header.chksum;
-
-			// Get the checksum from the header and compare to calculated sum
-			unsigned int parsed_sum;
-			int count = sscanf( tar_header.header.chksum, "%6o", &parsed_sum );
- 
-			if ( parsed_sum != unsigned_sum )
-      {
-        throw TAR_ARCHIVEERROR;
-      }
-
-			// And check the magic string
-			QString magic = tar_header.header.magic;
-			if ( magic != "ustar  " ) 
-      {
-        throw TAR_ARCHIVEERROR;
-      }
 
 			// Now get the data from the header
 
@@ -478,16 +442,13 @@ int US_Tar::extract( const QString& archive )
 			unsigned int fsize;
 			unsigned int mtime;
 			
-			count = sscanf( tar_header.header.mode,   "%7o", &mode  );
+			sscanf( tar_header.header.mode,   "%7o", &mode  );
 #ifndef WIN32
-      count = sscanf( tar_header.header.uid,    "%7o", &uid   );
-			count = sscanf( tar_header.header.gid,    "%7o", &gid   );
-#else
-      count = sscanf( tar_header.header.uid,    "0000000" );
-			count = sscanf( tar_header.header.gid,    "0000000" );
+      sscanf( tar_header.header.uid,    "%7o", &uid   );
+			sscanf( tar_header.header.gid,    "%7o", &gid   );
 #endif
-			count = sscanf( tar_header.header.size,  "%11o", &fsize );
-			count = sscanf( tar_header.header.mtime, "%11o", &mtime );
+			sscanf( tar_header.header.size,  "%11o", &fsize );
+			sscanf( tar_header.header.mtime, "%11o", &mtime );
 
 			bool directory;
 			switch ( tar_header.header.typeflag )
@@ -618,3 +579,183 @@ int US_Tar::extract( const QString& archive )
 	return TAR_OK;
 }
 
+/////////////////////////////
+int US_Tar::list( const QString& archive, QStringList& files )
+{
+	ifd = open( archive.latin1(), O_RDONLY | O_BINARY );
+	if ( ifd < 0 ) return TAR_NOTFOUND;
+
+	blocks_read = 0;
+
+	try
+	{
+		while ( true )
+		{
+			// Read header
+			ssize_t size = read( ifd, tar_header.h, BLOCK_SIZE );
+			if ( size != BLOCK_SIZE ) throw TAR_READERROR;
+
+			bool zero = validate_header();
+	
+			// The archive ends with two zero blocks
+			if ( zero )
+			{
+				size = read( ifd, tar_header.h, BLOCK_SIZE );
+	  		if ( size != BLOCK_SIZE ) throw TAR_READERROR;
+
+				bool second_zero = validate_header();
+				
+				if ( second_zero ) 
+				{
+					break;
+				}
+				else 
+    		{
+      		throw TAR_ARCHIVEERROR;
+    		}
+			}
+
+			// Now get the data from the header
+
+			files << tar_header.header.name;	// Save the file name for return
+
+			bool directory;
+			switch ( tar_header.header.typeflag )
+			{
+				case '5':
+					directory = true;
+					break;
+
+				case '0':
+					directory = false;
+					break;
+
+				default:
+					throw TAR_ARCHIVEERROR;
+			}
+
+			if ( ! directory )
+			{
+	 			// Skip file data
+	 
+				unsigned int fsize;
+			  sscanf( tar_header.header.size,  "%11o", &fsize );
+
+				int skip = BLOCK_SIZE - fsize % BLOCK_SIZE;
+
+				 // If file size is exact multple of blocks
+        if (  skip == BLOCK_SIZE ) skip = 0;
+
+				// Skip to start of next block
+				lseek( ifd, fsize + skip, SEEK_CUR );
+      }
+		}  // while ( true )
+	}
+	catch ( int error )
+	{
+		close( ifd );
+		return error;
+	}
+
+  close( ifd );
+	return TAR_OK;
+}
+
+// The return boolean here is if header is zero
+bool US_Tar::validate_header( void )
+{
+
+	// Validate checksum
+	unsigned char* p = tar_header.h;
+  int            unsigned_sum = 0;
+	unsigned int   i;
+
+	for ( i = sizeof tar_header; i-- != 0; )
+	{
+	   unsigned_sum += (unsigned char) (*p++);
+	}
+
+	// Signal that the end of archive has arived.  Verify with another
+	// empty block
+  
+	if ( unsigned_sum == 0 ) return true;
+
+	// Adjust checksum to count the "chksum" field as blanks.
+	for ( i = sizeof tar_header.header.chksum; i-- != 0; )
+	{
+		unsigned_sum -= (unsigned char) tar_header.header.chksum[i];
+	}
+
+	unsigned_sum += ' ' * sizeof tar_header.header.chksum;
+
+	// Get the checksum from the header and compare to calculated sum
+	unsigned int parsed_sum;
+	sscanf( tar_header.header.chksum, "%6o", &parsed_sum );
+
+	if ( parsed_sum != (unsigned int ) unsigned_sum )
+  {
+    throw TAR_ARCHIVEERROR;
+  }
+
+	// And check the magic string
+	QString magic = tar_header.header.magic;
+	if ( magic != "ustar  " ) 
+  {
+    throw TAR_ARCHIVEERROR;
+  }
+
+	return false;  // Header ok and not zero
+}
+
+/////////////////////////////
+QString US_Tar::explain( const int error )
+{
+	QString explanation;
+	switch ( error )
+	{
+    case TAR_OK:
+      explanation = "The (un)tar operation was succesful.";
+      break;
+
+    case TAR_CANNOTCREATE:
+      explanation = "Could not create the ouput file." ;
+      break;
+
+    case  TAR_NOTFOUND:
+      explanation = "Could not find the input file." ;
+      break;
+
+    case TAR_CANTSTAT:
+      explanation = "Could not determine the input file metadata." ;
+      break;
+
+    case TAR_FILENAMETOOLONG:
+      explanation = "A file name was too long." ;
+      break;
+      
+    case TAR_INTERNAL:
+      explanation = "The internal file type was not a file or a directory." ;
+      break;
+      
+    case TAR_READERROR:
+      explanation = "Could not read input file." ;
+      break;
+      
+    case TAR_WRITEERROR:
+      explanation = "Could not write an output file." ;
+      break;
+      
+    case TAR_ARCHIVEERROR:
+      explanation = "The archive was not not formatted properly." ;
+      break;
+      
+    case TAR_MKDIRFAILED:
+      explanation = "Could not create a directory." ;
+      break;
+
+    default:
+      explanation = "Unknown return code: " + error;
+  }
+
+	return explanation;
+}

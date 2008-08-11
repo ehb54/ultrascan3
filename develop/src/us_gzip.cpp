@@ -31,7 +31,8 @@
 #   define fstat   _fstat
 #   define stat    _stat
 #   define utimbuf _utimbuf
-#   define ascii   toAscii
+// The following is for Qt4 
+//#   define ascii   toAscii  
 #else
 #  include <utime.h>
 #  define O_BINARY 0

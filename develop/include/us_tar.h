@@ -26,9 +26,11 @@ class US_EXTERN US_Tar
 		~US_Tar(){};
 		US_Tar(){};
 
-		int create ( const QString&, const QString&     ); // from a directory
-		int create ( const QString&, const QStringList& ); // from a list of files
-		int extract( const QString& ); 
+		int     create ( const QString&, const QString&     ); // from a directory
+		int     create ( const QString&, const QStringList& ); // from list of files
+		int     extract( const QString& ); 
+		int     list   ( const QString&, QStringList& ); 
+		QString explain( const int ); 
 
 	private:
 		int ofd;                 // Output file descriptor
@@ -70,10 +72,11 @@ class US_EXTERN US_Tar
 		int           blocks_read;
 		int           archive_size;
 
-		void  process_dir   ( const QString&, QStringList& );
-		void  write_file    ( const QString& );
-		void  flush_buffer  ( void );
-		void  archive_end   ( void );
+		void  process_dir    ( const QString&, QStringList& );
+		void  write_file     ( const QString& );
+		void  flush_buffer   ( void );
+		void  archive_end    ( void );
+		bool  validate_header( void );
 };
 #endif
 
