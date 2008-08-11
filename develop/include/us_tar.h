@@ -25,7 +25,7 @@ class US_EXTERN US_Tar
 	public:
 		~US_Tar(){};
 		US_Tar(){};
-    
+
 		int create ( const QString&, const QString&     ); // from a directory
 		int create ( const QString&, const QStringList& ); // from a list of files
 		int extract( const QString& ); 
