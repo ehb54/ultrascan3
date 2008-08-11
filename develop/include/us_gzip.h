@@ -56,8 +56,9 @@ class US_EXTERN US_Gzip
 		US_Gzip();
     ~US_Gzip(){};
 
-		int gzip  ( const QString& );
-    int gunzip( const QString& ); 
+		int     gzip   ( const QString& );
+    int     gunzip ( const QString& ); 
+		QString explain( const int ); 
 
   private:
 

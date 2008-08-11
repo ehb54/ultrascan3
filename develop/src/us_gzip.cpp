@@ -3189,3 +3189,63 @@ void US_Gzip::send_tree( ct_data* tree, int max_code )
   }
 }
 
+/////////////////////////////
+QString US_Gzip::explain( const int error )
+{
+	QString explanation;
+	switch ( error )
+	{
+    case GZIP_OK:
+      explanation = "The g(un)zip operation was succesful.";
+      break;
+
+    case GZIP_NOEXIST:
+      explanation = "Could not find the input file." ;
+      break;
+
+    case  GZIP_NOTFILE:
+      explanation = "The input file name is not a regular file." ;
+      break;
+
+    case GZIP_NOREAD:
+      explanation = "The input file is not readable by the user." ;
+      break;
+
+    case GZIP_OPTIONNOTSUPPORTED:
+      explanation = "An unsupported option is included in the compressed file.";
+      break;
+      
+    case GZIP_OUTFILEEXISTS:
+      explanation = "The output file already exists." ;
+      break;
+      
+    case GZIP_CRCERROR:
+      explanation = "The compressed file failed an internal validation." ;
+      break;
+      
+    case GZIP_READERROR:
+      explanation = "Could not read the input file." ;
+      break;
+      
+    case GZIP_WRITEERROR:
+      explanation = "Could not write the output file." ;
+      break;
+      
+    case GZIP_LENGTHERROR:
+      explanation = "The output data does not match the internal file size." ;
+      break;
+
+    case GZIP_FILENAMEERROR:
+      explanation = "The file/path name is too long." ;
+      break;
+
+    case GZIP_INTERNAL:
+      explanation = "In internal gzip error occured." ;
+      break;
+
+    default:
+      explanation = "Unknown return code: " + error;
+  }
+
+	return explanation;
+}
