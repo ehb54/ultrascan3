@@ -426,7 +426,7 @@ util->insertSeparator(-1);
 	QPopupMenu *db = new QPopupMenu;
 	Q_CHECK_PTR(db);
 	db->setLineWidth(1);
-	int commitID = db->insertItem(tr("&Commit Data to DB"), cmmt);
+	int commitID = db->insertItem(tr("&Manage DB Data"), cmmt);
 	db->setItemEnabled(commitID, true);
 	db->insertSeparator(-1);
 	int retrieveID = db->insertItem(tr("&Retrieve Experimental Data from DB"), rtv);
