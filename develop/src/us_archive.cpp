@@ -1,248 +1,161 @@
 #include "../include/us_archive.h"
+#include "../include/us_tar.h"
+#include "../include/us_gzip.h"
 
-US_Archive::US_Archive(QWidget *p , const char *name) : QFrame(p, name)
+#include <sys/statfs.h>
+
+US_Archive::US_Archive( QWidget* p, const char* name ): US_Widgets( p, name )
 {
-	USglobal = new US_Config();
-	int xpos = 2, ypos = 2, spacing = 2, buttonh = 26, buttonw0 = 220;
-	int buttonw = 109;
-	int buttonw1 = 170;
-	setCaption(tr("UltraScan Archive Manager"));
-	filename = "";
+	int       xpos     =   2;
+	int       ypos     =   2;
+	const int spacing  =   2;
+	const int buttonh  =  26;
+	const int buttonw0 = 220;
+	const int buttonw  = 109;
+	const int buttonw1 = 170;
 
-	setPalette( QPalette(USglobal->global_colors.cg_frame,
-	            USglobal->global_colors.cg_frame,
-	            USglobal->global_colors.cg_frame));
-
-	QString str;
-
+	filename       = "";
 	reports_flag   = true;
 	ultrascan_flag = true;
 	delete_flag    = true;
-	data_ctrl_flag = false;
 
-	mle = new QTextEdit( this );
-	mle->setFrameStyle( QFrame::WinPanel|Sunken );
-	mle->setPalette( QPalette( USglobal->global_colors.cg_normal,
-	                           USglobal->global_colors.cg_normal,
-	                           USglobal->global_colors.cg_normal));
-	mle->setReadOnly( true );
-	mle->setFont(QFont( USglobal->config_list.fontFamily,
-	                    USglobal->config_list.fontSize - 1 ) );
-	mle->setTextFormat( Qt::RichText );
-	mle->show();
+	setCaption( tr( "UltraScan Archive Manager" ) );
 
-	banner1 = new QLabel(tr("Archive Information:"),this);
-	banner1->setFrameStyle(QFrame::WinPanel|Raised);
-	banner1->setAlignment(AlignCenter|AlignVCenter);
-	banner1->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame) );
-	banner1->setGeometry(xpos, ypos, buttonw0, buttonh);
-	banner1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+	mle = textedit();
+
+	banner1 = banner( "Archive Information:" );
+	banner1->setGeometry( xpos, ypos, buttonw0, buttonh );
 
 	ypos += buttonh + spacing + 2;
 
-	pb_view = new QPushButton(tr("View Archive Contents"), this);
-	Q_CHECK_PTR(pb_view);
-	pb_view->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_view->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_view->setGeometry(xpos, ypos, buttonw0, buttonh);
-	pb_view->setAutoDefault(false);
-	connect(pb_view, SIGNAL(clicked()), SLOT(view()));
+	pb_view = pushbutton( "View Archive Contents" );
+	connect( pb_view, SIGNAL( clicked() ), SLOT( view() ) );
 
 	ypos += buttonh + spacing;
 
-	lbl_name1 = new QLabel(tr(" Archive:"),this);
-	lbl_name1->setFrameStyle(QFrame::WinPanel|Sunken);
-	lbl_name1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
-	lbl_name1->setGeometry(xpos, ypos, buttonw, buttonh);
-	lbl_name1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	lbl_name1->setAlignment(AlignLeft|AlignVCenter);
+	lbl_name1 = label( " Archive:" );
+	lbl_name1->setAlignment( AlignLeft | AlignVCenter);
+	lbl_name1->setGeometry( xpos, ypos, buttonw, buttonh );
 
 	xpos += spacing + buttonw;
 
-	lbl_name2 = new QLabel("", this);
-	lbl_name2->setFrameStyle(QFrame::WinPanel|Sunken);
-	lbl_name2->setGeometry(xpos, ypos, buttonw, buttonh);
-	lbl_name2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	lbl_name2->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
-	lbl_name2->setAlignment(AlignCenter|AlignVCenter);
+	lbl_name2 = textlabel( "", -1 );
+	lbl_name2->setAlignment( AlignLeft | AlignVCenter);
+	lbl_name2->setGeometry( xpos, ypos, buttonw, buttonh );
 
 	ypos += buttonh + spacing + 2;
 	xpos = spacing;
 
-	banner2 = new QLabel(tr("Archive Creation:"),this);
-	banner2->setFrameStyle(QFrame::WinPanel|Raised);
-	banner2->setAlignment(AlignCenter|AlignVCenter);
-	banner2->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame) );
+	banner2 = banner( "Archive Creation:" );
 	banner2->setGeometry(xpos, ypos, buttonw0, buttonh);
-	banner2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
 
-	ypos += buttonh + spacing + 2;
+	ypos += buttonh + spacing  +  2;
 	xpos += spacing + buttonw1 + 18;
 
-	cb_ultrascan = new QCheckBox(tr(" Include UltraScan Data:"),this);
-	Q_CHECK_PTR(cb_ultrascan);
-	cb_ultrascan->setGeometry(xpos, ypos+5, 14, 14);
-	cb_ultrascan->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	cb_ultrascan->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	cb_ultrascan->setChecked( ultrascan_flag );
-	connect(cb_ultrascan, SIGNAL(clicked()), SLOT(set_ultrascan()));
+	cb_ultrascan = checkbox( "Include UltraScan Data", ultrascan_flag );
+	cb_ultrascan->setGeometry( xpos, ypos + 5, 14, 14 );
+
+	connect( cb_ultrascan, SIGNAL( clicked() ), SLOT( set_ultrascan() ) );
 
 	ypos += buttonh + spacing;
 	xpos  = spacing;
 	xpos += spacing + buttonw1 + 18;
 
-	cb_reports = new QCheckBox(tr(" Include HTML Reports:"),this);
-	Q_CHECK_PTR(cb_reports);
-	cb_reports->setGeometry(xpos, ypos+5, 14, 14);
-	cb_reports->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	cb_reports->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	cb_reports->setChecked( reports_flag );
-	connect(cb_reports, SIGNAL(clicked()), SLOT(set_reports()));
+	cb_reports = checkbox( "Include HTML Reports", reports_flag );
+	cb_reports->setGeometry( xpos, ypos + 5, 14, 14 );
+	connect( cb_reports, SIGNAL( clicked() ), SLOT( set_reports() ) );
 
 	ypos += buttonh + spacing;
 	xpos  = spacing;
 	xpos += spacing + buttonw1 + 18;
 
-	cb_delete = new QCheckBox(tr(" Delete Original Data:"),this);
-	Q_CHECK_PTR(cb_delete);
-	cb_delete->setGeometry(xpos, ypos+5, 14, 14);
-	cb_delete->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	cb_delete->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	cb_delete->setChecked( delete_flag );
-	connect(cb_delete, SIGNAL(clicked()), SLOT(set_delete()));
+	cb_delete = checkbox( "Delete Original Data", delete_flag );
+	cb_delete->setGeometry( xpos, ypos + 5, 14, 14 );
+	connect( cb_delete, SIGNAL( clicked() ), SLOT( set_delete() ) );
 
 	ypos += buttonh + spacing;
 	xpos = spacing;
 
-	pb_select_velocdata_create = new QPushButton(tr("Select Velocity Data"), this);
-	Q_CHECK_PTR(pb_select_velocdata_create);
-	pb_select_velocdata_create->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_select_velocdata_create->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_select_velocdata_create->setGeometry(xpos, ypos, buttonw0, buttonh);
-	pb_select_velocdata_create->setAutoDefault(false);
-	connect(pb_select_velocdata_create, SIGNAL(clicked()), SLOT(select_velocdata_create_archive()));
+	pb_select_velocdata_create = pushbutton( "Select Velocity Data" );
+	pb_select_velocdata_create->setGeometry( xpos, ypos, buttonw0, buttonh );
+	connect( pb_select_velocdata_create, SIGNAL( clicked() ), 
+	                                     SLOT  ( select_velocdata() ) );
 
 	ypos += buttonh + spacing;
 
-	pb_select_equildata_create = new QPushButton(tr("Select Equilibrium Data"), this);
-	Q_CHECK_PTR(pb_select_equildata_create);
-	pb_select_equildata_create->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_select_equildata_create->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_select_equildata_create->setGeometry(xpos, ypos, buttonw0, buttonh);
-	pb_select_equildata_create->setAutoDefault(false);
-	connect(pb_select_equildata_create, SIGNAL(clicked()), SLOT(select_equildata_create_archive()));
+	pb_select_equildata_create = pushbutton( "Select Equilibrium Data" );
+	pb_select_equildata_create->setGeometry( xpos, ypos, buttonw0, buttonh );
+	connect( pb_select_equildata_create, SIGNAL( clicked() ), 
+	                                     SLOT  ( select_equildata() ) );
 
 	ypos += buttonh + spacing;
 
-	pb_select_eqproject_create = new QPushButton(tr("Select Equilibrium Project"), this);
-	Q_CHECK_PTR(pb_select_eqproject_create);
-	pb_select_eqproject_create->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_select_eqproject_create->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_select_eqproject_create->setGeometry(xpos, ypos, buttonw0, buttonh);
-	pb_select_eqproject_create->setAutoDefault(false);
-	connect(pb_select_eqproject_create, SIGNAL(clicked()), SLOT(select_eqproject_create_archive()));
+	pb_select_eqproject_create = pushbutton( "Select Equilibrium Project" );
+	pb_select_eqproject_create->setGeometry( xpos, ypos, buttonw0, buttonh );
+	connect( pb_select_eqproject_create, SIGNAL( clicked() ), 
+	                                     SLOT  (select_eqilproj() ) );
+
+	ypos += buttonh + spacing;
+	
+	pb_select_montecarlo_create = pushbutton( "Select Monte Carlo Project" );
+	pb_select_montecarlo_create->setGeometry( xpos, ypos, buttonw0, buttonh );
+	connect( pb_select_montecarlo_create, SIGNAL( clicked() ), 
+	                                      SLOT  ( select_montecarlo() ) );
 
 	ypos += buttonh + spacing;
 
-	pb_select_montecarlo_create = new QPushButton(tr("Select Monte Carlo Project"), this);
-	Q_CHECK_PTR(pb_select_montecarlo_create);
-	pb_select_montecarlo_create->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_select_montecarlo_create->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_select_montecarlo_create->setGeometry(xpos, ypos, buttonw0, buttonh);
-	pb_select_montecarlo_create->setAutoDefault(false);
-	connect(pb_select_montecarlo_create, SIGNAL(clicked()), SLOT(select_montecarlo_create_archive()));
-
-	ypos += buttonh + spacing;
-
-	lbl_create_name1 = new QLabel(tr(" Archive:"),this);
-	lbl_create_name1->setFrameStyle(QFrame::WinPanel|Sunken);
-	lbl_create_name1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
-	lbl_create_name1->setGeometry(xpos, ypos, buttonw, buttonh);
-	lbl_create_name1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	lbl_create_name1->setAlignment(AlignLeft|AlignVCenter);
+	lbl_create_name1 = label( " Archive:", -1, QFont::Bold );
+	lbl_create_name1->setAlignment( AlignLeft | AlignVCenter);
+	lbl_create_name1->setGeometry( xpos, ypos, buttonw, buttonh );
 
 	xpos += spacing + buttonw;
 
-	lbl_create_name2 = new QLabel("", this);
-	lbl_create_name2->setFrameStyle(QFrame::WinPanel|Sunken);
-	lbl_create_name2->setGeometry(xpos, ypos, buttonw, buttonh);
-	lbl_create_name2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	lbl_create_name2->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
-	lbl_create_name2->setAlignment(AlignCenter|AlignVCenter);
+	lbl_create_name2 = textlabel( "", -1 );
+	lbl_create_name2->setGeometry( xpos, ypos, buttonw, buttonh );
+	lbl_create_name2->setAlignment( AlignLeft | AlignVCenter);
 
 	ypos += buttonh + spacing;
 	xpos = spacing;
 
-	pb_create = new QPushButton(tr("Create Archive"), this);
-	Q_CHECK_PTR(pb_create);
-	pb_create->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_create->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_create->setGeometry(xpos, ypos, buttonw0, buttonh);
-	pb_create->setAutoDefault(false);
-	pb_create->setEnabled(false);
-	connect(pb_create, SIGNAL(clicked()), SLOT(create_archive()));
+	pb_create = pushbutton( "Create Archive", false );
+	pb_create->setGeometry( xpos, ypos, buttonw0, buttonh );
+	connect( pb_create, SIGNAL( clicked() ), SLOT( create_archive() ) );
 
 	ypos += buttonh + spacing + 2;
 
-	banner3 = new QLabel(tr("Archive Extraction:"),this);
-	banner3->setFrameStyle(QFrame::WinPanel|Raised);
-	banner3->setAlignment(AlignCenter|AlignVCenter);
-	banner3->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame) );
-	banner3->setGeometry(xpos, ypos, buttonw0, buttonh);
-	banner3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+	banner3 = banner( "Archive Extraction:" );
+	banner3->setGeometry( xpos, ypos, buttonw0, buttonh );
 
 	ypos += buttonh + spacing + 2;
 
-	pb_extract = new QPushButton(tr("Extract Archive"), this);
-	Q_CHECK_PTR(pb_extract);
-
-	pb_extract->setFont(QFont( USglobal->config_list.fontFamily,
-	                           USglobal->config_list.fontSize));
-
-	pb_extract->setPalette( QPalette( USglobal->global_colors.cg_pushb,
-	                                  USglobal->global_colors.cg_pushb_disabled,
-	                                  USglobal->global_colors.cg_pushb_active));
-
-	pb_extract->setGeometry(xpos, ypos, buttonw0, buttonh);
-	pb_extract->setAutoDefault(false);
-	connect(pb_extract, SIGNAL(clicked()), SLOT(extract_archive()));
+	pb_extract = pushbutton( "Extract Archive" );
+	pb_extract->setGeometry( xpos, ypos, buttonw0, buttonh );
+	connect( pb_extract, SIGNAL( clicked() ), SLOT( extract_archive() ) );
 
 	ypos += buttonh + spacing + 2;
 
-	banner4 = new QLabel(tr("Module Controls:"),this);
-	banner4->setFrameStyle(QFrame::WinPanel|Raised);
-	banner4->setAlignment(AlignCenter|AlignVCenter);
-	banner4->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame) );
-	banner4->setGeometry(xpos, ypos, buttonw0, buttonh);
-	banner4->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+	banner4 = banner( "Module Controls:" );
+	banner4->setGeometry( xpos, ypos, buttonw0, buttonh );
 
 	ypos += buttonh + spacing + 2;
 
-	pb_help = new QPushButton(tr("Help"), this);
-	Q_CHECK_PTR(pb_help);
-	pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_help->setGeometry(xpos, ypos, buttonw0, buttonh);
-	pb_help->setAutoDefault(false);
-	connect(pb_help, SIGNAL(clicked()), SLOT(help()));
+	pb_help = pushbutton( "Help" );
+	pb_help->setGeometry( xpos, ypos, buttonw0, buttonh );
+	connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
 	ypos += buttonh + spacing;
 
-	pb_close = new QPushButton(tr("Close"), this);
-	Q_CHECK_PTR(pb_close);
-	pb_close->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_close->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_close->setGeometry(xpos, ypos, buttonw0, buttonh);
-	pb_close->setAutoDefault(false);
-	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
+	pb_close = pushbutton( "Close" );
+	pb_close->setGeometry( xpos, ypos, buttonw0, buttonh );
+	connect( pb_close, SIGNAL(clicked() ), SLOT( close() ) );
 
 	ypos += buttonh + spacing;
 
 	global_Xpos += 30;
 	global_Ypos += 30;
 
-	setMinimumSize(900, ypos);
-	setGeometry(global_Xpos, global_Ypos, 900, ypos);
+	setMinimumSize( 900, ypos );
+	setGeometry( global_Xpos, global_Ypos, 900, ypos );
 
 	setup_GUI();
 }
@@ -253,66 +166,58 @@ US_Archive::~US_Archive()
 
 void US_Archive::setup_GUI()
 {
-	int j=0;
-	int rows = 18, columns = 2, spacing = 2;
+	int       j       =  0;
+	const int rows    = 18;
+	const int columns =  2;
+	const int spacing =  2;
 
-	QGridLayout * background = new QGridLayout(this,1,2,spacing);
-	QGridLayout * subGrid1 = new QGridLayout(rows, columns, spacing);
-	for (int i=0; i<rows; i++)
+	QGridLayout* subGrid1   = new QGridLayout( rows, columns, spacing );
+	
+	for ( int i = 0; i < rows; i++ )
 	{
-		subGrid1->setRowSpacing(i, 26);
+		subGrid1->setRowSpacing( i, 26 );
 	}
-	subGrid1->addMultiCellWidget(banner1,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(pb_view,j,j,0,1);
-	j++;
-	subGrid1->addWidget(lbl_name1,j,0);
-	subGrid1->addWidget(lbl_name2,j,1);
-	j++;
-	subGrid1->addMultiCellWidget(banner2,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(cb_ultrascan,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(cb_reports,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(cb_delete,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(pb_select_velocdata_create,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(pb_select_equildata_create,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(pb_select_eqproject_create,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(pb_select_montecarlo_create,j,j,0,1);
-	j++;
-	subGrid1->addWidget(lbl_create_name1,j,0);
-	subGrid1->addWidget(lbl_create_name2,j,1);
-	j++;
-	subGrid1->addMultiCellWidget(pb_create,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(banner3,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(pb_extract,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(banner4,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(pb_help,j,j,0,1);
-	j++;
-	subGrid1->addMultiCellWidget(pb_close,j,j,0,1);
+	subGrid1->addMultiCellWidget( banner1,      j, j, 0, 1 ); j++;
+	subGrid1->addMultiCellWidget( pb_view,      j, j, 0, 1 ); j++;
 
-	background->addLayout(subGrid1,0,0);
-	background->addWidget(mle,0,1);
-	background->setColStretch(0,1);
-	background->setColStretch(1,4);
-	background->setColSpacing(1,680);
+	subGrid1->addWidget         ( lbl_name1, j, 0 );
+	subGrid1->addWidget         ( lbl_name2, j, 1 ); j++;
+	
+	subGrid1->addMultiCellWidget( banner2,      j, j, 0, 1 ); j++;
+	subGrid1->addMultiCellWidget( cb_ultrascan, j, j, 0, 1 ); j++;
+	subGrid1->addMultiCellWidget( cb_reports,   j, j, 0, 1 ); j++;
+	subGrid1->addMultiCellWidget( cb_delete,    j, j, 0, 1 ); j++;
+	
+	subGrid1->addMultiCellWidget( pb_select_velocdata_create,  j, j, 0, 1); j++;
+	subGrid1->addMultiCellWidget( pb_select_equildata_create,  j, j, 0, 1); j++;
+	subGrid1->addMultiCellWidget( pb_select_eqproject_create,  j, j, 0, 1); j++;
+	subGrid1->addMultiCellWidget( pb_select_montecarlo_create, j, j, 0, 1); j++;
+	
+	subGrid1->addWidget         ( lbl_create_name1, j, 0 );
+	subGrid1->addWidget         ( lbl_create_name2, j, 1 ); j++;
+	
+	subGrid1->addMultiCellWidget( pb_create,    j, j, 0, 1 ); j++;
+	subGrid1->addMultiCellWidget( banner3,      j, j, 0, 1 ); j++; 
+	subGrid1->addMultiCellWidget( pb_extract,   j, j, 0, 1 ); j++;
+	subGrid1->addMultiCellWidget( banner4,      j, j, 0, 1 ); j++;
+	subGrid1->addMultiCellWidget( pb_help,      j, j, 0, 1 ); j++;
+	subGrid1->addMultiCellWidget( pb_close,     j, j, 0, 1 );
+
+	QGridLayout* background = new QGridLayout( this, 1, 2, spacing );
+	background->addLayout    ( subGrid1, 0, 0 );
+	background->addWidget    ( mle,      0, 1 );
+	background->setColStretch( 0, 1 );
+	background->setColStretch( 1, 4);
+	background->setColSpacing( 1, 680 );
 
 	qApp->processEvents();
-	QRect r = background->cellGeometry(0, 0);
+	
+	QRect r = background->cellGeometry( 0, 0) ;
 
 	global_Xpos += 30;
 	global_Ypos += 30;
 
-	this->setGeometry(global_Xpos, global_Ypos, r.width()+680, r.height());
+	this->setGeometry( global_Xpos, global_Ypos, r.width() + 680, r.height() );
 }
 
 void US_Archive::closeEvent( QCloseEvent* e )
@@ -320,181 +225,6 @@ void US_Archive::closeEvent( QCloseEvent* e )
 	e->accept();
 	global_Xpos -= 30;
 	global_Ypos -= 30;
-}
-
-void US_Archive::view()
-{
-	QString fn = QFileDialog::getOpenFileName(
-			USglobal->config_list.archive_dir, "*.tar.gz", 0 );
-	mle->setReadOnly( false );
-
-	if ( ! fn.isEmpty() )
-	{
-		fn.replace( "\\", "/" ); // Convert for WIN32 backslashes
-		int slash = fn.findRev( "/" );
-
-		lbl_name2->setText( fn.mid( slash + 1, fn.length() - ( slash + 1 ) - 7 ) );
-		mle->clear();
-		qApp->processEvents();
-		view( fn );
-	}
-
-	mle->setReadOnly( true );
-}
-
-void US_Archive::view( const QString& fn )
-{
-#ifdef HAS_VFS
-	int return_info = statfs( USglobal->config_list.data_dir, &file_info );
-
-	if ( return_info < 0 )
-	{
-		QMessageBox::message(
-		  tr("Attention:"),
-			tr("There was an error in function statfs() while\n"
-			   "processing the requested information:\n\n") +
-			   (QString) strerror(errno));
-
-		return;
-	}
-#endif
-
-	QString s;
-
-	view_file.setName( fn );
-	mle->insert( tr( "\n\nInformation for archive\n\"") +
-	  QDir::convertSeparators( fn ) + "\":\n" );
-	mle->insert( tr( "(compressed size: ") + s.sprintf(tr( "%.2f MBytes)" ),
-	                 (float) view_file.size() / 1e6) );
-
-	mle->insert( tr( "\n\nThis archive contains the following sub-archives:\n\n" ) );
-
-	int start_pos = fn.findRev( "/" ) + 1;
-	view_filename = fn.mid( start_pos );
-
-
-	int cr = copy( fn, USglobal->config_list.root_dir + "/temp/" + view_filename );
-
-	if ( cr == 0 )
-	{
-		v_step = 0;
-
-		view_proc = new QProcess(this);
-		connect(view_proc, SIGNAL(readyReadStdout() ), this, SLOT(readView()  ) );
-		connect(view_proc, SIGNAL(processExited()   ), this, SLOT(endView()   ) );
-		endView();
-	}
-	else
-	{
-		QString msg;
-		msg.sprintf( "Unable to copy view data to temp dir. %d\n"
-		             + fn + "\n" + USglobal->config_list.root_dir + "/temp/"
-		             + view_filename, cr );
-
-		QMessageBox::message(
-		  tr( "UltraScan Error:" ),
-		  tr( msg ) );
-	}
-}
-
-// Handle output of tar -tvf
-void US_Archive::readView()
-{
-	QString line = view_proc->readStdout();
-	line.remove( "/None" );                   // This will only occur for WIN32
-	mle->append( "<pre>" + line + "</pre>" ); // Make spaces significant
-}
-
-void US_Archive::endView()
-{
-	QDir view_dir;
-	view_dir.setPath( USglobal->config_list.root_dir + "/temp/" );
-	view_proc->setWorkingDirectory( view_dir );
-	view_proc->clearArguments();
-
-	switch( v_step )
-	{
-		case 0:
-			view_proc->addArgument( "gzip");
-			view_proc->addArgument( "-d" );
-			view_proc->addArgument( view_filename );
-
-			v_step = 1;
-
-			if ( ! view_proc->start() )
-			{
-				QMessageBox::message(
-				  tr( "UltraScan Error:" ),
-				  tr( "Unable to start process to uncompress data.\n" + view_filename ) );
-			}
-
-			break;
-
-		case 1:
-			view_filename = view_filename.left( view_filename.length() - 3 );
-
-			view_proc->addArgument( "tar" );
-			view_proc->addArgument( "-tvf" );
-			view_proc->addArgument( view_filename );
-
-			v_step = 2;
-
-			if ( ! view_proc->start() )
-			{
-				QMessageBox::message(
-				  tr( "UltraScan Error:" ),
-				  tr( "Unable to start process to list view data." ) );
-			}
-
-			break;
-
-		case 2:
-			unsigned int diskspace = 0;
-			int          para      = 8;  // The data is in paragraph 8
-			int          k         = 3;  // tar -tvf parameter for size
-
-			QString      lineView;
-			QString      msg;
-			QString      str;
-
-			lineView = mle->text( para );
-
-			getToken ( &lineView, ">" );  // Skip rich text formatting
-
-      while ( ( msg = getToken ( &lineView, ">" ) ) != "" )
-			{
-				for ( int i = 0; i < k; i++ )
-				{
-					str = getToken( &msg, " " ); // Get k-th token
-				}
-
-				diskspace += str.toUInt();
-			}
-
-#ifdef HAS_VFS
-			mle->insert( tr("\nTotal diskspace needed for extraction: ") +
-			    str.sprintf(tr("%.1f MBytes\n"), diskspace/1e6));
-
-			mle->insert( tr("Total available diskspace on ") +
-			    USglobal->config_list.data_dir + ": " +
-			    str.sprintf( tr("%f MBytes"), (float) file_info.f_bavail * file_info.f_bsize / 1e6 ) );
-
-			if ( diskspace > file_info.f_bavail * file_info.f_bsize )
-			{
-				mle->insert(tr( "\n\nATTENTION: You will need to free up some "
-				                "diskspace before extracting this archive!"));
-			}
-#endif
-
-			str.sprintf("\n\nCompression Ratio: %3.2f : 1\n\n",
-			    (float) diskspace / view_file.size() );
-
-			mle->append( str );
-			clean_temp_dir();
-			delete view_proc;
-
-			break;
-	}
 }
 
 void US_Archive::set_ultrascan()
@@ -516,130 +246,143 @@ void US_Archive::set_reports()
 	cb_reports->setChecked( reports_flag );
 }
 
-void US_Archive::quit()
+void US_Archive::quit( void )
 {
 	close();
 }
 
-void US_Archive::select_velocdata_create_archive()
+void US_Archive::help()
 {
-	run_type = 0;
-	clean_temp_dir();
-
-	if ( data_ctrl_flag )
-	{
-		delete data_control;
-		data_ctrl_flag = false;
-	}
-
-	data_control   = new Data_Control_W( 7 );
-	data_ctrl_flag = true;
-
-	int flag = data_control->load_data();
-	data_control->details();  // This doesn't do anything any more for run type 7
-	filename = data_control->run_inf.run_id;
-	lbl_create_name2->setText( filename );
-
-	if ( flag < 0 )
-	{
-		pb_create->setEnabled( false );
-	}
-	else
-	{
-		pb_create->setEnabled( true );
-	}
+	US_Help *online_help; online_help = new US_Help(this);
+	online_help->show_help("manual/archive.html");
 }
 
-void US_Archive::select_equildata_create_archive()
+void US_Archive::select_velocdata( void )
 {
-	run_type = 1;
-	clean_temp_dir();
-
-	if ( data_ctrl_flag )
-	{
-		delete data_control;
-		data_ctrl_flag = false;
-	}
-
-	data_control   = new Data_Control_W( 8 );
-	data_ctrl_flag = true;
-
-	int flag = data_control->load_data();
-	data_control->details();  // This doesn't do anything any more for run type 8
-	filename = data_control->run_inf.run_id;
-	lbl_create_name2->setText( filename );
-
-	if ( flag < 0 )
-	{
-		pb_create->setEnabled( false );
-	}
-	else
-	{
-		pb_create->setEnabled( true );
-	}
+	select_create_archive( 0 );
 }
 
-void US_Archive::select_eqproject_create_archive()
+void US_Archive::select_equildata( void )
 {
-	run_type = 2;
-	clean_temp_dir();
-
-	if ( data_ctrl_flag )
-	{
-		delete data_control;
-		data_ctrl_flag = false;
-	}
-
-	QString str = QFileDialog::getOpenFileName(
-	    USglobal->config_list.result_dir, "*.eq-project", 0 );
-
-	if ( ! str.isEmpty() )
-	{
-		QFile projectFile( str );
-		projectFile.open( IO_ReadOnly );
-		QTextStream project_ts( &projectFile );
-		projectName = project_ts.readLine();
-		projectFile.close();
-
-		lbl_create_name2->setText( projectName );
-		pb_create->setEnabled( true );
-	}
-	else
-	{
-		pb_create->setEnabled( false );
-	}
+	select_create_archive( 1 );
 }
 
-void US_Archive::select_montecarlo_create_archive()
+void US_Archive::select_eqilproj( void )
 {
-	run_type = 3;
-	clean_temp_dir();
-
-	if (data_ctrl_flag)
-	{
-		delete data_control;
-		data_ctrl_flag = false;
-	}
-
-	QString str = QFileDialog::getOpenFileName(
-	    USglobal->config_list.result_dir, "*.Monte-Carlo", 0);
-
-	if ( ! str.isEmpty() )
-	{
-		QFile projectFile( str );
-		projectFile.open( IO_ReadOnly );
-		QTextStream project_ts( &projectFile );
-		projectName = project_ts.readLine();
-		projectFile.close();
-
-		lbl_create_name2->setText( projectName );
-		pb_create->setEnabled( true );
-	}
-	else
-	{
-		pb_create->setEnabled( false );
-	}
+	select_create_archive( 2 );
 }
+
+void US_Archive::select_montecarlo( void )
+{
+	select_create_archive( 3 );
+}
+
+void US_Archive::select_create_archive( const int type )
+{
+	QString filter;
+	QString dir = USglobal->config_list.result_dir;
+
+	pb_create->setEnabled( false );
+	run_type = type;
+
+	switch ( type )
+	{
+		case 0:
+			filter = "*.us.v";
+			break;
+
+		case 1:
+			filter = "*.us.e";
+			break;
+
+		case 2:
+	    filter = "*.eq-project";
+			break;
+		
+		case 3:
+	    filter = "*.Monte-Carlo";
+			break;
+	}
+
+	QString fn = QFileDialog::getOpenFileName( dir, filter, 0 );
+	if ( fn == "" ) return;
+
+	switch ( type )
+	{
+		case 0:
+		case 1:
+		{
+			QFile f( fn );
+			if ( ! f.open( IO_ReadOnly ) )
+			{
+	  		QMessageBox::message(
+					tr( "Ultrascan Error:" ),
+					tr( "Could not open file:" ) + fn );
+
+	  		return; 
+			}
+
+			QDataStream ds ( &f );
+			if ( ds.atEnd() )
+			{
+	  		f.close();
+	  		QMessageBox::message(
+					tr( "Ultrascan Error:" ),
+					tr( "The file is empty: " ) + fn );
+		
+				return; // empty file
+			}
+	
+			// The filename we want is the third entry
+			QString version;
+			QString datadir;
+
+			ds >> version;
+			if ( version.toFloat() < 6.0 )
+			{
+				QMessageBox::message(
+					tr( "Ultrascan Warning:" ),
+					tr( "These data were edited with an usupported release\n"
+							"of UltraScan (version " + version + "), which is not\n"
+							"binary compatible with the current version (" + US_Version + 
+							").\n\n"
+							"Please re-edit the experimental data before\n"
+							"using the data for data analysis." ) );
+			}
+
+			ds >> datadir;
+			ds >> filename;
+			f.close();
+
+			lbl_create_name2->setText( filename );
+		}
+		break;
+		
+		case 2:
+		case 3:
+		{
+			QFile projectFile( fn );
+			if ( ! projectFile.open( IO_ReadOnly ) )
+			{
+				QMessageBox::message(
+					tr( "Ultrascan Error:" ),
+					tr( "Could not open " ) + fn );
+				return;
+				
+			};
+			QTextStream project_ts( &projectFile );
+			projectName = project_ts.readLine();
+			projectFile.close();
+
+			lbl_create_name2->setText( projectName );
+		}
+		break;	
+	}		
+		
+	clean_temp_dir();
+	pb_create->setEnabled( true );
+}
+
 void US_Archive::clean_temp_dir()
 {
 	QDir temp_dir;
@@ -686,9 +429,169 @@ void US_Archive::enable_buttons()
 	pb_select_eqproject_create ->setEnabled(true);
 }
 
-/**********************************************************************************/
-void US_Archive::create_archive()
+/******************************************************************************/
+void US_Archive::view()
 {
+	QString fn = QFileDialog::getOpenFileName(
+			USglobal->config_list.archive_dir, "*.tar.gz", 0 );
+
+	if ( ! fn.isEmpty() )
+	{
+		fn.replace( "\\", "/" ); // Convert for WIN32 backslashes
+		int slash = fn.findRev( "/" );
+
+		lbl_name2->setText( fn.mid( slash + 1, fn.length() - ( slash + 1 ) - 7 ) );
+
+		mle->setReadOnly( false );
+		mle->clear();
+		qApp->processEvents();  // Is this needed?
+		viewtargz( fn );
+		mle->setReadOnly( true );
+	}
+}
+
+void US_Archive::viewtargz( const QString& fn )
+{
+//#ifdef HAS_VFS
+  struct statfs system_info;
+	int return_info = statfs( USglobal->config_list.data_dir, &system_info );
+
+	if ( return_info < 0 )
+	{
+		QMessageBox::message(
+		  tr("Attention:"),
+			tr("There was an error in function statfs() while\n"
+			   "processing the requested information:\n\n") +
+			   QString( strerror( return_info ) ) );
+
+		return;
+	}
+//#endif
+
+	QString   s;
+	QFileInfo f = QFileInfo( fn );
+
+	mle->append( tr( "<qt><p>Information for archive</p>\n<pre>\"") +
+	  QDir::convertSeparators( fn ) + "\"</pre>\n" );
+
+	mle->append( tr( "<p>(compressed size: ") + 
+			s.sprintf(tr( "%.2f MBytes)</p>\n" ), (float) f.size() / 1e6) );
+
+	mle->append( 
+			tr( "<p>This archive contains the following sub-archives:</p>\n" ) );
+
+	int     start_pos       = fn.findRev( "/" ) + 1;
+	QString gzip_filename   = fn.mid( start_pos );
+	QString tempdir         = USglobal->config_list.root_dir + "/temp/";
+	int     cr              = copy( fn, tempdir + gzip_filename );
+	
+	if ( cr != 0 )
+	{
+		QString msg;
+		msg.sprintf( "Unable to copy view data to temp dir. %d\n"
+		             + fn + "\n" + tempdir + gzip_filename, cr );
+
+		QMessageBox::message(
+			tr( "UltraScan Error:" ),
+			tr( msg ) );
+			return;
+	}
+
+	// Save the current directory and cnage to the temp directory
+	
+	char cwd[ 256 ];
+	if ( getcwd( cwd, sizeof cwd ) == 0 )
+	{
+		QMessageBox::message(
+		   tr( "UltraScan Error:" ),
+		   tr( "Could not get current working directory" ) );
+		return;
+	}
+
+	int errno = chdir( tempdir.ascii() );
+	if ( errno != 0 )
+	{
+	  QString e = QString( "%1" ).arg( errno );
+		QMessageBox::message(
+		   tr( "UltraScan Error:" ),
+		   tr( "Could not change working directory\n" + tempdir + 
+				   "\nError number = " + e ) );
+		return;
+	}
+
+	// gunzip the file
+	US_Gzip gzip;
+	int ret = gzip.gunzip( gzip_filename );
+
+	if ( ret != GZIP_OK )
+	{
+		QMessageBox::message(
+		   tr( "UltraScan gzip Error:" ),
+		   tr( gzip.explain( ret ) ) );
+		return;
+	}
+
+	// Assume gzip_filename is something.tar.gz
+
+	US_Tar      tar;
+	QString     tarfile = gzip_filename.left( gzip_filename.length() - 3 );
+	QStringList files;
+
+	// Get the listing
+	if ( ( ret = tar.list( tarfile, files ) ) != TAR_OK )
+	{
+		QMessageBox::message(
+		   tr( "UltraScan tar Error:" ),
+		   tr( tar.explain( ret ) ) );
+		return;
+	}
+
+	chdir( cwd ); // Restore working directory
+	
+	// Write out the file data from the tar file
+	// Also calculate the total disk space needed
+	unsigned int          diskspace = 0;
+	QStringList::Iterator it;
+	QString               pre_string;
+	
+	pre_string = "<pre>";
+	for ( it = files.begin(); it != files.end(); ++it )
+	{
+		QString line      = *it;
+		pre_string       += line + "\n"; 
+		unsigned int size = line.simplifyWhiteSpace().section( ' ', 2, 2 ).toUInt();
+		diskspace        += size;
+	}
+
+	mle->append( pre_string + "</pre>\n" ); 
+
+//#ifdef HAS_VFS
+	mle->append( tr( "<p>Total diskspace needed for extraction: " +
+	    s.sprintf( "%.1f MBytes", diskspace / 1e6 ) + "</p>\n" ) );
+
+	mle->append( tr( "<p>Total available diskspace on " +
+	    USglobal->config_list.data_dir + ": </p>\n" +
+	    s.sprintf( "<p>%.1f MBytes</p>\n", 
+				(float) system_info.f_bavail * system_info.f_bsize / 1e6 ) ) );
+
+	if ( diskspace > system_info.f_bavail * system_info.f_bsize )
+	{
+		mle->append(tr( "<p>ATTENTION: You will need to free up some "
+		                "diskspace before extracting this archive!</p>\n"));
+	}
+//#endif
+
+	s.sprintf("<p>Compression Ratio: %3.2f : 1</p></qt>\n",
+	    (float) diskspace / f.size() );
+
+	mle->append( s );
+	clean_temp_dir();
+}
+
+/******************************************************************************/
+void US_Archive::create_archive( QStringList* list )
+{
+	if ( list ) list->clear();
 	mle->clear();
 
 	QString filen = filename.stripWhiteSpace();
@@ -708,131 +611,352 @@ void US_Archive::create_archive()
 
 	disable_buttons();
 
-	QDir temp_dir( USglobal->config_list.root_dir + "/temp" );
+	QString tempDirString = USglobal->config_list.root_dir + "/temp";
+	QDir temp_dir( tempDirString );
 
 	if ( temp_dir.exists() )
 	{
 		clean_temp_dir();
-		temp_dir.rmdir( USglobal->config_list.root_dir + "/temp" );
 	}
-
-	if ( ! temp_dir.mkdir( USglobal->config_list.root_dir + "/temp" ) )
+	else if ( ! temp_dir.mkdir( tempDirString ) )
 	{
 		QMessageBox::message(
 		  tr( "Ultrascan Warning:"),
-			tr( "Cannot create a temporary directory in:\n\n" + USglobal->config_list.root_dir));
+			tr( "Cannot create a temporary directory:\n\n" + 
+				  tempDirString ) );
+
+		enable_buttons();
+		return;
 	}
 
-	create_proc = new QProcess( this );
+	if ( ! ultrascan_flag && ( ( run_type == 2 ) || ( run_type == 3 ) ) )
+	{
+	  QMessageBox::message(
+			tr( "UltraScan Error:") ,
+			tr( "The UltraScan Data must be included for "
+				  "selecting a project archive." ) );
 
-	if ( ultrascan_flag )			// Result data is selected.
+		enable_buttons();
+		return;
+  }
+
+	char cwd[ 256 ];
+	if ( getcwd( cwd, sizeof cwd ) == 0 )
 	{
-		c_step = 0;
+		QMessageBox::message(
+		   tr( "UltraScan Error:" ),
+		   tr( "Could not get current working directory" ) );
+
+		enable_buttons();
+		return;
 	}
-	else			// ultrascan_flag==false, result data is NOT selected.
+
+	QString     dirString = USglobal->config_list.result_dir;;
+	QDir        dir;
+	QString     tarfile;
+	QStringList entries;
+	QStringList files_processed;
+
+	// Create result data file
+	if ( ultrascan_flag )		
 	{
-		// Select equilibrium fitting or Monte Carlo project
-		if ( (run_type == 2) || (run_type == 3) )
+		switch ( run_type )
+		{
+			case 0:  // Velocity or equilibrium data
+			case 1:
+			{
+				mle->append( tr("<p>Creating Archive of UltraScan Data for Run " )
+				                 + filename + ":</p>\n" );
+
+				tarfile = filename + ".ultrascan-data.tar";
+				
+				// Get the list of files
+				QDir datadir;
+				datadir.setPath( dirString );
+				datadir.setNameFilter( filename + "*" );
+				entries = datadir.entryList();
+				break;
+			}
+
+			case 2:  // Equilibrium Fitting Project Data
+			{
+				mle->append(
+				   tr( "<p>Creating Archive of Equilibrium Fitting Project Data:<br>\n")
+				      + projectName + ":</p>\n" );
+
+				tarfile = projectName + ".ultrascan-data.tar";
+
+				// Get the list of files
+				QDir dat_dir;
+				dat_dir.setPath( dirString );
+				QString filter = projectName + "*.eq-project; " +
+				                 projectName + "*.dat; "        +
+				                 projectName + "*.eq_fit; "     +
+				                 projectName + "*.res; "        +
+				                 projectName + "*.dis; "        +
+				                 projectName + "*.lncr2; "      +
+				                 projectName + "*.mw*";
+
+				dat_dir.setNameFilter( filter );
+				entries = dat_dir.entryList();
+				break;
+			}
+
+			case 3:  // Monte Carlo Project Data
+			{
+				mle->append(
+				   tr( "<p>Creating Archive of Monte Carlo Project Data:<br>\n " )
+				      +  projectName + ":</p>\n" );
+				
+				tarfile = projectName + ".ultrascan-data.tar";
+				entries << projectName + ".Monte-Carlo " << projectName + ".mc";
+			}
+		}  // End switch ( run_type )
+
+		mle->append( "<p>" + tarfile + "</p>\n " );
+
+		if ( ! create_tar( dirString, tarfile, entries ) ) 
+			return;
+	}
+
+	entries.clear();
+
+	// Create report tar file
+	if ( reports_flag )  
+	{
+		switch ( run_type )
+		{
+			case 0:
+			case 1:
+				mle->append(
+				  tr( "<p>Creating Archive of HTML Reports for Run " ) +
+					filename + ":</p>\n" );
+
+				tarfile = filename + ".report-files.tar";
+				entries << filename;
+				break;
+
+			case 2:
+				mle->append(
+				  tr( "<p>Creating Archive of HTML Reports for Equilibrium "
+				       "Fitting Project: " ) +	projectName + ":</p>\n" );
+
+				tarfile = projectName + ".report-files.tar";
+				entries << projectName;
+				break;
+
+			case 3:
+				mle->append(
+				  tr( "<p>Creating Archive of HTML Reports for Monte Carlo "
+				       "Project Data: " ) + projectName + ":</p>\n" );
+
+				tarfile = projectName + ".report-files.tar";
+				entries << projectName + ".mc";
+		}
+
+		mle->append( "<p>" + tarfile + "</p>\n " );
+		
+		if ( ! create_tar( USglobal->config_list.html_dir, tarfile, entries ) ) 
+			return;
+	}
+
+	entries.clear();
+	QDir work;
+
+	// Create raw data tar file
+	
+	QString dirname = filename;
+
+	if ( ( run_type == 0 ) || ( run_type == 1 ) ) 
+	{
+		QString path = USglobal->config_list.data_dir + "/" + filename;
+
+		mle->append(
+		  tr("<p>Creating Archive of Raw Experimental Datafiles for Run " ) +
+			    filename + ":</p>\n");
+
+		work.setPath( path );
+
+		if ( ! work.exists() )
 		{
 			QMessageBox::message(
-			  tr( "UltraScan Error:") ,
-			  tr( "The UltraScan Data must be included for selecting project archive." ) );
+				tr( "UltraScan Warning:" ),
+				tr( "The required raw data directory does not exist:\n" + path + "\n"
+				    "Please select the raw data directory.") );
 
-			return;
-		}
+			QString new_dir = QFileDialog::getExistingDirectory(
+			  USglobal->config_list.data_dir, this,
+			  "get existing directory", "Choose a directory", true );
 
-		if ( reports_flag )    // Report data is selected
-		{
-			c_step = 1;
-		}
-
-		else    // reports_flag == false, report data is NOT selected
-		{
-			// Velocity or equilibrium data
-			if ( (run_type == 0) || (run_type == 1) )
+			if ( ! new_dir.isEmpty() )
 			{
-				c_step = 2;
+				// Assumes last char returned is a /
+				// This gets the last component of the directory path
+				work.setPath( new_dir );
+				int position = new_dir.findRev( "/", -2 );
+				new_dir  = new_dir.mid( position + 1, new_dir.length() - 1 );
+
+				if ( QString::compare( dirname, new_dir ) != 0 )
+				{
+					QMessageBox::message(
+					  tr( "UltraScan Warning:" ),
+					  tr( "New directory name is different than recorded name." ) );
+
+					dirname = new_dir;
+				}
 			}
-
-			// Equilibrium fitting or Monte Carlo project$
-			if ( (run_type == 2) || (run_type == 3) )
+			else
 			{
-				c_step = 3;
+				QMessageBox::message(
+				  tr( "UltraScan Error:" ),
+				  tr( "No raw data be selected, progam will be terminated." ) );
+
+				exit(0);
+			}
+		}
+
+		entries << dirname;
+		tarfile = filename + ".raw-data.tar";
+
+		mle->append( "<p>" + tarfile + "</p>\n " );
+
+		if ( ! create_tar( USglobal->config_list.data_dir, tarfile, entries ) ) 
+			return;
+	}
+
+	// Move tar files from different dirs to temp dir and tar them together
+	
+	QString tempdir   = USglobal->config_list.root_dir   + "/temp/";
+	QString resultdir = USglobal->config_list.result_dir + "/";
+	QString reportdir = USglobal->config_list.html_dir   + "/" ;
+	QString datadir   = USglobal->config_list.data_dir   + "/";
+	QString src;
+	QString dest;
+	QDir    temp;
+
+	if ( ( run_type == 0 ) || ( run_type == 1 ) )
+	{
+		src  = resultdir + filename + ".ultrascan-data.tar";
+		dest = tempdir   + filename + ".ultrascan-data.tar";
+		move_file( src, dest );
+
+		src  = reportdir + filename + ".report-files.tar";
+		dest = tempdir   + filename + ".report-files.tar";
+		move_file( src, dest );
+
+		src  = datadir + filename + ".raw-data.tar";
+		dest = tempdir + filename + ".raw-data.tar";
+		move_file( src, dest );
+
+		tarfile = filename + ".tar";
+	}
+	else // ( run_type == 2 ) || ( run_type == 3 )
+	{
+		src  = resultdir + projectName + ".ultrascan-data.tar";
+		dest = tempdir   + projectName + ".ultrascan-data.tar";
+		move_file( src, dest );
+
+		src  = reportdir + projectName + ".report-files.tar";
+		dest = tempdir   + projectName + ".report-files.tar";
+		move_file( src, dest );
+
+		if ( run_type == 2 ) 
+			tarfile = projectName + ".project.tar";
+		else // run_type == 3
+			tarfile = projectName + ".mc.project.tar";
+	}	
+
+	chdir( tempdir.ascii() );
+	temp.setPath( tempdir );
+	temp.setNameFilter( filename + "*.tar" );
+	entries = temp.entryList();
+
+	US_Tar tar;
+
+	int ret = tar.create( tarfile, entries );
+	if ( ret != TAR_OK )
+	{
+		QMessageBox::message(
+			 tr( "UltraScan tar Error:" ),
+			 tr( tar.explain( ret ) ) );
+
+		enable_buttons();
+		return;
+	}
+	
+	// gzip the tarfile of tarfiles
+
+	US_Gzip gzip;
+	
+	if ( ( ret = gzip.gzip( tarfile ) ) != GZIP_OK )
+	{
+		QMessageBox::message(
+		   tr( "UltraScan gzip Error:" ),
+		   tr( gzip.explain( ret ) ) );
+
+		enable_buttons();
+		return;
+	}
+	
+	// Move the gzipped file to the archive directory
+	
+	QString gzfile     = tarfile + ".gz";
+	QString archivedir = USglobal->config_list.archive_dir +"/";
+	
+	src                = tempdir    + gzfile;
+	dest               = archivedir + gzfile;
+	
+	QFile archive;
+	archive.setName( dest );
+	
+	while ( archive.exists() )
+	{
+		switch( QMessageBox::information( this,
+		  tr( "Ultrascan Warning:" ) ,
+		  tr( "Archive File '" + gzfile + "'\n"
+			    "already exists, overwrite?" ),
+			    "&Yes", "&Cancel", "Rename" ) )
+		{
+			case 0:
+				goto move;
+
+			case 1:
+				enable_buttons();
+				return;
+
+			case 2:
+			{
+				dest =
+				  QFileDialog::getSaveFileName( archivedir, "*.tar.gz", 0 );
+
+				archive.setName( dest );
+				break;
 			}
 		}
 	}
 
-	connect(create_proc, SIGNAL(readyReadStdout() ), this, SLOT(readCreate()       ));
-	connect(create_proc, SIGNAL(processExited()   ), this, SLOT(endCreateProcess() ));
-	endCreateProcess();
-}
+	move:
+	
+	move_file( src, dest );
 
-void US_Archive::readCreate()
-{
-	mle->insert( QDir::convertSeparators( create_proc->readStdout() ) );
-}
+	// Delete files if requested
 
-void US_Archive::endCreateProcess()
-{
-	QDir        work_dir;
-	QStringList entries;
-	QString     str;
-	QString     name_filter;
-
-	switch( c_step )
+	if ( delete_flag )
 	{
-		case 0:   // Create run data tar file in result dir
+		QString name_filter;
+
+		mle->append( tr( "<p>Deleting Source Files...</p>\n" ) );
+		
+		// Delete result files
+		
+		switch ( run_type )
 		{
-			create_proc->clearArguments();
-			work_dir.setPath( USglobal->config_list.result_dir );
-			create_proc->setWorkingDirectory( work_dir );
-			QStringList u_cmd;
-			u_cmd.append( "tar"  );
-			u_cmd.append( "-cvf" );
-
-			// Velocity or equilibrium data
-			if ( (run_type == 0) || (run_type == 1) )
-			{
-				str = data_control->run_inf.run_id + ".ultrascan-data.tar";
-			}
-
-			// Equilibrium fitting or Monte Carlo project
-			if ( (run_type == 2) || (run_type == 3) )
-			{
-				str = projectName + ".ultrascan-data.tar";
-			}
-
-			u_cmd.append( str );
-
-			// Velocity or equilibrium data
-			if ( (run_type == 0) || (run_type == 1) )
-			{
-				mle->insert( tr("\nCreating Archive of UltraScan Data for Run ")
-				                 + data_control->run_inf.run_id + "...\n\n");
-
-				QDir dat_dir;
-				dat_dir.setPath( USglobal->config_list.result_dir );
-
+			case 0: // Velocity or equilibrium data
+			case 1:
 				name_filter = filename + "*";
-				dat_dir.setNameFilter( name_filter );
-				entries = dat_dir.entryList();
+				break;
 
-				QStringList::Iterator it;
-				for ( it = entries.begin(); it != entries.end(); ++it )
-				{
-					u_cmd.append((*it).latin1());
-				}
-			}
-
-			if ( run_type == 2 ) // Equilibrium fitting project
-			{
-				mle->insert(
-						tr("\nCreating Archive of Equilibrium Fitting Project Data:\n\n ")
-						+ projectName + "...\n\n");
-
-				QDir dat_dir;
-				dat_dir.setPath( USglobal->config_list.result_dir );
-
+			case 2: // Equilibrium fitting project
 				name_filter = projectName + "*.eq-project; " +
 				              projectName + "*.dat; "        +
 				              projectName + "*.eq_fit; "     +
@@ -840,861 +964,331 @@ void US_Archive::endCreateProcess()
 				              projectName + "*.dis; "        +
 				              projectName + "*.lncr2; "      +
 				              projectName + "*.mw*";
+				break;
 
-				dat_dir.setNameFilter( name_filter );
-				entries = dat_dir.entryList();
-
-				QStringList::Iterator it;
-				for ( it = entries.begin(); it != entries.end(); ++it )
-				{
-					u_cmd.append((*it).latin1());
-				}
-			}
-
-			if ( run_type == 3 ) // Monte Carlo project
-			{
-				mle->insert(
-						tr("\nCreating Archive of Monte Carlo Project Data:\n\n ") +
-						projectName + "...\n\n");
-
-				QString filter1 = projectName + ".Monte-Carlo ";
-				QString filter2 = projectName + ".mc";
-				u_cmd.append( filter1 );
-				u_cmd.append( filter2 );
-			}
-
-			create_proc->setArguments( u_cmd );
-
-			if ( reports_flag )  // ultrascan_flag == true && reports_flag == true.
-			{
-				c_step = 1;
-			}
-			else                // ultrascan_flag == true && reports_flag == false.
-			{
-				if ( (run_type == 0) || (run_type == 1) )  // Velocity or equilibrium data
-				{
-					c_step = 2;
-				}
-				if ( (run_type == 2) || (run_type == 3) )  // Equilibrium fitting or Monte Carlo project
-				{
-					c_step = 3;
-				}
-			}
-
-			if ( ! create_proc->start() )
-			{
-				QMessageBox::message(
-						tr( "UltraScan Error:" ),
-						tr( "Unable to start process to create data archive.") );
-			}
-
-			break;
+			case 3:
+				name_filter = projectName + ".Monte-Carlo; " + projectName + ".mc";
+				break;
 		}
 
-		case 1:			// Create report tar file
+		work.setPath( resultdir );
+		work.setNameFilter( name_filter );
+		entries = work.entryList();
+
+		QStringList::Iterator it;
+		for ( it = entries.begin(); it != entries.end(); ++it )
 		{
-			create_proc->clearArguments();
-			work_dir.setPath(USglobal->config_list.html_dir);
-			create_proc->setWorkingDirectory( work_dir );
-
-			QStringList r_cmd;
-			r_cmd.append( "tar" );
-			r_cmd.append( "--mode=u+X" );
-			r_cmd.append( "-cvf" );
-
-			if ( (run_type == 0) || (run_type == 1) ) // Velocity or equilibrium data
-			{
-				mle->insert(
-				  tr("\nCreating Archive of HTML Reports for Run ") +
-				  data_control->run_inf.run_id + "...\n\n");
-
-				str = data_control->run_inf.run_id + ".report-files.tar";
-				r_cmd.append( str );
-				r_cmd.append( filename );
-			}
-
-			if ( run_type == 2 ) // Equilibrium fitting project
-			{
-				mle->insert(
-				  tr("\nCreating Archive of HTML Reports for Equilibrium Fitting Project:\n\n")
-				  + projectName + "...\n\n");
-
-				str = projectName + ".report-files.tar";
-				r_cmd.append( str );
-				r_cmd.append( projectName );
-			}
-
-			if ( run_type == 3 ) // Monte Carlo project
-			{
-				mle->insert(
-				  tr("\nCreating Archive of HTML Reports for Monte Carlo Project Data:\n\n ")
-				  + projectName + "...\n\n");
-
-				str = projectName + ".report-files.tar";
-				r_cmd.append( str );
-				r_cmd.append( projectName + ".mc" );
-			}
-
-			create_proc->setArguments( r_cmd );
-
-			if ( (run_type == 0) || (run_type == 1) )  // Velocity or equilibrium data
-			{
-				c_step = 2;
-			}
-			if ( (run_type == 2) || (run_type == 3) )  // Equilibrium fitting or Monte Carlo project
-			{
-				c_step = 3;
-			}
-
-			if ( ! create_proc->start() )
-			{
-				QMessageBox::message(
-					tr( "UltraScan Error:" ),
-					tr( "Unable to start process to create report archive." ) );
-			}
-
-			break;
+			work.remove( *it );
 		}
 
-		case 2:  // Create raw data tar file
+		QString report;
+
+		// Delete report file
+		switch ( run_type )
 		{
-			create_proc->clearArguments();
+			case 0: // Velocity or equilibrium data
+			case 1:
+			  report = reportdir + filename;
+				break;
 
-			QString dirname = data_control->run_inf.data_dir;
-			int position    = dirname.findRev( "/", -2, false );
-			dirname         = dirname.mid( position + 1, dirname.length() - 1 );
+			case 2: // Equilibrium fitting project
+				report = reportdir + projectName;
+				break;
 
-			mle->insert(tr("\nCreating Archive of Raw Experimental Datafiles for Run ") +
-			                QDir::convertSeparators( USglobal->config_list.data_dir +
-			                "/" + dirname ) + "...\n\n");
-
-			str = USglobal->config_list.data_dir + "/" + dirname;
-			work_dir.setPath( str );
-
-			if ( ! work_dir.exists() )
-			{
-				QMessageBox::message(
-					tr( "UltraScan Warning:" ),
-					tr( "The required raw data directory does not exist:\n" + str + "\n"
-					    "Please select the raw data directory.") );
-
-				QString new_dir = QFileDialog::getExistingDirectory(
-				  USglobal->config_list.data_dir, this,
-				  "get existing directory", "Choose a directory",true);
-
-				if ( ! new_dir.isEmpty() )
-				{
-					work_dir.setPath( new_dir );
-					position = new_dir.findRev( "/", -2, false );
-					new_dir  = new_dir.mid( position + 1, new_dir.length() - 1 );
-
-					if ( QString::compare( dirname, new_dir ) != 0 )
-					{
-						QMessageBox::message(
-						  tr( "UltraScan Warning:" ),
-						  tr( "New directory name is different than recorded name." ) );
-
-						dirname = new_dir;
-					}
-				}
-				else
-				{
-					QMessageBox::message(
-					  tr( "UltraScan Error:" ),
-					  tr( "No raw data be selected, progam will be terminated." ) );
-
-					exit(0);
-				}
-			}
-
-			work_dir.cdUp();
-			current_data_dir = work_dir.path();
-			create_proc->setWorkingDirectory( work_dir );
-
-			QStringList c_cmd;
-			c_cmd.append( "tar" );
-			c_cmd.append( "--mode=u+X" );
-			c_cmd.append( "-cvf" );
-			c_cmd.append( data_control->run_inf.run_id + ".raw-data.tar" );
-			c_cmd.append( dirname );
-
-			create_proc->setArguments( c_cmd );
-
-			c_step = 3;
-
-			if ( ! create_proc->start() )
-			{
-				QMessageBox::message(
-				  tr( "UltraScan Error:" ),
-				  tr( "Unable to start process to create raw data archive." ) );
-			}
-
-			break;
+			case 3: // Monte Carlo project
+				report = reportdir + projectName + ".mc";
+				break;
 		}
 
-		case 3:  // Move tar files from different dir to temp dirs and compress temp-dir
+		work.setPath( report );
+		entries = work.entryList( "*" );
+
+		for ( it = entries.begin(); it != entries.end(); ++it )
 		{
-			QString result_tar_file, report_tar_file, rawdata_tar_file;
-			QString result_dst_file, report_dst_file, rawdata_dst_file;
+			if ( *it == "."  ||  *it == ".." ) continue;
+			work.remove( *it );
+		}
 
-			// Velocity or equilibrium data result tar file
-			if ( (run_type == 0) || (run_type == 1) )
-			{
-				result_tar_file = USglobal->config_list.result_dir + "/" +
-				  data_control->run_inf.run_id + ".ultrascan-data.tar";
+		work.cdUp();
 
-				result_dst_file = USglobal->config_list.root_dir + "/temp/" +
-				  data_control->run_inf.run_id + ".ultrascan-data.tar";
+		switch ( run_type )
+		{
+			case 0: // Velocity or equilibrium data
+			case 1:
+			  work.rmdir( filename );
+				break;
 
-				report_tar_file = USglobal->config_list.html_dir + "/" +
-				  data_control->run_inf.run_id + ".report-files.tar";
+			case 2: // Equilibrium fitting or Monte Carlo project
+			case 3: 
+				work.rmdir( projectName );
+				break;
+		}
 
-				report_dst_file = USglobal->config_list.root_dir + "/temp/" +
-				  data_control->run_inf.run_id + ".report-files.tar";
+		// Delete data file
 
-				rawdata_tar_file = current_data_dir + "/" +
-				  data_control->run_inf.run_id + ".raw-data.tar";
 
-				rawdata_dst_file = USglobal->config_list.root_dir + "/temp/" +
-				  data_control->run_inf.run_id + ".raw-data.tar";
-			}
-
-			// Equilibrium fitting or Monte Carlo project result tar file
-			if ( (run_type == 2) || (run_type == 3) )
-			{
-				result_tar_file = USglobal->config_list.result_dir + "/" +
-				  projectName + ".ultrascan-data.tar";
-
-				result_dst_file = USglobal->config_list.root_dir + "/temp/" +
-				  projectName + ".ultrascan-data.tar";
-
-				report_tar_file = USglobal->config_list.html_dir + "/" +
-				  projectName + ".report-files.tar";
-
-				report_dst_file = USglobal->config_list.root_dir + "/temp/" +
-				  projectName + ".report-files.tar";
-			}
-
-			QFile resultFile( result_tar_file );
-
-			if ( resultFile.exists() )
-			{
-				int rp = Move( result_tar_file, result_dst_file );
-
-				if ( rp < 0 )
+		switch ( run_type )
+		{
+			case 0: // Velocity or equilibrium data
+			case 1:
 				{
-					QMessageBox::message(
-					  tr( "UltraScan Error:" ),
-					  tr( "Unable to move result tar file from result dir to temp dir.\n"
-						    "the compress archive is failed.\n\n"
-						    "Error Code in Move function : " + QString::number( rp ) ) );
-
-					exit(0);
+			  work.rmdir( filename );
+				break;
 				}
-			}
 
-			QFile reportFile(report_tar_file);
+			case 2: // Equilibrium fitting or Monte Carlo project
+			case 3: 
+				break;
+		}
 
-			if ( reportFile.exists() )
-			{
-				int rp = Move( report_tar_file, report_dst_file );
+		if ( (run_type == 0) || (run_type == 1) ) // Velocity or equilibrium data
+		{
+			QString dirname  = filename;
+			work.setPath( datadir + dirname );
+			entries = work.entryList( "*" );
 
-				if ( rp < 0 )
-				{
-					QMessageBox::message(
-					  tr( "UltraScan Error:" ),
-					  tr( "Unable to move report tar file from result dir to temp dir.\n"
-						    "the compress archive is failed.\n\n"
-						    "Error Code in Move function : " + QString::number(rp) ) );
-
-					exit(0);
-				}
-			}
-
-			QFile rawdataFile(rawdata_tar_file);
-
-			if ( rawdataFile.exists() )
-			{
-				int rp = Move( rawdata_tar_file, rawdata_dst_file );
-
-				if ( rp < 0 )
-				{
-					QMessageBox::message(
-					  tr( "UltraScan Error:" ),
-					  tr( "Unable to move rawdata tar file from result dir to temp dir.\n"
-						    "the compress archive is failed.\n\n"
-						    "Error Code in Move function : " + QString::number( rp ) ) );
-
-					exit(0);
-				}
-			}
-
-			create_proc->clearArguments();
-			mle->insert(tr("\nCombining Sub-Archives...\n\n"));
-			work_dir.setPath( USglobal->config_list.root_dir + "/temp/" );
-			create_proc->setWorkingDirectory( work_dir );
-
-			QStringList t_cmd;
-			t_cmd.append("tar");
-			t_cmd.append("-cvf");
-
-			if ( ( run_type == 0) || (run_type == 1) ) // Velocity or equilibrium data
-			{
-				str = data_control->run_inf.run_id + ".tar";
-			}
-
-			if ( run_type == 2 ) // Equilibrium fitting project
-			{
-			 	str = projectName + ".project.tar";
-			}
-
-			if ( run_type == 3 ) // Monte Carlo project
-			{
-				str = projectName + ".mc.project.tar";
-			}
-
-			t_cmd.append( str );
-
-			QDir dat_dir;
-			dat_dir.setPath( USglobal->config_list.root_dir + "/temp/" );
-
-			name_filter=filename + "*.tar";
-			dat_dir.setNameFilter(name_filter);
-			entries = dat_dir.entryList();
-
-			QStringList::Iterator it;
 			for ( it = entries.begin(); it != entries.end(); ++it )
 			{
-				t_cmd.append((*it).latin1());
+				if ( *it == "."  ||  *it == ".." ) continue;
+				work.remove( *it );
 			}
 
-			create_proc->setArguments(t_cmd);
-			c_step = 4;
-
-			if ( ! create_proc->start() )
-			{
-				QMessageBox::message(
-				  tr( "UltraScan Error:" ),
-				  tr( "Unable to start process to compress tar file." ) );
-			}
-
-			break;
-		}
-
-		case 4:  // gzip temp-dir tar file
-		{
-			create_proc->clearArguments();
-			mle->insert(tr( "\nCompressing Archive in Background...\n" ) );
-			work_dir.setPath( USglobal->config_list.root_dir + "/temp/" );
-			create_proc->setWorkingDirectory( work_dir );
-			QStringList g_cmd;
-
-			g_cmd.append( "gzip" );
-			g_cmd.append( "-f9" );
-
-			if ( (run_type == 0) || (run_type == 1) ) // Velocity or equilibrium data
-			{
-				str = data_control->run_inf.run_id + ".tar";
-			}
-
-			if ( run_type == 2 ) // Equilibrium fitting project
-			{
-				str = projectName + ".project.tar";
-			}
-
-			if ( run_type == 3 ) // Monte Carlo project
-			{
-				str = projectName + ".mc.project.tar";
-			}
-
-			g_cmd.append(str);
-			create_proc->setArguments(g_cmd);
-			c_step = 5;
-
-			if ( ! create_proc->start() )
-			{
-				QMessageBox::message(
-				  tr( "UltraScan Error:" ),
-				  tr( "Unable to start process to gzip tar file on temp dir." ) );
-			}
-
-			break;
-		}
-
-		case 5:
-		{
-			QString temp_gz_str, gz_str;
-
-			if ( ( run_type == 0 ) || ( run_type == 1 ) ) // Velocity or equilibrium data
-			{
-				temp_gz_str = USglobal->config_list.root_dir + "/temp/" +
-				  data_control->run_inf.run_id + ".tar.gz";
-
-				gz_str = USglobal->config_list.archive_dir + "/" +
-				  data_control->run_inf.run_id + ".tar.gz";
-			}
-
-			if ( run_type == 2 )  // Equilibrium fitting project
-			{
-				temp_gz_str = USglobal->config_list.root_dir + "/temp/" +
-				  projectName + ".project.tar.gz";
-
-				gz_str = USglobal->config_list.archive_dir + "/" +
-				  projectName + ".project.tar.gz";
-			}
-
-			if ( run_type == 3 )  // Monte Carlo project
-			{
-				temp_gz_str = USglobal->config_list.root_dir + "/temp/" +
-				  projectName + ".mc.project.tar.gz";
-				gz_str = USglobal->config_list.archive_dir +"/"+ projectName + ".mc.project.tar.gz";
-			}
-
-			QFile gzFile( gz_str );
-
-			if ( gzFile.exists() )
-			{
-				switch( QMessageBox::information( this,
-				  tr( "Ultrascan Warning:" ) ,
-				  tr( "Archive File '" + gz_str + "'\n"
-					    "already exists, overwrite?" ),
-					    "&Yes", "&Cancel", "Rename" ) )
-				{
-					case 0:
-					{
-						if ( Move( temp_gz_str, gz_str ) < 0 )
-						{
-							QMessageBox::message(
-							  tr( "UltraScan Error:" ),
-							  tr( "Unable to overwrite the old archive file." ) );
-
-			          enable_buttons();
-			          delete create_proc;
-								return;
-						}
-
-						break;
-					}
-
-					case 2:
-					{
-						QString savefilename =
-						  QFileDialog::getSaveFileName( USglobal->config_list.archive_dir, "*.tar.gz", 0 );
-
-						if ( ! savefilename.isEmpty() )
-						{
-								int rp = savefilename.find( ".tar.gz", 1, false );
-
-								if ( rp == -1 )	// Not found
-								{
-									savefilename = savefilename + ".tar.gz";
-								}
-
-								if ( Move( temp_gz_str, savefilename ) < 0 )
-								{
-									QMessageBox::message(
-									  tr( "UltraScan Error:" ),
-									  tr( "Unable to move compressed file from temp dir to "
-										    "create a new archive file.\n" ) );
-
-			          		enable_buttons();
-			          		delete create_proc;
-										return;
-								}
-						}
-
-						break;
-					}
-				}
-			}
-			else  // New file
-			{
-				if ( Move( temp_gz_str, gz_str ) < 0 )
-				{
-					QMessageBox::message(
-					  tr( "UltraScan Error:" ),
-					  tr( "Unable to move compressed file from temp dir to archive dir.\n" ) );
-
-			      enable_buttons();
-			      delete create_proc;
-						return;
-				}
-			}
-
-			if ( delete_flag )  // Delete source file option is selected
-			{
-				mle->insert( tr( "\nDeleting Source Files...\n" ) );
-				// Delete result file
-
-				if ( (run_type == 0 ) || ( run_type == 1 ) ) // Velocity or equilibrium data
-				{
-					name_filter = filename + "*";
-				}
-
-				if ( run_type == 2 ) // Equilibrium fitting project
-				{
-					name_filter = projectName + "*.eq-project; " +
-					              projectName + "*.dat; "        +
-					              projectName + "*.eq_fit; "     +
-					              projectName + "*.res; "        +
-					              projectName + "*.dis; "        +
-					              projectName + "*.lncr2; "      +
-					              projectName + "*.mw*";
-				}
-
-				if ( run_type == 3 ) // Monte Carlo project
-				{
-					name_filter = projectName + ".Monte-Carlo; " + projectName + ".mc";
-				}
-
-				work_dir.setPath( USglobal->config_list.result_dir );
-cerr << "Path set to " << USglobal->config_list.result_dir << endl;
-				work_dir.setNameFilter( name_filter );
-				entries = work_dir.entryList();
-
-				QStringList::Iterator it;
-				for ( it = entries.begin(); it != entries.end(); ++it )
-				{
-cerr << "Deleting " << *it << endl;
-					work_dir.remove((*it).latin1());
-				}
-
-				// Delete report file
-				if ( (run_type == 0) || (run_type == 1) ) // Velocity or equilibrium data
-				{
-					str = USglobal->config_list.html_dir + "/" + filename;
-				}
-
-				if ( run_type == 2 ) // Equilibrium fitting project
-				{
-					str = USglobal->config_list.html_dir + "/" + projectName;
-				}
-
-				if (run_type == 3) // Monte Carlo project
-				{
-					str = USglobal->config_list.html_dir + "/" + projectName + ".mc";
-				}
-
-				work_dir.setPath( str );
-				entries = work_dir.entryList( "*" );
-
-				for ( it = entries.begin(); it != entries.end(); ++it )
-				{
-					if ( *it == "."  ||  *it == ".." ) continue;
-					work_dir.remove((*it).latin1());
-				}
-
-				work_dir.cdUp();
-
-				if ( (run_type == 0) || (run_type == 1) ) // Velocity or equilibrium data
-				{
-					work_dir.rmdir( filename );
-				}
-				if ((run_type == 2) || (run_type == 3)) // Equilibrium fitting or Monte Carlo project
-				{
-					work_dir.rmdir( projectName );
-				}
-
-				// Delete data file
-				if ( (run_type == 0) || (run_type == 1) ) // Velocity or equilibrium data
-				{
-					QString dirname = data_control->run_inf.data_dir;
-					int position    = dirname.findRev( "/", -2, false );
-					dirname         = dirname.mid( position + 1, dirname.length() - 1 );
-
-					str = USglobal->config_list.data_dir + "/" + dirname;
-					work_dir.setPath( str );
-
-					entries = work_dir.entryList( "*" );
-
-					for ( it = entries.begin(); it != entries.end(); ++it )
-					{
-						if ( *it == "."  ||  *it == ".." ) continue;
-						work_dir.remove((*it).latin1());
-					}
-
-					work_dir.cdUp();
-					work_dir.rmdir( dirname );
-				}
-			}
-
-			//Finish the creation job
-			mle->insert( tr( "\nArchive Creation finished...\n" ) );
-			enable_buttons();
-			delete create_proc;
+			work.cdUp();
+			work.rmdir( dirname );
 		}
 	}
 
+	mle->append( tr( "<p>Archive Creation finished:</p>\n" ) );
+	mle->append( "<p>" + gzfile + "</p>\n " );
+
+	enable_buttons();
 	pb_create->setEnabled( false );
+	chdir( cwd );
 }
 
-void US_Archive::extract_archive()
+void US_Archive::move_file( const QString& src, const QString& dest )
 {
-	fn = QFileDialog::getOpenFileName(
-	        USglobal->config_list.archive_dir, "*.tar.gz", 0);
+	QFile f( src );
+	if ( ! f.exists() ) return;
 
-	if ( ! fn.isEmpty() )
+	int result = Move( src, dest );
+
+	if ( result < 0 )
 	{
-		fn.replace( "\\", "/" ); // Convert for WIN32 backslashes
-		int start_pos = fn.findRev( "/" ) + 1;
-		extract_filename = fn.mid( start_pos );
+		QMessageBox::message(
+		  tr( "UltraScan Error:" ),
+		  tr( "Unable to move file to destination."
+		      "\nSource     : " ) + src  + 
+		  tr( "\nDestination: " ) + dest + 
+		  tr( "\nError Code in Move function : " ) + QString::number( result ) + 
+		  tr( "\nTerminating" ) );
 
-		clean_temp_dir();
-		mle->clear();
-		mle->insert( tr( "\nExtracting Archive: \n") +
-		  QDir::convertSeparators( fn ) + ": \n\n" );
-
-		disable_buttons();
-		extract_proc = new QProcess(this);
-
-		//copy tar.gz fie to temp dir for uncompress
-		int cr = copy( fn, USglobal->config_list.root_dir + "/temp/" + extract_filename );
-
-		if ( cr == 0 )
-		{
-			e_step = 0;
-			connect(extract_proc, SIGNAL(readyReadStdout() ), this, SLOT(readExtract()       ) );
-			connect(extract_proc, SIGNAL(processExited()   ), this, SLOT(endExtractProcess() ) );
-			endExtractProcess();
-		}
-		else
-		{
-			QMessageBox::information( this,
-			  tr( "UltraScan Error:" ),
-			  tr( "Unable to copy archive to temp dir for extraction." ) );
-			return;
-		}
+		exit(0);
 	}
 }
 
-void US_Archive::readExtract()
+bool US_Archive::create_tar( const QString& dirString, 
+		                         const QString& tarfile, 
+														 QStringList&   entries )
 {
-	mle->insert( QDir::convertSeparators( extract_proc->readStdout() ) );
+	US_Tar      tar;
+	QStringList files_processed;	
+
+	chdir( dirString.ascii() );
+
+	int ret = tar.create( tarfile, entries, &files_processed );
+	if ( ret != TAR_OK )
+	{
+		QMessageBox::message(
+			 tr( "UltraScan tar Error:" ),
+			 tr( tar.explain( ret ) ) );
+			
+		enable_buttons();
+		return false;
+	}
+
+	QString list = "<pre>\n" + files_processed.join( "\n" ) + "</pre>\n";
+	mle->append( list );
+
+	return true;
 }
 
-void US_Archive::endExtractProcess()
+/******************************************************************************/
+void US_Archive::extract_archive( void )
 {
-	QStringList           entries;
-	QStringList::Iterator it;
+	QString fn = QFileDialog::getOpenFileName(
+	        USglobal->config_list.archive_dir, "*.tar.gz", 0 );
 
-	QString     str;
+	if ( fn.isEmpty() ) return;
 
-	QFile       rawFile;
-	QFile       resultFile;
-	QFile       reportFile;
+	
+	fn.replace( "\\", "/" ); // Convert for WIN32 backslashes
+	int start_pos = fn.findRev( "/" ) + 1;
+	QString tarGzFile = fn.mid( start_pos );
+
+	clean_temp_dir();
+	mle->clear();
+
+	mle->append( tr( "<qt><p>Extracting Archive: \n") +
+	  QDir::convertSeparators( fn ) + "</p>\n" );
+
+	disable_buttons();
+
+	// Copy tar.gz fie to temp dir for uncompress
+
+	QString tempdir = USglobal->config_list.root_dir + "/temp/";
+	int cr = copy( fn, tempdir + tarGzFile );
+
+	if ( cr != 0 )
+	{
+		QMessageBox::information( this,
+		  tr( "UltraScan Error:" ),
+		  tr( "Unable to copy archive to temp dir for extraction." ) );
+
+		enable_buttons();
+		return;
+	}
+
+  // gunzip the file
+	// Save the current directory and cnage to the temp directory
+	
+	char cwd[ 256 ];
+	if ( getcwd( cwd, sizeof cwd ) == 0 )
+	{
+		QMessageBox::message(
+		   tr( "UltraScan Error:" ),
+		   tr( "Could not get current working directory" ) );
+
+		enable_buttons();
+		return;
+	}
+
+	int errno = chdir( tempdir.ascii() );
+	if ( errno != 0 )
+	{
+	  QString e = QString( "%1" ).arg( errno );
+		QMessageBox::message(
+		   tr( "UltraScan Error:" ),
+		   tr( "Could not change working directory\n" + tempdir + 
+				   "\nError number = " + e ) );
+
+		enable_buttons();
+		return;
+	}
+
+	// gunzip the file
+	US_Gzip gzip;
+
+	int ret = gzip.gunzip( tarGzFile );
+	if ( ret != GZIP_OK )
+	{
+		QMessageBox::message(
+		   tr( "UltraScan gzip Error:" ),
+		   tr( gzip.explain( ret ) ) );
+
+		enable_buttons();
+		return;
+	}
+
+	// untar the file
+	// Assume extract_filename is something.tar.gz
+
+	US_Tar      tar;
+	QString     tarfile = tarGzFile.left( tarGzFile.length() - 3 );
+
+	// Extract the files
+	ret = tar.extract( tarfile );
+	if ( ret != TAR_OK )
+	{
+		QMessageBox::message(
+		   tr( "UltraScan tar Error:" ),
+		   tr( tar.explain( ret ) ) );
+
+		enable_buttons();
+		return;
+	}
+
+	unlink ( tarfile.ascii() );
+
+	// Move tar file to according dir and then uncompress result-data files
 
 	QDir        work_dir;
-	work_dir.setPath( USglobal->config_list.root_dir + "/temp" );
-	extract_proc->setWorkingDirectory( work_dir );
-	extract_proc->clearArguments();
+	QStringList entries;
 
-	switch( e_step )
+	work_dir.setPath( tempdir );
+	work_dir.setNameFilter( "*.tar" );
+	entries = work_dir.entryList();
+
+	QStringList::Iterator it;
+	for ( it = entries.begin(); it != entries.end(); ++it )
 	{
-		case 0:		// unzip the *.tar.gz file
-			extract_proc->addArgument( "gzip");
-			extract_proc->addArgument( "-d");
-			extract_proc->addArgument( extract_filename );
+		chdir( tempdir.ascii() );
+		tarfile = *it;
 
-			e_step = 1;
+		// Results
+		if ( tarfile.contains( ".ultrascan-data.tar", false ) > 0 )
+		{
+			QString result_dir = USglobal->config_list.result_dir + "/";
+			extract( tarfile, "Result", result_dir, true );
+		}
 
-			if ( ! extract_proc->start() )
-			{
-				QMessageBox::message(
-				  tr( "UltraScan Error:" ),
-				  tr( "Unable to start process to unzip archive." ) );
-			}
+		// Reports
+		else if ( tarfile.contains( ".report-files.tar", false ) > 0 )
+		{
+			QString report_dir = USglobal->config_list.html_dir + "/";
+			extract( tarfile, "Report", report_dir, true );
+		}
 
-			break;
-
-		case 1:			// tar -xf *.tar file
-			extract_filename = extract_filename.left( extract_filename.length() - 3 );
-
-			extract_proc->addArgument( "tar" );
-			extract_proc->addArgument( "-xvf" );
-			extract_proc->addArgument( extract_filename );
-
-			e_step = 2;
-
-			if ( ! extract_proc->start() )
-			{
-				QMessageBox::message(
-				  tr( "UltraScan Error:" ),
-				  tr( "Unable to start process to extract *.tar file." ) );
-			}
-
-			break;
-
-		// Move tar file to according dir and then uncompress result-data file
-		case 2:
-			work_dir.setNameFilter( "*.tar" );
-			entries = work_dir.entryList();
-
-			for ( it = entries.begin(); it != entries.end(); ++it )
-			{
-				str = (*it).latin1();
-
-				if ( str.contains( ".ultrascan-data.tar", false ) > 0 )
-				{
-					result_file = str;
-					resultFile.setName( USglobal->config_list.root_dir + "/temp/" + result_file );
-
-					if ( resultFile.exists() )
-					{
-						copy( USglobal->config_list.root_dir   + "/temp/" + result_file,
-						      USglobal->config_list.result_dir + "/"      + result_file);
-					}
-				}
-
-				if ( str.contains(".report-files.tar", false ) > 0 )
-				{
-					report_file = str;
-					reportFile.setName( USglobal->config_list.root_dir + "/temp/" + report_file );
-					copy( USglobal->config_list.root_dir + "/temp/" + report_file,
-					      USglobal->config_list.html_dir + "/"      + report_file);
-				}
-
-				if ( str.contains( ".raw-data.tar", false ) > 0 )
-				{
-					raw_file = str;
-					rawFile.setName( USglobal->config_list.root_dir + "/temp/" + raw_file );
-					copy( USglobal->config_list.root_dir + "/temp/" + raw_file,
-					      USglobal->config_list.data_dir + "/"      + raw_file);
-				}
-			}
-
-			mle->insert(tr("\n\nRestoring Result Sub-Archive \n") +
-			    QDir::convertSeparators( USglobal->config_list.result_dir +
-					"/"+ result_file ) + ": \n\n");
-
-			work_dir.setPath( USglobal->config_list.result_dir );
-			extract_proc->setWorkingDirectory( work_dir );
-
-			extract_proc->addArgument( "tar" );
-			extract_proc->addArgument( "-xvf" );
-			extract_proc->addArgument( result_file );
-
-			if ( reportFile.exists() )	//result file exists
-			{
-					e_step = 3;
-			}
-
-			if ( ! reportFile.exists() && rawFile.exists() )
-			{
-					e_step = 4;
-			}
-
-			if ( ! reportFile.exists() && ! rawFile.exists() )
-			{
-					e_step = 5;
-			}
-
-			if ( ! extract_proc->start() )
-			{
-				QMessageBox::message(
-				  tr( "UltraScan Error:" ),
-				  tr( "Unable to start process to extract raw data file." ) );
-			}
-
-			break;
-
-		case 3:	// For uncompressing report-data file
-			mle->insert( tr( "\n\nRestoring Report Sub-Archive \n") +
-			    QDir::convertSeparators( USglobal->config_list.html_dir +
-			    "/" + report_file ) + ": \n\n" );
-
-			work_dir.setPath( USglobal->config_list.html_dir );
-			extract_proc->setWorkingDirectory( work_dir );
-
-			extract_proc->addArgument( "tar" );
-			extract_proc->addArgument( "-xvf" );
-			extract_proc->addArgument( report_file );
-
-			rawFile.setName( USglobal->config_list.data_dir + "/" + raw_file );
-
-			if ( rawFile.exists() )	// result file exists
-			{
-				e_step = 4;
-			}
-			else
-			{
-				e_step = 5;
-			}
-
-			if ( ! extract_proc->start() )
-			{
-				QMessageBox::message(
-				  tr( "UltraScan Error:" ),
-				  tr( "Unable to start process to extract report file." ) );
-			}
-
-			break;
-
-		// velocity or equilibrium data, uncompress raw data.
-		case 4:
-			mle->insert( tr( "\n\nRestoring Raw Data Sub-Archive \n" ) +
-			    QDir::convertSeparators( USglobal->config_list.data_dir
-			    + "/" + raw_file ) + ": \n\n");
-
-			work_dir.setPath( USglobal->config_list.data_dir );
-			extract_proc->setWorkingDirectory( work_dir );
-
-			extract_proc->addArgument( "tar" );
-			extract_proc->addArgument( "-xvf" );
-			extract_proc->addArgument( raw_file );
-
-			e_step = 5;
-
-			if ( ! extract_proc->start() )
-			{
-				QMessageBox::message(
-				  tr( "UltraScan Error:" ),
-				  tr( "Unable to start process to extract raw data file." ) );
-			}
-
-			break;
-
-		case 5:	//Finish extracting archive and clear tar file
-			QFile tarFile( USglobal->config_list.data_dir + "/" + raw_file );
-
-			if ( tarFile.exists() )
-			{
-				tarFile.remove();
-			}
-
-			tarFile.setName( USglobal->config_list.result_dir + "/" + result_file );
-
-			if ( tarFile.exists() )
-			{
-				tarFile.remove();
-			}
-
-			tarFile.setName( USglobal->config_list.html_dir + "/" + report_file );
-
-			if ( tarFile.exists() )
-			{
-				tarFile.remove();
-			}
-
-			work_dir.setPath( USglobal->config_list.root_dir + "/temp/" );
-			work_dir.setNameFilter( "*.*" );
-			entries = work_dir.entryList();
-
-			for ( it = entries.begin(); it != entries.end(); ++it )
-			{
-				work_dir.remove((*it).latin1());
-			}
-
-			mle->insert( tr( "\nFinished Restoring Archive " ) +
-					QDir::convertSeparators( fn ) + "...\n" );
-
-			enable_buttons();
-			delete extract_proc;
+		// Raw data
+		else if ( tarfile.contains( ".raw-data.tar", false ) > 0 )
+		{
+			QString data_dir = USglobal->config_list.data_dir + "/";
+			extract( tarfile, "Raw Data", data_dir, true );
+		}
 	}
+
+	enable_buttons();
+	chdir( cwd ); // Restore original working directory
 }
 
-void US_Archive::help()
+void US_Archive::extract( const QString& tarfile, 
+                          const QString& label,
+                          const QString& dir,
+                          const bool     verbose )
 {
-	US_Help *online_help; online_help = new US_Help(this);
-	online_help->show_help("manual/archive.html");
+	QString tempdir = USglobal->config_list.root_dir + "/temp/";
+	copy( tempdir + tarfile, dir + tarfile );
+	chdir ( dir.ascii() );
+
+	QStringList files;
+			
+	// Extract the files
+	mle->append( tr( "<p>Restoring " + label + " Sub-Archive<br>\n") +
+			    QDir::convertSeparators( dir + tarfile ) + ":</p>\n" );
+
+	US_Tar tar;
+	int    ret;
+
+	if ( verbose )
+		ret = tar.extract( tarfile, &files );
+	else 
+		ret =  tar.extract( tarfile );
+	
+	if ( ret != TAR_OK )
+	{
+		QMessageBox::message(
+			tr( "UltraScan tar Error:" ),
+			tr( tar.explain( ret ) ) );
+
+		return;
+	}
+
+	if ( verbose )
+	{
+		QString pre_string = "<pre>" + files.join( "\n" ) + "</pre>\n";
+		mle->append( pre_string ); 
+	}
+
+	unlink ( tarfile.ascii() );
 }
 

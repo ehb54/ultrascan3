@@ -205,12 +205,14 @@ US_Gzip::US_Gzip()
 
 int US_Gzip::gzip( const QString& filename )
 {
+	bytes_out = 0;
   return treat_file( filename, FALSE );
 }
 
 int US_Gzip::gunzip( const QString& filename )
 {
-   return treat_file( filename, TRUE );
+	bytes_out = 0;
+  return treat_file( filename, TRUE );
 }
 
 int US_Gzip::treat_file( const QString& iname, bool decompress )
@@ -230,12 +232,6 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
   QDateTime    lastMod    = filename.lastModified();
   
   filetime = lastMod.toTime_t();
-  //unsigned int ownerID    = filename.ownerId();
-  //unsigned int groupID    = filename.groupId();
-
-  //printf( "time_stamp=%d, ownerID=%d, groupID=%d\n", time_stamp, ownerID, groupID );
-  //cout << "Modi time = " << lastMod.toString() << endl;
-  //cout << "Read time = " << lastRead.toString() << endl;
 
   ifd = open( iname.ascii(), O_RDONLY );
   if ( ifd < 0 ) return GZIP_READERROR;
@@ -263,9 +259,6 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
     if ( signature[0] != (char) 0x1f  || 
          signature[1] != (char) 0x8b ) return GZIP_NOTGZ;
 
-    //printf( "Signature = 0x%2x, 0x%2x\n", 
-    //    (unsigned char)signature[0], (unsigned char)signature[1] );
-
     // One byte method.  Only 0x08, deflate, is supported
     char method;
     count = read( ifd, &method, 1 );
@@ -276,8 +269,6 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
       return GZIP_READERROR;
     }
     
-    // printf( "Method = 0x%02x\n", (unsigned char) method );
-
     // One byte flags.  00111111.  Only bit 3 ( file name present ) is supported
     // Bit 0 is ignored.  Bits 1,2,4,5 (multi-part, extra field, comment,
     // encrypyion) are flagged as unsupported.
@@ -1444,7 +1435,6 @@ int US_Gzip::inflate_dynamic()
   {
     if ( i == 1 ) 
     {
-      //fprintf(stderr, " incomplete literal tree\n");
       huft_free( tl );
     }
 
@@ -1456,7 +1446,6 @@ int US_Gzip::inflate_dynamic()
   {
     if (i == 1) 
     {
-      //fprintf(stderr, " incomplete distance tree\n");
       huft_free( td );
     }
 

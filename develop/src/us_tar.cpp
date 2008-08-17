@@ -49,15 +49,17 @@
 #include <iostream>
 using namespace std;
 
-int US_Tar::create( const QString& archive, const QString& directory )
+int US_Tar::create( const QString& archive, const QString& directory,
+		                QStringList* list )
 {
 	// Just put the directory in a list and create the file that way.
 	QStringList dir;
 	dir << directory;
-	return create( archive, dir );
+	return create( archive, dir, list );
 }
 
-int US_Tar::create( const QString& archive, const QStringList& files )
+int US_Tar::create( const QString& archive, const QStringList& files,
+		                QStringList* list )
 {
 
   // To crate the file, we do the following:
@@ -70,6 +72,8 @@ int US_Tar::create( const QString& archive, const QStringList& files )
 	// 3.  Write two null headers (512 bytes)
 	
   QStringList all;
+
+	if ( list ) list->clear();
 
 	for ( unsigned int i = 0; i < files.size(); i++ )
 	{
@@ -99,6 +103,7 @@ int US_Tar::create( const QString& archive, const QStringList& files )
 			continue;   
 		}
 
+
 		// Append regular files to the list
 		if ( f.isFile() )
 		{
@@ -108,10 +113,7 @@ int US_Tar::create( const QString& archive, const QStringList& files )
 		// Block and character devices, pipes, and symbolic links should be ignored
 	}
 
-	// Debug -- list the files
-	QStringList::Iterator it = all.begin();
-	//while ( it != all.end() ) cout << *it++ << endl;
-
+	if ( list ) *list = all;
   // Process all files
 
 #ifndef O_BINARY
@@ -123,11 +125,12 @@ int US_Tar::create( const QString& archive, const QStringList& files )
 	//cout << "ofd=" << ofd << endl;
 	if ( ofd < 0 ) return TAR_CANNOTCREATE;
 
-	it             = all.begin();
-	blocks_written = 0;
+	QStringList::iterator it = all.begin();
+	blocks_written           = 0;
 
 	try
 	{
+
 		while ( it != all.end() )
 		{
 			write_file ( *it++ );
@@ -374,7 +377,7 @@ void US_Tar::flush_buffer( void )
 }
 
 ///////////////////////////
-int US_Tar::extract( const QString& archive )
+int US_Tar::extract( const QString& archive, QStringList* list )
 {
 	/* 1. Open the archve
 	 * 2. while header is not null
@@ -392,6 +395,8 @@ int US_Tar::extract( const QString& archive )
   ofd = -1;  // Initialize output file to closed
 	ifd = open( archive.latin1(), O_RDONLY | O_BINARY );
 	if ( ifd < 0 ) return TAR_NOTFOUND;
+
+	if ( list ) list->clear();
 
 	blocks_read = 0;
 	QStringList files;
@@ -466,6 +471,7 @@ int US_Tar::extract( const QString& archive )
 			}
 
 			files << filename;	// Save the file name for error processing
+			if ( list ) list->append( filename ); // Return list if requested
 
 			if ( directory )
 			{
@@ -617,8 +623,18 @@ int US_Tar::list( const QString& archive, QStringList& files )
 
 			// Now get the data from the header
 
-			files << tar_header.header.name;	// Save the file name for return
+		  QString filename = tar_header.header.name;	
+			QString uname    = tar_header.header.uname;
+			QString gname    = tar_header.header.gname;
 
+			unsigned int mode;
+			unsigned int fsize;
+			unsigned int mtime;
+			
+			sscanf( tar_header.header.mode,   "%7o", &mode  );
+			sscanf( tar_header.header.size,  "%11o", &fsize );
+			sscanf( tar_header.header.mtime, "%11o", &mtime );
+			
 			bool directory;
 			switch ( tar_header.header.typeflag )
 			{
@@ -633,6 +649,15 @@ int US_Tar::list( const QString& archive, QStringList& files )
 				default:
 					throw TAR_ARCHIVEERROR;
 			}
+
+			QString s;
+
+			// perms user/group size date time filename
+			files << format_permissions( mode, directory ) + " " +
+			         uname + "/" + gname                   + " " +
+			         s.sprintf( "%10d", fsize )            + " " +
+			         format_datetime( mtime )              + " " +
+			         filename;
 
 			if ( ! directory )
 			{
@@ -659,6 +684,35 @@ int US_Tar::list( const QString& archive, QStringList& files )
 
   close( ifd );
 	return TAR_OK;
+}
+
+QString US_Tar::format_permissions( const unsigned int mode, const bool dir )
+{
+	QString s = "----------";
+	if ( dir )         s = s.replace( 0, 1, "d" );
+	if ( mode & 0400 ) s = s.replace( 1, 1, "r" );
+	if ( mode & 0200 ) s = s.replace( 2, 1, "w" );
+	if ( mode & 0100 ) s = s.replace( 3, 1, "x" );
+	if ( mode & 0040 ) s = s.replace( 4, 1, "r" );
+	if ( mode & 0020 ) s = s.replace( 5, 1, "w" );
+	if ( mode & 0010 ) s = s.replace( 6, 1, "x" );
+	if ( mode & 0004 ) s = s.replace( 7, 1, "r" );
+	if ( mode & 0002 ) s = s.replace( 8, 1, "w" );
+	if ( mode & 0001 ) s = s.replace( 9, 1, "x" );
+
+	return s;
+}
+
+QString US_Tar::format_datetime( const unsigned int mtime )
+{
+	time_t     time = mtime;
+	struct tm* t    = localtime( &time );
+	
+	QString s;
+	s = s.sprintf( "%04d-%02d-%02d %02d:%02d", 
+			t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min );
+
+	return s;
 }
 
 // The return boolean here is if header is zero

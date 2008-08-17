@@ -26,9 +26,13 @@ class US_EXTERN US_Tar
 		~US_Tar(){};
 		US_Tar(){};
 
-		int     create ( const QString&, const QString&     ); // from a directory
-		int     create ( const QString&, const QStringList& ); // from list of files
-		int     extract( const QString& ); 
+		// From a directory
+		int     create ( const QString&, const QString&, QStringList* = 0 ); 
+
+		// From a list of files ( including directories )
+		int     create ( const QString&, const QStringList&, QStringList* = 0 );
+		
+		int     extract( const QString&, QStringList* = 0 ); 
 		int     list   ( const QString&, QStringList& ); 
 		QString explain( const int ); 
 
@@ -72,11 +76,13 @@ class US_EXTERN US_Tar
 		int           blocks_read;
 		int           archive_size;
 
-		void  process_dir    ( const QString&, QStringList& );
-		void  write_file     ( const QString& );
-		void  flush_buffer   ( void );
-		void  archive_end    ( void );
-		bool  validate_header( void );
+		void    process_dir       ( const QString&, QStringList& );
+		void    write_file        ( const QString& );
+		void    flush_buffer      ( void );
+		void    archive_end       ( void );
+		bool    validate_header   ( void );
+		QString format_permissions( const unsigned int, const bool );
+		QString format_datetime   ( const unsigned int );
 };
 #endif
 

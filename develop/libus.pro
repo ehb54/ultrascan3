@@ -224,6 +224,7 @@ SOURCES += \
   src/us_vhwsim.cpp \
   src/us_vhwenhanced.cpp \
   src/us_viewmwl.cpp \
+  src/us_widgets.cpp \
   src/us_win.cpp \
   src/us_write_config.cpp
 #  src/us_cofdistro.cpp \ 
@@ -402,6 +403,7 @@ HEADERS += \
   include/us_vhwsim.h \
   include/us_vhwenhanced.h \
   include/us_viewmwl.h \
+  include/us_widgets.h \
   include/us_win.h \
   include/us_write_config.h 
 
