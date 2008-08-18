@@ -233,7 +233,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
   
   filetime = lastMod.toTime_t();
 
-  ifd = open( iname.ascii(), O_RDONLY );
+  ifd = open( iname.ascii(), O_RDONLY | O_BINARY );
   if ( ifd < 0 ) return GZIP_READERROR;
 
   // Generate output file name. 

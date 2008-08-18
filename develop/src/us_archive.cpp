@@ -1,8 +1,16 @@
+#ifndef WIN32
+  #include <sys/statfs.h>
+#else
+  // We don't need windows.h unless we are trying to get the free
+  // space on the partition at the end of viewtargz()
+  //#include <windows.h>  // Must be first for windows to build
+  #include <direct.h>      
+  #define chdir _chdir
+#endif
+
 #include "../include/us_archive.h"
 #include "../include/us_tar.h"
 #include "../include/us_gzip.h"
-
-#include <sys/statfs.h>
 
 US_Archive::US_Archive( QWidget* p, const char* name ): US_Widgets( p, name )
 {
@@ -158,10 +166,6 @@ US_Archive::US_Archive( QWidget* p, const char* name ): US_Widgets( p, name )
 	setGeometry( global_Xpos, global_Ypos, 900, ypos );
 
 	setup_GUI();
-}
-
-US_Archive::~US_Archive()
-{
 }
 
 void US_Archive::setup_GUI()
@@ -366,7 +370,7 @@ void US_Archive::select_create_archive( const int type )
 			{
 				QMessageBox::message(
 					tr( "Ultrascan Error:" ),
-					tr( "Could not open " ) + fn );
+					tr( "Could not open " ) + QDir::convertSeparators( fn ) );
 				return;
 				
 			};
@@ -444,7 +448,7 @@ void US_Archive::view()
 
 		mle->setReadOnly( false );
 		mle->clear();
-		qApp->processEvents();  // Is this needed?
+		qApp->processEvents();  
 		viewtargz( fn );
 		mle->setReadOnly( true );
 	}
@@ -452,7 +456,7 @@ void US_Archive::view()
 
 void US_Archive::viewtargz( const QString& fn )
 {
-//#ifdef HAS_VFS
+#ifndef WIN32
   struct statfs system_info;
 	int return_info = statfs( USglobal->config_list.data_dir, &system_info );
 
@@ -466,7 +470,9 @@ void US_Archive::viewtargz( const QString& fn )
 
 		return;
 	}
-//#endif
+#else
+  // Add WIN32 code here
+#endif
 
 	QString   s;
 	QFileInfo f = QFileInfo( fn );
@@ -508,19 +514,23 @@ void US_Archive::viewtargz( const QString& fn )
 		return;
 	}
 
-	int errno = chdir( tempdir.ascii() );
-	if ( errno != 0 )
+	int err = chdir( tempdir.ascii() );
+	if ( err != 0 )
 	{
-	  QString e = QString( "%1" ).arg( errno );
+	  QString e = QString( "%1" ).arg( err );
 		QMessageBox::message(
 		   tr( "UltraScan Error:" ),
-		   tr( "Could not change working directory\n" + tempdir + 
-				   "\nError number = " + e ) );
+		   tr( "Could not change working directory\n" ) + 
+				   QDir::convertSeparators( tempdir ) + 
+				   tr( "\nError number = " ) + e  );
 		return;
 	}
 
+	qApp->processEvents();  
+	
 	// gunzip the file
 	US_Gzip gzip;
+	
 	int ret = gzip.gunzip( gzip_filename );
 
 	if ( ret != GZIP_OK )
@@ -536,6 +546,8 @@ void US_Archive::viewtargz( const QString& fn )
 	US_Tar      tar;
 	QString     tarfile = gzip_filename.left( gzip_filename.length() - 3 );
 	QStringList files;
+
+	qApp->processEvents();  
 
 	// Get the listing
 	if ( ( ret = tar.list( tarfile, files ) ) != TAR_OK )
@@ -565,12 +577,12 @@ void US_Archive::viewtargz( const QString& fn )
 
 	mle->append( pre_string + "</pre>\n" ); 
 
-//#ifdef HAS_VFS
 	mle->append( tr( "<p>Total diskspace needed for extraction: " +
 	    s.sprintf( "%.1f MBytes", diskspace / 1e6 ) + "</p>\n" ) );
 
+#ifndef WIN32
 	mle->append( tr( "<p>Total available diskspace on " +
-	    USglobal->config_list.data_dir + ": </p>\n" +
+	    QDir::convertSeparators( USglobal->config_list.data_dir ) + ": </p>\n" +
 	    s.sprintf( "<p>%.1f MBytes</p>\n", 
 				(float) system_info.f_bavail * system_info.f_bsize / 1e6 ) ) );
 
@@ -579,7 +591,35 @@ void US_Archive::viewtargz( const QString& fn )
 		mle->append(tr( "<p>ATTENTION: You will need to free up some "
 		                "diskspace before extracting this archive!</p>\n"));
 	}
-//#endif
+#else
+  /*  Not figured out yet
+  unsigned long int free  = 0;
+  unsigned long int total = 0;
+
+  WCHAR wdir[256]; 
+  QString dir = "C:\\"; //QDir::convertSeparators( USglobal->config_list.data_dir );
+  bool def;
+
+  int nOut = WideCharToMultiByte( CP_ACP, 0, 
+    (LPCWSTR)dir.ascii(), dir.length()+1, (LPSTR) &wdir[0],
+    sizeof(wdir)/sizeof(wdir[0]), 0, (LPBOOL) &def );
+
+QMessageBox::message( "Debug", "nOut=" + QString::number( nOut ) );
+  
+  int result = GetDiskFreeSpaceEx( wdir, (PULARGE_INTEGER) &free, 
+                                         (PULARGE_INTEGER) &total, 0 );
+
+  QMessageBox::message( "Debug", "result=" + QString::number( result ) );
+  QMessageBox::message( "Debug", "free=" + QString::number( free ) );
+  mle->append( tr( "<p>Total available diskspace on " +
+     QDir::convertSeparators( USglobal->config_list.data_dir ) + ": </p>\n" +
+     s.sprintf( "<p>%.1f MBytes</p>\n",  (float) free / 1e6 ) ) );
+
+	if ( (unsigned long int) diskspace > free )
+    mle->append(tr( "<p>ATTENTION: You will need to free up some "
+     "diskspace before extracting this archive!</p>\n"));
+ */
+#endif
 
 	s.sprintf("<p>Compression Ratio: %3.2f : 1</p></qt>\n",
 	    (float) diskspace / f.size() );
@@ -623,7 +663,7 @@ void US_Archive::create_archive( QStringList* list )
 		QMessageBox::message(
 		  tr( "Ultrascan Warning:"),
 			tr( "Cannot create a temporary directory:\n\n" + 
-				  tempDirString ) );
+				  QDir::convertSeparators( tempDirString ) ) );
 
 		enable_buttons();
 		return;
@@ -781,7 +821,8 @@ void US_Archive::create_archive( QStringList* list )
 		{
 			QMessageBox::message(
 				tr( "UltraScan Warning:" ),
-				tr( "The required raw data directory does not exist:\n" + path + "\n"
+				tr( "The required raw data directory does not exist:\n" + 
+					  QDir::convertSeparators( path ) + "\n"
 				    "Please select the raw data directory.") );
 
 			QString new_dir = QFileDialog::getExistingDirectory(
@@ -871,6 +912,8 @@ void US_Archive::create_archive( QStringList* list )
 	temp.setNameFilter( filename + "*.tar" );
 	entries = temp.entryList();
 
+	qApp->processEvents();  
+
 	US_Tar tar;
 
 	int ret = tar.create( tarfile, entries );
@@ -883,6 +926,8 @@ void US_Archive::create_archive( QStringList* list )
 		enable_buttons();
 		return;
 	}
+
+	qApp->processEvents();  
 	
 	// gzip the tarfile of tarfiles
 
@@ -1078,8 +1123,8 @@ void US_Archive::move_file( const QString& src, const QString& dest )
 		QMessageBox::message(
 		  tr( "UltraScan Error:" ),
 		  tr( "Unable to move file to destination."
-		      "\nSource     : " ) + src  + 
-		  tr( "\nDestination: " ) + dest + 
+		      "\nSource     : " ) + QDir::convertSeparators(  src ) + 
+		  tr( "\nDestination: " ) + QDir::convertSeparators( dest ) + 
 		  tr( "\nError Code in Move function : " ) + QString::number( result ) + 
 		  tr( "\nTerminating" ) );
 
@@ -1095,6 +1140,7 @@ bool US_Archive::create_tar( const QString& dirString,
 	QStringList files_processed;	
 
 	chdir( dirString.ascii() );
+	qApp->processEvents();  
 
 	int ret = tar.create( tarfile, entries, &files_processed );
 	if ( ret != TAR_OK )
@@ -1163,19 +1209,22 @@ void US_Archive::extract_archive( void )
 		return;
 	}
 
-	int errno = chdir( tempdir.ascii() );
-	if ( errno != 0 )
+	int err = chdir( tempdir.ascii() );
+	if ( err != 0 )
 	{
-	  QString e = QString( "%1" ).arg( errno );
+	  QString e = QString( "%1" ).arg( err );
 		QMessageBox::message(
 		   tr( "UltraScan Error:" ),
-		   tr( "Could not change working directory\n" + tempdir + 
+		   tr( "Could not change to working directory:\n" + 
+				   QDir::convertSeparators( tempdir ) + 
 				   "\nError number = " + e ) );
 
 		enable_buttons();
 		return;
 	}
 
+	qApp->processEvents();  
+	
 	// gunzip the file
 	US_Gzip gzip;
 
@@ -1190,12 +1239,16 @@ void US_Archive::extract_archive( void )
 		return;
 	}
 
+	qApp->processEvents();  
+
 	// untar the file
 	// Assume extract_filename is something.tar.gz
 
 	US_Tar      tar;
 	QString     tarfile = tarGzFile.left( tarGzFile.length() - 3 );
 
+	qApp->processEvents();  
+	
 	// Extract the files
 	ret = tar.extract( tarfile );
 	if ( ret != TAR_OK )
@@ -1222,6 +1275,7 @@ void US_Archive::extract_archive( void )
 	QStringList::Iterator it;
 	for ( it = entries.begin(); it != entries.end(); ++it )
 	{
+		qApp->processEvents();  
 		chdir( tempdir.ascii() );
 		tarfile = *it;
 
@@ -1268,6 +1322,8 @@ void US_Archive::extract( const QString& tarfile,
 
 	US_Tar tar;
 	int    ret;
+
+	qApp->processEvents();  
 
 	if ( verbose )
 		ret = tar.extract( tarfile, &files );

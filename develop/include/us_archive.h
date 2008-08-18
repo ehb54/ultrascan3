@@ -16,7 +16,7 @@ class US_EXTERN US_Archive : public US_Widgets
 
 	public:	
 		US_Archive   ( QWidget* p = 0, const char* name = 0 );
-		~US_Archive  ( void );
+		~US_Archive  ( void ){};
 
 	private:
 		int          run_type;
