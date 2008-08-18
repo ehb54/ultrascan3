@@ -775,13 +775,13 @@ void US_Extinction::reset()
 void US_Extinction::selectPeptide()
 {
 	float vbar= (float) 0.72, temp=20, vbar20= (float) 0.72;
+	cnt_wavelength->setValue(280);
 	US_Vbar_DB *vbar_dlg;
 	vbar_dlg = new US_Vbar_DB(temp, &vbar, &vbar20,true, false, investigatorID);
 	vbar_dlg->setCaption(tr("V-bar Calculation"));
 	vbar_dlg->pb_ok->setText(tr(" Close "));
 	connect(vbar_dlg, SIGNAL(e280Changed(float)), SLOT(update_extinction_coefficient(float)));
 	vbar_dlg->show();
-
 }
 
 void US_Extinction::update_extinction_coefficient(float val)
