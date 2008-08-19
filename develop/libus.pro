@@ -123,6 +123,7 @@ SOURCES += \
   src/us_db_tbl_nucleotide.cpp \
   src/us_db_tbl_vbar.cpp \
   src/us_db_template.cpp \
+  src/us_db_widgets.cpp \
   src/us_dcdrdat.cpp \
   src/us_dcdtdat.cpp \
   src/us_diagnostics.cpp \
@@ -300,6 +301,7 @@ HEADERS += \
   include/us_db_tbl_nucleotide.h \
   include/us_db_tbl_vbar.h \
   include/us_db_template.h \
+  include/us_db_widgets.h \
   include/us_dcdrdat.h \
   include/us_dcdtdat.h \
   include/us_diagnostics.h \
