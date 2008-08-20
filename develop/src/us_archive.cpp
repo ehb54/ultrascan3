@@ -371,9 +371,10 @@ void US_Archive::select_create_archive( const int type )
 				QMessageBox::message(
 					tr( "Ultrascan Error:" ),
 					tr( "Could not open " ) + QDir::convertSeparators( fn ) );
-				return;
 				
+				return;
 			};
+
 			QTextStream project_ts( &projectFile );
 			projectName = project_ts.readLine();
 			projectFile.close();
@@ -749,7 +750,7 @@ void US_Archive::create_archive( QStringList* list )
 				      +  projectName + ":</p>\n" );
 				
 				tarfile = projectName + ".ultrascan-data.tar";
-				entries << projectName + ".Monte-Carlo " << projectName + ".mc";
+				entries << projectName + ".Monte-Carlo" << projectName + ".mc";
 			}
 		}  // End switch ( run_type )
 
@@ -1196,7 +1197,7 @@ void US_Archive::extract_archive( void )
 	}
 
   // gunzip the file
-	// Save the current directory and cnage to the temp directory
+	// Save the current directory and change to the temp directory
 	
 	char cwd[ 256 ];
 	if ( getcwd( cwd, sizeof cwd ) == 0 )

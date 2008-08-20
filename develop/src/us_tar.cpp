@@ -62,7 +62,7 @@ int US_Tar::create( const QString& archive, const QStringList& files,
 		                QStringList* list )
 {
 
-  // To crate the file, we do the following:
+  // To create the file, we do the following:
 	// 1.  Open the archive filefor writing.  This will overwrite any existing
 	//     tar file by the same name
 	// 2.  For each file in the list
