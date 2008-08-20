@@ -493,7 +493,7 @@ if($max_time[0] > 2880 &&
 			   To      =>  "$email, ebrookes\@cs.utsa.edu",
 			   Subject =>  "TIGRE job on $default_system set to maximum time",
 			   Data    => 
-"Your TIGRE job on $default system estimated has an estimated run time of " . ($max_time[0]/60) . " which exceeds the maximum 48 hour limit.  
+"Your TIGRE job on $default_system estimated has an estimated run time of " . ($max_time[0]/60) . " which exceeds the maximum 48 hour limit.  
 It has been set to this limit, but the job may terminate prematurely, losing all results.  
 The job info is as follows:
 --------------------------------------------------------------------------------
