@@ -10,7 +10,7 @@
 
 $bcf_no_procs = 42;
 $alamo_no_procs = 31;
-$laredo_no_procs = 36;
+$laredo_no_procs = 34; # 36;
 
 # END USER EDITABLE SECTION
 
@@ -367,12 +367,12 @@ for($i = 0; $i < @systems; $i++) {
 	   '' #meta
 	   );
 
-
+# /work/teragrid/tg457210/qt/lib:/work/teragrid/tg457210/qwt/lib:/work/teragrid/tg457210/qwt3d/lib:/work/teragrid/tg457210/ultrascan/lib64:/opt/MPI/intel9/mvapich/0.9.7/lib:/opt/intel/compiler9.1/cc/lib:/opt/intel/compiler9.1/fc/lib:/data/TG/globus-4.0.1-r3/lib:/data/TG/globus-4.0.1-r3/myproxy-3.4/lib:/data/TG/gsi-openssh-3.6-r1/lib:/usr/lib:/usr/X11R6/lib:/usr/local/lib:/data/TG/lib:/data/TG/srb-client-3.4.1-r1/lib:/data/TG/64bit/globus-4.0.1-r3/lib:/data/TG/hdf4-4.2r1-r1/lib:/opt/apps/hdf5/hdf5-1.6.5/lib:/data/TG/phdf5-1.6.5/lib:</value>
 
 @ld_xml = (
 	   '  <environment>
     <name>LD_LIBRARY_PATH</name>
-    <value>/work/teragrid/tg457210/qt/lib:/work/teragrid/tg457210/qwt/lib:/work/teragrid/tg457210/qwt3d/lib:/work/teragrid/tg457210/ultrascan/lib64:/opt/MPI/intel9/mvapich/0.9.7/lib:/opt/intel/compiler9.1/cc/lib:/opt/intel/compiler9.1/fc/lib:/data/TG/globus-4.0.1-r3/lib:/data/TG/globus-4.0.1-r3/myproxy-3.4/lib:/data/TG/gsi-openssh-3.6-r1/lib:/usr/lib:/usr/X11R6/lib:/usr/local/lib:/data/TG/lib:/data/TG/srb-client-3.4.1-r1/lib:/data/TG/64bit/globus-4.0.1-r3/lib:/data/TG/hdf4-4.2r1-r1/lib:/opt/apps/hdf5/hdf5-1.6.5/lib:/data/TG/phdf5-1.6.5/lib:</value>
+    <value>/work/teragrid/tg457210/qt/lib:/work/teragrid/tg457210/qwt/lib:/work/teragrid/tg457210/qwt3d/lib:/work/teragrid/tg457210/ultrascan//lib64:/opt/apps/intel10/hdf5/1.6.5/lib:/opt/apps/intel10/mvapich/1.0.1/lib:/opt/apps/intel10/mvapich/1.0.1/lib/shared:/opt/apps/intel/10.1//cc/lib:/opt/apps/intel/10.1//fc/lib:/opt/apps/gsi-openssh-3.9/lib:/usr/lib:/usr/X11R6/lib:/usr/local/lib:.:/import/data2/TG/globus-4.0.7-r1/lib:/data/TG/tgcp-1.0.0-r2/lib:</value>
   </environment>
   <environment>
     <name>ULTRASCAN</name>
@@ -465,6 +465,8 @@ if($analysis_type =~ /^2DSA/) {
     print "2DSA time $max_time[0]\n";
 }
 
+$max_time[0] *= 2 if $default_system =~ /hlrb2/;
+
 if($monte_carlo) {
     $max_time[0] *= $monte_carlo;
 };
@@ -488,7 +490,7 @@ $max_time[0] = 5 if $max_time[0] <= 5;
 if($max_time[0] > 2880 &&
    $default_system eq 'lonestar.tacc.utexas.edu') {
     $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
-			   To      =>  "$email, ebrookes@cs.utsa.edu",
+			   To      =>  "$email, ebrookes\@cs.utsa.edu",
 			   Subject =>  "TIGRE job on $default_system set to maximum time",
 			   Data    => 
 "Your TIGRE job on $default system estimated has an estimated run time of " . ($max_time[0]/60) . " which exceeds the maximum 48 hour limit.  
