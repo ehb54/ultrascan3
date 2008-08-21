@@ -574,7 +574,7 @@ $xmlfile = "us_tigre_job_desc${id}.xml";
 $eprfile = "us_tigre_epr${id}.xml";
 
 if($default_system ne 'meta') {
-    $pr_line = sprintf("[%20s][%4s][%26s][%25s][%s][%s][%s][%s]",
+    $pr_line = sprintf("[%20s][%4s][%26s][%25s][%s][%s][%s][%s][%s]",
 		       $expname,
 		       $jobtype,
 		       $default_system,
@@ -582,7 +582,8 @@ if($default_system ne 'meta') {
 		       $date,
 		       "$cwd/$eprfile",
 		       $db_login_database,
-		       $HPCAnalysisID);
+		       $HPCAnalysisID,
+		       $gcfile);
     
     print `echo tigre_job_start $pr_line > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
 }
