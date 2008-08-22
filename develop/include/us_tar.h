@@ -37,6 +37,8 @@ class US_EXTERN US_Tar
 		QString explain( const int ); 
 
 	private:
+
+		// Class variables
 		int ofd;                 // Output file descriptor
 		int ifd;                 // Input file descriptor
 
@@ -76,13 +78,18 @@ class US_EXTERN US_Tar
 		int           blocks_read;
 		int           archive_size;
 
-		void    process_dir       ( const QString&, QStringList& );
-		void    write_file        ( const QString& );
-		void    flush_buffer      ( void );
-		void    archive_end       ( void );
-		bool    validate_header   ( void );
-		QString format_permissions( const unsigned int, const bool );
-		QString format_datetime   ( const unsigned int );
+		// Internal methods
+
+		void    process_dir         ( const QString&, QStringList& );
+		void    write_file          ( const QString& );
+		void    write_long_filename ( const QString& );
+		void    flush_buffer        ( void );
+		void    archive_end         ( void );
+		bool    validate_header     ( void );
+		void    read_block          ( void );
+		QString get_long_filename   ( void );
+		QString format_permissions  ( const unsigned int, const bool );
+		QString format_datetime     ( const unsigned int );
 };
 #endif
 

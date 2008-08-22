@@ -42,8 +42,9 @@
 #   include <sys/time.h>
 #endif
 
-#include <time.h>
+#define LONGFILE "././@LongLink"
 
+#include <time.h>
 
 #include <vector>
 #include <iostream>
@@ -206,7 +207,8 @@ void US_Tar::write_file( const QString& file )
 	
 	// Populate the header
 	if ( file.length() > sizeof( tar_header.header.name ) - 1 )
-		throw TAR_FILENAMETOOLONG;
+		//throw TAR_FILENAMETOOLONG;
+		write_long_filename( file );
 
 	strcpy( tar_header.header.name, file.latin1() );
 
@@ -337,6 +339,118 @@ void US_Tar::write_file( const QString& file )
 	}
 }
 
+void US_Tar::write_long_filename( const QString& filename )
+{
+	// If there is a long filename, write a special header, followed by the 
+	// necessary number of blocks that are needed for the filename
+	
+	// Add 1 for null byte teminating filename
+	unsigned int length = (unsigned int) filename.length() + 1;
+
+	//char name[100];     /*   0 */
+	strcpy( tar_header.header.name, LONGFILE );
+	
+	//char mode[8];       /* 100 */
+	//char uid[8];        /* 108 */
+	//char gid[8];        /* 116 */
+	//char size[12];      /* 124 */
+	//char mtime[12];     /* 136 */
+
+	sprintf ( tar_header.header.mode,   "%07o", 0 );
+	sprintf ( tar_header.header.uid,    "%07o", 0 );
+	sprintf ( tar_header.header.gid,    "%07o", 0 );
+	sprintf ( tar_header.header.size,  "%011o", length );
+	sprintf ( tar_header.header.mtime, "%011o", 0 );
+
+
+	// Fill with blanks befor checksumming
+	memcpy( &tar_header.header.chksum, "        ", sizeof tar_header.header.chksum );
+
+  //char typeflag;      /* 156 */
+	
+  tar_header.header.typeflag = 'L';
+
+	//char linkname[100]; /* 157 */
+	//char magic[6];      /* 257 */
+	//char version[2];    /* 263 */
+	
+	sprintf ( tar_header.header.magic, "ustar  " );
+
+	//char uname[32];     /* 265 */
+	//char gname[32];     /* 297 */
+	strcpy ( tar_header.header.uname, "root" );
+	strcpy ( tar_header.header.gname, "root" );
+
+	/* Fill in the checksum field.  It's formatted differently from the
+   * other fields: it has [6] digits, a null, then a space -- rather than
+	 * digits, then a null. */
+
+  //char chksum[8];
+	int   sum = 0;
+	char* p   = (char*) &tar_header;
+	
+	for ( int i = sizeof tar_header; i-- != 0; )
+	{
+		sum += 0xFF & *p++;
+	}
+
+	sprintf ( tar_header.header.chksum, "%06o", sum );
+	
+	// Copy the header to the buffer
+  memcpy( (void*) ( buffer + blocks_written * BLOCK_SIZE ), 
+	        (void*) tar_header.h, 
+	        sizeof tar_header );
+
+	// Write the buffer if it is full
+	blocks_written++;
+	if ( blocks_written == BLOCKING_FACTOR ) flush_buffer();
+
+  // Now write the filename in one of more blocks
+
+	int full_blocks = length / BLOCK_SIZE;
+
+	for ( int i = 0; i < full_blocks; i++ )
+	{
+		memset( (void*) tar_header.h, 0, sizeof tar_header );
+		
+		memcpy( (void*) tar_header.h,
+		        (void*) filename.mid( i * BLOCK_SIZE, BLOCK_SIZE ).latin1(),
+		        BLOCK_SIZE );
+
+		// Copy the header to the buffer
+		memcpy( (void*) ( buffer + blocks_written * BLOCK_SIZE ), 
+		        (void*) tar_header.h, 
+		        sizeof tar_header );
+
+		// Write the buffer if it is full
+		blocks_written++;
+		if ( blocks_written == BLOCKING_FACTOR ) flush_buffer();
+	}
+
+	// Copy what is left
+	if (  ( length ) % BLOCK_SIZE )  // Copy what is left
+	{
+		memset( (void*) tar_header.h, 0, sizeof tar_header );
+
+		memcpy( (void*) tar_header.h, 
+		        (void*) filename.mid( full_blocks * BLOCK_SIZE ).latin1(),
+						length % BLOCK_SIZE );
+
+		// Copy the header to the buffer
+		memcpy( (void*) ( buffer + blocks_written * BLOCK_SIZE ), 
+		        (void*) tar_header.h, 
+		        sizeof tar_header );
+
+		// Write the buffer if it is full
+		blocks_written++;
+		if ( blocks_written == BLOCKING_FACTOR ) flush_buffer();
+	}
+
+	// Finally write the first 100 bytes of the original filename
+	memset( (void*) tar_header.h, 0, sizeof( tar_header ) );
+	memcpy( (void*) tar_header.h, filename.latin1(), 100 ); 
+}
+
 void US_Tar::archive_end( void )
 {
 	// Write a null block
@@ -409,8 +523,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 		while ( true )
 		{
 			// Read header
-			ssize_t size = read( ifd, tar_header.h, BLOCK_SIZE );
-			if ( size != BLOCK_SIZE ) throw TAR_READERROR;
+			read_block();
 
 			// Validate checksum
 			bool zero = validate_header();
@@ -418,9 +531,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 			// The archive ends with two zero blocks
 			if ( zero )
 			{
-				size = read( ifd, tar_header.h, BLOCK_SIZE );
-	  		if ( size != BLOCK_SIZE ) throw TAR_READERROR;
-
+				read_block();
 				bool second_zero = validate_header();
 				
 				if ( second_zero ) 
@@ -435,7 +546,13 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 
 			// Now get the data from the header
 
-		  QString filename = tar_header.header.name;	
+			QString filename;
+
+			if ( tar_header.header.typeflag == 'L' )
+				filename = get_long_filename();
+			else
+				filename = tar_header.header.name;
+
 			QString uname    = tar_header.header.uname;
 			QString gname    = tar_header.header.gname;
 
@@ -497,6 +614,8 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 				int          skip           = BLOCK_SIZE - fsize % BLOCK_SIZE;
 
         if (  skip == BLOCK_SIZE ) skip = 0;  // If file size is exact multple of blocks
+
+				int size;
 
 				while ( bytes_to_write > sizeof buffer )
 				{
@@ -598,17 +717,13 @@ int US_Tar::list( const QString& archive, QStringList& files )
 		while ( true )
 		{
 			// Read header
-			ssize_t size = read( ifd, tar_header.h, BLOCK_SIZE );
-			if ( size != BLOCK_SIZE ) throw TAR_READERROR;
-
+			read_block();
 			bool zero = validate_header();
 	
 			// The archive ends with two zero blocks
 			if ( zero )
 			{
-				size = read( ifd, tar_header.h, BLOCK_SIZE );
-	  		if ( size != BLOCK_SIZE ) throw TAR_READERROR;
-
+				read_block();
 				bool second_zero = validate_header();
 				
 				if ( second_zero ) 
@@ -623,7 +738,13 @@ int US_Tar::list( const QString& archive, QStringList& files )
 
 			// Now get the data from the header
 
-		  QString filename = tar_header.header.name;	
+		  QString filename;	
+
+			if ( tar_header.header.typeflag == 'L' )
+				filename = get_long_filename();
+			else
+				filename = tar_header.header.name;
+
 			QString uname    = tar_header.header.uname;
 			QString gname    = tar_header.header.gname;
 
@@ -662,7 +783,6 @@ int US_Tar::list( const QString& archive, QStringList& files )
 			if ( ! directory )
 			{
 	 			// Skip file data
-	 
 				unsigned int fsize;
 			  sscanf( tar_header.header.size,  "%11o", &fsize );
 
@@ -759,6 +879,34 @@ bool US_Tar::validate_header( void )
   }
 
 	return false;  // Header ok and not zero
+}
+
+QString US_Tar::get_long_filename( void )
+{
+	QString filename;
+	
+	unsigned int length;
+	sscanf( tar_header.header.size,  "%11o", &length );
+
+	// Skip to next header
+	
+	int final_block = ( length % BLOCK_SIZE ) ? 1 : 0;
+	int blocks      = length / BLOCK_SIZE + final_block;
+	
+	for ( int i = 0; i < blocks; i++ )
+	{
+		read_block();
+		filename.append( (char*) tar_header.h );
+	}
+
+	read_block();
+	return filename;
+}
+
+void US_Tar::read_block( void )
+{
+	ssize_t size = read( ifd, tar_header.h, BLOCK_SIZE );
+	if ( size != BLOCK_SIZE ) throw TAR_READERROR;
 }
 
 /////////////////////////////
