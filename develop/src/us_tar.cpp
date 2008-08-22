@@ -51,7 +51,7 @@
 using namespace std;
 
 int US_Tar::create( const QString& archive, const QString& directory,
-		                QStringList* list )
+                    QStringList* list )
 {
 	// Just put the directory in a list and create the file that way.
 	QStringList dir;
@@ -60,28 +60,28 @@ int US_Tar::create( const QString& archive, const QString& directory,
 }
 
 int US_Tar::create( const QString& archive, const QStringList& files,
-		                QStringList* list )
+                    QStringList* list )
 {
 
-  // To create the file, we do the following:
+	// To create the file, we do the following:
 	// 1.  Open the archive filefor writing.  This will overwrite any existing
 	//     tar file by the same name
 	// 2.  For each file in the list
 	//     a.  If the file is a directory, continue for each file in the directory
-  //     b.  Write the header to the archive
+	//     b.  Write the header to the archive
 	//     c.  Copy the file to the archive
 	// 3.  Write two null headers (512 bytes)
 	
-  QStringList all;
+	QStringList all;
 
 	if ( list ) list->clear();
 
 	for ( unsigned int i = 0; i < files.size(); i++ )
 	{
-    QString   current = files[ i ];
+		QString   current = files[ i ];
 		QFileInfo f( current );
 
-    if ( ! f.exists() )
+		if ( ! f.exists() )
 		{
 			return TAR_NOTFOUND;
 		}
@@ -98,12 +98,11 @@ int US_Tar::create( const QString& archive, const QStringList& files,
 			process_dir( current, all );
 			continue;
 		}
-		
+
 		if ( f.isHidden() )  // No hidden files
 		{
 			continue;   
 		}
-
 
 		// Append regular files to the list
 		if ( f.isFile() )
@@ -115,7 +114,7 @@ int US_Tar::create( const QString& archive, const QStringList& files,
 	}
 
 	if ( list ) *list = all;
-  // Process all files
+	// Process all files
 
 #ifndef O_BINARY
 # define O_BINARY 0
@@ -148,12 +147,12 @@ int US_Tar::create( const QString& archive, const QStringList& files,
 	}
 
 	close( ofd );
-  return TAR_OK;
+	return TAR_OK;
 }
 
 void US_Tar::process_dir( const QString& path, QStringList& all )
 {
-  QDir                  dir( path );
+	QDir                  dir( path );
 	QStringList           files = dir.entryList( QDir::Files | QDir::NoSymLinks );
 	QStringList::Iterator it    = files.begin();
 
@@ -166,7 +165,7 @@ void US_Tar::process_dir( const QString& path, QStringList& all )
 
 	QStringList dirs = dir.entryList( QDir::Dirs );
 	it = dirs.begin();
-  
+
 	// Recurse into subdirectories
 	while ( it != dirs.end() )
 	{
@@ -175,7 +174,7 @@ void US_Tar::process_dir( const QString& path, QStringList& all )
 			all << path + "/" +  *it + "/";
 			process_dir( path + "/" + *it, all );
 		}
-		
+
 		it++;
 	}
 }
@@ -204,7 +203,7 @@ void US_Tar::write_file( const QString& file )
 	if ( ret < 0 ) throw TAR_CANTSTAT;
 
 	memset( (void*) tar_header.h, 0, sizeof( tar_header ) );
-	
+
 	// Populate the header
 	if ( file.length() > sizeof( tar_header.header.name ) - 1 )
 		//throw TAR_FILENAMETOOLONG;
@@ -213,9 +212,9 @@ void US_Tar::write_file( const QString& file )
 	strcpy( tar_header.header.name, file.latin1() );
 
 	int perms = TSUID  | TSGID   | TSVTX  |
-		          TUREAD | TUWRITE | TUEXEC |
-							TGREAD | TGWRITE | TGEXEC |
-							TOREAD | TOWRITE | TOEXEC ;
+	            TUREAD | TUWRITE | TUEXEC |
+	            TGREAD | TGWRITE | TGEXEC |
+	            TOREAD | TOWRITE | TOEXEC ;
 
 	sprintf ( tar_header.header.mode,  "%07o",  stats.st_mode & perms );
 	sprintf ( tar_header.header.uid,   "%07o",  stats.st_uid );
@@ -223,24 +222,23 @@ void US_Tar::write_file( const QString& file )
 	sprintf ( tar_header.header.size,  "%011o", (unsigned int) stats.st_size );
 	sprintf ( tar_header.header.mtime, "%011o", (unsigned int) stats.st_mtime );
 
-
 	// Fill with blanks befor checksumming
 	memcpy( &tar_header.header.chksum, "        ", sizeof tar_header.header.chksum );
 
-  //char typeflag;      /* 156 */
-	
-  if      ( f.isDir()  ) tar_header.header.typeflag = '5';
+	//char typeflag;      /* 156 */
+
+	if      ( f.isDir()  ) tar_header.header.typeflag = '5';
 	else if ( f.isFile() ) tar_header.header.typeflag = '0';
 	else throw TAR_INTERNAL;
 
 	//char linkname[100]; /* 157 */
 	//char magic[6];      /* 257 */
 	//char version[2];    /* 263 */
-	
+
 	sprintf ( tar_header.header.magic, "ustar  " );
 
 #ifndef WIN32
-  // uid and gid are always zero on WIN32 systems
+	// uid and gid are always zero on WIN32 systems
 	//char uname[32];     /* 265 */
 	struct passwd* pwbuf = getpwuid( stats.st_uid );
 	sprintf ( tar_header.header.uname, "%s", pwbuf->pw_name );
@@ -250,10 +248,10 @@ void US_Tar::write_file( const QString& file )
 	sprintf ( tar_header.header.gname, "%s", grpbuf->gr_name );
 #endif
 	/* Fill in the checksum field.  It's formatted differently from the
-   * other fields: it has [6] digits, a null, then a space -- rather than
+	 * other fields: it has [6] digits, a null, then a space -- rather than
 	 * digits, then a null. */
 	
-  //char chksum[8];
+	//char chksum[8];
 	int   sum = 0;
 	char* p   = (char*) &tar_header;
 	
@@ -264,9 +262,9 @@ void US_Tar::write_file( const QString& file )
 	sprintf ( tar_header.header.chksum, "%06o", sum );
 	
 	// Copy the header to the buffer
-  memcpy( (void*) ( buffer + blocks_written * BLOCK_SIZE ), 
-			    (void*) tar_header.h, 
-			    sizeof tar_header );
+ 	memcpy( (void*) ( buffer + blocks_written * BLOCK_SIZE ), 
+	        (void*) tar_header.h, 
+	        sizeof tar_header );
 
 	// Write the buffer if it is full
 	blocks_written++;
@@ -280,7 +278,7 @@ void US_Tar::write_file( const QString& file )
 
 		ssize_t input;
 		int full_blocks = stats.st_size / BLOCK_SIZE;
-    int space       = BLOCKING_FACTOR - blocks_written;
+		int space       = BLOCKING_FACTOR - blocks_written;
 
 		//cout << "full_blocks=" << full_blocks << "; space=" << space << endl;
 		if ( full_blocks > 0  &&  space >= full_blocks ) 
@@ -294,7 +292,7 @@ void US_Tar::write_file( const QString& file )
 		else if ( full_blocks > 0 )
 		{
 			input = read( ifd, buffer + blocks_written * BLOCK_SIZE,
-					space * BLOCK_SIZE );
+			                   space * BLOCK_SIZE );
 			blocks_written += space;
 			full_blocks    -= space;
 			flush_buffer();
@@ -327,7 +325,7 @@ void US_Tar::write_file( const QString& file )
 		{
 			// Zero out anyting left
 			memset( buffer + blocks_written * BLOCK_SIZE + input, 0, 
-					BLOCK_SIZE - input );
+			        BLOCK_SIZE - input );
 			blocks_written++;
 			if ( blocks_written == BLOCKING_FACTOR ) flush_buffer();
 		}
@@ -343,7 +341,7 @@ void US_Tar::write_long_filename( const QString& filename )
 {
 	// If there is a long filename, write a special header, followed by the 
 	// necessary number of blocks that are needed for the filename
-	
+
 	// Add 1 for null byte teminating filename
 	unsigned int length = (unsigned int) filename.length() + 1;
 
@@ -362,18 +360,17 @@ void US_Tar::write_long_filename( const QString& filename )
 	sprintf ( tar_header.header.size,  "%011o", length );
 	sprintf ( tar_header.header.mtime, "%011o", 0 );
 
-
 	// Fill with blanks befor checksumming
 	memcpy( &tar_header.header.chksum, "        ", sizeof tar_header.header.chksum );
 
-  //char typeflag;      /* 156 */
-	
+	//char typeflag;      /* 156 */
+
   tar_header.header.typeflag = 'L';
 
 	//char linkname[100]; /* 157 */
 	//char magic[6];      /* 257 */
 	//char version[2];    /* 263 */
-	
+
 	sprintf ( tar_header.header.magic, "ustar  " );
 
 	//char uname[32];     /* 265 */
@@ -382,13 +379,13 @@ void US_Tar::write_long_filename( const QString& filename )
 	strcpy ( tar_header.header.gname, "root" );
 
 	/* Fill in the checksum field.  It's formatted differently from the
-   * other fields: it has [6] digits, a null, then a space -- rather than
+	 * other fields: it has [6] digits, a null, then a space -- rather than
 	 * digits, then a null. */
 
   //char chksum[8];
 	int   sum = 0;
 	char* p   = (char*) &tar_header;
-	
+
 	for ( int i = sizeof tar_header; i-- != 0; )
 	{
 		sum += 0xFF & *p++;
@@ -434,7 +431,7 @@ void US_Tar::write_long_filename( const QString& filename )
 
 		memcpy( (void*) tar_header.h, 
 		        (void*) filename.mid( full_blocks * BLOCK_SIZE ).latin1(),
-						length % BLOCK_SIZE );
+		        length % BLOCK_SIZE );
 
 		// Copy the header to the buffer
 		memcpy( (void*) ( buffer + blocks_written * BLOCK_SIZE ), 
@@ -527,7 +524,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 
 			// Validate checksum
 			bool zero = validate_header();
-	
+
 			// The archive ends with two zero blocks
 			if ( zero )
 			{
@@ -539,9 +536,9 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 					break;
 				}
 				else 
-    		{
-      		throw TAR_ARCHIVEERROR;
-    		}
+				{
+					throw TAR_ARCHIVEERROR;
+				}
 			}
 
 			// Now get the data from the header
@@ -558,7 +555,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 
 			unsigned int mode;
 #ifndef WIN32
-      uid_t        uid;
+			uid_t        uid;
 			gid_t        gid;
 #endif
 			unsigned int fsize;
@@ -566,7 +563,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 			
 			sscanf( tar_header.header.mode,   "%7o", &mode  );
 #ifndef WIN32
-      sscanf( tar_header.header.uid,    "%7o", &uid   );
+			sscanf( tar_header.header.uid,    "%7o", &uid   );
 			sscanf( tar_header.header.gid,    "%7o", &gid   );
 #endif
 			sscanf( tar_header.header.size,  "%11o", &fsize );
@@ -608,12 +605,12 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 				ofd = open( filename.latin1(), O_WRONLY | O_CREAT | O_BINARY, 0644 );
 				if ( ofd < 0 ) throw TAR_WRITEERROR;
 
-	 			// Copy from archive to file
-	 
-	 			unsigned int bytes_to_write = fsize;
+				// Copy from archive to file
+
+				unsigned int bytes_to_write = fsize;
 				int          skip           = BLOCK_SIZE - fsize % BLOCK_SIZE;
 
-        if (  skip == BLOCK_SIZE ) skip = 0;  // If file size is exact multple of blocks
+				if (  skip == BLOCK_SIZE ) skip = 0;  // If file size is exact multple of blocks
 
 				int size;
 
@@ -624,50 +621,50 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 
 					size = write( ofd, buffer, sizeof buffer );
 					if ( size != sizeof buffer ) throw TAR_WRITEERROR;
-					
+
 					bytes_to_write -= sizeof buffer;
 				}
-					
+
 				size = read( ifd, buffer, bytes_to_write );
-			  if ( size != (int) bytes_to_write ) throw TAR_READERROR;
+				if ( size != (int) bytes_to_write ) throw TAR_READERROR;
 
 				size = write( ofd, buffer, bytes_to_write );
 				if ( size != (int) bytes_to_write ) throw TAR_WRITEERROR;
-				
+
 				// Skip to start of next block
 				lseek( ifd, skip, SEEK_CUR );
-	 			
-        // Clost output file
-        close( ofd );
-        ofd = -1;  // Mark as closed
-      }
 
-      // Fix permissions, owner, group, and date
+				// Clost output file
+				close( ofd );
+				ofd = -1;  // Mark as closed
+			}
+
+			// Fix permissions, owner, group, and date
 			// We do the utime before the chmod because some versions of utime are
 			// broken and trash the modes of the file.  
 
 			// Get current time
-      struct timeval tv;
+			struct timeval tv;
 #ifndef WIN32
-   		gettimeofday( &tv, NULL );
+			gettimeofday( &tv, NULL );
 #else
-      struct _timeb timebuffer;
-      _ftime(&timebuffer);
-      tv.tv_sec  = timebuffer.time;
-      tv.tv_usec = timebuffer.millitm * 1000;
+			struct _timeb timebuffer;
+			_ftime(&timebuffer);
+			tv.tv_sec  = timebuffer.time;
+			tv.tv_usec = timebuffer.millitm * 1000;
 #endif
 			// Set the times on the file
 			struct utimbuf time;
 			time.actime  = tv.tv_sec;  // now
 			time.modtime = mtime;
-      utime( filename.latin1(), &time );
-	
+			utime( filename.latin1(), &time );
+
 #ifndef WIN32
 			// Update permissions
-      chmod( filename.latin1(), mode );
+			chmod( filename.latin1(), mode );
 
 			// Update owner/group
-  		if ( geteuid() != 0 ) uid = (uid_t) -1;
+			if ( geteuid() != 0 ) uid = (uid_t) -1;
 			chown( filename.ascii(), uid, gid );
 #endif
 		}  // while ( true )
@@ -686,7 +683,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 		return error;
 	}
 
-  close( ifd );
+	close( ifd );
 
 	// Fix directory times
 	
@@ -719,26 +716,26 @@ int US_Tar::list( const QString& archive, QStringList& files )
 			// Read header
 			read_block();
 			bool zero = validate_header();
-	
+
 			// The archive ends with two zero blocks
 			if ( zero )
 			{
 				read_block();
 				bool second_zero = validate_header();
-				
+
 				if ( second_zero ) 
 				{
 					break;
 				}
 				else 
-    		{
-      		throw TAR_ARCHIVEERROR;
-    		}
+				{
+					throw TAR_ARCHIVEERROR;
+				}
 			}
 
 			// Now get the data from the header
 
-		  QString filename;	
+			QString filename;	
 
 			if ( tar_header.header.typeflag == 'L' )
 				filename = get_long_filename();
@@ -755,7 +752,7 @@ int US_Tar::list( const QString& archive, QStringList& files )
 			sscanf( tar_header.header.mode,   "%7o", &mode  );
 			sscanf( tar_header.header.size,  "%11o", &fsize );
 			sscanf( tar_header.header.mtime, "%11o", &mtime );
-			
+
 			bool directory;
 			switch ( tar_header.header.typeflag )
 			{
@@ -782,18 +779,18 @@ int US_Tar::list( const QString& archive, QStringList& files )
 
 			if ( ! directory )
 			{
-	 			// Skip file data
+				// Skip file data
 				unsigned int fsize;
-			  sscanf( tar_header.header.size,  "%11o", &fsize );
+				sscanf( tar_header.header.size,  "%11o", &fsize );
 
 				int skip = BLOCK_SIZE - fsize % BLOCK_SIZE;
 
 				 // If file size is exact multple of blocks
-        if (  skip == BLOCK_SIZE ) skip = 0;
+				if (  skip == BLOCK_SIZE ) skip = 0;
 
 				// Skip to start of next block
 				lseek( ifd, fsize + skip, SEEK_CUR );
-      }
+			}
 		}  // while ( true )
 	}
 	catch ( int error )
@@ -802,7 +799,7 @@ int US_Tar::list( const QString& archive, QStringList& files )
 		return error;
 	}
 
-  close( ifd );
+	close( ifd );
 	return TAR_OK;
 }
 
@@ -830,7 +827,7 @@ QString US_Tar::format_datetime( const unsigned int mtime )
 	
 	QString s;
 	s = s.sprintf( "%04d-%02d-%02d %02d:%02d", 
-			t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min );
+	    t->tm_year + 1900, t->tm_mon + 1, t->tm_mday, t->tm_hour, t->tm_min );
 
 	return s;
 }
@@ -841,17 +838,17 @@ bool US_Tar::validate_header( void )
 
 	// Validate checksum
 	unsigned char* p = tar_header.h;
-  int            unsigned_sum = 0;
+	int            unsigned_sum = 0;
 	unsigned int   i;
 
 	for ( i = sizeof tar_header; i-- != 0; )
 	{
-	   unsigned_sum += (unsigned char) (*p++);
+		unsigned_sum += (unsigned char) (*p++);
 	}
 
 	// Signal that the end of archive has arived.  Verify with another
 	// empty block
-  
+
 	if ( unsigned_sum == 0 ) return true;
 
 	// Adjust checksum to count the "chksum" field as blanks.
@@ -867,16 +864,16 @@ bool US_Tar::validate_header( void )
 	sscanf( tar_header.header.chksum, "%6o", &parsed_sum );
 
 	if ( parsed_sum != (unsigned int ) unsigned_sum )
-  {
-    throw TAR_ARCHIVEERROR;
-  }
+	{
+		throw TAR_ARCHIVEERROR;
+	}
 
 	// And check the magic string
 	QString magic = tar_header.header.magic;
-	if ( magic != "ustar  " ) 
-  {
-    throw TAR_ARCHIVEERROR;
-  }
+	if ( magic != "ustar	" ) 
+	{
+		throw TAR_ARCHIVEERROR;
+	}
 
 	return false;  // Header ok and not zero
 }
@@ -884,12 +881,12 @@ bool US_Tar::validate_header( void )
 QString US_Tar::get_long_filename( void )
 {
 	QString filename;
-	
+
 	unsigned int length;
 	sscanf( tar_header.header.size,  "%11o", &length );
 
 	// Skip to next header
-	
+
 	int final_block = ( length % BLOCK_SIZE ) ? 1 : 0;
 	int blocks      = length / BLOCK_SIZE + final_block;
 	
@@ -915,49 +912,49 @@ QString US_Tar::explain( const int error )
 	QString explanation;
 	switch ( error )
 	{
-    case TAR_OK:
-      explanation = "The (un)tar operation was succesful.";
-      break;
+		case TAR_OK:
+			explanation = "The (un)tar operation was succesful.";
+			break;
 
-    case TAR_CANNOTCREATE:
-      explanation = "Could not create the ouput file." ;
-      break;
+		case TAR_CANNOTCREATE:
+			explanation = "Could not create the ouput file." ;
+			break;
 
-    case  TAR_NOTFOUND:
-      explanation = "Could not find the input file." ;
-      break;
+		case	TAR_NOTFOUND:
+			explanation = "Could not find the input file." ;
+			break;
 
-    case TAR_CANTSTAT:
-      explanation = "Could not determine the input file metadata." ;
-      break;
+		case TAR_CANTSTAT:
+			explanation = "Could not determine the input file metadata." ;
+			break;
 
-    case TAR_FILENAMETOOLONG:
-      explanation = "A file name was too long." ;
-      break;
-      
-    case TAR_INTERNAL:
-      explanation = "The internal file type was not a file or a directory." ;
-      break;
-      
-    case TAR_READERROR:
-      explanation = "Could not read input file." ;
-      break;
-      
-    case TAR_WRITEERROR:
-      explanation = "Could not write an output file." ;
-      break;
-      
-    case TAR_ARCHIVEERROR:
-      explanation = "The archive was not not formatted properly." ;
-      break;
-      
-    case TAR_MKDIRFAILED:
-      explanation = "Could not create a directory." ;
-      break;
+		case TAR_FILENAMETOOLONG:
+			explanation = "A file name was too long." ;
+			break;
 
-    default:
-      explanation = "Unknown return code: " + error;
-  }
+		case TAR_INTERNAL:
+			explanation = "The internal file type was not a file or a directory." ;
+			break;
+			
+		case TAR_READERROR:
+			explanation = "Could not read input file." ;
+			break;
+
+		case TAR_WRITEERROR:
+			explanation = "Could not write an output file." ;
+			break;
+
+		case TAR_ARCHIVEERROR:
+			explanation = "The archive was not not formatted properly." ;
+			break;
+
+		case TAR_MKDIRFAILED:
+			explanation = "Could not create a directory." ;
+			break;
+
+		default:
+			explanation = "Unknown return code: " + error;
+	}
 
 	return explanation;
 }
