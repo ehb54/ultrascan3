@@ -870,7 +870,7 @@ bool US_Tar::validate_header( void )
 
 	// And check the magic string
 	QString magic = tar_header.header.magic;
-	if ( magic != "ustar	" ) 
+	if ( magic != "ustar  " ) 
 	{
 		throw TAR_ARCHIVEERROR;
 	}
