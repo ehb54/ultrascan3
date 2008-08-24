@@ -27,8 +27,8 @@ void US_Hydrodyn::setupGUI()
 	sidechain_OR = new US_Hydrodyn_OR(&sidechain_overlap, this);
 	mainchain_OR = new US_Hydrodyn_OR(&mainchain_overlap, this);
 	buried_OR = new US_Hydrodyn_OR(&buried_overlap, this);
-	buried_OR->cnt_fuse->setEnabled(false);
-	buried_OR->cb_fuse->setEnabled(false);
+	//buried_OR->cnt_fuse->setEnabled(false);
+	//buried_OR->cb_fuse->setEnabled(false);
 
 	lbl_info = new QLabel(tr("Bead Overlap Reduction Options:"), this);
 	Q_CHECK_PTR(lbl_info);
@@ -1455,9 +1455,9 @@ void US_Hydrodyn::reset()
 	sidechain_overlap.fuse_beads = true;
 	sidechain_overlap.fuse_beads_percent = 70.0;
 	sidechain_overlap.remove_hierarch = true;
-	sidechain_overlap.remove_hierarch_percent = 70.0;
+	sidechain_overlap.remove_hierarch_percent = 1.0;
 	sidechain_overlap.remove_sync = false;
-	sidechain_overlap.remove_sync_percent = 70.0;
+	sidechain_overlap.remove_sync_percent = 1.0;
 	sidechain_overlap.translate_out = true;
 	sidechain_overlap.show_translate = true;
 
@@ -1465,9 +1465,9 @@ void US_Hydrodyn::reset()
 	mainchain_overlap.fuse_beads = true;
 	mainchain_overlap.fuse_beads_percent = 70.0;
 	mainchain_overlap.remove_hierarch = true;
-	mainchain_overlap.remove_hierarch_percent = 70.0;
+	mainchain_overlap.remove_hierarch_percent = 1.0;
 	mainchain_overlap.remove_sync = false;
-	mainchain_overlap.remove_sync_percent = 70.0;
+	mainchain_overlap.remove_sync_percent = 1.0;
 	mainchain_overlap.translate_out = false;
 	mainchain_overlap.show_translate = false;
 
@@ -1475,9 +1475,9 @@ void US_Hydrodyn::reset()
 	buried_overlap.fuse_beads = false;
 	buried_overlap.fuse_beads_percent = 0.0;
 	buried_overlap.remove_hierarch = true;
-	buried_overlap.remove_hierarch_percent = 70.0;
+	buried_overlap.remove_hierarch_percent = 1.0;
 	buried_overlap.remove_sync = false;
-	buried_overlap.remove_sync_percent = 70.0;
+	buried_overlap.remove_sync_percent = 1.0;
 	buried_overlap.translate_out = false;
 	buried_overlap.show_translate = false;
 

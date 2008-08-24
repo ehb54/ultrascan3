@@ -46,6 +46,7 @@ class US_EXTERN US_Hydrodyn_OR : public QFrame
 		US_Config *USglobal;
 
 		QLabel *lbl_title;
+		QLabel *lbl_steps;
 
 		QCheckBox *cb_fuse;
 		QCheckBox *cb_hierarch;

@@ -53,6 +53,13 @@ void US_Hydrodyn_OR::setupGUI()
 	cnt_fuse->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_fuse, SIGNAL(valueChanged(double)), SLOT(update_fuse(double)));
 
+	lbl_steps = new QLabel(tr(" Overlap Reduction Step Size (in %): "), this);
+	Q_CHECK_PTR(lbl_steps);
+	lbl_steps->setAlignment(AlignLeft|AlignVCenter);
+	lbl_steps->setMinimumHeight(minHeight1);
+	lbl_steps->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
 	cb_hierarch = new QCheckBox(this);
 	cb_hierarch->setText(tr(" Remove Overlaps hierarchically (larger -> smaller) "));
 	cb_hierarch->setChecked((*o_r).remove_hierarch);
@@ -74,7 +81,7 @@ void US_Hydrodyn_OR::setupGUI()
 	connect(cnt_hierarch, SIGNAL(valueChanged(double)), SLOT(update_hierarch(double)));
 
 	cb_sync = new QCheckBox(this);
-	cb_sync->setText(tr(" Remove Overlaps synchronously with step size: "));
+	cb_sync->setText(tr(" Remove Overlaps synchronously: "));
 	cb_sync->setChecked((*o_r).remove_sync);
 	cb_sync->setEnabled((*o_r).remove_overlap);
 	cb_sync->setMinimumHeight(minHeight1);
@@ -114,6 +121,8 @@ void US_Hydrodyn_OR::setupGUI()
 	j++;
 	background->addWidget(cb_fuse, j, 0);
 	background->addWidget(cnt_fuse, j, 1);
+	j++;
+	background->addWidget(lbl_steps, j, 0);
 	j++;
 	background->addWidget(cb_sync, j, 0);
 	background->addWidget(cnt_sync, j, 1);
