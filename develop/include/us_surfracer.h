@@ -2,8 +2,9 @@
 #define US_SURFRACER_H
 
 int surfracer_main(float probe_radius, 
-		    vector <residue> residue_list,
-		    vector <PDB_model> *model_vector);
+		   vector <residue> residue_list,
+		   PDB_model *model_vector,
+		   bool recheck = false);
 
 #define US_SURFRACER_ERR_MISSING_RESIDUE     1
 #define US_SURFRACER_ERR_MISSING_ATOM        2

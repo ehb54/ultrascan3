@@ -194,6 +194,7 @@ int __fpclassifyf (float x);
 
 #endif // WIN32
 
+float int_vol_2sphere(float r1, float r2, float d);
 
 #endif
 

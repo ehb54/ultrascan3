@@ -1,0 +1,4479 @@
+/*       PROGRAM SUPC VERSION 4.0 (Updated 31 Jan 2001)       */
+/*                            4.1 (Updated  3 Jun 2004)       */
+/*			      4.2 (Updated 14 Jun 2007) introduced overlap choice in over.c */
+/*				                        introduced version # in supc.c */
+/*				                        fixed MAX EXT in supc.c */
+/*       Readapted for Linux from Win version 15/5/2002       */
+/* Computation of the hydrodynamic properties of rigid models */
+/* composed of non-overlapping beads of different radii.      */
+
+#define  PI 3.141592654
+#define  ETAo 1.005E-02
+#define  DENS 0.998203
+#define  AVO 6.023E23
+#define  KB 1.38066E-16
+#define  TE 293.15
+#define  SMAX 100
+#define  RM_COMMAND "rm "
+#include <stdlib.h>		/* Added for 'print_time' function use */
+
+#include <stdio.h>
+#include <math.h>
+#include <time.h>
+#include <malloc.h>
+#include <string.h>
+
+#include "../include/us_hydrodyn_supc.h"
+
+static FILE *mol;
+static FILE *rmc;
+static FILE *new_mol;
+static FILE *new_mol1;
+static FILE *new_rmc;
+static FILE *ris;
+static FILE *exe_time;
+static FILE *tot_mol;
+static FILE *interinp;
+static FILE *interinp1;
+static FILE *interout;
+
+static char molecola[SMAX];
+static char ragcol[SMAX];
+static char risultati[SMAX];
+static char fil001[SMAX];
+// static char corresp[SMAX];
+// static char data_stp;
+
+static int numero_sfere;
+static int prima;
+static int ultima;
+static int num;
+static int kkk;
+static int fe;
+static int colorzero;
+static int colorsix;
+static int colorsixf;
+static int metodo;
+static int scelta;
+// static int metod1;
+static int volcor;
+static int sfecalc;
+static int mascor;
+static int mascor1;
+// static int d;
+static int cd;
+static int cc;
+static int nat;
+// static int natt;
+// static int ind1;
+// static int ind2;
+static int vt;
+static int flag_norm;
+static int cdmolix;
+static int num001;
+static int numor;
+// static int i;
+// static int k;
+/* int annov; */
+// static int flag_mem;
+
+static float isigmat[9];
+static float sigmat[9];
+static float sigmaRr[9];
+static float sigmaoc[9];
+static float soct[9];
+static float sigmaoR[9];
+static float roR[3];
+static float inver[6][6];
+static float Doc[9];
+static float Doct[9];
+static float Dot[9];
+static float cv[9];
+static long double Dr[9];
+static float roD[3];
+static float DDt[9];
+static float taoh;
+static float taom;
+static float taod;
+static float stdinv;
+static float taodin;
+static long double tao[5];
+// static float aa;
+// static float qq;
+// static float ri;
+// static float rj;
+// static float del;
+// static float d1;
+// static float d2;
+// static float rr;
+// static float tt;
+static float f;
+// static float tol;
+static float raggio;
+static float partvol;
+static float partvolc;
+static float partvolc1;
+static float partvolc2;
+static float xm;
+static float ym;
+static float zm;
+static float mtx;
+static float raflag;
+static float taoflag;
+static float vT[9];
+static float Tv[9];
+static float bb[3];
+static float vis;
+static float vis1;
+static float vis2;
+static float vis3;
+static float vis4;
+static float vc[3];
+static float ro;
+static float rou;
+static float pesmol;
+static float totvol;
+static float totsup;
+static float interm1;
+static float totvolb;
+static long double dl1;
+static long double dl2;
+static long double dl3;
+static float fconv;
+static float fconv1;
+static float volcor1;
+static float vol_mas;
+static float correz;
+static float Rg;
+static float Rgu;
+static float RSt;
+static float RSr[3];
+static float CdT;
+static float CfT;
+static float CST;
+static float CSTF;
+static float CdR1;
+static float CfR1;
+static float CfR[3];
+static float CdR[3];
+static float RT[5];
+static float CT[5];
+static float CTH;
+static float CTM;
+static float VIM;
+static float VIMC;
+static float VIMDS;
+static float VIMTM;
+static float VIMTV;
+static float RE;
+static float REC;
+static float REDS;
+static float RETM;
+static float RETV;
+static float Rg2;
+static float Rgu2;
+static float RSt2;
+static float RSr2[3];
+static float CdT2;
+static float CfT2;
+static float CST2;
+static float CSTF2;
+static float CdR12;
+static float CfR12;
+static float CfR2[3];
+static float CdR2[3];
+static float RT2[5];
+static float CT2[5];
+static float CTH2;
+static float CTM2;
+static float VIM2;
+static float VIMC2;
+static float VIMDS2;
+static float VIMTM2;
+static float VIMTV2;
+static float RE2;
+static float REC2;
+static float REDS2;
+static float RETM2;
+static float RETV2;
+static float maxx;
+static float maxy;
+static float maxz;
+
+static void print_time(int seconds);
+static void print_time_2IO(int seconds);
+
+static void intestazione();
+static void presentazione();
+static void vedimatrici();
+static void stampamatrice(float *n);
+static void stampamatrice1(float *n);
+static void stampamatrice1l(long double *n);
+static void stampa_ris();
+static void mem_ris();
+static void val_med();
+static void inp_inter();
+static void out_inter();
+static void mem_mol();
+static void autovalori();
+static void riempimatrice();
+static void choldc(int N);
+static void cholsl(int N);
+static void inizializza_b1();
+static void inverti(int N);
+static void DDtcalc();
+static void sigmaoRcalc();
+static void Gets_date(char *day, char *month, int *year, int *numday, char *hour);
+#if defined(NOT_USED)
+ static void sigmaocalc();
+ static void sigmatcalc1();
+#endif
+static void sigmaocalc1();
+static void sigmatcalc2();
+static void sigmarRcalc1();
+static int overlap();
+static void vxT(float v[3], float T[9]);
+static void vxTl(float v[3], long double T[9]);
+static void Txv(float T[9], float v[3]);
+static void Mxv(float M[9], float v[3]);
+static void calcqij();
+static void calcR();
+static void calcD();
+static void secondo(long double b, long double c);
+static void terzo(long double b, long double c, long double d);
+static void visco();
+static void tsuda();
+static void tsuda1();
+static void doublesum();
+static void init_da_a();
+static void inv(float r[9]);
+static void inv6x6(float a[6][6]);
+static void initarray();
+static void diffcalc();
+static void relax_rigid_calc();
+static void ragir();
+static void maxest();
+
+// #define NMAX 1690
+
+static struct dati1 *dt = 0;	// [2 * NMAX];
+static struct dati1 *dtn = 0;	// [NMAX];
+static float *rRi = 0;		// [3 * NMAX];
+static float *b1 = 0;		// [3 * NMAX];
+static float *p = 0;		// [3 * NMAX];
+static float *gp = 0;		// [NMAX][9];
+static float *q = 0;		// [NMAX][NMAX][9];
+static float *a = 0;		// [3 * NMAX][3 * NMAX];
+
+static int nmax;
+
+static void
+supc_free_alloced()
+{
+    if (dt)
+    {
+	free(dt);
+    }
+    if (dtn)
+    {
+	free(dtn);
+    }
+    if (rRi)
+    {
+	free(rRi);
+    }
+    if (b1)
+    {
+	free(b1);
+    }
+    if (p)
+    {
+	free(p);
+    }
+    if (gp)
+    {
+	free(gp);
+    }
+    if (a)
+    {
+	free(a);
+    }
+    if (q)
+    {
+	free(q);
+    }
+}
+
+int
+supc_alloc()
+{
+    dt = (struct dati1 *) malloc(2 * nmax * sizeof(struct dati1));
+    if (!dt)
+    {
+	supc_free_alloced();
+	fprintf(stderr, "memory allocation error\n");
+	return -1;
+    }
+    dtn = (struct dati1 *) malloc(nmax * sizeof(struct dati1));
+    if (!dtn)
+    {
+	supc_free_alloced();
+	fprintf(stderr, "memory allocation error\n");
+	return -1;
+    }
+    rRi = (float *) malloc(nmax * 3 * sizeof(float));
+    if (!rRi)
+    {
+	supc_free_alloced();
+	fprintf(stderr, "memory allocation error\n");
+	return -1;
+    }
+    b1 = (float *) malloc(nmax * 3 * sizeof(float));
+    if (!b1)
+    {
+	supc_free_alloced();
+	fprintf(stderr, "memory allocation error\n");
+	return -1;
+    }
+    p = (float *) malloc(nmax * 3 * sizeof(float));
+    if (!p)
+    {
+	supc_free_alloced();
+	fprintf(stderr, "memory allocation error\n");
+	return -1;
+    }
+    gp = (float *) malloc(nmax * 9 * sizeof(float));
+    if (!gp)
+    {
+	supc_free_alloced();
+	fprintf(stderr, "memory allocation error\n");
+	return -1;
+    }
+    a = (float *) malloc(nmax * 3 * nmax * 3 * sizeof(float));
+    if (!a)
+    {
+	supc_free_alloced();
+	fprintf(stderr, "memory allocation error\n");
+	return -1;
+    }
+    q = (float *) malloc(nmax * nmax * 9 * sizeof(float));
+    if (!q)
+    {
+	supc_free_alloced();
+	fprintf(stderr, "memory allocation error\n");
+	return -1;
+    }
+    return 0;
+}
+
+static void
+print_time(int seconds)
+{
+    auto div_t min_sec;
+
+    min_sec = div(seconds, 60);
+    printf("Time used for computing: %d minutes and %d seconds\n", min_sec.quot, min_sec.rem);
+}
+
+static void
+print_time_2IO(int seconds)
+{
+    auto div_t min_sec;
+
+    min_sec = div(seconds, 60);
+    fprintf(exe_time, "Time used for computing: %d minutes and %d seconds\n", min_sec.quot, min_sec.rem);
+}
+
+/*********************************************************
+*							 *
+*	    Procedure:                                   *
+*                                                        *
+*           void Gets_date(char *day, char *month,       *
+*                             char *year, int *numday,   *
+*			      char *hour)                *
+*                                                        *
+**********************************************************/
+static void
+Gets_date(char *day, char *month, int *year, int *numday, char *hour)
+{
+
+    char tempo[100];
+    char anno[5];
+    time_t timer;
+    struct tm *tblock;
+
+    timer = time(NULL);
+    tblock = localtime(&timer);
+    strcpy(tempo, asctime(tblock));
+    sscanf(tempo, "%s %s %d %s %s\n", day, month, numday, hour, anno);
+    /* annov=strtol(anno,NULL,0); */
+    anno[0] = anno[2];
+    anno[1] = anno[3];
+    anno[2] = '\0';
+    *year = atoi(anno);
+}
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+
+int
+us_hydro_supc_main(int use_nmax)
+{
+    nmax = use_nmax;
+    if (int retval = supc_alloc())
+    {
+	return retval;
+    }
+
+    int i;
+    int k; 
+    int flag_mem;
+    int bc;
+    char r1;
+    char command[200];
+    float temp, x, y, z;
+    time_t primo, secondo;
+    // void Gets_date(char *day, char *month, int *year, int *numday, char *hour);
+    char day[4];
+    char month[3];
+    char hour[9];
+    int numday, year;
+
+    printf("\n\n ** REMOVING RESERVED FILES, IF PRESENT ** \n\n");
+
+    printf("Removing tot_mol\n");
+    system("rm tot_mol");
+    printf("Removing ifraxon\n");
+    system("rm ifraxon");
+    printf("Removing ofraxon\n");
+    system("rm ofraxon");
+    printf("Removing ifraxon1\n");
+    system("rm ifraxon1");
+    printf("Removing ofraxon1\n");
+    system("rm ofraxon1");
+
+    Gets_date(day, month, &year, &numday, hour);
+
+    num = 0;
+    colorzero = 0;
+    colorsix = 0;
+    colorsixf = 0;
+    metodo = 2;
+    flag_mem = 0;
+    flag_norm = 0;
+    cd = 3;
+    cc = 0;
+    scelta = 1;
+    volcor = 3;
+    mascor = 3;
+
+    while ((num < 1) || (num > 100))
+    {
+	intestazione();
+	printf("\n\n** Compiled for %d beads **\n\n", nmax);
+	printf("\n\n\n** Insert number of models to analyze (max=100) :___ ");
+	scanf("%d", &num);
+	getchar();
+    }
+
+    if (num != 1)
+    {
+	printf("\n - Sequential files?\n");
+	printf(" 1) Yes\n 2) No\n\n");
+	printf(" Your choice ? (1/2) :__ ");
+	scanf("%d", &cdmolix);
+	if (cdmolix == 1)
+	{
+	    printf("\n-Enter filename prefix  ");
+	    scanf("%s", fil001);
+	    getchar();
+	    printf("\n-Enter first file number   ");
+	    scanf("%d", &num001);
+	    numor = 1;
+	}
+	r1 = 'y';
+	flag_mem = 1;
+
+	/* Initialization for average values */
+
+	Rg = Rgu = RSt = CfT = CST = CSTF = CdT = CfR1 = CdR1 = RE = REC = REDS = RETM = RETV = VIM = VIMC = VIMDS = VIMTM =
+	    VIMTV = CTH = CTM = 0.0;
+	Rg2 = Rgu2 = RSt2 = CfT2 = CST2 = CSTF2 = CdT2 = CfR12 = CdR12 = RE2 = REC2 = REDS2 = RETM2 = RETV2 = VIM2 = VIMC2 =
+	    VIMDS2 = VIMTM2 = VIMTV2 = CTH2 = CTM2 = 0.0;
+
+	for (k = 0; k < 3; k++)
+	{
+	    RSr[k] = RSr2[k] = 0.0;
+	    CfR[k] = CfR2[k] = 0.0;
+	    CdR[k] = CdR2[k] = 0.0;
+	}
+	for (k = 0; k < 5; k++)
+	{
+	    RT[k] = RT2[k] = 0.0;
+	    CT[k] = CT2[k] = 0.0;
+	}
+    }
+
+    else
+
+    {
+	r1 = 'a';
+	while ((r1 != 'n') && (r1 != 'N') && (r1 != 'y') && (r1 != 'S'))
+	{
+	    intestazione();
+	    printf("\n\n\n** Number of models to analyze:___ %d", num);
+	    printf("\n** Do you want the results printed to a file ? (y/n) :___ ");
+	    scanf("%s", &r1);
+	    getchar();
+	}
+    }
+
+    if ((r1 == 'y') || (r1 == 'Y'))
+    {
+      a50:
+	flag_mem = 1;
+	printf("\n** Insert the name of results' file :___ ");
+	scanf("%s", risultati);
+	getchar();
+    }
+    new_mol = fopen(risultati, "r");
+
+    if (new_mol != NULL)
+    {
+	printf("\n");
+	printf("*** CAUTION : File already exists ! ***\n\n");
+	printf("   Do you want:\n\n");
+	printf(" 1) Append to existing file\n");
+	printf(" 2) Overwrite existing file\n");
+	printf(" 3) Create new file\n\n");
+	printf("** Select (1/2/3) :___ ");
+	scanf("%d", &fe);
+	getchar();
+	fclose(new_mol);
+	if (fe == 2)
+	{
+	    strcpy(command, RM_COMMAND);
+	    strcat(command, risultati);
+	    if (system(command) != 0)
+		printf("Error writing file");
+	}
+	if (fe == 3)
+	{
+	    goto a50;
+/*		printf("** Insert the name of results file :___ ");
+        scanf("%s",risultati);
+        getchar();  */
+	}
+    }
+
+    printf("\n\t\tWARNING !\n");
+    printf("If the coordinates and the radius of the beads are expressed \n");
+    printf("in units other than nanometers, insert the correct conversion\n");
+    printf("factor to turn them into nanometers [else insert 1].\n");
+    printf("The following table shows some examples of conversions:\n\n");
+
+    printf("- - )	micrometers => nanometers [ Conversion factor = 1000 ]\n");
+    printf("- - )	nanometers  => nanometers [ Conversion factor = 1    ]\n");
+    printf("- - )	angstroms   => nanometers [ Conversion factor = 0.1  ]\n\n");
+    printf("\n** Insert the conversion factor :___ ");
+
+    scanf("%f", &fconv);
+    fconv1 = 1.0 / fconv;
+
+    while ((cd != 1) && (cd != 2))
+    {
+	intestazione();
+	printf("\n- Reference System :\n\n");
+	printf(" 1) Cartesian Origin \n 2) Diffusion Center\n\n");
+	printf(" Select (1/2) :___ ");
+	scanf("%d", &cd);
+	getchar();
+    }
+
+    while ((cc != 1) && (cc != 2))
+    {
+	intestazione();
+	printf("\n- Boundary Conditions :\n\n");
+	printf(" 1) STICK boundary condition (6*PI*ETAo)\n");
+	printf(" 2) SLIP boundary condition (4*PI*ETAo)\n\n");
+	printf(" Select (1/2) :___ ");
+	scanf("%d", &cc);
+	getchar();
+    }
+
+    while ((volcor != 1) && (volcor != 2))
+    {
+	intestazione();
+	printf("\n- Volume correction:\n\n");
+	printf(" 1) Automatic (Total volume of the beads)\n");
+	printf(" 2) Manual    (From keyboard)\n\n");
+	printf(" Select (1/2) :___ ");
+	scanf("%d", &volcor);
+	getchar();
+    }
+
+    if (volcor == 2)
+    {
+	printf("\n\n\n- Insert value of the volume : ");
+	scanf("%f", &volcor1);
+    }
+
+    while ((mascor != 1) && (mascor != 2))
+    {
+	intestazione();
+	printf("\n- Mass correction:\n\n");
+	printf(" 1) Automatic (Masses from file) \n");
+	printf(" 2) Manual    (Total Mass from Keyboard)\n\n");
+	printf(" Select (1/2) :___ ");
+	scanf("%d", &mascor);
+	getchar();
+    }
+
+    if (mascor == 2)
+    {
+	printf("\n\n\n- Insert value of mass : ");
+	scanf("%d", &mascor1);
+    }
+
+    while ((sfecalc != 1) && (sfecalc != 2))
+    {
+	intestazione();
+	printf("\n- Beads to be included in the computation:\n\n");
+	printf(" 1) ALL beads\n");
+	printf(" 2) Color Code Selection (Beads Color Coded \"6\" will be excluded)\n\n");
+	printf(" Select (1/2) :___ ");
+	scanf("%d", &sfecalc);
+	getchar();
+	if ((sfecalc == 2) && (volcor == 1))
+	{
+	    printf("\n YOU HAVE SELECTED TO EXCLUDE BEADS COLOR CODED \"6\"\n\n");
+	    printf("\n HOWEVER, THEIR VOLUME MAY BE IMPORTANT FOR THE\n");
+	    printf("\n ROTATIONAL DIFFUSION AND INTRINSIC VISCOSITY CORRECTIONS\n");
+	    printf("\n You may choose to include their volume in:\n\n");
+
+	    printf(" 0) Neither correction\n");
+	    printf(" 1) The rotational diffusion correction only\n");
+	    printf(" 2) The intrinsic viscosity correction only\n");
+	    printf(" 3) Both corrections\n\n");
+	    printf(" Select (0/1/2/3) :___ ");
+	    scanf("%d", &colorsixf);
+	    getchar();
+
+	}
+
+    }
+
+    intestazione();
+
+    printf("- Computational Method : SUPERMATRIX INVERSION\n\n");
+
+    if (flag_mem == 1)
+    {
+	ris = fopen(risultati, "ab");
+	fprintf(ris, "\n%s", "BEAMS -           IST. CBA                - COEFF/SUPCW v. 4.2\n");
+	fprintf(ris, "\n%s", "**************************************************************");
+	fprintf(ris, "\n%s\n", "***** Computational Method : Supermatrix Inversion ***********");
+	fprintf(ris, "%s\n", "**************************************************************");
+	fprintf(ris, "* Date: %s %d %s %d %s                                *\n", day, numday, month, year, hour);
+
+	fprintf(ris, "%s\n", "**************************************************************");
+
+	fclose(ris);
+    }
+
+    for (k = 0; k < num; k++)
+    {
+	/* Check for file existence and selects whole or part of the models for sequential files only   */
+	if (cdmolix == 1)
+	{
+	    sprintf(molecola, "%s%d", fil001, num001);
+	    num001 = num001 + 1;
+	    mol = fopen(molecola, "r");
+	    while (mol == NULL)
+	    {
+		printf("\n");
+		printf("The Model(s) do not exist!!!\n");
+		printf("Insert the models' correct prefix :___");
+		scanf("%s", molecola);
+		mol = fopen(molecola, "r");
+	    }
+	    fscanf(mol, "%d", &nat);
+	    fclose(mol);
+	    if (k == 0)
+	    {
+		printf("\n%s%d%s", "** TOTAL Number of BEADS in the MODELS :___", nat, " **\n\n");
+		prima = (-1);
+		while ((prima < 0) || (prima > (nat - 1)))
+		{
+		    printf("%s", "** Insert FIRST BEAD # to be included:___");
+		    scanf("%d", &prima);
+		    getchar();
+		    printf("\n");
+		}
+		ultima = nat + 1;
+		while ((ultima < prima) || (ultima > nat))
+		{
+		    printf("%s", "** Insert LAST BEAD # to be included:___");
+		    scanf("%d", &ultima);
+		    getchar();
+		    printf("\n");
+		}
+	    }
+	    tot_mol = fopen("tot_mol", "ab");
+	    fprintf(tot_mol, "%s\n", molecola);
+	    fprintf(tot_mol, "%d\t%d\t%d\n", nat, prima, ultima);
+	    fclose(tot_mol);
+	}
+
+	else
+	{
+	    if (num != 1)
+	    {
+		printf("\n%s%d%s", "** Insert file name of model #", k + 1, " to be analyzed :___ ");
+	    }
+
+	    else
+		printf("\n** Insert file name of the model to be analyzed :___ ");
+	    scanf("%s", molecola);
+	    getchar();
+
+	    init_da_a();
+	}
+    }
+
+    tot_mol = fopen("tot_mol", "r");
+
+    for (k = 0; k < num; k++)
+    {
+
+	initarray();
+
+	fscanf(tot_mol, "%f", &raflag);
+
+	presentazione();
+
+	kkk = k + 1;
+	inp_inter();
+	printf("\n\n- Starting PAT ...\n");
+	system("./pat");
+	printf("\n\n- End of PAT ...\n\n");
+	out_inter();
+
+	system("rm ifraxon*");
+	system("rm ofraxon*");
+
+	for (i = 0; i < nat; i++)
+	{
+	    x = fabs(dt[i].x - dtn[i].x);
+	    y = fabs(dt[i].y - dtn[i].y);
+	    z = fabs(dt[i].z - dtn[i].z);
+
+	    if ((x > 1) || (y > 1) || (z > 1))
+		flag_norm = 1;
+	}
+
+	for (i = 0; i < nat; i++)
+	{
+	    dt[i].x = dtn[i].x;
+	    dt[i].y = dtn[i].y;
+	    dt[i].z = dtn[i].z;
+	}
+
+	if (overlap() == 1)
+	{
+	    printf("\n\n Hit any key to exit");
+	    getchar();
+	    break;
+	}
+/*		MOVED INSIDE INIT.C
+		 printf("\n\n Starting function: ragir()\n");
+         ragir(); 
+		 printf("\n End of function: ragir()\n"); */
+
+	/* RECOMPUTING THE CENTER OF MASS */
+
+	mtx = 0.0;
+	xm = 0.0;
+	ym = 0.0;
+	zm = 0.0;
+
+	for (i = 0; i < nat; i++)
+	    mtx += dt[i].m;
+
+	for (i = 0; i < nat; i++)
+	{
+	    xm += dt[i].x * dt[i].m;
+	    ym += dt[i].y * dt[i].m;
+	    zm += dt[i].z * dt[i].m;
+	}
+
+	xm = xm / mtx;
+	ym = ym / mtx;
+	zm = zm / mtx;
+
+	printf("\n\n Starting function: tsuda()\n");
+	tsuda();
+	printf("\n End of function: tsuda()\n");
+	printf("\n Starting function: doublesum()\n");
+	doublesum();
+	printf("\n End of function: doublesum()\n");
+	printf("\n Starting function: calcqij()\n");
+	calcqij();
+	printf("\n\n End of function: calcqij()\n");
+
+	presentazione();
+	printf("- Computational Method : SUPERMATRIX INVERSION\n\n");
+	if (flag_mem == 1)
+	{
+	    exe_time = fopen("exe_time", "ab");
+	    fprintf(exe_time, "\n%s\n", "BEAMS -           IST. CBA                    COEFF/SUPC");
+	    fprintf(exe_time, "\n%s\n\n", "*** Computational Method : SUPERMATRIX INVERSION chol ***");
+	    fprintf(exe_time, "Date: %s %d %s %d %s\n", day, numday, month, year, hour);
+	    fprintf(exe_time, "%s", "MODEL FILE NAME :___ ");
+	    fprintf(exe_time, "%s\n", molecola);
+	    fprintf(exe_time, "%s%d\n", "BEADS in the MODEL :___ ", numero_sfere);
+	    fprintf(exe_time, "%s%d\n", "FIRST BEAD # INCLUDED  :___ ", prima);
+	    fprintf(exe_time, "%s%d\n", "LAST BEAD # INCLUDED :___ ", ultima);
+
+	    if (flag_norm == 1)
+		fprintf(exe_time, "\n%s\n\n", "- NORMALIZED MOLECULE -");
+	    else
+		fprintf(exe_time, "\n");
+	    fclose(exe_time);
+
+	    system("date >> exe_time");
+	}
+	primo = time(NULL);	/* Gets system time */
+	riempimatrice();
+	inverti(nat);
+	printf("- Matrix S_ij     : ");
+	printf("calculated\n");
+
+	visco();
+	tsuda1();
+
+	printf("- Matrix KSI_T  : ");
+	sigmatcalc2();
+	printf("calculated\n");
+
+	printf("- Matrix KSI_OC : ");
+	sigmaocalc1();
+	printf("calculated\n");
+
+	calcR();
+
+	printf("- Matrix KSI_Rr  : ");
+	sigmarRcalc1();
+	printf("calculated\n");
+
+	printf("- Matrix KSI_OR: ");
+	sigmaoRcalc();
+	printf("calculated\n");
+
+	diffcalc();
+	relax_rigid_calc();
+
+	if (cd == 2)
+	{
+	    calcD();
+	    DDtcalc();
+	}
+
+	printf("- Matrix Doc      : calculated\n");
+	printf("- Matrix Doct     : calculated\n");
+	printf("- Matrix Dot      : calculated\n");
+	printf("- Matrix Dr       : calculated\n");
+	secondo = time(NULL);	/* Gets system time again */
+	if (flag_mem == 1)
+
+	{
+	    system("date >> exe_time");
+	    exe_time = fopen("exe_time", "ab");
+	    print_time_2IO((int) difftime(secondo, primo));
+	    /*
+	       Substitute the previous line with the following for compiling under SUN O.S.
+	       print_time_2IO(secondo-primo);
+	     */
+	    fclose(exe_time);
+	}
+
+	presentazione();
+	printf("- Computational Method : SUPERMATRIX INVERSION\n\n\n");
+	totvol = 0.0;
+	totsup = 0.0;
+	totvolb = 0.0;
+
+	if ((volcor == 1) && (sfecalc == 2))
+	    totvolb = interm1 / (6.0 * ETAo);
+
+	if ((volcor == 1) && ((colorsixf == 2) || (colorsixf == 3)))
+	    totvol = interm1 / (6.0 * ETAo);
+	else
+	{
+	    for (i = 0; i < nat; i++)
+		totvol += (4.0 / 3.0 * PI * dt[i].r * dt[i].r * dt[i].r);
+	    totvolb = totvol;
+	}
+	for (i = 0; i < nat; i++)
+	    totsup += PI * dt[i].r * dt[i].r * 4.0;
+
+	if (num != 1)		/* average values of parameters */
+	{
+
+	    temp = 0.0;
+
+	    if (cc == 1)
+		bc = 6;
+	    else
+		bc = 4;
+
+	    if (mascor == 1)
+		mascor1 = (int) pesmol;
+
+	    CfT += f * 1.0E-7 * fconv;
+	    CfT2 += pow((f * 1.0E-7 * fconv), 2.0);
+
+	    CdT += (KB * TE * 1.0E7) / f * fconv1;
+	    CdT2 += pow(((KB * TE * 1.0E7) / f * fconv1), 2.0);
+
+	    if ((raflag == -1.0) || (raflag == -3.0))
+	    {
+		CST += (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO);
+		CST2 += pow((mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), 2.0);
+	    }
+
+	    if ((raflag == -2.0) || (raflag == -3.0) || (raflag == -5.0))
+	    {
+		CSTF += (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
+		CSTF2 += pow((mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), 2.0);
+	    }
+
+	    Rg += ro * fconv;
+	    Rg2 += pow((ro * fconv), 2.0);
+
+	    if ((raflag == -1.0) || (raflag == -3.0))
+	    {
+		Rgu += rou * fconv;
+		Rgu2 += pow((rou * fconv), 2.0);
+	    }
+
+	    RSt += f * fconv / (bc * PI * ETAo);
+	    RSt2 += pow((f * fconv / (bc * PI * ETAo)), 2.0);
+
+	    temp = 0.0;
+	    for (i = 0; i < 3; i++)
+		temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3.0);
+	    CfR1 += temp / 3.0;
+	    CfR12 += pow((temp / 3.0), 2.0);
+
+	    temp = 0.0;
+	    for (i = 0; i < 3; i++)
+		temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3.0);
+	    CdR1 += temp / 3.0;
+	    CdR12 += pow((temp / 3.0), 2.0);
+
+	    for (i = 0; i < 3; i++)
+	    {
+		temp = 0.0;
+		RSr[i] += pow((3.0 / Dr[i * 4] / bc / 4.0 / PI / ETAo), 0.333333) * fconv;
+		temp += pow((3.0 / Dr[i * 4] / bc / 4.0 / PI / ETAo), 0.333333) * fconv;
+		RSr2[i] += pow(temp, 2.0);
+
+		CdR[i] += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3.0);
+		temp = (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3.0);
+		CdR2[i] += pow(temp, 2.0);
+
+		CfR[i] += 1.0E-21 / Dr[i * 4] * pow(fconv, 3.0);
+		temp = 1.0E-21 / Dr[i * 4] * pow(fconv, 3.0);
+		CfR2[i] += pow(temp, 2.0);
+	    }
+
+	    if (mascor == 2)
+	    {
+		correz = pesmol / mascor1;
+		vol_mas = mascor1;
+	    }
+	    else
+	    {
+		correz = 1.0;
+		vol_mas = pesmol;
+	    }
+
+	    VIM += vis * correz * pow(fconv, 3.0);
+	    temp = vis * correz * pow(fconv, 3.0);
+	    VIM2 += pow(temp, 2.0);
+
+	    RE += 1.0E7 * pow((0.3 * pesmol * vis / (PI * AVO)), 0.333333) * fconv;
+	    temp = 1.0E7 * pow((0.3 * pesmol * vis / (PI * AVO)), 0.333333) * fconv;
+	    RE2 += pow(temp, 2.0);
+
+	    VIMC += (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3.0);
+	    temp = (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3.0);
+	    VIMC2 += pow(temp, 2.0);
+
+	    REC += 1.0E7 * pow((0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO)), 0.333333) * fconv;
+	    temp = 1.0E7 * pow((0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO)), 0.333333) * fconv;
+	    REC2 += pow(temp, 2.0);
+
+	    VIMDS += (vis4 * correz) * pow(fconv, 3.0);
+	    temp = (vis4 * correz) * pow(fconv, 3.0);
+	    VIMDS2 += pow(temp, 2.0);
+
+	    REDS += 1.0E7 * pow((0.3 * pesmol * vis4 / (PI * AVO)), 0.333333) * fconv;
+	    temp = 1.0E7 * pow((0.3 * pesmol * vis4 / (PI * AVO)), 0.333333) * fconv;
+	    REDS2 += pow(temp, 2.0);
+
+	    VIMTM += (vis1 * correz) * pow(fconv, 3.0);
+	    temp = (vis1 * correz) * pow(fconv, 3.0);
+	    VIMTM2 += pow(temp, 2.0);
+
+	    RETM += 1.0E7 * pow((0.3 * pesmol * vis1 / (PI * AVO)), 0.333333) * fconv;
+	    temp = 1.0E7 * pow((0.3 * pesmol * vis1 / (PI * AVO)), 0.333333) * fconv;
+	    RETM2 += pow(temp, 2.0);
+
+	    VIMTV += (vis2 * correz) * pow(fconv, 3.0);
+	    temp = (vis2 * correz) * pow(fconv, 3.0);
+	    VIMTV2 += pow(temp, 2.0);
+
+	    RETV += 1.0E7 * pow((0.3 * pesmol * vis2 / (PI * AVO)), 0.333333) * fconv;
+	    temp = 1.0E7 * pow((0.3 * pesmol * vis2 / (PI * AVO)), 0.333333) * fconv;
+	    RETV2 += pow(temp, 2.0);
+
+	    for (i = 0; i < 5; i++)
+	    {
+		CT[i] += tao[i] * pow(fconv, 3.0);
+		temp = tao[i] * pow(fconv, 3.0);
+		CT2[i] += pow(temp, 2.0);
+	    }
+	    CTM += taom * pow(fconv, 3.0);
+	    temp = taom * pow(fconv, 3.0);
+	    CTM2 += pow(temp, 2.0);
+	    CTH += taoh * 1.0E9 * pow(fconv, 3.0);
+	    temp = taoh * 1.0E9 * pow(fconv, 3.0);
+	    CTH2 += pow(temp, 2.0);
+
+	}
+
+	maxest();
+
+	stampa_ris();
+
+	if (flag_mem == 1)
+	    mem_ris();
+
+	if (num != 1)
+	{
+	    if ((raflag == -4.0) || (raflag == -5.0))	/* CLEARING THE MEMORY SPACE ALLOCATED FOR AA-BEADS CORRESPONDENCE */
+	    {
+		for (i = 0; i < nat; i++)
+		{
+		    free(dt[i].cor);
+		}
+	    }
+	}
+	if (num == 1)
+	{
+	    while (scelta == 1)
+	    {
+		print_time((int) difftime(secondo, primo));
+
+		/*
+		   Substitute the previous line with the following for compiling under SUN O.S.
+
+		   print_time(secondo-primo);
+		 */
+		printf("\n\n- Options : 		\n\n");
+		printf("  0) EXIT\n");
+		printf("  1) VIEW MATRICES\n");
+
+		if (flag_norm == 1)
+		{
+		    printf("  2) STORE Bead Model\n\n");
+		    printf("  Select (0/1/2) : ");
+		}
+		else
+		{
+		    printf("\n");
+		    printf("  Select (0/1) : ");
+		}
+
+		scanf("%d", &scelta);
+		getchar();
+
+		if (scelta == 1)
+		    vedimatrici();
+	    }
+
+	    if (scelta == 2)
+	    {
+		presentazione();
+		mem_mol();
+	    }
+	    if ((raflag == -4.0) || (raflag == -5.0))	/* CLEARING THE MEMORY SPACE ALLOCATED FOR AA-BEADS CORRESPONDENCE */
+	    {
+		for (i = 0; i < numero_sfere; i++)
+		{
+		    free(dt[i].cor);
+		}
+	    }
+	}
+
+    }
+
+    if (num != 1)
+	val_med();
+
+    fclose(tot_mol);
+    system("clear");
+    system("rm tot_mol");
+    return 0;
+}
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+
+static void
+intestazione()
+{
+    system("clear");
+    printf("####################################################\n");
+    printf("#   National Institute for Cancer Research (IST)   #\n");
+    printf("#         Advanced Biotechnologies Center (CBA)    #\n");
+    printf("#                   Genova, ITALY                  #\n");
+    printf("####################################################\n");
+    printf("#  SUPC - HYDRODYNAMIC PROPERTIES COMPUTATION      #\n");
+    printf("#              Version 4.2  June 2007              #\n");
+    printf("####################################################\n\n");
+}
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+
+static void
+presentazione()
+{
+    system("clear");
+    printf("####################################################\n");
+    printf("#   National Institute for Cancer Research (IST)   #\n");
+    printf("#         Advanced Biotechnologies Center (CBA)    #\n");
+    printf("#                   Genova, ITALY                  #\n");
+    printf("####################################################\n");
+    printf("#  SUPC - HYDRODYNAMIC PROPERTIES COMPUTATION      #\n");
+    printf("#              Version 4.2  June 2007              #\n");
+    printf("####################################################\n\n");
+    printf("- Model        : %s\n", molecola);
+    printf("- TOTAL Beads in the MODEL : %d\n", numero_sfere);
+    printf("%s%d\n", "- FIRST Bead Included  : ", prima);
+    printf("%s%d\n", "- LAST Bead Included : ", ultima);
+    if (colorzero == 1)
+    {
+	printf("\n%s%d%s\n", "- WARNING: THERE IS ", colorzero, " BEAD COLOR CODED '0' [RADIUS < 0.005 NM]");
+	printf("%s\n", "- THIS BEAD IS NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n");
+    }
+    if (colorzero > 1)
+    {
+	printf("\n%s%d%s\n", "- WARNING: THERE ARE ", colorzero, " BEADS COLOR CODED '0' [RADIUS < 0.005 NM]");
+	printf("%s\n", "- THOSE BEADS ARE NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n");
+    }
+
+    if (flag_norm == 1)
+	printf("%s\n", "- Model     : NORMALIZED");
+
+    if (cc == 1)
+	printf("\n- STICK boundary condition (6*PI*ETAo)\n");
+    else
+	printf("- SLIP boundary condition (4*PI*ETAo)\n\n");
+}
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+
+static void
+vedimatrici()
+{
+
+    int mtt;
+
+    mtt = 1;
+    while (mtt != 0)
+    {
+	presentazione();
+	printf("\n- Matrices :\n");
+	printf("\n  1)  KSI_T\n");
+	printf("  2)  KSI_OC\n");
+	printf("  3)  KSI_Rr\n");
+	printf("  4)  KSI_OR\n");
+	printf("  5)  Doc\n");
+	printf("  6)  Doct\n");
+	printf("  7)  Dot\n");
+	printf("  8)  Dr\n");
+	printf("\n  0)  Back\n");
+
+	printf("\n  Select(0/8) : ");
+	scanf("%d", &mtt);
+	getchar();
+
+	switch (mtt)
+	{
+	case 0:
+	    return;
+	case 1:
+	    {
+		presentazione();
+		printf("\n- Matrix : KSI_T\n\n\n");
+		stampamatrice(sigmat);
+	    }
+	    break;
+	case 2:
+	    {
+		presentazione();
+		printf("\n- Matrix : KSI_OC\n\n\n");
+		stampamatrice(sigmaoc);
+	    }
+	    break;
+	case 3:
+	    {
+		presentazione();
+		printf("\n- Matrix : KSIRr\n\n\n");
+		stampamatrice(sigmaRr);
+	    }
+	    break;
+	case 4:
+	    {
+		presentazione();
+		printf("\n- Matrix : KSIR_OR\n\n\n");
+		stampamatrice(sigmaoR);
+	    }
+	    break;
+	case 5:
+	    {
+		presentazione();
+		printf("\n- Matrix : Doc\n\n\n");
+		stampamatrice1(Doc);
+	    }
+	    break;
+	case 6:
+	    {
+		presentazione();
+		printf("\n- Matrix : Doct\n\n\n");
+		stampamatrice1(Doct);
+	    }
+	    break;
+	case 7:
+	    {
+		presentazione();
+		printf("\n- Matrix : Dot\n\n\n");
+		stampamatrice1(Dot);
+	    }
+	    break;
+	case 8:
+	    {
+		presentazione();
+		printf("\n- Matrix : Dr\n\n\n");
+		stampamatrice1l(Dr);
+	    }
+	    break;
+	}
+    }
+}
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+
+static void
+stampamatrice(float *n)
+{
+
+    int i;
+    float ss;
+
+    ss = 1.0;
+    if (metodo != 3)
+    {
+	if (cc == 1)
+	    ss = 6.0 * PI * ETAo;
+	else
+	    ss = 4.0 * PI * ETAo;
+    }
+
+    for (i = 0; i < 3; i++)
+    {
+	printf("\t%f\t%f\t%f", ss * n[3 * i], ss * n[3 * i + 1], ss * n[3 * i + 2]);
+	printf("\n");
+    }
+
+    printf("\n\n  Hit RETURN to go back");
+    getchar();
+    system("clear");
+
+}
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+
+static void
+stampamatrice1(float *n)
+{
+
+    int i;
+    float ss;
+
+    ss = 1.0;
+    if (metodo != 3)
+    {
+	if (cc == 1)
+	    ss = 6.0 * PI * ETAo;
+	else
+	    ss = 4.0 * PI * ETAo;
+    }
+
+    for (i = 0; i < 3; i++)
+    {
+	printf("\t%f\t%f\t%f", n[3 * i] / ss, n[3 * i + 1] / ss, n[3 * i + 2] / ss);
+	printf("\n");
+    }
+
+    printf("\n\n  Hit RETURN to go back");
+    getchar();
+    system("clear");
+
+}
+
+static void
+stampamatrice1l(long double *n)
+{
+
+    int i;
+    float ss;
+
+    ss = 1.0;
+    if (metodo != 3)
+    {
+	if (cc == 1)
+	    ss = 6.0 * PI * ETAo;
+	else
+	    ss = 4.0 * PI * ETAo;
+    }
+
+    for (i = 0; i < 3; i++)
+    {
+	printf("\t%f\t%f\t%f", (double) (n[3 * i] / ss), (double) (n[3 * i + 1] / ss), (double) (n[3 * i + 2] / ss));
+	printf("\n");
+    }
+
+    printf("\n\n  Hit RETURN to go back");
+    getchar();
+    system("clear");
+
+}
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+
+static void
+stampa_ris()
+{
+
+    float einst, bc, temp;
+    int i;
+    if (cc == 1)
+	bc = 6;
+    else
+	bc = 4;
+
+    printf("\n\n%s%d\n", "- Used BEADS Number  = ", nat);
+    if (volcor == 1)
+    {
+	if ((colorsixf == 0) && (sfecalc == 2))
+	    printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0),
+		   "  [nm^3] (NO contribution from buried beads)");
+	if ((colorsixf == 1) && (sfecalc == 2))
+	{
+	    printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0),
+		   "  [nm^3] (contribution from buried beads only for Dr)");
+	    printf("%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0), "  [nm^3] (for [n])");
+	}
+	if ((colorsixf == 2) && (sfecalc == 2))
+	{
+	    printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0),
+		   "  [nm^3] (contribution from buried beads only for [n])");
+	    printf("%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0), "  [nm^3] (for Dr)");
+	}
+	if ((colorsixf == 3) && (sfecalc == 2))
+	    printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0), "  [nm^3]");
+	if (sfecalc == 1)
+	    printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0), "  [nm^3]");
+    }
+    if (volcor == 2)
+	printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0), "  [nm^3]");
+
+    if (mascor == 1)
+	mascor1 = (int) pesmol;
+
+    printf("%s%d%s\n", "- Used BEADS Mass    = ", mascor1, "  [Da]");
+    printf("\n\n%s%.3e\t%s\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] (w@20C)");
+    printf("%s%.2e\t%s\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] (20C,w)");
+
+    if (raflag == -1.0)
+	printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+	       (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+
+    if ((raflag == -2.0) || (raflag == -5.0))
+    {
+	printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
+	       (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+	if ((nat + colorzero + colorsix) < numero_sfere)
+	    printf
+		("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+    }
+
+    if (raflag == -3.0)
+    {
+	printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
+	       (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+	if ((nat + colorzero + colorsix) < numero_sfere)
+	    printf
+		("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+
+	printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+	       (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+    }
+
+    temp = 0.0;
+    for (i = 0; i < 3; i++)
+	temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3.0);
+    printf("\n%s%.3e\t%s\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] (w@20C)");
+    temp = 0.0;
+    for (i = 0; i < 3; i++)
+	temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3.0);
+    printf("%s%.0f\t%s\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] (20C,w)");
+
+    printf("%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3.0), "[g*cm^2/s] (w@20C)");
+    printf("%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3.0), "[g*cm^2/s] (w@20C)");
+    printf("%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3.0), "[g*cm^2/s (w@20C)]");
+    printf("%s%.0Lf\t%s\n", "- ROT. DIFF. COEFF.  [ X ] = ", (KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3.0), "[1/s] (20C,w)");
+    printf("%s%.0Lf\t%s\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3.0), "[1/s] (20C,w)");
+    printf("%s%.0Lf\t%s\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3.0), "[1/s] (20C,w)");
+
+    printf("%s%.2f\t%s\n", "- MOLECULAR WEIGHT   (from file) = ", pesmol, "[Da]");
+    if (sfecalc == 2)
+	printf("%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3.0), "[nm^3]");
+    else
+	printf("%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", totvol * pow(fconv, 3.0), "[nm^3]");
+    printf("%s%.2f\t%s\n", "- BEADS TOTAL SURFACE AREA       = ", totsup * pow(fconv, 3.0), "[nm^2]");
+
+    if (raflag == -1.0)
+	printf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
+
+    if ((raflag == -2.0) || (raflag == -5.0))
+	printf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from file) = ", partvol, "[cm^3/g]");
+
+    if (raflag == -3.0)
+    {
+	printf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from file)             = ", partvol, "[cm^3/g]");
+	printf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
+    }
+
+    if ((raflag == -1.0) || (raflag == -3.0))
+    {
+	printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)   = ", ro * fconv, "[nm]");
+	printf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unhydrated Beads) = ", rou * fconv, "[nm]");
+    }
+    else
+
+	printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
+
+    printf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * PI * ETAo), "[nm]");
+
+    printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ", pow((3.0 / Dr[0] / bc / 4.0 / PI / ETAo), (0.33333)) * fconv,
+	   "[nm]");
+    printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ", pow((3.0 / Dr[4] / bc / 4.0 / PI / ETAo), (0.33333)) * fconv,
+	   "[nm]");
+    printf("%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
+	   pow((3.0 / Dr[8] / bc / 4.0 / PI / ETAo), (0.33333)) * fconv, "[nm]");
+
+    printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF RESISTANCE  :  ", roR[0] * fconv, roR[1] * fconv, roR[2] * fconv,
+	   "[nm]");
+    printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF MASS        :  ", xm * fconv, ym * fconv, zm * fconv, "[nm]");
+    if (cd == 2)
+	printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF DIFFUSION   :  ", roD[0] * fconv, roD[1] * fconv, roD[2] * fconv,
+	       "[nm]");
+
+    printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n\n", "- CENTRE OF VISCOSITY   :  ", vc[0] * fconv, vc[1] * fconv, vc[2] * fconv, "[nm]");
+
+    if (mascor == 2)
+    {
+	correz = pesmol / mascor1;
+	vol_mas = mascor1;
+    }
+    else
+    {
+	correz = 1.0;
+	vol_mas = pesmol;
+    }
+
+    printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY                 = ", vis * correz * pow(fconv, 3.0), "[cm^3/g]");
+    einst = pow(0.3 * pesmol * vis / (PI * AVO), 0.33333);
+    einst = 1E7 * einst;
+    printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                   = ", einst * fconv, "[nm]");
+    if ((volcor == 1) && ((colorsixf == 0) || (colorsixf == 1) || (colorsixf == 2)))
+    {
+	printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(GDLT corrected) = ",
+	       (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3.0), "[cm^3/g]");
+	einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO), 0.33333);
+	einst = 1E7 * einst;
+	printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
+    }
+    else
+    {
+	printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
+	       (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3.0), "[cm^3/g]");
+	einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / (PI * AVO), 0.33333);
+	einst = 1E7 * einst;
+	printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
+    }
+    printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(DoubleSum CM)   = ", vis4 * correz * pow(fconv, 3.0), "[cm^3/g]");
+    einst = pow(0.3 * pesmol * vis4 / (PI * AVO), 0.33333);
+    einst = 1E7 * einst;
+    printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (DoubleSum CM)    = ", einst * fconv, "[nm]");
+    printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CM)       = ", vis1 * correz * pow(fconv, 3.0), "[cm^3/g]");
+    einst = pow(0.3 * pesmol * vis1 / (PI * AVO), 0.33333);
+    einst = 1E7 * einst;
+    printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CM)        = ", einst * fconv, "[nm]");
+    printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CV)       = ", vis2 * correz * pow(fconv, 3.0), "[cm^3/g]");
+    einst = pow(0.3 * pesmol * vis2 / (PI * AVO), 0.33333);
+    einst = 1E7 * einst;
+    printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)        = ", einst * fconv, "[nm]");
+
+    printf("\nRELAXATION TIMES\n\n");
+
+    if (taoflag == 1.0)
+    {
+	printf("%s\t%.2Lf\t%s\n", " Tau(1) ", tao[0] * pow(fconv, 3.0), "[ns] (20C,w)");
+	printf("%s\t%.2Lf\t%s\n", " Tau(2) ", tao[1] * pow(fconv, 3.0), "[ns] (20C,w)");
+	printf("%s\t%.2Lf\t%s\n", " Tau(3) ", tao[1] * pow(fconv, 3.0), "[ns] (20C,w)");
+	printf("%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
+	printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
+    }
+    if (taoflag == 2.0)
+    {
+	printf("%s\t%.2Lf\t%s\n", " Tau(1) ", tao[4] * pow(fconv, 3.0), "[ns] (20C,w)");
+	printf("%s\t%.2Lf\t%s\n", " Tau(2) ", tao[1] * pow(fconv, 3.0), "[ns] (20C,w)");
+	printf("%s\t%.2Lf\t%s\n", " Tau(3) ", tao[1] * pow(fconv, 3.0), "[ns] (20C,w)");
+	printf("%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
+	printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
+    }
+    if (taoflag == 0.0)
+    {
+	printf("%s\t%.2Lf\t%s\n", " Tau(1) ", tao[0] * pow(fconv, 3.0), "[ns] (20C,w)");
+	printf("%s\t%.2Lf\t%s\n", " Tau(2) ", tao[1] * pow(fconv, 3.0), "[ns] (20C,w)");
+	printf("%s\t%.2Lf\t%s\n", " Tau(3) ", tao[2] * pow(fconv, 3.0), "[ns] (20C,w)");
+	printf("%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
+	printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[4] * pow(fconv, 3.0), "[ns] (20C,w)");
+    }
+    printf("\n%s\t%.2f\t%s\n", " Tau(m) ", taom * pow(fconv, 3.0), "[ns] (20C,w)");
+    printf("%s\t%.2f\t%s\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0), "[ns] (20C,w) \n");
+
+    printf("\n%s", "- MAX EXTENSIONS:");
+    printf("\n%s%.2f%s%s%.2f%s%s%.2f%s\n", "[X axis] = ", (maxx * fconv), " [nm];  ", "[Y axis] = ", (maxy * fconv), " [nm];  ",
+	   "[Z axis] = ", (maxz * fconv), " [nm]");
+    printf("%s%.1f%s%.1f%s%.1f%s\n\n", "- AXIAL RATIOS : [X:Z] = ", (maxx / maxz), "; [X:Y] = ", (maxx / maxy), "; [Y:Z] = ",
+	   (maxy / maxz), "");
+
+    system("sleep 3");
+
+}
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+
+static void
+mem_ris()
+{
+
+    float einst, bc, temp;
+    int i;
+
+    if (cc == 1)
+	bc = 6.0;
+    else
+	bc = 4.0;
+
+    ris = fopen(risultati, "ab");
+    fprintf(ris, "%s", "MODEL File Name  :___ ");
+    fprintf(ris, "%s\n", molecola);
+    fprintf(ris, "%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere);
+    fprintf(ris, "%s%d\n", "FIRST Bead Included  :___ ", prima);
+    fprintf(ris, "%s%d\n\n", "LAST Bead Included :___ ", ultima);
+
+    if (colorzero == 1)
+    {
+	fprintf(ris, "%s%d%s\n", "- WARNING: THERE IS ", colorzero, " BEAD COLOR CODED '0' [RADIUS < 0.005 NM]");
+	fprintf(ris, "%s\n", "- THIS BEAD IS NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n");
+    }
+    if (colorzero > 1)
+    {
+	fprintf(ris, "%s%d%s\n", "- WARNING: THERE ARE ", colorzero, " BEADS COLOR CODED '0' [RADIUS < 0.005 NM]");
+	fprintf(ris, "%s\n", "- THOSE BEADS ARE NOT USED IN THE HYDRODYNAMIC COMPUTATIONS\n");
+    }
+
+    if (flag_norm == 1)
+	fprintf(ris, "%s\n", "- 'NORMALIZED' model -");
+
+    if (cc == 1)
+	fprintf(ris, "- STICK BOUNDARY CONDITIONS (6*PI*ETAo)\n\n");
+    else
+	fprintf(ris, "- SLIP BOUNDARY CONDITIONS (4*PI*ETAo)\n\n");
+
+    fprintf(ris, "%s%d\n", "- Used BEADS Number  = ", nat);
+    if (volcor == 1)
+    {
+	if ((colorsixf == 0) && (sfecalc == 2))
+	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0),
+		    "  [nm^3] (NO contribution from buried beads)");
+	if ((colorsixf == 1) && (sfecalc == 2))
+	{
+	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0),
+		    "  [nm^3] (contribution from buried beads only for Dr)");
+	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0), "  [nm^3] (for [n])");
+	}
+	if ((colorsixf == 2) && (sfecalc == 2))
+	{
+	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0),
+		    "  [nm^3] (contribution from buried beads only for [n])");
+	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0), "  [nm^3] (for Dr)");
+	}
+	if ((colorsixf == 3) && (sfecalc == 2))
+	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0), "  [nm^3]");
+	if (sfecalc == 1)
+	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0), "  [nm^3]");
+    }
+    if (volcor == 2)
+	fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0), "  [nm^3]");
+
+    if (mascor == 1)
+	mascor1 = (int) pesmol;
+
+    fprintf(ris, "%s%d%s\n", "- Used BEAD Mass     = ", mascor1, "  [Da]");
+    fprintf(ris, "%s%.2f\n", "- Conversion Factor  = ", fconv);
+
+    fprintf(ris, "\n%s%.3e\t%s\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] (w@20C)");
+    fprintf(ris, "%s%.2e\t%s\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] (20C,w)");
+
+    if (raflag == -1.0)
+	fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+		(mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+
+    if ((raflag == -2.0) || (raflag == -5.0))
+    {
+	fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
+		(mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+	if ((nat + colorzero + colorsix) < numero_sfere)
+	    fprintf(ris,
+		    "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+    }
+
+    if (raflag == -3.0)
+    {
+	fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
+		(mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+	if ((nat + colorzero + colorsix) < numero_sfere)
+	    fprintf(ris,
+		    "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+
+	fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+		(mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+    }
+
+    temp = 0.0;
+    for (i = 0; i < 3; i++)
+	temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3.0);
+    fprintf(ris, "%s%.3e\t%s\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] (w@20C)");
+    temp = 0.0;
+    for (i = 0; i < 3; i++)
+	temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3.0);
+    fprintf(ris, "%s%.0f\t%s\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] (20C,w)");
+
+    fprintf(ris, "%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3.0), "[g*cm^2/s] (w@20C)");
+    fprintf(ris, "%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3.0), "[g*cm^2/s] (w@20C)");
+    fprintf(ris, "%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3.0), "[g*cm^2/s] (w@20C)");
+    fprintf(ris, "%s%.2Lf\t%s\n", "- ROT. DIFF. COEFF.  [ X ] = ", KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3.0),
+	    "[1/s] (20C,w)");
+    fprintf(ris, "%s%.2Lf\t%s\n", "- ROT. DIFF. COEFF.  [ Y ] = ", KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3.0),
+	    "[1/s] (20C,w)");
+    fprintf(ris, "%s%.2Lf\t%s\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3.0),
+	    "[1/s] (20C,w)");
+
+    fprintf(ris, "%s%.2f\t%s\n", "- MOLECULAR WEIGHT (from file)   = ", pesmol, "[Da]");
+    if (sfecalc == 2)
+	fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3.0), "[nm^3]");
+    else
+	fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", totvol * pow(fconv, 3.0), "[nm^3]");
+    fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL SURFACE AREA       = ", totsup * pow(fconv, 3.0), "[nm^2]");
+
+    if (raflag == -1.0)
+	fprintf(ris, "%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
+
+    if ((raflag == -2.0) || (raflag == -5.0))
+	fprintf(ris, "%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from file) = ", partvol, "[cm^3/g]");
+
+    if (raflag == -3.0)
+    {
+	fprintf(ris, "%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from file)             = ", partvol, "[cm^3/g]");
+	fprintf(ris, "%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
+    }
+
+    if ((raflag == -1.0) || (raflag == -3.0))
+    {
+	fprintf(ris, "\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)  = ", ro * fconv, "[nm]");
+	fprintf(ris, "%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unydrated Beads) = ", rou * fconv, "[nm]");
+    }
+
+    else
+	fprintf(ris, "\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
+    fprintf(ris, "%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * PI * ETAo), "[nm]");
+
+    fprintf(ris, "%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ",
+	    pow((3.0 / Dr[0] / bc / 4.0 / PI / ETAo), (0.33333)) * fconv, "[nm]");
+    fprintf(ris, "%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ",
+	    pow((3.0 / Dr[4] / bc / 4.0 / PI / ETAo), (0.33333)) * fconv, "[nm]");
+    fprintf(ris, "%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
+	    pow((3.0 / Dr[8] / bc / 4.0 / PI / ETAo), (0.33333)) * fconv, "[nm]");
+    fprintf(ris, "%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF RESISTANCE   :  ", roR[0] * fconv, roR[1] * fconv, roR[2] * fconv,
+	    "[nm]");
+    fprintf(ris, "%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF MASS         :  ", xm * fconv, ym * fconv, zm * fconv, "[nm]");
+    if (cd == 2)
+	fprintf(ris, "%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF DIFFUSION    :  ", roD[0] * fconv, roD[1] * fconv,
+		roD[2] * fconv, "[nm]");
+
+    fprintf(ris, "%s%5.2f\t%5.2f\t%5.2f\t%s\n\n", "- CENTRE OF VISCOSITY    :  ", vc[0] * fconv, vc[1] * fconv, vc[2] * fconv,
+	    "[nm]");
+
+    if (mascor == 2)
+    {
+	correz = pesmol / mascor1;
+	vol_mas = mascor1;
+    }
+    else
+    {
+	correz = 1.0;
+	vol_mas = pesmol;
+    }
+
+    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY                 = ", vis * correz * pow(fconv, 3.0), "[cm^3/g]");
+    einst = pow(0.3 * pesmol * vis / (PI * AVO), 0.33333);
+    einst = 1E7 * einst;
+    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                   = ", einst * fconv, "[nm]");
+    if ((volcor == 1) && ((colorsixf == 0) || (colorsixf == 1) || (colorsixf == 2)))
+    {
+	fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
+		(vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3.0), "[cm^3/g]");
+	einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO), 0.33333);
+	einst = 1E7 * einst;
+	fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
+    }
+    else
+    {
+	fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
+		(vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3.0), "[cm^3/g]");
+	einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / (PI * AVO), 0.33333);
+	einst = 1E7 * einst;
+	fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
+    }
+    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(DoubleSum CM)   = ", vis4 * correz * pow(fconv, 3.0), "[cm^3/g]");
+    einst = pow(0.3 * pesmol * vis4 / (PI * AVO), 0.33333);
+    einst = 1E7 * einst;
+    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (DoubleSum CM)    = ", einst * fconv, "[nm]");
+    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CM)       = ", vis1 * correz * pow(fconv, 3.0), "[cm^3/g]");
+    einst = pow(0.3 * pesmol * vis1 / (PI * AVO), 0.33333);
+    einst = 1E7 * einst;
+    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CM)        = ", einst * fconv, "[nm]");
+    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CV)       = ", vis2 * correz * pow(fconv, 3.0), "[cm^3/g]");
+    einst = pow(0.3 * pesmol * vis2 / (PI * AVO), 0.33333);
+    einst = 1E7 * einst;
+    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)        = ", einst * fconv, "[nm]");
+
+    fprintf(ris, "\nRELAXATION TIMES\n\n");
+
+    if (taoflag == 1.0)
+    {
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(1) ", tao[0] * pow(fconv, 3.0), "[ns] (20C,w)");
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(2) ", tao[1] * pow(fconv, 3.0), "[ns] (20C,w)");
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(3) ", tao[1] * pow(fconv, 3.0), "[ns] (20C,w)");
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(5) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
+    }
+    if (taoflag == 2.0)
+    {
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(1) ", tao[4] * pow(fconv, 3.0), "[ns] (20C,w)");
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(2) ", tao[1] * pow(fconv, 3.0), "[ns] (20C,w)");
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(3) ", tao[1] * pow(fconv, 3.0), "[ns] (20C,w)");
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(5) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
+    }
+    if (taoflag == 0.0)
+    {
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(1) ", tao[0] * pow(fconv, 3.0), "[ns] (20C,w)");
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(2) ", tao[1] * pow(fconv, 3.0), "[ns] (20C,w)");
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(3) ", tao[2] * pow(fconv, 3.0), "[ns] (20C,w)");
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
+	fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(5) ", tao[4] * pow(fconv, 3.0), "[ns] (20C,w)");
+    }
+    fprintf(ris, "\n%s\t%.2f\t%s\n", " Tau(m) ", taom * pow(fconv, 3.0), "[ns] (20C,w)");
+    fprintf(ris, "%s\t%.2f\t%s\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0), "[ns] (20C,w)");
+
+    fprintf(ris, "\n%s", "- MAX EXTENSIONS:");
+    fprintf(ris, "\n%s%.2f%s%s%.2f%s%s%.2f%s\n", "[X axis] = ", (maxx * fconv), " [nm];  ", "[Y axis] = ", (maxy * fconv),
+	    " [nm];  ", "[Z axis] = ", (maxz * fconv), " [nm]");
+    fprintf(ris, "%s%.1f%s%.1f%s%.1f%s\n\n", "- AXIAL RATIOS : [X:Z] = ", (maxx / maxz), "; [X:Y] = ", (maxx / maxy),
+	    "; [Y:Z] = ", (maxy / maxz), "");
+
+    fprintf(ris, "\n********************************************************************************\n");
+
+    fclose(ris);
+
+}
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+
+static void
+val_med()
+{
+
+    float temp;
+
+    ris = fopen(risultati, "ab");
+
+    fprintf(ris, "\n\t AVERAGE PARAMETERS \n");
+    fprintf(ris, "\n\t\t\t\t Mean value\tSt. Dev.\n");
+
+    temp = fabs((CfT2 - pow(CfT, 2.0) / num) / (num - 1));
+    fprintf(ris, "\n%s\t%.3e\t%.3e\t%s\n", "- TRANS. FRICT. COEFF.        ", CfT / num, sqrt(temp), "[g/s]");
+
+    temp = fabs((CdT2 - pow(CdT, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2e\t%.3e\t%s\n", "- TRANS. DIFF. COEFF.         ", CdT / num, sqrt(temp), "[cm^2/s]");
+
+    if (raflag == -1.0)
+    {
+	temp = fabs((CST2 - pow(CST, 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv unhyd.rad.)", CST / num, sqrt(temp), "[S]");
+    }
+
+    if ((raflag == -2.0) || (raflag == -5.0))
+    {
+	temp = fabs((CSTF2 - pow(CSTF, 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv from file) ", CSTF / num, sqrt(temp), "[S]");
+	if ((nat + colorzero + colorsix) < numero_sfere)
+	    fprintf(ris,
+		    "- !!WARNING: ONLY PART(S) OF THE MODELS HAVE BEEN ANALYZED, BUT THE PSV UTILIZED    IS THAT OF THE ENTIRE MODEL!! - \n");
+    }
+
+    if (raflag == -3.0)
+    {
+	temp = fabs((CSTF2 - pow(CSTF, 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv from file) ", CSTF / num, sqrt(temp), "[S]");
+	if ((nat + colorzero + colorsix) < numero_sfere)
+	    fprintf(ris,
+		    "- !!WARNING: ONLY PART(S) OF THE MODELS HAVE BEEN ANALYZED, BUT THE PSV UTILIZED    IS THAT OF THE ENTIRE MODEL!! - \n");
+	temp = fabs((CST2 - pow(CST, 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv unhyd.rad.)", CST / num, sqrt(temp), "[S]");
+    }
+
+    temp = fabs((CfR12 - pow(CfR1, 2.0) / num) / (num - 1));
+    fprintf(ris, "\n%s\t%.3e\t%.3e\t%s\n", "- ROT. FRICT. COEFF.          ", CfR1 / num, sqrt(temp), "[g*cm^2/s]");
+
+    temp = fabs((CdR12 - pow(CdR1, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.0f\t\t%.0f\t\t%s\n", "- ROT. DIFF. COEFF.           ", CdR1 / num, sqrt(temp), "[1/s]");
+
+    temp = fabs((CfR2[0] - pow(CfR[0], 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.3e\t%.3e\t%s\n", "- ROT. FRICT. COEFF. [ X ]    ", CfR[0] / num, sqrt(temp), "[g*cm^2/s]");
+
+    temp = fabs((CfR2[1] - pow(CfR[1], 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.3e\t%.3e\t%s\n", "- ROT. FRICT. COEFF. [ Y ]    ", CfR[1] / num, sqrt(temp), "[g*cm^2/s]");
+    temp = fabs((CfR2[2] - pow(CfR[2], 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.3e\t%.3e\t%s\n", "- ROT. FRICT. COEFF. [ Z ]    ", CfR[2] / num, sqrt(temp), "[g*cm^2/s]");
+    temp = fabs((CdR2[0] - pow(CdR[0], 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.0f\t\t%.0f\t\t%s\n", "- ROT. DIFF. COEFF. [ X ]     ", CdR[0] / num, sqrt(temp), "[1/s]");
+    temp = fabs((CdR2[1] - pow(CdR[1], 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.0f\t\t%.0f\t\t%s\n", "- ROT. DIFF. COEFF. [ Y ]     ", CdR[1] / num, sqrt(temp), "[1/s]");
+    temp = fabs((CdR2[2] - pow(CdR[2], 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.0f\t\t%.0f\t\t%s\n\n", "- ROT. DIFF. COEFF. [ Z ]     ", CdR[2] / num, sqrt(temp), "[1/s]");
+
+    if ((raflag == -1.0) || (raflag == -3.0))
+    {
+	temp = fabs((Rg2 - pow(Rg, 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- RADIUS OF GYRATION (Hydr.)  ", Rg / num, sqrt(temp), "[nm]");
+	temp = fabs((Rgu2 - pow(Rgu, 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- RADIUS OF GYRATION (Unhydr.)", Rgu / num, sqrt(temp), "[nm]");
+    }
+    else
+    {
+	temp = fabs((Rg2 - pow(Rg, 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- RADIUS OF GYRATION          ", Rg / num, sqrt(temp), "[nm]");
+    }
+
+    temp = fabs((RSt2 - pow(RSt, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- TRANS. STOKES' RADIUS       ", RSt / num, sqrt(temp), "[nm]");
+
+    temp = fabs((RSr2[0] - pow(RSr[0], 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- ROTAT. STOKES' RADIUS [ X ] ", RSr[0] / num, sqrt(temp), "[nm]");
+
+    temp = fabs((RSr2[1] - pow(RSr[1], 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- ROTAT. STOKES' RADIUS [ Y ] ", RSr[1] / num, sqrt(temp), "[nm]");
+
+    temp = fabs((RSr2[2] - pow(RSr[2], 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- ROTAT. STOKES' RADIUS [ Z ] ", RSr[2] / num, sqrt(temp), "[nm]");
+
+    temp = fabs((VIM2 - pow(VIM, 2.0) / num) / (num - 1));
+    fprintf(ris, "\n%s\t%.2f\t\t%.2f\t\t%s\n", "- INTRINSIC VISCOSITY         ", VIM / num, sqrt(temp), "[cm^3/g]");
+
+    temp = fabs((RE2 - pow(RE, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- EINSTEIN'S RADIUS           ", RE / num, sqrt(temp), "[nm]");
+
+    temp = fabs((VIMC2 - pow(VIMC, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- INTRINSIC VISC. (GDLT corr.)", VIMC / num, sqrt(temp), "[cm^3/g]");
+
+    temp = fabs((REC2 - pow(REC, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- EINSTEIN'S RADIUS (GDLT co.)", REC / num, sqrt(temp), "[nm]");
+
+    temp = fabs((VIMDS2 - pow(VIMDS, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- INTRINSIC VISC. (Double Sum)", VIMDS / num, sqrt(temp), "[cm^3/g]");
+
+    temp = fabs((REDS2 - pow(REDS, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- EINSTEIN'S RADIUS (D. Sum)  ", REDS / num, sqrt(temp), "[nm]");
+
+    temp = fabs((VIMTM2 - pow(VIMTM, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- INTRINSIC VISC. (Tsuda CM)  ", VIMTM / num, sqrt(temp), "[cm^3/g]");
+
+    temp = fabs((RETM2 - pow(RETM, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CM)", RETM / num, sqrt(temp), "[nm]");
+
+    temp = fabs((VIMTV2 - pow(VIMTV, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- INTRINSIC VISC. (Tsuda CV)  ", VIMTV / num, sqrt(temp), "[cm^3/g]");
+
+    temp = fabs((RETV2 - pow(RETV, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)", RETV / num, sqrt(temp), "[nm]");
+
+    fprintf(ris, "\nRELAXATION TIMES\n\n");
+
+    taoh = 0.0;
+    taom = 0.0;
+    taod = 0.0;
+    taodin = 0.0;
+
+    if (taoflag == 1.0)
+    {
+	temp = fabs((CT2[0] - pow(CT[0], 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(1)                       ", CT[0] / num, sqrt(temp), "[ns]");
+	taom = taom + (CT[0] / num / temp);
+	stdinv = (1 / (CT[0] / num)) - (1 / ((CT[0] / num) - (sqrt(temp))));
+	taoh = taoh + (1 / (CT[0] / num) / (pow(stdinv, 2.0)));
+	taod = taod + (1 / temp);
+	taodin = taodin + (1 / (pow(stdinv, 2.0)));
+
+	temp = fabs((CT2[1] - pow(CT[1], 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(2)                       ", CT[1] / num, sqrt(temp), "[ns]");
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(3)                       ", CT[1] / num, sqrt(temp), "[ns]");
+	taom = taom + (CT[1] / num / temp);
+	stdinv = (1 / (CT[1] / num)) - (1 / ((CT[1] / num) - (sqrt(temp))));
+	taoh = taoh + (1 / (CT[1] / num) / (pow(stdinv, 2.0)));
+	taod = taod + (1 / temp);
+	taodin = taodin + (1 / (pow(stdinv, 2.0)));
+
+	temp = fabs((CT2[3] - pow(CT[3], 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(4)                       ", CT[3] / num, sqrt(temp), "[ns]");
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n\n", " Tau(5)                       ", CT[3] / num, sqrt(temp), "[ns]");
+	taom = taom + (CT[3] / num / temp);
+	stdinv = (1 / (CT[3] / num)) - (1 / ((CT[3] / num) - (sqrt(temp))));
+	taoh = taoh + (1 / (CT[3] / num) / (pow(stdinv, 2.0)));
+	taod = taod + (1 / temp);
+	taodin = taodin + (1 / (pow(stdinv, 2.0)));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Weighted average)    ", (taom / taod), (sqrt(1 / taod)), "[ns]");
+	stdinv = (taoh / taodin) + ((sqrt(1 / taodin)));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Weighted average)    ", (1 / (taoh / taodin)),
+		((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
+    }
+
+    if (taoflag == 2.0)
+    {
+	temp = fabs((CT2[4] - pow(CT[4], 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(1)                       ", CT[4] / num, sqrt(temp), "[ns]");
+	taom = taom + (CT[4] / num / temp);
+	stdinv = (1 / (CT[4] / num)) - (1 / ((CT[4] / num) - (sqrt(temp))));
+	taoh = taoh + (1 / (CT[4] / num) / (pow(stdinv, 2.0)));
+	taod = taod + (1 / temp);
+	taodin = taodin + (1 / (pow(stdinv, 2.0)));
+
+	temp = fabs((CT2[1] - pow(CT[1], 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(2)                       ", CT[1] / num, sqrt(temp), "[ns]");
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(3)                       ", CT[1] / num, sqrt(temp), "[ns]");
+	taom = taom + (CT[1] / num / temp);
+	stdinv = (1 / (CT[1] / num)) - (1 / ((CT[1] / num) - (sqrt(temp))));
+	taoh = taoh + (1 / (CT[1] / num) / (pow(stdinv, 2.0)));
+	taod = taod + (1 / temp);
+	taodin = taodin + (1 / (pow(stdinv, 2.0)));
+
+	temp = fabs((CT2[3] - pow(CT[3], 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(4)                       ", CT[2] / num, sqrt(temp), "[ns]");
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n\n", " Tau(5)                       ", CT[2] / num, sqrt(temp), "[ns]");
+	taom = taom + (CT[3] / num / temp);
+	stdinv = (1 / (CT[3] / num)) - (1 / ((CT[3] / num) - (sqrt(temp))));
+	taoh = taoh + (1 / (CT[3] / num) / (pow(stdinv, 2.0)));
+	taod = taod + (1 / temp);
+	taodin = taodin + (1 / (pow(stdinv, 2.0)));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Weighted average)    ", (taom / taod), (sqrt(1 / taod)), "[ns]");
+	stdinv = (taoh / taodin) + ((sqrt(1 / taodin)));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Weighted average)    ", (1 / (taoh / taodin)),
+		((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
+    }
+
+    if (taoflag == 0.0)
+    {
+	temp = fabs((CT2[0] - pow(CT[0], 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(1)                       ", CT[0] / num, sqrt(temp), "[ns]");
+	taom = taom + (CT[0] / num / temp);
+	stdinv = (1 / (CT[0] / num)) - (1 / ((CT[0] / num) - (sqrt(temp))));
+	taoh = taoh + (1 / (CT[0] / num) / (pow(stdinv, 2.0)));
+	taod = taod + (1 / temp);
+	taodin = taodin + (1 / (pow(stdinv, 2.0)));
+
+	temp = fabs((CT2[1] - pow(CT[1], 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(2)                       ", CT[1] / num, sqrt(temp), "[ns]");
+	taom = taom + (CT[1] / num / temp);
+	stdinv = (1 / (CT[1] / num)) - (1 / ((CT[1] / num) - (sqrt(temp))));
+	taoh = taoh + (1 / (CT[1] / num) / (pow(stdinv, 2.0)));
+	taod = taod + (1 / temp);
+	taodin = taodin + (1 / (pow(stdinv, 2.0)));
+
+	temp = fabs((CT2[2] - pow(CT[2], 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(3)                       ", CT[2] / num, sqrt(temp), "[ns]");
+	taom = taom + (CT[2] / num / temp);
+	stdinv = (1 / (CT[2] / num)) - (1 / ((CT[2] / num) - (sqrt(temp))));
+	taoh = taoh + (1 / (CT[2] / num) / (pow(stdinv, 2.0)));
+	taod = taod + (1 / temp);
+	taodin = taodin + (1 / (pow(stdinv, 2.0)));
+
+	temp = fabs((CT2[3] - pow(CT[3], 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(4)                       ", CT[3] / num, sqrt(temp), "[ns]");
+	taom = taom + (CT[3] / num / temp);
+	stdinv = (1 / (CT[3] / num)) - (1 / ((CT[3] / num) - (sqrt(temp))));
+	taoh = taoh + (1 / (CT[3] / num) / (pow(stdinv, 2.0)));
+	taod = taod + (1 / temp);
+	taodin = taodin + (1 / (pow(stdinv, 2.0)));
+
+	temp = fabs((CT2[4] - pow(CT[4], 2.0) / num) / (num - 1));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(5)                       ", CT[4] / num, sqrt(temp), "[ns]");
+	taom = taom + (CT[4] / num / temp);
+	stdinv = (1 / (CT[4] / num)) - (1 / ((CT[4] / num) - (sqrt(temp))));
+	taoh = taoh + (1 / (CT[4] / num) / (pow(stdinv, 2.0)));
+	taod = taod + (1 / temp);
+	taodin = taodin + (1 / (pow(stdinv, 2.0)));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Weighted average)    ", (taom / taod), (sqrt(1 / taod)), "[ns]");
+	stdinv = (taoh / taodin) + ((sqrt(1 / taodin)));
+	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Weighted average)    ", (1 / (taoh / taodin)),
+		((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
+    }
+
+    temp = fabs((CTM2 - pow(CTM, 2.0) / num) / (num - 1));
+    fprintf(ris, "\n%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Unweighted average)  ", CTM / num, sqrt(temp), "[ns]");
+    temp = fabs((CTH2 - pow(CTH, 2.0) / num) / (num - 1));
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Unweighted average)  ", CTH / num, sqrt(temp), "[ns]");
+
+    fprintf(ris, "\n****************************************************************\n");
+    fclose(ris);
+
+}
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+
+static void
+inp_inter()
+{
+
+    int i;
+
+    interinp = fopen("ifraxon", "ab");
+    interinp1 = fopen("ifraxon1", "ab");
+
+    fprintf(interinp, "%d\n", nat);
+    fprintf(interinp, "%f\n", 0.0);
+    fprintf(interinp, "%s\n", "ifraxon1");
+
+    for (i = 0; i < nat; i++)
+    {
+	fprintf(interinp, "%f\t", dt[i].x);
+	fprintf(interinp, "%f\t", dt[i].y);
+	fprintf(interinp, "%f\n", dt[i].z);
+	fprintf(interinp1, "%f\t", dt[i].r);
+	fprintf(interinp1, "%d\t", dt[i].m);
+	fprintf(interinp1, "%d\n", dt[i].col);
+    }
+
+    fclose(interinp);
+    fclose(interinp1);
+
+}
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+
+static void
+out_inter()
+{
+
+    int i;
+    int n;
+    char ramaco[20];
+
+    interout = fopen("ofraxon", "r");
+
+    fscanf(interout, "%d", &n);
+    fscanf(interout, "%f", &raggio);
+    fscanf(interout, "%s", ramaco);
+
+    for (i = 0; i < n; i++)
+    {
+	fscanf(interout, "%f", &dtn[i].x);
+	fscanf(interout, "%f", &dtn[i].y);
+	fscanf(interout, "%f", &dtn[i].z);
+    }
+
+    fclose(interout);
+
+}
+
+/**************************************************************************/
+/**************************************************************************/
+/**************************************************************************/
+
+static void
+mem_mol()
+{
+
+    int i;
+    int n;
+    char nmolecola[SMAX], nragcol[SMAX];
+    char risp1, risp2, risp3;
+  a100:
+    printf("\n\n** Insert file name for coordinates :___ ");
+    scanf("%s", nmolecola);
+    getchar();
+
+    new_mol1 = fopen(nmolecola, "r");
+
+    if (new_mol1 != NULL)
+    {
+	printf("\n");
+	printf("*** CAUTION : File already exists ! ***\n");
+	printf("** Do you want change the file name ? (y/n) :___ ");
+	scanf("%s", &risp2);
+	getchar();
+	fclose(new_mol1);
+	if ((risp2 == 'y') || (risp2 == 'Y'))
+	    goto a100;
+    }
+
+    if (nat == numero_sfere)
+    {
+	printf("** Same File Name r_m_c ? (y/n) :___ ");
+	scanf("%s", &risp1);
+	getchar();
+    }
+
+    else
+	risp1 = 'n';
+
+    if ((risp1 == 'n') || (risp1 == 'N'))
+    {
+      a150:
+	printf("** Insert file name r_m_c :___ ");
+	scanf("%s", nragcol);
+	getchar();
+	new_mol1 = fopen(nragcol, "r");
+
+	if (new_mol1 != NULL)
+	{
+	    printf("\n");
+	    printf("*** CAUTION : File already exists ! ***\n");
+	    printf("** Do you want change the file name ? (y/n) :___ ");
+	    scanf("%s", &risp3);
+	    getchar();
+	    fclose(new_mol1);
+	    if ((risp3 == 'y') || (risp3 == 'Y'))
+		goto a150;
+
+	}
+    }
+    else
+    {
+	mol = fopen(molecola, "r");
+	fscanf(mol, "%d", &n);
+	fscanf(mol, "%f", &raggio);
+	fscanf(mol, "%s", nragcol);
+	fclose(mol);
+	raflag = raggio; // ?? ==
+    }
+
+    new_mol1 = fopen(nmolecola, "w");
+
+    fprintf(new_mol1, "%d\t", nat);
+    if (raflag == 0.0)
+	fprintf(new_mol1, "%f\t", 0.0);
+    if (raflag == -1.0)
+	fprintf(new_mol1, "%f\t", -1.0);
+    if (raflag == -2.0)
+	fprintf(new_mol1, "%f\t", -2.0);
+    if (raflag == -3.0)
+	fprintf(new_mol1, "%f\t", -3.0);
+    if (raflag == -4.0)
+	fprintf(new_mol1, "%f\t", -4.0);
+    if (raflag == -5.0)
+	fprintf(new_mol1, "%f\t", -5.0);
+    if ((raflag == -2.0) || (raflag == -3.0) || (raflag == -5.0))
+    {
+	fprintf(new_mol1, "%s\t", nragcol);
+	fprintf(new_mol1, "%f\n", partvol);
+    }
+    else
+	fprintf(new_mol1, "%s\n", nragcol);
+
+    for (i = 0; i < nat; i++)
+    {
+	fprintf(new_mol1, "%f\t", dt[i].x);
+	fprintf(new_mol1, "%f\t", dt[i].y);
+	fprintf(new_mol1, "%f\n", dt[i].z);
+    }
+
+    fclose(new_mol1);
+
+    if (risp1 == 'n')
+    {
+	new_rmc = fopen(nragcol, "w");
+	if ((raflag == 0.0) || (raflag == -2.0))
+	{
+	    for (i = 0; i < nat; i++)
+	    {
+		fprintf(new_rmc, "%f\t", dt[i].r);
+		fprintf(new_rmc, "%d\t", dt[i].m);
+		fprintf(new_rmc, "%d\n", dt[i].col);
+	    }
+	}
+	if ((raflag == -1.0) || (raflag == -3.0))
+	{
+	    for (i = 0; i < nat; i++)
+	    {
+		fprintf(new_rmc, "%f\t", dt[i].r);
+		fprintf(new_rmc, "%f\t", dt[i].ru);
+		fprintf(new_rmc, "%d\t", dt[i].m);
+		fprintf(new_rmc, "%d\n", dt[i].col);
+	    }
+	}
+	if ((raflag == -4.0) || (raflag == -5.0));
+	{
+	    for (i = 0; i < nat; i++)
+	    {
+		fprintf(new_rmc, "%f\t", dt[i].r);
+		fprintf(new_rmc, "%d\t", dt[i].m);
+		fprintf(new_rmc, "%d\t", dt[i].col);
+		fprintf(new_rmc, "%s\n", dt[i].cor);
+	    }
+	}
+	fclose(new_rmc);
+    }
+
+}
+
+static void
+maxest()
+{
+
+    int i, j;
+    float temp;
+
+    temp = 0.0;
+    maxx = 0.0;
+    maxy = 0.0;
+    maxz = 0.0;
+
+    for (i = 0; i < nat; i++)
+    {
+	for (j = i + 1; j < nat; j++)
+	{
+	    if ((temp = (fabs(dt[i].x - dt[j].x) + dt[i].r + dt[j].r)) > maxx)
+		maxx = temp;
+	    if ((temp = (fabs(dt[i].y - dt[j].z) + dt[i].r + dt[j].r)) > maxy)
+		maxy = temp;
+	    if ((temp = (fabs(dt[i].z - dt[j].z) + dt[i].r + dt[j].r)) > maxz)
+		maxz = temp;
+	}
+    }
+
+}
+
+/**************************************************************************/
+/*                                  End                           */
+/**************************************************************************/
+
+// autov.c
+
+static void
+autovalori()
+{
+
+    int a1, a2;
+    long double b, c, d;
+    long double a[3][3], slip;
+
+/* COMPUTATION OF THE EIGENVALUES dl1, dl2, dl3  OF THE MATRIX A */
+
+    slip = 1.0;
+    if (cc == 2)
+	slip = 1.5;
+
+    for (a1 = 0; a1 < 3; a1++)
+	for (a2 = 0; a2 < 3; a2++)
+	{
+	    if (fabs(Dr[a1 * 3 + a2]) < 0.0000000001)
+		a[a1][a2] = 0.0;
+	    else
+		a[a1][a2] = Dr[a1 * 3 + a2] * KB * TE / 1.0E-21;
+	}
+
+    if ((a[0][1] == 0.0) && (a[1][2] == 0.0) && (a[0][2] == 0.0))
+    {
+	dl1 = a[0][0];
+	dl2 = a[1][1];
+	dl3 = a[2][2];
+    }
+
+    else if ((a[0][2] == 0.0) && (a[1][2] == 0.0))
+    {
+	dl1 = a[2][2];
+	b = (-a[0][0] - a[1][1]);
+	c = a[0][0] * a[1][1] - a[0][1] * a[1][0];
+	secondo(b, c);
+    }
+
+    else if ((a[0][2] == 0.0) && (a[0][1] == 0.0))
+    {
+	dl1 = a[0][0];
+	b = (-a[2][2] - a[1][1]);
+	c = a[2][2] * a[1][1] - a[2][1] * a[1][2];
+	secondo(b, c);
+    }
+
+    else
+    {
+	b = (-(a[0][0] + a[1][1] + a[2][2]));
+	c = a[0][0] * a[1][1] + a[0][0] * a[2][2] + a[1][1] * a[2][2] - a[0][2] * a[2][0] - a[1][2] * a[2][1] -
+	    a[0][1] * a[1][0];
+	d = (-a[0][0] * a[1][1] * a[2][2] - 2.0 * a[0][1] * a[0][2] * a[1][2] + a[0][2] * a[0][2] * a[1][1] +
+	     a[1][2] * a[1][2] * a[0][0] + a[0][1] * a[0][1] * a[2][2]);
+	terzo(b, c, d);
+    }
+
+/* 
+   printf("EIGENVALUES II in autva :\t ");
+   printf("%f%s%f%s%f\n\n\n",dl1,",",dl2,",",dl3);
+*/
+
+}
+
+// chol.c
+
+static void
+riempimatrice()
+{
+
+    int i, j, k, l;
+
+    printf("SUPERMATRIX INVERSION\n\n");
+
+    printf("Cycle 1 of 3; model %d of %d\n\n", kkk, num);
+
+    for (i = 0; i < nat; i++)
+    {
+
+	printf("%s%d%s%d", "Iteration  ", i + 1, " of ", nat);
+	fflush(stdout);
+
+	for (j = 0; j < nat; j++)
+	{
+	    for (k = 0; k < 3; k++)
+	    {
+		for (l = 0; l < 3; l++)
+		{
+		    a[(3 * i + k) * (3 * nmax) + 3 * j + l] = q[i * (nmax * 9) + j * 9 + k * 3 + l];
+		}
+	    }
+	}
+
+	printf("%c", '\r');
+
+    }
+
+    printf("\n\n");
+
+}
+
+/*************************************************************************/
+
+static void
+choldc(int N)
+{
+    int i, j, k;
+    float sum;
+
+    printf("Cycle 2 of 3; model %d of %d\n\n", kkk, num);
+
+    for (i = 0; i < 3 * N; i++)
+    {
+
+	printf("%s%d%s%d", "Iteration  ", i + 1, " of ", 3 * N);
+	fflush(stdout);
+
+	for (j = i; j < 3 * N; j++)
+	{
+
+	    for (sum = a[i * (3 * nmax) + j], k = i - 1; k >= 0; k--)
+	    {
+		sum -= a[i * (3 * nmax) + k] * a[j * (3 * nmax) + k];
+	    }
+	    if (i == j)
+	    {
+		if (sum <= 0.0)
+		{
+		    printf("The matrix to be inverted is not defined positive");
+		    exit(0);
+		}
+		p[i] = sqrt(sum);
+	    }
+	    else
+		a[j * (3 * nmax) + i] = sum / p[i];
+
+	}
+	printf("%c", '\r');
+    }
+}
+
+/************************************************************************/
+
+static void
+cholsl(int N)
+{
+
+    int i, k;
+    float sum;
+
+    for (i = 0; i < 3 * N; i++)
+    {
+	for (sum = b1[i], k = i - 1; k >= 0; k--)
+	    sum -= a[i * (3 * nmax) + k] * rRi[k];
+	rRi[i] = sum / p[i];
+    }
+
+    for (i = 3 * N - 1; i >= 0; i--)
+    {
+	for (sum = rRi[i], k = i + 1; k < 3 * N; k++)
+	    sum -= a[k * (3 * nmax) + i] * rRi[k];
+	rRi[i] = sum / p[i];
+    }
+}
+
+/*************************************************************************/
+
+static void
+inizializza_b1()
+{
+
+    int i;
+
+    for (i = 0; i < 3 * nat; i++)
+    {
+	b1[i] = 0.0;
+	rRi[i] = 0.0;
+    }
+
+}
+
+/*************************************************************************/
+
+// diff.c
+
+/**********************************************************************/
+/*								      */
+/* Function that computes the relaxation times for a rigid model      */
+/* Changed the taoh and taom means 3/6/2004 (always five times)       */
+/*								      */
+/**********************************************************************/
+
+static void
+relax_rigid_calc()
+{
+
+    // char pluto;
+    float ddd[3];
+    float rrr[3];
+    long double ddr[3];
+    long double pd[3];
+    int a;
+    // char pluto1;
+
+    autovalori();
+
+    ddr[0] = dl1;
+    ddr[1] = dl2;
+    ddr[2] = dl3;
+
+/*		printf("\nValori ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
+		scanf("%s",&pluto1);
+		getchar();    */
+
+    for (a = 0; a < 3; a++)
+    {
+	ddd[a] = 0.0;
+	rrr[a] = 0.0;
+    }
+
+    a = (int) 0.0;
+    if ((fabs(ddr[0] - ddr[1]) / ddr[0]) < 0.01)
+    {
+	a = (int) 1.0;
+	ddr[1] = (ddr[0] + ddr[1]) / 2;
+
+	pd[0] = ddr[1];
+	pd[1] = ddr[1];
+	pd[2] = ddr[2];
+	if (ddr[2] <= ddr[1])
+	    a = (int) 2.0;
+
+/*		printf("\nCaso 1, valore a= %d\n",a);
+		scanf("%s",&pluto1);
+		getchar();    */
+    }
+
+    if ((fabs(ddr[0] - ddr[2]) / ddr[0]) < 0.01)
+    {
+	a = (int) 1.0;
+	ddr[2] = (ddr[0] + ddr[2]) / 2;
+
+	pd[0] = ddr[2];
+	pd[1] = ddr[2];
+	pd[2] = ddr[1];
+	if (ddr[1] <= ddr[2])
+	    a = (int) 2.0;
+
+/*     	 	printf("\nCaso 2, valore a= %d\n",a);
+		scanf("%s",&pluto1);
+		getchar();    */
+    }
+
+    if ((fabs(ddr[1] - ddr[2]) / ddr[1]) < 0.01)
+    {
+	a = (int) 1.0;
+	ddr[1] = (ddr[1] + ddr[2]) / 2;
+
+	pd[0] = ddr[1];
+	pd[1] = ddr[1];
+	pd[2] = ddr[0];
+	if (ddr[0] <= ddr[1])
+	    a = (int) 2.0;
+
+/*		printf("\nCaso 3, valore a= %d\n",a);
+		scanf("%s",&pluto1);
+		getchar();     */
+    }
+
+    if (a == 1.0)
+    {
+	tao[0] = 6.0 * pd[0];
+	tao[1] = 5.0 * pd[0] + pd[2];
+	tao[2] = tao[1];
+	tao[3] = 2.0 * pd[0] + 4.0 * pd[2];
+	tao[4] = tao[3];
+	taoflag = 1.0;
+	taoh = (tao[0] + (2 * tao[1]) + (2 * tao[3])) / 5;
+	taoh = 1.0 / taoh;
+	for (a = 0; a < 5; a++)
+	{
+	    tao[a] = tao[a] * 1E-09;
+	}
+	taom = ((1.0 / tao[0]) + (2 * (1.0 / tao[1])) + (2 * (1.0 / tao[3]))) / 5;
+    }
+
+    if (a == 2.0)
+    {
+	tao[4] = 6.0 * pd[0];
+	tao[1] = 5.0 * pd[0] + pd[2];
+	tao[2] = tao[1];
+	tao[3] = 2.0 * pd[0] + 4.0 * pd[2];
+	tao[0] = tao[3];
+	taoflag = 2.0;
+	taoh = ((2 * tao[1]) + (2 * tao[3]) + tao[4]) / 5;
+	taoh = 1.0 / taoh;
+	for (a = 0; a < 5; a++)
+	{
+	    tao[a] = tao[a] * 1E-09;
+	}
+	taom = ((2 * (1.0 / tao[1])) + (2 * (1.0 / tao[3])) + (1.0 / tao[4])) / 5;
+    }
+
+    if (a == 0.0)
+
+    {
+/*		printf("\nCaso 4, valore a= %d\n",a);
+		scanf("%s",&pluto1);
+		getchar();      */
+
+	ddd[0] = ddr[0];
+	ddd[1] = ddr[1];
+	ddd[2] = ddr[2];
+
+	if ((ddr[2] > ddr[1]) && (ddr[2] > ddr[0]))
+	{
+	    if (ddr[1] > ddr[0])
+	    {
+		ddr[2] = ddd[2];
+		ddr[1] = ddd[1];
+		ddr[0] = ddd[0];
+	    }
+	    else
+	    {
+		ddr[2] = ddd[2];
+		ddr[1] = ddd[0];
+		ddr[0] = ddd[1];
+	    }
+	}
+
+	else if ((ddr[1] > ddr[2]) && (ddr[1] > ddr[0]))
+	{
+	    if (ddr[2] > ddr[0])
+	    {
+		ddr[2] = ddd[1];
+		ddr[1] = ddd[2];
+		ddr[0] = ddd[0];
+	    }
+	    else
+	    {
+		ddr[2] = ddd[1];
+		ddr[1] = ddd[0];
+		ddr[0] = ddd[2];
+	    }
+	}
+
+	else
+	{
+	    if (ddr[2] > ddr[1])
+	    {
+		ddr[2] = ddd[0];
+		ddr[1] = ddd[2];
+		ddr[0] = ddd[1];
+	    }
+	    else
+	    {
+		ddr[2] = ddd[0];
+		ddr[1] = ddd[1];
+		ddr[0] = ddd[2];
+	    }
+	}
+	pd[0] = ddr[0] * ddr[0] + ddr[1] * ddr[1] + ddr[2] * ddr[2] - ddr[0] * ddr[1] - ddr[0] * ddr[2] - ddr[1] * ddr[2];
+	pd[0] = pow(pd[0], .5);
+	pd[1] = (ddr[0] + ddr[1] + ddr[2]) / 3.0;
+	tao[0] = 6.0 * pd[1] - 2.0 * pd[0];
+	tao[1] = 3.0 * (pd[1] + ddr[1]);
+	tao[2] = 3.0 * (pd[1] + ddr[0]);
+	tao[3] = 3.0 * (pd[1] + ddr[2]);
+	tao[4] = 6.0 * pd[1] + 2.0 * pd[0];
+	taoflag = 0.0;
+	for (a = 0; a < 5; a++)
+	{
+	    taoh += tao[a];
+	    tao[a] = tao[a] * 1E-09;
+	    taom += 1.0 / tao[a];
+	}
+	taoh = taoh / 5.0;
+	taoh = 1.0 / taoh;
+	taom = taom / 5.0;
+    }
+
+    for (a = 0; a < 5; a++)
+    {
+	/*      printf("\n%s%d%s%f\n","Tao[",a,"] = ",tao[a]);     */
+	tao[a] = 1.0 / tao[a];
+	/*      printf("\n%s%d%s%Lg\n","Tao[",a,"] = ",tao[a]);
+	   scanf("%s",&pluto1);
+	   getchar();       */
+    }
+
+}
+
+/**********************************************************************/
+/*								      */
+/* Function that calculates the diffusion tensors for a rigid model   */
+/*								      */
+/**********************************************************************/
+
+static void
+diffcalc()
+{
+    float ro[6][6];
+    int i, j;
+
+    for (i = 0; i < 3; i++)
+    {
+	for (j = 0; j < 6; j++)
+	{
+	    if (j < 3)
+		ro[i][j] = sigmat[j + 3 * i];
+	    else
+		ro[i][j] = soct[j - 3 + 3 * i];
+	}
+    }
+
+    for (i = 3; i < 6; i++)
+    {
+	for (j = 0; j < 6; j++)
+	{
+	    if (j < 3)
+		ro[i][j] = sigmaoc[j + 3 * i - 9];
+	    else
+		ro[i][j] = sigmaoR[j + 3 * i - 12];
+	}
+    }
+
+    inv6x6(ro);
+
+    for (i = 0; i < 6; i++)
+	for (j = 0; j < 6; j++)
+	    ro[i][j] = inver[i][j];	/* WITHOUT CONSTANTS         */
+    /* (BOLTZMANN & TEMPERATURE) */
+
+    for (i = 0; i < 3; i++)
+	for (j = 0; j < 3; j++)
+	    Dot[j + 3 * i] = ro[i][j];
+
+    for (i = 0; i < 3; i++)
+	for (j = 3; j < 6; j++)
+	    Doct[j - 3 + 3 * i] = ro[i][j];
+
+    for (i = 3; i < 6; i++)
+	for (j = 0; j < 3; j++)
+	    Doc[j + 3 * i - 9] = ro[i][j];
+
+    for (i = 3; i < 6; i++)
+	for (j = 3; j < 6; j++)
+	    Dr[j + 3 * i - 12] = ro[i][j];
+
+}
+
+// gir.c
+
+static void
+ragir()
+{
+    int i;
+    float ro2;
+    float mt;
+    float rg;
+    float rgu;
+    float rou2 = 0.0;
+
+    extern float raflag;
+
+    mt = 0.0;
+    xm = 0.0;
+    ym = 0.0;
+    zm = 0.0;
+    ro2 = 0.0;
+
+    for (i = 0; i < nat; i++)
+	mt += dt[i].m;
+
+    for (i = 0; i < nat; i++)
+    {
+	xm += dt[i].x * dt[i].m;
+	ym += dt[i].y * dt[i].m;
+	zm += dt[i].z * dt[i].m;
+    }
+
+    xm = xm / mt;
+    ym = ym / mt;
+    zm = zm / mt;
+
+    for (i = 0; i < nat; i++)
+    {
+	rg = 1.8 * dt[i].r * dt[i].r;
+	ro2 += dt[i].m * (pow((dt[i].x - xm), 2.0) + pow((dt[i].y - ym), 2.0) + pow((dt[i].z - zm), 2.0) + rg);
+
+	if ((raflag == -1.0) || (raflag == -3.0))
+	{
+	    rgu = 1.8 * dt[i].ru * dt[i].ru;
+	    rou2 += dt[i].m * (pow((dt[i].x - xm), 2.0) + pow((dt[i].y - ym), 2.0) + pow((dt[i].z - zm), 2.0) + rgu);
+	}
+    }
+
+    ro2 = ro2 / mt;
+    ro = sqrt(ro2);
+
+    if ((raflag == -1.0) || (raflag == -3.0))
+    {
+	rou2 = rou2 / mt;
+	rou = sqrt(rou2);
+
+    }
+
+    pesmol = mt;
+
+/*
+if(sfecalc==2)  // computation with all beads or with only the 'exposed'
+
+	{
+j=0;
+for(i=0;i<nat;i++)
+	{
+	if(dt[i].col==6)  ;
+	
+	else
+
+	{
+        dt[j]=dt[i];
+	j++;
+	}
+
+	}
+nat=j;
+	} 
+
+*/
+}
+
+/********************************INIT.C****************************************/
+/*                                                                            */
+/* Module that loads the content of the files of the model to be analyzed into*/
+/* the correspondent fields of the work record dt. Includes code for selecting*/
+/* only part of the models to be analyzed IF NOT coming from sequential files.*/
+/******************************************************************************/
+
+// init.c
+
+// FILE *mol;
+// FILE *rmc;
+// FILE *tot_mol;
+static int j;
+// extern float interm1;
+// extern int colorzero;
+// extern int colorsix;
+// extern int colorsixf;
+// static char pippo1;
+static char ricorda[SMAX];
+
+static void
+init_da_a()
+{
+
+    mol = fopen(molecola, "r");	/* Check for the file existence  */
+
+    while (mol == NULL)
+    {
+	printf("\n");
+	printf("** The Model does NOT exist !!\n");
+	printf("** Insert the correct name :___");
+	scanf("%s", molecola);
+	mol = fopen(molecola, "r");
+    }
+
+    fscanf(mol, "%d", &nat);
+    fscanf(mol, "%f", &raggio);
+
+    fclose(mol);
+
+    /* Selects for whole or part of the model(s) to be analyzed */
+
+    printf("\n%s%d%s", "** TOTAL Number of BEADS in the MODEL :___ ", nat, " **\n\n");
+    prima = (-1);
+    while ((prima < 0) || (prima > (nat - 1)))
+    {
+	printf("%s", "** Insert FIRST BEAD # to be included  :___ ");
+	scanf("%d", &prima);
+	getchar();
+	printf("\n");
+    }
+
+    ultima = nat + 1;
+    while ((ultima < prima) || (ultima > nat))
+    {
+	printf("%s", "** Insert LAST BEAD # to be included :___ ");
+	scanf("%d", &ultima);
+	getchar();
+	printf("\n");
+    }
+
+    tot_mol = fopen("tot_mol", "ab");
+    fprintf(tot_mol, "%s\n", molecola);
+    fprintf(tot_mol, "%d\t%d\t%d\t%f\n", nat, prima, ultima, raggio);
+    fclose(tot_mol);
+
+}
+
+/*********************************************************************/
+
+static void
+initarray()
+{
+    int i;
+    char temp[34];
+
+    fscanf(tot_mol, "%s", molecola);
+    strcpy(ricorda, molecola);
+    fscanf(tot_mol, "%d", &nat);
+    fscanf(tot_mol, "%d", &prima);
+    fscanf(tot_mol, "%d", &ultima);
+
+    for (i = 0; i < nat; i++)
+	dt[i].cor = temp;
+
+    vt = 0;
+    mol = fopen(molecola, "r");
+    fscanf(mol, "%d", &nat);
+    fscanf(mol, "%f", &raggio);
+
+    if (raggio == 0.0)		/* Variable hydrated radii only */
+    {
+	fscanf(mol, "%s", ragcol);
+
+	rmc = fopen(ragcol, "r");
+
+	for (i = 0; i < nat; i++)
+	{
+	    fscanf(mol, "%f", &dt[i].x);
+	    fscanf(mol, "%f", &dt[i].y);
+	    fscanf(mol, "%f", &dt[i].z);
+	    fscanf(rmc, "%f", &dt[i].r);
+	    fscanf(rmc, "%d", &dt[i].m);
+	    fscanf(rmc, "%d", &dt[i].col);
+	}
+
+	fclose(rmc);
+	goto a1200;
+    }
+
+    if (raggio == -1.0)		/* Variable hydrated and unhydrated radii */
+    {
+
+	fscanf(mol, "%s", ragcol);
+
+	rmc = fopen(ragcol, "r");
+
+	for (i = 0; i < nat; i++)
+	{
+	    fscanf(mol, "%f", &dt[i].x);
+	    fscanf(mol, "%f", &dt[i].y);
+	    fscanf(mol, "%f", &dt[i].z);
+	    fscanf(rmc, "%f", &dt[i].r);
+	    fscanf(rmc, "%f", &dt[i].ru);
+	    fscanf(rmc, "%d", &dt[i].m);
+	    fscanf(rmc, "%d", &dt[i].col);
+	}
+	fclose(rmc);
+	goto a1200;
+    }
+
+    if (raggio == -2.0)		/* Variable hydrated radii and part. spec. vol. */
+    {
+
+	fscanf(mol, "%s", ragcol);
+
+	fscanf(mol, "%f", &partvol);
+
+	rmc = fopen(ragcol, "r");
+
+	for (i = 0; i < nat; i++)
+	{
+	    fscanf(mol, "%f", &dt[i].x);
+	    fscanf(mol, "%f", &dt[i].y);
+	    fscanf(mol, "%f", &dt[i].z);
+	    fscanf(rmc, "%f", &dt[i].r);
+	    fscanf(rmc, "%d", &dt[i].m);
+	    fscanf(rmc, "%d", &dt[i].col);
+	}
+	fclose(rmc);
+	goto a1200;
+    }
+
+    if (raggio == -3.0)		/* Variable hydrated and unhydrated radii and psv */
+    {
+
+	fscanf(mol, "%s", ragcol);
+
+	fscanf(mol, "%f", &partvol);
+
+	rmc = fopen(ragcol, "r");
+
+	for (i = 0; i < nat; i++)
+	{
+	    fscanf(mol, "%f", &dt[i].x);
+	    fscanf(mol, "%f", &dt[i].y);
+	    fscanf(mol, "%f", &dt[i].z);
+	    fscanf(rmc, "%f", &dt[i].r);
+	    fscanf(rmc, "%f", &dt[i].ru);
+	    fscanf(rmc, "%d", &dt[i].m);
+	    fscanf(rmc, "%d", &dt[i].col);
+	}
+
+	fclose(rmc);
+	goto a1200;
+    }
+
+    if (raggio == -4.0)		/* Variable hydrated radii and bead-aminoacids correspondence */
+    {
+
+	fscanf(mol, "%s", ragcol);
+
+	rmc = fopen(ragcol, "r");
+
+	for (i = 0; i < nat; i++)
+	{
+	    fscanf(mol, "%f", &dt[i].x);
+	    fscanf(mol, "%f", &dt[i].y);
+	    fscanf(mol, "%f", &dt[i].z);
+	    fscanf(rmc, "%f", &dt[i].r);
+	    fscanf(rmc, "%d", &dt[i].m);
+	    fscanf(rmc, "%d", &dt[i].col);
+	    dt[i].cor = (char *) malloc(10 * sizeof(char));
+	    fscanf(rmc, "%s", dt[i].cor);
+	}
+
+	fclose(rmc);
+	goto a1200;
+    }
+
+    if (raggio == -5.0)		/* Variable hydrated radii, bead-aminoacids correspondence and psv */
+    {
+
+	fscanf(mol, "%s", ragcol);
+
+	fscanf(mol, "%f", &partvol);
+
+	rmc = fopen(ragcol, "r");
+
+	for (i = 0; i < nat; i++)
+	{
+	    fscanf(mol, "%f", &dt[i].x);
+	    fscanf(mol, "%f", &dt[i].y);
+	    fscanf(mol, "%f", &dt[i].z);
+	    fscanf(rmc, "%f", &dt[i].r);
+	    fscanf(rmc, "%d", &dt[i].m);
+	    fscanf(rmc, "%d", &dt[i].col);
+	    dt[i].cor = (char *) malloc(10 * sizeof(char));
+	    fscanf(rmc, "%s", dt[i].cor);
+	}
+
+	fclose(rmc);
+	goto a1200;
+    }
+
+    else			/* Constant radius, mass and color */
+    {
+	vt = 1;
+	for (i = 0; i < nat; i++)
+	{
+	    fscanf(mol, "%f", &dt[i].x);
+	    fscanf(mol, "%f", &dt[i].y);
+	    fscanf(mol, "%f", &dt[i].z);
+	    dt[i].r = raggio;
+	    dt[i].m = (int) 1.0;
+	    dt[i].col = 1;
+	}
+    }
+
+  a1200:
+
+    fclose(mol);
+
+    if ((raggio == -1.0) || (raggio == -3.0))
+    {
+	partvolc1 = 0.0;
+	partvolc2 = 0.0;
+	for (i = 0; i < nat; i++)
+	{
+	    partvolc1 = partvolc1 + (4.0 / 3.0 * PI * dt[i].ru * dt[i].ru * dt[i].ru * fconv1 * fconv1 * fconv1 * 1E-21);
+	    partvolc2 = partvolc2 + dt[i].m;
+	}
+	partvolc = partvolc1 * AVO / partvolc2;
+    }
+
+    if ((prima == 1) && (ultima == nat));
+    else
+    {
+	if ((raggio == 0.0) || (raggio == -2.0))
+	    for (i = 0; i < nat; i++)
+	    {
+		dt[i].x = dt[i + prima - 1].x;
+		dt[i].y = dt[i + prima - 1].y;
+		dt[i].z = dt[i + prima - 1].z;
+		dt[i].r = dt[i + prima - 1].r;
+		dt[i].m = dt[i + prima - 1].m;
+		dt[i].col = dt[i + prima - 1].col;
+	    }
+	if ((raggio == -1.0) || (raggio == -3.0))
+	    for (i = 0; i < nat; i++)
+	    {
+		dt[i].x = dt[i + prima - 1].x;
+		dt[i].y = dt[i + prima - 1].y;
+		dt[i].z = dt[i + prima - 1].z;
+		dt[i].r = dt[i + prima - 1].r;
+		dt[i].m = dt[i + prima - 1].m;
+		dt[i].ru = dt[i + prima - 1].ru;
+		dt[i].col = dt[i + prima - 1].col;
+	    }
+	if ((raggio == -4.0) || (raggio == -5.0))
+	    for (i = 0; i < nat; i++)
+	    {
+		dt[i].x = dt[i + prima - 1].x;
+		dt[i].y = dt[i + prima - 1].y;
+		dt[i].z = dt[i + prima - 1].z;
+		dt[i].r = dt[i + prima - 1].r;
+		dt[i].m = dt[i + prima - 1].m;
+		dt[i].col = dt[i + prima - 1].col;
+		dt[i].cor = dt[i + prima - 1].cor;
+	    }
+
+    }
+
+    strcpy(molecola, ricorda);
+    numero_sfere = nat;
+    nat = ultima - prima + 1;
+
+    printf("\n\n Starting function: ragir()\n");
+    ragir();
+    printf("\n End of function: ragir()\n");
+
+    /* removing from the hydrodynamic computations the beads color-coded '0' */
+
+    {
+	j = 0;
+	for (i = 0; i < nat; i++)
+	{
+	    if (dt[i].col == 0);
+
+	    else
+
+	    {
+		dt[j] = dt[i];
+		j++;
+	    }
+
+	}
+	colorzero = nat - j;
+	nat = j;
+    }
+
+    if (sfecalc == 2)		/* computation with all beads or with only the 'exposed'                           beads */
+
+    {
+	j = 0;
+	interm1 = 0;
+	for (i = 0; i < nat; i++)
+	{
+	    /*     if(colorsixf==1)     */
+	    interm1 += pow(dt[i].r, 3.0) * PI * 8.0 * ETAo;	/* calculating the total volume correction of the beads, including the buried ones */
+
+	    if (dt[i].col == 6);
+
+	    else
+
+	    {
+		dt[j] = dt[i];
+		j++;
+	    }
+
+	}
+	colorsix = nat - j;
+	nat = j;
+    }
+
+    if (nat > nmax)
+    {
+	printf("\n%s%d%s", " TOO MANY BEADS to COMPUTE ! (max: ", nmax, ")\n");
+	exit(0);
+    }
+}
+
+/*******************************************************************/
+
+// inv.c
+
+static void
+inv(float r[9])
+{
+  // int i;
+
+    float deter, rdet;
+    float cofa1, cofa2, cofa3, cofa4, cofa5, cofa6, cofa7, cofa8, cofa9;
+
+    cofa1 = r[4] * r[8] - r[5] * r[7];
+    cofa2 = r[5] * r[6] - r[3] * r[8];
+    cofa3 = r[3] * r[7] - r[4] * r[6];
+    cofa4 = r[0] * r[8] - r[2] * r[6];
+    cofa5 = r[1] * r[6] - r[0] * r[7];
+    cofa6 = r[0] * r[4] - r[1] * r[3];
+    cofa7 = r[7] * r[2] - r[1] * r[8];
+    cofa8 = r[1] * r[5] - r[4] * r[2];
+    cofa9 = r[3] * r[2] - r[0] * r[5];
+    deter = r[0] * cofa1 + r[1] * cofa2 + r[2] * cofa3;
+
+    if (fabs(deter) == 0.0)
+	printf("SINGULAR MATRIX\n");
+    else
+    {
+
+	rdet = 1.0 / deter;
+	r[0] = cofa1 * rdet;
+	r[3] = cofa2 * rdet;
+	r[6] = cofa3 * rdet;
+	r[4] = cofa4 * rdet;
+	r[7] = cofa5 * rdet;
+	r[8] = cofa6 * rdet;
+	r[1] = cofa7 * rdet;
+	r[2] = cofa8 * rdet;
+	r[5] = cofa9 * rdet;
+    }
+
+}
+
+static void
+inv6x6(float a[6][6])
+{
+
+    float a1[5][5], a2[4][4];
+    float det, c1, elem, elem1, k1;
+    int i, j, i1, i2, j1, j2, j3;
+
+    det = 0.0;
+    k1 = 0.0;
+    for (i = 0; i < 6; i++)
+    {
+	for (j = 0; j < 6; j++)
+	{
+	    for (i1 = 0; i1 < 5; i1++)
+	    {
+		i2 = i1;
+		if (i1 >= i)
+		    i2 = i1 + 1;
+		for (j1 = 0; j1 < 5; j1++)
+		{
+		    j2 = j1;
+		    if (j1 >= j)
+			j2 = j1 + 1;
+		    a1[i1][j1] = a[i2][j2];
+		}
+	    }
+
+	    det = 0.0;
+	    for (j1 = 0; j1 < 5; j1++)
+	    {
+
+		for (i2 = 0; i2 < 4; i2++)
+		{
+		    for (j2 = 0; j2 < 4; j2++)
+		    {
+			j3 = j2;
+			if (j2 >= j1)
+			    j3 = j2 + 1;
+			a2[i2][j2] = a1[i2 + 1][j3];
+		    }
+		}
+
+		c1 = a2[0][0] * (a2[1][1] * (a2[2][2] * a2[3][3] - a2[2][3] * a2[3][2])
+				 - a2[1][2] * (a2[2][1] * a2[3][3] - a2[2][3] * a2[3][1])
+				 + a2[1][3] * (a2[2][1] * a2[3][2] - a2[2][2] * a2[3][1]));
+		c1 = c1 - a2[0][1] * (a2[1][0] * (a2[2][2] * a2[3][3] - a2[2][3] * a2[3][2])
+				      - a2[1][2] * (a2[2][0] * a2[3][3] - a2[3][0] * a2[2][3])
+				      + a2[1][3] * (a2[2][0] * a2[3][2] - a2[3][0] * a2[2][2]));
+		c1 = c1 + a2[0][2] * (a2[1][0] * (a2[2][1] * a2[3][3] - a2[3][1] * a2[2][3])
+				      - a2[1][1] * (a2[2][0] * a2[3][3] - a2[2][3] * a2[3][0])
+				      + a2[1][3] * (a2[2][0] * a2[3][1] - a2[2][1] * a2[3][0]));
+		c1 = c1 - a2[0][3] * (a2[1][0] * (a2[2][1] * a2[3][2] - a2[2][2] * a2[3][1])
+				      - a2[1][1] * (a2[2][0] * a2[3][2] - a2[3][0] * a2[2][2])
+				      + a2[1][2] * (a2[2][0] * a2[3][1] - a2[2][1] * a2[3][0]));
+
+		elem = 1.0;
+		if (j1 == 1)
+		    elem = (-1.0);
+		if (j1 == 3)
+		    elem = (-1.0);
+
+		det = det + c1 * elem * a1[0][j1];
+
+	    }
+
+	    elem1 = (-1.0);
+	    for (j2 = 0; j2 <= i + j; j2++)
+		elem1 = elem1 * (-1.0);
+	    inver[j][i] = det * elem1;
+	    if (i == 0)
+		k1 = k1 + det * elem1 * a[i][j];
+	}
+    }
+
+    for (i = 0; i < 6; i++)
+    {
+	for (j = 0; j < 6; j++)
+	    inver[j][i] = inver[j][i] / k1;
+    }
+
+}
+
+/**************************************************************************/
+
+static void
+inverti(int N)
+{
+
+    int i, j, k1, k2, k3, k4, k5;
+
+    printf("MATRIX DECOMPOSITION (Chol.Dec.)\n\n");
+    choldc(N);
+    printf("\n\nINVERSION BY COLUMNS\n\n");
+
+    inizializza_b1();
+    b1[0] = 1.0;
+
+    printf("Cycle 3 of 3; model %d of %d\n\n", kkk, num);
+
+    for (j = 1; j <= 3 * N; j++)
+    {
+
+	printf("%s%d%s%d", "Iteration  ", j, " of ", 3 * N);
+	fflush(stdout);
+
+	k1 = (int) (floor((j - 1) / 3.0));
+	k2 = (j - 1) % 3;
+
+	if (j != 1)
+	{
+	    b1[j - 2] = 0.0;
+	    b1[j - 1] = 1.0;
+	}
+
+	cholsl(N);
+
+	for (i = 1; i <= 3 * N; i++)
+	{
+	    k3 = (int) (floor((i - 1) / 3.0));
+	    k4 = (i - 1) % 3;
+	    k5 = k2 + 3 * k4;
+	    q[k3 * (nmax * 9) + k1 * 9 + k5] = rRi[i - 1];
+	}
+
+	printf("%c", '\r');
+    }
+
+    printf("\n");
+}
+
+/**************************************************************************/
+
+/* int test; */
+// extern float interm1;
+// extern int colorsixf;
+static void
+DDtcalc()
+{
+    int i;
+    float p1[9], p2[9], p3[9];
+
+    vxTl(roD, Dr);
+    Txv(vT, roD);
+
+    for (i = 0; i < 9; i++)
+	p1[i] = Tv[i];
+
+    vxT(roD, Doc);
+
+    for (i = 0; i < 9; i++)
+	p2[i] = vT[i];
+
+    Doct[0] = Doc[0];
+    Doct[1] = Doc[3];
+    Doct[2] = Doc[6];
+    Doct[3] = Doc[1];
+    Doct[4] = Doc[4];
+    Doct[5] = Doc[7];
+    Doct[6] = Doc[2];
+    Doct[7] = Doc[5];
+    Doct[8] = Doc[8];
+
+    Txv(Doct, roD);
+
+    for (i = 0; i < 9; i++)
+	p3[i] = Tv[i];
+
+    for (i = 0; i < 9; i++)
+	DDt[i] = Dot[i] - p1[i] - p2[i] + p3[i];
+
+}
+
+/**************** computation of the matrix SIGMAOR ***************************/
+
+static void
+sigmaoRcalc()
+{
+    int i;
+    float p1[9], p2[9], p3[9];
+
+    vxT(roR, sigmat);
+    Txv(vT, roR);
+
+    for (i = 0; i < 9; i++)
+	p1[i] = Tv[i];
+
+    Txv(sigmaoc, roR);
+
+    for (i = 0; i < 9; i++)
+	p2[i] = Tv[i];
+
+    soct[0] = sigmaoc[0];
+    soct[1] = sigmaoc[3];
+    soct[2] = sigmaoc[6];
+    soct[3] = sigmaoc[1];
+    soct[4] = sigmaoc[4];
+    soct[5] = sigmaoc[7];
+    soct[6] = sigmaoc[2];
+    soct[7] = sigmaoc[5];
+    soct[8] = sigmaoc[8];
+
+    vxT(roR, soct);
+
+    for (i = 0; i < 9; i++)
+	p3[i] = vT[i];
+
+    for (i = 0; i < 9; i++)
+	sigmaoR[i] = sigmaRr[i] + p1[i] - p2[i] + p3[i];
+
+}
+
+/***************** computation ofthe matrix SIGMAOC ***************************/
+
+#if defined(NOT_USED)
+static void
+sigmaocalc()
+{
+    int i, j;
+
+    for (i = 0; i < 9; i++)
+    {
+	sigmaoc[i] = 0.0;
+    }
+
+    for (i = 0; i < 3; i++)
+    {
+	for (j = 0; j < nat; j++)
+	{
+	    sigmaoc[i] += dt[j].r * (gp[j * 9 + 6 + i] * dt[j].y - gp[j * 9 + 3 + i] * dt[j].z);	/* manca 6*PI*ETAo */
+	    sigmaoc[i + 3] += dt[j].r * (gp[j * 9 + i] * dt[j].z - gp[j * 9 + 6 + i] * dt[j].x);
+	    sigmaoc[i + 6] += dt[j].r * (gp[j * 9 + 3 + i] * dt[j].x - gp[j * 9 + i] * dt[j].y);
+	}
+
+    }
+}
+#endif
+
+/************************************************************************/
+
+static void
+sigmaocalc1()
+{
+    int i, j, k;
+
+    for (i = 0; i < 9; i++)
+    {
+	sigmaoc[i] = 0.0;
+    }
+
+    for (k = 0; k < nat; k++)
+    {
+	for (j = 0; j < nat; j++)
+	{
+	    for (i = 0; i < 3; i++)
+	    {
+		sigmaoc[i] += (q[k * (nmax * 9) + j * 9 + 6 + i] * dt[k].y - q[k * (nmax * 9) + j * 9 + 3 + i] * dt[k].z);
+		sigmaoc[i + 3] += (q[k * (nmax * 9) + j * 9 + i] * dt[k].z - q[k * (nmax * 9) + j * 9 + 6 + i] * dt[k].x);
+		sigmaoc[i + 6] += (q[k * (nmax * 9) + j * 9 + 3 + i] * dt[k].x - q[k * (nmax * 9) + j * 9 + i] * dt[k].y);
+	    }
+	}
+    }
+}
+
+/************************************************************************/
+#if defined(NOT_USED)
+static void
+sigmatcalc1()
+{
+
+    int i, j, k;
+
+    for (i = 0; i < nat; i++)
+    {
+	for (k = 0; k < 9; k++)
+	    gp[i * 9 + k] = 0.0;
+
+	for (j = 0; j < nat; j++)
+	{
+	    for (k = 0; k < 9; k++)
+		gp[i * 9 + k] += q[i * (nmax * 9) + j * 9 + k] * dt[j].r;
+	}
+
+	for (k = 0; k < 9; k++)
+	    gp[i * 9 + k] = (1.0 / dt[i].r) * gp[i * 9 + k];
+    }
+
+    for (k = 0; k < 9; k++)
+    {
+	sigmat[k] = 0.0;
+
+	for (i = 0; i < nat; i++)
+	    sigmat[k] += dt[i].r * gp[i * 9 + k];
+
+	isigmat[k] = sigmat[k];
+    }
+
+    inv(isigmat);
+    f = 3.0 / (isigmat[0] + isigmat[4] + isigmat[8]);
+
+}
+#endif
+
+/************************************************************************/
+
+static void
+sigmatcalc2()
+{
+
+    int i, j, k;
+
+    for (k = 0; k < 9; k++)
+	sigmat[k] = 0.0;
+
+    for (i = 0; i < nat; i++)
+    {
+	for (j = 0; j < nat; j++)
+	{
+	    for (k = 0; k < 9; k++)
+		sigmat[k] += q[i * (nmax * 9) + j * 9 + k];
+	}
+    }
+
+    for (k = 0; k < 9; k++)
+	isigmat[k] = sigmat[k];
+
+    inv(isigmat);
+    f = 3.0 / (isigmat[0] + isigmat[4] + isigmat[8]);
+
+}
+
+/************************************************************************/
+
+static void
+sigmarRcalc1()
+{
+
+    int l, k, i, j, kmeno, kpiu, lmeno, lpiu;
+    float xi[2], xj[2], interm;
+
+    for (k = 0; k < 3; k++)
+    {
+
+	kmeno = k - 1;
+	if (k == 0)
+	    kmeno = 2;
+
+	kpiu = k + 1;
+	if (k == 2)
+	    kpiu = 0;
+
+	for (l = 0; l < 3; l++)
+	{
+
+	    sigmaRr[3 * k + l] = 0.0;
+
+	    lmeno = l - 1;
+	    if (l == 0)
+		lmeno = 2;
+
+	    lpiu = l + 1;
+	    if (l == 2)
+		lpiu = 0;
+
+	    for (i = 0; i < nat; i++)
+	    {
+
+		xi[0] = rRi[3 * i + kpiu];
+		xi[1] = rRi[3 * i + kmeno];
+
+		for (j = 0; j < nat; j++)
+		{
+
+		    xj[0] = rRi[3 * j + lpiu];
+		    xj[1] = rRi[3 * j + lmeno];
+
+		    interm = xi[0] * xj[0] * q[i * (nmax * 9) + j * 9 + 3 * kmeno + lmeno];
+		    interm = interm + xi[1] * xj[1] * q[i * (nmax * 9) + j * 9 + 3 * kpiu + lpiu];
+		    interm = interm - xi[0] * xj[1] * q[i * (nmax * 9) + j * 9 + 3 * kmeno + lpiu];
+		    interm = interm - xi[1] * xj[0] * q[i * (nmax * 9) + j * 9 + 3 * kpiu + lmeno];
+
+/*			 interm=dt[j].r*interm;	*/
+		    sigmaRr[3 * k + l] += interm;
+
+		}
+
+	    }
+	}
+    }
+
+    interm = 0.0;
+/*		printf("%d%d\n\n volcor,colorsixf",volcor,"   ",colorsixf);
+		scanf("%d",&test);
+		getchar();  */
+    if ((volcor == 1) && ((colorsixf == 1) || (colorsixf == 3)))
+	interm = interm1;	/* total vol. of beads, buried included */
+    else
+    {
+	if (volcor == 1)
+	{
+	    for (i = 0; i < nat; i++)
+		interm += pow(dt[i].r, 3.0) * PI * 8.0 * ETAo;
+	}
+	else
+	    interm = volcor1 * 6.0 * ETAo;	/* manual volume correction */
+    }
+
+    for (i = 0; i < 3; i++)
+    {
+	if (cc == 1)
+	    sigmaRr[4 * i] += interm;
+	else
+	    sigmaRr[4 * i] += 0.0;
+    }
+
+    if (cc == 1)
+	volcor1 = interm / 6.0 / ETAo;
+    else
+	volcor1 = 0.0;
+
+}
+
+/*************************************************************************/
+// over.c
+
+static int
+overlap()
+{
+    int i, j, flag;
+    float dist;
+    float overlval;
+    char r5;
+
+    flag = 0;
+
+    printf("\n** Performing overlap test **\n");
+    printf("\n** WARNING: Overlaps can lead to wrong results! Detection cutoff > 0.001 **\n");
+
+    for (i = 0; i < nat; i++)
+    {
+	for (j = i + 1; j < nat; j++)
+	{
+	    dist = pow((dt[i].x - dt[j].x), 2.0) + pow((dt[i].y - dt[j].y), 2.0) + pow((dt[i].z - dt[j].z), 2.0);
+	    overlval = (dist - pow((dt[i].r + dt[j].r), 2.0));
+	    if ((dist - pow((dt[i].r + dt[j].r), 2.0)) < -0.01)
+	    {
+		printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
+		       (sqrt(dist) - (dt[i].r + dt[j].r)));
+		printf("\n** Do you want to proceed anyway? (y/n) ");
+		scanf("%s", &r5);
+		getchar();
+		if ((r5 == 'y') || (r5 == 'Y'))
+		{
+		    flag = 0;
+		}
+		else
+		{
+		    flag = 1;
+		    goto a99;
+		}
+	    }
+
+	}
+    }
+    printf("\n** Overlap test completed **\n");
+  a99:
+    return (flag);
+}
+
+// pvt.c
+
+static void
+vxT(float v[3], float T[9])
+{
+    int i;
+
+    for (i = 0; i < 3; i++)
+	vT[i] = T[i + 6] * v[1] - T[i + 3] * v[2];
+
+    for (i = 3; i < 6; i++)
+	vT[i] = T[i - 3] * v[2] - T[i + 3] * v[0];
+
+    for (i = 6; i < 9; i++)
+	vT[i] = T[i - 3] * v[0] - T[i - 6] * v[1];
+}
+
+static void
+vxTl(float v[3], long double T[9])
+{
+    int i;
+
+    for (i = 0; i < 3; i++)
+	vT[i] = T[i + 6] * v[1] - T[i + 3] * v[2];
+
+    for (i = 3; i < 6; i++)
+	vT[i] = T[i - 3] * v[2] - T[i + 3] * v[0];
+
+    for (i = 6; i < 9; i++)
+	vT[i] = T[i - 3] * v[0] - T[i - 6] * v[1];
+}
+
+static void
+Txv(float T[9], float v[3])
+{
+    int i;
+
+    for (i = 0; i < 3; i++)
+    {
+	Tv[3 * i] = T[3 * i + 1] * v[2] - T[3 * i + 2] * v[1];
+	Tv[3 * i + 1] = T[3 * i + 2] * v[0] - T[3 * i] * v[2];
+	Tv[3 * i + 2] = T[3 * i] * v[1] - T[3 * i + 1] * v[0];
+    }
+}
+
+static void
+Mxv(float M[9], float v[3])
+{
+    int i;
+
+    for (i = 0; i < 3; i++)
+    {
+	vc[i] = M[3 * i] * v[0] + M[3 * i + 1] * v[1] + M[3 * i + 2] * v[2];
+    }
+}
+
+// qij.c
+
+static void
+calcqij()
+{
+    int i, j, k, l, inx;
+    float qqx, qqy, qqz, del, aa, ri, rj, d2, qq, rr, tt;
+    float tempij[3], tempji[3], dij, etai;
+
+    del = 0.0;
+
+    for (i = 0; i < nat; i++)
+    {
+	for (j = i; j < nat; j++)
+	{
+	    ri = dt[i].r;
+	    rj = dt[j].r;
+
+	    if (cc == 1)	/* Corrected 9 Oct 1997 MR */
+		etai = 6.0 * PI * ETAo * ri;
+	    else
+		etai = 4 * PI * ETAo * ri;
+
+	    aa = 0.0;
+
+	    qqx = dt[i].x - dt[j].x;
+	    aa += qqx * qqx;
+	    tempji[0] = (-qqx);
+	    tempij[0] = qqx;
+
+	    qqy = dt[i].y - dt[j].y;
+	    aa += qqy * qqy;
+	    tempji[1] = (-qqy);
+	    tempij[1] = qqy;
+
+	    qqz = dt[i].z - dt[j].z;
+	    aa += qqz * qqz;
+	    tempji[2] = (-qqz);
+	    tempij[2] = qqz;
+
+	    aa = sqrt(aa);
+	    dij = aa;
+
+	    for (k = 0; k < 3; k++)
+	    {
+		for (l = 0; l < 3; l++)
+		{
+		    inx = l + 3 * k;
+		    if (k == l)
+			del = 1.0;
+		    else
+			del = 0.0;
+
+		    if (i == j)
+			q[i * (nmax * 9) + j * 9 + inx] = del / etai;
+		    else
+		    {
+			d2 = dij * dij;
+			qq = (tempji[l] * tempji[k]) / d2;
+			rr = (dt[i].r * dt[i].r + dt[j].r * dt[j].r);
+			tt = del + qq + (rr / d2) * (del / 3.0 - qq);
+			tt = tt / (dij * 8.0 * PI * ETAo);
+			q[i * (nmax * 9) + j * 9 + inx] = tt;
+			q[j * (nmax * 9) + i * 9 + inx] = tt;
+		    }
+		}
+	    }
+	}
+    }
+
+}
+
+// rot.c
+
+static void
+calcR()
+{
+
+    float temp[9];
+    int i;
+
+    temp[0] = sigmat[4] + sigmat[8];
+    temp[1] = (-sigmat[1]);
+    temp[2] = (-sigmat[2]);
+    temp[3] = (-sigmat[1]);
+    temp[4] = sigmat[0] + sigmat[8];
+    temp[5] = (-sigmat[5]);
+    temp[6] = (-sigmat[2]);
+    temp[7] = (-sigmat[5]);
+    temp[8] = sigmat[0] + sigmat[4];
+
+    inv(temp);
+
+    for (i = 0; i < 3; i++)
+	roR[i] =
+	    temp[3 * i] * (sigmaoc[7] - sigmaoc[5]) + temp[3 * i + 1] * (sigmaoc[2] - sigmaoc[6]) + temp[3 * i +
+													 2] * (sigmaoc[3] -
+													       sigmaoc[1]);
+
+    for (i = 0; i < nat; i++)
+    {
+	rRi[3 * i] = dt[i].x - roR[0];
+	rRi[3 * i + 1] = dt[i].y - roR[1];
+	rRi[3 * i + 2] = dt[i].z - roR[2];
+    }
+}
+
+/*************************************************************************/
+
+static void
+calcD()
+{
+
+    float temp[9];
+    int i;
+
+    temp[0] = (Dr[4] + Dr[8]);
+    temp[1] = (-Dr[1]);
+    temp[2] = (-Dr[2]);
+    temp[3] = (-Dr[1]);
+    temp[4] = Dr[0] + Dr[8];
+    temp[5] = (-Dr[5]);
+    temp[6] = (-Dr[2]);
+    temp[7] = (-Dr[5]);
+    temp[8] = (Dr[0] + Dr[4]);
+
+    inv(temp);
+
+    for (i = 0; i < 3; i++)
+	roD[i] = temp[3 * i] * (-Doc[7] + Doc[5]) + temp[3 * i + 1] * (-Doc[2] + Doc[6]) + temp[3 * i + 2] * (-Doc[3] + Doc[1]);
+
+}
+
+// secondo.c
+
+static void
+secondo(long double b, long double c)
+{
+    float delta, pfraz, pin;
+    int coco;
+
+    delta = b * b - 4.0 * c;
+
+    pfraz = fabs(delta);
+    pin = floor(pfraz);
+    pfraz = pfraz - pin;
+
+    if (((pin == 0) && (pfraz < 0.00001) && (delta <= 0.0)) || ((pin == 0) && (pfraz < 0.2) && (delta > 0.0)))
+    {
+	dl2 = (-b / 2.0);
+	dl3 = dl2;
+    }
+    else if (delta > 0.0)
+    {
+	dl2 = (-b + sqrt(b * b - 4.0 * c)) / 2.0;
+	dl3 = (-b - sqrt(b * b - 4.0 * c)) / 2.0;
+    }
+    else
+	coco = 1;		/* TWO COMPLEX CONJUGATED EIGENVALUES */
+
+/*
+if(coco==1)
+{
+printf("EIGENVALUES of the MATRIX A ARE :\t ");
+printf("%f%s\n\n\n",dl1,", c.c. , c.c.");
+}
+else
+{
+printf("EIGENVALUES of the MATRIX A ARE :\t ");
+printf("%f%s%f%s%f\n\n\n",dl1,",",dl2,",",dl3);
+}
+*/
+
+}
+
+// terzo.c
+
+static void
+terzo(long double b, long double c, long double d)
+{
+
+  // float nb, nc, nd;
+    float p, q, s, r, pq, epsi, y1, y2, y3, alfa, alf1;
+    float unterzo, beta, bet1, rad, pfraz, pin;
+    int coco;
+
+    if ((c == 0.0) && (d == 0.0))
+    {
+	dl1 = 0.0;
+	dl3 = 0.0;
+	dl2 = (-b);
+	goto RET0;
+    }
+
+    if (d == 0.0)
+    {
+	dl1 = 0.0;
+	secondo(b, c);
+	goto RET0;
+    }
+
+    rad = atan(1.00) / 45;
+    p = (-(b * b) / 3.0 + c);
+    q = (2.0 * b * b * b - 9.0 * c * b + 27.0 * d) / 27.0;
+    s = (q * q) / 4.0 + (p * p * p) / 27.0;
+
+    pfraz = fabs(s);
+    pin = floor(pfraz);
+    pfraz = pfraz - pin;
+
+    if ((s > 0.0) && ((pin != 0) || ((pin == 0) && (pfraz > 0.01))))
+	coco = 1;		/* TWO COMPLEX CONJUGATED EIGENVALUES */
+
+    else if ((s < 0.0) && ((pin != 0) || ((pin == 0) && (pfraz > 0.01))))
+    {
+	r = sqrt(-4.0 * p / 3.0);
+	pq = 4.0 * q / (r * r * r);
+	epsi = (asin(pq)) / 3.0;
+	y1 = r * sin(epsi);
+	y2 = r * sin(60.0 * rad - epsi);
+	y3 = (-r * sin(60.0 * rad + epsi));
+
+	dl1 = y1 - b / 3.0;
+	dl2 = y2 - b / 3.0;
+	dl3 = y3 - b / 3.0;
+
+	goto RET0;
+    }
+    else
+    {
+	alfa = (-q / 2.0 + sqrt(q * q / 4.0 + p * p * p / 27.0));
+	unterzo = 1.0 / 3.0;
+
+	if (alfa < 0.0)
+	{
+	    alfa = (-alfa);
+	    alf1 = (-pow(alfa, unterzo));
+	}
+
+	else
+	    alf1 = pow(alfa, unterzo);
+
+	beta = (-q / 2.0 - sqrt(q * q / 4.0 + p * p * p / 27.0));
+
+	if (beta < 0.0)
+	{
+	    beta = (-beta);
+	    bet1 = (-pow(beta, unterzo));
+	}
+
+	else
+	    bet1 = pow(beta, unterzo);
+
+	dl1 = alf1 + bet1;
+	dl2 = (-(alf1 + bet1) / 2.0);
+	dl3 = dl2;
+
+	dl1 = dl1 - b / 3.0;
+	dl2 = dl2 - b / 3.0;
+	dl3 = dl3 - b / 3.0;
+
+    }
+
+  RET0:
+
+    ;
+}
+
+// visc.c
+
+static void
+visco()
+{
+    float numx, numy, numz, den, bc;
+    float temp, temp1, temp2, temp3, etai, mas, sum1, sum11, sum111;
+    int i, j;
+    // float a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12, a13, a14, a15, a16, E, H, I, RRcosalfa, ri, rj, Ri, Rj, R;
+
+    // int Na = 1;
+
+    mas = 0.0;
+    numx = 0.0;
+    numy = 0.0;
+    numz = 0.0;
+    den = 0.0;
+    vis = 0.0;
+
+/* COMPUTATION OF THE VISCOSITY CENTER COORDINATES */
+
+    for (i = 0; i < 9; i++)
+	cv[i] = 0.0;
+    for (i = 0; i < 3; i++)
+	bb[i] = 0.0;
+
+    for (i = 0; i < nat; i++)
+    {
+	for (j = 0; j < nat; j++)
+	{
+	    etai = 1.0;
+
+	    etai = 1.0 / (6.0 * PI * dt[j].r * ETAo);
+
+	    cv[0] += etai * (8.0 * q[i * (nmax * 9) + j * 9 + 0] +
+			     6.0 * q[i * (nmax * 9) + j * 9 + 4] + 6.0 * q[i * (nmax * 9) + j * 9 + 8]);
+	    cv[1] += etai * (q[i * (nmax * 9) + j * 9 + 1] + q[i * (nmax * 9) + j * 9 + 3]);
+	    cv[2] += etai * (q[i * (nmax * 9) + j * 9 + 2] + q[i * (nmax * 9) + j * 9 + 6]);
+	    bb[0] += etai * ((dt[i].x + dt[j].x) *
+			     (4.0 * q[i * (nmax * 9) + j * 9 + 0] +
+			      3.0 * q[i * (nmax * 9) + j * 9 + 4] +
+			      3.0 * q[i * (nmax * 9) + j * 9 + 8]) +
+			     dt[j].y * (3.0 * q[i * (nmax * 9) + j * 9 + 3] -
+					2.0 * q[i * (nmax * 9) + j * 9 + 1]) +
+			     dt[j].z * (3.0 * q[i * (nmax * 9) + j * 9 + 6] -
+					2.0 * q[i * (nmax * 9) + j * 9 + 2]) +
+			     dt[j].y * (3.0 * q[i * (nmax * 9) + j * 9 + 1] -
+					2.0 * q[i * (nmax * 9) + j * 9 + 3]) +
+			     dt[j].z * (3.0 * q[i * (nmax * 9) + j * 9 + 2] - 2.0 * q[i * (nmax * 9) + j * 9 + 6]));
+
+	    cv[4] += etai * (8.0 * q[i * (nmax * 9) + j * 9 + 4] +
+			     6.0 * q[i * (nmax * 9) + j * 9 + 8] + 6.0 * q[i * (nmax * 9) + j * 9 + 0]);
+	    cv[5] += etai * (q[i * (nmax * 9) + j * 9 + 5] + q[i * (nmax * 9) + j * 9 + 7]);
+	    cv[3] += etai * (q[i * (nmax * 9) + j * 9 + 3] + q[i * (nmax * 9) + j * 9 + 1]);
+	    bb[1] += etai * ((dt[i].y + dt[j].y) * (4.0 * q[i * (nmax * 9) + j * 9 + 4] +
+						    3.0 * q[i * (nmax * 9) + j * 9 + 8] +
+						    3.0 * q[i * (nmax * 9) + j * 9 + 0]) +
+			     dt[j].z * (3.0 * q[i * (nmax * 9) + j * 9 + 7] -
+					2.0 * q[i * (nmax * 9) + j * 9 + 5]) +
+			     dt[j].x * (3.0 * q[i * (nmax * 9) + j * 9 + 1] -
+					2.0 * q[i * (nmax * 9) + j * 9 + 3]) +
+			     dt[j].z * (3.0 * q[i * (nmax * 9) + j * 9 + 5] -
+					2.0 * q[i * (nmax * 9) + j * 9 + 7]) +
+			     dt[j].x * (3.0 * q[i * (nmax * 9) + j * 9 + 3] - 2.0 * q[i * (nmax * 9) + j * 9 + 1]));
+
+	    cv[8] += etai * (8.0 * q[i * (nmax * 9) + j * 9 + 8] +
+			     6.0 * q[i * (nmax * 9) + j * 9 + 4] + 6.0 * q[i * (nmax * 9) + j * 9 + 0]);
+	    cv[6] += etai * (q[i * (nmax * 9) + j * 9 + 6] + q[i * (nmax * 9) + j * 9 + 2]);
+	    cv[7] += etai * (q[i * (nmax * 9) + j * 9 + 7] + q[i * (nmax * 9) + j * 9 + 5]);
+	    bb[2] += etai * ((dt[i].z + dt[j].z) * (4.0 * q[i * (nmax * 9) + j * 9 + 8] +
+						    3.0 * q[i * (nmax * 9) + j * 9 + 4] +
+						    3.0 * q[i * (nmax * 9) + j * 9 + 0]) +
+			     dt[j].x * (3.0 * q[i * (nmax * 9) + j * 9 + 2] -
+					2.0 * q[i * (nmax * 9) + j * 9 + 6]) +
+			     dt[j].y * (3.0 * q[i * (nmax * 9) + j * 9 + 5] -
+					2.0 * q[i * (nmax * 9) + j * 9 + 7]) +
+			     dt[j].x * (3.0 * q[i * (nmax * 9) + j * 9 + 6] -
+					2.0 * q[i * (nmax * 9) + j * 9 + 2]) +
+			     dt[j].y * (3.0 * q[i * (nmax * 9) + j * 9 + 7] - 2.0 * q[i * (nmax * 9) + j * 9 + 5]));
+	}
+    }
+
+    inv(cv);
+
+    Mxv(cv, bb);
+
+    if (cc == 1)
+	bc = 6.0;
+    else
+	bc = 4.0;
+
+    for (i = 0; i < nat; i++)
+    {
+	for (j = 0; j < nat; j++)
+	{
+
+/*    etai=bc*PI*dt[j].r;  */
+
+	    etai = 1.0;
+
+	    temp =
+		(dt[i].x - vc[0]) * q[i * (nmax * 9) + j * 9 + 0] *
+		(dt[j].x - vc[0]) + (dt[i].y - vc[1]) * q[i * (nmax * 9) + j * 9 + 4] * (dt[j].y - vc[1]) +
+		(dt[i].z - vc[2]) * q[i * (nmax * 9) + j * 9 + 8] * (dt[j].z - vc[2]);
+	    temp1 = (dt[i].x - vc[0]) * ((dt[j].y - vc[1]) * (q[i * (nmax * 9) + j * 9 + 3]) +
+					 (dt[j].z - vc[2]) * q[i * (nmax * 9) + j * 9 + 6]);
+	    temp2 = (dt[i].y - vc[1]) * ((dt[j].x - vc[0]) * (q[i * (nmax * 9) + j * 9 + 1]) +
+					 (dt[j].z - vc[2]) * q[i * (nmax * 9) + j * 9 + 7]);
+	    temp3 = (dt[i].z - vc[2]) * ((dt[j].x - vc[0]) * (q[i * (nmax * 9) + j * 9 + 2]) +
+					 (dt[j].y - vc[1]) * q[i * (nmax * 9) + j * 9 + 5]);
+	    sum1 = temp1 + temp2 + temp3;
+
+	    temp1 = (dt[i].x - vc[0]) * ((dt[j].y - vc[1]) * (q[i * (nmax * 9) + j * 9 + 1]) +
+					 (dt[j].z - vc[2]) * q[i * (nmax * 9) + j * 9 + 2]);
+	    temp2 = (dt[i].y - vc[1]) * ((dt[j].x - vc[0]) * (q[i * (nmax * 9) + j * 9 + 3]) +
+					 (dt[j].z - vc[2]) * q[i * (nmax * 9) + j * 9 + 5]);
+	    temp3 = (dt[i].z - vc[2]) * ((dt[j].x - vc[0]) * (q[i * (nmax * 9) + j * 9 + 6]) +
+					 (dt[j].y - vc[1]) * q[i * (nmax * 9) + j * 9 + 7]);
+	    sum11 = temp1 + temp2 + temp3;
+
+	    temp1 = (dt[i].x - vc[0]) * (dt[j].x - vc[0]) * (q[i * (nmax * 9) + j * 9 + 4] + q[i * (nmax * 9) + j * 9 + 8]);
+	    temp2 = (dt[i].y - vc[1]) * (dt[j].y - vc[1]) * (q[i * (nmax * 9) + j * 9 + 0] + q[i * (nmax * 9) + j * 9 + 8]);
+	    temp3 = (dt[i].z - vc[2]) * (dt[j].z - vc[2]) * (q[i * (nmax * 9) + j * 9 + 0] + q[i * (nmax * 9) + j * 9 + 4]);
+	    sum111 = temp1 + temp2 + temp3;
+
+	    vis += etai * ((1.0 / 15.0) * temp + (1.0 / 20.0) * sum1 - (1.0 / 30.0) * sum11 + (1.0 / 20.0) * sum111);
+
+	}
+    }
+
+    /*for(i=0;i<nat;i++) mas+=dt[i].m;  total mass of the model */
+
+    vis = vis / pesmol * AVO * 1.0E-21 / ETAo;
+
+    vis3 = 2.5 * AVO * 1.0E-21;
+}
+
+/*******************************************************************************/
+
+/*  INTRISIC VISCOSITY COMPUTATION ACCORDING TO TSUDA (CM) */
+
+static void
+tsuda()
+{
+
+    int i, j;
+    float a1;
+    float a2;
+    float a3;
+    float a4;
+    float a5;
+    float a6;
+    float a7;
+    float a8;
+    float a9;
+    float a10;
+    float a11;
+    float a12;
+    float a13;
+    float a14;
+    float a15;
+    float a16;
+    float E;
+    float H;
+    float I;
+    float RRcosalfa;
+    float ri = 0.0;
+    float rj;
+    float Ri = 0.0;
+    float Rj;
+    float R;
+
+    I = E = H = 0.0;
+
+/* COMPUTATION OF OTHER PARAMETERS NECESSARY FOR THE INTRINSIC VISCOSITY */
+
+    for (i = 0; i < nat; i++)
+    {
+	for (j = 0; j < nat; j++)
+	{
+	    if (i != j)
+	    {
+		ri = dt[i].r;
+
+		rj = dt[j].r;
+
+		Ri = sqrt(pow((dt[i].x - xm), 2.0) + pow((dt[i].y - ym), 2.0) + pow((dt[i].z - zm), 2.0));
+
+		Rj = sqrt(pow((dt[j].x - xm), 2.0) + pow((dt[j].y - ym), 2.0) + pow((dt[j].z - zm), 2.0));
+
+		R = sqrt(pow((dt[i].x - dt[j].x), 2.0) + pow((dt[i].y - dt[j].y), 2.0) + pow((dt[i].z - dt[j].z), 2.0));
+
+		RRcosalfa = (dt[i].x - xm) * (dt[j].x - xm) + (dt[i].y - ym) * (dt[j].y - ym) + (dt[i].z - zm) * (dt[j].z - zm);
+
+		a1 = log10((R * R - (ri - rj) * (ri - rj)) / (R * R + (ri - rj) * (ri - rj)));
+
+		a2 = (52 * (Ri * Ri + Rj * Rj) + 34 * (ri * ri + rj * rj) - 54 * R * R) / (5 * R);
+
+		a3 = 104 * ri * ri * (RRcosalfa - Ri * Ri) / (15 * R * R * R) -
+		    104 * rj * rj * (Rj * Rj - RRcosalfa) / (15 * R * R * R);
+
+		a4 = a1 * ((Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) +
+			   4.0 / 3.0 * (Ri * Ri * ri * ri + Rj * Rj * rj * rj)) / (10 * R * ri * rj);
+
+		a5 = 3.0 * rj * rj - 3.0 * R * R - 5.0 * ri * ri +
+		    a1 * (-ri * ri * (6.0 * rj * rj - 3.0 * ri * ri - 2.0 * R * R) +
+			  3.0 * (R * R - rj * rj) * (R * R - rj * rj)) / (4.0 * ri * rj);
+
+		a6 = (3.0 * (RRcosalfa - Ri * Ri) * (RRcosalfa - Ri * Ri) - R * R * Ri * Ri) * a5 / (15 * R * R * R * R * R);
+
+		a7 = 3.0 * ri * ri - 3.0 * R * R - 5.0 * rj * rj +
+		    a1 * (-rj * rj * (6.0 * ri * ri - 3.0 * rj * rj - 2.0 * R * R) +
+			  3.0 * (R * R - ri * ri) * (R * R - ri * ri)) / (4.0 * ri * rj);
+
+		a8 = (3.0 * (Rj * Rj - RRcosalfa) * (Rj * Rj - RRcosalfa) - R * R * Rj * Rj) * a7 / (15 * R * R * R * R * R);
+
+		a9 = 1.0 + a1 * (rj * rj - ri * ri - R * R) / (4.0 * ri * rj);
+
+		a10 = 4.0 * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (RRcosalfa - Ri * Ri) * a9 / (5.0 * R * R * R);
+
+		a11 = 1.0 + a1 * (ri * ri - rj * rj - R * R) / (4.0 * ri * rj);
+
+		a12 = 4.0 * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (Rj * Rj - RRcosalfa) * a11 / (5.0 * R * R * R);
+
+		a13 = 4.0 * (RRcosalfa - Ri * Ri) * (Rj * Rj - RRcosalfa) / (5.0 * R * R * R * R * R);
+
+		a14 = a13 * (R * R + ri * ri + rj * rj + a1 * ((ri * ri - rj * rj) * (ri * ri - rj * rj) - R * R * R * R));
+
+		a15 = 2.0 * (Ri * Ri * Rj * Rj - RRcosalfa * RRcosalfa) / (5.0 * R * R * R * R * R);
+
+		a16 =
+		    a15 * (R * R - ri * ri - rj * rj +
+			   a1 / (4.0 * ri * rj) * ((ri + rj) * (ri + rj) - R * R) * (R * R - (ri - rj) * (ri - rj)));
+
+		I += (ri * ri * rj * rj) * (a2 + a3 + a4 + a6 + a8 - a10 - a12 - a14 - a16);
+
+	    }
+	}
+	E += ri * ri * (ri * ri + Ri * Ri);
+
+	H += ri * ri * ri * (3.0 * ri * ri + 10 * Ri * Ri);
+    }
+
+    E = 4.0 * E;
+
+    H = 32.0 / 15.0 * H;
+
+    vis1 = 4.0 * AVO * 1.0E-21 * PI * E * E / (3.0 * pesmol * (H + I));
+
+}
+
+/*********************************************************************************/
+
+/*  INTRINSIC VISCOSITY COMPUTATION ACCORDING TO TSUDA (CV) */
+
+static void
+tsuda1()
+{
+
+    int i, j;
+    float a1;
+    float a2;
+    float a3;
+    float a4;
+    float a5;
+    float a6;
+    float a7;
+    float a8;
+    float a9;
+    float a10;
+    float a11;
+    float a12;
+    float a13;
+    float a14;
+    float a15;
+    float a16;
+    float E;
+    float H;
+    float I;
+    float RRcosalfa;
+    float ri = 0.0;
+    float rj;
+    float Ri = 0.0;
+    float Rj;
+    float R;
+
+    I = E = H = 0.0;
+
+/* COMPUTATION OF OTHER PARAMETERS NECESSARY FOR THE INTRINSIC VISCOSITY */
+
+    for (i = 0; i < nat; i++)
+    {
+	for (j = 0; j < nat; j++)
+	{
+	    if (i != j)
+	    {
+		ri = dt[i].r;
+
+		rj = dt[j].r;
+
+		Ri = sqrt(pow((dt[i].x - vc[0]), 2.0) + pow((dt[i].y - vc[1]), 2.0) + pow((dt[i].z - vc[2]), 2.0));
+
+		Rj = sqrt(pow((dt[j].x - vc[0]), 2.0) + pow((dt[j].y - vc[1]), 2.0) + pow((dt[j].z - vc[2]), 2.0));
+
+		R = sqrt(pow((dt[i].x - dt[j].x), 2.0) + pow((dt[i].y - dt[j].y), 2.0) + pow((dt[i].z - dt[j].z), 2.0));
+
+		RRcosalfa = (dt[i].x - vc[0]) * (dt[j].x - vc[0]) + (dt[i].y - vc[1]) * (dt[j].y - vc[1]) +
+		    (dt[i].z - vc[2]) * (dt[j].z - vc[2]);
+
+		a1 = log10((R * R - (ri - rj) * (ri - rj)) / (R * R + (ri - rj) * (ri - rj)));
+
+		a2 = (52 * (Ri * Ri + Rj * Rj) + 34 * (ri * ri + rj * rj) - 54 * R * R) / (5 * R);
+
+		a3 = 104 * ri * ri * (RRcosalfa - Ri * Ri) / (15 * R * R * R) -
+		    104 * rj * rj * (Rj * Rj - RRcosalfa) / (15 * R * R * R);
+
+		a4 = a1 * ((Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) +
+			   4.0 / 3.0 * (Ri * Ri * ri * ri + Rj * Rj * rj * rj)) / (10 * R * ri * rj);
+
+		a5 = 3.0 * rj * rj - 3.0 * R * R - 5.0 * ri * ri +
+		    a1 * (-ri * ri * (6.0 * rj * rj - 3.0 * ri * ri - 2.0 * R * R) +
+			  3.0 * (R * R - rj * rj) * (R * R - rj * rj)) / (4.0 * ri * rj);
+
+		a6 = (3.0 * (RRcosalfa - Ri * Ri) * (RRcosalfa - Ri * Ri) - R * R * Ri * Ri) * a5 / (15 * R * R * R * R * R);
+
+		a7 = 3.0 * ri * ri - 3.0 * R * R - 5.0 * rj * rj +
+		    a1 * (-rj * rj * (6.0 * ri * ri - 3.0 * rj * rj - 2.0 * R * R) +
+			  3.0 * (R * R - ri * ri) * (R * R - ri * ri)) / (4.0 * ri * rj);
+
+		a8 = (3.0 * (Rj * Rj - RRcosalfa) * (Rj * Rj - RRcosalfa) - R * R * Rj * Rj) * a7 / (15 * R * R * R * R * R);
+
+		a9 = 1.0 + a1 * (rj * rj - ri * ri - R * R) / (4.0 * ri * rj);
+
+		a10 = 4.0 * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (RRcosalfa - Ri * Ri) * a9 / (5.0 * R * R * R);
+
+		a11 = 1.0 + a1 * (ri * ri - rj * rj - R * R) / (4.0 * ri * rj);
+
+		a12 = 4.0 * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (Rj * Rj - RRcosalfa) * a11 / (5.0 * R * R * R);
+
+		a13 = 4.0 * (RRcosalfa - Ri * Ri) * (Rj * Rj - RRcosalfa) / (5.0 * R * R * R * R * R);
+
+		a14 = a13 * (R * R + ri * ri + rj * rj + a1 * ((ri * ri - rj * rj) * (ri * ri - rj * rj) - R * R * R * R));
+
+		a15 = 2.0 * (Ri * Ri * Rj * Rj - RRcosalfa * RRcosalfa) / (5.0 * R * R * R * R * R);
+
+		a16 =
+		    a15 * (R * R - ri * ri - rj * rj +
+			   a1 / (4.0 * ri * rj) * ((ri + rj) * (ri + rj) - R * R) * (R * R - (ri - rj) * (ri - rj)));
+
+		I += (ri * ri * rj * rj) * (a2 + a3 + a4 + a6 + a8 - a10 - a12 - a14 - a16);
+
+	    }
+	}
+	E += ri * ri * (ri * ri + Ri * Ri);
+
+	H += ri * ri * ri * (3.0 * ri * ri + 10 * Ri * Ri);
+    }
+
+    E = 4.0 * E;
+
+    H = 32.0 / 15.0 * H;
+
+    vis2 = 4.0 * AVO * 1.0E-21 * PI * E * E / (3.0 * pesmol * (H + I));
+
+}
+
+/*********************************************************************/
+
+/*  INTRINSIC VISCOSITY COMPUTATION BY THE DOUBLE SUM APPROXIMATION   */
+
+static void
+doublesum()
+{
+
+    int i, j;
+    float a1, a2, RRcosalfa, ri, rj, Ri, Rj, R;
+
+    a1 = a2 = 0.0;
+
+/* COMPUTATION OF OTHER PARAMETERS NECESSARY FOR THE INTRINSIC VISCOSITY */
+
+    for (i = 0; i < nat; i++)
+    {
+
+	ri = dt[i].r;
+
+	Ri = sqrt(pow((dt[i].x - xm), 2.0) + pow((dt[i].y - ym), 2.0) + pow((dt[i].z - zm), 2.0));
+
+	a1 += 6.0 * PI * ETAo * ri * Ri * Ri;
+
+	for (j = 0; j < nat; j++)
+	{
+
+	    rj = dt[j].r;
+
+	    Rj = sqrt(pow((dt[j].x - xm), 2.0) + pow((dt[j].y - ym), 2.0) + pow((dt[j].z - zm), 2.0));
+
+	    if (i != j)
+	    {
+
+		R = sqrt(pow((dt[i].x - dt[j].x), 2.0) + pow((dt[i].y - dt[j].y), 2.0) + pow((dt[i].z - dt[j].z), 2.0));
+
+		RRcosalfa = (dt[i].x - xm) * (dt[j].x - xm) + (dt[i].y - ym) * (dt[j].y - ym) + (dt[i].z - zm) * (dt[j].z - zm);
+
+		a2 += 6.0 * PI * ETAo * ri * rj * RRcosalfa / R;
+
+	    }
+	}
+    }
+
+    vis4 = AVO * 1.0E-21 / 6.0 / ETAo * (a1 * a1) / (a1 + a2) / pesmol;
+
+}
+
+// #define MAIN
+
+#if defined(MAIN)
+int
+main()
+{
+    int use_nmax;
+    do
+    {
+	printf("\n\n\n** Insert number of beads to use? :  ");
+	scanf("%d", &use_nmax);
+    }
+    while (use_nmax < 1);
+    us_hydro_supc_main(use_nmax);
+}
+#endif

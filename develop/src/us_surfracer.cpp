@@ -40,6 +40,15 @@ static int ned;
 static int atomnumber;
 static int calcmode;
 
+#define MAXCYCLES 40
+// #define DEBUGMSG
+
+static void dbg(char *s) {
+#if defined(DEBUGMSG)
+  printf("sr: %s\n",s); fflush(stdout);
+#endif
+}
+
 static float
 dist2(int i, int j)		/*square of the distance between two atoms */
 {
@@ -491,14 +500,14 @@ checkcycle(int j, int nver, float cycle[][3], float *point)
 }
 
 /*searchcycle() finds all cycles that surround the same surface as cycle1,loads their numbers in *hits*/
-/*internal-external relationships between cycles are loaded in the respect[][40] array*/
+/*internal-external relationships between cycles are loaded in the respect[][MAXCYCLES] array*/
 /*returns the number of these cycles*/
 static int
-searchcycle(int ncycles, int cycle1, int respect[][40], int *hits)	/*LIMIT: max of 40 cycles per atom */
+searchcycle(int ncycles, int cycle1, int respect[][MAXCYCLES], int *hits)	/*LIMIT: max of MAXCYCLES cycles per atom */
 {
     int i, j, nhit = 0;
 
-    for (i = 0; i <= 39; i++)	/*initializing hits */
+    for (i = 0; i < MAXCYCLES; i++)	/*initializing hits */
 	hits[i] = -1;
 
     for (i = 0; i <= ncycles - 1; i++)
@@ -539,13 +548,13 @@ searchcycle(int ncycles, int cycle1, int respect[][40], int *hits)	/*LIMIT: max 
 static int
 potoedge(int natom, int v0, int *v1, int *verte, int nverte)
 {
-    int i, j, degen[20], ndegen, degatom[20], ndegat;	/*degen are the vertices that are degenerate with v0 including v0 */
+    int i, j, degen[MAXCYCLES], ndegen, degatom[MAXCYCLES], ndegat;	/*degen are the vertices that are degenerate with v0 including v0 */
     int corratom, k;		/*degatom are the atoms forming the degenerate vertices */
-    float e1[3], e2[3], e3[3], vect[40][3], tni[3], check[3];	/*vect are unit vectors corresponding to degatoms */
+    float e1[3], e2[3], e3[3], vect[MAXCYCLES][3], tni[3], check[3];	/*vect are unit vectors corresponding to degatoms */
     float sssp, sp, ssp, ang, minangle, d;
     float finvect[3], vp[3];	/*the correct unit vector from vect array */
-    int vercom[50], vc;
-
+    int vercom[MAXCYCLES + 10], vc;
+    dbg("potoedge 0");
     degen[0] = v0;		/*finding all degenerate vertexes */
     for (i = 0, ndegen = 1; i <= nverte - 1; i++)
 	if (i != v0 && verte[i] != -1)	/*looking for vertices that coincide with v0 and not eliminated yet */
@@ -558,10 +567,12 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
 	    }			/*x y and z coincide */
     /*all degenerate vertices are recorded now */
     /*ndegen=1 means that v0 is NOT degenerate */
+    dbg("potoedge 1");
 
     vdiff(&ver[verte[v0] * 3], &a[natom * 3], e1);
     vtimk(e1, 1. / ar[natom]);	/*e1 is a unit vector from the center of atom atomn to the vertex verte[v0] */
 
+    dbg("potoedge 2");
     ndegat = 0;
     if (verat[verte[v0] * 3] != natom)
     {
@@ -581,10 +592,12 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
 	ndegat++;		/*recording the first 2 atoms */
     }
     /*ndegat>=2 (2 if nondegenerate) */
+    dbg("potoedge 3");
 
     for (i = 1; i <= ndegen - 1; i++)	/*recording the atoms forming the degenerate vertexes */
     {
-	if (verat[verte[degen[i]] * 3] != natom)
+      dbg("potoedge 3");
+        if (verat[verte[degen[i]] * 3] != natom)
 	{
 	    for (j = 0; j <= ndegat - 1; j++)	/*making sure the atoms do not repeat */
 		if (verat[verte[degen[i]] * 3] == degatom[j])
@@ -597,6 +610,7 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
 	    }
 	}
 
+      dbg("potoedge 4");
 	if (verat[verte[degen[i]] * 3 + 1] != natom)
 	{
 	    for (j = 0; j <= ndegat - 1; j++)	/*making sure the atoms do not repeat */
@@ -609,6 +623,7 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
 		ndegat++;
 	    }
 	}
+      dbg("potoedge 5");
 
 	if (verat[verte[degen[i]] * 3 + 2] != natom)
 	{
@@ -625,15 +640,22 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
     }
     /*loaded all possibilities for the atom number to return by this function */
 
+      dbg("potoedge 6");
+      printf("ndegat %d\n", ndegat);
     for (i = 0; i <= ndegat - 1; i++)	/*  loading vect */
     {
+      dbg("potoedge 6.1");
 
 	cunnvec(natom, degatom[i], &ver[verte[v0] * 3], vect[i]);
+      dbg("potoedge 6.2");
 	d = sqrt(scalarprod(vect[i], vect[i]));
+      dbg("potoedge 6.3");
 	vtimk(vect[i], 1. / d);
+      dbg("potoedge 6.4");
     }
     /*vect are a correctly oriented unit vectors we were looking for */
     /*all oriented vectors are loaded here, now we can find the correct next atom (corratom) */
+      dbg("potoedge 7");
 
     corratom = degatom[0];	/*arbitrary start */
     finvect[0] = vect[0][0];
@@ -660,6 +682,7 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
 	    }
 	}
     }
+      dbg("potoedge 8");
     /*The correct atom is found and the unit vector in the right direction is finvect */
     /*vertex degeneracy problem is solved at this point */
 
@@ -682,6 +705,7 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
 		}		/*here again vercom contains indices of verte */
 	}
 
+      dbg("potoedge 9");
     if (vc >= 2)
     {				/*finding the next vertex */
 	minangle = (float)( 3. * M_PI );
@@ -730,13 +754,14 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
     else
 	*v1 = vercom[0];	/*this is the correct next vertex, however it can be degenerate */
     /*it has correct coordinates but not necessarily atom numbers */
+      dbg("potoedge 10");
 
     return (corratom);		/*returning the atom forming the correct edge with natom */
 }
 
 /*convexarea() returns the convex area of surface surrounded by cycles pointed by hits*/
 static float
-convexarea(int natom, int cycles[][40], int common[][40], int *hits, int nhits, int *nvincyc)
+convexarea(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *hits, int nhits, int *nvincyc)
 {
     int i, j;
     float area = 0.;
@@ -771,7 +796,7 @@ convexarea(int natom, int cycles[][40], int common[][40], int *hits, int nhits, 
 /*managedge records and erases edge records such that each atom's area is counted only once*/
 /*the arguments are exactly the same as in convexarea() above*/
 static void
-managedge(int natom, int cycles[][40], int common[][40], int *hits, int nhits, int *nvincyc)
+managedge(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *hits, int nhits, int *nvincyc)
 {
     int i, j, l, p;
 
@@ -818,7 +843,7 @@ managedge(int natom, int cycles[][40], int common[][40], int *hits, int nhits, i
 
 		if (l == ned)	/*did not find it */
 		{
-		    for (p = 0; edge[p * 2] != -1; p++);	/*found an empty spot */
+		  for (p = 0; edge[p * 2] != -1; p++);	/*found an empty spot */ // emre this is where it craps out
 
 		    edge[p * 2] = cycles[hits[i]][j + 1];	/*recording in the reverse order */
 		    edge[p * 2 + 1] = cycles[hits[i]][j];
@@ -870,15 +895,17 @@ managedge(int natom, int cycles[][40], int common[][40], int *hits, int nhits, i
 /*buildcycles builds all cycles for natom-loads them into cycles[][]*/
 /*returns the number of cycles*/
 static int
-buildcycles(int natom, int cycles[][40], int common[][40], int *nvincyc)
+buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nvincyc)
 {
     int verte[50], i, ii, j, nve, icycle, v0, v1, comatom, p, cycmin, pflag;
     float v00[3];
-
+    dbg("bc0");
     for (i = 0; i <= 49; i++)
 	verte[i] = -1;		/*initializing verte[] with -1 */
 
     /*loading vertexes of atom number natom */
+    dbg("bc1");
+
 
     for (i = 0, nve = 0; i <= nv - 1; i++)
     {
@@ -890,6 +917,7 @@ buildcycles(int natom, int cycles[][40], int common[][40], int *nvincyc)
 	    nve++;
 	}
     }
+    dbg("bc2");
     /*loading cycles */
     /*circles are considered in this part */
 
@@ -914,10 +942,12 @@ buildcycles(int natom, int cycles[][40], int common[][40], int *nvincyc)
 	}
     }
 
+    dbg("bc3");
     /*circles are loaded- now it's time to load more complex cycles */
 
     while (1)			/*break inside */
     {
+    dbg("bc4");
 	for (i = 0; i <= nve - 1; i++)	/*going over all vertices of natom */
 	    if (verte[i] != -1)
 		break;		/*found an untreated vertex */
@@ -934,29 +964,42 @@ buildcycles(int natom, int cycles[][40], int common[][40], int *nvincyc)
 	v1 = v0;
 	j = 0;
 
+    dbg("bc5");
 	nvincyc[icycle] = 0;	/*initialize */
 
 	do
 	{
+    dbg("bc5.1");
 	    nvincyc[icycle]++;	/*count the number of vertices in the cycle */
+    dbg("bc5.2");
 
 	    v0 = v1;		/*the initial vertex of an edge is v0 */
+    dbg("bc5.3");
 	    cycles[icycle][j] = verte[v1];
+    dbg("bc5.4");
 	    comatom = potoedge(natom, v0, &v1, verte, nve);
+    dbg("bc5.5");
 	    common[icycle][j] = comatom;
+    dbg("bc5.6");
 	    j++;
+    dbg("bc6");
 	}
-	while (fabs(ver[verte[v1] * 3] - v00[0]) >= 1.e-6
-	       || fabs(ver[verte[v1] * 3 + 1] - v00[1]) >= 1.e-6 || fabs(ver[verte[v1] * 3 + 2] - v00[2]) >= 1.e-6);
+	while (j < MAXCYCLES  && 
+	       (fabs(ver[verte[v1] * 3] - v00[0]) >= 1.e-6
+		|| fabs(ver[verte[v1] * 3 + 1] - v00[1]) >= 1.e-6 || 
+		fabs(ver[verte[v1] * 3 + 2] - v00[2]) >= 1.e-6));
+    dbg("bc6.1");
 	/*stop when the coordinates coincide- the cycle is then closed */
 	/*comparing coordinates in case of degeneracy */
 	for (p = 0; p <= j - 1; p++)
 	    for (ii = 0; ii <= nve - 1; ii++)
 		if (verte[ii] != -1 && cycles[icycle][p] == verte[ii])
 		    verte[ii] = -1;
+    dbg("bc7");
 
 	for (p = 0; p <= j - 1; p++)
 	{
+    dbg("bc8");
 	    cycmin = 0;
 	    pflag = 0;
 	    for (ii = 0; ii <= nve - 1; ii++)
@@ -994,7 +1037,9 @@ buildcycles(int natom, int cycles[][40], int common[][40], int *nvincyc)
 		    }
 	}			/*again possible degeneracy causes coordinate comparison here */
 	icycle++;
+    dbg("bc9");
     }
+    dbg("bc10");
 
     return (icycle);
 }
@@ -1003,7 +1048,7 @@ buildcycles(int natom, int cycles[][40], int common[][40], int *nvincyc)
 /*from the edge number*/
 /*it returns the number of that cycle in the cycles[][] array*/
 static int
-find1cyc(int nedge, int cycles[][40], int icycle, int *nvincyc)	/*icycle is the total number of cycles */
+find1cyc(int nedge, int cycles[][MAXCYCLES], int icycle, int *nvincyc)	/*icycle is the total number of cycles */
 {
     int i, j;
 
@@ -1037,7 +1082,7 @@ find1cyc(int nedge, int cycles[][40], int icycle, int *nvincyc)	/*icycle is the 
 /*this is same as above, only using a vertex or a circle number as a search clue*/
 /*fi1cyc() is used in the cavity calculation part*/
 static int
-fi1cyc(int i, int cycles[][40], int icycle, int *nvincyc)
+fi1cyc(int i, int cycles[][MAXCYCLES], int icycle, int *nvincyc)
 {
     int j, k;
 
@@ -1071,10 +1116,10 @@ fi1cyc(int i, int cycles[][40], int icycle, int *nvincyc)
 /*loadresp() loads internal-external relationships into respect[][]*/
 /*the notation is the same as above*/
 static void
-loadresp(int natom, int icycle, int cycles[][40], int respect[][40], int *nvincyc)
+loadresp(int natom, int icycle, int cycles[][MAXCYCLES], int respect[][MAXCYCLES], int *nvincyc)
 {
     int i, j, k;
-    float verte[40][3];
+    float verte[MAXCYCLES][3];
 
     if (icycle == 1)		/*only one cycle- no relationships to figure out */
     {
@@ -1212,7 +1257,7 @@ free_alloced(void)
 }
 
 int
-surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model > *model_vector)
+surfracer_main(float prober, vector < residue > residue_list, PDB_model *model_vector, bool recheck)
 {
     /* HANDLE hStdin; */
     // char str1[255];
@@ -1253,7 +1298,7 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
     float z;
     float zmax;
     float highest[3];
-    float verte[40][3];
+    float verte[MAXCYCLES][3];
     // float polarea;
     // float nparea;
     float asar;
@@ -1269,13 +1314,13 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
     int bur2;
     int atom0;
     int ncycle;
-    int cycles[40][40];
-    int common[40][40];
-    int respect[40][40];
+    int cycles[MAXCYCLES][MAXCYCLES];
+    int common[MAXCYCLES][MAXCYCLES];
+    int respect[MAXCYCLES][MAXCYCLES];
     int nhits;
-    int hits[40];
+    int hits[MAXCYCLES];
     int cyc1;
-    int nvincyc[40];
+    int nvincyc[MAXCYCLES];
 
     clock_t start1;
     clock_t end1;
@@ -1331,23 +1376,25 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
     puts("sr3.0");
 
     puts("Surface Racer 3.0 by Oleg Tsodikov");
-    puts("Integrated into  UltraScan by E. Brookes");
+    puts("Integrated into UltraScan by E. Brookes");
 
-    // for (unsigned int m = 0; m < residue_list.size(); m++ )
-    // {
-    //   printf("residue %d name %s\n", m, residue_list[m].name.ascii());
-    // }
-
-    // process PDB
-    vector < PDB_atom * >active_atoms;
-
-    for (unsigned int i = 0; i < model_vector->size(); i++)
+#if defined(DEBUG)
+    for (unsigned int m = 0; m < residue_list.size(); m++ )
     {
-	for (unsigned int j = 0; j < (*model_vector)[i].molecule.size(); j++)
+       printf("residue %d name %s\n", m, residue_list[m].name.ascii());
+    }
+#endif
+    // process PDB
+    vector <PDB_atom *> active_atoms;
+    if (!recheck) 
+    {
+      // for (unsigned int i = 0; i < model_vector->size(); i++)
+      {
+	for (unsigned int j = 0; j < model_vector->molecule.size(); j++)
 	{
-	    for (unsigned int k = 0; k < (*model_vector)[i].molecule[j].atom.size(); k++)
+	    for (unsigned int k = 0; k < model_vector->molecule[j].atom.size(); k++)
 	    {
-		PDB_atom *this_atom = &((*model_vector)[i].molecule[j].atom[k]);
+		PDB_atom *this_atom = &(model_vector->molecule[j].atom[k]);
 
 		//       printf("model %d molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
 		//             i, j, k, 
@@ -1362,22 +1409,51 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 		this_atom->p_residue = (residue *) 0;
 		this_atom->p_atom = (atom *) 0;
 		this_atom->radius = 0;
+		this_atom->bead_hydration = 0;
+		this_atom->bead_color = 0;
+		this_atom->bead_ref_volume = 0;
+		this_atom->bead_ref_mw = 0;
+		
+		// printf("sr0 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
 		// find residue in residues
 		int respos = -1;
+#if defined(DEBUG)
+		printf("residue search name %s resName %s\n", 
+		       this_atom->name.ascii(), 
+		       this_atom->resName.ascii());
+#endif
 		for (unsigned int m = 0; m < residue_list.size(); m++)
 		{
-		    if (residue_list[m].name == this_atom->resName)
+		  /*		    if ((residue_list[m].name == this_atom->resName &&
+			 (k || this_atom->name != "N")) ||
+			(!k &&
+			 this_atom->name == "N" &&
+			 residue_list[m].name == "N1") ||
+			(this_atom->name == "OXT" &&
+			 residue_list[m].name == "OXT")
+			 ) */
+		  if ((residue_list[m].name == this_atom->resName &&
+		       this_atom->name != "OXT" &&
+		       (k || this_atom->name != "N")) || 
+		      (residue_list[m].name == "OXT" 
+		       && this_atom->name == "OXT") ||
+			(!k &&
+			 this_atom->name == "N" &&
+			 residue_list[m].name == "N1")) 
 		    {
 			respos = (int) m;
 			this_atom->p_residue = &(residue_list[m]);
+#if defined(DEBUG)
+			printf("residue match %d resName %s \n", m, residue_list[m].name.ascii());
+#endif
 			break;
 		    }
 		}
 		if (respos == -1)
 		{
 		    printf
-			("missing residue model %d molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-			 i, j, k, this_atom->name.ascii(),
+			("missing residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+			 j, k, this_atom->name.ascii(),
 			 this_atom->resName.ascii(),
 			 this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]);
 		    if ((this_atom->name != "H" && this_atom->name != "D"
@@ -1397,7 +1473,20 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 		{
 		    for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
 		    {
-			if (residue_list[respos].r_atom[m].name == this_atom->name)
+#if defined(DEBUG)
+		      if(this_atom->name == "N" && !k) {
+			printf("this_atom->name == N/N1 this residue_list[%d].r_atom[%d].name == %s\n",
+			       respos, m, residue_list[respos].r_atom[m].name.ascii());
+		      }
+#endif
+
+			if (residue_list[respos].r_atom[m].name == this_atom->name ||
+			    (
+			     this_atom->name == "N" && 
+			     !k &&
+			     residue_list[respos].r_atom[m].name == "N1"
+			     )
+			    )
 			{
 			    this_atom->p_atom = &(residue_list[respos].r_atom[m]);
 			    atompos = (int) m;
@@ -1407,8 +1496,8 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 		    if (atompos == -1)
 		    {
 			printf
-			    ("missing atom model %d molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-			     i, j, k, this_atom->name.ascii(),
+			    ("missing atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+			     j, k, this_atom->name.ascii(),
 			     this_atom->resName.ascii(),
 			     this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]);
 		    }
@@ -1421,8 +1510,25 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 		      //       );
 			this_atom->active = true;
 			this_atom->radius = residue_list[respos].r_atom[atompos].hybrid.radius;
+			this_atom->mw = residue_list[respos].r_atom[atompos].hybrid.mw;
 			this_atom->placing_method =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method;
+			this_atom->bead_hydration =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].hydration;
+			this_atom->bead_color =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].color;
+			this_atom->bead_ref_volume =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].volume;
+			this_atom->bead_ref_mw =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].mw;
+			this_atom->bead_computed_radius =  pow(3 * this_atom->bead_ref_volume / (4.0*M_PI), 1.0/3);
 			//  printf("radius %f\n", residue_list[respos].r_atom[atompos].hybrid.radius);
+#if defined(DEBUG)
+		       printf("found atom %s %s in residue %d pos %d bead asgn %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s\n", 
+			      this_atom->name.ascii(), this_atom->resName.ascii(), respos, atompos,
+			      this_atom->p_atom->bead_assignment,
+			      this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method,
+			      this_atom->mw,
+			      this_atom->bead_ref_mw,
+			      residue_list[respos].r_atom[atompos].hybrid.name.ascii(),
+			      this_atom->p_atom->hybrid.name.ascii()
+		             );
+#endif
 		    }
 		}
 		if (this_atom->active)
@@ -1438,22 +1544,38 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 		    }
 		    else
 		    {
+#if defined(DEBUG)
 			printf
 			    ("skipped bound waters & H %s %s rad %f resseq %d\n",
 			     this_atom->name.ascii(), this_atom->resName.ascii(), this_atom->radius, this_atom->resSeq);
+#endif
 		    }
 		}
 	    }
 	}
+      }
+    } else {
+      // this is for the recheck bead 
+      for (unsigned int i = 0; i < model_vector->molecule[0].atom.size(); i++) 
+      {
+	if (model_vector->molecule[0].atom[i].active &&
+	    model_vector->molecule[0].atom[i].bead_computed_radius > 0.001) { // should be asa_threshold?
+	  PDB_atom *this_atom = &(model_vector->molecule[0].atom[i]);
+	  active_atoms.push_back(this_atom);
+	}
+      }
+      printf("bead recheck active atoms.size() %u\n", (unsigned int)active_atoms.size());
     }
 
+#if defined(DEBUG)
     for (unsigned int i = 0; i < active_atoms.size(); i++)
     {
 	printf("active atom %d %s %s rad %f resseq %d\n",
 	       i,
 	       active_atoms[i]->name.ascii(),
-	       active_atoms[i]->resName.ascii(), active_atoms[i]->radius, active_atoms[i]->resSeq);
+	       active_atoms[i]->resName.ascii(), active_atoms[i]->radius, active_atoms[i]->resSeq); fflush(stdout);
     }
+#endif
 
     // printf("\nEnter a number to choose the calculation mode:");
     // printf("\n1- Accessible surface area only");
@@ -1465,7 +1587,7 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 
     atomnumber = (int) active_atoms.size();
 
-    printf("\nReading atomic coordinates and assigning radii ...");
+    printf("\nReading atomic coordinates and assigning radii ..."); fflush(stdout);
 
     /*allocating memory for coordinate, radius, and area arrays */
     a = (float *) calloc(atomnumber * 3, sizeof(float));	/*   coordinates   */
@@ -1507,13 +1629,26 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 
     /*This part of the program loads up atomic coordinates from the file and assigns radii */
     i = 0;			/*atom number counter */
-    for (i = 0; i < atomnumber; i++)
+    if (!recheck) 
     {
-	ar[i] = active_atoms[i]->radius;
-	a[3 * i] = active_atoms[i]->coordinate.axis[0];
-	a[3 * i + 1] = active_atoms[i]->coordinate.axis[1];
-	a[3 * i + 2] = active_atoms[i]->coordinate.axis[2];
-    }
+        for (i = 0; i < atomnumber; i++)
+        {
+	  ar[i] = active_atoms[i]->radius;
+	  printf("radius %d %f\n", i, ar[i]);
+	  a[3 * i] = active_atoms[i]->coordinate.axis[0];
+	  a[3 * i + 1] = active_atoms[i]->coordinate.axis[1];
+	  a[3 * i + 2] = active_atoms[i]->coordinate.axis[2];
+	}
+    } else {
+        for (i = 0; i < atomnumber; i++)
+        {
+	  ar[i] = active_atoms[i]->bead_computed_radius;
+	  printf("radius %d %f\n", i, ar[i]);
+	  a[3 * i] = active_atoms[i]->bead_coordinate.axis[0];
+	  a[3 * i + 1] = active_atoms[i]->bead_coordinate.axis[1];
+	  a[3 * i + 2] = active_atoms[i]->bead_coordinate.axis[2];
+	}
+    }      
 
     /*The end of the loading and assigning of radii and coordinates */
 
@@ -1524,10 +1659,10 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 
     // need to check why he is doing this? 
 
-    for (i = 0; i <= atomnumber / 2.; i++)
-    {
-	a[i * 3] += (float) 0.01;
-    }
+    //    for (i = 0; i <= atomnumber / 2.; i++)
+    //    {
+    //	a[i * 3] += (float) 0.01;
+    //    }
 
     atomcon = (int *) calloc(atomnumber - 1, sizeof(int));	/*allocating memory for array storing contacts for an atom */
     if (!atomcon)
@@ -1568,7 +1703,7 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
     }
 
 /*loadind unburied vertexes (probe positions) and contact circles*/
-/* printf("\nBuilding the surface...");   */
+    printf("\nBuilding the surface..."); fflush(stdout);
     nv = 0;			/*setting the number of vertexes and circles at 0 */
     ncircle = 0;
 
@@ -1849,6 +1984,7 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
     }
+
     if (ncircle > 0)		/*if there are circles */
     {
 	cirat = (int *) calloc(ncircle * 2, sizeof(int));	/*contact circle forming atom pairs */
@@ -1922,8 +2058,11 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
     /*one caveat to be taken care of later is a very unlikely but possible exact coincidence of two or more vertices */
     /*these are called degenerate vertices further */
     /*the degenerate vertices are resolved in potoedge */
+#if defined(DEBUG)
+    printf("nv %d ncircle %d\n", nv, ncircle); fflush(stdout);
+#endif
 
-    ned = 3 * nv / 2 + ncircle;
+    ned = (3 * nv / 2 + ncircle);
 
     edge = (int *) calloc(ned * 2, sizeof(int));	/* radius */
     if (!edge)
@@ -1947,13 +2086,16 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
     }
 
     start2 = clock();
-    /* printf("\nSurface built successfully...");
-       printf("\nStarting area calculation...");     */
+
+    printf("\nSurface built successfully...");
+    printf("\nStarting area calculation..."); fflush(stdout);
+
 
     /*beginning of surface calculation */
     /*finding the atom with the highest north pole-it's accessible and will be the first one */
     zmax = -100000.;
     atom0 = -1;
+    dbg("0");
     for (i = 0; i <= atomnumber - 1; i++)
     {
 	if ((z = a[i * 3 + 2] + ar[i]) > zmax)
@@ -1963,15 +2105,18 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 	}
     }
     /*the first atom is atom0 */
+    dbg("1");
 
     /* building all ncycle cycles of atom0 */
     ncycle = buildcycles(atom0, cycles, common, nvincyc);
 
+    dbg("2");
     /*loading all internal-external relationships between the cycles of atom0 */
     loadresp(atom0, ncycle, cycles, respect, nvincyc);
 
     /*the highest point belongs to the accessible surface area */
     /*we need to create another cycle - circle formed by this highest point */
+    dbg("3");
 
     for (i = 0; i <= ncycle - 1; i++)
     {
@@ -1998,7 +2143,7 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 	    }
 	    else
 	    {
-		for (j = 0; j <= 39 && cycles[i][j] != -1; j++)
+		for (j = 0; j <= MAXCYCLES && cycles[i][j] != -1; j++)
 		{
 		    verte[j][0] = ver[cycles[i][j] * 3];	/*j vertices of cycle i */
 		    verte[j][1] = ver[cycles[i][j] * 3 + 1];
@@ -2009,6 +2154,7 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 	}
     }
 
+    dbg("4");
 /*finds all nhits number of cycles to be included in the surface calculation*/
     nhits = searchcycle(ncycle + 1, ncycle, respect, hits);	/*nhits does not include the cycle ncycle!!! */
 
@@ -2022,18 +2168,22 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 
     managedge(atom0, cycles, common, hits, nhits, nvincyc);	/*edge array management */
 
+    dbg("5");
     /* printf("\nProbe rolled over atom %d",atom0+1);    *//*line used in debugging */
 
 /*surface calculation of the rest of the molecule*/
     while (1)
     {
+    dbg("5.1");
 	for (i = 0; i <= ned - 1; i++)
 	    if (edge[i * 2] != -1)
 		break;		/*found a new edge */
+    dbg("5.2");
 
 	if (i == ned)		/*outer surface calculation completed */
 	{			/* printf("\n\nCalculation complete for the outer surface");  */
 
+    dbg("5.3");
 	    // end2=clock();
 	    // tused=(end1-start1+end2-start2)/CLK_TCK;
 	    // printf("\nTime used=%f sec ",tused);
@@ -2043,6 +2193,7 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 	else			/*perform calculation for the next atom */
 	{			/* printf("\nProbe rolled over atom %d",edgeatom[i]);  *//* line used in debugging */
 
+    dbg("5.4");
 	    /*  if(edgeatom[i]==23066)
 	       printf("\nI'm here");
 
@@ -2050,12 +2201,19 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 	       printf("\nI'm here");               */
 
 	    ncycle = buildcycles(edgeatom[i], cycles, common, nvincyc);	/*build all cycles */
+    dbg("5.5");
 	    loadresp(edgeatom[i], ncycle, cycles, respect, nvincyc);	/*load relationships */
+    dbg("5.6");
 	    cyc1 = find1cyc(i, cycles, ncycle, nvincyc);	/*find first cycle */
+    dbg("5.7");
 	    nhits = searchcycle(ncycle, cyc1, respect, hits);	/*hits does not include cyc1 */
+    dbg("5.8");
 	    hits[nhits] = cyc1;
+    dbg("5.9");
 	    nhits++;		/*now ALL cycles are included!! */
+    dbg("5.10");
 	    asar = convexarea(edgeatom[i], cycles, common, hits, nhits, nvincyc);	/*accessible area */
+    dbg("5.11");
 	    if (asar >= 0.001)
 		aarea[edgeatom[i]] += asar;
 	    else
@@ -2063,13 +2221,22 @@ surfracer_main(float prober, vector < residue > residue_list, vector < PDB_model
 	    if (calcmode > 1)
 		molarea[edgeatom[i]] +=
 		    asar * (ar[edgeatom[i]] - prober) * (ar[edgeatom[i]] - prober) / (ar[edgeatom[i]] * ar[edgeatom[i]]);
+    dbg("5.12");
 	    managedge(edgeatom[i], cycles, common, hits, nhits, nvincyc);	/*edge array management */
+    dbg("5.13");	
 	}
     }
 
+    dbg("6");
     puts("us_surfracer 1");
     fflush(stdout);
-    FILE *aafile = fopen("emre.asa", "w");
+    FILE *aafile;
+    if (!recheck) {
+      aafile = fopen("emre.asa", "w");
+    } else {
+      aafile = fopen("emre_recheck.asa", "w");
+    }
+
     puts("us_surfracer 2");
     fflush(stdout);
     for (i = 0; i < atomnumber; i++)

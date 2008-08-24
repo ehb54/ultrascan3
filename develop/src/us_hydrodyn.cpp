@@ -1,6 +1,14 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_surfracer.h"
 
+// #define DEBUG
+#define DEBUG1
+#define TIMING
+#if defined(TIMING)
+# include <sys/time.h>
+static struct timeval start_tv, end_tv;
+#endif
+
 US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 {
 	USglobal=new US_Config();
@@ -19,6 +27,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	global_Xpos += 30;
 	global_Ypos += 30;
 	setGeometry(global_Xpos, global_Ypos, 0, 0);
+	create_beads_normally = true;
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -275,359 +284,2082 @@ void US_Hydrodyn::setupGUI()
 	background->addMultiCellWidget(progress, j, j, 0, 1);
 }
 
+struct BPair {
+  int i;
+  int j;
+  float separation;
+  bool active;
+};
+
+
+static void outward_translate_1_sphere_1_fixed(
+					       float *r1,  // radius of sphere 1
+					       float *r2,  // radius of sphere 2
+					       float *x1, // center of sphere 1
+					       float *x2, // center of sphere 2
+					       float *v1 // normalized vector to sphere 1 from COG
+					       ) {
+#if defined(DEBUG)
+  printf("outward_translate_1_sphere_1_fixed\n"
+	 "sphere 1 radius %f center [%f,%f,%f] cog vector [%f,%f,%f]\n"
+	 "sphere 2 radius %f center [%f,%f,%f]\n",
+	 *r1, x1[0], x1[1], x1[2], v1[0], v1[1], v1[2],
+	 *r2, x2[0], x2[1], x2[2]);
+#endif
+
+  float k;
+  float denom =     
+    -2 * *r1 * *r2 - *r2 * *r2 + 
+    *r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]);
+
+  float sfact =
+    sqrt(
+	 (*r1 + *r2) * (*r1 + *r2) * 
+	 ((-2 * *r1 * *r2 - *r2 * *r2 + 
+	   *r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]))
+	  * (
+	     (*r1 + *r2) * (*r1 + *r2) - 
+	     (x1[0] - x2[0]) * (x1[0] - x2[0]) - 
+	     (x1[1] - x2[1]) * (x1[1] - x2[1]) - 
+	     (x1[2] - x2[2]) * (x1[2] - x2[2])) + 
+	  pow(*r1 * *r1 + *r2 * *r2 + 
+	   *r1 * (
+		 2 * *r2 + v1[0] * x1[0] + v1[1] * x1[1] + v1[2] * x1[2] - 
+		 v1[0] * x2[0] - v1[1] * x2[1] - v1[2] * x2[2]),2)));
+
+  float b =
+    - (*r1 + *r2) * 
+    (*r1 * *r1 + *r2 * *r2 + 
+     *r1 * (2 * *r2 + v1[0] * x1[0] + v1[1] * x1[1] + v1[2] * x1[2] - 
+	    v1[0] * x2[0] - v1[1] * x2[1] - v1[2] * x2[2]));
+
+  k = (b + sfact) / denom;
+
+  float k1 = k * *r1 / (*r1 + *r2);
+  float k2 = k * *r2 / (*r1 + *r2);
+
+  x1[0] += k1 * v1[0];
+  x1[1] += k1 * v1[1];
+  x1[2] += k1 * v1[2];
+
+  *r1 -= k1;
+  *r2 -= k2;
+
+#if defined(DEBUG)
+
+  printf("k %.3f\n", k);
+
+  printf("new coordinates, radius\n"
+	 "sphere 1 radius %.3f center [%.3f,%.3f,%.3f]\n"
+	 "sphere 2 radius %.3f center [%.3f,%.3f,%.3f]\n"
+	 "r1 + r2 - distance between spheres = %f\n",
+	 *r1,
+	 x1[0],
+	 x1[1],
+	 x1[2],
+	 *r2,
+	 x2[0],
+	 x2[1],
+	 x2[2],
+	 *r1 + *r2 -
+	 sqrt(
+	      (x1[0] - x2[0]) * (x1[0] - x2[0]) +
+	      (x1[1] - x2[1]) * (x1[1] - x2[1]) +
+	      (x1[2] - x2[2]) * (x1[2] - x2[2]))
+	 );
+#endif
+
+}
+
+static void outward_translate_2_spheres(float *r1, // radius of sphere 1
+					float *r2, // radius of sphere 2
+					float *x1, // center of sphere 1
+					float *x2, // center of sphere 2
+					float *v1, // normalized vector to sphere 1 from COG
+					float *v2  // normalized vector to sphere 1 from COG
+					) {
+#if defined(DEBUG) || defined(DEBUG1)
+  printf("outward_translate_2_spheres\n"
+	 "sphere 1 radius %.3f center [%.3f,%.3f,%.3f] cog vector [%.3f,%.3f,%.3f]\n"
+	 "sphere 2 radius %.3f center [%.3f,%.3f,%.3f] cog vector [%.3f,%.3f,%.3f]\n",
+	 *r1, x1[0], x1[1], x1[2], v1[0], v1[1], v1[2],
+	 *r2, x2[0], x2[1], x2[2], v2[0], v2[1], v2[2]);
+#endif
+
+  float k;
+  float denom =     
+    2 * *r1 * *r2 * (1 + v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]) -
+    *r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]) - 
+    *r2 * *r2 * (-1 + v2[0] * v2[0] + v2[1] * v2[1] + v2[2] * v2[2]);
+
+  float sfact = 
+    sqrt(
+	 (*r1 + *r2) * (*r1 + *r2) * 
+	 ((*r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]) - 
+	   
+	   2 * *r1 * *r2 * (1 + v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]) + 
+
+	   *r2 * *r2 * (-1 + v2[0] * v2[0] + v2[1] * v2[1] + v2[2] * v2[2])) * 
+	  
+	  ((*r1 + *r2) * (*r1 + *r2) - 
+	   (x1[0] - x2[0]) * (x1[0] - x2[0]) - 
+	     (x1[1] - x2[1]) * (x1[1] - x2[1]) - 
+	   (x1[2] - x2[2]) * (x1[2] - x2[2])) + 
+
+	  pow(*r1 * *r1 + 
+	      *r1 * (
+		    2 * *r2 + v1[0] * x1[0] + v1[1] * x1[1] + v1[2] * x1[2] - 
+		    v1[0] * x2[0] - v1[1] * x2[1] - v1[2] * x2[2]) + 
+	     *r2 * (
+		   *r2 - v2[0] * x1[0] - v2[1] * x1[1] - v2[2] * x1[2] + 
+		   v2[0] * x2[0] + v2[1] * x2[1] + v2[2] * x2[2]),2)));
+
+  float b = 
+    (*r1 + *r2) * 
+    (*r1 * *r1 + 
+     *r1 * (2 * *r2 + v1[0] * x1[0] + v1[1] * x1[1] + v1[2] * x1[2] - 
+	     v1[0] * x2[0] - v1[1] * x2[1] - v1[2] * x2[2]) + 
+     *r2 * (*r2 - v2[0] * x1[0] - v2[1] * x1[1] - v2[2] * x1[2] + v2[0] * x2[0] + 
+	   v2[1] * x2[1] + v2[2] * x2[2]));
+
+  k = (b - sfact) / denom;
+
+  float k1 = k * *r1 / (*r1 + *r2);
+  float k2 = k * *r2 / (*r1 + *r2);
+
+  x1[0] += k1 * v1[0];
+  x1[1] += k1 * v1[1];
+  x1[2] += k1 * v1[2];
+
+  x2[0] += k2 * v2[0];
+  x2[1] += k2 * v2[1];
+  x2[2] += k2 * v2[2];
+
+  *r1 -= k1;
+  *r2 -= k2;
+
+#if defined(DEBUG) || defined(DEBUG1)
+
+  printf("k %.3f\n", k);
+
+  printf("new coordinates, radius\n"
+	 "sphere 1 radius %.3f center [%.3f,%.3f,%.3f]\n"
+	 "sphere 2 radius %.3f center [%.3f,%.3f,%.3f]\n"
+	 "r1 + r2 - distance between spheres = %f\n",
+	 *r1,
+	 x1[0],
+	 x1[1],
+	 x1[2],
+	 *r2,
+	 x2[0],
+	 x2[1],
+	 x2[2],
+	 *r1 + *r2 -
+	 sqrt(
+	      (x1[0] - x2[0]) * (x1[0] - x2[0]) +
+	      (x1[1] - x2[1]) * (x1[1] - x2[1]) +
+	      (x1[2] - x2[2]) * (x1[2] - x2[2]))
+	 );
+#endif
+}
+
 int US_Hydrodyn::compute_asa()
 {
 // run the surfracer code
 
-	int retval = surfracer_main(asa.probe_radius, residue_list, &model_vector);
-	if ( retval )
-	{
-		switch ( retval )
-		{
-			case US_SURFRACER_ERR_MISSING_RESIDUE:
-			{
-				return US_SURFRACER_ERR_MISSING_RESIDUE;
-				break;
-			}
-			case US_SURFRACER_ERR_MISSING_ATOM:
-			{
-				return US_SURFRACER_ERR_MISSING_ATOM;
-				break;
-			}
-			case US_SURFRACER_ERR_MEMORY_ALLOC:
-			{
-				return US_SURFRACER_ERR_MEMORY_ALLOC;
-				break;
-			}
-			default:
-			{
-				// unknown error
-				return -1;
-				break;
-			}
-		}
+  int retval = surfracer_main(asa.probe_radius, residue_list, &model_vector[current_model]);
+  if ( retval ) {
+    switch ( retval ) {
+    case US_SURFRACER_ERR_MISSING_RESIDUE:
+      {
+	return US_SURFRACER_ERR_MISSING_RESIDUE;
+	break;
+      }
+    case US_SURFRACER_ERR_MISSING_ATOM:
+      {
+	return US_SURFRACER_ERR_MISSING_ATOM;
+	break;
+      }
+    case US_SURFRACER_ERR_MEMORY_ALLOC:
+      {
+	return US_SURFRACER_ERR_MEMORY_ALLOC;
+	break;
+      }
+    default:
+      {
+	// unknown error
+	return -1;
+	break;
+      }
+    }
+  }
+  
+  // pass 1 assign bead #'s, chain #'s, initialize data
+  
+  // for (unsigned int i = 0; i < model_vector.size (); i++)   
+  {
+    unsigned int i = current_model;
+
+    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+	// printf("p1 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
+	
+	this_atom->bead_assignment =
+	  (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
+	this_atom->chain =
+	  ((this_atom->p_residue && this_atom->p_atom) ?
+	   (int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
+	
+	// initialize data
+	this_atom->bead_positioner = false;
+	this_atom->normalized_ot_is_valid = false;
+	
+	for (unsigned int m = 0; m < 3; m++) {
+	  this_atom->bead_cog_coordinate.axis[m] = 0;
+	  this_atom->bead_position_coordinate.axis[m] = 0;
+	  this_atom->bead_coordinate.axis[m] = 0;
 	}
+      }
+    }
+  }
+  
+  // pass 2 determine beads, cog_position, fixed_position, molecular cog phase 1.
+  
+  int count_actives;
+  float molecular_cog[3] = { 0, 0, 0 };
+  float molecular_mw = 0;
 
-	// pass 1 assign bead #'s, chain #'s, initialize data
+  // for (unsigned int i = 0; i < model_vector.size (); i++)	
+  {
+    unsigned int i = current_model;
+    
+    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+      int last_bead_assignment = -1;
+      int last_chain = -1;
+      QString last_resName = "not a residue";
+      PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
+      PDB_atom *last_main_bead = (PDB_atom *) 0;
+      PDB_atom *sidechain_N = (PDB_atom *) 0;
+      
+      count_actives = 0;
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+	// printf("p2 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
+	this_atom->bead_positioner = false;
+	if (this_atom->active) {
+#if defined(DEBUG)
+	  printf("pass 2 active %s %s %d pm %d\n",
+		 this_atom->name.ascii(),
+		 this_atom->resName.ascii(),
+		 this_atom->serial,
+		 this_atom->placing_method); fflush(stdout);
+#endif
+	  
+	  molecular_mw += this_atom->mw;
+	  for (unsigned int m = 0; m < 3; m++) {
+	    molecular_cog[m] += this_atom->coordinate.axis[m] * this_atom->mw;
+	  }
 
-	for (unsigned int i = 0; i < model_vector.size (); i++)
-	{
-		for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
-		{
-			for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
-			{
-			PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-
-			this_atom->bead_assignment =
-			(this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
-			this_atom->chain =
-			((this_atom->p_residue && this_atom->p_atom) ?
-				(int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
-
-			// initialize data
-			this_atom->bead_positioner = false;
-
-				for (unsigned int m = 0; m < 3; m++)
-				{
-				this_atom->bead_cog_coordinate.axis[m] = 0;
-				this_atom->bead_position_coordinate.axis[m] = 0;
-				this_atom->bead_coordinate.axis[m] = 0;
-				}
-			}
+	  this_atom->bead_mw = 0;
+	  this_atom->bead_asa = 0;
+	  
+	  // do we have a new bead?
+	  // we want to put the N on a previous bead unless it is the first one of the molecule
+	  
+	  if (!create_beads_normally ||
+	      (
+	       (this_atom->bead_assignment != last_bead_assignment ||
+		this_atom->chain != last_chain ||
+		this_atom->resName != last_resName) &&
+	       !(this_atom->chain == 0 &&
+		 this_atom->name == "N" &&
+		 count_actives))) {
+#if defined(DEBUG)
+	    printf("pass 2 active %s %s %d new bead chain %d\n",
+		   this_atom->name.ascii(),
+		   this_atom->resName.ascii(),
+		   this_atom->serial,
+		   this_atom->chain); fflush(stdout);
+#endif
+	    
+	    this_atom->bead_positioner = this_atom->p_atom->positioner;
+	    
+	    this_atom->is_bead = true;
+	    last_main_bead = this_atom;
+	    last_bead_assignment = this_atom->bead_assignment;
+	    last_chain = this_atom->chain;
+	    last_resName = this_atom->resName;
+	    if (create_beads_normally) {
+	      if(sidechain_N &&
+		 this_atom->chain == 1) {
+		if(this_atom->name == "N") {
+		  printf("ERROR double N on sequential sidechains! PRO PRO?\n");
 		}
+#if defined(DEBUG)
+		printf("adding sidechain N %f %f to this_atom\n",
+		     sidechain_N->asa,
+		       sidechain_N->mw
+		       );
+#endif
+		this_atom->bead_asa += sidechain_N->bead_asa;
+		this_atom->bead_mw += sidechain_N->bead_mw;
+		sidechain_N->bead_mw = 0;
+		sidechain_N->bead_asa = 0;
+		sidechain_N = (PDB_atom *) 0;
+	      } 
+	      if(this_atom->name == "N" &&
+		 this_atom->chain == 1) {
+		sidechain_N = this_atom;
+		this_atom->is_bead = false;
+	      }
+	    }
+	  } else {
+#if defined(DEBUG)
+	    printf("pass 2 active %s %s %d not a new bead\n",
+		   this_atom->name.ascii(),
+		   this_atom->resName.ascii(),
+		   this_atom->serial); fflush(stdout);
+#endif
+	    if (this_atom->p_atom->positioner) {
+	      
+	      if (last_main_bead->bead_positioner &&
+		  this_atom->placing_method == 1) {
+		fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
+			last_main_bead->name.ascii(),
+			last_main_bead->resName.ascii(),
+			last_main_bead->serial);
+	      }
+	      last_main_bead->bead_positioner = true;
+	      last_main_bead->bead_position_coordinate = this_atom->coordinate;
+	    }
+	    
+	    this_atom->is_bead = false;
+	    // this_atom->bead_cog_mw = 0;
+	  }
+	  
+	  this_atom->bead_cog_mw = 0;
+	  
+	  // special nitrogen asa handling
+	  PDB_atom *use_atom;
+	  if (create_beads_normally &&
+	      this_atom->chain == 0 &&
+	      this_atom->name == "N" &&
+	      last_main_chain_bead) {
+	    use_atom = last_main_chain_bead;
+	  } else {
+	    use_atom = last_main_bead;
+	  }
+
+	  
+	  use_atom->bead_asa += this_atom->asa;
+	  use_atom->bead_mw += this_atom->mw;
+#if defined(DEBUG)
+	  printf("atom %s %s p_atom.hybrid.mw %f atom.mw %f\n",
+		 this_atom->name.ascii(),
+		 this_atom->resName.ascii(),
+		 this_atom->p_atom->hybrid.mw,
+		 this_atom->mw
+		 );
+#endif
+	  // accum
+	  
+	  if (!create_beads_normally ||
+	      this_atom->p_atom->positioner) {
+#if defined(DEBUG)
+	    printf("adding cog from %d to %d mw %f totmw %f (this pos [%f,%f,%f], org pos [%f,%f,%f])\n", this_atom->serial, use_atom->serial, this_atom->mw, use_atom->bead_cog_mw,
+		   this_atom->coordinate.axis[0],
+		   this_atom->coordinate.axis[1],
+		   this_atom->coordinate.axis[2],
+		   use_atom->bead_cog_coordinate.axis[0],
+		   use_atom->bead_cog_coordinate.axis[1],
+		   use_atom->bead_cog_coordinate.axis[2]
+		   );
+#endif
+	    use_atom->bead_cog_mw += this_atom->mw;
+	    for (unsigned int m = 0; m < 3; m++) {
+	      use_atom->bead_cog_coordinate.axis[m] +=
+		this_atom->coordinate.axis[m] * this_atom->mw;
+	    }
+#if defined(DEBUG)
+	    printf("afterwards: target mw %f pos [%f,%f,%f]\n",
+		   use_atom->bead_cog_mw,
+		   use_atom->bead_cog_coordinate.axis[0],
+		   use_atom->bead_cog_coordinate.axis[1],
+		   use_atom->bead_cog_coordinate.axis[2]);
+#endif
+	  } else {
+#if defined(DEBUG)
+	      fprintf(stderr, "notice: atom %s %s %d excluded from cog calculation in bead %s %s %d\n",
+		      this_atom->name.ascii(),
+		      this_atom->resName.ascii(),
+		      this_atom->serial,
+		      use_atom->name.ascii(),
+		      use_atom->resName.ascii(),
+		      use_atom->serial);
+#endif
+	  }
+	    
+	  if (!create_beads_normally ||
+	      this_atom->p_atom->positioner) {
+	    if (use_atom->bead_positioner &&
+                this_atom->placing_method == 1) {
+	      fprintf(stderr, "warning: 2 or more positioners in bead %s %s %d\n",
+		      use_atom->name.ascii(),
+		      use_atom->resName.ascii(),
+		      use_atom->serial);
+	    }
+	    use_atom->bead_positioner = true;
+	    use_atom->bead_position_coordinate = this_atom->coordinate;
+	  }
+	  
+	  if (this_atom->chain == 0 &&
+	      this_atom->name == "N" &&
+	      !count_actives)
+	    {
+	      last_resName = "first N";
+	    }
+	  
+	  if (this_atom->chain == 0 &&
+	      this_atom->name == "CA") {
+	    
+	    last_main_chain_bead = this_atom;
+	  }
+	  
+	  count_actives++;
+	  
+	} else {
+	  this_atom->is_bead = false;
 	}
+      }
+    }
+  }
+  
+  if (molecular_mw) {
+    for (unsigned int m = 0; m < 3; m++) {
+      molecular_cog[m] /= molecular_mw;
+    }
+#if defined(DEBUG1) || defined(DEBUG)
+    printf("molecular cog [%f,%f,%f] mw %f\n",
+	   molecular_cog[0],
+	   molecular_cog[1],
+	   molecular_cog[2],
+	   molecular_mw);
+#endif
+  } else {
+    printf("ERROR: this molecule has zero mw!\n");
+  }
 
-		// pass 2 determine beads, cog_position, fixed_position
+  // pass 2b move bead_ref_volume, ref_mw, computed_radius from 
+  // next main chain back one
+  
+  // for (unsigned int i = 0; i < model_vector.size (); i++)	{
+  {
+    unsigned int i = current_model;
+    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+      PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
+      
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+	  
+	if (this_atom->active &&
+	    this_atom->is_bead &&
+	    this_atom->chain == 0) {
+	  if (last_main_chain_bead &&
+	      (this_atom->resName == "PRO" ||
+	       last_main_chain_bead->resName == "PRO")
+	      ) {
+#if defined(DEBUG)
+	    printf("pass 2b active PRO %s %s %d pm %d\n",
+		   this_atom->name.ascii(),
+		   this_atom->resName.ascii(),
+		   this_atom->serial,
+		   this_atom->placing_method); fflush(stdout);
+#endif
+	    last_main_chain_bead->bead_ref_volume = this_atom->bead_ref_volume;
+	    last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
+	    last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
+	    if (this_atom->resName == "GLY") {
+	      last_main_chain_bead->bead_ref_mw -= 1.01;
+	    }
+	  } 
+	  if (this_atom->name == "OXT" &&
+	      last_main_chain_bead) {
+#if defined(DEBUG)
+	    printf("pass 2b active OXT %s %s %d last %s %s %d\n",
+		   this_atom->name.ascii(),
+		   this_atom->resName.ascii(),
+		   this_atom->serial,
+		   last_main_chain_bead->name.ascii(),
+		   last_main_chain_bead->resName.ascii(),
+		   last_main_chain_bead->serial);
+	    fflush(stdout);
+#endif
 
-		int last_bead_assignment = -1;
-		int last_chain = -1;
-		QString last_resName = "not a residue";
-		PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
-		PDB_atom *last_main_bead = (PDB_atom *) 0;
-		int count_actives;
-
-		for (unsigned int i = 0; i < model_vector.size (); i++)
-	{
-		for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
-		{
-			count_actives = 0;
-			for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
-		{
-			PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-			this_atom->bead_positioner = false;
-			if (this_atom->active)
-			{
-				printf("pass 2 active %s %s %d\n",
-					this_atom->name.ascii(),
-					this_atom->resName.ascii(),
-					this_atom->serial); fflush(stdout);
-
-				this_atom->mw = this_atom->p_atom->hybrid.mw;
-
-				// do we have a new bead?
-				// we want to put the N on a previous bead unless it is the first one of the molecule
-
-				if ((this_atom->bead_assignment != last_bead_assignment ||
-				this_atom->chain != last_chain ||
-				this_atom->resName != last_resName) &&
-				!(this_atom->chain == 0 &&
-					this_atom->name == "N" &&
-					count_actives))
-			{
-				printf("pass 2 active %s %s %d new bead\n",
-				this_atom->name.ascii(),
-				this_atom->resName.ascii(),
-				this_atom->serial); fflush(stdout);
-
-				this_atom->bead_positioner = this_atom->p_atom->positioner;
-
-				this_atom->is_bead = true;
-				last_main_bead = this_atom;
-				last_bead_assignment = this_atom->bead_assignment;
-				last_chain = this_atom->chain;
-				last_resName = this_atom->resName;
-			} else {
-				printf("pass 2 active %s %s %d not a new bead\n",
-				this_atom->name.ascii(),
-				this_atom->resName.ascii(),
-				this_atom->serial); fflush(stdout);
-				if (this_atom->p_atom->positioner)
-				{
-					if (last_main_bead->bead_positioner)
-				{
-					fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
-						last_main_bead->name.ascii(),
-						last_main_bead->resName.ascii(),
-						last_main_bead->serial);
-				}
-					last_main_bead->bead_positioner = true;
-					last_main_bead->bead_position_coordinate = this_atom->coordinate;
-				}
-
-				this_atom->is_bead = false;
-				this_atom->bead_mw = 0;
-			}
-
-				this_atom->bead_asa = 0;
-				this_atom->bead_mw = 0;
-
-				// special nitrogen asa handling
-				PDB_atom *use_atom;
-				if (this_atom->chain == 0 &&
-				this_atom->name == "N" &&
-				last_main_chain_bead)
-			{
-				use_atom = last_main_chain_bead;
-			} else {
-				use_atom = last_main_bead;
-			}
-
-				use_atom->bead_asa += this_atom->asa;
-				use_atom->bead_mw += this_atom->p_atom->hybrid.mw;
-
-				// accum
-				for (unsigned int m = 0; m < 3; m++)
-			{
-				use_atom->bead_cog_coordinate.axis[m] +=
-				this_atom->coordinate.axis[m] * this_atom->p_atom->hybrid.mw;
-			}
-				if (this_atom->p_atom->positioner)
-			{
-				if (use_atom->bead_positioner)
-				{
-					fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
-						use_atom->name.ascii(),
-						use_atom->resName.ascii(),
-						use_atom->serial);
-				}
-				use_atom->bead_positioner = true;
-				use_atom->bead_position_coordinate = this_atom->coordinate;
-			}
-
-				if (this_atom->chain == 0 &&
-				this_atom->name == "N" &&
-				!count_actives)
-			{
-				last_resName = "first N";
-			}
-
-				if (this_atom->chain == 0 &&
-				this_atom->name == "CA")
-			{
-				last_main_chain_bead = this_atom;
-			}
-
-				count_actives++;
-
-			} else {
-				this_atom->is_bead = false;
-			}
-		}
-		}
+	    this_atom->is_bead = false;
+	    last_main_chain_bead->bead_ref_volume = this_atom->bead_ref_volume;
+	    last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
+	    if (last_main_chain_bead->resName == "GLY") {
+	      last_main_chain_bead->bead_ref_mw += 1.01;
+	    }
+	    last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
+	  } else {
+	    last_main_chain_bead = this_atom;
+	  }
 	}
+      }
+    }
+  }
 
-		// pass 3 determine visibility, exposed code, normalize cog position, final position determination
+  // pass 2c hydration
+  
+  // for (unsigned int i = 0; i < model_vector.size (); i++)	{
+  {
+    unsigned int i = current_model;
+    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 
-		printf("pass 3\n"); fflush(stdout);
-
-		for (unsigned int i = 0; i < model_vector.size (); i++)
-	{
-		for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
-		{
-			for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
-		{
-			PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-			this_atom->exposed_code = -1;
-			if (this_atom->active &&
-				this_atom->is_bead)
-			{
-				printf("pass 3 active is bead %s %s %d\n",
-					this_atom->name.ascii(),
-					this_atom->resName.ascii(),
-					this_atom->serial); fflush(stdout);
-
-				for (unsigned int m = 0; m < 3; m++)
-			{
-				if (this_atom->bead_mw)
-				{
-					this_atom->bead_cog_coordinate.axis[m] /= this_atom->bead_mw;
-				} else {
-					this_atom->bead_cog_coordinate.axis[m] = 0;
-				}
-			}
-
-				if (this_atom->p_residue && this_atom->p_atom)
-			{
-				printf("pass 3 active is bead %s %s %d bead assignment %d placing method %d\n",
-				this_atom->name.ascii(),
-				this_atom->resName.ascii(),
-				this_atom->serial,
-				this_atom->bead_assignment,
-				this_atom->placing_method
-				); fflush(stdout);
-				switch (this_atom->placing_method)
-				{
-				case 0 : // cog
-					this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
-					if (this_atom->bead_positioner)
-				{
-					fprintf(stderr, "warning: this bead had a atom claiming position & a bead placing method of cog! %s %s %d\n",
-						this_atom->name.ascii(),
-						this_atom->resName.ascii(),
-						this_atom->serial);
-				}
-					break;
-				case 1 : // positioner
-					this_atom->bead_coordinate = this_atom->bead_position_coordinate;
-					break;
-				case 2 : // no positioning necessary
-					this_atom->bead_coordinate = this_atom->coordinate;
-					break;
-				default :
-					this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
-					fprintf(stderr, "warning: unknown bead placing method %d %s %s %d <using cog!>\n",
-						this_atom->placing_method,
-						this_atom->name.ascii(),
-						this_atom->resName.ascii(),
-						this_atom->serial);
-					break;
-				}
-			} else {
-				fprintf(stderr, "serious internal error 1 on %s %s %d, quitting\n",
-					this_atom->name.ascii(),
-					this_atom->resName.ascii(),
-					this_atom->serial);
-				exit(-1);
-				break;
-			}
-				printf("pass 3 active is bead %s %s %d checkpoint 1\n",
-					this_atom->name.ascii(),
-					this_atom->resName.ascii(),
-					this_atom->serial); fflush(stdout);
-
-				this_atom->visibility = (this_atom->bead_asa >= asa.threshold);
-
-				printf("pass 3 active is bead %s %s %d checkpoint 2\n",
-					this_atom->name.ascii(),
-					this_atom->resName.ascii(),
-					this_atom->serial); fflush(stdout);
-				if (this_atom->visibility)
-			{
-				this_atom->exposed_code = 1;  // exposed
-			} else {
-				if (this_atom->chain == 0)
-				{
-					this_atom->exposed_code = 10;  // main chain, buried
-				}
-				if (this_atom->chain == 1)
-				{
-					this_atom->exposed_code = 6;   // side chain, buried
-				}
-			}
-				printf("pass 3 active is bead %s %s %d checkpoint 3\n",
-					this_atom->name.ascii(),
-					this_atom->resName.ascii(),
-					this_atom->serial); fflush(stdout);
-			} else {
-				this_atom->placing_method = -1;
-			}
-		}
-		}
+	if (this_atom->active &&
+	    this_atom->is_bead) {
+#if defined(DEBUG)
+	    printf("pass 2c hydration %s %s %d pm %d\n",
+		   this_atom->name.ascii(),
+		   this_atom->resName.ascii(),
+		   this_atom->serial,
+		   this_atom->placing_method); fflush(stdout);
+#endif
+	    this_atom->bead_ref_volume += 24.041 * this_atom->bead_hydration;
+	    this_atom->bead_computed_radius = pow(3 * this_atom->bead_ref_volume / (4.0*M_PI), 1.0/3);
+	} 
+      }
+    }
+  }
+  
+  // pass 3 determine visibility, exposed code, normalize cog position, final position determination
+  // compute com of entire molecule
+  
+#if defined(DEBUG1) || defined(DEBUG)
+  printf("pass 3\n"); fflush(stdout);
+#endif
+  
+  // for (unsigned int i = 0; i < model_vector.size (); i++) {
+  {
+    unsigned int i = current_model;
+    
+    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+      
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+	
+	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+	// printf("p3 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
+	this_atom->exposed_code = -1;
+	if (this_atom->active &&
+	    this_atom->is_bead) {
+	  
+#if defined(DEBUG)
+	  printf("pass 3 active is bead %s %s %d\n",
+		 this_atom->name.ascii(),
+		 this_atom->resName.ascii(),
+		 this_atom->serial); fflush(stdout);
+#endif	  
+	  for (unsigned int m = 0; m < 3; m++) {
+	    if (this_atom->bead_cog_mw) {
+	      this_atom->bead_cog_coordinate.axis[m] /= this_atom->bead_cog_mw;
+	    } else {
+	      this_atom->bead_cog_coordinate.axis[m] = 0;
+	    }
+	  }
+	  
+	  if (this_atom->p_residue && this_atom->p_atom) {
+	    
+#if defined(DEBUG)
+	    printf("pass 3 active is bead %s %s %d bead assignment %d placing method %d\n",
+		   this_atom->name.ascii(),
+		   this_atom->resName.ascii(),
+		   this_atom->serial,
+		   this_atom->bead_assignment,
+		   this_atom->placing_method
+		   ); fflush(stdout);
+#endif
+	    switch (this_atom->placing_method) {
+	      
+	    case 0 : // cog
+	      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
+	      // if (this_atom->bead_positioner) {
+	      // fprintf(stderr, "warning: this bead had a atom claiming position & a bead placing method of cog! %s %s %d\n",
+	      //	this_atom->name.ascii(),
+	      //	this_atom->resName.ascii(),
+	      //	this_atom->serial);
+	      // }
+	      break;
+	    case 1 : // positioner
+	      this_atom->bead_coordinate = this_atom->bead_position_coordinate;
+	      break;
+	    case 2 : // no positioning necessary
+	      this_atom->bead_coordinate = this_atom->coordinate;
+	      break;
+	    default :
+	      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
+	      fprintf(stderr, "warning: unknown bead placing method %d %s %s %d <using cog!>\n",
+		      this_atom->placing_method,
+		      this_atom->name.ascii(),
+		      this_atom->resName.ascii(),
+		      this_atom->serial);
+	      break;
+	    }
+	  } else {
+	    fprintf(stderr, "serious internal error 1 on %s %s %d, quitting\n",
+		    this_atom->name.ascii(),
+		    this_atom->resName.ascii(),
+		    this_atom->serial);
+	    exit(-1);
+	    break;
+	  }
+#if defined(DEBUG)
+	  printf("pass 3 active is bead %s %s %d checkpoint 1\n",
+		 this_atom->name.ascii(),
+		 this_atom->resName.ascii(),
+		 this_atom->serial); fflush(stdout);
+#endif	  
+	  this_atom->visibility = (this_atom->bead_asa >= asa.threshold);
+	  
+#if defined(DEBUG)
+	  printf("pass 3 active is bead %s %s %d checkpoint 2\n",
+		 this_atom->name.ascii(),
+		 this_atom->resName.ascii(),
+		 this_atom->serial); fflush(stdout);
+#endif
+	  if (!create_beads_normally ||
+	      this_atom->visibility ||
+	      !asa.calculation) {
+	    this_atom->exposed_code = 1;  // exposed
+	  } else {
+	    if (this_atom->chain == 0) {
+	      this_atom->exposed_code = 10;  // main chain, buried
+	    }
+	    if (this_atom->chain == 1) {
+	      this_atom->exposed_code = 6;   // side chain, buried
+	    }
+	  }
+#if defined(DEBUG)
+	  printf("pass 3 active is bead %s %s %d checkpoint 3\n",
+		 this_atom->name.ascii(),
+		 this_atom->resName.ascii(),
+		 this_atom->serial); fflush(stdout);
+#endif
+	} else {
+	  this_atom->placing_method = -1;
 	}
+      }
+    }
+  }
+  
+  // pass 4 print results
+  
+#if defined(DEBUG)
+  printf("model~molecule~atom~name~residue~chainID~"
+	 "position~active~radius~asa~mw~"
+	 "bead #~chain~serial~is_bead~bead_asa~visible~code/color~"
+	 "bead mw~position controlled?~bead positioner~baric method~bead hydration~bead color~"
+	 "bead ref volume~bead ref mw~bead computed radius~mw match?~"
+	 "position_coordinate~cog position~use position\n");
+  for (unsigned int i = 0; i < model_vector.size (); i++) {
+    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+	// printf("p4 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
+	
+	// printf("model %d mol %d atm %d nam %s res %s xyz [%f,%f,%f] act %s rads %f asa %f bead # %d chain %d serl %d is_bead %s bead_asa %f vis %s code %d pos? %s pos_co [%f,%f,%f] cog [%f,%f,%f] use [%f, %f, %f]\n",
+	printf("%d~%d~%d~%s~%s~%s~"
+	       "[%f,%f,%f]~%s~%f~%f~%f~"
+	       "%d~%d~%d~%s~%f~%s~"
+	       "%d~%f~%s~%s~%d~%u~%u~"
+	       "%f~%f~%f~%s~"
+	       "[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]\n",
 
-		// pass 4 print results
+	       i, j, k,
+	       this_atom->name.ascii(),
+	       this_atom->resName.ascii(),
+	       this_atom->chainID.ascii(),
 
-		printf("model~molecule~atom~name~residue~position~active~radius~asa~mw~bead #~chain~serial~is_bead~ bead_asa~visible~code/color~bead mw~position controlled?~baric method~position_coordinate~cog position~use position\n");
-		for (unsigned int i = 0; i < model_vector.size (); i++)
-	{
-		for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++)
-		{
-			for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++)
-		{
-			PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+	       this_atom->coordinate.axis[0],
+	       this_atom->coordinate.axis[1],
+	       this_atom->coordinate.axis[2],
+	       this_atom->active ? "Y" : "N",
+	       this_atom->radius,
+	       this_atom->asa,
+	       this_atom->mw,
 
-			//		   printf("model %d mol %d atm %d nam %s res %s xyz [%f,%f,%f] act %s rads %f asa %f bead # %d chain %d serl %d is_bead %s bead_asa %f vis %s code %d pos? %s pos_co [%f,%f,%f] cog [%f,%f,%f] use [%f, %f, %f]\n",
-			printf("%d~%d~%d~%s~%s~[%f,%f,%f]~%s~%f~%f~%f~%d~%d~%d~%s~%f~%s~%d~%f~%s~%d~[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]\n",
-			i, j, k,
-			this_atom->name.ascii(),
-			this_atom->resName.ascii(),
-			this_atom->coordinate.axis[0],
-			this_atom->coordinate.axis[1],
-			this_atom->coordinate.axis[2],
-			this_atom->active ? "Y" : "N",
-			this_atom->radius,
-			this_atom->asa,
-			this_atom->mw,
-			this_atom->bead_assignment,
-			this_atom->chain,
-			this_atom->serial,
-			this_atom->is_bead ? "Y" : "N",
-			this_atom->bead_asa,
-			this_atom->visibility ? "Y" : "N",
-			this_atom->exposed_code,
-			this_atom->bead_mw,
-			this_atom->bead_positioner ? "Y" : "N",
-			this_atom->placing_method,
-			this_atom->bead_position_coordinate.axis[0],
-			this_atom->bead_position_coordinate.axis[1],
-			this_atom->bead_position_coordinate.axis[2],
-			this_atom->bead_cog_coordinate.axis[0],
-			this_atom->bead_cog_coordinate.axis[1],
-			this_atom->bead_cog_coordinate.axis[2],
-			this_atom->bead_coordinate.axis[0],
-			this_atom->bead_coordinate.axis[1],
-			this_atom->bead_coordinate.axis[2]
-			);
-		}
-		}
+	       this_atom->bead_assignment,
+	       this_atom->chain,
+	       this_atom->serial,
+	       this_atom->is_bead ? "Y" : "N",
+	       this_atom->bead_asa,
+	       this_atom->visibility ? "Y" : "N",
+
+	       this_atom->exposed_code,
+	       this_atom->bead_mw,
+	       this_atom->bead_positioner ? "Y" : "N",
+	       this_atom->active ? (this_atom->p_atom->positioner ? "Y" : "N") : "Inactive",
+	       this_atom->placing_method,
+	       this_atom->bead_hydration,
+	       this_atom->bead_color,
+
+	       this_atom->bead_ref_volume,
+	       this_atom->bead_ref_mw,
+	       this_atom->bead_computed_radius,
+	       fabs(this_atom->bead_ref_mw - this_atom->bead_mw) < .03 ? "Y" : "N",
+
+	       this_atom->bead_position_coordinate.axis[0],
+	       this_atom->bead_position_coordinate.axis[1],
+	       this_atom->bead_position_coordinate.axis[2],
+	       this_atom->bead_cog_coordinate.axis[0],
+	       this_atom->bead_cog_coordinate.axis[1],
+	       this_atom->bead_cog_coordinate.axis[2],
+	       this_atom->bead_coordinate.axis[0],
+	       this_atom->bead_coordinate.axis[1],
+	       this_atom->bead_coordinate.axis[2]
+	       ); fflush(stdout);
+      }
+    }
+  }
+#endif
+  // build vector of beads
+  bead_model.clear();
+  for (unsigned int i = 0; i < model_vector.size (); i++) {
+    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+	if(this_atom->active &&
+	   this_atom->is_bead) {
+	  this_atom->bead_number = bead_model.size();
+	  this_atom->bead_actual_radius = this_atom->bead_computed_radius;
+	  bead_model.push_back(*this_atom);
 	}
+      }
+    }
+  }
 
-		return 0;
+  // popping radial reduction
+
+# define POP_MC              (1 << 0)
+# define POP_SC              (1 << 1)
+# define POP_MCSC            (1 << 2)
+# define POP_EXPOSED         (1 << 3)
+# define POP_BURIED          (1 << 4)
+# define POP_ALL             (1 << 5)
+# define RADIAL_REDUCTION    (1 << 6)
+# define RR_MC               (1 << 7)
+# define RR_SC               (1 << 8)
+# define RR_MCSC             (1 << 9)
+# define RR_EXPOSED          (1 << 10)
+# define RR_BURIED           (1 << 11)
+# define RR_ALL              (1 << 12)
+# define OUTWARD_TRANSLATION (1 << 13)
+# define RR_HIERC            (1 << 14)
+# define MIN_OVERLAP 0.0
+# define TOLERANCE 0.001       // this is used to place a limit on the allowed radial overlap
+
+  // or sc fb Y rh Y rs Y to Y st Y ro Y 70.000000 1.000000 0.000000
+  // or scmc fb Y rh N rs N to Y st N ro Y 1.000000 0.000000 70.000000
+  // or bb fb Y rh Y rs N to N st Y ro N 0.000000 0.000000 0.000000
+
+#if defined(DEBUG)
+  printf("or sc fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n"
+	 "or scmc fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n"
+	 "or bb fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n",
+	 sidechain_overlap.fuse_beads ? "Y" : "N",
+	 sidechain_overlap.remove_hierarch ? "Y" : "N",
+	 sidechain_overlap.remove_sync ? "Y" : "N",
+	 sidechain_overlap.translate_out ? "Y" : "N",
+	 sidechain_overlap.show_translate ? "Y" : "N",
+	 sidechain_overlap.remove_overlap ? "Y" : "N",
+	 sidechain_overlap.fuse_beads_percent,
+	 sidechain_overlap.remove_sync_percent,
+	 sidechain_overlap.remove_hierarch_percent,
+
+	 mainchain_overlap.fuse_beads ? "Y" : "N",
+	 mainchain_overlap.remove_hierarch ? "Y" : "N",
+	 mainchain_overlap.remove_sync ? "Y" : "N",
+	 mainchain_overlap.translate_out ? "Y" : "N",
+	 mainchain_overlap.show_translate ? "Y" : "N",
+	 mainchain_overlap.remove_overlap ? "Y" : "N",
+	 mainchain_overlap.fuse_beads_percent,
+	 mainchain_overlap.remove_sync_percent,
+	 mainchain_overlap.remove_hierarch_percent,
+
+	 buried_overlap.fuse_beads ? "Y" : "N",
+	 buried_overlap.remove_hierarch ? "Y" : "N",
+	 buried_overlap.remove_sync ? "Y" : "N",
+	 buried_overlap.translate_out ? "Y" : "N",
+	 buried_overlap.show_translate ? "Y" : "N",
+	 buried_overlap.remove_overlap ? "Y" : "N",
+	 buried_overlap.fuse_beads_percent,
+	 buried_overlap.remove_sync_percent,
+	 buried_overlap.remove_hierarch_percent);
+
+#endif
+
+  int methods[] = 
+    { 
+      RADIAL_REDUCTION | RR_SC | RR_EXPOSED, 
+      RADIAL_REDUCTION | RR_MCSC | RR_EXPOSED,
+      RADIAL_REDUCTION | RR_MCSC | RR_BURIED,
+    };
+  
+  if (sidechain_overlap.fuse_beads) {
+    methods[0] |= POP_SC | POP_EXPOSED;
+  }
+
+  if (mainchain_overlap.fuse_beads) {
+    methods[1] |= POP_MCSC | POP_EXPOSED;
+  }
+
+  if (buried_overlap.fuse_beads) {
+    methods[2] |= POP_ALL | POP_BURIED;
+  }
+
+  if (sidechain_overlap.remove_hierarch) {
+    methods[0] |= RR_HIERC;
+  }
+
+  if (mainchain_overlap.remove_hierarch) {
+    methods[1] |= RR_HIERC;
+  }
+
+  if (buried_overlap.remove_hierarch) {
+    methods[2] |= RR_HIERC;
+  }
+
+  if (sidechain_overlap.translate_out) {
+    methods[0] |= OUTWARD_TRANSLATION;
+  }
+
+  if (mainchain_overlap.translate_out) {
+    methods[1] |= OUTWARD_TRANSLATION;
+  }
+
+  if (buried_overlap.translate_out) {
+    methods[2] |= OUTWARD_TRANSLATION;
+  }
+
+  if (!sidechain_overlap.remove_overlap) {
+    methods[0] = 0;
+  }
+
+  if (!mainchain_overlap.remove_overlap) {
+    methods[1] = 0;
+  }
+
+  if (!buried_overlap.remove_overlap) {
+    methods[2] = 0;
+  }
+
+  float overlap[] =
+    {
+      sidechain_overlap.fuse_beads_percent / 100.0, 
+      mainchain_overlap.fuse_beads_percent / 100.0, 
+      buried_overlap.fuse_beads_percent / 100.0
+    };
+
+  float rr_overlap[] =
+    {
+      (sidechain_overlap.remove_hierarch ? 
+       sidechain_overlap.remove_hierarch_percent : sidechain_overlap.remove_sync_percent) / 100.0,
+      (mainchain_overlap.remove_hierarch ? 
+       mainchain_overlap.remove_hierarch_percent : mainchain_overlap.remove_sync_percent) / 100.0,
+      (buried_overlap.remove_hierarch ? 
+       buried_overlap.remove_hierarch_percent : buried_overlap.remove_sync_percent) / 100.0
+    };
+
+
+  write_bead_tsv("bead_model_start.tsv", &bead_model);
+  write_bead_spt("bead_model_start", &bead_model);
+  for(unsigned int k = 0; k < sizeof(methods) / sizeof(int); k++) {
+	   
+    int beads_popped = 0;
+  
+#if defined(DEBUG1) || defined(DEBUG)
+    printf("popping stage %d %s%s%s%s%s%s%s%s%s%s%s%s%s%s%soverlap_reduction %f rroverlap %f\n",
+	   k,
+	   (methods[k] & POP_MC) ? "main chain " : "",
+	   (methods[k] & POP_SC) ? "side chain " : "",
+	   (methods[k] & POP_MCSC) ? "main & side chain " : "",
+	   (methods[k] & POP_EXPOSED) ? "exposed " : "",
+	   (methods[k] & POP_BURIED) ? "buried " : "",
+	   (methods[k] & POP_ALL) ? "all " : "",
+	   (methods[k] & RADIAL_REDUCTION) ? "radial reduction " : "",
+	   (methods[k] & RR_HIERC) ? "hierarchically " : "synchronously ",
+	   (methods[k] & RR_MC) ? "main chain " : "",
+	   (methods[k] & RR_SC) ? "side chain " : "",
+	   (methods[k] & RR_MCSC) ? "main & side chain " : "",
+	   (methods[k] & RR_EXPOSED) ? "exposed " : "",
+	   (methods[k] & RR_BURIED) ? "buried " : "",
+	   (methods[k] & RR_ALL) ? "all " : "",
+	   (methods[k] & OUTWARD_TRANSLATION) ? "outward translation " : "",
+	   overlap[k],
+	   rr_overlap[k]);
+#endif
+
+    if (overlap[k] < MIN_OVERLAP) {
+      printf("using %f as minimum overlap\n", MIN_OVERLAP);
+      overlap[k] = MIN_OVERLAP;
+    }
+
+    float max_intersection_volume;
+    float intersection_volume = 0;
+    int max_bead1 = 0;
+    int max_bead2 = 0;
+    unsigned iter = 0;
+    bool overlaps_exist;
+#if defined(TIMING)
+    gettimeofday(&start_tv, NULL);
+#endif
+    do {
+      // write_bead_tsv(QString("bead_model_bp-%1-%2.tsv").arg(k).arg(iter), &bead_model);
+      // write_bead_spt(QString("bead_model-bp-%1-%2").arg(k).arg(iter), &bead_model);
+#if defined(DEBUG1) || defined(DEBUG)
+      printf("popping iteration %d\n", iter++);
+#endif
+      max_intersection_volume = -1;
+      overlaps_exist = false;
+      if (methods[k] & (POP_MC | POP_SC | POP_MCSC | POP_EXPOSED | POP_BURIED | POP_ALL)) {
+	for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
+	  for (unsigned int j = i + 1; j < bead_model.size(); j++) {
+#if defined(DEBUG)
+	    printf("checking popping stage %d beads %d %d on chains %d %d exposed %d %d active %s %s max iv %f\n",
+		   k, i, j,
+		   bead_model[i].chain,
+		   bead_model[j].chain,
+		   bead_model[i].exposed_code,
+		   bead_model[j].exposed_code,
+		   bead_model[i].active ? "Y" : "N",
+		   bead_model[j].active ? "Y" : "N",
+		   max_intersection_volume
+		   );
+#endif	    
+	    if (bead_model[i].active &&
+		bead_model[j].active &&
+		( ((methods[k] & POP_SC) &&
+		  bead_model[i].chain == 1 &&
+		  bead_model[j].chain == 1) ||
+		  ((methods[k] & POP_MC) &&
+		  bead_model[i].chain == 0 &&
+		  bead_model[j].chain == 0) ||
+		  ((methods[k] & POP_MCSC) 
+		   // &&
+		   // (bead_model[i].chain != 1 ||
+		   // bead_model[j].chain != 1)) 
+		   ) ) &&
+		( ((methods[k] & POP_EXPOSED) &&
+		   bead_model[i].exposed_code == 1 &&
+		   bead_model[j].exposed_code == 1) ||
+		  ((methods[k] & POP_BURIED) &&
+		   (bead_model[i].exposed_code != 1 ||
+		    bead_model[j].exposed_code != 1)) ||
+		  (methods[k] & POP_ALL) )) {
+	      intersection_volume = 
+		int_vol_2sphere(
+				bead_model[i].bead_computed_radius,
+				bead_model[j].bead_computed_radius,
+				sqrt(
+				     pow(bead_model[i].bead_coordinate.axis[0] -
+					 bead_model[j].bead_coordinate.axis[0], 2) +
+				     pow(bead_model[i].bead_coordinate.axis[1] -
+					 bead_model[j].bead_coordinate.axis[1], 2) +
+				     pow(bead_model[i].bead_coordinate.axis[2] -
+					 bead_model[j].bead_coordinate.axis[2], 2)) );
+#if defined(DEBUG)
+	      printf("this overlap bead %u %u vol %f rv1 %f rv2 %f r1 %f r2 %f p1 [%f,%f,%f] p2 [%f,%f,%f]\n", 
+		     bead_model[i].serial, 
+		     bead_model[j].serial, 
+		     intersection_volume,
+		     bead_model[i].bead_ref_volume,
+		     bead_model[j].bead_ref_volume,
+		     bead_model[i].bead_computed_radius,
+		     bead_model[j].bead_computed_radius,
+		     bead_model[i].bead_coordinate.axis[0],
+		     bead_model[i].bead_coordinate.axis[1],
+		     bead_model[i].bead_coordinate.axis[2],
+		     bead_model[j].bead_coordinate.axis[0],
+		     bead_model[j].bead_coordinate.axis[1],
+		     bead_model[j].bead_coordinate.axis[2]
+		     );
+#endif
+	      if (intersection_volume > bead_model[i].bead_ref_volume * overlap[k] ||
+		  intersection_volume > bead_model[j].bead_ref_volume * overlap[k]) {
+		overlaps_exist = true;
+		if (intersection_volume > max_intersection_volume) {
+#if defined(DEBUG)
+		  printf("best overlap so far bead %u %u vol %f\n", 
+			 bead_model[i].serial, 
+			 bead_model[j].serial, 
+			 intersection_volume);
+#endif
+		  max_intersection_volume = intersection_volume;
+		  max_bead1 = i;
+		  max_bead2 = j;
+		}
+	      }
+	    }
+	  }
+	}
+	if (overlaps_exist) {
+	  beads_popped++;
+#if defined(DEBUG1) || defined(DEBUG)
+	  printf("popping beads %u %u int vol %f mw1 %f mw2 %f v1 %f v2 %f c1 [%f,%f,%f] c2 [%f,%f,%f]\n",
+		 bead_model[max_bead1].serial, 
+		 bead_model[max_bead2].serial, 
+		 max_intersection_volume,
+		 bead_model[max_bead1].bead_ref_mw,
+		 bead_model[max_bead2].bead_ref_mw,
+		 bead_model[max_bead1].bead_ref_volume,
+		 bead_model[max_bead2].bead_ref_volume,
+		 bead_model[max_bead1].bead_coordinate.axis[0],
+		 bead_model[max_bead1].bead_coordinate.axis[1],
+		 bead_model[max_bead1].bead_coordinate.axis[2],
+		 bead_model[max_bead2].bead_coordinate.axis[0],
+		 bead_model[max_bead2].bead_coordinate.axis[1],
+		 bead_model[max_bead2].bead_coordinate.axis[2]
+		 );
+#endif
+	  // bead_model[max_bead1].all_beads.push_back(&bead_model[max_bead1]); ??
+	  bead_model[max_bead1].all_beads.push_back(&bead_model[max_bead2]);
+	  for (unsigned int n = 0; n < bead_model[max_bead2].all_beads.size(); n++) {
+	    bead_model[max_bead1].all_beads.push_back(bead_model[max_bead2].all_beads[n]);
+	  }
+	  
+	  bead_model[max_bead2].active = false;
+	  for (unsigned int m = 0; m < 3; m++) {
+	    bead_model[max_bead1].bead_coordinate.axis[m] *= bead_model[max_bead1].bead_ref_mw;
+	    bead_model[max_bead1].bead_coordinate.axis[m] += 
+	      bead_model[max_bead2].bead_coordinate.axis[m] * bead_model[max_bead2].bead_ref_mw;
+	    bead_model[max_bead1].bead_coordinate.axis[m] /= bead_model[max_bead1].bead_ref_mw + bead_model[max_bead2].bead_ref_mw;
+	  }
+	  bead_model[max_bead1].bead_ref_mw = bead_model[max_bead1].bead_ref_mw + bead_model[max_bead2].bead_ref_mw;
+	  bead_model[max_bead1].bead_ref_volume = bead_model[max_bead1].bead_ref_volume + bead_model[max_bead2].bead_ref_volume; 
+	  // - max_intersection_volume;
+	  bead_model[max_bead1].bead_actual_radius =
+	    bead_model[max_bead1].bead_computed_radius = 
+	    pow(3 * bead_model[max_bead1].bead_ref_volume / (4.0*M_PI), 1.0/3);
+	  // if fusing with a side chain bead, make sure the fused is side-chain
+	  if (bead_model[max_bead2].chain) {
+	    bead_model[max_bead1].chain = 1;
+	  }
+	  bead_model[max_bead1].normalized_ot_is_valid = false;
+	  bead_model[max_bead2].normalized_ot_is_valid = false;
+#if defined(DEBUG)
+	  printf("after popping beads %d %d int volume %f radius %f mw %f vol %f coordinate [%f,%f,%f]\n",
+		 bead_model[max_bead1].serial, 
+		 bead_model[max_bead2].serial, 
+		 intersection_volume,
+		 bead_model[max_bead1].bead_computed_radius,
+		 bead_model[max_bead1].bead_ref_mw,
+		 bead_model[max_bead2].bead_ref_volume,
+		 bead_model[max_bead1].bead_coordinate.axis[0],
+		 bead_model[max_bead1].bead_coordinate.axis[1],
+		 bead_model[max_bead1].bead_coordinate.axis[2]
+	       );
+#endif
+	}
+      } // if pop method
+      // write_bead_tsv(QString("bead_model_ap-%1-%2.tsv").arg(k).arg(iter), &bead_model);
+      // write_bead_spt(QString("bead_model-ap-%1-%2").arg(k).arg(iter), &bead_model);
+    } while(overlaps_exist);
+#if defined(TIMING)
+    gettimeofday(&end_tv, NULL);
+    printf("popping %d time %lu\n",
+	   k,
+	   1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
+	   start_tv.tv_usec);
+    fflush(stdout);
+#endif
+    write_bead_tsv(QString("bead_model_pop-%1.tsv").arg(k), &bead_model);
+    write_bead_spt(QString("bead_model_pop-%1").arg(k), &bead_model);
+    printf("stage %d beads popped %d\n", k, beads_popped);
+
+    // radial reduction phase
+#if defined(TIMING)
+    gettimeofday(&start_tv, NULL);
+#endif
+
+    if (methods[k] & RADIAL_REDUCTION) {
+      BPair pair;
+      vector <BPair> pairs;
+
+      vector <bool> reduced;
+      vector <bool> reduced_any; // this is for a final recomputation of the volumes
+      vector <bool> last_reduced; // to prevent rescreening
+      reduced.resize(bead_model.size());
+      reduced_any.resize(bead_model.size());
+      last_reduced.resize(bead_model.size());
+
+      for (unsigned int i = 0; i < bead_model.size(); i++) {
+	reduced_any[i] = false;
+	last_reduced[i] = true;
+      }
+
+      int iter = 0;
+      int count;
+      float max_intersection_length;
+      // bool tb[bead_model.size() * bead_model.size()];
+      // printf("sizeof tb %d, bm.size^2 %d\n", 
+      //     sizeof(tb), bead_model.size() * bead_model.size());
+      if (methods[k] & RR_HIERC) {
+#if defined(DEBUG1) || defined(DEBUG)
+	printf("preprocessing processing hierarchical radial reduction\n");
+#endif
+	max_intersection_length = 0;
+	pairs.clear();
+	count = 0;
+	// build list of intersecting pairs
+	for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
+	  for (unsigned int j = i + 1; j < bead_model.size(); j++) {
+#if defined(DEBUG)
+	    printf("checking radial stage %d beads %d %d on chains %d %d exposed code %d %d active %s %s max il %f\n",
+		   k, i, j,
+		   bead_model[i].chain,
+		   bead_model[j].chain,
+		   bead_model[i].exposed_code,
+		   bead_model[j].exposed_code,
+		   bead_model[i].active ? "Y" : "N",
+		   bead_model[j].active ? "Y" : "N",
+		   max_intersection_length
+		   );
+#endif
+	    if (bead_model[i].active &&
+		bead_model[j].active &&
+		(((methods[k] & RR_SC) &&
+		  bead_model[i].chain == 1 &&
+		  bead_model[j].chain == 1) ||
+		 ((methods[k] & RR_MC) &&
+		  bead_model[i].chain == 0 &&
+		  bead_model[j].chain == 0) ||
+		 ((methods[k] & RR_MCSC)
+		  // &&
+		  // (bead_model[i].chain != 1 ||
+		  // bead_model[j].chain != 1)))
+		  )) &&
+		(((methods[k] & RR_EXPOSED) &&
+		  bead_model[i].exposed_code == 1 &&
+		  bead_model[j].exposed_code == 1) ||
+		 ((methods[k] & RR_BURIED) &&
+		  (bead_model[i].exposed_code != 1 ||
+		   bead_model[j].exposed_code != 1)) ||
+		 (methods[k] & RR_ALL))) {
+	      
+	      float separation = 
+		bead_model[i].bead_computed_radius + 
+		bead_model[j].bead_computed_radius -
+		sqrt(
+		     pow(bead_model[i].bead_coordinate.axis[0] -
+			 bead_model[j].bead_coordinate.axis[0], 2) +
+		     pow(bead_model[i].bead_coordinate.axis[1] -
+			 bead_model[j].bead_coordinate.axis[1], 2) +
+		     pow(bead_model[i].bead_coordinate.axis[2] -
+			 bead_model[j].bead_coordinate.axis[2], 2));
+	      
+#if defined(DEBUG)
+	      printf("beads %d %d with radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] have a sep of %f\n",
+		     i, j,
+		     bead_model[i].bead_computed_radius,
+		     bead_model[j].bead_computed_radius,
+		     bead_model[i].bead_coordinate.axis[0],
+		     bead_model[i].bead_coordinate.axis[1],
+		     bead_model[i].bead_coordinate.axis[2],
+		     bead_model[j].bead_coordinate.axis[0],
+		     bead_model[j].bead_coordinate.axis[1],
+		     bead_model[j].bead_coordinate.axis[2],
+		     separation);
+#endif		
+	      if (separation <= TOLERANCE) {
+		continue;
+	      }
+	      
+	      pair.i = i;
+	      pair.j = j;
+	      pair.separation = separation;
+	      pair.active = true;
+	      pairs.push_back(pair);
+	      count++;
+	    }
+	  }
+	}
+	// ok, now we have the list of pairs
+	max_bead1 = 
+	  max_bead2 = -1;
+	float radius_delta;
+	do {
+#if defined(DEBUG1) || defined(DEBUG)
+	  printf("processing hierarchical radial reduction iteration %d\n", iter++);
+#endif
+	  max_intersection_length = 0;
+	  int max_pair = -1;
+	  count = 0;
+	  for (unsigned int i = 0; i < pairs.size(); i++) {
+	    if (pairs[i].active) {
+	      if (
+		  pairs[i].i == max_bead1 ||
+		  pairs[i].j == max_bead1 ||
+		  pairs[i].i == max_bead2 ||
+		  pairs[i].j == max_bead2
+		  ) {
+		pairs[i].separation = 
+		  bead_model[pairs[i].i].bead_computed_radius + 
+		  bead_model[pairs[i].j].bead_computed_radius -
+		  sqrt(
+		       pow(bead_model[pairs[i].i].bead_coordinate.axis[0] -
+			   bead_model[pairs[i].j].bead_coordinate.axis[0], 2) +
+		       pow(bead_model[pairs[i].i].bead_coordinate.axis[1] -
+			 bead_model[pairs[i].j].bead_coordinate.axis[1], 2) +
+		       pow(bead_model[pairs[i].i].bead_coordinate.axis[2] -
+			   bead_model[pairs[i].j].bead_coordinate.axis[2], 2));
+		pairs[i].active = true;
+	      }
+	      if (pairs[i].separation > max_intersection_length) {
+		max_intersection_length = pairs[i].separation;
+		max_pair = i;
+	      }
+	    }
+	  }
+
+	  if (max_intersection_length > TOLERANCE) {
+	    count++;
+	    pairs[max_pair].active = false;
+	    max_bead1 = pairs[max_pair].i;
+	    max_bead2 = pairs[max_pair].j;
+#if defined(DEBUG1) || defined(DEBUG)
+	    printf("processing radial reduction hierc iteration %d pair %d processed %d\n", iter, max_pair, count);
+	    printf("reducing beads %d %d\n", max_bead1, max_bead2);
+#endif
+	    do {
+	      if (methods[k] & OUTWARD_TRANSLATION ||
+		  ((bead_model[max_bead1].chain == 1 ||
+		    bead_model[max_bead2].chain == 1) &&
+		   methods[0] & OUTWARD_TRANSLATION)) {
+		// new 1 step ot
+		if((methods[k] & RR_MCSC &&
+		    (bead_model[max_bead1].chain == 1 ||
+		     bead_model[max_bead2].chain == 1))
+		   ) {
+		  // new 1 bead 1 OT / treat as no ot...
+		  int use_bead;
+		  if (bead_model[max_bead1].chain == 1) {
+		    use_bead = max_bead2;
+		  } else {
+		    use_bead = max_bead1;
+		  }
+		  // one bead to shrink
+		  reduced[use_bead] = true;
+		  reduced_any[use_bead] = true;
+		  radius_delta = max_intersection_length;
+		  if (radius_delta > bead_model[use_bead].bead_computed_radius) {
+		    radius_delta = bead_model[use_bead].bead_computed_radius;
+		  }
+		  printf("use bead %d no outward translation is required, one bead to shrink, radius delta %f  cr %f %f\n",
+			 use_bead,
+			 radius_delta,
+			 bead_model[use_bead].bead_computed_radius,
+			 bead_model[use_bead].bead_computed_radius - radius_delta
+			 );
+		  bead_model[use_bead].bead_computed_radius -= radius_delta;
+		  if (bead_model[use_bead].bead_computed_radius <= 0) {
+		    // this is to ignore this bead for further radial reduction regardless
+		    bead_model[use_bead].bead_computed_radius = TOLERANCE - 1e-5;
+		    reduced[use_bead] = false;
+		  }
+		} else {
+		  int use_bead = max_bead1;
+		  if (!bead_model[use_bead].normalized_ot_is_valid) {
+		    float norm = 0.0;
+		    for (unsigned int l = 0; l < 3; l++) {
+		      bead_model[use_bead].normalized_ot.axis[l] = 
+			bead_model[use_bead].bead_coordinate.axis[l] - 
+			molecular_cog[l];
+		      norm += 
+			bead_model[use_bead].normalized_ot.axis[l] *
+			bead_model[use_bead].normalized_ot.axis[l];
+		    }
+		    norm = sqrt(norm);
+		    if (norm) {
+		      for (unsigned int l = 0; l < 3; l++) {
+			bead_model[use_bead].normalized_ot.axis[l] /= norm;
+		      }
+		      bead_model[use_bead].normalized_ot_is_valid = true;
+		    } else {
+		      printf("wow! bead %d is at the molecular cog!\n", use_bead);
+		    }
+		  }
+		  use_bead = max_bead2;
+		  if (!bead_model[use_bead].normalized_ot_is_valid) {
+		    float norm = 0.0;
+		    for (unsigned int l = 0; l < 3; l++) {
+		      bead_model[use_bead].normalized_ot.axis[l] = 
+			bead_model[use_bead].bead_coordinate.axis[l] - 
+			molecular_cog[l];
+		      norm += 
+			bead_model[use_bead].normalized_ot.axis[l] *
+			bead_model[use_bead].normalized_ot.axis[l];
+		    }
+		    norm = sqrt(norm);
+		    if (norm) {
+		      for (unsigned int l = 0; l < 3; l++) {
+			bead_model[use_bead].normalized_ot.axis[l] /= norm;
+		      }
+		      bead_model[use_bead].normalized_ot_is_valid = true;
+		    } else {
+		      printf("wow! bead %d is at the molecular cog!\n", use_bead);
+		    }
+		  }
+		}
+		// we need to handle 1 fixed case and
+		// the slight potential of one being at the molecular cog
+		reduced_any[max_bead1] = true;
+		reduced_any[max_bead2] = true;
+		outward_translate_2_spheres(
+					    &bead_model[max_bead1].bead_computed_radius,
+					    &bead_model[max_bead2].bead_computed_radius,
+					    bead_model[max_bead1].bead_coordinate.axis,
+					    bead_model[max_bead2].bead_coordinate.axis,
+					    bead_model[max_bead1].normalized_ot.axis,
+					    bead_model[max_bead2].normalized_ot.axis
+					    );
+	      } else {
+		// no outward translation is required for either bead
+		// are we shrinking just 1 bead ... if we are dealing with buried beads, then
+		// only buried beads should be shrunk, not exposed beads 
+		printf("no outward translation is required\n");
+		if(methods[k] & RR_BURIED &&
+		   bead_model[max_bead1].exposed_code == 1 &&
+		   bead_model[max_bead2].exposed_code == 1) {
+		  printf("what are we doing here?  buried and two exposed??\n");
+		  exit(-1);
+		}
+		if(methods[k] & RR_MCSC &&
+		   bead_model[max_bead1].chain == 1 &&
+		   bead_model[max_bead2].chain == 1) {
+		  printf("what are we doing here?  dealing with 2 SC's on the MCSC run??\n");
+		  exit(-1);
+		}
+		if((methods[k] & RR_BURIED &&
+		    (bead_model[max_bead1].exposed_code == 1 ||
+		     bead_model[max_bead2].exposed_code == 1)) ||
+		   (methods[k] & RR_MCSC &&
+		    (bead_model[max_bead1].chain == 1 ||
+		     bead_model[max_bead2].chain == 1))) {
+		  // only one bead to shrink, since
+		  // we are either buried with one of the beads exposed or
+		  // on the MCSC and one of the beads is SC
+		  int use_bead;
+		  if (methods[k] & RR_BURIED) {
+		    if (bead_model[max_bead1].exposed_code == 1) {
+		      use_bead = max_bead2;
+		    } else {
+		      use_bead = max_bead1;
+		    }
+		  } else {
+		    if (bead_model[max_bead1].chain == 1) {
+		      use_bead = max_bead2;
+		    } else {
+		      use_bead = max_bead1;
+		    }
+		  }
+		  // one bead to shrink
+		  reduced[use_bead] = true;
+		  reduced_any[use_bead] = true;
+		  radius_delta = max_intersection_length;
+		  if (radius_delta > bead_model[use_bead].bead_computed_radius) {
+		    radius_delta = bead_model[use_bead].bead_computed_radius;
+		  }
+		  printf("use bead %d no outward translation is required, one bead to shrink, radius delta %f  cr %f %f\n",
+			 use_bead,
+			 radius_delta,
+			 bead_model[use_bead].bead_computed_radius,
+			 bead_model[use_bead].bead_computed_radius - radius_delta
+			 );
+		  bead_model[use_bead].bead_computed_radius -= radius_delta;
+		  if (bead_model[use_bead].bead_computed_radius <= 0) {
+		    // this is to ignore this bead for further radial reduction regardless
+		    bead_model[use_bead].bead_computed_radius = TOLERANCE - 1e-5;
+		    reduced[use_bead] = false;
+		  }
+		} else {
+		  // two beads to shrink
+		  int use_bead = max_bead1;
+		  printf("use bead %d no outward translation is required\n", use_bead);
+		  reduced[use_bead] = true;
+		  reduced_any[use_bead] = true;
+		  radius_delta = 
+		    // bead_model[use_bead].bead_actual_radius * rr_overlap[k];
+		    max_intersection_length * bead_model[max_bead1].bead_computed_radius /
+		    (bead_model[max_bead1].bead_computed_radius + bead_model[max_bead2].bead_computed_radius);
+		  float radius_delta2 = 
+		    // bead_model[use_bead].bead_actual_radius * rr_overlap[k];
+		    max_intersection_length * bead_model[max_bead2].bead_computed_radius /
+		    (bead_model[max_bead1].bead_computed_radius + bead_model[max_bead2].bead_computed_radius);
+		  printf("intersection len %f recomputed %f radius delta %f r1 %f r2 %f\n", 
+			 max_intersection_length,
+			 bead_model[max_bead1].bead_computed_radius + 
+			 bead_model[max_bead2].bead_computed_radius -
+			 sqrt(
+			      pow(bead_model[max_bead1].bead_coordinate.axis[0] -
+				  bead_model[max_bead2].bead_coordinate.axis[0], 2) +
+			      pow(bead_model[max_bead1].bead_coordinate.axis[1] -
+				  bead_model[max_bead2].bead_coordinate.axis[1], 2) +
+			      pow(bead_model[max_bead1].bead_coordinate.axis[2] -
+				  bead_model[max_bead2].bead_coordinate.axis[2], 2)),		      
+			 radius_delta,
+			 bead_model[max_bead1].bead_computed_radius,
+			 bead_model[max_bead2].bead_computed_radius
+			 );
+		  if (radius_delta > bead_model[use_bead].bead_computed_radius) {
+		    radius_delta = bead_model[use_bead].bead_computed_radius;
+		  }
+		  bead_model[use_bead].bead_computed_radius -= radius_delta;
+		  if (bead_model[use_bead].bead_computed_radius <= TOLERANCE) {
+		    // this is to ignore this bead for further radial reduction regardless
+		    bead_model[use_bead].bead_computed_radius = TOLERANCE / 2;
+		    reduced[use_bead] = false;
+		  }
+		  
+		  printf("intersection len %f recomputed %f radius delta %f r1 %f r2 %f\n", 
+			 max_intersection_length,
+			 bead_model[max_bead1].bead_computed_radius + 
+			 bead_model[max_bead2].bead_computed_radius -
+			 sqrt(
+			      pow(bead_model[max_bead1].bead_coordinate.axis[0] -
+				  bead_model[max_bead2].bead_coordinate.axis[0], 2) +
+			      pow(bead_model[max_bead1].bead_coordinate.axis[1] -
+				  bead_model[max_bead2].bead_coordinate.axis[1], 2) +
+			      pow(bead_model[max_bead1].bead_coordinate.axis[2] -
+				  bead_model[max_bead2].bead_coordinate.axis[2], 2)),		      
+			 radius_delta,
+			 bead_model[max_bead1].bead_computed_radius,
+			 bead_model[max_bead2].bead_computed_radius
+			 );
+		  
+		  use_bead = max_bead2;
+		  reduced[use_bead] = true;
+		  reduced_any[use_bead] = true;
+		  float radius_delta = radius_delta2;
+		  if (radius_delta > bead_model[use_bead].bead_computed_radius) {
+		    radius_delta = bead_model[use_bead].bead_computed_radius;
+		  }
+		  bead_model[use_bead].bead_computed_radius -= radius_delta;
+		  if (bead_model[use_bead].bead_computed_radius <= 0) {
+		    // this is to ignore this bead for further radial reduction regardless
+		    bead_model[use_bead].bead_computed_radius = TOLERANCE - 1e-5;
+		    reduced[use_bead] = false;
+		  }
+		}
+	      }
+	      printf("b1r %f b2r %f current separation %f\n", 
+		     bead_model[max_bead1].bead_computed_radius,
+		     bead_model[max_bead2].bead_computed_radius,
+		     bead_model[max_bead1].bead_computed_radius + 
+		     bead_model[max_bead2].bead_computed_radius -
+		     sqrt(
+			  pow(bead_model[max_bead1].bead_coordinate.axis[0] -
+			      bead_model[max_bead2].bead_coordinate.axis[0], 2) +
+			  pow(bead_model[max_bead1].bead_coordinate.axis[1] -
+			      bead_model[max_bead2].bead_coordinate.axis[1], 2) +
+			  pow(bead_model[max_bead1].bead_coordinate.axis[2] -
+			      bead_model[max_bead2].bead_coordinate.axis[2], 2)));
+	      printf("flags %s %s %s %s\n",
+		     bead_model[max_bead1].bead_computed_radius > TOLERANCE ? "Y" : "N",
+		     bead_model[max_bead2].bead_computed_radius > TOLERANCE ? "Y" : "N",
+		     (bead_model[max_bead1].bead_computed_radius + 
+		      bead_model[max_bead2].bead_computed_radius -
+		      sqrt(
+			   pow(bead_model[max_bead1].bead_coordinate.axis[0] -
+			       bead_model[max_bead2].bead_coordinate.axis[0], 2) +
+			   pow(bead_model[max_bead1].bead_coordinate.axis[1] -
+			       bead_model[max_bead2].bead_coordinate.axis[1], 2) +
+			   pow(bead_model[max_bead1].bead_coordinate.axis[2] -
+			       bead_model[max_bead2].bead_coordinate.axis[2], 2)) > TOLERANCE) ? "Y" : "N",
+		     bead_model[max_bead1].bead_computed_radius > TOLERANCE &&
+		     bead_model[max_bead2].bead_computed_radius > TOLERANCE &&
+		     (bead_model[max_bead1].bead_computed_radius + 
+		      bead_model[max_bead2].bead_computed_radius -
+		      sqrt(
+			   pow(bead_model[max_bead1].bead_coordinate.axis[0] -
+			       bead_model[max_bead2].bead_coordinate.axis[0], 2) +
+			   pow(bead_model[max_bead1].bead_coordinate.axis[1] -
+			       bead_model[max_bead2].bead_coordinate.axis[1], 2) +
+			   pow(bead_model[max_bead1].bead_coordinate.axis[2] -
+			       bead_model[max_bead2].bead_coordinate.axis[2], 2)) > TOLERANCE) ? "Y" : "N");		     
+	    } while (
+		     bead_model[max_bead1].bead_computed_radius > TOLERANCE &&
+		     bead_model[max_bead2].bead_computed_radius > TOLERANCE &&
+		     (bead_model[max_bead1].bead_computed_radius + 
+		      bead_model[max_bead2].bead_computed_radius -
+		      sqrt(
+			   pow(bead_model[max_bead1].bead_coordinate.axis[0] -
+			       bead_model[max_bead2].bead_coordinate.axis[0], 2) +
+			   pow(bead_model[max_bead1].bead_coordinate.axis[1] -
+			       bead_model[max_bead2].bead_coordinate.axis[1], 2) +
+			   pow(bead_model[max_bead1].bead_coordinate.axis[2] -
+			       bead_model[max_bead2].bead_coordinate.axis[2], 2)) > TOLERANCE));
+	    printf("out of while 1\n");
+	  } // if max intersection length > TOLERANCE
+	} while(count);
+	printf("out of while 2\n");
+      } else {
+	// simultaneous reduction
+	do {
+	  // write_bead_tsv(QString("bead_model_br-%1-%2.tsv").arg(k).arg(iter), &bead_model);
+	  // write_bead_spt(QString("bead_model-br-%1-%2").arg(k).arg(iter), &bead_model);
+#if defined(DEBUG1) || defined(DEBUG)
+	  printf("processing simultaneous radial reduction iteration %d\n", iter++);
+#endif
+	  if(iter > 10000) {
+	    printf("too many interations\n");
+	    exit(-1);
+	  }
+	  max_intersection_length = 0;
+	  pairs.clear();
+	  count = 0;
+	  for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
+	    reduced[i] = false;
+	    if (last_reduced[i]) {
+	      for (unsigned int j = i + 1; j < bead_model.size(); j++) {
+#if defined(DEBUG)
+		printf("checking radial stage %d beads %d %d on chains %d %d exposed code %d %d active %s %s max il %f\n",
+		       k, i, j,
+		       bead_model[i].chain,
+		       bead_model[j].chain,
+		       bead_model[i].exposed_code,
+		       bead_model[j].exposed_code,
+		       bead_model[i].active ? "Y" : "N",
+		       bead_model[j].active ? "Y" : "N",
+		       max_intersection_length
+		       );
+#endif
+		if (last_reduced[j] &&
+		    bead_model[i].active &&
+		    bead_model[j].active &&
+		    (((methods[k] & RR_SC) &&
+		      bead_model[i].chain == 1 &&
+		      bead_model[j].chain == 1) ||
+		     ((methods[k] & RR_MC) &&
+		      bead_model[i].chain == 0 &&
+		      bead_model[j].chain == 0) ||
+		     ((methods[k] & RR_MCSC)
+		      // &&
+		      // (bead_model[i].chain != 1 ||
+		      // bead_model[j].chain != 1)))
+		      )) &&
+		    (((methods[k] & RR_EXPOSED) &&
+		      bead_model[i].exposed_code == 1 &&
+		      bead_model[j].exposed_code == 1) ||
+		     ((methods[k] & RR_BURIED) &&
+		      (bead_model[i].exposed_code != 1 ||
+		       bead_model[j].exposed_code != 1)) ||
+		     (methods[k] & RR_ALL))) {
+		  
+		  float separation = 
+		    bead_model[i].bead_computed_radius + 
+		    bead_model[j].bead_computed_radius -
+		    sqrt(
+			 pow(bead_model[i].bead_coordinate.axis[0] -
+			     bead_model[j].bead_coordinate.axis[0], 2) +
+			 pow(bead_model[i].bead_coordinate.axis[1] -
+			     bead_model[j].bead_coordinate.axis[1], 2) +
+			 pow(bead_model[i].bead_coordinate.axis[2] -
+			     bead_model[j].bead_coordinate.axis[2], 2));
+		  
+#if defined(DEBUG)
+		  printf("beads %d %d with radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] have a sep of %f\n",
+			 i, j,
+			 bead_model[i].bead_computed_radius,
+			 bead_model[j].bead_computed_radius,
+			 bead_model[i].bead_coordinate.axis[0],
+			 bead_model[i].bead_coordinate.axis[1],
+			 bead_model[i].bead_coordinate.axis[2],
+			 bead_model[j].bead_coordinate.axis[0],
+			 bead_model[j].bead_coordinate.axis[1],
+			 bead_model[j].bead_coordinate.axis[2],
+			 separation);
+#endif		
+		  if (separation <= TOLERANCE) {
+		    continue;
+		  }
+		  
+		  if (separation > max_intersection_length) {
+		    max_intersection_length = separation;
+		    max_bead1 = i;
+		    max_bead2 = j;
+		  }
+		  pair.i = i;
+		  pair.j = j;
+		  pair.separation = separation;
+		  pairs.push_back(pair);
+		  count++;
+		}
+	      }
+	    } // if last_reduced[i]
+	  }
+	  if (max_intersection_length > TOLERANCE) {	    
+#if defined(DEBUG1) || defined(DEBUG)
+	    printf("processing radial reduction sync iteration %d pairs to process %d\n", iter, count);
+#endif
+	    for (unsigned int i = 0; i < pairs.size(); i++) {
+	      if (!reduced[pairs[i].i]) {
+		int use_bead = pairs[i].i;
+		if ( !(methods[k] & RR_MCSC) ||
+		     bead_model[use_bead].exposed_code != 1 ||
+		     bead_model[use_bead].chain == 0 ||
+		     (bead_model[pairs[i].i].chain == 1 &&
+		      bead_model[pairs[i].j].chain == 1) ) {
+#if defined(DEBUG)
+		  printf("reducing beads %d\n", use_bead);
+#endif
+		  reduced[use_bead] = true;
+		  reduced_any[use_bead] = true;
+		  float radius_delta = bead_model[use_bead].bead_computed_radius * rr_overlap[k];
+		  if (radius_delta < TOLERANCE) {
+		    radius_delta = TOLERANCE;
+		  }
+		  if (methods[k] & OUTWARD_TRANSLATION ||
+		      (bead_model[pairs[i].i].chain == 1 &&
+		       bead_model[pairs[i].j].chain == 1 &&
+		       methods[0] & OUTWARD_TRANSLATION) ) {
+#if defined(DEBUG)
+		    printf("outward translation from [%f,%f,%f] to ",
+			   bead_model[use_bead].bead_coordinate.axis[0],
+			   bead_model[use_bead].bead_coordinate.axis[1],
+			   bead_model[use_bead].bead_coordinate.axis[2]);
+#endif
+		    if (!bead_model[use_bead].normalized_ot_is_valid) {
+		      float norm = 0.0;
+		      for (unsigned int l = 0; l < 3; l++) {
+			bead_model[use_bead].normalized_ot.axis[l] = 
+			  bead_model[use_bead].bead_coordinate.axis[l] - 
+			  molecular_cog[l];
+			norm += 
+			  bead_model[use_bead].normalized_ot.axis[l] *
+			  bead_model[use_bead].normalized_ot.axis[l];
+		      }
+		      norm = sqrt(norm);
+		      if (norm) {
+			for (unsigned int l = 0; l < 3; l++) {
+			  bead_model[use_bead].normalized_ot.axis[l] /= norm;
+			  bead_model[use_bead].bead_coordinate.axis[l] += 
+			    radius_delta * bead_model[use_bead].normalized_ot.axis[l];
+			}
+			bead_model[use_bead].normalized_ot_is_valid = true;
+		      } else {
+			printf("wow! bead %d is at the molecular cog!\n", use_bead);
+		      }
+		    } else {
+		      for (unsigned int l = 0; l < 3; l++) {
+			bead_model[use_bead].bead_coordinate.axis[l] += 
+			  radius_delta * bead_model[use_bead].normalized_ot.axis[l];
+		      }
+		    }
+#if defined(DEBUG)
+		    printf(" [%f,%f,%f]\n",
+			   bead_model[use_bead].bead_coordinate.axis[0],
+			   bead_model[use_bead].bead_coordinate.axis[1],
+			   bead_model[use_bead].bead_coordinate.axis[2]);
+#endif
+		  }
+		  bead_model[use_bead].bead_computed_radius -= radius_delta;
+		  if (bead_model[use_bead].bead_computed_radius <= TOLERANCE) {
+		    // this is to ignore this bead for further radial reduction regardless
+		    bead_model[use_bead].bead_computed_radius = TOLERANCE;
+		    reduced[use_bead] = false;
+		  }
+		}
+	      }
+	      if (!reduced[pairs[i].j]) {
+		int use_bead = pairs[i].j;
+		if ( !(methods[k] & RR_MCSC) ||
+		     bead_model[use_bead].chain == 0 ||
+		     bead_model[use_bead].exposed_code != 1 ||
+		     (bead_model[pairs[i].i].chain == 1 &&
+		      bead_model[pairs[i].j].chain == 1) ) {
+#if defined(DEBUG)
+		  printf("reducing beads %d\n", use_bead);
+#endif
+		  reduced[use_bead] = true;
+		  reduced_any[use_bead] = true;
+		  float radius_delta = bead_model[use_bead].bead_computed_radius * rr_overlap[k];
+		  if (radius_delta < TOLERANCE) {
+		    radius_delta = TOLERANCE;
+		  }
+		  if (methods[k] & OUTWARD_TRANSLATION ||
+		      (bead_model[pairs[i].i].chain == 1 &&
+		       bead_model[pairs[i].j].chain == 1 &&
+		       methods[0] & OUTWARD_TRANSLATION) ) {
+#if defined(DEBUG)
+		    printf("outward translation from [%f,%f,%f] to ",
+			   bead_model[use_bead].bead_coordinate.axis[0],
+			   bead_model[use_bead].bead_coordinate.axis[1],
+			   bead_model[use_bead].bead_coordinate.axis[2]);
+#endif
+		    if (!bead_model[use_bead].normalized_ot_is_valid) {
+		      float norm = 0.0;
+		      for (unsigned int l = 0; l < 3; l++) {
+			bead_model[use_bead].normalized_ot.axis[l] = 
+			  bead_model[use_bead].bead_coordinate.axis[l] - 
+			  molecular_cog[l];
+			norm += 
+			  bead_model[use_bead].normalized_ot.axis[l] *
+			  bead_model[use_bead].normalized_ot.axis[l];
+		      }
+		      norm = sqrt(norm);
+		      if (norm) {
+			for (unsigned int l = 0; l < 3; l++) {
+			  bead_model[use_bead].normalized_ot.axis[l] /= norm;
+			  bead_model[use_bead].bead_coordinate.axis[l] += 
+			    radius_delta * bead_model[use_bead].normalized_ot.axis[l];
+			}
+			bead_model[use_bead].normalized_ot_is_valid = true;
+		      } else {
+			printf("wow! bead %d is at the molecular cog!\n", use_bead);
+		      }
+		    } else {
+		      for (unsigned int l = 0; l < 3; l++) {
+			bead_model[use_bead].bead_coordinate.axis[l] += 
+			  radius_delta * bead_model[use_bead].normalized_ot.axis[l];
+		      }
+		    }
+#if defined(DEBUG)
+		    printf(" [%f,%f,%f]\n",
+			   bead_model[use_bead].bead_coordinate.axis[0],
+			   bead_model[use_bead].bead_coordinate.axis[1],
+			   bead_model[use_bead].bead_coordinate.axis[2]);
+#endif
+		  }
+		  bead_model[use_bead].bead_computed_radius -= radius_delta;
+		  if (bead_model[use_bead].bead_computed_radius <= TOLERANCE) {
+		    // this is to ignore this bead for further radial reduction regardless
+		    bead_model[use_bead].bead_computed_radius = TOLERANCE;
+		    reduced[use_bead] = false;
+		  }
+		}
+	      }
+	    }
+	  }
+	  last_reduced = reduced;
+	  // write_bead_tsv(QString("bead_model_ar-%1-%2.tsv").arg(k).arg(iter), &bead_model);
+	  // write_bead_spt(QString("bead_model-ar-%1-%2").arg(k).arg(iter), &bead_model);
+	} while(count);
+      }
+#if defined(TIMING)
+      gettimeofday(&end_tv, NULL);
+      printf("radial reduction %d time %lu\n",
+	     k,
+	     1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
+	     start_tv.tv_usec);
+      fflush(stdout);
+#endif
+      // recompute volumes
+      for (unsigned int i = 0; i < bead_model.size(); i++) {
+	if (reduced_any[i]) {
+#if defined(DEBUG1) || defined(DEBUG)
+	  printf("recomputing volume bead %d\n", i);
+#endif
+	  bead_model[i].bead_ref_volume = 
+	    (4.0*M_PI/3.0) * pow(bead_model[i].bead_computed_radius, 3.0);
+	}
+      }
+    }
+    write_bead_tsv(QString("bead_model_rr-%1.tsv").arg(k), &bead_model);
+    write_bead_spt(QString("bead_model_rr-%1").arg(k), &bead_model);
+  } // methods
+  write_bead_tsv("bead_model_end.tsv", &bead_model);
+  write_bead_spt("bead_model_end", &bead_model);
+  return 0;
+}
+
+void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model) {
+  {
+    FILE *f = fopen(fname.ascii(), "w");
+    for (unsigned int i = 0; i < model->size(); i++) {
+      if ((*model)[i].active) {
+	fwrite(&((*model)[i].bead_cog_coordinate.axis[0]), sizeof(float), 3, f);
+	float color[3] = { .2, .2, ((*model)[i].all_beads.size() / 5) > 1 ? 1 : ((*model)[i].all_beads.size() / 5) };
+	fwrite(color, sizeof(float), 3, f);
+      fwrite(&(*model)[i].bead_computed_radius, sizeof(float), 1, f);
+      }
+    }
+    fclose(f);
+  }
+  {
+    FILE *f = fopen(QString("%1-info").arg(fname).ascii(), "w");
+    for (unsigned int i = 0; i < model->size(); i++) {
+      if ((*model)[i].active) {
+      float color[3] = { .2, .2, ((*model)[i].all_beads.size() / 5) > 1 ? 1 : ((*model)[i].all_beads.size() / 5) };
+      fprintf(f,"%f %f %f %f %f %f %f\n",
+	      (*model)[i].bead_coordinate.axis[0],
+	      (*model)[i].bead_coordinate.axis[1],
+	      (*model)[i].bead_coordinate.axis[2],
+	      color[0],
+	      color[1],
+	      color[2],
+	      (*model)[i].bead_computed_radius);
+      }
+    }
+    fclose(f);
+  }
+}
+
+static int get_color(PDB_atom *a) {
+  int color = a->bead_color;
+  if (a->all_beads.size()) {
+    color = 7;
+  }
+  if (a->exposed_code != 1) {
+    color = 6;
+  }
+  if (a->bead_computed_radius <= 0.001) {
+    color = 0;
+  }
+  //  color = a->bead_number % 15;
+  return color;
+}
+  
+void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
+
+  char *colormap[] = 
+    {
+      "black",        // 0 black
+      "blue",         // 1 blue
+      "greenblue",    // 2 greenblue
+      "cyan",         // 3 cyan
+      "red",          // 4 red
+      "magenta",      // 5 magenta
+      "orange",       // 6 orange
+      "white",        // 7 white
+      "redorange",    // 8 redorange
+      "purple",       // 9 purple
+      "green",        // 10 green
+      "cyan",         // 11 cyan
+      "redorange",    // 12 redorange
+      "violet",       // 13 violet
+      "yellow",       // 14 yellow
+    };
+
+#if defined(DEBUG)
+  printf("write bead spt %s\n", fname.ascii()); fflush(stdout);
+#endif
+
+  FILE *fspt = fopen(QString("%1.spt").arg(fname).ascii(), "w");
+  FILE *fbms = fopen(QString("%1.bms").arg(fname).ascii(), "w");
+  FILE *frmc = fopen(QString("%1.rmc").arg(fname).ascii(), "w");
+  FILE *frmc1 = fopen(QString("%1.rmc1").arg(fname).ascii(), "w");
+  int beads = 0;
+  
+  float max_radius = 0;
+  for (unsigned int i = 0; i < model->size(); i++) {
+    if ((*model)[i].active) {
+      beads++;
+      if (max_radius < (*model)[i].bead_computed_radius) {
+	max_radius = (*model)[i].bead_computed_radius;
+      }
+    }
+  }
+
+# define MAX_RADIUS 10.0
+  float scaling = 1.0;
+  if(max_radius > MAX_RADIUS) {
+    scaling = max_radius / MAX_RADIUS;
+  }
+  scaling = 5.0;
+  fprintf(fbms, 
+	  "%d\n%s\n", 
+	  beads, 
+	  fname.ascii() 
+	  );
+  fprintf(fspt, 
+	  "load xyz %s\nselect all\nwireframe off\nset background white\n",
+	  QString("%1.bms").arg(fname).ascii() 
+	  );
+	  
+  int atomno = 0;
+  for (unsigned int i = 0; i < model->size(); i++) {
+    if ((*model)[i].active) {
+      if ((*model)[i].bead_color >= (sizeof(colormap) / sizeof(char))) {
+	printf("ERROR: bead color for bead %u is to large %u\n", 
+	       (*model)[i].serial,
+	       get_color(&(*model)[i])); fflush(stdout);
+      }
+      fprintf(fbms, 
+	      "Pb %.2f %.2f %.2f\n", 
+	      (*model)[i].bead_coordinate.axis[0] / scaling,
+	      (*model)[i].bead_coordinate.axis[1] / scaling,
+	      (*model)[i].bead_coordinate.axis[2] / scaling
+	      );
+      fprintf(fspt,
+	      "select atomno=%d\nspacefill %.2f\ncolour %s\n",
+	      atomno++,
+	      (*model)[i].bead_computed_radius / scaling,
+	      colormap[get_color(&(*model)[i])]
+	      );
+      fprintf(frmc,
+	      "%.6f\t%u\t%d\n",
+	      (*model)[i].bead_computed_radius,
+	      (int)(*model)[i].bead_mw,
+	      get_color(&(*model)[i]));
+      unsigned int tmp_serial = (*model)[i].serial;
+      QString residues = 
+	(*model)[i].resName + "." + 
+	((*model)[i].chainID == " " ? "" : ((*model)[i].chainID + "."));
+      // a compiler error forced this kludge using tmp_serial
+      //	+ QString("%1").arg((*model)[i].serial);
+      residues += QString("%1").arg(tmp_serial);
+
+      for (unsigned int j = 0; j < (*model)[i].all_beads.size(); j++) 
+      {
+	unsigned int tmp_serial = (*model)[i].all_beads[j]->serial;
+	residues += "," + 
+	  (*model)[i].all_beads[j]->resName + "." + 
+	  ((*model)[i].all_beads[j]->chainID == " " ? "" : ((*model)[i].all_beads[j]->chainID + "."));
+	// a compiler error forced this kludge using tmp_serial
+	//  + QString("%1").arg((*model)[i].all_beads[j].serial);
+	residues += QString("%1").arg(tmp_serial);
+      }
+      fprintf(frmc1,
+	      "%.6f\t%u\t%d\t%d\t%s\n",
+	      (*model)[i].bead_computed_radius,
+	      (int)(*model)[i].bead_mw,
+	      get_color(&(*model)[i]),
+	      (*model)[i].serial,
+	      residues.ascii()
+	      );
+    }
+  }
+  fclose(fspt);
+  fclose(fbms);
+  fclose(frmc);
+  fclose(frmc1);
+}
+  
+void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
+  FILE *f = fopen(fname.ascii(), "w");
+  fprintf(f, "name~residue~chainID~"
+	 "position~active~radius~asa~mw~"
+	 "bead #~chain~serial~is_bead~bead_asa~visible~code/color~"
+	 "bead mw~position controlled?~bead positioner~baric method~bead hydration~bead color~"
+	 "bead ref volume~bead ref mw~bead computed radius~"
+	 "position_coordinate~cog position~use position~sizeof(parents)~beads referenced\n");
+  
+  for (unsigned int i = 0; i < model->size(); i++) {
+    if ((*model)[i].active) {
+      QString beads_referenced = "";
+      for (unsigned int j = 0; j < (*model)[i].all_beads.size(); j++) {
+
+	beads_referenced += 
+	  QString("%1-%2-%3-%4;").
+	  arg(((*model)[i].all_beads)[j]->serial).
+	  arg(((*model)[i].all_beads)[j]->name).
+	  arg(((*model)[i].all_beads)[j]->resName).
+	  arg(((*model)[i].all_beads)[j]->chainID);
+	
+	  //	  ((*model)[i].all_beads)[j]->serial + "-" +
+	  //	  ((*model)[i].all_beads)[j]->name + "-" +
+	  //	  ((*model)[i].all_beads)[j]->resName + "-" +
+	  //	  ((*model)[i].all_beads)[j]->chainID + ";";
+      }
+      fprintf(f, 
+	    "%s~%s~%s~"
+	    "[%f,%f,%f]~%s~%f~%f~%f~"
+	    "%d~%d~%d~%s~%f~%s~"
+	    "%d~%f~%s~%s~%d~%u~%u~"
+	    "%f~%f~%f~"
+	    "[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]~%u~%s\n",
+
+	    (*model)[i].name.ascii(),
+	    (*model)[i].resName.ascii(),
+	    (*model)[i].chainID.ascii(),
+	    
+	    (*model)[i].coordinate.axis[0],
+	    (*model)[i].coordinate.axis[1],
+	    (*model)[i].coordinate.axis[2],
+	    (*model)[i].active ? "Y" : "N",
+	    (*model)[i].radius,
+	    (*model)[i].asa,
+	    (*model)[i].mw,
+	    
+	    (*model)[i].bead_number,
+	    (*model)[i].chain,
+	    (*model)[i].serial,
+	    (*model)[i].is_bead ? "Y" : "N",
+	    (*model)[i].bead_asa,
+	    (*model)[i].visibility ? "Y" : "N",
+	    
+	    (*model)[i].exposed_code,
+	    (*model)[i].bead_mw,
+	    (*model)[i].bead_positioner ? "Y" : "N",
+	    (*model)[i].active ? ((*model)[i].p_atom->positioner ? "Y" : "N") : "Inactive",
+	    (*model)[i].placing_method,
+	    (*model)[i].bead_hydration,
+	    (*model)[i].bead_color,
+	    
+	    (*model)[i].bead_ref_volume,
+	    (*model)[i].bead_ref_mw,
+	    (*model)[i].bead_computed_radius,
+	    
+	    (*model)[i].bead_position_coordinate.axis[0],
+	    (*model)[i].bead_position_coordinate.axis[1],
+	    (*model)[i].bead_position_coordinate.axis[2],
+	    (*model)[i].bead_cog_coordinate.axis[0],
+	    (*model)[i].bead_cog_coordinate.axis[1],
+	    (*model)[i].bead_cog_coordinate.axis[2],
+	    (*model)[i].bead_coordinate.axis[0],
+	    (*model)[i].bead_coordinate.axis[1],
+	    (*model)[i].bead_coordinate.axis[2],
+	      (*model)[i].all_beads.size(),
+	      beads_referenced.ascii()
+	    ); 
+    }
+  }
+  fclose(f);
 }
 
 void US_Hydrodyn::bead_check()
 {
-	// recheck beads here
+  // recheck beads here
+  
+  puts("bead recheck");
+  PDB_chain tmp_chain;
+  PDB_model tmp_model;
+  tmp_chain.atom = bead_model;
+  tmp_model.molecule.push_back(tmp_chain);
+  int retval = surfracer_main(asa.probe_radius, residue_list, &tmp_model, true);
+  if ( retval ) {
+    switch ( retval ) {
+    case US_SURFRACER_ERR_MISSING_RESIDUE:
+      {
+	fprintf(stderr, "bead recheck: missing residue error\n");
+	return;
+	break;
+      }
+    case US_SURFRACER_ERR_MISSING_ATOM:
+      {
+	fprintf(stderr, "bead recheck: missing atom error\n");
+	return;
+	break;
+      }
+    case US_SURFRACER_ERR_MEMORY_ALLOC:
+      {
+	fprintf(stderr, "bead recheck: memory alloc error\n");
+	return;
+	break;
+      }
+    default:
+      {
+	// unknown error
+	fprintf(stderr, "bead recheck: unknown error %d\n", retval);
+	return;
+	break;
+      }
+    }
+  }
+
 }
 
 void US_Hydrodyn::select_model(int val)
@@ -638,25 +2370,35 @@ void US_Hydrodyn::select_model(int val)
 
 void US_Hydrodyn::visualize()
 {
+  puts("run rasmol");
+  QString rascmd = QString("$ULTRASCAN/bin") +
+#if defined(BIN64)
+    QString("64") +
+#endif
+    QString("/rasmol -script bead_model_end.spt > /dev/null &");
+  system(rascmd.ascii());
 	// visualize bead model with rasmol etc.
 }
 
 int US_Hydrodyn::calc_somo()
 {
-	if (asa.recheck_beads)
-	{
-		bead_check();
-	}
-	if (asa.calculation)
-	{
-		compute_asa();
-	}
+  if (!residue_list.size() ||
+      !model_vector.size()) {
+    fprintf(stderr, "calculations can not be run until residue & pdb files are read!\n");
+    return -1;
+  }
+  compute_asa();
+  if (asa.recheck_beads)
+  {
+    puts("recheck beads disabled");
+    // bead_check();
+  }
 
-	// calculate bead model and generate hydrodynamics calculation output
-	// if successful, enable follow-on buttons:
-	pb_visualize->setEnabled(true);
-	pb_calc_hydro->setEnabled(true);
-	return 0;
+  // calculate bead model and generate hydrodynamics calculation output
+  // if successful, enable follow-on buttons:
+  pb_visualize->setEnabled(true);
+  pb_calc_hydro->setEnabled(true);
+  return 0;
 }
 
 void US_Hydrodyn::calc_hydro()
@@ -950,6 +2692,8 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 	temp_atom.altLoc = str1.mid(16, 1);
 
 	temp_atom.resName = str1.mid(17, 3);
+
+	temp_atom.chainID = str1.mid(21, 1);
 
 	str2 = str1.mid(22, 4);
 	temp_atom.resSeq = str2.toUInt();

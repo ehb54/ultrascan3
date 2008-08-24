@@ -66,6 +66,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		struct overlap_reduction buried_overlap;
 		double overlap_tolerance;
 
+		vector <PDB_atom> bead_model;
+
 		US_Config *USglobal;
 
 		QLabel *lbl_info;
@@ -152,6 +154,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void update_bead_model_file(const QString &);
 		void calc_hydro();
 		void show_hydro_results();
+		bool create_beads_normally;             // true = normal, false = atoms are beads
+		void write_bead_tsv(QString, vector <PDB_atom> *);
+		void write_bead_ebf(QString, vector <PDB_atom> *);
+		void write_bead_spt(QString, vector <PDB_atom> *);
 
 	protected slots:
 

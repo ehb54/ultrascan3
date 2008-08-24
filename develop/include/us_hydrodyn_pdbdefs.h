@@ -23,6 +23,7 @@ struct PDB_atom
 	QString name;
 	QString altLoc;
 	QString resName;
+        QString chainID;
 	unsigned int resSeq;
 	QString iCode;
 	struct point coordinate;
@@ -50,10 +51,22 @@ struct PDB_atom
         bool bead_positioner;             // true if an atom had a bead positioner
         float mw;
         float bead_mw;
+        float bead_cog_mw;                // mw of those atoms contributing to the bead_cog
 	point bead_position_coordinate;
 	point bead_cog_coordinate;
 	point bead_coordinate;
+        bool normalized_ot_is_valid;      // true if the normalized ot is valid computed
+        point normalized_ot;              // the ot
+	unsigned int bead_hydration;
+	unsigned int bead_color;
+        float bead_ref_volume;            // this is taken from the bead structure
+        float bead_ref_mw;                // ditto
+        float bead_computed_radius;       // from ref_volume
+        float bead_actual_radius;         // used for radial reduction % computation, does not get reduced
 	int placing_method;	          // baric method (see struct bead->placing method, -1 undefined
+
+  //        float vol_intersection            // temporary value used in popping
+        vector <struct PDB_atom *> all_beads;  // this is used to keep track of beads that have been popped together
 };
 
 struct PDB_chain	// chain in PDB file

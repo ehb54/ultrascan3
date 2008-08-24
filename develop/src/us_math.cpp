@@ -1161,3 +1161,52 @@ int __fpclassifyf (float x)
 }
 #endif // WIN32
 
+float int_vol_2sphere(float r1, float r2, float d) {
+  // r1 & r2 are radii of spheres, d is distance between centers
+  // returns volume
+  float tmp;
+
+#if defined(DEBUG)
+  printf("r1 %f r2 %f d %f\n", r1, r2, d);
+#endif
+
+  if (d > r1 + r2) {
+    // no intersection
+#if defined(DEBUG)
+    puts("no intersection");
+#endif
+    return 0;
+  }
+
+  if (r1 < r2) {
+    tmp = r2;
+    r2 = r1;
+    r1 = tmp;
+  }
+
+  if (d + r2 < r1) {
+    // smaller is fully subsumed
+#if defined(DEBUG)
+    puts("smaller is fully subsumed");
+#endif
+    return (4.0/3) * M_PI * pow(r2,3);
+  }
+
+  float cy = (d + (r1*r1 - r2*r2)/d) * .5;
+
+  if (d - r2 > cy || r1 < cy) {
+    fprintf(stderr, "error: range inconsistancy! %f %f %f\n", d - r2, cy, r1);
+    exit(-1);
+  }
+
+#if defined(DEBUG)
+  printf("cy %f\n", cy);
+#endif
+
+  float vol = 
+    (M_PI / 3.0) * 
+    ((2.0 * r2 + d - cy) * (cy - d + r2) * (cy - d + r2) +
+     (2.0 * r1 + cy) * (r1 - cy) * (r1 - cy));
+
+  return vol;
+}
