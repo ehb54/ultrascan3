@@ -361,6 +361,36 @@ bool US_DB_Veloc::insertCompressedData()
 
 	db_connect();
 
+	// Check for duplicates
+	
+	QString q;
+	int     exists     = 0;
+	int     VelocRstID = exp_rst.expRstID;
+	
+	q.sprintf( "SELECT COUNT( VelocRstID ) FROM tblVelocResult "
+	           "WHERE VelocRstID = %d;",  VelocRstID );
+				
+	QSqlQuery check( q );
+				
+	if ( check.isActive() )
+	{
+		if ( check.next() ) exists = check.value( 0 ).toInt();
+	}
+
+	if ( exists > 0 )
+	{
+		int answer =  QMessageBox::question( this, tr( "UltraScan Warning" ), 
+			tr( "The selected result already exists in the database.  Overwrite?" ), 
+			QMessageBox::Yes, QMessageBox::Cancel );
+	
+		if ( answer == QMessageBox::Cancel )
+		{
+			cleanCompressedFiles();
+			pd->close();
+			return false;
+		}
+	}
+
 	QSqlCursor cursor( "tblVelocResultData" );
 	cursor.setMode( QSqlCursor::Insert );
 
@@ -394,21 +424,37 @@ bool US_DB_Veloc::insertCompressedData()
 
 	// Insert data to DB table tblVelocResult
 
-	QString q = "INSERT INTO tblVelocResult "
-	            "(VelocRstID, Date, RunID, InvestigatorID, DataID";
+	if ( exists > 0 )
+	{
+		q = "UPDATE tblVelocResult SET "
+				"Date='"          + exp_rst.date                     + "', "
+				"RunID='"         + run_id                           + "', "
+				"InvestigatorID=" + QString::number( exp_rst.invID ) + ", "
+				"DataID="         + QString::number( DataID );
 
-	if ( runrequestID > 0 ) q += ", RunRequestID";
+		if (  runrequestID > 0 ) 
+			q += ", " + QString::number( runrequestID );
 
-	q += ") VALUES("
-	  + QString::number( exp_rst.expRstID ) + ", "
-		"'"	+ exp_rst.date                    + "', "
-		"'"	+ run_id                          + "', "
-		+ QString::number( exp_rst.invID )    + ", "
-		+ QString::number( DataID );
+		q += " WHERE VelocRstID=" + QString::number( exp_rst.expRstID );
+	}
+	else
+	{
+		q = "INSERT INTO tblVelocResult "
+		    "(VelocRstID, Date, RunID, InvestigatorID, DataID";
 
-	if ( runrequestID > 0 ) q += ", " + QString::number( runrequestID ); 
+		if ( runrequestID > 0 ) q += ", RunRequestID";
 
-	q += ");";
+		q += ") VALUES("
+		  + QString::number( exp_rst.expRstID ) + ", "
+			"'"	+ exp_rst.date                    + "', "
+			"'"	+ run_id                          + "', "
+			+ QString::number( exp_rst.invID )    + ", "
+			+ QString::number( DataID );
+
+		if ( runrequestID > 0 ) q += ", " + QString::number( runrequestID ); 
+
+		q += ");";
+	}
 
 	QSqlQuery target;
 	bool      finished = target.exec( q );
