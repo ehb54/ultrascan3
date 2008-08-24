@@ -1,0 +1,82 @@
+#ifndef US_HYDRODYN_ASA_H
+#define US_HYDRODYN_ASA_H
+
+// QT defs:
+
+#include <qlabel.h>
+#include <qstring.h>
+#include <qlayout.h>
+#include <qpushbutton.h>
+#include <qframe.h>
+#include <qcheckbox.h>
+#include <qwt_counter.h>
+
+#include "us_util.h"
+
+//standard C and C++ defs:
+
+#include <vector>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
+using namespace std;
+
+struct asa_options
+{
+	float probe_radius;
+	float threshold;
+	float threshold_percent;
+	bool calculation;
+	bool recheck_beads;
+};
+
+class US_EXTERN US_Hydrodyn_ASA : public QFrame
+{
+	Q_OBJECT
+
+	public:
+		US_Hydrodyn_ASA(struct asa_options *, bool *, QWidget *p = 0, const char *name = 0);
+		~US_Hydrodyn_ASA();
+
+	public:
+		struct asa_options *asa;
+		bool *asa_widget;
+
+		US_Config *USglobal;
+
+		QLabel *lbl_info;
+		QLabel *lbl_probe_radius;
+		QLabel *lbl_asa_threshold;
+		QLabel *lbl_asa_threshold_percent;
+		
+		QwtCounter *cnt_probe_radius;
+		QwtCounter *cnt_asa_threshold;
+		QwtCounter *cnt_asa_threshold_percent;
+
+		QCheckBox *cb_asa_calculation;
+		QCheckBox *cb_bead_check;
+
+		QPushButton *pb_help;
+		QPushButton *pb_cancel;
+
+	private slots:
+		
+		void setupGUI();
+		void update_probe_radius(double);
+		void update_asa_threshold(double);
+		void update_asa_threshold_percent(double);
+		void set_asa_calculation();
+		void set_bead_check();
+		void cancel();
+		void help();
+	
+	protected slots:
+
+		void closeEvent(QCloseEvent *);
+};
+
+
+
+#endif
+

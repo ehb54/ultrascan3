@@ -10,6 +10,11 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	atom_widget = false;
 	residue_widget = false;
 	hybrid_widget = false;
+	asa_widget = false;
+	misc_widget = false;
+	hydro_widget = false;
+	overlap_widget = false;
+	bead_output_widget = false;
 	setupGUI();
 	global_Xpos += 30;
 	global_Ypos += 30;
@@ -23,26 +28,8 @@ US_Hydrodyn::~US_Hydrodyn()
 void US_Hydrodyn::setupGUI()
 {
 	int minHeight1 = 30;
-	residue_filename = "";
-	sidechain_OR = new US_Hydrodyn_OR(&sidechain_overlap, this);
-	mainchain_OR = new US_Hydrodyn_OR(&mainchain_overlap, this);
-	buried_OR = new US_Hydrodyn_OR(&buried_overlap, this);
-	//buried_OR->cnt_fuse->setEnabled(false);
-	//buried_OR->cb_fuse->setEnabled(false);
-
-	lbl_info = new QLabel(tr("Bead Overlap Reduction Options:"), this);
-	Q_CHECK_PTR(lbl_info);
-	lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-	lbl_info->setAlignment(AlignCenter|AlignVCenter);
-	lbl_info->setMinimumHeight(minHeight1);
-	lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-	lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
-
-	tw_overlap = new QTabWidget(this);
-	tw_overlap->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	tw_overlap->addTab(sidechain_OR, "Side chain beads");
-	tw_overlap->addTab(mainchain_OR, "Main and side chain beads");
-	tw_overlap->addTab(buried_OR, "Buried beads");
+	bead_output.filename = "";
+	bead_model_file = "";
 
 	pb_select_residue_file = new QPushButton(tr("Select Lookup Table"), this);
 	Q_CHECK_PTR(pb_select_residue_file);
@@ -57,6 +44,20 @@ void US_Hydrodyn::setupGUI()
 	pb_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
 	pb_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_somo, SIGNAL(clicked()), SLOT(calc_somo()));
+
+	pb_calc_hydro = new QPushButton(tr("Calculate Hydrodynamics"), this);
+	Q_CHECK_PTR(pb_calc_hydro);
+	pb_calc_hydro->setMinimumHeight(minHeight1);
+	pb_calc_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_calc_hydro->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_calc_hydro, SIGNAL(clicked()), SLOT(calc_hydro()));
+
+	pb_show_hydro_results = new QPushButton(tr("Show Hydrodynamic Calculations"), this);
+	Q_CHECK_PTR(pb_show_hydro_results);
+	pb_show_hydro_results->setMinimumHeight(minHeight1);
+	pb_show_hydro_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_show_hydro_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_show_hydro_results, SIGNAL(clicked()), SLOT(show_hydro_results()));
 
 	pb_visualize = new QPushButton(tr("Visualize Bead Model"), this);
 	Q_CHECK_PTR(pb_visualize);
@@ -79,6 +80,21 @@ void US_Hydrodyn::setupGUI()
 	pb_load_pdb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_load_pdb, SIGNAL(clicked()), SLOT(load_pdb()));
 
+	pb_load_bead_model = new QPushButton(tr("Load Bead Model File"), this);
+	Q_CHECK_PTR(pb_load_bead_model);
+	pb_load_bead_model->setMinimumHeight(minHeight1);
+	pb_load_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_load_bead_model->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_load_bead_model, SIGNAL(clicked()), SLOT(load_bead_model()));
+
+	le_bead_model_file = new QLineEdit(this, "bead_model_file Line Edit");
+	le_bead_model_file->setText(" not selected ");
+	le_bead_model_file->setMinimumHeight(minHeight1);
+	le_bead_model_file->setAlignment(AlignCenter|AlignVCenter);
+	le_bead_model_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_bead_model_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	connect(le_bead_model_file, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_file(const QString &)));
+
 	lbl_pdb_file = new QLabel(tr(" not selected"),this);
 	lbl_pdb_file->setFrameStyle(QFrame::WinPanel|Sunken);
 	lbl_pdb_file->setAlignment(AlignCenter|AlignVCenter);
@@ -86,7 +102,7 @@ void US_Hydrodyn::setupGUI()
 	lbl_pdb_file->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
 	lbl_pdb_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-	lbl_model = new QLabel(tr(" Please select a Model:"), this);
+	lbl_model = new QLabel(tr(" Please select a PDB Structure:"), this);
 	Q_CHECK_PTR(lbl_model);
 	lbl_model->setAlignment(AlignLeft|AlignVCenter);
 	lbl_model->setMinimumHeight(minHeight1);
@@ -102,113 +118,56 @@ void US_Hydrodyn::setupGUI()
 	lb_model->setVScrollBarMode(QScrollView::Auto);
 	connect(lb_model, SIGNAL(selected(int)), this, SLOT(select_model(int)));
 
-	lbl_probe_radius = new QLabel(tr(" ASA Probe Radius (A): "), this);
-	Q_CHECK_PTR(lbl_probe_radius);
-	lbl_probe_radius->setAlignment(AlignLeft|AlignVCenter);
-	lbl_probe_radius->setMinimumHeight(minHeight1);
-	lbl_probe_radius->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_probe_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+	lbl_options = new QLabel(tr("Modify SOMO Options for:"), this);
+	Q_CHECK_PTR(lbl_options);
+	lbl_options->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+	lbl_options->setAlignment(AlignCenter|AlignVCenter);
+	lbl_options->setMinimumHeight(minHeight1);
+	lbl_options->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+	lbl_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-	cnt_probe_radius= new QwtCounter(this);
-	Q_CHECK_PTR(cnt_probe_radius);
-	cnt_probe_radius->setRange(0, 10, 0.01);
-	cnt_probe_radius->setValue(probe_radius);
-	cnt_probe_radius->setMinimumHeight(minHeight1);
-	cnt_probe_radius->setEnabled(true);
-	cnt_probe_radius->setNumButtons(3);
-	cnt_probe_radius->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cnt_probe_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(cnt_probe_radius, SIGNAL(valueChanged(double)), SLOT(update_probe_radius(double)));
+	lbl_somo = new QLabel(tr("Run SOMO Program:"), this);
+	Q_CHECK_PTR(lbl_somo);
+	lbl_somo->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+	lbl_somo->setAlignment(AlignCenter|AlignVCenter);
+	lbl_somo->setMinimumHeight(minHeight1);
+	lbl_somo->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+	lbl_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-	lbl_asa_threshold = new QLabel(tr(" ASA Threshold (A^2)): "), this);
-	Q_CHECK_PTR(lbl_asa_threshold);
-	lbl_asa_threshold->setAlignment(AlignLeft|AlignVCenter);
-	lbl_asa_threshold->setMinimumHeight(minHeight1);
-	lbl_asa_threshold->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_asa_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+	pb_show_asa = new QPushButton(tr("ASA Calculation"), this);
+	Q_CHECK_PTR(pb_show_asa);
+	pb_show_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_show_asa->setMinimumHeight(minHeight1);
+	pb_show_asa->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_show_asa, SIGNAL(clicked()), SLOT(show_asa()));
 
-	cnt_asa_threshold= new QwtCounter(this);
-	Q_CHECK_PTR(cnt_asa_threshold);
-	cnt_asa_threshold->setRange(0, 100, 0.1);
-	cnt_asa_threshold->setValue(asa_threshold);
-	cnt_asa_threshold->setMinimumHeight(minHeight1);
-	cnt_asa_threshold->setEnabled(true);
-	cnt_asa_threshold->setNumButtons(3);
-	cnt_asa_threshold->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cnt_asa_threshold->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(cnt_asa_threshold, SIGNAL(valueChanged(double)), SLOT(update_asa_threshold(double)));
+	pb_show_overlap = new QPushButton(tr("Overlap Reduction"), this);
+	Q_CHECK_PTR(pb_show_overlap);
+	pb_show_overlap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_show_overlap->setMinimumHeight(minHeight1);
+	pb_show_overlap->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_show_overlap, SIGNAL(clicked()), SLOT(show_overlap()));
 
-	lbl_asa_threshold_percent = new QLabel(tr(" Bead ASA Threshold %: "), this);
-	Q_CHECK_PTR(lbl_asa_threshold_percent);
-	lbl_asa_threshold_percent->setAlignment(AlignLeft|AlignVCenter);
-	lbl_asa_threshold_percent->setMinimumHeight(minHeight1);
-	lbl_asa_threshold_percent->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_asa_threshold_percent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+	pb_show_bead_output = new QPushButton(tr("Bead Model Output"), this);
+	Q_CHECK_PTR(pb_show_bead_output);
+	pb_show_bead_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_show_bead_output->setMinimumHeight(minHeight1);
+	pb_show_bead_output->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_show_bead_output, SIGNAL(clicked()), SLOT(show_bead_output()));
 
-	cnt_asa_threshold_percent= new QwtCounter(this);
-	Q_CHECK_PTR(cnt_asa_threshold_percent);
-	cnt_asa_threshold_percent->setRange(0, 100, 0.1);
-	cnt_asa_threshold_percent->setValue(asa_threshold_percent);
-	cnt_asa_threshold_percent->setMinimumHeight(minHeight1);
-	cnt_asa_threshold_percent->setEnabled(true);
-	cnt_asa_threshold_percent->setNumButtons(3);
-	cnt_asa_threshold_percent->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cnt_asa_threshold_percent->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(cnt_asa_threshold_percent, SIGNAL(valueChanged(double)), SLOT(update_asa_threshold_percent(double)));
+	pb_show_hydro = new QPushButton(tr("Hydrodynamic Calculations"), this);
+	Q_CHECK_PTR(pb_show_hydro);
+	pb_show_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_show_hydro->setMinimumHeight(minHeight1);
+	pb_show_hydro->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_show_hydro, SIGNAL(clicked()), SLOT(show_hydro()));
 
-	lbl_hydrovol = new QLabel(tr(" Hydration Water Vol. (A^3): "), this);
-	Q_CHECK_PTR(lbl_hydrovol);
-	lbl_hydrovol->setAlignment(AlignLeft|AlignVCenter);
-	lbl_hydrovol->setMinimumHeight(minHeight1);
-	lbl_hydrovol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_hydrovol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-	cnt_hydrovol= new QwtCounter(this);
-	Q_CHECK_PTR(cnt_hydrovol);
-	cnt_hydrovol->setRange(0, 100, 0.001);
-	cnt_hydrovol->setValue(hydrovol);
-	cnt_hydrovol->setMinimumHeight(minHeight1);
-	cnt_hydrovol->setEnabled(true);
-	cnt_hydrovol->setNumButtons(3);
-	cnt_hydrovol->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cnt_hydrovol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(cnt_hydrovol, SIGNAL(valueChanged(double)), SLOT(update_hydrovol(double)));
-
-	lbl_overlap_tolerance = new QLabel(tr(" Bead Overlap Tolerance: "), this);
-	Q_CHECK_PTR(lbl_overlap_tolerance);
-	lbl_overlap_tolerance->setAlignment(AlignLeft|AlignVCenter);
-	lbl_overlap_tolerance->setMinimumHeight(minHeight1);
-	lbl_overlap_tolerance->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_overlap_tolerance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-	cnt_overlap_tolerance= new QwtCounter(this);
-	Q_CHECK_PTR(cnt_overlap_tolerance);
-	cnt_overlap_tolerance->setRange(0, 1, 0.0001);
-	cnt_overlap_tolerance->setValue(overlap_tolerance);
-	cnt_overlap_tolerance->setMinimumHeight(minHeight1);
-	cnt_overlap_tolerance->setEnabled(true);
-	cnt_overlap_tolerance->setNumButtons(3);
-	cnt_overlap_tolerance->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cnt_overlap_tolerance->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(cnt_overlap_tolerance, SIGNAL(valueChanged(double)), SLOT(update_overlap_tolerance(double)));
-
-	cb_asa_calculation = new QCheckBox(this);
-	cb_asa_calculation->setText(tr(" Perform ASA Calculation "));
-	cb_asa_calculation->setChecked(asa_calculation);
-	cb_asa_calculation->setEnabled(true);
-	cb_asa_calculation->setMinimumHeight(minHeight1);
-	cb_asa_calculation->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_asa_calculation->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(cb_asa_calculation, SIGNAL(clicked()), SLOT(set_asa_calculation()));
-
-	cb_bead_check = new QCheckBox(this);
-	cb_bead_check->setText(tr(" Re-check bead ASA "));
-	cb_bead_check->setChecked(recheck_beads);
-	cb_bead_check->setEnabled(true);
-	cb_bead_check->setMinimumHeight(minHeight1);
-	cb_bead_check->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_bead_check->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(cb_bead_check, SIGNAL(clicked()), SLOT(set_bead_check()));
+	pb_show_misc = new QPushButton(tr("Miscellaneous Options"), this);
+	Q_CHECK_PTR(pb_show_misc);
+	pb_show_misc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_show_misc->setMinimumHeight(minHeight1);
+	pb_show_misc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_show_misc, SIGNAL(clicked()), SLOT(show_misc()));
 
 	pb_help = new QPushButton(tr("Help"), this);
 	Q_CHECK_PTR(pb_help);
@@ -231,105 +190,6 @@ void US_Hydrodyn::setupGUI()
 	lbl_tabletabs->setMinimumHeight(minHeight1);
 	lbl_tabletabs->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	lbl_tabletabs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
-
-	lbl_output = new QLabel(tr("Bead Model Output Options:"), this);
-	Q_CHECK_PTR(lbl_output);
-	lbl_output->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-	lbl_output->setAlignment(AlignCenter|AlignVCenter);
-	lbl_output->setMinimumHeight(minHeight1);
-	lbl_output->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-	lbl_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
-
-	bg_output = new QButtonGroup(3, Qt::Horizontal, "Output Format:", this);
-	bg_output->setExclusive(true);
-	connect(bg_output, SIGNAL(clicked(int)), this, SLOT(select_output(int)));
-
-	cb_somo_output = new QCheckBox(bg_output);
-	cb_somo_output->setText(tr(" SOMO "));
-	cb_somo_output->setEnabled(true);
-	cb_somo_output->setMinimumHeight(minHeight1);
-	cb_somo_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_somo_output->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-
-	cb_beams_output = new QCheckBox(bg_output);
-	cb_beams_output->setText(tr(" BEAMS "));
-	cb_beams_output->setEnabled(true);
-	cb_beams_output->setMinimumHeight(minHeight1);
-	cb_beams_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_beams_output->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-
-	cb_hydro_output = new QCheckBox(bg_output);
-	cb_hydro_output->setText(tr(" HYDRO "));
-	cb_hydro_output->setEnabled(true);
-	cb_hydro_output->setMinimumHeight(minHeight1);
-	cb_hydro_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_hydro_output->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-
-	bg_output->setButton(output);
-
-	bg_sequence = new QButtonGroup(3, Qt::Vertical, "Bead Sequence Format:", this);
-	bg_sequence->setExclusive(true);
-	connect(bg_sequence, SIGNAL(clicked(int)), this, SLOT(select_sequence(int)));
-
-	cb_pdb_sequence = new QCheckBox(bg_sequence);
-	cb_pdb_sequence->setText(tr(" as in original PDB  "));
-	cb_pdb_sequence->setEnabled(true);
-	cb_pdb_sequence->setMinimumHeight(minHeight1);
-	cb_pdb_sequence->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_pdb_sequence->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-
-	cb_chain_sequence = new QCheckBox(bg_sequence);
-	cb_chain_sequence->setText(tr(" exposed side chain -> exposed main chain -> buried "));
-	cb_chain_sequence->setEnabled(true);
-	cb_chain_sequence->setMinimumHeight(minHeight1);
-	cb_chain_sequence->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_chain_sequence->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-
-	cb_correspondence_sequence = new QCheckBox(bg_sequence);
-	cb_correspondence_sequence->setText(tr(" include bead - original residue correspondence "));
-	cb_correspondence_sequence->setEnabled(true);
-	cb_correspondence_sequence->setMinimumHeight(minHeight1);
-	cb_correspondence_sequence->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_correspondence_sequence->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-
-	bg_sequence->setButton(sequence);
-
-	cb_vbar = new QCheckBox(this);
-	cb_vbar->setText(tr(" Calculate vbar "));
-	cb_vbar->setChecked(compute_vbar);
-	cb_vbar->setMinimumHeight(minHeight1);
-	cb_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_vbar->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(cb_vbar, SIGNAL(clicked()), SLOT(set_vbar()));
-
-	pb_vbar = new QPushButton(tr("Select vbar"), this);
-	Q_CHECK_PTR(pb_vbar);
-	pb_vbar->setEnabled(!compute_vbar);
-	pb_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-	pb_vbar->setMinimumHeight(minHeight1);
-	pb_vbar->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	connect(pb_vbar, SIGNAL(clicked()), SLOT(select_vbar()));
-
-	le_vbar = new QLineEdit(this, "vbar Line Edit");
-	le_vbar->setMinimumHeight(minHeight1);
-	le_vbar->setEnabled(!compute_vbar);
-	le_vbar->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(update_vbar(const QString &)));
-
-	le_output_file = new QLineEdit(this, "output_file Line Edit");
-	le_output_file->setMinimumHeight(minHeight1);
-	le_output_file->setEnabled(true);
-	le_output_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	le_output_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	connect(le_output_file, SIGNAL(textChanged(const QString &)), SLOT(update_output_file(const QString &)));
-
-	pb_select_output_file = new QPushButton(tr("Select Output File"), this);
-	Q_CHECK_PTR(pb_select_output_file);
-	pb_select_output_file->setMinimumHeight(minHeight1);
-	pb_select_output_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-	pb_select_output_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	connect(pb_select_output_file, SIGNAL(clicked()), SLOT(select_output_file()));
 
 	pb_reset = new QPushButton(tr("Reset to Default Options"), this);
 	Q_CHECK_PTR(pb_reset);
@@ -359,67 +219,62 @@ void US_Hydrodyn::setupGUI()
 	pb_hybrid->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_hybrid, SIGNAL(clicked()), SLOT(hybrid()));
 
+	progress = new QProgressBar(this, "Loading Progress");
+	progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	progress->reset();
+	
 	int rows=7, columns = 4, spacing = 2, j=0, margin=4;
 	QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
-	background->addWidget(pb_select_residue_file, j, 0);
-	background->addWidget(lbl_table, j, 1);
-	background->addMultiCellWidget(lbl_info, j, j, 2, 4);
-	j++;
-	background->addWidget(pb_load_pdb, j, 0);
-	background->addWidget(lbl_pdb_file, j, 1);
-	background->addMultiCellWidget(tw_overlap, j, j+6, 2, 4);
-	j++;
-	background->addWidget(lbl_model, j, 0);
-	background->addMultiCellWidget(lb_model, j, j+1, 1, 1);
-	j+=2;
-	background->addWidget(lbl_probe_radius, j, 0);
-	background->addWidget(cnt_probe_radius, j, 1);
-	j++;
-	background->addWidget(lbl_asa_threshold, j, 0);
-	background->addWidget(cnt_asa_threshold, j, 1);
-	j++;
-	background->addWidget(lbl_asa_threshold_percent, j, 0);
-	background->addWidget(cnt_asa_threshold_percent, j, 1);
-	j++;
-	background->addWidget(lbl_hydrovol, j, 0);
-	background->addWidget(cnt_hydrovol, j, 1);
-	j++;
-	background->addWidget(lbl_overlap_tolerance, j, 0);
-	background->addWidget(cnt_overlap_tolerance, j, 1);
-	background->addMultiCellWidget(lbl_output, j, j, 2, 4);
-	j++;
-	background->addWidget(cb_asa_calculation, j, 0);
-	background->addWidget(cb_bead_check, j, 1);
-	background->addMultiCellWidget(bg_output, j, j+1, 2, 4);
-	j++;
-	background->addWidget(cb_vbar, j, 0);
-	background->addWidget(pb_help, j, 1);
-	j++;
-	background->addWidget(pb_vbar, j, 0);
-	background->addWidget(le_vbar, j, 1);
-	background->addMultiCellWidget(bg_sequence, j, j+3, 2, 4);
-	j++;
-	background->addWidget(pb_somo, j, 0);
-	background->addWidget(pb_visualize, j, 1);
-	j++;
 	background->addMultiCellWidget(lbl_tabletabs, j, j, 0, 1);
 	j++;
 	background->addWidget(pb_hybrid, j, 0);
 	background->addWidget(pb_atom, j, 1);
 	j++;
 	background->addWidget(pb_residue, j, 0);
+	j++;
+	background->addMultiCellWidget(lbl_options, j, j, 0, 1);
+	j++;
+	background->addWidget(pb_show_asa, j, 0);
+	background->addWidget(pb_show_overlap, j, 1);
+	j++;
+	background->addWidget(pb_show_hydro, j, 0);
+	background->addWidget(pb_show_misc, j, 1);
+	j++;
+	background->addWidget(pb_show_bead_output, j, 0);
+	background->addWidget(pb_reset, j, 1);
+	j++;
+	background->addMultiCellWidget(lbl_somo, j, j, 0, 1);
+	j++;
+	background->addWidget(pb_select_residue_file, j, 0);
+	background->addWidget(lbl_table, j, 1);
+	j++;
+	background->addWidget(pb_load_pdb, j, 0);
+	background->addWidget(lbl_pdb_file, j, 1);
+	j++;
+	background->addWidget(lbl_model, j, 0);
+	background->addMultiCellWidget(lb_model, j, j+1, 1, 1);
+	j+=2;
+	background->addWidget(pb_load_bead_model, j, 0);
+	background->addWidget(le_bead_model_file, j, 1);
+	j++;
+	background->addWidget(pb_somo, j, 0);
+	background->addWidget(pb_visualize, j, 1);
+	j++;
+	background->addWidget(pb_calc_hydro, j, 0);
+	background->addWidget(pb_show_hydro_results, j, 1);
+	j++;
+	background->addWidget(pb_help, j, 0);
 	background->addWidget(pb_cancel, j, 1);
-	background->addWidget(pb_select_output_file, j, 2);
-	background->addWidget(le_output_file, j, 3);
-	background->addWidget(pb_reset, j, 4);
+	j++;
+	background->addMultiCellWidget(progress, j, j, 0, 1);
 }
 
 int US_Hydrodyn::compute_asa()
 {
 // run the surfracer code
 
-	int retval = surfracer_main(probe_radius, residue_list, &model_vector);
+	int retval = surfracer_main(asa.probe_radius, residue_list, &model_vector);
 	if ( retval )
 	{
 		switch ( retval )
@@ -685,7 +540,7 @@ int US_Hydrodyn::compute_asa()
 					this_atom->resName.ascii(),
 					this_atom->serial); fflush(stdout);
 
-				this_atom->visibility = (this_atom->bead_asa >= asa_threshold);
+				this_atom->visibility = (this_atom->bead_asa >= asa.threshold);
 
 				printf("pass 3 active is bead %s %s %d checkpoint 2\n",
 					this_atom->name.ascii(),
@@ -783,17 +638,25 @@ void US_Hydrodyn::visualize()
 
 int US_Hydrodyn::calc_somo()
 {
-	if (recheck_beads)
+	if (asa.recheck_beads)
 	{
 		bead_check();
 	}
-	if (asa_calculation)
+	if (asa.calculation)
 	{
 		compute_asa();
 	}
 
 	// calculate bead model and generate hydrodynamics calculation output
 	return 0;
+}
+
+void US_Hydrodyn::calc_hydro()
+{
+}
+
+void US_Hydrodyn::show_hydro_results()
+{
 }
 
 void US_Hydrodyn::cancel()
@@ -829,7 +692,7 @@ void US_Hydrodyn::residue()
 	}
 	else
 	{
-		addResidue = new US_AddResidue(&residue_widget, hydrovol, 0);
+		addResidue = new US_AddResidue(&residue_widget, misc.hydrovol, 0);
 		addResidue->show();
 	}
 }
@@ -847,48 +710,9 @@ void US_Hydrodyn::hybrid()
 	}
 }
 
-void US_Hydrodyn::update_vbar(const QString &str)
+void US_Hydrodyn::update_bead_model_file(const QString &str)
 {
-	vbar = str.toDouble();
-}
-
-void US_Hydrodyn::update_vbar_signal(float val1, float val2)
-{
-	QString str;
-	float vbar20;
-	vbar20 = val1;
-	vbar = val2;
-	le_vbar->setText(str.sprintf("%7.4f", vbar));
-}
-
-void US_Hydrodyn::update_output_file(const QString &str)
-{
-	output_filename = str;
-}
-
-void US_Hydrodyn::select_vbar()
-{
-	float val;
-	vbar_dlg = new US_Vbar_DB(20.0, &val, &val, true, false, 0);
-	vbar_dlg->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-	vbar_dlg->setCaption(tr("V-bar Calculation"));
-	connect(vbar_dlg, SIGNAL(valueChanged(float, float)), SLOT(update_vbar_signal(float, float)));
-	vbar_dlg->exec();
-}
-
-void US_Hydrodyn::select_output_file()
-{
-	output_filename = QFileDialog::getSaveFileName(USglobal->config_list.root_dir,
-	"Somo files (*.somo)",
-	this,
-	"save file dialog",
-	"Choose a filename to save SOMO file under" );
-	if (output_filename.isEmpty()) return;
-	if (output_filename.right(5) != ".somo")
-	{
-		output_filename += ".somo";
-	}
-	le_output_file->setText(output_filename);
+	bead_model_file = str;
 }
 
 void US_Hydrodyn::select_residue_file()
@@ -984,6 +808,17 @@ void US_Hydrodyn::load_pdb()
 	{
 		lbl_pdb_file->setText(filename);
 		read_pdb(filename);
+	}
+}
+
+void US_Hydrodyn::load_bead_model()
+{
+	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo_bead_model *.SOMO_BEAD_MODEL", this);
+	if (!filename.isEmpty())
+	{
+		bead_model_file = filename;
+		le_bead_model_file->setText(filename);
+		//read_bead_model(); 
 	}
 }
 
@@ -1141,23 +976,6 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
 	e->accept();
 }
 
-void US_Hydrodyn::select_output(int val)
-{
-	output = val;
-}
-
-void US_Hydrodyn::select_sequence(int val)
-{
-	sequence = val;
-}
-
-void US_Hydrodyn::set_vbar()
-{
-	compute_vbar = cb_vbar->isChecked();
-	le_vbar->setEnabled(!compute_vbar);
-	pb_vbar->setEnabled(!compute_vbar);
-}
-
 void US_Hydrodyn::calc_bead_mw(struct residue *res)
 {
 	for (unsigned int i=0; i<(*res).r_bead.size(); i++)
@@ -1171,41 +989,6 @@ void US_Hydrodyn::calc_bead_mw(struct residue *res)
 			}
 		}
 	}
-}
-
-void US_Hydrodyn::update_probe_radius(double val)
-{
-	probe_radius = val;
-}
-
-void US_Hydrodyn::update_asa_threshold(double val)
-{
-	asa_threshold = val;
-}
-
-void US_Hydrodyn::update_asa_threshold_percent(double val)
-{
-	asa_threshold_percent = val;
-}
-
-void US_Hydrodyn::update_hydrovol(double val)
-{
-	hydrovol = val;
-}
-
-void US_Hydrodyn::update_overlap_tolerance(double val)
-{
-	overlap_tolerance = val;
-}
-
-void US_Hydrodyn::set_asa_calculation()
-{
-	asa_calculation = cb_asa_calculation->isChecked();
-}
-
-void US_Hydrodyn::set_bead_check()
-{
-	recheck_beads = cb_bead_check->isChecked();
 }
 
 void US_Hydrodyn::read_config()
@@ -1294,31 +1077,31 @@ void US_Hydrodyn::read_config()
 
 		ts >> str;
 		ts.readLine();
-		output = str.toInt();
+		bead_output.output = str.toInt();
 		ts >> str;
 		ts.readLine();
-		sequence = str.toInt();
+		bead_output.sequence = str.toInt();
 		ts >> str;
 		ts.readLine();
-		compute_vbar = (bool) str.toInt();
+		misc.compute_vbar = (bool) str.toInt();
 		ts >> str;
 		ts.readLine();
-		probe_radius = str.toDouble();
+		asa.probe_radius = str.toDouble();
 		ts >> str;
 		ts.readLine();
-		asa_threshold = str.toDouble();
+		asa.threshold = str.toDouble();
 		ts >> str;
 		ts.readLine();
-		asa_threshold_percent = str.toDouble();
+		asa.threshold_percent = str.toDouble();
 		ts >> str;
 		ts.readLine();
-		asa_calculation = (bool) str.toInt();
+		asa.calculation = (bool) str.toInt();
 		ts >> str;
 		ts.readLine();
-		recheck_beads = (bool) str.toInt();
+		asa.recheck_beads = (bool) str.toInt();
 		ts >> str;
 		ts.readLine();
-		hydrovol = str.toDouble();
+		misc.hydrovol = str.toDouble();
 		ts >> str;
 		ts.readLine();
 		overlap_tolerance = str.toDouble();
@@ -1408,31 +1191,31 @@ void US_Hydrodyn::read_config()
 			buried_overlap.show_translate = (bool) str.toInt();
 			ts >> str;
 			ts.readLine();
-			output = str.toInt();
+			bead_output.output = str.toInt();
 			ts >> str;
 			ts.readLine();
-			sequence = str.toInt();
+			bead_output.sequence = str.toInt();
 			ts >> str;
 			ts.readLine();
-			compute_vbar = (bool) str.toInt();
+			misc.compute_vbar = (bool) str.toInt();
 			ts >> str;
 			ts.readLine();
-			probe_radius = str.toDouble();
+			asa.probe_radius = str.toDouble();
 			ts >> str;
 			ts.readLine();
-			asa_threshold = str.toDouble();
+			asa.threshold = str.toDouble();
 			ts >> str;
 			ts.readLine();
-			asa_threshold_percent = str.toDouble();
+			asa.threshold_percent = str.toDouble();
 			ts >> str;
 			ts.readLine();
-			asa_calculation = (bool) str.toInt();
+			asa.calculation = (bool) str.toInt();
 			ts >> str;
 			ts.readLine();
-			recheck_beads = (bool) str.toInt();
+			asa.recheck_beads = (bool) str.toInt();
 			ts >> str;
 			ts.readLine();
-			hydrovol = str.toDouble();
+			misc.hydrovol = str.toDouble();
 			ts >> str;
 			ts.readLine();
 			overlap_tolerance = str.toDouble();
@@ -1485,15 +1268,15 @@ void US_Hydrodyn::reset()
 	mainchain_overlap.title = "exposed main/main and main/side chain beads";
 	buried_overlap.title = "buried beads";
 
-	sequence = 0;
-	output = 0;
-	compute_vbar = true;
-	probe_radius = 1.4;
-	asa_threshold = 10.0;
-	asa_threshold_percent = 30.0;
-	asa_calculation = true;
-	recheck_beads = true;
-	hydrovol = 24.041;
+	bead_output.sequence = 0;
+	bead_output.output = 0;
+	asa.probe_radius = 1.4;
+	asa.threshold = 10.0;
+	asa.threshold_percent = 30.0;
+	asa.calculation = true;
+	asa.recheck_beads = true;
+	misc.hydrovol = 24.041;
+	misc.compute_vbar = true;
 	overlap_tolerance = 0.001;
 }
 
@@ -1536,18 +1319,124 @@ void US_Hydrodyn::write_config()
 		ts << buried_overlap.translate_out << "\t\t# Outward translation flag\n";
 		ts << buried_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
 
-		ts << output << "\t\t# flag for selecting output format\n";
-		ts << sequence << "\t\t# flag for selecting sequence format\n";
-		ts << compute_vbar << "\t\t# flag for selecting vbar calculation\n";
-		ts << probe_radius << "\t\t# probe radius in angstrom\n";
-		ts << asa_threshold << "\t\t# ASA threshold\n";
-		ts << asa_threshold_percent << "\t\t# ASA threshold percent\n";
-		ts << asa_calculation << "\t\t# flag for calculation of ASA\n";
-		ts << recheck_beads << "\t\t# flag for rechecking beads\n";
-		ts << hydrovol << "\t\t# hydration volume\n";
+		ts << bead_output.output << "\t\t# flag for selecting output format\n";
+		ts << bead_output.sequence << "\t\t# flag for selecting sequence format\n";
+		ts << misc.compute_vbar << "\t\t# flag for selecting vbar calculation\n";
+		ts << asa.probe_radius << "\t\t# probe radius in angstrom\n";
+		ts << asa.threshold << "\t\t# ASA threshold\n";
+		ts << asa.threshold_percent << "\t\t# ASA threshold percent\n";
+		ts << asa.calculation << "\t\t# flag for calculation of ASA\n";
+		ts << asa.recheck_beads << "\t\t# flag for rechecking beads\n";
+		ts << misc.hydrovol << "\t\t# hydration volume\n";
 		ts << overlap_tolerance << "\t\t# bead overlap tolerance\n";
 
 		f.close();
+	}
+}
+
+void US_Hydrodyn::show_asa()
+{
+	if (asa_widget)
+	{
+		if (asa_window->isVisible())
+		{
+			asa_window->raise();
+		}
+		else
+		{
+			asa_window->show();
+		}
+		return;
+	}
+	else
+	{
+		asa_window = new US_Hydrodyn_ASA(&asa, &asa_widget);
+		asa_window->show();
+	}
+}
+
+void US_Hydrodyn::show_overlap()
+{
+	if (overlap_widget)
+	{
+		if (overlap_window->isVisible())
+		{
+			overlap_window->raise();
+		}
+		else
+		{
+			overlap_window->show();
+		}
+		return;
+	}
+	else
+	{
+		overlap_window = new US_Hydrodyn_Overlap(&sidechain_overlap,
+		&mainchain_overlap, &buried_overlap, &overlap_tolerance, &overlap_widget);
+		overlap_window->show();
+	}
+}
+
+void US_Hydrodyn::show_bead_output()
+{
+	if (bead_output_widget)
+	{
+		if (bead_output_window->isVisible())
+		{
+			bead_output_window->raise();
+		}
+		else
+		{
+			bead_output_window->show();
+		}
+		return;
+	}
+	else
+	{
+		bead_output_window = new US_Hydrodyn_Bead_Output(&bead_output, &bead_output_widget);
+		bead_output_window->show();
+	}
+}
+
+void US_Hydrodyn::show_misc()
+{
+	if (misc_widget)
+	{
+		if (misc_window->isVisible())
+		{
+			misc_window->raise();
+		}
+		else
+		{
+			misc_window->show();
+		}
+		return;
+	}
+	else
+	{
+		misc_window = new US_Hydrodyn_Misc(&misc, &misc_widget);
+		misc_window->show();
+	}
+}
+
+void US_Hydrodyn::show_hydro()
+{
+	if (hydro_widget)
+	{
+		if (hydro_window->isVisible())
+		{
+			hydro_window->raise();
+		}
+		else
+		{
+			hydro_window->show();
+		}
+		return;
+	}
+	else
+	{
+		hydro_window = new US_Hydrodyn_Hydro(&hydro, &hydro_widget);
+		hydro_window->show();
 	}
 }
 
