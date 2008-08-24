@@ -23,7 +23,7 @@ US_Hydrodyn_Bead_Output::~US_Hydrodyn_Bead_Output()
 void US_Hydrodyn_Bead_Output::setupGUI()
 {
 	int minHeight1 = 30;
-	
+
 	lbl_info = new QLabel(tr("Bead Model Output Options:"), this);
 	Q_CHECK_PTR(lbl_info);
 	lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -137,7 +137,7 @@ void US_Hydrodyn_Bead_Output::update_output_file(const QString &str)
 
 void US_Hydrodyn_Bead_Output::select_output_file()
 {
-	(*bead_output).filename = QFileDialog::getSaveFileName(USglobal->config_list.root_dir,
+	(*bead_output).filename = QFileDialog::getSaveFileName(USglobal->config_list.result_dir,
 			"Somo files (*.somo_bead_model)",
 			this,
 			"save file dialog",
