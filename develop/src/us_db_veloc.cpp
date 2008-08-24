@@ -288,8 +288,8 @@ bool US_DB_Veloc::insertCompressedData()
 	{
 		pd->close();
 		QMessageBox::message(
-		  tr( "UltraScan tar Error: Report" ),
-		  tr( tar.explain( ret ) ) );
+		  tr( "UltraScan tar creation Error: Report" ),
+		  tr( tar.explain( ret ) + tr( "/nInput files:\n" ) + files.join( "\n") ) );
 
 		// Remove the tar file
 		QFile::remove( reportDir + tarfile );
@@ -330,8 +330,8 @@ bool US_DB_Veloc::insertCompressedData()
 	{
 		pd->close();
 		QMessageBox::message(
-		  tr( "UltraScan tar Error: Result" ),
-		  tr( tar.explain( ret ) ) );
+		  tr( "UltraScan tar creation Error: Result" ),
+		  tr( tar.explain( ret ) + tr( "/nInput files:\n" ) + files.join( "\n") ) );
 
 		// Remove the tar file
 		QFile::remove( resultDir + tarfile );
@@ -788,12 +788,12 @@ void US_DB_Veloc::retrieve_db( void )
 	{
 		pd->close();
 		QMessageBox::message(
-		  tr( "UltraScan tar Error:" ),
-		  tr( tar.explain( ret ) ) );
+		  tr( "UltraScan tar extraction Error:" ),
+		  tr( tar.explain( ret ) + tr( "/ntarfile: " ) + tarfile ) );
 
 		// Remove the tar file
 		QFile::remove( reportDir + tarfile );
-		return;
+		goto result;
 	}
 
 	QFile::remove( reportDir + tarfile );
@@ -817,18 +817,19 @@ void US_DB_Veloc::retrieve_db( void )
 		return;
 	}
 
+result:
 	tarfile = run_id + "_result.tar";
 
 	if ( ( ret = tar.extract( tarfile ) ) != GZIP_OK )
 	{
 		pd->close();
 		QMessageBox::message(
-			tr( "UltraScan tar Error:" ),
-			tr( tar.explain( ret ) ) );
+			tr( "UltraScan tar extraction Error:" ),
+		  tr( tar.explain( ret ) + tr( "/ntarfile: " ) + tarfile ) );
 
 		// Remove the tar file
 		QFile::remove( resultDir + tarfile );
-		return;
+		goto rawdata;
 	}
 
 	QFile::remove( resultDir + tarfile );
@@ -852,6 +853,7 @@ void US_DB_Veloc::retrieve_db( void )
 	  return;
 	}
 
+rawdata:
 	tarfile = run_id + "_rawdata.tar";
 	pd->setProgress( 8 );
 	qApp->processEvents();
@@ -860,12 +862,11 @@ void US_DB_Veloc::retrieve_db( void )
 	{
 		pd->close();
 		QMessageBox::message(
-		  tr( "UltraScan tar Error:" ),
-		  tr( tar.explain( ret ) ) );
+		  tr( "UltraScan tar extraction Error:" ),
+		  tr( tar.explain( ret ) + tr( "/ntarfile: " ) + tarfile ) );
 
 		// Remove the tar file
 		QFile::remove( dataDir + tarfile );
-		return;
 	}
 
 	QFile::remove( dataDir + tarfile );
