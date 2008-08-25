@@ -19,7 +19,7 @@ DEFINES += THREAD
 
 # Automatic hardware platform and operating system configurations:
 
-INCLUDEPATH = $(QWTDIR)/include $(QTDIR)/include $(QWT3DDIR)/include $(ZLIB)
+INCLUDEPATH = $(QWTDIR)/include $(QTDIR)/include $(QWT3DDIR)/include 
 DEPENDPATH += src include
 
 unix {
@@ -38,8 +38,6 @@ unix {
     DESTDIR  = ../lib
   }
 }
-
-#linux-g++: QMAKE_CXXFLAGS += -fno-exceptions
 
 win32 {
   message ("Configuring for the Microsoft Windows Platform...")

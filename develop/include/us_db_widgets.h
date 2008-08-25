@@ -7,6 +7,8 @@
 #include <qcheckbox.h>
 #include <qlistbox.h>
 #include <qprogressdialog.h> 
+#include <qlineedit.h> 
+#include <qcombobox.h> 
 
 #include "us_db.h"
 #include "us_util.h"
@@ -31,6 +33,8 @@ class US_EXTERN US_DB_Widgets : public US_DB
 		QCheckBox*       checkbox      ( const QString&, bool = false );
 		QListBox*        listbox       ( const QString&, bool = true );
 		QProgressDialog* progressdialog( const QString&, const QString&, int );
+		QLineEdit*       lineedit      ( const QString& );
+		QComboBox*       combobox      ( const QString&, int = false );
 };
 #endif
 

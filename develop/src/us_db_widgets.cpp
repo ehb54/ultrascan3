@@ -143,7 +143,8 @@ QProgressDialog* US_DB_Widgets::progressdialog( const QString& label,
                                                 const QString& name,
                                                 int   steps )
 {
-  QProgressDialog* p = new QProgressDialog( label, 0, steps, this, name, true );
+  QProgressDialog* p = new QProgressDialog( tr( label ), 0, steps, this, 
+	                                          name, true );
 	
 	p->setPalette( 
 			QPalette( USglobal->global_colors.cg_normal,
@@ -157,4 +158,33 @@ QProgressDialog* US_DB_Widgets::progressdialog( const QString& label,
 	p->setProgress( 0 ); 
 	
 	return p;
+}
+
+// line edit
+QLineEdit* US_DB_Widgets::lineedit( const QString& name )
+{
+	QLineEdit* le = new QLineEdit( this, name );
+
+	le->setPalette( 
+			QPalette( USglobal->global_colors.cg_normal,
+			          USglobal->global_colors.cg_normal,
+			          USglobal->global_colors.cg_normal ) );
+
+	return le;
+}
+
+// combo box
+QComboBox* US_DB_Widgets::combobox( const QString& name, int rw )
+{
+	QComboBox* cb = new QComboBox( rw, this, name );
+
+	cb->setPalette( 
+			QPalette( USglobal->global_colors.cg_normal,
+			          USglobal->global_colors.cg_normal,
+			          USglobal->global_colors.cg_normal ) );
+
+	cb->setFont( QFont( USglobal->config_list.fontFamily, 
+	                    USglobal->config_list.fontSize - 1 ) );
+
+	return cb;
 }
