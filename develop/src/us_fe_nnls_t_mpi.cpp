@@ -88,7 +88,7 @@ static void setup_model_system_1comp() {
     if(!myrank) {
 	us_femglobal.write_modelSystem(&model_system_1comp, "tmp.model_system");
     }
-    printf("setup cvs %u\n", model_system_1comp.component_vector.size()); fflush(stdout);
+    printf("setup cvs %u\n", (unsigned int)model_system_1comp.component_vector.size()); fflush(stdout);
 }
     
 
@@ -361,7 +361,7 @@ void US_fe_nnls_t::WriteResultsSC(vector <struct mfem_data> experiment, vector<S
 	printf("0: testing readmodelsystem vector<modelsystem>*, filename %s\n", modelsystemname.ascii()); fflush(stdout);
 	vector<ModelSystem> vms;
 	printf("0: retval = %d\n", us_femglobal.read_modelSystem(&vms, modelsystemname)); fflush(stdout);
-	printf("0: vms.size() %u\n", vms.size()); fflush(stdout);
+	printf("0: vms.size() %u\n", (unsigned int)vms.size()); fflush(stdout);
     }
 }
 
@@ -830,7 +830,7 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment, vector<So
 			}
 		}
 		// is this our last?
-		printf("0: BufferResults: existing tag %s solutes.size %u\n", tag.ascii(), (*expdata_iter).solutes.size());
+		printf("0: BufferResults: existing tag %s solutes.size %u\n", tag.ascii(), (unsigned int)(*expdata_iter).solutes.size());
 		fflush(stdout);
 		if (this_monte_carlo == monte_carlo_iterations - 1)
 		{
@@ -872,7 +872,7 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment,
 		{
 			fprintf(stderr, "0: error: unexpected premature end in BufferResults!\n");
 		}
-		//		printf("0: BufferResults: new tag %s solutes.size %u\n", tag.ascii(), expdata.sv.solutes.size());
+		//		printf("0: BufferResults: new tag %s solutes.size %u\n", tag.ascii(), (unsigned int)expdata.sv.solutes.size());
 		//		fflush(stdout);
 	}
 	else
@@ -886,7 +886,7 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment,
 			(*expdata_iter).sv.solutes.push_back(sv.solutes[i]);
 		}
 		// is this our last?
-		//		printf("0: BufferResults: existing tag %s solutes.size %u\n", tag.ascii(), (*expdata_iter).sv.solutes.size());
+		//		printf("0: BufferResults: existing tag %s solutes.size %u\n", tag.ascii(), (unsigned int)(*expdata_iter).sv.solutes.size());
 		//		fflush(stdout);
 		if (this_monte_carlo == monte_carlo_iterations - 1)
 		{
@@ -2389,8 +2389,8 @@ int US_fe_nnls_t::run(int status)
 				} // for e
 
 				//	Simulation_values sv = calc_residuals(experiment, demes_results[best_deme], 0e0, 0);
-				printf("0: best deme is %d size %u fitness %.4g\n", best_deme,
-					   demes_results[best_deme].size(), best_deme_fitness);
+				printf("0: best deme is %u size %u fitness %.4g\n", best_deme,
+					   (unsigned int)demes_results[best_deme].size(), best_deme_fitness);
 				fflush(stdout);
 				{
 					unsigned int i;
@@ -2702,10 +2702,10 @@ int US_fe_nnls_t::run(int status)
 			unsigned int depth_0_count = 0;
 #endif
 
-			printf("jobs added %d experiments %d solutions %d max_experiment_size %d union %d\n",
-				   jobqueue.size(),
-				   experiment.size(),
-				   solutions.size(),
+			printf("jobs added %u experiments %u solutions %u max_experiment_size %d union %d\n",
+				   (unsigned int)jobqueue.size(),
+				   (unsigned int)experiment.size(),
+				   (unsigned int)solutions.size(),
 				   max_experiment_size,
 				   union_results);
 			fflush(stdout);
@@ -3050,7 +3050,7 @@ int US_fe_nnls_t::run(int status)
 											sv = unions[unions.size() - 1];
 											if (sv.solutes.size() != unions[unions.size()-1].solutes.size())
 											{
-												printf("!!iterative final mismatch! fixing correct size %d\n", sv.solutes.size());
+												printf("!!iterative final mismatch! fixing correct size %u\n", (unsigned int)sv.solutes.size());
 											}
 											unions[unions.size() - 1] = sv;
 										}
@@ -3099,9 +3099,9 @@ int US_fe_nnls_t::run(int status)
 										if (last_results.solutes.size() !=
 												unions[unions.size() - 1].solutes.size())
 										{
-											printf("iterative size difference last %d new %d\n",
-												   last_results.solutes.size(),
-												   unions[unions.size() - 1].solutes.size());
+											printf("iterative size difference last %u new %u\n",
+												   (unsigned int)last_results.solutes.size(),
+												   (unsigned int)unions[unions.size() - 1].solutes.size());
 											fflush(stdout);
 										}
 
@@ -3195,10 +3195,10 @@ int US_fe_nnls_t::run(int status)
 										  // fflush(stdout);
 											if (fit_meniscus)
 											{
-												printf("experiment meniscus_offset %.12g variance %.12g solutes %d\n",
+												printf("experiment meniscus_offset %.12g variance %.12g solute %u\n",
 													   meniscus_offset,
 													   unions[unions.size() - 1].variance,
-													   unions[unions.size() - 1].solutes.size()
+													   (unsigned int)unions[unions.size() - 1].solutes.size()
 													  );
 												meniscus_results.push_back(unions[unions.size() - 1]);
 												meniscus_meniscus.push_back(meniscus_offset);
@@ -3265,10 +3265,10 @@ int US_fe_nnls_t::run(int status)
 										// -----
 										if (fit_meniscus)
 										{
-											printf("experiment meniscus %.12g variance %.12g solutes %d\n",
+											printf("experiment meniscus %.12g variance %.12g solutes %u\n",
 												   meniscus_offset,
 												   unions[unions.size() - 1].variance,
-												   unions[unions.size() - 1].solutes.size()
+												   (unsigned int)unions[unions.size() - 1].solutes.size()
 												  );
 #if defined(SLIST2)
 
@@ -3588,14 +3588,14 @@ int US_fe_nnls_t::run(int status)
 				{
 					for (j = 0; j < meniscus_results.size(); j++)
 					{
-						printf("writing %u size %u\n", j, meniscus_results[j].solutes.size());
+						printf("writing %u size %u\n", j, (unsigned int)meniscus_results[j].solutes.size());
 						fflush(stdout);
 						Simulation_values sv = calc_residuals(experiment, meniscus_results[j].solutes, meniscus_meniscus[j], 0);
-						printf("writing return from calc_resid %u size %u\n", j, meniscus_results[j].solutes.size());
+						printf("writing return from calc_resid %u size %u\n", j, (unsigned int)meniscus_results[j].solutes.size());
 						fflush(stdout);
 						if (sv.solutes.size() != meniscus_results[j].solutes.size())
 						{
-							printf("!!<fi>final mismatch! writing size %u\n", sv.solutes.size());
+							printf("!!<fi>final mismatch! writing size %u\n", (unsigned int)sv.solutes.size());
 							fflush(stdout);
 						}
 						if (regularization > 0e0)
@@ -3611,12 +3611,12 @@ int US_fe_nnls_t::run(int status)
 				}
 				else
 				{
-					printf("writing depth %d size %d\n", unions.size(), unions[unions.size() - 1].solutes.size());
+					printf("writing depth %u size %u\n", (unsigned int)unions.size(), (unsigned int)unions[unions.size() - 1].solutes.size());
 					fflush(stdout);
 					Simulation_values sv = calc_residuals(experiment, unions[unions.size()-1].solutes, 0e0, 0);
 					if (sv.solutes.size() != unions[unions.size()-1].solutes.size())
 					{
-						printf("!!final mismatch! writing size %u\n", sv.solutes.size());
+						printf("!!final mismatch! writing size %u\n", (unsigned int)sv.solutes.size());
 						fflush(stdout);
 					}
 					if (regularization > 0e0)
@@ -3876,18 +3876,18 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 
 #if defined(JOB_TIMING_CR)
 
-	printf("job_timing_cr size %u\n", solutes.size());
+	printf("job_timing_cr size %u\n", (unsigned int)solutes.size());
 	fflush(stdout);
 # if defined(JOB_TIMING_CRMP)
 
-	printf("job_timing_crmp size %u\n", solutes.size());
+	printf("job_timing_crmp size %u\n", (unsigned int)solutes.size());
 	fflush(stdout);
 	unsigned int use_size, tmp_uint;
 	vector<Solute> crmp_save_solutes = solutes;
 	vector<struct mfem_data> save_experiment = experiment;
 	for (use_size = 1; use_size <= crmp_save_solutes.size(); use_size *= 2)
 	{
-		printf("job_timing_crmp %u of %u\n", use_size, crmp_save_solutes.size());
+		printf("job_timing_crmp %u of %u\n", use_size, (unsigned int)crmp_save_solutes.size());
 		fflush(stdout);
 		solutes.clear();
 		experiment = save_experiment;

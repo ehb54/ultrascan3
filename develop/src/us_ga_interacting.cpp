@@ -287,8 +287,8 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
 
 	  astfem_rsa.calculate(&our_model_system, &our_simulation_parameters, &experiment);
 
-	  printf("points %u scans %u\n", org_experiment[0].radius.size(), org_experiment[0].scan.size()); fflush(stdout);
-	  printf("points %u scans %u\n", experiment[0].radius.size(), experiment[0].scan.size()); fflush(stdout);
+	  printf("points %u scans %u\n", (unsigned int)org_experiment[0].radius.size(), (unsigned int)org_experiment[0].scan.size()); fflush(stdout);
+	  printf("points %u scans %u\n", (unsigned int)experiment[0].radius.size(), (unsigned int)experiment[0].scan.size()); fflush(stdout);
 
 	  for (i = 0; i < org_experiment[0].scan.size(); i++)
 	  {
@@ -376,7 +376,7 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
 void print_ModelSystem(struct ModelSystem *s) {
   //  printf("ModelSystem.description            \t%s\n", s->description.ascii());
   printf("+ModelSystem.model                  \t%d\n", s->model);
-  printf("ModelSystem.component_vector.size()\t%u\n", s->component_vector.size());
+  printf("ModelSystem.component_vector.size()\t%u\n", (unsigned int)s->component_vector.size());
   unsigned int i, j;
   for(i = 0; i < s->component_vector.size(); i++) {
     printf("  -ModelSystem.component_vector[%d].vbar20       \t%e\n", i, s->component_vector[i].vbar20);
@@ -399,7 +399,7 @@ void print_ModelSystem(struct ModelSystem *s) {
     //    printf("  -ModelSystem.component_vector[%d].shape        \t%s\n", i, s->component_vector[i].shape.ascii());
     //    printf("  -ModelSystem.component_vector[%d].name         \t%s\n", i, s->component_vector[i].name.ascii());
   }
-  printf("ModelSystem.assoc_vector.size()    \t%u\n", s->assoc_vector.size());
+  printf("ModelSystem.assoc_vector.size()    \t%u\n", (unsigned int)s->assoc_vector.size());
   for(i = 0; i < s->assoc_vector.size(); i++) {
     printf("  +ModelSystem.assoc_vector[%d].keq              \t%e\n", i, s->assoc_vector[i].keq);
     printf("  +ModelSystem.assoc_vector[%d].k_off            \t%e\n", i, s->assoc_vector[i].k_off);
@@ -415,7 +415,7 @@ void print_ModelSystem(struct ModelSystem *s) {
 
 void print_SimulationParameters(struct SimulationParameters *s) {
   unsigned int i;
-  printf("SimulationParameters.speed_step.size()\t%u\n", s->speed_step.size());
+  printf("SimulationParameters.speed_step.size()\t%u\n", (unsigned int)s->speed_step.size());
   for(i = 0; i < s->speed_step.size(); i++) {
     printf("  +SimulationParameters.speed_step[%d].duration_hours     \t%u\n", i, s->speed_step[i].duration_hours);
     printf("  +SimulationParameters.speed_step[%d].duration_minutes   \t%u\n", i, s->speed_step[i].duration_minutes);
@@ -440,7 +440,7 @@ void print_SimulationParameters(struct SimulationParameters *s) {
 void print_AstFemParameters(struct AstFemParameters *s) {
   unsigned int i;
   printf("AstFemParameters.simpoints           \t%u\n", s->simpoints);
-  printf("AstFemParameters.s.size()            \t%u\n", s->s.size());
+  printf("AstFemParameters.s.size()            \t%u\n", (unsigned int)s->s.size());
   for (i = 0; i < s->s.size(); i++) {
     printf("  AstFemParameters.s[%u]           \t%e\n", i, s->s[i]);
     printf("  AstFemParameters.D[%u]           \t%e\n", i, s->D[i]);

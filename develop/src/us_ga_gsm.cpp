@@ -1612,7 +1612,7 @@ double lamm_gsm_f(our_vector *v) {
 	if (solute_vector.size() != s_estimate_solutes) 
 	{
 	    printf("%d: !! solute_vector.size() (%u) != s_estimate_solutes (%u)\n", 
-		   this_rank, solute_vector.size(), s_estimate_solutes); fflush(stdout);
+		   this_rank, (unsigned int)solute_vector.size(), s_estimate_solutes); fflush(stdout);
 	    Simulation_values sv;
 	    vector<double> no_noise;
 	    vector<double> variances;

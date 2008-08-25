@@ -1321,6 +1321,7 @@ value evaluate(node *n, value *args)
 			break;
 		}
 	}
+	return 0;
 }
 
 int pick_a_random_function(int weight)
@@ -2318,7 +2319,7 @@ double fitness_solute(node *n)
 		    if (solute_vector.size() != s_estimate_solutes) 
 		    {
 			printf("%d: !! solute_vector.size() (%u) != s_estimate_solutes (%u)\n", 
-			       this_rank, solute_vector.size(), s_estimate_solutes); fflush(stdout);
+			       this_rank, (unsigned int)solute_vector.size(), s_estimate_solutes); fflush(stdout);
 			Simulation_values sv;
 			vector<double> no_noise;
 			vector<double> variances;
@@ -3372,7 +3373,7 @@ Simulation_values node_to_sv(node *n)
 		    if (solute_vector.size() != s_estimate_solutes) 
 		    {
 			printf("%d: !! solute_vector.size() (%u) != s_estimate_solutes (%u)\n", 
-			       this_rank, solute_vector.size(), s_estimate_solutes); fflush(stdout);
+			       this_rank, (unsigned int)solute_vector.size(), s_estimate_solutes); fflush(stdout);
 			Simulation_values sv;
 			vector<double> no_noise;
 			vector<double> variances;
@@ -4773,7 +4774,7 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
 						mpi_ga_msg_out.gen = -1;
 						mpi_ga_msg_out.size = (int) solutes.size();
 
-						printf("%d: worker sending out final solutes preamble size %u\n", this_rank, solutes.size());
+						printf("%d: worker sending out final solutes preamble size %u\n", this_rank, (unsigned int)solutes.size());
 						fflush(stdout);
 #if defined(US_DEBUG_MPI)
 
@@ -4794,7 +4795,7 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
 						fflush(stdout);
 #endif
 
-						printf("%d: worker sending out final solutes size %u\n", this_rank, solutes.size() * sizeof(Solute));
+						printf("%d: worker sending out final solutes size %u\n", this_rank, (unsigned int)solutes.size() * (unsigned int)sizeof(Solute));
 						fflush(stdout);
 #if defined(US_DEBUG_MPI)
 
@@ -5786,7 +5787,7 @@ void ga_setup(struct ga_data GA_Params, int myrank, US_fe_nnls_t *pass_us_fe_nnl
 	our_us_fe_nnls_t = pass_us_fe_nnls_t;
 	unsigned int i;
 	this_rank = myrank;
-	printf("%d: sizeof(double) %d (int) %d (char) %d\n", this_rank, sizeof(double), sizeof(int), sizeof(char));
+	printf("%d: sizeof(double) %d (int) %d (char) %d\n", this_rank, (int)sizeof(double), (int)sizeof(int), (int)sizeof(char));
 	printf("%d: ga_setup received %d\n", myrank, this_rank);
 	fflush(stdout);
 	s_estimate_solutes = GA_Params.initial_solutes;
