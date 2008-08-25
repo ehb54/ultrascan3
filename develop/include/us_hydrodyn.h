@@ -13,6 +13,8 @@
 #include <qlayout.h>
 #include <qframe.h>
 #include <qprogressbar.h>
+#include <qprocess.h>
+#include <qdir.h>
 
 #include "us.h"
 #include "us_extern.h"
@@ -54,7 +56,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 				hydro_widget,
 				results_widget,
 				misc_widget;
-		
+
 		bool create_beads_normally;             // true = normal, false = atoms are beads
 		unsigned int current_model;
 		QString residue_filename, bead_model_file;
@@ -119,6 +121,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		US_Hydrodyn_Misc *misc_window;
 		US_Hydrodyn_Results *results_window;
 
+		QProcess *rasmol;
+		QDir tmp_dir;
+
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
@@ -164,6 +169,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void write_bead_tsv(QString, vector <PDB_atom> *);
 		void write_bead_ebf(QString, vector <PDB_atom> *);
 		void write_bead_spt(QString, vector <PDB_atom> *);
+		void printError(const QString &);
+		void closeAttnt(QProcess *, QString);
 
 	protected slots:
 

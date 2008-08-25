@@ -11,7 +11,7 @@ static struct timeval start_tv, end_tv;
 
 US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 {
-	USglobal=new US_Config();
+	USglobal = new US_Config();
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("SOMO Solution Bead Modeler"));
 	read_config();
@@ -28,6 +28,9 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	global_Ypos += 30;
 	setGeometry(global_Xpos, global_Ypos, 0, 0);
 	create_beads_normally = true;
+	rasmol = NULL;
+	tmp_dir.setPath(USglobal->config_list.root_dir + "/tmp");
+	tmp_dir.mkdir(USglobal->config_list.root_dir + "/tmp");
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -308,29 +311,29 @@ static void outward_translate_1_sphere_1_fixed(
 #endif
 
   float k;
-  float denom =     
-    -2 * *r1 * *r2 - *r2 * *r2 + 
+  float denom =
+    -2 * *r1 * *r2 - *r2 * *r2 +
     *r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]);
 
   float sfact =
     sqrt(
-	 (*r1 + *r2) * (*r1 + *r2) * 
-	 ((-2 * *r1 * *r2 - *r2 * *r2 + 
+	 (*r1 + *r2) * (*r1 + *r2) *
+	 ((-2 * *r1 * *r2 - *r2 * *r2 +
 	   *r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]))
 	  * (
-	     (*r1 + *r2) * (*r1 + *r2) - 
-	     (x1[0] - x2[0]) * (x1[0] - x2[0]) - 
-	     (x1[1] - x2[1]) * (x1[1] - x2[1]) - 
-	     (x1[2] - x2[2]) * (x1[2] - x2[2])) + 
-	  pow(*r1 * *r1 + *r2 * *r2 + 
+	     (*r1 + *r2) * (*r1 + *r2) -
+	     (x1[0] - x2[0]) * (x1[0] - x2[0]) -
+	     (x1[1] - x2[1]) * (x1[1] - x2[1]) -
+	     (x1[2] - x2[2]) * (x1[2] - x2[2])) +
+	  pow(*r1 * *r1 + *r2 * *r2 +
 	   *r1 * (
-		 2 * *r2 + v1[0] * x1[0] + v1[1] * x1[1] + v1[2] * x1[2] - 
+		 2 * *r2 + v1[0] * x1[0] + v1[1] * x1[1] + v1[2] * x1[2] -
 		 v1[0] * x2[0] - v1[1] * x2[1] - v1[2] * x2[2]),2)));
 
   float b =
-    - (*r1 + *r2) * 
-    (*r1 * *r1 + *r2 * *r2 + 
-     *r1 * (2 * *r2 + v1[0] * x1[0] + v1[1] * x1[1] + v1[2] * x1[2] - 
+    - (*r1 + *r2) *
+    (*r1 * *r1 + *r2 * *r2 +
+     *r1 * (2 * *r2 + v1[0] * x1[0] + v1[1] * x1[1] + v1[2] * x1[2] -
 	    v1[0] * x2[0] - v1[1] * x2[1] - v1[2] * x2[2]));
 
   k = (b + sfact) / denom;
@@ -387,39 +390,39 @@ static void outward_translate_2_spheres(float *r1, // radius of sphere 1
 #endif
 
   float k;
-  float denom =     
+  float denom =
     2 * *r1 * *r2 * (1 + v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]) -
-    *r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]) - 
+    *r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]) -
     *r2 * *r2 * (-1 + v2[0] * v2[0] + v2[1] * v2[1] + v2[2] * v2[2]);
 
-  float sfact = 
+  float sfact =
     sqrt(
-	 (*r1 + *r2) * (*r1 + *r2) * 
-	 ((*r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]) - 
-	   
-	   2 * *r1 * *r2 * (1 + v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]) + 
+	 (*r1 + *r2) * (*r1 + *r2) *
+	 ((*r1 * *r1 * (-1 + v1[0] * v1[0] + v1[1] * v1[1] + v1[2] * v1[2]) -
 
-	   *r2 * *r2 * (-1 + v2[0] * v2[0] + v2[1] * v2[1] + v2[2] * v2[2])) * 
-	  
-	  ((*r1 + *r2) * (*r1 + *r2) - 
-	   (x1[0] - x2[0]) * (x1[0] - x2[0]) - 
-	     (x1[1] - x2[1]) * (x1[1] - x2[1]) - 
-	   (x1[2] - x2[2]) * (x1[2] - x2[2])) + 
+	   2 * *r1 * *r2 * (1 + v1[0] * v2[0] + v1[1] * v2[1] + v1[2] * v2[2]) +
 
-	  pow(*r1 * *r1 + 
+	   *r2 * *r2 * (-1 + v2[0] * v2[0] + v2[1] * v2[1] + v2[2] * v2[2])) *
+
+	  ((*r1 + *r2) * (*r1 + *r2) -
+	   (x1[0] - x2[0]) * (x1[0] - x2[0]) -
+	     (x1[1] - x2[1]) * (x1[1] - x2[1]) -
+	   (x1[2] - x2[2]) * (x1[2] - x2[2])) +
+
+	  pow(*r1 * *r1 +
 	      *r1 * (
-		    2 * *r2 + v1[0] * x1[0] + v1[1] * x1[1] + v1[2] * x1[2] - 
-		    v1[0] * x2[0] - v1[1] * x2[1] - v1[2] * x2[2]) + 
+		    2 * *r2 + v1[0] * x1[0] + v1[1] * x1[1] + v1[2] * x1[2] -
+		    v1[0] * x2[0] - v1[1] * x2[1] - v1[2] * x2[2]) +
 	     *r2 * (
-		   *r2 - v2[0] * x1[0] - v2[1] * x1[1] - v2[2] * x1[2] + 
+		   *r2 - v2[0] * x1[0] - v2[1] * x1[1] - v2[2] * x1[2] +
 		   v2[0] * x2[0] + v2[1] * x2[1] + v2[2] * x2[2]),2)));
 
-  float b = 
-    (*r1 + *r2) * 
-    (*r1 * *r1 + 
-     *r1 * (2 * *r2 + v1[0] * x1[0] + v1[1] * x1[1] + v1[2] * x1[2] - 
-	     v1[0] * x2[0] - v1[1] * x2[1] - v1[2] * x2[2]) + 
-     *r2 * (*r2 - v2[0] * x1[0] - v2[1] * x1[1] - v2[2] * x1[2] + v2[0] * x2[0] + 
+  float b =
+    (*r1 + *r2) *
+    (*r1 * *r1 +
+     *r1 * (2 * *r2 + v1[0] * x1[0] + v1[1] * x1[1] + v1[2] * x1[2] -
+	     v1[0] * x2[0] - v1[1] * x2[1] - v1[2] * x2[2]) +
+     *r2 * (*r2 - v2[0] * x1[0] - v2[1] * x1[1] - v2[2] * x1[2] + v2[0] * x2[0] +
 	   v2[1] * x2[1] + v2[2] * x2[2]));
 
   k = (b - sfact) / denom;
@@ -467,36 +470,42 @@ int US_Hydrodyn::compute_asa()
 {
 // run the surfracer code
 
-  int retval = surfracer_main(asa.probe_radius, residue_list, &model_vector[current_model]);
-  if ( retval ) {
-    switch ( retval ) {
-    case US_SURFRACER_ERR_MISSING_RESIDUE:
-      {
-	return US_SURFRACER_ERR_MISSING_RESIDUE;
-	break;
-      }
-    case US_SURFRACER_ERR_MISSING_ATOM:
-      {
-	return US_SURFRACER_ERR_MISSING_ATOM;
-	break;
-      }
-    case US_SURFRACER_ERR_MEMORY_ALLOC:
-      {
-	return US_SURFRACER_ERR_MEMORY_ALLOC;
-	break;
-      }
-    default:
-      {
-	// unknown error
-	return -1;
-	break;
-      }
-    }
-  }
-  
+	int retval = surfracer_main(asa.probe_radius, residue_list, &model_vector[current_model]);
+	if ( retval )
+	{
+		switch ( retval )
+		{
+			case US_SURFRACER_ERR_MISSING_RESIDUE:
+			{
+				printError("US_SURFRACER encountered a missing residue");
+				return US_SURFRACER_ERR_MISSING_RESIDUE;
+				break;
+			}
+			case US_SURFRACER_ERR_MISSING_ATOM:
+			{
+				printError("US_SURFRACER encountered a missing atom");
+				return US_SURFRACER_ERR_MISSING_ATOM;
+				break;
+			}
+			case US_SURFRACER_ERR_MEMORY_ALLOC:
+			{
+				printError("US_SURFRACER encountered a memory allocation error");
+				return US_SURFRACER_ERR_MEMORY_ALLOC;
+				break;
+			}
+			default:
+			{
+				printError("US_SURFRACER encountered an unknown error");
+				// unknown error
+				return -1;
+				break;
+			}
+		}
+	}
+
   // pass 1 assign bead #'s, chain #'s, initialize data
-  
-  // for (unsigned int i = 0; i < model_vector.size (); i++)   
+
+  // for (unsigned int i = 0; i < model_vector.size (); i++)
   {
     unsigned int i = current_model;
 
@@ -504,17 +513,17 @@ int US_Hydrodyn::compute_asa()
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
 	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 	// printf("p1 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
-	
+
 	this_atom->bead_assignment =
 	  (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
 	this_atom->chain =
 	  ((this_atom->p_residue && this_atom->p_atom) ?
 	   (int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
-	
+
 	// initialize data
 	this_atom->bead_positioner = false;
 	this_atom->normalized_ot_is_valid = false;
-	
+
 	for (unsigned int m = 0; m < 3; m++) {
 	  this_atom->bead_cog_coordinate.axis[m] = 0;
 	  this_atom->bead_position_coordinate.axis[m] = 0;
@@ -523,17 +532,17 @@ int US_Hydrodyn::compute_asa()
       }
     }
   }
-  
+
   // pass 2 determine beads, cog_position, fixed_position, molecular cog phase 1.
-  
+
   int count_actives;
   float molecular_cog[3] = { 0, 0, 0 };
   float molecular_mw = 0;
 
-  // for (unsigned int i = 0; i < model_vector.size (); i++)	
+  // for (unsigned int i = 0; i < model_vector.size (); i++)
   {
     unsigned int i = current_model;
-    
+
     for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       int last_bead_assignment = -1;
       int last_chain = -1;
@@ -541,7 +550,7 @@ int US_Hydrodyn::compute_asa()
       PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
       PDB_atom *last_main_bead = (PDB_atom *) 0;
       PDB_atom *sidechain_N = (PDB_atom *) 0;
-      
+
       count_actives = 0;
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
 	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
@@ -555,7 +564,7 @@ int US_Hydrodyn::compute_asa()
 		 this_atom->serial,
 		 this_atom->placing_method); fflush(stdout);
 #endif
-	  
+
 	  molecular_mw += this_atom->mw;
 	  for (unsigned int m = 0; m < 3; m++) {
 	    molecular_cog[m] += this_atom->coordinate.axis[m] * this_atom->mw;
@@ -563,10 +572,10 @@ int US_Hydrodyn::compute_asa()
 
 	  this_atom->bead_mw = 0;
 	  this_atom->bead_asa = 0;
-	  
+
 	  // do we have a new bead?
 	  // we want to put the N on a previous bead unless it is the first one of the molecule
-	  
+
 	  if (!create_beads_normally ||
 	      (
 	       (this_atom->bead_assignment != last_bead_assignment ||
@@ -582,9 +591,9 @@ int US_Hydrodyn::compute_asa()
 		   this_atom->serial,
 		   this_atom->chain); fflush(stdout);
 #endif
-	    
+
 	    this_atom->bead_positioner = this_atom->p_atom->positioner;
-	    
+
 	    this_atom->is_bead = true;
 	    last_main_bead = this_atom;
 	    last_bead_assignment = this_atom->bead_assignment;
@@ -607,7 +616,7 @@ int US_Hydrodyn::compute_asa()
 		sidechain_N->bead_mw = 0;
 		sidechain_N->bead_asa = 0;
 		sidechain_N = (PDB_atom *) 0;
-	      } 
+	      }
 	      if(this_atom->name == "N" &&
 		 this_atom->chain == 1) {
 		sidechain_N = this_atom;
@@ -622,7 +631,7 @@ int US_Hydrodyn::compute_asa()
 		   this_atom->serial); fflush(stdout);
 #endif
 	    if (this_atom->p_atom->positioner) {
-	      
+
 	      if (last_main_bead->bead_positioner &&
 		  this_atom->placing_method == 1) {
 		fprintf(stderr, "warning: 2 positioners in bead %s %s %d\n",
@@ -633,13 +642,13 @@ int US_Hydrodyn::compute_asa()
 	      last_main_bead->bead_positioner = true;
 	      last_main_bead->bead_position_coordinate = this_atom->coordinate;
 	    }
-	    
+
 	    this_atom->is_bead = false;
 	    // this_atom->bead_cog_mw = 0;
 	  }
-	  
+
 	  this_atom->bead_cog_mw = 0;
-	  
+
 	  // special nitrogen asa handling
 	  PDB_atom *use_atom;
 	  if (create_beads_normally &&
@@ -651,7 +660,7 @@ int US_Hydrodyn::compute_asa()
 	    use_atom = last_main_bead;
 	  }
 
-	  
+
 	  use_atom->bead_asa += this_atom->asa;
 	  use_atom->bead_mw += this_atom->mw;
 #if defined(DEBUG)
@@ -663,7 +672,7 @@ int US_Hydrodyn::compute_asa()
 		 );
 #endif
 	  // accum
-	  
+
 	  if (!create_beads_normally ||
 	      this_atom->p_atom->positioner) {
 #if defined(DEBUG)
@@ -699,7 +708,7 @@ int US_Hydrodyn::compute_asa()
 		      use_atom->serial);
 #endif
 	  }
-	    
+
 	  if (!create_beads_normally ||
 	      this_atom->p_atom->positioner) {
 	    if (use_atom->bead_positioner &&
@@ -712,29 +721,29 @@ int US_Hydrodyn::compute_asa()
 	    use_atom->bead_positioner = true;
 	    use_atom->bead_position_coordinate = this_atom->coordinate;
 	  }
-	  
+
 	  if (this_atom->chain == 0 &&
 	      this_atom->name == "N" &&
 	      !count_actives)
 	    {
 	      last_resName = "first N";
 	    }
-	  
+
 	  if (this_atom->chain == 0 &&
 	      this_atom->name == "CA") {
-	    
+
 	    last_main_chain_bead = this_atom;
 	  }
-	  
+
 	  count_actives++;
-	  
+
 	} else {
 	  this_atom->is_bead = false;
 	}
       }
     }
   }
-  
+
   if (molecular_mw) {
     for (unsigned int m = 0; m < 3; m++) {
       molecular_cog[m] /= molecular_mw;
@@ -750,18 +759,18 @@ int US_Hydrodyn::compute_asa()
     printf("ERROR: this molecule has zero mw!\n");
   }
 
-  // pass 2b move bead_ref_volume, ref_mw, computed_radius from 
+  // pass 2b move bead_ref_volume, ref_mw, computed_radius from
   // next main chain back one
-  
+
   // for (unsigned int i = 0; i < model_vector.size (); i++)	{
   {
     unsigned int i = current_model;
     for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
-      
+
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
 	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-	  
+
 	if (this_atom->active &&
 	    this_atom->is_bead &&
 	    this_atom->chain == 0) {
@@ -782,7 +791,7 @@ int US_Hydrodyn::compute_asa()
 	    if (this_atom->resName == "GLY") {
 	      last_main_chain_bead->bead_ref_mw -= 1.01;
 	    }
-	  } 
+	  }
 	  if (this_atom->name == "OXT" &&
 	      last_main_chain_bead) {
 #if defined(DEBUG)
@@ -812,7 +821,7 @@ int US_Hydrodyn::compute_asa()
   }
 
   // pass 2c hydration
-  
+
   // for (unsigned int i = 0; i < model_vector.size (); i++)	{
   {
     unsigned int i = current_model;
@@ -831,38 +840,38 @@ int US_Hydrodyn::compute_asa()
 #endif
 	    this_atom->bead_ref_volume += 24.041 * this_atom->bead_hydration;
 	    this_atom->bead_computed_radius = pow(3 * this_atom->bead_ref_volume / (4.0*M_PI), 1.0/3);
-	} 
+	}
       }
     }
   }
-  
+
   // pass 3 determine visibility, exposed code, normalize cog position, final position determination
   // compute com of entire molecule
-  
+
 #if defined(DEBUG1) || defined(DEBUG)
   printf("pass 3\n"); fflush(stdout);
 #endif
-  
+
   // for (unsigned int i = 0; i < model_vector.size (); i++) {
   {
     unsigned int i = current_model;
-    
+
     for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
-      
+
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
-	
+
 	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 	// printf("p3 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
 	this_atom->exposed_code = -1;
 	if (this_atom->active &&
 	    this_atom->is_bead) {
-	  
+
 #if defined(DEBUG)
 	  printf("pass 3 active is bead %s %s %d\n",
 		 this_atom->name.ascii(),
 		 this_atom->resName.ascii(),
 		 this_atom->serial); fflush(stdout);
-#endif	  
+#endif
 	  for (unsigned int m = 0; m < 3; m++) {
 	    if (this_atom->bead_cog_mw) {
 	      this_atom->bead_cog_coordinate.axis[m] /= this_atom->bead_cog_mw;
@@ -870,9 +879,9 @@ int US_Hydrodyn::compute_asa()
 	      this_atom->bead_cog_coordinate.axis[m] = 0;
 	    }
 	  }
-	  
+
 	  if (this_atom->p_residue && this_atom->p_atom) {
-	    
+
 #if defined(DEBUG)
 	    printf("pass 3 active is bead %s %s %d bead assignment %d placing method %d\n",
 		   this_atom->name.ascii(),
@@ -883,7 +892,7 @@ int US_Hydrodyn::compute_asa()
 		   ); fflush(stdout);
 #endif
 	    switch (this_atom->placing_method) {
-	      
+
 	    case 0 : // cog
 	      this_atom->bead_coordinate = this_atom->bead_cog_coordinate;
 	      // if (this_atom->bead_positioner) {
@@ -921,9 +930,9 @@ int US_Hydrodyn::compute_asa()
 		 this_atom->name.ascii(),
 		 this_atom->resName.ascii(),
 		 this_atom->serial); fflush(stdout);
-#endif	  
+#endif
 	  this_atom->visibility = (this_atom->bead_asa >= asa.threshold);
-	  
+
 #if defined(DEBUG)
 	  printf("pass 3 active is bead %s %s %d checkpoint 2\n",
 		 this_atom->name.ascii(),
@@ -954,9 +963,9 @@ int US_Hydrodyn::compute_asa()
       }
     }
   }
-  
+
   // pass 4 print results
-  
+
 #if defined(DEBUG)
   printf("model~molecule~atom~name~residue~chainID~"
 	 "position~active~radius~asa~mw~"
@@ -969,7 +978,7 @@ int US_Hydrodyn::compute_asa()
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
 	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 	// printf("p4 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
-	
+
 	// printf("model %d mol %d atm %d nam %s res %s xyz [%f,%f,%f] act %s rads %f asa %f bead # %d chain %d serl %d is_bead %s bead_asa %f vis %s code %d pos? %s pos_co [%f,%f,%f] cog [%f,%f,%f] use [%f, %f, %f]\n",
 	printf("%d~%d~%d~%s~%s~%s~"
 	       "[%f,%f,%f]~%s~%f~%f~%f~"
@@ -1101,13 +1110,13 @@ int US_Hydrodyn::compute_asa()
 
 #endif
 
-  int methods[] = 
-    { 
-      RADIAL_REDUCTION | RR_SC | RR_EXPOSED, 
+  int methods[] =
+    {
+      RADIAL_REDUCTION | RR_SC | RR_EXPOSED,
       RADIAL_REDUCTION | RR_MCSC | RR_EXPOSED,
       RADIAL_REDUCTION | RR_MCSC | RR_BURIED,
     };
-  
+
   if (sidechain_overlap.fuse_beads) {
     methods[0] |= POP_SC | POP_EXPOSED;
   }
@@ -1158,18 +1167,18 @@ int US_Hydrodyn::compute_asa()
 
   float overlap[] =
     {
-      sidechain_overlap.fuse_beads_percent / 100.0, 
-      mainchain_overlap.fuse_beads_percent / 100.0, 
+      sidechain_overlap.fuse_beads_percent / 100.0,
+      mainchain_overlap.fuse_beads_percent / 100.0,
       buried_overlap.fuse_beads_percent / 100.0
     };
 
   float rr_overlap[] =
     {
-      (sidechain_overlap.remove_hierarch ? 
+      (sidechain_overlap.remove_hierarch ?
        sidechain_overlap.remove_hierarch_percent : sidechain_overlap.remove_sync_percent) / 100.0,
-      (mainchain_overlap.remove_hierarch ? 
+      (mainchain_overlap.remove_hierarch ?
        mainchain_overlap.remove_hierarch_percent : mainchain_overlap.remove_sync_percent) / 100.0,
-      (buried_overlap.remove_hierarch ? 
+      (buried_overlap.remove_hierarch ?
        buried_overlap.remove_hierarch_percent : buried_overlap.remove_sync_percent) / 100.0
     };
 
@@ -1177,9 +1186,9 @@ int US_Hydrodyn::compute_asa()
   write_bead_tsv("bead_model_start.tsv", &bead_model);
   write_bead_spt("bead_model_start", &bead_model);
   for(unsigned int k = 0; k < sizeof(methods) / sizeof(int); k++) {
-	   
+
     int beads_popped = 0;
-  
+
 #if defined(DEBUG1) || defined(DEBUG)
     printf("popping stage %d %s%s%s%s%s%s%s%s%s%s%s%s%s%s%soverlap_reduction %f rroverlap %f\n",
 	   k,
@@ -1238,7 +1247,7 @@ int US_Hydrodyn::compute_asa()
 		   bead_model[j].active ? "Y" : "N",
 		   max_intersection_volume
 		   );
-#endif	    
+#endif
 	    if (bead_model[i].active &&
 		bead_model[j].active &&
 		( ((methods[k] & POP_SC) &&
@@ -1247,10 +1256,10 @@ int US_Hydrodyn::compute_asa()
 		  ((methods[k] & POP_MC) &&
 		  bead_model[i].chain == 0 &&
 		  bead_model[j].chain == 0) ||
-		  ((methods[k] & POP_MCSC) 
+		  ((methods[k] & POP_MCSC)
 		   // &&
 		   // (bead_model[i].chain != 1 ||
-		   // bead_model[j].chain != 1)) 
+		   // bead_model[j].chain != 1))
 		   ) ) &&
 		( ((methods[k] & POP_EXPOSED) &&
 		   bead_model[i].exposed_code == 1 &&
@@ -1259,7 +1268,7 @@ int US_Hydrodyn::compute_asa()
 		   (bead_model[i].exposed_code != 1 ||
 		    bead_model[j].exposed_code != 1)) ||
 		  (methods[k] & POP_ALL) )) {
-	      intersection_volume = 
+	      intersection_volume =
 		int_vol_2sphere(
 				bead_model[i].bead_computed_radius,
 				bead_model[j].bead_computed_radius,
@@ -1271,9 +1280,9 @@ int US_Hydrodyn::compute_asa()
 				     pow(bead_model[i].bead_coordinate.axis[2] -
 					 bead_model[j].bead_coordinate.axis[2], 2)) );
 #if defined(DEBUG)
-	      printf("this overlap bead %u %u vol %f rv1 %f rv2 %f r1 %f r2 %f p1 [%f,%f,%f] p2 [%f,%f,%f]\n", 
-		     bead_model[i].serial, 
-		     bead_model[j].serial, 
+	      printf("this overlap bead %u %u vol %f rv1 %f rv2 %f r1 %f r2 %f p1 [%f,%f,%f] p2 [%f,%f,%f]\n",
+		     bead_model[i].serial,
+		     bead_model[j].serial,
 		     intersection_volume,
 		     bead_model[i].bead_ref_volume,
 		     bead_model[j].bead_ref_volume,
@@ -1292,9 +1301,9 @@ int US_Hydrodyn::compute_asa()
 		overlaps_exist = true;
 		if (intersection_volume > max_intersection_volume) {
 #if defined(DEBUG)
-		  printf("best overlap so far bead %u %u vol %f\n", 
-			 bead_model[i].serial, 
-			 bead_model[j].serial, 
+		  printf("best overlap so far bead %u %u vol %f\n",
+			 bead_model[i].serial,
+			 bead_model[j].serial,
 			 intersection_volume);
 #endif
 		  max_intersection_volume = intersection_volume;
@@ -1309,8 +1318,8 @@ int US_Hydrodyn::compute_asa()
 	  beads_popped++;
 #if defined(DEBUG1) || defined(DEBUG)
 	  printf("popping beads %u %u int vol %f mw1 %f mw2 %f v1 %f v2 %f c1 [%f,%f,%f] c2 [%f,%f,%f]\n",
-		 bead_model[max_bead1].serial, 
-		 bead_model[max_bead2].serial, 
+		 bead_model[max_bead1].serial,
+		 bead_model[max_bead2].serial,
 		 max_intersection_volume,
 		 bead_model[max_bead1].bead_ref_mw,
 		 bead_model[max_bead2].bead_ref_mw,
@@ -1329,19 +1338,19 @@ int US_Hydrodyn::compute_asa()
 	  for (unsigned int n = 0; n < bead_model[max_bead2].all_beads.size(); n++) {
 	    bead_model[max_bead1].all_beads.push_back(bead_model[max_bead2].all_beads[n]);
 	  }
-	  
+
 	  bead_model[max_bead2].active = false;
 	  for (unsigned int m = 0; m < 3; m++) {
 	    bead_model[max_bead1].bead_coordinate.axis[m] *= bead_model[max_bead1].bead_ref_mw;
-	    bead_model[max_bead1].bead_coordinate.axis[m] += 
+	    bead_model[max_bead1].bead_coordinate.axis[m] +=
 	      bead_model[max_bead2].bead_coordinate.axis[m] * bead_model[max_bead2].bead_ref_mw;
 	    bead_model[max_bead1].bead_coordinate.axis[m] /= bead_model[max_bead1].bead_ref_mw + bead_model[max_bead2].bead_ref_mw;
 	  }
 	  bead_model[max_bead1].bead_ref_mw = bead_model[max_bead1].bead_ref_mw + bead_model[max_bead2].bead_ref_mw;
-	  bead_model[max_bead1].bead_ref_volume = bead_model[max_bead1].bead_ref_volume + bead_model[max_bead2].bead_ref_volume; 
+	  bead_model[max_bead1].bead_ref_volume = bead_model[max_bead1].bead_ref_volume + bead_model[max_bead2].bead_ref_volume;
 	  // - max_intersection_volume;
 	  bead_model[max_bead1].bead_actual_radius =
-	    bead_model[max_bead1].bead_computed_radius = 
+	    bead_model[max_bead1].bead_computed_radius =
 	    pow(3 * bead_model[max_bead1].bead_ref_volume / (4.0*M_PI), 1.0/3);
 	  // if fusing with a side chain bead, make sure the fused is side-chain
 	  if (bead_model[max_bead2].chain) {
@@ -1351,8 +1360,8 @@ int US_Hydrodyn::compute_asa()
 	  bead_model[max_bead2].normalized_ot_is_valid = false;
 #if defined(DEBUG)
 	  printf("after popping beads %d %d int volume %f radius %f mw %f vol %f coordinate [%f,%f,%f]\n",
-		 bead_model[max_bead1].serial, 
-		 bead_model[max_bead2].serial, 
+		 bead_model[max_bead1].serial,
+		 bead_model[max_bead2].serial,
 		 intersection_volume,
 		 bead_model[max_bead1].bead_computed_radius,
 		 bead_model[max_bead1].bead_ref_mw,
@@ -1404,7 +1413,7 @@ int US_Hydrodyn::compute_asa()
       int count;
       float max_intersection_length;
       // bool tb[bead_model.size() * bead_model.size()];
-      // printf("sizeof tb %d, bm.size^2 %d\n", 
+      // printf("sizeof tb %d, bm.size^2 %d\n",
       //     sizeof(tb), bead_model.size() * bead_model.size());
       if (methods[k] & RR_HIERC) {
 #if defined(DEBUG1) || defined(DEBUG)
@@ -1448,9 +1457,9 @@ int US_Hydrodyn::compute_asa()
 		  (bead_model[i].exposed_code != 1 ||
 		   bead_model[j].exposed_code != 1)) ||
 		 (methods[k] & RR_ALL))) {
-	      
-	      float separation = 
-		bead_model[i].bead_computed_radius + 
+
+	      float separation =
+		bead_model[i].bead_computed_radius +
 		bead_model[j].bead_computed_radius -
 		sqrt(
 		     pow(bead_model[i].bead_coordinate.axis[0] -
@@ -1459,7 +1468,7 @@ int US_Hydrodyn::compute_asa()
 			 bead_model[j].bead_coordinate.axis[1], 2) +
 		     pow(bead_model[i].bead_coordinate.axis[2] -
 			 bead_model[j].bead_coordinate.axis[2], 2));
-	      
+
 #if defined(DEBUG)
 	      printf("beads %d %d with radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] have a sep of %f\n",
 		     i, j,
@@ -1472,11 +1481,11 @@ int US_Hydrodyn::compute_asa()
 		     bead_model[j].bead_coordinate.axis[1],
 		     bead_model[j].bead_coordinate.axis[2],
 		     separation);
-#endif		
+#endif
 	      if (separation <= TOLERANCE) {
 		continue;
 	      }
-	      
+
 	      pair.i = i;
 	      pair.j = j;
 	      pair.separation = separation;
@@ -1487,7 +1496,7 @@ int US_Hydrodyn::compute_asa()
 	  }
 	}
 	// ok, now we have the list of pairs
-	max_bead1 = 
+	max_bead1 =
 	  max_bead2 = -1;
 	float radius_delta;
 	do {
@@ -1505,8 +1514,8 @@ int US_Hydrodyn::compute_asa()
 		  pairs[i].i == max_bead2 ||
 		  pairs[i].j == max_bead2
 		  ) {
-		pairs[i].separation = 
-		  bead_model[pairs[i].i].bead_computed_radius + 
+		pairs[i].separation =
+		  bead_model[pairs[i].i].bead_computed_radius +
 		  bead_model[pairs[i].j].bead_computed_radius -
 		  sqrt(
 		       pow(bead_model[pairs[i].i].bead_coordinate.axis[0] -
@@ -1574,10 +1583,10 @@ int US_Hydrodyn::compute_asa()
 		  if (!bead_model[use_bead].normalized_ot_is_valid) {
 		    float norm = 0.0;
 		    for (unsigned int l = 0; l < 3; l++) {
-		      bead_model[use_bead].normalized_ot.axis[l] = 
-			bead_model[use_bead].bead_coordinate.axis[l] - 
+		      bead_model[use_bead].normalized_ot.axis[l] =
+			bead_model[use_bead].bead_coordinate.axis[l] -
 			molecular_cog[l];
-		      norm += 
+		      norm +=
 			bead_model[use_bead].normalized_ot.axis[l] *
 			bead_model[use_bead].normalized_ot.axis[l];
 		    }
@@ -1595,10 +1604,10 @@ int US_Hydrodyn::compute_asa()
 		  if (!bead_model[use_bead].normalized_ot_is_valid) {
 		    float norm = 0.0;
 		    for (unsigned int l = 0; l < 3; l++) {
-		      bead_model[use_bead].normalized_ot.axis[l] = 
-			bead_model[use_bead].bead_coordinate.axis[l] - 
+		      bead_model[use_bead].normalized_ot.axis[l] =
+			bead_model[use_bead].bead_coordinate.axis[l] -
 			molecular_cog[l];
-		      norm += 
+		      norm +=
 			bead_model[use_bead].normalized_ot.axis[l] *
 			bead_model[use_bead].normalized_ot.axis[l];
 		    }
@@ -1628,7 +1637,7 @@ int US_Hydrodyn::compute_asa()
 	      } else {
 		// no outward translation is required for either bead
 		// are we shrinking just 1 bead ... if we are dealing with buried beads, then
-		// only buried beads should be shrunk, not exposed beads 
+		// only buried beads should be shrunk, not exposed beads
 		printf("no outward translation is required\n");
 		if(methods[k] & RR_BURIED &&
 		   bead_model[max_bead1].exposed_code == 1 &&
@@ -1690,17 +1699,17 @@ int US_Hydrodyn::compute_asa()
 		  printf("use bead %d no outward translation is required\n", use_bead);
 		  reduced[use_bead] = true;
 		  reduced_any[use_bead] = true;
-		  radius_delta = 
+		  radius_delta =
 		    // bead_model[use_bead].bead_actual_radius * rr_overlap[k];
 		    max_intersection_length * bead_model[max_bead1].bead_computed_radius /
 		    (bead_model[max_bead1].bead_computed_radius + bead_model[max_bead2].bead_computed_radius);
-		  float radius_delta2 = 
+		  float radius_delta2 =
 		    // bead_model[use_bead].bead_actual_radius * rr_overlap[k];
 		    max_intersection_length * bead_model[max_bead2].bead_computed_radius /
 		    (bead_model[max_bead1].bead_computed_radius + bead_model[max_bead2].bead_computed_radius);
-		  printf("intersection len %f recomputed %f radius delta %f r1 %f r2 %f\n", 
+		  printf("intersection len %f recomputed %f radius delta %f r1 %f r2 %f\n",
 			 max_intersection_length,
-			 bead_model[max_bead1].bead_computed_radius + 
+			 bead_model[max_bead1].bead_computed_radius +
 			 bead_model[max_bead2].bead_computed_radius -
 			 sqrt(
 			      pow(bead_model[max_bead1].bead_coordinate.axis[0] -
@@ -1708,7 +1717,7 @@ int US_Hydrodyn::compute_asa()
 			      pow(bead_model[max_bead1].bead_coordinate.axis[1] -
 				  bead_model[max_bead2].bead_coordinate.axis[1], 2) +
 			      pow(bead_model[max_bead1].bead_coordinate.axis[2] -
-				  bead_model[max_bead2].bead_coordinate.axis[2], 2)),		      
+				  bead_model[max_bead2].bead_coordinate.axis[2], 2)),
 			 radius_delta,
 			 bead_model[max_bead1].bead_computed_radius,
 			 bead_model[max_bead2].bead_computed_radius
@@ -1722,10 +1731,10 @@ int US_Hydrodyn::compute_asa()
 		    bead_model[use_bead].bead_computed_radius = TOLERANCE / 2;
 		    reduced[use_bead] = false;
 		  }
-		  
-		  printf("intersection len %f recomputed %f radius delta %f r1 %f r2 %f\n", 
+
+		  printf("intersection len %f recomputed %f radius delta %f r1 %f r2 %f\n",
 			 max_intersection_length,
-			 bead_model[max_bead1].bead_computed_radius + 
+			 bead_model[max_bead1].bead_computed_radius +
 			 bead_model[max_bead2].bead_computed_radius -
 			 sqrt(
 			      pow(bead_model[max_bead1].bead_coordinate.axis[0] -
@@ -1733,12 +1742,12 @@ int US_Hydrodyn::compute_asa()
 			      pow(bead_model[max_bead1].bead_coordinate.axis[1] -
 				  bead_model[max_bead2].bead_coordinate.axis[1], 2) +
 			      pow(bead_model[max_bead1].bead_coordinate.axis[2] -
-				  bead_model[max_bead2].bead_coordinate.axis[2], 2)),		      
+				  bead_model[max_bead2].bead_coordinate.axis[2], 2)),
 			 radius_delta,
 			 bead_model[max_bead1].bead_computed_radius,
 			 bead_model[max_bead2].bead_computed_radius
 			 );
-		  
+
 		  use_bead = max_bead2;
 		  reduced[use_bead] = true;
 		  reduced_any[use_bead] = true;
@@ -1754,10 +1763,10 @@ int US_Hydrodyn::compute_asa()
 		  }
 		}
 	      }
-	      printf("b1r %f b2r %f current separation %f\n", 
+	      printf("b1r %f b2r %f current separation %f\n",
 		     bead_model[max_bead1].bead_computed_radius,
 		     bead_model[max_bead2].bead_computed_radius,
-		     bead_model[max_bead1].bead_computed_radius + 
+		     bead_model[max_bead1].bead_computed_radius +
 		     bead_model[max_bead2].bead_computed_radius -
 		     sqrt(
 			  pow(bead_model[max_bead1].bead_coordinate.axis[0] -
@@ -1769,7 +1778,7 @@ int US_Hydrodyn::compute_asa()
 	      printf("flags %s %s %s %s\n",
 		     bead_model[max_bead1].bead_computed_radius > TOLERANCE ? "Y" : "N",
 		     bead_model[max_bead2].bead_computed_radius > TOLERANCE ? "Y" : "N",
-		     (bead_model[max_bead1].bead_computed_radius + 
+		     (bead_model[max_bead1].bead_computed_radius +
 		      bead_model[max_bead2].bead_computed_radius -
 		      sqrt(
 			   pow(bead_model[max_bead1].bead_coordinate.axis[0] -
@@ -1780,7 +1789,7 @@ int US_Hydrodyn::compute_asa()
 			       bead_model[max_bead2].bead_coordinate.axis[2], 2)) > TOLERANCE) ? "Y" : "N",
 		     bead_model[max_bead1].bead_computed_radius > TOLERANCE &&
 		     bead_model[max_bead2].bead_computed_radius > TOLERANCE &&
-		     (bead_model[max_bead1].bead_computed_radius + 
+		     (bead_model[max_bead1].bead_computed_radius +
 		      bead_model[max_bead2].bead_computed_radius -
 		      sqrt(
 			   pow(bead_model[max_bead1].bead_coordinate.axis[0] -
@@ -1788,11 +1797,11 @@ int US_Hydrodyn::compute_asa()
 			   pow(bead_model[max_bead1].bead_coordinate.axis[1] -
 			       bead_model[max_bead2].bead_coordinate.axis[1], 2) +
 			   pow(bead_model[max_bead1].bead_coordinate.axis[2] -
-			       bead_model[max_bead2].bead_coordinate.axis[2], 2)) > TOLERANCE) ? "Y" : "N");		     
+			       bead_model[max_bead2].bead_coordinate.axis[2], 2)) > TOLERANCE) ? "Y" : "N");
 	    } while (
 		     bead_model[max_bead1].bead_computed_radius > TOLERANCE &&
 		     bead_model[max_bead2].bead_computed_radius > TOLERANCE &&
-		     (bead_model[max_bead1].bead_computed_radius + 
+		     (bead_model[max_bead1].bead_computed_radius +
 		      bead_model[max_bead2].bead_computed_radius -
 		      sqrt(
 			   pow(bead_model[max_bead1].bead_coordinate.axis[0] -
@@ -1857,9 +1866,9 @@ int US_Hydrodyn::compute_asa()
 		      (bead_model[i].exposed_code != 1 ||
 		       bead_model[j].exposed_code != 1)) ||
 		     (methods[k] & RR_ALL))) {
-		  
-		  float separation = 
-		    bead_model[i].bead_computed_radius + 
+
+		  float separation =
+		    bead_model[i].bead_computed_radius +
 		    bead_model[j].bead_computed_radius -
 		    sqrt(
 			 pow(bead_model[i].bead_coordinate.axis[0] -
@@ -1868,7 +1877,7 @@ int US_Hydrodyn::compute_asa()
 			     bead_model[j].bead_coordinate.axis[1], 2) +
 			 pow(bead_model[i].bead_coordinate.axis[2] -
 			     bead_model[j].bead_coordinate.axis[2], 2));
-		  
+
 #if defined(DEBUG)
 		  printf("beads %d %d with radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] have a sep of %f\n",
 			 i, j,
@@ -1881,11 +1890,11 @@ int US_Hydrodyn::compute_asa()
 			 bead_model[j].bead_coordinate.axis[1],
 			 bead_model[j].bead_coordinate.axis[2],
 			 separation);
-#endif		
+#endif
 		  if (separation <= TOLERANCE) {
 		    continue;
 		  }
-		  
+
 		  if (separation > max_intersection_length) {
 		    max_intersection_length = separation;
 		    max_bead1 = i;
@@ -1900,7 +1909,7 @@ int US_Hydrodyn::compute_asa()
 	      }
 	    } // if last_reduced[i]
 	  }
-	  if (max_intersection_length > TOLERANCE) {	    
+	  if (max_intersection_length > TOLERANCE) {
 #if defined(DEBUG1) || defined(DEBUG)
 	    printf("processing radial reduction sync iteration %d pairs to process %d\n", iter, count);
 #endif
@@ -1934,10 +1943,10 @@ int US_Hydrodyn::compute_asa()
 		    if (!bead_model[use_bead].normalized_ot_is_valid) {
 		      float norm = 0.0;
 		      for (unsigned int l = 0; l < 3; l++) {
-			bead_model[use_bead].normalized_ot.axis[l] = 
-			  bead_model[use_bead].bead_coordinate.axis[l] - 
+			bead_model[use_bead].normalized_ot.axis[l] =
+			  bead_model[use_bead].bead_coordinate.axis[l] -
 			  molecular_cog[l];
-			norm += 
+			norm +=
 			  bead_model[use_bead].normalized_ot.axis[l] *
 			  bead_model[use_bead].normalized_ot.axis[l];
 		      }
@@ -1945,7 +1954,7 @@ int US_Hydrodyn::compute_asa()
 		      if (norm) {
 			for (unsigned int l = 0; l < 3; l++) {
 			  bead_model[use_bead].normalized_ot.axis[l] /= norm;
-			  bead_model[use_bead].bead_coordinate.axis[l] += 
+			  bead_model[use_bead].bead_coordinate.axis[l] +=
 			    radius_delta * bead_model[use_bead].normalized_ot.axis[l];
 			}
 			bead_model[use_bead].normalized_ot_is_valid = true;
@@ -1954,7 +1963,7 @@ int US_Hydrodyn::compute_asa()
 		      }
 		    } else {
 		      for (unsigned int l = 0; l < 3; l++) {
-			bead_model[use_bead].bead_coordinate.axis[l] += 
+			bead_model[use_bead].bead_coordinate.axis[l] +=
 			  radius_delta * bead_model[use_bead].normalized_ot.axis[l];
 		      }
 		    }
@@ -2002,10 +2011,10 @@ int US_Hydrodyn::compute_asa()
 		    if (!bead_model[use_bead].normalized_ot_is_valid) {
 		      float norm = 0.0;
 		      for (unsigned int l = 0; l < 3; l++) {
-			bead_model[use_bead].normalized_ot.axis[l] = 
-			  bead_model[use_bead].bead_coordinate.axis[l] - 
+			bead_model[use_bead].normalized_ot.axis[l] =
+			  bead_model[use_bead].bead_coordinate.axis[l] -
 			  molecular_cog[l];
-			norm += 
+			norm +=
 			  bead_model[use_bead].normalized_ot.axis[l] *
 			  bead_model[use_bead].normalized_ot.axis[l];
 		      }
@@ -2013,7 +2022,7 @@ int US_Hydrodyn::compute_asa()
 		      if (norm) {
 			for (unsigned int l = 0; l < 3; l++) {
 			  bead_model[use_bead].normalized_ot.axis[l] /= norm;
-			  bead_model[use_bead].bead_coordinate.axis[l] += 
+			  bead_model[use_bead].bead_coordinate.axis[l] +=
 			    radius_delta * bead_model[use_bead].normalized_ot.axis[l];
 			}
 			bead_model[use_bead].normalized_ot_is_valid = true;
@@ -2022,7 +2031,7 @@ int US_Hydrodyn::compute_asa()
 		      }
 		    } else {
 		      for (unsigned int l = 0; l < 3; l++) {
-			bead_model[use_bead].bead_coordinate.axis[l] += 
+			bead_model[use_bead].bead_coordinate.axis[l] +=
 			  radius_delta * bead_model[use_bead].normalized_ot.axis[l];
 		      }
 		    }
@@ -2062,7 +2071,7 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG1) || defined(DEBUG)
 	  printf("recomputing volume bead %d\n", i);
 #endif
-	  bead_model[i].bead_ref_volume = 
+	  bead_model[i].bead_ref_volume =
 	    (4.0*M_PI/3.0) * pow(bead_model[i].bead_computed_radius, 3.0);
 	}
       }
@@ -2121,10 +2130,10 @@ static int get_color(PDB_atom *a) {
   //  color = a->bead_number % 15;
   return color;
 }
-  
+
 void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
 
-  char *colormap[] = 
+  char *colormap[] =
     {
       "black",        // 0 black
       "blue",         // 1 blue
@@ -2152,7 +2161,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
   FILE *frmc = fopen(QString("%1.rmc").arg(fname).ascii(), "w");
   FILE *frmc1 = fopen(QString("%1.rmc1").arg(fname).ascii(), "w");
   int beads = 0;
-  
+
   float max_radius = 0;
   for (unsigned int i = 0; i < model->size(); i++) {
     if ((*model)[i].active) {
@@ -2169,26 +2178,26 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
     scaling = max_radius / MAX_RADIUS;
   }
   scaling = 5.0;
-  fprintf(fbms, 
-	  "%d\n%s\n", 
-	  beads, 
-	  fname.ascii() 
+  fprintf(fbms,
+	  "%d\n%s\n",
+	  beads,
+	  fname.ascii()
 	  );
-  fprintf(fspt, 
+  fprintf(fspt,
 	  "load xyz %s\nselect all\nwireframe off\nset background white\n",
-	  QString("%1.bms").arg(fname).ascii() 
+	  QString("%1.bms").arg(fname).ascii()
 	  );
-	  
+
   int atomno = 0;
   for (unsigned int i = 0; i < model->size(); i++) {
     if ((*model)[i].active) {
       if ((*model)[i].bead_color >= (sizeof(colormap) / sizeof(char))) {
-	printf("ERROR: bead color for bead %u is to large %u\n", 
+	printf("ERROR: bead color for bead %u is to large %u\n",
 	       (*model)[i].serial,
 	       get_color(&(*model)[i])); fflush(stdout);
       }
-      fprintf(fbms, 
-	      "Pb %.2f %.2f %.2f\n", 
+      fprintf(fbms,
+	      "Pb %.2f %.2f %.2f\n",
 	      (*model)[i].bead_coordinate.axis[0] / scaling,
 	      (*model)[i].bead_coordinate.axis[1] / scaling,
 	      (*model)[i].bead_coordinate.axis[2] / scaling
@@ -2205,18 +2214,18 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
 	      (int)(*model)[i].bead_mw,
 	      get_color(&(*model)[i]));
       unsigned int tmp_serial = (*model)[i].serial;
-      QString residues = 
-	(*model)[i].resName + "." + 
+      QString residues =
+	(*model)[i].resName + "." +
 	((*model)[i].chainID == " " ? "" : ((*model)[i].chainID + "."));
       // a compiler error forced this kludge using tmp_serial
       //	+ QString("%1").arg((*model)[i].serial);
       residues += QString("%1").arg(tmp_serial);
 
-      for (unsigned int j = 0; j < (*model)[i].all_beads.size(); j++) 
+      for (unsigned int j = 0; j < (*model)[i].all_beads.size(); j++)
       {
 	unsigned int tmp_serial = (*model)[i].all_beads[j]->serial;
-	residues += "," + 
-	  (*model)[i].all_beads[j]->resName + "." + 
+	residues += "," +
+	  (*model)[i].all_beads[j]->resName + "." +
 	  ((*model)[i].all_beads[j]->chainID == " " ? "" : ((*model)[i].all_beads[j]->chainID + "."));
 	// a compiler error forced this kludge using tmp_serial
 	//  + QString("%1").arg((*model)[i].all_beads[j].serial);
@@ -2237,7 +2246,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
   fclose(frmc);
   fclose(frmc1);
 }
-  
+
 void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
   FILE *f = fopen(fname.ascii(), "w");
   fprintf(f, "name~residue~chainID~"
@@ -2246,25 +2255,25 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
 	 "bead mw~position controlled?~bead positioner~baric method~bead hydration~bead color~"
 	 "bead ref volume~bead ref mw~bead computed radius~"
 	 "position_coordinate~cog position~use position~sizeof(parents)~beads referenced\n");
-  
+
   for (unsigned int i = 0; i < model->size(); i++) {
     if ((*model)[i].active) {
       QString beads_referenced = "";
       for (unsigned int j = 0; j < (*model)[i].all_beads.size(); j++) {
 
-	beads_referenced += 
+	beads_referenced +=
 	  QString("%1-%2-%3-%4;").
 	  arg(((*model)[i].all_beads)[j]->serial).
 	  arg(((*model)[i].all_beads)[j]->name).
 	  arg(((*model)[i].all_beads)[j]->resName).
 	  arg(((*model)[i].all_beads)[j]->chainID);
-	
+
 	  //	  ((*model)[i].all_beads)[j]->serial + "-" +
 	  //	  ((*model)[i].all_beads)[j]->name + "-" +
 	  //	  ((*model)[i].all_beads)[j]->resName + "-" +
 	  //	  ((*model)[i].all_beads)[j]->chainID + ";";
       }
-      fprintf(f, 
+      fprintf(f,
 	    "%s~%s~%s~"
 	    "[%f,%f,%f]~%s~%f~%f~%f~"
 	    "%d~%d~%d~%s~%f~%s~"
@@ -2275,7 +2284,7 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
 	    (*model)[i].name.ascii(),
 	    (*model)[i].resName.ascii(),
 	    (*model)[i].chainID.ascii(),
-	    
+
 	    (*model)[i].coordinate.axis[0],
 	    (*model)[i].coordinate.axis[1],
 	    (*model)[i].coordinate.axis[2],
@@ -2283,14 +2292,14 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
 	    (*model)[i].radius,
 	    (*model)[i].asa,
 	    (*model)[i].mw,
-	    
+
 	    (*model)[i].bead_number,
 	    (*model)[i].chain,
 	    (*model)[i].serial,
 	    (*model)[i].is_bead ? "Y" : "N",
 	    (*model)[i].bead_asa,
 	    (*model)[i].visibility ? "Y" : "N",
-	    
+
 	    (*model)[i].exposed_code,
 	    (*model)[i].bead_mw,
 	    (*model)[i].bead_positioner ? "Y" : "N",
@@ -2298,11 +2307,11 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
 	    (*model)[i].placing_method,
 	    (*model)[i].bead_hydration,
 	    (*model)[i].bead_color,
-	    
+
 	    (*model)[i].bead_ref_volume,
 	    (*model)[i].bead_ref_mw,
 	    (*model)[i].bead_computed_radius,
-	    
+
 	    (*model)[i].bead_position_coordinate.axis[0],
 	    (*model)[i].bead_position_coordinate.axis[1],
 	    (*model)[i].bead_position_coordinate.axis[2],
@@ -2314,7 +2323,7 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
 	    (*model)[i].bead_coordinate.axis[2],
 	      (*model)[i].all_beads.size(),
 	      beads_referenced.ascii()
-	    ); 
+	    );
     }
   }
   fclose(f);
@@ -2323,7 +2332,7 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
 void US_Hydrodyn::bead_check()
 {
   // recheck beads here
-  
+
   puts("bead recheck");
   PDB_chain tmp_chain;
   PDB_model tmp_model;
@@ -2370,6 +2379,25 @@ void US_Hydrodyn::select_model(int val)
 
 void US_Hydrodyn::visualize()
 {
+	rasmol = new QProcess(this);
+	QStringList argument;
+#if defined(BIN64)
+	argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
+#else
+	argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
+#endif
+//	argument.append("/home/user/demeler/us/ultrascan/bin/rasmol");
+	argument.append("-script");
+	argument.append(tmp_dir.absPath() + "/bead_model_end.spt");
+	rasmol->setArguments(argument);
+	if (!rasmol->start())
+	{
+		QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+										"Please check to make sure RASMOL is properly installed..."));
+		return;
+	}
+/*
+
   puts("run rasmol");
   QString rascmd = QString("$ULTRASCAN/bin") +
 #if defined(BIN64)
@@ -2377,28 +2405,29 @@ void US_Hydrodyn::visualize()
 #endif
     QString("/rasmol -script bead_model_end.spt > /dev/null &");
   system(rascmd.ascii());
+ */
 	// visualize bead model with rasmol etc.
 }
 
 int US_Hydrodyn::calc_somo()
 {
-  if (!residue_list.size() ||
-      !model_vector.size()) {
-    fprintf(stderr, "calculations can not be run until residue & pdb files are read!\n");
-    return -1;
-  }
-  compute_asa();
-  if (asa.recheck_beads)
-  {
-    puts("recheck beads disabled");
-    // bead_check();
-  }
-
-  // calculate bead model and generate hydrodynamics calculation output
-  // if successful, enable follow-on buttons:
-  pb_visualize->setEnabled(true);
-  pb_calc_hydro->setEnabled(true);
-  return 0;
+	if (!residue_list.size() ||
+      !model_vector.size())
+	{
+		fprintf(stderr, "calculations can not be run until residue & pdb files are read!\n");
+		return -1;
+	}
+	compute_asa();
+	if (asa.recheck_beads)
+	{
+		puts("recheck beads disabled");
+		// bead_check();
+	}
+	// calculate bead model and generate hydrodynamics calculation output
+	// if successful, enable follow-on buttons:
+	pb_visualize->setEnabled(true);
+	pb_calc_hydro->setEnabled(true);
+	return 0;
 }
 
 void US_Hydrodyn::calc_hydro()
@@ -2578,8 +2607,10 @@ void US_Hydrodyn::load_bead_model()
 
 void US_Hydrodyn::read_pdb(const QString &filename)
 {
+	lb_model->clear();
 	QString str1, str2, temp;
 	model_vector.clear();
+	bead_model.clear();
 	struct PDB_chain temp_chain;
 	QFile f(filename);
 	struct PDB_model temp_model;
@@ -2730,6 +2761,16 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
 	global_Xpos -= 30;
 	global_Ypos -= 30;
 	write_config();
+	// removing the temporary directory requires that the temporary directory is empty.
+	// we don't know what else is in the directory if it was created previously.
+	// tmp_dir.rmdir(USglobal->config_list.root_dir + "/tmp");
+	if (rasmol != NULL)
+	{
+		if (rasmol->isRunning())
+		{
+			closeAttnt(rasmol, "RASMOL");
+		}
+	}
 	e->accept();
 }
 
@@ -3169,3 +3210,34 @@ void US_Hydrodyn::show_hydro()
 	}
 }
 
+void US_Hydrodyn::printError(const QString &str)
+{
+	QMessageBox::warning(this, tr("UltraScan Warning"), tr("Please note:\n\n") +
+			tr(str), QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+}
+
+void US_Hydrodyn::closeAttnt(QProcess *proc, QString message)
+{
+	switch( QMessageBox::information( this,
+		tr("Attention!"),	message + tr(" is still running.\n"
+		    "Do you want to close it?"),
+		tr("&Kill"), tr("&Close gracefully"), tr("Leave running"),
+		 0,      // Enter == button 0
+		 2 ) )   // Escape == button 2
+	{
+		case 0:
+		{
+			proc->kill();
+			break;
+		}
+		case 1:
+		{
+			proc->tryTerminate();
+			break;
+		}
+		case 2:
+		{
+			break;
+		}
+	}
+}
