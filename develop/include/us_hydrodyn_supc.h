@@ -1,6 +1,11 @@
 #ifndef US_HYDRODYN_SUPC_H
 #define US_HYDRODYN_SUPC_H
 
+#include "../include/us_hydrodyn.h"
+#include "../include/us_hydrodyn_hydro.h"
+#include "../include/us_hydrodyn_pdbdefs.h"
+
+
 #include <stdio.h>
 #include <math.h>
 #include <malloc.h>
@@ -15,6 +20,7 @@ struct dati1
     int col;			/* color of the bead                 */
     char *cor;			/* correspondence between beads and AA */
 };
-int us_hydro_supc_main();
+int
+us_hydrodyn_supc_main(hydro_options *hydro, vector <PDB_atom> *bead_model, char *filename);
 
 #endif
