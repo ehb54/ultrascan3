@@ -8,9 +8,11 @@
 #include <qlayout.h>
 #include <qpushbutton.h>
 #include <qbuttongroup.h>
+#include <qgroupbox.h>
 #include <qframe.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
+#include <qlineedit.h>
 
 #include "us_util.h"
 
@@ -27,16 +29,16 @@ using namespace std;
 struct hydro_options
 {
 	int unit; 						// exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
-	bool reference_system;		// true: diffusion center, false: cartesian origin (default true)
-	bool boundary_cond;			// true: stick, false: slip (default true)
-	bool correct_volume;			// true: Automatic, false: manual (provide value)
-	float volume_correction;	// volume correction
-	bool correct_mass;			// true: Automatic, false: manual (provide value)
-	float mass_correction;		// mass correction
-	bool bead_exclusion;			// true: exclude hidden beads; false: use all beads
-	bool rotational;				// true: include beads in volume correction for rotational diffusion, false: exclude
-	bool viscosity;				// true: include beads in volume correction for intrinsic viscosity, false: exclude
-	bool overlap_cutoff;			// true: same as in model building, false: enter manually
+	bool reference_system;		// false: diffusion center, true: cartesian origin (default false)
+	bool boundary_cond;			// false: stick, true: slip (default false)
+	bool volume_correction;		// false: Automatic, true: manual (provide value)
+	double volume;					// volume correction
+	bool mass_correction;		// false: Automatic, true: manual (provide value)
+	double mass;					// mass correction
+	bool bead_inclusion;			// false: exclude hidden beads; true: use all beads
+	bool rotational;				// false: include beads in volume correction for rotational diffusion, true: exclude
+	bool viscosity;				// false: include beads in volume correction for intrinsic viscosity, true: exclude
+	bool overlap_cutoff;			// false: same as in model building, true: enter manually
 	double overlap;				// overlap cut off value if entered manually
 };
 
@@ -56,13 +58,60 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
 		US_Config *USglobal;
 
 		QLabel *lbl_info;
+		QLabel *lbl_unit;
+		QLabel *lbl_reference_system;
+		QLabel *lbl_volume;
+		QLabel *lbl_mass;
+		QLabel *lbl_overlap;
+		
+		QButtonGroup *bg_reference_system;
+		QButtonGroup *bg_boundary_cond;
+		QButtonGroup *bg_volume_correction;
+		QButtonGroup *bg_mass_correction;
+		QButtonGroup *bg_overlap;
+		QButtonGroup *bg_bead_inclusion;
+		
+		QGroupBox *gb_buried;
+
+		QCheckBox *cb_diffusion_center;
+		QCheckBox *cb_cartesian_origin;
+		QCheckBox *cb_stick;
+		QCheckBox *cb_slip;
+		QCheckBox *cb_auto_volume;
+		QCheckBox *cb_manual_volume;
+		QCheckBox *cb_auto_mass;
+		QCheckBox *cb_manual_mass;
+		QCheckBox *cb_auto_overlap;
+		QCheckBox *cb_manual_overlap;
+		QCheckBox *cb_exclusion;
+		QCheckBox *cb_inclusion;
+		QCheckBox *cb_rotational;
+		QCheckBox *cb_viscosity;
+		
+		QwtCounter *cnt_unit;
+		
+		QLineEdit *le_volume;
+		QLineEdit *le_mass;
+		QLineEdit *le_overlap;
+		
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;
 
 	private slots:
 
 		void setupGUI();
-
+		void update_unit(double);
+		void update_volume(const QString &str);
+		void update_mass(const QString &str);
+		void update_overlap(const QString &str);
+		void select_reference_system(int);
+		void select_boundary_cond(int);
+		void select_volume_correction(int);
+		void select_mass_correction(int);
+		void select_overlap(int);
+		void select_bead_inclusion(int);
+		void set_rotational();
+		void set_viscosity();
 		void cancel();
 		void help();
 

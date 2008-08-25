@@ -25,6 +25,7 @@
 #include "us_hydrodyn_asa.h"
 #include "us_hydrodyn_hydro.h"
 #include "us_hydrodyn_misc.h"
+#include "us_hydrodyn_results.h"
 
 //standard C and C++ defs:
 
@@ -51,12 +52,16 @@ class US_EXTERN US_Hydrodyn : public QFrame
 				overlap_widget,
 				bead_output_widget,
 				hydro_widget,
+				results_widget,
 				misc_widget;
+		
+		bool create_beads_normally;             // true = normal, false = atoms are beads
 		unsigned int current_model;
 		QString residue_filename, bead_model_file;
 		struct asa_options asa;
 		struct misc_options misc;
 		struct hydro_options hydro;
+		struct hydro_results results;
 		struct bead_output_options bead_output;
 		struct residue new_residue;
 		struct atom new_atom;
@@ -112,6 +117,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		US_Hydrodyn_Bead_Output *bead_output_window;
 		US_Hydrodyn_Hydro *hydro_window;
 		US_Hydrodyn_Misc *misc_window;
+		US_Hydrodyn_Results *results_window;
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
@@ -146,6 +152,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void show_bead_output();
 		void show_hydro();
 		void show_misc();
+		void show_results();
 		void bead_check(); // recheck beads
 		void read_config();
 		void write_config();
@@ -154,7 +161,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void update_bead_model_file(const QString &);
 		void calc_hydro();
 		void show_hydro_results();
-		bool create_beads_normally;             // true = normal, false = atoms are beads
 		void write_bead_tsv(QString, vector <PDB_atom> *);
 		void write_bead_ebf(QString, vector <PDB_atom> *);
 		void write_bead_spt(QString, vector <PDB_atom> *);

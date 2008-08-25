@@ -2753,237 +2753,161 @@ void US_Hydrodyn::read_config()
 	QFile f;
 	QString str;
 	f.setName(USglobal->config_list.root_dir + "/etc/somo.config");
-	if (f.open(IO_ReadOnly)) // first try user's directory for default settings
-	{
-		QTextStream ts(&f);
-		ts.readLine(); // first line is comment
-		ts >> str;
-		ts.readLine();
-		sidechain_overlap.remove_overlap = (bool) str.toInt();
-		ts >> str;
-		ts.readLine();
-		sidechain_overlap.fuse_beads = (bool) str.toInt();
-		ts >> sidechain_overlap.fuse_beads_percent;
-		ts.readLine();
-		ts >> str;
-		ts.readLine();
-		sidechain_overlap.remove_hierarch = (bool) str.toInt();
-		ts >> sidechain_overlap.remove_hierarch_percent;
-		ts.readLine();
-		ts >> str;
-		ts.readLine();
-		sidechain_overlap.remove_sync = (bool) str.toInt();
-		ts >> sidechain_overlap.remove_sync_percent;
-		ts.readLine();
-		ts >> str;
-		ts.readLine();
-		sidechain_overlap.translate_out = (bool) str.toInt();
-		ts >> str;
-		ts.readLine();
-		sidechain_overlap.show_translate = (bool) str.toInt();
-
-		ts >> str;
-		ts.readLine();
-		mainchain_overlap.remove_overlap = (bool) str.toInt();
-		ts >> str;
-		ts.readLine();
-		mainchain_overlap.fuse_beads = (bool) str.toInt();
-		ts >> mainchain_overlap.fuse_beads_percent;
-		ts.readLine();
-		ts >> str;
-		ts.readLine();
-		mainchain_overlap.remove_hierarch = (bool) str.toInt();
-		ts >> mainchain_overlap.remove_hierarch_percent;
-		ts.readLine();
-		ts >> str;
-		ts.readLine();
-		mainchain_overlap.remove_sync = (bool) str.toInt();
-		ts >> mainchain_overlap.remove_sync_percent;
-		ts.readLine();
-		ts >> str;
-		ts.readLine();
-		mainchain_overlap.translate_out = (bool) str.toInt();
-		ts >> str;
-		ts.readLine();
-		mainchain_overlap.show_translate = (bool) str.toInt();
-
-		ts >> str;
-		ts.readLine();
-		buried_overlap.remove_overlap = (bool) str.toInt();
-		ts >> str;
-		ts.readLine();
-		buried_overlap.fuse_beads = (bool) str.toInt();
-		ts >> buried_overlap.fuse_beads_percent;
-		ts.readLine();
-		ts >> str;
-		ts.readLine();
-		buried_overlap.remove_hierarch = (bool) str.toInt();
-		ts >> buried_overlap.remove_hierarch_percent;
-		ts.readLine();
-		ts >> str;
-		ts.readLine();
-		buried_overlap.remove_sync = (bool) str.toInt();
-		ts >> buried_overlap.remove_sync_percent;
-		ts.readLine();
-		ts >> str;
-		ts.readLine();
-		buried_overlap.translate_out = (bool) str.toInt();
-		ts >> str;
-		ts.readLine();
-		buried_overlap.show_translate = (bool) str.toInt();
-
-		ts >> str;
-		ts.readLine();
-		bead_output.output = str.toInt();
-		ts >> str;
-		ts.readLine();
-		bead_output.sequence = str.toInt();
-		ts >> str;
-		ts.readLine();
-		misc.compute_vbar = (bool) str.toInt();
-		ts >> str;
-		ts.readLine();
-		asa.probe_radius = str.toDouble();
-		ts >> str;
-		ts.readLine();
-		asa.threshold = str.toDouble();
-		ts >> str;
-		ts.readLine();
-		asa.threshold_percent = str.toDouble();
-		ts >> str;
-		ts.readLine();
-		asa.calculation = (bool) str.toInt();
-		ts >> str;
-		ts.readLine();
-		asa.recheck_beads = (bool) str.toInt();
-		ts >> str;
-		ts.readLine();
-		misc.hydrovol = str.toDouble();
-		ts >> str;
-		ts.readLine();
-		overlap_tolerance = str.toDouble();
-
-		f.close();
-	}
-	else
+	if (!f.open(IO_ReadOnly)) // first try user's directory for default settings
 	{
 		f.setName(USglobal->config_list.system_dir + "/etc/somo.config");
-		if (f.open(IO_ReadOnly)) // read system directory
+		if (!f.open(IO_ReadOnly)) // read system directory
 		{
-			QTextStream ts(&f);
-			ts.readLine(); // first line is comment
-			ts >> str;
-			ts.readLine();
-			sidechain_overlap.remove_overlap = (bool) str.toInt();
-			ts >> str;
-			ts.readLine();
-			sidechain_overlap.fuse_beads = (bool) str.toInt();
-			ts >> sidechain_overlap.fuse_beads_percent;
-			ts.readLine();
-			ts >> str;
-			ts.readLine();
-			sidechain_overlap.remove_hierarch = (bool) str.toInt();
-			ts >> sidechain_overlap.remove_hierarch_percent;
-			ts.readLine();
-			ts >> str;
-			ts.readLine();
-			sidechain_overlap.remove_sync = (bool) str.toInt();
-			ts >> sidechain_overlap.remove_sync_percent;
-			ts.readLine();
-			ts >> str;
-			ts.readLine();
-			sidechain_overlap.translate_out = (bool) str.toInt();
-			ts >> str;
-			ts.readLine();
-			sidechain_overlap.show_translate = (bool) str.toInt();
-
-			ts >> str;
-			ts.readLine();
-			mainchain_overlap.remove_overlap = (bool) str.toInt();
-			ts >> str;
-			ts.readLine();
-			mainchain_overlap.fuse_beads = (bool) str.toInt();
-			ts >> mainchain_overlap.fuse_beads_percent;
-			ts.readLine();
-			ts >> str;
-			ts.readLine();
-			mainchain_overlap.remove_hierarch = (bool) str.toInt();
-			ts >> mainchain_overlap.remove_hierarch_percent;
-			ts.readLine();
-			ts >> str;
-			ts.readLine();
-			mainchain_overlap.remove_sync = (bool) str.toInt();
-			ts >> mainchain_overlap.remove_sync_percent;
-			ts.readLine();
-			ts >> str;
-			ts.readLine();
-			mainchain_overlap.translate_out = (bool) str.toInt();
-			ts >> str;
-			ts.readLine();
-			mainchain_overlap.show_translate = (bool) str.toInt();
-
-			ts >> str;
-			ts.readLine();
-			buried_overlap.remove_overlap = (bool) str.toInt();
-			ts >> str;
-			ts.readLine();
-			buried_overlap.fuse_beads = (bool) str.toInt();
-			ts >> buried_overlap.fuse_beads_percent;
-			ts.readLine();
-			ts >> str;
-			ts.readLine();
-			buried_overlap.remove_hierarch = (bool) str.toInt();
-			ts >> buried_overlap.remove_hierarch_percent;
-			ts.readLine();
-			ts >> str;
-			ts.readLine();
-			buried_overlap.remove_sync = (bool) str.toInt();
-			ts >> buried_overlap.remove_sync_percent;
-			ts.readLine();
-			ts >> str;
-			ts.readLine();
-			buried_overlap.translate_out = (bool) str.toInt();
-			ts >> str;
-			ts.readLine();
-			buried_overlap.show_translate = (bool) str.toInt();
-			ts >> str;
-			ts.readLine();
-			bead_output.output = str.toInt();
-			ts >> str;
-			ts.readLine();
-			bead_output.sequence = str.toInt();
-			ts >> str;
-			ts.readLine();
-			misc.compute_vbar = (bool) str.toInt();
-			ts >> str;
-			ts.readLine();
-			asa.probe_radius = str.toDouble();
-			ts >> str;
-			ts.readLine();
-			asa.threshold = str.toDouble();
-			ts >> str;
-			ts.readLine();
-			asa.threshold_percent = str.toDouble();
-			ts >> str;
-			ts.readLine();
-			asa.calculation = (bool) str.toInt();
-			ts >> str;
-			ts.readLine();
-			asa.recheck_beads = (bool) str.toInt();
-			ts >> str;
-			ts.readLine();
-			misc.hydrovol = str.toDouble();
-			ts >> str;
-			ts.readLine();
-			overlap_tolerance = str.toDouble();
-
-			f.close();
-		}
-		else // assign default values
-		{
-			reset();
+			reset(); // no file available, reset and return
+			return;
 		}
 	}
+	QTextStream ts(&f);
+	ts.readLine(); // first line is comment
+	ts >> str;
+	ts.readLine();
+	sidechain_overlap.remove_overlap = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	sidechain_overlap.fuse_beads = (bool) str.toInt();
+	ts >> sidechain_overlap.fuse_beads_percent;
+	ts.readLine();
+	ts >> str;
+	ts.readLine();
+	sidechain_overlap.remove_hierarch = (bool) str.toInt();
+	ts >> sidechain_overlap.remove_hierarch_percent;
+	ts.readLine();
+	ts >> str;
+	ts.readLine();
+	sidechain_overlap.remove_sync = (bool) str.toInt();
+	ts >> sidechain_overlap.remove_sync_percent;
+	ts.readLine();
+	ts >> str;
+	ts.readLine();
+	sidechain_overlap.translate_out = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	sidechain_overlap.show_translate = (bool) str.toInt();
+
+	ts >> str;
+	ts.readLine();
+	mainchain_overlap.remove_overlap = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	mainchain_overlap.fuse_beads = (bool) str.toInt();
+	ts >> mainchain_overlap.fuse_beads_percent;
+	ts.readLine();
+	ts >> str;
+	ts.readLine();
+	mainchain_overlap.remove_hierarch = (bool) str.toInt();
+	ts >> mainchain_overlap.remove_hierarch_percent;
+	ts.readLine();
+	ts >> str;
+	ts.readLine();
+	mainchain_overlap.remove_sync = (bool) str.toInt();
+	ts >> mainchain_overlap.remove_sync_percent;
+	ts.readLine();
+	ts >> str;
+	ts.readLine();
+	mainchain_overlap.translate_out = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	mainchain_overlap.show_translate = (bool) str.toInt();
+
+	ts >> str;
+	ts.readLine();
+	buried_overlap.remove_overlap = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	buried_overlap.fuse_beads = (bool) str.toInt();
+	ts >> buried_overlap.fuse_beads_percent;
+	ts.readLine();
+	ts >> str;
+	ts.readLine();
+	buried_overlap.remove_hierarch = (bool) str.toInt();
+	ts >> buried_overlap.remove_hierarch_percent;
+	ts.readLine();
+	ts >> str;
+	ts.readLine();
+	buried_overlap.remove_sync = (bool) str.toInt();
+	ts >> buried_overlap.remove_sync_percent;
+	ts.readLine();
+	ts >> str;
+	ts.readLine();
+	buried_overlap.translate_out = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	buried_overlap.show_translate = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	overlap_tolerance = str.toDouble();
+
+	ts >> str;
+	ts.readLine();
+	bead_output.output = str.toInt();
+	ts >> str;
+	ts.readLine();
+	bead_output.sequence = str.toInt();
+	ts >> str;
+	ts.readLine();
+	asa.probe_radius = str.toDouble();
+	ts >> str;
+	ts.readLine();
+	asa.threshold = str.toDouble();
+	ts >> str;
+	ts.readLine();
+	asa.threshold_percent = str.toDouble();
+	ts >> str;
+	ts.readLine();
+	asa.calculation = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	asa.recheck_beads = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	misc.hydrovol = str.toDouble();
+	ts >> str;
+	ts.readLine();
+	misc.compute_vbar = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	misc.vbar = str.toDouble();
+	ts >> str;
+	ts.readLine();
+	hydro.unit = str.toInt();
+	ts >> str;
+	ts.readLine();
+	hydro.reference_system = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	hydro.boundary_cond = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	hydro.volume_correction = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	hydro.volume = str.toDouble();
+	ts >> str;
+	ts.readLine();
+	hydro.mass_correction = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	hydro.mass = str.toDouble();
+	ts >> str;
+	ts.readLine();
+	hydro.bead_inclusion = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	hydro.rotational = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	hydro.viscosity = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	hydro.overlap_cutoff = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	hydro.overlap = str.toDouble();
 	sidechain_overlap.title = "exposed side chain beads";
 	mainchain_overlap.title = "exposed main/main and\nmain/side chain beads";
 	buried_overlap.title = "buried beads";
@@ -3034,21 +2958,21 @@ void US_Hydrodyn::reset()
 	asa.recheck_beads = true;
 	misc.hydrovol = 24.041;
 	misc.compute_vbar = true;
+	misc.vbar = 0.72;
 	overlap_tolerance = 0.001;
-/*
-	int unit; 						// exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
-	bool reference_system;		// true: diffusion center, false: cartesian origin (default true)
-	bool boundary_cond;			// true: stick, false: slip (default true)
-	bool correct_volume;			// true: Automatic, false: manual (provide value)
-	float volume_correction;	// volume correction
-	bool correct_mass;			// true: Automatic, false: manual (provide value)
-	float mass_correction;		// mass correction
-	bool bead_exclusion;			// true: exclude hidden beads; false: use all beads
-	bool rotational;				// true: include beads in volume correction for rotational diffusion, false: exclude
-	bool viscosity;				// true: include beads in volume correction for intrinsic viscosity, false: exclude
-	bool overlap_cutoff;			// true: same as in model building, false: enter manually
-	double overlap;				// overlap
-*/
+
+	hydro.unit = -9; 						// exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
+	hydro.reference_system = false;	// false: diffusion center, true: cartesian origin (default false)
+	hydro.boundary_cond = false;		// false: stick, true: slip (default false)
+	hydro.volume_correction = false;	// false: Automatic, true: manual (provide value)
+	hydro.volume = 0.0;					// volume correction
+	hydro.mass_correction = false;		// false: Automatic, true: manual (provide value)
+	hydro.mass = 0.0;						// mass correction
+	hydro.bead_inclusion = false;		// false: exclude hidden beads; true: use all beads
+	hydro.rotational = false;			// false: include beads in volume correction for rotational diffusion, true: exclude
+	hydro.viscosity = false;				// false: include beads in volume correction for intrinsic viscosity, true: exclude
+	hydro.overlap_cutoff = false;		// false: same as in model building, true: enter manually
+	hydro.overlap = 0.0;					// overlap
 }
 
 void US_Hydrodyn::write_config()
@@ -3089,19 +3013,53 @@ void US_Hydrodyn::write_config()
 		ts << buried_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
 		ts << buried_overlap.translate_out << "\t\t# Outward translation flag\n";
 		ts << buried_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
+		ts << overlap_tolerance << "\t\t# bead overlap tolerance\n";
 
 		ts << bead_output.output << "\t\t# flag for selecting output format\n";
 		ts << bead_output.sequence << "\t\t# flag for selecting sequence format\n";
-		ts << misc.compute_vbar << "\t\t# flag for selecting vbar calculation\n";
 		ts << asa.probe_radius << "\t\t# probe radius in angstrom\n";
 		ts << asa.threshold << "\t\t# ASA threshold\n";
 		ts << asa.threshold_percent << "\t\t# ASA threshold percent\n";
 		ts << asa.calculation << "\t\t# flag for calculation of ASA\n";
 		ts << asa.recheck_beads << "\t\t# flag for rechecking beads\n";
 		ts << misc.hydrovol << "\t\t# hydration volume\n";
-		ts << overlap_tolerance << "\t\t# bead overlap tolerance\n";
+		ts << misc.compute_vbar << "\t\t# flag for selecting vbar calculation\n";
+		ts << misc.vbar << "\t\t# vbar value\n";
 
+		ts << hydro.unit << "\t\t# exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)\n";
+		ts << hydro.reference_system << "\t\t# flag for reference system\n";
+		ts << hydro.boundary_cond << "\t\t# flag for boundary condition: false: stick, true: slip\n";
+		ts << hydro.volume_correction << "\t\t# flag for volume correction - false: Automatic, true: manual\n";
+		ts << hydro.volume << "\t\t# volume correction value for manual entry\n";
+		ts << hydro.mass_correction << "\t\t# flag for mass correction: false: Automatic, true: manual\n";
+		ts << hydro.mass << "\t\t# mass correction value for manual entry\n";
+		ts << hydro.bead_inclusion << "\t\t# flag for bead inclusion in computation - false: exclude hidden beads; true: use all beads\n";
+		ts << hydro.rotational << "\t\t# flag false: include beads in volume correction for rotational diffusion, true: exclude\n";
+		ts << hydro.viscosity << "\t\t# flag false: include beads in volume correction for intrinsic viscosity, true: exclude\n";
+		ts << hydro.overlap_cutoff << "\t\t# flag for overlap cutoff: false: same as in model building, true: enter manually\n";
+		ts << hydro.overlap << "\t\t# overlap value\n";
 		f.close();
+	}
+}
+
+void US_Hydrodyn::show_results()
+{
+	if (results_widget)
+	{
+		if (results_window->isVisible())
+		{
+			results_window->raise();
+		}
+		else
+		{
+			results_window->show();
+		}
+		return;
+	}
+	else
+	{
+		results_window = new US_Hydrodyn_Results(&results, &results_widget);
+		results_window->show();
 	}
 }
 

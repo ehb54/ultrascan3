@@ -176,6 +176,7 @@ SOURCES += \
   src/us_hydrodyn_misc.cpp \
   src/us_hydrodyn_overlap.cpp \
   src/us_hydrodyn_overlap_reduction.cpp \
+  src/us_hydrodyn_results.cpp \
   src/us_imgviewer.cpp \
   src/us_infopanel.cpp \
   src/us_license.cpp \
@@ -360,6 +361,7 @@ HEADERS += \
   include/us_hydrodyn_overlap.h \
   include/us_hydrodyn_overlap_reduction.h \
   include/us_hydrodyn_pdbdefs.h \
+  include/us_hydrodyn_results.h \
   include/us_imgviewer.h \
   include/us_infopanel.h \
   include/us_license.h \
