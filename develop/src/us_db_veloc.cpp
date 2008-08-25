@@ -20,7 +20,7 @@ US_DB_Veloc::US_DB_Veloc( QWidget* p, const char* name ) :
 	item_ExpdataID   = NULL;
 	item_Description = NULL;
 
-		pb_load = pushbutton( "Load Data from HD" );
+	pb_load = pushbutton( "Load Data from Hard Drive" );
 	connect( pb_load, SIGNAL( clicked() ), SLOT( load_HD() ) );
 
 	pb_help = pushbutton( "Help" );
@@ -29,18 +29,18 @@ US_DB_Veloc::US_DB_Veloc( QWidget* p, const char* name ) :
 	pb_close = pushbutton( "Close" );
 	connect( pb_close, SIGNAL( clicked() ), SLOT( quit() ) );
 
-	pb_load_db = pushbutton( "Load Metadata from DB" );
+	pb_load_db = pushbutton( "Query Result from Database" );
 	connect( pb_load_db, SIGNAL( clicked() ), SLOT( query_db() ) );
 
-	pb_save_db = pushbutton( "Backup Result to DB" );
+	pb_save_db = pushbutton( "Backup Result to Database" );
 	connect( pb_save_db, SIGNAL( clicked()), SLOT( save_db() ) );
 
-	pb_retrieve_db = pushbutton( "Retrieve Result from DB", false );
+	pb_retrieve_db = pushbutton( "Retrieve Result from Database", false );
 	connect( pb_retrieve_db, SIGNAL( clicked() ), SLOT( retrieve_db() ) );
 
 	lbl_instr = banner( "Doubleclick on result data to select" );
 
-	pb_del_db = pushbutton( "Delete Result from DB" );
+	pb_del_db = pushbutton( "Delete Result from Database" );
 	connect( pb_del_db, SIGNAL( clicked() ), SLOT( check_permission() ) );
 
 	lb_result = listbox( "Result files" );
@@ -262,7 +262,6 @@ bool US_DB_Veloc::insertCompressedData()
 
 	pd->setMinimumDuration( 0 );
 	pd->setProgress       ( 1 );
-	pd->show();
 
 	QString reportDir = USglobal->config_list.html_dir   + "/";
 	QString resultDir = USglobal->config_list.result_dir + "/";
@@ -276,7 +275,6 @@ bool US_DB_Veloc::insertCompressedData()
 
 	pd->setLabelText( "Compressing Report Data..." );
 	qApp->processEvents();
-	sleep( 2 ); // Wait for progress dialog to appear
 
 	QString tarfile =  run_id + "_report.tar";
 	int     ret;
@@ -287,6 +285,7 @@ bool US_DB_Veloc::insertCompressedData()
 	if ( ( ret = tar.create( tarfile, files ) ) != GZIP_OK )
 	{
 		pd->close();
+		delete pd;
 		QMessageBox::message(
 		  tr( "UltraScan tar creation Error: Report" ),
 		  tr( tar.explain( ret ) + tr( "/nInput files:\n" ) + files.join( "\n") ) );
@@ -303,6 +302,7 @@ bool US_DB_Veloc::insertCompressedData()
 	if ( gzip.gzip( tarfile ) != TAR_OK )
 	{
 		pd->close();
+		delete pd;
 		QMessageBox::message(
 		  tr( "UltraScan Error:" ),
 		  tr( "Unable to uncompress tar archive.\n" +
@@ -329,6 +329,7 @@ bool US_DB_Veloc::insertCompressedData()
 	if ( ( ret = tar.create( tarfile, files ) ) != GZIP_OK )
 	{
 		pd->close();
+		delete pd;
 		QMessageBox::message(
 		  tr( "UltraScan tar creation Error: Result" ),
 		  tr( tar.explain( ret ) + tr( "/nInput files:\n" ) + files.join( "\n") ) );
@@ -345,6 +346,7 @@ bool US_DB_Veloc::insertCompressedData()
 	if ( gzip.gzip( tarfile ) != TAR_OK )
 	{
 		pd->close();
+		delete pd;
 		QMessageBox::message(
 		  tr( "UltraScan Error:" ),
 		  tr( "Unable to uncompress tar archive.\n" +
@@ -364,20 +366,17 @@ bool US_DB_Veloc::insertCompressedData()
 	// Check for duplicates
 	
 	QString q;
-	int     exists     = 0;
+	int     oldDataID  = 0;
 	int     VelocRstID = exp_rst.expRstID;
 	
-	q.sprintf( "SELECT COUNT( VelocRstID ) FROM tblVelocResult "
+	q.sprintf( "SELECT DataID FROM tblVelocResult "
 	           "WHERE VelocRstID = %d;",  VelocRstID );
-				
+			
 	QSqlQuery check( q );
 				
-	if ( check.isActive() )
-	{
-		if ( check.next() ) exists = check.value( 0 ).toInt();
-	}
+	if ( check.next() ) oldDataID = check.value( 0 ).toInt();
 
-	if ( exists > 0 )
+	if ( oldDataID > 0 )
 	{
 		int answer =  QMessageBox::question( this, tr( "UltraScan Warning" ), 
 			tr( "The selected result already exists in the database.  Overwrite?" ), 
@@ -387,8 +386,19 @@ bool US_DB_Veloc::insertCompressedData()
 		{
 			cleanCompressedFiles();
 			pd->close();
+			delete pd;
 			return false;
 		}
+	}
+
+	// If overwriting, delete the old result data
+	// Note: this also deletes the asociated record from tblVelocResult
+	// due to the constraint in the table definition
+	
+	if ( oldDataID > 0 )
+	{
+		q.sprintf( "DELETE FROM tblVelocResultData WHERE tableID=%d", oldDataID );
+		check.exec( q );
 	}
 
 	QSqlCursor cursor( "tblVelocResultData" );
@@ -419,42 +429,27 @@ bool US_DB_Veloc::insertCompressedData()
 			    "Error message from MySQL:\n\n" ) + err.text() );
 
 		pd->close();
+		delete pd;
 		return false;
 	}
 
 	// Insert data to DB table tblVelocResult
 
-	if ( exists > 0 )
-	{
-		q = "UPDATE tblVelocResult SET "
-				"Date='"          + exp_rst.date                     + "', "
-				"RunID='"         + run_id                           + "', "
-				"InvestigatorID=" + QString::number( exp_rst.invID ) + ", "
-				"DataID="         + QString::number( DataID );
+	q = "INSERT INTO tblVelocResult "
+	    "(VelocRstID, Date, RunID, InvestigatorID, DataID";
 
-		if (  runrequestID > 0 ) 
-			q += ", " + QString::number( runrequestID );
+	if ( runrequestID > 0 ) q += ", RunRequestID";
 
-		q += " WHERE VelocRstID=" + QString::number( exp_rst.expRstID );
-	}
-	else
-	{
-		q = "INSERT INTO tblVelocResult "
-		    "(VelocRstID, Date, RunID, InvestigatorID, DataID";
+	q += ") VALUES("
+	  + QString::number( exp_rst.expRstID ) + ", "
+		"'"	+ exp_rst.date                    + "', "
+		"'"	+ run_id                          + "', "
+		+ QString::number( exp_rst.invID )    + ", "
+		+ QString::number( DataID );
 
-		if ( runrequestID > 0 ) q += ", RunRequestID";
+	if ( runrequestID > 0 ) q += ", " + QString::number( runrequestID ); 
 
-		q += ") VALUES("
-		  + QString::number( exp_rst.expRstID ) + ", "
-			"'"	+ exp_rst.date                    + "', "
-			"'"	+ run_id                          + "', "
-			+ QString::number( exp_rst.invID )    + ", "
-			+ QString::number( DataID );
-
-		if ( runrequestID > 0 ) q += ", " + QString::number( runrequestID ); 
-
-		q += ");";
-	}
+	q += ");";
 
 	QSqlQuery target;
 	bool      finished = target.exec( q );
@@ -462,6 +457,7 @@ bool US_DB_Veloc::insertCompressedData()
 	if ( ! finished )
 	{
 		pd->close();
+		delete pd;
 		QSqlError sqlerr = target.lastError();
 		QMessageBox::message(
 		  tr( "Attention:" ), 
@@ -491,7 +487,7 @@ bool US_DB_Veloc::insertCompressedData()
 				
 		QSqlQuery check( q );
 				
-		if ( check.isActive() )
+		if ( check.size() > 0 )
 		{
 			if ( check.next() ) resultID = check.value( 0 ).toInt();
 		}
@@ -520,6 +516,7 @@ bool US_DB_Veloc::insertCompressedData()
 			if ( ! query.exec( q ) )
 			{
 				pd->close();
+				delete pd;
 
 				QMessageBox::message(
 					tr( "Attention:" ), 
@@ -533,6 +530,7 @@ bool US_DB_Veloc::insertCompressedData()
 	// clean the temp compress file
 	cleanCompressedFiles();
 	pd->close();
+	delete pd;
 
 	QMessageBox::message(
 		tr( "Success"),
