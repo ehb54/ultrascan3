@@ -941,64 +941,6 @@ void US_ExpData_DB::add_db( void )
 		return;
 	}
 		
-	/***************  This isn't necessary
-	QDir temp_dir;
-	
-	QString tempDir = USglobal->config_list.root_dir + "/temp";
-	temp_dir.setPath( tempDir );
-	
-	// Clear temporary directory
-	if ( temp_dir.exists() )
-	{
-		QStringList entries;
-		temp_dir.setNameFilter( "*.*" );
-		entries = temp_dir.entryList();
-		
-		QStringList::Iterator it;
-		for ( it = entries.begin(); it != entries.end(); ++it ) 
-		{
-				temp_dir.remove( *it );
-		}
-	}
-	else
-	{
-		temp_dir.mkdir( tempDir );
-	}	
-	
-	compress_proc = new QProcess(this);
-	compress_proc->clearArguments();
-   
-	QStringList cmd;
-
-#ifdef WIN32
-	cmd.append( "copy" );
-#endif
-#ifdef UNIX
-	cmd.append( "cp" );
-#endif
-
-	cmd.append( "-r" );
-	cmd.append( exp_info.Path );
-	
-	cmd.append( tempDir + "/" + exp_info.Runid );		
-	compress_proc->setArguments( cmd );
-	
-	pd_add->setProgress( 1 );
-	
-	if ( ! compress_proc->start() )
-	{
-			QMessageBox::message(
-        tr( "UltraScan Error:" ), 
-        tr( "Unable to start process to copy data." ) );
-			return;
-	}
-	
-	c_step=0;   
-	connect( compress_proc, SIGNAL( processExited()      ), 
-	         this,          SLOT  ( endCompressProcess() ) );
-	disconnect( compress_proc );	
-	****************/
-
 	// tar raw data directory
 	
 	US_Tar  tar;
@@ -1254,7 +1196,7 @@ void US_ExpData_DB::sel_query( int item )
 			pd->setProgress       ( 0 );
 			pd->setMinimumDuration( 0 );
 
-			QString targzfile = exp_info.Runid + ".tar.gz";
+			QString targzfile = exp_info.Runid + "_rawdata.tar.gz";
 			QString filename  = make_tempFile( dataDir, targzfile );
 
 			if ( ! read_blob( "Rawdata", cur_f, filename ) )
@@ -1685,7 +1627,7 @@ bool US_ExpData_DB::retrieve_all( int ExpdataID, QString Display )
 				pd->setProgress       ( 0 );
 				pd->setMinimumDuration( 0 );
 				
-				QString targzfile = exp_info.Runid + ".tar.gz";
+				QString targzfile = exp_info.Runid + "_rawdata.tar.gz";
 		   	QString filename = make_tempFile ( dataDir, targzfile );
          	
 				if ( ! read_blob( "RawData", cur_f, filename ) )

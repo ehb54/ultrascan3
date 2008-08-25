@@ -180,17 +180,16 @@ int US_DB_T::get_newID(QString table, QString key)
 	}	
 }
 
-QString US_DB_T::make_tempFile(QString dirName, QString fileName)
+QString US_DB_T::make_tempFile( QString dirName, QString fileName )
 {
-	QDir temp_dir;
-	//QString str = USglobal->config_list.html_dir + "/temp/";
-	temp_dir.setPath(dirName);
-	if(!temp_dir.exists())
+	QDir temp_dir( dirName );
+
+	if ( ! temp_dir.exists() )
 	{
-		temp_dir.mkdir(dirName);
+		temp_dir.mkdir( dirName );
 	}
-	QString path = dirName +"/"+ fileName;
-	return path;
+
+	return  dirName + "/" + fileName;
 }
 
 void US_DB_T::remove_temp_dir(QString dirName)
@@ -212,22 +211,32 @@ void US_DB_T::remove_temp_dir(QString dirName)
 	}
 }
 
-bool US_DB_T::read_blob(QString field, QSqlCursor cur, QString filename)
+bool US_DB_T::read_blob( QString field, QSqlCursor cur, QString filename )
 {
 	bool flag = false;
-	int byte;
-	int size = cur.value(field).toByteArray().size();
-//	cerr<<filename<<" : "<<size<<endl;
-	if(size>0)
+	int  byte;
+	int  size = cur.value( field ).toByteArray().size();
+	
+	//cout << "field:" << field << endl;
+	//cout << "filename: " << filename << ", file size: " << size << endl;
+	
+	if ( size > 0 )
 	{
-		QByteArray da(size);
-		da = cur.value(field).toByteArray();
-		QFile fw(filename);
-		fw.open(IO_WriteOnly);
-		byte = fw.writeBlock(da.data(),size);
+		QByteArray da( size );
+		da = cur.value( field ).toByteArray();
+		
+		QFile fw( filename );
+		fw.open( IO_WriteOnly );
+		//if ( ! fw.open( IO_WriteOnly ) ) cout << "file open failed\n";
+		
+		byte = fw.writeBlock( da.data(), size );
+
+		//cout << byte << " bytes written\n";
+
 		fw.close();
-	   flag = true;
+		flag = true;
 	}
+
 	return flag;
 }
 
