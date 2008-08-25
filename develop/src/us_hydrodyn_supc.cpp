@@ -24,10 +24,15 @@
 #include <string.h>
 
 #include "../include/us_hydrodyn_supc.h"
+#include "../include/us_hydrodyn_pat.h"
+
+#undef R // it's defined as a us #define above & we use R as a local variable
 
 static FILE *mol;
 static FILE *rmc;
-static FILE *new_mol;
+#if defined(USE_MAIN)
+ static FILE *new_mol;
+#endif
 static FILE *new_mol1;
 static FILE *new_rmc;
 static FILE *ris;
@@ -49,7 +54,9 @@ static int prima;
 static int ultima;
 static int num;
 static int kkk;
-static int fe;
+#if defined(USE_MAIN)
+ static int fe;
+#endif
 static int colorzero;
 static int colorsix;
 static int colorsixf;
@@ -71,7 +78,9 @@ static int vt;
 static int flag_norm;
 static int cdmolix;
 static int num001;
-static int numor;
+#if defined(USE_MAIN)
+ static int numor;
+#endif
 // static int i;
 // static int k;
 /* int annov; */
@@ -156,7 +165,9 @@ static float CdR1;
 static float CfR1;
 static float CfR[3];
 static float CdR[3];
-static float RT[5];
+#if defined(USE_MAIN)
+ static float RT[5];
+#endif
 static float CT[5];
 static float CTH;
 static float CTM;
@@ -182,7 +193,9 @@ static float CdR12;
 static float CfR12;
 static float CfR2[3];
 static float CdR2[3];
-static float RT2[5];
+#if defined(USE_MAIN)
+ static float RT2[5];
+#endif
 static float CT2[5];
 static float CTH2;
 static float CTM2;
@@ -205,10 +218,12 @@ static void print_time_2IO(int seconds);
 
 static void intestazione();
 static void presentazione();
-static void vedimatrici();
-static void stampamatrice(float *n);
-static void stampamatrice1(float *n);
-static void stampamatrice1l(long double *n);
+#if defined(USE_MAIN)
+ static void vedimatrici();
+ static void stampamatrice(float *n);
+ static void stampamatrice1(float *n);
+ static void stampamatrice1l(long double *n);
+#endif
 static void stampa_ris();
 static void mem_ris();
 static void val_med();
@@ -304,7 +319,7 @@ supc_free_alloced()
     }
 }
 
-int
+static int
 supc_alloc()
 {
     dt = (struct dati1 *) malloc(2 * nmax * sizeof(struct dati1));
@@ -418,9 +433,9 @@ Gets_date(char *day, char *month, int *year, int *numday, char *hour)
 /**************************************************************************/
 
 int
-us_hydro_supc_main(int use_nmax)
+us_hydrodyn_supc_main(hydro_options *hydro, vector <PDB_atom> *bead_model, char *filename)
 {
-    nmax = use_nmax;
+    nmax = (int) bead_model->size();
     if (int retval = supc_alloc())
     {
 	return retval;
@@ -430,8 +445,10 @@ us_hydro_supc_main(int use_nmax)
     int k; 
     int flag_mem;
     int bc;
+#if defined(USE_MAIN)
     char r1;
     char command[200];
+#endif
     float temp, x, y, z;
     time_t primo, secondo;
     // void Gets_date(char *day, char *month, int *year, int *numday, char *hour);
@@ -468,6 +485,7 @@ us_hydro_supc_main(int use_nmax)
     volcor = 3;
     mascor = 3;
 
+#if defined(USE_MAIN)
     while ((num < 1) || (num > 100))
     {
 	intestazione();
@@ -537,7 +555,9 @@ us_hydro_supc_main(int use_nmax)
 	scanf("%s", risultati);
 	getchar();
     }
+
     new_mol = fopen(risultati, "r");
+    
 
     if (new_mol != NULL)
     {
@@ -665,6 +685,46 @@ us_hydro_supc_main(int use_nmax)
     }
 
     intestazione();
+#else
+    intestazione();
+    num = 1;
+    strncpy(risultati, filename, SMAX);
+    risultati[SMAX-1] = 0;
+    strncat(risultati, ".ris", SMAX - strlen(risultati));
+    risultati[SMAX-1] = 0;
+    printf("risultati: %s\n", risultati);
+    strncpy(molecola, filename, SMAX);
+    molecola[SMAX-1] = 0;
+    if(!(mol = fopen(molecola, "r"))) {
+      supc_free_alloced();
+      return -5;
+    }
+    fclose(mol);
+    fconv = pow(10,hydro->unit + 9);
+    printf("fconv = %f\n", fconv);
+    fconv1 = 1.0 / fconv;
+    cd = hydro->reference_system ? 1 : 2;
+    cc = hydro->boundary_cond ? 2 : 1;
+    volcor = hydro->volume_correction ? 2 : 1;
+    if (volcor == 2) 
+    {
+      volcor = (int)hydro->volume;
+    }
+    mascor = hydro->mass_correction ? 2 : 1;
+    if (mascor == 2) 
+    {
+      mascor1 = (int)hydro->mass;
+    }
+    sfecalc = hydro->bead_inclusion ? 1 : 2;
+    if ((sfecalc == 2) && (volcor == 1))
+    {
+      colorsixf = 
+	(hydro->rotational ? 1 : 0) + 
+	(hydro->viscosity ? 2 : 0);
+    }
+    cdmolix = 0;
+    init_da_a();
+#endif
 
     printf("- Computational Method : SUPERMATRIX INVERSION\n\n");
 
@@ -733,12 +793,16 @@ us_hydro_supc_main(int use_nmax)
 		printf("\n%s%d%s", "** Insert file name of model #", k + 1, " to be analyzed :___ ");
 	    }
 
+#if defined(USE_MAIN)
 	    else
+	    {
 		printf("\n** Insert file name of the model to be analyzed :___ ");
+	    }
 	    scanf("%s", molecola);
 	    getchar();
 
 	    init_da_a();
+#endif
 	}
     }
 
@@ -756,7 +820,7 @@ us_hydro_supc_main(int use_nmax)
 	kkk = k + 1;
 	inp_inter();
 	printf("\n\n- Starting PAT ...\n");
-	system("./pat");
+	printf("pat returns %d\n", us_hydrodyn_pat_main(nmax));
 	printf("\n\n- End of PAT ...\n\n");
 	out_inter();
 
@@ -779,11 +843,16 @@ us_hydro_supc_main(int use_nmax)
 	    dt[i].y = dtn[i].y;
 	    dt[i].z = dtn[i].z;
 	}
-
 	if (overlap() == 1)
 	{
+#if defined(USE_MAIN)
 	    printf("\n\n Hit any key to exit");
 	    getchar();
+#else
+	    printf("overlaps detected\n");
+	    supc_free_alloced();
+	    return -6;
+#endif
 	    break;
 	}
 /*		MOVED INSIDE INIT.C
@@ -1083,6 +1152,7 @@ us_hydro_supc_main(int use_nmax)
 
 		   print_time(secondo-primo);
 		 */
+#if defined(USE_MAIN)
 		printf("\n\n- Options : 		\n\n");
 		printf("  0) EXIT\n");
 		printf("  1) VIEW MATRICES\n");
@@ -1103,6 +1173,9 @@ us_hydro_supc_main(int use_nmax)
 
 		if (scelta == 1)
 		    vedimatrici();
+#else
+		scelta = 0;
+#endif
 	    }
 
 	    if (scelta == 2)
@@ -1127,6 +1200,7 @@ us_hydro_supc_main(int use_nmax)
     fclose(tot_mol);
     system("clear");
     system("rm tot_mol");
+    supc_free_alloced();
     return 0;
 }
 
@@ -1192,6 +1266,7 @@ presentazione()
 /**************************************************************************/
 /**************************************************************************/
 
+#if defined(USE_MAIN)
 static void
 vedimatrici()
 {
@@ -1372,7 +1447,7 @@ stampamatrice1l(long double *n)
     system("clear");
 
 }
-
+#endif
 /**************************************************************************/
 /**************************************************************************/
 /**************************************************************************/
@@ -2903,6 +2978,8 @@ init_da_a()
     /* Selects for whole or part of the model(s) to be analyzed */
 
     printf("\n%s%d%s", "** TOTAL Number of BEADS in the MODEL :___ ", nat, " **\n\n");
+
+#if defined(USE_MAIN)
     prima = (-1);
     while ((prima < 0) || (prima > (nat - 1)))
     {
@@ -2920,6 +2997,10 @@ init_da_a()
 	getchar();
 	printf("\n");
     }
+#else
+    prima = 1;
+    ultima = nat;
+#endif
 
     tot_mol = fopen("tot_mol", "ab");
     fprintf(tot_mol, "%s\n", molecola);
@@ -3685,7 +3766,9 @@ overlap()
     int i, j, flag;
     float dist;
     float overlval;
+#if defined(USE_MAIN)
     char r5;
+#endif
 
     flag = 0;
 
@@ -3702,6 +3785,7 @@ overlap()
 	    {
 		printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
 		       (sqrt(dist) - (dt[i].r + dt[j].r)));
+#if defined(USE_MAIN)
 		printf("\n** Do you want to proceed anyway? (y/n) ");
 		scanf("%s", &r5);
 		getchar();
@@ -3714,12 +3798,17 @@ overlap()
 		    flag = 1;
 		    goto a99;
 		}
+#else
+		return (1);
+#endif
 	    }
 
 	}
     }
     printf("\n** Overlap test completed **\n");
+#if defined(USE_MAIN)
   a99:
+#endif
     return (flag);
 }
 
@@ -4219,7 +4308,9 @@ tsuda()
     float Rj;
     float R;
 
-    I = E = H = 0.0;
+    I = 0.0;
+    E = 0.0;
+    H = 0.0;
 
 /* COMPUTATION OF OTHER PARAMETERS NECESSARY FOR THE INTRINSIC VISCOSITY */
 
@@ -4421,7 +4512,8 @@ static void
 doublesum()
 {
 
-    int i, j;
+    int i;
+    int j;
     float a1, a2, RRcosalfa, ri, rj, Ri, Rj, R;
 
     a1 = a2 = 0.0;
@@ -4461,9 +4553,8 @@ doublesum()
 
 }
 
-// #define MAIN
 
-#if defined(MAIN)
+#if defined(USE_MAIN)
 int
 main()
 {
