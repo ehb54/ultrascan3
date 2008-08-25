@@ -17,8 +17,6 @@ SUBDIRS += \
     us_cofs \
     us_colorgradient \
     us_db_equil \
-    us_db_rst_veloc \
-    us_db_rst_equil \
     us_db_rst_equilproject \
     us_db_rst_montecarlo \
     us_db_rtv_date \
@@ -84,6 +82,8 @@ SUBDIRS += \
     us_vhwenhanced \
     us_viewmwl
 
+#        us_db_rst_equil \
+#        us_db_rst_veloc \
 #        us_cofdistro \
 #        us_db_laser \
 #        us_findat_ad \
