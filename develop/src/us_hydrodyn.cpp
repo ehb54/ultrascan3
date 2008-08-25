@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_surfracer.h"
+#include "../include/us_hydrodyn_supc.h"
 
 // #define DEBUG
 #define DEBUG1
@@ -2158,6 +2159,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
 
   FILE *fspt = fopen(QString("%1.spt").arg(fname).ascii(), "w");
   FILE *fbms = fopen(QString("%1.bms").arg(fname).ascii(), "w");
+  FILE *fbeams = fopen(QString("%1.beams").arg(fname).ascii(), "w");
   FILE *frmc = fopen(QString("%1.rmc").arg(fname).ascii(), "w");
   FILE *frmc1 = fopen(QString("%1.rmc1").arg(fname).ascii(), "w");
   int beads = 0;
@@ -2188,6 +2190,13 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
 	  QString("%1.bms").arg(fname).ascii()
 	  );
 
+  // should put vbar calc here...
+  fprintf(fbeams, 
+	  "%d\t0.000000\t%s.rmc\n", 
+	  beads, 
+	  fname.ascii()
+	  );
+
   int atomno = 0;
   for (unsigned int i = 0; i < model->size(); i++) {
     if ((*model)[i].active) {
@@ -2201,6 +2210,12 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
 	      (*model)[i].bead_coordinate.axis[0] / scaling,
 	      (*model)[i].bead_coordinate.axis[1] / scaling,
 	      (*model)[i].bead_coordinate.axis[2] / scaling
+	      );
+      fprintf(fbeams, 
+	      "%f\t%f\t%f\n", 
+	      (*model)[i].bead_coordinate.axis[0],
+	      (*model)[i].bead_coordinate.axis[1],
+	      (*model)[i].bead_coordinate.axis[2]
 	      );
       fprintf(fspt,
 	      "select atomno=%d\nspacefill %.2f\ncolour %s\n",
@@ -2432,6 +2447,9 @@ int US_Hydrodyn::calc_somo()
 
 void US_Hydrodyn::calc_hydro()
 {
+  puts("calc hydro (supc)");
+  int retval = us_hydrodyn_supc_main(&hydro, &bead_model, "bead_model_end.beams");
+  printf("back from supc retval %d\n", retval);
 }
 
 void US_Hydrodyn::show_hydro_results()
