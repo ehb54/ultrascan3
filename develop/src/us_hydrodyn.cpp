@@ -473,21 +473,23 @@ static void outward_translate_2_spheres(float *r1, // radius of sphere 1
 int US_Hydrodyn::compute_asa()
 {
 // run the surfracer code
-
-	int retval = surfracer_main(asa.probe_radius, residue_list, &model_vector[current_model]);
+        QString error_string = "";
+	int retval = surfracer_main(&error_string, asa.probe_radius, residue_list, &model_vector[current_model]);
 	if ( retval )
 	{
 		switch ( retval )
 		{
 			case US_SURFRACER_ERR_MISSING_RESIDUE:
 			{
-				printError("US_SURFRACER encountered a missing residue");
+				printError("US_SURFRACER encountered a missing residue:\n" + 
+					   error_string);
 				return US_SURFRACER_ERR_MISSING_RESIDUE;
 				break;
 			}
 			case US_SURFRACER_ERR_MISSING_ATOM:
 			{
-				printError("US_SURFRACER encountered a missing atom");
+				printError("US_SURFRACER encountered a missing atom:\n" + 
+					   error_string);
 				return US_SURFRACER_ERR_MISSING_ATOM;
 				break;
 			}
@@ -506,6 +508,12 @@ int US_Hydrodyn::compute_asa()
 			}
 		}
 	}
+	if(error_string.length()) {
+	  printError("US_SURFRACER encountered missing atom(s) error:\n" + 
+		     error_string);
+	  return US_SURFRACER_ERR_MISSING_ATOM;
+	}
+	  
 
   // pass 1 assign bead #'s, chain #'s, initialize data
 
@@ -2357,23 +2365,31 @@ void US_Hydrodyn::bead_check()
   PDB_model tmp_model;
   tmp_chain.atom = bead_model;
   tmp_model.molecule.push_back(tmp_chain);
-  int retval = surfracer_main(asa.probe_radius, residue_list, &tmp_model, true);
+  QString error_string = "";
+  int retval = surfracer_main(&error_string,
+			      // asa.probe_radius
+			      10, residue_list, &tmp_model, true);
   if ( retval ) {
     switch ( retval ) {
     case US_SURFRACER_ERR_MISSING_RESIDUE:
       {
+	printError("US_SURFRACER on bead recheck encountered a missing residue:\n" +
+		   error_string);
 	fprintf(stderr, "bead recheck: missing residue error\n");
 	return;
 	break;
       }
     case US_SURFRACER_ERR_MISSING_ATOM:
       {
+	printError("US_SURFRACER on bead recheck encountered a missing atom:\n" +
+		   error_string);
 	fprintf(stderr, "bead recheck: missing atom error\n");
 	return;
 	break;
       }
     case US_SURFRACER_ERR_MEMORY_ALLOC:
       {
+	printError("US_SURFRACER on bead recheck encountered a memory allocation error");
 	fprintf(stderr, "bead recheck: memory alloc error\n");
 	return;
 	break;
@@ -2381,13 +2397,18 @@ void US_Hydrodyn::bead_check()
     default:
       {
 	// unknown error
+	printError("US_SURFRACER encountered an unknown error");
 	fprintf(stderr, "bead recheck: unknown error %d\n", retval);
 	return;
 	break;
       }
     }
   }
-
+  if(error_string.length()) {
+    printError("US_SURFRACER encountered missing atom(s) error:\n" + 
+	       error_string);
+    return;
+  }
 }
 
 void US_Hydrodyn::select_model(int val)
@@ -2412,7 +2433,7 @@ void US_Hydrodyn::visualize()
 	if (!rasmol->start())
 	{
 		QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-										"Please check to make sure RASMOL is properly installed..."));
+							    "Please check to make sure RASMOL is properly installed..."));
 		return;
 	}
 /*
@@ -2436,16 +2457,17 @@ int US_Hydrodyn::calc_somo()
 		fprintf(stderr, "calculations can not be run until residue & pdb files are read!\n");
 		return -1;
 	}
-	compute_asa();
-	if (asa.recheck_beads)
-	{
-		puts("recheck beads disabled");
-		// bead_check();
+	if(!compute_asa()) {
+	  if (asa.recheck_beads)
+	    {
+	      // puts("recheck beads disabled");
+	      bead_check();
+	    }
+	  // calculate bead model and generate hydrodynamics calculation output
+	  // if successful, enable follow-on buttons:
+	  pb_visualize->setEnabled(true);
+	  pb_calc_hydro->setEnabled(true);
 	}
-	// calculate bead model and generate hydrodynamics calculation output
-	// if successful, enable follow-on buttons:
-	pb_visualize->setEnabled(true);
-	pb_calc_hydro->setEnabled(true);
 	return 0;
 }
 

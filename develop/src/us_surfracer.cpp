@@ -641,7 +641,7 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
     /*loaded all possibilities for the atom number to return by this function */
 
       dbg("potoedge 6");
-      printf("ndegat %d\n", ndegat);
+      //  printf("ndegat %d\n", ndegat);
     for (i = 0; i <= ndegat - 1; i++)	/*  loading vect */
     {
       dbg("potoedge 6.1");
@@ -1257,7 +1257,7 @@ free_alloced(void)
 }
 
 int
-surfracer_main(float prober, vector < residue > residue_list, PDB_model *model_vector, bool recheck)
+surfracer_main(QString *error_string, float prober, vector < residue > residue_list, PDB_model *model_vector, bool recheck)
 {
     /* HANDLE hStdin; */
     // char str1[255];
@@ -1455,6 +1455,10 @@ surfracer_main(float prober, vector < residue > residue_list, PDB_model *model_v
 			 j, k, this_atom->name.ascii(),
 			 this_atom->resName.ascii(),
 			 this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]);
+		    error_string->append(QString("").sprintf("missing residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+							     j, k, this_atom->name.ascii(),
+							     this_atom->resName.ascii(),
+							     this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
 		    if ((this_atom->name != "H" && this_atom->name != "D"
 			 && this_atom->resName != "DOD"
 			 && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
@@ -1494,11 +1498,15 @@ surfracer_main(float prober, vector < residue > residue_list, PDB_model *model_v
 		    }
 		    if (atompos == -1)
 		    {
-			printf
-			    ("missing atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-			     j, k, this_atom->name.ascii(),
-			     this_atom->resName.ascii(),
-			     this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]);
+		      error_string->append(QString("").sprintf("missing atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+							       j, k, this_atom->name.ascii(),
+							       this_atom->resName.ascii(),
+							       this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+		      printf
+			("missing atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+			 j, k, this_atom->name.ascii(),
+			 this_atom->resName.ascii(),
+			 this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]);
 		    }
 		    else
 		    {
