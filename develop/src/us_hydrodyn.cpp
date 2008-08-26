@@ -483,21 +483,22 @@ int US_Hydrodyn::compute_asa()
 {
 // run the surfracer code
         QString error_string = "";
-	// progress->reset();
-	// int mppos = 18;
-	// progress->setTotalSteps(mppos);
-	// int ppos = 0;
-	// progress->setProgress(ppos++); // 1
-	// qApp->processEvents();
-	// progress->setProgress(ppos++); // 1
-	// qApp->processEvents();
+	progress->reset();
+	int mppos = 18 + (asa.recheck_beads ? 1 : 0);
+	progress->setTotalSteps(mppos);
+	int ppos = 0;
+	progress->setProgress(ppos++); // 1
+	qApp->processEvents();
+	progress->setProgress(ppos++); // 1
+	qApp->processEvents();
 
 	int retval = surfracer_main(&error_string, asa.probe_radius, residue_list, &model_vector[current_model]);
-	// progress->setProgress(ppos++); // 2
-
+	progress->setProgress(ppos++); // 2
+	qApp->processEvents();
 	if ( retval )
 	{
-	  // progress->setProgress(mppos);
+	  progress->setProgress(mppos);
+	  qApp->processEvents();
 		switch ( retval )
 		{
 			case US_SURFRACER_ERR_MISSING_RESIDUE:
@@ -530,7 +531,8 @@ int US_Hydrodyn::compute_asa()
 		}
 	}
 	if(error_string.length()) {
-	  // progress->setProgress(mppos);
+	  progress->setProgress(mppos);
+	  qApp->processEvents();
 	  printError("US_SURFRACER encountered missing atom(s) error:\n" + 
 		     error_string);
 	  return US_SURFRACER_ERR_MISSING_ATOM;
@@ -538,6 +540,7 @@ int US_Hydrodyn::compute_asa()
 	  
 
   // pass 1 assign bead #'s, chain #'s, initialize data
+	printf("made it to here\n"); fflush(stdout);
 
   // for (unsigned int i = 0; i < model_vector.size (); i++)
   {
@@ -546,13 +549,14 @@ int US_Hydrodyn::compute_asa()
     for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
 	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-	// printf("p1 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
+        printf("p1 i j k %d %d %d %lx %s\n", i, j, k, (long unsigned int)this_atom->p_atom, this_atom->active ? "active" : "not active"); fflush(stdout);
 
-	this_atom->bead_assignment =
-	  (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
-	this_atom->chain =
-	  ((this_atom->p_residue && this_atom->p_atom) ?
-	   (int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
+	//	this_atom->bead_assignment =
+	//	  (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
+	//	printf("this_atom->bead_assignment %d\n", this_atom->bead_assignment); fflush(stdout);
+	//	this_atom->chain =
+	//	  ((this_atom->p_residue && this_atom->p_atom) ?
+	//	   (int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
 
 	// initialize data
 	this_atom->bead_positioner = false;
@@ -567,7 +571,8 @@ int US_Hydrodyn::compute_asa()
     }
   }
 
-	// progress->setProgress(ppos++); // 3
+  progress->setProgress(ppos++); // 3
+  qApp->processEvents();
 
   // pass 2 determine beads, cog_position, fixed_position, molecular cog phase 1.
 
@@ -795,7 +800,8 @@ int US_Hydrodyn::compute_asa()
     printf("ERROR: this molecule has zero mw!\n");
   }
 
-  // progress->setProgress(ppos++); // 4
+  progress->setProgress(ppos++); // 4
+  qApp->processEvents();
 
   // pass 2b move bead_ref_volume, ref_mw, computed_radius from
   // next main chain back one
@@ -858,7 +864,8 @@ int US_Hydrodyn::compute_asa()
     }
   }
 
-  // progress->setProgress(ppos++); // 5
+  progress->setProgress(ppos++); // 5
+  qApp->processEvents();
 
   // pass 2c hydration
 
@@ -887,7 +894,8 @@ int US_Hydrodyn::compute_asa()
 
   // pass 3 determine visibility, exposed code, normalize cog position, final position determination
   // compute com of entire molecule
-  // progress->setProgress(ppos++); // 6
+  progress->setProgress(ppos++); // 6
+  qApp->processEvents();
 
 
 #if defined(DEBUG1) || defined(DEBUG)
@@ -1007,7 +1015,8 @@ int US_Hydrodyn::compute_asa()
   }
 
   // pass 4 print results
-  // progress->setProgress(ppos++); // 7
+  progress->setProgress(ppos++); // 7
+  qApp->processEvents();
 
 
 #if defined(DEBUG)
@@ -1094,7 +1103,8 @@ int US_Hydrodyn::compute_asa()
     }
   }
 
-  // progress->setProgress(ppos++); // 8
+  progress->setProgress(ppos++); // 8
+  qApp->processEvents();
 
   // popping radial reduction
 
@@ -1271,7 +1281,8 @@ int US_Hydrodyn::compute_asa()
 #if defined(TIMING)
     gettimeofday(&start_tv, NULL);
 #endif
-    // progress->setProgress(ppos++); // 9, 10, 11
+    progress->setProgress(ppos++); // 9, 10, 11
+    qApp->processEvents();
 
     do {
       // write_bead_tsv(QString("bead_model_bp-%1-%2.tsv").arg(k).arg(iter), &bead_model);
@@ -1435,7 +1446,8 @@ int US_Hydrodyn::compute_asa()
     write_bead_tsv(QString("bead_model_pop-%1.tsv").arg(k), &bead_model);
     write_bead_spt(QString("bead_model_pop-%1").arg(k), &bead_model);
     printf("stage %d beads popped %d\n", k, beads_popped);
-    // progress->setProgress(ppos++); // 12,13,14
+    progress->setProgress(ppos++); // 12,13,14
+    qApp->processEvents();
 
 
     // radial reduction phase
@@ -2115,8 +2127,8 @@ int US_Hydrodyn::compute_asa()
 	     start_tv.tv_usec);
       fflush(stdout);
 #endif
-      // progress->setProgress(ppos++); // 15,16,17
-
+      progress->setProgress(ppos++); // 15,16,17
+      qApp->processEvents();
 
       // recompute volumes
       for (unsigned int i = 0; i < bead_model.size(); i++) {
@@ -2134,7 +2146,8 @@ int US_Hydrodyn::compute_asa()
   } // methods
   write_bead_tsv("bead_model_end.tsv", &bead_model);
   write_bead_spt("bead_model_end", &bead_model);
-  // progress->setProgress(mppos);
+  progress->setProgress(mppos - (asa.recheck_beads ? 1 : 0));
+  qApp->processEvents();
 
   return 0;
 }
@@ -2390,8 +2403,8 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
 	    (*model)[i].bead_cog_coordinate.axis[2],
 	    (*model)[i].bead_coordinate.axis[0],
 	    (*model)[i].bead_coordinate.axis[1],
-	    (*model)[i].bead_coordinate.axis[2],
-	      (*model)[i].all_beads.size(),
+	      (*model)[i].bead_coordinate.axis[2],
+	      (unsigned int)(*model)[i].all_beads.size(),
 	      beads_referenced.ascii()
 	    );
     }
@@ -2409,9 +2422,10 @@ void US_Hydrodyn::bead_check()
   tmp_chain.atom = bead_model;
   tmp_model.molecule.push_back(tmp_chain);
   QString error_string = "";
-  int retval = surfracer_main(&error_string,
-			      // asa.probe_radius
-			      10, residue_list, &tmp_model, true);
+  int retval = surfracer_main(&error_string, 
+			      //10,
+			      asa.probe_radius * 4,
+			      residue_list, &tmp_model, true);
   if ( retval ) {
     switch ( retval ) {
     case US_SURFRACER_ERR_MISSING_RESIDUE:
@@ -2494,7 +2508,7 @@ void US_Hydrodyn::visualize()
 
 int US_Hydrodyn::calc_somo()
 {
-	if (!residue_list.size() ||
+  if (!residue_list.size() ||
       !model_vector.size())
 	{
 		fprintf(stderr, "calculations can not be run until residue & pdb files are read!\n");
@@ -2504,7 +2518,10 @@ int US_Hydrodyn::calc_somo()
 	  if (asa.recheck_beads)
 	    {
 	      // puts("recheck beads disabled");
+	      
 	      bead_check();
+	      progress->setProgress(19);
+	      qApp->processEvents();
 	    }
 	  // calculate bead model and generate hydrodynamics calculation output
 	  // if successful, enable follow-on buttons:

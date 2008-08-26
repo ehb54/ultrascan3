@@ -909,6 +909,7 @@ buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nv
 
     for (i = 0, nve = 0; i <= nv - 1; i++)
     {
+      //      printf("bc 1 i %d nve %d nv %d\n", i, nve, nv);
 	if (verat[i * 3] > natom)
 	    break;
 	if (verat[i * 3] == natom || verat[i * 3 + 1] == natom || verat[i * 3 + 2] == natom)
@@ -917,6 +918,7 @@ buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nv
 	    nve++;
 	}
     }
+
     dbg("bc2");
     /*loading cycles */
     /*circles are considered in this part */
@@ -941,6 +943,7 @@ buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nv
 	    icycle++;		/*degenerate cycles are not chemically possible and extremely unlikely */
 	}
     }
+    // printf("bc 2 icycle %d ncircle %d\n", icycle, ncircle);
 
     dbg("bc3");
     /*circles are loaded- now it's time to load more complex cycles */
@@ -956,6 +959,9 @@ buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nv
 	    break;		/*all vertices are taken into account- break the while loop */
 
 	/*so we are still here- that means verte[i] is the vertex that will start a brand new cycle for us!!! */
+	if(verte[i] == -1) {
+	  printf("ERROR dc4!!\n");
+	}
 
 	v0 = i;			/*we will have its number in v0 at first */
 	v00[0] = ver[verte[v0] * 3];
@@ -988,6 +994,7 @@ buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nv
 	       (fabs(ver[verte[v1] * 3] - v00[0]) >= 1.e-6
 		|| fabs(ver[verte[v1] * 3 + 1] - v00[1]) >= 1.e-6 || 
 		fabs(ver[verte[v1] * 3 + 2] - v00[2]) >= 1.e-6));
+	// printf("after bc6 j = %d\n", j);
     dbg("bc6.1");
 	/*stop when the coordinates coincide- the cycle is then closed */
 	/*comparing coordinates in case of degeneracy */
@@ -1376,6 +1383,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 
     puts("Surface Racer 3.0 by Oleg Tsodikov");
     puts("Integrated into UltraScan by E. Brookes");
+    // #define DEBUG
 
 #if defined(DEBUG)
     for (unsigned int m = 0; m < residue_list.size(); m++ )
@@ -1561,6 +1569,23 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	    }
 	}
       }
+      {
+	for (unsigned int j = 0; j < model_vector->molecule.size (); j++) {
+	  for (unsigned int k = 0; k < model_vector->molecule[j].atom.size (); k++) {
+	    PDB_atom *this_atom = &model_vector->molecule[j].atom[k];
+	    //  printf("p1 i j k %d %d %d %lx %s %d\n", i, j, k, 
+	    //	 (long unsigned int)this_atom->p_atom, 
+	    //	 this_atom->active ? "active" : "not active",
+	    //	 (this_atom->p_atom ? (int)this_atom->p_atom->bead_assignment : -1)
+	    //	 ); fflush(stdout);
+	    this_atom->bead_assignment =
+	      (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
+	    this_atom->chain =
+	      ((this_atom->p_residue && this_atom->p_atom) ?
+	       (int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
+	  }
+	}
+      }
     } else {
       // this is for the recheck bead 
       for (unsigned int i = 0; i < model_vector->molecule[0].atom.size(); i++) 
@@ -1604,6 +1629,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(a, atomnumber * 3 * sizeof(float), 0);
 
     ar = (float *) calloc(atomnumber, sizeof(float));	/* radius */
     if (!ar)
@@ -1612,6 +1638,8 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(ar, atomnumber * 3 * sizeof(float), 0);
+
     aarea = (float *) calloc(atomnumber, sizeof(float));	/* accessible area  */
     if (!aarea)
     {
@@ -1619,6 +1647,8 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(aarea, atomnumber * sizeof(float), 0);
+
     molarea = (float *) calloc(atomnumber, sizeof(float));	/*  molecular (smooth) area  */
     if (!molarea)
     {
@@ -1626,6 +1656,9 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(molarea, atomnumber * sizeof(float), 0);
+
+
     curvat = (float *) calloc(atomnumber, sizeof(float));	/*  curvature  */
     if (!curvat)
     {
@@ -1633,6 +1666,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(curvat, atomnumber * sizeof(float), 0);
 
     /*This part of the program loads up atomic coordinates from the file and assigns radii */
     i = 0;			/*atom number counter */
@@ -1657,6 +1691,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	}
     }      
 
+
     /*The end of the loading and assigning of radii and coordinates */
 
     for (i = 0; i <= atomnumber - 1; i++)	/*incrementing all atomic radii by the probe radius */
@@ -1671,13 +1706,16 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
     //	a[i * 3] += (float) 0.01;
     //    }
 
-    atomcon = (int *) calloc(atomnumber - 1, sizeof(int));	/*allocating memory for array storing contacts for an atom */
+    atomcon = (int *) calloc(atomnumber, sizeof(int));	/*allocating memory for array storing contacts for an atom */
     if (!atomcon)
     {
 	free_alloced();
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(atomcon, atomnumber * sizeof(int), 0);
+
+
     veat = (int *) calloc(atomnumber * 6 * 3, sizeof(int));	/*vertex forming atom triplets */
     if (!veat)
     {
@@ -1685,6 +1723,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(veat, atomnumber * 6 * 3 * sizeof(int), 0);
 
     ve = (float *) calloc(atomnumber * 6 * 3, sizeof(float));
     if (!ve)
@@ -1693,6 +1732,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(ve, atomnumber * 6 * 3 * sizeof(int), 0);
 
     ciat = (int *) calloc(atomnumber * 2, sizeof(int));	/*contact circle forming atom pairs */
     if (!ciat)
@@ -1701,6 +1741,9 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(ciat, atomnumber * 2 * sizeof(int), 0);
+
+
     ci = (float *) calloc(atomnumber * 3, sizeof(float));
     if (!ci)
     {
@@ -1708,6 +1751,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(ci, atomnumber * 3 * sizeof(float), 0);
 
 /*loadind unburied vertexes (probe positions) and contact circles*/
     printf("\nBuilding the surface..."); fflush(stdout);
@@ -1983,6 +2027,8 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	    free_alloced();
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
+	memset(verat, nv * 3 * sizeof(int), 0);
+
 	ver = (float *) calloc(nv * 3, sizeof(float));
 	if (!ver)
 	{
@@ -1990,6 +2036,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	    free_alloced();
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
+	memset(ver, nv * 3 * sizeof(float), 0);
     }
 
     if (ncircle > 0)		/*if there are circles */
@@ -2001,6 +2048,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	    free_alloced();
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
+	memset(cirat, ncircle * 2 * sizeof(int), 0);
 
 	cir = (float *) calloc(ncircle * 3, sizeof(float));
 	if (!cir)
@@ -2009,6 +2057,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	    free_alloced();
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
+	memset(cir, ncircle * 3 * sizeof(float), 0);
     }
 
     veflag = (char *) calloc(ncircle + nv, sizeof(char));
@@ -2018,6 +2067,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	free_alloced();
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(veflag, (ncircle + nv) * sizeof(char), 0);
 
     for (i = 0; i <= nv - 1; i++)
     {
@@ -2060,6 +2110,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	ciat = (int *) 0;
     }
 
+
     /*finished memory optimization */
 
     /*one caveat to be taken care of later is a very unlikely but possible exact coincidence of two or more vertices */
@@ -2078,6 +2129,8 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	free_alloced();
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(edge, ned * 2 * sizeof(int), 0);
+
     edgeatom = (int *) calloc(ned, sizeof(int));	/* radius */
     if (!edgeatom)
     {
@@ -2085,6 +2138,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	free_alloced();
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
+    memset(edgeatom, ned * sizeof(int), 0);
 
     for (i = 0; i <= ned - 1; i++)	/*initializing the first elements of each pair with -1 */
     {
@@ -2096,7 +2150,6 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 
     printf("\nSurface built successfully...");
     printf("\nStarting area calculation..."); fflush(stdout);
-
 
     /*beginning of surface calculation */
     /*finding the atom with the highest north pole-it's accessible and will be the first one */
@@ -2111,6 +2164,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	    atom0 = i;
 	}
     }
+
     /*the first atom is atom0 */
     dbg("1");
 
