@@ -1512,6 +1512,7 @@ stampa_ris()
     printf("%s%d%s\n", "- Used BEADS Mass    = ", mascor1, "  [Da]");
     supc_results->mass = mascor1;
     printf("\n\n%s%.3e\t%s\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] (w@20C)");
+    supc_results->s20w = f * 1.0E-07 * fconv;
 
     printf("%s%.2e\t%s\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] (20C,w)");
     supc_results->D20w = (KB * TE * 1.0E7) / f * fconv1;
@@ -1594,6 +1595,7 @@ stampa_ris()
     }
 
     printf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * PI * ETAo), "[nm]");
+    supc_results->rs = f * fconv / (bc * PI * ETAo);
     
 
     printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ", pow((3.0 / Dr[0] / bc / 4.0 / PI / ETAo), (0.33333)) * fconv,
@@ -1666,6 +1668,7 @@ stampa_ris()
 	printf("%s\t%.2Lf\t%s\n", " Tau(3) ", tao[1] * pow(fconv, 3.0), "[ns] (20C,w)");
 	printf("%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
 	printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
+	supc_results->theta = tao[0] * pow(fconv, 3.0);
     }
     if (taoflag == 2.0)
     {
@@ -1674,6 +1677,7 @@ stampa_ris()
 	printf("%s\t%.2Lf\t%s\n", " Tau(3) ", tao[1] * pow(fconv, 3.0), "[ns] (20C,w)");
 	printf("%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
 	printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
+	supc_results->theta = tao[4] * pow(fconv, 3.0);
     }
     if (taoflag == 0.0)
     {
@@ -1682,6 +1686,7 @@ stampa_ris()
 	printf("%s\t%.2Lf\t%s\n", " Tau(3) ", tao[2] * pow(fconv, 3.0), "[ns] (20C,w)");
 	printf("%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0), "[ns] (20C,w)");
 	printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[4] * pow(fconv, 3.0), "[ns] (20C,w)");
+	supc_results->theta = tao[0] * pow(fconv, 3.0);
     }
     printf("\n%s\t%.2f\t%s\n", " Tau(m) ", taom * pow(fconv, 3.0), "[ns] (20C,w)");
     printf("%s\t%.2f\t%s\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0), "[ns] (20C,w) \n");
