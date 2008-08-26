@@ -86,20 +86,6 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 
 	bg_sequence->setButton((*bead_output).sequence);
 
-	le_output_file = new QLineEdit(this, "output_file Line Edit");
-	le_output_file->setMinimumHeight(minHeight1);
-	le_output_file->setEnabled(true);
-	le_output_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	le_output_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	connect(le_output_file, SIGNAL(textChanged(const QString &)), SLOT(update_output_file(const QString &)));
-
-	pb_select_output_file = new QPushButton(tr("Select Output File"), this);
-	Q_CHECK_PTR(pb_select_output_file);
-	pb_select_output_file->setMinimumHeight(minHeight1);
-	pb_select_output_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-	pb_select_output_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	connect(pb_select_output_file, SIGNAL(clicked()), SLOT(select_output_file()));
-
 	pb_cancel = new QPushButton(tr("Close"), this);
 	Q_CHECK_PTR(pb_cancel);
 	pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -114,7 +100,7 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 	pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-	int rows=11, columns = 2, spacing = 2, j=0, margin=4;
+	int rows=10, columns = 2, spacing = 2, j=0, margin=4;
 	QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
 	background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -123,31 +109,8 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 	j+=3;
 	background->addMultiCellWidget(bg_sequence, j, j+3, 0, 1);
 	j+=4;
-	background->addWidget(pb_select_output_file, j, 0);
-	background->addWidget(le_output_file, j, 1);
-	j++;
 	background->addWidget(pb_help, j, 0);
 	background->addWidget(pb_cancel, j, 1);
-}
-
-void US_Hydrodyn_Bead_Output::update_output_file(const QString &str)
-{
-	(*bead_output).filename = str;
-}
-
-void US_Hydrodyn_Bead_Output::select_output_file()
-{
-	(*bead_output).filename = QFileDialog::getSaveFileName(USglobal->config_list.result_dir,
-			"Somo files (*.somo_bead_model)",
-			this,
-			"save file dialog",
-			"Choose a filename to save SOMO file under" );
-	if ((*bead_output).filename.isEmpty()) return;
-	if ((*bead_output).filename.right(5) != ".somo_bead_model")
-	{
-		(*bead_output).filename += ".somo_bead_model";
-	}
-	le_output_file->setText((*bead_output).filename);
 }
 
 void US_Hydrodyn_Bead_Output::select_output(int val)

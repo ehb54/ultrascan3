@@ -131,6 +131,7 @@ struct residue
 											// 4: detergent
 											// 5: other
 	float molvol;						// the molecular volume of the residue
+	float vbar;							// the partial specific volume of the residue
 	float asa;							// maximum accessible surface area (A^2)
 	vector <struct atom> r_atom;	// the atoms in the residue
 	vector <struct bead> r_bead;	// the beads used to describe the residue

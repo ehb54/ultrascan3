@@ -10,8 +10,6 @@
 #include <qbuttongroup.h>
 #include <qframe.h>
 #include <qcheckbox.h>
-#include <qtabwidget.h>
-#include <qwt_counter.h>
 
 #include "us_util.h"
 
@@ -33,7 +31,6 @@ struct bead_output_options
 	int sequence;		// 0 = as in original pdb file
 							// 1 = exposed sidechain -> exposed main chain -> buried
 							// 2 = include bead-original residue correspondence
-	QString filename;	// bead model output file name
 };
 
 class US_EXTERN US_Hydrodyn_Bead_Output : public QFrame
@@ -53,12 +50,9 @@ class US_EXTERN US_Hydrodyn_Bead_Output : public QFrame
 
 		QLabel *lbl_info;
 
-		QPushButton *pb_select_output_file;
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;
 		
-		QLineEdit *le_output_file;
-
 		QButtonGroup *bg_output;
 		QButtonGroup *bg_sequence;
 
@@ -73,8 +67,6 @@ class US_EXTERN US_Hydrodyn_Bead_Output : public QFrame
 	private slots:
 		
 		void setupGUI();
-		void select_output_file();
-		void update_output_file(const QString &);
 		void select_output(int);
 		void select_sequence(int);
 

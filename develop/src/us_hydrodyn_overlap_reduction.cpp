@@ -225,3 +225,27 @@ void US_Hydrodyn_OR::update_hierarch(double val)
 {
 	(*o_r).remove_hierarch_percent = val;
 }
+
+
+/*
+void US_Hydrodyn_Bead_Output::update_output_file(const QString &str)
+{
+	(*bead_output).filename = str;
+}
+
+void US_Hydrodyn_Bead_Output::select_output_file()
+{
+	(*bead_output).filename = QFileDialog::getSaveFileName(USglobal->config_list.result_dir,
+			"Somo files (*.somo_bead_model)",
+			this,
+			"save file dialog",
+			"Choose a filename to save SOMO file under" );
+	if ((*bead_output).filename.isEmpty()) return;
+	if ((*bead_output).filename.right(5) != ".somo_bead_model")
+{
+		(*bead_output).filename += ".somo_bead_model";
+}
+	le_output_file->setText((*bead_output).filename);
+}
+
+*/

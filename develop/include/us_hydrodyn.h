@@ -71,6 +71,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		struct overlap_reduction sidechain_overlap;
 		struct overlap_reduction mainchain_overlap;
 		struct overlap_reduction buried_overlap;
+		QString project;	// name of the current project - derived from the prefix of the pdb filename
 		double overlap_tolerance;
 
 		vector <PDB_atom> bead_model;

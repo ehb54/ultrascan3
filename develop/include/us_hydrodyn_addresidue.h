@@ -65,6 +65,7 @@ class US_AddResidue : public QWidget
 		QLabel *lbl_numbeads;
 		QLabel *lbl_type;
 		QLabel *lbl_molvol;
+		QLabel *lbl_vbar;
 		QLabel *lbl_asa;
 		QLabel *lbl_beadchain;
 		QLabel *lbl_bead_volume;
@@ -109,6 +110,7 @@ class US_AddResidue : public QWidget
 		QwtCounter *cnt_numatoms;
 
 		QLineEdit *le_molvol;
+		QLineEdit *le_vbar;
 		QLineEdit *le_asa;
 		QLineEdit *le_residue_name;
 		QLineEdit *le_bead_volume;
@@ -144,6 +146,7 @@ class US_AddResidue : public QWidget
 		void accept_residue();
 		void update_name(const QString &);
 		void update_molvol(const QString &);
+		void update_vbar(const QString &);
 		void update_asa(const QString &);
 		void update_bead_volume(const QString &);
 		void update_hydration(double);

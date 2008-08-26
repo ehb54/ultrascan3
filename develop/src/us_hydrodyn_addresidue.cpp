@@ -190,6 +190,20 @@ void US_AddResidue::setupGUI()
 	le_molvol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	connect(le_molvol, SIGNAL(textChanged(const QString &)), SLOT(update_molvol(const QString &)));
 
+	lbl_vbar = new QLabel(tr(" Residue partial spec. vol. (cm^3/g):"), this);
+	Q_CHECK_PTR(lbl_vbar);
+	lbl_vbar->setAlignment(AlignLeft|AlignVCenter);
+	lbl_vbar->setMinimumHeight(minHeight1);
+	lbl_vbar->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+	le_vbar = new QLineEdit(this, "Residue vbar Line Edit");
+	le_vbar->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_vbar->setMinimumHeight(minHeight1);
+	le_vbar->setEnabled(false);
+	le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(update_vbar(const QString &)));
+
 	lbl_asa = new QLabel(tr(" Max. Accessible Surface Area (A^2):"), this);
 	Q_CHECK_PTR(lbl_asa);
 	lbl_asa->setMinimumHeight(minHeight1);
@@ -560,6 +574,9 @@ void US_AddResidue::setupGUI()
 	background->addWidget(lbl_molvol, j, 0);
 	background->addWidget(le_molvol, j, 1);
 	j++;
+	background->addWidget(lbl_vbar, j, 0);
+	background->addWidget(le_vbar, j, 1);
+	j++;
 	background->addWidget(lbl_asa, j, 0);
 	background->addWidget(le_asa, j, 1);
 	j++;
@@ -619,9 +636,9 @@ void US_AddResidue::setupGUI()
 	background->addWidget(lbl_list_beadatom, j, 3);
 	background->addWidget(lbl_select_beadatom, j, 4);
 	j++;
-	background->addMultiCellWidget(lb_list_beadatom, j, j+3, 3, 3);
-	background->addMultiCellWidget(lb_select_beadatom, j, j+3, 4, 4);
-	j+=4;
+	background->addMultiCellWidget(lb_list_beadatom, j, j+4, 3, 3);
+	background->addMultiCellWidget(lb_select_beadatom, j, j+4, 4, 4);
+	j+=5;
 	background->addWidget(pb_accept_bead, j, 3);
 	background->addWidget(pb_reset, j, 4);
 	j++;
@@ -657,6 +674,7 @@ void US_AddResidue::add()
 			item = (int) i;
 			residue_list[i].type = new_residue.type;
 			residue_list[i].molvol = new_residue.molvol;
+			residue_list[i].vbar = new_residue.vbar;
 			residue_list[i].asa = new_residue.asa;
 			residue_list[i].r_atom.clear();
 			residue_list[i].r_bead.clear();
@@ -710,6 +728,10 @@ void US_AddResidue::select_residue_file()
 				ts >> new_residue.asa;
 				ts >> numatoms;
 				ts >> numbeads;
+				ts >> new_residue.vbar;
+//				cout << "name: " << new_residue.name << ", type: " << new_residue.type
+//						<< ", molvol: " << new_residue.molvol << ", asa: " << new_residue.asa <<
+//						", numatoms: " << numatoms << ", beads: " << numbeads << ", vbar: " << new_residue.vbar << endl;
 				ts.readLine(); // read rest of line
 				new_residue.r_atom.clear();
 				new_residue.r_bead.clear();
@@ -765,6 +787,7 @@ void US_AddResidue::select_residue_file()
 				calc_bead_mw(&new_residue);
 				if ( !new_residue.name.isEmpty()
 					&& new_residue.molvol > 0.0
+					&& new_residue.vbar > 0.0
 					&& new_residue.asa > 0.0)
 				{
 					residue_list.push_back(new_residue);
@@ -857,6 +880,7 @@ void US_AddResidue::select_atom_file()
 			cnt_numbeads->setEnabled(true);
 			le_asa->setEnabled(true);
 			le_molvol->setEnabled(true);
+			le_vbar->setEnabled(true);
 			cmb_type->setEnabled(true);
 			le_residue_name->setEnabled(true);
 			pb_reset->setEnabled(true);
@@ -903,6 +927,11 @@ void US_AddResidue::update_numbeads(double val)
 void US_AddResidue::update_molvol(const QString &str)
 {
 	new_residue.molvol = str.toFloat();
+}
+
+void US_AddResidue::update_vbar(const QString &str)
+{
+	new_residue.vbar = str.toFloat();
 }
 
 void US_AddResidue::update_asa(const QString &str)
@@ -1062,6 +1091,7 @@ void US_AddResidue::select_residue(int val)
 	cnt_numbeads->setValue(residue_list[val].r_bead.size());
 	cmb_type->setCurrentItem(residue_list[val].type);
 	le_molvol->setText(str.sprintf("%7.2f", residue_list[val].molvol));
+	le_vbar->setText(str.sprintf("%7.2f", residue_list[val].vbar));
 	le_asa->setText(str.sprintf("%7.2f", residue_list[val].asa));
 	new_residue = residue_list[val];
 //	print_residue (new_residue);
@@ -1074,6 +1104,7 @@ void US_AddResidue::print_residue(struct residue res)
 	cout << "Residue name: " << res.name << endl;
 	cout << "Residue type: " << res.type << endl;
 	cout << "Residue molvol: " << res.molvol << endl;
+	cout << "Residue vbar: " << res.vbar << endl;
 	cout << "Residue asa: " << res.asa << endl;
 	cout << "Number of atoms: " << res.r_atom.size() << endl;
 	for (i=0; i<res.r_atom.size(); i++)
@@ -1126,6 +1157,8 @@ void US_AddResidue::reset()
 	cmb_type->setEnabled(true);
 	le_molvol->setEnabled(true);
 	le_molvol->setText("");
+	le_vbar->setEnabled(true);
+	le_vbar->setText("");
 	le_asa->setEnabled(true);
 	le_asa->setText("");
 
@@ -1168,6 +1201,7 @@ void US_AddResidue::accept_residue()
 	|| new_residue.r_atom.size() == 0
 	|| new_residue.r_bead.size() == 0
 	|| new_residue.molvol == 0
+	|| new_residue.vbar == 0
 	|| new_residue.asa == 0)
 	{
 		QMessageBox::warning(this, tr("UltraScan Warning"),
@@ -1178,6 +1212,7 @@ void US_AddResidue::accept_residue()
 	{
 		le_residue_name->setEnabled(false);
 		le_molvol->setEnabled(false);
+		le_vbar->setEnabled(false);
 		le_asa->setEnabled(false);
 		cmb_type->setEnabled(false);
 		cmb_r_atoms->setEnabled(true);
@@ -1482,7 +1517,8 @@ void US_AddResidue::write_residue_file()
 					<< "\t" << str1.sprintf("%7.2f", residue_list[i].molvol)
 					<< "\t" << residue_list[i].asa
 					<< "\t" << residue_list[i].r_atom.size()
-					<< "\t" << residue_list[i].r_bead.size() << endl;
+					<< "\t" << residue_list[i].r_bead.size()
+					<< "\t" << residue_list[i].vbar << endl;
 			for (unsigned int j=0; j<residue_list[i].r_atom.size(); j++)
 			{
 				ts << residue_list[i].r_atom[j].name.upper()

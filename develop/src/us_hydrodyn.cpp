@@ -53,7 +53,6 @@ US_Hydrodyn::~US_Hydrodyn()
 void US_Hydrodyn::setupGUI()
 {
 	int minHeight1 = 30;
-	bead_output.filename = "";
 	bead_model_file = "";
 
 	lbl_tabletabs = new QLabel(tr("Modify Lookup Tables:"), this);
@@ -2751,13 +2750,16 @@ void US_Hydrodyn::load_pdb()
 	if (!filename.isEmpty())
 	{
 		lbl_pdb_file->setText(filename);
+		QFileInfo fi(filename);
+		project = fi.baseName();
+		cout << project << endl;
 		read_pdb(filename);
 	}
 }
 
 void US_Hydrodyn::load_bead_model()
 {
-	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo_bead_model *.SOMO_BEAD_MODEL", this);
+	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo.bead_model *.SOMO.BEAD_MODEL", this);
 	if (!filename.isEmpty())
 	{
 		bead_model_file = filename;
