@@ -35,6 +35,15 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	tmp_dir.mkdir(USglobal->config_list.root_dir + "/tmp");
 	chdir(QString(USglobal->config_list.root_dir + "/tmp").ascii());
 	printf("%s\n", QString(USglobal->config_list.root_dir + "/tmp").ascii());
+	results.total_beads = 0;
+	results.used_beads = 0;
+	results.mass = 0.0;
+	results.s20w = 0.0;
+	results.D20w = 0.0;
+	results.viscosity = 0.0;
+	results.rs = 0.0;
+	results.rg = 0.0;
+	results.theta = 0.0;
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -2522,6 +2531,23 @@ void US_Hydrodyn::calc_hydro()
 
 void US_Hydrodyn::show_hydro_results()
 {
+	if (results_widget)
+	{
+		if (results_window->isVisible())
+		{
+			results_window->raise();
+		}
+		else
+		{
+			results_window->show();
+		}
+		return;
+	}
+	else
+	{
+		results_window = new US_Hydrodyn_Results(&results, &results_widget);
+		results_window->show();
+	}
   puts("show hydro");
 }
 
@@ -3167,27 +3193,6 @@ void US_Hydrodyn::write_config()
 		ts << hydro.overlap_cutoff << "\t\t# flag for overlap cutoff: false: same as in model building, true: enter manually\n";
 		ts << hydro.overlap << "\t\t# overlap value\n";
 		f.close();
-	}
-}
-
-void US_Hydrodyn::show_results()
-{
-	if (results_widget)
-	{
-		if (results_window->isVisible())
-		{
-			results_window->raise();
-		}
-		else
-		{
-			results_window->show();
-		}
-		return;
-	}
-	else
-	{
-		results_window = new US_Hydrodyn_Results(&results, &results_widget);
-		results_window->show();
 	}
 }
 

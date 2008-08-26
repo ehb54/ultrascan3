@@ -35,6 +35,7 @@ void US_Hydrodyn_Misc::setupGUI()
 	lbl_hydrovol = new QLabel(tr(" Hydration Water Vol. (A^3): "), this);
 	Q_CHECK_PTR(lbl_hydrovol);
 	lbl_hydrovol->setAlignment(AlignLeft|AlignVCenter);
+	lbl_hydrovol->setMinimumWidth(200);
 	lbl_hydrovol->setMinimumHeight(minHeight1);
 	lbl_hydrovol->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_hydrovol->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
@@ -44,6 +45,7 @@ void US_Hydrodyn_Misc::setupGUI()
 	cnt_hydrovol->setRange(0, 100, 0.001);
 	cnt_hydrovol->setValue((*misc).hydrovol);
 	cnt_hydrovol->setMinimumHeight(minHeight1);
+	cnt_hydrovol->setMinimumWidth(200);
 	cnt_hydrovol->setEnabled(true);
 	cnt_hydrovol->setNumButtons(3);
 	cnt_hydrovol->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));

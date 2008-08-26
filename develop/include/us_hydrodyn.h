@@ -157,7 +157,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void show_bead_output();
 		void show_hydro();
 		void show_misc();
-		void show_results();
 		void bead_check(); // recheck beads
 		void read_config();
 		void write_config();

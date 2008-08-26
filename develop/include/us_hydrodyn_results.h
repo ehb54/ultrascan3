@@ -4,6 +4,7 @@
 // QT defs:
 
 #include <qlabel.h>
+#include <qlineedit.h>
 #include <qstring.h>
 #include <qlayout.h>
 #include <qframe.h>
@@ -49,6 +50,25 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
 		US_Config *USglobal;
 		
 		QLabel *lbl_info;
+		QLabel *lbl_total_beads;
+		QLineEdit *le_total_beads;
+		QLabel *lbl_used_beads;
+		QLineEdit *le_used_beads;
+		QLabel *lbl_mass;
+		QLineEdit *le_mass;
+		QLabel *lbl_D20w;
+		QLineEdit *le_D20w;
+		QLabel *lbl_s20w;
+		QLineEdit *le_s20w;
+		QLabel *lbl_viscosity;
+		QLineEdit *le_viscosity;
+		QLabel *lbl_rs;
+		QLineEdit *le_rs;
+		QLabel *lbl_rg;
+		QLineEdit *le_rg;
+		QLabel *lbl_theta;
+		QLineEdit *le_theta;
+
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;
 
