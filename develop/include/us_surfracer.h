@@ -1,7 +1,10 @@
 #ifndef US_SURFRACER_H
 #define US_SURFRACER_H
 
-int surfracer_main(float probe_radius, 
+#include <qstring.h>
+
+int surfracer_main(QString *error_string,
+		   float probe_radius, 
 		   vector <residue> residue_list,
 		   PDB_model *model_vector,
 		   bool recheck = false);
