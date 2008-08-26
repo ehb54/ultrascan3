@@ -28,6 +28,7 @@
 
 #undef R // it's defined as a us #define above & we use R as a local variable
 
+static hydro_results *supc_results;
 static FILE *mol;
 static FILE *rmc;
 #if defined(USE_MAIN)
@@ -327,56 +328,56 @@ supc_alloc()
     {
 	supc_free_alloced();
 	fprintf(stderr, "memory allocation error\n");
-	return -1;
+	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
     dtn = (struct dati1 *) malloc(nmax * sizeof(struct dati1));
     if (!dtn)
     {
 	supc_free_alloced();
 	fprintf(stderr, "memory allocation error\n");
-	return -1;
+	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
     rRi = (float *) malloc(nmax * 3 * sizeof(float));
     if (!rRi)
     {
 	supc_free_alloced();
 	fprintf(stderr, "memory allocation error\n");
-	return -1;
+	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
     b1 = (float *) malloc(nmax * 3 * sizeof(float));
     if (!b1)
     {
 	supc_free_alloced();
 	fprintf(stderr, "memory allocation error\n");
-	return -1;
+	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
     p = (float *) malloc(nmax * 3 * sizeof(float));
     if (!p)
     {
 	supc_free_alloced();
 	fprintf(stderr, "memory allocation error\n");
-	return -1;
+	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
     gp = (float *) malloc(nmax * 9 * sizeof(float));
     if (!gp)
     {
 	supc_free_alloced();
 	fprintf(stderr, "memory allocation error\n");
-	return -1;
+	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
     a = (float *) malloc(nmax * 3 * nmax * 3 * sizeof(float));
     if (!a)
     {
 	supc_free_alloced();
 	fprintf(stderr, "memory allocation error\n");
-	return -1;
+	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
     q = (float *) malloc(nmax * nmax * 9 * sizeof(float));
     if (!q)
     {
 	supc_free_alloced();
 	fprintf(stderr, "memory allocation error\n");
-	return -1;
+	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
     return 0;
 }
@@ -433,9 +434,14 @@ Gets_date(char *day, char *month, int *year, int *numday, char *hour)
 /**************************************************************************/
 
 int
-us_hydrodyn_supc_main(hydro_options *hydro, vector <PDB_atom> *bead_model, char *filename)
+us_hydrodyn_supc_main(hydro_results *hydro_results, 
+		      hydro_options *hydro, 
+		      vector <PDB_atom> *bead_model, 
+		      char *filename)
 {
     nmax = (int) bead_model->size();
+    supc_results = hydro_results;
+    supc_results->total_beads = nmax;
     if (int retval = supc_alloc())
     {
 	return retval;
@@ -460,15 +466,15 @@ us_hydrodyn_supc_main(hydro_options *hydro, vector <PDB_atom> *bead_model, char 
     printf("\n\n ** REMOVING RESERVED FILES, IF PRESENT ** \n\n");
 
     printf("Removing tot_mol\n");
-    system("rm tot_mol");
+    unlink("tot_mol");
     printf("Removing ifraxon\n");
-    system("rm ifraxon");
+    unlink("ifraxon");
     printf("Removing ofraxon\n");
-    system("rm ofraxon");
+    unlink("ofraxon");
     printf("Removing ifraxon1\n");
-    system("rm ifraxon1");
+    unlink("ifraxon1");
     printf("Removing ofraxon1\n");
-    system("rm ofraxon1");
+    unlink("ofraxon1");
 
     Gets_date(day, month, &year, &numday, hour);
 
@@ -693,11 +699,12 @@ us_hydrodyn_supc_main(hydro_options *hydro, vector <PDB_atom> *bead_model, char 
     strncat(risultati, ".ris", SMAX - strlen(risultati));
     risultati[SMAX-1] = 0;
     printf("risultati: %s\n", risultati);
+    flag_mem = 1;
     strncpy(molecola, filename, SMAX);
     molecola[SMAX-1] = 0;
     if(!(mol = fopen(molecola, "r"))) {
       supc_free_alloced();
-      return -5;
+      return US_HYDRODYN_SUPC_FILE_NOT_FOUND;
     }
     fclose(mol);
     fconv = pow(10,hydro->unit + 9);
@@ -820,12 +827,21 @@ us_hydrodyn_supc_main(hydro_options *hydro, vector <PDB_atom> *bead_model, char 
 	kkk = k + 1;
 	inp_inter();
 	printf("\n\n- Starting PAT ...\n");
-	printf("pat returns %d\n", us_hydrodyn_pat_main(nmax));
+	{
+	  int retval = us_hydrodyn_pat_main(nmax);
+	  printf("pat returns %d\n", retval);
+	}
 	printf("\n\n- End of PAT ...\n\n");
 	out_inter();
 
-	system("rm ifraxon*");
-	system("rm ofraxon*");
+	printf("Removing ifraxon\n");
+	unlink("ifraxon");
+	printf("Removing ofraxon\n");
+	unlink("ofraxon");
+	printf("Removing ifraxon1\n");
+	unlink("ifraxon1");
+	printf("Removing ofraxon1\n");
+	unlink("ofraxon1");
 
 	for (i = 0; i < nat; i++)
 	{
@@ -851,7 +867,7 @@ us_hydrodyn_supc_main(hydro_options *hydro, vector <PDB_atom> *bead_model, char 
 #else
 	    printf("overlaps detected\n");
 	    supc_free_alloced();
-	    return -6;
+	    return US_HYDRODYN_SUPC_OVERLAPS_EXIST;
 #endif
 	    break;
 	}
@@ -1464,6 +1480,7 @@ stampa_ris()
 	bc = 4;
 
     printf("\n\n%s%d\n", "- Used BEADS Number  = ", nat);
+    supc_results->used_beads = nat;
     if (volcor == 1)
     {
 	if ((colorsixf == 0) && (sfecalc == 2))
@@ -1493,17 +1510,24 @@ stampa_ris()
 	mascor1 = (int) pesmol;
 
     printf("%s%d%s\n", "- Used BEADS Mass    = ", mascor1, "  [Da]");
+    supc_results->mass = mascor1;
     printf("\n\n%s%.3e\t%s\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] (w@20C)");
-    printf("%s%.2e\t%s\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] (20C,w)");
 
-    if (raflag == -1.0)
+    printf("%s%.2e\t%s\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] (20C,w)");
+    supc_results->D20w = (KB * TE * 1.0E7) / f * fconv1;
+
+    if (raflag == -1.0) 
+    {
 	printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
 	       (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+	supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO);
+    }
 
     if ((raflag == -2.0) || (raflag == -5.0))
     {
 	printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
 	       (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+	supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
 	if ((nat + colorzero + colorsix) < numero_sfere)
 	    printf
 		("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
@@ -1513,6 +1537,7 @@ stampa_ris()
     {
 	printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
 	       (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+	supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
 	if ((nat + colorzero + colorsix) < numero_sfere)
 	    printf
 		("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
@@ -1559,13 +1584,17 @@ stampa_ris()
     if ((raflag == -1.0) || (raflag == -3.0))
     {
 	printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION (Hydrated Beads)   = ", ro * fconv, "[nm]");
+	supc_results->rg = ro * fconv;
 	printf("%s%.2f\t%s\n", "- RADIUS OF GYRATION (Unhydrated Beads) = ", rou * fconv, "[nm]");
     }
     else
-
+    {
 	printf("\n%s%.2f\t%s\n", "- RADIUS OF GYRATION              = ", ro * fconv, "[nm]");
+	supc_results->rg = ro * fconv;
+    }
 
     printf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * PI * ETAo), "[nm]");
+    
 
     printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ", pow((3.0 / Dr[0] / bc / 4.0 / PI / ETAo), (0.33333)) * fconv,
 	   "[nm]");
@@ -1595,6 +1624,7 @@ stampa_ris()
     }
 
     printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY                 = ", vis * correz * pow(fconv, 3.0), "[cm^3/g]");
+    supc_results->viscosity = vis * correz * pow(fconv, 3.0);
     einst = pow(0.3 * pesmol * vis / (PI * AVO), 0.33333);
     einst = 1E7 * einst;
     printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                   = ", einst * fconv, "[nm]");

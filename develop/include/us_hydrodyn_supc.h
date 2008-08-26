@@ -20,7 +20,15 @@ struct dati1
     int col;			/* color of the bead                 */
     char *cor;			/* correspondence between beads and AA */
 };
+
 int
-us_hydrodyn_supc_main(hydro_options *hydro, vector <PDB_atom> *bead_model, char *filename);
+us_hydrodyn_supc_main(hydro_results *hydro_results, 
+		      hydro_options *hydro, 
+		      vector <PDB_atom> *bead_model, 
+		      char *filename);
+
+#define US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC   -1
+#define US_HYDRODYN_SUPC_FILE_NOT_FOUND     -5
+#define US_HYDRODYN_SUPC_OVERLAPS_EXIST     -6
 
 #endif

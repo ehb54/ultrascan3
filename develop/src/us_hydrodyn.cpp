@@ -1,6 +1,7 @@
 #include "../include/us_hydrodyn.h"
 #include "../include/us_surfracer.h"
 #include "../include/us_hydrodyn_supc.h"
+#include "../include/us_hydrodyn_pat.h"
 
 // #define DEBUG
 #define DEBUG1
@@ -32,6 +33,8 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	rasmol = NULL;
 	tmp_dir.setPath(USglobal->config_list.root_dir + "/tmp");
 	tmp_dir.mkdir(USglobal->config_list.root_dir + "/tmp");
+	chdir(QString(USglobal->config_list.root_dir + "/tmp").ascii());
+	printf("%s\n", QString(USglobal->config_list.root_dir + "/tmp").ascii());
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -2258,6 +2261,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
   }
   fclose(fspt);
   fclose(fbms);
+  fclose(fbeams);
   fclose(frmc);
   fclose(frmc1);
 }
@@ -2448,12 +2452,55 @@ int US_Hydrodyn::calc_somo()
 void US_Hydrodyn::calc_hydro()
 {
   puts("calc hydro (supc)");
-  int retval = us_hydrodyn_supc_main(&hydro, &bead_model, "bead_model_end.beams");
+  int retval = us_hydrodyn_supc_main(&results, 
+				     &hydro, 
+				     &bead_model, 
+				     "bead_model_end.beams");
   printf("back from supc retval %d\n", retval);
+  pb_show_hydro_results->setEnabled(retval ? false : true);
+  if ( retval )
+  {
+      switch ( retval )
+      {
+      case US_HYDRODYN_SUPC_FILE_NOT_FOUND:
+	{
+	  printError("US_HYDRODYN_SUPC encountered a file not found error");
+	  return;
+	  break;
+	}
+      case US_HYDRODYN_SUPC_OVERLAPS_EXIST:
+	{
+	  printError("US_HYDRODYN_SUPC encountered an overlaps in the bead model error");
+	  return;
+	  break;
+	}
+      case US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC:
+	{
+	  printError("US_HYDRODYN_SUPC encountered a memory allocation error");
+	  return;
+	  break;
+	}
+      case US_HYDRODYN_PAT_ERR_MEMORY_ALLOC:
+	{
+	  printError("US_HYDRODYN_PAT encountered a memory allocation error");
+	  return;
+	  break;
+	}
+      default:
+	{
+	  printError("US_HYDRODYN_SUPC encountered an unknown error");
+	  // unknown error
+	  return;
+	  break;
+	}
+      }
+  }
+
 }
 
 void US_Hydrodyn::show_hydro_results()
 {
+  puts("show hydro");
 }
 
 void US_Hydrodyn::cancel()

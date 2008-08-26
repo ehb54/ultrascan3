@@ -1371,7 +1371,6 @@ surfracer_main(float prober, vector < residue > residue_list, PDB_model *model_v
 
     veflag = (char *) 0;
 
-    resfile = fopen("result.txt", "a");	/*resfile will have the breakdown of all areas */
 
     puts("sr3.0");
 
@@ -2232,9 +2231,9 @@ surfracer_main(float prober, vector < residue > residue_list, PDB_model *model_v
     fflush(stdout);
     FILE *aafile;
     if (!recheck) {
-      aafile = fopen("emre.asa", "w");
+      aafile = fopen("bead_model.asa", "w");
     } else {
-      aafile = fopen("emre_recheck.asa", "w");
+      aafile = fopen("bead_model_recheck.asa", "w");
     }
 
     puts("us_surfracer 2");
@@ -2251,6 +2250,8 @@ surfracer_main(float prober, vector < residue > residue_list, PDB_model *model_v
     puts("us_surfracer 4");
     fflush(stdout);
     return (0);
+
+    resfile = fopen("result.txt", "a");	/*resfile will have the breakdown of all areas */
 
 #if defined(US_SURFRACER_COMPUTE_EXTRAS)
 /*calculating the curvatures*/

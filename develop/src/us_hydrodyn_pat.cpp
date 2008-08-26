@@ -6,6 +6,8 @@
 #include <math.h>
 #include <malloc.h>
 
+#include "../include/us_hydrodyn_pat.h"
+
 struct dati1
 {
 
@@ -68,14 +70,14 @@ pat_alloc()
     {
 	pat_free_alloced();
 	fprintf(stderr, "memory allocation error\n");
-	return -1;
+	return US_HYDRODYN_PAT_ERR_MEMORY_ALLOC;
     }
     dtn = (struct dati1 *) malloc(nmax * sizeof(struct dati1));
     if (!dtn)
     {
 	pat_free_alloced();
 	fprintf(stderr, "memory allocation error\n");
-	return -1;
+	return US_HYDRODYN_PAT_ERR_MEMORY_ALLOC;
     }
     return 0;
 }
