@@ -45,7 +45,9 @@ static int calcmode;
 
 static void dbg(char *s) {
 #if defined(DEBUGMSG)
-  printf("sr: %s\n",s); fflush(stdout);
+	printf("sr: %s\n",s); fflush(stdout);
+#else
+	*s++;*s--;  // avoid warning
 #endif
 }
 

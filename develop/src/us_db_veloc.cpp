@@ -2,6 +2,11 @@
 #include "../include/us_tar.h"
 #include "../include/us_gzip.h"
 
+#ifdef WIN32
+	#define chdir _chdir
+	#include <direct.h>
+#endif
+
 US_DB_Veloc::US_DB_Veloc( QWidget* p, const char* name ) : 
   US_DB_Widgets( p, name )
 {
@@ -754,7 +759,6 @@ void US_DB_Veloc::retrieve_db( void )
   q.sprintf( "tableID = %d", DataID );
 
 	qApp->processEvents();
-	sleep( 2 ); // Wait to display progress dialog
 	cursor.select( q );
 
 	// Fetch data

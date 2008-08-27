@@ -74,8 +74,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QString project;	// name of the current project - derived from the prefix of the pdb filename
 		double overlap_tolerance;
 
-		vector <PDB_atom> bead_model;
-
 		US_Config *USglobal;
 
 		QLabel *lbl_info;
@@ -128,6 +126,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
   #pragma warning ( disable: 4251 )
 #endif
 
+		vector <PDB_atom>        bead_model;
 		vector <struct residue>   residue_list;
 		vector <struct PDB_model> model_vector;
 

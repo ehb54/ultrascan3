@@ -2,6 +2,11 @@
 #include "../include/us_tar.h"
 #include "../include/us_gzip.h"
 
+#ifdef WIN32
+	#define chdir _chdir
+	#include <direct.h>
+#endif
+
 //! Constructor
 /*! 
 	Constractor a new <var>US_ExpData_DB</var> interface, 

@@ -98,13 +98,13 @@ us_hydrodyn_pat_main(int use_nmax)
     initarray();
 
     contatore = 0;
-    max = dt[0].m;
+    max = (float)dt[0].m;
 
     printf("pat: nmax %d nat %d\n", nmax, nat);
 
     for (i = 1; i < nat; i++)
 	if (dt[i].m > max)
-	    max = dt[i].m;
+	    max = (float)dt[i].m;
 
     FL = 1;
 
@@ -160,7 +160,7 @@ us_hydrodyn_pat_main(int use_nmax)
 	b = (-(a[0][0] + a[1][1] + a[2][2]));
 	c = a[0][0] * a[1][1] + a[0][0] * a[2][2] + a[1][1] * a[2][2] - a[0][2] * a[2][0] - a[1][2] * a[2][1] -
 	    a[0][1] * a[1][0];
-	d = (-a[0][0] * a[1][1] * a[2][2] - 2.0 * a[0][1] * a[0][2] * a[1][2] + a[0][2] * a[0][2] * a[1][1] +
+	d = (float)(-a[0][0] * a[1][1] * a[2][2] - 2.0 * a[0][1] * a[0][2] * a[1][2] + a[0][2] * a[0][2] * a[1][1] +
 	     a[1][2] * a[1][2] * a[0][0] + a[0][1] * a[0][1] * a[2][2]);
 	terzo(b, c, d);
     }
@@ -551,28 +551,28 @@ place2(float a1[3], float a2[3])
 	if (fabs(b1x) < 0.0001)	/* if x is = 0 ... */
 	{
 	    if (b1y > 0.0)
-		tetar = PI / 2.0;
+		tetar = (float)(PI / 2.0);
 	    else
-		tetar = (-PI / 2.0);
+		tetar = (float)(-PI / 2.0);
 	}
 
 	else			/* if x and y are both > 0 ...  */
 	{
 	    if ((b1y > 0.0) && (b1x > 0.0))
-		tetar = atan(b1y / b1x);
+		tetar = (float)atan(b1y / b1x);
 	    else if ((b1y < 0.0) && (b1x > 0.0))
-		tetar = (-atan(fabs(b1y / b1x)));
+		tetar = (float)(-atan(fabs(b1y / b1x)));
 	    else if ((b1y < 0.0) && (b1x < 0.0))
-		tetar = (-(PI - atan(b1y / b1x)));
+		tetar = (float)(-(PI - atan(b1y / b1x)));
 	    else if ((b1y > 0.0) && (b1x < 0.0))
-		tetar = PI - atan(fabs(b1y / b1x));
+		tetar = (float)(PI - atan(fabs(b1y / b1x)));
 	}
     }
 
     else
     {
 	if (b1x < 0.0)
-	    tetar = PI;
+	    tetar = (float)PI;
 	else
 	    tetar = 0.0;
     }
@@ -600,28 +600,28 @@ place2(float a1[3], float a2[3])
 	if (fabs(b1nx) < 0.0001)	/* if x is = 0 ... */
 	{
 	    if (b1nz > 0.0)
-		tetar = PI / 2.0;
+		tetar = (float)(PI / 2.0);
 	    else
-		tetar = (-PI / 2.0);
+		tetar = (float)(-PI / 2.0);
 	}
 
 	else			/* if x and y are both > 0 ...  */
 	{
 	    if ((b1nz > 0.0) && (b1nx > 0.0))
-		tetar = atan(b1nz / b1nx);
+		tetar = (float)atan(b1nz / b1nx);
 	    else if ((b1nz < 0.0) && (b1nx > 0.0))
-		tetar = (-atan(fabs(b1nz / b1nx)));
+		tetar = (float)(-atan(fabs(b1nz / b1nx)));
 	    else if ((b1nz < 0.0) && (b1nx < 0.0))
-		tetar = (-(PI - atan(b1nz / b1nx)));
+		tetar = (float)(-(PI - atan(b1nz / b1nx)));
 	    else if ((b1nz > 0.0) && (b1nx < 0.0))
-		tetar = PI - atan(fabs(b1nz / b1nx));
+		tetar = (float)(PI - atan(fabs(b1nz / b1nx)));
 	}
     }
 
     else
     {
 	if (b1nx < 0.0)
-	    tetar = PI;
+	    tetar = (float)PI;
 	else
 	    tetar = 0.0;
     }
@@ -657,9 +657,9 @@ place2(float a1[3], float a2[3])
 	if (fabs(b2y) < 0.0001)	/* if y is = 0 ... */
 	{
 	    if (b2z > 0.0)
-		tetar = (-PI / 2.0);
+		tetar = (float)(-PI / 2.0);
 	    else
-		tetar = PI / 2.0;
+		tetar = (float)(PI / 2.0);
 	}
 
 	else			/* if z and y are both > 0 ...  */
@@ -669,16 +669,16 @@ place2(float a1[3], float a2[3])
 	    else if ((b2z < 0.0) && (b2y > 0.0))
 		tetar = atan(fabs(b2z / b2y));
 	    else if ((b2z < 0.0) && (b2y < 0.0))
-		tetar = PI - atan(b2z / b2y);
+		tetar = (float)(PI - atan(b2z / b2y));
 	    else if ((b2z > 0.0) && (b2y < 0.0))
-		tetar = (-(PI - atan(fabs(b2z / b2y))));
+		tetar = (float)(-(PI - atan(fabs(b2z / b2y))));
 	}
     }
 
     else
     {
 	if (b2y < 0.0)
-	    tetar = PI;
+	    tetar = (float)PI;
 	else
 	    tetar = 0.0;
     }
@@ -716,9 +716,9 @@ place1(float a1[3])
 	if (fabs(b1x) < 0.0001)	/* if x is = 0 ... */
 	{
 	    if (b1y > 0.0)
-		tetar = PI / 2.0;
+		tetar = (float)(PI / 2.0);
 	    else
-		tetar = (-PI / 2.0);
+		tetar = (float)(-PI / 2.0);
 	}
 
 	else			/* if both x and y are > 0 ...  */
@@ -728,16 +728,16 @@ place1(float a1[3])
 	    else if ((b1y < 0.0) && (b1x > 0.0))
 		tetar = (-atan(fabs(b1y / b1x)));
 	    else if ((b1y < 0.0) && (b1x < 0.0))
-		tetar = (-(PI - atan(b1y / b1x)));
+		tetar = (float)(-(PI - atan(b1y / b1x)));
 	    else if ((b1y > 0.0) && (b1x < 0.0))
-		tetar = PI - atan(fabs(b1y / b1x));
+		tetar = (float)PI - atan(fabs(b1y / b1x));
 	}
     }
 
     else
     {
 	if (b1x < 0.0)
-	    tetar = PI;
+	    tetar = (float)PI;
 	else
 	    tetar = 0.0;
     }
@@ -761,9 +761,9 @@ place1(float a1[3])
 	if (fabs(b1nx) < 0.0001)	/* if x is = 0 ... */
 	{
 	    if (b1nz > 0.0)
-		tetar = PI / 2.0;
+		tetar = (float)(PI / 2.0);
 	    else
-		tetar = (-PI / 2.0);
+		tetar = (float)(-PI / 2.0);
 	}
 
 	else			/* if x and y are both > 0 ...  */
@@ -773,16 +773,16 @@ place1(float a1[3])
 	    else if ((b1nz < 0.0) && (b1nx > 0.0))
 		tetar = (-atan(fabs(b1nz / b1nx)));
 	    else if ((b1nz < 0.0) && (b1nx < 0.0))
-		tetar = (-(PI - atan(b1nz / b1nx)));
+		tetar = (-((float)PI - atan(b1nz / b1nx)));
 	    else if ((b1nz > 0.0) && (b1nx < 0.0))
-		tetar = PI - atan(fabs(b1nz / b1nx));
+		tetar = (float)PI - atan(fabs(b1nz / b1nx));
 	}
     }
 
     else
     {
 	if (b1nx < 0.0)
-	    tetar = PI;
+	    tetar = (float)PI;
 	else
 	    tetar = 0.0;
     }
@@ -840,7 +840,7 @@ secondo(float b, float c)
 {
     float delta, pfraz, pin;
 
-    delta = b * b - 4.0 * c;
+    delta = b * b - 4.0f * c;
 
     pfraz = fabs(delta);
     pin = floor(pfraz);
@@ -848,13 +848,13 @@ secondo(float b, float c)
 
     if (((pin == 0) && (pfraz < 0.00001) && (delta <= 0.0)) || ((pin == 0) && (pfraz < 0.2) && (delta > 0.0)))
     {
-	dl2 = (-b / 2.0);
+	dl2 = (-b / 2.0f);
 	dl3 = dl2;
     }
     else if (delta > 0.0)
     {
-	dl2 = (-b + sqrt(b * b - 4.0 * c)) / 2.0;
-	dl3 = (-b - sqrt(b * b - 4.0 * c)) / 2.0;
+	dl2 = (-b + sqrt(b * b - 4.0f * c)) / 2.0f;
+	dl3 = (-b - sqrt(b * b - 4.0f * c)) / 2.0f;
     }
     else
 	cc = 1;			/* TWO COMPLEX CONJUGATED EIGENVALUES */
@@ -932,7 +932,7 @@ sol(float c[2][3])
 
 	/* THE EIGENVECTOR IS NORMALIZED TO 1 */
 
-	xr = 1.0 / sqrt(x1[0] * x1[0] + x1[1] * x1[1] + x1[2] * x1[2]);
+	xr = 1.0f / sqrt(x1[0] * x1[0] + x1[1] * x1[1] + x1[2] * x1[2]);
 	xx[0] = xr * x1[0];
 	xx[1] = xr * x1[1];
 	xx[2] = xr * x1[2];
@@ -974,10 +974,10 @@ terzo(float b, float c, float d)
 	goto RET0;
     }
 
-    rad = atan(1.00) / 45;
-    p = (-(b * b) / 3.0 + c);
-    q = (2.0 * b * b * b - 9.0 * c * b + 27.0 * d) / 27.0;
-    s = (q * q) / 4.0 + (p * p * p) / 27.0;
+    rad = (float)(atan(1.00) / 45.0);
+    p = (-(b * b) / 3.0f + c);
+    q = (2.0f * b * b * b - 9.0f * c * b + 27.0f * d) / 27.0f;
+    s = (q * q) / 4.0f + (p * p * p) / 27.0f;
 
     pfraz = fabs(s);
     pin = floor(pfraz);
@@ -988,23 +988,23 @@ terzo(float b, float c, float d)
 
     else if ((s < 0.0) && ((pin != 0) || ((pin == 0) && (pfraz > 0.01))))
     {
-	r = sqrt(-4.0 * p / 3.0);
-	pq = 4.0 * q / (r * r * r);
-	epsi = (asin(pq)) / 3.0;
+	r = sqrt(-4.0f * p / 3.0f);
+	pq = 4.0f * q / (r * r * r);
+	epsi = (asin(pq)) / 3.0f;
 	y1 = r * sin(epsi);
-	y2 = r * sin(60.0 * rad - epsi);
-	y3 = (-r * sin(60.0 * rad + epsi));
+	y2 = r * sin(60.0f * rad - epsi);
+	y3 = (-r * sin(60.0f * rad + epsi));
 
-	dl1 = y1 - b / 3.0;
-	dl2 = y2 - b / 3.0;
-	dl3 = y3 - b / 3.0;
+	dl1 = y1 - b / 3.0f;
+	dl2 = y2 - b / 3.0f;
+	dl3 = y3 - b / 3.0f;
 
 	goto RET0;
     }
     else
     {
-	alfa = (-q / 2.0 + sqrt(q * q / 4.0 + p * p * p / 27.0));
-	unterzo = 1.0 / 3.0;
+	alfa = (-q / 2.0f + sqrt(q * q / 4.0f + p * p * p / 27.0f));
+	unterzo = 1.0f / 3.0f;
 
 	if (alfa < 0.0)
 	{
@@ -1015,7 +1015,7 @@ terzo(float b, float c, float d)
 	else
 	    alf1 = pow(alfa, unterzo);
 
-	beta = (-q / 2.0 - sqrt(q * q / 4.0 + p * p * p / 27.0));
+	beta = (-q / 2.0f - sqrt(q * q / 4.0f + p * p * p / 27.0f));
 
 	if (beta < 0.0)
 	{
@@ -1027,12 +1027,12 @@ terzo(float b, float c, float d)
 	    bet1 = pow(beta, unterzo);
 
 	dl1 = alf1 + bet1;
-	dl2 = (-(alf1 + bet1) / 2.0);
+	dl2 = (-(alf1 + bet1) / 2.0f);
 	dl3 = dl2;
 
-	dl1 = dl1 - b / 3.0;
-	dl2 = dl2 - b / 3.0;
-	dl3 = dl3 - b / 3.0;
+	dl1 = dl1 - b / 3.0f;
+	dl2 = dl2 - b / 3.0f;
+	dl3 = dl3 - b / 3.0f;
 
     }
 

@@ -2,6 +2,11 @@
 #include "../include/us_gzip.h"
 #include "../include/us_tar.h"
 
+#ifdef WIN32
+	#define chdir _chdir
+	#include <direct.h>
+#endif
+
 US_DB_Equil::US_DB_Equil( QWidget* p, const char* name) 
   : US_DB_Widgets( p, name )
 {

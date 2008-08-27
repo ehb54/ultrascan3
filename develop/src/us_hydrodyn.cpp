@@ -3,13 +3,20 @@
 #include "../include/us_hydrodyn_supc.h"
 #include "../include/us_hydrodyn_pat.h"
 
-// #define DEBUG
-#define DEBUG1
-#define TIMING
-#if defined(TIMING)
-# include <sys/time.h>
-static struct timeval start_tv, end_tv;
+#ifndef WIN32
+	// #define DEBUG
+	#define DEBUG1
+	#define TIMING
+
+	#if defined(TIMING)
+		# include <sys/time.h>
+		static struct timeval start_tv, end_tv;
+	#endif
+#else
+	#define chdir _chdir
+	#include <direct.h>
 #endif
+
 
 US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 {
@@ -832,7 +839,7 @@ int US_Hydrodyn::compute_asa()
 	    last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
 	    last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
 	    if (this_atom->resName == "GLY") {
-	      last_main_chain_bead->bead_ref_mw -= 1.01;
+	      last_main_chain_bead->bead_ref_mw -= 1.01f;
 	    }
 	  }
 	  if (this_atom->name == "OXT" &&
@@ -852,7 +859,7 @@ int US_Hydrodyn::compute_asa()
 	    last_main_chain_bead->bead_ref_volume = this_atom->bead_ref_volume;
 	    last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
 	    if (last_main_chain_bead->resName == "GLY") {
-	      last_main_chain_bead->bead_ref_mw += 1.01;
+	      last_main_chain_bead->bead_ref_mw += 1.01f;
 	    }
 	    last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
 	  } else {
@@ -1275,7 +1282,9 @@ int US_Hydrodyn::compute_asa()
     float intersection_volume = 0;
     int max_bead1 = 0;
     int max_bead2 = 0;
+#if defined(DEBUG1) || defined(DEBUG)
     unsigned iter = 0;
+#endif
     bool overlaps_exist;
 #if defined(TIMING)
     gettimeofday(&start_tv, NULL);
@@ -1636,7 +1645,7 @@ int US_Hydrodyn::compute_asa()
 		  bead_model[use_bead].bead_computed_radius -= radius_delta;
 		  if (bead_model[use_bead].bead_computed_radius <= 0) {
 		    // this is to ignore this bead for further radial reduction regardless
-		    bead_model[use_bead].bead_computed_radius = TOLERANCE - 1e-5;
+		    bead_model[use_bead].bead_computed_radius = (float)(TOLERANCE - 1e-5);
 		    reduced[use_bead] = false;
 		  }
 		} else {
@@ -1751,7 +1760,7 @@ int US_Hydrodyn::compute_asa()
 		  bead_model[use_bead].bead_computed_radius -= radius_delta;
 		  if (bead_model[use_bead].bead_computed_radius <= 0) {
 		    // this is to ignore this bead for further radial reduction regardless
-		    bead_model[use_bead].bead_computed_radius = TOLERANCE - 1e-5;
+		    bead_model[use_bead].bead_computed_radius = (float)(TOLERANCE - 1e-5);
 		    reduced[use_bead] = false;
 		  }
 		} else {
@@ -1789,7 +1798,7 @@ int US_Hydrodyn::compute_asa()
 		  bead_model[use_bead].bead_computed_radius -= radius_delta;
 		  if (bead_model[use_bead].bead_computed_radius <= TOLERANCE) {
 		    // this is to ignore this bead for further radial reduction regardless
-		    bead_model[use_bead].bead_computed_radius = TOLERANCE / 2;
+		    bead_model[use_bead].bead_computed_radius = (float)(TOLERANCE / 2);
 		    reduced[use_bead] = false;
 		  }
 
@@ -1819,7 +1828,7 @@ int US_Hydrodyn::compute_asa()
 		  bead_model[use_bead].bead_computed_radius -= radius_delta;
 		  if (bead_model[use_bead].bead_computed_radius <= 0) {
 		    // this is to ignore this bead for further radial reduction regardless
-		    bead_model[use_bead].bead_computed_radius = TOLERANCE - 1e-5;
+		    bead_model[use_bead].bead_computed_radius = (float)(TOLERANCE - 1e-5);
 		    reduced[use_bead] = false;
 		  }
 		}
@@ -1989,7 +1998,7 @@ int US_Hydrodyn::compute_asa()
 		  reduced_any[use_bead] = true;
 		  float radius_delta = bead_model[use_bead].bead_computed_radius * rr_overlap[k];
 		  if (radius_delta < TOLERANCE) {
-		    radius_delta = TOLERANCE;
+		    radius_delta = (float)TOLERANCE;
 		  }
 		  if (methods[k] & OUTWARD_TRANSLATION ||
 		      (bead_model[pairs[i].i].chain == 1 &&
@@ -2038,7 +2047,7 @@ int US_Hydrodyn::compute_asa()
 		  bead_model[use_bead].bead_computed_radius -= radius_delta;
 		  if (bead_model[use_bead].bead_computed_radius <= TOLERANCE) {
 		    // this is to ignore this bead for further radial reduction regardless
-		    bead_model[use_bead].bead_computed_radius = TOLERANCE;
+		    bead_model[use_bead].bead_computed_radius = (float)TOLERANCE;
 		    reduced[use_bead] = false;
 		  }
 		}
@@ -2057,7 +2066,7 @@ int US_Hydrodyn::compute_asa()
 		  reduced_any[use_bead] = true;
 		  float radius_delta = bead_model[use_bead].bead_computed_radius * rr_overlap[k];
 		  if (radius_delta < TOLERANCE) {
-		    radius_delta = TOLERANCE;
+		    radius_delta = (float)TOLERANCE;
 		  }
 		  if (methods[k] & OUTWARD_TRANSLATION ||
 		      (bead_model[pairs[i].i].chain == 1 &&
@@ -2106,7 +2115,7 @@ int US_Hydrodyn::compute_asa()
 		  bead_model[use_bead].bead_computed_radius -= radius_delta;
 		  if (bead_model[use_bead].bead_computed_radius <= TOLERANCE) {
 		    // this is to ignore this bead for further radial reduction regardless
-		    bead_model[use_bead].bead_computed_radius = TOLERANCE;
+		    bead_model[use_bead].bead_computed_radius = (float)TOLERANCE;
 		    reduced[use_bead] = false;
 		  }
 		}
@@ -2136,7 +2145,7 @@ int US_Hydrodyn::compute_asa()
 	  printf("recomputing volume bead %d\n", i);
 #endif
 	  bead_model[i].bead_ref_volume =
-	    (4.0*M_PI/3.0) * pow(bead_model[i].bead_computed_radius, 3.0);
+	    (4.0*M_PI/3.0) * pow(bead_model[i].bead_computed_radius, 3);
 	}
       }
     }
@@ -2157,7 +2166,7 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model) {
     for (unsigned int i = 0; i < model->size(); i++) {
       if ((*model)[i].active) {
 	fwrite(&((*model)[i].bead_cog_coordinate.axis[0]), sizeof(float), 3, f);
-	float color[3] = { .2, .2, ((*model)[i].all_beads.size() / 5) > 1 ? 1 : ((*model)[i].all_beads.size() / 5) };
+	float color[3] = { .2f, .2f, ((*model)[i].all_beads.size() / 5) > 1 ? 1 : ((*model)[i].all_beads.size() / 5) };
 	fwrite(color, sizeof(float), 3, f);
       fwrite(&(*model)[i].bead_computed_radius, sizeof(float), 1, f);
       }
@@ -2168,7 +2177,7 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model) {
     FILE *f = fopen(QString("%1-info").arg(fname).ascii(), "w");
     for (unsigned int i = 0; i < model->size(); i++) {
       if ((*model)[i].active) {
-      float color[3] = { .2, .2, ((*model)[i].all_beads.size() / 5) > 1 ? 1 : ((*model)[i].all_beads.size() / 5) };
+      float color[3] = { .2f, .2f, ((*model)[i].all_beads.size() / 5) > 1 ? 1 : ((*model)[i].all_beads.size() / 5) };
       fprintf(f,"%f %f %f %f %f %f %f\n",
 	      (*model)[i].bead_coordinate.axis[0],
 	      (*model)[i].bead_coordinate.axis[1],
@@ -3158,7 +3167,7 @@ void US_Hydrodyn::reset()
 
 	bead_output.sequence = 0;
 	bead_output.output = 0;
-	asa.probe_radius = 1.4;
+	asa.probe_radius = 1.4f;
 	asa.threshold = 10.0;
 	asa.threshold_percent = 30.0;
 	asa.calculation = true;
