@@ -2032,10 +2032,10 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, bool use_t
 				{
 					cerr << "simulation time scan[" << simscan << "]: " << (*simdata).scan[simscan-1].time
 							<< ", expdata scan time[" << expscan << "]: " << (*expdata).scan[expscan].time << endl;
+					cerr << QObject::tr("The simulated data does not cover the entire experimental time range and ends too early!\nexiting...\n");
 #if defined(USE_MPI)
 					MPI_Abort(MPI_COMM_WORLD, -1);
 #endif
-					cerr << QObject::tr("The simulated data does not cover the entire experimental time range and ends too early!\nexiting...\n");
 					exit(-1);
 				}
 			}

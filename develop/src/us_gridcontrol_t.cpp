@@ -156,8 +156,8 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		// if the flag is true, then the band_volume set below should be used. The band_volume needs to be set by the user.
 		simulation_parameters.band_volume = model_system_constraints.band_volume;
 
-		constraints_file_name = file_info + ".tmp.constraints";
-		simulation_parameters_file_name = file_info + ".tmp.simulation_parameters";
+		constraints_file_name = USglobal->config_list.result_dir + "/" + file_info + ".tmp.constraints";
+		simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + ".tmp.simulation_parameters";
 
 		QFile f1(constraints_file_name);
 		QFile f2(simulation_parameters_file_name);
@@ -172,8 +172,8 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		    f1.close();
 		    f2.close();
 		    increment++;
-		    constraints_file_name = file_info + QString(".tmp-%1.constraints").arg(increment);
-		    simulation_parameters_file_name = file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
+		    constraints_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.constraints").arg(increment);
+		    simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
 		    f1.setName(constraints_file_name);
 		    f2.setName(simulation_parameters_file_name);
 		}
@@ -191,7 +191,7 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		analysis_type == "GA_MW_RA") 
 	    {
 		dataIO->assign_simparams(&simulation_parameters, selected_cell, selected_lambda, selected_channel);
-		simulation_parameters_file_name = file_info + ".tmp.simulation_parameters";
+		simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + ".tmp.simulation_parameters";
 	    }		
             points = run_inf.points[selected_cell][selected_lambda][selected_channel];
             cerr << " there are " << points << " in this dataset...\n";
@@ -375,14 +375,16 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		{
 		    f.close();
 		    increment++;
-		    simulation_parameters_file_name = file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
+		    simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
 		    f.setName(simulation_parameters_file_name);
 		}
 		f.close();
 		flock(lfd, LOCK_UN);
 		close(lfd);
 		US_FemGlobal us_femglobal;
-		us_femglobal.write_simulationParameters(&simulation_parameters, simulation_parameters_file_name);
+		fprintf(stderr, "write simulation parameters returned %d <%s>\n",
+			us_femglobal.write_simulationParameters(&simulation_parameters, simulation_parameters_file_name),
+			simulation_parameters_file_name.ascii());
 	    }
 	    { // read simulation parameters
 	      QFile fsimulation_parameters(simulation_parameters_file_name);
@@ -575,7 +577,7 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		{
 		    f.close();
 		    increment++;
-		    simulation_parameters_file_name = file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
+		    simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
 		    f.setName(simulation_parameters_file_name);
 		}
 		f.close();
@@ -826,20 +828,22 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		{
 		    f.close();
 		    increment++;
-		    simulation_parameters_file_name = file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
+		    simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
 		    f.setName(simulation_parameters_file_name);
 		}
 		f.close();
 		flock(lfd, LOCK_UN);
 		close(lfd);
 		US_FemGlobal us_femglobal;
-		us_femglobal.write_simulationParameters(&simulation_parameters, simulation_parameters_file_name);
+		fprintf(stderr, "write simulation parameters returned %d <%s>\n",
+			us_femglobal.write_simulationParameters(&simulation_parameters, simulation_parameters_file_name),
+			simulation_parameters_file_name.ascii());
 	    }
 	    { // read simulation parameters
 	      QFile fsimulation_parameters(simulation_parameters_file_name);
 	      if (!fsimulation_parameters.open(IO_ReadOnly))
 	      {
-		cerr << "Failed to open simulation_parameters file!\n";
+		cerr << "Failed to open simulation_parameters file " << simulation_parameters_file_name << " !\n";
 		exit(-4);
 	      }
 	      simulation_parameters_full_text.clear();
@@ -993,7 +997,7 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		{
 		    f.close();
 		    increment++;
-		    simulation_parameters_file_name = file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
+		    simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
 		    f.setName(simulation_parameters_file_name);
 		}
 		f.close();
@@ -1766,7 +1770,7 @@ void US_GridControl_T::write_experiment()
         // be sent to each individual cluster.
         if(gridopt != "no")
         {
-            system(syscall);
+	    system(syscall.ascii());
         }
         else
         {
