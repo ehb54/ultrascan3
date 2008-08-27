@@ -1,7 +1,8 @@
 #include "../include/us_write_config.h"
 #include <qmessagebox.h>
 
-US_Write_Config::US_Write_Config(QObject *parent, const char *name) : QObject(parent, name)
+US_Write_Config::US_Write_Config( QObject* parent, const char* name) 
+  : QObject( parent, name) 
 {
 }
 
@@ -9,7 +10,7 @@ US_Write_Config::~US_Write_Config()
 {
 }
 
-bool US_Write_Config::write_config(struct Config config_list)
+bool US_Write_Config::write_config( struct Config config_list )
 {
 	QString warning=tr("Warning"), message;
 	QDir temp_dir = config_list.help_dir;
@@ -21,7 +22,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 			+ config_list.help_dir + "\nPlease check your write permissions!");
 			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
-			return( false );
+			return false;
 		}
 	}
 
@@ -34,7 +35,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 			+ config_list.root_dir + "\nPlease check your write permissions!");
 			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
-			return( false );
+			return false;
 		}
 	}
 
@@ -47,7 +48,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 			+ config_list.data_dir + "\nPlease check your write permissions!");
 			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
-			return( false );
+			return false;
 		}
 	}
 
@@ -60,7 +61,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 					+ config_list.tmp_dir + "\nPlease check your write permissions!");
 			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
-			return( false );
+			return false;
 		}
 	}
 
@@ -73,7 +74,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 			+ config_list.archive_dir + "\nPlease check your write permissions!");
 			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
-			return( false );
+			return false;
 		}
 	}
 
@@ -84,7 +85,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 		+ config_list.system_dir + "\nPlease check your settings!");
 		errorMessage(warning, message);
 		cerr << warning << ":\n" << message << endl;
-		return( false );
+		return false;
 	}
 
 	temp_dir = config_list.html_dir;
@@ -96,7 +97,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 			+ config_list.html_dir + "\nPlease check your write permissions!");
 			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
-			return( false );
+			return false;
 		}
 	}
 
@@ -109,7 +110,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 			+ config_list.result_dir + "\nPlease check your write permissions!");
 			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
-			return( false );
+			return false;
 		}
 	}
 
@@ -122,8 +123,8 @@ bool US_Write_Config::write_config(struct Config config_list)
 		QTextStream ts ( &f );
 		ts << config_list.version         << "\n";
 		ts << config_list.browser         << "\n";
-		ts << "tar_dummy"		             << "\n";
-		ts << "zip_dummy"    		       << "\n";
+		ts << "tar_dummy"                 << "\n";
+		ts << "zip_dummy"                 << "\n";
 		ts << config_list.help_dir        << "\n";
 		ts << config_list.data_dir        << "\n";
 		ts << config_list.root_dir        << "\n";
@@ -142,13 +143,13 @@ bool US_Write_Config::write_config(struct Config config_list)
 	}
 	else
 	{
-		message = tr("Could not open Configuration File for update.\n\n"
-		"$HOME/ultrascan/etc/usrc.conf\nPlease check your write permissions!");
-		errorMessage(warning, message);
+		message = tr( "Could not open Configuration File for update.\n\n"
+		"$HOME/ultrascan/etc/usrc.conf\nPlease check your write permissions!" );
+		errorMessage( warning, message );
 		cerr << warning << ":\n" << message << endl;
-		return( false );
+		return false;
 	}
-	return (true);
+	return true ;
 }
 
 void US_Write_Config::errorMessage( QString& str1, QString& str2 )
