@@ -123,7 +123,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		US_Hydrodyn_Results *results_window;
 
 		QProcess *rasmol;
-		QDir tmp_dir;
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )

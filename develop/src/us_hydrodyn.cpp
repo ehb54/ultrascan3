@@ -31,10 +31,8 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	setGeometry(global_Xpos, global_Ypos, 0, 0);
 	create_beads_normally = true;
 	rasmol = NULL;
-	tmp_dir.setPath(USglobal->config_list.root_dir + "/tmp");
-	tmp_dir.mkdir(USglobal->config_list.root_dir + "/tmp");
-	chdir(QString(USglobal->config_list.root_dir + "/tmp").ascii());
-	printf("%s\n", QString(USglobal->config_list.root_dir + "/tmp").ascii());
+	chdir(QString(USglobal->config_list.tmp_dir.ascii()));
+	printf("%s\n", QString(USglobal->config_list.tmp_dir).ascii());
 	results.total_beads = 0;
 	results.used_beads = 0;
 	results.mass = 0.0;
@@ -2484,7 +2482,7 @@ void US_Hydrodyn::visualize()
 #endif
 //	argument.append("/home/user/demeler/us/ultrascan/bin/rasmol");
 	argument.append("-script");
-	argument.append(tmp_dir.absPath() + "/bead_model_end.spt");
+	argument.append(USglobal->config_list.tmp_dir + "/bead_model_end.spt");
 	rasmol->setArguments(argument);
 	if (!rasmol->start())
 	{
