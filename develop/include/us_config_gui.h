@@ -41,9 +41,8 @@ class US_EXTERN US_Config_GUI : public QFrame
 
 	private:
 		QPushButton *pb_browser;
-		QPushButton *pb_tar;
-		QPushButton *pb_gzip;
 		QPushButton *pb_root_dir;
+		QPushButton *pb_tmp_dir;
 		QPushButton *pb_data_dir;
 		QPushButton *pb_archive_dir;
 		QPushButton *pb_system_dir;
@@ -60,11 +59,10 @@ class US_EXTERN US_Config_GUI : public QFrame
 		QLabel* lbl_database;
 		QLabel* lbl_numThreads;
 		QLineEdit *le_browser;
-		QLineEdit *le_tar;
-		QLineEdit *le_gzip;
 		QLineEdit *le_data_dir;
 		QLineEdit *le_archive_dir;
 		QLineEdit *le_root_dir;
+		QLineEdit *le_tmp_dir;
 		QLineEdit *le_system_dir;
 		QLineEdit *le_help_dir;
 		QLineEdit *le_result_dir;
@@ -87,10 +85,8 @@ class US_EXTERN US_Config_GUI : public QFrame
 		void update_screen();
 		void open_browser_dir();
 		void update_browser(const QString &);
-		void open_tar_dir();
-		void update_tar(const QString &);
-		void open_gzip_dir();
-		void update_gzip(const QString &);
+		void open_tmp_dir();
+		void update_tmp_dir(const QString &);
 		void open_data_dir();
 		void update_data_dir(const QString &);
 		void open_archive_dir();

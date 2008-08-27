@@ -23,11 +23,12 @@ US_Config::US_Config( QObject* parent, const char* name)
 	setModelString();
 }
 
+
 // This is for us_register only
 US_Config::US_Config( QString dummy, QObject* parent, const char* name )
   : QObject (parent, name)
 {
-  config_list.tar = dummy;  // Dummy to avoid compiler complaint
+//  config_list.tar = dummy;  // Dummy to avoid compiler complaint
 }
 
 
@@ -437,13 +438,9 @@ void US_Config::setDefault()
 	config_list.version = US_Version_string;  // Defined in us_util.h
 
 	config_list.browser = "/usr/bin/firefox";
-	config_list.tar     = "/bin/tar";
-	config_list.gzip    = "/bin/gzip";
 
 #ifdef WIN32
 config_list.browser = "C:/Program Files/Internet Explorer/iexplore.exe";
-config_list.tar     = "tar";
-config_list.gzip    = "gzip";
 #endif
 
 	QString ultrascan = getenv( "ULTRASCAN" );
@@ -476,6 +473,8 @@ config_list.gzip    = "gzip";
 			QDir::convertSeparators( config_list.root_dir + "results" );
 	config_list.html_dir =
 			QDir::convertSeparators( config_list.root_dir + "reports" );
+	config_list.tmp_dir =
+			QDir::convertSeparators( config_list.root_dir + "tmp" );
 
 	config_list.temperature_tol = 0.5;  // Allow a max of 0.5 degrees variation
 												// over course of run
@@ -506,9 +505,10 @@ bool US_Config::read()
 			return ( false );
 		}
 
+		QString dummy;
 		config_list.browser     = ts.readLine(  );
-		config_list.tar         = ts.readLine(  );
-		config_list.gzip        = ts.readLine(  );
+		dummy                   = ts.readLine(  );
+		dummy                   = ts.readLine(  );
 		config_list.help_dir    = ts.readLine(  );
 		config_list.data_dir    = ts.readLine(  );
 		config_list.root_dir    = ts.readLine(  );
@@ -600,6 +600,18 @@ bool US_Config::read()
 			else
 			{
 				return ( false );  // Bad numThreads
+			}
+		}
+		if ( ! ts.atEnd(  ) )
+		{
+			str = ts.readLine(  );
+			if ( ! str.isNull(  ) && ! str.isEmpty(  ) )
+			{
+				config_list.tmp_dir = str;
+			}
+			else
+			{
+				return ( false );  // Bad temporary directory
 			}
 		}
 		else

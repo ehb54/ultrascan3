@@ -31,7 +31,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 		if (!temp_dir.mkdir(config_list.root_dir, true))
 		{
 			message = tr("Could not create the Root Directory!\n\n"
-			+ config_list.help_dir + "\nPlease check your write permissions!");
+			+ config_list.root_dir + "\nPlease check your write permissions!");
 			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
 			return( false );
@@ -44,7 +44,20 @@ bool US_Write_Config::write_config(struct Config config_list)
 		if (!temp_dir.mkdir(config_list.data_dir, true))
 		{
 			message = tr("Could not create the Data Directory!\n\n"
-			+ config_list.help_dir + "\nPlease check your write permissions!");
+			+ config_list.data_dir + "\nPlease check your write permissions!");
+			errorMessage(warning, message);
+			cerr << warning << ":\n" << message << endl;
+			return( false );
+		}
+	}
+
+	temp_dir = config_list.tmp_dir;
+	if ( ! temp_dir.exists() )
+	{
+		if (!temp_dir.mkdir(config_list.tmp_dir, true))
+		{
+			message = tr("Could not create the Temporary Directory!\n\n"
+					+ config_list.tmp_dir + "\nPlease check your write permissions!");
 			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
 			return( false );
@@ -57,7 +70,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 		if (!temp_dir.mkdir(config_list.archive_dir, true))
 		{
 			message = tr("Could not create the Archive Directory!\n\n"
-			+ config_list.help_dir + "\nPlease check your write permissions!");
+			+ config_list.archive_dir + "\nPlease check your write permissions!");
 			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
 			return( false );
@@ -68,7 +81,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 	if ( ! temp_dir.exists() )
 	{
 		message = tr("The UltraScan System Directory could not be found!\n\n"
-		+ config_list.help_dir + "\nPlease check your settings!");
+		+ config_list.system_dir + "\nPlease check your settings!");
 		errorMessage(warning, message);
 		cerr << warning << ":\n" << message << endl;
 		return( false );
@@ -80,7 +93,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 		if ( ! temp_dir.mkdir(config_list.html_dir, true) )
 		{
 			message = tr("Could not create the Reports Directory!\n\n"
-			+ config_list.help_dir + "\nPlease check your write permissions!");
+			+ config_list.html_dir + "\nPlease check your write permissions!");
 			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
 			return( false );
@@ -93,7 +106,7 @@ bool US_Write_Config::write_config(struct Config config_list)
 		if ( ! temp_dir.mkdir( config_list.result_dir, true ) )
 		{
 			message = tr("Could not create the Results Directory!\n\n"
-			+ config_list.help_dir + "\nPlease check your write permissions!");
+			+ config_list.result_dir + "\nPlease check your write permissions!");
 			errorMessage(warning, message);
 			cerr << warning << ":\n" << message << endl;
 			return( false );
@@ -109,8 +122,8 @@ bool US_Write_Config::write_config(struct Config config_list)
 		QTextStream ts ( &f );
 		ts << config_list.version         << "\n";
 		ts << config_list.browser         << "\n";
-		ts << config_list.tar             << "\n";
-		ts << config_list.gzip            << "\n";
+		ts << "tar_dummy"		             << "\n";
+		ts << "zip_dummy"    		       << "\n";
 		ts << config_list.help_dir        << "\n";
 		ts << config_list.data_dir        << "\n";
 		ts << config_list.root_dir        << "\n";
@@ -124,12 +137,13 @@ bool US_Write_Config::write_config(struct Config config_list)
 		ts << config_list.fontSize        << "\n";
 		ts << config_list.margin          << "\n";
 		ts << config_list.numThreads      << "\n";
+		ts << config_list.tmp_dir         << "\n";
 		f.close();
 	}
 	else
 	{
 		message = tr("Could not open Configuration File for update.\n\n"
-		+ config_list.help_dir + "\nPlease check your write permissions!");
+		"$HOME/ultrascan/etc/usrc.conf\nPlease check your write permissions!");
 		errorMessage(warning, message);
 		cerr << warning << ":\n" << message << endl;
 		return( false );

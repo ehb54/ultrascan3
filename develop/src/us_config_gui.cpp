@@ -30,7 +30,7 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
 	lbl_paths->setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	lbl_paths->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-	pb_browser = new QPushButton(QObject::tr("WWW Browser:"),this);
+	pb_browser = new QPushButton(QObject::tr(" WWW Browser:"),this);
 	pb_browser->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
 	pb_browser->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	US_Config::connect(pb_browser, SIGNAL(clicked()), this, SLOT(open_browser_dir()));
@@ -45,27 +45,17 @@ US_Config_GUI::US_Config_GUI(QWidget *parent, const char *name) : QFrame(parent,
 
 	US_Config::connect(le_browser, SIGNAL(textChanged(const QString &)), this, SLOT(update_browser(const QString &)));
 
-	pb_tar = new QPushButton(QObject::tr("tar Archiver:"),this);
-	pb_tar->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
-	pb_tar->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	US_Config::connect(pb_tar, SIGNAL(clicked()), this, SLOT(open_tar_dir()));
+	pb_tmp_dir = new QPushButton(QObject::tr(" Temporary Directory:"),this);
+	pb_tmp_dir->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
+	pb_tmp_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	US_Config::connect(pb_tmp_dir, SIGNAL(clicked()), this, SLOT(open_tmp_dir()));
 
-	le_tar = new QLineEdit(this);
-	le_tar->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	le_tar->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
-	US_Config::connect(le_tar, SIGNAL(textChanged(const QString &)), this, SLOT(update_tar(const QString &)));
+	le_tmp_dir = new QLineEdit(this);
+	le_tmp_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_tmp_dir->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
+	US_Config::connect(le_tmp_dir, SIGNAL(textChanged(const QString &)), this, SLOT(update_tmp_dir(const QString &)));
 
-	pb_gzip = new QPushButton(QObject::tr("gzip Compression:"),this);
-	pb_gzip->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
-	pb_gzip->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	US_Config::connect(pb_gzip, SIGNAL(clicked()), this, SLOT(open_gzip_dir()));
-
-	le_gzip = new QLineEdit(this);
-	le_gzip->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	le_gzip->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
-	US_Config::connect(le_gzip, SIGNAL(textChanged(const QString &)), this, SLOT(update_gzip(const QString &)));
-
-	pb_root_dir = new QPushButton(QObject::tr("User's UltraScan Directory:"),this);
+	pb_root_dir = new QPushButton(QObject::tr(" User's UltraScan Directory:"),this);
 	pb_root_dir->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb));
 	pb_root_dir->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	US_Config::connect(pb_root_dir, SIGNAL(clicked()), this, SLOT(open_root_dir()));
@@ -253,11 +243,11 @@ void US_Config_GUI::setup_GUI()
 	QFontMetrics* fm      = new QFontMetrics ( *font );
 
 	int cwidth  = fm->width( USglobal->config_list.browser );
-	int w       = fm->width( USglobal->config_list.tar );
+	int w       = fm->width( USglobal->config_list.root_dir );
 	
 	w = ( cwidth > w ) ? cwidth : w;
 
-	w = fm->width( USglobal->config_list.gzip );
+	w = fm->width( USglobal->config_list.data_dir );
 	w = ( cwidth > w ) ? cwidth : w;
 
 	w = fm->width( USglobal->config_list.system_dir );
@@ -266,10 +256,7 @@ void US_Config_GUI::setup_GUI()
 	w = fm->width( USglobal->config_list.help_dir );
 	w = ( cwidth > w ) ? cwidth : w;
 
-	w = fm->width( USglobal->config_list.data_dir );
-	w = ( cwidth > w ) ? cwidth : w;
-
-	w = fm->width( USglobal->config_list.root_dir );
+	w = fm->width( USglobal->config_list.tmp_dir );
 	w = ( cwidth > w ) ? cwidth : w;
 
 	w = fm->width( USglobal->config_list.archive_dir );
@@ -296,12 +283,6 @@ void US_Config_GUI::setup_GUI()
 	lineGrid->addWidget(pb_browser,j,0);
 	lineGrid->addWidget(le_browser,j,1);
 	j++;
-	lineGrid->addWidget(pb_tar,j,0);
-	lineGrid->addWidget(le_tar,j,1);
-	j++;
-	lineGrid->addWidget(pb_gzip,j,0);
-	lineGrid->addWidget(le_gzip,j,1);
-	j++;
 	lineGrid->addWidget(pb_root_dir,j,0);
 	lineGrid->addWidget(le_root_dir,j,1);
 	j++;
@@ -316,6 +297,9 @@ void US_Config_GUI::setup_GUI()
 	j++;
 	lineGrid->addWidget(pb_archive_dir,j,0);
 	lineGrid->addWidget(le_archive_dir,j,1);
+	j++;
+	lineGrid->addWidget(pb_tmp_dir,j,0);
+	lineGrid->addWidget(le_tmp_dir,j,1);
 	j++;
 	lineGrid->addWidget(pb_system_dir,j,0);
 	lineGrid->addWidget(le_system_dir,j,1);
@@ -394,14 +378,13 @@ void US_Config_GUI::update_screen()
 {
 	QString str;
 	le_browser->setText(USglobal->config_list.browser);
-	le_tar->setText(USglobal->config_list.tar);
-	le_gzip->setText(USglobal->config_list.gzip);
 	le_system_dir->setText(USglobal->config_list.system_dir);
 	le_help_dir->setText(USglobal->config_list.help_dir);
 	le_data_dir->setText(USglobal->config_list.data_dir);
 	le_root_dir->setText(USglobal->config_list.root_dir);
 	le_archive_dir->setText(USglobal->config_list.archive_dir);
 	le_result_dir->setText(USglobal->config_list.result_dir);
+	le_tmp_dir->setText(USglobal->config_list.tmp_dir);
 	le_html_dir->setText(USglobal->config_list.html_dir);
 	str.sprintf("%4.3f", USglobal->config_list.temperature_tol);
 	le_temperature_tol->setText(str);
@@ -484,42 +467,6 @@ void US_Config_GUI::update_browser(const QString& newText)
 		USglobal->config_list.browser = newText;
 }
 
-void US_Config_GUI::open_tar_dir()
-{
-	QString tar = QFileDialog::getOpenFileName(
-		USglobal->config_list.tar, QString::null, 0);
-
-	if ( tar != "" )
-	{
-		le_tar->setText( tar );
-		USglobal->config_list.tar = tar ;
-	}
-}
-
-void US_Config_GUI::update_tar(const QString& newText)
-{
-	if ( newText != "" )
-		USglobal->config_list.tar = newText;
-}
-
-void US_Config_GUI::open_gzip_dir()
-{
-	QString gzip = QFileDialog::getOpenFileName(
-		USglobal->config_list.gzip, QString::null, 0);
-
-	if ( gzip != "" )
-	{
-		le_gzip->setText( gzip );
-		USglobal->config_list.gzip = gzip;
-	}
-}
-
-void US_Config_GUI::update_gzip( const QString& newText )
-{
-	if ( newText != "" )
-		USglobal->config_list.gzip = newText;
-}
-
 void US_Config_GUI::open_system_dir()
 {
 	QString system = QFileDialog::getExistingDirectory(
@@ -595,6 +542,24 @@ void US_Config_GUI::update_html_dir( const QString& newText )
 {
 	if ( newText != "" )
 		USglobal->config_list.html_dir = newText;
+}
+
+void US_Config_GUI::open_tmp_dir()
+{
+	QString tmp = QFileDialog::getExistingDirectory(
+			USglobal->config_list.tmp_dir, 0, 0, QString::null, true);
+
+	if ( tmp != "" )
+	{
+		le_tmp_dir->setText( tmp );
+		USglobal->config_list.tmp_dir = tmp;
+	}
+}
+
+void US_Config_GUI::update_tmp_dir( const QString& newText )
+{
+	if ( newText != "" )
+		USglobal->config_list.tmp_dir = newText;
 }
 
 void US_Config_GUI::open_data_dir()

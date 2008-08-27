@@ -18,17 +18,14 @@ class USconfig_check : public QWidget
 	public:
     USconfig_check(){};
 		~USconfig_check(){};
-
 		struct Config config;
-
 		bool check_config();
 
 	protected:
-    bool exists       ( const QString& );
+   	bool exists       ( const QString& );
 		void set_default  ( const QString& );
 		void write_default( const QString& );
-    void debug        ( const QString& );
-
+   	void debug        ( const QString& );
 };
 
 class USconfig_setup : public USconfig_check
@@ -46,7 +43,7 @@ int main (int argc, char **argv)
 	int global_Xpos = 50;
 	int global_Ypos = 50;
 
- 	QApplication a( argc, argv );
+	QApplication a( argc, argv );
 	QTranslator translator( 0 );
 	translator.load( "../us/us_", "." );
 	a.installTranslator( &translator );
@@ -63,16 +60,16 @@ int main (int argc, char **argv)
 		delete check;
 
 		// Check that we know at least the base system directory
-    if ( ! OK )
+		if ( ! OK )
 		{
 			cout << "Starting USconfig_set()" << endl;
-      USconfig_setup* set = new USconfig_setup();
+			USconfig_setup* set = new USconfig_setup();
 			// Not found, ask the user
 			set->move( global_Xpos, global_Ypos );
 			set->show();
 			a.setMainWidget( set );
 		}
-    else  // OK to continue
+		else  // OK to continue
 		{
 			UsWin* us = new UsWin();
 			us->setCaption( "UltraScan Analysis" );
@@ -102,7 +99,7 @@ void USconfig_check::debug( const QString& str )
 
 bool USconfig_check::check_config()
 {
-	// If we have a config file, retrun true
+	// If we have a config file, return true
 	if ( exists( US_Config::get_home_dir() + ETC_DIR + "/usrc.conf" ) ||
 			 exists( QDir::homeDirPath() + "/.usrc" ) )
 	{
@@ -172,13 +169,9 @@ void USconfig_check::set_default( const QString& system_dir )
 	config.version         = US_Version_string;  // Defined in us_util.h
 
 	config.browser         = "/usr/bin/firefox";
-	config.tar             = "/bin/tar";
-	config.gzip            = "/bin/gzip";
 
 #ifdef WIN32
 	config.browser         = "C:\\Program Files\\Internet Explorer\\iexplore.exe";
-	config.tar             = "tar";
-	config.gzip            = "gzip";
 #endif
 
 	// Set up system directories
@@ -193,6 +186,7 @@ void USconfig_check::set_default( const QString& system_dir )
 	config.archive_dir     = QDir::convertSeparators( root_dir + "archive" );
 	config.result_dir      = QDir::convertSeparators( root_dir + "results" );
 	config.html_dir        = QDir::convertSeparators( root_dir + "reports" );
+	config.tmp_dir         = QDir::convertSeparators( root_dir + "tmp" );
 
 	config.temperature_tol = 0.5;  // Allow a max of 0.5 degrees variation
 	                               // over course of run

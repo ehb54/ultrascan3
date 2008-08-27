@@ -137,12 +137,11 @@ struct Config
 {
   QString version;        // Current Version
   QString browser;        // html browser location/startup file
-  QString tar;            // tape archive utility path
-  QString gzip;           // gzip compression utility path
   QString system_dir;     // root directory for UltraScan System
   QString help_dir;       // root directory for html help files (usually ../html subdir of system_dir)
   QString data_dir;       // root directory for experimental "raw" data
   QString root_dir;       // root directory for UltraScan associated files
+  QString tmp_dir;        // temporary directory for UltraScan temp files
   QString html_dir;       // root directory for data analysis reports
   QString archive_dir;    // archived data goes here
   QString result_dir;     // analyzed data goes here
