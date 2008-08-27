@@ -9,23 +9,27 @@
 // If not, create a default usrc.conf
 // The main issue is to determine the location of the UltraScan system files
 // These are found by (in order) 
-// 1. ULTRASCAN environment variable
-// 2. Checking a default location
+// 1. Checking a default location
+// 2. ULTRASCAN environment variable
 // 3. Ask the user
 
 class USconfig_check : public QWidget
 {
 	public:
-    USconfig_check(){};
+		USconfig_check(){};
 		~USconfig_check(){};
+
+		//Class variable
 		struct Config config;
+
+		// Public method
 		bool check_config();
 
 	protected:
-   	bool exists       ( const QString& );
+		bool exists       ( const QString& );
 		void set_default  ( const QString& );
 		void write_default( const QString& );
-   	void debug        ( const QString& );
+		void debug        ( const QString& );
 };
 
 class USconfig_setup : public USconfig_check
@@ -37,7 +41,7 @@ class USconfig_setup : public USconfig_check
 
 
 //////////////
-int main (int argc, char **argv)
+int main ( int argc, char **argv )
 {
 	// These are *not* gloabal
 	int global_Xpos = 50;
@@ -62,7 +66,7 @@ int main (int argc, char **argv)
 		// Check that we know at least the base system directory
 		if ( ! OK )
 		{
-			cout << "Starting USconfig_set()" << endl;
+			cout << "Starting USconfig_setup()" << endl;
 			USconfig_setup* set = new USconfig_setup();
 			// Not found, ask the user
 			set->move( global_Xpos, global_Ypos );
@@ -78,7 +82,7 @@ int main (int argc, char **argv)
 			a.setMainWidget( us );
 		}
 	}
-	else		
+	else
 	{
 		a.setMainWidget( us_register );
 	}
@@ -101,12 +105,12 @@ bool USconfig_check::check_config()
 {
 	// If we have a config file, return true
 	if ( exists( US_Config::get_home_dir() + ETC_DIR + "/usrc.conf" ) ||
-			 exists( QDir::homeDirPath() + "/.usrc" ) )
+	     exists( QDir::homeDirPath() + "/.usrc" ) )
 	{
 		return true;
 	}
 
-  // Check the default location
+	// Check the default location
 #ifdef UNIX
 	QString dir = "/usr/local/ultrascan";
 #endif
@@ -119,37 +123,37 @@ bool USconfig_check::check_config()
 	{
 		// If we got here,  ETC_DIR + "/usrc.conf" does not yet exist
 		debug( "Writing usrc.conf with system dir=" + dir );
-    write_default( dir );
+		write_default( dir );
 
-		cout << "Ultrascan is installed in the default location: " + dir << endl;
+		cout << "UltraScan is installed in the default location: " + dir << endl;
 		return true;
 	}
 
-  debug( "system dir=" + dir + "/etc/ultra.xpm not found" );
+	debug( "system dir=" + dir + "/etc/ultra.xpm not found" );
 	// Check the environment variable
-  QString ultrascan = getenv( "ULTRASCAN" );
-  debug( "returning exists( " + ultrascan + "/etc/ultra.xpm" );
+	QString ultrascan = getenv( "ULTRASCAN" );
+	debug( "returning exists( " + ultrascan + "/etc/ultra.xpm" );
 	return  exists( ultrascan + "/etc/ultra.xpm" ); 
 }
 
 bool USconfig_check::exists( const QString& file )
 {
-  QFile f( file );
+	QFile f( file );
 	return f.exists();
 }
 
 void USconfig_check::write_default( const QString& dir )
 {
-  set_default( dir );
+	set_default( dir );
 	US_Write_Config* w_config = new US_Write_Config( this );
-  bool OK = w_config->write_config( config );
+	bool             OK       = w_config->write_config( config );
 	delete w_config;
 
 	if ( ! OK )
 	{
 		QMessageBox::information( this,
-		  tr( "Setup" ),
-		  tr( "Could not create configuration file.  Aborting." ) );
+			tr( "Setup" ),
+			tr( "Could not create configuration file.  Aborting." ) );
 
 		exit ( -1 );
 	}
@@ -202,11 +206,11 @@ USconfig_setup::USconfig_setup()
 	do
 	{
 		// Ask for the directory
-	  QString dir = QFileDialog::getExistingDirectory(
+		QString dir = QFileDialog::getExistingDirectory(
 			QString::null, this, NULL, "Select the UltraScan System Directory" );
 	
 		// Check it
-	  if ( exists( dir + "/etc/ultra.xpm" ) )
+		if ( exists( dir + "/etc/ultra.xpm" ) )
 		{
 			// Found.  Create the config file.
 			write_default( dir );
@@ -216,24 +220,21 @@ USconfig_setup::USconfig_setup()
 		// Not a valid directory
 		QMessageBox::information( this,
 			tr( "Setup" ),
-			tr( "The selected directory is not the UltraScan system diredtory.\n"
+			tr( "The selected directory is not the UltraScan system directory.\n"
 			    "Try again." ),
 			QMessageBox::Ok, QMessageBox::Cancel );
 
 	} while ( result != QMessageBox::Cancel );
 
-  if ( result ==  QMessageBox::Cancel )
+	if ( result ==  QMessageBox::Cancel )
 	{
 		msg = "System directory not found.  Aborting.";
 	}
 
 	// Show results
 	QMessageBox::information( this,
-	   tr( "Setup" ),
-	   tr( msg ) );
+		tr( "Setup" ),
+		tr( msg ) );
 
 	exit(0);
 }
-
-
-
