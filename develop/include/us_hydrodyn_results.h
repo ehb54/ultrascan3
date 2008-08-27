@@ -10,6 +10,7 @@
 #include <qframe.h>
 
 #include "us_util.h"
+#include "us_editor.h"
 
 //standard C and C++ defs:
 
@@ -46,6 +47,7 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
 		
 		struct hydro_results *results;
 		bool *result_widget;
+		TextEdit *e;
 		
 		US_Config *USglobal;
 		
@@ -71,12 +73,19 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
 
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;
+		QPushButton *pb_load_results;
+		QPushButton *pb_load_asa;
+		QPushButton *pb_load_beadmodel;
 
 	private slots:
 		
 		void setupGUI();
+		void load_results();
+		void load_asa();
+		void load_beadmodel();
 		void cancel();
 		void help();
+		void view_file(const QString &);
 	
 	protected slots:
 

@@ -152,6 +152,27 @@ void US_Hydrodyn_Results::setupGUI()
 	le_rg->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
+	pb_load_asa = new QPushButton(tr("Load ASA Result File"), this);
+	Q_CHECK_PTR(pb_load_asa);
+	pb_load_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_load_asa->setMinimumHeight(minHeight1);
+	pb_load_asa->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_load_asa, SIGNAL(clicked()), SLOT(load_asa()));
+
+	pb_load_results = new QPushButton(tr("Load Hydrodynamics File"), this);
+	Q_CHECK_PTR(pb_load_results);
+	pb_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_load_results->setMinimumHeight(minHeight1);
+	pb_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_load_results, SIGNAL(clicked()), SLOT(load_results()));
+
+	pb_load_beadmodel = new QPushButton(tr("Load Bead Models"), this);
+	Q_CHECK_PTR(pb_load_beadmodel);
+	pb_load_beadmodel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_load_beadmodel->setMinimumHeight(minHeight1);
+	pb_load_beadmodel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_load_beadmodel, SIGNAL(clicked()), SLOT(load_beadmodel()));
+
 	pb_cancel = new QPushButton(tr("Close"), this);
 	Q_CHECK_PTR(pb_cancel);
 	pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -198,6 +219,11 @@ void US_Hydrodyn_Results::setupGUI()
 	background->addWidget(lbl_viscosity, j, 0);
 	background->addWidget(le_viscosity, j, 1);
 	j++;
+	background->addWidget(pb_load_asa, j, 0);
+	background->addWidget(pb_load_results, j, 1);
+	j++;
+	background->addWidget(pb_load_beadmodel, j, 0);
+	j++;
 	background->addWidget(pb_help, j, 0);
 	background->addWidget(pb_cancel, j, 1);
 }
@@ -212,6 +238,42 @@ void US_Hydrodyn_Results::help()
 	US_Help *online_help;
 	online_help = new US_Help(this);
 	online_help->show_help("manual/somo_results.html");
+}
+
+void US_Hydrodyn_Results::load_results()
+{
+	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo.hydro_res *.SOMO.hydro_res", this);
+	if (!filename.isEmpty())
+	{
+		view_file(filename);
+	}
+}
+
+void US_Hydrodyn_Results::load_beadmodel()
+{
+	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo.bead_model* *.SOMO.BEAD_MODEL*", this);
+	if (!filename.isEmpty())
+	{
+		view_file(filename);
+	}
+}
+
+void US_Hydrodyn_Results::load_asa()
+{
+	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo.asa_res *.SOMO.ASA_RES", this);
+	if (!filename.isEmpty())
+	{
+		view_file(filename);
+	}
+}
+
+void US_Hydrodyn_Results::view_file(const QString &filename)
+{
+	e = new TextEdit();
+	e->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	e->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
+	e->load(filename);
+	e->show();
 }
 
 void US_Hydrodyn_Results::closeEvent(QCloseEvent *e)

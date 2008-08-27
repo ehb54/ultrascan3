@@ -25,6 +25,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	hydro_widget = false;
 	overlap_widget = false;
 	bead_output_widget = false;
+	results_widget = false;
 	setupGUI();
 	global_Xpos += 30;
 	global_Ypos += 30;
@@ -227,6 +228,7 @@ void US_Hydrodyn::setupGUI()
 	pb_show_hydro_results = new QPushButton(tr("Show Hydrodynamic Calculations"), this);
 	Q_CHECK_PTR(pb_show_hydro_results);
 	pb_show_hydro_results->setMinimumHeight(minHeight1);
+	//pb_show_hydro_results->setEnabled(true);
 	pb_show_hydro_results->setEnabled(false);
 	pb_show_hydro_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
 	pb_show_hydro_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
