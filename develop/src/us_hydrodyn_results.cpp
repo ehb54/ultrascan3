@@ -81,7 +81,7 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_s20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_s20w = new QLineEdit(this, "s20w Line Edit");
-	le_s20w->setText(str.sprintf("%6.4e s", (*results).s20w));
+	le_s20w->setText(str.sprintf("%4.2e s", (*results).s20w));
 	le_s20w->setReadOnly(true);
 	le_s20w->setAlignment(AlignVCenter);
 	le_s20w->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -94,7 +94,7 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_D20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_D20w = new QLineEdit(this, "D20w Line Edit");
-	le_D20w->setText(str.sprintf("%6.4e cm/sec^2", (*results).D20w));
+	le_D20w->setText(str.sprintf("%4.2e cm/sec^2", (*results).D20w));
 	le_D20w->setReadOnly(true);
 	le_D20w->setAlignment(AlignVCenter);
 	le_D20w->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -107,7 +107,7 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_theta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_theta = new QLineEdit(this, "theta Line Edit");
-	le_theta->setText(str.sprintf("%6.4e ns", (*results).theta));
+	le_theta->setText(str.sprintf("%4.2e ns", (*results).theta));
 	le_theta->setReadOnly(true);
 	le_theta->setAlignment(AlignVCenter);
 	le_theta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -120,7 +120,7 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_viscosity = new QLineEdit(this, "viscosity Line Edit");
-	le_viscosity->setText(str.sprintf("%6.4e cm^3/g", (*results).viscosity));
+	le_viscosity->setText(str.sprintf("%4.2e cm^3/g", (*results).viscosity));
 	le_viscosity->setReadOnly(true);
 	le_viscosity->setAlignment(AlignVCenter);
 	le_viscosity->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -133,7 +133,7 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_rs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_rs = new QLineEdit(this, "rs Line Edit");
-	le_rs->setText(str.sprintf("%6.4e nm", (*results).rs));
+	le_rs->setText(str.sprintf("%4.2e nm", (*results).rs));
 	le_rs->setReadOnly(true);
 	le_rs->setAlignment(AlignVCenter);
 	le_rs->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -146,7 +146,7 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_rg = new QLineEdit(this, "rg Line Edit");
-	le_rg->setText(str.sprintf("%6.4e nm", (*results).rg));
+	le_rg->setText(str.sprintf("%4.2e nm", (*results).rg));
 	le_rg->setReadOnly(true);
 	le_rg->setAlignment(AlignVCenter);
 	le_rg->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));

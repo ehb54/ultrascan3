@@ -125,7 +125,7 @@ void US_Hydrodyn_Misc::update_vbar_signal(float val1, float val2)
 	float vbar20;
 	vbar20 = val1;
 	(*misc).vbar = val2;
-	le_vbar->setText(str.sprintf("%7.4f", (*misc).vbar));
+	le_vbar->setText(str.sprintf("%5.2f", (*misc).vbar));
 }
 
 void US_Hydrodyn_Misc::select_vbar()

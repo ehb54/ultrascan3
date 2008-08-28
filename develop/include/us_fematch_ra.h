@@ -97,6 +97,7 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 
 		QPushButton *pb_fit;
 		QPushButton *pb_loadModel;
+		QPushButton *pb_loadConstraints;
 		QPushButton *pb_model;
 		QPushButton *pb_parameter;
 

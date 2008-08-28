@@ -50,6 +50,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	results.rs = 0.0;
 	results.rg = 0.0;
 	results.theta = 0.0;
+	rasmol = new QProcess(this);
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -2484,7 +2485,6 @@ void US_Hydrodyn::select_model(int val)
 
 void US_Hydrodyn::visualize()
 {
-	rasmol = new QProcess(this);
 	QStringList argument;
 #if defined(BIN64)
 	argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
@@ -2501,17 +2501,7 @@ void US_Hydrodyn::visualize()
 							    "Please check to make sure RASMOL is properly installed..."));
 		return;
 	}
-/*
 
-  puts("run rasmol");
-  QString rascmd = QString("$ULTRASCAN/bin") +
-#if defined(BIN64)
-    QString("64") +
-#endif
-    QString("/rasmol -script bead_model_end.spt > /dev/null &");
-  system(rascmd.ascii());
- */
-	// visualize bead model with rasmol etc.
 }
 
 int US_Hydrodyn::calc_somo()
@@ -2759,6 +2749,20 @@ void US_Hydrodyn::load_pdb()
 	if (!filename.isEmpty())
 	{
 		lbl_pdb_file->setText(filename);
+		QStringList argument;
+#if defined(BIN64)
+		argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
+#else
+		argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
+#endif
+		argument.append(filename);
+		rasmol->setArguments(argument);
+		if (!rasmol->start())
+		{
+			QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+			"Please check to make sure RASMOL is properly installed..."));
+			return;
+		}
 		QFileInfo fi(filename);
 		project = fi.baseName();
 		cout << project << endl;

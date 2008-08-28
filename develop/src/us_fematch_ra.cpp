@@ -71,6 +71,14 @@ void US_FeMatchRa_W::setup_GUI()
 	pb_loadModel->setEnabled(false);
 	connect(pb_loadModel, SIGNAL(clicked()), SLOT(load_model()));
 
+	pb_loadConstraints = new QPushButton(tr("Load Constraints"), this);
+	Q_CHECK_PTR(pb_loadConstraints);
+	pb_loadConstraints->setAutoDefault(false);
+	pb_loadConstraints->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	pb_loadConstraints->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	pb_loadConstraints->setEnabled(false);
+	connect(pb_loadConstraints, SIGNAL(clicked()), SLOT(load_constraints()));
+
 	pb_fit = new QPushButton(tr("Simulate Model"), this);
 	Q_CHECK_PTR(pb_fit);
 	pb_fit->setAutoDefault(false);
@@ -266,7 +274,9 @@ void US_FeMatchRa_W::setup_GUI()
 	subGrid1->addMultiCellWidget(cmb_timeGrid, j, j, 0, 3);
 	j++;
 	subGrid1->addMultiCellWidget(pb_loadModel, j, j, 0, 1);
-	subGrid1->addMultiCellWidget(pb_fit, j, j, 2, 3);
+	subGrid1->addMultiCellWidget(pb_loadConstraints, j, j, 2, 3);
+	j++;
+	subGrid1->addMultiCellWidget(pb_fit, j, j, 0, 3);
 	j++;
 	subGrid1->addWidget(lbl_variance, j, 0);
 	subGrid1->addWidget(lbl_variance2, j, 1);

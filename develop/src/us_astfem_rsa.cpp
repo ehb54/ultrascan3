@@ -113,7 +113,7 @@ vector <struct mfem_data> *exp_data)
 				}  // end of for acceleration
 				duration = (unsigned int) ((*simparams).speed_step[ss].duration_hours * 3600
 						+ (*simparams).speed_step[ss].duration_minutes * 60);
-				duration *= 1.005;
+				duration = (int) (duration * 1.005);
 
 				if (accel_time > duration)
 				{
