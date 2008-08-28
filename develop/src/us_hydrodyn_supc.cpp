@@ -282,6 +282,10 @@ static float *q = 0;		// [NMAX][NMAX][9];
 static float *a = 0;		// [3 * NMAX][3 * NMAX];
 
 static int nmax;
+// static QApplication *qApp;
+static QProgressBar *progress;
+static int ppos;
+static int mppos;
 
 static void
 supc_free_alloced()
@@ -437,8 +441,11 @@ int
 us_hydrodyn_supc_main(hydro_results *hydro_results, 
 		      hydro_options *hydro, 
 		      vector <PDB_atom> *bead_model, 
-		      char *filename)
+		      char *filename,
+		      QProgressBar *use_progress)
 {
+    progress = use_progress;
+
     nmax = (int) bead_model->size();
     supc_results = hydro_results;
     supc_results->total_beads = nmax;
@@ -820,6 +827,12 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
 	initarray();
 
+	ppos = 1;
+	mppos = 3 * nat + 17;
+	progress->setTotalSteps(mppos);
+	progress->setProgress(ppos++); // 1
+	qApp->processEvents();
+
 	fscanf(tot_mol, "%f", &raflag);
 
 	presentazione();
@@ -832,6 +845,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	  printf("pat returns %d\n", retval);
 	}
 	printf("\n\n- End of PAT ...\n\n");
+	progress->setProgress(ppos++); // 2
+	qApp->processEvents();
+
 	out_inter();
 
 	printf("Removing ifraxon\n");
@@ -876,6 +892,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          ragir(); 
 		 printf("\n End of function: ragir()\n"); */
 
+	progress->setProgress(ppos++); //3
+	qApp->processEvents();
 	/* RECOMPUTING THE CENTER OF MASS */
 
 	mtx = 0.0;
@@ -899,13 +917,19 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
 	printf("\n\n Starting function: tsuda()\n");
 	tsuda();
+	progress->setProgress(ppos++); // 4
+	qApp->processEvents();
 	printf("\n End of function: tsuda()\n");
 	printf("\n Starting function: doublesum()\n");
 	doublesum();
+	progress->setProgress(ppos++); // 5
+	qApp->processEvents();
 	printf("\n End of function: doublesum()\n");
 	printf("\n Starting function: calcqij()\n");
 	calcqij();
 	printf("\n\n End of function: calcqij()\n");
+	progress->setProgress(ppos++); // 6
+	qApp->processEvents();
 
 	presentazione();
 	printf("- Computational Method : SUPERMATRIX INVERSION\n\n");
@@ -930,34 +954,58 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	    system("date >> exe_time");
 	}
 	primo = time(NULL);	/* Gets system time */
+	progress->setProgress(ppos++); // 7
+	qApp->processEvents();
+
 	riempimatrice();
+	progress->setProgress(ppos++); // 8
+	qApp->processEvents();
 	inverti(nat);
 	printf("- Matrix S_ij     : ");
 	printf("calculated\n");
 
 	visco();
 	tsuda1();
+	progress->setProgress(ppos++); // 9
+	qApp->processEvents();
 
 	printf("- Matrix KSI_T  : ");
 	sigmatcalc2();
 	printf("calculated\n");
 
+	progress->setProgress(ppos++); // 10
+	qApp->processEvents();
 	printf("- Matrix KSI_OC : ");
 	sigmaocalc1();
 	printf("calculated\n");
+	progress->setProgress(ppos++); // 11
+	qApp->processEvents();
 
 	calcR();
 
+	progress->setProgress(ppos++); // 12
+	qApp->processEvents();
 	printf("- Matrix KSI_Rr  : ");
 	sigmarRcalc1();
 	printf("calculated\n");
 
+	progress->setProgress(ppos++); // 13
+	qApp->processEvents();
 	printf("- Matrix KSI_OR: ");
 	sigmaoRcalc();
 	printf("calculated\n");
+	progress->setProgress(ppos++); // 14
+	qApp->processEvents();
 
 	diffcalc();
+
+	progress->setProgress(ppos++); // 15
+	qApp->processEvents();
+
 	relax_rigid_calc();
+
+	progress->setProgress(ppos++); // 16
+	qApp->processEvents();
 
 	if (cd == 2)
 	{
@@ -1214,9 +1262,10 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	val_med();
 
     fclose(tot_mol);
-    system("clear");
-    system("rm tot_mol");
+    unlink("tot_mol");
     supc_free_alloced();
+    progress->setProgress(mppos); 
+    qApp->processEvents();
     return 0;
 }
 
@@ -1227,7 +1276,6 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 static void
 intestazione()
 {
-    system("clear");
     printf("####################################################\n");
     printf("#   National Institute for Cancer Research (IST)   #\n");
     printf("#         Advanced Biotechnologies Center (CBA)    #\n");
@@ -1245,7 +1293,6 @@ intestazione()
 static void
 presentazione()
 {
-    system("clear");
     printf("####################################################\n");
     printf("#   National Institute for Cancer Research (IST)   #\n");
     printf("#         Advanced Biotechnologies Center (CBA)    #\n");
@@ -1400,7 +1447,6 @@ stampamatrice(float *n)
 
     printf("\n\n  Hit RETURN to go back");
     getchar();
-    system("clear");
 
 }
 
@@ -1432,7 +1478,6 @@ stampamatrice1(float *n)
 
     printf("\n\n  Hit RETURN to go back");
     getchar();
-    system("clear");
 
 }
 
@@ -1460,7 +1505,6 @@ stampamatrice1l(long double *n)
 
     printf("\n\n  Hit RETURN to go back");
     getchar();
-    system("clear");
 
 }
 #endif
@@ -1512,7 +1556,7 @@ stampa_ris()
     printf("%s%d%s\n", "- Used BEADS Mass    = ", mascor1, "  [Da]");
     supc_results->mass = mascor1;
     printf("\n\n%s%.3e\t%s\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] (w@20C)");
-    supc_results->s20w = f * 1.0E-07 * fconv;
+    // supc_results->s20w = f * 1.0E-07 * fconv;
 
     printf("%s%.2e\t%s\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] (20C,w)");
     supc_results->D20w = (KB * TE * 1.0E7) / f * fconv1;
@@ -1626,7 +1670,7 @@ stampa_ris()
     }
 
     printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY                 = ", vis * correz * pow(fconv, 3), "[cm^3/g]");
-    supc_results->viscosity = vis * correz * pow(fconv, 3);
+
     einst = pow(0.3 * pesmol * vis / (PI * AVO), 0.33333);
     einst = 1E7 * einst;
     printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                   = ", einst * fconv, "[nm]");
@@ -1634,6 +1678,7 @@ stampa_ris()
     {
 	printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(GDLT corrected) = ",
 	       (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
+	supc_results->viscosity = (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
 	einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO), 0.33333);
 	einst = 1E7 * einst;
 	printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
@@ -1642,6 +1687,7 @@ stampa_ris()
     {
 	printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
 	       (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
+	supc_results->viscosity = (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3);
 	einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / (PI * AVO), 0.33333);
 	einst = 1E7 * einst;
 	printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
@@ -1668,7 +1714,6 @@ stampa_ris()
 	printf("%s\t%.2Lf\t%s\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] (20C,w)");
 	printf("%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
 	printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
-	supc_results->theta = tao[0] * pow(fconv, 3.0f);
     }
     if (taoflag == 2.0)
     {
@@ -1677,7 +1722,6 @@ stampa_ris()
 	printf("%s\t%.2Lf\t%s\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] (20C,w)");
 	printf("%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
 	printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
-	supc_results->theta = tao[4] * pow(fconv, 3.0f);
     }
     if (taoflag == 0.0)
     {
@@ -1686,9 +1730,9 @@ stampa_ris()
 	printf("%s\t%.2Lf\t%s\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] (20C,w)");
 	printf("%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
 	printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] (20C,w)");
-	supc_results->theta = tao[0] * pow(fconv, 3.0f);
     }
     printf("\n%s\t%.2f\t%s\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] (20C,w)");
+    supc_results->theta = taom * pow(fconv, 3.0f);
     printf("%s\t%.2f\t%s\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] (20C,w) \n");
 
     printf("\n%s", "- MAX EXTENSIONS:");
@@ -1697,7 +1741,7 @@ stampa_ris()
     printf("%s%.1f%s%.1f%s%.1f%s\n\n", "- AXIAL RATIOS : [X:Z] = ", (maxx / maxz), "; [X:Y] = ", (maxx / maxy), "; [Y:Z] = ",
 	   (maxy / maxz), "");
 
-    system("sleep 3");
+    //    system("sleep 3");
 
 }
 
@@ -3472,6 +3516,8 @@ inverti(int N)
 
     for (j = 1; j <= 3 * N; j++)
     {
+	progress->setProgress(ppos++);
+	qApp->processEvents();
 
 	printf("%s%d%s%d", "Iteration  ", j, " of ", 3 * N);
 	fflush(stdout);

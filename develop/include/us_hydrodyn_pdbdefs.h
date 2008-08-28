@@ -119,6 +119,7 @@ struct atom
 											// 2 = prosthetic group
 											// 3 = undefined
 											// 4 = other
+        bool tmp_flag;               // used for finding missing residues
 };
 
 struct residue

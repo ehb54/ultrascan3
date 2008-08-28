@@ -141,7 +141,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void setupGUI();
 		void select_residue_file();
 		void clear_temp_chain(struct PDB_chain *);
-	   void assign_atom(const QString &, struct PDB_chain *);
+		void assign_atom(const QString &, struct PDB_chain *);
 		void cancel();
 		void help();
 		void atom();
@@ -150,6 +150,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void select_model(int);
 		void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
 		int calc_somo(); // build bead model
+		int check_for_missing_atoms(QString *error_string, PDB_model *);
 		int compute_asa(); // calculate maximum accessible surface area
 		void show_asa();
 		void show_overlap();

@@ -1461,16 +1461,16 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 		if (respos == -1)
 		{
 		    printf
-			("missing residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-			 j, k, this_atom->name.ascii(),
+			("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+			 j + 1, k, this_atom->name.ascii(),
 			 this_atom->resName.ascii(),
-			 this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]);
+			 this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]); fflush(stdout);
 		    if ((this_atom->name != "H" && this_atom->name != "D"
 			 && this_atom->resName != "DOD"
 			 && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
 		    {
-		      error_string->append(QString("").sprintf("missing residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-							       j, k, this_atom->name.ascii(),
+		      error_string->append(QString("").sprintf("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+							       j + 1, k, this_atom->name.ascii(),
 							       this_atom->resName.ascii(),
 							       this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
 			free_alloced();
@@ -1479,9 +1479,13 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 		}
 		else
 		{
-		    //      printf("found residue pos %d\n", respos);
+#if defined(DEBUG)
+		  printf("found residue pos %d\n", respos);
+#endif
+
 		}
 		int atompos = -1;
+
 		if (respos != -1)
 		{
 		    for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
@@ -1506,15 +1510,16 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 			    break;
 			}
 		    }
+
 		    if (atompos == -1)
 		    {
-		      error_string->append(QString("").sprintf("missing atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-							       j, k, this_atom->name.ascii(),
+		      error_string->append(QString("").sprintf("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+							       j + 1, k, this_atom->name.ascii(),
 							       this_atom->resName.ascii(),
 							       this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
 		      printf
-			("missing atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-			 j, k, this_atom->name.ascii(),
+			("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+			 j + 1, k, this_atom->name.ascii(),
 			 this_atom->resName.ascii(),
 			 this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]);
 		    }
@@ -1548,8 +1553,12 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 #endif
 		    }
 		}
+
 		if (this_atom->active)
 		{
+#if defined(DEBUG)
+		  puts("active atom"); fflush(stdout);
+#endif
 		    this_atom->active = false;
 		    if (this_atom->name != "H" &&
 			this_atom->name != "D" &&
@@ -1565,6 +1574,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 			printf
 			    ("skipped bound waters & H %s %s rad %f resseq %d\n",
 			     this_atom->name.ascii(), this_atom->resName.ascii(), this_atom->radius, this_atom->resSeq);
+			fflush(stdout);
 #endif
 		    }
 		}
@@ -1585,6 +1595,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	    this_atom->chain =
 	      ((this_atom->p_residue && this_atom->p_atom) ?
 	       (int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
+	    this_atom->bead_positioner = this_atom->p_atom ? this_atom->p_atom->positioner : false;
 	  }
 	}
       }
