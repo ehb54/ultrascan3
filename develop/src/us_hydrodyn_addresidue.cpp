@@ -1091,7 +1091,7 @@ void US_AddResidue::select_residue(int val)
 	cnt_numbeads->setValue(residue_list[val].r_bead.size());
 	cmb_type->setCurrentItem(residue_list[val].type);
 	le_molvol->setText(str.sprintf("%7.2f", residue_list[val].molvol));
-	le_vbar->setText(str.sprintf("%7.2f", residue_list[val].vbar));
+	le_vbar->setText(str.sprintf("%5.3f", residue_list[val].vbar));
 	le_asa->setText(str.sprintf("%7.2f", residue_list[val].asa));
 	new_residue = residue_list[val];
 //	print_residue (new_residue);
