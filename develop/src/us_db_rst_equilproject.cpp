@@ -296,7 +296,7 @@ void US_DB_RST_EquilProject::save_db( void )
 		delete pd;
 		QMessageBox::message(
 			tr( "UltraScan tar creation Error: Report" ),
-			tr( tar.explain( ret ) + tr( "/nInput files:\n" ) + files.join( "\n") ) );
+			tr( tar.explain( ret ) + tr( "\nInput files:\n" ) + files.join( "\n") ) );
 
 		// Remove the tar file
 		cleanCompressFile();
@@ -341,7 +341,7 @@ void US_DB_RST_EquilProject::save_db( void )
 		delete pd;
 		QMessageBox::message(
 			tr( "UltraScan tar creation Error: Result" ),
-			tr( tar.explain( ret ) + tr( "/nInput files:\n" ) + files.join( "\n") ) );
+			tr( tar.explain( ret ) + tr( "\nInput files:\n" ) + files.join( "\n") ) );
 
 		// Remove the tar file
 		cleanCompressFile();
@@ -685,7 +685,7 @@ void US_DB_RST_EquilProject::retrieve_db()
 	{
 		QMessageBox::message(
 		tr( "UltraScan tar extraction Error:" ),
-		tr( tar.explain( ret ) + tr( "/ntarfile: " ) + tarfile ) );
+		tr( tar.explain( ret ) + tr( "\ntarfile: " ) + tarfile ) );
 	}
 
 result:
@@ -721,7 +721,7 @@ result:
 	{
 		QMessageBox::message(
 		tr( "UltraScan tar extraction Error:" ),
-		tr( tar.explain( ret ) + tr( "/ntarfile: " ) + tarfile ) );
+		tr( tar.explain( ret ) + tr( "\ntarfile: " ) + tarfile ) );
 	}
 	else
 	{

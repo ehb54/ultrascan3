@@ -293,7 +293,7 @@ bool US_DB_Veloc::insertCompressedData()
 		delete pd;
 		QMessageBox::message(
 		  tr( "UltraScan tar creation Error: Report" ),
-		  tr( tar.explain( ret ) + tr( "/nInput files:\n" ) + files.join( "\n") ) );
+		  tr( tar.explain( ret ) + tr( "\nInput files:\n" ) + files.join( "\n") ) );
 
 		// Remove the tar file
 		QFile::remove( reportDir + tarfile );
@@ -337,7 +337,7 @@ bool US_DB_Veloc::insertCompressedData()
 		delete pd;
 		QMessageBox::message(
 		  tr( "UltraScan tar creation Error: Result" ),
-		  tr( tar.explain( ret ) + tr( "/nInput files:\n" ) + files.join( "\n") ) );
+		  tr( tar.explain( ret ) + tr( "\nInput files:\n" ) + files.join( "\n") ) );
 
 		// Remove the tar file
 		QFile::remove( resultDir + tarfile );
@@ -837,7 +837,7 @@ void US_DB_Veloc::retrieve_db( void )
 		pd->close();
 		QMessageBox::message(
 		  tr( "UltraScan tar extraction Error:" ),
-		  tr( tar.explain( ret ) + tr( "/ntarfile: " ) + tarfile ) );
+		  tr( tar.explain( ret ) + tr( "\ntarfile: " ) + tarfile ) );
 
 		// Remove the tar file
 		QFile::remove( reportDir + tarfile );
@@ -873,7 +873,7 @@ result:
 		pd->close();
 		QMessageBox::message(
 			tr( "UltraScan tar extraction Error:" ),
-		  tr( tar.explain( ret ) + tr( "/ntarfile: " ) + tarfile ) );
+		  tr( tar.explain( ret ) + tr( "\ntarfile: " ) + tarfile ) );
 
 		// Remove the tar file
 		QFile::remove( resultDir + tarfile );
@@ -911,7 +911,7 @@ rawdata:
 		pd->close();
 		QMessageBox::message(
 		  tr( "UltraScan tar extraction Error:" ),
-		  tr( tar.explain( ret ) + tr( "/ntarfile: " ) + tarfile ) );
+		  tr( tar.explain( ret ) + tr( "\ntarfile: " ) + tarfile ) );
 
 		// Remove the tar file
 		QFile::remove( dataDir + tarfile );
