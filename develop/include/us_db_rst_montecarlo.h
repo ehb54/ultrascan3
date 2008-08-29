@@ -38,9 +38,6 @@ class US_EXTERN US_DB_RST_Montecarlo : public US_DB_Widgets
 		QLabel*      lbl_investigator;
 		QLabel*      lbl_runrequest;
 
-		QProgressDialog* pd;
-
-
 		QString  fileName;
 		QString  parameterFile;
 		QString  projectName;

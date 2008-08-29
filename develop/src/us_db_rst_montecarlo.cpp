@@ -16,7 +16,6 @@ US_DB_RST_Montecarlo::US_DB_RST_Montecarlo( QWidget* p, const char* name ) :
 
   // Initialize class variables
 	
-	pd               = NULL;
 	item_projectID   = NULL;
 	item_projectName = NULL;
 	from_HD          = false;
@@ -267,13 +266,11 @@ void US_DB_RST_Montecarlo::clearTmpDir()
 
 bool US_DB_RST_Montecarlo::insertData()
 {
-	if ( pd != NULL ) delete pd;
-	
-	QString title = "Please wait while your data is saved to the database...";
-	pd            = progressdialog( title,	"pd", 8 );
+	QString          title = "Saving data to the database...";
+	QProgressDialog* pd    = progressdialog( title,	"pd", 8 );
 
 	pd->setMinimumDuration( 0 );
-	pd->show();
+	pd->setProgress       ( 1 );
 
 	// Clear temp directory
 	pd->setLabelText( "Clearing temporary directory..." );
@@ -655,10 +652,8 @@ void US_DB_RST_Montecarlo::retrieve()
 		return;
 	}
 
-	if ( pd != NULL ) delete pd;
-
-	QString title = "Please wait while your data is retrieved from the database...";
-	pd = progressdialog( title, "pd", 8 );
+	QString          title = "Retrieving data from the database...";
+	QProgressDialog* pd    = progressdialog( title, "pd", 8 );
 	pd->setMinimumDuration( 0 );
 	pd->setLabelText      ( "Clearing temporary directory..." );
 	pd->setProgress       ( 0 );
