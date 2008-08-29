@@ -30,7 +30,7 @@ US_DB_RST_Montecarlo::US_DB_RST_Montecarlo( QWidget* p, const char* name ) :
 	pb_hd = pushbutton( "Select data from HD" );
 	connect( pb_hd, SIGNAL( clicked() ), SLOT( load_HD() ) );
 
-	pb_db = pushbutton( "Load metadata from DB" );
+	pb_db = pushbutton( "Query Data from DB" );
 	connect( pb_db, SIGNAL( clicked() ), SLOT( load_DB() ) );
 
 	pb_retrieve = pushbutton( "Retrieve data from DB", false );
@@ -657,13 +657,16 @@ void US_DB_RST_Montecarlo::retrieve()
 	pd->setMinimumDuration( 0 );
 	pd->setLabelText      ( "Clearing temporary directory..." );
 	pd->setProgress       ( 0 );
+	qApp->processEvents();
 	
 	// Clear temp directory
 	clearTmpDir();
+	qApp->processEvents();
 
 	// Retrieve Monte Carlo data from the database
 	pd->setLabelText( "Downloading Monte Carlo Data..." );
 	pd->setProgress ( 1 );
+	qApp->processEvents();
 
 	QSqlCursor cursor( "MonteCarloData" );
 
