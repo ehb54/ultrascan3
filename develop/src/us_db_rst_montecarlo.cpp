@@ -3,6 +3,8 @@
 #include "../include/us_tar.h"
 #include "../include/us_gzip.h"
 
+#include <time.h>
+
 #ifdef WIN32
 	#include <direct.h>
 	#define chdir _chdir
@@ -50,6 +52,8 @@ US_DB_RST_Montecarlo::US_DB_RST_Montecarlo( QWidget* p, const char* name ) :
 	lbl_instr = label( "Doubleclick on item to select:", -1 );
 
 	lb_result = listbox( "result" );
+	lb_result->setMinimumHeight( 300 );
+	lb_result->setMinimumWidth ( 500 );
 	connect( lb_result, SIGNAL( selected( int ) ), SLOT( select_result( int ) ) );
 
 	lbl_item = label( " not selected", -1 );
@@ -240,7 +244,7 @@ void US_DB_RST_Montecarlo::save_db()
 void US_DB_RST_Montecarlo::clearTmpDir()
 {
 	QDir    temp_dir;
-	QString tempDirString =  USglobal->config_list.root_dir + "/temp";
+	QString tempDirString =  USglobal->config_list.tmp_dir;
 
 	temp_dir.setPath( tempDirString );
 
@@ -277,7 +281,7 @@ bool US_DB_RST_Montecarlo::insertData()
 	
 	// Archiving and gzipping the Monte Carlo report
 	
-	QString tempDir     = USglobal->config_list.root_dir + "/temp";
+	QString tempDir     = USglobal->config_list.tmp_dir + "/";
 
 	QString reportDir   = USglobal->config_list.html_dir + "/";
 	QString tarfile     = projectName + "_report.tar";
@@ -654,36 +658,40 @@ void US_DB_RST_Montecarlo::retrieve()
 	if ( pd != NULL ) delete pd;
 
 	QString title = "Please wait while your data is retrieved from the database...";
-	pd = progressdialog( title, "pd", 6 );
-
+	pd = progressdialog( title, "pd", 8 );
 	pd->setMinimumDuration( 0 );
-	pd->setLabelText( "Clearing temporary directory..." );
-	//pd->show();
+	pd->setLabelText      ( "Clearing temporary directory..." );
+	pd->setProgress       ( 0 );
 	
 	// Clear temp directory
 	clearTmpDir();
 
 	// Retrieve Monte Carlo data from the database
-
-	QString filename;
-
-	QString tempDir = USglobal->config_list.root_dir + "/temp/";
-
 	pd->setLabelText( "Downloading Monte Carlo Data..." );
-	pd->setProgress( 1 );
+	pd->setProgress ( 1 );
+
+	QSqlCursor cursor( "MonteCarloData" );
+
+	// 1st time consuming statement
+
+	//cout << "before sleep" << time(0) << "\n";
+	//sleep(5);
 	qApp->processEvents();
 
-	QString str;
-	QSqlCursor cur_f( "MonteCarloData" );
-	str.sprintf( "montecarloID = %d", montecarloID );
-	cur_f.select( str );
+	//cout << "before select" << time(0) << "\n";
 
-	if ( cur_f.next() )
+	cursor.select( QString( "montecarloID = %1" ).arg( montecarloID ) );
+	//cout << "after select " << time(0) << "\n";
+
+	QString tempDir = USglobal->config_list.tmp_dir + "/";
+
+	if ( cursor.next() )
 	{
-		filename = tempDir + "montecarlo.tar";
-		if ( ! read_blob( "data", cur_f, filename ) )
+		pd->setProgress( 2 );
+		if ( ! read_blob( "data", cursor, tempDir + "montecarlo.tar" ) )
 		{
 			pd->close();
+			delete pd;
 			QMessageBox::message(
 				tr( "UltraScan Error:" ), 
 				tr( "Unable to retrieve Monte Carlo Data from the database" ) );
@@ -694,6 +702,7 @@ void US_DB_RST_Montecarlo::retrieve()
 	else
 	{
 		pd->close();
+		delete pd;
 		QMessageBox::message(
 			tr( "UltraScan Error:" ), 
 			tr( "Cannot find the selected Monte Carlo archive in the database." ) );
@@ -704,8 +713,7 @@ void US_DB_RST_Montecarlo::retrieve()
 	// Untar the master archive
 	pd->setLabelText( 
 	  "Extracting Monte Carlo master archive into temporary directory..." );
-				
-	pd->setProgress( 2 );
+	pd->setProgress( 3 );
 	qApp->processEvents();
 
 	US_Tar  tar;
@@ -715,6 +723,7 @@ void US_DB_RST_Montecarlo::retrieve()
 	if ( tar.extract( tarfile ) != TAR_OK )
 	{
 		pd->close();
+		delete pd;
 		QMessageBox::message(
 			tr( "UltraScan Error:" ), 
 			tr( "Unable to extract the Monte Carlo tar archive.\n" ) +
@@ -726,7 +735,7 @@ void US_DB_RST_Montecarlo::retrieve()
 	/////////////////////
 	// gunzip the result tar file
 	pd->setLabelText( "Uncompressing Monte Carlo result tar file..." );
-	pd->setProgress( 3 );
+	pd->setProgress( 4 );
 	qApp->processEvents();
 	
 	US_Gzip gzip;
@@ -735,6 +744,7 @@ void US_DB_RST_Montecarlo::retrieve()
 	if ( gzip.gunzip( targzfile ) != TAR_OK )
 	{
 		pd->close();
+		delete pd;
 		QMessageBox::message(
 			tr( "UltraScan Error:" ), 
 			tr( "Unable to uncompress Monte Carlo result tar archive.\n" +
@@ -744,8 +754,8 @@ void US_DB_RST_Montecarlo::retrieve()
 	}
 
 	// Untar the result tar file
-	pd->setLabelText( "Uncompressing Monte Carlo result tar file..." );
-	pd->setProgress( 4 );
+	pd->setLabelText( "Extracting Monte Carlo result tar file..." );
+	pd->setProgress( 5 );
 	qApp->processEvents();
 	
 	QString resultDir = USglobal->config_list.result_dir + "/";
@@ -760,6 +770,7 @@ void US_DB_RST_Montecarlo::retrieve()
 	if ( ( ret = tar.extract( tarfile ) ) != GZIP_OK )
 	{
 		pd->close();
+		delete pd;
 		QMessageBox::message(
 			tr( "UltraScan tar Error:" ),
 			tr( tar.explain( ret ) ) );
@@ -775,7 +786,7 @@ void US_DB_RST_Montecarlo::retrieve()
 	////////////////////
 	// gunzip the report tar file
 	pd->setLabelText( "Uncompressing Monte Carlo report tar file..." );
-	pd->setProgress( 5 );
+	pd->setProgress( 6 );
 	qApp->processEvents();
 	
 	targzfile = projectName + "_report.tar.gz";
@@ -785,6 +796,7 @@ void US_DB_RST_Montecarlo::retrieve()
 	if ( gzip.gunzip( targzfile ) != GZIP_OK )
 	{
 		pd->close();
+		delete pd;
 		QMessageBox::message(
 			tr( "UltraScan Error:" ), 
 			tr( "Unable to uncompress the Monte Carlo report tar archive." ) );
@@ -794,8 +806,8 @@ void US_DB_RST_Montecarlo::retrieve()
 
 	// untar the report file
 	
-	pd->setLabelText( "Uncompressing Monte Carlo report tar file..." );
-	pd->setProgress( 6 );
+	pd->setLabelText( "Extracting Monte Carlo report tar file..." );
+	pd->setProgress( 7 );
 	qApp->processEvents();
 	
 	QString reportDir = USglobal->config_list.html_dir + "/";
@@ -808,6 +820,7 @@ void US_DB_RST_Montecarlo::retrieve()
 	if ( ( ret = tar.extract( tarfile ) ) != GZIP_OK )
 	{
 		pd->close();
+		delete pd;
 		QMessageBox::message(
 			tr( "UltraScan tar Error:" ),
 			tr( tar.explain( ret ) ) );
@@ -819,7 +832,13 @@ void US_DB_RST_Montecarlo::retrieve()
 	
 	// Success	
 	QFile::remove( reportDir + tarfile );
+	clearTmpDir();
 	pd->close();
+	delete pd;
+
+	QMessageBox::message(
+			tr( "Success" ),
+			tr( "Retrieval Complete." ) );
 }
 
 void US_DB_RST_Montecarlo::display()

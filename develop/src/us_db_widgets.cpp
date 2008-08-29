@@ -144,7 +144,7 @@ QProgressDialog* US_DB_Widgets::progressdialog( const QString& label,
                                                 int   steps )
 {
   QProgressDialog* p = new QProgressDialog( tr( label ), 0, steps, this, 
-	                                          name, true );
+	                                          name );
 	
 	p->setPalette( 
 			QPalette( USglobal->global_colors.cg_normal,
