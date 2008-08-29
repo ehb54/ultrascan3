@@ -2744,6 +2744,6 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
     free(molarea);
     free(curvat);
 
-    return 0;
 # endif
+    return 0;
 }
