@@ -652,7 +652,86 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
     return 0;
   }
 }
-  
+
+// #define DEBUG_OVERLAP
+
+// # define TOLERANCE 0.001       // this is used to place a limit on the allowed radial overlap
+#define TOLERANCE overlap_tolerance
+
+int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried) 
+{
+  int retval = 0;
+#if defined(DEBUG_OVERLAP)
+  printf("overlap checking--overlap tolerance %f--%s-%s-%s--------------------\n",
+	 TOLERANCE,
+	 sc ? "side chain" : "",
+	 mc ? "main & side chain" : "",
+	 buried ? "buried" : "");
+#endif
+  for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
+    for (unsigned int j = i + 1; j < bead_model.size(); j++) {
+      if (bead_model[i].active &&
+	  bead_model[j].active 
+	  &&
+	  (mc ||
+	   (sc && 
+	    bead_model[i].chain == 1 &&
+	    bead_model[j].chain == 1))
+	  &&
+	  (buried ||
+	   (bead_model[i].exposed_code == 1 &&
+	    bead_model[j].exposed_code == 1)) &&
+	  bead_model[i].bead_computed_radius > TOLERANCE &&
+	  bead_model[j].bead_computed_radius > TOLERANCE
+	  ) {
+	float separation =
+	  bead_model[i].bead_computed_radius +
+	  bead_model[j].bead_computed_radius -
+	  sqrt(
+	       pow(bead_model[i].bead_coordinate.axis[0] -
+		   bead_model[j].bead_coordinate.axis[0], 2) +
+	       pow(bead_model[i].bead_coordinate.axis[1] -
+		   bead_model[j].bead_coordinate.axis[1], 2) +
+	       pow(bead_model[i].bead_coordinate.axis[2] -
+		   bead_model[j].bead_coordinate.axis[2], 2));
+	if (separation <= TOLERANCE) {
+	  continue;
+	}
+	retval++;
+#if defined(DEBUG_OVERLAP)
+	    printf("overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - needs reduction\n",
+		   i, j,
+		   bead_model[i].chain,
+		   bead_model[j].chain,
+		   bead_model[i].exposed_code,
+		   bead_model[j].exposed_code,
+		   bead_model[i].active ? "Y" : "N",
+		   bead_model[j].active ? "Y" : "N",
+		   bead_model[i].bead_computed_radius,
+		   bead_model[j].bead_computed_radius,
+		   bead_model[i].bead_coordinate.axis[0],
+		   bead_model[i].bead_coordinate.axis[1],
+		   bead_model[i].bead_coordinate.axis[2],
+		   bead_model[j].bead_coordinate.axis[0],
+		   bead_model[j].bead_coordinate.axis[1],
+		   bead_model[j].bead_coordinate.axis[2],
+		   separation
+		   );
+#endif
+      }
+    }
+  }
+#if defined(DEBUG_OVERLAP)
+  printf("end of overlap checking--overlap tolerance %f--%s-%s-%s--violations %d------------------\n",
+	 TOLERANCE,
+	 sc ? "side chain" : "",
+	 mc ? "main & side chain" : "",
+	 buried ? "buried" : "",
+	 retval);
+#endif
+  return retval;
+}
+
 
 int US_Hydrodyn::compute_asa()
 {
@@ -1200,7 +1279,6 @@ int US_Hydrodyn::compute_asa()
   progress->setProgress(ppos++); // 7
   qApp->processEvents();
 
-
 #if defined(DEBUG)
   printf("model~molecule~atom~name~residue~chainID~"
 	 "position~active~radius~asa~mw~"
@@ -1299,6 +1377,8 @@ int US_Hydrodyn::compute_asa()
   progress->setProgress(ppos++); // 8
   qApp->processEvents();
 
+  // #define DEBUG
+
   // popping radial reduction
 
 # define POP_MC              (1 << 0)
@@ -1317,7 +1397,6 @@ int US_Hydrodyn::compute_asa()
 # define OUTWARD_TRANSLATION (1 << 13)
 # define RR_HIERC            (1 << 14)
 # define MIN_OVERLAP 0.0
-# define TOLERANCE 0.001       // this is used to place a limit on the allowed radial overlap
 
   // or sc fb Y rh Y rs Y to Y st Y ro Y 70.000000 1.000000 0.000000
   // or scmc fb Y rh N rs N to Y st N ro Y 1.000000 0.000000 70.000000
@@ -1480,7 +1559,7 @@ int US_Hydrodyn::compute_asa()
     qApp->processEvents();
 
     do {
-      write_bead_tsv(QString("bead_model_bp-%1-%2.tsv").arg(k).arg(iter), &bead_model);
+      // write_bead_tsv(QString("bead_model_bp-%1-%2.tsv").arg(k).arg(iter), &bead_model);
       // write_bead_spt(QString("bead_model-bp-%1-%2").arg(k).arg(iter), &bead_model);
 #if defined(DEBUG1) || defined(DEBUG)
       printf("popping iteration %d\n", iter++);
@@ -1672,6 +1751,11 @@ int US_Hydrodyn::compute_asa()
       // bool tb[bead_model.size() * bead_model.size()];
       // printf("sizeof tb %d, bm.size^2 %d\n",
       //     sizeof(tb), bead_model.size() * bead_model.size());
+#if defined(DEBUG_OVERLAP)
+      overlap_check(methods[k] & RR_SC ? true : false,
+		    methods[k] & RR_MCSC ? true : false,
+		    methods[k] & RR_BURIED ? true : false);
+#endif
       if (methods[k] & RR_HIERC) {
 #if defined(DEBUG1) || defined(DEBUG)
 	printf("preprocessing processing hierarchical radial reduction\n");
@@ -1760,10 +1844,23 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG1) || defined(DEBUG)
 	  printf("processing hierarchical radial reduction iteration %d\n", iter++);
 #endif
+#if defined(DEBUG_OVERLAP)
+	  overlap_check(methods[k] & RR_SC ? true : false,
+			methods[k] & RR_MCSC ? true : false,
+			methods[k] & RR_BURIED ? true : false);
+#endif
 	  max_intersection_length = 0;
 	  int max_pair = -1;
 	  count = 0;
 	  for (unsigned int i = 0; i < pairs.size(); i++) {
+#if defined(DEBUG_OVERLAP)
+	    printf("pair %d %d sep %f %s %s\n", 
+		   pairs[i].i, pairs[i].j, pairs[i].separation, pairs[i].active ? "active" : "not active",
+		   pairs[i].i == max_bead1 ||
+		   pairs[i].j == max_bead1 ||
+		   pairs[i].i == max_bead2 ||
+		   pairs[i].j == max_bead2 ? "needs recompute of separation" : "separation valid");
+#endif
 	    if (pairs[i].active) {
 	      if (
 		  pairs[i].i == max_bead1 ||
@@ -1878,19 +1975,19 @@ int US_Hydrodyn::compute_asa()
 		      printf("wow! bead %d is at the molecular cog!\n", use_bead);
 		    }
 		  }
+		  // we need to handle 1 fixed case and
+		  // the slight potential of one being at the molecular cog
+		  reduced_any[max_bead1] = true;
+		  reduced_any[max_bead2] = true;
+		  outward_translate_2_spheres(
+					      &bead_model[max_bead1].bead_computed_radius,
+					      &bead_model[max_bead2].bead_computed_radius,
+					      bead_model[max_bead1].bead_coordinate.axis,
+					      bead_model[max_bead2].bead_coordinate.axis,
+					      bead_model[max_bead1].normalized_ot.axis,
+					      bead_model[max_bead2].normalized_ot.axis
+					      );
 		}
-		// we need to handle 1 fixed case and
-		// the slight potential of one being at the molecular cog
-		reduced_any[max_bead1] = true;
-		reduced_any[max_bead2] = true;
-		outward_translate_2_spheres(
-					    &bead_model[max_bead1].bead_computed_radius,
-					    &bead_model[max_bead2].bead_computed_radius,
-					    bead_model[max_bead1].bead_coordinate.axis,
-					    bead_model[max_bead2].bead_coordinate.axis,
-					    bead_model[max_bead1].normalized_ot.axis,
-					    bead_model[max_bead2].normalized_ot.axis
-					    );
 	      } else {
 		// no outward translation is required for either bead
 		// are we shrinking just 1 bead ... if we are dealing with buried beads, then
@@ -2310,7 +2407,7 @@ int US_Hydrodyn::compute_asa()
 	    }
 	  }
 	  last_reduced = reduced;
-	  write_bead_tsv(QString("bead_model_ar-%1-%2.tsv").arg(k).arg(iter), &bead_model);
+	  // write_bead_tsv(QString("bead_model_ar-%1-%2.tsv").arg(k).arg(iter), &bead_model);
 	  // write_bead_spt(QString("bead_model-ar-%1-%2").arg(k).arg(iter), &bead_model);
 	} while(count);
       }
@@ -2336,6 +2433,14 @@ int US_Hydrodyn::compute_asa()
 	}
       }
     }
+#if defined(DEBUG_OVERLAP)
+    if(overlap_check(methods[k] & RR_SC ? true : false,
+		     methods[k] & RR_MCSC ? true : false,
+		     methods[k] & RR_BURIED ? true : false)) {
+      printf("internal over lap error... exiting!");
+      exit(-1);
+    }
+#endif
     write_bead_tsv(QString("bead_model_rr-%1.tsv").arg(k), &bead_model);
     write_bead_spt(QString("bead_model_rr-%1").arg(k), &bead_model);
   } // methods
@@ -2379,6 +2484,8 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model) {
   }
 }
 
+// #define DEBUG_COLOR
+
 static int get_color(PDB_atom *a) {
   int color = a->bead_color;
   if (a->all_beads.size()) {
@@ -2391,6 +2498,20 @@ static int get_color(PDB_atom *a) {
     color = 0;
   }
   //  color = a->bead_number % 15;
+#if defined DEBUG_COLOR
+  color = 0;
+  if (a->chain == 1) {
+    color = 4;
+    if (a->exposed_code != 1) {
+      color = 6;
+    }
+  } else {
+    color = 1;
+    if (a->exposed_code != 1) {
+      color = 10;
+    }
+  }
+#endif
   return color;
 }
 
@@ -2936,6 +3057,7 @@ void US_Hydrodyn::load_pdb()
 	if (!filename.isEmpty())
 	{
 		lbl_pdb_file->setText(filename);
+#if defined(START_RASMOL)
 		QStringList argument;
 #if defined(BIN64)
 		argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
@@ -2950,6 +3072,7 @@ void US_Hydrodyn::load_pdb()
 			"Please check to make sure RASMOL is properly installed..."));
 			return;
 		}
+#endif
 		QFileInfo fi(filename);
 		project = fi.baseName();
 		cout << project << endl;

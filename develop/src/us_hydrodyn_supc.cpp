@@ -828,7 +828,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	initarray();
 
 	ppos = 1;
-	mppos = 3 * nat + 17;
+	mppos = (1 + 3 + 3) * nat + 17;
 	progress->setTotalSteps(mppos);
 	progress->setProgress(ppos++); // 1
 	qApp->processEvents();
@@ -883,6 +883,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #else
 	    printf("overlaps detected\n");
 	    supc_free_alloced();
+	    progress->setProgress(mppos); 
+	    qApp->processEvents();
 	    return US_HYDRODYN_SUPC_OVERLAPS_EXIST;
 #endif
 	    break;
@@ -2561,6 +2563,9 @@ riempimatrice()
     for (i = 0; i < nat; i++)
     {
 
+	progress->setProgress(ppos++);
+	qApp->processEvents();
+
 	printf("%s%d%s%d", "Iteration  ", i + 1, " of ", nat);
 	fflush(stdout);
 
@@ -2595,6 +2600,9 @@ choldc(int N)
 
     for (i = 0; i < 3 * N; i++)
     {
+
+	progress->setProgress(ppos++);
+	qApp->processEvents();
 
 	printf("%s%d%s%d", "Iteration  ", i + 1, " of ", 3 * N);
 	fflush(stdout);

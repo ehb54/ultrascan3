@@ -151,6 +151,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
 		int calc_somo(); // build bead model
 		int check_for_missing_atoms(QString *error_string, PDB_model *);
+		int overlap_check(bool sc, bool mc, bool buried); // check for overlaps
 		int compute_asa(); // calculate maximum accessible surface area
 		void show_asa();
 		void show_overlap();
