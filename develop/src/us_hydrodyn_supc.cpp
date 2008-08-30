@@ -284,6 +284,7 @@ static float *a = 0;		// [3 * NMAX][3 * NMAX];
 static int nmax;
 // static QApplication *qApp;
 static QProgressBar *progress;
+static QTextEdit *editor;
 static int ppos;
 static int mppos;
 
@@ -442,11 +443,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 		      hydro_options *hydro, 
 		      vector <PDB_atom> *bead_model, 
 		      char *filename,
-		      QProgressBar *use_progress)
+		      QProgressBar *use_progress,
+		      QTextEdit *use_editor)
 {
     progress = use_progress;
+    editor = use_editor;
 
     nmax = (int) bead_model->size();
+    
     supc_results = hydro_results;
     supc_results->total_beads = nmax;
     if (int retval = supc_alloc())
@@ -827,6 +831,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
 	initarray();
 
+	
 	ppos = 1;
 	mppos = (1 + 3 + 3) * nat + 17;
 	progress->setTotalSteps(mppos);
@@ -2560,6 +2565,8 @@ riempimatrice()
 
     printf("Cycle 1 of 3; model %d of %d\n\n", kkk, num);
 
+    editor->append("Supermatrix inversion Cycle 1 of 3\n");
+    qApp->processEvents();
     for (i = 0; i < nat; i++)
     {
 
@@ -2597,6 +2604,8 @@ choldc(int N)
     float sum;
 
     printf("Cycle 2 of 3; model %d of %d\n\n", kkk, num);
+    editor->append("Supermatrix inversion Cycle 2 of 3\n");
+    qApp->processEvents();
 
     for (i = 0; i < 3 * N; i++)
     {
@@ -3521,6 +3530,8 @@ inverti(int N)
     b1[0] = 1.0;
 
     printf("Cycle 3 of 3; model %d of %d\n\n", kkk, num);
+    editor->append("Supermatrix inversion Cycle 3 of 3\n");
+    qApp->processEvents();
 
     for (j = 1; j <= 3 * N; j++)
     {

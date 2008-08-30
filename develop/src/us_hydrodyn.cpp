@@ -560,14 +560,12 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 		if (!residue_list[lastResPos].r_atom[l].tmp_flag)
 		{
 		  errors_found++;
-		  if (errors_found < 20) {
-		    error_string->
-		      append(QString("").
-			     sprintf("missing atom molecule %d atom %s residue %s\n",
-				     j + 1, 
-				     residue_list[lastResPos].r_atom[l].name.ascii(), 
-				     residue_list[lastResPos].name.ascii()));
-		  }
+		  error_string->
+		    append(QString("").
+			   sprintf("missing atom molecule %d atom %s residue %s\n",
+				   j + 1, 
+				   residue_list[lastResPos].r_atom[l].name.ascii(), 
+				   residue_list[lastResPos].name.ascii()));
 		}
 	      }
 	    }
@@ -597,12 +595,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	     && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
 	{
 	  errors_found++;
-	  if (errors_found < 20) {
-	    error_string->append(QString("").sprintf("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-						     j + 1, k, this_atom->name.ascii(),
-						     this_atom->resName.ascii(),
-						     this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
-	  }
+	  error_string->append(QString("").sprintf("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+						   j + 1, k, this_atom->name.ascii(),
+						   this_atom->resName.ascii(),
+						   this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
 	}
       } else {
 	int atompos = -1;
@@ -626,12 +622,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	if (atompos == -1)
 	{
 	  errors_found++;
-	  if (errors_found < 20) {
-	    error_string->append(QString("").sprintf("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-						     j + 1, k, this_atom->name.ascii(),
-						     this_atom->resName.ascii(),
-						     this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
-	  }
+	  error_string->append(QString("").sprintf("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+						   j + 1, k, this_atom->name.ascii(),
+						   this_atom->resName.ascii(),
+						   this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
 	}
       }
     }
@@ -643,26 +637,19 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	if (!residue_list[lastResPos].r_atom[l].tmp_flag)
 	{
 	  errors_found++;
-	  if (errors_found < 20) 
-	  {
-	    error_string->
-	      append(QString("").
-		     sprintf("missing atom molecule %d atom %s residue %s\n",
-			     j + 1, 
-			     residue_list[lastResPos].r_atom[l].name.ascii(), 
-			     residue_list[lastResPos].name.ascii()));
-	  }
+	  error_string->
+	    append(QString("").
+		   sprintf("missing atom molecule %d atom %s residue %s\n",
+			   j + 1, 
+			   residue_list[lastResPos].r_atom[l].name.ascii(), 
+			   residue_list[lastResPos].name.ascii()));
 	}
       }
     }
   }
 
   if(error_string->length()) {
-    if (errors_found >= 20) {
-      error_string->
-	append(QString("%1 more errors present").arg(errors_found - 19));
-    }
-    return 1;
+    return errors_found;
   } else {
     return 0;
   }
@@ -753,26 +740,32 @@ int US_Hydrodyn::compute_asa()
 // run the surfracer code
   
         QString error_string = "";
+	progress->reset();
+	editor->setText(QString("Building the bead model for model %1\n").arg(current_model+1));
+	editor->append("Checking the pdb structure\n");
 	if (check_for_missing_atoms(&error_string, &model_vector[current_model])) {
-	  printError("US_SURFRACER encountered errors with your PDB structure:\n" + 
-		     error_string);
+	  editor->append("US_SURFRACER encountered the following errors with your PDB structure:\n" + 
+			 error_string);
+	  printError("US_SURFRACER encountered errors with your PDB structure:\n"
+		     "please check the text window");
 	  return -1;
 	}
+	editor->append("PDB structure ok\n");
+	editor->append("Computing ASA\n");
 
-	progress->reset();
 	int mppos = 18 + (asa.recheck_beads ? 1 : 0);
 	progress->setTotalSteps(mppos);
-	int ppos = 0;
-	progress->setProgress(ppos++); // 1
-	qApp->processEvents();
+	int ppos = 1;
 	progress->setProgress(ppos++); // 1
 	qApp->processEvents();
 
 	int retval = surfracer_main(&error_string, asa.probe_radius, residue_list, &model_vector[current_model]);
 	progress->setProgress(ppos++); // 2
 	qApp->processEvents();
+	editor->append("Return from Computing ASA\n");
 	if ( retval )
 	{
+	  editor->append("Errors found during ASA calculation\n");
 	  progress->setProgress(mppos);
 	  qApp->processEvents();
 		switch ( retval )
@@ -1570,6 +1563,7 @@ int US_Hydrodyn::compute_asa()
 #if defined(TIMING)
     gettimeofday(&start_tv, NULL);
 #endif
+    editor->append(QString("Begin popping stage %1\n").arg(k + 1));
     progress->setProgress(ppos++); // 9, 10, 11
     qApp->processEvents();
 
@@ -1736,6 +1730,7 @@ int US_Hydrodyn::compute_asa()
     write_bead_spt(QString("bead_model_pop-%1").arg(k), &bead_model);
     printf("stage %d beads popped %d\n", k, beads_popped);
     progress->setProgress(ppos++); // 12,13,14
+    editor->append(QString("Beads popped %1.\nBegin radial reduction stage %2\n").arg(beads_popped).arg(k + 1));
     qApp->processEvents();
 
 
@@ -2461,6 +2456,7 @@ int US_Hydrodyn::compute_asa()
   } // methods
   write_bead_tsv("bead_model_end.tsv", &bead_model);
   write_bead_spt("bead_model_end", &bead_model);
+  editor->append("Finished with popping and radial reduction\n");
   progress->setProgress(mppos - (asa.recheck_beads ? 1 : 0));
   qApp->processEvents();
 
@@ -2754,7 +2750,7 @@ void US_Hydrodyn::bead_check()
   tmp_model.molecule.push_back(tmp_chain);
   QString error_string = "";
   int retval = surfracer_main(&error_string, 
-			      //10,
+			      // 10,
 			      asa.probe_radius * 4,
 			      residue_list, &tmp_model, true);
   if ( retval ) {
@@ -2838,31 +2834,44 @@ int US_Hydrodyn::calc_somo()
 	  if (asa.recheck_beads)
 	    {
 	      // puts("recheck beads disabled");
+	      editor->append("Rechecking beads (not currently functional!\n");
+	      qApp->processEvents();
 	      
 	      bead_check();
+	      editor->append("Finished rechecking beads (not currently functional!\n");
 	      progress->setProgress(19);
+	    } else {
+	      editor->append("No rechecking of beads\n");
 	      qApp->processEvents();
 	    }
+
 	  // calculate bead model and generate hydrodynamics calculation output
 	  // if successful, enable follow-on buttons:
+	  editor->append("Build bead model completed\n\n");
+	  qApp->processEvents();
 	  pb_visualize->setEnabled(true);
 	  pb_calc_hydro->setEnabled(true);
 	}
+
 	return 0;
 }
 
 void US_Hydrodyn::calc_hydro()
 {
   puts("calc hydro (supc)");
+  editor->append("Begin hydrodynamic calculations\n");
   int retval = us_hydrodyn_supc_main(&results, 
 				     &hydro, 
 				     &bead_model, 
 				     "bead_model_end.beams",
-				     progress);
+				     progress,
+				     editor);
   printf("back from supc retval %d\n", retval);
   pb_show_hydro_results->setEnabled(retval ? false : true);
   if ( retval )
   {
+    editor->append("Calculate hydrodynamics failed\n\n");
+    qApp->processEvents();
       switch ( retval )
       {
       case US_HYDRODYN_SUPC_FILE_NOT_FOUND:
@@ -2898,7 +2907,8 @@ void US_Hydrodyn::calc_hydro()
 	}
       }
   }
-
+  editor->append("Calculate hydrodynamics completed\n\n");
+  qApp->processEvents();
 }
 
 void US_Hydrodyn::show_hydro_results()
@@ -3071,6 +3081,7 @@ void US_Hydrodyn::load_pdb()
 	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.pdb *.PDB", this);
 	if (!filename.isEmpty())
 	{
+            	int errors_found = 0;
 		lbl_pdb_file->setText(filename);
 #if defined(START_RASMOL)
 		QStringList argument;
@@ -3093,12 +3104,18 @@ void US_Hydrodyn::load_pdb()
 		cout << project << endl;
 		read_pdb(filename);
 		QString error_string = "";
+		editor->setText("");
 		for(unsigned int i = 0; i < model_vector.size(); i++) {
+		  editor->append(QString("Checking the pdb structure for model %1\n").arg(i+1));
 		  if (check_for_missing_atoms(&error_string, &model_vector[i])) {
-		    printError(QString("US_SURFRACER encountered errors with your PDB structure for model %1:\n").arg(i + 1) +
-			       error_string);
+		    errors_found++;
+		    editor->append(QString("US_SURFRACER encountered errors with your PDB structure for model %1:\n").
+				   arg(i + 1) + error_string);
+		    printError(QString("US_SURFRACER encountered errors with your PDB structure for model %1:\n").
+			       arg(i + 1) + "please check the text window");
 		  }
 		}
+		editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
 	}
 }
 
