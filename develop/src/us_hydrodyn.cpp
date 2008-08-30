@@ -271,6 +271,7 @@ void US_Hydrodyn::setupGUI()
 	file->insertItem( tr("Font"),  this, SLOT(update_font()),	 ALT+Key_F );
 	file->insertItem( tr("Save"),  this, SLOT(save()),	 ALT+Key_S );
 	file->insertItem( tr("Print"), this, SLOT(print()),	ALT+Key_P );
+	file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),	ALT+Key_X );
 	editor->setWordWrap (QTextEdit::WidgetWidth);
 	
 	int rows=7, columns = 3, spacing = 2, j=0, margin=4;
@@ -3226,6 +3227,11 @@ void US_Hydrodyn::save()
 		editor->setModified( false );
 		setCaption( fn );
 	}
+}
+
+void US_Hydrodyn::clear_display()
+{
+	editor->clear();
 }
 
 void US_Hydrodyn::update_font()

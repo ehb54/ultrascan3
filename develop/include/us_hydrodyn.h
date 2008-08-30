@@ -185,6 +185,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void save();
 		void print();
 		void update_font();
+		void clear_display();
 	
 
 	protected slots:
