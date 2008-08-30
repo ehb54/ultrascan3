@@ -41,7 +41,7 @@ static int atomnumber;
 static int calcmode;
 
 #define MAXCYCLES 40
-#define DEBUGMSG
+// #define DEBUGMSG
 
 static void dbg(char *s) {
 #if defined(DEBUGMSG)
