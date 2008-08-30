@@ -271,14 +271,7 @@ void US_Hydrodyn::setupGUI()
 	file->insertItem( tr("Font"),  this, SLOT(update_font()),	 ALT+Key_F );
 	file->insertItem( tr("Save"),  this, SLOT(save()),	 ALT+Key_S );
 	file->insertItem( tr("Print"), this, SLOT(print()),	ALT+Key_P );
-	/*
-	ft.setFamily("Courier");
-	ft.setPointSize(11);
-	ft.setBold(true);
-	editor->setFont(ft);
-	*/
 	editor->setWordWrap (QTextEdit::WidgetWidth);
-	editor->setText("aiosdfy asdi vhauidv hasdui vhasd;iuvhasdiuv hasduiv hasdviu hasdiupvh asdviu hasdfiuv hasuif vhaslfdiuv hasldui fhgaslvu hfasldvu ghasliuv gasel ufgvasl;uivgf asleui gfvalsuieg fvalieu gfvawleugfv");
 	
 	int rows=7, columns = 3, spacing = 2, j=0, margin=4;
 	QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
