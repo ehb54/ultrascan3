@@ -41,7 +41,7 @@ static int atomnumber;
 static int calcmode;
 
 #define MAXCYCLES 40
-// #define DEBUGMSG
+#define DEBUGMSG
 
 static void dbg(char *s) {
 #if defined(DEBUGMSG)
@@ -1012,7 +1012,8 @@ buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nv
 	    cycmin = 0;
 	    pflag = 0;
 	    for (ii = 0; ii <= nve - 1; ii++)
-		if (cycles[icycle][p] != verte[ii])
+		if (cycles[icycle][p] != verte[ii] &&
+		    verte[ii] != -1) // emre?
 		    if (fabs(ver[cycles[icycle][p] * 3] - ver[verte[ii] * 3]) <
 			1.e-6
 			&& fabs(ver[cycles[icycle][p] * 3 + 1] -
@@ -1335,6 +1336,17 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
     clock_t end1;
     clock_t start2;
     // clock_t end2;
+
+    memset(cycles, MAXCYCLES * MAXCYCLES * sizeof(int), 0);
+    memset(common, MAXCYCLES * MAXCYCLES * sizeof(int), 0);
+    memset(respect, MAXCYCLES * MAXCYCLES * sizeof(int), 0);
+    memset(hits,  MAXCYCLES * sizeof(int), 0);
+    memset(nvincyc,  MAXCYCLES * sizeof(int), 0);
+
+    memset(verte, MAXCYCLES * 3 * sizeof(float), 0);
+    memset(uconij, 10000 * 3 * sizeof(float), 0);
+    memset(tconij, 10000 * 3 * sizeof(float), 0);
+    memset(dist2ij, 10000 * sizeof(float), 0);
 
 #if defined(US_SURFRACER_COMPUTE_EXTRAS)
     int cavn;
