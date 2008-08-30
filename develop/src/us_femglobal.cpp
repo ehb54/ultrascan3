@@ -104,7 +104,7 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv,
 		}
 	}
 	if (offset) // we are given an offset position to start in the string
-	{ 
+	{
 	    pos = offset;
 	}
 	pos++; // FE, SA2D, COFS, SIM or GA
@@ -462,7 +462,7 @@ int US_FemGlobal::write_modelSystem(struct ModelSystem *ms, QString filename, bo
 	ts << "SIM" << "\n";
 	ts << "Model written by US_FEMGLOBAL\n";
 	ts << "# This file is computer-generated, please do not edit unless you know what you are doing\n";
-#if defined(USE_MPI) 
+#if defined(USE_MPI)
 	ts << US_Version_string << "\t\t# UltraScan Version Number\n";
 #else
 	ts << US_Version << "\t\t# UltraScan Version Number\n";
@@ -783,7 +783,7 @@ int US_FemGlobal::read_experiment(struct ModelSystem *ms, struct SimulationParam
 	QFile f;
 	f.setName(filename);
 	printf("trying to open %s\n", filename.ascii());
-	if (f.open(IO_ReadOnly))
+	if (filename.contains("us_system") && f.open(IO_ReadOnly))
 	{
 		QTextStream ts(&f);
 		ts >> str;
@@ -793,17 +793,41 @@ int US_FemGlobal::read_experiment(struct ModelSystem *ms, struct SimulationParam
 		f.close();
 		if (flag1 < 0)
 		{
+			cerr << filename << ", couldn't read simulation parameters..."<<endl;
 			return (flag1);
 		}
 		if (flag2 < 0)
 		{
+			cerr << filename << ", couldn't read models..."<<endl;
+			return (flag2);
+		}
+		return(0);
+	}
+	else if (filename.contains("model") && f.open(IO_ReadOnly))
+	{
+		QFileInfo fi(filename);
+#ifdef WIN32
+		str = fi.dirPath() + "\\" + fi.baseName() + "." + fi.fileName().right(2) + ".simulation_parameters";
+#else
+		str = fi.dirPath() + "/" + fi.baseName() + "." + fi.fileName().right(2) + ".simulation_parameters";
+#endif
+		flag1 = read_simulationParameters(sp, str);
+		flag2 = read_modelSystem(ms, filename);
+		if (flag1 < 0)
+		{
+			cerr << filename << ", couldn't read simulation parameters..."<<endl;
+			return (flag1);
+		}
+		if (flag2 < 0)
+		{
+			cerr << filename << ", couldn't read models..."<<endl;
 			return (flag2);
 		}
 		return(0);
 	}
 	else
 	{
-		return(-1); // can't read input file
+		return(-200); // can't read input file
 	}
 }
 
@@ -814,7 +838,7 @@ int US_FemGlobal::read_experiment(vector <struct ModelSystem> *vms, struct Simul
 	QFile f;
 	f.setName(filename);
 	printf("trying to open %s\n", filename.ascii());
-	if (f.open(IO_ReadOnly) && filename.contains("us_system"))
+	if (filename.contains("us_system") && f.open(IO_ReadOnly))
 	{
 		QTextStream ts(&f);
 		ts >> str;
@@ -834,10 +858,14 @@ int US_FemGlobal::read_experiment(vector <struct ModelSystem> *vms, struct Simul
 		}
 		return(0);
 	}
-	else if (f.open(IO_ReadOnly) && filename.contains("model"))
+	else if (filename.contains("model") && f.open(IO_ReadOnly))
 	{
 		QFileInfo fi(filename);
-		cout << fi.absFilePath() << endl;
+#ifdef WIN32
+		str = fi.dirPath() + "\\" + fi.baseName() + "." + fi.fileName().right(2) + ".simulation_parameters";
+#else
+		str = fi.dirPath() + "/" + fi.baseName() + "." + fi.fileName().right(2) + ".simulation_parameters";
+#endif
 		flag1 = read_simulationParameters(sp, str);
 		flag2 = read_modelSystem(vms, filename);
 		if (flag1 < 0)
@@ -1116,7 +1144,7 @@ int US_FemGlobal::read_model_data(vector <mfem_data> *model, QString filename, b
   struct mfem_data temp_model;
   struct mfem_scan temp_scan;
   vector <double> concentration;
-  
+
   unsigned int i;
   unsigned int j;
   unsigned int k;
@@ -1165,7 +1193,7 @@ int US_FemGlobal::read_model_data(vector <mfem_data> *model, QString filename, b
     ds >> temp_model.vbar20;
     ds >> temp_model.avg_temperature;
 #if defined(DEBUG_HYDRO)
-			
+
     printf("model time %g avg_temp %.12g vbar %.12g vbar20 %.12g visc %.12g density %.12g\n",
 	   temp_model.scan[temp_model.scan.size()-1].time,
 	   temp_model.avg_temperature,
@@ -1246,7 +1274,7 @@ int US_FemGlobal::write_model_data(vector <mfem_data> *model, QString filename) 
   return 0;
 }
 
-int US_FemGlobal::accumulate_model_monte_carlo_data(vector <mfem_data> *accumulated_model, vector <mfem_data> *source_model, unsigned int monte_carlo_iterations) 
+int US_FemGlobal::accumulate_model_monte_carlo_data(vector <mfem_data> *accumulated_model, vector <mfem_data> *source_model, unsigned int monte_carlo_iterations)
 {
   if (!monte_carlo_iterations)
   {
@@ -1254,13 +1282,13 @@ int US_FemGlobal::accumulate_model_monte_carlo_data(vector <mfem_data> *accumula
     monte_carlo_iterations = 1;
   }
 
-  if ((*accumulated_model).size() && 
-      (*accumulated_model).size() != (*source_model).size()) 
+  if ((*accumulated_model).size() &&
+      (*accumulated_model).size() != (*source_model).size())
   {
     cout << "Internal Error: US_FemGlobal::accumulate_model_monte_carlo_data model size incompability\n";
     return (-2);
   }
-  
+
   unsigned int i;
   unsigned int j;
   unsigned int k;
@@ -1285,17 +1313,17 @@ int US_FemGlobal::accumulate_model_monte_carlo_data(vector <mfem_data> *accumula
 
   for (i=0; i<(*source_model).size(); i++)
   {
-    if ((*accumulated_model)[i].scan.size() != (*source_model)[i].scan.size()) 
+    if ((*accumulated_model)[i].scan.size() != (*source_model)[i].scan.size())
     {
       cout << "Internal Error: US_FemGlobal::accumulate_model_monte_carlo_data scan size incompability\n";
       return (-3);
     }
-    if ((*accumulated_model)[i].radius.size() != (*source_model)[i].radius.size()) 
+    if ((*accumulated_model)[i].radius.size() != (*source_model)[i].radius.size())
     {
       cout << "Internal Error: US_FemGlobal::accumulate_model_monte_carlo_data radius size incompability\n";
       return (-4);
     }
-    if ((*accumulated_model)[i].radius != (*source_model)[i].radius) 
+    if ((*accumulated_model)[i].radius != (*source_model)[i].radius)
     {
       cout << "Internal Error: US_FemGlobal::accumulate_model_monte_carlo_data radius value incompability\n";
       return (-5);
@@ -1316,7 +1344,7 @@ int US_FemGlobal::read_mwl_model_data(vector <mfem_data> *model, QString filenam
   unsigned int i;
   unsigned int no_of_models_loaded = 0;
   vector <mfem_data> temp_model;
-  for (i = 0; i < 2048; i++) 
+  for (i = 0; i < 2048; i++)
   {
     if (!read_model_data(&temp_model, filenamebase + QString("-model-%1.dat").arg(i), true))
     {
@@ -1326,4 +1354,4 @@ int US_FemGlobal::read_mwl_model_data(vector <mfem_data> *model, QString filenam
   }
   return no_of_models_loaded;
 }
- 
+
