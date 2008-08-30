@@ -899,47 +899,44 @@ void US_ExpData_DB::add_db( void )
 	QProgressDialog* pd_add = progressdialog( "Waiting for DB...", "pd_add", 4 );
 
 	pd_add->setMinimumDuration( 0 );
-	pd_add->setProgress( 0 );
+	pd_add->setProgress       ( 0 );
+	qApp->processEvents();
 	
-	bool flg1;
-	QString str, STR;
-	QSqlQuery target1;
+	QSqlQuery query;
 	
-	STR  = "UPDATE tblExpData SET ";
-	STR += "Invid = '"       + QString::number(exp_info.Invid)       + "', ";
-	STR += "Temperature = '" + QString::number(exp_info.Temperature) + "', ";
-	STR += "Duration = '"    + QString::number(exp_info.Duration)    + "', "; 
-	STR += "Edit_type = '"   + QString::number(exp_info.Edit_type)   + "', ";
-	STR += "Rotor = '"       + QString::number(exp_info.Rotor)       + "', ";
-	STR += "Path = '"        + exp_info.Path                         + "', ";
-	STR += "Date = '"        + exp_info.Date                         + "', ";
-	STR += "Runid = '"       + exp_info.Runid                        + "', ";
+	QString q = "UPDATE tblExpData SET ";
+	 + "Invid = '"       + QString::number(exp_info.Invid)       + "', ";
+	 + "Temperature = '" + QString::number(exp_info.Temperature) + "', ";
+	 + "Duration = '"    + QString::number(exp_info.Duration)    + "', "; 
+	 + "Edit_type = '"   + QString::number(exp_info.Edit_type)   + "', ";
+	 + "Rotor = '"       + QString::number(exp_info.Rotor)       + "', ";
+	 + "Path = '"        + exp_info.Path                         + "', ";
+	 + "Date = '"        + exp_info.Date                         + "', ";
+	 + "Runid = '"       + exp_info.Runid                        + "', ";
 	
 	for ( int i = 0; i < 8; i++ )
 	{	
 		if ( exp_info.CellID[ i ] > 0 )
 		{
-			STR += "Cell" + QString::number( i + 1 ) + " = '" 
-			    + exp_info.Cell[ i ] + "', ";
+			q += "Cell" + QString::number( i + 1 ) + " = '" 
+			  + exp_info.Cell[ i ] + "', ";
 
-			STR += "Cell" + QString::number( i + 1 ) + "ID = '" 
-			    + QString::number( exp_info.CellID[ i ]) + "', ";
+			q += "Cell" + QString::number( i + 1 ) + "ID = '" 
+			  + QString::number( exp_info.CellID[ i ]) + "', ";
 		}
 	}
 
-	STR += "Description= '"      + exp_info.Description + "' ";
-	STR += "WHERE ExpdataID = '" + QString::number( exp_info.ExpdataID) + "';";
+	q += "Description= '"      + exp_info.Description + "' "
+	  +  "WHERE ExpdataID = '" + QString::number( exp_info.ExpdataID) + "';";
 	
-	flg1 = target1.exec(STR);
-	
-	if ( ! flg1 )
+	if ( ! query.exec( q ) )
 	{
-		QSqlError sqlerr = target1.lastError();
+		QSqlError sqlerr = query.lastError();
 		QMessageBox::message(
 			tr( "Attention:" ), 
 			tr( "Saving to DB table 'tblExpData' failed.\n"
 			    "Attempted to execute this command:\n\n"
-			    + STR + "\n\n"
+			    + q + "\n\n"
 			    "Causing the following error:\n\n")
 			    + sqlerr.text());
 
@@ -951,10 +948,12 @@ void US_ExpData_DB::add_db( void )
 	US_Tar  tar;
 	US_Gzip gzip;
 
-	chdir( exp_info.Path.latin1() );
+	QString dataDir = USglobal->config_list.data_dir + "/";
+
+	chdir( dataDir.latin1() );
 
 	QString tarfile = exp_info.Runid + "_rawdata.tar";
-	QString files   = exp_info.Runid;
+	QString files   = exp_info.Runid;  // A directory
 
 	int ret = tar.create( tarfile, files );
 
@@ -962,7 +961,8 @@ void US_ExpData_DB::add_db( void )
 	{
 		QMessageBox::message(
 			tr( "UltraScan tar Error:" ),
-			tr( tar.explain( ret ) ) );
+			tr( tar.explain( ret ) ) + "\n" 
+			"Files:" +  dataDir + files );
 
 		return;
 	}
@@ -974,7 +974,7 @@ void US_ExpData_DB::add_db( void )
 		QMessageBox::message(
 			tr( "UltraScan Error:" ),
 			tr( "Unable to compress raw data tar archive.\n" +
-			tarfile ) );
+			dataDir+ tarfile ) );
 
 		return;
 	}
@@ -992,16 +992,14 @@ void US_ExpData_DB::add_db( void )
 	{
 		QMessageBox::message(
 			tr( "Error:" ),
-			tr( "Saving file: " ) + str + "\n"
+			tr( "Saving file: " ) + targzfile + "\n"
 			+ tr( "to DB table 'tblRawExpData' failed.\n" ) );
 
 		QFile::remove( targzfile );
 		return;
 	}
 
-	int result = cursor.insert();
-	
-	if ( result <= 0 )
+	if ( cursor.insert() <= 0 )
 	{
 		QSqlError err = cursor.lastError();
 		QMessageBox::message(
@@ -1016,10 +1014,11 @@ void US_ExpData_DB::add_db( void )
 
 	lb_query->clear();
 
-	str.sprintf( "ExpData (ID:%d) has been saved to the database. ", 
+	QString msg;
+	msg.sprintf( "ExpData (ID:%d) has been saved to the database. ", 
 			exp_info.ExpdataID );
 	
-	lb_query->insertItem( str );
+	lb_query->insertItem( msg );
 	lb_query->insertItem( "************************************************" );
 	lb_query->insertItem( "If you want to change any selected item," );
 	lb_query->insertItem( "you will have to delete the existing entry first," );

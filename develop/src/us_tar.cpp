@@ -925,7 +925,7 @@ QString US_Tar::explain( const int error )
 			break;
 
 		case TAR_CANTSTAT:
-			explanation = "Could not determine the input file metadata." ;
+			explanation = "Could not determine the input file status." ;
 			break;
 
 		case TAR_FILENAMETOOLONG:
