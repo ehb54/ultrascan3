@@ -260,13 +260,35 @@ void US_Hydrodyn::setupGUI()
 	progress->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	progress->reset();
 
-	int rows=7, columns = 4, spacing = 2, j=0, margin=4;
+	editor = new QTextEdit(this);
+	editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	editor->setReadOnly(true);
+	editor->setMinimumWidth(500);
+	m = new QMenuBar(this, "menu" );
+	m->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	QPopupMenu * file = new QPopupMenu();
+	m->insertItem( tr("&File"), file );
+	file->insertItem( tr("Font"),  this, SLOT(update_font()),	 ALT+Key_F );
+	file->insertItem( tr("Save"),  this, SLOT(save()),	 ALT+Key_S );
+	file->insertItem( tr("Print"), this, SLOT(print()),	ALT+Key_P );
+	/*
+	ft.setFamily("Courier");
+	ft.setPointSize(11);
+	ft.setBold(true);
+	editor->setFont(ft);
+	*/
+	editor->setWordWrap (QTextEdit::WidgetWidth);
+	editor->setText("aiosdfy asdi vhauidv hasdui vhasd;iuvhasdiuv hasduiv hasdviu hasdiupvh asdviu hasdfiuv hasuif vhaslfdiuv hasldui fhgaslvu hfasldvu ghasliuv gasel ufgvasl;uivgf asleui gfvalsuieg fvalieu gfvawleugfv");
+	
+	int rows=7, columns = 3, spacing = 2, j=0, margin=4;
 	QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
 	background->addMultiCellWidget(lbl_tabletabs, j, j, 0, 1);
+	background->addWidget(m, j, 2);
 	j++;
 	background->addWidget(pb_hybrid, j, 0);
 	background->addWidget(pb_atom, j, 1);
+	background->addMultiCellWidget(editor, j, j+17, 2, 2);
 	j++;
 	background->addWidget(pb_residue, j, 0);
 	j++;
@@ -3174,6 +3196,66 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 	lb_model->setEnabled(true);
 	lb_model->setSelected(0, true);
 	current_model = 0;
+}
+
+void US_Hydrodyn::save()
+{
+	QString fn;
+	fn = QFileDialog::getSaveFileName(QString::null, QString::null,this );
+	if(!fn.isEmpty() )
+	{
+		QString text = editor->text();
+		QFile f( fn );
+		if ( !f.open( IO_WriteOnly | IO_Translate) )
+		{
+			return;
+		}
+		QTextStream t( &f );
+		t << text;
+		f.close();
+		editor->setModified( false );
+		setCaption( fn );
+	}
+}
+
+void US_Hydrodyn::update_font()
+{
+	bool ok;
+	QFont newFont;
+	newFont = QFontDialog::getFont( &ok, ft, this );
+	if ( ok )
+	{
+		ft = newFont;
+	}
+	editor->setFont(ft);
+}
+
+void US_Hydrodyn::print()
+{
+	const int MARGIN = 10;
+	printer.setPageSize(QPrinter::Letter);
+
+	if ( printer.setup(this) ) {		// opens printer dialog
+		QPainter p;
+		p.begin( &printer );			// paint on printer
+		p.setFont(editor->font() );
+		int yPos		= 0;			// y position for each line
+		QFontMetrics fm = p.fontMetrics();
+		QPaintDeviceMetrics metrics( &printer ); // need width/height
+											 // of printer surface
+		for( int i = 0 ; i < editor->lines() ; i++ ) {
+			if ( MARGIN + yPos > metrics.height() - MARGIN ) {
+				printer.newPage();		// no more room on this page
+				yPos = 0;			// back to top of page
+			}
+			p.drawText( MARGIN, MARGIN + yPos,
+							metrics.width(), fm.lineSpacing(),
+							ExpandTabs | DontClip,
+							editor->text( i ) );
+			yPos = yPos + fm.lineSpacing();
+		}
+		p.end();				// send job to printer
+	}
 }
 
 void US_Hydrodyn::clear_temp_chain(struct PDB_chain *temp_chain) // clear all the memory from the vectors in temp_chain

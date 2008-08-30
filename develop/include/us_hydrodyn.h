@@ -15,6 +15,10 @@
 #include <qprogressbar.h>
 #include <qprocess.h>
 #include <qdir.h>
+#include <qtextedit.h>
+#include <qmenubar.h>
+#include <qpopupmenu.h>
+#include <qprinter.h>
 
 #include "us.h"
 #include "us_extern.h"
@@ -56,6 +60,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 				hydro_widget,
 				results_widget,
 				misc_widget;
+		QMenuBar *m;
+		QPrinter printer;
+		QFont ft;
 
 		bool create_beads_normally;             // true = normal, false = atoms are beads
 		unsigned int current_model;
@@ -85,6 +92,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QLabel *lbl_somo;
 
 		QLineEdit *le_bead_model_file;
+		
 
 		QPushButton *pb_save;
 		QPushButton *pb_reset;
@@ -107,6 +115,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QPushButton *pb_show_hydro_results;
 
 		QProgressBar *progress;
+		QTextEdit *editor;
 
 		QListBox *lb_model;
 
@@ -171,6 +180,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void write_bead_spt(QString, vector <PDB_atom> *);
 		void printError(const QString &);
 		void closeAttnt(QProcess *, QString);
+
+		// editor functions:
+		void save();
+		void print();
+		void update_font();
+		void append(const QString &);
+	
 
 	protected slots:
 

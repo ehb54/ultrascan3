@@ -814,7 +814,7 @@ int US_FemGlobal::read_experiment(vector <struct ModelSystem> *vms, struct Simul
 	QFile f;
 	f.setName(filename);
 	printf("trying to open %s\n", filename.ascii());
-	if (f.open(IO_ReadOnly))
+	if (f.open(IO_ReadOnly) && filename.contains("us_system"))
 	{
 		QTextStream ts(&f);
 		ts >> str;
@@ -822,6 +822,24 @@ int US_FemGlobal::read_experiment(vector <struct ModelSystem> *vms, struct Simul
 		ts >> str;
 		flag2 = read_modelSystem(vms, str);
 		f.close();
+		if (flag1 < 0)
+		{
+			cerr << filename << ", couldn't read simulation parameters..."<<endl;
+			return (flag1);
+		}
+		if (flag2 < 0)
+		{
+			cerr << filename << ", couldn't read models..."<<endl;
+			return (flag2);
+		}
+		return(0);
+	}
+	else if (f.open(IO_ReadOnly) && filename.contains("model"))
+	{
+		QFileInfo fi(filename);
+		cout << fi.absFilePath() << endl;
+		flag1 = read_simulationParameters(sp, str);
+		flag2 = read_modelSystem(vms, filename);
 		if (flag1 < 0)
 		{
 			cerr << filename << ", couldn't read simulation parameters..."<<endl;
