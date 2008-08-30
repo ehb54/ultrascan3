@@ -32,6 +32,8 @@ class US_EXTERN US_ExpData_DB : public US_DB_Widgets
 		US_ExpData_DB( QWidget* parent = 0, const char* name = "us_tblexpdata" );
 		~US_ExpData_DB();
 
+		static void cleanDir( const QString& );
+
 	private:
 
 		QPushButton*     pb_run;

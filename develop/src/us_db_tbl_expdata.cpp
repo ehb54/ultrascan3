@@ -890,16 +890,16 @@ void US_ExpData_DB::add_db( void )
 	{
 		QMessageBox::message(
 			tr( "Attention:" ),
-			tr( "Some cell datatables are still incomplete,\n"
+			tr( "Some cell data tables are still incomplete,\n"
 			    "please finish all cell data entries before saving." ) );
 
 		return;
 	}
-	
-	QProgressDialog* pd_add = progressdialog( "Waiting for DB...", "pd_add", 4 );
 
-	pd_add->setMinimumDuration( 0 );
-	pd_add->setProgress       ( 0 );
+	QProgressDialog* pd = progressdialog( "Waiting for DB...", "pd", 5 );
+
+	pd->setMinimumDuration( 0 );
+	pd->setProgress       ( 0 );
 	qApp->processEvents();
 	
 	QSqlQuery query;
@@ -931,6 +931,9 @@ void US_ExpData_DB::add_db( void )
 	
 	if ( ! query.exec( q ) )
 	{
+		pd->close();
+		delete pd;
+
 		QSqlError sqlerr = query.lastError();
 		QMessageBox::message(
 			tr( "Attention:" ), 
@@ -942,15 +945,39 @@ void US_ExpData_DB::add_db( void )
 
 		return;
 	}
-		
-	// tar raw data directory
+	
+	// Copy data to tmp dir
+  pd->setLabelText( "Copying files to temporary directory..." );
+	pd->setProgress( 1 );
+	qApp->processEvents();
+
+	QString tmpDir  = USglobal->config_list.tmp_dir  + "/";
+	QString dataDir = USglobal->config_list.data_dir + "/";
+	cleanDir( tmpDir );
+	
+	QDir d( tmpDir );
+	d.mkdir( QString( exp_info.Runid ) );
+
+	QDir source( exp_info.Path, "*.*" );
+	QStringList tmpFiles = source.entryList();
+
+	QStringList::Iterator it;
+	for ( it = tmpFiles.begin(); it != tmpFiles.end(); ++it )
+	{
+		if ( *it == "."  ||  *it == ".." ) continue;
+
+		copy(           exp_info.Path  + "/" + *it, 
+		      tmpDir  + exp_info.Runid + "/" + *it );
+	}
+
+  pd->setLabelText( "Creating raw data tarfile..." );
+	pd->setProgress( 2 );
+	qApp->processEvents();
 	
 	US_Tar  tar;
 	US_Gzip gzip;
 
-	QString dataDir = USglobal->config_list.data_dir + "/";
-
-	chdir( dataDir.latin1() );
+	chdir( tmpDir.latin1() );
 
 	QString tarfile = exp_info.Runid + "_rawdata.tar";
 	QString files   = exp_info.Runid;  // A directory
@@ -959,27 +986,41 @@ void US_ExpData_DB::add_db( void )
 
 	if ( ret != TAR_OK )
 	{
+		pd->close();
+		delete pd;
+
 		QMessageBox::message(
 			tr( "UltraScan tar Error:" ),
 			tr( tar.explain( ret ) ) + "\n" 
-			"Files:" +  dataDir + files );
+			"Files:" +  tmpDir + files );
 
+		cleanDir( tmpDir );
 		return;
 	}
 
 	// Compress raw data tar file
+  pd->setLabelText( "Compressing raw data tarfile..." );
+	pd->setProgress( 3 );
+	qApp->processEvents();
 
 	if ( gzip.gzip( tarfile ) != TAR_OK )
 	{
+		pd->close();
+		delete pd;
+
 		QMessageBox::message(
 			tr( "UltraScan Error:" ),
 			tr( "Unable to compress raw data tar archive.\n" +
-			dataDir+ tarfile ) );
+			tmpDir + tarfile ) );
 
+		cleanDir( tmpDir );
 		return;
 	}
 
 	// Insert compressed file into tblRawExpData
+  pd->setLabelText( "Uploading raw data tarfile..." );
+	pd->setProgress( 4 );
+	qApp->processEvents();
 
 	QSqlCursor cursor( "tblRawExpData" );
 	cursor.setMode( QSqlCursor::Insert );
@@ -990,17 +1031,23 @@ void US_ExpData_DB::add_db( void )
 	QString targzfile = tarfile + ".gz";
 	if ( ! write_blob( targzfile, buffer, "RawData" ) )
 	{
+		pd->close();
+		delete pd;
+
 		QMessageBox::message(
 			tr( "Error:" ),
 			tr( "Saving file: " ) + targzfile + "\n"
 			+ tr( "to DB table 'tblRawExpData' failed.\n" ) );
 
-		QFile::remove( targzfile );
+		cleanDir ( tmpDir );
 		return;
 	}
 
 	if ( cursor.insert() <= 0 )
 	{
+		pd->close();
+		delete pd;
+
 		QSqlError err = cursor.lastError();
 		QMessageBox::message(
 			tr( "Attention:" ), 
@@ -1008,9 +1055,14 @@ void US_ExpData_DB::add_db( void )
 			    "Error message from MySQL:\n\n" )
 			     + err.text() );
 
-		QFile::remove( targzfile );
+		cleanDir ( tmpDir );
 		return;
 	}
+
+	// Clean up
+	pd->close();
+	delete pd;
+	cleanDir ( tmpDir );
 
 	lb_query->clear();
 
@@ -1023,10 +1075,34 @@ void US_ExpData_DB::add_db( void )
 	lb_query->insertItem( "If you want to change any selected item," );
 	lb_query->insertItem( "you will have to delete the existing entry first," );
 	lb_query->insertItem( "or you can create a new database Entry" );
-
-	// Delete the .tar.gz file
-	QFile::remove( targzfile );
 }
+
+
+void US_ExpData_DB::cleanDir( const QString& dir )
+{
+	QDir        current( dir, "*.* *" );
+	QStringList entries = current.entryList();
+	QFileInfo   f;
+
+	QStringList::Iterator it;
+	for ( it = entries.begin(); it != entries.end(); ++it )
+	{
+		if ( *it == "." || *it == ".." ) continue;
+		
+		QString path = dir + "/" + *it;
+
+		f.setFile( path );
+
+		if ( f.isDir() )
+		{
+			cleanDir( path );
+			current.rmdir( *it );
+		}
+		else
+			QFile::remove( path );
+	}
+}
+
 
 /*!  List experimental data stored in DB table: <tt>tblExpData</tt>.  */
 void US_ExpData_DB::query_db()
@@ -1199,6 +1275,7 @@ void US_ExpData_DB::sel_query( int item )
 
 			pd->setProgress       ( 0 );
 			pd->setMinimumDuration( 0 );
+			qApp->processEvents();
 
 			QString targzfile = exp_info.Runid + "_rawdata.tar.gz";
 			QString filename  = make_tempFile( dataDir, targzfile );
@@ -1241,8 +1318,16 @@ void US_ExpData_DB::sel_query( int item )
 		  qApp->processEvents();
 
 			US_Tar  tar;
-			QString tarfile =  exp_info.Runid + ".tar";
-			int     ret;
+
+			// Sometimes the extracted file is .tar and sometimes _rawdata.tar
+			QString tarfile =  exp_info.Runid + "_rawdata.tar";
+			QDir tf( dataDir + tarfile );
+			if ( ! tf.exists() ) 
+			{
+				tarfile = exp_info.Runid + ".tar";
+			}
+
+			int ret;
 
 			if ( ( ret = tar.extract( tarfile ) ) != GZIP_OK )
 			{
