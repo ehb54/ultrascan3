@@ -3016,6 +3016,7 @@ void US_Hydrodyn::select_residue_file()
 				ts >> new_residue.asa;
 				ts >> numatoms;
 				ts >> numbeads;
+				ts >> new_residue.vbar;
 				ts.readLine(); // read rest of line
 				new_residue.r_atom.clear();
 				new_residue.r_bead.clear();
@@ -3140,12 +3141,14 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 	QString str1, str2, temp;
 	model_vector.clear();
 	bead_model.clear();
+	unsigned int last_resSeq = 0; // keeps track of residue sequence number, initialize to zero, first real one will be "1"
 	struct PDB_chain temp_chain;
 	QFile f(filename);
 	struct PDB_model temp_model;
 	bool chain_flag = false;
 	bool model_flag = false;
 	temp_model.molecule.clear();
+	temp_model.residue.clear();
 	clear_temp_chain(&temp_chain);
 	if (f.open(IO_ReadOnly))
 	{
@@ -3159,11 +3162,15 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 				str2 = str1.mid(6, 15);
 				temp_model.model_id = str2.toUInt();
 				chain_flag = false; // we are starting a new molecule
+				temp_model.molecule.clear();
+				temp_model.residue.clear();
+				clear_temp_chain(&temp_chain);
 			}
 			if (str1.left(6) == "ENDMDL") // we need to save the previously recorded molecule
 			{
-				temp_model.molecule.push_back(temp_chain);
-				model_vector.push_back(temp_model);
+				temp_model.molecule.push_back(temp_chain); // add the last chain of this model
+				calc_vbar(&temp_model); // update the calculated vbar for this model
+				model_vector.push_back(temp_model); // save the model in the model vector.
 				clear_temp_chain(&temp_chain); // we are done with this molecule and can delete it
 			}
 			if (str1.left(4) == "ATOM" || str1.left(6) == "HETATM") // need to add TER
@@ -3186,7 +3193,10 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 						temp_chain.segID = str2.stripWhiteSpace();
 					}
 				}
-				assign_atom(str1, &temp_chain); // parse the current line and add it to temp_chain
+				if (assign_atom(str1, &temp_chain, &last_resSeq)) // parse the current line and add it to temp_chain
+				{ // if true, we have new residue and need to add it to the residue vector
+					temp_model.residue.push_back(current_residue); // add the next residue of this model
+				}
 			}
 		}
 		f.close();
@@ -3195,7 +3205,13 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 	if(!model_flag)	// there were no model definitions, just a single molecule,
 	{						// we still need to save the results
 		temp_model.molecule.push_back(temp_chain);
+		cout << "Protein sequence: " << endl;
+		for (unsigned int m=0; m<temp_model.residue.size(); m++ )
+		{
+			//cout << temp_model.residue[m].name << endl;
+		}
 		temp_model.model_id = 1;
+		calc_vbar(&temp_model); // update the calculated vbar for this model
 		model_vector.push_back(temp_model);
 		clear_temp_chain(&temp_chain);
 	}
@@ -3207,6 +3223,24 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 	lb_model->setEnabled(true);
 	lb_model->setSelected(0, true);
 	current_model = 0;
+}
+
+void US_Hydrodyn::calc_vbar(struct PDB_model *model)
+{
+	float mw_vbar_sum = 0.0;
+	float mw_sum = 0.0;
+	float mw;
+	for (unsigned int i=0; i<(*model).residue.size(); i++)
+	{
+		mw = 0.0;
+		for (unsigned int j=0; j<(*model).residue[i].r_atom.size(); j++)
+		{
+			mw += (*model).residue[i].r_atom[j].hybrid.mw;
+		}
+		mw_sum += mw;
+		mw_vbar_sum += mw * (*model).residue[i].vbar; 
+	}
+	(*model).vbar = (mw_vbar_sum/mw_sum) - 0.002125;
 }
 
 void US_Hydrodyn::save()
@@ -3281,7 +3315,7 @@ void US_Hydrodyn::clear_temp_chain(struct PDB_chain *temp_chain) // clear all th
 	(*temp_chain).segID = "";
 }
 
-void US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain)
+bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain, unsigned int *last_resSeq)
 {
 /*
 http://www.rcsb.org/pdb/docs/format/pdbguide2.2/part_11.html
@@ -3307,6 +3341,7 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 79 - 80        LString(2)      charge        Charge on the atom.
 */
 	QString str2;
+	bool flag;
 	struct PDB_atom temp_atom;
 	str2 = str1.mid(6, 5);
 	temp_atom.serial = str2.toUInt();
@@ -3322,7 +3357,15 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 
 	str2 = str1.mid(22, 4);
 	temp_atom.resSeq = str2.toUInt();
-
+	if (temp_atom.resSeq == *last_resSeq)
+	{
+		flag = false;
+	}
+	else
+	{
+		flag = true;
+	}
+	*last_resSeq = temp_atom.resSeq; //update last residue sequence number 
 	temp_atom.iCode = str1.mid(26, 1);
 
 	str2 = str1.mid(30, 8);
@@ -3348,6 +3391,22 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 		temp_atom.charge = "  ";
 	}
 	(*temp_chain).atom.push_back(temp_atom);
+	bool found = false;
+	for (unsigned int m = 0; m < residue_list.size(); m++)
+	{
+		if (temp_atom.resName == residue_list[m].name)
+		{
+			current_residue = residue_list[m];
+			found = true;
+			break;
+		}
+	}
+	if (!found)
+	{
+		printError(tr("The residue " + temp_atom.resName + " listed in this PDB file is not found in the residue table!"));
+	}
+	
+	return(flag);
 }
 
 void US_Hydrodyn::closeEvent(QCloseEvent *e)

@@ -80,6 +80,7 @@ struct PDB_model
 {
 	vector <struct PDB_chain> molecule;
 	vector <struct residue> residue;			// keep track of amino acid sequence in molecule for vbar calculation
+	float vbar;
 	unsigned int model_id;
 };
 

@@ -64,9 +64,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QPrinter printer;
 		QFont ft;
 
-		bool create_beads_normally;             // true = normal, false = atoms are beads
+		bool create_beads_normally; // true = normal, false = atoms are beads
 		unsigned int current_model;
 		QString residue_filename, bead_model_file;
+		struct residue current_residue;
 		struct asa_options asa;
 		struct misc_options misc;
 		struct hydro_options hydro;
@@ -150,7 +151,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void setupGUI();
 		void select_residue_file();
 		void clear_temp_chain(struct PDB_chain *);
-		void assign_atom(const QString &, struct PDB_chain *);
+		// The next function returns a boolean to indicate whether the atom that was just assigned belongs
+		// to a new residue or is part of a previously assigned residue
+		// true: new residue sequence number, false: still the same
+		// the integer argument contains the last sequence number (last_resSeq)
+		bool assign_atom(const QString &, struct PDB_chain *, unsigned int *);
 		void cancel();
 		void help();
 		void atom();
@@ -180,6 +185,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void write_bead_spt(QString, vector <PDB_atom> *);
 		void printError(const QString &);
 		void closeAttnt(QProcess *, QString);
+		void calc_vbar(struct PDB_model *);
 
 		// editor functions:
 		void save();
