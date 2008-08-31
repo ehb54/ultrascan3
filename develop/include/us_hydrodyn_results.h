@@ -33,6 +33,7 @@ struct hydro_results
 	double rs;
 	double rg;
 	double theta;
+	double vbar;
 };
 
 class US_EXTERN US_Hydrodyn_Results : public QFrame
@@ -70,6 +71,8 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
 		QLineEdit *le_rg;
 		QLabel *lbl_theta;
 		QLineEdit *le_theta;
+		QLabel *lbl_vbar;
+		QLineEdit *le_vbar;
 
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;

@@ -53,10 +53,10 @@ void US_Hydrodyn_OR::setupGUI()
 	cnt_fuse->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_fuse, SIGNAL(valueChanged(double)), SLOT(update_fuse(double)));
 
-	lbl_steps = new QLabel(tr(" Overlap Reduction Step Size (in %): "), this);
+	lbl_steps = new QLabel(tr(" Overlap Reduction\n Step Size (in %): "), this);
 	Q_CHECK_PTR(lbl_steps);
 	lbl_steps->setAlignment(AlignLeft|AlignVCenter);
-	lbl_steps->setMinimumHeight(minHeight1);
+	lbl_steps->setMinimumHeight(minHeight1+20);
 	lbl_steps->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_steps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 

@@ -25,7 +25,7 @@ void US_Hydrodyn_Results::setupGUI()
 	int minHeight1 = 30;
 	QString str;
 	
-	lbl_info = new QLabel(tr("SOMO Hydrodynamic Results:"), this);
+	lbl_info = new QLabel(tr("   SOMO Hydrodynamic Results (Water at 20ºC):   "), this);
 	Q_CHECK_PTR(lbl_info);
 	lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
 	lbl_info->setAlignment(AlignCenter|AlignVCenter);
@@ -73,6 +73,19 @@ void US_Hydrodyn_Results::setupGUI()
 	le_mass->setAlignment(AlignVCenter);
 	le_mass->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+	lbl_vbar = new QLabel(tr(" Part. Specif. Volume: "), this);
+	Q_CHECK_PTR(lbl_vbar);
+	lbl_vbar->setAlignment(AlignLeft|AlignVCenter);
+	lbl_vbar->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+	le_vbar = new QLineEdit(this, "vbar Line Edit");
+	le_vbar->setText(str.sprintf("%5.3f ccm/g", (*results).vbar));
+	le_vbar->setReadOnly(true);
+	le_vbar->setAlignment(AlignVCenter);
+	le_vbar->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
 	lbl_s20w = new QLabel(tr(" s20,W: "), this);
 	Q_CHECK_PTR(lbl_s20w);
@@ -152,21 +165,21 @@ void US_Hydrodyn_Results::setupGUI()
 	le_rg->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-	pb_load_asa = new QPushButton(tr("Load ASA Result File"), this);
+	pb_load_asa = new QPushButton(tr("Load ASA Results File"), this);
 	Q_CHECK_PTR(pb_load_asa);
 	pb_load_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
 	pb_load_asa->setMinimumHeight(minHeight1);
 	pb_load_asa->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_load_asa, SIGNAL(clicked()), SLOT(load_asa()));
 
-	pb_load_results = new QPushButton(tr("Load Hydrodynamics File"), this);
+	pb_load_results = new QPushButton(tr("Load Full Hydrodynamics Results File"), this);
 	Q_CHECK_PTR(pb_load_results);
 	pb_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
 	pb_load_results->setMinimumHeight(minHeight1);
 	pb_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_load_results, SIGNAL(clicked()), SLOT(load_results()));
 
-	pb_load_beadmodel = new QPushButton(tr("Load Bead Models"), this);
+	pb_load_beadmodel = new QPushButton(tr("Load Bead Model"), this);
 	Q_CHECK_PTR(pb_load_beadmodel);
 	pb_load_beadmodel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
 	pb_load_beadmodel->setMinimumHeight(minHeight1);
@@ -201,8 +214,8 @@ void US_Hydrodyn_Results::setupGUI()
 	background->addWidget(lbl_mass, j, 0);
 	background->addWidget(le_mass, j, 1);
 	j++;
-	background->addWidget(lbl_theta, j, 0);
-	background->addWidget(le_theta, j, 1);
+	background->addWidget(lbl_vbar, j, 0);
+	background->addWidget(le_vbar, j, 1);
 	j++;
 	background->addWidget(lbl_s20w, j, 0);
 	background->addWidget(le_s20w, j, 1);
@@ -216,13 +229,16 @@ void US_Hydrodyn_Results::setupGUI()
 	background->addWidget(lbl_rg, j, 0);
 	background->addWidget(le_rg, j, 1);
 	j++;
+	background->addWidget(lbl_theta, j, 0);
+	background->addWidget(le_theta, j, 1);
+	j++;
 	background->addWidget(lbl_viscosity, j, 0);
 	background->addWidget(le_viscosity, j, 1);
 	j++;
 	background->addWidget(pb_load_asa, j, 0);
-	background->addWidget(pb_load_results, j, 1);
+	background->addWidget(pb_load_beadmodel, j, 1);
 	j++;
-	background->addWidget(pb_load_beadmodel, j, 0);
+	background->addMultiCellWidget(pb_load_results, j, j, 0, 1);
 	j++;
 	background->addWidget(pb_help, j, 0);
 	background->addWidget(pb_cancel, j, 1);

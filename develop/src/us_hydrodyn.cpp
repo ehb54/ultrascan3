@@ -49,6 +49,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	results.viscosity = 0.0;
 	results.rs = 0.0;
 	results.rg = 0.0;
+	results.vbar = 0.72;
 	results.theta = 0.0;
 	rasmol = new QProcess(this);
 }
@@ -3823,6 +3824,7 @@ void US_Hydrodyn::show_misc()
 
 void US_Hydrodyn::show_hydro()
 {
+	results.vbar = misc.vbar;
 	if (hydro_widget)
 	{
 		if (hydro_window->isVisible())
