@@ -904,15 +904,15 @@ void US_ExpData_DB::add_db( void )
 	
 	QSqlQuery query;
 	
-	QString q = "UPDATE tblExpData SET ";
-	 + "Invid = '"       + QString::number(exp_info.Invid)       + "', ";
-	 + "Temperature = '" + QString::number(exp_info.Temperature) + "', ";
-	 + "Duration = '"    + QString::number(exp_info.Duration)    + "', "; 
-	 + "Edit_type = '"   + QString::number(exp_info.Edit_type)   + "', ";
-	 + "Rotor = '"       + QString::number(exp_info.Rotor)       + "', ";
-	 + "Path = '"        + exp_info.Path                         + "', ";
-	 + "Date = '"        + exp_info.Date                         + "', ";
-	 + "Runid = '"       + exp_info.Runid                        + "', ";
+	QString q = "UPDATE tblExpData SET "
+	   "Invid = '"       + QString::number(exp_info.Invid)       + "', "
+	   "Temperature = '" + QString::number(exp_info.Temperature) + "', "
+	   "Duration = '"    + QString::number(exp_info.Duration)    + "', " 
+	   "Edit_type = '"   + QString::number(exp_info.Edit_type)   + "', "
+	   "Rotor = '"       + QString::number(exp_info.Rotor)       + "', "
+	   "Path = '"        + exp_info.Path                         + "', "
+	   "Date = '"        + exp_info.Date                         + "', "
+	   "Runid = '"       + exp_info.Runid                        + "', ";
 	
 	for ( int i = 0; i < 8; i++ )
 	{	
@@ -927,7 +927,7 @@ void US_ExpData_DB::add_db( void )
 	}
 
 	q += "Description= '"      + exp_info.Description + "' "
-	  +  "WHERE ExpdataID = '" + QString::number( exp_info.ExpdataID) + "';";
+	     "WHERE ExpdataID = '" + QString::number( exp_info.ExpdataID) + "';";
 	
 	if ( ! query.exec( q ) )
 	{
@@ -1075,6 +1075,8 @@ void US_ExpData_DB::add_db( void )
 	lb_query->insertItem( "If you want to change any selected item," );
 	lb_query->insertItem( "you will have to delete the existing entry first," );
 	lb_query->insertItem( "or you can create a new database Entry" );
+
+	all_done = true;
 }
 
 
@@ -1297,14 +1299,16 @@ void US_ExpData_DB::sel_query( int item )
 			chdir( dataDir.latin1() );
 
 			US_Gzip gzip;			
+			int     ret = gzip.gunzip( targzfile );
 
-			if ( gzip.gunzip( targzfile ) != TAR_OK )
+			if ( ret != TAR_OK )
 			{
 				pd->close();
 				delete pd;
 				QMessageBox::message(
 				  tr( "UltraScan Error:" ),
 				  tr( "Unable to uncompress tar archive.\n" +
+					tr( gzip.explain( ret ) + "\nFile:\n" )   +
 					    dataDir + targzfile ) );
 
 				QFile::remove( dataDir + targzfile );
@@ -1317,17 +1321,14 @@ void US_ExpData_DB::sel_query( int item )
 	  	pd->setProgress( 3 );
 		  qApp->processEvents();
 
-			US_Tar  tar;
+			US_Tar tar;
 
 			// Sometimes the extracted file is .tar and sometimes _rawdata.tar
 			QString tarfile =  exp_info.Runid + "_rawdata.tar";
-			QDir tf( dataDir + tarfile );
-			if ( ! tf.exists() ) 
+			if ( ! QFile::exists( tarfile ) )
 			{
 				tarfile = exp_info.Runid + ".tar";
 			}
-
-			int ret;
 
 			if ( ( ret = tar.extract( tarfile ) ) != GZIP_OK )
 			{
@@ -1335,7 +1336,7 @@ void US_ExpData_DB::sel_query( int item )
 				delete pd;
 				QMessageBox::message(
 					tr( "UltraScan tar extraction Error" ),
-					tr( tar.explain( ret ) ) + "\nFile:\n" +
+					tr( tar.explain( ret ) + "\nFile:\n" ) +
 					    dataDir + tarfile );
 
 				QFile::remove( dataDir + tarfile );
@@ -1713,8 +1714,9 @@ bool US_ExpData_DB::retrieve_all( int ExpdataID, QString Display )
 				QProgressDialog* pd = progressdialog( 
 					"Waiting for Data Retrieval...", "pd", 4 );
 
-				pd->setProgress       ( 0 );
 				pd->setMinimumDuration( 0 );
+				pd->setProgress       ( 0 );
+				qApp->processEvents();
 				
 				QString targzfile = exp_info.Runid + "_rawdata.tar.gz";
 		   	QString filename = make_tempFile ( dataDir, targzfile );
@@ -1736,14 +1738,16 @@ bool US_ExpData_DB::retrieve_all( int ExpdataID, QString Display )
 				chdir( dataDir.latin1() );
 
 				US_Gzip gzip;			
+				int     ret = gzip.gunzip( targzfile );
 
-				if ( gzip.gunzip( targzfile ) != TAR_OK )
+				if ( ret != TAR_OK )
 				{
 					pd->close();
 					delete pd;
 					QMessageBox::message(
 						tr( "UltraScan Error:" ),
 						tr( "Unable to uncompress tar archive.\n" +
+						tr( gzip.explain( ret ) + "\nFile:\n" )   +
 								dataDir + targzfile ) );
 
 					QFile::remove( dataDir + targzfile );
@@ -1757,8 +1761,13 @@ bool US_ExpData_DB::retrieve_all( int ExpdataID, QString Display )
 				qApp->processEvents();
 
 				US_Tar  tar;
-				QString tarfile =  exp_info.Runid + ".tar";
-				int     ret;
+
+				// Sometimes the extracted file is .tar and sometimes _rawdata.tar
+				QString tarfile =  exp_info.Runid + "_rawdata.tar";
+				if ( ! QFile::exists( tarfile ) )
+				{
+					tarfile = exp_info.Runid + ".tar";
+				}
 
 				if ( ( ret = tar.extract( tarfile ) ) != GZIP_OK )
 				{
@@ -1766,7 +1775,7 @@ bool US_ExpData_DB::retrieve_all( int ExpdataID, QString Display )
 					delete pd;
 					QMessageBox::message(
 						tr( "UltraScan tar extraction Error" ),
-						tr( tar.explain( ret ) ) + "\nFile:\n" +
+						tr( tar.explain( ret )  + "\nFile:\n" ) +
 								dataDir + tarfile );
 
 					QFile::remove( dataDir + tarfile );
