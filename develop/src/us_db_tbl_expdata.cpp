@@ -1489,11 +1489,11 @@ void US_ExpData_DB::reset()
 void US_ExpData_DB::closeEvent( QCloseEvent* e )
 {
 	QSqlQuery del;
-	QString s;
+	QString   s;
 
-	//delete all relative cell data if the expData is not finally saved
+	// Delete all relative cell data if the expData is not finally saved
 
-	if ( ! all_done &&  ! from_query )
+	if ( ! all_done &&  ! from_query  &&  exp_info.ExpdataID > 0 )
 	{
 		s.sprintf( "DELETE FROM tblCell WHERE ExperimentID = %d;", 
 			exp_info.ExpdataID );
@@ -1528,7 +1528,8 @@ void US_ExpData_DB::quit( void )
 }
 
 /*!
- 	Create a file: <var>db_info.dat</var> to store centerpiece, DNA, buffer, peptide info.
+ 	Create a file: <var>db_info.dat</var> to store centerpiece, DNA, buffer, i
+	peptide info.
 	\param dir the same directory as uncompressed files' directory.
 */
 void US_ExpData_DB::write_dbinfo( QString dir )
