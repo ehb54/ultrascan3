@@ -785,6 +785,7 @@ void US_DB_Veloc::retrieve_db( void )
 		}
 	}
 
+	/*
 	cursor.setName( "tblRawExpData" );
 	q.sprintf( "ExpdataID = %d", exp_rst.expRstID );
 	cursor.select( q );
@@ -802,6 +803,7 @@ void US_DB_Veloc::retrieve_db( void )
 			  tr( "Unable to retrieve Raw data files." ) );
 		}
 	}
+	*/
 
 	US_Gzip gzip;
 	US_Tar  tar;
@@ -817,11 +819,14 @@ void US_DB_Veloc::retrieve_db( void )
 	if ( gzip.gunzip( targzfile ) != TAR_OK )
 	{
 		pd->close();
+		delete pd;
+
 		QMessageBox::message(
 		  tr( "UltraScan Error:" ),
 		  tr( "Unable to uncompress tar archive.\n" +
 		      reportDir + targzfile ) );
 
+		cleanCompressedFiles();
 	  return;
 	}
 
@@ -862,6 +867,7 @@ void US_DB_Veloc::retrieve_db( void )
 		  tr( "Unable to uncompress tar archive.\n" +
 		      resultDir + targzfile ) );
 
+		cleanCompressedFiles();
 		return;
 	}
 
@@ -870,18 +876,16 @@ result:
 
 	if ( ( ret = tar.extract( tarfile ) ) != GZIP_OK )
 	{
-		pd->close();
 		QMessageBox::message(
 			tr( "UltraScan tar extraction Error:" ),
 		  tr( tar.explain( ret ) + tr( "\ntarfile: " ) + tarfile ) );
 
 		// Remove the tar file
-		QFile::remove( resultDir + tarfile );
+		cleanCompressedFiles();
 		goto rawdata;
 	}
 
-	QFile::remove( resultDir + tarfile );
-
+/*
 	// Uncompress raw data
 	pd->setLabelText( "Uncompressing Raw Data..." );
 	pd->setProgress( 7 );
@@ -900,8 +904,9 @@ result:
 
 	  return;
 	}
-
+*/
 rawdata:
+/*
 	tarfile = run_id + "_rawdata.tar";
 	pd->setProgress( 8 );
 	qApp->processEvents();
@@ -913,14 +918,19 @@ rawdata:
 		  tr( "UltraScan tar extraction Error:" ),
 		  tr( tar.explain( ret ) + tr( "\ntarfile: " ) + tarfile ) );
 
-		// Remove the tar file
-		QFile::remove( dataDir + tarfile );
 	}
 
-	QFile::remove( dataDir + tarfile );
+*/
 
-	pd->setProgress( 9 );
+	pd->close();
+	delete pd;
 	qApp->processEvents();
+	cleanCompressedFiles();
+
+	QMessageBox::information( this,
+			tr( "Success" ),
+			tr( "Download complete" ) );
+
 	from_DB = true;
 }
 

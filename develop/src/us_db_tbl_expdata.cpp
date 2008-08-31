@@ -1602,228 +1602,228 @@ void US_ExpData_DB::write_dbinfo( QString dir )
 */
 bool US_ExpData_DB::retrieve_all( int ExpdataID, QString Display )
 {
-		int Step = 0;
-		QSqlCursor cur( "tblExpData" );
+	int Step = 0;
+	QSqlCursor cur( "tblExpData" );
+	
+	QStringList orderFields;
+	orderFields << "Path" << "Invid" << "Date" << "Edit_type" << "Runid"
+	            << "Temperature" << "Duration" << "Rotor" << "Description"
+	            << "Cell1" << "Cell2" << "Cell3" << "Cell4"
+	            << "Cell5" << "Cell6" << "Cell7" << "Cell8";
+
+	QSqlIndex order = cur.index( orderFields );
+	QSqlIndex filter = cur.index( "ExpdataID" );
+
+	cur.setValue( "ExpdataID", ExpdataID );
+	cur.select( filter, order );
+
+	while( cur.next() )
+	{
+		exp_info.ExpdataID   = ExpdataID;
+		exp_info.Description = cur.value( "Description" ).toString();
+		exp_info.Path        = cur.value( "Path"        ).toString();
+		exp_info.Invid       = cur.value( "Invid"       ).toInt();
+		exp_info.Date        = cur.value( "Date"        ).toString();
+		exp_info.Edit_type   = cur.value( "Edit_type"   ).toInt();
+		exp_info.Runid       = cur.value( "Runid"       ).toString();
+		exp_info.Temperature = cur.value( "Temperature" ).toString().toFloat();
+		exp_info.Duration    = cur.value( "Duration"    ).toString().toFloat();
+		exp_info.Rotor       = cur.value( "Rotor"       ).toInt();
 		
-		QStringList orderFields;
-		orderFields << "Path" << "Invid" << "Date" << "Edit_type" << "Runid"
-		            << "Temperature" << "Duration" << "Rotor" << "Description"
-		            << "Cell1" << "Cell2" << "Cell3" << "Cell4"
-		            << "Cell5" << "Cell6" << "Cell7" << "Cell8";
-
-		QSqlIndex order = cur.index( orderFields );
-		QSqlIndex filter = cur.index( "ExpdataID" );
-
-		cur.setValue( "ExpdataID", ExpdataID );
-		cur.select( filter, order );
-
-		while( cur.next() )
+		QString s;
+		
+		for ( int i = 0; i < 8; i++ )
 		{
-			exp_info.ExpdataID   = ExpdataID;
-			exp_info.Description = cur.value( "Description" ).toString();
-			exp_info.Path        = cur.value( "Path"        ).toString();
-			exp_info.Invid       = cur.value( "Invid"       ).toInt();
-			exp_info.Date        = cur.value( "Date"        ).toString();
-			exp_info.Edit_type   = cur.value( "Edit_type"   ).toInt();
-			exp_info.Runid       = cur.value( "Runid"       ).toString();
-			exp_info.Temperature = cur.value( "Temperature" ).toString().toFloat();
-			exp_info.Duration    = cur.value( "Duration"    ).toString().toFloat();
-			exp_info.Rotor       = cur.value( "Rotor"       ).toInt();
-			
-			QString s;
-			
-			for ( int i = 0; i < 8; i++ )
+			s.sprintf( "Cell%d", i + 1 );
+			exp_info.Cell[ i ] = cur.value( s ).toString();
+
+			s.sprintf( "Cell%dID", i + 1 );
+			exp_info.CellID[ i ] = cur.value( s).toInt();
+		}
+
+		QSqlCursor get( "tblCell" );
+		
+		for ( int i = 0; i < 8; i++ )
+		{
+			s.sprintf( "CellID = %d", exp_info.CellID[ i ] );
+			get.select( s );
+
+			if ( get.next() )
 			{
-				s.sprintf( "Cell%d", i + 1 );
-				exp_info.Cell[ i ] = cur.value( s ).toString();
-
-				s.sprintf( "Cell%dID", i + 1 );
-				exp_info.CellID[ i ] = cur.value( s).toInt();
-			}
-
-			QSqlCursor get( "tblCell" );
-			
-			for( int i = 0; i < 8; i++ )
-			{
-				s.sprintf( "CellID = %d", exp_info.CellID[ i ] );
-				get.select( s );
-
-				if ( get.next() )
+				// query Cell Table to get the number of total scans file
+				
+				for( int j = 0; j < 3; j++ )
 				{
-					// query Cell Table to get the number of total scans file
-					
-					for( int j = 0; j < 3; j++ )
+					s.sprintf( "Wl_Scans_%d", j + 1 );
+					Step += get.value( s ).toInt();
+				}
+
+				//get centerpiece, DNA, buffer,peptide data for write_dbinfo()
+				exp_info.centerpiece[ i ] = get.value( "CenterpieceID" ).toInt();
+
+				for ( int j = 0; j < 4; j++ )
+				{
+					s.sprintf( "BufferID_%d", j + 1 );
+					bufferid[ i ][ j ] = get.value( s ).toInt();
+
+					for ( int k = 0; k < 3; k++ )
 					{
-						s.sprintf( "Wl_Scans_%d", j + 1 );
-						Step += get.value( s ).toInt();
-					}
-
-					//get centerpiece, DNA, buffer,peptide data for write_dbinfo()
-					exp_info.centerpiece[ i ] = get.value( "CenterpieceID" ).toInt();
-
-					for ( int j = 0; j < 4; j++ )
-					{
-						s.sprintf( "BufferID_%d", j + 1 );
-						bufferid[ i ][ j ] = get.value( s ).toInt();
-
-						for ( int k = 0; k < 3; k++ )
+						if ( k == 0 )
 						{
-							if ( k == 0 )
-							{
-								s.sprintf( "PeptideID_%d", j + 1 );
-								pepid[ i ][ j ][ k ] = get.value( s ).toInt();
+							s.sprintf( "PeptideID_%d", j + 1 );
+							pepid[ i ][ j ][ k ] = get.value( s ).toInt();
 
-								s.sprintf( "DNAID_%d", j + 1 );
-								DNAid[ i ][ j ][ k ] = get.value( s ).toInt();
-							}
-							else
-							{
-								s.sprintf( "Peptide%dID_%d", k + 1, j + 1 );
-								pepid[ i ][ j ][ k ] = get.value( s ).toInt();
+							s.sprintf( "DNAID_%d", j + 1 );
+							DNAid[ i ][ j ][ k ] = get.value( s ).toInt();
+						}
+						else
+						{
+							s.sprintf( "Peptide%dID_%d", k + 1, j + 1 );
+							pepid[ i ][ j ][ k ] = get.value( s ).toInt();
 
-								s.sprintf( "DNA%dID_%d", k + 1, j + 1 );
-								DNAid[ i ][ j ][ k ] = get.value( s ).toInt();
-							}
+							s.sprintf( "DNA%dID_%d", k + 1, j + 1 );
+							DNAid[ i ][ j ][ k ] = get.value( s ).toInt();
 						}
 					}
 				}
 			}
+		}
 
-			QSqlCursor cur_f( "tblRawExpData" );
-			s.sprintf( "ExpdataID = %d", exp_info.ExpdataID );
-			cur_f.select( s );
+		QSqlCursor cur_f( "tblRawExpData" );
+		s.sprintf( "ExpdataID = %d", exp_info.ExpdataID );
+		cur_f.select( s );
 
-			QString dataDir = USglobal->config_list.data_dir + "/";
+		QString dataDir = USglobal->config_list.data_dir + "/";
 
-			if ( cur_f.next() )
-			{
-				QDir rawdata_dir( dataDir + exp_info.Runid );
-				
-				if ( rawdata_dir.exists() )
-				{
-					QMessageBox::message(
-						tr( "Attention:" ), 
-						tr( "The directory: \n '") + dataDir + exp_info.Runid+ "'\n" +
-						tr( "already exists in your data directory, \n"
-						    "if you want to retrieve the data data again\n"
-						    "from the database, you will have to remove\n"
-						    "this directory first" ) );
-
-					return false;
-			 	}
-
-				QProgressDialog* pd = progressdialog( 
-					"Waiting for Data Retrieval...", "pd", 4 );
-
-				pd->setMinimumDuration( 0 );
-				pd->setProgress       ( 0 );
-				qApp->processEvents();
-				
-				QString targzfile = exp_info.Runid + "_rawdata.tar.gz";
-		   	QString filename = make_tempFile ( dataDir, targzfile );
-         	
-				if ( ! read_blob( "RawData", cur_f, filename ) )
-        {
-					QMessageBox::message(
-						tr( "UltraScan Error:" ), 
-						tr( "Unable to retrieve Raw data files." ) );
-
-					return false;
-				}
+		if ( cur_f.next() )
+		{
+			QDir rawdata_dir( dataDir + exp_info.Runid );
 			
-				// unzip raw data file
-				pd->setLabelText( "Decompressing Raw Data..." );
-				pd->setProgress( 2 );
-				qApp->processEvents();
-
-				chdir( dataDir.latin1() );
-
-				US_Gzip gzip;			
-				int     ret = gzip.gunzip( targzfile );
-
-				if ( ret != TAR_OK )
-				{
-					pd->close();
-					delete pd;
-					QMessageBox::message(
-						tr( "UltraScan Error:" ),
-						tr( "Unable to uncompress tar archive.\n" +
-						tr( gzip.explain( ret ) + "\nFile:\n" )   +
-								dataDir + targzfile ) );
-
-					QFile::remove( dataDir + targzfile );
-					return false;
-				}
-
-				// untar raw data file
-
-				pd->setLabelText( "Extracting Raw Data..." );
-				pd->setProgress( 3 );
-				qApp->processEvents();
-
-				US_Tar  tar;
-
-				// Sometimes the extracted file is .tar and sometimes _rawdata.tar
-				QString tarfile =  exp_info.Runid + "_rawdata.tar";
-				if ( ! QFile::exists( tarfile ) )
-				{
-					tarfile = exp_info.Runid + ".tar";
-				}
-
-				if ( ( ret = tar.extract( tarfile ) ) != GZIP_OK )
-				{
-					pd->close();
-					delete pd;
-					QMessageBox::message(
-						tr( "UltraScan tar extraction Error" ),
-						tr( tar.explain( ret )  + "\nFile:\n" ) +
-								dataDir + tarfile );
-
-					QFile::remove( dataDir + tarfile );
-					return false;
-				}
-
-				write_dbinfo( dataDir + exp_info.Runid );
-				
-				QFile::remove( dataDir + tarfile );
-				pd->close();
-				delete pd;
-
-			}
-			else
+			if ( rawdata_dir.exists() )
 			{
 				QMessageBox::message(
 					tr( "Attention:" ), 
-					tr( "No Raw Data found in Database for ExpdataID=" )
-					  + QString::number( exp_info.ExpdataID ) );
+					tr( "The directory: \n '") + dataDir + exp_info.Runid+ "'\n" +
+					tr( "already exists in your data directory, \n"
+					    "if you want to retrieve the data data again\n"
+					    "from the database, you will have to remove\n"
+					    "this directory first" ) );
+
+				return false;
+		 	}
+
+			QProgressDialog* pd = progressdialog( 
+				"Waiting for Data Retrieval...", "pd", 4 );
+
+			pd->setMinimumDuration( 0 );
+			pd->setProgress       ( 0 );
+			qApp->processEvents();
+			
+			QString targzfile = exp_info.Runid + "_rawdata.tar.gz";
+	   	QString filename = make_tempFile ( dataDir, targzfile );
+       	
+			if ( ! read_blob( "RawData", cur_f, filename ) )
+      {
+				QMessageBox::message(
+					tr( "UltraScan Error:" ), 
+					tr( "Unable to retrieve Raw data files." ) );
 
 				return false;
 			}
-		}
-	
-		from_query = true;
-		query_flag = false;
-
-		lb_query        ->insertItem( Display );
-
-		lbl_run         ->setText( exp_info.Path       );
-		lbl_investigator->setNum ( exp_info.Invid      );
-		lbl_date        ->setText( exp_info.Date       );
-		lbl_runid       ->setText( exp_info.Runid      );
-		lbl_temp        ->setNum ( exp_info.Temperature);
-		lbl_dur         ->setNum ( exp_info.Duration   );
-		le_description  ->setText( exp_info.Description);
 		
-		update_type ( exp_info.Edit_type );
-		update_rotor( exp_info.Rotor );
-		update_cell();
+			// unzip raw data file
+			pd->setLabelText( "Decompressing Raw Data..." );
+			pd->setProgress( 2 );
+			qApp->processEvents();
 
-		pb_run         ->setEnabled( false );
-		pb_investigator->setEnabled( false );
-		pb_date        ->setEnabled( false );
-		pb_add         ->setEnabled( false );
-		pb_query       ->setEnabled( false );
-		pb_reset       ->setEnabled( false );
+			chdir( dataDir.latin1() );
 
-		return ( true );
+			US_Gzip gzip;			
+			int     ret = gzip.gunzip( targzfile );
+
+			if ( ret != TAR_OK )
+			{
+				pd->close();
+				delete pd;
+				QMessageBox::message(
+					tr( "UltraScan Error:" ),
+					tr( "Unable to uncompress tar archive.\n" +
+					tr( gzip.explain( ret ) + "\nFile:\n" )   +
+							dataDir + targzfile ) );
+
+				QFile::remove( dataDir + targzfile );
+				return false;
+			}
+
+			// untar raw data file
+
+			pd->setLabelText( "Extracting Raw Data..." );
+			pd->setProgress( 3 );
+			qApp->processEvents();
+
+			US_Tar  tar;
+
+			// Sometimes the extracted file is .tar and sometimes _rawdata.tar
+			QString tarfile =  exp_info.Runid + "_rawdata.tar";
+			if ( ! QFile::exists( tarfile ) )
+			{
+				tarfile = exp_info.Runid + ".tar";
+			}
+
+			if ( ( ret = tar.extract( tarfile ) ) != GZIP_OK )
+			{
+				pd->close();
+				delete pd;
+				QMessageBox::message(
+					tr( "UltraScan tar extraction Error" ),
+					tr( tar.explain( ret )  + "\nFile:\n" ) +
+							dataDir + tarfile );
+
+				QFile::remove( dataDir + tarfile );
+				return false;
+			}
+
+			write_dbinfo( dataDir + exp_info.Runid );
+			
+			QFile::remove( dataDir + tarfile );
+			pd->close();
+			delete pd;
+
+		}
+		else
+		{
+			QMessageBox::message(
+				tr( "Attention:" ), 
+				tr( "No Raw Data found in Database for ExpdataID=" )
+				  + QString::number( exp_info.ExpdataID ) );
+
+			return false;
+		}
+	}
+
+	from_query = true;
+	query_flag = false;
+
+	lb_query        ->insertItem( Display );
+
+	lbl_run         ->setText( exp_info.Path       );
+	lbl_investigator->setNum ( exp_info.Invid      );
+	lbl_date        ->setText( exp_info.Date       );
+	lbl_runid       ->setText( exp_info.Runid      );
+	lbl_temp        ->setNum ( exp_info.Temperature);
+	lbl_dur         ->setNum ( exp_info.Duration   );
+	le_description  ->setText( exp_info.Description);
+	
+	update_type ( exp_info.Edit_type );
+	update_rotor( exp_info.Rotor );
+	update_cell();
+
+	pb_run         ->setEnabled( false );
+	pb_investigator->setEnabled( false );
+	pb_date        ->setEnabled( false );
+	pb_add         ->setEnabled( false );
+	pb_query       ->setEnabled( false );
+	pb_reset       ->setEnabled( false );
+
+	return ( true );
 }
