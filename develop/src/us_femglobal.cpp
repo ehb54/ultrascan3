@@ -107,6 +107,8 @@ int US_FemGlobal::read_modelSystem(struct ModelSystem *ms, vector <QString> qsv,
 	{
 	    pos = offset;
 	}
+	printf("read_modelsystem pos = %d\n", pos);
+	printf("qsv[%d]=%s\n", pos, qsv[pos].ascii()); fflush(stdout);
 	pos++; // FE, SA2D, COFS, SIM or GA
 	if (pos >= qsv.size()) return -1;
 	(*ms).description = qsv[pos++];
@@ -782,7 +784,7 @@ int US_FemGlobal::read_experiment(struct ModelSystem *ms, struct SimulationParam
 	int flag1, flag2;
 	QFile f;
 	f.setName(filename);
-	printf("trying to open %s\n", filename.ascii());
+	printf("read exp ms trying to open %s\n", filename.ascii());
 	if (filename.contains("us_system") && f.open(IO_ReadOnly))
 	{
 		QTextStream ts(&f);
@@ -837,7 +839,7 @@ int US_FemGlobal::read_experiment(vector <struct ModelSystem> *vms, struct Simul
 	int flag1, flag2;
 	QFile f;
 	f.setName(filename);
-	printf("trying to open %s\n", filename.ascii());
+	printf("read exp msv trying to open %s\n", filename.ascii());
 	if (filename.contains("us_system") && f.open(IO_ReadOnly))
 	{
 		QTextStream ts(&f);
@@ -1183,7 +1185,7 @@ int US_FemGlobal::read_model_data(vector <mfem_data> *model, QString filename, b
 	ds >> double_val;
 	temp_scan.conc.push_back(double_val);
 	// ds >> short_int_val;
-	// temp_scan.ignore.push_back(short_int_val);
+       	// temp_scan.ignore.push_back(short_int_val);
       }
       temp_model.scan.push_back(temp_scan);
     }

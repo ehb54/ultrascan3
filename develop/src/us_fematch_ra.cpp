@@ -461,6 +461,13 @@ void US_FeMatchRa_W::load_model()
 		QString str;
 		fg = new US_FemGlobal(this);
 		error_code = fg->read_experiment(&msv, &sp, fn);
+		printf("got model system size %u errorcode %d\n", (unsigned int)msv.size(), error_code); fflush(stdout);
+		{ 
+		  for (unsigned int i = 0; i < msv.size(); i++) {
+		    fg->write_modelSystem(&msv[i], QString("tmp.model_system-%1").arg(i));
+		  }
+		}
+		fg->write_simulationParameters(&sp, "tmp.simulation_parameters");
 		cmb_timeGrid->setCurrentItem(sp.moving_grid);
 		cnt_band_volume->setValue(sp.band_volume);
 		cnt_simpoints->setValue(sp.simpoints);
