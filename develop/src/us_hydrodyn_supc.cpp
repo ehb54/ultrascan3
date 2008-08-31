@@ -958,7 +958,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 		fprintf(exe_time, "\n");
 	    fclose(exe_time);
 
-	    system("date >> exe_time");
+	    // system("date >> exe_time");
 	}
 	primo = time(NULL);	/* Gets system time */
 	progress->setProgress(ppos++); // 7
@@ -1028,7 +1028,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	if (flag_mem == 1)
 
 	{
-	    system("date >> exe_time");
+	  // system("date >> exe_time");
 	    exe_time = fopen("exe_time", "ab");
 	    print_time_2IO((int) difftime(secondo, primo));
 	    /*

@@ -3404,7 +3404,7 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 	}
 	if (!found)
 	{
-		printError(tr("The residue " + temp_atom.resName + " listed in this PDB file is not found in the residue table!"));
+	  //	printError(tr("The residue " + temp_atom.resName + " listed in this PDB file is not found in the residue table!"));
 	}
 	
 	return(flag);
