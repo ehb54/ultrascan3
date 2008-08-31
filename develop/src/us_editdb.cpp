@@ -12,6 +12,7 @@ US_Edit_DB::US_Edit_DB(QWidget *p , const char *name)
 	delete cnt_exsingle;
 	delete cnt_exrange;
 	delete cnt_edit;
+	delete pb_exclude_profile;
 	database = true;
 	
 	exp_type.velocity = true;
