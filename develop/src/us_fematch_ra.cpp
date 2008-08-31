@@ -387,6 +387,7 @@ float US_FeMatchRa_W::fit()
 	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 	{
 		single_scan.time = (double) run_inf.time[selected_cell][selected_lambda][i];
+		single_scan.omega_t = (double) run_inf.omega_t[selected_cell][selected_lambda][i];
 		simdata[0].scan.push_back(single_scan);
 	}
 	double tmp = sp.speed_step[0].delay_minutes;
