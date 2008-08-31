@@ -718,6 +718,7 @@ void US_DB_Equil::retrieve_db( void )
 		}
 	}
 
+	/*
 	QSqlCursor cur2( "tblRawExpData" );
 	q.sprintf( "ExpdataID = %d", exp_rst.expRstID );
 	cur2.select( q );
@@ -737,6 +738,7 @@ void US_DB_Equil::retrieve_db( void )
 				tr( "Unable to retrieve Raw data files." ) );
 		}
 	}
+	*/
 
 	US_Gzip gzip;
 	US_Tar  tar;
@@ -832,6 +834,7 @@ void US_DB_Equil::retrieve_db( void )
 		return;
 	}
 
+	/*
 	// Uncompress data
 	targzfile = run_id + "_rawdata.tar.gz";
 
@@ -875,6 +878,7 @@ void US_DB_Equil::retrieve_db( void )
 	}
 
 finish:
+	*/
 	// Finished
 
 	QMessageBox::message(
