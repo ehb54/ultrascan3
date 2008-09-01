@@ -2588,9 +2588,10 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
 
   // should put vbar calc here...
   fprintf(fbeams, 
-	  "%d\t0.000000\t%s.rmc\n", 
+	  "%d\t-2.000000\t%s.rmc\t%f\n", 
 	  beads, 
-	  fname.ascii()
+	  fname.ascii(),
+	  results.vbar
 	  );
 
   int atomno = 0;
