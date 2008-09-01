@@ -26,7 +26,31 @@ SOMO - Accessible Surface Area (ASA) Options Module:</h2>
 <img SRC="somo-asa.png" ALT="SOMO ASA Screen">
 </center>
 <p>
-
+In this module, you can set the parameters and options for calculating the
+Accessible Surface Area (ASA) of your structure. This information is then
+used by the model builder to discriminate exposed from buried beads, allowing
+the exclusion of the latter from the hydrodynamic computations.The ASA module
+is an implementation of SurfRacer, kindly provided by O.V. Tsodikov (Tsodikov
+OV, Record MT Jr, Sergeev YV.  Novel computer program for fast exact
+calculation of accessible and molecular surface areas and average surface
+curvature. J. Comput. Chem. 2002 23:600-609).
+<br>In the <i>ASA Probe Radius (A)</i> field, you set the radius of the
+hypothetical water molecule used to probe the surface of the molecule for 
+accessibility. The default value is 1.4 Angstroms.
+<br>In the <i>ASA Threshold (A^2)</i> field, you set the accessible surface
+area threshold above which a main- or side-chain will be considered 
+exposed to the solvent. The default value is 10 A<sup>2</sup>.
+<br>The <i>Bead ASA Threshold %</i> field lets you set the % of the surface
+of a bead that must be at least accessible to re-classify as exposed a bead
+previously considered to be buried. Beads are initially assigned as being
+buried or exposed based on the status of the main- or side-chain they represent.
+However, during overlap removal some beads initially classified as buried may
+become exposed, hence the need to recheck their status. This operation is 
+performed if the <b>Re-check bead ASA</b> checkbox is selected (recommended).
+The default value is 30%.
+<br>The ASA computation on the intial structure can be excluded by deselecting
+the <b>Perform ASA Calculation</b> checkbox (not recommended).
+<p>
 <hr>
 <font face="helvetica" size="-1">
 www contact: <a href="mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a>

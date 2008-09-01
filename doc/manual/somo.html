@@ -30,10 +30,11 @@ The SOMO (SOlution MOdeller) module of UltraScan is a bead modelling
 utility that was originally developed by the Rocco and Byron labs,
 respectively at the Istituto Nazionale per la Ricerca sul Cancro (IST,
 Genova, Italy) and at the University of Glasgow (Glasgow, Scotland,
-UK). It is based on a reduced representation of a biomacromolecule,
-starting from its atomic coordinates, as a set of non-overlapping
-beads of different radii, from which the hydrodynamic properties
-can be calculated using the Garcia de la Torre-Bloomfield rigid-body
+UK). The original code was mainly written by B. Spotorno, G. Tassara,
+N. Rai and M. Nollmann. SOMO is based on a reduced representation of
+a biomacromolecule, starting from its atomic coordinates, as a set of
+non-overlapping beads of different radii, from which the hydrodynamic
+properties can be calculated using the Garcia de la Torre-Bloomfield rigid-body
 approach (García de la Torre and Bloomfield, Q. Rev. Biophys. 14:81-139,
 1981). The reduced representation is afforded by grouping together atoms
 and substituting them with a bead of the same volume, appropriately
@@ -42,9 +43,7 @@ theoretically bound to each group of atoms can be then added to each
 bead. The overlaps between the beads are then removed in sequential
 steps, but preserving as much as possible the original surface envelope
 of the bead model. The method has been fully validated and reported in the
-literature (Rai et al., Structure 13:723-734, 2005), and a first important
-application to the structure and conformational changes of integrins has
-been recently published (Rocco et al., Structure, 2008). Among the main
+literature (Rai et al., Structure 13:723-734, 2005). Among the main
 advantages of this method over shell-modelling and grid-based procedures
 are a better treatment of the hydration water and the preservation of a
 direct correspondence between beads and original residues. For instance,
@@ -65,17 +64,20 @@ currently, structures from 5K to 250K have been successfully studied.
 <tr>
 <td align=justify>
 In this section you can define the hybridizations, atoms and residues
-that need to be interpreted as beads in the bead model calculation.
+that need to be interpreted as beads in the bead model generation.
 These parameters are collected in different tables that are used 
-as the components from which the bead sizes are calculated. PDB structures
-can then be converted to bead models based on the bead parameters defined here.
+as the components from which the bead sizes and positions are calculated.
+PDB structures can then be converted to bead models based on the bead
+parameters defined here.
 <ul>
 <li>
 <b>Add/Edit Hybridization:</b> Use this function to modify the <a href=
 "somo-1.png">hybridization table</a>. In this file you need to list all
-hybridizations that will be used for the definitions of all atoms. Each
-hybridization requires a name, a molecular weight and a radius (in
-Angstrom units).  Load the hybridization file first if one exists, and
+hybridizations (as defined in Tsai et al., J. Mol. Biol. 290:253-266, 1999)
+that will be used for the definitions of all atoms. Each hybridization
+requires a name, a molecular weight (given by the sum of the mw of the 
+atom being defined plus that of the hydrogen atoms bound to it) and a radius
+(in Angstrom units). Load the hybridization file first if one exists, and
 add new hybridizations to it by filling out the fields and clicking on
 <b><i>"Add Hybridization to File"</i></b></li>
 <li>
@@ -83,8 +85,10 @@ add new hybridizations to it by filling out the fields and clicking on
 "somo-2.png">atom table</a>. In this file you need to list all
 atom details that will be used for the definitions of all residues. Each
 atom requires a name, a hybridization, a molecular weight and a radius (in
-Angstrom units). In addition, you need to assign a the position of the 
-atom in the molecule. The options are: 
+Angstrom units). The latter two properties are automatically defined once
+the proper hybrydization is chosen from the <a href="somo-1.png">hybridization table</a>.
+In addition, you need to assign the position of the atom in the molecule.
+The options are: 
 <ol>
 <li>Undefined</li>
 <li>Main Chain</li>
@@ -92,13 +96,13 @@ atom in the molecule. The options are:
 <li>Prosthetic Group</li>
 <li>Other</li>
 </ol>
-Load the hybridization file first, and the atom file if one exists, and
+Load the hybridization file first, then the atom file if one exists, and
 add new atoms to it by filling out the fields and clicking on
 <b><i>Add Atom to File</i></b>. You can also delete an atom from
 the file.</li>
 <li>
 <b>Add/Edit Residue:</b> Use this function to modify the <a href=
-"somo-residue-0.png">residue table</a>. The use of this program is described in
+"somo-residue-0.png">residue table</a>. The use of this module is described in
 <a href="residue.html">this help file</a>.
 </ul>
 </td>
@@ -116,7 +120,7 @@ the file.</li>
 <td align=justify>
 In this section you can set all options for different steps in the program.
 These options are saved in a system wide config file <pre>
-$ULTRASCAN/etc/somo.config</pre>. Every time you close the SOMO program,
+$ULTRASCAN/etc/somo.config</pre> Every time you close the SOMO program,
 the currently defined options will be saved in <pre>
 $HOME/ultrascan/etc/somo.config</pre>
 where they will be reloaded from upon startup.
@@ -126,26 +130,27 @@ where they will be reloaded from upon startup.
 the accessible surface area calculation done with SurfRacer (Tsodikov
 OV, Record MT Jr, Sergeev YV.  Novel computer program for fast exact
 calculation of accessible and molecular surface areas and average
-surface curvature.  J Comput Chem. 2002 23(6):600-9). A detailed
+surface curvature.  J. Comput. Chem. 2002 23:600-609). A detailed
 description of this module can be found <a href=somo_asa.html>here</a>.
 
 <li>
 <b>Overlap Reduction:</b> This module allows you to change the options
-for reducing molecular surfaces to beads, and to handle the various
-issues related to bead overlap elimination. A detailed description of
-this module can be found <a href=somo_overlap.html>here</a>.
+and handle the various issues related to bead overlap elimination.
+A detailed description of this module can be found <a href=somo_overlap.html>here</a>.
 
 <li>
 <b>Hydrodynamic Calculations:</b> This module allows you to change
-the options for calculating hydrodynamic parameters from the bead
+the options for calculating the hydrodynamic parameters from the bead
 models. A detailed description of this module can be found <a
 href=somo_results.html>here</a>.
 
 <li>
-<b>Miscellaneous Options:</b> This module allows you to define the volume
-of hydration of a water molecule and the partials specific volume of
-your molecule. A detailed description of this module can be found <a
-href=somo_misc.html>here</a>.
+<b>Miscellaneous Options:</b> This module allows you to either automatically
+compute from the composition or manually enter the partial specific volume
+of your molecule, and to define the volume used for the hydration water
+molecules (water of hydration has different properties than "bulk" water).
+A detailed description of this module can be found <a href=somo_misc.html>
+here</a>.
 
 <li>
 <b>Bead Model Output:</b> This module allows you to control output options
@@ -154,7 +159,7 @@ this module can be found <a href=somo_bead_output.html>here</a>.
 
 <li>
 <b>Reset to Default Options:</b> Click on this button to reset all
-options to default values. When existing just after clicking on this
+options to default values. When exiting just after clicking on this
 button will reset the config file as well to default options.
 
 </ul>
@@ -180,20 +185,21 @@ NMR or X-ray crystallography experiments. The file can contain multiple
 models and if so, multiple models will be displayed in the list box.
 You can only process one model at a time. After selecting the model,
 click on <i><b>Build Bead Model</b></i>, which should be active now.
-This function will generate the beadmodel based on the settings selected
+This function will generate the bead model based on the settings selected
 above. Alternatively, you can skip all of these steps and load a 
-previously generated beadmodel by clicking on <i><b>Load Bead Model
+previously generated bead model by clicking on <i><b>Load Bead Model
 File</b></i> from the menu. Once bead model generation is completed,
 the progress bar will be at 100% and the bead model can be visualized with
-<i>rasmol</i> by clicking on <i><b>Visualize Bead Model</b></i>. <i>rasmol</i>
-needs to be installed in in <pre><b>$ULTRASCAN/bin</b></pre> for 32 bit
+<i>Rasmol</i> by clicking on <i><b>Visualize Bead Model</b></i>. <i>Rasmol</i>
+needs to be installed in <pre><b>$ULTRASCAN/bin</b></pre> for 32 bit
 machines, and <pre><b>$ULTRASCAN/bin64</b></pre> for 64 bit platforms.
-You can get a copy of <i>rasmol</i> from <a href="http://www.umass.edu/microbio/rasmol/">
+You can get a copy of <i>Rasmol</i> from <a href="http://www.umass.edu/microbio/rasmol/">
 http://www.umass.edu/microbio/rasmol/</a>. Once a bead model has been
-calculated hydrodynamic parameters can be determined from this model
-by clicking on <i><b>Calculate Hydrodynamics</b></i>. The results
-can be seen as soon as this calculation is complete by clicking on 
-<i><b>Show Hydrodynamic Calculations</b></i>.
+generated, its hydrodynamic parameters can be determined by clicking
+on <i><b>Calculate Hydrodynamics</b></i>. A partial list of parameters
+can be seen as soon as this calculation is complete by clicking on
+<i><b>Show Hydrodynamic Calculations</b></i>. A full list of all the
+parameters is also available as a text file.
 </td>
 </tr> 
 </table>
