@@ -3120,6 +3120,14 @@ void US_Hydrodyn::load_pdb()
 		}
 		editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
 	}
+	if (misc.compute_vbar) // after reading the pdb file, the vbar is calculated.
+	{// If we computed vbar, we assign this to result.vbar, which should be used in the calculation.
+		results.vbar = model_vector[current_model].vbar; 
+	}
+	else
+	{
+		results.vbar = misc.vbar;
+	}
 }
 
 void US_Hydrodyn::load_bead_model()
@@ -3242,6 +3250,7 @@ void US_Hydrodyn::calc_vbar(struct PDB_model *model)
 		mw_vbar_sum += mw * (*model).residue[i].vbar; 
 	}
 	(*model).vbar = (mw_vbar_sum/mw_sum) - 0.002125;
+	//cout << "VBAR: " << (*model).vbar << endl;
 }
 
 void US_Hydrodyn::save()
