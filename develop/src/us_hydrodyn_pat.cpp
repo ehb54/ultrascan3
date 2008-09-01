@@ -5,8 +5,19 @@
 #include <stdio.h>
 #include <math.h>
 #include <malloc.h>
+#include <string.h>
 
 #include "../include/us_hydrodyn_pat.h"
+
+// #define DEBUG_WW
+#if defined(DEBUG_WW)
+ static int log_cnt = 0;
+ static double cks;
+ static FILE *logfx;
+ static void dww(char *s) {
+   fprintf(logfx, "dww %s: %.12e\n", s, cks);
+ }
+#endif
 
 struct dati1
 {
@@ -72,6 +83,8 @@ pat_alloc()
 	fprintf(stderr, "memory allocation error\n");
 	return US_HYDRODYN_PAT_ERR_MEMORY_ALLOC;
     }
+    memset(dt, 0, 2 * nmax * sizeof(struct dati1));
+
     dtn = (struct dati1 *) malloc(nmax * sizeof(struct dati1));
     if (!dtn)
     {
@@ -79,6 +92,8 @@ pat_alloc()
 	fprintf(stderr, "memory allocation error\n");
 	return US_HYDRODYN_PAT_ERR_MEMORY_ALLOC;
     }
+    memset(dtn, 0, nmax * sizeof(struct dati1));
+
     return 0;
 }
 
@@ -91,9 +106,23 @@ us_hydrodyn_pat_main(int use_nmax)
 	return retval;
     }
 
+#if defined(DEBUG_WW)
+    cks = 0e0;
+    {
+      char s[30];
+      sprintf(s, "pat_log-%d", log_cnt++);
+      logfx = fopen(s, "w");
+    }
+#endif
+
     int vect; // not used: , kbh, num;
     int i, j, k, contatore;
     float max, vvj;
+
+#if defined(DEBUG_WW)
+    cks += (double)nmax;
+    dww("start");
+#endif
 
     initarray();
 
@@ -105,6 +134,11 @@ us_hydrodyn_pat_main(int use_nmax)
     for (i = 1; i < nat; i++)
 	if (dt[i].m > max)
 	    max = (float)dt[i].m;
+
+#if defined(DEBUG_WW)
+    cks += (double)max;
+    dww("pat 2");
+#endif
 
     FL = 1;
 
@@ -121,8 +155,32 @@ us_hydrodyn_pat_main(int use_nmax)
     else if (max <= 1000000)
 	FL = 1000000;
 
+#if defined(DEBUG_WW)
+    cks += (double)FL;
+    dww("pat 2");
+#endif
+
     calc_CM();
+#if defined(DEBUG_WW)
+    for (i = 0; i < nat; i++) {
+      cks += (double)dt[i].x;
+      cks += (double)dt[i].y;
+      cks += (double)dt[i].z;
+      //      cks += (double)dt[i].r;
+      //      cks += (double)dt[i].m;
+      //      cks += (double)dt[i].col;
+    }
+    dww("after calc CM");
+#endif
     calc_inertia_tensor();
+#if defined(DEBUG_WW)
+    for (i = 0; i < 3; i++) {
+      for (j = 0; j < 3; j++) {
+	cks += (double)a[i][j];
+      }
+    }
+    dww("after calc inertia tensor");
+#endif
 
   RET:
 
@@ -236,6 +294,18 @@ us_hydrodyn_pat_main(int use_nmax)
 printf("%s%f\t%f\t%f\t%f\n","autov + vett ",vv[i][0],vv[i][1],vv[i][2],vv[i][3]);
 */
 
+#if defined(DEBUG_WW)
+    for (i = 0; i < 3; i++) {
+      cks += (double)a1[i][i];
+      cks += (double)a2[i][i];
+      cks += (double)a2[i][i];
+      cks += (double)vv[i][0];
+      cks += (double)vv[i][1];
+      cks += (double)vv[i][2];
+    }
+    dww("pat 3");
+#endif
+
     for (i = 0; i < 2; i++)
 	for (k = i + 1; k < 3; k++)
 	{
@@ -310,7 +380,26 @@ printf("%s%d\n","autovett ",autovett);
     }
 
     calc_CM();
+#if defined(DEBUG_WW)
+    for (i = 0; i < nat; i++) {
+      cks += (double)dt[i].x;
+      cks += (double)dt[i].y;
+      cks += (double)dt[i].z;
+      //      cks += (double)dt[i].r;
+      //      cks += (double)dt[i].m;
+      //      cks += (double)dt[i].col;
+    }
+    dww("after calc CM 2");
+#endif
     calc_inertia_tensor();
+#if defined(DEBUG_WW)
+    for (i = 0; i < 3; i++) {
+      for (j = 0; j < 3; j++) {
+	cks += (double)a[i][j];
+      }
+    }
+    dww("after calc inertia tensor 2");
+#endif
 
     if (contatore > 4)
     {
@@ -373,6 +462,9 @@ printf("%s%d\n","autovett ",autovett);
 
     }
     pat_free_alloced();
+#if defined(DEBUG_WW)
+    fclose(logfx);
+#endif
     return 0;
 }
 
@@ -522,6 +614,18 @@ initarray()
 	fclose(mol);
 	fclose(rmc);
     }
+
+#if defined(DEBUG_WW)
+    for (i = 0; i < nat; i++) {
+      cks += (double)dt[i].x;
+      cks += (double)dt[i].y;
+      cks += (double)dt[i].z;
+      cks += (double)dt[i].r;
+      cks += (double)dt[i].m;
+      cks += (double)dt[i].col;
+    }
+    dww("initarray end");
+#endif
 
 }
 

@@ -270,6 +270,16 @@ static void relax_rigid_calc();
 static void ragir();
 static void maxest();
 
+// #define DEBUG_WW
+#if defined(DEBUG_WW)
+ static int log_cnt = 0;
+ static double cks;
+ static FILE *logfx;
+ static void dww(char *s) {
+   fprintf(logfx, "dww %s: %.12e\n", s, cks);
+ }
+#endif
+
 // #define NMAX 1690
 
 static struct dati1 *dt = 0;	// [2 * NMAX];
@@ -335,6 +345,8 @@ supc_alloc()
 	fprintf(stderr, "memory allocation error\n");
 	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
+    memset(dt, 0, 2 * nmax * sizeof(struct dati1));
+
     dtn = (struct dati1 *) malloc(nmax * sizeof(struct dati1));
     if (!dtn)
     {
@@ -342,6 +354,8 @@ supc_alloc()
 	fprintf(stderr, "memory allocation error\n");
 	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
+    memset(dtn, 0, nmax * sizeof(struct dati1));
+
     rRi = (float *) malloc(nmax * 3 * sizeof(float));
     if (!rRi)
     {
@@ -349,6 +363,8 @@ supc_alloc()
 	fprintf(stderr, "memory allocation error\n");
 	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
+    memset(rRi, 0, nmax * 3 * sizeof(float));
+
     b1 = (float *) malloc(nmax * 3 * sizeof(float));
     if (!b1)
     {
@@ -356,6 +372,8 @@ supc_alloc()
 	fprintf(stderr, "memory allocation error\n");
 	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
+    memset(b1, 0, nmax * 3 * sizeof(float));
+
     p = (float *) malloc(nmax * 3 * sizeof(float));
     if (!p)
     {
@@ -363,6 +381,8 @@ supc_alloc()
 	fprintf(stderr, "memory allocation error\n");
 	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
+    memset(p, 0, nmax * 3 * sizeof(float));
+
     gp = (float *) malloc(nmax * 9 * sizeof(float));
     if (!gp)
     {
@@ -370,6 +390,8 @@ supc_alloc()
 	fprintf(stderr, "memory allocation error\n");
 	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
+    memset(gp, 0, nmax * 9 * sizeof(float));
+
     a = (float *) malloc(nmax * 3 * nmax * 3 * sizeof(float));
     if (!a)
     {
@@ -377,6 +399,8 @@ supc_alloc()
 	fprintf(stderr, "memory allocation error\n");
 	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
+    memset(a, 0, nmax * 3 * nmax * 3 * sizeof(float));
+
     q = (float *) malloc(nmax * nmax * 9 * sizeof(float));
     if (!q)
     {
@@ -384,6 +408,7 @@ supc_alloc()
 	fprintf(stderr, "memory allocation error\n");
 	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
+    memset(q, 0, nmax * nmax * 9 * sizeof(float));
     return 0;
 }
 
@@ -446,18 +471,39 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 		      QProgressBar *use_progress,
 		      QTextEdit *use_editor)
 {
+  dt = 0;
+  dtn = 0;
+  rRi = 0;
+  b1 = 0;	
+  p = 0;	
+  gp = 0;	
+  q = 0;	
+  a = 0;	
+
     progress = use_progress;
     editor = use_editor;
+#if defined(DEBUG_WW)
+    cks = 0e0;
+    {
+      char s[30];
+      sprintf(s, "supc_log-%d", log_cnt++);
+      logfx = fopen(s, "w");
+    }
+#endif
 
     nmax = (int) bead_model->size();
     
     supc_results = hydro_results;
     supc_results->total_beads = nmax;
+    
     if (int retval = supc_alloc())
     {
 	return retval;
     }
-
+#if defined(DEBUG_WW)
+    cks += (double)nmax;
+    dww("start");
+#endif
     int i;
     int k; 
     int flag_mem;
@@ -880,12 +926,25 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	    dt[i].y = dtn[i].y;
 	    dt[i].z = dtn[i].z;
 	}
+#if defined(DEBUG_WW)
+	    for (i = 0; i < nat; i++) {
+	      cks += (double)dt[i].x;
+	      cks += (double)dt[i].y;
+	      cks += (double)dt[i].z;
+	    }
+    dww("main before overlap");
+#endif
+
 	if (overlap() == 1)
 	{
 #if defined(USE_MAIN)
 	    printf("\n\n Hit any key to exit");
 	    getchar();
 #else
+# if defined(DEBUG_WW)
+    dww("final/overlaps");
+    fclose(logfx);
+# endif
 	    printf("overlaps detected\n");
 	    supc_free_alloced();
 	    progress->setProgress(mppos); 
@@ -1270,6 +1329,12 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
     fclose(tot_mol);
     unlink("tot_mol");
+
+#if defined(DEBUG_WW)
+    dww("final");
+    fclose(logfx);
+#endif
+
     supc_free_alloced();
     progress->setProgress(mppos); 
     qApp->processEvents();
@@ -2265,13 +2330,24 @@ inp_inter()
 
     int i;
 
-    interinp = fopen("ifraxon", "ab");
-    interinp1 = fopen("ifraxon1", "ab");
+    interinp = fopen("ifraxon", "wb");
+    interinp1 = fopen("ifraxon1", "wb");
 
     fprintf(interinp, "%d\n", nat);
     fprintf(interinp, "%f\n", 0.0);
     fprintf(interinp, "%s\n", "ifraxon1");
 
+#if defined(DEBUG_WW)
+    for (i = 0; i < nat; i++) {
+      cks += (double)dt[i].x;
+      cks += (double)dt[i].y;
+      cks += (double)dt[i].z;
+      cks += (double)dt[i].r;
+      cks += (double)dt[i].m;
+      cks += (double)dt[i].col;
+    }
+    dww("inp_inter before writing");
+#endif
     for (i = 0; i < nat; i++)
     {
 	fprintf(interinp, "%f\t", dt[i].x);
@@ -2312,6 +2388,14 @@ out_inter()
 	fscanf(interout, "%f", &dtn[i].z);
     }
 
+#if defined(DEBUG_WW)
+    for (i = 0; i < nat; i++) {
+      cks += (double)dtn[i].x;
+      cks += (double)dtn[i].y;
+      cks += (double)dtn[i].z;
+    }
+    dww("out_inter after reading");
+#endif
     fclose(interout);
 
 }
@@ -3112,6 +3196,7 @@ initarray()
 {
     int i;
     char temp[34];
+    memset(temp, 0, 34);
 
     fscanf(tot_mol, "%s", molecola);
     strcpy(ricorda, molecola);
@@ -3121,6 +3206,24 @@ initarray()
 
     for (i = 0; i < nat; i++)
 	dt[i].cor = temp;
+
+#if defined(DEBUG_WW)
+    for (i = 0; i < nat; i++) {
+      if(i < 5 || i > nat - 5) {
+         fprintf(logfx,"dt[%d]=",i);
+      }
+      for (int j = 0; j < 34; j++) {
+	if(i < 5 || i > nat - 5) {
+	  fprintf(logfx,"%d ",dt[i].cor[j]);
+	}
+	cks += (double)dt[i].cor[j];
+      }
+      if(i < 5 || i > nat - 5) {
+	fprintf(logfx,"\n");
+      }
+    }
+    dww("initarray 1");
+#endif
 
     vt = 0;
     mol = fopen(molecola, "r");
@@ -3142,6 +3245,17 @@ initarray()
 	    fscanf(rmc, "%d", &dt[i].m);
 	    fscanf(rmc, "%d", &dt[i].col);
 	}
+#if defined(DEBUG_WW)
+	    for (i = 0; i < nat; i++) {
+	      cks += (double)dt[i].x;
+	      cks += (double)dt[i].y;
+	      cks += (double)dt[i].z;
+	      cks += (double)dt[i].r;
+	      cks += (double)dt[i].m;
+	      cks += (double)dt[i].col;
+	    }
+    dww("initarray 2");
+#endif
 
 	fclose(rmc);
 	goto a1200;
@@ -3387,6 +3501,17 @@ initarray()
 	printf("\n%s%d%s", " TOO MANY BEADS to COMPUTE ! (max: ", nmax, ")\n");
 	exit(0);
     }
+#if defined(DEBUG_WW)
+	    for (i = 0; i < nat; i++) {
+	      cks += (double)dt[i].x;
+	      cks += (double)dt[i].y;
+	      cks += (double)dt[i].z;
+	      cks += (double)dt[i].r;
+	      cks += (double)dt[i].m;
+	      cks += (double)dt[i].col;
+	    }
+    dww("initarray 3");
+#endif
 }
 
 /*******************************************************************/

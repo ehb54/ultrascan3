@@ -1337,16 +1337,16 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
     clock_t start2;
     // clock_t end2;
 
-    memset(cycles, MAXCYCLES * MAXCYCLES * sizeof(int), 0);
-    memset(common, MAXCYCLES * MAXCYCLES * sizeof(int), 0);
-    memset(respect, MAXCYCLES * MAXCYCLES * sizeof(int), 0);
-    memset(hits,  MAXCYCLES * sizeof(int), 0);
-    memset(nvincyc,  MAXCYCLES * sizeof(int), 0);
+    memset(cycles, 0, MAXCYCLES * MAXCYCLES * sizeof(int));
+    memset(common, 0, MAXCYCLES * MAXCYCLES * sizeof(int));
+    memset(respect, 0, MAXCYCLES * MAXCYCLES * sizeof(int));
+    memset(hits, 0, MAXCYCLES * sizeof(int));
+    memset(nvincyc, 0, MAXCYCLES * sizeof(int));
 
-    memset(verte, MAXCYCLES * 3 * sizeof(float), 0);
-    memset(uconij, 10000 * 3 * sizeof(float), 0);
-    memset(tconij, 10000 * 3 * sizeof(float), 0);
-    memset(dist2ij, 10000 * sizeof(float), 0);
+    memset(verte, 0, MAXCYCLES * 3 * sizeof(float));
+    memset(uconij, 0, 10000 * 3 * sizeof(float));
+    memset(tconij, 0, 10000 * 3 * sizeof(float));
+    memset(dist2ij, 0, 10000 * sizeof(float));
 
 #if defined(US_SURFRACER_COMPUTE_EXTRAS)
     int cavn;
@@ -1654,7 +1654,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(a, atomnumber * 3 * sizeof(float), 0);
+    memset(a, 0, atomnumber * 3 * sizeof(float));
 
     ar = (float *) calloc(atomnumber, sizeof(float));	/* radius */
     if (!ar)
@@ -1663,7 +1663,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(ar, atomnumber * 3 * sizeof(float), 0);
+    memset(ar, 0, atomnumber * sizeof(float));
 
     aarea = (float *) calloc(atomnumber, sizeof(float));	/* accessible area  */
     if (!aarea)
@@ -1672,7 +1672,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(aarea, atomnumber * sizeof(float), 0);
+    memset(aarea, 0, atomnumber * sizeof(float));
 
     molarea = (float *) calloc(atomnumber, sizeof(float));	/*  molecular (smooth) area  */
     if (!molarea)
@@ -1681,7 +1681,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(molarea, atomnumber * sizeof(float), 0);
+    memset(molarea, 0, atomnumber * sizeof(float));
 
 
     curvat = (float *) calloc(atomnumber, sizeof(float));	/*  curvature  */
@@ -1691,7 +1691,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(curvat, atomnumber * sizeof(float), 0);
+    memset(curvat, 0, atomnumber * sizeof(float));
 
     /*This part of the program loads up atomic coordinates from the file and assigns radii */
     i = 0;			/*atom number counter */
@@ -1738,7 +1738,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(atomcon, atomnumber * sizeof(int), 0);
+    memset(atomcon, 0, atomnumber * sizeof(int));
 
 
     veat = (int *) calloc(atomnumber * 6 * 3, sizeof(int));	/*vertex forming atom triplets */
@@ -1748,7 +1748,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(veat, atomnumber * 6 * 3 * sizeof(int), 0);
+    memset(veat, 0, atomnumber * 6 * 3 * sizeof(int));
 
     ve = (float *) calloc(atomnumber * 6 * 3, sizeof(float));
     if (!ve)
@@ -1757,7 +1757,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(ve, atomnumber * 6 * 3 * sizeof(int), 0);
+    memset(ve, 0, atomnumber * 6 * 3 * sizeof(int));
 
     ciat = (int *) calloc(atomnumber * 2, sizeof(int));	/*contact circle forming atom pairs */
     if (!ciat)
@@ -1766,7 +1766,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(ciat, atomnumber * 2 * sizeof(int), 0);
+    memset(ciat, 0, atomnumber * 2 * sizeof(int));
 
 
     ci = (float *) calloc(atomnumber * 3, sizeof(float));
@@ -1776,7 +1776,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(ci, atomnumber * 3 * sizeof(float), 0);
+    memset(ci, 0, atomnumber * 3 * sizeof(float));
 
 /*loadind unburied vertexes (probe positions) and contact circles*/
     printf("\nBuilding the surface..."); fflush(stdout);
@@ -2052,7 +2052,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	    free_alloced();
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
-	memset(verat, nv * 3 * sizeof(int), 0);
+	memset(verat, 0, nv * 3 * sizeof(int));
 
 	ver = (float *) calloc(nv * 3, sizeof(float));
 	if (!ver)
@@ -2061,7 +2061,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	    free_alloced();
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
-	memset(ver, nv * 3 * sizeof(float), 0);
+	memset(ver, 0, nv * 3 * sizeof(float));
     }
 
     if (ncircle > 0)		/*if there are circles */
@@ -2073,7 +2073,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	    free_alloced();
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
-	memset(cirat, ncircle * 2 * sizeof(int), 0);
+	memset(cirat, 0, ncircle * 2 * sizeof(int));
 
 	cir = (float *) calloc(ncircle * 3, sizeof(float));
 	if (!cir)
@@ -2082,7 +2082,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	    free_alloced();
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
-	memset(cir, ncircle * 3 * sizeof(float), 0);
+	memset(cir, 0, ncircle * 3 * sizeof(float));
     }
 
     veflag = (char *) calloc(ncircle + nv, sizeof(char));
@@ -2092,7 +2092,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	free_alloced();
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(veflag, (ncircle + nv) * sizeof(char), 0);
+    memset(veflag, 0, (ncircle + nv) * sizeof(char));
 
     for (i = 0; i <= nv - 1; i++)
     {
@@ -2154,7 +2154,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	free_alloced();
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(edge, ned * 2 * sizeof(int), 0);
+    memset(edge, 0, ned * 2 * sizeof(int));
 
     edgeatom = (int *) calloc(ned, sizeof(int));	/* radius */
     if (!edgeatom)
@@ -2163,7 +2163,7 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
 	free_alloced();
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
-    memset(edgeatom, ned * sizeof(int), 0);
+    memset(edgeatom, 0, ned * sizeof(int));
 
     for (i = 0; i <= ned - 1; i++)	/*initializing the first elements of each pair with -1 */
     {
