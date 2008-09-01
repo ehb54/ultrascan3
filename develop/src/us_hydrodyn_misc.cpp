@@ -23,7 +23,7 @@ US_Hydrodyn_Misc::~US_Hydrodyn_Misc()
 void US_Hydrodyn_Misc::setupGUI()
 {
 	int minHeight1 = 30;
-	
+	QString str;
 	lbl_info = new QLabel(tr("Miscellaneous SOMO Options:"), this);
 	Q_CHECK_PTR(lbl_info);
 	lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -78,6 +78,7 @@ void US_Hydrodyn_Misc::setupGUI()
 	le_vbar = new QLineEdit(this, "vbar Line Edit");
 	le_vbar->setMinimumHeight(minHeight1);
 	le_vbar->setEnabled(!(*misc).compute_vbar);
+	le_vbar->setText(str.sprintf("%5.3f", (*misc).vbar));
 	le_vbar->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(update_vbar(const QString &)));
