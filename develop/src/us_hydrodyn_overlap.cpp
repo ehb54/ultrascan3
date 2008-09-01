@@ -12,7 +12,7 @@ double *overlap_tolerance, bool *overlap_widget, QWidget *p, const char *name) :
 	*overlap_widget = true;
 	USglobal=new US_Config();
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-	setCaption(tr("SOMO Accessible Surface Area Options"));
+	setCaption(tr("SOMO Bead Overlap Reduction Options"));
 	setupGUI();
 	global_Xpos += 30;
 	global_Ypos += 30;

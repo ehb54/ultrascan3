@@ -86,41 +86,37 @@ void US_Hydrodyn_Hydro::setupGUI()
 
 	bg_boundary_cond->setButton((*hydro).boundary_cond);
 	
-	bg_bead_inclusion = new QButtonGroup(2, Qt::Horizontal, "Buried Bead Inclusion:", this);
-	bg_bead_inclusion->setExclusive(true);
-	connect(bg_bead_inclusion, SIGNAL(clicked(int)), this, SLOT(select_bead_inclusion(int)));
+	bg_mass_correction = new QButtonGroup(4, Qt::Horizontal, "Bead Mass Correction:", this);
+	bg_mass_correction->setExclusive(true);
+	connect(bg_mass_correction, SIGNAL(clicked(int)), this, SLOT(select_mass_correction(int)));
 
-	cb_exclusion = new QCheckBox(bg_bead_inclusion);
-	cb_exclusion->setText(tr(" Exclude "));
-	cb_exclusion->setEnabled(true);
-	cb_exclusion->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_exclusion->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cb_auto_mass = new QCheckBox(bg_mass_correction);
+	cb_auto_mass->setText(tr(" Automatic "));
+	cb_auto_mass->setEnabled(true);
+	cb_auto_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cb_auto_mass->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-	cb_inclusion = new QCheckBox(bg_bead_inclusion);
-	cb_inclusion->setText(tr(" Include "));
-	cb_inclusion->setEnabled(true);
-	cb_inclusion->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_inclusion->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cb_manual_mass = new QCheckBox(bg_mass_correction);
+	cb_manual_mass->setText(tr(" Manual "));
+	cb_manual_mass->setEnabled(true);
+	cb_manual_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cb_manual_mass->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-	bg_bead_inclusion->setButton((*hydro).bead_inclusion);
-	
-	gb_buried = new QButtonGroup(2, Qt::Horizontal, "Include Buried Beads in volume correction for calculation of:", this);
+	bg_mass_correction->setButton((*hydro).mass_correction);
 
-	cb_rotational = new QCheckBox(gb_buried);
-	cb_rotational->setText(tr(" Rotational Diffusion "));
-	cb_rotational->setEnabled((*hydro).bead_inclusion);
-	cb_rotational->setChecked((*hydro).rotational);
-	cb_rotational->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_rotational->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(cb_rotational, SIGNAL(clicked()), this, SLOT(set_rotational()));
+	lbl_mass = new QLabel(tr(" Enter mass:    "), bg_mass_correction);
+	Q_CHECK_PTR(lbl_mass);
+	lbl_mass->setAlignment(AlignLeft|AlignVCenter);
+	lbl_mass->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-	cb_viscosity = new QCheckBox(gb_buried);
-	cb_viscosity->setText(tr(" Intrinsic Viscosity "));
-	cb_viscosity->setEnabled((*hydro).bead_inclusion);
-	cb_viscosity->setChecked((*hydro).viscosity);
-	cb_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_viscosity->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(cb_viscosity, SIGNAL(clicked()), this, SLOT(set_viscosity()));
+	le_mass = new QLineEdit(bg_mass_correction, "Mass Line Edit");
+	le_mass->setText(" 0.0 ");
+	le_mass->setAlignment(AlignVCenter);
+	le_mass->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	le_mass->setEnabled((*hydro).mass_correction);
+	connect(le_mass, SIGNAL(textChanged(const QString &)), SLOT(update_mass(const QString &)));
 
 	bg_volume_correction = new QButtonGroup(4, Qt::Horizontal, "Bead Volume Correction:", this);
 	bg_volume_correction->setExclusive(true);
@@ -154,37 +150,42 @@ void US_Hydrodyn_Hydro::setupGUI()
 	le_volume->setEnabled((*hydro).volume_correction);
 	connect(le_volume, SIGNAL(textChanged(const QString &)), SLOT(update_volume(const QString &)));
 
-	bg_mass_correction = new QButtonGroup(4, Qt::Horizontal, "Bead Mass Correction:", this);
-	bg_mass_correction->setExclusive(true);
-	connect(bg_mass_correction, SIGNAL(clicked(int)), this, SLOT(select_mass_correction(int)));
+	bg_bead_inclusion = new QButtonGroup(2, Qt::Horizontal, "Buried Bead Inclusion:", this);
+	bg_bead_inclusion->setExclusive(true);
+	bg_bead_inclusion->setEnabled(!(*hydro).volume_correction);
+	connect(bg_bead_inclusion, SIGNAL(clicked(int)), this, SLOT(select_bead_inclusion(int)));
 
-	cb_auto_mass = new QCheckBox(bg_mass_correction);
-	cb_auto_mass->setText(tr(" Automatic "));
-	cb_auto_mass->setEnabled(true);
-	cb_auto_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_auto_mass->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cb_exclusion = new QCheckBox(bg_bead_inclusion);
+	cb_exclusion->setText(tr(" Exclude "));
+	cb_exclusion->setEnabled(true);
+	cb_exclusion->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cb_exclusion->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-	cb_manual_mass = new QCheckBox(bg_mass_correction);
-	cb_manual_mass->setText(tr(" Manual "));
-	cb_manual_mass->setEnabled(true);
-	cb_manual_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_manual_mass->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	cb_inclusion = new QCheckBox(bg_bead_inclusion);
+	cb_inclusion->setText(tr(" Include "));
+	cb_inclusion->setEnabled(true);
+	cb_inclusion->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cb_inclusion->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-	bg_mass_correction->setButton((*hydro).mass_correction);
+	bg_bead_inclusion->setButton((*hydro).bead_inclusion);
+	
+	gb_buried = new QButtonGroup(2, Qt::Horizontal, "Include Buried Beads in volume correction for calculation of:", this);
 
-	lbl_mass = new QLabel(tr(" Enter mass:    "), bg_mass_correction);
-	Q_CHECK_PTR(lbl_mass);
-	lbl_mass->setAlignment(AlignLeft|AlignVCenter);
-	lbl_mass->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+	cb_rotational = new QCheckBox(gb_buried);
+	cb_rotational->setText(tr(" Rotational Diffusion "));
+	cb_rotational->setEnabled(!(*hydro).bead_inclusion);
+	cb_rotational->setChecked((*hydro).rotational);
+	cb_rotational->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cb_rotational->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cb_rotational, SIGNAL(clicked()), this, SLOT(set_rotational()));
 
-	le_mass = new QLineEdit(bg_mass_correction, "Mass Line Edit");
-	le_mass->setText(" 0.0 ");
-	le_mass->setAlignment(AlignVCenter);
-	le_mass->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	le_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	le_mass->setEnabled((*hydro).mass_correction);
-	connect(le_mass, SIGNAL(textChanged(const QString &)), SLOT(update_mass(const QString &)));
+	cb_viscosity = new QCheckBox(gb_buried);
+	cb_viscosity->setText(tr(" Intrinsic Viscosity "));
+	cb_viscosity->setEnabled(!(*hydro).bead_inclusion);
+	cb_viscosity->setChecked((*hydro).viscosity);
+	cb_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cb_viscosity->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cb_viscosity, SIGNAL(clicked()), this, SLOT(set_viscosity()));
 
 	bg_overlap = new QButtonGroup(4, Qt::Horizontal, "Overlap cut-off:", this);
 	bg_overlap->setExclusive(true);
@@ -244,13 +245,13 @@ void US_Hydrodyn_Hydro::setupGUI()
 	j+=3;
 	background->addMultiCellWidget(bg_boundary_cond, j, j+2, 0, 1);
 	j+=3;
-	background->addMultiCellWidget(bg_bead_inclusion, j, j+2, 0, 1);
-	j+=3;
-	background->addMultiCellWidget(gb_buried, j, j+2, 0, 1);
+	background->addMultiCellWidget(bg_mass_correction, j, j+2, 0, 1);
 	j+=3;
 	background->addMultiCellWidget(bg_volume_correction, j, j+2, 0, 1);
 	j+=3;
-	background->addMultiCellWidget(bg_mass_correction, j, j+2, 0, 1);
+	background->addMultiCellWidget(bg_bead_inclusion, j, j+2, 0, 1);
+	j+=3;
+	background->addMultiCellWidget(gb_buried, j, j+2, 0, 1);
 	j+=3;
 	background->addMultiCellWidget(bg_overlap, j, j+2, 0, 1);
 	j+=3;
@@ -291,13 +292,14 @@ void US_Hydrodyn_Hydro::select_boundary_cond(int val)
 void US_Hydrodyn_Hydro::select_bead_inclusion(int val)
 {
 	(*hydro).bead_inclusion = val;
-	cb_rotational->setEnabled((*hydro).bead_inclusion);
-	cb_viscosity->setEnabled((*hydro).bead_inclusion);
+	cb_rotational->setEnabled(!(*hydro).bead_inclusion);
+	cb_viscosity->setEnabled(!(*hydro).bead_inclusion);
 }
 
 void US_Hydrodyn_Hydro::select_volume_correction(int val)
 {
 	(*hydro).volume_correction = val;
+	bg_bead_inclusion->setEnabled(!(*hydro).volume_correction);
 	le_volume->setEnabled((*hydro).volume_correction);
 }
 
