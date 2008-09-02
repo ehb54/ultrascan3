@@ -32,7 +32,7 @@ struct hydro_results
 	double viscosity;
 	double rs;
 	double rg;
-	double theta;
+	double tau;
 	double vbar;
 };
 
@@ -45,13 +45,13 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
 		~US_Hydrodyn_Results();
 
 	public:
-		
+
 		struct hydro_results *results;
 		bool *result_widget;
 		TextEdit *e;
-		
+
 		US_Config *USglobal;
-		
+
 		QLabel *lbl_info;
 		QLabel *lbl_total_beads;
 		QLineEdit *le_total_beads;
@@ -69,8 +69,8 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
 		QLineEdit *le_rs;
 		QLabel *lbl_rg;
 		QLineEdit *le_rg;
-		QLabel *lbl_theta;
-		QLineEdit *le_theta;
+		QLabel *lbl_tau;
+		QLineEdit *le_tau;
 		QLabel *lbl_vbar;
 		QLineEdit *le_vbar;
 
@@ -81,18 +81,18 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
 		QPushButton *pb_load_beadmodel;
 
 	public slots:
-	
+
 		void cancel();
 
 	private slots:
-		
+
 		void setupGUI();
 		void load_results();
 		void load_asa();
 		void load_beadmodel();
 		void help();
 		void view_file(const QString &);
-	
+
 	protected slots:
 
 		void closeEvent(QCloseEvent *);

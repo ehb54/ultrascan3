@@ -24,7 +24,7 @@ void US_Hydrodyn_Results::setupGUI()
 {
 	int minHeight1 = 30;
 	QString str;
-	
+
 	lbl_info = new QLabel(tr("   SOMO Hydrodynamic Results (Water at 20ºC):   "), this);
 	Q_CHECK_PTR(lbl_info);
 	lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -81,26 +81,26 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_vbar = new QLineEdit(this, "vbar Line Edit");
-	le_vbar->setText(str.sprintf("%5.3f ccm/g", (*results).vbar));
+	le_vbar->setText(str.sprintf("%5.3f cm^3/g", (*results).vbar));
 	le_vbar->setReadOnly(true);
 	le_vbar->setAlignment(AlignVCenter);
 	le_vbar->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-	lbl_s20w = new QLabel(tr(" s20,W: "), this);
+	lbl_s20w = new QLabel(tr(" s(20,w): "), this);
 	Q_CHECK_PTR(lbl_s20w);
 	lbl_s20w->setAlignment(AlignLeft|AlignVCenter);
 	lbl_s20w->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_s20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_s20w = new QLineEdit(this, "s20w Line Edit");
-	le_s20w->setText(str.sprintf("%4.2e s", (*results).s20w));
+	le_s20w->setText(str.sprintf("%4.2e S", (*results).s20w));
 	le_s20w->setReadOnly(true);
 	le_s20w->setAlignment(AlignVCenter);
 	le_s20w->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_s20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-	lbl_D20w = new QLabel(tr(" D20,W, transl.: "), this);
+	lbl_D20w = new QLabel(tr(" D(20,w), transl.: "), this);
 	Q_CHECK_PTR(lbl_D20w);
 	lbl_D20w->setAlignment(AlignLeft|AlignVCenter);
 	lbl_D20w->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -113,18 +113,18 @@ void US_Hydrodyn_Results::setupGUI()
 	le_D20w->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_D20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-	lbl_theta = new QLabel(tr(" Relaxation Time: "), this);
-	Q_CHECK_PTR(lbl_theta);
-	lbl_theta->setAlignment(AlignLeft|AlignVCenter);
-	lbl_theta->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_theta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+	lbl_tau = new QLabel(tr(" Relaxation Time, tau(h): "), this);
+	Q_CHECK_PTR(lbl_tau);
+	lbl_tau->setAlignment(AlignLeft|AlignVCenter);
+	lbl_tau->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
-	le_theta = new QLineEdit(this, "theta Line Edit");
-	le_theta->setText(str.sprintf("%4.2e ns", (*results).theta));
-	le_theta->setReadOnly(true);
-	le_theta->setAlignment(AlignVCenter);
-	le_theta->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	le_theta->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	le_tau = new QLineEdit(this, "tau Line Edit");
+	le_tau->setText(str.sprintf("%4.2e ns", (*results).tau));
+	le_tau->setReadOnly(true);
+	le_tau->setAlignment(AlignVCenter);
+	le_tau->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
 	lbl_viscosity = new QLabel(tr(" Intrinsic Viscosity: "), this);
 	Q_CHECK_PTR(lbl_viscosity);
@@ -229,8 +229,8 @@ void US_Hydrodyn_Results::setupGUI()
 	background->addWidget(lbl_rg, j, 0);
 	background->addWidget(le_rg, j, 1);
 	j++;
-	background->addWidget(lbl_theta, j, 0);
-	background->addWidget(le_theta, j, 1);
+	background->addWidget(lbl_tau, j, 0);
+	background->addWidget(le_tau, j, 1);
 	j++;
 	background->addWidget(lbl_viscosity, j, 0);
 	background->addWidget(le_viscosity, j, 1);

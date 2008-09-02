@@ -54,7 +54,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	results.rs = 0.0;
 	results.rg = 0.0;
 	results.vbar = 0.72;
-	results.theta = 0.0;
+	results.tau = 0.0;
 	rasmol = new QProcess(this);
  	rasmol->setWorkingDirectory(
  				    QDir(USglobal->config_list.system_dir +
@@ -286,7 +286,7 @@ void US_Hydrodyn::setupGUI()
 	file->insertItem( tr("Print"), this, SLOT(print()),	ALT+Key_P );
 	file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),	ALT+Key_X );
 	editor->setWordWrap (QTextEdit::WidgetWidth);
-	
+
 	int rows=7, columns = 3, spacing = 2, j=0, margin=4;
 	QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
@@ -321,11 +321,11 @@ void US_Hydrodyn::setupGUI()
 	background->addWidget(lbl_model, j, 0);
 	background->addMultiCellWidget(lb_model, j, j+1, 1, 1);
 	j+=2;
-	background->addWidget(pb_load_bead_model, j, 0);
-	background->addWidget(le_bead_model_file, j, 1);
-	j++;
 	background->addWidget(pb_somo, j, 0);
 	background->addWidget(pb_visualize, j, 1);
+	j++;
+	background->addWidget(pb_load_bead_model, j, 0);
+	background->addWidget(le_bead_model_file, j, 1);
 	j++;
 	background->addWidget(pb_calc_hydro, j, 0);
 	background->addWidget(pb_show_hydro_results, j, 1);
@@ -535,61 +535,61 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 
       // find residue in residues
 #if defined(DEBUG)
-      printf("check_for_missing_atoms search name %s resName %s\n", 
-	     this_atom->name.ascii(), 
+      printf("check_for_missing_atoms search name %s resName %s\n",
+	     this_atom->name.ascii(),
 	     this_atom->resName.ascii());
 #endif
       int respos = -1;
-      
+
       for (unsigned int m = 0; m < residue_list.size(); m++)
       {
 	if ((residue_list[m].name == this_atom->resName &&
 	     this_atom->name != "OXT" &&
-	     (k || this_atom->name != "N")) || 
-	    (residue_list[m].name == "OXT" 
+	     (k || this_atom->name != "N")) ||
+	    (residue_list[m].name == "OXT"
 	     && this_atom->name == "OXT") ||
 	    (!k &&
 	     this_atom->name == "N" &&
-	     residue_list[m].name == "N1")) 
+	     residue_list[m].name == "N1"))
 	{
 	  respos = (int) m;
 	  this_atom->p_residue = &(residue_list[m]);
 #if defined(DEBUG)
 	  printf("residue match %d resName %s \n", m, residue_list[m].name.ascii());
 #endif
-	  if (lastResSeq != this_atom->resSeq) 
+	  if (lastResSeq != this_atom->resSeq)
 	  {
 	    // new residue
-	    if (lastResPos) 
+	    if (lastResPos)
 	    {
 	      // check for false entries in last residue and warn about them
-	      for (unsigned int l = 0; l < residue_list[lastResPos].r_atom.size(); l++) 
+	      for (unsigned int l = 0; l < residue_list[lastResPos].r_atom.size(); l++)
 	      {
 		if (spec_N1 &&
 		    residue_list[lastResPos].r_atom[l].name == "N") {
 		  residue_list[lastResPos].r_atom[l].tmp_flag = true;
 		  spec_N1 = false;
 		}
-		  
+
 		if (!residue_list[lastResPos].r_atom[l].tmp_flag)
 		{
 		  errors_found++;
 		  error_string->
 		    append(QString("").
 			   sprintf("missing atom molecule %d atom %s residue %s\n",
-				   j + 1, 
-				   residue_list[lastResPos].r_atom[l].name.ascii(), 
+				   j + 1,
+				   residue_list[lastResPos].r_atom[l].name.ascii(),
 				   residue_list[lastResPos].name.ascii()));
 		}
 	      }
 	    }
 
 	    // reset residue list
-	    for (unsigned int l = 0; l < residue_list[m].r_atom.size(); l++) 
+	    for (unsigned int l = 0; l < residue_list[m].r_atom.size(); l++)
 	    {
 	      residue_list[m].r_atom[l].tmp_flag = false;
 	    }
-	    lastResSeq = this_atom->resSeq;      
+	    lastResSeq = this_atom->resSeq;
 	    lastResPos = m;
 	  }
 
@@ -618,17 +618,17 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	int atompos = -1;
 	for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
 	{
-	  
+
 	  if (residue_list[respos].r_atom[m].name == this_atom->name ||
 	      (
-	       this_atom->name == "N" && 
+	       this_atom->name == "N" &&
 	       !k &&
 	       residue_list[respos].r_atom[m].name == "N1"
 	       )
 	      )
 	  {
 	    this_atom->active = true;
-	    residue_list[respos].r_atom[m].tmp_flag = true;	    
+	    residue_list[respos].r_atom[m].tmp_flag = true;
 	    atompos = (int) m;
 	    break;
 	  }
@@ -643,10 +643,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	}
       }
     }
-    if (lastResPos) 
+    if (lastResPos)
     {
       // check for false entries in last residue and warn about them
-      for (unsigned int l = 0; l < residue_list[lastResPos].r_atom.size(); l++) 
+      for (unsigned int l = 0; l < residue_list[lastResPos].r_atom.size(); l++)
       {
 	if (!residue_list[lastResPos].r_atom[l].tmp_flag)
 	{
@@ -654,8 +654,8 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	  error_string->
 	    append(QString("").
 		   sprintf("missing atom molecule %d atom %s residue %s\n",
-			   j + 1, 
-			   residue_list[lastResPos].r_atom[l].name.ascii(), 
+			   j + 1,
+			   residue_list[lastResPos].r_atom[l].name.ascii(),
 			   residue_list[lastResPos].name.ascii()));
 	}
       }
@@ -674,7 +674,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 // # define TOLERANCE 0.001       // this is used to place a limit on the allowed radial overlap
 #define TOLERANCE overlap_tolerance
 
-int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried) 
+int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
 {
   int retval = 0;
 #if defined(DEBUG_OVERLAP)
@@ -687,10 +687,10 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
   for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
     for (unsigned int j = i + 1; j < bead_model.size(); j++) {
       if (bead_model[i].active &&
-	  bead_model[j].active 
+	  bead_model[j].active
 	  &&
 	  (mc ||
-	   (sc && 
+	   (sc &&
 	    bead_model[i].chain == 1 &&
 	    bead_model[j].chain == 1))
 	  &&
@@ -752,13 +752,13 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
 int US_Hydrodyn::compute_asa()
 {
 // run the surfracer code
-  
+
         QString error_string = "";
 	progress->reset();
 	editor->setText(QString("Building the bead model for %1 model %2\n").arg(project).arg(current_model+1));
 	editor->append("Checking the pdb structure\n");
 	if (check_for_missing_atoms(&error_string, &model_vector[current_model])) {
-	  editor->append("US_SURFRACER encountered the following errors with your PDB structure:\n" + 
+	  editor->append("US_SURFRACER encountered the following errors with your PDB structure:\n" +
 			 error_string);
 	  printError("US_SURFRACER encountered errors with your PDB structure:\n"
 		     "please check the text window");
@@ -783,9 +783,9 @@ int US_Hydrodyn::compute_asa()
 	progress->setProgress(ppos++); // 1
 	qApp->processEvents();
 
-	int retval = surfracer_main(&error_string, 
-				    asa.probe_radius, 
-				    residue_list, 
+	int retval = surfracer_main(&error_string,
+				    asa.probe_radius,
+				    residue_list,
 				    &model_vector[current_model],
 				    false,
 				    progress,
@@ -803,14 +803,14 @@ int US_Hydrodyn::compute_asa()
 		{
 			case US_SURFRACER_ERR_MISSING_RESIDUE:
 			{
-				printError("US_SURFRACER encountered an unknown residue:\n" + 
+				printError("US_SURFRACER encountered an unknown residue:\n" +
 					   error_string);
 				return US_SURFRACER_ERR_MISSING_RESIDUE;
 				break;
 			}
 			case US_SURFRACER_ERR_MISSING_ATOM:
 			{
-				printError("US_SURFRACER encountered a unknown atom:\n" + 
+				printError("US_SURFRACER encountered a unknown atom:\n" +
 					   error_string);
 				return US_SURFRACER_ERR_MISSING_ATOM;
 				break;
@@ -833,11 +833,11 @@ int US_Hydrodyn::compute_asa()
 	if(error_string.length()) {
 	  progress->setProgress(mppos);
 	  qApp->processEvents();
-	  printError("US_SURFRACER encountered unknown atom(s) error:\n" + 
+	  printError("US_SURFRACER encountered unknown atom(s) error:\n" +
 		     error_string);
 	  return US_SURFRACER_ERR_MISSING_ATOM;
 	}
-	  
+
 
   // pass 1 assign bead #'s, chain #'s, initialize data
 	printf("made it to here\n"); fflush(stdout);
@@ -1325,7 +1325,7 @@ int US_Hydrodyn::compute_asa()
 	 "bead mw~position controlled?~bead positioner~baric method~bead hydration~bead color~"
 	 "bead ref volume~bead ref mw~bead computed radius~mw match?~"
 	 "position_coordinate~cog position~use position\n");
-  // for (unsigned int i = 0; i < model_vector.size (); i++) 
+  // for (unsigned int i = 0; i < model_vector.size (); i++)
   {
     unsigned int i = current_model;
     for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
@@ -1394,7 +1394,7 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG_MOD)
   vector<PDB_atom> dbg_model;
 #endif
-  //  for (unsigned int i = 0; i < model_vector.size (); i++) 
+  //  for (unsigned int i = 0; i < model_vector.size (); i++)
   {
     unsigned int i = current_model;
     for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
@@ -1900,7 +1900,7 @@ int US_Hydrodyn::compute_asa()
 	  count = 0;
 	  for (unsigned int i = 0; i < pairs.size(); i++) {
 #if defined(DEBUG_OVERLAP)
-	    printf("pair %d %d sep %f %s %s\n", 
+	    printf("pair %d %d sep %f %s %s\n",
 		   pairs[i].i, pairs[i].j, pairs[i].separation, pairs[i].active ? "active" : "not active",
 		   pairs[i].i == max_bead1 ||
 		   pairs[i].j == max_bead1 ||
@@ -2628,9 +2628,9 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
 	  );
 
   // should put vbar calc here...
-  fprintf(fbeams, 
-	  "%d\t-2.000000\t%s.rmc\t%f\n", 
-	  beads, 
+  fprintf(fbeams,
+	  "%d\t-2.000000\t%s.rmc\t%f\n",
+	  beads,
 	  fname.ascii(),
 	  results.vbar
 	  );
@@ -2649,8 +2649,8 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
 	      (*model)[i].bead_coordinate.axis[1] / scaling,
 	      (*model)[i].bead_coordinate.axis[2] / scaling
 	      );
-      fprintf(fbeams, 
-	      "%f\t%f\t%f\n", 
+      fprintf(fbeams,
+	      "%f\t%f\t%f\n",
 	      (*model)[i].bead_coordinate.axis[0],
 	      (*model)[i].bead_coordinate.axis[1],
 	      (*model)[i].bead_coordinate.axis[2]
@@ -2793,11 +2793,11 @@ void US_Hydrodyn::bead_check()
   tmp_chain.atom = bead_model;
   tmp_model.molecule.push_back(tmp_chain);
   QString error_string = "";
-  int retval = surfracer_main(&error_string, 
+  int retval = surfracer_main(&error_string,
 			      // 10,
 			      asa.probe_radius * 4,
-			      residue_list, 
-			      &tmp_model, 
+			      residue_list,
+			      &tmp_model,
 			      true,
 			      progress,
 			      editor
@@ -2838,7 +2838,7 @@ void US_Hydrodyn::bead_check()
     }
   }
   if(error_string.length()) {
-    printError("US_SURFRACER encountered missing atom(s) error:\n" + 
+    printError("US_SURFRACER encountered missing atom(s) error:\n" +
 	       error_string);
     return;
   }
@@ -2858,7 +2858,7 @@ void US_Hydrodyn::select_model(int val)
 	pb_somo->setEnabled(true);
 	pb_show_hydro_results->setEnabled(false);
 	pb_calc_hydro->setEnabled(false);
-	pb_visualize->setEnabled(false);	
+	pb_visualize->setEnabled(false);
 
 }
 
@@ -2866,7 +2866,7 @@ void US_Hydrodyn::visualize()
 {
 	QStringList argument;
 #if !defined(WIN32)
-	// maybe we should make this a user defined terminal window? 
+	// maybe we should make this a user defined terminal window?
 	argument.append("xterm");
 	argument.append("-e");
 #endif
@@ -2902,7 +2902,7 @@ int US_Hydrodyn::calc_somo()
 	      // puts("recheck beads disabled");
 	      editor->append("Rechecking beads (not currently functional!\n");
 	      qApp->processEvents();
-	      
+
 	      bead_check();
 	      editor->append("Finished rechecking beads (not currently functional!\n");
 	      progress->setProgress(19);
@@ -2918,6 +2918,12 @@ int US_Hydrodyn::calc_somo()
 	  pb_visualize->setEnabled(true);
 	  pb_calc_hydro->setEnabled(true);
 	}
+	if (results_widget)
+	{
+		results_window->close();
+		delete results_window;
+		results_widget = false;
+	}
 
 	return 0;
 }
@@ -2926,13 +2932,13 @@ void US_Hydrodyn::calc_hydro()
 {
   puts("calc hydro (supc)");
   editor->append("Begin hydrodynamic calculations\n");
-  int retval = us_hydrodyn_supc_main(&results, 
-				     &hydro, 
-				     &bead_model, 
-				     QString(USglobal->config_list.result_dir + 
+  int retval = us_hydrodyn_supc_main(&results,
+				     &hydro,
+				     &bead_model,
+				     QString(USglobal->config_list.result_dir +
 					     SLASH +
-					     project + 
-					     QString("_%1").arg(current_model + 1) + 
+					     project +
+					     QString("_%1").arg(current_model + 1) +
 					     ".somo.beams").ascii(),
 				     progress,
 				     editor);
@@ -3162,7 +3168,7 @@ void US_Hydrodyn::load_pdb()
 #if defined(START_RASMOL)
 		QStringList argument;
 #if !defined(WIN32)
-		// maybe we should make this a user defined terminal window? 
+		// maybe we should make this a user defined terminal window?
 		argument.append("xterm");
 		argument.append("-e");
 #endif
@@ -3204,7 +3210,7 @@ void US_Hydrodyn::load_pdb()
 	}
 	if (misc.compute_vbar) // after reading the pdb file, the vbar is calculated.
 	{// If we computed vbar, we assign this to result.vbar, which should be used in the calculation.
-		results.vbar = model_vector[current_model].vbar; 
+		results.vbar = model_vector[current_model].vbar;
 	}
 	else
 	{
@@ -3219,7 +3225,7 @@ void US_Hydrodyn::load_pdb()
 	pb_somo->setEnabled(true);
 	pb_show_hydro_results->setEnabled(false);
 	pb_calc_hydro->setEnabled(false);
-	pb_visualize->setEnabled(false);	
+	pb_visualize->setEnabled(false);
 }
 
 void US_Hydrodyn::load_bead_model()
@@ -3236,12 +3242,12 @@ void US_Hydrodyn::load_bead_model()
 		    results_window->close();
 		    delete results_window;
 		    results_widget = false;
-		}  
+		}
 		pb_visualize->setEnabled(true);
 		pb_calc_hydro->setEnabled(true);
 		pb_show_hydro_results->setEnabled(false);
 		pb_calc_hydro->setEnabled(false);
-		pb_visualize->setEnabled(false);	
+		pb_visualize->setEnabled(false);
 	}
 }
 
@@ -3279,7 +3285,7 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 			if (str1.left(6) == "ENDMDL") // we need to save the previously recorded molecule
 			{
 				temp_model.molecule.push_back(temp_chain); // add the last chain of this model
-				editor->append("\nResidue sequence from " + project +".pdb model " + 
+				editor->append("\nResidue sequence from " + project +".pdb model " +
 					       QString("%1").arg(model_vector.size() + 1) + ": \n");
 				str = "";
 				for (unsigned int m=0; m<temp_model.residue.size(); m++ )
@@ -3293,7 +3299,7 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 			}
 			if (str1.left(4) == "ATOM" || str1.left(6) == "HETATM") // need to add TER
 			{
-			  if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H") 
+			  if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H")
 			  {
 				if (!chain_flag) 	// at the first time we encounter the word ATOM
 				{ 				// we don't have a chain yet, so let's start a new one
@@ -3360,7 +3366,7 @@ void US_Hydrodyn::calc_vbar(struct PDB_model *model)
 			mw += (*model).residue[i].r_atom[j].hybrid.mw;
 		}
 		mw_sum += mw;
-		mw_vbar_sum += mw * (*model).residue[i].vbar; 
+		mw_vbar_sum += mw * (*model).residue[i].vbar;
 	}
 	(*model).vbar = (mw_vbar_sum/mw_sum) - 0.002125;
 	//cout << "VBAR: " << (*model).vbar << endl;
@@ -3493,7 +3499,7 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 	{
 		flag = false;
 	}
-	*last_resSeq = temp_atom.resSeq; //update last residue sequence number 
+	*last_resSeq = temp_atom.resSeq; //update last residue sequence number
 	temp_atom.iCode = str1.mid(26, 1);
 
 	str2 = str1.mid(30, 8);
@@ -3533,7 +3539,7 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 	{
 	  //	printError(tr("The residue " + temp_atom.resName + " listed in this PDB file is not found in the residue table!"));
 	}
-	
+
 	return(flag);
 }
 
