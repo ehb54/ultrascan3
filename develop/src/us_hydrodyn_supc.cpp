@@ -1012,8 +1012,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	    fprintf(exe_time, "%s", "MODEL FILE NAME :___ ");
 	    fprintf(exe_time, "%s\n", molecola);
 	    fprintf(exe_time, "%s%d\n", "BEADS in the MODEL :___ ", numero_sfere);
-	    fprintf(exe_time, "%s%d\n", "FIRST BEAD # INCLUDED  :___ ", prima);
-	    fprintf(exe_time, "%s%d\n", "LAST BEAD # INCLUDED :___ ", ultima);
+	    // fprintf(exe_time, "%s%d\n", "FIRST BEAD # INCLUDED  :___ ", prima);
+	    // fprintf(exe_time, "%s%d\n", "LAST BEAD # INCLUDED :___ ", ultima);
 
 	    if (flag_norm == 1)
 		fprintf(exe_time, "\n%s\n\n", "- NORMALIZED MOLECULE -");
@@ -1379,8 +1379,8 @@ presentazione()
     printf("####################################################\n\n");
     printf("- Model        : %s\n", molecola);
     printf("- TOTAL Beads in the MODEL : %d\n", numero_sfere);
-    printf("%s%d\n", "- FIRST Bead Included  : ", prima);
-    printf("%s%d\n", "- LAST Bead Included : ", ultima);
+    // printf("%s%d\n", "- FIRST Bead Included  : ", prima);
+    // printf("%s%d\n", "- LAST Bead Included : ", ultima);
     if (colorzero == 1)
     {
 	printf("\n%s%d%s\n", "- WARNING: THERE IS ", colorzero, " BEAD COLOR CODED '0' [RADIUS < 0.005 NM]");
@@ -1841,8 +1841,9 @@ mem_ris()
     fprintf(ris, "%s", "MODEL File Name  :___ ");
     fprintf(ris, "%s\n", molecola);
     fprintf(ris, "%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere);
-    fprintf(ris, "%s%d\n", "FIRST Bead Included  :___ ", prima);
-    fprintf(ris, "%s%d\n\n", "LAST Bead Included :___ ", ultima);
+    // fprintf(ris, "%s%d\n", "FIRST Bead Included  :___ ", prima);
+    // fprintf(ris, "%s%d\n\n", "LAST Bead Included :___ ", ultima);
+    fprintf(ris, "\n");
 
     if (colorzero == 1)
     {
@@ -1867,19 +1868,19 @@ mem_ris()
     if (volcor == 1)
     {
 	if ((colorsixf == 0) && (sfecalc == 2))
-	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
+	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f),
 		    "  [nm^3] (NO contribution from buried beads)");
 	if ((colorsixf == 1) && (sfecalc == 2))
 	{
-	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
+	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f),
 		    "  [nm^3] (contribution from buried beads only for Dr)");
-	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])");
+	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])");
 	}
 	if ((colorsixf == 2) && (sfecalc == 2))
 	{
-	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
+	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f),
 		    "  [nm^3] (contribution from buried beads only for [n])");
-	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)");
+	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)");
 	}
 	if ((colorsixf == 3) && (sfecalc == 2))
 	    fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
@@ -1904,8 +1905,8 @@ mem_ris()
 
     if ((raflag == -2.0) || (raflag == -5.0))
     {
-	fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
-		(mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+	fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF.           = ",
+		(mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "        [S] (20C,w)");
 	if ((nat + colorzero + colorsix) < numero_sfere)
 	    fprintf(ris,
 		    "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
@@ -1998,38 +1999,38 @@ mem_ris()
 	vol_mas = pesmol;
     }
 
-    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY                 = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]");
+    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY                  = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]");
     einst = pow(0.3 * pesmol * vis / (PI * AVO), 0.33333);
     einst = 1E7 * einst;
-    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                   = ", einst * fconv, "[nm]");
+    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                    = ", einst * fconv, "[nm]");
     if ((volcor == 1) && ((colorsixf == 0) || (colorsixf == 1) || (colorsixf == 2)))
     {
 	fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
 		(vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
 	einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO), 0.33333);
 	einst = 1E7 * einst;
-	fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
+	fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
     }
     else
     {
-	fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
+	fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected)  = ",
 		(vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
 	einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / (PI * AVO), 0.33333);
 	einst = 1E7 * einst;
-	fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
+	fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
     }
-    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(DoubleSum CM)   = ", vis4 * correz * pow(fconv, 3), "[cm^3/g]");
+    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(DoubleSum CM)    = ", vis4 * correz * pow(fconv, 3), "[cm^3/g]");
     einst = pow(0.3 * pesmol * vis4 / (PI * AVO), 0.33333);
     einst = 1E7 * einst;
-    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (DoubleSum CM)    = ", einst * fconv, "[nm]");
-    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CM)       = ", vis1 * correz * pow(fconv, 3), "[cm^3/g]");
+    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (DoubleSum CM)     = ", einst * fconv, "[nm]");
+    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CM)        = ", vis1 * correz * pow(fconv, 3), "[cm^3/g]");
     einst = pow(0.3 * pesmol * vis1 / (PI * AVO), 0.33333);
     einst = 1E7 * einst;
-    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CM)        = ", einst * fconv, "[nm]");
-    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CV)       = ", vis2 * correz * pow(fconv, 3), "[cm^3/g]");
+    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CM)         = ", einst * fconv, "[nm]");
+    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(Tsuda CV)        = ", vis2 * correz * pow(fconv, 3), "[cm^3/g]");
     einst = pow(0.3 * pesmol * vis2 / (PI * AVO), 0.33333);
     einst = 1E7 * einst;
-    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)        = ", einst * fconv, "[nm]");
+    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)         = ", einst * fconv, "[nm]");
 
     fprintf(ris, "\nRELAXATION TIMES\n\n");
 

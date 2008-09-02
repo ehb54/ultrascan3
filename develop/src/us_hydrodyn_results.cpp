@@ -286,6 +286,7 @@ void US_Hydrodyn_Results::load_asa()
 void US_Hydrodyn_Results::view_file(const QString &filename)
 {
 	e = new TextEdit();
+	e->setFont(QFont("Courier"));
 	e->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	e->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
 	e->load(filename);

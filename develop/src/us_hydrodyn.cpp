@@ -2896,6 +2896,16 @@ int US_Hydrodyn::calc_somo()
 		fprintf(stderr, "calculations can not be run until residue & pdb files are read!\n");
 		return -1;
 	}
+        pb_visualize->setEnabled(false);
+        pb_show_hydro_results->setEnabled(false);
+	pb_calc_hydro->setEnabled(false);
+	if (results_widget)
+	{
+		results_window->close();
+		delete results_window;
+		results_widget = false;
+	}
+
 	if(!compute_asa()) {
 	  if (asa.recheck_beads)
 	    {
@@ -2917,12 +2927,6 @@ int US_Hydrodyn::calc_somo()
 	  qApp->processEvents();
 	  pb_visualize->setEnabled(true);
 	  pb_calc_hydro->setEnabled(true);
-	}
-	if (results_widget)
-	{
-		results_window->close();
-		delete results_window;
-		results_widget = false;
 	}
 
 	return 0;
