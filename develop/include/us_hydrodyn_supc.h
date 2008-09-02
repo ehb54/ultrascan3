@@ -25,7 +25,7 @@ int
 us_hydrodyn_supc_main(hydro_results *hydro_results, 
 		      hydro_options *hydro, 
 		      vector <PDB_atom> *bead_model, 
-		      char *filename,
+		      const char *filename,
 		      QProgressBar *progress,
 		      QTextEdit *editor);
 

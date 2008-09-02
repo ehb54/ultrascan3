@@ -12,9 +12,11 @@
 		# include <sys/time.h>
 		static struct timeval start_tv, end_tv;
 	#endif
+        #define SLASH "/"
 #else
 	#define chdir _chdir
 	#include <direct.h>
+        #define SLASH "\\"
 #endif
 
 
@@ -54,6 +56,14 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	results.vbar = 0.72;
 	results.theta = 0.0;
 	rasmol = new QProcess(this);
+ 	rasmol->setWorkingDirectory(
+ 				    QDir(USglobal->config_list.system_dir +
+#if defined(BIN64)
+ 					 "/bin64/"
+#else
+ 					 "/bin/"
+#endif
+					 ));
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -1383,7 +1393,7 @@ int US_Hydrodyn::compute_asa()
     }
   }
 #if defined(DEBUG_MOD)
-  write_bead_tsv("bead_model_debug.tsv", &dbg_model);
+  write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + "bead_model_debug.somo.tsv", &dbg_model);
 #endif
 
   progress->setProgress(ppos++); // 8
@@ -1523,8 +1533,8 @@ int US_Hydrodyn::compute_asa()
     };
 
 
-  write_bead_tsv("bead_model_start.tsv", &bead_model);
-  write_bead_spt("bead_model_start", &bead_model);
+  write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + "bead_model_start.somo.tsv", &bead_model);
+  write_bead_spt(USglobal->config_list.tmp_dir + SLASH + "bead_model_start.somo", &bead_model);
   for(unsigned int k = 0; k < sizeof(methods) / sizeof(int); k++) {
 
     int beads_popped = 0;
@@ -1572,8 +1582,8 @@ int US_Hydrodyn::compute_asa()
     qApp->processEvents();
 
     do {
-      // write_bead_tsv(QString("bead_model_bp-%1-%2.tsv").arg(k).arg(iter), &bead_model);
-      // write_bead_spt(QString("bead_model-bp-%1-%2").arg(k).arg(iter), &bead_model);
+      // write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + QString("bead_model_bp-%1-%2.somo.tsv").arg(k).arg(iter), &bead_model);
+      // write_bead_spt(USglobal->config_list.tmp_dir + SLASH + QString("bead_model-bp-%1-%2.somo").arg(k).arg(iter), &bead_model);
 #if defined(DEBUG1) || defined(DEBUG)
       printf("popping iteration %d\n", iter++);
 #endif
@@ -1719,8 +1729,8 @@ int US_Hydrodyn::compute_asa()
 #endif
 	}
       } // if pop method
-      // write_bead_tsv(QString("bead_model_ap-%1-%2.tsv").arg(k).arg(iter), &bead_model);
-      // write_bead_spt(QString("bead_model-ap-%1-%2").arg(k).arg(iter), &bead_model);
+      // write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + QString("bead_model_ap-%1-%2.somo.tsv").arg(k).arg(iter), &bead_model);
+      // write_bead_spt(USglobal->config_list.tmp_dir + SLASH + QString("bead_model-ap-%1-%2.somo").arg(k).arg(iter), &bead_model);
     } while(overlaps_exist);
 #if defined(TIMING)
     gettimeofday(&end_tv, NULL);
@@ -1730,8 +1740,8 @@ int US_Hydrodyn::compute_asa()
 	   start_tv.tv_usec);
     fflush(stdout);
 #endif
-    write_bead_tsv(QString("bead_model_pop-%1.tsv").arg(k), &bead_model);
-    write_bead_spt(QString("bead_model_pop-%1").arg(k), &bead_model);
+    write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + QString("bead_model_pop-%1.somo.tsv").arg(k), &bead_model);
+    write_bead_spt(USglobal->config_list.tmp_dir + SLASH + QString("bead_model_pop-%1.somo").arg(k), &bead_model);
     printf("stage %d beads popped %d\n", k, beads_popped);
     progress->setProgress(ppos++); // 12,13,14
     editor->append(QString("Beads popped %1.\nBegin radial reduction stage %2\n").arg(beads_popped).arg(k + 1));
@@ -2185,8 +2195,8 @@ int US_Hydrodyn::compute_asa()
       } else {
 	// simultaneous reduction
 	do {
-	  // write_bead_tsv(QString("bead_model_br-%1-%2.tsv").arg(k).arg(iter), &bead_model);
-	  // write_bead_spt(QString("bead_model-br-%1-%2").arg(k).arg(iter), &bead_model);
+	  // write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + QString("bead_model_br-%1-%2.somo.tsv").arg(k).arg(iter), &bead_model);
+	  // write_bead_spt(USglobal->config_list.tmp_dir + SLASH + QString("bead_model-br-%1-%2.somo").arg(k).arg(iter), &bead_model);
 #if defined(DEBUG1) || defined(DEBUG)
 	  printf("processing simultaneous radial reduction iteration %d\n", iter++);
 #endif
@@ -2421,8 +2431,8 @@ int US_Hydrodyn::compute_asa()
 	    }
 	  }
 	  last_reduced = reduced;
-	  // write_bead_tsv(QString("bead_model_ar-%1-%2.tsv").arg(k).arg(iter), &bead_model);
-	  // write_bead_spt(QString("bead_model-ar-%1-%2").arg(k).arg(iter), &bead_model);
+	  // write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + QString("bead_model_ar-%1-%2.somo.tsv").arg(k).arg(iter), &bead_model);
+	  // write_bead_spt(USglobal->config_list.tmp_dir + SLASH + QString("bead_model-ar-%1-%2.somo").arg(k).arg(iter), &bead_model);
 	} while(count);
       }
 #if defined(TIMING)
@@ -2455,11 +2465,12 @@ int US_Hydrodyn::compute_asa()
       exit(-1);
     }
 #endif
-    write_bead_tsv(QString("bead_model_rr-%1.tsv").arg(k), &bead_model);
-    write_bead_spt(QString("bead_model_rr-%1").arg(k), &bead_model);
+    write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + QString("bead_model_rr-%1.somo.tsv").arg(k), &bead_model);
+    write_bead_spt(USglobal->config_list.tmp_dir + SLASH + QString("bead_model_rr-%1.somo").arg(k), &bead_model);
   } // methods
-  write_bead_tsv("bead_model_end.tsv", &bead_model);
-  write_bead_spt("bead_model_end", &bead_model);
+  write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + "bead_model_end.somo.tsv", &bead_model);
+  write_bead_spt(USglobal->config_list.tmp_dir + SLASH + "bead_model_end.somo", &bead_model);
+  write_bead_spt(USglobal->config_list.result_dir + SLASH + project + QString("_%1").arg(current_model + 1) + ".somo", &bead_model);
   editor->append("Finished with popping and radial reduction\n");
   progress->setProgress(mppos - (asa.recheck_beads ? 1 : 0));
   qApp->processEvents();
@@ -2814,9 +2825,8 @@ void US_Hydrodyn::visualize()
 #else
 	argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
 #endif
-//	argument.append("/home/user/demeler/us/ultrascan/bin/rasmol");
 	argument.append("-script");
-	argument.append(USglobal->config_list.tmp_dir + "/bead_model_end.spt");
+	argument.append(USglobal->config_list.result_dir + SLASH + project + QString("_%1").arg(current_model + 1) + ".somo.spt");
 	rasmol->setArguments(argument);
 	if (!rasmol->start())
 	{
@@ -2868,7 +2878,11 @@ void US_Hydrodyn::calc_hydro()
   int retval = us_hydrodyn_supc_main(&results, 
 				     &hydro, 
 				     &bead_model, 
-				     "bead_model_end.beams",
+				     QString(USglobal->config_list.result_dir + 
+					     SLASH +
+					     project + 
+					     QString("_%1").arg(current_model + 1) + 
+					     ".somo.beams").ascii(),
 				     progress,
 				     editor);
   printf("back from supc retval %d\n", retval);

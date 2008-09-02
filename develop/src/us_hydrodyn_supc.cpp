@@ -13,7 +13,7 @@
 #define  AVO 6.023E23
 #define  KB 1.38066E-16
 #define  TE 293.15
-#define  SMAX 100
+#define  SMAX 256
 #define  RM_COMMAND "rm "
 #include <stdlib.h>		/* Added for 'print_time' function use */
 
@@ -467,7 +467,7 @@ int
 us_hydrodyn_supc_main(hydro_results *hydro_results, 
 		      hydro_options *hydro, 
 		      vector <PDB_atom> *bead_model, 
-		      char *filename,
+		      const char *filename,
 		      QProgressBar *use_progress,
 		      QTextEdit *use_editor)
 {
@@ -753,7 +753,10 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     num = 1;
     strncpy(risultati, filename, SMAX);
     risultati[SMAX-1] = 0;
-    strncat(risultati, ".ris", SMAX - strlen(risultati));
+    if(strlen(risultati) > 6) {
+      risultati[strlen(risultati) - 5] = 0;
+    }
+    strncat(risultati, "hydro_res", SMAX - strlen(risultati));
     risultati[SMAX-1] = 0;
     printf("risultati: %s\n", risultati);
     unlink(risultati);
