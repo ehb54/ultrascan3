@@ -2859,6 +2859,11 @@ void US_Hydrodyn::select_model(int val)
 void US_Hydrodyn::visualize()
 {
 	QStringList argument;
+#if !defined(WIN32)
+	// maybe we should make this a user defined terminal window? 
+	argument.append("xterm");
+	argument.append("-e");
+#endif
 #if defined(BIN64)
 	argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
 #else
@@ -2866,6 +2871,7 @@ void US_Hydrodyn::visualize()
 #endif
 	argument.append("-script");
 	argument.append(USglobal->config_list.result_dir + SLASH + project + QString("_%1").arg(current_model + 1) + ".somo.spt");
+	// #endif
 	rasmol->setArguments(argument);
 	if (!rasmol->start())
 	{
@@ -3149,6 +3155,11 @@ void US_Hydrodyn::load_pdb()
 		editor->setText("");
 #if defined(START_RASMOL)
 		QStringList argument;
+#if !defined(WIN32)
+		// maybe we should make this a user defined terminal window? 
+		argument.append("xterm");
+		argument.append("-e");
+#endif
 #if defined(BIN64)
 		argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
 #else
