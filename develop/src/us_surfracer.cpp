@@ -40,6 +40,9 @@ static int ned;
 static int atomnumber;
 static int calcmode;
 
+static QProgressBar *progress;
+static QTextEdit *editor;
+
 #define MAXCYCLES 40
 // #define DEBUGMSG
 
@@ -1267,8 +1270,16 @@ free_alloced(void)
 }
 
 int
-surfracer_main(QString *error_string, float prober, vector < residue > residue_list, PDB_model *model_vector, bool recheck)
+surfracer_main(QString *error_string, 
+	       float prober, 
+	       vector < residue > residue_list, 
+	       PDB_model *model_vector, 
+	       bool recheck,
+	       QProgressBar *use_progress,
+	       QTextEdit *use_editor)
 {
+    progress = use_progress;
+    editor = use_editor;
     /* HANDLE hStdin; */
     // char str1[255];
     // char str[255];
@@ -1409,6 +1420,19 @@ surfracer_main(QString *error_string, float prober, vector < residue > residue_l
     vector <PDB_atom *> active_atoms;
     if (!recheck) 
     {
+      // #define DEBUG_MM
+#if defined(DEBUG_MM)
+      {
+	int no_of_atoms = 0;
+	int no_of_molecules = model_vector->molecule.size();
+	int i;
+	for (i = 0; i < no_of_molecules; i++) {
+	  no_of_atoms +=  model_vector->molecule[i].atom.size();
+	}
+
+	editor->append(QString("in us_surfracer: There are %1 atoms in %2 molecule(s) in this model\n").arg(no_of_atoms).arg(no_of_molecules));
+      }
+#endif
       // for (unsigned int i = 0; i < model_vector->size(); i++)
       {
 	for (unsigned int j = 0; j < model_vector->molecule.size(); j++)

@@ -755,7 +755,7 @@ int US_Hydrodyn::compute_asa()
   
         QString error_string = "";
 	progress->reset();
-	editor->setText(QString("Building the bead model for model %1\n").arg(current_model+1));
+	editor->setText(QString("Building the bead model for %1 model %2\n").arg(project).arg(current_model+1));
 	editor->append("Checking the pdb structure\n");
 	if (check_for_missing_atoms(&error_string, &model_vector[current_model])) {
 	  editor->append("US_SURFRACER encountered the following errors with your PDB structure:\n" + 
@@ -765,6 +765,16 @@ int US_Hydrodyn::compute_asa()
 	  return -1;
 	}
 	editor->append("PDB structure ok\n");
+	{
+	  int no_of_atoms = 0;
+	  int no_of_molecules = model_vector[current_model].molecule.size();
+	  int i;
+	  for (i = 0; i < no_of_molecules; i++) {
+	    no_of_atoms +=  model_vector[current_model].molecule[i].atom.size();
+	  }
+
+	  editor->append(QString("There are %1 atoms in %2 molecule(s) in this model\n").arg(no_of_atoms).arg(no_of_molecules));
+	}
 	editor->append("Computing ASA\n");
 
 	int mppos = 18 + (asa.recheck_beads ? 1 : 0);
@@ -773,7 +783,14 @@ int US_Hydrodyn::compute_asa()
 	progress->setProgress(ppos++); // 1
 	qApp->processEvents();
 
-	int retval = surfracer_main(&error_string, asa.probe_radius, residue_list, &model_vector[current_model]);
+	int retval = surfracer_main(&error_string, 
+				    asa.probe_radius, 
+				    residue_list, 
+				    &model_vector[current_model],
+				    false,
+				    progress,
+				    editor
+				    );
 	progress->setProgress(ppos++); // 2
 	qApp->processEvents();
 	editor->append("Return from Computing ASA\n");
@@ -1308,7 +1325,9 @@ int US_Hydrodyn::compute_asa()
 	 "bead mw~position controlled?~bead positioner~baric method~bead hydration~bead color~"
 	 "bead ref volume~bead ref mw~bead computed radius~mw match?~"
 	 "position_coordinate~cog position~use position\n");
-  for (unsigned int i = 0; i < model_vector.size (); i++) {
+  // for (unsigned int i = 0; i < model_vector.size (); i++) 
+  {
+    unsigned int i = current_model;
     for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
 	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
@@ -1375,7 +1394,9 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG_MOD)
   vector<PDB_atom> dbg_model;
 #endif
-  for (unsigned int i = 0; i < model_vector.size (); i++) {
+  //  for (unsigned int i = 0; i < model_vector.size (); i++) 
+  {
+    unsigned int i = current_model;
     for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
 	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
@@ -1395,6 +1416,7 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG_MOD)
   write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + "bead_model_debug.somo.tsv", &dbg_model);
 #endif
+  editor->append(QString("There are %1 beads in this model before popping\n").arg(bead_model.size()));
 
   progress->setProgress(ppos++); // 8
   qApp->processEvents();
@@ -2768,7 +2790,12 @@ void US_Hydrodyn::bead_check()
   int retval = surfracer_main(&error_string, 
 			      // 10,
 			      asa.probe_radius * 4,
-			      residue_list, &tmp_model, true);
+			      residue_list, 
+			      &tmp_model, 
+			      true,
+			      progress,
+			      editor
+			      );
   if ( retval ) {
     switch ( retval ) {
     case US_SURFRACER_ERR_MISSING_RESIDUE:
@@ -3214,6 +3241,14 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 			if (str1.left(6) == "ENDMDL") // we need to save the previously recorded molecule
 			{
 				temp_model.molecule.push_back(temp_chain); // add the last chain of this model
+				editor->append("\nResidue sequence from " + project +".pdb model " + 
+					       QString("%1").arg(model_vector.size() + 1) + ": \n");
+				str = "";
+				for (unsigned int m=0; m<temp_model.residue.size(); m++ )
+				{
+				    str += temp_model.residue[m].name + " ";
+				}
+				editor->append(str);
 				calc_vbar(&temp_model); // update the calculated vbar for this model
 				model_vector.push_back(temp_model); // save the model in the model vector.
 				clear_temp_chain(&temp_chain); // we are done with this molecule and can delete it

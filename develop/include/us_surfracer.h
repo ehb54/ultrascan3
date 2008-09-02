@@ -7,7 +7,10 @@ int surfracer_main(QString *error_string,
 		   float probe_radius, 
 		   vector <residue> residue_list,
 		   PDB_model *model_vector,
-		   bool recheck = false);
+		   bool recheck,
+		   QProgressBar *progress,
+		   QTextEdit *editor
+		   );
 
 #define US_SURFRACER_ERR_MISSING_RESIDUE     1
 #define US_SURFRACER_ERR_MISSING_ATOM        2
