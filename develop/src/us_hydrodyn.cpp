@@ -2223,12 +2223,13 @@ int US_Hydrodyn::compute_asa()
 	  printf("processing simultaneous radial reduction iteration %d\n", iter++);
 #endif
 	  if(iter > 10000) {
-	    printf("too many interations\n");
+	    printf("too many iterations\n");
 	    exit(-1);
 	  }
 	  max_intersection_length = 0;
 	  pairs.clear();
 	  count = 0;
+	  reduced[bead_model.size() - 1] = false;
 	  for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
 	    reduced[i] = false;
 	    if (last_reduced[i]) {
@@ -2309,6 +2310,9 @@ int US_Hydrodyn::compute_asa()
 	      }
 	    } // if last_reduced[i]
 	  }
+#if defined(DEBUG1) || defined(DEBUG)
+	  printf("processing radial reduction sync iteration %d pairs to process %d max int len %f\n", iter, count, max_intersection_length);
+#endif
 	  if (max_intersection_length > TOLERANCE) {
 #if defined(DEBUG1) || defined(DEBUG)
 	    printf("processing radial reduction sync iteration %d pairs to process %d\n", iter, count);
@@ -2316,11 +2320,12 @@ int US_Hydrodyn::compute_asa()
 	    for (unsigned int i = 0; i < pairs.size(); i++) {
 	      if (!reduced[pairs[i].i]) {
 		int use_bead = pairs[i].i;
-		if ( !(methods[k] & RR_MCSC) ||
+		/*		if ( !(methods[k] & RR_MCSC) ||
 		     bead_model[use_bead].exposed_code != 1 ||
 		     bead_model[use_bead].chain == 0 ||
 		     (bead_model[pairs[i].i].chain == 1 &&
-		      bead_model[pairs[i].j].chain == 1) ) {
+		     bead_model[pairs[i].j].chain == 1) ) */
+		if(1) {
 #if defined(DEBUG)
 		  printf("reducing beads %d\n", use_bead);
 #endif
@@ -2384,11 +2389,12 @@ int US_Hydrodyn::compute_asa()
 	      }
 	      if (!reduced[pairs[i].j]) {
 		int use_bead = pairs[i].j;
-		if ( !(methods[k] & RR_MCSC) ||
+		/* if ( !(methods[k] & RR_MCSC) ||
 		     bead_model[use_bead].chain == 0 ||
 		     bead_model[use_bead].exposed_code != 1 ||
 		     (bead_model[pairs[i].i].chain == 1 &&
-		      bead_model[pairs[i].j].chain == 1) ) {
+		     bead_model[pairs[i].j].chain == 1) ) */
+		{
 #if defined(DEBUG)
 		  printf("reducing beads %d\n", use_bead);
 #endif
