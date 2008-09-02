@@ -2841,7 +2841,19 @@ void US_Hydrodyn::bead_check()
 void US_Hydrodyn::select_model(int val)
 {
 	current_model = val;
+	editor->setText(QString("%1 model %2 selected.\n").arg(project).arg(current_model+1));
 	// check integrity of PDB file and confirm that all residues are correctly defined in residue table
+	if (results_widget)
+	{
+		results_window->close();
+		delete results_window;
+		results_widget = false;
+	}
+	pb_somo->setEnabled(true);
+	pb_show_hydro_results->setEnabled(false);
+	pb_calc_hydro->setEnabled(false);
+	pb_visualize->setEnabled(false);	
+
 }
 
 void US_Hydrodyn::visualize()
@@ -3202,8 +3214,17 @@ void US_Hydrodyn::load_bead_model()
 		le_bead_model_file->setText(filename);
 		//read_bead_model();
 		// if bead model reading is successful, enabled follow-on buttons:
+		if (results_widget)
+		{
+		    results_window->close();
+		    delete results_window;
+		    results_widget = false;
+		}  
 		pb_visualize->setEnabled(true);
 		pb_calc_hydro->setEnabled(true);
+		pb_show_hydro_results->setEnabled(false);
+		pb_calc_hydro->setEnabled(false);
+		pb_visualize->setEnabled(false);	
 	}
 }
 
