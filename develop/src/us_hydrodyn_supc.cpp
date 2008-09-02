@@ -756,6 +756,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     strncat(risultati, ".ris", SMAX - strlen(risultati));
     risultati[SMAX-1] = 0;
     printf("risultati: %s\n", risultati);
+    unlink(risultati);
     flag_mem = 1;
     strncpy(molecola, filename, SMAX);
     molecola[SMAX-1] = 0;
@@ -844,7 +845,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 		    printf("\n");
 		}
 	    }
-	    tot_mol = fopen("tot_mol", "ab");
+	    tot_mol = fopen("tot_mol", "wb");
 	    fprintf(tot_mol, "%s\n", molecola);
 	    fprintf(tot_mol, "%d\t%d\t%d\n", nat, prima, ultima);
 	    fclose(tot_mol);
@@ -1001,7 +1002,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	printf("- Computational Method : SUPERMATRIX INVERSION\n\n");
 	if (flag_mem == 1)
 	{
-	    exe_time = fopen("exe_time", "ab");
+	    exe_time = fopen("exe_time", "wb");
 	    fprintf(exe_time, "\n%s\n", "BEAMS -           IST. CBA                    COEFF/SUPC");
 	    fprintf(exe_time, "\n%s\n\n", "*** Computational Method : SUPERMATRIX INVERSION chol ***");
 	    fprintf(exe_time, "Date: %s %d %s %d %s\n", day, numday, month, year, hour);
