@@ -2681,7 +2681,7 @@ void US_Astfem_RSA::print_af(FILE *outf)
 	fprintf(outf, "#####################################################\n");
 	fprintf(outf, "#  \n");
 	fprintf(outf, "#  Model Number: %d \n", (*system).model);
-	fprintf(outf, "#  Number of species = %d\n", af_params.s.size() );
+	fprintf(outf, "#  Number of species = %d\n", (int)af_params.s.size() );
 	for (i=0; i<af_params.s.size(); i++)
 	{
 		fprintf(outf, "#  s[%d]=%20.12e D[%d]=%20.12e \n", i, af_params.s[i], i, af_params.D[i]);
