@@ -28,7 +28,7 @@ vector <struct mfem_data> *exp_data)
 	double accel_time, dr;
 	mfem_data simdata;
 	mfem_initial CT0;			// initial total concentration
-	mfem_initial *vC0;		// initial concentration for multiple components
+	mfem_initial *vC0 = NULL;		// initial concentration for multiple components
 	vector <bool> reacting;
 	reacting.resize( (*system).component_vector.size() );
 	af_params.first_speed = (*simparams).speed_step[0].rotorspeed;
@@ -253,7 +253,7 @@ vector <struct mfem_data> *exp_data)
 		last_time = 0.0;
 
 		dr = (af_params.current_bottom - af_params.current_meniscus)/(initial_npts-1);
-
+		if (vC0 != NULL) delete [] vC0;
 		vC0 = new mfem_initial [ rg[group].GroupComponent.size() ];
 		for (j=0; j<rg[group].GroupComponent.size(); j++)
 		{
@@ -388,6 +388,7 @@ vector <struct mfem_data> *exp_data)
 			}
 		}
 	}
+	if (vC0 != NULL)	delete [] vC0;
 	return 0;
 }
 
@@ -1554,7 +1555,8 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 // generate the mesh
 ////////////////////%
 
-
+	US_Config* USglobal;
+	USglobal = NULL;
 	x.clear();
 	sort(nu.begin(), nu.end());	// put nu in ascending order
 	switch ( MeshOpt )
@@ -1616,8 +1618,9 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 			cout << "using mesh from file $ULTRASCAN/mesh.dat...\n";
 			QString str = getenv("ULTRASCAN");
 #else
-			US_Config* USglobal = new US_Config();
+			USglobal = new US_Config();
 			QString    str      = USglobal->config_list.system_dir;
+			if (USglobal != NULL) delete USglobal;
 #endif
 
 			QFile f(str + "/mesh.dat");
@@ -1655,7 +1658,6 @@ void US_Astfem_RSA::mesh_gen(vector <double> nu, unsigned int MeshOpt)
 			cerr << "undefined mesh option\n";
 		}
 	}
-
 	N = x.size();
 	//cout << "total number of points = " << N << "\n";
 }

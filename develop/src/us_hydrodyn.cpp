@@ -33,6 +33,8 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	overlap_widget = false;
 	bead_output_widget = false;
 	results_widget = false;
+	residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
+	read_residue_file();
 	setupGUI();
 	global_Xpos += 30;
 	global_Ypos += 30;
@@ -157,7 +159,7 @@ void US_Hydrodyn::setupGUI()
 	pb_select_residue_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_select_residue_file, SIGNAL(clicked()), SLOT(select_residue_file()));
 
-	lbl_table = new QLabel(tr(" not selected"),this);
+	lbl_table = new QLabel(tr(residue_filename),this);
 	lbl_table->setMinimumHeight(minHeight1);
 	lbl_table->setFrameStyle(QFrame::WinPanel|Sunken);
 	lbl_table->setAlignment(AlignCenter|AlignVCenter);
@@ -167,7 +169,7 @@ void US_Hydrodyn::setupGUI()
 	pb_load_pdb = new QPushButton(tr("Load PDB File"), this);
 	Q_CHECK_PTR(pb_load_pdb);
 	pb_load_pdb->setMinimumHeight(minHeight1);
-	pb_load_pdb->setEnabled(false);
+	pb_load_pdb->setEnabled(true);
 	pb_load_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
 	pb_load_pdb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_load_pdb, SIGNAL(clicked()), SLOT(load_pdb()));
@@ -2994,89 +2996,93 @@ void US_Hydrodyn::update_bead_model_file(const QString &str)
 
 void US_Hydrodyn::select_residue_file()
 {
-	QString old_filename = residue_filename, str1, str2;
-	unsigned int numatoms, numbeads, i, j, positioner;
+	QString old_filename = residue_filename;
 	residue_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.residue *.RESIDUE", this);
 	if (residue_filename.isEmpty())
 	{
 		residue_filename = old_filename;
+		return;
 	}
-	else
+	read_residue_file();
+	lbl_table->setText(residue_filename);
+}
+
+void US_Hydrodyn::read_residue_file()
+{
+	QString str1, str2;
+	unsigned int numatoms, numbeads, i, j, positioner;
+	QFile f(residue_filename);
+	cout << "residue file name: " << residue_filename << endl;
+	residue_list.clear();
+	i=1;
+	if (f.open(IO_ReadOnly|IO_Translate))
 	{
-		lbl_table->setText(residue_filename);
-		QFile f(residue_filename);
-		residue_list.clear();
-		i=1;
-		if (f.open(IO_ReadOnly|IO_Translate))
+		QTextStream ts(&f);
+		while (!ts.atEnd())
 		{
-			QTextStream ts(&f);
-			while (!ts.atEnd())
+			ts >> new_residue.name;
+			ts >> new_residue.type;
+			ts >> new_residue.molvol;
+			ts >> new_residue.asa;
+			ts >> numatoms;
+			ts >> numbeads;
+			ts >> new_residue.vbar;
+			ts.readLine(); // read rest of line
+			new_residue.r_atom.clear();
+			new_residue.r_bead.clear();
+			for (j=0; j<numatoms; j++)
 			{
-				ts >> new_residue.name;
-				ts >> new_residue.type;
-				ts >> new_residue.molvol;
-				ts >> new_residue.asa;
-				ts >> numatoms;
-				ts >> numbeads;
-				ts >> new_residue.vbar;
-				ts.readLine(); // read rest of line
-				new_residue.r_atom.clear();
-				new_residue.r_bead.clear();
-				for (j=0; j<numatoms; j++)
+				ts >> new_atom.name;
+				ts >> new_atom.hybrid.name;
+				ts >> new_atom.hybrid.mw;
+				ts >> new_atom.hybrid.radius;
+				ts >> new_atom.bead_assignment;
+				ts >> positioner;
+				if(positioner == 0)
 				{
-					ts >> new_atom.name;
-					ts >> new_atom.hybrid.name;
-					ts >> new_atom.hybrid.mw;
-					ts >> new_atom.hybrid.radius;
-					ts >> new_atom.bead_assignment;
-					ts >> positioner;
-					if(positioner == 0)
-					{
-						new_atom.positioner = false;
-					}
-					else
-					{
-						new_atom.positioner = true;
-					}
-					ts >> new_atom.serial_number;
-					ts >> new_atom.chain;
-					str2 = ts.readLine(); // read rest of line
-					if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
-					{
-						new_residue.r_atom.push_back(new_atom);
-					}
-					else
-					{
-						QMessageBox::warning(this, tr("UltraScan Warning"),
-													tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n\nAtom "
-															+ new_atom.name + " cannot be read and will be deleted from List."),
-													QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-					}
+					new_atom.positioner = false;
 				}
-				for (j=0; j<numbeads; j++)
+				else
 				{
-					ts >> new_bead.hydration;
-					ts >> new_bead.color;
-					ts >> new_bead.placing_method;
-					ts >> new_bead.chain;
-					ts >> new_bead.volume;
-					str2 = ts.readLine(); // read rest of line
-					printf("residue name %s loading bead %d placing method %d\n",
-					       new_residue.name.ascii(),
-					       j, new_bead.placing_method); fflush(stdout);
-					new_residue.r_bead.push_back(new_bead);
+					new_atom.positioner = true;
 				}
-				calc_bead_mw(&new_residue);
-				if ( !new_residue.name.isEmpty()
-								  && new_residue.molvol > 0.0
-								  && new_residue.asa > 0.0)
+				ts >> new_atom.serial_number;
+				ts >> new_atom.chain;
+				str2 = ts.readLine(); // read rest of line
+				if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
 				{
-					residue_list.push_back(new_residue);
+					new_residue.r_atom.push_back(new_atom);
+				}
+				else
+				{
+					QMessageBox::warning(this, tr("UltraScan Warning"),
+												tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n\nAtom "
+														+ new_atom.name + " cannot be read and will be deleted from List."),
+												QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
 				}
 			}
-			f.close();
-			pb_load_pdb->setEnabled(true);
+			for (j=0; j<numbeads; j++)
+			{
+				ts >> new_bead.hydration;
+				ts >> new_bead.color;
+				ts >> new_bead.placing_method;
+				ts >> new_bead.chain;
+				ts >> new_bead.volume;
+				str2 = ts.readLine(); // read rest of line
+				printf("residue name %s loading bead %d placing method %d\n",
+						new_residue.name.ascii(),
+						j, new_bead.placing_method); fflush(stdout);
+				new_residue.r_bead.push_back(new_bead);
+			}
+			calc_bead_mw(&new_residue);
+			if ( !new_residue.name.isEmpty()
+							&& new_residue.molvol > 0.0
+							&& new_residue.asa > 0.0)
+			{
+				residue_list.push_back(new_residue);
+			}
 		}
+		f.close();
 	}
 }
 
@@ -3085,8 +3091,9 @@ void US_Hydrodyn::load_pdb()
 	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.pdb *.PDB", this);
 	if (!filename.isEmpty())
 	{
-            	int errors_found = 0;
+     	int errors_found = 0;
 		lbl_pdb_file->setText(filename);
+		editor->setText("");
 #if defined(START_RASMOL)
 		QStringList argument;
 #if defined(BIN64)
@@ -3105,21 +3112,25 @@ void US_Hydrodyn::load_pdb()
 #endif
 		QFileInfo fi(filename);
 		project = fi.baseName();
-		cout << project << endl;
 		read_pdb(filename);
 		QString error_string = "";
-		editor->setText("");
-		for(unsigned int i = 0; i < model_vector.size(); i++) {
-		  editor->append(QString("Checking the pdb structure for model %1\n").arg(i+1));
-		  if (check_for_missing_atoms(&error_string, &model_vector[i])) {
-		    errors_found++;
-		    editor->append(QString("US_SURFRACER encountered errors with your PDB structure for model %1:\n").
-				   arg(i + 1) + error_string);
-		    printError(QString("US_SURFRACER encountered errors with your PDB structure for model %1:\n").
-			       arg(i + 1) + "please check the text window");
-		  }
+		for(unsigned int i = 0; i < model_vector.size(); i++)
+		{
+			editor->append(QString("Checking the pdb structure for model %1\n").arg(i+1));
+		  	if (check_for_missing_atoms(&error_string, &model_vector[i]))
+			{
+		   	errors_found++;
+		   	editor->append(QString("US_SURFRACER encountered errors with your PDB structure for model %1:\n").
+				arg(i + 1) + error_string);
+		   	printError(QString("US_SURFRACER encountered errors with your PDB structure for model %1:\n").
+			   arg(i + 1) + "please check the text window");
+			}
 		}
 		editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
+	}
+	else
+	{
+		return; // user canceled loading PDB file
 	}
 	if (misc.compute_vbar) // after reading the pdb file, the vbar is calculated.
 	{// If we computed vbar, we assign this to result.vbar, which should be used in the calculation.
@@ -3129,6 +3140,10 @@ void US_Hydrodyn::load_pdb()
 	{
 		results.vbar = misc.vbar;
 	}
+	pb_somo->setEnabled(true);
+	pb_show_hydro_results->setEnabled(false);
+	pb_calc_hydro->setEnabled(false);
+	pb_visualize->setEnabled(false);	
 }
 
 void US_Hydrodyn::load_bead_model()
@@ -3148,7 +3163,7 @@ void US_Hydrodyn::load_bead_model()
 void US_Hydrodyn::read_pdb(const QString &filename)
 {
 	lb_model->clear();
-	QString str1, str2, temp;
+	QString str, str1, str2, temp;
 	model_vector.clear();
 	bead_model.clear();
 	unsigned int last_resSeq = 0; // keeps track of residue sequence number, initialize to zero, first real one will be "1"
@@ -3210,16 +3225,17 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 			}
 		}
 		f.close();
-		pb_somo->setEnabled(true);
 	}
 	if(!model_flag)	// there were no model definitions, just a single molecule,
 	{						// we still need to save the results
 		temp_model.molecule.push_back(temp_chain);
-		cout << "Protein sequence: " << endl;
+		editor->append("\nResidue sequence from " + project +".pdb:\n");
+		str = "";
 		for (unsigned int m=0; m<temp_model.residue.size(); m++ )
 		{
-			//cout << temp_model.residue[m].name << endl;
+			str += temp_model.residue[m].name + " ";
 		}
+		editor->append(str);
 		temp_model.model_id = 1;
 		calc_vbar(&temp_model); // update the calculated vbar for this model
 		model_vector.push_back(temp_model);
@@ -3375,6 +3391,11 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 	else
 	{
 		flag = true;
+	}
+	if (temp_atom.resName == "HOH" || // we dont want to add waters to the sequence
+			temp_atom.resName == "DOD")
+	{
+		flag = false;
 	}
 	*last_resSeq = temp_atom.resSeq; //update last residue sequence number 
 	temp_atom.iCode = str1.mid(26, 1);
@@ -3666,7 +3687,7 @@ void US_Hydrodyn::reset()
 	misc.vbar = 0.72;
 	overlap_tolerance = 0.001;
 
-	hydro.unit = -9; 						// exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
+	hydro.unit = -10; 					// exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
 	hydro.reference_system = false;	// false: diffusion center, true: cartesian origin (default false)
 	hydro.boundary_cond = false;		// false: stick, true: slip (default false)
 	hydro.volume_correction = false;	// false: Automatic, true: manual (provide value)

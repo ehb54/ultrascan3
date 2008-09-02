@@ -40,6 +40,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+
+#define START_RASMOL
 using namespace std;
 
 class US_EXTERN US_Hydrodyn : public QFrame
@@ -150,6 +152,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void read_pdb(const QString &);
 		void setupGUI();
 		void select_residue_file();
+		void read_residue_file();
 		void clear_temp_chain(struct PDB_chain *);
 		// The next function returns a boolean to indicate whether the atom that was just assigned belongs
 		// to a new residue or is part of a previously assigned residue

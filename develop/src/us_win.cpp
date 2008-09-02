@@ -2524,8 +2524,14 @@ void UsWin::credits()
 			"Center for Research Resources with grant 5R01RR022200.\n\n"
 			"The following individuals have contributed code\n"
 			"to the UltraScan Software:\n\n"
-	  		"Dr. Emre Brookes, Dr. Bruce Dubbs, Dan Zollars,\n"
-			"Jeremy Mann, Yu Ning, Josh Wilson and Zach Ozer"));
+			"Dr. Emre Brookes (parallel distributed code, supercomputing\n"
+			"implementations, GA, 2DSA), Dr. Bruce Dubbs (Porting), Dr. Weiming Cao\n"
+			"(ASTFEM, ASTFEM-RA), Dan Zollars (USLIMS), Dr. Oleg Tsodikov\n"
+			"(SurfRacer in SOMO), Dr. Mattia Rocco (SOMO), Jeremy Mann\n"
+			"(Development, Supercomputing), Yu Ning (Database\n"
+			"Functionality), Josh Wilson (initial USLIMS) and Zach Ozer\n"
+			"(Equilibrium Fitter) and many users contributing bug fixes\n"
+			"and feature suggestions."));
 	emit explain( " " );
 }
 
