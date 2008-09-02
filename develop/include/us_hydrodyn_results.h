@@ -80,13 +80,16 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
 		QPushButton *pb_load_asa;
 		QPushButton *pb_load_beadmodel;
 
+	public slots:
+	
+		void cancel();
+
 	private slots:
 		
 		void setupGUI();
 		void load_results();
 		void load_asa();
 		void load_beadmodel();
-		void cancel();
 		void help();
 		void view_file(const QString &);
 	

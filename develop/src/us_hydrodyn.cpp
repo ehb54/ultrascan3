@@ -3154,6 +3154,12 @@ void US_Hydrodyn::load_pdb()
 	{
 		results.vbar = misc.vbar;
 	}
+	if (results_widget)
+	{
+		results_window->close();
+		delete results_window;
+		results_widget = false;
+	}
 	pb_somo->setEnabled(true);
 	pb_show_hydro_results->setEnabled(false);
 	pb_calc_hydro->setEnabled(false);
