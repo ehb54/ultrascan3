@@ -406,6 +406,7 @@ float US_FeMatchRa_W::fit()
 	analysis_plot->clear();
 	edit_plot->clear();
 	plot_edit();
+	QwtSymbol symbol;
 	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 	{
 		for (j=0; j<points; j++)
@@ -414,11 +415,20 @@ float US_FeMatchRa_W::fit()
 			res[i][j] = absorbance[i][j] - sim[i][j];
 			rmsd += pow(res[i][j], 2.0);
 		}
+		
 		s_curve[i] = edit_plot->insertCurve("Simulated Model Data");
 		r_curve[i] = analysis_plot->insertCurve("Residual Data");
 		edit_plot->setCurvePen(s_curve[i], QPen(Qt::red, 1, SolidLine));
 		edit_plot->setCurveData(s_curve[i], radius, sim[i], points);
-		analysis_plot->setCurvePen(r_curve[i], QPen(Qt::yellow, 1, SolidLine));
+
+		symbol.setStyle(QwtSymbol::Ellipse);
+		symbol.setPen(Qt::yellow);
+		symbol.setBrush(Qt::yellow);
+		symbol.setSize(1);
+
+		analysis_plot->setCurveStyle(r_curve[i], QwtCurve::NoCurve);
+		analysis_plot->setCurveSymbol(curve[i], symbol);
+		analysis_plot->setCurvePen(r_curve[i], QPen(Qt::yellow, 1));
 		analysis_plot->setCurveData(r_curve[i], radius, res[i], points);
 	}
 	edit_plot->replot();
