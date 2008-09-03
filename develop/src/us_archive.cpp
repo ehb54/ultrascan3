@@ -1,3 +1,4 @@
+#ifndef OSX
 #ifndef WIN32
   #include <sys/statfs.h>
 #else
@@ -6,6 +7,7 @@
   //#include <windows.h>  // Must be first for windows to build
   #include <direct.h>      
   #define chdir _chdir
+#endif
 #endif
 
 #include "../include/us_archive.h"
@@ -457,6 +459,8 @@ void US_Archive::view()
 
 void US_Archive::viewtargz( const QString& fn )
 {
+
+#ifndef OSX
 #ifndef WIN32
   struct statfs system_info;
 	int return_info = statfs( USglobal->config_list.data_dir, &system_info );
@@ -473,6 +477,7 @@ void US_Archive::viewtargz( const QString& fn )
 	}
 #else
   // Add WIN32 code here
+#endif
 #endif
 
 	QString   s;
@@ -581,6 +586,7 @@ void US_Archive::viewtargz( const QString& fn )
 	mle->append( tr( "<p>Total diskspace needed for extraction: " +
 	    s.sprintf( "%.1f MBytes", diskspace / 1e6 ) + "</p>\n" ) );
 
+#ifndef OSX
 #ifndef WIN32
 	mle->append( tr( "<p>Total available diskspace on " +
 	    QDir::convertSeparators( USglobal->config_list.data_dir ) + ": </p>\n" +
@@ -620,6 +626,7 @@ QMessageBox::message( "Debug", "nOut=" + QString::number( nOut ) );
     mle->append(tr( "<p>ATTENTION: You will need to free up some "
      "diskspace before extracting this archive!</p>\n"));
  */
+#endif
 #endif
 
 	s.sprintf("<p>Compression Ratio: %3.2f : 1</p></qt>\n",
