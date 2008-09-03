@@ -20,7 +20,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <time.h>
+#ifdef OSX
 #include <sys/malloc.h>
+#endif
 #include <string.h>
 
 #include "../include/us_hydrodyn_supc.h"

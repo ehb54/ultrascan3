@@ -8,7 +8,9 @@
 
 #include <stdio.h>
 #include <math.h>
+#ifdef OSX
 #include <sys/malloc.h>
+#endif
 #include <string.h>
 
 
