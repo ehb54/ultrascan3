@@ -33,7 +33,7 @@ void US_Hydrodyn_Hydro::setupGUI()
 	lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-	lbl_unit = new QLabel(tr(" PDB Structure units (-10 = Angstrom, -9 = nanometer): "), this);
+	lbl_unit = new QLabel(tr(" Model units (-10 = Angstrom, -9 = nanometer): "), this);
 	Q_CHECK_PTR(lbl_unit);
 	lbl_unit->setAlignment(AlignLeft|AlignVCenter);
 	lbl_unit->setMinimumHeight(minHeight1);
@@ -119,7 +119,7 @@ void US_Hydrodyn_Hydro::setupGUI()
 	le_mass->setEnabled((*hydro).mass_correction);
 	connect(le_mass, SIGNAL(textChanged(const QString &)), SLOT(update_mass(const QString &)));
 
-	bg_volume_correction = new QButtonGroup(4, Qt::Horizontal, "Total Volume of Model: (for Rotational Diff. and Intrinsic Visc. Calc.)", this);
+	bg_volume_correction = new QButtonGroup(4, Qt::Horizontal, "Total Volume of Model: (for Rotational Diff. and Intrinsic Visc. Volume Corr.)", this);
 	bg_volume_correction->setExclusive(true);
 	connect(bg_volume_correction, SIGNAL(clicked(int)), this, SLOT(select_volume_correction(int)));
 
