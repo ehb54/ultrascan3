@@ -3323,6 +3323,7 @@ void US_Hydrodyn::load_bead_model()
 		pb_visualize->setEnabled(false);
 		pb_calc_hydro->setEnabled(false);
 		pb_show_hydro->setEnabled(false);
+		pb_show_hydro_results->setEnabled(false);
 		if (results_widget)
 		{
 		    results_window->close();
