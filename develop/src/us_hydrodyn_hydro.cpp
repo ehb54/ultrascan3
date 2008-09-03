@@ -9,6 +9,7 @@ bool *hydro_widget, QWidget *p, const char *name) : QFrame(p, name)
 	USglobal=new US_Config();
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("SOMO Hydrodynamic Calculation Options"));
+	this->setMinimumWidth(680);
 	setupGUI();
 	global_Xpos += 30;
 	global_Ypos += 30;
@@ -86,12 +87,12 @@ void US_Hydrodyn_Hydro::setupGUI()
 
 	bg_boundary_cond->setButton((*hydro).boundary_cond);
 	
-	bg_mass_correction = new QButtonGroup(4, Qt::Horizontal, "Bead Mass Correction:", this);
+	bg_mass_correction = new QButtonGroup(4, Qt::Horizontal, "Total Mass of Model:", this);
 	bg_mass_correction->setExclusive(true);
 	connect(bg_mass_correction, SIGNAL(clicked(int)), this, SLOT(select_mass_correction(int)));
 
 	cb_auto_mass = new QCheckBox(bg_mass_correction);
-	cb_auto_mass->setText(tr(" Automatic "));
+	cb_auto_mass->setText(tr(" Automatic (Sum of Bead Masses)"));
 	cb_auto_mass->setEnabled(true);
 	cb_auto_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_auto_mass->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -118,12 +119,12 @@ void US_Hydrodyn_Hydro::setupGUI()
 	le_mass->setEnabled((*hydro).mass_correction);
 	connect(le_mass, SIGNAL(textChanged(const QString &)), SLOT(update_mass(const QString &)));
 
-	bg_volume_correction = new QButtonGroup(4, Qt::Horizontal, "Bead Volume Correction:", this);
+	bg_volume_correction = new QButtonGroup(4, Qt::Horizontal, "Total Volume of Model: (for Rotational Diff. and Intrinsic Visc. Calc.)", this);
 	bg_volume_correction->setExclusive(true);
 	connect(bg_volume_correction, SIGNAL(clicked(int)), this, SLOT(select_volume_correction(int)));
 
 	cb_auto_volume = new QCheckBox(bg_volume_correction);
-	cb_auto_volume->setText(tr(" Automatic "));
+	cb_auto_volume->setText(tr(" Automatic (Sum of Bead Volumes)"));
 	cb_auto_volume->setEnabled(true);
 	cb_auto_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_auto_volume->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -150,9 +151,8 @@ void US_Hydrodyn_Hydro::setupGUI()
 	le_volume->setEnabled((*hydro).volume_correction);
 	connect(le_volume, SIGNAL(textChanged(const QString &)), SLOT(update_volume(const QString &)));
 
-	bg_bead_inclusion = new QButtonGroup(2, Qt::Horizontal, "Buried Bead Inclusion:", this);
+	bg_bead_inclusion = new QButtonGroup(2, Qt::Horizontal, "Inclusion of Buried Beads in Hydrodynamic Calculations:", this);
 	bg_bead_inclusion->setExclusive(true);
-	bg_bead_inclusion->setEnabled(!(*hydro).volume_correction);
 	connect(bg_bead_inclusion, SIGNAL(clicked(int)), this, SLOT(select_bead_inclusion(int)));
 
 	cb_exclusion = new QCheckBox(bg_bead_inclusion);
@@ -169,11 +169,18 @@ void US_Hydrodyn_Hydro::setupGUI()
 
 	bg_bead_inclusion->setButton((*hydro).bead_inclusion);
 	
-	gb_buried = new QButtonGroup(2, Qt::Horizontal, "Include Buried Beads in volume correction for calculation of:", this);
+	gb_buried = new QButtonGroup(2, Qt::Horizontal, "Include Buried Beads in Volume Correction for Calculation of:", this);
 
 	cb_rotational = new QCheckBox(gb_buried);
 	cb_rotational->setText(tr(" Rotational Diffusion "));
-	cb_rotational->setEnabled(!(*hydro).bead_inclusion);
+	if ((*hydro).volume_correction)
+	{
+		cb_rotational->setEnabled(false);
+	}
+	else
+	{
+		cb_rotational->setEnabled(!(*hydro).bead_inclusion);
+	}
 	cb_rotational->setChecked((*hydro).rotational);
 	cb_rotational->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_rotational->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -181,7 +188,14 @@ void US_Hydrodyn_Hydro::setupGUI()
 
 	cb_viscosity = new QCheckBox(gb_buried);
 	cb_viscosity->setText(tr(" Intrinsic Viscosity "));
-	cb_viscosity->setEnabled(!(*hydro).bead_inclusion);
+	if ((*hydro).volume_correction)
+	{
+		cb_viscosity->setEnabled(false);
+	}
+	else
+	{
+		cb_viscosity->setEnabled(!(*hydro).bead_inclusion);
+	}
 	cb_viscosity->setChecked((*hydro).viscosity);
 	cb_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_viscosity->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -292,15 +306,32 @@ void US_Hydrodyn_Hydro::select_boundary_cond(int val)
 void US_Hydrodyn_Hydro::select_bead_inclusion(int val)
 {
 	(*hydro).bead_inclusion = val;
-	cb_rotational->setEnabled(!(*hydro).bead_inclusion);
-	cb_viscosity->setEnabled(!(*hydro).bead_inclusion);
+	if ((*hydro).volume_correction)
+	{
+		cb_viscosity->setEnabled(false);
+		cb_rotational->setEnabled(false);
+	}
+	else
+	{
+		cb_viscosity->setEnabled(!(*hydro).bead_inclusion);
+		cb_rotational->setEnabled(!(*hydro).bead_inclusion);
+	}
 }
 
 void US_Hydrodyn_Hydro::select_volume_correction(int val)
 {
 	(*hydro).volume_correction = val;
-	bg_bead_inclusion->setEnabled(!(*hydro).volume_correction);
 	le_volume->setEnabled((*hydro).volume_correction);
+	if ((*hydro).volume_correction)
+	{
+		cb_viscosity->setEnabled(false);
+		cb_rotational->setEnabled(false);
+	}
+	else
+	{
+		cb_viscosity->setEnabled(!(*hydro).bead_inclusion);
+		cb_rotational->setEnabled(!(*hydro).bead_inclusion);
+	}
 }
 
 void US_Hydrodyn_Hydro::select_mass_correction(int val)
