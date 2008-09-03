@@ -8,8 +8,9 @@
 
 #include <stdio.h>
 #include <math.h>
-#include <malloc.h>
+#include <sys/malloc.h>
 #include <string.h>
+
 
 struct dati1
 {

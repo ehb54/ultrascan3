@@ -4,8 +4,10 @@
 
 #include <stdio.h>
 #include <math.h>
-#include <malloc.h>
+#include <sys/malloc.h>
 #include <string.h>
+
+#include <stdlib.h>
 
 #include "../include/us_hydrodyn_pat.h"
 
