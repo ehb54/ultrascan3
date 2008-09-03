@@ -2837,7 +2837,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
       unsigned int tmp_serial = (*model)[i].serial;
       QString residues =
 	(*model)[i].resName +
-	((*model)[i].chain ? ".SC." : ".MC.") + 
+	((*model)[i].org_chain ? ".SC." : ".MC.") + 
 	((*model)[i].chainID == " " ? "" : ((*model)[i].chainID + "."));
       // a compiler error forced this kludge using tmp_serial
       //	+ QString("%1").arg((*model)[i].serial);
@@ -2848,7 +2848,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
 	unsigned int tmp_serial = (*model)[i].all_beads[j]->serial;
 	residues += "," +
 	  (*model)[i].all_beads[j]->resName + 
-	  ((*model)[i].all_beads[j]->chain ? ".SC." : ".MC.") + 
+	  ((*model)[i].all_beads[j]->org_chain ? ".SC." : ".MC.") + 
 	  ((*model)[i].all_beads[j]->chainID == " " ? "" : ((*model)[i].all_beads[j]->chainID + "."));
 	// a compiler error forced this kludge using tmp_serial
 	//  + QString("%1").arg((*model)[i].all_beads[j].serial);
