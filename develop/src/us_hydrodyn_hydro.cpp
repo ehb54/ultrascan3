@@ -23,7 +23,7 @@ US_Hydrodyn_Hydro::~US_Hydrodyn_Hydro()
 void US_Hydrodyn_Hydro::setupGUI()
 {
 	int minHeight1 = 30;
-	
+	QString str;	
 	lbl_info = new QLabel(tr("SOMO Hydrodynamic Calculation Options:"), this);
 	Q_CHECK_PTR(lbl_info);
 	lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -111,7 +111,7 @@ void US_Hydrodyn_Hydro::setupGUI()
 	lbl_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_mass = new QLineEdit(bg_mass_correction, "Mass Line Edit");
-	le_mass->setText(" 0.0 ");
+	le_mass->setText(str.sprintf("%5.3e", (*hydro).mass));
 	le_mass->setAlignment(AlignVCenter);
 	le_mass->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_mass->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -143,7 +143,7 @@ void US_Hydrodyn_Hydro::setupGUI()
 	lbl_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_volume = new QLineEdit(bg_volume_correction, "Volume Line Edit");
-	le_volume->setText(" 0.0 ");
+	le_volume->setText(str.sprintf("%5.3e", (*hydro).volume));
 	le_volume->setAlignment(AlignVCenter);
 	le_volume->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_volume->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -212,7 +212,7 @@ void US_Hydrodyn_Hydro::setupGUI()
 	lbl_overlap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_overlap = new QLineEdit(bg_overlap, "Mass Line Edit");
-	le_overlap->setText(" 0.0 ");
+	le_overlap->setText(str.sprintf("%5.3e", (*hydro).overlap));
 	le_overlap->setAlignment(AlignVCenter);
 	le_overlap->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_overlap->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
