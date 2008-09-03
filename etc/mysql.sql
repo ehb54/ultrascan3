@@ -1,13 +1,15 @@
--- MySQL dump 10.9
+-- MySQL dump 10.10
 --
 -- Host: localhost    Database: cauma
 -- ------------------------------------------------------
--- Server version	4.1.20-log
+-- Server version	5.0.22-log
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
 /*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
 /*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
@@ -554,6 +556,10 @@ CREATE TABLE `tbl2DSA_MW_Settings` (
   `iterations_option` tinyint(1) NOT NULL default '0',
   `iterations_value` int(11) NOT NULL default '3',
   `rinoise_option` tinyint(1) NOT NULL default '0',
+  `simpoints` int(11) default NULL,
+  `band_volume` double default NULL,
+  `radial_grid` tinyint(4) default NULL,
+  `time_grid` tinyint(4) default NULL,
   `HPCAnalysis_ID` int(11) NOT NULL default '0',
   PRIMARY KEY  (`2DSA_MW_Settings_ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -581,6 +587,10 @@ CREATE TABLE `tbl2DSA_Settings` (
   `iterations_option` tinyint(1) NOT NULL default '0',
   `iterations_value` int(11) NOT NULL default '3',
   `rinoise_option` tinyint(1) NOT NULL default '0',
+  `simpoints` int(11) default NULL,
+  `band_volume` double default NULL,
+  `radial_grid` tinyint(4) default NULL,
+  `time_grid` tinyint(4) default NULL,
   `HPCAnalysis_ID` int(11) NOT NULL default '0',
   PRIMARY KEY  (`2DSA_Settings_ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
@@ -600,6 +610,7 @@ CREATE TABLE `tblAuth` (
   `Signup` datetime NOT NULL default '0000-00-00 00:00:00',
   `LastLogin` datetime NOT NULL default '0000-00-00 00:00:00',
   `Userlevel` tinyint(4) NOT NULL default '0',
+  `TUM` tinyint(1) NOT NULL default '0',
   `account_activity_changed` date default NULL,
   PRIMARY KEY  (`InvestigatorID`),
   KEY `Invid` (`InvestigatorID`),
@@ -879,6 +890,10 @@ CREATE TABLE `tblGA_MW_Settings` (
   `regularization_value` double NOT NULL default '5',
   `seed_value` int(11) NOT NULL default '0',
   `rinoise_option` tinyint(1) NOT NULL default '0',
+  `simpoints` int(11) default NULL,
+  `band_volume` double default NULL,
+  `radial_grid` tinyint(4) default NULL,
+  `time_grid` tinyint(4) default NULL,
   `meniscus_option` tinyint(1) NOT NULL default '0',
   `meniscus_value` double NOT NULL default '0',
   `HPCAnalysis_ID` int(11) NOT NULL default '0',
@@ -932,6 +947,10 @@ CREATE TABLE `tblGA_Settings` (
   `seed_value` int(11) NOT NULL default '0',
   `tinoise_option` tinyint(1) NOT NULL default '0',
   `rinoise_option` tinyint(1) NOT NULL default '0',
+  `simpoints` int(11) default NULL,
+  `band_volume` double default NULL,
+  `radial_grid` tinyint(4) default NULL,
+  `time_grid` tinyint(4) default NULL,
   `meniscus_option` tinyint(1) NOT NULL default '0',
   `meniscus_value` double NOT NULL default '0',
   `solute_value` int(11) NOT NULL default '3',
@@ -1294,6 +1313,7 @@ CREATE TABLE `tblVelocResultData` (
   `Rawdata_Tar` longblob,
   PRIMARY KEY  (`tableID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
