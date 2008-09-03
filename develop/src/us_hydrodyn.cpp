@@ -3460,7 +3460,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 	lb_model->clear();
 	lbl_pdb_file->setText(tr(" not selected "));
 	project = filename;
-	project.replace(QRegExp(".*\(/|\\\\)"), "");
+	project.replace(QRegExp(".*(/|\\\\)"), "");
 	project.replace(QRegExp("\\.(somo|SOMO)\\.(bead_model|BEAD_MODEL)$"), ""); 
         editor->setText("Loading bead model " + project + "\n");
 	bead_model.clear();
