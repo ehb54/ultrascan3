@@ -3483,7 +3483,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		  editor->append("Error in line 1!\n");
 		  return 1;
 		}
-		editor->append(QString("Beads %1 vbar %2\n").arg(bead_count).arg(results.vbar));
+		editor->append(QString("Beads %1\n").arg(bead_count));
 		while (!ts.atEnd())
 		{
 		  for (unsigned int i = 0; i < 3; i++) 
