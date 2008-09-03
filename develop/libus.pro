@@ -8,7 +8,7 @@ QMAKE_EXTRA_UNIX_TARGETS += revision
 
 TEMPLATE       = lib
 TRANSLATIONS   = lib.ts
-VERSION        = 9.8
+VERSION        = 9.9
 MOC_DIR        = src/moc
 OBJECTS_DIR    = src/obj
 
