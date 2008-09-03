@@ -529,6 +529,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
   {
     unsigned int lastResSeq = 0;
     unsigned int lastResPos = 0;
+    QString lastChainID = "";
     bool spec_N1 = false;
     for (unsigned int k = 0; k < model->molecule[j].atom.size(); k++)
     {
@@ -578,9 +579,11 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 		  errors_found++;
 		  error_string->
 		    append(QString("").
-			   sprintf("missing atom molecule %d atom %s residue %s\n",
+			   sprintf("missing atom chain %s molecule %d atom %s residue %d %s\n",
+				   lastChainID.ascii(),
 				   j + 1,
 				   residue_list[lastResPos].r_atom[l].name.ascii(),
+				   lastResSeq,
 				   residue_list[lastResPos].name.ascii()));
 		}
 	      }
@@ -592,6 +595,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	      residue_list[m].r_atom[l].tmp_flag = false;
 	    }
 	    lastResSeq = this_atom->resSeq;
+	    lastChainID = this_atom->chainID;
 	    lastResPos = m;
 	  }
 
@@ -611,10 +615,13 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	     && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
 	{
 	  errors_found++;
-	  error_string->append(QString("").sprintf("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-						   j + 1, k, this_atom->name.ascii(),
-						   this_atom->resName.ascii(),
-						   this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+	  error_string->append(QString("").sprintf("unknown residue chain %s molecule %d atom %s residue %d %s\n",
+						   this_atom->chainID.ascii(),
+						   j + 1,
+						   this_atom->name.ascii(),
+						   (int)this_atom->resSeq,
+						   this_atom->resName.ascii()
+						   ));
 	}
       } else {
 	int atompos = -1;
@@ -638,10 +645,13 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	if (atompos == -1)
 	{
 	  errors_found++;
-	  error_string->append(QString("").sprintf("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-						   j + 1, k, this_atom->name.ascii(),
-						   this_atom->resName.ascii(),
-						   this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+	  error_string->append(QString("").sprintf("unknown atom chain %s molecule %d atom %s residue %d %s\n",
+						   this_atom->chainID.ascii(),
+						   j + 1, 
+						   this_atom->name.ascii(),
+						   (int)this_atom->resSeq,
+						   this_atom->resName.ascii()
+						   ));
 	}
       }
     }
@@ -655,9 +665,11 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	  errors_found++;
 	  error_string->
 	    append(QString("").
-		   sprintf("missing atom molecule %d atom %s residue %s\n",
+		   sprintf("missing atom chain %s molecule %d atom %s residue %d %s\n",
+			   lastChainID.ascii(),
 			   j + 1,
 			   residue_list[lastResPos].r_atom[l].name.ascii(),
+			   lastResSeq,
 			   residue_list[lastResPos].name.ascii()));
 	}
       }
