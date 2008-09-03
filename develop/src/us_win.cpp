@@ -68,19 +68,19 @@ UsWin::UsWin(QWidget *parent, const char *name)
 
 	QString version = "UltraScan " + US_Version +  " for " OS_TITLE;
 
-	//QFontMetrics metrics( QFont( USglobal->config_list.fontFamily, 
+	//QFontMetrics metrics( QFont( USglobal->config_list.fontFamily,
 	//                             USglobal->config_list.fontSize, QFont::Bold ) );
 
 	QFont font( "Arial" );
 	font.setWeight( QFont::DemiBold );
 	font.setPixelSize( 18 );
 	painter.setFont( font );
-	QFontMetrics metrics( font ); 
-	//painter.setFont( QFont( USglobal->config_list.fontFamily, 
+	QFontMetrics metrics( font );
+	//painter.setFont( QFont( USglobal->config_list.fontFamily,
 	//                        USglobal->config_list.fontSize, QFont::Bold ) );
-	//QFontMetrics metrics( QFont( USglobal->config_list.fontFamily, 
+	//QFontMetrics metrics( QFont( USglobal->config_list.fontFamily,
 	//                             USglobal->config_list.fontSize, QFont::Bold ) );
-	
+
 	int sWidth = metrics.boundingRect( version ).width();
 	int x      = ( pw - sWidth ) / 2;
 
@@ -2514,24 +2514,30 @@ void UsWin::credits()
 			"Copyright 1998 - 2008\n"
 			"Borries Demeler and the University of Texas System\n\n"
 			" - Credits -\n\n"
-			"The development of this software has been supported by\n"
-			"grants from the National Science Foundation (grants\n"
-			"#9724273 and #9974819), the Howard Hughes Medical\n"
-			"Institute Research Resources Program Award to the\n"
-			"University of Texas Health Science Center at\n"
-			"San Antonio (# 76200-550802), grant #119933 from\n"
-			"the San Antonio Life Science Institute, and the NIH\n"
+			"The development of this software has been supported by grants\n"
+			"from the National Science Foundation (grants #9724273 and\n"
+			"#9974819), the Robert J. Kleberg Jr. and Helen C. Kleberg\n"
+			"Foundation, the Howard Hughes Medical Institute Research\n"
+			"Resources Program Award to the University of Texas Health\n"
+			"Science Center at San Antonio (# 76200-550802), grant #119933\n"
+			"from the San Antonio Life Science Institute, and the NIH\n"
 			"Center for Research Resources with grant 5R01RR022200.\n\n"
-			"The following individuals have contributed code\n"
+			"The following individuals have made significant contributions\n"
 			"to the UltraScan Software:\n\n"
-			"Dr. Emre Brookes (parallel distributed code, supercomputing\n"
-			"implementations, GA, 2DSA), Dr. Bruce Dubbs (Porting), Dr. Weiming Cao\n"
-			"(ASTFEM, ASTFEM-RA), Dan Zollars (USLIMS), Dr. Oleg Tsodikov\n"
-			"(SurfRacer in SOMO), Dr. Mattia Rocco (SOMO), Jeremy Mann\n"
-			"(Development, Supercomputing), Yu Ning (Database\n"
-			"Functionality), Josh Wilson (initial USLIMS) and Zach Ozer\n"
-			"(Equilibrium Fitter) and many users contributing bug fixes\n"
-			"and feature suggestions."));
+			"   * Emre Brookes (parallel distributed code, supercomputing\n"
+			"     implementations, GA, 2DSA, SOMO, simulation, optimization)\n"
+			"   * Weiming Cao (ASTFEM, ASTFEM-RA, Simulator)\n"
+			"   * Bruce Dubbs (Win32 Port, USLIMS, GNU code integration)\n"
+			"   * Jeremy Mann (Porting, TIGRE/Globus Integration)\n"
+			"   * Yu Ning (Database Functionality)\n"
+			"   * Marcelo Nollman (SOMO)\n"
+			"   * Zach Ozer (Equilibrium Fitter)\n"
+			"   * Nithin Rai (SOMO)\n"
+			"   * Mattia Rocco (SOMO)\n"
+			"   * Oleg Tsodikov (SurfRacer in SOMO)\n"
+			"   * Josh Wilson (initial USLIMS)\n"
+			"   * Dan Zollars (USLIMS and Database)\n\n"
+			"and many users who contributed bug fixes and feature suggestions."));
 	emit explain( " " );
 }
 
