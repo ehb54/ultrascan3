@@ -1631,6 +1631,7 @@ surfracer_main(QString *error_string,
 	    this_atom->chain =
 	      ((this_atom->p_residue && this_atom->p_atom) ?
 	       (int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
+	    this_atom->org_chain = this_atom->chain;
 	    this_atom->bead_positioner = this_atom->p_atom ? this_atom->p_atom->positioner : false;
 	  }
 	}

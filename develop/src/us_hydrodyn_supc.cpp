@@ -776,7 +776,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     volcor = hydro->volume_correction ? 2 : 1;
     if (volcor == 2) 
     {
-      volcor = (int)hydro->volume;
+      volcor1 = (int)hydro->volume;
     }
     mascor = hydro->mass_correction ? 2 : 1;
     if (mascor == 2) 

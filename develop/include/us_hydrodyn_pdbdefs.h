@@ -46,6 +46,7 @@ struct PDB_atom
         int bead_assignment;              // number in residue->r_bead[]
         int visibility;                   // 0 = hidden, 1 = exposed
         int chain;                        // 0 = main, 1 = side
+        int org_chain;                    // 0 = main, 1 = side
         float bead_asa;
         int exposed_code;                 // 1 exposed, 6 side chain buried, 10 main chain buried
         bool bead_positioner;             // true if an atom had a bead positioner

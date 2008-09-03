@@ -2517,7 +2517,6 @@ int US_Hydrodyn::compute_asa()
   editor->append("Finished with popping and radial reduction\n");
   progress->setProgress(mppos - (asa.recheck_beads ? 1 : 0));
   qApp->processEvents();
-
   return 0;
 }
 
@@ -2693,7 +2692,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
       {
 	residues = 
 	  (*model)[i].resName +
-	  ((*model)[i].chain ? ".SC." : ".MC.") + 
+	  ((*model)[i].org_chain ? ".SC." : ".MC.") + 
 	  ((*model)[i].chainID == " " ? "" : ((*model)[i].chainID + "."));
 	// a compiler error forced this kludge using tmp_serial
 	//	+ QString("%1").arg((*model)[i].serial);
@@ -2704,7 +2703,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
 	  unsigned int tmp_serial = (*model)[i].all_beads[j]->serial;
 	  residues += "," +
 	    (*model)[i].all_beads[j]->resName +
-	    ((*model)[i].all_beads[j]->chain ? ".SC." : ".MC.") + 
+	    ((*model)[i].all_beads[j]->org_chain ? ".SC." : ".MC.") + 
 	    ((*model)[i].all_beads[j]->chainID == " " ? "" : ((*model)[i].all_beads[j]->chainID + "."));
 	  // a compiler error forced this kludge using tmp_serial
 	  //  + QString("%1").arg((*model)[i].all_beads[j].serial);
@@ -3028,6 +3027,10 @@ void US_Hydrodyn::calc_hydro()
 {
   puts("calc hydro (supc)");
   editor->append("Begin hydrodynamic calculations\n");
+  write_bead_spt(USglobal->config_list.result_dir + SLASH + project + 
+		 (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+		 ".somo", &bead_model, bead_model_from_file);
+
   int retval = us_hydrodyn_supc_main(&results,
 				     &hydro,
 				     &bead_model,
