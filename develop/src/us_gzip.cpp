@@ -35,6 +35,7 @@
 //#   define ascii   toAscii  
 #else
 #  include <utime.h>
+#  include <sys/stat.h>  // For OSX
 #  define O_BINARY 0
 #endif
 
