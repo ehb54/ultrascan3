@@ -192,6 +192,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void printError(const QString &);
 		void closeAttnt(QProcess *, QString);
 		void calc_vbar(struct PDB_model *);
+		void update_vbar(); // update the results.vbar everytime something changes the vbar in options or calculation
 		int get_color(PDB_atom *);
 
 		// editor functions:

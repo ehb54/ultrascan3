@@ -127,6 +127,7 @@ void US_Hydrodyn_Misc::update_vbar_signal(float val1, float val2)
 	vbar20 = val1;
 	(*misc).vbar = val2;
 	le_vbar->setText(str.sprintf("%5.3f", (*misc).vbar));
+	emit vbar_changed();
 }
 
 void US_Hydrodyn_Misc::select_vbar()
@@ -137,6 +138,7 @@ void US_Hydrodyn_Misc::select_vbar()
 	vbar_dlg->setCaption(tr("V-bar Calculation"));
 	connect(vbar_dlg, SIGNAL(valueChanged(float, float)), SLOT(update_vbar_signal(float, float)));
 	vbar_dlg->exec();
+	emit vbar_changed();
 }
 
 void US_Hydrodyn_Misc::set_vbar()
@@ -144,6 +146,7 @@ void US_Hydrodyn_Misc::set_vbar()
 	(*misc).compute_vbar = cb_vbar->isChecked();
 	le_vbar->setEnabled(!(*misc).compute_vbar);
 	pb_vbar->setEnabled(!(*misc).compute_vbar);
+	emit vbar_changed();
 }
 
 void US_Hydrodyn_Misc::cancel()

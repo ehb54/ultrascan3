@@ -76,6 +76,10 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
 	protected slots:
 
 		void closeEvent(QCloseEvent *);
+
+	signals:
+
+		void vbar_changed();
 };
 
 

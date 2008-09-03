@@ -3305,14 +3305,7 @@ void US_Hydrodyn::load_pdb()
 	{
 		return; // user canceled loading PDB file
 	}
-	if (misc.compute_vbar) // after reading the pdb file, the vbar is calculated.
-	{// If we computed vbar, we assign this to result.vbar, which should be used in the calculation.
-		results.vbar = model_vector[current_model].vbar;
-	}
-	else
-	{
-		results.vbar = misc.vbar;
-	}
+	update_vbar();
 	if (results_widget)
 	{
 		results_window->close();
@@ -3542,6 +3535,18 @@ int US_Hydrodyn::read_bead_model(QString filename)
 	}
 	editor->append("File read error\n");
 	return -2;
+}
+
+void US_Hydrodyn::update_vbar()
+{
+	if (misc.compute_vbar && model_vector.size() > 0) // after reading the pdb file, the vbar is calculated.
+	{// If we computed vbar, we assign this to result.vbar, which should be used in the calculation.
+		results.vbar = model_vector[current_model].vbar;
+	}
+	else
+	{
+		results.vbar = misc.vbar;
+	}
 }
 
 void US_Hydrodyn::calc_vbar(struct PDB_model *model)
@@ -4142,13 +4147,14 @@ void US_Hydrodyn::show_misc()
 	else
 	{
 		misc_window = new US_Hydrodyn_Misc(&misc, &misc_widget);
+		connect(misc_window, SIGNAL(vbar_changed()), this, SLOT(update_vbar()));
 		misc_window->show();
 	}
+	update_vbar();
 }
 
 void US_Hydrodyn::show_hydro()
 {
-	results.vbar = misc.vbar;
 	if (hydro_widget)
 	{
 		if (hydro_window->isVisible())
