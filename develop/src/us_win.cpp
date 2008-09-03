@@ -2534,6 +2534,8 @@ void UsWin::credits()
 			"   * Zach Ozer (Equilibrium Fitter)\n"
 			"   * Nithin Rai (SOMO)\n"
 			"   * Mattia Rocco (SOMO)\n"
+			"   * Bruno Spotorno (SOMO)\n"
+			"   * Giovanni Tassara (SOMO)\n"
 			"   * Oleg Tsodikov (SurfRacer in SOMO)\n"
 			"   * Josh Wilson (initial USLIMS)\n"
 			"   * Dan Zollars (USLIMS and Database)\n\n"
