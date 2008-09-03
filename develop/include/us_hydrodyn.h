@@ -141,6 +141,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		vector <PDB_atom>        bead_model;
 		vector <struct residue>   residue_list;
 		vector <struct PDB_model> model_vector;
+		bool bead_model_from_file;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -150,6 +151,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void load_pdb();
 		void load_bead_model();
 		void read_pdb(const QString &);
+		int read_bead_model(QString);
 		void setupGUI();
 		void select_residue_file();
 		void read_residue_file();
@@ -185,10 +187,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void show_hydro_results();
 		void write_bead_tsv(QString, vector <PDB_atom> *);
 		void write_bead_ebf(QString, vector <PDB_atom> *);
-		void write_bead_spt(QString, vector <PDB_atom> *);
+		void write_bead_spt(QString, vector <PDB_atom> *, bool loaded_bead_model = false);
+		void write_bead_model(QString, vector <PDB_atom> *);
 		void printError(const QString &);
 		void closeAttnt(QProcess *, QString);
 		void calc_vbar(struct PDB_model *);
+		int get_color(PDB_atom *);
 
 		// editor functions:
 		void save();

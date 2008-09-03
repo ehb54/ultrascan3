@@ -2,6 +2,7 @@
 #include "../include/us_surfracer.h"
 #include "../include/us_hydrodyn_supc.h"
 #include "../include/us_hydrodyn_pat.h"
+#include <qregexp.h>
 
 #ifndef WIN32
 	// #define DEBUG
@@ -64,6 +65,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
  					 "/bin/"
 #endif
 					 ));
+	bead_model_from_file = false;
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -215,7 +217,7 @@ void US_Hydrodyn::setupGUI()
 	connect(pb_load_bead_model, SIGNAL(clicked()), SLOT(load_bead_model()));
 
 	le_bead_model_file = new QLineEdit(this, "bead_model_file Line Edit");
-	le_bead_model_file->setText(" not selected ");
+	le_bead_model_file->setText(tr(" not selected "));
 	le_bead_model_file->setMinimumHeight(minHeight1);
 	le_bead_model_file->setAlignment(AlignCenter|AlignVCenter);
 	le_bead_model_file->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -2499,6 +2501,7 @@ int US_Hydrodyn::compute_asa()
   write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + "bead_model_end.somo.tsv", &bead_model);
   write_bead_spt(USglobal->config_list.tmp_dir + SLASH + "bead_model_end.somo", &bead_model);
   write_bead_spt(USglobal->config_list.result_dir + SLASH + project + QString("_%1").arg(current_model + 1) + ".somo", &bead_model);
+  write_bead_model(USglobal->config_list.result_dir + SLASH + project + QString("_%1").arg(current_model + 1) + ".somo", &bead_model);
   editor->append("Finished with popping and radial reduction\n");
   progress->setProgress(mppos - (asa.recheck_beads ? 1 : 0));
   qApp->processEvents();
@@ -2540,7 +2543,7 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model) {
 
 // #define DEBUG_COLOR
 
-static int get_color(PDB_atom *a) {
+int US_Hydrodyn::get_color(PDB_atom *a) {
   int color = a->bead_color;
   if (a->all_beads.size()) {
     color = 7;
@@ -2548,7 +2551,7 @@ static int get_color(PDB_atom *a) {
   if (a->exposed_code != 1) {
     color = 6;
   }
-  if (a->bead_computed_radius <= 0.001) {
+  if (a->bead_computed_radius <= TOLERANCE) {
     color = 0;
   }
   //  color = a->bead_number % 15;
@@ -2569,7 +2572,7 @@ static int get_color(PDB_atom *a) {
   return color;
 }
 
-void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
+void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool loaded_bead_model) {
 
   char *colormap[] =
     {
@@ -2589,7 +2592,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
       "violet",       // 13 violet
       "yellow",       // 14 yellow
     };
-
+#define DEBUG
 #if defined(DEBUG)
   printf("write bead spt %s\n", fname.ascii()); fflush(stdout);
 #endif
@@ -2600,6 +2603,13 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
   FILE *frmc = fopen(QString("%1.rmc").arg(fname).ascii(), "w");
   FILE *frmc1 = fopen(QString("%1.rmc1").arg(fname).ascii(), "w");
   int beads = 0;
+  if(!(fspt) ||
+     !(fbms) ||
+     !(fbeams) ||
+     !(frmc) ||
+     !(frmc1)) {
+    printf("file write error!\n"); fflush(stdout);
+  }
 
   float max_radius = 0;
   for (unsigned int i = 0; i < model->size(); i++) {
@@ -2627,7 +2637,6 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
 	  QString("%1.bms").arg(fname).ascii()
 	  );
 
-  // should put vbar calc here...
   fprintf(fbeams,
 	  "%d\t-2.000000\t%s.rmc\t%f\n",
 	  beads,
@@ -2667,22 +2676,30 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
 	      (int)(*model)[i].bead_mw,
 	      get_color(&(*model)[i]));
       unsigned int tmp_serial = (*model)[i].serial;
-      QString residues =
-	(*model)[i].resName + "." +
-	((*model)[i].chainID == " " ? "" : ((*model)[i].chainID + "."));
-      // a compiler error forced this kludge using tmp_serial
-      //	+ QString("%1").arg((*model)[i].serial);
-      residues += QString("%1").arg(tmp_serial);
-
-      for (unsigned int j = 0; j < (*model)[i].all_beads.size(); j++)
+      QString residues;
+      if (!loaded_bead_model) 
       {
-	unsigned int tmp_serial = (*model)[i].all_beads[j]->serial;
-	residues += "," +
-	  (*model)[i].all_beads[j]->resName + "." +
-	  ((*model)[i].all_beads[j]->chainID == " " ? "" : ((*model)[i].all_beads[j]->chainID + "."));
+	residues = 
+	  (*model)[i].resName +
+	  ((*model)[i].chain ? ".SC." : ".MC.") + 
+	  ((*model)[i].chainID == " " ? "" : ((*model)[i].chainID + "."));
 	// a compiler error forced this kludge using tmp_serial
-	//  + QString("%1").arg((*model)[i].all_beads[j].serial);
+	//	+ QString("%1").arg((*model)[i].serial);
 	residues += QString("%1").arg(tmp_serial);
+	
+	for (unsigned int j = 0; j < (*model)[i].all_beads.size(); j++)
+        {
+	  unsigned int tmp_serial = (*model)[i].all_beads[j]->serial;
+	  residues += "," +
+	    (*model)[i].all_beads[j]->resName +
+	    ((*model)[i].all_beads[j]->chain ? ".SC." : ".MC.") + 
+	    ((*model)[i].all_beads[j]->chainID == " " ? "" : ((*model)[i].all_beads[j]->chainID + "."));
+	  // a compiler error forced this kludge using tmp_serial
+	  //  + QString("%1").arg((*model)[i].all_beads[j].serial);
+	residues += QString("%1").arg(tmp_serial);
+	}
+      } else {
+	residues = (*model)[i].residue_list;
       }
       fprintf(frmc1,
 	      "%.6f\t%u\t%d\t%d\t%s\n",
@@ -2783,6 +2800,65 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
   fclose(f);
 }
 
+void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
+
+#if defined(DEBUG)
+  printf("write bead model %s\n", fname.ascii()); fflush(stdout);
+#endif
+
+  FILE *fbeadmodel = fopen(QString("%1.bead_model").arg(fname).ascii(), "w");
+  int beads = 0;
+
+  for (unsigned int i = 0; i < model->size(); i++) {
+    if ((*model)[i].active) {
+      beads++;
+    }
+  }
+
+  fprintf(fbeadmodel,
+	  "%d\t%f\n",
+	  beads,
+	  results.vbar
+	  );
+
+  for (unsigned int i = 0; i < model->size(); i++) {
+    if ((*model)[i].active) {
+      unsigned int tmp_serial = (*model)[i].serial;
+      QString residues =
+	(*model)[i].resName +
+	((*model)[i].chain ? ".SC." : ".MC.") + 
+	((*model)[i].chainID == " " ? "" : ((*model)[i].chainID + "."));
+      // a compiler error forced this kludge using tmp_serial
+      //	+ QString("%1").arg((*model)[i].serial);
+      residues += QString("%1").arg(tmp_serial);
+
+      for (unsigned int j = 0; j < (*model)[i].all_beads.size(); j++)
+      {
+	unsigned int tmp_serial = (*model)[i].all_beads[j]->serial;
+	residues += "," +
+	  (*model)[i].all_beads[j]->resName + 
+	  ((*model)[i].all_beads[j]->chain ? ".SC." : ".MC.") + 
+	  ((*model)[i].all_beads[j]->chainID == " " ? "" : ((*model)[i].all_beads[j]->chainID + "."));
+	// a compiler error forced this kludge using tmp_serial
+	//  + QString("%1").arg((*model)[i].all_beads[j].serial);
+	residues += QString("%1").arg(tmp_serial);
+      }
+      fprintf(fbeadmodel,
+	      "%f\t%f\t%f\t%.6f\t%u\t%d\t%d\t%s\n",
+	      (*model)[i].bead_coordinate.axis[0],
+	      (*model)[i].bead_coordinate.axis[1],
+	      (*model)[i].bead_coordinate.axis[2],
+	      (*model)[i].bead_computed_radius,
+	      (int)(*model)[i].bead_mw,
+	      get_color(&(*model)[i]),
+	      (*model)[i].serial,
+	      residues.ascii()
+	      );
+    }
+  }
+  fclose(fbeadmodel);
+}
+
 void US_Hydrodyn::bead_check()
 {
   // recheck beads here
@@ -2876,7 +2952,11 @@ void US_Hydrodyn::visualize()
 	argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
 #endif
 	argument.append("-script");
-	argument.append(USglobal->config_list.result_dir + SLASH + project + QString("_%1").arg(current_model + 1) + ".somo.spt");
+	argument.append(USglobal->config_list.result_dir + 
+			SLASH + 
+			project + 
+			(bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) + 
+			".somo.spt");
 	// #endif
 	rasmol->setArguments(argument);
 	if (!rasmol->start())
@@ -2942,7 +3022,7 @@ void US_Hydrodyn::calc_hydro()
 				     QString(USglobal->config_list.result_dir +
 					     SLASH +
 					     project +
-					     QString("_%1").arg(current_model + 1) +
+					     (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
 					     ".somo.beams").ascii(),
 				     progress,
 				     editor);
@@ -3166,7 +3246,8 @@ void US_Hydrodyn::load_pdb()
 	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.pdb *.PDB", this);
 	if (!filename.isEmpty())
 	{
-     	int errors_found = 0;
+		bead_model_from_file = false;
+		int errors_found = 0;
 		lbl_pdb_file->setText(filename);
 		editor->setText("");
 #if defined(START_RASMOL)
@@ -3230,6 +3311,7 @@ void US_Hydrodyn::load_pdb()
 	pb_show_hydro_results->setEnabled(false);
 	pb_calc_hydro->setEnabled(false);
 	pb_visualize->setEnabled(false);
+	le_bead_model_file->setText(" not selected ");
 }
 
 void US_Hydrodyn::load_bead_model()
@@ -3237,21 +3319,24 @@ void US_Hydrodyn::load_bead_model()
 	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo.bead_model *.SOMO.BEAD_MODEL", this);
 	if (!filename.isEmpty())
 	{
-		bead_model_file = filename;
-		le_bead_model_file->setText(filename);
-		//read_bead_model();
-		// if bead model reading is successful, enabled follow-on buttons:
+		pb_somo->setEnabled(false);
+		pb_visualize->setEnabled(false);
+		pb_calc_hydro->setEnabled(false);
+		pb_show_hydro->setEnabled(false);
 		if (results_widget)
 		{
 		    results_window->close();
 		    delete results_window;
 		    results_widget = false;
 		}
-		pb_visualize->setEnabled(true);
-		pb_calc_hydro->setEnabled(true);
-		pb_show_hydro_results->setEnabled(false);
-		pb_calc_hydro->setEnabled(false);
-		pb_visualize->setEnabled(false);
+
+		bead_model_file = filename;
+		le_bead_model_file->setText(filename);
+		if (!read_bead_model(filename)) 
+		{
+		  pb_visualize->setEnabled(true);
+		  pb_calc_hydro->setEnabled(true);
+		}
 	}
 }
 
@@ -3355,6 +3440,96 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 	lb_model->setEnabled(true);
 	lb_model->setSelected(0, true);
 	current_model = 0;
+}
+
+int US_Hydrodyn::read_bead_model(QString filename)
+{
+	lb_model->clear();
+	lbl_pdb_file->setText(tr(" not selected "));
+	project = filename;
+	project.replace(QRegExp(".*\(/|\\\\)"), "");
+	project.replace(QRegExp("\\.(somo|SOMO)\\.(bead_model|BEAD_MODEL)$"), ""); 
+        editor->setText("Loading bead model " + project + "\n");
+	bead_model.clear();
+	PDB_atom tmp_atom;
+	QFile f(filename);
+	int bead_count;
+	int linepos = 0;
+	if (f.open(IO_ReadOnly))
+	{
+		QTextStream ts(&f);
+		if (!ts.atEnd()) {
+		  ts >> bead_count;
+		} else {
+		  editor->append("Error in line 1!\n");
+		  return 1;
+		}
+		if (!ts.atEnd()) {
+		  ts >> results.vbar;
+		} else {
+		  editor->append("Error in line 1!\n");
+		  return 1;
+		}
+		editor->append(QString("Beads %1 vbar %2\n").arg(bead_count).arg(results.vbar));
+		while (!ts.atEnd())
+		{
+		  for (unsigned int i = 0; i < 3; i++) 
+		  {
+		    if (!ts.atEnd()) {
+		      ts >>  tmp_atom.bead_coordinate.axis[i];
+		    } else {
+		      editor->append(QString("\nError in line %1!\n").arg(linepos));
+		      return linepos;
+		    }
+		  }
+		  if (!ts.atEnd()) {
+		    ts >>  tmp_atom.bead_computed_radius;
+		  } else {
+		    editor->append(QString("\nError in line %1!\n").arg(linepos));
+		    return linepos;
+		  }
+		  if (!ts.atEnd()) {
+		    ts >>  tmp_atom.bead_mw;
+		  } else {
+		    editor->append(QString("\nError in line %1!\n").arg(linepos));
+		    return linepos;
+		  }
+		  if (!ts.atEnd()) {
+		    ts >>  tmp_atom.bead_color;
+		  } else {
+		    editor->append(QString("\nError in line %1!\n").arg(linepos));
+		    return linepos;
+		  }
+		  if (!ts.atEnd()) {
+		    ts >>  tmp_atom.serial;
+		  } else {
+		    editor->append(QString("\nError in line %1!\n").arg(linepos));
+		    return linepos;
+		  }
+		  if (!ts.atEnd()) {
+		    ts >>  tmp_atom.residue_list;
+		  } else {
+		    editor->append(QString("\nError in line %1!\n").arg(linepos));
+		    return linepos;
+		  }
+		  tmp_atom.exposed_code = 1;
+		  tmp_atom.all_beads.clear();
+		  tmp_atom.active = true;
+		  bead_model.push_back(tmp_atom);
+		}
+		f.close();
+		if (bead_count != (int)bead_model.size()) 
+		{
+		  editor->append(QString("Error: bead count %1 does not match # of beads read from file (%2) \n").arg(bead_count).arg(bead_model.size()));
+		  return -1;
+		}
+		bead_model_from_file = true;
+		editor->append("Bead model loaded\n\n");
+		write_bead_spt(USglobal->config_list.result_dir + SLASH + project + ".somo", &bead_model, true);
+		return 0;
+	}
+	editor->append("File read error\n");
+	return -2;
 }
 
 void US_Hydrodyn::calc_vbar(struct PDB_model *model)

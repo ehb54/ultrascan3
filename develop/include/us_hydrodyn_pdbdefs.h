@@ -67,6 +67,7 @@ struct PDB_atom
 
   //        float vol_intersection            // temporary value used in popping
         vector <struct PDB_atom *> all_beads;  // this is used to keep track of beads that have been popped together
+        QString residue_list;             // for loaded bead models
 };
 
 struct PDB_chain	// chain in PDB file
