@@ -97,7 +97,6 @@ SOURCES += \
   src/us_db_admin.cpp \
   src/us_db_veloc.cpp \
   src/us_db_equil.cpp \
-  src/us_db_rst_channel.cpp \
   src/us_db_rst_equilproject.cpp \
   src/us_db_rst_montecarlo.cpp \
   src/us_db_rtv_date.cpp \
@@ -232,6 +231,7 @@ SOURCES += \
   src/us_win.cpp \
   src/us_write_config.cpp
 
+#  src/us_db_rst_channel.cpp \
 #  src/us_db_rst_equil.cpp \
 #  src/us_db_rst_veloc.cpp \
 #  src/us_db_rst_cell.cpp \
@@ -284,7 +284,6 @@ HEADERS += \
   include/us_db_admin.h \
   include/us_db_veloc.h \
   include/us_db_equil.h \
-  include/us_db_rst_channel.h \
   include/us_db_rst_equilproject.h \
   include/us_db_rst_montecarlo.h \
   include/us_db_rtv_date.h \
@@ -421,6 +420,7 @@ HEADERS += \
   include/us_win.h \
   include/us_write_config.h 
 
+#  include/us_db_rst_channel.h \
 #  include/us_db_rst_equil.h \
 #  include/us_db_rst_veloc.h \
 #  include/us_db_rst_cell.h \
