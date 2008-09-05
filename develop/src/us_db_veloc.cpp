@@ -539,7 +539,7 @@ bool US_DB_Veloc::insertCompressedData()
 
 	QMessageBox::message(
 		tr( "Success"),
-		tr( "Successfully saveed data to database.\n" ) );
+		tr( "Successfully saved data to database.\n" ) );
 
 	return true;
 }
