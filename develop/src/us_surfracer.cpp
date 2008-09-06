@@ -1404,10 +1404,10 @@ surfracer_main(QString *error_string,
     veflag = (char *) 0;
 
 
-    puts("sr3.0");
+    //puts("sr3.0");
 
-    puts("Surface Racer 3.0 by Oleg Tsodikov");
-    puts("Integrated into UltraScan by E. Brookes");
+    //puts("Surface Racer 3.0 by Oleg Tsodikov");
+    //puts("Integrated into UltraScan by E. Brookes");
     // #define DEBUG
 
 #if defined(DEBUG)
@@ -1416,8 +1416,9 @@ surfracer_main(QString *error_string,
        printf("residue %d name %s\n", m, residue_list[m].name.ascii());
     }
 #endif
-    // process PDB
+    // process PDB 
     vector <PDB_atom *> active_atoms;
+    
     if (!recheck) 
     {
       // #define DEBUG_MM
@@ -1496,11 +1497,11 @@ surfracer_main(QString *error_string,
 		}
 		if (respos == -1)
 		{
-		    printf
-			("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-			 j + 1, k, this_atom->name.ascii(),
-			 this_atom->resName.ascii(),
-			 this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]); fflush(stdout);
+		 //   printf
+		//	("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+		//	 j + 1, k, this_atom->name.ascii(),
+		//	 this_atom->resName.ascii(),
+		//	 this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]); fflush(stdout);
 		    if ((this_atom->name != "H" && this_atom->name != "D"
 			 && this_atom->resName != "DOD"
 			 && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
@@ -1553,11 +1554,11 @@ surfracer_main(QString *error_string,
 							       j + 1, k, this_atom->name.ascii(),
 							       this_atom->resName.ascii(),
 							       this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
-		      printf
-			("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
-			 j + 1, k, this_atom->name.ascii(),
-			 this_atom->resName.ascii(),
-			 this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]);
+		  //    printf
+			//("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+			// j + 1, k, this_atom->name.ascii(),
+			// this_atom->resName.ascii(),
+			 //this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]);
 		    }
 		    else
 		    {
@@ -1646,7 +1647,7 @@ surfracer_main(QString *error_string,
 	  active_atoms.push_back(this_atom);
 	}
       }
-      printf("bead recheck active atoms.size() %u\n", (unsigned int)active_atoms.size());
+      //printf("bead recheck active atoms.size() %u\n", (unsigned int)active_atoms.size());
     }
 
 #if defined(DEBUG)
@@ -1669,14 +1670,14 @@ surfracer_main(QString *error_string,
 
     atomnumber = (int) active_atoms.size();
 
-    printf("\nReading atomic coordinates and assigning radii ..."); fflush(stdout);
+    //printf("\nReading atomic coordinates and assigning radii ..."); fflush(stdout);
 
     /*allocating memory for coordinate, radius, and area arrays */
     a = (float *) calloc(atomnumber * 3, sizeof(float));	/*   coordinates   */
     if (!a)
     {
 	free_alloced();
-	fprintf(stderr, "memory allocation error\n");
+	//fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
     memset(a, 0, atomnumber * 3 * sizeof(float));
@@ -1685,7 +1686,7 @@ surfracer_main(QString *error_string,
     if (!ar)
     {
 	free_alloced();
-	fprintf(stderr, "memory allocation error\n");
+//	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
     memset(ar, 0, atomnumber * sizeof(float));
@@ -1694,7 +1695,7 @@ surfracer_main(QString *error_string,
     if (!aarea)
     {
 	free_alloced();
-	fprintf(stderr, "memory allocation error\n");
+//	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
     memset(aarea, 0, atomnumber * sizeof(float));
@@ -1703,7 +1704,7 @@ surfracer_main(QString *error_string,
     if (!molarea)
     {
 	free_alloced();
-	fprintf(stderr, "memory allocation error\n");
+//	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
     memset(molarea, 0, atomnumber * sizeof(float));
@@ -1713,7 +1714,7 @@ surfracer_main(QString *error_string,
     if (!curvat)
     {
 	free_alloced();
-	fprintf(stderr, "memory allocation error\n");
+//	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
     memset(curvat, 0, atomnumber * sizeof(float));
@@ -1725,7 +1726,7 @@ surfracer_main(QString *error_string,
         for (i = 0; i < atomnumber; i++)
         {
 	  ar[i] = active_atoms[i]->radius;
-	  printf("radius %d %f\n", i, ar[i]);
+	  //printf("radius %d %f\n", i, ar[i]);
 	  a[3 * i] = active_atoms[i]->coordinate.axis[0];
 	  a[3 * i + 1] = active_atoms[i]->coordinate.axis[1];
 	  a[3 * i + 2] = active_atoms[i]->coordinate.axis[2];
@@ -1734,7 +1735,7 @@ surfracer_main(QString *error_string,
         for (i = 0; i < atomnumber; i++)
         {
 	  ar[i] = active_atoms[i]->bead_computed_radius;
-	  printf("radius %d %f\n", i, ar[i]);
+	  //printf("radius %d %f\n", i, ar[i]);
 	  a[3 * i] = active_atoms[i]->bead_coordinate.axis[0];
 	  a[3 * i + 1] = active_atoms[i]->bead_coordinate.axis[1];
 	  a[3 * i + 2] = active_atoms[i]->bead_coordinate.axis[2];
@@ -1760,7 +1761,7 @@ surfracer_main(QString *error_string,
     if (!atomcon)
     {
 	free_alloced();
-	fprintf(stderr, "memory allocation error\n");
+//	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
     memset(atomcon, 0, atomnumber * sizeof(int));
@@ -1770,7 +1771,7 @@ surfracer_main(QString *error_string,
     if (!veat)
     {
 	free_alloced();
-	fprintf(stderr, "memory allocation error\n");
+//	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
     memset(veat, 0, atomnumber * 6 * 3 * sizeof(int));
@@ -1779,7 +1780,7 @@ surfracer_main(QString *error_string,
     if (!ve)
     {
 	free_alloced();
-	fprintf(stderr, "memory allocation error\n");
+//	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
     memset(ve, 0, atomnumber * 6 * 3 * sizeof(int));
@@ -1788,7 +1789,7 @@ surfracer_main(QString *error_string,
     if (!ciat)
     {
 	free_alloced();
-	fprintf(stderr, "memory allocation error\n");
+//	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
     memset(ciat, 0, atomnumber * 2 * sizeof(int));
@@ -1798,7 +1799,7 @@ surfracer_main(QString *error_string,
     if (!ci)
     {
 	free_alloced();
-	fprintf(stderr, "memory allocation error\n");
+//	fprintf(stderr, "memory allocation error\n");
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
     memset(ci, 0, atomnumber * 3 * sizeof(float));
@@ -1814,9 +1815,9 @@ surfracer_main(QString *error_string,
 
     for (ai = 0; ai <= atomnumber - 1; ai++)	/*taking an atom (going through all) */
     {
-	if (ai != 0)
-	    if (ai % 1000 == 0)
-		printf("\n%d atoms traced", ai);
+	//if (ai != 0)
+	//    if (ai % 1000 == 0)
+	//	printf("\n%d atoms traced", ai);
 
 	xmax = a[ai * 3] + delta;
 	xmin = a[ai * 3] - delta;
@@ -1930,7 +1931,7 @@ surfracer_main(QString *error_string,
 
 				    if (nv >= atomnumber * 6)	/*if goes into here allocate more memory and recompile */
 				    {
-					fprintf(stderr, "\nNot enough computer memory for vertexes");
+					//fprintf(stderr, "\nNot enough computer memory for vertexes");
 					free_alloced();
 					return (US_SURFRACER_ERR_MEMORY_ALLOC);
 				    }
@@ -2048,7 +2049,7 @@ surfracer_main(QString *error_string,
 			ncircle++;	/*incrementing the circle counter */
 			if (ncircle >= atomnumber)
 			{
-			    fprintf(stderr, "\nNot enough RAM for the contact circle array");
+//			    fprintf(stderr, "\nNot enough RAM for the contact circle array");
 			    free_alloced();
 			    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 			}
@@ -2073,7 +2074,7 @@ surfracer_main(QString *error_string,
 	verat = (int *) calloc(nv * 3, sizeof(int));	/*vertex forming atom triplets */
 	if (!verat)
 	{
-	    fprintf(stderr, "\nNot enough computer memory for vertexes");
+	    //fprintf(stderr, "\nNot enough computer memory for vertexes");
 	    free_alloced();
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
@@ -2082,7 +2083,7 @@ surfracer_main(QString *error_string,
 	ver = (float *) calloc(nv * 3, sizeof(float));
 	if (!ver)
 	{
-	    fprintf(stderr, "\nNot enough computer memory for vertexes");
+	    //fprintf(stderr, "\nNot enough computer memory for vertexes");
 	    free_alloced();
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
@@ -2094,7 +2095,7 @@ surfracer_main(QString *error_string,
 	cirat = (int *) calloc(ncircle * 2, sizeof(int));	/*contact circle forming atom pairs */
 	if (!cirat)
 	{
-	    fprintf(stderr, "\nNot enough computer memory for vertexes");
+	    //fprintf(stderr, "\nNot enough computer memory for vertexes");
 	    free_alloced();
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
@@ -2103,7 +2104,7 @@ surfracer_main(QString *error_string,
 	cir = (float *) calloc(ncircle * 3, sizeof(float));
 	if (!cir)
 	{
-	    fprintf(stderr, "\nNot enough computer memory for vertexes");
+	    //fprintf(stderr, "\nNot enough computer memory for vertexes");
 	    free_alloced();
 	    return (US_SURFRACER_ERR_MEMORY_ALLOC);
 	}
@@ -2113,7 +2114,7 @@ surfracer_main(QString *error_string,
     veflag = (char *) calloc(ncircle + nv, sizeof(char));
     if (!veflag)
     {
-	fprintf(stderr, "\nNot enough computer memory for vertexes");
+	//fprintf(stderr, "\nNot enough computer memory for vertexes");
 	free_alloced();
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
@@ -2175,7 +2176,7 @@ surfracer_main(QString *error_string,
     edge = (int *) calloc(ned * 2, sizeof(int));	/* radius */
     if (!edge)
     {
-	fprintf(stderr, "\nNot enough computer memory for vertexes");
+	//fprintf(stderr, "\nNot enough computer memory for vertexes");
 	free_alloced();
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
@@ -2184,7 +2185,7 @@ surfracer_main(QString *error_string,
     edgeatom = (int *) calloc(ned, sizeof(int));	/* radius */
     if (!edgeatom)
     {
-	fprintf(stderr, "\nNot enough computer memory for vertexes");
+	//fprintf(stderr, "\nNot enough computer memory for vertexes");
 	free_alloced();
 	return (US_SURFRACER_ERR_MEMORY_ALLOC);
     }
@@ -2198,8 +2199,8 @@ surfracer_main(QString *error_string,
 
     start2 = clock();
 
-    printf("\nSurface built successfully...");
-    printf("\nStarting area calculation..."); fflush(stdout);
+    //printf("\nSurface built successfully...");
+    //printf("\nStarting area calculation..."); fflush(stdout);
 
     /*beginning of surface calculation */
     /*finding the atom with the highest north pole-it's accessible and will be the first one */
@@ -2339,8 +2340,8 @@ surfracer_main(QString *error_string,
     }
 
     dbg("6");
-    puts("us_surfracer 1");
-    fflush(stdout);
+    //puts("us_surfracer 1");
+    //fflush(stdout);
     FILE *aafile;
     if (!recheck) {
       aafile = fopen("bead_model.asa", "w");
@@ -2348,7 +2349,7 @@ surfracer_main(QString *error_string,
       aafile = fopen("bead_model_recheck.asa", "w");
     }
 
-    puts("us_surfracer 2");
+    //puts("us_surfracer 2");
     fflush(stdout);
     for (i = 0; i < atomnumber; i++)
     {
@@ -2356,10 +2357,10 @@ surfracer_main(QString *error_string,
 	fprintf(aafile, "atom %d %f %f %f %f %f\n", i + 1, a[i * 3], a[i * 3 + 1], a[i * 3 + 2], ar[i] - prober, aarea[i]);
     }
     fclose(aafile);
-    puts("us_surfracer 3");
+    //puts("us_surfracer 3");
     fflush(stdout);
     free_alloced();
-    puts("us_surfracer 4");
+    //puts("us_surfracer 4");
     fflush(stdout);
     return (0);
 
@@ -2529,14 +2530,14 @@ surfracer_main(QString *error_string,
 	}
     }
 
-    printf("\n\nSolvent accessible surface areas (in Angstrom^2):");
-    printf("\nTotal area = %.2f, Polar area= %.2f , Non-polar area= %.2f", polarea + nparea, polarea, nparea);
-    printf("\n\nMolecular surface areas (in Angstrom^2):");
-    printf("\nTotal area = %.2f, Polar area= %.2f , Non-polar area= %.2f", molpolarea + molnparea, molpolarea, molnparea);
-    printf("\nVertices=%d  circles=%d", nv, ncircle);
-    printf("\n\nPress <Enter> to check for cavities");
-    getchar();
-    getchar();
+    //printf("\n\nSolvent accessible surface areas (in Angstrom^2):");
+    //printf("\nTotal area = %.2f, Polar area= %.2f , Non-polar area= %.2f", polarea + nparea, polarea, nparea);
+    //printf("\n\nMolecular surface areas (in Angstrom^2):");
+    //printf("\nTotal area = %.2f, Polar area= %.2f , Non-polar area= %.2f", molpolarea + molnparea, molpolarea, molnparea);
+    //printf("\nVertices=%d  circles=%d", nv, ncircle);
+    //printf("\n\nPress <Enter> to check for cavities");
+    //getchar();
+    //getchar();
 
     fclose(asafile);		/*closing the file */
 
@@ -2560,7 +2561,7 @@ surfracer_main(QString *error_string,
 	for (i = 0; i <= nv + ncircle - 1; i++)
 	    if (veflag[i] == 0)	/*found untreated vertex or circle- it must be in a cavity */
 	    {
-		printf("\nFound cavity %d", cavn);
+		//printf("\nFound cavity %d", cavn);
 
 		for (j = 0; j <= atomnumber - 1; j++)
 		{
@@ -2576,8 +2577,8 @@ surfracer_main(QString *error_string,
 
 	if (i == nv + ncircle)	/*did not find untreated elements- there are NO cavities */
 	{
-	    if (cavn == 1)
-		printf("\nThe structure contains no cavities");
+	    //if (cavn == 1)
+		//printf("\nThe structure contains no cavities");
 	    break;
 	}
 	else			/*cavity found */
@@ -2612,7 +2613,7 @@ surfracer_main(QString *error_string,
 
 		if (i == ned)	/*outer surface calculation completed */
 		{
-		    printf("\n\nCalculation complete for cavity %d", cavn);
+		    //printf("\n\nCalculation complete for cavity %d", cavn);
 		    break;
 		}
 		else		/*perform calculation for the next atom */
@@ -2760,12 +2761,12 @@ surfracer_main(QString *error_string,
     fprintf(resfile, "Structure contains %d cavities\n\n", cavn - 1);
     fclose(resfile);
 
-    printf("\n\nThe solvent accessible atomic areas are saved in the file *.txt");
-    printf("\n\nThe breakdown of surface areas is in the file result.txt");
+    //printf("\n\nThe solvent accessible atomic areas are saved in the file *.txt");
+    //printf("\n\nThe breakdown of surface areas is in the file result.txt");
 
-    printf("\n\nPress <Enter> to quit");
+    //printf("\n\nPress <Enter> to quit");
 
-    getchar();
+    //getchar();
 
     /*the end of all calculations */
     /*freeing the dynamic memory */

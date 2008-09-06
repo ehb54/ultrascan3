@@ -217,7 +217,7 @@ void US_Hydrodyn::setupGUI()
 	pb_select_residue_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_select_residue_file, SIGNAL(clicked()), SLOT(select_residue_file()));
 
-	lbl_table = new QLabel(tr(residue_filename),this);
+	lbl_table = new QLabel( QDir::convertSeparators( residue_filename ), this );
 	lbl_table->setMinimumHeight(minHeight1);
 	lbl_table->setFrameStyle(QFrame::WinPanel|Sunken);
 	lbl_table->setAlignment(AlignCenter|AlignVCenter);
@@ -3223,7 +3223,7 @@ void US_Hydrodyn::select_residue_file()
 		return;
 	}
 	read_residue_file();
-	lbl_table->setText(residue_filename);
+	lbl_table->setText( QDir::convertSeparators( residue_filename ) );
 }
 
 void US_Hydrodyn::read_residue_file()
@@ -3312,7 +3312,7 @@ void US_Hydrodyn::load_pdb()
 	{
 		bead_model_from_file = false;
 		int errors_found = 0;
-		lbl_pdb_file->setText(filename);
+		lbl_pdb_file->setText( QDir::convertSeparators( filename ) );
 		editor->setText("\n\n");
 
 #if defined(START_RASMOL)
@@ -3389,7 +3389,7 @@ void US_Hydrodyn::load_bead_model()
 		}
 
 		bead_model_file = filename;
-		le_bead_model_file->setText(filename);
+		le_bead_model_file->setText( QDir::convertSeparators( filename ) );
 		if (!read_bead_model(filename))
 		{
 		  pb_visualize->setEnabled(true);
