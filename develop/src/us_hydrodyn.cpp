@@ -3503,7 +3503,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		  return 1;
 		}
 		editor->append(QString("Beads %1\n").arg(bead_count));
-		while (!ts.atEnd())
+		while (!ts.atEnd() && linepos < bead_count)
 		{
 		  ++linepos;
 		  for (unsigned int i = 0; i < 3; i++)
