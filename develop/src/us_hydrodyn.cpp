@@ -4,7 +4,6 @@
 #include "../include/us_hydrodyn_pat.h"
 #include <qregexp.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -12,6 +11,7 @@
 
 #ifndef WIN32
 	// #define DEBUG
+        #include <unistd.h>
 	#define DEBUG1
 	#define TIMING
 
@@ -20,10 +20,16 @@
 		static struct timeval start_tv, end_tv;
 	#endif
         #define SLASH "/"
+	#define __open open
 #else
 	#define chdir _chdir
+	#define dup2 _dup2
+	#define __open _open
 	#include <direct.h>
+	#include <io.h>
         #define SLASH "\\"
+        #define STDOUT_FILENO 1
+        #define STDERR_FILENO 2
 #endif
 
 
@@ -32,15 +38,15 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 
 	USglobal = new US_Config();
 
-	int stdout = open(QString(USglobal->config_list.tmp_dir +
+	int r_stdout = __open(QString(USglobal->config_list.tmp_dir +
 				  SLASH + "last_stdout.txt").ascii(), 
 			  O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	dup2(stdout, STDOUT_FILENO);
+	dup2(r_stdout, STDOUT_FILENO);
 
-	int stderr = open(QString(USglobal->config_list.tmp_dir +
+	int r_stderr = __open(QString(USglobal->config_list.tmp_dir +
 				  SLASH + "last_stderr.txt").ascii(), 
 			  O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	dup2(stderr, STDERR_FILENO);
+	dup2(r_stderr, STDERR_FILENO);
 
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("SOMO Solution Bead Modeler"));
