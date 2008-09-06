@@ -4,6 +4,11 @@
 #include "../include/us_hydrodyn_pat.h"
 #include <qregexp.h>
 #include <stdlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 #ifndef WIN32
 	// #define DEBUG
@@ -24,7 +29,19 @@
 
 US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 {
+
 	USglobal = new US_Config();
+
+	int stdout = open(QString(USglobal->config_list.tmp_dir +
+				  SLASH + "last_stdout.txt").ascii(), 
+			  O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	dup2(stdout, STDOUT_FILENO);
+
+	int stderr = open(QString(USglobal->config_list.tmp_dir +
+				  SLASH + "last_stderr.txt").ascii(), 
+			  O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	dup2(stderr, STDERR_FILENO);
+
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("SOMO Solution Bead Modeler"));
 	read_config();
@@ -46,6 +63,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	create_beads_normally = true;
 	rasmol = NULL;
 	chdir(QString(USglobal->config_list.tmp_dir.ascii()));
+
 	printf("%s\n", QString(USglobal->config_list.tmp_dir).ascii());
 	results.total_beads = 0;
 	results.used_beads = 0;
@@ -86,6 +104,8 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	    putenv(rmp);
 	  }
 	}
+
+
 }
 
 US_Hydrodyn::~US_Hydrodyn()
