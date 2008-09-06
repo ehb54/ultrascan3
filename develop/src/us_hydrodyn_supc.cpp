@@ -800,7 +800,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
     if (flag_mem == 1)
     {
-	ris = fopen(risultati, "ab");
+	ris = fopen(risultati, "wb");
 	fprintf(ris, "\n%s", "BEAMS -           IST. CBA                - COEFF/SUPCW v. 4.2\n");
 	fprintf(ris, "\n%s", "**************************************************************");
 	fprintf(ris, "\n%s\n", "***** Computational Method : Supermatrix Inversion ***********");

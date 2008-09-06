@@ -3,6 +3,7 @@
 #include "../include/us_hydrodyn_supc.h"
 #include "../include/us_hydrodyn_pat.h"
 #include <qregexp.h>
+#include <stdlib.h>
 
 #ifndef WIN32
 	// #define DEBUG
@@ -57,15 +58,34 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	results.vbar = 0.72;
 	results.tau = 0.0;
 	rasmol = new QProcess(this);
- 	rasmol->setWorkingDirectory(
- 				    QDir(USglobal->config_list.system_dir +
+	rasmol->setWorkingDirectory(
+ 				    QDir(USglobal->config_list.result_dir +
 #if defined(BIN64)
  					 "/bin64/"
 #else
  					 "/bin/"
 #endif
 					 ));
+
 	bead_model_from_file = false;
+	QString RMP = "RASMOLPATH=" + USglobal->config_list.system_dir +
+#if defined(BIN64)
+	  "/bin64/"
+#else
+	  "/bin/"
+#endif
+	  ;
+
+	if (!getenv("RASMOLPATH")) 
+	{
+	  // note this is not free'd because it becomes part of the environment....
+	  char *rmp = (char *)malloc(strlen(RMP.ascii() + 1));
+	  if (rmp) 
+	  {
+	    strcpy(rmp, RMP.ascii());
+	    putenv(rmp);
+	  }
+	}
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -770,7 +790,7 @@ int US_Hydrodyn::compute_asa()
 
         QString error_string = "";
 	progress->reset();
-	editor->setText(QString("Building the bead model for %1 model %2\n").arg(project).arg(current_model+1));
+	editor->setText(QString("\n\nBuilding the bead model for %1 model %2\n").arg(project).arg(current_model+1));
 	editor->append("Checking the pdb structure\n");
 	if (check_for_missing_atoms(&error_string, &model_vector[current_model])) {
 	  editor->append("US_SURFRACER encountered the following errors with your PDB structure:\n" +
@@ -2642,17 +2662,17 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
   fprintf(fbms,
 	  "%d\n%s\n",
 	  beads,
-	  fname.ascii()
+	  QFileInfo(fname).fileName().ascii()
 	  );
   fprintf(fspt,
 	  "load xyz %s\nselect all\nwireframe off\nset background white\n",
-	  QString("%1.bms").arg(fname).ascii()
+	  QString("%1.bms").arg(QFileInfo(fname).fileName()).ascii()
 	  );
 
   fprintf(fbeams,
 	  "%d\t-2.000000\t%s.rmc\t%f\n",
 	  beads,
-	  fname.ascii(),
+	  QFileInfo(fname).fileName().ascii(),
 	  results.vbar
 	  );
 
@@ -2935,7 +2955,7 @@ void US_Hydrodyn::bead_check()
 void US_Hydrodyn::select_model(int val)
 {
 	current_model = val;
-	editor->setText(QString("%1 model %2 selected.\n").arg(project).arg(current_model+1));
+	editor->setText(QString("\n\n%1 model %2 selected.\n").arg(project).arg(current_model+1));
 	// check integrity of PDB file and confirm that all residues are correctly defined in residue table
 	if (results_widget)
 	{
@@ -2964,12 +2984,13 @@ void US_Hydrodyn::visualize()
 	argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
 #endif
 	argument.append("-script");
-	argument.append(USglobal->config_list.result_dir +
-			SLASH +
+	argument.append(
 			project +
 			(bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
 			".somo.spt");
-	// #endif
+
+	rasmol->setWorkingDirectory(USglobal->config_list.result_dir);
+	
 	rasmol->setArguments(argument);
 	if (!rasmol->start())
 	{
@@ -3032,16 +3053,17 @@ void US_Hydrodyn::calc_hydro()
 		 (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
 		 ".somo", &bead_model, bead_model_from_file);
 
+  chdir(QString(USglobal->config_list.result_dir.ascii()));
   int retval = us_hydrodyn_supc_main(&results,
 				     &hydro,
 				     &bead_model,
-				     QString(USglobal->config_list.result_dir +
-					     SLASH +
-					     project +
+				     QString(project +
 					     (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
 					     ".somo.beams").ascii(),
 				     progress,
 				     editor);
+  chdir(QString(USglobal->config_list.tmp_dir.ascii()));
+
   printf("back from supc retval %d\n", retval);
   pb_show_hydro_results->setEnabled(retval ? false : true);
   if ( retval )
@@ -3265,7 +3287,8 @@ void US_Hydrodyn::load_pdb()
 		bead_model_from_file = false;
 		int errors_found = 0;
 		lbl_pdb_file->setText(filename);
-		editor->setText("");
+		editor->setText("\n\n");
+
 #if defined(START_RASMOL)
 		QStringList argument;
 #if !defined(WIN32)
@@ -3278,13 +3301,13 @@ void US_Hydrodyn::load_pdb()
 #else
 		argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
 #endif
-		argument.append(filename);
+		argument.append(QFileInfo(filename).fileName());
+		rasmol->setWorkingDirectory(QFileInfo(filename).dirPath());
 		rasmol->setArguments(argument);
 		if (!rasmol->start())
 		{
 			QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
 			"Please check to make sure RASMOL is properly installed..."));
-			return;
 		}
 #endif
 		QFileInfo fi(filename);
@@ -3458,7 +3481,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 	project = filename;
 	project.replace(QRegExp(".*(/|\\\\)"), "");
 	project.replace(QRegExp("\\.(somo|SOMO)\\.(bead_model|BEAD_MODEL)$"), "");
-        editor->setText("Loading bead model " + project + "\n");
+        editor->setText("\n\nLoading bead model " + project + "\n");
 	bead_model.clear();
 	PDB_atom tmp_atom;
 	QFile f(filename);
@@ -3482,6 +3505,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		editor->append(QString("Beads %1\n").arg(bead_count));
 		while (!ts.atEnd())
 		{
+		  ++linepos;
 		  for (unsigned int i = 0; i < 3; i++)
 		  {
 		    if (!ts.atEnd()) {
