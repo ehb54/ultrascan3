@@ -1253,6 +1253,7 @@ void UsWin::simulate()
 	emit explain(tr("Loading Sedimentation Simulator...") );
 
 	us_finsim_proc = new QProcess(this);
+	us_finsim_proc->setCommunication(0);
 	us_finsim_proc->addArgument("us_finsim");
 	if (!us_finsim_proc->start())
 	{
@@ -1270,6 +1271,7 @@ void UsWin::us_astfem_sim()
 	emit explain(tr("Loading Finite Element Sedimentation Simulator (ASTFEM)...") );
 
 	us_astfem_sim_proc = new QProcess(this);
+	us_astfem_sim_proc->setCommunication(0);
 	us_astfem_sim_proc->addArgument("us_astfem_sim");
 	if (!us_astfem_sim_proc->start())
 	{
@@ -1286,6 +1288,7 @@ void UsWin::us_dma60()
 	emit explain(tr("Loading the Anton Paar DMA 60 Data Acquisition Module...") );
 
 	us_dma60_proc = new QProcess(this);
+	us_dma60_proc->setCommunication(0);
 	us_dma60_proc->addArgument("us_dma60");
 	if (!us_dma60_proc->start())
 	{
@@ -1302,6 +1305,7 @@ void UsWin::pseudo3d_combine()
 	emit explain(tr("Loading the Pseudo-3D Distribution Overlay Module...") );
 
 	us_pseudo3d_combine_proc = new QProcess(this);
+	us_pseudo3d_combine_proc->setCommunication(0);
 	us_pseudo3d_combine_proc->addArgument("us_pseudo3d_combine");
 	if (!us_pseudo3d_combine_proc->start())
 	{
@@ -1318,6 +1322,7 @@ void UsWin::us_colorgradient()
 	emit explain(tr("Loading the Anton Paar DMA 60 Data Acquisition Module...") );
 
 	us_colorgradient_proc = new QProcess(this);
+	us_colorgradient_proc->setCommunication(0);
 	us_colorgradient_proc->addArgument("us_colorgradient");
 	if (!us_colorgradient_proc->start())
 	{
@@ -1334,6 +1339,7 @@ void UsWin::spectrum()
 	emit explain(tr("Loading Global Wavelength Spectrum Fitter...") );
 
 	us_spectrum_proc = new QProcess(this);
+	us_spectrum_proc->setCommunication(0);
 	us_spectrum_proc->addArgument("us_spectrum");
 	if (!us_spectrum_proc->start())
 	{
@@ -1350,6 +1356,7 @@ void UsWin::sassoc()
 	emit explain( tr("Starting Self-Association Simulator...") );
 
 	us_sassoc_proc = new QProcess(this);
+	us_sassoc_proc->setCommunication(0);
 	us_sassoc_proc->addArgument("us_sassoc");
 	if (!us_sassoc_proc->start())
 	{
@@ -1366,6 +1373,7 @@ void UsWin::cpuload()
 	emit explain( tr("Loading CPU Status Information...") );
 
 	us_cpuload_proc = new QProcess(this);
+	us_cpuload_proc->setCommunication(0);
 	us_cpuload_proc->addArgument("us_cpuload");
 	if (!us_cpuload_proc->start())
 	{
@@ -1382,6 +1390,7 @@ void UsWin::sysload()
 	emit explain( tr("Loading System Load Information...") );
 
 	us_sysload_proc = new QProcess(this);
+	us_sysload_proc->setCommunication(0);
 	us_sysload_proc->addArgument("us_sysload");
 	if (!us_sysload_proc->start())
 	{
@@ -1398,6 +1407,7 @@ void UsWin::meminfo()
 	emit explain( tr("Loading Memory Information...") );
 
 	us_meminfo_proc = new QProcess(this);
+	us_meminfo_proc->setCommunication(0);
 	us_meminfo_proc->addArgument("us_meminfo");
 	if (!us_meminfo_proc->start())
 	{
@@ -1422,6 +1432,7 @@ void UsWin::veloc_absorbance()
 	emit explain( tr("Editing Velocity Absorbance Data...") );
 
 	us_edvabs_proc = new QProcess(this);
+	us_edvabs_proc->setCommunication(0);
 	us_edvabs_proc->addArgument("us_edvabs");
 
 	if (!us_edvabs_proc->start())
@@ -1487,6 +1498,7 @@ void UsWin::veloc_interference()
 	emit explain( tr("Editing Velocity Interference Data..." ));
 
 	us_edvint_proc = new QProcess(this);
+	us_edvint_proc->setCommunication(0);
 	us_edvint_proc->addArgument("us_edvint");
 
 	if (!us_edvint_proc->start())
@@ -1504,6 +1516,7 @@ void UsWin::veloc_fluorescence()
 	emit explain( tr("Editing Velocity Fluorescence Data..." ));
 
 	us_edvflo_proc = new QProcess(this);
+	us_edvflo_proc->setCommunication(0);
 	us_edvflo_proc->addArgument("us_edvflo");
 
 	if (!us_edvflo_proc->start())
@@ -1521,6 +1534,7 @@ void UsWin::equil_absorbance()
 	emit explain( tr("Editing Equilibrium Absorbance Data...") );
 
 	us_edeabs_proc = new QProcess(this);
+	us_edeabs_proc->setCommunication(0);
 	us_edeabs_proc->addArgument("us_edeabs");
 	if (!us_edeabs_proc->start())
 	{
@@ -1537,6 +1551,7 @@ void UsWin::equil_interference()
 	emit explain( tr("Editing Equilibrium Interference Data...") );
 
 	us_edeint_proc = new QProcess(this);
+	us_edeint_proc->setCommunication(0);
 	us_edeint_proc->addArgument("us_edeint");
 	if (!us_edeint_proc->start())
 	{
@@ -1553,6 +1568,7 @@ void UsWin::equil_fluorescence()
 	emit explain( tr("Editing Equilibrium Fluorescence Data...") );
 
 	us_edeflo_proc = new QProcess(this);
+	us_edeflo_proc->setCommunication(0);
 	us_edeflo_proc->addArgument("us_edeflo");
 	if (!us_edeflo_proc->start())
 	{
@@ -1569,6 +1585,7 @@ void UsWin::editWavelength()
 	emit explain( tr("Editing Wavelength Data...") );
 
 	us_editwavelength_proc = new QProcess(this);
+	us_editwavelength_proc->setCommunication(0);
 	us_editwavelength_proc->addArgument("us_editwavelength");
 	if (!us_editwavelength_proc->start())
 	{
@@ -1585,6 +1602,7 @@ void UsWin::vhw()
 	emit explain( tr("Loading van Holde - Weischet Analysis...") );
 
 	us_vhwdat_proc = new QProcess(this);
+	us_vhwdat_proc->setCommunication(0);
 	us_vhwdat_proc->addArgument("us_vhwdat");
 	if (!us_vhwdat_proc->start())
 	{
@@ -1601,6 +1619,7 @@ void UsWin::vhw_enhanced()
 	emit explain( tr("Loading enahnced van Holde - Weischet Analysis...") );
 
 	us_vhwenhanced_proc = new QProcess(this);
+	us_vhwenhanced_proc->setCommunication(0);
 	us_vhwenhanced_proc->addArgument("us_vhwenhanced");
 	if (!us_vhwenhanced_proc->start())
 	{
@@ -1617,6 +1636,7 @@ void UsWin::finite_element_dud()
 	emit explain( tr("Loading Finite Element Analysis (based on DUD) for a single experiment...") );
 
 	us_findat_proc = new QProcess(this);
+	us_findat_proc->setCommunication(0);
 	us_findat_proc->addArgument("us_findat");
 	if (!us_findat_proc->start())
 	{
@@ -1634,6 +1654,7 @@ void UsWin::finite_element_ad()
 	emit explain( tr("Loading Finite Element Analysis (based on automatic differentiation) for a single experiment...") );
 
 	us_findat_ad_proc = new QProcess(this);
+	us_findat_ad_proc->setCommunication(0);
 	us_findat_ad_proc->addArgument("us_findat_ad");
 	if (!us_findat_ad_proc->start())
 	{
@@ -1655,6 +1676,7 @@ void UsWin::finite_element_single()
 	emit explain( tr("Loading Finite Element Analysis (based on automatic differentiation) for a single experiment...") );
 
 	us_finite_single_proc = new QProcess(this);
+	us_finite_single_proc->setCommunication(0);
 	us_finite_single_proc->addArgument("us_finite_single");
 	if (!us_finite_single_proc->start())
 	{
@@ -1671,6 +1693,7 @@ void UsWin::fematch()
 	emit explain( tr("Loading Finite Element matching routine to compare experimental data...") );
 
 	us_fematch_proc = new QProcess(this);
+	us_fematch_proc->setCommunication(0);
 	us_fematch_proc->addArgument("us_fematch");
 	if (!us_fematch_proc->start())
 	{
@@ -1687,6 +1710,7 @@ void UsWin::fematch_ra()
 	emit explain( tr("Loading Finite Element matching routine to compare experimental data...") );
 
 	us_fematch_ra_proc = new QProcess(this);
+	us_fematch_ra_proc->setCommunication(0);
 	us_fematch_ra_proc->addArgument("us_fematch_ra");
 	if (!us_fematch_ra_proc->start())
 	{
@@ -1703,6 +1727,7 @@ void UsWin::hydrodyn()
 	emit explain( tr("Loading SOMO Bead Modeler...") );
 
 	us_hydrodyn_proc = new QProcess(this);
+	us_hydrodyn_proc->setCommunication(0);
 	us_hydrodyn_proc->addArgument("us_hydrodyn");
 	if (!us_hydrodyn_proc->start())
 	{
@@ -1719,6 +1744,7 @@ void UsWin::secm()
 	emit explain( tr("Loading Second Moment Analysis...") );
 
 	us_secdat_proc = new QProcess(this);
+	us_secdat_proc->setCommunication(0);
 	us_secdat_proc->addArgument("us_secdat");
 	if (!us_secdat_proc->start())
 	{
@@ -1735,6 +1761,7 @@ void UsWin::cofs()
 	emit explain( tr("Loading C(s) Analysis...") );
 
 	us_cofs_proc = new QProcess(this);
+	us_cofs_proc->setCommunication(0);
 	us_cofs_proc->addArgument("us_cofs");
 	if (!us_cofs_proc->start())
 	{
@@ -1751,6 +1778,7 @@ void UsWin::cofdistro()
 	emit explain( tr("Loading Distribution Analysis...") );
 
 	us_cofdistro_proc = new QProcess(this);
+	us_cofdistro_proc->setCommunication(0);
 	us_cofdistro_proc->addArgument("us_cofdistro");
 	if (!us_cofdistro_proc->start())
 	{
@@ -1767,6 +1795,7 @@ void UsWin::sa2d()
 	emit explain( tr("Loading 2-dimensional Spectrum Analysis...") );
 
 	us_sa2d_proc = new QProcess(this);
+	us_sa2d_proc->setCommunication(0);
 	us_sa2d_proc->addArgument("us_sa2d");
 	if (!us_sa2d_proc->start())
 	{
@@ -1783,6 +1812,7 @@ void UsWin::viewmwl()
 	emit explain( tr("Loading Multiwavelength Viewer/Editor...") );
 
 	us_viewmwl_proc = new QProcess(this);
+	us_viewmwl_proc->setCommunication(0);
 	us_viewmwl_proc->addArgument("us_viewmwl");
 	if (!us_viewmwl_proc->start())
 	{
@@ -1799,6 +1829,7 @@ void UsWin::dcdt()
 	emit explain( tr("Loading Time Derivative - dC/dt Analysis..."));
 
 	us_dcdtdat_proc = new QProcess(this);
+	us_dcdtdat_proc->setCommunication(0);
 	us_dcdtdat_proc->addArgument("us_dcdtdat");
 	if (!us_dcdtdat_proc->start())
 	{
@@ -1815,6 +1846,7 @@ void UsWin::dcdr()
 	emit explain( tr("Loading Radial Derivative - dC/dr Analysis...") );
 
 	us_dcdrdat_proc = new QProcess(this);
+	us_dcdrdat_proc->setCommunication(0);
 	us_dcdrdat_proc->addArgument("us_dcdrdat");
 	if (!us_dcdrdat_proc->start())
 	{
@@ -1831,6 +1863,7 @@ void UsWin::kirkwood()
 	emit explain( tr("Loading Kirkwood Analysis...") );
 
 	us_kirkwood_proc = new QProcess(this);
+	us_kirkwood_proc->setCommunication(0);
 	us_kirkwood_proc->addArgument("us_kirkwood");
 	if (!us_kirkwood_proc->start())
 	{
@@ -1847,6 +1880,7 @@ void UsWin::equilibrium()
 	emit explain( tr("Loading Equilibrium Simulator...") );
 
 	us_equilsim_proc = new QProcess(this);
+	us_equilsim_proc->setCommunication(0);
 	us_equilsim_proc->addArgument("us_equilsim");
 	if (!us_equilsim_proc->start())
 	{
@@ -1863,6 +1897,7 @@ void UsWin::equiltime()
 	emit explain( tr("Loading Equilibrium Time Estimation Simulator...") );
 
 	us_equiltime_proc = new QProcess(this);
+	us_equiltime_proc->setCommunication(0);
 	us_equiltime_proc->addArgument("us_equiltime");
 	if (!us_equiltime_proc->start())
 	{
@@ -1879,6 +1914,7 @@ void UsWin::model1()
 	emit explain( tr("Loading Molecular Modeling Simulator..."));
 
 	us_predict1_proc = new QProcess(this);
+	us_predict1_proc->setCommunication(0);
 	us_predict1_proc->addArgument("us_predict1");
 	if (!us_predict1_proc->start())
 	{
@@ -1895,6 +1931,7 @@ void UsWin::model2()
 	emit explain( tr("Loading Molecular Modeling Simulator...") );
 
 	us_predict2_proc = new QProcess(this);
+	us_predict2_proc->setCommunication(0);
 	us_predict2_proc->addArgument("us_predict2");
 	if (!us_predict2_proc->start())
 	{
@@ -1909,6 +1946,7 @@ void UsWin::model2()
 void UsWin::predict()
 {
 	us_equilspeed_proc = new QProcess(this);
+	us_equilspeed_proc->setCommunication(0);
 	us_equilspeed_proc->addArgument("us_equilspeed");
 	if (!us_equilspeed_proc->start())
 	{
@@ -1924,6 +1962,7 @@ void UsWin::global_fit()
 	emit explain( tr("Loading Nonlinear Least Squares Fitting Routine for global Equilibrium Analysis...") );
 
 	us_globalequil_proc = new QProcess(this);
+	us_globalequil_proc->setCommunication(0);
 	us_globalequil_proc->addArgument("us_globalequil");
 	if (!us_globalequil_proc->start())
 	{
@@ -1940,6 +1979,7 @@ void UsWin::lnc()
 	emit explain( tr("Loading Equilibrium Analysis - ln(C) vs. r^2 Analysis...") );
 
 	us_lncr2_proc = new QProcess(this);
+	us_lncr2_proc->setCommunication(0);
 	us_lncr2_proc->addArgument("us_lncr2");
 	if (!us_lncr2_proc->start())
 	{
@@ -1956,6 +1996,7 @@ void UsWin::investigator_db()
 	emit explain( tr("Loading Investigator Table...") );
 
 	us_investigator_db_proc = new QProcess(this);
+	us_investigator_db_proc->setCommunication(0);
 	us_investigator_db_proc->addArgument("us_db_tbl_investigator");
 	if (!us_investigator_db_proc->start())
 	{
@@ -1972,6 +2013,7 @@ void UsWin::buffer_db()
 	emit explain( tr("Loading Buffer Table...") );
 
 	us_buffer_db_proc = new QProcess(this);
+	us_buffer_db_proc->setCommunication(0);
 	us_buffer_db_proc->addArgument("us_buffer_db");
 	if (!us_buffer_db_proc->start())
 	{
@@ -1988,6 +2030,7 @@ void UsWin::vbar_db()
 	emit explain( tr("Loading Peptide Table...") );
 
 	us_vbar_db_proc = new QProcess(this);
+	us_vbar_db_proc->setCommunication(0);
 	us_vbar_db_proc->addArgument("us_vbar_db");
 	if (!us_vbar_db_proc->start())
 	{
@@ -2004,6 +2047,7 @@ void UsWin::nucleotide_db()
 	emit explain( tr("Loading Nucleotide Sqeuence Table...") );
 
 	us_nucleotide_db_proc = new QProcess(this);
+	us_nucleotide_db_proc->setCommunication(0);
 	us_nucleotide_db_proc->addArgument("us_nucleotide_db");
 	if (!us_nucleotide_db_proc->start())
 	{
@@ -2020,6 +2064,7 @@ void UsWin::expdata_db()
 	emit explain( tr("Loading Experimental Data Table...") );
 
 	us_expdata_db_proc = new QProcess(this);
+	us_expdata_db_proc->setCommunication(0);
 	us_expdata_db_proc->addArgument("us_expdata_db");
 	if (!us_expdata_db_proc->start())
 	{
@@ -2036,6 +2081,7 @@ void UsWin::laser_db()
 	emit explain( tr("Loading Laser Experimental Data Table...") );
 
 	us_laser_db_proc = new QProcess(this);
+	us_laser_db_proc->setCommunication(0);
 	us_laser_db_proc->addArgument("us_laser_db");
 	if (!us_laser_db_proc->start())
 	{
@@ -2052,6 +2098,7 @@ void UsWin::rtv_investigator()
 	emit explain( tr("Loading Retrieve Investigator...") );
 
 	us_rtv_investigator_proc = new QProcess(this);
+	us_rtv_investigator_proc->setCommunication(0);
 	us_rtv_investigator_proc->addArgument("us_db_rtv_investigator");
 	if (!us_rtv_investigator_proc->start())
 	{
@@ -2068,6 +2115,7 @@ void UsWin::rtv_date()
 	emit explain( tr("Loading Retrieve Date...") );
 
 	us_rtv_date_proc = new QProcess(this);
+	us_rtv_date_proc->setCommunication(0);
 	us_rtv_date_proc->addArgument("us_db_rtv_date");
 	if (!us_rtv_date_proc->start())
 	{
@@ -2084,6 +2132,7 @@ void UsWin::rtv_description()
 	emit explain( tr("Loading Retrieve Description...") );
 
 	us_rtv_description_proc = new QProcess(this);
+	us_rtv_description_proc->setCommunication(0);
 	us_rtv_description_proc->addArgument("us_db_rtv_description");
 	if (!us_rtv_description_proc->start())
 	{
@@ -2100,6 +2149,7 @@ void UsWin::rtv_edittype()
 	emit explain( tr("Loading Retrieve Edit Type...") );
 
 	us_rtv_edittype_proc = new QProcess(this);
+	us_rtv_edittype_proc->setCommunication(0);
 	us_rtv_edittype_proc->addArgument("us_db_rtv_edittype");
 	if (!us_rtv_edittype_proc->start())
 	{
@@ -2116,6 +2166,7 @@ void UsWin::rtv_request()
 	emit explain( tr("Loading Retrieve Request...") );
 
 	us_rtv_request_proc = new QProcess(this);
+	us_rtv_request_proc->setCommunication(0);
 	us_rtv_request_proc->addArgument("us_db_rtv_request");
 	if (!us_rtv_request_proc->start())
 	{
@@ -2132,6 +2183,7 @@ void UsWin::rtv_requeststatus()
 	emit explain( tr("Loading Retrieve Request Status...") );
 
 	us_rtv_requeststatus_proc = new QProcess(this);
+	us_rtv_requeststatus_proc->setCommunication(0);
 	us_rtv_requeststatus_proc->addArgument("us_db_rtv_requeststatus");
 	if (!us_rtv_requeststatus_proc->start())
 	{
@@ -2148,6 +2200,7 @@ void UsWin::rtv_image()
 	emit explain( tr("Loading Retrieve Image...") );
 
 	us_rtv_image_proc = new QProcess(this);
+	us_rtv_image_proc->setCommunication(0);
 	us_rtv_image_proc->addArgument("us_db_rtv_image");
 	if (!us_rtv_image_proc->start())
 	{
@@ -2164,6 +2217,7 @@ void UsWin::rtv_sample()
 	emit explain( tr("Loading Retrieve Sample...") );
 
 	us_rtv_sample_proc = new QProcess(this);
+	us_rtv_sample_proc->setCommunication(0);
 	us_rtv_sample_proc->addArgument("us_db_rtv_sample");
 	if (!us_rtv_sample_proc->start())
 	{
@@ -2180,6 +2234,7 @@ void UsWin::rtv_runrequest()
 	emit explain( tr("Loading Retrieve RunRequest...") );
 
 	us_rtv_runrequest_proc = new QProcess(this);
+	us_rtv_runrequest_proc->setCommunication(0);
 	us_rtv_runrequest_proc->addArgument("us_db_rtv_runrequest");
 	if (!us_rtv_runrequest_proc->start())
 	{
@@ -2197,6 +2252,7 @@ void UsWin::db_template()
 	emit explain( tr("Loading Create Database template...") );
 
 	us_db_template_proc = new QProcess(this);
+	us_db_template_proc->setCommunication(0);
 	us_db_template_proc->addArgument("us_db_template");
 	if (!us_db_template_proc->start())
 	{
@@ -2213,6 +2269,7 @@ void UsWin::db_rst_veloc()
 	emit explain( tr("Loading Database Velocity Result...") );
 
 	us_db_rst_veloc_proc = new QProcess(this);
+	us_db_rst_veloc_proc->setCommunication(0);
 	us_db_rst_veloc_proc->addArgument("us_db_veloc");
 	if (!us_db_rst_veloc_proc->start())
 	{
@@ -2229,6 +2286,7 @@ void UsWin::db_rst_equil()
 	emit explain( tr("Loading Database Equilibrium Result...") );
 
 	us_db_rst_equil_proc = new QProcess(this);
+	us_db_rst_equil_proc->setCommunication(0);
 	us_db_rst_equil_proc->addArgument("us_db_equil");
 	if (!us_db_rst_equil_proc->start())
 	{
@@ -2245,6 +2303,7 @@ void UsWin::db_rst_equilproject()
 	emit explain( tr("Loading Database Equilibrium Project Result...") );
 
 	us_db_rst_equilproject_proc = new QProcess(this);
+	us_db_rst_equilproject_proc->setCommunication(0);
 	us_db_rst_equilproject_proc->addArgument("us_db_rst_equilproject");
 	if (!us_db_rst_equilproject_proc->start())
 	{
@@ -2261,6 +2320,7 @@ void UsWin::db_rst_montecarlo()
 	emit explain( tr("Loading Database Monte Carlo Project Result...") );
 
 	us_db_rst_montecarlo_proc = new QProcess(this);
+	us_db_rst_montecarlo_proc->setCommunication(0);
 	us_db_rst_montecarlo_proc->addArgument("us_db_rst_montecarlo");
 	if (!us_db_rst_montecarlo_proc->start())
 	{
@@ -2281,6 +2341,7 @@ void UsWin::laser_global()
 	emit explain( tr("Loading Global Light Scattering...") );
 
 	us_globallaser_proc = new QProcess(this);
+	us_globallaser_proc->setCommunication(0);
 	us_globallaser_proc->addArgument("us_globallaser");
 	if (!us_globallaser_proc->start())
 	{
@@ -2304,6 +2365,7 @@ void UsWin::database()
 void UsWin::archive()
 {
 	us_archive_proc = new QProcess(this);
+	us_archive_proc->setCommunication(0);
 	us_archive_proc->addArgument("us_archive");
 	if (!us_archive_proc->start())
 	{
@@ -2317,6 +2379,7 @@ void UsWin::archive()
 void UsWin::reorder()
 {
 	us_reorder_proc = new QProcess(this);
+	us_reorder_proc->setCommunication(0);
 	us_reorder_proc->addArgument("us_reorder");
 	if (!us_reorder_proc->start())
 	{
@@ -2330,6 +2393,7 @@ void UsWin::reorder()
 void UsWin::pseudoabs()
 {
 	us_pseudoabs_proc = new QProcess(this);
+	us_pseudoabs_proc->setCommunication(0);
 	us_pseudoabs_proc->addArgument("us_pseudoabs");
 	if (!us_pseudoabs_proc->start())
 	{
@@ -2343,6 +2407,7 @@ void UsWin::pseudoabs()
 void UsWin::merge()
 {
 	us_merge_proc = new QProcess(this);
+	us_merge_proc->setCommunication(0);
 	us_merge_proc->addArgument("us_merge");
 	if (!us_merge_proc->start())
 	{
@@ -2356,6 +2421,7 @@ void UsWin::merge()
 void UsWin::combine()
 {
 	us_combine_proc = new QProcess(this);
+	us_combine_proc->setCommunication(0);
 	us_combine_proc->addArgument("us_combine");
 	if (!us_combine_proc->start())
 	{
@@ -2369,6 +2435,7 @@ void UsWin::combine()
 void UsWin::combine_mw()
 {
 	us_combine_mw_proc = new QProcess(this);
+	us_combine_mw_proc->setCommunication(0);
 	us_combine_mw_proc->addArgument("us_combine_mw");
 	if (!us_combine_mw_proc->start())
 	{
@@ -2382,6 +2449,7 @@ void UsWin::combine_mw()
 void UsWin::combine_cofs()
 {
 	us_combine_cofs_proc = new QProcess(this);
+	us_combine_cofs_proc->setCommunication(0);
 	us_combine_cofs_proc->addArgument("us_cofs_combine");
 	if (!us_combine_cofs_proc->start())
 	{
@@ -2395,6 +2463,7 @@ void UsWin::combine_cofs()
 void UsWin::combine_cofmw()
 {
 	us_combine_cofmw_proc = new QProcess(this);
+	us_combine_cofmw_proc->setCommunication(0);
 	us_combine_cofmw_proc->addArgument("us_cofmw_combine");
 	if (!us_combine_cofmw_proc->start())
 	{
@@ -2408,6 +2477,7 @@ void UsWin::combine_cofmw()
 void UsWin::combine_cofd()
 {
 	us_combine_cofd_proc = new QProcess(this);
+	us_combine_cofd_proc->setCommunication(0);
 	us_combine_cofd_proc->addArgument("us_cofd_combine");
 	if (!us_combine_cofd_proc->start())
 	{
@@ -2421,6 +2491,7 @@ void UsWin::combine_cofd()
 void UsWin::create_global()
 {
 	us_create_global_proc = new QProcess(this);
+	us_create_global_proc->setCommunication(0);
 	us_create_global_proc->addArgument("us_create_global");
 	if (!us_create_global_proc->start())
 	{
@@ -2434,6 +2505,7 @@ void UsWin::create_global()
 void UsWin::diagnostics()
 {
 	us_diagnostics_proc = new QProcess(this);
+	us_diagnostics_proc->setCommunication(0);
 	us_diagnostics_proc->addArgument("us_diagnostics");
 	if (!us_diagnostics_proc->start())
 	{
@@ -2447,6 +2519,7 @@ void UsWin::diagnostics()
 void UsWin::calc_hydro()
 {
 	us_buffer_proc = new QProcess(this);
+	us_buffer_proc->setCommunication(0);
 	us_buffer_proc->addArgument("us_buffer");
 	if (!us_buffer_proc->start())
 	{
@@ -2660,6 +2733,7 @@ void UsWin::ga_initialize1()
 	emit explain( tr("Loading Genetic Algorithm Module for GA initialization from 2DSA distribution...") );
 
 	us_gainit1_proc = new QProcess(this);
+	us_gainit1_proc->setCommunication(0);
 	us_gainit1_proc->addArgument("us_gainit");
 	if (!us_gainit1_proc->start())
 	{
@@ -2676,6 +2750,7 @@ void UsWin::ga_initialize2()
 	emit explain( tr("Loading Genetic Algorithm Module for GA initialization from a nonlinear model...") );
 
 	us_gainit2_proc = new QProcess(this);
+	us_gainit2_proc->setCommunication(0);
 	us_gainit2_proc->addArgument("us_ga_model_editor");
 	if (!us_gainit2_proc->start())
 	{
@@ -2692,6 +2767,7 @@ void UsWin::config()
 	emit explain( tr("Loading Configuration..." ));
 
 	us_config_proc = new QProcess(this);
+	us_config_proc->setCommunication(0);
 	us_config_proc->addArgument("us_config");
 
 	if (!us_config_proc->start())
@@ -2709,6 +2785,7 @@ void UsWin::admin()
 	emit explain( tr("Loading Administrator..." ));
 
 	us_admin_proc = new QProcess(this);
+	us_admin_proc->setCommunication(0);
 	us_admin_proc->addArgument("us_admin");
 
 	if (!us_admin_proc->start())
@@ -2726,6 +2803,7 @@ void UsWin::calc_extinction()
 	emit explain( tr("Loading Extinction Coefficient Calculator...") );
 
 	us_extinction_proc = new QProcess(this);
+	us_extinction_proc->setCommunication(0);
 	us_extinction_proc->addArgument("us_extinction");
 
 	if (!us_extinction_proc->start())
