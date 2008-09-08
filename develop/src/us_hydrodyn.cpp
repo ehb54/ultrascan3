@@ -3029,6 +3029,7 @@ void US_Hydrodyn::visualize()
 
 int US_Hydrodyn::calc_somo()
 {
+  pb_somo->setEnabled(false);
   if (!residue_list.size() ||
       !model_vector.size())
 	{
@@ -3068,11 +3069,13 @@ int US_Hydrodyn::calc_somo()
 	  pb_calc_hydro->setEnabled(true);
 	}
 
+	pb_somo->setEnabled(true);
 	return 0;
 }
 
 void US_Hydrodyn::calc_hydro()
 {
+  pb_calc_hydro->setEnabled(false);
   puts("calc hydro (supc)");
   editor->append("Begin hydrodynamic calculations\n");
   write_bead_spt(USglobal->config_list.result_dir + SLASH + project +
@@ -3092,6 +3095,7 @@ void US_Hydrodyn::calc_hydro()
 
   printf("back from supc retval %d\n", retval);
   pb_show_hydro_results->setEnabled(retval ? false : true);
+  pb_calc_hydro->setEnabled(true);
   if ( retval )
   {
     editor->append("Calculate hydrodynamics failed\n\n");
