@@ -23,7 +23,7 @@
 	#define __open open
 #else
 	#define chdir _chdir
-	#define dup2 _dup2
+        #define dup2 _dup2
 	#define __open _open
 	#include <direct.h>
 	#include <io.h>
@@ -38,15 +38,15 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 
 	USglobal = new US_Config();
 
-	int r_stdout = __open(QString(USglobal->config_list.tmp_dir +
-				  SLASH + "last_stdout.txt").ascii(), 
-			  O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	dup2(r_stdout, STDOUT_FILENO);
+	// int r_stdout = __open(QString(USglobal->config_list.tmp_dir +
+	//			  SLASH + "last_stdout.txt").ascii(), 
+	//		  O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	// dup2(r_stdout, STDOUT_FILENO);
 
-	int r_stderr = __open(QString(USglobal->config_list.tmp_dir +
-				  SLASH + "last_stderr.txt").ascii(), 
-			  O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	dup2(r_stderr, STDERR_FILENO);
+	// int r_stderr = __open(QString(USglobal->config_list.tmp_dir +
+	//			  SLASH + "last_stderr.txt").ascii(), 
+	//		  O_WRONLY | O_CREAT | O_TRUNC, 0666);
+	// dup2(r_stderr, STDERR_FILENO);
 
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("SOMO Solution Bead Modeler"));
