@@ -722,7 +722,7 @@ do {
 	    $status = $1;
 	}
     }
-   // printf("debug: status = <$status> %s\n", $status =~ /^$/ ? "blank" : "not blank?");
+
     if($status =~ /^$/) {
 	$dups_blank++;
 	if($dups_blank < 10) {
