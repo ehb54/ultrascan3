@@ -6,21 +6,21 @@ $ENV{'GLOBUS_LOCATION'} = '/share/apps/tigre/globus';
 # @systems = ( 'bcf.uthscsa.edu' , 'alamo.uthscsa.edu');
 @systems = ( 
 	     'lonestar.tacc.utexas.edu', 
-	     'eldorado.acrl.uh.edu', 
-	     'antaeus.hpcc.ttu.edu', 
-	     'cosmos.tamu.edu', 
+#	     'eldorado.acrl.uh.edu', 
+#	     'antaeus.hpcc.ttu.edu', 
+#	     'cosmos.tamu.edu', 
 	     'a01.hlrb2.lrz-muenchen.de', 
 	     'bcf.uthscsa.edu', 
 	     'alamo.uthscsa.edu', 
 	     'laredo.uthscsa.edu' 
 	     );
-$cutoff = 5;
+$cutoff = 2;
 # @systemssize = ( 4, 2, 2 );
 @globusport = ( 
 		8443, # lonestar
-		8443, # eldorado
-		9443, # antaeus
-		8443, # cosmos
+#		8443, # eldorado
+#		9443, # antaeus
+#		8443, # cosmos
 		8443, # hlrb2
 		9443, # bcf
 		9443, # alamo
@@ -55,9 +55,10 @@ $ultrascan = $ENV{'ULTRASCAN'};
 open(OUT, ">$ultrascan/etc/tigre_sysstat.new");
 
 for($i = 0; $i < $cutoff; $i++) {
+#    next if $systems[$i] =~ /^(lonestar)/;
 # no load checking
-    $t = new Net::Telnet(Timeout=>.1, Errmode=>'return', Port=>$globusport[$i]);
-    $t->open($systems[$i]);
+    $t = new Net::Telnet(Timeout=>.5, Errmode=>'return', Port=>$globusport[$i]);
+    $t->open($systems[$i] =~ /lonestar/ ? "lslogin2.lonestar.tacc.utexas.edu" : $systems[$i]);
     print OUT "$systems[$i] ";
     if(!length($t->errmsg)) {
 	if($systems[$i] =~ /tamu.edux/) {
@@ -108,7 +109,7 @@ sub timedexec {
 }
 
 for($i = $cutoff; $i < @systems; $i++) {
-    next if $systems[$i] =~ /^(alamo)/;
+ #   next if $systems[$i] =~ /^(lonestar|bcf)/;
     print OUT "$systems[$i] ";
     $t = new Net::Telnet(Timeout=>.1, Errmode=>'return', Port=>$globusport[$i]);
     $t->open($systems[$i]);
@@ -129,7 +130,7 @@ for($i = $cutoff; $i < @systems; $i++) {
     $t->close();
     print OUT "\n";
 }
-print OUT "meta up TESTING * *\n";
+# print OUT "meta up TESTING * *\n";
 close(OUT);
 sleep 2;
 
