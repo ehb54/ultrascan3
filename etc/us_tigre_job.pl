@@ -137,14 +137,6 @@ jid $id
 
 $|=1;
 
-if($default_system eq 'meta') {
-    $grms_loc = $ENV{'GRMS_CLIENT_LOCATION'};
-    if(!$grms_loc) {
-	&failmsg('ERROR: meta requested and no GRMS_CLIENT_LOCATION');
-    }
-    die "ERROR: meta requested and no GRMS_CLIENT_LOCATION\n";
-}
-
 print "us_tigre_job.pl\n";
 $date = `date +'%D %T'`;
 chomp $date;
@@ -163,7 +155,21 @@ require "$US/etc/us_gcfields.pl";
 
 $default_system = shift;
 $default_system = "bcf.uthscsa.edu" if !$default_system;
-    
+if($default_system eq 'meta') {
+    $grms_loc = $ENV{'GRMS_CLIENT_LOCATION'};
+    if(!$grms_loc) {
+	&failmsg('ERROR: meta requested and no GRMS_CLIENT_LOCATION');
+    }
+    die "ERROR: meta requested and no GRMS_CLIENT_LOCATION\n";
+}
+
+
+if($default_system =~ /hlrb2/) {
+    $util = .1;
+    $util_ti = .1;
+    print "setting target utilization to .1 for hlrb\n";
+}
+
 if($default_system && 0) {
     $id = $default_system;
     $id =~ s/\..*//;
@@ -427,7 +433,7 @@ for($i = 0; $i < @systems; $i++) {
 	   $bcf_no_procs ,
 	   $alamo_no_procs ,
 	   $laredo_no_procs ,
-	   32 ,
+	   100 ,
 	   64 #meta
 	   );
 
@@ -460,12 +466,16 @@ if($analysis_type =~ /^GA/) {
     $max_time[0] *= 1.5;
 }
 
+if($analysis_type =~ /^GA_SC/) {
+    $max_time[0] *= 4;
+}
+
 if($analysis_type =~ /^2DSA/) {
     $max_time[0] = 10;
     print "2DSA time $max_time[0]\n";
 }
 
-$max_time[0] *= 2 if $default_system =~ /hlrb2/;
+$max_time[0] *= 8 if $default_system =~ /hlrb2/;
 
 if($monte_carlo) {
     $max_time[0] *= $monte_carlo;
@@ -696,14 +706,23 @@ do {
     if($default_system eq 'meta') {
 	$status = `grms-client job_info $grms_id 2> /dev/null | grep Status | awk '{ print \$3 }'`;
     } else {
-	$status = `globusrun-ws -status -job-epr-file $eprfile`;
+	$status = `globusrun-ws -status -job-epr-file $eprfile 2> /lustre/tmp/gc_tigre_${id}_globus_stderr`;
+	$stderr = `cat /lustre/tmp/gc_tigre_${id}_globus_stderr`;
+	print STDERR $stderr;
+	if($stderr =~ /SOAP Fault/ &&
+	   $status != /^$/) {
+	    print "Soap Fault: ignoring bogus status <$status>\n";
+	    $status = '';
+	}
     }
     print $status;
     chomp $status;
     if($default_system ne 'meta') {
-	$status =~ /.* (\w*)/;
-	$status = $1;
+	if($status =~ /.* (\w*)/) {
+	    $status = $1;
+	}
     }
+   // printf("debug: status = <$status> %s\n", $status =~ /^$/ ? "blank" : "not blank?");
     if($status =~ /^$/) {
 	$dups_blank++;
 	if($dups_blank < 10) {
