@@ -116,7 +116,7 @@ vector <struct mfem_data> *exp_data)
 
 				if(ss == (*simparams).speed_step.size() - 1) 
 				{
-				  duration += 60 * 5 + (unsigned int) (duration * 1.005); // 5 minutes + .5%
+				  duration += 60 * (unsigned int) (duration * 0.001); // 5 minutes + .5%
 				}
 
 				if (accel_time > duration)
@@ -304,12 +304,10 @@ vector <struct mfem_data> *exp_data)
 			}  // end of for acceleration
 			duration = (unsigned int) ((*simparams).speed_step[ss].duration_hours * 3600
 					+ (*simparams).speed_step[ss].duration_minutes * 60);
-
-			if(ss == (*simparams).speed_step.size() - 1) 
+			if(ss == (*simparams).speed_step.size() - 1)
 			{
-			  duration += 60 * 5 + (unsigned int) (duration * 1.005); // 5 minutes + .5%
+				duration += (unsigned int) (60 * (duration * 0.001)); // 5 minutes + .5%
 			}
-
 			if (accel_time > duration)
 			{
 				cerr << "Attention: acceleration time exceeds duration - please check initialization\n";
