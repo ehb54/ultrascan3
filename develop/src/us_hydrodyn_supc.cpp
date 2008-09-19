@@ -337,6 +337,21 @@ supc_free_alloced()
     }
 }
 
+static void
+supc_free_alloced_2()
+{
+    if (a)
+    {
+	free(a);
+	a = 0;
+    }
+    if (q)
+    {
+	free(q);
+	q = 0;
+    }
+}
+
 static int
 supc_alloc()
 {
@@ -394,23 +409,29 @@ supc_alloc()
     }
     memset(gp, 0, nmax * 9 * sizeof(float));
 
-    a = (float *) malloc(nmax * 3 * nmax * 3 * sizeof(float));
+    return 0;
+}
+
+static int
+supc_alloc_2()
+{
+    a = (float *) malloc(nat * 3 * nat * 3 * sizeof(float));
     if (!a)
     {
 	supc_free_alloced();
 	fprintf(stderr, "memory allocation error\n");
 	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
-    memset(a, 0, nmax * 3 * nmax * 3 * sizeof(float));
+    memset(a, 0, nat * 3 * nat * 3 * sizeof(float));
 
-    q = (float *) malloc(nmax * nmax * 9 * sizeof(float));
+    q = (float *) malloc(nat * nat * 9 * sizeof(float));
     if (!q)
     {
 	supc_free_alloced();
 	fprintf(stderr, "memory allocation error\n");
 	return US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC;
     }
-    memset(q, 0, nmax * nmax * 9 * sizeof(float));
+    memset(q, 0, nat * nat * 9 * sizeof(float));
     return 0;
 }
 
@@ -881,8 +902,16 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     for (k = 0; k < num; k++)
     {
 
+        supc_free_alloced_2();
 	initarray();
+	editor->append(QString("Using %1 beads for the matrix\n").arg(nat));
+	qApp->processEvents();
 
+	printf("nat = %d\n", nat);
+	if (int retval = supc_alloc_2())
+	{
+	  return retval;
+	}
 	
 	ppos = 1;
 	mppos = (1 + 3 + 3) * nat + 17;
@@ -2673,7 +2702,7 @@ riempimatrice()
 	    {
 		for (l = 0; l < 3; l++)
 		{
-		    a[(3 * i + k) * (3 * nmax) + 3 * j + l] = q[i * (nmax * 9) + j * 9 + k * 3 + l];
+		    a[(3 * i + k) * (3 * nat) + 3 * j + l] = q[i * (nat * 9) + j * 9 + k * 3 + l];
 		}
 	    }
 	}
@@ -2710,9 +2739,9 @@ choldc(int N)
 	for (j = i; j < 3 * N; j++)
 	{
 
-	    for (sum = a[i * (3 * nmax) + j], k = i - 1; k >= 0; k--)
+	    for (sum = a[i * (3 * nat) + j], k = i - 1; k >= 0; k--)
 	    {
-		sum -= a[i * (3 * nmax) + k] * a[j * (3 * nmax) + k];
+		sum -= a[i * (3 * nat) + k] * a[j * (3 * nat) + k];
 	    }
 	    if (i == j)
 	    {
@@ -2724,7 +2753,7 @@ choldc(int N)
 		p[i] = sqrt(sum);
 	    }
 	    else
-		a[j * (3 * nmax) + i] = sum / p[i];
+		a[j * (3 * nat) + i] = sum / p[i];
 
 	}
 	printf("%c", '\r');
@@ -2743,14 +2772,14 @@ cholsl(int N)
     for (i = 0; i < 3 * N; i++)
     {
 	for (sum = b1[i], k = i - 1; k >= 0; k--)
-	    sum -= a[i * (3 * nmax) + k] * rRi[k];
+	    sum -= a[i * (3 * nat) + k] * rRi[k];
 	rRi[i] = sum / p[i];
     }
 
     for (i = 3 * N - 1; i >= 0; i--)
     {
 	for (sum = rRi[i], k = i + 1; k < 3 * N; k++)
-	    sum -= a[k * (3 * nmax) + i] * rRi[k];
+	    sum -= a[k * (3 * nat) + i] * rRi[k];
 	rRi[i] = sum / p[i];
     }
 }
@@ -3689,7 +3718,7 @@ inverti(int N)
 	    k3 = (int) (floor((i - 1) / 3.0));
 	    k4 = (i - 1) % 3;
 	    k5 = k2 + 3 * k4;
-	    q[k3 * (nmax * 9) + k1 * 9 + k5] = rRi[i - 1];
+	    q[k3 * (nat * 9) + k1 * 9 + k5] = rRi[i - 1];
 	}
 
 	printf("%c", '\r');
@@ -3823,9 +3852,9 @@ sigmaocalc1()
 	{
 	    for (i = 0; i < 3; i++)
 	    {
-		sigmaoc[i] += (q[k * (nmax * 9) + j * 9 + 6 + i] * dt[k].y - q[k * (nmax * 9) + j * 9 + 3 + i] * dt[k].z);
-		sigmaoc[i + 3] += (q[k * (nmax * 9) + j * 9 + i] * dt[k].z - q[k * (nmax * 9) + j * 9 + 6 + i] * dt[k].x);
-		sigmaoc[i + 6] += (q[k * (nmax * 9) + j * 9 + 3 + i] * dt[k].x - q[k * (nmax * 9) + j * 9 + i] * dt[k].y);
+		sigmaoc[i] += (q[k * (nat * 9) + j * 9 + 6 + i] * dt[k].y - q[k * (nat * 9) + j * 9 + 3 + i] * dt[k].z);
+		sigmaoc[i + 3] += (q[k * (nat * 9) + j * 9 + i] * dt[k].z - q[k * (nat * 9) + j * 9 + 6 + i] * dt[k].x);
+		sigmaoc[i + 6] += (q[k * (nat * 9) + j * 9 + 3 + i] * dt[k].x - q[k * (nat * 9) + j * 9 + i] * dt[k].y);
 	    }
 	}
     }
@@ -3847,7 +3876,7 @@ sigmatcalc1()
 	for (j = 0; j < nat; j++)
 	{
 	    for (k = 0; k < 9; k++)
-		gp[i * 9 + k] += q[i * (nmax * 9) + j * 9 + k] * dt[j].r;
+		gp[i * 9 + k] += q[i * (nat * 9) + j * 9 + k] * dt[j].r;
 	}
 
 	for (k = 0; k < 9; k++)
@@ -3886,7 +3915,7 @@ sigmatcalc2()
 	for (j = 0; j < nat; j++)
 	{
 	    for (k = 0; k < 9; k++)
-		sigmat[k] += q[i * (nmax * 9) + j * 9 + k];
+		sigmat[k] += q[i * (nat * 9) + j * 9 + k];
 	}
     }
 
@@ -3943,10 +3972,10 @@ sigmarRcalc1()
 		    xj[0] = rRi[3 * j + lpiu];
 		    xj[1] = rRi[3 * j + lmeno];
 
-		    interm = xi[0] * xj[0] * q[i * (nmax * 9) + j * 9 + 3 * kmeno + lmeno];
-		    interm = interm + xi[1] * xj[1] * q[i * (nmax * 9) + j * 9 + 3 * kpiu + lpiu];
-		    interm = interm - xi[0] * xj[1] * q[i * (nmax * 9) + j * 9 + 3 * kmeno + lpiu];
-		    interm = interm - xi[1] * xj[0] * q[i * (nmax * 9) + j * 9 + 3 * kpiu + lmeno];
+		    interm = xi[0] * xj[0] * q[i * (nat * 9) + j * 9 + 3 * kmeno + lmeno];
+		    interm = interm + xi[1] * xj[1] * q[i * (nat * 9) + j * 9 + 3 * kpiu + lpiu];
+		    interm = interm - xi[0] * xj[1] * q[i * (nat * 9) + j * 9 + 3 * kmeno + lpiu];
+		    interm = interm - xi[1] * xj[0] * q[i * (nat * 9) + j * 9 + 3 * kpiu + lmeno];
 
 /*			 interm=dt[j].r*interm;	*/
 		    sigmaRr[3 * k + l] += interm;
@@ -4154,7 +4183,7 @@ calcqij()
 			del = 0.0;
 
 		    if (i == j)
-			q[i * (nmax * 9) + j * 9 + inx] = del / etai;
+			q[i * (nat * 9) + j * 9 + inx] = del / etai;
 		    else
 		    {
 			d2 = dij * dij;
@@ -4162,8 +4191,8 @@ calcqij()
 			rr = (dt[i].r * dt[i].r + dt[j].r * dt[j].r);
 			tt = del + qq + (rr / d2) * (del / 3.0 - qq);
 			tt = tt / (dij * 8.0 * PI * ETAo);
-			q[i * (nmax * 9) + j * 9 + inx] = tt;
-			q[j * (nmax * 9) + i * 9 + inx] = tt;
+			q[i * (nat * 9) + j * 9 + inx] = tt;
+			q[j * (nat * 9) + i * 9 + inx] = tt;
 		    }
 		}
 	    }
@@ -4402,51 +4431,51 @@ visco()
 
 	    etai = 1.0 / (6.0 * PI * dt[j].r * ETAo);
 
-	    cv[0] += etai * (8.0 * q[i * (nmax * 9) + j * 9 + 0] +
-			     6.0 * q[i * (nmax * 9) + j * 9 + 4] + 6.0 * q[i * (nmax * 9) + j * 9 + 8]);
-	    cv[1] += etai * (q[i * (nmax * 9) + j * 9 + 1] + q[i * (nmax * 9) + j * 9 + 3]);
-	    cv[2] += etai * (q[i * (nmax * 9) + j * 9 + 2] + q[i * (nmax * 9) + j * 9 + 6]);
+	    cv[0] += etai * (8.0 * q[i * (nat * 9) + j * 9 + 0] +
+			     6.0 * q[i * (nat * 9) + j * 9 + 4] + 6.0 * q[i * (nat * 9) + j * 9 + 8]);
+	    cv[1] += etai * (q[i * (nat * 9) + j * 9 + 1] + q[i * (nat * 9) + j * 9 + 3]);
+	    cv[2] += etai * (q[i * (nat * 9) + j * 9 + 2] + q[i * (nat * 9) + j * 9 + 6]);
 	    bb[0] += etai * ((dt[i].x + dt[j].x) *
-			     (4.0 * q[i * (nmax * 9) + j * 9 + 0] +
-			      3.0 * q[i * (nmax * 9) + j * 9 + 4] +
-			      3.0 * q[i * (nmax * 9) + j * 9 + 8]) +
-			     dt[j].y * (3.0 * q[i * (nmax * 9) + j * 9 + 3] -
-					2.0 * q[i * (nmax * 9) + j * 9 + 1]) +
-			     dt[j].z * (3.0 * q[i * (nmax * 9) + j * 9 + 6] -
-					2.0 * q[i * (nmax * 9) + j * 9 + 2]) +
-			     dt[j].y * (3.0 * q[i * (nmax * 9) + j * 9 + 1] -
-					2.0 * q[i * (nmax * 9) + j * 9 + 3]) +
-			     dt[j].z * (3.0 * q[i * (nmax * 9) + j * 9 + 2] - 2.0 * q[i * (nmax * 9) + j * 9 + 6]));
+			     (4.0 * q[i * (nat * 9) + j * 9 + 0] +
+			      3.0 * q[i * (nat * 9) + j * 9 + 4] +
+			      3.0 * q[i * (nat * 9) + j * 9 + 8]) +
+			     dt[j].y * (3.0 * q[i * (nat * 9) + j * 9 + 3] -
+					2.0 * q[i * (nat * 9) + j * 9 + 1]) +
+			     dt[j].z * (3.0 * q[i * (nat * 9) + j * 9 + 6] -
+					2.0 * q[i * (nat * 9) + j * 9 + 2]) +
+			     dt[j].y * (3.0 * q[i * (nat * 9) + j * 9 + 1] -
+					2.0 * q[i * (nat * 9) + j * 9 + 3]) +
+			     dt[j].z * (3.0 * q[i * (nat * 9) + j * 9 + 2] - 2.0 * q[i * (nat * 9) + j * 9 + 6]));
 
-	    cv[4] += etai * (8.0 * q[i * (nmax * 9) + j * 9 + 4] +
-			     6.0 * q[i * (nmax * 9) + j * 9 + 8] + 6.0 * q[i * (nmax * 9) + j * 9 + 0]);
-	    cv[5] += etai * (q[i * (nmax * 9) + j * 9 + 5] + q[i * (nmax * 9) + j * 9 + 7]);
-	    cv[3] += etai * (q[i * (nmax * 9) + j * 9 + 3] + q[i * (nmax * 9) + j * 9 + 1]);
-	    bb[1] += etai * ((dt[i].y + dt[j].y) * (4.0 * q[i * (nmax * 9) + j * 9 + 4] +
-						    3.0 * q[i * (nmax * 9) + j * 9 + 8] +
-						    3.0 * q[i * (nmax * 9) + j * 9 + 0]) +
-			     dt[j].z * (3.0 * q[i * (nmax * 9) + j * 9 + 7] -
-					2.0 * q[i * (nmax * 9) + j * 9 + 5]) +
-			     dt[j].x * (3.0 * q[i * (nmax * 9) + j * 9 + 1] -
-					2.0 * q[i * (nmax * 9) + j * 9 + 3]) +
-			     dt[j].z * (3.0 * q[i * (nmax * 9) + j * 9 + 5] -
-					2.0 * q[i * (nmax * 9) + j * 9 + 7]) +
-			     dt[j].x * (3.0 * q[i * (nmax * 9) + j * 9 + 3] - 2.0 * q[i * (nmax * 9) + j * 9 + 1]));
+	    cv[4] += etai * (8.0 * q[i * (nat * 9) + j * 9 + 4] +
+			     6.0 * q[i * (nat * 9) + j * 9 + 8] + 6.0 * q[i * (nat * 9) + j * 9 + 0]);
+	    cv[5] += etai * (q[i * (nat * 9) + j * 9 + 5] + q[i * (nat * 9) + j * 9 + 7]);
+	    cv[3] += etai * (q[i * (nat * 9) + j * 9 + 3] + q[i * (nat * 9) + j * 9 + 1]);
+	    bb[1] += etai * ((dt[i].y + dt[j].y) * (4.0 * q[i * (nat * 9) + j * 9 + 4] +
+						    3.0 * q[i * (nat * 9) + j * 9 + 8] +
+						    3.0 * q[i * (nat * 9) + j * 9 + 0]) +
+			     dt[j].z * (3.0 * q[i * (nat * 9) + j * 9 + 7] -
+					2.0 * q[i * (nat * 9) + j * 9 + 5]) +
+			     dt[j].x * (3.0 * q[i * (nat * 9) + j * 9 + 1] -
+					2.0 * q[i * (nat * 9) + j * 9 + 3]) +
+			     dt[j].z * (3.0 * q[i * (nat * 9) + j * 9 + 5] -
+					2.0 * q[i * (nat * 9) + j * 9 + 7]) +
+			     dt[j].x * (3.0 * q[i * (nat * 9) + j * 9 + 3] - 2.0 * q[i * (nat * 9) + j * 9 + 1]));
 
-	    cv[8] += etai * (8.0 * q[i * (nmax * 9) + j * 9 + 8] +
-			     6.0 * q[i * (nmax * 9) + j * 9 + 4] + 6.0 * q[i * (nmax * 9) + j * 9 + 0]);
-	    cv[6] += etai * (q[i * (nmax * 9) + j * 9 + 6] + q[i * (nmax * 9) + j * 9 + 2]);
-	    cv[7] += etai * (q[i * (nmax * 9) + j * 9 + 7] + q[i * (nmax * 9) + j * 9 + 5]);
-	    bb[2] += etai * ((dt[i].z + dt[j].z) * (4.0 * q[i * (nmax * 9) + j * 9 + 8] +
-						    3.0 * q[i * (nmax * 9) + j * 9 + 4] +
-						    3.0 * q[i * (nmax * 9) + j * 9 + 0]) +
-			     dt[j].x * (3.0 * q[i * (nmax * 9) + j * 9 + 2] -
-					2.0 * q[i * (nmax * 9) + j * 9 + 6]) +
-			     dt[j].y * (3.0 * q[i * (nmax * 9) + j * 9 + 5] -
-					2.0 * q[i * (nmax * 9) + j * 9 + 7]) +
-			     dt[j].x * (3.0 * q[i * (nmax * 9) + j * 9 + 6] -
-					2.0 * q[i * (nmax * 9) + j * 9 + 2]) +
-			     dt[j].y * (3.0 * q[i * (nmax * 9) + j * 9 + 7] - 2.0 * q[i * (nmax * 9) + j * 9 + 5]));
+	    cv[8] += etai * (8.0 * q[i * (nat * 9) + j * 9 + 8] +
+			     6.0 * q[i * (nat * 9) + j * 9 + 4] + 6.0 * q[i * (nat * 9) + j * 9 + 0]);
+	    cv[6] += etai * (q[i * (nat * 9) + j * 9 + 6] + q[i * (nat * 9) + j * 9 + 2]);
+	    cv[7] += etai * (q[i * (nat * 9) + j * 9 + 7] + q[i * (nat * 9) + j * 9 + 5]);
+	    bb[2] += etai * ((dt[i].z + dt[j].z) * (4.0 * q[i * (nat * 9) + j * 9 + 8] +
+						    3.0 * q[i * (nat * 9) + j * 9 + 4] +
+						    3.0 * q[i * (nat * 9) + j * 9 + 0]) +
+			     dt[j].x * (3.0 * q[i * (nat * 9) + j * 9 + 2] -
+					2.0 * q[i * (nat * 9) + j * 9 + 6]) +
+			     dt[j].y * (3.0 * q[i * (nat * 9) + j * 9 + 5] -
+					2.0 * q[i * (nat * 9) + j * 9 + 7]) +
+			     dt[j].x * (3.0 * q[i * (nat * 9) + j * 9 + 6] -
+					2.0 * q[i * (nat * 9) + j * 9 + 2]) +
+			     dt[j].y * (3.0 * q[i * (nat * 9) + j * 9 + 7] - 2.0 * q[i * (nat * 9) + j * 9 + 5]));
 	}
     }
 
@@ -4469,28 +4498,28 @@ visco()
 	    etai = 1.0;
 
 	    temp =
-		(dt[i].x - vc[0]) * q[i * (nmax * 9) + j * 9 + 0] *
-		(dt[j].x - vc[0]) + (dt[i].y - vc[1]) * q[i * (nmax * 9) + j * 9 + 4] * (dt[j].y - vc[1]) +
-		(dt[i].z - vc[2]) * q[i * (nmax * 9) + j * 9 + 8] * (dt[j].z - vc[2]);
-	    temp1 = (dt[i].x - vc[0]) * ((dt[j].y - vc[1]) * (q[i * (nmax * 9) + j * 9 + 3]) +
-					 (dt[j].z - vc[2]) * q[i * (nmax * 9) + j * 9 + 6]);
-	    temp2 = (dt[i].y - vc[1]) * ((dt[j].x - vc[0]) * (q[i * (nmax * 9) + j * 9 + 1]) +
-					 (dt[j].z - vc[2]) * q[i * (nmax * 9) + j * 9 + 7]);
-	    temp3 = (dt[i].z - vc[2]) * ((dt[j].x - vc[0]) * (q[i * (nmax * 9) + j * 9 + 2]) +
-					 (dt[j].y - vc[1]) * q[i * (nmax * 9) + j * 9 + 5]);
+		(dt[i].x - vc[0]) * q[i * (nat * 9) + j * 9 + 0] *
+		(dt[j].x - vc[0]) + (dt[i].y - vc[1]) * q[i * (nat * 9) + j * 9 + 4] * (dt[j].y - vc[1]) +
+		(dt[i].z - vc[2]) * q[i * (nat * 9) + j * 9 + 8] * (dt[j].z - vc[2]);
+	    temp1 = (dt[i].x - vc[0]) * ((dt[j].y - vc[1]) * (q[i * (nat * 9) + j * 9 + 3]) +
+					 (dt[j].z - vc[2]) * q[i * (nat * 9) + j * 9 + 6]);
+	    temp2 = (dt[i].y - vc[1]) * ((dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 1]) +
+					 (dt[j].z - vc[2]) * q[i * (nat * 9) + j * 9 + 7]);
+	    temp3 = (dt[i].z - vc[2]) * ((dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 2]) +
+					 (dt[j].y - vc[1]) * q[i * (nat * 9) + j * 9 + 5]);
 	    sum1 = temp1 + temp2 + temp3;
 
-	    temp1 = (dt[i].x - vc[0]) * ((dt[j].y - vc[1]) * (q[i * (nmax * 9) + j * 9 + 1]) +
-					 (dt[j].z - vc[2]) * q[i * (nmax * 9) + j * 9 + 2]);
-	    temp2 = (dt[i].y - vc[1]) * ((dt[j].x - vc[0]) * (q[i * (nmax * 9) + j * 9 + 3]) +
-					 (dt[j].z - vc[2]) * q[i * (nmax * 9) + j * 9 + 5]);
-	    temp3 = (dt[i].z - vc[2]) * ((dt[j].x - vc[0]) * (q[i * (nmax * 9) + j * 9 + 6]) +
-					 (dt[j].y - vc[1]) * q[i * (nmax * 9) + j * 9 + 7]);
+	    temp1 = (dt[i].x - vc[0]) * ((dt[j].y - vc[1]) * (q[i * (nat * 9) + j * 9 + 1]) +
+					 (dt[j].z - vc[2]) * q[i * (nat * 9) + j * 9 + 2]);
+	    temp2 = (dt[i].y - vc[1]) * ((dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 3]) +
+					 (dt[j].z - vc[2]) * q[i * (nat * 9) + j * 9 + 5]);
+	    temp3 = (dt[i].z - vc[2]) * ((dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 6]) +
+					 (dt[j].y - vc[1]) * q[i * (nat * 9) + j * 9 + 7]);
 	    sum11 = temp1 + temp2 + temp3;
 
-	    temp1 = (dt[i].x - vc[0]) * (dt[j].x - vc[0]) * (q[i * (nmax * 9) + j * 9 + 4] + q[i * (nmax * 9) + j * 9 + 8]);
-	    temp2 = (dt[i].y - vc[1]) * (dt[j].y - vc[1]) * (q[i * (nmax * 9) + j * 9 + 0] + q[i * (nmax * 9) + j * 9 + 8]);
-	    temp3 = (dt[i].z - vc[2]) * (dt[j].z - vc[2]) * (q[i * (nmax * 9) + j * 9 + 0] + q[i * (nmax * 9) + j * 9 + 4]);
+	    temp1 = (dt[i].x - vc[0]) * (dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 4] + q[i * (nat * 9) + j * 9 + 8]);
+	    temp2 = (dt[i].y - vc[1]) * (dt[j].y - vc[1]) * (q[i * (nat * 9) + j * 9 + 0] + q[i * (nat * 9) + j * 9 + 8]);
+	    temp3 = (dt[i].z - vc[2]) * (dt[j].z - vc[2]) * (q[i * (nat * 9) + j * 9 + 0] + q[i * (nat * 9) + j * 9 + 4]);
 	    sum111 = temp1 + temp2 + temp3;
 
 	    vis += etai * ((1.0 / 15.0) * temp + (1.0 / 20.0) * sum1 - (1.0 / 30.0) * sum11 + (1.0 / 20.0) * sum111);
