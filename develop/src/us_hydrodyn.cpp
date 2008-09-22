@@ -63,9 +63,9 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
 	read_residue_file();
 	setupGUI();
-	global_Xpos += 30;
-	global_Ypos += 30;
-	setGeometry(global_Xpos, global_Ypos, 0, 0);
+//	global_Xpos += 30;
+//	global_Ypos += 30;
+//	setGeometry(global_Xpos, global_Ypos, 0, 0);
 	create_beads_normally = true;
 	rasmol = NULL;
 	chdir(QString(USglobal->config_list.tmp_dir.ascii()));
@@ -99,19 +99,18 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	  "/bin/"
 #endif
 	  ;
-
-	if (!getenv("RASMOLPATH")) 
+	if (!getenv("RASMOLPATH"))
 	{
+		int n = RMP.length();
 	  // note this is not free'd because it becomes part of the environment....
-	  char *rmp = (char *)malloc(strlen(RMP.ascii() + 1));
-	  if (rmp) 
-	  {
-	    strcpy(rmp, RMP.ascii());
-	    putenv(rmp);
-	  }
+		char* rmp = (char*) malloc (n + 1);
+		if ( rmp )
+		{
+		    strncpy( rmp, RMP.ascii(), n );
+		    *( rmp + n ) = 0;
+		    putenv( rmp );
+		}
 	}
-
-
 }
 
 US_Hydrodyn::~US_Hydrodyn()
