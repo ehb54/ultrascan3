@@ -2928,7 +2928,7 @@ void US_Hydrodyn::bead_check()
   QString error_string = "";
   int retval = surfracer_main(&error_string,
 			      // 10,
-			      asa.probe_radius * 4,
+			      asa.probe_radius,
 			      residue_list,
 			      &tmp_model,
 			      true,

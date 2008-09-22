@@ -22,6 +22,7 @@ static float *curvat;		/*atom coordinates, radii and molecular (smooth) areas an
 static float *ve;		// atomic coordinates
 static float *ci;		// radii
 static float *aarea;		// areas
+static short *visits;
 
 static int *verat;
 static int *cirat;
@@ -560,6 +561,9 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
     float finvect[3], vp[3];	/*the correct unit vector from vect array */
     int vercom[MAXCYCLES + 10], vc;
     dbg("potoedge 0");
+    if(verte[v0] == -1) {
+      printf("protoedge entered with verte[v0]==-1!!\n"); fflush(stdout);
+    }
     degen[0] = v0;		/*finding all degenerate vertexes */
     for (i = 0, ndegen = 1; i <= nverte - 1; i++)
 	if (i != v0 && verte[i] != -1)	/*looking for vertices that coincide with v0 and not eliminated yet */
@@ -579,6 +583,8 @@ potoedge(int natom, int v0, int *v1, int *verte, int nverte)
 
     dbg("potoedge 2");
     ndegat = 0;
+    // printf("v0 %d ", v0); fflush(stdout);
+    // printf("verte[v0] %d\n", verte[v0]); fflush(stdout);
     if (verat[verte[v0] * 3] != natom)
     {
 	degatom[ndegat] = verat[verte[v0] * 3];
@@ -804,11 +810,14 @@ static void
 managedge(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *hits, int nhits, int *nvincyc)
 {
     int i, j, l, p;
+    dbg("me 1");
 
     for (i = 0; i <= nhits - 1; i++)
     {
+      dbg("me 2");
 	if (cycles[hits[i]][0] == -2)	/*circle */
 	{
+	  dbg("me 3");
 	    for (j = 0; j <= ned - 1; j++)
 		if (edge[j * 2] == -2 && edge[j * 2 + 1] == cycles[hits[i]][1])
 		{
@@ -832,12 +841,15 @@ managedge(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *hits
 	}
 	else			/* a cycle is formed of vertex edges */
 	{
+	  dbg("me 4");
 
 	    for (j = 0; j <= nvincyc[hits[i]] - 2; j++)	/*checking all edges but the last one */
 	    {
+	  dbg("me 4.1");
 		for (l = 0; l <= ned - 1; l++)
 		    if ((cycles[hits[i]][j] == edge[l * 2] || cycles[hits[i]][j + 1] == edge[l * 2 + 1]) && edgeatom[l] == natom)	/*found it- the  vertexes (in the right order!) are the same */
 		    {
+	  dbg("me 4.2");
 			if (calcmode > 1)
 			    concave(edge[l * 2 + 1], natom);
 			edge[l * 2] = -1;
@@ -846,9 +858,12 @@ managedge(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *hits
 
 		    }
 
+	  dbg("me 4.3");
 		if (l == ned)	/*did not find it */
 		{
-		  for (p = 0; edge[p * 2] != -1; p++);	/*found an empty spot */ // emre this is where it craps out
+	  dbg("me 4.4");
+		  for (p = 0; p < ned && edge[p * 2] != -1; p++);	/*found an empty spot */ // emre this is where it craps out
+	  dbg("me 4.5");
 
 		    edge[p * 2] = cycles[hits[i]][j + 1];	/*recording in the reverse order */
 		    edge[p * 2 + 1] = cycles[hits[i]][j];
@@ -862,8 +877,10 @@ managedge(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *hits
 			concave(edge[p * 2], natom);	/*calculating the concave molecular surface and writing it into molarea */
 		    }
 		}
+	  dbg("me 4.6");
 	    }
 
+	  dbg("me 5");
 	    /*the last element */
 	    for (l = 0; l <= ned - 1; l++)
 		if ((cycles[hits[i]][nvincyc[hits[i]] - 1] == edge[l * 2]
@@ -879,7 +896,8 @@ managedge(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *hits
 
 	    if (l == ned)	/*did not find it */
 	    {
-		for (p = 0; edge[p * 2] != -1; p++);	/*found an empty spot */
+	  dbg("me 6");
+		for (p = 0; p < ned && edge[p * 2] != -1; p++);	/*found an empty spot */
 
 		edge[p * 2] = cycles[hits[i]][0];	/*recording in the reverse order */
 		edge[p * 2 + 1] = cycles[hits[i]][nvincyc[hits[i]] - 1];
@@ -893,8 +911,11 @@ managedge(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *hits
 		    concave(edge[p * 2], natom);	/*calculating the concave molecular surface and writing it into molarea */
 		}
 	    }
+	  dbg("me 7");
 	}
+	  dbg("me 8");
     }
+	  dbg("me 9");
 }
 
 /*buildcycles builds all cycles for natom-loads them into cycles[][]*/
@@ -912,6 +933,7 @@ buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nv
     dbg("bc1");
 
 
+
     for (i = 0, nve = 0; i <= nv - 1; i++)
     {
       //      printf("bc 1 i %d nve %d nv %d\n", i, nve, nv);
@@ -921,8 +943,15 @@ buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nv
 	{
 	    verte[nve] = i;
 	    nve++;
+	    if(nve >= 50) {
+	      printf("sr: buildcycles error limit 1 nve=%d\n", nve);
+	      fflush(stdout);
+	      exit(-1);
+	    }
 	}
     }
+    // printf("sr: NOTICE nve=%d\n", nve);
+    // fflush(stdout);
 
     dbg("bc2");
     /*loading cycles */
@@ -977,6 +1006,9 @@ buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nv
 
     dbg("bc5");
 	nvincyc[icycle] = 0;	/*initialize */
+	if(verte[v0] == -1) {
+	  printf("ERROR bc5!!\n");
+	}
 
 	do
 	{
@@ -988,6 +1020,9 @@ buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nv
     dbg("bc5.3");
 	    cycles[icycle][j] = verte[v1];
     dbg("bc5.4");
+            if(verte[v0] == -1) {
+	      printf("ERROR bc5.4!!\n");
+	    }
 	    comatom = potoedge(natom, v0, &v1, verte, nve);
     dbg("bc5.5");
 	    common[icycle][j] = comatom;
@@ -996,6 +1031,7 @@ buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nv
     dbg("bc6");
 	}
 	while (j < MAXCYCLES  && 
+	       verte[v1] != -1 &&
 	       (fabs(ver[verte[v1] * 3] - v00[0]) >= 1.e-6
 		|| fabs(ver[verte[v1] * 3 + 1] - v00[1]) >= 1.e-6 || 
 		fabs(ver[verte[v1] * 3 + 2] - v00[2]) >= 1.e-6));
@@ -1212,6 +1248,11 @@ free_alloced(void)
 	free(curvat);
 	curvat = (float *) 0;
     }
+    if (visits)
+    {
+	free(visits);
+	visits = (short *) 0;
+    }
     if (ve)
     {
 	free(ve);
@@ -1348,17 +1389,6 @@ surfracer_main(QString *error_string,
     clock_t start2;
     // clock_t end2;
 
-    memset(cycles, 0, MAXCYCLES * MAXCYCLES * sizeof(int));
-    memset(common, 0, MAXCYCLES * MAXCYCLES * sizeof(int));
-    memset(respect, 0, MAXCYCLES * MAXCYCLES * sizeof(int));
-    memset(hits, 0, MAXCYCLES * sizeof(int));
-    memset(nvincyc, 0, MAXCYCLES * sizeof(int));
-
-    memset(verte, 0, MAXCYCLES * 3 * sizeof(float));
-    memset(uconij, 0, 10000 * 3 * sizeof(float));
-    memset(tconij, 0, 10000 * 3 * sizeof(float));
-    memset(dist2ij, 0, 10000 * sizeof(float));
-
 #if defined(US_SURFRACER_COMPUTE_EXTRAS)
     int cavn;
     float tused;
@@ -1389,6 +1419,7 @@ surfracer_main(QString *error_string,
     cir = (float *) 0;
     molarea = (float *) 0;
     curvat = (float *) 0;
+    visits = (short *) 0;
     ve = (float *) 0;		// atomic coordinates
     ci = (float *) 0;		// radii
     aarea = (float *) 0;	// areas
@@ -1660,15 +1691,162 @@ surfracer_main(QString *error_string,
     }
 #endif
 
+    editor->append("Finding spacial groups\n");
+    qApp->processEvents();
+    int next_group = 1;
+    for (unsigned int i = 0; i < active_atoms.size(); i++) {
+      active_atoms[i]->group = 0;
+    }
+    float separation;
+    vector<int> removed_groups;
+    for (unsigned int i = 0; i < active_atoms.size() - 1; i++) {
+      for (unsigned int j = i + 1; j < active_atoms.size(); j++) {
+	if (!recheck) 
+	{
+	  separation =
+	    
+	    sqrt(
+		 pow(active_atoms[i]->coordinate.axis[0] -
+		     active_atoms[j]->coordinate.axis[0], 2) +
+		 pow(active_atoms[i]->coordinate.axis[1] -
+		     active_atoms[j]->coordinate.axis[1], 2) +
+		 pow(active_atoms[i]->coordinate.axis[2] -
+		     active_atoms[j]->coordinate.axis[2], 2))
+	    - active_atoms[i]->radius
+	    - active_atoms[j]->radius;
+	} else {
+	  separation =
+	    
+	    sqrt(
+		 pow(active_atoms[i]->bead_coordinate.axis[0] -
+		     active_atoms[j]->bead_coordinate.axis[0], 2) +
+		 pow(active_atoms[i]->bead_coordinate.axis[1] -
+		     active_atoms[j]->bead_coordinate.axis[1], 2) +
+		 pow(active_atoms[i]->bead_coordinate.axis[2] -
+		     active_atoms[j]->bead_coordinate.axis[2], 2))
+	    - active_atoms[i]->bead_computed_radius 
+	    - active_atoms[j]->bead_computed_radius;
+	}	
+	if (separation < prober * 2)
+	{
+	  if (!active_atoms[i]->group &&
+	      !active_atoms[j]->group) {
+	    editor->append(QString("New group %1\n").arg(next_group));
+	    qApp->processEvents();
+	    active_atoms[i]->group =
+	      active_atoms[j]->group = next_group;
+	    next_group++;
+	  } else {
+	    if (!active_atoms[i]->group &&
+		active_atoms[j]->group)
+	    {
+	      active_atoms[i]->group = active_atoms[j]->group;
+	    } else {
+	      if (active_atoms[i]->group &&
+		  !active_atoms[j]->group)
+	      {
+		active_atoms[j]->group = active_atoms[i]->group;
+	      } else {
+		if (active_atoms[i]->group != active_atoms[j]->group) {
+		// 
+		  int joined_group = 
+		    active_atoms[i]->group > active_atoms[j]->group ? 
+		    active_atoms[i]->group : active_atoms[j]->group;
+		  int removed_group = 
+		    active_atoms[i]->group > active_atoms[j]->group ? 
+		    active_atoms[j]->group : active_atoms[i]->group;
+		  removed_groups.push_back(removed_group);
+		  editor->append(QString("Joining group %1 into group %2\n").
+				 arg(removed_group).arg(joined_group));
+		  qApp->processEvents();
+		  for (unsigned int k = 0; k < active_atoms.size(); k++) 
+	          {
+		    if (active_atoms[k]->group == removed_group) {
+		      active_atoms[k]->group = joined_group;
+		    }
+		  }
+		}
+	      }
+	    }
+	  }
+	}
+      }
+    }
+    int total_groups = next_group - 1 - (int)removed_groups.size();
+    editor->append(QString("There are %1 active groups\n").
+		   arg(total_groups));
+    qApp->processEvents();
+    
+
+
     // printf("\nEnter a number to choose the calculation mode:");
     // printf("\n1- Accessible surface area only");
     // printf("\n2- Accessible and molecular surface areas");
     // printf("\n3- Accessible, molecular surface areas and average curvature of MS");
     // printf("\nMode number:");
     // scanf("%d",&calcmode);
+
+
+    if (!recheck) {
+      unlink("bead_model.asa");
+    } else {
+      unlink("bead_model_recheck.asa");
+    }
+
+
+    vector <vector <PDB_atom *> >atom_groups;
+    vector <int> any_buried;
+    atom_groups.resize(next_group);
+    any_buried.resize(next_group);
+    for (unsigned int i = 0; i < active_atoms.size(); i++) {
+      atom_groups[active_atoms[i]->group].push_back(active_atoms[i]);
+      if(recheck) {
+	if(active_atoms[i]->exposed_code == 6 ||
+	   active_atoms[i]->exposed_code == 10) {
+	  any_buried[active_atoms[i]->group] = 1;
+	}
+      }
+    }
+
+    for (unsigned int i = 1; i < atom_groups.size(); i++) {
+      if (atom_groups[i].size()) {
+	editor->append(QString("Group %1 contains %2 %3%4\n").
+		       arg(i).arg(atom_groups[i].size()).
+		       arg(recheck ? "beads" : "atoms").
+		       arg((recheck && any_buried[i]) ? " with buried beads" : " no buried beads"));
+	printf("%s\n", 
+	       QString("Group %1 contains %2 %3%4").
+	       arg(i).arg(atom_groups[i].size()).
+	       arg(recheck ? "beads" : "atoms").
+	       arg((recheck && any_buried[i]) ? " with buried beads" : " no buried beads").ascii());
+	fflush(stdout);
+      }
+    }
+    qApp->processEvents();
+
+    for (unsigned int atom_group = 1; atom_group < atom_groups.size(); atom_group++) {
+      if (atom_groups[atom_group].size() &&
+	  (!recheck || any_buried[atom_group])) {
+	editor->append(QString("Computing ASA for group %1\n").arg(atom_group));
+	qApp->processEvents();
+	printf("%s",QString("Computing ASA for group %1\n").arg(atom_group).ascii());
+	fflush(stdout);
+    
+    memset(cycles, 0, MAXCYCLES * MAXCYCLES * sizeof(int));
+    memset(common, 0, MAXCYCLES * MAXCYCLES * sizeof(int));
+    memset(respect, 0, MAXCYCLES * MAXCYCLES * sizeof(int));
+    memset(hits, 0, MAXCYCLES * sizeof(int));
+    memset(nvincyc, 0, MAXCYCLES * sizeof(int));
+
+    memset(verte, 0, MAXCYCLES * 3 * sizeof(float));
+    memset(uconij, 0, 10000 * 3 * sizeof(float));
+    memset(tconij, 0, 10000 * 3 * sizeof(float));
+    memset(dist2ij, 0, 10000 * sizeof(float));
+
     calcmode = 1;
 
-    atomnumber = (int) active_atoms.size();
+    //    atomnumber = (int) active_atoms.size();
+    atomnumber = (int) atom_groups[atom_group].size();
 
     //printf("\nReading atomic coordinates and assigning radii ..."); fflush(stdout);
 
@@ -1719,29 +1897,96 @@ surfracer_main(QString *error_string,
     }
     memset(curvat, 0, atomnumber * sizeof(float));
 
+    visits = (short *) calloc(atomnumber, sizeof(short));         /* count # of visits E54 */
+    if (!visits)
+    {
+	free_alloced();
+//	fprintf(stderr, "memory allocation error\n");
+	return (US_SURFRACER_ERR_MEMORY_ALLOC);
+    }
+    memset(visits, 0, atomnumber * sizeof(short));
+
     /*This part of the program loads up atomic coordinates from the file and assigns radii */
     i = 0;			/*atom number counter */
+    {
+      system("pwd");
+      QString outfile = QString("group_%2_%1.mod")
+	.arg(atom_group)
+	.arg(recheck ? "bead" : "atom");
+
+      FILE *fout = fopen(outfile.ascii(), "w");
+      fprintf(fout, "\tatomnumber = %d;\n", atomnumber);
+      fprintf(fout, "\tint apos = 0;\n", atomnumber);
+
+      QString bmsfile = QString("group_%2_%1.bms")
+	.arg(atom_group)
+	.arg(recheck ? "bead" : "atom");
+      FILE *fbms = fopen(bmsfile.ascii(), "w");
+      fprintf(fbms, "%d\nmodel\n",atomnumber);
+
+      QString sptfile = QString("group_%2_%1.spt")
+	.arg(atom_group)
+	.arg(recheck ? "bead" : "atom");
+      FILE *fspt = fopen(sptfile.ascii(), "w");
+      fprintf(fspt, "load xyz %s\nselect all\nwireframe off\nset background white\n",
+	      bmsfile.ascii());
+
     if (!recheck) 
     {
         for (i = 0; i < atomnumber; i++)
         {
-	  ar[i] = active_atoms[i]->radius;
+	  ar[i] = atom_groups[atom_group][i]->radius;
 	  //printf("radius %d %f\n", i, ar[i]);
-	  a[3 * i] = active_atoms[i]->coordinate.axis[0];
-	  a[3 * i + 1] = active_atoms[i]->coordinate.axis[1];
-	  a[3 * i + 2] = active_atoms[i]->coordinate.axis[2];
+	  a[3 * i] = atom_groups[atom_group][i]->coordinate.axis[0];
+	  a[3 * i + 1] = atom_groups[atom_group][i]->coordinate.axis[1];
+	  a[3 * i + 2] = atom_groups[atom_group][i]->coordinate.axis[2];
+	  fprintf(fout, "\tar[apos] = %f;\n", ar[i]);
+	  fprintf(fout, "\ta[3 * apos] = %f;\n", a[3 * i]);
+	  fprintf(fout, "\ta[3 * apos + 1] = %f;\n", a[3 * i + 1]);
+	  fprintf(fout, "\ta[3 * apos + 2] = %f;\n", a[3 * i + 2]);
+	  fprintf(fout, "\tapos++;\n");
+	  fprintf(fbms,
+		  "Pb %.2f %.2f %.2f\n",
+		  a[3 * i],
+		  a[3 * i + 1],
+		  a[3 * i + 2]);
+	  fprintf(fspt,
+		  "select atomno=%d\nspacefill %.2f\ncolour %s\n",
+		  i, 
+		  ar[i],
+		  "blue"
+		  );
 	}
     } else {
         for (i = 0; i < atomnumber; i++)
         {
-	  ar[i] = active_atoms[i]->bead_computed_radius;
+	  ar[i] = atom_groups[atom_group][i]->bead_computed_radius;
 	  //printf("radius %d %f\n", i, ar[i]);
-	  a[3 * i] = active_atoms[i]->bead_coordinate.axis[0];
-	  a[3 * i + 1] = active_atoms[i]->bead_coordinate.axis[1];
-	  a[3 * i + 2] = active_atoms[i]->bead_coordinate.axis[2];
+	  a[3 * i] = atom_groups[atom_group][i]->bead_coordinate.axis[0];
+	  a[3 * i + 1] = atom_groups[atom_group][i]->bead_coordinate.axis[1];
+	  a[3 * i + 2] = atom_groups[atom_group][i]->bead_coordinate.axis[2];
+	  fprintf(fout, "\tar[apos] = %f;\n", ar[i]);
+	  fprintf(fout, "\ta[3 * apos] = %f;\n", a[3 * i]);
+	  fprintf(fout, "\ta[3 * apos + 1] = %f;\n", a[3 * i + 1]);
+	  fprintf(fout, "\ta[3 * apos + 2] = %f;\n", a[3 * i + 2]);
+	  fprintf(fout, "\tapos++;\n");
+	  fprintf(fbms,
+		  "Pb %.2f %.2f %.2f\n",
+		  a[3 * i],
+		  a[3 * i + 1],
+		  a[3 * i + 2]);
+	  fprintf(fspt,
+		  "select atomno=%d\nspacefill %.2f\ncolour %s\n",
+		  i, 
+		  ar[i],
+		  "blue"
+		  );
 	}
     }      
-
+    fclose(fspt);
+    fclose(fbms);
+    fclose(fout);
+    }
 
     /*The end of the loading and assigning of radii and coordinates */
 
@@ -1805,7 +2050,7 @@ surfracer_main(QString *error_string,
     memset(ci, 0, atomnumber * 3 * sizeof(float));
 
 /*loadind unburied vertexes (probe positions) and contact circles*/
-    printf("\nBuilding the surface..."); fflush(stdout);
+    //  printf("\nBuilding the surface..."); fflush(stdout);
     nv = 0;			/*setting the number of vertexes and circles at 0 */
     ncircle = 0;
 
@@ -2278,6 +2523,7 @@ surfracer_main(QString *error_string,
     if (calcmode > 1)
 	molarea[atom0] += asar * (ar[atom0] - prober) * (ar[atom0] - prober) / (ar[atom0] * ar[atom0]);	/*molecular convex area */
 
+    visits[atom0]++;
     managedge(atom0, cycles, common, hits, nhits, nvincyc);	/*edge array management */
 
     dbg("5");
@@ -2288,7 +2534,7 @@ surfracer_main(QString *error_string,
     {
     dbg("5.1");
 	for (i = 0; i <= ned - 1; i++)
-	    if (edge[i * 2] != -1)
+	    if (edge[i * 2] != -1 && visits[edgeatom[i]] < 2)
 		break;		/*found a new edge */
     dbg("5.2");
 
@@ -2334,26 +2580,32 @@ surfracer_main(QString *error_string,
 		molarea[edgeatom[i]] +=
 		    asar * (ar[edgeatom[i]] - prober) * (ar[edgeatom[i]] - prober) / (ar[edgeatom[i]] * ar[edgeatom[i]]);
     dbg("5.12");
+	    visits[edgeatom[i]]++;
 	    managedge(edgeatom[i], cycles, common, hits, nhits, nvincyc);	/*edge array management */
     dbg("5.13");	
 	}
     }
+    free(visits);
+    visits = (short *)0;
 
     dbg("6");
-    //puts("us_surfracer 1");
-    //fflush(stdout);
+    // puts("us_surfracer 1");
+    fflush(stdout);
     FILE *aafile;
     if (!recheck) {
-      aafile = fopen("bead_model.asa", "w");
+      aafile = fopen("bead_model.asa", "a");
     } else {
-      aafile = fopen("bead_model_recheck.asa", "w");
+      aafile = fopen("bead_model_recheck.asa", "a");
     }
 
-    //puts("us_surfracer 2");
+    fprintf(aafile, "atom group %d\n", atom_group);
+
+    // puts("us_surfracer 2");
     fflush(stdout);
     for (i = 0; i < atomnumber; i++)
     {
-	active_atoms[i]->asa = aarea[i];
+      //	active_atoms[i]->asa = aarea[i];
+	atom_groups[atom_group][i]->asa = aarea[i];
 	fprintf(aafile, "atom %d %f %f %f %f %f\n", i + 1, a[i * 3], a[i * 3 + 1], a[i * 3 + 2], ar[i] - prober, aarea[i]);
     }
     fclose(aafile);
@@ -2362,6 +2614,8 @@ surfracer_main(QString *error_string,
     free_alloced();
     //puts("us_surfracer 4");
     fflush(stdout);
+      }
+    }
     return (0);
 
     resfile = fopen("result.txt", "a");	/*resfile will have the breakdown of all areas */
