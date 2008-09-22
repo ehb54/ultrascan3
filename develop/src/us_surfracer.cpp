@@ -1916,7 +1916,7 @@ surfracer_main(QString *error_string,
 
       FILE *fout = fopen(outfile.ascii(), "w");
       fprintf(fout, "\tatomnumber = %d;\n", atomnumber);
-      fprintf(fout, "\tint apos = 0;\n", atomnumber);
+      fprintf(fout, "\tint apos = 0;\n");
 
       QString bmsfile = QString("group_%2_%1.bms")
 	.arg(atom_group)
