@@ -17,15 +17,15 @@ QLabel* US_Widgets::label( const QString& labelString, int fontAdjust,
 
 	newLabel->setFrameStyle( StyledPanel | Raised );
 	newLabel->setAlignment ( AlignCenter );
-	
+
 	newLabel->setFont(
 			QFont( USglobal->config_list.fontFamily, 
-				     USglobal->config_list.fontSize + fontAdjust, 
-						 weight ) );
-	
+			       USglobal->config_list.fontSize + fontAdjust, 
+			       weight ) );
+
 	QPalette defaultpalette( USglobal->global_colors.cg_label,  // active
-			                     USglobal->global_colors.cg_label,  // inactive
-							             USglobal->global_colors.cg_label ); // disabled
+	                         USglobal->global_colors.cg_label,  // inactive
+	                         USglobal->global_colors.cg_label ); // disabled
 
 	newLabel->setPalette( defaultpalette );
 
@@ -39,8 +39,8 @@ QLabel* US_Widgets::textlabel( const QString& labelString, int fontAdjust,
 	QLabel* newLabel = label( labelString, fontAdjust, weight );
 
 	QPalette defaultpalette( USglobal->global_colors.cg_edit,
-			                     USglobal->global_colors.cg_edit,
-							             USglobal->global_colors.cg_edit );
+	                         USglobal->global_colors.cg_edit,
+	                         USglobal->global_colors.cg_edit );
 
 	newLabel->setPalette( defaultpalette );
 
@@ -55,8 +55,8 @@ QLabel* US_Widgets::banner( const QString& labelString, int fontAdjust,
 
 	// Set label colors
 	QPalette defaultpalette( USglobal->global_colors.cg_frame,
-			                     USglobal->global_colors.cg_frame,
-							             USglobal->global_colors.cg_frame );
+	                         USglobal->global_colors.cg_frame,
+	                         USglobal->global_colors.cg_frame );
 
 	newLabel->setPalette( defaultpalette );
 
@@ -70,12 +70,12 @@ QPushButton* US_Widgets::pushbutton( const QString& labelString, bool enabled )
 
 	button->setFont(
 			QFont( USglobal->config_list.fontFamily, 
-				     USglobal->config_list.fontSize ) );
-  
+			       USglobal->config_list.fontSize ) );
+
 	button->setPalette( 
 			QPalette( USglobal->global_colors.cg_pushb, 
-				        USglobal->global_colors.cg_pushb_disabled, 
-								USglobal->global_colors.cg_pushb_active ) );
+			          USglobal->global_colors.cg_pushb_disabled, 
+			          USglobal->global_colors.cg_pushb_active ) );
 
 	button->setAutoDefault( false );
 	button->setEnabled( enabled );
@@ -86,17 +86,17 @@ QPushButton* US_Widgets::pushbutton( const QString& labelString, bool enabled )
 // textedit
 QTextEdit* US_Widgets::textedit( void )
 {
-  QTextEdit* te = new QTextEdit( this );
-	
+	QTextEdit* te = new QTextEdit( this );
+
 	te->setFont(
-			QFont( USglobal->config_list.fontFamily,
-		         USglobal->config_list.fontSize - 1 ) );
-	
+	    QFont( USglobal->config_list.fontFamily,
+	           USglobal->config_list.fontSize - 1 ) );
+
 	te->setPalette( 
-			QPalette( USglobal->global_colors.cg_normal,
-							  USglobal->global_colors.cg_normal,
-								USglobal->global_colors.cg_normal ) );
-	
+	    QPalette( USglobal->global_colors.cg_normal,
+	              USglobal->global_colors.cg_normal,
+	              USglobal->global_colors.cg_normal ) );
+
 	te->setFrameStyle( WinPanel | Sunken );
 	te->setTextFormat( RichText );
 	te->setReadOnly  ( true );
@@ -112,14 +112,14 @@ QCheckBox* US_Widgets::checkbox( const QString& text, bool flag )
 	
 	cb->setFont(
 			QFont( USglobal->config_list.fontFamily,
-		         USglobal->config_list.fontSize,
-						 QFont::Bold ) );
+			       USglobal->config_list.fontSize,
+			       QFont::Bold ) );
 	
 	cb->setPalette( 
 			QPalette( USglobal->global_colors.cg_normal,
-							  USglobal->global_colors.cg_normal,
-								USglobal->global_colors.cg_normal ) );
-	
+			          USglobal->global_colors.cg_normal,
+			          USglobal->global_colors.cg_normal ) );
+
 	cb->setChecked( flag );
 	return cb;
 }
@@ -129,10 +129,10 @@ QCheckBox* US_Widgets::checkbox( const QString& text, bool flag )
 QPopupMenu* US_Widgets::popupmenu ( int fontAdjust )
 {
 	QPopupMenu* pu = new QPopupMenu;
-	
+
 	pu->setFont(
 			QFont( USglobal->config_list.fontFamily, 
-				     USglobal->config_list.fontSize + fontAdjust ) );
+			       USglobal->config_list.fontSize + fontAdjust ) );
 
 	return pu;
 }
@@ -144,11 +144,9 @@ QMenuBar* US_Widgets::menubar( int fontAdjust, int fontWeight )
 
 	mb->setFont( 
 			QFont( USglobal->config_list.fontFamily, 
-				     USglobal->config_list.fontSize + fontAdjust, 
-						 fontWeight ) );
+			       USglobal->config_list.fontSize + fontAdjust, 
+			       fontWeight ) );
 
 	return mb;
 }
-
-
 
