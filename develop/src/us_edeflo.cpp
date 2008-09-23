@@ -6,7 +6,7 @@ EditFloEquil_Win::EditFloEquil_Win(QWidget *p , const char *name)
 	edit_type = 2;
 	extension1 = "FI";
 	extension2 = "fi";
-	edit_plt->setTitle(tr("Absorbance Equilibrium Data"));
+	edit_plt->setTitle(tr("Fluorescence Equilibrium Data"));
 	edit_plt->setAxisTitle(QwtPlot::yLeft, "Absorbance");
 	run_inf.exp_type.velocity = false;
 	run_inf.exp_type.equilibrium = true;

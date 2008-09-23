@@ -1,27 +1,695 @@
 #include "../include/us_win.h"
 #include "../include/us_revision.h"
+
+
+#include "../include/us_dtactrl.h"
+#include "../include/us_velocreport.h"
+#include "../include/us_equilreport.h"
+#include "../include/us_equilprojectreport.h"
+#include "../include/us_montecarloreport.h"
+#include "../include/us_export.h"
+
+
 #include <qtimer.h>
-#include <qmotifstyle.h>
-#include <qmotifplusstyle.h>
-#include <qwindowsstyle.h>
-#include <qcommonstyle.h>
-#include <qinterlacestyle.h>
-#include <qcompactstyle.h>
-#include <qplatinumstyle.h>
-#include <qsgistyle.h>
 
-UsWin::UsWin(QWidget *parent, const char *name)
-	: QWidget(parent, name)
+namespace us_win_data
 {
-	USglobal = new US_Config();
-	connect ( USglobal, SIGNAL( errorMessage( QString, QString ) ),
-	                    SLOT  ( errorMessage( QString, QString ) ) );
+	enum 
+	{
+		P_CONFIG = 300, P_ADMIN ,
+		P_VELOC_ABSORB, P_VELOC_INTERF, P_VELOC_FLUOR,
+		P_EQUIL_ABSORB, P_EQUIL_INTERF, P_EQUIL_FLUOR,
+		P_EDIT_WAVE,    P_VIEW_MWL,
 
-	int width=710, height=532;
-	//bool env_missing=false;
+		P_VHW_ENH,      P_FEMATCH,      P_FEMATCH_RA,   P_GAINIT1, P_GAINIT2,
+		P_FEDUD,        P_SECM,         P_DCDT,         P_DCDR,    P_COFS,
+		
+		P_PREDICT,      P_EQTIME,       P_GFIT,         P_LNC,
 
-	setGeometry(50, 50, width, height);
+		P_EXTINCT,      P_SPECTRUM,
 
+		P_CPU,          P_MEM,          P_SYSLOAD,
+		P_COMBINE,      P_COMBINE_MW,   P_COMBINE_COFS, P_COMBINE_COFMW,
+		P_COMBINE_COFD, P_PSEUDO3D,     P_CREATEG,
+
+		P_ARCHIVE,      P_REORDER,      P_MERGE,        P_PSEUDOABS,
+		P_DIAG,         P_NUCL_DB,      P_CALC_HYDRO,   P_VBAR_DB,
+		P_DMA60,        P_COLORG,       /* P_EXTINCT again */
+
+		P_ASTFEM,       P_EQULILSIM,    P_EQUILTIMESIM, P_SASSOC, 
+		P_MODEL1,       P_MODEL2,       P_HYDRODYN,
+
+		P_DB_VELOC,     P_DB_EQUIL,     P_DB_EQUILP,    P_DB_MC,
+		P_DB_INV,       P_DB_DATE,      P_DB_DESC,      P_DB_TYPE,
+		P_DB_REQ,       P_DB_STATUS,    P_DB_IMAGE,     P_DB_SAMP, P_DB_RUNR,
+		P_INV_DATA,     P_DB_BUFF,      P_DB_VBAR,      P_DB_DNA,  P_DB_RAW,
+		P_DB_TEMP,
+
+		P_END
+	};
+
+	// The constants below need to defined in the same order as the enum above.
+	struct processes
+	{
+		int       index;
+		QProcess* process;
+		QString   name;
+		QString   loadingMsg;
+		QString   runningMsg;
+	} p[] = 
+	{
+		{ P_CONFIG,        NULL, "us_config", 
+			"Loading Configuration", 
+			"Configuration Program" },
+		
+		{ P_ADMIN,         NULL, "us_admin",  
+			"Loading Administrator",  
+			"Adminstrator Program"  },
+
+		{ P_VELOC_ABSORB,  NULL, "us_edvabs", 
+			"Editing Velocity Absorbance Data", 
+		  "Editing Velocity Absorbance Data Program" },
+		
+		{ P_VELOC_INTERF,  NULL, "us_edvint", 
+			"Editing Velocity Interference Data", 
+		  "Editing Velocity Interference Data Program" },
+		
+		{ P_VELOC_FLUOR,   NULL, "us_edvflo", 
+			"Editing Velocity Fluorescence Data", 
+		  "Editing Velocity Fluorescence Data Program" },
+		
+		{ P_EQUIL_ABSORB,  NULL, "us_edeabs", 
+			"Editing Equilibrium Absorbance Data", 
+		  "Editing Equilibrium Absorbance Data Program" },
+		
+		{ P_EQUIL_INTERF,  NULL, "us_edeint", 
+			"Editing Equilibrium Interference Data", 
+		  "Editing Equilibrium Interference Data Program" },
+		
+		{ P_EQUIL_FLUOR,   NULL, "us_edeflo", 
+			"Editing Equilibrium Fluorescence Data", 
+		  "Editing Equilibrium Fluorescence Data Program" },
+		
+		{ P_EDIT_WAVE,     NULL, "us_editwavelength", 
+			"Editing Wavelength Data", 
+		  "Editing Wavelength Absorbance or Intensity Data Program" },
+		
+		{ P_VIEW_MWL,      NULL, "us_viewmwl", 
+			"Loading Multiwavelength Viewer/Editor", 
+		  "Multiwavelength Viewing/Editing Program" },
+		
+		{ P_VHW_ENH,       NULL, "us_vhwenhanced", 
+			"Loading enahnced van Holde - Weischet Analysis", 
+		  "Enhanced van Holde - Weischet Analysis Program" },
+		
+		{ P_FEMATCH,       NULL, "us_fematch", 
+			"Loading Finite Element matching routine to compare experimental data", 
+		  "Finite Element Model and Data Viewer" },
+		
+		{ P_FEMATCH_RA,    NULL, "us_fematch_ra", 
+			"Loading Finite Element matching routine to compare experimental data", 
+		  "Finite Element Model and Data Viewer" },
+		
+		{ P_GAINIT1,       NULL, "us_gainit", 
+			"Loading Genetic Algorithm Module for GA initialization "
+		  "from 2DSA distribution", 
+		  "Genetic Algorithm Initializer from 2DSA distribution" },
+		
+		{ P_GAINIT2,       NULL, "us_ga_model_editor", 
+			"Loading Genetic Algorithm Module for GA initialization "
+			"from 2DSA distribution", 
+		  "Genetic Algorithm Initializer for nonlinear Model" },
+
+		{ P_FEDUD,         NULL, "us_findat", 
+			"Loading Finite Element Analysis (based on DUD) for a single experiment", 
+		  "Finite Element Analysis Program" },
+
+		{ P_SECM,          NULL, "us_secdat", 
+			"Loading Second Moment Analysis", 
+		  "Second Moment Analysis Program" },
+		
+		{ P_DCDT,          NULL, "us_dcdtdat", 
+			"Loading Time Derivative - dC/dt Analysis", 
+		  "Time Derivative - dC/dt Analysis Program" },
+		
+		{ P_DCDR,          NULL, "us_dcdrdat", 
+			"Loading Radial Derivative - dC/dr Analysis", 
+		  "Radial Derivative - dC/dr Analysis Program" },
+		
+		{ P_COFS,          NULL, "us_cofs", 
+		  "Loading C(s) Analysis",
+		  "C(s) Analysis Program" },
+		
+		{ P_PREDICT,       NULL, "us_equilspeed", 
+		  "Loading Equilibrium Speed Prediction Program",
+		  "Equilibrium Speed Prediction Program" },
+		
+		{ P_EQTIME,        NULL, "us_equiltime", 
+		  "Loading Equilibrium Time Estimation Simulator",
+		  "Equilibrium Time Estimation Program" },
+		
+		{ P_GFIT,          NULL, "us_globalequil", 
+		  "Loading Nonlinear Least Squares Fitting Routine for global "
+		  "Equilibrium Analysis",
+		  "Global Equilibrium Fitting Program" },
+		
+		{ P_LNC,           NULL, "us_lncr2", 
+		  "Loading Equilibrium Analysis - ln(C) vs. r^2 Analysis",
+		  "Equilibrium Analysis - ln(C) vs. r^2 Analysis Program" },
+		
+		{ P_EXTINCT,       NULL, "us_extinction", 
+		  "Loading Extinction Coefficient Calculator",
+		  "Extinction Coefficient Calculator Program" },
+		
+		{ P_SPECTRUM,      NULL, "us_spectrum", 
+		  "Loading Global Wavelength Spectrum Fitter",
+		  "Global Spectrum Analysis Program" },
+		
+
+		{ P_CPU,           NULL, "us_cpuload", 
+		  "Loading CPU Status Information",
+		  "CPU Status Information Program" },
+
+		{ P_MEM,           NULL, "us_meminfo", 
+		  "Loading Memory Information",
+		  "Memory Information Program" },
+
+		{ P_SYSLOAD,       NULL, "us_sysload", 
+		  "Loading System Load Information",
+		  "System Load Information Program" },
+
+		{ P_COMBINE,       NULL, "us_combine", 
+		  "Loading G/g(s) Distribution Combination Program",
+		  "G/g(s) Distribution Combination Program" },
+
+		{ P_COMBINE_MW,    NULL, "us_combine_mw", 
+		  "Loading G/g(MW) Distribution Combination Program",
+		  "G/g(MW) Distribution Combination Program" },
+
+		{ P_COMBINE_COFS,  NULL, "us_cofs_combine", 
+		  "Loading C(s) Distribution Combination Program",
+		  "C(s) Distribution Combination Program" },
+
+		{ P_COMBINE_COFMW, NULL, "us_cofmw_combine", 
+		  "Loading C(MW) Distribution Combination Program",
+		  "C(MW) Distribution Combination Program" },
+
+		{ P_COMBINE_COFD,  NULL, "us_cofd_combine", 
+		  "Loading C(D) Distribution Combination Program",
+		  "C(D) Distribution Combination Program" },
+
+		{ P_PSEUDO3D,      NULL, "us_pseudo3d_combine", 
+		  "Loading the Pseudo-3D Distribution Overlay Module",
+		  "Pseudo-3D Distribution Overlay Program" },
+
+		{ P_CREATEG,       NULL, "us_create_global", 
+		  "Loading Create Global Distribution Program",
+		  "Create Global Distribution Program" },
+
+		{ P_ARCHIVE,       NULL, "us_archive", 
+		  "Loading UltraScan Archive Utility",
+		  "UltraScan Archive Utility" },
+
+		{ P_REORDER,       NULL, "us_reorder", 
+		  "Loading UltraScan File Ordering Utility",
+		  "UltraScan File Ordering Utility" },
+
+		{ P_MERGE,         NULL, "us_merge", 
+		  "Loading UltraScan Scan File Merging Utility",
+		  "UltraScan Scan File Merging Utility" },
+
+		{ P_PSEUDOABS,     NULL, "", 
+		  "Loading UltraScan Intensity to Pseudoabsorbance Conversion Utility",
+		  "UltraScan Intensity to Pseudoabsorbance Conversion Utility" },
+
+		{ P_DIAG,          NULL, "us_diagnostics", 
+		  "Loading UltraScan Diagnostics Utilities",
+		  "UltraScan Diagnostics Utilities" },
+
+		{ P_NUCL_DB,       NULL, "us_nucleotide_db", 
+		  "Loading Nucleotide Sqeuence Table",
+		  "Table of DNA Data" },
+
+		{ P_CALC_HYDRO,    NULL, "us_buffer", 
+		  "Loading Table of Buffer Data",
+		  "Table of Buffer Data" },
+
+		{ P_VBAR_DB,       NULL, "us_vbar_db", 
+		  "Loading Peptide Table",
+		  "Table of Peptide Data" },
+
+		{ P_DMA60,         NULL, "us_dma60", 
+		  "Loading the Anton Paar DMA 60 Data Acquisition Module",
+		  "Anton Paar DMA 60 Acquisition Program" },
+
+		{ P_COLORG,        NULL, "us_colorgradient", 
+		  "Loading Color Gradient Editor Program",
+		  "Color Gradient Editor Program" },
+
+		{ P_ASTFEM,        NULL, "us_astfem_sim", 
+		  "Loading Finite Element Sedimentation Simulator (ASTFEM)",
+		  "Finite Element Simulation Program (ASTFEM)" },
+		
+		{ P_EQULILSIM,     NULL, "us_equilsim", 
+			"Loading Equilibrium Simulator",
+		  "Equilibrium Simulation Program" },
+		
+		{ P_EQUILTIMESIM,  NULL, "us_equiltime", 
+		  "Loading Equilibrium Time Estimation Simulator",
+		  "Equilibrium Time Estimation Program" },
+		
+		{ P_SASSOC,        NULL, "us_sassoc", 
+		  "Starting Self-Association Simulator",
+		  "Self-Association Simulation Program" },
+		
+		{ P_MODEL1,        NULL, "us_predict1", 
+		  "Loading Molecular Modeling Simulator",
+		  "Molecular Modeling Simulation Program (1)" },
+		
+		{ P_MODEL2,        NULL, "us_predict2", 
+		  "Loading Molecular Modeling Simulator",
+		  "Molecular Modeling Simulation Program (2)" },
+		
+		{ P_HYDRODYN,      NULL, "us_hydrodyn", 
+		  "Loading SOMO Bead Modeler",
+		  "SOMO Bead Modeling" },
+	
+		{ P_DB_VELOC,      NULL, "us_db_veloc", 
+		  "Loading Database Velocity Result",
+		  "Table for Database Velocity Result" },
+
+		{ P_DB_EQUIL,      NULL, "us_db_equil", 
+		  "Loading Database Equilibrium Result",
+		  "Table for Database Equilibrium Result" },
+
+		{ P_DB_EQUILP,     NULL, "us_db_rst_equilproject", 
+		  "Loading Database Equilibrium Project Result",
+		  "Table for Database Equilibrium Project Result" },
+
+		{ P_DB_MC,         NULL, "us_db_rst_montecarlo", 
+		  "Loading Database Monte Carlo Project Result",
+		  "Table for Database Monte Carlo Project Result" },
+
+		{ P_DB_INV,      NULL, "us_db_tbl_investigator", 
+		  "Loading Investigator Table",
+		  "Table of Retrieve from Investigator" },
+
+		{ P_DB_DATE,      NULL, "us_db_rtv_date", 
+		  "Loading Retrieve Date",
+		  "Table of Retrieve from Date" },
+
+		{ P_DB_DESC,      NULL, "us_db_rtv_description", 
+		  "Loading Retrieve Description",
+		  "Table of Retrieve from Description" },
+
+		{ P_DB_TYPE,      NULL, "us_db_rtv_edittype", 
+		  "Loading Retrieve Edit Type",
+		  "Table of Retrieve from Edit Type" },
+
+		{ P_DB_REQ,       NULL, "us_db_rtv_request", 
+		  "Loading Retrieve Request",
+		  "Table of show project request" },
+
+		{ P_DB_STATUS,    NULL, "us_db_rtv_requeststatus", 
+		  "Loading Retrieve Request Status",
+		  "Table of show project status" },
+
+		{ P_DB_IMAGE,     NULL, "us_db_rtv_image", 
+		  "Loading Retrieve Image",
+		  "Table of show project image" },
+
+		{ P_DB_SAMP,      NULL, "us_db_rtv_sample", 
+		  "Loading Retrieve Sample",
+		  "Table of show project sample" },
+
+		{ P_DB_RUNR,      NULL, "us_db_rtv_runrequest", 
+		  "Loading Retrieve RunRequest",
+		  "Table of show run request" },
+
+		{ P_INV_DATA,     NULL, "us_db_tbl_investigator", 
+		  "Loading Investigator Table",
+		  "Table of Investigator" },
+
+		{ P_DB_BUFF,      NULL, "us_buffer_db", 
+		  "Loading Buffer Table",
+		  "Table of Buffer Data" },
+
+		{ P_DB_VBAR,      NULL, "us_vbar_db", 
+		  "Loading Peptide Table",
+		  "Table of Peptide Data" },
+
+		{ P_DB_DNA,       NULL, "us_nucleotide_db", 
+		  "Loading Nucleotide Sqeuence Table",
+		  "Table of DNA Data" },
+
+		{ P_DB_RAW,       NULL, "us_expdata_db", 
+		  "Loading Experimental Data Table",
+		  "Table of Experimential Data" },
+
+		{ P_DB_TEMP,      NULL, "us_db_template", 
+		  "Loading Create Database template",
+		  "Create New Database Template" },
+
+		{ P_END, NULL, "", "", "" }
+	};
+
+	// Data Control Functions
+	enum 
+	{ 
+		DS_COPY_VELOC = 100,
+	  DS_COPY_EQUIL,
+	  DS_NOISE,
+	  DS_MENISCUS,
+		DS_VELOC_ID,
+		DS_EQUIL_ID,
+		DS_VELOC,
+		DS_EQUIL,
+		DS_END
+	};
+
+	struct data_control_data
+	{
+		int index;
+		int parameter;
+		QString message;
+	} dctrl [] =
+  {
+		{ DS_COPY_VELOC, 11, "Copying Edited Velocity Data to a new Name..."    },
+		{ DS_NOISE,      31, "Subtracting Time invariant and Radially Invariant "
+			                   "Noise from Edited Velocity Data..."               },
+		{ DS_MENISCUS,   32, "Update Meniscus for Edited Velocity Data..."      },
+		{ DS_COPY_EQUIL, 12, "Copying Edited Equilibrium Data to a new Name..." },
+		{ DS_VELOC_ID,    9, "Editing Cell Id's for Velocity Data..."           },
+		{ DS_EQUIL_ID,   10, "Editing Cell Id's for Equilibrium Data..."        },
+		{ DS_VELOC,       1, "Dataset Information for Velocity Run..."          },
+		{ DS_EQUIL,       2, "Dataset Information for Equilibrium Run..."       },
+		{ DS_END,         0, ""                                                 }
+  };
+
+	// Help Functions
+	enum 
+	{ 
+		HELP = 200,
+	  HELP_REG,
+	  HELP_HOME,
+	  HELP_UPGRADE,
+		HELP_LICENSE,
+		HELP_END
+	};
+
+	enum help_type { PAGE, URL };
+
+	struct help_data
+	{
+		int            index;
+		enum help_type type;
+		QString        loadMsg;
+		QString        url;
+	} h[] =
+	{
+		{ HELP,         PAGE, "Help...",                     "manual/index.html" },
+		{ HELP_REG,     URL,  "Registration Information...", "register.html"     },
+		{ HELP_HOME,    URL,  "UltraScan Home Page...",      ""                  },
+		{ HELP_UPGRADE, URL,  "Upgrade Information...",      "download.html"     },
+		{ HELP_LICENSE, URL,  "License Information...",      "license.html"      },
+		{ HELP_END,     URL,  "",                            ""                  }
+	};
+}
+
+using namespace us_win_data;
+
+
+UsWin::UsWin( QWidget* parent, const char* name ): US_Widgets( parent, name )
+{
+	int width  = 710;
+	int height = 532;
+	
+  unsetPalette();
+	setGeometry( 50, 50, width, height );
+	make_splash( width );
+
+	// File
+
+	// Submenu
+	QPopupMenu* file_info = popupmenu();
+	connect( file_info, SIGNAL( activated( int ) ), SLOT( data_control( int ) ) );
+	
+	file_info->insertItem( tr( "&Velocity Data"    ), DS_VELOC );
+	file_info->insertItem( tr( "&Equilibrium Data" ), DS_EQUIL );
+
+	// Submenu
+	QPopupMenu* export_data = popupmenu();
+
+	export_data->insertItem( tr( "&Velocity Data"    ), this, SLOT( export_V() ) );
+	export_data->insertItem( tr( "&Equilibrium Data" ), this, SLOT( export_E() ) );
+
+	// Submenu
+	QPopupMenu* print_data = popupmenu();
+
+	print_data->insertItem( tr( "&Velocity Data"    ), this, SLOT( print_V() ) );
+	print_data->insertItem( tr( "&Equilibrium Data" ), this, SLOT( print_E() ) );
+
+	// Submenu
+	QPopupMenu* report = popupmenu();
+
+	report->insertItem( tr( "&Velocity Data"               ), this, SLOT( report_V()  ) );
+	report->insertItem( tr( "&Equilibrium Data"            ), this, SLOT( report_E()  ) );
+	report->insertItem( tr( "Equilibrium &Fitting Project" ), this, SLOT( report_EP() ) );
+	report->insertItem( tr( "&Monte Carlo Project"         ), this, SLOT( report_MC() ) );
+
+	QPopupMenu* file = popupmenu();
+	connect( file, SIGNAL( activated( int ) ), SLOT( launch( int ) ) );
+
+	file->insertItem( tr( "&Dataset Info"    ), file_info   );
+	file->insertItem( tr( "&Export Data"     ), export_data );
+	file->insertItem( tr( "&Print Data"      ), print_data  );
+	file->insertItem( tr( "&Generate Report" ), report      );
+	file->insertItem( tr( "&Configuration"   ), P_CONFIG    );
+	file->insertItem( tr( "&Administrator"   ), P_ADMIN     );
+	file->insertSeparator();
+	file->insertItem( tr( "E&xit"),            this, SLOT( quit() ) );
+
+	// Edit
+
+	// Submenu
+	QPopupMenu* type1 = popupmenu();
+	connect( type1, SIGNAL( activated( int ) ), SLOT( data_control( int ) ) );
+	connect( type1, SIGNAL( activated( int ) ), SLOT( launch      ( int ) ) );
+
+	type1->insertItem( tr( "&Absorbance Data"   ), P_VELOC_ABSORB );
+	type1->insertItem( tr( "&Interference Data" ), P_VELOC_INTERF );
+	type1->insertItem( tr( "&Fluorescence Data" ), P_VELOC_FLUOR  );
+	type1->insertItem( tr( "&Edit Cell ID's"    ), DS_VELOC_ID    );
+
+	// Submenu
+	QPopupMenu* type2 = popupmenu();
+	connect( type2, SIGNAL( activated( int ) ), SLOT( data_control( int ) ) );
+	connect( type2, SIGNAL( activated( int ) ), SLOT( launch      ( int ) ) );
+
+	type2->insertItem( tr( "&Absorbance Data"   ), P_EQUIL_ABSORB );
+	type2->insertItem( tr( "&Interference Data" ), P_EQUIL_INTERF );
+	type2->insertItem( tr( "&Fluorescence Data" ), P_EQUIL_FLUOR  );
+	type2->insertItem( tr( "&Edit Cell ID's"    ), DS_EQUIL_ID    );
+
+	QPopupMenu* edit = popupmenu();
+	connect( edit, SIGNAL( activated( int ) ), SLOT( launch( int ) ) );
+
+	edit->insertItem( tr( "&Velocity Data"                 ), type1       );
+	edit->insertItem( tr( "&Equilibrium Data"              ), type2       );
+	edit->insertItem( tr( "Edit &Wavelength Data"          ), P_EDIT_WAVE );
+	edit->insertItem( tr( "View/Edit &Multiwavelength Data"), P_VIEW_MWL  );
+
+	// Velocoty
+	QPopupMenu* veloc = popupmenu();
+	connect( veloc, SIGNAL( activated( int ) ), SLOT( launch( int ) ) );
+
+	veloc->insertItem( tr( "&Enhanced van Holde - Weischet"            ), P_VHW_ENH    );
+	veloc->insertItem( tr( "FE Model Viewer (&non-interacting)"        ), P_FEMATCH    );
+	veloc->insertItem( tr( "FE Model Viewer (&reversible associations)"), P_FEMATCH_RA );
+	veloc->insertItem( tr( "&Initialize GA with 2DSA Distribution"     ), P_GAINIT1    );
+	veloc->insertItem( tr( "Initialize &GA with nonlinear Model"       ), P_GAINIT2    );
+	veloc->insertItem( tr( "Finite Element (D&UD)"                     ), P_FEDUD      );
+	veloc->insertItem( tr( "&Second Moment"                            ), P_SECM       );
+	veloc->insertItem( tr( "&Time Derivative"                          ), P_DCDT       );
+	veloc->insertItem( tr( "Radial &Derivative"                        ), P_DCDR       );
+	veloc->insertItem( tr( "&C(s) Analysis"                            ), P_COFS       );
+
+	// Equilibrium
+	QPopupMenu* equil = popupmenu();
+	connect( equil, SIGNAL( activated( int ) ), SLOT( launch( int ) ) );
+
+	equil->insertItem( tr( "&Suggest Best Speed"         ), P_PREDICT );
+	equil->insertItem( tr( "Estimate Equilibrium &Times" ), P_EQTIME  );
+	equil->insertItem( tr( "&Global Fit"                 ), P_GFIT    );
+	equil->insertItem( tr( "&Log(C) vs. r^2"             ), P_LNC     );
+
+	// Global Fit
+	QPopupMenu* global_menu = popupmenu();
+	connect( global_menu, SIGNAL( activated( int ) ), SLOT( launch( int ) ) );
+
+	global_menu->insertItem( tr( "Global &Equilibrium Fit" ), P_GFIT     );
+	global_menu->insertItem( tr( "Global E&xtinction Fit"  ), P_EXTINCT  );
+	global_menu->insertItem( tr( "Global &Spectrum Fit"    ), P_SPECTRUM );
+
+	// Utilities
+/* These are not currently implemented
+#ifdef LINUX
+	// Submenu
+	QPopupMenu* sys = popupmenu();
+	connect( sys, SIGNAL( activated( int ) ), SLOT( launch( int ) ) );
+
+	sys->insertItem( tr( "&CPU Load"    ), P_CPU     );
+	sys->insertItem( tr( "&Memory Info" ), P_MEM     );
+	sys->insertItem( tr( "&System Load" ), P_SYSLOAD );
+#endif
+*/
+	// Submenu
+	QPopupMenu* combine = popupmenu();
+	connect( combine, SIGNAL( activated( int ) ), SLOT( launch( int ) ) );
+
+	combine->insertItem( tr( "&Combine G/g(s) Distribution Plots (vHW)"), P_COMBINE       );
+	combine->insertItem( tr( "&Combine G/g(MW) Distributions (vHW)"    ), P_COMBINE_MW    );
+	combine->insertItem( tr( "&Combine discrete s20,W Distributions"   ), P_COMBINE_COFS  );
+	combine->insertItem( tr( "&Combine discrete MW Distributions"      ), P_COMBINE_COFMW );
+	combine->insertItem( tr( "&Combine discrete D Distributions"       ), P_COMBINE_COFD  );
+	combine->insertItem( tr( "&Combine Pseudo-3D Distributions"        ), P_PSEUDO3D      );
+	combine->insertItem( tr( "Create &Global Distributions"            ), P_CREATEG       );
+
+	
+	QPopupMenu* util = popupmenu();
+	connect( util, SIGNAL( activated( int ) ), SLOT( data_control( int ) ) );
+	connect( util, SIGNAL( activated( int ) ), SLOT( launch      ( int ) ) );
+
+/*
+#ifdef LINUX
+	util->insertItem(tr("&System Utilities"), sys );
+	util->insertSeparator( -1 );
+#endif
+*/
+	util->insertItem( tr( "&Archive Manager"                        ), P_ARCHIVE     );
+	util->insertItem( tr( "&Re-order Scanfile Sequence"             ), P_REORDER     );
+	util->insertItem( tr( "&Merge Scanfiles from 2 Directories"     ), P_MERGE       );
+	util->insertItem( tr( "&Convert Intensity to Pseudo-Absorbance" ), P_PSEUDOABS   );
+	util->insertItem( tr( "Edit Cell ID (&Velocity)"                ), DS_VELOC_ID   );
+	util->insertItem( tr( "Edit Cell &ID (Equilibrium)"             ), DS_EQUIL_ID   );
+	util->insertItem( tr( "&Copy Velocity Run"                      ), DS_COPY_VELOC );
+	util->insertItem( tr( "Copy &Equilibrium Run"                   ), DS_COPY_EQUIL );
+	util->insertSeparator( -1 );
+	
+	util->insertItem(tr( "&RI/TI Noise Subtraction from Velocity Run" ), DS_NOISE    );
+	util->insertItem(tr( "&Update Meniscus for Velocity Run"          ), DS_MENISCUS );
+	util->insertItem(tr( "&Combine Distribution Data"), combine );
+
+	util->insertItem( tr( "Scan &Diagnostics"              ), P_DIAG       );
+	util->insertItem( tr( "Calculate &DNA/RNA MW"          ), P_NUCL_DB    );
+	util->insertItem( tr( "&Buffer Corrections"            ), P_CALC_HYDRO );
+	util->insertItem( tr( "Calculate &Protein MW and vbar" ), P_VBAR_DB    );
+	util->insertItem( tr( "Start Anton Paar DMA 60"        ), P_DMA60      );
+	util->insertItem( tr( "Gradient Color Editor"          ), P_COLORG     );
+	util->insertItem( tr( "Global &Extinction Fit"         ), P_EXTINCT    );
+
+	// Simulation
+	QPopupMenu* sim = popupmenu();
+	connect( sim, SIGNAL( activated( int ) ), SLOT( launch( int ) ) );
+
+	sim->insertItem( tr( "&Finite Element Simulation (ASTFEM)"            ), P_ASTFEM       );
+	sim->insertItem( tr( "&Equilibrium Simulation"                        ), P_EQULILSIM    );
+	sim->insertItem( tr( "Estimate Equilibrium &Times"                    ), P_EQUILTIMESIM );
+	sim->insertItem( tr( "&Self-Association Equilibrium"                  ), P_SASSOC       );
+	sim->insertItem( tr( "&Model s, D and f from MW for 4 basic shapes"   ), P_MODEL1       );
+	sim->insertItem( tr( "&Predict f and axial ratios for 4 basic shapes" ), P_MODEL2       );
+	sim->insertItem( tr( "SOMO &Bead Modeling"                            ), P_HYDRODYN     );
+
+	// Database
+
+	// Submenu
+	QPopupMenu* result =  popupmenu();
+	connect( result, SIGNAL( activated( int ) ), SLOT( launch( int ) ) );
+
+	result->insertItem( tr( "&Velocity Data"               ), P_DB_VELOC  );
+	result->insertItem( tr( "&Equilibrium Data"            ), P_DB_EQUIL  );
+	result->insertItem( tr( "Equilibrium &Fitting Project" ), P_DB_EQUILP );
+	result->insertItem( tr( "&Monte Carlo Project"         ), P_DB_MC     );
+
+	// Submenu
+	QPopupMenu* rtv = popupmenu();
+	connect( rtv, SIGNAL( activated( int ) ), SLOT( launch( int ) ) );
+
+	rtv->insertItem( tr( "&Investigator" ), P_DB_INV  );
+	rtv->insertItem( tr( "&Date"         ), P_DB_DATE );
+	rtv->insertItem( tr( "&Description"  ), P_DB_DESC );
+	rtv->insertItem( tr( "&Edit Type"    ), P_DB_TYPE );
+
+	// Submenu
+	QPopupMenu* project = popupmenu();
+	connect( project, SIGNAL( activated( int ) ), SLOT( launch( int ) ) );
+
+	project->insertItem( tr( "&Project Request" ), P_DB_REQ    );
+	project->insertItem( tr( "Project Status"   ), P_DB_STATUS );
+	project->insertItem( tr( "&Images"          ), P_DB_IMAGE  );
+	project->insertItem( tr( "&Sample Info"     ), P_DB_SAMP   );
+	project->insertItem( tr( "&Run Request"     ), P_DB_RUNR   );
+
+	QPopupMenu* db = popupmenu();
+	connect( db, SIGNAL( activated( int ) ), SLOT( launch( int ) ) );
+
+	db->insertItem( tr( "Manage Investigator &Data"    ), P_INV_DATA );
+	db->insertItem( tr( "Manage &Buffer Data"          ), P_DB_BUFF  );
+	db->insertItem( tr( "Manage &Peptide Sequences"    ), P_DB_VBAR  );
+	db->insertItem( tr( "Manage &Nucleotide Sequences" ), P_DB_DNA   );
+	db->insertSeparator( -1 );
+
+	db->insertItem( tr( "&Commit Raw Experimental Data to DB" ), P_DB_RAW );
+	db->insertSeparator( -1 );
+	
+	db->insertItem( tr( "Retrieve Raw &Experimental Data from DB" ), rtv );
+	db->insertSeparator( -1 );
+	
+	db->insertItem( tr( "Manage &Results and Analysis Data" ), result );
+	db->insertSeparator( -1 );
+	
+	db->insertItem( tr( "Project &Info" ), project );
+	db->insertSeparator( -1 );
+	
+	db->insertItem( tr( "Initialize Database &Template" ), P_DB_TEMP  );
+
+	// Help
+	QPopupMenu* help = popupmenu();
+
+	help->insertItem( tr("UltraScan &Home"    ), HELP_HOME               );
+	help->insertItem( tr("UltraScan &Manual"  ), HELP                    );
+	help->insertItem( tr("&Register Software" ), HELP_REG                );
+	help->insertItem( tr("&Upgrade UltraScan" ), HELP_UPGRADE            );
+	help->insertItem( tr("UltraScan &License" ), HELP_LICENSE            );
+	help->insertItem( tr("&About"             ), this, SLOT( about()   ) );
+	help->insertItem( tr("&Credits"           ), this, SLOT( credits() ) );
+	
+	connect( help, SIGNAL( activated( int ) ), SLOT( display_help( int ) ) );
+
+	QMenuBar* menu = menubar();
+	
+	menu->insertItem(tr("&File"),        file);
+	menu->insertItem(tr("&Edit"),        edit);
+	menu->insertItem(tr("&Velocity"),    veloc);
+	menu->insertItem(tr("E&quilibrium"), equil);
+	menu->insertItem(tr("&Global Fit"),  global_menu);
+	menu->insertItem(tr("&Utilities"),   util);
+	menu->insertItem(tr("S&imulation"),  sim);
+	menu->insertItem(tr("&Database"),    db);
+	menu->insertItem(tr("&Help"),        help);
+
+	menu->setGeometry( 2, 2, width - 4, 22 );
+
+	stat_bar = textlabel( "" );
+	stat_bar->setFrameStyle( QFrame::Box | QFrame::Sunken );
+	stat_bar->setAlignment ( AlignLeft | AlignVCenter );
+
+	connect( this,     SIGNAL( explain( const QString& ) ), 
+	         stat_bar, SLOT  ( setText( const QString& ) ) );
+}
+
+void UsWin::make_splash( int width )
+{
 #if defined(WIN32)
   #define OS_TITLE "Microsoft Windows"
 #elif defined(LINUX)
@@ -44,42 +712,25 @@ UsWin::UsWin(QWidget *parent, const char *name)
 
 #define DROP    20
 
-	QPixmap rawpix( USglobal->config_list.system_dir + "/etc/flash-combined-no-text.png" );
-	//int ph = rawpix.height() + DROP;
-	//int pw = rawpix.width() + DROP;
+	QPixmap rawpix( USglobal->config_list.system_dir + 
+			            "/etc/flash-combined-no-text.png" );
+
 	int ph = rawpix.height();
 	int pw = rawpix.width();
 
 	QPixmap  pixmap( pw, ph );
 	QPainter painter( &pixmap );
 
-	//painter.fillRect( 0, 0, pw, ph, QBrush( Qt::black) );
-	//painter.fillRect( DROP, DROP, pw+DROP, ph+DROP, QBrush( Qt::cyan) );
-
 	painter.drawPixmap( 0, 0, rawpix );
-
-	//painter.setPen( QPen( Qt::blue, 4 ) );
-	//painter.drawRect( QRect( 0, 0, pw, ph ) );
-
-	painter.setPen( QPen( Qt::white, 3 ) );
-
-	//QPaintDeviceMetrics dev_metrics( this );
-	//int devDPI = dev_metrics.logicalDpiX();
+	painter.setPen    ( QPen( Qt::white, 3 ) );
 
 	QString version = "UltraScan " + US_Version +  " for " OS_TITLE;
-
-	//QFontMetrics metrics( QFont( USglobal->config_list.fontFamily,
-	//                             USglobal->config_list.fontSize, QFont::Bold ) );
 
 	QFont font( "Arial" );
 	font.setWeight( QFont::DemiBold );
 	font.setPixelSize( 18 );
 	painter.setFont( font );
 	QFontMetrics metrics( font );
-	//painter.setFont( QFont( USglobal->config_list.fontFamily,
-	//                        USglobal->config_list.fontSize, QFont::Bold ) );
-	//QFontMetrics metrics( QFont( USglobal->config_list.fontFamily,
-	//                             USglobal->config_list.fontSize, QFont::Bold ) );
 
 	int sWidth = metrics.boundingRect( version ).width();
 	int x      = ( pw - sWidth ) / 2;
@@ -104,2448 +755,74 @@ UsWin::UsWin(QWidget *parent, const char *name)
 	sWidth = metrics.boundingRect( s ).width();
 	painter.drawText( ( pw - sWidth ) / 2, 247, s );
 
-
-	//splash = new QSplashScreen( pixmap );
-	//splash->show();
-
 	QTimer* splash_time = new QTimer( this );
 	splash_time->start( 6000, true );
 	connect( splash_time, SIGNAL( timeout() ), this, SLOT( close_splash() ) );
 
-	bigframe = new QLabel(this);
-	bigframe->setFrameStyle(QFrame::Box | QFrame::Raised);
+	bigframe = new QLabel( this );
+	bigframe->setFrameStyle( QFrame::Box | QFrame::Raised );
 	bigframe->setPalette( QPalette( USglobal->global_colors.cg_frame,
 	                                USglobal->global_colors.cg_frame,
 	                                USglobal->global_colors.cg_frame ) );
 
 	smallframe = new QLabel(this);
-	smallframe->setGeometry((unsigned int) ((width/2)-210) , 130, 460, 276);
+	smallframe->setGeometry( (unsigned int)( ( width / 2 ) - 210 ) , 130, 460, 276 );
 
 	smallframe->setPalette( QPalette( USglobal->global_colors.cg_pushb,
 	                                  USglobal->global_colors.cg_pushb_disabled,
-	                                  USglobal->global_colors.cg_pushb_active));
+	                                  USglobal->global_colors.cg_pushb_active ) );
 
 	splash_b = new QLabel(this);
 	splash_b->setPixmap(pixmap);
-	splash_b->setGeometry((unsigned int) ((width/2)-230), 110, 460, 276);
-
-
-	QPopupMenu *file_info = new QPopupMenu;
-	Q_CHECK_PTR(file_info);
-	file_info->setLineWidth(1);
-	int veloc_infoID = file_info->insertItem(tr("&Velocity Data"), this, SLOT(open_veloc()));
-	file_info->setItemEnabled(veloc_infoID, true);
-	int equil_infoID = file_info->insertItem(tr("&Equilibrium Data"), this, SLOT(open_equil()));
-	file_info->setItemEnabled(equil_infoID, true);
-	file_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	QPopupMenu *export_data = new QPopupMenu;
-	Q_CHECK_PTR(export_data);
-	export_data->setLineWidth(1);
-	int export_velocID = export_data->insertItem(tr("&Velocity Data"), this, SLOT(export_V()));
-	export_data->setItemEnabled(export_velocID, true);
-	int export_equilID = export_data->insertItem(tr("&Equilibrium Data"), this, SLOT(export_E()));
-	export_data->setItemEnabled(export_equilID, true);
-	export_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	QPopupMenu *print_data = new QPopupMenu;
-	Q_CHECK_PTR(print_data);
-	print_data->setLineWidth(1);
-	int print_velocID = print_data->insertItem(tr("&Velocity Data"), this, SLOT(print_V()));
-	print_data->setItemEnabled(print_velocID, true);
-	int print_equilID = print_data->insertItem(tr("&Equilibrium Data"), this, SLOT(print_E()));
-	print_data->setItemEnabled(print_equilID, true);
-	print_data->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	QPopupMenu *report = new QPopupMenu;
-	Q_CHECK_PTR(report);
-	report->setLineWidth(1);
-	int report_velocID = report->insertItem(tr("&Velocity Data"), this, SLOT(report_V()));
-	report->setItemEnabled(report_velocID, true);
-	int report_equilID = report->insertItem(tr("&Equilibrium Data"), this, SLOT(report_E()));
-	report->setItemEnabled(report_equilID, true);
-	int report_equilProjectID = report->insertItem(tr("Equilibrium &Fitting Project"), this, SLOT(report_EP()));
-	report->setItemEnabled(report_equilProjectID, true);
-	int report_montecarloProjectID = report->insertItem(tr("&Monte Carlo Project"), this, SLOT(report_MC()));
-	report->setItemEnabled(report_montecarloProjectID, true);
-	report->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	QPopupMenu *file = new QPopupMenu;
-	Q_CHECK_PTR(file);
-	file->setLineWidth(1);
-	int infoID = file->insertItem(tr("&Dataset Info"), file_info);
-	file->setItemEnabled(infoID, true);
-	int exportID = file->insertItem(tr("&Export Data"), export_data);
-	file->setItemEnabled(exportID, true);
-	int printID = file->insertItem(tr("&Print Data"), print_data);
-	file->setItemEnabled(printID, true);
-	int reportID = file->insertItem(tr("&Generate Report"), report);
-	file->setItemEnabled(reportID, true);
-	int configID = file->insertItem(tr("&Configuration"), this, SLOT(config()));
-	file->setItemEnabled(configID, true);
-	int adminID = file->insertItem(tr("&Administrator"), this, SLOT(admin()));
-	file->setItemEnabled(adminID, true);
-//  int publishID = file->insertItem(tr("P&ublish"), this, SLOT(publish()));
-//  file->setItemEnabled(publishID, true);
-	file->insertSeparator();
-	file->insertItem(tr("E&xit"), this, SLOT(quit()));
-	file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	QPopupMenu *type1 = new QPopupMenu;
-	Q_CHECK_PTR(type1);
-	type1->setLineWidth(1);
-	type1->insertItem(tr("&Absorbance Data"), this, SLOT(veloc_absorbance()));
-	type1->insertItem(tr("&Interference Data"), this, SLOT(veloc_interference()));
-	type1->insertItem(tr("&Fluorescence Data"), this, SLOT(veloc_fluorescence()));
-	type1->insertItem(tr("&Edit Cell ID's"), this, SLOT(edit_cell_id_veloc()));
-	type1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	QPopupMenu *type2 = new QPopupMenu;
-	Q_CHECK_PTR(type2);
-	type2->setLineWidth(1);
-	int abs2ID = type2->insertItem(tr("&Absorbance Data"), this, SLOT(equil_absorbance()));
-	type2->setItemEnabled(abs2ID, true);
-	int if2ID = type2->insertItem(tr("&Interference Data"), this, SLOT(equil_interference()));
-	type2->setItemEnabled(if2ID, true);
-	int flo2ID = type2->insertItem(tr("&Fluorescence Data"), this, SLOT(equil_fluorescence()));
-	type2->setItemEnabled(flo2ID, true);
-	int edit_equil_ids = type2->insertItem(tr("&Edit Cell ID's"), this, SLOT(edit_cell_id_equil()));
-	type2->setItemEnabled(edit_equil_ids, true);
-	type2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	QPopupMenu *edit = new QPopupMenu;
-	Q_CHECK_PTR(edit);
-	edit->setLineWidth(1);
-	edit->insertItem(tr("&Velocity Data"), type1);
-	int editequilID = edit->insertItem(tr("&Equilibrium Data"), type2);
-	edit->setItemEnabled(editequilID, true);
-	edit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	int editWavelengthID = edit->insertItem(tr("Edit &Wavelength Data"), this, SLOT(editWavelength()));
-	edit->setItemEnabled(editWavelengthID, true);
-	int viewmwlID = edit->insertItem(tr("View/Edit &Multiwavelength Data"), this, SLOT(viewmwl()));
-	edit->setItemEnabled(viewmwlID, true);
-
-	QPopupMenu *veloc = new QPopupMenu;
-	Q_CHECK_PTR(veloc);
-	veloc->setLineWidth(1);
-	veloc->insertItem(tr("&Enhanced van Holde - Weischet"), this, SLOT(vhw_enhanced()));
-//	int sa2dID = veloc->insertItem(tr("&2-D Spectrum Analysis"), this, SLOT(sa2d()));
-//	veloc->setItemEnabled(sa2dID, true);
-//	int cofdistroID = veloc->insertItem(tr("Distribution &Analysis"), this, SLOT(cofdistro()));
-//	veloc->setItemEnabled(cofdistroID, true);
-	int fematchID = veloc->insertItem(tr("FE Model Viewer (&non-interacting)"), this, SLOT(fematch()));
-	veloc->setItemEnabled(fematchID, true);
-	int fematch_raID = veloc->insertItem(tr("FE Model Viewer (&reversible associations)"), this, SLOT(fematch_ra()));
-	veloc->setItemEnabled(fematch_raID, true);
-	int ga_init1ID = veloc->insertItem(tr("&Initialize GA with 2DSA Distribution"), this, SLOT(ga_initialize1()));
-	veloc->setItemEnabled(ga_init1ID, true);
-	int ga_init2ID = veloc->insertItem(tr("Initialize &GA with nonlinear Model"), this, SLOT(ga_initialize2()));
-	int finiteID = veloc->insertItem(tr("Finite Element (D&UD)"), this, SLOT(finite_element_dud()));
-	veloc->setItemEnabled(finiteID, true);
-	veloc->setItemEnabled(ga_init2ID, true);
-	int sec_momID = veloc->insertItem(tr("&Second Moment"), this, SLOT(secm()));
-	veloc->setItemEnabled(sec_momID, true);
-	int dcdtID = veloc->insertItem(tr("&Time Derivative"), this, SLOT(dcdt()));
-	veloc->setItemEnabled(dcdtID, true);
-	int dcdrID = veloc->insertItem(tr("Radial &Derivative"), this, SLOT(dcdr()));
-	veloc->setItemEnabled(dcdrID, true);
-	veloc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	int cofsID = veloc->insertItem(tr("&C(s) Analysis"), this, SLOT(cofs()));
-	veloc->setItemEnabled(cofsID, true);
-
-	QPopupMenu *sim = new QPopupMenu;
-	Q_CHECK_PTR(sim);
-	sim->setLineWidth(1);
-	sim->insertItem(tr("&Finite Element Simulation (ASTFEM)"), this, SLOT(us_astfem_sim()));
-	int equilID = sim->insertItem(tr("&Equilibrium Simulation"), this, SLOT(equilibrium()));
-	sim->setItemEnabled(equilID, true);
-	sim->insertItem(tr("Estimate Equilibrium &Times"), this, SLOT(equiltime()));
-	sim->insertItem(tr("&Self-Association Equilibrium"), this, SLOT(sassoc()));
-	int model1ID = sim->insertItem(tr("&Model s, D and f from MW for 4 basic shapes"), this, SLOT(model1()));
-	sim->setItemEnabled(model1ID, true);
-	int model2ID = sim->insertItem(tr("&Predict f and axial ratios for 4 basic shapes"), this, SLOT(model2()));
-	sim->setItemEnabled(model2ID, true);
-	sim->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-//  int kirkID = sim->insertItem(tr("&Kirkwood Theory"), this, SLOT(kirkwood()));
-//  sim->setItemEnabled(kirkID, true);
-	int hydrodynID = sim->insertItem(tr("&SOMO Bead Modeling"), this, SLOT(hydrodyn()));
-	sim->setItemEnabled(hydrodynID, true);
-
-	QPopupMenu *equil = new QPopupMenu;
-	Q_CHECK_PTR(equil);
-	equil->setLineWidth(1);
-	int suggestID = equil->insertItem(tr("&Suggest Best Speed"), this, SLOT(predict()));
-	equil->setItemEnabled(suggestID, true);
-	int equiltimeID = equil->insertItem(tr("Estimate Equilibrium &Times"), this, SLOT(equiltime()));
-	equil->setItemEnabled(equiltimeID, true);
-	int globalfitID = equil->insertItem(tr("&Global Fit"), this, SLOT(global_fit()));
-	equil->setItemEnabled(globalfitID, true);
-	int logID = equil->insertItem(tr("&Log(C) vs. r^2"), this, SLOT(lnc()));
-	equil->setItemEnabled(logID, true);
-	equil->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-/*
-	QPopupMenu *laser = new QPopupMenu;
-	Q_CHECK_PTR(laser);
-	laser->setLineWidth(1);
-	laser->insertItem(tr("&Preview Data"), this, SLOT(laser_db()));
-	laser->insertItem(tr("&Global Fitting"), this, SLOT(laser_global()));
-//  laser->insertItem(tr("&Suggest Sample Times"), this, SLOT(laser_predict()));
-	laser->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-*/
-	QPopupMenu *global_menu = new QPopupMenu;
-	Q_CHECK_PTR(global_menu);
-	global_menu->setLineWidth(1);
-	global_menu->insertItem(tr("Global &Equilibrium Fit"), this, SLOT(global_fit()));
-	global_menu->insertItem(tr("Global E&xtinction Fit"), this, SLOT(calc_extinction()));
-	global_menu->insertItem(tr("Global &Spectrum Fit"), this, SLOT(spectrum()));
-//  global_menu->insertItem(tr("Global &Light Scattering"), this, SLOT(laser_global()));
-	global_menu->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-#ifdef LINUX
-QPopupMenu *sys = new QPopupMenu;
-Q_CHECK_PTR(sys);
-sys->setLineWidth(1);
-sys->insertItem(tr("&CPU Load"), this, SLOT(cpuload()));
-sys->insertItem(tr("&Memory Info"), this, SLOT(meminfo()));
-sys->insertItem(tr("&System Load"), this, SLOT(sysload()));
-sys->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-#endif
-
-QPopupMenu *util = new QPopupMenu;
-Q_CHECK_PTR(util);
-util->setLineWidth(1);
-#ifdef LINUX
-int systemID = util->insertItem(tr("&System Utilities"), sys);
-util->setItemEnabled(systemID, true);
-util->insertSeparator(-1);
-#endif
-
-
-	QPopupMenu *combine_distros = new QPopupMenu;
-	Q_CHECK_PTR(combine_distros);
-	combine_distros->setLineWidth(1);
-	int combineID = combine_distros->insertItem(tr("&Combine G/g(s) Distribution Plots (vHW)"), this, SLOT(combine()));
-	combine_distros->setItemEnabled(combineID, true);
-	int combinemwID = combine_distros->insertItem(tr("&Combine G/g(MW) Distributions (vHW)"), this, SLOT(combine_mw()));
-	combine_distros->setItemEnabled(combinemwID, true);
-	int combinecofsID = combine_distros->insertItem(tr("&Combine discrete s20,W Distributions"), this, SLOT(combine_cofs()));
-	combine_distros->setItemEnabled(combinecofsID, true);
-	int combinecofmwID = combine_distros->insertItem(tr("&Combine discrete MW Distributions"), this, SLOT(combine_cofmw()));
-	combine_distros->setItemEnabled(combinecofmwID, true);
-	int combinecofdID = combine_distros->insertItem(tr("&Combine discrete D Distributions"), this, SLOT(combine_cofd()));
-	combine_distros->setItemEnabled(combinecofdID, true);
-	int pseudo3d_combineID = combine_distros->insertItem(tr("&Combine Pseudo-3D Distributions"), this, SLOT(pseudo3d_combine()));
-	combine_distros->setItemEnabled(pseudo3d_combineID, true);
-	int createGlobalID = combine_distros->insertItem(tr("Create &Global Distributions"), this, SLOT(create_global()));
-	combine_distros->setItemEnabled(createGlobalID, true);
-	combine_distros->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-
-	int archiveID = util->insertItem(tr("&Archive Manager"), this, SLOT(archive()));
-	util->setItemEnabled(archiveID, true);
-	int reorderID = util->insertItem(tr("&Re-order Scanfile Sequence"), this, SLOT(reorder()));
-	util->setItemEnabled(reorderID, true);
-	int mergeID = util->insertItem(tr("&Merge Scanfiles from 2 Directories"), this, SLOT(merge()));
-	util->setItemEnabled(mergeID, true);
-	int pseudoabsID = util->insertItem(tr("&Convert Intensity to Pseudo-Absorbance"), this, SLOT(pseudoabs()));
-	util->setItemEnabled(pseudoabsID, true);
-	util->insertItem(tr("Edit Cell ID (&Velocity)"), this, SLOT(edit_cell_id_veloc()));
-	util->insertItem(tr("Edit Cell &ID (Equilibrium)"), this, SLOT(edit_cell_id_equil()));
-	util->insertItem(tr("&Copy Velocity Run"), this, SLOT(copy_run_veloc()));
-	util->insertItem(tr("Copy &Equilibrium Run"), this, SLOT(copy_run_equil()));
-	util->insertSeparator(-1);
-	util->insertItem(tr("&RI/TI Noise Subtraction from Velocity Run"), this, SLOT(riti_veloc()));
-	util->insertItem(tr("&Update Meniscus for Velocity Run"), this, SLOT(meniscus_veloc()));
-	int combine_distroID = util->insertItem(tr("&Combine Distribution Data"), combine_distros);
-	file->setItemEnabled(combine_distroID, true);
-
-	int diagID = util->insertItem(tr("Scan &Diagnostics"), this, SLOT(diagnostics()));
-	util->setItemEnabled(diagID, true);
-	int calcID = util->insertItem(tr("Calculate &DNA/RNA MW"), this, SLOT(nucleotide_db()));
-	util->setItemEnabled(calcID, true);
-	int calcHydro = util->insertItem(tr("&Buffer Corrections"), this, SLOT(calc_hydro()));
-	util->setItemEnabled(calcHydro, true);
-	int vbarID = util->insertItem(tr("Calculate &Protein MW and vbar"), this, SLOT(vbar_db()));
-	util->setItemEnabled(vbarID, true);
-	int dma60ID = util->insertItem(tr("Start Anton Paar DMA 60"), this, SLOT(us_dma60()));
-	util->setItemEnabled(dma60ID, true);
-	int gradientID = util->insertItem(tr("Gradient Color Editor"), this, SLOT(us_colorgradient()));
-	util->setItemEnabled(gradientID, true);
-	int extinctionID = util->insertItem(tr("Global &Extinction Fit"), this, SLOT(calc_extinction()));
-	util->setItemEnabled(extinctionID, true);
-	util->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	QPopupMenu *rtv = new QPopupMenu;
-	Q_CHECK_PTR(rtv);
-	rtv->setLineWidth(1);
-	rtv->insertItem(tr("&Investigator"), this, SLOT(rtv_investigator()));
-	rtv->insertItem(tr("&Date"), this, SLOT(rtv_date()));
-	rtv->insertItem(tr("&Description"), this, SLOT(rtv_description()));
-	rtv->insertItem(tr("&Edit Type"), this, SLOT(rtv_edittype()));
-	rtv->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	QPopupMenu *project = new QPopupMenu;
-	Q_CHECK_PTR(rtv);
-	project->setLineWidth(1);
-	project->insertItem(tr("&Project Request"), this, SLOT(rtv_request()));
-	project->insertItem(tr("Project Status"), this, SLOT(rtv_requeststatus()));
-	project->insertItem(tr("&Images"), this, SLOT(rtv_image()));
-	project->insertItem(tr("&Sample Info"), this, SLOT(rtv_sample()));
-	project->insertItem(tr("&Run Request"), this, SLOT(rtv_runrequest()));
-	project->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	QPopupMenu *result = new QPopupMenu;
-	Q_CHECK_PTR(result);
-	result->setLineWidth(1);
-	result->insertItem(tr("&Velocity Data"), this, SLOT(db_rst_veloc()));
-	result->insertItem(tr("&Equilibrium Data"), this, SLOT(db_rst_equil()));
-	result->insertItem(tr("&Equilibrium Fitting Project"), this, SLOT(db_rst_equilproject()));
-	result->insertItem(tr("&Monte Carlo Project"), this, SLOT(db_rst_montecarlo()));
-	result->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	QPopupMenu *db = new QPopupMenu;
-	Q_CHECK_PTR(db);
-	db->setLineWidth(1);
-	db->insertItem(tr("Manage Investigator &Data"), this, SLOT(investigator_db()));
-	db->insertItem(tr("Manage &Buffer Data"), this, SLOT(buffer_db()));
-	db->insertItem(tr("Manage &Peptide Sequences"), this, SLOT(vbar_db()));
-	db->insertItem(tr("Manage &Nucleotide Sequences"), this, SLOT(nucleotide_db()));
-	db->insertSeparator(-1);
-	db->insertItem(tr("&Commit Raw Experimental Data to DB"), this, SLOT(expdata_db()));
-	db->insertSeparator(-1);
-	db->insertItem(tr("Retrieve Raw &Experimental Data from DB"), rtv);
-	db->insertSeparator(-1);
-	db->insertItem(tr("Manage &Results and Analysis Data"), result);
-	db->insertSeparator(-1);
-	db->insertItem(tr("Project &Info"), project);
-	db->insertSeparator(-1);
-	db->insertItem(tr("Initialize Database &Template"), this, SLOT(db_template()));
-	db->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	QPopupMenu *help = new QPopupMenu;
-	Q_CHECK_PTR(help);
-	help->setLineWidth(1);
-	help->insertItem(tr("UltraScan &Home"), this, SLOT(us_home()));
-	help->insertItem(tr("UltraScan &Manual"), this, SLOT(help()));
-	help->insertItem(tr("&Register Software"), this, SLOT(us_register()));
-	help->insertItem(tr("&Upgrade UltraScan"), this, SLOT(us_upgrade()));
-	help->insertItem(tr("UltraScan &License"), this, SLOT(us_license()));
-	help->insertItem(tr("&About"), this, SLOT(about()));
-	help->insertItem(tr("&Credits"), this, SLOT(credits()));
-	help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-	menu = new QMenuBar(this);
-	Q_CHECK_PTR(menu);
-	menu->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-	menu->insertItem(tr("&File"), file);
-	menu->insertItem(tr("&Edit"), edit);
-	menu->insertItem(tr("&Velocity"), veloc);
-	menu->insertItem(tr("E&quilibrium"), equil);
-/*
-	int laserID = menu->insertItem(tr("&DLS"), laser);
-	menu->setItemEnabled(laserID, true);
-*/
-	int globalID = menu->insertItem(tr("&Global Fit"), global_menu);
-	menu->setItemEnabled(globalID, true);
-	menu->insertItem(tr("&Utilities"), util);
-	menu->insertItem(tr("S&imulation"), sim);
-	menu->insertItem(tr("&Database"), db);
-	menu->insertSeparator();
-	menu->insertItem(tr("&Help"), help);
-	menu->setGeometry(2, 2, width-4, 22);
-
-	stat_bar = new QLabel(this);
-	Q_CHECK_PTR(stat_bar);
-	stat_bar->setFrameStyle(QFrame::Box | QFrame::Sunken);
-	stat_bar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	stat_bar->setLineWidth(1);
-	stat_bar->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
-	stat_bar->setAlignment(AlignLeft|AlignVCenter);
-
-	connect(this,  SIGNAL(explain(const QString &)), stat_bar, SLOT(setText(const QString &)));
-
-/*
-	if (config_is_open)
-	{
-	US_Config_GUI us_config_gui;
-
-	us_config_gui.show();
-	config_is_open = false;
-	us_config_gui.isActiveWindow();
-}
-*/
-//us_finsim_proc = NULL;
-	us_astfem_sim_proc = NULL;
-	us_dma60_proc = NULL;
-	us_pseudo3d_combine_proc = NULL;
-	us_colorgradient_proc = NULL;
-	us_sassoc_proc = NULL;
-	us_cpuload_proc = NULL;
-	us_sysload_proc = NULL;
-	us_meminfo_proc = NULL;
-	us_edeabs_proc = NULL;
-	us_edeint_proc = NULL;
-	us_edeflo_proc = NULL;
-	us_editwavelength_proc = NULL;
-	us_edvabs_proc = NULL;
-	us_edvint_proc = NULL;
-	us_edvflo_proc = NULL;
-	us_vhwdat_proc = NULL;
-	us_vhwenhanced_proc = NULL;
-	us_findat_proc = NULL;
-	us_finite_single_proc = NULL;
-	us_findat_ad_proc = NULL;
-	us_fematch_proc = NULL;
-	us_fematch_ra_proc = NULL;
-	us_gainit1_proc = NULL;
-	us_gainit2_proc = NULL;
-	us_hydrodyn_proc = NULL;
-	us_secdat_proc = NULL;
-	us_cofs_proc = NULL;
-//us_cofdistro_proc = NULL;
-//us_sa2d_proc = NULL;
-	us_spectrum_proc = NULL;
-	us_viewmwl_proc = NULL;
-	us_dcdtdat_proc = NULL;
-	us_dcdrdat_proc = NULL;
-	us_predict1_proc = NULL;
-	us_predict2_proc = NULL;
-	us_equilspeed_proc = NULL;
-	us_equilsim_proc = NULL;
-	us_equiltime_proc = NULL;
-	us_globalequil_proc = NULL;
-//us_globallaser_proc = NULL;
-//us_kirkwood_proc = NULL;
-	us_lncr2_proc = NULL;
-	us_archive_proc = NULL;
-	us_reorder_proc = NULL;
-	us_pseudoabs_proc = NULL;
-	us_merge_proc = NULL;
-	us_combine_proc = NULL;
-	us_combine_mw_proc = NULL;
-	us_combine_cofs_proc = NULL;
-	us_combine_cofmw_proc = NULL;
-	us_combine_cofd_proc = NULL;
-	us_create_global_proc = NULL;
-	us_diagnostics_proc = NULL;
-	us_buffer_proc = NULL;
-	us_config_proc = NULL;
-	us_admin_proc = NULL;
-	us_extinction_proc = NULL;
-	us_investigator_db_proc = NULL;
-	us_buffer_db_proc = NULL;
-	us_vbar_db_proc = NULL;
-	us_nucleotide_db_proc = NULL;
-	us_expdata_db_proc = NULL;
-//us_laser_db_proc = NULL;
-	us_rtv_investigator_proc = NULL;
-	us_rtv_date_proc = NULL;
-	us_rtv_description_proc = NULL;
-	us_rtv_edittype_proc = NULL;
-	us_rtv_request_proc = NULL;
-	us_rtv_requeststatus_proc = NULL;
-	us_rtv_image_proc = NULL;
-	us_rtv_sample_proc = NULL;
-	us_rtv_runrequest_proc = NULL;
-	us_db_template_proc = NULL;
-	us_db_rst_veloc_proc = NULL;
-	us_db_rst_equil_proc = NULL;
-	us_db_rst_equilproject_proc = NULL;
-	us_db_rst_montecarlo_proc = NULL;
-
-	/*
-	if (env_missing)
-	{
-	  // This will fail because the application has not called exec() yet
-		// It should never happen anyway becasue the program now handles this
-		// earlier.
-
-
-		QMessageBox::message("Attention:",
-			"The environment variable \"ULTRASCAN\" is not defined!\n"
-			"Please set it to the root directory of your UltraScan\n"
-			"installation, for example:\n\n"
-			"export ULTRASCAN=/usr/lib/ultrascan (sh, bash)\n"
-			"setenv ULTRASCAN /usr/lib/ultrascan (csh, tcsh)\n\n"
-			"If you do not set the environment variable now, \n"
-			"UltraScan may not run properly.");
-	}
-	*/
+	splash_b->setGeometry( (unsigned int)( ( width / 2 ) - 230 ), 110, 460, 276);
 }
 
-UsWin::~UsWin()
-{
-}
-
-void UsWin::closeAttnt(QProcess *proc, QString message)
-{
-	switch( QMessageBox::information( this,
-		tr("Attention!"),
-		tr( "The ") + message + tr(" is still running.\n"
-		    "Do you want to close it?"),
-		tr("&Kill"), tr("&Close gracefully"), tr("Leave running"),
-		 0,      // Enter == button 0
-		 2 ) )   // Escape == button 2
-	{
-		case 0:
-		{
-			proc->kill();
-			break;
-		}
-		case 1:
-		{
-			proc->tryTerminate();
-			break;
-		}
-		case 2:
-		{
-			break;
-		}
-	}
-}
-
-void UsWin::closeEvent(QCloseEvent *)
-{
-	QString str;
-	/*
-	if (us_finsim_proc != NULL)
-	{
-		if (us_finsim_proc->isRunning())
-		{
-			str = tr("Finite Element Simulation Program");
-			closeAttnt(us_finsim_proc, str);
-		}
-	}
-	*/
-	if (us_astfem_sim_proc != NULL)
-	{
-		if (us_astfem_sim_proc->isRunning())
-		{
-			str = tr("Finite Element Simulation Program (ASTFEM)");
-			closeAttnt(us_astfem_sim_proc, str);
-		}
-	}
-	if (us_dma60_proc != NULL)
-	{
-		if (us_dma60_proc->isRunning())
-		{
-			str = tr("Anton Paar DMA 60 Acquisition Program");
-			closeAttnt(us_dma60_proc, str);
-		}
-	}
-	if (us_pseudo3d_combine_proc != NULL)
-	{
-		if (us_pseudo3d_combine_proc->isRunning())
-		{
-			str = tr("Pseudo-3D Distribution Overlay Program");
-			closeAttnt(us_pseudo3d_combine_proc, str);
-		}
-	}
-	if (us_colorgradient_proc != NULL)
-	{
-		if (us_colorgradient_proc->isRunning())
-		{
-			str = tr("Color Gradient Editor Program");
-			closeAttnt(us_colorgradient_proc, str);
-		}
-	}
-	if (us_sassoc_proc != NULL)
-	{
-		if (us_sassoc_proc->isRunning())
-		{
-			str = tr("Self-Association Simulation Program");
-			closeAttnt(us_sassoc_proc, str);
-		}
-	}
-	if (us_cpuload_proc != NULL)
-	{
-		if (us_cpuload_proc->isRunning())
-		{
-			str = tr("CPU Status Information Program");
-			closeAttnt(us_cpuload_proc, str);
-		}
-	}
-	if (us_sysload_proc != NULL)
-	{
-		if (us_sysload_proc->isRunning())
-		{
-			str = tr("System Load Information Program");
-			closeAttnt(us_sysload_proc, str);
-		}
-	}
-	if (us_meminfo_proc != NULL)
-	{
-		if (us_meminfo_proc->isRunning())
-		{
-			str = tr("Memory Information Program");
-			closeAttnt(us_meminfo_proc, str);
-		}
-	}
-	if (us_edvabs_proc != NULL)
-	{
-		if (us_edvabs_proc->isRunning())
-		{
-			str = tr("Editing Velocity Absorbance Data Program");
-			closeAttnt(us_edvabs_proc, str);
-		}
-	}
-	if (us_edvint_proc != NULL)
-	{
-		if (us_edvint_proc->isRunning())
-		{
-			str = tr("Editing Velocity Interference Data Program");
-			closeAttnt(us_edvint_proc, str);
-		}
-	}
-	if (us_edvflo_proc != NULL)
-	{
-		if (us_edvflo_proc->isRunning())
-		{
-			str = tr("Editing Velocity Fluorescence Data Program");
-			closeAttnt(us_edvint_proc, str);
-		}
-	}
-	if (us_edeabs_proc != NULL)
-	{
-		if (us_edeabs_proc->isRunning())
-		{
-			str = tr("Editing Equilibrium Absorbance Data Program");
-			closeAttnt(us_edeabs_proc, str);
-		}
-	}
-	if (us_edeint_proc != NULL)
-	{
-		if (us_edeint_proc->isRunning())
-		{
-			str = tr("Editing Equilibrium Interference Data Program");
-			closeAttnt(us_edeint_proc, str);
-		}
-	}
-	if (us_edeflo_proc != NULL)
-	{
-		if (us_edeflo_proc->isRunning())
-		{
-			str = tr("Editing Equilibrium Fluorescence Data Program");
-			closeAttnt(us_edeint_proc, str);
-		}
-	}
-	if (us_editwavelength_proc != NULL)
-	{
-		if (us_editwavelength_proc->isRunning())
-		{
-			str = tr("Editing Wavelength Absorbance or Intensity Data Program");
-			closeAttnt(us_editwavelength_proc, str);
-		}
-	}
-	if (us_vhwdat_proc != NULL)
-	{
-		if (us_vhwdat_proc->isRunning())
-		{
-			str = tr("van Holde - Weischet Analysis Program");
-			closeAttnt(us_vhwdat_proc, str);
-		}
-	}
-	if (us_vhwenhanced_proc != NULL)
-	{
-		if (us_vhwenhanced_proc->isRunning())
-		{
-			str = tr("Enhanced van Holde - Weischet Analysis Program");
-			closeAttnt(us_vhwenhanced_proc, str);
-		}
-	}
-	if (us_findat_proc != NULL)
-	{
-		if (us_findat_proc->isRunning())
-		{
-			str = tr("Finite Element Analysis Program");
-			closeAttnt(us_findat_proc, str);
-		}
-	}
-	if (us_findat_ad_proc != NULL)
-	{
-		if (us_findat_ad_proc->isRunning())
-		{
-			str = tr("Finite Element Analysis Program");
-			closeAttnt(us_findat_ad_proc, str);
-		}
-	}
-	if (us_finite_single_proc != NULL)
-	{
-		if (us_finite_single_proc->isRunning())
-		{
-			str = tr("Finite Element Analysis Program");
-			closeAttnt(us_finite_single_proc, str);
-		}
-	}
-	if (us_fematch_proc != NULL)
-	{
-		if (us_fematch_proc->isRunning())
-		{
-			str = tr("Finite Element Model and Data Viewer");
-			closeAttnt(us_fematch_proc, str);
-		}
-	}
-	if (us_fematch_ra_proc != NULL)
-	{
-		if (us_fematch_ra_proc->isRunning())
-		{
-			str = tr("Finite Element Model and Data Viewer");
-			closeAttnt(us_fematch_ra_proc, str);
-		}
-	}
-	if (us_gainit1_proc != NULL)
-	{
-		if (us_gainit1_proc->isRunning())
-		{
-			str = tr("Genetic Algorithm Initializer from 2DSA distribution");
-			closeAttnt(us_gainit1_proc, str);
-		}
-	}
-	if (us_gainit2_proc != NULL)
-	{
-		if (us_gainit2_proc->isRunning())
-		{
-			str = tr("Genetic Algorithm Initializer for nonlinear Model");
-			closeAttnt(us_gainit2_proc, str);
-		}
-	}
-	if (us_hydrodyn_proc != NULL)
-	{
-		if (us_hydrodyn_proc->isRunning())
-		{
-			str = tr("SOMO Bead Modeling");
-			closeAttnt(us_hydrodyn_proc, str);
-		}
-	}
-	if (us_secdat_proc != NULL)
-	{
-		if (us_secdat_proc->isRunning())
-		{
-			str = tr("Second Moment Analysis Program");
-			closeAttnt(us_secdat_proc, str);
-		}
-	}
-	if (us_cofs_proc != NULL)
-	{
-		if (us_cofs_proc->isRunning())
-		{
-			str = tr("C(s) Analysis Program");
-			closeAttnt(us_cofs_proc, str);
-		}
-	}
-	/*
-	if (us_cofdistro_proc != NULL)
-	{
-		if (us_cofdistro_proc->isRunning())
-		{
-			str = tr("Distribution Analysis Program");
-			closeAttnt(us_cofdistro_proc, str);
-		}
-	}
-
-	if (us_sa2d_proc != NULL)
-	{
-		if (us_sa2d_proc->isRunning())
-		{
-			str = tr("2-D Spectrum Analysis Program");
-			closeAttnt(us_sa2d_proc, str);
-		}
-	}
-	*/
-	if (us_viewmwl_proc != NULL)
-	{
-		if (us_viewmwl_proc->isRunning())
-		{
-			str = tr("Multiwavelength Viewing/Editing Program");
-			closeAttnt(us_viewmwl_proc, str);
-		}
-	}
-	if (us_dcdtdat_proc != NULL)
-	{
-		if (us_dcdtdat_proc->isRunning())
-		{
-			str = tr("Time Derivative - dC/dt Analysis Program");
-			closeAttnt(us_dcdtdat_proc, str);
-		}
-	}
-	if (us_dcdrdat_proc != NULL)
-	{
-		if (us_dcdrdat_proc->isRunning())
-		{
-			str = tr("Radial Derivative - dC/dr Analysis Program");
-			closeAttnt(us_dcdrdat_proc, str);
-		}
-	}
-	/*
-	if (us_kirkwood_proc != NULL)
-	{
-		if (us_kirkwood_proc->isRunning())
-		{
-			str = tr("Kirkwood Analysis Program");
-			closeAttnt(us_kirkwood_proc, str);
-		}
-	}
-	*/
-	if (us_predict1_proc != NULL)
-	{
-		if (us_predict1_proc->isRunning())
-		{
-			str = tr("Molecular Modeling Simulation Program (1)");
-			closeAttnt(us_predict1_proc, str);
-		}
-	}
-	if (us_predict2_proc != NULL)
-	{
-		if (us_predict2_proc->isRunning())
-		{
-			str = tr("Molecular Modeling Simulation Program (2)");
-			closeAttnt(us_predict2_proc, str);
-		}
-	}
-	if (us_equilspeed_proc != NULL)
-	{
-		if (us_equilspeed_proc->isRunning())
-		{
-			str = tr("Equilibrium Speed Prediction Program");
-			closeAttnt(us_equilspeed_proc, str);
-		}
-	}
-	if (us_equilsim_proc != NULL)
-	{
-		if (us_equilsim_proc->isRunning())
-		{
-			str = tr("Equilibrium Simulation Program");
-			closeAttnt(us_equilsim_proc, str);
-		}
-	}
-	if (us_equiltime_proc != NULL)
-	{
-		if (us_equiltime_proc->isRunning())
-		{
-			str = tr("Equilibrium Time Estimation Program");
-			closeAttnt(us_equiltime_proc, str);
-		}
-	}
-	if (us_globalequil_proc != NULL)
-	{
-		if (us_globalequil_proc->isRunning())
-		{
-			str = tr("Global Equilibrium Fitting Program");
-			closeAttnt(us_globalequil_proc, str);
-		}
-	}
-	/*
-	if (us_globallaser_proc != NULL)
-	{
-		if (us_globallaser_proc->isRunning())
-		{
-			str = tr("Global Light Scattering Program");
-			closeAttnt(us_globallaser_proc, str);
-		}
-	}
-	*/
-	if (us_lncr2_proc != NULL)
-	{
-		if (us_lncr2_proc->isRunning())
-		{
-			str = tr("Equilibrium Analysis - ln(C) vs. r^2 Analysis Program");
-			closeAttnt(us_lncr2_proc, str);
-		}
-	}
-	if (us_archive_proc != NULL)
-	{
-		if (us_archive_proc->isRunning())
-		{
-			str = tr("UltraScan Archive Utility");
-			closeAttnt(us_archive_proc, str);
-		}
-	}
-	if (us_reorder_proc != NULL)
-	{
-		if (us_reorder_proc->isRunning())
-		{
-			str = tr("UltraScan File Ordering Utility");
-			closeAttnt(us_reorder_proc, str);
-		}
-	}
-	if (us_pseudoabs_proc != NULL)
-	{
-		if (us_pseudoabs_proc->isRunning())
-		{
-			str = tr("UltraScan Intensity to Pseudoabsorbance Conversion Utility");
-			closeAttnt(us_pseudoabs_proc, str);
-		}
-	}
-	if (us_merge_proc != NULL)
-	{
-		if (us_merge_proc->isRunning())
-		{
-			str = tr("UltraScan Scan File Merging Utility");
-			closeAttnt(us_merge_proc, str);
-		}
-	}
-	if (us_combine_proc != NULL)
-	{
-		if (us_combine_proc->isRunning())
-		{
-			str = tr("G/g(s) Distribution Combination Program");
-			closeAttnt(us_combine_proc, str);
-		}
-	}
-	if (us_spectrum_proc != NULL)
-	{
-		if (us_spectrum_proc->isRunning())
-		{
-			str = tr("Global Spectrum Analysis Program");
-			closeAttnt(us_spectrum_proc, str);
-		}
-	}
-	if (us_combine_mw_proc != NULL)
-	{
-		if (us_combine_mw_proc->isRunning())
-		{
-			str = tr("G/g(MW) Distribution Combination Program");
-			closeAttnt(us_combine_mw_proc, str);
-		}
-	}
-	if (us_combine_cofs_proc != NULL)
-	{
-		if (us_combine_cofs_proc->isRunning())
-		{
-			str = tr("C(s) Distribution Combination Program");
-			closeAttnt(us_combine_cofs_proc, str);
-		}
-	}
-	if (us_combine_cofmw_proc != NULL)
-	{
-		if (us_combine_cofmw_proc->isRunning())
-		{
-			str = tr("C(MW) Distribution Combination Program");
-			closeAttnt(us_combine_cofmw_proc, str);
-		}
-	}
-	if (us_combine_cofd_proc != NULL)
-	{
-		if (us_combine_cofd_proc->isRunning())
-		{
-			str = tr("C(D) Distribution Combination Program");
-			closeAttnt(us_combine_cofd_proc, str);
-		}
-	}
-	if (us_create_global_proc != NULL)
-	{
-		if (us_create_global_proc->isRunning())
-		{
-			str = tr("Create Global Distribution Program");
-			closeAttnt(us_create_global_proc, str);
-		}
-	}
-	if (us_diagnostics_proc != NULL)
-	{
-		if (us_diagnostics_proc->isRunning())
-		{
-			str = tr("UltraScan Diagnostics Utilities");
-			closeAttnt(us_diagnostics_proc, str);
-		}
-	}
-	if (us_buffer_proc != NULL)
-	{
-		if (us_buffer_proc->isRunning())
-		{
-			str = tr("UltraScan Buffer Utility");
-			closeAttnt(us_buffer_proc, str);
-		}
-	}
-	if (us_config_proc != NULL)
-	{
-		if (us_config_proc->isRunning())
-		{
-			str = tr("Configuration Program");
-			closeAttnt(us_config_proc, str);
-		}
-	}
-	if (us_admin_proc != NULL)
-	{
-		if (us_admin_proc->isRunning())
-		{
-			str = tr("Adminstrator Program");
-			closeAttnt(us_admin_proc, str);
-		}
-	}
-
-	if (us_extinction_proc != NULL)
-	{
-		if (us_extinction_proc->isRunning())
-		{
-			str = tr("Extinction Coefficient Calculator Program");
-			closeAttnt(us_extinction_proc, str);
-		}
-	}
-	if (us_investigator_db_proc != NULL)
-	{
-		if (us_investigator_db_proc->isRunning())
-		{
-			str = tr("Table of Investigator");
-			closeAttnt(us_investigator_db_proc, str);
-		}
-	}
-	if (us_buffer_db_proc != NULL)
-	{
-		if (us_buffer_db_proc->isRunning())
-		{
-			str = tr("Table of Buffer Data");
-			closeAttnt(us_buffer_db_proc, str);
-		}
-	}
-	if (us_vbar_db_proc != NULL)
-	{
-		if (us_vbar_db_proc->isRunning())
-		{
-			str = tr("Table of Peptide Data");
-			closeAttnt(us_vbar_db_proc, str);
-		}
-	}
-	if (us_nucleotide_db_proc != NULL)
-	{
-		if (us_nucleotide_db_proc->isRunning())
-		{
-			str = tr("Table of DNA Data");
-			closeAttnt(us_nucleotide_db_proc, str);
-		}
-	}
-	if (us_expdata_db_proc != NULL)
-	{
-		if (us_expdata_db_proc->isRunning())
-		{
-			str = tr("Table of Experimential Data");
-			closeAttnt(us_expdata_db_proc, str);
-		}
-	}
-	/*
-	if (us_laser_db_proc != NULL)
-	{
-		if (us_laser_db_proc->isRunning())
-		{
-			str = tr("Table of Laser Experimential Data");
-			closeAttnt(us_laser_db_proc, str);
-		}
-	}
-	*/
-	if (us_rtv_investigator_proc != NULL)
-	{
-		if (us_rtv_investigator_proc->isRunning())
-		{
-			str = tr("Table of Retrieve from Investigator");
-			closeAttnt(us_rtv_investigator_proc, str);
-		}
-	}
-	if (us_rtv_date_proc != NULL)
-	{
-		if (us_rtv_date_proc->isRunning())
-		{
-			str = tr("Table of Retrieve from Date");
-			closeAttnt(us_rtv_date_proc, str);
-		}
-	}
-	if (us_rtv_description_proc != NULL)
-	{
-		if (us_rtv_description_proc->isRunning())
-		{
-			str = tr("Table of Retrieve from Description");
-			closeAttnt(us_rtv_description_proc, str);
-		}
-	}
-	if (us_rtv_edittype_proc != NULL)
-	{
-		if (us_rtv_edittype_proc->isRunning())
-		{
-			str = tr("Table of Retrieve from Edit Type");
-			closeAttnt(us_rtv_edittype_proc, str);
-		}
-	}
-	if (us_rtv_request_proc != NULL)
-	{
-		if (us_rtv_request_proc->isRunning())
-		{
-			str = tr("Table of show project request");
-			closeAttnt(us_rtv_request_proc, str);
-		}
-	}
-	if (us_rtv_requeststatus_proc != NULL)
-	{
-		if (us_rtv_requeststatus_proc->isRunning())
-		{
-			str = tr("Table of show project status");
-			closeAttnt(us_rtv_requeststatus_proc, str);
-		}
-	}
-	if (us_rtv_image_proc != NULL)
-	{
-		if (us_rtv_image_proc->isRunning())
-		{
-			str = tr("Table of show project image");
-			closeAttnt(us_rtv_image_proc, str);
-		}
-	}
-	if (us_rtv_sample_proc != NULL)
-	{
-		if (us_rtv_sample_proc->isRunning())
-		{
-			str = tr("Table of show project sample");
-			closeAttnt(us_rtv_sample_proc, str);
-		}
-	}
-	if (us_rtv_runrequest_proc != NULL)
-	{
-		if (us_rtv_runrequest_proc->isRunning())
-		{
-			str = tr("Table of show run request");
-			closeAttnt(us_rtv_runrequest_proc, str);
-		}
-	}
-	if (us_db_template_proc != NULL)
-	{
-		if (us_db_template_proc->isRunning())
-		{
-			str = tr("Create New Database Template");
-			closeAttnt(us_db_template_proc, str);
-		}
-	}
-	if (us_db_rst_veloc_proc != NULL)
-	{
-		if (us_db_rst_veloc_proc->isRunning())
-		{
-			str = tr("Table for Database Velocity Result");
-			closeAttnt(us_db_rst_veloc_proc, str);
-		}
-	}
-	if (us_db_rst_equil_proc != NULL)
-	{
-		if (us_db_rst_equil_proc->isRunning())
-		{
-			str = tr("Table for Database Equilibrium Result");
-			closeAttnt(us_db_rst_equil_proc, str);
-		}
-	}
-	if (us_db_rst_equilproject_proc != NULL)
-	{
-		if (us_db_rst_equilproject_proc->isRunning())
-		{
-			str = tr("Table for Database Equilibrium Project Result");
-			closeAttnt(us_db_rst_equilproject_proc, str);
-		}
-	}
-	if (us_db_rst_montecarlo_proc != NULL)
-	{
-		if (us_db_rst_montecarlo_proc->isRunning())
-		{
-			str = tr("Table for Database Monte Carlo Project Result");
-			closeAttnt(us_db_rst_montecarlo_proc, str);
-		}
-	}
-	exit(0);
-}
-
-/*
-void UsWin::simulate()
-{
-	emit explain(tr("Loading Sedimentation Simulator...") );
-
-	us_finsim_proc = new QProcess(this);
-	us_finsim_proc->setCommunication(0);
-	us_finsim_proc->addArgument("us_finsim");
-	if (!us_finsim_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_FINSIM\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-*/
-
-void UsWin::us_astfem_sim()
-{
-	emit explain(tr("Loading Finite Element Sedimentation Simulator (ASTFEM)...") );
-
-	us_astfem_sim_proc = new QProcess(this);
-	us_astfem_sim_proc->setCommunication(0);
-	us_astfem_sim_proc->addArgument("us_astfem_sim");
-	if (!us_astfem_sim_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_ASTFEM_SIM\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::us_dma60()
-{
-	emit explain(tr("Loading the Anton Paar DMA 60 Data Acquisition Module...") );
-
-	us_dma60_proc = new QProcess(this);
-	us_dma60_proc->setCommunication(0);
-	us_dma60_proc->addArgument("us_dma60");
-	if (!us_dma60_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DMA60\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::pseudo3d_combine()
-{
-	emit explain(tr("Loading the Pseudo-3D Distribution Overlay Module...") );
-
-	us_pseudo3d_combine_proc = new QProcess(this);
-	us_pseudo3d_combine_proc->setCommunication(0);
-	us_pseudo3d_combine_proc->addArgument("us_pseudo3d_combine");
-	if (!us_pseudo3d_combine_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_PSEUDO3D_COMBINE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::us_colorgradient()
-{
-	emit explain(tr("Loading the Anton Paar DMA 60 Data Acquisition Module...") );
-
-	us_colorgradient_proc = new QProcess(this);
-	us_colorgradient_proc->setCommunication(0);
-	us_colorgradient_proc->addArgument("us_colorgradient");
-	if (!us_colorgradient_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_COLORGRADIENT\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::spectrum()
-{
-	emit explain(tr("Loading Global Wavelength Spectrum Fitter...") );
-
-	us_spectrum_proc = new QProcess(this);
-	us_spectrum_proc->setCommunication(0);
-	us_spectrum_proc->addArgument("us_spectrum");
-	if (!us_spectrum_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_SPECTRUM\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::sassoc()
-{
-	emit explain( tr("Starting Self-Association Simulator...") );
-
-	us_sassoc_proc = new QProcess(this);
-	us_sassoc_proc->setCommunication(0);
-	us_sassoc_proc->addArgument("us_sassoc");
-	if (!us_sassoc_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_SASSOC\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::cpuload()
-{
-	emit explain( tr("Loading CPU Status Information...") );
-
-	us_cpuload_proc = new QProcess(this);
-	us_cpuload_proc->setCommunication(0);
-	us_cpuload_proc->addArgument("us_cpuload");
-	if (!us_cpuload_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_CPULOAD\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::sysload()
-{
-	emit explain( tr("Loading System Load Information...") );
-
-	us_sysload_proc = new QProcess(this);
-	us_sysload_proc->setCommunication(0);
-	us_sysload_proc->addArgument("us_sysload");
-	if (!us_sysload_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_SYSLOAD\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::meminfo()
-{
-	emit explain( tr("Loading Memory Information...") );
-
-	us_meminfo_proc = new QProcess(this);
-	us_meminfo_proc->setCommunication(0);
-	us_meminfo_proc->addArgument("us_meminfo");
-	if (!us_meminfo_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_MEMINFO\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::close_splash()
+void UsWin::close_splash( void )
 {
 	delete smallframe;
 	delete splash_b;
 	bigframe->show();
-	//splash->close();
 }
 
-void UsWin::veloc_absorbance()
+void UsWin::closeAttnt( QProcess* proc, QString message )
 {
-	emit explain( tr("Editing Velocity Absorbance Data...") );
-
-	us_edvabs_proc = new QProcess(this);
-	us_edvabs_proc->setCommunication(0);
-	us_edvabs_proc->addArgument("us_edvabs");
-
-	if (!us_edvabs_proc->start())
+	switch( QMessageBox::information( this,
+		tr( "Attention!"),
+		tr( "The ") + message + tr(" is still running.\n"
+		    "Do you want to close it?"),
+		tr( "&Kill" ), tr( "&Close gracefully" ), tr( "Leave running" ),
+		0,      // Enter  == button 0
+		2 ) )   // Escape == button 2
 	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_EDVABS\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
+		case 0:
+			proc->kill();
+			break;
 
-void UsWin::copy_run_veloc()
-{
-	emit explain( tr("Copying Edited Velocity Data to a new Name...") );
-	dataset_i = new Data_Control_W(11);
-	dataset_i->load_data();
-	emit explain( " " );
-}
-
-void UsWin::riti_veloc()
-{
-	emit explain( tr("Subtracting Time invariant and Radially Invariant Noise from Edited Velocity Data...") );
-	dataset_i = new Data_Control_W(31);
-	dataset_i->load_data();
-	emit explain( " " );
-}
-
-void UsWin::meniscus_veloc()
-{
-	emit explain( tr("Update Meniscus for Edited Velocity Data...") );
-	dataset_i = new Data_Control_W(32);
-	dataset_i->load_data();
-	emit explain( " " );
-}
-
-void UsWin::copy_run_equil()
-{
-	emit explain( tr("Copying Edited Equilibrium Data to a new Name...") );
-	dataset_i = new Data_Control_W(12);
-	dataset_i->load_data();
-	emit explain( " " );
-}
-
-void UsWin::edit_cell_id_veloc()
-{
-	emit explain( tr("Editing Cell Id's for Velocity Data...") );
-	dataset_i = new Data_Control_W(9);
-	dataset_i->load_data();
-	emit explain( " " );
-}
-
-void UsWin::edit_cell_id_equil()
-{
-	emit explain( tr("Editing Cell Id's for Equilibrium Data...") );
-	dataset_i = new Data_Control_W(10);
-	dataset_i->load_data();
-	emit explain( " " );
-}
-
-void UsWin::veloc_interference()
-{
-	emit explain( tr("Editing Velocity Interference Data..." ));
-
-	us_edvint_proc = new QProcess(this);
-	us_edvint_proc->setCommunication(0);
-	us_edvint_proc->addArgument("us_edvint");
-
-	if (!us_edvint_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_EDVINT\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::veloc_fluorescence()
-{
-	emit explain( tr("Editing Velocity Fluorescence Data..." ));
-
-	us_edvflo_proc = new QProcess(this);
-	us_edvflo_proc->setCommunication(0);
-	us_edvflo_proc->addArgument("us_edvflo");
-
-	if (!us_edvflo_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_EDVFLO\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::equil_absorbance()
-{
-	emit explain( tr("Editing Equilibrium Absorbance Data...") );
-
-	us_edeabs_proc = new QProcess(this);
-	us_edeabs_proc->setCommunication(0);
-	us_edeabs_proc->addArgument("us_edeabs");
-	if (!us_edeabs_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_EDEABS\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::equil_interference()
-{
-	emit explain( tr("Editing Equilibrium Interference Data...") );
-
-	us_edeint_proc = new QProcess(this);
-	us_edeint_proc->setCommunication(0);
-	us_edeint_proc->addArgument("us_edeint");
-	if (!us_edeint_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_EDEINT\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::equil_fluorescence()
-{
-	emit explain( tr("Editing Equilibrium Fluorescence Data...") );
-
-	us_edeflo_proc = new QProcess(this);
-	us_edeflo_proc->setCommunication(0);
-	us_edeflo_proc->addArgument("us_edeflo");
-	if (!us_edeflo_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_EDEFLO\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::editWavelength()
-{
-	emit explain( tr("Editing Wavelength Data...") );
-
-	us_editwavelength_proc = new QProcess(this);
-	us_editwavelength_proc->setCommunication(0);
-	us_editwavelength_proc->addArgument("us_editwavelength");
-	if (!us_editwavelength_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_EDITWAVELENGTH\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::vhw()
-{
-	emit explain( tr("Loading van Holde - Weischet Analysis...") );
-
-	us_vhwdat_proc = new QProcess(this);
-	us_vhwdat_proc->setCommunication(0);
-	us_vhwdat_proc->addArgument("us_vhwdat");
-	if (!us_vhwdat_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"),tr("There was a problem creating a sub process\n"
-				"for US_VHWDAT\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::vhw_enhanced()
-{
-	emit explain( tr("Loading enahnced van Holde - Weischet Analysis...") );
-
-	us_vhwenhanced_proc = new QProcess(this);
-	us_vhwenhanced_proc->setCommunication(0);
-	us_vhwenhanced_proc->addArgument("us_vhwenhanced");
-	if (!us_vhwenhanced_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"),tr("There was a problem creating a sub process\n"
-				"for US_VHWDAT\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::finite_element_dud()
-{
-	emit explain( tr("Loading Finite Element Analysis (based on DUD) for a single experiment...") );
-
-	us_findat_proc = new QProcess(this);
-	us_findat_proc->setCommunication(0);
-	us_findat_proc->addArgument("us_findat");
-	if (!us_findat_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_FINDAT\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-#ifdef ADOLC
-void UsWin::finite_element_ad()
-{
-	emit explain( tr("Loading Finite Element Analysis (based on automatic differentiation) for a single experiment...") );
-
-	us_findat_ad_proc = new QProcess(this);
-	us_findat_ad_proc->setCommunication(0);
-	us_findat_ad_proc->addArgument("us_findat_ad");
-	if (!us_findat_ad_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_FINDAT_AD\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-#else
-void UsWin::finite_element_ad()
-{
-}
-#endif
-
-void UsWin::finite_element_single()
-{
-	emit explain( tr("Loading Finite Element Analysis (based on automatic differentiation) for a single experiment...") );
-
-	us_finite_single_proc = new QProcess(this);
-	us_finite_single_proc->setCommunication(0);
-	us_finite_single_proc->addArgument("us_finite_single");
-	if (!us_finite_single_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_FINITE_SINGLE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::fematch()
-{
-	emit explain( tr("Loading Finite Element matching routine to compare experimental data...") );
-
-	us_fematch_proc = new QProcess(this);
-	us_fematch_proc->setCommunication(0);
-	us_fematch_proc->addArgument("us_fematch");
-	if (!us_fematch_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_FEMATCH\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::fematch_ra()
-{
-	emit explain( tr("Loading Finite Element matching routine to compare experimental data...") );
-
-	us_fematch_ra_proc = new QProcess(this);
-	us_fematch_ra_proc->setCommunication(0);
-	us_fematch_ra_proc->addArgument("us_fematch_ra");
-	if (!us_fematch_ra_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_FEMATCH_RA\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::hydrodyn()
-{
-	emit explain( tr("Loading SOMO Bead Modeler...") );
-
-	us_hydrodyn_proc = new QProcess(this);
-	us_hydrodyn_proc->setCommunication(0);
-	us_hydrodyn_proc->addArgument("us_hydrodyn");
-	if (!us_hydrodyn_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_HYDRODYN\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::secm()
-{
-	emit explain( tr("Loading Second Moment Analysis...") );
-
-	us_secdat_proc = new QProcess(this);
-	us_secdat_proc->setCommunication(0);
-	us_secdat_proc->addArgument("us_secdat");
-	if (!us_secdat_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_SECDAT\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::cofs()
-{
-	emit explain( tr("Loading C(s) Analysis...") );
-
-	us_cofs_proc = new QProcess(this);
-	us_cofs_proc->setCommunication(0);
-	us_cofs_proc->addArgument("us_cofs");
-	if (!us_cofs_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_COFS\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-/*
-void UsWin::cofdistro()
-{
-	emit explain( tr("Loading Distribution Analysis...") );
-
-	us_cofdistro_proc = new QProcess(this);
-	us_cofdistro_proc->setCommunication(0);
-	us_cofdistro_proc->addArgument("us_cofdistro");
-	if (!us_cofdistro_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_COFS\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::sa2d()
-{
-	emit explain( tr("Loading 2-dimensional Spectrum Analysis...") );
-
-	us_sa2d_proc = new QProcess(this);
-	us_sa2d_proc->setCommunication(0);
-	us_sa2d_proc->addArgument("us_sa2d");
-	if (!us_sa2d_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_SA2D\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-*/
-void UsWin::viewmwl()
-{
-	emit explain( tr("Loading Multiwavelength Viewer/Editor...") );
-
-	us_viewmwl_proc = new QProcess(this);
-	us_viewmwl_proc->setCommunication(0);
-	us_viewmwl_proc->addArgument("us_viewmwl");
-	if (!us_viewmwl_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_VIEWMWL\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::dcdt()
-{
-	emit explain( tr("Loading Time Derivative - dC/dt Analysis..."));
-
-	us_dcdtdat_proc = new QProcess(this);
-	us_dcdtdat_proc->setCommunication(0);
-	us_dcdtdat_proc->addArgument("us_dcdtdat");
-	if (!us_dcdtdat_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DCDTDAT\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::dcdr()
-{
-	emit explain( tr("Loading Radial Derivative - dC/dr Analysis...") );
-
-	us_dcdrdat_proc = new QProcess(this);
-	us_dcdrdat_proc->setCommunication(0);
-	us_dcdrdat_proc->addArgument("us_dcdrdat");
-	if (!us_dcdrdat_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"),tr("There was a problem creating a sub process\n"
-				"for US_DCDRDAT\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-/*
-void UsWin::kirkwood()
-{
-	emit explain( tr("Loading Kirkwood Analysis...") );
-
-	us_kirkwood_proc = new QProcess(this);
-	us_kirkwood_proc->setCommunication(0);
-	us_kirkwood_proc->addArgument("us_kirkwood");
-	if (!us_kirkwood_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"),tr("There was a problem creating a sub process\n"
-				"for US_KIRKWOOD\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-*/
-void UsWin::equilibrium()
-{
-	emit explain( tr("Loading Equilibrium Simulator...") );
-
-	us_equilsim_proc = new QProcess(this);
-	us_equilsim_proc->setCommunication(0);
-	us_equilsim_proc->addArgument("us_equilsim");
-	if (!us_equilsim_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_EQUILSIM\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::equiltime()
-{
-	emit explain( tr("Loading Equilibrium Time Estimation Simulator...") );
-
-	us_equiltime_proc = new QProcess(this);
-	us_equiltime_proc->setCommunication(0);
-	us_equiltime_proc->addArgument("us_equiltime");
-	if (!us_equiltime_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_EQUILTIME\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::model1()
-{
-	emit explain( tr("Loading Molecular Modeling Simulator..."));
-
-	us_predict1_proc = new QProcess(this);
-	us_predict1_proc->setCommunication(0);
-	us_predict1_proc->addArgument("us_predict1");
-	if (!us_predict1_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_PREDICT1\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::model2()
-{
-	emit explain( tr("Loading Molecular Modeling Simulator...") );
-
-	us_predict2_proc = new QProcess(this);
-	us_predict2_proc->setCommunication(0);
-	us_predict2_proc->addArgument("us_predict2");
-	if (!us_predict2_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_PREDICT2\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::predict()
-{
-	us_equilspeed_proc = new QProcess(this);
-	us_equilspeed_proc->setCommunication(0);
-	us_equilspeed_proc->addArgument("us_equilspeed");
-	if (!us_equilspeed_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_EQUILSPEED\n\n"
-						"Please check and try again..."));
-		return;
+		case 1:
+			proc->tryTerminate();
+			break;
 	}
 }
 
-void UsWin::global_fit()
+void UsWin::closeEvent( QCloseEvent* e )
 {
-	emit explain( tr("Loading Nonlinear Least Squares Fitting Routine for global Equilibrium Analysis...") );
-
-	us_globalequil_proc = new QProcess(this);
-	us_globalequil_proc->setCommunication(0);
-	us_globalequil_proc->addArgument("us_globalequil");
-	if (!us_globalequil_proc->start())
+	for ( int i = P_CONFIG; i < P_END; i++ )
 	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_GLOBALEQUIL\n\n"
-						"Please check and try again..."));
-		return;
+		int index = i - P_CONFIG;
+		QProcess* proc = p[ index ].process;
+
+		if ( proc != NULL  &&  proc->isRunning() )
+		{
+			 closeAttnt( proc, p[ index ].runningMsg );
+			 p[ index ].process = NULL;
+		}
 	}
-	emit explain( " " );
+
+	e->accept();
+	exit( 0 );
 }
 
-void UsWin::lnc()
-{
-	emit explain( tr("Loading Equilibrium Analysis - ln(C) vs. r^2 Analysis...") );
-
-	us_lncr2_proc = new QProcess(this);
-	us_lncr2_proc->setCommunication(0);
-	us_lncr2_proc->addArgument("us_lncr2");
-	if (!us_lncr2_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_LNCR2\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::investigator_db()
-{
-	emit explain( tr("Loading Investigator Table...") );
-
-	us_investigator_db_proc = new QProcess(this);
-	us_investigator_db_proc->setCommunication(0);
-	us_investigator_db_proc->addArgument("us_db_tbl_investigator");
-	if (!us_investigator_db_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_TBL_INVESTIGATOR\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::buffer_db()
-{
-	emit explain( tr("Loading Buffer Table...") );
-
-	us_buffer_db_proc = new QProcess(this);
-	us_buffer_db_proc->setCommunication(0);
-	us_buffer_db_proc->addArgument("us_buffer_db");
-	if (!us_buffer_db_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_BUFFER_DB\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::vbar_db()
-{
-	emit explain( tr("Loading Peptide Table...") );
-
-	us_vbar_db_proc = new QProcess(this);
-	us_vbar_db_proc->setCommunication(0);
-	us_vbar_db_proc->addArgument("us_vbar_db");
-	if (!us_vbar_db_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_VBAR_DB\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::nucleotide_db()
-{
-	emit explain( tr("Loading Nucleotide Sqeuence Table...") );
-
-	us_nucleotide_db_proc = new QProcess(this);
-	us_nucleotide_db_proc->setCommunication(0);
-	us_nucleotide_db_proc->addArgument("us_nucleotide_db");
-	if (!us_nucleotide_db_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_NUCLEOTIDE_DB\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::expdata_db()
-{
-	emit explain( tr("Loading Experimental Data Table...") );
-
-	us_expdata_db_proc = new QProcess(this);
-	us_expdata_db_proc->setCommunication(0);
-	us_expdata_db_proc->addArgument("us_expdata_db");
-	if (!us_expdata_db_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_EXPDATA_DB\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-/*
-void UsWin::laser_db()
-{
-	emit explain( tr("Loading Laser Experimental Data Table...") );
-
-	us_laser_db_proc = new QProcess(this);
-	us_laser_db_proc->setCommunication(0);
-	us_laser_db_proc->addArgument("us_laser_db");
-	if (!us_laser_db_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_LASER_DB\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-*/
-void UsWin::rtv_investigator()
-{
-	emit explain( tr("Loading Retrieve Investigator...") );
-
-	us_rtv_investigator_proc = new QProcess(this);
-	us_rtv_investigator_proc->setCommunication(0);
-	us_rtv_investigator_proc->addArgument("us_db_rtv_investigator");
-	if (!us_rtv_investigator_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_RTV_INVESTIGATOR\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::rtv_date()
-{
-	emit explain( tr("Loading Retrieve Date...") );
-
-	us_rtv_date_proc = new QProcess(this);
-	us_rtv_date_proc->setCommunication(0);
-	us_rtv_date_proc->addArgument("us_db_rtv_date");
-	if (!us_rtv_date_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_RTV_DATE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::rtv_description()
-{
-	emit explain( tr("Loading Retrieve Description...") );
-
-	us_rtv_description_proc = new QProcess(this);
-	us_rtv_description_proc->setCommunication(0);
-	us_rtv_description_proc->addArgument("us_db_rtv_description");
-	if (!us_rtv_description_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_RTV_DESCRIPTION\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::rtv_edittype()
-{
-	emit explain( tr("Loading Retrieve Edit Type...") );
-
-	us_rtv_edittype_proc = new QProcess(this);
-	us_rtv_edittype_proc->setCommunication(0);
-	us_rtv_edittype_proc->addArgument("us_db_rtv_edittype");
-	if (!us_rtv_edittype_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_RTV_EDITTYPE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::rtv_request()
-{
-	emit explain( tr("Loading Retrieve Request...") );
-
-	us_rtv_request_proc = new QProcess(this);
-	us_rtv_request_proc->setCommunication(0);
-	us_rtv_request_proc->addArgument("us_db_rtv_request");
-	if (!us_rtv_request_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_RTV_REQUEST\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::rtv_requeststatus()
-{
-	emit explain( tr("Loading Retrieve Request Status...") );
-
-	us_rtv_requeststatus_proc = new QProcess(this);
-	us_rtv_requeststatus_proc->setCommunication(0);
-	us_rtv_requeststatus_proc->addArgument("us_db_rtv_requeststatus");
-	if (!us_rtv_requeststatus_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_RTV_REQUESTSTATUS\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::rtv_image()
-{
-	emit explain( tr("Loading Retrieve Image...") );
-
-	us_rtv_image_proc = new QProcess(this);
-	us_rtv_image_proc->setCommunication(0);
-	us_rtv_image_proc->addArgument("us_db_rtv_image");
-	if (!us_rtv_image_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_RTV_IMAGE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::rtv_sample()
-{
-	emit explain( tr("Loading Retrieve Sample...") );
-
-	us_rtv_sample_proc = new QProcess(this);
-	us_rtv_sample_proc->setCommunication(0);
-	us_rtv_sample_proc->addArgument("us_db_rtv_sample");
-	if (!us_rtv_sample_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_RTV_SAMPLE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::rtv_runrequest()
-{
-	emit explain( tr("Loading Retrieve RunRequest...") );
-
-	us_rtv_runrequest_proc = new QProcess(this);
-	us_rtv_runrequest_proc->setCommunication(0);
-	us_rtv_runrequest_proc->addArgument("us_db_rtv_runrequest");
-	if (!us_rtv_runrequest_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_RTV_RUNREQUEST\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-
-void UsWin::db_template()
-{
-	emit explain( tr("Loading Create Database template...") );
-
-	us_db_template_proc = new QProcess(this);
-	us_db_template_proc->setCommunication(0);
-	us_db_template_proc->addArgument("us_db_template");
-	if (!us_db_template_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_TEPLATE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::db_rst_veloc()
-{
-	emit explain( tr("Loading Database Velocity Result...") );
-
-	us_db_rst_veloc_proc = new QProcess(this);
-	us_db_rst_veloc_proc->setCommunication(0);
-	us_db_rst_veloc_proc->addArgument("us_db_veloc");
-	if (!us_db_rst_veloc_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_VELOC\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::db_rst_equil()
-{
-	emit explain( tr("Loading Database Equilibrium Result...") );
-
-	us_db_rst_equil_proc = new QProcess(this);
-	us_db_rst_equil_proc->setCommunication(0);
-	us_db_rst_equil_proc->addArgument("us_db_equil");
-	if (!us_db_rst_equil_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_EQUIL\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::db_rst_equilproject()
-{
-	emit explain( tr("Loading Database Equilibrium Project Result...") );
-
-	us_db_rst_equilproject_proc = new QProcess(this);
-	us_db_rst_equilproject_proc->setCommunication(0);
-	us_db_rst_equilproject_proc->addArgument("us_db_rst_equilproject");
-	if (!us_db_rst_equilproject_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_RST_EQUILPROJECT\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::db_rst_montecarlo()
-{
-	emit explain( tr("Loading Database Monte Carlo Project Result...") );
-
-	us_db_rst_montecarlo_proc = new QProcess(this);
-	us_db_rst_montecarlo_proc->setCommunication(0);
-	us_db_rst_montecarlo_proc->addArgument("us_db_rst_montecarlo");
-	if (!us_db_rst_montecarlo_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DB_RST_MONTECARLO\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-/*
-void UsWin::laser_load()
-{
-}
-
-void UsWin::laser_global()
-{
-	emit explain( tr("Loading Global Light Scattering...") );
-
-	us_globallaser_proc = new QProcess(this);
-	us_globallaser_proc->setCommunication(0);
-	us_globallaser_proc->addArgument("us_globallaser");
-	if (!us_globallaser_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_GLOBALLASER\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-
-}
-
-void UsWin::laser_predict()
-{
-}
-*/
-void UsWin::database()
-{
-}
-
-void UsWin::archive()
-{
-	us_archive_proc = new QProcess(this);
-	us_archive_proc->setCommunication(0);
-	us_archive_proc->addArgument("us_archive");
-	if (!us_archive_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_ARCHIVE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::reorder()
-{
-	us_reorder_proc = new QProcess(this);
-	us_reorder_proc->setCommunication(0);
-	us_reorder_proc->addArgument("us_reorder");
-	if (!us_reorder_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_REORDER\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::pseudoabs()
-{
-	us_pseudoabs_proc = new QProcess(this);
-	us_pseudoabs_proc->setCommunication(0);
-	us_pseudoabs_proc->addArgument("us_pseudoabs");
-	if (!us_pseudoabs_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_PSEUDOABS\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::merge()
-{
-	us_merge_proc = new QProcess(this);
-	us_merge_proc->setCommunication(0);
-	us_merge_proc->addArgument("us_merge");
-	if (!us_merge_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_MERGE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::combine()
-{
-	us_combine_proc = new QProcess(this);
-	us_combine_proc->setCommunication(0);
-	us_combine_proc->addArgument("us_combine");
-	if (!us_combine_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_COMBINE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::combine_mw()
-{
-	us_combine_mw_proc = new QProcess(this);
-	us_combine_mw_proc->setCommunication(0);
-	us_combine_mw_proc->addArgument("us_combine_mw");
-	if (!us_combine_mw_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_COMBINE_MW\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::combine_cofs()
-{
-	us_combine_cofs_proc = new QProcess(this);
-	us_combine_cofs_proc->setCommunication(0);
-	us_combine_cofs_proc->addArgument("us_cofs_combine");
-	if (!us_combine_cofs_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_COFS_COMBINE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::combine_cofmw()
-{
-	us_combine_cofmw_proc = new QProcess(this);
-	us_combine_cofmw_proc->setCommunication(0);
-	us_combine_cofmw_proc->addArgument("us_cofmw_combine");
-	if (!us_combine_cofmw_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_COFMW_COMBINE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::combine_cofd()
-{
-	us_combine_cofd_proc = new QProcess(this);
-	us_combine_cofd_proc->setCommunication(0);
-	us_combine_cofd_proc->addArgument("us_cofd_combine");
-	if (!us_combine_cofd_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_COFD_COMBINE\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::create_global()
-{
-	us_create_global_proc = new QProcess(this);
-	us_create_global_proc->setCommunication(0);
-	us_create_global_proc->addArgument("us_create_global");
-	if (!us_create_global_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_CREATE_GLOBAL\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::diagnostics()
-{
-	us_diagnostics_proc = new QProcess(this);
-	us_diagnostics_proc->setCommunication(0);
-	us_diagnostics_proc->addArgument("us_diagnostics");
-	if (!us_diagnostics_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_DIAGNOSTICS\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::calc_hydro()
-{
-	us_buffer_proc = new QProcess(this);
-	us_buffer_proc->setCommunication(0);
-	us_buffer_proc->addArgument("us_buffer");
-	if (!us_buffer_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_BUFFER\n\n"
-						"Please check and try again..."));
-		return;
-	}
-}
-
-void UsWin::open_veloc()
-{
-	emit explain( tr("Dataset Information for Velocity Run...") );
-	dataset_i = new Data_Control_W(1);
-	dataset_i->load_data();
-	emit explain( " " );
-}
-
-void UsWin::open_equil()
-{
-	emit explain(tr("Dataset Information for Equilibrium Run...") );
-	dataset_i = new Data_Control_W(2);
-	dataset_i->load_data();
-	emit explain( " " );
-}
-
+/////////////////////////
 void UsWin::quit()
 {
 	close();
@@ -2555,13 +832,14 @@ void UsWin::about()
 {
 	QString ver = US_Version;
 #ifdef WIN32
-  ver = US_Version + WIN32Version;
+  ver += WIN32Version;
 #endif
 
 	emit explain( tr("About...") );
-	QMessageBox::message(
-			tr("About UltraScan..."),
-	tr("UltraScan II version " + ver + "\n"
+	
+	QMessageBox::information( this,
+		tr("About UltraScan..."),
+		tr("UltraScan II version " + ver + "\n"
 			REVISION "\n"
 			"Copyright 1989 - 2008\n"
 			"Borries Demeler and the University of Texas System\n\n"
@@ -2575,15 +853,17 @@ void UsWin::about()
 			"voice: (210) 567-6592\n"
 			"Fax:   (210) 567-6595\n"
 			"E-mail: demeler@biochem.uthscsa.edu"));
+	
 	emit explain( " " );
 }
 
 void UsWin::credits()
 {
 	emit explain( tr("UltraScan Credits...") );
-	QMessageBox::message(
-			tr("UltraScan Credits"),
-	tr("UltraScan II version " + US_Version + "\n"
+	
+	QMessageBox::information( this,
+		tr("UltraScan Credits"),
+		tr("UltraScan II version " + US_Version + "\n"
 			"Copyright 1998 - 2008\n"
 			"Borries Demeler and the University of Texas System\n\n"
 			" - Credits -\n\n"
@@ -2613,334 +893,151 @@ void UsWin::credits()
 			"   * Josh Wilson (initial USLIMS)\n"
 			"   * Dan Zollars (USLIMS and Database)\n\n"
 			"and many users who contributed bug fixes and feature suggestions."));
+
 	emit explain( " " );
 }
 
-void UsWin::help()
+void UsWin::data_control( int index )
 {
-	emit explain( tr("Loading Help...") );
-	US_Help *online_help; online_help = new US_Help(this);
-	online_help->show_help("manual/index.html");
+	if ( index < DS_COPY_VELOC  ||  index >= DS_END ) return;
+
+	index -= DS_COPY_VELOC;
+	emit explain ( dctrl[ index ].message );
+
+	Data_Control_W* dataset = new Data_Control_W( dctrl[ index ].parameter );
+	dataset->load_data();
+
 	emit explain( " " );
 }
 
-void UsWin::us_register()
+void  UsWin::display_help( int index )
 {
-	emit explain( tr("Loading Registration Information..." ));
-	US_Help *online_help; online_help = new US_Help(this);
-	online_help->show_URL("http://www.ultrascan.uthscsa.edu/register.html");
+	if ( index < HELP  || index >= HELP_END ) return;
+
+	index -= HELP;
+	emit explain( tr( "Loading " + h[ index ].loadMsg ) );
+
+	US_Help* online_help = new US_Help( this );
+
+	if ( h[ index ].type == PAGE )
+		online_help->show_help( h[ index ].url );
+	else
+		online_help->show_URL( "http://www.ultrascan.uthscsa.edu/" + h[ index ].url );
+
 	emit explain( " " );
 }
 
-void UsWin::us_home()
+void UsWin::launch( int index )
 {
-	emit explain( tr("Loading UltraScan Home Page..." ));
-	US_Help *online_help; online_help = new US_Help(this);
-	online_help->show_URL("http://www.ultrascan.uthscsa.edu/");
-	emit explain( " " );
+	if ( index < P_CONFIG  || index >= P_END ) return;
+	index -= P_CONFIG;
+
+	emit explain( tr( p[ index ].loadingMsg + "..." ) );
+
+	QProcess* process = new QProcess( this );
+	process->setCommunication( 0 );
+	process->addArgument( p[ index ].name );
+
+	if ( ! process->start() )
+	{	
+			QMessageBox::information( this,
+			tr( "Error" ),
+			tr( "There was a problem creating a subprocess\n"
+			    "for " ) + p[ index ].name.upper() );
+	}
+	else
+		p[ index ].process = process;
+
+	emit explain( "" );
 }
 
 void UsWin::export_V()
 {
-	emit explain( tr("Loading Function for Exporting Velocity Data...") );
-	export_veloc = new US_Export_Veloc();
-	export_veloc->setCaption(tr("Export Velocity Data"));
+	emit explain( tr( "Loading Function for Exporting Velocity Data..." ) );
+	
+	US_Export_Veloc* export_veloc = new US_Export_Veloc();
+	export_veloc->setCaption( tr( "Export Velocity Data" ) );
 	export_veloc->show();
+	
 	emit explain( " " );
 }
 
 void UsWin::export_E()
 {
-	emit explain( tr("Loading Function for Exporting Equilibrium Data...") );
-	export_equil = new US_Export_Equil();
-	export_equil->setCaption(tr("Export Equilibrium Data"));
+	emit explain( tr("Loading Function for Exporting Equilibrium Data..." ) );
+	
+	US_Export_Equil* export_equil = new US_Export_Equil();
+	export_equil->setCaption(tr( "Export Equilibrium Data" ) );
 	export_equil->show();
+	
 	emit explain( " " );
 }
 
 void UsWin::print_V()
 {
-	emit explain( tr("Loading Function for Printing Velocity Data...") );
-	print_veloc = new US_Print_Veloc();
-	print_veloc->setCaption(tr("Printing Velocity Data"));
+	emit explain( tr( "Loading Function for Printing Velocity Data..." ) );
+	
+	US_Print_Veloc* print_veloc = new US_Print_Veloc();
+	print_veloc->setCaption( tr( "Printing Velocity Data" ) );
 	print_veloc->show();
+	
 	emit explain( " " );
 }
 
 void UsWin::print_E()
 {
-	emit explain( tr("Loading Function for Printing Equilibrium Data...") );
-	print_equil = new US_Print_Equil();
-	print_equil->setCaption(tr("Printing Equilibrium Data"));
+	emit explain( tr( "Loading Function for Printing Equilibrium Data..." ) );
+	
+	US_Print_Equil* print_equil = new US_Print_Equil();
+	print_equil->setCaption( tr( "Printing Equilibrium Data" ) );
 	print_equil->show();
+
 	emit explain( " " );
 }
 
 void UsWin::report_V()
 {
-	emit explain( tr("Generating Report for Velocity Data..." ));
-	report_veloc = new US_Report_Veloc(true);
+	emit explain( tr( "Generating Report for Velocity Data..." ) );
+	
+	US_Report_Veloc* report = new US_Report_Veloc( true );
+	delete report; // Satisfy compiler warning
+	
 	emit explain( " " );
 }
 
 void UsWin::report_E()
 {
-	emit explain( tr("Generating Report for Equilibrium Data...") );
-	report_equil = new US_Report_Equil(true);
+	emit explain( tr( "Generating Report for Equilibrium Data..." ) );
+	
+	US_Report_Equil* report = new US_Report_Equil( true );
+	delete report; // Satisfy compiler warning
+	
 	emit explain( " " );
 }
 
 void UsWin::report_EP()
 {
-	emit explain( tr("Generating Report for Equilibrium Data...") );
-	report_equilproject = new US_Report_EquilProject(true);
+	emit explain( tr( "Generating Report for Equilibrium Data..." ) );
+	
+	US_Report_EquilProject* report = new US_Report_EquilProject( true );
+	delete report; // Satisfy compiler warning
+	
 	emit explain( " " );
 }
 
 void UsWin::report_MC()
 {
-	emit explain( tr("Generating Report for Monte Carlo Analysis...") );
-	report_montecarlo = new US_Report_MonteCarlo(true);
-	emit explain( " " );
-}
-/*
-void UsWin::publish()
-{
-emit explain( tr("Publishing Materials and Methods section...") );
-publish_dialog = new US_Publish(0, "");
-publish_dialog->show();
-emit explain( " " );
-}
-*/
-void UsWin::us_upgrade()
-{
-	emit explain( tr("Loading Upgrade Information...") );
-	US_Help *online_help; online_help = new US_Help(this);
-	online_help->show_URL("http://www.ultrascan.uthscsa.edu/download.html");
+	emit explain( tr( "Generating Report for Monte Carlo Analysis..." ) );
+	
+	US_Report_MonteCarlo* report = new US_Report_MonteCarlo( true );
+	delete report; // Satisfy compiler warning
+	
 	emit explain( " " );
 }
 
-void UsWin::us_license()
+void UsWin::resizeEvent( QResizeEvent* e )
 {
-	emit explain( tr("Loading License Information...") );
-	US_Help *online_help; online_help = new US_Help(this);
-	online_help->show_URL("http://www.ultrascan.uthscsa.edu/license.html");
-	emit explain( " " );
+	QRect r( 0, 0, e->size().width(), e->size().height() );
+	bigframe->setGeometry( 2, 36,              r.width() - 4, r.height() - 66 );
+	stat_bar->setGeometry( 2, r.height() - 28, r.width() - 4, 26);
 }
-
-void UsWin::ga_initialize1()
-{
-	emit explain( tr("Loading Genetic Algorithm Module for GA initialization from 2DSA distribution...") );
-
-	us_gainit1_proc = new QProcess(this);
-	us_gainit1_proc->setCommunication(0);
-	us_gainit1_proc->addArgument("us_gainit");
-	if (!us_gainit1_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_GAINIT\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::ga_initialize2()
-{
-	emit explain( tr("Loading Genetic Algorithm Module for GA initialization from a nonlinear model...") );
-
-	us_gainit2_proc = new QProcess(this);
-	us_gainit2_proc->setCommunication(0);
-	us_gainit2_proc->addArgument("us_ga_model_editor");
-	if (!us_gainit2_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_GA_MODEL_EDITOR\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::config()
-{
-	emit explain( tr("Loading Configuration..." ));
-
-	us_config_proc = new QProcess(this);
-	us_config_proc->setCommunication(0);
-	us_config_proc->addArgument("us_config");
-
-	if (!us_config_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_CONFIG\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::admin()
-{
-	emit explain( tr("Loading Administrator..." ));
-
-	us_admin_proc = new QProcess(this);
-	us_admin_proc->setCommunication(0);
-	us_admin_proc->addArgument("us_admin");
-
-	if (!us_admin_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_ADMIN\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-
-}
-void UsWin::calc_extinction()
-{
-	emit explain( tr("Loading Extinction Coefficient Calculator...") );
-
-	us_extinction_proc = new QProcess(this);
-	us_extinction_proc->setCommunication(0);
-	us_extinction_proc->addArgument("us_extinction");
-
-	if (!us_extinction_proc->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem creating a sub process\n"
-				"for US_EXTINCTION\n\n"
-						"Please check and try again..."));
-		return;
-	}
-	emit explain( " " );
-}
-
-void UsWin::config_check()
-{
-	USglobal = new US_Config();
-	if (!USglobal->read())
-	{
-		delete USglobal;
-		USglobal = new US_Config();
-		USglobal->config_list.fontFamily = "Helvetica";
-		USglobal->config_list.fontSize = 10;
-		config();
-	}
-}
-
-void UsWin::resizeEvent(QResizeEvent *e)
-{
-	QRect r(0, 0, e->size().width(), e->size().height());
-	bigframe->setGeometry(2, 36, r.width()-4, r.height()-66);
-	stat_bar->setGeometry(2, r.height()-28, r.width()-4, 26);
-}
-
-void UsWin::errorMessage(QString str1, QString str2)
-{
-	QMessageBox::warning(this, str1, str2, QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-}
-/*
-US_Publish::US_Publish(QWidget *parent, const char *name) : QDialog( parent, name, TRUE )
-{
-int xpos = 2, ypos = 2, buttonw = 150, spacing = 2;
-QString str;
-US_Config *USglobal;
-USglobal = new US_Config();
-setPalette( QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame) );
-
-QLabel *journal_lbl;
-journal_lbl = new QLabel(tr("Please pick a Journal:"), this);
-journal_lbl->setAlignment(AlignCenter|AlignVCenter);
-journal_lbl->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-journal_lbl->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-journal_lbl->setGeometry(xpos, ypos, 2 * buttonw + spacing, 26);
-
-ypos += 31;
-
-QListBox *journal_lb;
-journal_lb = new QListBox(this, "Model");
-journal_lb->insertItem( str.sprintf(tr("Science")) );
-journal_lb->insertItem( str.sprintf(tr("Nature")) );
-journal_lb->insertItem( str.sprintf(tr("Cell")) );
-journal_lb->insertItem( str.sprintf(tr("Biochemistry")) );
-journal_lb->insertItem( str.sprintf(tr("Biophysical Journal")) );
-journal_lb->insertItem( str.sprintf(tr("JBC")) );
-journal_lb->insertItem( str.sprintf(tr("PNAS")) );
-journal_lb->insertItem( str.sprintf(tr("Analytical Biochemistry")) );
-journal_lb->insertItem( str.sprintf(tr("Biopolymers")) );
-journal_lb->setGeometry(xpos, ypos, 2 * buttonw + spacing, 75);
-journal_lb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-journal_lb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-
-ypos+=80;
-
-review_pb = new QPushButton(tr("Review Publication"),this);
-review_pb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-review_pb->setAutoDefault(false);
-review_pb->setGeometry(xpos, ypos, buttonw, 26);
-review_pb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-
-xpos+=buttonw + 2;
-
-publish_pb = new QPushButton(tr("Submit Publication"),this);
-publish_pb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-publish_pb->setAutoDefault(false);
-publish_pb->setGeometry(xpos, ypos, buttonw, 26);
-publish_pb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-
-ypos +=28;
-xpos = 2;
-
-help = new QPushButton( tr("Help"), this );
-help->setGeometry(xpos, ypos, buttonw, 26);
-help->setAutoDefault(false);
-help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-
-xpos+=buttonw + 2;
-
-cancel = new QPushButton( tr("Cancel"), this );
-cancel->setGeometry(xpos, ypos, buttonw, 26);
-cancel->setAutoDefault(false);
-cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-connect(cancel, SIGNAL(clicked()), SLOT(reject()) );
-
-ypos +=28;
-xpos = 2;
-
-ok = new QPushButton( tr("Advanced..."), this );
-ok->setGeometry(xpos, ypos, buttonw, 26);
-ok->setAutoDefault(false);
-ok->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-ok->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-connect(ok, SIGNAL(clicked()), SLOT(advanced()) );
-
-
-global_Xpos += 30;
-global_Ypos += 30;
-
-move(global_Xpos, global_Ypos);
-}
-
-US_Publish::~US_Publish()
-{
-}
-
-void US_Publish::advanced()
-{
-QMessageBox *msge;
-msge = new QMessageBox();
-USglobal = new US_Config();
-msge->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 5, QFont::Bold));
-msge->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-msge->setText("\n        Argue with Reviewers...\n    ");
-msge->setGeometry(10,10,300, 150);
-//  msge->setAutoDefault(false);
-msge->show();
-msge->raise();
-}
-*/
-
-

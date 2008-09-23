@@ -123,3 +123,32 @@ QCheckBox* US_Widgets::checkbox( const QString& text, bool flag )
 	cb->setChecked( flag );
 	return cb;
 }
+
+// popup menu
+
+QPopupMenu* US_Widgets::popupmenu ( int fontAdjust )
+{
+	QPopupMenu* pu = new QPopupMenu;
+	
+	pu->setFont(
+			QFont( USglobal->config_list.fontFamily, 
+				     USglobal->config_list.fontSize + fontAdjust ) );
+
+	return pu;
+}
+
+// Menu bar
+QMenuBar* US_Widgets::menubar( int fontAdjust, int fontWeight )
+{
+	QMenuBar* mb = new QMenuBar( this );
+
+	mb->setFont( 
+			QFont( USglobal->config_list.fontFamily, 
+				     USglobal->config_list.fontSize + fontAdjust, 
+						 fontWeight ) );
+
+	return mb;
+}
+
+
+
