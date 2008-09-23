@@ -48,6 +48,7 @@ struct PDB_atom
         int chain;                        // 0 = main, 1 = side
         int org_chain;                    // 0 = main, 1 = side
         float bead_asa;
+        float ref_asa;			  // reference asa from the residue table
         int exposed_code;                 // 1 exposed, 6 side chain buried, 10 main chain buried
         bool bead_positioner;             // true if an atom had a bead positioner
         float mw;
@@ -60,7 +61,8 @@ struct PDB_atom
         point normalized_ot;              // the ot
 	unsigned int bead_hydration;
 	unsigned int bead_color;
-        float bead_ref_volume;            // this is taken from the bead structure
+        float bead_ref_volume;            // this is taken from the bead structure+hydration
+        float bead_ref_volume_unhydrated; // this is taken from the bead structure
         float bead_ref_mw;                // ditto
         float bead_computed_radius;       // from ref_volume
         float bead_actual_radius;         // used for radial reduction % computation, does not get reduced

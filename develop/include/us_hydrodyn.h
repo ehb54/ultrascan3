@@ -84,6 +84,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QString project;	// name of the current project - derived from the prefix of the pdb filename
 		double overlap_tolerance;
 
+		point last_molecular_cog;
+
 		US_Config *USglobal;
 
 		QLabel *lbl_info;
@@ -185,6 +187,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void update_bead_model_file(const QString &);
 		void calc_hydro();
 		void show_hydro_results();
+		void write_bead_asa(QString, vector <PDB_atom> *);
 		void write_bead_tsv(QString, vector <PDB_atom> *);
 		void write_bead_ebf(QString, vector <PDB_atom> *);
 		void write_bead_spt(QString, vector <PDB_atom> *, bool loaded_bead_model = false);

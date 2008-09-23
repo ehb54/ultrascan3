@@ -12,7 +12,7 @@
 #ifndef WIN32
 	// #define DEBUG
         #include <unistd.h>
-	#define DEBUG1
+        // #define DEBUG1
 	#define TIMING
 
 	#if defined(TIMING)
@@ -833,7 +833,7 @@ int US_Hydrodyn::compute_asa()
 	    no_of_atoms +=  model_vector[current_model].molecule[i].atom.size();
 	  }
 
-	  editor->append(QString("There are %1 atoms in %2 molecule(s) in this model\n").arg(no_of_atoms).arg(no_of_molecules));
+	  editor->append(QString("There are %1 atoms in %2 chain(s) in this model\n").arg(no_of_atoms).arg(no_of_molecules));
 	}
 	editor->append("Computing ASA\n");
 
@@ -909,7 +909,7 @@ int US_Hydrodyn::compute_asa()
     for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
 	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-        printf("p1 i j k %d %d %d %lx %s\n", i, j, k, (long unsigned int)this_atom->p_atom, this_atom->active ? "active" : "not active"); fflush(stdout);
+        // printf("p1 i j k %d %d %d %lx %s\n", i, j, k, (long unsigned int)this_atom->p_atom, this_atom->active ? "active" : "not active"); fflush(stdout);
 
 	//	this_atom->bead_assignment =
 	//	  (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
@@ -1160,6 +1160,10 @@ int US_Hydrodyn::compute_asa()
     printf("ERROR: this molecule has zero mw!\n");
   }
 
+  for (unsigned int m = 0; m < 3; m++) {
+    last_molecular_cog.axis[m] = molecular_cog[m];
+  }
+
   progress->setProgress(ppos++); // 4
   qApp->processEvents();
 
@@ -1245,7 +1249,8 @@ int US_Hydrodyn::compute_asa()
 		   this_atom->serial,
 		   this_atom->placing_method); fflush(stdout);
 #endif
-	    this_atom->bead_ref_volume += 24.041 * this_atom->bead_hydration;
+	    this_atom->bead_ref_volume_unhydrated = this_atom->bead_ref_volume;
+	    this_atom->bead_ref_volume += misc.hydrovol * this_atom->bead_hydration;
 	    this_atom->bead_computed_radius = pow(3 * this_atom->bead_ref_volume / (4.0*M_PI), 1.0/3);
 	}
       }
@@ -1450,7 +1455,7 @@ int US_Hydrodyn::compute_asa()
 #endif
   // build vector of beads
   bead_model.clear();
-#define DEBUG_MOD
+  // #define DEBUG_MOD
 #if defined(DEBUG_MOD)
   vector<PDB_atom> dbg_model;
 #endif
@@ -1473,6 +1478,10 @@ int US_Hydrodyn::compute_asa()
       }
     }
   }
+  write_bead_asa(USglobal->config_list.result_dir + SLASH + 
+		 project + QString("_%1").arg(current_model + 1) + 
+		 ".somo.asa", &bead_model);
+  
 #if defined(DEBUG_MOD)
   write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + "bead_model_debug.somo.tsv", &dbg_model);
 #endif
@@ -2026,12 +2035,14 @@ int US_Hydrodyn::compute_asa()
 		  if (radius_delta > bead_model[use_bead].bead_computed_radius) {
 		    radius_delta = bead_model[use_bead].bead_computed_radius;
 		  }
+#if defined(DEBUG2)
 		  printf("use bead %d no outward translation is required, one bead to shrink, radius delta %f  cr %f %f\n",
 			 use_bead,
 			 radius_delta,
 			 bead_model[use_bead].bead_computed_radius,
 			 bead_model[use_bead].bead_computed_radius - radius_delta
 			 );
+#endif
 		  bead_model[use_bead].bead_computed_radius -= radius_delta;
 		  if (bead_model[use_bead].bead_computed_radius <= 0) {
 		    // this is to ignore this bead for further radial reduction regardless
@@ -2098,7 +2109,9 @@ int US_Hydrodyn::compute_asa()
 		// no outward translation is required for either bead
 		// are we shrinking just 1 bead ... if we are dealing with buried beads, then
 		// only buried beads should be shrunk, not exposed beads
+#if defined(DEBUG2)
 		printf("no outward translation is required\n");
+#endif
 		if(methods[k] & RR_BURIED &&
 		   bead_model[max_bead1].exposed_code == 1 &&
 		   bead_model[max_bead2].exposed_code == 1) {
@@ -2141,12 +2154,14 @@ int US_Hydrodyn::compute_asa()
 		  if (radius_delta > bead_model[use_bead].bead_computed_radius) {
 		    radius_delta = bead_model[use_bead].bead_computed_radius;
 		  }
+#if defined(DEBUG2)
 		  printf("use bead %d no outward translation is required, one bead to shrink, radius delta %f  cr %f %f\n",
 			 use_bead,
 			 radius_delta,
 			 bead_model[use_bead].bead_computed_radius,
 			 bead_model[use_bead].bead_computed_radius - radius_delta
 			 );
+#endif
 		  bead_model[use_bead].bead_computed_radius -= radius_delta;
 		  if (bead_model[use_bead].bead_computed_radius <= 0) {
 		    // this is to ignore this bead for further radial reduction regardless
@@ -2156,7 +2171,9 @@ int US_Hydrodyn::compute_asa()
 		} else {
 		  // two beads to shrink
 		  int use_bead = max_bead1;
+#if defined(DEBUG2)
 		  printf("use bead %d no outward translation is required\n", use_bead);
+#endif
 		  reduced[use_bead] = true;
 		  reduced_any[use_bead] = true;
 		  radius_delta =
@@ -2167,6 +2184,7 @@ int US_Hydrodyn::compute_asa()
 		    // bead_model[use_bead].bead_actual_radius * rr_overlap[k];
 		    max_intersection_length * bead_model[max_bead2].bead_computed_radius /
 		    (bead_model[max_bead1].bead_computed_radius + bead_model[max_bead2].bead_computed_radius);
+#if defined(DEBUG2)
 		  printf("intersection len %f recomputed %f radius delta %f r1 %f r2 %f\n",
 			 max_intersection_length,
 			 bead_model[max_bead1].bead_computed_radius +
@@ -2182,6 +2200,7 @@ int US_Hydrodyn::compute_asa()
 			 bead_model[max_bead1].bead_computed_radius,
 			 bead_model[max_bead2].bead_computed_radius
 			 );
+#endif
 		  if (radius_delta > bead_model[use_bead].bead_computed_radius) {
 		    radius_delta = bead_model[use_bead].bead_computed_radius;
 		  }
@@ -2192,6 +2211,7 @@ int US_Hydrodyn::compute_asa()
 		    reduced[use_bead] = false;
 		  }
 
+#if defined(DEBUG2)
 		  printf("intersection len %f recomputed %f radius delta %f r1 %f r2 %f\n",
 			 max_intersection_length,
 			 bead_model[max_bead1].bead_computed_radius +
@@ -2207,7 +2227,7 @@ int US_Hydrodyn::compute_asa()
 			 bead_model[max_bead1].bead_computed_radius,
 			 bead_model[max_bead2].bead_computed_radius
 			 );
-
+#endif
 		  use_bead = max_bead2;
 		  reduced[use_bead] = true;
 		  reduced_any[use_bead] = true;
@@ -2223,6 +2243,7 @@ int US_Hydrodyn::compute_asa()
 		  }
 		}
 	      }
+#if defined(DEBUG2)
 	      printf("b1r %f b2r %f current separation %f\n",
 		     bead_model[max_bead1].bead_computed_radius,
 		     bead_model[max_bead2].bead_computed_radius,
@@ -2258,6 +2279,7 @@ int US_Hydrodyn::compute_asa()
 			       bead_model[max_bead2].bead_coordinate.axis[1], 2) +
 			   pow(bead_model[max_bead1].bead_coordinate.axis[2] -
 			       bead_model[max_bead2].bead_coordinate.axis[2], 2)) > TOLERANCE) ? "Y" : "N");
+#endif
 	    } while (
 		     bead_model[max_bead1].bead_computed_radius > TOLERANCE &&
 		     bead_model[max_bead2].bead_computed_radius > TOLERANCE &&
@@ -2270,10 +2292,14 @@ int US_Hydrodyn::compute_asa()
 			       bead_model[max_bead2].bead_coordinate.axis[1], 2) +
 			   pow(bead_model[max_bead1].bead_coordinate.axis[2] -
 			       bead_model[max_bead2].bead_coordinate.axis[2], 2)) > TOLERANCE));
+#if defined(DEBUG2)
 	    printf("out of while 1\n");
+#endif
 	  } // if max intersection length > TOLERANCE
 	} while(count);
+#if defined(DEBUG2)
 	printf("out of while 2\n");
+#endif
       } else {
 	// simultaneous reduction
 	do {
@@ -2649,7 +2675,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
       "violet",       // 13 violet
       "yellow",       // 14 yellow
     };
-#define DEBUG
+  // #define DEBUG
 #if defined(DEBUG)
   printf("write bead spt %s\n", fname.ascii()); fflush(stdout);
 #endif
@@ -2854,6 +2880,68 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
 	    );
     }
   }
+  fclose(f);
+}
+
+void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
+  FILE *f = fopen(fname.ascii(), "w");
+  fprintf(f, " N.	   Res.       ASA\n");
+
+  float total_asa = 0.0;
+  float total_vol = 0.0;
+  float total_mass = 0.0;
+
+  QString last_residue = "";
+  int seqno = 0;
+  float residue_asa = 0;
+
+  for (unsigned int i = 0; i < model->size(); i++) {
+    if ((*model)[i].active) {
+      total_asa += (*model)[i].bead_asa;
+      total_mass += (*model)[i].bead_mw;
+      total_vol += (*model)[i].bead_ref_volume_unhydrated;
+	
+      QString residue = 
+	(*model)[i].resName + "_" +
+	((*model)[i].chainID == " " ? "_" : (*model)[i].chainID) + 
+	QString("_%1").arg((*model)[i].resSeq);
+      if (residue != last_residue) {
+	if (last_residue != "") {
+	  fprintf(f,
+		  " [ %-6d %s ]\t%.0f\n",
+		  seqno, last_residue.ascii(), residue_asa);
+	}
+	residue_asa = 0;
+	last_residue = residue;
+	seqno++;
+      }
+      residue_asa += (*model)[i].bead_asa;
+    }
+  }
+  if (last_residue != "") {
+    fprintf(f,
+	    " [ %-6d %s ]\t%.0f\n",
+	    seqno, last_residue.ascii(), residue_asa);
+  }
+
+  fprintf(f,
+	  "\n\n\n"
+	  "\tTOTAL ASA OF THE MOLECULE    = %.0f\t[A^2] (Threshold used: %.1f A^2]\n"
+	  "\tTOTAL VOLUME OF THE MOLECULE = %-.2f\t[A^3]\n"
+	  //	  "\tRADIUS OF GYRATION (+r) =  %-.2f\t[A]\n"
+	  //	  "\tRADIUS OF GYRATION (-r) =  %-.2f	[A]\n"
+	  "\tMASS OF THE MOLECULE    =  %.0f	[Da]\n"
+	  "\tCENTRE OF MASS          =  %.4f %.4f %.4f [A]\n"
+	  ,
+	  total_asa,
+	  asa.threshold,
+	  total_vol,
+	  // 0.0,
+	  // 0.0,
+	  total_mass,
+	  last_molecular_cog.axis[0], last_molecular_cog.axis[1], last_molecular_cog.axis[2]
+	  );
+
   fclose(f);
 }
 
@@ -3377,7 +3465,7 @@ void US_Hydrodyn::load_pdb()
 
 void US_Hydrodyn::load_bead_model()
 {
-	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo.bead_model *.SOMO.BEAD_MODEL", this);
+	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo.bead_model *.SOMO.BEAD_MODEL *.somo.beams *.SOMO.BEAMS", this);
 	if (!filename.isEmpty())
 	{
 		pb_somo->setEnabled(false);
@@ -3508,16 +3596,21 @@ int US_Hydrodyn::read_bead_model(QString filename)
 	lb_model->clear();
 	lbl_pdb_file->setText(tr(" not selected "));
 	project = filename;
-	project.replace(QRegExp(".*(/|\\\\)"), "");
-	project.replace(QRegExp("\\.(somo|SOMO)\\.(bead_model|BEAD_MODEL)$"), "");
-        editor->setText("\n\nLoading bead model " + project + "\n");
+	//	project.replace(QRegExp(".*(/|\\\\)"), "");
+	//	project.replace(QRegExp("\\.(somo|SOMO)\\.(bead_model|BEAD_MODEL)$"), "");
+	project = QFileInfo(QFileInfo(filename).fileName()).baseName();
+	QString ftype = QFileInfo(filename).extension(false).lower();
+        editor->setText("\n\nLoading bead model " + project + " of type " + ftype + "\n");
 	bead_model.clear();
 	PDB_atom tmp_atom;
 	QFile f(filename);
 	int bead_count;
 	int linepos = 0;
-	if (f.open(IO_ReadOnly))
+
+	if (ftype == "bead_model") 
 	{
+	  if (f.open(IO_ReadOnly))
+	  {
 		QTextStream ts(&f);
 		if (!ts.atEnd()) {
 		  ts >> bead_count;
@@ -3589,7 +3682,99 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		editor->append("Bead model loaded\n\n");
 		write_bead_spt(USglobal->config_list.result_dir + SLASH + project + ".somo", &bead_model, true);
 		return 0;
+	  }
 	}
+
+	if (ftype == "beams") 
+	{
+	  if (f.open(IO_ReadOnly))
+	  {
+		QTextStream ts(&f);
+		if (!ts.atEnd()) {
+		  ts >> bead_count;
+		} else {
+		  editor->append("Error in line 1!\n");
+		  return 1;
+		}
+		if (!ts.atEnd()) {
+		  ts >> results.vbar;
+		} else {
+		  editor->append("Error in line 1!\n");
+		  return 1;
+		}
+		QString rmcfile;
+		if (!ts.atEnd()) {
+		  ts >> rmcfile;
+		} else {
+		  editor->append("Error in line 1!\n");
+		  return 1;
+		}
+		if (results.vbar == -2) 
+		{
+		  if (!ts.atEnd()) {
+		    ts >> results.vbar;
+		  } else {
+		    editor->append("Error in line 1!\n");
+		    return 1;
+		  }
+		}
+		QFile frmc(QFileInfo(filename).dirPath() + SLASH + rmcfile);
+		if (frmc.open(IO_ReadOnly))
+		{
+		  QTextStream tsrmc(&frmc);
+
+		  editor->append(QString("Beads %1\n").arg(bead_count));
+		  while (!tsrmc.atEnd() && !ts.atEnd() && linepos < bead_count)
+		  {
+		    ++linepos;
+		    for (unsigned int i = 0; i < 3; i++)
+		    {
+		      if (!ts.atEnd()) {
+			ts >>  tmp_atom.bead_coordinate.axis[i];
+		      } else {
+			editor->append(QString("\nError in line %1!\n").arg(linepos));
+			return linepos;
+		      }
+		    }
+		    if (!tsrmc.atEnd()) {
+		      tsrmc >>  tmp_atom.bead_computed_radius;
+		    } else {
+		      editor->append(QString("\nError in line %1!\n").arg(linepos));
+		      return linepos;
+		    }
+		    if (!tsrmc.atEnd()) {
+		      tsrmc >>  tmp_atom.bead_mw;
+		    } else {
+		      editor->append(QString("\nError in line %1!\n").arg(linepos));
+		      return linepos;
+		    }
+		    if (!tsrmc.atEnd()) {
+		      tsrmc >>  tmp_atom.bead_color;
+		    } else {
+		      editor->append(QString("\nError in line %1!\n").arg(linepos));
+		      return linepos;
+		    }
+		    tmp_atom.serial = linepos;
+		    tmp_atom.exposed_code = 1;
+		    tmp_atom.all_beads.clear();
+		    tmp_atom.active = true;
+		    bead_model.push_back(tmp_atom);
+		  }
+		  frmc.close();
+		}
+		f.close();
+		if (bead_count != (int)bead_model.size())
+		{
+		  editor->append(QString("Error: bead count %1 does not match # of beads read from file (%2) \n").arg(bead_count).arg(bead_model.size()));
+		  return -1;
+		}
+		bead_model_from_file = true;
+		editor->append("Bead model loaded\n\n");
+		write_bead_spt(USglobal->config_list.result_dir + SLASH + project + ".somo", &bead_model, true);
+		return 0;
+	  }
+	}
+	
 	editor->append("File read error\n");
 	return -2;
 }

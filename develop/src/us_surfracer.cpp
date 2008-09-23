@@ -1029,8 +1029,10 @@ buildcycles(int natom, int cycles[][MAXCYCLES], int common[][MAXCYCLES], int *nv
     dbg("bc5.6");
 	    j++;
     dbg("bc6");
+    //    printf("v1 = %d\n", v1); fflush(stdout);
 	}
 	while (j < MAXCYCLES  && 
+	       v1 >= 0 &&
 	       verte[v1] != -1 &&
 	       (fabs(ver[verte[v1] * 3] - v00[0]) >= 1.e-6
 		|| fabs(ver[verte[v1] * 3 + 1] - v00[1]) >= 1.e-6 || 
@@ -1248,6 +1250,7 @@ free_alloced(void)
 	free(curvat);
 	curvat = (float *) 0;
     }
+
     if (visits)
     {
 	free(visits);
@@ -1606,6 +1609,7 @@ surfracer_main(QString *error_string,
 			this_atom->bead_color =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].color;
 			this_atom->bead_ref_volume =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].volume;
 			this_atom->bead_ref_mw =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].mw;
+			this_atom->ref_asa =  this_atom->p_residue->asa;
 			this_atom->bead_computed_radius =  pow(3 * this_atom->bead_ref_volume / (4.0*M_PI), 1.0/3);
 			//  printf("radius %f\n", residue_list[respos].r_atom[atompos].hybrid.radius);
 #if defined(DEBUG)
@@ -1727,7 +1731,7 @@ surfracer_main(QString *error_string,
 	    - active_atoms[i]->bead_computed_radius 
 	    - active_atoms[j]->bead_computed_radius;
 	}	
-	if (separation < prober * 2)
+	if (separation < prober )
 	{
 	  if (!active_atoms[i]->group &&
 	      !active_atoms[j]->group) {
@@ -2527,7 +2531,9 @@ surfracer_main(QString *error_string,
     managedge(atom0, cycles, common, hits, nhits, nvincyc);	/*edge array management */
 
     dbg("5");
-    /* printf("\nProbe rolled over atom %d",atom0+1);    *//*line used in debugging */
+#if defined PDEBUG
+    printf("\nProbe rolled over atom %d\n",atom0+1);    /*line used in debugging */
+#endif
 
 /*surface calculation of the rest of the molecule*/
     while (1)
@@ -2549,7 +2555,10 @@ surfracer_main(QString *error_string,
 	    break;
 	}
 	else			/*perform calculation for the next atom */
-	{			/* printf("\nProbe rolled over atom %d",edgeatom[i]);  *//* line used in debugging */
+	{		
+#if defined PDEBUG
+	printf("\nProbe rolled over atom %d\n",edgeatom[i]); /* line used in debugging */
+#endif
 
     dbg("5.4");
 	    /*  if(edgeatom[i]==23066)
@@ -2582,6 +2591,9 @@ surfracer_main(QString *error_string,
     dbg("5.12");
 	    visits[edgeatom[i]]++;
 	    managedge(edgeatom[i], cycles, common, hits, nhits, nvincyc);	/*edge array management */
+#if defined PDEBUG
+	    printf("asa atom: %d aarea[%d]=%f\n", edgeatom[i], edgeatom[i], aarea[edgeatom[i]]); fflush(stdout);
+#endif
     dbg("5.13");	
 	}
     }
@@ -2590,7 +2602,7 @@ surfracer_main(QString *error_string,
 
     dbg("6");
     // puts("us_surfracer 1");
-    fflush(stdout);
+    // fflush(stdout);
     FILE *aafile;
     if (!recheck) {
       aafile = fopen("bead_model.asa", "a");
@@ -2601,7 +2613,7 @@ surfracer_main(QString *error_string,
     fprintf(aafile, "atom group %d\n", atom_group);
 
     // puts("us_surfracer 2");
-    fflush(stdout);
+    // fflush(stdout);
     for (i = 0; i < atomnumber; i++)
     {
       //	active_atoms[i]->asa = aarea[i];
@@ -2609,11 +2621,11 @@ surfracer_main(QString *error_string,
 	fprintf(aafile, "atom %d %f %f %f %f %f\n", i + 1, a[i * 3], a[i * 3 + 1], a[i * 3 + 2], ar[i] - prober, aarea[i]);
     }
     fclose(aafile);
-    //puts("us_surfracer 3");
-    fflush(stdout);
+    // puts("us_surfracer 3");
+    // fflush(stdout);
     free_alloced();
-    //puts("us_surfracer 4");
-    fflush(stdout);
+    // puts("us_surfracer 4");
+    // fflush(stdout);
       }
     }
     return (0);

@@ -1839,8 +1839,8 @@ stampa_ris()
 	printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] (20C,w)");
     }
     printf("\n%s\t%.2f\t%s\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] (20C,w)");
-    supc_results->tau = taom * pow(fconv, 3.0f);
     printf("%s\t%.2f\t%s\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] (20C,w) \n");
+    supc_results->tau = taoh * 1.0E+09 * pow(fconv, 3.0f);
 
     printf("\n%s", "- MAX EXTENSIONS:");
     printf("\n%s%.2f%s%s%.2f%s%s%.2f%s\n", "[X axis] = ", (maxx * fconv), " [nm];  ", "[Y axis] = ", (maxy * fconv), " [nm];  ",
