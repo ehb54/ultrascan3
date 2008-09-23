@@ -2,6 +2,7 @@
 #include <qtextstream.h>
 #include "../include/us_win.h"
 #include "../include/us_register.h"
+#include "../include/us_write_config.h"
 
 // Helper class used only here
 // The purpose is to ensure the usrc.conf or the depricated $HOME/.usrc exists
