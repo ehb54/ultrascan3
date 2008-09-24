@@ -375,10 +375,10 @@ namespace us_win_data
 	} dctrl [] =
   {
 		{ DS_COPY_VELOC, 11, "Copying Edited Velocity Data to a new Name..."    },
-		{ DS_NOISE,      31, "Subtracting Time invariant and Radially Invariant "
-			                   "Noise from Edited Velocity Data..."               },
-		{ DS_MENISCUS,   32, "Update Meniscus for Edited Velocity Data..."      },
 		{ DS_COPY_EQUIL, 12, "Copying Edited Equilibrium Data to a new Name..." },
+		{ DS_NOISE,      31, "Subtracting Time invariant and Radially Invariant "
+		                     "Noise from Edited Velocity Data..."               },
+		{ DS_MENISCUS,   32, "Update Meniscus for Edited Velocity Data..."      },
 		{ DS_VELOC_ID,    9, "Editing Cell Id's for Velocity Data..."           },
 		{ DS_EQUIL_ID,   10, "Editing Cell Id's for Equilibrium Data..."        },
 		{ DS_VELOC,       1, "Dataset Information for Velocity Run..."          },
