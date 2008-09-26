@@ -1695,7 +1695,7 @@ surfracer_main(QString *error_string,
     }
 #endif
 
-    editor->append("Finding spacial groups\n");
+    editor->append("Finding spatial groups\n");
     qApp->processEvents();
     int next_group = 1;
     for (unsigned int i = 0; i < active_atoms.size(); i++) {

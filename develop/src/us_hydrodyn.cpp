@@ -2885,19 +2885,22 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
 
 void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
   FILE *f = fopen(fname.ascii(), "w");
-  fprintf(f, " N.	   Res.       ASA\n");
+  fprintf(f, " N.	   Res.       ASA        MAX ASA\n");
 
   float total_asa = 0.0;
+  float total_ref_asa = 0.0;
   float total_vol = 0.0;
   float total_mass = 0.0;
 
   QString last_residue = "";
   int seqno = 0;
   float residue_asa = 0;
+  float residue_ref_asa = 0;
 
   for (unsigned int i = 0; i < model->size(); i++) {
     if ((*model)[i].active) {
       total_asa += (*model)[i].bead_asa;
+      total_ref_asa += (*model)[i].ref_asa;
       total_mass += (*model)[i].bead_mw;
       total_vol += (*model)[i].bead_ref_volume_unhydrated;
 	
@@ -2908,20 +2911,22 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
       if (residue != last_residue) {
 	if (last_residue != "") {
 	  fprintf(f,
-		  " [ %-6d %s ]\t%.0f\n",
-		  seqno, last_residue.ascii(), residue_asa);
+		  " [ %-6d %s ]\t%.0f\t%.0f\n",
+		  seqno, last_residue.ascii(), residue_asa, residue_ref_asa);
 	}
 	residue_asa = 0;
+	residue_ref_asa = 0;
 	last_residue = residue;
 	seqno++;
       }
       residue_asa += (*model)[i].bead_asa;
+      residue_ref_asa = (*model)[i].ref_asa;
     }
   }
   if (last_residue != "") {
     fprintf(f,
-	    " [ %-6d %s ]\t%.0f\n",
-	    seqno, last_residue.ascii(), residue_asa);
+	    " [ %-6d %s ]\t%.0f\t%.0f\n",
+	    seqno, last_residue.ascii(), residue_asa, residue_ref_asa);
   }
 
   fprintf(f,
