@@ -14,7 +14,7 @@
 
 namespace us_win_data
 {
-	enum 
+	enum
 	{
 		P_CONFIG = 300, P_ADMIN ,
 		P_VELOC_ABSORB, P_VELOC_INTERF, P_VELOC_FLUOR,
@@ -23,7 +23,7 @@ namespace us_win_data
 
 		P_VHW_ENH,      P_FEMATCH,      P_FEMATCH_RA,   P_GAINIT1, P_GAINIT2,
 		P_FEDUD,        P_SECM,         P_DCDT,         P_DCDR,    P_COFS,
-		
+
 		P_PREDICT,      P_EQTIME,       P_GFIT,         P_LNC,
 
 		P_EXTINCT,      P_SPECTRUM,
@@ -36,7 +36,7 @@ namespace us_win_data
 		P_DIAG,         P_NUCL_DB,      P_CALC_HYDRO,   P_VBAR_DB,
 		P_DMA60,        P_COLORG,       /* P_EXTINCT again */
 
-		P_ASTFEM,       P_EQULILSIM,    P_EQUILTIMESIM, P_SASSOC, 
+		P_ASTFEM,       P_EQULILSIM,    P_EQUILTIMESIM, P_SASSOC,
 		P_MODEL1,       P_MODEL2,       P_HYDRODYN,
 
 		P_DB_VELOC,     P_DB_EQUIL,     P_DB_EQUILP,    P_DB_MC,
@@ -56,297 +56,297 @@ namespace us_win_data
 		QString   name;
 		QString   loadingMsg;
 		QString   runningMsg;
-	} p[] = 
+	} p[] =
 	{
-		{ P_CONFIG,        NULL, "us_config", 
-			"Loading Configuration", 
+		{ P_CONFIG,        NULL, "us_config",
+			"Loading Configuration",
 			"Configuration Program" },
-		
-		{ P_ADMIN,         NULL, "us_admin",  
-			"Loading Administrator",  
+
+		{ P_ADMIN,         NULL, "us_admin",
+			"Loading Administrator",
 			"Adminstrator Program"  },
 
-		{ P_VELOC_ABSORB,  NULL, "us_edvabs", 
-			"Editing Velocity Absorbance Data", 
+		{ P_VELOC_ABSORB,  NULL, "us_edvabs",
+			"Editing Velocity Absorbance Data",
 		  "Editing Velocity Absorbance Data Program" },
-		
-		{ P_VELOC_INTERF,  NULL, "us_edvint", 
-			"Editing Velocity Interference Data", 
+
+		{ P_VELOC_INTERF,  NULL, "us_edvint",
+			"Editing Velocity Interference Data",
 		  "Editing Velocity Interference Data Program" },
-		
-		{ P_VELOC_FLUOR,   NULL, "us_edvflo", 
-			"Editing Velocity Fluorescence Data", 
+
+		{ P_VELOC_FLUOR,   NULL, "us_edvflo",
+			"Editing Velocity Fluorescence Data",
 		  "Editing Velocity Fluorescence Data Program" },
-		
-		{ P_EQUIL_ABSORB,  NULL, "us_edeabs", 
-			"Editing Equilibrium Absorbance Data", 
+
+		{ P_EQUIL_ABSORB,  NULL, "us_edeabs",
+			"Editing Equilibrium Absorbance Data",
 		  "Editing Equilibrium Absorbance Data Program" },
-		
-		{ P_EQUIL_INTERF,  NULL, "us_edeint", 
-			"Editing Equilibrium Interference Data", 
+
+		{ P_EQUIL_INTERF,  NULL, "us_edeint",
+			"Editing Equilibrium Interference Data",
 		  "Editing Equilibrium Interference Data Program" },
-		
-		{ P_EQUIL_FLUOR,   NULL, "us_edeflo", 
-			"Editing Equilibrium Fluorescence Data", 
+
+		{ P_EQUIL_FLUOR,   NULL, "us_edeflo",
+			"Editing Equilibrium Fluorescence Data",
 		  "Editing Equilibrium Fluorescence Data Program" },
-		
-		{ P_EDIT_WAVE,     NULL, "us_editwavelength", 
-			"Editing Wavelength Data", 
+
+		{ P_EDIT_WAVE,     NULL, "us_editwavelength",
+			"Editing Wavelength Data",
 		  "Editing Wavelength Absorbance or Intensity Data Program" },
-		
-		{ P_VIEW_MWL,      NULL, "us_viewmwl", 
-			"Loading Multiwavelength Viewer/Editor", 
+
+		{ P_VIEW_MWL,      NULL, "us_viewmwl",
+			"Loading Multiwavelength Viewer/Editor",
 		  "Multiwavelength Viewing/Editing Program" },
-		
-		{ P_VHW_ENH,       NULL, "us_vhwenhanced", 
-			"Loading enahnced van Holde - Weischet Analysis", 
+
+		{ P_VHW_ENH,       NULL, "us_vhwenhanced",
+			"Loading enahnced van Holde - Weischet Analysis",
 		  "Enhanced van Holde - Weischet Analysis Program" },
-		
-		{ P_FEMATCH,       NULL, "us_fematch", 
-			"Loading Finite Element matching routine to compare experimental data", 
+
+		{ P_FEMATCH,       NULL, "us_fematch",
+			"Loading Finite Element matching routine to compare experimental data",
 		  "Finite Element Model and Data Viewer" },
-		
-		{ P_FEMATCH_RA,    NULL, "us_fematch_ra", 
-			"Loading Finite Element matching routine to compare experimental data", 
+
+		{ P_FEMATCH_RA,    NULL, "us_fematch_ra",
+			"Loading Finite Element matching routine to compare experimental data",
 		  "Finite Element Model and Data Viewer" },
-		
-		{ P_GAINIT1,       NULL, "us_gainit", 
+
+		{ P_GAINIT1,       NULL, "us_gainit",
 			"Loading Genetic Algorithm Module for GA initialization "
-		  "from 2DSA distribution", 
+		  "from 2DSA distribution",
 		  "Genetic Algorithm Initializer from 2DSA distribution" },
-		
-		{ P_GAINIT2,       NULL, "us_ga_model_editor", 
+
+		{ P_GAINIT2,       NULL, "us_ga_model_editor",
 			"Loading Genetic Algorithm Module for GA initialization "
-			"from 2DSA distribution", 
+			"from 2DSA distribution",
 		  "Genetic Algorithm Initializer for nonlinear Model" },
 
-		{ P_FEDUD,         NULL, "us_findat", 
-			"Loading Finite Element Analysis (based on DUD) for a single experiment", 
+		{ P_FEDUD,         NULL, "us_findat",
+			"Loading Finite Element Analysis (based on DUD) for a single experiment",
 		  "Finite Element Analysis Program" },
 
-		{ P_SECM,          NULL, "us_secdat", 
-			"Loading Second Moment Analysis", 
+		{ P_SECM,          NULL, "us_secdat",
+			"Loading Second Moment Analysis",
 		  "Second Moment Analysis Program" },
-		
-		{ P_DCDT,          NULL, "us_dcdtdat", 
-			"Loading Time Derivative - dC/dt Analysis", 
+
+		{ P_DCDT,          NULL, "us_dcdtdat",
+			"Loading Time Derivative - dC/dt Analysis",
 		  "Time Derivative - dC/dt Analysis Program" },
-		
-		{ P_DCDR,          NULL, "us_dcdrdat", 
-			"Loading Radial Derivative - dC/dr Analysis", 
+
+		{ P_DCDR,          NULL, "us_dcdrdat",
+			"Loading Radial Derivative - dC/dr Analysis",
 		  "Radial Derivative - dC/dr Analysis Program" },
-		
-		{ P_COFS,          NULL, "us_cofs", 
+
+		{ P_COFS,          NULL, "us_cofs",
 		  "Loading C(s) Analysis",
 		  "C(s) Analysis Program" },
-		
-		{ P_PREDICT,       NULL, "us_equilspeed", 
+
+		{ P_PREDICT,       NULL, "us_equilspeed",
 		  "Loading Equilibrium Speed Prediction Program",
 		  "Equilibrium Speed Prediction Program" },
-		
-		{ P_EQTIME,        NULL, "us_equiltime", 
+
+		{ P_EQTIME,        NULL, "us_equiltime",
 		  "Loading Equilibrium Time Estimation Simulator",
 		  "Equilibrium Time Estimation Program" },
-		
-		{ P_GFIT,          NULL, "us_globalequil", 
+
+		{ P_GFIT,          NULL, "us_globalequil",
 		  "Loading Nonlinear Least Squares Fitting Routine for global "
 		  "Equilibrium Analysis",
 		  "Global Equilibrium Fitting Program" },
-		
-		{ P_LNC,           NULL, "us_lncr2", 
+
+		{ P_LNC,           NULL, "us_lncr2",
 		  "Loading Equilibrium Analysis - ln(C) vs. r^2 Analysis",
 		  "Equilibrium Analysis - ln(C) vs. r^2 Analysis Program" },
-		
-		{ P_EXTINCT,       NULL, "us_extinction", 
+
+		{ P_EXTINCT,       NULL, "us_extinction",
 		  "Loading Extinction Coefficient Calculator",
 		  "Extinction Coefficient Calculator Program" },
-		
-		{ P_SPECTRUM,      NULL, "us_spectrum", 
+
+		{ P_SPECTRUM,      NULL, "us_spectrum",
 		  "Loading Global Wavelength Spectrum Fitter",
 		  "Global Spectrum Analysis Program" },
-		
 
-		{ P_CPU,           NULL, "us_cpuload", 
+
+		{ P_CPU,           NULL, "us_cpuload",
 		  "Loading CPU Status Information",
 		  "CPU Status Information Program" },
 
-		{ P_MEM,           NULL, "us_meminfo", 
+		{ P_MEM,           NULL, "us_meminfo",
 		  "Loading Memory Information",
 		  "Memory Information Program" },
 
-		{ P_SYSLOAD,       NULL, "us_sysload", 
+		{ P_SYSLOAD,       NULL, "us_sysload",
 		  "Loading System Load Information",
 		  "System Load Information Program" },
 
-		{ P_COMBINE,       NULL, "us_combine", 
+		{ P_COMBINE,       NULL, "us_combine",
 		  "Loading G/g(s) Distribution Combination Program",
 		  "G/g(s) Distribution Combination Program" },
 
-		{ P_COMBINE_MW,    NULL, "us_combine_mw", 
+		{ P_COMBINE_MW,    NULL, "us_combine_mw",
 		  "Loading G/g(MW) Distribution Combination Program",
 		  "G/g(MW) Distribution Combination Program" },
 
-		{ P_COMBINE_COFS,  NULL, "us_cofs_combine", 
+		{ P_COMBINE_COFS,  NULL, "us_cofs_combine",
 		  "Loading C(s) Distribution Combination Program",
 		  "C(s) Distribution Combination Program" },
 
-		{ P_COMBINE_COFMW, NULL, "us_cofmw_combine", 
+		{ P_COMBINE_COFMW, NULL, "us_cofmw_combine",
 		  "Loading C(MW) Distribution Combination Program",
 		  "C(MW) Distribution Combination Program" },
 
-		{ P_COMBINE_COFD,  NULL, "us_cofd_combine", 
+		{ P_COMBINE_COFD,  NULL, "us_cofd_combine",
 		  "Loading C(D) Distribution Combination Program",
 		  "C(D) Distribution Combination Program" },
 
-		{ P_PSEUDO3D,      NULL, "us_pseudo3d_combine", 
+		{ P_PSEUDO3D,      NULL, "us_pseudo3d_combine",
 		  "Loading the Pseudo-3D Distribution Overlay Module",
 		  "Pseudo-3D Distribution Overlay Program" },
 
-		{ P_CREATEG,       NULL, "us_create_global", 
+		{ P_CREATEG,       NULL, "us_create_global",
 		  "Loading Create Global Distribution Program",
 		  "Create Global Distribution Program" },
 
-		{ P_ARCHIVE,       NULL, "us_archive", 
+		{ P_ARCHIVE,       NULL, "us_archive",
 		  "Loading UltraScan Archive Utility",
 		  "UltraScan Archive Utility" },
 
-		{ P_REORDER,       NULL, "us_reorder", 
+		{ P_REORDER,       NULL, "us_reorder",
 		  "Loading UltraScan File Ordering Utility",
 		  "UltraScan File Ordering Utility" },
 
-		{ P_MERGE,         NULL, "us_merge", 
+		{ P_MERGE,         NULL, "us_merge",
 		  "Loading UltraScan Scan File Merging Utility",
 		  "UltraScan Scan File Merging Utility" },
 
-		{ P_PSEUDOABS,     NULL, "", 
+		{ P_PSEUDOABS,     NULL, "",
 		  "Loading UltraScan Intensity to Pseudoabsorbance Conversion Utility",
 		  "UltraScan Intensity to Pseudoabsorbance Conversion Utility" },
 
-		{ P_DIAG,          NULL, "us_diagnostics", 
+		{ P_DIAG,          NULL, "us_diagnostics",
 		  "Loading UltraScan Diagnostics Utilities",
 		  "UltraScan Diagnostics Utilities" },
 
-		{ P_NUCL_DB,       NULL, "us_nucleotide_db", 
+		{ P_NUCL_DB,       NULL, "us_nucleotide_db",
 		  "Loading Nucleotide Sqeuence Table",
 		  "Table of DNA Data" },
 
-		{ P_CALC_HYDRO,    NULL, "us_buffer", 
+		{ P_CALC_HYDRO,    NULL, "us_buffer",
 		  "Loading Table of Buffer Data",
 		  "Table of Buffer Data" },
 
-		{ P_VBAR_DB,       NULL, "us_vbar_db", 
+		{ P_VBAR_DB,       NULL, "us_vbar_db",
 		  "Loading Peptide Table",
 		  "Table of Peptide Data" },
 
-		{ P_DMA60,         NULL, "us_dma60", 
+		{ P_DMA60,         NULL, "us_dma60",
 		  "Loading the Anton Paar DMA 60 Data Acquisition Module",
 		  "Anton Paar DMA 60 Acquisition Program" },
 
-		{ P_COLORG,        NULL, "us_colorgradient", 
+		{ P_COLORG,        NULL, "us_colorgradient",
 		  "Loading Color Gradient Editor Program",
 		  "Color Gradient Editor Program" },
 
-		{ P_ASTFEM,        NULL, "us_astfem_sim", 
+		{ P_ASTFEM,        NULL, "us_astfem_sim",
 		  "Loading Finite Element Sedimentation Simulator (ASTFEM)",
 		  "Finite Element Simulation Program (ASTFEM)" },
-		
-		{ P_EQULILSIM,     NULL, "us_equilsim", 
+
+		{ P_EQULILSIM,     NULL, "us_equilsim",
 			"Loading Equilibrium Simulator",
 		  "Equilibrium Simulation Program" },
-		
-		{ P_EQUILTIMESIM,  NULL, "us_equiltime", 
+
+		{ P_EQUILTIMESIM,  NULL, "us_equiltime",
 		  "Loading Equilibrium Time Estimation Simulator",
 		  "Equilibrium Time Estimation Program" },
-		
-		{ P_SASSOC,        NULL, "us_sassoc", 
+
+		{ P_SASSOC,        NULL, "us_sassoc",
 		  "Starting Self-Association Simulator",
 		  "Self-Association Simulation Program" },
-		
-		{ P_MODEL1,        NULL, "us_predict1", 
+
+		{ P_MODEL1,        NULL, "us_predict1",
 		  "Loading Molecular Modeling Simulator",
 		  "Molecular Modeling Simulation Program (1)" },
-		
-		{ P_MODEL2,        NULL, "us_predict2", 
+
+		{ P_MODEL2,        NULL, "us_predict2",
 		  "Loading Molecular Modeling Simulator",
 		  "Molecular Modeling Simulation Program (2)" },
-		
-		{ P_HYDRODYN,      NULL, "us_hydrodyn", 
+
+		{ P_HYDRODYN,      NULL, "us_hydrodyn",
 		  "Loading SOMO Bead Modeler",
 		  "SOMO Bead Modeling" },
-	
-		{ P_DB_VELOC,      NULL, "us_db_veloc", 
+
+		{ P_DB_VELOC,      NULL, "us_db_veloc",
 		  "Loading Database Velocity Result",
 		  "Table for Database Velocity Result" },
 
-		{ P_DB_EQUIL,      NULL, "us_db_equil", 
+		{ P_DB_EQUIL,      NULL, "us_db_equil",
 		  "Loading Database Equilibrium Result",
 		  "Table for Database Equilibrium Result" },
 
-		{ P_DB_EQUILP,     NULL, "us_db_rst_equilproject", 
+		{ P_DB_EQUILP,     NULL, "us_db_rst_equilproject",
 		  "Loading Database Equilibrium Project Result",
 		  "Table for Database Equilibrium Project Result" },
 
-		{ P_DB_MC,         NULL, "us_db_rst_montecarlo", 
+		{ P_DB_MC,         NULL, "us_db_rst_montecarlo",
 		  "Loading Database Monte Carlo Project Result",
 		  "Table for Database Monte Carlo Project Result" },
 
-		{ P_DB_INV,      NULL, "us_db_tbl_investigator", 
+		{ P_DB_INV,      NULL, "us_db_rtv_investigator",
 		  "Loading Investigator Table",
 		  "Table of Retrieve from Investigator" },
 
-		{ P_DB_DATE,      NULL, "us_db_rtv_date", 
+		{ P_DB_DATE,      NULL, "us_db_rtv_date",
 		  "Loading Retrieve Date",
 		  "Table of Retrieve from Date" },
 
-		{ P_DB_DESC,      NULL, "us_db_rtv_description", 
+		{ P_DB_DESC,      NULL, "us_db_rtv_description",
 		  "Loading Retrieve Description",
 		  "Table of Retrieve from Description" },
 
-		{ P_DB_TYPE,      NULL, "us_db_rtv_edittype", 
+		{ P_DB_TYPE,      NULL, "us_db_rtv_edittype",
 		  "Loading Retrieve Edit Type",
 		  "Table of Retrieve from Edit Type" },
 
-		{ P_DB_REQ,       NULL, "us_db_rtv_request", 
+		{ P_DB_REQ,       NULL, "us_db_rtv_request",
 		  "Loading Retrieve Request",
 		  "Table of show project request" },
 
-		{ P_DB_STATUS,    NULL, "us_db_rtv_requeststatus", 
+		{ P_DB_STATUS,    NULL, "us_db_rtv_requeststatus",
 		  "Loading Retrieve Request Status",
 		  "Table of show project status" },
 
-		{ P_DB_IMAGE,     NULL, "us_db_rtv_image", 
+		{ P_DB_IMAGE,     NULL, "us_db_rtv_image",
 		  "Loading Retrieve Image",
 		  "Table of show project image" },
 
-		{ P_DB_SAMP,      NULL, "us_db_rtv_sample", 
+		{ P_DB_SAMP,      NULL, "us_db_rtv_sample",
 		  "Loading Retrieve Sample",
 		  "Table of show project sample" },
 
-		{ P_DB_RUNR,      NULL, "us_db_rtv_runrequest", 
+		{ P_DB_RUNR,      NULL, "us_db_rtv_runrequest",
 		  "Loading Retrieve RunRequest",
 		  "Table of show run request" },
 
-		{ P_INV_DATA,     NULL, "us_db_tbl_investigator", 
+		{ P_INV_DATA,     NULL, "us_db_tbl_investigator",
 		  "Loading Investigator Table",
 		  "Table of Investigator" },
 
-		{ P_DB_BUFF,      NULL, "us_buffer_db", 
+		{ P_DB_BUFF,      NULL, "us_buffer_db",
 		  "Loading Buffer Table",
 		  "Table of Buffer Data" },
 
-		{ P_DB_VBAR,      NULL, "us_vbar_db", 
+		{ P_DB_VBAR,      NULL, "us_vbar_db",
 		  "Loading Peptide Table",
 		  "Table of Peptide Data" },
 
-		{ P_DB_DNA,       NULL, "us_nucleotide_db", 
+		{ P_DB_DNA,       NULL, "us_nucleotide_db",
 		  "Loading Nucleotide Sqeuence Table",
 		  "Table of DNA Data" },
 
-		{ P_DB_RAW,       NULL, "us_expdata_db", 
+		{ P_DB_RAW,       NULL, "us_expdata_db",
 		  "Loading Experimental Data Table",
 		  "Table of Experimential Data" },
 
-		{ P_DB_TEMP,      NULL, "us_db_template", 
+		{ P_DB_TEMP,      NULL, "us_db_template",
 		  "Loading Create Database template",
 		  "Create New Database Template" },
 
@@ -354,8 +354,8 @@ namespace us_win_data
 	};
 
 	// Data Control Functions
-	enum 
-	{ 
+	enum
+	{
 		DS_COPY_VELOC = 100,
 	  DS_COPY_EQUIL,
 	  DS_NOISE,
@@ -387,8 +387,8 @@ namespace us_win_data
   };
 
 	// Help Functions
-	enum 
-	{ 
+	enum
+	{
 		HELP = 200,
 	  HELP_REG,
 	  HELP_HOME,
@@ -423,7 +423,7 @@ UsWin::UsWin( QWidget* parent, const char* name ): US_Widgets( parent, name )
 {
 	int width  = 710;
 	int height = 532;
-	
+
   unsetPalette();
 	setGeometry( 50, 50, width, height );
 	make_splash( width );
@@ -433,7 +433,7 @@ UsWin::UsWin( QWidget* parent, const char* name ): US_Widgets( parent, name )
 	// Submenu
 	QPopupMenu* file_info = popupmenu();
 	connect( file_info, SIGNAL( activated( int ) ), SLOT( data_control( int ) ) );
-	
+
 	file_info->insertItem( tr( "&Velocity Data"    ), DS_VELOC );
 	file_info->insertItem( tr( "&Equilibrium Data" ), DS_EQUIL );
 
@@ -555,7 +555,7 @@ UsWin::UsWin( QWidget* parent, const char* name ): US_Widgets( parent, name )
 	combine->insertItem( tr( "&Combine Pseudo-3D Distributions"        ), P_PSEUDO3D      );
 	combine->insertItem( tr( "Create &Global Distributions"            ), P_CREATEG       );
 
-	
+
 	QPopupMenu* util = popupmenu();
 	connect( util, SIGNAL( activated( int ) ), SLOT( data_control( int ) ) );
 	connect( util, SIGNAL( activated( int ) ), SLOT( launch      ( int ) ) );
@@ -575,7 +575,7 @@ UsWin::UsWin( QWidget* parent, const char* name ): US_Widgets( parent, name )
 	util->insertItem( tr( "&Copy Velocity Run"                      ), DS_COPY_VELOC );
 	util->insertItem( tr( "Copy &Equilibrium Run"                   ), DS_COPY_EQUIL );
 	util->insertSeparator( -1 );
-	
+
 	util->insertItem(tr( "&RI/TI Noise Subtraction from Velocity Run" ), DS_NOISE    );
 	util->insertItem(tr( "&Update Meniscus for Velocity Run"          ), DS_MENISCUS );
 	util->insertItem(tr( "&Combine Distribution Data"), combine );
@@ -641,16 +641,16 @@ UsWin::UsWin( QWidget* parent, const char* name ): US_Widgets( parent, name )
 
 	db->insertItem( tr( "&Commit Raw Experimental Data to DB" ), P_DB_RAW );
 	db->insertSeparator( -1 );
-	
+
 	db->insertItem( tr( "Retrieve Raw &Experimental Data from DB" ), rtv );
 	db->insertSeparator( -1 );
-	
+
 	db->insertItem( tr( "Manage &Results and Analysis Data" ), result );
 	db->insertSeparator( -1 );
-	
+
 	db->insertItem( tr( "Project &Info" ), project );
 	db->insertSeparator( -1 );
-	
+
 	db->insertItem( tr( "Initialize Database &Template" ), P_DB_TEMP  );
 
 	// Help
@@ -663,11 +663,11 @@ UsWin::UsWin( QWidget* parent, const char* name ): US_Widgets( parent, name )
 	help->insertItem( tr("UltraScan &License" ), HELP_LICENSE            );
 	help->insertItem( tr("&About"             ), this, SLOT( about()   ) );
 	help->insertItem( tr("&Credits"           ), this, SLOT( credits() ) );
-	
+
 	connect( help, SIGNAL( activated( int ) ), SLOT( display_help( int ) ) );
 
 	QMenuBar* menu = menubar();
-	
+
 	menu->insertItem(tr("&File"),        file);
 	menu->insertItem(tr("&Edit"),        edit);
 	menu->insertItem(tr("&Velocity"),    veloc);
@@ -684,7 +684,7 @@ UsWin::UsWin( QWidget* parent, const char* name ): US_Widgets( parent, name )
 	stat_bar->setFrameStyle( QFrame::Box | QFrame::Sunken );
 	stat_bar->setAlignment ( AlignLeft | AlignVCenter );
 
-	connect( this,     SIGNAL( explain( const QString& ) ), 
+	connect( this,     SIGNAL( explain( const QString& ) ),
 	         stat_bar, SLOT  ( setText( const QString& ) ) );
 }
 
@@ -712,7 +712,7 @@ void UsWin::make_splash( int width )
 
 #define DROP    20
 
-	QPixmap rawpix( USglobal->config_list.system_dir + 
+	QPixmap rawpix( USglobal->config_list.system_dir +
 			            "/etc/flash-combined-no-text.png" );
 
 	int ph = rawpix.height();
@@ -836,7 +836,7 @@ void UsWin::about()
 #endif
 
 	emit explain( tr("About...") );
-	
+
 	QMessageBox::information( this,
 		tr("About UltraScan..."),
 		tr("UltraScan II version " + ver + "\n"
@@ -853,14 +853,14 @@ void UsWin::about()
 			"voice: (210) 567-6592\n"
 			"Fax:   (210) 567-6595\n"
 			"E-mail: demeler@biochem.uthscsa.edu"));
-	
+
 	emit explain( " " );
 }
 
 void UsWin::credits()
 {
 	emit explain( tr("UltraScan Credits...") );
-	
+
 	QMessageBox::information( this,
 		tr("UltraScan Credits"),
 		tr("UltraScan II version " + US_Version + "\n"
@@ -939,7 +939,7 @@ void UsWin::launch( int index )
 	process->addArgument( p[ index ].name );
 
 	if ( ! process->start() )
-	{	
+	{
 			QMessageBox::information( this,
 			tr( "Error" ),
 			tr( "There was a problem creating a subprocess\n"
@@ -954,40 +954,40 @@ void UsWin::launch( int index )
 void UsWin::export_V()
 {
 	emit explain( tr( "Loading Function for Exporting Velocity Data..." ) );
-	
+
 	US_Export_Veloc* export_veloc = new US_Export_Veloc();
 	export_veloc->setCaption( tr( "Export Velocity Data" ) );
 	export_veloc->show();
-	
+
 	emit explain( " " );
 }
 
 void UsWin::export_E()
 {
 	emit explain( tr("Loading Function for Exporting Equilibrium Data..." ) );
-	
+
 	US_Export_Equil* export_equil = new US_Export_Equil();
 	export_equil->setCaption(tr( "Export Equilibrium Data" ) );
 	export_equil->show();
-	
+
 	emit explain( " " );
 }
 
 void UsWin::print_V()
 {
 	emit explain( tr( "Loading Function for Printing Velocity Data..." ) );
-	
+
 	US_Print_Veloc* print_veloc = new US_Print_Veloc();
 	print_veloc->setCaption( tr( "Printing Velocity Data" ) );
 	print_veloc->show();
-	
+
 	emit explain( " " );
 }
 
 void UsWin::print_E()
 {
 	emit explain( tr( "Loading Function for Printing Equilibrium Data..." ) );
-	
+
 	US_Print_Equil* print_equil = new US_Print_Equil();
 	print_equil->setCaption( tr( "Printing Equilibrium Data" ) );
 	print_equil->show();
@@ -998,40 +998,40 @@ void UsWin::print_E()
 void UsWin::report_V()
 {
 	emit explain( tr( "Generating Report for Velocity Data..." ) );
-	
+
 	US_Report_Veloc* report = new US_Report_Veloc( true );
 	delete report; // Satisfy compiler warning
-	
+
 	emit explain( " " );
 }
 
 void UsWin::report_E()
 {
 	emit explain( tr( "Generating Report for Equilibrium Data..." ) );
-	
+
 	US_Report_Equil* report = new US_Report_Equil( true );
 	delete report; // Satisfy compiler warning
-	
+
 	emit explain( " " );
 }
 
 void UsWin::report_EP()
 {
 	emit explain( tr( "Generating Report for Equilibrium Data..." ) );
-	
+
 	US_Report_EquilProject* report = new US_Report_EquilProject( true );
 	delete report; // Satisfy compiler warning
-	
+
 	emit explain( " " );
 }
 
 void UsWin::report_MC()
 {
 	emit explain( tr( "Generating Report for Monte Carlo Analysis..." ) );
-	
+
 	US_Report_MonteCarlo* report = new US_Report_MonteCarlo( true );
 	delete report; // Satisfy compiler warning
-	
+
 	emit explain( " " );
 }
 
