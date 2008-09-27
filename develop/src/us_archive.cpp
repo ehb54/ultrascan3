@@ -393,7 +393,7 @@ void US_Archive::select_create_archive( const int type )
 void US_Archive::clean_temp_dir()
 {
 	QDir temp_dir;
-	QString str = USglobal->config_list.root_dir + "/temp";
+	QString str = USglobal->config_list.tmp_dir;
 
 	temp_dir.setPath( str );
 
@@ -494,7 +494,7 @@ void US_Archive::viewtargz( const QString& fn )
 
 	int     start_pos       = fn.findRev( "/" ) + 1;
 	QString gzip_filename   = fn.mid( start_pos );
-	QString tempdir         = USglobal->config_list.root_dir + "/temp/";
+	QString tempdir         = USglobal->config_list.tmp_dir + "/";
 	int     cr              = copy( fn, tempdir + gzip_filename );
 	
 	if ( cr != 0 )
@@ -659,7 +659,7 @@ void US_Archive::create_archive( QStringList* list )
 
 	disable_buttons();
 
-	QString tempDirString = USglobal->config_list.root_dir + "/temp";
+	QString tempDirString = USglobal->config_list.tmp_dir;
 	QDir temp_dir( tempDirString );
 
 	if ( temp_dir.exists() )
@@ -875,7 +875,7 @@ void US_Archive::create_archive( QStringList* list )
 
 	// Move tar files from different dirs to temp dir and tar them together
 	
-	QString tempdir   = USglobal->config_list.root_dir   + "/temp/";
+	QString tempdir   = USglobal->config_list.tmp_dir    + "/";
 	QString resultdir = USglobal->config_list.result_dir + "/";
 	QString reportdir = USglobal->config_list.html_dir   + "/" ;
 	QString datadir   = USglobal->config_list.data_dir   + "/";
@@ -1190,7 +1190,7 @@ void US_Archive::extract_archive( void )
 
 	// Copy tar.gz fie to temp dir for uncompress
 
-	QString tempdir = USglobal->config_list.root_dir + "/temp/";
+	QString tempdir = USglobal->config_list.tmp_dir + "/";
 	int cr = copy( fn, tempdir + tarGzFile );
 
 	if ( cr != 0 )
@@ -1213,6 +1213,7 @@ void US_Archive::extract_archive( void )
 		   tr( "UltraScan Error:" ),
 		   tr( "Could not get current working directory" ) );
 
+		clean_temp_dir();
 		enable_buttons();
 		return;
 	}
@@ -1227,6 +1228,7 @@ void US_Archive::extract_archive( void )
 				   QDir::convertSeparators( tempdir ) + 
 				   "\nError number = " + e ) );
 
+		clean_temp_dir();
 		enable_buttons();
 		return;
 	}
@@ -1243,6 +1245,7 @@ void US_Archive::extract_archive( void )
 		   tr( "UltraScan gzip Error:" ),
 		   tr( gzip.explain( ret ) ) );
 
+		clean_temp_dir();
 		enable_buttons();
 		return;
 	}
@@ -1265,6 +1268,7 @@ void US_Archive::extract_archive( void )
 		   tr( "UltraScan tar Error:" ),
 		   tr( tar.explain( ret ) ) );
 
+		clean_temp_dir();
 		enable_buttons();
 		return;
 	}
@@ -1311,6 +1315,11 @@ void US_Archive::extract_archive( void )
 
 	enable_buttons();
 	chdir( cwd ); // Restore original working directory
+	clean_temp_dir();
+
+	QMessageBox::information( this,
+		tr( "Information" ),
+		tr( "Extraction Complete" ) );
 }
 
 void US_Archive::extract( const QString& tarfile, 
@@ -1318,7 +1327,7 @@ void US_Archive::extract( const QString& tarfile,
                           const QString& dir,
                           const bool     verbose )
 {
-	QString tempdir = USglobal->config_list.root_dir + "/temp/";
+	QString tempdir = USglobal->config_list.tmp_dir + "/";
 	copy( tempdir + tarfile, dir + tarfile );
 	chdir ( dir.ascii() );
 
