@@ -241,11 +241,11 @@ void US_Tar::write_file( const QString& file )
 	// uid and gid are always zero on WIN32 systems
 	//char uname[32];     /* 265 */
 	struct passwd* pwbuf = getpwuid( stats.st_uid );
-	sprintf ( tar_header.header.uname, "%s", pwbuf->pw_name );
+	if ( pwbuf ) sprintf ( tar_header.header.uname, "%s", pwbuf->pw_name );
 
 	//char gname[32];     /* 297 */
 	struct group* grpbuf = getgrgid( stats.st_gid );
-	sprintf ( tar_header.header.gname, "%s", grpbuf->gr_name );
+	if ( grpbuf ) sprintf ( tar_header.header.gname, "%s", grpbuf->gr_name );
 #endif
 	/* Fill in the checksum field.  It's formatted differently from the
 	 * other fields: it has [6] digits, a null, then a space -- rather than
