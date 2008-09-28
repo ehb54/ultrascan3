@@ -1,5 +1,6 @@
 #include "../include/us_win.h"
 #include "../include/us_revision.h"
+#include "../include/us_version.h"
 
 
 #include "../include/us_dtactrl.h"
@@ -724,7 +725,8 @@ void UsWin::make_splash( int width )
 	painter.drawPixmap( 0, 0, rawpix );
 	painter.setPen    ( QPen( Qt::white, 3 ) );
 
-	QString version = "UltraScan " + US_Version +  " for " OS_TITLE;
+	QString version = "UltraScan " + US_Version + " ( " REVISION 
+		" ) for " OS_TITLE;  // REVISON is #define "Revision: xxx"
 
 	QFont font( "Arial" );
 	font.setWeight( QFont::DemiBold );
