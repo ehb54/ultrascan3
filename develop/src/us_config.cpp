@@ -1,5 +1,6 @@
 #include "../include/us_util.h"
 #include "../include/us_write_config.h"
+#include "../include/us_version.h"
 
 US_Config::US_Config( QObject* parent, const char* name)
 	: QObject (parent, name)

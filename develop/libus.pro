@@ -412,6 +412,7 @@ HEADERS += \
   include/us_vbar.h \
   include/us_velocreport.h \
   include/us_velocmodelctrl.h \
+  include/us_version.h \
   include/us_vhwdat.h \
   include/us_vhwsim.h \
   include/us_vhwenhanced.h \
