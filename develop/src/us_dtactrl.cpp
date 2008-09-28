@@ -1245,58 +1245,6 @@ int Data_Control_W::load_data(const QString &fileName)
 			return (-2);
 		}
 	}
-
-/*
-	cout << "after loading the data in dtactrl().. " << endl;
-	{
-		unsigned int i, j, k;
-		cout << "Directory: " << run_inf.data_dir << endl;
-		cout << "Run Id: " <<  run_inf.run_id << endl;
-		cout << "Run duration: " << run_inf.duration << endl;
-		cout << "Total scans: " << run_inf.total_scans << endl;
-		cout << "Delta r: " << run_inf.delta_r << endl;
-		for (i=0; i<8; i++)
-		{
-			cout << "run_inf.centerpiece[" << i << "]: " << run_inf.centerpiece[i] << endl;
-			cout << "run_inf.cell_id[" << i << "]: " << run_inf.cell_id[i] << endl;
-			cout << "run_inf.wavelength_count[" << i << "]: " << run_inf.wavelength_count[i] << endl;
-		}
-		for (i=0; i<8; i++)
-		{
-			for (j=0; j<3; j++)
-			{
-				cout << "run_inf.wavelength[" << i << "][" << j << "]: " << run_inf.wavelength[i][j] << endl;
-				cout << "run_inf.scans[" << i << "][" << j << "]: " << run_inf.scans[i][j] << endl;
-				if (run_inf.centerpiece[i] >= 0)
-				{
-					for (k=0; k<1; k++)
-					{
-						cout << "run_inf.range_left[" << i << "][" << j << "][" << k << "]: " << run_inf.range_left[i][j][k] << endl;
-						cout << "run_inf.range_right[" << i << "][" << j << "][" << k << "]: " << run_inf.range_right[i][j][k] << endl;
-						cout << "run_inf.points[" << i << "][" << j << "][" << k << "]: " << run_inf.points[i][j][k] << endl;
-						cout << "run_inf.point_density[" << i << "][" << j << "][" << k << "]: " << run_inf.point_density[i][j][k] << endl;
-					}
-				}
-			}
-		}
-		for (i=0; i<8; i++)
-		{
-			cout << "wavelength_count[" << i << "]: " << run_inf.wavelength_count[i] << endl;
-			for (j=0; j<run_inf.wavelength_count[i]; j++)
-			{
-				cout << "scans[" << i << "][" << j << "]: " << run_inf.scans[i][j] << endl;
-				for (k=0; k<run_inf.scans[i][j]; k++)
-				{
-					cout << "rpm[" << i << "][" << j << "][" << k << "]: " << run_inf.rpm[i][j][k] << endl;
-					cout << "temperature[" << i << "][" << j << "][" << k << "]: " << run_inf.temperature[i][j][k] << endl;
-					cout << "time[" << i << "][" << j << "][" << k << "]: " << run_inf.time[i][j][k] << endl;
-					cout << "omega[" << i << "][" << j << "][" << k << "]: " << run_inf.omega_s_t[i][j][k] << endl;
-				}
-			}
-		}
-		cout << "Rotor: " << run_inf.rotor << endl;
-	}
-*/
 	run_loaded = true;
 	createHtmlDir(); 	// create the directory for html reports
 	i=0;
@@ -1338,7 +1286,6 @@ int Data_Control_W::load_data(const QString &fileName)
 	vbar = hydro_inf.Vbar[selected_cell][selected_channel][0];
 	vbar20 = hydro_inf.Vbar20[selected_cell][selected_channel][0];
 	calc_correction(run_inf.avg_temperature);
-
 	if ((run_type != 7
 	&& run_type != 8
 	&& run_type != 0

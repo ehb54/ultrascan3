@@ -20,7 +20,7 @@ RunDetails_F::RunDetails_F(int ed, int stat, struct runinfo *temp_run_inf, QWidg
 		GUI = true;
 	}
 
-/*
+
 	cout << "entering RunDetails().. " << endl;
 	{
 		cout << "Directory: " << (*run_inf).data_dir << endl;
@@ -42,7 +42,7 @@ RunDetails_F::RunDetails_F(int ed, int stat, struct runinfo *temp_run_inf, QWidg
 				cout << "(*run_inf).scans[" << i << "][" << j << "]: " << (*run_inf).scans[i][j] << endl;
 				if ((*run_inf).centerpiece[i] >= 0 && (*run_inf).scans[i][j] > 0)
 				{
-					for (k=0; k<1; k++)
+					for (unsigned int k=0; k<1; k++)
 					{
 						cout << "(*run_inf).range_left[" << i << "][" << j << "][" << k << "]: " << (*run_inf).range_left[i][j][k] << endl;
 						cout << "(*run_inf).range_right[" << i << "][" << j << "][" << k << "]: " << (*run_inf).range_right[i][j][k] << endl;
@@ -57,7 +57,7 @@ RunDetails_F::RunDetails_F(int ed, int stat, struct runinfo *temp_run_inf, QWidg
 			for (j=0; j<(*run_inf).wavelength_count[i]; j++)
 			{
 				cout << "scans[" << i << "][" << j << "]: " << (*run_inf).scans[i][j] << endl;
-				for (k=0; k<(*run_inf).scans[i][j]; k++)
+				for (unsigned int k=0; k<(*run_inf).scans[i][j]; k++)
 				{
 					cout << "rpm[" << i << "][" << j << "][" << k << "]: " << (*run_inf).rpm[i][j][k] << endl;
 					cout << "temperature[" << i << "][" << j << "][" << k << "]: " << (*run_inf).temperature[i][j][k] << endl;
@@ -68,7 +68,8 @@ RunDetails_F::RunDetails_F(int ed, int stat, struct runinfo *temp_run_inf, QWidg
 		}
 		cout << "Rotor: " << (*run_inf).rotor << endl;
 	}
-*/
+
+	cout << "c1\n";
 	USglobal = new US_Config();
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	edit_type = ed;
@@ -95,6 +96,8 @@ RunDetails_F::RunDetails_F(int ed, int stat, struct runinfo *temp_run_inf, QWidg
 	temp_sum=0;
 	correction_sum=0;
 	blink=1;
+	cout << "c2\n";
+
 	scan_counter = new unsigned int* [8];	// keeps track of the scan number for each cell and each wavelength
 	for (i=0; i<8; i++)
 	{
@@ -107,6 +110,7 @@ RunDetails_F::RunDetails_F(int ed, int stat, struct runinfo *temp_run_inf, QWidg
 			scan_counter[i][j] = 0;
 		}
 	}
+	cout << "c3\n";
 
 	scans = new double [(*run_inf).total_scans];	// x-variable for the plot
 	tempy1 = new double [(*run_inf).total_scans];
@@ -126,6 +130,7 @@ RunDetails_F::RunDetails_F(int ed, int stat, struct runinfo *temp_run_inf, QWidg
 	{
 		i ++;
 	}
+	cout << "c4\n";
 	if (i == 8)
 	{
 		QString str = ("Could not find any data!\n\n"
@@ -147,7 +152,6 @@ RunDetails_F::RunDetails_F(int ed, int stat, struct runinfo *temp_run_inf, QWidg
 	{
 		scans[i] = (double) i+1;
 	}
-
 	count = 0;
 	while (count < (*run_inf).total_scans)
 	{
@@ -167,6 +171,7 @@ RunDetails_F::RunDetails_F(int ed, int stat, struct runinfo *temp_run_inf, QWidg
 			}
 		}
 	}
+	cout << "c5\n";
 	for (i=0; i<8; i++)
 	{
 		for (j=0; j<3; j++)
@@ -174,15 +179,23 @@ RunDetails_F::RunDetails_F(int ed, int stat, struct runinfo *temp_run_inf, QWidg
 			scan_counter[i][j] = 0;
 		}
 	}
+	cout << "c6\n";
 	avg_rpm = 0.0;
+	cout << "c7\n";
 	for (unsigned int i=0; i<(*run_inf).total_scans; i++)
 	{
 		avg_rpm += tempy3[i];
 	}
+	cout << "c8\n";
 	avg_rpm /= (float) (*run_inf).total_scans;
+	cout << "c9\n";
 	omega = (M_PI / 30) * avg_rpm;
+	cout << "c10\n";
 	vector <unsigned int> time_v; 	// temporary storage for the time of scans
+	cout << "c11\n";
 	count = 0;
+	cout << "c12\n";
+
 	while (count < (*run_inf).total_scans)
 	{
 //cout << "pt 1, count=" << count << ", total_scans=" << (*run_inf).total_scans<< "\n";

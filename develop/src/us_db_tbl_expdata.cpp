@@ -1563,6 +1563,7 @@ void US_ExpData_DB::write_dbinfo( QString dir )
 
 	for ( int i = 0; i < 8; i++ )
 	{
+		cout << "i: " << i << ", CellID: " <<  exp_info.CellID[ i ] << endl;
 		if ( exp_info.CellID[ i ] != 0 )
 		{
 			ts << exp_info.centerpiece[ i ]
@@ -1588,9 +1589,8 @@ void US_ExpData_DB::write_dbinfo( QString dir )
 				}
 			}
 		}
-
-	f.close();
 	}
+	f.close();
 }
 
 /*!

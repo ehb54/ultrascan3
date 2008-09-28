@@ -16,7 +16,7 @@
 #include "us_db_tbl_nucleotide.h"
 #include "us_db_tbl_buffer.h"
 #include "us_db_tbl_vbar.h"
-
+#include "us_util.h"
 //! A Struct for storing required info for Cell Data in DB.
 /*! 
 	Each element is according to an entry field in Database Table <tt>tblCell</tt>.
@@ -53,6 +53,7 @@ class US_EXTERN US_Cell_DB : public US_DB
 		struct US_CellData cell_info;		/*!< A struct US_CellData for storing Cell info. */
 		struct US_ExpData exp_info;		/*!< A struct US_ExpData for storing experimental data info. */
 		int *item_CellID;						/*!< An integer array stores tblCell id.*/
+		vector <struct centerpieceInfo> cp_info_vector;	/*!<centerpiece information */
 		QString *item_Description;			/*!< A string array stores cell description.*/
 		int *cell_table_unfinished;		/*!< An integer point variable for checking cell table finish.*/
 		bool 	select_flag,					/*!< A flag use for data listbox select, initialize to <var>false</var>. */

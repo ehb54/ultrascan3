@@ -15,6 +15,7 @@ US_Cell_DB::US_Cell_DB(struct US_ExpData temp_exp_info, int *temp_cell_table_unf
 	int border=4, spacing=2;
 	int xpos = border, ypos = border;
 	int buttonw = 150, buttonh = 26;
+	QString str;
 
 	from_cell = true;
 	for(int i=0; i<4; i++)
@@ -37,6 +38,8 @@ US_Cell_DB::US_Cell_DB(struct US_ExpData temp_exp_info, int *temp_cell_table_unf
 	cell_info.ExperimentID = exp_info.ExpdataID;
 	cell_info.Position = exp_info.cell_position;
 	cell_info.CenterpieceID = exp_info.centerpiece[exp_info.cell_position];
+	cp_info_vector.clear();
+	readCenterpieceInfo(&cp_info_vector);
 	cell_info.InvID = exp_info.Invid;
 	cell_info.Description = exp_info.Cell[exp_info.cell_position];
 	cell_info.CellID = exp_info.CellID[exp_info.cell_position];
@@ -138,10 +141,10 @@ US_Cell_DB::US_Cell_DB(struct US_ExpData temp_exp_info, int *temp_cell_table_unf
 	lbl_ctpc->setPalette(QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit));
 	lbl_ctpc->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 	lbl_ctpc->setNum(cell_info.CenterpieceID);
-	if(cell_info.CenterpieceID>4 || cell_info.CenterpieceID<0)
-	{
-		lbl_ctpc->setText("not selected");
-	}
+	str.sprintf(cp_info_vector[cell_info.CenterpieceID].material + " %d-Channel (%d)",
+	cp_info_vector[cell_info.CenterpieceID].channels * 2, cp_info_vector[cell_info.CenterpieceID].sector);
+	cell_info.Num_Channel = cp_info_vector[cell_info.CenterpieceID].channels;
+	lbl_ctpc->setText(str);
 
 	xpos += buttonw + spacing;
 	pb_reset = new QPushButton(tr("Reset"), this);
@@ -333,17 +336,9 @@ US_Cell_DB::US_Cell_DB(struct US_ExpData temp_exp_info, int *temp_cell_table_unf
 	cmbb_channel->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	cmbb_channel->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 	cmbb_channel->setGeometry(xpos, ypos, buttonw, buttonh);
-	if(cell_info.CenterpieceID>=0 && cell_info.CenterpieceID<=2)
+	for (int k=0; k<cell_info.Num_Channel; k++)
 	{
-		cmbb_channel->insertItem("Channel 1");
-		cell_info.Num_Channel = 1;
-	}
-	if(cell_info.CenterpieceID == 3)
-	{
-		cmbb_channel->insertItem("Channel 1");
-		cmbb_channel->insertItem("Channel 2");
-		cmbb_channel->insertItem("Channel 3");
-		cell_info.Num_Channel = 3;
+		cmbb_channel->insertItem(str.sprintf("Channel %d", k+1));
 	}
 	connect(cmbb_channel, SIGNAL(activated(int)), SLOT(sel_channel(int)));
 
