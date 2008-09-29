@@ -2129,7 +2129,48 @@ void US_FeMatch_W::load_model(const QString &fileName)
 		lbl_MW_ff02->setText(str);
 		pb_fit->setEnabled(true);
 		update_distribution();
+		create_modelsystems();
 	}
+}
+
+void US_FeMatch_W::create_modelsystems()
+{
+/*
+	struct ModelSystem ms;
+	msv.clear();
+	QString str;
+	unsigned int j=0, threads=USglobal->config_list.numThreads;
+	unsigned int components_per_job = (int)(0.5 + components/threads)
+	// distribute all components among as many models as there are threads:
+	for (unsigned int i=0; i<threads; i++)
+	{
+		for (j=((int)(0.5 + components/threads))*i; j<((int)(components/threads))*(i+1); j++)
+		{
+			ms.description = str.sprintf("Components for thread %d", i+1);
+			ms.model = 3; // fixed molecular weight distribution model with noninteracting species
+			ms.component_vector.resize(1);
+			ms.component_vector[0].vbar20 = vbar20; // not used
+			ms.component_vector[0].mw = mw[i]; // not used
+			ms.component_vector[0].s = s_distribution[i]; // populate with s and D values that have
+			ms.component_vector[0].D = D_distribution[i]; // been adjusted for experimental space
+		ms.component_vector[0].sigma = 0.0; // not used
+		ms.component_vector[0].delta = 0.0; // not used
+		ms.component_vector[0].extinction = 0.0; // not used
+		ms.component_vector[0].concentration = partial_concentration[i];
+		ms.component_vector[0].show_conc =  false; // not used
+		ms.component_vector[0].show_keq = false; // not used
+		ms.component_vector[0].show_koff = false; // not used
+		ms.component_vector[0].show_stoich = 0; // not used
+		ms.component_vector[0].show_component.resize(0); // not used
+		ms.component_vector[0].shape = ""; // not used
+		ms.component_vector[0].name = ""; // not used
+		ms.component_vector[0].c0.radius.clear(); // not used
+		ms.component_vector[0].c0.concentration.clear(); // not used
+		ms.assoc_vector.clear();
+		}
+		msv.push_back(ms);
+	}
+*/
 }
 
 //void US_FeMatch_W::updateParameters(float val1, float val2)

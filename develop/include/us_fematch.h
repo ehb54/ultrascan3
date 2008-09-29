@@ -9,6 +9,7 @@
 #include "us_plotdata.h"
 #include "us_3dsolutes.h"
 #include "../3dplot/mesh2mainwindow.h"
+#include "us_femglobal.h"
 
 #include <qcheckbox.h>
 #include <qwt_symbol.h>
@@ -52,6 +53,7 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
 		float rmsd, baseline;
 		int model;
 		unsigned int components, current_component;
+		vector <struct ModelSystem> msv;
 
 #ifdef WIN32
 		    #pragma warning ( disable: 4251 )
@@ -97,6 +99,7 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
 		void calc_distros();
 		void load_model();
 		void load_model(const QString &);
+		void create_modelsystems();
 		void update_labels();
 		void clearDisplay();
 
