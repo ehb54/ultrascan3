@@ -29,7 +29,6 @@ unix {
 }
 
 win32 {
-  message ("Configuring for the Microsoft Windows Platform...")
   TEMPLATE             = vcapp          # Visual C application (creates .vcproj file)
   CONFIG              += qt warn thread release
   #CONFIG              += qt warn thread debug

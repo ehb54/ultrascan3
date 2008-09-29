@@ -53,7 +53,17 @@ class US_EXTERN US_Cell_DB : public US_DB
 		struct US_CellData cell_info;		/*!< A struct US_CellData for storing Cell info. */
 		struct US_ExpData exp_info;		/*!< A struct US_ExpData for storing experimental data info. */
 		int *item_CellID;						/*!< An integer array stores tblCell id.*/
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
 		vector <struct centerpieceInfo> cp_info_vector;	/*!<centerpiece information */
+
+#ifdef WIN32
+		  #pragma warning ( default: 4251 )
+#endif
+
 		QString *item_Description;			/*!< A string array stores cell description.*/
 		int *cell_table_unfinished;		/*!< An integer point variable for checking cell table finish.*/
 		bool 	select_flag,					/*!< A flag use for data listbox select, initialize to <var>false</var>. */
