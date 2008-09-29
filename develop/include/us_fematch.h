@@ -18,14 +18,14 @@ using namespace std;
 class  US_EXTERN US_FeMatch_W : public Data_Control_W
 {
 	Q_OBJECT
-	
+
 	public:
-	
+
 		US_FeMatch_W(QWidget *p = 0, const char *name = 0);
 		~US_FeMatch_W();
-		
+
 	private:
-	
+
 		int plot2;
 		unsigned int monte_carlo_iterations;
 		bool window_3d_flag;
@@ -68,15 +68,15 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
 		vector <double> mw;
 		vector <double> f_f0;
 		vector <double> fv;
-		
+
 #ifdef WIN32
 		    #pragma warning ( default: 4251 )
 #endif
 
 		struct mfem_data residuals, fem_model;
-		
+
 	private slots:
-		
+
 		void setup_GUI();
 		void update_component(double);
 		void update_s(const QString &);
@@ -90,6 +90,7 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
 		void updateParameters();
 		void fit();
 		float calc_residuals();
+		float calc_residuals_ra();
 		void second_plot(int);
 		void write_cofs();
 		void write_res();
@@ -131,7 +132,7 @@ class fematch_thr_t : public QThread
 			 double ,
 			 unsigned int ,
 			 unsigned int ,
-			 unsigned int 
+			 unsigned int
 			 );
   void fematch_thr_shutdown();
   void fematch_thr_wait();

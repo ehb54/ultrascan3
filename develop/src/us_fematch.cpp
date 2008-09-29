@@ -1451,6 +1451,175 @@ void fematch_thr_t::run()
 	}
 }
 
+float US_FeMatch_W::calc_residuals_ra()
+{
+	/*
+	QString str;
+	unsigned int i, j;
+	long *s_curve, *r_curve;
+	double **sim, **res;
+	struct mfem_scan single_scan;
+
+	sim = new double * [run_inf.scans[selected_cell][selected_lambda]];
+	res = new double * [run_inf.scans[selected_cell][selected_lambda]];
+	s_curve = new long   [run_inf.scans[selected_cell][selected_lambda]];
+	r_curve = new long   [run_inf.scans[selected_cell][selected_lambda]];
+	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+	{
+		sim[i] = new double [points];
+		res[i] = new double [points];
+	}
+	simdata.clear();
+	simdata.resize(1);
+	single_scan.conc.clear();
+	for (i=0; i<points; i++)
+	{
+		simdata[0].radius.push_back(radius[i]);
+		single_scan.conc.push_back(0.0); // populate with zeros
+	}
+	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+	{
+		single_scan.time = (double) run_inf.time[selected_cell][selected_lambda][i];
+		single_scan.omega_s_t = (double) run_inf.omega_s_t[selected_cell][selected_lambda][i];
+		simdata[0].scan.push_back(single_scan);
+	}
+	double tmp = sp.speed_step[0].delay_minutes;
+	US_Data_IO *data_io;
+	data_io = new US_Data_IO(&run_inf, false); // (baseline flag can be false, we don't need it)
+	data_io->assign_simparams(&sp, selected_cell, selected_lambda, selected_channel);
+	delete data_io;
+	sp.moving_grid = moving_grid;
+	sp.mesh = mesh;
+	sp.simpoints = simpoints;
+	sp.band_volume = band_volume;
+	sp.speed_step[0].delay_minutes = tmp;
+	assign_model();
+	astfem_rsa->calculate(&ms, &sp, &simdata);
+	rmsd = 0.0;
+	analysis_plot->clear();
+	edit_plot->clear();
+	plot_edit();
+	QwtSymbol symbol;
+	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+	{
+		for (j=0; j<points; j++)
+		{
+			sim[i][j] = simdata[0].scan[i].conc[j];
+			res[i][j] = absorbance[i][j] - sim[i][j];
+			rmsd += pow(res[i][j], 2.0);
+		}
+
+		s_curve[i] = edit_plot->insertCurve("Simulated Model Data");
+		r_curve[i] = analysis_plot->insertCurve("Residual Data");
+		edit_plot->setCurvePen(s_curve[i], QPen(Qt::red, 1, SolidLine));
+		edit_plot->setCurveData(s_curve[i], radius, sim[i], points);
+
+		symbol.setStyle(QwtSymbol::Ellipse);
+		symbol.setPen(Qt::yellow);
+		symbol.setBrush(Qt::yellow);
+		symbol.setSize(1);
+
+		analysis_plot->setCurveStyle(r_curve[i], QwtCurve::NoCurve);
+		analysis_plot->setCurveSymbol(curve[i], symbol);
+		analysis_plot->setCurvePen(r_curve[i], QPen(Qt::yellow, 1));
+		analysis_plot->setCurveData(r_curve[i], radius, res[i], points);
+	}
+	edit_plot->replot();
+	analysis_plot->replot();
+	rmsd /= (run_inf.scans[selected_cell][selected_lambda] * points);
+	str.sprintf("%6.4e", rmsd);
+	lbl_variance2->setText(str);
+	rmsd = pow((double)rmsd, 0.5);
+	str.sprintf("%6.4e", rmsd);
+	lbl2_excluded->setText(str);
+	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+	{
+		delete [] sim[i];
+		delete [] res[i];
+	}
+	delete [] sim;
+	delete [] res;
+	delete [] s_curve;
+	delete [] r_curve;
+	return rmsd;
+	qApp->processEvents();
+	plot_edit();
+	long *resids;
+	double **res;
+	res = new double *[experiment.scan.size()];
+	resids = new long [experiment.scan.size()];
+	for (i=0; i<experiment.scan.size(); i++)
+	{
+		res[i] = new double [points];
+	}
+	for (j=0; j<experiment.scan.size(); j++)
+	{
+		for (k=0; k<points; k++)
+		{
+			res[j][k] = residuals.scan[j].conc[k] + ti_noise[k] + ri_noise[j];
+		}
+		if (analysis_type == "sa2d")
+		{
+			str = "2D-Spectrum Analysis Model";
+		}
+		else if (analysis_type == "cofs")
+		{
+			str = "C(s) Model";
+		}
+		else if (analysis_type == "fe")
+		{
+			str = "Finite Element Model";
+		}
+		else if (analysis_type == "ga")
+		{
+			str = "Genetic Algorithm Model";
+		}
+		else
+		{
+			str = "2D-Spectrum Analysis Model";
+		}
+		resids[j] = edit_plot->insertCurve(str);
+		edit_plot->setCurvePen(resids[j], QPen(Qt::red, 1, SolidLine));
+		edit_plot->setCurveData(resids[j], radius, res[j], points);
+//		qApp->processEvents();
+	}
+	edit_plot->replot();
+	clear_data(&fem_model);
+	fem_model = residuals;
+	rmsd = 0.0;
+	for (j=0; j<experiment.scan.size(); j++)
+	{
+		for (k=0; k<points; k++)
+		{
+//			residuals.scan[j].conc[k] = absorbance[j][k] - residuals.scan[j].conc[k];
+			residuals.scan[j].conc[k] = absorbance[j][k] - res[j][k];
+//			cout << "C[" << j << "][" << k << "]: " << residuals.scan[j].conc[k] << endl;
+			rmsd += residuals.scan[j].conc[k] * residuals.scan[j].conc[k];
+		}
+	}
+//cout << "RMSD: " << rmsd << ", points: " << points << ", scans: " << experiment.scan.size() << endl;
+	rmsd /= (points * experiment.scan.size());
+	str.sprintf("%6.4e", rmsd);
+	lbl_variance2->setText(str);
+	rmsd = pow((double)rmsd, 0.5);
+	str.sprintf("%6.4e", rmsd);
+	lbl2_excluded->setText(str);
+//	calc_distros();
+	second_plot(plot2);
+	for (i=0; i<experiment.scan.size(); i++)
+	{
+		delete [] res[i];
+	}
+	delete [] res;
+	delete [] resids;
+	pb_second_plot->setEnabled(true);
+	pb_save->setEnabled(true);
+	pb_view->setEnabled(true);
+	pb_print->setEnabled(true);
+	*/
+	return rmsd;
+}
+
 float US_FeMatch_W::calc_residuals()
 {
 	QString str;
