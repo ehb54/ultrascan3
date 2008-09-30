@@ -1453,28 +1453,25 @@ void fematch_thr_t::run()
 
 float US_FeMatch_W::calc_residuals_ra()
 {
-	/*
 	QString str;
-	unsigned int i, j;
-	long *s_curve, *r_curve;
-	double **sim, **res;
+	unsigned int i, j, k;
 	struct mfem_scan single_scan;
+	struct mfem_data solution; //collect all models from multiple threads in this variable
 
-	sim = new double * [run_inf.scans[selected_cell][selected_lambda]];
-	res = new double * [run_inf.scans[selected_cell][selected_lambda]];
-	s_curve = new long   [run_inf.scans[selected_cell][selected_lambda]];
-	r_curve = new long   [run_inf.scans[selected_cell][selected_lambda]];
-	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
-	{
-		sim[i] = new double [points];
-		res[i] = new double [points];
-	}
-	simdata.clear();
-	simdata.resize(1);
+	progress->setTotalSteps(USglobal->config_list.numThreads); // one extra column for the baseline
+	progress->reset();
+	simdata.clear(); // simdata is a vector since astfem_rsa requires a vector for all speed steps
+	simdata.resize(1); // we only have 1 speed step.
+	simdata[0].radius.clear();
+	solution.radius.clear();
+	simdata[0].scan.clear();
+	solution.scan.clear();
 	single_scan.conc.clear();
 	for (i=0; i<points; i++)
 	{
 		simdata[0].radius.push_back(radius[i]);
+		solution.radius.push_back(radius[i]);
+		residuals.radius.push_back(radius[i]);
 		single_scan.conc.push_back(0.0); // populate with zeros
 	}
 	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
@@ -1482,81 +1479,51 @@ float US_FeMatch_W::calc_residuals_ra()
 		single_scan.time = (double) run_inf.time[selected_cell][selected_lambda][i];
 		single_scan.omega_s_t = (double) run_inf.omega_s_t[selected_cell][selected_lambda][i];
 		simdata[0].scan.push_back(single_scan);
+		solution.scan.push_back(single_scan);
+		residuals.scan.push_back(single_scan);
 	}
-	double tmp = sp.speed_step[0].delay_minutes;
 	US_Data_IO *data_io;
 	data_io = new US_Data_IO(&run_inf, false); // (baseline flag can be false, we don't need it)
 	data_io->assign_simparams(&sp, selected_cell, selected_lambda, selected_channel);
 	delete data_io;
-	sp.moving_grid = moving_grid;
-	sp.mesh = mesh;
-	sp.simpoints = simpoints;
-	sp.band_volume = band_volume;
-	sp.speed_step[0].delay_minutes = tmp;
-	assign_model();
-	astfem_rsa->calculate(&ms, &sp, &simdata);
-	rmsd = 0.0;
-	analysis_plot->clear();
-	edit_plot->clear();
-	plot_edit();
-	QwtSymbol symbol;
-	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+	sp.rotor = 1;
+	sp.moving_grid = 0;
+	sp.mesh = 1;
+	sp.simpoints = 200;
+	sp.band_volume = 0.15;
+	US_Astfem_RSA *astfem_rsa;
+	astfem_rsa = new US_Astfem_RSA(false);
+	US_FemGlobal fg;
+	for (j=0; j<USglobal->config_list.numThreads; j++)
 	{
-		for (j=0; j<points; j++)
+		fg.write_experiment(&msv[j], &sp, str.sprintf("/home/user/demeler/us/ultrascan/develop/%d-model", j));
+		astfem_rsa->calculate(&msv[j], &sp, &simdata); // calculate the model for the current thread
+		// combine the current model's solution with the total solution vector:
+		for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
 		{
-			sim[i][j] = simdata[0].scan[i].conc[j];
-			res[i][j] = absorbance[i][j] - sim[i][j];
-			rmsd += pow(res[i][j], 2.0);
+			for (k=0; k<points; k++)
+			{
+				solution.scan[i].conc[k] += simdata[0].scan[i].conc[k];
+			}
 		}
-
-		s_curve[i] = edit_plot->insertCurve("Simulated Model Data");
-		r_curve[i] = analysis_plot->insertCurve("Residual Data");
-		edit_plot->setCurvePen(s_curve[i], QPen(Qt::red, 1, SolidLine));
-		edit_plot->setCurveData(s_curve[i], radius, sim[i], points);
-
-		symbol.setStyle(QwtSymbol::Ellipse);
-		symbol.setPen(Qt::yellow);
-		symbol.setBrush(Qt::yellow);
-		symbol.setSize(1);
-
-		analysis_plot->setCurveStyle(r_curve[i], QwtCurve::NoCurve);
-		analysis_plot->setCurveSymbol(curve[i], symbol);
-		analysis_plot->setCurvePen(r_curve[i], QPen(Qt::yellow, 1));
-		analysis_plot->setCurveData(r_curve[i], radius, res[i], points);
+		progress->setProgress(j+1);
 	}
-	edit_plot->replot();
-	analysis_plot->replot();
-	rmsd /= (run_inf.scans[selected_cell][selected_lambda] * points);
-	str.sprintf("%6.4e", rmsd);
-	lbl_variance2->setText(str);
-	rmsd = pow((double)rmsd, 0.5);
-	str.sprintf("%6.4e", rmsd);
-	lbl2_excluded->setText(str);
-	for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
-	{
-		delete [] sim[i];
-		delete [] res[i];
-	}
-	delete [] sim;
-	delete [] res;
-	delete [] s_curve;
-	delete [] r_curve;
-	return rmsd;
+	delete astfem_rsa;
 	qApp->processEvents();
 	plot_edit();
 	long *resids;
 	double **res;
-	res = new double *[experiment.scan.size()];
-	resids = new long [experiment.scan.size()];
-	for (i=0; i<experiment.scan.size(); i++)
+	res = new double *[solution.scan.size()];
+	resids = new long [solution.scan.size()];
+	for (i=0; i<solution.scan.size(); i++)
 	{
 		res[i] = new double [points];
 	}
-	for (j=0; j<experiment.scan.size(); j++)
+	for (j=0; j<solution.scan.size(); j++)
 	{
 		for (k=0; k<points; k++)
 		{
-			res[j][k] = residuals.scan[j].conc[k] + ti_noise[k] + ri_noise[j];
+			res[j][k] = solution.scan[j].conc[k] + ti_noise[k] + ri_noise[j];
 		}
 		if (analysis_type == "sa2d")
 		{
@@ -1581,32 +1548,27 @@ float US_FeMatch_W::calc_residuals_ra()
 		resids[j] = edit_plot->insertCurve(str);
 		edit_plot->setCurvePen(resids[j], QPen(Qt::red, 1, SolidLine));
 		edit_plot->setCurveData(resids[j], radius, res[j], points);
-//		qApp->processEvents();
 	}
 	edit_plot->replot();
 	clear_data(&fem_model);
-	fem_model = residuals;
+	fem_model = solution;
 	rmsd = 0.0;
-	for (j=0; j<experiment.scan.size(); j++)
+	for (j=0; j<solution.scan.size(); j++)
 	{
 		for (k=0; k<points; k++)
 		{
-//			residuals.scan[j].conc[k] = absorbance[j][k] - residuals.scan[j].conc[k];
 			residuals.scan[j].conc[k] = absorbance[j][k] - res[j][k];
-//			cout << "C[" << j << "][" << k << "]: " << residuals.scan[j].conc[k] << endl;
-			rmsd += residuals.scan[j].conc[k] * residuals.scan[j].conc[k];
+			rmsd += pow(residuals.scan[j].conc[k], 2.0);
 		}
 	}
-//cout << "RMSD: " << rmsd << ", points: " << points << ", scans: " << experiment.scan.size() << endl;
-	rmsd /= (points * experiment.scan.size());
+	rmsd /= (points * solution.scan.size());
 	str.sprintf("%6.4e", rmsd);
 	lbl_variance2->setText(str);
 	rmsd = pow((double)rmsd, 0.5);
 	str.sprintf("%6.4e", rmsd);
 	lbl2_excluded->setText(str);
-//	calc_distros();
 	second_plot(plot2);
-	for (i=0; i<experiment.scan.size(); i++)
+	for (i=0; i<solution.scan.size(); i++)
 	{
 		delete [] res[i];
 	}
@@ -1616,7 +1578,6 @@ float US_FeMatch_W::calc_residuals_ra()
 	pb_save->setEnabled(true);
 	pb_view->setEnabled(true);
 	pb_print->setEnabled(true);
-	*/
 	return rmsd;
 }
 
@@ -1635,12 +1596,11 @@ float US_FeMatch_W::calc_residuals()
 	{
 		threads = components;
 	}
-	//struct mfem_data fem_data[threads];
 	vector<struct mfem_data> fem_data(threads);
-	//US_MovingFEM *mfem[threads];
 	vector<US_MovingFEM*> mfem(threads);
-	for(i = 0; i < threads; i++) {
-	mfem[i] = new US_MovingFEM(&(fem_data[i]), false);
+	for(i = 0; i < threads; i++)
+	{
+		mfem[i] = new US_MovingFEM(&(fem_data[i]), false);
 	}
 
 // initialize experimental data array sizes and radius positions:
@@ -2180,7 +2140,7 @@ void US_FeMatch_W::create_modelsystems()
 			ms.component_vector[l].show_stoich = 0; // not used
 			ms.component_vector[l].show_component.resize(0); // not used
 			ms.component_vector[l].shape = ""; // not used
-			ms.component_vector[l].name = ""; // not used
+			ms.component_vector[l].name = str.sprintf("Component %d (of %d)", k+1, components); // not used
 			ms.component_vector[l].c0.radius.clear(); // not used
 			ms.component_vector[l].c0.concentration.clear(); // not used
 			ms.assoc_vector.clear();

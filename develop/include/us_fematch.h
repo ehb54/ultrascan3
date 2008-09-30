@@ -10,6 +10,7 @@
 #include "us_3dsolutes.h"
 #include "../3dplot/mesh2mainwindow.h"
 #include "us_femglobal.h"
+#include "us_astfem_rsa.h"
 
 #include <qcheckbox.h>
 #include <qwt_symbol.h>
@@ -54,6 +55,8 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
 		int model;
 		unsigned int components, current_component;
 		vector <struct ModelSystem> msv;
+		vector <struct mfem_data> simdata;
+		struct SimulationParameters sp;
 
 #ifdef WIN32
 		    #pragma warning ( disable: 4251 )
