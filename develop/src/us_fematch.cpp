@@ -2029,22 +2029,22 @@ void US_FeMatch_W::load_model(const QString &fileName)
 		QTextStream ts(&f);
 		str = ts.readLine();
 		str.stripWhiteSpace();
-		if (str == "SA2D" || str == "2DSA")
+		if (str == "SA2D" || str == "2DSA" || str == "2DSA_RA")
 		{
 			analysis_type = "sa2d";
 			str = ts.readLine();
 		}
-		else if (str == "SA2D_MW" || str == "2DSA_MW")
+		else if (str == "SA2D_MW" || str == "2DSA_MW" || str == "2DSA_RA_MW")
 		{
 			analysis_type = "sa2d_mw";
 			str = ts.readLine();
 		}
-		else if (str == "GA")
+		else if (str == "GA" || str == "GA_RA" )
 		{
 			analysis_type = "ga";
 			str = ts.readLine();
 		}
-		else if (str == "GA_MW")
+		else if (str == "GA_MW" || str == "GA_RA_MW")
 		{
 			analysis_type = "ga_mw";
 			str = ts.readLine();
@@ -2059,28 +2059,28 @@ void US_FeMatch_W::load_model(const QString &fileName)
 			analysis_type = "cofs";
 			str = ts.readLine();
 		}
-		else if (str == "GA_MC")
+		else if (str == "GA_MC" || str == "GA_RA_MC")
 		{
 			analysis_type = "ga_mc";
 			str = ts.readLine(); // number of Monte Carlo iterations
 			monte_carlo_iterations = str.toUInt();
 			str = ts.readLine(); // run name
 		}
-		else if (str == "SA2D_MC" || str == "2DSA_MC")
+		else if (str == "SA2D_MC" || str == "2DSA_MC" || str == "2DSA_RA_MC")
 		{
 			analysis_type = "sa2d_mc";
 			str = ts.readLine(); // number of Monte Carlo iterations
 			monte_carlo_iterations = str.toUInt();
 			str = ts.readLine(); // run name
 		}
-		else if (str == "2DSA_MW_MC")
+		else if (str == "2DSA_MW_MC" || str == "2DSA_RA_MW_MC")
 		{
 			analysis_type = "sa2d_mw_mc";
 			str = ts.readLine(); // number of Monte Carlo iterations
 			monte_carlo_iterations = str.toUInt();
 			str = ts.readLine(); // run name
 		}
-		else if (str == "GA_MW_MC")
+		else if (str == "GA_MW_MC" || str == "GA_RA_MW_MC")
 		{
 			analysis_type = "ga_mw_mc";
 			str = ts.readLine(); // number of Monte Carlo iterations
@@ -2124,7 +2124,6 @@ void US_FeMatch_W::load_model(const QString &fileName)
 		f.close();
 		cnt_component->setRange(1.0, (double) components, 1.0);
 		cnt_component->setEnabled(true);
-
 		str.sprintf(" %10.6e kD, %4.2f", mw[0]/1000, f_f0[0]);
 		lbl_MW_ff02->setText(str);
 		pb_fit->setEnabled(true);
@@ -2135,42 +2134,61 @@ void US_FeMatch_W::load_model(const QString &fileName)
 
 void US_FeMatch_W::create_modelsystems()
 {
-/*
 	struct ModelSystem ms;
 	msv.clear();
 	QString str;
-	unsigned int j=0, threads=USglobal->config_list.numThreads;
-	unsigned int components_per_job = (int)(0.5 + components/threads)
-	// distribute all components among as many models as there are threads:
-	for (unsigned int i=0; i<threads; i++)
+	unsigned int i, j, k, l, threads=USglobal->config_list.numThreads;
+	unsigned int components_per_job[threads];
+
+	for (i=0; i<threads; i++)
 	{
-		for (j=((int)(0.5 + components/threads))*i; j<((int)(components/threads))*(i+1); j++)
+		components_per_job[i] = (int)(components/threads); // initialize
+	}
+	j = components_per_job[0] * threads;
+	while (j<components);
+	{
+		for (i=0; i<threads; i++)
+		{
+			components_per_job[i]++; // if remainder != zero, pile the remainder on at the end
+			j++;
+			if (j == components) break;
+		}
+	}
+
+// distribute all components among as many models as there are threads:
+	j=0;
+	for (i=0; i<threads; i++)
+	{
+		l=0;
+		ms.component_vector.resize(components_per_job[i]);
+		for (k=j; k<j+components_per_job[i]; k++)
 		{
 			ms.description = str.sprintf("Components for thread %d", i+1);
 			ms.model = 3; // fixed molecular weight distribution model with noninteracting species
-			ms.component_vector.resize(1);
-			ms.component_vector[0].vbar20 = vbar20; // not used
-			ms.component_vector[0].mw = mw[i]; // not used
-			ms.component_vector[0].s = s_distribution[i]; // populate with s and D values that have
-			ms.component_vector[0].D = D_distribution[i]; // been adjusted for experimental space
-		ms.component_vector[0].sigma = 0.0; // not used
-		ms.component_vector[0].delta = 0.0; // not used
-		ms.component_vector[0].extinction = 0.0; // not used
-		ms.component_vector[0].concentration = partial_concentration[i];
-		ms.component_vector[0].show_conc =  false; // not used
-		ms.component_vector[0].show_keq = false; // not used
-		ms.component_vector[0].show_koff = false; // not used
-		ms.component_vector[0].show_stoich = 0; // not used
-		ms.component_vector[0].show_component.resize(0); // not used
-		ms.component_vector[0].shape = ""; // not used
-		ms.component_vector[0].name = ""; // not used
-		ms.component_vector[0].c0.radius.clear(); // not used
-		ms.component_vector[0].c0.concentration.clear(); // not used
-		ms.assoc_vector.clear();
+			ms.component_vector[l].vbar20 = vbar20; // not used
+			ms.component_vector[l].mw = mw[k]; // not used
+			ms.component_vector[l].s = s_distribution[k]; // populate with s and D values that have
+			ms.component_vector[l].D = D_distribution[k]; // been adjusted for experimental space
+			ms.component_vector[l].sigma = 0.0; // not used
+			ms.component_vector[l].delta = 0.0; // not used
+			ms.component_vector[l].extinction = 0.0; // not used
+			ms.component_vector[l].concentration = partial_concentration[k];
+			ms.component_vector[l].f_f0 = 0.0; // not used
+			ms.component_vector[l].show_conc =  false; // not used
+			ms.component_vector[l].show_keq = false; // not used
+			ms.component_vector[l].show_koff = false; // not used
+			ms.component_vector[l].show_stoich = 0; // not used
+			ms.component_vector[l].show_component.resize(0); // not used
+			ms.component_vector[l].shape = ""; // not used
+			ms.component_vector[l].name = ""; // not used
+			ms.component_vector[l].c0.radius.clear(); // not used
+			ms.component_vector[l].c0.concentration.clear(); // not used
+			ms.assoc_vector.clear();
+			l++;
 		}
+		j += components_per_job[i];
 		msv.push_back(ms);
 	}
-*/
 }
 
 //void US_FeMatch_W::updateParameters(float val1, float val2)

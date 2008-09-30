@@ -822,7 +822,7 @@ void US_FeMatchRa_W::show_parameter()
 	analysis_plot->replot();
 }
 
-
+// this function combines like solutes and adds their frequencies
 void US_FeMatchRa_W::reduce(list <Parameter> *p, double *mode, double *mean, double *median)
 {
 	list <Parameter> par1, par2;
