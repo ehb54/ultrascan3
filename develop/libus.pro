@@ -167,14 +167,15 @@ SOURCES += \
   src/us_hydrodyn_addhybrid.cpp \
   src/us_hydrodyn_addresidue.cpp \
   src/us_hydrodyn_asa.cpp \
+  src/us_hydrodyn_asab1.cpp \
   src/us_hydrodyn_bead_output.cpp \
   src/us_hydrodyn_hydro.cpp \
   src/us_hydrodyn_misc.cpp \
   src/us_hydrodyn_overlap.cpp \
   src/us_hydrodyn_overlap_reduction.cpp \
   src/us_hydrodyn_pat.cpp \
-  src/us_hydrodyn_supc.cpp \
   src/us_hydrodyn_results.cpp \
+  src/us_hydrodyn_supc.cpp \
   src/us_imgviewer.cpp \
   src/us_infopanel.cpp \
   src/us_license.cpp \
@@ -354,6 +355,7 @@ HEADERS += \
   include/us_hydrodyn_addhybrid.h \
   include/us_hydrodyn_addresidue.h \
   include/us_hydrodyn_asa.h \
+  include/us_hydrodyn_asab1.h \
   include/us_hydrodyn_bead_output.h \
   include/us_hydrodyn_hydro.h \
   include/us_hydrodyn_misc.h \
@@ -361,8 +363,8 @@ HEADERS += \
   include/us_hydrodyn_overlap_reduction.h \
   include/us_hydrodyn_pdbdefs.h \
   include/us_hydrodyn_pat.h \
-  include/us_hydrodyn_supc.h \
   include/us_hydrodyn_results.h \
+  include/us_hydrodyn_supc.h \
   include/us_imgviewer.h \
   include/us_infopanel.h \
   include/us_license.h \
