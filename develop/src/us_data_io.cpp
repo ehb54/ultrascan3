@@ -157,74 +157,74 @@ vector <struct centerpieceInfo> *cp_list)
 			return(-3);	// -3 error code = wrong version
 		}
 		ds >> (*run_inf).data_dir;
-cerr << "data_dir: " << (*run_inf).data_dir.latin1() << endl;
+//cerr << "data_dir: " << (*run_inf).data_dir.latin1() << endl;
 		ds >> (*run_inf).run_id;
-cerr << "Run ID: " << (*run_inf).run_id.latin1() << endl;
+//cerr << "Run ID: " << (*run_inf).run_id.latin1() << endl;
 		ds >> (*run_inf).avg_temperature;
 		temperature = (*run_inf).avg_temperature;
 		VBAR->temperature = temperature; // update VBAR object's temperature as well'
-cerr << "Avg. temp: " << (*run_inf).avg_temperature << endl;
+//cerr << "Avg. temp: " << (*run_inf).avg_temperature << endl;
 		ds >> (*run_inf).temperature_check;
-cerr << "temp check: " << (*run_inf).temperature_check << endl;
+//cerr << "temp check: " << (*run_inf).temperature_check << endl;
 		ds >> (*run_inf).time_correction;
-cerr << "Time correction: " << (*run_inf).time_correction << endl;
+//cerr << "Time correction: " << (*run_inf).time_correction << endl;
 		ds >> (*run_inf).duration;
-cerr << "duration: " << (*run_inf).duration << endl;
+//cerr << "duration: " << (*run_inf).duration << endl;
 		ds >> (*run_inf).total_scans;
-cerr << "Total Scans: " << (*run_inf).total_scans << endl;
+//cerr << "Total Scans: " << (*run_inf).total_scans << endl;
 		ds >> (*run_inf).delta_r;
-cerr << "Delta-r: " << (*run_inf).delta_r << endl;
+//cerr << "Delta-r: " << (*run_inf).delta_r << endl;
 		ds >> (*run_inf).expdata_id;
-cerr << "data id: " << (*run_inf).expdata_id << endl;
+//cerr << "data id: " << (*run_inf).expdata_id << endl;
 		ds >> (*run_inf).investigator;
-cerr << "investigator: " << (*run_inf).investigator << endl;
+//cerr << "investigator: " << (*run_inf).investigator << endl;
 		ds >> (*run_inf).date;
-cerr << "date: " << (*run_inf).date << endl;
+//cerr << "date: " << (*run_inf).date << endl;
 		ds >> (*run_inf).description;
-cerr << "description: " << (*run_inf).description << endl;
+//cerr << "description: " << (*run_inf).description << endl;
 		ds >> (*run_inf).dbname;
-cerr << "dbname: " << (*run_inf).dbname << endl;
+//cerr << "dbname: " << (*run_inf).dbname << endl;
 		ds >> (*run_inf).dbhost;
-cerr << "dbhost: " << (*run_inf).dbhost << endl;
+//cerr << "dbhost: " << (*run_inf).dbhost << endl;
 		ds >> (*run_inf).dbdriver;
-cerr << "dbdriver: " << (*run_inf).dbdriver << endl;
+//cerr << "dbdriver: " << (*run_inf).dbdriver << endl;
 		ds >> et;
 		(*run_inf).exp_type.velocity = (bool) et;
-cerr << "velocity: " << (*run_inf).exp_type.velocity << endl;
+//cerr << "velocity: " << (*run_inf).exp_type.velocity << endl;
 		ds >> et;
 		(*run_inf).exp_type.equilibrium = (bool) et;
-cerr << "equilibrium: " << (*run_inf).exp_type.equilibrium << endl;
+//cerr << "equilibrium: " << (*run_inf).exp_type.equilibrium << endl;
 		ds >> et;
 		(*run_inf).exp_type.diffusion = (bool) et;
-cerr << "diffusion: " << (*run_inf).exp_type.diffusion << endl;
+//cerr << "diffusion: " << (*run_inf).exp_type.diffusion << endl;
 		ds >> et;
 		(*run_inf).exp_type.simulation = (bool) et;
-cerr << "simulation: " << (*run_inf).exp_type.simulation << endl;
+//cerr << "simulation: " << (*run_inf).exp_type.simulation << endl;
 		ds >> et;
 		(*run_inf).exp_type.interference = (bool) et;
-cerr << "interference: " << (*run_inf).exp_type.interference << endl;
+//cerr << "interference: " << (*run_inf).exp_type.interference << endl;
 		ds >> et;
 		(*run_inf).exp_type.absorbance = (bool) et;
-cerr << "absorbance: " << (*run_inf).exp_type.absorbance << endl;
+//cerr << "absorbance: " << (*run_inf).exp_type.absorbance << endl;
 		ds >> et;
 		(*run_inf).exp_type.fluorescence = (bool) et;
-cerr << "fluorescence: " << (*run_inf).exp_type.fluorescence << endl;
+//cerr << "fluorescence: " << (*run_inf).exp_type.fluorescence << endl;
 		ds >> et;
 		(*run_inf).exp_type.intensity = (bool) et;
-cerr << "intensity: " << (*run_inf).exp_type.intensity << endl;
+//cerr << "intensity: " << (*run_inf).exp_type.intensity << endl;
 		ds >> et;
 		(*run_inf).exp_type.wavelength = (bool) et;
-cerr << "wavelength: " << (*run_inf).exp_type.wavelength << endl;
+//cerr << "wavelength: " << (*run_inf).exp_type.wavelength << endl;
 		for (i=0; i<8; i++)
 		{
 			ds >> (*run_inf).centerpiece[i];
-cerr <<  "Centerpiece[" << i << "]: " << (*run_inf).centerpiece[i] << endl;
+//cerr <<  "Centerpiece[" << i << "]: " << (*run_inf).centerpiece[i] << endl;
 			ds >> (*run_inf).meniscus[i];
-cerr <<  "Meniscus[" << i << "]: " << (*run_inf).meniscus[i] << endl;
+//cerr <<  "Meniscus[" << i << "]: " << (*run_inf).meniscus[i] << endl;
 			ds >> (*run_inf).cell_id[i];
-cerr <<  "cell_id[" << i << "]: " << (*run_inf).cell_id[i] << endl;
+//cerr <<  "cell_id[" << i << "]: " << (*run_inf).cell_id[i] << endl;
 			ds >> (*run_inf).wavelength_count[i];
-cerr <<  "wavelenth_count[" << i << "]: " << (*run_inf).wavelength_count[i] << endl;
+//cerr <<  "wavelenth_count[" << i << "]: " << (*run_inf).wavelength_count[i] << endl;
 		}
 		for (i=0; i<8; i++)
 		{
@@ -235,7 +235,7 @@ cerr <<  "wavelenth_count[" << i << "]: " << (*run_inf).wavelength_count[i] << e
 					ds >> (*run_inf).DNA_serialnumber[i][j][0];
 					ds >> (*run_inf).buffer_serialnumber[i][j];
 					ds >> (*run_inf).peptide_serialnumber[i][j][0];
-cerr << "Cell " << i+1 <<", Channel " << j+1 << " DNA, buffer, peptide: " << (*run_inf).DNA_serialnumber[i][j][0] << ", " <<  (*run_inf).buffer_serialnumber[i][j] << ", " << (*run_inf).peptide_serialnumber[i][j][0] << "\n";
+//cerr << "Cell " << i+1 <<", Channel " << j+1 << " DNA, buffer, peptide: " << (*run_inf).DNA_serialnumber[i][j][0] << ", " <<  (*run_inf).buffer_serialnumber[i][j] << ", " << (*run_inf).peptide_serialnumber[i][j][0] << "\n";
 				}
 			}
 			else
@@ -247,7 +247,7 @@ cerr << "Cell " << i+1 <<", Channel " << j+1 << " DNA, buffer, peptide: " << (*r
 					{
 						ds >> (*run_inf).peptide_serialnumber[i][j][k];
 						ds >> (*run_inf).DNA_serialnumber[i][j][k];
-cerr << "Cell " << i+1 <<", Channel " << j+1 << " DNA, buffer, peptide: " << (*run_inf).DNA_serialnumber[i][j][k] << ", " <<  (*run_inf).buffer_serialnumber[i][j] << ", " << (*run_inf).peptide_serialnumber[i][j][k] << "\n";
+//cerr << "Cell " << i+1 <<", Channel " << j+1 << " DNA, buffer, peptide: " << (*run_inf).DNA_serialnumber[i][j][k] << ", " <<  (*run_inf).buffer_serialnumber[i][j] << ", " << (*run_inf).peptide_serialnumber[i][j][k] << "\n";
 					}
 				}
 			}
@@ -301,7 +301,7 @@ cerr << "Cell " << i+1 <<", Channel " << j+1 << " DNA, buffer, peptide: " << (*r
 					(*run_inf).time[i][j][k] -= (unsigned int) ((*run_inf).time_correction + 0.5);
 					ds >> (*run_inf).omega_s_t[i][j][k];
 					ds >> (*run_inf).plateau[i][j][k];
-cerr << "Cell " << i+1 <<", wavelength " << j+1 << ", scan " << k+1 << " (rpm, temp, time, omega, plateau: " << (*run_inf).rpm[i][j][k] << ", " << (*run_inf).temperature[i][j][k] << ", " << (*run_inf).time[i][j][k] << ", " << (*run_inf).omega_s_t[i][j][k] << ", " << (*run_inf).plateau[i][j][k] << "\n";
+//cerr << "Cell " << i+1 <<", wavelength " << j+1 << ", scan " << k+1 << " (rpm, temp, time, omega, plateau: " << (*run_inf).rpm[i][j][k] << ", " << (*run_inf).temperature[i][j][k] << ", " << (*run_inf).time[i][j][k] << ", " << (*run_inf).omega_s_t[i][j][k] << ", " << (*run_inf).plateau[i][j][k] << "\n";
 					if (run_type == 1 && baseline_flag)
 					{
 cout << "subtracting baseline in data_io...\n";

@@ -1230,7 +1230,7 @@ void US_FeMatch_W::write_cofs()
 
 void US_FeMatch_W::fit()
 {
-	calc_residuals();
+	calc_residuals_ra();
 	if(!window_3d_flag)
 	{
 		us_3d_solutes = new US_3d_Solutes(&sa2d_ctrl_vars, &window_3d_flag, run_inf.run_id,
@@ -1271,7 +1271,7 @@ void US_FeMatch_W::update_C(const QString &str)
 
 void US_FeMatch_W::update_baseline(const QString &str)
 {
-	cout << "updating baseline...\n";
+	//cout << "updating baseline...\n";
 	baseline = str.toFloat();
 }
 
@@ -1460,6 +1460,7 @@ float US_FeMatch_W::calc_residuals_ra()
 
 	progress->setTotalSteps(USglobal->config_list.numThreads); // one extra column for the baseline
 	progress->reset();
+	clear_data(&residuals);
 	simdata.clear(); // simdata is a vector since astfem_rsa requires a vector for all speed steps
 	simdata.resize(1); // we only have 1 speed step.
 	simdata[0].radius.clear();
@@ -1486,17 +1487,23 @@ float US_FeMatch_W::calc_residuals_ra()
 	data_io = new US_Data_IO(&run_inf, false); // (baseline flag can be false, we don't need it)
 	data_io->assign_simparams(&sp, selected_cell, selected_lambda, selected_channel);
 	delete data_io;
-	sp.rotor = 1;
-	sp.moving_grid = 0;
-	sp.mesh = 1;
+	//sp.moving_grid = 0;
+	//sp.mesh = 1;
 	sp.simpoints = 200;
-	sp.band_volume = 0.15;
+	//sp.band_volume = 0.015;
 	US_Astfem_RSA *astfem_rsa;
 	astfem_rsa = new US_Astfem_RSA(false);
-	US_FemGlobal fg;
+	//US_FemGlobal fg;
 	for (j=0; j<USglobal->config_list.numThreads; j++)
 	{
-		fg.write_experiment(&msv[j], &sp, str.sprintf("/home/user/demeler/us/ultrascan/develop/%d-model", j));
+		//fg.write_experiment(&msv[j], &sp, str.sprintf("/usr/local/ultrascan/develop/%d-model", j));
+		for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+		{
+			for (k=0; k<points; k++)
+			{
+				simdata[0].scan[i].conc[k] = 0.0;
+			}
+		}
 		astfem_rsa->calculate(&msv[j], &sp, &simdata); // calculate the model for the current thread
 		// combine the current model's solution with the total solution vector:
 		for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
@@ -1507,9 +1514,9 @@ float US_FeMatch_W::calc_residuals_ra()
 			}
 		}
 		progress->setProgress(j+1);
+		qApp->processEvents();
 	}
 	delete astfem_rsa;
-	qApp->processEvents();
 	plot_edit();
 	long *resids;
 	double **res;
@@ -2105,11 +2112,13 @@ void US_FeMatch_W::create_modelsystems()
 		components_per_job[i] = (int)(components/threads); // initialize
 	}
 	j = components_per_job[0] * threads;
-	while (j<components);
+	//cout << "j: " << j << ", components/job[0]: " << components_per_job[0] << ", components/job[1]: " << components_per_job[1] << ", components: " << components << endl;
+	while (j<components)
 	{
 		for (i=0; i<threads; i++)
 		{
 			components_per_job[i]++; // if remainder != zero, pile the remainder on at the end
+			//cout << "components/job[" << i << "]: " << components_per_job[i] << ", j: " << j << endl;
 			j++;
 			if (j == components) break;
 		}
@@ -2139,7 +2148,7 @@ void US_FeMatch_W::create_modelsystems()
 			ms.component_vector[l].show_koff = false; // not used
 			ms.component_vector[l].show_stoich = 0; // not used
 			ms.component_vector[l].show_component.resize(0); // not used
-			ms.component_vector[l].shape = ""; // not used
+			ms.component_vector[l].shape = "undefined"; // not used
 			ms.component_vector[l].name = str.sprintf("Component %d (of %d)", k+1, components); // not used
 			ms.component_vector[l].c0.radius.clear(); // not used
 			ms.component_vector[l].c0.concentration.clear(); // not used

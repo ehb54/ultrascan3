@@ -3194,6 +3194,7 @@ void Data_Control_W::plot_edit()
 			edit_plot->setCurveData(curve[i*3+2], temp_radius, temp_abs, count);
 		}
 	}
+	/*
 	if (run_inf.wavelength[selected_cell][selected_lambda] == 999) // we have simulated data and need to limit the max y-range
 	{
 		edit_plot->setAxisScale(QwtPlot::yLeft, -0.05, run_inf.plateau[0][0][0] * 2);
@@ -3202,6 +3203,8 @@ void Data_Control_W::plot_edit()
 	{
 		edit_plot->setAxisAutoScale(QwtPlot::yLeft);
 	}
+	*/
+	edit_plot->setAxisAutoScale(QwtPlot::yLeft);
 	scan_copied = true;
 	edit_plot->replot();
 	//edit_plot->updatePlot();		//no updatePlot() function in new version
