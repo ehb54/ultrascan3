@@ -41,7 +41,7 @@ void US_Hydrodyn_ASA::setupGUI()
 	cb_surfracer->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
 	cb_asab1 = new QCheckBox(bg_asa_method);
-	cb_asab1->setText(tr(" Rolling Sphere (ASAB1, Lee & Richard's Method)"));
+	cb_asab1->setText(tr(" Rolling Sphere (ASAB1, Lee && Richard's Method)"));
 	cb_asab1->setEnabled(true);
 	cb_asab1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_asab1->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
