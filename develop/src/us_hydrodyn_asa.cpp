@@ -30,6 +30,24 @@ void US_Hydrodyn_ASA::setupGUI()
 	lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
+	bg_asa_method = new QButtonGroup(2, Qt::Vertical, "ASA Method:", this);
+	bg_asa_method->setExclusive(true);
+	connect(bg_asa_method, SIGNAL(clicked(int)), this, SLOT(select_asa_method(int)));
+
+	cb_surfracer = new QCheckBox(bg_asa_method);
+	cb_surfracer->setText(tr(" Voronoi Tesselation (Surfracer, Tsodikov et al.)"));
+	cb_surfracer->setEnabled(true);
+	cb_surfracer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cb_surfracer->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+	cb_asab1 = new QCheckBox(bg_asa_method);
+	cb_asab1->setText(tr(" Rolling Sphere (ASAB1, Lee & Richard's Method)"));
+	cb_asab1->setEnabled(true);
+	cb_asab1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cb_asab1->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+	bg_asa_method->setButton((*asa).method);
+
 	lbl_probe_radius = new QLabel(tr(" ASA Probe Radius (A): "), this);
 	Q_CHECK_PTR(lbl_probe_radius);
 	lbl_probe_radius->setAlignment(AlignLeft|AlignVCenter);
@@ -84,6 +102,24 @@ void US_Hydrodyn_ASA::setupGUI()
 	cnt_asa_threshold_percent->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_asa_threshold_percent, SIGNAL(valueChanged(double)), SLOT(update_asa_threshold_percent(double)));
 
+	lbl_asab1_step = new QLabel(tr(" ASAB1 Step Size (A): "), this);
+	Q_CHECK_PTR(lbl_asab1_step);
+	lbl_asab1_step->setAlignment(AlignLeft|AlignVCenter);
+	lbl_asab1_step->setMinimumHeight(minHeight1);
+	lbl_asab1_step->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_asab1_step->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+	cnt_asab1_step= new QwtCounter(this);
+	Q_CHECK_PTR(cnt_asab1_step);
+	cnt_asab1_step->setRange(0.1, 100, 0.1);
+	cnt_asab1_step->setValue((*asa).asab1_step);
+	cnt_asab1_step->setMinimumHeight(minHeight1);
+	cnt_asab1_step->setEnabled(true);
+	cnt_asab1_step->setNumButtons(3);
+	cnt_asab1_step->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cnt_asab1_step->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cnt_asab1_step, SIGNAL(valueChanged(double)), SLOT(update_asab1_step(double)));
+
 	cb_asa_calculation = new QCheckBox(this);
 	cb_asa_calculation->setText(tr(" Perform ASA Calculation "));
 	cb_asa_calculation->setChecked((*asa).calculation);
@@ -121,6 +157,11 @@ void US_Hydrodyn_ASA::setupGUI()
 
 	background->addMultiCellWidget(lbl_info, j, j, 0, 1);
 	j++;
+	background->addWidget(cb_asa_calculation, j, 0);
+	background->addWidget(cb_bead_check, j, 1);
+	j++;
+	background->addMultiCellWidget(bg_asa_method, j, j+3, 0, 1);
+	j+=4;
 	background->addWidget(lbl_probe_radius, j, 0);
 	background->addWidget(cnt_probe_radius, j, 1);
 	j++;
@@ -130,8 +171,8 @@ void US_Hydrodyn_ASA::setupGUI()
 	background->addWidget(lbl_asa_threshold_percent, j, 0);
 	background->addWidget(cnt_asa_threshold_percent, j, 1);
 	j++;
-	background->addWidget(cb_asa_calculation, j, 0);
-	background->addWidget(cb_bead_check, j, 1);
+	background->addWidget(lbl_asab1_step, j, 0);
+	background->addWidget(cnt_asab1_step, j, 1);
 	j++;
 	background->addWidget(pb_help, j, 0);
 	background->addWidget(pb_cancel, j, 1);
@@ -172,6 +213,11 @@ void US_Hydrodyn_ASA::update_asa_threshold_percent(double val)
 	(*asa).threshold_percent = val;
 }
 
+void US_Hydrodyn_ASA::update_asab1_step(double val)
+{
+	(*asa).asab1_step = (float) val;
+}
+
 void US_Hydrodyn_ASA::set_asa_calculation()
 {
 	(*asa).calculation = cb_asa_calculation->isChecked();
@@ -180,6 +226,11 @@ void US_Hydrodyn_ASA::set_asa_calculation()
 void US_Hydrodyn_ASA::set_bead_check()
 {
 	(*asa).recheck_beads = cb_bead_check->isChecked();
+}
+
+void US_Hydrodyn_ASA::select_asa_method(int val)
+{
+	(*asa).method = val;
 }
 
 

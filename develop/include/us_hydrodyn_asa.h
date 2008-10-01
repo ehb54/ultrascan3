@@ -10,6 +10,7 @@
 #include <qframe.h>
 #include <qcheckbox.h>
 #include <qwt_counter.h>
+#include <qbuttongroup.h>
 
 #include "us_util.h"
 
@@ -20,6 +21,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+
 using namespace std;
 
 struct asa_options
@@ -29,6 +31,8 @@ struct asa_options
 	float threshold_percent;
 	bool calculation;
 	bool recheck_beads;
+	bool method;
+	float asab1_step;
 };
 
 class US_EXTERN US_Hydrodyn_ASA : public QFrame
@@ -49,16 +53,22 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
 		QLabel *lbl_probe_radius;
 		QLabel *lbl_asa_threshold;
 		QLabel *lbl_asa_threshold_percent;
+		QLabel *lbl_asab1_step;
 		
 		QwtCounter *cnt_probe_radius;
 		QwtCounter *cnt_asa_threshold;
 		QwtCounter *cnt_asa_threshold_percent;
+		QwtCounter *cnt_asab1_step;
 
 		QCheckBox *cb_asa_calculation;
 		QCheckBox *cb_bead_check;
+		QCheckBox *cb_surfracer;
+		QCheckBox *cb_asab1;
 
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;
+		
+		QButtonGroup *bg_asa_method;
 
 	private slots:
 		
@@ -66,6 +76,8 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
 		void update_probe_radius(double);
 		void update_asa_threshold(double);
 		void update_asa_threshold_percent(double);
+		void update_asab1_step(double);
+		void select_asa_method(int);
 		void set_asa_calculation();
 		void set_bead_check();
 		void cancel();

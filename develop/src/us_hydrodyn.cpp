@@ -4136,6 +4136,12 @@ void US_Hydrodyn::read_config()
 	asa.recheck_beads = (bool) str.toInt();
 	ts >> str;
 	ts.readLine();
+	asa.method = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	asa.asab1_step = str.toFloat();
+	ts >> str;
+	ts.readLine();
 	misc.hydrovol = str.toDouble();
 	ts >> str;
 	ts.readLine();
@@ -4227,6 +4233,8 @@ void US_Hydrodyn::reset()
 	asa.threshold_percent = 30.0;
 	asa.calculation = true;
 	asa.recheck_beads = true;
+	asa.method = true; // by default use ASAB1
+	asa.asab1_step = 1.0;
 	misc.hydrovol = 24.041;
 	misc.compute_vbar = true;
 	misc.vbar = 0.72;
@@ -4293,6 +4301,8 @@ void US_Hydrodyn::write_config()
 		ts << asa.threshold_percent << "\t\t# ASA threshold percent\n";
 		ts << asa.calculation << "\t\t# flag for calculation of ASA\n";
 		ts << asa.recheck_beads << "\t\t# flag for rechecking beads\n";
+		ts << asa.method << "\t\t# flag for ASAB1/Surfracer method\n";
+		ts << asa.asab1_step << "\t\t# ASAB1 step size\n";
 		ts << misc.hydrovol << "\t\t# hydration volume\n";
 		ts << misc.compute_vbar << "\t\t# flag for selecting vbar calculation\n";
 		ts << misc.vbar << "\t\t# vbar value\n";
