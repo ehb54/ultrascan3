@@ -460,6 +460,7 @@ void US_Tar::archive_end( void )
 	// Write a second null block and finish
 	location = (void*) ( buffer + blocks_written * BLOCK_SIZE );
 	memset( location, 0, BLOCK_SIZE );
+	blocks_written++;
 	flush_buffer();
 }
 

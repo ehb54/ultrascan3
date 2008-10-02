@@ -692,11 +692,11 @@ UsWin::UsWin( QWidget* parent, const char* name ): US_Widgets( parent, name )
 void UsWin::make_splash( int width )
 {
 #if defined(WIN32)
-  #define OS_TITLE "Microsoft Windows"
+  #define OS_TITLE "Windows"
 #elif defined(LINUX)
   #define OS_TITLE "Linux"
 #elif defined(OSX)
-  #define OS_TITLE "Macintosh OS-X"
+  #define OS_TITLE "OS-X"
 #elif defined(FREEBSD)
   #define OS_TITLE "FreeBSD"
 #elif defined(OPENBSD)
@@ -704,9 +704,9 @@ void UsWin::make_splash( int width )
 #elif defined(NETBSD)
   #define OS_TITLE "NetBSD"
 #elif defined(IRIX)
-  #define OS_TITLE "Silicon Graphics Irix"
+  #define OS_TITLE "Irix"
 #elif defined(SOLARIS)
-  #define OS_TITLE "Sun Solaris"
+  #define OS_TITLE "Solaris"
 #else
   #define OS_TITLE "Unknown"
 #endif
