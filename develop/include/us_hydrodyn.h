@@ -82,6 +82,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		struct overlap_reduction mainchain_overlap;
 		struct overlap_reduction buried_overlap;
 		QString project;	// name of the current project - derived from the prefix of the pdb filename
+		QString bead_model_prefix;
+		QString somo_dir;
 		double overlap_tolerance;
 
 		point last_molecular_cog;
@@ -95,9 +97,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QLabel *lbl_tabletabs;
 		QLabel *lbl_options;
 		QLabel *lbl_somo;
+		QLabel *lbl_bead_model_prefix;
 
 		QLineEdit *le_bead_model_file;
-		
+		QLineEdit *le_bead_model_prefix;
 
 		QPushButton *pb_save;
 		QPushButton *pb_reset;
@@ -185,6 +188,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void reset();
 		void visualize();
 		void update_bead_model_file(const QString &);
+		void update_bead_model_prefix(const QString &);
 		void calc_hydro();
 		void show_hydro_results();
 		void write_bead_asa(QString, vector <PDB_atom> *);
@@ -203,7 +207,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void print();
 		void update_font();
 		void clear_display();
-	
+
 
 	protected slots:
 

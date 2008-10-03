@@ -40,12 +40,12 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	USglobal = new US_Config();
 
 	// int r_stdout = __open(QString(USglobal->config_list.tmp_dir +
-	//			  SLASH + "last_stdout.txt").ascii(), 
+	//			  SLASH + "last_stdout.txt").ascii(),
 	//		  O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	// dup2(r_stdout, STDOUT_FILENO);
 
 	// int r_stderr = __open(QString(USglobal->config_list.tmp_dir +
-	//			  SLASH + "last_stderr.txt").ascii(), 
+	//			  SLASH + "last_stderr.txt").ascii(),
 	//		  O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	// dup2(r_stderr, STDERR_FILENO);
 
@@ -100,6 +100,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	  "/bin/"
 #endif
 	  ;
+	bead_model_prefix = "Default";
 	if (!getenv("RASMOLPATH"))
 	{
 		int n = RMP.length();
@@ -111,6 +112,17 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 		    *( rmp + n ) = 0;
 		    putenv( rmp );
 		}
+	}
+	somo_dir = USglobal->config_list.root_dir + "/somo";
+	QDir dir1(somo_dir);
+	if (!dir1.exists())
+	{
+		dir1.mkdir(somo_dir);
+	}
+	QDir dir2(somo_dir + "/structures");
+	if (!dir2.exists())
+	{
+		dir2.mkdir(somo_dir + "/structures");
 	}
 }
 
@@ -270,6 +282,21 @@ void US_Hydrodyn::setupGUI()
 	le_bead_model_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	connect(le_bead_model_file, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_file(const QString &)));
 
+	lbl_bead_model_prefix = new QLabel(tr(" Bead Model Prefix:"), this);
+	Q_CHECK_PTR(lbl_bead_model_prefix);
+	lbl_bead_model_prefix->setAlignment(AlignLeft|AlignVCenter);
+	lbl_bead_model_prefix->setMinimumHeight(minHeight1);
+	lbl_bead_model_prefix->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+	le_bead_model_prefix = new QLineEdit(this, "bead_model_prefix Line Edit");
+	le_bead_model_prefix->setText(tr(" default "));
+	le_bead_model_prefix->setMinimumHeight(minHeight1);
+	le_bead_model_prefix->setAlignment(AlignCenter|AlignVCenter);
+	le_bead_model_prefix->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	connect(le_bead_model_prefix, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_prefix(const QString &)));
+
 	pb_somo = new QPushButton(tr("Build Bead Model"), this);
 	Q_CHECK_PTR(pb_somo);
 	pb_somo->setMinimumHeight(minHeight1);
@@ -375,6 +402,9 @@ void US_Hydrodyn::setupGUI()
 	j++;
 	background->addWidget(pb_load_bead_model, j, 0);
 	background->addWidget(le_bead_model_file, j, 1);
+	j++;
+	background->addWidget(lbl_bead_model_prefix, j, 0);
+	background->addWidget(le_bead_model_prefix, j, 1);
 	j++;
 	background->addWidget(pb_calc_hydro, j, 0);
 	background->addWidget(pb_show_hydro_results, j, 1);
@@ -1479,10 +1509,10 @@ int US_Hydrodyn::compute_asa()
       }
     }
   }
-  write_bead_asa(USglobal->config_list.result_dir + SLASH + 
-		 project + QString("_%1").arg(current_model + 1) + 
+  write_bead_asa(USglobal->config_list.result_dir + SLASH +
+		 project + QString("_%1").arg(current_model + 1) +
 		 ".somo.asa", &bead_model);
-  
+
 #if defined(DEBUG_MOD)
   write_bead_tsv(USglobal->config_list.tmp_dir + SLASH + "bead_model_debug.somo.tsv", &dbg_model);
 #endif
@@ -2904,10 +2934,10 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
       total_ref_asa += (*model)[i].ref_asa;
       total_mass += (*model)[i].bead_mw;
       total_vol += (*model)[i].bead_ref_volume_unhydrated;
-	
-      QString residue = 
+
+      QString residue =
 	(*model)[i].resName + "_" +
-	((*model)[i].chainID == " " ? "_" : (*model)[i].chainID) + 
+	((*model)[i].chainID == " " ? "_" : (*model)[i].chainID) +
 	QString("_%1").arg((*model)[i].resSeq);
       if (residue != last_residue) {
 	if (last_residue != "") {
@@ -3130,7 +3160,7 @@ void US_Hydrodyn::visualize()
 			".somo.spt");
 
 	rasmol->setWorkingDirectory(USglobal->config_list.result_dir);
-	
+
 	rasmol->setArguments(argument);
 	if (!rasmol->start())
 	{
@@ -3329,6 +3359,11 @@ void US_Hydrodyn::hybrid()
 void US_Hydrodyn::update_bead_model_file(const QString &str)
 {
 	bead_model_file = str;
+}
+
+void US_Hydrodyn::update_bead_model_prefix(const QString &str)
+{
+	bead_model_prefix = str;
 }
 
 void US_Hydrodyn::select_residue_file()
@@ -3634,7 +3669,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 	int bead_count;
 	int linepos = 0;
 
-	if (ftype == "bead_model") 
+	if (ftype == "bead_model")
 	{
 	  if (f.open(IO_ReadOnly))
 	  {
@@ -3712,7 +3747,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 	  }
 	}
 
-	if (ftype == "beams") 
+	if (ftype == "beams")
 	{
 	  if (f.open(IO_ReadOnly))
 	  {
@@ -3736,7 +3771,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		  editor->append("Error in line 1!\n");
 		  return 1;
 		}
-		if (results.vbar == -2) 
+		if (results.vbar == -2)
 		{
 		  if (!ts.atEnd()) {
 		    ts >> results.vbar;
@@ -3801,7 +3836,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		return 0;
 	  }
 	}
-	
+
 	editor->append("File read error\n");
 	return -2;
 }
