@@ -178,7 +178,7 @@ static QTextEdit *editor;
 static asa_options *asa_opts;
 static hydro_results *results;
 static bool recheck;
-static vector <PDB_atom> *bead_model;
+static vector <PDB_atom *> active_atoms;
 
 static void
 em(char *s)
@@ -311,7 +311,7 @@ asab1_alloc()
 }
 
 int
-us_hydrodyn_asab1_main(vector <PDB_atom> *use_bead_model, 
+us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms, 
 		       asa_options *use_asa_opts,
 		       hydro_results *use_results,
 		       bool use_recheck,
@@ -328,8 +328,8 @@ us_hydrodyn_asab1_main(vector <PDB_atom> *use_bead_model,
   asa_opts = use_asa_opts;
   results = use_results;
   recheck = use_recheck;
-  bead_model = use_bead_model;
-  nmax = nmax1 = bead_model->size();
+  active_atoms = use_active_atoms;
+  nmax = nmax1 = active_atoms.size();
   if (int retval = asab1_alloc())
   {
     return retval;
@@ -1032,9 +1032,9 @@ plutone[2]=0; */
 	    printf("%d %.2f\n", l, asa[l]);
 	    if (!recheck) 
 	    {
-		(*bead_model)[l].asa = asa[l];
+		active_atoms[l]->asa = asa[l];
 	    } else {
-		(*bead_model)[l].bead_recheck_asa = asa[l];
+		active_atoms[l]->bead_recheck_asa = asa[l];
 	    }
 	    if (dt[l].col == 6)
 	    {
@@ -1661,7 +1661,7 @@ while(init2_mol1==NULL)
 //    if (flag1 != 1)
 //	init2_mol1 = fopen("provaly2", "r");
 
-    nat = bead_model->size();
+    nat = active_atoms.size();
     // fscanf(init2_mol, "%d", &nat);
     // fscanf(init2_mol, "%f", &raggio);
     raggio = -2;
@@ -1707,26 +1707,26 @@ while(init2_mol1==NULL)
 
     if (!recheck) 
     {
-      for (unsigned int i = 0; i < bead_model->size(); i++) 
+      for (unsigned int i = 0; i < active_atoms.size(); i++) 
       {
-	dt[i].r = (*bead_model)[i].radius;
+	dt[i].r = active_atoms[i]->radius;
 	dt[i].r += rprobe;
-	dt[i].x = (*bead_model)[i].coordinate.axis[0];
-	dt[i].y = (*bead_model)[i].coordinate.axis[1];
-	dt[i].z = (*bead_model)[i].coordinate.axis[2];
-	dt[i].m = (int)(*bead_model)[i].mw;
-	dt[i].col = (*bead_model)[i].bead_color;
+	dt[i].x = active_atoms[i]->coordinate.axis[0];
+	dt[i].y = active_atoms[i]->coordinate.axis[1];
+	dt[i].z = active_atoms[i]->coordinate.axis[2];
+	dt[i].m = (int)active_atoms[i]->mw;
+	dt[i].col = active_atoms[i]->bead_color;
       }
     }  else {
-      for (unsigned int i = 0; i < bead_model->size(); i++) 
+      for (unsigned int i = 0; i < active_atoms.size(); i++) 
       {
-	dt[i].r = (*bead_model)[i].bead_computed_radius;
+	dt[i].r = active_atoms[i]->bead_computed_radius;
 	dt[i].r += rprobe;
-	dt[i].x = (*bead_model)[i].bead_coordinate.axis[0];
-	dt[i].y = (*bead_model)[i].bead_coordinate.axis[1];
-	dt[i].z = (*bead_model)[i].bead_coordinate.axis[2];
-	dt[i].m = (int)(*bead_model)[i].bead_mw;
-	dt[i].col = (*bead_model)[i].bead_color;
+	dt[i].x = active_atoms[i]->bead_coordinate.axis[0];
+	dt[i].y = active_atoms[i]->bead_coordinate.axis[1];
+	dt[i].z = active_atoms[i]->bead_coordinate.axis[2];
+	dt[i].m = (int)active_atoms[i]->bead_mw;
+	dt[i].col = active_atoms[i]->bead_color;
       }
     }
 

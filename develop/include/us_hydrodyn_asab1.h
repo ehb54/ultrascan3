@@ -19,7 +19,7 @@
 #include <math.h>
 
 int
-us_hydrodyn_asab1_main(vector <PDB_atom> *bead_model, 
+us_hydrodyn_asab1_main(vector <PDB_atom *> active_atoms, 
 		       asa_options *asa_opts,
 		       hydro_results *use_results,
 		       bool use_recheck,

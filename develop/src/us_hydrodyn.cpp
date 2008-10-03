@@ -839,23 +839,212 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
   return retval;
 }
 
+int US_Hydrodyn::create_beads(QString *error_string) 
+{
+
+    editor->append("Creating beads from model\n");
+    qApp->processEvents();
+    active_atoms.clear();
+    
+    // #define DEBUG_MM
+#if defined(DEBUG_MM)
+    {
+      int no_of_atoms = 0;
+      int no_of_molecules = model_vector[current_model].molecule.size();
+      int i;
+      for (i = 0; i < no_of_molecules; i++) {
+	no_of_atoms +=  model_vector[current_model].molecule[i].atom.size();
+      }
+      
+      editor->append(QString("There are %1 atoms in %2 molecule(s) in this model\n").arg(no_of_atoms).arg(no_of_molecules));
+    }
+#endif
+    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
+    {
+      for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
+      {
+	PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+
+	// initialize data
+	this_atom->active = false;
+	this_atom->asa = 0;
+	this_atom->p_residue = 0;
+	this_atom->p_atom = 0;
+	this_atom->radius = 0;
+	this_atom->bead_hydration = 0;
+	this_atom->bead_color = 0;
+	this_atom->bead_ref_volume = 0;
+	this_atom->bead_ref_mw = 0;
+	
+	// find residue in residues
+	int respos = -1;
+#if defined(DEBUG)
+	printf("residue search name %s resName %s\n", 
+	       this_atom->name.ascii(), 
+	       this_atom->resName.ascii());
+#endif
+	for (unsigned int m = 0; m < residue_list.size(); m++)
+	{
+	  if ((residue_list[m].name == this_atom->resName &&
+	       this_atom->name != "OXT" &&
+	       (k || this_atom->name != "N")) || 
+	      (residue_list[m].name == "OXT" 
+	       && this_atom->name == "OXT") ||
+	      (!k &&
+	       this_atom->name == "N" &&
+	       residue_list[m].name == "N1")) 
+	  {
+	    respos = (int) m;
+	    this_atom->p_residue = &(residue_list[m]);
+#if defined(DEBUG)
+	    printf("residue match %d resName %s \n", m, residue_list[m].name.ascii());
+#endif
+	    break;
+	  }
+	}
+	if (respos == -1)
+	{
+	  if ((this_atom->name != "H" && this_atom->name != "D"
+	       && this_atom->resName != "DOD"
+	       && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
+	  {
+	    error_string->append(QString("").sprintf("unknown residue molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+						     j + 1, k, this_atom->name.ascii(),
+						     this_atom->resName.ascii(),
+						     this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+	    return (US_SURFRACER_ERR_MISSING_RESIDUE);
+	  }
+	} else {
+#if defined(DEBUG)
+	  printf("found residue pos %d\n", respos);
+#endif
+	}
+	int atompos = -1;
+	
+	if (respos != -1)
+	{
+	  for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
+	  {
+#if defined(DEBUG)
+	    if(this_atom->name == "N" && !k) {
+	      printf("this_atom->name == N/N1 this residue_list[%d].r_atom[%d].name == %s\n",
+		     respos, m, residue_list[respos].r_atom[m].name.ascii());
+	    }
+#endif
+	    
+	    if (residue_list[respos].r_atom[m].name == this_atom->name ||
+		(
+		 this_atom->name == "N" && 
+		 !k &&
+		 residue_list[respos].r_atom[m].name == "N1"
+		 )
+		)
+	    {
+	      this_atom->p_atom = &(residue_list[respos].r_atom[m]);
+	      atompos = (int) m;
+	      break;
+	    }
+	  }
+
+	  if (atompos == -1)
+	  {
+	    error_string->append(QString("").sprintf("unknown atom molecule %d atom %d name %s resname %s coord [%f,%f,%f]\n",
+						     j + 1, k, this_atom->name.ascii(),
+						     this_atom->resName.ascii(),
+						     this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
+	  } else {
+	    this_atom->active = true;
+	    this_atom->radius = residue_list[respos].r_atom[atompos].hybrid.radius;
+	    this_atom->mw = residue_list[respos].r_atom[atompos].hybrid.mw;
+	    this_atom->placing_method =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method;
+	    this_atom->bead_hydration =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].hydration;
+	    this_atom->bead_color =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].color;
+	    this_atom->bead_ref_volume =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].volume;
+	    this_atom->bead_ref_mw =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].mw;
+	    this_atom->ref_asa =  this_atom->p_residue->asa;
+	    this_atom->bead_computed_radius =  pow(3 * this_atom->bead_ref_volume / (4.0*M_PI), 1.0/3);
+#if defined(DEBUG)
+	    printf("found atom %s %s in residue %d pos %d bead asgn %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s\n", 
+		   this_atom->name.ascii(), this_atom->resName.ascii(), respos, atompos,
+		   this_atom->p_atom->bead_assignment,
+		   this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method,
+		   this_atom->mw,
+		   this_atom->bead_ref_mw,
+		   residue_list[respos].r_atom[atompos].hybrid.name.ascii(),
+		   this_atom->p_atom->hybrid.name.ascii()
+		   );
+#endif
+	  }
+	}
+	
+	if (this_atom->active)
+	{
+#if defined(DEBUG)
+	  puts("active atom"); fflush(stdout);
+#endif
+	  this_atom->active = false;
+	  if (this_atom->name != "H" &&
+	      this_atom->name != "D" &&
+	      this_atom->p_residue->name != "DOD" &&
+	      this_atom->p_residue->name != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " "))
+	  {
+	    this_atom->active = true;
+	    active_atoms.push_back(this_atom);
+	  } else {
+#if defined(DEBUG)
+	    printf
+	      ("skipped bound waters & H %s %s rad %f resseq %d\n",
+	       this_atom->name.ascii(), this_atom->resName.ascii(), this_atom->radius, this_atom->resSeq);
+	    fflush(stdout);
+#endif
+	  }
+	}
+      }
+    }
+
+    {
+      for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
+	for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
+	  PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
+	  //  printf("p1 i j k %d %d %d %lx %s %d\n", i, j, k, 
+	  //	 (long unsigned int)this_atom->p_atom, 
+	  //	 this_atom->active ? "active" : "not active",
+	  //	 (this_atom->p_atom ? (int)this_atom->p_atom->bead_assignment : -1)
+	  //	 ); fflush(stdout);
+	  this_atom->bead_assignment =
+	    (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
+	  this_atom->chain =
+	    ((this_atom->p_residue && this_atom->p_atom) ?
+	     (int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
+	  this_atom->org_chain = this_atom->chain;
+	  this_atom->bead_positioner = this_atom->p_atom ? this_atom->p_atom->positioner : false;
+	}
+      }
+    }
+    return 0;
+}  
 
 int US_Hydrodyn::compute_asa()
 {
-// run the surfracer code
 
         QString error_string = "";
 	progress->reset();
 	editor->setText(QString("\n\nBuilding the bead model for %1 model %2\n").arg(project).arg(current_model+1));
 	editor->append("Checking the pdb structure\n");
 	if (check_for_missing_atoms(&error_string, &model_vector[current_model])) {
-	  editor->append("US_SURFRACER encountered the following errors with your PDB structure:\n" +
+	  editor->append("Encountered the following errors with your PDB structure:\n" +
 			 error_string);
-	  printError("US_SURFRACER encountered errors with your PDB structure:\n"
+	  printError("Encountered errors with your PDB structure:\n"
 		     "please check the text window");
 	  return -1;
 	}
 	editor->append("PDB structure ok\n");
+	int mppos = 18 + (asa.recheck_beads ? 1 : 0);
+	progress->setTotalSteps(mppos);
+	int ppos = 1;
+	progress->setProgress(ppos++); // 1
+	qApp->processEvents();
+
 	{
 	  int no_of_atoms = 0;
 	  int no_of_molecules = model_vector[current_model].molecule.size();
@@ -866,61 +1055,44 @@ int US_Hydrodyn::compute_asa()
 
 	  editor->append(QString("There are %1 atoms in %2 chain(s) in this model\n").arg(no_of_atoms).arg(no_of_molecules));
 	}
-	editor->append("Computing ASA\n");
-
-	int mppos = 18 + (asa.recheck_beads ? 1 : 0);
-	progress->setTotalSteps(mppos);
-	int ppos = 1;
-	progress->setProgress(ppos++); // 1
-	qApp->processEvents();
-
-	int retval = surfracer_main(&error_string,
-				    asa.probe_radius,
-				    residue_list,
-				    &model_vector[current_model],
-				    false,
-				    progress,
-				    editor
-				    );
-	progress->setProgress(ppos++); // 2
-	qApp->processEvents();
-	editor->append("Return from Computing ASA\n");
+	int retval = create_beads(&error_string);
 	if ( retval )
 	{
-	  editor->append("Errors found during ASA calculation\n");
+	  editor->append("Errors found during the initial creation of beads\n");
 	  progress->setProgress(mppos);
 	  qApp->processEvents();
-		switch ( retval )
-		{
-			case US_SURFRACER_ERR_MISSING_RESIDUE:
-			{
-				printError("US_SURFRACER encountered an unknown residue:\n" +
-					   error_string);
-				return US_SURFRACER_ERR_MISSING_RESIDUE;
-				break;
-			}
-			case US_SURFRACER_ERR_MISSING_ATOM:
-			{
-				printError("US_SURFRACER encountered a unknown atom:\n" +
-					   error_string);
-				return US_SURFRACER_ERR_MISSING_ATOM;
-				break;
-			}
-			case US_SURFRACER_ERR_MEMORY_ALLOC:
-			{
-				printError("US_SURFRACER encountered a memory allocation error");
-				return US_SURFRACER_ERR_MEMORY_ALLOC;
-				break;
-			}
-			default:
-			{
-				printError("US_SURFRACER encountered an unknown error");
-				// unknown error
-				return -1;
-				break;
-			}
-		}
+	  switch ( retval )
+	  {
+	  case US_SURFRACER_ERR_MISSING_RESIDUE:
+	    {
+	      printError("US_SURFRACER encountered an unknown residue:\n" +
+			 error_string);
+	      return US_SURFRACER_ERR_MISSING_RESIDUE;
+	      break;
+	    }
+	  case US_SURFRACER_ERR_MISSING_ATOM:
+	    {
+	      printError("US_SURFRACER encountered a unknown atom:\n" +
+			 error_string);
+	      return US_SURFRACER_ERR_MISSING_ATOM;
+	      break;
+	    }
+	  case US_SURFRACER_ERR_MEMORY_ALLOC:
+	    {
+	      printError("US_SURFRACER encountered a memory allocation error");
+	      return US_SURFRACER_ERR_MEMORY_ALLOC;
+	      break;
+	    }
+	  default:
+	    {
+	      printError("US_SURFRACER encountered an unknown error");
+	      // unknown error
+	      return -1;
+	      break;
+	    }
+	  }
 	}
+
 	if(error_string.length()) {
 	  progress->setProgress(mppos);
 	  qApp->processEvents();
@@ -929,6 +1101,106 @@ int US_Hydrodyn::compute_asa()
 	  return US_SURFRACER_ERR_MISSING_ATOM;
 	}
 
+
+	if(asa.method == 0) {
+	  // surfracer
+	  editor->append("Computing ASA via SurfRacer\n");
+	  qApp->processEvents();
+	  int retval = surfracer_main(&error_string,
+				      asa.probe_radius,
+				      residue_list,
+				      active_atoms,
+				      false,
+				      progress,
+				      editor
+				      );
+
+	  progress->setProgress(ppos++); // 2
+	  qApp->processEvents();
+	  editor->append("Return from Computing ASA\n");
+	  if ( retval )
+	  {
+	    editor->append("Errors found during ASA calculation\n");
+	    progress->setProgress(mppos);
+	    qApp->processEvents();
+	    switch ( retval )
+	    {
+	    case US_SURFRACER_ERR_MISSING_RESIDUE:
+	      {
+		printError("US_SURFRACER encountered an unknown residue:\n" +
+			   error_string);
+		return US_SURFRACER_ERR_MISSING_RESIDUE;
+		break;
+	      }
+	    case US_SURFRACER_ERR_MISSING_ATOM:
+	      {
+		printError("US_SURFRACER encountered a unknown atom:\n" +
+			   error_string);
+		return US_SURFRACER_ERR_MISSING_ATOM;
+		break;
+	      }
+	    case US_SURFRACER_ERR_MEMORY_ALLOC:
+	      {
+		printError("US_SURFRACER encountered a memory allocation error");
+		return US_SURFRACER_ERR_MEMORY_ALLOC;
+		break;
+	      }
+	    default:
+	      {
+		printError("US_SURFRACER encountered an unknown error");
+		// unknown error
+		return -1;
+		break;
+	      }
+	    }
+	  }
+	  if(error_string.length()) {
+	    progress->setProgress(mppos);
+	    qApp->processEvents();
+	    printError("US_SURFRACER encountered unknown atom(s) error:\n" +
+		       error_string);
+	    return US_SURFRACER_ERR_MISSING_ATOM;
+	  }
+	}
+
+	if(asa.method == 1) {
+	  // surfracer
+	  editor->append("Computing ASA via ASAB1\n");
+	  qApp->processEvents();
+	  int retval = us_hydrodyn_asab1_main(active_atoms,
+					      &asa,
+					      &results,
+					      false,
+					      progress,
+					      editor
+				      );
+
+	  progress->setProgress(ppos++); // 2
+	  qApp->processEvents();
+	  editor->append("Return from Computing ASA\n");
+	  if ( retval )
+	  {
+	    editor->append("Errors found during ASA calculation\n");
+	    progress->setProgress(mppos);
+	    qApp->processEvents();
+	    switch ( retval )
+	    {
+	    case US_HYDRODYN_ASAB1_ERR_MEMORY_ALLOC:
+	      {
+		printError("US_HYDRODYN_ASAB1 encountered a memory allocation error");
+		return US_HYDRODYN_ASAB1_ERR_MEMORY_ALLOC;
+		break;
+	      }
+	    default:
+	      {
+		printError("US_HYDRODYN_ASAB1 encountered an unknown error");
+		// unknown error
+		return -1;
+		break;
+	      }
+	    }
+	  }
+	}
 
   // pass 1 assign bead #'s, chain #'s, initialize data
 	printf("made it to here\n"); fflush(stdout);
@@ -3045,12 +3317,13 @@ void US_Hydrodyn::bead_check()
   // recheck beads here
 
   puts("bead recheck");
-  PDB_chain tmp_chain;
-  PDB_model tmp_model;
-  tmp_chain.atom = bead_model;
-  tmp_model.molecule.push_back(tmp_chain);
+  active_atoms.clear();
+  for(unsigned int i = 0; i < bead_model.size(); i++) {
+    active_atoms.push_back(&bead_model[i]);
+  }
+    
   QString error_string = "";
-  int retval = us_hydrodyn_asab1_main(&bead_model,
+  int retval = us_hydrodyn_asab1_main(active_atoms,
 				      &asa,
 				      &results,
 				      true,

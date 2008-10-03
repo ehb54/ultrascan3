@@ -144,6 +144,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 #endif
 
 		vector <PDB_atom>        bead_model;
+		vector <PDB_atom *>      active_atoms;
 		vector <struct residue>   residue_list;
 		vector <struct PDB_model> model_vector;
 		bool bead_model_from_file;
@@ -173,7 +174,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void residue();
 		void select_model(int);
 		void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
-		int calc_somo(); // build bead model
+		int calc_somo();    // compute asa and then refine bead_model
+		int create_beads(QString *error_string); // turn pdb/atom model into bead_model
 		int check_for_missing_atoms(QString *error_string, PDB_model *);
 		int overlap_check(bool sc, bool mc, bool buried); // check for overlaps
 		int compute_asa(); // calculate maximum accessible surface area

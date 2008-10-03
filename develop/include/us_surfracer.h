@@ -6,7 +6,7 @@
 int surfracer_main(QString *error_string,
 		   float probe_radius, 
 		   vector <residue> residue_list,
-		   PDB_model *model_vector,
+		   vector <PDB_atom *> active_atoms,
 		   bool recheck,
 		   QProgressBar *progress,
 		   QTextEdit *editor

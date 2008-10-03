@@ -31,7 +31,7 @@ struct asa_options
 	float threshold_percent;
 	bool calculation;
 	bool recheck_beads;
-	bool method;
+	int method;  // 0 == surfracer , 1 == asab1
 	float asab1_step;
 };
 
