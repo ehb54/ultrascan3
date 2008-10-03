@@ -2,6 +2,7 @@
 #include "../include/us_surfracer.h"
 #include "../include/us_hydrodyn_supc.h"
 #include "../include/us_hydrodyn_pat.h"
+#include "../include/us_hydrodyn_asab1.h"
 #include <qregexp.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -3019,36 +3020,18 @@ void US_Hydrodyn::bead_check()
   tmp_chain.atom = bead_model;
   tmp_model.molecule.push_back(tmp_chain);
   QString error_string = "";
-  int retval = surfracer_main(&error_string,
-			      // 10,
-			      asa.probe_radius,
-			      residue_list,
-			      &tmp_model,
-			      true,
-			      progress,
-			      editor
-			      );
+  int retval = us_hydrodyn_asab1_main(&bead_model,
+				      &asa,
+				      &results,
+				      true,
+				      progress,
+				      editor
+				      );
   if ( retval ) {
     switch ( retval ) {
-    case US_SURFRACER_ERR_MISSING_RESIDUE:
+    case US_HYDRODYN_ASAB1_ERR_MEMORY_ALLOC:
       {
-	printError("US_SURFRACER on bead recheck encountered a missing residue:\n" +
-		   error_string);
-	fprintf(stderr, "bead recheck: missing residue error\n");
-	return;
-	break;
-      }
-    case US_SURFRACER_ERR_MISSING_ATOM:
-      {
-	printError("US_SURFRACER on bead recheck encountered a missing atom:\n" +
-		   error_string);
-	fprintf(stderr, "bead recheck: missing atom error\n");
-	return;
-	break;
-      }
-    case US_SURFRACER_ERR_MEMORY_ALLOC:
-      {
-	printError("US_SURFRACER on bead recheck encountered a memory allocation error");
+	printError("US_HYDRODYN_ASAB1 on bead recheck encountered a memory allocation error");
 	fprintf(stderr, "bead recheck: memory alloc error\n");
 	return;
 	break;
@@ -3056,18 +3039,57 @@ void US_Hydrodyn::bead_check()
     default:
       {
 	// unknown error
-	printError("US_SURFRACER encountered an unknown error");
+	printError("US_HYDRODYN_ASAB1 encountered an unknown error");
 	fprintf(stderr, "bead recheck: unknown error %d\n", retval);
 	return;
 	break;
       }
     }
   }
-  if(error_string.length()) {
-    printError("US_SURFRACER encountered missing atom(s) error:\n" +
-	       error_string);
-    return;
+
+  int b2e = 0;
+  int e2b = 0;
+
+  write_bead_spt(USglobal->config_list.result_dir + SLASH + project + QString("_%1").arg(current_model + 1) + "_pre_recheck.somo", &bead_model);
+  write_bead_model(USglobal->config_list.result_dir + SLASH + project + QString("_%1").arg(current_model + 1) + "_pre_recheck.somo", &bead_model);
+
+  for (unsigned int i = 0; i < bead_model.size(); i++) 
+  {
+    float surface_area = bead_model[i].bead_computed_radius * bead_model[i].bead_computed_radius * 4 * M_PI;
+    QString msg = "";
+    if(bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area) {
+      // now exposed
+      if(bead_model[i].exposed_code != 1) {
+	// was buried
+	msg = "buried->exposed";
+	b2e++;
+	bead_model[i].exposed_code = 1;
+	bead_model[i].bead_color = 8;
+      }
+    } else {
+      // now buried
+      if(bead_model[i].exposed_code == 1) {
+	// was exposed
+	msg = "exposed->buried";
+	e2b++;
+	bead_model[i].exposed_code = 6;
+	bead_model[i].bead_color = 6;
+      }
+    }
+      
+    printf("bead %d %.2f %.2f %s %s\n",
+	   i,
+	   surface_area,
+	   bead_model[i].bead_recheck_asa,
+	   (bead_model[i].bead_recheck_asa >
+	    (asa.threshold_percent / 100.0) * surface_area) ? 
+	   "exposed" : "buried",
+	   msg.ascii());
   }
+  write_bead_spt(USglobal->config_list.result_dir + SLASH + project + QString("_%1").arg(current_model + 1) + ".somo", &bead_model);
+  write_bead_model(USglobal->config_list.result_dir + SLASH + project + QString("_%1").arg(current_model + 1) + ".somo", &bead_model);
+  editor->append(QString("%1 exposed beads became buried\n").arg(e2b));
+  editor->append(QString("%1 buried beads became exposed\n").arg(b2e));
 }
 
 void US_Hydrodyn::select_model(int val)
@@ -3142,11 +3164,11 @@ int US_Hydrodyn::calc_somo()
 	  if (asa.recheck_beads)
 	    {
 	      // puts("recheck beads disabled");
-	      editor->append("Rechecking beads (not currently functional!\n");
+	      editor->append("Rechecking beads\n");
 	      qApp->processEvents();
 
 	      bead_check();
-	      editor->append("Finished rechecking beads (not currently functional!\n");
+	      editor->append("Finished rechecking beads\n");
 	      progress->setProgress(19);
 	    } else {
 	      editor->append("No rechecking of beads\n");

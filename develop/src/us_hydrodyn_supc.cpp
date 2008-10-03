@@ -30,6 +30,16 @@
 
 #undef R // it's defined as a us #define above & we use R as a local variable
 
+struct dati1
+{
+    float x, y, z;		/* coordinates of the bead center    */
+    float r;			/* hydrated radius of the bead       */
+    float ru;			/* unhydrated radius of the bead     */
+    int m;			/* mass of the bead                  */
+    int col;			/* color of the bead                 */
+    char *cor;			/* correspondence between beads and AA */
+};
+
 static hydro_results *supc_results;
 static FILE *mol;
 static FILE *rmc;

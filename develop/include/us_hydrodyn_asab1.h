@@ -20,8 +20,12 @@
 
 int
 us_hydrodyn_asab1_main(vector <PDB_atom> *bead_model, 
+		       asa_options *asa_opts,
+		       hydro_results *use_results,
+		       bool use_recheck,
 		       QProgressBar *progress,
-		       QTextEdit *editor);
+		       QTextEdit *editor
+		       );
 
 #define US_HYDRODYN_ASAB1_ERR_MEMORY_ALLOC   -1
 

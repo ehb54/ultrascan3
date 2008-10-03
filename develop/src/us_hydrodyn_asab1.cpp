@@ -175,6 +175,10 @@ static int nmax;
 static int nmax1;
 static QProgressBar *progress;
 static QTextEdit *editor;
+static asa_options *asa_opts;
+static hydro_results *results;
+static bool recheck;
+static vector <PDB_atom> *bead_model;
 
 static void
 em(char *s)
@@ -307,18 +311,29 @@ asab1_alloc()
 }
 
 int
-us_hydrodyn_asab1_main(vector <PDB_atom> *bead_model, 
+us_hydrodyn_asab1_main(vector <PDB_atom> *use_bead_model, 
+		       asa_options *use_asa_opts,
+		       hydro_results *use_results,
+		       bool use_recheck,
 		       QProgressBar *use_progress,
-		       QTextEdit *use_editor)
+		       QTextEdit *use_editor
+		       )
 {
-  nmax = nmax1 = bead_model->size();
+  em("asab1_main");
+  em("asab1_main 1");
   //  nmax1 = 4000;
+  em("asab1_main 2");
+  progress = use_progress;
+  editor = use_editor;
+  asa_opts = use_asa_opts;
+  results = use_results;
+  recheck = use_recheck;
+  bead_model = use_bead_model;
+  nmax = nmax1 = bead_model->size();
   if (int retval = asab1_alloc())
   {
     return retval;
   }
-  progress = use_progress;
-  editor = use_editor;
 
     int i, ii, l, j, s, kk, kkk, ini, contatom, contatom1, indCA, indC, indO;
     int posiz, massa = 0, check_asa = 0;
@@ -354,7 +369,8 @@ us_hydrodyn_asab1_main(vector <PDB_atom> *bead_model,
     printf("\n\n\n\n To process a PBD file, enter 2\n ");
     printf("To re-check a bead model, enter 3\n\n ");
     printf("--> ");
-    scanf("%d", &ini);
+    //    scanf("%d", &ini);
+    ini = 3;
 
 /* printf("\n\n%s%d\t%d\n","Valore flag all'inizio, valore ini: ",flag1,ini);
 scanf("%s",pippo);
@@ -415,6 +431,7 @@ getchar(); */
 	em("s4");
 	ini = 2;
 	check_asa = 1;
+	min_asa = asa_opts->threshold_percent;
 	while (min_asa < 0.0)
 	{
 	    printf("\n\nASA RE-CHECK  - Insert the minimum ASA %% threshold level [0-99] : ");
@@ -1012,6 +1029,13 @@ plutone[2]=0; */
 
 	for (l = 0; l < nat; l++)
 	{
+	    printf("%d %.2f\n", l, asa[l]);
+	    if (!recheck) 
+	    {
+		(*bead_model)[l].asa = asa[l];
+	    } else {
+		(*bead_model)[l].bead_recheck_asa = asa[l];
+	    }
 	    if (dt[l].col == 6)
 	    {
 		/*bead's surface */
@@ -1067,7 +1091,7 @@ plutone[2]=0; */
 // ----------------------------------- bsort.c -------------------------------------
 // #warning bsort.c 
 
-#if defined(USE_UNUSED)
+#if defined(NOT_USED)
 static void
 ord_d()
 {
@@ -1319,7 +1343,7 @@ calcdis()
 
 // void cordis(int);
 
-#if defined(USE_UNUSED)
+#if defined(NOT_USED)
 static void
 cordis(int s)
 {
@@ -1522,9 +1546,9 @@ pulisci()
 /* MODIFIED DEC 2002 IN GLASGOW FOR CHECK ON THE OUTPUT FILES WHEN RE-CHECKING ASA */
 /* MODIFIED APRIL 2003 IN GENOVA FOR INCLUSION OF PSV */
 
-static FILE *init2_mol;
+// static FILE *init2_mol;
 static FILE *init2_mol1;
-static FILE *init2_rmc;
+// static FILE *init2_rmc;
 
 // void init2();
 
@@ -1534,12 +1558,12 @@ init2()
 {
     struct dati1 *dd;
 
-    int i;
-    int fe, fe1;
+    // int i;
+    // int fe, fe1;
     // char rido[10];
     // char command[200];
-    char nome[30];
-    extern int flag1;
+    // char nome[30];
+    // extern int flag1;
 
 /*	printf("\n\n\t%s%d","Valore flag: ",flag1);
 	scanf("%s",rido);
@@ -1547,6 +1571,7 @@ init2()
 
     pulisci();
 
+#if defined(NOT_USED)
     while (init2_mol == NULL)
     {
 /*	pulisci();  */
@@ -1568,7 +1593,7 @@ while(init2_mol1==NULL)
 	printf("\n");
 	printf("\t*** CAUTION : File already exists ! ***\n\n");
 	printf("\t  Select one option:\n\n");
-	printf("\t 1) Owerwrite existing file\n");
+	printf("\t 1) Overwrite existing file\n");
 	printf("\t 2) Create new file\n\n");
 	printf("\t** Select (1/2) :___ ");
 	scanf("%d", &fe);
@@ -1581,6 +1606,8 @@ while(init2_mol1==NULL)
 	if (fe == 2)
 	    goto a50;
     }
+#endif
+    strcpy(ridotto, "asab1_output");
     init2_mol1 = fopen(ridotto, "w");
 /*	}   */
     fclose(init2_mol1);
@@ -1594,7 +1621,7 @@ while(init2_mol1==NULL)
     strcat(ridotto_rmc, ".rmc");
     printf("\n");
     printf("\t Creating file %s for radii, masses and colors\n", ridotto_rmc);
-
+#if defined(NOT_USED)
   a55:
     init2_mol1 = fopen(ridotto_rmc, "r");
     if (init2_mol1 != NULL)
@@ -1602,7 +1629,7 @@ while(init2_mol1==NULL)
 	printf("\n");
 	printf("\t*** CAUTION : File %s already exists ! ***\n\n", ridotto_rmc);
 	printf("\t  Select one option:\n\n");
-	printf("\t 1) Owerwrite existing .rmc file\n");
+	printf("\t 1) Overwrite existing .rmc file\n");
 	printf("\t 2) Create new .rmc file\n\n");
 	printf("\t** Select (1/2) :___ ");
 	scanf("%d", &fe1);
@@ -1619,33 +1646,38 @@ while(init2_mol1==NULL)
 	    goto a55;
 	}
     }
+#endif
 
 /*	printf("\n\n\t%s","Insert the filename for the rmc file of the re-checked bead model: ");
 	scanf("%s",ridotto_rmc); */
-    init2_mol1 = fopen(ridotto_rmc, "w");
+//    init2_mol1 = fopen(ridotto_rmc, "w");
 /*	} */
-    fclose(init2_mol1);
+//    fclose(init2_mol1);
 
 /*	printf("\n\n\t%s%d","Valore flag1: ",flag1);
 	scanf("%s",rido);
 	getchar(); */
 
-    if (flag1 != 1)
-	init2_mol1 = fopen("provaly2", "r");
+//    if (flag1 != 1)
+//	init2_mol1 = fopen("provaly2", "r");
 
-    fscanf(init2_mol, "%d", &nat);
-    fscanf(init2_mol, "%f", &raggio);
-    fscanf(init2_mol, "%s", ragcol);
-    if ((raggio >= ((float) -2.1)) && (raggio <= ((float) -1.9)))
-	fscanf(init2_mol, "%f", &psv);
+    nat = bead_model->size();
+    // fscanf(init2_mol, "%d", &nat);
+    // fscanf(init2_mol, "%f", &raggio);
+    raggio = -2;
+    psv = results->vbar;
+    // fscanf(init2_mol, "%s", ragcol);
+    // if ((raggio >= ((float) -2.1)) && (raggio <= ((float) -1.9)))
+    //	fscanf(init2_mol, "%f", &psv);
 
-    init2_rmc = fopen(ragcol, "r");	/* opening the file containing the radii, masses and colors */
+    // init2_rmc = fopen(ragcol, "r");	/* opening the file containing the radii, masses and colors */
 
     dd = dt;
 
     maxz = dd->z + dd->r;
     minz = dd->z - dd->r;
 
+#if defined(NOT_USED)
     for (i = 0; i < nat; i++)
     {
 	fscanf(init2_mol, "%f", &(dt[i].x));
@@ -1671,11 +1703,48 @@ while(init2_mol1==NULL)
 
 	dd++;
     }
+#endif
 
-    fclose(init2_mol);
-    fclose(init2_rmc);
-    if (flag1 != 1)
-	fclose(init2_mol1);
+    if (!recheck) 
+    {
+      for (unsigned int i = 0; i < bead_model->size(); i++) 
+      {
+	dt[i].r = (*bead_model)[i].radius;
+	dt[i].r += rprobe;
+	dt[i].x = (*bead_model)[i].coordinate.axis[0];
+	dt[i].y = (*bead_model)[i].coordinate.axis[1];
+	dt[i].z = (*bead_model)[i].coordinate.axis[2];
+	dt[i].m = (int)(*bead_model)[i].mw;
+	dt[i].col = (*bead_model)[i].bead_color;
+      }
+    }  else {
+      for (unsigned int i = 0; i < bead_model->size(); i++) 
+      {
+	dt[i].r = (*bead_model)[i].bead_computed_radius;
+	dt[i].r += rprobe;
+	dt[i].x = (*bead_model)[i].bead_coordinate.axis[0];
+	dt[i].y = (*bead_model)[i].bead_coordinate.axis[1];
+	dt[i].z = (*bead_model)[i].bead_coordinate.axis[2];
+	dt[i].m = (int)(*bead_model)[i].bead_mw;
+	dt[i].col = (*bead_model)[i].bead_color;
+      }
+    }
+
+    for(int i = 0; i < nat; i++) {
+      printf("%d %.2f %.2f %.2f %.2f %d %d\n", 
+	     i,
+	     dt[i].r, 
+	     dt[i].x, 
+	     dt[i].y, 
+	     dt[i].z, 
+	     dt[i].m, 
+	     dt[i].col);
+    }
+ 
+    //  fclose(init2_mol);
+    // fclose(init2_rmc);
+    // if (flag1 != 1)
+    //	fclose(init2_mol1);
 }
 
 // ----------------------------------- init3.c -------------------------------------
@@ -2096,7 +2165,7 @@ else
 static void
 assignrad(int xx)
 {
-    float flrad;
+    float flrad = 0.0;
     struct dati1 *dd;
 
     dd = dt;
@@ -3637,7 +3706,9 @@ formato()
     while (conferma == 0)
     {
 	printf("\n\nInsert the integration step in angstroms : ");
-	scanf("%f", &passo);
+	// scanf("%f", &passo);
+	passo = asa_opts->asab1_step;
+	printf("%.2f\n", passo);
 
 	while (passo <= 0)
 	{
@@ -3648,8 +3719,9 @@ formato()
 	}
 
 	printf("\n\n%s%.0f\n\n", "Number of resulting iterations: ", ceil(fabs(maxz - minz) / passo));
-	printf("%s", "Confirm ? [yes=1;no=0] ");
-	scanf("%d", &conferma);
+	// printf("%s", "Confirm ? [yes=1;no=0] ");
+	// scanf("%d", &conferma);
+	conferma = 1;
     }
 
     passi = (int) (ceil(fabs(maxz - minz) / passo));
@@ -3794,16 +3866,19 @@ scala()
 static void
 raggio_probe()
 {
-    printf("\n\n\nPROBE RADIUS [>=0.0]___");
-    rbulk = scanf("%f", &rprobe);
-    while ((rbulk != 1) || (rprobe < 0.0))
-    {
-	printf("\n\n\n");
-	printf("Wrong number !!\n");
-	printf("Re-insert the PROBE RADIUS");
-	printf("\n\n\nPROBE RADIUS [>=0.0]___");
-	rbulk = scanf("%f", &rprobe);
-    }
+  // printf("\n\n\nPROBE RADIUS [>=0.0]___");
+  // rbulk = scanf("%f", &rprobe);
+    
+  // while ((rbulk != 1) || (rprobe < 0.0))
+  //{
+  //printf("\n\n\n");
+  //printf("Wrong number !!\n");
+  //printf("Re-insert the PROBE RADIUS");
+  //printf("\n\n\nPROBE RADIUS [>=0.0]___");
+  //rbulk = scanf("%f", &rprobe);
+  //}
+  rprobe = asa_opts->probe_radius;
+  rbulk = 1;
 
     if (rprobe <= 0.001)
 	rbulk = 0;

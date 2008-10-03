@@ -53,6 +53,7 @@ struct PDB_atom
         bool bead_positioner;             // true if an atom had a bead positioner
         float mw;
         float bead_mw;
+        float bead_recheck_asa;
         float bead_cog_mw;                // mw of those atoms contributing to the bead_cog
 	point bead_position_coordinate;
 	point bead_cog_coordinate;
