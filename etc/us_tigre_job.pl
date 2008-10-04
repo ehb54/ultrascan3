@@ -7,10 +7,13 @@
 # IF THIS FAILS FOR THE NUMBER OF PROCESSORS YOU HAVE SELECTED, TIGRE JOBS WILL FAIL!
 # THIS IS NOT HOW MANY PROCS THE SYSTEM HAS, BUT HOW MANY TIGRE/PBS KNOW ABOUT!!!!
 
+@bcfdowncount = `pbsnodes -l`;
+@laredodowncount = `ssh laredo pbsnodes -l`;
+@alamodowncount = `ssh alamo pbsnodes -l`;
 
-$bcf_no_procs = 42;
-$alamo_no_procs = 31;
-$laredo_no_procs = 34; # 36;
+$bcf_no_procs = 42 - 2 * @bcfdowncount;
+$alamo_no_procs = 31 - 2 * @alamodowncount;
+$laredo_no_procs = 34 - 2 * @laredodowncount;
 
 # END USER EDITABLE SECTION
 
