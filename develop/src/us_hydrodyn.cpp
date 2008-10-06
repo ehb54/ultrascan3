@@ -3236,7 +3236,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
       if (residue != last_residue) {
 	if (last_residue != "") {
 	  fprintf(f,
-		  " [ %-6d %s ]\t%.0f\t%.0f\t%.2f%%\n",
+		  " [ %-6d %s ]\t%.0f\t%.0f\t%.2f\n",
 		  seqno, last_residue.ascii(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
 	}
 	residue_asa = 0;
@@ -3250,7 +3250,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
   }
   if (last_residue != "") {
     fprintf(f,
-	    " [ %-6d %s ]\t%.0f\t%.0f\t%.2f%%\n",
+	    " [ %-6d %s ]\t%.0f\t%.0f\t%.2f\n",
 	    seqno, last_residue.ascii(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
   }
 
