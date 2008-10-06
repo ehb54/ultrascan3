@@ -1214,6 +1214,9 @@ int US_Hydrodyn::compute_asa()
   // pass 1 assign bead #'s, chain #'s, initialize data
 	printf("made it to here\n"); fflush(stdout);
 
+	FILE *asaf = fopen(QString(somo_tmp_dir + "/atom.asa"), "w");
+	
+
   // for (unsigned int i = 0; i < model_vector.size (); i++)
   {
     unsigned int i = current_model;
@@ -1233,6 +1236,12 @@ int US_Hydrodyn::compute_asa()
 	// initialize data
 	// this_atom->bead_positioner = false;
 	this_atom->normalized_ot_is_valid = false;
+	fprintf(asaf, "%s\t%s\t%u\t%.2f\n",
+		this_atom->name.ascii(),
+		this_atom->resName.ascii(),
+		this_atom->resSeq,
+		this_atom->asa);
+		
 
 	for (unsigned int m = 0; m < 3; m++) {
 	  this_atom->bead_cog_coordinate.axis[m] = 0;
@@ -1242,6 +1251,7 @@ int US_Hydrodyn::compute_asa()
       }
     }
   }
+  fclose(asaf);
 
   progress->setProgress(ppos++); // 3
   qApp->processEvents();
@@ -3200,7 +3210,7 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
 
 void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
   FILE *f = fopen(fname.ascii(), "w");
-  fprintf(f, " N.	   Res.       ASA        MAX ASA\n");
+  fprintf(f, " N.	   Res.       ASA        MAX ASA         %%\n");
 
   float total_asa = 0.0;
   float total_ref_asa = 0.0;
@@ -3226,8 +3236,8 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
       if (residue != last_residue) {
 	if (last_residue != "") {
 	  fprintf(f,
-		  " [ %-6d %s ]\t%.0f\t%.0f\n",
-		  seqno, last_residue.ascii(), residue_asa, residue_ref_asa);
+		  " [ %-6d %s ]\t%.0f\t%.0f\t%.2f%%\n",
+		  seqno, last_residue.ascii(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
 	}
 	residue_asa = 0;
 	residue_ref_asa = 0;
@@ -3240,8 +3250,8 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
   }
   if (last_residue != "") {
     fprintf(f,
-	    " [ %-6d %s ]\t%.0f\t%.0f\n",
-	    seqno, last_residue.ascii(), residue_asa, residue_ref_asa);
+	    " [ %-6d %s ]\t%.0f\t%.0f\t%.2f%%\n",
+	    seqno, last_residue.ascii(), residue_asa, residue_ref_asa, 100.0 * residue_asa / residue_ref_asa);
   }
 
   fprintf(f,
