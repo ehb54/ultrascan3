@@ -84,6 +84,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QString project;	// name of the current project - derived from the prefix of the pdb filename
 		QString bead_model_prefix;
 		QString somo_dir;
+		QString somo_pdb_dir;
+		QString somo_tmp_dir;
 		double overlap_tolerance;
 
 		point last_molecular_cog;
