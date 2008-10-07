@@ -1478,8 +1478,8 @@ ragir()
 	mm = dd->m;
 
 	rg = ((float) 1.8) * (rr - rprobe) * (rr - rprobe);
-	ro2 += mm * ((float) (pow((xx - xm), 2.0) + pow((yy - ym), 2.0) + pow((zz - zm), 2.0) + rg));
-	ro3 += mm * ((float) (pow((xx - xm), 2.0) + pow((yy - ym), 2.0) + pow((zz - zm), 2.0)));
+	ro2 += mm * ((float) (pow((xx - xm), 2) + pow((yy - ym), 2) + pow((zz - zm), 2) + rg));
+	ro3 += mm * ((float) (pow((xx - xm), 2) + pow((yy - ym), 2) + pow((zz - zm), 2	)));
 
 	dd++;
     }
@@ -3598,7 +3598,7 @@ plotcircle()
 
     plotter_pl = fopen("plotter", "ab");
 
-    d = dd->r - (fl * (((float) 1.0) + ((float) ceil(nat / 15)) / ((float) 2.0)));
+    d = dd->r - (fl * (((float) 1.0) + ((float) ceil(nat / 15.)) / ((float) 2.0)));
 
     fprintf(plotter_pl, "%s%d%c", "SP", dd->col, ';');
     fprintf(plotter_pl, "%s%f%c%f%c", "PA", dd->x, ',', dd->y, ';');
