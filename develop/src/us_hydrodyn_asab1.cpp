@@ -385,15 +385,15 @@ getchar(); */
 	fclose(mol);  */
 
 	mol = fopen("plotter", "w");
-	fprintf(mol, "");
+	//fprintf(mol, "");
 	fclose(mol);
 
 	mol = fopen("plotter1", "w");
-	fprintf(mol, "");
+	//fprintf(mol, "");
 	fclose(mol);
 
 	mol = fopen("controll", "w");
-	fprintf(mol, "");
+	//fprintf(mol, "");
 	fclose(mol);
 
 /*	mol=fopen("provaly","w");
@@ -1525,8 +1525,10 @@ init()
 	fscanf(init1_rmc, "%f", &(dt[i].r));
 	fscanf(init1_rmc, "%d", &(dt[i].m));
 	fscanf(init1_rmc, "%d", &(dt[i].col));
-	fscanf(init1_mol1, "%s", &(dt[i].elm));
-	fscanf(init1_mol1, "%s", &(dt[i].amin));
+	//fscanf(init1_mol1, "%s", &(dt[i].elm));
+	//fscanf(init1_mol1, "%s", &(dt[i].amin));
+	fscanf(init1_mol1, "%4c", &(dt[i].elm[0]));
+	fscanf(init1_mol1, "%4c", &(dt[i].amin[0]));
     }
 
     fclose(init1_mol);
@@ -1823,7 +1825,7 @@ initarray()
     init3_brook = fopen(nome, "r");
 
     init3_mol1 = fopen("contrall", "w");
-    fprintf(init3_mol1, "");
+    //fprintf(init3_mol1, "");
     fclose(init3_mol1);
     em("i3_8");
 
@@ -1854,19 +1856,19 @@ initarray()
 			printf("\n outfile2= %s",outfile2); 
 			printf("\n outris= %s",outris); */
 	init3_mol = fopen(outfile, "w");
-	fprintf(init3_mol, "");
+	//fprintf(init3_mol, "");
 	fclose(init3_mol);
 
 	init3_mol = fopen(outfile1, "w");
-	fprintf(init3_mol, "");
+	//fprintf(init3_mol, "");
 	fclose(init3_mol);
 
 	init3_mol = fopen(outfile2, "w");
-	fprintf(init3_mol, "");
+	//fprintf(init3_mol, "");
 	fclose(init3_mol);
 
 	init3_mol = fopen(outris, "w");
-	fprintf(init3_mol, "");
+	//fprintf(init3_mol, "");
 	fclose(init3_mol);
 
     }

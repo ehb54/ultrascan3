@@ -2105,7 +2105,8 @@ void US_FeMatch_W::create_modelsystems()
 	msv.clear();
 	QString str;
 	unsigned int i, j, k, l, threads=USglobal->config_list.numThreads;
-	unsigned int components_per_job[threads];
+	//unsigned int components_per_job[threads];
+	unsigned int* components_per_job = (unsigned int*) malloc( threads * sizeof(unsigned int) );
 
 	for (i=0; i<threads; i++)
 	{
@@ -2158,6 +2159,7 @@ void US_FeMatch_W::create_modelsystems()
 		j += components_per_job[i];
 		msv.push_back(ms);
 	}
+	delete [] components_per_job;
 }
 
 //void US_FeMatch_W::updateParameters(float val1, float val2)

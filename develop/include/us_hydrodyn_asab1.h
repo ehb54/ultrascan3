@@ -14,9 +14,12 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <math.h>
+
+#ifndef WIN32
+  #include <unistd.h>
+#endif
 
 int
 us_hydrodyn_asab1_main(vector <PDB_atom *> active_atoms, 

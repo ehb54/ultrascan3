@@ -54,13 +54,13 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
 		float rmsd, baseline;
 		int model;
 		unsigned int components, current_component;
-		vector <struct ModelSystem> msv;
-		vector <struct mfem_data> simdata;
 		struct SimulationParameters sp;
 
 #ifdef WIN32
-		    #pragma warning ( disable: 4251 )
+  #pragma warning ( disable: 4251 )
 #endif
+		vector <struct ModelSystem> msv;
+		vector <struct mfem_data> simdata;
 
 		vector <double> ri_noise, ti_noise;
 		vector <double> s_distribution;
@@ -75,7 +75,7 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
 		vector <double> fv;
 
 #ifdef WIN32
-		    #pragma warning ( default: 4251 )
+  #pragma warning ( default: 4251 )
 #endif
 
 		struct mfem_data residuals, fem_model;
@@ -152,11 +152,21 @@ class fematch_thr_t : public QThread
   struct mfem_initial *initCVector;
   US_MovingFEM *mfem;
   struct runinfo *run_inf;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
   vector <double> *s_distribution;
   vector <double> *D_distribution;
+  vector <double> *partial_concentration;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
   unsigned int selected_cell;
   unsigned int selected_lambda;
-  vector <double> *partial_concentration;
   double bottom;
   unsigned int points;
   unsigned int j_start;
