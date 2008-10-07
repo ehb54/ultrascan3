@@ -9,6 +9,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+// #define OLD_ASAB1_SC_COMPUTE
 
 #ifndef WIN32
 	// #define DEBUG
@@ -89,6 +90,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 //	global_Ypos += 30;
 //	setGeometry(global_Xpos, global_Ypos, 0, 0);
 	create_beads_normally = true;
+	regular_N_handling = true;
 	rasmol = NULL;
 	chdir(somo_tmp_dir);
 	printf("%s\n", QString(somo_tmp_dir).ascii());
@@ -636,11 +638,12 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
       {
 	if ((residue_list[m].name == this_atom->resName &&
 	     this_atom->name != "OXT" &&
-	     (k || this_atom->name != "N")) ||
+	     (k || this_atom->name != "N" || !regular_N_handling)) ||
 	    (residue_list[m].name == "OXT"
 	     && this_atom->name == "OXT") ||
 	    (!k &&
 	     this_atom->name == "N" &&
+	     regular_N_handling &&
 	     residue_list[m].name == "N1"))
 	{
 	  respos = (int) m;
@@ -657,6 +660,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	      for (unsigned int l = 0; l < residue_list[lastResPos].r_atom.size(); l++)
 	      {
 		if (spec_N1 &&
+		    regular_N_handling &&
 		    residue_list[lastResPos].r_atom[l].name == "N") {
 		  residue_list[lastResPos].r_atom[l].tmp_flag = true;
 		  spec_N1 = false;
@@ -719,6 +723,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	  if (residue_list[respos].r_atom[m].name == this_atom->name ||
 	      (
 	       this_atom->name == "N" &&
+	       regular_N_handling &&
 	       !k &&
 	       residue_list[respos].r_atom[m].name == "N1"
 	       )
@@ -898,11 +903,12 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	{
 	  if ((residue_list[m].name == this_atom->resName &&
 	       this_atom->name != "OXT" &&
-	       (k || this_atom->name != "N")) || 
+	       (k || this_atom->name != "N" || !regular_N_handling)) || 
 	      (residue_list[m].name == "OXT" 
 	       && this_atom->name == "OXT") ||
 	      (!k &&
 	       this_atom->name == "N" &&
+	       regular_N_handling &&
 	       residue_list[m].name == "N1")) 
 	  {
 	    respos = (int) m;
@@ -937,7 +943,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	  for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
 	  {
 #if defined(DEBUG)
-	    if(this_atom->name == "N" && !k) {
+	    if(this_atom->name == "N" && !k && regular_N_handling) {
 	      printf("this_atom->name == N/N1 this residue_list[%d].r_atom[%d].name == %s\n",
 		     respos, m, residue_list[respos].r_atom[m].name.ascii());
 	    }
@@ -946,6 +952,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	    if (residue_list[respos].r_atom[m].name == this_atom->name ||
 		(
 		 this_atom->name == "N" && 
+		 regular_N_handling &&
 		 !k &&
 		 residue_list[respos].r_atom[m].name == "N1"
 		 )
@@ -1305,7 +1312,8 @@ int US_Hydrodyn::compute_asa()
 	       (this_atom->bead_assignment != last_bead_assignment ||
 		this_atom->chain != last_chain ||
 		this_atom->resName != last_resName) &&
-	       !(this_atom->chain == 0 &&
+	       !(regular_N_handling &&
+		 this_atom->chain == 0 &&
 		 this_atom->name == "N" &&
 		 count_actives))) {
 #if defined(DEBUG)
@@ -1340,7 +1348,8 @@ int US_Hydrodyn::compute_asa()
 		sidechain_N->bead_asa = 0;
 		sidechain_N = (PDB_atom *) 0;
 	      }
-	      if(this_atom->name == "N" &&
+	      if(regular_N_handling &&
+		 this_atom->name == "N" &&
 		 this_atom->chain == 1) {
 		sidechain_N = this_atom;
 		this_atom->is_bead = false;
@@ -1376,6 +1385,7 @@ int US_Hydrodyn::compute_asa()
 	  PDB_atom *use_atom;
 	  if (create_beads_normally &&
 	      this_atom->chain == 0 &&
+	      regular_N_handling &&
 	      this_atom->name == "N" &&
 	      last_main_chain_bead) {
 	    use_atom = last_main_chain_bead;
@@ -1446,6 +1456,7 @@ int US_Hydrodyn::compute_asa()
 	  }
 
 	  if (this_atom->chain == 0 &&
+	      regular_N_handling &&
 	      this_atom->name == "N" &&
 	      !count_actives)
 	    {
@@ -1595,7 +1606,6 @@ int US_Hydrodyn::compute_asa()
 
     for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
 
-      // #define OLD_ASAB1_SC_COMPUTE
 #if defined(OLD_ASAB1_SC_COMPUTE)
       float mc_asab1 = 0;
       QString mc_resname = "";
