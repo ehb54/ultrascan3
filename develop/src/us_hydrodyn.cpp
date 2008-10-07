@@ -432,6 +432,7 @@ struct BPair {
 };
 
 
+#if defined(TO_DO)
 static void outward_translate_1_sphere_1_fixed(
 					       float *r1,  // radius of sphere 1
 					       float *r2,  // radius of sphere 2
@@ -510,6 +511,7 @@ static void outward_translate_1_sphere_1_fixed(
 #endif
 
 }
+#endif
 
 static void outward_translate_2_spheres(float *r1, // radius of sphere 1
 					float *r2, // radius of sphere 2
@@ -1593,7 +1595,15 @@ int US_Hydrodyn::compute_asa()
 
     for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
 
+      // #define OLD_ASAB1_SC_COMPUTE
+#if defined(OLD_ASAB1_SC_COMPUTE)
+      float mc_asab1 = 0;
+      QString mc_resname = "";
+      unsigned int mc_resSeq = 0;
+#endif
+
       for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+
 
 	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
 	// printf("p3 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
@@ -1660,13 +1670,31 @@ int US_Hydrodyn::compute_asa()
 	    exit(-1);
 	    break;
 	  }
-#if defined(DEBUG)
+#if defined(DEBUG) || defined(OLD_ASAB1_SC_COMPUTE)
 	  printf("pass 3 active is bead %s %s %d checkpoint 1\n",
 		 this_atom->name.ascii(),
 		 this_atom->resName.ascii(),
-		 this_atom->serial); fflush(stdout);
+		 this_atom->resSeq); fflush(stdout);
 #endif
 	  this_atom->visibility = (this_atom->bead_asa >= asa.threshold);
+#if defined(OLD_ASAB1_SC_COMPUTE)
+	  if (this_atom->chain == 1) {
+	    if (this_atom->resName == mc_resname &&
+	        this_atom->resSeq == mc_resSeq) {
+	      printf("visibility was %d is ", this_atom->visibility);
+	      this_atom->visibility = (this_atom->bead_asa + mc_asab1 >= asa.threshold);
+	      printf("%d\n", this_atom->visibility);
+	    } else {
+	      printf("ERROR: mc no sc asa! %s %s %d %d\n", 
+		     this_atom->resName.ascii(),
+		     mc_resname.ascii(),
+		     this_atom->resSeq,
+		     mc_resSeq
+		     );
+	    }
+	  }
+#endif
+	      
 
 #if defined(DEBUG)
 	  printf("pass 3 active is bead %s %s %d checkpoint 2\n",
@@ -1691,6 +1719,15 @@ int US_Hydrodyn::compute_asa()
 		 this_atom->name.ascii(),
 		 this_atom->resName.ascii(),
 		 this_atom->serial); fflush(stdout);
+#endif
+
+#if defined(OLD_ASAB1_SC_COMPUTE)
+	  if(this_atom->chain == 0) {
+	    mc_asab1 = this_atom->bead_asa;
+	    mc_resname = this_atom->resName;
+	    mc_resSeq = this_atom->resSeq;
+	    printf("saving last mc asa %.2f\n", mc_asab1);
+	  }
 #endif
 	} else {
 	  this_atom->placing_method = -1;
