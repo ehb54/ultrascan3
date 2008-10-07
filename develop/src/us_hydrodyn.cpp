@@ -3089,7 +3089,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
       {
 	residues =
 	  (*model)[i].resName +
-	  ((*model)[i].org_chain ? ".SC." : ".MC.") +
+	  ((*model)[i].org_chain ? ".SC." : ".PB.") +
 	  ((*model)[i].chainID == " " ? "" : ((*model)[i].chainID + "."));
 	// a compiler error forced this kludge using tmp_serial
 	//	+ QString("%1").arg((*model)[i].serial);
@@ -3100,7 +3100,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
 	  unsigned int tmp_serial = (*model)[i].all_beads[j]->serial;
 	  residues += "," +
 	    (*model)[i].all_beads[j]->resName +
-	    ((*model)[i].all_beads[j]->org_chain ? ".SC." : ".MC.") +
+	    ((*model)[i].all_beads[j]->org_chain ? ".SC." : ".PB.") +
 	    ((*model)[i].all_beads[j]->chainID == " " ? "" : ((*model)[i].all_beads[j]->chainID + "."));
 	  // a compiler error forced this kludge using tmp_serial
 	  //  + QString("%1").arg((*model)[i].all_beads[j].serial);
@@ -3342,7 +3342,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
       unsigned int tmp_serial = use_model[i]->resSeq; // was serial
       QString residues =
 	use_model[i]->resName +
-	(use_model[i]->org_chain ? ".SC." : ".MC.") +
+	(use_model[i]->org_chain ? ".SC." : ".PB.") +
 	(use_model[i]->chainID == " " ? "" : (use_model[i]->chainID + "."));
       // a compiler error forced this kludge using tmp_serial
       //	+ QString("%1").arg((*use_model)[i].serial);
@@ -3353,7 +3353,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
 	unsigned int tmp_serial = use_model[i]->all_beads[j]->resSeq;
 	residues += "," +
 	  (use_model[i]->all_beads[j]->resName +
-	  (use_model[i]->all_beads[j]->org_chain ? ".SC." : ".MC.") +
+	  (use_model[i]->all_beads[j]->org_chain ? ".SC." : ".PB.") +
 	  (use_model[i]->all_beads[j]->chainID == " " ? "" : (use_model[i]->all_beads[j]->chainID + ".")));
 	// a compiler error forced this kludge using tmp_serial
 	//  + QString("%1").arg((*use_model)[i].all_beads[j].serial);
@@ -3414,14 +3414,18 @@ void US_Hydrodyn::bead_check()
   }
 
   int b2e = 0;
+#if defined(EXPOSED_TO_BURIED)
   int e2b = 0;
+#endif
 
   write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + "_pre_recheck" + DOTSOMO, &bead_model);
   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + "_pre_recheck" + DOTSOMO, &bead_model);
 
   for (unsigned int i = 0; i < bead_model.size(); i++) 
   {
-    float surface_area = bead_model[i].bead_computed_radius * bead_model[i].bead_computed_radius * 4 * M_PI;
+    float surface_area = 
+      (asa.probe_radius + bead_model[i].bead_computed_radius) * 
+      (asa.probe_radius + bead_model[i].bead_computed_radius) * 4 * M_PI;
     QString msg = "";
     if(bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area) {
       // now exposed
@@ -3432,7 +3436,9 @@ void US_Hydrodyn::bead_check()
 	bead_model[i].exposed_code = 1;
 	bead_model[i].bead_color = 8;
       }
-    } else {
+    }
+#if defined(EXPOSED_TO_BURIED)
+ else {
       // now buried
       if(bead_model[i].exposed_code == 1) {
 	// was exposed
@@ -3442,9 +3448,11 @@ void US_Hydrodyn::bead_check()
 	bead_model[i].bead_color = 6;
       }
     }
+#endif
       
-    printf("bead %d %.2f %.2f %s %s\n",
+    printf("bead %d %.2f %.2f %.2f %s %s\n",
 	   i,
+	   bead_model[i].bead_computed_radius,
 	   surface_area,
 	   bead_model[i].bead_recheck_asa,
 	   (bead_model[i].bead_recheck_asa >
@@ -3458,7 +3466,9 @@ void US_Hydrodyn::bead_check()
   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
 		   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 		   DOTSOMO, &bead_model);
+#if defined(EXPOSED_TO_BURIED)
   editor->append(QString("%1 exposed beads became buried\n").arg(e2b));
+#endif
   editor->append(QString("%1 buried beads became exposed\n").arg(b2e));
 }
 
