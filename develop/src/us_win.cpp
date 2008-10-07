@@ -219,7 +219,7 @@ namespace us_win_data
 		  "Loading UltraScan Scan File Merging Utility",
 		  "UltraScan Scan File Merging Utility" },
 
-		{ P_PSEUDOABS,     NULL, "",
+		{ P_PSEUDOABS,     NULL, "us_pseudoabs",
 		  "Loading UltraScan Intensity to Pseudoabsorbance Conversion Utility",
 		  "UltraScan Intensity to Pseudoabsorbance Conversion Utility" },
 
