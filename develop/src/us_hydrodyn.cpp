@@ -3134,7 +3134,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
       {
 	residues =
 	  (*model)[i].resName +
-	  ((*model)[i].org_chain ? ".SC." : ".PB.") +
+	  ((*model)[i].org_chain ? ".SC." : (regular_N_handling ? ".PB." : ".MC.")) +
 	  ((*model)[i].chainID == " " ? "" : ((*model)[i].chainID + "."));
 	// a compiler error forced this kludge using tmp_serial
 	//	+ QString("%1").arg((*model)[i].serial);
@@ -3145,7 +3145,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
 	  unsigned int tmp_serial = (*model)[i].all_beads[j]->serial;
 	  residues += "," +
 	    (*model)[i].all_beads[j]->resName +
-	    ((*model)[i].all_beads[j]->org_chain ? ".SC." : ".PB.") +
+	    ((*model)[i].all_beads[j]->org_chain ? ".SC." : (regular_N_handling ? ".PB." : ".MC.")) +
 	    ((*model)[i].all_beads[j]->chainID == " " ? "" : ((*model)[i].all_beads[j]->chainID + "."));
 	  // a compiler error forced this kludge using tmp_serial
 	  //  + QString("%1").arg((*model)[i].all_beads[j].serial);
@@ -3387,7 +3387,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
       unsigned int tmp_serial = use_model[i]->resSeq; // was serial
       QString residues =
 	use_model[i]->resName +
-	(use_model[i]->org_chain ? ".SC." : ".PB.") +
+	(use_model[i]->org_chain ? ".SC." : (regular_N_handling ? ".PB." : ".MC.")) +
 	(use_model[i]->chainID == " " ? "" : (use_model[i]->chainID + "."));
       // a compiler error forced this kludge using tmp_serial
       //	+ QString("%1").arg((*use_model)[i].serial);
@@ -3398,7 +3398,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
 	unsigned int tmp_serial = use_model[i]->all_beads[j]->resSeq;
 	residues += "," +
 	  (use_model[i]->all_beads[j]->resName +
-	  (use_model[i]->all_beads[j]->org_chain ? ".SC." : ".PB.") +
+	  (use_model[i]->all_beads[j]->org_chain ? ".SC." : (regular_N_handling ? ".PB." : ".MC.")) +
 	  (use_model[i]->all_beads[j]->chainID == " " ? "" : (use_model[i]->all_beads[j]->chainID + ".")));
 	// a compiler error forced this kludge using tmp_serial
 	//  + QString("%1").arg((*use_model)[i].all_beads[j].serial);
