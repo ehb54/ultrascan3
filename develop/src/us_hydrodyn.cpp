@@ -1115,9 +1115,7 @@ int US_Hydrodyn::compute_asa()
 	  // surfracer
 	  editor->append("Computing ASA via SurfRacer\n");
 	  qApp->processEvents();
-	  int retval = surfracer_main(&error_string,
-				      asa.probe_radius,
-				      residue_list,
+	  int retval = surfracer_main(asa.probe_radius,
 				      active_atoms,
 				      false,
 				      progress,

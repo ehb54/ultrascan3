@@ -1314,9 +1314,7 @@ free_alloced(void)
 }
 
 int
-surfracer_main(QString *error_string, 
-	       float prober, 
-	       vector < residue > residue_list, 
+surfracer_main(float prober, 
 	       vector <PDB_atom *> active_atoms,
 	       bool recheck,
 	       QProgressBar *use_progress,

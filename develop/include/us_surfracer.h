@@ -3,9 +3,7 @@
 
 #include <qstring.h>
 
-int surfracer_main(QString *error_string,
-		   float probe_radius, 
-		   vector <residue> residue_list,
+int surfracer_main(float probe_radius, 
 		   vector <PDB_atom *> active_atoms,
 		   bool recheck,
 		   QProgressBar *progress,
