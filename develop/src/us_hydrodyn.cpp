@@ -1596,6 +1596,38 @@ int US_Hydrodyn::compute_asa()
   qApp->processEvents();
 
 
+#if defined(OLD_ASAB1_SC_COMPUTE)
+  // pass 2d compute mc asa
+  vector <float> bead_mc_asa;
+# if defined(DEBUG1) || defined(DEBUG)
+  printf("pass 2d\n"); fflush(stdout);
+# endif
+  // for (unsigned int i = 0; i < model_vector.size (); i++)	{
+  {
+    unsigned int i = current_model;
+    for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+      for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+	PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+
+	if (this_atom->active &&
+	    this_atom->chain == 0) {
+#if defined(DEBUG)
+	    printf("pass 2d mc_asa %s %s %d pm %d\n",
+		   this_atom->name.ascii(),
+		   this_atom->resName.ascii(),
+		   this_atom->serial,
+		   this_atom->placing_method); fflush(stdout);
+#endif
+	    if(bead_mc_asa.size() < this_atom->resSeq + 1) {
+	      bead_mc_asa.resize(this_atom->resSeq + 32);
+	    }
+	    bead_mc_asa[this_atom->resSeq] += this_atom->asa;
+	}
+      }
+    }
+  }
+#endif
+
 #if defined(DEBUG1) || defined(DEBUG)
   printf("pass 3\n"); fflush(stdout);
 #endif
@@ -1689,22 +1721,11 @@ int US_Hydrodyn::compute_asa()
 	  this_atom->visibility = (this_atom->bead_asa >= asa.threshold);
 #if defined(OLD_ASAB1_SC_COMPUTE)
 	  if (this_atom->chain == 1) {
-	    if (this_atom->resName == mc_resname &&
-	        this_atom->resSeq == mc_resSeq) {
-	      printf("visibility was %d is ", this_atom->visibility);
-	      this_atom->visibility = (this_atom->bead_asa + mc_asab1 >= asa.threshold);
-	      printf("%d\n", this_atom->visibility);
-	    } else {
-	      printf("ERROR: mc no sc asa! %s %s %d %d\n", 
-		     this_atom->resName.ascii(),
-		     mc_resname.ascii(),
-		     this_atom->resSeq,
-		     mc_resSeq
-		     );
-	    }
+	    printf("visibility was %d is ", this_atom->visibility);
+	    this_atom->visibility = (this_atom->bead_asa + bead_mc_asa[this_atom->resSeq] >= asa.threshold);
+	    printf("%d\n", this_atom->visibility);
 	  }
 #endif
-	      
 
 #if defined(DEBUG)
 	  printf("pass 3 active is bead %s %s %d checkpoint 2\n",
