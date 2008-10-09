@@ -36,11 +36,14 @@
 #define DOTSOMO		""
 #define DOTSOMOCAP	""
 
+static bool no_rr;
 
 US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 {
 
 	USglobal = new US_Config();
+
+	no_rr = false;
 
 	// int r_stdout = __open(QString(somo_tmp_dir +
 	//			  SLASH + "last_stdout.txt").ascii(),
@@ -1946,6 +1949,12 @@ int US_Hydrodyn::compute_asa()
       RADIAL_REDUCTION | RR_MCSC | RR_EXPOSED,
       RADIAL_REDUCTION | RR_MCSC | RR_BURIED,
     };
+
+  if (no_rr) {
+    methods[0] = 0;
+    methods[1] = 0;
+    methods[2] = 0;
+  }
 
   if (sidechain_overlap.fuse_beads) {
     methods[0] |= POP_SC | POP_EXPOSED;
