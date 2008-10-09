@@ -2508,6 +2508,7 @@ int US_Hydrodyn::compute_asa()
 		  exit(-1);
 		}
 		if(methods[k] & RR_MCSC &&
+		   !(methods[k] & RR_BURIED) &&
 		   bead_model[max_bead1].chain == 1 &&
 		   bead_model[max_bead2].chain == 1) {
 		  printf("what are we doing here?  dealing with 2 SC's on the MCSC run??\n");
@@ -2517,6 +2518,7 @@ int US_Hydrodyn::compute_asa()
 		    (bead_model[max_bead1].exposed_code == 1 ||
 		     bead_model[max_bead2].exposed_code == 1)) ||
 		   (methods[k] & RR_MCSC &&
+		    !(methods[k] & RR_BURIED) &&
 		    (bead_model[max_bead1].chain == 1 ||
 		     bead_model[max_bead2].chain == 1))) {
 		  // only one bead to shrink, since
