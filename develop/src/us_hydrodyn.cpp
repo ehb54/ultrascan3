@@ -2291,26 +2291,19 @@ int US_Hydrodyn::compute_asa()
 		   max_intersection_length
 		   );
 #endif
-	    if (bead_model[i].active &&
+	    if (
+		bead_model[i].active &&
 		bead_model[j].active &&
-		(((methods[k] & RR_SC) &&
+		(methods[k] & RR_MCSC ||
+		 ((methods[k] & RR_SC) &&
 		  bead_model[i].chain == 1 &&
-		  bead_model[j].chain == 1) ||
-		 ((methods[k] & RR_MC) &&
-		  bead_model[i].chain == 0 &&
-		  bead_model[j].chain == 0) ||
-		 ((methods[k] & RR_MCSC)
-		  // &&
-		  // (bead_model[i].chain != 1 ||
-		  // bead_model[j].chain != 1)))
-		  )) &&
-		(((methods[k] & RR_EXPOSED) &&
-		  bead_model[i].exposed_code == 1 &&
-		  bead_model[j].exposed_code == 1) ||
-		 ((methods[k] & RR_BURIED) &&
-		  (bead_model[i].exposed_code != 1 ||
-		   bead_model[j].exposed_code != 1)) ||
-		 (methods[k] & RR_ALL))) {
+		  bead_model[j].chain == 1)) &&
+		((methods[k] & RR_BURIED) ||
+		 (bead_model[i].exposed_code == 1 ||
+		  bead_model[j].exposed_code == 1)) &&
+		bead_model[i].bead_computed_radius > TOLERANCE &&
+		bead_model[j].bead_computed_radius > TOLERANCE
+		) {
 
 	      float separation =
 		bead_model[i].bead_computed_radius +
@@ -2356,11 +2349,6 @@ int US_Hydrodyn::compute_asa()
 	do {
 #if defined(DEBUG1) || defined(DEBUG)
 	  printf("processing hierarchical radial reduction iteration %d\n", iter++);
-#endif
-#if defined(DEBUG_OVERLAP)
-	  overlap_check(methods[k] & RR_SC ? true : false,
-			methods[k] & RR_MCSC ? true : false,
-			methods[k] & RR_BURIED ? true : false);
 #endif
 	  max_intersection_length = 0;
 	  int max_pair = -1;
@@ -2702,7 +2690,13 @@ int US_Hydrodyn::compute_asa()
 #endif
       } else {
 	// simultaneous reduction
+	// #define DEBUG
 	do {
+#if defined(DEBUG_OVERLAP)
+	  overlap_check(methods[k] & RR_SC ? true : false,
+			methods[k] & RR_MCSC ? true : false,
+			methods[k] & RR_BURIED ? true : false);
+#endif
 	  // write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_br-%1-%2").arg(k).arg(iter) + DOTSOMO + ".tsv", &bead_model);
 	  // write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model-br-%1-%2").arg(k).arg(iter) + DOTSOMO, &bead_model);
 #if defined(DEBUG1) || defined(DEBUG)
@@ -2718,9 +2712,9 @@ int US_Hydrodyn::compute_asa()
 	  reduced[bead_model.size() - 1] = false;
 	  for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
 	    reduced[i] = false;
-	    if (last_reduced[i]) {
+	    if (1 || last_reduced[i]) {
 	      for (unsigned int j = i + 1; j < bead_model.size(); j++) {
-#if defined(DEBUG)
+#if defined(DEBUGX)
 		printf("checking radial stage %d beads %d %d on chains %d %d exposed code %d %d active %s %s max il %f\n",
 		       k, i, j,
 		       bead_model[i].chain,
@@ -2732,28 +2726,19 @@ int US_Hydrodyn::compute_asa()
 		       max_intersection_length
 		       );
 #endif
-		if (last_reduced[j] &&
+		if ((1 || last_reduced[j]) &&
 		    bead_model[i].active &&
 		    bead_model[j].active &&
-		    (((methods[k] & RR_SC) &&
+		    (methods[k] & RR_MCSC ||
+		     ((methods[k] & RR_SC) &&
 		      bead_model[i].chain == 1 &&
-		      bead_model[j].chain == 1) ||
-		     ((methods[k] & RR_MC) &&
-		      bead_model[i].chain == 0 &&
-		      bead_model[j].chain == 0) ||
-		     ((methods[k] & RR_MCSC)
-		      // &&
-		      // (bead_model[i].chain != 1 ||
-		      // bead_model[j].chain != 1)))
-		      )) &&
-		    (((methods[k] & RR_EXPOSED) &&
-		      bead_model[i].exposed_code == 1 &&
-		      bead_model[j].exposed_code == 1) ||
-		     ((methods[k] & RR_BURIED) &&
-		      (bead_model[i].exposed_code != 1 ||
-		       bead_model[j].exposed_code != 1)) ||
-		     (methods[k] & RR_ALL))) {
-
+		      bead_model[j].chain == 1)) &&
+		     ((methods[k] & RR_BURIED) ||
+		      (bead_model[i].exposed_code == 1 ||
+		       bead_model[j].exposed_code == 1)) &&
+		    bead_model[i].bead_computed_radius > TOLERANCE &&
+		    bead_model[j].bead_computed_radius > TOLERANCE
+		    ) {
 		  float separation =
 		    bead_model[i].bead_computed_radius +
 		    bead_model[j].bead_computed_radius -
@@ -2764,6 +2749,11 @@ int US_Hydrodyn::compute_asa()
 			     bead_model[j].bead_coordinate.axis[1], 2) +
 			 pow(bead_model[i].bead_coordinate.axis[2] -
 			     bead_model[j].bead_coordinate.axis[2], 2));
+
+
+		  if (separation <= TOLERANCE) {
+		    continue;
+		  }
 
 #if defined(DEBUG)
 		  printf("beads %d %d with radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] have a sep of %f\n",
@@ -2778,9 +2768,6 @@ int US_Hydrodyn::compute_asa()
 			 bead_model[j].bead_coordinate.axis[2],
 			 separation);
 #endif
-		  if (separation <= TOLERANCE) {
-		    continue;
-		  }
 
 		  if (separation > max_intersection_length) {
 		    max_intersection_length = separation;
@@ -2873,7 +2860,7 @@ int US_Hydrodyn::compute_asa()
 		  bead_model[use_bead].bead_computed_radius -= radius_delta;
 		  if (bead_model[use_bead].bead_computed_radius <= TOLERANCE) {
 		    // this is to ignore this bead for further radial reduction regardless
-		    bead_model[use_bead].bead_computed_radius = (float)TOLERANCE;
+		    bead_model[use_bead].bead_computed_radius = (float)TOLERANCE * 0.9999;
 		    reduced[use_bead] = false;
 		  }
 		}
@@ -2947,7 +2934,7 @@ int US_Hydrodyn::compute_asa()
 		  bead_model[use_bead].bead_computed_radius -= radius_delta;
 		  if (bead_model[use_bead].bead_computed_radius <= TOLERANCE) {
 		    // this is to ignore this bead for further radial reduction regardless
-		    bead_model[use_bead].bead_computed_radius = (float)TOLERANCE;
+		    bead_model[use_bead].bead_computed_radius = (float)TOLERANCE * 0.9999;
 		    reduced[use_bead] = false;
 		  }
 		}
