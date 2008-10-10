@@ -3158,7 +3158,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
       fprintf(frmc,
 	      "%.6f\t%u\t%d\n",
 	      (*model)[i].bead_computed_radius,
-	      (int)(*model)[i].bead_mw,
+	      (int)(*model)[i].bead_ref_mw,
 	      get_color(&(*model)[i]));
       unsigned int tmp_serial = (*model)[i].serial;
       QString residues;
@@ -3189,7 +3189,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
       fprintf(frmc1,
 	      "%.6f\t%u\t%d\t%d\t%s\n",
 	      (*model)[i].bead_computed_radius,
-	      (int)(*model)[i].bead_mw,
+	      (int)(*model)[i].bead_ref_mw,
 	      get_color(&(*model)[i]),
 	      (*model)[i].serial,
 	      residues.ascii()
@@ -3303,7 +3303,7 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
     if ((*model)[i].active) {
       total_asa += (*model)[i].bead_asa;
       total_ref_asa += (*model)[i].ref_asa;
-      total_mass += (*model)[i].bead_mw;
+      total_mass += (*model)[i].bead_ref_mw;
       total_vol += (*model)[i].bead_ref_volume_unhydrated;
 
       QString residue =
@@ -4140,6 +4140,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		  }
 		  if (!ts.atEnd()) {
 		    ts >>  tmp_atom.bead_mw;
+		    tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
 		  } else {
 		    editor->append(QString("\nError in line %1!\n").arg(linepos));
 		    return linepos;
@@ -4241,6 +4242,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		    }
 		    if (!tsrmc.atEnd()) {
 		      tsrmc >>  tmp_atom.bead_mw;
+		      tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
 		    } else {
 		      editor->append(QString("\nError in line %1!\n").arg(linepos));
 		      return linepos;
