@@ -2804,7 +2804,12 @@ int US_Hydrodyn::compute_asa()
 	    printf("processing radial reduction sync iteration %d pairs to process %d\n", iter, count);
 #endif
 	    for (unsigned int i = 0; i < pairs.size(); i++) {
-	      if (!reduced[pairs[i].i]) {
+	      if (
+		  !reduced[pairs[i].i] &&
+		  (bead_model[pairs[i].i].exposed_code != 1 ||
+		   methods[k] & RR_EXPOSED ||
+		   methods[k] & RR_ALL)
+		  ) {
 		int use_bead = pairs[i].i;
 		/*		if ( !(methods[k] & RR_MCSC) ||
 		     bead_model[use_bead].exposed_code != 1 ||
@@ -2873,7 +2878,12 @@ int US_Hydrodyn::compute_asa()
 		  }
 		}
 	      }
-	      if (!reduced[pairs[i].j]) {
+	      if (
+		  !reduced[pairs[i].j] &&
+		  (bead_model[pairs[i].j].exposed_code != 1 ||
+		   methods[k] & RR_EXPOSED || 
+		   methods[k] & RR_ALL)
+		  ) {
 		int use_bead = pairs[i].j;
 		/* if ( !(methods[k] & RR_MCSC) ||
 		     bead_model[use_bead].chain == 0 ||
