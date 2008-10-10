@@ -3442,7 +3442,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
 	      use_model[i]->bead_coordinate.axis[1],
 	      use_model[i]->bead_coordinate.axis[2],
 	      use_model[i]->bead_computed_radius,
-	      (int)use_model[i]->bead_mw,
+	      (int)use_model[i]->bead_ref_mw,
 	      get_color(use_model[i]),
 	      use_model[i]->serial,
 	      residues.ascii()
