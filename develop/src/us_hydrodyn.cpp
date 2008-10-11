@@ -1050,7 +1050,7 @@ int US_Hydrodyn::compute_asa()
 
         QString error_string = "";
 	progress->reset();
-	editor->setText(QString("\n\nBuilding the bead model for %1 model %2\n").arg(project).arg(current_model+1));
+	editor->append(QString("\nBuilding the bead model for %1 model %2\n").arg(project).arg(current_model+1));
 	editor->append("Checking the pdb structure\n");
 	if (check_for_missing_atoms(&error_string, &model_vector[current_model])) {
 	  editor->append("Encountered the following errors with your PDB structure:\n" +
@@ -3549,7 +3549,16 @@ void US_Hydrodyn::bead_check()
 void US_Hydrodyn::select_model(int val)
 {
 	current_model = val;
-	editor->setText(QString("\n\n%1 model %2 selected.\n").arg(project).arg(current_model+1));
+	QString msg = QString("\n\n%1 models selected:").arg(project);
+	for(int i = 0; i < lb_model->numRows(); i++) {
+	  if (lb_model->isSelected(i)) {
+	    current_model = i;
+	    msg += QString(" %1").arg(i+1);
+	  }
+	}
+	msg += "\n";
+	editor->setText(msg);
+	
 	// check integrity of PDB file and confirm that all residues are correctly defined in residue table
 	if (results_widget)
 	{
@@ -3566,33 +3575,41 @@ void US_Hydrodyn::select_model(int val)
 
 void US_Hydrodyn::visualize()
 {
-	QStringList argument;
+	for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
+	  if (lb_model->isSelected(current_model)) {
+	    if (somo_processed[current_model]) {
+	      editor->append(QString("Visualizing model %1\n").arg(current_model + 1));
+	      QStringList argument;
 #if !defined(WIN32)
 	// maybe we should make this a user defined terminal window?
-	argument.append("xterm");
-	argument.append("-e");
+	      argument.append("xterm");
+	      argument.append("-e");
 #endif
 #if defined(BIN64)
-	argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
+	      argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
 #else
-	argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
+	      argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
 #endif
-	argument.append("-script");
-	argument.append(
-			project +
-			(bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-			DOTSOMO + ".spt");
-
-	rasmol->setWorkingDirectory(somo_dir);
-
-	rasmol->setArguments(argument);
-	if (!rasmol->start())
-	{
-		QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
-							    "Please check to make sure RASMOL is properly installed..."));
-		return;
+	      argument.append("-script");
+	      argument.append(
+			      project +
+			      (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+			      DOTSOMO + ".spt");
+	    
+	      rasmol->setWorkingDirectory(somo_dir);
+	      
+	      rasmol->setArguments(argument);
+	      if (!rasmol->start())
+		{
+		  QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+							      "Please check to make sure RASMOL is properly installed..."));
+		  return;
+		}
+	    } else {
+	      editor->append(QString("Model %1 - selected but bead model not built\n").arg(current_model + 1));
+	    }
+	  }
 	}
-
 }
 
 int US_Hydrodyn::calc_somo()
@@ -3613,29 +3630,56 @@ int US_Hydrodyn::calc_somo()
 		delete results_window;
 		results_widget = false;
 	}
+	bool any_errors = false;
+	bool any_models = false;
+	somo_processed.resize(lb_model->numRows());
+	bead_models.resize(lb_model->numRows());
+	QString msg = QString("\n\n%1 models selected:").arg(project);
+	for(int i = 0; i < lb_model->numRows(); i++) {
+	  somo_processed[i] = 0;
+	  if (lb_model->isSelected(i)) {
+	    current_model = i;
+	    msg += QString(" %1").arg(i+1);
+	  }
+	}
+	msg += "\n";
+	editor->setText(msg);
 
-	if(!compute_asa()) {
-	  if (asa.recheck_beads)
-	    {
-	      // puts("recheck beads disabled");
-	      editor->append("Rechecking beads\n");
-	      qApp->processEvents();
-
-	      bead_check();
-	      editor->append("Finished rechecking beads\n");
-	      progress->setProgress(19);
+	for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
+	  if (!any_errors && lb_model->isSelected(current_model)) {
+	    any_models = true;
+	    if(!compute_asa()) {
+	      somo_processed[current_model] = 1;
+	      if (asa.recheck_beads)
+		{
+		  // puts("recheck beads disabled");
+		  editor->append("Rechecking beads\n");
+		  qApp->processEvents();
+		  
+		  bead_check();
+		  editor->append("Finished rechecking beads\n");
+		  progress->setProgress(19);
+		} else {
+		  editor->append("No rechecking of beads\n");
+		  qApp->processEvents();
+		}
+	      bead_models[current_model] = bead_model;
 	    } else {
-	      editor->append("No rechecking of beads\n");
-	      qApp->processEvents();
+	      any_errors = true;
 	    }
+	  }
 
 	  // calculate bead model and generate hydrodynamics calculation output
 	  // if successful, enable follow-on buttons:
+	}
+	if (any_models && !any_errors) {
 	  editor->append("Build bead model completed\n\n");
 	  qApp->processEvents();
 	  pb_visualize->setEnabled(true);
 	  pb_calc_hydro->setEnabled(true);
-	}
+	} else {
+	  editor->append("Errors encountered\n\n");
+	}	    
 
 	pb_somo->setEnabled(true);
 	return 0;
@@ -3646,64 +3690,79 @@ void US_Hydrodyn::calc_hydro()
   pb_calc_hydro->setEnabled(false);
   puts("calc hydro (supc)");
   editor->append("Begin hydrodynamic calculations\n");
-  write_bead_spt(somo_dir + SLASH + project +
-		 (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
-		 DOTSOMO, &bead_model, bead_model_from_file);
 
-  chdir(somo_dir);
-  int retval = us_hydrodyn_supc_main(&results,
-				     &hydro,
-				     &bead_model,
-				     QString(project +
-					     (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-					     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
-					     DOTSOMO + ".beams").ascii(),
-				     progress,
-				     editor);
-  chdir(somo_tmp_dir);
+  for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
+    if (lb_model->isSelected(current_model)) {
+      if (somo_processed[current_model]) {
+	editor->append(QString("\nComputing hydrodynamics for model %1\n").arg(current_model + 1));
+	bead_model = bead_models[current_model];
 
-  printf("back from supc retval %d\n", retval);
-  pb_show_hydro_results->setEnabled(retval ? false : true);
-  pb_calc_hydro->setEnabled(true);
-  if ( retval )
-  {
-    editor->append("Calculate hydrodynamics failed\n\n");
-    qApp->processEvents();
-      switch ( retval )
-      {
-      case US_HYDRODYN_SUPC_FILE_NOT_FOUND:
-	{
-	  printError("US_HYDRODYN_SUPC encountered a file not found error");
-	  return;
-	  break;
-	}
-      case US_HYDRODYN_SUPC_OVERLAPS_EXIST:
-	{
-	  printError("US_HYDRODYN_SUPC encountered an overlaps in the bead model error");
-	  return;
-	  break;
-	}
-      case US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC:
-	{
-	  printError("US_HYDRODYN_SUPC encountered a memory allocation error");
-	  return;
-	  break;
-	}
-      case US_HYDRODYN_PAT_ERR_MEMORY_ALLOC:
-	{
-	  printError("US_HYDRODYN_PAT encountered a memory allocation error");
-	  return;
-	  break;
-	}
-      default:
-	{
-	  printError("US_HYDRODYN_SUPC encountered an unknown error");
-	  // unknown error
-	  return;
-	  break;
-	}
+
+	write_bead_spt(somo_dir + SLASH + project +
+		       (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+		       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+		       DOTSOMO, &bead_model, bead_model_from_file);
+
+	chdir(somo_dir);
+	int retval = us_hydrodyn_supc_main(&results,
+					   &hydro,
+					   &bead_model,
+					   QString(project +
+						   (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+						   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+						   DOTSOMO + ".beams").ascii(),
+					   progress,
+					   editor);
+	chdir(somo_tmp_dir);
+
+	printf("back from supc retval %d\n", retval);
+	pb_show_hydro_results->setEnabled(retval ? false : true);
+	pb_calc_hydro->setEnabled(true);
+	if ( retval )
+	  {
+	    editor->append("Calculate hydrodynamics failed\n\n");
+	    qApp->processEvents();
+	    switch ( retval )
+	      {
+	      case US_HYDRODYN_SUPC_FILE_NOT_FOUND:
+		{
+		  printError("US_HYDRODYN_SUPC encountered a file not found error");
+		  return;
+		  break;
+		}
+	      case US_HYDRODYN_SUPC_OVERLAPS_EXIST:
+		{
+		  printError("US_HYDRODYN_SUPC encountered an overlaps in the bead model error");
+		  return;
+		  break;
+		}
+	      case US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC:
+		{
+		  printError("US_HYDRODYN_SUPC encountered a memory allocation error");
+		  return;
+		  break;
+		}
+	      case US_HYDRODYN_PAT_ERR_MEMORY_ALLOC:
+		{
+		  printError("US_HYDRODYN_PAT encountered a memory allocation error");
+		  return;
+		  break;
+		}
+	      default:
+		{
+		  printError("US_HYDRODYN_SUPC encountered an unknown error");
+		  // unknown error
+		  return;
+		  break;
+		}
+	      }
+	  } else {
+	    somo_processed[current_model] = 1;
+	  }
+      } else {
+	editor->append(QString("Model %1 - selected but bead model not built\n").arg(current_model + 1));
       }
+    }
   }
   editor->append("Calculate hydrodynamics completed\n\n");
   qApp->processEvents();
@@ -4176,6 +4235,15 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		write_bead_spt(somo_dir + SLASH + project +
 			       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 			       DOTSOMO, &bead_model, true);
+		lb_model->clear();
+		lb_model->insertItem("Model 1 from bead_model file");
+		lb_model->setSelected(0, true);
+		lb_model->setEnabled(false);
+		somo_processed.resize(lb_model->numRows());
+		bead_models.resize(lb_model->numRows());
+		current_model = 0;
+		bead_models[0] = bead_model;
+		somo_processed[0] = 1;
 		return 0;
 	  }
 	}
@@ -4269,6 +4337,17 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		write_bead_spt(somo_dir + SLASH + project +
 			       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 			       DOTSOMO, &bead_model, true);
+
+		lb_model->clear();
+		lb_model->insertItem("Model 1 from beams file");
+		lb_model->setSelected(0, true);
+		lb_model->setEnabled(false);
+		somo_processed.resize(lb_model->numRows());
+		bead_models.resize(lb_model->numRows());
+		current_model = 0;
+		bead_models[0] = bead_model;
+		somo_processed[0] = 1;
+
 		return 0;
 	  }
 	}

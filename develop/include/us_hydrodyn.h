@@ -147,10 +147,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
 #endif
 
 		vector <PDB_atom>        bead_model;
+		vector < vector <PDB_atom> >  bead_models;
 		vector <PDB_atom *>      active_atoms;
 		vector <struct residue>   residue_list;
 		vector <struct PDB_model> model_vector;
 		bool bead_model_from_file;
+		vector <int> somo_processed;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
