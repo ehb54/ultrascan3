@@ -28,11 +28,17 @@ struct hydro_results
 	unsigned int used_beads;
 	double mass;
 	double s20w;
+	double s20w_sd;
 	double D20w;
+	double D20w_sd;
 	double viscosity;
+	double viscosity_sd;
 	double rs;
+	double rs_sd;
 	double rg;
+	double rg_sd;
 	double tau;
+	double tau_sd;
 	double vbar;
 };
 

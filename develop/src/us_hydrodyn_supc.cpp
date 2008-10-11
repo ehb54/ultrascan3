@@ -178,9 +178,7 @@ static float CdR1;
 static float CfR1;
 static float CfR[3];
 static float CdR[3];
-#if defined(USE_MAIN)
- static float RT[5];
-#endif
+static float RT[5];
 static float CT[5];
 static float CTH;
 static float CTM;
@@ -206,9 +204,7 @@ static float CdR12;
 static float CfR12;
 static float CfR2[3];
 static float CdR2[3];
-#if defined(USE_MAIN)
- static float RT2[5];
-#endif
+static float RT2[5];
 static float CT2[5];
 static float CTH2;
 static float CTM2;
@@ -499,8 +495,11 @@ Gets_date(char *day, char *month, int *year, int *numday, char *hour)
 int
 us_hydrodyn_supc_main(hydro_results *hydro_results, 
 		      hydro_options *hydro, 
-		      vector <PDB_atom> *bead_model, 
+		      vector < vector <PDB_atom> > *bead_models, 
+		      vector <int> *somo_processed,
+		      QListBox *lb_model,
 		      const char *filename,
+		      const char *res_filename,
 		      QProgressBar *use_progress,
 		      QTextEdit *use_editor)
 {
@@ -513,6 +512,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
   q = 0;	
   a = 0;	
 
+  //  vector <PDB_atom> *bead_model;
     progress = use_progress;
     editor = use_editor;
 #if defined(DEBUG_WW)
@@ -524,7 +524,26 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     }
 #endif
 
-    nmax = (int) bead_model->size();
+    nmax = 0;
+    int models_to_proc = 0;
+    vector <int> model_idx;  // maps seq model # to bead_models offset
+    QString use_filename = filename;
+    for (int current_model = 0; current_model < (int)lb_model->numRows(); current_model++) {
+      if (lb_model->isSelected(current_model)) {
+	if ((*somo_processed)[current_model]) {
+	  model_idx.push_back(current_model);
+	  models_to_proc++;
+	  if (nmax < (int) (*bead_models)[current_model].size()) {
+	    nmax = (int) (*bead_models)[current_model].size();
+	  }
+	}
+      }
+    }
+
+    if(!models_to_proc) {
+      editor->append("\nNo selected models ready to compute hydrodynamics.\n");
+      return US_HYDRODYN_SUPC_NO_SEL_MODELS;
+    }
     
     supc_results = hydro_results;
     supc_results->total_beads = nmax;
@@ -541,8 +560,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     int k; 
     int flag_mem;
     int bc;
-#if defined(USE_MAIN)
     char r1;
+#if defined(USE_MAIN)
     char command[200];
 #endif
     float temp, x, y, z;
@@ -580,6 +599,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     scelta = 1;
     volcor = 3;
     mascor = 3;
+
+    num = models_to_proc;
+    
 
 #if defined(USE_MAIN)
     while ((num < 1) || (num > 100))
@@ -782,19 +804,44 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
     intestazione();
 #else
+    cdmolix = 2; // non sequential files
+    r1 = 'y';
+    flag_mem = 1;
+
+    /* Initialization for average values */
+
+    Rg = Rgu = RSt = CfT = CST = CSTF = CdT = CfR1 = CdR1 = RE = REC = REDS = RETM = RETV = VIM = VIMC = VIMDS = VIMTM =
+      VIMTV = CTH = CTM = 0.0;
+    Rg2 = Rgu2 = RSt2 = CfT2 = CST2 = CSTF2 = CdT2 = CfR12 = CdR12 = RE2 = REC2 = REDS2 = RETM2 = RETV2 = VIM2 = VIMC2 =
+      VIMDS2 = VIMTM2 = VIMTV2 = CTH2 = CTM2 = 0.0;
+    
+    for (k = 0; k < 3; k++)
+    {
+      RSr[k] = RSr2[k] = 0.0;
+      CfR[k] = CfR2[k] = 0.0;
+      CdR[k] = CdR2[k] = 0.0;
+    }
+    for (k = 0; k < 5; k++)
+    {
+      RT[k] = RT2[k] = 0.0;
+      CT[k] = CT2[k] = 0.0;
+    }
+
     intestazione();
-    num = 1;
-    strncpy(risultati, filename, SMAX);
+    num = models_to_proc;
+    strncpy(risultati, res_filename, SMAX);
+    printf("risultati (as res_filename): %s\n", risultati);
     risultati[SMAX-1] = 0;
     if(strlen(risultati) > 6) {
-      risultati[strlen(risultati) - 5] = 0;
+      risultati[strlen(risultati) - 5] = 0; // remove .beams
     }
     strncat(risultati, "hydro_res", SMAX - strlen(risultati));
     risultati[SMAX-1] = 0;
     printf("risultati: %s\n", risultati);
     unlink(risultati);
     flag_mem = 1;
-    strncpy(molecola, filename, SMAX);
+    
+    strncpy(molecola, QString(use_filename).arg(model_idx[0] + 1).ascii(), SMAX); // first model
     molecola[SMAX-1] = 0;
     if(!(mol = fopen(molecola, "r"))) {
       supc_free_alloced();
@@ -823,8 +870,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	(hydro->rotational ? 1 : 0) + 
 	(hydro->viscosity ? 2 : 0);
     }
-    cdmolix = 0;
-    init_da_a();
+    //    init_da_a();
 #endif
 
     printf("- Computational Method : SUPERMATRIX INVERSION\n\n");
@@ -845,6 +891,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
     for (k = 0; k < num; k++)
     {
+      //      current_model = model_idx[k];
+
 	/* Check for file existence and selects whole or part of the models for sequential files only   */
 	if (cdmolix == 1)
 	{
@@ -904,6 +952,10 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
 	    init_da_a();
 #endif
+	    printf("opening file: %s\n",  QString(use_filename).arg(model_idx[k] + 1).ascii());
+	    strncpy(molecola, QString(use_filename).arg(model_idx[k] + 1).ascii(), SMAX); // first model
+
+	    init_da_a();	    
 	}
     }
 
@@ -913,6 +965,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     {
 
         supc_free_alloced_2();
+	
 	initarray();
 	editor->append(QString("Using %1 beads for the matrix\n").arg(nat));
 	qApp->processEvents();
@@ -2134,11 +2187,15 @@ val_med()
 
     temp = fabs((CdT2 - pow(CdT, 2) / num) / (num - 1));
     fprintf(ris, "%s\t%.2e\t%.3e\t%s\n", "- TRANS. DIFF. COEFF.         ", CdT / num, sqrt(temp), "[cm^2/s]");
+    supc_results->D20w = CdT / num;
+    supc_results->D20w_sd = sqrt(temp);
 
     if (raflag == -1.0)
     {
 	temp = fabs((CST2 - pow(CST, 2) / num) / (num - 1));
 	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv unhyd.rad.)", CST / num, sqrt(temp), "[S]");
+	supc_results->s20w = CST / num;
+	supc_results->s20w_sd = sqrt(temp);
     }
 
     if ((raflag == -2.0) || (raflag == -5.0))
@@ -2148,12 +2205,16 @@ val_med()
 	if ((nat + colorzero + colorsix) < numero_sfere)
 	    fprintf(ris,
 		    "- !!WARNING: ONLY PART(S) OF THE MODELS HAVE BEEN ANALYZED, BUT THE PSV UTILIZED    IS THAT OF THE ENTIRE MODEL!! - \n");
+	supc_results->s20w = CSTF / num;
+	supc_results->s20w_sd = sqrt(temp);
     }
 
     if (raflag == -3.0)
     {
 	temp = fabs((CSTF2 - pow(CSTF, 2) / num) / (num - 1));
 	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv from file) ", CSTF / num, sqrt(temp), "[S]");
+	supc_results->s20w = CSTF / num;
+	supc_results->s20w_sd = sqrt(temp);
 	if ((nat + colorzero + colorsix) < numero_sfere)
 	    fprintf(ris,
 		    "- !!WARNING: ONLY PART(S) OF THE MODELS HAVE BEEN ANALYZED, BUT THE PSV UTILIZED    IS THAT OF THE ENTIRE MODEL!! - \n");
@@ -2185,6 +2246,8 @@ val_med()
     {
 	temp = fabs((Rg2 - pow(Rg, 2) / num) / (num - 1));
 	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- RADIUS OF GYRATION (Hydr.)  ", Rg / num, sqrt(temp), "[nm]");
+	supc_results->rg = Rg / num;
+	supc_results->rg_sd = sqrt(temp);
 	temp = fabs((Rgu2 - pow(Rgu, 2) / num) / (num - 1));
 	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- RADIUS OF GYRATION (Unhydr.)", Rgu / num, sqrt(temp), "[nm]");
     }
@@ -2192,10 +2255,14 @@ val_med()
     {
 	temp = fabs((Rg2 - pow(Rg, 2) / num) / (num - 1));
 	fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- RADIUS OF GYRATION          ", Rg / num, sqrt(temp), "[nm]");
+	supc_results->rg = Rg / num;
+	supc_results->rg_sd = sqrt(temp);
     }
 
     temp = fabs((RSt2 - pow(RSt, 2) / num) / (num - 1));
     fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- TRANS. STOKES' RADIUS       ", RSt / num, sqrt(temp), "[nm]");
+    supc_results->rs = RSt / num;
+    supc_results->rs_sd = sqrt(temp);
 
     temp = fabs((RSr2[0] - pow(RSr[0], 2) / num) / (num - 1));
     fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- ROTAT. STOKES' RADIUS [ X ] ", RSr[0] / num, sqrt(temp), "[nm]");
@@ -2214,6 +2281,8 @@ val_med()
 
     temp = fabs((VIMC2 - pow(VIMC, 2) / num) / (num - 1));
     fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- INTRINSIC VISC. (GDLT corr.)", VIMC / num, sqrt(temp), "[cm^3/g]");
+    supc_results->viscosity = VIMC / num;
+    supc_results->viscosity_sd = sqrt(temp);
 
     temp = fabs((REC2 - pow(REC, 2) / num) / (num - 1));
     fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- EINSTEIN'S RADIUS (GDLT co.)", REC / num, sqrt(temp), "[nm]");
@@ -2360,6 +2429,8 @@ val_med()
     fprintf(ris, "\n%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Unweighted average)  ", CTM / num, sqrt(temp), "[ns]");
     temp = fabs((CTH2 - pow(CTH, 2) / num) / (num - 1));
     fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Unweighted average)  ", CTH / num, sqrt(temp), "[ns]");
+    supc_results->tau = CTH / num;
+    supc_results->tau_sd = sqrt(temp);
 
     fprintf(ris, "\n****************************************************************\n");
     fclose(ris);
@@ -3228,6 +3299,7 @@ init_da_a()
     ultima = nat;
 #endif
 
+    printf("adding file: %s to tot_mol\n",  molecola);
     tot_mol = fopen("tot_mol", "ab");
     fprintf(tot_mol, "%s\n", molecola);
     fprintf(tot_mol, "%d\t%d\t%d\t%f\n", nat, prima, ultima, raggio);

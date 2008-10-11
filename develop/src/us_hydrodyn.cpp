@@ -3695,79 +3695,96 @@ void US_Hydrodyn::calc_hydro()
   puts("calc hydro (supc)");
   editor->append("Begin hydrodynamic calculations\n");
 
+  int models_to_proc = 0;
+  int first_model_no = 0;
   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
     if (lb_model->isSelected(current_model)) {
       if (somo_processed[current_model]) {
-	editor->append(QString("\nComputing hydrodynamics for model %1\n").arg(current_model + 1));
+	if (!first_model_no) {
+	  first_model_no = current_model + 1;
+	}
+	models_to_proc++;
+	editor->append(QString("\nModel %1 will be included\n").arg(current_model + 1));
 	bead_model = bead_models[current_model];
-
 
 	write_bead_spt(somo_dir + SLASH + project +
 		       (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
 		       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 		       DOTSOMO, &bead_model, bead_model_from_file);
-
-	chdir(somo_dir);
-	int retval = us_hydrodyn_supc_main(&results,
-					   &hydro,
-					   &bead_model,
-					   QString(project +
-						   (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-						   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
-						   DOTSOMO + ".beams").ascii(),
-					   progress,
-					   editor);
-	chdir(somo_tmp_dir);
-
-	printf("back from supc retval %d\n", retval);
-	pb_show_hydro_results->setEnabled(retval ? false : true);
-	pb_calc_hydro->setEnabled(true);
-	if ( retval )
-	  {
-	    editor->append("Calculate hydrodynamics failed\n\n");
-	    qApp->processEvents();
-	    switch ( retval )
-	      {
-	      case US_HYDRODYN_SUPC_FILE_NOT_FOUND:
-		{
-		  printError("US_HYDRODYN_SUPC encountered a file not found error");
-		  return;
-		  break;
-		}
-	      case US_HYDRODYN_SUPC_OVERLAPS_EXIST:
-		{
-		  printError("US_HYDRODYN_SUPC encountered an overlaps in the bead model error");
-		  return;
-		  break;
-		}
-	      case US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC:
-		{
-		  printError("US_HYDRODYN_SUPC encountered a memory allocation error");
-		  return;
-		  break;
-		}
-	      case US_HYDRODYN_PAT_ERR_MEMORY_ALLOC:
-		{
-		  printError("US_HYDRODYN_PAT encountered a memory allocation error");
-		  return;
-		  break;
-		}
-	      default:
-		{
-		  printError("US_HYDRODYN_SUPC encountered an unknown error");
-		  // unknown error
-		  return;
-		  break;
-		}
-	      }
-	  } else {
-	    somo_processed[current_model] = 1;
-	  }
       } else {
 	editor->append(QString("Model %1 - selected but bead model not built\n").arg(current_model + 1));
       }
     }
   }
+
+  chdir(somo_dir);
+  int retval = us_hydrodyn_supc_main(&results,
+				     &hydro,
+				     &bead_models,
+				     &somo_processed,
+				     lb_model,
+				     QString(project +
+					     // (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+					     (bead_model_from_file ? "" : (models_to_proc == 1 ? "_1" : "_%1")) +
+					     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+					     DOTSOMO + ".beams").ascii(),
+				     QString(project +
+					     (bead_model_from_file ? "" : QString("_%1").arg(first_model_no)) +
+					     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+					     DOTSOMO + ".beams").ascii(),
+				     progress,
+				     editor);
+  chdir(somo_tmp_dir);
+
+  printf("back from supc retval %d\n", retval);
+  pb_show_hydro_results->setEnabled(retval ? false : true);
+  pb_calc_hydro->setEnabled(true);
+  if ( retval )
+    {
+      editor->append("Calculate hydrodynamics failed\n\n");
+      qApp->processEvents();
+      switch ( retval )
+	{
+	case US_HYDRODYN_SUPC_FILE_NOT_FOUND:
+	  {
+	    printError("US_HYDRODYN_SUPC encountered a file not found error");
+	    return;
+	    break;
+	  }
+	case US_HYDRODYN_SUPC_OVERLAPS_EXIST:
+	  {
+	    printError("US_HYDRODYN_SUPC encountered an overlaps in the bead model error");
+	    return;
+	    break;
+	  }
+	case US_HYDRODYN_SUPC_ERR_MEMORY_ALLOC:
+	  {
+	    printError("US_HYDRODYN_SUPC encountered a memory allocation error");
+	    return;
+	    break;
+	  }
+	case US_HYDRODYN_SUPC_NO_SEL_MODELS:
+	  {
+	    printError("US_HYDRODYN_SUPC was called with no processed models selected");
+	    return;
+	    break;
+	  }
+	case US_HYDRODYN_PAT_ERR_MEMORY_ALLOC:
+	  {
+	    printError("US_HYDRODYN_PAT encountered a memory allocation error");
+	    return;
+	    break;
+	  }
+	default:
+	  {
+	    printError("US_HYDRODYN_SUPC encountered an unknown error");
+	    // unknown error
+	    return;
+	    break;
+	  }
+	}
+    }
+
   editor->append("Calculate hydrodynamics completed\n\n");
   qApp->processEvents();
 }
