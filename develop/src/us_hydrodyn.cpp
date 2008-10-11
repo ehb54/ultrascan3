@@ -2795,7 +2795,9 @@ int US_Hydrodyn::compute_asa()
 		  !reduced[pairs[i].i] &&
 		  (bead_model[pairs[i].i].exposed_code != 1 ||
 		   methods[k] & RR_EXPOSED ||
-		   methods[k] & RR_ALL)
+		   methods[k] & RR_ALL) &&
+		  (!(methods[k] & RR_MCSC) ||
+		   bead_model[pairs[i].i].chain == 0)
 		  ) {
 		int use_bead = pairs[i].i;
 		/*		if ( !(methods[k] & RR_MCSC) ||
@@ -2869,7 +2871,9 @@ int US_Hydrodyn::compute_asa()
 		  !reduced[pairs[i].j] &&
 		  (bead_model[pairs[i].j].exposed_code != 1 ||
 		   methods[k] & RR_EXPOSED || 
-		   methods[k] & RR_ALL)
+		   methods[k] & RR_ALL) &&
+		  (!(methods[k] & RR_MCSC) ||
+		   bead_model[pairs[i].j].chain == 0)
 		  ) {
 		int use_bead = pairs[i].j;
 		/* if ( !(methods[k] & RR_MCSC) ||
