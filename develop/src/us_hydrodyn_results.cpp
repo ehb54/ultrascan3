@@ -1,4 +1,6 @@
 #include "../include/us_hydrodyn_results.h"
+#define DOTSOMO		""
+#define DOTSOMOCAP	""
 
 US_Hydrodyn_Results::US_Hydrodyn_Results(struct hydro_results *results,
 bool *result_widget, QWidget *p, const char *name) : QFrame(p, name)
@@ -13,6 +15,7 @@ bool *result_widget, QWidget *p, const char *name) : QFrame(p, name)
 	global_Xpos += 30;
 	global_Ypos += 30;
 	setGeometry(global_Xpos, global_Ypos, 0, 0);
+	somo_dir = USglobal->config_list.root_dir + "/somo";
 }
 
 US_Hydrodyn_Results::~US_Hydrodyn_Results()
@@ -258,7 +261,7 @@ void US_Hydrodyn_Results::help()
 
 void US_Hydrodyn_Results::load_results()
 {
-	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo.hydro_res *.SOMO.hydro_res", this);
+	QString filename = QFileDialog::getOpenFileName(somo_dir, "*.hydro_res *.hydro_res", this);
 	if (!filename.isEmpty())
 	{
 		view_file(filename);
@@ -267,7 +270,7 @@ void US_Hydrodyn_Results::load_results()
 
 void US_Hydrodyn_Results::load_beadmodel()
 {
-	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo.bead_model* *.SOMO.BEAD_MODEL*", this);
+	QString filename = QFileDialog::getOpenFileName(somo_dir, "*.bead_model* *.BEAD_MODEL*", this);
 	if (!filename.isEmpty())
 	{
 		view_file(filename);
@@ -276,7 +279,7 @@ void US_Hydrodyn_Results::load_beadmodel()
 
 void US_Hydrodyn_Results::load_asa()
 {
-	QString filename = QFileDialog::getOpenFileName(USglobal->config_list.result_dir, "*.somo.asa_res *.SOMO.ASA_RES", this);
+	QString filename = QFileDialog::getOpenFileName(somo_dir, "*.asa *.ASA", this);
 	if (!filename.isEmpty())
 	{
 		view_file(filename);

@@ -86,6 +86,8 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
 		QPushButton *pb_load_asa;
 		QPushButton *pb_load_beadmodel;
 
+		QString somo_dir;
+
 	public slots:
 
 		void cancel();
