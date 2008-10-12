@@ -36,7 +36,6 @@ void US_Hydrodyn_OR::setupGUI()
 	cb_fuse = new QCheckBox(this);
 	cb_fuse->setText(tr(" Fuse Beads that overlap by more than: "));
 	cb_fuse->setChecked((*o_r).fuse_beads);
-	cb_fuse->setEnabled((*o_r).remove_overlap);
 	cb_fuse->setMinimumHeight(minHeight1);
 	cb_fuse->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_fuse->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -47,7 +46,6 @@ void US_Hydrodyn_OR::setupGUI()
 	cnt_fuse->setRange(0, 100, 0.1);
 	cnt_fuse->setValue((*o_r).fuse_beads_percent);
 	cnt_fuse->setMinimumHeight(minHeight1);
-	cnt_fuse->setEnabled((*o_r).remove_overlap);
 	cnt_fuse->setNumButtons(3);
 	cnt_fuse->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cnt_fuse->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -117,10 +115,10 @@ void US_Hydrodyn_OR::setupGUI()
 
 	background->addMultiCellWidget(lbl_title, j, j, 0, 1);
 	j++;
-	background->addWidget(cb_remove, j, 0);
-	j++;
 	background->addWidget(cb_fuse, j, 0);
 	background->addWidget(cnt_fuse, j, 1);
+	j++;
+	background->addWidget(cb_remove, j, 0);
 	j++;
 	background->addMultiCellWidget(lbl_steps, j, j+1, 1, 1);
 	j+=2;
@@ -145,8 +143,6 @@ void US_Hydrodyn_OR::set_remove()
 	cb_sync->setEnabled((*o_r).remove_overlap);
 	cnt_hierarch->setEnabled((*o_r).remove_overlap);
 	cb_hierarch->setEnabled((*o_r).remove_overlap);
-	cnt_fuse->setEnabled((*o_r).remove_overlap);
-	cb_fuse->setEnabled((*o_r).remove_overlap);
 	if ((*o_r).show_translate)
 	{
 		cb_translate->setEnabled((*o_r).remove_overlap);
