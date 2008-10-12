@@ -1,6 +1,10 @@
 #include "../include/us_femglobal.h"
 #include <qregexp.h>
 
+#if defined(USE_MPI)
+# include "../include/us_version.h"
+#endif
+
 US_FemGlobal::US_FemGlobal(QObject *parent, const char *name) : QObject(parent, name)
 {
 }
