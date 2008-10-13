@@ -2258,7 +2258,7 @@ int US_Hydrodyn::compute_asa()
 	    max_bead2 = max_bead1;
 	    max_bead1 = tmp;
 	  }
-	  if (bead_model[max_bead1].chain != bead_model[max_bead2].chain == 1 &&
+	  if (bead_model[max_bead1].chain != bead_model[max_bead2].chain &&
 	      k == 1) {
 	    back_to_zero = true;
 	  }
