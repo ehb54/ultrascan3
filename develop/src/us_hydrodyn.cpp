@@ -107,6 +107,12 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	results.rg = 0.0;
 	results.vbar = 0.72;
 	results.tau = 0.0;
+	results.s20w_sd = 0.0;
+	results.D20w_sd = 0.0;
+	results.viscosity_sd = 0.0;
+	results.rs_sd = 0.0;
+	results.rg_sd = 0.0;
+	results.tau_sd = 0.0;
 	rasmol = new QProcess(this);
 	rasmol->setWorkingDirectory(
  				    QDir(USglobal->config_list.system_dir +
@@ -3970,7 +3976,12 @@ void US_Hydrodyn::read_residue_file()
 
 void US_Hydrodyn::load_pdb()
 {
-	QString filename = QFileDialog::getOpenFileName(somo_pdb_dir, "*.pdb *.PDB", this);
+	cout << somo_pdb_dir << endl;
+	QString filename = QFileDialog::getOpenFileName(somo_pdb_dir,
+			"Structures (*.pdb *.PDB)",
+			this,
+			"Open Structure Files",
+			"Please select a PDB file...");
 	if (!filename.isEmpty())
 	{
 		bead_model_from_file = false;

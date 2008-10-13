@@ -97,7 +97,14 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_s20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_s20w = new QLineEdit(this, "s20w Line Edit");
-	le_s20w->setText(str.sprintf("%4.2e S", (*results).s20w));
+	if (fabs((*results).s20w_sd) <= 1e-100)
+	{
+		le_s20w->setText(str.sprintf("%4.2e S", (*results).s20w));
+	}
+	else
+	{
+		le_s20w->setText(str.sprintf("%4.2e S (%4.2e)", (*results).s20w, (*results).s20w_sd));
+	}
 	le_s20w->setReadOnly(true);
 	le_s20w->setAlignment(AlignVCenter);
 	le_s20w->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -110,7 +117,14 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_D20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_D20w = new QLineEdit(this, "D20w Line Edit");
-	le_D20w->setText(str.sprintf("%4.2e cm/sec^2", (*results).D20w));
+	if (fabs((*results).D20w_sd) <= 1e-100)
+	{
+		le_D20w->setText(str.sprintf("%4.2e cm/sec^2", (*results).D20w));
+	}
+	else
+	{
+		le_D20w->setText(str.sprintf("%4.2e cm/sec^2 (%4.2e)", (*results).D20w, (*results).D20w_sd));
+	}
 	le_D20w->setReadOnly(true);
 	le_D20w->setAlignment(AlignVCenter);
 	le_D20w->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -123,7 +137,14 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_tau->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_tau = new QLineEdit(this, "tau Line Edit");
-	le_tau->setText(str.sprintf("%4.2e ns", (*results).tau));
+	if (fabs((*results).tau_sd) <= 1e-100)
+	{
+		le_tau->setText(str.sprintf("%4.2e ns", (*results).tau));
+	}
+	else
+	{
+		le_tau->setText(str.sprintf("%4.2e ns (%4.2e)", (*results).tau, (*results).tau_sd));
+	}
 	le_tau->setReadOnly(true);
 	le_tau->setAlignment(AlignVCenter);
 	le_tau->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -136,7 +157,14 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_viscosity = new QLineEdit(this, "viscosity Line Edit");
-	le_viscosity->setText(str.sprintf("%4.2e cm^3/g", (*results).viscosity));
+	if (fabs((*results).viscosity_sd) <= 1e-100)
+	{
+		le_viscosity->setText(str.sprintf("%4.2e cm^3/g", (*results).viscosity));
+	}
+	else
+	{
+		le_viscosity->setText(str.sprintf("%4.2e cm^3/g (%4.2e)", (*results).viscosity, (*results).viscosity_sd));
+	}
 	le_viscosity->setReadOnly(true);
 	le_viscosity->setAlignment(AlignVCenter);
 	le_viscosity->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -149,7 +177,14 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_rs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_rs = new QLineEdit(this, "rs Line Edit");
-	le_rs->setText(str.sprintf("%4.2e nm", (*results).rs));
+	if (fabs((*results).rs_sd) <= 1e-100)
+	{
+		le_rs->setText(str.sprintf("%4.2e nm", (*results).rs));
+	}
+	else
+	{
+		le_rs->setText(str.sprintf("%4.2e nm (%4.2e)", (*results).rs, (*results).rs_sd));
+	}
 	le_rs->setReadOnly(true);
 	le_rs->setAlignment(AlignVCenter);
 	le_rs->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -162,7 +197,14 @@ void US_Hydrodyn_Results::setupGUI()
 	lbl_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
 	le_rg = new QLineEdit(this, "rg Line Edit");
-	le_rg->setText(str.sprintf("%4.2e nm", (*results).rg));
+	if (fabs((*results).rg_sd) <= 1e-100)
+	{
+		le_rg->setText(str.sprintf("%4.2e nm", (*results).rg));
+	}
+	else
+	{
+		le_rg->setText(str.sprintf("%4.2e nm (%4.2e)", (*results).rg, (*results).rg_sd));
+	}
 	le_rg->setReadOnly(true);
 	le_rg->setAlignment(AlignVCenter);
 	le_rg->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
