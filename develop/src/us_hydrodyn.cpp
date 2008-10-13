@@ -802,6 +802,7 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
 #endif
   for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
     for (unsigned int j = i + 1; j < bead_model.size(); j++) {
+#if defined(DEBUG_OVERLAP_2)
       if(i == 2 && (j == 107 || j == 108)) 
 	    printf("x1 overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - %s\n",
 		   i, j,
@@ -837,6 +838,7 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
 			    bead_model[j].bead_coordinate.axis[2], 2))
 		   <= TOLERANCE ? "ok" : "needs reduction"
 		   );
+#endif
       if (bead_model[i].active &&
 	  bead_model[j].active
 	  &&
@@ -861,6 +863,7 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
 		   bead_model[j].bead_coordinate.axis[1], 2) +
 	       pow(bead_model[i].bead_coordinate.axis[2] -
 		   bead_model[j].bead_coordinate.axis[2], 2));
+#if defined(DEBUG_OVERLAP_2)
       if(i == 2 && (j == 107 || j == 108)) 
 	    printf("x2 overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - %s\n",
 		   i, j,
@@ -881,6 +884,7 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
 		   separation,
 		   separation <= TOLERANCE ? "ok" : "needs reduction"
 		   );
+#endif
 	if (separation <= TOLERANCE) {
 	  continue;
 	}
