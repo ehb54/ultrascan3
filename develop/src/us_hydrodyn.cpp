@@ -802,6 +802,41 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
 #endif
   for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
     for (unsigned int j = i + 1; j < bead_model.size(); j++) {
+      if(i == 2 && (j == 107 || j == 108)) 
+	    printf("x1 overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - %s\n",
+		   i, j,
+		   bead_model[i].chain,
+		   bead_model[j].chain,
+		   bead_model[i].exposed_code,
+		   bead_model[j].exposed_code,
+		   bead_model[i].active ? "Y" : "N",
+		   bead_model[j].active ? "Y" : "N",
+		   bead_model[i].bead_computed_radius,
+		   bead_model[j].bead_computed_radius,
+		   bead_model[i].bead_coordinate.axis[0],
+		   bead_model[i].bead_coordinate.axis[1],
+		   bead_model[i].bead_coordinate.axis[2],
+		   bead_model[j].bead_coordinate.axis[0],
+		   bead_model[j].bead_coordinate.axis[1],
+		   bead_model[j].bead_coordinate.axis[2],
+		   bead_model[i].bead_computed_radius +
+		   bead_model[j].bead_computed_radius -
+		   sqrt(
+			pow(bead_model[i].bead_coordinate.axis[0] -
+			    bead_model[j].bead_coordinate.axis[0], 2) +
+			pow(bead_model[i].bead_coordinate.axis[1] -
+			    bead_model[j].bead_coordinate.axis[1], 2) +
+			pow(bead_model[i].bead_coordinate.axis[2] -
+			    bead_model[j].bead_coordinate.axis[2], 2)),
+		   sqrt(
+			pow(bead_model[i].bead_coordinate.axis[0] -
+			    bead_model[j].bead_coordinate.axis[0], 2) +
+			pow(bead_model[i].bead_coordinate.axis[1] -
+			    bead_model[j].bead_coordinate.axis[1], 2) +
+			pow(bead_model[i].bead_coordinate.axis[2] -
+			    bead_model[j].bead_coordinate.axis[2], 2))
+		   <= TOLERANCE ? "ok" : "needs reduction"
+		   );
       if (bead_model[i].active &&
 	  bead_model[j].active
 	  &&
@@ -826,6 +861,26 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
 		   bead_model[j].bead_coordinate.axis[1], 2) +
 	       pow(bead_model[i].bead_coordinate.axis[2] -
 		   bead_model[j].bead_coordinate.axis[2], 2));
+      if(i == 2 && (j == 107 || j == 108)) 
+	    printf("x2 overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - %s\n",
+		   i, j,
+		   bead_model[i].chain,
+		   bead_model[j].chain,
+		   bead_model[i].exposed_code,
+		   bead_model[j].exposed_code,
+		   bead_model[i].active ? "Y" : "N",
+		   bead_model[j].active ? "Y" : "N",
+		   bead_model[i].bead_computed_radius,
+		   bead_model[j].bead_computed_radius,
+		   bead_model[i].bead_coordinate.axis[0],
+		   bead_model[i].bead_coordinate.axis[1],
+		   bead_model[i].bead_coordinate.axis[2],
+		   bead_model[j].bead_coordinate.axis[0],
+		   bead_model[j].bead_coordinate.axis[1],
+		   bead_model[j].bead_coordinate.axis[2],
+		   separation,
+		   separation <= TOLERANCE ? "ok" : "needs reduction"
+		   );
 	if (separation <= TOLERANCE) {
 	  continue;
 	}
@@ -2167,10 +2222,11 @@ int US_Hydrodyn::compute_asa()
 	}
 	if (overlaps_exist) {
 	  beads_popped++;
-#if defined(DEBUG1) || defined(DEBUG)
+	  //#define DEBUG_FUSED
+#if defined(DEBUG1) || defined(DEBUG) || defined(DEBUG_FUSED)
 	  printf("popping beads %u %u int vol %f mw1 %f mw2 %f v1 %f v2 %f c1 [%f,%f,%f] c2 [%f,%f,%f]\n",
-		 bead_model[max_bead1].serial,
-		 bead_model[max_bead2].serial,
+		 max_bead1,
+		 max_bead2,
 		 max_intersection_volume,
 		 bead_model[max_bead1].bead_ref_mw,
 		 bead_model[max_bead2].bead_ref_mw,
@@ -2184,6 +2240,16 @@ int US_Hydrodyn::compute_asa()
 		 bead_model[max_bead2].bead_coordinate.axis[2]
 		 );
 #endif
+	  if (bead_model[max_bead1].chain == 1 &&
+	      bead_model[max_bead2].chain == 0) {
+	    // always select the mc!
+#if defined(DEBUG1) || defined(DEBUG) || defined(DEBUG_FUSED)
+	    puts("swap beads");
+#endif
+	    int tmp = max_bead2;
+	    max_bead2 = max_bead1;
+	    max_bead1 = tmp;
+	  }
 	  // bead_model[max_bead1].all_beads.push_back(&bead_model[max_bead1]); ??
 	  bead_model[max_bead1].all_beads.push_back(&bead_model[max_bead2]);
 	  for (unsigned int n = 0; n < bead_model[max_bead2].all_beads.size(); n++) {
@@ -2204,9 +2270,9 @@ int US_Hydrodyn::compute_asa()
 	    bead_model[max_bead1].bead_computed_radius =
 	    pow(3 * bead_model[max_bead1].bead_ref_volume / (4.0*M_PI), 1.0/3);
 	  // if fusing with a side chain bead, make sure the fused is side-chain
-	  if (bead_model[max_bead2].chain) {
-	    bead_model[max_bead1].chain = 1;
-	  }
+	  // if (bead_model[max_bead2].chain) {
+	  //   bead_model[max_bead1].chain = 1;
+	  // }
 	  bead_model[max_bead1].normalized_ot_is_valid = false;
 	  bead_model[max_bead2].normalized_ot_is_valid = false;
 #if defined(DEBUG)
@@ -3704,6 +3770,12 @@ void US_Hydrodyn::calc_hydro()
   pb_calc_hydro->setEnabled(false);
   puts("calc hydro (supc)");
   editor->append("Begin hydrodynamic calculations\n");
+  results.s20w_sd = 0.0;
+  results.D20w_sd = 0.0;
+  results.viscosity_sd = 0.0;
+  results.rs_sd = 0.0;
+  results.rg_sd = 0.0;
+  results.tau_sd = 0.0;
 
   int models_to_proc = 0;
   int first_model_no = 0;
