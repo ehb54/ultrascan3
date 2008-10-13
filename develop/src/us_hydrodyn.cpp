@@ -2091,6 +2091,8 @@ int US_Hydrodyn::compute_asa()
   write_bead_spt(somo_tmp_dir + SLASH + "bead_model_start" + DOTSOMO, &bead_model);
   for(unsigned int k = 0; k < sizeof(methods) / sizeof(int); k++) {
 
+  stage_loop:
+
     int beads_popped = 0;
 
 #if defined(DEBUG1) || defined(DEBUG)
@@ -2224,6 +2226,8 @@ int US_Hydrodyn::compute_asa()
 	    }
 	  }
 	}
+
+	bool back_to_zero = false;
 	if (overlaps_exist) {
 	  beads_popped++;
 	  //#define DEBUG_FUSED
@@ -2244,15 +2248,19 @@ int US_Hydrodyn::compute_asa()
 		 bead_model[max_bead2].bead_coordinate.axis[2]
 		 );
 #endif
-	  if (bead_model[max_bead1].chain == 1 &&
-	      bead_model[max_bead2].chain == 0) {
-	    // always select the mc!
+	  if (bead_model[max_bead1].chain == 0 &&
+	      bead_model[max_bead2].chain == 1) {
+	    // always select the sc!
 #if defined(DEBUG1) || defined(DEBUG) || defined(DEBUG_FUSED)
 	    puts("swap beads");
 #endif
 	    int tmp = max_bead2;
 	    max_bead2 = max_bead1;
 	    max_bead1 = tmp;
+	  }
+	  if (bead_model[max_bead1].chain != bead_model[max_bead2].chain == 1 &&
+	      k == 1) {
+	    back_to_zero = true;
 	  }
 	  // bead_model[max_bead1].all_beads.push_back(&bead_model[max_bead1]); ??
 	  bead_model[max_bead1].all_beads.push_back(&bead_model[max_bead2]);
@@ -2292,6 +2300,12 @@ int US_Hydrodyn::compute_asa()
 		 bead_model[max_bead1].bead_coordinate.axis[2]
 	       );
 #endif
+	  if (back_to_zero) {
+	    editor->append(QString("Beads popped %1, Go back to stage %2\n").arg(beads_popped).arg(k));
+	    printf("fused sc/mc bead in stage SC/MC, back to stage SC\n");
+	    k = 0;
+	    goto stage_loop;
+	  }
 	}
       } // if pop method
       // write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_ap-%1-%2").arg(k).arg(iter) + DOTSOMO + ".tsv", &bead_model);
