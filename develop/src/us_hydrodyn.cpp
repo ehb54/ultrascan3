@@ -2304,6 +2304,7 @@ int US_Hydrodyn::compute_asa()
 	    editor->append(QString("Beads popped %1, Go back to stage %2\n").arg(beads_popped).arg(k));
 	    printf("fused sc/mc bead in stage SC/MC, back to stage SC\n");
 	    k = 0;
+	    ppos -= 4;
 	    goto stage_loop;
 	  }
 	}
@@ -3787,7 +3788,7 @@ void US_Hydrodyn::calc_hydro()
 {
   pb_calc_hydro->setEnabled(false);
   puts("calc hydro (supc)");
-  editor->append("Begin hydrodynamic calculations\n");
+  editor->append("Begin hydrodynamic calculations\n\n");
   results.s20w_sd = 0.0;
   results.D20w_sd = 0.0;
   results.viscosity_sd = 0.0;
@@ -3804,7 +3805,7 @@ void US_Hydrodyn::calc_hydro()
 	  first_model_no = current_model + 1;
 	}
 	models_to_proc++;
-	editor->append(QString("\nModel %1 will be included\n").arg(current_model + 1));
+	editor->append(QString("Model %1 will be included\n").arg(current_model + 1));
 	bead_model = bead_models[current_model];
 
 	write_bead_spt(somo_dir + SLASH + project +
@@ -3825,7 +3826,8 @@ void US_Hydrodyn::calc_hydro()
 				     lb_model,
 				     QString(project +
 					     // (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-					     (bead_model_from_file ? "" : (models_to_proc == 1 ? "_1" : "_%1")) +
+					     // (bead_model_from_file ? "" : (models_to_proc == 1 ? "_1" : "_%1")) +
+					     (bead_model_from_file ? "" : "_%1") +
 					     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 					     DOTSOMO + ".beams").ascii(),
 				     QString(project +

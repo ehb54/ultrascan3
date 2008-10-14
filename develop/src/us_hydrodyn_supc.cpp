@@ -964,6 +964,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     for (k = 0; k < num; k++)
     {
 
+	editor->append(QString("\nProcessing model %1 bead count %2\n").arg(k+1).arg((*bead_models)[model_idx[k]].size()));
+
         supc_free_alloced_2();
 	
 	initarray();
@@ -3322,9 +3324,12 @@ initarray()
     fscanf(tot_mol, "%d", &prima);
     fscanf(tot_mol, "%d", &ultima);
 
+    //    editor->append(QString("initarray - 0 From file: %1 beads\n").arg(nat));
+
     for (i = 0; i < nat; i++)
 	dt[i].cor = temp;
 
+    //    int count6 = 0;
 #if defined(DEBUG_WW)
     for (i = 0; i < nat; i++) {
       if(i < 5 || i > nat - 5) {
@@ -3565,12 +3570,20 @@ initarray()
     strcpy(molecola, ricorda);
     numero_sfere = nat;
     nat = ultima - prima + 1;
+    //    editor->append(QString("initarray - 1 (ultima - prima): %1 beads\n").arg(nat));
 
     printf("\n\n Starting function: ragir()\n");
     ragir();
     printf("\n End of function: ragir()\n");
 
     /* removing from the hydrodynamic computations the beads color-coded '0' */
+
+    // for (i = 0; i < nat; i++) {
+    //      printf("bead %d col %d\n", i, dt[i].col);
+    // if(dt[i].col == 6) {
+    //	count6++;
+    //      }
+    //    }
 
     {
 	j = 0;
@@ -3589,6 +3602,8 @@ initarray()
 	colorzero = nat - j;
 	nat = j;
     }
+
+    //    editor->append(QString("initarray - 2 (remove cc 0): %1 beads\n").arg(nat));
 
     if (sfecalc == 2)		/* computation with all beads or with only the 'exposed'                           beads */
 
@@ -3613,6 +3628,8 @@ initarray()
 	colorsix = nat - j;
 	nat = j;
     }
+
+    //    editor->append(QString("initarray - 3 (only exposed): %1 beads (count6 == %2)\n").arg(nat).arg(count6));
 
     if (nat > nmax)
     {
@@ -4124,7 +4141,8 @@ overlap()
 	{
 	    dist = pow((dt[i].x - dt[j].x), 2) + pow((dt[i].y - dt[j].y), 2) + pow((dt[i].z - dt[j].z), 2);
 	    overlval = (dist - pow((dt[i].r + dt[j].r), 2));
-	    if ((dist - pow((dt[i].r + dt[j].r), 2)) < -0.01)
+	    // if (dist - pow((dt[i].r + dt[j].r), 2)) < -0.01)
+	    if (sqrt(dist) - (dt[i].r + dt[j].r) < -0.001)
 	    {
 		printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
 		       (sqrt(dist) - (dt[i].r + dt[j].r)));
