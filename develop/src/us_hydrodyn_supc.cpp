@@ -530,11 +530,19 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     nmax = 0;
     int models_to_proc = 0;
     vector <int> model_idx;  // maps seq model # to bead_models offset
+    vector <int> bead_count;  // counts # of active beads
     QString use_filename = filename;
     for (int current_model = 0; current_model < (int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
 	if ((*somo_processed)[current_model]) {
 	  model_idx.push_back(current_model);
+	  int tmp_count = 0;
+	  for(int i = 0; i < (int)(*bead_models)[current_model].size(); i++) {
+	    if((*bead_models)[current_model][i].active) {
+	      tmp_count++;
+	    }
+	  }
+	  bead_count.push_back(tmp_count);
 	  models_to_proc++;
 	  if (nmax < (int) (*bead_models)[current_model].size()) {
 	    nmax = (int) (*bead_models)[current_model].size();
@@ -967,7 +975,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     for (k = 0; k < num; k++)
     {
 
-	editor->append(QString("\nProcessing model %1 bead count %2\n").arg(k+1).arg((*bead_models)[model_idx[k]].size()));
+	editor->append(QString("\nProcessing model %1 bead count %2\n").arg(k+1).arg(bead_count[k]));
 
         supc_free_alloced_2();
 	
