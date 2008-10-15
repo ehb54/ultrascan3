@@ -3819,8 +3819,16 @@ void US_Hydrodyn::calc_hydro()
   }
 
   chdir(somo_dir);
+
+  editor->append(QString("%1")
+		 //		 .arg(hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance)
+		 .arg((fabs((hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance) - overlap_tolerance) > 1e-5)
+		      ? QString("\nNOTICE: Overlap reduction bead overlap tolerance %1 does not equal the manually selected hydrodynamic calculations bead overlap cut-off %2\n")
+		      .arg(overlap_tolerance).arg(hydro.overlap) : ""));
+							  
   int retval = us_hydrodyn_supc_main(&results,
 				     &hydro,
+				     hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance,
 				     &bead_models,
 				     &somo_processed,
 				     lb_model,

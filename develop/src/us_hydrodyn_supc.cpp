@@ -305,6 +305,7 @@ static QProgressBar *progress;
 static QTextEdit *editor;
 static int ppos;
 static int mppos;
+static double overlap_tolerance;
 
 static void
 supc_free_alloced()
@@ -495,6 +496,7 @@ Gets_date(char *day, char *month, int *year, int *numday, char *hour)
 int
 us_hydrodyn_supc_main(hydro_results *hydro_results, 
 		      hydro_options *hydro, 
+		      double use_overlap_tolerance,
 		      vector < vector <PDB_atom> > *bead_models, 
 		      vector <int> *somo_processed,
 		      QListBox *lb_model,
@@ -515,6 +517,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
   //  vector <PDB_atom> *bead_model;
     progress = use_progress;
     editor = use_editor;
+    overlap_tolerance = use_overlap_tolerance;
 #if defined(DEBUG_WW)
     cks = 0e0;
     {
@@ -4133,7 +4136,7 @@ overlap()
     flag = 0;
 
     printf("\n** Performing overlap test **\n");
-    printf("\n** WARNING: Overlaps can lead to wrong results! Detection cutoff > 0.001 **\n");
+    printf("\n** WARNING: Overlaps can lead to wrong results! Detection cutoff > %f **\n", overlap_tolerance);
 
     for (i = 0; i < nat; i++)
     {
@@ -4142,8 +4145,10 @@ overlap()
 	    dist = pow((dt[i].x - dt[j].x), 2) + pow((dt[i].y - dt[j].y), 2) + pow((dt[i].z - dt[j].z), 2);
 	    overlval = (dist - pow((dt[i].r + dt[j].r), 2));
 	    // if (dist - pow((dt[i].r + dt[j].r), 2)) < -0.01)
-	    if (sqrt(dist) - (dt[i].r + dt[j].r) < -0.001)
+	    if (sqrt(dist) - (dt[i].r + dt[j].r) < -overlap_tolerance)
 	    {
+	    	editor->append(QString("").sprintf("\n%s%d%s%d%s%.6f\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+						 -(sqrt(dist) - (dt[i].r + dt[j].r))));
 		printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
 		       (sqrt(dist) - (dt[i].r + dt[j].r)));
 #if defined(USE_MAIN)

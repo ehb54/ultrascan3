@@ -16,6 +16,7 @@
 int
 us_hydrodyn_supc_main(hydro_results *hydro_results, 
 		      hydro_options *hydro, 
+		      double use_overlap_tolerance,
 		      vector < vector <PDB_atom> > *bead_models, 
 		      vector <int> *somo_processed,
 		      QListBox *lb_model,
