@@ -454,6 +454,7 @@ void US_Edit_DB::plot_dataset()
 	delete [] temp_min;
 	if (dataset_counter != count2)	// if dataset_counter == count2, we're all done editing!
 	{
+		pb_accept->setEnabled(true);
 		pb_accept->setText(tr("Next Cell"));
 	}
 }
@@ -461,6 +462,7 @@ void US_Edit_DB::plot_dataset()
 void US_Edit_DB::load_dataset()
 {
 	unsigned int i, scan, scan_counter=0;
+	pb_accept->setEnabled(false); // disable during loading
 
 	cmbb_centerpiece->setEnabled(true);
 	cmbb_rotor->setEnabled(true);
@@ -622,6 +624,7 @@ void US_Edit_DB::load_dataset()
 	{
 		str.sprintf(tr("Please select the appropriate centerpiece, rotor\nand experiment type, and then commit the information\nto the database..."));
 		lbl_instructions2->setText(str);
+		pb_accept->setEnabled(true);
 		pb_accept->setText("Commit to Database");
 		plot_dataset();
 		return;
