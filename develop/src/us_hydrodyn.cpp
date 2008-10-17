@@ -1371,6 +1371,7 @@ int US_Hydrodyn::compute_asa()
 
 	  this_atom->bead_mw = 0;
 	  this_atom->bead_asa = 0;
+	  this_atom->bead_recheck_asa = 0;
 
 	  // do we have a new bead?
 	  // we want to put the N on a previous bead unless it is the first one of the molecule
@@ -2087,8 +2088,10 @@ int US_Hydrodyn::compute_asa()
     };
 
 
+#if defined(WRITE_EXTRA_FILES)
   write_bead_tsv(somo_tmp_dir + SLASH + "bead_model_start" + DOTSOMO + ".tsv", &bead_model);
   write_bead_spt(somo_tmp_dir + SLASH + "bead_model_start" + DOTSOMO, &bead_model);
+#endif
   for(unsigned int k = 0; k < sizeof(methods) / sizeof(int); k++) {
 
   stage_loop:
@@ -2320,8 +2323,10 @@ int US_Hydrodyn::compute_asa()
 	   start_tv.tv_usec);
     fflush(stdout);
 #endif
+#if defined(WRITE_EXTRA_FILES)
     write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_pop-%1").arg(k) + DOTSOMO + ".tsv", &bead_model);
     write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model_pop-%1").arg(k) + DOTSOMO, &bead_model);
+#endif
     printf("stage %d beads popped %d\n", k, beads_popped);
     progress->setProgress(ppos++); // 12,13,14
     editor->append(QString("Beads popped %1.\nBegin radial reduction stage %2\n").arg(beads_popped).arg(k + 1));
@@ -3075,11 +3080,15 @@ int US_Hydrodyn::compute_asa()
       exit(-1);
     }
 #endif
+#if defined(WRITE_EXTRA_FILES)
     write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_rr-%1").arg(k) + DOTSOMO + ".tsv", &bead_model);
     write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model_rr-%1").arg(k) + DOTSOMO, &bead_model);
+#endif
   } // methods
+#if defined(WRITE_EXTRA_FILES)
   write_bead_tsv(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO + ".tsv", &bead_model);
   write_bead_spt(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO, &bead_model);
+#endif
   write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + DOTSOMO, &bead_model);
   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
 		   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + DOTSOMO
@@ -3452,7 +3461,6 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
   // int bead_output.sequence;           // 0 = 
   // 1 = 
 
-
 #if defined(DEBUG)
   printf("write bead model %s\n", fname.ascii()); fflush(stdout);
 #endif
@@ -3533,7 +3541,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
 	residues += QString("%1").arg(tmp_serial);
       }
       fprintf(fbeadmodel,
-	      "%f\t%f\t%f\t%.6f\t%u\t%d\t%d\t%s\n",
+	      "%f\t%f\t%f\t%.6f\t%u\t%d\t%d\t%s\t%.4f\n",
 	      use_model[i]->bead_coordinate.axis[0],
 	      use_model[i]->bead_coordinate.axis[1],
 	      use_model[i]->bead_coordinate.axis[2],
@@ -3541,7 +3549,8 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
 	      (int)use_model[i]->bead_ref_mw,
 	      get_color(use_model[i]),
 	      use_model[i]->serial,
-	      residues.ascii()
+	      residues.ascii(),
+	      use_model[i]->bead_recheck_asa
 	      );
     }
   }
@@ -4351,6 +4360,12 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		  }
 		  if (!ts.atEnd()) {
 		    ts >>  tmp_atom.residue_list;
+		  } else {
+		    editor->append(QString("\nError in line %1!\n").arg(linepos));
+		    return linepos;
+		  }
+		  if (!ts.atEnd()) {
+		    ts >>  tmp_atom.bead_recheck_asa;
 		  } else {
 		    editor->append(QString("\nError in line %1!\n").arg(linepos));
 		    return linepos;
