@@ -62,12 +62,15 @@ class US_EXTERN US_GridControl_T : public QObject
 		unsigned int selected_lambda;
 		unsigned int selected_channel;
 
+		vector <SimparamsExtra> simparams_extra;
 		float meniscus_range;
 		float regularization;
 		
 		vector <QString> constraints_full_text;
 		vector <QString> simulation_parameters_full_text;
 		SimulationParameters simulation_parameters;
+		vector <SimulationParameters> simulation_parameters_vec;
+
 		QString constraints_file_name;
 		QString simulation_parameters_file_name;
 		ModelSystem model_system;

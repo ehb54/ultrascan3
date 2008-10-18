@@ -59,6 +59,8 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
     unsigned int count;
     Control_Params.int_params.clear();
     Control_Params.float_params.clear();
+    simparams_extra.clear();
+    simulation_parameters_vec.clear();
     total_points = 0;
     cp_list.clear();
     rotor_list.clear();
@@ -192,7 +194,16 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 	    {
 		dataIO->assign_simparams(&simulation_parameters, selected_cell, selected_lambda, selected_channel);
 		simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + ".tmp.simulation_parameters";
+		cout << "simulation_parameters_file_name: " << simulation_parameters_file_name << endl;
+		SimparamsExtra tmp_extra;
+		tmp_extra.simulation_parameters_file_name = simulation_parameters_file_name;
+		simparams_extra.push_back(tmp_extra);
+		cerr << QString("assign loop simparams_extra[%1].simulation_parameters_file_name = %2\n").
+		  arg(simparams_extra.size() - 1).
+		  arg(simparams_extra[simparams_extra.size() - 1].simulation_parameters_file_name);
+		simulation_parameters_vec.push_back(simulation_parameters);
 	    }		
+	    
             points = run_inf.points[selected_cell][selected_lambda][selected_channel];
             cerr << " there are " << points << " in this dataset...\n";
             total_points += points * run_inf.scans[selected_cell][selected_lambda];
@@ -226,6 +237,7 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
             add_experiment();
             delete dataIO;
         }
+	// ------------- read experiments loop
         if (analysis_type == "GA")
         {
             ts >> GA_Params.demes;
@@ -350,20 +362,18 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
             ts >> email;
             cerr << "Email: " << email << endl;
             printf("email: %s\n", email.ascii());
-	    ts >> GA_Params.simpoints;
-            cerr << "Simpoints:" << GA_Params.simpoints << endl;
-	    ts >> GA_Params.band_volume;
-            cerr << "Band volume:" << GA_Params.band_volume << endl;
-	    ts >> GA_Params.radial_grid;
-            cerr << "Radial grid:" << GA_Params.radial_grid << endl;
-	    ts >> GA_Params.moving_grid;
-            cerr << "Moving grid:" << GA_Params.moving_grid << endl;
-	    simulation_parameters.simpoints = GA_Params.simpoints;
-	    // NOTICE: we need a band forming flag value for this to be relevant
-	    simulation_parameters.band_volume = GA_Params.band_volume;
-	    simulation_parameters.mesh = GA_Params.radial_grid;
-	    simulation_parameters.moving_grid = GA_Params.moving_grid;
-	    {
+	    for (unsigned int i = 0; i < experiment.size(); i++) {
+	      cerr << QString("Experiment %1 simparameters:\n").arg(i);
+	      ts >> simparams_extra[i].simpoints;
+	      cerr << "Simpoints:" << simparams_extra[i].simpoints << endl;
+	      ts >> simparams_extra[i].band_volume;
+	      cerr << "Band volume:" << simparams_extra[i].band_volume << endl;
+	      ts >> simparams_extra[i].radial_grid;
+	      cerr << "Radial grid:" << simparams_extra[i].radial_grid << endl;
+	      ts >> simparams_extra[i].moving_grid;
+	      cerr << "Moving grid:" << simparams_extra[i].moving_grid << endl;
+	      {
+		simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name;
 		QFile f(simulation_parameters_file_name);
 		char *US = getenv("ULTRASCAN");
 		char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
@@ -375,34 +385,41 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		{
 		    f.close();
 		    increment++;
-		    simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
+		    simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name + QString("-%1").arg(increment);
 		    f.setName(simulation_parameters_file_name);
 		}
 		f.close();
 		flock(lfd, LOCK_UN);
 		close(lfd);
+		simparams_extra[i].simulation_parameters_file_name = simulation_parameters_file_name;
 		US_FemGlobal us_femglobal;
+		simulation_parameters_vec[i].simpoints = simparams_extra[i].simpoints;
+		simulation_parameters_vec[i].band_volume = simparams_extra[i].band_volume;
+		simulation_parameters_vec[i].mesh = simparams_extra[i].radial_grid;
+		simulation_parameters_vec[i].moving_grid = simparams_extra[i].moving_grid;
 		fprintf(stderr, "write simulation parameters returned %d <%s>\n",
-			us_femglobal.write_simulationParameters(&simulation_parameters, simulation_parameters_file_name),
+			us_femglobal.write_simulationParameters(&simulation_parameters_vec[i], simulation_parameters_file_name),
 			simulation_parameters_file_name.ascii());
-	    }
-	    { // read simulation parameters
-	      QFile fsimulation_parameters(simulation_parameters_file_name);
-	      if (!fsimulation_parameters.open(IO_ReadOnly))
-	      {
-		cerr << "Failed to open simulation_parameters file!\n";
-		exit(-4);
 	      }
-	      simulation_parameters_full_text.clear();
-	      QTextStream ts(&fsimulation_parameters);
-	      QString qs_tmp;
-	      while(!ts.atEnd())
-	      {
-		qs_tmp = ts.readLine();
-		printf("simu line: %s\n", qs_tmp.ascii());
-		simulation_parameters_full_text.push_back(qs_tmp);
+	      { // read simulation parameters
+		QFile fsimulation_parameters(simulation_parameters_file_name);
+		if (!fsimulation_parameters.open(IO_ReadOnly))
+		{
+		    cerr << "Failed to open simulation_parameters file!\n";
+		    exit(-4);
+		}
+		simulation_parameters_full_text.clear();
+		QTextStream ts(&fsimulation_parameters);
+		QString qs_tmp;
+		while (!ts.atEnd())
+		{
+		  qs_tmp = ts.readLine();
+		  printf("simu line: %s\n", qs_tmp.ascii());
+		  simulation_parameters_full_text.push_back(qs_tmp);
+		}
+		fsimulation_parameters.close();
+		simparams_extra[i].simulation_parameters_full_text = simulation_parameters_full_text;
 	      }
-	      fsimulation_parameters.close();
 	    }
             {
                 analysis_defined = true;
@@ -552,20 +569,18 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
             ts >> email;
             cerr << "Email: " << email << endl;
             printf("email: %s\n", email.ascii());
-	    ts >> GA_Params.simpoints;
-            cerr << "Simpoints:" << GA_Params.simpoints << endl;
-	    ts >> GA_Params.band_volume;
-            cerr << "Band volume:" << GA_Params.band_volume << endl;
-	    ts >> GA_Params.radial_grid;
-            cerr << "Radial grid:" << GA_Params.radial_grid << endl;
-	    ts >> GA_Params.moving_grid;
-            cerr << "Moving grid:" << GA_Params.moving_grid << endl;
-	    simulation_parameters.simpoints = GA_Params.simpoints;
-	    // NOTICE: we need a band forming flag value for this to be relevant
-	    simulation_parameters.band_volume = GA_Params.band_volume;
-	    simulation_parameters.mesh = GA_Params.radial_grid;
-	    simulation_parameters.moving_grid = GA_Params.moving_grid;
-	    {
+	    for (unsigned int i = 0; i < experiment.size(); i++) {
+	      cerr << QString("Experiment %1 simparameters:\n").arg(i);
+	      ts >> simparams_extra[i].simpoints;
+	      cerr << "Simpoints:" << simparams_extra[i].simpoints << endl;
+	      ts >> simparams_extra[i].band_volume;
+	      cerr << "Band volume:" << simparams_extra[i].band_volume << endl;
+	      ts >> simparams_extra[i].radial_grid;
+	      cerr << "Radial grid:" << simparams_extra[i].radial_grid << endl;
+	      ts >> simparams_extra[i].moving_grid;
+	      cerr << "Moving grid:" << simparams_extra[i].moving_grid << endl;
+	      {
+		simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name;
 		QFile f(simulation_parameters_file_name);
 		char *US = getenv("ULTRASCAN");
 		char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
@@ -577,32 +592,41 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		{
 		    f.close();
 		    increment++;
-		    simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
+		    simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name + QString("-%1").arg(increment);
 		    f.setName(simulation_parameters_file_name);
 		}
 		f.close();
 		flock(lfd, LOCK_UN);
 		close(lfd);
+		simparams_extra[i].simulation_parameters_file_name = simulation_parameters_file_name;
 		US_FemGlobal us_femglobal;
-		us_femglobal.write_simulationParameters(&simulation_parameters, simulation_parameters_file_name);
-	    }
-	    { // read simulation parameters
-	      QFile fsimulation_parameters(simulation_parameters_file_name);
-	      if (!fsimulation_parameters.open(IO_ReadOnly))
-	      {
-		cerr << "Failed to open simulation_parameters file!\n";
-		exit(-4);
+		simulation_parameters_vec[i].simpoints = simparams_extra[i].simpoints;
+		simulation_parameters_vec[i].band_volume = simparams_extra[i].band_volume;
+		simulation_parameters_vec[i].mesh = simparams_extra[i].radial_grid;
+		simulation_parameters_vec[i].moving_grid = simparams_extra[i].moving_grid;
+		fprintf(stderr, "write simulation parameters returned %d <%s>\n",
+			us_femglobal.write_simulationParameters(&simulation_parameters_vec[i], simulation_parameters_file_name),
+			simulation_parameters_file_name.ascii());
 	      }
-	      simulation_parameters_full_text.clear();
-	      QTextStream ts(&fsimulation_parameters);
-	      QString qs_tmp;
-	      while(!ts.atEnd())
-	      {
-		qs_tmp = ts.readLine();
-		printf("simu line: %s\n", qs_tmp.ascii());
-		simulation_parameters_full_text.push_back(qs_tmp);
+	      { // read simulation parameters
+		QFile fsimulation_parameters(simulation_parameters_file_name);
+		if (!fsimulation_parameters.open(IO_ReadOnly))
+		{
+		    cerr << "Failed to open simulation_parameters file!\n";
+		    exit(-4);
+		}
+		simulation_parameters_full_text.clear();
+		QTextStream ts(&fsimulation_parameters);
+		QString qs_tmp;
+		while (!ts.atEnd())
+		{
+		  qs_tmp = ts.readLine();
+		  printf("simu line: %s\n", qs_tmp.ascii());
+		  simulation_parameters_full_text.push_back(qs_tmp);
+		}
+		fsimulation_parameters.close();
+		simparams_extra[i].simulation_parameters_full_text = simulation_parameters_full_text;
 	      }
-	      fsimulation_parameters.close();
 	    }
             {
                 analysis_defined = true;
@@ -802,21 +826,18 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
             max_iterations = SA2D_Params.max_iterations;
             ts >> SA2D_Params.monte_carlo;
             cerr << "Monte Carlo Iterations:" << SA2D_Params.monte_carlo << endl;
-	    ts >> SA2D_Params.simpoints;
-            cerr << "Simpoints:" << SA2D_Params.simpoints << endl;
-	    ts >> SA2D_Params.band_volume;
-            cerr << "Band volume:" << SA2D_Params.band_volume << endl;
-	    ts >> SA2D_Params.radial_grid;
-            cerr << "Radial grid:" << SA2D_Params.radial_grid << endl;
-	    ts >> SA2D_Params.moving_grid;
-            cerr << "Moving grid:" << SA2D_Params.moving_grid << endl;
-            cerr << "px\n";
-	    simulation_parameters.simpoints = SA2D_Params.simpoints;
-	    // NOTICE: we need a band forming flag value for this to be relevant
-	    simulation_parameters.band_volume = SA2D_Params.band_volume;
-	    simulation_parameters.mesh = SA2D_Params.radial_grid;
-	    simulation_parameters.moving_grid = SA2D_Params.moving_grid;
-	    {
+	    for (unsigned int i = 0; i < experiment.size(); i++) {
+	      cerr << QString("Experiment %1 simparameters:\n").arg(i);
+	      ts >> simparams_extra[i].simpoints;
+	      cerr << "Simpoints:" << simparams_extra[i].simpoints << endl;
+	      ts >> simparams_extra[i].band_volume;
+	      cerr << "Band volume:" << simparams_extra[i].band_volume << endl;
+	      ts >> simparams_extra[i].radial_grid;
+	      cerr << "Radial grid:" << simparams_extra[i].radial_grid << endl;
+	      ts >> simparams_extra[i].moving_grid;
+	      cerr << "Moving grid:" << simparams_extra[i].moving_grid << endl;
+	      {
+		simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name;
 		QFile f(simulation_parameters_file_name);
 		char *US = getenv("ULTRASCAN");
 		char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
@@ -828,34 +849,43 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		{
 		    f.close();
 		    increment++;
-		    simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
+		    simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name + QString("-%1").arg(increment);
 		    f.setName(simulation_parameters_file_name);
 		}
 		f.close();
 		flock(lfd, LOCK_UN);
 		close(lfd);
+		simparams_extra[i].simulation_parameters_file_name = simulation_parameters_file_name;
 		US_FemGlobal us_femglobal;
+		simulation_parameters_vec[i].simpoints = simparams_extra[i].simpoints;
+		simulation_parameters_vec[i].band_volume = simparams_extra[i].band_volume;
+		simulation_parameters_vec[i].mesh = simparams_extra[i].radial_grid;
+		simulation_parameters_vec[i].moving_grid = simparams_extra[i].moving_grid;
 		fprintf(stderr, "write simulation parameters returned %d <%s>\n",
-			us_femglobal.write_simulationParameters(&simulation_parameters, simulation_parameters_file_name),
+			us_femglobal.write_simulationParameters(&simulation_parameters_vec[i], simulation_parameters_file_name),
 			simulation_parameters_file_name.ascii());
-	    }
-	    { // read simulation parameters
-	      QFile fsimulation_parameters(simulation_parameters_file_name);
-	      if (!fsimulation_parameters.open(IO_ReadOnly))
-	      {
-		cerr << "Failed to open simulation_parameters file " << simulation_parameters_file_name << " !\n";
-		exit(-4);
 	      }
-	      simulation_parameters_full_text.clear();
-	      QTextStream ts(&fsimulation_parameters);
-	      QString qs_tmp;
-	      while(!ts.atEnd())
-	      {
-		qs_tmp = ts.readLine();
-		printf("simu line: %s\n", qs_tmp.ascii());
-		simulation_parameters_full_text.push_back(qs_tmp);
+	      { // read simulation parameters
+		fprintf(stderr, "opening simulation_parameters file %s:\n", 
+			simulation_parameters_file_name.ascii());
+		QFile fsimulation_parameters(simulation_parameters_file_name);
+		if (!fsimulation_parameters.open(IO_ReadOnly))
+		{
+		    cerr << "Failed to open simulation_parameters file!\n";
+		    exit(-4);
+		}
+		simulation_parameters_full_text.clear();
+		QTextStream ts(&fsimulation_parameters);
+		QString qs_tmp;
+		while (!ts.atEnd())
+		{
+		  qs_tmp = ts.readLine();
+		  printf("simu line: %s\n", qs_tmp.ascii());
+		  simulation_parameters_full_text.push_back(qs_tmp);
+		}
+		fsimulation_parameters.close();
+		simparams_extra[i].simulation_parameters_full_text = simulation_parameters_full_text;
 	      }
-	      fsimulation_parameters.close();
 	    }
             {
                 analysis_defined = true;
@@ -972,20 +1002,18 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
             SA2D_Params.max_mer = strlen(SA2D_Params.max_mer_string.ascii());
             cerr << "Max mer string:" << SA2D_Params.max_mer_string << endl;
             cerr << "Max mer:" << SA2D_Params.max_mer << endl;
-	    ts >> SA2D_Params.simpoints;
-            cerr << "Simpoints:" << SA2D_Params.simpoints << endl;
-	    ts >> SA2D_Params.band_volume;
-            cerr << "Band volume:" << SA2D_Params.band_volume << endl;
-	    ts >> SA2D_Params.radial_grid;
-            cerr << "Radial grid:" << SA2D_Params.radial_grid << endl;
-	    ts >> SA2D_Params.moving_grid;
-            cerr << "Moving grid:" << SA2D_Params.moving_grid << endl;
-	    simulation_parameters.simpoints = SA2D_Params.simpoints;
-	    // NOTICE: we need a band forming flag value for this to be relevant
-	    simulation_parameters.band_volume = SA2D_Params.band_volume;
-	    simulation_parameters.mesh = SA2D_Params.radial_grid;
-	    simulation_parameters.moving_grid = SA2D_Params.moving_grid;
-	    {
+	    for (unsigned int i = 0; i < experiment.size(); i++) {
+	      cerr << QString("Experiment %1 simparameters:\n").arg(i);
+	      ts >> simparams_extra[i].simpoints;
+	      cerr << "Simpoints:" << simparams_extra[i].simpoints << endl;
+	      ts >> simparams_extra[i].band_volume;
+	      cerr << "Band volume:" << simparams_extra[i].band_volume << endl;
+	      ts >> simparams_extra[i].radial_grid;
+	      cerr << "Radial grid:" << simparams_extra[i].radial_grid << endl;
+	      ts >> simparams_extra[i].moving_grid;
+	      cerr << "Moving grid:" << simparams_extra[i].moving_grid << endl;
+	      {
+		simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name;
 		QFile f(simulation_parameters_file_name);
 		char *US = getenv("ULTRASCAN");
 		char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
@@ -997,32 +1025,41 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 		{
 		    f.close();
 		    increment++;
-		    simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
+		    simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name + QString("-%1").arg(increment);
 		    f.setName(simulation_parameters_file_name);
 		}
 		f.close();
 		flock(lfd, LOCK_UN);
 		close(lfd);
+		simparams_extra[i].simulation_parameters_file_name = simulation_parameters_file_name;
 		US_FemGlobal us_femglobal;
-		us_femglobal.write_simulationParameters(&simulation_parameters, simulation_parameters_file_name);
-	    }
-	    { // read simulation parameters
-	      QFile fsimulation_parameters(simulation_parameters_file_name);
-	      if (!fsimulation_parameters.open(IO_ReadOnly))
-	      {
-		cerr << "Failed to open simulation_parameters file!\n";
-		exit(-4);
+		simulation_parameters_vec[i].simpoints = simparams_extra[i].simpoints;
+		simulation_parameters_vec[i].band_volume = simparams_extra[i].band_volume;
+		simulation_parameters_vec[i].mesh = simparams_extra[i].radial_grid;
+		simulation_parameters_vec[i].moving_grid = simparams_extra[i].moving_grid;
+		fprintf(stderr, "write simulation parameters returned %d <%s>\n",
+			us_femglobal.write_simulationParameters(&simulation_parameters_vec[i], simulation_parameters_file_name),
+			simulation_parameters_file_name.ascii());
 	      }
-	      simulation_parameters_full_text.clear();
-	      QTextStream ts(&fsimulation_parameters);
-	      QString qs_tmp;
-	      while(!ts.atEnd())
-	      {
-		qs_tmp = ts.readLine();
-		printf("simu line: %s\n", qs_tmp.ascii());
-		simulation_parameters_full_text.push_back(qs_tmp);
+	      { // read simulation parameters
+		QFile fsimulation_parameters(simulation_parameters_file_name);
+		if (!fsimulation_parameters.open(IO_ReadOnly))
+		{
+		    cerr << "Failed to open simulation_parameters file!\n";
+		    exit(-4);
+		}
+		simulation_parameters_full_text.clear();
+		QTextStream ts(&fsimulation_parameters);
+		QString qs_tmp;
+		while (!ts.atEnd())
+		{
+		  qs_tmp = ts.readLine();
+		  printf("simu line: %s\n", qs_tmp.ascii());
+		  simulation_parameters_full_text.push_back(qs_tmp);
+		}
+		fsimulation_parameters.close();
+		simparams_extra[i].simulation_parameters_full_text = simulation_parameters_full_text;
 	      }
-	      fsimulation_parameters.close();
 	    }
             cerr << "px\n";
             {
@@ -1166,16 +1203,19 @@ void US_GridControl_T::write_experiment()
         if (analysis_type == "2DSA_RA" ||
 	    analysis_type == "2DSA_MW_RA")
 	{
-	    ds << SA2D_Params.simpoints;
-	    ds << SA2D_Params.band_volume;
-	    ds << SA2D_Params.radial_grid;
-	    ds << SA2D_Params.moving_grid;
-	    ds << (unsigned int)simulation_parameters_full_text.size();
-	    for (i = 0; i < simulation_parameters_full_text.size(); i++) 
+	  for (unsigned int i = 0; i < experiment.size(); i++)
+	  {
+	    ds << simparams_extra[i].simpoints;
+	    ds << simparams_extra[i].band_volume;
+	    ds << simparams_extra[i].radial_grid;
+	    ds << simparams_extra[i].moving_grid;
+	    ds << (unsigned int)simparams_extra[i].simulation_parameters_full_text.size();
+	    for (unsigned int j = 0; j < simparams_extra[i].simulation_parameters_full_text.size(); j++) 
 	    {
-		ds << simulation_parameters_full_text[i];
-		cout << simulation_parameters_full_text[i] << "\n";
+		ds << simparams_extra[i].simulation_parameters_full_text[j];
+		cout << simparams_extra[i].simulation_parameters_full_text[j] << "\n";
 	    }
+	  }
 	}
         if(analysis_type == "GA")
         {
@@ -1251,16 +1291,19 @@ void US_GridControl_T::write_experiment()
         if (analysis_type == "GA_RA" ||
 	    analysis_type == "GA_MW_RA")
 	{
-	    ds << GA_Params.simpoints;
-	    ds << GA_Params.band_volume;
-	    ds << GA_Params.radial_grid;
-	    ds << GA_Params.moving_grid;
-	    ds << (unsigned int)simulation_parameters_full_text.size();
-	    for (i = 0; i < simulation_parameters_full_text.size(); i++) 
+	  for (unsigned int i = 0; i < experiment.size(); i++)
+	  {
+	    ds << simparams_extra[i].simpoints;
+	    ds << simparams_extra[i].band_volume;
+	    ds << simparams_extra[i].radial_grid;
+	    ds << simparams_extra[i].moving_grid;
+	    ds << (unsigned int)simparams_extra[i].simulation_parameters_full_text.size();
+	    for (unsigned int j = 0; j < simparams_extra[i].simulation_parameters_full_text.size(); j++) 
 	    {
-		ds << simulation_parameters_full_text[i];
-		cout << simulation_parameters_full_text[i] << "\n";
+		ds << simparams_extra[i].simulation_parameters_full_text[j];
+		cout << simparams_extra[i].simulation_parameters_full_text[j] << "\n";
 	    }
+	  }
 	}
         if(analysis_type == "GA_SC")
         {
@@ -1770,7 +1813,7 @@ void US_GridControl_T::write_experiment()
         // be sent to each individual cluster.
         if(gridopt != "no")
         {
-	    system(syscall.ascii());
+	  system(syscall.ascii());
         }
         else
         {

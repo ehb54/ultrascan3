@@ -32,10 +32,20 @@ struct sa2d_data
 	bool use_iterative;
 	unsigned int max_iterations;
 	unsigned int monte_carlo;
+	// unsigned int simpoints;
+	// double band_volume;
+	// unsigned int radial_grid;
+	// int moving_grid;
+};
+
+struct SimparamsExtra
+{
         unsigned int simpoints;
         double band_volume;
         unsigned int radial_grid;
-        int moving_grid;
+	int moving_grid;
+	QString simulation_parameters_file_name;
+        vector <QString> simulation_parameters_full_text;
 };
 
 class US_EXTERN US_SA2D_GridControl : public QDialog

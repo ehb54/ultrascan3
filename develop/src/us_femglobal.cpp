@@ -1,4 +1,8 @@
 #include "../include/us_femglobal.h"
+#if defined(USE_MPI)
+# include "../include/us_version.h"
+#endif
+
 #include <qregexp.h>
 
 #if defined(USE_MPI)

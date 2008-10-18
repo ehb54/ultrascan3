@@ -39,12 +39,20 @@ vector<struct mfem_data> last_residuals;
 static vector<struct mfem_data> save_gaussians;
 
 SimulationParameters simulation_parameters;
+static vector <SimulationParameters> simulation_parameters_vec;
+static vector <SimulationParameters> org_simulation_parameters_vec;
+static vector <double> exp_concentrations;
+static bool use_multi_exp;
 ModelSystem model_system;
 ModelSystemConstraints model_system_constraints;
+
+static bool fitdiffs;
 
 static ModelSystem model_system_1comp;
 ModelSystem use_model_system;
 SimulationParameters use_simulation_parameters;
+
+static bool multi_experiment_flag;
 
 static void setup_model_system_1comp() {
     unsigned int i;
@@ -91,6 +99,21 @@ static void setup_model_system_1comp() {
     printf("setup cvs %u\n", (unsigned int)model_system_1comp.component_vector.size()); fflush(stdout);
 }
     
+static double conc_sum(Simulation_values *sv) {
+  double conc = 0.0;
+  for (unsigned int i = 0; i < sv->solutes.size(); i++) {
+    conc += sv->solutes[i].c;
+  }
+  return conc;
+}
+
+static void sv_conc_rescale(Simulation_values *sv, unsigned int e) {
+  if (use_multi_exp) {
+    for (unsigned int i = 0; i < sv->solutes.size(); i++) {
+      sv->solutes[i].c *= exp_concentrations[e];
+    }
+  }
+}
 
 // only define one of these _TIMING!
 #define GLOBAL_JOB_TIMING
@@ -127,6 +150,7 @@ static void clear_data(mfem_data *d)
 US_fe_nnls_t::US_fe_nnls_t()
 // US_fe_nnls_t::US_fe_nnls_t(QWidget * p, const char *name):QWidget(p, name)
 {
+	fitdiffs = false;
 }
 
 US_fe_nnls_t::~US_fe_nnls_t()
@@ -606,8 +630,12 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment,
 	unsigned int e;
 	unsigned int ti_noise_offset = 0;
 	unsigned int ri_noise_offset = 0;
+	Simulation_values sav_sv = sv;
 	for (e = 0; e < experiment.size(); e++)
 	{
+		sv = sav_sv;
+		sv_conc_rescale(&sv, e);
+		
 		QString cellwave;
 		cellwave = cellwave.sprintf(".%d%d", experiment[e].cell + 1, experiment[e].wavelength + 1);
 		QString filenametags;
@@ -975,6 +1003,8 @@ US_fe_nnls_t::init_run(const QString & data_file,
 		cout << "regularization: " << regularization << "\n";
 		GA_Params.regularization = regularization;
 		ds >> count1;
+		simparams_extra.resize(count1);
+		simulation_parameters_vec.resize(count1);
 		cout << "count1: " << count1 << "\n";
 		//	cout << "sizeof(count1): " << sizeof(count1) << "\n";
 		//	cout << "sizeof(unsigned int): " << sizeof(unsigned int) << "\n";
@@ -1009,16 +1039,17 @@ US_fe_nnls_t::init_run(const QString & data_file,
 			}
 			if (analysis_type == "2DSA_RA")
 			{
-			    ds >> SA2D_Params.simpoints;
-			    ds >> SA2D_Params.band_volume;
-			    ds >> SA2D_Params.radial_grid;
-			    ds >> SA2D_Params.moving_grid;
+			  for (unsigned int e = 0; e < simparams_extra.size(); e++) {
+			    ds >> simparams_extra[e].simpoints;
+			    ds >> simparams_extra[e].band_volume;
+			    ds >> simparams_extra[e].radial_grid;
+			    ds >> simparams_extra[e].moving_grid;
 			    if (!myrank)
 			    {
-				cout << "Simpoints:" << SA2D_Params.simpoints << endl;
-				cout << "Band volume:" << SA2D_Params.band_volume << endl;
-				cout << "Radial grid:" << SA2D_Params.radial_grid << endl;
-				cout << "Moving grid:" << SA2D_Params.moving_grid << endl;
+				cout << "Simpoints:" << simparams_extra[e].simpoints << endl;
+				cout << "Band volume:" << simparams_extra[e].band_volume << endl;
+				cout << "Radial grid:" << simparams_extra[e].radial_grid << endl;
+				cout << "Moving grid:" << simparams_extra[e].moving_grid << endl;
 				fflush(stdout);
 			    }
 			    {
@@ -1026,7 +1057,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				QString qs_tmp;
 				simulation_parameters_full_text.clear();
 				ds >> i;
-				printf("------simulation_parameters--%d--lines-----\n", i);
+				printf("------simulation_parameters-%d-%d--lines-----\n", e, i);
 				fflush(stdout);
 				for (j = 0; j < i; j++) 
 				{
@@ -1038,10 +1069,13 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				    qs_tmp.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
 				    simulation_parameters_full_text.push_back(qs_tmp);
 				}
+				simparams_extra[e].simulation_parameters_full_text = simulation_parameters_full_text;
 				US_FemGlobal us_femglobal;
 				us_femglobal.read_simulationParameters(&simulation_parameters, simulation_parameters_full_text);
-				us_femglobal.write_simulationParameters(&simulation_parameters, "tmp.simulation_parameters");
+				us_femglobal.write_simulationParameters(&simulation_parameters, QString("tmp-e%1.simulation_parameters").arg(e));
+				simulation_parameters_vec[e] = simulation_parameters;
 			    }
+			  } // e
 			}
 		}
 		if (analysis_type == "2DSA_MW" ||
@@ -1076,16 +1110,17 @@ US_fe_nnls_t::init_run(const QString & data_file,
 			}
 			if (analysis_type == "2DSA_MW_RA")
 			{
-			    ds >> SA2D_Params.simpoints;
-			    ds >> SA2D_Params.band_volume;
-			    ds >> SA2D_Params.radial_grid;
-			    ds >> SA2D_Params.moving_grid;
+			  for (unsigned int e = 0; e < simparams_extra.size(); e++) {
+			    ds >> simparams_extra[e].simpoints;
+			    ds >> simparams_extra[e].band_volume;
+			    ds >> simparams_extra[e].radial_grid;
+			    ds >> simparams_extra[e].moving_grid;
 			    if (!myrank)
 			    {
-				cout << "Simpoints:" << SA2D_Params.simpoints << endl;
-				cout << "Band volume:" << SA2D_Params.band_volume << endl;
-				cout << "Radial grid:" << SA2D_Params.radial_grid << endl;
-				cout << "Moving grid:" << SA2D_Params.moving_grid << endl;
+				cout << "Simpoints:" << simparams_extra[e].simpoints << endl;
+				cout << "Band volume:" << simparams_extra[e].band_volume << endl;
+				cout << "Radial grid:" << simparams_extra[e].radial_grid << endl;
+				cout << "Moving grid:" << simparams_extra[e].moving_grid << endl;
 				fflush(stdout);
 			    }
 			    {
@@ -1093,7 +1128,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				QString qs_tmp;
 				simulation_parameters_full_text.clear();
 				ds >> i;
-				printf("------simulation_parameters--%d--lines-----\n", i);
+				printf("------simulation_parameters-%d-%d--lines-----\n", e, i);
 				fflush(stdout);
 				for (j = 0; j < i; j++) 
 				{
@@ -1105,10 +1140,13 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				    qs_tmp.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
 				    simulation_parameters_full_text.push_back(qs_tmp);
 				}
+				simparams_extra[e].simulation_parameters_full_text = simulation_parameters_full_text;
 				US_FemGlobal us_femglobal;
 				us_femglobal.read_simulationParameters(&simulation_parameters, simulation_parameters_full_text);
-				us_femglobal.write_simulationParameters(&simulation_parameters, "tmp.simulation_parameters");
+				us_femglobal.write_simulationParameters(&simulation_parameters, QString("tmp-e%1.simulation_parameters").arg(e));
+				simulation_parameters_vec[e] = simulation_parameters;
 			    }
+			  } // e
 			}
 		}
 		if (analysis_type == "GA" ||
@@ -1204,16 +1242,17 @@ US_fe_nnls_t::init_run(const QString & data_file,
 			}
 			if (analysis_type == "GA_RA")
 			{
-			    ds >> GA_Params.simpoints;
-			    ds >> GA_Params.band_volume;
-			    ds >> GA_Params.radial_grid;
-			    ds >> GA_Params.moving_grid;
+			  for (unsigned int e = 0; e < simparams_extra.size(); e++) {
+			    ds >> simparams_extra[e].simpoints;
+			    ds >> simparams_extra[e].band_volume;
+			    ds >> simparams_extra[e].radial_grid;
+			    ds >> simparams_extra[e].moving_grid;
 			    if (!myrank)
 			    {
-				cout << "Simpoints:" << GA_Params.simpoints << endl;
-				cout << "Band volume:" << GA_Params.band_volume << endl;
-				cout << "Radial grid:" << GA_Params.radial_grid << endl;
-				cout << "Moving grid:" << GA_Params.moving_grid << endl;
+				cout << "Simpoints:" << simparams_extra[e].simpoints << endl;
+				cout << "Band volume:" << simparams_extra[e].band_volume << endl;
+				cout << "Radial grid:" << simparams_extra[e].radial_grid << endl;
+				cout << "Moving grid:" << simparams_extra[e].moving_grid << endl;
 				fflush(stdout);
 			    }
 			    {
@@ -1221,7 +1260,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				QString qs_tmp;
 				simulation_parameters_full_text.clear();
 				ds >> i;
-				printf("------simulation_parameters--%d--lines-----\n", i);
+				printf("------simulation_parameters-%d-%d--lines-----\n", e, i);
 				fflush(stdout);
 				for (j = 0; j < i; j++) 
 				{
@@ -1233,10 +1272,13 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				    qs_tmp.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
 				    simulation_parameters_full_text.push_back(qs_tmp);
 				}
+				simparams_extra[e].simulation_parameters_full_text = simulation_parameters_full_text;
 				US_FemGlobal us_femglobal;
 				us_femglobal.read_simulationParameters(&simulation_parameters, simulation_parameters_full_text);
-				us_femglobal.write_simulationParameters(&simulation_parameters, "tmp.simulation_parameters");
+				us_femglobal.write_simulationParameters(&simulation_parameters, QString("tmp-e%1.simulation_parameters").arg(e));
+				simulation_parameters_vec[e] = simulation_parameters;
 			    }
+			  } // e
 			}
 		}
 		if (analysis_type == "GA_MW" ||
@@ -1348,16 +1390,17 @@ US_fe_nnls_t::init_run(const QString & data_file,
 			}
 			if (analysis_type == "GA_MW_RA")
 			{
-			    ds >> GA_Params.simpoints;
-			    ds >> GA_Params.band_volume;
-			    ds >> GA_Params.radial_grid;
-			    ds >> GA_Params.moving_grid;
+			  for (unsigned int e = 0; e < simparams_extra.size(); e++) {
+			    ds >> simparams_extra[e].simpoints;
+			    ds >> simparams_extra[e].band_volume;
+			    ds >> simparams_extra[e].radial_grid;
+			    ds >> simparams_extra[e].moving_grid;
 			    if (!myrank)
 			    {
-				cout << "Simpoints:" << GA_Params.simpoints << endl;
-				cout << "Band volume:" << GA_Params.band_volume << endl;
-				cout << "Radial grid:" << GA_Params.radial_grid << endl;
-				cout << "Moving grid:" << GA_Params.moving_grid << endl;
+				cout << "Simpoints:" << simparams_extra[e].simpoints << endl;
+				cout << "Band volume:" << simparams_extra[e].band_volume << endl;
+				cout << "Radial grid:" << simparams_extra[e].radial_grid << endl;
+				cout << "Moving grid:" << simparams_extra[e].moving_grid << endl;
 				fflush(stdout);
 			    }
 			    {
@@ -1365,7 +1408,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				QString qs_tmp;
 				simulation_parameters_full_text.clear();
 				ds >> i;
-				printf("------simulation_parameters--%d--lines-----\n", i);
+				printf("------simulation_parameters-%d-%d--lines-----\n", e, i);
 				fflush(stdout);
 				for (j = 0; j < i; j++) 
 				{
@@ -1377,10 +1420,13 @@ US_fe_nnls_t::init_run(const QString & data_file,
 				    qs_tmp.replace(QRegExp("\\s+#.*"), ""); // removes everything from the whitespace before the first # to the end of the line
 				    simulation_parameters_full_text.push_back(qs_tmp);
 				}
+				simparams_extra[e].simulation_parameters_full_text = simulation_parameters_full_text;
 				US_FemGlobal us_femglobal;
 				us_femglobal.read_simulationParameters(&simulation_parameters, simulation_parameters_full_text);
-				us_femglobal.write_simulationParameters(&simulation_parameters, "tmp.simulation_parameters");
+				us_femglobal.write_simulationParameters(&simulation_parameters, QString("tmp-e%1.simulation_parameters").arg(e));
+				simulation_parameters_vec[e] = simulation_parameters;
 			    }
+			  } // e
 			}
 		}
 		if (analysis_type == "GA_SC")
@@ -1458,6 +1504,8 @@ US_fe_nnls_t::init_run(const QString & data_file,
 			    us_femglobal.read_simulationParameters(&simulation_parameters, simulation_parameters_full_text);
 			    us_femglobal.write_constraints(&model_system, &model_system_constraints, "tmp.constraints");
 			    us_femglobal.write_simulationParameters(&simulation_parameters, "tmp.simulation_parameters");
+			    // no multi-e sc
+			    simulation_parameters_vec[0] = simulation_parameters;
 			}
 			// ok, now setup the buckets & resolution of the buckets
 			{
@@ -2303,11 +2351,12 @@ int US_fe_nnls_t::run(int status)
 						if (analysis_type == "GA_RA" ||
 						    analysis_type == "GA_MW_RA")
 						{
-							ts << "Simpoints:                   " << GA_Params.simpoints << endl;
-							ts << "Band volume                  " << GA_Params.band_volume << endl;
-							ts << "Radial grid:                 " << GA_Params.radial_grid << endl;
-							ts << "Time grid  :                 " << GA_Params.moving_grid << endl;
-
+						  for (unsigned int e = 0; e < simparams_extra.size(); e++) {
+						    ts << QString("Simulation points exp # %1:  ").arg(e+1) << simparams_extra[e].simpoints << endl;
+						    ts << QString("Band volume for exp # %1:    ").arg(e+1) << simparams_extra[e].band_volume << endl;
+						    ts << QString("Radial grid for exp # %1:    ").arg(e+1) << simparams_extra[e].radial_grid << endl;
+						    ts << QString("Time grid for exp # %1:      ").arg(e+1) << simparams_extra[e].moving_grid << endl;
+						  }
 						}
 						ts << "Population (Genes per deme): " << GA_Params.genes << endl;
 						ts << "Demes:                       " << npes - 1 << endl;
@@ -2568,9 +2617,23 @@ int US_fe_nnls_t::run(int status)
 		MPI_Finalize();
 		exit(0);
 	}
+	// ----------------------------------------------- end of GA -------------------------------------------------
+	// --------------------------------------------- start of 2DSA -----------------------------------------------
 
+	// --------- multiple experiment data fakeout --------
+	int multi_experiment_count = (int) experiment.size();
+	multi_experiment_flag = false;
+	use_multi_exp = false;  // the global control flag
+	if (multi_experiment_count > 1) {
+	  use_multi_exp = true;
+	}
+	int use_multi_experiment;
+	vector <struct mfem_data> save_multi_experiment = experiment;
+	exp_concentrations.resize(experiment.size());
+	org_simulation_parameters_vec = simulation_parameters_vec;
 	if (!myrank)
 	{ // master
+
 		cout << "email " << email << " exp " << experiment[0].id << endl;
 		fflush(stdout);
 		vector <struct gene> org_solutions = solutions;
@@ -2585,8 +2648,81 @@ int US_fe_nnls_t::run(int status)
 			printf("0: float_mc_edge_inc %f\n", float_mc_edge_inc);
 			fflush(stdout);
 		}
-		for (this_monte_carlo = 0; this_monte_carlo < monte_carlo_iterations; this_monte_carlo++)
+		for (this_monte_carlo = 0; this_monte_carlo < monte_carlo_iterations; multi_experiment_flag ? 0 : this_monte_carlo++)
 		{
+			if (use_multi_exp)
+			{
+				if (multi_experiment_count) 
+				{
+				  use_multi_experiment = (int)save_multi_experiment.size() - multi_experiment_count;
+				  experiment.clear();
+				  experiment.push_back(save_multi_experiment[use_multi_experiment]);
+				  multi_experiment_flag = true;
+				  printf("%d: master running multiple experiment %d mc %d\n",
+					 myrank, use_multi_experiment, this_monte_carlo); fflush(stdout);
+				  simulation_parameters_vec.clear();
+				  printf("org sim vec size %u\n", org_simulation_parameters_vec.size()); fflush(stdout);
+				  simulation_parameters_vec.push_back(org_simulation_parameters_vec[use_multi_experiment]);
+				} else {
+				  if (multi_experiment_flag) {
+				    bool any_zeros = false;
+				    printf("%d: entering pre barrier mpi broadcast exp_concentration stuff presize %u\n", myrank, exp_concentrations.size()); fflush(stdout);
+				    MPI_Barrier(MPI_COMM_WORLD);
+				    printf("%d: mpi broadcast exp_concentration stuff presize %u\n", myrank, exp_concentrations.size()); fflush(stdout);
+				    MPI_Bcast(&exp_concentrations[0], save_multi_experiment.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+				    printf("%d: done mpi broadcast exp_concentration stuff\n", myrank); fflush(stdout);
+				    printf("%d: entering post barrier mpi broadcast exp_concentration stuff presize %u\n", myrank, exp_concentrations.size()); fflush(stdout);
+				    // MPI_Barrier(MPI_COMM_WORLD);
+				    printf("%d: leaving post barrier mpi broadcast exp_concentration stuff presize %u\n", myrank, exp_concentrations.size()); fflush(stdout);
+				    for (unsigned int i = 0; i < exp_concentrations.size(); i++) {
+				      if (exp_concentrations[i] <= 0) {
+					any_zeros = true;
+				      }
+				      printf("%d: conc %u %f\n", myrank, i, exp_concentrations[i]); fflush(stdout);
+				    }
+				    if (any_zeros) {
+				      cout << "Zero concentration!\n"; fflush(stdout);
+				      cerr << "Zero concentration!\n"; fflush(stdout);
+				      MPI_Abort(MPI_COMM_WORLD, -107);
+				    }
+				    experiment = save_multi_experiment;
+#if defined(DEBUG_SCALING)
+				    for(unsigned int e = 0; e < experiment.size(); e++) {
+				      printf("%d: before rescaling~~ (scaling factor) %f exp %u scan 10 conc 10 %f\n", 
+					     myrank,
+					     e,
+					     exp_concentrations[e],
+					     experiment[e].scan[10].conc[10]);
+				    }
+#endif
+				    for (unsigned int e = 0; e < experiment.size(); e++)
+				    {
+				      for (unsigned int i = 0; i < experiment[e].scan.size(); i++)
+				      {
+					for (unsigned int j = 0; j < experiment[e].radius.size(); j++)
+					{
+					  // rescale concentrations
+					  experiment[e].scan[i].conc[j] /= exp_concentrations[e];
+					}
+				      }
+				    }
+#if defined(DEBUG_SCALING)
+				    for(unsigned int e = 0; e < experiment.size(); e++) {
+				      printf("%d: after rescaling~~ (scaling factor) %f exp %u scan 10 conc 10 %f\n", 
+					     myrank,
+					     e,
+					     exp_concentrations[e],
+					     experiment[e].scan[10].conc[10]);
+				    }
+#endif
+				  }
+				  simulation_parameters_vec = org_simulation_parameters_vec;
+				  multi_experiment_flag = false;
+				  printf("%d: master back to regular experiment %d mc %d\n",
+					 myrank, multi_experiment_count, this_monte_carlo);
+				}
+			}
+
 			if (float_mc_edge_max && (monte_carlo_iterations > 1))
 			{
 				for (unsigned int i = 0; i < org_solutions.size(); i++)
@@ -3504,9 +3640,87 @@ int US_fe_nnls_t::run(int status)
 
 			printf("master finishing up\n");
 			endDateTime = QDateTime::currentDateTime();
-			QFile f("email_text_" + startDateTime.toString("yyMMddhhmmss"));
-			if (this_monte_carlo == 0)
-			{
+			if (multi_experiment_flag) {
+			  printf("%d: end of multi_experiment_run\n", myrank); fflush(stdout);
+			  // compute the concentration
+			  if (union_results)
+			  { 
+				if (fit_meniscus)
+				{
+					exp_concentrations[use_multi_experiment] = 0.0;
+					for (j = 0; j < meniscus_results.size(); j++)
+					{
+						Simulation_values sv = calc_residuals(experiment, meniscus_results[j].solutes, meniscus_meniscus[j], 0);
+						if (sv.solutes.size() != meniscus_results[j].solutes.size())
+						{
+							printf("!!<fi>final mismatch! writing size %u\n", (unsigned int)sv.solutes.size());
+							fflush(stdout);
+						}
+						if (regularization > 0e0)
+						{
+							sv = regularize(sv, meniscus_meniscus[j]);
+						}
+						printf("exp %d meniscus ofs %f conc %f\n", use_multi_experiment, meniscus_meniscus[j], conc_sum(&sv)); fflush(stdout);
+						exp_concentrations[use_multi_experiment] += conc_sum(&sv);
+					}
+					exp_concentrations[use_multi_experiment] /= meniscus_results.size();
+				}
+				else
+				{
+					Simulation_values sv = calc_residuals(experiment, unions[unions.size()-1].solutes, 0e0, 0);
+					if (sv.solutes.size() != unions[unions.size()-1].solutes.size())
+					{
+						printf("!!final mismatch! writing size %u\n", (unsigned int)sv.solutes.size());
+						fflush(stdout);
+					}
+					if (regularization > 0e0)
+					{
+						sv = regularize(sv, 0e0);
+					}
+					printf("exp %d conc %.3f\n", use_multi_experiment, conc_sum(&sv)); fflush(stdout);
+					exp_concentrations[use_multi_experiment] = conc_sum(&sv);
+				}
+			  }
+			  else
+			  {
+				unsigned int j;
+				if (fit_meniscus)
+				{
+					exp_concentrations[use_multi_experiment] = 0.0;
+					for (j = 0; j < meniscus_results.size(); j++)
+					{
+						Simulation_values sv = meniscus_results[j];
+						if (regularization > 0e0)
+						{
+							sv = regularize(sv, meniscus_meniscus[j]);
+						}
+						exp_concentrations[use_multi_experiment] += conc_sum(&sv);
+					}
+					exp_concentrations[use_multi_experiment] /= meniscus_results.size();
+				}
+				else
+				{
+					exp_concentrations[use_multi_experiment] = 0.0;
+					for (j = 0; j < solutions.size(); j++)
+					{
+						Simulation_values sv = results[j];
+						if (regularization > 0e0)
+						{
+							sv = regularize(sv, 0);
+						}
+						exp_concentrations[use_multi_experiment] += conc_sum(&sv);
+					}
+				}
+			  }
+			  printf("final conc exp %d %f\n", use_multi_experiment, exp_concentrations[use_multi_experiment]); fflush(stdout);
+			  printf("%d: entering pre quit barrier\n", myrank); fflush(stdout);
+			  MPI_Barrier(MPI_COMM_WORLD);
+			  printf("%d: leaving pre quit barrier\n", myrank); fflush(stdout);
+			  multi_experiment_count--;
+			} else {
+			  QFile f("email_text_" + startDateTime.toString("yyMMddhhmmss"));
+			  if (this_monte_carlo == 0)
+			  {
 				if (f.open(IO_WriteOnly))
 				{
 					QTextStream ts(&f);
@@ -3534,15 +3748,6 @@ int US_fe_nnls_t::run(int status)
 						ts << "MW maximum:                 " << SA2D_Params.mw_max << endl;
 						ts << "Largest oligomer            " << SA2D_Params.max_mer << endl;
 						ts << "grid resolution:            " << SA2D_Params.grid_resolution << endl;
-					}
-					if (analysis_type == "2DSA_RA" ||
-					    analysis_type == "2DSA_MW_RA")
-					{
-					    ts << "Simulation points:          " << SA2D_Params.simpoints << endl;
-					    ts << "Band volume                 " << SA2D_Params.band_volume << endl;
-					    ts << "Radial grid:                " << SA2D_Params.radial_grid << endl;
-					    ts << "Time grid:                  " << SA2D_Params.moving_grid << endl;
-					    
 					}
 
 					ts << "f/f0 minimum:               " << SA2D_Params.ff0_min << endl;
@@ -3577,13 +3782,32 @@ int US_fe_nnls_t::run(int status)
 						ts << "Float Mc f/f0 edge maximum: " << float_mc_edge_max << endl;
 					}
 					ts << endl;
+
+					if (analysis_type == "2DSA_RA" ||
+					    analysis_type == "2DSA_MW_RA")
+					{
+					  for (unsigned int e = 0; e < simparams_extra.size(); e++) {
+					    ts << QString("Simulation points exp # %1:  ").arg(e+1) << simparams_extra[e].simpoints << endl;
+					    ts << QString("Band volume for exp # %1:    ").arg(e+1) << simparams_extra[e].band_volume << endl;
+					    ts << QString("Radial grid for exp # %1:    ").arg(e+1) << simparams_extra[e].radial_grid << endl;
+					    ts << QString("Time grid for exp # %1:      ").arg(e+1) << simparams_extra[e].moving_grid << endl;
+					  }
+					  ts << endl;
+					}
+
+					for (unsigned int i = 0; i < exp_concentrations.size(); i++) {
+						ts << QString("Experiment %1 total conc:    %2\n").
+						  arg(i + 1).arg(exp_concentrations[i]);
+					}
+					ts << endl;
+
 					ts << "The results of your " + analysis_type + " analysis involved datasets:\n\n";
 				}
 				f.close();
-			}
+			  }
 
-			if (union_results)
-			{ // write the unions
+			  if (union_results)
+			  { // write the unions
 				if (fit_meniscus)
 				{
 					for (j = 0; j < meniscus_results.size(); j++)
@@ -3604,6 +3828,7 @@ int US_fe_nnls_t::run(int status)
 						}
 						printf("buffer results %u\n", j);
 						fflush(stdout);
+						// sv_conc_rescale(&sv, 0);
 						BufferResults(experiment, sv, QString("_m%1").arg(j), meniscus_meniscus[j], meniscus_iterations[j]);
 						printf("results buffered %u\n", j);
 						fflush(stdout);
@@ -3623,13 +3848,14 @@ int US_fe_nnls_t::run(int status)
 					{
 						sv = regularize(sv, 0e0);
 					}
+					// sv_conc_rescale(&sv, 0);
 					BufferResults(experiment, sv, "", 0, iterations);
 					printf("results buffered\n");
 					fflush(stdout);
 				}
-			}
-			else
-			{
+			  }
+			  else
+			  {
 				unsigned int j;
 				if (fit_meniscus)
 				{
@@ -3640,6 +3866,7 @@ int US_fe_nnls_t::run(int status)
 						{
 							sv = regularize(sv, meniscus_meniscus[j]);
 						}
+						// sv_conc_rescale(&sv, 0);
 						BufferResults(experiment, sv, QString("_m%1").arg(j), meniscus_meniscus[j], meniscus_iterations[j]);
 					}
 				}
@@ -3652,13 +3879,14 @@ int US_fe_nnls_t::run(int status)
 						{
 							sv = regularize(sv, 0);
 						}
+						// sv_conc_rescale(&sv, 0);
 						BufferResults(experiment, sv, QString("%1").arg(j + 1), 0, 1);
 					}
 				}
-			}
-			if (this_monte_carlo == monte_carlo_iterations - 1)
-			{
-				if (f.open(IO_WriteOnly | IO_Append))
+			  }
+			  if (this_monte_carlo == monte_carlo_iterations - 1)
+			  {
+			    if (f.open(IO_WriteOnly | IO_Append))
 				{
 					QTextStream ts(&f);
 					ts << "\nsubmitted at " + startDateTime.toString("hh:mm:ss") + " on "
@@ -3666,19 +3894,19 @@ int US_fe_nnls_t::run(int status)
 					<< "The results are attached.\n\n";
 				}
 				f.close();
-			}
+			  }
 
-			if (monte_carlo_iterations > 1 && !this_monte_carlo)
-			{
+			  if (monte_carlo_iterations > 1 && !this_monte_carlo)
+			  {
 				printf("0: get_gaussian_means for monte carlo\n");
 				fflush(stdout);
 				save_gaussians = get_gaussian_means(last_residuals);
 				org_experiment = experiment;
-			}
+			  }
 
 			// email results
-			if (this_monte_carlo == monte_carlo_iterations - 1)
-			{
+			  if (this_monte_carlo == monte_carlo_iterations - 1)
+			  {
 #ifdef BIN64
 				QString email_cmd =
 					"perl $ULTRASCAN/bin64/us_email.pl email_list_" + startDateTime.toString("yyMMddhhmmss") +
@@ -3726,15 +3954,81 @@ int US_fe_nnls_t::run(int status)
 				fflush(stdout);
 #endif
 
-			}
-		}
+			  }
+			} // end of !multi_experiment_flag
+
+		} //  for (this_monte_carlo = 0; this_monte_carlo < monte_carlo_iterations; multi_experiment_flag ? 0 : this_monte_carlo++)
 		printf("0: max rss %ld pages\n", maxrss);
 		printf("master exiting up\n");
 	}
 	else
 	{ // worker
-		for (this_monte_carlo = 0; this_monte_carlo < monte_carlo_iterations; this_monte_carlo++)
+	  for (this_monte_carlo = 0; this_monte_carlo < monte_carlo_iterations; multi_experiment_flag ? 0 : this_monte_carlo++)
 		{
+			if (use_multi_exp)
+			{
+				if (use_multi_exp && multi_experiment_count) 
+				{
+				  use_multi_experiment = (int)save_multi_experiment.size() - multi_experiment_count;
+				  experiment.clear();
+				  experiment.push_back(save_multi_experiment[use_multi_experiment]);
+				  multi_experiment_flag = true;
+				  printf("%d: worker running multiple experiment %d mc %d\n",
+				       myrank, use_multi_experiment, this_monte_carlo);
+				  simulation_parameters_vec.clear();
+				  simulation_parameters_vec.push_back(org_simulation_parameters_vec[use_multi_experiment]);
+				  multi_experiment_count--;
+				} else {
+				  if (multi_experiment_flag) {
+				    printf("%d: entering pre barrier mpi broadcast exp_concentration stuff presize %u\n", myrank, exp_concentrations.size()); fflush(stdout);
+				    MPI_Barrier(MPI_COMM_WORLD);
+				    printf("%d: mpi broadcast exp_concentration stuff presize %u\n", myrank, exp_concentrations.size()); fflush(stdout);
+				    MPI_Bcast(&exp_concentrations[0], save_multi_experiment.size(), MPI_DOUBLE, 0, MPI_COMM_WORLD);
+				    printf("%d: done mpi broadcast exp_concentration stuff\n", myrank); fflush(stdout);
+				    printf("%d: entering post barrier mpi broadcast exp_concentration stuff presize %u\n", myrank, exp_concentrations.size()); fflush(stdout);
+				    // MPI_Barrier(MPI_COMM_WORLD);
+				    printf("%d: leaving post barrier mpi broadcast exp_concentration stuff presize %u\n", myrank, exp_concentrations.size()); fflush(stdout);
+				    for (unsigned int i = 0; i < exp_concentrations.size(); i++) {
+				      printf("%d: conc %u %f\n", myrank, i, exp_concentrations[i]); fflush(stdout);
+				    }
+				    experiment = save_multi_experiment;
+#if defined(DEBUG_SCALING)
+				    for(unsigned int e = 0; e < experiment.size(); e++) {
+				      printf("%d: before rescaling~~ (scaling factor) %f exp %u scan 10 conc 10 %f\n", 
+					     myrank,
+					     e,
+					     exp_concentrations[e],
+					     experiment[e].scan[10].conc[10]);
+				    }
+#endif
+				    for (unsigned int e = 0; e < experiment.size(); e++)
+				    {
+				      for (unsigned int i = 0; i < experiment[e].scan.size(); i++)
+				      {
+					for (unsigned int j = 0; j < experiment[e].radius.size(); j++)
+					{
+					  // rescale concentrations
+					  experiment[e].scan[i].conc[j] /= exp_concentrations[e];
+					}
+				      }
+				    }
+#if defined(DEBUG_SCALING)
+				    for(unsigned int e = 0; e < experiment.size(); e++) {
+				      printf("%d: after rescaling~~ (scaling factor) %f exp %u scan 10 conc 10 %f\n", 
+					     myrank,
+					     e,
+					     exp_concentrations[e],
+					     experiment[e].scan[10].conc[10]);
+				    }
+#endif
+				  }
+				  simulation_parameters_vec = org_simulation_parameters_vec;
+				  multi_experiment_flag = false;
+				  printf("%d: worker back to regular experiment %d mc %d\n",
+					 myrank, multi_experiment_count, this_monte_carlo);
+				}
+			}
+
 			if (this_monte_carlo)
 			{
 				// receive the monte carlo data
@@ -3856,7 +4150,13 @@ int US_fe_nnls_t::run(int status)
 					break;
 				}
 			}
-		}
+			if(multi_experiment_flag) {
+			  printf("%d: end of multi_experiment_run\n", myrank); fflush(stdout);
+			  printf("%d: entering pre quit barrier\n", myrank); fflush(stdout);
+			  MPI_Barrier(MPI_COMM_WORLD);
+			  printf("%d: leaving pre quit barrier\n", myrank); fflush(stdout);
+			}
+		} //  for (this_monte_carlo = 0; this_monte_carlo < monte_carlo_iterations; multi_experiment_flag ? 0 : this_monte_carlo++)
 	}
 	printf("%d: finalizing\n", myrank);
 	fflush(stdout);
@@ -3872,6 +4172,15 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 		int return_all_solutes)
 {
 	//	printf("%d: calc_residuals\n", myrank); fflush(stdout);
+#if defined(DEBUG_SCALING)
+	for(unsigned int e = 0; e < experiment.size(); e++) {
+	  printf("%d: in calc residuals~~  (scaling factor) %f exp %u scan 10 conc 10 %f\n", 
+		 myrank,
+		 exp_concentrations[e],
+		 e,
+		 experiment[e].scan[10].conc[10]);
+	}
+#endif
 	Simulation_values sv;
 
 #if defined(JOB_TIMING_CR)
@@ -3924,6 +4233,13 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 			ti_noise_size += experiment[j].radius.size();
 			ri_noise_size += experiment[j].scan.size();
 		}
+		if (fitdiffs && !(fit_tinoise || fit_rinoise)) 
+		{
+			for (j = 0; j < experiment.size(); j++)
+			{
+				i += experiment[j].radius.size() * (experiment[j].scan.size() - 1);
+			}
+		}
 		unsigned int total_points_size = i;
 
 		j = solutes.size();
@@ -3975,11 +4291,24 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 			{
 				for (j = 0; j < experiment[e].radius.size(); j++)
 				{
-					// populate the A matrix for the NNLS routine with the model
+					// populate the b vector for the NNLS routine with the model
 					// function:
 					nnls_b[count] = experiment[e].scan[i].conc[j];
 					count++;
 				}
+			}
+			if (fitdiffs && !(fit_tinoise || fit_rinoise)) 
+			{
+				for (i = 1; i < experiment[e].scan.size(); i++)
+				{
+					for (j = 0; j < experiment[e].radius.size(); j++)
+					{
+						// populate the b vector for the NNLS routine with the model
+						// function:
+						nnls_b[count] = experiment[e].scan[i].conc[j] - experiment[e].scan[i - 1].conc[j];
+						count++;	
+					}
+				}	
 			}
 		}
 		/*	printf("s20w_correction %.12g D20w_correction %.12g scan.size %d\n",
@@ -3998,7 +4327,6 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 #if defined(SHOW_TIMING)
 		gettimeofday(&start_tv, NULL);
 #endif
-
 		count = 0;
 		for (i = 0; i < solutes.size(); i++)
 		{
@@ -4043,7 +4371,7 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 				    use_model_system = model_system_1comp;
 				    use_model_system.component_vector[0].s = solutes[i].s / experiment[e].s20w_correction;
 				    use_model_system.component_vector[0].D = D_tb;
-				    use_simulation_parameters = simulation_parameters;
+				    use_simulation_parameters = simulation_parameters_vec[e];
 				    use_simulation_parameters.meniscus += meniscus_offset;
 				    vector<mfem_data> use_experiment;
 				    use_experiment.push_back(experiment[e]);
@@ -4094,6 +4422,19 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 						nnls_a[count] = experiment[e].scan[j].conc[k];
 						count++;
 					}
+				}
+				if (fitdiffs && !(fit_tinoise || fit_rinoise)) 
+				{
+					for (j = 1; j < experiment[e].scan.size(); j++)
+					{
+						for (k = 0; k < experiment[e].radius.size(); k++)
+						{
+							// populate the b vector for the NNLS routine with the model
+							// function:
+							nnls_a[count] = experiment[e].scan[j].conc[k] - experiment[e].scan[j - 1].conc[k];
+							count++;	
+						}
+					}	
 				}
 			} // for e
 		} // for i
@@ -4956,7 +5297,7 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 					    use_model_system = model_system_1comp;
 					    use_model_system.component_vector[0].s = solutes[i].s / experiment[e].s20w_correction;
 					    use_model_system.component_vector[0].D = D_tb;
-					    use_simulation_parameters = simulation_parameters;
+					    use_simulation_parameters = simulation_parameters_vec[e];
 					    use_simulation_parameters.meniscus += meniscus_offset;
 					    vector<mfem_data> use_experiment;
 					    use_experiment.push_back(experiment[e]);

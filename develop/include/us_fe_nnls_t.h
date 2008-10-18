@@ -53,7 +53,7 @@ class US_EXTERN US_fe_nnls_t
 		QString gridopt;
 		vector <QString> constraints_full_text;
 		vector <QString> simulation_parameters_full_text;
-		
+		vector <SimparamsExtra> simparams_extra;
 
 	public:
 		Simulation_values calc_residuals(vector <struct mfem_data>, vector <Solute>, double, int);
