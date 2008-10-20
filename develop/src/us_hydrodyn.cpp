@@ -4844,13 +4844,16 @@ void US_Hydrodyn::read_config()
 	bead_output.sequence = str.toInt();
 	ts >> str;
 	ts.readLine();
-	asa.probe_radius = str.toDouble();
+	asa.probe_radius = str.toFloat();
 	ts >> str;
 	ts.readLine();
-	asa.threshold = str.toDouble();
+	asa.probe_recheck_radius = str.toFloat();
 	ts >> str;
 	ts.readLine();
-	asa.threshold_percent = str.toDouble();
+	asa.threshold = str.toFloat();
+	ts >> str;
+	ts.readLine();
+	asa.threshold_percent = str.toFloat();
 	ts >> str;
 	ts.readLine();
 	asa.calculation = (bool) str.toInt();
@@ -4951,7 +4954,8 @@ void US_Hydrodyn::reset()
 
 	bead_output.sequence = 0;
 	bead_output.output = 0;
-	asa.probe_radius = 1.4f;
+	asa.probe_radius = 1.4;
+	asa.probe_recheck_radius = 1.4;
 	asa.threshold = 10.0;
 	asa.threshold_percent = 30.0;
 	asa.calculation = true;
@@ -5020,6 +5024,7 @@ void US_Hydrodyn::write_config()
 		ts << bead_output.output << "\t\t# flag for selecting output format\n";
 		ts << bead_output.sequence << "\t\t# flag for selecting sequence format\n";
 		ts << asa.probe_radius << "\t\t# probe radius in angstrom\n";
+		ts << asa.probe_recheck_radius << "\t\t# probe recheck radius in angstrom\n";
 		ts << asa.threshold << "\t\t# ASA threshold\n";
 		ts << asa.threshold_percent << "\t\t# ASA threshold percent\n";
 		ts << asa.calculation << "\t\t# flag for calculation of ASA\n";

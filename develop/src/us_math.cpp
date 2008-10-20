@@ -557,7 +557,9 @@ void calc_vbar(struct peptide *pep, QString *sequence, float *temperature)
 	pep->w = sequence->contains("w", false);
 	pep->z = sequence->contains("z", false);
 	pep->x = sequence->contains("x", false);
-	pep->x += sequence->contains("?");
+	pep->x = sequence->contains("?");
+	pep->dab = sequence->contains("+");
+	pep->dpr = sequence->contains("@");
 	pep->residues += pep->r
 						+ pep->l
 						+ pep->k
@@ -582,7 +584,9 @@ void calc_vbar(struct peptide *pep, QString *sequence, float *temperature)
 						+ pep->m
 						+ pep->w
 						+ pep->z
-						+ pep->x;
+						+ pep->x
+						+ pep->dab
+						+ pep->dpr;
 
 	pep->mw     	+= pep->a * 71.1;
 	pep->weight 	+= pep->a * 71.1 * .74;
@@ -625,6 +629,14 @@ void calc_vbar(struct peptide *pep, QString *sequence, float *temperature)
 	pep->weight 	+= pep->j * 235.2*.6497;
 	pep->vbar_sum 	+= pep->j * .6497;
 	pep->e280		+= pep->j * 9850;
+
+	pep->mw     	+= pep->dab * 101.1; // John Kulp: diaminobutyric acid
+	pep->weight 	+= pep->dab * 101.1*0.736;
+	pep->vbar_sum 	+= pep->dab * 0.736;
+
+	pep->mw     	+= pep->dpr * 87.1; // John Kulp: diaminopropanoic acid
+	pep->weight 	+= pep->dpr * 87.1*.669;
+	pep->vbar_sum 	+= pep->dpr * 0.669;
 
 	pep->mw     	+= pep->k * 128.2;
 	pep->weight 	+= pep->k * 128.2 * .82;

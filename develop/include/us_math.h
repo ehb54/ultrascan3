@@ -76,39 +76,42 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
 
    struct peptide
    {
-      uint r;
-      uint l;
-      uint k;
-      uint a;
-      uint v;
-      uint e;
-      uint g;
-      uint n;
-      uint i;
-      uint j; //Hao (James Nowick)
-      uint q;
-      uint y;
-      uint o; //delta-linked ornithin (James Nowick)
-      uint p;
-      uint s;
-      uint h;
-      uint t;
-      uint d;
-      uint f;
-      uint b;
-      uint c;
-      uint m;
-      uint w;
-      uint x;
-      uint z;
-      float vbar;
-      float vbar20;
-      float mw;
-      float vbar_sum;
-      float weight;
-      float e280;
-      uint residues;
-   };
+		uint a;
+		uint b;
+		uint c;
+		uint d;
+		uint e;
+		uint f;
+		uint g;
+		uint h;
+		uint i;
+		uint j; //Hao (James Nowick)
+		uint k;
+		uint l;
+		uint m;
+		uint n;
+		uint o; //delta-linked ornithin (James Nowick)
+		uint p;
+		uint q;
+		uint r;
+		uint s;
+		uint t;
+		uint u; // currently unused
+		uint v;
+		uint w;
+		uint x;
+		uint y;
+		uint z;
+		uint dab; // diaminobutyric acid (John Kulp), symbol: "+"
+		uint dpr; // diaminopropanoic acid (John Kulp), symbol: "@"
+		float vbar;
+		float vbar20;
+		float mw;
+		float vbar_sum;
+		float weight;
+		float e280;
+		uint residues;
+	};
 
 
    unsigned long square(int);

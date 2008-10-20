@@ -66,6 +66,24 @@ void US_Hydrodyn_ASA::setupGUI()
 	cnt_probe_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_probe_radius, SIGNAL(valueChanged(double)), SLOT(update_probe_radius(double)));
 
+	lbl_probe_recheck_radius = new QLabel(tr(" ASA Probe Recheck Radius (A): "), this);
+	Q_CHECK_PTR(lbl_probe_recheck_radius);
+	lbl_probe_recheck_radius->setAlignment(AlignLeft|AlignVCenter);
+	lbl_probe_recheck_radius->setMinimumHeight(minHeight1);
+	lbl_probe_recheck_radius->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_probe_recheck_radius->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+	cnt_probe_recheck_radius= new QwtCounter(this);
+	Q_CHECK_PTR(cnt_probe_recheck_radius);
+	cnt_probe_recheck_radius->setRange(0, 10, 0.01);
+	cnt_probe_recheck_radius->setValue((*asa).probe_recheck_radius);
+	cnt_probe_recheck_radius->setMinimumHeight(minHeight1);
+	cnt_probe_recheck_radius->setEnabled(true);
+	cnt_probe_recheck_radius->setNumButtons(3);
+	cnt_probe_recheck_radius->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cnt_probe_recheck_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cnt_probe_recheck_radius, SIGNAL(valueChanged(double)), SLOT(update_probe_recheck_radius(double)));
+
 	lbl_asa_threshold = new QLabel(tr(" ASA Threshold (A^2)): "), this);
 	Q_CHECK_PTR(lbl_asa_threshold);
 	lbl_asa_threshold->setAlignment(AlignLeft|AlignVCenter);
@@ -165,6 +183,9 @@ void US_Hydrodyn_ASA::setupGUI()
 	background->addWidget(lbl_probe_radius, j, 0);
 	background->addWidget(cnt_probe_radius, j, 1);
 	j++;
+	background->addWidget(lbl_probe_recheck_radius, j, 0);
+	background->addWidget(cnt_probe_recheck_radius, j, 1);
+	j++;
 	background->addWidget(lbl_asa_threshold, j, 0);
 	background->addWidget(cnt_asa_threshold, j, 1);
 	j++;
@@ -200,17 +221,22 @@ void US_Hydrodyn_ASA::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_ASA::update_probe_radius(double val)
 {
-	(*asa).probe_radius = val;
+	(*asa).probe_radius = (float) val;
+}
+
+void US_Hydrodyn_ASA::update_probe_recheck_radius(double val)
+{
+	(*asa).probe_recheck_radius = (float) val;
 }
 
 void US_Hydrodyn_ASA::update_asa_threshold(double val)
 {
-	(*asa).threshold = val;
+	(*asa).threshold = (float) val;
 }
 
 void US_Hydrodyn_ASA::update_asa_threshold_percent(double val)
 {
-	(*asa).threshold_percent = val;
+	(*asa).threshold_percent = (float) val;
 }
 
 void US_Hydrodyn_ASA::update_asab1_step(double val)

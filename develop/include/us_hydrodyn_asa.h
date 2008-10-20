@@ -27,6 +27,7 @@ using namespace std;
 struct asa_options
 {
 	float probe_radius;
+	float probe_recheck_radius;
 	float threshold;
 	float threshold_percent;
 	bool calculation;
@@ -51,11 +52,13 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
 
 		QLabel *lbl_info;
 		QLabel *lbl_probe_radius;
+		QLabel *lbl_probe_recheck_radius;
 		QLabel *lbl_asa_threshold;
 		QLabel *lbl_asa_threshold_percent;
 		QLabel *lbl_asab1_step;
 		
 		QwtCounter *cnt_probe_radius;
+		QwtCounter *cnt_probe_recheck_radius;
 		QwtCounter *cnt_asa_threshold;
 		QwtCounter *cnt_asa_threshold_percent;
 		QwtCounter *cnt_asab1_step;
@@ -74,6 +77,7 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
 		
 		void setupGUI();
 		void update_probe_radius(double);
+		void update_probe_recheck_radius(double);
 		void update_asa_threshold(double);
 		void update_asa_threshold_percent(double);
 		void update_asab1_step(double);
