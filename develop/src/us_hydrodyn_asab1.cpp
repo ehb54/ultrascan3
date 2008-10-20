@@ -3879,7 +3879,12 @@ raggio_probe()
   //printf("\n\n\nPROBE RADIUS [>=0.0]___");
   //rbulk = scanf("%f", &rprobe);
   //}
-  rprobe = asa_opts->probe_radius;
+  if(recheck) {
+    rprobe = asa_opts->probe_recheck_radius;
+  } else {
+    rprobe = asa_opts->probe_radius;
+  }
+    
   rbulk = 1;
 
     if (rprobe <= 0.001)
