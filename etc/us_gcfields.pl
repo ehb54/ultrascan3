@@ -91,12 +91,17 @@ sub parsegc {
 	$fit_ri_noise = $gcf[$i]; $i++;
 	$email = $gcf[$i]; $i++;
 	if($analysis_type eq 'GA_RA') {
-	    $simpoints = $gcf[$i]; $i++;
-	    $band_volume = $gcf[$i]; $i++;
-	    $radial_grid = $gcf[$i]; $i++;
-	    $moving_grid = $gcf[$i]; $i++;
+	    for(my $j = 0; $j < $no_experiments; $j++) {
+		$simpoints[$j] = $gcf[$i]; $i++;
+		$band_volume[$j] = $gcf[$i]; $i++;
+		$radial_grid[$j] = $gcf[$i]; $i++;
+		$moving_grid[$j] = $gcf[$i]; $i++;
+	    }
 	}
-	$HPCAnalysisID = $gcf[$i]; $i++;
+	for(my $j = 0; $j < $no_experiments; $j++) {
+	    $HPCAnalysisID[$j] = $gcf[$i]; $i++;
+	}
+	$HPCAnalysisID = $HPCAnalysisID[0];
     }
     if($analysis_type eq 'GA_MW' ||
        $analysis_type eq 'GA_MW_RA') {
@@ -132,12 +137,17 @@ sub parsegc {
 	$fit_ri_noise = $gcf[$i]; $i++;
 	$email = $gcf[$i]; $i++;
 	if($analysis_type eq 'GA_MW_RA') {
-	    $simpoints = $gcf[$i]; $i++;
-	    $band_volume = $gcf[$i]; $i++;
-	    $radial_grid = $gcf[$i]; $i++;
-	    $moving_grid = $gcf[$i]; $i++;
+	    for(my $j = 0; $j < $no_experiments; $j++) {
+		$simpoints[$j] = $gcf[$i]; $i++;
+		$band_volume[$j] = $gcf[$i]; $i++;
+		$radial_grid[$j] = $gcf[$i]; $i++;
+		$moving_grid[$j] = $gcf[$i]; $i++;
+	    }
 	}
-	$HPCAnalysisID = $gcf[$i]; $i++;
+	for(my $j = 0; $j < $no_experiments; $j++) {
+	    $HPCAnalysisID[$j] = $gcf[$i]; $i++;
+	}
+	$HPCAnalysisID = $HPCAnalysisID[0];
     }
     if($analysis_type eq 'GA_SC') {
 	$ga_params_demes = $gcf[$i]; $i++;
@@ -190,12 +200,17 @@ sub parsegc {
 	$sa2d_params_max_iterations = $gcf[$i]; $i++;
 	$monte_carlo = $gcf[$i]; $i++;
 	if($analysis_type eq '2DSA_RA') {
-	    $simpoints = $gcf[$i]; $i++;
-	    $band_volume = $gcf[$i]; $i++;
-	    $radial_grid = $gcf[$i]; $i++;
-	    $moving_grid = $gcf[$i]; $i++;
+	    for(my $j = 0; $j < $no_experiments; $j++) {
+		$simpoints[$j] = $gcf[$i]; $i++;
+		$band_volume[$j] = $gcf[$i]; $i++;
+		$radial_grid[$j] = $gcf[$i]; $i++;
+		$moving_grid[$j] = $gcf[$i]; $i++;
+	    }
 	}
-	$HPCAnalysisID = $gcf[$i]; $i++;
+	for(my $j = 0; $j < $no_experiments; $j++) {
+	    $HPCAnalysisID[$j] = $gcf[$i]; $i++;
+	}
+	$HPCAnalysisID = $HPCAnalysisID[0];
     }
     if($analysis_type eq '2DSA_MW' ||
        $analysis_type eq '2DSA_MW_RA') {
@@ -218,12 +233,17 @@ sub parsegc {
 	$monte_carlo = $gcf[$i]; $i++;
 	$sa2d_params_max_mer = $gcf[$i]; $i++;
 	if($analysis_type eq '2DSA_MW_RA') {
-	    $simpoints = $gcf[$i]; $i++;
-	    $band_volume = $gcf[$i]; $i++;
-	    $radial_grid = $gcf[$i]; $i++;
-	    $moving_grid = $gcf[$i]; $i++;
+	    for(my $j = 0; $j < $no_experiments; $j++) {
+		$simpoints[$j] = $gcf[$i]; $i++;
+		$band_volume[$j] = $gcf[$i]; $i++;
+		$radial_grid[$j] = $gcf[$i]; $i++;
+		$moving_grid[$j] = $gcf[$i]; $i++;
+	    }
 	}
-	$HPCAnalysisID = $gcf[$i]; $i++;
+	for(my $j = 0; $j < $no_experiments; $j++) {
+	    $HPCAnalysisID[$j] = $gcf[$i]; $i++;
+	}
+	$HPCAnalysisID = $HPCAnalysisID[0];
     }
 
     $dbstring = "$db_login_user|$db_login_database|$db_login_host|$email|$no_experiments|$exp_file_infos|$exp_dirs|$exp_cells|$exp_lambdas|$exp_channels|$analysis_type|$monte_carlo|$fit_ti_noise|$fit_ri_noise|$fit_meniscus|$meniscus_range|$meniscus_gridpoints";
