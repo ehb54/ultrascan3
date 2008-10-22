@@ -3600,8 +3600,8 @@ void US_Hydrodyn::bead_check()
   int e2b = 0;
 #endif
 
-  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + "_pre_recheck" + DOTSOMO, &bead_model);
-  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + "_pre_recheck" + DOTSOMO, &bead_model);
+  //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + "_pre_recheck" + DOTSOMO, &bead_model);
+  //  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + "_pre_recheck" + DOTSOMO, &bead_model);
 
   for (unsigned int i = 0; i < bead_model.size(); i++) 
   {
