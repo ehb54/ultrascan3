@@ -652,6 +652,9 @@ void US_Spectrum::load_gaussian_profile(struct WavelengthProfile &profile, const
 	QString line, str1, str2;
 	struct Gaussian temp_gauss;
 	unsigned int i, order;
+	QFileInfo fi;
+	fi.setFile(fileName);
+	profile.filenameBasis = fi.baseName();
 	QFile f(fileName);
 	profile.gaussian.clear();
 	if (f.open(IO_ReadOnly))
@@ -669,9 +672,9 @@ void US_Spectrum::load_gaussian_profile(struct WavelengthProfile &profile, const
 		str1 = getToken(&line, " "); // Coefficient
 		str1 = getToken(&line, " "); // at
 		str1 = getToken(&line, " "); // wavelength
-		profile.lambda_scale = str1.toUInt();
+		profile.lambda_scale = str1.toUInt(); // wavelength at which the data is normalized for an extinction coefficient
 		str1 = getToken(&line, ":");
-		profile.scale = line.toFloat();
+		profile.scale = line.toFloat(); // extinction coefficient used for normalization
 		line = ts.readLine();
 		line = ts.readLine();
 		for (i=0; i<order; i++)
@@ -706,23 +709,28 @@ void US_Spectrum::load_gaussian_profile(struct WavelengthProfile &profile, const
 		f.close();
 	}
 	profile.filename = fileName;
-	QFileInfo fi;
-	fi.setFile(fileName);
-	str1 = fi.dirPath() + "/" + fi.baseName() + ".extinction.dat";
-	f.setName(str1);
+	QString datfile = fi.dirPath() + "/" + fi.baseName() + ".extinction.dat";
+	f.setName(datfile);
 	if (f.open(IO_ReadOnly))
 	{
 		QTextStream ts(&f);
 		ts.readLine();
 		ts >> str1;
-		profile.lambda_min = str1.toUInt();
+		float tmp = str1.toFloat();
+		profile.lambda_min = (int) tmp;
 		while (!ts.atEnd())
 		{
 			str1 = ts.readLine(); // read last line in absorption spectrum
 		}
 		str2 = getToken(&str1, "\t");
-		profile.lambda_max = str2.toUInt();
+		profile.lambda_max = (int) str2.toFloat();
 	}
+	else
+	{
+		QMessageBox::message("Attention:", "Could not read the wavelength data file:\n" + datfile );
+	}
+	find_amplitude(profile);
+	print_profile(profile);
 }
 
 void US_Spectrum::select_basis(const QMouseEvent &e)
@@ -751,7 +759,7 @@ void US_Spectrum::select_basis(const QMouseEvent &e)
 		points = basis[val].lambda_max - basis[val].lambda_min + 1;
 		x = new double [points];
 		y = new double [points];
-		find_amplitude(basis[val]);
+		//find_amplitude(basis[val]);
 		for (i=0; i<points; i++)
 		{
 			x[i] = basis[val].lambda_min + i;
@@ -851,12 +859,10 @@ void US_Spectrum::load_basis()
 		load_gaussian_profile(temp_wp, fileName);
 		basis.push_back(temp_wp);
 	}
-	QFileInfo fi;
 	i = basis.size() - 1;
-	fi.setFile(fileName);
-//	str.sprintf(fi.baseName() + " [%3d:%3d], E_%3d: %6.4e", 
+//	str.sprintf(fi.baseName() + " [%3d:%3d], E_%3d: %6.4e",
 //	basis[i].lambda_min, basis[i].lambda_max, basis[i].lambda_scale, basis[i].scale);
-	lb_basis->insertItem(fi.baseName(), -1);
+	lb_basis->insertItem(temp_wp.filenameBasis, -1);
 	
 	current = i;
 	points = basis[current].lambda_max - basis[current].lambda_min + 1;
@@ -875,7 +881,7 @@ void US_Spectrum::load_basis()
 		}
 		y[i] *= basis[current].amplitude;
 	}
-	curve.push_back(data_plot->insertCurve(fi.baseName()));
+	curve.push_back(data_plot->insertCurve(basis[current].filenameBasis));
 	i = curve.size() - 1;
 	basis[current].curve_number = curve[i];
 	data_plot->setCurveStyle(curve[i], QwtCurve::Lines);
@@ -1153,6 +1159,29 @@ void US_Spectrum::find_amplitude(struct WavelengthProfile &profile)
 	profile.amplitude *= profile.scale;
 }
 
+void US_Spectrum::print_profile(struct WavelengthProfile &profile)
+{
+	cout << "Gaussian size: " << profile.gaussian.size() << endl;
+	for (unsigned int i=0; i<profile.gaussian.size(); i++)
+	{
+		cout << "Gaussian " << i+1 << ": " << endl;
+		cout << "Mean: " << profile.gaussian[i].mean << endl;
+		cout << "amplitude: " << profile.gaussian[i].amplitude << endl;
+		cout << "Sigma: " << profile.gaussian[i].sigma << endl;
+	}
+
+	cout << "scale: " << profile.scale << endl;
+	cout << "lambda_scale: " << profile.lambda_scale << endl;
+	cout << "lambda_min: " << profile.lambda_min << endl;
+	cout << "lambda_max: " << profile.lambda_max << endl;
+	cout << "filename: " << profile.filename << endl;
+	cout << "filenameBasis: " << profile.filenameBasis << endl;
+	cout << "curve_number: " << profile.curve_number << endl;
+	cout << "amplitude: " << profile.amplitude << endl;
+	cout << "nnls_factor: " << profile.nnls_factor << endl;
+	cout << "nnls_percentage: " << profile.nnls_percentage << endl;
+}
+
 void US_Spectrum::load_target()
 {
 	unsigned int i, j, points;
@@ -1189,6 +1218,7 @@ void US_Spectrum::load_target()
 			/ (2.0 * pow(target.gaussian[j].sigma, 2.0))));
 		}
 		y[i] *= target.amplitude;
+		//cout << target.amplitude << ", y[" << target.lambda_min + i << "]: " << y[i] << endl;
 	}
 	if (target.curve_number != -1)
 	{
@@ -1303,7 +1333,7 @@ void US_Spectrum::fit()
 	for (i=0; i<basis.size(); i++)
 	{
 		results.push_back(100.0 * nnls_x[i]/fval);
-		str.sprintf("%3.2f%% (%6.4e): " + lb_basis->text(i), results[i], nnls_x[i]);
+		str.sprintf(basis[i].filenameBasis + ": %3.2f%% (%6.4e)", results[i], nnls_x[i]);
 		lb_basis->changeItem(str, i);
 		basis[i].nnls_factor = nnls_x[i];
 		basis[i].nnls_percentage = results[i];

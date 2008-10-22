@@ -46,6 +46,7 @@ struct WavelengthProfile
 	unsigned int lambda_min;
 	unsigned int lambda_max;
 	QString filename;
+	QString filenameBasis;
 	int curve_number;
 // use this amplitude to scale the final distribution for any 
 // desired extinction coefficient at any wavelength
@@ -138,6 +139,7 @@ class US_EXTERN US_Spectrum : public QFrame
 		void find_amplitude(struct WavelengthProfile &);
 		void print_residuals();
 		void print_fit();
+		void print_profile(struct WavelengthProfile &);
 };
 
 #endif
