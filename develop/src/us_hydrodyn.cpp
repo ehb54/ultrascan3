@@ -4954,8 +4954,8 @@ void US_Hydrodyn::reset()
 
 	bead_output.sequence = 0;
 	bead_output.output = 0;
-	asa.probe_radius = 1.4;
-	asa.probe_recheck_radius = 1.4;
+	asa.probe_radius = (float) 1.4;
+	asa.probe_recheck_radius = (float) 1.4;
 	asa.threshold = 10.0;
 	asa.threshold_percent = 30.0;
 	asa.calculation = true;

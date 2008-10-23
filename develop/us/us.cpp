@@ -18,20 +18,20 @@
 class USconfig_check : public QWidget
 {
 	public:
-		USconfig_check(){};
-		~USconfig_check(){};
+		USconfig_check()  {};
+		~USconfig_check() {};
 
 		//Class variable
 		struct Config config;
 
 		// Public method
-		bool check_config();
+		bool        check_config( );
+		static void debug       ( const QString& );
 
 	protected:
-		bool exists       ( const QString& );
-		void set_default  ( const QString& );
-		void write_default( const QString& );
-		void debug        ( const QString& );
+		bool exists             ( const QString& );
+		void set_default        ( const QString& );
+		void write_default      ( const QString& );
 };
 
 class USconfig_setup : public USconfig_check
@@ -68,7 +68,7 @@ int main ( int argc, char **argv )
 		// Check that we know at least the base system directory
 		if ( ! OK )
 		{
-			cout << "Starting USconfig_setup()" << endl;
+			USconfig_check::debug( "Starting USconfig_setup()" );
 			USconfig_setup* set = new USconfig_setup();
 			// Not found, ask the user
 			set->move( global_Xpos, global_Ypos );
@@ -95,12 +95,12 @@ int main ( int argc, char **argv )
 
 void USconfig_check::debug( const QString& str )
 {
-  //QFile f( "debug.txt" );
-  //f.open( IO_WriteOnly | IO_Append );
-  //QTextStream debug( &f );
-  //debug << str << "\r\n";
-  //f.close();
-  cout << str << "\n";
+	//QFile f( "debug.txt" );
+	//f.open( IO_WriteOnly | IO_Append );
+	//QTextStream debug( &f );
+	//debug << str << "\r\n";
+	//f.close();
+	cout << str << "\n";
 }
 
 bool USconfig_check::check_config()
@@ -109,7 +109,26 @@ bool USconfig_check::check_config()
 	if ( exists( US_Config::get_home_dir() + ETC_DIR + "/usrc.conf" ) ||
 	     exists( QDir::homeDirPath() + "/.usrc" ) )
 	{
-		return true;
+		US_Config* config = new US_Config( "dummy" );
+		if ( config->read() )
+		{
+		  return true;
+		}
+		else
+		{
+			int result = QMessageBox::information( this,
+			  tr( "Setup" ),
+			  tr( "The configuration file format is out of date.\n"
+			      "Selecting OK will delete it and recreate a valid\n"
+			      "configuration file, but any customized settings will be lost." ),
+			QMessageBox::Ok, QMessageBox::Cancel );
+
+			if ( result == QMessageBox::Cancel ) exit( 0 );
+
+			// Delete the configuration file
+			QFile::remove( US_Config::get_home_dir() + ETC_DIR + "/usrc.conf" );
+			QFile::remove( QDir::homeDirPath() + "/.usrc" );
+		}
 	}
 
 	// Check the default location
@@ -127,7 +146,7 @@ bool USconfig_check::check_config()
 		debug( "Writing usrc.conf with system dir=" + dir );
 		write_default( dir );
 
-		cout << "UltraScan is installed in the default location: " + dir << endl;
+		debug( "UltraScan is installed in the default location: " + dir );
 		return true;
 	}
 
@@ -220,7 +239,7 @@ USconfig_setup::USconfig_setup()
 		}
 
 		// Not a valid directory
-		QMessageBox::information( this,
+		result = QMessageBox::information( this,
 			tr( "Setup" ),
 			tr( "The selected directory is not the UltraScan system directory.\n"
 			    "Try again." ),
