@@ -27,7 +27,7 @@ US_Hydrodyn_Overlap::~US_Hydrodyn_Overlap()
 void US_Hydrodyn_Overlap::setupGUI()
 {
 	int minHeight1 = 30;
-	
+
 	sidechain_OR = new US_Hydrodyn_OR(sidechain_overlap, this);
 	mainchain_OR = new US_Hydrodyn_OR(mainchain_overlap, this);
 	buried_OR = new US_Hydrodyn_OR(buried_overlap, this);
@@ -62,8 +62,8 @@ void US_Hydrodyn_Overlap::setupGUI()
 
 	tw_overlap = new QTabWidget(this);
 	tw_overlap->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	tw_overlap->addTab(sidechain_OR, "Side chain beads");
-	tw_overlap->addTab(mainchain_OR, "Main and side chain beads");
+	tw_overlap->addTab(sidechain_OR, "Exposed Side chain beads");
+	tw_overlap->addTab(mainchain_OR, "Exposed Main and side chain beads");
 	tw_overlap->addTab(buried_OR, "Buried beads");
 
 	pb_cancel = new QPushButton(tr("Close"), this);

@@ -35,13 +35,13 @@ void US_Hydrodyn_ASA::setupGUI()
 	connect(bg_asa_method, SIGNAL(clicked(int)), this, SLOT(select_asa_method(int)));
 
 	cb_surfracer = new QCheckBox(bg_asa_method);
-	cb_surfracer->setText(tr(" Voronoi Tesselation (Surfracer, Tsodikov et al.)"));
+	cb_surfracer->setText(tr(" Voronoi Tesselation (Surfrace, Tsodikov et al.)"));
 	cb_surfracer->setEnabled(true);
 	cb_surfracer->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_surfracer->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
 	cb_asab1 = new QCheckBox(bg_asa_method);
-	cb_asab1->setText(tr(" Rolling Sphere (ASAB1, Lee && Richard's Method)"));
+	cb_asab1->setText(tr(" Rolling Sphere (ASAB1, Lee && Richards' Method)"));
 	cb_asab1->setEnabled(true);
 	cb_asab1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_asab1->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
