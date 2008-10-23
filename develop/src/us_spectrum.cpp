@@ -559,7 +559,7 @@ void US_Spectrum::reset_basis()
 	y = new double [points];
 	pen.setWidth(3);
 	pen.setColor(Qt::yellow);
-	find_amplitude(target);
+	//find_amplitude(target);
 	for (i=0; i<points; i++)
 	{
 		x[i] = target.lambda_min + i;
@@ -1155,6 +1155,7 @@ void US_Spectrum::find_amplitude(struct WavelengthProfile &profile)
 		exp(-(pow(profile.lambda_scale - profile.gaussian[j].mean, 2.0)
 		/ (2.0 * pow(profile.gaussian[j].sigma, 2.0))));
 	}
+	cout << "profile.amplitude in find_amplitude(): " << profile.amplitude << endl; 
 	profile.amplitude = 1.0/profile.amplitude;
 	profile.amplitude *= profile.scale;
 }
@@ -1206,7 +1207,7 @@ void US_Spectrum::load_target()
 	points = target.lambda_max - target.lambda_min + 1;
 	x = new double [points];
 	y = new double [points];
-	find_amplitude(target);
+	//find_amplitude(target);
 	for (i=0; i<points; i++)
 	{
 		x[i] = target.lambda_min + i;
@@ -1290,7 +1291,7 @@ void US_Spectrum::fit()
 	nnls_x = new double [order]; // the solution vector, pre-allocated for nnls
 	nnls_wp = new double [order]; // pre-allocated working space for nnls, On exit, wp[] will contain the dual solution vector, wp[i]=0.0 for all i in set p and wp[i]<=0.0 for all i in set z. 
 	nnls_indexp = new int [order];
-	find_amplitude(target);
+	//find_amplitude(target);
 	for (i=0; i<points; i++)
 	{
 		x[i] = target.lambda_min + i;
@@ -1307,7 +1308,7 @@ void US_Spectrum::fit()
 	counter = 0;
 	for (k=0; k<order; k++)
 	{
-		find_amplitude(basis[k]);
+		//find_amplitude(basis[k]);
 		for (i=0; i<points; i++)
 		{
 			x[i] = basis[k].lambda_min + i;
@@ -1345,18 +1346,17 @@ void US_Spectrum::fit()
 	}
 	for (k=0; k<order; k++)
 	{
-		find_amplitude(basis[k]);
+		//find_amplitude(basis[k]);
 		for (i=0; i<points; i++)
 		{
 			x[i] = basis[k].lambda_min + i;
 			
 			for (j=0; j<basis[k].gaussian.size(); j++)
 			{
-				solution[i] += basis[k].gaussian[j].amplitude *
+				solution[i] += (basis[k].gaussian[j].amplitude *
 				exp(-(pow(x[i] - basis[k].gaussian[j].mean, 2.0)
-				/ (2.0 * pow(basis[k].gaussian[j].sigma, 2.0))));
+				/ (2.0 * pow(basis[k].gaussian[j].sigma, 2.0))))) * basis[k].amplitude * nnls_x[k];
 			}
-			solution[i] *= basis[k].amplitude * nnls_x[k];
 		}
 	}
 	for (i=0; i<points; i++)
@@ -1442,7 +1442,7 @@ void US_Spectrum::difference()
 	x = new double [points];
 	y = new double [points];
 	residuals.resize(points);
-	find_amplitude(target);
+	//find_amplitude(target);
 	for (i=0; i<points; i++)
 	{
 		x[i] = target.lambda_min + i;
@@ -1455,7 +1455,7 @@ void US_Spectrum::difference()
 		}
 		y[i] *= target.amplitude;
 	}
-	find_amplitude(basis[0]);
+	//find_amplitude(basis[0]);
 	for (i=0; i<points; i++)
 	{
 		x[i] = basis[0].lambda_min + i;

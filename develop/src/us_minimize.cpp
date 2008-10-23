@@ -15,7 +15,7 @@ US_Minimize::US_Minimize(bool *temp_fitting_widget, bool temp_GUI, QWidget *p, c
 	lambdaStart = 1.0e5;
 	lambdaStep = 10.0;
 	maxIterations = 1000;
-	tolerance =  (float) 1.0e-6;
+	tolerance =  (float) 1.0e-12;
 	nlsMethod = 0;
 	GUI = temp_GUI;
 	constrained = false;
@@ -41,6 +41,7 @@ void US_Minimize::setup_GUI()
 	column3 = 93;
 	buttonh = 26;
 	span = column1 + column2 + column3 + 2 * spacing;
+	QString str;
 
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("Fitting Control"));
@@ -581,7 +582,7 @@ void US_Minimize::setup_GUI()
 	le_lambdaStart->setGeometry(xpos, ypos, column2, buttonh);
 	le_lambdaStart->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_lambdaStart->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	le_lambdaStart->setText(" 1.0e+05");
+	le_lambdaStart->setText(str.sprintf("%6.4e", lambdaStart));
 	connect(le_lambdaStart, SIGNAL(textChanged(const QString &)),
 	SLOT(update_lambdaStart(const QString &)));
 
@@ -611,7 +612,7 @@ void US_Minimize::setup_GUI()
 	le_lambdaStep->setGeometry(xpos, ypos, column2, buttonh);
 	le_lambdaStep->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_lambdaStep->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	le_lambdaStep->setText(" 10.0");
+	le_lambdaStep->setText(str.sprintf("%6.4e", lambdaStep));
 	connect(le_lambdaStep, SIGNAL(textChanged(const QString &)),
 	SLOT(update_lambdaStep(const QString &)));
 
@@ -641,7 +642,7 @@ void US_Minimize::setup_GUI()
 	le_maxIterations->setGeometry(xpos, ypos, column2, buttonh);
 	le_maxIterations->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_maxIterations->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	le_maxIterations->setText(" 1000");
+	le_maxIterations->setText(str.sprintf("%ld", maxIterations));
 	connect(le_maxIterations, SIGNAL(textChanged(const QString &)),
 	SLOT(update_maxIterations(const QString &)));
 
@@ -671,7 +672,7 @@ void US_Minimize::setup_GUI()
 	le_tolerance->setGeometry(xpos, ypos, column2, buttonh);
 	le_tolerance->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	le_tolerance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	le_tolerance->setText(" 1.0e-06");
+	le_tolerance->setText(str.sprintf("%6.4e", tolerance));
 	connect(le_tolerance, SIGNAL(textChanged(const QString &)),
 	SLOT(update_tolerance(const QString &)));
 
