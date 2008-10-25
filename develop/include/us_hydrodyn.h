@@ -31,6 +31,7 @@
 #include "us_hydrodyn_asa.h"
 #include "us_hydrodyn_hydro.h"
 #include "us_hydrodyn_misc.h"
+#include "us_hydrodyn_grid.h"
 #include "us_hydrodyn_results.h"
 
 //standard C and C++ defs:
@@ -59,6 +60,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 				asa_widget,
 				overlap_widget,
 				bead_output_widget,
+				grid_widget,
 				hydro_widget,
 				results_widget,
 				misc_widget;
@@ -74,6 +76,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		struct asa_options asa;
 		struct misc_options misc;
 		struct hydro_options hydro;
+		struct grid_options grid;
 		struct hydro_results results;
 		struct bead_output_options bead_output;
 		struct residue new_residue;
@@ -121,12 +124,18 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QPushButton *pb_show_bead_output;
 		QPushButton *pb_show_hydro;
 		QPushButton *pb_show_misc;
+		QPushButton *pb_show_grid;
+		QPushButton *pb_view_pdb;
 		QPushButton *pb_load_bead_model;
 		QPushButton *pb_calc_hydro;
 		QPushButton *pb_show_hydro_results;
+		QPushButton *pb_grid;
+		QPushButton *pb_view_asa;
+
 
 		QProgressBar *progress;
 		QTextEdit *editor;
+		TextEdit *e;
 
 		QListBox *lb_model;
 
@@ -139,6 +148,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		US_Hydrodyn_Hydro *hydro_window;
 		US_Hydrodyn_Misc *misc_window;
 		US_Hydrodyn_Results *results_window;
+		US_Hydrodyn_Grid *grid_window;
 
 		QProcess *rasmol;
 
@@ -180,6 +190,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void select_model(int);
 		void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
 		int calc_somo();    // compute asa and then refine bead_model
+		int calc_grid();    // compute grid model
 		int create_beads(QString *error_string); // turn pdb/atom model into bead_model
 		int check_for_missing_atoms(QString *error_string, PDB_model *);
 		int overlap_check(bool sc, bool mc, bool buried); // check for overlaps
@@ -189,6 +200,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void show_bead_output();
 		void show_hydro();
 		void show_misc();
+		void show_grid(); // show grid options
+		void view_pdb(); // show pdb file in editor
+		void view_asa(); // show asa file in editor
+		void view_file(const QString &); // call editor to view a file
 		void bead_check(); // recheck beads
 		void read_config();
 		void write_config();

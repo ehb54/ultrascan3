@@ -82,6 +82,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 	hybrid_widget = false;
 	asa_widget = false;
 	misc_widget = false;
+	grid_widget = false;
 	hydro_widget = false;
 	overlap_widget = false;
 	bead_output_widget = false;
@@ -220,6 +221,13 @@ void US_Hydrodyn::setupGUI()
 	pb_show_misc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_show_misc, SIGNAL(clicked()), SLOT(show_misc()));
 
+	pb_show_grid = new QPushButton(tr("Grid Functions (AtoB)"), this);
+	Q_CHECK_PTR(pb_show_grid);
+	pb_show_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_show_grid->setMinimumHeight(minHeight1);
+	pb_show_grid->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_show_grid, SIGNAL(clicked()), SLOT(show_grid()));
+
 	pb_show_bead_output = new QPushButton(tr("Bead Model Output"), this);
 	Q_CHECK_PTR(pb_show_bead_output);
 	pb_show_bead_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -278,6 +286,14 @@ void US_Hydrodyn::setupGUI()
 	lbl_model->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
 	lbl_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
+	pb_view_pdb = new QPushButton(tr("View/Edit PDB File"), this);
+	Q_CHECK_PTR(pb_view_pdb);
+	pb_view_pdb->setMinimumHeight(minHeight1);
+	pb_view_pdb->setEnabled(false);
+	pb_view_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_view_pdb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_view_pdb, SIGNAL(clicked()), SLOT(view_pdb()));
+
 	lb_model = new QListBox(this, "model selection listbox" );
 	lb_model->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	lb_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -317,13 +333,28 @@ void US_Hydrodyn::setupGUI()
 	le_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	connect(le_bead_model_prefix, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_prefix(const QString &)));
 
-	pb_somo = new QPushButton(tr("Build Bead Model"), this);
+	pb_somo = new QPushButton(tr("Build SOMO Bead Model"), this);
 	Q_CHECK_PTR(pb_somo);
 	pb_somo->setMinimumHeight(minHeight1);
 	pb_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
 	pb_somo->setEnabled(false);
 	pb_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_somo, SIGNAL(clicked()), SLOT(calc_somo()));
+
+	pb_grid = new QPushButton(tr("Build Grid Bead Model"), this);
+	Q_CHECK_PTR(pb_grid);
+	pb_grid->setMinimumHeight(minHeight1);
+	pb_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_grid->setEnabled(false);
+	pb_grid->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_grid, SIGNAL(clicked()), SLOT(calc_grid()));
+
+	pb_view_asa = new QPushButton(tr("Show ASA Results"), this);
+	Q_CHECK_PTR(pb_view_asa);
+	pb_view_asa->setMinimumHeight(minHeight1);
+	pb_view_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_view_asa->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_view_asa, SIGNAL(clicked()), SLOT(view_asa()));
 
 	pb_visualize = new QPushButton(tr("Visualize Bead Model"), this);
 	Q_CHECK_PTR(pb_visualize);
@@ -386,7 +417,7 @@ void US_Hydrodyn::setupGUI()
 	QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
 	background->addMultiCellWidget(lbl_tabletabs, j, j, 0, 1);
-	background->addMultiCellWidget(editor, j, j+18, 2, 2);
+	background->addMultiCellWidget(editor, j, j+19, 2, 2);
 	//background->addWidget(m, j, 2);
 	j++;
 	background->addWidget(pb_hybrid, j, 0);
@@ -404,7 +435,9 @@ void US_Hydrodyn::setupGUI()
 	background->addWidget(pb_show_misc, j, 1);
 	j++;
 	background->addWidget(pb_show_bead_output, j, 0);
-	background->addWidget(pb_reset, j, 1);
+	background->addWidget(pb_show_grid, j, 1);
+	j++;
+	background->addWidget(pb_reset, j, 0);
 	j++;
 	background->addMultiCellWidget(lbl_somo, j, j, 0, 1);
 	j++;
@@ -416,8 +449,13 @@ void US_Hydrodyn::setupGUI()
 	j++;
 	background->addWidget(lbl_model, j, 0);
 	background->addMultiCellWidget(lb_model, j, j+1, 1, 1);
-	j+=2;
+	j++;
+	background->addWidget(pb_view_pdb, j, 0);
+	j++;
 	background->addWidget(pb_somo, j, 0);
+	background->addWidget(pb_grid, j, 1);
+	j++;
+	background->addWidget(pb_view_asa, j, 0);
 	background->addWidget(pb_visualize, j, 1);
 	j++;
 	background->addWidget(pb_load_bead_model, j, 0);
@@ -3720,6 +3758,43 @@ void US_Hydrodyn::visualize()
 	}
 }
 
+int US_Hydrodyn::calc_grid()
+{
+	int flag = 0;
+	bool any_errors = false;
+	bool any_models = false;
+	pb_grid->setEnabled(false);
+	if (!residue_list.size() ||
+			 !model_vector.size())
+	{
+		fprintf(stderr, "calculations can not be run until residue & pdb files are read!\n");
+		return -1;
+	}
+	pb_visualize->setEnabled(false);
+	pb_show_hydro_results->setEnabled(false);
+	pb_calc_hydro->setEnabled(false);
+	if (results_widget)
+	{
+		results_window->close();
+		delete results_window;
+		results_widget = false;
+	}
+	if (any_models && !any_errors)
+	{
+		editor->append("Build bead model completed\n\n");
+		qApp->processEvents();
+		pb_visualize->setEnabled(true);
+		pb_calc_hydro->setEnabled(true);
+	}
+	else
+	{
+		editor->append("Errors encountered\n\n");
+	}
+
+	pb_grid->setEnabled(true);
+	return (flag);
+}
+
 int US_Hydrodyn::calc_somo()
 {
   pb_somo->setEnabled(false);
@@ -3729,8 +3804,8 @@ int US_Hydrodyn::calc_somo()
 		fprintf(stderr, "calculations can not be run until residue & pdb files are read!\n");
 		return -1;
 	}
-        pb_visualize->setEnabled(false);
-        pb_show_hydro_results->setEnabled(false);
+	pb_visualize->setEnabled(false);
+	pb_show_hydro_results->setEnabled(false);
 	pb_calc_hydro->setEnabled(false);
 	if (results_widget)
 	{
@@ -3780,12 +3855,15 @@ int US_Hydrodyn::calc_somo()
 	  // calculate bead model and generate hydrodynamics calculation output
 	  // if successful, enable follow-on buttons:
 	}
-	if (any_models && !any_errors) {
-	  editor->append("Build bead model completed\n\n");
-	  qApp->processEvents();
-	  pb_visualize->setEnabled(true);
-	  pb_calc_hydro->setEnabled(true);
-	} else {
+	if (any_models && !any_errors)
+	{
+		editor->append("Build bead model completed\n\n");
+		qApp->processEvents();
+		pb_visualize->setEnabled(true);
+		pb_calc_hydro->setEnabled(true);
+	}
+	else
+	{
 	  editor->append("Errors encountered\n\n");
 	}	    
 
@@ -4150,10 +4228,40 @@ void US_Hydrodyn::load_pdb()
 	}
 	// bead_model_prefix = "";
 	pb_somo->setEnabled(true);
+	pb_grid->setEnabled(true);
+	pb_view_pdb->setEnabled(true);
 	pb_show_hydro_results->setEnabled(false);
 	pb_calc_hydro->setEnabled(false);
 	pb_visualize->setEnabled(false);
 	le_bead_model_file->setText(" not selected ");
+}
+
+void US_Hydrodyn::view_pdb()
+{
+	QString filename = QFileDialog::getOpenFileName(somo_dir, "*.pdb *.PDB", this);
+	if (!filename.isEmpty())
+	{
+		view_file(filename);
+	}
+}
+
+void US_Hydrodyn::view_file(const QString &filename)
+{
+	e = new TextEdit();
+	e->setFont(QFont("Courier"));
+	e->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	e->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
+	e->load(filename);
+	e->show();
+}
+
+void US_Hydrodyn::view_asa()
+{
+	QString filename = QFileDialog::getOpenFileName(somo_dir, "*.asa *.ASA", this);
+	if (!filename.isEmpty())
+	{
+		view_file(filename);
+	}
 }
 
 void US_Hydrodyn::load_bead_model()
@@ -4866,6 +4974,26 @@ void US_Hydrodyn::read_config()
 	ts >> str;
 	ts.readLine();
 	asa.asab1_step = str.toFloat();
+
+	ts >> str;
+	ts.readLine();
+	grid.cubic = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	grid.hydrate = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	grid.center = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	grid.overlaps = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	grid.tangency = (bool) str.toInt();
+	ts >> str;
+	ts.readLine();
+	grid.cube_side = str.toDouble();
+
 	ts >> str;
 	ts.readLine();
 	misc.hydrovol = str.toDouble();
@@ -4954,6 +5082,7 @@ void US_Hydrodyn::reset()
 
 	bead_output.sequence = 0;
 	bead_output.output = 0;
+	
 	asa.probe_radius = (float) 1.4;
 	asa.probe_recheck_radius = (float) 1.4;
 	asa.threshold = 10.0;
@@ -4962,6 +5091,14 @@ void US_Hydrodyn::reset()
 	asa.recheck_beads = true;
 	asa.method = true; // by default use ASAB1
 	asa.asab1_step = 1.0;
+
+	grid.cubic = true; 		// apply cubic grid
+	grid.hydrate = false; 	// true: hydrate model
+	grid.center = false; 	// true: center of cubelet, false: center of mass
+	grid.overlaps = true;	// true: remove overlaps
+	grid.tangency = false;	// true: Expand beads to tangency
+	grid.cube_side = 10.0;
+	
 	misc.hydrovol = 24.041;
 	misc.compute_vbar = true;
 	misc.vbar = 0.72;
@@ -5031,6 +5168,14 @@ void US_Hydrodyn::write_config()
 		ts << asa.recheck_beads << "\t\t# flag for rechecking beads\n";
 		ts << asa.method << "\t\t# flag for ASAB1/Surfracer method\n";
 		ts << asa.asab1_step << "\t\t# ASAB1 step size\n";
+		
+		ts << grid.cubic << "\t\t# flag to apply cubic grid\n";
+		ts << grid.hydrate << "\t\t# flag to hydrate original model (grid)\n";
+		ts << grid.center << "\t\t# flag for positioning bead in center of mass or cubelet (grid)\n";
+		ts << grid.overlaps << "\t\t# flag for removing overlaps (grid)\n";
+		ts << grid.tangency << "\t\t# flag for expanding beads to tangency (grid)\n";
+		ts << grid.cube_side << "\t\t# Length of cube side (grid)\n";
+		
 		ts << misc.hydrovol << "\t\t# hydration volume\n";
 		ts << misc.compute_vbar << "\t\t# flag for selecting vbar calculation\n";
 		ts << misc.vbar << "\t\t# vbar value\n";
@@ -5156,6 +5301,27 @@ void US_Hydrodyn::show_hydro()
 	{
 		hydro_window = new US_Hydrodyn_Hydro(&hydro, &hydro_widget);
 		hydro_window->show();
+	}
+}
+
+void US_Hydrodyn::show_grid()
+{
+	if (grid_widget)
+	{
+		if (grid_window->isVisible())
+		{
+			grid_window->raise();
+		}
+		else
+		{
+			grid_window->show();
+		}
+		return;
+	}
+	else
+	{
+		grid_window = new US_Hydrodyn_Grid(&grid, &grid_widget);
+		grid_window->show();
 	}
 }
 
