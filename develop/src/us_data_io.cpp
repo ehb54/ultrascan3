@@ -304,7 +304,7 @@ vector <struct centerpieceInfo> *cp_list)
 //cerr << "Cell " << i+1 <<", wavelength " << j+1 << ", scan " << k+1 << " (rpm, temp, time, omega, plateau: " << (*run_inf).rpm[i][j][k] << ", " << (*run_inf).temperature[i][j][k] << ", " << (*run_inf).time[i][j][k] << ", " << (*run_inf).omega_s_t[i][j][k] << ", " << (*run_inf).plateau[i][j][k] << "\n";
 					if (run_type == 1 && baseline_flag)
 					{
-cout << "subtracting baseline in data_io...\n";
+//cout << "subtracting baseline in data_io...\n";
 						(*run_inf).plateau[i][j][k] -= (*run_inf).baseline[i][j];
 					}
 				}
@@ -597,6 +597,7 @@ int US_Data_IO::load_hydrodynamics(struct hydrodynamicData *hydro_inf)
 			}
 			for(k=0; k<3; k++)
 			{
+//				cout << "Cell " << i << ", channel " << j<< ", item " << k << ", Peptide: " << (*run_inf).peptide_serialnumber[i][j][k] << ", DNA: " << (*run_inf).DNA_serialnumber[i][j][k] << endl;
 				if((*run_inf).peptide_serialnumber[i][j][k] > 0)
 				{
 					Vbar_info = VBAR->export_vbar((*run_inf).peptide_serialnumber[i][j][k]);
@@ -608,6 +609,7 @@ int US_Data_IO::load_hydrodynamics(struct hydrodynamicData *hydro_inf)
 					Vbar_info = VBAR->export_DNA_vbar((*run_inf).DNA_serialnumber[i][j][k]);
 					if (Vbar_info.vbar == 0.0 || Vbar_info.vbar20 == 0.0)
 					{
+//						cout << "its dna\n";
 						Vbar_info.vbar   = (float) 0.55;
 						Vbar_info.vbar20 = (float) 0.55;
 					}
@@ -620,6 +622,7 @@ int US_Data_IO::load_hydrodynamics(struct hydrodynamicData *hydro_inf)
 					(*hydro_inf).Vbar20[i][j][k] = (float) 0.72;
 					(*hydro_inf).Vbar[i][j][k] = (*hydro_inf).Vbar20[i][j][k] + (4.25e-4 * ((*run_inf).avg_temperature - 20));
 				}
+//				cout << "Cell " << i << ", channel " << j<< ", item " << k << ", Peptide: " << (*run_inf).peptide_serialnumber[i][j][k] << ", DNA: " << (*run_inf).DNA_serialnumber[i][j][k] << ", in us_data_io: vbar:" << (*hydro_inf).Vbar[i][j][k] << ", vbar20: " << (*hydro_inf).Vbar20[i][j][k] << endl;
 			}
 		}
 	}

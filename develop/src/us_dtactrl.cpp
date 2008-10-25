@@ -1038,11 +1038,13 @@ void Data_Control_W::updateLabels()
 			viscosity_le->setText(str);
 //			connect(viscosity_le, SIGNAL(returnPressed()), SLOT(update_viscosity()));
 		}
+		//cout << vbar20 << endl;
 		str.sprintf("%6.4f", vbar20);
 		if (vbarDisplay)
 		{
 //			vbar_le->disconnect();
 			vbar_le->setText(str);
+			qApp->processEvents();
 //			connect(vbar_le, SIGNAL(returnPressed()), SLOT(update_vbar()));
 		}
 	}
@@ -1286,6 +1288,7 @@ int Data_Control_W::load_data(const QString &fileName)
 	vbar = hydro_inf.Vbar[selected_cell][selected_channel][0];
 	vbar20 = hydro_inf.Vbar20[selected_cell][selected_channel][0];
 	calc_correction(run_inf.avg_temperature);
+	//cout << "vbar: " << vbar << ", vbar20: " << vbar20 << endl;
 	if ((run_type != 7
 	&& run_type != 8
 	&& run_type != 0
