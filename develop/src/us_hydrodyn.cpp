@@ -452,6 +452,9 @@ void US_Hydrodyn::setupGUI()
 	j++;
 	background->addWidget(pb_view_pdb, j, 0);
 	j++;
+	background->addWidget(lbl_bead_model_prefix, j, 0);
+	background->addWidget(le_bead_model_prefix, j, 1);
+	j++;
 	background->addWidget(pb_somo, j, 0);
 	background->addWidget(pb_grid, j, 1);
 	j++;
@@ -460,9 +463,6 @@ void US_Hydrodyn::setupGUI()
 	j++;
 	background->addWidget(pb_load_bead_model, j, 0);
 	background->addWidget(le_bead_model_file, j, 1);
-	j++;
-	background->addWidget(lbl_bead_model_prefix, j, 0);
-	background->addWidget(le_bead_model_prefix, j, 1);
 	j++;
 	background->addWidget(pb_calc_hydro, j, 0);
 	background->addWidget(pb_show_hydro_results, j, 1);
