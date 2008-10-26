@@ -62,10 +62,11 @@ SUBDIRS += \
     us_extinction \
     us_fematch \
     us_fematch_ra \
+    us_findat \
     us_ga_model_editor \
     us_gainit \
-    us_findat \
     us_globalequil \
+    us_gridcontrol_t \
     us_hydrodyn \
     us_license \
     us_lncr2 \
