@@ -703,6 +703,11 @@ cerr << "loading hydrodynamics from the database using db_login information...\n
 				else if((*run_inf).DNA_serialnumber[i][j][k] > 0)
 				{
 					Vbar_info = VBAR->export_DNA_vbar((*run_inf).DNA_serialnumber[i][j][k]);
+					if (Vbar_info.vbar == 0.0 || Vbar_info.vbar20 == 0.0)
+					{
+						Vbar_info.vbar   = (float) 0.55;
+						Vbar_info.vbar20 = (float) 0.55;
+					}
 					(*hydro_inf).Vbar[i][j][k] = Vbar_info.vbar;
 					(*hydro_inf).Vbar20[i][j][k] = Vbar_info.vbar20;
 				}

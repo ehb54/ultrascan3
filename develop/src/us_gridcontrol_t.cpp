@@ -12,1069 +12,1073 @@ US_GridControl_T::US_GridControl_T(const QString &control_file,
 {
 	cout.precision(8);
 	cerr.precision(8);
-    USglobal = new US_Config();
-    gcfile = control_file;
-    this->gridopt = gridopt;
-    cerr << "gridopt: " << gridopt << endl;
-    this->system_name = system_name;
-    cerr << "system: " << system_name << endl;
-    cerr << "non-gui\n";
-    timestamp = QDateTime::currentDateTime();
-    timestamp_string = timestamp.toString("yyMMddhhmmss");
-    SA2D_Params.ff0_min = 1.0;
-    SA2D_Params.ff0_max = 4.0;
-    SA2D_Params.ff0_resolution = 10;
-    SA2D_Params.s_min = 1.0;
-    SA2D_Params.s_max = 10.0;
-    SA2D_Params.s_resolution = 10;
-    SA2D_Params.regularization = 0.0;
-    SA2D_Params.uniform_grid_repetition = 1;
-    SA2D_Params.meniscus_range = 0.0;
-    SA2D_Params.meniscus_gridpoints = 0;
-    SA2D_Params.fit_meniscus = false;
-    SA2D_Params.max_iterations = 3;
-    SA2D_Params.monte_carlo = 0;
-    SA2D_Params.use_iterative = false;
-    GA_Params.genes = 500;
-    GA_Params.demes = 10;
-    GA_Params.generations = 100;
-    GA_Params.crossover = 50;
-    GA_Params.initial_solutes = 5;
-    GA_Params.mutation = 50;
-    GA_Params.plague = 0;
-    GA_Params.elitism = 2;
-    GA_Params.random_seed = 0;
-    GA_Params.regularization = 0.95;
-    GA_Params.meniscus_range = 0.0;
-    GA_Params.fit_meniscus = false;
-    GA_Params.solute.clear();
-    GA_Params.monte_carlo = 0;
-    meniscus_range = 0.0;
-    fit_meniscus = false;
-    use_iterative = false;
-    max_iterations = 3;
-    cerr << "l1\n";
-    struct bucket temp_bucket;
-    QString file_info, str;
-    unsigned int count;
-    Control_Params.int_params.clear();
-    Control_Params.float_params.clear();
-    simparams_extra.clear();
-    simulation_parameters_vec.clear();
-    total_points = 0;
-    cp_list.clear();
-    rotor_list.clear();
-    GA_Params.solute.clear();
-    if (!readCenterpieceInfo(&cp_list))
-    {
-        cerr << "UltraScan Fatal Error: There was a problem opening the\n"
-        "centerpiece database file:\n\n"
-        + USglobal->config_list.system_dir + "/etc/centerpiece.dat\n\n"
-        "Please install the centerpiece database file\n"
-        "before proceeding.\n\n";
-        exit(-1);
-    }
-    if (!readRotorInfo(&rotor_list))
-    {
-        cerr << "UltraScan Fatal Error:", "There was a problem opening the\n"
-        "rotor database file:\n\n"
-        + USglobal->config_list.system_dir + "/etc/rotor.dat\n\n"
-        "Please install the rotor database file\n"
-        "before proceeding.\n\n";
-        exit(-2);
-    }
-    cerr << "l2\n";
-    cerr << control_file << endl;
-    QFile f(control_file);
-    cerr << "l2a\n";
-    QString fn;
-    if(f.open(IO_ReadOnly))
-    {
-        cerr << "l2b\n";
-        QTextStream ts(&f);
-        db_login.driver = "QMYSQL3";
-        ts >> analysis_type;
-        if(analysis_type == "2DSA-MW-Constraint")
-        {
-            analysis_type = "2DSA_MW";
-        }
-        cerr << "Analysis Type: " << analysis_type << endl;
-        ts >> db_login.user;
-        cerr << "Database user: " << db_login.user << endl;
-        ts >> db_login.password;
-        cerr << "Database password: " << db_login.password << endl;
-        ts >> db_login.database;
-        cerr << "Database name: " << db_login.database << endl;
-        ts >> db_login.host;
-        cerr << "Database host: " << db_login.host << endl;
-        ts >> count;
-        cerr << "Number of experiments: " << count << endl;
-        bool baseline_flag = false;
-        for (unsigned  int i=0; i<count; i++)
-        {
-            dataIO = new US_Data_IO(&run_inf, baseline_flag);
-            ts >> file_info; // run ID
-            int position = file_info.find(".veloc.", 0, false);
-            file_info = file_info.left(position);
-            cerr << "Run ID for experiment " << i+1 << ": " << file_info << endl;
-            //USglobal paths need to get initialized for both "this" object and for US_Data_IO
-            ts >> dataIO->USglobal->config_list.result_dir; // place where data was extracted to
-            USglobal->config_list.result_dir = dataIO->USglobal->config_list.result_dir;
-            cerr << "Path for experiment " << i+1 << ": " << USglobal->config_list.result_dir << endl;
-            fn = USglobal->config_list.result_dir + "/" + file_info + ".us.v";
-            ts >> selected_cell;
-            selected_cell --;
-            cerr << "Cell for experiment " << i+1 << ": " << selected_cell << endl;
-            ts >> selected_lambda;
-            selected_lambda --;
-            cerr << "Wavelength for experiment " << i+1 << ": " << selected_lambda << endl;
-            ts >> selected_channel;
-            selected_channel --;
-            cerr << "Channel for experiment " << i+1 << ": " << selected_channel << endl;
-            cerr << "About to load file: " << fn << endl;
-            int result = dataIO->load_run(fn, 1, has_data, &cp_list);
-            cerr << "loading resulted in: " << result << endl;
-            if (result < 0)
-            {
-                str = tr("Error: the selected run could not be loaded:\n\n"
-                         "selected Experiment: " + fn + "\n"
-                         "Run aborted with exit code -3");
-                cerr << str << endl;
-                exit(-3);
-            }
-	    if (analysis_type == "GA_SC") 
-	    {
-		QString constraint_file;
-		dataIO->assign_simparams(&simulation_parameters, selected_cell, selected_lambda, selected_channel);
-		ts >> constraint_file;
-		constraint_file = USglobal->config_list.result_dir + "/" + constraint_file;
-		
-		US_FemGlobal us_femglobal;
-		printf("read constraints %d\n", us_femglobal.read_constraints(&model_system, &model_system_constraints, constraint_file));
-		simulation_parameters.simpoints = model_system_constraints.simpoints;
-		simulation_parameters.mesh = model_system_constraints.mesh;
-		simulation_parameters.moving_grid = model_system_constraints.moving_grid;
+	USglobal = new US_Config();
+	gcfile = control_file;
+	this->gridopt = gridopt;
+	cerr << "gridopt: " << gridopt << endl;
+	this->system_name = system_name;
+	cerr << "system: " << system_name << endl;
+	cerr << "non-gui\n";
+	timestamp = QDateTime::currentDateTime();
+	timestamp_string = timestamp.toString("yyMMddhhmmss");
+	SA2D_Params.ff0_min = 1.0;
+	SA2D_Params.ff0_max = 4.0;
+	SA2D_Params.ff0_resolution = 10;
+	SA2D_Params.s_min = 1.0;
+	SA2D_Params.s_max = 10.0;
+	SA2D_Params.s_resolution = 10;
+	SA2D_Params.regularization = 0.0;
+	SA2D_Params.uniform_grid_repetition = 1;
+	SA2D_Params.meniscus_range = 0.0;
+	SA2D_Params.meniscus_gridpoints = 0;
+	SA2D_Params.fit_meniscus = false;
+	SA2D_Params.max_iterations = 3;
+	SA2D_Params.monte_carlo = 0;
+	SA2D_Params.use_iterative = false;
+	GA_Params.genes = 500;
+	GA_Params.demes = 10;
+	GA_Params.generations = 100;
+	GA_Params.crossover = 50;
+	GA_Params.initial_solutes = 5;
+	GA_Params.mutation = 50;
+	GA_Params.plague = 0;
+	GA_Params.elitism = 2;
+	GA_Params.random_seed = 0;
+	GA_Params.regularization = 0.95;
+	GA_Params.meniscus_range = 0.0;
+	GA_Params.fit_meniscus = false;
+	GA_Params.solute.clear();
+	GA_Params.monte_carlo = 0;
+	meniscus_range = 0.0;
+	fit_meniscus = false;
+	use_iterative = false;
+	max_iterations = 3;
+	cerr << "l1\n";
+	struct bucket temp_bucket;
+	QString file_info, str;
+	unsigned int count;
+	Control_Params.int_params.clear();
+	Control_Params.float_params.clear();
+	simparams_extra.clear();
+	simulation_parameters_vec.clear();
+	total_points = 0;
+	cp_list.clear();
+	rotor_list.clear();
+	GA_Params.solute.clear();
+	if (!readCenterpieceInfo(&cp_list))
+	{
+		cerr << "UltraScan Fatal Error: There was a problem opening the\n"
+				"centerpiece database file:\n\n"
+				+ USglobal->config_list.system_dir + "/etc/centerpiece.dat\n\n"
+				"Please install the centerpiece database file\n"
+				"before proceeding.\n\n";
+		exit(-1);
+	}
+	if (!readRotorInfo(&rotor_list))
+	{
+		cerr << "UltraScan Fatal Error:", "There was a problem opening the\n"
+				"rotor database file:\n\n"
+						+ USglobal->config_list.system_dir + "/etc/rotor.dat\n\n"
+						"Please install the rotor database file\n"
+						"before proceeding.\n\n";
+				exit(-2);
+	}
+	cerr << "l2\n";
+	cerr << control_file << endl;
+	QFile f(control_file);
+	cerr << "l2a\n";
+	QString fn;
+	if(f.open(IO_ReadOnly))
+	{
+		cerr << "l2b\n";
+		QTextStream ts(&f);
+		db_login.driver = "QMYSQL3";
+		ts >> analysis_type;
+		if(analysis_type == "2DSA-MW-Constraint")
+		{
+			analysis_type = "2DSA_MW";
+		}
+		cerr << "Analysis Type: " << analysis_type << endl;
+		ts >> db_login.user;
+		cerr << "Database user: " << db_login.user << endl;
+		ts >> db_login.password;
+		cerr << "Database password: " << db_login.password << endl;
+		ts >> db_login.database;
+		cerr << "Database name: " << db_login.database << endl;
+		ts >> db_login.host;
+		cerr << "Database host: " << db_login.host << endl;
+		ts >> count;
+		cerr << "Number of experiments: " << count << endl;
+		bool baseline_flag = false;
+		for (unsigned  int i=0; i<count; i++)
+		{
+			dataIO = new US_Data_IO(&run_inf, baseline_flag);
+			ts >> file_info; // run ID
+			int position = file_info.find(".veloc.", 0, false);
+			file_info = file_info.left(position);
+			cerr << "Run ID for experiment " << i+1 << ": " << file_info << endl;
+				//USglobal paths need to get initialized for both "this" object and for US_Data_IO
+			ts >> dataIO->USglobal->config_list.result_dir; // place where data was extracted to
+			USglobal->config_list.result_dir = dataIO->USglobal->config_list.result_dir;
+			cerr << "Path for experiment " << i+1 << ": " << USglobal->config_list.result_dir << endl;
+			fn = USglobal->config_list.result_dir + "/" + file_info + ".us.v";
+			ts >> selected_cell;
+			selected_cell --;
+			cerr << "Cell for experiment " << i+1 << ": " << selected_cell << endl;
+			ts >> selected_lambda;
+			selected_lambda --;
+			cerr << "Wavelength for experiment " << i+1 << ": " << selected_lambda << endl;
+			ts >> selected_channel;
+			selected_channel --;
+			cerr << "Channel for experiment " << i+1 << ": " << selected_channel << endl;
+			cerr << "About to load file: " << fn << endl;
+			int result = dataIO->load_run(fn, 1, has_data, &cp_list);
+			cerr << "loading resulted in: " << result << endl;
+			if (result < 0)
+			{
+				str = tr("Error: the selected run could not be loaded:\n\n"
+						"selected Experiment: " + fn + "\n"
+						"Run aborted with exit code -3");
+				cerr << str << endl;
+				exit(-3);
+			}
+			if (analysis_type == "GA_SC")
+			{
+				QString constraint_file;
+				dataIO->assign_simparams(&simulation_parameters, selected_cell, selected_lambda, selected_channel);
+				ts >> constraint_file;
+				constraint_file = USglobal->config_list.result_dir + "/" + constraint_file;
+
+				US_FemGlobal us_femglobal;
+				printf("read constraints %d\n", us_femglobal.read_constraints(&model_system, &model_system_constraints, constraint_file));
+				simulation_parameters.simpoints = model_system_constraints.simpoints;
+				simulation_parameters.mesh = model_system_constraints.mesh;
+				simulation_parameters.moving_grid = model_system_constraints.moving_grid;
 		// NOTICE: the centerpiece type assigned in US_Data_IO::assign_simparams() sets the flag for band forming centerpieces.
 		// if the flag is true, then the band_volume set below should be used. The band_volume needs to be set by the user.
-		simulation_parameters.band_volume = model_system_constraints.band_volume;
+				simulation_parameters.band_volume = model_system_constraints.band_volume;
 
-		constraints_file_name = USglobal->config_list.result_dir + "/" + file_info + ".tmp.constraints";
-		simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + ".tmp.simulation_parameters";
+				constraints_file_name = USglobal->config_list.result_dir + "/" + file_info + ".tmp.constraints";
+				simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + ".tmp.simulation_parameters";
 
-		QFile f1(constraints_file_name);
-		QFile f2(simulation_parameters_file_name);
-		char *US = getenv("ULTRASCAN");
-		char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
-		sprintf(lockfile, "%s/tigre.lock", US);
-		int lfd = open(lockfile, O_RDONLY);
-		flock(lfd, LOCK_EX);
-		int increment = 0;
-		while (f1.open(IO_ReadOnly) || f2.open(IO_ReadOnly))
-		{
-		    f1.close();
-		    f2.close();
-		    increment++;
-		    constraints_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.constraints").arg(increment);
-		    simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
-		    f1.setName(constraints_file_name);
-		    f2.setName(simulation_parameters_file_name);
+				QFile f1(constraints_file_name);
+				QFile f2(simulation_parameters_file_name);
+				char *US = getenv("ULTRASCAN");
+				char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
+				sprintf(lockfile, "%s/tigre.lock", US);
+				int lfd = open(lockfile, O_RDONLY);
+				flock(lfd, LOCK_EX);
+				int increment = 0;
+				while (f1.open(IO_ReadOnly) || f2.open(IO_ReadOnly))
+				{
+					f1.close();
+					f2.close();
+					increment++;
+					constraints_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.constraints").arg(increment);
+					simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + QString(".tmp-%1.simulation_parameters").arg(increment);
+					f1.setName(constraints_file_name);
+					f2.setName(simulation_parameters_file_name);
+				}
+				f1.close();
+				f2.close();
+				flock(lfd, LOCK_UN);
+				close(lfd);
+
+				us_femglobal.write_constraints(&model_system, &model_system_constraints, constraints_file_name);
+				us_femglobal.write_simulationParameters(&simulation_parameters, simulation_parameters_file_name);
+			}
+			if (analysis_type == "2DSA_RA" ||
+						 analysis_type == "2DSA_MW_RA" ||
+						 analysis_type == "GA_RA" ||
+						 analysis_type == "GA_MW_RA")
+			{
+				dataIO->assign_simparams(&simulation_parameters, selected_cell, selected_lambda, selected_channel);
+				simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + ".tmp.simulation_parameters";
+				cout << "simulation_parameters_file_name: " << simulation_parameters_file_name << endl;
+				SimparamsExtra tmp_extra;
+				tmp_extra.simulation_parameters_file_name = simulation_parameters_file_name;
+				simparams_extra.push_back(tmp_extra);
+				cerr << QString("assign loop simparams_extra[%1].simulation_parameters_file_name = %2\n").
+						arg(simparams_extra.size() - 1).
+						arg(simparams_extra[simparams_extra.size() - 1].simulation_parameters_file_name);
+				simulation_parameters_vec.push_back(simulation_parameters);
+			}
+
+			points = run_inf.points[selected_cell][selected_lambda][selected_channel];
+			cerr << " there are " << points << " in this dataset...\n";
+			total_points += points * run_inf.scans[selected_cell][selected_lambda];
+			result = dataIO->load_veloc_scan(&channel_data, selected_cell, selected_lambda, selected_channel);
+			if(result < 0)
+			{
+				str.sprintf(tr("Error: the selected scan could not be loaded:\n\n"
+						"selected Experiment: " + fn + "\n"
+						"selected cell: %d\n"
+						"selected lambda: %d\n"
+						"selected channel: %d\n"
+						"Run aborted with exit code -4"),
+				selected_cell + 1, selected_lambda + 1, selected_channel + 1);
+				cerr << str << endl;
+				exit(-4);
+			}
+			cerr << "Result: " << result << endl;
+			cerr << "successfully loaded " << fn << ", cell: " << selected_cell+1 << ", lambda: " << selected_lambda+1 << ", channel: " << selected_channel << "\n";
+			dataIO->load_hydrodynamics(db_login, &hydro_inf);
+			corr_inf.density = hydro_inf.Density[selected_cell][selected_lambda];
+			cerr << "corr_inf.density: " << corr_inf.density << endl;
+			corr_inf.viscosity = hydro_inf.Viscosity[selected_cell][selected_lambda];
+			cerr << "corr_inf.viscosity: " << corr_inf.viscosity << endl;
+			corr_inf.vbar = hydro_inf.Vbar[selected_cell][selected_lambda][selected_channel];
+			cerr << "corr_inf.vbar: " << corr_inf.vbar << endl;
+			corr_inf.vbar20 = hydro_inf.Vbar20[selected_cell][selected_lambda][selected_channel];
+			cerr << "corr_inf.vbar20: " << corr_inf.vbar20 << endl;
+			corr_inf.temperature = run_inf.avg_temperature;
+			cerr << "corr_inf.temperature: " << corr_inf.temperature << endl;
+			dataIO->calc_correction(&corr_inf);
+			add_experiment();
+			delete dataIO;
 		}
-		f1.close();
-		f2.close();
-		flock(lfd, LOCK_UN);
-		close(lfd);
-
-		us_femglobal.write_constraints(&model_system, &model_system_constraints, constraints_file_name);
-		us_femglobal.write_simulationParameters(&simulation_parameters, simulation_parameters_file_name);
-	    }
-	    if (analysis_type == "2DSA_RA" ||
-		analysis_type == "2DSA_MW_RA" ||
-		analysis_type == "GA_RA" ||
-		analysis_type == "GA_MW_RA") 
-	    {
-		dataIO->assign_simparams(&simulation_parameters, selected_cell, selected_lambda, selected_channel);
-		simulation_parameters_file_name = USglobal->config_list.result_dir + "/" + file_info + ".tmp.simulation_parameters";
-		cout << "simulation_parameters_file_name: " << simulation_parameters_file_name << endl;
-		SimparamsExtra tmp_extra;
-		tmp_extra.simulation_parameters_file_name = simulation_parameters_file_name;
-		simparams_extra.push_back(tmp_extra);
-		cerr << QString("assign loop simparams_extra[%1].simulation_parameters_file_name = %2\n").
-		  arg(simparams_extra.size() - 1).
-		  arg(simparams_extra[simparams_extra.size() - 1].simulation_parameters_file_name);
-		simulation_parameters_vec.push_back(simulation_parameters);
-	    }		
-	    
-            points = run_inf.points[selected_cell][selected_lambda][selected_channel];
-            cerr << " there are " << points << " in this dataset...\n";
-            total_points += points * run_inf.scans[selected_cell][selected_lambda];
-            result = dataIO->load_veloc_scan(&channel_data, selected_cell, selected_lambda, selected_channel);
-            if(result < 0)
-            {
-                str.sprintf(tr("Error: the selected scan could not be loaded:\n\n"
-                               "selected Experiment: " + fn + "\n"
-                               "selected cell: %d\n"
-                               "selected lambda: %d\n"
-                               "selected channel: %d\n"
-                               "Run aborted with exit code -4"),
-                            selected_cell + 1, selected_lambda + 1, selected_channel + 1);
-                cerr << str << endl;
-                exit(-4);
-            }
-            cerr << "Result: " << result << endl;
-            cerr << "successfully loaded " << fn << ", cell: " << selected_cell+1 << ", lambda: " << selected_lambda+1 << ", channel: " << selected_channel << "\n";
-            dataIO->load_hydrodynamics(db_login, &hydro_inf);
-            corr_inf.density = hydro_inf.Density[selected_cell][selected_lambda];
-            cerr << "corr_inf.density: " << corr_inf.density << endl;
-            corr_inf.viscosity = hydro_inf.Viscosity[selected_cell][selected_lambda];
-            cerr << "corr_inf.viscosity: " << corr_inf.viscosity << endl;
-            corr_inf.vbar = hydro_inf.Vbar[selected_cell][selected_lambda][selected_channel];
-            cerr << "corr_inf.vbar: " << corr_inf.vbar << endl;
-            corr_inf.vbar20 = hydro_inf.Vbar20[selected_cell][selected_lambda][selected_channel];
-            cerr << "corr_inf.vbar20: " << corr_inf.vbar20 << endl;
-            corr_inf.temperature = run_inf.avg_temperature;
-            cerr << "corr_inf.temperature: " << corr_inf.temperature << endl;
-            dataIO->calc_correction(&corr_inf);
-            add_experiment();
-            delete dataIO;
-        }
 	// ------------- read experiments loop
-        if (analysis_type == "GA")
-        {
-            ts >> GA_Params.demes;
-            cerr << "demes:" << GA_Params.demes << endl;
-            ts >> GA_Params.generations;
-            cerr << "generations:" << GA_Params.generations << endl;
-            ts >> GA_Params.crossover;
-            cerr << "crossover:" << GA_Params.crossover << endl;
-            ts >> GA_Params.mutation;
-            cerr << "mutation:" << GA_Params.mutation << endl;
-            ts >> GA_Params.plague;
-            cerr << "plague:" << GA_Params.plague << endl;
-            ts >> GA_Params.elitism;
-            cerr << "elitism:" << GA_Params.elitism << endl;
-            ts >> GA_Params.migration_rate;
-            cerr << "Migration Rate:" << GA_Params.migration_rate << endl;
-            ts >> GA_Params.genes;
-            cerr << "genes:" << GA_Params.genes << endl;
-            ts >> GA_Params.initial_solutes;
-            cerr << "solutes:" << GA_Params.initial_solutes << endl;
-            printf("solutes:%d\n", GA_Params.initial_solutes);
-            ts >> GA_Params.random_seed;
-            cerr << "seed:" << GA_Params.random_seed << endl;
-            ts >> GA_Params.monte_carlo;
-            cerr << "Monte Carlo Iterations:" << GA_Params.monte_carlo << endl;
-            printf("monte carlo:%d\n", GA_Params.monte_carlo);
-            ts >> GA_Params.regularization;
-            cerr << "regularization:" << GA_Params.regularization << endl;
-            regularization = GA_Params.regularization;
-            printf("regularization:%f\n", GA_Params.regularization);
-            for (unsigned int i=0; i<GA_Params.initial_solutes; i++)
-            {
-                ts >>  temp_bucket.s;
-                ts >>  temp_bucket.s_min;
-                ts >>  temp_bucket.s_max;
-                ts >>  temp_bucket.ff0;
-                ts >>  temp_bucket.ff0_min;
-                ts >>  temp_bucket.ff0_max;
-                GA_Params.solute.push_back(temp_bucket);
-            }
-            ts >> count;
-            cerr << "Fit meniscus?: " << count << endl;
-            GA_Params.fit_meniscus = count;
-            fit_meniscus = count;
-            printf("fit_meniscus: %d\n", fit_meniscus);
-            ts >> GA_Params.meniscus_range;
-            cerr << "Meniscus range: " << GA_Params.meniscus_range << endl;
-            meniscus_range = GA_Params.meniscus_range;
-            ts >> count;
-            cerr << "Fit ti noise?: " << count << endl;
-            fit_tinoise = count;
-            printf("fit_ti: %d\n", fit_rinoise);
-            ts >> count;
-            cerr << "Fit ri noise?: " << count << endl;
-            fit_rinoise = count;
-            printf("fit_ri: %d\n", fit_rinoise);
-            ts >> email;
-            cerr << "Email: " << email << endl;
-            printf("email: %s\n", email.ascii());
-            {
-                analysis_defined = true;
-                data_loaded = true;
-                write_experiment();
-            }
-        }
-        if (analysis_type == "GA_RA")
-        {
-            ts >> GA_Params.demes;
-            cerr << "demes:" << GA_Params.demes << endl;
-            ts >> GA_Params.generations;
-            cerr << "generations:" << GA_Params.generations << endl;
-            ts >> GA_Params.crossover;
-            cerr << "crossover:" << GA_Params.crossover << endl;
-            ts >> GA_Params.mutation;
-            cerr << "mutation:" << GA_Params.mutation << endl;
-            ts >> GA_Params.plague;
-            cerr << "plague:" << GA_Params.plague << endl;
-            ts >> GA_Params.elitism;
-            cerr << "elitism:" << GA_Params.elitism << endl;
-            ts >> GA_Params.migration_rate;
-            cerr << "Migration Rate:" << GA_Params.migration_rate << endl;
-            ts >> GA_Params.genes;
-            cerr << "genes:" << GA_Params.genes << endl;
-            ts >> GA_Params.initial_solutes;
-            cerr << "solutes:" << GA_Params.initial_solutes << endl;
-            printf("solutes:%d\n", GA_Params.initial_solutes);
-            ts >> GA_Params.random_seed;
-            cerr << "seed:" << GA_Params.random_seed << endl;
-            ts >> GA_Params.monte_carlo;
-            cerr << "Monte Carlo Iterations:" << GA_Params.monte_carlo << endl;
-            printf("monte carlo:%d\n", GA_Params.monte_carlo);
-            ts >> GA_Params.regularization;
-            cerr << "regularization:" << GA_Params.regularization << endl;
-            regularization = GA_Params.regularization;
-            printf("regularization:%f\n", GA_Params.regularization);
-            for (unsigned int i=0; i<GA_Params.initial_solutes; i++)
-            {
-                ts >>  temp_bucket.s;
-                ts >>  temp_bucket.s_min;
-                ts >>  temp_bucket.s_max;
-                ts >>  temp_bucket.ff0;
-                ts >>  temp_bucket.ff0_min;
-                ts >>  temp_bucket.ff0_max;
-                GA_Params.solute.push_back(temp_bucket);
-            }
-            ts >> count;
-            cerr << "Fit meniscus?: " << count << endl;
-            GA_Params.fit_meniscus = count;
-            fit_meniscus = count;
-            printf("fit_meniscus: %d\n", fit_meniscus);
-            ts >> GA_Params.meniscus_range;
-            cerr << "Meniscus range: " << GA_Params.meniscus_range << endl;
-            meniscus_range = GA_Params.meniscus_range;
-            ts >> count;
-            cerr << "Fit ti noise?: " << count << endl;
-            fit_tinoise = count;
-            printf("fit_ti: %d\n", fit_rinoise);
-            ts >> count;
-            cerr << "Fit ri noise?: " << count << endl;
-            fit_rinoise = count;
-            printf("fit_ri: %d\n", fit_rinoise);
-            ts >> email;
-            cerr << "Email: " << email << endl;
-            printf("email: %s\n", email.ascii());
-	    for (unsigned int i = 0; i < experiment.size(); i++) {
-	      cerr << QString("Experiment %1 simparameters:\n").arg(i);
-	      ts >> simparams_extra[i].simpoints;
-	      cerr << "Simpoints:" << simparams_extra[i].simpoints << endl;
-	      ts >> simparams_extra[i].band_volume;
-	      cerr << "Band volume:" << simparams_extra[i].band_volume << endl;
-	      ts >> simparams_extra[i].radial_grid;
-	      cerr << "Radial grid:" << simparams_extra[i].radial_grid << endl;
-	      ts >> simparams_extra[i].moving_grid;
-	      cerr << "Moving grid:" << simparams_extra[i].moving_grid << endl;
-	      {
-		simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name;
-		QFile f(simulation_parameters_file_name);
-		char *US = getenv("ULTRASCAN");
-		char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
-		sprintf(lockfile, "%s/tigre.lock", US);
-		int lfd = open(lockfile, O_RDONLY);
-		flock(lfd, LOCK_EX);
-		int increment = 0;
-		while (f.open(IO_ReadOnly))
+		if (analysis_type == "GA")
 		{
-		    f.close();
-		    increment++;
-		    simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name + QString("-%1").arg(increment);
-		    f.setName(simulation_parameters_file_name);
+			ts >> GA_Params.demes;
+			cerr << "demes:" << GA_Params.demes << endl;
+			ts >> GA_Params.generations;
+			cerr << "generations:" << GA_Params.generations << endl;
+			ts >> GA_Params.crossover;
+			cerr << "crossover:" << GA_Params.crossover << endl;
+			ts >> GA_Params.mutation;
+			cerr << "mutation:" << GA_Params.mutation << endl;
+			ts >> GA_Params.plague;
+			cerr << "plague:" << GA_Params.plague << endl;
+			ts >> GA_Params.elitism;
+			cerr << "elitism:" << GA_Params.elitism << endl;
+			ts >> GA_Params.migration_rate;
+			cerr << "Migration Rate:" << GA_Params.migration_rate << endl;
+			ts >> GA_Params.genes;
+			cerr << "genes:" << GA_Params.genes << endl;
+			ts >> GA_Params.initial_solutes;
+			cerr << "solutes:" << GA_Params.initial_solutes << endl;
+			printf("solutes:%d\n", GA_Params.initial_solutes);
+			ts >> GA_Params.random_seed;
+			cerr << "seed:" << GA_Params.random_seed << endl;
+			ts >> GA_Params.monte_carlo;
+			cerr << "Monte Carlo Iterations:" << GA_Params.monte_carlo << endl;
+			printf("monte carlo:%d\n", GA_Params.monte_carlo);
+			ts >> GA_Params.regularization;
+			cerr << "regularization:" << GA_Params.regularization << endl;
+			regularization = GA_Params.regularization;
+			printf("regularization:%f\n", GA_Params.regularization);
+			for (unsigned int i=0; i<GA_Params.initial_solutes; i++)
+			{
+				ts >>  temp_bucket.s;
+				ts >>  temp_bucket.s_min;
+				ts >>  temp_bucket.s_max;
+				ts >>  temp_bucket.ff0;
+				ts >>  temp_bucket.ff0_min;
+				ts >>  temp_bucket.ff0_max;
+				GA_Params.solute.push_back(temp_bucket);
+			}
+			ts >> count;
+			cerr << "Fit meniscus?: " << count << endl;
+			GA_Params.fit_meniscus = count;
+			fit_meniscus = count;
+			printf("fit_meniscus: %d\n", fit_meniscus);
+			ts >> GA_Params.meniscus_range;
+			cerr << "Meniscus range: " << GA_Params.meniscus_range << endl;
+			meniscus_range = GA_Params.meniscus_range;
+			ts >> count;
+			cerr << "Fit ti noise?: " << count << endl;
+			fit_tinoise = count;
+			printf("fit_ti: %d\n", fit_rinoise);
+			ts >> count;
+			cerr << "Fit ri noise?: " << count << endl;
+			fit_rinoise = count;
+			printf("fit_ri: %d\n", fit_rinoise);
+			ts >> email;
+			cerr << "Email: " << email << endl;
+			printf("email: %s\n", email.ascii());
+			{
+				analysis_defined = true;
+				data_loaded = true;
+				write_experiment();
+			}
 		}
-		f.close();
-		flock(lfd, LOCK_UN);
-		close(lfd);
-		simparams_extra[i].simulation_parameters_file_name = simulation_parameters_file_name;
-		US_FemGlobal us_femglobal;
-		simulation_parameters_vec[i].simpoints = simparams_extra[i].simpoints;
-		simulation_parameters_vec[i].band_volume = simparams_extra[i].band_volume;
-		simulation_parameters_vec[i].mesh = simparams_extra[i].radial_grid;
-		simulation_parameters_vec[i].moving_grid = simparams_extra[i].moving_grid;
-		fprintf(stderr, "write simulation parameters returned %d <%s>\n",
-			us_femglobal.write_simulationParameters(&simulation_parameters_vec[i], simulation_parameters_file_name),
-			simulation_parameters_file_name.ascii());
-	      }
-	      { // read simulation parameters
-		QFile fsimulation_parameters(simulation_parameters_file_name);
-		if (!fsimulation_parameters.open(IO_ReadOnly))
+		if (analysis_type == "GA_RA")
 		{
-		    cerr << "Failed to open simulation_parameters file!\n";
-		    exit(-4);
+			ts >> GA_Params.demes;
+			cerr << "demes:" << GA_Params.demes << endl;
+			ts >> GA_Params.generations;
+			cerr << "generations:" << GA_Params.generations << endl;
+			ts >> GA_Params.crossover;
+			cerr << "crossover:" << GA_Params.crossover << endl;
+			ts >> GA_Params.mutation;
+			cerr << "mutation:" << GA_Params.mutation << endl;
+			ts >> GA_Params.plague;
+			cerr << "plague:" << GA_Params.plague << endl;
+			ts >> GA_Params.elitism;
+			cerr << "elitism:" << GA_Params.elitism << endl;
+			ts >> GA_Params.migration_rate;
+			cerr << "Migration Rate:" << GA_Params.migration_rate << endl;
+			ts >> GA_Params.genes;
+			cerr << "genes:" << GA_Params.genes << endl;
+			ts >> GA_Params.initial_solutes;
+			cerr << "solutes:" << GA_Params.initial_solutes << endl;
+			printf("solutes:%d\n", GA_Params.initial_solutes);
+			ts >> GA_Params.random_seed;
+			cerr << "seed:" << GA_Params.random_seed << endl;
+			ts >> GA_Params.monte_carlo;
+			cerr << "Monte Carlo Iterations:" << GA_Params.monte_carlo << endl;
+			printf("monte carlo:%d\n", GA_Params.monte_carlo);
+			ts >> GA_Params.regularization;
+			cerr << "regularization:" << GA_Params.regularization << endl;
+			regularization = GA_Params.regularization;
+			printf("regularization:%f\n", GA_Params.regularization);
+			for (unsigned int i=0; i<GA_Params.initial_solutes; i++)
+			{
+				ts >>  temp_bucket.s;
+				ts >>  temp_bucket.s_min;
+				ts >>  temp_bucket.s_max;
+				ts >>  temp_bucket.ff0;
+				ts >>  temp_bucket.ff0_min;
+				ts >>  temp_bucket.ff0_max;
+				GA_Params.solute.push_back(temp_bucket);
+			}
+			ts >> count;
+			cerr << "Fit meniscus?: " << count << endl;
+			GA_Params.fit_meniscus = count;
+			fit_meniscus = count;
+			printf("fit_meniscus: %d\n", fit_meniscus);
+			ts >> GA_Params.meniscus_range;
+			cerr << "Meniscus range: " << GA_Params.meniscus_range << endl;
+			meniscus_range = GA_Params.meniscus_range;
+			ts >> count;
+			cerr << "Fit ti noise?: " << count << endl;
+			fit_tinoise = count;
+			printf("fit_ti: %d\n", fit_rinoise);
+			ts >> count;
+			cerr << "Fit ri noise?: " << count << endl;
+			fit_rinoise = count;
+			printf("fit_ri: %d\n", fit_rinoise);
+			ts >> email;
+			cerr << "Email: " << email << endl;
+			printf("email: %s\n", email.ascii());
+			for (unsigned int i = 0; i < experiment.size(); i++)
+			{
+				cerr << QString("Experiment %1 simparameters:\n").arg(i);
+				ts >> simparams_extra[i].simpoints;
+				cerr << "Simpoints:" << simparams_extra[i].simpoints << endl;
+				ts >> simparams_extra[i].band_volume;
+				cerr << "Band volume:" << simparams_extra[i].band_volume << endl;
+				ts >> simparams_extra[i].radial_grid;
+				cerr << "Radial grid:" << simparams_extra[i].radial_grid << endl;
+				ts >> simparams_extra[i].moving_grid;
+				cerr << "Moving grid:" << simparams_extra[i].moving_grid << endl;
+				{
+					simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name;
+					QFile f(simulation_parameters_file_name);
+					char *US = getenv("ULTRASCAN");
+					char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
+					sprintf(lockfile, "%s/tigre.lock", US);
+					int lfd = open(lockfile, O_RDONLY);
+					flock(lfd, LOCK_EX);
+					int increment = 0;
+					while (f.open(IO_ReadOnly))
+					{
+						f.close();
+						increment++;
+						simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name + QString("-%1").arg(increment);
+						f.setName(simulation_parameters_file_name);
+					}
+					f.close();
+					flock(lfd, LOCK_UN);
+					close(lfd);
+					simparams_extra[i].simulation_parameters_file_name = simulation_parameters_file_name;
+					US_FemGlobal us_femglobal;
+					simulation_parameters_vec[i].simpoints = simparams_extra[i].simpoints;
+					simulation_parameters_vec[i].band_volume = simparams_extra[i].band_volume;
+					simulation_parameters_vec[i].mesh = simparams_extra[i].radial_grid;
+					simulation_parameters_vec[i].moving_grid = simparams_extra[i].moving_grid;
+					fprintf(stderr, "write simulation parameters returned %d <%s>\n",
+							  us_femglobal.write_simulationParameters(&simulation_parameters_vec[i], simulation_parameters_file_name),
+							  simulation_parameters_file_name.ascii());
+				}
+				{ // read simulation parameters
+					QFile fsimulation_parameters(simulation_parameters_file_name);
+					if (!fsimulation_parameters.open(IO_ReadOnly))
+					{
+						cerr << "Failed to open simulation_parameters file!\n";
+						exit(-4);
+					}
+					simulation_parameters_full_text.clear();
+					QTextStream ts(&fsimulation_parameters);
+					QString qs_tmp;
+					while (!ts.atEnd())
+					{
+						qs_tmp = ts.readLine();
+						printf("simu line: %s\n", qs_tmp.ascii());
+						simulation_parameters_full_text.push_back(qs_tmp);
+					}
+					fsimulation_parameters.close();
+					simparams_extra[i].simulation_parameters_full_text = simulation_parameters_full_text;
+				}
+			}
+			{
+				analysis_defined = true;
+				data_loaded = true;
+				write_experiment();
+			}
 		}
-		simulation_parameters_full_text.clear();
-		QTextStream ts(&fsimulation_parameters);
-		QString qs_tmp;
-		while (!ts.atEnd())
+		if (analysis_type == "GA_MW")
 		{
-		  qs_tmp = ts.readLine();
-		  printf("simu line: %s\n", qs_tmp.ascii());
-		  simulation_parameters_full_text.push_back(qs_tmp);
+			ts >> GA_Params.demes;
+			cerr << "demes:" << GA_Params.demes << endl;
+			ts >> GA_Params.generations;
+			cerr << "generations:" << GA_Params.generations << endl;
+			ts >> GA_Params.crossover;
+			cerr << "crossover:" << GA_Params.crossover << endl;
+			ts >> GA_Params.mutation;
+			cerr << "mutation:" << GA_Params.mutation << endl;
+			ts >> GA_Params.plague;
+			cerr << "plague:" << GA_Params.plague << endl;
+			ts >> GA_Params.elitism;
+			cerr << "elitism:" << GA_Params.elitism << endl;
+			ts >> GA_Params.migration_rate;
+			cerr << "Migration Rate:" << GA_Params.migration_rate << endl;
+			ts >> GA_Params.genes;
+			cerr << "genes:" << GA_Params.genes << endl;
+			ts >> GA_Params.largest_oligomer_string;
+			cerr << "largest_oligomer:" << GA_Params.largest_oligomer_string << endl;
+			GA_Params.largest_oligomer = strlen(GA_Params.largest_oligomer_string.ascii());
+			printf("largest_oligomer_string: %s\n", GA_Params.largest_oligomer_string.ascii());
+			printf("largest_oligomer:%d\n", GA_Params.largest_oligomer);
+			ts >> GA_Params.random_seed;
+			cerr << "seed:" << GA_Params.random_seed << endl;
+			ts >> GA_Params.monte_carlo;
+			cerr << "Monte Carlo Iterations:" << GA_Params.monte_carlo << endl;
+			printf("monte carlo:%d\n", GA_Params.monte_carlo);
+			ts >> GA_Params.regularization;
+			cerr << "regularization:" << GA_Params.regularization << endl;
+			regularization = GA_Params.regularization;
+			printf("regularization:%f\n", GA_Params.regularization);
+
+			ts >> GA_Params.mw_min;
+			cerr << "mw_min:" << GA_Params.mw_min << endl;
+			printf("mw_min:%e\n", GA_Params.mw_min);
+
+			ts >> GA_Params.mw_max;
+			cerr << "mw_max:" << GA_Params.mw_max << endl;
+			printf("mw_max:%e\n", GA_Params.mw_max);
+
+			ts >> GA_Params.ff0_min;
+			cerr << "ff0_min:" << GA_Params.ff0_min << endl;
+			printf("ff0_min:%e\n", GA_Params.ff0_min);
+
+			ts >> GA_Params.ff0_max;
+			cerr << "ff0_max:" << GA_Params.ff0_max << endl;
+			printf("mw_max:%e\n", GA_Params.ff0_max);
+
+			ts >> count;
+			cerr << "Fit meniscus?: " << count << endl;
+			GA_Params.fit_meniscus = count;
+			fit_meniscus = count;
+			printf("fit_meniscus: %d\n", fit_meniscus);
+			ts >> GA_Params.meniscus_range;
+			cerr << "Meniscus range: " << GA_Params.meniscus_range << endl;
+			meniscus_range = GA_Params.meniscus_range;
+			ts >> count;
+			cerr << "Fit ti noise?: " << count << endl;
+			fit_tinoise = count;
+			printf("fit_ti: %d\n", fit_rinoise);
+			ts >> count;
+			cerr << "Fit ri noise?: " << count << endl;
+			fit_rinoise = count;
+			printf("fit_ri: %d\n", fit_rinoise);
+			ts >> email;
+			cerr << "Email: " << email << endl;
+			printf("email: %s\n", email.ascii());
+			{
+				analysis_defined = true;
+				data_loaded = true;
+				write_experiment();
+			}
 		}
-		fsimulation_parameters.close();
-		simparams_extra[i].simulation_parameters_full_text = simulation_parameters_full_text;
-	      }
-	    }
-            {
-                analysis_defined = true;
-                data_loaded = true;
-                write_experiment();
-            }
-        }
-        if (analysis_type == "GA_MW")
-        {
-            ts >> GA_Params.demes;
-            cerr << "demes:" << GA_Params.demes << endl;
-            ts >> GA_Params.generations;
-            cerr << "generations:" << GA_Params.generations << endl;
-            ts >> GA_Params.crossover;
-            cerr << "crossover:" << GA_Params.crossover << endl;
-            ts >> GA_Params.mutation;
-            cerr << "mutation:" << GA_Params.mutation << endl;
-            ts >> GA_Params.plague;
-            cerr << "plague:" << GA_Params.plague << endl;
-            ts >> GA_Params.elitism;
-            cerr << "elitism:" << GA_Params.elitism << endl;
-            ts >> GA_Params.migration_rate;
-            cerr << "Migration Rate:" << GA_Params.migration_rate << endl;
-            ts >> GA_Params.genes;
-            cerr << "genes:" << GA_Params.genes << endl;
-            ts >> GA_Params.largest_oligomer_string;
-            cerr << "largest_oligomer:" << GA_Params.largest_oligomer_string << endl;
-            GA_Params.largest_oligomer = strlen(GA_Params.largest_oligomer_string.ascii());
-            printf("largest_oligomer_string: %s\n", GA_Params.largest_oligomer_string.ascii());
-            printf("largest_oligomer:%d\n", GA_Params.largest_oligomer);
-            ts >> GA_Params.random_seed;
-            cerr << "seed:" << GA_Params.random_seed << endl;
-            ts >> GA_Params.monte_carlo;
-            cerr << "Monte Carlo Iterations:" << GA_Params.monte_carlo << endl;
-            printf("monte carlo:%d\n", GA_Params.monte_carlo);
-            ts >> GA_Params.regularization;
-            cerr << "regularization:" << GA_Params.regularization << endl;
-            regularization = GA_Params.regularization;
-            printf("regularization:%f\n", GA_Params.regularization);
-
-            ts >> GA_Params.mw_min;
-            cerr << "mw_min:" << GA_Params.mw_min << endl;
-            printf("mw_min:%e\n", GA_Params.mw_min);
-
-            ts >> GA_Params.mw_max;
-            cerr << "mw_max:" << GA_Params.mw_max << endl;
-            printf("mw_max:%e\n", GA_Params.mw_max);
-
-            ts >> GA_Params.ff0_min;
-            cerr << "ff0_min:" << GA_Params.ff0_min << endl;
-            printf("ff0_min:%e\n", GA_Params.ff0_min);
-
-            ts >> GA_Params.ff0_max;
-            cerr << "ff0_max:" << GA_Params.ff0_max << endl;
-            printf("mw_max:%e\n", GA_Params.ff0_max);
-
-            ts >> count;
-            cerr << "Fit meniscus?: " << count << endl;
-            GA_Params.fit_meniscus = count;
-            fit_meniscus = count;
-            printf("fit_meniscus: %d\n", fit_meniscus);
-            ts >> GA_Params.meniscus_range;
-            cerr << "Meniscus range: " << GA_Params.meniscus_range << endl;
-            meniscus_range = GA_Params.meniscus_range;
-            ts >> count;
-            cerr << "Fit ti noise?: " << count << endl;
-            fit_tinoise = count;
-            printf("fit_ti: %d\n", fit_rinoise);
-            ts >> count;
-            cerr << "Fit ri noise?: " << count << endl;
-            fit_rinoise = count;
-            printf("fit_ri: %d\n", fit_rinoise);
-            ts >> email;
-            cerr << "Email: " << email << endl;
-            printf("email: %s\n", email.ascii());
-            {
-                analysis_defined = true;
-                data_loaded = true;
-                write_experiment();
-            }
-        }
-        if (analysis_type == "GA_MW_RA")
-        {
-            ts >> GA_Params.demes;
-            cerr << "demes:" << GA_Params.demes << endl;
-            ts >> GA_Params.generations;
-            cerr << "generations:" << GA_Params.generations << endl;
-            ts >> GA_Params.crossover;
-            cerr << "crossover:" << GA_Params.crossover << endl;
-            ts >> GA_Params.mutation;
-            cerr << "mutation:" << GA_Params.mutation << endl;
-            ts >> GA_Params.plague;
-            cerr << "plague:" << GA_Params.plague << endl;
-            ts >> GA_Params.elitism;
-            cerr << "elitism:" << GA_Params.elitism << endl;
-            ts >> GA_Params.migration_rate;
-            cerr << "Migration Rate:" << GA_Params.migration_rate << endl;
-            ts >> GA_Params.genes;
-            cerr << "genes:" << GA_Params.genes << endl;
-            ts >> GA_Params.largest_oligomer_string;
-            cerr << "largest_oligomer:" << GA_Params.largest_oligomer_string << endl;
-            GA_Params.largest_oligomer = strlen(GA_Params.largest_oligomer_string.ascii());
-            printf("largest_oligomer_string: %s\n", GA_Params.largest_oligomer_string.ascii());
-            printf("largest_oligomer:%d\n", GA_Params.largest_oligomer);
-            ts >> GA_Params.random_seed;
-            cerr << "seed:" << GA_Params.random_seed << endl;
-            ts >> GA_Params.monte_carlo;
-            cerr << "Monte Carlo Iterations:" << GA_Params.monte_carlo << endl;
-            printf("monte carlo:%d\n", GA_Params.monte_carlo);
-            ts >> GA_Params.regularization;
-            cerr << "regularization:" << GA_Params.regularization << endl;
-            regularization = GA_Params.regularization;
-            printf("regularization:%f\n", GA_Params.regularization);
-
-            ts >> GA_Params.mw_min;
-            cerr << "mw_min:" << GA_Params.mw_min << endl;
-            printf("mw_min:%e\n", GA_Params.mw_min);
-
-            ts >> GA_Params.mw_max;
-            cerr << "mw_max:" << GA_Params.mw_max << endl;
-            printf("mw_max:%e\n", GA_Params.mw_max);
-
-            ts >> GA_Params.ff0_min;
-            cerr << "ff0_min:" << GA_Params.ff0_min << endl;
-            printf("ff0_min:%e\n", GA_Params.ff0_min);
-
-            ts >> GA_Params.ff0_max;
-            cerr << "ff0_max:" << GA_Params.ff0_max << endl;
-            printf("mw_max:%e\n", GA_Params.ff0_max);
-
-            ts >> count;
-            cerr << "Fit meniscus?: " << count << endl;
-            GA_Params.fit_meniscus = count;
-            fit_meniscus = count;
-            printf("fit_meniscus: %d\n", fit_meniscus);
-            ts >> GA_Params.meniscus_range;
-            cerr << "Meniscus range: " << GA_Params.meniscus_range << endl;
-            meniscus_range = GA_Params.meniscus_range;
-            ts >> count;
-            cerr << "Fit ti noise?: " << count << endl;
-            fit_tinoise = count;
-            printf("fit_ti: %d\n", fit_rinoise);
-            ts >> count;
-            cerr << "Fit ri noise?: " << count << endl;
-            fit_rinoise = count;
-            printf("fit_ri: %d\n", fit_rinoise);
-            ts >> email;
-            cerr << "Email: " << email << endl;
-            printf("email: %s\n", email.ascii());
-	    for (unsigned int i = 0; i < experiment.size(); i++) {
-	      cerr << QString("Experiment %1 simparameters:\n").arg(i);
-	      ts >> simparams_extra[i].simpoints;
-	      cerr << "Simpoints:" << simparams_extra[i].simpoints << endl;
-	      ts >> simparams_extra[i].band_volume;
-	      cerr << "Band volume:" << simparams_extra[i].band_volume << endl;
-	      ts >> simparams_extra[i].radial_grid;
-	      cerr << "Radial grid:" << simparams_extra[i].radial_grid << endl;
-	      ts >> simparams_extra[i].moving_grid;
-	      cerr << "Moving grid:" << simparams_extra[i].moving_grid << endl;
-	      {
-		simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name;
-		QFile f(simulation_parameters_file_name);
-		char *US = getenv("ULTRASCAN");
-		char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
-		sprintf(lockfile, "%s/tigre.lock", US);
-		int lfd = open(lockfile, O_RDONLY);
-		flock(lfd, LOCK_EX);
-		int increment = 0;
-		while (f.open(IO_ReadOnly))
+		if (analysis_type == "GA_MW_RA")
 		{
-		    f.close();
-		    increment++;
-		    simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name + QString("-%1").arg(increment);
-		    f.setName(simulation_parameters_file_name);
-		}
-		f.close();
-		flock(lfd, LOCK_UN);
-		close(lfd);
-		simparams_extra[i].simulation_parameters_file_name = simulation_parameters_file_name;
-		US_FemGlobal us_femglobal;
-		simulation_parameters_vec[i].simpoints = simparams_extra[i].simpoints;
-		simulation_parameters_vec[i].band_volume = simparams_extra[i].band_volume;
-		simulation_parameters_vec[i].mesh = simparams_extra[i].radial_grid;
-		simulation_parameters_vec[i].moving_grid = simparams_extra[i].moving_grid;
-		fprintf(stderr, "write simulation parameters returned %d <%s>\n",
-			us_femglobal.write_simulationParameters(&simulation_parameters_vec[i], simulation_parameters_file_name),
-			simulation_parameters_file_name.ascii());
-	      }
-	      { // read simulation parameters
-		QFile fsimulation_parameters(simulation_parameters_file_name);
-		if (!fsimulation_parameters.open(IO_ReadOnly))
-		{
-		    cerr << "Failed to open simulation_parameters file!\n";
-		    exit(-4);
-		}
-		simulation_parameters_full_text.clear();
-		QTextStream ts(&fsimulation_parameters);
-		QString qs_tmp;
-		while (!ts.atEnd())
-		{
-		  qs_tmp = ts.readLine();
-		  printf("simu line: %s\n", qs_tmp.ascii());
-		  simulation_parameters_full_text.push_back(qs_tmp);
-		}
-		fsimulation_parameters.close();
-		simparams_extra[i].simulation_parameters_full_text = simulation_parameters_full_text;
-	      }
-	    }
-            {
-                analysis_defined = true;
-                data_loaded = true;
-                write_experiment();
-            }
-        }
-        if (analysis_type == "GA_SC")
-        {
-            ts >> GA_Params.demes;
-            cerr << "demes:" << GA_Params.demes << endl;
-            ts >> GA_Params.generations;
-            cerr << "generations:" << GA_Params.generations << endl;
-            ts >> GA_Params.crossover;
-            cerr << "crossover:" << GA_Params.crossover << endl;
-            ts >> GA_Params.mutation;
-            cerr << "mutation:" << GA_Params.mutation << endl;
-            ts >> GA_Params.plague;
-            cerr << "plague:" << GA_Params.plague << endl;
-            ts >> GA_Params.elitism;
-            cerr << "elitism:" << GA_Params.elitism << endl;
-            ts >> GA_Params.migration_rate;
-            cerr << "Migration Rate:" << GA_Params.migration_rate << endl;
-            ts >> GA_Params.genes;
-            cerr << "Poplulation:" << GA_Params.genes << endl;
-            ts >> GA_Params.random_seed;
-            cerr << "seed:" << GA_Params.random_seed << endl;
-            ts >> GA_Params.monte_carlo;
-            cerr << "Monte Carlo Iterations:" << GA_Params.monte_carlo << endl;
-            printf("monte carlo:%d\n", GA_Params.monte_carlo);
-            ts >> GA_Params.regularization;
-            cerr << "regularization:" << GA_Params.regularization << endl;
-            regularization = GA_Params.regularization;
-            printf("regularization:%f\n", GA_Params.regularization);
-	    ts >> count;
-            cerr << "Fit meniscus?: " << count << endl;
-            GA_Params.fit_meniscus = count;
-            fit_meniscus = count;
-            printf("fit_meniscus: %d\n", fit_meniscus);
-            ts >> GA_Params.meniscus_range;
-            cerr << "Meniscus range: " << GA_Params.meniscus_range << endl;
-            meniscus_range = GA_Params.meniscus_range;
-            ts >> count;
-            cerr << "Fit ti noise?: " << count << endl;
-            fit_tinoise = count;
-            printf("fit_ti: %d\n", fit_rinoise);
-            ts >> count;
-            cerr << "Fit ri noise?: " << count << endl;
-            fit_rinoise = count;
-            printf("fit_ri: %d\n", fit_rinoise);
-            ts >> email;
-            cerr << "Email: " << email << endl;
+			ts >> GA_Params.demes;
+			cerr << "demes:" << GA_Params.demes << endl;
+			ts >> GA_Params.generations;
+			cerr << "generations:" << GA_Params.generations << endl;
+			ts >> GA_Params.crossover;
+			cerr << "crossover:" << GA_Params.crossover << endl;
+			ts >> GA_Params.mutation;
+			cerr << "mutation:" << GA_Params.mutation << endl;
+			ts >> GA_Params.plague;
+			cerr << "plague:" << GA_Params.plague << endl;
+			ts >> GA_Params.elitism;
+			cerr << "elitism:" << GA_Params.elitism << endl;
+			ts >> GA_Params.migration_rate;
+			cerr << "Migration Rate:" << GA_Params.migration_rate << endl;
+			ts >> GA_Params.genes;
+			cerr << "genes:" << GA_Params.genes << endl;
+			ts >> GA_Params.largest_oligomer_string;
+			cerr << "largest_oligomer:" << GA_Params.largest_oligomer_string << endl;
+			GA_Params.largest_oligomer = strlen(GA_Params.largest_oligomer_string.ascii());
+			printf("largest_oligomer_string: %s\n", GA_Params.largest_oligomer_string.ascii());
+			printf("largest_oligomer:%d\n", GA_Params.largest_oligomer);
+			ts >> GA_Params.random_seed;
+			cerr << "seed:" << GA_Params.random_seed << endl;
+			ts >> GA_Params.monte_carlo;
+			cerr << "Monte Carlo Iterations:" << GA_Params.monte_carlo << endl;
+			printf("monte carlo:%d\n", GA_Params.monte_carlo);
+			ts >> GA_Params.regularization;
+			cerr << "regularization:" << GA_Params.regularization << endl;
+			regularization = GA_Params.regularization;
+			printf("regularization:%f\n", GA_Params.regularization);
 
-	    { // read constraints
-	      QFile fconstraints(constraints_file_name);
-	      if (!fconstraints.open(IO_ReadOnly))
-	      {
-		cerr << "Failed to open constraints file!\n";
-		exit(-3);
-	      }
-	      constraints_full_text.clear();
-	      QTextStream ts(&fconstraints);
-	      QString qs_tmp;
-	      while(!ts.atEnd())
-	      {
-		qs_tmp = ts.readLine();
-		printf("constr line: %s\n", qs_tmp.ascii());
-		constraints_full_text.push_back(qs_tmp);
-	      }
-	      fconstraints.close();
-	    }
+			ts >> GA_Params.mw_min;
+			cerr << "mw_min:" << GA_Params.mw_min << endl;
+			printf("mw_min:%e\n", GA_Params.mw_min);
 
-	    { // read simulation parameters
-	      QFile fsimulation_parameters(simulation_parameters_file_name);
-	      if (!fsimulation_parameters.open(IO_ReadOnly))
-	      {
-		cerr << "Failed to open simulation_parameters file!\n";
-		exit(-4);
-	      }
-	      simulation_parameters_full_text.clear();
-	      QTextStream ts(&fsimulation_parameters);
-	      QString qs_tmp;
-	      while(!ts.atEnd())
-	      {
-		qs_tmp = ts.readLine();
-		printf("simu line: %s\n", qs_tmp.ascii());
-		simulation_parameters_full_text.push_back(qs_tmp);
-	      }
-	      fsimulation_parameters.close();
-	    }
+			ts >> GA_Params.mw_max;
+			cerr << "mw_max:" << GA_Params.mw_max << endl;
+			printf("mw_max:%e\n", GA_Params.mw_max);
 
-            printf("email: %s\n", email.ascii());
-            {
-                analysis_defined = true;
-                data_loaded = true;
-                write_experiment();
-            }
-        }
-        if (analysis_type == "SA2D" ||
-                analysis_type == "2DSA")
-        {
-            ts >> SA2D_Params.ff0_min;
-            cerr << "ff0 min: " << SA2D_Params.ff0_min << endl;
-            ts >> SA2D_Params.ff0_max;
-            cerr << "ff0 max: " << SA2D_Params.ff0_max << endl;
-            ts >> SA2D_Params.ff0_resolution;
-            cerr << "ff0 Resolution: " << SA2D_Params.ff0_resolution << endl;
-            ts >> SA2D_Params.s_min;
-            cerr << "s min: " << SA2D_Params.s_min << endl;
-            ts >> SA2D_Params.s_max;
-            cerr << "s max: " << SA2D_Params.s_max << endl;
-            ts >> SA2D_Params.s_resolution;
-            cerr << "s Resolution: " << SA2D_Params.s_resolution<< endl;
-            ts >> SA2D_Params.regularization;
-            regularization = SA2D_Params.regularization;
-            cerr << "Regularization: " << SA2D_Params.regularization << endl;
-            ts >> SA2D_Params.uniform_grid_repetition;
-            cerr << "Grid Repetitions: " << SA2D_Params.uniform_grid_repetition << endl;
-            ts >> count;
-            cerr << "Fit meniscus?: " << count << endl;
-            SA2D_Params.fit_meniscus = count;
-            fit_meniscus = count;
-            ts >> SA2D_Params.meniscus_range;
-            cerr << "Meniscus range: " << SA2D_Params.meniscus_range << endl;
-            meniscus_range = SA2D_Params.meniscus_range;
-            ts >> SA2D_Params.meniscus_gridpoints;
-            cerr << "Meniscus Gridpoints: " << SA2D_Params.meniscus_gridpoints << endl;
-            meniscus_gridpoints = SA2D_Params.meniscus_gridpoints;
-            ts >> count;
-            cerr << "Fit ti noise?: " << count << endl;
-            fit_tinoise = count;
-            ts >> count;
-            cerr << "Fit ri noise?: " << count << endl;
-            fit_rinoise = count;
-            ts >> email;
-            cerr << "Email: " << email << endl;
-            ts >> count;
-            cerr << "Use iterative Method?: " << count << endl;
-            SA2D_Params.use_iterative = count;
-            use_iterative = count;
-            ts >> SA2D_Params.max_iterations;
-            cerr << "Max iterations: " << SA2D_Params.max_iterations << endl;
-            max_iterations = SA2D_Params.max_iterations;
-            ts >> SA2D_Params.monte_carlo;
-            cerr << "Monte Carlo Iterations:" << SA2D_Params.monte_carlo << endl;
+			ts >> GA_Params.ff0_min;
+			cerr << "ff0_min:" << GA_Params.ff0_min << endl;
+			printf("ff0_min:%e\n", GA_Params.ff0_min);
 
-            cerr << "px\n";
-            {
-                analysis_defined = true;
-                data_loaded = true;
-                write_experiment();
-            }
-        }
-        if (analysis_type == "2DSA_RA")
-        {
-            ts >> SA2D_Params.ff0_min;
-            cerr << "ff0 min: " << SA2D_Params.ff0_min << endl;
-            ts >> SA2D_Params.ff0_max;
-            cerr << "ff0 max: " << SA2D_Params.ff0_max << endl;
-            ts >> SA2D_Params.ff0_resolution;
-            cerr << "ff0 Resolution: " << SA2D_Params.ff0_resolution << endl;
-            ts >> SA2D_Params.s_min;
-            cerr << "s min: " << SA2D_Params.s_min << endl;
-            ts >> SA2D_Params.s_max;
-            cerr << "s max: " << SA2D_Params.s_max << endl;
-            ts >> SA2D_Params.s_resolution;
-            cerr << "s Resolution: " << SA2D_Params.s_resolution<< endl;
-            ts >> SA2D_Params.regularization;
-            regularization = SA2D_Params.regularization;
-            cerr << "Regularization: " << SA2D_Params.regularization << endl;
-            ts >> SA2D_Params.uniform_grid_repetition;
-            cerr << "Grid Repetitions: " << SA2D_Params.uniform_grid_repetition << endl;
-            ts >> count;
-            cerr << "Fit meniscus?: " << count << endl;
-            SA2D_Params.fit_meniscus = count;
-            fit_meniscus = count;
-            ts >> SA2D_Params.meniscus_range;
-            cerr << "Meniscus range: " << SA2D_Params.meniscus_range << endl;
-            meniscus_range = SA2D_Params.meniscus_range;
-            ts >> SA2D_Params.meniscus_gridpoints;
-            cerr << "Meniscus Gridpoints: " << SA2D_Params.meniscus_gridpoints << endl;
-            meniscus_gridpoints = SA2D_Params.meniscus_gridpoints;
-            ts >> count;
-            cerr << "Fit ti noise?: " << count << endl;
-            fit_tinoise = count;
-            ts >> count;
-            cerr << "Fit ri noise?: " << count << endl;
-            fit_rinoise = count;
-            ts >> email;
-            cerr << "Email: " << email << endl;
-            ts >> count;
-            cerr << "Use iterative Method?: " << count << endl;
-            SA2D_Params.use_iterative = count;
-            use_iterative = count;
-            ts >> SA2D_Params.max_iterations;
-            cerr << "Max iterations: " << SA2D_Params.max_iterations << endl;
-            max_iterations = SA2D_Params.max_iterations;
-            ts >> SA2D_Params.monte_carlo;
-            cerr << "Monte Carlo Iterations:" << SA2D_Params.monte_carlo << endl;
-	    for (unsigned int i = 0; i < experiment.size(); i++) {
-	      cerr << QString("Experiment %1 simparameters:\n").arg(i);
-	      ts >> simparams_extra[i].simpoints;
-	      cerr << "Simpoints:" << simparams_extra[i].simpoints << endl;
-	      ts >> simparams_extra[i].band_volume;
-	      cerr << "Band volume:" << simparams_extra[i].band_volume << endl;
-	      ts >> simparams_extra[i].radial_grid;
-	      cerr << "Radial grid:" << simparams_extra[i].radial_grid << endl;
-	      ts >> simparams_extra[i].moving_grid;
-	      cerr << "Moving grid:" << simparams_extra[i].moving_grid << endl;
-	      {
-		simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name;
-		QFile f(simulation_parameters_file_name);
-		char *US = getenv("ULTRASCAN");
-		char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
-		sprintf(lockfile, "%s/tigre.lock", US);
-		int lfd = open(lockfile, O_RDONLY);
-		flock(lfd, LOCK_EX);
-		int increment = 0;
-		while (f.open(IO_ReadOnly))
-		{
-		    f.close();
-		    increment++;
-		    simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name + QString("-%1").arg(increment);
-		    f.setName(simulation_parameters_file_name);
+			ts >> GA_Params.ff0_max;
+			cerr << "ff0_max:" << GA_Params.ff0_max << endl;
+			printf("mw_max:%e\n", GA_Params.ff0_max);
+
+			ts >> count;
+			cerr << "Fit meniscus?: " << count << endl;
+			GA_Params.fit_meniscus = count;
+			fit_meniscus = count;
+			printf("fit_meniscus: %d\n", fit_meniscus);
+			ts >> GA_Params.meniscus_range;
+			cerr << "Meniscus range: " << GA_Params.meniscus_range << endl;
+			meniscus_range = GA_Params.meniscus_range;
+			ts >> count;
+			cerr << "Fit ti noise?: " << count << endl;
+			fit_tinoise = count;
+			printf("fit_ti: %d\n", fit_rinoise);
+			ts >> count;
+			cerr << "Fit ri noise?: " << count << endl;
+			fit_rinoise = count;
+			printf("fit_ri: %d\n", fit_rinoise);
+			ts >> email;
+			cerr << "Email: " << email << endl;
+			printf("email: %s\n", email.ascii());
+			for (unsigned int i = 0; i < experiment.size(); i++)
+			{
+				cerr << QString("Experiment %1 simparameters:\n").arg(i);
+				ts >> simparams_extra[i].simpoints;
+				cerr << "Simpoints:" << simparams_extra[i].simpoints << endl;
+				ts >> simparams_extra[i].band_volume;
+				cerr << "Band volume:" << simparams_extra[i].band_volume << endl;
+				ts >> simparams_extra[i].radial_grid;
+				cerr << "Radial grid:" << simparams_extra[i].radial_grid << endl;
+				ts >> simparams_extra[i].moving_grid;
+				cerr << "Moving grid:" << simparams_extra[i].moving_grid << endl;
+				{
+					simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name;
+					QFile f(simulation_parameters_file_name);
+					char *US = getenv("ULTRASCAN");
+					char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
+					sprintf(lockfile, "%s/tigre.lock", US);
+					int lfd = open(lockfile, O_RDONLY);
+					flock(lfd, LOCK_EX);
+					int increment = 0;
+					while (f.open(IO_ReadOnly))
+					{
+						f.close();
+						increment++;
+						simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name + QString("-%1").arg(increment);
+						f.setName(simulation_parameters_file_name);
+					}
+					f.close();
+					flock(lfd, LOCK_UN);
+					close(lfd);
+					simparams_extra[i].simulation_parameters_file_name = simulation_parameters_file_name;
+					US_FemGlobal us_femglobal;
+					simulation_parameters_vec[i].simpoints = simparams_extra[i].simpoints;
+					simulation_parameters_vec[i].band_volume = simparams_extra[i].band_volume;
+					simulation_parameters_vec[i].mesh = simparams_extra[i].radial_grid;
+					simulation_parameters_vec[i].moving_grid = simparams_extra[i].moving_grid;
+					fprintf(stderr, "write simulation parameters returned %d <%s>\n",
+							  us_femglobal.write_simulationParameters(&simulation_parameters_vec[i], simulation_parameters_file_name),
+							  simulation_parameters_file_name.ascii());
+				}
+				{ // read simulation parameters
+					QFile fsimulation_parameters(simulation_parameters_file_name);
+					if (!fsimulation_parameters.open(IO_ReadOnly))
+					{
+						cerr << "Failed to open simulation_parameters file!\n";
+						exit(-4);
+					}
+					simulation_parameters_full_text.clear();
+					QTextStream ts(&fsimulation_parameters);
+					QString qs_tmp;
+					while (!ts.atEnd())
+					{
+						qs_tmp = ts.readLine();
+						printf("simu line: %s\n", qs_tmp.ascii());
+						simulation_parameters_full_text.push_back(qs_tmp);
+					}
+					fsimulation_parameters.close();
+					simparams_extra[i].simulation_parameters_full_text = simulation_parameters_full_text;
+				}
+			}
+			{
+				analysis_defined = true;
+				data_loaded = true;
+				write_experiment();
+			}
 		}
-		f.close();
-		flock(lfd, LOCK_UN);
-		close(lfd);
-		simparams_extra[i].simulation_parameters_file_name = simulation_parameters_file_name;
-		US_FemGlobal us_femglobal;
-		simulation_parameters_vec[i].simpoints = simparams_extra[i].simpoints;
-		simulation_parameters_vec[i].band_volume = simparams_extra[i].band_volume;
-		simulation_parameters_vec[i].mesh = simparams_extra[i].radial_grid;
-		simulation_parameters_vec[i].moving_grid = simparams_extra[i].moving_grid;
-		fprintf(stderr, "write simulation parameters returned %d <%s>\n",
-			us_femglobal.write_simulationParameters(&simulation_parameters_vec[i], simulation_parameters_file_name),
-			simulation_parameters_file_name.ascii());
-	      }
-	      { // read simulation parameters
-		fprintf(stderr, "opening simulation_parameters file %s:\n", 
-			simulation_parameters_file_name.ascii());
-		QFile fsimulation_parameters(simulation_parameters_file_name);
-		if (!fsimulation_parameters.open(IO_ReadOnly))
+		if (analysis_type == "GA_SC")
 		{
-		    cerr << "Failed to open simulation_parameters file!\n";
-		    exit(-4);
+			ts >> GA_Params.demes;
+			cerr << "demes:" << GA_Params.demes << endl;
+			ts >> GA_Params.generations;
+			cerr << "generations:" << GA_Params.generations << endl;
+			ts >> GA_Params.crossover;
+			cerr << "crossover:" << GA_Params.crossover << endl;
+			ts >> GA_Params.mutation;
+			cerr << "mutation:" << GA_Params.mutation << endl;
+			ts >> GA_Params.plague;
+			cerr << "plague:" << GA_Params.plague << endl;
+			ts >> GA_Params.elitism;
+			cerr << "elitism:" << GA_Params.elitism << endl;
+			ts >> GA_Params.migration_rate;
+			cerr << "Migration Rate:" << GA_Params.migration_rate << endl;
+			ts >> GA_Params.genes;
+			cerr << "Poplulation:" << GA_Params.genes << endl;
+			ts >> GA_Params.random_seed;
+			cerr << "seed:" << GA_Params.random_seed << endl;
+			ts >> GA_Params.monte_carlo;
+			cerr << "Monte Carlo Iterations:" << GA_Params.monte_carlo << endl;
+			printf("monte carlo:%d\n", GA_Params.monte_carlo);
+			ts >> GA_Params.regularization;
+			cerr << "regularization:" << GA_Params.regularization << endl;
+			regularization = GA_Params.regularization;
+			printf("regularization:%f\n", GA_Params.regularization);
+			ts >> count;
+			cerr << "Fit meniscus?: " << count << endl;
+			GA_Params.fit_meniscus = count;
+			fit_meniscus = count;
+			printf("fit_meniscus: %d\n", fit_meniscus);
+			ts >> GA_Params.meniscus_range;
+			cerr << "Meniscus range: " << GA_Params.meniscus_range << endl;
+			meniscus_range = GA_Params.meniscus_range;
+			ts >> count;
+			cerr << "Fit ti noise?: " << count << endl;
+			fit_tinoise = count;
+			printf("fit_ti: %d\n", fit_rinoise);
+			ts >> count;
+			cerr << "Fit ri noise?: " << count << endl;
+			fit_rinoise = count;
+			printf("fit_ri: %d\n", fit_rinoise);
+			ts >> email;
+			cerr << "Email: " << email << endl;
+
+			{ // read constraints
+				QFile fconstraints(constraints_file_name);
+				if (!fconstraints.open(IO_ReadOnly))
+				{
+					cerr << "Failed to open constraints file!\n";
+					exit(-3);
+				}
+				constraints_full_text.clear();
+				QTextStream ts(&fconstraints);
+				QString qs_tmp;
+				while(!ts.atEnd())
+				{
+					qs_tmp = ts.readLine();
+					printf("constr line: %s\n", qs_tmp.ascii());
+					constraints_full_text.push_back(qs_tmp);
+				}
+				fconstraints.close();
+			}
+
+			{ // read simulation parameters
+				QFile fsimulation_parameters(simulation_parameters_file_name);
+				if (!fsimulation_parameters.open(IO_ReadOnly))
+				{
+					cerr << "Failed to open simulation_parameters file!\n";
+					exit(-4);
+				}
+				simulation_parameters_full_text.clear();
+				QTextStream ts(&fsimulation_parameters);
+				QString qs_tmp;
+				while(!ts.atEnd())
+				{
+					qs_tmp = ts.readLine();
+					printf("simu line: %s\n", qs_tmp.ascii());
+					simulation_parameters_full_text.push_back(qs_tmp);
+				}
+				fsimulation_parameters.close();
+			}
+
+			printf("email: %s\n", email.ascii());
+			{
+				analysis_defined = true;
+				data_loaded = true;
+				write_experiment();
+			}
 		}
-		simulation_parameters_full_text.clear();
-		QTextStream ts(&fsimulation_parameters);
-		QString qs_tmp;
-		while (!ts.atEnd())
+		if (analysis_type == "SA2D" ||
+				  analysis_type == "2DSA")
 		{
-		  qs_tmp = ts.readLine();
-		  printf("simu line: %s\n", qs_tmp.ascii());
-		  simulation_parameters_full_text.push_back(qs_tmp);
+			ts >> SA2D_Params.ff0_min;
+			cerr << "ff0 min: " << SA2D_Params.ff0_min << endl;
+			ts >> SA2D_Params.ff0_max;
+			cerr << "ff0 max: " << SA2D_Params.ff0_max << endl;
+			ts >> SA2D_Params.ff0_resolution;
+			cerr << "ff0 Resolution: " << SA2D_Params.ff0_resolution << endl;
+			ts >> SA2D_Params.s_min;
+			cerr << "s min: " << SA2D_Params.s_min << endl;
+			ts >> SA2D_Params.s_max;
+			cerr << "s max: " << SA2D_Params.s_max << endl;
+			ts >> SA2D_Params.s_resolution;
+			cerr << "s Resolution: " << SA2D_Params.s_resolution<< endl;
+			ts >> SA2D_Params.regularization;
+			regularization = SA2D_Params.regularization;
+			cerr << "Regularization: " << SA2D_Params.regularization << endl;
+			ts >> SA2D_Params.uniform_grid_repetition;
+			cerr << "Grid Repetitions: " << SA2D_Params.uniform_grid_repetition << endl;
+			ts >> count;
+			cerr << "Fit meniscus?: " << count << endl;
+			SA2D_Params.fit_meniscus = count;
+			fit_meniscus = count;
+			ts >> SA2D_Params.meniscus_range;
+			cerr << "Meniscus range: " << SA2D_Params.meniscus_range << endl;
+			meniscus_range = SA2D_Params.meniscus_range;
+			ts >> SA2D_Params.meniscus_gridpoints;
+			cerr << "Meniscus Gridpoints: " << SA2D_Params.meniscus_gridpoints << endl;
+			meniscus_gridpoints = SA2D_Params.meniscus_gridpoints;
+			ts >> count;
+			cerr << "Fit ti noise?: " << count << endl;
+			fit_tinoise = count;
+			ts >> count;
+			cerr << "Fit ri noise?: " << count << endl;
+			fit_rinoise = count;
+			ts >> email;
+			cerr << "Email: " << email << endl;
+			ts >> count;
+			cerr << "Use iterative Method?: " << count << endl;
+			SA2D_Params.use_iterative = count;
+			use_iterative = count;
+			ts >> SA2D_Params.max_iterations;
+			cerr << "Max iterations: " << SA2D_Params.max_iterations << endl;
+			max_iterations = SA2D_Params.max_iterations;
+			ts >> SA2D_Params.monte_carlo;
+			cerr << "Monte Carlo Iterations:" << SA2D_Params.monte_carlo << endl;
+
+			cerr << "px\n";
+			{
+				analysis_defined = true;
+				data_loaded = true;
+				write_experiment();
+			}
 		}
-		fsimulation_parameters.close();
-		simparams_extra[i].simulation_parameters_full_text = simulation_parameters_full_text;
-	      }
-	    }
-            {
-                analysis_defined = true;
-                data_loaded = true;
-                write_experiment();
-            }
-        }
-        if (analysis_type == "2DSA_MW")
-        {
-            cerr << "2DSA_MW" << endl;
-            ts >> SA2D_Params.ff0_min;
-            cerr << "ff0 min: " << SA2D_Params.ff0_min << endl;
-            ts >> SA2D_Params.ff0_max;
-            cerr << "ff0 max: " << SA2D_Params.ff0_max << endl;
-            ts >> SA2D_Params.ff0_resolution;
-            cerr << "ff0 Resolution: " << SA2D_Params.ff0_resolution << endl;
-            ts >> SA2D_Params.mw_min;
-            cerr << "mw min: " << SA2D_Params.mw_min << endl;
-            ts >> SA2D_Params.mw_max;
-            cerr << "mw max: " << SA2D_Params.mw_max << endl;
-            ts >> SA2D_Params.grid_resolution;
-            cerr << "grid Resolution: " << SA2D_Params.grid_resolution<< endl;
-            ts >> SA2D_Params.regularization;
-            regularization = SA2D_Params.regularization;
-            cerr << "Regularization: " << SA2D_Params.regularization << endl;
-            ts >> SA2D_Params.uniform_grid_repetition;
-            cerr << "Grid Repetitions: " << SA2D_Params.uniform_grid_repetition << endl;
-            ts >> count;
-            cerr << "Fit meniscus?: " << count << endl;
-            SA2D_Params.fit_meniscus = count;
-            fit_meniscus = count;
-            ts >> SA2D_Params.meniscus_range;
-            cerr << "Meniscus range: " << SA2D_Params.meniscus_range << endl;
-            meniscus_range = SA2D_Params.meniscus_range;
-            ts >> SA2D_Params.meniscus_gridpoints;
-            cerr << "Meniscus Gridpoints: " << SA2D_Params.meniscus_gridpoints << endl;
-            meniscus_gridpoints = SA2D_Params.meniscus_gridpoints;
-            ts >> count;
-            cerr << "Fit ti noise?: " << count << endl;
-            fit_tinoise = count;
-            ts >> count;
-            cerr << "Fit ri noise?: " << count << endl;
-            fit_rinoise = count;
-            ts >> email;
-            cerr << "Email: " << email << endl;
-            ts >> count;
-            cerr << "Use iterative Method?: " << count << endl;
-            SA2D_Params.use_iterative = count;
-            use_iterative = count;
-            ts >> SA2D_Params.max_iterations;
-            cerr << "Max iterations: " << SA2D_Params.max_iterations << endl;
-            max_iterations = SA2D_Params.max_iterations;
-            ts >> SA2D_Params.monte_carlo;
-            cerr << "Monte Carlo Iterations:" << SA2D_Params.monte_carlo << endl;
-            ts >> SA2D_Params.max_mer_string;
-            SA2D_Params.max_mer = strlen(SA2D_Params.max_mer_string.ascii());
-            cerr << "Max mer string:" << SA2D_Params.max_mer_string << endl;
-            cerr << "Max mer:" << SA2D_Params.max_mer << endl;
-            cerr << "px\n";
-            {
-                analysis_defined = true;
-                data_loaded = true;
-                write_experiment();
-            }
-        }
-        if (analysis_type == "2DSA_MW_RA")
-        {
-            cerr << "2DSA_MW_RA" << endl;
-            ts >> SA2D_Params.ff0_min;
-            cerr << "ff0 min: " << SA2D_Params.ff0_min << endl;
-            ts >> SA2D_Params.ff0_max;
-            cerr << "ff0 max: " << SA2D_Params.ff0_max << endl;
-            ts >> SA2D_Params.ff0_resolution;
-            cerr << "ff0 Resolution: " << SA2D_Params.ff0_resolution << endl;
-            ts >> SA2D_Params.mw_min;
-            cerr << "mw min: " << SA2D_Params.mw_min << endl;
-            ts >> SA2D_Params.mw_max;
-            cerr << "mw max: " << SA2D_Params.mw_max << endl;
-            ts >> SA2D_Params.grid_resolution;
-            cerr << "grid Resolution: " << SA2D_Params.grid_resolution<< endl;
-            ts >> SA2D_Params.regularization;
-            regularization = SA2D_Params.regularization;
-            cerr << "Regularization: " << SA2D_Params.regularization << endl;
-            ts >> SA2D_Params.uniform_grid_repetition;
-            cerr << "Grid Repetitions: " << SA2D_Params.uniform_grid_repetition << endl;
-            ts >> count;
-            cerr << "Fit meniscus?: " << count << endl;
-            SA2D_Params.fit_meniscus = count;
-            fit_meniscus = count;
-            ts >> SA2D_Params.meniscus_range;
-            cerr << "Meniscus range: " << SA2D_Params.meniscus_range << endl;
-            meniscus_range = SA2D_Params.meniscus_range;
-            ts >> SA2D_Params.meniscus_gridpoints;
-            cerr << "Meniscus Gridpoints: " << SA2D_Params.meniscus_gridpoints << endl;
-            meniscus_gridpoints = SA2D_Params.meniscus_gridpoints;
-            ts >> count;
-            cerr << "Fit ti noise?: " << count << endl;
-            fit_tinoise = count;
-            ts >> count;
-            cerr << "Fit ri noise?: " << count << endl;
-            fit_rinoise = count;
-            ts >> email;
-            cerr << "Email: " << email << endl;
-            ts >> count;
-            cerr << "Use iterative Method?: " << count << endl;
-            SA2D_Params.use_iterative = count;
-            use_iterative = count;
-            ts >> SA2D_Params.max_iterations;
-            cerr << "Max iterations: " << SA2D_Params.max_iterations << endl;
-            max_iterations = SA2D_Params.max_iterations;
-            ts >> SA2D_Params.monte_carlo;
-            cerr << "Monte Carlo Iterations:" << SA2D_Params.monte_carlo << endl;
-            ts >> SA2D_Params.max_mer_string;
-            SA2D_Params.max_mer = strlen(SA2D_Params.max_mer_string.ascii());
-            cerr << "Max mer string:" << SA2D_Params.max_mer_string << endl;
-            cerr << "Max mer:" << SA2D_Params.max_mer << endl;
-	    for (unsigned int i = 0; i < experiment.size(); i++) {
-	      cerr << QString("Experiment %1 simparameters:\n").arg(i);
-	      ts >> simparams_extra[i].simpoints;
-	      cerr << "Simpoints:" << simparams_extra[i].simpoints << endl;
-	      ts >> simparams_extra[i].band_volume;
-	      cerr << "Band volume:" << simparams_extra[i].band_volume << endl;
-	      ts >> simparams_extra[i].radial_grid;
-	      cerr << "Radial grid:" << simparams_extra[i].radial_grid << endl;
-	      ts >> simparams_extra[i].moving_grid;
-	      cerr << "Moving grid:" << simparams_extra[i].moving_grid << endl;
-	      {
-		simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name;
-		QFile f(simulation_parameters_file_name);
-		char *US = getenv("ULTRASCAN");
-		char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
-		sprintf(lockfile, "%s/tigre.lock", US);
-		int lfd = open(lockfile, O_RDONLY);
-		flock(lfd, LOCK_EX);
-		int increment = 0;
-		while (f.open(IO_ReadOnly))
+		if (analysis_type == "2DSA_RA")
 		{
-		    f.close();
-		    increment++;
-		    simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name + QString("-%1").arg(increment);
-		    f.setName(simulation_parameters_file_name);
+			ts >> SA2D_Params.ff0_min;
+			cerr << "ff0 min: " << SA2D_Params.ff0_min << endl;
+			ts >> SA2D_Params.ff0_max;
+			cerr << "ff0 max: " << SA2D_Params.ff0_max << endl;
+			ts >> SA2D_Params.ff0_resolution;
+			cerr << "ff0 Resolution: " << SA2D_Params.ff0_resolution << endl;
+			ts >> SA2D_Params.s_min;
+			cerr << "s min: " << SA2D_Params.s_min << endl;
+			ts >> SA2D_Params.s_max;
+			cerr << "s max: " << SA2D_Params.s_max << endl;
+			ts >> SA2D_Params.s_resolution;
+			cerr << "s Resolution: " << SA2D_Params.s_resolution<< endl;
+			ts >> SA2D_Params.regularization;
+			regularization = SA2D_Params.regularization;
+			cerr << "Regularization: " << SA2D_Params.regularization << endl;
+			ts >> SA2D_Params.uniform_grid_repetition;
+			cerr << "Grid Repetitions: " << SA2D_Params.uniform_grid_repetition << endl;
+			ts >> count;
+			cerr << "Fit meniscus?: " << count << endl;
+			SA2D_Params.fit_meniscus = count;
+			fit_meniscus = count;
+			ts >> SA2D_Params.meniscus_range;
+			cerr << "Meniscus range: " << SA2D_Params.meniscus_range << endl;
+			meniscus_range = SA2D_Params.meniscus_range;
+			ts >> SA2D_Params.meniscus_gridpoints;
+			cerr << "Meniscus Gridpoints: " << SA2D_Params.meniscus_gridpoints << endl;
+			meniscus_gridpoints = SA2D_Params.meniscus_gridpoints;
+			ts >> count;
+			cerr << "Fit ti noise?: " << count << endl;
+			fit_tinoise = count;
+			ts >> count;
+			cerr << "Fit ri noise?: " << count << endl;
+			fit_rinoise = count;
+			ts >> email;
+			cerr << "Email: " << email << endl;
+			ts >> count;
+			cerr << "Use iterative Method?: " << count << endl;
+			SA2D_Params.use_iterative = count;
+			use_iterative = count;
+			ts >> SA2D_Params.max_iterations;
+			cerr << "Max iterations: " << SA2D_Params.max_iterations << endl;
+			max_iterations = SA2D_Params.max_iterations;
+			ts >> SA2D_Params.monte_carlo;
+			cerr << "Monte Carlo Iterations:" << SA2D_Params.monte_carlo << endl;
+			for (unsigned int i = 0; i < experiment.size(); i++)
+			{
+				cerr << QString("Experiment %1 simparameters:\n").arg(i);
+				ts >> simparams_extra[i].simpoints;
+				cerr << "Simpoints:" << simparams_extra[i].simpoints << endl;
+				ts >> simparams_extra[i].band_volume;
+				cerr << "Band volume:" << simparams_extra[i].band_volume << endl;
+				ts >> simparams_extra[i].radial_grid;
+				cerr << "Radial grid:" << simparams_extra[i].radial_grid << endl;
+				ts >> simparams_extra[i].moving_grid;
+				cerr << "Moving grid:" << simparams_extra[i].moving_grid << endl;
+				{
+					simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name;
+					QFile f(simulation_parameters_file_name);
+					char *US = getenv("ULTRASCAN");
+					char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
+					sprintf(lockfile, "%s/tigre.lock", US);
+					int lfd = open(lockfile, O_RDONLY);
+					flock(lfd, LOCK_EX);
+					int increment = 0;
+					while (f.open(IO_ReadOnly))
+					{
+						f.close();
+						increment++;
+						simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name + QString("-%1").arg(increment);
+						f.setName(simulation_parameters_file_name);
+					}
+					f.close();
+					flock(lfd, LOCK_UN);
+					close(lfd);
+					simparams_extra[i].simulation_parameters_file_name = simulation_parameters_file_name;
+					US_FemGlobal us_femglobal;
+					simulation_parameters_vec[i].simpoints = simparams_extra[i].simpoints;
+					simulation_parameters_vec[i].band_volume = simparams_extra[i].band_volume;
+					simulation_parameters_vec[i].mesh = simparams_extra[i].radial_grid;
+					simulation_parameters_vec[i].moving_grid = simparams_extra[i].moving_grid;
+					fprintf(stderr, "write simulation parameters returned %d <%s>\n",
+							  us_femglobal.write_simulationParameters(&simulation_parameters_vec[i], simulation_parameters_file_name),
+							  simulation_parameters_file_name.ascii());
+				}
+				{ // read simulation parameters
+					fprintf(stderr, "opening simulation_parameters file %s:\n",
+							  simulation_parameters_file_name.ascii());
+					QFile fsimulation_parameters(simulation_parameters_file_name);
+					if (!fsimulation_parameters.open(IO_ReadOnly))
+					{
+						cerr << "Failed to open simulation_parameters file!\n";
+						exit(-4);
+					}
+					simulation_parameters_full_text.clear();
+					QTextStream ts(&fsimulation_parameters);
+					QString qs_tmp;
+					while (!ts.atEnd())
+					{
+						qs_tmp = ts.readLine();
+						printf("simu line: %s\n", qs_tmp.ascii());
+						simulation_parameters_full_text.push_back(qs_tmp);
+					}
+					fsimulation_parameters.close();
+					simparams_extra[i].simulation_parameters_full_text = simulation_parameters_full_text;
+				}
+			}
+			{
+				analysis_defined = true;
+				data_loaded = true;
+				write_experiment();
+			}
 		}
-		f.close();
-		flock(lfd, LOCK_UN);
-		close(lfd);
-		simparams_extra[i].simulation_parameters_file_name = simulation_parameters_file_name;
-		US_FemGlobal us_femglobal;
-		simulation_parameters_vec[i].simpoints = simparams_extra[i].simpoints;
-		simulation_parameters_vec[i].band_volume = simparams_extra[i].band_volume;
-		simulation_parameters_vec[i].mesh = simparams_extra[i].radial_grid;
-		simulation_parameters_vec[i].moving_grid = simparams_extra[i].moving_grid;
-		fprintf(stderr, "write simulation parameters returned %d <%s>\n",
-			us_femglobal.write_simulationParameters(&simulation_parameters_vec[i], simulation_parameters_file_name),
-			simulation_parameters_file_name.ascii());
-	      }
-	      { // read simulation parameters
-		QFile fsimulation_parameters(simulation_parameters_file_name);
-		if (!fsimulation_parameters.open(IO_ReadOnly))
+		if (analysis_type == "2DSA_MW")
 		{
-		    cerr << "Failed to open simulation_parameters file!\n";
-		    exit(-4);
+			cerr << "2DSA_MW" << endl;
+			ts >> SA2D_Params.ff0_min;
+			cerr << "ff0 min: " << SA2D_Params.ff0_min << endl;
+			ts >> SA2D_Params.ff0_max;
+			cerr << "ff0 max: " << SA2D_Params.ff0_max << endl;
+			ts >> SA2D_Params.ff0_resolution;
+			cerr << "ff0 Resolution: " << SA2D_Params.ff0_resolution << endl;
+			ts >> SA2D_Params.mw_min;
+			cerr << "mw min: " << SA2D_Params.mw_min << endl;
+			ts >> SA2D_Params.mw_max;
+			cerr << "mw max: " << SA2D_Params.mw_max << endl;
+			ts >> SA2D_Params.grid_resolution;
+			cerr << "grid Resolution: " << SA2D_Params.grid_resolution<< endl;
+			ts >> SA2D_Params.regularization;
+			regularization = SA2D_Params.regularization;
+			cerr << "Regularization: " << SA2D_Params.regularization << endl;
+			ts >> SA2D_Params.uniform_grid_repetition;
+			cerr << "Grid Repetitions: " << SA2D_Params.uniform_grid_repetition << endl;
+			ts >> count;
+			cerr << "Fit meniscus?: " << count << endl;
+			SA2D_Params.fit_meniscus = count;
+			fit_meniscus = count;
+			ts >> SA2D_Params.meniscus_range;
+			cerr << "Meniscus range: " << SA2D_Params.meniscus_range << endl;
+			meniscus_range = SA2D_Params.meniscus_range;
+			ts >> SA2D_Params.meniscus_gridpoints;
+			cerr << "Meniscus Gridpoints: " << SA2D_Params.meniscus_gridpoints << endl;
+			meniscus_gridpoints = SA2D_Params.meniscus_gridpoints;
+			ts >> count;
+			cerr << "Fit ti noise?: " << count << endl;
+			fit_tinoise = count;
+			ts >> count;
+			cerr << "Fit ri noise?: " << count << endl;
+			fit_rinoise = count;
+			ts >> email;
+			cerr << "Email: " << email << endl;
+			ts >> count;
+			cerr << "Use iterative Method?: " << count << endl;
+			SA2D_Params.use_iterative = count;
+			use_iterative = count;
+			ts >> SA2D_Params.max_iterations;
+			cerr << "Max iterations: " << SA2D_Params.max_iterations << endl;
+			max_iterations = SA2D_Params.max_iterations;
+			ts >> SA2D_Params.monte_carlo;
+			cerr << "Monte Carlo Iterations:" << SA2D_Params.monte_carlo << endl;
+			ts >> SA2D_Params.max_mer_string;
+			SA2D_Params.max_mer = strlen(SA2D_Params.max_mer_string.ascii());
+			cerr << "Max mer string:" << SA2D_Params.max_mer_string << endl;
+			cerr << "Max mer:" << SA2D_Params.max_mer << endl;
+			cerr << "px\n";
+			{
+				analysis_defined = true;
+				data_loaded = true;
+				write_experiment();
+			}
 		}
-		simulation_parameters_full_text.clear();
-		QTextStream ts(&fsimulation_parameters);
-		QString qs_tmp;
-		while (!ts.atEnd())
+		if (analysis_type == "2DSA_MW_RA")
 		{
-		  qs_tmp = ts.readLine();
-		  printf("simu line: %s\n", qs_tmp.ascii());
-		  simulation_parameters_full_text.push_back(qs_tmp);
+			cerr << "2DSA_MW_RA" << endl;
+			ts >> SA2D_Params.ff0_min;
+			cerr << "ff0 min: " << SA2D_Params.ff0_min << endl;
+			ts >> SA2D_Params.ff0_max;
+			cerr << "ff0 max: " << SA2D_Params.ff0_max << endl;
+			ts >> SA2D_Params.ff0_resolution;
+			cerr << "ff0 Resolution: " << SA2D_Params.ff0_resolution << endl;
+			ts >> SA2D_Params.mw_min;
+			cerr << "mw min: " << SA2D_Params.mw_min << endl;
+			ts >> SA2D_Params.mw_max;
+			cerr << "mw max: " << SA2D_Params.mw_max << endl;
+			ts >> SA2D_Params.grid_resolution;
+			cerr << "grid Resolution: " << SA2D_Params.grid_resolution<< endl;
+			ts >> SA2D_Params.regularization;
+			regularization = SA2D_Params.regularization;
+			cerr << "Regularization: " << SA2D_Params.regularization << endl;
+			ts >> SA2D_Params.uniform_grid_repetition;
+			cerr << "Grid Repetitions: " << SA2D_Params.uniform_grid_repetition << endl;
+			ts >> count;
+			cerr << "Fit meniscus?: " << count << endl;
+			SA2D_Params.fit_meniscus = count;
+			fit_meniscus = count;
+			ts >> SA2D_Params.meniscus_range;
+			cerr << "Meniscus range: " << SA2D_Params.meniscus_range << endl;
+			meniscus_range = SA2D_Params.meniscus_range;
+			ts >> SA2D_Params.meniscus_gridpoints;
+			cerr << "Meniscus Gridpoints: " << SA2D_Params.meniscus_gridpoints << endl;
+			meniscus_gridpoints = SA2D_Params.meniscus_gridpoints;
+			ts >> count;
+			cerr << "Fit ti noise?: " << count << endl;
+			fit_tinoise = count;
+			ts >> count;
+			cerr << "Fit ri noise?: " << count << endl;
+			fit_rinoise = count;
+			ts >> email;
+			cerr << "Email: " << email << endl;
+			ts >> count;
+			cerr << "Use iterative Method?: " << count << endl;
+			SA2D_Params.use_iterative = count;
+			use_iterative = count;
+			ts >> SA2D_Params.max_iterations;
+			cerr << "Max iterations: " << SA2D_Params.max_iterations << endl;
+			max_iterations = SA2D_Params.max_iterations;
+			ts >> SA2D_Params.monte_carlo;
+			cerr << "Monte Carlo Iterations:" << SA2D_Params.monte_carlo << endl;
+			ts >> SA2D_Params.max_mer_string;
+			SA2D_Params.max_mer = strlen(SA2D_Params.max_mer_string.ascii());
+			cerr << "Max mer string:" << SA2D_Params.max_mer_string << endl;
+			cerr << "Max mer:" << SA2D_Params.max_mer << endl;
+			for (unsigned int i = 0; i < experiment.size(); i++)
+			{
+				cerr << QString("Experiment %1 simparameters:\n").arg(i);
+				ts >> simparams_extra[i].simpoints;
+				cerr << "Simpoints:" << simparams_extra[i].simpoints << endl;
+				ts >> simparams_extra[i].band_volume;
+				cerr << "Band volume:" << simparams_extra[i].band_volume << endl;
+				ts >> simparams_extra[i].radial_grid;
+				cerr << "Radial grid:" << simparams_extra[i].radial_grid << endl;
+				ts >> simparams_extra[i].moving_grid;
+				cerr << "Moving grid:" << simparams_extra[i].moving_grid << endl;
+				{
+					simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name;
+					QFile f(simulation_parameters_file_name);
+					char *US = getenv("ULTRASCAN");
+					char lockfile[strlen(US) + strlen("/tigre.lock") + 2];
+					sprintf(lockfile, "%s/tigre.lock", US);
+					int lfd = open(lockfile, O_RDONLY);
+					flock(lfd, LOCK_EX);
+					int increment = 0;
+					while (f.open(IO_ReadOnly))
+					{
+						f.close();
+						increment++;
+						simulation_parameters_file_name = simparams_extra[i].simulation_parameters_file_name + QString("-%1").arg(increment);
+						f.setName(simulation_parameters_file_name);
+					}
+					f.close();
+					flock(lfd, LOCK_UN);
+					close(lfd);
+					simparams_extra[i].simulation_parameters_file_name = simulation_parameters_file_name;
+					US_FemGlobal us_femglobal;
+					simulation_parameters_vec[i].simpoints = simparams_extra[i].simpoints;
+					simulation_parameters_vec[i].band_volume = simparams_extra[i].band_volume;
+					simulation_parameters_vec[i].mesh = simparams_extra[i].radial_grid;
+					simulation_parameters_vec[i].moving_grid = simparams_extra[i].moving_grid;
+					fprintf(stderr, "write simulation parameters returned %d <%s>\n",
+							  us_femglobal.write_simulationParameters(&simulation_parameters_vec[i], simulation_parameters_file_name),
+							  simulation_parameters_file_name.ascii());
+				}
+				{ // read simulation parameters
+					QFile fsimulation_parameters(simulation_parameters_file_name);
+					if (!fsimulation_parameters.open(IO_ReadOnly))
+					{
+						cerr << "Failed to open simulation_parameters file!\n";
+						exit(-4);
+					}
+					simulation_parameters_full_text.clear();
+					QTextStream ts(&fsimulation_parameters);
+					QString qs_tmp;
+					while (!ts.atEnd())
+					{
+						qs_tmp = ts.readLine();
+						printf("simu line: %s\n", qs_tmp.ascii());
+						simulation_parameters_full_text.push_back(qs_tmp);
+					}
+					fsimulation_parameters.close();
+					simparams_extra[i].simulation_parameters_full_text = simulation_parameters_full_text;
+				}
+			}
+			cerr << "px\n";
+			{
+				analysis_defined = true;
+				data_loaded = true;
+				write_experiment();
+			}
 		}
-		fsimulation_parameters.close();
-		simparams_extra[i].simulation_parameters_full_text = simulation_parameters_full_text;
-	      }
-	    }
-            cerr << "px\n";
-            {
-                analysis_defined = true;
-                data_loaded = true;
-                write_experiment();
-            }
-        }
-    }
-    else
-    {
-        cerr << "Error: cannot read input file " << control_file << endl;
-        cerr << "Run aborted ...\n\n";
-    }
-    exit(0);
+	}
+	else
+	{
+		cerr << "Error: cannot read input file " << control_file << endl;
+		cerr << "Run aborted ...\n\n";
+	}
+	exit(0);
 }
 
 US_GridControl_T::~US_GridControl_T()
