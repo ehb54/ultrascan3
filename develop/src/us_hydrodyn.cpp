@@ -4341,7 +4341,8 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 			}
 			if (str1.left(4) == "ATOM" || str1.left(6) == "HETATM") // need to add TER
 			{
-			  if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H")
+			  if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H" &&
+			     str1.mid(17,3) != "HOH")
 			  {
 				if (!chain_flag) 	// at the first time we encounter the word ATOM
 				{ 				// we don't have a chain yet, so let's start a new one
