@@ -1504,6 +1504,12 @@ float US_FeMatch_W::calc_residuals_ra()
 				simdata[0].scan[i].conc[k] = 0.0;
 			}
 		}
+		/*
+		for (i=0; i<msv[j].component_vector.size(); i++)
+		{
+			cout << "s: " << msv[j].component_vector[i].s << ", D: " << msv[j].component_vector[i].D << ", c: " << msv[j].component_vector[i].concentration << " (" << msv[j].component_vector[i].name<<")\n";
+		}
+		*/
 		astfem_rsa->calculate(&msv[j], &sp, &simdata); // calculate the model for the current thread
 		// combine the current model's solution with the total solution vector:
 		for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
@@ -2127,10 +2133,12 @@ void US_FeMatch_W::create_modelsystems()
 
 // distribute all components among as many models as there are threads:
 	j=0;
+	//cout << "threads: " << threads << endl;
 	for (i=0; i<threads; i++)
 	{
 		l=0;
 		ms.component_vector.resize(components_per_job[i]);
+		//cout << "Components for job " << i << ": " << components_per_job[i] << endl;
 		for (k=j; k<j+components_per_job[i]; k++)
 		{
 			ms.description = str.sprintf("Components for thread %d", i+1);
@@ -2154,6 +2162,7 @@ void US_FeMatch_W::create_modelsystems()
 			ms.component_vector[l].c0.radius.clear(); // not used
 			ms.component_vector[l].c0.concentration.clear(); // not used
 			ms.assoc_vector.clear();
+			//cout << "s: " << ms.component_vector[l].s << ", D: " << ms.component_vector[l].D << ", c: " << ms.component_vector[l].concentration << " (" << ms.component_vector[l].name<<")\n";
 			l++;
 		}
 		j += components_per_job[i];

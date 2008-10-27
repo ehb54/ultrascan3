@@ -39,8 +39,7 @@ vector <struct mfem_data> *exp_data)
 	{
 	    print_rg();
 	}
-
-	adjust_limits( 0 );
+	adjust_limits((*simparams).speed_step[0].rotorspeed);
 	for (k=0; k<(*system).component_vector.size(); k++)
 	{
 		reacting[k] = false;
@@ -529,7 +528,7 @@ void US_Astfem_RSA::initialize_rg() // Setup reaction groups
 			{
 				j++;
 			}
-			cout << "j: " << j << endl;
+			//cout << "j: " << j << endl;
 			if (j < (*system).assoc_vector.size())
 			{
 				tmp_rg.association.push_back(j);
@@ -2522,17 +2521,17 @@ void US_Astfem_RSA::adjust_limits(unsigned int speed)
 {
 	// first correct meniscus to theoretical position at rest:
 	double stretch_val = stretch((*simparams).rotor, af_params.first_speed);
-//	cout << "rotor: " << (*simparams).rotor << ", stretch: " << stretch_val << endl;
+	//cout << "rotor: " << (*simparams).rotor << ", stretch: " << stretch_val << ", speed: " << speed  ;
 	// this is the meniscus at rest
 	af_params.current_meniscus = (*simparams).meniscus - stretch_val;
-//	cout << "1st speed meniscus: " << (*simparams).meniscus << ", rest meniscus: " << af_params.current_meniscus << endl;
+	//cout << ", 1st speed meniscus: " << (*simparams).meniscus << ", rest meniscus: " << af_params.current_meniscus;
 	// calculate rotor stretch at current speed
 	stretch_val = stretch((*simparams).rotor, speed);
 	// add current stretch to meniscus at rest
 	af_params.current_meniscus +=  stretch_val;
 	// add current stretch to bottom at rest
 	af_params.current_bottom = (*simparams).bottom + stretch_val;
-//	cout << "corrected meniscus: " << af_params.current_meniscus << ", current_bottom: " << af_params.current_bottom << endl;
+	//cout << ", corrected meniscus: " << af_params.current_meniscus << ", current_bottom: " << af_params.current_bottom << endl;
 }
 
 void US_Astfem_RSA::adjust_grid(unsigned int old_speed, unsigned int new_speed, vector <double> *radius)
