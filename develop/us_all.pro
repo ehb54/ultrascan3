@@ -1,7 +1,8 @@
 DEFINES += ADOLC
 
 unix:{
-SUBDIRS   = us_equilmc_t 
+SUBDIRS   = us_equilmc_t \
+            us_gridcontrol_t 
 TEMPLATE  = subdirs
 }
 
@@ -66,7 +67,6 @@ SUBDIRS += \
     us_ga_model_editor \
     us_gainit \
     us_globalequil \
-    us_gridcontrol_t \
     us_hydrodyn \
     us_license \
     us_lncr2 \
