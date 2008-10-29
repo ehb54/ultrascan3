@@ -170,6 +170,7 @@ SOURCES += \
   src/us_hydrodyn_asab1.cpp \
   src/us_hydrodyn_bead_output.cpp \
   src/us_hydrodyn_grid.cpp \
+  src/us_hydrodyn_grid_atob.cpp \
   src/us_hydrodyn_hydro.cpp \
   src/us_hydrodyn_misc.cpp \
   src/us_hydrodyn_overlap.cpp \
@@ -359,6 +360,7 @@ HEADERS += \
   include/us_hydrodyn_asab1.h \
   include/us_hydrodyn_bead_output.h \
   include/us_hydrodyn_grid.h \
+  include/us_hydrodyn_grid_atob.h \
   include/us_hydrodyn_hydro.h \
   include/us_hydrodyn_misc.h \
   include/us_hydrodyn_overlap.h \
