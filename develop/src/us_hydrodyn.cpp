@@ -289,7 +289,6 @@ void US_Hydrodyn::setupGUI()
 	pb_view_pdb = new QPushButton(tr("View/Edit PDB File"), this);
 	Q_CHECK_PTR(pb_view_pdb);
 	pb_view_pdb->setMinimumHeight(minHeight1);
-	pb_view_pdb->setEnabled(false);
 	pb_view_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
 	pb_view_pdb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_view_pdb, SIGNAL(clicked()), SLOT(view_pdb()));
@@ -4229,7 +4228,6 @@ void US_Hydrodyn::load_pdb()
 	// bead_model_prefix = "";
 	pb_somo->setEnabled(true);
 	pb_grid->setEnabled(true);
-	pb_view_pdb->setEnabled(true);
 	pb_show_hydro_results->setEnabled(false);
 	pb_calc_hydro->setEnabled(false);
 	pb_visualize->setEnabled(false);
@@ -4238,7 +4236,7 @@ void US_Hydrodyn::load_pdb()
 
 void US_Hydrodyn::view_pdb()
 {
-	QString filename = QFileDialog::getOpenFileName(somo_dir, "*.pdb *.PDB", this);
+	QString filename = QFileDialog::getOpenFileName(somo_pdb_dir, "*.pdb *.PDB", this);
 	if (!filename.isEmpty())
 	{
 		view_file(filename);

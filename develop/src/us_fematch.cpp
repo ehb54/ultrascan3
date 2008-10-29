@@ -1487,10 +1487,19 @@ float US_FeMatch_W::calc_residuals_ra()
 	data_io = new US_Data_IO(&run_inf, false); // (baseline flag can be false, we don't need it)
 	data_io->assign_simparams(&sp, selected_cell, selected_lambda, selected_channel);
 	delete data_io;
-	//sp.moving_grid = 0;
-	//sp.mesh = 1;
+	if (sp.band_forming)
+	{
+		OneLiner *ol;
+		ol = new OneLiner(tr("Please enter a\nband-loading volume\n(in milliliter):"));
+		ol->show();
+		ol->parameter1->setText(str.sprintf("%5.3f", sp.band_volume));
+		if (ol->exec())
+		{
+			sp.band_volume = ol->string.toFloat();
+		}
+		delete ol;
+	}
 	sp.simpoints = 200;
-	//sp.band_volume = 0.015;
 	US_Astfem_RSA *astfem_rsa;
 	astfem_rsa = new US_Astfem_RSA(false);
 	//US_FemGlobal fg;
