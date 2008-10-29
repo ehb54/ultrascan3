@@ -12,7 +12,7 @@
 @alamodowncount = `ssh alamo pbsnodes -l`;
 
 $bcf_no_procs = 42 - 2 * @bcfdowncount;
-$alamo_no_procs = 31 - 2 * @alamodowncount;
+$alamo_no_procs = 30 - 2 * @alamodowncount;
 $laredo_no_procs = 34 - 2 * @laredodowncount;
 
 # END USER EDITABLE SECTION
@@ -85,8 +85,6 @@ $_[0]
 		     Filename => "us_job${id}.stdout");
     }
 
-
-    
     $msg->send('smtp', 'smtp.uthscsa.edu');
 
     $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
@@ -269,6 +267,7 @@ solutes    $solutes
 
 @systems = (
 	    'lonestar.tacc.utexas.edu' , 
+	    'ranger.tacc.utexas.edu' , 
 	    'cosmos.tamu.edu' ,
 	    'antaeus.hpcc.ttu.edu' ,
 	    'gridgate.rtc.rice.edu' ,
@@ -287,6 +286,7 @@ for($i = 0; $i < @systems; $i++) {
 @ports_globus = (
 		 8443 ,
 		 8443 ,
+		 8443 ,
 		 9443 ,
 		 9443 ,
 		 8443 ,
@@ -298,6 +298,7 @@ for($i = 0; $i < @systems; $i++) {
 		 );
 
 @ports_ssh = (
+	      22 ,
 	      22 ,
 	      2222 ,
 	      49922 ,
@@ -312,6 +313,7 @@ for($i = 0; $i < @systems; $i++) {
 
 @work = (
 	 '/work/teragrid/tg457210' ,
+	 '/work/00451/tg457210' ,
 	 '/home/ehb1056' ,
 	 '/home/tigrepool0003' ,
 	 '/users/eb4' ,
@@ -324,6 +326,7 @@ for($i = 0; $i < @systems; $i++) {
 	 );
 
 @factorytypes = (
+	       'LSF' ,
 	       'LSF' ,
 	       'PBS' ,
 	       'LSF' ,
@@ -339,6 +342,7 @@ for($i = 0; $i < @systems; $i++) {
 
 @bins = (
        'bin64' ,
+       'bin64' ,
        'bin'   ,
        'bin64' ,
        'bin'   ,
@@ -350,6 +354,7 @@ for($i = 0; $i < @systems; $i++) {
 	 'bin64'
        );
 @executable = (
+       'us_fe_nnls_t_mpi' , #lonestar
        'us_fe_nnls_t_mpi' , #lonestar
        'us_fe_nnls_t_mpi' , #cosmos
        'us_fe_nnls_t_mpi' , #antaeus
@@ -365,6 +370,7 @@ for($i = 0; $i < @systems; $i++) {
 @queues = (
 #	   '<queue>normal</queue>' , # lonestar
 	   '<queue>high</queue>' , # lonestar
+	   '<queue>normal</queue>' , # lonestar
 	   '<queue>normal</queue>' , # cosmos
 	   '<queue>tigre</queue>' , #antaeus
 	   '' , # gridgate
@@ -388,6 +394,15 @@ for($i = 0; $i < @systems; $i++) {
     <value>/work/teragrid/tg457210/ultrascan</value>
   </environment>
 '   , # lonestar
+	   '  <environment>
+    <name>LD_LIBRARY_PATH</name>
+    <value>/opt/apps/intel10_1/mvapich/1.0.1/lib:/opt/apps/intel10_1/mvapich/1.0.1/lib/shared:/opt/apps/intel/10.1/cc/lib:/opt/apps/intel/10.1/fc/lib:/share/apps/teragrid/globus-4.0.7-r1/lib:/share/apps/teragrid/globus-4.0.7-r1/myproxy-3.4/lib:/share/apps/teragrid/globus-4.0.1-r3/lib:/share/apps/teragrid/globus-4.0.1-r3/myproxy-3.4/lib:/share/apps/teragrid/srb-client-3.4.1-r1/lib:/opt/gsi-openssh-4.1/lib:/opt/gsi-openssh-4.1/lib:/opt/apps/binutils-amd/070220/lib64
+  </environment>
+  <environment>
+    <name>ULTRASCAN</name>
+    <value>/work/00451/tg457210/ultrascan</value>
+  </environment>
+'   , # ranger
 	   '  <environment>
     <name>LD_LIBRARY_PATH</name>
     <value>/opt/intel/9.1-20060523/lib:/opt/intel/mkl/6.1.1.004/mkl61/lib/64:/usr/local/tigre/globus/lib:/usr/local/tigre/globus/lib:/usr/X11R6/lib:/usr/X11R6/lib/modules</value>
@@ -429,6 +444,7 @@ for($i = 0; $i < @systems; $i++) {
 
 @max_np = (
 	   64 ,
+	   64 ,
 	   4 ,
 	   16 ,
 	   64 ,
@@ -442,6 +458,7 @@ for($i = 0; $i < @systems; $i++) {
 
 @max_time = (
 	   30 ,
+	   2880 ,
 	   120 ,
 	   120 ,
 	   120 ,
@@ -479,6 +496,8 @@ if($analysis_type =~ /^2DSA/) {
 }
 
 $max_time[0] *= 8 if $default_system =~ /hlrb2/;
+$max_time[0] *= 3 if $default_system =~ /lonestar/;
+$max_time[0] *= 4 if $default_system =~ /ranger/;
 
 if($monte_carlo) {
     $max_time[0] *= $monte_carlo;
@@ -527,10 +546,11 @@ solutes    $solutes
     
 
 $max_time[0] = 2880 if $max_time[0] > 2880;
-$max_time[4] = $max_time[0];
+$max_time[5] = $max_time[0];
+$max_time[3] = $max_time[0];
 $max_time[2] = $max_time[0];
 $max_time[1] = $max_time[0];
-$max_time[8] = $max_time[0];
+$max_time[9] = $max_time[0];
 
 print "Maximum time[0]=$max_time[0]\n";
 
@@ -743,8 +763,8 @@ do {
        $status eq 'FAILED') {
 	if($default_system ne 'meta') {
 	    $cmd = 
-"gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stderr .
-gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stdout .
+"gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
+gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
 ";
 	    print $cmd;
 	    print `$cmd` if $execute;
