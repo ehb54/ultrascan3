@@ -67,6 +67,27 @@ vector <struct mfem_data> *exp_data)
 			CT0.radius.push_back(af_params.current_meniscus + j * dr );
 			CT0.concentration.push_back(0.0);
 		}
+		// once time invariant noise has been removed in a band experiment, we can use the
+		// first scan of the first speed step of the experiment as the initial concentration
+		// of the simulation. The approach will copy the 1st scan concentration vector into
+		// each component's c0 vector. NNLS will scale the appropriate concentration for each
+		// component. The assumption is made that any potential differentiation of components
+		// in the initial scan is minimal compared to any solute flow disturbances at the
+		// meniscus. For this approach to work well it is necessary to pick the first data
+		// point close to the meniscus and to include the earliest possible scan in the
+		// experiment. Also, time invariant noise should be subtracted first.
+		if ((*simparams).band_firstScanIsConcentration)
+		{
+			mfem_initial scan1;
+			scan1.radius.clear();
+			scan1.concentration.clear();
+			for (j=0; j<(*exp_data)[0].scan[0].conc.size(); j++)
+			{
+				scan1.radius.push_back((*exp_data)[0].radius[j]);
+				scan1.concentration.push_back((*exp_data)[0].scan[0].conc[j]);
+			}
+			interpolate_C0(&scan1, &(*system).component_vector[k].c0);
+		}
 		if (!reacting[k]) // noninteracting
 		{
 			initialize_conc(k, &CT0, true);
