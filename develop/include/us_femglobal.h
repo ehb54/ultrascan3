@@ -174,6 +174,7 @@ struct SimulationParameters
 	int rotor;						// rotor serial number in database
 	bool band_forming;			// true for band-forming centerpieces
 	double band_volume;			// loading volume (of lamella) in a band-forming centerpiece
+	bool band_firstScanIsConcentration; // first band sedimentation scan is initializer for concentration
 };
 
 class US_EXTERN US_FemGlobal : public QObject
