@@ -285,6 +285,8 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
 	  astfem_rsa.setTimeCorrection(true);
 	  astfem_rsa.setTimeInterpolation(false);
 
+	  our_simulation_parameters.band_firstScanIsConcentration = false;
+
 	  astfem_rsa.calculate(&our_model_system, &our_simulation_parameters, &experiment);
 
 	  printf("points %u scans %u\n", (unsigned int)org_experiment[0].radius.size(), (unsigned int)org_experiment[0].scan.size()); fflush(stdout);
@@ -337,6 +339,8 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
 
   astfem_rsa.setTimeCorrection(true);
   astfem_rsa.setTimeInterpolation(false);
+
+  our_simulation_parameters.band_firstScanIsConcentration = false;
 
   astfem_rsa.calculate(&our_model_system, &our_simulation_parameters, &experiment);
 //  printf("rss: exit astfem_rsa_calculate %lu\n", getrss(0)); fflush(stdout);

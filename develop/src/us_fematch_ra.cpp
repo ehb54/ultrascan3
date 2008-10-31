@@ -401,6 +401,7 @@ float US_FeMatchRa_W::fit()
 	sp.band_volume = band_volume;
 	sp.speed_step[0].delay_minutes = tmp;
 	assign_model();
+	sp.band_firstScanIsConcentration = false;
 	astfem_rsa->calculate(&ms, &sp, &simdata);
 	rmsd = 0.0;
 	analysis_plot->clear();

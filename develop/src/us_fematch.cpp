@@ -1519,6 +1519,13 @@ float US_FeMatch_W::calc_residuals_ra()
 			cout << "s: " << msv[j].component_vector[i].s << ", D: " << msv[j].component_vector[i].D << ", c: " << msv[j].component_vector[i].concentration << " (" << msv[j].component_vector[i].name<<")\n";
 		}
 		*/
+		if(!ti_noise_avail && sp.band_forming) {
+			cout << "band_firstScanIsConcentration = true\n";
+			sp.band_firstScanIsConcentration = true;
+		} else {
+			cout << "band_firstScanIsConcentration = false\n";
+			sp.band_firstScanIsConcentration = false;
+		}
 		astfem_rsa->calculate(&msv[j], &sp, &simdata); // calculate the model for the current thread
 		// combine the current model's solution with the total solution vector:
 		for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
@@ -1961,6 +1968,7 @@ void US_FeMatch_W::load_model(const QString &fileName)
 			ri_noise.push_back(0.0);
 		}
 	}
+	ti_noise_avail = false;
 	f.setName(USglobal->config_list.result_dir + "/" + temp_name + str.sprintf(".ti_noise.%d%d", selected_cell+1, selected_lambda+1));
 	if (f.exists())
 	{
@@ -1969,6 +1977,7 @@ void US_FeMatch_W::load_model(const QString &fileName)
 													"Yes", "No");
 		if (response == 0 && f.open(IO_ReadOnly))
 		{
+			ti_noise_avail = true;
 			QTextStream ts(&f);
 			for (i=0; i<points; i++)
 			{

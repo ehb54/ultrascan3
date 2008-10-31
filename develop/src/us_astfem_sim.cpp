@@ -944,6 +944,7 @@ void US_Astfem_Sim::start_simulation()
 	stopFlag = false;
 	pb_stop_simulation->setText("Stop Simulation");
 	astfem_rsa->setStopFlag(stopFlag);
+	simparams.band_firstScanIsConcentration = false;
 	astfem_rsa->calculate(&system, &simparams, &astfem_data);
 	// add noise:
 	float maxconc = 0.0;

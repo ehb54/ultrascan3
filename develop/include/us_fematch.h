@@ -55,6 +55,7 @@ class  US_EXTERN US_FeMatch_W : public Data_Control_W
 		int model;
 		unsigned int components, current_component;
 		struct SimulationParameters sp;
+		bool ti_noise_avail;
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
