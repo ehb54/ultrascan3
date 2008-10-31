@@ -2630,6 +2630,7 @@ int US_fe_nnls_t::run(int status)
 	int use_multi_experiment;
 	vector <struct mfem_data> save_multi_experiment = experiment;
 	exp_concentrations.resize(experiment.size());
+	exp_concentrations[0] = 1.0;
 	org_simulation_parameters_vec = simulation_parameters_vec;
 	if (!myrank)
 	{ // master
@@ -3795,9 +3796,11 @@ int US_fe_nnls_t::run(int status)
 					  ts << endl;
 					}
 
-					for (unsigned int i = 0; i < exp_concentrations.size(); i++) {
-						ts << QString("Experiment %1 total conc:    %2\n").
-						  arg(i + 1).arg(exp_concentrations[i]);
+					if (multi_experiment_flag) {
+					  for (unsigned int i = 0; i < exp_concentrations.size(); i++) {
+					    ts << QString("Experiment %1 total conc:    %2\n").
+					      arg(i + 1).arg(exp_concentrations[i]);
+					  }
 					}
 					ts << endl;
 
@@ -4377,6 +4380,11 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 				    use_experiment.push_back(experiment[e]);
 				    astfem_rsa.setTimeCorrection(true);
 				    astfem_rsa.setTimeInterpolation(false);
+				    if(!fit_tinoise && use_simulation_parameters.band_forming) {
+				      use_simulation_parameters.band_firstScanIsConcentration = true;
+				    } else {
+				      use_simulation_parameters.band_firstScanIsConcentration = false;
+				    }
 				    astfem_rsa.calculate(&use_model_system, &use_simulation_parameters, &use_experiment);
 				    experiment[e] = use_experiment[0];
 				} else {
@@ -5303,6 +5311,11 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 					    use_experiment.push_back(experiment[e]);
 					    astfem_rsa.setTimeCorrection(true);
 					    astfem_rsa.setTimeInterpolation(false);
+					    if(!fit_tinoise && use_simulation_parameters.band_forming) {
+					      use_simulation_parameters.band_firstScanIsConcentration = true;
+					    } else {
+					      use_simulation_parameters.band_firstScanIsConcentration = false;
+					    }
 					    astfem_rsa.calculate(&use_model_system, &use_simulation_parameters, &use_experiment);
 					    experiment[e] = use_experiment[0];
 					} else {
@@ -5439,6 +5452,9 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 	fflush(stdout);
 #endif
 
+#if defined(DEBUG_HYDRO)
+	printf("%d: rmsd at end of calc_resid: %f\n", sqrt(sv.variance)); fflush(stdout);
+#endif
 	return sv;
 
 	// return(residual);
