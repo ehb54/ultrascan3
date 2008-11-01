@@ -2197,7 +2197,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(unsigned int Npts, double **C1, do
    delta_n = new double [num_comp];
    b = new double [num_comp];
    initialize_2d(num_comp, num_comp, &A);
-   for(i=0;i<num_comp;i++) A[i] = new double [num_comp];
+//   for(i=0;i<num_comp;i++) A[i] = new double [num_comp];
 //	cout << "Npts: " << Npts << "num_comp: " << num_comp << endl;
 	for (j=0; j<Npts; j++)
 	{
@@ -2245,11 +2245,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(unsigned int Npts, double **C1, do
 
    } // end of j (pts)
 
-   for(i=0;i<num_comp;i++)
-	{
-		delete [] A[i];
-	}
-   delete [] A;
+	clear_2d(num_comp, A);
    delete [] b;
    delete [] delta_n;
    delete [] y0;
