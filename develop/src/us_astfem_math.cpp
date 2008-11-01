@@ -553,7 +553,7 @@ void IntQTm(vector <double> vx, double D, double sw2, double **Stif, double dt)
 	delete [] phiCy;
 	delete [] phiC;
 
-	clear_2d(3, StifL);
+	clear_2d(4, StifL);
 	clear_2d(4, StifR);
 }
 
@@ -740,7 +740,7 @@ void IntQTn2(vector <double> vx, double D, double sw2, double **Stif, double dt)
 	delete [] phiCy;
 	delete [] phiC;
 
-	clear_2d(3, StifL);
+	clear_2d(4, StifL);
 	clear_2d(4, StifR);
 }
 
@@ -1603,7 +1603,7 @@ void IntQTm_ellam(vector <double> vx, double D, double sw2, double **Stif, doubl
 	delete [] phiCy;
 	delete [] phiC;
 
-	clear_2d(3, StifL);
+	clear_2d(4, StifL);
 	clear_2d(4, StifR);
 }
 
