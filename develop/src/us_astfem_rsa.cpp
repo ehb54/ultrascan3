@@ -276,7 +276,7 @@ vector <struct mfem_data> *exp_data)
 
 				if(ss == (*simparams).speed_step.size() - 1) 
 				{
-					duration += (unsigned int) (duration * 0.02)); // + 2% (was 6%?) 
+					duration += (unsigned int) (duration * 0.02); // + 2% (was 6%?) 
 				}
 
 				if (accel_time > duration)
@@ -472,7 +472,7 @@ vector <struct mfem_data> *exp_data)
 					+ (*simparams).speed_step[ss].duration_minutes * 60);
 			if(ss == (*simparams).speed_step.size() - 1)
 			{
-				duration += (unsigned int) (duration * 0.02)); // + 2% (was 6%?) 
+				duration += (unsigned int) (duration * 0.02); // + 2% (was 6%?) 
 			}
 			if (accel_time > duration)
 			{
