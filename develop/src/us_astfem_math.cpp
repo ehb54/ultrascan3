@@ -1,5 +1,8 @@
 #include "../include/us_astfem_math.h"
 
+// #define DEBUG_ALLOC
+// #define DEBUG_ALLOC_2
+
 #if defined(USE_MPI)
 # include "mpi.h"
 #endif
@@ -70,10 +73,81 @@ void tridiag(double *a, double *b, double *c, double *r, double *u, unsigned int
 	delete [] gam;
 }
 
+#if defined(DEBUG_ALLOC)
+
+struct _created_matrices {
+  unsigned long addr;
+  unsigned int val1;
+  unsigned int val2;
+};
+
+static list <_created_matrices> created_matrices;
+
+void init_matrices_alloc() 
+{
+  created_matrices.clear();
+  puts("init_matrices_alloc()");
+}
+
+void list_matrices_alloc() 
+{
+  if (created_matrices.size()) {
+    printf("allocated matrices:\n");
+  }
+  list<_created_matrices>::iterator Li;
+
+  for (Li = created_matrices.begin(); Li != created_matrices.end(); Li++) 
+  {
+    printf("addr %lx val1 %u val2 %u\n",
+	   Li->addr,
+	   Li->val1,
+	   Li->val2
+	   );
+  }
+}
+
+static list<_created_matrices>::iterator find_matrices_alloc(unsigned long addr) {
+  list<_created_matrices>::iterator Li;
+  for (Li = created_matrices.begin(); Li != created_matrices.end(); Li++) 
+  {
+    if (Li->addr == addr) 
+    {
+      return Li;
+    }
+  }
+  return Li;
+}
+
+#endif
+
 void initialize_3d(unsigned int val1, unsigned int val2, unsigned int val3, double ****matrix)
 {
+#if defined(DEBUG_ALLOC)
+# if defined(DEBUG_ALLOC_2)
+	printf("call init_3d (%u %u %u)\n", val1, val2, val3); 
+	list_matrices_alloc();
+# endif
+
+	if (find_matrices_alloc((unsigned long)*matrix) != created_matrices.end())
+	{
+	  printf("error: 3d reallocation of previous allocation! %lx\n",
+		 ((unsigned long)*matrix));
+	  list_matrices_alloc();
+	  exit(-1);
+	}
+#endif
+
 	unsigned int i, j, k;
 	*matrix = new double **[val1];
+
+#if defined(DEBUG_ALLOC)
+	_created_matrices tmp_created_matrix;
+	tmp_created_matrix.addr = (unsigned long)(unsigned long)*matrix;
+	tmp_created_matrix.val1 = val1;
+	tmp_created_matrix.val2 = val2; // 3d
+	created_matrices.push_back(tmp_created_matrix);
+#endif
+
 	for (i=0; i<val1; i++)
 	{
 		(*matrix)[i] = new double *[val2];
@@ -90,8 +164,31 @@ void initialize_3d(unsigned int val1, unsigned int val2, unsigned int val3, doub
 
 void initialize_2d(unsigned int val1, unsigned int val2, double ***matrix)
 {
+#if defined(DEBUG_ALLOC)
+# if defined(DEBUG_ALLOC_2)
+	printf("call init_2d (%u %u)\n", val1, val2); 
+	list_matrices_alloc();
+# endif
+        if (find_matrices_alloc((unsigned long)*matrix) != created_matrices.end())
+	{
+	  printf("error: 2d reallocation of previous allocation! %lx\n",
+		 ((unsigned long)*matrix));
+	  list_matrices_alloc();
+	  exit(-1);
+	}
+#endif
+
 	unsigned int i, j;
 	*matrix = new double *[val1];
+
+#if defined(DEBUG_ALLOC)
+	_created_matrices tmp_created_matrix;
+	tmp_created_matrix.addr = (unsigned long)(unsigned long)*matrix;
+	tmp_created_matrix.val1 = val1;
+	tmp_created_matrix.val2 = 0; // 2d
+	created_matrices.push_back(tmp_created_matrix);
+#endif
+
 	for (i=0; i<val1; i++)
 	{
 		(*matrix)[i] = new double [val2];
@@ -104,6 +201,31 @@ void initialize_2d(unsigned int val1, unsigned int val2, double ***matrix)
 
 void clear_3d(unsigned int val1, unsigned int val2, double ***matrix)
 {
+
+#if defined(DEBUG_ALLOC)
+# if defined(DEBUG_ALLOC_2)
+	printf("clear_3d (%u %u)\n", val1, val2); 
+	list_matrices_alloc();
+# endif
+	list<_created_matrices>::iterator Li;
+	if ((Li = find_matrices_alloc((unsigned long)matrix)) == created_matrices.end())
+	{
+	  printf("error: 3d deallocation of unallocated allocation! %lx\n",
+		 ((unsigned long)matrix));
+	  list_matrices_alloc();
+	  exit(-1);
+	}
+
+	if (val1 != Li->val1 || val2 != Li->val2) 
+	{
+	  printf("notice: 3d deallocation mismatch, correcting given %d,%d != %d,%d corrected\n",
+	  val1, val2,
+	  Li->val1, Li->val2);
+	  val1 = Li->val1;
+	  val2 = Li->val2;
+	}
+	created_matrices.erase(Li);
+#endif
 	unsigned int i, j;
 	for (i=0; i<val1; i++)
 	{
@@ -118,6 +240,28 @@ void clear_3d(unsigned int val1, unsigned int val2, double ***matrix)
 
 void clear_2d(unsigned int val1, double **matrix)
 {
+#if defined(DEBUG_ALLOC)
+# if defined(DEBUG_ALLOC_2)
+	printf("clear_2d (%u)\n", val1); 
+	list_matrices_alloc();
+# endif
+	list<_created_matrices>::iterator Li;
+	if ((Li = find_matrices_alloc((unsigned long)matrix)) == created_matrices.end())
+	{
+	  printf("error: 2d deallocation of unallocated allocation! %lx\n",
+		 ((unsigned long)matrix));
+	  list_matrices_alloc();
+	  exit(-1);
+	}
+	
+	if (val1 != Li->val1) 
+	{
+	  printf("notice: 2d deallocation mismatch, correcting given %d != %d corrected\n",
+	  	 val1, Li->val1);
+	  val1 = Li->val1;
+	}
+	created_matrices.erase(Li);
+#endif
 	unsigned int i;
 	for (i=0; i<val1; i++)
 	{

@@ -2,6 +2,28 @@
 #include "../include/us_util.h"
 #include <algorithm>
 
+// #define DEBUG_ALLOC
+// #define DEBUG_RSS
+
+#if defined(DEBUG_ALLOC)
+void init_matrices_alloc();                   // initializes matrix alloc array
+void list_matrices_alloc();                   // lists matrix alloc array
+#endif
+
+#if defined(DEBUG_RSS) 
+extern long getrss(int pid);
+
+static long last_rss = 0;
+static long deltasum = 0;
+
+static void dm(char *s) {
+	deltasum += getrss(0) - last_rss;
+	printf("%s: rss %lu delta %ld sum %ld\n", s, (unsigned long)getrss(0), (getrss(0) - last_rss), deltasum); fflush(stdout);
+	last_rss = getrss(0);
+}
+
+#endif
+
 US_Astfem_RSA::US_Astfem_RSA(bool guiFlag, QObject *parent, const char *name) : QObject(parent, name)
 {
 	this->guiFlag = guiFlag;
@@ -9,6 +31,9 @@ US_Astfem_RSA::US_Astfem_RSA(bool guiFlag, QObject *parent, const char *name) : 
 	movieFlag = false;
 	use_time = false;
 	time_correction = true;
+#if defined(DEBUG_ALLOC)
+	init_matrices_alloc();
+#endif
 }
 
 US_Astfem_RSA::~US_Astfem_RSA()
@@ -20,6 +45,13 @@ vector <struct mfem_data> *exp_data)
 {
 	//US_FemGlobal fg;
 	//fg.write_experiment(system, simparams, "/root/astfem_rsa-output");
+
+#if defined(DEBUG_RSS)
+	deltasum = 0;
+	dm("start us_astfem_rsa::calculate");
+	// return 0;
+#endif
+
 	this->simparams = simparams;
 	this->system = system;
 	unsigned int duration, initial_npts=1000, current_assoc;
@@ -37,7 +69,7 @@ vector <struct mfem_data> *exp_data)
 	initialize_rg();
 	if (guiFlag) 
 	{
-	    print_rg();
+	  // print_rg();
 	}
 	adjust_limits((*simparams).speed_step[0].rotorspeed);
 	for (k=0; k<(*system).component_vector.size(); k++)
@@ -407,6 +439,13 @@ vector <struct mfem_data> *exp_data)
 		}
 	}
 	if (vC0 != NULL)	delete [] vC0;
+
+#if defined(DEBUG_ALLOC)
+	list_matrices_alloc();
+#endif
+#if defined(DEBUG_RSS)
+	dm("end   us_astfem_rsa::calculate");
+#endif
 	return 0;
 }
 
@@ -2607,7 +2646,7 @@ void US_Astfem_RSA::print_rg()
 {
 	unsigned int i, k ;
 
-   cout << "Reaction Group Info: " << endl;
+        cout << "Reaction Group Info: " << endl;
 	for (k=0; k< rg.size(); k++)
    {
       cout << "Group ["<< k << "] "<< endl;

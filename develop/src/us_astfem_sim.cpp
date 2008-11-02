@@ -1,5 +1,7 @@
 #include "../include/us_astfem_sim.h"
 
+// #define DEBUG_RSS
+
 US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 {
 	cerr.precision(10);
@@ -945,7 +947,22 @@ void US_Astfem_Sim::start_simulation()
 	pb_stop_simulation->setText("Stop Simulation");
 	astfem_rsa->setStopFlag(stopFlag);
 	simparams.band_firstScanIsConcentration = false;
+
+#if defined(DEBUG_RSS)
+	ModelSystem sav_system = system;
+	SimulationParameters sav_simparams = simparams;
+	vector <mfem_data> sav_astfem_data = astfem_data;
+	for (unsigned int i = 0; i < 20; i++) {
+		printf("debug rss trial %d\n", i);
+		system = sav_system;
+		simparams = sav_simparams;
+		astfem_data = sav_astfem_data;
+#endif
+	
 	astfem_rsa->calculate(&system, &simparams, &astfem_data);
+#if defined(DEBUG_RSS)
+	}
+#endif
 	// add noise:
 	float maxconc = 0.0;
 	for (i=0; i<system.component_vector.size(); i++)
