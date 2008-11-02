@@ -380,6 +380,7 @@ bool readRotorInfo(vector <struct rotorInfo> *rotor_info_vector)
 #else
 	QFile rotor_file(USglobal->config_list.system_dir + "/etc/rotor.dat");
 #endif
+	delete USglobal;
 	if(rotor_file.open(IO_ReadOnly))
 	{
 		QTextStream ts(&rotor_file);

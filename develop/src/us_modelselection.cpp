@@ -54,7 +54,6 @@ void US_ModelSelection::select_model(struct ModelSystem *ms)
 				if (!SelectModel3->exec())
 				{
 					(*ms).model = -1;
-					return;
 				}
 				else
 				{
@@ -65,6 +64,7 @@ void US_ModelSelection::select_model(struct ModelSystem *ms)
 						(*ms).component_vector[i].name = str.sprintf("Component %d", i+1);
 					}
 				}
+				delete SelectModel3;
 				break;
 			}
 			case 4: // Monomer-Dimer Equilibrium
@@ -243,6 +243,7 @@ void US_ModelSelection::select_model(struct ModelSystem *ms)
 													 (*ms).assoc_vector[0].component2,
 													 (*ms).assoc_vector[0].stoichiometry2);
 				}
+				delete SelectModel10;
 				break;
 			}
 			case 11: // Monomer-Dimer-Trimer Equilibrium
@@ -331,7 +332,6 @@ void US_ModelSelection::select_model(struct ModelSystem *ms)
 				if (!SelectModel13->exec())
 				{
 					(*ms).model = -1;
-					break;
 				}
 				else
 				{
@@ -370,8 +370,9 @@ void US_ModelSelection::select_model(struct ModelSystem *ms)
 					initializeAssociation1(ms, (*ms).assoc_vector[1].component1,
 													 (*ms).assoc_vector[1].component2,
 													 (*ms).assoc_vector[1].stoichiometry2);
-					break;
 				}
+				delete SelectModel13;
+				break;
 			}
 			case 14:	// 2 component hetero association.
 			{
@@ -493,6 +494,7 @@ void US_ModelSelection::select_model(struct ModelSystem *ms)
 					(*ms).component_vector[3].show_keq = true;
 					(*ms).component_vector[3].show_koff = true;
 				}
+				delete SelectModel10;
 				break;
 			}
 			case 16:	// User-Defined Monomer - N-mer Equilibrium, some incompetent monomer, we need some addtl. info from the user
@@ -558,6 +560,7 @@ void US_ModelSelection::select_model(struct ModelSystem *ms)
 					(*ms).component_vector[2].show_component.push_back(0);
 					(*ms).component_vector[0].show_component.push_back(2);
 				}
+				delete SelectModel10;
 				break;
 			}
 			case 17:	// User-Defined Monomer - N-mer Equilibrium, some incompetent N-mer, we need some addtl. info from the user
@@ -621,6 +624,7 @@ void US_ModelSelection::select_model(struct ModelSystem *ms)
 					(*ms).component_vector[2].show_component.push_back(0);
 					(*ms).component_vector[0].show_component.push_back(2);
 				}
+				delete SelectModel10;
 				break;
 			}
 			case 18:	// User-Defined irreversible Monomer - N-mer
@@ -665,6 +669,7 @@ void US_ModelSelection::select_model(struct ModelSystem *ms)
 					(*ms).component_vector[1].show_keq = false;
 					(*ms).component_vector[1].show_koff = false;
 				}
+				delete SelectModel10;
 				break;
 			}
 			case 19:	// User-Defined Monomer - N-mer Equilibrium, plus some contaminant, we need some addtl. info from the user
@@ -716,12 +721,15 @@ void US_ModelSelection::select_model(struct ModelSystem *ms)
 					(*ms).component_vector[2].show_keq      = false;
 					(*ms).component_vector[2].show_koff     = false;
 				}
+				delete SelectModel10;
 				break;
 			}
 		}
+		delete SelectModel;
 	}
 	else
 	{
+		delete SelectModel;
 		(*ms).model = -1;
 		return;
 	}

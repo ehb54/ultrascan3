@@ -1,7 +1,5 @@
 #include "../include/us_astfem_sim.h"
 
-// #define DEBUG_RSS
-
 US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
 {
 	cerr.precision(10);
@@ -849,6 +847,7 @@ void US_Astfem_Sim::change_model()
 		pb_simulation_parameters->setEnabled(true);
 		pb_change_model->setEnabled(true);
 	}
+	delete component_dialog;
 }
 
 void US_Astfem_Sim::simulation_parameters()
@@ -860,6 +859,7 @@ void US_Astfem_Sim::simulation_parameters()
 		pb_start_simulation->setEnabled(true);
 		pb_save_system->setEnabled(true);
 	}
+	delete sp;
 }
 
 void US_Astfem_Sim::start_simulation()
@@ -947,22 +947,7 @@ void US_Astfem_Sim::start_simulation()
 	pb_stop_simulation->setText("Stop Simulation");
 	astfem_rsa->setStopFlag(stopFlag);
 	simparams.band_firstScanIsConcentration = false;
-
-#if defined(DEBUG_RSS)
-	ModelSystem sav_system = system;
-	SimulationParameters sav_simparams = simparams;
-	vector <mfem_data> sav_astfem_data = astfem_data;
-	for (unsigned int i = 0; i < 20; i++) {
-		printf("debug rss trial %d\n", i);
-		system = sav_system;
-		simparams = sav_simparams;
-		astfem_data = sav_astfem_data;
-#endif
-	
 	astfem_rsa->calculate(&system, &simparams, &astfem_data);
-#if defined(DEBUG_RSS)
-	}
-#endif
 	// add noise:
 	float maxconc = 0.0;
 	for (i=0; i<system.component_vector.size(); i++)
@@ -1202,6 +1187,7 @@ void US_Astfem_Sim::save_xla(const QString &fileName)
 	float maxrad = simparams.bottom;
 	cd = new US_ClipData(&maxc, &maxrad, simparams.meniscus, total_conc);
 	cd->exec();
+	delete cd;
 	progress->setTotalSteps(total_scans);
 	progress->reset();
 	temp_radius = new float [pts];
@@ -1283,6 +1269,7 @@ void US_Astfem_Sim::save_xla(const QString &fileName)
 	}
 	progress->setProgress(total_scans);
 	lbl_progress->setText("Completed:");
+	delete [] temp_radius;
 }
 
 void US_Astfem_Sim::save_ultrascan(const QString &filename)
@@ -1297,6 +1284,7 @@ void US_Astfem_Sim::save_ultrascan(const QString &filename)
 	US_ClipData *cd;
 	cd = new US_ClipData(&maxc, &maxrad, simparams.meniscus, total_conc);
 	cd->exec();
+	delete cd;
 //	QMessageBox:message(tr("Additional Information Needed:"), tr("Please pick a point now in the lower plot\nthat best represents the plateau..."));
 	progress->setTotalSteps(total_scans);
 	progress->reset();
