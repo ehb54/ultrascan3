@@ -11,7 +11,111 @@ void list_matrices_alloc();                   // lists matrix alloc array
 #endif
 
 #if defined(DEBUG_RSS) 
-extern long getrss(int pid);
+#include <pwd.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <dirent.h>
+
+#define DEV_ENCODE(M,m) ( \
+ ( (M&0xfff) << 8) | ( (m&0xfff00) << 12) | (m&0xff) \
+)
+
+#include <asm/param.h> /* HZ */
+#include <asm/page.h> /* PAGE_SIZE */
+#define NO_TTY_VALUE DEV_ENCODE(0,0)
+#ifndef HZ
+#warning HZ not defined, assuming it is 100
+#define HZ 100
+#endif
+
+#ifndef PAGE_SIZE
+#warning PAGE_SIZE not defined, assuming it is 4096
+#define PAGE_SIZE 4096
+#endif
+
+long getrss(int pid)
+{
+	if (!pid)
+	{
+		pid = getpid();
+	}
+	char P_tty_text[16];
+	char P_cmd[16];
+	char P_state;
+	int P_euid;
+	int P_pid;
+	int P_ppid, P_pgrp, P_session, P_tty_num, P_tpgid;
+	unsigned long P_flags, P_min_flt, P_cmin_flt, P_maj_flt, P_cmaj_flt, P_utime, P_stime;
+	long P_cutime, P_cstime, P_priority, P_nice, P_timeout, P_alarm;
+	unsigned long P_start_time, P_vsize;
+	long P_rss;
+	unsigned long P_rss_rlim, P_start_code, P_end_code, P_start_stack, P_kstk_esp, P_kstk_eip;
+	unsigned P_signal, P_blocked, P_sigignore, P_sigcatch;
+	unsigned long P_wchan, P_nswap, P_cnswap;
+	char buf[800]; /* about 40 fields, 64-bit decimal is about 20 chars */
+	int num;
+	int fd;
+	char* tmp;
+	struct stat sb; /* stat() used to get EUID */
+	snprintf(buf, 32, "/proc/%d/stat", pid);
+	if ( (fd = open(buf, O_RDONLY, 0) ) == -1 )
+		return 0;
+	num = read(fd, buf, sizeof buf - 1);
+	fstat(fd, &sb);
+	P_euid = sb.st_uid;
+	close(fd);
+	if (num<80)
+		return 0;
+	buf[num] = '\0';
+	tmp = strrchr(buf, ')');	/* split into "PID (cmd" and "<rest>" */
+	*tmp = '\0';				/* replace trailing ')' with NUL */
+	/* parse these two strings separately, skipping the leading "(". */
+	memset(P_cmd, 0, sizeof P_cmd);		/* clear */
+	sscanf(buf, "%d (%15c", &P_pid, P_cmd); /* comm[16] in kernel */
+	num = sscanf(tmp + 2,					/* skip space after ')' too */
+				 "%c "
+				 "%d %d %d %d %d "
+				 "%lu %lu %lu %lu %lu %lu %lu "
+				 "%ld %ld %ld %ld %ld %ld "
+				 "%lu %lu "
+				 "%ld "
+				 "%lu %lu %lu %lu %lu %lu "
+				 "%u %u %u %u " /* no use for RT signals */
+				 "%lu %lu %lu",
+				 &P_state,
+				 &P_ppid, &P_pgrp, &P_session, &P_tty_num, &P_tpgid,
+				 &P_flags, &P_min_flt, &P_cmin_flt, &P_maj_flt, &P_cmaj_flt, &P_utime, &P_stime,
+				 &P_cutime, &P_cstime, &P_priority, &P_nice, &P_timeout, &P_alarm,
+				 &P_start_time, &P_vsize,
+				 &P_rss,
+				 &P_rss_rlim, &P_start_code, &P_end_code, &P_start_stack, &P_kstk_esp, &P_kstk_eip,
+				 &P_signal, &P_blocked, &P_sigignore, &P_sigcatch,
+				 &P_wchan, &P_nswap, &P_cnswap
+				);
+	/*	fprintf(stderr, "stat2proc converted %d fields.\n",num); */
+	P_vsize /= 1024;
+	P_rss *= (PAGE_SIZE/1024);
+
+	memcpy(P_tty_text, " ? ", 8);
+	if (P_tty_num != NO_TTY_VALUE)
+	{
+		int tty_maj = (P_tty_num>>8)&0xfff;
+		int tty_min = (P_tty_num&0xff) | ((P_tty_num>>12)&0xfff00);
+		snprintf(P_tty_text, sizeof P_tty_text, "%3d,%-3d", tty_maj, tty_min);
+	}
+
+	if (num < 30)
+		return 0;
+	if (P_pid != pid)
+		return 0;
+	return P_rss;
+}
 
 static long last_rss = 0;
 static long deltasum = 0;
