@@ -11,6 +11,9 @@ void list_matrices_alloc();                   // lists matrix alloc array
 #endif
 
 #if defined(DEBUG_RSS) 
+extern long getrss(int pid);
+
+#if !defined(USE_MPI)
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -116,6 +119,7 @@ long getrss(int pid)
 		return 0;
 	return P_rss;
 }
+#endif
 
 static long last_rss = 0;
 static long deltasum = 0;
@@ -272,7 +276,7 @@ vector <struct mfem_data> *exp_data)
 
 				if(ss == (*simparams).speed_step.size() - 1) 
 				{
-				  duration += 60 * (unsigned int) (duration * 0.001); // 5 minutes + .5%
+					duration += (unsigned int) (duration * 0.02)); // + 2% (was 6%?) 
 				}
 
 				if (accel_time > duration)
@@ -300,12 +304,18 @@ vector <struct mfem_data> *exp_data)
 				// find out the minimum number of simpoints needed to provide the necessary dt:
 				af_params.time_steps = (unsigned int) (1+duration/af_params.dt);
 				af_params.start_time = current_time;
+				//printf("us_astfem_rsa::calc before calculate_no af_params.current_bottom %f (*simparams).bottom %f\n",
+				//       af_params.current_bottom,
+				//       simparams->bottom);
 				calculate_ni((*simparams).speed_step[ss].rotorspeed, (*simparams).speed_step[ss].rotorspeed, &CT0, &simdata, false);
 
 				// set the current time to the last scan of this speed step
 				current_time = (*simparams).speed_step[ss].duration_hours * 3600
 						+ (*simparams).speed_step[ss].duration_minutes * 60;
 				// interpolate the simulated data onto the experimental time- and radius grid
+				// printf("us_astfem_rsa::calc before interpolate af_params.current_bottom %f (*simparams).bottom %f\n",
+				//       af_params.current_bottom,
+				//       simparams->bottom);
 				interpolate(&(*exp_data)[ss], &simdata, use_time);
 				// set the current speed to the constant rotor speed of the current speed step
 				current_speed = (*simparams).speed_step[ss].rotorspeed;
@@ -462,7 +472,7 @@ vector <struct mfem_data> *exp_data)
 					+ (*simparams).speed_step[ss].duration_minutes * 60);
 			if(ss == (*simparams).speed_step.size() - 1)
 			{
-				duration += (unsigned int) (60 * (duration * 0.001)); // 5 minutes + .5%
+				duration += (unsigned int) (duration * 0.02)); // + 2% (was 6%?) 
 			}
 			if (accel_time > duration)
 			{
