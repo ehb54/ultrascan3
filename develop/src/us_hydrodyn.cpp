@@ -3,6 +3,7 @@
 #include "../include/us_hydrodyn_supc.h"
 #include "../include/us_hydrodyn_pat.h"
 #include "../include/us_hydrodyn_asab1.h"
+#include "../include/us_hydrodyn_grid_atob.h"
 #include <qregexp.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -960,6 +961,23 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
   return retval;
 }
 
+class sortable_PDB_atom {
+public:
+  PDB_atom pdb_atom;
+  bool operator < (const sortable_PDB_atom& objIn) const
+  {
+    if (pdb_atom.bead_assignment < objIn.pdb_atom.bead_assignment)
+    {
+      return (true);
+    }
+    else
+    {
+      return (false);
+    }
+  }
+};
+
+// #define DEBUG
 int US_Hydrodyn::create_beads(QString *error_string) 
 {
 
@@ -982,6 +1000,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 #endif
     for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
     {
+      int last_resSeq = -1;
       for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
       {
 	PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
@@ -996,6 +1015,8 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	this_atom->bead_color = 0;
 	this_atom->bead_ref_volume = 0;
 	this_atom->bead_ref_mw = 0;
+	this_atom->bead_assignment = -1;
+	this_atom->chain = -1;
 	
 	// find residue in residues
 	int respos = -1;
@@ -1043,8 +1064,39 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	}
 	int atompos = -1;
 	
+
 	if (respos != -1)
 	{
+	  // clear tmp_used if new resSeq
+#if defined(DEBUG)
+	  printf("respos %d != -1 last used %u %d\n", respos, this_atom->resSeq, last_resSeq);
+#endif
+	  if ((int)this_atom->resSeq != last_resSeq ||
+	      residue_list[respos].name == "OXT" ||
+	      residue_list[respos].name == "N1")
+	  {
+#if defined(DEBUG)
+	    printf("clear last used %u %d\n", this_atom->resSeq, last_resSeq);
+#endif
+	    for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
+	    {
+	      residue_list[respos].r_atom[m].tmp_used = false;
+	    }
+	    last_resSeq = (int)this_atom->resSeq;
+	    if(residue_list[respos].name == "OXT" ||
+	       residue_list[respos].name == "N1") {
+	      last_resSeq = -1;
+	    }
+	  }
+#if defined(DEBUG)
+	  for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
+	  {
+	    if(residue_list[respos].r_atom[m].tmp_used) {
+	      printf("used %u %u\n", respos, m);
+	    }
+	  }
+#endif
+
 	  for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
 	  {
 #if defined(DEBUG)
@@ -1053,16 +1105,18 @@ int US_Hydrodyn::create_beads(QString *error_string)
 		     respos, m, residue_list[respos].r_atom[m].name.ascii());
 	    }
 #endif
-	    
-	    if (residue_list[respos].r_atom[m].name == this_atom->name ||
-		(
-		 this_atom->name == "N" && 
-		 regular_N_handling &&
-		 !k &&
-		 residue_list[respos].r_atom[m].name == "N1"
+	    if (!residue_list[respos].r_atom[m].tmp_used &&
+		(residue_list[respos].r_atom[m].name == this_atom->name ||
+		 (
+		  this_atom->name == "N" && 
+		  regular_N_handling &&
+		  !k &&
+		  residue_list[respos].r_atom[m].name == "N1"
+		  )
 		 )
 		)
 	    {
+	      residue_list[respos].r_atom[m].tmp_used = true;
 	      this_atom->p_atom = &(residue_list[respos].r_atom[m]);
 	      atompos = (int) m;
 	      break;
@@ -1086,15 +1140,20 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	    this_atom->bead_ref_mw =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].mw;
 	    this_atom->ref_asa =  this_atom->p_residue->asa;
 	    this_atom->bead_computed_radius =  pow(3 * this_atom->bead_ref_volume / (4.0*M_PI), 1.0/3);
+	    this_atom->bead_assignment = this_atom->p_atom->bead_assignment;
+	    this_atom->chain = (int) this_atom->p_residue->r_bead[this_atom->bead_assignment].chain;
+
 #if defined(DEBUG)
-	    printf("found atom %s %s in residue %d pos %d bead asgn %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s\n", 
+	    printf("found atom %s %s in residue %d pos %d bead asgn %d %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s ba %d\n", 
 		   this_atom->name.ascii(), this_atom->resName.ascii(), respos, atompos,
 		   this_atom->p_atom->bead_assignment,
+		   this_atom->bead_assignment,
 		   this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method,
 		   this_atom->mw,
 		   this_atom->bead_ref_mw,
 		   residue_list[respos].r_atom[atompos].hybrid.name.ascii(),
-		   this_atom->p_atom->hybrid.name.ascii()
+		   this_atom->p_atom->hybrid.name.ascii(),
+		   this_atom->p_atom->bead_assignment
 		   );
 #endif
 	  }
@@ -1125,30 +1184,110 @@ int US_Hydrodyn::create_beads(QString *error_string)
       }
     }
 
+#if defined(DEBUG)
+    puts("before sort::");
+#endif
     {
       for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
 	for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
 	  PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
-	  //  printf("p1 i j k %d %d %d %lx %s %d\n", i, j, k, 
-	  //	 (long unsigned int)this_atom->p_atom, 
-	  //	 this_atom->active ? "active" : "not active",
-	  //	 (this_atom->p_atom ? (int)this_atom->p_atom->bead_assignment : -1)
-	  //	 ); fflush(stdout);
-	  this_atom->bead_assignment =
-	    (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
-	  this_atom->chain =
-	    ((this_atom->p_residue && this_atom->p_atom) ?
-	     (int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
+
+#if defined(DEBUG)
+	    printf("p1 j k %d %d %lx %s %d\n", j, k, 
+		   (long unsigned int)this_atom->p_atom, 
+		   this_atom->active ? "active" : "not active",
+		   this_atom->bead_assignment
+	  	 ); fflush(stdout);
+#endif
+
+	    // this_atom->bead_assignment =
+	    // (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
+	    // this_atom->chain =
+	    // ((this_atom->p_residue && this_atom->p_atom) ?
+	    //  (int) this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].chain : -1);
 	  this_atom->org_chain = this_atom->chain;
 	  this_atom->bead_positioner = this_atom->p_atom ? this_atom->p_atom->positioner : false;
 	}
       }
     }
+#define DO_SORT
+#if defined(DO_SORT)
+    // reorder residue
+    {
+      for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
+	int last_resSeq = -1;
+	list <sortable_PDB_atom> last_residue_atoms;
+	unsigned int k;
+	for (k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
+	  PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
+
+	  if ((int)this_atom->resSeq != last_resSeq) {
+	    if (last_resSeq != -1) {
+	      // reorder previous residue
+	      last_residue_atoms.sort();
+	      int base_ofs = (int) last_residue_atoms.size();
+	      // printf("resort last residue... size/base %d k %u\n", base_ofs, k);
+	      for (unsigned int m = k - base_ofs; m < k; m++) {
+		// printf("resort m = %u size lra %u\n", m, last_residue_atoms.size());
+		model_vector[current_model].molecule[j].atom[m] = (last_residue_atoms.front()).pdb_atom;
+		last_residue_atoms.pop_front();
+	      }
+	    }
+	    last_resSeq = this_atom->resSeq;
+	  }
+	  sortable_PDB_atom tmp_sortable_pdb_atom;
+	  tmp_sortable_pdb_atom.pdb_atom = *this_atom;
+	  last_residue_atoms.push_back(tmp_sortable_pdb_atom);
+	}
+	if (last_resSeq != -1) {
+	  // reorder 'last' residue
+	  last_residue_atoms.sort();
+	  int base_ofs = (int) last_residue_atoms.size();
+	  // printf("final resort last residue... size/base %d k %u\n", base_ofs, k);
+	  for (unsigned int m = k - base_ofs; m < k; m++) {
+	    //	    printf("finalresort m = %u size lra %u\n", m, last_residue_atoms.size());
+	    model_vector[current_model].molecule[j].atom[m] = (last_residue_atoms.front()).pdb_atom;
+	    last_residue_atoms.pop_front();
+	  }
+	}
+      }
+    }
+#endif
+#if !defined(DO_SORT)
+    puts("sorting disabled");
+#endif
+	
+#if defined(DEBUG)
+    puts("after sort::");
+    // list them again...
+    {
+      for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
+	for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
+	  PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
+
+	    printf("p1 j k %d %d %lx %s %d\n", j, k, 
+		   (long unsigned int)this_atom->p_atom, 
+		   this_atom->active ? "active" : "not active",
+		   this_atom->bead_assignment
+	  	 ); fflush(stdout);
+	}
+      }
+    }
+#endif
+	
     return 0;
 }  
 
+// #undef DEBUG
+
+void US_Hydrodyn::radial_reduction()
+{
+}
+
 int US_Hydrodyn::compute_asa()
 {
+  //	make_bead_model();
+  //	return;
 
         QString error_string = "";
 	progress->reset();
@@ -1188,27 +1327,27 @@ int US_Hydrodyn::compute_asa()
 	  {
 	  case US_SURFRACER_ERR_MISSING_RESIDUE:
 	    {
-	      printError("US_SURFRACER encountered an unknown residue:\n" +
+	      printError("Encountered an unknown residue:\n" +
 			 error_string);
 	      return US_SURFRACER_ERR_MISSING_RESIDUE;
 	      break;
 	    }
 	  case US_SURFRACER_ERR_MISSING_ATOM:
 	    {
-	      printError("US_SURFRACER encountered a unknown atom:\n" +
+	      printError("Encountered a unknown atom:\n" +
 			 error_string);
 	      return US_SURFRACER_ERR_MISSING_ATOM;
 	      break;
 	    }
 	  case US_SURFRACER_ERR_MEMORY_ALLOC:
 	    {
-	      printError("US_SURFRACER encountered a memory allocation error");
+	      printError("Encountered a memory allocation error");
 	      return US_SURFRACER_ERR_MEMORY_ALLOC;
 	      break;
 	    }
 	  default:
 	    {
-	      printError("US_SURFRACER encountered an unknown error");
+	      printError("Encountered an unknown error");
 	      // unknown error
 	      return -1;
 	      break;
@@ -1219,7 +1358,7 @@ int US_Hydrodyn::compute_asa()
 	if(error_string.length()) {
 	  progress->setProgress(mppos);
 	  qApp->processEvents();
-	  printError("US_SURFRACER encountered unknown atom(s) error:\n" +
+	  printError("Encountered unknown atom(s) error:\n" +
 		     error_string);
 	  return US_SURFRACER_ERR_MISSING_ATOM;
 	}
@@ -1368,7 +1507,6 @@ int US_Hydrodyn::compute_asa()
   progress->setProgress(ppos++); // 3
   qApp->processEvents();
 
-  // #define DEBUG
   // pass 2 determine beads, cog_position, fixed_position, molecular cog phase 1.
 
   int count_actives;
@@ -1394,11 +1532,12 @@ int US_Hydrodyn::compute_asa()
         // this_atom->bead_positioner = false;
 	if (this_atom->active) {
 #if defined(DEBUG)
-	  printf("pass 2 active %s %s %d pm %d\n",
+	  printf("pass 2 active %s %s %d pm %d %d\n",
 		 this_atom->name.ascii(),
 		 this_atom->resName.ascii(),
 		 this_atom->serial,
-		 this_atom->placing_method); fflush(stdout);
+		 this_atom->placing_method,
+		 this_atom->bead_assignment); fflush(stdout);
 #endif
 
 	  molecular_mw += this_atom->mw;
@@ -1514,7 +1653,7 @@ int US_Hydrodyn::compute_asa()
 
 	  if (!create_beads_normally ||
 	      this_atom->bead_positioner) {
-#if defined(DEBUG)
+#if defined(DEBUG_COG)
 	    printf("adding cog from %d to %d mw %f totmw %f (this pos [%f,%f,%f], org pos [%f,%f,%f])\n", this_atom->serial, use_atom->serial, this_atom->mw, use_atom->bead_cog_mw,
 		   this_atom->coordinate.axis[0],
 		   this_atom->coordinate.axis[1],
@@ -1529,7 +1668,7 @@ int US_Hydrodyn::compute_asa()
 	      use_atom->bead_cog_coordinate.axis[m] +=
 		this_atom->coordinate.axis[m] * this_atom->mw;
 	    }
-#if defined(DEBUG)
+#if defined(DEBUG_COG)
 	    printf("afterwards: target mw %f pos [%f,%f,%f]\n",
 		   use_atom->bead_cog_mw,
 		   use_atom->bead_cog_coordinate.axis[0],
@@ -1537,7 +1676,7 @@ int US_Hydrodyn::compute_asa()
 		   use_atom->bead_cog_coordinate.axis[2]);
 #endif
 	  } else {
-#if defined(DEBUG)
+#if defined(DEBUG_COG)
 	      fprintf(stderr, "notice: atom %s %s %d excluded from cog calculation in bead %s %s %d\n",
 		      this_atom->name.ascii(),
 		      this_atom->resName.ascii(),
@@ -3763,12 +3902,6 @@ int US_Hydrodyn::calc_grid()
 	bool any_errors = false;
 	bool any_models = false;
 	pb_grid->setEnabled(false);
-	if (!residue_list.size() ||
-			 !model_vector.size())
-	{
-		fprintf(stderr, "calculations can not be run until residue & pdb files are read!\n");
-		return -1;
-	}
 	pb_visualize->setEnabled(false);
 	pb_show_hydro_results->setEnabled(false);
 	pb_calc_hydro->setEnabled(false);
@@ -3778,6 +3911,122 @@ int US_Hydrodyn::calc_grid()
 		delete results_window;
 		results_widget = false;
 	}
+
+	for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
+	  if (lb_model->isSelected(current_model)) {
+	    printf("in calc_grid: is selected current model %d\n", current_model); fflush(stdout);
+	    if (somo_processed.size() > current_model && somo_processed[current_model]) {
+	      printf("in calc_grid: somo_processed %d\n", current_model); fflush(stdout);
+	      editor->append(QString("Gridding bead model %1\n").arg(current_model + 1));
+	      qApp->processEvents();
+	      bead_models[current_model] = 
+		us_hydrodyn_grid_atob(&bead_models[current_model], 
+				    &grid,
+				    progress,
+				    editor);
+	      bead_model = bead_models[current_model];
+	      any_models = true;
+	      somo_processed[current_model] = 1;
+	      write_bead_spt(somo_dir + SLASH + project +
+			     (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+			     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+			     DOTSOMO, &bead_model, bead_model_from_file);
+	      write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
+			       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + 
+			       DOTSOMO, &bead_model);
+	    } else {
+	      QString error_string;
+	      printf("in calc_grid: !somo_processed %d\n", current_model); fflush(stdout);
+	      // create bead model from atoms
+	      editor->append(QString("Gridding atom model %1\n").arg(current_model + 1));
+	      qApp->processEvents();
+	      int retval = create_beads(&error_string);
+	      if ( retval )
+	      {
+		editor->append("Errors found during the initial creation of beads\n");
+		qApp->processEvents();
+		any_errors = true;
+		switch ( retval )
+		{
+		case US_SURFRACER_ERR_MISSING_RESIDUE:
+		  {
+		    printError("Encountered an unknown residue:\n" +
+			       error_string);
+		    break;
+		  }
+		case US_SURFRACER_ERR_MISSING_ATOM:
+		  {
+		    printError("Encountered a unknown atom:\n" +
+			       error_string);
+		    break;
+		  }
+		case US_SURFRACER_ERR_MEMORY_ALLOC:
+		  {
+		    printError("Encountered a memory allocation error");
+		    break;
+		  }
+		default:
+		  {
+		    printError("Encountered an unknown error");
+		    // unknown error
+		    break;
+		  }
+		}
+	      } else {
+		if(error_string.length()) {
+		  printError("Encountered unknown atom(s) error:\n" +
+			     error_string);
+		  any_errors = true;
+		} else {
+		  // ok, we have the basic "bead" info loaded...
+		  unsigned int i = current_model;
+		  bead_model.clear();
+		  for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+		    for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
+		      PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
+		      if(this_atom->active) {
+			for (unsigned int m = 0; m < 3; m++) {
+			  this_atom->bead_coordinate.axis[m] = this_atom->coordinate.axis[m];
+			}
+			this_atom->bead_number = bead_model.size();
+			this_atom->bead_computed_radius = this_atom->radius;
+			this_atom->bead_actual_radius = this_atom->bead_computed_radius;
+			this_atom->bead_mw = this_atom->mw;
+			bead_model.push_back(*this_atom);
+		      }
+		    }
+		  }
+		  if (bead_models.size() < current_model + 1) {
+		    bead_models.resize(current_model + 1);
+		  }
+		  bead_models[current_model] = 
+		    us_hydrodyn_grid_atob(&bead_model,
+					  &grid,
+					  progress,
+					  editor);
+		  printf("back from grid_atob 0\n"); fflush(stdout);
+		  if (somo_processed.size() < current_model + 1) {
+		    somo_processed.resize(current_model + 1);
+		  }
+
+		  bead_model = bead_models[current_model];
+		  any_models = true;
+		  somo_processed[current_model] = 1;
+		  printf("back from grid_atob 1\n"); fflush(stdout);
+		  write_bead_spt(somo_dir + SLASH + project +
+				 (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+				 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+				 DOTSOMO, &bead_model, bead_model_from_file);
+		  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
+				   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + 
+				   DOTSOMO, &bead_model);
+		  
+		}
+	      }
+	    }
+	  }
+	}
+
 	if (any_models && !any_errors)
 	{
 		editor->append("Build bead model completed\n\n");
@@ -4206,9 +4455,9 @@ void US_Hydrodyn::load_pdb()
 		  	if (check_for_missing_atoms(&error_string, &model_vector[i]))
 			{
 		   	errors_found++;
-		   	editor->append(QString("US_SURFRACER encountered errors with your PDB structure for model %1:\n").
+		   	editor->append(QString("Encountered errors with your PDB structure for model %1:\n").
 				arg(i + 1) + error_string);
-		   	printError(QString("US_SURFRACER encountered errors with your PDB structure for model %1:\n").
+		   	printError(QString("Encountered errors with your PDB structure for model %1:\n").
 			   arg(i + 1) + "please check the text window");
 			}
 		}
@@ -4273,6 +4522,7 @@ void US_Hydrodyn::load_bead_model()
 		pb_visualize->setEnabled(false);
 		pb_calc_hydro->setEnabled(false);
 		pb_show_hydro_results->setEnabled(false);
+		pb_grid->setEnabled(false);
 		if (results_widget)
 		{
 		    results_window->close();
@@ -4286,6 +4536,7 @@ void US_Hydrodyn::load_bead_model()
 		{
 		  pb_visualize->setEnabled(true);
 		  pb_calc_hydro->setEnabled(true);
+		  pb_grid->setEnabled(true);
 		}
 		// bead_model_prefix = "";
 	}
@@ -4480,6 +4731,10 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		  tmp_atom.exposed_code = 1;
 		  tmp_atom.all_beads.clear();
 		  tmp_atom.active = true;
+		  tmp_atom.name = "ATOM";
+		  tmp_atom.resName = "RESIDUE";
+		  tmp_atom.iCode = "ICODE";
+		  tmp_atom.chainID = "CHAIN";
 		  bead_model.push_back(tmp_atom);
 		}
 		f.close();
@@ -4580,6 +4835,10 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		    tmp_atom.exposed_code = 1;
 		    tmp_atom.all_beads.clear();
 		    tmp_atom.active = true;
+		    tmp_atom.name = "ATOM";
+		    tmp_atom.resName = "RESIDUE";
+		    tmp_atom.iCode = "ICODE";
+		    tmp_atom.chainID = "CHAIN";
 		    bead_model.push_back(tmp_atom);
 		  }
 		  frmc.close();
@@ -4748,7 +5007,7 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 	str2 = str1.mid(6, 5);
 	temp_atom.serial = str2.toUInt();
 
-	str2 = str1.mid(13, 4);
+	str2 = str1.mid(12, 5);
 	temp_atom.name = str2.stripWhiteSpace();
 
 	temp_atom.altLoc = str1.mid(16, 1);
