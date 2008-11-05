@@ -128,6 +128,7 @@ struct atom
 											// 3 = undefined
 											// 4 = other
         bool tmp_flag;               // used for finding missing residues
+        bool tmp_used;               // used for avoiding duplicate usage
 };
 
 struct residue
