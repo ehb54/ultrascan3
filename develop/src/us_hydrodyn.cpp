@@ -964,9 +964,14 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
 class sortable_PDB_atom {
 public:
   PDB_atom pdb_atom;
+  bool PRO_N_override;
   bool operator < (const sortable_PDB_atom& objIn) const
   {
-    if (pdb_atom.bead_assignment < objIn.pdb_atom.bead_assignment)
+    if (
+	(PRO_N_override ? 0 : pdb_atom.bead_assignment)
+	< 
+	(objIn.PRO_N_override ? 0 : objIn.pdb_atom.bead_assignment)
+	)
     {
       return (true);
     }
@@ -1237,6 +1242,11 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	  }
 	  sortable_PDB_atom tmp_sortable_pdb_atom;
 	  tmp_sortable_pdb_atom.pdb_atom = *this_atom;
+	  tmp_sortable_pdb_atom.PRO_N_override = false;
+	  if(this_atom->resName == "PRO" &&
+	     this_atom->name == "N") {
+	    tmp_sortable_pdb_atom.PRO_N_override = true;
+	  }
 	  last_residue_atoms.push_back(tmp_sortable_pdb_atom);
 	}
 	if (last_resSeq != -1) {
@@ -1274,32 +1284,61 @@ int US_Hydrodyn::create_beads(QString *error_string)
       }
     }
 #endif
-#define DEBUG_MW
+    // #define DEBUG_MW
 #if defined(DEBUG_MW)
     puts("mw totals:::");
     double tot_atom_mw = 0e0;
     double tot_bead_mw = 0e0;
+    double prev_bead_mw = 0e0;
+    double prev_atom_mw = 0e0;
     int bead_count = 0;
     int atom_count = 0;
     int last_asgn = -1;
     int last_res = -1;
+    QString last_resName = "";
     {
       for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
 	for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
 	  PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
 	  if(this_atom->active) {
-	    atom_count++;
-	    tot_atom_mw += this_atom->mw;
 	    if(last_asgn != (int)this_atom->bead_assignment ||
 	       last_res != (int)this_atom->resSeq) {
+	      if(bead_count) {
+		printf("res %d %s bead %d bead_mw %f sum atom mw %f diff %f\n",
+		       last_res,
+		       last_resName.ascii(),
+		       last_asgn,
+		       prev_bead_mw,
+		       prev_atom_mw,
+		       prev_bead_mw -
+		       prev_atom_mw
+		       );
+	      }
+	      prev_bead_mw = 0;
+	      prev_atom_mw = 0;
+
 	      bead_count++;
 	      tot_bead_mw += this_atom->bead_ref_mw;
+	      prev_bead_mw += this_atom->bead_ref_mw;
 	      last_asgn = (int)this_atom->bead_assignment;
 	      last_res = (int)this_atom->resSeq;
+	      last_resName = this_atom->resName;
 	    }
+	    atom_count++;
+	    tot_atom_mw += this_atom->mw;
+	    prev_atom_mw += this_atom->mw;
 	  }
 	}
       }
+      printf("res %d %s bead %d bead_mw %f sum atom mw %f diff %f\n",
+	     last_res,
+	     last_resName.ascii(),
+	     last_asgn,
+	     prev_bead_mw,
+	     prev_atom_mw,
+	     prev_bead_mw -
+	     prev_atom_mw
+	     );
     }
     printf("~~tot atom %d mw %f tot bead %d mw %f\n",
 	   atom_count,
@@ -1540,6 +1579,7 @@ int US_Hydrodyn::compute_asa()
   progress->setProgress(ppos++); // 3
   qApp->processEvents();
 
+  // #define DEBUG
   // pass 2 determine beads, cog_position, fixed_position, molecular cog phase 1.
 
   int count_actives;
@@ -2129,8 +2169,13 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG_MW)
   double tot_atom_mw = 0e0;
   double tot_bead_mw = 0e0;
+  double prev_bead_mw = 0e0;
+  double prev_atom_mw = 0e0;
   int bead_count = 0;
   int atom_count = 0;
+  int last_asgn = -1;
+  int last_res = -1;
+  QString last_resName = "";
 #endif
   {
     unsigned int i = current_model;
@@ -2146,8 +2191,25 @@ int US_Hydrodyn::compute_asa()
 	  this_atom->bead_number = bead_model.size();
 	  this_atom->bead_actual_radius = this_atom->bead_computed_radius;
 #if defined(DEBUG_MW)
+	  if(bead_count) {
+	    printf("res %d %s bead %d bead_mw %f sum atom mw %f diff %f\n",
+		   last_res,
+		   last_resName.ascii(),
+		   last_asgn,
+		   prev_bead_mw,
+		   prev_atom_mw,
+		   prev_bead_mw -
+		   prev_atom_mw
+		   );
+	  }
+	  prev_bead_mw = 0;
+	  prev_atom_mw = 0;
 	  bead_count++;
 	  tot_bead_mw += this_atom->bead_ref_mw;
+	  prev_bead_mw += this_atom->bead_ref_mw;
+	  last_asgn = (int)this_atom->bead_assignment;
+	  last_res = (int)this_atom->resSeq;
+	  last_resName = this_atom->resName;
 #endif
 	  bead_model.push_back(*this_atom);
 	}
@@ -2155,18 +2217,28 @@ int US_Hydrodyn::compute_asa()
 	if(this_atom->active) {
 	  atom_count++;
 	  tot_atom_mw += this_atom->mw;
+	  prev_atom_mw += this_atom->mw;
 	}
 #endif
-	  
       }
     }
   }
 #if defined(DEBUG_MW)
-    printf("~~tot atom %d mw %f tot bead %d mw %f\n",
-	   atom_count,
-	   tot_atom_mw,
-	   bead_count,
-	   tot_bead_mw);
+  printf("res %d %s bead %d bead_mw %f sum atom mw %f diff %f\n",
+	 last_res,
+	 last_resName.ascii(),
+	 last_asgn,
+	 prev_bead_mw,
+	 prev_atom_mw,
+	 prev_bead_mw -
+	 prev_atom_mw
+	 );
+  printf("~~tot atom %d mw %f tot bead %d mw %f beads_size %u\n",
+	 atom_count,
+	 tot_atom_mw,
+	 bead_count,
+	 tot_bead_mw,
+	 (unsigned int)bead_model.size());
 #endif
 
   write_bead_asa(somo_dir + SLASH +
