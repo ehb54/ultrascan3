@@ -3567,9 +3567,9 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
 	      colormap[get_color(&(*model)[i])]
 	      );
       fprintf(frmc,
-	      "%.6f\t%u\t%d\n",
+	      "%.6f\t%.6f\t%d\n",
 	      (*model)[i].bead_computed_radius,
-	      (int)(*model)[i].bead_ref_mw,
+	      (*model)[i].bead_ref_mw,
 	      get_color(&(*model)[i]));
       unsigned int tmp_serial = (*model)[i].serial;
       QString residues;
@@ -3598,9 +3598,9 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
 	residues = (*model)[i].residue_list;
       }
       fprintf(frmc1,
-	      "%.6f\t%u\t%d\t%d\t%s\n",
+	      "%.6f\t%.6f\t%d\t%d\t%s\n",
 	      (*model)[i].bead_computed_radius,
-	      (int)(*model)[i].bead_ref_mw,
+	      (*model)[i].bead_ref_mw,
 	      get_color(&(*model)[i]),
 	      (*model)[i].serial,
 	      residues.ascii()
@@ -3847,12 +3847,12 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
 	residues += QString("%1").arg(tmp_serial);
       }
       fprintf(fbeadmodel,
-	      "%f\t%f\t%f\t%.6f\t%u\t%d\t%d\t%s\t%.4f\n",
+	      "%f\t%f\t%f\t%.6f\t%.6f\t%d\t%d\t%s\t%.4f\n",
 	      use_model[i]->bead_coordinate.axis[0],
 	      use_model[i]->bead_coordinate.axis[1],
 	      use_model[i]->bead_coordinate.axis[2],
 	      use_model[i]->bead_computed_radius,
-	      (int)use_model[i]->bead_ref_mw,
+	      use_model[i]->bead_ref_mw,
 	      get_color(use_model[i]),
 	      use_model[i]->serial,
 	      residues.ascii(),

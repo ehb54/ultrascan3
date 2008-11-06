@@ -35,7 +35,7 @@ struct dati1
     float x, y, z;		/* coordinates of the bead center    */
     float r;			/* hydrated radius of the bead       */
     float ru;			/* unhydrated radius of the bead     */
-    int m;			/* mass of the bead                  */
+    float m;			/* mass of the bead                  */
     int col;			/* color of the bead                 */
     char *cor;			/* correspondence between beads and AA */
 };
@@ -79,7 +79,7 @@ static int scelta;
 static int volcor;
 static int sfecalc;
 static int mascor;
-static int mascor1;
+static float mascor1;
 // static int d;
 static int cd;
 static int cc;
@@ -782,7 +782,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     if (mascor == 2)
     {
 	printf("\n\n\n- Insert value of mass : ");
-	scanf("%d", &mascor1);
+	scanf("%f", &mascor1);
     }
 
     while ((sfecalc != 1) && (sfecalc != 2))
@@ -872,7 +872,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     mascor = hydro->mass_correction ? 2 : 1;
     if (mascor == 2) 
     {
-      mascor1 = (int)hydro->mass;
+      mascor1 = (float)hydro->mass;
     }
     sfecalc = hydro->bead_inclusion ? 1 : 2;
     if ((sfecalc == 2) && (volcor == 1))
@@ -1239,7 +1239,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 		bc = 4;
 
 	    if (mascor == 1)
-		mascor1 = (int) pesmol;
+		mascor1 = (float) pesmol;
 
 	    CfT += f * 1.0E-7 * fconv;
 	    CfT2 += pow((f * 1.0E-7 * fconv), 2);
@@ -1734,9 +1734,9 @@ stampa_ris()
 	printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
 
     if (mascor == 1)
-	mascor1 = (int) pesmol;
+	mascor1 = (float) pesmol;
 
-    printf("%s%d%s\n", "- Used BEADS Mass    = ", mascor1, "  [Da]");
+    printf("%s%.2f%s\n", "- Used BEADS Mass    = ", mascor1, "  [Da]");
     supc_results->mass = mascor1;
     printf("\n\n%s%.3e\t%s\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] (w@20C)");
     // supc_results->s20w = f * 1.0E-07 * fconv;
@@ -1998,9 +1998,9 @@ mem_ris()
 	fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
 
     if (mascor == 1)
-	mascor1 = (int) pesmol;
+	mascor1 = (float) pesmol;
 
-    fprintf(ris, "%s%d%s\n", "- Used BEAD Mass     = ", mascor1, "  [Da]");
+    fprintf(ris, "%s%.2f%s\n", "- Used BEAD Mass     = ", mascor1, "  [Da]");
     fprintf(ris, "%s%.2f\n", "- Conversion Factor  = ", fconv);
 
     fprintf(ris, "\n%s%.3e\t%s\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] (w@20C)");
@@ -2484,7 +2484,7 @@ inp_inter()
 	fprintf(interinp, "%f\t", dt[i].y);
 	fprintf(interinp, "%f\n", dt[i].z);
 	fprintf(interinp1, "%f\t", dt[i].r);
-	fprintf(interinp1, "%d\t", dt[i].m);
+	fprintf(interinp1, "%f\t", dt[i].m);
 	fprintf(interinp1, "%d\n", dt[i].col);
     }
 
@@ -2642,7 +2642,7 @@ mem_mol()
 	    for (i = 0; i < nat; i++)
 	    {
 		fprintf(new_rmc, "%f\t", dt[i].r);
-		fprintf(new_rmc, "%d\t", dt[i].m);
+		fprintf(new_rmc, "%f\t", dt[i].m);
 		fprintf(new_rmc, "%d\n", dt[i].col);
 	    }
 	}
@@ -2652,7 +2652,7 @@ mem_mol()
 	    {
 		fprintf(new_rmc, "%f\t", dt[i].r);
 		fprintf(new_rmc, "%f\t", dt[i].ru);
-		fprintf(new_rmc, "%d\t", dt[i].m);
+		fprintf(new_rmc, "%f\t", dt[i].m);
 		fprintf(new_rmc, "%d\n", dt[i].col);
 	    }
 	}
@@ -2661,7 +2661,7 @@ mem_mol()
 	    for (i = 0; i < nat; i++)
 	    {
 		fprintf(new_rmc, "%f\t", dt[i].r);
-		fprintf(new_rmc, "%d\t", dt[i].m);
+		fprintf(new_rmc, "%f\t", dt[i].m);
 		fprintf(new_rmc, "%d\t", dt[i].col);
 		fprintf(new_rmc, "%s\n", dt[i].cor);
 	    }
@@ -3317,7 +3317,6 @@ init_da_a()
     fprintf(tot_mol, "%s\n", molecola);
     fprintf(tot_mol, "%d\t%d\t%d\t%f\n", nat, prima, ultima, raggio);
     fclose(tot_mol);
-
 }
 
 /*********************************************************************/
@@ -3376,7 +3375,7 @@ initarray()
 	    fscanf(mol, "%f", &dt[i].y);
 	    fscanf(mol, "%f", &dt[i].z);
 	    fscanf(rmc, "%f", &dt[i].r);
-	    fscanf(rmc, "%d", &dt[i].m);
+	    fscanf(rmc, "%f", &dt[i].m);
 	    fscanf(rmc, "%d", &dt[i].col);
 	}
 #if defined(DEBUG_WW)
@@ -3409,7 +3408,7 @@ initarray()
 	    fscanf(mol, "%f", &dt[i].z);
 	    fscanf(rmc, "%f", &dt[i].r);
 	    fscanf(rmc, "%f", &dt[i].ru);
-	    fscanf(rmc, "%d", &dt[i].m);
+	    fscanf(rmc, "%f", &dt[i].m);
 	    fscanf(rmc, "%d", &dt[i].col);
 	}
 	fclose(rmc);
@@ -3431,7 +3430,7 @@ initarray()
 	    fscanf(mol, "%f", &dt[i].y);
 	    fscanf(mol, "%f", &dt[i].z);
 	    fscanf(rmc, "%f", &dt[i].r);
-	    fscanf(rmc, "%d", &dt[i].m);
+	    fscanf(rmc, "%f", &dt[i].m);
 	    fscanf(rmc, "%d", &dt[i].col);
 	}
 	fclose(rmc);
@@ -3454,7 +3453,7 @@ initarray()
 	    fscanf(mol, "%f", &dt[i].z);
 	    fscanf(rmc, "%f", &dt[i].r);
 	    fscanf(rmc, "%f", &dt[i].ru);
-	    fscanf(rmc, "%d", &dt[i].m);
+	    fscanf(rmc, "%f", &dt[i].m);
 	    fscanf(rmc, "%d", &dt[i].col);
 	}
 
@@ -3475,7 +3474,7 @@ initarray()
 	    fscanf(mol, "%f", &dt[i].y);
 	    fscanf(mol, "%f", &dt[i].z);
 	    fscanf(rmc, "%f", &dt[i].r);
-	    fscanf(rmc, "%d", &dt[i].m);
+	    fscanf(rmc, "%f", &dt[i].m);
 	    fscanf(rmc, "%d", &dt[i].col);
 	    dt[i].cor = (char *) malloc(10 * sizeof(char));
 	    fscanf(rmc, "%s", dt[i].cor);
@@ -3500,7 +3499,7 @@ initarray()
 	    fscanf(mol, "%f", &dt[i].y);
 	    fscanf(mol, "%f", &dt[i].z);
 	    fscanf(rmc, "%f", &dt[i].r);
-	    fscanf(rmc, "%d", &dt[i].m);
+	    fscanf(rmc, "%f", &dt[i].m);
 	    fscanf(rmc, "%d", &dt[i].col);
 	    dt[i].cor = (char *) malloc(10 * sizeof(char));
 	    fscanf(rmc, "%s", dt[i].cor);
@@ -3519,7 +3518,7 @@ initarray()
 	    fscanf(mol, "%f", &dt[i].y);
 	    fscanf(mol, "%f", &dt[i].z);
 	    dt[i].r = raggio;
-	    dt[i].m = (int) 1.0;
+	    dt[i].m = (float) 1.0;
 	    dt[i].col = 1;
 	}
     }
