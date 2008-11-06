@@ -1274,6 +1274,39 @@ int US_Hydrodyn::create_beads(QString *error_string)
       }
     }
 #endif
+#define DEBUG_MW
+#if defined(DEBUG_MW)
+    puts("mw totals:::");
+    double tot_atom_mw = 0e0;
+    double tot_bead_mw = 0e0;
+    int bead_count = 0;
+    int atom_count = 0;
+    int last_asgn = -1;
+    int last_res = -1;
+    {
+      for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
+	for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
+	  PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
+	  if(this_atom->active) {
+	    atom_count++;
+	    tot_atom_mw += this_atom->mw;
+	    if(last_asgn != (int)this_atom->bead_assignment ||
+	       last_res != (int)this_atom->resSeq) {
+	      bead_count++;
+	      tot_bead_mw += this_atom->bead_ref_mw;
+	      last_asgn = (int)this_atom->bead_assignment;
+	      last_res = (int)this_atom->resSeq;
+	    }
+	  }
+	}
+      }
+    }
+    printf("~~tot atom %d mw %f tot bead %d mw %f\n",
+	   atom_count,
+	   tot_atom_mw,
+	   bead_count,
+	   tot_bead_mw);
+#endif
 	
     return 0;
 }  
@@ -2093,6 +2126,12 @@ int US_Hydrodyn::compute_asa()
   vector<PDB_atom> dbg_model;
 #endif
   //  for (unsigned int i = 0; i < model_vector.size (); i++)
+#if defined(DEBUG_MW)
+  double tot_atom_mw = 0e0;
+  double tot_bead_mw = 0e0;
+  int bead_count = 0;
+  int atom_count = 0;
+#endif
   {
     unsigned int i = current_model;
     for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
@@ -2106,11 +2145,30 @@ int US_Hydrodyn::compute_asa()
 	   this_atom->is_bead) {
 	  this_atom->bead_number = bead_model.size();
 	  this_atom->bead_actual_radius = this_atom->bead_computed_radius;
+#if defined(DEBUG_MW)
+	  bead_count++;
+	  tot_bead_mw += this_atom->bead_ref_mw;
+#endif
 	  bead_model.push_back(*this_atom);
 	}
+#if defined(DEBUG_MW)
+	if(this_atom->active) {
+	  atom_count++;
+	  tot_atom_mw += this_atom->mw;
+	}
+#endif
+	  
       }
     }
   }
+#if defined(DEBUG_MW)
+    printf("~~tot atom %d mw %f tot bead %d mw %f\n",
+	   atom_count,
+	   tot_atom_mw,
+	   bead_count,
+	   tot_bead_mw);
+#endif
+
   write_bead_asa(somo_dir + SLASH +
 		 project + QString("_%1").arg(current_model + 1) + 
 		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "")
