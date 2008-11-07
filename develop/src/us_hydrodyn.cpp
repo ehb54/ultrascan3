@@ -1008,6 +1008,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
     for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
     {
       int last_resSeq = -1;
+      QString last_resName = "";
       for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
       {
 	PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
@@ -1072,7 +1073,6 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	}
 	int atompos = -1;
 	
-
 	if (respos != -1)
 	{
 	  // clear tmp_used if new resSeq
@@ -1080,6 +1080,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	  printf("respos %d != -1 last used %u %d\n", respos, this_atom->resSeq, last_resSeq);
 #endif
 	  if ((int)this_atom->resSeq != last_resSeq ||
+	      this_atom->resName != last_resName ||
 	      residue_list[respos].name == "OXT" ||
 	      residue_list[respos].name == "N1")
 	  {
@@ -1091,6 +1092,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	      residue_list[respos].r_atom[m].tmp_used = false;
 	    }
 	    last_resSeq = (int)this_atom->resSeq;
+	    last_resName = this_atom->resName;
 	    if(residue_list[respos].name == "OXT" ||
 	       residue_list[respos].name == "N1") {
 	      last_resSeq = -1;
