@@ -11,8 +11,8 @@ static QTextEdit *editor;
 #define VW_average_radius 1.5	/* Van der Walls average radius equal to 1.5 A */
 #define EXPANSION_COEF 0.2	/*how much bigger LMAX will be with respect to the protein max size! (0.2=20%) */
 
-#define DEBUG
-#define DEBUG_ATOB
+// #define DEBUG
+// #define DEBUG_ATOB
 
 static float
 particle_max_size(PDB * pdb)
@@ -575,7 +575,11 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 	tmp_atom.bead_coordinate.axis[1] = this_pdb->y;
 	tmp_atom.bead_coordinate.axis[2] = this_pdb->z;
 	tmp_atom.bead_computed_radius = this_prop->rVW;
+	tmp_atom.bead_actual_radius = this_prop->rVW;
+	tmp_atom.radius = this_prop->rVW;
 	tmp_atom.bead_mw = this_prop->mass;
+	tmp_atom.mw = this_prop->mass;
+	tmp_atom.bead_ref_mw = this_prop->mass;
 	tmp_atom.bead_color = 1;
 	tmp_atom.serial = this_pdb->atnum;
 	tmp_atom.exposed_code = 1;
@@ -584,6 +588,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 	tmp_atom.resName = QString(this_pdb->resnam);
 	tmp_atom.iCode = QString(this_pdb->insert);
 	tmp_atom.chainID = QString(this_pdb->chain);
+	tmp_atom.chain = 1;
 	result_bead_model.push_back(tmp_atom);
     }
 #if defined(DEBUG)

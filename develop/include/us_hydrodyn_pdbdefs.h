@@ -43,7 +43,8 @@ struct PDB_atom
         // assigned after return from compute_asa()
         bool is_bead;                     // 0 = no, 1 = yes this is the bead info
         int bead_number;                  // sequence of bead #'s
-        int bead_assignment;              // number in residue->r_bead[]
+        int bead_assignment;              // position in residue->r_bead[]
+        int atom_assignment;              // position in residue->r_atom[]
         int visibility;                   // 0 = hidden, 1 = exposed
         int chain;                        // 0 = main, 1 = side
         int org_chain;                    // 0 = main, 1 = side
