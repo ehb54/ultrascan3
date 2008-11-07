@@ -5768,6 +5768,8 @@ void US_Hydrodyn::load_pdb()
 			}
 		}
 		editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
+		bead_models.clear();
+		somo_processed.clear();
 	}
 	else
 	{
