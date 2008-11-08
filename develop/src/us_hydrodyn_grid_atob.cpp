@@ -595,6 +595,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
     puts("grid_atob 7");
     fflush(stdout);
 #endif
+    editor->append(QString("Grid contains %1 beads\n").arg(result_bead_model.size()));
     printf("bead model size %d\n", (int)result_bead_model.size()); fflush(stdout);
 
     return result_bead_model;
