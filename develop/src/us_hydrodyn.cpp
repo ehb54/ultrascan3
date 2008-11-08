@@ -5222,6 +5222,22 @@ int US_Hydrodyn::calc_grid()
 	      bead_model = bead_models[current_model];
 	      any_models = true;
 	      somo_processed[current_model] = 1;
+	      if (grid.overlaps) 
+	      {
+		radial_reduction();
+		bead_models[current_model] = bead_model;
+	      }
+	      if (asa.recheck_beads)
+	      {
+		editor->append("Rechecking beads\n");
+		qApp->processEvents();
+		for(unsigned int i = 0; i < bead_model.size(); i++) {
+		  bead_model[i].exposed_code = 6;
+		  bead_model[i].bead_color = 6;
+		}
+		bead_check();
+		bead_models[current_model] = bead_model;
+	      }
 	      write_bead_spt(somo_dir + SLASH + project +
 			     (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
 			     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
@@ -5294,6 +5310,7 @@ int US_Hydrodyn::calc_grid()
 		  if (bead_models.size() < current_model + 1) {
 		    bead_models.resize(current_model + 1);
 		  }
+		
 		  bead_models[current_model] = 
 		    us_hydrodyn_grid_atob(&bead_model,
 					  &grid,
@@ -5303,21 +5320,15 @@ int US_Hydrodyn::calc_grid()
 		  if (somo_processed.size() < current_model + 1) {
 		    somo_processed.resize(current_model + 1);
 		  }
-
 		  bead_model = bead_models[current_model];
 		  any_models = true;
 		  somo_processed[current_model] = 1;
 		  printf("back from grid_atob 1\n"); fflush(stdout);
-		  write_bead_spt(somo_dir + SLASH + project +
-				 (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-				 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
-				 DOTSOMO, &bead_model, bead_model_from_file);
-		  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
-				   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + 
-				   DOTSOMO, &bead_model);
-		  radial_reduction();
-		  bead_models[current_model] = bead_model;
-#if defined(RECHECK_GRID)
+		  if (grid.overlaps) 
+		  {
+		    radial_reduction();
+		    bead_models[current_model] = bead_model;
+		  }
 		  if (asa.recheck_beads)
 		  {
 		    editor->append("Rechecking beads\n");
@@ -5327,8 +5338,17 @@ int US_Hydrodyn::calc_grid()
 		      bead_model[i].bead_color = 6;
 		    }
 		    bead_check();
+		    bead_models[current_model] = bead_model;
 		  }
-#endif
+
+		  write_bead_spt(somo_dir + SLASH + project +
+				 (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+				 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+				 DOTSOMO, &bead_model, bead_model_from_file);
+		  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
+				   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + 
+				   DOTSOMO, &bead_model);
+
 		}
 	      }
 	    }
