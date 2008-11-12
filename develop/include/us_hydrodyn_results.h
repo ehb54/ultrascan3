@@ -25,8 +25,8 @@ using namespace std;
 
 struct hydro_results
 {
-	unsigned int total_beads;
-	unsigned int used_beads;
+	float total_beads;
+	float used_beads;
 	double mass;
 	double s20w;
 	double s20w_sd;

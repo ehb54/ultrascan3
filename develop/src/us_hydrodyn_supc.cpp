@@ -306,6 +306,8 @@ static QTextEdit *editor;
 static int ppos;
 static int mppos;
 static double overlap_tolerance;
+static float tot_tot_beads;
+static float tot_used_beads;
 
 static void
 supc_free_alloced()
@@ -505,16 +507,19 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 		      QProgressBar *use_progress,
 		      QTextEdit *use_editor)
 {
-  dt = 0;
-  dtn = 0;
-  rRi = 0;
-  b1 = 0;	
-  p = 0;	
-  gp = 0;	
-  q = 0;	
-  a = 0;	
+    dt = 0;
+    dtn = 0;
+    rRi = 0;
+    b1 = 0;	
+    p = 0;	
+    gp = 0;	
+    q = 0;	
+    a = 0;	
 
   //  vector <PDB_atom> *bead_model;
+    tot_tot_beads = 0;
+    tot_used_beads = 0;
+
     progress = use_progress;
     editor = use_editor;
     overlap_tolerance = use_overlap_tolerance;
@@ -1486,6 +1491,7 @@ presentazione()
     printf("####################################################\n\n");
     printf("- Model        : %s\n", molecola);
     printf("- TOTAL Beads in the MODEL : %d\n", numero_sfere);
+
     // printf("%s%d\n", "- FIRST Bead Included  : ", prima);
     // printf("%s%d\n", "- LAST Bead Included : ", ultima);
     if (colorzero == 1)
@@ -1708,6 +1714,8 @@ stampa_ris()
 
     printf("\n\n%s%d\n", "- Used BEADS Number  = ", nat);
     supc_results->used_beads = nat;
+    tot_used_beads += (float)nat;
+
     if (volcor == 1)
     {
 	if ((colorsixf == 0) && (sfecalc == 2))
@@ -1948,6 +1956,9 @@ mem_ris()
     fprintf(ris, "%s", "MODEL File Name  :___ ");
     fprintf(ris, "%s\n", molecola);
     fprintf(ris, "%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere);
+    tot_tot_beads += (float) numero_sfere;
+    supc_results->total_beads = numero_sfere;
+    
     // fprintf(ris, "%s%d\n", "FIRST Bead Included  :___ ", prima);
     // fprintf(ris, "%s%d\n\n", "LAST Bead Included :___ ", ultima);
     fprintf(ris, "\n");
@@ -2194,6 +2205,8 @@ val_med()
 
     fprintf(ris, "\n\t AVERAGE PARAMETERS \n");
     fprintf(ris, "\n\t\t\t\t Mean value\tSt. Dev.\n");
+    supc_results->total_beads = tot_tot_beads / num;
+    supc_results->used_beads = tot_used_beads / num;
 
     temp = fabs((CfT2 - pow(CfT, 2) / num) / (num - 1));
     fprintf(ris, "\n%s\t%.3e\t%.3e\t%s\n", "- TRANS. FRICT. COEFF.        ", CfT / num, sqrt(temp), "[g/s]");
