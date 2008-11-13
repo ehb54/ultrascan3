@@ -2513,7 +2513,9 @@ void US_Hydrodyn::radial_reduction()
   write_bead_tsv(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO + ".tsv", &bead_model);
   write_bead_spt(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO, &bead_model);
 #endif
-  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + DOTSOMO, &bead_model);
+  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
+		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+		 DOTSOMO, &bead_model);
   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
 		   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + DOTSOMO
 		   , &bead_model);
@@ -4560,7 +4562,9 @@ int US_Hydrodyn::compute_asa()
   write_bead_tsv(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO + ".tsv", &bead_model);
   write_bead_spt(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO, &bead_model);
 #endif
-  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + DOTSOMO, &bead_model);
+  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+		 DOTSOMO, &bead_model);
   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
 		   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + DOTSOMO
 		   , &bead_model);
@@ -5173,6 +5177,7 @@ void US_Hydrodyn::visualize()
 	      argument.append(
 			      project +
 			      (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+			      QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 			      DOTSOMO + ".spt");
 	    
 	      rasmol->setWorkingDirectory(somo_dir);
@@ -5205,6 +5210,16 @@ int US_Hydrodyn::calc_grid()
 		results_window->close();
 		delete results_window;
 		results_widget = false;
+	}
+
+	if(!bead_model_prefix.contains("a2b")) 
+	{
+	  if(bead_model_prefix.length()) {
+	    bead_model_prefix += "-a2b";
+	  } else {
+	    bead_model_prefix += "a2b";
+	  }
+	  le_bead_model_prefix->setText(bead_model_prefix);
 	}
 
 	for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
