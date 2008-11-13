@@ -1,0 +1,75 @@
+<head>
+   <title>Finite Element Analysis - Fitting Control Window</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<H2>Finite Element Analysis - Fitting Control Window:</H2>
+<p>
+The fitting control window gives you control over the
+nonlinear least squares fitting process:
+<p>
+<center>
+<img src=finite_fit_ctrl1.png>
+</center>
+<p>
+After defining your model with the <a href=finite_model.html>Model 
+Selection</a> and the <a href=finite_model_ctrl.html>Model Control Window</a>,
+you can start the fitting control window from the finite element analysis 
+window by clicking on the <b><i>"Fitting Control"</i></b> button.
+<p>
+Select between a constrained or unconstrained fit, then click on the
+<i>Fit</i> button. All fitting statistics will be updated once per
+iteration and the status bar will keep you informed about the progress
+of the fit. Similarly, all fitted parameters will be updated once every
+iteration to their current value int he model control window. Once the
+solution has converged, fitting will automatically stop and display
+<b>"Solution Converged"</b> in the status field.
+<p>
+You can interrupt the fitting process at any time by clicking on the 
+<i>Pause</i> button. To resume the interrupted fit, click on <i>Resume</i>.
+While stopped, you can change parameter values or the time discretization.
+However, you cannot change wether a parameter is allowed to float or 
+needs to remain fixed. To make such a change, you need to abort the fitting
+session first and then restart the fit.
+New parameter values entered in the model control window during a temporary
+fitting stop will be accepted as soon as fitting is resumed. Clicking
+on <i>Abort</i> will halt all fitting and cancel the current fitting session.
+Once the solution has converged, you can close the fitting control window
+by clicking on <i>Close</i>. 
+<p>
+For more information on optimal finite element fitting strategies, please 
+consult the <a href=finite_tutor.html>Finite Element Tutorial</a>. The final
+fitting results can further be used to model the component under investigation.
+Please consult the finite element <a href=finite_interpretation.html>Results
+Interpretation Manual</a> for further information on this topic.
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software
+Documentation distribution. <br><a href=copyright.html>Copyright &copy; notice</a>
+<p>
+The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>
+ 

@@ -1,0 +1,72 @@
+<html>
+<head>
+<title>UTHSCSA - Dept. of Biochemistry</title>
+
+<SCRIPT LANGUAGE="JavaScript">
+
+
+<!-- Beginning of JavaScript ----------------------
+/*
+        Original code (C)1996 Web Integration Systems, Inc. DBA Websys, Inc.  All Rights Reserved.  This code can be re-used or modified, if credit is given in the source code.
+        Chris Skinner, January 30, 1996.
+
+        Modified by Bob Gambert - February 15, 1996.    
+        Modified by Borries Demeler- April 21, 1996.    
+
+Disclaimer:  We will not be held responsible for any unwanted effects due to the usage of this applet or any derivative.  No warrantees for usability for any specific application are given or implied.
+
+*/
+
+
+
+
+function scrollit_r21(seed)
+{
+
+        var m1 = "...Welcome to the Department of Biochemistry"
+        var m2 = " at the University of Texas Health Science Center in San Antonio...";
+        var m3 = "... Thanks for visiting our website!... ";
+
+        var msg=m1+m2+m3
+        var out = " ";
+
+        var c = 1;
+
+        if (seed > 100) {
+                seed--;
+                var cmd="scrollit_r21(" + seed + ")";
+                timerTwo=window.setTimeout(cmd,100);
+        }
+        else if (seed <= 100 && seed > 0) {
+                for (c=0 ; c < seed ; c++) {
+                        out+=" ";
+        }
+        out+=msg;
+        seed--;
+        var cmd="scrollit_r21(" + seed + ")";
+                window.status=out;
+        timerTwo=window.setTimeout(cmd,100);
+        }
+        else if (seed <= 0) {
+                if (-seed < msg.length) {
+                        out+=msg.substring(-seed,msg.length);
+                        seed--;
+                        var cmd="scrollit_r21(" + seed + ")";
+                        window.status=out;
+                        timerTwo=window.setTimeout(cmd,100);
+                }
+                else {
+                        window.status=" ";
+                        timerTwo=window.setTimeout("scrollit_r21(100)",75);
+                }
+        }
+}
+
+// End of JavaScript Code -->
+
+
+</SCRIPT>
+
+</head>
+<body bgcolor=ffffff>
+<BODY BGCOLOR="#FFFFFF" onLoad="timerONE=window.setTimeout('scrollit_r21(100)',500);"></BODY>

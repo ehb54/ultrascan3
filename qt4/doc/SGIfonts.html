@@ -1,0 +1,70 @@
+<html>
+<title>Solution: SGI/DEC-Alpha version font problems</title>
+<body bgcolor=white>
+<h2>Solution: SGI/DEC-Alpha version font problems</h2>
+<p>
+If you are using the DEC or SGI versions of UltraScan and experience
+strange font problems (the fonts appear too large), you are using
+100 DPI fonts, instead of the standard 75 DPI fonts, for which
+UltraScan was compiled.
+<p>
+The problem is easily soved by re-arranging the order of font loading
+in the font search path on your X-display. Follow this procedure to
+load the 75 dpi fonts first:
+<p>
+
+First obtain the default font path:
+<p>
+
+<b><code>$: xset -q</code></b>
+<p>
+
+For example, you might see:<p>
+<code><b>
+Font Path:
+/usr/X11R6/lib/X11/fonts/misc/,/usr/X11R6/lib/X11/fonts/100dpi/:unscaled,/usr/X11R6/lib/X11/fonts/75dpi/:unscaled,/usr/X11R6/lib/X11/fonts/Type1/,/usr/X11R6/lib/X11/fonts/Speedo/,/usr/X11R6/lib/X11/fonts/75dpi/,/usr/X11R6/lib/X11/fonts/100dpi/</code></b>
+<p>
+In this case the 75dpi fonts come <i>after</i> the 100 dpi fonts.<br>
+In order to fix this, enter:
+<p>
+<code><b>
+xset +fp /usr/X11R6/lib/X11/fonts/75dpi:unscaled</code></b>
+<p>
+to obtain:
+<p>
+<code><b>
+Font Path:
+/usr/X11R6/lib/X11/fonts/75dpi:unscaled,/usr/X11R6/lib/X11/fonts/misc/,/usr/X11R6/lib/X11/fonts/100dpi/:unscaled,/usr/X11R6/lib/X11/fonts/Type1/,/usr/X11R6/lib/X11/fonts/Speedo/,/usr/X11R6/lib/X11/fonts/75dpi/,/usr/X11R6/lib/X11/fonts/100dpi/
+</code></b>
+<p>
+Then start UltraScan.
+<p>
+To reset to your 100 dpi default, enter:
+<p>
+<code><b>
+xset +fp /usr/X11R6/lib/X11/fonts/100dpi:unscaled
+</code></b>
+<p>
+(make sure you enter your real font path values, they may be different
+on your Unix system!)
+<p>
+If you compile from source, you can compile for 100 dpi fonts using
+the 100dpi switch to the "Setup" script. However, this procedure will
+not change the fixed fonts in some library widgets!
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software
+Documentation distribution. <br><a href=copyright.html>Copyright &copy; notice</a>
+<p>
+The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

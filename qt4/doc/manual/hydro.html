@@ -1,0 +1,161 @@
+<head>
+   <title>Buffer Calculation Module</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<h2>Buffer Calculation Module:</h2>
+<p>
+
+<CENTER><img src="buffer1.png"></CENTER>
+
+
+<p>To correct sedimentation and diffusion coefficients, as well as molecular
+weight, to standard conditions of water at 20 <SUP>o</SUP>C, use the buffer
+correction utility of <b><I>UltraScan</I></b>. 
+<p>
+<b>Note:</b> This program will utilize the database backend of
+<b><i>UltraScan</i></b>. This functionality allows you to save certain
+files and data in a database, among them the nucleotide files analyzed
+with this module. If the database system is not supported or available
+on your system, you will get a <a href=db-error1.png>warning message</a>
+when opening this module.
+<p>
+This utility can be accessed in one of three ways:
+<p>
+<ol>
+<li> Click on <A HREF=menu_utilities0.png>"Buffer Corrections"</A>
+in the Utility Menu from the Main Menu of <b><I>UltraScan</I></b>.
+<p>
+<li>Click on the <b>"Density"</b> or <b>"Viscosity"</b>button in the <A
+HREF="vhw-6.png">analysis window</A> of any data analysis method.
+<p>
+<li>Through the database function <a href=menu_database1.png><b>"Commit 
+Data to DB:Buffer"</b></a>, which will allow you to manipulate any
+buffer data stored in the database.
+</ol>
+<p>
+When using the second option, the temperature of the experiment will
+automatically be used to correct the density and viscosity of the selected
+components to the temperature of the experiment.
+<br>
+
+<p>
+<b><FONT SIZE=+1>Explanation of fields and buttons:</FONT></b>
+<p>
+<table border=1 cellspacing=5 cellpadding=5>
+<tr>
+<td>
+<img src=buffer2.png align=center>
+</td>
+<td>
+<b>Buffer File Loading:</b><br>
+You can load buffer definition files into this program by one of two methods:
+<ol>
+<li><b>Load Buffer from HD</b><br>
+Use this button to load a buffer definition file from your harddrive. A file
+dialog will open and allow you to search for *.buf files.
+<p>
+<li><b>Query Buffer from DB</b><br>
+If you are using a database backend for <b><i>UltraScan</b></i> you can
+query the database for buffer definition files that have previously
+been committed to the database. Buffer definition files available
+in the database will be listed in the listbox once you click on this
+button. More information about various database functions is available
+<a href=database.html>elsewhere</a>.
+</ol>
+</td>
+</tr>
+
+<tr>
+<td>
+<img src=buffer3.png align=center>
+</td>
+<td>
+<li><b>Help:</b> Show this help file
+<li><b>Close:</b> Close this function
+<li><b>Save Buffer to HD</b> Save current buffer definition to a file
+on your harddrive.  The suffix "*.buf" will automatically be added to
+any name entered.
+<li><b>Backup Buffer to DB:</b> Use this function to save a buffer definition file to
+the database.  Before storing a buffer definition file in the database, you need to have
+a copy of the buffer definition stored locally, for example, on your harddrive.
+You can then select the buffer definition to be stored in the database from
+a <a href=buffer7.png>filedialog</a> and after selection, <a
+href=buffer8.png> commit</a> the sequence to the database.
+<li><b>Delete Buffer from DB:</b> Delete the selected buffer from the database.
+This function requires <a href=administrator.html>administrator</a> privileges.
+<li><b>Reset Buffer:</b> Reset all entries to zero and start with the density
+and viscosity of pure water at 20 <SUP>o</SUP>C
+</td>
+</tr>
+
+<tr>
+<td>
+<img src=buffer4.png align=center>
+</td>
+<td>
+<li>
+<b>Density (20 <SUP>o</SUP>C):</b> The density of the combined solution
+at 20 <SUP>o</SUP>C.
+
+<li>
+<b>Viscosity (20 <SUP>o</SUP>C):</b> The viscosity of the combined solution
+at 20 <SUP>o</SUP>C.
+</td>
+</tr>
+
+<tr>
+<td>
+<img src=buffer5.png align=center><br>
+<img src=buffer6.png align=center>
+</td>
+<td>
+<li><b>Buffer Description:</b> If you save a combination of buffer components
+as a buffer definition, you have to enter a description for the buffer to
+help you identify it later on when loaded from the harddrive or database.
+<li><b>Please select a Buffer Component</b> Use the buffer definition list
+to select a buffer component. The selected item will be displayed, as well as
+the units in which you should enter the concentration of the buffer component.
+As soon as you hit the <enter> key, the module will recalculate the density
+and viscosity of the buffer based on the current concentration of all 
+buffer components and update the density and viscosity labels.
+<p>
+In order to select an item from the list on the left, simply highlight
+the buffer component and enter the concentration in the units shown above
+the concentration entry field. Add this component to the buffer by hitting
+the enter key. You can repeat this procedure for each component to be added
+to the buffer. To deselect a component and remove it from the list, double-click
+on the item. <b>Please note: </b>There are different concentration units
+for various buffer components. Please verify the appropriate unit before
+entering the concentration.
+</td>
+</tr>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

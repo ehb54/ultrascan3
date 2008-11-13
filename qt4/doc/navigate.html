@@ -1,0 +1,408 @@
+<html>
+<!-- Author: Borries Demeler 12/1/98 -->
+<head>
+<title>UltraScan Software - Navigation Frame</title>
+
+<script language="JavaScript">
+
+if (document.images) 
+{
+   var Nwelcome_up = new Image(84,23)
+   var Nwelcome_over = new Image(84,23)
+   var Nwelcome_onClick = new Image(84,23);
+
+   Nwelcome_up.src = "graphics/welcome_up.gif"
+   Nwelcome_over.src = "graphics/welcome_over.gif"
+   Nwelcome_onClick.src = "graphics/welcome_onClick.gif"
+
+
+   var Nfaq_up = new Image(84,23)
+   var Nfaq_over = new Image(84,23)
+   var Nfaq_onClick = new Image(84,23);
+
+   Nfaq_up.src = "graphics/faq_up.gif"
+   Nfaq_over.src = "graphics/faq_over.gif"
+   Nfaq_onClick.src = "graphics/faq_onClick.gif"
+
+
+   var Nsupport_up = new Image(84,23)
+   var Nsupport_over = new Image(84,23)
+   var Nsupport_onClick = new Image(84,23);
+
+   Nsupport_up.src = "graphics/support_up.gif"
+   Nsupport_over.src = "graphics/support_over.gif"
+   Nsupport_onClick.src = "graphics/support_onClick.gif"
+
+
+   var Nnews_up = new Image(84,23)
+   var Nnews_over = new Image(84,23)
+   var Nnews_onClick = new Image(84,23);
+
+   Nnews_up.src = "graphics/news_up.gif"
+   Nnews_over.src = "graphics/news_over.gif"
+   Nnews_onClick.src = "graphics/news_onClick.gif"
+
+
+   var Nlicense_up = new Image(84,23)
+   var Nlicense_over = new Image(84,23)
+   var Nlicense_onClick = new Image(84,23);
+
+   Nlicense_up.src = "graphics/license_up.gif"
+   Nlicense_over.src = "graphics/license_over.gif"
+   Nlicense_onClick.src = "graphics/license_onClick.gif"
+
+
+   var Ndownload_up = new Image(84,23)
+   var Ndownload_over = new Image(84,23)
+   var Ndownload_onClick = new Image(84,23);
+
+   Ndownload_up.src = "graphics/download_up.gif"
+   Ndownload_over.src = "graphics/download_over.gif"
+   Ndownload_onClick.src = "graphics/download_onClick.gif"
+
+
+   var Norder_us_up = new Image(84,23)
+   var Norder_us_over = new Image(84,23)
+   var Norder_us_onClick = new Image(84,23);
+
+   Norder_us_up.src = "graphics/order_us_up.gif"
+   Norder_us_over.src = "graphics/order_us_over.gif"
+   Norder_us_onClick.src = "graphics/order_us_onClick.gif"
+
+
+   var Nmanual_up = new Image(84,23)
+   var Nmanual_over = new Image(84,23)
+   var Nmanual_onClick = new Image(84,23);
+
+   Nmanual_up.src = "graphics/manual_up.gif"
+   Nmanual_over.src = "graphics/manual_over.gif"
+   Nmanual_onClick.src = "graphics/manual_onClick.gif"
+
+
+   var Ntutorial_up = new Image(84,23)
+   var Ntutorial_over = new Image(84,23)
+   var Ntutorial_onClick = new Image(84,23);
+
+   Ntutorial_up.src = "graphics/tutorial_up.gif"
+   Ntutorial_over.src = "graphics/tutorial_over.gif"
+   Ntutorial_onClick.src = "graphics/tutorial_onClick.gif"
+
+   var Nreferences_up = new Image(84,23)
+   var Nreferences_over = new Image(84,23)
+   var Nreferences_onClick = new Image(84,23);
+
+   Nreferences_up.src = "graphics/references_up.gif"
+   Nreferences_over.src = "graphics/references_over.gif"
+   Nreferences_onClick.src = "graphics/references_onClick.gif"
+
+   var Nworkshop_up = new Image(84,23)
+   var Nworkshop_over = new Image(84,23)
+   var Nworkshop_onClick = new Image(84,23);
+
+   Nworkshop_up.src = "graphics/workshop_up.gif"
+   Nworkshop_over.src = "graphics/workshop_over.gif"
+   Nworkshop_onClick.src = "graphics/workshop_onClick.gif"
+
+   var Ncontributors_up = new Image(84,23)
+   var Ncontributors_over = new Image(84,23)
+   var Ncontributors_onClick = new Image(84,23);
+
+   Ncontributors_up.src = "graphics/contributors_up.gif"
+   Ncontributors_over.src = "graphics/contributors_over.gif"
+   Ncontributors_onClick.src = "graphics/contributors_onClick.gif"
+
+   var Nseminar_up = new Image(84,23)
+   var Nseminar_over = new Image(84,23)
+   var Nseminar_onClick = new Image(84,23);
+
+   Nseminar_up.src = "graphics/seminar_up.gif"
+   Nseminar_over.src = "graphics/seminar_over.gif"
+   Nseminar_onClick.src = "graphics/seminar_onClick.gif"
+
+   var Narchive_up = new Image(84,23)
+   var Narchive_over = new Image(84,23)
+   var Narchive_onClick = new Image(84,23);
+
+   Narchive_up.src = "graphics/archive_up.gif"
+   Narchive_over.src = "graphics/archive_over.gif"
+   Narchive_onClick.src = "graphics/archive_onClick.gif"
+
+   var Nsearch_up = new Image(84,23)
+   var Nsearch_over = new Image(84,23)
+   var Nsearch_onClick = new Image(84,23);
+
+   Nsearch_up.src = "graphics/search_up.gif"
+   Nsearch_over.src = "graphics/search_over.gif"
+   Nsearch_onClick.src = "graphics/search_onClick.gif"
+
+
+   var Npost_up = new Image(84,23)
+   var Npost_over = new Image(84,23)
+   var Npost_onClick = new Image(84,23);
+
+   Npost_up.src = "graphics/post_up.gif"
+   Npost_over.src = "graphics/post_over.gif"
+   Npost_onClick.src = "graphics/post_onClick.gif"
+
+   var Nsubscribe_up = new Image(84,23)
+   var Nsubscribe_over = new Image(84,23)
+   var Nsubscribe_onClick = new Image(84,23);
+
+   Nsubscribe_up.src = "graphics/subscribe_up.gif"
+   Nsubscribe_over.src = "graphics/subscribe_over.gif"
+   Nsubscribe_onClick.src = "graphics/subscribe_onClick.gif"
+
+   var Nrelated_up = new Image(84,23)
+   var Nrelated_over = new Image(84,23)
+   var Nrelated_onClick = new Image(84,23);
+
+   Nrelated_up.src = "graphics/related_up.gif"
+   Nrelated_over.src = "graphics/related_over.gif"
+   Nrelated_onClick.src = "graphics/related_onClick.gif"
+
+
+   var Ncontacts_up = new Image(84,23)
+   var Ncontacts_over = new Image(84,23)
+   var Ncontacts_onClick = new Image(84,23);
+
+   Ncontacts_up.src = "graphics/contacts_up.gif"
+   Ncontacts_over.src = "graphics/contacts_over.gif"
+   Ncontacts_onClick.src = "graphics/contacts_onClick.gif"
+
+}
+
+function dm(msgStr) {
+  document.returnValue = false;
+  if (document.images) {
+     window.status = msgStr;
+     document.returnValue = true;
+  }
+}
+
+function di(id,name){
+  if (document.images) document.images[id].src=eval(name+".src");
+}
+// -->
+
+</script>
+</head>
+<BODY background="graphics/bg1.gif">
+<p>
+<table border="1" cellspacing="3" cellpadding="0">
+<td align=center colspan=2>
+<img src="graphics/us_software.gif"></td>
+</tr>
+<tr>
+<td><a href="welcome.html" target="main"
+onmouseover="di('Nwelcome', 'Nwelcome_over' );"
+onmouseout="di('Nwelcome', 'Nwelcome_up' );"
+onclick="di('Nwelcome', 'Nwelcome_onClick' );">
+<img name="Nwelcome"
+alt="Welcome Message"
+src="graphics/welcome_up.gif" align=center
+border="0"> </a></td>
+
+<td><a href="faq.html" target="main"
+onmouseover="di('Nfaq', 'Nfaq_over' );"
+onmouseout="di('Nfaq', 'Nfaq_up' );"
+onclick="di('Nfaq', 'Nfaq_onClick' );">
+<img name="Nfaq"
+alt="Frequently Asked Questions"
+src="graphics/faq_up.gif" align=center
+border="0"> </a></td>
+</tr>
+
+<tr>
+<td><a href="support.html" target="main"
+onmouseover="di('Nsupport', 'Nsupport_over' );"
+onmouseout="di('Nsupport', 'Nsupport_up' );"
+onclick="di('Nsupport', 'Nsupport_onClick' );">
+<img name="Nsupport"
+alt="Support Options"
+src="graphics/support_up.gif" align=center
+border="0"> </a></td>
+
+<td><a href="news.html" target="main"
+onmouseover="di('Nnews', 'Nnews_over' );"
+onmouseout="di('Nnews', 'Nnews_up' );"
+onclick="di('Nnews', 'Nnews_onClick' );">
+<img name="Nnews"
+alt="Latest UltraScan News"
+src="graphics/news_up.gif" align=center
+border="0"> </a></td>
+</tr>
+
+<tr>
+<td><a href="download.html" target="main"
+onmouseover="di('Ndownload', 'Ndownload_over' );"
+onmouseout="di('Ndownload', 'Ndownload_up' );"
+onclick="di('Ndownload', 'Ndownload_onClick' );">
+<img name="Ndownload"
+alt="Download UltraScan Software"
+src="graphics/download_up.gif" align=center
+border="0"> </a></td>
+
+<td><a href="register.html" target="main"
+onmouseover="di('Nlicense', 'Nlicense_over' );"
+onmouseout="di('Nlicense', 'Nlicense_up' );"
+onclick="di('Nlicense', 'Nlicense_onClick' );">
+<img name="Nlicense"
+alt="UltraScan License"
+src="graphics/license_up.gif" align=center
+border="0"> </a></td>
+</tr>
+
+<tr>
+<td><a href="order_us.html" target="main"
+onmouseover="di('Norder_us', 'Norder_us_over' );"
+onmouseout="di('Norder_us', 'Norder_us_up' );"
+onclick="di('Norder_us', 'Norder_us_onClick' );">
+<img name="Norder_us"
+alt="Order UltraScan on CDROM"
+src="graphics/order_us_up.gif" align=center
+border="0"> </a></td>
+
+<td><a href="manual/index.html" target="_top"
+onmouseover="di('Nmanual', 'Nmanual_over' );"
+onmouseout="di('Nmanual', 'Nmanual_up' );"
+onclick="di('Nmanual', 'Nmanual_onClick' );">
+<img name="Nmanual"
+alt="UltraScan Manual"
+src="graphics/manual_up.gif" align=center
+border="0"> </a></td>
+</tr>
+
+<tr>
+<td><a href="tutorials.html" target="main"
+onmouseover="di('Ntutorial', 'Ntutorial_over' );"
+onmouseout="di('Ntutorial', 'Ntutorial_up' );"
+onclick="di('Ntutorial', 'Ntutorial_onClick' );">
+<img name="Ntutorial"
+alt="UltraScan Tutorials"
+src="graphics/tutorial_up.gif" align=center
+border="0"> </a></td>
+
+<td><a href="references.html" target="main"
+onmouseover="di('Nreferences', 'Nreferences_over' );"
+onmouseout="di('Nreferences', 'Nreferences_up' );"
+onclick="di('Nreferences', 'Nreferences_onClick' );">
+<img name="Nreferences"
+alt="UltraScan References"
+src="graphics/references_up.gif" align=center
+border="0"> </a></td>
+</tr>
+
+<tr>
+<td><a href="http://www.ultrascan.uthscsa.edu/workshop/" target="main"
+onmouseover="di('Nworkshop', 'Nworkshop_over' );"
+onmouseout="di('Nworkshop', 'Nworkshop_up' );"
+onclick="di('Nworkshop', 'Nworkshop_onClick' );">
+<img name="Nworkshop"
+alt="UltraScan Workshop"
+src="graphics/workshop_up.gif" align=center
+border="0"> </a></td>
+
+<td><a href="http://www.ultrascan.uthscsa.edu/seminar.html" target="main"
+onmouseover="di('Nseminar', 'Nseminar_over' );"
+onmouseout="di('Nseminar', 'Nseminar_up' );"
+onclick="di('Nseminar', 'Nseminar_onClick' );">
+<img name="Nseminar"
+alt="UltraScan Seminar"
+src="graphics/seminar_up.gif" align=center
+border="0"> </a></td>
+
+</tr>
+<tr>
+<td><a href="contributors.html" target="main"
+onmouseover="di('Ncontributors', 'Ncontributors_over' );"
+onmouseout="di('Ncontributors', 'Ncontributors_up' );"
+onclick="di('Ncontributors', 'Ncontributors_onClick' );">
+<img name="Ncontributors"
+alt="UltraScan contributors"
+src="graphics/contributors_up.gif" align=center
+border="0"> </a></td>
+
+</tr>
+</table><br>
+<table border="1" cellspacing="3" cellpadding="0">
+<td align=center colspan=2>
+<img src="graphics/mlist.gif"></td>
+</tr>
+<tr>
+<td><a href="http://www.ultrascan.uthscsa.edu/mailman/listinfo/ultrascan" target="main"
+onmouseover="di('Nsubscribe', 'Nsubscribe_over' );"
+onmouseout="di('Nsubscribe', 'Nsubscribe_up' );"
+onclick="di('Nsubscribe', 'Nsubscribe_onClick' );">
+<img name="Nsubscribe"
+alt="Subscribe to the UltraScan Mailing List"
+src="graphics/subscribe_up.gif" align=center
+border="0"> </a></td>
+
+<td><a href="search.html" target="main"
+onmouseover="di('Nsearch', 'Nsearch_over' );"
+onmouseout="di('Nsearch', 'Nsearch_up' );"
+onclick="di('Nsearch', 'Nsearch_onClick' );">
+<img name="Nsearch"
+alt="Search UltraScan Mailing List Archive by Keyword"
+src="graphics/search_up.gif" align=center
+border="0"> </a></td>
+</tr>
+
+<tr>
+<td><a href="mailto:ultrascan@ultrascan.uthscsa.edu" target="main"
+onmouseover="di('Npost', 'Npost_over' );"
+onmouseout="di('Npost', 'Npost_up' );"
+onclick="di('Npost', 'Npost_onClick' );">
+<img name="Npost"
+alt="Post a Question or Message to the UltraScan Mailing List"
+src="graphics/post_up.gif" align=center
+border="0"> </a></td>
+
+<td><a href="http://www.ultrascan.uthscsa.edu/pipermail/ultrascan" target="main"
+onmouseover="di('Narchive', 'Narchive_over' );"
+onmouseout="di('Narchive', 'Narchive_up' );"
+onclick="di('Narchive', 'Narchive_onClick' );">
+<img name="Narchive"
+alt="Browse UltraScan Mailing List Archive"
+src="graphics/archive_up.gif" align=center
+border="0"> </a></td>
+</tr>
+
+</table>
+<p>
+<form method="post" action="http://www.ultrascan.uthscsa.edu/cgi-bin/htsearch" target=_blank>
+<input type=hidden name=config value=htdig-us>
+<input type=hidden name=restrict value="">
+<input type=hidden name=exclude value="">
+<input type="text" name="words" size="12">
+<input type="submit" value="Search">
+</form>
+<p>
+<table border="1" cellspacing="3" cellpadding="0">
+<td align=center colspan=2>
+<img src="graphics/related.gif"></td>
+</tr>
+<tr>
+<td><a href="related.html" target="main"
+onmouseover="di('Nrelated', 'Nrelated_over' );"
+onmouseout="di('Nrelated', 'Nrelated_up' );"
+onclick="di('Nrelated', 'Nrelated_onClick' );">
+<img name="Nrelated"
+alt="Related Links"
+src="graphics/related_up.gif" align=center
+border="0"> </a></td>
+
+<td><a href="contacts.html" target="main"
+onmouseover="di('Ncontacts', 'Ncontacts_over' );"
+onmouseout="di('Ncontacts', 'Ncontacts_up' );"
+onclick="di('Ncontacts', 'Ncontacts_onClick' );">
+<img name="Ncontacts"
+alt="Contacts"
+src="graphics/contacts_up.gif" align=center
+border="0"> </a></td>
+</tr>
+</table>
+<p>
+<img src=graphics/penguin.gif>
+</body>
+</html>

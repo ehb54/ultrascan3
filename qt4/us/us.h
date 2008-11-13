@@ -1,0 +1,51 @@
+#include <QtGui>
+
+#include "us_global.h"
+#include "us_help.h"
+
+class us_win : public QMainWindow
+{
+  Q_OBJECT
+
+public:
+
+  us_win( QWidget* parent = 0, Qt::WindowFlags flags = 0 );
+  ~us_win(){};
+
+private:
+  US_Global* g;
+  QLabel*    bigframe;
+  QLabel*    smallframe;
+  QLabel*    splash_shadow;
+  US_Help    showhelp;
+  
+  void addMenu( int, const QString&, QMenu* );
+  void splash ( void );
+  void logo   ( int );
+  void help   ( int );
+  void launch ( int );
+
+private slots:
+  void onIndexTriggered( int index );
+  void closeEvent      ( QCloseEvent* );
+  void closeSplash     ( void );
+  void terminated      ( int, QProcess::ExitStatus );
+};
+//////////////
+class us_action : public QAction
+{
+  Q_OBJECT
+
+public:
+  us_action( int, const QString&, QObject* );
+
+signals:
+  void indexTriggered( int );
+
+private slots:
+  void onTriggered( bool );
+
+private:
+  int  index;
+};
+

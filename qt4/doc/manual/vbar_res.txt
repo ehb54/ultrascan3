@@ -1,0 +1,31 @@
+***************************************************
+*            Peptide Analysis Results             *
+***************************************************
+
+
+Report for:           Lysozyme C precursor (EC 3.2.1.17) (1,4-beta-N-acetylmuramidase C)
+
+Number of Residues: 146 AA
+Molecular Weight:   16395.8 Dalton
+V-bar at 20 ºC:     0.709645 ccm/g
+V-bar at 20.000 ºC: 0.709645 ccm/g
+Extinction coefficient for the denatured
+peptide at 280 nm: 44990 OD/(mol*cm)
+
+Composition: 
+
+Alanine:	14	Arginine:	12
+Asparagine:	15	Aspartate:	7
+Asparagine or
+Aspartate:	0
+Cysteine:	11	Glutamate:	6
+Glutamine:	4	Glycine:	12
+Glutamine or
+Glutamate:	0
+Histidine:	1	Isoleucine:	6
+Leucine:	8	Lysine:		6
+Methionine:	3	Phenylalanine:	5
+Proline:	2	Serine:		11
+Threonine:	7	Tryptophan:	7
+Tyrosine:	3	Valine:		6
+Unknown:	0

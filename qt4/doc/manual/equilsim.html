@@ -1,0 +1,237 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD html 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Equilibrium Simulator</title>
+                             
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+                
+  <link href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body text="#000000" bgcolor="#ffffff" link="#0000ef" vlink="#cf30cf" alink="#ff0000">
+<table border="0" cellpadding="5">
+  <tbody>
+    <tr>
+      <td><img src="ultrascan1.png" border="0">
+      </td>
+      <td align="vcenter">
+      <h1 align="Center"><i>Manual</i></h1>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<hr>
+<h2>Equilibrium Simulator:</h2>
+<p> You start the Equilibrium Simulator by clicking on <a
+href="menu_simulation0.png"> main menu</a> from UltraScan. The main
+<a href="equilsim1.png"> Equilibrium Simulator Window</a> will appear.
+This module can be used as an educational tool to simulate equilibrium
+experiments at multiple speeds and concentrations. Several predefined
+and user-definable models are available. All scan parameters such as
+the number of datapoints, maximum OD, centerpiece geometry, pathlength,
+can be adjusted by the user. Sample properties such as composition,
+extinction coefficient, vbar, molecular weight and loading concentration,
+as well as buffer density, baseline and noise levels can be adjusted
+to simulate every aspect of the experiment. Optical density scan
+profiles can be plotted, and a concentration histogram can be displayed.
+Simulated data can be exported to binary <b><i>UltraScan format</i></b>,
+or to the ASCII format used in the Beckman data acquisition program. The
+internal <b><i>UltraScan</b></i> formatted data can be used directly
+without further editing in the equilibrium analysis modules. Beckman
+formatted data needs to be edited with the <b><i>UltraScan</b></i>
+editing modules before analysis with <b><i>UltraScan</b></i>.
+<p>
+<b>Explanation of Fields and Buttons:</b>
+<p>
+<table border=1 cellspacing=5 cellpadding=5>
+<tr>
+<td align=center>
+<img src=equilsim2.png>
+</td>
+<td>
+<b>Model Selection:</b> To select a model, click on the <b>"Select Model"</b>
+button. You can then select a predefined or user-defined model from a <a 
+href=global_equil9.png>model selection dialog</a>. Model selection is explained
+in more detail <a href=equil2.html>here</a>.
+</td>
+</tr>
+
+<tr>
+<td align=center>
+<img src=equilsim3.png>
+</td>
+<td>
+<b>Component Information:</b><br>
+<li><b>Species:</b> For multiple component models you can use the arrow
+button to select the desired component. 
+<li><b>Mol. Weight (dalton):</b> Enter the molecular weight for the conponent
+selected above.
+<li><b>Concentration (mM):</b> Enter the partial concentration in millimolar
+for the component selected above.
+<li><b>V-bar (ccm/g, 20<sup>o</sup>C):</b> Enter the partial specific volume 
+for the component selected above. Clicking on the button will load the 
+<a href=vbar.html>Vbar Calculation module</a>, which allows you to estimate a
+v-bar value from the amino acid composition specified in a protein sequence file.
+<li><b>Ext. Coeff. (OD/cm*M):</b> Enter the extinction coefficient of the 
+component selected above for the the wavelength to be simulated. The units
+for the extinction coefficient are measured in optical density units at
+the selected wavelength per cm and mol. Clicking on the button will load the
+<a href=vbar.html>peptide properties calculation module</a>, which allows you to 
+estimate an extinction coefficient for the denatured protein at 280 nm
+from the amino acid composition specified in a protein sequence file.
+</td>
+</tr>
+
+<tr>
+<td align=center>
+<img src=equilsim4.png>
+</td>
+<td>
+<b>Model Parameters:</b><br>
+<li><b>Assoc. Const. 1/2/3:</b> Enter the natural log of the desired association constant
+in molar concentration units. Fields will be disabled for models that do not require 
+association constants.
+<li><b>Baseline OD:</b> Enter the baseline concentration, if any for the 
+simulated experiment.
+<li><b>Loading OD Contrib.:</b> The figure listed in this field is the contribution
+to the optical density for the selected component. This number is calculated from
+the molar concentration and the extinction coefficient. This number cannot be 
+changed by the user. If you want to change the value listed here, you need to adjust
+the molar concentration or the extinction coefficient.
+</td>
+</tr>
+
+<tr>
+<td align=center>
+<img src=equilsim5.png>
+</td>
+<td>
+<li><b>Conc. Increment (OD):</b> Enter the concentration increment for multiple
+loading concentrations. For a global equilibrium experiment, at least three 
+loading concentrations should be measured (for example, 0.3, 0.5, and 0.7 OD).
+The increment should be listed in OD units.
+<li><b># of Conc. Steps:</b> Enter the number of desired concentration steps
+for this experiment. For example, if three different loading concentrations
+are desired click on the arrow buttons to select "3". The double arrow buttons
+chnage the setting in steps of 10, the single arrow button in unity steps.
+<li><b>Temperature (<sup>o</sup>C):</b> Enter the temperature in
+degrees Celsius for the experiment. If different from 20<sup>o</sup>C,
+the program will automatically adjust the vbar and density settings to
+the new temperature.
+<li><b>Density (g/ccm 20<sup>o</sup>C):</b> Enter the density of the 
+buffer for the simulated experiment. The density is entered in cgs units
+for the buffer at 20<sup>o</sup>C. Clicking on the <b>"Density"</b> button
+loads the buffer calculation module</a>.
+<li><b>Column Height (mm):</b> Select the column height in millimeter for
+the experiment.
+<li><b>Meniscus:</b> Displays the current meniscus position.  The meniscus
+position is automatically calculated from the column height and the cell
+bottom position.
+</td>
+</tr>
+
+<tr>
+<td align=center>
+<img src=equilsim6.png>
+</td>
+<td>
+<li><b>Pathlength (cm):</b> Enter the centerpiece pathlength (in centimeters).
+<li><b>Speed Start:</b> For a global equilibrium experiment it is recommended
+to use multiple speeds. The correct speed depends on the molecular weight of
+the component(s) to be simulated, and are best expressed in values of sigma
+(reduced molecular weight) ranging between 0.5 and 4. The <a href=calc_equil.html>
+Equilibrium Speed Estimation module</a> can assist you in determining the 
+best speeds for your experiment. Use this field to enter the lowest speed
+of the experiment. Use the arrow keys to select the speed. The single arrow
+key changes the speed in steps of 100 rpm, double arrow keys change the 
+speed in steps of 1000 rpm, and triple arrow keys change the speed in
+units of 10,000 rpm.
+<li><b>Speed Stop:</b> Select the highest speed for this simulation.
+<li><b>Speed Steps:</b> Select the number of different speeds used in this
+simulation. The program will calculate equal speed intervals between the 
+Speed Start value and the Speed Stop value. If only 2 speeds are selected,
+the Start Speed and the Stop Speed will be used. If one speed is selected,
+the Start Speed only will be used.
+<li><b>Cell Bottom (cm):</b> Enter the cell bottom position in centimeter
+to define the geometry of the cell. The single arrow button changes the 
+position in units of 1x10<<sup>-3</sup> cm, the double arrow button changes the
+position in units of 1x10<<sup>-2</sup> cm, and the triple button changes
+the position in steps of 0.1 centimeter.
+<li><b>Maximum OD:</b> Enter the maximum OD to be simulated in the experiment.
+All data exceeding this value will not be displayed.
+</td>
+</tr>
+
+<tr>
+<td align=center>
+<img src=equilsim7.png>
+</td>
+<td>
+<li><b># of Datapoints:</b> Select the number of datapoints for this 
+simulation. Each scan will be simulated with that many points, which will
+be equally spaced wit the radial step size listed under <b>"Radial Increment"</b>.
+<li><b>Gaussian Noise (% OD):</b> Enter the percentage of the total optical
+density to be simulated as random noise, with gaussian distribution. Single
+arrow button clicks will adjust the noise level in steps of 0.01 OD percentage
+points, double arrow button clicks will adjust the level in steps of 0.1 OD 
+percentage points, and single arrow button click will adjust it in steps of
+unity. 0.1 - 0.3 percent of 1 OD are common values for the XL-A analytical
+ultracentrifuge.
+<li><b>Nonlinear Noise (% OD):</b> Enter the percentage of nonlinear gaussian
+noise. This noise value will affect optical densities at higher values
+more than at lower concentrations and reflects the instrumental noise
+seen at higher optical densities in spectrophotometers. Values of 0.01 - 
+0.02 are common for the XL-A analytical ultracentrifuge.
+</td>
+</tr>
+
+<tr>
+<td align=center>
+<img src=equilsim8.png>
+</td>
+<td>
+<li><b>Radial Increment:</b> This value cannot be adjusted by the user and 
+reflects the radial stepsize resulting from the column height and the number
+of datapoints selected for each scan.
+<li><b>Simulated Wavelength:</b> This value has no effect on the calculations,
+but is used when the data is exported to an external format.
+<li><b>Export as: XL-A/UltraScan:</b> Select the export format for
+the simulated data. <b>"XL-A"</b> format produces ASCII files of the type
+generated by the Beckman data acquisition software (00001.ra1, 00002.ra1, ...),
+while <b>"UltraScan"</b> format produces a binary output file suitable
+for direct analysis with the <b><i>UltraScan</i></b> equilibrium modules.
+</td>
+</tr>
+
+<tr>
+<td align=center>
+<img src=equilsim9.png align=center>
+</td>
+<td>
+<li><b>Help:</b> Show this Help file.
+<li><b>Plot:</b> Plot the simulated equilibrium scans in a <a href=equilsim10.png>
+plot window</a>.
+<li><b>Histogram:</b> Plot a <a href=equilsim11.png>concentration histogram</a> 
+for the total concentration of all scans in the simulated experiment.
+<li><b>Export:</b> Export the simulated data to an external file format. See 
+<b>"Export as:"</b> for additional detail.
+<li><b>Close:</b> Close this module and exit.
+</td>
+</tr>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software
+Documentation distribution. <br><a href=copyright.html>Copyright &copy; notice</a>
+<p>
+The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

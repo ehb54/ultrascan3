@@ -1,0 +1,9 @@
+Times for changing rotor speeds:
+
+Change to speed 2 (19000 rpm) after 24 hrs, 34 min, 20 sec
+Change to speed 3 (23000 rpm) after 38 hrs, 4 min, 0 sec
+Change to speed 4 (27000 rpm) after 50 hrs, 18 min, 20 sec
+Change to speed 5 (31000 rpm) after 60 hrs, 43 min, 50 sec
+Change to speed 6 (35000 rpm) after 69 hrs, 26 min, 20 sec
+Change to speed 7 (39000 rpm) after 74 hrs, 59 min, 0 sec
+Change to speed 8 (43000 rpm) after 82 hrs, 16 min, 30 sec

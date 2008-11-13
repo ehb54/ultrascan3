@@ -1,0 +1,36 @@
+<html>
+<title>UltraScan download - Debian 3.0 Linux installation notes</title>
+<body bgcolor=white>
+<h2>UltraScan download - Debian 3.0 Linux installation notes</h2>
+<p align=justify>
+The standard Debian 3.0 distribution is missing some links that are 
+required for UltraScan 7.0 and 7.1. These suggestions from Gerhard Steger
+(Heinrich Heine University D&uuml;sseldorf) fix the problem:
+<p>
+<ol> 
+<li> libXrandr.so.2 and libXcursor.so.1 are not available under Debian 3.0 stable,
+only under Debian/testing. You can reload it using apt-get:<br>
+# apt-get install libxcursor1/testing<br>
+# apt-get install libxrandr2/testing<p>
+
+<li> a shared/dynamic version of libXinerama is required:<br>
+# cd /usr/local/lib/<br>
+# ld --whole-archive -share -o ./libXinerama.so.1 /usr/X11R6/lib/libXinerama.a<br>
+# ln -s libXinerama.so.1 libXinerama.so<br>
+# ldconfig<p>
+</ol>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution.
+<br>
+The latest version of this document can always be found at:
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+</body>
+</html>

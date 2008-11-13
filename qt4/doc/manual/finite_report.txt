@@ -1,0 +1,156 @@
+***************************************************
+*           Finite Element Fit Analysis           *
+***************************************************
+
+
+Data Report for Run "demo1", Cell 1, Wavelength 1
+
+Detailed Run Information:
+
+Cell Description:            lysozyme / 208-1 mixed in 0.2M NaCl/TE
+Raw Data Directory:          /auc/data/demo1
+Rotor Speed:                 42000 rpm
+Average Temperature:         20 ºC
+Temperature Variation:       Within Tolerance
+Time Correction:             1 minute(s) 12 second(s)
+Run Duration:                3 hour(s) 3 minute(s)
+Wavelength:                  259 nm
+Baseline Absorbance:         -0.0411945 OD (fitted)
+Meniscus Position:           6.019 cm (fixed)
+Slope Error Correction(r):   0 OD (fixed)
+Slope Error Correction(c,r): 0 OD (fixed)
+Edited Data starts at:       6.042 cm
+Edited Data stops at:        7.029 cm
+
+
+Hydrodynamic Settings:
+
+Viscosity correction:        1.0266
+Viscosity (absolute):        1.0266
+Density correction:          1.0081 g/ccm
+Density (absolute):          1.0081 g/ccm
+
+
+Data Analysis Settings:
+
+Analyzed Boundary:           100 %
+Boundary Position:           0 %
+
+
+Fitting Information:
+
+Variance:                    2.31524e-05
+Standard Deviation           0.00481169
+# of Iterations:             40
+# of Function Evals.:        105
+# of fitted Parameters:      7
+# of fitted Data Points:     19740
+
+
+Component Information:
+
+Component 1:
+Molecular Weight:            139917 Dalton (fitted)
+Sed. Coeff. (s20,W):         5.46294e-13 s (fitted)
+Sedimentation Coeff.:        5.27009e-13 s (fitted)
+Diff. Coeff. (D20,W):        2.06407e-07 D (fitted)
+Diffusion Coeff.:            2.01449e-07 D (fitted)
+Partial Concentration:       0.404147 OD (fitted)
+Partial Spec. Vol. (vbar):   0.54 ccm/g (fixed)
+vbar (Corr. for 20ºC):       0.54 ccm/g (fixed)
+Conc. Dep. of s (Sigma):     0 (fixed)
+Conc. Dep. of D (Delta):     0 (fixed)
+Buoyancy (Water, 20ºC):      0.460954
+Buoyancy (absolute):         0.455626
+
+Hydrodynamic Modeling Information:
+
+Radius of Minimal Sphere:    31.0559 Å
+Radius of Stoke's Sphere:    101.311 Å
+Frictional Coefficient:      1.96046e-07
+Minimal Sphere F0:           5.8656e-08
+Frictional Ratio (F/F0):     3.34229
+Volume of Molecule:          125464 Å^3
+
+Possible Hydrodynamic Models for this Molecule (hypothetical only!):
+
+Prolate Ellipsoid:
+Length of Semi-Major Axis:   506.716 Å
+Length of Semi-Minor Axis:   7.68835 Å
+Axial Ratio:                 65.907
+
+Oblate Ellipsoid:
+Length of Semi-Major Axis:   162.326 Å
+Length of Semi-Minor Axis:   1.13673 Å
+Axial Ratio:                 142.801
+
+Long Rod:
+Length of Semi-Major Axis:   491.987 Å
+Length of Semi-Minor Axis:   6.37079 Å
+Axial Ratio:                 77.2253
+
+
+Component 2:
+Molecular Weight:            12120 Dalton (fitted)
+Sed. Coeff. (s20,W):         1.68584e-13 s (fitted)
+Sedimentation Coeff.:        1.60537e-13 s (fitted)
+Diff. Coeff. (D20,W):        1.17221e-06 D (fitted)
+Diffusion Coeff.:            1.14405e-06 D (fitted)
+Partial Concentration:       0.336126 OD (fitted)
+Partial Spec. Vol. (vbar):   0.7121 ccm/g (fixed)
+vbar (Corr. for 20ºC):       0.7121 ccm/g (fixed)
+Conc. Dep. of s (Sigma):     0 (fixed)
+Conc. Dep. of D (Delta):     0 (fixed)
+Buoyancy (Water, 20ºC):      0.289158
+Buoyancy (absolute):         0.282132
+
+Hydrodynamic Modeling Information:
+
+Radius of Minimal Sphere:    15.0685 Å
+Radius of Stoke's Sphere:    17.8392 Å
+Frictional Coefficient:      3.45205e-08
+Minimal Sphere F0:           2.84603e-08
+Frictional Ratio (F/F0):     1.21294
+Volume of Molecule:          14331.8 Å^3
+
+Possible Hydrodynamic Models for this Molecule (hypothetical only!):
+
+Prolate Ellipsoid:
+Length of Semi-Major Axis:   40.755 Å
+Length of Semi-Minor Axis:   9.16253 Å
+Axial Ratio:                 4.44801
+
+Oblate Ellipsoid:
+Length of Semi-Major Axis:   25.4387 Å
+Length of Semi-Minor Axis:   5.28714 Å
+Axial Ratio:                 4.81144
+
+Long Rod:
+F/F0 < 1.32, this model is not applicable
+
+
+
+Scan Information: 
+
+Scan:     Corrected Time:  Plateau Concentration: 
+
+  1:       48 min 36 sec        0.673682 OD
+  2:       55 min 43 sec        0.670245 OD
+  3:       63 min  2 sec        0.667991 OD
+  4:       69 min 56 sec        0.664045 OD
+  5:       76 min 60 sec        0.658982 OD
+  6:       83 min 52 sec           0.653 OD
+  7:       90 min 49 sec        0.651382 OD
+  8:       98 min  2 sec        0.647027 OD
+  9:      105 min  6 sec        0.644064 OD
+ 10:      112 min  1 sec        0.639436 OD
+ 11:      118 min 59 sec        0.635255 OD
+ 12:      126 min 15 sec        0.631564 OD
+ 13:      133 min 18 sec        0.628864 OD
+ 14:      140 min 17 sec        0.627873 OD
+ 15:      147 min 14 sec        0.622545 OD
+ 16:      154 min 14 sec          0.6225 OD
+ 17:      161 min 18 sec        0.618682 OD
+ 18:      168 min 27 sec        0.615191 OD
+ 19:      175 min 41 sec        0.609982 OD
+ 20:      182 min 55 sec        0.605127 OD

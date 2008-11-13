@@ -1,0 +1,156 @@
+<head>
+   <title>Estimating Equilibrium Speed</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<CENTER>
+<H2>
+Estimating Equilibrium Speed:</H2></CENTER>
+
+<CENTER><img src="calc_equil1.png"></CENTER>
+
+
+<p>In order to determine the best speed for an equilibrium experiment,
+select "<b>Suggest Best Speed</b>" from the <A HREF="menu_equilibrium0.png">Equilibrium
+menu</A> in the main window. start You can start the
+
+<p><b><FONT SIZE=+1>Explanation for fields and buttons:</FONT></b>
+<br><b></b>
+<UL>
+<li>
+<b>Buttons:</b>
+</UL>
+
+<UL>
+<UL>
+<li>
+<b>Help:</b> Bring up this Help window
+
+<li>
+<b>Close: </b>Close the equilibrium estimation module and return to the
+main window.
+
+<li>
+<b>Density (20 C):</b> Call the <A HREF="hydro.html">buffer calculation
+module</A>. This will calculate the density correction for the buffer you
+selected and correct the density for the selected temperature. You can
+also override the calculation routine and enter an known density for your
+buffer at 20C.
+
+<li>
+<b>Vbar (20 C): </b>Call the <A HREF="vbar.html">vbar calculation module</A>.
+This will calculate the vbar for a protein sequence from the Swiss Protein
+Database. You can also override this value by providing your own vbar value.
+The program will automatically adjust your value to the selected temperature.
+</UL>
+</UL>
+<b></b>
+<UL>
+<li>
+<b>Other Fields:</b>
+</UL>
+
+<UL>
+<UL>
+<li>
+<b>Suggested Speed: </b>This is the best speed for the selected settings.
+Use this speed for your experiment.
+
+<li>
+<b>Est. MW: </b>Enter here the estimated molecular weight for the sample.
+If there are more than component in this sample, use a weight average molecular
+weight. For monomer-dimer equilibria, use the molecular weight of the monomer.
+
+<li>
+<b>Sigma:</b> Enter the reduced molecular weight sigma. This value should
+ideally be between 2 and 3. If you plan to perform an experiment with 3
+speeds, select one speed for a sigma value of 2.0, one for 2.5 and one
+for 3.0. This value will adjust the curvature of the final equilibrium
+gradient. If this number is too small, the gradient will be too shallow,
+and the information content of the experiment is minimal.
+
+<li>
+<b>Concentration Ratio Rb/Rm: </b>This is the ratio of the concentration
+(fringes or OD) at the bottom of the cell over the concentration at the
+meniscus that will be observed at equilibrium. The larger the loading volume,
+the larger will this ratio be. This ratio is directly related to the sigma
+value for the run.
+
+<li>
+<b>Column length. </b>The program will calculate the length of the column
+(in mm) according to the rotor stretching and loaded volume.
+
+<li>
+<b>Loading volume: </b>Enter the amount of sample to be loaded.
+
+<li>
+<b>Meniscus position:</b> This value is provided to allow you to adjust
+the scanning positions of the XL-A. For short column experiments it is
+often not necessary to scan the entire cell. This value will tell you in
+advance where the meniscus will be. It is a good idea to always set the
+scanning range a few millimeters longer than given by this value, in case
+of pipetting error.
+
+<li>
+<b>Temperature:</b> Enter the temperature of the run.
+
+<li>
+<b>Bottom of Cell Position: </b>This program will calculate the bottom
+of the cell based on the rotor stretching and the centerpiece used.
+
+<li>
+<b>Rotor Type:</b> Click on the button corresponding to the rotor to be
+used in the experiment
+
+<li>
+R<b>otor Overspeed Check: </b>If your settings bring the rotor speed above
+the permitted speed of the selected rotor, a red LCD will flash to warn
+you about the rotor selection.
+
+<li>
+<b>Centerpiece:</b> Select the appropriate centerpiece.
+
+<li>
+<b>Centerpiece Overspeed Check:</b> If your settings bring the rotor speed
+above the permitted speed of the selected centerpiece, a red LCD will flash
+to warn you about the rotor selection.
+
+<li>
+<b>Estimated Number of Datapoints/Scan: </b>This field will show you how
+many datapoints you can expect for the a particular optical system for
+the settings selected. This number is only an estimate and will depend
+in large part on the amount of useful data in your scans. For the absorbance
+optical system, it also requires that you use the maximum resolution setting
+of the XL-A, which is 0.001 cm/datapoint. However, because of the data
+acquisition system, datapoints will generally only be acquired at a density
+of about 0.0016 cm/points on the average.
+</UL>
+</UL>
+
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

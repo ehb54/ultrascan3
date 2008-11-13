@@ -1,0 +1,90 @@
+<HEAD>
+   <TITLE>van Holde - Weischet Tutorial: Calculation of apparent 
+Sedimentation Coefficients</TITLE>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="../mainstyle.css" rel="styleSheet" type="text/css">
+</HEAD>
+<BODY TEXT="#000000" BGCOLOR="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table cellspacing=10 border=0>
+<tr><td><img src=vhw_icon.gif border=0></td>
+<td><h2 align=left><i>van Holde - Weischet Tutorial</h2>
+</td>
+</tr>
+</table>
+<p><hr><p>
+<h2 align=left>Calculation of apparent Sedimentation Coefficients</i></h2>
+<p>
+The first step in distinguishing diffusional boundary spreading from
+spreading due to heterogeneity in <i>S</i> is to calculate <i>apparent
+sedimentation coefficients</i>, <i>s*</i>, along the entire boundary.
+First, the boundary is divided into equally spaced horizontal 
+boundary fractions between the baseline and the plateau. 
+The intercepts of these divisions are located and mapped on the 
+boundary as shown below:
+<p>
+<center>
+<img src=tutor4.gif border=0>
+</center>
+<p>
+<b>Figure 4:</b> In this plot, 11 equally spaced boundary fractions between 
+the plateau concentration and the baseline absorbance have been mapped onto
+a single scan; the corresponding radial positions in the boundary 
+(r<sub>b</sub>) are identified r<sub>1</sub> through r<sub>11</sub>.
+For clarity, only 11 divisions are shown, in practice, the number 
+of divisions is often larger (50-100).
+<p>
+The known time of the scan and the radial positions associated with the
+intercepts (r<sub>1</sub> - r<sub>11</sub>) are then used to calculate
+an apparent <i>S</i>-value, <i>s<sub>b</sub>*</i>, for each boundary
+position:
+<p>
+<center>
+<img src=equ1.gif>
+</center>
+<p>
+Here, <i>r<sub>b</sub></i> refers to the radial position of the boundary 
+fraction intercept, <i>r<sub>m</sub></i> refers to the meniscus position,
+<i>t</i> is the corrected time of the scan, and <i>t<sub>0</sub></i> is the
+start time of the experiment, corrected for rotor acceleration. The rotor
+acceleration time correction can be determined by taking the omega-square-t
+integral times from scans taken at constant velocity and plotting them against
+the actual time of the scan. Extrapolating to zero omega-square-t will 
+reveal the rotor acceleration time difference, which needs to be subtracted
+from the times recorded for all scans.
+<p>
+This procedure is repeated for each scan in the experiment. Because of 
+radial dilution, the absolute spacing between the boundary fractions 
+will decrease over time, since the plateau absorbance decreases. This
+gives rise to the same number of apparent <i>S</i>-values, <i>s*</i>, 
+for each scan in the experiment. It is clear from this algorithm that
+only scans that span the entire range from baseline to plateau concentration
+can be included in a global fit.
+<hr>
+<center>
+<table border=0 cellspacing=20>
+<tr>
+<td> <a href=index.html><img src=home.gif border=0></a></td>
+<td><a href=basics_2.html><img src=back.gif border=0></a></td>
+<td><a href=basics_4.html><img src=next.gif border=0></a></td>
+</tr>
+</table>
+</center>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software
+Documentation distribution.
+<p>
+Copyright 1998, 1999, <a href=http://www.uthscsa.edu>The University of
+Texas Health Science Center at San Antonio</a>. 
+<p>
+The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on June 12, 1999.
+</body>
+</html>

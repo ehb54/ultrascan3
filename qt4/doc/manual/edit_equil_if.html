@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD html 4.01 Transitional//EN">
+<html>
+<head>
+  <title>Editing Interference Equilibrium Data</title>
+                      
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+            
+  <link href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body text="#000000" bgcolor="#ffffff" link="#0000ef" vlink="#cf30cf" alink="#ff0000">
+<table border="0" cellpadding="5">
+  <tbody>
+    <tr>
+      <td><img src="ultrascan1.png" border="0">
+      </td>
+      <td align="vcenter">
+      <h1 align="Center"><i>Manual</i></h1>
+      </td>
+    </tr>
+  </tbody>
+</table>
+<hr>
+<h2>Editing Interference Equilibrium Data:</h2>
+<p> All experimental equilibrium data aquired on the XL-A requires substantial 
+ editing and preliminary diagnostics before the data can be successfully analyzed
+with various analysis methods. <b><i>UltraScan </i></b>assists you in this
+process by handling most essential diagnostics and editing steps automatically,
+but permits you to intervene, where necessary. Editing is started by selecting
+<p>
+<center><b>"Edit Equilibrium Data": "Interference Data"</b></center>
+<p>
+from the <A HREF="menu_edit2.png">main menu</A> of <b><I>UltraScan</I></b>.
+This will bring up the <A HREF="edit_equil_i1.png">editing window </A>with the
+plot area and the control panel.
+
+<p>At the bottom of the control panel is a "Wizard" that provides step-by-step
+instructions to guide you through the multi-step process of equilibrium
+data editing. Refer to it to determine which action is required next.
+
+<p><b>Step 1: </b>Select a data directory that contains the data files
+acquired by the Beckman data acquisition program. Such a directory can
+generally be found as a subdirectory of the Beckman data acquisition software.
+The default installation for the Beckman software is C:\XLAWIN (under Windows).
+Under Unix, the drive with Windows will generally be mounted under
+the /dosc or /dos directory. You can always set the desired default location 
+in the <a HREF="config.html">configuration panel</a> so you can avoid lengthy 
+directory traversals to find the desired location quickly.
+<p>
+The experimental data will then be located in a subdirectory of the
+form mmddyy/hhmmss (month/day/year/hour/min/sec), identifying the date
+and time on which data acquisition commenced for a particular run. A <a HREF="edit2.png">file
+dialog</a> will allow you to specify the desired directory. If the directory
+contains files of the type 00001.ip1, 00002.ip1, ..., etc., then it is
+a proper data directory. If the program cannot find enough scans in the 
+selected directory, a <a href=edit3a.png>warning message</a>
+will be printed on the screen.
+<p>
+
+<b>Note:</b><br>
+Data directories retrieved from the database contain an additional file
+called "db_info.dat" which contains database index information that is
+automatically included in the edited data. The file is parsed during
+editing and parameters such as run identification, celltype, centerpiece
+type, rotor, buffer corrections, etc.  are included in the edited data
+and later available during analysis.
+<p>
+Please note that UltraScan needs at least 3 scan files for each cell in order to 
+identify the wavelengths used for the run.
+Once
+you have navigated through the directory tree to the desired data directory,
+simply press the OK button. Next, the program will load the data in this
+directory and determine a number of important diagnostics from the scan
+files present in this directory:
+<OL>
+<li> The number and position of cells that were scanned in this
+run. If not enough datapoints are found in the selected directory, a <a
+href=edit3a.png>warning message</a> will be printed.  If the sequence of
+the scan files is out of order, a <a href=edit3c.png>warning message</a>
+will be shown. If this message shows up, you can rescue your data by
+rebuilding the data sequence with the <a href=reorder.html>Scanfile
+Reordering Utility</a>.
+
+<li>
+The number of scans that were taken for each cell
+
+<li>
+The average temperature over the entire run
+
+<li>
+The temperature of each individual scan
+
+<li>
+The program will determine if the temperature varied for more
+than a pre-set tolerance value over the course of the run and
+warn the user if the tolerance was exceeded. In such a case, a <A
+HREF="edit3d.png">warning message</A> is printed forcing the user to
+acknowledge the diagnostic before editing can resume. Depending on
+the method of analysis of equilibrium runs, a temperature variation
+during equilibrium experiments may actually be of little consequence,
+since the software will compensate automatically for variations in
+temperature-dependent density changes. When measuring thermodynamic
+parameters such as association constants it is important to realize that
+temperature variations may significantly affect the results and should
+be avoided if possible.  Also, for velocity experiments a constant
+temperature is required throughout the experiment in order to avoid
+systematic errors introduced through density and viscosity changes,
+as well as variations in the thermodynamic properties of the sample.
+
+<li>
+The length (duration) of the entire run in hours and minutes
+
+<li>
+The rotor speed at which each measurement was made
+
+<li>
+The identifications for each cell that were entered at the begin of the
+run in the Beckman data acquisition program.
+</OL>
+The status bar will keep you informed about the progress of the diagnostics.
+The length of time required to complete these diagnostics will depend on
+the number of files in the directory that have to be analyzed. Once the
+diagnostics are completed, the <A HREF="edit_equil_a2.png">diagnostics window</A>
+will be displayed that shows the details of the selected run. The top panel
+of the "Run Detail" Window will provide you with a profile of the temperature
+variation over the course of the run. Shown is the temperature value of
+each scan in the experiment. Ideally, the temperature should not vary more
+than a few tenth of a degree over the course of the run. If the temperature
+varies more than a pre-set tolerance value, the "Temperature Check" field
+will show a red flashing LCD, otherwise a continuous green LCD. 
+<p>
+Clicking on the <b>"Time Plot"</b> button will present you with a
+<a href=edit_equil_a3.png> plot of the time differences</a> between
+scans. The <b>"Time Plot"</b> button will then change to a <b>"Speed
+Plot"</b> button. Clicking on the <b>"Speed Plot"</b> button will then
+show you a <a href=edit_equil_a4.png> plot of the speed</a> at which each
+scan was recorded. Finally, you can recall the <a href=edit_equil_a2.png>
+temperature plot</a> by clicking on the <b>"Temp. Plot"</b> button,
+and cycle through the different plots by repeatedly clicking on the
+same button.
+
+<p>The purpose of this window is to facilitate the identification
+of experiments from the rather cryptic information provided by the
+file- and directory names created by the Beckman data acquisition
+software. Information about various cells available for a particular run
+can be obtained by selecting the appropriate cells in the listbox. In
+interference experiments, you can collect scans from 8 separate cells,
+because the counterbalance is not required after the radial calibration
+has been made. <b><I>UltraScan</I></b> allows for up to 8 cells to
+accommodate experiments performed with the 8-hole rotor AN-50 Ti,
+and allows for an unlimited number of scans to be analyzed for each
+dataset. The cell description will be updated for each cell that is
+selected in the listbox. If the description for a particular cell was
+not sufficient, it can now be updated and edited to accommodate changes.
+
+<p>At the lower left corner of the diagnostics window you will find
+a <A HREF="edit_equil_a5.png">list of speeds</A> for this run. If
+you want to know how many scans and wavelengths were collected for a
+particular speed, you can click on any of the speeds to obtain a <A
+HREF="edit_equil_a6.png">window with the listing for that speed</A>.<b></b>
+
+<p><b>Step 2:</b> Before editing of the data can proceed, a unique
+run identification needs to be entered in the box labeled "Run
+Identification".  This run identification should not contain any spaces
+and should help the user in identifying the run by name. Spaces can be
+replaced by underscores.  Please note that unlike under Microsoft Windows,
+file names will follow Unix name conventions (case sensitive). For
+example, a run identification such as "Chromatin_pH8" is distinct from
+"chromatin_ph8". A practical way of naming runs is to use the logbook
+number of the run, and to append a "v" for equilibrium-, or an "e"
+for equilibrium runs. If the data was retrieved from the database, the 
+run identification will be filled in automatically.
+<p>
+If you change your mind and do not want to edit this data, you can cancel
+the editing process at this point by clicking on "Cancel" and you can then
+select a different directory instead. However, if you do want to proceed,
+click on "Accept". If you forgot to enter a unique run identification,
+you will be reminded by an <A HREF="edit5.png">error message</A>.
+
+<p>
+<b>Step 3:</b> Make sure that the cell descriptions are correct and
+adequate to identify the contents of each cell that contains data. If not,
+you can now edit the description for each cell by modifying the string
+in the editable text box.  After entering a unique run identification,
+the window will close and you will return to the main editing window. The
+<A HREF="edit6.png">control panel</A> will now show all fields updated
+with the proper information obtained during the diagnostics. If the
+data directory was retrieved from the database, the run identification
+is automatically set and all cell and centerpiece parameters should
+be automatically set to their proper values. Otherwise, adjust the
+centerpiece, cell and rotor settings now.  Some data analysis methods
+rely on the geometry information included in these definitions.
+
+<p>The number of editable datasets will be displayed in the "Run Detail"
+box. For interference data, a dataset is defined as the collection of
+scans acquired for a single cell.  To load the first dataset for editing,
+click on <A HREF="edit6.png">"Start Editing"</A>. All scans will then
+load into the editing plot window, and the status bar indicates the
+progress of data loading.
+
+<p><b>Step 4:</b> After loading is completed, the data will be displayed
+in the <A HREF="edit_equil_i7.png">editing window</A>. Review the settings
+for rotor selection and centerpiece type, and adjust if needed.  If you
+used a 6-channel centerpiece to collect your data, make sure to select the
+6-channel centerpiece. Also verify that the rotor is correctly selected.
+
+<p>
+The selection of these items determines the method of editing as well as
+the cell dimensions needed for integration of the modelled functions. If
+the data was loaded from a directory that was retrieved from the database,
+these settings should already be adjusted to their appropriate values.
+
+<p>
+In case the sample and reference channels were reversed during loading,
+you can click on the "Invert Sign" button to flip the data back into
+a standard display mode.
+<p>
+
+<p><b>Step 5:</b> Now you need to define the meniscus. In interference 
+data this can be difficult, because the meniscus position is often not
+very clear. Moreover, the meniscus position moves because of rotor stretching
+at different speeds. Therefore, if you measure at multiple speeds (as
+you should for a global equilibrium experiment), each scan will have
+a different meniscus position. Since there is no reproducible feature
+associated with an interference meniscus, <b><i>UltraScan</i></b>
+cannot simply scan for a peak in the scanner trace as it is possible in
+absorbance data. Instead, the user will have to define each meniscus
+position manually. <b><i>UltraScan</i></b> can assist the user in
+this process by zooming into each scan and channel and amplifying
+the meniscus region for a better detection of the meniscus. To start,
+find a <a href=edit_equil_i6.png>position a little to the left</a>
+of the region where the menisci for all scans can be found (or for the
+channel's menisci, if you are using a multi-channel centerpiece).
+
+<p>
+<b>Step 6 (optional):</b> Now the <a href=edit_equil_i5.png>wizard</a>
+informs you that you can delete unwanted scans from the 
+group of scans by using on the exclude buttons.
+To exclude one or more scans, select the scan with the counter
+and then click on
+"Exclude Single Scan". To exclude a range of scans, click on "Exclude Scan
+Range", after setting the scan number in the counter. ">>" and "&lt;&lt;"
+buttons move in steps of 10, while ">" and "&lt;" move in single step
+mode. To select a range of scans for exclusion, select the scan at the
+beginning of the range with the counter of "Exclude Single Scan". Then
+use the counter from the "Exclude Scan Range" button to define the last
+scan of the range to be excluded.  As you select scans, the about to be
+excluded scans will be <A HREF="edit_equil_i13.png">highlighted in red</A>. After
+clicking on one of the "Exclude..." buttons, the highlighted scans will
+be deleted from the dataset.
+<p>
+<b>Step 7 (optional):</b> If your data contains spikes or window scratches you
+can edit them now. To edit a spike, click on the ">" - button until you reach the desired
+scan. The selected scan will be highlighted </A>in magenta to assist you
+in finding the appropriate scan (if you click on the ">>" and "&lt;&lt;"
+buttons, you can move around in steps of 10, which may be useful if
+you have a large number of scans in your dataset).  Once you found the
+appropriate scan, click on "Edit Single Scan". This will bring up the
+<a href=edit_spikes.html>scan editing dialogue</a>.
+<p>
+<b>Step 8:</b> Next, the right limit is chosen
+for the useful data range for all scans in this cell or channel.
+This range defines the data
+used in the data analysis. Since the left limit has already been chosen 
+through the definition of the left border of the meniscus range, now
+you need to define the position at the bottom of the cell or channel
+that defines the <a href="edit_equil_i12.png">right limit of the useful data</a>.
+
+<p><b>Step 9:</b> Next, you will have to manually inspect the scan
+to fine tune the meniscus position for each scan.  The data will be
+<A HREF="edit_equil_i11.png">rescaled</A> to the new limits, and the
+extraneous datapoints will be discarded. To better be able to find
+the true meniscus position, you may maximize the window to enlarge the
+plot. This is helpful on large displays only. Look for the meniscus where
+there are sudden jumps of fringes near a smooth scan area. Click on <a
+href="edit_equil_i10.png">that point</a>. Besides identifying the exact
+meniscus position, this position will be used as the new left limit of
+the useful data range. Repeat step 8 for each scan in this cell or channel.
+<p>
+<b>Step 10:</b>Once you have cycled through all scans of this cell
+or channel, the program will automatically advance to the next cell
+or channel, and you will have to repeat steps 4-9 for all cells and
+channels.  When all datasets are edited, the program will return
+with a <A HREF="edit20.png">message window</A> indicating that
+all scans have been edited and the data has been written to a <A
+HREF="file_format.html">binary file</A>.
+
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

@@ -1,0 +1,324 @@
+<head>
+   <title>Global Nonlinear Least-Squares Equilibrium Analysis: 
+   Model-Specific Information
+   </title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<H2>Global Nonlinear Least-Squares Equilibrium Analysis:<p>
+</H2>
+<table border=1 cellpadding=3 bgcolor="CFCFCF">
+<tr>
+   <td>
+      <b>Part 7: Model-Specific Information</b>
+   </td>
+   <td>
+      Previous: <a href=equil6.html>Fitting Information</a> 
+   </td>
+</table> 
+<p>
+The <b><i>UltraScan</i></b> global nonlinear least squares fitting 
+program for equilibrium data provides a number of predefined models,
+each is discussed in further detail below. Each model has a global
+model number, which is used in default naming conventions for result
+files, Monte Carlo analyses and as a model descriptor across different
+methods. The model number is indicated in each description:
+<p>
+<ol>
+<li><a href=global_equil37.png>1-Component, Ideal</a>: This model can be used for
+a pure, single component system that behaves hydrodynamically ideal. This model
+should be used first, if model fits well, the system is homogeneous and
+doesn't self-associate. The following parameters are fitted:
+<p>
+<ul>
+<li>A single molecular weight (global)
+<li>The log of the amplitude of the molecular weight term for each
+included scan (local)
+<li>The baseline for each included scan (local)
+</ul>
+<p>
+The model number for this model is "0".
+<p>
+<li><a href=global_equil38.png>2-Component, Ideal, Noninteracting</a>:
+This model can be used for for a system of two components that
+are not interacting, and behaving hydrodynamically ideal. After
+fitting this model, and a good fit was obtained, it is a good idea to
+compare the ratios of the integrals between scans run under different
+conditions.
+<p>
+If the ratios are roughly unchanged from scan to scan (by an order of
+magnitude), there is a good chance that the system is truly noninteracting
+and two different components are in the system. If the ratios change
+in the direction of larger amounts for the larger component with
+increasing concentration and speed, the model should be fitted with a
+self-associating model, since the molecular weight average changes with
+concentration distribution, and a concentration-dependent self-association
+is most likely present.  The following parameters are fitted:
+
+<p>
+<ul>
+<li>The molecular weight for component 1 (global)
+<li>The molecular weight for component 2 (global)
+<li>The log of the amplitude of molecular weight term 1 for each included
+scan (local)
+<li>The log of the amplitude of molecular weight term 2 for each included
+scan (local)
+<li>The baseline for each included scan (local)
+</ul>
+<p>
+The model number for this model is "1".
+<p>
+<li><a href=global_equil39.png>3-Component, Ideal, Noninteracting</a>:
+This model can be used for for a system of three components that
+are not interacting, and behaving hydrodynamically ideal. After
+fitting this model, and a good fit was obtained, it is a good idea to
+compare the ratios of the integrals between scans run under different
+conditions. If the ratios are roughly unchanged from scan to scan
+(by an order of magnitude), there is a good chance that the system is
+truly noninteracting and three different components are in the system.
+<p>
+If the ratios change in the direction of larger amounts for the larger
+components with increasing concentration and speed, the model should be
+fitted with a self-associating model, since the molecular weight average
+changes with concentration distribution, and a concentration-dependent
+self-association is most likely present.
+<p>
+Because this model has a large number of degrees of freedom, this model
+should only be used for cases where all other models fail to describe
+the system. Rarely do equilibrium scans contain enough information
+to quantitatively describe a three component system with all of its
+parameters floated. However, if you do know the molecular weight of
+each species, you can leave those parameters fixed and just fit the
+amplitudes and baseline. However, this would be a linear fit, and is more
+appropriately dealt with in the next model, the fixed molecular weight
+distribution, described below.  The following parameters are fitted:
+<p>
+<ul>
+<li>The molecular weight for component 1 (global)
+<li>The molecular weight for component 2 (global)
+<li>The molecular weight for component 3 (global)
+<li>The log of the amplitude of molecular weight term 1 for each included
+scan (local)
+<li>The log of the amplitude of molecular weight term 2 for each included
+scan (local)
+<li>The log of the amplitude of molecular weight term 3 for each included
+scan (local)
+<li>The baseline for each included scan (local)
+</ul>
+<p>
+The model number for this model is "2".
+<p>
+<li><a href=global_equil40.png>Fixed Molecular Weight Distribution</a>: 
+In this model, the molecular weights are preset as an evenly 
+divided distribution of molecular weights between some lower and upper
+<a href=global_equil41.png>molecular weight limit</a>.
+This model 
+can be used for any experiment, since it fits the experiment in an <i>almost</i>
+model-independent way. Several diagnostic plots are provided with this model
+to ascertain what nonlinear model may be most appropriate for fitting.
+Fitting with this model can prove helpful for cases where you need to 
+distinguish between self-associating and noninteracting systems.
+<p>
+A predetermined molecular weight distribution with the molecular weight
+parameter kept fixed is used to fit all scans independently with general
+least squares. Since no exponents are fitted, the fitting function can
+be considered a linear combination of nonlinear terms, which is linear
+in the coefficients that are fitted. The coefficients are nothing more
+than the amplitudes for each exponential term with a different fixed
+molecular weight. Use at least 3 different molecular weight terms to
+describe a model-independent system.
+
+<p>
+If the residuals for this fit do not come out perfectly random and show
+systematic drift, the molecular weight distribution is not set up correctly.
+Perform a single component, ideal fit first, and repeat the fixed molecular
+weight distribution model by centering your molecular weight distribution
+around the molecular weight obtained by the single component fit.
+<p>
+After the fit completes with satisfactory residuals, you can display the 
+results in one of three ways:
+<p>
+<ul>
+<li><a href=global_equil43.png>ln(C) vs. r<sup>2</sup></a>: Plots the log
+of the concentration of each fit versus the square of the radius. If
+multiple components are present in appreciable amounts, the plots will
+not be linear. The example shown here reflects a self-associating
+monomer-dimer system.
+<p>
+<li><a href=global_equil42.png>MW vs. r<sup>2</sup></a>: Plots the molecular
+weight for each fit at each point versus the square of the radius. If the
+plots roughly overlay, the sample is most likely non-interacting. If the
+plots follow roughly the sample profile, but each plot at a different
+position, the sample is most likely self-associating. If the plots
+have multiple inflection points, multiple species are probably present.
+The example shown reflects the same self-associating monomer-dimer model
+as shown above.
+<p>
+<li><a href=global_equil44.png>MW vs. C</a>: Plots the molecular weight for each
+fit at each point versus the concentration at that point.  If the plots
+roughly overlay, the sample is most likely following a concentration
+dependent self-association process. If the plots follow roughly the
+sample profile, but each plot at a different position, the sample is most
+likely non-interacting and heterogeneous in composition. If the plots
+have multiple inflection points, multiple species are probably present.
+The example shown reflects the same self-associating monomer-dimer model
+as shown above.
+</ul>
+<p>
+The plotting functions listed above are available for this model only
+and can be accessed from the <a href=global_equil45.png>fitting control panel</a>.
+<p>
+The following parameters are fitted:
+<p>
+<ul>
+<li>The amplitudes for each molecular weight term for each included scan (local)
+<li>The baseline (or zeroth order term) for each included scan (local)
+</ul>
+<p>
+The following parameters are fixed:
+<p>
+<ul>
+<li>Each molecular weight term (global)
+</ul>
+<p>
+The model number for this model is "3".
+<p>
+<li><a href=global_equil10.png>Monomer-Dimer Equilibrium</a>: This model can be 
+used to fit an ideal, reversibly self-associating monomer-dimer system.
+The following parameters are fitted:
+<p>
+<ul>
+<li>The monomer molecular weight (global)
+<li>The log of the amplitude of the monomer molecular weight term for
+each included scan (local)
+<li>The log of the monomer-dimer association constant (global)
+<li>The baseline for each included scan (local)
+</ul>
+<p>
+The model number for this model is "4".
+<p>
+<li><a href=global_equil46.png>Monomer-Trimer Equilibrium</a>: This model is 
+identical to the monomer-dimer equilibrium model, except instead of a dimer
+the association is for a trimer.
+<p>
+The model number for this model is "5".
+<p>
+<li><a href=global_equil47.png>Monomer-Tetramer Equilibrium</a>: This model is 
+identical to the monomer-dimer equilibrium model, except instead of a dimer
+the association is for a tetramer.
+<p>
+The model number for this model is "6".
+<p>
+<li><a href=global_equil48.png>Monomer-Pentamer Equilibrium</a>: This model is 
+identical to the monomer-dimer equilibrium model, except instead of a dimer
+the association is for a pentamer.
+<p>
+The model number for this model is "7".
+<p>
+<li><a href=global_equil49.png>Monomer-Hexamer Equilibrium</a>: This model is 
+identical to the monomer-dimer equilibrium model, except instead of a dimer
+the association is for a hexamer.
+<p>
+The model number for this model is "8".
+<p>
+<li><a href=global_equil50.png>Monomer-Heptamer Equilibrium</a>: This model is 
+identical to the monomer-dimer equilibrium model, except instead of a dimer
+the association is for a heptamer.
+<p>
+The model number for this model is "9".
+<p>
+<li><a href=global_equil51.png>User-defined Monomer-Nmer Equilibrium</a>:
+This model is identical to the monomer-dimer equilibrium model,
+except instead of a dimer the association is for a user-defined
+stoichiometry. You can define your desired stoichiometry in the
+monomer-Nmer <a href=global_equil12.png>stoichiometry selection panel</a>.
+<p>
+The model number for this model is "10".
+<p>
+<li><a href=global_equil52.png>Monomer-Dimer-Trimer Equilibrium</a>:
+This model can be used to fit an ideal, reversibly self-associating
+monomer-dimer-trimer system.  The following parameters are fitted:
+<p>
+<ul>
+<li>The monomer molecular weight (global)
+<li>The log of the amplitude of the monomer molecular weight term for
+each included scan (local)
+<li>The log of the monomer-dimer association constant (global)
+<li>The log of the monomer-trimer association constant (global)
+<li>The baseline for each included scan (local)
+</ul>
+<p>
+The model number for this model is "11".
+<p>
+<li><a href=global_equil53.png>Monomer-Dimer-Tetramer Equilibrium</a>:
+This model can be used to fit an ideal, reversibly self-associating
+monomer-dimer-tetramer system.  The following parameters are fitted:
+<p>
+<ul>
+<li>The monomer molecular weight (global)
+<li>The log of the amplitude of the monomer molecular weight term for
+each included scan (local)
+<li>The log of the monomer-dimer association constant (global)
+<li>The log of the monomer-tetramer association constant (global)
+<li>The baseline for each included scan (local)
+</ul>
+<p>
+The model number for this model is "12".
+<p>
+<li><a href=global_equil54.png>User-defined Monomer - N-mer - M-mer
+Equilibrium</a>: This model can be used to fit an ideal, reversibly
+self-associating monomer - N-mer - M-mer system. You can define the
+stoichiometries for the <i>N</i> and <i>M</i> associations using the
+<a href=global_equil13.png>stoichiometry selection panel</a>.  The following
+parameters are fitted:
+<p>
+<ul>
+<li>The monomer molecular weight (global)
+<li>The log of the amplitude of the monomer molecular weight term for
+each included scan (local)
+<li>The log of the monomer - N-mer association constant (global)
+<li>The log of the monomer - M-mer association constant (global)
+<li>The baseline for each included scan (local)
+</ul>
+<p>
+The model number for this model is "13".
+<p>
+</ol>
+<p>
+<table border=1 cellpadding=3 bgcolor="CFCFCF">
+<tr>
+   <td>
+      Previous: <a href=equil6.html>Fitting Information</a> 
+   </td>
+   <td>
+      Model-Specific Information
+   </td>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

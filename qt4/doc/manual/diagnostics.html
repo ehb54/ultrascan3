@@ -1,0 +1,208 @@
+<head>
+   <title>Scan Diagnostics</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<h2>Scan Diagnostics:</h2>
+<p>
+<CENTER><img src="diagnostics-1.png"></CENTER>
+
+
+<p>The scan diagnostics utility can be invoked by clicking on the <A
+HREF="menu_utilities0.png">"Diagnostics"</A> entry in the Utility
+Menu from the Main Menu of <b><I>UltraScan</I></b>. The purpose of
+this module is to present the parameters and contents of a scanfile in
+a graphical way. In absorbance scans, radial scans are measured with
+varying radial increments. Since the radial increments are not constant,
+this module will show the radial increments as delta-r plots. In addition,
+all parameters are extracted from the file header and shown.
+
+<p>
+<b><FONT SIZE=+1>Explanation of buttons and fields:</FONT></b>
+<p>
+<b>Buttons:</b>
+<table border=1 cellpadding=5>
+<tr>
+	<td rowspan=5>
+		<img src=diagnostics-2.png>
+	</td>
+	<td>
+		<li><b>Load Scan</b>
+	</td>
+	<td>
+		Select a scan file from your data directory. Valid files
+		are velocity, equilibrium, absorbance and interference
+		scans. Invalid files are automatically detected and will
+		not load.
+	</td>
+
+</tr>
+<tr>
+	<td>
+		<li><b>Print Delta Plot</b>
+	</td>
+	<td>
+		Create postscript file or a printout of the delta-r plot.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Print Scan Plot</b>
+	</td>
+	<td>
+		Create postscript file or a printout of the scan plot.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Help</b>
+	</td>
+	<td>
+		Call up this help file.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Close</b>
+	</td>
+	<td>
+		Quit the Scan Diagnostics module
+	</td>
+</tr>
+</table>
+<p>
+<b>Fields:</b>
+<table border=1 cellpadding=5>
+<tr>
+	<td rowspan=12>
+		<img src=diagnostics-3.png>
+	</td>
+	<td>
+		<li><b>Filename</b>
+	</td>
+	<td>
+		The name of the selected file.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Cell</b>
+	</td>
+	<td>
+		The cell position that the scan was taken in the original
+		run. This may be different from the file name extension if
+		the data was collected with the older UltraScan software
+		which could renumber the scans under certain conditions.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Scanmode</b>
+	</td>
+	<td>
+		Choices are "Radial" (R), "Interference" (P), "Incidence" 
+		(I) or "Wavelength" (W).
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Temperature</b>
+	</td>
+	<td>
+		Temperature in <sup>o</sup>C.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Rotor Speed</b>
+	</td>
+	<td>
+		The rotor speed in rpm.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Scan Time</b>
+	</td>
+	<td>
+		Time of scan in seconds measured from start of run.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Omega<sup>2</sup>-t</b>
+	</td>
+	<td>
+		The total force on the rotor measured in Omega<sup>2</sup>-t
+		at the time of the scan.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Wavelength</b>
+	</td>
+	<td>
+		The wavelength in nm.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Repetitions</b>
+	</td>
+	<td>
+		The number of repetitions measure for each datapoint.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Datapoints</b>
+	</td>
+	<td>
+		The number of datapoints in the scan file.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Filesize</b>
+	</td>
+	<td>
+		The size of the datafile in bytes.
+	</td>
+</tr>
+<tr>
+	<td>
+		<li><b>Datapoint Density</b>
+	</td>
+	<td>
+		The average density of datapoints per centimeter.
+	</td>
+</tr>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003
+</body>
+</html>
