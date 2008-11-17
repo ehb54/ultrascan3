@@ -7,31 +7,139 @@
 #include "us_help.h"
 #include "us_gui_settings.h"
 #include "us_win_data.cpp"
+#include "us_defines.h"
 
 using namespace us_win_data;
 
+/*
 int main( int argc, char* argv[] )
 {
   QString options( getenv( "ULTRASCAN_OPTIONS" ) );
   if ( options.contains( "multiple" ) )
   {
+//
     QApplication application( argc, argv );
+//
+    QString locale = QLocale::system().name();
+
+    QTranslator translator;
+    translator.load( QString( "us_" ) + locale );
+    application.installTranslator( &translator );
+    
     //bool license = US_License_t::isValid();
     us_win w;
     w.show();
     return application.exec();
   }
  
+//
   QtSingleApplication application( "UltraScan", argc, argv );
   if ( application.sendMessage( "Wake up" ) ) return 0;
   application.initialize();
+//
 
-  bool license = US_License_t::isValid();
-  qDebug() << "License valid? " << license;
+  QString locale = QLocale::system().name();
 
+  QTranslator translator;
+  translator.load( QString( "us_" ) + locale );
+  application.installTranslator( &translator );
+    
+  QString ErrorMessage;
+  if ( US_License_t::isValid( ErrorMessage ) != US_License_t::OK )
+  {
+    QMessageBox mBox;
+
+    QPushButton* cancel   = mBox.addButton( QMessageBox::Cancel );
+    QPushButton* Register = mBox.addButton( qApp->translate( "UltraScan", "Register"), 
+        QMessageBox::ActionRole);
+    
+    mBox.setDefaultButton( Register );
+    mBox.setWindowTitle( qApp->translate( "UltraScan", "UltraScan License Problem" ) );
+    mBox.setText( ErrorMessage );
+    mBox.setIcon( QMessageBox::Critical );
+    mBox.exec();
+
+    if ( mBox.clickedButton() == cancel )
+    {
+      qDebug( "Cancel clicked" );
+      exit( -1 );
+    }
+    
+    qDebug( "Register clicked" );
+
+    //US_License license;
+    //license.show;
+    //application.setActivationWindow( &license );
+    //return application.exec();
+    return -1;
+  }
+  
   us_win w;
   w.show();
   application.setActivationWindow( &w );
+
+  return application.exec();
+}
+*/
+
+
+int main( int argc, char* argv[] )
+{
+  QtSingleApplication application( "UltraScan", argc, argv );
+  QString             options( getenv( "ULTRASCAN_OPTIONS" ) );
+  
+  // If environment variable ULTRASCAN_OPTIONS contians the 
+  // word 'multiple', then we don't try to limit to one instance
+  if ( ! options.contains( "multiple" ) )
+  {
+    if ( application.sendMessage( "Wake up" ) ) return 0;
+  }
+
+  application.initialize();
+
+  // Set up language localization
+  QString locale = QLocale::system().name();
+
+  QTranslator translator;
+  translator.load( QString( "us_" ) + locale );
+  application.installTranslator( &translator );
+    
+  // See if we need to update the license
+  QString ErrorMessage;
+  if ( US_License_t::isValid( ErrorMessage ) != US_License_t::OK )
+  {
+    QMessageBox mBox;
+
+    QPushButton* cancel   = mBox.addButton( QMessageBox::Cancel );
+    QPushButton* Register = mBox.addButton( qApp->translate( "UltraScan", "Register"), 
+        QMessageBox::ActionRole);
+    
+    mBox.setDefaultButton( Register );
+    mBox.setWindowTitle  ( qApp->translate( "UltraScan", "UltraScan License Problem" ) );
+    mBox.setText         ( ErrorMessage );
+    mBox.setIcon         ( QMessageBox::Critical );
+    mBox.exec();
+
+    if ( mBox.clickedButton() == cancel )
+    {
+      qDebug( "Cancel clicked" );
+      exit( -1 );
+    }
+    
+    qDebug( "Register clicked" );
+
+    //US_License license;
+    //license.show;
+    //application.setActivationWindow( &license );
+    return -1;  // temporary until US_License is done
+  }
+  else
+  {
+    // License is OK.  Start up.
+    us_win w;
+    w.show();
+    application.setActivationWindow( &w );
+  }
 
   return application.exec();
 }
@@ -70,24 +178,24 @@ us_win::us_win( QWidget* parent, Qt::WindowFlags flags )
   setWindowTitle( "UltraScan Analysis" );
 
   ////////////
-  QMenu* file = new QMenu( "&File", this );
+  QMenu* file = new QMenu( tr( "&File" ), this );
 
-  addMenu(  P_CONFIG, "&Configuration", file );
-  addMenu(  P_ADMIN , "&Administrator", file );
-  addMenu(  4       , "E&xit"         , file );
+  addMenu(  P_CONFIG, tr( "&Configuration" ), file );
+  addMenu(  P_ADMIN , tr( "&Administrator" ), file );
+  addMenu(  4       , tr( "E&xit"          ), file );
 
-  QMenu* type1 = new QMenu( tr( "&VeloityData" ), file );
+  QMenu* type1 = new QMenu( tr( "&Velocity Data" ), file );
   addMenu( 21, tr( "&Absorbance Data"     ), type1 );
   addMenu( 22, tr( "&Interference Data"   ), type1 );
   addMenu( 23, tr( "&Fluorescense Data"   ), type1 );
   addMenu( 24, tr( "&Edit Cell ID's Data" ), type1 );
 
-  QMenu* edit = new QMenu( "&Edit", this );
+  QMenu* edit = new QMenu( tr( "&Edit" ), this );
   edit->addMenu( type1 );
-  addMenu( 12, "&Equilibrium Data"    , edit );
-  addMenu( 13, "Edit &Wavelength Data", edit );
+  addMenu( 12, tr( "&Equilibrium Data" )    , edit );
+  addMenu( 13, tr( "Edit &Wavelength Data" ), edit );
   
-  QMenu* help = new QMenu( "&Help", this );
+  QMenu* help = new QMenu( tr( "&Help" ), this );
   addMenu( HELP_HOME   , tr("UltraScan &Home"    ), help );
   addMenu( HELP        , tr("UltraScan &Manual"  ), help );
   addMenu( HELP_REG    , tr("&Register Software" ), help );
@@ -156,13 +264,13 @@ void us_win::launch( int index )
   {
     QMessageBox::information( this,
       tr( "Error" ),
-      tr( QString( "The " + p[ index ].name + " is already running" ).toAscii() ) );
+      p[ index ].name + tr( " is already running" ) );
   
     return;
   }
 
   statusBar()->showMessage( 
-      tr( QString( "Loading " + p[ index ].runningMsg + "..." ).toAscii() ) );
+      tr( "Loading " ) + p[ index ].runningMsg + "..." );
 
   QProcess* process = new QProcess( this );
   process->closeReadChannel( QProcess::StandardOutput );
@@ -176,14 +284,14 @@ void us_win::launch( int index )
   {
     QMessageBox::information( this,
       tr( "Error" ),
-      tr( QString( "There was a problem creating a subprocess\n"
-          "for " + p[ index ].name ).toAscii() ) );
+      tr( "There was a problem creating a subprocess\n"
+          "for " ) + p[ index ].name );
   }
   else
     p[ index ].process = process;
 
   statusBar()->showMessage( 
-      tr( QString( "Loaded " + p[ index ].runningMsg + "..." ).toAscii() ) );
+      tr( "Loaded " ) + p[ index ].runningMsg + "..." );
 }
 
 
@@ -219,27 +327,8 @@ void us_win::splash( void )
 
 void us_win::logo( int width )
 {
-#if defined(WIN32)
-    #define OS_TITLE "Windows"
-#elif defined(LINUX)
-    #define OS_TITLE "Linux"
-#elif defined(OSX)
-    #define OS_TITLE "OS-X"
-#elif defined(FREEBSD)
-    #define OS_TITLE "FreeBSD"
-#elif defined(OPENBSD)
-    #define OS_TITLE "OpenBSD"
-#elif defined(NETBSD)
-    #define OS_TITLE "NetBSD"
-#elif defined(IRIX)
-    #define OS_TITLE "Irix"
-#elif defined(SOLARIS)
-    #define OS_TITLE "Solaris"
-#else
-    #define OS_TITLE "Unknown"
-#endif
-
   QString dir = qApp->applicationDirPath() + "/../etc/";  // For now -- later UltraScan sytem dir
+  // QString dir = US_Settings::systemDir() + "/etc/";
   qDebug() << dir;
   QPixmap rawpix( dir + "flash-combined-no-text.png" );
 
@@ -252,8 +341,8 @@ void us_win::logo( int width )
   painter.drawPixmap( 0, 0, rawpix );
   painter.setPen    ( QPen( Qt::white, 3 ) );
 
+// These need to be defined in a header.
 #define REVISION "Revision: 999"
-#define US_Version QString("10.0")
 
   QString version = "UltraScan " + US_Version + " ( " REVISION
   " ) for " OS_TITLE;  // REVISON is #define "Revision: xxx"
@@ -309,58 +398,59 @@ void us_win::help( int index )
     case HELP_CREDITS:
       QMessageBox::information( this,
         tr( "UltraScan Credits" ),
-        tr( QString( "UltraScan II version " + US_Version + "\n"
-          "Copyright 1998 - 2008\n"
-          "Borries Demeler and the University of Texas System\n\n"
-          " - Credits -\n\n"
-          "The development of this software has been supported by grants\n"
-          "from the National Science Foundation (grants #9724273 and\n"
-          "#9974819), the Robert J. Kleberg Jr. and Helen C. Kleberg\n"
-          "Foundation, the Howard Hughes Medical Institute Research\n"
-          "Resources Program Award to the University of Texas Health\n"
-          "Science Center at San Antonio (# 76200-550802), grant #119933\n"
-          "from the San Antonio Life Science Institute, and the NIH\n"
-          "Center for Research Resources with grant 5R01RR022200.\n\n"
-          "The following individuals have made significant contributions\n"
-          "to the UltraScan Software:\n\n"
-          "   * Emre Brookes (parallel distributed code, supercomputing\n"
-          "     implementations, GA, 2DSA, SOMO, simulation, optimization)\n"
-          "   * Weiming Cao (ASTFEM, ASTFEM-RA, Simulator)\n"
-          "   * Bruce Dubbs (Win32 Port, Qt4 Port, USLIMS, \n"
-          "     GNU code integration)\n"
-          "   * Jeremy Mann (Porting, TIGRE/Globus Integration)\n"
-          "   * Yu Ning (Database Functionality)\n"
-          "   * Marcelo Nollman (SOMO)\n"
-          "   * Zach Ozer (Equilibrium Fitter)\n"
-          "   * Nithin Rai (SOMO)\n"
-          "   * Mattia Rocco (SOMO)\n"
-          "   * Bruno Spotorno (SOMO)\n"
-          "   * Giovanni Tassara (SOMO)\n"
-          "   * Oleg Tsodikov (SurfRacer in SOMO)\n"
-          "   * Josh Wilson (initial USLIMS)\n"
-          "   * Dan Zollars (USLIMS and Database)\n\n"
-          "and many users who contributed bug fixes and feature suggestions." ).toAscii() ) );
+        tr( "UltraScan II version %1\n"
+            "Copyright 1998 - 2008\n"
+            "Borries Demeler and the University of Texas System\n\n"
+            " - Credits -\n\n"
+            "The development of this software has been supported by grants\n"
+            "from the National Science Foundation (grants #9724273 and\n"
+            "#9974819), the Robert J. Kleberg Jr. and Helen C. Kleberg\n"
+            "Foundation, the Howard Hughes Medical Institute Research\n"
+            "Resources Program Award to the University of Texas Health\n"
+            "Science Center at San Antonio (# 76200-550802), grant #119933\n"
+            "from the San Antonio Life Science Institute, and the NIH\n"
+            "Center for Research Resources with grant 5R01RR022200.\n\n"
+            "The following individuals have made significant contributions\n"
+            "to the UltraScan Software:\n\n"
+            "   * Emre Brookes (parallel distributed code, supercomputing\n"
+            "     implementations, GA, 2DSA, SOMO, simulation, optimization)\n"
+            "   * Weiming Cao (ASTFEM, ASTFEM-RA, Simulator)\n"
+            "   * Bruce Dubbs (Win32 Port, Qt4 Port, USLIMS, \n"
+            "     GNU code integration)\n"
+            "   * Jeremy Mann (Porting, TIGRE/Globus Integration)\n"
+            "   * Yu Ning (Database Functionality)\n"
+            "   * Marcelo Nollman (SOMO)\n"
+            "   * Zach Ozer (Equilibrium Fitter)\n"
+            "   * Nithin Rai (SOMO)\n"
+            "   * Mattia Rocco (SOMO)\n"
+            "   * Bruno Spotorno (SOMO)\n"
+            "   * Giovanni Tassara (SOMO)\n"
+            "   * Oleg Tsodikov (SurfRacer in SOMO)\n"
+            "   * Josh Wilson (initial USLIMS)\n"
+            "   * Dan Zollars (USLIMS and Database)\n\n"
+            "and many users who contributed bug fixes and feature "
+            "suggestions." ).arg( US_Version) );
 
       statusBar()->showMessage( tr( "Ready" ) );
       break;
 
     case HELP_ABOUT:
       QMessageBox::information( this,
-        tr("About UltraScan..."),
-        tr( QString( "UltraScan III version " + US_Version + "\n"
-          REVISION "\n"
-          "Copyright 1989 - 2008\n"
-          "Borries Demeler and the University of Texas System\n\n"
-          "For more information, please visit:\n"
-          "http://www.ultrascan.uthscsa.edu/\n\n"
-          "The author can be reached at:\n"
-          "The University of Texas Health Science Center\n"
-          "Department of Biochemistry\n"
-          "7703 Floyd Curl Drive\n"
-          "San Antonio, Texas 78229-3900\n"
-          "voice: (210) 567-6592\n"
-          "Fax:   (210) 567-6595\n"
-          "E-mail: demeler@biochem.uthscsa.edu" ).toAscii() ) );
+        tr( "About UltraScan..." ),
+        tr( "UltraScan III version %1\n"
+            "%2\n"
+            "Copyright 1989 - 2008\n"
+            "Borries Demeler and the University of Texas System\n\n"
+            "For more information, please visit:\n"
+            "http://www.ultrascan.uthscsa.edu/\n\n"
+            "The author can be reached at:\n"
+            "The University of Texas Health Science Center\n"
+            "Department of Biochemistry\n"
+            "7703 Floyd Curl Drive\n"
+            "San Antonio, Texas 78229-3900\n"
+            "voice: (210) 567-6592\n"
+            "Fax:   (210) 567-6595\n"
+            "E-mail: demeler@biochem.uthscsa.edu" ).arg( US_Version ).arg( REVISION ) );
 
       statusBar()->showMessage( tr( "Ready" ) );
       break;
@@ -372,7 +462,7 @@ void us_win::help( int index )
       else
         showhelp.show_help( h[i].url );
 
-      statusBar()->showMessage( tr( "Loaded " + h[i].loadMsg.toAscii() ) );
+      statusBar()->showMessage( tr( "Loaded " ) + h[i].loadMsg.toAscii() );
       break;
   }
 }

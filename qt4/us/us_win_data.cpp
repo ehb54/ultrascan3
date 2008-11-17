@@ -44,16 +44,19 @@ namespace us_win_data
   } p[] =
   {
     { P_CONFIG,        NULL, "us_config",
-      "Loading Configuration",
-      "Configuration Program" },
+      QObject::tr( "Loading Configuration" ),
+      QObject::tr( "Configuration Program" ) 
+    },
 
     { P_ADMIN,         NULL, "us_admin",
-      "Loading Administrator",
-      "Adminstrator Program"  },
+      QObject::tr( "Loading Administrator" ),
+      QObject::tr( "Adminstrator Program"  )
+    },
 
     { P_VELOC_ABSORB,  NULL, "us_edvabs",
-      "Editing Velocity Absorbance Data",
-      "Editing Velocity Absorbance Data Program" },
+      QObject::tr( "Editing Velocity Absorbance Data" ),
+      QObject::tr( "Editing Velocity Absorbance Data Program" )
+    },
     
     { P_END, NULL, "", "", "" }
   };
@@ -81,13 +84,14 @@ namespace us_win_data
     QString        url;
   } h[] =
   {
-    { HELP,         PAGE  , "Help..."                    , "manual/index.html" },
-    { HELP_REG,     PAGE  , "Registration Information...", "register.html"     },
-    { HELP_HOME,    URL   , "UltraScan Home Page..."     , "http://www.ultrascan.uthscsa.edu/" },
-    { HELP_UPGRADE, PAGE  , "Upgrade Information..."     , "download.html"     },
-    { HELP_LICENSE, PAGE  , "License Information..."     , "license.html"      },
-    { HELP_ABOUT,   METHOD, "About Ultrascan..."         , ""                  },
-    { HELP_CREDITS, METHOD, "UltraScan Credits..."       , ""                  },
-    { HELP_END,     METHOD, ""                           , ""                  }
+    { HELP,         PAGE  , QObject::tr( "Help..." )                    , "manual/index.html" },
+    { HELP_REG,     PAGE  , QObject::tr( "Registration Information..." ), "register.html"     },
+    { HELP_HOME,    URL   , QObject::tr( "UltraScan Home Page..." )     , 
+      "http://www.ultrascan.uthscsa.edu/" },
+    { HELP_UPGRADE, PAGE  , QObject::tr( "Upgrade Information..." )     , "download.html"     },
+    { HELP_LICENSE, PAGE  , QObject::tr( "License Information..." )     , "license.html"      },
+    { HELP_ABOUT,   METHOD, QObject::tr( "About Ultrascan..." )         , ""                  },
+    { HELP_CREDITS, METHOD, QObject::tr( "UltraScan Credits..." )       , ""                  },
+    { HELP_END,     METHOD, ""                                 , ""                  }
   };
 }

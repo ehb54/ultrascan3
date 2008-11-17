@@ -9,7 +9,8 @@ DESTDIR       = ../bin
 LIBS         += -lus_utils -lus_gui -L../../lib
 
 HEADERS      += us.h
-SOURCES      += us.cpp
-TRANSLATIONS += us.ts
+SOURCES      += us.cpp \
+                us_win_data.cpp
+TRANSLATIONS += us_de_DE.ts
 
 DEFINES      += LINUX
