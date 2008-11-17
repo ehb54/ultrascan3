@@ -19,3 +19,4 @@ SOURCES      = us_license_t.cpp \
                us_global.cpp    \
                us_settings.cpp
 
+DEFINES      += LINUX INTEL

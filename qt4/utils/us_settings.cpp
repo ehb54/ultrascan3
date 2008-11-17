@@ -26,6 +26,18 @@ void US_Settings::set_helpDir( const QString& dir )
   settings.setValue( "helpDir", dir );
 }
 
+QStringList US_Settings::license( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  return settings.value( "license", "" ).toStringList();
+}
+
+void US_Settings::set_license( const QString& license )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  settings.setValue( "license", license );
+}
+
 QByteArray US_Settings::UltraScanPW( void )
 {
   QSettings settings( "UTHSCSA", "UltraScan" );
