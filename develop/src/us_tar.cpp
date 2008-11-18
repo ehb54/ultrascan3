@@ -575,6 +575,7 @@ int US_Tar::extract( const QString& archive, QStringList* list )
 			{
 				case '5':
 					directory = true;
+					mode |= 0111; // Make sure directory is executable
 					break;
 
 				case '0':
