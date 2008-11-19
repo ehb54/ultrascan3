@@ -120,7 +120,7 @@ int US_Tar::create( const QString& archive, const QStringList& files,
 # define O_BINARY 0
 #endif
 
-	umask( 0133 );  // Permissions should be 644
+	//umask( 0133 );  // Permissions should be 644
 	ofd = open( archive.latin1(), O_WRONLY | O_CREAT | O_BINARY, 0644 );
 	//cout << "ofd=" << ofd << endl;
 	if ( ofd < 0 ) return TAR_CANNOTCREATE;
@@ -195,7 +195,7 @@ void US_Tar::process_dir( const QString& path, QStringList& all )
 
 void US_Tar::write_file( const QString& file )
 {
-	// Crate and output the header
+	// Create and output the header
 	QFileInfo f( file );
 
 	struct stat stats;
