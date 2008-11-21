@@ -5,7 +5,7 @@
 QLabel* US_Widgets::us_label( const QString& labelString, int fontAdjust, 
                               int weight )
 {
-  QLabel* newLabel = new QLabel( tr( labelString.toAscii() ), this );
+  QLabel* newLabel = new QLabel( labelString, this );
 
   newLabel->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
   newLabel->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
@@ -36,13 +36,17 @@ QLabel* US_Widgets::us_textlabel( const QString& labelString, int fontAdjust,
 QLabel* US_Widgets::us_banner( const QString& labelString, int fontAdjust, 
                             int weight )
 {
+  qDebug() << "banner" ;
   QLabel* newLabel = us_label( labelString, fontAdjust, weight );
 
   newLabel->setAlignment ( Qt::AlignCenter );
+  newLabel->setFrameStyle( QFrame::WinPanel | QFrame::Raised );
+  newLabel->setMidLineWidth( 2 );
 
   // Set label colors
   newLabel->setPalette( US_GuiSettings::frameColor() );
 
+  qDebug() << "banner end" ;
   return newLabel;
 }
 

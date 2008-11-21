@@ -1,13 +1,16 @@
+//! \file us.cpp
 #include <QApplication>
 #include <QtSingleApplication>
 
 #include "us.h"
 #include "us_global.h"
 #include "us_license_t.h"
+#include "us_license.h"
 #include "us_help.h"
 #include "us_gui_settings.h"
 #include "us_win_data.cpp"
 #include "us_defines.h"
+#include "us_revision.h"
 
 using namespace us_win_data;
 
@@ -106,7 +109,9 @@ int main( int argc, char* argv[] )
     
   // See if we need to update the license
   QString ErrorMessage;
-  if ( US_License_t::isValid( ErrorMessage ) != US_License_t::OK )
+
+  int result = US_License_t::isValid( ErrorMessage );
+  if ( result != US_License_t::OK )
   {
     QMessageBox mBox;
 
@@ -120,27 +125,18 @@ int main( int argc, char* argv[] )
     mBox.setIcon         ( QMessageBox::Critical );
     mBox.exec();
 
-    if ( mBox.clickedButton() == cancel )
-    {
-      qDebug( "Cancel clicked" );
-      exit( -1 );
-    }
+    if ( mBox.clickedButton() == cancel )  exit( -1 ); 
     
-    qDebug( "Register clicked" );
-
-    //US_License license;
-    //license.show;
-    //application.setActivationWindow( &license );
-    return -1;  // temporary until US_License is done
-  }
-  else
-  {
-    // License is OK.  Start up.
-    us_win w;
-    w.show();
-    application.setActivationWindow( &w );
+    US_License* license = new US_License();
+    license->show();
+    application.setActivationWindow( license );
+    return application.exec();
   }
 
+  // License is OK.  Start up.
+  us_win w;
+  w.show();
+  application.setActivationWindow( &w );
   return application.exec();
 }
 
@@ -160,20 +156,15 @@ void us_action::onTriggered( bool )
 us_win::us_win( QWidget* parent, Qt::WindowFlags flags )
   : QMainWindow( parent, flags )
 {
-  g = new US_Global();
-  if ( ! g->isValid() ) 
+  if ( ! g.isValid() ) 
   {
-     // Do something for invalid global memory
-     qDebug( "us_win: invalid global memory" );
+    // Do something for invalid global memory
+    qDebug( "us_win: invalid global memory" );
   }
 
-  QPoint p = g->global_position();
+  QPoint p = g.global_position();
   setGeometry( QRect( p, p + QPoint( 710, 532 ) ) );
-  //qDebug() << "Global position = " << p << endl;
-  g->set_global_position( p + QPoint( 30, 30 ) );
-
-  //p = g->global_position();
-  //qDebug() << "Global position = " << p << endl;
+  g.set_global_position( p + QPoint( 30, 30 ) );
 
   setWindowTitle( "UltraScan Analysis" );
 
@@ -214,6 +205,12 @@ us_win::us_win( QWidget* parent, Qt::WindowFlags flags )
   splash();
   statusBar()->showMessage( tr( "Ready" ) );
 }
+
+us_win::~us_win()
+{
+    QPoint p = g.global_position();
+    g.set_global_position( p - QPoint( 30, 30 ) );
+}
   
 void us_win::addMenu( int index, const QString& label, QMenu* menu )
 {
@@ -233,7 +230,6 @@ void us_win::addMenu( int index, const QString& label, QMenu* menu )
 
 void us_win::onIndexTriggered( int index )
 {
-  qDebug() << index ;
   if ( index == 4 ) close();
   if ( index >= P_CONFIG && index < P_END    ) launch( index );
   if ( index >= HELP     && index < HELP_END ) help  ( index );
@@ -294,15 +290,6 @@ void us_win::launch( int index )
       tr( "Loaded " ) + p[ index ].runningMsg + "..." );
 }
 
-
-void us_win::closeEvent( QCloseEvent* event )
-{
-  QPoint p = g->global_position();
-  g->set_global_position( p - QPoint( 30, 30 ) );
-  delete g;
-  event->accept();
-}
-
 void us_win::splash( void )
 {
   int y =           menuBar  ()->size().rheight();
@@ -329,7 +316,6 @@ void us_win::logo( int width )
 {
   QString dir = qApp->applicationDirPath() + "/../etc/";  // For now -- later UltraScan sytem dir
   // QString dir = US_Settings::systemDir() + "/etc/";
-  qDebug() << dir;
   QPixmap rawpix( dir + "flash-combined-no-text.png" );
 
   int ph = rawpix.height();
@@ -340,9 +326,6 @@ void us_win::logo( int width )
 
   painter.drawPixmap( 0, 0, rawpix );
   painter.setPen    ( QPen( Qt::white, 3 ) );
-
-// These need to be defined in a header.
-#define REVISION "Revision: 999"
 
   QString version = "UltraScan " + US_Version + " ( " REVISION
   " ) for " OS_TITLE;  // REVISON is #define "Revision: xxx"

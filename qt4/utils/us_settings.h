@@ -16,7 +16,7 @@ class US_Settings
     static void        set_helpDir( const QString& );
 
     static QStringList license( void );
-    static void        set_license( const QString& );
+    static void        set_license( const QStringList& );
 
     static QByteArray  UltraScanPW( void );
     static void        set_UltraScanPW( const QByteArray& );

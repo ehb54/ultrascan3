@@ -1,10 +1,8 @@
-#ifndef US_LICENSE_H
-#define US_LICENSE_H
-
 //! \file us_license_t.h
+#ifndef US_LICENSE_T_H
+#define US_LICENSE_T_H
 
 #include "us_global.h"
-
 
 class US_License_t
 {
@@ -14,7 +12,7 @@ class US_License_t
 
     enum { OK, Expired, Invalid, Missing, BadPlatform, BadOS };
 
-    static int isValid( QString& );
+    static int isValid( QString&, const QStringList& = QStringList() );
 
   private:
 

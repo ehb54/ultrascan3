@@ -1,13 +1,21 @@
+//! \file us_license_t.cpp
+#include <QtCore>
+
 #include "us_license_t.h"
 #include "us_settings.h"
+#include "us_defines.h"
 
-//! \file us_license_t.cpp
 
-int US_License_t::isValid( QString& ErrorMessage )
+int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense )
 {
-  QStringList license = US_Settings::license();
+  QStringList license;
+
+  if ( newLicense.size() == 0 )
+    license = US_Settings::license();
+  else 
+    license = newLicense;
   
-  if ( license.value( 0 ) == "" )
+  if ( license.size() == 0 )
   {
     ErrorMessage =  QString( qApp->translate( "UltraScan", 
         "You have not yet installed a valid UltraScan license.\n"

@@ -10,10 +10,10 @@ class us_win : public QMainWindow
 public:
 
   us_win( QWidget* parent = 0, Qt::WindowFlags flags = 0 );
-  ~us_win(){};
+  ~us_win();
 
 private:
-  US_Global* g;
+  US_Global  g;
   QLabel*    bigframe;
   QLabel*    smallframe;
   QLabel*    splash_shadow;
@@ -27,7 +27,6 @@ private:
 
 private slots:
   void onIndexTriggered( int index );
-  void closeEvent      ( QCloseEvent* );
   void closeSplash     ( void );
   void terminated      ( int, QProcess::ExitStatus );
 };

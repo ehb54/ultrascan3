@@ -32,7 +32,7 @@ QStringList US_Settings::license( void )
   return settings.value( "license", "" ).toStringList();
 }
 
-void US_Settings::set_license( const QString& license )
+void US_Settings::set_license( const QStringList& license )
 {
   QSettings settings( "UTHSCSA", "UltraScan" );
   settings.setValue( "license", license );
