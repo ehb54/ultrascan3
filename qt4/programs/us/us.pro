@@ -3,10 +3,10 @@ TEMPLATE      = app
 
 CONFIG       += debug qt thread warn
 TARGET        = us
-DEPENDPATH   += ../utils ../gui
-INCLUDEPATH  += ../utils ../gui
-DESTDIR       = ../bin
-LIBS         += -lus_utils -lus_gui -L../../lib
+DEPENDPATH   += ../../utils ../../gui
+INCLUDEPATH  += ../../utils ../../gui
+DESTDIR       = ../../bin
+LIBS         += -lus_utils -lus_gui -L../../../lib
 
 HEADERS      += us.h
 SOURCES      += us.cpp \
