@@ -13,14 +13,18 @@ VERSION      = 10.0
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 
-HEADERS      = us_gui_settings.h \
+HEADERS      = us_crypto.h       \
+               us_gui_settings.h \
                us_help.h         \
                us_license.h      \
+               us_passwd.h       \
                us_widgets.h
 
-SOURCES      = us_gui_settings.cpp \ 
+SOURCES      = us_crypto.cpp       \
+               us_gui_settings.cpp \ 
                us_help.cpp         \
                us_license.cpp      \
+               us_passwd.cpp       \
                us_widgets.cpp
 
 DEFINES      += LINUX INTEL

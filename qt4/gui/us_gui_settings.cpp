@@ -10,7 +10,10 @@ QString US_GuiSettings::fontFamily( void )
 void US_GuiSettings::set_fontFamily( const QString& fontFamily )
 {
   QSettings settings( "UTHSCSA", "UltraScan" );
-  settings.setValue( "fontFamily", fontFamily );
+  if ( fontFamily == "Helvetica" )
+    settings.remove( "fontFamily" );
+  else
+    settings.setValue( "fontFamily", fontFamily );
 }
 
 int US_GuiSettings::fontSize( void )
@@ -22,7 +25,10 @@ int US_GuiSettings::fontSize( void )
 void US_GuiSettings::set_fontSize( int fontSize )
 {
   QSettings settings( "UTHSCSA", "UltraScan" );
-  settings.setValue( "fontSize", fontSize );
+  if ( fontSize == 10 )
+    settings.remove( "fontSize" );
+  else
+    settings.setValue( "fontSize", fontSize );
 }
 
 // Palettes
@@ -39,21 +45,21 @@ QPalette US_GuiSettings::labelColor( void )
 QPalette US_GuiSettings::labelColorDefault( void )
 {
   QPalette p;
-  p.setColor( QPalette::Active, QPalette::WindowText, Qt::black ); // windowText/foreground
+  p.setColor( QPalette::Active, QPalette::WindowText, Qt::white ); // windowText/foreground
   p.setColor( QPalette::Active, QPalette::Window,     Qt::black ); // background
   p.setColor( QPalette::Active, QPalette::Light,      Qt::black ); // border
   p.setColor( QPalette::Active, QPalette::Dark,       Qt::black ); // border
   p.setColor( QPalette::Active, QPalette::Text,       Qt::white ); // text w/ Base
   p.setColor( QPalette::Active, QPalette::Base,       Qt::black ); // bg for text entry
 
-  p.setColor( QPalette::Disabled, QPalette::WindowText, Qt::black ); // windowText/foreground
+  p.setColor( QPalette::Disabled, QPalette::WindowText, Qt::white ); // windowText/foreground
   p.setColor( QPalette::Disabled, QPalette::Window,     Qt::black ); // background
   p.setColor( QPalette::Disabled, QPalette::Light,      Qt::black ); // border
   p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::black ); // border
   p.setColor( QPalette::Disabled, QPalette::Text,       Qt::white ); // text w/ Base
   p.setColor( QPalette::Disabled, QPalette::Base,       Qt::black ); // bg for text entry
 
-  p.setColor( QPalette::Inactive, QPalette::WindowText, Qt::black ); // windowText/foreground
+  p.setColor( QPalette::Inactive, QPalette::WindowText, Qt::white ); // windowText/foreground
   p.setColor( QPalette::Inactive, QPalette::Window,     Qt::black ); // background
   p.setColor( QPalette::Inactive, QPalette::Light,      Qt::black ); // border
   p.setColor( QPalette::Inactive, QPalette::Dark,       Qt::black ); // border
@@ -210,7 +216,7 @@ QPalette US_GuiSettings::pushbColorDefault( void )
   p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::darkGray ); // border
   p.setColor( QPalette::Disabled, QPalette::Shadow,     Qt::black    ); // Between light and dark
 
-  p.setColor( QPalette::Inactive, QPalette::ButtonText, Qt::black    ); // windowText/foreground
+  p.setColor( QPalette::Inactive, QPalette::ButtonText, Qt::white    ); // windowText/foreground
   p.setColor( QPalette::Inactive, QPalette::Button,     bluegreen    ); // background
   p.setColor( QPalette::Inactive, QPalette::Light,      Qt::white    ); // border
   p.setColor( QPalette::Inactive, QPalette::Dark,       Qt::darkGray ); // border

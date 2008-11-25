@@ -171,8 +171,9 @@ us_win::us_win( QWidget* parent, Qt::WindowFlags flags )
   ////////////
   QMenu* file = new QMenu( tr( "&File" ), this );
 
-  addMenu(  P_CONFIG, tr( "&Configuration" ), file );
-  addMenu(  P_ADMIN , tr( "&Administrator" ), file );
+  //addMenu(  P_CONFIG, tr( "&Configuration" ), file );
+  //addMenu(  P_ADMIN , tr( "&Administrator" ), file );
+  file->addSeparator();
   addMenu(  4       , tr( "E&xit"          ), file );
 
   QMenu* type1 = new QMenu( tr( "&Velocity Data" ), file );
@@ -185,6 +186,8 @@ us_win::us_win( QWidget* parent, Qt::WindowFlags flags )
   edit->addMenu( type1 );
   addMenu( 12, tr( "&Equilibrium Data" )    , edit );
   addMenu( 13, tr( "Edit &Wavelength Data" ), edit );
+  edit->addSeparator();
+  addMenu(  P_CONFIG, tr( "&Preferences" )  , edit );
   
   QMenu* help = new QMenu( tr( "&Help" ), this );
   addMenu( HELP_HOME   , tr("UltraScan &Home"    ), help );

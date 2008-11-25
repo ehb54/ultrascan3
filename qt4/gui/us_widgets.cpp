@@ -1,3 +1,4 @@
+//! \file us_widgets.cpp
 #include "us_widgets.h"
 #include "us_gui_settings.h"
 
@@ -10,6 +11,7 @@ QLabel* US_Widgets::us_label( const QString& labelString, int fontAdjust,
   newLabel->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
   newLabel->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
   newLabel->setMargin    ( 5 );
+  newLabel->setAutoFillBackground( true );
 
   newLabel->setFont(
       QFont( US_GuiSettings::fontFamily(), 
@@ -36,7 +38,6 @@ QLabel* US_Widgets::us_textlabel( const QString& labelString, int fontAdjust,
 QLabel* US_Widgets::us_banner( const QString& labelString, int fontAdjust, 
                             int weight )
 {
-  qDebug() << "banner" ;
   QLabel* newLabel = us_label( labelString, fontAdjust, weight );
 
   newLabel->setAlignment ( Qt::AlignCenter );
@@ -46,17 +47,17 @@ QLabel* US_Widgets::us_banner( const QString& labelString, int fontAdjust,
   // Set label colors
   newLabel->setPalette( US_GuiSettings::frameColor() );
 
-  qDebug() << "banner end" ;
   return newLabel;
 }
 
 // pushbutton
-QPushButton* US_Widgets::us_pushbutton( const QString& labelString, bool enabled )
+QPushButton* US_Widgets::us_pushbutton( const QString& labelString, bool enabled,
+                                        int fontAdjust )
 {
   QPushButton* button =  new QPushButton( tr( labelString.toAscii() ), this );
 
-  button->setFont(
-      QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() ) );
+  button->setFont( QFont( US_GuiSettings::fontFamily(), 
+                          US_GuiSettings::fontSize() + fontAdjust ) );
 
   button->setPalette( US_GuiSettings::pushbColor() );
 
@@ -84,17 +85,17 @@ QTextEdit* US_Widgets::us_textedit( void )
 }
 
 // lineedit
-QLineEdit* US_Widgets::us_lineedit( const QString& text )
+QLineEdit* US_Widgets::us_lineedit( const QString& text, int fontAdjust )
 {
   QLineEdit* le = new QLineEdit( this );
 
 
-  le->setFont          ( QFont( US_GuiSettings::fontFamily(), 
-                                US_GuiSettings::fontSize() - 1 ) );
+  le->setFont    ( QFont( US_GuiSettings::fontFamily(), 
+                          US_GuiSettings::fontSize() + fontAdjust ) );
   
-  le->insert           ( text );
-  le->setPalette       ( US_GuiSettings::editColor() );
-  le->setReadOnly      ( false );
+  le->insert     ( text );
+  le->setPalette ( US_GuiSettings::editColor() );
+  le->setReadOnly( false );
   le->show();
 
   return le;
@@ -103,7 +104,7 @@ QLineEdit* US_Widgets::us_lineedit( const QString& text )
 // checkbox
 QCheckBox* US_Widgets::us_checkbox( const QString& text, Qt::CheckState state )
 {
-  QCheckBox* cb = new QCheckBox( tr( text.toAscii() ), this );
+  QCheckBox* cb = new QCheckBox( text.toAscii(), this );
   
   cb->setFont( QFont ( US_GuiSettings::fontFamily(), 
                        US_GuiSettings::fontSize(),
@@ -113,5 +114,20 @@ QCheckBox* US_Widgets::us_checkbox( const QString& text, Qt::CheckState state )
 
   cb->setCheckState( state );
   return cb;
+}
+
+// radiobutton
+QRadioButton* US_Widgets::us_radiobutton( const QString& text, Qt::CheckState state )
+{
+  QRadioButton* rb = new QRadioButton( text.toAscii(), this );
+  
+  rb->setFont( QFont ( US_GuiSettings::fontFamily(), 
+                       US_GuiSettings::fontSize(),
+                       QFont::Bold ) );
+  
+  rb->setPalette( US_GuiSettings::editColor() );
+
+  rb->setChecked( state );
+  return rb;
 }
 

@@ -1,13 +1,12 @@
+//! \file us_global.h
 #ifndef US_GLOBAL_H
 #define US_GLOBAL_H
 
 #include <QSharedMemory>
 #include <QPoint>
 
-/*! \file us_global.h
-    \brief Manage shared memory
-*/
 
+//!  \brief Manage shared memory
 
 /*! \class US_Global 
 
@@ -63,13 +62,26 @@ class US_Global
     */
     QPoint global_position( void );
 
-    /*! /brief Sets the point in shared memory
+    /*! \brief Sets the point in shared memory
+        \param The point to save
 
        This function sets the point that the next program should use for its upper
        left corner.  The calling program should increnment this point after it
        retrives the current point and decrement it when terminating.
     */
     void   set_global_position( const QPoint& );
+
+
+    /*! \brief Retrieves the unencrypted master password from shared memory
+
+       This function returns a character string as a QString.
+    */
+    QString passwd( void );
+
+    /*! \brief Sets the unencrypted master password into shared memory
+        \param The unencrypted master password
+    */
+    void setPasswd( const QString& );
 
   private:
 
@@ -84,12 +96,15 @@ class US_Global
        If additional shared memory items are added, new functions to get and 
        set those items  should be created.
     */   
-    struct global
+    class Global
     {
+      public:
       QPoint current_position;
+      char   passwd[64];
       // Add other global values as necessary
-    } global;
+    };
 
+    Global        global;
     bool          valid;
     QSharedMemory sharedMemory;
 

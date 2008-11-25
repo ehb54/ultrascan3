@@ -11,12 +11,12 @@ VERSION      = 10.0
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 
-HEADERS      = us_license_t.h \
-               us_global.h    \
+HEADERS      = us_global.h    \
+               us_license_t.h \
                us_settings.h
 
-SOURCES      = us_license_t.cpp \
-               us_global.cpp    \
+SOURCES      = us_global.cpp    \
+               us_license_t.cpp \
                us_settings.cpp
 
 DEFINES      += LINUX INTEL
