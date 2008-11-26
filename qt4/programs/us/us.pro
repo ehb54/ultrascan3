@@ -6,7 +6,7 @@ TARGET        = us
 DEPENDPATH   += ../../utils ../../gui
 INCLUDEPATH  += ../../utils ../../gui
 DESTDIR       = ../../bin
-LIBS         += -lus_utils -lus_gui -L../../../lib
+LIBS         += -lus_utils -lus_gui -L../../../lib -lqca
 
 HEADERS      += us.h
 SOURCES      += us.cpp \

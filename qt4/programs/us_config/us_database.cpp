@@ -5,10 +5,7 @@
 #include "us_help.h"
 #include "us_passwd.h"
 #include "us_crypto.h"
-
-#ifdef UNIX
-#include <sys/stat.h>
-#endif
+#include "us_db.h"
 
 US_Database::US_Database( QWidget* w, Qt::WindowFlags flags ) 
   : US_Widgets( w, flags )
@@ -49,8 +46,8 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   // Populate db_list
   lw_entries->setCurrentRow( 0 );
-  connect( lw_entries, SIGNAL( itemSelectionChanged() ), 
-           this,       SLOT  ( select_db()            ) );
+  connect( lw_entries, SIGNAL( itemPressed( QListWidgetItem* ) ), 
+           this,       SLOT  ( select_db  ( QListWidgetItem* ) ) );
 
   update_lw();  // Fill in the list widget
   topbox->addWidget( lw_entries );
@@ -111,7 +108,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   pb_delete = us_pushbutton( tr( "Delete Current Entry" ) );
   pb_delete->setEnabled( false );
-  //connect( pb_delete, SIGNAL( clicked() ), this, SLOT( delete() ) );
+  connect( pb_delete, SIGNAL( clicked() ), this, SLOT( deleteDB() ) );
   buttons->addWidget( pb_delete, row++, 1 );
 
   pb_save = us_pushbutton( tr( "Save as Default" ) );
@@ -125,7 +122,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   pb_testConnect = us_pushbutton( tr( "Test DB Connectivity" ) );
   pb_testConnect->setEnabled( false );
-  //connect( pb_testConnect, SIGNAL( clicked() ), this, SLOT( test_connect() ) );
+  connect( pb_testConnect, SIGNAL( clicked() ), this, SLOT( test_connect() ) );
   buttons->addWidget( pb_testConnect, row++, 0, 1, 2 );
 
   QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
@@ -143,11 +140,13 @@ US_Database::~US_Database()
 {
   g.set_global_position( g.global_position() - QPoint( 30, 30 ) );
 }
-void US_Database::select_db( void )
+
+void US_Database::select_db( QListWidgetItem* entry )
 {
   // When this is run, we will always have a current dblist
-  QString item = lw_entries->currentItem()->text();
-// Need to delete trailing (default) if that is present
+  
+  // Need to delete trailing (default) if that is present
+  QString item = entry->text().remove( " (default)" );
 
   for ( int i = 0; i < dblist.size(); i++ )
   {
@@ -172,6 +171,7 @@ void US_Database::select_db( void )
     }
   }
 }
+
 void US_Database::check_add()
 {
   // Check that all fields have at least something
@@ -262,26 +262,29 @@ void US_Database::check_add()
 void US_Database::update_lw( const QString& current )
 {
   lw_entries->clear();
-  dblist = US_Settings::databases();
+
+  dblist            = US_Settings::databases();
   QString defaultDB = US_Settings::defaultDB().at( 0 );
 
   for ( int i = 0; i < dblist.size(); i++ )
   {
-// Need to add (default) if this is the default entry
-     QString          desc   = dblist.at( i ).at( 0 );
-     if ( dblist.at( i ).at( 0 ) == defaultDB ) desc.append( " (default)" );
-     QListWidgetItem* widget = new QListWidgetItem( desc );
-
-     lw_entries->addItem( widget );  
+    QString desc    = dblist.at( i ).at( 0 );
+    QString display = desc;
+    
+    if ( desc == defaultDB ) display.append( " (default)" );
+    
+    QListWidgetItem* widget = new QListWidgetItem( display );
+    lw_entries->addItem( widget );  
      
-     if ( desc == current ) 
-       lw_entries->setCurrentItem( widget, QItemSelectionModel::Select );
+    if ( desc == current ) 
+      lw_entries->setCurrentItem( widget, QItemSelectionModel::Select );
   }
 }
 
 void US_Database::reset( void )
 {
-  update_lw();
+  QString defaultDB = US_Settings::defaultDB().at( 0 );
+  update_lw( defaultDB );
 
   le_description->setText("");
   le_username   ->setText("");
@@ -305,8 +308,6 @@ void US_Database::save_default( void )
   for ( int i = 0; i < dblist.size(); i++ )
   {
     QString desc = dblist.at( i ).at( 0 );
-    // Need to remove (default) if this is the default entry
-    desc = desc.remove( " (default)" );
      
     // Look for the current description
     if ( desc == le_description->text() ) 
@@ -327,72 +328,53 @@ void US_Database::save_default( void )
           "The default database has not been updated." ) );
 }
 
-/*
-void US_Database::check_del()
+void US_Database::deleteDB( void )
 {
-  if(selected_item < 0)
+  QString item = le_description->text();
+
+  // Go through list and delete the one matching description
+  for ( int i = 0; i < dblist.size(); i++ )
   {
-    QMessageBox::message(
-        tr( "Attention:" ), 
-        tr( "First select the login DB information\n"
-            "which you want to delete from the list."));
-    return;
-  }
-
-  US_DB_Admin* db_admin = new US_DB_Admin("");
-  db_admin->show();
-  connect(db_admin, SIGNAL( issue_permission(bool) ), 
-                    SLOT  ( del(bool) ) );
-}
-
-void US_Database::del( bool permission )
-{
-  if ( ! permission )
-  {
-    QMessageBox::message(
-        tr("Attention:"), 
-        tr("Permission denied"));
-    return;
-  }
-
-  QString selected_db_name = dblist[selected_item].dbname;
-
-  vector <struct US_LoginData>::iterator item = dblist.begin() + selected_item;
-  dblist.erase(item);
-
-  if ( db_name == selected_db_name )   //remove usdbconf.bin
-  {
-    QString filename = US_Config::get_home_dir(  ) + USDB;
-    QFile f( filename );
-    
-    if ( f.exists() )
+    QString desc = dblist.at( i ).at( 0 );
+     
+    // Look for the current description
+    if ( desc == item ) 
     {
-      f.remove();
+      dblist.removeAt( i );
+      US_Settings::set_databases( dblist );
+      
+      // Check if the default DB matches
+      QStringList defaultDB = US_Settings::defaultDB();
+      if ( defaultDB.at( 0 ) == item )
+        US_Settings::set_defaultDB( QStringList() );
+      
+      reset();
+
+      QMessageBox::information( this, 
+          tr( "Database Removed" ),
+          tr( "The database has been removed." ) );
+      return;
     }
   }
-
-  QFile fw( data_file );   // etc/database.dat
-  fw.open ( IO_WriteOnly | IO_Translate );
-  
-  count = dblist.size();
-  lb_dbname->clear();
-
-  QTextStream ts( &fw );
-
-  for ( int i=0; i<count; i++ )
-  {
-    ts << dblist[i].description << "\n";
-    ts << dblist[i].username    << "\n";
-    ts << dblist[i].password    << "\n";
-    ts << dblist[i].dbname      << "\n";
-    ts << dblist[i].host        << "\n";
-    ts << dblist[i].driver      << "\n";
-    
-    lb_dbname->insertItem( dblist[i].description );
-  }
-
-  fw.close();
-  clear();
+     
+  QMessageBox::warning( this, 
+      tr( "Database Problem" ),
+      tr( "The description does not match any in the database list.\n"
+          "The database has not been removed." ) );
 }
 
-*/
+void US_Database::test_connect( void )
+{
+  QString error;
+  bool ok = US_DB::test_db_connection( le_host->text(), le_dbname->text(), 
+              le_username->text(), le_password->text(), error );
+
+  if ( ok ) 
+    QMessageBox::information( this,
+      tr( "Database Connectiom" ),
+      tr( "The connection was successful." ) );
+  else
+    QMessageBox::warning( this,
+      tr( "Database Connectiom" ),
+      tr( "The connection failed.\n" ) + error );
+}

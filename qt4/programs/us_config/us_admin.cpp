@@ -5,6 +5,7 @@
 #include "us_help.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_crypto.h"
 
 US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
 {
@@ -147,6 +148,51 @@ void US_Admin::save( void )
     QCryptographicHash::hash( newPW.toAscii(), QCryptographicHash::Sha1 );
 
   US_Settings::set_UltraScanPW( sha1string );
+
+  // We need to reset any passwords in databases here
+  // from le_oldPasswd->text()
+  // to   le_passwd1->text()
+
+  QStringList defaultDB = US_Settings::defaultDB();
+
+  if ( defaultDB.length() > 0 )
+  {
+    // Decrypt with old password
+    // 4 = cipher; 5 = initialization vector
+    g.setPasswd( le_oldPasswd->text() );
+    QString db_password = US_Crypto::decrypt( defaultDB.at( 4 ), defaultDB.at( 5 ) );
+   
+    // Encrypt with new password
+    g.setPasswd( newPW );
+    QStringList cipherText = US_Crypto::encrypt( db_password );
+    
+    defaultDB.replace( 4, cipherText.at( 0 ) );
+    defaultDB.replace( 5, cipherText.at( 1 ) );
+    
+    US_Settings::set_defaultDB( defaultDB );
+  }
+
+  QList<QStringList> databases = US_Settings::databases();
+
+  for ( int i = 0; i < databases.length(); i++ )
+  {
+    QStringList database = databases.at( i );
+    
+    g.setPasswd( le_oldPasswd->text() );
+    QString db_password = US_Crypto::decrypt( database.at( 4 ), database.at( 5 ) );
+    
+    g.setPasswd( newPW );
+    QStringList cipherText  = US_Crypto::encrypt( db_password );
+    
+    database.replace( 4, cipherText.at( 0 ) );
+    database.replace( 5, cipherText.at( 1 ) );
+    
+    databases.replace( i, database );
+  }
+
+  if ( databases.length() > 0 )
+    US_Settings::set_databases( databases );
+  
   g.setPasswd( newPW );
   close();
 }
@@ -156,5 +202,4 @@ void US_Admin::help()
   US_Help* online_help = new US_Help( this );
   online_help->show_help( "manual/administrator.html" );
 }
-
 

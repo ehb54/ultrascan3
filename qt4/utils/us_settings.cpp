@@ -224,6 +224,17 @@ void US_Settings::set_databases( const QList<QStringList>& dblist )
 {
   QSettings settings( "UTHSCSA", "UltraScan" );
 
+  // First remove any existing database entries
+  if ( settings.contains( "dbCount" ) )
+  {
+    int count = settings.value( "dbCount" ).toInt();
+    for ( int i = 0; i < count; i++ )
+    {
+      QString key = QString( "dblist%1" ).arg( i );
+      settings.remove( key );
+    }
+  }
+
   int dbCount = dblist.length();
 
   for ( int i = 0; i < dbCount; i++ )
@@ -244,5 +255,8 @@ QStringList US_Settings::defaultDB( void )
 void US_Settings::set_defaultDB( const QStringList& defaultDB )
 {
   QSettings settings( "UTHSCSA", "UltraScan" );
-  settings.setValue( "defaultDB", defaultDB );
+  if ( defaultDB.isEmpty() )
+    settings.remove( "defaultDB" );
+  else
+    settings.setValue( "defaultDB", defaultDB );
 }

@@ -38,11 +38,11 @@ class US_Database : public US_Widgets
     
   private slots:
     void help        ( void );
-    void select_db   ( void );
+    void select_db   ( QListWidgetItem* );
     void check_add   ( void );
     void reset       ( void );
     void save_default( void );
-    //void delete      ( void );
-    //void test_connect( void );
+    void deleteDB    ( void );
+    void test_connect( void );
 };
 #endif
