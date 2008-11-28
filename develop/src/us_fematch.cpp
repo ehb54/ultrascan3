@@ -1174,6 +1174,32 @@ void US_FeMatch_W::write_res()
 			mw[i], s20w[i], D20w[i], 100.0 * partial_concentration[i]/sum_freq);
 			ts << " %)\n";
 		}
+		for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+		{
+			if (i+1<10)
+			{
+				ts << "  " << (i+1) << ":    ";
+			}
+			else if (i+1 < 100 && i+1 > 9)
+			{
+				ts << " " << (i+1) << ":    ";
+			}
+			else if (i+1 > 99)
+			{
+				ts << (i+1) << ":    ";
+			}
+			k = (unsigned int) (run_inf.time[selected_cell][selected_lambda][i]/ 60);
+			j = (unsigned int) (0.5 + (run_inf.time[selected_cell][selected_lambda][i] - (k * 60)));
+			ts.width(5);
+			ts << k << tr(" min");
+			ts.width(3);
+			ts << j << tr(" sec     ");
+			ts.width(11);
+			ts << run_inf.plateau[selected_cell][selected_lambda][i]
+				<< " OD (" << run_inf.omega_s_t[selected_cell][selected_lambda][i]
+				<< ", " << simdata[0].scan[i].omega_s_t << ")\n";
+		}
+
 		res_f.close();
 	}
 }
@@ -1479,6 +1505,7 @@ float US_FeMatch_W::calc_residuals_ra()
 	{
 		single_scan.time = (double) run_inf.time[selected_cell][selected_lambda][i];
 		single_scan.omega_s_t = (double) run_inf.omega_s_t[selected_cell][selected_lambda][i];
+		//cout << "i=" << i << ": " << single_scan.time << ", " << single_scan.omega_s_t << endl;
 		simdata[0].scan.push_back(single_scan);
 		solution.scan.push_back(single_scan);
 		residuals.scan.push_back(single_scan);
@@ -1503,6 +1530,7 @@ float US_FeMatch_W::calc_residuals_ra()
 	US_Astfem_RSA *astfem_rsa;
 	astfem_rsa = new US_Astfem_RSA(false);
 	//US_FemGlobal fg;
+	//fg.write_simulationParameters(&sp, "simparams.out");
 	for (j=0; j<USglobal->config_list.numThreads; j++)
 	{
 		//fg.write_experiment(&msv[j], &sp, str.sprintf("/usr/local/ultrascan/develop/%d-model", j));
@@ -1534,6 +1562,7 @@ float US_FeMatch_W::calc_residuals_ra()
 			{
 				solution.scan[i].conc[k] += simdata[0].scan[i].conc[k];
 			}
+			//cout << "i=" << i << ": " << simdata[0].scan[i].time << ", " << simdata[0].scan[i].omega_s_t << endl;
 		}
 		progress->setProgress(j+1);
 		qApp->processEvents();

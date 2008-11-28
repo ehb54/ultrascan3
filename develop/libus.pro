@@ -83,6 +83,7 @@ SOURCES += \
   src/us_buffer.cpp \
   src/us_calendar.cpp \ 
   src/us_clipdata.cpp \ 
+  src/us_cofdistro.cpp \
   src/us_cofs.cpp \ 
   src/us_color.cpp \
   src/us_colorgradient.cpp \
@@ -232,13 +233,12 @@ SOURCES += \
   src/us_viewmwl.cpp \
   src/us_widgets.cpp \
   src/us_win.cpp \
-  src/us_write_config.cpp
+  src/us_write_config.cpp 
 
 #  src/us_db_rst_channel.cpp \
 #  src/us_db_rst_equil.cpp \
 #  src/us_db_rst_veloc.cpp \
 #  src/us_db_rst_cell.cpp \
-#  src/us_cofdistro.cpp \ 
 #  src/us_db_laser.cpp \
 #  src/us_globallaser.cpp \
 #  src/us_kirkwood.cpp \
@@ -274,6 +274,7 @@ HEADERS += \
   include/us_buffer.h \
   include/us_calendar.h \
   include/us_clipdata.h \
+  include/us_cofdistro.h \
   include/us_cofs.h \
   include/us_color.h \
   include/us_colorgradient.h \
@@ -425,13 +426,12 @@ HEADERS += \
   include/us_viewmwl.h \
   include/us_widgets.h \
   include/us_win.h \
-  include/us_write_config.h 
+  include/us_write_config.h
 
 #  include/us_db_rst_channel.h \
 #  include/us_db_rst_equil.h \
 #  include/us_db_rst_veloc.h \
 #  include/us_db_rst_cell.h \
-#  include/us_cofdistro.h \
 #  include/us_db_laser.h \
 #  include/us_globallaser.h \
 #  include/us_kirkwood.h \

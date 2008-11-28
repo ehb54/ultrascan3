@@ -10,7 +10,7 @@ void init_matrices_alloc();                   // initializes matrix alloc array
 void list_matrices_alloc();                   // lists matrix alloc array
 #endif
 
-#if defined(DEBUG_RSS) 
+#if defined(DEBUG_RSS)
 extern long getrss(int pid);
 
 #if !defined(USE_MPI)
@@ -175,7 +175,7 @@ vector <struct mfem_data> *exp_data)
 	af_params.simpoints = simparams->simpoints;
 	update_assocv();
 	initialize_rg();
-	if (guiFlag) 
+	if (guiFlag)
 	{
 	  // print_rg();
 	}
@@ -274,9 +274,9 @@ vector <struct mfem_data> *exp_data)
 				duration = (unsigned int) ((*simparams).speed_step[ss].duration_hours * 3600
 						+ (*simparams).speed_step[ss].duration_minutes * 60);
 
-				if(ss == (*simparams).speed_step.size() - 1) 
+				if(ss == (*simparams).speed_step.size() - 1)
 				{
-					duration += (unsigned int) (duration * 0.02); // + 2% (was 6%?) 
+					duration += (unsigned int) (duration * 0.02); // + 2% (was 6%?)
 				}
 
 				if (accel_time > duration)
@@ -435,7 +435,7 @@ vector <struct mfem_data> *exp_data)
 		}
 
 		decompose(vC0);
-		
+
 		for (ss=0; ss<(*simparams).speed_step.size(); ss++)
 		{
 			adjust_limits((*simparams).speed_step[ss].rotorspeed);
@@ -472,7 +472,7 @@ vector <struct mfem_data> *exp_data)
 					+ (*simparams).speed_step[ss].duration_minutes * 60);
 			if(ss == (*simparams).speed_step.size() - 1)
 			{
-				duration += (unsigned int) (duration * 0.02); // + 2% (was 6%?) 
+				duration += (unsigned int) (duration * 0.02); // + 2% (was 6%?)
 			}
 			if (accel_time > duration)
 			{
@@ -798,6 +798,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
 	    outf = fopen("tmp.out", "a");
 	}
 	*/
+	//cout << "rpm_start: " << rpm_start << ", rpm_stop: " << rpm_stop << endl;
 	CA = NULL;
 	CB = NULL;
 	C0 = NULL;
@@ -941,7 +942,7 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
 		}
 		(*simdata).scan.push_back(simscan);
 		/*
-		if(guiFlag) 
+		if(guiFlag)
 		{
 		    if(i%1 == 0 || i<5)
 		    {
@@ -2569,7 +2570,7 @@ void US_Astfem_RSA::Reaction_dydt(double *y, double *yt)
 
 /*  print
     FILE *outf;
-    if (guiFlag) 
+    if (guiFlag)
     {
         outf = fopen("tmp1.out","a");
 	fprintf(outf, "y[i]\n");
