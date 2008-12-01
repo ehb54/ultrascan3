@@ -2760,6 +2760,7 @@ int US_Hydrodyn::compute_asa()
       int last_bead_assignment = -1;
       int last_chain = -1;
       QString last_resName = "not a residue";
+      int last_resSeq = -1;
       PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
       PDB_atom *last_main_bead = (PDB_atom *) 0;
       PDB_atom *sidechain_N = (PDB_atom *) 0;
@@ -2795,7 +2796,8 @@ int US_Hydrodyn::compute_asa()
 	      (
 	       (this_atom->bead_assignment != last_bead_assignment ||
 		this_atom->chain != last_chain ||
-		this_atom->resName != last_resName) &&
+		this_atom->resName != last_resName ||
+		(int)this_atom->resSeq != last_resSeq) &&
 	       !(regular_N_handling &&
 		 this_atom->chain == 0 &&
 		 this_atom->name == "N" &&
@@ -2814,6 +2816,7 @@ int US_Hydrodyn::compute_asa()
 	    last_bead_assignment = this_atom->bead_assignment;
 	    last_chain = this_atom->chain;
 	    last_resName = this_atom->resName;
+	    last_resSeq = this_atom->resSeq;
 	    if (create_beads_normally) {
 	      if(sidechain_N &&
 		 this_atom->chain == 1) {
