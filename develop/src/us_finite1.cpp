@@ -1916,7 +1916,8 @@ void US_Finite_W::calc_residuals(const unsigned int i)
 				count++;
 			}
 		}
-		variance[i] = variance[i]/(count - parameters);
+		// variance[i] = variance[i]/(count - parameters);
+		variance[i] = variance[i] / count;
 	}
 	else
 	{
