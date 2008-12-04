@@ -1908,7 +1908,7 @@ void US_Finite_W::calc_residuals(const unsigned int i)
 	variance[i] = 0.0;
 	if (fabs(bd_range - 100) < .01)  // disable boundary
 	{
-		cout << "100%\n";
+		//cout << "100%\n";
 		for (j=0; j<run_inf.scans[selected_cell][selected_lambda]; j++)
 		{
 			for (k=0; k<points; k++)
@@ -1918,16 +1918,16 @@ void US_Finite_W::calc_residuals(const unsigned int i)
 			}
 		}
 		// variance[i] = variance[i]/(count - parameters);
-		variance[i] = variance[i] / count;
+		variance[i] = variance[i]/count;
 	}
 	else
 	{
-		cout << "less than 100%:" << bd_range << endl;
+		//cout << "less than 100%:" << bd_range << endl;
 		for (j=0; j<run_inf.scans[selected_cell][selected_lambda]; j++)
 		{
 			start_y = run_inf.plateau[selected_cell][selected_lambda][j] * bd_position / 100;
 			stop_y  = start_y + run_inf.plateau[selected_cell][selected_lambda][j] * bd_range/100;
-			cout << "starty: " << start_y << ", stop_y: " << stop_y << endl;
+			//cout << "starty: " << start_y << ", stop_y: " << stop_y << endl;
 			for (k=0; k<points; k++)
 			{
 				if((absorbance[j][k] >= start_y) && (absorbance[j][k] <= stop_y))
@@ -3350,14 +3350,12 @@ void US_Finite_W::load_fit(const QString &filename)
 		bd_range = val;
 		ds >> val;
 		bd_position = val;
-		cout << "Range: " << bd_range << ", offset: " << bd_position << endl;
+		//cout << "Range: " << bd_range << ", offset: " << bd_position << endl;
 		ds >> density;
 		ds >> viscosity;
 		ds >> standard_deviation;
 		ds >> int32;
 		sim_points = (unsigned int) int32;
-		range_counter->setValue(bd_range);
-		position_counter->setValue(bd_position);
 		for (unsigned int i=0; i<(unsigned int) temp_scans; i++)
 		{
 			ds >> int32;
@@ -3452,6 +3450,16 @@ void US_Finite_W::load_fit(const QString &filename)
 		pb_save->setEnabled(true);
 		pb_view->setEnabled(true);
 	}
+	qApp->processEvents();
+	double temp_val = bd_position; // we need to save the current bd_position because it gets overwritten in the next line
+	range_counter->setValue(bd_range); // this also sets the allowable range for position counter
+	range_counter->disconnect();
+	position_counter->disconnect();
+	bd_position = temp_val; // reassign boundary position
+	position_counter->setValue(bd_position);
+	// reconnect everything:
+	connect(range_counter, SIGNAL(valueChanged(double)), SLOT(update_boundary_range(double)));
+	connect(position_counter, SIGNAL(valueChanged(double)), SLOT(update_boundary_position(double)));
 }
 
 // With this function we can save the entire dataset, fit and run parameters in a binary file for later
