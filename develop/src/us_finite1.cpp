@@ -1906,8 +1906,9 @@ void US_Finite_W::calc_residuals(const unsigned int i)
 	unsigned int j, k, count=0, subcount=0;
 	float start_y,stop_y;
 	variance[i] = 0.0;
-	if (1 || fabs(bd_range - 100) < .01)  // disable boundary 
+	if (fabs(bd_range - 100) < .01)  // disable boundary
 	{
+		cout << "100%\n";
 		for (j=0; j<run_inf.scans[selected_cell][selected_lambda]; j++)
 		{
 			for (k=0; k<points; k++)
@@ -1921,10 +1922,12 @@ void US_Finite_W::calc_residuals(const unsigned int i)
 	}
 	else
 	{
+		cout << "less than 100%:" << bd_range << endl;
 		for (j=0; j<run_inf.scans[selected_cell][selected_lambda]; j++)
 		{
 			start_y = run_inf.plateau[selected_cell][selected_lambda][j] * bd_position / 100;
 			stop_y  = start_y + run_inf.plateau[selected_cell][selected_lambda][j] * bd_range/100;
+			cout << "starty: " << start_y << ", stop_y: " << stop_y << endl;
 			for (k=0; k<points; k++)
 			{
 				if((absorbance[j][k] >= start_y) && (absorbance[j][k] <= stop_y))
@@ -1935,7 +1938,8 @@ void US_Finite_W::calc_residuals(const unsigned int i)
 				count++;
 			}
 		}
-		variance[i] = variance[i]/(subcount - parameters);
+		//variance[i] = variance[i]/(subcount - parameters);
+		variance[i] = variance[i]/(subcount);
 	}
 }
 
@@ -3346,11 +3350,14 @@ void US_Finite_W::load_fit(const QString &filename)
 		bd_range = val;
 		ds >> val;
 		bd_position = val;
+		cout << "Range: " << bd_range << ", offset: " << bd_position << endl;
 		ds >> density;
 		ds >> viscosity;
 		ds >> standard_deviation;
 		ds >> int32;
 		sim_points = (unsigned int) int32;
+		range_counter->setValue(bd_range);
+		position_counter->setValue(bd_position);
 		for (unsigned int i=0; i<(unsigned int) temp_scans; i++)
 		{
 			ds >> int32;
