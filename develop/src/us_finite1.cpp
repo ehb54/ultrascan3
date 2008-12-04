@@ -1906,7 +1906,7 @@ void US_Finite_W::calc_residuals(const unsigned int i)
 	unsigned int j, k, count=0, subcount=0;
 	float start_y,stop_y;
 	variance[i] = 0.0;
-	if (fabs(bd_range - 100) < .01)  // exact equality with a double is unlikely
+	if (1 || fabs(bd_range - 100) < .01)  // disable boundary 
 	{
 		for (j=0; j<run_inf.scans[selected_cell][selected_lambda]; j++)
 		{
