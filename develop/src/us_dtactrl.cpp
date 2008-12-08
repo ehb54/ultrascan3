@@ -871,6 +871,13 @@ void Data_Control_W::closeEvent(QCloseEvent *e)
 void Data_Control_W::show_cell(int val)
 {
 	reset();
+	selected_cell = val;
+	density = hydro_inf.Density[selected_cell][selected_channel];
+	viscosity = hydro_inf.Viscosity[selected_cell][selected_channel];
+	vbar = hydro_inf.Vbar[selected_cell][selected_channel][0];
+	vbar20 = hydro_inf.Vbar20[selected_cell][selected_channel][0];
+	calc_correction(run_inf.avg_temperature);
+
 	if (scan_copied)
 	{
 		cleanup_copied_scan();
@@ -880,7 +887,6 @@ void Data_Control_W::show_cell(int val)
 		QMessageBox::message(tr("Attention:\n"),tr("You need to load some data first!\n\n	   Click on \"Load Data\"\n"));
 		return;
 	}
-	selected_cell = val;
 	if (run_type == 2 || run_type == 4 || run_type == 6)
 	{
 		channel_select->setSelected(0, true);
@@ -974,6 +980,13 @@ void Data_Control_W::show_lambda(int val)
 void Data_Control_W::show_channel(int val)
 {
 	reset();
+	selected_channel = val;
+	density = hydro_inf.Density[selected_cell][selected_channel];
+	viscosity = hydro_inf.Viscosity[selected_cell][selected_channel];
+	vbar = hydro_inf.Vbar[selected_cell][selected_channel][0];
+	vbar20 = hydro_inf.Vbar20[selected_cell][selected_channel][0];
+	calc_correction(run_inf.avg_temperature);
+
 	if (scan_copied)
 	{
 		cleanup_copied_scan();
@@ -984,7 +997,6 @@ void Data_Control_W::show_channel(int val)
 		QMessageBox::message(tr("Attention:\n"),tr("You need to load some data first!\n\n	   Click on \"Load Data\"\n"));
 		return;
 	}
-	selected_channel = val;
 //	run_inf.centerpiece[selected_cell] contains the serial number of the centerpiece, which is also the array element of the list
 	if (cp_list[run_inf.centerpiece[selected_cell]].channels > 1 && run_inf.wavelength[selected_cell][selected_lambda] != 0)
 	{
@@ -1270,12 +1282,16 @@ int Data_Control_W::load_data(const QString &fileName)
 	{
 		exit(return_flag);
 	}
+
+//???? check the density and viscosity values for each cell ????
 	for(i=0; i<8; i++)
 	{
 		for(j=0; j<4; j++)
 		{
 			Density[i][j] = hydro_inf.Density[i][j];
 			Viscosity[i][j] = hydro_inf.Viscosity[i][j];
+
+			cout << "Cell " << i << ", channel " << j << ": Density=" << Density[i][j] << ", viscosity=" << Viscosity[i][j] << endl;
 			for(k=0; k<3; k++)
 			{
 				Vbar[i][j][k] = hydro_inf.Vbar[i][j][k];
@@ -3340,12 +3356,12 @@ void Data_Control_W::reset()
 	}
 	if (range_counter != NULL)
 	{
-		range_counter->disconnect();
+		//range_counter->disconnect();
 		bd_range=90;
-		position_counter->disconnect();
+		//position_counter->disconnect();
 		range_counter->setValue(bd_range);
-		connect(range_counter, SIGNAL(valueChanged(double)), SLOT(update_boundary_range(double)));
-		connect(position_counter, SIGNAL(valueChanged(double)), SLOT(update_boundary_position(double)));
+		//connect(range_counter, SIGNAL(valueChanged(double)), SLOT(update_boundary_range(double)));
+		//connect(position_counter, SIGNAL(valueChanged(double)), SLOT(update_boundary_position(double)));
 	}
 }
 
