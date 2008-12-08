@@ -1,6 +1,5 @@
 //! \file us_admin.cpp
 #include "us_admin.h"
-#include "us_global.h"
 #include "us_license_t.h"
 #include "us_help.h"
 #include "us_settings.h"

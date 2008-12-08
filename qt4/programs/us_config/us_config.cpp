@@ -8,7 +8,6 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_admin.h"
-#include "us_font.h"
 
 int main( int argc, char* argv[] )
 {
@@ -56,6 +55,10 @@ int main( int argc, char* argv[] )
 US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   : US_Widgets( parent, flags )
 {
+  font   = NULL;
+  db     = NULL;
+  colors = NULL;
+
   if ( ! g.isValid() ) 
   {
     // Do something for invalid global memory
@@ -253,7 +256,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   pb_save = us_pushbutton( tr( "Save" ) );
   connect( pb_save, SIGNAL( clicked() ), this, SLOT( save() ) );
 
-  pb_cancel = us_pushbutton( tr( "Cancel" ) );
+  pb_cancel = us_pushbutton( tr( "Close" ) );
   connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( close() ) );
 
   QBoxLayout* buttons = new QHBoxLayout();
@@ -265,9 +268,8 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
 US_Config::~US_Config()
 {
-    QPoint p = g.global_position();
-    g.set_global_position( p - QPoint( 30, 30 ) );
-    if ( db ) delete db;
+  QPoint p = g.global_position();
+  g.set_global_position( p - QPoint( 30, 30 ) );
 }
   
 void US_Config::help( void )
@@ -282,24 +284,28 @@ void US_Config::save( void )
 
 void US_Config::update_colors( void )
 {
-  qDebug() << "update_colors Pushed";
+  if ( colors ) delete colors;
+  colors = new US_Color;
+  colors->show();
 }
 
 void US_Config::update_font( void )
 {
-  US_Font* font = new US_Font();
+  if ( font ) delete font;
+  font = new US_Font;
   font->show();
 }
 
 void US_Config::update_db( void )
 {
-  db = new US_Database();
+  if ( db ) delete db;
+  db = new US_Database;
   db->show();
 }
 
 void US_Config::update_password( void )
 {
-  US_Admin* admin = new US_Admin();
+  US_Admin* admin = new US_Admin;
   admin->show();
 }
 
@@ -351,3 +357,11 @@ void US_Config::open_tmpDir( void )
   if ( dir != "" ) le_tmpDir->setText( dir );
 }
 
+void US_Config::closeEvent( QCloseEvent* e )
+{
+  if ( colors ) delete colors;
+  if ( db     ) delete db;
+  if ( font   ) delete font;
+
+  e->accept();
+}

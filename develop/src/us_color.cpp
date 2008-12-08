@@ -583,6 +583,8 @@ void US_Color::setup_GUI()
   {
     subGrid1->setRowSpacing(i, 26);
   }
+  subGrid1->addMultiCellWidget(lbl_background,j,j,0,2);
+  j++;
   subGrid1->addMultiCellWidget(plot,j,j,0,2);
   j++;
   subGrid1->addMultiCellWidget(lbl_margin,j,j,0,1);

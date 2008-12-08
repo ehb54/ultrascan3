@@ -1,9 +1,11 @@
 TEMPLATE     = lib
 
+QWTPATH      = /usr/local/qwt-5.1.1
+
 CONFIG      += debug qt thread warn
 TARGET       = us_gui
-DEPENDPATH   += ../utils 
-INCLUDEPATH  += ../utils 
+DEPENDPATH   += ../utils $$QWTPATH/include
+INCLUDEPATH  += ../utils $$QWTPATH/include
 
 DESTDIR      = ../../lib
 

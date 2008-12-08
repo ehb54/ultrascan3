@@ -94,11 +94,25 @@ QLineEdit* US_Widgets::us_lineedit( const QString& text, int fontAdjust )
                           US_GuiSettings::fontSize() + fontAdjust ) );
   
   le->insert     ( text );
+  le->setAutoFillBackground( true );
   le->setPalette ( US_GuiSettings::editColor() );
   le->setReadOnly( false );
   le->show();
 
   return le;
+}
+
+// List Widget
+QListWidget* US_Widgets::us_listwidget ( int fontAdjust )
+{
+  QListWidget* lw = new QListWidget;
+
+  lw->setAutoFillBackground( true );
+  lw->setPalette( US_GuiSettings::editColor() );
+  lw->setFont   ( QFont( US_GuiSettings::fontFamily(), 
+                         US_GuiSettings::fontSize() + fontAdjust ) );
+
+  return lw;
 }
 
 // checkbox
@@ -129,5 +143,122 @@ QRadioButton* US_Widgets::us_radiobutton( const QString& text, Qt::CheckState st
 
   rb->setChecked( state );
   return rb;
+}
+
+// Progress Bar
+QProgressBar* US_Widgets::us_progressBar( int low, int high, int value )
+{
+  QProgressBar* pb = new QProgressBar;
+
+  pb->setRange( low, high );
+  pb->setValue( value );
+
+  pb->setAlignment( Qt::AlignLeft | Qt::AlignVCenter );
+  pb->setPalette( US_GuiSettings::normalColor() );
+  pb->setAutoFillBackground( true );
+
+  pb->setFont( QFont( US_GuiSettings::fontFamily(),
+                      US_GuiSettings::fontSize(),
+                      QFont::Bold ) );
+
+  return pb;
+}
+
+// Combo Box
+QComboBox* US_Widgets::us_comboBox( void )
+{
+  QComboBox* cb = new QComboBox;
+
+  cb->setPalette( US_GuiSettings::normalColor() );
+  cb->setAutoFillBackground( true );
+  cb->setFont( QFont( US_GuiSettings::fontFamily(), 
+                      US_GuiSettings::fontSize() ) );
+
+  return cb;
+}
+
+// LCD
+QLCDNumber* US_Widgets::us_lcd( int digits, int value )
+{
+  QLCDNumber* lcd = new QLCDNumber( digits );
+
+  lcd->setSegmentStyle( QLCDNumber::Filled );
+  lcd->setMode        ( QLCDNumber::Dec );
+  lcd->display        ( value );
+  lcd->setAutoFillBackground( true );
+
+  lcd->setPalette     ( US_GuiSettings::lcdColor() );
+
+  return lcd;
+}
+
+//QwtCounter
+QwtCounter* US_Widgets::us_counter( int buttons, double low, double high, 
+                                    double value )
+{
+  QwtCounter* counter = new QwtCounter;
+  counter->setNumButtons( buttons );
+  counter->setRange     ( low, high );
+  counter->setValue     ( value );
+  counter->setPalette   ( US_GuiSettings::normalColor() );
+  counter->setAutoFillBackground( true );
+
+  return counter;
+}
+
+QwtPlot* US_Widgets::us_plot( const QString& title, const QString& x_axis,
+                              const QString& y_axis )
+{
+  QwtPlot* plot = new QwtPlot;  
+  plot->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
+  plot->setAutoReplot( false );
+  plot->setTitle     ( title );
+ 
+  plot->setAxisTitle( QwtPlot::xBottom, x_axis );
+  plot->setAxisTitle( QwtPlot::yLeft  , y_axis );
+
+  plot->setAutoFillBackground( true );
+  plot->setPalette ( US_GuiSettings::plotColor() );
+  plot->setCanvasBackground( US_GuiSettings::plotCanvasBG() );
+
+  return plot;
+}
+
+QwtPlotGrid* US_Widgets::us_grid( QwtPlot* plot )
+{
+  QwtPlotGrid* grid = new QwtPlotGrid;
+  grid->enableXMin    ( true );
+  grid->setMajPen(QPen( US_GuiSettings::plotMajGrid(), 0, Qt::DotLine ) );
+  grid->setMinPen(QPen( US_GuiSettings::plotMinGrid(), 0, Qt::DotLine ) );
+  grid->attach        ( plot );
+
+  return grid;
+}
+
+QwtPlotCurve* US_Widgets::us_curve( QwtPlot* plot )
+{
+  QwtPlotCurve* curve = new QwtPlotCurve;
+  curve->setRenderHint( QwtPlotItem::RenderAntialiased );
+  curve->setPen       ( QPen( US_GuiSettings::plotCurve() ) );
+  curve->setYAxis     ( QwtPlot::yLeft );
+  curve->attach       ( plot );
+
+  return curve;
+}
+
+QwtPlotPicker* US_Widgets::us_picker( QwtPlot* plot )
+{
+  QwtPlotPicker* pick = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
+                                           plot->canvas() ); 
+
+  pick->setSelectionFlags( QwtPicker::PointSelection );
+  pick->setTrackerMode   ( QwtPicker::AlwaysOn );
+  pick->setRubberBand    ( QwtPicker::CrossRubberBand );
+
+  QColor c = US_GuiSettings::plotPicker();
+  pick->setRubberBandPen ( c );
+  pick->setTrackerPen    ( c );
+
+  return pick;
 }
 

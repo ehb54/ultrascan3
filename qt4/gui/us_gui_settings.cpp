@@ -31,6 +31,22 @@ void US_GuiSettings::set_fontSize( int fontSize )
     settings.setValue( "fontSize", fontSize );
 }
 
+// Misc
+int US_GuiSettings::plotMargin( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  return settings.value( "plotMargin", 10 ).toInt();
+}
+
+void US_GuiSettings::set_plotMargin( int fontSize )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( fontSize == 10 )
+    settings.remove( "plotMargin" );
+  else
+    settings.setValue( "plotMargin", fontSize );
+}
+
 // Palettes
 
 // Label
@@ -151,33 +167,31 @@ QPalette US_GuiSettings::frameColor( void )
   return frameColorDefault();
 }
 
-#define gray2 QColor( 0xde, 0xde, 0xde )
-
 QPalette US_GuiSettings::frameColorDefault( void )
 {
   QPalette p;
   p.setColor( QPalette::Active, QPalette::WindowText, Qt::white      ); // windowText/foreground
   p.setColor( QPalette::Active, QPalette::Window,     Qt::darkCyan   ); // background
-  p.setColor( QPalette::Active, QPalette::Light,      gray2          ); // border
+  p.setColor( QPalette::Active, QPalette::Light,      Qt::lightGray  ); // border
   p.setColor( QPalette::Active, QPalette::Dark,       Qt::darkGray   ); // border
   p.setColor( QPalette::Active, QPalette::Mid,        Qt::cyan       ); // Between light and dark
-  p.setColor( QPalette::Active, QPalette::Text,       Qt::white      ); // text w/ Base
+  p.setColor( QPalette::Active, QPalette::Midlight,   Qt::white      ); // 
   p.setColor( QPalette::Active, QPalette::Base,       Qt::darkGray   ); // bg for text entry
 
   p.setColor( QPalette::Disabled, QPalette::WindowText, Qt::white    ); // windowText/foreground
   p.setColor( QPalette::Disabled, QPalette::Window,     Qt::darkCyan ); // background
-  p.setColor( QPalette::Disabled, QPalette::Light,      gray2        ); // border
+  p.setColor( QPalette::Disabled, QPalette::Light,      Qt::lightGray); // border
   p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::darkGray ); // border
   p.setColor( QPalette::Disabled, QPalette::Mid,        Qt::cyan     ); // Between light and dark
-  p.setColor( QPalette::Disabled, QPalette::Text,       Qt::white    ); // text w/ Base
+  p.setColor( QPalette::Disabled, QPalette::Midlight,   Qt::white    ); // 
   p.setColor( QPalette::Disabled, QPalette::Base,       Qt::darkGray ); // bg for text entry
 
   p.setColor( QPalette::Inactive, QPalette::WindowText, Qt::white    ); // windowText/foreground
   p.setColor( QPalette::Inactive, QPalette::Window,     Qt::darkCyan ); // background
-  p.setColor( QPalette::Inactive, QPalette::Light,      gray2        ); // border
+  p.setColor( QPalette::Inactive, QPalette::Light,      Qt::lightGray); // border
   p.setColor( QPalette::Inactive, QPalette::Dark,       Qt::darkGray ); // border
   p.setColor( QPalette::Inactive, QPalette::Mid,        Qt::cyan     ); // Between light and dark
-  p.setColor( QPalette::Inactive, QPalette::Text,       Qt::white    ); // text w/ Base
+  p.setColor( QPalette::Inactive, QPalette::Midlight,   Qt::white    ); // 
   p.setColor( QPalette::Inactive, QPalette::Base,       Qt::darkGray ); // bg for text entry
 
   return p; 
@@ -244,8 +258,8 @@ QPalette US_GuiSettings::normalColor( void )
 QPalette US_GuiSettings::normalColorDefault( void )
 {
   QPalette p;
-  p.setColor( QPalette::Active, QPalette::ButtonText, Qt::black      ); // windowText/foreground
-  p.setColor( QPalette::Active, QPalette::Button,     Qt::lightGray  ); // background
+  p.setColor( QPalette::Active, QPalette::WindowText, Qt::black      ); // windowText/foreground
+  p.setColor( QPalette::Active, QPalette::Window,     Qt::lightGray  ); // background
   p.setColor( QPalette::Active, QPalette::Light,      Qt::white      ); // border
   p.setColor( QPalette::Active, QPalette::Dark,       Qt::darkGray   ); // border
   p.setColor( QPalette::Active, QPalette::Mid,        Qt::lightGray  );
@@ -259,8 +273,8 @@ QPalette US_GuiSettings::normalColorDefault( void )
   p.setColor( QPalette::Active, QPalette::ButtonText, Qt::black      );
   p.setColor( QPalette::Active, QPalette::Shadow,     Qt::black      ); // Between light and dark
 
-  p.setColor( QPalette::Disabled, QPalette::ButtonText, Qt::black      ); // windowText/foreground
-  p.setColor( QPalette::Disabled, QPalette::Button,     Qt::lightGray  ); // background
+  p.setColor( QPalette::Disabled, QPalette::WindowText, Qt::black      ); // windowText/foreground
+  p.setColor( QPalette::Disabled, QPalette::Window,     Qt::lightGray  ); // background
   p.setColor( QPalette::Disabled, QPalette::Light,      Qt::white      ); // border
   p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::darkGray   ); // border
   p.setColor( QPalette::Disabled, QPalette::Mid,        Qt::lightGray  );
@@ -274,8 +288,8 @@ QPalette US_GuiSettings::normalColorDefault( void )
   p.setColor( QPalette::Disabled, QPalette::ButtonText, Qt::black      );
   p.setColor( QPalette::Disabled, QPalette::Shadow,     Qt::black      ); // Between light and dark
 
-  p.setColor( QPalette::Inactive, QPalette::ButtonText, Qt::black      ); // windowText/foreground
-  p.setColor( QPalette::Inactive, QPalette::Button,     Qt::lightGray  ); // background
+  p.setColor( QPalette::Inactive, QPalette::WindowText, Qt::black      ); // windowText/foreground
+  p.setColor( QPalette::Inactive, QPalette::Window,     Qt::lightGray  ); // background
   p.setColor( QPalette::Inactive, QPalette::Light,      Qt::white      ); // border
   p.setColor( QPalette::Inactive, QPalette::Dark,       Qt::darkGray   ); // border
   p.setColor( QPalette::Inactive, QPalette::Mid,        Qt::lightGray  );
@@ -296,5 +310,146 @@ void US_GuiSettings::set_normalColor( const QPalette& palette )
 {
   QSettings settings( "UTHSCSA", "UltraScan" );
   settings.setValue( "palettes/normalColor", palette );
+}
+
+// LCD 
+QPalette US_GuiSettings::lcdColor( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( settings.contains( "palettes/lcdColor" ) )
+      return settings.value( "palettes/lcdColor" ).value<QPalette>();
+  return lcdColorDefault();
+}
+
+QPalette US_GuiSettings::lcdColorDefault( void )
+{
+  QPalette p;
+  p.setColor( QPalette::Active,   QPalette::WindowText, Qt::green    ); // foreground
+  p.setColor( QPalette::Active,   QPalette::Window,     Qt::black    ); // background
+  p.setColor( QPalette::Active,   QPalette::Light,      Qt::green    ); // highlight1
+  p.setColor( QPalette::Active,   QPalette::Shadow,     Qt::darkCyan ); // highlight2
+
+  p.setColor( QPalette::Inactive, QPalette::WindowText, Qt::green    ); // foreground
+  p.setColor( QPalette::Inactive, QPalette::Window,     Qt::black    ); // background
+  p.setColor( QPalette::Inactive, QPalette::Light,      Qt::green    ); // highlight1
+  p.setColor( QPalette::Inactive, QPalette::Shadow,     Qt::darkCyan ); // highlight2
+
+  return p; 
+}
+
+void US_GuiSettings::set_lcdColor( const QPalette& palette )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  settings.setValue( "palettes/lcdColor", palette );
+}
+
+// Plot frame
+QPalette US_GuiSettings::plotColor( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( settings.contains( "palettes/plotColor" ) )
+      return settings.value( "palettes/plotColor" ).value<QPalette>();
+  return plotColorDefault();
+}
+
+QPalette US_GuiSettings::plotColorDefault( void )
+{
+  QPalette p;
+  p.setColor( QPalette::Active,   QPalette::WindowText, Qt::black     ); // foreground
+  p.setColor( QPalette::Active,   QPalette::Window,     Qt::lightGray ); // background
+  p.setColor( QPalette::Active,   QPalette::Shadow,     Qt::black     ); // highlights
+
+  p.setColor( QPalette::Inactive, QPalette::WindowText, Qt::black     ); // foreground
+  p.setColor( QPalette::Inactive, QPalette::Window,     Qt::lightGray ); // background
+  p.setColor( QPalette::Inactive, QPalette::Shadow,     Qt::black     ); // highlights
+
+  return p; 
+}
+
+void US_GuiSettings::set_plotColor( const QPalette& palette )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  settings.setValue( "palettes/plotColor", palette );
+}
+
+
+// Plot curve color
+QColor US_GuiSettings::plotCurve( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  return settings.value( "palettes/plotCurve", Qt::yellow ).value<QColor>();
+}
+
+void US_GuiSettings::set_plotCurve( const QColor& color )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( color == Qt::yellow )
+    settings.remove( "palettes/plotCurve" );
+  else
+    settings.setValue( "palettes/plotCurve", color );
+}
+
+// Canvas background
+QColor US_GuiSettings::plotCanvasBG( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  return settings.value( "palettes/normalColor", Qt::darkBlue ).value<QColor>();
+}
+
+void US_GuiSettings::set_plotCanvasBG( const QColor& color )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( color == Qt::darkBlue )
+    settings.remove( "palettes/plotCanvasBG" );
+  else
+    settings.setValue( "palettes/plotCanvasBG", color );
+}
+
+// Canvas major gridlines
+QColor US_GuiSettings::plotMajGrid( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  return settings.value( "palettes/plotMajGrid", Qt::white ).value<QColor>();
+}
+
+void US_GuiSettings::set_plotMajGrid( const QColor& color )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( color == Qt::white )
+    settings.remove( "palettes/plotMajGrid" );
+  else
+    settings.setValue( "palettes/plotMajGrid", color );
+}
+
+// Canvas minor gridlines
+QColor US_GuiSettings::plotMinGrid( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  return settings.value( "palettes/plotMinGrid", Qt::lightGray ).value<QColor>();
+}
+
+void US_GuiSettings::set_plotMinGrid( const QColor& color )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( color == Qt::lightGray )
+    settings.remove( "palettes/plotMinGrid" );
+  else
+    settings.setValue( "palettes/plotMinGrid", color );
+}
+
+// Plot Picker rubber band pen and Tracker pen color
+QColor US_GuiSettings::plotPicker( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  return settings.value( "palettes/plotPicker", Qt::white ).value<QColor>();
+}
+
+void US_GuiSettings::set_plotPicker( const QColor& color )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( color == Qt::white )
+    settings.remove( "palettes/plotPicker" );
+  else
+    settings.setValue( "palettes/plotPicker", color );
 }
 

@@ -2,13 +2,13 @@
 #ifndef US_LICENSE_T_H
 #define US_LICENSE_T_H
 
-#include "us_global.h"
+#include <QtCore>
 
 class US_License_t
 {
   public:
-    US_License_t(){};
-    ~US_License_t(){};
+    US_License_t()  {};
+    ~US_License_t() {};
 
     enum { OK, Expired, Invalid, Missing, BadPlatform, BadOS };
 

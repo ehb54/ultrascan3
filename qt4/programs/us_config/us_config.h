@@ -6,6 +6,8 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_database.h"
+#include "us_color.h"
+#include "us_font.h"
 
 class US_Config : public US_Widgets
 {
@@ -20,6 +22,8 @@ private:
   US_Global     g;
   US_Help       showhelp;
   US_Database*  db;
+  US_Font*      font;
+  US_Color*     colors;
                
   QPushButton*  pb_help;
   QPushButton*  pb_save;
@@ -72,5 +76,5 @@ private slots:
   void update_password( void );
   void save           ( void );
   void help           ( void );
-
+  void closeEvent     ( QCloseEvent* );
 };

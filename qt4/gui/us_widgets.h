@@ -4,6 +4,12 @@
 
 #include <QtGui>
 
+#include "qwt_counter.h"
+#include "qwt_plot.h"
+#include "qwt_plot_grid.h"
+#include "qwt_plot_picker.h"
+#include "qwt_plot_curve.h"
+
 class US_Widgets : public QFrame
 {
   public: 
@@ -35,7 +41,7 @@ class US_Widgets : public QFrame
 
     //! \param labelString - text in pushbutton
     //! \param enabled
-    //! \param fontAdjust -  adjustment to default point size
+    //! \param fontAdjust -  adjustment to default font size
     //! * Standard Font family and size
     //! * color set to US_GuiSettings::pushbColor()
     //! * button is enabled
@@ -54,7 +60,11 @@ class US_Widgets : public QFrame
     //! * Color is set to US_GuiSettings::editColor()
     //! * ReadOnly is false
     QLineEdit*   us_lineedit  ( const QString& = 0, int = -1 );
-    
+
+    //! \param fontAdjust -  adjustment to default font size
+    //! * Color is set to US_GuiSettings::editColor()
+    QListWidget* us_listwidget ( int = 0 );
+
     //! \param text - Text to set with checkbox
     //! \param state - Qt::{Unchecked,PartiallyChecked,Checked}
     //! * Font weight is bold
@@ -65,6 +75,52 @@ class US_Widgets : public QFrame
     //! \param state - Qt::{Unchecked,PartiallyChecked,Checked}
     //! * Color is set to US_GuiSettings::editColor()
     QRadioButton* us_radiobutton( const QString&, Qt::CheckState = Qt::Unchecked );
+
+    //! \param low   - Lower bound of progress
+    //! \param high  - Upper bound of progress
+    //! \param value - Initial value between low and high
+    //! * Color is set to US_GuiSettings::normalColor()
+    //! * Font weight is bold
+    QProgressBar* us_progressBar( int, int, int = 0 );
+
+    //! * Color is set to US_GuiSettings::normalColor()
+    QComboBox*    us_comboBox( void );
+
+    //! Create an LCD style disply
+    //! \param digits - Number of digits to display
+    //! \param value  - Initial value to set
+    //! * Color is set to US_GuiSettings::lcdColor()
+    QLCDNumber*   us_lcd( int, int = 0 );
+                  
+    //! \param buttons - Number of buttons to use ( 1 to 3 )
+    //! \param low     - Lower bound of progress
+    //! \param high    - Upper bound of progress
+    //! \param value   - Initial value to set
+    //! * Color is set to US_GuiSettings::normalColor()
+    QwtCounter*   us_counter( int, double, double, double = 0.0 );
+
+    //! \param title  - Plot Title
+    //! \param bottom - Bottom Axis Title
+    //! \param left   - Left Axis Title
+    //! * Color is set to US_GuiSettings::plotColor()
+    //! * Convas background is set to US_GuiSettings::plotConvasBG()
+    QwtPlot*      us_plot( const QString&, const QString& = QString(), 
+                           const QString& = QString() );
+
+    //! \param plot*   - Pointer to plot
+    //! * Major Pen color is set to US_GuiSettings::plotMajGrid()
+    //! * Minor Pen color is set to US_GuiSettings::plotMinGrid()
+    QwtPlotGrid*  us_grid( QwtPlot* );
+
+    //! \param plot*   - Pointer to plot
+    //! * Curve color is set to US_GuiSettings::plotCurve()
+    QwtPlotCurve* us_curve( QwtPlot* );
+
+    //! \param plot*   - Pointer to plot
+    //! * Rubber Band pen and Tracker pen color is set to 
+    //! * US_GuiSettings::plotPicker()
+    QwtPlotPicker* us_picker( QwtPlot* );
+
 };
 #endif
 
