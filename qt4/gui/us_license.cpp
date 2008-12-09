@@ -398,12 +398,12 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
 
   // Finish up
-  QPoint p = g.global_position();
-  g.set_global_position( p + QPoint( 30, 30 ) );
+//  QPoint p = g.global_position();
+//  g.set_global_position( p + QPoint( 30, 30 ) );
 
   ypos += 30;    
-  setGeometry( QRect( p, p + QPoint( spacing + width + spacing, ypos ) ) );
-  setMinimumSize( QSize( spacing + width + spacing, ypos ) );
+//  setGeometry( QRect( p, p + QPoint( spacing + width + spacing, ypos ) ) );
+  setMinimumSize( spacing + width + spacing, ypos );
 
   // Initialize for later
   osTypes << "linux"   << "win32"  << "osx"     << "irix" << "solaris"
@@ -412,8 +412,8 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
 US_License::~US_License()
 {
-  QPoint p = g.global_position();
-  g.set_global_position( p - QPoint( 30, 30 ) );
+//  QPoint p = g.global_position();
+//  g.set_global_position( p - QPoint( 30, 30 ) );
 }
 
 void US_License::cancel( void )

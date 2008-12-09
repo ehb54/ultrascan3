@@ -5,7 +5,6 @@
 #include <QtCore>
 
 #include "us_widgets.h"
-#include "us_global.h"
 
 class US_Database : public US_Widgets
 {
@@ -13,13 +12,11 @@ class US_Database : public US_Widgets
   
   public:
     US_Database( QWidget* w = 0, Qt::WindowFlags flags = 0 );
-    ~US_Database();
+    ~US_Database() {};
     
   private:
     QList<QStringList> dblist;
     
-    US_Global    g;
-
     QPushButton* pb_add;   
     QPushButton* pb_delete;
     QPushButton* pb_save;

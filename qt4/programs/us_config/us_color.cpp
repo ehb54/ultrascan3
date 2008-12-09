@@ -3,16 +3,6 @@
 
 US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
 {
-  if ( ! g.isValid() )
-  {
-    // Do something for invalid global memory
-    //qDebug( "us_win: invalid global memory" );
-  }
- 
-  QPoint p = g.global_position();
-  move( p );
-  g.set_global_position( p + QPoint( 30, 30 ) );
- 
   setWindowTitle( "Color Configuration for UltraScan" );
 
   QGridLayout* mainLayout = new QGridLayout( this );
@@ -330,12 +320,6 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
   mainLayout->addLayout( buttonBar  , 1, 0, 1, 2 );
 
   reset();
-}
-
-US_Color::~US_Color()
-{
-  QPoint p = g.global_position();
-  g.set_global_position( p - QPoint( 30, 30 ) );
 }
 
 void US_Color::getCurrentSettings( void )

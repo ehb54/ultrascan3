@@ -3,88 +3,14 @@
 #include <QtSingleApplication>
 
 #include "us.h"
-#include "us_global.h"
 #include "us_license_t.h"
 #include "us_license.h"
-#include "us_help.h"
 #include "us_gui_settings.h"
 #include "us_win_data.cpp"
 #include "us_defines.h"
 #include "us_revision.h"
 
 using namespace us_win_data;
-
-/*
-int main( int argc, char* argv[] )
-{
-  QString options( getenv( "ULTRASCAN_OPTIONS" ) );
-  if ( options.contains( "multiple" ) )
-  {
-//
-    QApplication application( argc, argv );
-//
-    QString locale = QLocale::system().name();
-
-    QTranslator translator;
-    translator.load( QString( "us_" ) + locale );
-    application.installTranslator( &translator );
-    
-    //bool license = US_License_t::isValid();
-    us_win w;
-    w.show();
-    return application.exec();
-  }
- 
-//
-  QtSingleApplication application( "UltraScan", argc, argv );
-  if ( application.sendMessage( "Wake up" ) ) return 0;
-  application.initialize();
-//
-
-  QString locale = QLocale::system().name();
-
-  QTranslator translator;
-  translator.load( QString( "us_" ) + locale );
-  application.installTranslator( &translator );
-    
-  QString ErrorMessage;
-  if ( US_License_t::isValid( ErrorMessage ) != US_License_t::OK )
-  {
-    QMessageBox mBox;
-
-    QPushButton* cancel   = mBox.addButton( QMessageBox::Cancel );
-    QPushButton* Register = mBox.addButton( qApp->translate( "UltraScan", "Register"), 
-        QMessageBox::ActionRole);
-    
-    mBox.setDefaultButton( Register );
-    mBox.setWindowTitle( qApp->translate( "UltraScan", "UltraScan License Problem" ) );
-    mBox.setText( ErrorMessage );
-    mBox.setIcon( QMessageBox::Critical );
-    mBox.exec();
-
-    if ( mBox.clickedButton() == cancel )
-    {
-      qDebug( "Cancel clicked" );
-      exit( -1 );
-    }
-    
-    qDebug( "Register clicked" );
-
-    //US_License license;
-    //license.show;
-    //application.setActivationWindow( &license );
-    //return application.exec();
-    return -1;
-  }
-  
-  us_win w;
-  w.show();
-  application.setActivationWindow( &w );
-
-  return application.exec();
-}
-*/
-
 
 int main( int argc, char* argv[] )
 {

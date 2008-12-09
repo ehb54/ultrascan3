@@ -5,8 +5,6 @@
 
 QString US_Passwd::getPasswd( void  )
 {
-  US_Global g;
-
   // If the pw is in global memory, return it
   QString pw = g.passwd();
   if ( ! pw.isEmpty() ) return pw;

@@ -2,6 +2,25 @@
 #include "us_widgets.h"
 #include "us_gui_settings.h"
 
+US_Widgets::US_Widgets( QWidget* w, Qt::WindowFlags f ) : QFrame( w, f )
+{
+  if ( ! g.isValid() )
+  {
+    // Do something for invalid global memory
+   qDebug( "us_win: invalid global memory" );
+  }
+
+  QPoint p = g.global_position();
+  g.set_global_position( p + QPoint( 30, 30 ) );
+  move( p );
+}
+
+US_Widgets::~US_Widgets()
+{
+  QPoint p = g.global_position();
+  g.set_global_position( p - QPoint( 30, 30 ) );
+}
+
 // label
 QLabel* US_Widgets::us_label( const QString& labelString, int fontAdjust, 
                               int weight )

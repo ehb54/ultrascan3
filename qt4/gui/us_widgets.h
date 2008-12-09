@@ -10,13 +10,15 @@
 #include "qwt_plot_picker.h"
 #include "qwt_plot_curve.h"
 
+#include "us_global.h"
+
 class US_Widgets : public QFrame
 {
   public: 
-    US_Widgets ( QWidget* p = 0, Qt::WindowFlags flags = 0 ) 
-      : QFrame( p, flags) {};
-    
-    ~US_Widgets( void ) {};
+    US_Widgets( QWidget* p = 0, Qt::WindowFlags f = 0 );
+    ~US_Widgets( void );
+
+    US_Global g;
 
     //! \param labelString - contents of label
     //! \param fontAdjust  - adjustment to default point size 

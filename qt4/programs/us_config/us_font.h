@@ -5,7 +5,6 @@
 #include <QtGui>
 
 #include "us_widgets.h"
-#include "us_global.h"
 #include "us_help.h"
 
 class US_Font : public US_Widgets
@@ -13,8 +12,8 @@ class US_Font : public US_Widgets
   Q_OBJECT
   
   public:
-    US_Font( QWidget* = 0,  Qt::WindowFlags f = 0 );
-    ~US_Font();
+    US_Font( QWidget* = 0, Qt::WindowFlags = 0 );
+    ~US_Font() {};
 
   private:
 
@@ -31,8 +30,6 @@ class US_Font : public US_Widgets
     QPushButton* pb_save;
     QPushButton* pb_help;
     QPushButton* pb_cancel;
-
-    US_Global    g;
 
   private slots:
   

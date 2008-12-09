@@ -16,17 +16,6 @@ int main( int argc, char* argv[] )
 
 US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
 {
-  g = new US_Global();
-  if ( ! g->isValid() ) 
-  {
-     // Do something for invalid global memory
-     //qDebug( "us_win: invalid global memory" );
-  }
-
-  QPoint p = g->global_position();
-  move( p );
-  g->set_global_position( p + QPoint( 30, 30 ) );
-
   setWindowTitle( "Administrator Password" );
 
   int buttonh = 26;
@@ -65,7 +54,7 @@ US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
           
   pb_cancel = us_pushbutton( "Cancel" );
   pb_cancel->setMinimumHeight( buttonh );
-  connect( pb_cancel, SIGNAL( clicked() ), SLOT( quit() ) );
+  connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
 
   // Layout
   QGridLayout* passwords = new QGridLayout;
@@ -126,7 +115,7 @@ void US_Admin::save( void )
 
   US_Settings::set_UltraScanPW( sha1string );
 
-  quit();
+  close();
 }
 
 void US_Admin::help()
@@ -135,15 +124,3 @@ void US_Admin::help()
   online_help->show_help( "manual/administrator.html" );
 }
 
-void US_Admin::quit()
-{
-  close();
-}
-
-void US_Admin::closeEvent( QCloseEvent* event )
-{
-  QPoint p = g->global_position();
-  g->set_global_position( p - QPoint( 30, 30 ) );
-  delete g;
-  event->accept();
-}

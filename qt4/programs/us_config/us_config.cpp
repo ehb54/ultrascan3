@@ -59,16 +59,6 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   db     = NULL;
   colors = NULL;
 
-  if ( ! g.isValid() ) 
-  {
-    // Do something for invalid global memory
-    qDebug( "us_win: invalid global memory" );
-  }
-
-  QPoint p = g.global_position();
-  g.set_global_position( p + QPoint( 30, 30 ) );
-  move( p );
-
   setWindowTitle( "UltraScan Configuration" );
   setPalette( US_GuiSettings::frameColor() );
 
@@ -266,12 +256,6 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   topbox->addLayout( buttons );
 }
 
-US_Config::~US_Config()
-{
-  QPoint p = g.global_position();
-  g.set_global_position( p - QPoint( 30, 30 ) );
-}
-  
 void US_Config::help( void )
 {
   showhelp.show_help( "manual/config.html" );

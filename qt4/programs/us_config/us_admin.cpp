@@ -8,16 +8,6 @@
 
 US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
 {
-  if ( ! g.isValid() ) 
-  {
-     // Do something for invalid global memory
-     //qDebug( "us_win: invalid global memory" );
-  }
-
-  QPoint p = g.global_position();
-  move( p );
-  g.set_global_position( p + QPoint( 30, 30 ) );
-
   setWindowTitle( "Change Master Password" );
 
   int buttonh = 26;
@@ -93,11 +83,6 @@ US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
   main->addLayout( buttonLine );
 
   setLayout( main );
-}
-
-US_Admin::~US_Admin()
-{
-  g.set_global_position( g.global_position() - QPoint( 30, 30 ) );
 }
 
 void US_Admin::save( void )

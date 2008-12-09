@@ -5,7 +5,6 @@
 #include <QtGui>
 
 #include "us_widgets.h"
-#include "us_global.h"
 
 class US_Admin : public US_Widgets
 {
@@ -13,7 +12,7 @@ class US_Admin : public US_Widgets
   
   public:
     US_Admin( QWidget* = 0, Qt::WindowFlags = 0 );
-    ~US_Admin();
+    ~US_Admin() {};
     
   private:
     QLineEdit*   le_oldPasswd;
@@ -27,8 +26,6 @@ class US_Admin : public US_Widgets
     QString      password1;    
     QString      password2;    
     
-    US_Global    g;
-
   private slots:
     void help();
     void save();

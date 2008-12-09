@@ -10,16 +10,6 @@
 US_Database::US_Database( QWidget* w, Qt::WindowFlags flags ) 
   : US_Widgets( w, flags )
 {
-  if ( ! g.isValid() )
-  {
-    // Do something for invalid global memory
-    // qDebug( "us_win: invalid global memory" );
-  }
-
-  QPoint p = g.global_position();
-  move( p );
-  g.set_global_position( p + QPoint( 30, 30 ) );
- 
   // Frame layout
   setPalette( US_GuiSettings::frameColor() );
 
@@ -134,11 +124,6 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   buttons->addWidget( pb_cancel, row++, 1 );
 
   topbox->addLayout( buttons );
-}
-
-US_Database::~US_Database()
-{
-  g.set_global_position( g.global_position() - QPoint( 30, 30 ) );
 }
 
 void US_Database::select_db( QListWidgetItem* entry )

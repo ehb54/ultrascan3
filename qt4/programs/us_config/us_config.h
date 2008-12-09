@@ -2,7 +2,6 @@
 
 #include <QtGui>
 
-#include "us_global.h"
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_database.h"
@@ -16,10 +15,9 @@ class US_Config : public US_Widgets
 public:
 
   US_Config( QWidget* parent = 0, Qt::WindowFlags flags = 0 );
-  ~US_Config();
+  ~US_Config() {};
 
 private:
-  US_Global     g;
   US_Help       showhelp;
   US_Database*  db;
   US_Font*      font;
