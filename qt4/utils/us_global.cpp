@@ -2,29 +2,15 @@
 #include "us_global.h"
 #include <QTextStream>
 
-/*
-#ifndef WIN32
-  #include  <unistd.h>
-#endif
-*/
-
 US_Global::US_Global()
 {
-  valid = false;
+  valid      = false;
+  deleteFlag = false;
 
   // Make the key specific to the uid
   QString key = QString( "UltraScan%1" ).arg( getuid() );
-  //qDebug( QString( "Key:" + key ).toAscii() );
 
-/*
-#ifndef WIN32
-  QTextStream( &key ) << getuid();
-#endif
-*/
-    
   sharedMemory.setKey( key );
-  //QString msg = "Shared memory key: " + key;
-  //qDebug( msg.toAscii() );
 
   if ( ! sharedMemory.attach() )
   {
@@ -34,7 +20,6 @@ US_Global::US_Global()
       set_global_position( QPoint( 50, 50 ) );
       setPasswd( "" );
       // Add an additional global initialization here
-      //qDebug( "Shared memory created -- done" );
     }
     else
       qDebug( "Failure to create shared memory" );
@@ -42,14 +27,13 @@ US_Global::US_Global()
   else
   { 
     valid = true;
-    //qDebug( "Attached to shared memory" );
   }
 }
 
 US_Global::~US_Global()
 {
-  //qDebug( "Detaching shared memory" );
   sharedMemory.detach();
+  if ( deleteFlag ) sharedMemory.deleteLater();
 }
 
 void US_Global::set_global_position( const QPoint& p )

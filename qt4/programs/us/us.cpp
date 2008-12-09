@@ -82,17 +82,20 @@ void us_action::onTriggered( bool )
 us_win::us_win( QWidget* parent, Qt::WindowFlags flags )
   : QMainWindow( parent, flags )
 {
+  // We need to handle US_Global::g here becuse US_Widgets is not a parent
   if ( ! g.isValid() ) 
   {
     // Do something for invalid global memory
     qDebug( "us_win: invalid global memory" );
   }
-
+  
+  g.set_global_position( QPoint( 50, 50 ) ); // Ensure initialization
   QPoint p = g.global_position();
   setGeometry( QRect( p, p + QPoint( 710, 532 ) ) );
   g.set_global_position( p + QPoint( 30, 30 ) );
 
   setWindowTitle( "UltraScan Analysis" );
+  procs = QList<procData*>(); // Initialize to an empty list
 
   ////////////
   QMenu* file = new QMenu( tr( "&File" ), this );
@@ -166,17 +169,21 @@ void us_win::onIndexTriggered( int index )
 
 void us_win::terminated( int /* code*/, QProcess::ExitStatus /* status */ )
 {
-  for ( int i = 0; i < P_END - P_CONFIG; i++ )
+  QList<procData*>::iterator pr;
+  
+  for ( pr = procs.begin(); pr != procs.end(); pr++ )
   {
-    QProcess* proc = p[ i ].process;
-    if ( proc ) 
+    procData* d       = *pr;
+    QProcess* process = d->proc;
+
+    if ( process->state() == QProcess::NotRunning )
     {
-      if ( proc->state() == QProcess::NotRunning )
-      {
-        delete proc;
-        p[ i ].process = NULL;
-        return;
-      }
+      procs.removeOne( d );
+      int index = d->index;
+      p[ index ].currentRunCount--;
+      delete process;  // Deleting the process structure
+      delete d;        // Deleting the procData structure
+      return;
     }
   }
 }
@@ -185,11 +192,12 @@ void us_win::launch( int index )
 {
   index -= P_CONFIG;
 
-  if ( p[ index ].process ) 
+  if ( p[ index ].maxRunCount <= p[ index ].currentRunCount && 
+       p[ index ].maxRunCount > 0 ) 
   {
-    QMessageBox::information( this,
+    QMessageBox::warning( this,
       tr( "Error" ),
-      p[ index ].name + tr( " is already running" ) );
+      p[ index ].name + tr( " has reached it's maximum run count." ) );
   
     return;
   }
@@ -213,11 +221,75 @@ void us_win::launch( int index )
           "for " ) + p[ index ].name );
   }
   else
-    p[ index ].process = process;
+  {
+    p[ index ].currentRunCount++;
+    procData* pr = new procData;
+    pr->proc = process;
+    pr->name = p[ index ].name;
+    pr->index = index;
+
+    procs << pr;
+  }
 
   statusBar()->showMessage( 
       tr( "Loaded " ) + p[ index ].runningMsg + "..." );
 }
+
+void us_win::closeProcs( void )
+{
+  QString                    names;
+  QList<procData*>::iterator p;
+  
+  for ( p = procs.begin(); p != procs.end(); p++ )
+  {
+    procData* d  = *p;
+    names       += d->name + "\n";
+  }
+
+  QString isAre  = ( procs.length() > 1 ) ? "es are" : " is";
+  QString itThem = ( procs.length() > 1 ) ? "them"   : "it";
+  
+  QMessageBox box;
+  box.setWindowTitle( tr( "Attention" ) );
+  box.setText( QString( tr( "The following process%1 still running:\n%2"
+                            "Do you want to close %3?" )
+                             .arg( isAre ).arg( names ).arg( itThem ) ) );
+
+  QString killText  = tr( "&Kill" );
+  QString closeText = tr( "&Close Gracfully" );
+  QString leaveText = tr( "&Leave running" );
+
+  QPushButton* kill  = box.addButton( killText , QMessageBox::YesRole );
+                       box.addButton( closeText, QMessageBox::YesRole );
+  QPushButton* leave = box.addButton( leaveText, QMessageBox::NoRole  );
+
+  box.exec();
+
+  if ( box.clickedButton() == leave ) return;
+
+  for ( p = procs.begin(); p != procs.end(); p++ )
+  {
+    procData* d       = *p;
+    QProcess* process = d->proc;
+    
+    if ( box.clickedButton() == kill )
+      process->kill();
+    else
+      process->terminate();
+  }
+
+  // We need to sleep slightly (one millisecond) so that the system can clean 
+  // up and properly release shared memory.
+  g.scheduleDelete();
+  usleep( 1000 );
+}
+
+void us_win::closeEvent( QCloseEvent* e )
+{
+  if ( ! procs.isEmpty() ) closeProcs();
+  e->accept();
+}
+
 
 void us_win::splash( void )
 {

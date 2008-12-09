@@ -37,28 +37,29 @@ namespace us_win_data
   struct processes
   {
     int       index;
-    QProcess* process;
+    int       maxRunCount;
+    int       currentRunCount;
     QString   name;
     QString   loadingMsg;
     QString   runningMsg;
   } p[] =
   {
-    { P_CONFIG,        NULL, "us_config",
+    { P_CONFIG, 1, 0, "us_config",
       QObject::tr( "Loading Configuration" ),
       QObject::tr( "Configuration Program" ) 
     },
 
-    { P_ADMIN,         NULL, "us_admin",
+    { P_ADMIN,  1, 0, "us_admin",
       QObject::tr( "Loading Administrator" ),
       QObject::tr( "Adminstrator Program"  )
     },
 
-    { P_VELOC_ABSORB,  NULL, "us_edvabs",
+    { P_VELOC_ABSORB,  0, 0, "us_edvabs",
       QObject::tr( "Editing Velocity Absorbance Data" ),
       QObject::tr( "Editing Velocity Absorbance Data Program" )
     },
     
-    { P_END, NULL, "", "", "" }
+    { P_END, 0, 0, "", "", "" }
   };
 
   // Help Functions

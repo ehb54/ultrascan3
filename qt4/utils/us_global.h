@@ -83,6 +83,11 @@ class US_Global
     */
     void setPasswd( const QString& );
 
+    /*! \brief Only called by master program to schedule deleting of
+        shared memory when killing child processes
+    */
+    void scheduleDelete( void ) { deleteFlag = true; }
+
   private:
 
     /*!
@@ -106,6 +111,7 @@ class US_Global
 
     Global        global;
     bool          valid;
+    bool          deleteFlag;
     QSharedMemory sharedMemory;
 
     void read_global ( void );

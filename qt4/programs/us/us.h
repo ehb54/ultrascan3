@@ -25,11 +25,23 @@ private:
   void help   ( int );
   void launch ( int );
 
+  struct procData
+  {
+    QProcess* proc;
+    QString   name;
+    int       index;
+  };
+
+  QList<procData*> procs;
+
 private slots:
   void onIndexTriggered( int index );
   void closeSplash     ( void );
   void terminated      ( int, QProcess::ExitStatus );
+  void closeEvent      ( QCloseEvent* );
+  void closeProcs      ( void );
 };
+
 //////////////
 class us_action : public QAction
 {
