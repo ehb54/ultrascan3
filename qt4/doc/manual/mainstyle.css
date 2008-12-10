@@ -1,6 +1,32 @@
-body { 	margin-left: 5 px;
-	margin-right: 5 px;
-	margin-top: 0 px;
-	text-align: justify;
+body 
+{ 
+  margin-left     : 1em;
+	margin-right    : 1em;
+	margin-top      : 1em;
+	text-align      : justify;
 	background-color: white;
-     }
+  color           : black;
+}
+
+a:link    { color : #0000EF; }  /* Slightly dark blue */
+a:visited { color : #55188A; }  /* Maroon */
+a:active  { color : red;     }
+
+img       { border: none; }
+
+p.footer
+{
+  font-size       : small;
+  font-family     : helvetica sans-serif;
+}
+
+/* div.header img { float : left; }
+hr             { clear : both; } */
+
+div.header
+{
+  margin: 0px 5%;
+  font-style: italic;
+  font-size: 300%;
+}
+

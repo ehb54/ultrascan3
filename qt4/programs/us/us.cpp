@@ -1,5 +1,4 @@
 //! \file us.cpp
-#include <QApplication>
 #include <QtSingleApplication>
 
 #include "us.h"
@@ -14,7 +13,7 @@ using namespace us_win_data;
 
 int main( int argc, char* argv[] )
 {
-  QtSingleApplication application( "UltraScan", argc, argv );
+  QtSingleApplication application( "UltraScan III", argc, argv );
   QString             options( getenv( "ULTRASCAN_OPTIONS" ) );
   
   // If environment variable ULTRASCAN_OPTIONS contians the 
@@ -42,11 +41,11 @@ int main( int argc, char* argv[] )
     QMessageBox mBox;
 
     QPushButton* cancel   = mBox.addButton( QMessageBox::Cancel );
-    QPushButton* Register = mBox.addButton( qApp->translate( "UltraScan", "Register"), 
+    QPushButton* Register = mBox.addButton( qApp->translate( "UltraScan III", "Register"), 
         QMessageBox::ActionRole);
     
     mBox.setDefaultButton( Register );
-    mBox.setWindowTitle  ( qApp->translate( "UltraScan", "UltraScan License Problem" ) );
+    mBox.setWindowTitle  ( qApp->translate( "UltraScan III", "UltraScan License Problem" ) );
     mBox.setText         ( ErrorMessage );
     mBox.setIcon         ( QMessageBox::Critical );
     mBox.exec();
@@ -94,7 +93,7 @@ us_win::us_win( QWidget* parent, Qt::WindowFlags flags )
   setGeometry( QRect( p, p + QPoint( 710, 532 ) ) );
   g.set_global_position( p + QPoint( 30, 30 ) );
 
-  setWindowTitle( "UltraScan Analysis" );
+  setWindowTitle( "UltraScan III" );
   procs = QList<procData*>(); // Initialize to an empty list
 
   ////////////
@@ -111,13 +110,30 @@ us_win::us_win( QWidget* parent, Qt::WindowFlags flags )
   addMenu( 23, tr( "&Fluorescense Data"   ), type1 );
   addMenu( 24, tr( "&Edit Cell ID's Data" ), type1 );
 
+  QMenu* type2 = new QMenu( tr( "&Equlibrium Data" ), file );
+  addMenu( 31, tr( "&Absorbance Data"     ), type2 );
+
+
+
+  ///////////////
   QMenu* edit = new QMenu( tr( "&Edit" ), this );
+  edit->setFont( QFont( "Helvetica" ) );
   edit->addMenu( type1 );
-  addMenu( 12, tr( "&Equilibrium Data" )    , edit );
+  edit->addMenu( type2 );
+  //addMenu( 12, tr( "&Equilibrium Data" )    , edit );
   addMenu( 13, tr( "Edit &Wavelength Data" ), edit );
+  addMenu( 14, tr( "View/Edit &Multiwavelength Data" ), edit );
   edit->addSeparator();
   addMenu(  P_CONFIG, tr( "&Preferences" )  , edit );
   
+  /////////////
+  QMenu* velocity    = new QMenu( tr( "&Velocity" ), this );
+  QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
+  QMenu* fit         = new QMenu( tr( "&Global Fit" ), this );
+  QMenu* utilities   = new QMenu( tr( "&Utilities" ), this );
+  QMenu* simulation  = new QMenu( tr( "S&imulation" ), this );
+  QMenu* database    = new QMenu( tr( "&Database" ), this );
+  ///////////////
   QMenu* help = new QMenu( tr( "&Help" ), this );
   addMenu( HELP_HOME   , tr("UltraScan &Home"    ), help );
   addMenu( HELP        , tr("UltraScan &Manual"  ), help );
@@ -129,10 +145,16 @@ us_win::us_win( QWidget* parent, Qt::WindowFlags flags )
   
 
   QFont bold = QFont( "Helvetica", 9, QFont::Bold );
-  menuBar()->setFont( bold );
-  menuBar()->addMenu( file );
-  menuBar()->addMenu( edit );
-  menuBar()->addMenu( help );
+  menuBar()->setFont( bold        );
+  menuBar()->addMenu( file        );
+  menuBar()->addMenu( edit        );
+  menuBar()->addMenu( velocity    );
+  menuBar()->addMenu( equilibrium );
+  menuBar()->addMenu( fit         );
+  menuBar()->addMenu( utilities   );
+  menuBar()->addMenu( simulation  );
+  menuBar()->addMenu( database    );
+  menuBar()->addMenu( help        );
 
   splash();
   statusBar()->showMessage( tr( "Ready" ) );
@@ -316,8 +338,7 @@ void us_win::splash( void )
 void us_win::logo( int width )
 {
   QString dir = qApp->applicationDirPath() + "/../etc/";  // For now -- later UltraScan sytem dir
-  // QString dir = US_Settings::systemDir() + "/etc/";
-  QPixmap rawpix( dir + "flash-combined-no-text.png" );
+  QPixmap rawpix( dir + "us3-splash.png" );
 
   int ph = rawpix.height();
   int pw = rawpix.width();
@@ -328,7 +349,7 @@ void us_win::logo( int width )
   painter.drawPixmap( 0, 0, rawpix );
   painter.setPen    ( QPen( Qt::white, 3 ) );
 
-  QString version = "UltraScan " + US_Version + " ( " REVISION
+  QString version = "Version " + US_Version + " ( " REVISION
   " ) for " OS_TITLE;  // REVISON is #define "Revision: xxx"
 
   QFont font( "Arial" );
@@ -382,7 +403,7 @@ void us_win::help( int index )
     case HELP_CREDITS:
       QMessageBox::information( this,
         tr( "UltraScan Credits" ),
-        tr( "UltraScan II version %1\n"
+        tr( "UltraScan III version %1\n"
             "Copyright 1998 - 2008\n"
             "Borries Demeler and the University of Texas System\n\n"
             " - Credits -\n\n"

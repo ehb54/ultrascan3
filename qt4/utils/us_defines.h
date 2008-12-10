@@ -4,7 +4,7 @@
 //! \file us_defines.h
 
 /// The version of UltraScan
-#define US_Version QString("10.0")
+#define US_Version QString("0.1")
 
 // Define the platform
 #ifdef SPARC
