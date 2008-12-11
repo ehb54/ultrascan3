@@ -248,7 +248,7 @@ AtoB(PDB * pdb, long npoints, float dx,
     for (i = 0; i < npoints; i++)	/* Now the radius of the beads are in r0[][][] */
 	for (j = 0; j < npoints; j++)
 	    for (k = 0; k < npoints; k++)
-		ro[i][j][k] = pow(ro[i][j][k], 0.333333);
+		ro[i][j][k] = pow((double)ro[i][j][k], 0.333333);
 
 #if defined(DEBUG)
     puts("in atob 4 b");
@@ -511,7 +511,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
     }
     else
     {
-	epsilon = EXPANSION_COEF;
+	epsilon = (float)EXPANSION_COEF;
     }
     /*max box size is slightly (EXP_COEF*100 %) bigger than particle! */
 
@@ -527,7 +527,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
     npoints *= 2;
 
 
-    nprop.resize((int) pow(npoints, 3));
+    nprop.resize((int) pow((double)npoints, 3));
 #if defined(DEBUG)
     puts("grid_atob 4");
     fflush(stdout);

@@ -14,7 +14,8 @@
 #include <math.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <values.h>
+//#include <values.h>
+#include <list>  
 
 typedef float REAL;
 
