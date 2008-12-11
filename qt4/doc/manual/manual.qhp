@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<QtHelpProject version="1.0">
+    <namespace>UltraScanIII</namespace>
+    <virtualFolder>manual</virtualFolder>
+    <customFilter name="UltraScan III">
+        <filterAttribute>UltraScan</filterAttribute>
+        <filterAttribute>III</filterAttribute>
+    </customFilter>
+    <filterSection>
+        <filterAttribute>UltraScan</filterAttribute>
+        <filterAttribute>III</filterAttribute>
+        <toc>
+            <section title="UltraScan III User's Manual"     ref="index.html">
+                <section title="Quick Index"                 ref="index.html#quick"/>
+                <section title="Editing Sedimentation Data"  ref="index.html#edit"/>
+                <section title="Velocity Data Analysis"      ref="index.html#veloc"/>
+                <section title="Equilibrium Data Analysis"   ref="index.html#equil"/>
+                <section title="Nonlinear Least Squares Analysis"  ref="index.html#least2"/>
+                <section title="Monte Carlo Analysis"        ref="index.html#monte"/>
+                <section title="Utilities"                   ref="index.html#utils"/>
+                <section title="Simulation Programs"         ref="index.html#simulation"/>
+                <section title="UltraScan Database Frontend" ref="index.html#database"/>
+                <section title="Additional Information"      ref="index.html#additional"/>
+            </section>
+        </toc>
+        <keywords>
+            <keyword name="password" id="UltraScan::pw" ref="master_pw.html"/>
+            <keyword name="configuration"               ref="config.html"/>
+        </keywords>
+        <files>
+            <file>mainstyle.css</file>
+            <file>index.html</file>
+            <file>images/ultrascan3.png</file>
+
+            <file>config.html</file>
+            <file>images/config.png</file>
+            <file>images/config1.png</file>
+            <file>config2.html</file>
+            <file>images/config2.png</file>
+            
+            <file>uscol.html</file>
+            <file>images/color-1.png</file>
+            <file>uscolor2.html</file>
+            <file>images/color-2.png</file>
+            
+            <file>usfont.html</file>
+            <file>images/usfont-1.png</file>
+            <file>usfont2.html</file>
+            <file>images/usfont-2.png</file>
+            
+            <file>database_config.html</file>
+            <file>images/database.png</file>
+            
+            <file>master_pw.html</file>
+            <file>images/master-pw.png</file>
+        </files>
+    </filterSection>
+</QtHelpProject> 

@@ -46,6 +46,7 @@ QString US_Crypto::decrypt( const QString& ciphertext, const QString& initVector
 {
   US_Passwd  p;
   QByteArray masterPW = p.getPasswd().toLatin1();
+  if ( masterPW.size() == 0 ) return QString();
 
   QCA::Initializer init;
 

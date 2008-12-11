@@ -1,99 +1,71 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<?xml version="1.0"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "http://www.w3.org/TR/html4/loose.dtd">
 <html>
   <head>
-    <title>
-      Database Configuration Panel
-    </title>
+    <title> Database Configuration Panel </title>
     <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
     <link href="mainstyle.css" rel="styleSheet" type="text/css">
   </head>
-  <body text="#000000" bgcolor="#FFFFFF" link="#0000EF" vlink="#CF30CF"
-  alink="#FF0000">
-    <table border="0" cellpadding="5">
-      <tr>
-        <td>
-          <img src="ultrascan1.png" border="0">
-        </td>
-        <td align="vcenter">
-          <h1 align="center">
-            <i>Manual</i>
-          </h1>
-        </td>
-      </tr>
-    </table>
-    <hr>
-    <h2>
-      Database Configuration Panel:
-    </h2>
-    <p>
-      <b>Note</b>: before a database entry can be entered, the
-      <b><i>UltraScan</i></b> <a href="administrator.html">administrator
-      password</a> has to be configured. The <a href="database.png">database
-      configuration</a> window (listed under "Miscellaneous Settings") can be
-      selected from the <a href="config.html">configuration panel</a> by
-      clicking on the "<b>Change</b>" button from the database preferences
-      option.
-    </p>
-    <div align="center">
-      <table border="0" cellspacing="5" cellpadding="5">
-        <tr>
-          <td>
-            "<b>File</b>"
-          </td>
-          <td>
-            <img src="arrow.png" width="52" height="12">
-          </td>
-          <td>
-            "<b>Configuration</b>"
-          </td>
-          <td>
-            <img src="arrow.png" width="52" height="12">
-          </td>
-          <td>
-            ("Database Preferences") "<b>Change</b>"
-          </td>
-        </tr>
-      </table>
+  <body>
+
+    <div class='header'> <img src="images/ultrascan3.png" alt='Ultrascan logo'>
+      <i>Manual</i> 
     </div>
-    <p>
-      The <a href="database.png">database configuration</a> panel allows you
-      to configure the connection to the database that holds your
-      experimental data. Here you can enter the name of the database, the
-      username you use to connect to the database engine as well as your
-      database login password, and finally the name of the host on which the
-      database engine is running. <b><i>UltraScan</i></b> offers the option
-      to configure multiple databases for facilities that may use multiple
-      databases from different sites simultaneously. The currently selected
-      database is listed with the "(default)" tag. To change the default
-      database, simply double-click on the desired database in the "Database
-      List" section to select the database that needs to be set as default.
-      Now click on the "<b>Save as Default</b>" button and enter the
-      database's password when prompted in the <a href=
-      "database1.png">password dialog</a>. When a change in the selection has
-      been made, the database entries are shown as <a href=
-      "database2.png">greyed-out listings</a>. When "<b>Reset</b>" is
-      selected, the fields are cleared and a new entry can be entered. Note
-      that if a new database is entered it is set to default. To delete an
-      entry, click on "<b>Delete Old Entry</b>". The <b><i>UltraScan</i></b>
-      <a href="administrator.html">administrator password</a> is required to
-      confirm a record deletion.
-    </p>
+
     <hr>
-    <font face="helvetica" size="-1">www contact: <a href=
-    "mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a></font>
-    <p>
-      <font face="helvetica" size="-1">This document is part of the
-      <i><b>UltraScan</b></i> Software Documentation distribution: <a href=
-      "copyright.html">Copyright © notice</a>.</font>
-    </p>
-    <p>
-      <font face="helvetica" size="-1">The latest version of this document
-      can always be found at: <a href=
-      "http://www.ultrascan.uthscsa.edu">http://www.ultrascan.uthscsa.edu</a></font>
-    </p>
-    <p>
-      <font face="helvetica" size="-1">Last modified on March 20,
-      2006.</font>
-    </p>
+
+    <h2> Database Configuration Panel </h2>
+
+
+    <p> <b>Note</b>: Whenever <b><i>UltraScan</i></b> needs to use a database
+    entry, it needs the user's master password.  The first time it is needed,
+    it will prompt for it and save it in memory, but not on disk storage.  When
+    needed again, <b><i>UltraScan</i></b> uses the stored password.  Before
+    this can be done, the master password needs to be set up and a
+    cryptographic hash of the password stored.  Use the <a
+    href="master_pw.html">Master Password</a> panel, accessed form the main
+    configuration panel, to set up or change the master password. </p>
+
+    <center> <img src="images/database.png"> </center>
+
+    <p> The database configuration panel allows you to configure the connection
+    to the database that holds your experimental data. Here you can enter the
+    name of the database, the username you use to connect to the database
+    engine as well as your <em>database</em> login password, and finally the
+    name of the host on which the database engine is running.
+    <b><i>UltraScan</i></b> offers the option to configure multiple databases
+    for facilities that may use multiple databases from different sites. The
+    currently selected database is listed with the "(default)" tag. To change
+    the default database, simply double-click on the desired database in the
+    "Database List" section to select the database that needs to be set as
+    default.  Now click on the <em>Save as Default</em> button.  The name in
+    the database list with the "(default)" tag will then reflect the new
+    default database. </p> 
+    
+    <p>When <em>Reset</em> is selected, the fields are cleared and a new entry
+    can be entered. The <em>Test DB Connectivity</em> button will try to
+    connect to the database in the Detailed Information fields to provide a
+    confimation that the data is correct. <p>
+
+    <p> To delete an entry, select it and click on <em>Delete Current
+    Entry</em>. </p>
+
+    <hr>
+
+    <p class='footer'>www contact: <a href=
+    "mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a></p>
+    
+    <p class='footer'>This document is part of the
+      <i><b>UltraScan</b></i> Software Documentation distribution.<br>
+      <a href="copyright.html">Copyright © notice</a>.</p>
+    
+    <p class='footer'>The latest version of this document can always be found at: </p>
+    
+    <p class='footer' style="margin-left: 2em"><a href=
+      "http://www.ultrascan.uthscsa.edu">http://www.ultrascan.uthscsa.edu</a></p>
+    
+    <p class='footer'>Last modified on $Date$ </p>
+
   </body>
 </html>
