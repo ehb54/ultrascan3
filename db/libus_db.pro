@@ -4,7 +4,7 @@ CONFIG      += debug qt thread warn
 TARGET       = us_db
 DEPENDPATH  += ../utils ../gui
 INCLUDEPATH += ../utils ../gui
-DESTDIR      = ../../lib
+DESTDIR      = ../lib
 
 # gui is needed for now because us_crypto can pop
 # up a window asking for teh master password

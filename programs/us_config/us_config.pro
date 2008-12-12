@@ -7,7 +7,7 @@ TARGET        = us_config
 DEPENDPATH   += ../../utils ../../gui ../../db
 INCLUDEPATH  += ../../utils ../../gui ../../db $$QWTPATH/include
 DESTDIR       = ../../bin
-LIBS         += -lus_utils -lus_gui -lus_db -L../../../lib -lqca 
+LIBS         += -lus_utils -lus_gui -lus_db -L../../lib -lqca 
 LIBS         += -lqwt -L$$QWTPATH/lib
 
 # Temp until db library is built 

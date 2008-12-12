@@ -3,7 +3,7 @@ TEMPLATE     = lib
 CONFIG      += debug qt thread warn
 QT          -= gui
 TARGET       = us_utils
-DESTDIR      = ../../lib
+DESTDIR      = ../lib
 
 TRANSLATIONS = us_utils.ts
 VERSION      = 10.0
