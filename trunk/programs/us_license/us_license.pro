@@ -7,7 +7,7 @@ TARGET        = us_license
 DEPENDPATH   += ../../utils ../../gui
 INCLUDEPATH  += ../../utils ../../gui $$QWTPATH/include
 DESTDIR       = ../../bin
-LIBS         += -lus_utils -lus_gui -L../../../lib -lqca
+LIBS         += -lus_utils -lus_gui -L../../lib -lqca
 LIBS         += -lqwt -L$$QWTPATH/lib
 
 SOURCES       = us_license.cpp

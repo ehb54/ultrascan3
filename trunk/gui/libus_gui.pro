@@ -7,7 +7,7 @@ TARGET       = us_gui
 DEPENDPATH   += ../utils $$QWTPATH/include
 INCLUDEPATH  += ../utils $$QWTPATH/include
 
-DESTDIR      = ../../lib
+DESTDIR      = ../lib
 
 TRANSLATIONS = us_gui.ts
 VERSION      = 10.0
