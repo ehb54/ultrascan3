@@ -1,0 +1,104 @@
+<head>
+   <title>Finite Element Results Interpretation</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<H2>Finite Element Results Interpretation:</H2>
+<p>
+After a fitting session has converged, the finite element analysis will
+result in data that can be used to calculate molecular weights or partial
+specific volumes, if the molecular weight is know from a different source.
+<p> Press on the <a href=predict3.png><i>Model Results</i></a> button in
+the <a href=finite_model_ctrl4.png>model control window</a> to see the possible
+models that would be consistent with the calculated parameters.  Make sure
+to click on <i>Update for 20<sup>o</sup>,W</i> before modeling any results
+in order to correct all data for the proper buffer, temperature and vbar
+values. You can also update the models from within the modeling window.
+Three hyposthetical models are presented:
+<p>
+<ul>
+<li>Prolate Ellipsoid
+<li>Oblate Ellipsoid
+<li>Long Rod
+</ul>
+<p>
+In addition, the frictional coefficient <i>f</i>, the frictional ratio
+<i>f/f0</i>, the volume of the particle, the radius of the minimal sphere
+and the frictional of the minimal sphere are shown. The minimal sphere is
+the sphere that has the same volume as the modeled particle. 
+<p>
+<b>Special considerations:</b>
+<p>
+How reliable are these calculations? The reliability of these hypothetical
+models is dependent on the adequacy of the model used for the finite
+element fit. If the model used for the nonlinear least squares fit can be
+used to accurately describe the underlying physical system, the models
+are all equally likely. Of course, there exists no information that would
+tell you which of these three models is the most likely. The frictional
+information derived from the finite element fit is degenerate, in the sense
+that many different models can be used to explain the frictional coefficient
+ratio <i>f/f0</i> observed. Therefore, these data can only be used to 
+suggest a possible interpretation of the system at hand.
+<p>
+How adequate a particular fitting model is, is very difficult to
+determine. In the first place, it is of course required that the data
+were fit with a fitting model wich produces residuals that scatter
+randomly about zero. In general, it can be stated that if the same model
+can be used to fit the same system under many different conditions
+such as different run speeds, concentrations and run durations
+it is quite likely that the model describes adequately the system
+under investigation. Therefore, it is recommended to fit multiple run
+conditions of the same system, and if possible, in a single global fit
+(this functionality is available in the future release of the Beowulf
+version of the UltraScan software).
+<p>
+If the same model can be applied to all run conditions, the confidence
+in the resulting parameters is higher than if only a single run
+condition is examined.  A special case is found if the frictional ratio,
+<i>f/f0</i>, is equal to unity. In such a case it is possible that the
+sample is spherical in shape. Even though a unity value for <i>f/f0</i>
+is indicative of a spherical shape, it is also possible that the model
+which produced a unity <i>f/f0</i> ratio is the result of an incorrect
+fitting model. 
+<p>
+In the most obvious case even a ratio less than unity is possible. In this
+case a <a href=predict3a.png> warning message</a> is printed and the model
+used to arrive at the values can be considered invalid since there is no
+physical possibility for this to occur. In that case the frictional ratio
+will be <a href=predict3b.png>printed in red</a> to alert the user to the
+problem. Such a ratio will most likely occur because a heterogeneity in
+the sample has been compensated for by a too large diffusion coefficient.
+In the worst case scenario a gaussian distribution of particle sizes will
+produce a boundary spreading that can be compensated quite well with
+a larger diffusion coefficient, since a larger diffusion coefficient
+will also produce a similar boundary spreading. Especially in the case
+of noisy data or low concentrations of secondary components, this error
+may occur quite readily.
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

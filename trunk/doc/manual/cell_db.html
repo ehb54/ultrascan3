@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>
+      Cell Data Record Entry
+    </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <link href="mainstyle.css" rel="styleSheet" type="text/css">
+  </head>
+  <body text="#000000" bgcolor="#FFFFFF" link="#0000EF" vlink="#CF30CF"
+  alink="#FF0000">
+    <table border="0" cellpadding="5">
+      <tbody>
+        <tr>
+          <td>
+            <img src="ultrascan1.png" border="0">
+          </td>
+          <td align="vcenter">
+            <h1 align="center">
+              <i>Manual</i>
+            </h1>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <hr>
+    <h2>
+      Cell Data Record Entry:
+    </h2>
+    <center>
+      <img src="celldb1.png">
+    </center>
+    <p>
+      Use this function to associate buffer, nucleotide, or peptide sequence
+      data with the experimental data for each channel of each cell of an
+      experimental run to be stored in the <b><i>UltraScan</i></b> database.
+      The function is opened by selecting a <a href="expdata18.png">cell
+      information listbox entry</a> in the <a href=
+      "expdata_db.html">experimental data database entry form</a>. Once
+      opened, the form will inherit the database ID keys for the investigator
+      and centerpiece type. In this module you will have to select a
+      nucleotide and peptide sequence, as well as a buffer definition for
+      each channel of the cell. The selection has to be made from entries
+      that have been previously committed to the database. After the
+      selection is made, you can add the new cell entry to the database.
+    </p>
+    <p>
+      <b>Note:</b> This program will utilize the database backend of
+      <b><i>UltraScan</i></b>. This functionality allows you to save certain
+      files and data in a database, among them the nucleotide files analyzed
+      with this module. If the database system is not supported or available
+      on your system, you will get a <a href="db-error1.png">warning
+      message</a> when opening this module.
+    </p>
+    <p>
+      <b>Explanation of fields and buttons:</b>
+    </p>
+    <table border="1" cellspacing="5" cellpadding="5">
+      <tr>
+        <td>
+          <img src="celldb2.png" align="center">
+        </td>
+        <td>
+          <ul>
+            <li>
+              <b>Cell Table ID:</b> The database ID/key for this cell entry
+            </li>
+            <li>
+              <b>Investigator ID:</b> The database ID/key for the
+              investigator associated with this dataset.
+            </li>
+            <li>
+              <b>Centerpiece ID:</b> The database ID/key of the centerpiece
+              used in this cell
+            </li>
+            <li>
+              <b>DNA DB for Channel:</b> Click on this button to select a
+              nucleotide database entry to be associated with the sample in
+              this channel (optional)
+            </li>
+            <li>
+              <b>Buffer DB for Channel:</b> Click on this button to select a
+              buffer definition file from the database to be associated with
+              the sample in this channel (optional)
+            </li>
+            <li>
+              <b>Peptide DB for Channel:</b> Click on this button to select a
+              peptide database entry to be associated with the sample in this
+              channel (optional)
+            </li>
+            <li>
+              <b>Channel:</b> This listbox displays the currently selected
+              channel. If a multi-channel centerpiece was used in this cell,
+              you will have to make a selection for each channel.
+            </li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <img src="celldb5.png" align="center">
+        </td>
+        <td>
+          <ul>
+            <li>
+              <b>Help:</b> Display this help file
+            </li>
+            <li>
+              <b>Close:</b> Close this database utility window and exit
+            </li>
+            <li>
+              <b>Add DB Entry:</b> Add the current cell information record to
+              the database. All channels need to be defined before the cell
+              data is committed to the database. If you did not associate any
+              buffer, nucleotide or peptide sequence file with your cell
+              data, a <a href="celldb6.png">warning message</a> will be
+              shown. You should always define a buffer and either a
+              nucleotide or peptide sequence, or both.
+            </li>
+            <li>
+              <b>Delete DB Entry:</b> Delete the selected experimental data
+              record from the database. This function requires <a href=
+              "administrator.html">administrator</a> privileges.
+            </li>
+            <li>
+              <b>Reset:</b> Reset the database browser window and clear all
+              fields (will reset selectable fields to <b>"not selected"</b>)
+            </li>
+            <li>
+              <b>Query DB Entry:</b> Search the database for all database
+              entries (this could take a long time on a slow link)
+            </li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <img src="celldb3.png" align="center">
+        </td>
+        <td>
+          <ul>
+            <li>
+              <b>Experiment ID:</b> The database ID/key for the associated
+              run.
+            </li>
+            <li>
+              <b>Wavelength 1[2][3]:</b> The wavelength(s) (in nm) used in
+              the acquisition of data for this experiment.
+            </li>
+          </ul>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <img src="celldb4.png" align="center">
+        </td>
+        <td>
+          <ul>
+            <li>
+              <b>Cell Position:</b> The position and rotor hole for this cell
+            </li>
+            <li>
+              <b># of Scans for WL 1[2][3]:</b> The number of scans taken at
+              each of the wavelengths 1-3
+            </li>
+          </ul>
+        </td>
+      </tr>
+    </table>
+    <hr>
+    <font face="helvetica" size="-1">www contact: <a href=
+    "mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a></font>
+    <p>
+      <font face="helvetica" size="-1">This document is part of the
+      <i><b>UltraScan</b></i> Software Documentation distribution.<br>
+      <a href="copyright.html">Copyright © notice</a></font>
+    </p>
+    <p>
+      <font face="helvetica" size="-1">The latest version of this document
+      can always be found at:</font>
+    </p>
+    <div style="margin-left: 2em">
+      <font face="helvetica" size="-1"><a href=
+      "http://www.ultrascan.uthscsa.edu">http://www.ultrascan.uthscsa.edu</a></font>
+    </div>
+    <p>
+      <font face="helvetica" size="-1">Last modified on January 12,
+      2003.</font>
+    </p>
+  </body>
+</html>

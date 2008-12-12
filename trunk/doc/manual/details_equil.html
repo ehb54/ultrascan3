@@ -1,0 +1,170 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+  <head>
+    <title>
+      Run Diagnostics and Details - Equilibrium Data
+    </title>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <link href="mainstyle.css" rel="styleSheet" type="text/css">
+  </head>
+  <body text="#000000" bgcolor="#FFFFFF" link="#0000EF" vlink="#CF30CF"
+  alink="#FF0000">
+    <table border="0" cellpadding="5">
+      <tr>
+        <td>
+          <img src="ultrascan1.png" border="0">
+        </td>
+        <td align="vcenter">
+          <h1 align="center">
+            <i>Manual</i>
+          </h1>
+        </td>
+      </tr>
+    </table>
+    <hr>
+    <h2>
+      Run Diagnostics and Details - Equilibrium Data:
+    </h2>Before experimental data can be analyzed, the data needs to be
+    edited with the <b><i><font face=
+    "Arial,Helvetica">UltraScan</font></i></b> editing module. In order to
+    provide you with maximum convenience and user friendliness,
+    <b><i><font face="Arial,Helvetica">UltraScan</font></i></b> will
+    automatically execute any functions which can be implemented without user
+    intervention. These functions include certain diagnostics and analyses.
+    To inform you of the results of these automated functions,
+    <b><i><font face="Arial,Helvetica">UltraScan</font></i></b> will display
+    the Run Diagnostics/Run Detail window after an experimental data
+    directory has been specified, or after an edited run has been loaded by a
+    data analysis routine:
+    <center>
+      <img src="edit_equil_a2.png">
+    </center>
+    <p>
+      This window will inform you about all the salient features of a
+      particular experiment and allow you to assign a unique run
+      identification to the experiment that will be associated with all data
+      analyses performed later on, as well as any result data files that will
+      be derived from this data.<br>
+    </p>
+    <ul>
+      <li>
+        <b>Temperature Variation:</b> This plot window shows you the
+        temperature of each scan acquired during the experiment. The purpose
+        of this plot is to inform you if a temperature variation during this
+        run has occured that exceeds the temperature tolerance setting in the
+        <a href="config.html">configuration</a> file of <b><i><font face=
+        "Arial,Helvetica">UltraScan</font></i></b>. For equilibrium data it
+        is desirable to maintain a constant temperature throughout the run
+        for the following reason: A variation in temperature will affect the
+        viscosity and density of the buffer/sample solution which would
+        require a different temperature correction for each scan in a global
+        analysis, which may be tedious to accomplish in the data analysis
+        software and may not be supported in every analysis software package.
+        Although a variation of the viscosity during an equilibrium run is
+        irrelevant for the the analysis of truly equilibrated scans, a change
+        in density throughout the run will affect the data analysis results
+        if the buffer conditions are not properly adjusted for each
+        temperature change.
+      </li>
+      <li>
+        <b>Temperature Check:</b> If the temperature check has been exceeded
+        during the run, this LCD will show a flashing red light, otherwise,
+        the LCD will display a constant green light.
+      </li>
+      <li>
+        <b>Help Button:</b> clicking on this button will bring up this page.
+      </li>
+      <li>
+        <b>Cancel Button:</b> After selecting the incorrect directory, or to
+        abandon the analysis of the selected run, you can press the
+        "<i>Cancel</i>" button to abort.
+      </li>
+      <li>
+        <b>Accept Button:</b> After entering the Run Identification of the
+        selected data, you can click on the "<i>Accept</i>" button to return
+        to the main editing window. If you fail to enter a Run
+        Identification, a <a href="edit5.png">reminder</a> will pop up to
+        prompt you to enter a Run Identification before proceeding. If this
+        window is called from a data analysis window, the "<i>Cancel</i>" and
+        "<i>Accept</i>" buttons simply close the window.
+      </li>
+      <li>
+        <b>Data Directory:</b> This is the location where the experimental
+        data acquired by the Beckman Data Acquisition program is located.
+      </li>
+      <li>
+        <b>Run Identification:</b> This is an editable field that allows you
+        to enter a unique run identification for your experiment. This
+        identification will be associated with all data analyses performed
+        later on, as well as any result data files that will be derived from
+        this data. Before allowing you to proceed, UltraScan requires that
+        this field has a valid entry. A valid entry is any alphanumeric
+        character, except a space (" "). If you fail to enter a Run
+        Identification, a <a href="edit5.png">reminder</a> will pop up to
+        prompt you to enter a Run Identification before proceeding. If this
+        window is called from a data analysis window, this field can't be
+        edited and simply will display the Run Identification that was
+        entered during the editing process.
+      </li>
+      <li>
+        <b>Cells with Data:</b> This field will indicate which cell
+        position(s) in the rotor where acquired in the experiment. Valid
+        numbers: 1-8 (in absorbance experiments cell #8 is reserved for the
+        counterbalance).
+      </li>
+      <li>
+        <b>Avg. Temperature:</b> The average temperature of the run resulting
+        from all scans in the experiment.
+      </li>
+      <li>
+        <b>Length of Run:</b> The time point at which the last scan of the
+        experiment was taken.
+      </li>
+      <li>
+        <b>Available Rotor Speeds:</b> The rotor speed setting for all scans
+        in the method scan of the equilibrium experiment.
+      </li>
+      <li>
+        <b>Cell Description:</b> This is the description of the cell contents
+        that were entered at the time of data acquisition. This field is
+        editable and you can update or change this information at this time.
+        When this window is called from a data analysis window, any changes
+        in this field will remain without effect.
+      </li>
+      <li>
+        <b>Cell Listbox:</b> This box allows you to review the <i>Cell
+        Description</i>, <i>Wavelengths</i> and <i>Scans</i> acquired for
+        each cell. As you scroll through this box and click on individual
+        cells, the information in the respective fields will be updated for
+        you to review.
+      </li>
+      <li>
+        <b>Wavelengths:</b> The wavelength selection for the data. For
+        absorbance data, there are up to 3 different selections available.
+      </li>
+      <li>
+        <b>Scans:</b> The number of scans for each wavelength acquired.
+      </li>
+    </ul>
+    <hr>
+    <font face="helvetica" size="-1">www contact: <a href=
+    "mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a></font>
+    <p>
+      <font face="helvetica" size="-1">This document is part of the
+      <i><b>UltraScan</b></i> Software Documentation distribution.<br>
+      <a href="copyright.html">Copyright © notice</a>.</font>
+    </p>
+    <p>
+      <font face="helvetica" size="-1">The latest version of this document
+      can always be found at:</font>
+    </p>
+    <div style="margin-left: 2em">
+      <font face="helvetica" size="-1"><a href=
+      "http://www.ultrascan.uthscsa.edu">http://www.ultrascan.uthscsa.edu</a></font>
+    </div>
+    <p>
+      <font face="helvetica" size="-1">Last modified on January 12,
+      2003.</font>
+    </p>
+  </body>
+</html>

@@ -1,0 +1,83 @@
+<head>
+   <title>Finite Element Simulation - Model Selection</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<H2 align=left>Finite Element Simulation - Model Selection:</H2>
+<p>
+<b>Model Selection:</b>
+<p>
+The first step in simulating a sedimentation run is to define a
+model. This is accomplished by pressing the <b>"Create New Model"</b>
+button. This will display the <a href=finsim2.png>Model Selection</a>
+Dialogue. Select a model from the list. For the non-interacting model you
+can define the number of components to be modeled with the system. There
+is no limit to the number of components that can be modeled with this
+program. After selecting the appropriate model, click on the <b>"Assign
+Coefficients (s, D, etc)"</b> button to assign values to the model's
+parameter list.
+<p>
+If you chose a non-interacting system, you will be prompted with a
+<a href=finsim3.png>dialogue</a> for entering partial concentration,
+"s", "D" and concentration dependency parameters sigma and delta.
+If you click on the <b>"Simulate s and D"</b> button, you will be able 
+to assign the sedimentation and diffusion coefficient by modeling a 
+molecule in the module called <a href=predict1.html>Model s, D and f from
+Molecular Weight for 4 basic shapes</a>. Selecting any one of the check buttons
+for sphere, prolate, oblate or long rod model will substitute the appropriate
+s and D coefficients for the selected shape into the dialogue.
+<p>
+If you have selected to model more than one component, clicking on the
+<b>"Next"</b> button will cycle through the list of selected components,
+presenting coefficient dialogues for each component. After entering
+the last component's parameters, click on the <b>"OK"</b> button to be
+returned to the <a href=finsim2.png>Model Selection</a> dialogue.
+<p>
+If you choose an equilibrating system, an <a href=finsim4.png>information
+message</a> will be displayed informing you that one of the four possible
+parameters "s" and "D" can be left blank (assigned to zero)
+because of the molecular weight constraints for the second component.
+The Svedberg relationship allows three parameters to be specified,
+while the fourth can then be automatically calculated.  The <a
+href=finsim5.png>coefficient dialogue</a> for equilibrating systems
+will display a single screen for both components, While it is possible
+to assign values for all parameters, you should always leave one of the
+four parameters set to zero so it can be more accurately assigned by
+the program itself.
+
+<p>
+After entering all model parameters, you have the opportunity to save
+the newly defined model. A <a href=finsim6.png>file dialogue</a>
+will appear which allows you to save the model to a file. You will be
+<a href=finsim7.png>prompted</a> to enter a short description for
+your model to facilitate later identification. Once saved,
+the model can be retrieved at a later time with the <b>"Load existing
+Model"</b> button from the main finite element simulation panel.
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003
+</body>
+</html>

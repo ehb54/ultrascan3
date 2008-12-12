@@ -1,0 +1,39 @@
+Results for global wavelength scan/extinction coefficient fit:
+
+Number of Gaussian terms: 5
+
+Extinction coeffcient at 280 nm used for normalization of Data: 8250
+
+Parameters for each Gaussian term:
+
+1. Gaussian:
+Peak position: 215.983 nm
+Amplitude of peak: 41.0485 extinction
+Peak width: 11.1874 nm
+
+2. Gaussian:
+Peak position: 247.217 nm
+Amplitude of peak: 1.68628 extinction
+Peak width: 8.3036 nm
+
+3. Gaussian:
+Peak position: 268.434 nm
+Amplitude of peak: 3.268 extinction
+Peak width: 11.3714 nm
+
+4. Gaussian:
+Peak position: 284.037 nm
+Amplitude of peak: 2.15125 extinction
+Peak width: 7.63682 nm
+
+5. Gaussian:
+Peak position: 309.528 nm
+Amplitude of peak: 0.233289 extinction
+Peak width: 23.299 nm
+
+Relative Concentration of Scan 1: 0.0947307
+Relative Concentration of Scan 2: 0.0177913
+Relative Concentration of Scan 3: 0.0444868
+Relative Concentration of Scan 4: 0.0747879
+Relative Concentration of Scan 5: 0.0271502
+
