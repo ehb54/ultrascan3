@@ -1,7 +1,0 @@
-/*! 
-  \mainpage Ultrascan library libus_util.so
-
-  The library is designed to have utility functions for the UltraScan program
-  suite that do not depend on gui or database functions.  It is desinged for
-  use in both command line programs as well as normal graphical programs.
-*/
