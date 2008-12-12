@@ -3,8 +3,16 @@
 
 void US_Help::show_help( const QString& helpFile )
 {
-  URL = "file://" + US_Settings::helpDir() + "/" + helpFile;
-  openBrowser();
+  //URL = "file://" + US_Settings::helpDir() + "/" + helpFile;
+  //openBrowser();
+  
+  if ( assistant != NULL ) assistant = new QProcess;
+  
+  QStringList args;
+  args << helpFile;
+  
+  assistant->start( "us_helpdaemon", args );
+  // Don't bother to wait
 }
 
 void US_Help::show_URL( const QString& location )
@@ -68,6 +76,7 @@ void US_Help::endProcess( int /* exitCode */, QProcess::ExitStatus /* exitStatus
     arguments << URL;
 
     proc->start( browser, arguments );
+
     if ( ! proc->waitForStarted( 10000 ) ) // 10 second timeout
     {
       qDebug() << "Error: Can't start browser window...\n"

@@ -8,15 +8,20 @@ class US_Help : public QWidget
   Q_OBJECT
 
   public:
-    US_Help( QWidget* parent = 0 ) : QWidget( parent ) {};
+    US_Help( QWidget* parent = 0 ) : QWidget( parent ) 
+    {
+      assistant = NULL;
+      proc      = NULL;
+    };
     
-    ~US_Help(){};
+    ~US_Help() {};
 
     void show_URL      ( const QString& );
     void show_help     ( const QString& );
 
   private:
     QProcess* proc;
+    QProcess* assistant;
     QString   URL;
     int       stderrSize;
     int       trials;
