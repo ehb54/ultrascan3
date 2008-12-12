@@ -1,0 +1,87 @@
+<head>
+   <title>Editing Spikes and other Optical Imperfections</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<H2>Editing Spikes and other Optical Imperfections:</H2>
+<p>
+The purpose of this routine is to allow editing of experimental data
+with flaws such as spikes and scratches. These imperfections occur from
+time to time, either due to electrical noise in the data acquisition 
+system, due to failed lamp flashes, missing CCD points or scratches in
+the cell windows. Eliminating such imperfections is appropriate as long
+as the overall shape of the concentration gradient is not altered.
+<p>
+To edit the spike in scan 13 from this <a
+href=edit_spikes1.png>example</a>, click on the single-arrow counter
+button until it reads "13". The selected scan will be highlighted in
+purple to assist you in finding the appropriate scan.
+
+<p>
+If you click on the double- or triple-arrow buttons, you can move around in
+steps of 10 or 100, which may be useful if you have a large number of scans in
+your dataset; keeping the mousebutton depressed on the arrow buttons
+will update the counter without redrawing the screen until the button
+is released. This trick avoids lengthy redraws on slow video cards,
+which can be especially important if your dataset contains many scans.
+<p>
+Once you found the appropriate scan, click on the
+<b>"Edit Single Scan"</b> button, which will bring up a <A
+HREF="edit_spikes2.png">window</A> showing the selected scan
+by itself. Use the mouse to <A HREF="edit_spikes3.png">drag
+a box</A> around the problem area. Releasing the mouse will <a
+href="edit_spikes4.png">rescale</a> the graph within the limits of the
+bounding box created earlier. This process can be repeated until the
+<A HREF="edit_spikes5.png">desired zoom level</A> is attained. Note:
+the program will automatically autoscale the y-axis, therefore it is not
+necessary to include everything in the y-axis frame. Only the x-limits
+are relevant.
+
+<p>
+Once the desired zoom level is reached, the zoom function has to be turned
+off by clicking on the <b>"Turn Zoom Off"</b> button. You can also
+turn zooming back on to further enhance the problem region, but the zooming
+has to be turned off before you can select the problem point with the mouse.
+<p>
+Next, you can click with the mouse near the problem point and it
+will be <A HREF="edit_spikes6.png">highlighted with red crosshairs</A>.
+Find the position that the problem point <i>should</i> be located,
+point to it with the mouse and click.  You can click as many times as
+you want until you are <A HREF="edit_spikes7.png">satisfied </A> with the
+new location of the point.  <b>Note:</b> Each time you move the point,
+the plot area will be autoscaled to best distribute the points on the
+available screensize, which may lead to a somewhat jagged appearance
+of the points. Once they are re-scaled to their proper dimension, they
+will appear normally again. Once you have found the optimal position for
+the point, click on the <b>Accept</b> button. This will return
+you to the main editing screen, which will now display the <a href=edit_spikes8.png>corrected
+scan</a>.
+
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

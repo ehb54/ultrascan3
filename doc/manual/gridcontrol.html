@@ -1,0 +1,195 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.51 [en] (X11; I; Linux 2.2.5 i686) [Netscape]">
+   <title>Parallel Cluster Control Module</title>
+<link href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body text="#000000" bgcolor="#FFFFFF" link="#0000EF" vlink="#CF30CF" alink="#FF0000">
+
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="ultrascan1.png" BORDER=0></td>
+
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<h2>
+Parallel Cluster Control Module:</h2>
+<p>
+<center>
+<img src=gridcontrol-1.png>
+</center>
+<p>
+The parallel cluster control module is used to assemble all the information
+necessary for a parallel computation on a Linux cluster or WAN computer grid.
+The methods that support a parallel analysis include the global genetic algorithm
+and 2-dimensional spectrum analysis. The following steps are involved for
+starting a run on the parallel cluster:
+<p>
+<ol>
+<li>Load a velocity experiment
+<li>select one or more experiments from the run to be included in the global analysis
+<li>Repeat the above 2 steps until all experiments have been included for the global fit.
+<li>assign the experimental parameters using either the <a href=ga_control.html>
+Genetic Algorithm Control</a> or the <a href=sa2d_gridcontrol.html>2-dimensional
+Spectrum Analysis Control</a>
+<li>write the grid control file
+<li>Start the run
+</ol>
+<p>
+You start the UltraScan cluster control by clicking on "<a
+href="menu_global0.png">Parallel Cluster Interface</a>" in the Global Fit
+sub-menu of the main menu.
+
+<p>
+<b>Control Functions:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF" NOSAVE >
+<tr>
+<td><img SRC="gridcontrol-2.png" ></td>
+
+<td align=justify>
+<li>
+<b>Load Data:</b> Load edited data sets (with the *.us.* suffix). A <a
+href=load_sed.png>file dialogue</a> will allow you to select a previously
+edited and saved velocity experiment. If the data was edited with an
+older version of UltraScan than is supported in the current version,
+an <a href=version.png>error message</a> will be displayed.</li>
+
+<li>
+<b>Run Details:</b> View the <a href="run_details_veloc.png">diagnostic details</a>
+for a particular run.</li>
+
+<li>
+<b>Add Dataset:</b> After loading a run, you need to select a cell and wavelength
+for the fit.
+
+<li>
+<b>Write Control File:</b> Write out a control file for the parallel cluster.
+It contains all the pertinent information for fitting with the selected method.
+
+<li>
+<b>Help:</b> This help file</li>
+
+<li>
+<b>Close:</b> Close the control module window.</li>
+</ul>
+</td>
+</tr>
+</table>
+
+<p><b>Run Information:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<tr NOSAVE>
+<td NOSAVE><img SRC="vhw-5.png" ></td>
+
+<td align=justify>
+<li>
+<b>Run ID:</b> The name of the run given during editing</li>
+
+<li>
+<b>Temperature:</b> The average temperature calculated from the entire run</li>
+
+<li>
+<b>Available Cells:</b> The numbers the cells that contain analyzable data</li>
+Clicking on a cell and wavelength selection will bring up the cell contents
+description for that cell and wavelength. Scroll through this list to bring
+up information for cells > 3. If there is no data available for the selected
+cell, the program will list "No Data available". Selecting a cell/wavelength
+combination will automatically bring up the corresponding dataset.</td>
+</tr>
+</table>
+
+<br>
+<p><b>Analysis Controls:</b>
+<br>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<tr>
+<td><img SRC="gridcontrol-3.png" ></td>
+
+<td align=justify>
+<ul>
+<li>
+<b>GA Control</b> - Load the Genetic Algorithm control window to define
+settings for a GA run.
+<li><b>2D-SA Control</b> - Load the 2-dimensional Spectrum Analysis
+controls to define the limits of a 2-dimensional Spectrum Analysis run.
+<li>
+<b>Run Analysis:</b>  - Clicking on this buffon will start the parallel run.
+<li>
+<b>Fit T-I noise</b> Clicking on this button will cause the fitting
+algorithm to extract time invariant noise components from the experimental
+data and consider it in the fit.
+
+<li>
+<b>Fit R-I noise</b> Clicking on this button will cause the fitting
+algorithm to extract radially invariant noise components from the experimental
+data and consider it in the fit.
+</tr>
+</table>
+
+<br>
+<p><b>Data Controls:</b>
+<br>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<tr>
+<td><img SRC="gridcontrol-4.png" ></td>
+
+<td align=justify>
+<ul>
+
+<li><b>Exclude Single Scan:</b> When setting this counter to a non-zero value,
+the respective scan will be highlighted in red. Clicking on "Excl. Single
+Scan" while a scan is highlighted in red will delete this scan from the
+analysis. Deleting scans from the analysis is irreversible and can only
+be reset by clicking on the "Reset" button or by reloading the data (when
+smoothing, the data is always automatically reloaded, causing the number 
+of scans to be reset to the original count). <a href=#skipped>Skipped scans</a>
+are excluded automatically. Scans that are selected for exclusion are also
+marked with a <a href=vhw-10.png>vertical bar in the analysis plot</a>, so you can 
+easily identify which scan is about to be <a href=vhw-11.png>deleted</a>.
+
+<li><b>Exclude Scan Range: </b>Same as "<b>Exclude Single Scan</b>", except
+for multiple scans. To use this feature, select first the start scan of
+the range by using "<b>Exclude Single Scan</b>", then complete the scan
+range by using "<b>Exclude Scan Range</b>". Please see the 
+<a href="../tutorial/index.html"> van
+Holde - Weischet analysis tutorial </a>to decide which scans are appropriate
+for analysis and which scans need to be excluded.</li>
+</ul>
+</td>
+</tr>
+<tr>
+	<td>
+		<img SRC="gridcontrol-5.png" >
+	</td>
+	<td>
+		This dialog lists all selected data sets. Double-clicking on any dataset entry allows you to remove it
+		again from the list.
+	</td>
+</tr>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on November 27, 2005.
+</body>
+</html>

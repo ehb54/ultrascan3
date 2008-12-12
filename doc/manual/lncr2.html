@@ -1,0 +1,271 @@
+<head>
+   <title>Equilibrium: Ln(C) vs. r2 Analysis</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<H2>Equilibrium: Ln(C) vs. r<sup> 2</sup> Analysis:</H2>
+<p>
+The Ln(C) vs.r<sup>2</sup> analysis can be used as a first order
+check on the quality of equilibrium data. The analysis doesn't require
+any non-linear least squares fitting, and provides some rudimentary
+statistics, such as standard deviation, correlation coefficient
+and runs analysis. This analysis should not be used for a detailed
+description of the sample, since at most it can only verify the presence
+of homogeneity or heterogeneity. More sophisticated methods such as <a
+href=equil1.html>non-linear global fitting methods</a> should be employed
+for a more detailed analysis of equilibrium data.
+<p>
+The Ln(C) vs.r<sup>2</sup> analysis is started from the
+<a href=menu_equilibrium0.png> equilibrium menu</a> in the main menu
+of <i><b>UltraScan</i></b>. This will display the the <a
+href="lncr2-1.png">Ln(C) vs. r<sup> 2</sup> data analysis window</a>.
+<p>
+<p>The first step in the analysis requires that you load an
+<b><i>UltraScan</i></b> equilibrium dataset that has previously been edited with
+the <b><i>UltraScan</i></b> editing module. <b><i>UltraScan</i></b>
+sedimentation equilibrium datasets always have the suffix ".us.e". Click
+on the <b>"Load Dataset"</b> button in the left upper corner of the control
+panel. Simply select the desired run from the selection of available runs
+in the <a href="load_sed_equil.png">dataset loading dialog</a>. Once loaded,
+the <a href=run_details_equil.png>Run Details</a> will be shown. Click on
+the <b>"Accept"</b> or <b>"Cancel"</b> button, and you will be returned
+to the <a href=lncr2-2.png> analysis window</a>, which will show the first
+available dataset of the selected run in the edited data window on the
+lower right panel, and the Ln(C) vs. r<sup> 2</sup> analysis will be shown
+in the upper right panel of the analysis window.
+<p>
+Next, you can use the <a href=lncr2-4.png>baseline adjustment tool</a>
+to adjust the baseline to minimize residuals visually/manually. Note that
+not all scans in the same cell will necessarily show best residuals with
+the same baseline: 
+<p>
+<table border=1 cellspacing=5 align=center>
+<tr>
+<td align=center>
+<b>
+Uncorrected Baseline
+</b>
+<p>
+<img src=lncr2-5.png>
+<p>
+<img src=lncr2-4.png>
+</td>
+</tr>
+<tr>
+<td align=center>
+<b>Corrected Baseline</b>
+<p>
+<img src=lncr2-3.png>
+<p>
+<img src=lncr2-6.png>
+</td>
+</tr>
+</table>
+<p>
+
+
+<b>Analysis Functions:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF" NOSAVE >
+<tr>
+<td><img src="lncr2-7.png" ></td>
+
+<td>Click on these buttons to control the Ln(C) vs. r<sup> 2</sup> 
+analysis:
+<UL>
+<li>
+<b>Load Data:</b> Load edited data sets (with the *.us.e suffix). A 
+<a href=load_sed_equil.png>file dialogue</a> will allow you to select a
+previously edited and saved velocity experiment. If the data was edited 
+with a version of UltraScan less than 4.0, an <a href=version.png>error
+message</a> will be displayed.
+
+<li>
+<b>Run Details:</b> View the <A HREF="run_details_equil.png">diagnostic details</A>
+for a particular run.
+
+<li>
+<b>Save Data:</b> Write out a copy of all results to an ASCII formatted
+data file suitable for import into a spreadsheet plotting program. See
+"<A HREF="file_format.html">File Structures and Formats</A>" for details.
+Note: These files are overwritten each time this button is clicked. Only
+the last version of the analysis will be saved!
+
+<li>
+<b>Print Data:</b> Load the printer control panel for printing of plot
+graphics
+
+<li>
+<b>View Data Report:</b> Review the data report for the last analysis setting.
+Note: This file is re-written each time it is accessed. Only the current
+analysis result is available. This <a href=lncr2_report.txt>file</a> 
+will provide information about molecular weight as well as fitting statistics.
+
+<li>
+<b>Help:</b> This help file
+
+<li>
+<b>Close:</b> Close the Ln(C) vs. r<sup> 2</sup> analysis window.
+</UL>
+</td>
+</tr>
+</table>
+
+<p><b>Run Information:</b>
+<br>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<TR NOSAVE>
+<TD NOSAVE><img src="lncr2-8.png" ></td>
+
+<TD NOSAVE>
+<UL>
+<li>
+Run ID: The name of the run given during editing
+
+<li>
+Temperature: The average temperature calculated from the entire run
+
+<li>
+Available Cells: The numbers the cells that contain analyzable data
+</UL>
+Clicking on a cell, wavelength and channel selection will bring up
+the cell contents description for that cell and wavelength. Scroll
+through the cell listing to bring up information for cells > 3. If
+there is no data available for the selected cell, the program will list
+"No Data available". Selecting a cell/wavelength/channel combination
+will automatically bring up the corresponding dataset and present the
+analysis. <b>Note:</b> Not all experimental data contains multiple 
+channels or wavelengths. Only data edited with the 6-channel centerpiece
+will provide multi-channel data, otherwise the channel selection
+dialogue will be disabled.</td>
+</tr>
+</table>
+<p>
+<b>Experimental Parameters:</b>
+<br>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF" NOSAVE >
+<tr>
+<td><img src="lncr2-9.png" ></td>
+<td>Here you can enter the corrections for density and partial
+specific volume of your sample. As you change the information in these
+fields, the program will automatically update the analysis to correct the
+results according to the specified conditions.
+<UL>
+<li>
+<b>Density:</b> Click to <A HREF="hydro.html">calculate</A> the density
+based on the composition of your buffer.
+<li>
+<b>vbar(20<SUP>o</SUP>):</b> Click to <A HREF="vbar.html">calculate</A>
+the partial specific volume for a peptide based on its primary amino acid
+sequence and correct the vbar value for the current temperature.
+<li><b>Reset Data:</b> Reset all parameters to the default values, which
+includes restoring all scans that have been excluded, resetting the smoothing
+and baseline value to zero, and resetting the boundary to 100%.
+</UL>
+</td>
+</tr>
+</table>
+<p>
+<b>Analysis Controls:</b>
+<br>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<tr>
+<td><img src="lncr2-10.png" ></td>
+
+<td>
+<OL>
+<li><b>Adjust Baseline:</b> Since inclusion of the baseline as a parameter
+into the fit would cause the fit to be nonlinear and require an iterative
+fitting procedure, the baseline can in this analysis routine only be adjusted
+by manual intervention. You can use this counter to fine-tune the baseline 
+offset for all scans and attempt to improve the fitting statistics by finding
+an optimal value for the baseline. Alternatively, you can overspeed the 
+experiment at the end of the run and pellet all material in order to obtain
+a baseline value. You can use this counter to dial in the experimentally 
+determined baseline value.
+<li>
+<b>Data Smoothing:</b> Use this feature to smooth the experimental data.
+For noisy data, increasing this parameter can improve the clarity and appearance
+of the results considerably. Please note: Whenever possible, especially
+for steep gradients, try to avoid using too much
+smoothing to prevent artificial modification of the boundary shape. Smoothing
+is performed based on a frame average. The number shown represents the
+size of the smoothing kernel used (the number of datapoints averaged for
+a single point). The algorithm used is non-destructive of the original
+data and hence the smoothing is reversible. Also, point smoothing is
+independent,
+where the smoothing of one point does not have any effect on the smoothing
+of its neighbors. Only unsmoothened points are used for the calculation
+of the smoothed value. Each time you click on the counter, the current dataset
+will be reset to the full dataset.
+
+<li>
+<b>% of Boundary:</b> This is the portion of the boundary used for the
+analysis. 100 % refers to the entire boundary, reaching from the baseline
+concentration value to the plateau concentration value. This portion is
+shown in yellow in the experimental data plot at the lower right panel
+of the Second Moment analysis window. Excluded data is shown in blue. Changing
+this number will automatically reset the position of the analyzable portion
+of the boundary in the center of concentration between the baseline and
+the plateau concentration.
+
+<li>
+<b>Boundary Position (%):</b> For percent-boundary values less than
+100 %, this number refers to the percentage of total concentration by which
+the remainder (=un-analyzed portion of the boundary) is shifted away from
+the baseline. A value of 0% refers to a data analysis start at the baseline.
+This number is always less than or equal to 100 % - (% of Boundary). It
+allows you to control the position of the analyzed portion relative to
+the baseline. The blue colored portion of a scan is excluded from the analysis,
+and the yellow portion is analyzed.
+
+<li>
+<b>Exlude Single Scan:</b> When setting this counter to a non-zero value,
+the respective scan will be highlighted in red. Clicking on "Excl. Single
+Scan" while a scan is highlighted in red will delete this scan from the
+analysis. Deleting scans from the analysis is irreversible and can only
+be reset by clicking on the "Reset" button or by reloading the data (when
+smoothing, the data is always automatically reloaded).
+
+<li>
+<b>Exclude Scan Range: </b>Same as "<b>Exclude Single Scan</b>", except
+for multiple scans. To use this feature, select first the start scan of
+the range by using "<b>Exclude Single Scan</b>", then complete the scan
+range by using "<b>Exclude Scan Range</b>". Use this feature to exclude
+a range of scans.
+
+<li>
+<b>Status: </b>The status bar is not used in this analysis, since calculations
+are very fast.
+</OL>
+</td>
+</tr>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

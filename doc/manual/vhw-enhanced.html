@@ -1,0 +1,316 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.51 [en] (X11; I; Linux 2.2.5 i686) [Netscape]">
+   <title>Enhanced van Holde - Weischet Data Analysis</title>
+<link href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body text="#000000" bgcolor="#FFFFFF" link="#0000EF" vlink="#CF30CF" alink="#FF0000">
+
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="ultrascan1.png" BORDER=0></td>
+
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<h2>
+Enhanced van Holde - Weischet Data Analysis:</h2>
+<p>
+The enhanced van Holde - Weischet analysis is a model independent method
+to analyze velocity data. It will provide S-value distributions that
+are corrected for diffusion effects, and provide valuable diagnostics
+for velocity data.  Compared to the traditional van Holde - Weischet
+method there are several improvements in the enhanced method which allow
+it to better deal with heterogeneous samples and samples that contain
+two or more well-separated components. The enhanced method also can take
+advantage of data points near the bottom of the cell and from scans that
+have no longer a stable plateau or have not yet cleared the meniscus.
+
+<p>
+You start the enhanced van Holde - Weischet data analysis by clicking on "<a
+href="menu_velocity0.png">Enhanced van Holde - Weischet</a>" in the Velocity
+sub-menu of the main menu. The main <a href="vhw-enhanced-1.png">Enhanced van Holde -
+Weischet data analysis window</a> will appear.
+
+<p>The first step in the analysis requires that you load an
+<b><i>UltraScan</i></b> dataset that has previously been edited with
+the <b><i>UltraScan</i></b> editing module. <b><i>UltraScan</i></b>
+sedimentation velocity datasets always have the suffix ".us.v". Click
+on the "Load Dataset" button in the left upper corner of the control
+panel. Simply select the desired run from the selection of available runs
+in the <a href="load_sed.png">dataset loading dialog</a>. Once loaded,
+the <a href=run_details_veloc.png>Run Details</a> will be shown. Click on
+the <b>"Accept"</b> or <b>"Cancel"</b> button, and you will be returned
+to the <a href=vhw-enhanced-2.png> analysis window</a>, which will show the first
+available dataset of the selected run in the edited data window on the
+lower right panel, and the enhanced van Holde - Weischet analysis will be shown
+in the upper right panel of the <a href=vhw-enhanced-2.png>analysis window</a>.
+
+<p>
+<b>Analysis Functions:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF" NOSAVE >
+<tr>
+<td><img SRC="vhw-3.png" ></td>
+
+<td align=justify>
+Click on these buttons to control the enhanced van Holde - Weischet analysis.
+<ul>
+<li>
+<b>Load Data:</b> Load edited data sets (with the *.us suffix). A 
+<a href=load_sed.png>file dialogue</a> will allow you to select a
+previously edited and saved velocity experiment. If the data was edited 
+with an older version of UltraScan than the current, an <a href=version.png>error
+message</a> will be displayed.</li>
+
+<li>
+<b>Run Details:</b> View the <a href="run_details_veloc.png">diagnostic details</a>
+for a particular run.</li>
+
+<li>
+<b>Distribution Plot:</b> View the <a href="distribution.html">van Holde - Weischet
+integral distribution plot</a> for the current analysis.</li>
+
+<li>
+<b>Save Data:</b> Write out a copy of all results to an ASCII formatted
+data file suitable for import into a spreadsheet plotting program. See
+"<a href="file_format.html">File Structures and Formats</a>" for details.
+<br>
+<b>Note 1:</b> These files are overwritten each time this button is clicked. Only
+the last version of the analysis will be saved!<br>
+<b>Note 2:</b> If <a href=#groups>groups</a> have been defined, a finite element
+model will also be saved, which can be imported into the finite element 
+analysis to initialize a finite element fit.
+
+<li>
+<b>Print Data:</b> Load the <a href=printer_control.html>printer control 
+panel</a> for printing of plot graphics</li>
+
+<li>
+<b>View Data Report:</b> See the data report for the last analysis setting.
+Note: This file is re-written each time it is accessed. Only the current
+analysis result is available.</li>
+
+<li>
+<b>Help:</b> This help file</li>
+
+<li>
+<b>Close:</b> Close the van Holde - Weischet analysis window.</li>
+</ul>
+</td>
+</tr>
+</table>
+
+<p><b>Run Information:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<tr NOSAVE>
+<td NOSAVE><img SRC="vhw-5.png" ></td>
+
+<td align=justify>
+<ul>
+<li>
+<b>Run ID:</b> The name of the run given during editing</li>
+
+<li>
+<b>Temperature:</b> The average temperature calculated from the entire run</li>
+
+<li>
+<b>Available Cells:</b> The numbers the cells that contain analyzable data</li>
+</ul>
+Clicking on a cell and wavelength selection will bring up the cell contents
+description for that cell and wavelength. Scroll through this list to bring
+up information for cells > 3. If there is no data available for the selected
+cell, the program will list "No Data available". Selecting a cell/wavelength
+combination will automatically bring up the corresponding dataset and present
+the analysis.</td>
+</tr>
+</table>
+
+<p><b>Experimental Parameters:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF" NOSAVE >
+<tr>
+<td><img SRC="vhw-enhanced-6.png" ></td>
+
+<td align=justify>
+Here you can enter the corrections for density, viscosity, and partial
+specific volume of your sample. As you change the information in these
+fields, the program will automatically update the analysis to correct the
+S-value according to the specified buffer conditions. If the data was
+retrieved from the database and associated with the correct buffer file
+and peptide file, the density, viscosity and partial specific volume (vbar)
+will automatically be updated to the appropriate values and don't need to be
+adjusted to produce S 20,W corrected values.
+
+<ul>
+<li>
+<b>Density:</b> Click to <a href="hydro.html">calculate</a> the density
+based on the composition of your buffer.</li>
+
+<li>
+<b>Viscosity:</b> Click to <a href="hydro.html">calculate</a> the viscosity
+based on the composition of your buffer.</li>
+
+<li>
+<b>vbar(20<sup>o</sup>):</b> Click to <a href="vbar.html">calculate</a>
+the partial specific volume for a peptide based on its primary amino acid
+sequence and correct the vbar value for the current temperature.</li>
+
+</ul> 
+</td> 
+</tr> 
+</table>
+
+<br>
+<p><b>Analysis Controls:</b>
+<br>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<tr>
+<td><img SRC="vhw-enhanced-7.png" ></td>
+
+<td align=justify>
+<ul>
+<li>
+<b>Reset Data </b>- use this button to reset the default settings for the
+analysis.</li>
+<a name=groups>
+<li><b>Select Groups</b> - use this button to define groups of S-value 
+intercepts. After clicking on this button you'll see a short 
+<a href=vhw-8.png>instruction dialogue</a> asking you to click above
+and below a group of lines that intercept close to the same point in 
+the extrapolation point. The corrected S-values belonging to these lines
+will be averaged and the average value as well as the percentage of the 
+total lines (representative of the partial concentration of the component
+sedimenting with that S-value) will be displayed in the <a href=vhw-9.png>
+plot area</a> and printed to the <a href=vhw_report.txt>data report</a>.
+The partial concentrations and S-values from each defined group will also be
+written to a model file that can be imported into the finite element 
+analysis modules and serve as starting guesses for the finite element fits.
+
+<li>
+<b>C(s) Analysis:</b> Clicking on this button will launch the <a
+href=cofs.html>C(s) analysis</a> using the currently available limits
+from the van Holde - Weischet analysis as an initialization for the C(s)
+analysis. The program will add 20% of the range at the top and the bottom
+of the current s-value distribution and set the initializations of the
+C(s) analysis accordingly.
+
+<li>
+<b>2D Spectrum Analysis:</b> Clicking on this button will launch
+the <a href=sa2d.html>2-dimensional spectrum analysis</a> using the
+currently available limits from the van Holde - Weischet analysis as an
+initialization for the spectrum analysis. The program will add 20% of
+the range at the top and the bottom of the current s-value distribution
+and set the initializations of the spectrum analysis accordingly.
+
+<li>
+<a name=backdiff>
+<b>Back-Diffusion Tolerance:</b> The back-diffusion tolerance setting controls 
+the concentration level at which back-diffusion is considered to be significant.
+A small value indicates a small concentration, resulting in a larger 
+back-diffusion radius, while a higher tolerance setting results in a smaller
+back-diffusion radius, or higher tolerance for back-diffusion effects. This setting
+should be adjusted large enough to provide a maximum number of datapoints to be
+included in the linear extrapolation fit, but small enough such that the later
+scans provide apparent sedimentation coefficients consistent with the earlier
+scans. If the later scans yield S-values that are too low, the tolerance is
+set to high. Usually the default value is appropriate for standard noise levels in
+the data. The back-diffusion boundary is visualized by a red line in the 
+<a href=vhw-enhanced-3.png>"Edited Data Plot"</a>
+<li>
+<b>Divisions: </b>The integral divisions used to create the van Holde -
+Weischet extrapolation plot. This is an integral number between 10 and
+100. Changing this number will immediately recalculate the van Holde -
+Weischet plot and display the plot with the selected number of divisions.
+The larger this number, the higher the resolution of the analysis. Generally,
+the more datapoints there are across the boundary, the higher this number
+can be without introducing excessive noise.</li>
+
+<li>
+<b>Data Smoothing:</b> Use this feature to smooth the experimental data.
+For noisy data, increasing this parameter can improve the clarity and appearance
+of the results considerably. Please note: Whenever possible, especially
+for very steep boundaries with low diffusion, try to avoid using too much
+smoothing to prevent artificial modification of the boundary shape. Smoothing
+is performed based on a frame average. The number shown represents the
+size of the smoothing kernel used (the number of datapoints averaged for
+a single point). The algorithm used is non-destructive of the original
+data and hence the smoothing is reversible. Also, point smoothing is independent,
+where the smoothing of one point does not have any effect on the smoothing
+of its neighbors. Only unsmoothened points are used for the calculation
+of the smoothed value. Each time you click on the counter, the current dataset
+will be reset to the full dataset.</li>
+
+<li>
+<b>% of Boundary:</b> This is the portion of the boundary used for the
+analysis. 100 % refers to the entire boundary, reaching from the baseline
+concentration value to the plateau concentration value. This portion is
+shown in yellow in the experimental data plot at the lower right panel
+of the van Holde - Weischet analysis window. Excluded data is shown in
+blue. Changing this number will automatically reset the position of the
+analyzable portion of the boundary in the center of concentration between
+the baseline and the plateau concentration.</li>
+
+<li>
+<b>Boundary Position (%):</b> For percent-boundary values less than
+100 %, this number refers to the percentage of total concentration by which
+the remainder (=un-analyzed portion of the boundary) is shifted away from
+the baseline. A value of 0% refers to a data analysis start at the baseline.
+This number is always less than or equal to 100 % - (% of Boundary). It
+allows you to control the position of the analyzed portion relative to
+the baseline. The blue colored portion of a scan is excluded from the analysis,
+and the yellow portion is analyzed.</li>
+
+<li>
+<b>Exlude Single Scan:</b> When setting this counter to a non-zero value,
+the respective scan will be highlighted in red. Clicking on "Excl. Single
+Scan" while a scan is highlighted in red will delete this scan from the
+analysis. Deleting scans from the analysis is irreversible and can only
+be reset by clicking on the "Reset" button or by reloading the data (when
+smoothing, the data is always automatically reloaded, causing the number 
+of scans to be reset to the original count). <a href=#skipped>Skipped scans</a>
+are excluded automatically. Scans that are selected for exclusion are also
+marked with a <a href=vhw-10.png>vertical bar in the analysis plot</a>, so you can 
+easily identify which scan is about to be <a href=vhw-11.png>deleted</a>.
+
+<li>
+<b>Exclude Scan Range: </b>Same as "<b>Exclude Single Scan</b>", except
+for multiple scans. To use this feature, select first the start scan of
+the range by using "<b>Exclude Single Scan</b>", then complete the scan
+range by using "<b>Exclude Scan Range</b>". Please see the 
+<a href="../tutorial/index.html"> van
+Holde - Weischet analysis tutorial </a>to decide which scans are appropriate
+for analysis and which scans need to be excluded.</li>
+
+<li>
+<b>Status: </b>The status bar informs the user about the progress of the
+analysis. On slower computers this has more significance than on a fast
+Unix machine.</li>
+</ul>
+</td>
+</tr>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on July 17, 2005.
+</body>
+</html>

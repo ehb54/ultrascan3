@@ -1,0 +1,181 @@
+<head>
+   <title>Printing Data - Velocity or Equilibrium Data</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<H2>Printing Data - Velocity or Equilibrium Data:</H2>
+<p>
+Once you have edited experimental data with the editing module, you
+can print the edited experimental data to a postscript printer or file.
+More information about using the <B><i>UltraScan</i></b> printer control
+functions can be found <a href=printer_control.html>here</a>.
+<p>
+To print data, click on "<A HREF="menu_file3.png">Print Data</A>" from
+the File Menu on the UltraScan Main Menu. You can select from velocity
+and equilibrium experiments.  The program will display the the Print
+Data window for either <a href=print-1.png> velocity </a> or <a
+href=print-2.png>equilibrium</a> data.
+<p>
+<b>Run Control Functions:</b>
+<p>
+<table border=1 cellpadding=5 cellspacing=5>
+<tr>
+<td><img src=print-3.png></td>
+<td>
+<ul>
+<li>
+<b>Load Data:</b> Load edited data sets (with the *.us.v or *.us.e
+suffix). A <a href=load_sed.png>file dialogue</a> will allow you to select
+a previously edited velocity or equilibrium experiment.  If you selected
+"Velocity", only previously edited velocity experiments will be shown,
+and the same for equilibrium runs. Once a run has been selected, the <a
+href=run_details_veloc.png>Run Details</a> will be shown. Click on the
+<b>"Accept"</b> or <b>"Cancel"</b> button, and the program will display
+the first available dataset for this run in its entirety.  If the data
+was edited with an older version of UltraScan than the current, an <a
+href=version.png>error message</a> will be displayed.
+
+<li>
+<b>Run Details:</b> View the diagnostic details for a 
+<a href="run_details_veloc.png">velocity</a> or
+<a href="run_details_equil.png">equilibrium</a> experiment.
+
+<li><b>Print Data:</b> This function allows you to print the data to
+a postscript printer or postscript file. Before printing, you may wish to
+use the various controls to customize the appearance of the printed data
+(see below).
+
+<li><b>Reset:</b> Reset all display parameters to their default values.
+
+<li>
+<b>Help:</b> This help file</li>
+
+<li>
+<b>Close:</b> Exit this module</li>
+</ul>
+</td>
+</tr>
+</table>
+
+<p><b>Run Information:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<tr NOSAVE>
+<td NOSAVE><img SRC="vhw-5.png" >
+<p>
+Equilibrium:
+<p>
+<img src=export-4.png>
+</td>
+
+<td NOSAVE>
+<ul>
+<li>
+<b>Run ID:</b> The name of the run given during editing</li>
+
+<li>
+<b>Temperature:</b> The average temperature calculated from the entire run</li>
+
+<li>
+<b>Available Cells:</b> The numbers the cells that contain analyzable data</li>
+</ul>
+Clicking on a cell and wavelength selection will bring up the cell contents
+description for that cell and wavelength. Scroll through this list to bring
+up information for cells > 3. If there is no data available for the selected
+cell, the program will list "No Data available". Selecting a cell/wavelength
+combination will automatically bring up the corresponding dataset and present
+the analysis. For equilibrium scans, you can also select the <a href=export-4.png>
+channels</a> (for runs containing multi-channel centerpieces)</td> 
+
+</tr>
+</table>
+<p>
+<b>Changing Display Parameters:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<tr>
+<td><img src=export-5.png></td>
+
+<td>
+<ul>
+<li>
+<b>Data Smoothing:</b> Use this feature to smooth the experimental data.
+For noisy data, increasing this parameter can improve the clarity and appearance
+of the results considerably. Please note: Whenever possible, especially
+for very steep boundaries with low diffusion, try to avoid using too much
+smoothing to prevent artificial modification of the boundary shape. Smoothing
+is performed based on a frame average. The number shown represents the
+size of the smoothing kernel used (the number of datapoints averaged for
+a single point). The algorithm used is non-destructive of the original
+data and hence the smoothing is reversible. Also, point smoothing is independent,
+where the smoothing of one point does not have any effect on the smoothing
+of its neighbors. Only unsmoothened points are used for the calculation
+of the smoothed value. Each time you click on the counter, the current dataset
+will be reset to the full dataset.</li>
+
+<li>
+
+<b>% of Boundary:</b> This is the portion of the boundary used for the
+analysis. 100 % refers to the entire boundary, reaching from the baseline
+concentration value to the plateau concentration value. This portion is
+shown in yellow in the experimental data plot. Excluded data is shown in
+blue. Changing this number will automatically reset the position of the
+analyzable portion of the boundary in the center of concentration between
+the baseline and the plateau concentration.</li>
+
+<li>
+<b>Boundary Position (%):</b> For percent-boundary values less than
+100 %, this number refers to the percentage of total concentration by which
+the remainder (=un-analyzed portion of the boundary) is shifted away from
+the baseline. A value of 0% refers to a data analysis start at the baseline.
+This number is always less than or equal to 100 % - (% of Boundary). It
+allows you to control the position of the analyzed portion relative to
+the baseline. The blue colored portion of a scan is excluded from the analysis,
+and the yellow portion is analyzed.</li>
+
+<li>
+<b>Exlude Single Scan:</b> When setting this counter to a non-zero value,
+the respective scan will be highlighted in red. Clicking on "Excl. Single
+Scan" while a scan is highlighted in red will delete this scan from the
+analysis. Deleting scans from the analysis is irreversible and can only
+be reset by clicking on the "Reset" button or by reloading the data (when
+smoothing, the data is always automatically reloaded, causing the number 
+of scans to be reset to the original count). 
+
+<li>
+<b>Exclude Scan Range: </b>Same as "<b>Exclude Single Scan</b>", except
+for multiple scans. To use this feature, select first the start scan of
+the range by using "<b>Exclude Single Scan</b>", then complete the scan
+range by using "<b>Exclude Scan Range</b>".
+</ul>
+</td>
+</tr>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

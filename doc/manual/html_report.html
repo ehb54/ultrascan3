@@ -1,0 +1,76 @@
+<head>
+   <title>html Report Generation</title>
+   <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+   <LINK href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body TEXT="#000000" bgcolor="#FFFFFF" LINK="#0000EF" VLINK="#CF30CF" ALINK="#FF0000">
+<table border=0 cellpadding=5>
+<tr>
+<td>
+<img src=ultrascan1.png border=0>
+</td>
+<td align=vcenter>
+<h1 align=center><i>Manual</i></h1>
+</td>
+</tr>
+</table>
+<hr>
+<p>
+<center>
+<H2>html Report Generation:</H2>
+<p>
+<img src=menu_file4.png>
+</center>
+<p>
+The html Report Generation Module is started from the "File" menu, under
+"Generate Report". The purpose of this module is to automatically generate
+a lab notebook of all experimental analyses and pertinent plots and files.
+When selected, you have the option to generate a report for velocity analyses,
+equilibrium data, equilibrium fitting projects, as well as Monte Carlo
+analyses. Each function will produce two webpages. The first webpage will
+have all plots, files, and ancillary information presented as hyperlinks,
+the second page will present all relevant plots ready for printing. Each
+page is cross-referenced at the bottom of the other page.
+<p>
+After the report has been generated, you are <a href=html_report-1.png>
+asked</a> if you want to view the report. If you want to view the report,
+your Netscape browser is automatically loaded with the linked page. All
+files associated with any report will be placed into a subdirectory 
+of the report directory, which is defined in the <a href=config.html>
+configuration</a> menu. The subdirectory is generally the run ID or the
+project name. For Monte Carlo analyses reports, the suffix ".mc" is added
+to the project name.
+<p>
+If the report directory as defined in the configuration menu is below
+the apache web server document root, the results can also be viewed 
+on the Internet. Please follow the following guidelines when placing
+your reports into a directory which is served from a webserver:
+<p>
+<ul>
+<li>Webserver pages linked into user accounts are generally set up
+below the directory "$HOME/public_html", where $HOME is your home account.
+This directory is sometimes also called "www" or "html", check with your
+system administrator for details.
+<li>Please be aware that files served through the public webpages on your
+server are accessible to anyone. If you want to lock your files with
+password access, you need to set up a file called ".htaccess" in the root
+of your report directory. More information on how to create password
+protected directories is available on the <a href=http://httpd.apache.org/docs/>Apache documentation website</a>.
+<li>It is always a good idea to check with your system administrator for
+details of your webserver implementation and to first request permission
+to place pages on your website.
+</ul>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on January 12, 2003.
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <meta name="GENERATOR" content="Mozilla/4.51 [en] (X11; I; Linux 2.2.5 i686) [Netscape]">
+   <title>2-dimensional Spectrum Analysis Grid Control Module</title>
+<link href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body text="#000000" bgcolor="#FFFFFF" link="#0000EF" vlink="#CF30CF" alink="#FF0000">
+
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="ultrascan1.png" BORDER=0></td>
+
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<h2>
+2-dimensional Spectrum Analysis Grid Control Module:</h2>
+<p>
+<center>
+<img src=sa2d_gridcontrol-1.png>
+</center>
+<p>
+The 2-dimensional spectrum analysis grid control module is used to select the parameters
+needed in a grid-based analysis using the 2-dimensional spectrum analysis method.
+The method supports a global analysis of multiple datasets, and parameters selected
+here apply to all datasets included in the analysis. For example, an experiment
+of multiple components has been done at multiple speeds. Each speed can provide
+a dataset to the global analysis of this system.
+<p>
+<b>Analysis Parameters:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF" NOSAVE >
+<tr>
+<td><img SRC="sa2d_gridcontrol-2.png" ></td>
+
+<td align=justify>
+<li>
+<b>Minimum/Maximum s-value:</b>This controls the
+<i>s</i>-value range examined in the spectrum analysis.  If distribution
+was loaded, these values will be 
+will be automatically initialized to reasonable values,
+otherwise they will need to be manually adjusted by the user. The larger
+the range, the more points will be needed to cover a sufficiently narrow
+grid for the analysis.
+
+<li><b>s-value Resolution:</b> This value controls the number of divisions made
+in the <i>s</i>-value range.
+
+<li><b>f/f0 Minimum/Maximum:</b> This controls the frictional ratio range
+examined in the spectrum analysis.  The default setting is to search
+a space between an <i>f/f<sub>0</sub></i> range between 1 and 4. The larger the range,
+the more points will be needed to cover a sufficiently narrow grid for
+the analysis. Globular proteins often can be fitted with values less
+than 2.5. Random coil and DNA molecules, as well as aggregates often
+need higher <i>f/f<sub>0</sub></i> values. If a previous spectrum 
+analysis distribution was loaded, these values will be initialized
+automatically to the values derived from the loaded distribution.
+
+<li><b>f/f0 resolution:</b> This value controls the number of divisions
+made in the <i>f/f<sub>0</sub></i> ratio range.
+</td>
+</tr>
+</table>
+
+<p><b>Control Functions:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 NOSAVE >
+<tr NOSAVE>
+<td NOSAVE><img SRC="sa2d_gridcontrol-3.png" ></td>
+
+<td align=justify>
+
+<li>
+<b>Help:</b> This help file</li>
+
+<li>
+<b>Load Distribution:</b> The average temperature calculated from the entire run</li>
+<li>
+<b>Cancel:</b> Close the control module window.</li>
+<li>
+<b>Accept</b> Accept the current settings for the analysis</li>
+
+</td>
+</tr>
+</table>
+<p>
+<hr>
+<font face=helvetica size=-1>
+www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
+<p>
+This document is part of the <i><b>UltraScan</i></b> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<p> The latest version of this document can always be found at:
+<p>
+<ol>
+<a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
+</ol>
+<p>
+Last modified on November 27, 2005.
+</body>
+</html>
