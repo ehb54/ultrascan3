@@ -1,0 +1,48 @@
+To create the manual for assistant, there are two procedures that
+must be run:
+
+  qhelpgenerator       manual.qhp  -o manual.qch
+  qcollectiongenerator manual.qhcp -o manual.qhc
+
+The input files, manual.qhp and manual.qhcp, are XML files.  
+
+File types:
+  .qhp  -- XML input to qhelpgenerator
+           Defines Table of Contents, Index keywords, and html files.
+           The docuemntation of the .qhp file is in the Qt Documentation 
+           accessed via assistant.  Access the XML documentation via the 
+           Index "Qt Help Project".
+
+  .qch  -- Compressed help files used to generate the .qhc file
+  
+  .qhcp -- XML input to qcollectiongenerator
+           Defines customization to the help file collection
+           Specifies .qhp and .qch files
+
+  .qhc  -- Compressed help collection in a sqlite3 database format
+           Requires sqlite3 Qt plugin
+
+
+
+The .qhp file must be manually updated every time html files, including any
+supporting files such as images, are added, deleted, or changed.  Additionally,
+the structure of the table of contents page is defined in this file.  Also,
+keywords used in the index section of the Qt assistant program are defined 
+here.
+
+  qhelpgenerator manual.qhp -o manual.qch
+
+The Qt Help Collection is the file that Qt assistant uses to access help pages.
+The .qhcp file probably does not need to be updated when help pages are 
+added, deleted, or modified but the .qhc file must be regenerated after
+updating the .qch file.
+
+  qcollectiongenerator manual.qhcp -o manual.qhc
+
+After creating the .qhc file, it needs to be moved to the bin/ directory
+so the us_help class and us_helpdaemon program can find it.
+
+In some cases, an update may not appear to work.  Deleting the file
+~/.local/share/data/Trolltech/Assistant/manual.qhc usually will fix the
+problem.
+

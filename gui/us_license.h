@@ -108,6 +108,8 @@ class US_License : public US_Widgets
     void update_sparc_rb   ( void ) { platform = "sparc";   };
     void update_mac_rb     ( void ) { platform = "mac";     };
     void update_sgi_rb     ( void ) { platform = "sgi";     };
+
+    void closeEvent        ( QCloseEvent* e ) { e->accept(); };
 };
 
 #endif
