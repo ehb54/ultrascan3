@@ -1,0 +1,66 @@
+Adding internationalization to UltraScan
+
+This summary is taken form the Qt Linguist documentation available 
+in the Qt Assistant docuemntation tool
+
+
+Programmers
+  The .pro file needs one or more TRANSLATIONS entry like
+
+    TRANSLATIONS = program_DE_de.ts \
+                   program_fr.ts
+
+  If there are non-Latin1 strings, the following is needed:
+
+    CODECFORTR = UTF-8
+  -------------
+
+  The main program needs soemthing like:
+
+    QString appname = "us_";
+    QString locale = QLocale::system().name();
+
+    QTranslator translator;
+    translator.load( appname + locale );
+    application.installTranslator( &translator );
+
+    // Repeat for each library used
+
+  -------------
+  Non Latin-1 strings also need:
+
+    QTextCodec::setCodecForTr( QTextCodec::codecForName( "utf8" ) );
+
+  -------------
+
+  Strings in the programs need to be in tr( ) constructs.  Do not use 
+  variables inside tr(), but use something like:
+
+    box.setText( QString( tr( "The following process%1 still running:\n%2"
+                              "Do you want to close %3?" )
+                              .arg( isAre ).arg( names ).arg( itThem ) ) );
+
+  There are special cases to review in the Qt Linguist documentation when: 
+  *  "plural-aware" issues arise, 
+  *  translating text that is outside of a  QObject subclass (e.g. main program), 
+  *  using tr() inside a namespace,
+  *  or distinguishing identical strings that require different translations.
+
+  Also see http://doc.trolltech.com/qtopia1.6/html/i18n.html
+
+Release Manager
+
+  lupdate filename.pro
+     finds the translatable strings
+     creates .ts files  (XML file)
+
+  lrelease myproject.pro
+     produces .qm files out of .ts files
+
+Translators
+
+  linguist
+    gui application to present phrases and accept translations
+
+    file->open  select a .ts file
+

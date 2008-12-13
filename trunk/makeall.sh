@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DIR=$(pwd)
-rm build.log
+rm -f build.log
 
 for d in utils gui db programs/*
 do

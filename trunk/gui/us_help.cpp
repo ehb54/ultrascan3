@@ -1,16 +1,25 @@
 #include "us_help.h"
 #include "us_settings.h"
 
+US_Help::US_Help( QWidget* parent ) : QWidget( parent )
+{
+  assistant = new QProcess;
+  proc      = new QProcess;
+
+  connect( proc, SIGNAL( readyReadStandardOutput() ), 
+           this, SLOT  ( captureStdout()           ) );
+  
+  connect( proc, SIGNAL( readyReadStandardError() ), 
+           this, SLOT  ( captureStderr()          ) );
+  
+  connect( proc, SIGNAL( finished  ( int, QProcess::ExitStatus ) ), 
+           this, SLOT  ( endProcess( int, QProcess::ExitStatus ) ) );
+};
+
 void US_Help::show_help( const QString& helpFile )
 {
-  //URL = "file://" + US_Settings::helpDir() + "/" + helpFile;
-  //openBrowser();
-  
-  if ( assistant != NULL ) assistant = new QProcess;
-  
   QStringList args;
   args << helpFile;
-  
   assistant->start( "us_helpdaemon", args );
   // Don't bother to wait
 }
@@ -23,17 +32,6 @@ void US_Help::show_URL( const QString& location )
 
 void US_Help::openBrowser()
 {
-  if ( proc != NULL ) proc = new QProcess( this );
-  
-  connect( proc, SIGNAL( readyReadStandardOutput() ), 
-           this, SLOT  ( captureStdout()           ) );
-  
-  connect( proc, SIGNAL( readyReadStandardError() ), 
-           this, SLOT  ( captureStderr()          ) );
-  
-  connect( proc, SIGNAL( finished  ( int, QProcess::ExitStatus ) ), 
-           this, SLOT  ( endProcess( int, QProcess::ExitStatus ) ) );
-
   QString     browser = US_Settings::browser();
   QStringList arguments;
 
