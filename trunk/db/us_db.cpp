@@ -5,14 +5,14 @@
 
 bool US_DB::test_db_connection( 
         const QString& host, const QString& dbname, 
-        const QString& user, const QString& passwd, 
+        const QString& user, const QString& password, 
         QString& error )
 {
   QSqlDatabase db = QSqlDatabase::addDatabase( "QMYSQL" );
-  db.setUserName    ( user   );
-  db.setDatabaseName( dbname );
-  db.setHostName    ( host   );
-  db.setPassword    ( passwd );
+  db.setUserName    ( user     );
+  db.setDatabaseName( dbname   );
+  db.setHostName    ( host     );
+  db.setPassword    ( password );
 
   bool status = db.open();
   error       = db.lastError().text();

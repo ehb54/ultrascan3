@@ -9,6 +9,8 @@
 #include "us_gui_settings.h"
 #include "us_admin.h"
 
+
+//! \brief Standard main program startup 
 int main( int argc, char* argv[] )
 {
   QApplication application( argc, argv );

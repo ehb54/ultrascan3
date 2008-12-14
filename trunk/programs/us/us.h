@@ -1,16 +1,28 @@
+//! \file us.h
 #include <QtGui>
 
 #include "us_global.h"
 #include "us_help.h"
 
-class us_win : public QMainWindow
+//! \brief UltraScan initial screen
+
+class US_Win : public QMainWindow
 {
   Q_OBJECT
 
 public:
 
-  us_win( QWidget* parent = 0, Qt::WindowFlags flags = 0 );
-  ~us_win();
+  /*! \brief Launch Qt Assistant and set the page to show.
+  
+      \param parent  A pointer to the parent widget.  This normally can be 
+                     left as NULL.
+      \param flags   An enum value that describes the window properties. 
+                     This normally can be left as 0 (Qt::Widget).
+  */
+  US_Win( QWidget* = 0, Qt::WindowFlags = 0 );
+  
+  //! Destructor for US_Win.  Resets position in global memory. 
+  ~US_Win();
 
 private:
   US_Global  g;
@@ -43,17 +55,32 @@ private slots:
 };
 
 //////////////
-class us_action : public QAction
+
+
+/*! \brief A subclass of QAction to allow sending an integer when a
+           menu item is selected.
+*/
+class US_Action : public QAction
 {
   Q_OBJECT
 
 public:
-  us_action( int, const QString&, QObject* );
+
+  /*! \brief Create a new QAction and connect the action to the 
+             private slot onTriggered.
+      \param i      The index number to send when triggered.
+      \param text   The menu label to be displayed.
+      \param parent A pointer to the parent menu.
+  */
+  US_Action( int, const QString&, QObject* );
 
 signals:
+  //! A signal to send with the index of the menu selected.
   void indexTriggered( int );
 
 private slots:
+  //! A function to accept a normal QAction signal and emit \ref indexTriggered.
+  // \param bool The parameter sent by the QAction object is ignored.
   void onTriggered( bool );
 
 private:

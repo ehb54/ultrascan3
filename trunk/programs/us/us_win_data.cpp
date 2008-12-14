@@ -1,4 +1,10 @@
-namespace us_win_data
+//! \file us_win_data.cpp
+
+/*! This namespace is used to configure data using C mechanisms instead
+    of a large C++ constructor.  It is a convenience namespace used only
+    by \ref US_Win.
+*/
+namespace US_WinData
 {
   enum
   {
@@ -34,15 +40,36 @@ namespace us_win_data
     P_END1
   };
 
+  /*!  \brief A structure to contol launching of external processes within the 
+              main UltraScan program
+      
+         The process structure is a set of constants (with the exception
+         of currentRunCount.  It provides an ability to define data 
+         associated with each individual process launched by \ref US_Win.
+         The variable p[] is an array of the structures.  
+       
+       \note   
+         The index values in p[] must be placed in the same order as 
+         defined in the P_ enum list.  
+  */
   struct processes
   {
-    int       index;
-    int       maxRunCount;
-    int       currentRunCount;
-    QString   name;
-    QString   loadingMsg;
-    QString   runningMsg;
-  } p[] =
+    int       index;           //!< This member contains a constant P_ enum value.
+    int       maxRunCount;     //!< Maximum number of this type process that can run
+                               //!< simutaneously. For many process, this is 1.  A
+                               //!< value of 0 indicates unlimited instances are allowed.
+                               //!< this is a constant.
+    int       currentRunCount; //!< The number of instances of this process currently
+                               //!< active.  Initialized to 0.
+    QString   name;            //!< The name of the executable process.
+    QString   loadingMsg;      //!< A constant message that is displayed on the status
+                               //!< line when loading the process.
+    QString   runningMsg;      //!< A constant string that displays after the process
+                               //!<  has loaded.
+
+  } 
+  //! An array of processes
+  p[] =
   {
     { P_CONFIG, 1, 0, "us_config",
       QObject::tr( "Loading Configuration" ),
@@ -63,6 +90,7 @@ namespace us_win_data
   };
 
   // Help Functions
+
   enum
   {
     HELP = 200,
@@ -75,15 +103,33 @@ namespace us_win_data
     HELP_END
   };
 
-  enum help_type { PAGE, URL, METHOD };
+  //! \enum help_type  The type of a call to help.
+  enum help_type 
+  { 
+    PAGE,      //!< A page in the local documentation
+    URL,       //!< A WWW external link viewed through a browser.
+    METHOD     //!< An interanl method of the \ref US_Win class.
+  };
 
+  /*! \brief A structure to contol calls to help within the main UltraScan program
+    
+              The help_data structure is a set of constants used to display different
+              help pages.
+      \note   The index values in h[] must be placed in the same order as
+              defined in the HELP_ enum list.
+  */
   struct help_data
   {
-    int            index;
-    enum help_type type;
-    QString        loadMsg;
-    QString        url;
-  } h[] =
+    int            index;   //!< A constant HELP_ enum value.
+    enum help_type type;    //!< The type of page corresponding the the help_type enum.
+    QString        loadMsg; //!< A constant message that is displayed on the status
+                            //!< line when loading the help.
+    QString        url;     //!< The actual page to display.  It is only valid for the
+                            //!< PAGE and URL help types.
+
+  } 
+  //! An array of help_data
+  h[] =
   {
     { HELP,         PAGE  , QObject::tr( "Help..." )                    , "manual/index.html" },
     { HELP_REG,     PAGE  , QObject::tr( "Registration Information..." ), "register.html"     },
