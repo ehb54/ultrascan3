@@ -1,3 +1,4 @@
+//! \file us_color.h
 #ifndef US_COLOR_H
 #define US_COLOR_H
 
@@ -11,12 +12,20 @@
 #include "us_widgets.h"
 #include "us_help.h"
 
+//! \brief Allow the user to set or change the colors used in UltraScan
+
+//! A class to allow the user to set or change the look of UltraScan 
+//! windows via maipulation of the color components of widget palettes.
+//! It also allows the control of plot margins.
 class US_Color : public US_Widgets
 {
   Q_OBJECT
   
   public:
+    //! Construct the window to manage the user's color choices.
+    //! The settings are saved for each user via \ref US_Settings.
     US_Color( QWidget* = 0, Qt::WindowFlags = 0 );
+    //! A null destructor. 
     ~US_Color() {};
 
   private:

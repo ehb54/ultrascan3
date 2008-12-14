@@ -9,8 +9,20 @@
 #include "us_defines.h"
 #include "us_revision.h"
 
-using namespace us_win_data;
+using namespace US_WinData;
 
+/*! \brief Main program for UltraScan
+
+  This program is instantiated using QtSingleApplication.  This class 
+  prevents more than one instance of the program being run.
+
+  The environment variable, ULTRASCAN_OPTIONS, can be used to allow
+  multiple instances if it contains the string "multiple".
+
+  The main program also sets up internationalization and checks for
+  a license.  If a valid license is not found, it launches the
+  \ref US_License window.
+*/
 int main( int argc, char* argv[] )
 {
   QtSingleApplication application( "UltraScan III", argc, argv );
@@ -59,33 +71,33 @@ int main( int argc, char* argv[] )
   }
 
   // License is OK.  Start up.
-  us_win w;
+  US_Win w;
   w.show();
   application.setActivationWindow( &w );
   return application.exec();
 }
 
-//////////////us_action
-us_action::us_action( int i, const QString& text, QObject* parent) 
+//////////////US_Action
+US_Action::US_Action( int i, const QString& text, QObject* parent) 
     : QAction( text, parent ), index( i ) 
 {
   connect( this, SIGNAL( triggered  ( bool ) ), 
            this, SLOT  ( onTriggered( bool ) ) );
 }
 
-void us_action::onTriggered( bool ) 
+void US_Action::onTriggered( bool ) 
 {
   emit indexTriggered( index );
 }
-/////////////us_win
-us_win::us_win( QWidget* parent, Qt::WindowFlags flags )
+/////////////US_Win
+US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   : QMainWindow( parent, flags )
 {
   // We need to handle US_Global::g here becuse US_Widgets is not a parent
   if ( ! g.isValid() ) 
   {
     // Do something for invalid global memory
-    qDebug( "us_win: invalid global memory" );
+    qDebug( "US_Win: invalid global memory" );
   }
   
   g.set_global_position( QPoint( 50, 50 ) ); // Ensure initialization
@@ -160,15 +172,15 @@ us_win::us_win( QWidget* parent, Qt::WindowFlags flags )
   statusBar()->showMessage( tr( "Ready" ) );
 }
 
-us_win::~us_win()
+US_Win::~US_Win()
 {
     QPoint p = g.global_position();
     g.set_global_position( p - QPoint( 30, 30 ) );
 }
   
-void us_win::addMenu( int index, const QString& label, QMenu* menu )
+void US_Win::addMenu( int index, const QString& label, QMenu* menu )
 {
-  us_action* action = new us_action( index, label, menu );
+  US_Action* action = new US_Action( index, label, menu );
 
   QString family    = "Helvetica";
   int     pointsize = 9;
@@ -182,14 +194,14 @@ void us_win::addMenu( int index, const QString& label, QMenu* menu )
   menu->addAction( action );
 }
 
-void us_win::onIndexTriggered( int index )
+void US_Win::onIndexTriggered( int index )
 {
   if ( index == 4 ) close();
   if ( index >= P_CONFIG && index < P_END    ) launch( index );
   if ( index >= HELP     && index < HELP_END ) help  ( index );
 }
 
-void us_win::terminated( int /* code*/, QProcess::ExitStatus /* status */ )
+void US_Win::terminated( int /* code*/, QProcess::ExitStatus /* status */ )
 {
   QList<procData*>::iterator pr;
   
@@ -210,7 +222,7 @@ void us_win::terminated( int /* code*/, QProcess::ExitStatus /* status */ )
   }
 }
 
-void us_win::launch( int index )
+void US_Win::launch( int index )
 {
   index -= P_CONFIG;
 
@@ -257,7 +269,7 @@ void us_win::launch( int index )
       tr( "Loaded " ) + p[ index ].runningMsg + "..." );
 }
 
-void us_win::closeProcs( void )
+void US_Win::closeProcs( void )
 {
   QString                    names;
   QList<procData*>::iterator p;
@@ -306,14 +318,14 @@ void us_win::closeProcs( void )
   usleep( 1000 );
 }
 
-void us_win::closeEvent( QCloseEvent* e )
+void US_Win::closeEvent( QCloseEvent* e )
 {
   if ( ! procs.isEmpty() ) closeProcs();
   e->accept();
 }
 
 
-void us_win::splash( void )
+void US_Win::splash( void )
 {
   int y =           menuBar  ()->size().rheight();
   int h = 532 - y - statusBar()->size().rheight();
@@ -332,10 +344,10 @@ void us_win::splash( void )
 
   logo( w );
 
-  QTimer::singleShot( 6000, this, SLOT( closeSplash() ) );
+  //QTimer::singleShot( 6000, this, SLOT( closeSplash() ) );
 }
 
-void us_win::logo( int width )
+void US_Win::logo( int width )
 {
   QString dir = qApp->applicationDirPath() + "/../etc/";  // For now -- later UltraScan sytem dir
   QPixmap rawpix( dir + "us3-splash.png" );
@@ -386,14 +398,14 @@ void us_win::logo( int width )
   smallframe->setGeometry( (unsigned int)( (width / 2) - 230 ), 110, 460, 276);
 }
 
-void us_win::closeSplash( void )
+void US_Win::closeSplash( void )
 {
    delete smallframe;
    delete splash_shadow;
    bigframe->show();
 }
 
-void us_win::help( int index )
+void US_Win::help( int index )
 {
   int i = index - HELP;
 

@@ -1,4 +1,4 @@
-//! \file us_license.cpp
+//! \file gui/us_license.cpp
 #include "us_license.h"
 #include "us_license_t.h"
 #include "us_settings.h"
@@ -8,15 +8,6 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   : US_Widgets( parent, flags )
 {
   setWindowTitle( "UltraScan License Configuration" );
-
-#define spacing        5
-#define commaWidth    10
-#define buttonw      180
-#define span         600
-#define full_buttonw 610
-#define half_buttonw 295
-#define pushbutton   156
-#define rowHeight     26
 
   int width = 5 * pushbutton + 4 * spacing;
 
@@ -123,7 +114,6 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
                     SLOT  ( update_city( const QString& ) ) );
 
   xpos += buttonw + spacing;
-#define smallColumn 90
 
   QLabel* lb_state = us_label( tr( "State:" ) );
   lb_state->setFrameStyle( QFrame::NoFrame );
@@ -143,7 +133,6 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   cbb_state->addItems( states );
 
-#define mediumColumn 110
   state = "NON-US"; // Initialize
   cbb_state->setGeometry( xpos, ypos, mediumColumn, rowHeight );
   connect( cbb_state, SIGNAL( currentIndexChanged( const QString& ) ), 
@@ -281,8 +270,6 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   code->setGeometry( xpos, ypos, buttonw, rowHeight );
 
   xpos += buttonw + spacing;
-
-#define codeWidth 60
 
   le_code1 = us_lineedit( "" );
   le_code1->setGeometry( xpos, ypos, codeWidth, rowHeight );

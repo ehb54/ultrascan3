@@ -1,3 +1,4 @@
+//! \file us_color.cpp
 #include "us_color.h"
 #include "us_gui_settings.h"
 

@@ -8,13 +8,31 @@
 #include "us_color.h"
 #include "us_font.h"
 
+//! \brief Provide the top level window for user configuration
+
+/*! \class US_Config
+           This class provides the top level window for user configuration.
+           It allows customization of the user's www browser, different
+           working directories, and miscellaneous constants.  It also
+           provides pushbuttons for access to screens to configure the
+           user's Master Password, database settings, fonts, and widget
+           colors.
+*/
 class US_Config : public US_Widgets
 {
   Q_OBJECT
 
 public:
-
-  US_Config( QWidget* parent = 0, Qt::WindowFlags flags = 0 );
+    /*! \brief The constructor creates the various controls for the main
+               window.  
+        \param parent A pointer to the parent widget.  This normally can be
+                      left as NULL.
+        \param flags  An enum value that describes the window properties.
+                      This normally can be left as 0 (Qt::Widget).
+    */
+    US_Config( QWidget* = 0, Qt::WindowFlags = 0 );
+  
+  //! A null destructor. 
   ~US_Config() {};
 
 private:

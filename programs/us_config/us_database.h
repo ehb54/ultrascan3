@@ -6,12 +6,19 @@
 
 #include "us_widgets.h"
 
+/*! \brief A class to allow the user to set, modify or delete
+    parameters for database access.
+*/
 class US_Database : public US_Widgets
 {
   Q_OBJECT
   
   public:
+    
+    //!  Construct the window to manage database parameters.
     US_Database( QWidget* w = 0, Qt::WindowFlags flags = 0 );
+    
+    //! A null destructor. 
     ~US_Database() {};
     
   private:

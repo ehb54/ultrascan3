@@ -6,12 +6,18 @@
 
 #include "us_widgets.h"
 
+//! A class to allow the user to set or change the user's Master Password
 class US_Admin : public US_Widgets
 {
   Q_OBJECT
   
   public:
+    //! Construct the window to manage the user's Master Password
+    //! When setting the password, it is saved in global memory. See \ref US_Global.
+    //! A cryptographic hash of the password is saved in the user's
+    //! settings. See \ref US_Settings.
     US_Admin( QWidget* = 0, Qt::WindowFlags = 0 );
+    //! A null destructor. 
     ~US_Admin() {};
     
   private:

@@ -63,7 +63,7 @@ class US_Global
     QPoint global_position( void );
 
     /*! \brief Sets the point in shared memory
-        \param The point to save
+        \param p The point to save
 
        This function sets the point that the next program should use for its upper
        left corner.  The calling program should increnment this point after it
@@ -79,7 +79,7 @@ class US_Global
     QString passwd( void );
 
     /*! \brief Sets the unencrypted master password into shared memory
-        \param The unencrypted master password
+        \param pw The unencrypted master password
     */
     void setPasswd( const QString& );
 

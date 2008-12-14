@@ -15,13 +15,10 @@ US_Font::US_Font( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
 	QBoxLayout* topbox = new QVBoxLayout( this );
   topbox->addWidget( banner );
 
-
   // Body
 	QPushButton* pb_font = us_pushbutton( tr( "Select Font" ) );
   topbox->addWidget( pb_font );
 	connect( pb_font, SIGNAL( clicked() ), SLOT( selectFont() ) );
-
-#define BUTTON_H 26
 
 	QLabel* family = us_label( tr( "Current Family:" ), -1 );
   family->setFixedHeight( BUTTON_H );

@@ -1,0 +1,32 @@
+/*! 
+  \mainpage Ultrascan III Internals
+
+  The UltraScan source is separated into multiple executable programs and three libraries.
+
+  - Utilities Library
+    Text only supporting classes
+    - \ref US_Defines
+    - \ref US_Global
+    - \ref US_License_t
+    - \ref US_Settings
+
+  - Gui Library
+    Graphical interface supporting functions
+    - \ref US_Crypto
+    - \ref US_License
+    - \ref US_Passwd
+    - \ref US_Widgets
+
+  - Database Library
+    - \ref US_DB
+
+  - Programs
+     - \ref US_Win
+     - \ref US_Config
+       - \ref US_Admin
+       - \ref US_Color
+       - \ref US_Database
+       - \ref US_Font
+     - \ref US_HelpDaemon
+     - \ref licenseMain
+*/
