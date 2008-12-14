@@ -5,9 +5,12 @@ rm -f build.log
 
 for d in utils gui db programs/*
 do
+  if [ ! -d $d ]; then continue; fi
   pushd $d
   qmake *.pro
   echo "Making in $d" >> $DIR/build.log
   make                >> $DIR/build.log
   popd
 done
+
+doxygen >> $DIR/build.log

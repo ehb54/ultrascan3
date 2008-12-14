@@ -9,48 +9,16 @@
 #include "us_gui_settings.h"
 #include "us_admin.h"
 
-
-//! \brief Standard main program startup 
 int main( int argc, char* argv[] )
 {
   QApplication application( argc, argv );
-  
-  // Set up language localization
-  QString locale = QLocale::system().name();
 
-  QTranslator translator;
-  translator.load( QString( "us_config_" ) + locale );
-  application.installTranslator( &translator );
-    
-  // See if we need to update the license
-  QString ErrorMessage;
-
-  int result = US_License_t::isValid( ErrorMessage );
-  if ( result != US_License_t::OK )
-  {
-    QMessageBox mBox;
-
-    QPushButton* cancel   = mBox.addButton( QMessageBox::Cancel );
-    QPushButton* Register = mBox.addButton( qApp->translate( "UltraScan", "Register"), 
-        QMessageBox::ActionRole);
-    
-    mBox.setDefaultButton( Register );
-    mBox.setWindowTitle  ( qApp->translate( "UltraScan", "UltraScan License Problem" ) );
-    mBox.setText         ( ErrorMessage );
-    mBox.setIcon         ( QMessageBox::Critical );
-    mBox.exec();
-
-    if ( mBox.clickedButton() == cancel )  exit( -1 ); 
-    
-    US_License* license = new US_License();
-    license->show();
-    return application.exec();
-  }
+  #include "main1.inc"
 
   // License is OK.  Start up.
-  US_Config w;
-  w.show();
-  return application.exec();
+  US_Config w;               
+  w.show();                   //!< \memberof QWidget
+  return application.exec();  //!< \memberof QApplication
 }
 
 ///////////////////

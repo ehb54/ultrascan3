@@ -14,4 +14,5 @@ SOURCES      += us_config.cpp   \
                 us_admin.cpp    \
                 us_color.cpp    \
                 us_database.cpp \
-                us_font.cpp
+                us_font.cpp     \
+                main1.inc
