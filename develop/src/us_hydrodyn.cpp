@@ -7102,7 +7102,7 @@ void US_Hydrodyn::append_options_log_somo()
 		  "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
 		  "      Remove Overlaps hierarchically:             %s\n"
 		  "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
-		  "      Outward Translation:                         %s\n"
+		  "      Outward Translation:                        %s\n"
 		  
 		  "    Exposed Main and side chain beads:\n"
 		  "      Fuse Beads:                                 %s\n"

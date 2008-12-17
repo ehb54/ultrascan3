@@ -72,6 +72,7 @@ class US_AddAtom : public QWidget
 		void select_chain(int);
 		void delete_atom();
 		void write_atom_file();
+		void sort_atoms();
 
 	protected slots:
 		void closeEvent(QCloseEvent *);

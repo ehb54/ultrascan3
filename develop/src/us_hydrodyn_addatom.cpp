@@ -243,9 +243,50 @@ void US_AddAtom::add()
 	pb_delete->setEnabled(true);
 }
 
+class sortable_atom {
+public:
+  atom our_atom;
+  bool operator < (const sortable_atom& objIn) const
+  {
+    QString atom_cmp = our_atom.name.upper() + "\t" + our_atom.hybrid.name.upper();
+    QString obj_cmp = objIn.our_atom.name.upper() + "\t" + objIn.our_atom.hybrid.name.upper();
+    if (
+	atom_cmp
+	< 
+	obj_cmp
+	)
+    {
+      return (true);
+    }
+    else
+    {
+      return (false);
+    }
+  }
+};
+
+void US_AddAtom::sort_atoms()
+{
+	list < sortable_atom > atoms_to_sort;
+	sortable_atom tmp_atom;
+	for (unsigned int i=0; i<atom_list.size(); i++) 
+	{
+		tmp_atom.our_atom = atom_list[i];
+		atoms_to_sort.push_back(tmp_atom);
+	}
+	atoms_to_sort.sort();
+	atom_list.clear();
+	while(atoms_to_sort.size()) 
+	{
+		atom_list.push_back((atoms_to_sort.front()).our_atom);
+		atoms_to_sort.pop_front();
+	}
+}
+
 void US_AddAtom::write_atom_file()
 {
 	QString str1;
+	sort_atoms();
 	QFile f(atom_filename);
 	if (f.open(IO_WriteOnly|IO_Translate))
 	{
