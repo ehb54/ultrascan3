@@ -388,6 +388,13 @@ void US_Hydrodyn::setupGUI()
 	pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
+	pb_stop_calc = new QPushButton(tr("Stop"), this);
+	Q_CHECK_PTR(pb_stop_calc);
+	pb_stop_calc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_stop_calc->setMinimumHeight(minHeight1);
+	pb_stop_calc->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_stop_calc, SIGNAL(clicked()), SLOT(stop_calc()));
+
 	pb_cancel = new QPushButton(tr("Close"), this);
 	Q_CHECK_PTR(pb_cancel);
 	pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -470,7 +477,9 @@ void US_Hydrodyn::setupGUI()
 	background->addWidget(pb_help, j, 0);
 	background->addWidget(pb_cancel, j, 1);
 	j++;
-	background->addMultiCellWidget(progress, j, j, 0, 1);
+	background->addWidget(pb_stop_calc, j, 0);
+	background->addWidget(progress, j, 1);
+	//	background->addMultiCellWidget(progress, j, j, 0, 1);
 }
 
 struct BPair {
@@ -1435,7 +1444,6 @@ void US_Hydrodyn::radial_reduction()
 	 buried_overlap.fuse_beads_percent,
 	 buried_overlap.remove_sync_percent,
 	 buried_overlap.remove_hierarch_percent);
-
 #endif
 
   int methods[] =
@@ -2513,9 +2521,9 @@ void US_Hydrodyn::radial_reduction()
   write_bead_tsv(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO + ".tsv", &bead_model);
   write_bead_spt(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO, &bead_model);
 #endif
-  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
-		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
-		 DOTSOMO, &bead_model);
+  //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
+  //		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+  //		 DOTSOMO, &bead_model);
   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
 		   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + DOTSOMO
 		   , &bead_model);
@@ -3413,7 +3421,7 @@ int US_Hydrodyn::compute_asa()
   write_bead_asa(somo_dir + SLASH +
 		 project + QString("_%1").arg(current_model + 1) + 
 		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "")
-		 + DOTSOMO + ".asa", &bead_model);
+		 + DOTSOMO + ".asa_res", &bead_model);
 
 #if defined(DEBUG_MOD)
   write_bead_tsv(somo_tmp_dir + SLASH + "bead_model_debug" + DOTSOMO + ".tsv", &dbg_model);
@@ -4565,9 +4573,9 @@ int US_Hydrodyn::compute_asa()
   write_bead_tsv(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO + ".tsv", &bead_model);
   write_bead_spt(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO, &bead_model);
 #endif
-  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
-		 DOTSOMO, &bead_model);
+  //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+  //		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+  //		 DOTSOMO, &bead_model);
   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
 		   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + DOTSOMO
 		   , &bead_model);
@@ -4640,7 +4648,7 @@ int US_Hydrodyn::get_color(PDB_atom *a) {
   return color;
 }
 
-void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool loaded_bead_model) {
+void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
 
   char *colormap[] =
     {
@@ -4667,15 +4675,10 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
 
   FILE *fspt = fopen(QString("%1.spt").arg(fname).ascii(), "w");
   FILE *fbms = fopen(QString("%1.bms").arg(fname).ascii(), "w");
-  FILE *fbeams = fopen(QString("%1.beams").arg(fname).ascii(), "w");
-  FILE *frmc = fopen(QString("%1.rmc").arg(fname).ascii(), "w");
-  FILE *frmc1 = fopen(QString("%1.rmc1").arg(fname).ascii(), "w");
+
   int beads = 0;
   if(!(fspt) ||
-     !(fbms) ||
-     !(fbeams) ||
-     !(frmc) ||
-     !(frmc1)) {
+     !(fbms)) {
     printf("file write error!\n"); fflush(stdout);
   }
 
@@ -4705,13 +4708,6 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
 	  QString("%1.bms").arg(QFileInfo(fname).fileName()).ascii()
 	  );
 
-  fprintf(fbeams,
-	  "%d\t-2.000000\t%s.rmc\t%f\n",
-	  beads,
-	  QFileInfo(fname).fileName().ascii(),
-	  results.vbar
-	  );
-
   int atomno = 0;
   for (unsigned int i = 0; i < model->size(); i++) {
     if ((*model)[i].active) {
@@ -4726,64 +4722,16 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model, bool lo
 	      (*model)[i].bead_coordinate.axis[1] / scaling,
 	      (*model)[i].bead_coordinate.axis[2] / scaling
 	      );
-      fprintf(fbeams,
-	      "%f\t%f\t%f\n",
-	      (*model)[i].bead_coordinate.axis[0],
-	      (*model)[i].bead_coordinate.axis[1],
-	      (*model)[i].bead_coordinate.axis[2]
-	      );
       fprintf(fspt,
 	      "select atomno=%d\nspacefill %.2f\ncolour %s\n",
 	      atomno++,
 	      (*model)[i].bead_computed_radius / scaling,
 	      colormap[get_color(&(*model)[i])]
 	      );
-      fprintf(frmc,
-	      "%.6f\t%.2f\t%d\n",
-	      (*model)[i].bead_computed_radius,
-	      (*model)[i].bead_ref_mw,
-	      get_color(&(*model)[i]));
-      unsigned int tmp_serial = (*model)[i].serial;
-      QString residues;
-      if (!loaded_bead_model)
-      {
-	residues =
-	  (*model)[i].resName +
-	  ((*model)[i].org_chain ? ".SC." : (regular_N_handling ? ".PB." : ".MC.")) +
-	  ((*model)[i].chainID == " " ? "" : ((*model)[i].chainID + "."));
-	// a compiler error forced this kludge using tmp_serial
-	//	+ QString("%1").arg((*model)[i].serial);
-	residues += QString("%1").arg(tmp_serial);
-
-	for (unsigned int j = 0; j < (*model)[i].all_beads.size(); j++)
-        {
-	  unsigned int tmp_serial = (*model)[i].all_beads[j]->serial;
-	  residues += "," +
-	    (*model)[i].all_beads[j]->resName +
-	    ((*model)[i].all_beads[j]->org_chain ? ".SC." : (regular_N_handling ? ".PB." : ".MC.")) +
-	    ((*model)[i].all_beads[j]->chainID == " " ? "" : ((*model)[i].all_beads[j]->chainID + "."));
-	  // a compiler error forced this kludge using tmp_serial
-	  //  + QString("%1").arg((*model)[i].all_beads[j].serial);
-	residues += QString("%1").arg(tmp_serial);
-	}
-      } else {
-	residues = (*model)[i].residue_list;
-      }
-      fprintf(frmc1,
-	      "%.6f\t%.2f\t%d\t%d\t%s\n",
-	      (*model)[i].bead_computed_radius,
-	      (*model)[i].bead_ref_mw,
-	      get_color(&(*model)[i]),
-	      (*model)[i].serial,
-	      residues.ascii()
-	      );
     }
   }
   fclose(fspt);
   fclose(fbms);
-  fclose(fbeams);
-  fclose(frmc);
-  fclose(frmc1);
 }
 
 void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
@@ -4935,12 +4883,46 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
   fclose(f);
 }
 
+
+
 void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
-  // int bead_output.sequence;           // 0 = 
-  // 1 = 
+
+  int decpts = -(int)log10(overlap_tolerance/9.9999) + 1;
+  if (decpts < 4) {
+    decpts = 4;
+  }
+
+  QString fstring_somo = 
+    QString("\%.%1f\t\%.%2f\t\%.%3f\t\%.%4f\t\%.2f\t\%d\t\%s\t\%.4f\n").
+    arg(decpts).
+    arg(decpts).
+    arg(decpts).
+    arg(decpts);
+
+  QString fstring_beams = 
+    QString("%.%1f\t%.%2f\t%.%3f\n").
+    arg(decpts).
+    arg(decpts).
+    arg(decpts);
+
+  QString fstring_rmc = 
+    QString("\%.%1f\t\%.0f\t\%d\n"). // zero digit MW
+    arg(decpts);
+
+  QString fstring_rmc1 = 
+    QString("\%.\%1f\t\%.0f\t\%d\t\%d\t\%s\n"). // zero digit MW
+    arg(decpts);
+
+  QString fstring_hydro = 
+    QString("\%.%1f\t\%.%2f\t\%.%3f\t\%.%4f\n").
+    arg(decpts).
+    arg(decpts).
+    arg(decpts).
+    arg(decpts);
 
 #if defined(DEBUG)
   printf("write bead model %s\n", fname.ascii()); fflush(stdout);
+  printf("decimal points to use: %d\n", decpts);
 #endif
 
   vector <PDB_atom *> use_model;
@@ -4981,7 +4963,24 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
     break;
   }
 
-  FILE *fbeadmodel = fopen(QString("%1.bead_model").arg(fname).ascii(), "w");
+  FILE *fsomo = (FILE *)0;
+  FILE *fbeams = (FILE *)0;
+  FILE *frmc = (FILE *)0;
+  FILE *frmc1 = (FILE *)0;
+  FILE *fhydro = (FILE *)0;
+
+  if (bead_output.output & US_HYDRODYN_OUTPUT_SOMO) {
+    fsomo = fopen(QString("%1.bead_model").arg(fname).ascii(), "w");
+  }
+  if (bead_output.output & US_HYDRODYN_OUTPUT_BEAMS) {
+    fbeams = fopen(QString("%1.beams").arg(fname).ascii(), "w");
+    frmc = fopen(QString("%1.rmc").arg(fname).ascii(), "w");
+    frmc1 = fopen(QString("%1.rmc1").arg(fname).ascii(), "w");
+  }
+  if (bead_output.output & US_HYDRODYN_OUTPUT_HYDRO) {
+    fhydro = fopen(QString("%1.dat").arg(fname).ascii(), "w");
+  }
+
   int beads = 0;
 
   for (unsigned int i = 0; i < use_model.size(); i++) {
@@ -4990,49 +4989,132 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
     }
   }
 
-  fprintf(fbeadmodel,
-	  "%d\t%f\n",
-	  beads,
-	  results.vbar
-	  );
+  if (fsomo) {
+    fprintf(fsomo,
+	    "%d\t%.3f\n",
+	    beads,
+	    results.vbar
+	    );
+  }
+
+  if (fbeams) {
+    fprintf(fbeams,
+	    "%d\t-2.000000\t%s.rmc\t%.3f\n",
+	    beads,
+	    QFileInfo(fname).fileName().ascii(),
+	    results.vbar
+	    );
+  }
+
+  if (fhydro) {
+    fprintf(fhydro,
+	    "1.E%d,\t!Unit of length for coordinates and radii, cm\n"
+	    "%d,\t!Number of beads\n",
+	    hydro.unit + 2,
+	    beads
+	    );
+  }
 
   for (unsigned int i = 0; i < use_model.size(); i++) {
     if (use_model[i]->active) {
       unsigned int tmp_serial = use_model[i]->resSeq; // was serial
-      QString residues =
-	use_model[i]->resName +
-	(use_model[i]->org_chain ? ".SC." : (regular_N_handling ? ".PB." : ".MC.")) +
-	(use_model[i]->chainID == " " ? "" : (use_model[i]->chainID + "."));
-      // a compiler error forced this kludge using tmp_serial
-      //	+ QString("%1").arg((*use_model)[i].serial);
-      residues += QString("%1").arg(tmp_serial);
+      QString residues;
 
-      for (unsigned int j = 0; j < use_model[i]->all_beads.size(); j++)
-      {
-	unsigned int tmp_serial = use_model[i]->all_beads[j]->resSeq;
-	residues += "," +
-	  (use_model[i]->all_beads[j]->resName +
-	  (use_model[i]->all_beads[j]->org_chain ? ".SC." : (regular_N_handling ? ".PB." : ".MC.")) +
-	  (use_model[i]->all_beads[j]->chainID == " " ? "" : (use_model[i]->all_beads[j]->chainID + ".")));
+      if (!bead_model_from_file) {
+	residues =
+	  use_model[i]->resName +
+	  (use_model[i]->org_chain ? ".SC." : (regular_N_handling ? ".PB." : ".MC.")) +
+	  (use_model[i]->chainID == " " ? "" : (use_model[i]->chainID + "."));
 	// a compiler error forced this kludge using tmp_serial
-	//  + QString("%1").arg((*use_model)[i].all_beads[j].serial);
+	//	+ QString("%1").arg((*use_model)[i].serial);
 	residues += QString("%1").arg(tmp_serial);
+
+	for (unsigned int j = 0; j < use_model[i]->all_beads.size(); j++)
+	{
+	  unsigned int tmp_serial = use_model[i]->all_beads[j]->resSeq;
+	  
+	  residues += "," +
+	    (use_model[i]->all_beads[j]->resName +
+	     (use_model[i]->all_beads[j]->org_chain ? ".SC." : (regular_N_handling ? ".PB." : ".MC.")) +
+	     (use_model[i]->all_beads[j]->chainID == " " ? "" : (use_model[i]->all_beads[j]->chainID + ".")));
+	  // a compiler error forced this kludge using tmp_serial
+	  //  + QString("%1").arg((*use_model)[i].all_beads[j].serial);
+	  residues += QString("%1").arg(tmp_serial);
+	}
+      } else {
+	residues = use_model[i]->residue_list;
       }
-      fprintf(fbeadmodel,
-	      "%f\t%f\t%f\t%.6f\t%.2f\t%d\t%d\t%s\t%.4f\n",
-	      use_model[i]->bead_coordinate.axis[0],
-	      use_model[i]->bead_coordinate.axis[1],
-	      use_model[i]->bead_coordinate.axis[2],
-	      use_model[i]->bead_computed_radius,
-	      use_model[i]->bead_ref_mw,
-	      get_color(use_model[i]),
-	      use_model[i]->serial,
-	      residues.ascii(),
-	      use_model[i]->bead_recheck_asa
-	      );
+
+      if (fsomo) {
+	fprintf(fsomo,
+		fstring_somo.ascii(),
+		use_model[i]->bead_coordinate.axis[0],
+		use_model[i]->bead_coordinate.axis[1],
+		use_model[i]->bead_coordinate.axis[2],
+		use_model[i]->bead_computed_radius,
+		use_model[i]->bead_ref_mw,
+		get_color(use_model[i]),
+		residues.ascii(),
+		use_model[i]->bead_recheck_asa
+		);
+      }
+      if (fbeams) {
+	fprintf(fbeams,
+		fstring_beams.ascii(),
+		use_model[i]->bead_coordinate.axis[0],
+		use_model[i]->bead_coordinate.axis[1],
+		use_model[i]->bead_coordinate.axis[2]
+		);
+	fprintf(frmc,
+		fstring_rmc.ascii(),
+		use_model[i]->bead_computed_radius,
+		use_model[i]->bead_ref_mw,
+		get_color(use_model[i]));
+	fprintf(frmc1,
+		fstring_rmc1.ascii(),
+		use_model[i]->bead_computed_radius,
+		use_model[i]->bead_ref_mw,
+		get_color(use_model[i]),
+		use_model[i]->serial,
+		residues.ascii()
+		);
+      }
+      if (fhydro) {
+	fprintf(fhydro,
+		fstring_hydro.ascii(),
+		use_model[i]->bead_coordinate.axis[0],
+		use_model[i]->bead_coordinate.axis[1],
+		use_model[i]->bead_coordinate.axis[2],
+		use_model[i]->bead_computed_radius);
+      }
     }
   }
-  fclose(fbeadmodel);
+  if (fsomo) {
+    fprintf(fsomo,
+	    "\n"
+	    "Bead Model Output:\n"
+	    "  Sequence:                   %s\n"
+	    "\n"
+	    
+	    ,bead_output.sequence ? 
+	    (bead_output.sequence == 1 ? 
+	     "exposed sidechain -> exposed main chain -> buried" :
+	     "include bead-original residue correspondence") :
+	    "as in original PDB file"
+	    );
+    
+    fprintf(fsomo, options_log.ascii());
+    fclose(fsomo);
+  }
+  if (fbeams) {
+    fclose(fbeams);
+    fclose(frmc);
+    fclose(frmc1);
+
+  }
+  if (fhydro) {
+    fclose(fhydro);
+  }
 }
 
 void US_Hydrodyn::bead_check()
@@ -5120,9 +5202,9 @@ void US_Hydrodyn::bead_check()
 	   "exposed" : "buried",
 	   msg.ascii());
   }
-  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-		   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
-		 DOTSOMO, &bead_model);
+  //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+  //		   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+  //		 DOTSOMO, &bead_model);
   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
 		   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 		   DOTSOMO, &bead_model);
@@ -5164,6 +5246,11 @@ void US_Hydrodyn::visualize()
 	for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
 	  if (lb_model->isSelected(current_model)) {
 	    if (somo_processed[current_model]) {
+	      bead_model = bead_models[current_model];
+	      write_bead_spt(somo_dir + SLASH + project +
+			     (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+			     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+	      		     DOTSOMO, &bead_model);
 	      editor->append(QString("Visualizing model %1\n").arg(current_model + 1));
 	      QStringList argument;
 #if !defined(WIN32)
@@ -5201,6 +5288,7 @@ void US_Hydrodyn::visualize()
 
 int US_Hydrodyn::calc_grid()
 {
+	append_options_log_atob();
 	int flag = 0;
 	bool any_errors = false;
 	bool any_models = false;
@@ -5256,10 +5344,10 @@ int US_Hydrodyn::calc_grid()
 		bead_check();
 		bead_models[current_model] = bead_model;
 	      }
-	      write_bead_spt(somo_dir + SLASH + project +
-			     (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-			     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
-			     DOTSOMO, &bead_model, bead_model_from_file);
+	      // write_bead_spt(somo_dir + SLASH + project +
+	      //	     (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+	      //	     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+	      //		     DOTSOMO, &bead_model, bead_model_from_file);
 	      write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
 			       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + 
 			       DOTSOMO, &bead_model);
@@ -5359,10 +5447,10 @@ int US_Hydrodyn::calc_grid()
 		    bead_models[current_model] = bead_model;
 		  }
 
-		  write_bead_spt(somo_dir + SLASH + project +
-				 (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-				 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
-				 DOTSOMO, &bead_model, bead_model_from_file);
+		  // write_bead_spt(somo_dir + SLASH + project +
+		  //		 (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+		  //		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+		  //		 DOTSOMO, &bead_model, bead_model_from_file);
 		  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
 				   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + 
 				   DOTSOMO, &bead_model);
@@ -5392,6 +5480,9 @@ int US_Hydrodyn::calc_grid()
 int US_Hydrodyn::calc_somo()
 {
   pb_somo->setEnabled(false);
+  options_log = "";
+  append_options_log_somo();
+
   if (!residue_list.size() ||
       !model_vector.size())
 	{
@@ -5489,10 +5580,10 @@ void US_Hydrodyn::calc_hydro()
 	editor->append(QString("Model %1 will be included\n").arg(current_model + 1));
 	bead_model = bead_models[current_model];
 
-	write_bead_spt(somo_dir + SLASH + project +
-		       (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-		       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
-		       DOTSOMO, &bead_model, bead_model_from_file);
+	// write_bead_spt(somo_dir + SLASH + project +
+	//	       (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
+	//	       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+	//	       DOTSOMO, &bead_model, bead_model_from_file);
       } else {
 	editor->append(QString("Model %1 - selected but bead model not built\n").arg(current_model + 1));
       }
@@ -5512,6 +5603,7 @@ void US_Hydrodyn::calc_hydro()
 				     hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance,
 				     &bead_models,
 				     &somo_processed,
+				     &model_vector,
 				     lb_model,
 				     QString(project +
 					     // (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
@@ -5524,7 +5616,8 @@ void US_Hydrodyn::calc_hydro()
 					     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 					     DOTSOMO + ".beams").ascii(),
 				     progress,
-				     editor);
+				     editor,
+				     this);
   chdir(somo_tmp_dir);
 
   printf("back from supc retval %d\n", retval);
@@ -5765,6 +5858,7 @@ void US_Hydrodyn::load_pdb()
 			"Please select a PDB file...");
 	if (!filename.isEmpty())
 	{
+		options_log = "";
 		bead_model_from_file = false;
 		int errors_found = 0;
 		lbl_pdb_file->setText( QDir::convertSeparators( filename ) );
@@ -5852,7 +5946,7 @@ void US_Hydrodyn::view_file(const QString &filename)
 
 void US_Hydrodyn::view_asa()
 {
-	QString filename = QFileDialog::getOpenFileName(somo_dir, "*.asa *.ASA", this);
+	QString filename = QFileDialog::getOpenFileName(somo_dir, "*.asa_res *.ASA_RES", this);
 	if (!filename.isEmpty())
 	{
 		view_file(filename);
@@ -5866,11 +5960,15 @@ void US_Hydrodyn::load_bead_model()
 							this);
 	if (!filename.isEmpty())
 	{
+		options_log = "";
 		pb_somo->setEnabled(false);
 		pb_visualize->setEnabled(false);
 		pb_calc_hydro->setEnabled(false);
 		pb_show_hydro_results->setEnabled(false);
 		pb_grid->setEnabled(false);
+		bead_model_prefix = "";
+		le_bead_model_prefix->setText(bead_model_prefix);
+		
 		if (results_widget)
 		{
 		    results_window->close();
@@ -6059,7 +6157,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		    return linepos;
 		  }
 		  if (!ts.atEnd()) {
-		    ts >>  tmp_atom.serial;
+		    tmp_atom.serial = linepos;
 		  } else {
 		    editor->append(QString("\nError in line %1!\n").arg(linepos));
 		    return linepos;
@@ -6093,9 +6191,9 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		}
 		bead_model_from_file = true;
 		editor->append("Bead model loaded\n\n");
-		write_bead_spt(somo_dir + SLASH + project +
-			       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
-			       DOTSOMO, &bead_model, true);
+		// write_bead_spt(somo_dir + SLASH + project +
+		//	       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+		//	       DOTSOMO, &bead_model, true);
 		lb_model->clear();
 		lb_model->insertItem("Model 1 from bead_model file");
 		lb_model->setSelected(0, true);
@@ -6199,9 +6297,9 @@ int US_Hydrodyn::read_bead_model(QString filename)
 		}
 		bead_model_from_file = true;
 		editor->append("Bead model loaded\n\n");
-		write_bead_spt(somo_dir + SLASH + project +
-			       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
-			       DOTSOMO, &bead_model, true);
+		// write_bead_spt(somo_dir + SLASH + project +
+		//	       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+		//	       DOTSOMO, &bead_model, true);
 
 		lb_model->clear();
 		lb_model->insertItem("Model 1 from beams file");
@@ -6961,4 +7059,132 @@ void US_Hydrodyn::closeAttnt(QProcess *proc, QString message)
 			break;
 		}
 	}
+}
+
+void US_Hydrodyn::append_options_log_somo()
+{
+	QString s;
+
+	s.sprintf("Bead model built with the following options:\n");
+	options_log += s;
+
+	s.sprintf(
+		  "ASA Calculation:\n"
+		  "  Perform ASA Calculation:    %s\n"
+		  "  Recheck Bead ASA:           %s\n"
+		  "  ASA Method:                 %s\n"
+		  "  ASA Probe Radius (A):       %.2f\n"
+		  "  Probe Recheck Radius (A):   %.2f\n"
+		  "  ASA Threshold (A^2):        %.1f\n"
+		  "  Bead ASA Threshold %%:       %.1f\n"
+		  "  ASAB1 Step Size (A):        %.1f\n"
+		  "\n"
+		  
+		  ,asa.calculation ? "On" : "Off"
+		  ,asa.recheck_beads ? "On" : "Off"
+		  ,asa.method ? "Voronoi Tesselation" : "Rolling Sphere"
+		  ,asa.probe_radius
+		  ,asa.probe_recheck_radius
+		  ,asa.threshold
+		  ,asa.threshold_percent
+		  ,asa.asab1_step
+		  );
+	options_log += s;
+
+	s.sprintf(
+		  "Overlap Reduction:\n"
+		  "  Bead Overlap Tolerance:     %f\n"
+		  "    Exposed Side chain beads:\n"
+		  "      Fuse Beads:                                 %s\n"
+		  "      Fuse Beads that overlap by more than:       %.1f\n"
+		  "      Remove Overlaps:                            %s\n"
+		  "      Remove Overlaps synchronously:              %s\n"
+		  "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+		  "      Remove Overlaps hierarchically:             %s\n"
+		  "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+		  "      Outward Translation:                         %s\n"
+		  
+		  "    Exposed Main and side chain beads:\n"
+		  "      Fuse Beads:                                 %s\n"
+		  "      Fuse Beads that overlap by more than:       %.1f\n"
+		  "      Remove Overlaps:                            %s\n"
+		  "      Remove Overlaps synchronously:              %s\n"
+		  "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+		  "      Remove Overlaps hierarchically:             %s\n"
+		  "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+		  
+		  "    Buried beads:\n"
+		  "      Fuse Beads:                                 %s\n"
+		  "      Fuse Beads that overlap by more than:       %.1f\n"
+		  "      Remove Overlaps:                            %s\n"
+		  "      Remove Overlaps synchronously:              %s\n"
+		  "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+		  "      Remove Overlaps hierarchically:             %s\n"
+		  "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+		  "\n"
+		  
+		  ,overlap_tolerance
+
+		  ,sidechain_overlap.fuse_beads ? "On" : "Off"
+		  ,sidechain_overlap.fuse_beads_percent
+		  ,sidechain_overlap.remove_overlap ? "On" : "Off"
+		  ,sidechain_overlap.remove_sync ? "On" : "Off"
+		  ,sidechain_overlap.remove_sync_percent
+		  ,sidechain_overlap.remove_hierarch ? "On" : "Off"
+		  ,sidechain_overlap.remove_hierarch_percent
+		  ,sidechain_overlap.translate_out ? "On" : "Off"
+		  
+		  ,mainchain_overlap.fuse_beads ? "On" : "Off"
+		  ,mainchain_overlap.fuse_beads_percent
+		  ,mainchain_overlap.remove_overlap ? "On" : "Off"
+		  ,mainchain_overlap.remove_sync ? "On" : "Off"
+		  ,mainchain_overlap.remove_sync_percent
+		  ,mainchain_overlap.remove_hierarch ? "On" : "Off"
+		  ,mainchain_overlap.remove_hierarch_percent
+		  
+		  ,buried_overlap.fuse_beads ? "On" : "Off"
+		  ,buried_overlap.fuse_beads_percent
+		  ,buried_overlap.remove_overlap ? "On" : "Off"
+		  ,buried_overlap.remove_sync ? "On" : "Off"
+		  ,buried_overlap.remove_sync_percent
+		  ,buried_overlap.remove_hierarch ? "On" : "Off"
+		  ,buried_overlap.remove_hierarch_percent
+		  );
+	options_log += s;
+}	
+
+
+	    
+void US_Hydrodyn::append_options_log_atob()
+{
+	QString s;
+
+	s.sprintf("Grid model built with the following options:\n");
+	options_log += s;
+
+	s.sprintf(
+		  "Grid Functions (AtoB):\n"
+		  "  Computations Relative to:   %s\n"
+		  "  Cube Side (Angstrom):       %.1f\n"
+		  "  Apply Cubic Grid:           %s\n"
+		  "  Hydrate the Original Model: %s\n"
+		  "  Remove Overlaps:            %s\n"
+		  "  Expand Beads to Tangency:   %s\n"
+		  "\n"
+
+		  ,grid.center ? "Center of Mass" : "Center of Cubelet"
+		  ,grid.cube_side
+		  ,grid.cubic ? "On" : "Off"
+		  ,grid.hydrate ? "On" : "Off"
+		  ,grid.overlaps ? "On" : "Off"
+		  ,grid.tangency ? "On" : "Off"
+		  );
+
+	options_log += s;
+}
+
+void US_Hydrodyn::stop_calc() 
+{
+	stopFlag = true;
+	pb_stop_calc->setEnabled(false);
 }

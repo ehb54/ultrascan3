@@ -303,7 +303,7 @@ void US_Hydrodyn_Results::help()
 
 void US_Hydrodyn_Results::load_results()
 {
-	QString filename = QFileDialog::getOpenFileName(somo_dir, "*.hydro_res *.hydro_res", this);
+	QString filename = QFileDialog::getOpenFileName(somo_dir, "*.hydro_res *.HYDRO_RES", this);
 	if (!filename.isEmpty())
 	{
 		view_file(filename);
@@ -321,7 +321,7 @@ void US_Hydrodyn_Results::load_beadmodel()
 
 void US_Hydrodyn_Results::load_asa()
 {
-	QString filename = QFileDialog::getOpenFileName(somo_dir, "*.asa *.ASA", this);
+	QString filename = QFileDialog::getOpenFileName(somo_dir, "*.asa_res *.ASA_RES", this);
 	if (!filename.isEmpty())
 	{
 		view_file(filename);

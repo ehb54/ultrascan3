@@ -84,7 +84,7 @@ void US_Hydrodyn_ASA::setupGUI()
 	cnt_probe_recheck_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_probe_recheck_radius, SIGNAL(valueChanged(double)), SLOT(update_probe_recheck_radius(double)));
 
-	lbl_asa_threshold = new QLabel(tr(" ASA Threshold (A^2)): "), this);
+	lbl_asa_threshold = new QLabel(tr(" ASA Threshold (A^2): "), this);
 	Q_CHECK_PTR(lbl_asa_threshold);
 	lbl_asa_threshold->setAlignment(AlignLeft|AlignVCenter);
 	lbl_asa_threshold->setMinimumHeight(minHeight1);

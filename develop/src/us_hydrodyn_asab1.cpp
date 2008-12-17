@@ -1085,6 +1085,10 @@ plutone[2]=0; */
     }
     printf("\n\n\n");
     asab1_free_alloced();
+    unlink("controll");
+    unlink("plotter");
+    unlink("plotter1");
+
     return 0;
 }
 
@@ -1883,7 +1887,7 @@ initarray()
 	strcpy(outris, outfile);
 	strcat(outris, ".asaris");
 /*			printf("\n outris= %s",outris); */
-	strcat(outfile, ".asa");
+	strcat(outfile, ".asa_res");
 /*			printf("\n outfile= %s",outfile); */
 	strcpy(outfile1, outfile);
 	strcat(outfile1, "1");

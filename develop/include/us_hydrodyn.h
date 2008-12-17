@@ -52,6 +52,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
 	public:
 		US_Hydrodyn(QWidget *p = 0, const char *name = 0);
 		~US_Hydrodyn();
+		int get_color(PDB_atom *);
+		struct misc_options misc;
+		double overlap_tolerance;
+		bool stopFlag;
 
 	private:
 		bool 	residue_widget,
@@ -74,7 +78,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QString residue_filename, bead_model_file;
 		struct residue current_residue;
 		struct asa_options asa;
-		struct misc_options misc;
 		struct hydro_options hydro;
 		struct grid_options grid;
 		struct hydro_results results;
@@ -90,7 +93,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QString somo_dir;
 		QString somo_pdb_dir;
 		QString somo_tmp_dir;
-		double overlap_tolerance;
 
 		point last_molecular_cog;
 
@@ -131,6 +133,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QPushButton *pb_show_hydro_results;
 		QPushButton *pb_grid;
 		QPushButton *pb_view_asa;
+		QPushButton *pb_stop_calc;
 
 
 		QProgressBar *progress;
@@ -163,6 +166,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		vector <struct PDB_model> model_vector;
 		bool bead_model_from_file;
 		vector <int> somo_processed;
+		QString options_log;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
@@ -203,6 +207,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void show_grid(); // show grid options
 		void view_pdb(); // show pdb file in editor
 		void view_asa(); // show asa file in editor
+		void stop_calc(); // stop some operations
 		void view_file(const QString &); // call editor to view a file
 		void bead_check(); // recheck beads
 		void read_config();
@@ -217,19 +222,21 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void write_bead_asa(QString, vector <PDB_atom> *);
 		void write_bead_tsv(QString, vector <PDB_atom> *);
 		void write_bead_ebf(QString, vector <PDB_atom> *);
-		void write_bead_spt(QString, vector <PDB_atom> *, bool loaded_bead_model = false);
+		void write_bead_spt(QString, vector <PDB_atom> *);
 		void write_bead_model(QString, vector <PDB_atom> *);
 		void printError(const QString &);
 		void closeAttnt(QProcess *, QString);
 		void calc_vbar(struct PDB_model *);
 		void update_vbar(); // update the results.vbar everytime something changes the vbar in options or calculation
-		int get_color(PDB_atom *);
+		void append_options_log_somo(); // append somo options to options_log 
+		void append_options_log_atob(); // append atob options to options_log 
 
 		// editor functions:
 		void save();
 		void print();
 		void update_font();
 		void clear_display();
+
 
 
 	protected slots:

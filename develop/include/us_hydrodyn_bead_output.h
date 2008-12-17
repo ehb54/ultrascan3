@@ -23,6 +23,10 @@
 
 using namespace std;
 
+#define US_HYDRODYN_OUTPUT_SOMO		(1 << 0)
+#define US_HYDRODYN_OUTPUT_BEAMS	(1 << 1)
+#define US_HYDRODYN_OUTPUT_HYDRO	(1 << 2)
+
 struct bead_output_options
 {
 	int output; 		// 0 = SOMO

@@ -33,12 +33,13 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 	lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
 	bg_output = new QButtonGroup(3, Qt::Horizontal, "Output Format:", this);
-	bg_output->setExclusive(true);
+	bg_output->setExclusive(false);
 	connect(bg_output, SIGNAL(clicked(int)), this, SLOT(select_output(int)));
 
 	cb_somo_output = new QCheckBox(bg_output);
 	cb_somo_output->setText(tr(" SOMO "));
 	cb_somo_output->setEnabled(true);
+	cb_somo_output->setChecked((*bead_output).output & US_HYDRODYN_OUTPUT_SOMO);
 	cb_somo_output->setMinimumHeight(minHeight1);
 	cb_somo_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_somo_output->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -46,6 +47,7 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 	cb_beams_output = new QCheckBox(bg_output);
 	cb_beams_output->setText(tr(" BEAMS "));
 	cb_beams_output->setEnabled(true);
+	cb_beams_output->setChecked((*bead_output).output & US_HYDRODYN_OUTPUT_BEAMS);
 	cb_beams_output->setMinimumHeight(minHeight1);
 	cb_beams_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_beams_output->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -53,11 +55,12 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 	cb_hydro_output = new QCheckBox(bg_output);
 	cb_hydro_output->setText(tr(" HYDRO "));
 	cb_hydro_output->setEnabled(true);
+	cb_hydro_output->setChecked((*bead_output).output & US_HYDRODYN_OUTPUT_HYDRO);
 	cb_hydro_output->setMinimumHeight(minHeight1);
 	cb_hydro_output->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_hydro_output->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-	bg_output->setButton((*bead_output).output);
+	// bg_output->setButton((*bead_output).output);
 
 	bg_sequence = new QButtonGroup(3, Qt::Vertical, "Bead Sequence Format:", this);
 	bg_sequence->setExclusive(true);
@@ -115,7 +118,11 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 
 void US_Hydrodyn_Bead_Output::select_output(int val)
 {
-	(*bead_output).output = val;
+	if((*bead_output).output & 1 << val) {
+	  (*bead_output).output &= ~(1 << val);
+	} else {
+	  (*bead_output).output |= (1 << val);
+	}
 }
 
 void US_Hydrodyn_Bead_Output::select_sequence(int val)

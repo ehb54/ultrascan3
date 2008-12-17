@@ -7,6 +7,8 @@
 /* Computation of the hydrodynamic properties of rigid models */
 /* composed of non-overlapping beads of different radii.      */
 
+// #define DEBUG_FILES
+
 #define  PI 3.141592654
 #define  ETAo 1.005E-02
 #define  DENS 0.998203
@@ -49,7 +51,9 @@ static FILE *rmc;
 static FILE *new_mol1;
 static FILE *new_rmc;
 static FILE *ris;
-static FILE *exe_time;
+#if defined(CREATE_EXE_TIME)
+ static FILE *exe_time;
+#endif
 static FILE *tot_mol;
 static FILE *interinp;
 static FILE *interinp1;
@@ -133,6 +137,7 @@ static float f;
 // static float tol;
 static float raggio;
 static float partvol;
+static float tot_partvol;
 static float partvolc;
 static float partvolc1;
 static float partvolc2;
@@ -146,10 +151,14 @@ static float vT[9];
 static float Tv[9];
 static float bb[3];
 static float vis;
-static float vis1;
-static float vis2;
+#if defined(TSUDA_DOUBLESUM)
+ static float vis1;
+ static float vis2;
+#endif
 static float vis3;
-static float vis4;
+#if defined(TSUDA_DOUBLESUM)
+ static float vis4;
+#endif
 static float vc[3];
 static float ro;
 static float rou;
@@ -184,14 +193,22 @@ static float CTH;
 static float CTM;
 static float VIM;
 static float VIMC;
-static float VIMDS;
-static float VIMTM;
-static float VIMTV;
+#if defined(TSUDA_DOUBLESUM)
+ static float VIMDS;
+ static float VIMDS2;
+ static float REDS;
+ static float REDS2;
+ static float RETM;
+ static float RETM2;
+ static float RETV;
+ static float RETV2;
+ static float VIMTM;
+ static float VIMTM2;
+ static float VIMTV;
+ static float VIMTV2;
+#endif
 static float RE;
 static float REC;
-static float REDS;
-static float RETM;
-static float RETV;
 static float Rg2;
 static float Rgu2;
 static float RSt2;
@@ -210,20 +227,16 @@ static float CTH2;
 static float CTM2;
 static float VIM2;
 static float VIMC2;
-static float VIMDS2;
-static float VIMTM2;
-static float VIMTV2;
 static float RE2;
 static float REC2;
-static float REDS2;
-static float RETM2;
-static float RETV2;
 static float maxx;
 static float maxy;
 static float maxz;
 
 static void print_time(int seconds);
-static void print_time_2IO(int seconds);
+#if defined(CREATE_EXE_TIME)
+ static void print_time_2IO(int seconds);
+#endif
 
 static void intestazione();
 static void presentazione();
@@ -266,9 +279,11 @@ static void calcD();
 static void secondo(long double b, long double c);
 static void terzo(long double b, long double c, long double d);
 static void visco();
-static void tsuda();
-static void tsuda1();
-static void doublesum();
+#if defined(TSUDA_DOUBLESUM)
+ static void tsuda();
+ static void tsuda1();
+ static void doublesum();
+#endif
 static void init_da_a();
 static void inv(float r[9]);
 static void inv6x6(float a[6][6]);
@@ -308,6 +323,13 @@ static int mppos;
 static double overlap_tolerance;
 static float tot_tot_beads;
 static float tot_used_beads;
+static vector <PDB_model> *model_vector;
+static vector <int> model_idx;  // maps seq model # to bead_models offset
+static vector < vector <PDB_atom> > *bead_models;
+static vector < vector <int> > active_idx;  // maps into bead_model
+static vector <int> bead_count;  // counts # of active beads
+static int active_model;
+static US_Hydrodyn *us_hydrodyn;
 
 static void
 supc_free_alloced()
@@ -453,14 +475,16 @@ print_time(int seconds)
     printf("Time used for computing: %d minutes and %d seconds\n", min_sec.quot, min_sec.rem);
 }
 
-static void
-print_time_2IO(int seconds)
-{
+#if defined(CREATE_EXE_TIME)
+ static void
+ print_time_2IO(int seconds)
+ {
     auto div_t min_sec;
 
     min_sec = div(seconds, 60);
     fprintf(exe_time, "Time used for computing: %d minutes and %d seconds\n", min_sec.quot, min_sec.rem);
-}
+ }
+#endif
 
 /*********************************************************
 *							 *
@@ -499,13 +523,15 @@ int
 us_hydrodyn_supc_main(hydro_results *hydro_results, 
 		      hydro_options *hydro, 
 		      double use_overlap_tolerance,
-		      vector < vector <PDB_atom> > *bead_models, 
+		      vector < vector <PDB_atom> > *use_bead_models, 
 		      vector <int> *somo_processed,
+		      vector <PDB_model> *use_model_vector,
 		      QListBox *lb_model,
 		      const char *filename,
 		      const char *res_filename,
 		      QProgressBar *use_progress,
-		      QTextEdit *use_editor)
+		      QTextEdit *use_editor,
+		      US_Hydrodyn *use_us_hydrodyn)
 {
     dt = 0;
     dtn = 0;
@@ -515,6 +541,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     gp = 0;	
     q = 0;	
     a = 0;	
+    tot_partvol = 0.0;
 
   //  vector <PDB_atom> *bead_model;
     tot_tot_beads = 0;
@@ -523,6 +550,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     progress = use_progress;
     editor = use_editor;
     overlap_tolerance = use_overlap_tolerance;
+    model_vector = use_model_vector;
+    bead_models = use_bead_models;
+    us_hydrodyn = use_us_hydrodyn;
 #if defined(DEBUG_WW)
     cks = 0e0;
     {
@@ -531,23 +561,27 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       logfx = fopen(s, "w");
     }
 #endif
+    model_idx.clear();
+    bead_count.clear();
+    active_idx.clear();
 
     nmax = 0;
     int models_to_proc = 0;
-    vector <int> model_idx;  // maps seq model # to bead_models offset
-    vector <int> bead_count;  // counts # of active beads
     QString use_filename = filename;
     for (int current_model = 0; current_model < (int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
 	if ((*somo_processed)[current_model]) {
 	  model_idx.push_back(current_model);
+	  vector < int > tmp_active_idx;
 	  int tmp_count = 0;
 	  for(int i = 0; i < (int)(*bead_models)[current_model].size(); i++) {
 	    if((*bead_models)[current_model][i].active) {
+	      tmp_active_idx.push_back(i);
 	      tmp_count++;
 	    }
 	  }
 	  bead_count.push_back(tmp_count);
+	  active_idx.push_back(tmp_active_idx);
 	  models_to_proc++;
 	  if (nmax < (int) (*bead_models)[current_model].size()) {
 	    nmax = (int) (*bead_models)[current_model].size();
@@ -649,10 +683,19 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
 	/* Initialization for average values */
 
-	Rg = Rgu = RSt = CfT = CST = CSTF = CdT = CfR1 = CdR1 = RE = REC = REDS = RETM = RETV = VIM = VIMC = VIMDS = VIMTM =
-	    VIMTV = CTH = CTM = 0.0;
-	Rg2 = Rgu2 = RSt2 = CfT2 = CST2 = CSTF2 = CdT2 = CfR12 = CdR12 = RE2 = REC2 = REDS2 = RETM2 = RETV2 = VIM2 = VIMC2 =
-	    VIMDS2 = VIMTM2 = VIMTV2 = CTH2 = CTM2 = 0.0;
+	Rg = Rgu = RSt = CfT = CST = CSTF = CdT = CfR1 = CdR1 = RE = REC = VIM = VIMC = 
+	    CTH = CTM = 0.0;
+
+#if defined(TSUDA_DOUBLESUM)
+	REDS = RETM = RETV = VIMDS = VIMTM = VIMTV = 0.0;
+#endif
+
+	Rg2 = Rgu2 = RSt2 = CfT2 = CST2 = CSTF2 = CdT2 = CfR12 = CdR12 = RE2 = REC2 = VIM2 = VIMC2 =
+	    CTH2 = CTM2 = 0.0;
+
+#if defined(TSUDA_DOUBLESUM)
+	REDS2 = RETM2 = RETV2 = VIMDS2 = VIMTM2 = VIMTV2 = 0.0;
+#endif
 
 	for (k = 0; k < 3; k++)
 	{
@@ -826,10 +869,19 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
     /* Initialization for average values */
 
-    Rg = Rgu = RSt = CfT = CST = CSTF = CdT = CfR1 = CdR1 = RE = REC = REDS = RETM = RETV = VIM = VIMC = VIMDS = VIMTM =
-      VIMTV = CTH = CTM = 0.0;
-    Rg2 = Rgu2 = RSt2 = CfT2 = CST2 = CSTF2 = CdT2 = CfR12 = CdR12 = RE2 = REC2 = REDS2 = RETM2 = RETV2 = VIM2 = VIMC2 =
-      VIMDS2 = VIMTM2 = VIMTV2 = CTH2 = CTM2 = 0.0;
+	Rg = Rgu = RSt = CfT = CST = CSTF = CdT = CfR1 = CdR1 = RE = REC = VIM = VIMC = 
+	    CTH = CTM = 0.0;
+
+#if defined(TSUDA_DOUBLESUM)
+	REDS = RETM = RETV = VIMDS = VIMTM = VIMTV = 0.0;
+#endif
+
+	Rg2 = Rgu2 = RSt2 = CfT2 = CST2 = CSTF2 = CdT2 = CfR12 = CdR12 = RE2 = REC2 = VIM2 = VIMC2 =
+	    CTH2 = CTM2 = 0.0;
+
+#if defined(TSUDA_DOUBLESUM)
+	REDS2 = RETM2 = RETV2 = VIMDS2 = VIMTM2 = VIMTV2 = 0.0;
+#endif
     
     for (k = 0; k < 3; k++)
     {
@@ -859,11 +911,13 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     
     strncpy(molecola, QString(use_filename).arg(model_idx[0] + 1).ascii(), SMAX); // first model
     molecola[SMAX-1] = 0;
+#if defined(DEBUG_FILES)
     if(!(mol = fopen(molecola, "r"))) {
       supc_free_alloced();
       return US_HYDRODYN_SUPC_FILE_NOT_FOUND;
     }
     fclose(mol);
+#endif
     fconv = pow(10.0,hydro->unit + 9);
     printf("fconv = %f\n", fconv);
     fconv1 = 1.0 / fconv;
@@ -910,7 +964,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       //      current_model = model_idx[k];
 
 	/* Check for file existence and selects whole or part of the models for sequential files only   */
-	if (cdmolix == 1)
+        if (cdmolix == 1) // never true in our case, cdmolix == 2
 	{
 	    sprintf(molecola, "%s%d", fil001, num001);
 	    num001 = num001 + 1;
@@ -952,13 +1006,13 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	}
 
 	else
-	{
+	{  // this code is always executed
+
+#if defined(USE_MAIN)
 	    if (num != 1)
 	    {
 		printf("\n%s%d%s", "** Insert file name of model #", k + 1, " to be analyzed :___ ");
 	    }
-
-#if defined(USE_MAIN)
 	    else
 	    {
 		printf("\n** Insert file name of the model to be analyzed :___ ");
@@ -971,6 +1025,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	    printf("opening file: %s\n",  QString(use_filename).arg(model_idx[k] + 1).ascii());
 	    strncpy(molecola, QString(use_filename).arg(model_idx[k] + 1).ascii(), SMAX); // first model
 
+	    active_model = k;
+
 	    init_da_a();	    
 	}
     }
@@ -979,11 +1035,12 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
     for (k = 0; k < num; k++)
     {
+	active_model = k;
 
 	editor->append(QString("\nProcessing model %1 bead count %2\n").arg(k+1).arg(bead_count[k]));
 
         supc_free_alloced_2();
-	
+
 	initarray();
 	editor->append(QString("Using %1 beads for the matrix\n").arg(nat));
 	qApp->processEvents();
@@ -1097,16 +1154,21 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	ym = ym / mtx;
 	zm = zm / mtx;
 
+#if defined(TSUDA_DOUBLESUM)
 	printf("\n\n Starting function: tsuda()\n");
 	tsuda();
+	printf("\n End of function: tsuda()\n");
+#endif
 	progress->setProgress(ppos++); // 4
 	qApp->processEvents();
-	printf("\n End of function: tsuda()\n");
+#if defined(TSUDA_DOUBLESUM)
 	printf("\n Starting function: doublesum()\n");
 	doublesum();
+	printf("\n End of function: doublesum()\n");
+#endif
 	progress->setProgress(ppos++); // 5
 	qApp->processEvents();
-	printf("\n End of function: doublesum()\n");
+
 	printf("\n Starting function: calcqij()\n");
 	calcqij();
 	printf("\n\n End of function: calcqij()\n");
@@ -1115,6 +1177,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
 	presentazione();
 	printf("- Computational Method : SUPERMATRIX INVERSION\n\n");
+#if defined(CREATE_EXE_TIME)
 	if (flag_mem == 1)
 	{
 	    exe_time = fopen("exe_time", "wb");
@@ -1132,9 +1195,10 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	    else
 		fprintf(exe_time, "\n");
 	    fclose(exe_time);
-
 	    // system("date >> exe_time");
 	}
+#endif
+
 	primo = time(NULL);	/* Gets system time */
 	progress->setProgress(ppos++); // 7
 	qApp->processEvents();
@@ -1147,7 +1211,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	printf("calculated\n");
 
 	visco();
+#if defined(TSUDA_DOUBLESUM)
 	tsuda1();
+#endif
 	progress->setProgress(ppos++); // 9
 	qApp->processEvents();
 
@@ -1200,8 +1266,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	printf("- Matrix Dot      : calculated\n");
 	printf("- Matrix Dr       : calculated\n");
 	secondo = time(NULL);	/* Gets system time again */
-	if (flag_mem == 1)
 
+#if defined(CREATE_EXE_TIME)
+	if (flag_mem == 1)
 	{
 	  // system("date >> exe_time");
 	    exe_time = fopen("exe_time", "ab");
@@ -1212,6 +1279,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	     */
 	    fclose(exe_time);
 	}
+#endif
 
 	presentazione();
 	printf("- Computational Method : SUPERMATRIX INVERSION\n\n\n");
@@ -1331,6 +1399,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	    temp = 1.0E7 * pow((0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO)), 0.333333) * fconv;
 	    REC2 += pow(temp, 2);
 
+#if defined(TSUDA_DOUBLESUM)
 	    VIMDS += (vis4 * correz) * pow(fconv, 3);
 	    temp = (vis4 * correz) * pow(fconv, 3);
 	    VIMDS2 += pow(temp, 2.0f);
@@ -1354,6 +1423,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	    RETV += 1.0E7 * pow((0.3 * pesmol * vis2 / (PI * AVO)), 0.333333) * fconv;
 	    temp = 1.0E7 * pow((0.3 * pesmol * vis2 / (PI * AVO)), 0.333333) * fconv;
 	    RETV2 += pow(temp, 2);
+#endif
 
 	    for (i = 0; i < 5; i++)
 	    {
@@ -1444,7 +1514,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 	val_med();
 
     fclose(tot_mol);
+
     unlink("tot_mol");
+    unlink("exe_time");
 
 #if defined(DEBUG_WW)
     dww("final");
@@ -1860,29 +1932,35 @@ stampa_ris()
 	vol_mas = pesmol;
     }
 
-    printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY                 = ", vis * correz * pow(fconv, 3), "[cm^3/g]");
+    printf("%s%.2f\t%s\n", "- UNCORRECTED INTRINSIC VISCOSITY     = ", vis * correz * pow(fconv, 3), "[cm^3/g]");
 
     einst = pow(0.3 * pesmol * vis / (PI * AVO), 0.33333);
     einst = 1E7 * einst;
-    printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                   = ", einst * fconv, "[nm]");
+    printf("%s%.2f\t%s\n", "- UNCORRECTED EINSTEIN'S RADIUS       = ", einst * fconv, "[nm]");
     if ((volcor == 1) && ((colorsixf == 0) || (colorsixf == 1) || (colorsixf == 2)))
     {
-	printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(GDLT corrected) = ",
+        // printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(GDLT corrected) = ",
+        printf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY       = ",
 	       (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
 	supc_results->viscosity = (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
 	einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO), 0.33333);
 	einst = 1E7 * einst;
-	printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
+	// printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
+	printf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS         = ", einst * fconv, "[nm]");
     }
     else
     {
-	printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
+        // printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
+        printf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY       = ",
 	       (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
 	supc_results->viscosity = (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3);
 	einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / (PI * AVO), 0.33333);
 	einst = 1E7 * einst;
-	printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
+	// printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)  = ", einst * fconv, "[nm]");
+	printf("%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS         = ", einst * fconv, "[nm]");
     }
+
+#if defined(TSUDA_DOUBLESUM)
     printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(DoubleSum CM)   = ", vis4 * correz * pow(fconv, 3.0f), "[cm^3/g]");
     einst = pow(0.3 * pesmol * vis4 / (PI * AVO), 0.33333);
     einst = 1E7 * einst;
@@ -1895,6 +1973,7 @@ stampa_ris()
     einst = pow(0.3 * pesmol * vis2 / (PI * AVO), 0.33333);
     einst = 1E7 * einst;
     printf("%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)        = ", einst * fconv, "[nm]");
+#endif
 
     printf("\nRELAXATION TIMES\n\n");
 
@@ -1958,6 +2037,7 @@ mem_ris()
     fprintf(ris, "%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere);
     tot_tot_beads += (float) numero_sfere;
     supc_results->total_beads = numero_sfere;
+    supc_results->vbar = partvol;
     
     // fprintf(ris, "%s%d\n", "FIRST Bead Included  :___ ", prima);
     // fprintf(ris, "%s%d\n\n", "LAST Bead Included :___ ", ultima);
@@ -2117,26 +2197,34 @@ mem_ris()
 	vol_mas = pesmol;
     }
 
-    fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY                  = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]");
+    // fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY                  = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]");
+    fprintf(ris, "%s%.2f\t%s\n", "- UNCORRECTED INTRINSIC VISCOSITY      = ", vis * correz * pow(fconv, 3.0f), "[cm^3/g]");
     einst = pow(0.3 * pesmol * vis / (PI * AVO), 0.33333);
     einst = 1E7 * einst;
-    fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                    = ", einst * fconv, "[nm]");
+    // fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS                    = ", einst * fconv, "[nm]");
+    fprintf(ris, "%s%.2f\t%s\n", "- UNCORRECTED EINSTEIN'S RADIUS        = ", einst * fconv, "[nm]");
     if ((volcor == 1) && ((colorsixf == 0) || (colorsixf == 1) || (colorsixf == 2)))
     {
-	fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
+        // fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
+	fprintf(ris, "%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY        = ",
 		(vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
 	einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO), 0.33333);
 	einst = 1E7 * einst;
-	fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
+	// fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
+	fprintf(ris, "%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]");
     }
     else
     {
-	fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected)  = ",
+        // fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected)  = ",
+        fprintf(ris, "%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY         = ",
 		(vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
 	einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / (PI * AVO), 0.33333);
 	einst = 1E7 * einst;
-	fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
+	// fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
+	fprintf(ris, "%s%.2f\t%s\n", "- CORRECTED EINSTEIN'S RADIUS          = ", einst * fconv, "[nm]");
     }
+
+#if defined(TSUDA_DOUBLESUM)
     fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(DoubleSum CM)    = ", vis4 * correz * pow(fconv, 3), "[cm^3/g]");
     einst = pow(0.3 * pesmol * vis4 / (PI * AVO), 0.33333);
     einst = 1E7 * einst;
@@ -2149,6 +2237,7 @@ mem_ris()
     einst = pow(0.3 * pesmol * vis2 / (PI * AVO), 0.33333);
     einst = 1E7 * einst;
     fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)         = ", einst * fconv, "[nm]");
+#endif
 
     fprintf(ris, "\nRELAXATION TIMES\n\n");
 
@@ -2207,6 +2296,7 @@ val_med()
     fprintf(ris, "\n\t\t\t\t Mean value\tSt. Dev.\n");
     supc_results->total_beads = tot_tot_beads / num;
     supc_results->used_beads = tot_used_beads / num;
+    supc_results->vbar = tot_partvol / num;
 
     temp = fabs((CfT2 - pow(CfT, 2) / num) / (num - 1));
     fprintf(ris, "\n%s\t%.3e\t%.3e\t%s\n", "- TRANS. FRICT. COEFF.        ", CfT / num, sqrt(temp), "[g/s]");
@@ -2300,19 +2390,24 @@ val_med()
     fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- ROTAT. STOKES' RADIUS [ Z ] ", RSr[2] / num, sqrt(temp), "[nm]");
 
     temp = fabs((VIM2 - pow(VIM, 2) / num) / (num - 1));
-    fprintf(ris, "\n%s\t%.2f\t\t%.2f\t\t%s\n", "- INTRINSIC VISCOSITY         ", VIM / num, sqrt(temp), "[cm^3/g]");
+    // fprintf(ris, "\n%s\t%.2f\t\t%.2f\t\t%s\n", "- INTRINSIC VISCOSITY         ", VIM / num, sqrt(temp), "[cm^3/g]");
+    fprintf(ris, "\n%s\t%.2f\t\t%.2f\t\t%s\n", "- UNCORRECTED INTRINSIC VISC. ", VIM / num, sqrt(temp), "[cm^3/g]");
 
     temp = fabs((RE2 - pow(RE, 2) / num) / (num - 1));
-    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- EINSTEIN'S RADIUS           ", RE / num, sqrt(temp), "[nm]");
+    // fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- EINSTEIN'S RADIUS           ", RE / num, sqrt(temp), "[nm]");
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- UNCORRECTED EINSTEIN'S RADIUS", RE / num, sqrt(temp), "[nm]");
 
     temp = fabs((VIMC2 - pow(VIMC, 2) / num) / (num - 1));
-    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- INTRINSIC VISC. (GDLT corr.)", VIMC / num, sqrt(temp), "[cm^3/g]");
+    // fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- INTRINSIC VISC. (GDLT corr.)", VIMC / num, sqrt(temp), "[cm^3/g]");
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- CORRECTED INTRINSIC VISCOSITY", VIMC / num, sqrt(temp), "[cm^3/g]");
     supc_results->viscosity = VIMC / num;
     supc_results->viscosity_sd = sqrt(temp);
 
     temp = fabs((REC2 - pow(REC, 2) / num) / (num - 1));
-    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- EINSTEIN'S RADIUS (GDLT co.)", REC / num, sqrt(temp), "[nm]");
+    // fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- EINSTEIN'S RADIUS (GDLT co.)", REC / num, sqrt(temp), "[nm]");
+    fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- CORRECTED EINSTEIN'S RADIUS", REC / num, sqrt(temp), "[nm]");
 
+#if defined(TSUDA_DOUBLESUM)
     temp = fabs((VIMDS2 - pow(VIMDS, 2) / num) / (num - 1));
     fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- INTRINSIC VISC. (Double Sum)", VIMDS / num, sqrt(temp), "[cm^3/g]");
 
@@ -2330,6 +2425,7 @@ val_med()
 
     temp = fabs((RETV2 - pow(RETV, 2) / num) / (num - 1));
     fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- EINSTEIN'S RADIUS (Tsuda CV)", RETV / num, sqrt(temp), "[nm]");
+#endif
 
     fprintf(ris, "\nRELAXATION TIMES\n\n");
 
@@ -3282,7 +3378,9 @@ static void
 init_da_a()
 {
 
+#if defined(DEBUG_FILES)
     mol = fopen(molecola, "r");	/* Check for the file existence  */
+    // this is the .beams_file
 
     while (mol == NULL)
     {
@@ -3297,6 +3395,12 @@ init_da_a()
     fscanf(mol, "%f", &raggio);
 
     fclose(mol);
+#endif
+
+    printf("!!!nat %d %d active_model %d\n", nat, bead_count[active_model], active_model);
+
+    nat = bead_count[active_model];
+    raggio = -2.000000;
 
     /* Selects for whole or part of the model(s) to be analyzed */
 
@@ -3372,9 +3476,15 @@ initarray()
 #endif
 
     vt = 0;
+
+#if defined(DEBUG_FILES)
     mol = fopen(molecola, "r");
     fscanf(mol, "%d", &nat);
     fscanf(mol, "%f", &raggio);
+    printf("!! opening molecola == '%s' nat == %d raggio == %f\n",
+	   molecola, nat, raggio);
+#endif
+    raggio = -2.0;
 
     if (raggio == 0.0)		/* Variable hydrated radii only */
     {
@@ -3431,22 +3541,74 @@ initarray()
     if (raggio == -2.0)		/* Variable hydrated radii and part. spec. vol. */
     {
 
+#if defined(DEBUG_FILES)
 	fscanf(mol, "%s", ragcol);
 
 	fscanf(mol, "%f", &partvol);
-
+	printf("!! partvol %f vbar %f %s %f\n", 
+	       partvol, (*model_vector)[model_idx[active_model]].vbar,
+	       us_hydrodyn->misc.compute_vbar ? "computed-vbar" : "user vbar",
+	       us_hydrodyn->misc.vbar
+	       );
 	rmc = fopen(ragcol, "r");
+#endif
+
+	partvol = (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0;
+	if (!us_hydrodyn->misc.compute_vbar) {
+	  partvol = us_hydrodyn->misc.vbar;
+	}
+	tot_partvol += partvol;
+
+	printf("psv = %f\n", partvol);
+
+
+	int decpts = -(int)log10(us_hydrodyn->overlap_tolerance/9.9999) + 1;
+	if (decpts < 4) {
+	  decpts = 4;
+	}
+	int decpow = (int)pow(10, (decpts));
+	printf("!!rounding to %d digits (%d)\n", decpts, decpow);
+
 
 	for (i = 0; i < nat; i++)
 	{
-	    fscanf(mol, "%f", &dt[i].x);
-	    fscanf(mol, "%f", &dt[i].y);
-	    fscanf(mol, "%f", &dt[i].z);
-	    fscanf(rmc, "%f", &dt[i].r);
-	    fscanf(rmc, "%f", &dt[i].m);
-	    fscanf(rmc, "%d", &dt[i].col);
+	    dt[i].x = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[0];
+	    dt[i].y = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[1];
+	    dt[i].z = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[2];
+	    dt[i].r = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_computed_radius;
+	    dt[i].m = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_ref_mw;
+	    dt[i].col = us_hydrodyn->get_color(&((*bead_models)[model_idx[active_model]][active_idx[active_model][i]]));
+	    dt[i].x = ((int)((dt[i].x * decpow) + (dt[i].x > 0 ? 0.5 : -0.5))) / (float)decpow;
+	    dt[i].y = ((int)((dt[i].y * decpow) + (dt[i].y > 0 ? 0.5 : -0.5))) / (float)decpow;
+	    dt[i].z = ((int)((dt[i].z * decpow) + (dt[i].z > 0 ? 0.5 : -0.5))) / (float)decpow;
+	    dt[i].r = ((int)((dt[i].r * decpow) + (dt[i].r > 0 ? 0.5 : -0.5))) / (float)decpow;
+	    dt[i].m = ((int)(dt[i].m * 100.0)) / 100.0;
+#if defined(DEBUG_FILES)
+	    {
+	      float fx, fy, fz, fr, fm;
+	      int fc;
+	      fscanf(mol, "%f", &fx);
+	      fscanf(mol, "%f", &fy);
+	      fscanf(mol, "%f", &fz);
+	      fscanf(rmc, "%f", &fr);
+	      fscanf(rmc, "%f", &fm);
+	      fscanf(rmc, "%d", &fc);
+	      printf("!!(%f %f %f) %f %f %f %f %f %d\n",
+		     (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[0],
+		     dt[i].x, fx,
+		     dt[i].x - fx,
+		     dt[i].y - fy,
+		     dt[i].z - fz,
+		     dt[i].r - fr,
+		     dt[i].m - fm,
+		     dt[i].col - fc
+		   ); fflush(stdout);
+	    }
+#endif
 	}
+#if defined(DEBUG_FILES)
 	fclose(rmc);
+#endif
 	goto a1200;
     }
 
@@ -3538,7 +3700,9 @@ initarray()
 
   a1200:
 
+#if defined(DEBUG_FILES)
     fclose(mol);
+#endif
 
     if ((raggio == -1.0) || (raggio == -3.0))
     {
@@ -4659,6 +4823,9 @@ visco()
     vis3 = (float)(2.5 * AVO * 1.0E-21);
 }
 
+
+#if defined(TSUDA_DOUBLESUM)
+
 /*******************************************************************************/
 
 /*  INTRISIC VISCOSITY COMPUTATION ACCORDING TO TSUDA (CM) */
@@ -4938,7 +5105,7 @@ doublesum()
     vis4 = AVO * 1.0E-21 / 6.0 / ETAo * (a1 * a1) / (a1 + a2) / pesmol;
 
 }
-
+#endif
 
 #if defined(USE_MAIN)
 int
