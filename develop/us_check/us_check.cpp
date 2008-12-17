@@ -167,7 +167,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_blank->setFrameStyle(QFrame::WinPanel|Raised);
 	lbl_blank->setPalette(background_color);
 	lbl_blank->setGeometry(xpos, ypos, buttonw, buttonh*2-15);
-	lbl_blank->setFont(QFont("Helvetical", 12, QFont::Bold));
 		
 	xpos = border;
 	ypos += buttonh*2-15 + spacing;
@@ -177,12 +176,10 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_type->setFrameStyle(QFrame::WinPanel|Raised);
 	lbl_type->setPalette(QPalette(black));
 	lbl_type->setGeometry(xpos, ypos, buttonw/2, buttonh);
-	lbl_type->setFont(QFont("Helvetical", 10, QFont::Bold));
 	
 	xpos += buttonw/2;
 	cmbb_type = new QComboBox(false, this, " ");
 	cmbb_type->setPalette( QPalette(gray));
-	cmbb_type->setFont(QFont("Helvetical", 10, QFont::Bold));
 	cmbb_type->setGeometry(xpos, ypos, buttonw/2, buttonh);
 	cmbb_type->insertItem("not selected");
 	cmbb_type->insertItem("Lastname");
@@ -200,14 +197,12 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_input->setFrameStyle(QFrame::WinPanel|Sunken);
 	lbl_input->setPalette( QPalette(black));
 	lbl_input->setGeometry(xpos, ypos, buttonw/2, buttonh);
-	lbl_input->setFont(QFont("Helvetical", 10, QFont::Bold));
 	
 	xpos += buttonw/2;
 	
 	le_input = new QLineEdit(this, "");
 	le_input->setGeometry(xpos, ypos, buttonw/2, buttonh);
 	le_input->setPalette(QPalette(white));
-	le_input->setFont(QFont("Helvetical", 10, QFont::Bold));
 	le_input->setEnabled(false);
 	connect (le_input, SIGNAL(textChanged(const QString &)), SLOT(update_input(const QString &)));
 
@@ -216,7 +211,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	
 	pb_reset = new QPushButton("Reset", this);
 	pb_reset->setAutoDefault(false);
-	pb_reset->setFont(QFont( "Helvetical", 10, QFont::Bold));
 	pb_reset->setPalette(QPalette(cyan));
 	pb_reset->setGeometry(xpos, ypos, buttonw/2, buttonh);
 	pb_reset->setEnabled(true);
@@ -226,7 +220,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	
 	pb_chkLC = new QPushButton("Check License", this);
 	pb_chkLC->setAutoDefault(false);
-	pb_chkLC->setFont(QFont( "Helvetical", 10, QFont::Bold));
 	pb_chkLC->setPalette(QPalette( cyan));
 	pb_chkLC->setGeometry(xpos, ypos, buttonw/2, buttonh);
 	pb_chkLC->setEnabled(true);
@@ -238,7 +231,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_instr1 = new QLabel("Doubleclick on item to select:",this);
 	lbl_instr1->setAlignment(AlignCenter|AlignVCenter);
 	lbl_instr1->setPalette( QPalette(background_color));
-	lbl_instr1->setFont(QFont( "Helvetical", 9, QFont::Bold));
 	lbl_instr1->setGeometry(xpos, ypos, buttonw, buttonh);
 
 	xpos = border;
@@ -247,7 +239,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lb_key = new QListBox(this, "license key");
 	lb_key->setPalette(QPalette(white));
 	lb_key->setGeometry(xpos, ypos, buttonw, buttonh*6+ spacing *6);
-	lb_key->setFont(QFont( "Helvetical", 10, QFont::Bold));
 	lb_key->setSelected(0, true);
 	connect(lb_key, SIGNAL(selected(int)), SLOT(select_name(int)));
 	connect(lb_key, SIGNAL(selected(int)), SLOT(select_key(int)));
@@ -260,14 +251,12 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_license->setFrameStyle(QFrame::WinPanel|Sunken);
 	lbl_license->setPalette( QPalette(black));
 	lbl_license->setGeometry(xpos, ypos, buttonw, buttonh);
-	lbl_license->setFont(QFont( "Helvetical", 10, QFont::Bold));
 
 	xpos = border;
 	ypos += buttonh + 2*spacing;
 	
 	pb_delete = new QPushButton("Delete License", this);
 	pb_delete->setAutoDefault(false);
-	pb_delete->setFont(QFont( "Helvetical", 10, QFont::Bold));
 	pb_delete->setPalette(QPalette(cyan));
 	pb_delete->setGeometry(xpos, ypos, buttonw/2, buttonh);
 	pb_delete->setEnabled(true);
@@ -277,7 +266,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	
 	pb_chkID = new QPushButton("Show Info", this);
 	pb_chkID->setAutoDefault(false);
-	pb_chkID->setFont(QFont("Helvetical", 10, QFont::Bold));
 	pb_chkID->setPalette(QPalette(cyan));
 	pb_chkID->setGeometry(xpos, ypos, buttonw/2, buttonh);
 	connect(pb_chkID, SIGNAL(clicked()), SLOT(show_info()));
@@ -287,7 +275,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	
 	pb_approve = new QPushButton("Approve License", this);
 	pb_approve->setAutoDefault(false);
-	pb_approve->setFont(QFont( "Helvetical", 10, QFont::Bold));
 	pb_approve->setPalette(QPalette(cyan));
 	pb_approve->setGeometry(xpos, ypos, buttonw/2, buttonh);
 	pb_approve->setEnabled(true);
@@ -297,7 +284,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	
 	pb_close = new QPushButton("Close", this);
 	pb_close->setAutoDefault(false);
-	pb_close->setFont(QFont( "Helvetical", 10, QFont::Bold));
 	pb_close->setPalette(QPalette(cyan));
 	pb_close->setGeometry(xpos, ypos, buttonw/2, buttonh);
 	pb_close->setEnabled(true);
@@ -317,7 +303,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_instr2 = new QLabel("License Registration",this);
 	lbl_instr2->setAlignment(AlignCenter|AlignVCenter);
 	lbl_instr2->setPalette( QPalette(background_color));
-	lbl_instr2->setFont(QFont("Times", 15, QFont::Bold));
 	lbl_instr2->setGeometry(xpos, ypos, buttonw, buttonh*2-15);
 	
 	xpos = buttonw + border*4;
@@ -327,14 +312,12 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_firstname->setAlignment(AlignLeft|AlignVCenter);
 	lbl_firstname->setPalette(QPalette(background_color));
 	lbl_firstname->setGeometry(xpos, ypos, buttonw/3, buttonh);
-	lbl_firstname->setFont(QFont("Times",11, QFont::Bold));
 	
 	xpos += buttonw/3;
 	lbl_fname = new QLabel(" ",this);
 	lbl_fname->setAlignment(AlignLeft|AlignVCenter);
 	lbl_fname->setPalette(QPalette(background_color));
 	lbl_fname->setGeometry(xpos, ypos, buttonw/3*2, buttonh);
-	lbl_fname->setFont(QFont("Times",13, QFont::Bold));
 		
 	xpos = buttonw +4*border;
 	ypos += buttonh + spacing;
@@ -343,7 +326,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_lastname->setAlignment(AlignLeft|AlignVCenter);
 	lbl_lastname->setPalette(QPalette(background_color));
 	lbl_lastname->setGeometry(xpos, ypos, buttonw/3, buttonh);
-	lbl_lastname->setFont(QFont("Times",11, QFont::Bold));
 	
 	xpos += buttonw/3;
 	
@@ -351,7 +333,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_lname->setAlignment(AlignLeft|AlignVCenter);
 	lbl_lname->setPalette(QPalette(background_color));
 	lbl_lname->setGeometry(xpos, ypos, buttonw/3*2, buttonh);
-	lbl_lname->setFont(QFont("Times",13, QFont::Bold));
 
 	xpos = buttonw +4*border;
 	ypos += buttonh + spacing;
@@ -360,7 +341,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_organization->setAlignment(AlignLeft|AlignVCenter);
 	lbl_organization->setPalette(QPalette(background_color));
 	lbl_organization->setGeometry(xpos, ypos, buttonw/3, buttonh);
-	lbl_organization->setFont(QFont("Times",11, QFont::Bold));
 	
 	xpos += buttonw/3;
 	
@@ -368,7 +348,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_org->setAlignment(AlignLeft|AlignVCenter);
 	lbl_org->setPalette(QPalette(background_color));
 	lbl_org->setGeometry(xpos, ypos, buttonw/3*2, buttonh);
-	lbl_org->setFont(QFont("Times",13, QFont::Bold));
 	
 	xpos = buttonw +4*border;
 	ypos += buttonh + spacing;
@@ -377,7 +356,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_address->setAlignment(AlignLeft|AlignVCenter);
 	lbl_address->setPalette(QPalette(background_color));
 	lbl_address->setGeometry(xpos, ypos, buttonw/3, buttonh);
-	lbl_address->setFont(QFont("Times",11, QFont::Bold));
 	
 	xpos += buttonw/3;
 	
@@ -385,7 +363,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_addr->setAlignment(AlignLeft|AlignVCenter);
 	lbl_addr->setPalette(QPalette(background_color));
 	lbl_addr->setGeometry(xpos, ypos, buttonw/3*2, buttonh);
-	lbl_addr->setFont(QFont("Times",13, QFont::Bold));
 	
 	xpos = buttonw +4*border;
 	ypos += buttonh + spacing;
@@ -394,7 +371,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_city->setAlignment(AlignLeft|AlignVCenter);
 	lbl_city->setPalette(QPalette(background_color));
 	lbl_city->setGeometry(xpos, ypos, buttonw/3, buttonh);
-	lbl_city->setFont(QFont("Times",11, QFont::Bold));
 	
 	xpos += buttonw/3;
 	
@@ -402,7 +378,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_ct->setAlignment(AlignLeft|AlignVCenter);
 	lbl_ct->setPalette(QPalette(background_color));
 	lbl_ct->setGeometry(xpos, ypos, buttonw/3*2, buttonh);
-	lbl_ct->setFont(QFont("Times",13, QFont::Bold));
 	
 	xpos = buttonw +4*border;
 	ypos += buttonh + spacing;
@@ -411,7 +386,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_state->setAlignment(AlignLeft|AlignVCenter);
 	lbl_state->setPalette(QPalette(background_color));
 	lbl_state->setGeometry(xpos, ypos, buttonw/4, buttonh);
-	lbl_state->setFont(QFont("Times",11, QFont::Bold));
 	
 	xpos += buttonw/4;
 	
@@ -419,7 +393,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_st->setAlignment(AlignLeft|AlignVCenter);
 	lbl_st->setPalette(QPalette(background_color));
 	lbl_st->setGeometry(xpos, ypos, buttonw/4, buttonh);
-	lbl_st->setFont(QFont("Times",13, QFont::Bold));
 
 	xpos += buttonw/4;
 
@@ -427,7 +400,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_zipcode->setAlignment(AlignLeft|AlignVCenter);
 	lbl_zipcode->setPalette(QPalette(background_color));
 	lbl_zipcode->setGeometry(xpos, ypos, buttonw/4, buttonh);
-	lbl_zipcode->setFont(QFont("Times",11, QFont::Bold));
 	
 	xpos += buttonw/4;
 	
@@ -435,7 +407,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_zip->setAlignment(AlignLeft|AlignVCenter);
 	lbl_zip->setPalette(QPalette(background_color));
 	lbl_zip->setGeometry(xpos, ypos, buttonw/4, buttonh);
-	lbl_zip->setFont(QFont("Times",13, QFont::Bold));
 	
 	xpos = buttonw +4*border;
 	ypos += buttonh + spacing;
@@ -444,7 +415,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_telephone->setAlignment(AlignLeft|AlignVCenter);
 	lbl_telephone->setPalette(QPalette(background_color));
 	lbl_telephone->setGeometry(xpos, ypos, buttonw/3, buttonh);
-	lbl_telephone->setFont(QFont("Times",11, QFont::Bold));	
 	
 	xpos += buttonw/3;
 	
@@ -452,7 +422,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_phone->setAlignment(AlignLeft|AlignVCenter);
 	lbl_phone->setPalette(QPalette(background_color));
 	lbl_phone->setGeometry(xpos, ypos, buttonw/3*2, buttonh);
-	lbl_phone->setFont(QFont("Times",12, QFont::Bold));
 
 	xpos = buttonw +4*border;
 	ypos += buttonh + spacing;
@@ -461,7 +430,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_emailaddr->setAlignment(AlignLeft|AlignVCenter);
 	lbl_emailaddr->setPalette(QPalette(background_color));
 	lbl_emailaddr->setGeometry(xpos, ypos, buttonw/3, buttonh);
-	lbl_emailaddr->setFont(QFont("Times",11, QFont::Bold));
 	
 	xpos += buttonw/3;
 	
@@ -469,7 +437,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_email->setAlignment(AlignLeft|AlignVCenter);
 	lbl_email->setPalette(QPalette(background_color));
 	lbl_email->setGeometry(xpos, ypos, buttonw/3*2, buttonh);
-	lbl_email->setFont(QFont("Times",12, QFont::Bold));
 	
 	xpos = buttonw +4*border;
 	ypos += buttonh + spacing;
@@ -478,7 +445,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_platform->setAlignment(AlignLeft|AlignVCenter);
 	lbl_platform->setPalette(QPalette(background_color));
 	lbl_platform->setGeometry(xpos, ypos, buttonw/3, buttonh);
-	lbl_platform->setFont(QFont("Times",11, QFont::Bold));
 		
 	xpos += buttonw/3;
 	
@@ -486,7 +452,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_os->setAlignment(AlignLeft|AlignVCenter);
 	lbl_os->setPalette(QPalette(background_color));
 	lbl_os->setGeometry(xpos, ypos, buttonw/3*2, buttonh);
-	lbl_os->setFont(QFont("Times",12, QFont::Bold));
 	
 	xpos = buttonw +4*border;
 	ypos += buttonh + spacing;
@@ -495,7 +460,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_licensetype->setAlignment(AlignLeft|AlignVCenter);
 	lbl_licensetype->setPalette(QPalette(background_color));
 	lbl_licensetype->setGeometry(xpos, ypos, buttonw/4, buttonh);
-	lbl_licensetype->setFont(QFont("Times",11, QFont::Bold));
 	
 	xpos += buttonw/4;
 	
@@ -503,7 +467,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_lctype->setAlignment(AlignLeft|AlignVCenter);
 	lbl_lctype->setPalette(QPalette(background_color));
 	lbl_lctype->setGeometry(xpos, ypos, buttonw/4, buttonh);
-	lbl_lctype->setFont(QFont("Times",12, QFont::Bold));
 	
 	xpos += buttonw/4;
 	
@@ -511,7 +474,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_version->setAlignment(AlignLeft|AlignVCenter);
 	lbl_version->setPalette(QPalette(background_color));
 	lbl_version->setGeometry(xpos, ypos, buttonw/4, buttonh);
-	lbl_version->setFont(QFont("Times",11, QFont::Bold));
 	
 	xpos += buttonw/4;
 	
@@ -519,7 +481,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_vs->setAlignment(AlignLeft|AlignVCenter);
 	lbl_vs->setPalette(QPalette(background_color));
 	lbl_vs->setGeometry(xpos, ypos, buttonw/4, buttonh);
-	lbl_vs->setFont(QFont("Times",12, QFont::Bold));
 	
 	xpos = buttonw +4*border;
 	ypos += buttonh + spacing;
@@ -528,7 +489,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_expiration->setAlignment(AlignLeft|AlignVCenter);
 	lbl_expiration->setPalette(QPalette(background_color));
 	lbl_expiration->setGeometry(xpos, ypos, buttonw/3, buttonh);
-	lbl_expiration->setFont(QFont("Times",11, QFont::Bold));
 		
 	xpos += buttonw/3;
 	
@@ -536,7 +496,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_exp->setAlignment(AlignLeft|AlignVCenter);
 	lbl_exp->setPalette(QPalette(background_color));
 	lbl_exp->setGeometry(xpos, ypos, buttonw/3*2, buttonh);
-	lbl_exp->setFont(QFont("Times",13, QFont::Bold));
 	
 	xpos = buttonw +4*border;
 	ypos += buttonh + spacing;
@@ -545,7 +504,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_mailinglist->setAlignment(AlignLeft|AlignVCenter);
 	lbl_mailinglist->setPalette(QPalette(background_color));
 	lbl_mailinglist->setGeometry(xpos, ypos, buttonw/4, buttonh);
-	lbl_mailinglist->setFont(QFont("Times",11, QFont::Bold));	
 	
 	xpos += buttonw/4;
 	
@@ -553,7 +511,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_mlist->setAlignment(AlignLeft|AlignVCenter);
 	lbl_mlist->setPalette(QPalette(background_color));
 	lbl_mlist->setGeometry(xpos, ypos, buttonw/4, buttonh);
-	lbl_mlist->setFont(QFont("Times",12, QFont::Bold));
 	
 	xpos += buttonw/4;
 	
@@ -561,7 +518,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_approved->setAlignment(AlignLeft|AlignVCenter);
 	lbl_approved->setPalette(QPalette(background_color));
 	lbl_approved->setGeometry(xpos, ypos, buttonw/4, buttonh);
-	lbl_approved->setFont(QFont("Times",11, QFont::Bold));
 		
 	xpos += buttonw/4;
 	
@@ -569,14 +525,12 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 	lbl_apprv->setAlignment(AlignLeft|AlignVCenter);
 	lbl_apprv->setPalette(QPalette(background_color));
 	lbl_apprv->setGeometry(xpos, ypos, buttonw/4, buttonh);
-	lbl_apprv->setFont(QFont("Times",12, QFont::Bold));
 	
 	xpos = buttonw +3*border;
 	ypos += buttonh + border;
 	
 	pb_license = new QPushButton("Printable License", this);
 	pb_license->setAutoDefault(false);
-	pb_license->setFont(QFont( "Helvetical", 10, QFont::Bold));
 	pb_license->setPalette(QPalette(cyan));
 	pb_license->setGeometry(xpos, ypos, buttonw/2, buttonh);
 	pb_license->setEnabled(true);
@@ -586,7 +540,6 @@ US_Check::US_Check( QWidget *p, const char *name) : QFrame( p, name)
 		
 	pb_text = new QPushButton("Printable Info", this);
 	pb_text->setAutoDefault(false);
-	pb_text->setFont(QFont( "Helvetical", 10, QFont::Bold));
 	pb_text->setPalette(QPalette(cyan));
 	pb_text->setGeometry(xpos, ypos, buttonw/2, buttonh);
 	pb_text->setEnabled(true);

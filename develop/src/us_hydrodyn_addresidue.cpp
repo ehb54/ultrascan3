@@ -121,6 +121,20 @@ void US_AddResidue::setupGUI()
 	le_residue_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	connect(le_residue_name, SIGNAL(textChanged(const QString &)), SLOT(update_name(const QString &)));
 
+	lbl_residue_comment = new QLabel(tr(" Description:"), this);
+	Q_CHECK_PTR(lbl_residue_comment);
+	lbl_residue_comment->setAlignment(AlignLeft|AlignVCenter);
+	lbl_residue_comment->setMinimumHeight(minHeight1);
+	lbl_residue_comment->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_residue_comment->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+	le_residue_comment = new QLineEdit(this, "Residue name Line Edit");
+	le_residue_comment->setMinimumHeight(minHeight1);
+	le_residue_comment->setEnabled(false);
+	le_residue_comment->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	le_residue_comment->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	connect(le_residue_comment, SIGNAL(textChanged(const QString &)), SLOT(update_comment(const QString &)));
+
 	lbl_numatoms = new QLabel(tr(" Number of Atoms in Residue:"), this);
 	Q_CHECK_PTR(lbl_numatoms);
 	lbl_numatoms->setAlignment(AlignLeft|AlignVCenter);
@@ -546,7 +560,7 @@ void US_AddResidue::setupGUI()
 	pb_close->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_close, SIGNAL(clicked()), SLOT(close()));
 
-	int rows=3, columns = 5, spacing = 2, j=0, margin=4, colspace=10;
+	int rows=24, columns = 5, spacing = 2, j=0, margin=4, colspace=10;
 	QGridLayout *background = new QGridLayout(this, rows, columns, margin, spacing);
 
 	background->setColSpacing(2, colspace);
@@ -561,6 +575,9 @@ void US_AddResidue::setupGUI()
 	j++;
 	background->addWidget(lbl_residue_name, j, 0);
 	background->addWidget(le_residue_name, j, 1);
+	j++;
+	background->addWidget(lbl_residue_comment, j, 0);
+	background->addWidget(le_residue_comment, j, 1);
 	j++;
 	background->addWidget(lbl_numatoms, j, 0);
 	background->addWidget(cnt_numatoms, j, 1);
@@ -581,10 +598,9 @@ void US_AddResidue::setupGUI()
 	background->addWidget(le_asa, j, 1);
 	j++;
 	background->addWidget(lbl_numresidues, j, 0);
-	background->addMultiCellWidget(lb_residues, j, j+1, 1, 1);
-	j++;
-	background->addWidget(pb_accept_residue, j, 0);
-	j++;
+	background->addMultiCellWidget(lb_residues, j, j+3, 1, 1);
+	background->addWidget(pb_accept_residue, j+1, 0);
+	j+=4;
 //section 2
 	background->addMultiCellWidget(lbl_info2, j, j, 0, 1);
 	j++;
@@ -636,9 +652,9 @@ void US_AddResidue::setupGUI()
 	background->addWidget(lbl_list_beadatom, j, 3);
 	background->addWidget(lbl_select_beadatom, j, 4);
 	j++;
-	background->addMultiCellWidget(lb_list_beadatom, j, j+4, 3, 3);
-	background->addMultiCellWidget(lb_select_beadatom, j, j+4, 4, 4);
-	j+=5;
+	background->addMultiCellWidget(lb_list_beadatom, j, j+7, 3, 3);
+	background->addMultiCellWidget(lb_select_beadatom, j, j+7, 4, 4);
+	j+=8;
 	background->addWidget(pb_accept_bead, j, 3);
 	background->addWidget(pb_reset, j, 4);
 	j++;
@@ -722,6 +738,7 @@ void US_AddResidue::select_residue_file()
 			QTextStream ts(&f);
 			while (!ts.atEnd())
 			{
+				new_residue.comment = ts.readLine();
 				ts >> new_residue.name;
 				ts >> new_residue.type;
 				ts >> new_residue.molvol;
@@ -792,7 +809,14 @@ void US_AddResidue::select_residue_file()
 				{
 					residue_list.push_back(new_residue);
 					str1.sprintf("%d: ", i);
-					str1 += new_residue.name;
+					if (new_residue.comment.isEmpty())
+					{
+						str1 += new_residue.name;
+					}
+					else
+					{
+						str1 += new_residue.name + " (" + new_residue.comment + ")";
+					}
 					lb_residues->insertItem(str1);
 					i++;
 				}
@@ -883,6 +907,7 @@ void US_AddResidue::select_atom_file()
 			le_vbar->setEnabled(true);
 			cmb_type->setEnabled(true);
 			le_residue_name->setEnabled(true);
+			le_residue_comment->setEnabled(true);
 			pb_reset->setEnabled(true);
 			pb_accept_residue->setEnabled(true);
 		}
@@ -892,6 +917,11 @@ void US_AddResidue::select_atom_file()
 void US_AddResidue::update_name(const QString &str)
 {
 	new_residue.name = str;
+}
+
+void US_AddResidue::update_comment(const QString &str)
+{
+	new_residue.comment = str;
 }
 
 void US_AddResidue::update_numatoms(double val)
@@ -1087,6 +1117,7 @@ void US_AddResidue::select_residue(int val)
 	new_residue.r_atom.clear();
 	new_residue.r_bead.clear();
 	le_residue_name->setText(residue_list[val].name);
+	le_residue_comment->setText(residue_list[val].comment);
 	cnt_numatoms->setValue(residue_list[val].r_atom.size());
 	cnt_numbeads->setValue(residue_list[val].r_bead.size());
 	cmb_type->setCurrentItem(residue_list[val].type);
@@ -1102,6 +1133,7 @@ void US_AddResidue::print_residue(struct residue res)
 {
 	unsigned int i;
 	cout << "Residue name: " << res.name << endl;
+	cout << "Residue Description: " << res.comment << endl;
 	cout << "Residue type: " << res.type << endl;
 	cout << "Residue molvol: " << res.molvol << endl;
 	cout << "Residue vbar: " << res.vbar << endl;
@@ -1146,7 +1178,9 @@ void US_AddResidue::reset()
 	pb_select_atom_file->setEnabled(false);
 	pb_select_residue_file->setEnabled(false);
 	le_residue_name->setEnabled(true);
+	le_residue_comment->setEnabled(true);
 	le_residue_name->setText("");
+	le_residue_comment->setText("");
 	le_bead_volume->setText("0.0");
 	le_bead_mw->setText("0.0");
 	le_bead_hydrovol->setText("0.0, 0.0");
@@ -1211,6 +1245,7 @@ void US_AddResidue::accept_residue()
 	else
 	{
 		le_residue_name->setEnabled(false);
+		le_residue_comment->setEnabled(false);
 		le_molvol->setEnabled(false);
 		le_vbar->setEnabled(false);
 		le_asa->setEnabled(false);
@@ -1512,6 +1547,7 @@ void US_AddResidue::write_residue_file()
 		QTextStream ts(&f);
 		for (unsigned int i=0; i<residue_list.size(); i++)
 		{
+			ts << residue_list[i].comment << endl;
 			ts << residue_list[i].name.upper()
 					<< "\t" << residue_list[i].type
 					<< "\t" << str1.sprintf("%7.2f", residue_list[i].molvol)

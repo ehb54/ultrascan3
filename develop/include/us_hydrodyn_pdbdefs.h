@@ -135,6 +135,7 @@ struct atom
 struct residue
 {
 	QString name;
+	QString comment;
 	unsigned int type;				// 0: amino acid
 											// 1: sugar
 											// 2: nucleotide

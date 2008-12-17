@@ -5782,6 +5782,7 @@ void US_Hydrodyn::read_residue_file()
 		QTextStream ts(&f);
 		while (!ts.atEnd())
 		{
+			new_residue.comment = ts.readLine();
 			ts >> new_residue.name;
 			ts >> new_residue.type;
 			ts >> new_residue.molvol;

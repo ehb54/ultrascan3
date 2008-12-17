@@ -61,6 +61,7 @@ class US_AddResidue : public QWidget
 		QLabel *lbl_residue_file;
 		QLabel *lbl_numresidues;
 		QLabel *lbl_residue_name;
+		QLabel *lbl_residue_comment;
 		QLabel *lbl_numatoms;
 		QLabel *lbl_numbeads;
 		QLabel *lbl_type;
@@ -113,6 +114,7 @@ class US_AddResidue : public QWidget
 		QLineEdit *le_vbar;
 		QLineEdit *le_asa;
 		QLineEdit *le_residue_name;
+		QLineEdit *le_residue_comment;
 		QLineEdit *le_bead_volume;
 		QLineEdit *le_bead_mw;
 		QLineEdit *le_bead_hydrovol;
@@ -145,6 +147,7 @@ class US_AddResidue : public QWidget
 		void accept_atom();
 		void accept_residue();
 		void update_name(const QString &);
+		void update_comment(const QString &);
 		void update_molvol(const QString &);
 		void update_vbar(const QString &);
 		void update_asa(const QString &);
