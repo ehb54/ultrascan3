@@ -7082,7 +7082,7 @@ void US_Hydrodyn::append_options_log_somo()
 		  
 		  ,asa.calculation ? "On" : "Off"
 		  ,asa.recheck_beads ? "On" : "Off"
-		  ,asa.method ? "Voronoi Tesselation" : "Rolling Sphere"
+		  ,asa.method ? "Rolling Sphere" : "Voronoi Tesselation"
 		  ,asa.probe_radius
 		  ,asa.probe_recheck_radius
 		  ,asa.threshold
