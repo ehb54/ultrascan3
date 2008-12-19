@@ -77,7 +77,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
 	setCaption(tr("SOMO Solution Bead Modeler"));
-	read_config();
+	read_config(""); // specify default configuration by leaving argument empty
 	atom_widget = false;
 	residue_widget = false;
 	hybrid_widget = false;
@@ -235,6 +235,20 @@ void US_Hydrodyn::setupGUI()
 	pb_show_bead_output->setMinimumHeight(minHeight1);
 	pb_show_bead_output->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_show_bead_output, SIGNAL(clicked()), SLOT(show_bead_output()));
+
+	pb_load_config = new QPushButton(tr("Load Configuration"), this);
+	Q_CHECK_PTR(pb_load_config);
+	pb_load_config->setMinimumHeight(minHeight1);
+	pb_load_config->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_load_config->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_load_config, SIGNAL(clicked()), SLOT(load_config()));
+
+	pb_write_config = new QPushButton(tr("Save current Configuration"), this);
+	Q_CHECK_PTR(pb_write_config);
+	pb_write_config->setMinimumHeight(minHeight1);
+	pb_write_config->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_write_config->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_write_config, SIGNAL(clicked()), SLOT(write_config()));
 
 	pb_reset = new QPushButton(tr("Reset to Default Options"), this);
 	Q_CHECK_PTR(pb_reset);
@@ -424,7 +438,7 @@ void US_Hydrodyn::setupGUI()
 	QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
 	background->addMultiCellWidget(lbl_tabletabs, j, j, 0, 1);
-	background->addMultiCellWidget(editor, j, j+19, 2, 2);
+	background->addMultiCellWidget(editor, j, j+20, 2, 2);
 	//background->addWidget(m, j, 2);
 	j++;
 	background->addWidget(pb_hybrid, j, 0);
@@ -443,6 +457,9 @@ void US_Hydrodyn::setupGUI()
 	j++;
 	background->addWidget(pb_show_bead_output, j, 0);
 	background->addWidget(pb_show_grid, j, 1);
+	j++;
+	background->addWidget(pb_load_config, j, 0);
+	background->addWidget(pb_write_config, j, 1);
 	j++;
 	background->addWidget(pb_reset, j, 0);
 	j++;
@@ -481,6 +498,23 @@ void US_Hydrodyn::setupGUI()
 	background->addWidget(progress, j, 1);
 	//	background->addMultiCellWidget(progress, j, j, 0, 1);
 }
+
+void US_Hydrodyn::load_config()
+{
+	QString fname = QFileDialog::getOpenFileName ( somo_dir, "*.config", 0, 0, "Please select a SOMO configuration file...", 0, TRUE );
+	read_config(fname);
+}
+
+void US_Hydrodyn::write_config()
+{
+	QString fname = QFileDialog::getSaveFileName ( somo_dir, "*.config", 0, 0, "Please name your SOMO configuration file...", 0, TRUE );
+	if (fname.right(7) != ".config")
+	{
+		fname += ".config";
+	}
+	write_config(fname);
+}
+
 
 struct BPair {
   int i;
@@ -5937,12 +5971,13 @@ void US_Hydrodyn::view_pdb()
 
 void US_Hydrodyn::view_file(const QString &filename)
 {
-	e = new TextEdit();
-	e->setFont(QFont("Courier"));
-	e->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	e->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
-	e->load(filename);
-	e->show();
+	US_Editor *edit;
+	edit = new US_Editor(1);
+	edit->setFont(QFont("Courier"));
+	edit->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	edit->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);
+	edit->load(filename);
+	edit->show();
 }
 
 void US_Hydrodyn::view_asa()
@@ -6524,9 +6559,23 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 
 void US_Hydrodyn::closeEvent(QCloseEvent *e)
 {
+	QMessageBox mb(tr("UltraScan"), tr("Attention:\nAre you sure you want to exit?"),
+			QMessageBox::Information,
+			QMessageBox::Yes | QMessageBox::Default,
+			QMessageBox::Cancel | QMessageBox::Escape,
+			QMessageBox::NoButton);
+	mb.setButtonText(QMessageBox::Yes, tr("Yes"));
+	mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+	switch(mb.exec())
+	{
+		case QMessageBox::Cancel:
+		{
+			return;
+		}
+	}
 	global_Xpos -= 30;
 	global_Ypos -= 30;
-	write_config();
+	write_config(USglobal->config_list.root_dir + "/etc/somo.config");
 	// removing the temporary directory requires that the temporary directory is empty.
 	// we don't know what else is in the directory if it was created previously.
 	// tmp_dir.rmdir(USglobal->config_list.root_dir + "/tmp");
@@ -6555,11 +6604,18 @@ void US_Hydrodyn::calc_bead_mw(struct residue *res)
 	}
 }
 
-void US_Hydrodyn::read_config()
+void US_Hydrodyn::read_config(const QString& fname)
 {
 	QFile f;
 	QString str;
-	f.setName(USglobal->config_list.root_dir + "/etc/somo.config");
+	if (fname.isEmpty()) // this is true if we don't explicitely set a user-defined file name
+	{
+		f.setName(USglobal->config_list.root_dir + "/etc/somo.config");
+	}
+	else
+	{
+		f.setName(fname);
+	}
 	if (!f.open(IO_ReadOnly)) // first try user's directory for default settings
 	{
 		f.setName(USglobal->config_list.system_dir + "/etc/somo.config");
@@ -6751,6 +6807,25 @@ void US_Hydrodyn::read_config()
 
 void US_Hydrodyn::reset()
 {
+	QMessageBox mb(tr("UltraScan"), tr("Attention:\nAre you sure you want to reset to the default options?\nAll currently defined options will be reset."),
+						QMessageBox::Information,
+						QMessageBox::Yes | QMessageBox::Default,
+						QMessageBox::Cancel | QMessageBox::Escape,
+						QMessageBox::No);
+	mb.setButtonText(QMessageBox::Yes, tr("Yes"));
+	mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+	mb.setButtonText(QMessageBox::No, tr("Save Current Options"));
+	switch(mb.exec())
+	{
+		case QMessageBox::Cancel:
+		{
+			return;
+		}
+		case QMessageBox::No:
+		{
+			write_config();
+		}
+	}
 	sidechain_overlap.remove_overlap = true;
 	sidechain_overlap.fuse_beads = true;
 	sidechain_overlap.fuse_beads_percent = 70.0;
@@ -6823,11 +6898,11 @@ void US_Hydrodyn::reset()
 	hydro.overlap = 0.0;					// overlap
 }
 
-void US_Hydrodyn::write_config()
+void US_Hydrodyn::write_config(const QString& fname)
 {
 	QFile f;
 	QString str;
-	f.setName(USglobal->config_list.root_dir + "/etc/somo.config");
+	f.setName(fname);
 	if (f.open(IO_WriteOnly | IO_Translate)) // first try user's directory for default settings
 	{
 		QTextStream ts(&f);

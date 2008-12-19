@@ -38,12 +38,14 @@ public:
 	~US_Editor();
 	QTextEdit *e;
 	QFont ft;
+	QString fileName;
 	
 public slots:
 	void newDoc();
 	void load();
 	void load(const QString &fileName);
 	void save();
+	void saveAs();
 	void print();
 	void update_font();
 	void closeDoc();

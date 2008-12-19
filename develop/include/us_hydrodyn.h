@@ -4,6 +4,7 @@
 // QT defs:
 
 #include <qfile.h>
+#include <qfiledialog.h>
 #include <qtextstream.h>
 #include <qpushbutton.h>
 #include <qbuttongroup.h>
@@ -112,6 +113,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
 		QPushButton *pb_save;
 		QPushButton *pb_reset;
+		QPushButton *pb_write_config;
+		QPushButton *pb_load_config;
 		QPushButton *pb_select_residue_file;
 		QPushButton *pb_load_pdb;
 		QPushButton *pb_atom;
@@ -210,8 +213,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void stop_calc(); // stop some operations
 		void view_file(const QString &); // call editor to view a file
 		void bead_check(); // recheck beads
-		void read_config();
+		void read_config(const QString &);
+		void load_config();
 		void write_config();
+		void write_config(const QString &);
 		void reset();
 		void visualize();
 		void update_bead_model_file(const QString &);
