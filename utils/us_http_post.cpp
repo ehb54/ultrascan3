@@ -1,15 +1,15 @@
 //! \file us_http_post.cpp
 #include "us_http_post.h"
 
-US_HttpPost::US_HttpPost( const QString& url, const QString& data ) : QObject()
+US_HttpPost::US_HttpPost( const QString& url, const QString& request ) : QObject()
 {
-  QNetworkAccessManager* manager = new QNetworkAccessManager(this);
-  QNetworkRequest        request;
+  QNetworkAccessManager* manager = new QNetworkAccessManager( this );
+  QNetworkRequest        httpPost;
   
-  request.setUrl( url );
+  httpPost.setUrl( url );
 
 
-  reply = manager->post( request, data.toAscii().data() );
+  reply = manager->post( httpPost, request.toAscii().data() );
     
   connect( reply, SIGNAL( finished    ( void ) ), 
            this,  SLOT  ( postFinished( void ) ) );
