@@ -472,7 +472,7 @@ void TextEdit::load_text( QString text )
    filenames.replace( edit, text );
 }
 
-QTextEdit *TextEdit::currentEditor(  ) const const
+QTextEdit *TextEdit::currentEditor(  ) const
 {
    if ( tabWidget->currentPage(  ) &&
         tabWidget->currentPage(  )->inherits( "QTextEdit" ) )
