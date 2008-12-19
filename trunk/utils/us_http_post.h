@@ -19,13 +19,15 @@ class US_HttpPost : public QObject
 
   public slots:
     //! \brief Handle HTTP response
-    //! \param reply The data and header response to the request
     void postFinished( void );
 
     //! \brief Handle network error
+    //! \param error The type of network error douemtnted in 
+    //!              QNetworkReply::NetworkError
     void postError( QNetworkReply::NetworkError );
 
   signals:
+    //! \brief Forward the response of the post to the interested function
     void US_Http_post_response( const QString& );
 
   private:
