@@ -2,14 +2,18 @@
 #include "us_license.h"
 #include "us_license_t.h"
 #include "us_settings.h"
+#include "us_gui_settings.h"
 #include "us_help.h"
+#include "us_http_post.h"
+#include "us_defines.h"
 
 US_License::US_License( QWidget* parent, Qt::WindowFlags flags ) 
   : US_Widgets( parent, flags )
 {
   setWindowTitle( "UltraScan License Configuration" );
-
-  int width = 5 * pushbutton + 4 * spacing;
+  setPalette( US_GuiSettings::frameColor() );
+  
+  const int width = 5 * pushbutton + 4 * spacing;
 
   int xpos = spacing;
   int ypos = spacing;
@@ -19,15 +23,13 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
      tr( "Please enter all fields exactly as shown in the issued license,\n"
          "or import a license from an E-mail text file:" ) );
 
-  banner->setPalette( palette() ); // Back to default
   banner->setGeometry( 
       QRect( xpos, ypos, width, spacing + 2 * rowHeight ) );
 
   // Row 1 - Name
   ypos += rowHeight * 3 + spacing;
 
-  QLabel* firstname = us_label( tr( "Name (first, last):" ) );
-  firstname->setFrameStyle( QFrame::NoFrame );
+  QLabel* firstname = us_label( tr( "Name (first, last):" ), 0, QFont::Bold );
   firstname->setGeometry( xpos, ypos, buttonw, rowHeight );
 
   xpos += buttonw + spacing;
@@ -40,9 +42,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   xpos += half_buttonw + spacing;
 
-  QLabel* comma = us_label( "," );
-  comma->setFrameStyle( QFrame::NoFrame );
-  comma->setMargin( 0 );
+  QLabel* comma = new QLabel( ",", this );
   comma->setGeometry( xpos, ypos, 10, rowHeight );
 
   xpos += spacing + 10;
@@ -57,8 +57,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   xpos  = spacing;
   ypos += rowHeight + spacing;
 
-  QLabel* email = us_label( tr( "E-mail Address:" ) );
-  email->setFrameStyle( QFrame::NoFrame );
+  QLabel* email = us_label( tr( "E-mail Address:" ), 0, QFont::Bold );
   email->setGeometry( xpos, ypos, buttonw, rowHeight );
 
   xpos += buttonw + spacing;
@@ -72,8 +71,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   xpos = spacing;
   ypos += rowHeight + spacing;
 
-  QLabel* institution = us_label( tr("Institution:" ) );
-  institution->setFrameStyle( QFrame::NoFrame );
+  QLabel* institution = us_label( tr("Institution:" ), 0, QFont::Bold );
   institution->setGeometry( xpos, ypos, buttonw, rowHeight );
 
   xpos += spacing + buttonw;
@@ -87,8 +85,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   xpos = spacing;
   ypos += rowHeight + spacing;
 
-  QLabel* address = us_label( tr( "Address:" ) );
-  address->setFrameStyle( QFrame::NoFrame );
+  QLabel* address = us_label( tr( "Address:" ), 0, QFont::Bold );
   address->setGeometry( xpos, ypos, buttonw, rowHeight );
 
   xpos += buttonw + spacing;
@@ -102,8 +99,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   xpos = spacing;
   ypos += rowHeight + spacing;
 
-  QLabel* city = us_label( tr( "City:" ) );
-  city->setFrameStyle( QFrame::NoFrame );
+  QLabel* city = us_label( tr( "City:" ), 0, QFont::Bold );
   city->setGeometry( xpos, ypos, buttonw, rowHeight );
 
   xpos += spacing + buttonw;
@@ -115,8 +111,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   xpos += buttonw + spacing;
 
-  QLabel* lb_state = us_label( tr( "State:" ) );
-  lb_state->setFrameStyle( QFrame::NoFrame );
+  QLabel* lb_state = us_label( tr( "State:" ), 0, QFont::Bold );
   lb_state->setGeometry( xpos, ypos, smallColumn, rowHeight );
 
   xpos += smallColumn + spacing;
@@ -140,13 +135,12 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   xpos += mediumColumn + spacing + 10; // Adjust
 
-  QLabel* zip = us_label( tr( "Zip:" ) );
-  zip->setFrameStyle( QFrame::NoFrame );
+  QLabel* zip = us_label( tr( "Zip:" ), 0, QFont::Bold );
   zip->setGeometry( xpos, ypos, smallColumn, rowHeight );
 
   xpos += smallColumn + spacing;
 
-  le_zip = new QLineEdit( this );
+  le_zip = us_lineedit( "" );
   le_zip->setGeometry( xpos, ypos, mediumColumn, rowHeight );
   connect( le_zip, SIGNAL( textChanged( const QString& ) ), 
                    SLOT  ( update_zip ( const QString& ) ) );
@@ -155,8 +149,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   xpos  = spacing;
   ypos += rowHeight + spacing;
   
-  QLabel* phone = us_label( tr( "Phone Number:" ) );
-  phone->setFrameStyle( QFrame::NoFrame );
+  QLabel* phone = us_label( tr( "Phone Number:" ), 0, QFont::Bold );
   phone->setGeometry( xpos, ypos, buttonw, rowHeight );
 
   xpos += spacing + buttonw;
@@ -168,8 +161,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   xpos += buttonw + spacing;
 
-  QLabel* lb_licensetype = us_label( tr( "License:" ) );
-  lb_licensetype->setFrameStyle( QFrame::NoFrame );
+  QLabel* lb_licensetype = us_label( tr( "License:" ), 0, QFont::Bold );
   lb_licensetype->setGeometry( xpos, ypos, smallColumn, rowHeight );
 
   xpos += smallColumn + spacing;
@@ -185,222 +177,81 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   
   xpos += mediumColumn + spacing + 10; // Adjust
 
-  QLabel* lb_version = us_label( tr( "Version:" ) );
-  lb_version->setFrameStyle( QFrame::NoFrame );
-  lb_version->setGeometry( xpos, ypos, smallColumn, rowHeight );
+  lbl_version = us_label( tr( "Version:" ), 0, QFont::Bold );
+  lbl_version->setGeometry( xpos, ypos, smallColumn, rowHeight );
 
   xpos += smallColumn + spacing;
-
-  cbb_version = new QComboBox( this );
-  versions <<  "6.0" << "6.2" << "7.0" << "7.1" << "7.2" << "7.3"
-           <<  "7.4" << "8.0" << "8.1" << "9.0" << "9.2" << "9.3"
-           <<  "9.4" << "9.5" << "9.6" << "9.7" << "9.8" << "9.9"
-           << "10.0"; 
-  cbb_version->addItems( versions );
-  version = "10.0";  // Initialize
-  cbb_version->setCurrentIndex( versions.length() - 1 );
-  cbb_version->setGeometry( xpos, ypos, mediumColumn, rowHeight );
-  
-  connect( cbb_version, SIGNAL( currentIndexChanged( const QString& ) ), 
-                        SLOT  ( update_version     ( const QString& ) ) );
 
   xpos  = spacing;
   ypos += 2 * rowHeight + spacing;
 
-  // Row 7 - Platform
-  QLabel* lb_platform = us_label( tr( "Platform:" ) );
-  lb_platform->setFrameStyle( QFrame::NoFrame );
-  lb_platform->setGeometry( xpos, ypos, buttonw, rowHeight );
+  // Row 7 - Platform/Expiration/License Status
+  lbl_platform = us_label( "", 0, QFont::Bold );
+  lbl_platform->setGeometry( xpos, ypos, buttonw, rowHeight );
+
+  xpos += buttonw + spacing;
+  lbl_expiration = us_label( "", 0, QFont::Bold );
+  lbl_expiration->setGeometry( xpos, ypos, buttonw, rowHeight );
 
   xpos += buttonw + spacing;
 
-  rb_intel = new QRadioButton( tr( "Intel" ), this );
-  rb_intel->setGeometry( xpos, ypos, buttonw, rowHeight );
-  rb_intel->setChecked( true );
-  platform = "Intel";  // Initialize
-  connect( rb_intel, SIGNAL( clicked() ), SLOT( update_intel_rb() ) );
-
-  xpos += spacing * 4 + buttonw;
-
-  lb_os = new QListWidget( this );
-  
-  QStringList labels;
-  labels << "Linux"   << "Windows" << "Mac OS-X" << "Irix 6.5"
-         << "Solaris" << "FreeBSD" << "NetBSD"   << "OpenBSD";
-  
-  lb_os->addItems( labels );
-  lb_os-> setCurrentRow( 0 );
-  os = "linux";
-  lb_os->setGeometry( xpos, ypos, half_buttonw, rowHeight * 5 + spacing * 4 );
-
-  connect( lb_os, SIGNAL( currentRowChanged( int ) ), 
-                  SLOT  ( update_os        ( int ) ) );
-
-  ypos += rowHeight + spacing;
-  xpos = buttonw + spacing * 2;
-
-  rb_sparc = new QRadioButton( tr( "Sparc" ), this );
-  rb_sparc->setGeometry( xpos, ypos, buttonw, rowHeight );
-  connect( rb_sparc, SIGNAL( clicked() ), SLOT( update_sparc_rb() ) );
-
-  ypos += rowHeight + spacing;
-
-  rb_mac = new QRadioButton( tr( "Macintosh" ), this );
-  rb_mac->setGeometry( xpos, ypos, buttonw, rowHeight );
-  connect( rb_mac, SIGNAL( clicked() ), SLOT( update_mac_rb() ) );
-
-  ypos += rowHeight + spacing;
-
-  rb_opteron = new QRadioButton( tr( "Opteron" ), this );
-  rb_opteron->setGeometry( xpos, ypos, buttonw, rowHeight );
-  connect( rb_opteron, SIGNAL( clicked() ), SLOT( update_opteron_rb() ) );
-
-  ypos += rowHeight + spacing;
-
-  rb_sgi = new QRadioButton( tr( "Silicon Graphics" ), this );
-  rb_sgi->setGeometry( xpos, ypos, buttonw, rowHeight );
-  connect( rb_sgi, SIGNAL( clicked() ), SLOT( update_sgi_rb() ) );
-
-  // Row 8 - License Code
-  ypos += spacing + 2 * rowHeight;
-  xpos  = spacing;
-  
-  QLabel* code = us_label( tr( "License Code:" ) );
-  code->setFrameStyle( QFrame::NoFrame );
-  code->setGeometry( xpos, ypos, buttonw, rowHeight );
+  lbl_valid = us_label( "", 0, QFont::Bold );
+  lbl_valid->setGeometry( xpos, ypos, buttonw, rowHeight );
 
   xpos += buttonw + spacing;
+  
+  pb_update = us_pushbutton( tr( "Update / Renew" ) );
+  pb_update->setGeometry( xpos, ypos, pushbutton, rowHeight );
+  connect( pb_update, SIGNAL( clicked() ), SLOT( update() ) );
 
-  le_code1 = us_lineedit( "" );
-  le_code1->setGeometry( xpos, ypos, codeWidth, rowHeight );
-  connect( le_code1, SIGNAL( textChanged ( const QString& ) ), 
-                     SLOT  ( update_code1( const QString& ) ) );
+  QString error;
+  QString validMsg;
+  int     status = US_License_t::isValid( error, QStringList() );
 
-  xpos += codeWidth + spacing;
+  if ( status == US_License_t::Missing )
+  {
+    pb_update->setEnabled( false );
+  }
 
-  code = us_label( "-", 1 );
-  code->setFrameStyle( QFrame::NoFrame );
-  code->setMargin( 3 );
-  code->setGeometry( xpos, ypos, commaWidth + 5, rowHeight );
-
-  xpos += commaWidth + spacing;
-
-  le_code2 = us_lineedit( "" );
-  le_code2->setGeometry( xpos, ypos, codeWidth, rowHeight );
-  connect( le_code2, SIGNAL( textChanged ( const QString& ) ), 
-                     SLOT  ( update_code2( const QString& ) ) );
-
-  xpos += codeWidth + spacing;
-
-  code = us_label( "-", 1 );
-  code->setFrameStyle( QFrame::NoFrame );
-  code->setMargin( 3 );
-  code->setGeometry( xpos, ypos, commaWidth + 5, rowHeight );
-
-  xpos += commaWidth + spacing;
-
-  le_code3 = us_lineedit( "" );
-  le_code3->setGeometry( xpos, ypos, codeWidth, rowHeight );
-  connect( le_code3, SIGNAL( textChanged ( const QString& ) ), 
-                     SLOT  ( update_code3( const QString& ) ) );
-
-  xpos += codeWidth + spacing;
-
-  code = us_label( "-", 1 );
-  code->setFrameStyle( QFrame::NoFrame );
-  code->setMargin( 3 );
-  code->setGeometry( xpos, ypos, commaWidth + 5, rowHeight );
-
-  xpos += commaWidth + spacing;
-
-  le_code4 = us_lineedit( "" );
-  le_code4->setGeometry( xpos, ypos, codeWidth, rowHeight );
-  connect( le_code4, SIGNAL( textChanged ( const QString& ) ), 
-                     SLOT  ( update_code4( const QString& ) ) );
-
-  xpos += codeWidth + spacing;
-
-  code = us_label( "-", 1 );
-  code->setFrameStyle( QFrame::NoFrame );
-  code->setMargin( 3 );
-  code->setGeometry( xpos, ypos, commaWidth + 5, rowHeight );
-
-  xpos += commaWidth + spacing;
-
-  le_code5 = us_lineedit( "" );
-  le_code5->setGeometry( xpos, ypos, codeWidth, rowHeight );
-  connect( le_code5, SIGNAL( textChanged ( const QString& ) ), 
-                     SLOT  ( update_code5( const QString& ) ) );
-
-  ypos += rowHeight + spacing;
-  xpos  = spacing;
-
-  // Line 9 - Expiration Date
-  QLabel* expiration = us_label( tr( "Expiration Date:" ) );
-  expiration->setFrameStyle( QFrame::NoFrame );
-  expiration->setGeometry( xpos, ypos, buttonw, rowHeight );
-
-  xpos += buttonw + spacing;
-
-  le_expiration = new QLineEdit(this);
-  le_expiration->setGeometry( xpos, ypos, buttonw, rowHeight );
-  connect( le_expiration, SIGNAL( textChanged      ( const QString& ) ), 
-                          SLOT  ( update_expiration( const QString& ) ) );
-
-  // Line 10 - Pushbuttons
+  // Row 9 - Pushbuttons
   xpos  = spacing;
   ypos += spacing + rowHeight * 2;
   
   pb_request = us_pushbutton( tr( "Request New" ) );
   pb_request->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  pb_request->setPalette( palette() ); // Back to default
   connect( pb_request, SIGNAL( clicked() ), SLOT( request() ) );
 
   xpos += pushbutton + spacing;
 
   pb_import = us_pushbutton( tr( "E-mail Import" ) );
   pb_import->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  pb_import->setPalette( palette() ); // Back to default
   connect( pb_import, SIGNAL( clicked() ), SLOT( import() ) );
 
   xpos += pushbutton + spacing;
 
   pb_save = us_pushbutton( tr( "Save" ) );
   pb_save->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  pb_save->setPalette( palette() ); // Back to default
   connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
 
   xpos += pushbutton + spacing;
 
   pb_help = us_pushbutton( tr( "Help" ) );
   pb_help->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  pb_help->setPalette( palette() ); // Back to default
   connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
   xpos += pushbutton + spacing;
 
   pb_cancel = us_pushbutton( tr( "Cancel" ) );
   pb_cancel->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  pb_cancel->setPalette( palette() ); // Back to default
   connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
 
   // Finish up
-//  QPoint p = g.global_position();
-//  g.set_global_position( p + QPoint( 30, 30 ) );
 
   ypos += 30;    
-//  setGeometry( QRect( p, p + QPoint( spacing + width + spacing, ypos ) ) );
   setMinimumSize( spacing + width + spacing, ypos );
 
-  // Initialize for later
-  osTypes << "linux"   << "win32"  << "osx"     << "irix" << "solaris"
-          << "freebsd" << "netbsd" << "openbsd";
-}
-
-US_License::~US_License()
-{
-//  QPoint p = g.global_position();
-//  g.set_global_position( p - QPoint( 30, 30 ) );
+  updating_email = false;
+  load_current();
 }
 
 void US_License::cancel( void )
@@ -408,22 +259,249 @@ void US_License::cancel( void )
   close();
 }
 
-void US_License::update_os( int row )
-{
-  os = osTypes.at( row );                       
-}
-
 void US_License::help( void )
 {
   online_help.show_help( "manual/license.html" );
 }
 
-void US_License::request( void )
+QString US_License::titleCase( const QString& phrase )
 {
-  online_help.show_URL( "http://www.ultrascan.uthscsa.edu/register.html" );
+  QString title = phrase; 
+  bool    cap = true;
+
+  for ( int i = 0; i < title.length(); i++ )
+  {
+    QChar c = title[ i ];
+    
+    if ( c == QChar( ' ' ) ) cap = true;
+    
+    if ( cap )
+    {
+      title[ i ] = c.toUpper();
+      cap = false;
+    }
+    else
+      title[ i ] = c.toLower();
+  }
+
+  return title;
 }
 
-void US_License::save( void )
+void US_License::load_current( void )
+{
+  QStringList license = US_Settings::license();
+
+  if ( license.length() == 14 )
+  {
+    lastname    = license [ 0 ];
+    firstname   = license [ 1 ];
+    institution = license [ 2 ];
+    address     = license [ 3 ];
+    city        = license [ 4 ];
+    state       = license [ 5 ];
+    zip         = license [ 6 ];
+    phone       = license [ 7 ];
+    email       = license [ 8 ];
+    platform    = titleCase( license [ 9 ]  );
+    os          = titleCase( license [ 10 ] );
+    version     = license [ 11 ];
+    validation  = license [ 12 ];
+    expiration  = license [ 13 ];
+  }
+
+  update_screen();
+}
+
+void US_License::update_screen( void )
+{
+  le_firstname  ->setText( firstname   );
+  le_lastname   ->setText( lastname    );
+  le_institution->setText( institution );
+  le_address    ->setText( address     );
+  le_city       ->setText( city        );
+  le_zip        ->setText( zip         );
+  le_phone      ->setText( phone       );
+  le_email      ->setText( email       );
+
+  lbl_expiration->setText( "Expiration: " + expiration );
+  lbl_version   ->setText( "Version: " + version );
+  lbl_platform  ->setText( "Platform: " + platform + " / " + os );
+
+  // License type
+  for ( int i = 0; i < types.count(); i++ )
+  {
+    if ( licensetype == types.at( i ) )
+    {
+      cbb_licensetype->setCurrentIndex( i );
+      break;
+    }
+  }
+
+  // State
+  for ( int i = 0; i < states.count(); i++ )
+  {
+    if ( state == states.value( i ) )
+    {
+      cbb_state->setCurrentIndex( i );
+      break;
+     }
+   } 
+
+  // Update status
+  QString error;
+  QString validMsg;
+  int     status = US_License_t::isValid( error, QStringList() );
+  
+  switch ( status )
+  {
+    case US_License_t::OK:
+      validMsg = "Valid License";
+      break;
+
+    case US_License_t::Expired:
+      validMsg = "Expired License";
+      break;
+
+    case US_License_t::Invalid:
+    case US_License_t::BadPlatform:
+    case US_License_t::BadOS:
+      validMsg = "Invalid License";
+      break;
+
+    case US_License_t::Missing:
+      validMsg = "Missing License";
+      break;
+
+    default:
+      validMsg = "Unknown";
+  }
+
+  lbl_valid->setText( validMsg );
+}
+
+void US_License::update( void )
+{
+  // If the email address has changed, just do a normal request.
+  QStringList license = US_Settings::license();
+
+  if ( license.length() > 8 )  // Skip if no license (2nd part of initial setup)
+  {
+    if ( le_email->text() != license[ 8 ]  && ! updating_email )
+    {
+      int result = QMessageBox::question( this,
+          tr( "License Change" ),
+          tr( "Your email address is changing.\n"
+              "You must validate your new address using new license procedures\n"
+              "Continue?" ),
+          QMessageBox::Yes, QMessageBox::No );
+
+      if ( result == QMessageBox::Yes )
+        request();
+      
+      return;
+    }
+  }
+
+  // Form request
+  QString request = "firstname="    + firstname 
+                  + "&lastname="    + lastname
+                  + "&institution=" + institution
+                  + "&address="     + address
+                  + "&city="        + city
+                  + "&state="       + state
+                  + "&zip="         + zip
+                  + "&phone="       + phone
+                  + "&email="       + email
+                  + "&os="          + OS
+                  + "&platform="    + PLATFORM
+                  + "&version="     + US_Version
+                  + "&licensetype=" + licensetype;
+
+  // Send request
+  QString      url      = "http://ultrascan.uthscsa.edu/update-license.php";
+  US_HttpPost* transmit = new US_HttpPost( url, request );
+  connect( transmit, SIGNAL( US_Http_post_response( const QString& ) ),
+           this,     SLOT  ( update_response      ( const QString& ) ) );
+}
+
+// Process response
+void US_License::update_response( const QString& response )
+{
+  QStringList data = response.split( "-" );
+
+  int error = data[ 0 ].toInt();
+  if ( error == 0 )
+  {
+    code1      = data[ 1 ];
+    code2      = data[ 2 ];
+    code3      = data[ 3 ];
+    code4      = data[ 4 ];
+    code5      = data[ 5 ];
+    expiration = data[ 6 ];
+    version    = US_Version;
+qDebug() << "Debug success: " << response;
+    if ( save() ) update_screen();
+  }
+  else
+    // Process possible errors
+    QMessageBox::information ( this, 
+      tr( "Update Error" ),
+      response );
+}
+
+void US_License::request( void )
+{
+  // Form request
+  QString request = "firstname="    + firstname 
+                  + "&lastname="    + lastname
+                  + "&institution=" + institution
+                  + "&address="     + address
+                  + "&city="        + city
+                  + "&state="       + state
+                  + "&zip="         + zip
+                  + "&phone="       + phone
+                  + "&email="       + email
+                  + "&os="          + OS
+                  + "&platform="    + PLATFORM
+                  + "&version="     + US_Version
+                  + "&licensetype=" + licensetype;
+
+  // Send request
+  QString      url      = "http://ultrascan.uthscsa.edu/request-license.php";
+  US_HttpPost* transmit = new US_HttpPost( url, request );
+  connect( transmit, SIGNAL( US_Http_post_response( const QString& ) ),
+           this,     SLOT  ( request_response     ( const QString& ) ) );
+}
+
+void US_License::request_response( const QString& response )
+{
+  QStringList data = response.split( "-" );
+  qDebug() << response;
+  int error = data[ 0 ].toInt();
+  if ( error == 0 )
+  {
+    pb_update->setEnabled( true );
+
+    QMessageBox::information ( this, 
+      tr( "Request Success" ),
+      tr( "You have been sent an email to confirm your request.\n"
+          "After you respond to the email, select 'Update / Renew'." ) );
+
+  }
+  else
+  {
+    // Process possible errors
+    QMessageBox::information ( this, 
+      tr( "Request Error" ),
+      tr( "The response was " ) +  response );
+
+    pb_update->setEnabled( true );
+  } 
+
+  updating_email = true; // Needed in the case of changing esisting email
+}
+
+bool US_License::save( void )
 {
   QString     error;
   QString     message;
@@ -440,11 +518,12 @@ void US_License::save( void )
           << os.toLower()          << version   
           << validation.toUpper()  << expiration; 
 
+  bool isOK = false;
   switch ( US_License_t::isValid( error, license ) )
   {
     case US_License_t::Expired:
       message = tr( "Failure.\n"
-          "The data of the license is less than one year ago." );
+          "The date of the license is more than one year ago." );
       break;
 
     case US_License_t::Invalid:
@@ -464,7 +543,9 @@ void US_License::save( void )
 
     case US_License_t::OK:
       US_Settings::set_license( license );
-      message = tr( "Success" );
+      message        = tr( "Success" );
+      isOK           = true;
+      updating_email = false;
       break;
 
     default:
@@ -473,6 +554,7 @@ void US_License::save( void )
   }
 
   QMessageBox::information( this, tr( "License save results" ), message );
+  return isOK;
 }
 
 void US_License::import( void )
@@ -510,122 +592,27 @@ void US_License::import( void )
       return;
     }
 
-    lastname = ts.readLine();
-    le_lastname->setText( lastname );
-    
-    firstname = ts.readLine();
-    le_firstname->setText( firstname );
-
+    firstname   = ts.readLine();
+    lastname    = ts.readLine();
     institution = ts.readLine();
-    le_institution->setText( institution );
-
-    address = ts.readLine();
-    le_address->setText( address );
-
-    city = ts.readLine();
-    le_city->setText( city );
-
-    state = ts.readLine();
-    for ( int i = 0; i < states.count(); i++ )
-    {
-      if ( version == states.value( i ) )
-      {
-        cbb_state->setCurrentIndex( i );
-        return;
-      }
-    }
-
-    zip = ts.readLine();
-    le_zip->setText( zip );
-    
-    phone = ts.readLine();
-    le_phone->setText( phone );
-
-    email = ts.readLine();
-    le_email->setText( email );
-
-    // Platform is a radio button
-    platform = ts.readLine();
-    
-    QStringList platforms = QStringList() 
-       << "opteron" << "intel" << "sparc" << "mac" << "sgi";
-
-    QList< QRadioButton* > radios;
-    radios << rb_opteron << rb_intel << rb_sparc << rb_mac << rb_sgi;
-
-    for ( int i = 0; i < platforms.count(); i++ )
-    {
-      if ( platform == platforms.at( i ) )
-      {
-        radios.value( i )->setDown( true );
-        break;
-      }
-    }
-
-    // Operating system intrnally is different form the displayed name
-    os = ts.readLine();
-
-    for ( int i = 0; i < osTypes.count(); i++ )
-    {
-      if ( os == osTypes.at( i ) )
-      {
-        lb_os->setCurrentRow( i );
-        break;
-      }
-    }
-
-    // Version is a dropdown
-    version = ts.readLine();
-    for ( int i = 0; i < versions.count(); i++ )
-    {
-      if ( version == versions.value( i ) )
-      {
-        cbb_version->setCurrentIndex( i );
-        break;
-      }
-    }
-
-    // License type is a dropdown
+    address     = ts.readLine();
+    city        = ts.readLine();
+    state       = ts.readLine();
+    zip         = ts.readLine();
+    phone       = ts.readLine();
+    email       = ts.readLine();
+    platform    = titleCase( ts.readLine() );
+    os          = titleCase( ts.readLine() );
+    version     = ts.readLine();
     licensetype = ts.readLine();
-    for ( int i = 0; i < types.count(); i++ )
-    {
-      if ( licensetype == types.at( i ) )
-      {
-        cbb_licensetype->setCurrentIndex( i );
-        break;
-      }
-    }
-
-    QString Code = ts.readLine();
-    QStringList codes = Code.split( "-" );
-    
-    code1 = codes.value( 0 );
-    le_code1->setText( code1 );
-
-    code2 = codes.value( 1 );
-    le_code2->setText( code2 );
-    
-    code3 = codes.value( 2 );
-    le_code3->setText( code3 );
-    
-    code4 = codes.value( 3 );
-    le_code4->setText( code4 );
-    
-    code5 = codes.value( 4 );
-    le_code5->setText( code5 );
-
-    expiration = ts.readLine();
-    le_expiration->setText( expiration );
-
+    validation  = ts.readLine();
+    expiration  = ts.readLine();
     texfile.close();
+
+    update_screen();
   }
   else  // Open failed
     QMessageBox::information( this, tr( "License Error" ),
         tr( "Could not open license file\n%1" ).arg( filename ) );
-
 }
-
-
-
-
 

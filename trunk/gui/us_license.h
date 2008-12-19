@@ -44,7 +44,7 @@ class US_License : public US_Widgets
     US_License( QWidget* parent = 0, Qt::WindowFlags flags = 0 );
 
     //! \brief A null destructor.
-    ~US_License();
+    ~US_License() {};
   
   private:
     QPushButton* pb_save;
@@ -67,6 +67,7 @@ class US_License : public US_Widgets
     QString platform;
     QString version;
     QString licensetype;
+    QString validation;
     QString code1;
     QString code2;
     QString code3;
@@ -89,6 +90,12 @@ class US_License : public US_Widgets
     QLineEdit* le_code5;
     QLineEdit* le_expiration;
 
+    QLabel*    lbl_os;
+    QLabel*    lbl_version;
+    QLabel*    lbl_platform;
+    QLabel*    lbl_expiration;
+    QLabel*    lbl_valid;
+
     QComboBox* cbb_state;
     QComboBox* cbb_os1;
     QComboBox* cbb_version;
@@ -105,15 +112,25 @@ class US_License : public US_Widgets
 
     QStringList   states;
     QStringList   types;
-    QStringList   versions;
-    QStringList   osTypes;
+    bool          updating_email;
+//    QStringList   versions;
+//    QStringList   osTypes;
+//    QStringList   platforms;
+
+//    QList< QRadioButton* > radios;
+    QPushButton*           pb_update;
+
+    void    update_screen( void );
+    void    load_current ( void );
+    QString titleCase    ( const QString& );
 
   private slots:
-    void cancel ( void );
-    void help   ( void );
-    void request( void );
-    void save   ( void );
-    void import ( void );
+    void cancel        ( void );
+    void help          ( void );
+    void request       ( void );
+    bool save          ( void );
+    void import        ( void );
+    void update        ( void );
 
     void update_firstname  ( const QString& s ){ firstname   = s; };
     void update_lastname   ( const QString& s ){ lastname    = s; };
@@ -132,7 +149,7 @@ class US_License : public US_Widgets
     void update_code4      ( const QString& s ){ code4       = s; };
     void update_code5      ( const QString& s ){ code5       = s; };
     void update_expiration ( const QString& s ){ expiration  = s; };
-    void update_os         ( const int );
+    //void update_os         ( const int );
 
     void update_opteron_rb ( void ) { platform = "opteron"; };
     void update_intel_rb   ( void ) { platform = "intel";   };
@@ -140,8 +157,8 @@ class US_License : public US_Widgets
     void update_mac_rb     ( void ) { platform = "mac";     };
     void update_sgi_rb     ( void ) { platform = "sgi";     };
 
+    void update_response   ( const QString& );
+    void request_response  ( const QString& );
     void closeEvent        ( QCloseEvent* e ) { e->accept(); };
 };
-
 #endif
-

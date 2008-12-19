@@ -1,6 +1,7 @@
 include ( ../library.pri )
 
 TARGET       = us_gui
+QT          += network
 TRANSLATIONS = $${TARGET}_DE_de.ts
 
 HEADERS      = us_crypto.h       \

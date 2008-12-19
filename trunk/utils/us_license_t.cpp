@@ -15,7 +15,7 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
   else 
     license = newLicense;
   
-  if ( license.size() == 0 )
+  if ( license.size() < 14 )
   {
     ErrorMessage =  QString( qApp->translate( "UltraScan", 
         "You have not yet installed a valid UltraScan license.\n"
@@ -78,10 +78,10 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
   if ( calculation != validation )
   { 
     ErrorMessage = qApp->translate( "UltraScan", 
-           "The license in your home directory is invalid.\n"
+           "The license is invalid.\n"
            "You will have to update your license file before\n"
-           "proceeding. Click on 'Register' to obtain a new\n"
-           "UltraScan License" );
+           "proceeding. Click on 'Request New' to obtain a new\n"
+           "UltraScan License" ) + "\n" + validation + "\n" + calculation;
 
     return Invalid;
   }
@@ -89,9 +89,9 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
   if ( QDate::currentDate() > QDate::fromString( expiration ) )
   {
     ErrorMessage = qApp->translate( "UltraScan", 
-           "The license in your home directory is expired.\n"
+           "The license is expired.\n"
            "You will have to update your license file before\n"
-           "proceeding. Click on 'Register' to obtain a new\n"
+           "proceeding. Click on 'Request New' to obtain a new\n"
            "UltraScan License" );
 
     return Expired;
@@ -113,8 +113,6 @@ QString US_License_t::encode( const QString& str1, const QString& str2 )
     QChar c  = STR1.at( i );
     sum1    += c.unicode();
   }
-
-  QString SUM1 = QString::number( sum1 );
 
   for ( int i = 0; i < STR2.length(); i++ )
   {
