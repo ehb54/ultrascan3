@@ -6468,7 +6468,7 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 ---------------------------------------------------------------------------------
  1 -  6        Record name     "ATOM  "
  7 - 11        Integer         serial        Atom serial number.
-13 - 16        Atom            name          Atom name.
+13 - 16        Atom            name          Atom name. (sometimes starts at 12)
 17             Character       altLoc        Alternate location indicator.
 18 - 20        Residue name    resName       Residue name.
 22             Character       chainID       Chain identifier.
@@ -6494,7 +6494,8 @@ COLUMNS        DATA TYPE       FIELD         DEFINITION
 
 	temp_atom.altLoc = str1.mid(16, 1);
 
-	temp_atom.resName = str1.mid(17, 3);
+	str2 = str1.mid(17, 3);
+	temp_atom.resName = str2.stripWhiteSpace();
 
 	temp_atom.chainID = str1.mid(21, 1);
 
