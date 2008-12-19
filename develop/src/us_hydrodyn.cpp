@@ -697,6 +697,68 @@ static void outward_translate_2_spheres(float *r1, // radius of sphere 1
 #endif
 }
 
+void US_Hydrodyn::get_atom_map(PDB_model *model)
+{
+  atom_counts.clear();
+  has_OXT.clear();
+  for (unsigned int j = 0; j < model->molecule.size(); j++)
+  {
+    unsigned int lastResSeq = 0;
+    QString lastResName = "";
+    int atom_count = 0;
+    for (unsigned int k = 0; k < model->molecule[j].atom.size(); k++)
+    {
+      PDB_atom *this_atom = &(model->molecule[j].atom[k]);
+      if (lastResSeq != this_atom->resSeq ||
+	  lastResName != this_atom->resName)
+      {
+	// new residue
+	if (lastResSeq)
+	{
+	  atom_counts[QString("%1_%2_%3")
+		      .arg(j)
+		      .arg(lastResName)
+		      .arg(lastResSeq)] = atom_count;
+	}
+	lastResSeq = this_atom->resSeq;
+	lastResName = this_atom->resName;
+	atom_count = 0;
+      }
+      if(this_atom->name == "OXT") {
+	has_OXT[QString("%1_%2_%3")
+		.arg(j)
+		.arg(this_atom->resName)
+		.arg(this_atom->resSeq)]++;
+      }
+      atom_count++;
+    }
+    if (lastResSeq)
+    {
+      atom_counts[QString("%1_%2_%3")
+		  .arg(j)
+		  .arg(lastResName)
+		  .arg(lastResSeq)] = atom_count;
+    }
+  }
+
+#if defined(DEBUG_MULTI_RESIDUE)
+  for (map < QString, int >::iterator it = atom_counts.begin();
+       it != atom_counts.end();
+       it++) 
+  {
+    printf("atom count map %s map pos %d\n",
+	   it->first.ascii(), it->second);
+  }
+  for (map < QString, int >::iterator it = has_OXT.begin();
+       it != has_OXT.end();
+       it++) 
+  {
+    printf("has_OXT map %s map value %d\n",
+	   it->first.ascii(), it->second);
+  }
+#endif
+  // end of atom count build
+}  
 
 int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model)
 {
@@ -704,6 +766,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
   // expand vector of residues to atom list from residue file
   // compare expanded list of residues to model ... list missing atoms missing
   int errors_found = 0;
+  get_atom_map(model);
 
   for (unsigned int j = 0; j < model->molecule.size(); j++)
   {
@@ -716,6 +779,12 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
       PDB_atom *this_atom = &(model->molecule[j].atom[k]);
       this_atom->active = false;
 
+      QString count_idx = 
+	QString("%1_%2_%3")
+	.arg(j)
+	.arg(this_atom->resName)
+	.arg(this_atom->resSeq);
+
       // find residue in residues
 #if defined(DEBUG)
       printf("check_for_missing_atoms search name %s resName %s\n",
@@ -727,6 +796,8 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
       for (unsigned int m = 0; m < residue_list.size(); m++)
       {
 	if ((residue_list[m].name == this_atom->resName &&
+	     (int)residue_list[m].r_atom.size() ==	     
+	     atom_counts[count_idx] - has_OXT[count_idx] &&
 	     this_atom->name != "OXT" &&
 	     (k || this_atom->name != "N" || !regular_N_handling)) ||
 	    (residue_list[m].name == "OXT"
@@ -737,9 +808,32 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	     residue_list[m].name == "N1"))
 	{
 	  respos = (int) m;
+
+#if defined(DEBUG_MULTI_RESIDUE)
+	  printf("atom name %s residue name %s pos %u atom.size() %u map %s size %u has oxt %d\n"
+		 ,this_atom->name.ascii()
+		 ,this_atom->resName.ascii()
+		 ,m
+		 ,residue_list[m].r_atom.size()
+		 ,QString("%1_%2_%3")
+		 .arg(j)
+		 .arg(this_atom->resName)
+		 .arg(this_atom->resSeq)
+		 .ascii()
+		 ,atom_counts[count_idx]
+		 ,has_OXT[count_idx]
+		 );
+#endif
+		 
 	  this_atom->p_residue = &(residue_list[m]);
 #if defined(DEBUG)
 	  printf("residue match %d resName %s \n", m, residue_list[m].name.ascii());
+	  printf("resname %s respos %d mappos %d mapsize %u\n"
+		 ,this_atom->resName.ascii()
+		 ,m
+		 ,multi_residue_map[this_atom->resName][0]
+		 ,multi_residue_map[this_atom->resName].size()
+		 );
 #endif
 	  if (lastResSeq != this_atom->resSeq)
 	  {
@@ -1048,6 +1142,8 @@ int US_Hydrodyn::create_beads(QString *error_string)
       editor->append(QString("There are %1 atoms in %2 molecule(s) in this model\n").arg(no_of_atoms).arg(no_of_molecules));
     }
 #endif
+    get_atom_map(&model_vector[current_model]);
+
     for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
     {
       int last_resSeq = -1;
@@ -1055,6 +1151,12 @@ int US_Hydrodyn::create_beads(QString *error_string)
       for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
       {
 	PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+
+	QString count_idx = 
+	  QString("%1_%2_%3")
+	  .arg(j)
+	  .arg(this_atom->resName)
+	  .arg(this_atom->resSeq);
 
 	// initialize data
 	this_atom->active = false;
@@ -1080,6 +1182,8 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	for (unsigned int m = 0; m < residue_list.size(); m++)
 	{
 	  if ((residue_list[m].name == this_atom->resName &&
+	     (int)residue_list[m].r_atom.size() ==	     
+	     atom_counts[count_idx] - has_OXT[count_idx] &&
 	       this_atom->name != "OXT" &&
 	       (k || this_atom->name != "N" || !regular_N_handling)) || 
 	      (residue_list[m].name == "OXT" 
@@ -5810,6 +5914,7 @@ void US_Hydrodyn::read_residue_file()
 	QFile f(residue_filename);
 	cout << "residue file name: " << residue_filename << endl;
 	residue_list.clear();
+	map < QString, int > dup_residue_map;
 	i=1;
 	if (f.open(IO_ReadOnly|IO_Translate))
 	{
@@ -5876,11 +5981,35 @@ void US_Hydrodyn::read_residue_file()
 							&& new_residue.molvol > 0.0
 							&& new_residue.asa > 0.0)
 			{
+				new_residue.unique_name = QString("%1%2")
+				  .arg(new_residue.name)
+				  .arg(dup_residue_map[new_residue.name] ? 
+				       QString("_%1").arg(dup_residue_map[new_residue.name]) : "");
+				dup_residue_map[new_residue.name]++;
+				printf("residue name %s unique name %s\n"
+				       ,new_residue.name.ascii()
+				       ,new_residue.unique_name.ascii()
+				       ); fflush(stdout);
+				multi_residue_map[new_residue.name].push_back(residue_list.size());
 				residue_list.push_back(new_residue);
+
 			}
 		}
 		f.close();
 	}
+#if defined(DEBUG_MULTI_RESIDUE)
+	printf("map index:\n");
+	for (map < QString, vector < int > >::iterator it = multi_residue_map.begin();
+	     it != multi_residue_map.end();
+	     it++) 
+	{
+		for (unsigned int i = 0; i < it->second.size(); i++) 
+		{
+			printf("residue %s map pos %u\n",
+			       it->first.ascii(), it->second[i]);
+		}
+	}
+#endif
 }
 
 void US_Hydrodyn::load_pdb()

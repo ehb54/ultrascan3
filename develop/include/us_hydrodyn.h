@@ -42,6 +42,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
+#include <map>
 
 #define START_RASMOL
 using namespace std;
@@ -166,6 +167,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		vector < vector <PDB_atom> >  bead_models;
 		vector <PDB_atom *>      active_atoms;
 		vector <struct residue>   residue_list;
+		map < QString, vector <int> > multi_residue_map; // maps residue to index of residue_list
+		map < QString, int > atom_counts;
+		map < QString, int > has_OXT;
 		vector <struct PDB_model> model_vector;
 		bool bead_model_from_file;
 		vector <int> somo_processed;
@@ -199,6 +203,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		int calc_somo();    // compute asa and then refine bead_model
 		int calc_grid();    // compute grid model
 		int create_beads(QString *error_string); // turn pdb/atom model into bead_model
+		void get_atom_map(PDB_model *);
 		int check_for_missing_atoms(QString *error_string, PDB_model *);
 		int overlap_check(bool sc, bool mc, bool buried); // check for overlaps
 		int compute_asa(); // calculate maximum accessible surface area
