@@ -685,7 +685,7 @@ void US_AddResidue::add()
 	}
 	for (i=0; i<residue_list.size(); i++)
 	{
-		if (residue_list[i].name.upper() == new_residue.name.upper())
+		if (residue_list[i].name.upper() == new_residue.name.upper() && residue_list[i].comment.upper() == new_residue.comment.upper())
 		{
 			item = (int) i;
 			residue_list[i].type = new_residue.type;
