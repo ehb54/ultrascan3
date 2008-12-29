@@ -120,8 +120,8 @@ int Confirm::db_connect()
    }
 /*
    defaultDB->setUserName("us_register" );
-   defaultDB->setPassword( "241deal" );
-   defaultDB->setHostName( "129.111.69.237" );
+   defaultDB->setPassword( "thr33dogdown" );
+   defaultDB->setHostName( "biochem.uthscsa.edu" );
 
    defaultDB->setUserName("us_register" );
    defaultDB->setPassword( "ultrascan" );
