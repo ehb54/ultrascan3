@@ -1221,7 +1221,8 @@ void US_GridControl_T::write_experiment()
 	    }
 	  }
 	}
-        if(analysis_type == "GA")
+        if(analysis_type == "GA" || 
+	   analysis_type == "GA_RA")
         {
             ds << GA_Params.monte_carlo;
             ds << GA_Params.demes;
