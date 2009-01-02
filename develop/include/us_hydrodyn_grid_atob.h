@@ -21,29 +21,30 @@ typedef float REAL;
 
 typedef struct pdb_entry
 {
-    REAL x, y, z, occ, bval;
-    struct pdb_entry *next;
-    int atnum;
-    int resnum;
-    char junk[8];
-    char atnam[8];
-    char resnam[8];
-    char insert[8];
-    char chain[8];
+   REAL x, y, z, occ, bval;
+   struct pdb_entry *next;
+   int atnum;
+   int resnum;
+   char junk[8];
+   char atnam[8];
+   char resnam[8];
+   char insert[8];
+   char chain[8];
 } PDB;
 
 typedef struct physical_properties
 {
-    REAL f, rVW;		/*electron density */
-    REAL mass;
-    struct physical_properties *next;
+   REAL f, rVW;		/*electron density */
+   REAL mass;
+   struct physical_properties *next;
 
 } PHYSPROP;
 
 vector <PDB_atom> us_hydrodyn_grid_atob(vector <PDB_atom> *bead_model, 
 					grid_options *our_grid_options,
 					QProgressBar *progress,
-					QTextEdit *editor
+					QTextEdit *editor,
+					US_Hydrodyn* us_hydrodyn
 					);
 
 #endif
