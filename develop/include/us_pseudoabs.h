@@ -63,7 +63,7 @@ class US_EXTERN US_PseudoAbs : public QFrame
 		struct vertex p1, p2;
 		vector <double> average;
 		vector <struct intensity_cell> icell;
-		QString directory, extension, extension1, extension2;
+		QString directory, extension, extension1, extension2, channel_text[16];
 
 		QLabel *absorbance;
 		QLabel *interference;
@@ -84,6 +84,10 @@ class US_EXTERN US_PseudoAbs : public QFrame
 		QLabel *lbl_last_scan2;
 		QLabel *lbl_info1;
 		QLabel *lbl_info2;
+		QLabel *lbl_ch1txt;
+		QLabel *lbl_ch2txt;
+		QLineEdit *le_ch1txt;
+		QLineEdit *le_ch2txt;
 		QListBox *lb_cells;
 		QProgressBar *pgb_progress;
 		QPushButton *pb_select_dir;
@@ -107,6 +111,8 @@ class US_EXTERN US_PseudoAbs : public QFrame
 		void convert_cell();
 		void show_cell(int);
 		void show_channel(int);
+		void update_ch1txt(const QString &);
+		void update_ch2txt(const QString &);
 		void show1();
 		void show2();
 		void reset();

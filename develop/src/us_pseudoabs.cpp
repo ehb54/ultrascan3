@@ -107,6 +107,28 @@ US_PseudoAbs::US_PseudoAbs(QWidget *parent, const char* name) : QFrame(parent, n
 	lbl_info2->setMinimumHeight(minHeight1);
 	lbl_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
 
+	lbl_ch1txt = new QLabel(tr("Channel 1 Text:"),this);
+	lbl_ch1txt->setFrameStyle(QFrame::WinPanel|Sunken);
+	lbl_ch1txt->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_ch1txt->setMinimumHeight(minHeight1);
+	lbl_ch1txt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	lbl_ch2txt = new QLabel(tr("Channel 2 Text:"),this);
+	lbl_ch2txt->setFrameStyle(QFrame::WinPanel|Sunken);
+	lbl_ch2txt->setPalette(QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+	lbl_ch2txt->setMinimumHeight(minHeight1);
+	lbl_ch2txt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+	le_ch1txt = new QLineEdit( this, "ch1txt" );
+	le_ch1txt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_ch1txt->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+	connect(le_ch1txt, SIGNAL(textChanged(const QString &)), SLOT(update_ch1txt(const QString &)));
+
+	le_ch2txt = new QLineEdit( this, "ch2txt" );
+	le_ch2txt->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+	le_ch2txt->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+	connect(le_ch2txt, SIGNAL(textChanged(const QString &)), SLOT(update_ch2txt(const QString &)));
+
 	lbl_line2 = new QLabel("", this);
 	lbl_line2->setFrameStyle(QFrame::WinPanel|Raised);
 	lbl_line2->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -249,6 +271,7 @@ US_PseudoAbs::US_PseudoAbs(QWidget *parent, const char* name) : QFrame(parent, n
 	global_Xpos += 30;
 	global_Ypos += 30;
 	setup_GUI();
+	this->setMaximumWidth(1920);
 
 	move(global_Xpos, global_Ypos);
 }
@@ -283,6 +306,12 @@ void US_PseudoAbs::setup_GUI()
 	j=j+4;
 	background->addWidget(lbl_info1,j,0);
 	background->addMultiCellWidget(lbl_info2,j,j,1,2);
+	j++;
+	background->addWidget(lbl_ch1txt, j, 0);
+	background->addMultiCellWidget(le_ch1txt, j, j, 1, 2);
+	j++;
+	background->addWidget(lbl_ch2txt, j, 0);
+	background->addMultiCellWidget(le_ch2txt, j, j, 1, 2);
 	j++;
 	background->addWidget(pb_show1,j,0);
 	background->addMultiCellWidget(pb_markref, j, j, 1, 2);
@@ -581,7 +610,19 @@ void US_PseudoAbs::show_cell(int cell)
 		QTextStream ts(&scanfile);
 		if (!ts.eof())
 		{
-			lbl_info2->setText(ts.readLine());
+			QString tmp_str = ts.readLine();
+			lbl_info2->setText(tmp_str);
+			int channel = selected_cell * 2;
+			if (channel_text[channel] == "")
+			{
+				channel_text[channel] = tmp_str;
+			}
+			if (channel_text[channel+1] == "")
+			{
+				channel_text[channel+1] = tmp_str;
+			}
+			le_ch1txt->setText(channel_text[channel]);
+			le_ch2txt->setText(channel_text[channel+1]);
 		}
 		scanfile.close();
 	}
@@ -628,7 +669,7 @@ void US_PseudoAbs::convert_cell()
 		if (f.open(IO_WriteOnly))
 		{
 			QTextStream ts(&f);
-			ts << icell[selected_cell].header1 << endl;
+			ts << channel_text[selected_cell * 2] << endl;
 			ts << icell[selected_cell].scans[i].header2 << endl;
 			for (j=0; j<icell[selected_cell].scans[i].radius.size(); j++)
 			{
@@ -657,7 +698,7 @@ void US_PseudoAbs::convert_cell()
 		if (f.open(IO_WriteOnly))
 		{
 			QTextStream ts(&f);
-			ts << icell[selected_cell].header1 << endl;
+			ts << channel_text[selected_cell * 2 + 1] << endl;
 			ts << icell[selected_cell].scans[i].header2 << endl;
 			for (j=0; j<icell[selected_cell].scans[i].radius.size(); j++)
 			{
@@ -845,5 +886,17 @@ void US_PseudoAbs::markref()
 	pb_show2->setEnabled(false);
 	ready_for_averaging = true;
 	pb_markref->setEnabled(false);
+}
+
+void US_PseudoAbs::update_ch1txt(const QString &str)
+{
+	int channel = selected_cell * 2;
+	channel_text[channel] = str;
+}
+
+void US_PseudoAbs::update_ch2txt(const QString &str)
+{
+	int channel = selected_cell * 2 + 1;
+	channel_text[channel] = str;
 }
 
