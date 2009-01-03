@@ -61,6 +61,7 @@ class US_EXTERN US_PseudoAbs : public QFrame
 		bool review_channel1, review_channel2, ready_for_averaging, average_adjusted;
 		int scan_count[8];
 		struct vertex p1, p2;
+		vector <QString> wavelength;
 		vector <double> average;
 		vector <struct intensity_cell> icell;
 		QString directory, extension, extension1, extension2, channel_text[16];

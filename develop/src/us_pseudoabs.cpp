@@ -369,6 +369,7 @@ void US_PseudoAbs::select_dir()
 	directory = fd->getExistingDirectory(USglobal->config_list.data_dir, 0, 0, "AUC Data", false, true);
 	lbl_directory->setText(directory);
 	message = tr("The following cells of this run\n contain out-of-sequence scans:\nCell ");
+	wavelength.clear();
 	if (!directory.isEmpty())
 	{
 		data_dir.setPath(directory);
@@ -504,6 +505,7 @@ void US_PseudoAbs::select_dir()
 							QTextStream ts(&scan_file);
 							temp_cell.header1 = ts.readLine();
 							temp_scan.header2 = ts.readLine();
+       					wavelength.push_back(temp_scan.header2.mid(33,3));
 							while (true)
 							{
 								ts >> str;
@@ -548,6 +550,29 @@ void US_PseudoAbs::select_dir()
 				lbl_message->setText(tr("All scanfiles of this run are in\n the proper sequence.\nNo reordering is necessary."));
 			}
 			show_cell(i);
+			QString tmp = wavelength[0];
+			bool flag = false;
+			for (unsigned int k=1; k<wavelength.size(); k++)
+			{
+     			if (wavelength[k] != tmp)
+     			{
+     				flag = true;
+     				break;
+     			}
+
+			}
+			if (flag)
+			{
+				QMessageBox::message("Attention", tr("This run contains one or more scans that\n"
+				"were measured at different wavelengths.\n\n"
+				"UltraScan expects all velocity runs acquired\n"
+				"with the XLA absorbance/intensity optics to\n"
+				"be measured at the SAME wavelength.\n\n"
+				"If you want to edit these data with UltraScan\n"
+				"please edit the intensity scan files first to\n"
+				"make sure that all scans are at the same\n"
+				"wavelength.\n\nAfter editing, run this utility again."));
+			}
 		}
 	}
 	else
