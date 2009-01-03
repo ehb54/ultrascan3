@@ -1,7 +1,7 @@
 <?php
-	$username = "us_register";
-	$password = "thr33dogdown";
-	$host = "biochem.uthscsa.edu";
+	$username = "";
+	$password = "";
+	$host = "";
    $link = mysql_connect($host, $username, $password) or die("Could not connect");
    mysql_select_db("us_register") or die("Could not select database\n");
    $query = "SELECT * FROM license";
