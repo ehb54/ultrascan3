@@ -17,7 +17,7 @@
 # next Field: angle in degrees of sector width
 # next Field: width of channel if centerpiece is rectanglar
 # (in which case the angle above is zero, otherwise the width is zero) 
-0 Simulation 1 7.16 0 1.2 2.5 0
+0 Simulation 1 7.2 0 1.2 2.5 0
 1 Epon 1 7.2 0 1.2 2.5 0
 2 Aluminum 1 7.15 0 1.2 2.5 0
 3 Epon 3 6.111 6.613 7.104 1 1.2 0 0.323

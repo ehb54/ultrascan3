@@ -42,6 +42,7 @@ void US_Data_IO::assign_simparams(struct SimulationParameters *sp, unsigned int 
 	(*sp).radial_resolution = (float) 0.001;	// the radial datapoint increment/resolution
                                     // of the final data
 	(*sp).meniscus = (*run_inf).meniscus[cell];				// meniscus position at first constant speed
+	//cout << "Rotor: " << (*run_inf).rotor << ", centerpiece: " << (*run_inf).centerpiece[cell] << endl;
 	(*sp).bottom = calc_bottom((*run_inf).rotor, (*run_inf).centerpiece[cell], channel, 0); // bottom position at rest
 	(*sp).rnoise = 0.0;					// random noise
 	(*sp).tinoise = 0.0;					// time invariant noise
