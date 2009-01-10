@@ -26,6 +26,11 @@ class US_GuiSettings
     //! \brief Set font size setting
     static void     set_fontSize    ( int );
                                    
+    //! \brief Get style setting
+    static QString  guiStyle        ( void );
+    //! \brief Set style setting
+    static void     set_guiStyle    ( const QString& );
+
     // Palettes and colors         
 
     //! \brief Get current label palette
