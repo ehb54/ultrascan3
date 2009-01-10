@@ -4,6 +4,8 @@
 
 US_Widgets::US_Widgets( QWidget* w, Qt::WindowFlags f ) : QFrame( w, f )
 {
+  QApplication::setStyle( QStyleFactory::create( US_GuiSettings::guiStyle() ) );
+
   if ( ! g.isValid() )
   {
     // Do something for invalid global memory
@@ -29,7 +31,7 @@ QLabel* US_Widgets::us_label( const QString& labelString, int fontAdjust,
 
   newLabel->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
   newLabel->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
-  newLabel->setMargin    ( 5 );
+  newLabel->setMargin    ( 2 );
   newLabel->setAutoFillBackground( true );
 
   newLabel->setFont(
@@ -158,7 +160,8 @@ QRadioButton* US_Widgets::us_radiobutton( const QString& text, Qt::CheckState st
                        US_GuiSettings::fontSize(),
                        QFont::Bold ) );
   
-  rb->setPalette( US_GuiSettings::editColor() );
+  rb->setPalette( US_GuiSettings::normalColor() );
+  rb->setAutoFillBackground( true );
 
   rb->setChecked( state );
   return rb;
@@ -186,7 +189,7 @@ QProgressBar* US_Widgets::us_progressBar( int low, int high, int value )
 // Combo Box
 QComboBox* US_Widgets::us_comboBox( void )
 {
-  QComboBox* cb = new QComboBox;
+  QComboBox* cb = new QComboBox( this );
 
   cb->setPalette( US_GuiSettings::normalColor() );
   cb->setAutoFillBackground( true );

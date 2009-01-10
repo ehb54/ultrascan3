@@ -1,4 +1,5 @@
 #include "us_gui_settings.h"
+#include "us_defines.h"
 
 // Fonts
 QString US_GuiSettings::fontFamily( void )
@@ -29,6 +30,35 @@ void US_GuiSettings::set_fontSize( int fontSize )
     settings.remove( "fontSize" );
   else
     settings.setValue( "fontSize", fontSize );
+}
+
+QString US_GuiSettings::guiStyle( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  QString defaultStyle;
+  QString os = OS;
+  
+  if      ( os == "osx" )   defaultStyle = "Macintosh";
+  else if ( os == "win32" ) defaultStyle = "Windows";
+  else                      defaultStyle = "Plastique";
+
+  return settings.value( "guiStyle", defaultStyle ).toString();
+}
+
+void US_GuiSettings::set_guiStyle( const QString& style )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  QString defaultStyle;
+  QString os = OS;
+  
+  if      ( os == "osx" )   defaultStyle = "Macintosh";
+  else if ( os == "win32" ) defaultStyle = "Windows";
+  else                      defaultStyle = "Plastique";
+
+  if ( style == defaultStyle ) 
+    settings.remove( "guiStyle" );
+  else
+    settings.setValue( "guiStyle", style );
 }
 
 // Misc

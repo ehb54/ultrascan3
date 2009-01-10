@@ -116,7 +116,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   xpos += smallColumn + spacing;
 
-  cbb_state = new QComboBox( this );
+  cbb_state = us_comboBox();
   states << "NON-US" << "AL" << "AR" << "AZ" << "CA" << "CO" << "CT"
           << "DC"    << "DE" << "FL" << "GA" << "HI" << "IA" << "ID"
           << "IL"    << "IN" << "KS" << "KY" << "LA" << "MA" << "MD" 
@@ -166,7 +166,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   xpos += smallColumn + spacing;
 
-  cbb_licensetype = new QComboBox( this );
+  cbb_licensetype = us_comboBox();
   types << "academic" << "commercial" << "trial";
   cbb_licensetype->addItems( types );
   licensetype = "academic";  // Initialize
@@ -307,6 +307,11 @@ void US_License::load_current( void )
     version     = license [ 11 ];
     validation  = license [ 12 ];
     expiration  = license [ 13 ];
+  }
+  else
+  {
+    os          = titleCase( OS );
+    platform    = titleCase( PLATFORM );
   }
 
   update_screen();
