@@ -460,15 +460,16 @@ void US_DB_Equil::save_db( void )
 				}
 			}
 		}
-
-		// Clean the temp compress file	
-		cleanCompressFile();
-		pd->close();
-
-		QMessageBox::message(
-			tr( "Complete" ), 
-			tr( "Sucessfully saved data to database.\n" ) );						
 	}
+
+	// Clean the temp compress file	
+	cleanCompressFile();
+	pd->close();
+	delete pd;
+
+	QMessageBox::message(
+		tr( "Complete" ), 
+		tr( "Sucessfully saved data to database.\n" ) );						
 }
 
 bool US_DB_Equil::create_tar( const QString& dirString,
