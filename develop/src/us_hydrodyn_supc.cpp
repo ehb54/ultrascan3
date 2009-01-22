@@ -3686,7 +3686,7 @@ initarray()
       if (decpts < 4) {
 	 decpts = 4;
       }
-      int decpow = (int)pow(10, (decpts));
+      int decpow = (int)pow(10.0, (decpts));
       printf("!!rounding to %d digits (%d)\n", decpts, decpow);
 
 

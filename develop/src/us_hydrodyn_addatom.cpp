@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn_addatom.h"
+#include <list>
 
 US_AddAtom::US_AddAtom(bool *widget_flag, QWidget *p, const char *name) : QWidget( p, name)
 {
