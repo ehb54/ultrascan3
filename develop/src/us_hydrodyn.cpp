@@ -5127,7 +5127,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
    }
 
    QString fstring_somo = 
-      QString("\%.%1f\t\%.%2f\t\%.%3f\t\%.%4f\t\%.2f\t\%d\t\%s\t\%.4f\n").
+      QString("%.%1f\t%.%2f\t%.%3f\t%.%4f\t%.2f\t%d\t%s\t%.4f\n").
       arg(decpts).
       arg(decpts).
       arg(decpts).
@@ -5140,15 +5140,15 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
       arg(decpts);
 
    QString fstring_rmc = 
-      QString("\%.%1f\t\%.0f\t\%d\n"). // zero digit MW
+      QString("%.%1f\t%.0f\t%d\n"). // zero digit MW
       arg(decpts);
 
    QString fstring_rmc1 = 
-      QString("\%.\%1f\t\%.0f\t\%d\t\%d\t\%s\n"). // zero digit MW
+      QString("%.%1f\t%.0f\t%d\t%d\t%s\n"). // zero digit MW
       arg(decpts);
 
    QString fstring_hydro = 
-      QString("\%.%1f\t\%.%2f\t\%.%3f\t\%.%4f\n").
+      QString("%.%1f\t%.%2f\t%.%3f\t%.%4f\n").
       arg(decpts).
       arg(decpts).
       arg(decpts).
