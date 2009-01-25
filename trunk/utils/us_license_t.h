@@ -14,7 +14,7 @@ class US_License_t
     //! A null destructor. 
     ~US_License_t() {};
 
-    enum { OK, Expired, Invalid, Missing, BadPlatform, BadOS };
+    enum { OK, Expired, Invalid, Missing, BadPlatform, BadOS, Pending };
 
     /*! \brief A static function that retrieves the current UltraScan
                license from \ref US_Settings and checks it for validity.

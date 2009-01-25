@@ -15,11 +15,11 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
   else 
     license = newLicense;
   
-  if ( license.size() < 14 )
+  if ( license.size() < 12 )
   {
     ErrorMessage =  QString( qApp->translate( "UltraScan", 
-        "You have not yet installed a valid UltraScan license.\n"
-        "Click on 'Register' to obtain an UltraScan License\n"
+        "You have not yet registered your copy of UltraScan.\n"
+        "Click on 'Register' to register UltraScan\n"
         "for the %1 platform and %2 Operating System." ) )
         .arg( TITLE, OS_TITLE );
     
@@ -38,17 +38,24 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
   QString platform   = license.value(  9 );
   QString opSys      = license.value( 10 );
   QString version    = license.value( 11 );
-  QString validation = license.value( 12 );
-  QString expiration = license.value( 13 );
+
+  QString validation = "";
+  QString expiration = "";
+
+  if ( license.size() > 13 )
+  {
+    validation = license.value( 12 );
+    expiration = license.value( 13 );
+  }
 
   if ( platform != PLATFORM ) 
   {
     ErrorMessage =  QString( qApp->translate( "UltraScan", 
         "You are running UltraScan on a %1 platform,\n"
-        "but your license is issued for the %2 platform\n\n" 
-        "You will have to update your license file before\n"
-        "proceeding. Click on 'Register' to obtain an\n"
-        "UltraScan License for the %3 platform." ) )
+        "but your registration is issued for the %2 platform\n\n" 
+        "You will have to update your registration before\n"
+        "proceeding. Click on 'Register' to start the process\n"
+        "for the %3 platform." ) )
         .arg( TITLE, platform, TITLE );
 
     return BadPlatform;
@@ -58,14 +65,24 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
   {
     ErrorMessage = QString( qApp->translate( "UltraScan", 
           "You are running UltraScan with a %1 operating system,\n"
-          "but your license is issued for the %2 operating system\n\n"
-          "You will have to update your license file before\n"
-          "proceeding. Click on 'Register' to obtain an\n"
-          "UltraScan License for a %3 operating system." ) )
+          "but your registration is issued for the %2 operating system\n\n"
+          "You will have to update your registration  before\n"
+          "proceeding. Click on 'Register' to start the process\n"
+          "for a %3 operating system." ) )
           .arg( OS_TITLE, opSys, OS_TITLE );
 
     return BadOS;
   }
+
+  if ( license.size() == 12 )
+  {
+    ErrorMessage = QString( qApp->translate( "UltraScan", 
+             "Your UltraScan resistration is pending.\n"
+             "Please respond to the email sent to complete the process." ) );
+
+    return Pending;
+  }
+
 
   QString code1 = encode( lastname, firstname );
   QString code2 = encode( company , address   );
@@ -78,10 +95,10 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
   if ( calculation != validation )
   { 
     ErrorMessage = qApp->translate( "UltraScan", 
-           "The license is invalid.\n"
-           "You will have to update your license file before\n"
-           "proceeding. Click on 'Request New' to obtain a new\n"
-           "UltraScan License" ) + "\n" + validation + "\n" + calculation;
+           "The registration is invalid.\n"
+           "You will have to update your registration before\n"
+           "proceeding. Click on 'Register' to begin the registration\n" )
+            + "\n" + validation + "\n" + calculation;
 
     return Invalid;
   }
@@ -89,10 +106,9 @@ int US_License_t::isValid( QString& ErrorMessage, const QStringList& newLicense 
   if ( QDate::currentDate() > QDate::fromString( expiration ) )
   {
     ErrorMessage = qApp->translate( "UltraScan", 
-           "The license is expired.\n"
-           "You will have to update your license file before\n"
-           "proceeding. Click on 'Request New' to obtain a new\n"
-           "UltraScan License" );
+           "The registration is expired.\n"
+           "You will have to update your registration before\n"
+           "proceeding. Click on 'Update / Renew' to continue.\n" );
 
     return Expired;
   }
