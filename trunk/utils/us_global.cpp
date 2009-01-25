@@ -7,8 +7,12 @@ US_Global::US_Global()
   valid      = false;
   deleteFlag = false;
 
+#ifndef WIN32
   // Make the key specific to the uid
   QString key = QString( "UltraScan%1" ).arg( getuid() );
+#else
+  QString key = QString( "UltraScan" );
+#endif
 
   sharedMemory.setKey( key );
 

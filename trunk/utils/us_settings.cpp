@@ -235,7 +235,7 @@ void US_Settings::set_databases( const QList<QStringList>& dblist )
     }
   }
 
-  int dbCount = dblist.length();
+  int dbCount = dblist.size();
 
   for ( int i = 0; i < dbCount; i++ )
   {
