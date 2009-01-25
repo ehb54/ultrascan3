@@ -5,6 +5,7 @@
 #include <QSharedMemory>
 #include <QPoint>
 
+#include "us_extern.h"
 
 //!  \brief Manage shared memory
 
@@ -14,7 +15,7 @@
     interface to read and write data in the shared memory area.
 */
 
-class US_Global
+class US_EXTERN US_Global
 {
   public:
 

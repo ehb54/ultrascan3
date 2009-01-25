@@ -5,9 +5,11 @@
 #include <QtCore>
 #include <QtNetwork>
 
+#include "us_extern.h"
+
 //! \brief A text only class to provide a check to ensure a valid license
 
-class US_HttpPost : public QObject
+class US_EXTERN US_HttpPost : public QObject
 {
   Q_OBJECT
 

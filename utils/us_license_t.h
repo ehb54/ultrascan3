@@ -4,9 +4,11 @@
 
 #include <QtCore>
 
+#include "us_extern.h"
+
 //! \brief A text only class to provide a check to ensure a valid license
 
-class US_License_t
+class US_EXTERN US_License_t
 {
   public:
     //! A null constructor. 
