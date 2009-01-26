@@ -7,7 +7,6 @@
 #include "us_license_t.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_admin.h"
 
 int main( int argc, char* argv[] )
 {
@@ -28,6 +27,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   font   = NULL;
   db     = NULL;
   colors = NULL;
+  admin  = NULL;
 
   setWindowTitle( "UltraScan Configuration" );
   setPalette( US_GuiSettings::frameColor() );
@@ -35,6 +35,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   // Directories
   
   QBoxLayout* topbox = new QVBoxLayout( this );
+  topbox->setSpacing( 2 );
 
   QLabel* banner = us_banner( tr("UltraScan %1 Configuration" ).arg( US_Version ) );
   topbox->addWidget( banner );
@@ -146,14 +147,24 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   QLabel* temperature = us_label( "Temperature Tolerance (ºC):" );
   otherSettings->addWidget( temperature, row, 0 );
 
-  le_temperature_tol = us_lineedit( QString( "%1" ).arg( US_Settings::tempTolerance() ), 0 );
-  otherSettings->addWidget( le_temperature_tol, row++, 1 );
+  //le_temperature_tol = us_lineedit( QString( "%1" ).arg( US_Settings::tempTolerance() ), 0 );
+  //otherSettings->addWidget( le_temperature_tol, row++, 1 );
+  sb_temperature_tol = new QDoubleSpinBox();
+  sb_temperature_tol->setRange( 0.1, 1.0 );
+  sb_temperature_tol->setSingleStep( 0.1 );
+  sb_temperature_tol->setDecimals( 1 );
+  sb_temperature_tol->setValue( US_Settings::tempTolerance() );
+  sb_temperature_tol->setPalette( US_GuiSettings::editColor() );
+  sb_temperature_tol->setFont( QFont( US_GuiSettings::fontFamily(), 
+                                      US_GuiSettings::fontSize() ) );
+  otherSettings->addWidget( sb_temperature_tol, row++, 1 );
 
   // Beckman Bug
   QLabel* beckman = us_label( "Beckman Time Bug Correction:" );
   otherSettings->addWidget( beckman, row, 0 );
 
   QBoxLayout* radiobutton = new QHBoxLayout();
+  radiobutton->setSpacing( 0 );
 
   rb_on = us_radiobutton( tr( "On" ) );
   radiobutton->addWidget( rb_on );
@@ -195,8 +206,9 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   QSpinBox* sb_threads = new QSpinBox();
   sb_threads->setRange( 1, 64 );
   sb_threads->setValue( US_Settings::threads() );
-  sb_threads->setFixedWidth( 50 );
   sb_threads->setPalette( US_GuiSettings::editColor() );
+  sb_threads->setFont( QFont( US_GuiSettings::fontFamily(), 
+                              US_GuiSettings::fontSize() ) );
   otherSettings->addWidget( sb_threads, row++, 1 );
 
   // Master Password
@@ -233,7 +245,19 @@ void US_Config::help( void )
 
 void US_Config::save( void )
 {
-  qDebug() << "Save Pushed";
+   US_Settings::set_tempTolerance( sb_temperature_tol->value() );
+   US_Settings::set_browser      ( le_browser    ->text()      );
+   US_Settings::set_dataDir      ( le_dataDir    ->text()      );
+   US_Settings::set_resultDir    ( le_resultDir  ->text()      );
+   US_Settings::set_reportDir    ( le_reportDir  ->text()      );
+   US_Settings::set_archiveDir   ( le_archiveDir ->text()      );
+   US_Settings::set_tmpDir       ( le_tmpDir     ->text()      );
+   US_Settings::set_threads      ( sb_threads    ->value()     );
+   US_Settings::set_beckmanBug   ( rb_on         ->isChecked() );
+
+   QMessageBox::information( this,
+         tr( "Settings Saved" ),
+         tr( "The settings were successfully saved" ) );
 }
 
 void US_Config::update_colors( void )
@@ -259,7 +283,8 @@ void US_Config::update_db( void )
 
 void US_Config::update_password( void )
 {
-  US_Admin* admin = new US_Admin;
+  if ( admin ) delete admin;
+  admin = new US_Admin;
   admin->show();
 }
 
@@ -316,6 +341,7 @@ void US_Config::closeEvent( QCloseEvent* e )
   if ( colors ) delete colors;
   if ( db     ) delete db;
   if ( font   ) delete font;
+  if ( admin  ) delete admin;
 
   e->accept();
 }

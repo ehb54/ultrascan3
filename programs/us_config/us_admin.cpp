@@ -14,7 +14,7 @@ US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
   
   setPalette( US_GuiSettings::frameColor() );
   
-  QLabel* header = us_banner( "Change Administrator Password:" );
+  QLabel* header = us_banner( "Change Master Password" );
   header->setMinimumHeight( buttonh * 3 / 2 );
     
   QString oldPass = US_Settings::UltraScanPW();
@@ -79,6 +79,7 @@ US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
   buttonLine->addWidget( pb_cancel );
   
   QVBoxLayout* main = new QVBoxLayout;
+  main->setSpacing( 2 );
   main->addLayout( passwords );
   main->addLayout( buttonLine );
 
@@ -97,7 +98,7 @@ void US_Admin::save( void )
 
     if ( calcsha1 != oldPW )
     {
-      qDebug() << "Saved hash:" << oldPW << "; New hash:" << calcsha1;
+      //qDebug() << "Saved hash:" << oldPW << "; New hash:" << calcsha1;
       QMessageBox::information( this, 
         tr( "Attention:" ), 
         tr( "The old password is incorrect. Please re-input.\n" ) );
@@ -138,17 +139,17 @@ void US_Admin::save( void )
   // to   le_passwd1->text()
 
   QStringList defaultDB = US_Settings::defaultDB();
+  QString     oldPass   = le_passwd1->text();
 
-  if ( defaultDB.length() > 0 )
+  if ( defaultDB.size() > 0 )
   {
     // Decrypt with old password
     // 4 = cipher; 5 = initialization vector
-    g.setPasswd( le_oldPasswd->text() );
-    QString db_password = US_Crypto::decrypt( defaultDB.at( 4 ), defaultDB.at( 5 ) );
+    QString db_password = US_Crypto::decrypt( defaultDB.at( 4 ), oldPass, 
+                                              defaultDB.at( 5 ) );
    
     // Encrypt with new password
-    g.setPasswd( newPW );
-    QStringList cipherText = US_Crypto::encrypt( db_password );
+    QStringList cipherText = US_Crypto::encrypt( db_password, newPW );
     
     defaultDB.replace( 4, cipherText.at( 0 ) );
     defaultDB.replace( 5, cipherText.at( 1 ) );
@@ -158,15 +159,14 @@ void US_Admin::save( void )
 
   QList<QStringList> databases = US_Settings::databases();
 
-  for ( int i = 0; i < databases.length(); i++ )
+  for ( int i = 0; i < databases.size(); i++ )
   {
     QStringList database = databases.at( i );
     
-    g.setPasswd( le_oldPasswd->text() );
-    QString db_password = US_Crypto::decrypt( database.at( 4 ), database.at( 5 ) );
+    QString db_password = US_Crypto::decrypt( database.at( 4 ), oldPass,
+                                              database.at( 5 ) );
     
-    g.setPasswd( newPW );
-    QStringList cipherText  = US_Crypto::encrypt( db_password );
+    QStringList cipherText  = US_Crypto::encrypt( db_password, newPW );
     
     database.replace( 4, cipherText.at( 0 ) );
     database.replace( 5, cipherText.at( 1 ) );
@@ -174,7 +174,7 @@ void US_Admin::save( void )
     databases.replace( i, database );
   }
 
-  if ( databases.length() > 0 )
+  if ( databases.size() > 0 )
     US_Settings::set_databases( databases );
   
   g.setPasswd( newPW );

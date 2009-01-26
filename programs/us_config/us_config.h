@@ -7,6 +7,7 @@
 #include "us_database.h"
 #include "us_color.h"
 #include "us_font.h"
+#include "us_admin.h"
 
 //! \brief Provide the top level window for user configuration
 
@@ -40,6 +41,7 @@ private:
   US_Database*  db;
   US_Font*      font;
   US_Color*     colors;
+  US_Admin*     admin;
                
   QPushButton*  pb_help;
   QPushButton*  pb_save;
@@ -66,7 +68,8 @@ private:
   QPushButton*  pb_tmpDir;
   QLineEdit*    le_tmpDir;
                
-  QLineEdit*    le_temperature_tol;
+  //QLineEdit*    le_temperature_tol;
+  QDoubleSpinBox* sb_temperature_tol;
   
   QRadioButton* rb_on;
   QRadioButton* rb_off;
