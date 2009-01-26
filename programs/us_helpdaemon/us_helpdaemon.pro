@@ -20,4 +20,6 @@ OBJECTS_DIR  = ./obj
 SOURCES      += us_helpdaemon.cpp 
 HEADERS      += us_helpdaemon.h
 
-unix: DEFINES+= LINUX
+unix:  DEFINES      += LINUX
+win32: QMAKE_LFLAGS += /MACHINE:X86 /INCREMENTAL:NO 
+
