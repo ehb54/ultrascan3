@@ -53,9 +53,9 @@ void US_Help::openBrowser()
             "Please make sure you have the configured browser installed\n\n" 
             "Currently configured: " + browser ).toAscii() ) );
 
-    qDebug() << "Error: Can't start browser window...\n"
-             << "Please make sure you have the configured browser installed\n\n"
-             << "Currently configured: " << browser;
+    //qDebug() << "Error: Can't start browser window...\n"
+    //         << "Please make sure you have the configured browser installed\n\n"
+    //         << "Currently configured: " << browser;
   }
 }
 
@@ -77,9 +77,9 @@ void US_Help::endProcess( int /* exitCode */, QProcess::ExitStatus /* exitStatus
 
     if ( ! proc->waitForStarted( 10000 ) ) // 10 second timeout
     {
-      qDebug() << "Error: Can't start browser window...\n"
-               << "Please make sure you have the configured browser installed\n\n"
-               << "Currently configured: " << browser;
+      //qDebug() << "Error: Can't start browser window...\n"
+      //         << "Please make sure you have the configured browser installed\n\n"
+      //         << "Currently configured: " << browser;
 
       QMessageBox::information( this,
           tr( "UltraScan Error:" ), 
