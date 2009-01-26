@@ -5,11 +5,13 @@
 #include <QtCore>
 #include <QtSql>
 
+#include "us_extern.h"
+
 /*! \brief This class provides connectivity and convenience functions
            for database access.
 */
 
-class US_DB
+class US_EXTERN US_DB
 {
   public:
 
@@ -23,6 +25,7 @@ class US_DB
     /*! \brief This function provides a quick test of database connectivity
         to ensure that the parameters in the database setup are correct.
         The database is merely opened and then immediately closed.
+
         \param host     The name of the host of the database server.
         \param dbname   The name of the database to access.
         \param user     The user name that can access the database.
@@ -35,10 +38,12 @@ class US_DB
 
     /*! \brief A function to open a database using the currently defined database
                stored by \ref US_Config and \ref US_Settings.
-        \param error  A reference to a string for error responses as defined
-                      in the class QSqlError.
+
+        \param masterPW Master password to decrypt DB password
+        \param error    A reference to a string for error responses as defined
+                        in the class QSqlError.
     */
-    bool open ( QString& );
+    bool open ( const QString&, QString& );
 
     //! \brief Close the database 
     void close( void );
