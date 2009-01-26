@@ -3,6 +3,8 @@
 
 #include <QtGui>
 
+#include "us_extern.h"
+
 //! \brief Launch help programs
 
 /*! \class US_Help
@@ -11,7 +13,7 @@
   Qt Assistant for local help files.
 */
 
-class US_Help : public QWidget
+class US_EXTERN US_Help : public QWidget
 {
   Q_OBJECT
 

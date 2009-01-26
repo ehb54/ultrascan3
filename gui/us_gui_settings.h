@@ -3,9 +3,11 @@
 
 #include <QtGui>
 
+#include "us_extern.h"
+
 //! \brief Fetch and set Gui values via QSettings.  All functions are static.
 
-class US_GuiSettings
+class US_EXTERN US_GuiSettings
 {
   public:
 

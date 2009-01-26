@@ -5,9 +5,10 @@
 #include <QtGui>
 
 #include "us_widgets.h"
+#include "us_extern.h"
 
 //!  A class to get the user's master password.
-class US_Passwd : public US_Widgets
+class US_EXTERN US_Passwd : public US_Widgets
 {
   Q_OBJECT
 

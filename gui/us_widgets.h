@@ -11,6 +11,7 @@
 #include "qwt_plot_curve.h"
 
 #include "us_global.h"
+#include "us_extern.h"
 
 /*! \brief Set up widgets the UltraScan way.
  
@@ -19,7 +20,7 @@
     palette and font acording to the user's settings (or the UltraScan default).
     Depending on the widget, other parameters may be set.
 */
-class US_Widgets : public QFrame
+class US_EXTERN US_Widgets : public QFrame
 {
   public: 
     //! The constructor connects to global memory and moves the screen to 

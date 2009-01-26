@@ -10,7 +10,7 @@
 US_License::US_License( QWidget* parent, Qt::WindowFlags flags ) 
   : US_Widgets( parent, flags )
 {
-  setWindowTitle( "UltraScan License Configuration" );
+  setWindowTitle( "UltraScan Registration" );
   setPalette( US_GuiSettings::frameColor() );
   
   const int width = 5 * pushbutton + 4 * spacing;
@@ -20,8 +20,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   // Banner
   QLabel* banner = us_banner( 
-     tr( "Please enter all fields exactly as shown in the issued license,\n"
-         "or import a license from an E-mail text file:" ) );
+     tr( "UltraScan Registration\nPlease enter all fields" ) );
 
   banner->setGeometry( 
       QRect( xpos, ypos, width, spacing + 2 * rowHeight ) );
@@ -182,7 +181,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   xpos += smallColumn + spacing;
 
-  xpos  = spacing;
+  xpos  = ( full_buttonw - 2 * buttonw ) / 2 + 10;
   ypos += 2 * rowHeight + spacing;
 
   // Row 7 - Platform/Expiration/License Status
@@ -198,40 +197,46 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   lbl_valid = us_label( "", 0, QFont::Bold );
   lbl_valid->setGeometry( xpos, ypos, buttonw, rowHeight );
 
-  xpos += buttonw + spacing;
+  //xpos += buttonw + spacing;
   
-  pb_update = us_pushbutton( tr( "Update / Renew" ) );
+
+  // Row 9 - Pushbuttons
+  xpos  = spacing + pushbutton + spacing;
+  ypos += spacing + rowHeight;
+  
+  //pb_request = us_pushbutton( tr( "Request New" ) );
+  //pb_request->setGeometry( xpos, ypos, pushbutton, rowHeight );
+  //connect( pb_request, SIGNAL( clicked() ), SLOT( request() ) );
+
+  //xpos += pushbutton + spacing;
+
+  //pb_import = us_pushbutton( tr( "E-mail Import" ) );
+  //pb_import->setGeometry( xpos, ypos, pushbutton, rowHeight );
+  //connect( pb_import, SIGNAL( clicked() ), SLOT( import() ) );
+
+  //xpos += pushbutton + spacing;
+
+  //pb_save = us_pushbutton( tr( "Save" ) );
+  //pb_save->setGeometry( xpos, ypos, pushbutton, rowHeight );
+  //connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
+  pb_update = us_pushbutton( tr( "Register" ) );
   pb_update->setGeometry( xpos, ypos, pushbutton, rowHeight );
   connect( pb_update, SIGNAL( clicked() ), SLOT( update() ) );
 
   QString error;
   QString validMsg;
-  int     status = US_License_t::isValid( error, QStringList() );
 
-  if ( status == US_License_t::Missing )
+  switch ( US_License_t::isValid( error, QStringList() ) )
   {
-    pb_update->setEnabled( false );
+     case US_License_t::Pending:
+        pb_update->setText( "Finish Registration" );
+        break;
+
+     case US_License_t::OK:
+     case US_License_t::Expired:
+        pb_update->setText( "Update / Renew" );
+        break;
   }
-
-  // Row 9 - Pushbuttons
-  xpos  = spacing;
-  ypos += spacing + rowHeight * 2;
-  
-  pb_request = us_pushbutton( tr( "Request New" ) );
-  pb_request->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  connect( pb_request, SIGNAL( clicked() ), SLOT( request() ) );
-
-  xpos += pushbutton + spacing;
-
-  pb_import = us_pushbutton( tr( "E-mail Import" ) );
-  pb_import->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  connect( pb_import, SIGNAL( clicked() ), SLOT( import() ) );
-
-  xpos += pushbutton + spacing;
-
-  pb_save = us_pushbutton( tr( "Save" ) );
-  pb_save->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
 
   xpos += pushbutton + spacing;
 
@@ -241,9 +246,9 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   xpos += pushbutton + spacing;
 
-  pb_cancel = us_pushbutton( tr( "Cancel" ) );
+  pb_cancel = us_pushbutton( tr( "Close" ) );
   pb_cancel->setGeometry( xpos, ypos, pushbutton, rowHeight );
-  connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
+  connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
 
   // Finish up
 
@@ -252,11 +257,6 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   updating_email = false;
   load_current();
-}
-
-void US_License::cancel( void )
-{
-  close();
 }
 
 void US_License::help( void )
@@ -289,9 +289,25 @@ QString US_License::titleCase( const QString& phrase )
 
 void US_License::load_current( void )
 {
+  lastname    = "";
+  firstname   = "";
+  institution = "";
+  address     = "";
+  city        = "";
+  state       = "NON-US";
+  zip         = "";
+  phone       = "";
+  email       = "";
+  version     = US_Version;  // us_defines.h
+  validation  = "";
+  expiration  = "";
+
+  os          = titleCase( OS );
+  platform    = titleCase( PLATFORM );
+   
   QStringList license = US_Settings::license();
 
-  if ( license.length() == 14 )
+  if ( license.length() >= 12 )
   {
     lastname    = license [ 0 ];
     firstname   = license [ 1 ];
@@ -305,13 +321,12 @@ void US_License::load_current( void )
     platform    = titleCase( license [ 9 ]  );
     os          = titleCase( license [ 10 ] );
     version     = license [ 11 ];
+  }
+
+  if ( license.length() == 14 )
+  {
     validation  = license [ 12 ];
     expiration  = license [ 13 ];
-  }
-  else
-  {
-    os          = titleCase( OS );
-    platform    = titleCase( PLATFORM );
   }
 
   update_screen();
@@ -330,7 +345,7 @@ void US_License::update_screen( void )
 
   lbl_expiration->setText( "Expiration: " + expiration );
   lbl_version   ->setText( "Version: " + version );
-  lbl_platform  ->setText( "Platform: " + platform + " / " + os );
+  lbl_platform  ->setText( "Platform: " + platform + " / OS: " + os );
 
   // License type
   for ( int i = 0; i < types.count(); i++ )
@@ -360,21 +375,25 @@ void US_License::update_screen( void )
   switch ( status )
   {
     case US_License_t::OK:
-      validMsg = "Valid License";
+      validMsg = "Valid Registration";
       break;
 
     case US_License_t::Expired:
-      validMsg = "Expired License";
+      validMsg = "Expired Registration";
       break;
 
     case US_License_t::Invalid:
     case US_License_t::BadPlatform:
     case US_License_t::BadOS:
-      validMsg = "Invalid License";
+      validMsg = "Invalid Registration";
       break;
 
     case US_License_t::Missing:
-      validMsg = "Missing License";
+      validMsg = "Missing Registration";
+      break;
+
+    case US_License_t::Pending:
+      validMsg = "Pending Registration";
       break;
 
     default:
@@ -386,29 +405,49 @@ void US_License::update_screen( void )
 
 void US_License::update( void )
 {
+  if ( firstname   == ""  ||
+       lastname    == ""  ||
+       institution == ""  ||
+       address     == ""  ||
+       state       == ""  ||
+       zip         == ""  ||
+       phone       == ""  ||
+       email       == ""  )
+  {
+    QMessageBox::information ( this, 
+      tr( "Request Error" ),
+      tr( "Your request is incomplete.\n"
+          "Pleease fill out all requested information." ) );
+
+    return;
+  }
+
   // If the email address has changed, just do a normal request.
   QStringList license = US_Settings::license();
 
-  if ( license.length() > 8 )  // Skip if no license (2nd part of initial setup)
+  if ( license.length() > 8 )
   {
-    if ( le_email->text() != license[ 8 ]  && ! updating_email )
+    //qDebug() << "license len > 8";
+    if ( le_email->text() != license[ 8 ] )
     {
       int result = QMessageBox::question( this,
           tr( "License Change" ),
           tr( "Your email address is changing.\n"
-              "You must validate your new address using new license procedures\n"
+              "You must validate your new address using new registration procedures.\n"
               "Continue?" ),
           QMessageBox::Yes, QMessageBox::No );
 
-      if ( result == QMessageBox::Yes )
-        request();
-      
-      return;
+      if ( result == QMessageBox::No ) return;
     }
   }
-
+  else
+  {
+    request();
+    return;
+  }
+  
   // Form request
-  QString request = "firstname="    + firstname 
+  QString req     = "firstname="    + firstname 
                   + "&lastname="    + lastname
                   + "&institution=" + institution
                   + "&address="     + address
@@ -421,10 +460,10 @@ void US_License::update( void )
                   + "&platform="    + PLATFORM
                   + "&version="     + US_Version
                   + "&licensetype=" + licensetype;
-
+  //qDebug() << "requesting update";
   // Send request
   QString      url      = "http://ultrascan.uthscsa.edu/update-license.php";
-  US_HttpPost* transmit = new US_HttpPost( url, request );
+  US_HttpPost* transmit = new US_HttpPost( url, req );
   connect( transmit, SIGNAL( US_Http_post_response( const QString& ) ),
            this,     SLOT  ( update_response      ( const QString& ) ) );
 }
@@ -444,18 +483,22 @@ void US_License::update_response( const QString& response )
     code5      = data[ 5 ];
     expiration = data[ 6 ];
     version    = US_Version;
-qDebug() << "Debug success: " << response;
-    if ( save() ) update_screen();
+
+    if ( save() ) 
+    {
+      pb_update->setText( "Update / Renew" );
+      update_screen();
+    }
   }
   else
     // Process possible errors
     QMessageBox::information ( this, 
-      tr( "Update Error" ),
-      response );
+      tr( "Update Error" ), response );
 }
 
 void US_License::request( void )
 {
+   //qDebug() << "Starting Req";
   // Form request
   QString request = "firstname="    + firstname 
                   + "&lastname="    + lastname
@@ -471,7 +514,19 @@ void US_License::request( void )
                   + "&version="     + US_Version
                   + "&licensetype=" + licensetype;
 
+  // Save partial request
+  QStringList license;
+  license << lastname              << firstname 
+          << institution           << address 
+          << city                  << state                 
+          << zip                   << phone       
+          << email                 << platform.toLower() 
+          << os.toLower()          << version;   
+ 
+  US_Settings::set_license( license );
+
   // Send request
+  //qDebug() << "sending: " << request;
   QString      url      = "http://ultrascan.uthscsa.edu/request-license.php";
   US_HttpPost* transmit = new US_HttpPost( url, request );
   connect( transmit, SIGNAL( US_Http_post_response( const QString& ) ),
@@ -481,17 +536,18 @@ void US_License::request( void )
 void US_License::request_response( const QString& response )
 {
   QStringList data = response.split( "-" );
-  qDebug() << response;
+  //qDebug() << data;
   int error = data[ 0 ].toInt();
+
+  //Debug() << "Request response data: " << error;
   if ( error == 0 )
   {
-    pb_update->setEnabled( true );
+    pb_update->setText( "Finish Registration" );
 
     QMessageBox::information ( this, 
       tr( "Request Success" ),
       tr( "You have been sent an email to confirm your request.\n"
-          "After you respond to the email, select 'Update / Renew'." ) );
-
+          "After you respond to the email, select 'Finish Registration'." ) );
   }
   else
   {
@@ -499,11 +555,9 @@ void US_License::request_response( const QString& response )
     QMessageBox::information ( this, 
       tr( "Request Error" ),
       tr( "The response was " ) +  response );
-
-    pb_update->setEnabled( true );
+     
+    return;
   } 
-
-  updating_email = true; // Needed in the case of changing esisting email
 }
 
 bool US_License::save( void )
@@ -528,7 +582,7 @@ bool US_License::save( void )
   {
     case US_License_t::Expired:
       message = tr( "Failure.\n"
-          "The date of the license is more than one year ago." );
+          "The date of the registration is more than one year ago." );
       break;
 
     case US_License_t::Invalid:
@@ -560,64 +614,5 @@ bool US_License::save( void )
 
   QMessageBox::information( this, tr( "License save results" ), message );
   return isOK;
-}
-
-void US_License::import( void )
-{
-  QString line;
-
-  QString filename = QFileDialog::getOpenFileName( this,
-      tr( "Please select an e-mail file containing an UltraScan license..." ) );
-  
-  QFile texfile( filename );
-
-  if ( texfile.open( QIODevice::ReadOnly ) )
-  {
-    QTextStream   ts( &texfile );
-    QString cut = "_____________________CUT HERE_____________________";
-    
-    do
-    {
-      line = ts.readLine();
-    } 
-    while ( line != cut && ! ts.atEnd() );
-
-    if ( ts.atEnd() )
-    {
-      QMessageBox::information( this,
-          tr( "License Error" ), 
-          tr( "This file does not seem to be an E-mail text file.\n"
-              "It is missing the\n\n"
-              "\"%1\"\n\n"
-              "text string.\n"
-              "Please load an e-mail license message file or add the string "
-              "exactly as shown to the\n"
-              "top of the license file so this program can recognize it." )
-              .arg( cut ) );
-      return;
-    }
-
-    firstname   = ts.readLine();
-    lastname    = ts.readLine();
-    institution = ts.readLine();
-    address     = ts.readLine();
-    city        = ts.readLine();
-    state       = ts.readLine();
-    zip         = ts.readLine();
-    phone       = ts.readLine();
-    email       = ts.readLine();
-    platform    = titleCase( ts.readLine() );
-    os          = titleCase( ts.readLine() );
-    version     = ts.readLine();
-    licensetype = ts.readLine();
-    validation  = ts.readLine();
-    expiration  = ts.readLine();
-    texfile.close();
-
-    update_screen();
-  }
-  else  // Open failed
-    QMessageBox::information( this, tr( "License Error" ),
-        tr( "Could not open license file\n%1" ).arg( filename ) );
 }
 
