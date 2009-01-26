@@ -17,9 +17,9 @@ HEADERS      = us_gui_settings.h \
                us_passwd.h       \
                us_widgets.h
 
-win32 {
-  HEADERS   += us_http_post.h 
-}
+#win32 {
+#  HEADERS   += us_http_post.h 
+#}
 
 
 SOURCES      = us_gui_settings.cpp \ 
