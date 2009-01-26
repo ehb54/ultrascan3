@@ -6,6 +6,7 @@
 
 #include "us_widgets.h"
 #include "us_help.h"
+#include "us_extern.h"
 
 //! \brief Manage a user's UltraScan license.
 
@@ -27,7 +28,7 @@
 #define mediumColumn 110 //!< Width of a medium column
 #define codeWidth     60 //!< Width of license code line edit widgets
 
-class US_License : public US_Widgets
+class US_EXTERN US_License : public US_Widgets
 {
   Q_OBJECT
   
