@@ -25,6 +25,7 @@ win32 {
   LIBS       += ../../lib/libus_utils.lib
   LIBS       += ../../lib/libus_db.lib
   LIBS       += ../../lib/libus_gui.lib
+  QMAKE_LFLAGS += /MACHINE:X86 /INCREMENTAL:NO 
 
   QMAKE_CXXFLAGS_DEBUG   += /wd4996
   QMAKE_CXXFLAGS_RELEASE += /wd4996
