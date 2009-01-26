@@ -1,4 +1,7 @@
-include( /opt/qt-4.5.0/addons/qtsingleapplication-2.5_1-commercial/src/qtsingleapplication.pri )
+unix:  SINGLEDIR = /opt/qt-4.5.0/addons/qtsingleapplication-2.5_1-commercial/src/
+win32: SINGLEDIR = C:/Qt/4.4.3/addons/singleapp
+
+include( $${SINGLEDIR}/qtsingleapplication.pri )
 
 # Not a gui program
 
@@ -17,4 +20,4 @@ OBJECTS_DIR  = ./obj
 SOURCES      += us_helpdaemon.cpp 
 HEADERS      += us_helpdaemon.h
 
-DEFINES      += LINUX
+unix: DEFINES+= LINUX
