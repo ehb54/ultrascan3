@@ -45,13 +45,13 @@ QString US_Crypto::decrypt( const QString& ciphertext, const QString& pw,
 
   if ( masterPW.size() == 0 ) return QString();
 
+  QCA::Initializer init;
+
   if ( ! QCA::isSupported( "aes128-cbc-pkcs7" ) )
   {
     qDebug() << "AES128-CBC not supported!\n";
     return QString();
   }
-
-  QCA::Initializer init;
 
   QCA::Cipher cipher( 
                  QString( "aes128" ), 

@@ -133,7 +133,7 @@ void US_Settings::set_tmpDir( const QString& dir )
 QStringList US_Settings::license( void )
 {
   QSettings settings( "UTHSCSA", "UltraScan" );
-  return settings.value( "license", "" ).toStringList();
+  return settings.value( "license", QStringList() ).toStringList();
 }
 
 void US_Settings::set_license( const QStringList& license )
@@ -249,7 +249,7 @@ void US_Settings::set_databases( const QList<QStringList>& dblist )
 QStringList US_Settings::defaultDB( void )
 {
   QSettings settings( "UTHSCSA", "UltraScan" );
-  return settings.value( "defaultDB", "" ).toStringList();
+  return settings.value( "defaultDB", QStringList() ).toStringList();
 }
 
 void US_Settings::set_defaultDB( const QStringList& defaultDB )
