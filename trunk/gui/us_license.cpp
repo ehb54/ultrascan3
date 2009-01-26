@@ -269,7 +269,7 @@ QString US_License::titleCase( const QString& phrase )
   QString title = phrase; 
   bool    cap = true;
 
-  for ( int i = 0; i < title.length(); i++ )
+  for ( int i = 0; i < title.size(); i++ )
   {
     QChar c = title[ i ];
     
@@ -307,7 +307,7 @@ void US_License::load_current( void )
    
   QStringList license = US_Settings::license();
 
-  if ( license.length() >= 12 )
+  if ( license.size() >= 12 )
   {
     lastname    = license [ 0 ];
     firstname   = license [ 1 ];
@@ -323,7 +323,7 @@ void US_License::load_current( void )
     version     = license [ 11 ];
   }
 
-  if ( license.length() == 14 )
+  if ( license.size() == 14 )
   {
     validation  = license [ 12 ];
     expiration  = license [ 13 ];
@@ -425,7 +425,7 @@ void US_License::update( void )
   // If the email address has changed, just do a normal request.
   QStringList license = US_Settings::license();
 
-  if ( license.length() > 8 )
+  if ( license.size() > 8 )
   {
     //qDebug() << "license len > 8";
     if ( le_email->text() != license[ 8 ] )
