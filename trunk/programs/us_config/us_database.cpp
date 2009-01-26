@@ -3,7 +3,6 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 #include "us_help.h"
-#include "us_passwd.h"
 #include "us_crypto.h"
 #include "us_db.h"
 
@@ -20,10 +19,13 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   QBoxLayout* topbox = new QVBoxLayout( this );
   topbox->addWidget( banner );
+  topbox->setSpacing( 2 );
 
   lw_entries = new QListWidget();
   lw_entries->setSortingEnabled( true );
   lw_entries->setPalette( US_GuiSettings::editColor() );
+  lw_entries->setFont( QFont( US_GuiSettings::fontFamily(),
+                              US_GuiSettings::fontSize() ) );
 
   /*  This isn't doing anything
   QFont*        f  = new QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
@@ -119,7 +121,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   connect( pb_help, SIGNAL( clicked() ), this, SLOT( help() ) );
   buttons->addWidget( pb_help, row, 0 );
 
-  QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
+  QPushButton* pb_cancel = us_pushbutton( tr( "Close" ) );
   connect( pb_cancel, SIGNAL( clicked() ), this, SLOT( close() ) );
   buttons->addWidget( pb_cancel, row++, 1 );
 
@@ -133,6 +135,9 @@ void US_Database::select_db( QListWidgetItem* entry )
   // Need to delete trailing (default) if that is present
   QString item = entry->text().remove( " (default)" );
 
+  // Get the master PW
+  QString master_pw = pw.getPasswd();
+
   for ( int i = 0; i < dblist.size(); i++ )
   {
     if ( item == dblist.at( i ).at( 0 ) )
@@ -144,7 +149,7 @@ void US_Database::select_db( QListWidgetItem* entry )
 
       QString cipher = dblist.at( i ).at( 4 );
       QString iv     = dblist.at( i ).at( 5 );
-      QString pw     = US_Crypto::decrypt( cipher, iv );
+      QString pw     = US_Crypto::decrypt( cipher, master_pw, iv );
       
       le_password->setText( pw );   
       
@@ -201,9 +206,12 @@ void US_Database::check_add()
     return;
   }
   
+  // Get the master PW
+  QString     master_pw = pw.getPasswd();
+
   // Encrypt the DB password with the master password
   QString     db_pw = le_password->text();
-  QStringList pw    = US_Crypto::encrypt( db_pw );
+  QStringList pw    = US_Crypto::encrypt( db_pw, master_pw );
 
   // Save the DB entry
   dblist = US_Settings::databases();
@@ -248,15 +256,18 @@ void US_Database::update_lw( const QString& current )
 {
   lw_entries->clear();
 
-  dblist            = US_Settings::databases();
-  QString defaultDB = US_Settings::defaultDB().at( 0 );
+  dblist                = US_Settings::databases();
+  QStringList defaultDB = US_Settings::defaultDB();
+  QString     defaultDBname;
+
+  if ( defaultDB.size() > 0 ) defaultDBname = defaultDB.at( 0 );
 
   for ( int i = 0; i < dblist.size(); i++ )
   {
     QString desc    = dblist.at( i ).at( 0 );
     QString display = desc;
     
-    if ( desc == defaultDB ) display.append( " (default)" );
+    if ( desc == defaultDBname ) display.append( " (default)" );
     
     QListWidgetItem* widget = new QListWidgetItem( display );
     lw_entries->addItem( widget );  
@@ -268,7 +279,9 @@ void US_Database::update_lw( const QString& current )
 
 void US_Database::reset( void )
 {
-  QString defaultDB = US_Settings::defaultDB().at( 0 );
+  QStringList DB = US_Settings::defaultDB();
+  QString     defaultDB;
+  if ( DB.size() > 0 ) defaultDB = US_Settings::defaultDB().at( 0 );
   update_lw( defaultDB );
 
   le_description->setText("");

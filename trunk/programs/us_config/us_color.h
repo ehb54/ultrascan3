@@ -40,6 +40,7 @@ class US_Color : public US_Widgets
     QLabel* lbl_lcd;
     QLabel* lbl_counter;
     QLabel* lbl_assign;
+    QLabel* lbl_style;
 
     // Labels
 
@@ -93,6 +94,7 @@ class US_Color : public US_Widgets
     
     // Other Widgets
     QComboBox*     cmbb_margin;
+    QComboBox*     cmbb_style;
     QProgressBar*  progress;
     QwtCounter*    cnt;
 
@@ -114,6 +116,8 @@ class US_Color : public US_Widgets
       QColor   plotMajorGrid;
       QColor   plotMinorGrid;
       QColor   plotPicker;
+
+      QString  guiStyle;
 
       QPalette  frameColor;
       QPalette  pushbColor;
@@ -139,10 +143,11 @@ class US_Color : public US_Widgets
 
   private slots:
     void updateWidgets  ( double );
-    void selMargin      ( int    );
-    void selectedElement( int    );
     void selected_scheme( void   );
     void save_as        ( void   );
+    void selMargin      ( int    );
+    void selectedElement( int    );
+    void selectStyle    ( const QString& );
 
     void apply          ( void   );  // set as current
     void reset          ( void   );

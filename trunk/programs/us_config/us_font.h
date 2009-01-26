@@ -40,16 +40,24 @@ class US_Font : public US_Widgets
     QLabel*      large;
     QLabel*      largeBold;
     QLabel*      title;
+    QLabel*      lbl_family;
+    QLabel*      size;
+    QLabel*      samples;
 
+    QPushButton* pb_font;
     QPushButton* pb_save;
+    QPushButton* pb_default;
     QPushButton* pb_help;
     QPushButton* pb_cancel;
+
+    void redraw( void );
 
   private slots:
   
     void save      ( void );
     void help      ( void );
     void selectFont( void );
+    void setDefault( void );
 };
 
 #endif

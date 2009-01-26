@@ -146,6 +146,26 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
 
   row = 0;
 
+  // Style
+  lbl_style = us_label( tr( "Style:" ) );
+  rightColumn->addWidget( lbl_style, row, 0 );
+
+  QStringList styles = QStyleFactory::keys();
+  styles.sort();
+
+  cmbb_style = us_comboBox();
+  cmbb_style->addItems( styles );
+  current.guiStyle = US_GuiSettings::guiStyle();
+
+  cmbb_style->setCurrentIndex(
+        cmbb_style->findText( current.guiStyle, Qt::MatchFixedString ) );
+
+  connect( cmbb_style, SIGNAL( activated  ( const QString& ) ),
+                       SLOT  ( selectStyle( const QString& ) ) );
+
+  rightColumn->addWidget( cmbb_style, row++, 1 );
+
+  // Colors
   lbl_assign = us_banner( tr( "Assign new Colors" ) );
   rightColumn->addWidget( lbl_assign, row++, 0, 1, 2 );
 
@@ -284,7 +304,7 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
   connect( pb_save_as, SIGNAL( clicked() ), SLOT( save_as() ) );
   rightColumn->addWidget( pb_save_as, row, 0 );
 
-  le_save_as = us_lineedit( tr( "MyColors" ), 1 );
+  le_save_as = us_lineedit( tr( "MyColors" ), 0 );
 
   rightColumn->addWidget( le_save_as, row++, 1 );
 
@@ -326,6 +346,7 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
 void US_Color::getCurrentSettings( void )
 {
   current.plotMargin    = US_GuiSettings::plotMargin();
+  current.guiStyle      = US_GuiSettings::guiStyle();
 
   current.plotCurve     = US_GuiSettings::plotCurve();
   current.plotBg        = US_GuiSettings::plotCanvasBG();
@@ -344,6 +365,11 @@ void US_Color::getCurrentSettings( void )
 
 void US_Color::updateScreen( void )
 {
+  QApplication::setStyle( current.guiStyle );
+
+  cmbb_style->setCurrentIndex(
+      cmbb_style->findText( current.guiStyle, Qt::MatchFixedString ) );
+
   selectedElement( elements->currentRow() );
   resetFrames();
   resetButtons();
@@ -787,6 +813,7 @@ void US_Color::resetWidgets( void )
   QPalette p = current.normalColor;
 
   cmbb_margin->setPalette( p );
+  cmbb_style ->setPalette( p );
   progress   ->setPalette( p );
   cnt        ->setPalette( p );
 }
@@ -1389,5 +1416,11 @@ void US_Color::selected_scheme( void )
   }
 
   updateScreen();
+}
+
+void US_Color::selectStyle( const QString& styleName )
+{
+  current.guiStyle = styleName;
+  QApplication::setStyle( QStyleFactory::create( styleName ) );
 }
 
