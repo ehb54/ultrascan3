@@ -21,7 +21,7 @@ bool US_DB::test_db_connection(
   return status;
 }
 
-bool US_DB::open( QString& error )
+bool US_DB::open( const QString& masterPW, QString& error )
 {
   QStringList defaultDB = US_Settings::defaultDB();
 
@@ -29,7 +29,7 @@ bool US_DB::open( QString& error )
   db.setDatabaseName( defaultDB.at( 2 ) );
   db.setHostName    ( defaultDB.at( 3 ) );
 
-  QString passwd = US_Crypto::decrypt( defaultDB.at( 4 ), defaultDB.at( 5 ) );
+  QString passwd = US_Crypto::decrypt( defaultDB.at( 4 ), masterPW, defaultDB.at( 5 ) );
 
   db.setPassword    ( passwd );
 
