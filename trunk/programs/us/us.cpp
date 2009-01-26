@@ -8,6 +8,7 @@
 #include "us_win_data.cpp"
 #include "us_defines.h"
 #include "us_revision.h"
+#include "us_sleep.h"
 
 using namespace US_WinData;
 
@@ -315,7 +316,7 @@ void US_Win::closeProcs( void )
   // We need to sleep slightly (one millisecond) so that the system can clean 
   // up and properly release shared memory.
   g.scheduleDelete();
-  usleep( 1000 );
+  US_Sleep::msleep( 1 );
 }
 
 void US_Win::closeEvent( QCloseEvent* e )
