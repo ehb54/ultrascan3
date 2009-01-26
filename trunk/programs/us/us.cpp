@@ -281,8 +281,8 @@ void US_Win::closeProcs( void )
     names       += d->name + "\n";
   }
 
-  QString isAre  = ( procs.length() > 1 ) ? "es are" : " is";
-  QString itThem = ( procs.length() > 1 ) ? "them"   : "it";
+  QString isAre  = ( procs.size() > 1 ) ? "es are" : " is";
+  QString itThem = ( procs.size() > 1 ) ? "them"   : "it";
   
   QMessageBox box;
   box.setWindowTitle( tr( "Attention" ) );
