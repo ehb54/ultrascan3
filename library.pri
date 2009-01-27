@@ -20,7 +20,7 @@ win32 {
   QCAPATH                 = C:/qca-2.0.1
   DEPENDPATH             += ../gui ../utils
   INCLUDEPATH            += ../gui ../utils $$QWTPATH/src $$QCAPATH/include/QtCrypto
-  LIBS                   += $$QCAPATH/lib/qcad2.lib $$QWTPATH/lib/qwt5.lib 
+  LIBS                   += $$QCAPATH/lib/qcad2.lib $$QWTPATH/lib/qwtd5.lib 
   QMAKE_LFLAGS           += /IMPLIB:../lib/$${TARGET}.lib /MACHINE:X86 /INCREMENTAL:NO 
   QMAKE_CXXFLAGS_DEBUG   += /wd4996
   QMAKE_CXXFLAGS_RELEASE += /wd4996
