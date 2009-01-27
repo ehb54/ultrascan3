@@ -53,7 +53,7 @@ US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
   pb_save->setMinimumHeight( buttonh ); 
   connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
           
-  pb_cancel = us_pushbutton( "Cancel" );
+  pb_cancel = us_pushbutton( "Close" );
   pb_cancel->setMinimumHeight( buttonh );
   connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
 
@@ -139,7 +139,7 @@ void US_Admin::save( void )
   // to   le_passwd1->text()
 
   QStringList defaultDB = US_Settings::defaultDB();
-  QString     oldPass   = le_passwd1->text();
+  QString     oldPass   = le_oldPasswd->text();
 
   if ( defaultDB.size() > 0 )
   {
