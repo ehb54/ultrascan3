@@ -12,7 +12,7 @@
 @alamodowncount = `ssh alamo pbsnodes -l`;
 
 $bcf_no_procs = 42 - 2 * @bcfdowncount;
-$alamo_no_procs = 30 - 2 * @alamodowncount;
+$alamo_no_procs = 28 - 2 * @alamodowncount;
 $laredo_no_procs = 34 - 2 * @laredodowncount;
 
 # END USER EDITABLE SECTION
@@ -443,7 +443,7 @@ for($i = 0; $i < @systems; $i++) {
 #	 );
 
 @max_np = (
-	   64 ,
+	   128 ,
 	   64 ,
 	   4 ,
 	   16 ,
@@ -496,7 +496,7 @@ if($analysis_type =~ /^2DSA/) {
 }
 
 $max_time[0] *= 8 if $default_system =~ /hlrb2/;
-$max_time[0] *= 3 if $default_system =~ /lonestar/;
+$max_time[0] *= 4 if $default_system =~ /lonestar/;
 $max_time[0] *= 4 if $default_system =~ /ranger/;
 
 if($monte_carlo) {
@@ -505,7 +505,7 @@ if($monte_carlo) {
 
 if($sa2d_params_use_iterative &&
    $sa2d_max_iterations > 1) {
-    $max_time[0] *= $sa2d_max_iterations;
+    $max_time[0] *= 1.5 * $sa2d_max_iterations;
 }
 
 if($meniscus_gridpoints) {
@@ -597,6 +597,7 @@ $FACTORYTYPE = $factorytypes[$usesys];
 $BIN = $bins[$usesys];
 $LD_XML = $ld_xml[$usesys];
 $LD_QUEUE = $queues[$usesys];
+$PROJECT = "<project>ULTRASCAN</project>" if $default_system eq 'lonestar.tacc.utexas.edu';
 
 $WORKTMP = "${WORK}/tmp";
 $WORKRUN = "${WORK}/tmp/$id";
@@ -693,6 +694,7 @@ $LD_XML
   <stdout>$WORKRUN/us_job${id}.stdout</stdout>
   <stderr>$WORKRUN/us_job${id}.stderr</stderr>
   <count>$np</count>
+$PROJECT
 $LD_QUEUE
   <maxWallTime>$max_time[$usesys]</maxWallTime>
   <jobType>mpi</jobType>
