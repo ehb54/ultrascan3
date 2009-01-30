@@ -505,6 +505,13 @@ void US_PseudoAbs::select_dir()
 							QTextStream ts(&scan_file);
 							temp_cell.header1 = ts.readLine();
 							temp_scan.header2 = ts.readLine();
+							if (temp_scan.header2.mid(33,3).isEmpty() )
+							{
+								QMessageBox::message("Attention", tr("Scan "+ *it +"\n"
+										"appears to be corrupted.\n\n"
+												"Please review this file and edit, if necessary\n"
+												"\nAfter editing, run this utility again."));
+							}
        					wavelength.push_back(temp_scan.header2.mid(33,3));
 							while (true)
 							{
@@ -547,16 +554,17 @@ void US_PseudoAbs::select_dir()
 			}
 			else
 			{
-				lbl_message->setText(tr("All scanfiles of this run are in\n the proper sequence.\nNo reordering is necessary."));
+				lbl_message->setText(tr("All scanfiles of this run are in\nthe proper sequence.\nNo reordering is necessary."));
 			}
 			show_cell(i);
 			QString tmp = wavelength[0];
 			bool flag = false;
 			for (unsigned int k=1; k<wavelength.size(); k++)
 			{
-     			if (wavelength[k] != tmp)
+				if (abs(wavelength[k].toInt() - tmp.toInt()) > 2)
      			{
      				flag = true;
+					//cout << "k: " << k << "wavel: " << wavelength[k] << ", tmp: " << tmp << endl;
      				break;
      			}
 
