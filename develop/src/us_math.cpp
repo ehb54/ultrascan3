@@ -1210,7 +1210,7 @@ float int_vol_2sphere(float r1, float r2, float d) {
 
   if (d - r2 > cy || r1 < cy) {
     fprintf(stderr, "error: range inconsistancy! %f %f %f\n", d - r2, cy, r1);
-    exit(-1);
+//    exit(-1);
   }
 
 #if defined(DEBUG)
