@@ -129,8 +129,9 @@ class US_EXTERN US_Widgets : public QFrame
     QwtPlotGrid*  us_grid( QwtPlot* );
 
     //! \param plot*   - Pointer to plot\n
+    //! \param title   - Title of the curve\n
     //! * Curve color is set to US_GuiSettings::plotCurve()
-    QwtPlotCurve* us_curve( QwtPlot* );
+    QwtPlotCurve* us_curve( QwtPlot*, const QString& );
 
     //! \param plot*   - Pointer to plot\n
     //! * Rubber Band pen and Tracker pen color is set to\n
