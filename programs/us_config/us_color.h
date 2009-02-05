@@ -25,8 +25,8 @@ class US_Color : public US_Widgets
     //! Construct the window to manage the user's color choices.
     //! The settings are saved for each user via \ref US_Settings.
     US_Color( QWidget* = 0, Qt::WindowFlags = 0 );
-    //! A null destructor. 
-    ~US_Color() {};
+    //! A destructor to clean up 
+    //~US_Color();
 
   private:
     US_Help showhelp;
@@ -160,6 +160,8 @@ class US_Color : public US_Widgets
     void pick_color4    ( void   );
     void pick_color5    ( void   );
     void pick_color6    ( void   );
+
+    void closeEvent     (  QCloseEvent* );
 };
 
 #endif

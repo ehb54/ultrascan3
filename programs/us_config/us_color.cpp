@@ -1,6 +1,7 @@
 //! \file us_color.cpp
 #include "us_color.h"
 #include "us_gui_settings.h"
+#include "us_plot.h"
 
 US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
 {
@@ -22,9 +23,9 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
   leftColumn->addWidget( lbl_background, row++, 0, 1, 2 );
 
   // Plot example
-  plot  = us_plot  ( tr( "Sample Plot" ), tr( "X-axis" ), ( "Y-axis" ) );
+  plot  = new US_Plot( tr( "Sample Plot" ), tr( "X-axis" ), ( "Y-axis" ) );
   grid  = us_grid  ( plot );
-  curve = us_curve ( plot );
+  curve = us_curve ( plot, tr( "Sample Curve 1" ) );
   pick  = us_picker( plot );
 
   const int ArraySize = 21;
@@ -341,6 +342,11 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
   mainLayout->addLayout( buttonBar  , 1, 0, 1, 2 );
 
   reset();
+}
+
+void US_Color::closeEvent( QCloseEvent* e )
+{
+   e->accept();
 }
 
 void US_Color::getCurrentSettings( void )

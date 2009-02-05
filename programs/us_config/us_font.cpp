@@ -76,7 +76,7 @@ US_Font::US_Font( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
    pb_help = us_pushbutton( tr( "Help" ) );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   pb_cancel = us_pushbutton( tr( "Cancel" ) );
+   pb_cancel = us_pushbutton( tr( "Close" ) );
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
 
    QBoxLayout* buttons = new QHBoxLayout();
