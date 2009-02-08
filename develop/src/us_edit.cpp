@@ -2425,6 +2425,7 @@ void EditData_Win::write_equil_file()
 	for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
 	{
 		s << run_inf.equil_meniscus[scan];	// the first point in each dataset is always the meniscus
+		count[scan] = 0;
 		if (edit_type == 4) // for interference the point spacing is regular and doesn't need to be regularized
 		{
 // needed for interference where we set first point arbitrarily to zero:
@@ -2446,7 +2447,7 @@ void EditData_Win::write_equil_file()
 // Sometimes there are increments smaller than 0.001, so we need to skip those
 				while ((unsigned int) (radius[scan][count[scan]] * 1000) < (unsigned int) (rad * 1000))
 				{
-					count[scan] ++;
+					count[scan] ++; // increment scan's count of data points
 				}
 				if ((unsigned int) (radius[scan][count[scan]] * 1000) == (unsigned int) (rad * 1000))
 				{
@@ -2469,6 +2470,8 @@ void EditData_Win::write_equil_file()
 					 	    (radius[scan][count[scan]] - radius[scan][count[scan]-1]);
 						b = absorbance[scan][count[scan]] - m * radius[scan][count[scan]];
 						newpoint = m * rad + b;
+//						cout << rad << ", " << radius[scan][count[scan]] << ", " << radius[scan][count[scan]-1]
+//								<< absorbance[scan][count[scan]] << ", " << absorbance[scan][count[scan]-1] << endl;
 					}
 					else if (count[scan] == points[scan] - 1)
 					{

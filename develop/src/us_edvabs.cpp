@@ -178,7 +178,7 @@ void EditAbsVeloc_Win::get_x(const QMouseEvent &e)
 			sum = 0;
 			if (j > points[scan]+4)
 			{
-				str.sprintf	(tr("There appears to be a problem with scan %d of your\n"), scan+1);
+				str.sprintf	(tr("There appears to be a problem at then end of scan %d of your\n"), scan+1);
 				str1.sprintf(tr("data that showed up in module edvabs.cpp:get_x::CASE %d.\n\n"), step);
 				str.append(str1);
 				str.append 	(tr("Please manually inspect the file for:\n\n"));
@@ -197,7 +197,7 @@ void EditAbsVeloc_Win::get_x(const QMouseEvent &e)
 			}
 			if (j < 4)
 			{
-				str.sprintf	(tr("There appears to be a problem with scan %d of your\n"), scan+1);
+				str.sprintf	(tr("There appears to be a problem at the beginning of scan %d of your\n"), scan+1);
 				str1.sprintf(tr("data that showed up in module edvabs.cpp:get_x::CASE %d.\n\n"), step);
 				str.append(str1);
 				str.append 	(tr("Please manually inspect the file for:\n\n"));
@@ -247,18 +247,20 @@ void EditAbsVeloc_Win::get_x(const QMouseEvent &e)
 				for (i=0; i<run_inf.points[cell][lambda][current_channel]; i++)
 				{
 					rad = run_inf.range_left[cell][lambda][current_channel] + i * run_inf.delta_r;
+					//cout << rad << ": ";
 // only compare the first 3 significant digits
 // Sometimes there are increments smaller than 0.001, so we need to skip those
-					while ((int) (oldscan[scan].rad[count] * 1000) < (int) (rad * 1000)
+					while ((int) (oldscan[scan].rad[count] * 1000 + 0.5) < (int) (rad * 1000 + 0.5)
 					&& rad <= run_inf.range_right[cell][lambda][current_channel]
 					&& count <= oldscan[scan].rad.size())
 					{
 						count ++;
 					}
-					if (oldscan[scan].rad[count] == rad)
+					if ((unsigned int) (oldscan[scan].rad[count] * 1000 + 0.5) == (unsigned int) (rad * 1000 + 0.5))
 					{
 						s << oldscan[scan].abs[count];
-						count ++;
+						//cout << "old point: " << oldscan[scan].rad[count] << ", " << oldscan[scan].abs[count] << endl;
+						//count ++;
 					}
 					else
 					{
@@ -268,6 +270,8 @@ void EditAbsVeloc_Win::get_x(const QMouseEvent &e)
 						b = oldscan[scan].abs[count] - m * oldscan[scan].rad[count];
 						newpoint = m * rad + b;
 						s << (float) newpoint;
+						//cout << (unsigned int) (oldscan[scan].rad[count] * 1000 + 0.5) << " and " << (unsigned int) (rad * 1000 + 0.5) << " are not the same\n";
+						//cout << oldscan[scan].rad[count] << ", " << oldscan[scan].rad[count-1] << ", " << oldscan[scan].abs[count] << ", " << oldscan[scan].abs[count] << endl;
 					}
 				}
 			}
