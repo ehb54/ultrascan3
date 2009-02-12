@@ -113,7 +113,7 @@ for($i = 0; $i < @systems; $i++) {
 
 $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 $gsi_system = $system;
-$gsi_system = "brecca.vpac.monash.edu.au";
+$gsi_system = "brecca.vpac.monash.edu.au" if $system =~ /ng2.vpac.monash.edu.au/;
 
 $gsissh = `gsissh -p $ports_ssh[$reversesystems{$system}] -v $gsi_system echo $home[$reversesystems{$system}]test123 2>&1`;
 if(!($gsissh =~ /test123/)) {
