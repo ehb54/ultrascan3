@@ -8,7 +8,8 @@
 # THIS IS NOT HOW MANY PROCS THE SYSTEM HAS, BUT HOW MANY TIGRE/PBS KNOW ABOUT!!!!
 
 @bcfdowncount = `pbsnodes -l`;
-@laredodowncount = `ssh laredo pbsnodes -l`;
+# laredo is down
+# @laredodowncount = `ssh laredo pbsnodes -l`;
 @alamodowncount = `ssh alamo pbsnodes -l`;
 
 $bcf_no_procs = 42 - 2 * @bcfdowncount;
@@ -276,12 +277,14 @@ solutes    $solutes
 	    'alamo.uthscsa.edu' ,
 	    'laredo.uthscsa.edu' ,
 	    'a01.hlrb2.lrz-muenchen.de' ,
+	    'ng2.vpac.monash.edu.au' ,
 	    'meta'
 	    );
 
 for($i = 0; $i < @systems; $i++) {
     $reversesystems{$systems[$i]} = $i;
 }
+$home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 
 @ports_globus = (
 		 8443 ,
@@ -293,6 +296,7 @@ for($i = 0; $i < @systems; $i++) {
 		 9443 ,
 		 9443 ,
 		 9443 ,
+		 8443 ,
 		 8443 ,
 		 0
 		 );
@@ -308,6 +312,7 @@ for($i = 0; $i < @systems; $i++) {
 	      22 ,
 	      22 ,
 	      2222 ,
+	      22 ,
 	      0
 	      );
 
@@ -322,6 +327,7 @@ for($i = 0; $i < @systems; $i++) {
 	 '/home/tigre' ,
 	 '/home/tigre' ,
 	 '/home/hlrb2/pr28ci/lu65cen' ,
+	 '/home/grid-ultrascan' ,
 	 ''
 	 );
 
@@ -330,6 +336,7 @@ for($i = 0; $i < @systems; $i++) {
 	       'LSF' ,
 	       'PBS' ,
 	       'LSF' ,
+	       'PBS' ,
 	       'PBS' ,
 	       'PBS' ,
 	       'PBS' ,
@@ -351,6 +358,7 @@ for($i = 0; $i < @systems; $i++) {
        'bin' ,
        'bin'   ,
        'bin'   ,
+       'bin'   ,
 	 'bin64'
        );
 @executable = (
@@ -364,6 +372,7 @@ for($i = 0; $i < @systems; $i++) {
        'us_fe_nnls_t_mpi' , #alamo
        'us_fe_nnls_t_mpi' , #laredo
        'us_fe_nnls_t' , #a01.hlrb2
+       'us_fe_nnls_t_mpi' , #ng2.vpac.monash
        'us_fe_nnls_t_mpi' , #meta
        );
 
@@ -379,6 +388,7 @@ for($i = 0; $i < @systems; $i++) {
 	   '' , #alamo
 	   '' ,  #laredo
 	   '' ,  #hlrb2
+	   '' ,  #ng2.vpac.monash
 	   '' #meta
 	   );
 
@@ -421,6 +431,11 @@ for($i = 0; $i < @systems; $i++) {
 	   '' , # alamo
 	   '' , # laredo
 	   '' , # hlrb2
+	   '  <environment>
+    <name>ULTRASCAN</name>
+    <value>/home/grid-ultrascan/ultrascan</value>
+  </environment>
+' , # ng2.vpac.monash
 	   '' # meta
 	   );
 
@@ -453,6 +468,7 @@ for($i = 0; $i < @systems; $i++) {
 	   $alamo_no_procs ,
 	   $laredo_no_procs ,
 	   100 ,
+	   32 , # ng2.vpac.monash
 	   64 #meta
 	   );
 
@@ -467,6 +483,7 @@ for($i = 0; $i < @systems; $i++) {
 	   60000 ,
 	   60000 ,
 	   2880 ,
+	   10000 ,
 	   2880
 	   );
 
@@ -590,6 +607,8 @@ if( $systems[$usesys] =~ /^(bcf|alamo|laredo)/) {
 print "np is $np\n";
 
 $SYSTEM = $systems[$usesys];
+$GSI_SYSTEM = $SYSTEM;
+$GSI_SYSTEM = "brecca.vpac.monash.edu.au" if $SYSTEM =~ /ng2.vpac.monash.edu.au/;
 $PORT_GLOBUS = $ports_globus[$usesys];
 $PORT_SSH = $ports_ssh[$usesys];
 $WORK = $work[$usesys];
@@ -625,10 +644,10 @@ if($default_system ne 'meta') {
 # put files to TIGRE client
 if($default_system ne 'meta') {
     $cmd = 
-	"gsissh -p $PORT_SSH $SYSTEM rm -fr $WORKRUN
-gsissh -p $PORT_SSH $SYSTEM mkdir -p $WORKRUN
-gsiscp -P $PORT_SSH $experiment $SYSTEM:${WORKRUN}/experiments${timestamp}.dat
-gsiscp -P $PORT_SSH $solutes $SYSTEM:${WORKRUN}/solutes${timestamp}.dat\n";
+	"gsissh -p $PORT_SSH $GSI_SYSTEM rm -fr $WORKRUN
+gsissh -p $PORT_SSH $GSI_SYSTEM mkdir -p $WORKRUN
+gsiscp -P $PORT_SSH $experiment $GSI_SYSTEM:${WORKRUN}/experiments${timestamp}.dat
+gsiscp -P $PORT_SSH $solutes $GSI_SYSTEM:${WORKRUN}/solutes${timestamp}.dat\n";
     print $cmd;
     print `$cmd` if $execute;
 }
@@ -765,8 +784,8 @@ do {
        $status eq 'FAILED') {
 	if($default_system ne 'meta') {
 	    $cmd = 
-"gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
-gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
+"gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
+gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
 ";
 	    print $cmd;
 	    print `$cmd` if $execute;
@@ -788,12 +807,12 @@ if($default_system eq 'meta') {
 mv us_job${id}.stdout /lustre/tmp/us_job${id}.stdout
 ";
 } else {
-    $cmd = "gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
-gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
-gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/email_* .
-gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/*.model* .
-gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/*noise* .
-gsiscp -P $PORT_SSH ${SYSTEM}:${WORKRUN}/*.simulation_parameters .
+    $cmd = "gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stderr /lustre/tmp/
+gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/us_job${id}.stdout /lustre/tmp/
+gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/email_* .
+gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.model* .
+gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*noise* .
+gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.simulation_parameters .
 ";
 }
 print $cmd;
@@ -815,7 +834,7 @@ print `perl $ENV{'ULTRASCAN'}/bin64/us_email.pl email_list_* email_msg` if $exec
 if($default_system eq 'meta') {
     print `echo tigre_job_end $grms_id > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
 } else {
-    $cmd = "gsissh -p $PORT_SSH ${SYSTEM} rm -fr $WORKRUN\n";
+    $cmd = "gsissh -p $PORT_SSH ${GSI_SYSTEM} rm -fr $WORKRUN\n";
     print "not run: $cmd";
 # print `$cmd` if $execute;
     print `echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
