@@ -77,7 +77,8 @@ chomp $date;
 	    'a01.hlrb2.lrz-muenchen.de' ,
 	    'bcf.uthscsa.edu' ,
 	    'alamo.uthscsa.edu' ,
-	    'laredo.uthscsa.edu'
+	    'laredo.uthscsa.edu' ,
+	    'ng2.vpac.monash.edu.au'
 	    );
 
 for($i = 0; $i < @systems; $i++) {
@@ -93,7 +94,8 @@ for($i = 0; $i < @systems; $i++) {
 		 8443 , 
 		 9443 ,
 		 9443 ,
-		 9443
+		 9443 ,
+		 8443 
 		 );
 
 @ports_ssh = (
@@ -105,12 +107,17 @@ for($i = 0; $i < @systems; $i++) {
 	      2222 ,
 	      22 ,
 	      22 ,
+	      22 ,
 	      22
 	      );
 
-$gsissh = `gsissh -p $ports_ssh[$reversesystems{$system}] -v $system echo test123 2>&1`;
+$home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
+$gsi_system = $system;
+$gsi_system = "brecca.vpac.monash.edu.au";
+
+$gsissh = `gsissh -p $ports_ssh[$reversesystems{$system}] -v $gsi_system echo $home[$reversesystems{$system}]test123 2>&1`;
 if(!($gsissh =~ /test123/)) {
-    $msg = "ERROR: The command 'gsissh $system echo test123' failed as follows:\n$gsissh\n";
+    $msg = "ERROR: The command 'gsissh $gsi_system echo test123' failed as follows:\n$gsissh\n";
     print $msg;
     &do_email($msg, '') if $email;
     exit(-1);
@@ -119,7 +126,7 @@ if(!($gsissh =~ /test123/)) {
 print "gsissh ok\n";
 
 $globusruncmd = 
-"globusrun-ws -submit -term 12/31/2099 -F https://${system}:$ports_globus[$reversesystems{$system}]/wsrf/services/ManagedJobFactoryService -c ultrascan/etc/datetest '$date' $datef 2>&1\n";
+"globusrun-ws -submit -term 12/31/2099 -F https://${system}:$ports_globus[$reversesystems{$system}]/wsrf/services/ManagedJobFactoryService -c $home[$reversesystems{$system}]ultrascan/etc/datetest '$date' $home[$reversesystems{$system}]$datef 2>&1\n";
 print $globusruncmd;
 $globusrun = `$globusruncmd`;
 
@@ -137,7 +144,7 @@ if(!($globusrun =~ /Done/)) {
 }
 
 
-$gsissh = `gsissh -p $ports_ssh[$reversesystems{$system}] -v $system cat $datef 2>&1`;
+$gsissh = `gsissh -p $ports_ssh[$reversesystems{$system}] -v $gsi_system cat $home[$reversesystems{$system}]$datef 2>&1`;
 if(!($gsissh =~ /test $date endtest/)) {
     $msg = "ERROR: gsissh did not return the correct file.  Output follows:\n$gsissh\n";
     print $msg;
@@ -147,7 +154,7 @@ if(!($gsissh =~ /test $date endtest/)) {
 print "globusrun-ws default factory ok\n";
 #print "gsissh returned the correct data\n";
 
-$gsissh = `gsissh -p $ports_ssh[$reversesystems{$system}] -v $system rm $datef 2>&1`;
+$gsissh = `gsissh -p $ports_ssh[$reversesystems{$system}] -v $gsi_system rm $datef 2>&1`;
 
 __END__
 

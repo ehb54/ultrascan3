@@ -70,7 +70,8 @@ if($hh == 0) {
 	    'eldorado.acrl.uh.edu' ,
 	    'bcf.uthscsa.edu' ,
 	    'alamo.uthscsa.edu' ,
-	    'laredo.uthscsa.edu' 
+	    'laredo.uthscsa.edu' ,
+	    'ng2.vpac.monash.edu.au'
 	    );
 
 for($i = 0; $i < @systems; $i++) {
@@ -85,7 +86,8 @@ for($i = 0; $i < @systems; $i++) {
 		 9443 ,
 		 9443 ,
 		 9443 ,
-		 9443
+		 9443 ,
+		 8443 ,
 		 );
 
 @ports_ssh = (
@@ -96,11 +98,15 @@ for($i = 0; $i < @systems; $i++) {
 	      22 ,
 	      22 ,
 	      22 ,
+	      22 ,
 	      22
 	      );
 
+$home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
+
+
 $globusruncmd = 
-    "globusrun-ws -submit -F https://${system}:$ports_globus[$reversesystems{$system}]/wsrf/services/ManagedJobFactoryService -c /bin/touch me$arg\n";
+    "globusrun-ws -submit -F https://${system}:$ports_globus[$reversesystems{$system}]/wsrf/services/ManagedJobFactoryService -c /bin/touch $home[$reversesystems{$system}]me$arg\n";
 print $globusruncmd;
 print `$globusruncmd`;
 
