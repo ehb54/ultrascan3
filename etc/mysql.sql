@@ -610,7 +610,7 @@ CREATE TABLE `tblAuth` (
   `Signup` datetime NOT NULL default '0000-00-00 00:00:00',
   `LastLogin` datetime NOT NULL default '0000-00-00 00:00:00',
   `Userlevel` tinyint(4) NOT NULL default '0',
-  `TUM` tinyint(1) NOT NULL default '0',
+  `ClusterAuth` varchar(255) NOT NULL default 'bcf:alamo:laredo:lonestar',
   `account_activity_changed` date default NULL,
   PRIMARY KEY  (`InvestigatorID`),
   KEY `Invid` (`InvestigatorID`),
@@ -983,6 +983,7 @@ CREATE TABLE `tblHPCAnalysis` (
   `queue_name` varchar(80) NOT NULL default '',
   `Investigator_ID` int(11) NOT NULL default '0',
   `Submitter_ID` int(11) NOT NULL default '0',
+  `HPCAnalysisGroup_ID` int(11) default NULL,
   PRIMARY KEY  (`HPCAnalysis_ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
@@ -1002,6 +1003,22 @@ CREATE TABLE `tblHPCAnalysisData` (
   `HPCAnalysis_ID` int(11) NOT NULL default '0',
   PRIMARY KEY  (`HPCAnalysisData_ID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Table structure for table `tblHPCAnalysisGroup`
+--
+
+DROP TABLE IF EXISTS `tblHPCAnalysisGroup`;
+CREATE TABLE `tblHPCAnalysisGroup` (
+  `HPCAnalysisGroup_ID` int(11) NOT NULL auto_increment,
+  `DateTime` datetime NOT NULL default '0000-00-00 00:00:00',
+  `Email` varchar(80) NOT NULL default '',
+  `queue_email` varchar(80) NOT NULL default '',
+  `Investigator_ID` int(11) NOT NULL default '0',
+  `Submitter_ID` int(11) NOT NULL default '0',
+  `HPCFirst_ID` int(11) NOT NULL,
+  PRIMARY KEY  (`HPCAnalysisGroup_ID`)
+) ENGINE=MyISAM DEFAULT CHARSET=latin1;
 
 --
 -- Table structure for table `tblHPCModel`

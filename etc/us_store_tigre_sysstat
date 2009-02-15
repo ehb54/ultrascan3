@@ -6,22 +6,26 @@ $ENV{'GLOBUS_LOCATION'} = '/share/apps/tigre/globus';
 # @systems = ( 'bcf.uthscsa.edu' , 'alamo.uthscsa.edu');
 @systems = ( 
 	     'lonestar.tacc.utexas.edu', 
+	     'ranger.tacc.utexas.edu', 
 #	     'eldorado.acrl.uh.edu', 
 #	     'antaeus.hpcc.ttu.edu', 
 #	     'cosmos.tamu.edu', 
 	     'a01.hlrb2.lrz-muenchen.de', 
+	     'ng2.vpac.monash.edu.au',
 	     'bcf.uthscsa.edu', 
 	     'alamo.uthscsa.edu', 
 	     'laredo.uthscsa.edu' 
 	     );
-$cutoff = 2;
+$cutoff = 4;
 # @systemssize = ( 4, 2, 2 );
 @globusport = ( 
 		8443, # lonestar
+		8443, # ranger
 #		8443, # eldorado
 #		9443, # antaeus
 #		8443, # cosmos
 		8443, # hlrb2
+		8443, # ng2.vpac.monash
 		9443, # bcf
 		9443, # alamo
 		9443  # laredo
