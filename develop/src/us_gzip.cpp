@@ -7,7 +7,7 @@
  *  also licensed under the GPL.
  *
  *  Bruce Dubbs
- *  Univerity of Texas HEalth Science Center
+ *  Univerity of Texas Health Science Center
 */
 
 #include <qfileinfo.h> 
@@ -206,13 +206,13 @@ US_Gzip::US_Gzip()
 
 int US_Gzip::gzip( const QString& filename )
 {
-	bytes_out = 0;
+   bytes_out = 0;
   return treat_file( filename, FALSE );
 }
 
 int US_Gzip::gunzip( const QString& filename )
 {
-	bytes_out = 0;
+   bytes_out = 0;
   return treat_file( filename, TRUE );
 }
 
@@ -380,9 +380,11 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
     unsigned w = 0;  // Dummy to make define above work
 
     // CRC
-    char*        p_crc = (char*) &crc;
+    char  buf[ 4 ];
+
+    for ( int i = 0; i < 4; i++ ) buf[ i ] = GETBYTE();
     
-    for ( int i = 0; i < 4; i++ ) *( p_crc + i ) = GETBYTE();
+    crc = buf[ 3 ] << 24 | buf[ 2 ] << 16 | buf[ 1 ] << 8 | buf[ 0 ];
 
     /* Validate decompression */
     if ( crc != updcrc(outbuf, 0) ) 
@@ -395,9 +397,9 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
 
     // uncompressed input size modulo 2^32
 
-    unsigned int  size;
-    char*         p_size = (char*) &size;
-    for ( int i = 0; i < 4; i++ ) *( p_size + i ) = GETBYTE();
+    for ( int i = 0; i < 4; i++ ) buf[ i ] = GETBYTE();
+
+    ulg size = buf[ 3 ] << 24 | buf[ 2 ] << 16 | buf[ 1 ] << 8 | buf[ 0 ];
 
     if ( size != (unsigned int) bytes_out )
     {
@@ -1609,7 +1611,7 @@ ulg US_Gzip::updcrc( uch* s, unsigned n )
 {
   register ulg c;         /* temporary variable */
 
-  static ulg crc = (ulg) 0xffffffffL; /* shift register contents */
+  static ulg crc_internal = (ulg) 0xffffffffL; /* shift register contents */
 
   if ( s == NULL) 
   {
@@ -1617,14 +1619,14 @@ ulg US_Gzip::updcrc( uch* s, unsigned n )
   } 
   else 
   {
-     c = crc;
+     c = crc_internal;
      if ( n ) do 
      {
        c = crc_32_tab[ ( (int) c ^ ( *s++ ) ) & 0xff ] ^ ( c >> 8 );
      } while ( --n );
   }
 
-  crc = c;
+  crc_internal = c;
   return c ^ 0xffffffffL;       /* (instead of ~c for 64-bit machines) */
 }
 
@@ -3182,9 +3184,9 @@ void US_Gzip::send_tree( ct_data* tree, int max_code )
 /////////////////////////////
 QString US_Gzip::explain( const int error )
 {
-	QString explanation;
-	switch ( error )
-	{
+   QString explanation;
+   switch ( error )
+   {
     case GZIP_OK:
       explanation = "The g(un)zip operation was succesful.";
       break;
@@ -3237,5 +3239,5 @@ QString US_Gzip::explain( const int error )
       explanation = "Unknown return code: " + error;
   }
 
-	return explanation;
+   return explanation;
 }

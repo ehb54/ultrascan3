@@ -184,10 +184,12 @@ void USconfig_check::set_default( const QString& system_dir )
 {
 	config.version         = US_Version_string;  // Defined in us_util.h
 
-	config.browser         = "/usr/bin/firefox";
-
-#ifdef WIN32
+#if defined(WIN32)
 	config.browser         = "C:\\Program Files\\Internet Explorer\\iexplore.exe";
+#elif defined(MAC)
+	config.browser         = "open";
+#else
+	config.browser         = "/usr/bin/firefox";
 #endif
 
 	// Set up system directories

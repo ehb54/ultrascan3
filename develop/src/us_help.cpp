@@ -35,53 +35,38 @@ void US_Help::openBrowser()
 {
   proc = new QProcess( this );
   
-  connect(proc, SIGNAL(readyReadStdout()), 
-          this, SLOT(captureStdout()));
+  connect( proc, SIGNAL( readyReadStdout() ), 
+           this, SLOT  ( captureStdout  () ) );
   
-  connect(proc, SIGNAL(readyReadStderr()), 
-          this, SLOT(captureStderr()));
+  connect( proc, SIGNAL( readyReadStderr() ), 
+           this, SLOT  ( captureStderr  () ) );
   
-  connect(proc, SIGNAL(processExited()), 
-          this, SLOT(endProcess()));
+  connect( proc, SIGNAL( processExited() ), 
+           this, SLOT  ( endProcess   () ) );
   
   proc->clearArguments();
 
-#ifdef UNIX
   stderrSize = 0;
   trials     = 0;
 
   proc->addArgument( USglobal->config_list.browser );
+
+#if defined(UNIX) && ! defined(MAC)
+  // Optimized for Firefox
   proc->addArgument( "-remote" );
-  
   proc->addArgument( "openURL(" + URL + ", new-window)" ); 
-  
+#else
+  proc->addArgument( URL );
+#endif
+
   if ( ! proc->start() ) // Error
   {
-    cout << "Error: Can't start browser window...\n"
-         << "Please make sure you have the configured browser installed\n\n"
-         << "Currently configured: " << USglobal->config_list.browser << endl;
-
     QMessageBox::message(
         tr( "UltraScan Error:" ), 
         tr( "Can't start browser window...\n"
             "Please make sure you have the configured browser installed\n\n"
             "Currently configured: " + USglobal->config_list.browser ) );
   }
-#endif
-
-#ifdef WIN32
-  proc->addArgument( USglobal->config_list.browser );
-  proc->addArgument( URL );
-  
-  if ( ! proc->start() ) // Error
-  {
-    QMessageBox::message(
-        tr( "UltraScan Error:" ), 
-        tr( "Can't start browser window...\n"
-            "Please make sure you have the configured browser installed\n\n" 
-            "Currently configured: " + USglobal->config_list.browser ) );
-  }
-#endif
 }
 
 void US_Help::endProcess()
@@ -98,10 +83,6 @@ void US_Help::endProcess()
 
     if ( ! proc->start() ) // Error
     {
-      cout << "Error: Can't start browser window...\n"
-           << "Please make sure you have the configured browser installed\n\n"
-           << "Currently configured: " << USglobal->config_list.browser << endl;
-
       QMessageBox::message(
           tr( "UltraScan Error:" ), 
           tr( "Can't start browser window...\n"
