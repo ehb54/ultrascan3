@@ -1,0 +1,96 @@
+#ifndef US_MODEL_EDITOR_H
+#define US_MODEL_EDITOR_H
+
+#include <QtGui>
+
+#include "us_widgets_dialog.h"
+#include "us_femglobal.h"
+#include "us_help.h"
+
+class US_ModelEditor : public US_WidgetsDialog
+{
+	Q_OBJECT
+
+	public:
+		US_ModelEditor( struct ModelSystem&, QWidget* = 0, 
+            Qt::WindowFlags = 0 );
+
+   private:
+      US_Help      showhelp;
+                   
+      int          component;
+      int          shape;
+
+      QLabel*      lb_header;
+                   
+		QLineEdit*   le_sed;
+		QLineEdit*   le_diff;
+		QLineEdit*   le_extinction;
+		QLineEdit*   le_vbar;
+		QLineEdit*   le_mw;
+		QLineEdit*   le_f_f0;
+		QLineEdit*   le_conc;
+		QLineEdit*   le_c0;
+		QLineEdit*   le_koff;
+		QLineEdit*   le_keq;
+		QLineEdit*   le_sigma;
+		QLineEdit*   le_delta;
+		QLineEdit*   le_stoich;
+                   
+		QComboBox*   cmb_component1;
+		//QComboBox*   cmb_component2;
+		QListWidget*   cmb_component2;
+
+      QSpinBox*    sb_count;
+
+      QPushButton* pb_vbar;
+      QPushButton* pb_load_c0;
+
+		QCheckBox*   cb_rod;
+      QCheckBox*   cb_oblate;
+      QCheckBox*   cb_sphere;
+      QCheckBox*   cb_prolate;
+
+		QString      c0_file;
+
+      struct ModelSystem& model;
+      
+		//struct hydrosim simcomp;
+
+		void update_component( void );
+		void update_sD       ( void );
+		void update_shape    ( void );
+      bool verify_model    ( void );
+      void error           ( const QString& );
+
+	private slots:
+
+      void help( void ){ showhelp.show_help( "manual/astfem_component.html" ); };
+      
+      void change_component1 ( int );
+      void change_spinbox    ( int );
+		void get_vbar          ( void );
+		void simulate_component( void );
+
+		void select_rod        ( void );
+		void select_prolate    ( void );
+		void select_oblate     ( void );
+		void select_sphere     ( void );
+		void load_c0           ( void );
+		void load_model        ( void );
+		void save_model        ( void );
+		void accept_model      ( void );
+
+      void update_sed        ( const QString& );
+      void update_diff       ( const QString& );
+      void update_extinction ( const QString& );
+      void update_vbar       ( const QString& );
+      void update_mw         ( const QString& );
+      void update_f_f0       ( const QString& );
+      void update_conc       ( const QString& );
+      void update_keq        ( const QString& );
+      void update_koff       ( const QString& );
+      void update_sigma      ( const QString& );
+      void update_delta      ( const QString& );
+};
+#endif

@@ -1,4 +1,5 @@
 //! \file us_plot.cpp
+
 #include "us_plot.h"
 #include "us_gui_settings.h"
 
@@ -14,18 +15,38 @@
 US_Plot::US_Plot( const QString& title, const QString& x_axis, 
                   const QString& y_axis ) : QwtPlot()
 {
-  configWidget = NULL;
+   configWidget = NULL;
+  
+   setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
+   setAutoReplot( false );
+  
+   QwtText qwtTitle( title );
+   qwtTitle.setFont( QFont( US_GuiSettings::fontFamily(),
+                            US_GuiSettings::fontSize() + 2,
+                            QFont::Bold ) );
+  
+   setTitle( qwtTitle );
+  
+   setMargin( US_GuiSettings::plotMargin() );
+  
+   QFont axisFont( US_GuiSettings::fontFamily(),
+                   US_GuiSettings::fontSize() - 2, 
+                   QFont::Bold );
+  
+   qwtTitle.setFont( axisFont );
+   qwtTitle.setText( x_axis );  
+   setAxisTitle( QwtPlot::xBottom, qwtTitle );
 
-  setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
-  setAutoReplot( false );
-  setTitle     ( title );
-
-  setAxisTitle( QwtPlot::xBottom, x_axis );
-  setAxisTitle( QwtPlot::yLeft  , y_axis );
-
-  setAutoFillBackground( true );
-  setPalette ( US_GuiSettings::plotColor() );
-  setCanvasBackground( US_GuiSettings::plotCanvasBG() );
+   qwtTitle.setText( y_axis );
+   setAxisTitle( QwtPlot::yLeft  , qwtTitle );
+  
+   axisFont.setBold ( false );
+   setAxisFont( QwtPlot::xBottom, axisFont );
+   setAxisFont( QwtPlot::yLeft,   axisFont );
+  
+   setAutoFillBackground( true );
+   setPalette ( US_GuiSettings::plotColor() );
+   setCanvasBackground( US_GuiSettings::plotCanvasBG() );
 }
 
 void US_Plot::mousePressEvent( QMouseEvent* e )
@@ -1187,8 +1208,8 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    
    QBoxLayout* scaleRadio = new QHBoxLayout();
    
-   rb_linear = us_radiobutton( tr( "Linear"      ), Qt::Checked   );
-   rb_log    = us_radiobutton( tr( "Logarithmic" ), Qt::Unchecked );
+   rb_linear = us_radiobutton( tr( "Linear"      ), true  );
+   rb_log    = us_radiobutton( tr( "Logarithmic" ), false );
 
    if ( plot->axisScaleEngine( axis )->transformation()->type() == 
          QwtScaleTransformation::Log10 ) rb_log->setChecked( true );
@@ -1223,7 +1244,7 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    checked = ( attributes & QwtScaleEngine::Floating  ) 
       ? Qt::Checked : Qt::Unchecked;
    
-   cb_floating  = us_checkbox( QString( "Floating Ednpoints" ), checked );
+   cb_floating  = us_checkbox( QString( "Floating Endpoints" ), checked );
    
    checked = ( attributes & QwtScaleEngine::Inverted ) 
       ? Qt::Checked : Qt::Unchecked;

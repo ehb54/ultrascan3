@@ -1,6 +1,6 @@
-//! \file us_widgets.h
-#ifndef US_WIDGETS_H
-#define US_WIDGETS_H
+//! \file us_widgets_dialog.h
+#ifndef US_WIDGETS_DIALOG_H
+#define US_WIDGETS_DIALOG_H
 
 #include <QtGui>
 
@@ -10,7 +10,6 @@
 #include "qwt_plot_picker.h"
 #include "qwt_plot_curve.h"
 
-#include "us_global.h"
 #include "us_extern.h"
 
 /*! \brief Set up widgets the UltraScan way.
@@ -20,20 +19,12 @@
     palette and font acording to the user's settings (or the UltraScan default).
     Depending on the widget, other parameters may be set.
 */
-class US_EXTERN US_Widgets : public QFrame
+class US_EXTERN US_WidgetsDialog : public QDialog
 {
   public: 
-    //! The constructor connects to global memory and moves the screen to 
-    //! the point saved there. It adjusts the location point by QPoint( 30, 30).
-    US_Widgets( QWidget* p = 0, Qt::WindowFlags f = 0 );
-
-    //! The destructor readjusts the location point in global memory to 
-    //! a value of QPoint( -30, -30 )
-    ~US_Widgets( void );
-
-    //! Connect to global memory and make the values accessible.
-    US_Global g;
-
+    US_WidgetsDialog( QWidget*, Qt::WindowFlags );
+    ~US_WidgetsDialog() {};
+    
     //! \param labelString - contents of label
     //! \param fontAdjust  - adjustment to default point size 
     //! \param weight      - QFont::{Light,Normal,DemiBold,Bold,Black}\n
@@ -82,13 +73,13 @@ class US_EXTERN US_Widgets : public QFrame
     QListWidget* us_listwidget ( int = 0 );
 
     //! \param text - Text to set with checkbox
-    //! \param state - Initial check state\n
+    //! \param state - Qt::{Unchecked,PartiallyChecked,Checked}\n
     //! * Font weight is bold\n
     //! * Color is set to US_GuiSettings::normalColor()
-    QCheckBox*   us_checkbox  ( const QString&, bool = false );
+    QCheckBox*   us_checkbox  ( const QString&, Qt::CheckState = Qt::Unchecked );
 
     //! \param text - Text to set with radiobutton
-    //! \param state - Checked ( true or false )
+    //! \param state - Checked ( true or false )\n
     //! * Color is set to US_GuiSettings::editColor()
     QRadioButton* us_radiobutton( const QString&, bool = false );
 
@@ -137,7 +128,5 @@ class US_EXTERN US_Widgets : public QFrame
     //! * Rubber Band pen and Tracker pen color is set to\n
     //! * US_GuiSettings::plotPicker()
     QwtPlotPicker* us_picker( QwtPlot* );
-
 };
 #endif
-

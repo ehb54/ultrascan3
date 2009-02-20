@@ -149,12 +149,12 @@ QPalette US_GuiSettings::editColorDefault( void )
   p.setColor( QPalette::Active, QPalette::Shadow,     Qt::black ); // very dark
 
   p.setColor( QPalette::Disabled, QPalette::WindowText, Qt::black ); // windowText/foreground
-  p.setColor( QPalette::Disabled, QPalette::Window,     Qt::white ); // background
+  p.setColor( QPalette::Disabled, QPalette::Window,     Qt::lightGray ); // background
   p.setColor( QPalette::Disabled, QPalette::Light,      Qt::white ); // border
   p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::darkGray ); // border
   p.setColor( QPalette::Disabled, QPalette::Mid,        Qt::black ); // Between light and dark
   p.setColor( QPalette::Disabled, QPalette::Text,       Qt::black ); // text w/ Base
-  p.setColor( QPalette::Disabled, QPalette::Base,       Qt::white ); // bg for text entry
+  p.setColor( QPalette::Disabled, QPalette::Base,       Qt::lightGray ); // bg for text entry
   p.setColor( QPalette::Disabled, QPalette::HighlightedText, Qt::white ); // bg for selected text
   p.setColor( QPalette::Disabled, QPalette::Highlight,  Qt::darkBlue ); // selected text
   p.setColor( QPalette::Disabled, QPalette::Button,     Qt::darkGray ); // bg for button
@@ -260,7 +260,7 @@ QPalette US_GuiSettings::pushbColorDefault( void )
   p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::darkGray ); // border
   p.setColor( QPalette::Disabled, QPalette::Shadow,     Qt::black    ); // Between light and dark
 
-  p.setColor( QPalette::Inactive, QPalette::ButtonText, Qt::white    ); // windowText/foreground
+  p.setColor( QPalette::Inactive, QPalette::ButtonText, Qt::black    ); // windowText/foreground
   p.setColor( QPalette::Inactive, QPalette::Button,     bluegreen    ); // background
   p.setColor( QPalette::Inactive, QPalette::Light,      Qt::white    ); // border
   p.setColor( QPalette::Inactive, QPalette::Dark,       Qt::darkGray ); // border
@@ -309,7 +309,7 @@ QPalette US_GuiSettings::normalColorDefault( void )
   p.setColor( QPalette::Disabled, QPalette::Dark,       Qt::darkGray   ); // border
   p.setColor( QPalette::Disabled, QPalette::Mid,        Qt::lightGray  );
   p.setColor( QPalette::Disabled, QPalette::Text,       Qt::black      );
-  p.setColor( QPalette::Disabled, QPalette::Base,       Qt::white      );
+  p.setColor( QPalette::Disabled, QPalette::Base,       Qt::lightGray  );
   p.setColor( QPalette::Disabled, QPalette::HighlightedText,  Qt::white );
   p.setColor( QPalette::Disabled, QPalette::Highlight,  Qt::darkBlue   );
   p.setColor( QPalette::Disabled, QPalette::Button,     Qt::lightGray  );
