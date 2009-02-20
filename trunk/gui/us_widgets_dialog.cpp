@@ -1,30 +1,13 @@
-//! \file us_widgets.cpp
-#include "us_widgets.h"
+//! \file us_widgets_dialog.cpp
+#include "us_widgets_dialog.h"
 #include "us_gui_settings.h"
 
-US_Widgets::US_Widgets( QWidget* w, Qt::WindowFlags f ) : QFrame( w, f )
+US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f ) 
+   : QDialog( w, f )
 {
-  QApplication::setStyle( QStyleFactory::create( US_GuiSettings::guiStyle() ) );
-
-  if ( ! g.isValid() )
-  {
-    // Do something for invalid global memory
-   qDebug( "us_win: invalid global memory" );
-  }
-
-  QPoint p = g.global_position();
-  g.set_global_position( p + QPoint( 30, 30 ) );
-  move( p );
 }
 
-US_Widgets::~US_Widgets()
-{
-  QPoint p = g.global_position();
-  g.set_global_position( p - QPoint( 30, 30 ) );
-}
-
-// label
-QLabel* US_Widgets::us_label( const QString& labelString, int fontAdjust, 
+QLabel* US_WidgetsDialog::us_label( const QString& labelString, int fontAdjust, 
                               int weight )
 {
   QLabel* newLabel = new QLabel( labelString, this );
@@ -36,7 +19,7 @@ QLabel* US_Widgets::us_label( const QString& labelString, int fontAdjust,
 
   newLabel->setFont(
       QFont( US_GuiSettings::fontFamily(), 
-             US_GuiSettings::fontSize  () + fontAdjust, 
+             US_GuiSettings::fontSize() + fontAdjust, 
              weight ) );
 
   newLabel->setPalette( US_GuiSettings::labelColor() );
@@ -45,7 +28,7 @@ QLabel* US_Widgets::us_label( const QString& labelString, int fontAdjust,
 }
 
 // textlabel ( defaults to smaller font and changes text colors )
-QLabel* US_Widgets::us_textlabel( const QString& labelString, int fontAdjust, 
+QLabel* US_WidgetsDialog::us_textlabel( const QString& labelString, int fontAdjust, 
                                   int weight )
 {
   QLabel* newLabel = us_label( labelString, fontAdjust, weight );
@@ -56,7 +39,7 @@ QLabel* US_Widgets::us_textlabel( const QString& labelString, int fontAdjust,
 }
 
 // banner ( defaults to Bold and changes text colors )
-QLabel* US_Widgets::us_banner( const QString& labelString, int fontAdjust, 
+QLabel* US_WidgetsDialog::us_banner( const QString& labelString, int fontAdjust, 
                             int weight )
 {
   QLabel* newLabel = us_label( labelString, fontAdjust, weight );
@@ -72,13 +55,13 @@ QLabel* US_Widgets::us_banner( const QString& labelString, int fontAdjust,
 }
 
 // pushbutton
-QPushButton* US_Widgets::us_pushbutton( const QString& labelString, bool enabled,
+QPushButton* US_WidgetsDialog::us_pushbutton( const QString& labelString, bool enabled,
                                         int fontAdjust )
 {
   QPushButton* button =  new QPushButton( tr( labelString.toAscii() ), this );
 
   button->setFont( QFont( US_GuiSettings::fontFamily(), 
-                          US_GuiSettings::fontSize  () + fontAdjust ) );
+                          US_GuiSettings::fontSize() + fontAdjust ) );
 
   button->setPalette( US_GuiSettings::pushbColor() );
 
@@ -89,15 +72,15 @@ QPushButton* US_Widgets::us_pushbutton( const QString& labelString, bool enabled
 }
 
 // textedit
-QTextEdit* US_Widgets::us_textedit( void )
+QTextEdit* US_WidgetsDialog::us_textedit( void )
 {
   QTextEdit* te = new QTextEdit( this );
 
   te->setFont          ( QFont( US_GuiSettings::fontFamily(), 
-                                US_GuiSettings::fontSize  () - 1 ) );
+                                US_GuiSettings::fontSize() - 1 ) );
   
   te->setPalette       ( US_GuiSettings::normalColor() );
-  te->setFrameStyle    ( WinPanel | Sunken );
+  te->setFrameStyle    ( QFrame::WinPanel | QFrame::Sunken );
   te->setAcceptRichText( true );
   te->setReadOnly      ( true );
   te->show();
@@ -106,13 +89,13 @@ QTextEdit* US_Widgets::us_textedit( void )
 }
 
 // lineedit
-QLineEdit* US_Widgets::us_lineedit( const QString& text, int fontAdjust )
+QLineEdit* US_WidgetsDialog::us_lineedit( const QString& text, int fontAdjust )
 {
   QLineEdit* le = new QLineEdit( this );
 
 
   le->setFont    ( QFont( US_GuiSettings::fontFamily(), 
-                          US_GuiSettings::fontSize  () + fontAdjust ) );
+                          US_GuiSettings::fontSize() + fontAdjust ) );
   
   le->insert     ( text );
   le->setAutoFillBackground( true );
@@ -124,40 +107,41 @@ QLineEdit* US_Widgets::us_lineedit( const QString& text, int fontAdjust )
 }
 
 // List Widget
-QListWidget* US_Widgets::us_listwidget ( int fontAdjust )
+QListWidget* US_WidgetsDialog::us_listwidget ( int fontAdjust )
 {
   QListWidget* lw = new QListWidget;
 
   lw->setAutoFillBackground( true );
   lw->setPalette( US_GuiSettings::editColor() );
   lw->setFont   ( QFont( US_GuiSettings::fontFamily(), 
-                         US_GuiSettings::fontSize  () + fontAdjust ) );
+                         US_GuiSettings::fontSize() + fontAdjust ) );
 
   return lw;
 }
 
 // checkbox
-QCheckBox* US_Widgets::us_checkbox( const QString& text, bool state )
+QCheckBox* US_WidgetsDialog::us_checkbox( const QString& text, Qt::CheckState state )
 {
   QCheckBox* cb = new QCheckBox( text.toAscii(), this );
   
   cb->setFont( QFont ( US_GuiSettings::fontFamily(), 
-                       US_GuiSettings::fontSize  (),
+                       US_GuiSettings::fontSize(),
                        QFont::Bold ) );
   
   cb->setPalette( US_GuiSettings::normalColor() );
+  cb->setAutoFillBackground( true );
 
-  cb->setChecked( state );
+  cb->setCheckState( state );
   return cb;
 }
 
 // radiobutton
-QRadioButton* US_Widgets::us_radiobutton( const QString& text, bool state )
+QRadioButton* US_WidgetsDialog::us_radiobutton( const QString& text, bool state )
 {
   QRadioButton* rb = new QRadioButton( text.toAscii(), this );
   
   rb->setFont( QFont ( US_GuiSettings::fontFamily(), 
-                       US_GuiSettings::fontSize  (),
+                       US_GuiSettings::fontSize(),
                        QFont::Bold ) );
   
   rb->setPalette( US_GuiSettings::normalColor() );
@@ -168,7 +152,7 @@ QRadioButton* US_Widgets::us_radiobutton( const QString& text, bool state )
 }
 
 // Progress Bar
-QProgressBar* US_Widgets::us_progressBar( int low, int high, int value )
+QProgressBar* US_WidgetsDialog::us_progressBar( int low, int high, int value )
 {
   QProgressBar* pb = new QProgressBar;
 
@@ -180,27 +164,27 @@ QProgressBar* US_Widgets::us_progressBar( int low, int high, int value )
   pb->setAutoFillBackground( true );
 
   pb->setFont( QFont( US_GuiSettings::fontFamily(),
-                      US_GuiSettings::fontSize  (),
+                      US_GuiSettings::fontSize(),
                       QFont::Bold ) );
 
   return pb;
 }
 
 // Combo Box
-QComboBox* US_Widgets::us_comboBox( void )
+QComboBox* US_WidgetsDialog::us_comboBox( void )
 {
   QComboBox* cb = new QComboBox( this );
 
   cb->setPalette( US_GuiSettings::normalColor() );
   cb->setAutoFillBackground( true );
   cb->setFont( QFont( US_GuiSettings::fontFamily(), 
-                      US_GuiSettings::fontSize  () ) );
+                      US_GuiSettings::fontSize() ) );
 
   return cb;
 }
 
 // LCD
-QLCDNumber* US_Widgets::us_lcd( int digits, int value )
+QLCDNumber* US_WidgetsDialog::us_lcd( int digits, int value )
 {
   QLCDNumber* lcd = new QLCDNumber( digits );
 
@@ -215,7 +199,7 @@ QLCDNumber* US_Widgets::us_lcd( int digits, int value )
 }
 
 //QwtCounter
-QwtCounter* US_Widgets::us_counter( int buttons, double low, double high, 
+QwtCounter* US_WidgetsDialog::us_counter( int buttons, double low, double high, 
                                     double value )
 {
   QwtCounter* counter = new QwtCounter;
@@ -223,14 +207,12 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
   counter->setRange     ( low, high );
   counter->setValue     ( value );
   counter->setPalette   ( US_GuiSettings::normalColor() );
-  counter->setFont      ( QFont( US_GuiSettings::fontFamily(), 
-                                 US_GuiSettings::fontSize  () ) );
   counter->setAutoFillBackground( true );
 
   return counter;
 }
 
-QwtPlot* US_Widgets::us_plot( const QString& title, const QString& x_axis,
+QwtPlot* US_WidgetsDialog::us_plot( const QString& title, const QString& x_axis,
                               const QString& y_axis )
 {
   QwtPlot* plot = new QwtPlot;  
@@ -248,7 +230,7 @@ QwtPlot* US_Widgets::us_plot( const QString& title, const QString& x_axis,
   return plot;
 }
 
-QwtPlotGrid* US_Widgets::us_grid( QwtPlot* plot )
+QwtPlotGrid* US_WidgetsDialog::us_grid( QwtPlot* plot )
 {
   QwtPlotGrid* grid = new QwtPlotGrid;
   grid->enableXMin    ( true );
@@ -259,7 +241,7 @@ QwtPlotGrid* US_Widgets::us_grid( QwtPlot* plot )
   return grid;
 }
 
-QwtPlotCurve* US_Widgets::us_curve( QwtPlot* plot, const QString& title )
+QwtPlotCurve* US_WidgetsDialog::us_curve( QwtPlot* plot, const QString& title )
 {
   QwtPlotCurve* curve = new QwtPlotCurve( title );
   curve->setRenderHint( QwtPlotItem::RenderAntialiased );
@@ -270,7 +252,7 @@ QwtPlotCurve* US_Widgets::us_curve( QwtPlot* plot, const QString& title )
   return curve;
 }
 
-QwtPlotPicker* US_Widgets::us_picker( QwtPlot* plot )
+QwtPlotPicker* US_WidgetsDialog::us_picker( QwtPlot* plot )
 {
   QwtPlotPicker* pick = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
                                            plot->canvas() ); 

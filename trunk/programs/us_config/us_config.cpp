@@ -169,7 +169,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   rb_on = us_radiobutton( tr( "On" ) );
   radiobutton->addWidget( rb_on );
 
-  rb_off = us_radiobutton( tr( "Off" ), Qt::Checked );
+  rb_off = us_radiobutton( tr( "Off" ), true );
   radiobutton->addWidget( rb_off );
 
   otherSettings->addLayout( radiobutton, row++, 1 );
