@@ -380,7 +380,7 @@ int US_Gzip::treat_file( const QString& iname, bool decompress )
     unsigned w = 0;  // Dummy to make define above work
 
     // CRC
-    char  buf[ 4 ];
+    unsigned char buf[ 4 ];
 
     for ( int i = 0; i < 4; i++ ) buf[ i ] = GETBYTE();
     
