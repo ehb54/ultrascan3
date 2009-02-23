@@ -35,8 +35,8 @@ class US_EXTERN US_Astfem_RSA : public QObject
 
       QList< double >               x;    // Radii of grid points; x[0...N-1] 
       QList< struct ReactionGroup > rg;
-      struct ModelSystem            system;
-      struct SimulationParameters   simparams;
+      struct ModelSystem&           system;
+      struct SimulationParameters&  simparams;
 
       void   update_assocv  ( void );
       void   adjust_limits  ( uint speed );
@@ -51,6 +51,17 @@ class US_EXTERN US_Astfem_RSA : public QObject
       void   mesh_gen_RefL  ( int, int );
       
       void   ComputeCoefMatrixFixedMesh( double, double, double**, double** );
+      void   decompose      ( struct mfem_initial* );
+
+      void   ComputeCoefMatrixMovingMeshR( double, double, double**, double** );
+      void   ComputeCoefMatrixMovingMeshL( double, double, double**, double** );
+             
+      void   ReactionOneStep_Euler_imp   ( uint, double**, double );
+             
+      void   Reaction_dydt    ( double*, double*  );
+      void   Reaction_dfdy    ( double*, double** );
+             
+      int    calculate_ra2    ( double, double, mfem_initial*, mfem_data&, bool );         
 
    public: 
 
@@ -58,89 +69,25 @@ class US_EXTERN US_Astfem_RSA : public QObject
       void setTimeInterpolation( bool flag ){ use_time        = flag; };
       void setStopFlag         ( bool flag ){ stopFlag        = flag; };    
       
-      int  calculate           ( struct ModelSystem&, 
-                                 struct SimulationParameters&, 
+      int  calculate           ( //struct ModelSystem&, 
+                                 //struct SimulationParameters&, 
                                  QList< struct mfem_data >&  );
-      
+
    signals:
-      void new_scan         ( QList< double >*, double* );
+      void new_scan         ( QList< double >&, double* );
       void new_time         ( float                     );
       void current_component( int                       );
       void current_speed    ( unsigned int              );
 
-      
 #ifdef NEVER
-      
-      struct SimulationParameters *simparams;
-      struct ModelSystem *system;
-
-   private:
-      unsigned int N;         // number of points used in radial direction in ASTFEM
-#ifdef WIN32
-      #pragma warning ( disable: 4251 )
-#endif
-      vector <double> x;      // radii of grid points; x[0...N-1]
-#ifdef WIN32
-     #pragma warning ( default: 4251 )
-#endif
-
-   public slots:
-
-      int calculate_ni(double,            // rpm_start
-                       double,            // rpm_stop
-                       mfem_initial *,    // C0
-                       mfem_data *,       // simdata
-                       bool);             // acceleration? (1=acceleration, 0=no acceleration)
-
-      int calculate_ra2(double,           // rpm_start
-                        double,           // rpm_stop
-                        mfem_initial *,   // C0
-                        mfem_data *,      // simdata
-                        bool);            // acceleration? (1=acceleration, 0=no acceleration)
-
-
-   private slots:
-
-      void initialize_conc(unsigned int, struct mfem_initial *, bool); // initializes total concentration vector
-      void mesh_gen_s_pos(vector <double>);
-      void mesh_gen_s_neg(vector <double>);
-      void mesh_gen_RefL(int, int);
-
       void GlobalStiff(vector <double> *, double **, double **, double, double);
       void GlobalStiff_ellam(vector <double> *, double **, double **, double, double);
 
-      void ComputeCoefMatrixFixedMesh(double, double, double **, double **);
-      void ComputeCoefMatrixMovingMeshR(double, double, double **, double **);
-      void ComputeCoefMatrixMovingMeshL(double, double, double **, double **);
+      void adjust_grid( uint /*old speed*/, uint /*new speed*/, QList <double> * /*radial grid*/);
 
-      void ReactionOneStep_Euler_imp(unsigned int, double **, double);
-      // int DecomposeCT(double , double *);
-
-      // interpolate maps a simulated grid with a variable delta_r grid onto a
-      // fixed delta_r grid from experimental data, and also interpolates time
-
-      void Reaction_dydt(double *, double *);
-      void Reaction_dfdy(double *, double **);
-      void adjust_limits(unsigned int /*rotor speed*/);
-      void adjust_grid(unsigned int /*old speed*/, unsigned int /*new speed*/, vector <double> * /*radial grid*/);
-
-// output functions:
-      void print_af();                 // output all af params
-      void print_rg();                 // output all params in a reaction group
-      void print_af(FILE *);           // output all af params to file
-      void print_simparams();          // print simparams
-      void print_vector(vector <double> *);
-      void print_vector(double *, unsigned int);
-      void initialize_rg();
-      void update_assocv();
-      void decompose(struct mfem_initial *);
 #endif
 };
 
 
 #endif
-
-
-
-
 

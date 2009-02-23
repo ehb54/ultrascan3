@@ -4,18 +4,25 @@
 #include "us_extern.h"
 
 #define sq(x) ((x) * (x))
+#ifndef max
+   #define max(a,b) (((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef min
+   #define min(a,b) (((a) < (b)) ? (a) : (b))
+#endif
 
 class US_EXTERN US_Math
 {
    public:
-      static float box_muller( float, float );
-      static float ranf      ( void );      
+      static float  box_muller( float, float );
+      static float  ranf      ( void );      
 
-      static double linefit( double**, double**, double*, double*, double*, 
-                             double* , int );
-
-      static float  linefit( float** , float** , float* , float* , float* , 
-                             float*  , int );
+      static double linefit   ( double**, double**, double*, double*, double*, 
+                                double* , int );
+  
+      static float  linefit   ( float** , float** , float* , float* , float* , 
+                                float*  , int );
 };
 
 

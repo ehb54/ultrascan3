@@ -24,6 +24,7 @@ class US_Astfem_Sim : public US_Widgets
       bool           stopFlag;
       bool           movieFlag;
       bool           time_correctionFlag;
+      int            curve_count;
       float          total_conc;
       
       QCheckBox*     cb_movie;
@@ -34,6 +35,8 @@ class US_Astfem_Sim : public US_Widgets
       QPushButton*   pb_changeModel;
       QPushButton*   pb_start;
       QPushButton*   pb_stop;
+
+      QLabel*        lb_progress;
                     
       QLCDNumber*    lcd_time;
       QLCDNumber*    lcd_speed;
@@ -52,6 +55,8 @@ class US_Astfem_Sim : public US_Widgets
       QList< struct mfem_data >   astfem_data;
 
       void init_simparams  ( void );  
+      void save_xla        ( const QString& );  
+      void save_ultrascan  ( const QString& );  
 
    private slots:
       void load_experiment ( void );

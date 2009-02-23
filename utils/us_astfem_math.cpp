@@ -1,5 +1,6 @@
 //! \file us_astfem_math.cpp
 #include "us_astfem_math.h"
+#include "us_math.h"
 
 void US_AstfemMath::interpolate_C0( struct mfem_initial& C0, double* C1, 
       QList< double >& x )
@@ -139,32 +140,516 @@ double US_AstfemMath::maxval( const QList< struct SimulationComponent >& value )
    return maximum;
 }
 
-#ifdef NEVER
-void tridiag(double *a, double *b, double *c, double *r, double *u, unsigned int N)
+void US_AstfemMath::initialize_3d( 
+      uint val1, uint val2, uint val3, double**** matrix )
 {
-   int j;
-   double bet, *gam;
-   gam = new double [N];
-   if (b[0] == 0.0) cerr << "Error 1 in tridag" << endl;
+   *matrix = new double** [ val1 ];
 
-   u[0] = r[0]/(bet = b[0]);
-   for (j=1; j<(int) N; j++)
+   for ( uint i = 0; i < val1; i++ )
    {
-      gam[j] = c[j-1]/bet;
-      bet = b[j] - a[j] * gam[j];
-      if (bet == 0.0)
+      (*matrix)[ i ] = new double *[ val2 ];
+      
+      for ( uint j = 0; j < val2; j++ )
       {
-         cerr << "Error 2 in tridag" << endl;
+         (*matrix)[ i ][ j ] = new double [ val3 ];
+         
+         for ( uint k = 0; k < val3; k++ )
+         {
+            (*matrix)[ i ][ j ][ k ] = 0.0;
+         }
       }
-      u[j] = (r[j] - a[j] * u[j-1])/bet;
    }
-   for (j=(N-2); j>=0; j--)
+}
+
+void US_AstfemMath::clear_3d( uint val1, uint val2, double*** matrix )
+{
+   for ( uint i = 0; i < val1; i++ )
    {
-      u[j] -= gam[j+1] * u[j+1];
+      for ( uint j = 0; j < val2; j++ )
+      {
+         delete [] matrix[ i ][ j ];
+      }
+
+      delete [] matrix[ i ];
    }
+
+   delete [] matrix;
+}
+
+void US_AstfemMath::tridiag( double* a, double* b, double* c, 
+                             double* r, double* u, uint N )
+{
+   double bet = b[ 0 ];
+
+   double* gam = new double [ N ];
+   
+   if ( bet == 0.0 ) qDebug() << "Error 1 in tridag";
+
+   u[ 0 ] = r[ 0 ] / bet;
+   
+   for ( uint j = 1; j < N; j++ )
+   {
+      gam[ j ] = c[ j - 1 ] / bet;
+      bet = b[ j ] - a[ j ] * gam[ j ];
+      
+      if ( bet == 0.0 ) qDebug() << "Error 2 in tridag";
+
+      u[ j ] = ( r[ j ] - a[ j ] * u[ j - 1 ] ) / bet;
+   }
+
+   for ( int j = N - 2; j >= 0; j-- )
+      u[ j ] -= gam[ j + 1 ] * u[ j + 1 ];
+   
    delete [] gam;
 }
 
+//////////////////////////////////////////////////////////////////
+//
+// cub_root: find the positive cubic-root of a cubic polynomial
+//       p(x)=a0+a1*x+a2*x^2+x^3
+//
+// with: a0<=0,  and  a1, a2>=0;
+//
+//////////////////////////////////////////////////////////////////
+double US_AstfemMath::cube_root( double a0, double a1, double a2 )
+{
+   double x;
+
+   double Q = ( 3.0 * a1 - sq( a2 ) ) / 9.0;
+   double S = ( 9.0 * a1 * a2 - 27.0 * a0 - 2.0 * pow( a2, 3.0 ) ) / 54.0;
+   double D = pow( Q, 3.0 ) + sq( S );
+   
+   if ( D < 0 )
+   {
+      double theta = acos( S / sqrt( pow( -Q, 3.0 ) ) );
+      x = 2.0 * sqrt( -Q ) * cos( theta / 3.0) ;
+   }
+   else
+   {
+      double B;
+      double Dc = sqrt( D );
+      
+      if ( S + Dc < 0 )
+         B = - pow( - ( S + Dc ), 1.0 / 3.0 ) - pow( Dc - S, 1.0 / 3.0 );
+      
+      else if (S - Dc < 0)
+         B = pow( S + Dc, 1.0 / 3.0) - pow( Dc - S, 1.0 / 3.0);
+      
+      else
+         B = pow( S + Dc, 1.0 / 3.0 ) + pow( S - Dc, 1.0 / 3.0 );
+      
+      double Dc2 = -3.0 * (pow(B, 2.0) + 4 * Q);
+      
+      if ( Dc2 > 0 )
+         x = max( B, 0.5 * ( -B + sqrt( Dc2 ) ) );
+      else
+         x = B;
+   }
+   
+   x = x - a2 / 3.0;
+   
+   return x;
+}
+
+////////////////////////////////////////
+//
+// find_C1_mono_Nmer:   find C1 from    C1 + K * C1^n = CT
+//
+////////////////////////////////////////
+double US_AstfemMath::find_C1_mono_Nmer( int n, double K, double CT )
+{
+   // use Newton's method for f(x) = x + K*x^n - CT
+   //    x_{i+1} = x_i - f(x_i)/f'(x_i)
+
+   double    x1;
+   double    x0       = 0.0;
+   const int MaxNumIt = 1000;
+   int       i;
+
+   if ( CT <= 0.0     ) return 0.0 ;
+   if ( CT <= 1.0e-12 ) return CT;
+
+   for ( i = 1; i < MaxNumIt; i++ )
+   {
+      x1 = ( K * ( n - 1.0 ) * pow( x0, (double)n ) + CT ) / 
+           ( 1.0 + K * n * pow( x0, n - 1.0 ) );
+
+      if ( fabs( x1 - x0 ) / ( 1.0 + fabs( x1 ) ) < 1.e-12 ) break;
+      x0 = x1;
+   }
+
+   if ( i == MaxNumIt )
+   {
+      qDebug() << "warning: Newton's method did not coonverges "
+                  "in find_C1_mono_Nmer";
+      return -1.0;
+   }
+
+   return 0.5 * ( x0 + x1 );
+}
+
+/////////////////////////////////////////////////////////////////
+//
+// Gass Elimination for n X n system: Ax=b
+//
+// return value: -1: A singular, no solution,
+//                1: successful
+// in return:     A has been altered, and b stores the solution x
+//
+/////////////////////////////////////////////////////////////////
+int US_AstfemMath::GaussElim( int n, double** a, double* b )
+{
+    // Elimination
+    for ( int i = 0; i < n; i++ ) 
+    {
+      // find the pivot
+      double amax = fabs( a[ i ][ i ] );
+      int    Imx  = i;
+      
+      for ( int ip = i + 1; ip < n; ip++ ) 
+      {
+        if ( fabs( a[ ip ][ i ] ) > amax ) 
+        {
+          amax = fabs( a[ ip ][ i ]);
+          Imx  = ip;
+        }
+      }
+
+      if ( amax == 0 ) 
+      {
+        qDebug() << "Singular matrix in routine GaussElim";
+        return -1;
+      }
+
+      double tmp;
+
+      // interchange i-th and Imx-th row
+      if ( Imx != i ) 
+      {
+        double* ptmp = a[ i ]; 
+        a[ i ]       = a[ Imx ]; 
+        a[ Imx ]     = ptmp;
+
+        tmp          = b[ i ]; 
+        b[ i ]       = b[ Imx ]; 
+        b[ Imx ]     = tmp;
+      }
+
+      // Elimination
+      tmp = a[ i ][ i ];
+      
+      for ( int j = i; j < n; j++ ) a[ i ][ j ] /= tmp;
+      
+      b[ i ] /= tmp;
+      
+      for ( int ip = i + 1; ip < n; ip++ ) 
+      {
+        tmp = a[ ip ][ i ];
+        
+        for ( int j = i + 1; j < n; j++ ) 
+           a[ ip ][ j ] -= tmp * a[ i ][ j ];
+
+        b[ ip ] -= tmp * b[ i ];
+      }
+    }
+
+    // Backward substitution
+    for ( int i = n - 2; i >= 0; i-- ) 
+      for ( int j = i + 1; j < n; j++ ) b[ i ] -= a[ i ][ j ] * b[ j ];
+
+    return 1;
+}
+
+// Interpolation routine By B. Demeler 041708
+int US_AstfemMath::interpolate( struct mfem_data& expdata, 
+                                struct mfem_data& simdata, 
+                                bool              use_time )
+{
+  // NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
+  // before using this routine! The radius also has to be assigned!
+
+   if ( expdata.scan.size() == 0 || expdata.scan[0].conc.size() == 0 ||
+        simdata.scan.size() == 0 || simdata.radius.size() == 0 ) 
+      return -1;
+
+//qDebug() << "Marker I1" << expdata.scan.size() << expdata.scan[0].conc.size() 
+//               << simdata.scan.size() << simdata.radius.size();
+
+   // First, create a temporary mfem_data structure (tmp_data) that has the
+   // same radial grid as simdata, but the same time grid as the experimental
+   // data. The time and w2t integral values are interpolated for the tmp_data
+   // structure.
+
+   mfem_data tmp_data;
+   mfem_scan tmp_scan;
+   
+   tmp_data.scan.clear();
+   tmp_data.radius.clear();
+   
+   // Fill tmp_data.radius with radius positions from the simdata array:
+
+   for ( int i = 0; i < simdata.radius.size(); i++ )
+   {
+      tmp_data.radius << simdata.radius[ i ];
+   }
+
+   // Iterate through all experimental data scans and find the first time point
+   // in simdata that is higher or equal to each time point in expdata:
+
+   uint simscan = 0;
+//qDebug() << "Marker I2";
+   if ( use_time )
+   {
+//qDebug() << "Marker I2.1";
+      for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
+      {
+         while ( simdata.scan[ simscan ].time < expdata.scan[ expscan ].time )
+         {
+            simscan ++;
+            // make sure we don't overrun bounds:
+            if ( simscan == (uint) simdata.scan.size() )
+            {
+               qDebug() << "simulation time scan[" << simscan << "]: " 
+                        << simdata.scan[ simscan - 1 ].time
+                        << ", expdata scan time[" << expscan << "]: " 
+                        << expdata.scan[ expscan ].time;
+
+               qDebug() << "The simulated data does not cover the entire "
+                           "experimental time range and ends too early!\n"
+                           "exiting...\n";
+
+#if defined(USE_MPI)
+               MPI_Abort( MPI_COMM_WORLD, -1 );
+#endif
+               exit( -1 );
+            }
+         }
+
+         // Check to see if the time is equal or larger:
+         if ( simdata.scan[ simscan ].time == expdata.scan[ expscan ].time )
+         { // they are the same, so take this scan and push it onto the tmp_data array.
+            tmp_data.scan << simdata.scan[ simscan ];
+         }
+         else // interpolation is needed
+         {
+            double a;
+            double b;
+            tmp_scan.conc.clear();
+            
+            // interpolate the concentration points:
+            for ( int i = 0; i < simdata.radius.size(); i++ )
+            {
+               a = ( simdata.scan[ simscan     ].conc[ i ] - 
+                     simdata.scan[ simscan - 1 ].conc[ i ] )
+               / ( simdata.scan[ simscan ].time - simdata.scan[ simscan - 1 ].time );
+
+               b = simdata.scan[ simscan].conc[ i ] - a * simdata.scan[ simscan ].time;
+               tmp_scan.conc << a * expdata.scan[ expscan ].time + b;
+            }
+
+            // interpolate the omega_square_t integral data:
+            
+            a = ( simdata.scan[ simscan ].omega_s_t - simdata.scan[ simscan - 1 ].omega_s_t )
+              / ( simdata.scan[ simscan ].time      - simdata.scan[ simscan - 1 ].time );
+            
+            b = simdata.scan[ simscan ].omega_s_t - a * simdata.scan[ simscan ].time;
+            
+            expdata.scan[ expscan ].omega_s_t = a * expdata.scan[ expscan ].time + b;
+            tmp_data.scan << tmp_scan;
+         }
+      }
+   }
+   else // Use omega^2t integral for interpolation
+   {
+//qDebug() << "Marker I2.2";
+      for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
+      {
+         while ( simdata.scan[ simscan ].omega_s_t < expdata.scan[ expscan ].omega_s_t )
+         {
+            simscan ++;
+            // Make sure we don't overrun bounds:
+            if ( simscan == (uint) simdata.scan.size() )
+            {
+               qDebug() << "simulation time scan[" << simscan << "]: " 
+                        << simdata.scan[ simscan - 1 ].omega_s_t
+                        << ", expdata scan time[" << expscan << "]: "
+                        << expdata.scan[ expscan ].omega_s_t;
+#if defined(USE_MPI)
+               MPI_Abort( MPI_COMM_WORLD, -1 );
+#endif
+               qDebug() << "The simulated data does not cover the entire "
+                           "experimental time range and ends too early!\n"
+                           "exiting...";
+               exit( -1 );
+            }
+         }
+
+         // Check to see if the time is equal or larger:
+         if ( simdata.scan[ simscan ].omega_s_t == expdata.scan[ expscan ].omega_s_t )
+         { // They are the same, so take this scan and push it onto the tmp_data array.
+            tmp_data.scan << simdata.scan[ simscan ];
+         }
+         else // Interpolation is needed
+         {
+            double a;
+            double b;
+            tmp_scan.conc.clear();
+
+            // Interpolate the concentration points:
+            for ( int i = 0; i < simdata.radius.size(); i++ )
+            {
+               a = ( simdata.scan[ simscan ].conc[ i ] - simdata.scan[ simscan - 1 ].conc[ i ] )
+               / ( simdata.scan[ simscan ].omega_s_t - simdata.scan[ simscan - 1 ].omega_s_t );
+
+               b = simdata.scan[ simscan ].conc[ i ] - a * simdata.scan[ simscan ].omega_s_t;
+               
+               tmp_scan.conc << a * expdata.scan[ expscan ].omega_s_t + b;
+            }
+
+            // Interpolate the omega_square_t integral data:
+            a = ( simdata.scan[ simscan ].time - simdata.scan[ simscan - 1 ].time )
+               / ( simdata.scan[ simscan ].omega_s_t - simdata.scan[ simscan - 1 ].omega_s_t );
+            
+            b = simdata.scan[ simscan ].time - a * simdata.scan[ simscan ].omega_s_t;
+            
+            expdata.scan[ expscan ].time = a * expdata.scan[ expscan ].omega_s_t + b;
+            tmp_data.scan << tmp_scan;
+         }
+      }
+   }
+
+//qDebug() << "Marker I3";
+   // Interpolate all radial points from each scan in tmp_data onto expdata
+   for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
+   {
+      int j = 0;
+      if ( j == 0 && tmp_data.radius[ 0 ] > expdata.radius[ 0 ] )
+      {
+         qDebug() << "Radius comparison: " << tmp_data.radius[ 0 ] 
+                  << " (simulated), " << expdata.radius[ 0 ] 
+                  << " (experimental)";
+
+         qDebug() << "j = " << j << ", simdata radius: " 
+                  << tmp_data.radius[ j ] << ", expdata radius: " 
+                  << expdata.radius[ j ];  // Changed from radius[ i ]
+                                           // i out of scope
+ 
+         qDebug() << "The simulated data radial range does not include the "
+                     "beginning of the experimental data's radii!\n"
+                     "exiting...";
+
+#if defined(USE_MPI)
+         MPI_Abort( MPI_COMM_WORLD, -3 );
+#endif
+         exit( -3 );
+      }
+
+//qDebug() << "Marker I4";
+      for ( int i = 0; i < expdata.radius.size(); i++ )
+      {
+         while ( tmp_data.radius[ j ] < expdata.radius[ i ] )
+         {
+            j++;
+            // make sure we don't overrun bounds:
+            if ( j == tmp_data.radius.size() )
+            {
+               qDebug() << "The simulated data does not have enough "
+                           "radial points and ends too early!\n"
+                           "exiting...";
+#if defined(USE_MPI)
+               MPI_Abort( MPI_COMM_WORLD, -2 );
+#endif
+               exit( -2 );
+            }
+         }
+
+         // check to see if the radius is equal or larger:
+         if ( tmp_data.radius[ j ] == expdata.radius[ i ] )
+         { // they are the same, so simply update the concentration value:
+            expdata.scan[ expscan ].conc[ i ] += 
+                             tmp_data.scan[ expscan ].conc[ j ];
+         }
+         else // interpolation is needed
+         {
+            double a = ( tmp_data.scan[ expscan ].conc[ j ] - 
+                         tmp_data.scan[ expscan ].conc[ j - 1 ] )
+                       / ( tmp_data.radius[ j ] - tmp_data.radius[ j - 1 ] );
+            
+            double b = tmp_data.scan[ expscan ].conc[ j ] - 
+                       a * tmp_data.radius[ j ];
+            
+            expdata.scan[ expscan ].conc[ i ] += a * expdata.radius[ i ] + b;
+         }
+      }
+   }
+   return 0;
+}
+
+void US_AstfemMath::QuadSolver( double* ai, double* bi, double* ci, double* di, 
+                                double* cr, double* solu, uint N )
+{
+// Solve Quad-diagonal system [a_i, *b_i*, c_i, d_i]*[x]=[r_i]
+// b_i are on the main diagonal line
+//
+// Test
+// n=100; a=-1+rand(100,1); b=2+rand(200,1); c=-0.7*rand(100,1); d=-0.3*rand(100,1);
+// xs=rand(100,1);
+// r(1)=b(1)*xs(1)+c(1)*xs(2)+d(1)*xs(3);
+// for i=2:n-2,
+// r(i)=a(i)*xs(i-1)+b(i)*xs(i)+c(i)*xs(i+1)+d(i)*xs(i+2);
+// end;
+// i=n-1; r(i)=a(i)*xs(i-1)+b(i)*xs(i)+c(i)*xs(i+1);
+// i=n;  r(i)=a(i)*xs(i-1)+b(i)*xs(i);
+
+   QList< double > ca;
+   QList< double > cb;
+   QList< double > cc;
+   QList< double > cd;
+   
+   ca.clear();
+   cb.clear();
+   cc.clear();
+   cd.clear();
+
+   for ( uint i = 0; i < N; i++ )
+   {
+      ca << ai[ i ];
+      cb << bi[ i ];
+      cc << ci[ i ];
+      cd << di[ i ];
+   }
+
+   for ( uint i = 1; i <= N - 2; i++ )
+   {
+      double tmp = ca[ i ] / cb[ i - 1 ];
+      
+      cb[ i ] = cb[ i ] -cc[ i - 1] * tmp;
+      cc[ i ] = cc[ i ] -cd[ i - 1] * tmp;
+      cr[ i ] = cr[ i ] -cr[ i - 1] * tmp;
+   }
+   
+   uint   i   = N - 1;
+   double tmp = ca[ i ] / cb[ i - 1 ];
+      
+   cb[ i]  = cb[ i ] - cc[ i - 1 ] * tmp;
+   cr[ i ] = cr[ i ] - cr[ i - 1 ] * tmp;
+
+   solu[ N - 1 ] =   cr[ N - 1 ]                                / cb[ N - 1 ];
+   solu[ N - 2 ] = ( cr[ N - 2 ] - cc[ N - 2 ] * solu[ N - 1] ) / cb[ N - 2 ];
+   
+   i = N - 2;
+   do
+   {
+      i--;
+      solu[ i ] = (   cr[ i ] 
+                    - cc[ i ] * solu[ i + 1 ] 
+                    - cd[ i ] * solu[ i + 2 ] ) / 
+                  cb[ i ];
+   
+   } while ( i != 0 );
+}
+
+#ifdef NEVER
 #if defined(DEBUG_ALLOC)
 
 struct _created_matrices {
@@ -211,88 +696,6 @@ static list<_created_matrices>::iterator find_matrices_alloc(unsigned long addr)
 }
 
 #endif
-
-void initialize_3d(unsigned int val1, unsigned int val2, unsigned int val3, double ****matrix)
-{
-#if defined(DEBUG_ALLOC)
-# if defined(DEBUG_ALLOC_2)
-   printf("call init_3d (%u %u %u)\n", val1, val2, val3); 
-   list_matrices_alloc();
-# endif
-
-   if (find_matrices_alloc((unsigned long)*matrix) != created_matrices.end())
-   {
-     printf("error: 3d reallocation of previous allocation! %lx\n",
-       ((unsigned long)*matrix));
-     list_matrices_alloc();
-     exit(-1);
-   }
-#endif
-
-   unsigned int i, j, k;
-   *matrix = new double **[val1];
-
-#if defined(DEBUG_ALLOC)
-   _created_matrices tmp_created_matrix;
-   tmp_created_matrix.addr = (unsigned long)(unsigned long)*matrix;
-   tmp_created_matrix.val1 = val1;
-   tmp_created_matrix.val2 = val2; // 3d
-   created_matrices.push_back(tmp_created_matrix);
-#endif
-
-   for (i=0; i<val1; i++)
-   {
-      (*matrix)[i] = new double *[val2];
-      for (j=0; j<val2; j++)
-      {
-         (*matrix)[i][j] = new double [val3];
-         for (k=0; k<val3; k++)
-         {
-            (*matrix)[i][j][k] = 0.0;
-         }
-      }
-   }
-}
-
-
-void clear_3d(unsigned int val1, unsigned int val2, double ***matrix)
-{
-
-#if defined(DEBUG_ALLOC)
-# if defined(DEBUG_ALLOC_2)
-   printf("clear_3d (%u %u)\n", val1, val2); 
-   list_matrices_alloc();
-# endif
-   list<_created_matrices>::iterator Li;
-   if ((Li = find_matrices_alloc((unsigned long)matrix)) == created_matrices.end())
-   {
-     printf("error: 3d deallocation of unallocated allocation! %lx\n",
-       ((unsigned long)matrix));
-     list_matrices_alloc();
-     exit(-1);
-   }
-
-   if (val1 != Li->val1 || val2 != Li->val2) 
-   {
-     printf("notice: 3d deallocation mismatch, correcting given %d,%d != %d,%d corrected\n",
-     val1, val2,
-     Li->val1, Li->val2);
-     val1 = Li->val1;
-     val2 = Li->val2;
-   }
-   created_matrices.erase(Li);
-#endif
-   unsigned int i, j;
-   for (i=0; i<val1; i++)
-   {
-      for (j=0; j<val2; j++)
-      {
-         delete [] matrix[i][j];
-      }
-      delete [] matrix[i];
-   }
-   delete [] matrix;
-}
 
 
 //
@@ -988,61 +1391,6 @@ void IntQTn1(vector <double> vx, double D, double sw2, double **Stif, double dt)
    clear_2d(4, StifR);
 }
 
-
-void QuadSolver(double *ai, double *bi, double *ci, double *di, double *cr, double *solu, unsigned int N)
-{
-//
-// solve Quad-diagonal system [a_i, *b_i*, c_i, d_i]*[x]=[r_i]
-// b_i ar e on the main diagonal line
-//
-// test
-// n=100; a=-1+rand(100,1); b=2+rand(200,1); c=-0.7*rand(100,1); d=-0.3*rand(100,1);
-// xs=rand(100,1);
-// r(1)=b(1)*xs(1)+c(1)*xs(2)+d(1)*xs(3);
-// for i=2:n-2,
-// r(i)=a(i)*xs(i-1)+b(i)*xs(i)+c(i)*xs(i+1)+d(i)*xs(i+2);
-// end;
-// i=n-1; r(i)=a(i)*xs(i-1)+b(i)*xs(i)+c(i)*xs(i+1);
-// i=n;  r(i)=a(i)*xs(i-1)+b(i)*xs(i);
-//
-
-   unsigned int i;
-   double tmp;
-   vector<double> ca, cb, cc, cd;
-   ca.clear();
-   cb.clear();
-   cc.clear();
-   cd.clear();
-   for (i=0; i<N; i++)
-   {
-      ca.push_back( ai[i] );
-      cb.push_back( bi[i] );
-      cc.push_back( ci[i] );
-      cd.push_back( di[i] );
-   }
-
-   for (i=1; i<=N-2; i++)
-   {
-      tmp = ca[i]/cb[i-1];
-      cb[i] = cb[i]-cc[i-1]*tmp;
-      cc[i] = cc[i]-cd[i-1]*tmp;
-      cr[i] = cr[i]-cr[i-1]*tmp;
-   }
-   i=N-1;
-      tmp = ca[i]/cb[i-1];
-      cb[i] = cb[i]-cc[i-1]*tmp;
-      cr[i] = cr[i]-cr[i-1]*tmp;
-
-
-   solu[N-1] = cr[N-1] / cb[N-1];
-   solu[N-2] = (cr[N-2] - cc[N-2] * solu[N-1]) / cb[N-2];
-   i = N - 2;
-   do
-   {
-      i--;
-      solu[i] = (cr[i] - cc[i] * solu[i+1] - cd[i] * solu[i+2]) / cb[i];
-   } while (i != 0);
-}
 
 void DefineFkp(unsigned int npts, double **Lam)
 {
@@ -1921,142 +2269,6 @@ double IntConcentration(vector<double> r, double *u)
    return T;
 }
 
-////////////////////////////////////////
-//
-// find_C1_mono_Nmer:   find C1 from    C1 + K * C1^n = CT
-//
-////////////////////////////////////////
-double find_C1_mono_Nmer( int n, double K, double CT )
-{
-   //
-   // use Newton's method for f(x) = x + K*x^n - CT
-   //    x_{i+1} = x_i - f(x_i)/f'(x_i)
-   //
-   double x0=0., x1;
-   unsigned int i, MaxNumIt = 1000;
-
-   if ( CT<=0. ) return( 0. );
-   if ( CT<=1.e-12 ) return( CT );
-
-   for ( i=1; i < MaxNumIt; i++)
-   {
-      x1 = ( K * (n-1.0) * pow(x0,(double)n) + CT ) / ( 1. + K * n * pow(x0, n-1.) );
-      if ( fabs(x1 - x0)/(1.+fabs(x1)) < 1.e-12 ) break;
-      x0 = x1;
-   }
-
-   if( i == MaxNumIt )
-   {
-      cerr << "warning: Newton's method did not coonverges in find_C1_mono_Nmer"<<endl;
-      return( -1.0 );
-   }
-   return( 0.5*(x0+x1) );
-}
-
-//////////////////////////////////////////////////////////////////
-//
-// cub_root: find the positive cubic-root of a cubic polynomial
-//       p(x)=a0+a1*x+a2*x^2+x^3
-//
-// with: a0<=0,  and  a1, a2>=0;
-//
-//////////////////////////////////////////////////////////////////
-double cube_root(double a0, double a1, double a2)
-{
-   double B, Q, S, D, Dc, Dc2, theta, x;
-   Q = (3.0 * a1 - pow(a2, 2.0)) / 9.0;
-   S = (9.0 * a1 * a2 - 27.0 * a0 - 2.0 * pow(a2, 3.0)) / 54.0;
-   D = pow(Q, 3.0) + pow(S, 2.0);
-   if (D < 0)
-   {
-      theta = acos(S / sqrt(pow(-Q, 3.0)));
-      x = 2.0 * sqrt(-Q) * cos(theta / 3.0);
-   }
-   else
-   {
-      Dc = sqrt(D);
-      if (S + Dc < 0)
-      {
-         B = - pow(-(S + Dc), 1.0/3.0) - pow(Dc - S, 1.0/3.0);
-      }
-      else if (S - Dc < 0)
-      {
-         B = pow(S+Dc, 1.0/3.0) - pow(Dc - S, 1.0/3.0);
-      }
-      else
-      {
-         B = pow(S + Dc, 1.0/3.0) + pow(S - Dc, 1.0/3.0);
-      }
-      Dc2 = -3.0 * (pow(B, 2.0) + 4 * Q);
-      if (Dc2 > 0)
-      {
-         x = max(B, 0.5 * (-B + sqrt(Dc2)));
-      }
-      else
-      {
-         x = B;
-      }
-   }
-   x = x - a2 / 3.0;
-   return(x);
-}
-
-
-/////////////////////////////////////////////////////////////////
-//
-// Gass Elimination for n X n system: Ax=b
-//
-// return value: -1: A singular, no solution,
-//                1: successful
-// in return:     A has been altered, and b stores the solution x
-//
-/////////////////////////////////////////////////////////////////
-int GaussElim(int n, double **a, double *b)
-{
-    // ellimination
-    int i, j, ip, Imx;
-    double tmp, *ptmp, amx;
-
-    for(i=0; i<n; i++) {
-
-      // find the pivot
-      amx = fabs(a[i][i]);
-      Imx = i;
-      for(ip=i+1; ip<n; ip++) {
-        if(fabs(a[ip][i])>amx) {
-          amx = fabs(a[ip][i]);
-          Imx = ip;
-        }
-      }
-      if(amx ==0) {
-        printf("Singular matrix in routine GaussElim");
-        return -1;
-     }
-
-      // interchange i-th and Imx-th row
-      if(Imx!=i) {
-        ptmp = a[i]; a[i] = a[Imx]; a[Imx] = ptmp;
-        tmp  = b[i]; b[i] = b[Imx]; b[Imx] = tmp;
-      }
-
-      // ellimination
-      tmp = a[i][i];
-      for(j=i; j<n;j++) a[i][j] /= tmp;
-      b[i] /= tmp;
-      for(ip=i+1; ip<n; ip++) {
-        tmp = a[ip][i];
-        for(j=i+1; j<n;j++) a[ip][j] -= tmp*a[i][j];
-        b[ip] -= tmp*b[i];
-      }
-    }
-
-    // backward substitution
-    for (i=n-2;i>=0;i--) {
-      for(j=i+1; j<n; j++) b[i] -= a[i][j]*b[j];
-    }
-
-    return(1);
-}
 
 
 void DefInitCond(double **C0, unsigned int N)
@@ -2153,175 +2365,6 @@ float *scantimes, double *radius, double **c)
    return 0;
 }
 
-
-// interpolation routine By B. Demeler 041708
-int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, bool use_time)
-{
-// NOTE: *expdata has to be initialized to have the proper size (filled with zeros)
-// before using this routine! The radius also has to be assigned!
-
-   if ((*expdata).scan.size() == 0 || (*expdata).scan[0].conc.size() == 0 ||
-       (*simdata).scan.size() == 0 || (*simdata).radius.size() == 0)
-   {
-      return -1;
-   }
-
-   unsigned int i, j, simscan, expscan;
-   double a, b;
-
-   // first, create a temporary mfem_data structure (tmp_data) that has the same radial
-   // grid as simdata, but the same time grid as the experimental data. The time
-   // and w2t integral values are interpolated for the tmp_data structure.
-
-   mfem_data tmp_data;
-   mfem_scan tmp_scan;
-   tmp_data.scan.clear();
-   tmp_data.radius.clear();
-   // fill tmp_data.radius with radius positions from the simdata array:
-
-   for (i=0; i<(*simdata).radius.size(); i++)
-   {
-      tmp_data.radius.push_back((*simdata).radius[i]);
-   }
-
-   // iterate through all experimental data scans and find the first time point in simdata
-   // that is higher or equal to each time point in expdata:
-
-   simscan = 0;
-   if (use_time)
-   {
-      for (expscan = 0; expscan < (*expdata).scan.size(); expscan++)
-      {
-         while ((*simdata).scan[simscan].time < (*expdata).scan[expscan].time)
-         {
-            simscan ++;
-            // make sure we don't overrun bounds:
-            if (simscan == (*simdata).scan.size())
-            {
-               cerr << "simulation time scan[" << simscan << "]: " << (*simdata).scan[simscan-1].time
-                     << ", expdata scan time[" << expscan << "]: " << (*expdata).scan[expscan].time << endl;
-               cerr << QObject::tr("The simulated data does not cover the entire experimental time range and ends too early!\nexiting...\n");
-#if defined(USE_MPI)
-               MPI_Abort(MPI_COMM_WORLD, -1);
-#endif
-               exit(-1);
-            }
-         }
-         // check to see if the time is equal or larger:
-         if ((*simdata).scan[simscan].time == (*expdata).scan[expscan].time)
-         { // they are the same, so take this scan and push it onto the tmp_data array.
-            tmp_data.scan.push_back((*simdata).scan[simscan]);
-         }
-         else // interpolation is needed
-         {
-            tmp_scan.conc.clear();
-            // interpolate the concentration points:
-            for (i=0; i<(*simdata).radius.size(); i++)
-            {
-               a = ((*simdata).scan[simscan].conc[i] - (*simdata).scan[simscan-1].conc[i])
-               / ((*simdata).scan[simscan].time - (*simdata).scan[simscan-1].time);
-               b = (*simdata).scan[simscan].conc[i] - a *(*simdata).scan[simscan].time;
-               tmp_scan.conc.push_back(a * (*expdata).scan[expscan].time + b);
-            }
-            // interpolate the omega_square_t integral data:
-            a = ((*simdata).scan[simscan].omega_s_t - (*simdata).scan[simscan-1].omega_s_t)
-               / ((*simdata).scan[simscan].time - (*simdata).scan[simscan-1].time);
-            b = (*simdata).scan[simscan].omega_s_t - a *(*simdata).scan[simscan].time;
-            (*expdata).scan[expscan].omega_s_t = a * (*expdata).scan[expscan].time + b;
-            tmp_data.scan.push_back(tmp_scan);
-         }
-      }
-   }
-   else // use omega^2t integral for interpolation
-   {
-      for (expscan = 0; expscan < (*expdata).scan.size(); expscan++)
-      {
-         while ((*simdata).scan[simscan].omega_s_t < (*expdata).scan[expscan].omega_s_t)
-         {
-            simscan ++;
-            // make sure we don't overrun bounds:
-            if (simscan == (*simdata).scan.size())
-            {
-               cerr << "simulation time scan[" << simscan << "]: " << (*simdata).scan[simscan-1].omega_s_t
-                     << ", expdata scan time[" << expscan << "]: " << (*expdata).scan[expscan].omega_s_t << endl;
-#if defined(USE_MPI)
-               MPI_Abort(MPI_COMM_WORLD, -1);
-#endif
-               cerr << QObject::tr("The simulated data does not cover the entire experimental time range and ends too early!\nexiting...\n");
-               exit(-1);
-            }
-         }
-         // check to see if the time is equal or larger:
-         if ((*simdata).scan[simscan].omega_s_t == (*expdata).scan[expscan].omega_s_t)
-         { // they are the same, so take this scan and push it onto the tmp_data array.
-            tmp_data.scan.push_back((*simdata).scan[simscan]);
-         }
-         else // interpolation is needed
-         {
-            tmp_scan.conc.clear();
-            // interpolate the concentration points:
-            for (i=0; i<(*simdata).radius.size(); i++)
-            {
-               a = ((*simdata).scan[simscan].conc[i] - (*simdata).scan[simscan-1].conc[i])
-               / ((*simdata).scan[simscan].omega_s_t - (*simdata).scan[simscan-1].omega_s_t);
-               b = (*simdata).scan[simscan].conc[i] - a *(*simdata).scan[simscan].omega_s_t;
-               tmp_scan.conc.push_back(a * (*expdata).scan[expscan].omega_s_t + b);
-            }
-            // interpolate the omega_square_t integral data:
-            a = ((*simdata).scan[simscan].time - (*simdata).scan[simscan-1].time)
-               / ((*simdata).scan[simscan].omega_s_t - (*simdata).scan[simscan-1].omega_s_t);
-            b = (*simdata).scan[simscan].time - a *(*simdata).scan[simscan].omega_s_t;
-            (*expdata).scan[expscan].time = a * (*expdata).scan[expscan].omega_s_t + b;
-            tmp_data.scan.push_back(tmp_scan);
-         }
-      }
-   }
-
-   // interpolate all radial points from each scan in tmp_data onto expdata
-   for (expscan = 0; expscan<(*expdata).scan.size(); expscan++)
-   {
-      j = 0;
-      if (j == 0 && tmp_data.radius[0] > (*expdata).radius[0])
-      {
-         cerr << "Radius comparison: " << tmp_data.radius[0] << " (simulated), " << (*expdata).radius[0] << " (experimental)\n";
-         cerr << "j = " << j << ", simdata radius: " << tmp_data.radius[j] << ", expdata radius: " << (*expdata).radius[i] << endl;
-         cerr << QObject::tr("The simulated data radial range does not include the beginning of the experimental data's radii!\nexiting...\n");
-#if defined(USE_MPI)
-         MPI_Abort(MPI_COMM_WORLD, -3);
-#endif
-         exit(-3);
-      }
-      for (i=0; i<(*expdata).radius.size(); i++)
-      {
-         while (tmp_data.radius[j] < (*expdata).radius[i])
-         {
-            j++;
-            // make sure we don't overrun bounds:
-            if (j == tmp_data.radius.size())
-            {
-               cerr << QObject::tr("The simulated data does not have enough radial points and ends too early!\nexiting...\n");
-#if defined(USE_MPI)
-               MPI_Abort(MPI_COMM_WORLD, -2);
-#endif
-               exit(-2);
-            }
-         }
-         // check to see if the radius is equal or larger:
-         if (tmp_data.radius[j] == (*expdata).radius[i])
-         { // they are the same, so simply update the concentration value:
-            (*expdata).scan[expscan].conc[i] += tmp_data.scan[expscan].conc[j];
-         }
-         else // interpolation is needed
-         {
-            a = (tmp_data.scan[expscan].conc[j] - tmp_data.scan[expscan].conc[j-1])
-            / (tmp_data.radius[j] - tmp_data.radius[j-1]);
-            b = tmp_data.scan[expscan].conc[j] - a * tmp_data.radius[j];
-            (*expdata).scan[expscan].conc[i] += a * (*expdata).radius[i] + b;
-         }
-      }
-   }
-   return(0);
-}
 
 void interpolate_Cfinal(struct mfem_initial *C0, double *cfinal, vector <double> *x )
 {

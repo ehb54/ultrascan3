@@ -73,10 +73,10 @@ class US_EXTERN US_WidgetsDialog : public QDialog
     QListWidget* us_listwidget ( int = 0 );
 
     //! \param text - Text to set with checkbox
-    //! \param state - Qt::{Unchecked,PartiallyChecked,Checked}\n
+    //! \param state - checked -- true or false\n
     //! * Font weight is bold\n
     //! * Color is set to US_GuiSettings::normalColor()
-    QCheckBox*   us_checkbox  ( const QString&, Qt::CheckState = Qt::Unchecked );
+    QCheckBox*   us_checkbox  ( const QString&, bool = false );
 
     //! \param text - Text to set with radiobutton
     //! \param state - Checked ( true or false )\n

@@ -120,7 +120,7 @@ QListWidget* US_WidgetsDialog::us_listwidget ( int fontAdjust )
 }
 
 // checkbox
-QCheckBox* US_WidgetsDialog::us_checkbox( const QString& text, Qt::CheckState state )
+QCheckBox* US_WidgetsDialog::us_checkbox( const QString& text, bool state )
 {
   QCheckBox* cb = new QCheckBox( text.toAscii(), this );
   
@@ -131,7 +131,7 @@ QCheckBox* US_WidgetsDialog::us_checkbox( const QString& text, Qt::CheckState st
   cb->setPalette( US_GuiSettings::normalColor() );
   cb->setAutoFillBackground( true );
 
-  cb->setCheckState( state );
+  cb->setChecked( state );
   return cb;
 }
 
