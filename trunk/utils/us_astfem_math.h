@@ -3,6 +3,7 @@
 #define US_ASTFEM_MATH_H
 
 #include "us_femglobal.h"
+#include "us_extern.h"
 
 struct ReactionGroup
 {
@@ -29,15 +30,15 @@ struct AstFemParameters
    QList< double > kext;    // extinctiom coefficient
    QList< struct ComponentRole > role; // role of each component in various reactions
 
-   double       pathlength;       // path length of centerpiece;
-   double       dt;               // time step size;
-   unsigned int time_steps;       // number of time steps for simulation
-   double       omega_s;          // omega^2
-   double       start_time;       // start time in seconds of simulation at constant speed
-   double       current_meniscus; // actual meniscus for current speed
-   double       current_bottom;   // actual bottom for current speed
-   unsigned int first_speed;      // constant speed at first speed step
-   unsigned int rg_index;         // reaction group index
+   double pathlength;       // path length of centerpiece;
+   double dt;               // time step size;
+   uint   time_steps;       // number of time steps for simulation
+   double omega_s;          // omega^2
+   double start_time;       // start time in seconds of simulation at constant speed
+   double current_meniscus; // actual meniscus for current speed
+   double current_bottom;   // actual bottom for current speed
+   uint   first_speed;      // constant speed at first speed step
+   uint   rg_index;         // reaction group index
 
    // Local index of each GroupComponent involved in a reaction group
    QList< unsigned int > local_index;  
@@ -52,7 +53,7 @@ class US_EXTERN US_AstfemMath
    // Interpolate first onto second
    static void interpolate_C0( struct mfem_initial&, struct mfem_initial& );
 
-   // interpolate starting concentration vector mfem_initial onto C0
+   // Interpolate starting concentration vector mfem_initial onto C0
    static void interpolate_C0( struct mfem_initial&, double*, QList< double >& );
 
    static void initialize_2d( uint, uint, double*** );
@@ -62,6 +63,21 @@ class US_EXTERN US_AstfemMath
    static double minval( const QList< double >& );
    static double maxval( const QList< struct SimulationComponent >& );
    static double minval( const QList< struct SimulationComponent >& );
+   
+   static void   initialize_3d( uint, uint, uint, double**** );
+   static void   clear_3d     ( uint, uint, double*** );
+   
+   static void   tridiag      ( double*, double*, double*, 
+                                double*, double*, uint );
+
+   static double cube_root    ( double, double, double );
+   static int    GaussElim    ( int, double**, double* );
+
+   static double find_C1_mono_Nmer( int, double, double );
+
+   static int    interpolate  ( struct mfem_data&, struct mfem_data&, bool );  
+   static void   QuadSolver   (double*, double*, double*, double*, 
+                               double*, double*, uint);
 };
 
 
@@ -85,16 +101,12 @@ using namespace std;
 
 
 
-void initialize_3d(unsigned int val1, unsigned int val2, unsigned int val3, double ****matrix);
-void clear_3d(unsigned int val1, unsigned int val2, double ***matrix);
-void tridiag(double *, double *, double *, double *, double *, unsigned int);
 double Integrand(double, double, double, double, double, double, double, double);
 void DefineGaussian(unsigned int, double **);
 void IntQT1(vector <double>, double, double, double**, double);
 void IntQTm(vector <double>, double, double, double**, double);
 void IntQTn2(vector <double>, double, double, double**, double);
 void IntQTn1(vector <double>, double, double, double**, double);
-void QuadSolver(double *, double *, double *, double *, double *, double *, unsigned int);
 void DefineFkp(unsigned int, double **);
 double AreaT(vector <double> *, vector <double> *);
 void BasisTS(double, double, double *, double *, double *);
@@ -106,9 +118,6 @@ void IntQTm_ellam(vector <double>, double, double, double**, double);
 void IntQTn1_ellam(vector <double>, double, double, double**, double);
 void QuadSolver_ellam(double *, double *, double *, double *, double *, double *, unsigned int);
 double IntConcentration(vector<double>, double *);
-double find_C1_mono_Nmer(int, double, double);
-double cube_root(double, double, double);
-int GaussElim (int, double **, double *);
 void DefInitCond(double **, unsigned int);
 void interpolate_Cfinal(struct mfem_initial *, double *, vector <double> *); // interpolate final concentration back onto mfem_initial
 
@@ -119,9 +128,6 @@ int interpolate ( struct mfem_data *,  // simulated solution
                   double *,            // radius values from expt. data
                   double **);          // concentration values from expt. data, first dimension = time, second dimension radius
 
-int interpolate ( struct mfem_data *,  // simulated solution
-                  struct mfem_data *,  // experimental solution
-                  bool);               // use time or w^2t for interpolation
 #endif
 #endif
 

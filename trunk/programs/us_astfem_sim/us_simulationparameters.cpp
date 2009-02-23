@@ -133,7 +133,7 @@ US_SimulationParameters::US_SimulationParameters(
    main->addWidget( lb_rotorAccel, row, 0 );
 
    cb_acceleration_flag = us_checkbox( 
-         tr( "(Check to enable)" ) ); // sp->acceleration_flag );
+         tr( "(Check to enable)" ), sp->acceleration_flag );
    main->addWidget( cb_acceleration_flag, row++, 1 );
    
    connect( cb_acceleration_flag, SIGNAL( clicked          () ), 
