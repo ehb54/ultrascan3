@@ -63,6 +63,9 @@ class US_EXTERN US_Astfem_RSA : public QObject
              
       int    calculate_ra2    ( double, double, mfem_initial*, mfem_data&, bool );         
 
+      void   GlobalStiff      ( QList< double >& xb, double** ca, double** cb,
+                                double D, double sw2 );
+
    public: 
 
       void setTimeCorrection   ( bool flag ){ time_correction = flag; }; 

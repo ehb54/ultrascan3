@@ -7,8 +7,6 @@
 #include "us_math.h"
 #include "us_stiffbase.h"
 
-
-
 US_Astfem_RSA::US_Astfem_RSA( struct ModelSystem&          model, 
                               struct SimulationParameters& params, 
                               QObject*                     parent ) 
@@ -42,9 +40,9 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
    af_params.simpoints   = simparams.simpoints;
    
    update_assocv();
-   initialize_rg();
+   initialize_rg();  // Reaction group
    adjust_limits( simparams.speed_step[ 0 ].rotorspeed );
-//qDebug() << "Marker r1 " << size_cv << system.description << system.model;   
+
    for ( int k = 0; k < size_cv; k++ )
    {
       struct SimulationComponent* sc = &system.component_vector[ k ];
@@ -74,7 +72,6 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
       dr = ( af_params.current_bottom - af_params.current_meniscus ) / 
            ( initial_npts - 1 );
       
-//qDebug() << "Marker r1.1 " << initial_npts;   
       for ( int j = 0; j < initial_npts; j++ )
       {
          CT0.radius << af_params.current_meniscus + j * dr;
@@ -93,7 +90,6 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
       // earliest possible scan in the experiment. Also, time invariant noise
       // should be subtracted first.
       
-//qDebug() << "Marker r1.2 ";   
       if ( simparams.band_firstScanIsConcentration )
       {
          mfem_initial scan1;
@@ -109,11 +105,10 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
          US_AstfemMath::interpolate_C0( scan1, sc->c0 );
       }
 
-//qDebug() << "Marker r2";
       if ( ! reacting[ k ] ) // noninteracting
       {
          initialize_conc( k, CT0, true );
-//qDebug() << "Marker r2.001";
+
          af_params.s.clear();  
          af_params.D.clear();
          af_params.kext.clear();
@@ -125,14 +120,13 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
          for ( int step = 0; step < simparams.speed_step.size(); step++ )
          {
             struct SpeedProfile* sp = &simparams.speed_step[ step ]; 
-            struct mfem_data*    ed = &exp_data            [ step ]; // exp data
+            struct mfem_data*    ed = &exp_data            [ step ]; 
             adjust_limits( sp->rotorspeed );
 
             ed->meniscus = af_params.current_meniscus;
             ed->bottom   = af_params.current_bottom;
             accel_time   = 0.0;
 
-//qDebug() << "Marker r2.01";
             // We need to simulate acceleration
             if ( sp->acceleration_flag ) 
             {
@@ -150,9 +144,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
                // twice the number of points
                af_params.start_time = current_time;
                
-//qDebug() << "Marker r2.02";
                calculate_ni( current_speed, sp->rotorspeed, CT0, simdata, true );
-//qDebug() << "Marker r2.03";
 
                // Add the acceleration time:
                accel_time    = af_params.dt * af_params.time_steps;
@@ -181,11 +173,11 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
                duration -= (uint) accel_time;
             }
 
-            double omega = sp->rotorspeed * M_PI / 30.0;
-            af_params.omega_s = pow( omega, 2.0 );
+            double omega = sp->rotorspeed * M_PI / 30;
+            af_params.omega_s = sq( omega );
             
             af_params.dt = log( ed->bottom / ( ed->meniscus ) )
-                        / ( ( af_params.omega_s * fabs( sc->s ) ) 
+                        / ( ( fabs( sc->s ) * af_params.omega_s ) 
                               * ( simparams.simpoints - 1 ) );
             
             if ( af_params.dt > duration)
@@ -193,7 +185,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
                af_params.dt        = duration;
                af_params.simpoints = 1 + 
                   (uint) ( log( ed->bottom / ed->meniscus ) /
-                            ( af_params.omega_s * fabs( sc->s ) * af_params.dt ) 
+                           ( fabs( sc->s ) * af_params.omega_s * af_params.dt ) 
                          );
             }
 
@@ -204,18 +196,15 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
             af_params.time_steps = (uint) ( 1 + duration / af_params.dt );
             af_params.start_time = current_time;
             
-//qDebug() << "Marker r2.1";
             calculate_ni( sp->rotorspeed, sp->rotorspeed, CT0, simdata, false );
 
             // Set the current time to the last scan of this speed step
             current_time = sp->duration_hours * 3600 +
                            sp->duration_minutes * 60;
             
-//qDebug() << "Marker r2.2";
             // Interpolate the simulated data onto the experimental time and 
             // radius grid
             US_AstfemMath::interpolate( *ed, simdata, use_time );
-//qDebug() << "Marker r2.3";
             
             // Set the current speed to the constant rotor speed of the 
             // current speed step
@@ -236,7 +225,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
    for ( int i = 0; i < size_cv; i++ ) af_params.local_index << 0;
    
    struct ComponentRole cr;
-//qDebug() << "Marker r3" << rg.size();
+
    for ( int group = 0; group < rg.size(); group++ )
    {
       uint num_comp = rg[ group ].GroupComponent.size();
@@ -390,17 +379,17 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
              if ( s_max < fabs( af_params.s[m] ) ) s_max = fabs( af_params.s[m] );
 
 
-         af_params.omega_s = pow( sp->rotorspeed * M_PI / 30.0, 2.0 );
+         af_params.omega_s = sq( sp->rotorspeed * M_PI / 30 );
          
          af_params.dt = log( ed->bottom / ed->meniscus) /
                     ( af_params.omega_s * s_max * ( simparams.simpoints - 1 ) );
 
-         if (af_params.dt > duration)
+         if (af_params.dt > duration )
          {
             af_params.dt = duration;
             af_params.simpoints = 
                1 + (uint) ( log( ed->bottom / ed->meniscus )
-               / ( af_params.omega_s * s_max * af_params.dt ) );
+               / ( s_max * af_params.omega_s * af_params.dt ) );
          }
 
          if ( af_params.simpoints > 10000 ) af_params.simpoints = 10000;
@@ -560,6 +549,8 @@ double US_Astfem_RSA::stretch( int rotor, uint rpm )
 // Setup reaction groups
 void US_Astfem_RSA::initialize_rg( void )
 {
+   rg.clear();
+
    // If there are no reactions, then it is all noninteracting
    if ( system.assoc_vector.size() == 0 ) return; 
    
@@ -575,7 +566,6 @@ void US_Astfem_RSA::initialize_rg( void )
    struct ReactionGroup tmp_rg;
    tmp_rg.GroupComponent.clear();
    tmp_rg.association.clear();
-   rg.clear();
    
    tmp_rg.association << 0;
    tmp_rg.GroupComponent << system.assoc_vector[ 0 ].component1;
@@ -728,9 +718,7 @@ void US_Astfem_RSA::initialize_rg( void )
 void US_Astfem_RSA::initialize_conc( uint k, struct mfem_initial& CT0, 
       bool noninteracting ) 
 {
-//qDebug() << "Marker ra1" << k << noninteracting << system.component_vector.size();
    struct SimulationComponent* sc = &system.component_vector[ k ];
-//qDebug() << "Marker ra1.01";
 
    // We don't have an existing CT0 concentration vector. Build up the initial
    // concentration vector with constant concentration
@@ -739,7 +727,6 @@ void US_Astfem_RSA::initialize_conc( uint k, struct mfem_initial& CT0,
    {
       if ( simparams.band_forming )
       {
-//qDebug() << "Marker ra1.1";
          // Calculate the width of the lamella
          double base = af_params.current_meniscus * af_params.current_meniscus 
             + simparams.band_volume * 360.0 / ( 2.5 * 1.2 * M_PI );
@@ -757,7 +744,6 @@ void US_Astfem_RSA::initialize_conc( uint k, struct mfem_initial& CT0,
       }
       else
       {
-//qDebug() << "Marker ra1.2" << CT0.concentration.size();
          for ( int j = 0; j < CT0.concentration.size(); j++ )
             CT0.concentration[j] += sc->concentration;
       }
@@ -766,18 +752,16 @@ void US_Astfem_RSA::initialize_conc( uint k, struct mfem_initial& CT0,
    {
       if ( noninteracting )
       {
-//qDebug() << "Marker ra1.3";
          // Take the existing initial concentration vector and copy it to the
          // temporary CT0 vector: needs rubber band to make sure meniscus and
          // bottom equal current_meniscus and current_bottom
          
          CT0.radius.clear();
          CT0.concentration.clear();
-         CT0 = system.component_vector[k].c0;
+         CT0 = system.component_vector[ k ].c0;
       }
       else // interpolation
       {
-//qDebug() << "Marker ra1.4";
          mfem_initial C;
          C.radius.clear();
          C.concentration.clear();
@@ -791,7 +775,6 @@ void US_Astfem_RSA::initialize_conc( uint k, struct mfem_initial& CT0,
             C.concentration << 0.0;
          }
 
-//qDebug() << "Marker ra1.5";
          US_AstfemMath::interpolate_C0 ( sc->c0, C );
          
          for ( int j = 0; j < CT0.concentration.size(); j++ )
@@ -822,7 +805,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    simdata.scan.clear();
    mfem_scan simscan;
 
-   // generate the adaptive mesh
+   // Generate the adaptive mesh
   
    double sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
    QList< double > nu;
@@ -833,7 +816,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    
    // Refine left hand side (when s>0) or right hand side (when s < 0) for
    // acceleration
-//  qDebug() << "Marker ni1"; 
+int xxx = x.size();
    if ( accel )     
    {                             
       uint   j;
@@ -844,27 +827,25 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
          // Radial distance from meniscus how far the boundary will move during
          // this acceleration step (without diffusion)
          
-         xc = af_params.current_meniscus + sw2 * 
-            ( af_params.time_steps * af_params.dt ) / 3.0;
+         xc = af_params.current_meniscus +  
+              sw2 * ( af_params.time_steps * af_params.dt ) / 3.0;
          
-//  qDebug() << "Marker ni1.1" << N; 
          for ( j = 0; j < N - 3; j++ )
             if ( x[ j ] > xc ) break; 
       }
       else
       {
-         xc = af_params.current_bottom + sw2 * 
-                ( af_params.time_steps * af_params.dt ) / 3;
-//  qDebug() << "Marker ni1.2"; 
+         xc = af_params.current_bottom +  
+              sw2 * ( af_params.time_steps * af_params.dt ) / 3.0;
+
          for ( j = 0; j < N - 3; j++ )
             if ( x[ N - j - 1 ] < xc ) break;
       }
 
-//  qDebug() << "Marker ni1.3" << j; 
+
       mesh_gen_RefL( j + 1, 4 * j );
    }
 
-//  qDebug() << "Marker ni2"; 
    for ( uint i = 0; i < N; i++ ) simdata.radius << x[ i ];
 
 
@@ -873,10 +854,9 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    US_AstfemMath::initialize_2d( 3, N, &CA );
    US_AstfemMath::initialize_2d( 3, N, &CB );
 
-//  qDebug() << "Marker ni3"; 
    if ( ! accel ) // No acceleration
    {
-      sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30.0 );
+      sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
       
       if ( ! simparams.moving_grid )
       {
@@ -901,13 +881,11 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
 
       ComputeCoefMatrixFixedMesh( af_params.D[ 0 ], sw2, CA1, CB1 );
 
-      sw2 = af_params.s[ 0 ] * pow( rpm_stop * M_PI / 30.0, 2.0 );
+      sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
       ComputeCoefMatrixFixedMesh( af_params.D[ 0 ], sw2, CA2, CB2 );
    }
 
    // Initial condition
-
-//qDebug() << "Marker ni4"; 
    C0 = new double [ N ];
    C1 = new double [ N ];
 
@@ -915,7 +893,6 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    US_AstfemMath::interpolate_C0( C_init, C0, x );
 
    // Time evolution
-
    double* right_hand_side = new double [ N ];
 
    // Calculate all time steps f
@@ -932,10 +909,10 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
          {
             for( uint j2 = 0; j2 < N; j2++ )
             {
-               CA[ j1 ][ j2 ] += pow( rpm_current / rpm_stop, 2.0 ) * 
+               CA[ j1 ][ j2 ] += sq( rpm_current / rpm_stop ) * 
                   ( CA2[ j1 ][ j2 ] - CA1[ j1 ][ j2 ] );
                
-               CB[ j1 ][ j2 ] += pow( rpm_current / rpm_stop, 2.0 ) * 
+               CB[ j1 ][ j2 ] += sq( rpm_current / rpm_stop ) * 
                   ( CB2[ j1 ][ j2 ] - CB1[ j1 ][ j2 ]);
             }
          }
@@ -945,7 +922,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       simscan.time = af_params.start_time + i * af_params.dt;
       
       w2t_integral += ( simscan.time - last_time ) * 
-                      pow( rpm_current * M_PI / 30.0, 2.0 );
+                      sq( rpm_current * M_PI / 30 );
       
       last_time         = simscan.time;
       simscan.omega_s_t = w2t_integral;
@@ -956,7 +933,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       
       simscan.conc.clear();
 
-      for ( uint j = 0; j < N; j++ )  simscan.conc << C0[ j ];
+      for ( uint j = 0; j < N; j++ ) simscan.conc << C0[ j ];
 
       simdata.scan << simscan;
 
@@ -965,7 +942,8 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       
       if ( accel || ! simparams.moving_grid )
       {
-         right_hand_side[0] = -CB[1][0] * C0[0] - CB[2][0] * C0[1];
+         right_hand_side[ 0 ] = - CB[ 1 ][ 0 ] * C0[ 0 ] 
+                                - CB[ 2 ][ 0 ] * C0[ 1 ];
 
          for ( uint j = 1; j < N - 1; j++ )
          {
@@ -1015,8 +993,6 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       
       for ( uint j = 0; j < N; j++ ) C0[ j ] = C1[ j ];
    } // time loop
-
-//qDebug() << "Marker ni5"; 
 
    C_init.radius.clear();
    C_init.concentration.clear();
@@ -1416,11 +1392,9 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
    QList< double > zz;  // temperary array for adaptive grids
    zz.clear();
    
-//qDebug() << "Marker refl0" << af_params.s << N0 << M0; 
    if ( US_AstfemMath::minval( af_params.s ) > 0 ) // All species with s>0
    {
       // Refine around the meniscus for acceleration
-//qDebug() << "Marker refl1"; 
       for ( int j = 0; j < M0; j++ )
       {
          double tmp = (double) j / M0;
@@ -1428,13 +1402,11 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
          zz << x[ 0 ] * ( 1.0 - tmp ) + x[ N0 ] * tmp;
       }
 
-//qDebug() << "Marker refl2" << zz.size() << x.size(); 
       for ( int j = N0; j < x.size(); j++ ) 
          zz << x[ j ];
 
       x.clear();
 
-//qDebug() << "Marker refl3" << zz.size(); 
       for ( int j = 0; j <  zz.size(); j++ ) 
          x << zz[ j ];
    }
@@ -1446,7 +1418,6 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
       // Refine around the bottom for acceleration
       for ( int j = 1; j <= M0; j++ )
       {
-//qDebug() << "Marker refl4" << x.size(); 
          double tmp = (double) j / M0;
          tmp        = sin( tmp * M_PI / 2.0 );
          zz << x[ x.size() - N0 - 1 ] * ( 1.0 - tmp ) + x[ x.size() - 1 ] * tmp;
@@ -1466,22 +1437,22 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
 
 // Compute the coefficient matrices based on fixed mesh
 
-void US_Astfem_RSA::ComputeCoefMatrixFixedMesh( double D, double sw2, 
-      double** CA, double** CB )
+void US_Astfem_RSA::ComputeCoefMatrixFixedMesh( 
+      double D, double sw2, double** CA, double** CB )
 {
    StiffBase stfb0 ;
    double*** Stif;   // Local stiffness matrix at each element
    
-   US_AstfemMath::initialize_3d( N - 1, 4,  4, &Stif );
+   US_AstfemMath::initialize_3d( N - 1, 4, 4, &Stif );
 
    double xd[ 4 ][ 2 ];     // coord for verices of quad elem
    
    for ( uint k = 0; k < N - 1; k++ )
    {  // loop for all elem
       xd[ 0 ][ 0 ] = x[ k ];
-      xd[ 0 ][ 1 ] = 0.;
+      xd[ 0 ][ 1 ] = 0.0;
       xd[ 1 ][ 0 ] = x[ k + 1 ];
-      xd[ 1 ][ 1 ] = 0.;
+      xd[ 1 ][ 1 ] = 0.0;
       xd[ 2 ][ 0 ] = x[ k + 1 ];
       xd[ 2 ][ 1 ] = af_params.dt;
       xd[ 3 ][ 0 ] = x[ k ];
@@ -2189,7 +2160,8 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
                   double alpha = af_params.s[ i ] / s_max * ( 1 - dval ) + dval;
                   xb <<  pow( x[ j ], alpha ) * pow( x[ j + 1 ], ( 1 - alpha) );
                }
-              // GlobalStiff(&xb, CA[i], CB[i], af_params.D[i], sw2 );
+
+               GlobalStiff( xb, CA[ i ], CB[ i ], af_params.D[ i ], sw2 );
             }
          }
          else if ( s_max < 0)    // all components floating
@@ -2494,72 +2466,64 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    return 0;
 }
 
-#ifdef NEVER
-
-void US_Astfem_RSA::GlobalStiff(vector <double> *xb, double **ca, double **cb,
-double D, double sw2)
+void US_Astfem_RSA::GlobalStiff( QList< double >& xb, double** ca, double** cb,
+                                 double D, double sw2 )
 {
+   //  4: global stifness matrix
 
-//
-//  4: global stifness matrix
-//
+   // function [CA, CB]=4(x, xb, dt, D, sw2)
 
-//function [CA, CB]=4(x, xb, dt, D, sw2)
+   double*** Stif = NULL;
+   QList< double > vx;
+   
+   US_AstfemMath::initialize_3d( N, 6, 2, &Stif );
 
-   unsigned int i;
-   double ***Stif=NULL;
-   vector <double> vx;
-   initialize_3d(N, 6, 2, &Stif);
-
-// 1st elem
+   // 1st elem
    vx.clear();
-   vx.push_back(x[0]);
-   vx.push_back(x[1]);
-   vx.push_back(x[0]);
-   vx.push_back(x[1]);
-   vx.push_back(x[2]);
-   vx.push_back((*xb)[1]);
-   IntQT1(vx, D, sw2, Stif[0], af_params.dt);
+   vx << x [ 0 ];
+   vx << x [ 1 ];
+   vx << x [ 0 ];
+   vx << x [ 1 ];
+   vx << x [ 2 ];
+   vx << xb[ 1 ];
+   US_AstfemMath::IntQT1( vx, D, sw2, Stif[ 0 ], af_params.dt );
 
    // elems in middle
-   for (i=1; i<(N-2); i++)
+   for ( uint i = 1; i < N - 2; i++ )
    {
       vx.clear();
-      vx.push_back(x[i-1]);
-      vx.push_back(x[i]);
-      vx.push_back(x[i+1]);
-      vx.push_back(x[i]);
-      vx.push_back(x[i+1]);
-      vx.push_back(x[i+2]);
-      vx.push_back((*xb)[i]);
-      vx.push_back((*xb)[i+1]);
-      IntQTm(vx, D, sw2, Stif[i], af_params.dt);
+      vx << x [ i - 1 ];
+      vx << x [ i     ];
+      vx << x [ i + 1 ];
+      vx << x [ i     ];
+      vx << x [ i + 1 ];
+      vx << x [ i + 2 ];
+      vx << xb[ i     ];
+      vx << xb[ i + 1 ];
+      US_AstfemMath::IntQTm( vx, D, sw2, Stif[ i ], af_params.dt );
    }
 
-// 2nd last elems
+   // 2nd last elems
    vx.clear();
-   vx.push_back(x[N-3]);
-   vx.push_back(x[N-2]);
-   vx.push_back(x[N-1]);
-   vx.push_back(x[N-2]);
-   vx.push_back(x[N-1]);
-   vx.push_back((*xb)[N-2]);
-   vx.push_back((*xb)[N-1]);
+   vx << x [ N - 3 ];
+   vx << x [ N - 2 ];
+   vx << x [ N - 1 ];
+   vx << x [ N - 2 ];
+   vx << x [ N - 1 ];
+   vx << xb[ N - 2 ];
+   vx << xb[ N - 1 ];
 
-   IntQTn2(vx, D, sw2, Stif[N-2], af_params.dt);
+   US_AstfemMath::IntQTn2( vx, D, sw2, Stif[ N - 2 ], af_params.dt );
 
    // last elems
    vx.clear();
-   vx.push_back(x[N-2]);
-   vx.push_back(x[N-1]);
-   vx.push_back(x[N-1]);
-   vx.push_back((*xb)[N-1]);
-   IntQTn1(vx, D, sw2, Stif[N-1], af_params.dt);
-
-   //
+   vx << x [ N - 2 ];
+   vx << x [ N - 1 ];
+   vx << x [ N - 1 ];
+   vx << xb[ N - 1 ];
+   US_AstfemMath::IntQTn1 ( vx, D, sw2, Stif[ N - 1 ], af_params.dt );
+   
    // assembly into global stiffness matrix
-   //
-
    ca[0][0] = 0.0;
    ca[1][0] = Stif[0][2][0];
    ca[2][0] = Stif[0][3][0];
@@ -2582,7 +2546,7 @@ double D, double sw2)
    cb[3][1] =                 Stif[1][2][0];
 
    // i: middle
-   for (i=2; i<N-2; i++)
+   for (  uint i = 2; i < N - 2; i++ )
    {
       ca[0][i] = Stif[i-1][3][1];
       ca[1][i] = Stif[i-1][4][1] + Stif[i][3][0];
@@ -2596,7 +2560,7 @@ double D, double sw2)
    }
 
    // i=n
-   i = N-2;
+   uint i = N - 2;
    ca[0][i] = Stif[i-1][3][1];
    ca[1][i] = Stif[i-1][4][1] + Stif[i][3][0];
    ca[2][i] = Stif[i-1][5][1] + Stif[i][4][0];
@@ -2608,7 +2572,7 @@ double D, double sw2)
    cb[3][i] =                   Stif[i][2][0];
 
    // i=n+1
-   i = N-1;
+   i = N - 1;
    ca[0][i] = Stif[i-1][3][1];
    ca[1][i] = Stif[i-1][4][1] + Stif[i][2][0];
    ca[2][i] = 0.0;
@@ -2619,280 +2583,5 @@ double D, double sw2)
    cb[2][i] = Stif[i-1][2][1] + Stif[i][1][0];
    cb[3][i] = 0.0;
 
-   clear_3d(N, 6, Stif);
+   US_AstfemMath::clear_3d( N, 6, Stif );
 }
-
-
-//
-// ************* ELLAM ***********
-//
-
-void US_Astfem_RSA::GlobalStiff_ellam(vector <double> *xb, double **ca, double **cb,
-                                      double D, double sw2)
-{
-//
-//  4: global stifness matrix
-//
-
-//function [CA, CB]=4(x, xb, dt, D, sw2)
-
-   unsigned int i;
-   double ***Stif=NULL;
-   vector <double> vx;
-   initialize_3d(N, 6, 2, &Stif);
-
-// 1st elem
-   vx.clear();
-   vx.push_back(x[0]);
-   vx.push_back(x[1]);
-   vx.push_back(x[0]);
-   vx.push_back(x[1]);
-   vx.push_back((*xb)[1]);
-   IntQT1_ellam(vx, D, sw2, Stif[0], af_params.dt);
-
-   // elems in middle
-   for (i=1; i<=(N-2); i++)
-   {
-      vx.clear();
-      vx.push_back(x[i-1]);
-      vx.push_back(x[i]);
-      vx.push_back(x[i+1]);
-      vx.push_back(x[i-1]);
-      vx.push_back(x[i]);
-      vx.push_back(x[i+1]);
-      vx.push_back((*xb)[i]);
-      vx.push_back((*xb)[i+1]);
-      IntQTm_ellam(vx, D, sw2, Stif[i], af_params.dt);
-   }
-
-
-   // last elems
-   vx.clear();
-   vx.push_back(x[N-2]);
-   vx.push_back(x[N-1]);
-   vx.push_back(x[N-2]);
-   vx.push_back(x[N-1]);
-   vx.push_back((*xb)[N-1]);
-   IntQTn1_ellam(vx, D, sw2, Stif[N-1], af_params.dt);
-
-   //
-   // assembly into global stiffness matrix
-   //
-   ca[0][0] = 0.0;
-   ca[1][0] = 0.0;
-   ca[2][0] = Stif[0][2][0];
-   ca[3][0] = Stif[0][3][0];
-
-   cb[0][0] = 0.0;
-   cb[1][0] = 0.0;
-   cb[2][0] = Stif[0][0][0];
-   cb[3][0] = Stif[0][1][0];
-
-   // i=1
-   ca[0][1] = 0.0;
-   ca[1][1] = Stif[0][2][1] + Stif[1][3][0];
-   ca[2][1] = Stif[0][3][1] + Stif[1][4][0];
-   ca[3][1] =                 Stif[1][5][0];
-
-   cb[0][1] = 0.0;
-   cb[1][1] = Stif[0][0][1] + Stif[1][0][0];
-   cb[2][1] = Stif[0][1][1] + Stif[1][1][0];
-   cb[3][1] =                 Stif[1][2][0];
-
-   // i: middle
-   for (i=2; i<=N-2; i++)
-   {
-      ca[0][i] = Stif[i-1][3][1];
-      ca[1][i] = Stif[i-1][4][1] + Stif[i][3][0];
-      ca[2][i] = Stif[i-1][5][1] + Stif[i][4][0];
-      ca[3][i] =                   Stif[i][5][0];
-
-      cb[0][i] = Stif[i-1][0][1];
-      cb[1][i] = Stif[i-1][1][1] + Stif[i][0][0];
-      cb[2][i] = Stif[i-1][2][1] + Stif[i][1][0];
-      cb[3][i] =                   Stif[i][2][0];
-   }
-
-   // i=n-1
-   i = N-1;
-   ca[0][i] = Stif[i-1][3][1];
-   ca[1][i] = Stif[i-1][4][1] + Stif[i][2][0];
-   ca[2][i] = Stif[i-1][5][1] + Stif[i][3][0];
-   ca[3][i] = 0.0;
-
-   cb[0][i] = Stif[i-1][0][1];
-   cb[1][i] = Stif[i-1][1][1] + Stif[i][0][0];
-   cb[2][i] = Stif[i-1][2][1] + Stif[i][1][0];
-   cb[3][i] = 0.0;
-
-   clear_3d(N, 6, Stif);
-}
-
-
-void US_Astfem_RSA::adjust_grid(unsigned int old_speed, unsigned int new_speed, vector <double> *radius)
-{
-   double stretch_val1 = stretch((*simparams).rotor, old_speed);
-   double stretch_val2 = stretch((*simparams).rotor, new_speed);
-   for (unsigned int i=0; i<(*radius).size(); i++)
-   {
-      (*radius)[i] += stretch_val2 - stretch_val1;
-   }
-}
-
-void US_Astfem_RSA::setTimeCorrection(bool flag)
-{
-   time_correction = flag; // correct time for rotor acceleration
-}
-
-void US_Astfem_RSA::setTimeInterpolation(bool flag)
-{
-   use_time = flag; // use time interpolation if true, omega-square-t integral interpolation otherwise
-}
-
-void US_Astfem_RSA::setMovie(bool flag)
-{
-   movieFlag = flag; // plot movie
-}
-
-void US_Astfem_RSA::setStopFlag(bool flag)
-{
-   stopFlag = flag; // stop calculation
-}
-
-void US_Astfem_RSA::print_vector(double *dval, unsigned int ival)
-{
-   unsigned int i;
-   for (i=0; i<ival; i++)
-   {
-      printf("x[%d]=%20.10e \n", i, dval[i]);
-   }
-}
-
-void US_Astfem_RSA::print_vector(vector <double> *dval)
-{
-   unsigned int i;
-   for (i=0; i<(*dval).size(); i++)
-   {
-      printf("x[%d]=%20.10e \n", i, (*dval)[i]);
-   }
-}
-
-void US_Astfem_RSA::print_simparams()
-{
-}
-
-void US_Astfem_RSA::print_rg()
-{
-   unsigned int i, k ;
-
-        cout << "Reaction Group Info: " << endl;
-   for (k=0; k< rg.size(); k++)
-   {
-      cout << "Group ["<< k << "] "<< endl;
-
-      cout << "Assoc Rule: " ;
-      for (i=0; i< rg[k].association.size(); i++)
-      {
-         cout << "[" << rg[k].association[i] << "] ";
-      }
-      cout << endl;
-
-      cout << "Group Components: ";
-      for (i=0; i< rg[k].GroupComponent.size(); i++)
-      {
-         cout << "[" << rg[k].GroupComponent[i] << "] ";
-      }
-      cout << endl;
-   }
-   cout << "End of Reaction Group Info" << endl;
-}
-
-void US_Astfem_RSA::print_af()
-{
-   unsigned int i, j;
-   QString str;
-   cout.precision(10);
-   cout << "Simparams and system variables:\n";
-   cout << "Model Number:\t" << (*system).model << endl;
-   cout << "Rotor:\t" << (*simparams).rotor << endl;
-   cout << "mesh:\t\t" << (*simparams).mesh << endl;
-   cout << "moving grid\t\t" << (*simparams).moving_grid << endl;
-   cout << "\n\naf_params variables:\n";
-   cout << "First speed:\t" << af_params.first_speed << endl;
-   cout << "Simpoints:\t" << af_params.simpoints << endl;
-   cout << "\nHydrodynamic Parameters:\n";
-   for (i=0; i< af_params.s.size(); i++)
-   {
-      cout << "s[" << i << "]:\t\t" << af_params.s[i] << endl;
-      cout << "D[" << i << "]:\t\t" << af_params.D[i] << endl;
-      cout << "ext[" << i << "]:\t\t" << af_params.kext[i] << endl;
-   }
-   cout << "\ndt:\t\t" << af_params.dt << endl;
-   cout << "pathlength:\t" << af_params.pathlength << endl;
-   cout << "time_steps:\t" << af_params.time_steps << endl;
-   cout << "omega_s:\t" << af_params.omega_s << endl;
-   cout << "start_time:\t" << af_params.start_time << endl;
-   cout << "current meniscus:\t" << af_params.current_meniscus << endl;
-   cout << "current bottom:\t\t" << af_params.current_bottom << endl;
-   cout << "reaction group index:\t\t" << af_params.rg_index << endl;
-   for (i=0; i< af_params.local_index.size(); i++)
-   {
-      cout << "local index[" << i << "]:\t\t" << af_params.local_index[i] << endl;
-   }
-   for (i=0; i< af_params.association.size(); i++)
-   {
-      cout << "\n\nAssociation " << i << ":\t\t\n";
-      cout << "keq[" << i << "]:\t\t" << af_params.association[i].keq << endl;
-      cout << "koff[" << i << "]:\t\t" << af_params.association[i].k_off << endl;
-      cout << "units[" << i << "]:\t\t" << af_params.association[i].units << endl;
-      cout << "component1[" << i << "]:\t\t" << af_params.association[i].component1 << endl;
-      cout << "component2[" << i << "]:\t\t" << af_params.association[i].component2 << endl;
-      cout << "component3[" << i << "]:\t\t" << af_params.association[i].component3 << endl;
-      cout << "stoichiometry1[" << i << "]:\t\t" << af_params.association[i].stoichiometry1 << endl;
-      cout << "stoichiometry2[" << i << "]:\t\t" << af_params.association[i].stoichiometry2 << endl;
-      cout << "stoichiometry3[" << i << "]:\t\t" << af_params.association[i].stoichiometry3 << endl;
-      for (j=0; j<af_params.association[i].comp.size(); j++)
-      {
-         cout << "component involved in this reaction[" << j << "]:\t\t" << af_params.association[i].comp[j] << endl;
-      }
-      for (j=0; j<af_params.association[i].stoich.size(); j++)
-      {
-         cout << "stoichiometry of component[" << j << "]:\t\t" << af_params.association[i].stoich[j] << endl;
-      }
-      for (j=0; j<af_params.association[i].react.size(); j++)
-      {
-         cout << "reaction position[" << j << "]:\t\t" << af_params.association[i].react[j] << endl;
-      }
-   }
-}
-
-void US_Astfem_RSA::print_af(FILE *outf)
-{
-   unsigned int i;
-
-   fprintf(outf, "#####################################################\n");
-   fprintf(outf, "#  \n");
-   fprintf(outf, "#  Model Number: %d \n", (*system).model);
-   fprintf(outf, "#  Number of species = %d\n", (int)af_params.s.size() );
-   for (i=0; i<af_params.s.size(); i++)
-   {
-      fprintf(outf, "#  s[%d]=%20.12e D[%d]=%20.12e \n", i, af_params.s[i], i, af_params.D[i]);
-   }
-   fprintf(outf, "#  \n");
-   fprintf(outf, "#  parameters for simulation:\n");
-   fprintf(outf, "#  current meniscus =%12.5e \n",  af_params.current_meniscus);
-   fprintf(outf, "#  current bottom =%12.5e \n",  af_params.current_bottom);
-   fprintf(outf, "#  start time =%12.5e \n",  af_params.start_time);
-   fprintf(outf, "#  mesh opt =%d \n",  (*simparams).mesh);
-   if ((*simparams).moving_grid) fprintf(outf, "#  grids = moving \n");
-   else fprintf(outf, "#  grids = fixed \n");
-   fprintf(outf, "#  simpoints =%d \n",  af_params.simpoints);
-   fprintf(outf, "#  dt =%12.5e \n",  af_params.dt);
-   fprintf(outf, "#  Total Number of Steps =%d \n",  af_params.time_steps);
-
-   fprintf(outf, "#  \n");
-   fprintf(outf, "#####################################################\n");
-
-   return;
-}
-#endif

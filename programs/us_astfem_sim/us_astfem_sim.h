@@ -58,6 +58,16 @@ class US_Astfem_Sim : public US_Widgets
       void save_xla        ( const QString& );  
       void save_ultrascan  ( const QString& );  
 
+// debug
+      void dump_system     ( void );
+      void dump_simparms   ( void );
+      void dump_astfem_data( void );
+      void dump_simComponent( struct SimulationComponent& );
+      void dump_association ( struct Association& );
+      void dump_mfem_initial( struct mfem_initial& );
+      void dump_ss          ( struct SpeedProfile& );
+      void dump_mfem_scan   ( struct mfem_scan& );
+
    private slots:
       void load_experiment ( void );
       void save_experiment ( void );

@@ -649,151 +649,18 @@ void US_AstfemMath::QuadSolver( double* ai, double* bi, double* ci, double* di,
    } while ( i != 0 );
 }
 
-#ifdef NEVER
-#if defined(DEBUG_ALLOC)
+// old version: perform integration on supp(test function) separately 
+// on left Q and right T
 
-struct _created_matrices {
-  unsigned long addr;
-  unsigned int val1;
-  unsigned int val2;
-};
-
-static list <_created_matrices> created_matrices;
-
-void init_matrices_alloc() 
-{
-  created_matrices.clear();
-  puts("init_matrices_alloc()");
-}
-
-void list_matrices_alloc() 
-{
-  if (created_matrices.size()) {
-    printf("allocated matrices:\n");
-  }
-  list<_created_matrices>::iterator Li;
-
-  for (Li = created_matrices.begin(); Li != created_matrices.end(); Li++) 
-  {
-    printf("addr %lx val1 %u val2 %u\n",
-      Li->addr,
-      Li->val1,
-      Li->val2
-      );
-  }
-}
-
-static list<_created_matrices>::iterator find_matrices_alloc(unsigned long addr) {
-  list<_created_matrices>::iterator Li;
-  for (Li = created_matrices.begin(); Li != created_matrices.end(); Li++) 
-  {
-    if (Li->addr == addr) 
-    {
-      return Li;
-    }
-  }
-  return Li;
-}
-
-#endif
-
-
-//
-// source: http://www.math.ntnu.no/num/nnm/Program/Numlibc/
-//
-void DefineGaussian(unsigned int nGauss, double **Gs2)
-{
-   unsigned int i, j, k;
-   double *Gs1, *w;
-   Gs1 = new double [nGauss];
-   w = new double [nGauss];
-
-   switch (nGauss)
-   {
-      case 3:
-      {
-         Gs1[0] = -0.774596669241483;  w[0] = 5.0/9.0;
-         Gs1[1] = 0.0;                 w[1] = 8.0/9.0;
-         Gs1[2] = 0.774596669241483;   w[2] = 5.0/9.0;
-         break;
-      }
-      case 5:
-      {
-         Gs1[0] = 0.906179845938664 ;  w[0] = 0.236926885056189;
-         Gs1[1] = 0.538469310105683 ;  w[1] = 0.478628670499366;
-         Gs1[2] = 0.000000000000000 ;  w[2] = 0.568888888888889;
-         Gs1[3] = -Gs1[1];             w[3] = w[1];
-         Gs1[4] = -Gs1[0];             w[4] = w[0];
-         break;
-      }
-      case 7:
-      {
-         Gs1[0] = 0.949107912342759 ;  w[0] = 0.129484966168870;
-         Gs1[1] = 0.741531185599394 ;  w[1] = 0.279705391489277;
-         Gs1[2] = 0.405845151377397 ;  w[2] = 0.381830050505119;
-         Gs1[3] = 0.000000000000000 ;  w[3] = 0.417959183673469;
-         Gs1[4] = -Gs1[2];             w[4] = w[2];
-         Gs1[5] = -Gs1[1];             w[5] = w[1];
-         Gs1[6] = -Gs1[0];             w[6] = w[0];
-         break;
-      }
-      case 10:
-      {
-         Gs1[0] = 0.973906528517172 ;  w[0] = 0.066671344308688;
-         Gs1[1] = 0.865063366688985 ;  w[1] = 0.149451349150581;
-         Gs1[2] = 0.679409568299024 ;  w[2] = 0.219086362515982;
-         Gs1[3] = 0.433395394129247 ;  w[3] = 0.269266719309996;
-         Gs1[4] = 0.148874338981631 ;  w[4] = 0.295524224714753;
-         Gs1[5] = -Gs1[4];             w[5] = w[4];
-         Gs1[6] = -Gs1[3];             w[6] = w[3];
-         Gs1[7] = -Gs1[2];             w[7] = w[2];
-         Gs1[8] = -Gs1[1];             w[8] = w[1];
-         Gs1[9] = -Gs1[0];             w[9] = w[0];
-         break;
-      }
-      default:
-      {
-         return;
-      }
-   }
-
-   for (i=0; i<nGauss; i++)
-   {
-      for (j=0; j<nGauss; j++)   // map to [0,1] x [0,1]
-      {
-         k = j + (i) * nGauss;
-         Gs2[k][0] = (Gs1[i] + 1.0)/2.0;
-         Gs2[k][1] = (Gs1[j] + 1.0)/2.0;
-         Gs2[k][2] = w[i] * w[j]/4.0;
-      }
-   }
-   delete [] w;
-   delete [] Gs1;
-}
-
-
-//
-// integrand for Lamm equation
-//
-double Integrand(double x_gauss, double D, double sw2,
-double u, double ux, double ut, double v, double vx)
-{
-   return (x_gauss * ut * v + D * x_gauss * ux * vx -
-   sw2 * pow(x_gauss, 2.0) * u * vx);
-}
-
-
-//
-// old version: perform integration on supp(test function) separately on left Q and right T
-//
-void IntQT1(vector <double> vx, double D, double sw2, double **Stif, double dt)
+void US_AstfemMath::IntQT1( QList< double > vx, double D, double sw2, 
+                            double** Stif, double dt )
 {
    // element to define basis functions
-   //
+  
    unsigned int npts, i, k;
    double x_gauss, y_gauss, dval;
    double hh, slope, xn1, phiC, phiCx;
-   vector <double> Lx, Ly, Rx, Ry, Qx, Qy, Tx, Ty;
+   QList< double > Lx, Ly, Rx, Ry, Qx, Qy, Tx, Ty;
    double *phiL, *phiLx, *phiLy, *phiR, *phiRx, *phiRy;
    double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
    Lx.clear();
@@ -853,7 +720,7 @@ void IntQT1(vector <double> vx, double D, double sw2, double **Stif, double dt)
    {
       x_gauss = Lam[k][0] * Qx[0] + Lam[k][1] * Qx[1] + Lam[k][2] * Qx[2];
       y_gauss = Lam[k][0] * Qy[0] + Lam[k][1] * Qy[1] + Lam[k][2] * Qy[2];
-      DJac = 2.0 * AreaT(&Qx, &Qy);
+      DJac = 2.0 * AreaT( Qx, Qy );
 
       xn1 = x_gauss + slope * ( dt - y_gauss ); // trace-forward point at t_n+1 from (x_g, y_g)
 
@@ -890,7 +757,7 @@ void IntQT1(vector <double> vx, double D, double sw2, double **Stif, double dt)
    {
       x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
       y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-      DJac = 2.0 * AreaT(&Tx, &Ty);
+      DJac = 2.0 * AreaT( Tx, Ty );
 
       if(DJac<1.e-22) break;
 
@@ -934,17 +801,16 @@ void IntQT1(vector <double> vx, double D, double sw2, double **Stif, double dt)
 
    clear_2d(3, StifL);
    clear_2d(4, StifR);
-
-
 }
 
-void IntQTm(vector <double> vx, double D, double sw2, double **Stif, double dt)
+void US_AstfemMath::IntQTm( QList< double > vx, double D, double sw2, 
+                            double** Stif, double dt )
 {
    // element to define basis functions
    //
    unsigned int npts, i, k;
    double x_gauss, y_gauss, dval;
-   vector <double> Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
+   QList< double > Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
    double *phiR, *phiRx, *phiRy;
    double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
    double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
@@ -1080,7 +946,7 @@ void IntQTm(vector <double> vx, double D, double sw2, double **Stif, double dt)
    {
       x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
       y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-      DJac = 2.0 * AreaT(&Tx, &Ty);
+      DJac = 2.0 * AreaT( Tx, Ty );
 
       if(DJac<1.e-22) break;
 
@@ -1129,13 +995,14 @@ void IntQTm(vector <double> vx, double D, double sw2, double **Stif, double dt)
 }
 
 
-void IntQTn2(vector <double> vx, double D, double sw2, double **Stif, double dt)
+void US_AstfemMath::IntQTn2( QList< double > vx, double D, double sw2, 
+                                    double** Stif, double dt )
 {
    // element to define basis functions
    //
    unsigned int npts, i, k;
    double x_gauss, y_gauss, dval;
-   vector <double> Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
+   QList< double > Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
    double *phiR, *phiRx, *phiRy;
    double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
    double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
@@ -1269,7 +1136,7 @@ void IntQTn2(vector <double> vx, double D, double sw2, double **Stif, double dt)
    {
       x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
       y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-      DJac = 2.0 * AreaT(&Tx, &Ty);
+      DJac = 2.0 * AreaT( Tx, Ty );
 
       if(DJac<1.e-22) break;
 
@@ -1315,13 +1182,14 @@ void IntQTn2(vector <double> vx, double D, double sw2, double **Stif, double dt)
    clear_2d(4, StifR);
 }
 
-void IntQTn1(vector <double> vx, double D, double sw2, double **Stif, double dt)
+void US_AstfemMath::IntQTn1( QList< double > vx, double D, double sw2, 
+                             double** Stif, double dt )
 {
    // element to define basis functions
    //
    unsigned int npts, i, k;
    double x_gauss, y_gauss, dval;
-   vector <double> Lx, Ly, Tx, Ty;
+   QList< double > Lx, Ly, Tx, Ty;
    double **StifR=NULL, **Lam=NULL, DJac;
    double *phiL, *phiLx, *phiLy;
    phiL = new double [4];
@@ -1361,12 +1229,12 @@ void IntQTn1(vector <double> vx, double D, double sw2, double **Stif, double dt)
    {
       x_gauss = Lam[k][0] * Tx[0] + Lam[k][1] * Tx[1] + Lam[k][2] * Tx[2];
       y_gauss = Lam[k][0] * Ty[0] + Lam[k][1] * Ty[1] + Lam[k][2] * Ty[2];
-      DJac = 2.0 * AreaT(&Tx, &Ty);
+      DJac = 2.0 * AreaT( Tx, Ty );
 
       if(DJac<1.e-22) break;
-      //
+      
       // find phi, phi_x, phi_y on R and C at (x,y)
-      //
+      
 
       BasisTR(Lx, Ly, x_gauss, y_gauss, phiL, phiLx, phiLy);
 
@@ -1391,13 +1259,12 @@ void IntQTn1(vector <double> vx, double D, double sw2, double **Stif, double dt)
    clear_2d(4, StifR);
 }
 
-
-void DefineFkp(unsigned int npts, double **Lam)
+void US_AstfemMath::DefineFkp( uint npts, double** Lam )
 {
-   //
-   // source: http://people.scs.fsu.edu/~burkardt/datasets/quadrature_rules_tri/quadrature_rules_tri.html
-   //
-   switch (npts)
+   // source: http://people.scs.fsu.edu/~burkardt/datasets/
+   //                   quadrature_rules_tri/quadrature_rules_tri.html
+   
+   switch ( npts )
    {
       case 12:
       //  STRANG9, order 12, degree of precision 6.
@@ -1430,7 +1297,8 @@ void DefineFkp(unsigned int npts, double **Lam)
          break;
       }
       case 28:
-      // TOMS612_28, order 28, degree of precision 11, a rule from ACM TOMS algorithm #612
+      // TOMS612_28, order 28, degree of precision 11, 
+      // a rule from ACM TOMS algorithm #612
       {
          Lam[ 0][0] = 0.33333333333333333  ; Lam[ 0][1] = 0.333333333333333333 ;
          Lam[ 1][0] = 0.9480217181434233   ; Lam[ 1][1] = 0.02598914092828833 ;
@@ -1578,77 +1446,77 @@ void DefineFkp(unsigned int npts, double **Lam)
          return;
       }
    }
-   for(unsigned int i=0; i<npts; i++)
+
+   for( uint i = 0; i < npts; i++ )
    {
       Lam[i][2] = 1. - Lam[i][0] - Lam[i][1];
-      Lam[i][3] /= 2.;        // to make the sum( wt ) = 0.5 = area of standard elem
+      // To make the sum( wt ) = 0.5 = area of standard elem
+      Lam[i][3] /= 2.;   
    }
 }
 
-//
 // AreaT: area of a triangle (v1, v2, v3)
-//
-double AreaT(vector <double> *xv, vector <double> *yv)
+
+double US_AstfemMath::AreaT( QList< double >& xv, QList< double >& yv )
 {
-   return (0.5 * (((*xv)[1] - (*xv)[0]) * ((*yv)[2] - (*yv)[0])
-               - ((*xv)[2] - (*xv)[0]) * ((*yv)[1] - (*yv)[0])));
+   return ( 0.5 * ( ( xv[ 1 ] - xv[ 0 ] ) * ( yv[ 2 ] - yv[ 0 ] )
+                  - ( xv[ 2 ] - xv[ 0 ] ) * ( yv[ 1 ] - yv[ 0 ] ) ) );
 }
 
-//
-// computer basis on standard element
-//
-void BasisTS(double xi, double et, double *phi, double *phi1, double *phi2)
+// Computer basis on standard element
+
+void US_AstfemMath::BasisTS( double xi, double et, double* phi, 
+                             double* phi1, double* phi2 )
 {
-//function [phi, phi1, phi2] = BasisTS(xi,et)
+   //function [phi, phi1, phi2] = BasisTS(xi,et)
 
-   phi[0] = 1.0 - xi - et;
-   phi1[0] = -1.0;
-   phi2[0]= -1.0;
+   phi [ 0 ] =  1.0 - xi - et;
+   phi1[ 0 ] = -1.0;
+   phi2[ 0 ] = -1.0;
 
-   phi[1] = xi;
-   phi1[1] = 1.0;
-   phi2[1] = 0.0;
+   phi [ 1 ] = xi;
+   phi1[ 1 ] = 1.0;
+   phi2[ 1 ] = 0.0;
 
-   phi[2] = et;
-   phi1[2] = 0.0;
-   phi2[2] = 1.0;
+   phi [ 2 ] = et;
+   phi1[ 2 ] = 0.0;
+   phi2[ 2 ] = 1.0;
 }
 
-//
-// computer basis on standard element
-//
-void BasisQS(double xi, double et, double *phi, double *phi1, double *phi2)
+// Computer basis on standard element
+
+void US_AstfemMath::BasisQS( double xi, double et, double* phi, 
+                             double* phi1, double* phi2 )
 {
 
-   phi[0] = (1.0 - xi) * (1.0 - et);
-   phi1[0] = -1.0 * (1.0 - et);
-   phi2[0]= -1.0 * (1.0 - xi);
+   phi [ 0 ] = ( 1.0 - xi ) * ( 1.0 - et );
+   phi1[ 0 ] =  -1.0        * ( 1.0 - et );
+   phi2[ 0 ] =  -1.0        * ( 1.0 - xi );
 
-   phi[1] = xi * (1.0 - et);
-   phi1[1] = 1.0 - et;
-   phi2[1] = -xi;
+   phi [ 1 ] = xi * ( 1.0 - et );
+   phi1[ 1 ] = 1.0 - et;
+   phi2[ 1 ] = -xi;
 
-   phi[2] = xi * et;
-   phi1[2] = et;
-   phi2[2] = xi;
+   phi [ 2 ] = xi * et;
+   phi1[ 2 ] = et;
+   phi2[ 2 ] = xi;
 
-   phi[3] = (1.0 - xi) * et;
-   phi1[3] = -et;
-   phi2[3] = 1.0 - xi;
+   phi [ 3 ] = ( 1.0 - xi ) * et;
+   phi1[ 3 ] = -et;
+   phi2[ 3 ] = 1.0 - xi;
 }
 
-//
-// function BasisTR: compute basis on real element T:
+// Function BasisTR: compute basis on real element T:
 // phi, phi_x, phi_t at a given (xs,ts) point
 // the triangular is assumed to be (x1,y1), (x2, y2), (x3, y3)
-//
-void BasisTR(vector <double> vx, vector <double> vy, double xs,
-double ys, double *phi, double *phix, double *phiy)
+
+void US_AstfemMath::BasisTR( QList< double > vx, QList< double > vy, double xs,
+              double ys, double* phi, double* phix, double* phiy )
 {
    // find (xi,et) corresponding to (xs, ts)
-   //
+   
    unsigned int i;
-   vector <double> tempv1, tempv2;
+   QList< double > tempv1, tempv2;
    tempv1.clear();
    tempv2.clear();
    tempv1.push_back(xs);
@@ -1657,8 +1525,8 @@ double ys, double *phi, double *phix, double *phiy)
    tempv2.push_back(ys);
    tempv2.push_back(vy[2]);
    tempv2.push_back(vy[0]);
-   double AreaK = AreaT(&vx, &vy);
-   double xi = AreaT(&tempv1, &tempv2)/AreaK;
+   double AreaK = AreaT( vx, vy );
+   double xi    = AreaT( tempv1, tempv2 ) / AreaK;
    tempv1.clear();
    tempv2.clear();
    tempv1.push_back(xs);
@@ -1668,14 +1536,14 @@ double ys, double *phi, double *phix, double *phiy)
    tempv2.push_back(vy[0]);
    tempv2.push_back(vy[1]);
 
-   double et = AreaT(&tempv1, &tempv2)/AreaK;
+   double et = AreaT( tempv1, tempv2 ) / AreaK;
 
    double *phi1, *phi2;
 
    phi1 = new double [3];
    phi2 = new double [3];
 
-   BasisTS(xi, et, phi, phi1, phi2);
+   BasisTS( xi, et, phi, phi1, phi2 );
 
    double Jac[4], JacN[4], det;
 
@@ -1691,7 +1559,7 @@ double ys, double *phi, double *phix, double *phiy)
    JacN[2] = -Jac[2]/det;
    JacN[3] = Jac[0]/det;
 
-   for (i=0; i<3; i++)
+   for ( i = 0; i < 3; i++ )
    {
       phix[i] = JacN[0] * phi1[i] + JacN[2] * phi2[i];
       phiy[i] = JacN[1] * phi1[i] + JacN[3] * phi2[i];
@@ -1700,8 +1568,8 @@ double ys, double *phi, double *phix, double *phiy)
    delete [] phi2;
 }
 
-void BasisQR(vector <double> vx, double xs,
-double ts, double *phi, double *phix, double *phiy, double dt)
+void US_AstfemMath::BasisQR( QList< double > vx, double xs, double ts, double* phi, 
+              double* phix, double* phiy, double dt )
 {
    unsigned int i;
 
@@ -1716,7 +1584,7 @@ double ts, double *phi, double *phix, double *phiy, double dt)
    phi1 = new double [4];
    phi2 = new double [4];
 
-   BasisQS(xi, et, phi, phi1, phi2);
+   BasisQS( xi, et, phi, phi1, phi2 );
 
    double Jac[4], JacN[4], det;
 
@@ -1727,12 +1595,12 @@ double ts, double *phi, double *phix, double *phiy, double dt)
 
    det = Jac[0] * Jac[3] - Jac[1] * Jac [2];
 
-   JacN[0] = Jac[3]/det;
+   JacN[0] =  Jac[3]/det;
    JacN[1] = -Jac[1]/det;
    JacN[2] = -Jac[2]/det;
-   JacN[3] = Jac[0]/det;
+   JacN[3] =  Jac[0]/det;
 
-   for (i=0; i<4; i++)
+   for ( i = 0; i < 4; i++ )
    {
       phix[i] = JacN[0] * phi1[i] + JacN[2] * phi2[i];
       phiy[i] = JacN[1] * phi1[i] + JacN[3] * phi2[i];
@@ -1740,6 +1608,147 @@ double ts, double *phi, double *phix, double *phiy, double dt)
    delete [] phi1;
    delete [] phi2;
 }
+
+// Integrand for Lamm equation
+
+double US_AstfemMath::Integrand(double x_gauss, double D,  double sw2,
+                 double u,       double ux, double ut, 
+                 double v,       double vx )
+{
+   return ( x_gauss * ut * v + 
+            D * x_gauss * ux * vx -
+            sw2 * sq( x_gauss ) * u * vx );
+}
+
+// Source: http://www.math.ntnu.no/num/nnm/Program/Numlibc/
+
+void US_AstfemMath::DefineGaussian( uint nGauss, double** Gs2 )
+{
+   double* Gs1 = new double [ nGauss ];
+   double* w   = new double [ nGauss ];
+
+   switch ( nGauss )
+   {
+      case 3:
+      {
+         Gs1[0] = -0.774596669241483;  w[0] = 5.0/9.0;
+         Gs1[1] = 0.0;                 w[1] = 8.0/9.0;
+         Gs1[2] = 0.774596669241483;   w[2] = 5.0/9.0;
+         break;
+      }
+      case 5:
+      {
+         Gs1[0] = 0.906179845938664 ;  w[0] = 0.236926885056189;
+         Gs1[1] = 0.538469310105683 ;  w[1] = 0.478628670499366;
+         Gs1[2] = 0.000000000000000 ;  w[2] = 0.568888888888889;
+         Gs1[3] = -Gs1[1];             w[3] = w[1];
+         Gs1[4] = -Gs1[0];             w[4] = w[0];
+         break;
+      }
+      case 7:
+      {
+         Gs1[0] = 0.949107912342759 ;  w[0] = 0.129484966168870;
+         Gs1[1] = 0.741531185599394 ;  w[1] = 0.279705391489277;
+         Gs1[2] = 0.405845151377397 ;  w[2] = 0.381830050505119;
+         Gs1[3] = 0.000000000000000 ;  w[3] = 0.417959183673469;
+         Gs1[4] = -Gs1[2];             w[4] = w[2];
+         Gs1[5] = -Gs1[1];             w[5] = w[1];
+         Gs1[6] = -Gs1[0];             w[6] = w[0];
+         break;
+      }
+      case 10:
+      {
+         Gs1[0] = 0.973906528517172 ;  w[0] = 0.066671344308688;
+         Gs1[1] = 0.865063366688985 ;  w[1] = 0.149451349150581;
+         Gs1[2] = 0.679409568299024 ;  w[2] = 0.219086362515982;
+         Gs1[3] = 0.433395394129247 ;  w[3] = 0.269266719309996;
+         Gs1[4] = 0.148874338981631 ;  w[4] = 0.295524224714753;
+         Gs1[5] = -Gs1[4];             w[5] = w[4];
+         Gs1[6] = -Gs1[3];             w[6] = w[3];
+         Gs1[7] = -Gs1[2];             w[7] = w[2];
+         Gs1[8] = -Gs1[1];             w[8] = w[1];
+         Gs1[9] = -Gs1[0];             w[9] = w[0];
+         break;
+      }
+      default:
+      {
+         return;
+      }
+   }
+
+   for ( uint i = 0; i < nGauss; i++ )
+   {
+      for ( uint j = 0; j < nGauss; j++ )   // map to [0,1] x [0,1]
+      {
+         uint k = j + i * nGauss;
+
+         Gs2[ k ][ 0 ] = ( Gs1[ i ] + 1.0 ) / 2.0;
+         Gs2[ k ][ 1 ] = ( Gs1[ j ] + 1.0 ) / 2.0;
+
+         Gs2[ k ][ 2 ] = w[ i ] * w[ j ] / 4.0;
+      }
+   }
+
+   delete [] w;
+   delete [] Gs1;
+}
+#ifdef NEVER
+#if defined(DEBUG_ALLOC)
+
+struct _created_matrices {
+  unsigned long addr;
+  unsigned int val1;
+  unsigned int val2;
+};
+
+static list <_created_matrices> created_matrices;
+
+void init_matrices_alloc() 
+{
+  created_matrices.clear();
+  puts("init_matrices_alloc()");
+}
+
+void list_matrices_alloc() 
+{
+  if (created_matrices.size()) {
+    printf("allocated matrices:\n");
+  }
+  list<_created_matrices>::iterator Li;
+
+  for (Li = created_matrices.begin(); Li != created_matrices.end(); Li++) 
+  {
+    printf("addr %lx val1 %u val2 %u\n",
+      Li->addr,
+      Li->val1,
+      Li->val2
+      );
+  }
+}
+
+static list<_created_matrices>::iterator find_matrices_alloc(unsigned long addr) {
+  list<_created_matrices>::iterator Li;
+  for (Li = created_matrices.begin(); Li != created_matrices.end(); Li++) 
+  {
+    if (Li->addr == addr) 
+    {
+      return Li;
+    }
+  }
+  return Li;
+}
+
+#endif
+
+
+
+
+
+
+
+
+
+
 
 
 void IntQT1_ellam(vector <double> vx, double D, double sw2, double **Stif, double dt)

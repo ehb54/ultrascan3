@@ -32,7 +32,7 @@ US_ClipData::US_ClipData( double& concentration, double& radius,
 
    ct_conc = us_counter( 2, loading, conc, loading * 2 );
    ct_conc->setStep( 0.1 );
-   main->addWidget( lb_loading, row + 1, 1 );
+   main->addWidget( ct_conc, row + 1, 1 );
    row += 2;
 
    QLabel* lb_rad = us_label( tr( "Maximum Radius:" ) );

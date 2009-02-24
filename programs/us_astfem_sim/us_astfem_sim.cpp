@@ -32,7 +32,6 @@ int main( int argc, char* argv[] )
 US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f ) 
    : US_Widgets( p, f )
 {
-
    setWindowTitle( "ASTFEM Simulation Module" );
    setPalette( US_GuiSettings::frameColor() );
    init_simparams();
@@ -269,7 +268,6 @@ void US_Astfem_Sim::save_experiment( void )
 void US_Astfem_Sim::new_model( void )
 {
    US_ModelSelection::selectModel( system );
-qDebug() << "Marker s1.0" << system.component_vector.size();
 
    if ( system.model >= 0 )
    {
@@ -280,7 +278,6 @@ qDebug() << "Marker s1.0" << system.component_vector.size();
          pb_simParms   ->setEnabled( true );
          pb_changeModel->setEnabled( true );
       }
-qDebug() << "Marker s1.1" << system.component_vector.size();
    }
 }
 
@@ -319,14 +316,12 @@ void US_Astfem_Sim::load_model( void )
 
 void US_Astfem_Sim::sim_parameters( void )
 {
-qDebug() << "Marker s2.1" << system.component_vector.size();
    US_SimulationParameters* sp = new US_SimulationParameters( simparams );
    
    if ( sp->exec() )
    {
       pb_start  ->setEnabled( true );
       pb_saveExp->setEnabled( true );
-qDebug() << "Marker s2.2" << system.component_vector.size();
    }
 }
 
@@ -438,10 +433,19 @@ void US_Astfem_Sim::start_simulation( void )
    astfem_rsa->setStopFlag( stopFlag );
    
    simparams.band_firstScanIsConcentration = false;
-qDebug() << "Marker 1" << system.description << system.model;  
+
    //astfem_rsa->calculate( system, simparams, astfem_data );
+
+// Debug
+//dump_system();
+//dump_simparms();
+//dump_astfem_data();
+
    astfem_rsa->calculate( astfem_data );
 
+//dump_system();
+//dump_simparms();
+//dump_astfem_data();
    // Add noise
    
    float maxconc = 0.0;
@@ -511,6 +515,10 @@ qDebug() << "Marker 1" << system.description << system.model;
       progress->setValue( system.component_vector.size() ); 
    }
 
+   pb_stop   ->setEnabled( false  );
+   pb_start  ->setEnabled( true );
+   pb_saveExp->setEnabled( true );
+
    stopFlag = false;
    
    int total_scans = 0;
@@ -540,7 +548,6 @@ qDebug() << "Marker 1" << system.description << system.model;
          int radius_count = astfem_data[ i ].radius.size();
          int scan_count   = astfem_data[ i ].scan.size();
 
-qDebug() << "Marker plotcurve1.1" << radius_count << scan_count;
          x = new double  [ radius_count ];
          y = new double* [ scan_count   ];
 
@@ -641,7 +648,7 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
    }
 
    US_ClipData* cd = new US_ClipData( maxc, b, m, total_conc );
-   cd->exec();
+   if ( ! cd->exec() ) return;
    
    progress->setMaximum( total_scans );
    progress->reset();
@@ -718,7 +725,6 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
          current_scan++;
          progress->setValue( current_scan );
          qApp->processEvents();
- usleep(100000);
          //f.close();
       }
    }
@@ -754,7 +760,7 @@ void US_Astfem_Sim::save_ultrascan( const QString& filename )
 
    double maxrad = b;
    US_ClipData* cd = new US_ClipData( maxc, maxrad, m, total_conc );
-   cd->exec();
+   if ( ! cd->exec() ) return;
 
    progress->setMaximum( total_scans );
    progress->reset();
@@ -992,7 +998,6 @@ void US_Astfem_Sim::save_ultrascan( const QString& filename )
 
 void US_Astfem_Sim::update_progress( int component )
 {
-qDebug() << "Marker B";
    if ( component == -1 )
    {
       progress->setValue( system.component_vector.size() );
@@ -1009,20 +1014,25 @@ qDebug() << "Marker B";
 
 void US_Astfem_Sim::update_movie_plot( QList< double >& x, double* c )
 {
-   //moviePlot->clear();
+   //debug
+   static int count = 0;
+   count++;
+   if ( count < 3 )
+   {
+      qDebug() << "size of x" <<  x.size();
+      for ( int i = 0; i < 20; i++ )
+      {
+         qDebug() << x[ i ] << c[ i ];
+      }
+   }
+   // end debug
+
+   moviePlot->clear();
    double total_c = 0.0;
    
    for ( int i = 0; i < system.component_vector.size(); i++ )
       total_c += system.component_vector[ i ].concentration;
 
-if ( curve_count == 0 )
-{
-qDebug() << "Marker A0.9" << system.component_vector.size();
-   for ( int z = 0; z < system.component_vector.size(); z++ )
-       qDebug() << system.component_vector[ z ].concentration;
-}
-
-qDebug() << "Marker A1" << total_c  << curve_count;
    moviePlot->setAxisScale( QwtPlot::yLeft, 0, total_c * 2.0 );
    
    double* r = new double [ x.size() ];
@@ -1041,3 +1051,146 @@ qDebug() << "Marker A1" << total_c  << curve_count;
    
    delete [] r;
 }
+
+void US_Astfem_Sim::dump_system( void )
+{
+   //struct ModelSystem
+   qDebug() << "description" <<system.description;
+   qDebug() << "model" << system.model;
+   qDebug() << "component vector size" << system.component_vector.size();
+   for ( int i = 0; i < system.component_vector.size(); i++ ) 
+   {
+      qDebug() << "component vector " << i;
+      dump_simComponent( system.component_vector[ i ] );
+   }
+   qDebug() << "association vector size" << system.assoc_vector.size();
+   for ( int i = 0; i < system.assoc_vector.size(); i++ )
+   {
+      qDebug() << "Association vector " << i;
+      dump_association( system.assoc_vector[ i ] );
+   }
+}
+
+void US_Astfem_Sim::dump_simComponent( struct SimulationComponent& sc )
+{
+   qDebug() << "vbar20" << sc.vbar20;
+   qDebug() << "mw" << sc.mw;
+   qDebug() << "s" << sc.s;
+   qDebug() << "D" << sc.D;
+   qDebug() << "sigma" << sc.sigma;
+   qDebug() << "delta" << sc.delta;
+   qDebug() << "extinction" << sc.extinction;
+   qDebug() << "concentration" << sc.concentration;
+   qDebug() << "f_f0" << sc.f_f0;
+   qDebug() << "show_conc" << sc.show_conc;
+   qDebug() << "show_keq" << sc.show_keq;
+   qDebug() << "show_koff" << sc.show_koff;
+   qDebug() << "show_stoich" << sc.show_stoich;
+   qDebug() << "QList show_component" << sc.show_component;
+   qDebug() << "shape" << sc.shape;
+   qDebug() << "name" << sc.name;
+   qDebug() << "mfem_initial:";
+   dump_mfem_initial( sc.c0 );
+}
+
+void US_Astfem_Sim::dump_mfem_initial( struct mfem_initial& mfem )
+{
+   qDebug() << "radius list size " << mfem.radius.size();
+   qDebug() << "radius list" << mfem.radius;
+   qDebug() << "concentration list size " << mfem.concentration.size();
+   qDebug() << "concentration list" << mfem.concentration;
+}
+
+void US_Astfem_Sim::dump_association( struct Association& as )
+{
+   qDebug() << "keq" << as.keq;
+   qDebug() << "koff" << as.k_off;
+   qDebug() << "units" << as.units;
+   qDebug() << "component1" << as.component1;
+   qDebug() << "component2" << as.component2;
+   qDebug() << "component3" << as.component3;
+   qDebug() << "stoichiometry1" << as.stoichiometry1;
+   qDebug() << "stoichiometry2" << as.stoichiometry2;
+   qDebug() << "stoichiometry3" << as.stoichiometry3;
+   qDebug() << "comp list size " << as.comp.size();
+   qDebug() << "comp list " << as.comp;
+   qDebug() << "stoich list size " << as.stoich.size();
+   qDebug() << "stoich list " << as.stoich;
+   qDebug() << "react list size " << as.react.size();
+   qDebug() << "react list " << as.react;
+}
+
+void US_Astfem_Sim::dump_simparms( void )
+{
+   qDebug() << "simparams";
+   qDebug() << "mesh_radius list size " << simparams.mesh_radius.size();
+   qDebug() << "mesh_radius list " << simparams.mesh_radius;;
+   qDebug() << "speed profile list size " << simparams.speed_step.size();
+   for ( int i = 0; i < simparams.speed_step.size(); i++ ) dump_ss( simparams.speed_step[ i ] );
+   qDebug() << "simpoints " << simparams.simpoints;
+   qDebug() << "mesh " << simparams.mesh;
+   qDebug() << "moving_grid " << simparams.moving_grid;
+   qDebug() << "radial_resolution " << simparams.radial_resolution;
+   qDebug() << "meniscus " << simparams.meniscus;
+   qDebug() << "bottom " << simparams.bottom;
+   qDebug() << "rnoise " << simparams.rnoise;
+   qDebug() << "tinoise " << simparams.tinoise;
+   qDebug() << "rinoise " << simparams.rinoise;
+   qDebug() << "rotor " << simparams.rotor;
+   qDebug() << "band_forming " << simparams.band_forming;
+   qDebug() << "band_volume " << simparams.band_volume;
+   qDebug() << "band_firstScanIsConcentration " << simparams.band_firstScanIsConcentration;
+}
+
+void US_Astfem_Sim::dump_ss( struct SpeedProfile& sp )
+{
+   qDebug() << "speed profile";
+   qDebug() << "duration_hours " << sp.duration_hours;
+   qDebug() << "duration_minutes " << sp.duration_minutes;
+   qDebug() << "delay_hours " << sp.delay_hours;
+   qDebug() << "delay_minutes " << sp.delay_minutes;
+   qDebug() << "scans " << sp.scans;
+   qDebug() << "acceleration " << sp.acceleration;
+   qDebug() << "rotorspeed " << sp.rotorspeed;
+   qDebug() << "acceleration_flag " << sp.acceleration_flag;
+}
+
+void US_Astfem_Sim::dump_astfem_data( void )
+{
+   qDebug() << "astfem_data---- list size " << astfem_data.size();
+   for ( int j = 0; j < astfem_data.size(); j++ ) 
+   {
+      qDebug() << "id " << astfem_data[ j ].id;
+      qDebug() << "cell " << astfem_data[ j ].cell;
+      qDebug() << "channel " << astfem_data[ j ].channel;
+      qDebug() << "wavelength " << astfem_data[ j ].wavelength;
+      qDebug() << "rpm " << astfem_data[ j ].rpm;
+      qDebug() << "s20w_correction " << astfem_data[ j ].s20w_correction;
+      qDebug() << "D20w_correction " << astfem_data[ j ].D20w_correction;
+      qDebug() << "viscosity " << astfem_data[ j ].viscosity;
+      qDebug() << "density " << astfem_data[ j ].density;
+      qDebug() << "vbar " << astfem_data[ j ].vbar;
+      qDebug() << "avg_temperature " << astfem_data[ j ].avg_temperature;
+      qDebug() << "vbar20 " << astfem_data[ j ].vbar20;
+      qDebug() << "meniscus " << astfem_data[ j ].meniscus;
+      qDebug() << "bottom " << astfem_data[ j ].bottom;
+      qDebug() << "radius list size " << astfem_data[ j ].radius.size();
+      //qDebug() << "radius list " << astfem_data[ j ].radius;;
+      qDebug() << "scan list size " << astfem_data[ j ].scan.size();
+      for ( int i = 0; i < astfem_data[ j ].scan.size(); i++ ) 
+         dump_mfem_scan( astfem_data[ j ].scan [ i ] );
+   }
+}
+
+void US_Astfem_Sim::dump_mfem_scan( struct mfem_scan& ms )
+{
+   qDebug() << "mfem_scan----";
+   qDebug() << "time " << ms.time;
+   qDebug() << "omega_s_t " << ms.omega_s_t;
+   qDebug() << "rpm " << ms.rpm;
+   qDebug() << "temperature " << ms.temperature;
+   qDebug() << "time " << ms.time;
+   qDebug() << "conc list size " << ms.conc.size();
+   //qDebug() << "conc " << ms.conc;
+}
+ 

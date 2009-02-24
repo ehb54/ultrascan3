@@ -308,10 +308,10 @@ US_PlotConfig::US_PlotConfig( US_Plot* current_plot, QWidget* p,
    // Populate list widget
    QwtPlotItemList list = plot->itemList();
 
+   int j = 1;
+
    for ( int i = 0; i < list.size(); i++ )
    {
-      int j = 1;
-
       if ( list[ i ]->rtti() == QwtPlotItem::Rtti_PlotCurve )
       {
          QString label = "(" + QString::number( j++ ) + ") ";   
