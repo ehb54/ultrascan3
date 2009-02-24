@@ -78,6 +78,27 @@ class US_EXTERN US_AstfemMath
    static int    interpolate  ( struct mfem_data&, struct mfem_data&, bool );  
    static void   QuadSolver   (double*, double*, double*, double*, 
                                double*, double*, uint);
+   
+   static void   IntQT1       ( QList< double >, double, double, double**, double );
+   static void   IntQTm       ( QList< double >, double, double, double**, double );
+   static void   IntQTn2      ( QList< double >, double, double, double**, double );
+   static void   IntQTn1      ( QList< double >, double, double, double**, double );
+   static void   DefineFkp    ( uint, double** );
+   static double AreaT        ( QList< double >&, QList< double >& );
+
+   static void   BasisTS      ( double, double, double*, double*, double*);
+   static void   BasisQS      ( double, double, double*, double*, double*);
+   
+   static void   BasisTR      ( QList< double >, QList< double >, double, double, 
+                               double*, double*, double* );
+   
+   static void   BasisQR      ( QList< double >, double, double, double*, double*, 
+                                double*, double );
+
+   static double Integrand    ( double, double, double, double, double, double, 
+                                double, double);
+
+   static void  DefineGaussian( uint, double** );
 };
 
 
@@ -101,18 +122,6 @@ using namespace std;
 
 
 
-double Integrand(double, double, double, double, double, double, double, double);
-void DefineGaussian(unsigned int, double **);
-void IntQT1(vector <double>, double, double, double**, double);
-void IntQTm(vector <double>, double, double, double**, double);
-void IntQTn2(vector <double>, double, double, double**, double);
-void IntQTn1(vector <double>, double, double, double**, double);
-void DefineFkp(unsigned int, double **);
-double AreaT(vector <double> *, vector <double> *);
-void BasisTS(double, double, double *, double *, double *);
-void BasisQS(double, double, double *, double *, double *);
-void BasisTR(vector <double>, vector <double>, double, double, double *, double *, double *);
-void BasisQR(vector <double>, double, double, double *, double *, double *, double);
 void IntQT1_ellam(vector <double>, double, double, double**, double);
 void IntQTm_ellam(vector <double>, double, double, double**, double);
 void IntQTn1_ellam(vector <double>, double, double, double**, double);
