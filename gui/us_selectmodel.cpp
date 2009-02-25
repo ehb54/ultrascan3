@@ -29,10 +29,9 @@ US_SelectModel::US_SelectModel( int& selection, bool show_equation )
    for ( int i = 0; i < models.size(); i++ )
       lw_models->addItem( models[ i ] );
 
-   main->addWidget( lw_models );
+   lw_models->setCurrentItem( 0, QItemSelectionModel::Select );
 
-   QPushButton* pb_select = us_pushbutton( tr( "Select Model" ) );
-   connect( pb_select, SIGNAL( clicked() ), SLOT( select_model() ) );
+   main->addWidget( lw_models );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
@@ -40,10 +39,14 @@ US_SelectModel::US_SelectModel( int& selection, bool show_equation )
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
 
+   QPushButton* pb_select = us_pushbutton( tr( "Select Model" ) );
+   connect( pb_select, SIGNAL( clicked() ), SLOT( select_model() ) );
+
+
    QBoxLayout* buttons = new QHBoxLayout;
-   buttons->addWidget( pb_select );
    buttons->addWidget( pb_help   );
    buttons->addWidget( pb_cancel );
+   buttons->addWidget( pb_select );
 
    main->addLayout( buttons );
 }

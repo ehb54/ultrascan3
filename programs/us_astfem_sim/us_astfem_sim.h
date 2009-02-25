@@ -31,6 +31,7 @@ class US_Astfem_Sim : public US_Widgets
       QCheckBox*     cb_timeCorr;
                     
       QPushButton*   pb_saveExp;
+      QPushButton*   pb_saveSim;
       QPushButton*   pb_simParms;
       QPushButton*   pb_changeModel;
       QPushButton*   pb_start;
@@ -93,10 +94,6 @@ class US_Astfem_Sim : public US_Widgets
 
       void update_time_corr( void )
          { time_correctionFlag = cb_timeCorr->isChecked(); };
-
-      void update_movieFlag( void )
-         { cb_movie->isChecked(); };
-
 };                                                                   
 #endif                                                               
                                                                      

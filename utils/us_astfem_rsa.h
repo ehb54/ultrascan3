@@ -25,6 +25,8 @@ class US_EXTERN US_Astfem_RSA : public QObject
                               //!< based on time (=true) or 
                               //!< based on omega-square-t integral (=false)
       
+      bool show_movie;
+
       //! Keep track of time globally for w2t_integral calculation
       double last_time;      
 
@@ -63,14 +65,15 @@ class US_EXTERN US_Astfem_RSA : public QObject
              
       int    calculate_ra2    ( double, double, mfem_initial*, mfem_data&, bool );         
 
-      void   GlobalStiff      ( QList< double >& xb, double** ca, double** cb,
-                                double D, double sw2 );
+      void   GlobalStiff      ( QList< double >&, double**, double**,
+                                double, double );
 
    public: 
 
       void setTimeCorrection   ( bool flag ){ time_correction = flag; }; 
       void setTimeInterpolation( bool flag ){ use_time        = flag; };
       void setStopFlag         ( bool flag ){ stopFlag        = flag; };    
+      void set_movie_flag      ( bool flag ){ show_movie      = flag; };
       
       int  calculate           ( //struct ModelSystem&, 
                                  //struct SimulationParameters&, 
@@ -83,11 +86,8 @@ class US_EXTERN US_Astfem_RSA : public QObject
       void current_speed    ( unsigned int              );
 
 #ifdef NEVER
-      void GlobalStiff(vector <double> *, double **, double **, double, double);
       void GlobalStiff_ellam(vector <double> *, double **, double **, double, double);
-
       void adjust_grid( uint /*old speed*/, uint /*new speed*/, QList <double> * /*radial grid*/);
-
 #endif
 };
 
