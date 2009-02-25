@@ -13,18 +13,15 @@ void US_AstfemMath::interpolate_C0( struct mfem_initial& C0, double* C1,
       double xs = x[ j ];
       
       for ( i = ja; i < C0.radius.size(); i++ )
-      {
          if ( C0.radius[ i ] > xs + 1.e-12 ) break; 
-      }
+      
 
       if ( i == 0 )                        // x[j] < C0.radius[0]
-      {
-         C1[ j ] = C0.concentration[ 0 ];  // use the first value
-      }
-      else if ( i == C0.radius.size() )    // x[j] > last point in (*C0).radius
-      {
+         C1[ j ] = C0.concentration[ 0 ];  // Use the first value
+      
+      else if ( i == C0.radius.size() )    // x[j] > last point in C0.radius[]
          C1[ j ] = C0.concentration[ i - 1 ];
-      }
+      
       else
       {
          double a = C0.radius[ i - 1 ];
@@ -52,18 +49,15 @@ void US_AstfemMath::interpolate_C0( struct mfem_initial& C0,
       double xs = C1.radius[ j ];
       
       for ( i = ja; i < C0.radius.size(); i++ )
-      {
          if ( C0.radius[ i ] > xs + 1.e-12 )  break; 
-      }
+      
 
       if ( i == 0 )                         // x[j] < C0.radius[0]
-      {
-         C1.concentration[ j ] = C0.concentration[ 0 ];   // use the first value
-      }
-      else if ( i == C0.radius.size() )     // x[j] > last point in (*C0).radius
-      {
+         C1.concentration[ j ] = C0.concentration[ 0 ];   // Use the first value
+      
+      else if ( i == C0.radius.size() )     // x[j] > last point in C0.radius[]
          C1.concentration[ j ] = C0.concentration[ i - 1 ];
-      }
+      
       else
       {
          double a   = C0.radius[ i - 1 ];
@@ -87,9 +81,8 @@ void US_AstfemMath::initialize_2d( uint val1, uint val2, double*** matrix )
       (*matrix)[ i ] = new double [ val2 ];
       
       for ( uint j = 0; j < val2; j++ )
-      {
          (*matrix)[ i ][ j ] = 0.0;
-      }
+      
    }
 }
 

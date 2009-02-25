@@ -15,6 +15,7 @@ US_Astfem_RSA::US_Astfem_RSA( struct ModelSystem&          model,
    stopFlag        = false;
    use_time        = false;
    time_correction = true;
+   show_movie      = false;
 }
 
 int US_Astfem_RSA::calculate( //struct ModelSystem&          system, 
@@ -423,7 +424,6 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
    //emit current_component( k + 1 );
    qApp->processEvents();
 
-//qDebug() << "Marker r4";
    if ( time_correction )
    {
       // Check each speed step to see if it contains acceleration
@@ -468,7 +468,6 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
    if ( vC0 != NULL ) delete [] vC0;
    delete [] reacting;
  
-//qDebug() << "Marker r5";
    return 0;
 }
 
@@ -816,7 +815,7 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
    
    // Refine left hand side (when s>0) or right hand side (when s < 0) for
    // acceleration
-int xxx = x.size();
+
    if ( accel )     
    {                             
       uint   j;
@@ -842,12 +841,10 @@ int xxx = x.size();
             if ( x[ N - j - 1 ] < xc ) break;
       }
 
-
       mesh_gen_RefL( j + 1, 4 * j );
    }
 
    for ( uint i = 0; i < N; i++ ) simdata.radius << x[ i ];
-
 
    // Initialize the coefficient matrices
 
@@ -873,12 +870,11 @@ int xxx = x.size();
    else // For acceleration
    {
       US_AstfemMath::initialize_2d( 3, N, &CA1 );
-      US_AstfemMath::initialize_2d( 3, N, &CB1 );
       US_AstfemMath::initialize_2d( 3, N, &CA2 );
+      US_AstfemMath::initialize_2d( 3, N, &CB1 );
       US_AstfemMath::initialize_2d( 3, N, &CB2 );
 
       sw2 = 0.0;
-
       ComputeCoefMatrixFixedMesh( af_params.D[ 0 ], sw2, CA1, CB1 );
 
       sw2 = af_params.s[ 0 ] * sq( rpm_stop * M_PI / 30 );
@@ -895,7 +891,7 @@ int xxx = x.size();
    // Time evolution
    double* right_hand_side = new double [ N ];
 
-   // Calculate all time steps f
+   // Calculate all time steps 
    for ( uint i = 0; i < af_params.time_steps + 1; i++ )
    {
       double rpm_current = rpm_start + 
@@ -907,13 +903,13 @@ int xxx = x.size();
       {
          for ( uint j1 = 0; j1 < 3; j1++ )
          {
-            for( uint j2 = 0; j2 < N; j2++ )
+            for ( uint j2 = 0; j2 < N; j2++ )
             {
-               CA[ j1 ][ j2 ] += sq( rpm_current / rpm_stop ) * 
+               CA[ j1 ][ j2 ] = CA1[ j1 ][ j2 ] + sq( rpm_current / rpm_stop ) * 
                   ( CA2[ j1 ][ j2 ] - CA1[ j1 ][ j2 ] );
                
-               CB[ j1 ][ j2 ] += sq( rpm_current / rpm_stop ) * 
-                  ( CB2[ j1 ][ j2 ] - CB1[ j1 ][ j2 ]);
+               CB[ j1 ][ j2 ] = CB1[ j1 ][ j2 ] + sq( rpm_current / rpm_stop ) * 
+                  ( CB2[ j1 ][ j2 ] - CB1[ j1 ][ j2 ] );
             }
          }
       }
@@ -927,10 +923,13 @@ int xxx = x.size();
       last_time         = simscan.time;
       simscan.omega_s_t = w2t_integral;
 
-      emit new_scan( x, C0 );
-      emit new_time( (float) simscan.time );
+      if ( show_movie )
+      {
+         emit new_scan( x, C0 );
+         emit new_time( (float) simscan.time );
+      }
+     
       qApp->processEvents();
-      
       simscan.conc.clear();
 
       for ( uint j = 0; j < N; j++ ) simscan.conc << C0[ j ];
@@ -964,7 +963,7 @@ int xxx = x.size();
             right_hand_side[ 1 ] = - CB[ 1 ][ 1 ] * C0[ 0 ] 
                                    - CB[ 2 ][ 1 ] * C0[ 1 ];
             
-            for( uint j = 2; j < N; j++ )
+            for ( uint j = 2; j < N; j++ )
             {
                right_hand_side[ j ] = - CB[ 0 ][ j ] * C0[ j - 2 ] 
                                       - CB[ 1 ][ j ] * C0[ j - 1 ] 
@@ -973,7 +972,7 @@ int xxx = x.size();
          }
          else
          {
-            for( uint j = 0; j < N - 2; j++ )
+            for ( uint j = 0; j < N - 2; j++ )
             {
                right_hand_side[ j ] = - CB[ 0 ][ j ] * C0[ j     ] 
                                       - CB[ 1 ][ j ] * C0[ j + 1 ] 
@@ -1398,7 +1397,7 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
       for ( int j = 0; j < M0; j++ )
       {
          double tmp = (double) j / M0;
-         tmp        = 10. - cos( tmp * M_PI / 2.0 );
+         tmp        = 1.0 - cos( tmp * M_PI / 2 );
          zz << x[ 0 ] * ( 1.0 - tmp ) + x[ N0 ] * tmp;
       }
 
@@ -1407,7 +1406,7 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
 
       x.clear();
 
-      for ( int j = 0; j <  zz.size(); j++ ) 
+      for ( int j = 0; j < zz.size(); j++ ) 
          x << zz[ j ];
    }
    else if ( US_AstfemMath::maxval( af_params.s ) < 0 ) //  All species with s<0
@@ -1419,7 +1418,7 @@ void US_Astfem_RSA::mesh_gen_RefL( int N0, int M0 )
       for ( int j = 1; j <= M0; j++ )
       {
          double tmp = (double) j / M0;
-         tmp        = sin( tmp * M_PI / 2.0 );
+         tmp        = sin( tmp * M_PI / 2 );
          zz << x[ x.size() - N0 - 1 ] * ( 1.0 - tmp ) + x[ x.size() - 1 ] * tmp;
       }
       
@@ -1460,7 +1459,8 @@ void US_Astfem_RSA::ComputeCoefMatrixFixedMesh(
       
       stfb0.CompLocalStif( 4, xd, D, sw2, Stif[ k ] );
    }
-   // assembly coefficient matrices
+
+   // Assembly coefficient matrices
    // elem[ 0 ]; i=0
    uint k = 0;
    CA[ 1 ][ k ] = Stif[ k ][ 3 ][ 0 ] + Stif[ k ][ 3 ][ 3 ]; // j=3;
@@ -2207,7 +2207,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
        CT1[ j ] = CT0[ j ];
    }
 
-   // time evolution
+   // Time evolution
    double* right_hand_side = new double [N];
 
    for ( uint kkk = 0; kkk < NN + 2; kkk += 2 )   // two steps in together
@@ -2223,9 +2223,12 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       last_time         = simscan.time;
       simscan.omega_s_t = w2t_integral;
       
-      emit new_scan( x, CT0 );
-      emit new_time( (float) simscan.time );
-      qApp->processEvents();
+      if ( show_movie )
+      {
+         emit new_scan( x, CT0 );
+         emit new_time( (float) simscan.time );
+         qApp->processEvents();
+      }
 
       simscan.conc.clear();
       

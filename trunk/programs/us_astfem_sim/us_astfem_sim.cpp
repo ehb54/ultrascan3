@@ -85,7 +85,6 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    buttonbox->addWidget( pb_simParms );
 
    cb_movie = us_checkbox( "Show Movie", movieFlag );
-   connect( cb_movie, SIGNAL( clicked() ), SLOT( update_movieFlag() ) );
    buttonbox->addWidget( cb_movie );
 
    cb_timeCorr = us_checkbox( "Use Time Correction", time_correctionFlag );
@@ -103,8 +102,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    //QPushButton* pb_dcdt = us_pushbutton( tr( "dC/dt Window"), false );
    //buttonbox->addWidget( pb_dcdt );
 
-   //QPushButton* pb_saveSim = us_pushbutton( tr( "Save Simulation"), false );
-   QPushButton* pb_saveSim = us_pushbutton( tr( "Save Simulation") );
+   pb_saveSim = us_pushbutton( tr( "Save Simulation"), false );
    connect( pb_saveSim, SIGNAL( clicked() ), SLOT( save_scans() ) );
    buttonbox->addWidget( pb_saveSim );
 
@@ -343,7 +341,11 @@ void US_Astfem_Sim::start_simulation( void )
    pb_stop   ->setEnabled( true  );
    pb_start  ->setEnabled( false );
    pb_saveExp->setEnabled( false );
+   pb_saveSim->setEnabled( false );
 
+   astfem_rsa->set_movie_flag( cb_movie->isChecked() );
+   
+ 
    // The astfem simulation routine expects a dataset structure that is
    // initialized with a time and radius grid, and all concentration points
    // need to be set to zero.  Each speed is a separate mfem_data set.
@@ -434,20 +436,9 @@ void US_Astfem_Sim::start_simulation( void )
    
    simparams.band_firstScanIsConcentration = false;
 
-   //astfem_rsa->calculate( system, simparams, astfem_data );
-
-// Debug
-//dump_system();
-//dump_simparms();
-//dump_astfem_data();
-
+   // Run the simulation
    astfem_rsa->calculate( astfem_data );
 
-//dump_system();
-//dump_simparms();
-//dump_astfem_data();
-   // Add noise
-   
    float maxconc = 0.0;
    
    for ( int i = 0; i < system.component_vector.size(); i++ )
@@ -518,6 +509,7 @@ void US_Astfem_Sim::start_simulation( void )
    pb_stop   ->setEnabled( false  );
    pb_start  ->setEnabled( true );
    pb_saveExp->setEnabled( true );
+   pb_saveSim->setEnabled( true );
 
    stopFlag = false;
    
@@ -1014,19 +1006,6 @@ void US_Astfem_Sim::update_progress( int component )
 
 void US_Astfem_Sim::update_movie_plot( QList< double >& x, double* c )
 {
-   //debug
-   static int count = 0;
-   count++;
-   if ( count < 3 )
-   {
-      qDebug() << "size of x" <<  x.size();
-      for ( int i = 0; i < 20; i++ )
-      {
-         qDebug() << x[ i ] << c[ i ];
-      }
-   }
-   // end debug
-
    moviePlot->clear();
    double total_c = 0.0;
    
