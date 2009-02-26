@@ -4,7 +4,7 @@
 #include "us_gui_settings.h"
 #include "us_constants.h"
 
-using namespace US_Constants;
+using namespace US_ConstantModels;
 
 US_SelectModel::US_SelectModel( int& selection, bool show_equation ) 
    : US_WidgetsDialog( 0, 0 ), modelSelected( selection )

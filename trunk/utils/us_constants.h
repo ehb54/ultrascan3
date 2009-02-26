@@ -13,7 +13,7 @@
 #define VISC_20W 0.0100194
 #define DENS_20W 0.998234
 
-namespace US_Constants
+namespace US_ConstantModels
 {
    enum models 
    {

@@ -9,7 +9,7 @@
 // Select a model from the predefined list and initialize the model variables
 // with default values
 
-using namespace US_Constants;
+using namespace US_ConstantModels;
 
 void US_ModelSelection::selectModel( struct ModelSystem& ms )
 {
@@ -73,33 +73,33 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
          // Fixed molecular weight distribution, we need some more 
          // info from the user
          case Fixed:
-
-            int species;
-            
-            US_SelectModel3* SelectModel3 
-               = new US_SelectModel3( mw_upperLimit, 
-                                      mw_lowerLimit, 
-                                      species, 
-                                      model3_vbar, 
-                                      model3_vbarflag, -1 );
-            
-            if ( ! SelectModel3->exec() )
             {
-               ms.model = -1;
-            }
-            else
-            {
-               for ( int i = 0; i < species; i++ )
+               int species;
+               
+               US_SelectModel3* SelectModel3 
+                  = new US_SelectModel3( mw_upperLimit, 
+                                         mw_lowerLimit, 
+                                         species, 
+                                         model3_vbar, 
+                                         model3_vbarflag, -1 );
+               
+               if ( ! SelectModel3->exec() )
                {
-                  ms.component_vector << sc;
-                  struct SimulationComponent* cv = &ms.component_vector[ i ];
-
-                  cv->name = "Component " + QString::number( i + 1 );
+                  ms.model = -1;
                }
-            }
+               else
+               {
+                  for ( int i = 0; i < species; i++ )
+                  {
+                     ms.component_vector << sc;
+                     struct SimulationComponent* cv = &ms.component_vector[ i ];
 
-            break;
-         
+                     cv->name = "Component " + QString::number( i + 1 );
+                  }
+               }
+
+               break;
+            }
          case MonoDimer: // Monomer-Dimer Equilibrium
 
             ms.component_vector << sc << sc;

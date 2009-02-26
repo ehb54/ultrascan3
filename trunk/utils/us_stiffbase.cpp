@@ -88,21 +88,12 @@ void StiffBase::CompLocalStif( int NK, double xd[4][2],
       for ( int j = 0; j < 4; j++ ) 
          Stif[ i ][ j ] = 0.0;
 
-// Debug
-   QFile f( "stiff2" );
-   f.open( QIODevice::WriteOnly | QIODevice::Append );
-   QTextStream ts( &f );
-   QString s;
-
-
-
    for ( int k = 0; k < n_gauss; k++ ) 
    {
       AffineMapping( NK, xd, k, xg   );
       Jacobian     ( NK, xd, k, jcbv );
      
       double wt = ( NK == 3 ) ? xgT[ k ].w : xgQ[ k ].w;
-ts << s.sprintf( "wt %7.4f ;jcbv[ 0 ] %4.7f\n", wt, jcbv[ 0 ] );
 
       if ( NK == 3 ) 
       {
@@ -140,12 +131,9 @@ ts << s.sprintf( "wt %7.4f ;jcbv[ 0 ] %4.7f\n", wt, jcbv[ 0 ] );
                      sw2 * xg[ 0 ] * xg[ 0 ] * phi[ j ] ) * phix[ i ];
         
             Stif[ j ][ i ] += tmp * jcbv[ 0 ] * wt;
-ts << s.sprintf( "tmp %4.7f\n", tmp );
          }
       }
    }
-f.close();
-
 }
 
 void StiffBase::LambdaG( uint kk, double lam1, double lam2, double w, 
@@ -330,70 +318,39 @@ void StiffBase::AffineMapping( int NK, double xd[4][2], int gauss_ind,
 void StiffBase::Jacobian( int NK, double xd[4][2], int gauss_ind, 
       double jcbv[5] ) 
 {
-      double J11 = 0.0;
-      double J12 = 0.0;
-      double J21 = 0.0;
-      double J22 = 0.0;    // jcb = d_x/d_xi
-    
-// Debug
-   QFile f( "stiff4" );
-   f.open( QIODevice::WriteOnly | QIODevice::Append );
-   QTextStream ts( &f );
-   QString s;
-static int count = 0;
-if ( count > 70 && count < 80 )
-   ts << "NK:" << NK << "; gauss_ind: " << gauss_ind << endl;
-
-      if ( NK == 3 ) 
-      {
-        //  triangular element
-        for ( int i = 0; i < 3; i++ ) 
-        {   
-          J11 += xd[ i ][ 0 ] * phiT1[ gauss_ind ][ i ];
-          J12 += xd[ i ][ 0 ] * phiT2[ gauss_ind ][ i ];
-          J21 += xd[ i ][ 1 ] * phiT1[ gauss_ind ][ i ];
-          J22 += xd[ i ][ 1 ] * phiT2[ gauss_ind ][ i ];
-        }
-      } 
-      else 
-      { 
-        // quadrilateral element
-        for( int i = 0; i < 4; i++ ) 
-        {
-          J11 += xd[ i ][ 0 ] * phiQ1[ gauss_ind ][ i ];
-          J12 += xd[ i ][ 0 ] * phiQ2[ gauss_ind ][ i ];
-          J21 += xd[ i ][ 1 ] * phiQ1[ gauss_ind ][ i ];
-          J22 += xd[ i ][ 1 ] * phiQ2[ gauss_ind ][ i ];
-if ( count > 70 && count < 80 )
-{
-  ts << s.sprintf( "phiQ1[ gauss_ind ][ %i ]; %7.4f; phiQ2[ gauss_ind ][ %i ]; %7.4f\n", 
-        i, phiQ1[ gauss_ind ][ i ] , i,  phiQ2[ gauss_ind ][ i ] );
-}
-        }
-      }
-
-if ( count > 70 && count < 80 )
-{
-  ts << "J11: " << J11 << ";  J12; " << J12 << ";  J21: " << J21 << ";  J22: " << J22 << endl;
-}
-      jcbv[ 0 ] =  J11 * J22 - J12 * J21;   // = det(jcb)
-      jcbv[ 1 ] =  J22 / jcbv[ 0 ];     // = d_xi / d_x
-      jcbv[ 2 ] = -J12 / jcbv[ 0 ];     // = d_xi / d_y
-      jcbv[ 3 ] = -J21 / jcbv[ 0 ];     // = d_et / d_x
-      jcbv[ 4 ] =  J11 / jcbv[ 0 ];     // = d_et / d_y
+   double J11 = 0.0;
+   double J12 = 0.0;
+   double J21 = 0.0;
+   double J22 = 0.0;    // jcb = d_x/d_xi
    
-if ( count > 70 && count < 80 )
-{
-   ts << "xd00: " << xd[0][0] << "; xd01: " << xd[0][1] << endl;
-   ts << "xd10: " << xd[1][0] << "; xd11: " << xd[1][1] << endl;
-   ts << "xd20: " << xd[2][0] << "; xd21: " << xd[2][1] << endl;
-   ts << "xd30: " << xd[3][0] << "; xd31: " << xd[3][1] << endl;
-   
-   ts << s.sprintf( "jcbv  %7.4f %7.4f %7.4f %7.4f %7.4f\n\n", jcbv[0], jcbv[1],jcbv[2],jcbv[3],jcbv[4] ); 
-}
-count++;
-f.close();
-// end Debug
+   if ( NK == 3 ) 
+   {
+     //  triangular element
+     for ( int i = 0; i < 3; i++ ) 
+     {   
+       J11 += xd[ i ][ 0 ] * phiT1[ gauss_ind ][ i ];
+       J12 += xd[ i ][ 0 ] * phiT2[ gauss_ind ][ i ];
+       J21 += xd[ i ][ 1 ] * phiT1[ gauss_ind ][ i ];
+       J22 += xd[ i ][ 1 ] * phiT2[ gauss_ind ][ i ];
+     }
+   } 
+   else 
+   { 
+     // quadrilateral element
+     for( int i = 0; i < 4; i++ ) 
+     {
+       J11 += xd[ i ][ 0 ] * phiQ1[ gauss_ind ][ i ];
+       J12 += xd[ i ][ 0 ] * phiQ2[ gauss_ind ][ i ];
+       J21 += xd[ i ][ 1 ] * phiQ1[ gauss_ind ][ i ];
+       J22 += xd[ i ][ 1 ] * phiQ2[ gauss_ind ][ i ];
+     }
+   }
+
+   jcbv[ 0 ] =  J11 * J22 - J12 * J21;   // = det(jcb)
+   jcbv[ 1 ] =  J22 / jcbv[ 0 ];     // = d_xi / d_x
+   jcbv[ 2 ] = -J12 / jcbv[ 0 ];     // = d_xi / d_y
+   jcbv[ 3 ] = -J21 / jcbv[ 0 ];     // = d_et / d_x
+   jcbv[ 4 ] =  J11 / jcbv[ 0 ];     // = d_et / d_y
 }
 
 void StiffBase::LinearBasis( void )
