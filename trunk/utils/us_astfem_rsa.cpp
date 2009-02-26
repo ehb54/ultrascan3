@@ -6,6 +6,7 @@
 #include "us_hardware.h"
 #include "us_math.h"
 #include "us_stiffbase.h"
+#include "us_sleep.h"
 
 US_Astfem_RSA::US_Astfem_RSA( struct ModelSystem&          model, 
                               struct SimulationParameters& params, 
@@ -927,9 +928,10 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
       {
          emit new_scan( x, C0 );
          emit new_time( (float) simscan.time );
+         qApp->processEvents();
+         US_Sleep::msleep( 10 ); // 10 ms to let the display update.
       }
      
-      qApp->processEvents();
       simscan.conc.clear();
 
       for ( uint j = 0; j < N; j++ ) simscan.conc << C0[ j ];
@@ -2228,6 +2230,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
          emit new_scan( x, CT0 );
          emit new_time( (float) simscan.time );
          qApp->processEvents();
+         US_Sleep::msleep( 10 ); // 10 ms to let the display update.
       }
 
       simscan.conc.clear();
