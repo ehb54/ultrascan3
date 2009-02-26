@@ -29,7 +29,8 @@ US_SelectModel::US_SelectModel( int& selection, bool show_equation )
    for ( int i = 0; i < models.size(); i++ )
       lw_models->addItem( models[ i ] );
 
-   lw_models->setCurrentItem( 0, QItemSelectionModel::Select );
+   QListWidgetItem* item = lw_models->item( 0 );
+   item->setSelected( true ) ;
 
    main->addWidget( lw_models );
 
