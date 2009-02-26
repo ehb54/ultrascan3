@@ -2275,6 +2275,13 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, bool use_t
 				// make sure we don't overrun bounds:
 				if (j == tmp_data.radius.size())
 				{
+					printf("tmp_data radius.size() %u last pos %f, (*expdata).radius.size() %u last pos %f\n",
+					       (unsigned int)tmp_data.radius.size(),
+					       tmp_data.radius[tmp_data.radius.size() - 1],
+					       (unsigned int)(*expdata).radius.size(),
+					       (*expdata).radius[(*expdata).radius.size() - 1]
+					       ); fflush(stdout);
+
 					cerr << QObject::tr("The simulated data does not have enough radial points and ends too early!\nexiting...\n");
 #if defined(USE_MPI)
 					MPI_Abort(MPI_COMM_WORLD, -2);
