@@ -1992,4 +1992,5 @@ void US_GridControl_T::add_experiment()
     temp_experiment.avg_temperature = run_inf.avg_temperature;
     experiment.push_back(temp_experiment);
     data_loaded = true;
+    printf("range_left = %f\n", run_inf.range_left[selected_cell][selected_lambda][0]);
 }
