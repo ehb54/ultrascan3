@@ -2,6 +2,8 @@
 // into models for US_Astfem_RSA::calculate() and running calculate to
 // determine residuals
 
+// #define DEBUG_HYDRO
+
 #include <mpi.h>
 
 #include "../include/us_fe_nnls_t.h"
@@ -22,6 +24,23 @@ void us_ga_interacting_init()
 static void update_sD(SimulationComponent *sc, struct mfem_data *exp)
 {
 	QString str;
+#if defined(DEBUG_HYDRO)
+	printf("AVOGADRO: %.8g VISC_20W: %.8g DENS_20W: %8g vbar20: %.8g R: %.8g\n\n", AVOGADRO, VISC_20W, DENS_20W, exp->vbar20, R);
+	printf("s_correction: %.8g D_correction: %.8g\n",
+	       exp->s20w_correction, exp->D20w_correction);
+	printf("before update_sD: %.8g D %.8g k: %.8g mw:%g\n",
+	       sc->s, sc->D, sc->f_f0, sc->mw);
+#endif
+
+	// #define NO_UPDATE_SD
+
+#if defined(NO_UPDATE_SD)
+	sc->s /= exp->s20w_correction;
+	sc->D /= exp->D20w_correction;
+#endif
+
+
+#if !defined(NO_UPDATE_SD)
 	sc->s = 	
 	    (sc->mw * (1.0 - sc->vbar20 * DENS_20W))
 	    / (AVOGADRO * sc->f_f0 * 6.0 * VISC_20W * pow((0.75/AVOGADRO) * sc->mw * sc->vbar20 * M_PI * M_PI, 1.0/3.0))
@@ -32,6 +51,14 @@ static void update_sD(SimulationComponent *sc, struct mfem_data *exp)
 	     sc->f_f0 * 9.0 * VISC_20W * M_PI *
 	     pow((2.0 * sc->s * sc->f_f0 * sc->vbar20 * VISC_20W) / 
 		 (1.0 - sc->vbar20 * DENS_20W), 0.5)) / exp->D20w_correction;
+#endif
+	
+#if defined(DEBUG_HYDRO)
+	printf("after update_sD: %.8g D %.8g k: %.8g\n",
+	       sc->s, sc->D, sc->f_f0);
+	fflush(stdout);
+#endif
+
 }
 
 Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment, 
@@ -89,6 +116,11 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
 		  exit(-1);
 	      }
 	      our_model_system.component_vector[i].mw = solutes[spos++].s;
+#if defined(DEBUG_HYDRO)
+	      printf("forcing mw to 50000\n"); fflush(stdout);
+	      our_model_system.component_vector[i].mw = 50000;
+#endif
+	      
 	  }
 	  if (scp->s.fit) 
 	  {
@@ -342,7 +374,17 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
 
   our_simulation_parameters.band_firstScanIsConcentration = false;
 
+#if defined(DEBUG_HYDRO)
+  printf("ds1 %g D %g s2 %g D2 %g\n",
+	 our_model_system.component_vector[0].s, 
+	 our_model_system.component_vector[0].D,
+	 our_model_system.component_vector[1].s,
+	 our_model_system.component_vector[1].D
+	 );
+#endif
+
   astfem_rsa.calculate(&our_model_system, &our_simulation_parameters, &experiment);
+
 //  printf("rss: exit astfem_rsa_calculate %lu\n", getrss(0)); fflush(stdout);
 
   for (i = 0; i < experiment[0].scan.size(); i++)
@@ -366,13 +408,18 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
     sv.solutes = solutes;
     sv.variance = rmsd;
     rmsd = pow((double) rmsd, 0.5);
-    //    printf("rmsd %g\n", rmsd); fflush(stdout);
     variances.push_back(sv.variance);
     sv.variances = sv.variances;
     sv.ti_noise = no_noise;
     sv.ri_noise = no_noise;
-//    MPI_Abort(MPI_COMM_WORLD, -999);
-//    exit(-1);
+
+#if defined(DEBUG_HYDRO)
+    printf("rmsd %g\n", rmsd); fflush(stdout);
+    printf("debug hydro aborting\n"); fflush(stdout);
+    MPI_Abort(MPI_COMM_WORLD, -9999);
+    exit(-9999);
+#endif
+
 //    printf("rss: exit us_ga_interacting_calc %lu\n", getrss(0)); fflush(stdout);
     return sv;
 }
