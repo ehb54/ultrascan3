@@ -49,6 +49,10 @@ class US_Astfem_Sim : public US_Widgets
                     
       US_Help        showhelp;
 
+      QString        progress_text;
+      int            progress_value;
+      int            progress_maximum;
+
       US_Astfem_RSA* astfem_rsa;
 
       struct ModelSystem          system;
@@ -80,6 +84,9 @@ class US_Astfem_Sim : public US_Widgets
       void stop_simulation ( void );
       void save_scans      ( void );
       void update_progress ( int  );
+      void start_calc      ( unsigned int );
+      void show_progress   ( unsigned int );
+      void calc_over       ( void );
       
       void update_movie_plot( QList< double >&, double* );
 

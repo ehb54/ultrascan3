@@ -26,8 +26,24 @@ US_SelectModel::US_SelectModel( int& selection, bool show_equation )
 
    models = US_Constants::modelStrings();
 
+   int fw = 0;
+   int fh = 0;
+
    for ( int i = 0; i < models.size(); i++ )
+   {
       lw_models->addItem( models[ i ] );
+
+      // Adjust list widget size to show everything (prevent scrolling)
+      QFont        f = lw_models->item( i )->font();
+      QFontMetrics fm( f );
+      int          w = fm.width( models[ i ] );
+      fh            += fm.lineSpacing() + 4; // Add for borders of list items
+      
+      if ( w > fw ) fw = w;
+   }
+
+   lw_models->setMinimumSize( fw + 10 , fh );
+
 
    QListWidgetItem* item = lw_models->item( 0 );
    item->setSelected( true ) ;
