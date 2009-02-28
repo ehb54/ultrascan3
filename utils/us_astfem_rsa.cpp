@@ -221,7 +221,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
          qApp->processEvents();
       }
    }
-   
+
    // Resize af_params.local_index
    af_params.local_index.clear();
    for ( int i = 0; i < size_cv; i++ ) af_params.local_index << 0;
@@ -380,7 +380,6 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
          for ( int m = 1; m < af_params.s.size(); m++ )
              if ( s_max < fabs( af_params.s[m] ) ) s_max = fabs( af_params.s[m] );
 
-
          af_params.omega_s = sq( sp->rotorspeed * M_PI / 30 );
          
          af_params.dt = log( ed->bottom / ed->meniscus) /
@@ -401,6 +400,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
          af_params.time_steps = (unsigned int) ( 1 + duration / af_params.dt );
 
          af_params.start_time = current_time;
+
          calculate_ra2( (double) sp->rotorspeed, (double) sp->rotorspeed, 
                vC0, simdata, false );
          
@@ -593,7 +593,7 @@ void US_Astfem_RSA::initialize_rg( void )
       
       for ( int counter = 1; counter < system.assoc_vector.size(); counter++ ) 
       {
-         struct Association* av = &system.assoc_vector[counter];
+         struct Association* av = &system.assoc_vector[ counter ];
 
          while ( reaction_used[ counter ] )
          {
@@ -687,7 +687,11 @@ void US_Astfem_RSA::initialize_rg( void )
          // Make the next unused reaction the test reaction
          int j = 1;
          
-         while ( reaction_used[ j ] ) j++;
+         while ( reaction_used[ j ] ) 
+         {
+            j++;
+            if ( j >= reaction_used.size() ) return;   
+         }
 
          struct Association* avj = &system.assoc_vector[ j ];
          
@@ -1708,7 +1712,7 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0)
 
    // General cases
    double** C1;
-   double** C2;    // Array for all component at all radius position
+   double** C2;    // Arrays for all components at all radius position
 
    US_AstfemMath::initialize_2d( num_comp, Npts, &C1 );
    US_AstfemMath::initialize_2d( num_comp, Npts, &C2 );
@@ -1725,24 +1729,33 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0)
    // Estimate max time to reach equilibrium and suitable step size:
    // using e^{-k_min * N * dt ) < 1.e-7
    
-   uint   time_max = 100 ;          // maximum number of time steps for reacing equlibrium
-   double k_min    = 1.e12;
-   double TimeStepSize;             // time step size
+   double k_min    = 1.0e12;
    
+   // Get minimum k
    for ( int i = 0; i < af_params.association.size(); i++ )
    {
       if ( k_min > af_params.association[ i ].k_off ) 
-         k_min = af_params.association[ i ].k_off;
+           k_min = af_params.association[ i ].k_off;
    }
 
-   if ( k_min < 1.e-12 ) k_min = 1.e-12;
+   if ( k_min < 1.0e-12 ) k_min = 1.0e-12;
 
-   TimeStepSize = - log(1.e-7) / ( k_min * (double) time_max );
+   const uint time_max     = 100 ;  // max number of time steps to get to equlibrium
+   double     timeStepSize = - log( 1.0e-7 ) / ( k_min * time_max );
 
    // time loop
+   emit calc_start( time_max );
+
    for ( uint ti = 0; ti < time_max; ti++ )
    {
-      ReactionOneStep_Euler_imp( Npts, C1, TimeStepSize );
+      if ( show_movie )
+      {
+         emit calc_progress( ti );
+         qApp->processEvents();
+         US_Sleep::msleep( 10 );
+      }
+
+      ReactionOneStep_Euler_imp( Npts, C1, timeStepSize );
 
       double diff = 0.0;
       double ct   = 0.0;
@@ -1757,15 +1770,20 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0)
          }
       }
 
-      if ( diff < 1.e-5 * ct ) break;
+      if ( diff < 1.0e-5 * ct ) break;
    } // end time steps
+
+   if ( show_movie )
+   {
+      emit calc_done();
+      qApp->processEvents();
+      US_Sleep::msleep( 10 );
+   }
 
    for ( uint i = 0; i < num_comp; i++ )
    {
       for ( uint j = 0; j < Npts; j++ )
-      {
           C0[ i ].concentration[ j ] = C1[ i ][ j ];
-      }
    }
 
    US_AstfemMath::clear_2d( num_comp, C1 );
@@ -1778,7 +1796,7 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0)
 //
 //////////////////////////////%
 void US_Astfem_RSA::ReactionOneStep_Euler_imp( 
-      uint Npts, double** C1, double TimeStep )
+      uint Npts, double** C1, double timeStep )
 {
    uint num_comp = af_params.role.size();
 
@@ -1798,9 +1816,9 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
        {
           double ct = C1[ 0 ][ j ] + C1[ 1 ][ j ];
 
-          double dva = TimeStep * koff * keq;
-          double dvb = TimeStep * koff + 2.;
-          double dvc = TimeStep * koff * ct + 2.0 * C1[ 0 ][ j ];
+          double dva = timeStep * koff * keq;
+          double dvb = timeStep * koff + 2.;
+          double dvc = timeStep * koff * ct + 2.0 * C1[ 0 ][ j ];
           
           if ( st0 == 2 && st1 == 1 )                // mono <--> dimer
              uhat = 2 * dvc / ( dvb + sqrt( dvb * dvb + 4 * dva * dvc ) );
@@ -1834,14 +1852,14 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
    // General cases
    const uint iter_max = 20;      // maximum number of Newton iteration allowed
    
-   double **A, *y0, *delta_n, *b, diff;
+   double** A;
 
-   y0      = new double [ num_comp ];
-   delta_n = new double [ num_comp ];
-   b       = new double [ num_comp ];
+   double*  y0      = new double [ num_comp ];
+   double*  delta_n = new double [ num_comp ];
+   double*  b       = new double [ num_comp ];
    
    US_AstfemMath::initialize_2d( num_comp, num_comp, &A );
-
+   
    for ( uint j = 0; j < Npts; j++ )
    {
       double ct = 0.0;
@@ -1853,22 +1871,25 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
          ct          += fabs( y0[ i ] );
       }
 
-      for( uint iter = 0; iter < iter_max; iter++ ) // Newton iteration
+      for ( uint iter = 0; iter < iter_max; iter++ ) // Newton iteration
       {
+         double diff;
+
          for ( uint i = 0; i < num_comp; i++ ) 
-            y0[ i ]=C1[ i ][ j ] + delta_n[ i ];
+            y0[ i ] = C1[ i ][ j ] + delta_n[ i ];
 
          Reaction_dydt( y0, b );                  // b=dy/dt
-
          Reaction_dfdy( y0, A );                  // A=df/dy
 
          for ( uint i = 0; i < num_comp; i++ )
          {
-            for ( uint k = 0; k < num_comp; k++ ) A[ i ][ k ] *= ( -TimeStep );
+            for ( uint k = 0; k < num_comp; k++ ) A[ i ][ k ] *= ( -timeStep );
             
             A[ i ][ i ] += 2.0;
-            b[ i ]       = - ( 2 * delta_n[ i ] - TimeStep * b[ i ] );
+            b[ i ]       = - ( 2 * delta_n[ i ] - timeStep * b[ i ] );
          }
+
+
 
          if ( US_AstfemMath::GaussElim( num_comp, A, b ) == -1 )
          {
@@ -1886,7 +1907,7 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
             }
          }
 
-         if ( diff < 1.e-7 * ct ) break;
+         if ( diff < 1.0e-7 * ct ) break;
       } // End of Newton iteration;
 
       for ( uint i = 0; i < num_comp; i++ ) C1[ i ][ j ] += delta_n[ i ];
@@ -1900,55 +1921,57 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(
    delete [] y0;
 }
 
-void US_Astfem_RSA::Reaction_dydt( double* y, double* yt )
+void US_Astfem_RSA::Reaction_dydt( double* y0, double* yt )
 {
     uint    num_comp  = rg[ af_params.rg_index ].GroupComponent.size();
     uint    num_rule  = rg[ af_params.rg_index ].association.size();
-    double* Q         = new double [num_rule];
-    
-    for( uint m = 0; m < num_rule; m++ )
+    double* Q         = new double [ num_rule ];
+
+    for ( uint m = 0; m < num_rule; m++ )
     {
         double k_1        = af_params.association[ m ].k_off;
         double k1         = af_params.association[ m ].keq * k_1;
-        
         double Q_reactant = 1.0;
         double Q_product  = 1.0;
         
-        for( int n = 0; n < af_params.association[ m ].comp.size(); n++ )
+        for ( int n = 0; n < af_params.association[ m ].comp.size(); n++ )
         {
            // local index of the n-th component in assoc[rule]
            uint ind_cn = af_params.association[ m ].comp[ n ] ;
            
            // stoich of n-th comp in the rule
-           double stn = af_params.association[ m ].stoich[ n ] ;
+           uint stn = af_params.association[ m ].stoich[ n ] ;
            
            // comp[n] here is reactant
-           if ( af_params.association[ m ].react[n] == 1 ) 
-              Q_reactant *= pow( y[ind_cn], stn );
-           
-           else   
-              Q_product *= pow( y[ ind_cn ], stn );
+           if ( af_params.association[ m ].react[ n ] == 1 ) 
+           {
+              Q_reactant *= pow( y0[ ind_cn ], (double) stn );
+           }
+           else
+           {
+              Q_product  *= pow( y0[ ind_cn ], (double) stn );
+           }
         }
 
         Q[ m ] = k1 * Q_reactant - k_1 * Q_product;
     }
 
-    for( uint i = 0; i < num_comp; i++ )
+    for ( uint i = 0; i < num_comp; i++ )
     {
         yt[ i ] = 0.0;
 
         for ( int m = 0; m < af_params.role[ i ].assoc.size(); m++ )
         {
-            yt[ i ] += - af_params.role[ i ].react[ m ] * 
-                         af_params.role[ i ].st   [ m ] *
-                      Q[ af_params.role[ i ].assoc[ m ] ];
+            yt[ i ] +=      - af_params.role[ i ].react[ m ] * 
+                     (double) af_params.role[ i ].st   [ m ] *
+                           Q[ af_params.role[ i ].assoc[ m ] ];
         }
     }
 
     delete [] Q;
 }
 
-void US_Astfem_RSA::Reaction_dfdy( double* y, double** dfdy )
+void US_Astfem_RSA::Reaction_dfdy( double* y0, double** dfdy )
 {
     double** QC;
 
@@ -1957,10 +1980,10 @@ void US_Astfem_RSA::Reaction_dfdy( double* y, double** dfdy )
 
     US_AstfemMath::initialize_2d( num_rule, num_comp, &QC );
 
-    for ( uint m=0; m < num_rule; m++ )
+    for ( uint m = 0; m < num_rule; m++ )
     {
-        double k_1  = af_params.association[m].k_off;
-        double k1   = af_params.association[m].keq * k_1;
+        double k_1  = af_params.association[ m ].k_off;
+        double k1   = af_params.association[ m ].keq * k_1;
 
         for ( uint j = 0; j < num_comp; j++ )
         {
@@ -1979,23 +2002,23 @@ void US_Astfem_RSA::Reaction_dfdy( double* y, double** dfdy )
               double stn = af_params.association[ m ].stoich[ n ];
 
               // comp[j] is in the rule
-              if ( af_params.association[m].comp[n] == j ) 
+              if ( af_params.association[m].comp[ n ] == j ) 
               {
                   // comp[n] is reactant
                   if ( af_params.association[ m ].react[ n ] == 1 )   
-                     deriv_r = stn * pow( y[ ind_cn ], stn - 1.0 );
+                     deriv_r = stn * pow( y0[ ind_cn ], stn - 1.0 );
                   
                   else      // comp[n] in this rule is reactant
-                     deriv_p = stn * pow( y[ ind_cn ], stn - 1.0 );
+                     deriv_p = stn * pow( y0[ ind_cn ], stn - 1.0 );
               }
               else              // comp[j] is not in the rule
               {
                   // comp[n] is reactant
                   if ( af_params.association[ m ].react[ n ] == 1 )
-                     Q_reactant *= pow( y[ ind_cn ], stn );
+                     Q_reactant *= pow( y0[ ind_cn ], stn );
                   
                   else    // comp[n] in this rule is reactant
-                     Q_product *= pow( y[ ind_cn ], stn );
+                     Q_product *= pow( y0[ ind_cn ], stn );
               }
            }
 
@@ -2012,7 +2035,7 @@ void US_Astfem_RSA::Reaction_dfdy( double* y, double** dfdy )
             for ( int m = 0; m < af_params.role[ i ].assoc.size(); m++ )
             {
                 dfdy[ i ][ j ] += - af_params.role[ i ].react[ m ] * 
-                                    af_params.role[ i ].st   [ m ] * 
+                           (double) af_params.role[ i ].st   [ m ] * 
                                 QC[ af_params.role[ i ].assoc[ m ] ][ j ];
             }
         }
@@ -2078,7 +2101,9 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
          // s_min corresponds to fastest component
          uint   j;
          double sw2 = s_min * sq( rpm_stop * M_PI / 30 ); 
+         
          xc = b + sw2 * ( NN * dt) / 3;
+
          for ( j = 0; j < N - 3; j++ )
          {
             if ( x[ N - j - 1 ] < xc )  break; 
@@ -2093,10 +2118,7 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       }
    }
 
-   for ( uint i = 0; i < N; i++ )
-   {
-      simdata.radius << x[ i ];
-   }
+   for ( uint i = 0; i < N; i++ ) simdata.radius << x[ i ];
 
    // Stiffness matrix on left hand side
    // CA[0...Ms-1][4][0...N-1]

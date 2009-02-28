@@ -54,6 +54,15 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    connect( astfem_rsa, SIGNAL( current_speed( unsigned int ) ), 
             this      , SLOT  ( update_speed ( unsigned int ) ) );
 
+   connect( astfem_rsa, SIGNAL( calc_start( unsigned int ) ), 
+            this      , SLOT  ( start_calc( unsigned int ) ) );
+
+   connect( astfem_rsa, SIGNAL( calc_progress( unsigned int ) ), 
+            this      , SLOT  ( show_progress( unsigned int ) ) );
+
+   connect( astfem_rsa, SIGNAL( calc_done( void ) ), 
+            this      , SLOT  ( calc_over( void ) ) );
+
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
@@ -405,7 +414,7 @@ void US_Astfem_Sim::start_simulation( void )
       double increment = (   sp->duration_hours * 3600 + sp->duration_minutes*60
                            - sp->delay_hours    * 3600 - sp->delay_minutes   *60 
                          ) / sp->scans;
-      
+
       mfem_scan temp_scan;
 
       for ( int j = 0; j < (int) sp->scans; j++ )
@@ -1002,6 +1011,29 @@ void US_Astfem_Sim::update_progress( int component )
       lcd_component->setMode( QLCDNumber::Dec );
       lcd_component->display( component );
    }
+}
+
+void US_Astfem_Sim::show_progress( unsigned int time_step )
+{
+   progress->setValue( time_step );
+}
+
+void US_Astfem_Sim::start_calc( unsigned int steps )
+{
+   progress_text    = lb_progress->text();
+   progress_maximum = progress->maximum();
+   progress_value   = progress->value();
+
+   progress   ->setMaximum( steps );
+   progress   ->reset();
+   lb_progress->setText( tr( "Calculating..." ) );
+}
+
+void US_Astfem_Sim::calc_over( void )
+{
+   progress   ->setMaximum( progress_maximum );
+   progress   ->setValue  ( progress_value );
+   lb_progress->setText( progress_text );
 }
 
 void US_Astfem_Sim::update_movie_plot( QList< double >& x, double* c )

@@ -40,6 +40,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
       struct ModelSystem&           system;
       struct SimulationParameters&  simparams;
 
+      // Functions
       void   update_assocv  ( void );
       void   adjust_limits  ( uint speed );
       double stretch        ( int, uint );
@@ -84,6 +85,9 @@ class US_EXTERN US_Astfem_RSA : public QObject
       void new_time         ( float                     );
       void current_component( int                       );
       void current_speed    ( unsigned int              );
+      void calc_start       ( unsigned int              );
+      void calc_progress    ( unsigned int              );
+      void calc_done        ( void                      );
 
 #ifdef NEVER
       void GlobalStiff_ellam(vector <double> *, double **, double **, double, double);
