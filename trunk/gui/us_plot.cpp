@@ -562,10 +562,10 @@ void US_PlotConfig::gridConfigFinish( void )
 
 /*! 
    \brief Constructor
-   \param temp_plot QwtPlot widget
-   \param k curve key
-   \param p Parent widget
-   \param name Widget name
+   \param currentPlot QwtPlot widget
+   \param selected    A list of curve names to be configured
+   \param parent      Parent widget
+   \param flags       Widget flags
 */
 US_PlotCurveConfig::US_PlotCurveConfig( US_Plot* currentPlot, 
       const QStringList& selected, QWidget* parent, Qt::WindowFlags flags ) 
@@ -1048,7 +1048,7 @@ void US_PlotLabel::paintEvent( QPaintEvent* e )
 /*! 
    \brief Constructor
    \param currentAxis Axis ot configure
-   \param urrentPlot  QwtPlot widget
+   \param currentPlot QwtPlot widget
    \param parent      Parent widget
    \param flags       Frame window flags
 */
@@ -1426,10 +1426,10 @@ void US_PlotAxisConfig::apply( void )
 
 /**************************    US_PlotGridConfig Class    *********************/
 
-/*!  \brief Constructor
-     \param plot   
-     \param parent Parent widget
-     \param flags  Window flags
+/*!  \brief A window to configure the plot grid
+     \param currentPlot The plot to configure   
+     \param parent      Parent widget
+     \param flags       Window flags
 */
 US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot, 
    QWidget* parent, Qt::WindowFlags flags ) : US_Widgets( parent, flags )

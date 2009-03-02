@@ -1,3 +1,4 @@
+//! \file us_stiffbase.h
 #ifndef US_STIFFBASE_H
 #define US_STIFFBASE_H
 

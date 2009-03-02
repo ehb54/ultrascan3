@@ -22,6 +22,8 @@
 class US_EXTERN US_WidgetsDialog : public QDialog
 {
   public: 
+    //! \param w - Parent widget, normally not specified
+    //! \param f - Window flags, normally not specified
     US_WidgetsDialog( QWidget*, Qt::WindowFlags );
     ~US_WidgetsDialog() {};
     

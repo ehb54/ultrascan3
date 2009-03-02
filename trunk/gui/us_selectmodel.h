@@ -7,11 +7,16 @@
 #include "us_widgets_dialog.h"
 #include "us_help.h"
 
+//! \brief A window to select a model for simulation
+
 class US_EXTERN US_SelectModel : public US_WidgetsDialog
 {
 	Q_OBJECT
 	
 	public:
+      //! \param selection - Location for index of selected model
+      //! \param show_equation - A flag to control a popup giving model
+      //!                        details
 		US_SelectModel( int&, bool = false );
 		
    private:

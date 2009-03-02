@@ -29,6 +29,9 @@ class US_EXTERN US_Plot : public QwtPlot
    Q_OBJECT
 
    public:
+      //! \param title  - The title of the plot
+      //! \param x_axis - The title of the x (bottom) axis
+      //! \param y_axis - The title of the y (left) axis
 
       US_Plot( const QString&, const QString&, const QString& );
       ~US_Plot();
@@ -41,14 +44,21 @@ class US_EXTERN US_Plot : public QwtPlot
       void plotConfigFinished( void );
 };
 
+//! \brief A specialized push button class for US_Plot to automatically
+//!        tie a specialed signal to a the push button
 class US_PlotPushbutton : public QPushButton
 {
    Q_OBJECT
 
    public:
+      //! \param labelString -  Text in the button
+      //! \param w           -  Parent widget
+      //! \param index       -  Index value to pass in the signal when pushed
       US_PlotPushbutton( const QString&, QWidget*, int );
 
    signals:
+      //! \brief A signal that passes the index value when the pushbutton was
+      //!        created
       void US_PlotPbPushed( int );
 
    private:
@@ -58,14 +68,19 @@ class US_PlotPushbutton : public QPushButton
       void us_plotClicked( void );
 };
 
+//! \brief A window to allow customization of plots initialized
+//         via US_Plot
+
 class US_PlotConfig : public US_Widgets
 {
    Q_OBJECT
 
    public:
+      //! \param current_plot - The plot to be configured
       US_PlotConfig( US_Plot*, QWidget* = 0, Qt::WindowFlags = 0 );
 
    signals:
+      //! \brief A signal to tell the parent that the window iis closed
       void plotConfigClosed( void );
 
    private:
@@ -107,6 +122,8 @@ class US_PlotConfig : public US_Widgets
 
 class US_PlotLabel;
 
+//! \brief A window to customize plot curves
+
 class US_PlotCurveConfig : public US_Widgets
 {
    Q_OBJECT
@@ -118,6 +135,7 @@ class US_PlotCurveConfig : public US_Widgets
             Qt::WindowFlags = 0 );
 
    signals:
+      //! \brief A signal to tell the parent that the window is closed
       void curveConfigClosed( void );
 
    private:
@@ -155,11 +173,16 @@ class US_PlotCurveConfig : public US_Widgets
       void apply                    ( void );
 };
 
+//! \brief  A window to customize plot labels
 class US_PlotLabel : public QWidget
 {
    Q_OBJECT
 
    public:
+      //! \brief Custom class to display curve configuration
+      //! \param caller - Parent configuration window
+      //! \param p      - Parent widget, generally can be the default
+      //! \param f      - Window flags to be passed, normally the default
       US_PlotLabel( US_PlotCurveConfig*, QWidget* = 0, Qt::WindowFlags = 0 );
       
    private:
@@ -170,6 +193,7 @@ class US_PlotLabel : public QWidget
       void paintEvent( QPaintEvent* );
 };
 
+//! \brief  A window to customize plot axes
 class US_PlotAxisConfig : public US_Widgets
 {
    Q_OBJECT
@@ -178,6 +202,7 @@ class US_PlotAxisConfig : public US_Widgets
       US_PlotAxisConfig( int axis, QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
       
    signals:
+      //! \brief A signal to ensure the parent knows the window is closed.
       void axisConfigClosed( void );
 
    private:
@@ -219,6 +244,7 @@ class US_PlotAxisConfig : public US_Widgets
       void apply               ( void );
 };
 
+//! \brief A window to customize a plot's grid
 class US_PlotGridConfig : public US_Widgets
 {
    Q_OBJECT
@@ -228,6 +254,7 @@ class US_PlotGridConfig : public US_Widgets
       ~US_PlotGridConfig() {};
 
    signals:
+      //! \brief A signal to tell the parent that the window has been closed
       void gridConfigClosed( void );
 
    private:

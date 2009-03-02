@@ -1,3 +1,4 @@
+//! \file us_simulationparameters.h
 #ifndef US_SIMULATIONPARAMETERS_H
 #define US_SIMULATIONPARAMETERS_H
 
@@ -9,10 +10,14 @@
 #include "us_femglobal.h"
 #include "us_help.h"
 
+//! \brief A window for editing simulation parameters
 class US_SimulationParameters : public US_WidgetsDialog
 {
 	Q_OBJECT
 	public:
+      //! \param params - Location for simulation parameters to be updated
+      //! \param p      - Parent widget, normally not specified
+      //! \param f      - Window flags, normally not specified
 		US_SimulationParameters( struct SimulationParameters&, QWidget* = 0, 
             Qt::WindowFlags = 0 );
 
