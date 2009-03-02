@@ -7,7 +7,7 @@
 
 #include "us_extern.h"
 
-//! \brief A text only class to provide a check to ensure a valid license
+//! \brief A text only class to manage HTTP requests
 
 class US_EXTERN US_HttpPost : public QObject
 {

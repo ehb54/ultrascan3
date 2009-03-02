@@ -6,15 +6,16 @@
 
 #include "us_extern.h"
 
-#define AVOGADRO 6.022045e+23
-#define R        8.314472e+07
-#define K0       273.15
-#define K20      293.15
-#define VISC_20W 0.0100194
-#define DENS_20W 0.998234
+#define AVOGADRO 6.022045e+23 //!< Avogadro's number
+#define R        8.314472e+07 //!< Ideal gas constant
+#define K0       273.15       //!< 0 degrees C in Kelvin
+#define K20      293.15       //!< 20 degrees C in Kelvin
+#define VISC_20W 0.0100194    //!< Viscosity of water at 20 degrees C
+#define DENS_20W 0.998234     //!< Density of water at 20 degrees C
 
 namespace US_ConstantModels
 {
+   //! \brief The predefined simulation model types
    enum models 
    {
       Ideal1Comp, 
@@ -38,8 +39,6 @@ namespace US_ConstantModels
       UserIrreversible,
       UserMonoPlusContaminant
    };
-
-
 }
 
 //! \brief Fetch preset values.  All functions are static.

@@ -7,15 +7,35 @@
 #include "us_extern.h"
 #include "us_astfem_math.h"
 
+//! \brief The module that calculates simulation data
 class US_EXTERN US_Astfem_RSA : public QObject
 {
    Q_OBJECT
 
    public:
-
+      //! \brief Initialize the 
+      //! \param model  Reference to the model parmeters
+      //! \param params Referece to the simulation parameters 
+      //! \param parent Parent object, normally not specified
       US_Astfem_RSA( struct ModelSystem&, struct SimulationParameters&, 
             QObject* = 0 );
    
+      int  calculate           ( QList< struct mfem_data >&  );
+
+      void setTimeCorrection   ( bool flag ){ time_correction = flag; }; 
+      void setTimeInterpolation( bool flag ){ use_time        = flag; };
+      void setStopFlag         ( bool flag ){ stopFlag        = flag; };    
+      void set_movie_flag      ( bool flag ){ show_movie      = flag; };
+      
+
+   signals:
+      void new_scan         ( QList< double >&, double* );
+      void new_time         ( float                     );
+      void current_component( int                       );
+      void current_speed    ( unsigned int              );
+      void calc_start       ( unsigned int              );
+      void calc_progress    ( unsigned int              );
+      void calc_done        ( void                      );
    private:
       bool stopFlag;          //!< Stop calculation, interpolate, and return
       bool time_correction;   //!< Decides if output data is time corrected 
@@ -35,7 +55,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
       
       struct AstFemParameters af_params;
 
-      QList< double >               x;    // Radii of grid points; x[0...N-1] 
+      QList< double >               x;    //<! Radii of grid points; x[0...N-1] 
       QList< struct ReactionGroup > rg;
       struct ModelSystem&           system;
       struct SimulationParameters&  simparams;
@@ -69,25 +89,6 @@ class US_EXTERN US_Astfem_RSA : public QObject
       void   GlobalStiff      ( QList< double >&, double**, double**,
                                 double, double );
 
-   public: 
-
-      void setTimeCorrection   ( bool flag ){ time_correction = flag; }; 
-      void setTimeInterpolation( bool flag ){ use_time        = flag; };
-      void setStopFlag         ( bool flag ){ stopFlag        = flag; };    
-      void set_movie_flag      ( bool flag ){ show_movie      = flag; };
-      
-      int  calculate           ( //struct ModelSystem&, 
-                                 //struct SimulationParameters&, 
-                                 QList< struct mfem_data >&  );
-
-   signals:
-      void new_scan         ( QList< double >&, double* );
-      void new_time         ( float                     );
-      void current_component( int                       );
-      void current_speed    ( unsigned int              );
-      void calc_start       ( unsigned int              );
-      void calc_progress    ( unsigned int              );
-      void calc_done        ( void                      );
 
 #ifdef NEVER
       void GlobalStiff_ellam(vector <double> *, double **, double **, double, double);

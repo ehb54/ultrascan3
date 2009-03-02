@@ -1,3 +1,4 @@
+//! \file us_model_editor.h
 #ifndef US_MODEL_EDITOR_H
 #define US_MODEL_EDITOR_H
 
@@ -7,11 +8,16 @@
 #include "us_femglobal.h"
 #include "us_help.h"
 
+//! \brief A window to edit a model for simulation
+
 class US_ModelEditor : public US_WidgetsDialog
 {
 	Q_OBJECT
 
 	public:
+      //! \param current_model - Location of model structure for editing
+      //! \param p             - Parent widget, normally not specified
+      //! \param f             - Window flags, normally not specified
 		US_ModelEditor( struct ModelSystem&, QWidget* = 0, 
             Qt::WindowFlags = 0 );
 

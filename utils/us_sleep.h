@@ -1,4 +1,4 @@
-//! \file us_license_t.h
+//! \file us_sleep.h
 #ifndef US_SLEEP_H
 #define US_SLEEP_H
 
@@ -6,7 +6,7 @@
 
 //! \brief A static only class to provide sleep functions, 
 //! primarily for Windows.  Although this file is in the
-//! utils library directoy, it is not included in the library
+//! utils library directory, it is not included in the library
 //! because everything that is needed is in the header.
 
 class US_Sleep : public QThread
@@ -14,7 +14,7 @@ class US_Sleep : public QThread
   public:
 
     /*! \brief A static function that sleeps seconds
-        \param Seconds to sleep
+        \param secs Seconds to sleep
     */
 
     static void sleep( unsigned long secs )
@@ -23,7 +23,7 @@ class US_Sleep : public QThread
     }
 
     /*! \brief A static function that sleeps milliseconds
-        \param Milliseconds to sleep
+        \param msecs Milliseconds to sleep
     */
 
     static void msleep( unsigned long msecs ) 
@@ -32,7 +32,7 @@ class US_Sleep : public QThread
     }
 
     /*! \brief A static function that sleeps microseconds
-        \param Microseconds to sleep
+        \param usecs Microseconds to sleep
     */
 
     static void usleep( unsigned long usecs ) 

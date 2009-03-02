@@ -4,7 +4,7 @@ for d in utils gui db programs/*
 do
   pushd $d
   make clean
-  rm *~
+  rm -f *~
   popd
 done
 

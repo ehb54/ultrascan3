@@ -1,3 +1,4 @@
+//! \file us_femglobal.h
 #ifndef US_FEMGLOBAL_H
 #define US_FEMGLOBAL_H
 
@@ -12,54 +13,75 @@ struct constraint
    double high;
 };
 
+//! \brief Initial concentration contitions
 struct mfem_initial
 {
-   QList< double > radius;
-   QList< double > concentration;
+   QList< double > radius;         //!< List of radii
+   QList< double > concentration;  //!< List of concentrations corresponding to
+                                   //!< radii
 };
 
+//! \brief A scan entry
 struct mfem_scan
 {
-   double          time;
-   double          omega_s_t;
-   unsigned int    rpm;
-   double          temperature;
-   QList< double > conc;
+   double          time;        //!< Time of the scan
+   double          omega_s_t;   //!< Omega^2 t 
+   unsigned int    rpm;         //!< Rotor speed
+   double          temperature; //!< Temperature at the time of the scan
+   QList< double > conc;        //!< List of concentration values
 };
 
-// A data set comprised of scans from one sample taken at constant speed
+//! \brief A data set comprised of scans from one sample taken at constant speed
 struct mfem_data  
 {
-   QString      id;           // Description of this dataset
-   unsigned int cell;         // Cell position in rotor
-   unsigned int channel;      // Channel number from centerpiece
+   QString      id;           //!< Description of this dataset
+   unsigned int cell;         //!< Cell position in rotor
+   unsigned int channel;      //!< Channel number from centerpiece
 
-   // Single wavelength at which data was acquired (for UV/Vis)
+   //! Single wavelength at which data was acquired (for UV/Vis)
    unsigned int wavelength; 
-   unsigned int rpm;          // Constant rotor speed
+   unsigned int rpm;          //!< Constant rotor speed
    
-   // The number with which a s20,w value needs
-   // to be multiplied to get the s value in experimental space
-   // sT,B = s20,W * s20W_correction:
-   // sT,B = [s_20,W * [(1-vbar*rho)_T,B * eta_20,W] / 
-   //        [(1-vbar*rho)_20,W * eta_T,B]
+   //! The number with which a s20,w value needs
+   //! to be multiplied to get the s value in experimental space
+   //!  - sT,B = s20,W * s20W_correction
+   //!  - sT,B = [s_20,W * [(1-vbar*rho)_T,B * eta_20,W] / 
+   //!        [(1-vbar*rho)_20,W * eta_T,B]
+   
+   /*! 
+      \f[
+        s_{t,b} = s_{20,w} \frac{ ( 1 - (\bar v \rho)_{t,b} ) \eta_{20,w} } 
+                       {( 1 - (\bar v \rho)_{20,w} ) \eta_{t,b} } 
+      \f]
+      <div class='blockcenter'>
+         where: <br>
+
+         \f$ s \f$ = sedimentation coefficient <br>
+         \f$ t \f$ = temperature <br>
+         \f$ b \f$ = buffer <br>
+         \f$ w \f$ = water <br>
+         \f$ \bar v \f$ = average specific volume <br>
+         \f$ \rho \f$ = density <br>
+         \f$ \eta \f$ = viscosity </div>
+   */
+   
    double       s20w_correction;  
    
-   // The number with which a D20,w value needs 
-   // to be multiplied to get the s value in experimental space
-   // DT,B = D20,W * D20w_correction
-   // DT,B = [D20,W * T * eta_20,W] / [293.15 * eta_T,B]
+   //! The number with which a D20,w value needs 
+   //! to be multiplied to get the s value in experimental space
+   //!  - DT,B = D20,W * D20w_correction
+   //!  - DT,B = [D20,W * T * eta_20,W] / [293.15 * eta_T,B]
    
    double       D20w_correction;  
-   double       viscosity;        // viscosity of solvent
-   double       density;          // density of solvent
-   double       vbar;             // temperature corrected vbar
-   double       avg_temperature;  // average temperature of all scans
-   double       vbar20;           // vbar at 20C
-   double       meniscus;
-   double       bottom;           // corrected for speed dependent rotor stretch
-   QList< double>            radius;
-   QList< struct mfem_scan > scan;
+   double       viscosity;        //!< viscosity of solvent
+   double       density;          //!< density of solvent
+   double       vbar;             //!< temperature corrected vbar
+   double       avg_temperature;  //!< average temperature of all scans
+   double       vbar20;           //!< vbar at 20C
+   double       meniscus;         //!< radial position of meniscus
+   double       bottom;           //!< corrected for speed dependent rotor stretch
+   QList< double>            radius; //!< radial gridpoints
+   QList< struct mfem_scan > scan;   //!< list of scan data
 };
 
 struct SimulationComponent
@@ -78,14 +100,14 @@ struct SimulationComponent
    bool   show_koff;
    int    show_stoich;
 
-   // List of associated components for combobox, 
-   // if size == zero component is non-interacting
+   //! List of associated components for combobox, 
+   //! if size == zero component is non-interacting
    QList< unsigned int > show_component; 
    QString shape;
    QString name;
 
-   // The radius/concentration points for a user-defined 
-   // initial concentration grid
+   //! The radius/concentration points for a user-defined 
+   //! initial concentration grid
    struct mfem_initial c0; 
 };
 
@@ -106,30 +128,30 @@ struct Association
    double       keq;
    double       k_off;
 
-   // OpticalDensity, MolecularWeight, MgPerMl, Fringes, Fluorescence 
+   //! OpticalDensity, MolecularWeight, MgPerMl, Fringes, Fluorescence 
    QString      units;
 
    int component1;      // which component is associating
    
-   // Which component is dissociating (in heteroassociation this 
-   // component is associating)
+   //! Which component is dissociating (in heteroassociation this 
+   //! component is associating)
    int component2;
    
-   // Which component is dissociating (only for heteroassoc., 
-   // otherwise, if -1 it means self-assoc)
+   //! Which component is dissociating (only for heteroassoc., 
+   //! otherwise, if -1 it means self-assoc)
    int          component3;
    unsigned int stoichiometry1;  // stoichiometry of the first component
    unsigned int stoichiometry2;  // stoichiometry of the second component
    
-   // Stoichiometry of the third component (0 if reaction only has 2 components)
+   //! Stoichiometry of the third component (0 if reaction only has 2 components)
    unsigned int stoichiometry3; 
    
-   // Vector of all components involved in this reaction (new) 
+   //! Vector of all components involved in this reaction (new) 
    QList< unsigned int > comp;  
    
-   // Vector of stoichiometry of each component (new) 
+   //! Vector of stoichiometry of each component (new) 
    QList< unsigned int > stoich; 
-   QList< int >          react;    // =1 for reactant, = -1 for product
+   QList< int >          react;    //!< = 1 for reactant, = -1 for product
 };
 
 struct AssociationConstraints
@@ -150,14 +172,14 @@ struct ModelSystemConstraints
 {
    QList< struct SimulationComponentConstraints > component_vector_constraints;
    QList< struct AssociationConstraints         > assoc_vector_constraints;
-   unsigned int simpoints;    // number of radial grid points used in simulation
+   unsigned int simpoints;    //!< number of radial grid points used in simulation
    
-   // 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 
-   // 3 = user-selected mesh, 4 = nonuniform constant mesh 
+   //! 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 
+   //! 3 = user-selected mesh, 4 = nonuniform constant mesh 
    unsigned int mesh;
-   int          moving_grid;        // Use moving or fixed time grid
+   int          moving_grid;        //!< Use moving or fixed time grid
    
-   // Loading volume (of lamella) in a band-forming centerpiece 
+   //! Loading volume (of lamella) in a band-forming centerpiece 
    double       band_volume;       
 };
 
@@ -175,47 +197,49 @@ struct SpeedProfile
 
 struct SimulationParameters
 {
-   // The radii from a user-selected mesh file (mesh == 3)
+   //! The radii from a user-selected mesh file (mesh == 3)
    QList< double > mesh_radius; 
 
-   // Note: the radius points of c0 do not have to match the radii in the mesh
-   // file. The radius values of the c0 vector will be interpolated onto
-   // whatever mesh the user has selected.  however, the first and last point
-   // of either the c0 or mesh_radius should match the meniscus, otherwise they
-   // will be ignored or interpolated to the actual meniscus and bottom
-   // position set by the user, which will take precedence.
+   //! Note: the radius points of c0 do not have to match the radii in the mesh
+   //! file. The radius values of the c0 vector will be interpolated onto
+   //! whatever mesh the user has selected.  however, the first and last point
+   //! of either the c0 or mesh_radius should match the meniscus, otherwise they
+   //! will be ignored or interpolated to the actual meniscus and bottom
+   //! position set by the user, which will take precedence.
 
    QList< struct SpeedProfile > speed_step;
-   unsigned int simpoints;   // number of radial grid points used in simulation
+   unsigned int simpoints;   //!< number of radial grid points used in simulation
 
-   // 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 
-   // 3 = user-selected mesh, 4 = nonuniform constant mesh
+   //! 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 
+   //! 3 = user-selected mesh, 4 = nonuniform constant mesh
    unsigned int mesh;         
 
-   // Use adaptive time steps = 1, fixed time steps = 0
+   //! Use adaptive time steps = 1, fixed time steps = 0
    int          moving_grid;           
    
-   // The radial datapoint increment/resolution of the final data 
+   //! The radial datapoint increment/resolution of the final data 
    double       radial_resolution; 
 
-   // Meniscus position at first constant speed
-   // For multiple speeds, the user must measure the meniscus at
-   // the first constant speed and use that to initialize the routine
+   //! Meniscus position at first constant speed
+   //! For multiple speeds, the user must measure the meniscus at
+   //! the first constant speed and use that to initialize the routine
    double       meniscus;     
-   double       bottom;         // bottom of cell position without rotor stretch
-   double       rnoise;         // random noise
-   double       tinoise;        // time invariant noise
-   double       rinoise;        // radially invariant noise
-   int          rotor;          // rotor serial number in database
-   bool         band_forming;   // true for band-forming centerpieces
+   double       bottom;         //!< bottom of cell position without rotor stretch
+   double       rnoise;         //!< random noise
+   double       tinoise;        //!< time invariant noise
+   double       rinoise;        //!< radially invariant noise
+   int          rotor;          //!< rotor serial number in database
+   bool         band_forming;   //!< true for band-forming centerpieces
 
-   // Loading volume (of lamella) in a band-forming centerpiece
+   //! Loading volume (of lamella) in a band-forming centerpiece
    double       band_volume;   
   
-   // First band sedimentation scan is initializer for concentration 
+   //! First band sedimentation scan is initializer for concentration 
    bool         band_firstScanIsConcentration; 
 };
 
+//! \brief A set of static methods to read and write simulation 
+//!        experiments, parameters, models, and data
 class US_EXTERN US_FemGlobal 
 {
    public:
