@@ -13,10 +13,12 @@
 @alamodowncount = `ssh alamo pbsnodes -l`;
 
 $bcf_no_procs = 42 - 2 * @bcfdowncount;
-$alamo_no_procs = 28 - 2 * @alamodowncount;
-$laredo_no_procs = 34 - 2 * @laredodowncount;
+$alamo_no_procs = 31 - 2 * @alamodowncount;
+$laredo_no_procs = 8 - 4 * @laredodowncount;
 
 # END USER EDITABLE SECTION
+
+$SIG{HUP} = 'IGNORE';
 
 $startdate = `date +'\%Y-\%m-\%d \%T'`;
 chomp $startdate;
@@ -617,6 +619,7 @@ $BIN = $bins[$usesys];
 $LD_XML = $ld_xml[$usesys];
 $LD_QUEUE = $queues[$usesys];
 $PROJECT = "<project>ULTRASCAN</project>" if $default_system eq 'lonestar.tacc.utexas.edu';
+$MAXMEM = "<maxMemory>2000</maxMemory>" if $SYSTEM =~ /ng2.vpac.monash.edu.au/;
 
 $WORKTMP = "${WORK}/tmp";
 $WORKRUN = "${WORK}/tmp/$id";
@@ -716,6 +719,7 @@ $LD_XML
 $PROJECT
 $LD_QUEUE
   <maxWallTime>$max_time[$usesys]</maxWallTime>
+$MAXMEM
   <jobType>mpi</jobType>
 </job>
 " ;

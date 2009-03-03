@@ -1,14 +1,21 @@
-#!/usr/bin/perl -w
+#!/usr/bin/perl
+
+$us = $ENV{'ULTRASCAN'} || die "The environment variable ULTRASCAN must be set.  Terminating\n";
+# ----------- user configuration area
+$debug++;
+#$debugdb++;
+$dbname = "$us/etc/us_gridpipe_db";
+$globustimeout = 15; # seconds to wait for globusrun-ws commands to succeed or timeout
+$statusupdate = 10;  # seconds to wait for status update
+$killupdate = 60;  # seconds to wait for rekilling
+$maxkillreps = 120;  # number of times to try to kill before giving up
+$logfiledir = "/lustre/tmp";    # reset to /lustre/tmp
+# ----------- end user configuration area
+
+use DB_File;
 use FileHandle;
 
 $|=1;
-
-undef $debug;
-$debug++;
-
-
-$globustimeout = 15; # seconds to wait for globusrun-ws commands to succeed or timeout
-$statusupdate = 60; # seconds to wait for status update
 
 $us = $ENV{'ULTRASCAN'} || die "The environment variable ULTRASCAN must be set.  Terminating\n";
 open(SYS_LOCK, "$us/etc/us_gridpipe.lock") || die "$0: lockfile $us/etc/us_gridpipe.lock error: $!.  Terminating\n";
@@ -21,6 +28,185 @@ $status_file = "$us/etc/mpi_queue_status";
 $pipe = "$us/etc/us_gridpipe";
 
 $ENV{'DISPLAY'}='';
+
+$dbfile = "$dbname.db";
+$dblock = "$dbname.lock";
+`touch $dblock` if ! -e $dblock;
+die "couldn't create $dblock\n" if ! -e $dblock;
+
+sub LOCK_EX { 2 }
+sub LOCK_UN { 8 }
+
+## @fn $ dblock()
+# exclusively locks the database, failure to lock retries
+# @param nothing
+# @return nothing
+
+sub dblock {
+    print "dblock\n" if $debugdb;
+    if (!flock(DBLOCK, LOCK_EX)) {
+	do {
+	    print STDERR "$0: warning: error trying to lock file $dblock <$!>\n";
+	    sleep 5;
+	} while (!flock(DBLOCK, LOCK_EX));
+    }
+}
+
+## @fn $ dbunlock()
+# unlocks the database, failure to lock retries
+# @param nothing
+# @return nothing
+
+sub dbunlock {
+    print "dbunlock\n" if $debugdb;
+    if (!flock(DBLOCK, LOCK_UN)) {
+	do {
+	    print STDERR "$0: warning: error trying to unlock file $dblock<$!>\n";
+	    sleep 5;
+	} while (!flock(DBLOCK, LOCK_UN));
+    }
+}
+
+## @fn $ dbopen()
+# opens the database
+# @param nothing
+# @return nothing
+
+sub dbopen {
+    print "dbopen\n" if $debugdb;
+    open(DBLOCK, $dblock) || die "couldn't access dblock file $dblock <$!>\n";
+    dblock();
+    $DB = tie %db, "DB_File", $dbfile || die "can not tie $dbfile: $!\n";
+    dbunlock();
+}
+
+## @fn $ dbclose()
+# closed the database
+# @param nothing
+# @return nothing
+
+sub dbclose {
+    print "dbclose\n" if $debugdb;
+    dblock();
+    untie %db;
+    dbunlock();
+    close(DBLOCK);
+}
+
+## @fn $ dbwrite($key, $val)
+# set $db{$key} = $val
+# @param key
+# @return value
+
+sub dbwrite {
+    print "dbwrite $_[0]\n" if $debugdb;
+    dblock();
+    $db{$_[0]} = $_[1];
+    $DB->sync;
+    dbunlock();
+}
+
+## @fn $ dbread($key)
+# returns $db{$key}
+# @param key
+# @return $db{$key}
+
+sub dbread {
+    print "dbread $_[0]\n" if $debugdb;
+    dblock();
+    my $return = $db{$_[0]};
+    dbunlock();
+    return $return;
+}
+
+## @fn $ dbnxtseq()
+# returns a unique increasing #
+# @param nothing
+# @return a unique sequence #
+
+sub dbnxtseq() {
+    print "dbnxtseq\n" if $debugdb;
+    dblock();
+    my $seq = $db{"next_seq"};
+    print "seq was $seq\n" if $debugdb;
+    $seq++;
+    $db{"next_seq"} = $seq;
+    print "seq is $seq $db{'next_seq'}\n" if $debugdb;
+    $DB->sync;
+    dbunlock();
+    $seq;
+}
+
+## @fn $ dbdel($key)
+# deletes $db{$key}
+# @param key
+# @return nothing
+
+sub dbdel {
+    print "dbread $_[0]\n" if $debugdb;
+    dblock();
+    delete $db{$_[0]};
+    $DB->sync;
+    dbunlock();
+}
+
+## @fn $ dbdel($key)
+# returns a list of the keys of the database
+# @param key
+# @return list of the keys
+
+sub dbkeys {
+    print "dbkeys\n" if $debugdb;
+    dblock();
+    my @keys = keys %db;
+    dbunlock();
+    return sort @keys;
+}
+
+## @fn $ dbdel($key)
+# returns a local copy of the database
+# @param key
+# @return nothing
+
+sub dbrocopy {
+    print "dbrocopy\n" if $debugdb;
+    dblock();
+    my %mdb = %db;
+    dbunlock();
+    return %mdb;
+}
+
+## @fn $ dblist()
+# returns a string listing the database contents
+# @param nothing
+# @return string
+
+sub dblist {
+    print "dblist\n" if $debugdb;
+    my $out = '';
+    my %mdb = dbrocopy();
+    foreach my $i (keys %mdb) {
+	$out .= "<$i>:<$mdb{$i}>\n";
+    }
+    return $out;
+}
+
+## @fn $ dbtest()
+# a simple database test
+# @param nothing
+# @return nothing
+
+sub dbtest {
+    dbopen();
+    dbwrite("key1", "key arg 1");
+    dbwrite("key2", "key arg 2");
+    dbwrite("key3", "key arg 3");
+    print dblist();
+    print "----------\n";
+    dbdel("key2");
+    print dblist();
+    dbclose();
+}
 
 ## @fn $ timedexec($timeout, $command)
 # runs a shell command for timeout seconds and if it has not completed, it returns with 'non-responsive'
@@ -74,8 +260,7 @@ sub startjob_gc {
     my $child;
     if(!($child = fork)) {
 	print STDERR "$0: child started gc process job\n" if $debug;
-#	`export DISPLAY=bcf:99; us_gridcontrol $_[0] > /lustre/tmp/us_gridcontrol.stdout 2> /lustre/tmp/us_gridcontrol.stderr`;
-	`us_gridcontrol_t $_[0] > /lustre/tmp/us_gridcontrol.stdout 2> /lustre/tmp/us_gridcontrol.stderr`;
+	`us_gridcontrol_t $_[0] > $logfiledir/us_gridcontrol.stdout 2> $logfiledir/us_gridcontrol.stderr`;
 	exit;
     }
     print STDERR "$0: gc child pid is $child\n" if $debug;
@@ -86,8 +271,7 @@ sub startjob_gc_tigre {
     my $child;
     if(!($child = fork)) {
 	print STDERR "$0: child started gc process job\n" if $debug;
-#	`export DISPLAY=bcf:99; us_gridcontrol $_[0] TIGRE > /lustre/tmp/us_gridcontrol.stdout 2> /lustre/tmp/us_gridcontrol.stderr`;
-	`us_gridcontrol_t $_[0] TIGRE $_[1] > /lustre/tmp/us_gridcontrol.stdout 2> /lustre/tmp/us_gridcontrol.stderr`;
+	`us_gridcontrol_t $_[0] TIGRE $_[1] > $logfiledir/us_gridcontrol.stdout 2> $logfiledir/us_gridcontrol.stderr`;
 	exit;
     }
     print STDERR "$0: gc tigre child pid is $child\n" if $debug;
@@ -97,6 +281,7 @@ sub startjob_tigre {
     print STDERR "$0: start tigre job process $_[0]\n" if $debug;
     my $child;
     if(!($child = fork)) {
+	$SIG{HUP} = 'IGNORE';
 	print STDERR "$0: child started tigre job\n" if $debug;
 	`$_[0]`;
 	exit;
@@ -105,23 +290,59 @@ sub startjob_tigre {
     $child;
 }
 
-## @fn $ status_daemon()
-# forks off a process to ping the gridpipe every $statusupdate seconds to rewrite the $statusfile
-# @param nothing
-# @return nothing
-
-sub status_daemon {
-    print STDERR "$0: start status_daemon\n" if $debug;
+sub tigre_del {
+    my $eprfile = $_[0];
+    dbopen();
+    dblock();
+    print "tigre_del <$eprfile>\n" if $debugdb;
+    delete $db{'epr|'. $eprfile};
+    delete $db{'eprsystem|' . $eprfile};
+    delete $db{$db{'eprseq|' . $eprfile}};
+    delete $db{'eprseq|' . $eprfile};
+    delete $db{'eprstatus|' . $eprfile};
+    $DB->sync;
+#    dbdel('eprsystem|' . $eprfile);
+#    dbdel('eprseq|' . $eprfile);
+#    dbdel($tigre{'eprseq|' . $eprfile});
+#    dbdel('eprstatus|' . $eprfile);
+    dbunlock();
+    print STDERR "$0: tigre_del $eprfile\n" if $debug;
+}
+    
+sub startjob_tigre_status {
+    print STDERR "$0: start tigre status job process $_[0]\n" if $debug;
     my $child;
     if(!($child = fork)) {
-	while(1) {
-	    print STDERR "$: internal_status_update\n" if $debug;
-	    &timedexec(10, "echo internal_status_update > $pipe");
+	print STDERR "$0: child status started tigre job\n" if $debug;
+	while (1) {
+	    dbopen();
+	    $DB->sync;
+	    if (length(dbread('epr|' . $_[0])) == 0) {
+		print STDERR "$0: child status exited job disappeared $_[0]\n" if $debug;
+		exit;
+	    }
+	    dbclose();
+	    print "startjob_tigre_status: <$_[0]>\n";
+	    my $status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $_[0]");
+	    chomp $status;
+	    if(length($status)) {
+		dbopen();
+		$DB->sync;
+		dbwrite('eprstatus|' . $_[0], $status);
+		dbclose();
+		if ($status =~ /Done/) {
+		    &tigre_del($_[0]);
+		    print STDERR "$0: child status exited job Done $_[0]\n" if $debug;
+		    exit;
+		}
+	    }
 	    sleep $statusupdate;
 	}
-	exit; # should never get here!
+	dbclose();
+	exit;
     }
-    print STDERR "$0: status_daemon started as pid $child\n" if $debug;
+    print STDERR "$0: tigre status job child pid is $child\n" if $debug;
+    $child;
 }
 
 ## @fn $ write_status($filename)
@@ -144,32 +365,26 @@ sub write_status {
 	    my $date = `date`;
 	    print OUT "Queue status snapshot as of $date\n";
 	    my $tjobs = 0;
+	    dbopen();
+	    $DB->sync;
+	    %tigre = dbrocopy();
+	    dbclose();
 	    foreach $i (keys %tigre) {
-		$tjobs++;
+		if ($i =~ /^epr\|/) {
+		    $tjobs++;
+		}
 	    }
 	    if(@queue == 0 && $tjobs == 0) {
 		print OUT "No jobs are currently queued.\n";
 		close OUT;
 	    } else {
 		my @unsorted;
-		for($i = 0; $i < @queue; $i++) {
-		    my $status = "Current job state: ";
-		    if($i) {
-			$status .= "Waiting";
-		    } else {
-			$status .= "Active";
-		    }
-		    push @unsorted, "$mpi_status_lines[$i] $status\n";
-		}
 		foreach $i (keys %tigre) {
-#			    if($tigre{$i} =~ /[ meta]/) {
-#				$status = `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
-#			    } else {
-		    my $status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $i");
-#			    }
-		    chomp $status;
-		    $status = "Starting" if !length($status);
-		    push @unsorted, "$tigre{$i} $status\n";
+		    if ($i =~ /^epr\|/ && !$tigre{'kill|' . $use_i}) {
+			( $use_i ) = $i =~ /^epr\|(.*)$/;
+			$status = $tigre{'eprstatus|' . $use_i};
+			push @unsorted, "$tigre{$i} $status\n";
+		    }
 		}
 		print OUT sort 
 		{ 
@@ -195,6 +410,25 @@ sub write_status {
 	exit;
     }
     print STDERR "$0: write status child pid is $child\n" if $debug;
+}
+
+## @fn $ status_daemon()
+# forks off a process to ping the gridpipe every $statusupdate seconds to rewrite the $statusfile
+# @param nothing
+# @return nothing
+
+sub status_daemon {
+    print STDERR "$0: start status_daemon\n" if $debug;
+    my $child;
+    if(!($child = fork)) {
+	while(1) {
+	    print STDERR "$: internal_status_update\n" if $debug;
+	    &write_status($status_file);
+	    sleep $statusupdate;
+	}
+	exit; # should never get here!
+    }
+    print STDERR "$0: status_daemon started as pid $child\n" if $debug;
 }
 
 ## @fn $ remove_status($filename, $remove)
@@ -267,30 +501,186 @@ sub remove_status
 sub tigre_kill {
     print STDERR "$0: tigre_kill $_[0]\n" if $debug;
     if(!(my $child = fork)) {
-	my $status = `globusrun-ws -kill -job-epr-file $_[0] 2>&1`;
-	print STDERR "$0: tigre_kill $_[0] returned <$status>\n" if $debug;
+	my $reps = 0;
+	do {
+	    my $status = `globusrun-ws -kill -job-epr-file $_[0] 2>&1`;
+	    print STDERR "$0: tigre_kill $_[0] returned <$status>\n" if $debug;
+	    exit if $status =~ /Destroying job\.\.\.Done./;
+	    sleep $killupdate;
+	} while($reps++ < $maxkillreps);
 	exit;
     }
 }
 
-## @fn $ mpi_restart()
-# forks off a process to execute mpi_restart if the active mpi job was cancelled
-# @param nothing
+## @fn $ handle_request($line)
+# forks off a process to handle the request
+# @param line
 # @return nothing
 
-sub mpi_restart {
-    print STDERR "$0: mpi_restart\n" if $debug;
-    if (!(my $child = fork)) 
-    {
-	&timedexec(3600, "mpi_killall_apache > /dev/null 2> /dev/null");
-	print STDERR "$0: mpi_restart killall 1\n" if $debug;
-	sleep 2;
-	&timedexec(3600, "mpi_killall_apache > /dev/null 2> /dev/null");
-	print STDERR "$0: mpi_restart killall 2\n" if $debug;
-	sleep 1;
-	print STDERR "$0: mpi_restart restarting\n" if $debug;
-	`echo mpi_job_restart > $pipe`;
-	print STDERR "$0: mpi_restart child exits\n" if $debug;
+sub handle_request {
+    print STDERR "$0: handle request $_[0]\n" if $debug;
+    if(!(my $child = fork)) {
+	print STDERR "$0: received $line\n" if $debug;
+	undef $valid;
+	if($line =~ /^gc_tigre (.*) (.*)$/) {
+	    # process us_gridcontrol
+	    $valid++;
+	    $file = $1;
+	    $system = $2;
+	    print STDERR "$0: process us_gridcontrol $file $system\n" if $debug;
+	    &startjob_gc_tigre($file, $system);
+	}
+	if($line =~ /^tigre_job_run (.*)$/) {
+	    # just run this one
+	    $valid++;
+	    $job = $1;
+	    $job =~ /^\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\](.*)$/;
+	    $experiment = $1;
+	    $email = $2;
+	    $analysis_type = $3;
+	    $gcfile = $4;
+	    $job = $5;
+	    @f = split / /, $job;
+	    $gc = $gcfile;
+	    $timedate = $f[8];
+	    $eprfile = $gc;
+	    $eprfile =~ s/\/\d+\.gc//;
+	    $eprfile .= "/$timedate\/us_tigre_epr${timedate}.xml";
+	    $system = $f[12];
+	    &parsegc($gcfile);
+	    print "eprfile <$eprfile> system <$system>\n";
+	    $analysis_type =~ s/SA2D/2DSA/;
+	    if($monte_carlo) {
+		$analysis_type .= "-MC-$monte_carlo";
+	    }
+	    $date = `date +'%D %T'`;
+	    chomp $date;
+	    dbopen();
+	    $seq = dbnxtseq();
+	    $pr_line = sprintf("%d %s %s tigre %s %-26s %-25s %-20s %-4s %s",
+			       $seq, $db_login_database, $HPCAnalysisID, $date, $system, $email, $exp_file_info[0], $analysis_type, $gcfile);
+	    print "prline <$pr_line>\n";
+
+	    print STDERR "$0: email $email analysis_type $analysis_type\n";
+	    print STDERR "$0: add job $job\n" if $debug;
+	    dblock();
+	    $DB->sync;
+	    $db{'epr|'. $eprfile} =  $pr_line;
+	    $db{'eprsystem|' . $eprfile} =  $system;
+	    $db{'eprseq|' . $eprfile} =  $seq;
+	    $db{'eprstatus|' . $eprfile} = "Current job state: Initialized";
+	    $db{$seq} = $eprfile;
+	    $DB->sync;
+	    dbunlock();
+	    dbclose();
+	    &startjob_tigre($job);
+	    print STDERR "$0: tigre_job_run SEQ=$seq $eprfile\n" if $debug;
+	}
+	if($line =~ /^tigre_job_start (.*)$/) {
+	    # just run this one
+	    $valid++;
+	    $job = $1;
+	    $job =~ /^\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]$/;
+	    $experiment = $1;
+	    $analysis_type = $2;
+	    $system = $3;
+	    $email = $4;
+	    $date = $5;
+	    $eprfile = $6;
+	    $db = $7;
+	    $analysisid = $8;
+	    $gcfile = $9;
+	    $analysis_type =~ s/SA2D/2DSA/;
+	    dbopen();
+	    if (dbread('kill|' . $eprfile)) {
+		dbclose();
+		print STDERR "$0: tigre_job_start, already killed $eprfile\n" if $debug;
+		exit;
+	    }
+	    $seq = dbread('eprseq|' . $eprfile);
+	    undef $rewrite;
+	    if (!$seq) {
+		$seq = dbnxtseq();
+		$rewrite++;
+	    }
+	    $pr_line = sprintf("%d %s %s tigre %s %-26s %-25s %-20s %-4s %s",
+			       $seq, $db, $analysisid, $date, $system, $email, $experiment, $analysis_type, $gcfile);
+	    print "pr_line <$pr_line>\n";
+
+	    dblock();
+	    $DB->sync;
+	    if ($rewrite) {
+		$db{'epr|'. $eprfile} =  $pr_line;
+		$db{'eprsystem|' . $eprfile} =  $system;
+		$db{'eprseq|' . $eprfile} =  $seq;
+		$db{$seq} = $eprfile;
+	    } 
+	    $db{'eprstatus|' . $eprfile} = "Current job state: Submitted";
+	    $DB->sync;
+	    dbunlock();
+	    dbclose();
+	    &startjob_tigre_status($eprfile);
+
+	    print STDERR "$0: tigre_job_start SEQ=$seq $eprfile\n" if $debug;
+	}
+	if($line =~ /^tigre_job_end (.*)$/) {
+ 	    # just run this one
+	    $valid++;
+	    $eprfile = $1;
+	    chomp $eprfile;
+	    dbopen();
+	    $DB->sync;
+	    if (length(dbread('epr|' . $eprfile)) > 0) {
+		dbclose();
+		&tigre_del($eprfile);
+		print STDERR "$0: tigre_job_end $eprfile\n" if $debug;
+	    } else {
+		dbclose();
+	    }
+	    print STDERR "$0: tigre_job_end $eprfile <not exist>\n" if $debug;
+	}
+	if($line =~ /^tigre_job_clear$/) {
+	    # checks all jobs and clears if necessary
+	    $valid++;
+	    dbopen();
+	    $DB->sync;
+	    %tigre = dbrocopy();
+	    dbclose();
+	    foreach $i (keys %tigre) {
+		if ($i =~ /^epr\|/) {
+		    ( $use_i ) = $i =~ /^epr\|(.*)$/;
+		    $status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $use_i");
+		    chomp $status;
+		    if(!length($status) || $status eq 'FINISHED' || $status eq 'FAILED') {
+			&tigre_del($use_i);
+		    }
+		    print STDERR "$0: tigre_job_clear removed $tigre{$i}\n" if $debug;
+		}
+	    }
+	}
+	if($line =~ /^tigre_job_cancel (.*)$/) {
+	    # cancel one job
+	    my $cancel_seq = $1;
+	    $valid++;
+	    dbopen();
+	    $DB->sync;
+	    %tigre = dbrocopy();
+	    dbclose();
+	    $eprfile = $tigre{$cancel_seq};
+	    print STDERR "$0: tigre_job_cancel eprfile $eprfile\n";
+	    if($eprfile) {
+		dbopen();
+		$DB->sync;
+		dbwrite('kill|' . $eprfile, 1);
+		dbclose();
+		&remove_status($status_file, $cancel_seq);
+		&tigre_kill($eprfile);
+		&tigre_del($eprfile);
+	    }
+	}
+	if(!$valid) {
+	    print STDERR "$0: unknown request \"$line\"\n";
+	}
 	exit;
     }
 }
@@ -300,353 +690,37 @@ $SIG{CHLD} = "IGNORE";
 $seq = 0;
 
 &status_daemon();
+&dbopen();
+%tigre = dbrocopy();
+
+foreach $i (keys %tigre) {
+    print "keys <$i>\n" if $debugdb;
+    if ($i =~ /^epr\|/) {
+	( $use_i ) = $i =~ /^epr\|(.*)$/;
+	print "i<$i> use_i<$use_i>\n";
+	if (!-e $use_i) {
+	    print "Deleting job: " . $tigre{'epr|' . $use_i} . "\n";
+	    &tigre_del($use_i);
+	} else {
+	    &startjob_tigre_status($use_i);
+	    print "Monitoring job: " . $tigre{'epr|' . $use_i} . "\n";
+	}
+    }
+}	    
+
+dbclose();
 
 while(1) {
-	open(PIPE, $pipe) or die "$0: pipe $pipe open failure\n";
-	print STDERR "$0: Pipe open\n" if $debug;
-	while($line = <PIPE>) {
+    open(PIPE, $pipe) or die "$0: pipe $pipe open failure\n";
+    print STDERR "$0: Pipe open\n" if $debug;
+    while($line = <PIPE>) {
 #	    waitpid -1, 1;
-	    chomp $line;
+	chomp $line;
 #	    close(PIPE);
-	    print STDERR "$0: received $line\n" if $debug;
-	    undef $valid;
-	    if($line =~ /^internal_status_update$/) {
-		$valid++;
-		print STDERR "$0: queue status into $status_file\n" if $debug;
-		&write_status($status_file);
-	    }
-		
-	    if($line =~ /^status (\S*)$/) {
-		close PIPE;
-		$valid++;
-		$outfile = $1;
-		print STDERR "$0: queue status into $outfile\n" if $debug;
-		if(open(OUT, ">$outfile")) {
-		    $tjobs = 0;
-		    foreach $i (keys %tigre) {
-			$tjobs++;
-		    }
-		    if(@queue == 0 && $tjobs == 0) {
-			print OUT "No jobs are currently queued.\n";
-			close OUT;
-		    } else {
-			if(@queue != 0) {
-			    print OUT "id   started             submitted           email\t\texperiment\tanalysis type\n";
-			}
-			for($i = 0; $i < @queue; $i++) {
-			    print OUT sprintf("%-4d ",$ids[$i]);
-			    if($i) {
-				print OUT "waiting          ";
-			    } else {
-				print OUT "$started";
-			    }
-			    print OUT " : $submitted[$i] : $emails[$i]\t$experiments[$i]\t$types[$i]\n";
-			}
-			print OUT $last_status;
-			close OUT;
-			undef $last_status;
-			foreach $i (keys %tigre) {
-#			    if($tigre{$i} =~ /[ meta]/) {
-#				$status = `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
-#			    } else {
-				$status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $i");
-#			    }
-			    chomp $status;
-			    $status = "Starting" if !length($status);
-			    $last_status .= "$tigre{$i} $status\n";
-			}
-		    }
-		} else {
-		    print STDERR "$0: could not open \"$outfile\" for writing.\n";
-		}
-		open(PIPE, $pipe) or die "$0: pipe $pipe open failure\n";
-	    }
-	    if($line =~ /^status_full (\S*)$/) {
-		close PIPE;
-		$valid++;
-		$outfile = $1;
-		print STDERR "$0: queue status into $outfile\n" if $debug;
-		if(open(OUT, ">$outfile")) {
-		    $tjobs = 0;
-		    foreach $i (keys %tigre) {
-			$tjobs++;
-		    }
-		    if(@queue == 0 && $tjobs == 0) {
-			print OUT "No jobs are currently queued.\n";
-			close OUT;
-		    } else {
-			if(@queue != 0) {
-			    print OUT "id   started             submitted           email\t\texperiment\tanalysis type\tjob\n";
-			}
-			for($i = 0; $i < @queue; $i++) {
-			    print OUT sprintf("%-4d ",$ids[$i]);
-			    if($i) {
-				print OUT "waiting          ";
-			    } else {
-				print OUT "$started";
-			    }
-			    print OUT " : $submitted[$i] : $emails[$i]\t$experiments[$i]\t$types[$i]\t$queue[$i]\n";
-			}
-			print OUT $last_status_full;
-			close OUT;
-			undef $last_status_full;
-			foreach $i (keys %tigre) {
-#			    if($tigre{$i} =~ /[ meta]/) {
-#				$status = `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
-#			    } else {
-				$status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $i");
-#			    }
-			    chomp $status;
-			    $status = "Starting" if !length($status);
-			    $last_status_full .= "$tigre{$i} $status $i\n";
-			}
-		    }
-		} else {
-		    print STDERR "$0: could not open \"$outfile\" for writing.\n";
-		}
-		open(PIPE, $pipe) or die "$0: pipe $pipe open failure\n";
-	    }
-	    if($line =~ /^mpi_job_run (.*)$/) {
-		# add to queue
-		$seq++;
-		$valid++;
-		$job = $1;
-		$job =~ /^\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\](.*)$/;
-		$experiment = $1;
-		$email = $2;
-		$analysis_type = $3;
-		$gcfile = $4;
-		$job = $5;
-		print STDERR "$0: email $email analysis_type $analysis_type seq $seq\n";
-		print STDERR "$0: add job $job\n" if $debug;
-		&parsegc($gcfile);
-		$analysis_type =~ s/SA2D/2DSA/;
-		if($monte_carlo) {
-		    $analysis_type .= "-MC-$monte_carlo";
-		}
-		push @ids, $seq;
-		push @queue, $job;
-		push @experiments, $experiment;
-		push @emails, $email;
-		push @types, $analysis_type;
-		$date = `date '+%D %T'`; chomp $date; push @submitted, $date;
-		$mpi_status_line = sprintf("%d %s %s mpi %s %-26s %-25s %-20s %-4s",
-				   $seq, $db_login_database, $HPCAnalysisID, $date, "bcf.uthscsa.edu", $email, $exp_file_info[0], $analysis_type);
-		push @mpi_status_lines, $mpi_status_line;
-		if(@queue == 1) {
-		    # no jobs are running, so start this one
-		    &startjob;
-		}
-	    }
-	    if($line =~ /^mpi_job_complete$/) {
-		# pop from queue
-		$valid++;
-		if(@queue > 0) {
-		    $job = shift @queue;
-		    shift @submitted;
-		    shift @experiments;
-		    shift @emails;
-		    shift @types;
-		    shift @ids;
-		    shift @mpi_status_lines;
-		    print STDERR "$0: shift off job $job\n" if $debug;
-		    if(@queue > 0) {
-			&startjob;
-		    }
-		} else {
-		    print STDERR "$0: complete but job queue empty\n" if $debug;
-		}
-	    }
-	    if($line =~ /^mpi_job_cancel/) {
-		# pop from queue
-		( $id ) = $line =~ /^mpi_job_cancel (\d*)/;
-		$valid++;
-		$mark = -1;
-		for($i = 0; $mark == -1 && $i < @queue; $i++) {
-		    if($ids[$i] == $id) {
-			&remove_status($status_file, $id);
-			$mark = $i;
-			print STDERR "$0: shift off job $queue[$i]\n" if $debug;
-			splice @ids, $i, 1;
-			splice @queue, $i, 1;
-			splice @submitted, $i, 1;
-			splice @experiments, $i, 1;
-			splice @emails, $i, 1;
-			splice @types, $i, 1;
-			splice @mpi_status_lines, $i, 1;
-			&mpi_restart() if !$i;
-		    }
-		} 
-		if($mark == -1) {
-		    print STDERR "$0: mpi_job_cancel could not find id $id\n" if $debug;
-		}
-	    }
-	    if($line =~ /^mpi_job_to_end/) {
-		# pop from queue
-		( $id ) = $line =~ /^mpi_job_to_end (\d*)/;
-		$valid++;
-		$mark = -1;
-		for($i = 0; $mark == -1 && $i < @queue; $i++) {
-		    if($ids[$i] == $id) {
-			$mark = $i;
-			print STDERR "$0: mpi_job_to_end job $queue[$i]\n" if $debug;
-			@org_mpi_status_lines = @mpi_status_lines;
-			@org_ids = @ids;
-			@org_queue = @queue;
-			@org_submitted = @submitted;
-			@org_experiments = @experiments;
-			@org_emails = @emails;
-			@org_types = @types;
-			splice @mpi_status_lines, $i, 1;
-			splice @ids, $i, 1;
-			splice @queue, $i, 1;
-			splice @submitted, $i, 1;
-			splice @experiments, $i, 1;
-			splice @emails, $i, 1;
-			splice @types, $i, 1;
-		    }
-		} 
-		if($mark == -1) {
-		    print STDERR "$0: mpi_to_end could not find id $id\n" if $debug;
-		} else {
-		    push @mpi_status_lines, $org_mpi_status_lines[$mark];
-		    push @ids, $org_ids[$mark];
-		    push @queue, $org_queue[$mark];
-		    push @submitted, $org_submitted[$mark];
-		    push @experiments, $org_experiments[$mark];
-		    push @emails, $org_emails[$mark];
-		    push @types, $org_types[$mark];
-		}
-	    }
-	    if($line =~ /^mpi_job_restart$/) {
-		# restart 1st entry
-		$valid++;
-		print STDERR "$0: restarting\n" if $debug;
-		if(@queue > 0) {
-		    &startjob;
-		}
-	    }
-	    if($line =~ /^gc (.*)$/) {
-		# process us_gridcontrol
-		$valid++;
-		$file = $1;
-		print STDERR "$0: process us_gridcontrol $file\n" if $debug;
-		&startjob_gc($file);
-	    }
-	    if($line =~ /^gc_tigre (.*) (.*)$/) {
-		# process us_gridcontrol
-		$valid++;
-		$file = $1;
-		$system = $2;
-		print STDERR "$0: process us_gridcontrol $file $system\n" if $debug;
-		&startjob_gc_tigre($file, $system);
-	    }
-	    if($line =~ /^tigre_job_run (.*)$/) {
-		# just run this one
-		$valid++;
-		$job = $1;
-		$job =~ /^\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\](.*)$/;
-		$experiment = $1;
-		$email = $2;
-		$analysis_type = $3;
-		$gcfile = $4;
-		$job = $5;
-		$analysis_type =~ s/SA2D/2DSA/;
-		print STDERR "$0: email $email analysis_type $analysis_type\n";
-		print STDERR "$0: add job $job\n" if $debug;
-		&startjob_tigre($job,$system);
-	    }
-	    if($line =~ /^tigre_job_start (.*)$/) {
-		# just run this one
-		$valid++;
-		$seq++;
-		$job = $1;
-		$job =~ /^\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]\[(.*)\]$/;
-		$experiment = $1;
-		$analysis_type = $2;
-		$system = $3;
-		$email = $4;
-		$date = $5;
-		$eprfile = $6;
-		$db = $7;
- 		$analysisid = $8;
-		$gcfile = $9;
-		$analysis_type =~ s/SA2D/2DSA/;
-		$pr_line = sprintf("%d %s %s tigre %s %-26s %-25s %-20s %-4s %s",
-				   $seq, $db, $analysisid, $date, $system, $email, $experiment, $analysis_type, $gcfile);
-		$tigre{$eprfile} = $pr_line;
-		$tigre_system{$eprfile} = $system;
-		$tigre_seq{$eprfile} = $seq;
-		$tigre_epr{$seq} = $eprfile;
-
-		print STDERR "$0: tigre_job_start SEQ=$seq $eprfile\n" if $debug;
-		foreach $i (keys %tigre) {
-#		    if($tigre{$i} =~ /[ meta]/) {
-#			print STDERR $tigre{$i} . `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
-#		    } else {
-		        $status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $i");
-			print STDERR $tigre{$i} . $status;
-#		    }
-		}
-	    }
-	    if($line =~ /^tigre_job_end (.*)$/) {
-		# just run this one
-		$valid++;
-		$eprfile = $1;
-		chomp $eprfile;
-		foreach $i (keys %tigre) {
-#		    if($tigre{$i} =~ /[ meta]/) {
-#			print STDERR $tigre{$i} . `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
-#		    } else {
-			print STDERR $tigre{$i} . &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $i");
-#		    }
-		}
-		delete $tigre{$eprfile};
-		delete $tigre_epr{$tigre_seq{$eprfile}};
-		delete $tigre_seq{$eprfile};
-		delete $tigre_system{$eprfile};
-		print STDERR "$0: tigre_job_end $eprfile\n" if $debug;
-	    }
-	    if($line =~ /^tigre_job_clear$/) {
-		# just run this one
-		$valid++;
-		foreach $i (keys %tigre) {
-#		    if($tigre{$i} =~ /[ meta]/) {
-#			$status = `grms-client job_info $i 2> /dev/null | grep Status | awk '{ print \$3 }'`;
-#		    } else {
-		        $status = &timedexec($globustimeout, "globusrun-ws -status -job-epr-file $i");
-#		    }
-		    chomp $status;
-		    if(!length($status) || $status eq 'FINISHED' || $status eq 'FAILED') {
-			delete $tigre{$i};
-			delete $tigre_epr{$tigre_seq{$i}};
-			delete $tigre_seq{$i};
-			delete $tigre_system{$i};
-			print STDERR "$0: tigre_job_clear removed $tigre{$i}\n" if $debug;
-		    }
-		}
-	    }
-	    if($line =~ /^tigre_job_cancel (.*)$/) {
-		# cancel one job
-		my $cancel_seq = $1;
-		$valid++;
-		$eprfile = $tigre_epr{$cancel_seq};
-		print STDERR "$0: tigre_job_cancel eprfile $eprfile\n";
-		if($eprfile) {
-		    &remove_status($status_file, $cancel_seq);
-		    &tigre_kill($eprfile);
-		    delete $tigre{$eprfile};
-		    delete $tigre_epr{$tigre_seq{$eprfile}};
-		    delete $tigre_seq{$eprfile};
-		    delete $tigre_system{$eprfile};
-		}
-	    }
-	    if(!$valid) {
-		print STDERR "$0: unknown request \"$line\"\n";
-	    }
-	    print STDERR "$0: try reading again\n" if $debug;
-	}
-	close(PIPE);
-	print STDERR "$0: Pipe closed\n" if $debug;
+	&handle_request($line);
+	print STDERR "$0: try reading again\n" if $debug;
+    }
+    close(PIPE);
+    print STDERR "$0: Pipe closed\n" if $debug;
 }
 exit;
