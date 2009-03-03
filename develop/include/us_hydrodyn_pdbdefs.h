@@ -123,11 +123,6 @@ struct atom
 	unsigned int bead_assignment;	// which bead this atom belongs to
 	bool positioner;					// does this atom control position? (yes=1, no=0)
 	unsigned int serial_number;	// the serial number the atom occupies in the residue
-	unsigned int chain;				// 0 = main chain
-											// 1 = side chain
-											// 2 = prosthetic group
-											// 3 = undefined
-											// 4 = other
         bool tmp_flag;               // used for finding missing residues
         bool tmp_used;               // used for avoiding duplicate usage
 };

@@ -6184,7 +6184,6 @@ void US_Hydrodyn::read_residue_file()
 	       new_atom.positioner = true;
 	    }
 	    ts >> new_atom.serial_number;
-	    ts >> new_atom.chain;
 	    str2 = ts.readLine(); // read rest of line
 	    if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
 	    {

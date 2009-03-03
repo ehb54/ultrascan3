@@ -142,25 +142,6 @@ void US_AddAtom::setupGUI()
 	le_name->setMinimumHeight(minHeight1);
 	connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(update_name(const QString &)));
 
-	lbl_chain = new QLabel(tr(" Atom Assignment:"), this);
-	Q_CHECK_PTR(lbl_chain);
-	lbl_chain->setAlignment(AlignLeft|AlignVCenter);
-	lbl_chain->setMinimumHeight(minHeight1);
-	lbl_chain->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-	lbl_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
-
-	cmb_chain = new QComboBox(false, this, "chain Listing" );
-	cmb_chain->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	cmb_chain->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cmb_chain->setSizeLimit(5);
-	cmb_chain->insertItem("Main Chain Atom");
-	cmb_chain->insertItem("Side Chain Atom");
-	cmb_chain->insertItem("Prosthetic Group");
-	cmb_chain->insertItem("Undefined");
-	cmb_chain->insertItem("Other");
-	cmb_chain->setMinimumHeight(minHeight1);
-	connect(cmb_chain, SIGNAL(activated(int)), this, SLOT(select_chain(int)));
-
 	pb_add = new QPushButton(tr("Add Atom to File"), this);
 	Q_CHECK_PTR(pb_add);
 	pb_add->setEnabled(false);
@@ -213,9 +194,6 @@ void US_AddAtom::setupGUI()
 	background->addWidget(lbl_radius1, j, 0);
 	background->addWidget(lbl_radius2, j, 1);
 	j++;
-	background->addWidget(lbl_chain, j, 0);
-	background->addWidget(cmb_chain, j, 1);
-	j++;
 	background->addWidget(pb_add, j, 0);
 	background->addWidget(pb_delete, j, 1);
 	j++;
@@ -233,7 +211,6 @@ void US_AddAtom::add()
 			item = i;
 			atom_list[i].hybrid.mw = current_atom.hybrid.mw;
 			atom_list[i].hybrid.radius = current_atom.hybrid.radius;
-			atom_list[i].chain = current_atom.chain;
 		}
 	}
 	if (item < 0)
@@ -297,7 +274,7 @@ void US_AddAtom::write_atom_file()
 		for (unsigned int i=0; i<atom_list.size(); i++)
 		{
 			ts << atom_list[i].name.upper() << "\t" << atom_list[i].hybrid.name.upper() << "\t" <<
-					atom_list[i].hybrid.mw << "\t" << atom_list[i].hybrid.radius << "\t" << atom_list[i].chain << endl;
+					atom_list[i].hybrid.mw << "\t" << atom_list[i].hybrid.radius <<  endl;
 			str1.sprintf("%d: ", i+1);
 			str1 += atom_list[i].name.upper();
 			str1 += " (";
@@ -337,7 +314,6 @@ void US_AddAtom::select_atom_file()
 				ts >> current_atom.hybrid.name;
 				ts >> current_atom.hybrid.mw;
 				ts >> current_atom.hybrid.radius;
-				ts >> current_atom.chain;
 				str2 = ts.readLine(); // read rest of line
 				if (!current_atom.name.isEmpty() && current_atom.hybrid.radius > 0.0 && current_atom.hybrid.mw > 0.0)
 				{
@@ -430,7 +406,6 @@ void US_AddAtom::select_atom(int val)
 	current_atom.hybrid.mw = atom_list[val].hybrid.mw;
 	current_atom.hybrid.name = atom_list[val].hybrid.name;
 	current_atom.hybrid.radius = atom_list[val].hybrid.radius;
-	current_atom.chain = atom_list[val].chain;
 
 	str.sprintf("%3.4f", atom_list[val].hybrid.mw);
 	lbl_mw2->setText(str);
@@ -438,13 +413,7 @@ void US_AddAtom::select_atom(int val)
 	lbl_radius2->setText(str);
 	le_name->setText(atom_list[val].name.upper());
 	lbl_hybrid2->setText(atom_list[val].hybrid.name.upper());
-	cmb_chain->setCurrentItem(atom_list[val].chain);
 	pb_delete->setEnabled(true);
-}
-
-void US_AddAtom::select_chain(int val)
-{
-	current_atom.chain = (unsigned int) val;
 }
 
 void US_AddAtom::closeEvent(QCloseEvent *e)

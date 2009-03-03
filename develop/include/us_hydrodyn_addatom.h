@@ -41,7 +41,6 @@ class US_AddAtom : public QWidget
 		QLabel *lbl_name;
 		QLabel *lbl_hybrid1;
 		QLabel *lbl_hybrid2;
-		QLabel *lbl_chain;
 		QLabel *lbl_mw1;
 		QLabel *lbl_mw2;
 		QLabel *lbl_radius1;
@@ -51,7 +50,6 @@ class US_AddAtom : public QWidget
 
 		QComboBox *cmb_atom;
 		QComboBox *cmb_hybrid;
-		QComboBox *cmb_chain;
 		QLineEdit *le_name;
 		struct atom current_atom;
 		struct hybridization current_hybrid;
@@ -69,7 +67,6 @@ class US_AddAtom : public QWidget
 		void update_hybridization_name(const QString &);
 		void select_hybrid(int);
 		void select_atom(int);
-		void select_chain(int);
 		void delete_atom();
 		void write_atom_file();
 		void sort_atoms();

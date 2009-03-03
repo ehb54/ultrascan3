@@ -771,7 +771,6 @@ void US_AddResidue::select_residue_file()
 						new_atom.positioner = true;
 					}
 					ts >> new_atom.serial_number;
-					ts >> new_atom.chain;
 					str2 = ts.readLine(); // read rest of line
 					if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
 					{
@@ -869,7 +868,6 @@ void US_AddResidue::select_atom_file()
 				ts >> new_atom.hybrid.name;
 				ts >> new_atom.hybrid.mw;
 				ts >> new_atom.hybrid.radius;
-				ts >> new_atom.chain;
 				str2 = ts.readLine(); // read rest of line
 				if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
 				{
@@ -1148,7 +1146,6 @@ void US_AddResidue::print_residue(struct residue res)
 		cout << "\tBead Assignment:" << res.r_atom[i].bead_assignment << endl;
 		cout << "\tPositioner:" << res.r_atom[i].positioner << endl;
 		cout << "\tSerial #:" << res.r_atom[i].serial_number << endl;
-		cout << "\tChain:" << res.r_atom[i].chain << endl;
 	}
 	cout << endl;
 	cout << "Number of beads: " << res.r_bead.size() << endl;
@@ -1563,8 +1560,7 @@ void US_AddResidue::write_residue_file()
 						<< "\t" << residue_list[i].r_atom[j].hybrid.radius
 						<< "\t" << residue_list[i].r_atom[j].bead_assignment
 						<< "\t" << (unsigned int) residue_list[i].r_atom[j].positioner
-						<< "\t" << residue_list[i].r_atom[j].serial_number
-						<< "\t" << residue_list[i].r_atom[j].chain << endl;
+						<< "\t" << residue_list[i].r_atom[j].serial_number << endl;
 			}
 			for (unsigned int j=0; j<residue_list[i].r_bead.size(); j++)
 			{
