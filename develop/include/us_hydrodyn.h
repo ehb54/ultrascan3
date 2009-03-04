@@ -90,6 +90,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		struct overlap_reduction sidechain_overlap;
 		struct overlap_reduction mainchain_overlap;
 		struct overlap_reduction buried_overlap;
+		struct overlap_reduction grid_overlap;
 		QString project;	// name of the current project - derived from the prefix of the pdb filename
 		QString bead_model_prefix;
 		QString somo_dir;

@@ -2,11 +2,13 @@
 
 US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *sidechain_overlap,
 struct overlap_reduction *mainchain_overlap, struct overlap_reduction *buried_overlap,
-double *overlap_tolerance, bool *overlap_widget, QWidget *p, const char *name) : QFrame(p, name)
+struct overlap_reduction *grid_overlap, double *overlap_tolerance, bool *overlap_widget,
+QWidget *p, const char *name) : QFrame(p, name)
 {
 	this->sidechain_overlap = sidechain_overlap;
 	this->mainchain_overlap = mainchain_overlap;
 	this->buried_overlap = buried_overlap;
+	this->grid_overlap = grid_overlap;
 	this->overlap_widget = overlap_widget;
 	this->overlap_tolerance = overlap_tolerance;
 	*overlap_widget = true;
@@ -31,6 +33,7 @@ void US_Hydrodyn_Overlap::setupGUI()
 	sidechain_OR = new US_Hydrodyn_OR(sidechain_overlap, this);
 	mainchain_OR = new US_Hydrodyn_OR(mainchain_overlap, this);
 	buried_OR = new US_Hydrodyn_OR(buried_overlap, this);
+	grid_OR = new US_Hydrodyn_OR(grid_overlap, this);
 	//buried_OR->cnt_fuse->setEnabled(false);
 	//buried_OR->cb_fuse->setEnabled(false);
 
@@ -65,6 +68,7 @@ void US_Hydrodyn_Overlap::setupGUI()
 	tw_overlap->addTab(sidechain_OR, "Exposed Side chain beads");
 	tw_overlap->addTab(mainchain_OR, "Exposed Main and side chain beads");
 	tw_overlap->addTab(buried_OR, "Buried beads");
+	tw_overlap->addTab(grid_OR, "Grid beads");
 
 	pb_cancel = new QPushButton(tr("Close"), this);
 	Q_CHECK_PTR(pb_cancel);

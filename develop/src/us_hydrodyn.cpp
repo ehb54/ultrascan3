@@ -1583,6 +1583,16 @@ void US_Hydrodyn::radial_reduction()
 	  buried_overlap.fuse_beads_percent,
 	  buried_overlap.remove_sync_percent,
 	  buried_overlap.remove_hierarch_percent);
+	  
+	  grid_overlap.fuse_beads ? "Y" : "N",
+	  grid_overlap.remove_hierarch ? "Y" : "N",
+	  grid_overlap.remove_sync ? "Y" : "N",
+	  grid_overlap.translate_out ? "Y" : "N",
+	  grid_overlap.show_translate ? "Y" : "N",
+	  grid_overlap.remove_overlap ? "Y" : "N",
+	  grid_overlap.fuse_beads_percent,
+	  grid_overlap.remove_sync_percent,
+	  grid_overlap.remove_hierarch_percent);
 #endif
 
    int methods[] =
@@ -3708,6 +3718,16 @@ int US_Hydrodyn::compute_asa()
 	  buried_overlap.fuse_beads_percent,
 	  buried_overlap.remove_sync_percent,
 	  buried_overlap.remove_hierarch_percent);
+
+	  grid_overlap.fuse_beads ? "Y" : "N",
+	  grid_overlap.remove_hierarch ? "Y" : "N",
+	  grid_overlap.remove_sync ? "Y" : "N",
+	  grid_overlap.translate_out ? "Y" : "N",
+	  grid_overlap.show_translate ? "Y" : "N",
+	  grid_overlap.remove_overlap ? "Y" : "N",
+	  grid_overlap.fuse_beads_percent,
+	  grid_overlap.remove_sync_percent,
+	  grid_overlap.remove_hierarch_percent);
 
 #endif
 
@@ -7065,6 +7085,31 @@ void US_Hydrodyn::read_config(const QString& fname)
    ts >> str;
    ts.readLine();
    buried_overlap.show_translate = (bool) str.toInt();
+
+   ts >> str;
+   ts.readLine();
+   grid_overlap.remove_overlap = (bool) str.toInt();
+   ts >> str;
+   ts.readLine();
+   grid_overlap.fuse_beads = (bool) str.toInt();
+   ts >> grid_overlap.fuse_beads_percent;
+   ts.readLine();
+   ts >> str;
+   ts.readLine();
+   grid_overlap.remove_hierarch = (bool) str.toInt();
+   ts >> grid_overlap.remove_hierarch_percent;
+   ts.readLine();
+   ts >> str;
+   ts.readLine();
+   grid_overlap.remove_sync = (bool) str.toInt();
+   ts >> grid_overlap.remove_sync_percent;
+   ts.readLine();
+   ts >> str;
+   ts.readLine();
+   grid_overlap.translate_out = (bool) str.toInt();
+   ts >> str;
+   ts.readLine();
+   grid_overlap.show_translate = (bool) str.toInt();
    ts >> str;
    ts.readLine();
    overlap_tolerance = str.toDouble();
@@ -7167,6 +7212,7 @@ void US_Hydrodyn::read_config(const QString& fname)
    sidechain_overlap.title = "exposed side chain beads";
    mainchain_overlap.title = "exposed main/main and\nmain/side chain beads";
    buried_overlap.title = "buried beads";
+   grid_overlap.title = "Grid beads";
 }
 
 void US_Hydrodyn::reset()
@@ -7220,9 +7266,20 @@ void US_Hydrodyn::reset()
    buried_overlap.translate_out = false;
    buried_overlap.show_translate = false;
 
-   sidechain_overlap.title = "exposed side chain beads";
+   grid_overlap.remove_overlap = true;
+   grid_overlap.fuse_beads = false;
+   grid_overlap.fuse_beads_percent = 0.0;
+   grid_overlap.remove_hierarch = true;
+   grid_overlap.remove_hierarch_percent = 1.0;
+   grid_overlap.remove_sync = false;
+   grid_overlap.remove_sync_percent = 1.0;
+   grid_overlap.translate_out = false;
+   grid_overlap.show_translate = false;
+   
+	sidechain_overlap.title = "exposed side chain beads";
    mainchain_overlap.title = "exposed main/main and main/side chain beads";
    buried_overlap.title = "buried beads";
+   grid_overlap.title = "Grid beads";
 
    bead_output.sequence = 0;
    bead_output.output = 0;
@@ -7267,11 +7324,12 @@ void US_Hydrodyn::write_config(const QString& fname)
    QFile f;
    QString str;
    f.setName(fname);
+	cout << fname << endl;
    if (f.open(IO_WriteOnly | IO_Translate)) // first try user's directory for default settings
    {
       QTextStream ts(&f);
       ts << "SOMO Config file - computer generated, please do not edit...\n";
-      ts << sidechain_overlap.remove_overlap << "\t\t# Remove overlaps flag\n";
+      ts << sidechain_overlap.remove_overlap << "\t\t# Remove side chain overlaps flag\n";
       ts << sidechain_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
       ts << sidechain_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
       ts << sidechain_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
@@ -7281,7 +7339,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << sidechain_overlap.translate_out << "\t\t# Outward translation flag\n";
       ts << sidechain_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
 
-      ts << mainchain_overlap.remove_overlap << "\t\t# Remove overlaps flag\n";
+      ts << mainchain_overlap.remove_overlap << "\t\t# Remove mainchain overlaps flag\n";
       ts << mainchain_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
       ts << mainchain_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
       ts << mainchain_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
@@ -7291,7 +7349,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << mainchain_overlap.translate_out << "\t\t# Outward translation flag\n";
       ts << mainchain_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
 
-      ts << buried_overlap.remove_overlap << "\t\t# Remove overlaps flag\n";
+      ts << buried_overlap.remove_overlap << "\t\t# Remove buried beads overlaps flag\n";
       ts << buried_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
       ts << buried_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
       ts << buried_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
@@ -7300,6 +7358,16 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << buried_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
       ts << buried_overlap.translate_out << "\t\t# Outward translation flag\n";
       ts << buried_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
+
+      ts << grid_overlap.remove_overlap << "\t\t# Remove grid bead overlaps flag\n";
+      ts << grid_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
+      ts << grid_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
+      ts << grid_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+      ts << grid_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
+      ts << grid_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
+      ts << grid_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
+      ts << grid_overlap.translate_out << "\t\t# Outward translation flag\n";
+      ts << grid_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
       ts << overlap_tolerance << "\t\t# bead overlap tolerance\n";
 
       ts << bead_output.output << "\t\t# flag for selecting output format\n";
@@ -7378,7 +7446,7 @@ void US_Hydrodyn::show_overlap()
    else
    {
       overlap_window = new US_Hydrodyn_Overlap(&sidechain_overlap,
-					       &mainchain_overlap, &buried_overlap, &overlap_tolerance, &overlap_widget);
+					       &mainchain_overlap, &buried_overlap, &grid_overlap, &overlap_tolerance, &overlap_widget);
       overlap_window->show();
    }
 }
@@ -7561,6 +7629,15 @@ void US_Hydrodyn::append_options_log_somo()
 	     "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
 	     "      Remove Overlaps hierarchically:             %s\n"
 	     "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+	     
+		  "    Grid beads:\n"
+	     "      Fuse Beads:                                 %s\n"
+	     "      Fuse Beads that overlap by more than:       %.1f\n"
+	     "      Remove Overlaps:                            %s\n"
+	     "      Remove Overlaps synchronously:              %s\n"
+	     "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+	     "      Remove Overlaps hierarchically:             %s\n"
+	     "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
 	     "\n"
 		  
 	     ,overlap_tolerance
@@ -7589,6 +7666,14 @@ void US_Hydrodyn::append_options_log_somo()
 	     ,buried_overlap.remove_sync_percent
 	     ,buried_overlap.remove_hierarch ? "On" : "Off"
 	     ,buried_overlap.remove_hierarch_percent
+	     
+		  ,grid_overlap.fuse_beads ? "On" : "Off"
+	     ,grid_overlap.fuse_beads_percent
+	     ,grid_overlap.remove_overlap ? "On" : "Off"
+	     ,grid_overlap.remove_sync ? "On" : "Off"
+	     ,grid_overlap.remove_sync_percent
+	     ,grid_overlap.remove_hierarch ? "On" : "Off"
+	     ,grid_overlap.remove_hierarch_percent
 	     );
    options_log += s;
 }	
