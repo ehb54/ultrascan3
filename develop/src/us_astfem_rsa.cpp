@@ -620,135 +620,109 @@ void US_Astfem_RSA::update_assocv()
    }
 }
 
+/*************************************************************
+ New version : 03/03/2009
+*************************************************************/
 void US_Astfem_RSA::initialize_rg() // Setup reaction groups
 {
-   if ((*system).assoc_vector.size() == 0) return; // if there are no reactions, then it is all noninteracting
+   // if there are no reactions, then it is all noninteracting
+	if ((*system).assoc_vector.size() == 0) return; 
+    
+   vector <struct Association> tmp_rule;
    struct ReactionGroup tmp_rg;
-   unsigned int counter, i, j;
-   bool flag1=false, flag2, flag3;
-   vector <bool> reaction_used;
-   reaction_used.clear();
-   for (i=0; i<(*system).assoc_vector.size(); i++)
-   {
-      reaction_used.push_back(false);
-   }
-   // initialize the first reaction group and put it into a temporary reaction group, use as test against all assoc vector entries:
-   tmp_rg.GroupComponent.clear();
-   tmp_rg.association.clear();
+   unsigned int i, j, m;
+   bool isnew, connected, GCupdate; 		
+   unsigned int NoneExist = 65535;	// index for none exisiting component
+   
+   // make a copy of all association rules to avoid changing the original one
+   tmp_rule = (*system).assoc_vector;
+
    rg.clear();
-   tmp_rg.association.push_back(0);
-   tmp_rg.GroupComponent.push_back((*system).assoc_vector[0].component1);
-   tmp_rg.GroupComponent.push_back((*system).assoc_vector[0].component2);
-   if ((*system).assoc_vector[0].component3  != -1) // only 2 components react in first reaction
+   i = 0;
+   while ( i <(*system).assoc_vector.size() )
    {
-      tmp_rg.GroupComponent.push_back((*system).assoc_vector[0].component3);
-   }
-   reaction_used[0] = true;
-   if ((*system).assoc_vector.size() == 1)  // there is only one reaction, so add it and return
-   {
-      rg.push_back(tmp_rg);
-      return;
-   }
-   flag3 = false;
-   for (i=0; i<(*system).assoc_vector.size(); i++)
-   {
-      for (counter=1; counter<(*system).assoc_vector.size(); counter++) // check each association rule to see if it contains components that match tmp_rg components
+      tmp_rg.association.clear();
+      tmp_rg.GroupComponent.clear();
+      // find the first rulle with unsed components
+      for(m=i; m<(*system).assoc_vector.size(); m++) 
       {
-	 while (reaction_used[counter])
-	 {
-	    counter++;
-	    if (counter == (*system).assoc_vector.size()) return;
-	 }
-	 for (j=0; j<tmp_rg.GroupComponent.size(); j++) // check if any component already present in tmp_rg matches any of the three components in current (*system).assoc_vector entry
-	 {
-	    flag1 = false;
-	    if((*system).assoc_vector[counter].component1 == tmp_rg.GroupComponent[j]
-	       ||(*system).assoc_vector[counter].component2 == tmp_rg.GroupComponent[j]
-	       ||(*system).assoc_vector[counter].component3 == (int) tmp_rg.GroupComponent[j])
-	    {
-	       flag1 = true;
-	       break;
-	    }
-	 }
-	 if (flag1) 	// if the component from tmp_rg is present in another (*system).assoc_vector entry,
-	 {				//find out if the component from (*system).assoc_vector is already in tmp_rg.GroupComponent
-	    tmp_rg.association.push_back(counter); // it is present (flag1=true) so add this rule to the tmp_rg vector
-	    reaction_used[counter] = true;
-	    flag3 = true; // there is at least one of all (*system).assoc_vector entries in this reaction_group, so set flag3 to true
-	    flag2 = false;
-	    for (j=0; j<tmp_rg.GroupComponent.size(); j++) // check if 1st component is already in the GroupVector from tmp_rg
-	    {
-	       if((*system).assoc_vector[counter].component1 == tmp_rg.GroupComponent[j])
-	       {
-		  flag2 = true;
-	       }
-	    }
-	    if (!flag2) // add if not present already
-	    {
-	       tmp_rg.GroupComponent.push_back((*system).assoc_vector[counter].component1);
-	    }
-	    flag2 = false;
-	    for (j=0; j<tmp_rg.GroupComponent.size(); j++)  // check if 2nd component is already in the GroupVector from tmp_rg
-	    {
-	       if((*system).assoc_vector[counter].component2 == tmp_rg.GroupComponent[j])
-	       {
-		  flag2 = true;
-	       }
-	    }
-	    if (!flag2) // add if not present already
-	    {
-	       tmp_rg.GroupComponent.push_back((*system).assoc_vector[counter].component2);
-	    }
-	    flag2 = false;
-	    if ((*system).assoc_vector[counter].component3 != -1)  // check if 3rd component is already in the GroupVector from tmp_rg (but only if non-zero)
-	    {
-	       for (j=0; j<tmp_rg.GroupComponent.size(); j++)
-	       {
-		  if((*system).assoc_vector[counter].component3 == (int) tmp_rg.GroupComponent[j])
-		  {
-		     flag2 = true;
-		  }
-	       }
-	       if (!flag2) // add if not present already
-	       {
-		  tmp_rg.GroupComponent.push_back((*system).assoc_vector[counter].component3);
-	       }
-	    }
-	 } //flag1 = true
+        if( tmp_rule[m].component1 != NoneExist ||
+            tmp_rule[m].component2 != NoneExist ||
+            tmp_rule[m].component3 != -1 )  break;
       }
-      if (flag3)
+      if (m==(*system).assoc_vector.size() ) 
       {
-	 flag3 = false;
-	 rg.push_back(tmp_rg);
-	 tmp_rg.GroupComponent.clear();
-	 tmp_rg.association.clear();
-	 // make the next unused reaction the test reaction
-	 j=1;
-	 while (reaction_used[j])
-	 {
-	    j++;
-	 }
-	 //cout << "j: " << j << endl;
-	 if (j < (*system).assoc_vector.size())
-	 {
-	    tmp_rg.association.push_back(j);
-	    tmp_rg.GroupComponent.push_back((*system).assoc_vector[j].component1);
-	    tmp_rg.GroupComponent.push_back((*system).assoc_vector[j].component2);
-	    if ((*system).assoc_vector[j].component3  != -1) // only 2 components react in first reaction
-	    {
-	       tmp_rg.GroupComponent.push_back((*system).assoc_vector[j].component3);
-	    }
-	    reaction_used[j] = true;
-	    counter ++;
-	 }
-	 if (j == (*system).assoc_vector.size() - 1)
-	 {
-	    rg.push_back(tmp_rg);
-	    return;
-	 }
+        break; 	// no more rule with unused components
       }
-   }
+      else
+      {
+        i = m;
+      }
+        
+      // i-th rule has unused comps
+      tmp_rg.association.push_back(i);
+      tmp_rg.GroupComponent.push_back( tmp_rule[i].component1 );
+      tmp_rg.GroupComponent.push_back( tmp_rule[i].component2 );
+      if ( tmp_rule[i].component3 != -1 ) 
+        tmp_rg.GroupComponent.push_back( tmp_rule[i].component3 );
+
+      do		// loop to find all rules connected to rule[i]
+      {
+        GCupdate = false;	
+        for (m=i+1; m<(*system).assoc_vector.size(); m++)
+        {
+          connected = false;
+          for (j=0; j<tmp_rg.GroupComponent.size(); j++) 
+          {
+             if ( tmp_rule[m].component1 == tmp_rg.GroupComponent[j] ||
+                  tmp_rule[m].component2 == tmp_rg.GroupComponent[j] ||
+                  tmp_rule[m].component3 == (int)tmp_rg.GroupComponent[j] ) 
+             {
+                connected = true;
+                break;
+             }
+          } // j
+          if (connected)
+          {		// rules[m] belongs to tmp_rg
+             GCupdate = true; 		// tmp_rg.GroupComponent has to be updated
+             tmp_rg.association.push_back(m);
+
+             isnew = true; 	// check if tmp_rule[m].comp1 is in tmp_rg.GroupComponent 
+             for (j=0; j<tmp_rg.GroupComponent.size(); j++)  	
+             {
+                if (tmp_rule[m].component1 == tmp_rg.GroupComponent[j]) isnew = false; 
+             }
+             if (isnew) tmp_rg.GroupComponent.push_back( tmp_rule[m].component1 );
+
+             isnew = true; 	// check if tmp_rule[m].comp1 is in tmp_rg.GroupComponent 
+             for (j=0; j<tmp_rg.GroupComponent.size(); j++) 	
+             {
+                if (tmp_rule[m].component2 == tmp_rg.GroupComponent[j]) isnew = false; 
+             }
+             if (isnew) tmp_rg.GroupComponent.push_back( tmp_rule[m].component2 );
+
+             isnew = true; 	// check if tmp_rule[m].comp1 is in tmp_rg.GroupComponent 
+             for (j=0; j<tmp_rg.GroupComponent.size(); j++) 
+             {
+                if (tmp_rule[m].component3 == (int)tmp_rg.GroupComponent[j]) isnew = false; 
+             }
+             if (isnew) tmp_rg.GroupComponent.push_back( tmp_rule[m].component3 );
+
+             // reset tmp_rule[m] to indicate all its comps are included
+             tmp_rule[m].component1 = NoneExist;
+             tmp_rule[m].component2 = NoneExist;
+             tmp_rule[m].component3 = -1;
+           } // if connected
+        }  // m
+     } while( GCupdate );   
+
+     // all rules connected to to rule[i] are examined
+     rg.push_back( tmp_rg );
+     i ++;
+
+   } // while (i)
 }
+
 
 void US_Astfem_RSA::initialize_conc(unsigned int k, struct mfem_initial *CT0, bool noninteracting) // initializes total concentration vector
 {
