@@ -5775,7 +5775,8 @@ void ga_setup(struct ga_data GA_Params, int myrank, US_fe_nnls_t *pass_us_fe_nnl
 {
 	analysis_type = GA_Params.analysis_type;
 	s_rounding = 1e-13;
-	if(analysis_type == "GA_MW")
+	if(analysis_type == "GA_MW" ||
+	   analysis_type == "GA_MW_RA")
 	{
 		s_rounding = 100;
 		ga_mw = 1;

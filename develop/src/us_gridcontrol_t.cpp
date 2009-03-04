@@ -1260,7 +1260,8 @@ void US_GridControl_T::write_experiment()
                 cerr << "solute ff0:" << GA_Params.solute[i].ff0 << endl;
             }
         }
-        if(analysis_type == "GA_MW")
+        if(analysis_type == "GA_MW" ||
+	   analysis_type == "GA_MW_RA")
         {
             ds << GA_Params.monte_carlo;
             ds << GA_Params.demes;
