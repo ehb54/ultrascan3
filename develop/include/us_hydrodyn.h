@@ -193,7 +193,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		// to a new residue or is part of a previously assigned residue
 		// true: new residue sequence number, false: still the same
 		// the integer argument contains the last sequence number (last_resSeq)
-		bool assign_atom(const QString &, struct PDB_chain *, unsigned int *);
+		bool assign_atom(const QString &, struct PDB_chain *, QString *);
 		void cancel();
 		void help();
 		void atom();

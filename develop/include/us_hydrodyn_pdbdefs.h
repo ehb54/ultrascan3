@@ -24,7 +24,7 @@ struct PDB_atom
 	QString altLoc;
 	QString resName;
         QString chainID;
-	unsigned int resSeq;
+	QString resSeq;
 	QString iCode;
 	struct point coordinate;
 	float occupancy;

@@ -704,7 +704,7 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
    has_OXT.clear();
    for (unsigned int j = 0; j < model->molecule.size(); j++)
    {
-      unsigned int lastResSeq = 0;
+      QString lastResSeq = "";
       QString lastResName = "";
       int atom_count = 0;
       for (unsigned int k = 0; k < model->molecule[j].atom.size(); k++)
@@ -771,7 +771,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 
    for (unsigned int j = 0; j < model->molecule.size(); j++)
    {
-      unsigned int lastResSeq = 0;
+      QString lastResSeq = "";
       unsigned int lastResPos = 0;
       QString lastChainID = "";
       bool spec_N1 = false;
@@ -856,11 +856,11 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 			   errors_found++;
 			   error_string->
 			      append(QString("").
-				     sprintf("missing atom chain %s molecule %d atom %s residue %d %s\n",
+				     sprintf("missing atom chain %s molecule %d atom %s residue %s %s\n",
 					     lastChainID.ascii(),
 					     j + 1,
 					     residue_list[lastResPos].r_atom[l].name.ascii(),
-					     lastResSeq,
+					     lastResSeq.ascii(),
 					     residue_list[lastResPos].name.ascii()));
 			}
 		     }
@@ -878,7 +878,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 
 	       if (residue_list[m].name == "N1")
 	       {
-		  lastResSeq = 0;
+		  lastResSeq = "";
 		  lastResPos = 0;
 		  spec_N1 = true;
 	       }
@@ -892,11 +892,11 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 		 && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
 	    {
 	       errors_found++;
-	       error_string->append(QString("").sprintf("unknown residue chain %s molecule %d atom %s residue %d %s\n",
+	       error_string->append(QString("").sprintf("unknown residue chain %s molecule %d atom %s residue %s %s\n",
 							this_atom->chainID.ascii(),
 							j + 1,
 							this_atom->name.ascii(),
-							(int)this_atom->resSeq,
+							this_atom->resSeq.ascii(),
 							this_atom->resName.ascii()
 							));
 	    }
@@ -923,11 +923,11 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	    if (atompos == -1)
 	    {
 	       errors_found++;
-	       error_string->append(QString("").sprintf("unknown atom chain %s molecule %d atom %s residue %d %s\n",
+	       error_string->append(QString("").sprintf("unknown atom chain %s molecule %d atom %s residue %s %s\n",
 							this_atom->chainID.ascii(),
 							j + 1,
 							this_atom->name.ascii(),
-							(int)this_atom->resSeq,
+							this_atom->resSeq.ascii(),
 							this_atom->resName.ascii()
 							));
 	    }
@@ -943,11 +943,11 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	       errors_found++;
 	       error_string->
 		  append(QString("").
-			 sprintf("missing atom chain %s molecule %d atom %s residue %d %s\n",
+			 sprintf("missing atom chain %s molecule %d atom %s residue %s %s\n",
 				 lastChainID.ascii(),
 				 j + 1,
 				 residue_list[lastResPos].r_atom[l].name.ascii(),
-				 lastResSeq,
+				 lastResSeq.ascii(),
 				 residue_list[lastResPos].name.ascii()));
 	    }
 	 }
@@ -1147,7 +1147,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 
    for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
    {
-      int last_resSeq = -1;
+      QString last_resSeq = "";
       QString last_resName = "";
       for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
       {
@@ -1225,25 +1225,25 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	 {
 	    // clear tmp_used if new resSeq
 #if defined(DEBUG)
-	    printf("respos %d != -1 last used %u %d\n", respos, this_atom->resSeq, last_resSeq);
+	    printf("respos %d != -1 last used %s %s\n", respos, this_atom->resSeq.ascii(), last_resSeq.ascii());
 #endif
-	    if ((int)this_atom->resSeq != last_resSeq ||
+	    if (this_atom->resSeq != last_resSeq ||
 		this_atom->resName != last_resName ||
 		residue_list[respos].name == "OXT" ||
 		residue_list[respos].name == "N1")
 	    {
 #if defined(DEBUG)
-	       printf("clear last used %u %d\n", this_atom->resSeq, last_resSeq);
+	       printf("clear last used %s %s\n", this_atom->resSeq.ascii(), last_resSeq.ascii());
 #endif
 	       for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
 	       {
 		  residue_list[respos].r_atom[m].tmp_used = false;
 	       }
-	       last_resSeq = (int)this_atom->resSeq;
+	       last_resSeq = this_atom->resSeq;
 	       last_resName = this_atom->resName;
 	       if(residue_list[respos].name == "OXT" ||
 		  residue_list[respos].name == "N1") {
-		  last_resSeq = -1;
+		  last_resSeq = "";
 	       }
 	    }
 #if defined(DEBUG)
@@ -1334,8 +1334,8 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	    } else {
 #if defined(DEBUG)
 	       printf
-		  ("skipped bound waters & H %s %s rad %f resseq %d\n",
-		   this_atom->name.ascii(), this_atom->resName.ascii(), this_atom->radius, this_atom->resSeq);
+		  ("skipped bound waters & H %s %s rad %f resseq %s\n",
+		   this_atom->name.ascii(), this_atom->resName.ascii(), this_atom->radius, this_atom->resSeq.ascii());
 	       fflush(stdout);
 #endif
 	    }
@@ -1374,14 +1374,14 @@ int US_Hydrodyn::create_beads(QString *error_string)
    // reorder residue
    {
       for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
-	 int last_resSeq = -1;
+	 QString last_resSeq = "";
 	 list <sortable_PDB_atom> last_residue_atoms;
 	 unsigned int k;
 	 for (k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
 	    PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
 
-	    if ((int)this_atom->resSeq != last_resSeq) {
-	       if (last_resSeq != -1) {
+	    if (this_atom->resSeq != last_resSeq) {
+	       if (last_resSeq != "") {
 		  // reorder previous residue
 		  last_residue_atoms.sort();
 		  int base_ofs = (int) last_residue_atoms.size();
@@ -1403,7 +1403,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	    }
 	    last_residue_atoms.push_back(tmp_sortable_pdb_atom);
 	 }
-	 if (last_resSeq != -1) {
+	 if (last_resSeq != "") {
 	    // reorder 'last' residue
 	    last_residue_atoms.sort();
 	    int base_ofs = (int) last_residue_atoms.size();
@@ -1450,7 +1450,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
    int bead_count = 0;
    int atom_count = 0;
    int last_asgn = -1;
-   int last_res = -1;
+   int last_res = "";
    QString last_resName = "";
    {
       for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
@@ -1458,10 +1458,10 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	    PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
 	    if(this_atom->active) {
 	       if(last_asgn != (int)this_atom->bead_assignment ||
-		  last_res != (int)this_atom->resSeq) {
+		  last_res != this_atom->resSeq) {
 		  if(bead_count) {
-		     printf("res %d %s bead %d bead_mw %f sum atom mw %f diff %f\n",
-			    last_res,
+		     printf("res %s %s bead %d bead_mw %f sum atom mw %f diff %f\n",
+			    last_res.ascii(),
 			    last_resName.ascii(),
 			    last_asgn,
 			    prev_bead_mw,
@@ -1477,7 +1477,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 		  tot_bead_mw += this_atom->bead_ref_mw;
 		  prev_bead_mw += this_atom->bead_ref_mw;
 		  last_asgn = (int)this_atom->bead_assignment;
-		  last_res = (int)this_atom->resSeq;
+		  last_res = this_atom->resSeq;
 		  last_resName = this_atom->resName;
 	       }
 	       atom_count++;
@@ -1486,8 +1486,8 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	    }
 	 }
       }
-      printf("res %d %s bead %d bead_mw %f sum atom mw %f diff %f\n",
-	     last_res,
+      printf("res %s %s bead %d bead_mw %f sum atom mw %f diff %f\n",
+	     last_res.ascii(),
 	     last_resName.ascii(),
 	     last_asgn,
 	     prev_bead_mw,
@@ -1525,6 +1525,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 
 void US_Hydrodyn::radial_reduction()
 {
+   printf("--------------------------->>>>>>>>>>>>>>>>>>>>>radial reduction!!\n");
    // popping radial reduction
 
    // or sc fb Y rh Y rs Y to Y st Y ro Y 70.000000 1.000000 0.000000
@@ -1553,7 +1554,8 @@ void US_Hydrodyn::radial_reduction()
 #if defined(DEBUG)
    printf("or sc fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n"
 	  "or scmc fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n"
-	  "or bb fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n",
+	  "or bb fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n"
+	  "or grid fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n",
 	  sidechain_overlap.fuse_beads ? "Y" : "N",
 	  sidechain_overlap.remove_hierarch ? "Y" : "N",
 	  sidechain_overlap.remove_sync ? "Y" : "N",
@@ -1582,7 +1584,7 @@ void US_Hydrodyn::radial_reduction()
 	  buried_overlap.remove_overlap ? "Y" : "N",
 	  buried_overlap.fuse_beads_percent,
 	  buried_overlap.remove_sync_percent,
-	  buried_overlap.remove_hierarch_percent);
+	  buried_overlap.remove_hierarch_percent,
 	  
 	  grid_overlap.fuse_beads ? "Y" : "N",
 	  grid_overlap.remove_hierarch ? "Y" : "N",
@@ -1600,12 +1602,14 @@ void US_Hydrodyn::radial_reduction()
 	 RADIAL_REDUCTION | RR_SC | RR_EXPOSED,
 	 RADIAL_REDUCTION | RR_MCSC | RR_EXPOSED,
 	 RADIAL_REDUCTION | RR_MCSC | RR_BURIED,
+	 RADIAL_REDUCTION | RR_MCSC | RR_BURIED,
       };
 
    if (no_rr) {
       methods[0] = 0;
       methods[1] = 0;
       methods[2] = 0;
+      methods[3] = 0;
    }
 
    if (sidechain_overlap.fuse_beads) {
@@ -1620,6 +1624,10 @@ void US_Hydrodyn::radial_reduction()
       methods[2] |= POP_ALL | POP_BURIED;
    }
 
+   if (grid_overlap.fuse_beads) {
+      methods[3] |= POP_ALL | POP_BURIED;
+   }
+
    if (sidechain_overlap.remove_hierarch) {
       methods[0] |= RR_HIERC;
    }
@@ -1630,6 +1638,10 @@ void US_Hydrodyn::radial_reduction()
 
    if (buried_overlap.remove_hierarch) {
       methods[2] |= RR_HIERC;
+   }
+
+   if (grid_overlap.remove_hierarch) {
+      methods[3] |= RR_HIERC;
    }
 
    if (sidechain_overlap.translate_out) {
@@ -1644,6 +1656,10 @@ void US_Hydrodyn::radial_reduction()
       methods[2] |= OUTWARD_TRANSLATION;
    }
 
+   if (grid_overlap.translate_out) {
+      methods[3] |= OUTWARD_TRANSLATION;
+   }
+
    if (!sidechain_overlap.remove_overlap) {
       methods[0] = 0;
    }
@@ -1656,11 +1672,16 @@ void US_Hydrodyn::radial_reduction()
       methods[2] = 0;
    }
 
+   if (!grid_overlap.remove_overlap) {
+      methods[3] = 0;
+   }
+
    float overlap[] =
       {
 	 sidechain_overlap.fuse_beads_percent / 100.0,
 	 mainchain_overlap.fuse_beads_percent / 100.0,
-	 buried_overlap.fuse_beads_percent / 100.0
+	 buried_overlap.fuse_beads_percent / 100.0,
+	 grid_overlap.fuse_beads_percent / 100.0
       };
 
    float rr_overlap[] =
@@ -1670,7 +1691,9 @@ void US_Hydrodyn::radial_reduction()
 	 (mainchain_overlap.remove_hierarch ?
 	  mainchain_overlap.remove_hierarch_percent : mainchain_overlap.remove_sync_percent) / 100.0,
 	 (buried_overlap.remove_hierarch ?
-	  buried_overlap.remove_hierarch_percent : buried_overlap.remove_sync_percent) / 100.0
+	  buried_overlap.remove_hierarch_percent : buried_overlap.remove_sync_percent) / 100.0,
+	 (grid_overlap.remove_hierarch ?
+	  grid_overlap.remove_hierarch_percent : grid_overlap.remove_sync_percent) / 100.0
       };
 
 
@@ -1678,7 +1701,8 @@ void US_Hydrodyn::radial_reduction()
    write_bead_tsv(somo_tmp_dir + SLASH + "bead_model_start" + DOTSOMO + ".tsv", &bead_model);
    write_bead_spt(somo_tmp_dir + SLASH + "bead_model_start" + DOTSOMO, &bead_model);
 #endif
-   for(unsigned int k = 0; k < sizeof(methods) / sizeof(int); k++) {
+   for(unsigned int k = 3; k < sizeof(methods) / sizeof(int); k++) {
+      // only grid method
 
    stage_loop:
 
@@ -2937,10 +2961,10 @@ int US_Hydrodyn::compute_asa()
 	    // initialize data
 	    // this_atom->bead_positioner = false;
 	    this_atom->normalized_ot_is_valid = false;
-	    fprintf(asaf, "%s\t%s\t%u\t%.2f\n",
+	    fprintf(asaf, "%s\t%s\t%s\t%.2f\n",
 		    this_atom->name.ascii(),
 		    this_atom->resName.ascii(),
-		    this_atom->resSeq,
+		    this_atom->resSeq.ascii(),
 		    this_atom->asa);
 		
 
@@ -2976,7 +3000,7 @@ int US_Hydrodyn::compute_asa()
 	 int last_bead_assignment = -1;
 	 int last_chain = -1;
 	 QString last_resName = "not a residue";
-	 int last_resSeq = -1;
+	 QString last_resSeq = "";
 	 PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
 	 PDB_atom *last_main_bead = (PDB_atom *) 0;
 	 PDB_atom *sidechain_N = (PDB_atom *) 0;
@@ -3013,7 +3037,7 @@ int US_Hydrodyn::compute_asa()
 		    (this_atom->bead_assignment != last_bead_assignment ||
 		     this_atom->chain != last_chain ||
 		     this_atom->resName != last_resName ||
-		     (int)this_atom->resSeq != last_resSeq) &&
+		     this_atom->resSeq != last_resSeq) &&
 		    !(regular_N_handling &&
 		      this_atom->chain == 0 &&
 		      this_atom->name == "N" &&
@@ -3326,22 +3350,23 @@ int US_Hydrodyn::compute_asa()
 
 	    if (this_atom->active &&
 		this_atom->chain == 0) {
-#if defined(DEBUG)
+# if defined(DEBUG)
 	       printf("pass 2d mc_asa %s %s %d pm %d\n",
 		      this_atom->name.ascii(),
 		      this_atom->resName.ascii(),
 		      this_atom->serial,
 		      this_atom->placing_method); fflush(stdout);
-#endif
+# endif
 	       if(bead_mc_asa.size() < this_atom->resSeq + 1) {
 		  bead_mc_asa.resize(this_atom->resSeq + 32);
 	       }
+#warn broken by resSeq->QString
 	       bead_mc_asa[this_atom->resSeq] += this_atom->asa;
 	    }
 	 }
       }
    }
-#endif
+#endif // OLD_ASABA_SC_COMPUTE
 
 #if defined(DEBUG1) || defined(DEBUG)
    printf("pass 3\n"); fflush(stdout);
@@ -3428,10 +3453,10 @@ int US_Hydrodyn::compute_asa()
 		  break;
 	       }
 #if defined(DEBUG) || defined(OLD_ASAB1_SC_COMPUTE)
-	       printf("pass 3 active is bead %s %s %d checkpoint 1\n",
+	       printf("pass 3 active is bead %s %s %s checkpoint 1\n",
 		      this_atom->name.ascii(),
 		      this_atom->resName.ascii(),
-		      this_atom->resSeq); fflush(stdout);
+		      this_atom->resSeq.ascii()); fflush(stdout);
 #endif
 	       this_atom->visibility = (this_atom->bead_asa >= asa.threshold);
 #if defined(OLD_ASAB1_SC_COMPUTE)
@@ -3575,7 +3600,7 @@ int US_Hydrodyn::compute_asa()
    int bead_count = 0;
    int atom_count = 0;
    int last_asgn = -1;
-   int last_res = -1;
+   QString last_res = "";
    QString last_resName = "";
 #endif
    {
@@ -3593,8 +3618,8 @@ int US_Hydrodyn::compute_asa()
 	       this_atom->bead_actual_radius = this_atom->bead_computed_radius;
 #if defined(DEBUG_MW)
 	       if(bead_count) {
-		  printf("res %d %s bead %d bead_mw %f sum atom mw %f diff %f\n",
-			 last_res,
+		  printf("res %s %s bead %d bead_mw %f sum atom mw %f diff %f\n",
+			 last_res.ascii(),
 			 last_resName.ascii(),
 			 last_asgn,
 			 prev_bead_mw,
@@ -3609,7 +3634,7 @@ int US_Hydrodyn::compute_asa()
 	       tot_bead_mw += this_atom->bead_ref_mw;
 	       prev_bead_mw += this_atom->bead_ref_mw;
 	       last_asgn = (int)this_atom->bead_assignment;
-	       last_res = (int)this_atom->resSeq;
+	       last_res = this_atom->resSeq;
 	       last_resName = this_atom->resName;
 #endif
 	       bead_model.push_back(*this_atom);
@@ -5271,7 +5296,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
 
    for (unsigned int i = 0; i < use_model.size(); i++) {
       if (use_model[i]->active) {
-	 unsigned int tmp_serial = use_model[i]->resSeq; // was serial
+	 QString tmp_serial = use_model[i]->resSeq; // was serial
 	 QString residues;
 
 	 if (!bead_model_from_file) {
@@ -5285,7 +5310,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
 
 	    for (unsigned int j = 0; j < use_model[i]->all_beads.size(); j++)
 	    {
-	       unsigned int tmp_serial = use_model[i]->all_beads[j]->resSeq;
+	       QString tmp_serial = use_model[i]->all_beads[j]->resSeq;
 	  
 	       residues += "," +
 		  (use_model[i]->all_beads[j]->resName +
@@ -6413,7 +6438,7 @@ void US_Hydrodyn::read_pdb(const QString &filename)
    QString str, str1, str2, temp;
    model_vector.clear();
    bead_model.clear();
-   unsigned int last_resSeq = 0; // keeps track of residue sequence number, initialize to zero, first real one will be "1"
+   QString last_resSeq = ""; // keeps track of residue sequence number, initialize to zero, first real one will be "1"
    struct PDB_chain temp_chain;
    QFile f(filename);
    struct PDB_model temp_model;
@@ -6841,7 +6866,7 @@ void US_Hydrodyn::clear_temp_chain(struct PDB_chain *temp_chain) // clear all th
    (*temp_chain).segID = "";
 }
 
-bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain, unsigned int *last_resSeq)
+bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain, QString *last_resSeq)
 {
    /*
      http://www.rcsb.org/pdb/docs/format/pdbguide2.2/part_11.html
@@ -6882,8 +6907,8 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
 
    temp_atom.chainID = str1.mid(21, 1);
 
-   str2 = str1.mid(22, 4);
-   temp_atom.resSeq = str2.toUInt();
+   temp_atom.resSeq = str1.mid(22, 5);
+   temp_atom.resSeq.replace(QRegExp(" *"),"");
    if (temp_atom.resSeq == *last_resSeq)
    {
       flag = false;

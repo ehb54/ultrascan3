@@ -451,7 +451,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 	 tmp_pdb.next = (PDB *) 0;
 
 	 tmp_pdb.atnum = (*bead_model)[i].serial;
-	 tmp_pdb.resnum = (*bead_model)[i].resSeq;
+	 tmp_pdb.resnum = 1; // (*bead_model)[i].resSeq;
 
 	 strcpy(tmp_pdb.junk, "ATOM");
 #if defined(DEBUG)
