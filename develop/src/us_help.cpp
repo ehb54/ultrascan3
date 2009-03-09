@@ -34,7 +34,30 @@ void US_Help::show_html_file( QString helpFile )
 void US_Help::openBrowser()
 {
   proc = new QProcess( this );
-  
+  proc->addArgument( USglobal->config_list.browser );
+  proc->addArgument( URL );
+
+  if ( ! proc->start() ) // Error
+  {
+    QMessageBox::message(
+        tr( "UltraScan Error:" ), 
+        tr( "Can't start browser window...\n"
+            "Please make sure you have the configured browser installed\n\n"
+            "Currently configured: " + USglobal->config_list.browser ) );
+  }
+}
+
+
+// These are just here to avoid recompiling everything if us_help.h
+// is changed.
+void US_Help::endProcess(){}
+void US_Help::captureStdout(){}
+void US_Help::captureStderr(){}
+
+// Removed the -remote and 2nd try logic because it isn't needed any more.
+
+
+ /* 
   connect( proc, SIGNAL( readyReadStdout() ), 
            this, SLOT  ( captureStdout  () ) );
   
@@ -50,14 +73,7 @@ void US_Help::openBrowser()
   trials     = 0;
 
   proc->addArgument( USglobal->config_list.browser );
-
-#if defined(UNIX) && ! defined(MAC)
-  // Optimized for Firefox
-  proc->addArgument( "-remote" );
-  proc->addArgument( "openURL(" + URL + ", new-window)" ); 
-#else
   proc->addArgument( URL );
-#endif
 
   if ( ! proc->start() ) // Error
   {
@@ -96,7 +112,7 @@ void US_Help::endProcess()
 
 void US_Help::captureStdout()
 {
-  //cout << proc->readLineStdout() << endl;
+  cout << "std: " << proc->readLineStdout() << endl;
 }
 
 void US_Help::captureStderr()
@@ -104,7 +120,7 @@ void US_Help::captureStderr()
   QByteArray list = proc->readStderr();
   stderrSize      = list.size();
   
-  //cout << "The following error occured while attempting to run Mozilla:\n" 
-  //     << QString(list) << endl;
+  cout << "err: The following error occured while attempting to run Mozilla:\n" 
+       << QString(list) << endl;
 }
-
+*/
