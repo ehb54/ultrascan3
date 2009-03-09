@@ -1525,7 +1525,6 @@ int US_Hydrodyn::create_beads(QString *error_string)
 
 void US_Hydrodyn::radial_reduction()
 {
-   printf("--------------------------->>>>>>>>>>>>>>>>>>>>>radial reduction!!\n");
    // popping radial reduction
 
    // or sc fb Y rh Y rs Y to Y st Y ro Y 70.000000 1.000000 0.000000
@@ -2413,7 +2412,7 @@ void US_Hydrodyn::radial_reduction()
 #endif
 	 } else {
 	    // simultaneous reduction
-	    // #define DEBUG
+
 	    do {
 #if defined(DEBUG_OVERLAP)
 	       overlap_check(methods[k] & RR_SC ? true : false,
@@ -2422,8 +2421,10 @@ void US_Hydrodyn::radial_reduction()
 #endif
 	       // write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_br-%1-%2").arg(k).arg(iter) + DOTSOMO + ".tsv", &bead_model);
 	       // write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model-br-%1-%2").arg(k).arg(iter) + DOTSOMO, &bead_model);
+	       iter++;
 #if defined(DEBUG1) || defined(DEBUG)
-	       printf("processing simultaneous radial reduction iteration %d\n", iter++);
+	       printf("processing simultaneous radial reduction iteration %d\n", iter);
+	       editor->append(QString(" %1").arg(iter));
 #endif
 	       if(iter > 10000) {
 		  printf("too many iterations\n");
@@ -2516,13 +2517,14 @@ void US_Hydrodyn::radial_reduction()
 		  for (unsigned int i = 0; i < pairs.size(); i++) {
 		     if (
 			 !reduced[pairs[i].i] &&
-			 (bead_model[pairs[i].i].exposed_code != 1 ||
-			  methods[k] & RR_EXPOSED ||
-			  methods[k] & RR_ALL) &&
-			 (!(methods[k] & RR_MCSC) ||
-			  bead_model[pairs[i].i].chain == 0 ||
-			  (methods[k] & RR_BURIED &&
-			   bead_model[pairs[i].i].exposed_code != 1))
+			 (k == 3 ||
+			  (bead_model[pairs[i].i].exposed_code != 1 ||
+			   methods[k] & RR_EXPOSED ||
+			   methods[k] & RR_ALL) &&
+			  (!(methods[k] & RR_MCSC) ||
+			   bead_model[pairs[i].i].chain == 0 ||
+			   (methods[k] & RR_BURIED &&
+			    bead_model[pairs[i].i].exposed_code != 1)))
 			 ) {
 			int use_bead = pairs[i].i;
 			/*		if ( !(methods[k] & RR_MCSC) ||
