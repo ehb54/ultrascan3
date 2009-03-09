@@ -23,7 +23,7 @@ class US_EXTERN US_SelectModel3 : public US_WidgetsDialog
       //! \param temp_InvID         - Investigator ID  
       //! \param p                  - Parent widget, normally unspecified
       //! \param f                  - Window flags, normally not specified
-      US_SelectModel3( float&, float&, int&, float&, bool&, int,  
+      US_SelectModel3( double&, double&, int&, double&, bool&, int,  
             QWidget* = 0, Qt::WindowFlags = 0 );
 
       //! \param temp_mw_slots      - Location for mw slots
@@ -32,11 +32,11 @@ class US_EXTERN US_SelectModel3 : public US_WidgetsDialog
       US_SelectModel3( int&, QWidget* = 0, Qt::WindowFlags = 0 );
 
    private:
-      float& mwUpperLimit;
-      float& mwLowerLimit;
-      int&   mwSlots;
-      bool&  model3VbarFlag;
-      float& model3Vbar;
+      double& mwUpperLimit;
+      double& mwLowerLimit;
+      int&    mwSlots;
+      bool&   model3VbarFlag;
+      double& model3Vbar;
 
       int    InvID;
 

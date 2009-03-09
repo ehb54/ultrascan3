@@ -2,8 +2,8 @@
 #include "us_selectmodel13.h"
 #include "us_gui_settings.h"
 
-US_SelectModel13::US_SelectModel13( float&          temp_stoich1, 
-                                    float&          temp_stoich2,
+US_SelectModel13::US_SelectModel13( double&         temp_stoich1, 
+                                    double&         temp_stoich2,
                                     QWidget*        p, 
                                     Qt::WindowFlags f ) 
    : US_WidgetsDialog( p, f ), stoich1( temp_stoich1 ), stoich2( temp_stoich2 )

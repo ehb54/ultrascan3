@@ -79,28 +79,28 @@ class US_SimulationParameters : public US_WidgetsDialog
       void revert               ( void   );
 
       void update_lamella       ( double lamella )
-         { simparams.band_volume = (float) lamella; };
+         { simparams.band_volume = lamella; };
 
       void update_meniscus      ( double meniscus )
-         { simparams.meniscus    = (float) meniscus; };
+         { simparams.meniscus    = meniscus; };
 
       void update_bottom        ( double bottom )
-         { simparams.bottom      = (float) bottom; };
+         { simparams.bottom      = bottom; };
 
       void update_simpoints     ( double simpoints )
-         { simparams.simpoints   = (unsigned int) simpoints; };
+         { simparams.simpoints   = (uint) simpoints; };
  
       void update_radial_res    ( double radial_res )
-         { simparams.radial_resolution = (float) radial_res; };
+         { simparams.radial_resolution = radial_res; };
 
       void update_rnoise        ( double rnoise )
-         { simparams.rnoise      = (float) rnoise; };
+         { simparams.rnoise      = rnoise; };
 
       void update_tinoise       ( double tinoise )
-         { simparams.tinoise     = (float) tinoise; };
+         { simparams.tinoise     = tinoise; };
 
       void update_rinoise       ( double rinoise )
-         { simparams.rinoise     = (float) rinoise; };
+         { simparams.rinoise     = rinoise; };
       
       void update_moving        ( int grid )
          { simparams.moving_grid = grid; };

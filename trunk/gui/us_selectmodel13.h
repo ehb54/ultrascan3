@@ -17,11 +17,11 @@ class US_EXTERN US_SelectModel13 : public US_WidgetsDialog
       //! \param temp_stoich2  Location for 2nd stoichiometry value
       //! \param p             Parent widget, normally not specified
       //! \param f             Window flags, normally not specified
-      US_SelectModel13( float&, float&, QWidget* = 0, Qt::WindowFlags = 0 );
+      US_SelectModel13( double&, double&, QWidget* = 0, Qt::WindowFlags = 0 );
 
    private:
-      float&     stoich1;
-      float&     stoich2;
+      double&    stoich1;
+      double&    stoich2;
 
       QLineEdit* le_stoich1;
       QLineEdit* le_stoich2;

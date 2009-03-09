@@ -19,7 +19,7 @@ class US_ClipData : public US_WidgetsDialog
       //! \param loading       - Loading value to be displayed
       //! \param p      - Parent widget, normally not specified
       //! \param f      - Window flags, normally not specified
-		US_ClipData( double&, double&, double, float, 
+		US_ClipData( double&, double&, double, double, 
             QWidget* = 0, Qt::WindowFlags = 0 );
 
    private:

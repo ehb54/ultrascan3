@@ -2,7 +2,8 @@
 #include "us_font.h"
 #include "us_gui_settings.h"
 
-US_Font::US_Font( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
+US_Font::US_Font( QWidget* w, Qt::WindowFlags flags ) 
+   : US_Widgets( true, w, flags )
 {
    // Frame layout
    setPalette( US_GuiSettings::frameColor() );

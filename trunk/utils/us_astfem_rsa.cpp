@@ -436,14 +436,14 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
          // We need to correct time
          if ( simparams.speed_step[ ss ].acceleration_flag ) 
          {
-            float slope;
-            float intercept;
-            float correlation; 
-            float sigma;
-            float correction;
+            double slope;
+            double intercept;
+            double correlation; 
+            double sigma;
+            double correction;
             
-            float* xtmp = new float [ sp->scans ];
-            float* ytmp = new float [ sp->scans ];
+            double* xtmp = new double [ sp->scans ];
+            double* ytmp = new double [ sp->scans ];
 
             // Only fit the scans that belong to this speed step
             for ( uint i = 0; i < simparams.speed_step[ ss ].scans; i++ ) 

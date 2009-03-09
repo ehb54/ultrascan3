@@ -15,7 +15,7 @@ class US_EXTERN US_Passwd : public US_Widgets
   public:
     //! A null constructor.
     US_Passwd( QWidget* parent = 0, Qt::WindowFlags f = 0 ) 
-      : US_Widgets( parent, f ) {};
+      : US_Widgets( true, parent, f ) {};
     
     //! A null destructor. 
     ~US_Passwd() {};

@@ -11,6 +11,7 @@
 
 #include "us_widgets.h"
 #include "us_help.h"
+#include "us_plot.h"
 
 //! \brief Allow the user to set or change the colors used in UltraScan
 
@@ -106,6 +107,8 @@ class US_Color : public US_Widgets
     QwtPlotGrid*   grid;
     QwtPlotCurve*  curve;
     QwtPlotPicker* pick;
+
+    QMainWindow*   us_plot;
 
     struct
     {

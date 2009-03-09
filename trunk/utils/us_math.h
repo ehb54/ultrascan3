@@ -20,10 +20,10 @@ class US_EXTERN US_Math
       //! \brief Normal random variate generator
       //! \param m - mean
       //! \param s - standard deviation
-      static float  box_muller( float, float );
+      static double  box_muller( double, double );
 
       //! \brief Return a random floating point number
-      static float  ranf      ( void );      
+      static double  ranf      ( void );      
 
       //! \brief Given a line as a set of x and y coordinates, calulate
       //!        the line's characteristics
@@ -37,7 +37,7 @@ class US_EXTERN US_Math
       //! \param arraysize   Input array size
       static double linefit   ( double**, double**, double*, double*, double*, 
                                 double* , int );
-  
+/*  
       //! \brief An overloaded version of the above function with floats 
       //!        instead of doubles.
       //!       
@@ -49,6 +49,7 @@ class US_EXTERN US_Math
       //! \param correlation Pointer to location to retrun the correlation
       //! \param arraysize   Input array size
       static float  linefit   ( float** , float** , float* , float* , float* , 
-                                float*  , int );
+                              float*  , int );
+*/
 };
 #endif

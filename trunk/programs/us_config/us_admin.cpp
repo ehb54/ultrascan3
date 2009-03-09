@@ -6,7 +6,8 @@
 #include "us_gui_settings.h"
 #include "us_crypto.h"
 
-US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
+US_Admin::US_Admin( QWidget* w, Qt::WindowFlags flags ) 
+   : US_Widgets( true, w, flags )
 {
   setWindowTitle( "Change Master Password" );
 

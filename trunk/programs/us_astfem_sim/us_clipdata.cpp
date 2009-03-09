@@ -2,7 +2,7 @@
 #include "us_gui_settings.h"
 
 US_ClipData::US_ClipData( double& concentration, double& radius, 
-      double meniscus, float loading, QWidget* p, Qt::WindowFlags f ) 
+      double meniscus, double loading, QWidget* p, Qt::WindowFlags f ) 
   : US_WidgetsDialog( p, f ), conc( concentration ), rad( radius )
 {
    setWindowTitle( tr( "Data Range Selection - "

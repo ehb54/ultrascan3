@@ -3,10 +3,10 @@
 #include "us_gui_settings.h"
 
 US_SelectModel3::US_SelectModel3( 
-      float&          temp_mw_upperLimit, 
-      float&          temp_mw_lowerLimit,
+      double&         temp_mw_upperLimit, 
+      double&         temp_mw_lowerLimit,
       int&            temp_mw_slots, 
-      float&          temp_model3_vbar, 
+      double&         temp_model3_vbar, 
       bool&           temp_model3_vbar_flag, 
       int             temp_InvID,
       QWidget*        p, 
@@ -86,11 +86,11 @@ US_SelectModel3::US_SelectModel3( int&            temp_mw_slots,
                                   QWidget*        p, 
                                   Qt::WindowFlags f ) 
    : US_WidgetsDialog( p, f ),
-     mwUpperLimit  ( (float&) temp_mw_slots ), // dummy
-     mwLowerLimit  ( (float&) temp_mw_slots ), // dummy
-     mwSlots       ( temp_mw_slots ),
-     model3VbarFlag( (bool&)  temp_mw_slots ), // dummy
-     model3Vbar    ( (float&) temp_mw_slots )   // dummy
+     mwUpperLimit  ( (double&) temp_mw_slots ), // dummy
+     mwLowerLimit  ( (double&) temp_mw_slots ), // dummy
+     mwSlots       (           temp_mw_slots ),
+     model3VbarFlag( (bool&)   temp_mw_slots ), // dummy
+     model3Vbar    ( (double&) temp_mw_slots )  // dummy
 {
    setPalette( US_GuiSettings::frameColor() );
    setWindowTitle( tr( "Fixed Molecular Weight Distribution" ) );
@@ -142,7 +142,7 @@ void US_SelectModel3::ok2( void )
 
 void US_SelectModel3::cancel( void )
 {
-   model3Vbar   = (float) 0.72;
+   model3Vbar   = 0.72;
    mwUpperLimit = 0.0;
    mwLowerLimit = 0.0;
    mwSlots      = 0;

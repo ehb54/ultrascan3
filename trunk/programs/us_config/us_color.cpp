@@ -3,7 +3,8 @@
 #include "us_gui_settings.h"
 #include "us_plot.h"
 
-US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
+US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) 
+   : US_Widgets( true, w, flags )
 {
   setWindowTitle( "Color Configuration for UltraScan" );
 
@@ -23,7 +24,9 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
   leftColumn->addWidget( lbl_background, row++, 0, 1, 2 );
 
   // Plot example
-  plot  = new US_Plot( tr( "Sample Plot" ), tr( "X-axis" ), ( "Y-axis" ) );
+  QLayout* us_plot  = new US_Plot( plot, tr( "Sample Plot" ), 
+        tr( "X-axis" ), ( "Y-axis" ) );
+  
   grid  = us_grid  ( plot );
   curve = us_curve ( plot, tr( "Sample Curve 1" ) );
   pick  = us_picker( plot );
@@ -40,7 +43,7 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags ) : US_Widgets( w, flags )
    
   curve->setData( x, y, ArraySize );
 
-  leftColumn->addWidget( plot, row++, 0, 1, 2 );
+  leftColumn->addLayout( us_plot, row++, 0, 3, 2 );
 
   // Plot margin
 

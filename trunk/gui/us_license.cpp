@@ -15,7 +15,7 @@
 #include "us_http_post.h"
 
 US_License::US_License( QWidget* parent, Qt::WindowFlags flags ) 
-  : US_Widgets( parent, flags )
+  : US_Widgets( true, parent, flags )
 {
   setWindowTitle( "UltraScan Registration" );
   setPalette( US_GuiSettings::frameColor() );

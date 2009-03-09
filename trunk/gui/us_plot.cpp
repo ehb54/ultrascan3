@@ -1,7 +1,11 @@
 //! \file us_plot.cpp
 
+#include <QtSvg>
+
 #include "us_plot.h"
 #include "us_gui_settings.h"
+#include "us_pixmaps.h"
+#include "us_settings.h"
 
 #include "qwt_text_label.h"
 #include "qwt_plot_layout.h"
@@ -12,57 +16,217 @@
 #include "qwt_symbol.h"
 
 
-US_Plot::US_Plot( const QString& title, const QString& x_axis, 
-                  const QString& y_axis ) : QwtPlot()
+US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
+   : QwtPlotZoomer( xAxis, yAxis, canvas )
 {
+   setSelectionFlags( QwtPicker::DragSelection | QwtPicker::CornerToCorner );
+   setTrackerMode   ( QwtPicker::AlwaysOff );
+   setRubberBand    ( QwtPicker::NoRubberBand );
+
+   // RightButton: zoom out by 1
+   // Ctrl+RightButton: zoom out to full size
+
+   setMousePattern( QwtEventPattern::MouseSelect2,
+                    Qt::RightButton, Qt::ControlModifier );
+
+   setMousePattern( QwtEventPattern::MouseSelect3,
+                    Qt::RightButton );
+}
+
+// A new plot retruns a QBoxLayout
+US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_axis, 
+                  const QString& y_axis ) : QVBoxLayout()
+{
+   setSpacing( 0 );
+
+   // Add the tool bar 
+   QToolBar* toolBar = new QToolBar;
+   toolBar->setAutoFillBackground( true );
+   toolBar->setPalette( US_GuiSettings::plotColor() );
+
+   QToolButton* btnZoom = new QToolButton( toolBar );
+   btnZoom->setText( "Zoom" );
+   btnZoom->setIcon(QIcon( zoom_xpm ) );
+   btnZoom->setCheckable( true );
+   btnZoom->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   connect( btnZoom, SIGNAL( toggled( bool ) ), SLOT( zoom( bool ) ) );
+
+   QToolButton* btnPrint = new QToolButton( toolBar );
+   btnPrint->setText( "Print" );
+   btnPrint->setIcon( QIcon( print_xpm ) );
+   btnPrint->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   connect( btnPrint, SIGNAL( clicked() ), SLOT( print() ) );
+
+   QToolButton* btnSVG = new QToolButton( toolBar );
+   btnSVG->setText( "SVG" );
+   btnSVG->setIcon( QIcon( print_xpm ) );
+   btnSVG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   connect( btnSVG, SIGNAL( clicked() ), SLOT( svg() ) );
+
+   QToolButton* btnConfig = new QToolButton( toolBar );
+   btnConfig->setText( "Config" );
+   btnConfig->setIcon(QIcon( configure_32_xpm ) );
+   btnConfig->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   connect( btnConfig, SIGNAL( clicked() ), SLOT( config() ) );
+
+   toolBar->addWidget( btnZoom   );
+   toolBar->addWidget( btnPrint  );
+   toolBar->addWidget( btnSVG    );
+   toolBar->addWidget( btnConfig );
+
+   addWidget( toolBar );
+
+   // Add a 1 pixel black line between the tool bar and the plot
+   QLabel* spacer = new QLabel;
+   QPalette p;
+   p.setColor( QPalette::Window, Qt::black );
+   spacer->setPalette( p );
+   spacer->setAutoFillBackground( true );
+   spacer->setMaximumHeight( 1 );
+   addWidget( spacer );
+
+   plot        = new QwtPlot;
+   parent_plot = plot;
+   
+
    configWidget = NULL;
   
-   setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
-   setAutoReplot( false );
+   plot->setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Expanding );
+   plot->setAutoReplot( false );
   
    QwtText qwtTitle( title );
    qwtTitle.setFont( QFont( US_GuiSettings::fontFamily(),
                             US_GuiSettings::fontSize() + 2,
                             QFont::Bold ) );
   
-   setTitle( qwtTitle );
+   plot->setTitle( qwtTitle );
   
-   setMargin( US_GuiSettings::plotMargin() );
-  
+   plot->setMargin( US_GuiSettings::plotMargin() );
+
    QFont axisFont( US_GuiSettings::fontFamily(),
                    US_GuiSettings::fontSize() - 2, 
                    QFont::Bold );
   
    qwtTitle.setFont( axisFont );
    qwtTitle.setText( x_axis );  
-   setAxisTitle( QwtPlot::xBottom, qwtTitle );
+   plot->setAxisTitle( QwtPlot::xBottom, qwtTitle );
 
    qwtTitle.setText( y_axis );
-   setAxisTitle( QwtPlot::yLeft  , qwtTitle );
+   plot->setAxisTitle( QwtPlot::yLeft  , qwtTitle );
   
    axisFont.setBold ( false );
-   setAxisFont( QwtPlot::xBottom, axisFont );
-   setAxisFont( QwtPlot::yLeft,   axisFont );
+   plot->setAxisFont( QwtPlot::xBottom, axisFont );
+   plot->setAxisFont( QwtPlot::yLeft,   axisFont );
   
-   setAutoFillBackground( true );
-   setPalette ( US_GuiSettings::plotColor() );
-   setCanvasBackground( US_GuiSettings::plotCanvasBG() );
+   plot->setAutoFillBackground( true );
+   plot->setPalette ( US_GuiSettings::plotColor() );
+   plot->setCanvasBackground( US_GuiSettings::plotCanvasBG() );
+
+   addWidget( plot );
 }
 
-void US_Plot::mousePressEvent( QMouseEvent* e )
+void US_Plot::zoom( bool on )
 {
-   if ( e->button() == Qt::RightButton )
+   if ( on )
    {
-      if ( configWidget ) 
-      {
-         configWidget->close();
-      }
-      configWidget = new US_PlotConfig( this ); 
-      configWidget->setAttribute( Qt::WA_DeleteOnClose );
-      connect( configWidget, SIGNAL( plotConfigClosed  () ), 
-                             SLOT  ( plotConfigFinished() ) );
-      configWidget->show();
+      // Set up for zooming
+      zoomer = new US_Zoomer( QwtPlot::xBottom, QwtPlot::yLeft,
+                              plot->canvas() );
+      
+      zoomer->setRubberBand   ( QwtPicker::RectRubberBand );
+      zoomer->setRubberBandPen( QColor( Qt::green ) );
+      zoomer->setTrackerMode  ( QwtPicker::ActiveOnly );
+      zoomer->setTrackerPen   ( QColor( Qt::white ) );
+
+      panner = new QwtPlotPanner( plot->canvas() );
+      panner->setMouseButton( Qt::MidButton );
+
+      picker = new QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft,
+                     QwtPicker::PointSelection | QwtPicker::DragSelection,
+                     QwtPlotPicker::CrossRubberBand, QwtPicker::AlwaysOn,
+                     plot->canvas() );
+
+      picker->setRubberBandPen( QColor( Qt::green ) );
+      picker->setRubberBand   ( QwtPicker::CrossRubberBand );
+      picker->setTrackerPen   ( QColor( Qt::white ) );
    }
+   
+   panner->setEnabled( on );
+
+   zoomer->setEnabled( on );
+   zoomer->zoom( 0 );
+
+   picker->setEnabled( ! on );
+
+   if ( ! on )
+   {
+      delete picker;
+      delete panner;
+      delete zoomer;
+   }
+}
+
+void US_Plot::svg( void )
+{
+   QString fileName = QFileDialog::getSaveFileName( plot, 
+      tr( "Export File Name" ), US_Settings::reportDir(), 
+      tr( "SVG Documents (*.svg)" ) );
+
+   if ( ! fileName.isEmpty() )
+   {
+      if ( fileName.right( 4 ) != ".svg" ) fileName += ".svg";
+      QSvgGenerator generator;
+      generator.setFileName( fileName );
+      generator.setSize( QSize( 800, 600 ) );
+
+      plot->print( generator );
+   }
+   
+}
+
+void US_Plot::print( void )
+{
+   QPrinter printer( QPrinter::HighResolution );
+   printer.setOutputFileName( US_Settings::reportDir() + "/ultrascan-plot.pdf" );
+
+   QString docName = plot->title().text();
+   
+   if ( ! docName.isEmpty() )
+   {
+       docName.replace ( QRegExp( QString::fromLatin1( "\n" ) ), tr ( " -- " ) );
+       printer.setDocName( docName );
+   }
+
+   printer.setCreator( "UltraScan" );
+   printer.setOrientation( QPrinter::Landscape );
+
+   QPrintDialog dialog( &printer );
+
+   if ( dialog.exec() )
+   {
+       QwtPlotPrintFilter filter;
+       if ( printer.colorMode() == QPrinter::GrayScale )
+       {
+           int options = QwtPlotPrintFilter::PrintAll;
+           options    &= ~QwtPlotPrintFilter::PrintBackground;
+           options    |= QwtPlotPrintFilter::PrintFrameWithScales;
+           filter.setOptions( options );
+       }
+       plot->print( printer, filter );
+   }
+}
+
+void US_Plot::config( void )
+{
+   if ( configWidget ) 
+   {
+      configWidget->close();
+   }
+   configWidget = new US_PlotConfig( plot ); 
+   configWidget->setAttribute( Qt::WA_DeleteOnClose );
+   connect( configWidget, SIGNAL( plotConfigClosed  () ), 
+                          SLOT  ( plotConfigFinished() ) );
+   configWidget->show();
 }
 
 void US_Plot::plotConfigFinished( void )
@@ -108,8 +272,8 @@ US_PlotPushbutton::US_PlotPushbutton( const QString& labelString,
    \param p            Parent widget
    \param f            Window Flags
 */
-US_PlotConfig::US_PlotConfig( US_Plot* current_plot, QWidget* p, 
-  Qt::WindowFlags f ) : US_Widgets( p, f )
+US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p, 
+  Qt::WindowFlags f ) : US_Widgets( false, p, f )
 {
    setWindowTitle( "Local Plot Configuration" );
    setPalette( US_GuiSettings::frameColor() );
@@ -567,9 +731,9 @@ void US_PlotConfig::gridConfigFinish( void )
    \param parent      Parent widget
    \param flags       Widget flags
 */
-US_PlotCurveConfig::US_PlotCurveConfig( US_Plot* currentPlot, 
+US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot, 
       const QStringList& selected, QWidget* parent, Qt::WindowFlags flags ) 
-      : US_Widgets( parent, flags )
+      : US_Widgets( false, parent, flags )
 {
    plot          = currentPlot;
    selectedItems = selected;
@@ -1053,7 +1217,7 @@ void US_PlotLabel::paintEvent( QPaintEvent* e )
    \param flags       Frame window flags
 */
 US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US_Widgets( parent, flags )
+   QWidget* parent, Qt::WindowFlags flags ) : US_Widgets( false, parent, flags )
 {
    plot = currentPlot;
    axis = currentAxis;
@@ -1432,7 +1596,7 @@ void US_PlotAxisConfig::apply( void )
      \param flags       Window flags
 */
 US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US_Widgets( parent, flags )
+   QWidget* parent, Qt::WindowFlags flags ) : US_Widgets( false, parent, flags )
 {
    setWindowTitle( tr( "Grid Configuration" ) );
    setPalette( US_GuiSettings::frameColor() );
