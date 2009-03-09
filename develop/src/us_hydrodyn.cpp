@@ -6485,27 +6485,34 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 	    if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H" &&
 	       str1.mid(17,3) != "HOH")
 	    {
-	       if (!chain_flag) 	// at the first time we encounter the word ATOM
-	       { 				// we don't have a chain yet, so let's start a new one
-		  temp_chain.chainID = str1.mid(21, 1);
-		  str2 = str1.mid(72, 4);
-		  temp_chain.segID = str2.stripWhiteSpace();
-		  chain_flag = true;
-	       }
-	       else // we have a chain, let's make sure the chain is still the same
+	       if (str1.mid(16,1) == " " || str1.mid(16,1) == "A")
 	       {
-		  if(temp_chain.chainID != str1.mid(21, 1)) // then we just started a new chain
+		  if (str1.mid(16,1) == "A") 
 		  {
-		     temp_model.molecule.push_back(temp_chain);
-		     clear_temp_chain(&temp_chain);
-		     temp_chain.chainID = str1.mid(21, 1); // we have to start a new chain
+		     editor->append(QString("Atom %1 conformation A selected").arg(str1.mid(6,5)));
+		  }
+		  if (!chain_flag) 	// at the first time we encounter the word ATOM
+		  { 				// we don't have a chain yet, so let's start a new one
+		     temp_chain.chainID = str1.mid(21, 1);
 		     str2 = str1.mid(72, 4);
 		     temp_chain.segID = str2.stripWhiteSpace();
+		     chain_flag = true;
 		  }
-	       }
-	       if (assign_atom(str1, &temp_chain, &last_resSeq)) // parse the current line and add it to temp_chain
-	       { // if true, we have new residue and need to add it to the residue vector
-		  temp_model.residue.push_back(current_residue); // add the next residue of this model
+		  else // we have a chain, let's make sure the chain is still the same
+		  {
+		     if(temp_chain.chainID != str1.mid(21, 1)) // then we just started a new chain
+		     {
+			temp_model.molecule.push_back(temp_chain);
+			clear_temp_chain(&temp_chain);
+			temp_chain.chainID = str1.mid(21, 1); // we have to start a new chain
+			str2 = str1.mid(72, 4);
+			temp_chain.segID = str2.stripWhiteSpace();
+		     }
+		  }
+		  if (assign_atom(str1, &temp_chain, &last_resSeq)) // parse the current line and add it to temp_chain
+		  { // if true, we have new residue and need to add it to the residue vector
+		     temp_model.residue.push_back(current_residue); // add the next residue of this model
+		  }
 	       }
 	    }
 	 }
@@ -6899,7 +6906,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    str2 = str1.mid(6, 5);
    temp_atom.serial = str2.toUInt();
 
-   str2 = str1.mid(12, 5);
+   str2 = str1.mid(11, 5);
    temp_atom.name = str2.stripWhiteSpace();
 
    temp_atom.altLoc = str1.mid(16, 1);
