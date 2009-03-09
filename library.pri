@@ -6,11 +6,13 @@ VERSION      = 10.0
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 DEFINES     += INTEL
+QT          += sql
 
 unix {
+#  QMAKE_CXXFLAGS_DEBUG += -pg
   QWTPATH       = /usr/local/qwt-5.1.1
-  DEPENDPATH   += ../gui ../utils $$QWTPATH/include
-  INCLUDEPATH  += ../gui ../utils $$QWTPATH/include
+  DEPENDPATH   += ../gui ../utils ../db $$QWTPATH/include
+  INCLUDEPATH  += ../gui ../utils ../db $$QWTPATH/include
   DEFINES      += LINUX
   DESTDIR      = ../lib
 }

@@ -10,6 +10,7 @@
 #include "qwt_plot_picker.h"
 #include "qwt_plot_curve.h"
 
+#include "us_global.h"
 #include "us_extern.h"
 
 /*! \brief Set up widgets the UltraScan way.
@@ -27,6 +28,9 @@ class US_EXTERN US_WidgetsDialog : public QDialog
     US_WidgetsDialog( QWidget*, Qt::WindowFlags );
     ~US_WidgetsDialog() {};
     
+    //! Connect to global memory and make the values accessible.
+    US_Global g;
+
     //! \param labelString - contents of label
     //! \param fontAdjust  - adjustment to default point size 
     //! \param weight      - QFont::{Light,Normal,DemiBold,Bold,Black}\n

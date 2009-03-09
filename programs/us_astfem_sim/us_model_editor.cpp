@@ -418,8 +418,8 @@ void US_ModelEditor::update_component( void )
 
       le_mw->setText( QString::number( sc->mw, 'e', 4 ) );
       
-      float fraction1 = (*scl)[ sc->show_component[ 0 ] ].mw / sc->mw;
-      float fraction2 = (*scl)[ sc->show_component[ 1 ] ].mw / sc->mw;
+      double fraction1 = (*scl)[ sc->show_component[ 0 ] ].mw / sc->mw;
+      double fraction2 = (*scl)[ sc->show_component[ 1 ] ].mw / sc->mw;
 
       sc->vbar20 = (*scl) [ sc->show_component[ 0 ] ].vbar20 * fraction1 +
                    (*scl) [ sc->show_component[ 1 ] ].vbar20 * fraction2;
@@ -856,8 +856,8 @@ void US_ModelEditor::update_conc( const QString& text )
       sc->concentration = -1.0;
    else
    {
-      bool  ok;
-      float concentration;
+      bool   ok;
+      double concentration;
       concentration = text.toDouble( &ok );
       if ( ok )
       {

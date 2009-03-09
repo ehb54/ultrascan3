@@ -5,15 +5,15 @@
 
 #include "us_math.h"
 
-float US_Math::box_muller( float m, float s )   
+double US_Math::box_muller( double m, double s )   
 {
    static bool  use_last = false;
 
-   float        x1;
-   float        x2;
-   float        w;
-   float        y1;
-   static float y2;
+   double        x1;
+   double        x2;
+   double        w;
+   double        y1;
+   static double y2;
 
    if ( use_last )  // Use value from previous call 
    {
@@ -39,9 +39,9 @@ float US_Math::box_muller( float m, float s )
 }
 
 
-float US_Math::ranf( void )
+double US_Math::ranf( void )
 {
-   return  (float)rand() / ( (float)RAND_MAX + 1 );
+   return  (double)rand() / ( RAND_MAX + 1 );
 }
 
 
@@ -85,7 +85,7 @@ double US_Math::linefit( double** x       , double** y    , double* slope,
    
    return average;
 }
-
+/*
 float US_Math::linefit( float** x        , float** y    , float* slope, 
                         float*  intercept, float*  sigma, float* correlation, 
                         int     arraysize )
@@ -125,3 +125,4 @@ float US_Math::linefit( float** x        , float** y    , float* slope,
    
    return average;
 }
+*/

@@ -7,11 +7,12 @@ win32 {
         LIBS  += ../lib/libus_utils.lib ../lib/libus_db.lib
 }
 
-QT          += network 
+QT          += network svg
 
 TRANSLATIONS = $${TARGET}_DE_de.ts
 
-HEADERS      = us_gui_settings.h    \
+HEADERS      = us_buffer.h          \
+               us_gui_settings.h    \
                us_help.h            \
                us_license.h         \
                us_model_selection.h \
@@ -24,7 +25,8 @@ HEADERS      = us_gui_settings.h    \
                us_widgets.h         \
                us_widgets_dialog.h
 
-SOURCES      = us_gui_settings.cpp    \ 
+SOURCES      = us_buffer.cpp          \
+               us_gui_settings.cpp    \ 
                us_help.cpp            \
                us_license.cpp         \
                us_model_selection.cpp \

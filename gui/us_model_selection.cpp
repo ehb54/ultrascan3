@@ -20,9 +20,9 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
    ms.assoc_vector.clear();
 
    bool  model3_vbarflag = true; 
-   float mw_upperLimit   = 1.0e5;
-   float mw_lowerLimit   = 1.0e4;
-   float model3_vbar     = (float) 0.72;
+   double mw_upperLimit   = 1.0e5;
+   double mw_lowerLimit   = 1.0e4;
+   double model3_vbar     = 0.72;
    
    ms.component_vector.clear();
    struct SimulationComponent sc;
@@ -118,7 +118,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             av0 = &ms.assoc_vector[ 0 ];
             
             av0->keq            = 1.0;
-            av0->k_off          = (float) 1.0e-4;
+            av0->k_off          = 1.0e-4;
             av0->units          = "OD";
             av0->component1     = 0;
             av0->component2     = 1;
@@ -150,7 +150,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             av0 = &ms.assoc_vector[ 0 ];
             
             av0->keq            = 1.0;
-            av0->k_off          = (float) 1.0e-4;
+            av0->k_off          = 1.0e-4;
             av0->units          = "OD";
             av0->component1     = 0;
             av0->component2     = 1;
@@ -182,7 +182,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             av0 = &ms.assoc_vector[ 0 ];
             
             av0->keq            = 1.0;
-            av0->k_off          = (float) 1.0e-4;
+            av0->k_off          = 1.0e-4;
             av0->units          = "OD";
             av0->component1     = 0;
             av0->component2     = 1;
@@ -214,7 +214,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             av0 = &ms.assoc_vector[ 0 ];
             
             av0->keq            = 1.0;
-            av0->k_off          = (float) 1.0e-4;
+            av0->k_off          = 1.0e-4;
             av0->units          = "OD";
             av0->component1     = 0;
             av0->component2     = 1;
@@ -245,7 +245,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             av0 = &ms.assoc_vector[ 0 ];
             
             av0->keq            = 1.0;
-            av0->k_off          = (float) 1.0e-4;
+            av0->k_off          = 1.0e-4;
             av0->units          = "OD";
             av0->component1     = 0;
             av0->component2     = 1;
@@ -277,7 +277,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             av0 = &ms.assoc_vector[ 0 ];
             
             av0->keq            = 1.0;
-            av0->k_off          = (float) 1.0e-4;
+            av0->k_off          = 1.0e-4;
             av0->units          = "OD";
             av0->component1     = 0;
             av0->component2     = 1;
@@ -295,7 +295,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
          // we need some additional info from the user
          case UserMonoNmer:
             {
-               float stoich = 2;
+               double stoich = 2;
                
                US_SelectModel10* SelectModel10 = new US_SelectModel10( stoich );
                
@@ -321,7 +321,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   av0 = &ms.assoc_vector[ 0 ];
                
                   av0->keq            = 1.0;
-                  av0->k_off          = (float) 1.0e-4;
+                  av0->k_off          = 1.0e-4;
                   av0->units          = "OD";
                   av0->component1     = 0;
                   av0->component2     = 1;
@@ -361,7 +361,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             av1 = &ms.assoc_vector[ 1 ];
 
             av0->keq            = 1.0;
-            av0->k_off          = (float) 1.0e-4;
+            av0->k_off          = 1.0e-4;
             av0->units          = "OD";
             av0->component1     = 0;
             av0->component2     = 1;
@@ -371,7 +371,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             av0->stoichiometry3 = 0;
 
             av1->keq            = 1.0;
-            av1->k_off          = (float) 1.0e-4;
+            av1->k_off          = 1.0e-4;
             av1->units          = "OD";
             av1->component1     = 0;
             av1->component2     = 2;
@@ -413,7 +413,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             av1 = &ms.assoc_vector[ 1 ];
 
             av0->keq            = 1.0;
-            av0->k_off          = (float) 1.0e-4;
+            av0->k_off          = 1.0e-4;
             av0->units          = "OD";
             av0->component1     = 0;
             av0->component2     = 1;
@@ -423,7 +423,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             av0->stoichiometry3 = 0;
 
             av1->keq            = 1.0;
-            av1->k_off          = (float) 1.0e-4;
+            av1->k_off          = 1.0e-4;
             av1->units          = "OD";
             av1->component1     = 0;
             av1->component2     = 2;
@@ -446,8 +446,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
          
          case UserMonoNmerNmer:
             {         
-               float stoich1 = 1;
-               float stoich2 = 2;
+               double stoich1 = 1;
+               double stoich2 = 2;
                
                US_SelectModel13* SelectModel13 
                   = new US_SelectModel13( stoich1, stoich2);
@@ -480,7 +480,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   av1 = &ms.assoc_vector[ 1 ];
 
                   av0->keq            = 1.0;
-                  av0->k_off          = (float) 1.0e-4;
+                  av0->k_off          = 1.0e-4;
                   av0->units          = "OD";
                   av0->component1     = 0;
                   av0->component2     = 1;
@@ -490,7 +490,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   av0->stoichiometry3 = 0;
                   
                   av1->keq            = 1.0;
-                  av1->k_off          = (float) 1.0e-4;
+                  av1->k_off          = 1.0e-4;
                   av1->units          = "OD";
                   av1->component1     = 0;
                   av1->component2     = 2;
@@ -533,7 +533,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             av0 = &ms.assoc_vector[ 0 ];
 
             av0->keq        = 1.0;
-            av0->k_off      = (float) 1.0e-4;
+            av0->k_off      = 1.0e-4;
             av0->units      = "OD";
             av0->component1 = 0;
             av0->component2 = 1;
@@ -571,7 +571,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
          
          case UserHetero: 
             {         
-               float stoich = 2;
+               double stoich = 2;
 
                US_SelectModel10* SelectModel10 = new US_SelectModel10( stoich );
 
@@ -610,7 +610,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   
                   // Hetero-Association:
                   av0->keq            = 1.0;
-                  av0->k_off          = (float) 1.0e-4;
+                  av0->k_off          = 1.0e-4;
                   av0->units          = "OD";
                   av0->component1     = 0;
                   av0->component2     = 1;
@@ -621,13 +621,13 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   
                   // Self-Association:
                   av1->keq            = 1.0;
-                  av1->k_off          = (float) 1.0e-4;
+                  av1->k_off          = 1.0e-4;
                   av1->units          = "OD";
                   av1->component1     = 0;
                   av1->component2     = 3;
                   av1->component3     = -1;
                   av1->stoichiometry1 = 1;
-                  av1->stoichiometry2 = (unsigned int) stoich;
+                  av1->stoichiometry2 = (uint) stoich;
                   av1->stoichiometry3 = 0;
 
                   initAssoc1( ms, av1->component1,
@@ -667,7 +667,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
          
          case UserMonoIncompMono:
             {
-               float stoich = 2 ;
+               double stoich = 2 ;
                
                US_SelectModel10* select = new US_SelectModel10( stoich );
                
@@ -699,7 +699,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   av1 = &ms.assoc_vector[ 1 ];
                   
                   av0->keq            = 1.0;
-                  av0->k_off          = (float) 1.0e-4;
+                  av0->k_off          = 1.0e-4;
                   av0->units          = "OD";
                   av0->component1     = 0;
                   av0->component2     = 1;
@@ -731,7 +731,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   cv2->sigma         = cv0->sigma;
                   cv2->delta         = cv0->delta;
                   cv2->shape         = "";
-                  cv2->concentration = (float) 0.3;
+                  cv2->concentration = 0.3;
                   cv2->extinction    = cv0->extinction;
                   cv2->show_conc     = true;
                   cv2->show_stoich   = 1;
@@ -747,7 +747,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
          
          case UserMonoIncompNmer: 
             { 
-               float stoich = 2;
+               double stoich = 2;
 
                US_SelectModel10* select = new US_SelectModel10( stoich );
                
@@ -779,7 +779,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   av1 = &ms.assoc_vector[ 1 ];
                   
                   av0->keq            = 1.0;
-                  av0->k_off          = (float) 1.0e-4;
+                  av0->k_off          = 1.0e-4;
                   av0->units          = "OD";
                   av0->component1     = 0;
                   av0->component2     = 1;
@@ -811,7 +811,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   cv2->sigma         = cv1->sigma;
                   cv2->delta         = cv1->delta;
                   cv2->shape         = "";
-                  cv2->concentration = (float) 0.3;
+                  cv2->concentration = 0.3;
                   cv2->extinction    = cv1->extinction;
                   cv2->show_conc     = true;
                   cv2->show_stoich   = (int) stoich;
@@ -826,7 +826,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
         
          case UserIrreversible: // User-Defined irreversible Monomer - N-mer
             {         
-               float stoich = 2;
+               double stoich = 2;
 
                US_SelectModel10* select = new US_SelectModel10( stoich );
                
@@ -867,13 +867,13 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                                   av0->component2,
                                   av0->stoichiometry2);
                   
-                  cv0->concentration = (float) 0.7;
+                  cv0->concentration = 0.7;
                   cv0->show_conc     = true;
                   cv0->show_stoich   = 0;
                   cv0->show_keq      = false;
                   cv0->show_koff     = false;
                   
-                  cv1->concentration = (float) 0.3;
+                  cv1->concentration = 0.3;
                   cv1->show_conc     = true;
                   cv1->show_stoich   = (int) stoich;
                   cv1->show_keq      = false;
@@ -888,7 +888,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
 
          case 19: 
             {
-               float stoich=2;
+               double stoich = 2;
 
                US_SelectModel10* select = new US_SelectModel10( stoich );
                
@@ -919,7 +919,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   av0 = &ms.assoc_vector[ 0 ];
                   
                   av0->keq            = 1.0;
-                  av0->k_off          = (float) 1.0e-4;
+                  av0->k_off          = 1.0e-4;
                   av0->units          = "OD";
                   av0->component1     = 0;
                   av0->component2     = 1;
@@ -933,14 +933,14 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                                   av0->stoichiometry2 );
 
                   cv2->mw            = 22000.0;
-                  cv2->s             = (float) 1.9802e-13;
-                  cv2->D             = (float) 7.7981e-7;
-                  cv2->f_f0          = (float) 1.4893;
-                  cv2->vbar20        = (float) 0.72;
+                  cv2->s             = 1.9802e-13;
+                  cv2->D             = 7.7981e-7;
+                  cv2->f_f0          = 1.4893;
+                  cv2->vbar20        = 0.72;
                   cv2->sigma         = 0.0;
                   cv2->delta         = 0.0;
                   cv2->shape         = "prolate";
-                  cv2->concentration = (float) 0.3;
+                  cv2->concentration = 0.3;
                   cv2->extinction    = 0.5;
                   cv2->show_conc     = true;
                   cv2->show_stoich   = 0;
@@ -1031,7 +1031,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
          }
          else
          {
-            cv->vbar20 = (float) 0.72;
+            cv->vbar20 = 0.72;
          }
 
          cv->sigma      = 0.0;
@@ -1061,7 +1061,7 @@ void US_ModelSelection::initAssoc1( struct ModelSystem& ms,
 
    sc1->show_component << comp2;
    sc1->f_f0          = 1.25;
-   sc1->vbar20        = (float) 0.72;
+   sc1->vbar20        = 0.72;
    sc1->sigma         = 0.0;
    sc1->delta         = 0.0;
    sc1->shape         = "not defined";
@@ -1076,7 +1076,7 @@ void US_ModelSelection::initAssoc1( struct ModelSystem& ms,
    sc2->show_koff     = true;
    sc2->show_component << comp1;
    sc2->mw            = 5.0e4 * stoich1;
-   sc2->vbar20        = (float) 0.72;
+   sc2->vbar20        = 0.72;
    sc2->sigma         = 0.0;
    sc2->delta         = 0.0;
    sc2->shape         = "not defined";
@@ -1119,7 +1119,7 @@ void US_ModelSelection::initAssoc2( struct ModelSystem& ms )
 // Component A:
    cv0->mw            = 5.0e4;
    cv0->f_f0          = 1.25;
-   cv0->vbar20        = (float) 0.72;
+   cv0->vbar20        = 0.72;
    cv0->sigma         = 0.0;
    cv0->shape         = "not defined";
    cv0->concentration = 1.0;
@@ -1142,14 +1142,14 @@ void US_ModelSelection::initAssoc2( struct ModelSystem& ms )
 
 // Component B:
    cv1->mw            = 22000.0;
-   cv1->s             = (float) 1.9802e-13;
-   cv1->D             = (float) 7.7981e-7;
-   cv1->f_f0          = (float) 1.4893;
-   cv1->vbar20        = (float) 0.72;
+   cv1->s             = 1.9802e-13;
+   cv1->D             = 7.7981e-7;
+   cv1->f_f0          = 1.4893;
+   cv1->vbar20        = 0.72;
    cv1->sigma         = 0.0;
    cv1->delta         = 0.0;
    cv1->shape         = "prolate";
-   cv1->concentration = (float) 0.3;
+   cv1->concentration = 0.3;
    cv1->extinction    = 0.5;
    
    cv1->c0.radius.clear();
@@ -1157,10 +1157,10 @@ void US_ModelSelection::initAssoc2( struct ModelSystem& ms )
 
 // Component AB:
    cv2->mw            = 72000.0;
-   cv2->s             = (float) 4.7276e-13;
-   cv2->D             = (float) 5.6886e-7;
-   cv2->f_f0          = (float) 1.3751;
-   cv2->vbar20        = (float) 0.72;
+   cv2->s             = 4.7276e-13;
+   cv2->D             = 5.6886e-7;
+   cv2->f_f0          = 1.3751;
+   cv2->vbar20        = 0.72;
    cv2->sigma         = 0.0;
    cv2->delta         = 0.0;
    cv2->shape         = "prolate";

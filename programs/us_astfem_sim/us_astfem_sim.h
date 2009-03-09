@@ -31,7 +31,7 @@ class US_Astfem_Sim : public US_Widgets
       bool           movieFlag;
       bool           time_correctionFlag;
       int            curve_count;
-      float          total_conc;
+      double         total_conc;
       
       QCheckBox*     cb_movie;
       QCheckBox*     cb_timeCorr;
@@ -50,8 +50,8 @@ class US_Astfem_Sim : public US_Widgets
       QLCDNumber*    lcd_component;
       QProgressBar*  progress;
                     
-      US_Plot*       moviePlot;
-      US_Plot*       scanPlot;
+      QwtPlot*       moviePlot;
+      QwtPlot*       scanPlot;
                     
       US_Help        showhelp;
 
@@ -96,7 +96,7 @@ class US_Astfem_Sim : public US_Widgets
       
       void update_movie_plot( QList< double >&, double* );
 
-      void update_time     ( float time )        
+      void update_time     ( double time )        
          { lcd_time ->display( time  ); };
       
       void update_speed    ( uint speed )

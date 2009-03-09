@@ -15,12 +15,10 @@ class US_EXTERN US_DB
 {
   public:
 
-    //! A null constructor
-    US_DB () {};
-    //! A null destructor
-    ~US_DB() {};
+    US_DB();
+    ~US_DB();
 
-    // Programs
+    // Methods
 
     /*! \brief This function provides a quick test of database connectivity
         to ensure that the parameters in the database setup are correct.
@@ -43,14 +41,21 @@ class US_EXTERN US_DB
         \param error    A reference to a string for error responses as defined
                         in the class QSqlError.
     */
-    bool open ( const QString&, QString& );
+    bool      open   ( const QString&, QString& );
+    void      query  ( const QString& );
+    QVariant  value  ( int );
 
-    //! \brief Close the database 
-    void close( void );
-    //QString query( const QString& );
-    // Others
+    bool      isOpen ( void );
+    bool      next   ( void );
+    int       numRows( void );
+
+    QString              lastQueryErrorText( void ){ return error.text(); };
+    QSqlError::ErrorType lastQueryErrorType( void ){ return error.type(); };
     
   private:
-    QSqlDatabase db;
+    bool          opened;
+    QSqlDatabase  db;
+    QSqlQuery*    sqlQuery;
+    QSqlError     error;
 };
 #endif

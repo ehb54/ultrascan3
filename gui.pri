@@ -10,6 +10,8 @@ OBJECTS_DIR  = ./obj
 CONFIG       += debug qt thread warn
 
 unix {
+#  QMAKE_CXXFLAGS_DEBUG += -pg
+#  QMAKE_LFLAGS_DEBUG += -pg
   QWTPATH     = /usr/local/qwt-5.1.1
   LIBS       += -lus_utils -lus_gui -lus_db -L../../lib
   LIBS       += -lqca

@@ -2,7 +2,7 @@
 #include "us_selectmodel10.h"
 #include "us_gui_settings.h"
 
-US_SelectModel10::US_SelectModel10( float&          temp_stoich1, 
+US_SelectModel10::US_SelectModel10( double&         temp_stoich1, 
                                     QWidget*        p, 
                                     Qt::WindowFlags f ) 
    : US_WidgetsDialog( p, f ), stoich1( temp_stoich1 )

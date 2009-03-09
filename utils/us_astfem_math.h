@@ -105,46 +105,4 @@ class US_EXTERN US_AstfemMath
 
    static void   DefineGaussian( uint, double** );
 };
-
-
-#ifdef NEVER
-#include <math.h>
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <climits>
-#include <qobject.h>
-
-#include "us_extern.h"
-#include "us_matrix.h"
-#include "us_model_editor.h"
-#include "us_simulationparameters.h"
-#include "us_stiffbase.h"
-
-
-using namespace std;
-
-
-
-
-void IntQT1_ellam(vector <double>, double, double, double**, double);
-void IntQTm_ellam(vector <double>, double, double, double**, double);
-void IntQTn1_ellam(vector <double>, double, double, double**, double);
-void QuadSolver_ellam(double *, double *, double *, double *, double *, double *, unsigned int);
-double IntConcentration(vector<double>, double *);
-void DefInitCond(double **, unsigned int);
-void interpolate_Cfinal(struct mfem_initial *, double *, vector <double> *); // interpolate final concentration back onto mfem_initial
-
-int interpolate ( struct mfem_data *,  // simulated solution
-                  unsigned int,        // number of scans in expt. data, time dimension
-                  unsigned int,        // number of points in expt. data, radius dimension
-                  float *,             // scan times
-                  double *,            // radius values from expt. data
-                  double **);          // concentration values from expt. data, first dimension = time, second dimension radius
-
 #endif
-#endif
-
-
-
-

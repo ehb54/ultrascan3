@@ -7,16 +7,30 @@
 #include "qwt_plot.h"
 #include "qwt_plot_grid.h"
 #include "qwt_plot_picker.h"
+#include "qwt_plot_panner.h"
+#include "qwt_plot_zoomer.h"
 #include "qwt_plot_curve.h"
 #include "qwt_symbol.h"
 
 #include "us_widgets.h"
 #include "us_extern.h"
 
+
+//! \brief A class to implement plot zooming
+
+class US_Zoomer: public QwtPlotZoomer
+{
+   public:
+      //! \param x_axis - The title of the x (bottom) axis
+      //! \param y_axis - The title of the y (left) axis
+      //! \param y_axis - A pointer to the plot's canvas
+      US_Zoomer( int, int, QwtPlotCanvas* );
+};
+
 //! \brief Customize plot widgits
 
 /*! \class US_Plot
-  Provides functions to allow configuration of plot widgits
+  Provides functions to allow configuration of plot widgets
 */
 
 class US_PlotConfig;
@@ -24,7 +38,8 @@ class US_PlotAxisConfig;
 class US_PlotGridConfig;
 class US_PlotCurveConfig;
 
-class US_EXTERN US_Plot : public QwtPlot
+//class US_EXTERN US_Plot : public QwtPlot
+class US_EXTERN US_Plot : public QVBoxLayout
 {
    Q_OBJECT
 
@@ -33,14 +48,23 @@ class US_EXTERN US_Plot : public QwtPlot
       //! \param x_axis - The title of the x (bottom) axis
       //! \param y_axis - The title of the y (left) axis
 
-      US_Plot( const QString&, const QString&, const QString& );
+      //US_Plot( const QString&, const QString&, const QString& );
+      US_Plot( QwtPlot*& plot, const QString&, const QString&, const QString& );
       ~US_Plot();
 
    private:
       US_PlotConfig* configWidget;
+      QwtPlot*       plot;
+
+      QwtPlotZoomer* zoomer;
+      QwtPlotPicker* picker;
+      QwtPlotPanner* panner;
 
    private slots:
-      void mousePressEvent   ( QMouseEvent* );
+      void zoom              ( bool );
+      void print             ( void );
+      void svg               ( void );
+      void config            ( void );
       void plotConfigFinished( void );
 };
 
@@ -77,14 +101,14 @@ class US_PlotConfig : public US_Widgets
 
    public:
       //! \param current_plot - The plot to be configured
-      US_PlotConfig( US_Plot*, QWidget* = 0, Qt::WindowFlags = 0 );
+      US_PlotConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
 
    signals:
       //! \brief A signal to tell the parent that the window iis closed
       void plotConfigClosed( void );
 
    private:
-      US_Plot*     plot;
+      QwtPlot*     plot;
 
       QLineEdit*   le_titleText;
       QLineEdit*   le_titleFont;
@@ -131,7 +155,7 @@ class US_PlotCurveConfig : public US_Widgets
    friend class US_PlotLabel;
 
    public:
-      US_PlotCurveConfig( US_Plot*, const QStringList&, QWidget* = 0, 
+      US_PlotCurveConfig( QwtPlot*, const QStringList&, QWidget* = 0, 
             Qt::WindowFlags = 0 );
 
    signals:
@@ -139,7 +163,7 @@ class US_PlotCurveConfig : public US_Widgets
       void curveConfigClosed( void );
 
    private:
-      US_Plot*      plot;
+      QwtPlot*      plot;
                    
       QStringList   selectedItems;
 

@@ -71,8 +71,6 @@ StiffBase::~StiffBase()
       delete [] phiQ2;
 }
 
-// Numerical integration over a quadrilateral
-
 void StiffBase::CompLocalStif( int NK, double xd[4][2], 
       double D, double sw2, double** Stif )
 {

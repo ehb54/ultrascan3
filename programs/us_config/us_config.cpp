@@ -22,7 +22,7 @@ int main( int argc, char* argv[] )
 
 ///////////////////
 US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
-  : US_Widgets( parent, flags )
+  : US_Widgets( true, parent, flags )
 {
   font   = NULL;
   db     = NULL;

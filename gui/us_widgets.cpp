@@ -2,7 +2,7 @@
 #include "us_widgets.h"
 #include "us_gui_settings.h"
 
-US_Widgets::US_Widgets( QWidget* w, Qt::WindowFlags f ) : QFrame( w, f )
+US_Widgets::US_Widgets( bool set_position, QWidget* w, Qt::WindowFlags f ) : QFrame( w, f )
 {
   QApplication::setStyle( QStyleFactory::create( US_GuiSettings::guiStyle() ) );
 
@@ -12,9 +12,12 @@ US_Widgets::US_Widgets( QWidget* w, Qt::WindowFlags f ) : QFrame( w, f )
    qDebug( "us_win: invalid global memory" );
   }
 
-  QPoint p = g.global_position();
-  g.set_global_position( p + QPoint( 30, 30 ) );
-  move( p );
+  if ( set_position )
+  {
+    QPoint p = g.global_position();
+    g.set_global_position( p + QPoint( 30, 30 ) );
+    move( p );
+  }
 }
 
 US_Widgets::~US_Widgets()

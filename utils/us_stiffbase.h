@@ -3,6 +3,8 @@
 #define US_STIFFBASE_H
 
 #include "us_extern.h"
+
+//! Set a convenient shorthand
 #define uint unsigned int
 
 struct Gauss2D
@@ -15,8 +17,18 @@ struct Gauss2D
 class US_EXTERN StiffBase
 {
    public:
+      //! \brief Allocates memory structures for the integration
       StiffBase();
+
+      //! \brief Cleans up memory allocation
       ~StiffBase();
+
+      //! \brief  Numerical integration over a quadrilateral
+      //! \param NK
+      //! \param xd[4][2] 
+      //! \param D
+      //! \param sw2
+      //! \param Stif
 
       void CompLocalStif( int, double xd[4][2], double, double, double** );
 

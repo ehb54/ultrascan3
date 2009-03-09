@@ -7,7 +7,7 @@
 #include "us_db.h"
 
 US_Database::US_Database( QWidget* w, Qt::WindowFlags flags ) 
-  : US_Widgets( w, flags )
+  : US_Widgets( true, w, flags )
 {
   // Frame layout
   setPalette( US_GuiSettings::frameColor() );

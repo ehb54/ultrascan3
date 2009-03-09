@@ -5,6 +5,13 @@
 US_WidgetsDialog::US_WidgetsDialog( QWidget* w, Qt::WindowFlags f ) 
    : QDialog( w, f )
 {
+  QApplication::setStyle( QStyleFactory::create( US_GuiSettings::guiStyle() ) );
+
+  if ( ! g.isValid() )
+  {
+    // Do something for invalid global memory
+    qDebug( "us_win: invalid global memory" );
+  }
 }
 
 QLabel* US_WidgetsDialog::us_label( const QString& labelString, int fontAdjust, 

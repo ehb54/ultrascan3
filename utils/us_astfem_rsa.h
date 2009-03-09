@@ -30,7 +30,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
 
    signals:
       void new_scan         ( QList< double >&, double* );
-      void new_time         ( float                     );
+      void new_time         ( double                    );
       void current_component( int                       );
       void current_speed    ( unsigned int              );
       void calc_start       ( unsigned int              );

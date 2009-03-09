@@ -30,7 +30,7 @@ int main( int argc, char* argv[] )
 }
 
 US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f ) 
-   : US_Widgets( p, f )
+   : US_Widgets( true, p, f )
 {
    setWindowTitle( "ASTFEM Simulation Module" );
    setPalette( US_GuiSettings::frameColor() );
@@ -48,8 +48,8 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    connect( astfem_rsa, SIGNAL( current_component( int ) ), 
             this      , SLOT  ( update_progress  ( int ) ) );
 
-   connect( astfem_rsa, SIGNAL( new_time   ( float ) ), 
-            this      , SLOT  ( update_time( float ) ) );
+   connect( astfem_rsa, SIGNAL( new_time   ( double ) ), 
+            this      , SLOT  ( update_time( double ) ) );
    
    connect( astfem_rsa, SIGNAL( current_speed( unsigned int ) ), 
             this      , SLOT  ( update_speed ( unsigned int ) ) );
@@ -130,14 +130,14 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    QBoxLayout* plot = new QVBoxLayout;
 
    // Simulation Plot
-   moviePlot = new US_Plot( tr( "Simulation Window" ), tr( "Radius (cm)" ),
-                            tr( "Concentration" ) );
+   QBoxLayout* plot1 = new US_Plot( moviePlot, tr( "Simulation Window" ), 
+         tr( "Radius (cm)" ), tr( "Concentration" ) );
    us_grid  ( moviePlot );
    moviePlot->setMinimumSize( 600, 275);
    moviePlot->setAxisScale( QwtPlot::yLeft, 0.0, 2.0 );
    moviePlot->setAxisScale( QwtPlot::xBottom, 5.8, 7.2 );
 
-   plot->addWidget( moviePlot );
+   plot->addLayout( plot1 );
 
    QBoxLayout* timeSpeed = new QHBoxLayout;
 
@@ -158,13 +158,13 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    plot->addLayout( timeSpeed );
 
    // Saved Scans
-   scanPlot = new US_Plot( tr( "Saved Scans" ), tr( "Radius (cm)" ),
-                           tr( "Concentration" ) );
+   QBoxLayout* plot2 = new US_Plot( scanPlot, tr( "Saved Scans" ), 
+         tr( "Radius (cm)" ), tr( "Concentration" ) );
    us_grid  ( scanPlot );
    scanPlot->setMinimumSize( 600, 275);
    scanPlot->setAxisScale( QwtPlot::yLeft, 0.0, 2.0 );
    scanPlot->setAxisScale( QwtPlot::xBottom, 5.8, 7.2 );
-   plot->addWidget( scanPlot );
+   plot->addLayout( plot2 );
 
    QBoxLayout* completion = new QHBoxLayout;
 
@@ -448,14 +448,14 @@ void US_Astfem_Sim::start_simulation( void )
    // Run the simulation
    astfem_rsa->calculate( astfem_data );
 
-   float maxconc = 0.0;
+   double maxconc = 0.0;
    
    for ( int i = 0; i < system.component_vector.size(); i++ )
       maxconc += system.component_vector[ i ].concentration;
    
    if ( simparams.rinoise != 0.0 )
    {
-      float rinoise;
+      double rinoise;
       
       for ( int i = 0; i < ss_size; i++ )
       {
@@ -485,9 +485,9 @@ void US_Astfem_Sim::start_simulation( void )
 
    if ( simparams.tinoise != 0.0 )
    {
-      QList< float > tinoise;
+      QList< double > tinoise;
       
-      float val = US_Math::box_muller( 0, maxconc * simparams.tinoise / 100 );
+      double val = US_Math::box_muller( 0, maxconc * simparams.tinoise / 100 );
       
       tinoise.clear();
       
@@ -642,8 +642,8 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
       int last_scan = astfem_data[ k ].scan.size() - 1;
       
       maxc = max( maxc, 
-            (float) astfem_data[ k ].scan[ last_scan - 1 ].
-              conc[ astfem_data[ k ].scan[ last_scan ].conc.size() - 1 ] );
+              astfem_data[ k ].scan[ last_scan - 1 ].
+                conc[ astfem_data[ k ].scan[ last_scan ].conc.size() - 1 ] );
       
       total_scans += astfem_data[ k ].scan.size();
    }
@@ -837,21 +837,21 @@ void US_Astfem_Sim::save_ultrascan( const QString& filename )
       temp_str = temp_str.right( temp_str.lastIndexOf( "/" ) );
 
       ds << temp_str;
-      ds << (float) 20.0;                    // average temperature
-      ds << (int) 1;                         // run_inf.temperature_check;
-      ds << (float) 0.0;                     // run_inf.time_correction;
+      ds << 20.0;                            // average temperature
+      ds << 1;                               // run_inf.temperature_check;
+      ds << 0.0;                             // run_inf.time_correction;
       
       // Run_inf.duration;
-      ds << (float) ( astfem_data[astfem_data.size() - 1 ].
-            scan[ astfem_data[ astfem_data.size() - 1 ].scan.size() - 1 ].time ); 
+      ds << astfem_data[astfem_data.size() - 1 ].
+              scan[ astfem_data[ astfem_data.size() - 1 ].scan.size() - 1 ].time; 
        
       // for simulated data, total scans = scans for simulation, 
       // since only one "cell" is simulated
       
-      ds << (uint)  total_scans;  
-      ds << (float) grid_res;                // run_inf.delta_r
-      ds << (int)   -1;                      // experimental data ID
-      ds << (int)   -1;                      // Investigator ID
+      ds << total_scans;  
+      ds << grid_res;                // run_inf.delta_r
+      ds << -1;                      // experimental data ID
+      ds << -1;                      // Investigator ID
       
       QDate today = QDate::currentDate();
       QString current_date;
@@ -863,33 +863,33 @@ void US_Astfem_Sim::save_ultrascan( const QString& filename )
       ds << (QString) "192.168.0.1";
       ds << (QString) "QMYSQL3";
       
-      ds << (int) 1; // run_inf.exp_type.velocity;
-      ds << (int) 0; // run_inf.exp_type.equilibrium;
-      ds << (int) 0; // run_inf.exp_type.diffusion;
-      ds << (int) 1; // run_inf.exp_type.simulation;
-      ds << (int) 0; // run_inf.exp_type.interference;
-      ds << (int) 1; // run_inf.exp_type.absorbance;
-      ds << (int) 0; // run_inf.exp_type.fluorescence;
-      ds << (int) 0; // run_inf.exp_type.intensity;
-      ds << (int) 0; // run_inf.exp_type.wavelength;
+      ds << 1; // run_inf.exp_type.velocity;
+      ds << 0; // run_inf.exp_type.equilibrium;
+      ds << 0; // run_inf.exp_type.diffusion;
+      ds << 1; // run_inf.exp_type.simulation;
+      ds << 0; // run_inf.exp_type.interference;
+      ds << 1; // run_inf.exp_type.absorbance;
+      ds << 0; // run_inf.exp_type.fluorescence;
+      ds << 0; // run_inf.exp_type.intensity;
+      ds << 0; // run_inf.exp_type.wavelength;
       
       for ( int i = 0; i < 8; i++ )
       {
          if ( i == 0)
          {
-            ds << (int) 0; //centerpiece = simulation cell is zero
-            ds << (float) simparams.meniscus;
+            ds << 0; //centerpiece = simulation cell is zero
+            ds << simparams.meniscus;
             
             // Data discription
             ds << QString( tr( "Simulated Data - see corresponding model" ) );
-            ds << (unsigned int) 1; // How many wavelengths?
+            ds << 1; // How many wavelengths?
          }
          else
          {
-            ds << (unsigned int) 0; // Centerpiece = conventional 2 channel epon
-            ds << (float) 0.0;
+            ds << 0; // Centerpiece = conventional 2 channel epon
+            ds << 0.0;
             ds << QString();
-            ds << (unsigned int) 0;
+            ds << 0;
          }
       }
 
@@ -912,23 +912,23 @@ void US_Astfem_Sim::save_ultrascan( const QString& filename )
          {
             if ( i == 0 && j == 0 )
             {
-               ds << (uint)  999;  // run_inf.wavelength[i][j]
-               ds << (uint)  total_scans;
-               ds << (float) 0.0;   // baseline
-               ds << (float) simparams.meniscus;
-               ds << (float) new_bottom;
-               ds << (uint)  new_points;
-               ds << (float) ( new_bottom - m ) / new_points;
+               ds << 999;  // run_inf.wavelength[i][j]
+               ds << total_scans;
+               ds << 0.0;   // baseline
+               ds << simparams.meniscus;
+               ds << new_bottom;
+               ds << new_points;
+               ds << ( new_bottom - m ) / new_points;
             }
             else
             {
-               ds << (uint)  0;
-               ds << (uint)  0;
-               ds << (float) 0.0;   // baseline
-               ds << (float) 0.0;
-               ds << (float) 0.0;
-               ds << (uint)  0;
-               ds << (float) 0.0;
+               ds << 0;
+               ds << 0;
+               ds << 0.0;   // baseline
+               ds << 0.0;
+               ds << 0.0;
+               ds << 0;
+               ds << 0.0;
             }
          }
       }
@@ -939,7 +939,7 @@ void US_Astfem_Sim::save_ultrascan( const QString& filename )
          {
             for ( int j = 0; j < astfem_data[ k ].scan.size(); j++ )
             {
-               float plateau = 0.0;
+               double plateau = 0.0;
 
                for ( int n = 0; n < system.component_vector.size(); n++ )
                {
@@ -951,25 +951,25 @@ void US_Astfem_Sim::save_ultrascan( const QString& filename )
 
                if ( i == 0)
                {
-                  ds << (uint)  astfem_data[ k ].rpm;
-                  ds << (float) 20.0;     // temperature
-                  ds << (uint)  astfem_data[ k ].scan[ j ].time;
-                  ds << (float) astfem_data[ k ].scan[ j ].omega_s_t;
-                  ds << (float) 1.0;      //plateau;
+                  ds << astfem_data[ k ].rpm;
+                  ds << 20.0;     // temperature
+                  ds << astfem_data[ k ].scan[ j ].time;
+                  ds << astfem_data[ k ].scan[ j ].omega_s_t;
+                  ds << 1.0;      //plateau;
                }
                else
                {
-                  ds << (uint)  0;
-                  ds << (float) 0.0;
-                  ds << (uint)  0;
-                  ds << (float) 0.0;
-                  ds << (float) 0.0;
+                  ds << 0;
+                  ds << 0.0;
+                  ds << 0;
+                  ds << 0.0;
+                  ds << 0.0;
                }
             }
          }
       }
 
-      ds << (int) -1;   // run_inf.rotor;
+      ds << -1;   // run_inf.rotor;
       f1.flush();
       f1.close();
    }
@@ -987,7 +987,7 @@ void US_Astfem_Sim::save_ultrascan( const QString& filename )
          {
             for ( int i = 0; i < new_points; i++ )
             {
-               ds2 << (float) astfem_data[ k ].scan[ j ].conc[ i ];
+               ds2 << astfem_data[ k ].scan[ j ].conc[ i ];
             }
          }
       }

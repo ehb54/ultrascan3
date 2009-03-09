@@ -12,7 +12,7 @@ struct rotorInfo
 {
    int     serial_number;    //!< Rotor's serial number (series starts at zero)
    QString type;             //!< Name of rotor
-   float   coefficient[ 5 ]; //!< Stretching coefficient for 5th order polynomial 
+   double  coefficient[ 5 ]; //!< Stretching coefficient for 5th order polynomial 
                              //!< (radius vs speed in rpm)
 };
 
@@ -26,20 +26,20 @@ struct centerpieceInfo
    
    //! Bottom position of each channel (max 4) 
    //! If sector==3: position for synth. boundary
-   float   bottom_position[ 4 ]; 
+   double  bottom_position[ 4 ]; 
    
    //! 0 sector shaped, 1 for rectangular, 2 for circular, 
    //! 3 for synthetic boundary cells, 4 for band-forming centerpiece
    int     sector; 
    
    //! Pathlength of centerpiece in cm, default: 1.2 cm
-   float   pathlength;   
+   double  pathlength;   
    
    //! Angle of sector, if sector shaped, default: 2.5 degrees
-   float   angle;    
+   double  angle;    
    
    //! Width of channel, if rectangular, or radius if sector==2, 0 otherwise.
-   float   width;
+   double  width;
 };
 
 //! \brief A set of static functions to handle hardware data
