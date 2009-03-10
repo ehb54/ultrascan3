@@ -108,6 +108,7 @@ class US_EXTERN US_Buffer_DB : public US_WidgetsDialog
       void remove_component( QListWidgetItem* );
       void select_buffer   ( QListWidgetItem* );
       void search          ( const QString& );
+      void assign_investigator( int, const QString&, const QString& );
      
       void help ( void ) { showHelp.show_help( "manual/hydro.html" ); };
 };

@@ -5,6 +5,7 @@
 #include "us_db.h"
 #include "us_passwd.h"
 #include "us_constants.h"
+#include "us_investigator.h"
 
 US_Buffer_DB::US_Buffer_DB() : US_WidgetsDialog( 0, 0 )
 {
@@ -29,6 +30,10 @@ US_Buffer_DB::US_Buffer_DB() : US_WidgetsDialog( 0, 0 )
    main->setContentsMargins ( 2, 2, 2, 2 );
 
    int row = 0;
+   
+   QStringList DB = US_Settings::defaultDB();
+   QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
+   main->addWidget( lb_DB, row++, 0, 1, 3 );
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
@@ -93,7 +98,7 @@ US_Buffer_DB::US_Buffer_DB() : US_WidgetsDialog( 0, 0 )
    
    main->addWidget( lw_ingredients, row, 0, 6, 1 );
 
-   row = 0;
+   row = 1;
 
    // Investigator
    le_investigator = us_lineedit( tr( "Not Selected" ) );
@@ -242,26 +247,30 @@ bool US_Buffer_DB::read_template_file( void )
 
 void US_Buffer_DB::sel_investigator( void )
 {
-   buffer.investigatorID   = 999;
-   QMessageBox::information( this, "Under construction", "Not implemented yet." );
-/*   US_DB_TblInvestigator* investigator_dlg = new US_DB_TblInvestigator;
+   US_Investigator* inv_dialog = new US_Investigator( true );
+   connect( inv_dialog, 
+      SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
+      SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
+   inv_dialog->exec();
 
-   investigator_dlg->setCaption("Investigator Information");
-   investigator_dlg->pb_exit->setText("Accept");
-   connect( investigator_dlg, SIGNAL( valueChanged( QString, int ) ), 
-                              SLOT  ( update_investigator_lbl(QString, int)));
-   investigator_dlg->exec();
-
-   lb_current_buffer->clear();
-   lbl_buffer2        ->setText("");
-   le_description     ->setText("");
-   le_density         ->setText(" 0.0");
-   le_viscosity       ->setText(" 0.0");
-   le_refractive_index->setText(" 0.0");
+   lw_buffer     ->clear();
+   lb_units      ->setText( "" );
+   le_description->setText( "" );
+   le_density    ->setText( "0.0" );
+   le_viscosity  ->setText( "0.0" );
+   le_refraction ->setText( "0.0" );
    
-   Buffer.component.clear();
+   buffer.component.clear();
+}
+
+void US_Buffer_DB::assign_investigator( int invID, 
+      const QString& lname, const QString& fname)
+{
+   le_investigator->setText( "InvID (" + QString::number( invID ) + "): " +
+         lname + ", " + fname );
+   
+   buffer.investigatorID = invID;
    read_db();
-   */
 }
 
 /*! Load buffer data from database table tblBuffer and populate listbox. If
@@ -277,6 +286,7 @@ void US_Buffer_DB::read_db()
    if ( ! db->open( pw.getPasswd(), error ) )
    {
       // Error message here
+      qDebug() << "US_Buffer_DB::assign_investigator DB read error";
 
       return;
    }
@@ -643,10 +653,11 @@ void US_Buffer_DB::update_buffer( void )
    buffer.refractive_index = le_refraction ->text().toDouble();
    buffer.density          = le_density    ->text().toDouble();
    buffer.viscosity        = le_viscosity  ->text().toDouble();
+   // These are updated in other places
    //buffer.component
    //buffer.data
    //buffer.bufferID
-   //buffer.investifatorID
+   //buffer.investigatorID
 }
 
 void US_Buffer_DB::delete_buffer( void )
@@ -708,8 +719,6 @@ void US_Buffer_DB::delete_buffer( void )
       default:
             break;
    }
-
-
 }
 
 void US_Buffer_DB::save_db( void )
@@ -956,9 +965,8 @@ void US_Buffer_DB::add_component( void )
    pb_save_db->setEnabled( true );
 }
 
-/*!  After you select the buffer component in lw_ingredients, this method will
-     display in lbl_buffer2  and wait for a partial concentartion input value.
-*/
+/*!  After selection of the buffer component in lw_ingredients, this method will
+     display in lb_selected and wait for a partial concentartion input value. */
 
 void US_Buffer_DB::list_component( void )
 {
@@ -973,8 +981,7 @@ void US_Buffer_DB::list_component( void )
 }
 
 /*! When double clicked, the selected item in lw_buffer
-    will be removed  and the density and viscosity will be recalculated.
-*/
+    will be removed  and the density and viscosity will be recalculated.  */
 
 void US_Buffer_DB::remove_component( QListWidgetItem* item )
 {
@@ -1006,6 +1013,7 @@ void US_Buffer_DB::remove_component( QListWidgetItem* item )
       le_density  ->setReadOnly( true );
    }
 }
+
 /*! Reset some variables to initialization. */
 void US_Buffer_DB::reset()
 {
@@ -1048,8 +1056,7 @@ void US_Buffer_DB::reset()
 }
 
 /*!  Recalculate the density of the buffer based on the information in the
-     template file
-*/
+     template file */
 
 void US_Buffer_DB::recalc_density( void )
 {
@@ -1098,10 +1105,8 @@ void US_Buffer_DB::recalc_density( void )
    }
 }
 
-
 /*!  Recalculate the viscosity of the buffer based on the information in the
-     template file
- */
+     template file */
 
 void US_Buffer_DB::recalc_viscosity( void )
 {
@@ -1147,5 +1152,3 @@ void US_Buffer_DB::recalc_viscosity( void )
       }
    }
 }
-
-
