@@ -4,6 +4,7 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 #include "us_constants.h"
+#include "us_vbar.h"
 
 US_ModelEditor::US_ModelEditor( 
       struct ModelSystem& current_model, 
@@ -457,17 +458,15 @@ void US_ModelEditor::update_sD( void )
 
 void US_ModelEditor::get_vbar( void )
 {
-   QMessageBox::information( this, "Under construction", 
-         "US_ModelEditor::get_vbar Not implemented yet" );
-
-   /* 
-   float vbar, vbar20;
-   US_Vbar_DB* vbar_dlg = new US_Vbar_DB( (float) 20.0, &vbar, &vbar20, true, false, 0 );
-   connect( vbar_dlg, SIGNAL( valueChanged( float, float ) ), 
-                      SLOT  ( update_vbar ( float, float ) ) );
-   
+   US_Vbar* vbar_dlg = new US_Vbar( -1, true );
+   connect( vbar_dlg, SIGNAL( valueChanged( double ) ), 
+                      SLOT  ( update_vbar ( double ) ) );
    vbar_dlg->exec();
-   */
+}
+
+void US_ModelEditor::update_vbar( double vbar )
+{
+   if ( vbar > 0.0 ) le_vbar->setText( QString::number( vbar, 'f', 4 ) );
 }
 
 void US_ModelEditor::simulate_component( void )

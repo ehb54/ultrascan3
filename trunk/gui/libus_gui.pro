@@ -23,6 +23,7 @@ HEADERS      = us_buffer.h              \
                us_selectmodel3.h        \
                us_selectmodel10.h       \
                us_selectmodel13.h       \
+               us_vbar.h                \
                us_widgets.h             \
                us_widgets_dialog.h
 
@@ -38,6 +39,7 @@ SOURCES      = us_buffer.cpp              \
                us_selectmodel3.cpp        \
                us_selectmodel10.cpp       \
                us_selectmodel13.cpp       \
+               us_vbar.cpp                \
                us_widgets.cpp             \
                us_widgets_dialog.cpp
 
