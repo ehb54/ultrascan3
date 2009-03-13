@@ -91,6 +91,7 @@ class US_ModelEditor : public US_WidgetsDialog
       void update_diff       ( const QString& );
       void update_extinction ( const QString& );
       void update_vbar       ( const QString& );
+      void update_vbar       ( double );
       void update_mw         ( const QString& );
       void update_f_f0       ( const QString& );
       void update_conc       ( const QString& );

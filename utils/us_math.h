@@ -2,6 +2,7 @@
 #ifndef US_MATH_H
 #define US_MATH_H
 
+#include <QtCore>
 #include "us_extern.h"
 
 #define sq(x) ((x) * (x))
@@ -12,6 +13,46 @@
 #ifndef min
    #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
+
+//! A structure used for calculating a peptide sequence
+struct peptide
+{
+	uint   a;
+	uint   b;
+	uint   c;
+	uint   d;
+	uint   e;
+	uint   f;
+	uint   g;
+	uint   h;
+	uint   i;
+	uint   j; //Hao (James Nowick)
+	uint   k;
+	uint   l;
+	uint   m;
+	uint   n;
+	uint   o; //delta-linked ornithin (James Nowick)
+	uint   p;
+	uint   q;
+	uint   r;
+	uint   s;
+	uint   t;
+	uint   u; // currently unused
+	uint   v;
+	uint   w;
+	uint   x;
+	uint   y;
+	uint   z;
+	uint   dab; // diaminobutyric acid (John Kulp), symbol: "+"
+	uint   dpr; // diaminopropanoic acid (John Kulp), symbol: "@"
+	double vbar;
+	double vbar20;
+	double mw;
+	double vbar_sum;
+	double weight;
+	double e280;
+	uint   residues;
+};
 
 //! \brief A collecion of methematical routines.  All functions are static.
 class US_EXTERN US_Math
@@ -37,6 +78,23 @@ class US_EXTERN US_Math
       //! \param arraysize   Input array size
       static double linefit   ( double**, double**, double*, double*, double*, 
                                 double* , int );
+
+      //! \brief A routine to calulate the vbar and MW of a peptide sequence
+      //! \param pep      The structure to be populated
+      //! \param sequence The secuence used for the calculations
+      //! \param temperature The temperature to use for calulations
+
+      static void calc_vbar( struct peptide&, const QString&, double );
+
+      //! Adjust the vbar for temperature.  The values used in the 
+      //! unadjusted calculations are based on 25 degrees C.  We 
+      //! use an observed linear adjustment of 0.000425 per degreee.
+      
+      //! \param vbar The unadjusted vbar value
+      //! \param degC The temperature used for the adjsutment
+      static double adjust_vbar20( double vbar, double degC )
+      { return vbar + 0.002125 + 4.25e-4 * ( degC - 25.0 ); }
+
 /*  
       //! \brief An overloaded version of the above function with floats 
       //!        instead of doubles.
@@ -53,3 +111,4 @@ class US_EXTERN US_Math
 */
 };
 #endif
+
