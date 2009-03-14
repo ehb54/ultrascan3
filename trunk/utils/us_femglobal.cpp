@@ -18,8 +18,6 @@ int US_FemGlobal::read_experiment( struct ModelSystem&          ms,
 
    f.setFileName( filename );
    
-   //qDebug() << "read_experiment: Trying to open " << filename;
-
    if ( filename.contains( "us_system" ) && f.open( QIODevice::ReadOnly ) )
    {
       QTextStream ts( &f );
@@ -76,9 +74,9 @@ int US_FemGlobal::read_experiment( struct ModelSystem&          ms,
    return -200; // Can't read input file
 }
 
-int US_FemGlobal::read_experiment( QList< struct ModelSystem >&        vms, 
-                                          struct SimulationParameters& sp, 
-                                          const  QString&              filename)
+int US_FemGlobal::read_experiment( vector< struct ModelSystem >&        vms, 
+                                           struct SimulationParameters& sp, 
+                                           const  QString&              filename)
 {
    QString str;
    int     flag1;
@@ -184,8 +182,6 @@ int US_FemGlobal::read_simulationParameters(
    
    f.setFileName( filename );
   
-   //qDebug() << "read_simulationParameters: " << filename;
-
    if ( f.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
       QString     str;
@@ -196,7 +192,7 @@ int US_FemGlobal::read_simulationParameters(
          // Removes everything from the whitespace before 
          // the first # to the end of the line
          str.replace( QRegExp( "\\s+#.*" ), "" ); 
-         qsv << str;
+         qsv .push_back( str );
       }
 
       f.close();
@@ -215,15 +211,15 @@ int US_FemGlobal::read_simulationParameters(
 
    try
    {
-      int  ival = getInt( qsv, pos++, 51 );
+      uint  ival = getInt( qsv, pos++, 51 );
 
-      for ( int i = 0; i < ival; i++ )
+      for ( uint i = 0; i < ival; i++ )
       {
          // Expand the vector as necessary
          if ( sp.speed_step.size() < i + 1 )
          {
             struct SpeedProfile profile;
-            sp.speed_step << profile;
+            sp.speed_step .push_back( profile );
          }
 
          struct SpeedProfile* pro =  &sp.speed_step[ i ];
@@ -274,7 +270,7 @@ int US_FemGlobal::write_simulationParameters(
       ts << sp.speed_step.size() 
          << "\t\t# Number of speed step profiles" << "\n";
       
-      for ( int i = 0; i< sp.speed_step.size(); i++ )
+      for ( uint i = 0; i< sp.speed_step.size(); i++ )
       {
          ts << sp.speed_step[ i ].duration_hours 
             << str.sprintf("\t\t# run duration hours for profile %d\n", 
@@ -369,7 +365,7 @@ int US_FemGlobal::read_modelSystem( struct ModelSystem& ms,
          // Removes everything from the whitespace before the 
          // first # to the end of the line
          s.replace( QRegExp( "\\s+#.*" ), "" ); 
-         list << s;
+         list .push_back( s );
       }
 
       f.close();
@@ -379,8 +375,8 @@ int US_FemGlobal::read_modelSystem( struct ModelSystem& ms,
    return( -40 ); // Can't open input file
 }
 
-int US_FemGlobal::read_modelSystem( QList< ModelSystem >& modelList, 
-                                    const QString&        filename )
+int US_FemGlobal::read_modelSystem( vector< ModelSystem >& modelList, 
+                                     const QString&        filename )
 {
    QFile       f( filename );
    
@@ -388,20 +384,20 @@ int US_FemGlobal::read_modelSystem( QList< ModelSystem >& modelList,
 
    if ( f.open( QIODevice::ReadOnly | QIODevice::Text ) )
    {
-      QStringList           list;
-      QTextStream           ts( &f );
-      QList< unsigned int > offset;
-      QString               s;
+      QStringList            list;
+      QTextStream            ts( &f );
+      vector< unsigned int > offset;
+      QString                s;
       
       while ( ! ( s = ts.readLine() ).isNull() )
       {
          // Removes everything from the whitespace before 
          // the first # to the end of the line
          s.replace( QRegExp( "\\s+#.*"), "" ); 
-         list << s;
+         list .push_back( s );
 
          if ( s == "#!__Begin_ModelSystem__!" )
-            offset << list.size();
+            offset .push_back( list.size() );
       }
 
       f.close();
@@ -411,7 +407,7 @@ int US_FemGlobal::read_modelSystem( QList< ModelSystem >& modelList,
 
       if ( offset.size() )
       {
-         for ( int i = 0; i < offset.size(); i++ )
+         for ( uint i = 0; i < offset.size(); i++ )
          {
             retval = read_modelSystem( ms, list, false, offset[ i ] );
 
@@ -421,7 +417,7 @@ int US_FemGlobal::read_modelSystem( QList< ModelSystem >& modelList,
                         << " failed with return value: " << retval;
             }
 
-            modelList << ms;
+            modelList .push_back( ms );
 
             if ( retval ) return retval;
          }
@@ -437,7 +433,7 @@ int US_FemGlobal::read_modelSystem( QList< ModelSystem >& modelList,
             return retval;
          }
 
-         modelList << ms;
+         modelList .push_back( ms );
       }
 
       return( retval );
@@ -465,9 +461,6 @@ int US_FemGlobal::read_modelSystem( struct ModelSystem& ms,
    // We are given an offset position to start in the string
    if ( offset ) pos = offset;
 
-   //qDebug() << "read_modelsystem pos = " << pos;
-   //qDebug() << "qsv[" << pos << "]=" << qsv[ pos ];
-
    pos++; // FE, SA2D, COFS, SIM or GA
    
    try
@@ -483,15 +476,15 @@ int US_FemGlobal::read_modelSystem( struct ModelSystem& ms,
 
          ms.model = getInt( qsv, pos++, -2 );
 
-         int vectors =  getInt( qsv, pos++, -3 );  
+         uint vectors =  getInt( qsv, pos++, -3 );  
          
-         for ( int i = 0; i < vectors; i++ )
+         for ( uint i = 0; i < vectors; i++ )
          {
             // Expand the vector as necessary
             if ( ms.component_vector.size() < i + 1 )
             {
                struct SimulationComponent sc;
-               ms.component_vector << sc;
+               ms.component_vector .push_back( sc );
             }
 
             struct SimulationComponent* cv = &ms.component_vector[ i ];
@@ -517,15 +510,15 @@ int US_FemGlobal::read_modelSystem( struct ModelSystem& ms,
             cv->show_keq      = (bool) getInt( qsv, pos++, -17 );
             cv->show_koff     = (bool) getInt( qsv, pos++, -18 );
             
-            int components = getInt( qsv, pos++, -19 );
+            uint components = getInt( qsv, pos++, -19 );
             
-            for ( int j = 0; j < components; j++ )
+            for ( uint j = 0; j < components; j++ )
             {
                // Expand the vector as necessary
                if ( cv->show_component.size() < j + 1 )
                {
-                  unsigned int x;;
-                  cv->show_component << x;
+                  uint x;;
+                  cv->show_component .push_back( x );
                }
 
                cv->show_component[ j ] = getInt( qsv, pos++, -20 );
@@ -536,25 +529,25 @@ int US_FemGlobal::read_modelSystem( struct ModelSystem& ms,
                cv->c0.radius.clear();
                cv->c0.concentration.clear();
 
-               unsigned int ival = getInt( qsv, pos++, -21 );
+               uint ival = getInt( qsv, pos++, -21 );
 
-               for ( unsigned int j = 0; j < ival; j++ )
+               for ( uint j = 0; j < ival; j++ )
                {
-                  cv->c0.radius        << getDouble( qsv, pos++, -22 );
-                  cv->c0.concentration << getDouble( qsv, pos++, -23 );
+                  cv->c0.radius        .push_back( getDouble( qsv, pos++, -22 ) );
+                  cv->c0.concentration .push_back( getDouble( qsv, pos++, -23 ) );
                }
             }
          }
 
-         int assoc_vectors = getInt( qsv, pos++, -24 );
+         uint assoc_vectors = getInt( qsv, pos++, -24 );
 
-         for ( int i = 0; i < assoc_vectors; i++ )
+         for ( uint i = 0; i < assoc_vectors; i++ )
          {
             // Expand the vector as necessary
             if ( ms.assoc_vector.size() < i + 1 )
             {
                struct Association a;
-               ms.assoc_vector << a;
+               ms.assoc_vector .push_back( a );
             }
             
             ms.assoc_vector[ i ].keq            = getDouble( qsv, pos++, -25 );
@@ -580,15 +573,15 @@ int US_FemGlobal::read_modelSystem( struct ModelSystem& ms,
          // Set to fixed molecular weight distribution by default
          if ( ms.model > 3) ms.model = 3; 
          
-         int components = getInt( qsv, pos++, -34 );
+         uint components = getInt( qsv, pos++, -34 );
          
-         for ( int i = 0; i < components; i++ )
+         for ( uint i = 0; i < components; i++ )
          {
             // Expand the vector as necessary
             if ( ms.component_vector.size() < i + 1 )
             {
                struct SimulationComponent sc;
-               ms.component_vector << sc;
+               ms.component_vector .push_back( sc );
             }
 
             struct SimulationComponent* cv = &ms.component_vector[ i ];
@@ -685,7 +678,7 @@ int US_FemGlobal::write_modelSystem( struct ModelSystem& ms,
    ts << ms.component_vector.size() 
       << "\t\t# number of components in the model\n";
    
-   for ( int i = 0; i < ms.component_vector.size(); i++ )
+   for ( uint i = 0; i < ms.component_vector.size(); i++ )
    {
       struct SimulationComponent* cv = &ms.component_vector[ i ];
 
@@ -706,7 +699,7 @@ int US_FemGlobal::write_modelSystem( struct ModelSystem& ms,
       ts << (int) cv->show_koff       << "\t\t# show k_off?\n";
       ts << cv->show_component.size() << "\t\t# number of linked components\n";
       
-      for ( int j = 0; j < cv->show_component.size(); j++ )
+      for ( uint j = 0; j < cv->show_component.size(); j++ )
       {
          ts << cv->show_component[ j ] 
             << "\t\t# linked component (" << j + 1 << ")" << endl;;
@@ -717,7 +710,7 @@ int US_FemGlobal::write_modelSystem( struct ModelSystem& ms,
          ts << cv->c0.radius.size() 
             << "\t\t# number of initial concentration points\n";
          
-         for ( int j = 0; j < cv->c0.radius.size(); j++ )
+         for ( uint j = 0; j < cv->c0.radius.size(); j++ )
          {
             ts << cv->c0.radius       [ j ] << " "
                << cv->c0.concentration[ j ] << endl;
@@ -728,7 +721,7 @@ int US_FemGlobal::write_modelSystem( struct ModelSystem& ms,
    ts << ms.assoc_vector.size() 
       << "\t\t# number of association reactions in the model\n";
    
-   for ( int i = 0; i < ms.assoc_vector.size(); i++ )
+   for ( uint i = 0; i < ms.assoc_vector.size(); i++ )
    {
       struct Association* av = &ms.assoc_vector[ i ];
       
@@ -778,7 +771,7 @@ int US_FemGlobal::read_constraints( struct ModelSystem&            ms,
          // Removes everything from the whitespace before the 
          // first # to the end of the line
          s.replace( QRegExp( "\\s+#.*" ), "" ); 
-         qsv << s;
+         qsv .push_back( s );
       }
 
       f.close();
@@ -797,16 +790,16 @@ int US_FemGlobal::read_constraints( struct ModelSystem&            ms,
 
    try
    {
-      int j = getInt( qsv, pos++, -2 );
+      uint j = getInt( qsv, pos++, -2 );
       //msc.component_vector_constraints.resize( j );
 
-      for ( int i = 0; i < j; i++ )
+      for ( uint i = 0; i < j; i++ )
       {
          // Expand the vector as necessary
          if ( msc.component_vector_constraints.size() < i + 1 )
          {
             struct SimulationComponentConstraints scc;
-            msc.component_vector_constraints << scc;
+            msc.component_vector_constraints .push_back( scc );
          }
 
          struct SimulationComponentConstraints* cc = 
@@ -838,18 +831,18 @@ int US_FemGlobal::read_constraints( struct ModelSystem&            ms,
          cc->f_f0.high          = getDouble( qsv, pos++, -26 );
       }
 
-      if ( pos >= qsv.size()) return -27;
+      if ( pos >= qsv.size() ) return -27;
       
       // The number of reactions in this model
-      int reactions = getUInt  ( qsv, pos++, -27 ); 
+      uint reactions = getUInt( qsv, pos++, -27 ); 
       
-      for ( int i = 0; i < reactions; i++ )
+      for ( uint i = 0; i < reactions; i++ )
       {
          // Expand the vector as necessary
          if ( msc.assoc_vector_constraints.size() < i + 1 )
          {
             struct AssociationConstraints assoc;
-            msc.assoc_vector_constraints << assoc;
+            msc.assoc_vector_constraints .push_back( assoc );
          }
 
          struct AssociationConstraints* ac = &msc.assoc_vector_constraints[ i ];
@@ -902,7 +895,7 @@ int US_FemGlobal::write_constraints( struct ModelSystem&            ms,
       ts << msc.component_vector_constraints.size() 
          << "\t\t# Number of components in the model\n";
       
-      for ( int i = 0; i < msc.component_vector_constraints.size(); i++ )
+      for ( uint i = 0; i < msc.component_vector_constraints.size(); i++ )
       {
          struct SimulationComponentConstraints* cvs = 
             &msc.component_vector_constraints[ i ];
@@ -944,7 +937,7 @@ int US_FemGlobal::write_constraints( struct ModelSystem&            ms,
       ts << msc.assoc_vector_constraints.size() 
          << "\t\t# Number of reactions in the model\n";
       
-      for ( int i = 0; i < msc.assoc_vector_constraints.size(); i++ )
+      for ( uint i = 0; i < msc.assoc_vector_constraints.size(); i++ )
       {
          struct AssociationConstraints* avc = &msc.assoc_vector_constraints[ i ];
 
@@ -986,9 +979,9 @@ int US_FemGlobal::write_constraints( struct ModelSystem&            ms,
    return -400; // Can't open output file
 }
 
-int US_FemGlobal::read_model_data( QList< mfem_data >& model, 
-                                   const QString&      filename, 
-                                   bool                ignore_errors ) 
+int US_FemGlobal::read_model_data( vector< mfem_data >& model, 
+                                   const QString&       filename, 
+                                   bool                 ignore_errors ) 
 {
   unsigned int no_of_models;
   unsigned int no_of_radial_points;
@@ -1014,7 +1007,7 @@ int US_FemGlobal::read_model_data( QList< mfem_data >& model,
   struct mfem_data temp_model;
   struct mfem_scan temp_scan;
   
-  QList< double > concentration;
+  vector< double > concentration;
 
   QDataStream ds( &f );
 
@@ -1040,7 +1033,7 @@ int US_FemGlobal::read_model_data( QList< mfem_data >& model,
     for ( quint32 j = 0; j < no_of_radial_points; j++ )
     {
       ds >> double_val;
-      temp_model.radius << double_val;
+      temp_model.radius .push_back( double_val );
     }
     
     ds >> no_of_scans;
@@ -1052,7 +1045,7 @@ int US_FemGlobal::read_model_data( QList< mfem_data >& model,
       ds >> temp_scan.omega_s_t;
       temp_scan.conc.clear();
       
-      for ( int k = 0; k < temp_model.radius.size(); k++ )
+      for ( uint k = 0; k < temp_model.radius.size(); k++ )
       {
          ds >> double_val;
          temp_scan.conc.push_back(double_val);
@@ -1082,14 +1075,14 @@ int US_FemGlobal::read_model_data( QList< mfem_data >& model,
     qDebug() < s;
 #endif
 
-    model << temp_model;
+    model .push_back( temp_model );
   }
 
   return 0;
 }
 
-int US_FemGlobal::write_model_data( QList< mfem_data >& model, 
-                                    const QString&      filename) 
+int US_FemGlobal::write_model_data( vector< mfem_data >& model, 
+                                    const QString&       filename) 
 {
   QFile f( filename );
   
@@ -1102,9 +1095,9 @@ int US_FemGlobal::write_model_data( QList< mfem_data >& model,
 
   QDataStream ds( &f );
   
-  ds << (unsigned int) model.size();
+  ds << model.size();
   
-  for ( int i = 0; i < model.size(); i++ )
+  for ( uint i = 0; i < model.size(); i++ )
   {
     ds << model[ i ].id;
     ds << model[ i ].cell;
@@ -1116,19 +1109,19 @@ int US_FemGlobal::write_model_data( QList< mfem_data >& model,
     ds << model[ i ].s20w_correction;
     ds << model[ i ].D20w_correction;
     
-    ds << (unsigned int) model[ i ].radius.size();
+    ds << model[ i ].radius.size();
     
-    for ( int j = 0; j < model[ i ].radius.size(); j++ )
+    for ( uint j = 0; j < model[ i ].radius.size(); j++ )
       ds << model[ i ].radius[ j ];
 
-    ds << (unsigned int) model[ i ].scan.size();
+    ds << model[ i ].scan.size();
 
-    for ( int j = 0; j < model[ i ].scan.size(); j++ )
+    for ( uint j = 0; j < model[ i ].scan.size(); j++ )
     {
       ds << model[ i ].scan[ j ].time;
       ds << model[ i ].scan[ j ].omega_s_t;
       
-      for ( int k = 0; k < model[ i ].radius.size(); k++ )
+      for ( uint k = 0; k < model[ i ].radius.size(); k++ )
          ds << model[ i ].scan[ j ].conc[ k ];
     }
 
@@ -1162,9 +1155,9 @@ int US_FemGlobal::write_model_data( QList< mfem_data >& model,
 }
 
 int US_FemGlobal::accumulate_model_monte_carlo_data(
-      QList< mfem_data >& accumulated_model, 
-      QList< mfem_data >& source_model, 
-      unsigned int        monte_carlo_iterations )
+      vector< mfem_data >& accumulated_model, 
+      vector< mfem_data >& source_model, 
+      unsigned int         monte_carlo_iterations )
 {
   if ( ! monte_carlo_iterations )
   {
@@ -1188,25 +1181,25 @@ int US_FemGlobal::accumulate_model_monte_carlo_data(
   {
     struct mfem_data temp_model;
 
-    for ( int i = 0; i < source_model.size(); i++ )
+    for ( uint i = 0; i < source_model.size(); i++ )
     {
       temp_model = source_model[ i ];
 
-      for ( int j = 0; j < temp_model.scan.size(); j++ )
+      for ( uint j = 0; j < temp_model.scan.size(); j++ )
       {
-         for ( int k = 0; k < temp_model.radius.size(); k++ )
+         for ( uint k = 0; k < temp_model.radius.size(); k++ )
          {
             temp_model.scan[ j ].conc[ k ] /= (double) monte_carlo_iterations;
          }
       }
 
-      accumulated_model << temp_model;
+      accumulated_model .push_back( temp_model );
     }
 
     return 0;
   }
 
-  for ( int i = 0; i < source_model.size(); i++ )
+  for ( uint i = 0; i < source_model.size(); i++ )
   {
     if ( accumulated_model[ i ].scan.size() != source_model[ i ].scan.size() )
     {
@@ -1236,9 +1229,9 @@ int US_FemGlobal::accumulate_model_monte_carlo_data(
       return -5;
     }
 
-    for ( int j = 0; j < source_model[ i ].scan.size(); j++ )
+    for ( uint j = 0; j < source_model[ i ].scan.size(); j++ )
     {
-      for ( int k = 0; k < source_model[ i ].radius.size(); k++ )
+      for ( uint k = 0; k < source_model[ i ].radius.size(); k++ )
       {
          accumulated_model[ i ].scan[ j ].conc[ k ] 
            += source_model[ i ].scan[ j ].conc[ k ] 
@@ -1250,19 +1243,19 @@ int US_FemGlobal::accumulate_model_monte_carlo_data(
   return 0;
 }
 
-int US_FemGlobal::read_mwl_model_data( QList< mfem_data >& model, 
-                                       const QString&      filenamebase )
+int US_FemGlobal::read_mwl_model_data( vector< mfem_data >& model, 
+                                       const QString&       filenamebase )
 {
   unsigned int no_of_models_loaded = 0;
   
-  QList< mfem_data > temp_model;
+  vector< mfem_data > temp_model;
   
   for ( int i = 0; i < 2048; i++ )
   {
     if ( ! read_model_data( temp_model, 
              filenamebase + QString( "-model-%1.dat" ).arg ( i ), true ) )
     {
-      model << temp_model[ 0 ];
+      model .push_back( temp_model[ 0 ] );
       no_of_models_loaded++;
     }
   }

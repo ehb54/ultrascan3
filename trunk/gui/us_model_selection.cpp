@@ -41,7 +41,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
       switch ( ms.model )
       {
          case Ideal1Comp:
-            ms.component_vector << sc;
+            ms.component_vector .push_back( sc );
             
             cv0 = &ms.component_vector[ 0 ];
             
@@ -49,7 +49,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             break;
 
          case Ideal2Comp:
-            ms.component_vector << sc << sc;
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
             
             cv0 = &ms.component_vector[ 0 ];
             cv1 = &ms.component_vector[ 1 ];
@@ -59,7 +60,9 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             break;
 
          case Ideal3Comp:
-            ms.component_vector << sc << sc << sc;
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
             
             cv0 = &ms.component_vector[ 0 ];
             cv1 = &ms.component_vector[ 1 ];
@@ -91,7 +94,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                {
                   for ( int i = 0; i < species; i++ )
                   {
-                     ms.component_vector << sc;
+                     ms.component_vector .push_back( sc );
                      struct SimulationComponent* cv = &ms.component_vector[ i ];
 
                      cv->name = "Component " + QString::number( i + 1 );
@@ -102,7 +105,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             }
          case MonoDimer: // Monomer-Dimer Equilibrium
 
-            ms.component_vector << sc << sc;
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
             cv0 = &ms.component_vector[ 0 ];
             cv1 = &ms.component_vector[ 1 ];
             
@@ -114,7 +118,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             cv1->name  = "Dimer";
             cv1->show_component.clear();
             
-            ms.assoc_vector << assoc;
+            ms.assoc_vector .push_back( assoc );
             av0 = &ms.assoc_vector[ 0 ];
             
             av0->keq            = 1.0;
@@ -134,7 +138,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
 
          case MonoTrimer: // Monomer-Trimer Equilibrium
          
-            ms.component_vector << sc << sc;
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
             cv0 = &ms.component_vector[ 0 ];
             cv1 = &ms.component_vector[ 1 ];
             
@@ -146,7 +151,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             cv1->name  = "Trimer";
             cv1->show_component.clear();
             
-            ms.assoc_vector << assoc;
+            ms.assoc_vector .push_back( assoc );
             av0 = &ms.assoc_vector[ 0 ];
             
             av0->keq            = 1.0;
@@ -166,7 +171,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
          
          case MonoTetramer: // Monomer-Tetramer Equilibrium
          
-            ms.component_vector << sc << sc;
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
             cv0 = &ms.component_vector[ 0 ];
             cv1 = &ms.component_vector[ 1 ];
             
@@ -178,7 +184,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             cv1->name  = "Tetramer";
             cv1->show_component.clear();
             
-            ms.assoc_vector << assoc;
+            ms.assoc_vector .push_back( assoc );
             av0 = &ms.assoc_vector[ 0 ];
             
             av0->keq            = 1.0;
@@ -198,7 +204,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
          
          case MonoPentamer: // Monomer-Pentamer Equilibrium
          
-            ms.component_vector << sc << sc;
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
             cv0 = &ms.component_vector[ 0 ];
             cv1 = &ms.component_vector[ 1 ];
             
@@ -210,7 +217,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             cv0->name  = "Monomer";
             cv1->show_component.clear();
 
-            ms.assoc_vector << assoc;
+            ms.assoc_vector .push_back( assoc );
             av0 = &ms.assoc_vector[ 0 ];
             
             av0->keq            = 1.0;
@@ -229,7 +236,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
          
          case MonoHexamer: // Monomer-Hexamer Equilibrium
          
-            ms.component_vector << sc << sc;
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
             cv0 = &ms.component_vector[ 0 ];
             cv1 = &ms.component_vector[ 1 ];
             
@@ -241,7 +249,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             cv1->name  = "Hexamer";
             cv1->show_component.clear();
 
-            ms.assoc_vector << assoc;
+            ms.assoc_vector .push_back( assoc );
             av0 = &ms.assoc_vector[ 0 ];
             
             av0->keq            = 1.0;
@@ -261,7 +269,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
 
          case MonoHeptamer: // Monomer-Heptamer Equilibrium
          
-            ms.component_vector << sc << sc;
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
             cv0 = &ms.component_vector[ 0 ];
             cv1 = &ms.component_vector[ 1 ];
             
@@ -273,7 +282,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             cv1->name  = "Heptamer";
             cv1->show_component.clear();
      
-            ms.assoc_vector << assoc;
+            ms.assoc_vector .push_back( assoc );
             av0 = &ms.assoc_vector[ 0 ];
             
             av0->keq            = 1.0;
@@ -305,7 +314,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                }
                else
                {
-                  ms.component_vector << sc << sc;
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
                   cv0 = &ms.component_vector[ 0 ];
                   cv1 = &ms.component_vector[ 1 ];
                
@@ -317,7 +327,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   cv1->name  = "N-mer (" + QString::number( (int) stoich ) + ")";
                   cv1->show_component.clear();
 
-                  ms.assoc_vector << assoc;
+                  ms.assoc_vector .push_back( assoc );
                   av0 = &ms.assoc_vector[ 0 ];
                
                   av0->keq            = 1.0;
@@ -339,7 +349,9 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
 
          case MonoDiTrimer: // Monomer-Dimer-Trimer Equilibrium
          
-            ms.component_vector << sc << sc << sc;
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
             cv0 = &ms.component_vector[ 0 ];
             cv1 = &ms.component_vector[ 1 ];
             cv2 = &ms.component_vector[ 2 ];
@@ -356,7 +368,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             cv2->name = "Trimer";
             cv2->show_component.clear();
             
-            ms.assoc_vector << assoc << assoc;
+            ms.assoc_vector .push_back( assoc );
+            ms.assoc_vector .push_back( assoc );
             av0 = &ms.assoc_vector[ 0 ];
             av1 = &ms.assoc_vector[ 1 ];
 
@@ -391,11 +404,13 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
 
          case MonoDiTetramer: // Monomer-Dimer-Tetramer Equilibrium
          
-            ms.component_vector << sc << sc << sc;
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
             cv0 = &ms.component_vector[ 0 ];
             cv1 = &ms.component_vector[ 1 ];
             cv2 = &ms.component_vector[ 2 ];
-            
+
             cv0->shape = "not defined";
             cv0->name  = "Monomer";
             cv0->show_component.clear();
@@ -408,7 +423,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             cv2->name  = "Tetramer";
             cv2->show_component.clear();
             
-            ms.assoc_vector << assoc << assoc;
+            ms.assoc_vector .push_back( assoc );
+            ms.assoc_vector .push_back( assoc );
             av0 = &ms.assoc_vector[ 0 ];
             av1 = &ms.assoc_vector[ 1 ];
 
@@ -458,7 +474,9 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                }
                else
                {
-                  ms.component_vector << sc << sc << sc;
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
                   cv0 = &ms.component_vector[ 0 ];
                   cv1 = &ms.component_vector[ 1 ];
                   cv2 = &ms.component_vector[ 2 ];
@@ -475,7 +493,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   cv2->name  = "N-mer (" + QString::number( (int) stoich2 ) + " )";
                   cv2->show_component.clear();
 
-                  ms.assoc_vector << assoc << assoc;
+                  ms.assoc_vector .push_back( assoc );
+                  ms.assoc_vector .push_back( assoc );
                   av0 = &ms.assoc_vector[ 0 ];
                   av1 = &ms.assoc_vector[ 1 ];
 
@@ -512,7 +531,9 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
          
          case TwoComponent: // 2 component hetero association.
          
-            ms.component_vector << sc << sc << sc;
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
+            ms.component_vector .push_back( sc );
             cv0 = &ms.component_vector[ 0 ];
             cv1 = &ms.component_vector[ 1 ];
             cv2 = &ms.component_vector[ 2 ];
@@ -529,7 +550,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             cv2->name  = "Component AB";
             cv2->show_component.clear();
             
-            ms.assoc_vector << assoc ;
+            ms.assoc_vector .push_back( assoc );
             av0 = &ms.assoc_vector[ 0 ];
 
             av0->keq        = 1.0;
@@ -543,26 +564,29 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
             av0->stoichiometry1 = 1; 
             av0->stoichiometry2 = 1;
             av0->stoichiometry3 = 1;
-            
+
             initAssoc2( ms );
 
             cv0->show_conc   = true;
             cv0->show_stoich = 0;
             cv0->show_keq    = false;
             cv0->show_koff   = false;
-            cv0->show_component << 1 << 2;
+            cv0->show_component .push_back( 1 );
+            cv0->show_component .push_back( 2 );
 
             cv1->show_conc   = true;
             cv1->show_stoich = 0;
             cv1->show_keq    = false;
             cv1->show_koff   = false;
-            cv1->show_component << 0 << 2;
+            cv1->show_component .push_back( 0 );
+            cv1->show_component .push_back( 2 );
 
             cv2->show_conc   = false;
             cv2->show_stoich = -1; // -1 means hetero - association
             cv2->show_keq    = true;
             cv2->show_koff   = true;
-            cv1->show_component << 0 << 1;
+            cv2->show_component .push_back( 0 );
+            cv2->show_component .push_back( 1 );
             
             break;
          
@@ -581,7 +605,10 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                }
                else
                {
-                  ms.component_vector << sc << sc << sc << sc;
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
                   cv0 = &ms.component_vector[ 0 ];
                   cv1 = &ms.component_vector[ 1 ];
                   cv2 = &ms.component_vector[ 2 ];
@@ -604,7 +631,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                                 + QString::number( (int) stoich ) + ")";
                   cv3->show_component.clear();
 
-                  ms.assoc_vector << assoc << assoc ;
+                  ms.assoc_vector .push_back( assoc );
+                  ms.assoc_vector .push_back( assoc );
                   av0 = &ms.assoc_vector[ 0 ];
                   av1 = &ms.assoc_vector[ 1 ];
                   
@@ -640,19 +668,22 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   cv0->show_stoich = 0;
                   cv0->show_keq    = false;
                   cv0->show_koff   = false;
-                  cv0->show_component << 1 << 2;
+                  cv0->show_component .push_back( 1 );
+                  cv0->show_component .push_back( 2 );
 
                   cv1->show_conc   = true;
                   cv1->show_stoich = 0;
                   cv1->show_keq    = false;
                   cv1->show_koff   = false;
-                  cv1->show_component << 0 << 2;
+                  cv1->show_component .push_back( 0 );
+                  cv1->show_component .push_back( 2 );
 
                   cv2->show_conc   = false;
                   cv2->show_stoich = -1; // -1 means hetero - association
                   cv2->show_keq    = true;
                   cv2->show_koff   = true;
-                  cv1->show_component << 0 << 1;
+                  cv2->show_component .push_back( 0 );
+                  cv2->show_component .push_back( 1 );
 
                   cv3->show_conc   = false;
                   cv3->show_stoich = (int) stoich;
@@ -677,7 +708,9 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                }
                else
                {
-                  ms.component_vector << sc << sc << sc;
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
                   cv0 = &ms.component_vector[ 0 ];
                   cv1 = &ms.component_vector[ 1 ];
                   cv2 = &ms.component_vector[ 2 ];
@@ -694,7 +727,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   cv2->name  = "Incompetent Monomer";
                   cv2->show_component.clear();
                   
-                  ms.assoc_vector << assoc << assoc ;
+                  ms.assoc_vector .push_back( assoc );
+                  ms.assoc_vector .push_back( assoc );
                   av0 = &ms.assoc_vector[ 0 ];
                   av1 = &ms.assoc_vector[ 1 ];
                   
@@ -737,7 +771,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   cv2->show_stoich   = 1;
                   cv2->show_keq      = false;
                   cv2->show_koff     = false;
-                  cv2->show_component << 0 << 2;
+                  cv2->show_component .push_back( 0 );
+                  cv2->show_component .push_back( 2 );
                }
             }
             break;
@@ -757,7 +792,9 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                }
                else
                {
-                  ms.component_vector << sc << sc << sc;
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
                   cv0 = &ms.component_vector[ 0 ];
                   cv1 = &ms.component_vector[ 1 ];
                   cv2 = &ms.component_vector[ 2 ];
@@ -774,7 +811,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   cv2->name = "Incompetent N-mer";
                   cv2->show_component.clear();
 
-                  ms.assoc_vector << assoc << assoc ;
+                  ms.assoc_vector .push_back( assoc );
+                  ms.assoc_vector .push_back( assoc );
                   av0 = &ms.assoc_vector[ 0 ];
                   av1 = &ms.assoc_vector[ 1 ];
                   
@@ -818,8 +856,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   cv2->show_keq      = false;
                   cv2->show_koff     = false;
 
-                  cv2->show_component << 0;
-                  cv0->show_component << 2;
+                  cv2->show_component .push_back( 0 );
+                  cv0->show_component .push_back( 2 );
                }
             }
             break;
@@ -836,7 +874,8 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                }
                else
                {
-                  ms.component_vector << sc << sc;
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
                   cv0 = &ms.component_vector[ 0 ];
                   cv1 = &ms.component_vector[ 1 ];
 
@@ -848,7 +887,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   cv1->name  = "N-mer (" + QString::number( (int)stoich ) + ")";
                   cv1->show_component.clear();
                   
-                  ms.assoc_vector << assoc;
+                  ms.assoc_vector .push_back( assoc );
                   av0 = &ms.assoc_vector[ 0 ];
                   
                   // Irreversible components have zero equilibrium constants
@@ -898,7 +937,9 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                }
                else
                {
-                  ms.component_vector << sc << sc;
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
+                  ms.component_vector .push_back( sc );
                   cv0 = &ms.component_vector[ 0 ];
                   cv1 = &ms.component_vector[ 1 ];
                   cv2 = &ms.component_vector[ 2 ];
@@ -915,7 +956,7 @@ void US_ModelSelection::selectModel( struct ModelSystem& ms )
                   cv2->shape = "not defined";
                   cv2->show_component.clear();
                   
-                  ms.assoc_vector << assoc;
+                  ms.assoc_vector .push_back( assoc );
                   av0 = &ms.assoc_vector[ 0 ];
                   
                   av0->keq            = 1.0;
@@ -1059,7 +1100,7 @@ void US_ModelSelection::initAssoc1( struct ModelSystem& ms,
    sc1->show_koff     = false;
    sc1->mw            = 5.0e4;
 
-   sc1->show_component << comp2;
+   sc1->show_component .push_back( comp2 );
    sc1->f_f0          = 1.25;
    sc1->vbar20        = 0.72;
    sc1->sigma         = 0.0;
@@ -1074,7 +1115,7 @@ void US_ModelSelection::initAssoc1( struct ModelSystem& ms,
    sc2->show_stoich   = stoich1;
    sc2->show_keq      = true;
    sc2->show_koff     = true;
-   sc2->show_component << comp1;
+   sc2->show_component .push_back( comp1 );
    sc2->mw            = 5.0e4 * stoich1;
    sc2->vbar20        = 0.72;
    sc2->sigma         = 0.0;

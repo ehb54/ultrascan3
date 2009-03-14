@@ -4,6 +4,9 @@
 
 #include <QtGui>
 
+#include <vector>
+using namespace std;
+
 #include <qwt_plot.h>
 #include <qwt_counter.h>
 
@@ -63,7 +66,7 @@ class US_Astfem_Sim : public US_Widgets
 
       struct ModelSystem          system;
       struct SimulationParameters simparams;
-      QList< struct mfem_data >   astfem_data;
+      vector< struct mfem_data >  astfem_data;
 
       void init_simparams  ( void );  
       void save_xla        ( const QString& );  
@@ -94,7 +97,7 @@ class US_Astfem_Sim : public US_Widgets
       void show_progress   ( unsigned int );
       void calc_over       ( void );
       
-      void update_movie_plot( QList< double >&, double* );
+      void update_movie_plot( vector< double >&, double* );
 
       void update_time     ( double time )        
          { lcd_time ->display( time  ); };
