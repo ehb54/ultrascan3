@@ -3,6 +3,8 @@
 #define US_FEMGLOBAL_H
 
 #include <QtCore>
+#include <vector>
+using namespace std;
 
 #include "us_extern.h"
 
@@ -16,8 +18,8 @@ struct constraint
 //! \brief Initial concentration contitions
 struct mfem_initial
 {
-   QList< double > radius;         //!< List of radii
-   QList< double > concentration;  //!< List of concentrations corresponding to
+   vector< double > radius;         //!< List of radii
+   vector< double > concentration;  //!< List of concentrations corresponding to
                                    //!< radii
 };
 
@@ -28,7 +30,7 @@ struct mfem_scan
    double          omega_s_t;   //!< Omega^2 t 
    unsigned int    rpm;         //!< Rotor speed
    double          temperature; //!< Temperature at the time of the scan
-   QList< double > conc;        //!< List of concentration values
+   vector< double > conc;       //!< List of concentration values
 };
 
 //! \brief A data set comprised of scans from one sample taken at constant speed
@@ -80,8 +82,8 @@ struct mfem_data
    double       vbar20;           //!< vbar at 20C
    double       meniscus;         //!< radial position of meniscus
    double       bottom;           //!< corrected for speed dependent rotor stretch
-   QList< double>            radius; //!< radial gridpoints
-   QList< struct mfem_scan > scan;   //!< list of scan data
+   vector< double>            radius; //!< radial gridpoints
+   vector< struct mfem_scan > scan;   //!< list of scan data
 };
 
 struct SimulationComponent
@@ -102,7 +104,7 @@ struct SimulationComponent
 
    //! List of associated components for combobox, 
    //! if size == zero component is non-interacting
-   QList< unsigned int > show_component; 
+   vector< unsigned int > show_component; 
    QString shape;
    QString name;
 
@@ -147,11 +149,11 @@ struct Association
    unsigned int stoichiometry3; 
    
    //! Vector of all components involved in this reaction (new) 
-   QList< unsigned int > comp;  
+   vector< unsigned int > comp;  
    
    //! Vector of stoichiometry of each component (new) 
-   QList< unsigned int > stoich; 
-   QList< int >          react;    //!< = 1 for reactant, = -1 for product
+   vector< unsigned int > stoich; 
+   vector< int >          react;    //!< = 1 for reactant, = -1 for product
 };
 
 struct AssociationConstraints
@@ -164,14 +166,14 @@ struct ModelSystem
 {
    QString description;
    int     model;
-   QList< struct SimulationComponent > component_vector;
-   QList< struct Association >         assoc_vector;
+   vector< struct SimulationComponent > component_vector;
+   vector< struct Association >         assoc_vector;
 };
 
 struct ModelSystemConstraints
 {
-   QList< struct SimulationComponentConstraints > component_vector_constraints;
-   QList< struct AssociationConstraints         > assoc_vector_constraints;
+   vector< struct SimulationComponentConstraints > component_vector_constraints;
+   vector< struct AssociationConstraints         > assoc_vector_constraints;
    unsigned int simpoints;    //!< number of radial grid points used in simulation
    
    //! 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 
@@ -198,7 +200,7 @@ struct SpeedProfile
 struct SimulationParameters
 {
    //! The radii from a user-selected mesh file (mesh == 3)
-   QList< double > mesh_radius; 
+   vector< double > mesh_radius; 
 
    //! Note: the radius points of c0 do not have to match the radii in the mesh
    //! file. The radius values of the c0 vector will be interpolated onto
@@ -207,7 +209,7 @@ struct SimulationParameters
    //! will be ignored or interpolated to the actual meniscus and bottom
    //! position set by the user, which will take precedence.
 
-   QList< struct SpeedProfile > speed_step;
+   vector< struct SpeedProfile > speed_step;
    unsigned int simpoints;   //!< number of radial grid points used in simulation
 
    //! 0 = ASTFEM, 1 = Claverie, 2 = moving hat, 
@@ -248,7 +250,7 @@ class US_EXTERN US_FemGlobal
                                       struct SimulationParameters&,
                                       const QString& );
 
-      static int read_experiment(     QList< struct ModelSystem >&,
+      static int read_experiment(     vector< struct ModelSystem >&,
                                       struct SimulationParameters&,
                                       const QString& );
 
@@ -272,7 +274,7 @@ class US_EXTERN US_FemGlobal
                                       const QString&,
                                       bool = false );
 
-      static int read_modelSystem(    QList< ModelSystem >&,
+      static int read_modelSystem(    vector< ModelSystem >&,
                                       const QString& );
 
       static int read_modelSystem(    struct ModelSystem&,
@@ -295,19 +297,19 @@ class US_EXTERN US_FemGlobal
                                       struct ModelSystemConstraints&,
                                       const QString& );
 
-      static int read_model_data(     QList< mfem_data >&,
+      static int read_model_data(     vector< mfem_data >&,
                                       const QString&,
                                       bool = false );
 
-      static int write_model_data(    QList< mfem_data >&,
+      static int write_model_data(    vector< mfem_data >&,
                                       const QString& );
 
       static int accumulate_model_monte_carlo_data(
-                                      QList< mfem_data >&,
-                                      QList< mfem_data >&,
+                                      vector< mfem_data >&,
+                                      vector< mfem_data >&,
                                       unsigned int );
 
-      static int read_mwl_model_data( QList< mfem_data >&,
+      static int read_mwl_model_data( vector< mfem_data >&,
                                       const QString& );
 
    private:

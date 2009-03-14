@@ -42,8 +42,8 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
 
    astfem_rsa = new US_Astfem_RSA( system, simparams );
 
-   connect( astfem_rsa, SIGNAL( new_scan         ( QList< double >&, double* ) ), 
-            this      , SLOT(   update_movie_plot( QList< double >&, double* ) ) );
+   connect( astfem_rsa, SIGNAL( new_scan         ( vector< double >&, double* ) ), 
+            this      , SLOT(   update_movie_plot( vector< double >&, double* ) ) );
    
    connect( astfem_rsa, SIGNAL( current_component( int ) ), 
             this      , SLOT  ( update_progress  ( int ) ) );
@@ -192,7 +192,7 @@ void US_Astfem_Sim::init_simparams( void )
    struct SpeedProfile sp;
 
    simparams.speed_step.clear();
-   simparams.speed_step << sp;
+   simparams.speed_step .push_back( sp );
 
    simparams.speed_step[ 0 ].duration_hours    = 5;
    simparams.speed_step[ 0 ].duration_minutes  = 30;
@@ -368,7 +368,7 @@ void US_Astfem_Sim::start_simulation( void )
       struct SpeedProfile* sp = &simparams.speed_step[ i ];
       struct mfem_data     data;
       
-      astfem_data << data;
+      astfem_data.push_back( data );
 
       astfem_data[ i ].scan.clear();
       astfem_data[ i ].radius.clear();
@@ -406,7 +406,7 @@ void US_Astfem_Sim::start_simulation( void )
       
       while  ( r <= simparams.bottom )
       {
-         astfem_data[ i ].radius << r;
+         astfem_data[ i ].radius .push_back( r );
          r += simparams.radial_resolution;
       }
 
@@ -423,10 +423,10 @@ void US_Astfem_Sim::start_simulation( void )
          current_time  += increment;
          temp_scan.time = current_time;
 
-         for ( int k = 0; k < astfem_data[ i ].radius.size(); k++ ) 
-            temp_scan.conc << 0.0;
+         for ( uint k = 0; k < astfem_data[ i ].radius.size(); k++ ) 
+            temp_scan.conc .push_back( 0.0 );
 
-         astfem_data[ i ].scan << temp_scan;
+         astfem_data[ i ].scan .push_back( temp_scan );
       }
    }
 
@@ -450,7 +450,7 @@ void US_Astfem_Sim::start_simulation( void )
 
    double maxconc = 0.0;
    
-   for ( int i = 0; i < system.component_vector.size(); i++ )
+   for ( uint i = 0; i < system.component_vector.size(); i++ )
       maxconc += system.component_vector[ i ].concentration;
    
    if ( simparams.rinoise != 0.0 )
@@ -459,10 +459,10 @@ void US_Astfem_Sim::start_simulation( void )
       
       for ( int i = 0; i < ss_size; i++ )
       {
-         for ( int j = 0; j < astfem_data[ i ].scan.size(); j++ )
+         for ( uint j = 0; j < astfem_data[ i ].scan.size(); j++ )
          {
             rinoise = US_Math::box_muller( 0, maxconc * simparams.rinoise / 100 );
-            for ( int k = 0; k < astfem_data[ i ].radius.size(); k++ )
+            for ( uint k = 0; k < astfem_data[ i ].radius.size(); k++ )
                astfem_data[ i ].scan[ j ].conc[ k ] += rinoise;
          }
       }
@@ -472,9 +472,9 @@ void US_Astfem_Sim::start_simulation( void )
    {
       for ( int i = 0; i < ss_size; i++ )
       {
-         for ( int j = 0; j < astfem_data[ i ].scan.size(); j++ )
+         for ( uint j = 0; j < astfem_data[ i ].scan.size(); j++ )
          {
-            for ( int k = 0; k < astfem_data[ i ].radius.size(); k++ )
+            for ( uint k = 0; k < astfem_data[ i ].radius.size(); k++ )
             {
                astfem_data[ i ].scan[ j ].conc[ k ] 
                   += US_Math::box_muller( 0, maxconc * simparams.rnoise / 100 );
@@ -485,23 +485,23 @@ void US_Astfem_Sim::start_simulation( void )
 
    if ( simparams.tinoise != 0.0 )
    {
-      QList< double > tinoise;
+      vector< double > tinoise;
       
       double val = US_Math::box_muller( 0, maxconc * simparams.tinoise / 100 );
       
       tinoise.clear();
       
-      for ( int k = 0; k < astfem_data[ 0 ].radius.size(); k++ )
+      for ( uint k = 0; k < astfem_data[ 0 ].radius.size(); k++ )
       {
          val += US_Math::box_muller( 0, maxconc * simparams.tinoise / 100 );
-         tinoise << val;
+         tinoise .push_back( val );
       }
 
       for ( int i = 0; i < ss_size; i++ )
       {
-         for ( int j = 0; j < astfem_data[ i ].scan.size(); j++ )
+         for ( uint j = 0; j < astfem_data[ i ].scan.size(); j++ )
          {
-            for ( int k = 0; k < astfem_data[ i ].radius.size(); k++ )
+            for ( uint k = 0; k < astfem_data[ i ].radius.size(); k++ )
             {
                astfem_data[ i ].scan[ j ].conc[ k ] += tinoise[ k ];
             }
@@ -529,7 +529,7 @@ void US_Astfem_Sim::start_simulation( void )
    
    total_conc = 0.0;
 
-   for ( int i = 0; i < system.component_vector.size(); i++ )
+   for ( uint i = 0; i < system.component_vector.size(); i++ )
       total_conc += system.component_vector[ i ].concentration;
    
    if (simparams.band_forming)
@@ -539,7 +539,7 @@ void US_Astfem_Sim::start_simulation( void )
 
    if ( ! stopFlag )
    {
-      unsigned int* curve = new unsigned int[ total_scans ];
+      uint* curve = new uint[ total_scans ];
    
       double*  x;
       double** y;
@@ -669,7 +669,7 @@ void US_Astfem_Sim::save_xla( const QString& dirname )
    
    for ( int k = 0; k < step_size; k++ )
    {
-      for ( int i = 0; i < astfem_data[ k ].scan.size(); i++ )
+      for ( uint i = 0; i < astfem_data[ k ].scan.size(); i++ )
       {
          QString s;
          s.sprintf( "/%5.5d.ra1", current_scan );
@@ -768,15 +768,15 @@ void US_Astfem_Sim::save_ultrascan( const QString& filename )
 
    lb_progress->setText( tr("Writing..." ) );
    
-   int new_points = astfem_data[ 0 ].scan[ 0 ].conc.size();
+   uint new_points = astfem_data[ 0 ].scan[ 0 ].conc.size();
    
    for ( int k = 0; k < step_size; k++ )
    {
       // Find the radius from the last scan where the
       // concentration is higher than the threshold (if at all)
-      int i = 0;
+      uint i = 0;
       
-      int last_scan = astfem_data[ k ].scan.size() - 1;
+      uint last_scan = astfem_data[ k ].scan.size() - 1;
 
       while ( i < astfem_data[ 0 ].scan[ 0 ].conc.size() && 
                   astfem_data[ k ].scan[ last_scan ].conc[ i ] < maxc )
@@ -935,13 +935,13 @@ void US_Astfem_Sim::save_ultrascan( const QString& filename )
 
       for ( int i = 0; i < 8; i++ )
       {
-         for ( int k = 0; k < simparams.speed_step.size(); k++ )
+         for ( uint k = 0; k < simparams.speed_step.size(); k++ )
          {
-            for ( int j = 0; j < astfem_data[ k ].scan.size(); j++ )
+            for ( uint j = 0; j < astfem_data[ k ].scan.size(); j++ )
             {
                double plateau = 0.0;
 
-               for ( int n = 0; n < system.component_vector.size(); n++ )
+               for ( uint n = 0; n < system.component_vector.size(); n++ )
                {
                   // This is the equation for radial dilution:
                   plateau += system.component_vector[ n ].concentration * 
@@ -981,11 +981,11 @@ void US_Astfem_Sim::save_ultrascan( const QString& filename )
    {
       QDataStream ds2( &f2 );
       
-      for ( int k = 0; k < simparams.speed_step.size(); k++ )
+      for ( uint k = 0; k < simparams.speed_step.size(); k++ )
       {
-         for ( int j = 0; j < astfem_data[ k ].scan.size(); j++ )
+         for ( uint j = 0; j < astfem_data[ k ].scan.size(); j++ )
          {
-            for ( int i = 0; i < new_points; i++ )
+            for ( uint i = 0; i < new_points; i++ )
             {
                ds2 << astfem_data[ k ].scan[ j ].conc[ i ];
             }
@@ -1036,19 +1036,19 @@ void US_Astfem_Sim::calc_over( void )
    lb_progress->setText( progress_text );
 }
 
-void US_Astfem_Sim::update_movie_plot( QList< double >& x, double* c )
+void US_Astfem_Sim::update_movie_plot( vector< double >& x, double* c )
 {
    moviePlot->clear();
    double total_c = 0.0;
    
-   for ( int i = 0; i < system.component_vector.size(); i++ )
+   for ( uint i = 0; i < system.component_vector.size(); i++ )
       total_c += system.component_vector[ i ].concentration;
 
    moviePlot->setAxisScale( QwtPlot::yLeft, 0, total_c * 2.0 );
    
    double* r = new double [ x.size() ];
    
-   for ( int i = 0; i < x.size(); i++ ) r[ i ] = x[ i ]; 
+   for ( uint i = 0; i < x.size(); i++ ) r[ i ] = x[ i ]; 
 
    QwtPlotCurve* curve = 
       new QwtPlotCurve( "Scan Number " + QString::number( curve_count++ ) );
@@ -1069,13 +1069,13 @@ void US_Astfem_Sim::dump_system( void )
    qDebug() << "description" <<system.description;
    qDebug() << "model" << system.model;
    qDebug() << "component vector size" << system.component_vector.size();
-   for ( int i = 0; i < system.component_vector.size(); i++ ) 
+   for ( uint i = 0; i < system.component_vector.size(); i++ ) 
    {
       qDebug() << "component vector " << i;
       dump_simComponent( system.component_vector[ i ] );
    }
    qDebug() << "association vector size" << system.assoc_vector.size();
-   for ( int i = 0; i < system.assoc_vector.size(); i++ )
+   for ( uint i = 0; i < system.assoc_vector.size(); i++ )
    {
       qDebug() << "Association vector " << i;
       dump_association( system.assoc_vector[ i ] );
@@ -1097,7 +1097,7 @@ void US_Astfem_Sim::dump_simComponent( struct SimulationComponent& sc )
    qDebug() << "show_keq" << sc.show_keq;
    qDebug() << "show_koff" << sc.show_koff;
    qDebug() << "show_stoich" << sc.show_stoich;
-   qDebug() << "QList show_component" << sc.show_component;
+//   qDebug() << "QList show_component" << sc.show_component;
    qDebug() << "shape" << sc.shape;
    qDebug() << "name" << sc.name;
    qDebug() << "mfem_initial:";
@@ -1107,9 +1107,9 @@ void US_Astfem_Sim::dump_simComponent( struct SimulationComponent& sc )
 void US_Astfem_Sim::dump_mfem_initial( struct mfem_initial& mfem )
 {
    qDebug() << "radius list size " << mfem.radius.size();
-   qDebug() << "radius list" << mfem.radius;
+//   qDebug() << "radius list" << mfem.radius;
    qDebug() << "concentration list size " << mfem.concentration.size();
-   qDebug() << "concentration list" << mfem.concentration;
+//   qDebug() << "concentration list" << mfem.concentration;
 }
 
 void US_Astfem_Sim::dump_association( struct Association& as )
@@ -1124,20 +1124,20 @@ void US_Astfem_Sim::dump_association( struct Association& as )
    qDebug() << "stoichiometry2" << as.stoichiometry2;
    qDebug() << "stoichiometry3" << as.stoichiometry3;
    qDebug() << "comp list size " << as.comp.size();
-   qDebug() << "comp list " << as.comp;
+//   qDebug() << "comp list " << as.comp;
    qDebug() << "stoich list size " << as.stoich.size();
-   qDebug() << "stoich list " << as.stoich;
+//   qDebug() << "stoich list " << as.stoich;
    qDebug() << "react list size " << as.react.size();
-   qDebug() << "react list " << as.react;
+//   qDebug() << "react list " << as.react;
 }
 
 void US_Astfem_Sim::dump_simparms( void )
 {
    qDebug() << "simparams";
    qDebug() << "mesh_radius list size " << simparams.mesh_radius.size();
-   qDebug() << "mesh_radius list " << simparams.mesh_radius;;
+//   qDebug() << "mesh_radius list " << simparams.mesh_radius;;
    qDebug() << "speed profile list size " << simparams.speed_step.size();
-   for ( int i = 0; i < simparams.speed_step.size(); i++ ) dump_ss( simparams.speed_step[ i ] );
+   for ( uint i = 0; i < simparams.speed_step.size(); i++ ) dump_ss( simparams.speed_step[ i ] );
    qDebug() << "simpoints " << simparams.simpoints;
    qDebug() << "mesh " << simparams.mesh;
    qDebug() << "moving_grid " << simparams.moving_grid;
@@ -1169,7 +1169,7 @@ void US_Astfem_Sim::dump_ss( struct SpeedProfile& sp )
 void US_Astfem_Sim::dump_astfem_data( void )
 {
    qDebug() << "astfem_data---- list size " << astfem_data.size();
-   for ( int j = 0; j < astfem_data.size(); j++ ) 
+   for ( uint j = 0; j < astfem_data.size(); j++ ) 
    {
       qDebug() << "id " << astfem_data[ j ].id;
       qDebug() << "cell " << astfem_data[ j ].cell;
@@ -1188,7 +1188,7 @@ void US_Astfem_Sim::dump_astfem_data( void )
       qDebug() << "radius list size " << astfem_data[ j ].radius.size();
       //qDebug() << "radius list " << astfem_data[ j ].radius;;
       qDebug() << "scan list size " << astfem_data[ j ].scan.size();
-      for ( int i = 0; i < astfem_data[ j ].scan.size(); i++ ) 
+      for ( uint i = 0; i < astfem_data[ j ].scan.size(); i++ ) 
          dump_mfem_scan( astfem_data[ j ].scan [ i ] );
    }
 }

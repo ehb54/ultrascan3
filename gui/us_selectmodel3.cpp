@@ -71,13 +71,13 @@ US_SelectModel3::US_SelectModel3(
    buttons->addWidget( pb_help );
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
 
-   QPushButton* pb_ok = us_pushbutton( tr( "OK" ) );
-   buttons->addWidget( pb_ok );
-   connect( pb_ok, SIGNAL( clicked() ), SLOT( ok() ) );
-
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
    buttons->addWidget( pb_cancel );
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
+
+   QPushButton* pb_ok = us_pushbutton( tr( "OK" ) );
+   buttons->addWidget( pb_ok );
+   connect( pb_ok, SIGNAL( clicked() ), SLOT( ok() ) );
 
    main->addLayout( buttons, row++, 0, 1, 2 );
 }

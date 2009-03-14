@@ -25,8 +25,8 @@ US_ModelEditor::US_ModelEditor(
    c0_file   = "";
    
    // Convenience
-   struct SimulationComponent*          sc  = &model.component_vector[ component ]; 
-   QList< struct SimulationComponent >* scl = &model.component_vector; 
+   struct SimulationComponent*           sc  = &model.component_vector[ component ]; 
+   vector< struct SimulationComponent >* scl = &model.component_vector; 
    
    int row    = 0;
 
@@ -44,7 +44,7 @@ US_ModelEditor::US_ModelEditor(
    cmb_component1 = us_comboBox();
    cmb_component1->setMaxVisibleItems( 5 );
    
-   for ( int i = 0; i < scl->size(); i++ )
+   for ( uint i = 0; i < scl->size(); i++ )
       cmb_component1->addItem( ( *scl )[ i ].name );
 
    cmb_component1->setCurrentIndex( 0 );
@@ -163,7 +163,7 @@ US_ModelEditor::US_ModelEditor(
    cmb_component2->setEnabled( false );
    cmb_component2->setMaximumHeight( (int)( cmb_component1->height() * 1.7 ) );
    
-   for ( int i = 0; i < sc->show_component.size(); i++ )
+   for ( uint i = 0; i < sc->show_component.size(); i++ )
       cmb_component2->addItem(  (*scl)[ sc->show_component[ i ] ].name );
    
    //main->addWidget( cmb_component2, row++, 2, 1, 2 );
@@ -303,7 +303,7 @@ void US_ModelEditor::update_component( void )
 
    // Convenience 
    struct SimulationComponent*          sc  = &model.component_vector[ component ]; 
-   QList< struct SimulationComponent >* scl = &model.component_vector; 
+   vector< struct SimulationComponent >* scl = &model.component_vector; 
    
    le_sed        = us_lineedit( QString::number( sc->s         , 'e', 4 ) );
    le_diff       = us_lineedit( QString::number( sc->D         , 'e', 4 ) );
@@ -322,7 +322,7 @@ void US_ModelEditor::update_component( void )
 
    cmb_component2->clear();
 
-   for ( int i = 0; i < sc->show_component.size(); i++ )
+   for ( uint i = 0; i < sc->show_component.size(); i++ )
       cmb_component2->addItem( (*scl) [ sc->show_component[ i ] ].name );
 
    if ( sc->show_conc )
@@ -361,11 +361,11 @@ void US_ModelEditor::update_component( void )
    }
    
    // Convenience
-   QList<struct Association>* assoc = &model.assoc_vector;
+   vector<struct Association>* assoc = &model.assoc_vector;
 
    if ( sc->show_keq )
    {
-      for ( int i = 0; i < assoc->size(); i++ )
+      for ( uint i = 0; i < assoc->size(); i++ )
       { // only check the dissociating species
          if ( (*assoc)[ i ].component2 == component
          ||   (*assoc)[ i ].component3 == component )
@@ -633,8 +633,8 @@ void US_ModelEditor::load_c0( void )
 
             if ( val1 > 0.0 ) // ignore radius pairs that aren't positive
             {
-               sc->c0.radius        << val1;
-               sc->c0.concentration << val2;
+               sc->c0.radius        .push_back( val1 );
+               sc->c0.concentration .push_back( val2 );
             }
          }
 
@@ -674,9 +674,9 @@ void US_ModelEditor::load_model()
          cmb_component1->disconnect();
          cmb_component1->clear();  
          
-         QList< struct SimulationComponent >* scl = &model.component_vector;
+         vector< struct SimulationComponent >* scl = &model.component_vector;
 
-         for ( int i = 0; i< (*scl).size(); i++)
+         for ( uint i = 0; i< (*scl).size(); i++)
          {
             cmb_component1->addItem( ( *scl )[ i ].name );
          }
@@ -877,11 +877,11 @@ void US_ModelEditor::update_keq( const QString& text )
 {
    if ( text == "" ) return;
 
-   QList< struct Association >* av = &model.assoc_vector;
+   vector< struct Association >* av = &model.assoc_vector;
 
    // Check to see if the current component is a dissociation component
       
-   for ( int i = 0; i < (*av).size(); i++ )
+   for ( uint i = 0; i < (*av).size(); i++ )
    {
       struct Association* as = &model.assoc_vector[ i ];
       
@@ -903,10 +903,10 @@ void US_ModelEditor::update_koff( const QString& text )
 {
    if ( text == "" ) return;
 
-   QList< struct Association >* av = &model.assoc_vector;
+   vector< struct Association >* av = &model.assoc_vector;
 
    // Check to see if the current component is a dissociation component
-   for ( int i = 0; i < (*av).size(); i++ )
+   for ( uint i = 0; i < (*av).size(); i++ )
    {
       struct Association* as = &model.assoc_vector[ i ];
       
@@ -935,10 +935,10 @@ bool US_ModelEditor::verify_model( void )
 
    QString str;
 
-   QList< struct Association >*         av = &model.assoc_vector;
-   QList< struct SimulationComponent >* cv = &model.component_vector;
+   vector< struct Association >*         av = &model.assoc_vector;
+   vector< struct SimulationComponent >* cv = &model.component_vector;
    
-   for ( int i=0; i < (*av).size(); i++ )
+   for ( uint i=0; i < (*av).size(); i++ )
    {
       struct Association* as = &model.assoc_vector[ i ];
 

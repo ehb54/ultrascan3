@@ -3,6 +3,8 @@
 #define US_ASTFEM_RSA_H
 
 #include <QtCore>
+#include <vector>
+using namespace std;
 
 #include "us_extern.h"
 #include "us_astfem_math.h"
@@ -20,7 +22,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
       US_Astfem_RSA( struct ModelSystem&, struct SimulationParameters&, 
             QObject* = 0 );
    
-      int  calculate           ( QList< struct mfem_data >&  );
+      int  calculate           ( vector< struct mfem_data >&  );
 
       void setTimeCorrection   ( bool flag ){ time_correction = flag; }; 
       void setTimeInterpolation( bool flag ){ use_time        = flag; };
@@ -29,7 +31,7 @@ class US_EXTERN US_Astfem_RSA : public QObject
       
 
    signals:
-      void new_scan         ( QList< double >&, double* );
+      void new_scan         ( vector< double >&, double* );
       void new_time         ( double                    );
       void current_component( int                       );
       void current_speed    ( unsigned int              );
@@ -55,10 +57,10 @@ class US_EXTERN US_Astfem_RSA : public QObject
       
       struct AstFemParameters af_params;
 
-      QList< double >               x;    //<! Radii of grid points; x[0...N-1] 
-      QList< struct ReactionGroup > rg;
-      struct ModelSystem&           system;
-      struct SimulationParameters&  simparams;
+      vector< double >               x;    //<! Radii of grid points; x[0...N-1] 
+      vector< struct ReactionGroup > rg;
+      struct ModelSystem&            system;
+      struct SimulationParameters&   simparams;
 
       // Functions
       void   update_assocv  ( void );
@@ -68,9 +70,9 @@ class US_EXTERN US_Astfem_RSA : public QObject
       void   initialize_conc( uint, struct mfem_initial&, bool );
 
       int    calculate_ni   ( double, double, mfem_initial&, mfem_data&, bool );
-      void   mesh_gen       ( QList< double >&, uint );
-      void   mesh_gen_s_pos ( const QList< double >& );
-      void   mesh_gen_s_neg ( const QList< double >& );
+      void   mesh_gen       ( vector< double >&, uint );
+      void   mesh_gen_s_pos ( const vector< double >& );
+      void   mesh_gen_s_neg ( const vector< double >& );
       void   mesh_gen_RefL  ( int, int );
       
       void   ComputeCoefMatrixFixedMesh( double, double, double**, double** );
@@ -86,13 +88,13 @@ class US_EXTERN US_Astfem_RSA : public QObject
              
       int    calculate_ra2    ( double, double, mfem_initial*, mfem_data&, bool );         
 
-      void   GlobalStiff      ( QList< double >&, double**, double**,
+      void   GlobalStiff      ( vector< double >&, double**, double**,
                                 double, double );
 
 
 #ifdef NEVER
       void GlobalStiff_ellam(vector <double> *, double **, double **, double, double);
-      void adjust_grid( uint /*old speed*/, uint /*new speed*/, QList <double> * /*radial grid*/);
+      void adjust_grid( uint /*old speed*/, uint /*new speed*/, vector <double> * /*radial grid*/);
 #endif
 };
 

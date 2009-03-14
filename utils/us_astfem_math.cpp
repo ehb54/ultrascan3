@@ -3,13 +3,13 @@
 #include "us_math.h"
 
 void US_AstfemMath::interpolate_C0( struct mfem_initial& C0, double* C1, 
-      QList< double >& x )
+      vector< double >& x )
 {
    uint ja = 0;
    
-   for ( int j = 0; j < x.size(); j++ )
+   for ( uint j = 0; j < x.size(); j++ )
    {
-      int    i;
+      uint   i;
       double xs = x[ j ];
       
       for ( i = ja; i < C0.radius.size(); i++ )
@@ -41,11 +41,11 @@ void US_AstfemMath::interpolate_C0( struct mfem_initial& C0, double* C1,
 void US_AstfemMath::interpolate_C0( struct mfem_initial& C0, 
                                     struct mfem_initial& C1 ) 
 {
-   int ja = 0;
+   uint ja = 0;
 
-   for ( int j = 0; j < C1.radius.size(); j++ )
+   for ( uint j = 0; j < C1.radius.size(); j++ )
    {
-      int    i;
+      uint   i;
       double xs = C1.radius[ j ];
       
       for ( i = ja; i < C0.radius.size(); i++ )
@@ -93,41 +93,41 @@ void US_AstfemMath::clear_2d( uint val1, double** matrix )
    delete [] matrix;
 }
 
-double US_AstfemMath::minval( const QList< double >& value )
+double US_AstfemMath::minval( const vector< double >& value )
 {
    double minimum = 1.0e300;
    
-   for ( int i = 0; i < value.size(); i++ )
+   for ( uint i = 0; i < value.size(); i++ )
       minimum = min( minimum, value[ i ] );
 
    return minimum;
 }
 
-double US_AstfemMath::minval( const QList< struct SimulationComponent >& value )
+double US_AstfemMath::minval( const vector< struct SimulationComponent >& value )
 {
    double minimum = 1.0e300;
    
-   for ( int i = 0; i < value.size(); i++ )
+   for ( uint i = 0; i < value.size(); i++ )
       minimum = min( minimum, value[ i ].s );
    
    return minimum;
 }
 
-double US_AstfemMath::maxval( const QList< double >& value )
+double US_AstfemMath::maxval( const vector< double >& value )
 {
    double maximum = -1.0e300;
    
-   for ( int i = 0; i <value.size(); i++ )
+   for ( uint i = 0; i <value.size(); i++ )
       maximum = max( maximum, value[ i ]);
   
    return maximum;
 }
 
-double US_AstfemMath::maxval( const QList< struct SimulationComponent >& value )
+double US_AstfemMath::maxval( const vector< struct SimulationComponent >& value )
 {
    double maximum = -1.0e300;
 
-   for ( int i = 0; i < value.size(); i++ )
+   for ( uint i = 0; i < value.size(); i++ )
       maximum = max( maximum, value[ i ].s );
    
    return maximum;
@@ -381,9 +381,9 @@ int US_AstfemMath::interpolate( struct mfem_data& expdata,
    
    // Fill tmp_data.radius with radius positions from the simdata array:
 
-   for ( int i = 0; i < simdata.radius.size(); i++ )
+   for ( uint i = 0; i < simdata.radius.size(); i++ )
    {
-      tmp_data.radius << simdata.radius[ i ];
+      tmp_data.radius.push_back( simdata.radius[ i ] );
    }
 
    // Iterate through all experimental data scans and find the first time point
@@ -394,7 +394,7 @@ int US_AstfemMath::interpolate( struct mfem_data& expdata,
    if ( use_time )
    {
 //qDebug() << "Marker I2.1";
-      for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
+      for ( uint expscan = 0; expscan < expdata.scan.size(); expscan++ )
       {
          while ( simdata.scan[ simscan ].time < expdata.scan[ expscan ].time )
          {
@@ -421,7 +421,7 @@ int US_AstfemMath::interpolate( struct mfem_data& expdata,
          // Check to see if the time is equal or larger:
          if ( simdata.scan[ simscan ].time == expdata.scan[ expscan ].time )
          { // they are the same, so take this scan and push it onto the tmp_data array.
-            tmp_data.scan << simdata.scan[ simscan ];
+            tmp_data.scan.push_back( simdata.scan[ simscan ] );
          }
          else // interpolation is needed
          {
@@ -430,14 +430,14 @@ int US_AstfemMath::interpolate( struct mfem_data& expdata,
             tmp_scan.conc.clear();
             
             // interpolate the concentration points:
-            for ( int i = 0; i < simdata.radius.size(); i++ )
+            for ( uint i = 0; i < simdata.radius.size(); i++ )
             {
                a = ( simdata.scan[ simscan     ].conc[ i ] - 
                      simdata.scan[ simscan - 1 ].conc[ i ] )
                / ( simdata.scan[ simscan ].time - simdata.scan[ simscan - 1 ].time );
 
                b = simdata.scan[ simscan].conc[ i ] - a * simdata.scan[ simscan ].time;
-               tmp_scan.conc << a * expdata.scan[ expscan ].time + b;
+               tmp_scan.conc.push_back( a * expdata.scan[ expscan ].time + b );
             }
 
             // interpolate the omega_square_t integral data:
@@ -448,14 +448,14 @@ int US_AstfemMath::interpolate( struct mfem_data& expdata,
             b = simdata.scan[ simscan ].omega_s_t - a * simdata.scan[ simscan ].time;
             
             expdata.scan[ expscan ].omega_s_t = a * expdata.scan[ expscan ].time + b;
-            tmp_data.scan << tmp_scan;
+            tmp_data.scan.push_back( tmp_scan );
          }
       }
    }
    else // Use omega^2t integral for interpolation
    {
 //qDebug() << "Marker I2.2";
-      for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
+      for ( uint expscan = 0; expscan < expdata.scan.size(); expscan++ )
       {
          while ( simdata.scan[ simscan ].omega_s_t < expdata.scan[ expscan ].omega_s_t )
          {
@@ -480,7 +480,7 @@ int US_AstfemMath::interpolate( struct mfem_data& expdata,
          // Check to see if the time is equal or larger:
          if ( simdata.scan[ simscan ].omega_s_t == expdata.scan[ expscan ].omega_s_t )
          { // They are the same, so take this scan and push it onto the tmp_data array.
-            tmp_data.scan << simdata.scan[ simscan ];
+            tmp_data.scan.push_back( simdata.scan[ simscan ] );
          }
          else // Interpolation is needed
          {
@@ -489,14 +489,14 @@ int US_AstfemMath::interpolate( struct mfem_data& expdata,
             tmp_scan.conc.clear();
 
             // Interpolate the concentration points:
-            for ( int i = 0; i < simdata.radius.size(); i++ )
+            for ( uint i = 0; i < simdata.radius.size(); i++ )
             {
                a = ( simdata.scan[ simscan ].conc[ i ] - simdata.scan[ simscan - 1 ].conc[ i ] )
                / ( simdata.scan[ simscan ].omega_s_t - simdata.scan[ simscan - 1 ].omega_s_t );
 
                b = simdata.scan[ simscan ].conc[ i ] - a * simdata.scan[ simscan ].omega_s_t;
                
-               tmp_scan.conc << a * expdata.scan[ expscan ].omega_s_t + b;
+               tmp_scan.conc.push_back( a * expdata.scan[ expscan ].omega_s_t + b );
             }
 
             // Interpolate the omega_square_t integral data:
@@ -506,16 +506,16 @@ int US_AstfemMath::interpolate( struct mfem_data& expdata,
             b = simdata.scan[ simscan ].time - a * simdata.scan[ simscan ].omega_s_t;
             
             expdata.scan[ expscan ].time = a * expdata.scan[ expscan ].omega_s_t + b;
-            tmp_data.scan << tmp_scan;
+            tmp_data.scan.push_back( tmp_scan );
          }
       }
    }
 
 //qDebug() << "Marker I3";
    // Interpolate all radial points from each scan in tmp_data onto expdata
-   for ( int expscan = 0; expscan < expdata.scan.size(); expscan++ )
+   for ( uint expscan = 0; expscan < expdata.scan.size(); expscan++ )
    {
-      int j = 0;
+      uint j = 0;
       if ( j == 0 && tmp_data.radius[ 0 ] > expdata.radius[ 0 ] )
       {
          qDebug() << "Radius comparison: " << tmp_data.radius[ 0 ] 
@@ -538,7 +538,7 @@ int US_AstfemMath::interpolate( struct mfem_data& expdata,
       }
 
 //qDebug() << "Marker I4";
-      for ( int i = 0; i < expdata.radius.size(); i++ )
+      for ( uint i = 0; i < expdata.radius.size(); i++ )
       {
          while ( tmp_data.radius[ j ] < expdata.radius[ i ] )
          {
@@ -594,31 +594,31 @@ void US_AstfemMath::QuadSolver( double* ai, double* bi, double* ci, double* di,
 // i=n-1; r(i)=a(i)*xs(i-1)+b(i)*xs(i)+c(i)*xs(i+1);
 // i=n;  r(i)=a(i)*xs(i-1)+b(i)*xs(i);
 
-   QList< double > ca;
-   QList< double > cb;
-   QList< double > cc;
-   QList< double > cd;
+   vector< double > ca; ca.resize( N );
+   vector< double > cb; cb.resize( N );
+   vector< double > cc; cc.resize( N );
+   vector< double > cd; cd.resize( N );
    
-   ca.clear();
+   ca.clear(); 
    cb.clear();
    cc.clear();
    cd.clear();
 
    for ( uint i = 0; i < N; i++ )
    {
-      ca << ai[ i ];
-      cb << bi[ i ];
-      cc << ci[ i ];
-      cd << di[ i ];
+      ca.push_back( ai[ i ] );
+      cb.push_back( bi[ i ] );
+      cc.push_back( ci[ i ] );
+      cd.push_back( di[ i ] );
    }
 
    for ( uint i = 1; i <= N - 2; i++ )
    {
       double tmp = ca[ i ] / cb[ i - 1 ];
       
-      cb[ i ] = cb[ i ] -cc[ i - 1] * tmp;
-      cc[ i ] = cc[ i ] -cd[ i - 1] * tmp;
-      cr[ i ] = cr[ i ] -cr[ i - 1] * tmp;
+      cb[ i ] = cb[ i ] -cc [ i - 1] * tmp;
+      cc[ i ] = cc[ i ] -cd [ i - 1] * tmp;
+      cr[ i ] = cr[ i ] -cr [ i - 1] * tmp;
    }
    
    uint   i   = N - 1;
@@ -645,7 +645,7 @@ void US_AstfemMath::QuadSolver( double* ai, double* bi, double* ci, double* di,
 // old version: perform integration on supp(test function) separately 
 // on left Q and right T
 
-void US_AstfemMath::IntQT1( QList< double > vx, double D, double sw2, 
+void US_AstfemMath::IntQT1( vector< double > vx, double D, double sw2, 
                             double** Stif, double dt )
 {
    // element to define basis functions
@@ -653,7 +653,7 @@ void US_AstfemMath::IntQT1( QList< double > vx, double D, double sw2,
    unsigned int npts, i, k;
    double x_gauss, y_gauss, dval;
    double hh, slope, xn1, phiC, phiCx;
-   QList< double > Lx, Ly, Rx, Ry, Qx, Qy, Tx, Ty;
+   vector< double > Lx, Ly, Rx, Ry, Qx, Qy, Tx, Ty;
    double *phiL, *phiLx, *phiLy, *phiR, *phiRx, *phiRy;
    double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
    Lx.clear();
@@ -796,14 +796,14 @@ void US_AstfemMath::IntQT1( QList< double > vx, double D, double sw2,
    clear_2d(4, StifR);
 }
 
-void US_AstfemMath::IntQTm( QList< double > vx, double D, double sw2, 
+void US_AstfemMath::IntQTm( vector< double > vx, double D, double sw2, 
                             double** Stif, double dt )
 {
    // element to define basis functions
    //
    unsigned int npts, i, k;
    double x_gauss, y_gauss, dval;
-   QList< double > Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
+   vector< double > Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
    double *phiR, *phiRx, *phiRy;
    double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
    double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
@@ -988,14 +988,14 @@ void US_AstfemMath::IntQTm( QList< double > vx, double D, double sw2,
 }
 
 
-void US_AstfemMath::IntQTn2( QList< double > vx, double D, double sw2, 
+void US_AstfemMath::IntQTn2( vector< double > vx, double D, double sw2, 
                                     double** Stif, double dt )
 {
    // element to define basis functions
    //
    unsigned int npts, i, k;
    double x_gauss, y_gauss, dval;
-   QList< double > Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
+   vector< double > Lx, Ly, Cx, Cy, Rx, Ry, Qx, Qy, Tx, Ty;
    double *phiR, *phiRx, *phiRy;
    double **StifL=NULL, **StifR=NULL, **Lam=NULL, DJac;
    double *phiL, *phiLx, *phiLy, *phiCx, *phiCy, *phiC;
@@ -1175,14 +1175,14 @@ void US_AstfemMath::IntQTn2( QList< double > vx, double D, double sw2,
    clear_2d(4, StifR);
 }
 
-void US_AstfemMath::IntQTn1( QList< double > vx, double D, double sw2, 
+void US_AstfemMath::IntQTn1( vector< double > vx, double D, double sw2, 
                              double** Stif, double dt )
 {
    // element to define basis functions
    //
    unsigned int npts, i, k;
    double x_gauss, y_gauss, dval;
-   QList< double > Lx, Ly, Tx, Ty;
+   vector< double > Lx, Ly, Tx, Ty;
    double **StifR=NULL, **Lam=NULL, DJac;
    double *phiL, *phiLx, *phiLy;
    phiL = new double [4];
@@ -1450,7 +1450,7 @@ void US_AstfemMath::DefineFkp( uint npts, double** Lam )
 
 // AreaT: area of a triangle (v1, v2, v3)
 
-double US_AstfemMath::AreaT( QList< double >& xv, QList< double >& yv )
+double US_AstfemMath::AreaT( vector< double >& xv, vector< double >& yv )
 {
    return ( 0.5 * ( ( xv[ 1 ] - xv[ 0 ] ) * ( yv[ 2 ] - yv[ 0 ] )
                   - ( xv[ 2 ] - xv[ 0 ] ) * ( yv[ 1 ] - yv[ 0 ] ) ) );
@@ -1503,13 +1503,13 @@ void US_AstfemMath::BasisQS( double xi, double et, double* phi,
 // phi, phi_x, phi_t at a given (xs,ts) point
 // the triangular is assumed to be (x1,y1), (x2, y2), (x3, y3)
 
-void US_AstfemMath::BasisTR( QList< double > vx, QList< double > vy, double xs,
+void US_AstfemMath::BasisTR( vector< double > vx, vector< double > vy, double xs,
               double ys, double* phi, double* phix, double* phiy )
 {
    // find (xi,et) corresponding to (xs, ts)
    
    unsigned int i;
-   QList< double > tempv1, tempv2;
+   vector< double > tempv1, tempv2;
    tempv1.clear();
    tempv2.clear();
    tempv1.push_back(xs);
@@ -1561,7 +1561,7 @@ void US_AstfemMath::BasisTR( QList< double > vx, QList< double > vy, double xs,
    delete [] phi2;
 }
 
-void US_AstfemMath::BasisQR( QList< double > vx, double xs, double ts, double* phi, 
+void US_AstfemMath::BasisQR( vector< double > vx, double xs, double ts, double* phi, 
               double* phix, double* phiy, double dt )
 {
    unsigned int i;

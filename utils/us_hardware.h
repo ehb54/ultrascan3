@@ -3,6 +3,8 @@
 #define US_HARDWARE_H
 
 #include <QtCore>
+#include <vector>
+using namespace std;
 
 #include "us_extern.h"
 #include "us_util.h"
@@ -48,11 +50,11 @@ class US_EXTERN US_Hardware
    public:
       //! \brief Read rotor information into a structure
       //! \param rotor_list Reference of structure data to place data
-      static bool readRotorInfo      ( QList< struct rotorInfo       >& );
+      static bool readRotorInfo      ( vector< struct rotorInfo       >& );
       
       //! \brief Read centerpiect information into a structure
       //! \param cp_list Reference of structure to place data 
-      static bool readCenterpieceInfo( QList< struct centerpieceInfo >& );
+      static bool readCenterpieceInfo( vector< struct centerpieceInfo >& );
 };
 
 #endif

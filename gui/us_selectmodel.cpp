@@ -94,7 +94,7 @@ void US_SelectModel::select_model( int item )
       return;
    }
 
-   switch( modelSelected )
+   switch ( modelSelected )
    {
       case Ideal1Comp:  // 1-Component, Ideal
          QMessageBox::information( this, models[ Ideal1Comp ],

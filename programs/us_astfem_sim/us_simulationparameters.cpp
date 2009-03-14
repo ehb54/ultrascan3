@@ -43,7 +43,7 @@ US_SimulationParameters::US_SimulationParameters(
 
    struct SpeedProfile* sp = &simparams.speed_step[ 0 ];
 
-   for ( int i = 0; i < simparams.speed_step.size(); i++ ) 
+   for ( uint i = 0; i < simparams.speed_step.size(); i++ ) 
    {
       struct SpeedProfile* spi = &simparams.speed_step[ i ];
 
@@ -365,9 +365,9 @@ void US_SimulationParameters::backup_parms( void )
    struct SpeedProfile sp;
    simparams_backup.speed_step.clear();
 
-   for ( int i = 0; i < simparams.speed_step.size(); i ++ )
+   for ( uint i = 0; i < simparams.speed_step.size(); i ++ )
    {
-      simparams_backup.speed_step << sp;
+      simparams_backup.speed_step .push_back( sp );
 
       struct SpeedProfile* ss   = &simparams       .speed_step[ i ];
       struct SpeedProfile* ssbu = &simparams_backup.speed_step[ i ];
@@ -396,9 +396,9 @@ void US_SimulationParameters::revert( void )
    struct SpeedProfile sp;
    simparams.speed_step.clear();
 
-   for ( int i = 0; i < simparams_backup.speed_step.size(); i ++ )
+   for ( uint i = 0; i < simparams_backup.speed_step.size(); i ++ )
    {
-      simparams.speed_step << sp;
+      simparams.speed_step .push_back( sp );
 
       struct SpeedProfile* ss   = &simparams       .speed_step[ i ];
       struct SpeedProfile* ssbu = &simparams_backup.speed_step[ i ];
@@ -431,7 +431,7 @@ void US_SimulationParameters::update_speeds( double value )
    
    for ( int i = old_size; i < (int) value; i++ )
    {
-      simparams.speed_step << sp;
+      simparams.speed_step .push_back( sp );
 
       // Only initialize the new elements, leave the previously assigned
       // elements alone.  New elements simply get copies of the last old
@@ -460,7 +460,7 @@ void US_SimulationParameters::update_combobox( void )
    cmb_speeds->disconnect();
    cmb_speeds->clear();
    
-   for ( int i = 0; i < simparams.speed_step.size(); i++ )
+   for ( uint i = 0; i < simparams.speed_step.size(); i++ )
    {
       struct SpeedProfile* spi = &simparams.speed_step[ i ];
 
@@ -518,22 +518,22 @@ void US_SimulationParameters::select_speed_profile( int index )
 
 void US_SimulationParameters::check_delay( void )
 {
-   QList< int    > hours;
-   QList< double > minutes;
-   QList< int    > speed;
+   vector< int    > hours;
+   vector< double > minutes;
+   vector< int    > speed;
    
    speed.clear();
-   speed << 0;
+   speed .push_back( 0 );
 
    int steps = simparams.speed_step.size();
 
    for ( int i = 0; i < steps; i++ )
    {
-      hours   << 0;
-      minutes << 0.0;
+      hours  .push_back( 0 );
+      minutes.push_back( 0.0 );
 
       struct SpeedProfile* ss = &simparams.speed_step[ i ];
-      speed << ss->rotorspeed;
+      speed .push_back( ss->rotorspeed );
       
       int lower_limit = 1 + 
          ( abs( (speed[ i + 1 ] - speed[ i ] ) ) + 1 ) / ss->acceleration;
@@ -812,13 +812,13 @@ void US_SimulationParameters::update_mesh( int mesh )
                {
                   if ( value > simparams.meniscus )
                   {
-                     simparams.mesh_radius << (double)simparams.meniscus;
+                     simparams.mesh_radius .push_back( simparams.meniscus );
                   }
 
                   first = false;
                }
 
-               simparams.mesh_radius << value;
+               simparams.mesh_radius .push_back( value );
             }
          }
 
@@ -828,7 +828,7 @@ void US_SimulationParameters::update_mesh( int mesh )
 
          if ( simparams.mesh_radius[ mesh_size - 1 ] < simparams.bottom )
          {
-            simparams.mesh_radius << simparams.bottom;
+            simparams.mesh_radius .push_back( simparams.bottom );
          }
 
          

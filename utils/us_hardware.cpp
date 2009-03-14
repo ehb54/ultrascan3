@@ -1,7 +1,7 @@
 //! \file us_hardware.cpp
 #include "us_hardware.h"
 
-bool US_Hardware::readCenterpieceInfo( QList< struct centerpieceInfo >& cp_list )
+bool US_Hardware::readCenterpieceInfo( vector< struct centerpieceInfo >& cp_list )
 {
    QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
 
@@ -35,7 +35,7 @@ bool US_Hardware::readCenterpieceInfo( QList< struct centerpieceInfo >& cp_list 
             cp.angle      = US_Util::getToken( s, " " ).toFloat();
             cp.width      = US_Util::getToken( s, " " ).toFloat();
             
-            cp_list << cp;
+            cp_list .push_back( cp );
          }
       }
 
@@ -46,7 +46,7 @@ bool US_Hardware::readCenterpieceInfo( QList< struct centerpieceInfo >& cp_list 
    return false;
 }
 
-bool US_Hardware::readRotorInfo( QList< struct rotorInfo >& rotor_list )
+bool US_Hardware::readRotorInfo( vector< struct rotorInfo >& rotor_list )
 {
    QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
    
@@ -74,7 +74,7 @@ bool US_Hardware::readRotorInfo( QList< struct rotorInfo >& rotor_list )
             for ( int i = 0; i < 5; i++ )
                rotor.coefficient[ i ] =  US_Util::getToken( s, " " ).toFloat();
 
-            rotor_list << rotor;
+            rotor_list .push_back( rotor );
          }
       }
 

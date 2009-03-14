@@ -2,36 +2,39 @@
 #ifndef US_ASTFEM_MATH_H
 #define US_ASTFEM_MATH_H
 
+#include <vector>
+using namespace std;
+
 #include "us_femglobal.h"
 #include "us_extern.h"
 
 //! \brief Reaction Group
 struct ReactionGroup
 {
-   QList< unsigned int > association;
-   QList< unsigned int > GroupComponent;
+   vector< uint > association;
+   vector< uint > GroupComponent;
 };
 
 //! \brief Component Role
 struct ComponentRole
 {
-   unsigned int          comp_index; // index of this component
-   QList< unsigned int > assoc;      // assoc vector index where this component occurs
-   QList< int >          react;      // role of component in each association, 
+   uint           comp_index; // index of this component
+   vector< uint > assoc;      // assoc vector index where this component occurs
+   vector< int  > react;      // role of component in each association, 
                                      // = 1: if as reactant; =-1, if as product
-   QList< unsigned int > st;         // stoichiometry of each component in 
+   vector< uint > st;         // stoichiometry of each component in 
                                      // each assoc., index is linked to assoc.
 };
 
 //! \brief Parameters for finite element solution
 struct AstFemParameters
 {
-   unsigned int simpoints;
+   uint             simpoints;
 
-   QList< double > s;       //!< sedimentation coefficient
-   QList< double > D;       //!< Diffusion coefficient
-   QList< double > kext;    //!< extinctiom coefficient
-   QList< struct ComponentRole > role; //!< role of each component in various reactions
+   vector< double > s;       //!< sedimentation coefficient
+   vector< double > D;       //!< Diffusion coefficient
+   vector< double > kext;    //!< extinctiom coefficient
+   vector< struct ComponentRole > role; //!< role of each component in various reactions
 
    double pathlength;       //!< path length of centerpiece;
    double dt;               //!< time step size;
@@ -44,10 +47,10 @@ struct AstFemParameters
    uint   rg_index;         //!< reaction group index
 
    //! Local index of each GroupComponent involved in a reaction group
-   QList< unsigned int > local_index;  
+   vector< uint > local_index;  
    
    //! All association rules in a reaction group, with comp expressed in local index
-   QList< struct Association > association; 
+   vector< struct Association > association; 
 };
 
 //! \brief A group of static mathematical functions to support finite element 
@@ -59,15 +62,15 @@ class US_EXTERN US_AstfemMath
    static void interpolate_C0( struct mfem_initial&, struct mfem_initial& );
 
    //! Interpolate starting concentration vector mfem_initial onto C0
-   static void interpolate_C0( struct mfem_initial&, double*, QList< double >& );
+   static void interpolate_C0( struct mfem_initial&, double*, vector< double >& );
 
    static void initialize_2d( uint, uint, double*** );
    static void clear_2d     ( uint, double** );
 
-   static double maxval( const QList< double >& );
-   static double minval( const QList< double >& );
-   static double maxval( const QList< struct SimulationComponent >& );
-   static double minval( const QList< struct SimulationComponent >& );
+   static double maxval( const vector< double >& );
+   static double minval( const vector< double >& );
+   static double maxval( const vector< struct SimulationComponent >& );
+   static double minval( const vector< struct SimulationComponent >& );
    
    static void   initialize_3d( uint, uint, uint, double**** );
    static void   clear_3d     ( uint, uint, double*** );
@@ -84,20 +87,20 @@ class US_EXTERN US_AstfemMath
    static void   QuadSolver   ( double*, double*, double*, double*, 
                                 double*, double*, uint);
    
-   static void   IntQT1       ( QList< double >, double, double, double**, double );
-   static void   IntQTm       ( QList< double >, double, double, double**, double );
-   static void   IntQTn2      ( QList< double >, double, double, double**, double );
-   static void   IntQTn1      ( QList< double >, double, double, double**, double );
+   static void   IntQT1       ( vector< double >, double, double, double**, double );
+   static void   IntQTm       ( vector< double >, double, double, double**, double );
+   static void   IntQTn2      ( vector< double >, double, double, double**, double );
+   static void   IntQTn1      ( vector< double >, double, double, double**, double );
    static void   DefineFkp    ( uint, double** );
-   static double AreaT        ( QList< double >&, QList< double >& );
+   static double AreaT        ( vector< double >&, vector< double >& );
 
    static void   BasisTS      ( double, double, double*, double*, double*);
    static void   BasisQS      ( double, double, double*, double*, double*);
    
-   static void   BasisTR      ( QList< double >, QList< double >, double, double, 
+   static void   BasisTR      ( vector< double >, vector< double >, double, double, 
                                double*, double*, double* );
    
-   static void   BasisQR      ( QList< double >, double, double, double*, double*, 
+   static void   BasisQR      ( vector< double >, double, double, double*, double*, 
                                 double*, double );
 
    static double Integrand    ( double, double, double, double, double, double, 
