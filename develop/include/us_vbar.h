@@ -25,9 +25,12 @@ struct US_VbarData
 /*! It contains vbar, vbar20 and e280. */
 struct peptideDetails
 {
-	float vbar;					/*!< A float variable. */
-	float vbar20;				/*!< A float variable. */
-	float e280;					/*!< A float variable. */
+	int pepID;						/*!< An integer variable for tblPeptide entry. */
+	float vbar;						/*!< A float variable. */
+	float vbar20;					/*!< A float variable. */
+	float e280;						/*!< A float variable. */
+	QString sequence;				/*!< QString Peptide Sequence. */
+	QString description;			/*!< A string variable for peptide description. */
 };
 
 

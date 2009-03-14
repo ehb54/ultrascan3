@@ -1291,7 +1291,7 @@ int Data_Control_W::load_data(const QString &fileName)
 			Density[i][j] = hydro_inf.Density[i][j];
 			Viscosity[i][j] = hydro_inf.Viscosity[i][j];
 
-			cout << "Cell " << i << ", channel " << j << ": Density=" << Density[i][j] << ", viscosity=" << Viscosity[i][j] << endl;
+			//cout << "Cell " << i << ", channel " << j << ": Density=" << Density[i][j] << ", viscosity=" << Viscosity[i][j] << endl;
 			for(k=0; k<3; k++)
 			{
 				Vbar[i][j][k] = hydro_inf.Vbar[i][j][k];

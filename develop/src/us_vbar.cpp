@@ -33,7 +33,7 @@ bool US_Vbar::read_file(const QString &filename)
 
 // reads a protein sequence database file from the Expasy Swiss Protein Database server
 
-	QString str, newstr, test, sequence;
+	QString str, newstr, test;
 	if (!filename.isEmpty())
 	{
 		QFile f(filename);
@@ -53,7 +53,7 @@ bool US_Vbar::read_file(const QString &filename)
 			}
 		}
 		newstr = ts.readLine();
-		description = newstr.stripWhiteSpace();
+		vbar_info.Description = newstr.stripWhiteSpace();
 		while (test != "SQ")
 		{
 			ts >> test;
@@ -68,11 +68,11 @@ bool US_Vbar::read_file(const QString &filename)
 			}
 		}
 		ts.readLine();
-		sequence = "";
-		test = sequence.copy();
+		vbar_info.Sequence = "";
+		test = vbar_info.Sequence.copy();
 		while (test != "//")
 		{
-			sequence.append(test);
+			vbar_info.Sequence.append(test);
 			test = ts.readLine();
 			if (f.atEnd() && test.stripWhiteSpace() != "//")
 			{
@@ -95,8 +95,7 @@ bool US_Vbar::read_file(const QString &filename)
 			vbar_info.e280 = test.toFloat();
 		}
 		f.close();
-		vbar_info.Sequence = sequence;
-		calc_vbar(&pep, &sequence, &temperature);
+		calc_vbar(&pep, &vbar_info.Sequence, &temperature);
 		if (vbar_info.e280 > 0.0)
 		{
 			pep.e280 = vbar_info.e280;
@@ -114,9 +113,9 @@ bool US_Vbar::read_file(const QString &filename)
 		{
 			vbar_info.vbar = pep.vbar20;
 		}
+		vbar_info.PepID = 0; // this file is from disk, no database ID
 	}
-	res_file.truncate(filename.find("."));
-	res_file.append(".res");
+	res_file = USglobal->config_list.result_dir + "/0.pep_res";
 	sequence_loaded = true;
 	result_output(res_file);
 	emit valueChanged(pep.vbar, pep.vbar20);
@@ -126,7 +125,7 @@ bool US_Vbar::read_file(const QString &filename)
 
 bool US_Vbar::result_output(const QString &res_file)
 {
-	QString str, newstr, tempstr;
+	QString str, tempstr;
 	QFile result(res_file);
 	if (result.open(IO_WriteOnly))
 	{
@@ -134,7 +133,7 @@ bool US_Vbar::result_output(const QString &res_file)
 		res_io << "***************************************************\n";
 		res_io << tr("*            Peptide Analysis Results             *\n");
 		res_io << "***************************************************\n\n\n";
-		res_io << tr("Report for:         ") << newstr << "\n\n";
+		res_io << tr("Report for:         ") << vbar_info.Description << "\n\n";
 		res_io << tr("Number of Residues: ") << pep.residues << " AA\n";
 		res_io << tr("Molecular Weight:   ") << pep.mw << tr(" Dalton\n");
 		res_io << tr("V-bar at 20 ºC:     ") << pep.vbar20 << " ccm/g\n";
@@ -153,7 +152,8 @@ bool US_Vbar::result_output(const QString &res_file)
 		res_io << tr("Proline:\t") << pep.p << tr("\tSerine:\t\t") << pep.s << "\n";
 		res_io << tr("Threonine:\t") << pep.t << tr("\tTryptophan:\t") << pep.w << "\n";
 		res_io << tr("Tyrosine:\t") << pep.y << tr("\tValine:\t\t") << pep.v << "\n";
-		res_io << tr("Unknown:\t") << pep.x;
+		res_io << tr("Unknown:\t") << pep.x << "\n\n";
+		res_io << tr("Sequence:\n") << vbar_info.Sequence << endl;
 		result.close();
 		return true;
 	}
@@ -233,7 +233,7 @@ void US_Vbar::select_vbar(int item)
 
 bool US_Vbar::retrieve_vbar(int PepID)
 {
-	QString str, sequence;
+	QString str;
 	if(PepID<=0)
 	{
 		str.sprintf(tr("Attention:\nInvalid table ID for the requested peptide: %d"), PepID);
@@ -248,11 +248,12 @@ bool US_Vbar::retrieve_vbar(int PepID)
 		if(query.next())
 		{
 			vbar_info.Description = query.value(0).toString();
-			sequence = query.value(1).toString();
+			vbar_info.Sequence = query.value(1).toString();
 			vbar_info.InvID = query.value(2).toInt();
+			vbar_info.PepID = PepID;
 			vbar_info.vbar = (float) query.value(3).toDouble();
 			vbar_info.e280 = (float) query.value(4).toDouble();
-			calc_vbar(&pep, &sequence, &temperature);
+			calc_vbar(&pep, &vbar_info.Sequence, &temperature);
 			if (vbar_info.e280 > 0.0)
 			{
 				pep.e280 = vbar_info.e280;
@@ -273,7 +274,7 @@ bool US_Vbar::retrieve_vbar(int PepID)
 		}
 	}
 	filename = QString::number(vbar_info.PepID);
-	res_file = USglobal->config_list.result_dir +"/" + filename + ".pep_res";
+	res_file = USglobal->config_list.result_dir + "/" + filename + ".pep_res";
 	result_output(res_file);
 	return true;
 }
@@ -281,7 +282,7 @@ bool US_Vbar::retrieve_vbar(int PepID)
 struct peptideDetails US_Vbar::export_vbar(int id)
 {
 	peptideDetails Vbar;
-	QString str, sequence;
+	QString str;
 	str.sprintf("SELECT Description, Sequence, InvestigatorID, vbar, e280 FROM tblPeptide WHERE PepID = %d", id);
 	QSqlQuery query(str);
 	if(query.isActive())
@@ -289,11 +290,12 @@ struct peptideDetails US_Vbar::export_vbar(int id)
 		if(query.next())
 		{
 			vbar_info.Description = query.value(0).toString();
-			sequence = query.value(1).toString();
+			vbar_info.Sequence = query.value(1).toString();
 			vbar_info.InvID = query.value(2).toInt();
 			vbar_info.vbar = (float) query.value(3).toDouble();
 			vbar_info.e280 = (float) query.value(4).toDouble();
-			calc_vbar(&pep, &sequence, &temperature);
+			vbar_info.PepID = id;
+			calc_vbar(&pep, &vbar_info.Sequence, &temperature);
 			if (vbar_info.e280 > 0.0)
 			{
 				pep.e280 = vbar_info.e280;
@@ -316,7 +318,9 @@ struct peptideDetails US_Vbar::export_vbar(int id)
 			Vbar.vbar = pep.vbar;
 			Vbar.vbar20 = pep.vbar20;
 			Vbar.e280 = pep.e280;
-
+			Vbar.sequence = vbar_info.Sequence;
+			Vbar.pepID = vbar_info.PepID;
+			Vbar.description = vbar_info.Description;
 			emit valueChanged(pep.vbar, pep.vbar20);
 			emit e280Changed(pep.e280);
 			QString res_file = USglobal->config_list.result_dir +"/" + QString::number(id) + ".pep_res";
@@ -341,7 +345,7 @@ struct peptideDetails US_Vbar::export_vbar(int id)
 struct peptideDetails US_Vbar::export_DNA_vbar(int id)
 {
 	peptideDetails Vbar;
-	QString str, sequence;
+	QString str;
 	str.sprintf("SELECT Description, Sequence, InvestigatorID, vbar, e280, e260 FROM tblDNA WHERE DNAID = %d", id);
 	QSqlQuery query(str);
 	if(query.isActive())
@@ -349,10 +353,11 @@ struct peptideDetails US_Vbar::export_DNA_vbar(int id)
 		if(query.next())
 		{
 			vbar_info.Description = query.value(0).toString();
-			sequence = query.value(1).toString();
+			vbar_info.Sequence = query.value(1).toString();
 			vbar_info.InvID = query.value(2).toInt();
 			vbar_info.vbar = (float) query.value(3).toDouble();
 			vbar_info.e280 = (float) query.value(4).toDouble();
+			vbar_info.PepID = id;
 			//cout << "in us_vbar: vbar:" << vbar_info.vbar << endl;
 			if (!(vbar_info.vbar > 0.0))
 			{
@@ -361,6 +366,9 @@ struct peptideDetails US_Vbar::export_DNA_vbar(int id)
 			Vbar.vbar = vbar_info.vbar; // we don't know how much DNA vbar varies with temperature, so we use the same for 20 and Temperature
 			Vbar.vbar20 = vbar_info.vbar; 
 			Vbar.e280 = vbar_info.e280;
+			Vbar.sequence = vbar_info.Sequence;
+			Vbar.pepID = id;
+			Vbar.description = vbar_info.Description;
 			emit valueChanged(Vbar.vbar, Vbar.vbar20);
 			emit e280Changed(Vbar.e280);
 		}

@@ -84,7 +84,8 @@ void US_Report_Veloc::write_file(Data_Control_W *data_control)
 			{
 				if (data_control->run_inf.scans[i][j] != 0)
 				{
-					ts << "   <li><a href=\"#cell" << (i+1) << (j+1) << "\">Cell " << (i+1) << ", Wavelength " << (j+1) << "</a>\n";
+					ts << "   <li><a href=\"#cell" << (i+1) << (j+1) << "\">Cell " << (i+1) << ", Wavelength " << (j+1) <<
+					" (" << data_control->run_inf.cell_id[i] << ")</a>\n";
 				}
 			}
 		}
@@ -154,7 +155,6 @@ void US_Report_Veloc::write_file(Data_Control_W *data_control)
 			ts << "   <li><a href=" << data_control->run_inf.run_id << ".extinction.dat" << tr(">ASCII Data for Extinction Profile Plot</a>\n");
 		}
 		ts << "   </ul>\n<p><b>Combined Distributions:</b><p><ul>\n";
-
 
 		ts << tr("<b>van Holde - Weischet Analysis:</b>\n<p>\n<ul>\n");
 		ps << tr("<p><hr><p><b>van Holde - Weischet Analysis:</b>\n<p>\n<ul>\n");
@@ -413,8 +413,19 @@ void US_Report_Veloc::write_file(Data_Control_W *data_control)
 				{
 					ts << "\n<a name=\"cell" << (i+1) << (j+1) << "\">\n";
 					str1.sprintf(tr("<b>Cell %d (%d nm): ") + data_control->run_inf.cell_id[i] + "</b>\n<p>\n", i+1, data_control->run_inf.wavelength[i][j]);
+					ts << str1;
+					str1.sprintf(data_control->USglobal->config_list.result_dir + "/%d.pep_res", data_control->run_inf.peptide_serialnumber[i][j][0]);
+					testfile.setName(str1);
+					if (testfile.exists())
+					{
+						str2.sprintf(htmlDir + "/%d-pep.dat", data_control->run_inf.peptide_serialnumber[i][j][0]);
+					 	copy(str1, str2);
+						str1.sprintf("%d-pep.dat", data_control->run_inf.peptide_serialnumber[i][j][0]);
+						ts << "      <p><ul><li><a href=" << str1 << tr(">Peptide Sequence Information</a> (Database ID: " + QString::number(data_control->run_inf.peptide_serialnumber[i][j][0]) + ")</ul><p>\n");
+					}
+					
 					flag = false;
-					ts << str1 << tr("<ul>\n   <b>Experimental Data:</b>\n   <p>\n   <ul>\n");
+					ts << tr("<ul>\n   <b>Experimental Data:</b>\n   <p>\n   <ul>\n");
 					ps << "<p><hr><p>" << str1 << tr("\n<b>Experimental Data:</b>\n<p>\n");
 // Raw Data Plot Image:
 					str1.sprintf(htmlDir + "/raw_%d%d.png", i+1, j+1);
