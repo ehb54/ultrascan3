@@ -10,6 +10,7 @@ just pass value.
 */
 US_Buffer::US_Buffer(int InvID, QObject *parent, const char *name) : US_DB_T(parent, name)
 {
+	USglobal = new US_Config();
 	buf_init();
 	Buffer.investigatorID = InvID;
 	read_template_file();
@@ -17,6 +18,7 @@ US_Buffer::US_Buffer(int InvID, QObject *parent, const char *name) : US_DB_T(par
 
 US_Buffer::US_Buffer(QObject *parent, const char *name) : US_DB_T(parent, name)
 {
+	USglobal = new US_Config();
 	buf_init();
 	read_template_file();
 }
@@ -36,6 +38,7 @@ void US_Buffer::buf_init()
 /*! destroy the <var>US_Buffer</var>. */
 US_Buffer::~US_Buffer()
 {
+	delete USglobal;
 }
 
 void US_Buffer::setInvestigator(const int investigatorID) // if called without invID in constructor
@@ -135,6 +138,8 @@ struct BufferData US_Buffer::read_buffer(QString filename)
 				Buffer.density = (float)DENS_20W; // assume water
 			}
 			f.close();
+			str = USglobal->config_list.result_dir + "/0.buf_res";
+			result_output(str);
 		}
 		else
 		{
@@ -217,6 +222,8 @@ struct BufferData US_Buffer::export_buffer(int id)
 				Buffer.density = (float)DENS_20W; // assume water
 			}
 		}
+		str = USglobal->config_list.result_dir + "/" + QString::number(id) + ".buf_res";
+		result_output(str);
 	}
 	else
 	{
@@ -315,5 +322,40 @@ void US_Buffer::recalc_viscosity()
 				}
 			}
 		}
+	}
+}
+
+bool US_Buffer::result_output(const QString &res_file)
+{
+	//cout << "running buffer result out put: " << res_file << "\n";
+	QString str;
+	QFile result(res_file);
+	if (result.open(IO_WriteOnly))
+	{
+		QTextStream  res_io(&result);
+		res_io << "**************************************************\n";
+		res_io << tr("*            Buffer Analysis Results             *\n");
+		res_io << "**************************************************\n\n\n";
+		res_io << tr("Report for:         ") << Buffer.description << "\n\n";
+		res_io << tr("Refractive Index:   ") << Buffer.refractive_index << "\n";
+		res_io << tr("Density:            ") << Buffer.density << " g/ccm\n";
+		res_io << tr("Viscosity:          ") << Buffer.viscosity << " cp\n\n";
+		res_io << tr("Components:\n");
+		for (unsigned int i=0; i<Buffer.component.size(); i++)
+		{
+			res_io << Buffer.component[i].name << " (" << Buffer.component[i].partial_concentration << " "
+					<< Buffer.component[i].unit << ")\n";
+		}
+		result.close();
+		return true;
+	}
+	else
+	{
+		str = tr("Attention: UltraScan could not write the buffer data file\n"
+					"to the disk. Please check to make sure the disk is not write protected\n\n."
+					"Non-fatal error - continuing...");
+		cerr << str << endl;
+		emit newMessage(str, 1);
+		return false;
 	}
 }

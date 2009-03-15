@@ -414,6 +414,7 @@ void US_Report_Veloc::write_file(Data_Control_W *data_control)
 					ts << "\n<a name=\"cell" << (i+1) << (j+1) << "\">\n";
 					str1.sprintf(tr("<b>Cell %d (%d nm): ") + data_control->run_inf.cell_id[i] + "</b>\n<p>\n", i+1, data_control->run_inf.wavelength[i][j]);
 					ts << str1;
+					ts << "<ul><b>Hydrodynamic Information:</b><p><ul>\n";
 					str1.sprintf(data_control->USglobal->config_list.result_dir + "/%d.pep_res", data_control->run_inf.peptide_serialnumber[i][j][0]);
 					testfile.setName(str1);
 					if (testfile.exists())
@@ -421,8 +422,20 @@ void US_Report_Veloc::write_file(Data_Control_W *data_control)
 						str2.sprintf(htmlDir + "/%d-pep.dat", data_control->run_inf.peptide_serialnumber[i][j][0]);
 					 	copy(str1, str2);
 						str1.sprintf("%d-pep.dat", data_control->run_inf.peptide_serialnumber[i][j][0]);
-						ts << "      <p><ul><li><a href=" << str1 << tr(">Peptide Sequence Information</a> (Database ID: " + QString::number(data_control->run_inf.peptide_serialnumber[i][j][0]) + ")</ul><p>\n");
+						ts << "      <li><a href=" << str1 << tr(">Peptide Sequence Information</a> (Database ID: "
+								+ QString::number(data_control->run_inf.peptide_serialnumber[i][j][0]) + ")\n");
 					}
+					str1.sprintf(data_control->USglobal->config_list.result_dir + "/%d.buf_res", data_control->run_inf.buffer_serialnumber[i][j]);
+					testfile.setName(str1);
+					if (testfile.exists())
+					{
+						str2.sprintf(htmlDir + "/%d-buf.dat", data_control->run_inf.buffer_serialnumber[i][j]);
+					 	copy(str1, str2);
+						str1.sprintf("%d-buf.dat", data_control->run_inf.buffer_serialnumber[i][j]);
+						ts << "      <li><a href=" << str1 << tr(">Buffer Information</a> (Database ID: "
+								+ QString::number(data_control->run_inf.buffer_serialnumber[i][j]) + ")\n");
+					}
+					ts << "</ul></ul><p>\n";
 					
 					flag = false;
 					ts << tr("<ul>\n   <b>Experimental Data:</b>\n   <p>\n   <ul>\n");

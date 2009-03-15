@@ -50,7 +50,7 @@ class US_EXTERN US_Buffer : public US_DB_T
 		US_Buffer(int temp_invID, QObject *parent=0, const char *name="us_buffer_db");
 		US_Buffer(QObject *parent=0, const char *name="us_buffer_db");
 		~US_Buffer();
-
+		US_Config *USglobal;
 		struct BufferData Buffer;		/*!< A BufferData structure for the currently active Buffer Data. */
 
 #ifdef WIN32
@@ -72,6 +72,7 @@ class US_EXTERN US_Buffer : public US_DB_T
 		void setInvestigator(const int);
 		void recalc_density();
 		void recalc_viscosity();
+		bool result_output(const QString &);
 
 	signals:
 /*!
