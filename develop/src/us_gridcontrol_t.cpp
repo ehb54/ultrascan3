@@ -1192,7 +1192,8 @@ void US_GridControl_T::write_experiment()
             ds << SA2D_Params.s_resolution;
             ds << SA2D_Params.uniform_grid_repetition;
         }
-        if(analysis_type == "2DSA_MW")
+        if(analysis_type == "2DSA_MW" ||
+	   analysis_type == "2DSA_MW_RA")
         {
             ds << SA2D_Params.monte_carlo;
             ds << SA2D_Params.ff0_min;
