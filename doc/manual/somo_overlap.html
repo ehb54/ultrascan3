@@ -25,25 +25,28 @@ SOMO - Overlap Reduction Options Module:</h2>
 </center>
 <P>
 In this Module, you set the rules for removing the overlaps between the beads
-generated in the first stage of the bead model building. This operation is
+generated in the first stage of the bead model building process. This operation is
 <b>mandatory</b> for a correct computation of the hydrodynamic properties of
 the bead model because the hydrodynamic interaction tensor used is valid for
 <b>non-overlapping</b> spheres of different radii (Garcia de la Torre and
 Bloomfield, Q. Rev. Biophys. 14:81-139, 1981; Spotorno et al., Eur. J. Biophys.
 25:373-384, 26:417, 1997).
-<br>This operation is performed in three stages, treating first the <b>Exposed
-side chain beads</b>, then the <b>Exposed main and side chain beads</b>, and
-finally the <b>Buried beads</b>. The reason behind this procedure is to first
-adjust the "surface" of the model, dominated by the exposed side-chains, then
-complete it with the exposed main-chain segments, and finally adjust the buried
-core of the molecule. Although the last operation can be in principle avoided if
+<br>For SOMO-type bead models, this operation is performed in three stages,
+treating first the <b>Exposed side chain beads</b>, then the <b>Exposed main and
+side chain beads</b>, and finally the <b>Buried beads</b>. The reason behind this
+procedure is to first adjust the "surface" of the model, dominated by the exposed
+side-chains, then complete it with the exposed main-chain segments, and finally adjust
+the buried core of the molecule. Although the last operation can be in principle avoided if
 the buried beads are excluded from the hydrodynamic computations, it is safer to
 perform it because some beads initially classified as buried might become exposed
 following overlap removal on the beads initially classified as exposed.
-Common to all three Panels, The <i>Bead Overlap Tolerance</i> field sets the
+Common to all three Panels, the <i>Bead Overlap Tolerance</i> field sets the
 limit (in the model's units) above which the difference between the radii of
 two beads will classify them as overlapping (default: <b>0.001</b>).
-
+<br>In addition, in this Module a fourth panel is present to deal with overlap removal
+for grid-type bead models, <b>Grid beads</b>, in which the beads  are ALL initially classified as
+buried and then subdivided between buried and exposed at the end of the process by the ASAB1
+routine. 
 <p>
 <b>Exposed side chain beads:</b>
 <p>
@@ -51,19 +54,18 @@ two beads will classify them as overlapping (default: <b>0.001</b>).
 <tr>
 <td><img SRC="somo-overlap-0.png" ALT="Side Chain Beads Overlap Reduction Options"></td>
 <td>
-The first checkbox in this panel, <b>Remove Overlaps</b>, dictates if the
-whole procedure is active. It should be disallowed only for testing purposes
-or if the model is <b>not</b> used for hydrodynamic computations (default:
-<b>active</b>).
-<br>The second checkbox, <b>Fuse Beads that overlap by more than:</b>, activates
+The first checkbox in this panel, <b>Fuse Beads that overlap by more than:</b>, activates
 a "fusion" process between beads that overlap by more than the threshold set in
 the corresponding field (default: <b>70%</b>). This avoids the generation of very
 small beads that would result from a simple reduction of their radii. A new bead
-is created with a volume equal to the sum of the two original beads, and
-positioned in the cog between the two beads. The fusion process is a hierarchical
+is created with a volume equal to the sum of the two original beads, and positioned
+in the center of gravity (cog) between the two beads. The fusion process is a hierarchical
 procedure in which the couple with the biggest overlap exceeding the threshold is
 treated first, and the ensemble is re-screened after each fusion (default: <b>
 active</b>).
+<br>The second checkbox, <b>Remove Overlaps</b>, dictates if the whole procedure is active.
+It should be disallowed only for testing purposes or if the model is <b>not</b> used for
+hydrodynamic computations (default: <b>active</b>). 
 <br>Two alternative methods can then be selected to remove the remaining overlaps
 not exceeding the fusion threshold: <b>Remove Overlaps synchronously</b> and
 <b>Remove Overlaps hierarchically (larger -> smaller)</b>. An <i>Overlap
@@ -107,16 +109,24 @@ overlaps are eliminated by reducing the beads' radii (default: <b>active</b>).
 <td><img SRC="somo-overlap-1.png" ALT="Main Chain Beads Overlap Reduction Options"></td>
 <td>
 Overlaps involving <b>main-main</b> and <b>main-side</b> chain beads are now
-treated. As in the previous Panel, the first checkbox in this panel, <b>Remove
-Overlaps</b>, dictates if the whole procedure is active. It should be disallowed
-only for testing purposes or if the model is <b>not</b> used for hydrodynamic
-computations (default: <b>active</b>).
-<br>The second checkbox, <b>Fuse Beads that overlap by more than:</b>, again
-activates a "fusion" process between beads that overlap by more than the
-threshold set in the corresponding field (default: <b>70%</b>). A detailed
-explanation of this procedure can be found in the <b>Exposed side chain beads</b>
-panel (default: <b>active</b>).
-<br>Again, two alternative methods can then be selected to remove the remaining
+treated. As in the previous Panel, the first checkbox in this panel, <b>Fuse Beads
+that overlap by more than:</b>, again activates a "fusion" process between beads
+that overlap by more than the threshold set in the corresponding field (default: <b>70%</b>).
+ A detailed explanation of this procedure can be found in the <b>Exposed side chain beads</b>
+panel (default: <b>active</b>). If a fusion events takes places between a main- and a
+side-chain bead, the program steps back to the <b>Exposed Side chain beads</b> routine
+and re-screens this class for overlaps, removing them if necessary, then it restarts the
+second step.
+<br>The second checkbox, <b>Remove Overlaps</b>, dictates if the whole procedure is active.
+ It should be disallowed only for testing purposes or if the model is <b>not</b> used for
+hydrodynamic computations (default: <b>active</b>). 
+</td>
+</tr>
+</table>
+<table BORDER CELLSPACING=5 CELLPADDING=5>
+<tr>
+<td>
+Again, two alternative methods can then be selected to remove the remaining
 overlaps not exceeding the fusion threshold: <b>Remove Overlaps synchronously</b>
 and <b>Remove Overlaps hierarchically (larger -> smaller)</b>. The <i>Overlap
 Reduction Step Size (in %)</i> field controls the finesse in this stage, by
@@ -141,15 +151,40 @@ in the <b>Exposed Side Chain Beads</b> panel (default: <b>hierarchical</b>).
 <td><img SRC="somo-overlap-2.png" ALT="Buried Beads Overlap Reduction Options"></td>
 <td>
 Finally, overlaps between all the beads initially classified as buried are
-removed in this stage. As in the previous two Panels, the first checkbox in
-this panel, <b>Remove Overlaps</b>, dictates if the whole procedure is active.
+removed in this stage. As in the previous two Panels, there is a <b>Fuse Beads
+that overlap by more than:</b> checkbox, whose use is however NOT recommended. Again,
+the second checkbox, <b>Remove Overlaps</b>, dictates if the whole procedure is active.
 It should be disallowed only for testing purposes, or if the model is <b>not</b>
-used for hydrodynamics (default: <b>active</b>).
+used for hydrodynamic computations (default: <b>active</b>).
 <br>Only the two alternative options, <b>Remove Overlaps synchronously</b> and
 <b>Remove Overlaps hierarchically (larger -> smaller)</b> are present in this
-stage. They are ciontrolled by the <i>Overlaps Reduction Step Size (in %)</i>
+stage. They are controlled by the <i>Overlap Reduction Step Size (in %)</i>
 field, and have been fully described in the <b>Exposed side chain beads</b>
 Panel (default: <b>hierarchical</b>).
+
+</td>
+</tr>
+</table>
+
+<p>
+<b>Grid beads:</b>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5>
+<tr>
+<td><img SRC="somo-overlap-3.png" ALT="Grid Beads Overlap Reduction Options"></td>
+<td>
+This panel controls the overlap removal procedure for models build with the Grid (AtoB)
+routine, which is still under development. In this procedure, all the beads are initially
+classified as buried, and the overlaps between them are removed in this stage.
+<br>As in the previous three Panels, there is a <b>Fuse Beads that overlap by more than:</b> checkbox, whose use has not yet been fully tested, and thus is presently NOT recommended. Again,
+the second checkbox, <b>Remove Overlaps</b>, dictates if the whole procedure is active.
+It should be disallowed only for testing purposes, or if the model is <b>not</b>
+used for hydrodynamic computations (default: <b>active</b>).
+<br>Only the two alternative options, <b>Remove Overlaps synchronously</b> and
+<b>Remove Overlaps hierarchically (larger -> smaller)</b> are present in this
+stage. They are controlled by the <i>Overlap Reduction Step Size (in %)</i>
+field, and have been fully described in the <b>Exposed side chain beads</b>
+Panel (default: <b>synchronous</b>).
 
 </td>
 </tr>
