@@ -7320,8 +7320,8 @@ void US_Hydrodyn::reset()
 	
    asa.probe_radius = (float) 1.4;
    asa.probe_recheck_radius = (float) 1.4;
-   asa.threshold = 10.0;
-   asa.threshold_percent = 30.0;
+   asa.threshold = 20.0;
+   asa.threshold_percent = 50.0;
    asa.calculation = true;
    asa.recheck_beads = true;
    asa.method = true; // by default use ASAB1
