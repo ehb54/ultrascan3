@@ -2054,7 +2054,7 @@ void US_FeMatch_W::load_model(const QString &fileName)
 			analysis_type = "sa2d";
 			str = ts.readLine();
 		}
-		else if (str == "SA2D_MW" || str == "2DSA_MW" || str == "2DSA_RA_MW")
+		else if (str == "SA2D_MW" || str == "2DSA_MW" || str == "2DSA_MW_RA")
 		{
 			analysis_type = "sa2d_mw";
 			str = ts.readLine();
@@ -2064,7 +2064,7 @@ void US_FeMatch_W::load_model(const QString &fileName)
 			analysis_type = "ga";
 			str = ts.readLine();
 		}
-		else if (str == "GA_MW" || str == "GA_RA_MW")
+		else if (str == "GA_MW" || str == "GA_MW_RA")
 		{
 			analysis_type = "ga_mw";
 			str = ts.readLine();
@@ -2093,14 +2093,14 @@ void US_FeMatch_W::load_model(const QString &fileName)
 			monte_carlo_iterations = str.toUInt();
 			str = ts.readLine(); // run name
 		}
-		else if (str == "2DSA_MW_MC" || str == "2DSA_RA_MW_MC")
+		else if (str == "2DSA_MW_MC" || str == "2DSA_MW_RA_MC")
 		{
 			analysis_type = "sa2d_mw_mc";
 			str = ts.readLine(); // number of Monte Carlo iterations
 			monte_carlo_iterations = str.toUInt();
 			str = ts.readLine(); // run name
 		}
-		else if (str == "GA_MW_MC" || str == "GA_RA_MW_MC")
+		else if (str == "GA_MW_MC" || str == "GA_MW_RA_MC")
 		{
 			analysis_type = "ga_mw_mc";
 			str = ts.readLine(); // number of Monte Carlo iterations
