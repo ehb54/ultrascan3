@@ -22,53 +22,53 @@ using namespace std;
 class US_EXTERN US_fe_nnls_t 
 // : public QWidget
 {
-  //	Q_OBJECT
+   //	Q_OBJECT
 	
-	public:
+ public:
 	
-	//		US_fe_nnls_t(QWidget *p = 0, const char *name = 0);
-	US_fe_nnls_t();
-		~US_fe_nnls_t();
-		vector <struct mfem_data> experiment;
-		vector <struct gene> solutions;
-		bool fit_tinoise, fit_rinoise, union_results;
-		struct control_parameters Control_Params;
-		QString email;
-		QString analysis_type;
-		float meniscus_range;
-		bool fit_meniscus, use_iterative;
-		unsigned int meniscus_gridpoints, max_iterations;
-		float regularization;
-		QDateTime startDateTime, endDateTime;
-		void WriteResults(struct mfem_data, Simulation_values, QString, double, unsigned int);
-		void WriteResults(vector<struct mfem_data>, Simulation_values, QString, double, unsigned int);
-		void WriteResults(vector<struct mfem_data>, vector<Solute>, vector<Simulation_values>, QString, double, unsigned int);
-		void WriteResultsSC(vector<struct mfem_data>, vector<Solute>, vector<Simulation_values>, QString, double, unsigned int, int);
-		void BufferResults(vector<struct mfem_data>, Simulation_values, QString, double, unsigned int);
-		void BufferResults(vector<struct mfem_data>, vector<Solute>, vector<Simulation_values>, QString, double, unsigned int);
-		Simulation_values buffer_sv;
-		vector<Simulation_values> buffer_sve;
-		struct ga_data GA_Params;
-		struct sa2d_data SA2D_Params;
-		QString gridopt;
-		vector <QString> constraints_full_text;
-		vector <QString> simulation_parameters_full_text;
-		vector <SimparamsExtra> simparams_extra;
+   //		US_fe_nnls_t(QWidget *p = 0, const char *name = 0);
+   US_fe_nnls_t();
+   ~US_fe_nnls_t();
+   vector <struct mfem_data> experiment;
+   vector <struct gene> solutions;
+   bool fit_tinoise, fit_rinoise, union_results;
+   struct control_parameters Control_Params;
+   QString email;
+   QString analysis_type;
+   float meniscus_range;
+   bool fit_meniscus, use_iterative;
+   unsigned int meniscus_gridpoints, max_iterations;
+   float regularization;
+   QDateTime startDateTime, endDateTime;
+   void WriteResults(struct mfem_data, Simulation_values, QString, double, unsigned int);
+   void WriteResults(vector<struct mfem_data>, Simulation_values, QString, double, unsigned int);
+   void WriteResults(vector<struct mfem_data>, vector<Solute>, vector<Simulation_values>, QString, double, unsigned int);
+   void WriteResultsSC(vector<struct mfem_data>, vector<Solute>, vector<Simulation_values>, QString, double, unsigned int, int);
+   void BufferResults(vector<struct mfem_data>, Simulation_values, QString, double, unsigned int);
+   void BufferResults(vector<struct mfem_data>, vector<Solute>, vector<Simulation_values>, QString, double, unsigned int);
+   Simulation_values buffer_sv;
+   vector<Simulation_values> buffer_sve;
+   struct ga_data GA_Params;
+   struct sa2d_data SA2D_Params;
+   QString gridopt;
+   vector <QString> constraints_full_text;
+   vector <QString> simulation_parameters_full_text;
+   vector <SimparamsExtra> simparams_extra;
 
-	public:
-		Simulation_values calc_residuals(vector <struct mfem_data>, vector <Solute>, double, int);
-		Simulation_values calc_residuals(struct mfem_data, vector <Solute>);
-		Simulation_values regularize(Simulation_values, double);
-		int init_run(const QString &, const QString &, const QString &);
-		int init_run(const QString &, const QString &);
-		int run();
-		int run(int);
+ public:
+   Simulation_values calc_residuals(vector <struct mfem_data>, vector <Solute>, double, int, unsigned int);
+   Simulation_values calc_residuals(struct mfem_data, vector <Solute>);
+   Simulation_values regularize(Simulation_values, double);
+   int init_run(const QString &, const QString &, const QString &);
+   int init_run(const QString &, const QString &);
+   int run();
+   int run(int);
 };
 
 typedef struct _MPI_GA_Work_Msg {
-  int gen; // from worker -1 = final results, from master 0 = keep going, 1 were done!
-  unsigned int size;        // size of migrate file or # of solutes in following solute vector
-  double fitness;           // fitness of the best result
+   int gen; // from worker -1 = final results, from master 0 = keep going, 1 were done!
+   unsigned int size;        // size of migrate file or # of solutes in following solute vector
+   double fitness;           // fitness of the best result
 } MPI_GA_Work_Msg;
 
 extern long getrss(int pid);
