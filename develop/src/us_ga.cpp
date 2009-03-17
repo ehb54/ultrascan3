@@ -2333,7 +2333,7 @@ double fitness_solute(node *n)
 	    sve[e] = us_ga_interacting_calc(use_experiment, solute_vector, 0e0);
 	 }
       } else {
-	 sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1);
+	 sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1, e);
       }
       if(debug_level > 1)
       {
@@ -3387,7 +3387,7 @@ Simulation_values node_to_sv(node *n)
 	    sve[e] = us_ga_interacting_calc(use_experiment, solute_vector, 0e0);
 	 }
       } else {
-	 sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1);
+	 sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1, e);
       }
    } // for e
    if(our_us_fe_nnls_t->experiment.size() > 1)

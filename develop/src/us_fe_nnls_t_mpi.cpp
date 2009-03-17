@@ -181,7 +181,7 @@ Simulation_values US_fe_nnls_t::regularize(Simulation_values org_sv, double use_
    do
    {
       sv.solutes = solutes;
-      sv = calc_residuals(experiment, sv.solutes, use_meniscus, 0);
+      sv = calc_residuals(experiment, sv.solutes, use_meniscus, 0, 0);
       prev_solutes = sv.solutes;
       fitness = sv.variance;
       solutes.clear();
@@ -238,7 +238,7 @@ Simulation_values US_fe_nnls_t::regularize(Simulation_values org_sv, double use_
       }
    }
    sv.solutes = solute_vectors[min_reg_fitness_pos].solutes;
-   sv = calc_residuals(experiment, sv.solutes, use_meniscus, 0);
+   sv = calc_residuals(experiment, sv.solutes, use_meniscus, 0, 0);
    // solutes = solute_vectors[min_reg_fitness_pos].solutes;
    // variance = solute_vectors[min_reg_fitness_pos].fitness;
 #if defined(SLIST)
@@ -588,7 +588,12 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
 			     " solutes %4, rmsd %5, iterations %6\n").
 		  arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
 		  arg(sve[e].solutes.size()).
-		  arg(sqrt(sve[e].variance)).
+		  arg(sqrt(sve[e].variance) / 
+		      ((analysis_type == "2DSA" ||
+			analysis_type == "2DSA_MW" ||
+			analysis_type == "2DSA_RA" ||
+			analysis_type == "2DSA_MW_RA") ? experiment.size() : 1)
+		      ).
 		  arg(iterations).
 		  arg(meniscus + experiment[e].meniscus);
 	    }
@@ -604,14 +609,24 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
 			     " search parameters %4, rmsd %5, iterations %6\n").
 		  arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
 		  arg(sve[e].solutes.size()).
-		  arg(sqrt(sve[e].variance)).
+		  arg(sqrt(sve[e].variance) / 
+		      ((analysis_type == "2DSA" ||
+			analysis_type == "2DSA_MW" ||
+			analysis_type == "2DSA_RA" ||
+			analysis_type == "2DSA_MW_RA") ? experiment.size() : 1)
+		      ).
 		  arg(iterations);
 	    } else {
 	       ts << QString("Experiment %1, cell %2, wavelength %3,"
 			     " solutes %4, rmsd %5, iterations %6\n").
 		  arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
 		  arg(sve[e].solutes.size()).
-		  arg(sqrt(sve[e].variance)).
+		  arg(sqrt(sve[e].variance) /
+		      ((analysis_type == "2DSA" ||
+			analysis_type == "2DSA_MW" ||
+			analysis_type == "2DSA_RA" ||
+			analysis_type == "2DSA_MW_RA") ? experiment.size() : 1)
+		      ).
 		  arg(iterations);
 	    }			
 	 }
@@ -749,13 +764,24 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment,
 	    if (!e && experiment.size() > 1)
 	    {
 	       ts << QString("Global rmsd %1 meniscus offset %2\n").
-		  arg(sqrt(sv.variance)).
+		  arg(sqrt(sv.variance) / 
+		      ((analysis_type == "2DSA" ||
+			analysis_type == "2DSA_MW" ||
+			analysis_type == "2DSA_RA" ||
+			analysis_type == "2DSA_MW_RA") ? experiment.size() : 1)
+		      ).
 		  arg(meniscus);
 	    }
 	    ts << QString("Experiment %1, cell %2, wavelength %3, meniscus %7,"
 			  " solutes %4, rmsd %5, iterations %6\n").
 	       arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
-	       arg(sv.solutes.size()).arg(sqrt(sv.variances[e])).
+	       arg(sv.solutes.size()).
+	       arg(sqrt(sv.variances[e]) / 
+		   ((analysis_type == "2DSA" ||
+		     analysis_type == "2DSA_MW" ||
+		     analysis_type == "2DSA_RA" ||
+		     analysis_type == "2DSA_MW_RA") ? experiment.size() : 1)
+		   ).
 	       arg(iterations).
 	       arg(meniscus + experiment[e].meniscus);
 	 }
@@ -763,12 +789,24 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment,
 	 {
 	    if (!e && experiment.size() > 1)
 	    {
-	       ts << QString("Global rmsd %1\n").arg(sqrt(sv.variance));
+	       ts << QString("Global rmsd %1\n").
+		  arg(sqrt(sv.variance) / 
+		      ((analysis_type == "2DSA" ||
+			analysis_type == "2DSA_MW" ||
+			analysis_type == "2DSA_RA" ||
+			analysis_type == "2DSA_MW_RA") ? experiment.size() : 1)
+		      );
 	    }
 	    ts << QString("Experiment %1, cell %2, wavelength %3,"
 			  " solutes %4, rmsd %5, iterations %6\n").
 	       arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
-	       arg(sv.solutes.size()).arg(sqrt(sv.variances[e])).
+	       arg(sv.solutes.size()).
+	       arg(sqrt(sv.variances[e]) /
+		   ((analysis_type == "2DSA" ||
+		     analysis_type == "2DSA_MW" ||
+		     analysis_type == "2DSA_RA" ||
+		     analysis_type == "2DSA_MW_RA") ? experiment.size() : 1)
+		   ).
 	       arg(iterations);
 	 }
       }
@@ -2352,10 +2390,10 @@ int US_fe_nnls_t::run(int status)
 		      analysis_type == "GA_MW_RA")
 		  {
 		     for (unsigned int e = 0; e < simparams_extra.size(); e++) {
-			ts << QString("Simulation points exp # %1:  ").arg(e+1) << simparams_extra[e].simpoints << endl;
-			ts << QString("Band volume for exp # %1:    ").arg(e+1) << simparams_extra[e].band_volume << endl;
-			ts << QString("Radial grid for exp # %1:    ").arg(e+1) << simparams_extra[e].radial_grid << endl;
-			ts << QString("Time grid for exp # %1:      ").arg(e+1) << simparams_extra[e].moving_grid << endl;
+			ts << QString("Simulation points exp # %1:   ").arg(e+1) << simparams_extra[e].simpoints << endl;
+			ts << QString("Band volume for exp # %1:     ").arg(e+1) << simparams_extra[e].band_volume << endl;
+			ts << QString("Radial grid for exp # %1:     ").arg(e+1) << simparams_extra[e].radial_grid << endl;
+			ts << QString("Time grid for exp # %1:       ").arg(e+1) << simparams_extra[e].moving_grid << endl;
 		     }
 		  }
 		  ts << "Population (Genes per deme): " << GA_Params.genes << endl;
@@ -2433,11 +2471,11 @@ int US_fe_nnls_t::run(int status)
 	       {
 		  sve[e] = us_ga_interacting_calc(use_experiment, final_use_solutes, 0e0);
 	       } else {
-		  sve[e] = calc_residuals(use_experiment, final_use_solutes, 0e0, 1);
+		  sve[e] = calc_residuals(use_experiment, final_use_solutes, 0e0, 1, e);
 	       }
 	    } // for e
 
-	    //	Simulation_values sv = calc_residuals(experiment, demes_results[best_deme], 0e0, 0);
+	    //	Simulation_values sv = calc_residuals(experiment, demes_results[best_deme], 0e0, 0, 0);
 	    printf("0: best deme is %u size %u fitness %.4g\n", best_deme,
 		   (unsigned int)demes_results[best_deme].size(), best_deme_fitness);
 	    fflush(stdout);
@@ -2508,7 +2546,7 @@ int US_fe_nnls_t::run(int status)
 		  {
 		     sve[e] = us_ga_interacting_calc(use_experiment, final_use_solutes, 0e0);
 		  } else {
-		     sve[e] = calc_residuals(use_experiment, final_use_solutes, 0e0, 1);
+		     sve[e] = calc_residuals(use_experiment, final_use_solutes, 0e0, 1, e);
 		  }
 		  // printf("0: sve exp %u sol %u var %g\n", e, sve[e].solutes.size(), sve[e].variance);
 		  // fflush(stdout);
@@ -3183,7 +3221,7 @@ int US_fe_nnls_t::run(int status)
 			      // printf("iterative union\n");
 			      //	fflush(stdout);
 			      {
-				 Simulation_values sv = calc_residuals(experiment, unions[unions.size()-1].solutes, 0e0, 0);
+				 Simulation_values sv = calc_residuals(experiment, unions[unions.size()-1].solutes, 0e0, 0, 0);
 				 sv = unions[unions.size() - 1];
 				 if (sv.solutes.size() != unions[unions.size()-1].solutes.size())
 				 {
@@ -3651,7 +3689,7 @@ int US_fe_nnls_t::run(int status)
 		  exp_concentrations[use_multi_experiment] = 0.0;
 		  for (j = 0; j < meniscus_results.size(); j++)
 		  {
-		     Simulation_values sv = calc_residuals(experiment, meniscus_results[j].solutes, meniscus_meniscus[j], 0);
+		     Simulation_values sv = calc_residuals(experiment, meniscus_results[j].solutes, meniscus_meniscus[j], 0, 0);
 		     if (sv.solutes.size() != meniscus_results[j].solutes.size())
 		     {
 			printf("!!<fi>final mismatch! writing size %u\n", (unsigned int)sv.solutes.size());
@@ -3668,7 +3706,7 @@ int US_fe_nnls_t::run(int status)
 	       }
 	       else
 	       {
-		  Simulation_values sv = calc_residuals(experiment, unions[unions.size()-1].solutes, 0e0, 0);
+		  Simulation_values sv = calc_residuals(experiment, unions[unions.size()-1].solutes, 0e0, 0, 0);
 		  if (sv.solutes.size() != unions[unions.size()-1].solutes.size())
 		  {
 		     printf("!!final mismatch! writing size %u\n", (unsigned int)sv.solutes.size());
@@ -3788,10 +3826,10 @@ int US_fe_nnls_t::run(int status)
 		      analysis_type == "2DSA_MW_RA")
 		  {
 		     for (unsigned int e = 0; e < simparams_extra.size(); e++) {
-			ts << QString("Simulation points exp # %1:  ").arg(e+1) << simparams_extra[e].simpoints << endl;
-			ts << QString("Band volume for exp # %1:    ").arg(e+1) << simparams_extra[e].band_volume << endl;
-			ts << QString("Radial grid for exp # %1:    ").arg(e+1) << simparams_extra[e].radial_grid << endl;
-			ts << QString("Time grid for exp # %1:      ").arg(e+1) << simparams_extra[e].moving_grid << endl;
+			ts << QString("Simulation points exp # %1:   ").arg(e+1) << simparams_extra[e].simpoints << endl;
+			ts << QString("Band volume for exp # %1:     ").arg(e+1) << simparams_extra[e].band_volume << endl;
+			ts << QString("Radial grid for exp # %1:     ").arg(e+1) << simparams_extra[e].radial_grid << endl;
+			ts << QString("Time grid for exp # %1:       ").arg(e+1) << simparams_extra[e].moving_grid << endl;
 		     }
 		     ts << endl;
 		  }
@@ -3817,7 +3855,7 @@ int US_fe_nnls_t::run(int status)
 		  {
 		     printf("writing %u size %u\n", j, (unsigned int)meniscus_results[j].solutes.size());
 		     fflush(stdout);
-		     Simulation_values sv = calc_residuals(experiment, meniscus_results[j].solutes, meniscus_meniscus[j], 0);
+		     Simulation_values sv = calc_residuals(experiment, meniscus_results[j].solutes, meniscus_meniscus[j], 0, 0);
 		     printf("writing return from calc_resid %u size %u\n", j, (unsigned int)meniscus_results[j].solutes.size());
 		     fflush(stdout);
 		     if (sv.solutes.size() != meniscus_results[j].solutes.size())
@@ -3841,7 +3879,7 @@ int US_fe_nnls_t::run(int status)
 	       {
 		  printf("writing depth %u size %u\n", (unsigned int)unions.size(), (unsigned int)unions[unions.size() - 1].solutes.size());
 		  fflush(stdout);
-		  Simulation_values sv = calc_residuals(experiment, unions[unions.size()-1].solutes, 0e0, 0);
+		  Simulation_values sv = calc_residuals(experiment, unions[unions.size()-1].solutes, 0e0, 0, 0);
 		  if (sv.solutes.size() != unions[unions.size()-1].solutes.size())
 		  {
 		     printf("!!final mismatch! writing size %u\n", (unsigned int)sv.solutes.size());
@@ -4119,7 +4157,7 @@ int US_fe_nnls_t::run(int status)
 #endif
 
 		  // printf("p %d using meniscus %.12g\n", myrank, mpi_work_msg.meniscus_offset);
-		  sv = calc_residuals(experiment, use_solutes, mpi_work_msg.meniscus_offset, 0);
+		  sv = calc_residuals(experiment, use_solutes, mpi_work_msg.meniscus_offset, 0, 0);
 		  x = sv.solutes.size();
 		  MPI_Send(&x, 1, MPI_INT, 0, 3, MPI_COMM_WORLD); // let master know we are ready
 		  MPI_Send(&sv.solutes[0], x * sizeof(Solute), MPI_CHAR, 0, 0, MPI_COMM_WORLD);
@@ -4172,7 +4210,8 @@ extern void clear_data(mfem_data *);
 Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experiment,
 					       vector < Solute > solutes,
 					       double meniscus_offset,
-					       int return_all_solutes)
+					       int return_all_solutes, 
+					       unsigned int exp_pos)
 {
    //	printf("%d: calc_residuals\n", myrank); fflush(stdout);
 #if defined(DEBUG_SCALING)
@@ -4374,7 +4413,7 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 	       use_model_system = model_system_1comp;
 	       use_model_system.component_vector[0].s = solutes[i].s / experiment[e].s20w_correction;
 	       use_model_system.component_vector[0].D = D_tb;
-	       use_simulation_parameters = simulation_parameters_vec[e];
+	       use_simulation_parameters = simulation_parameters_vec[(experiment.size() > 1) ? e : exp_pos];
 	       use_simulation_parameters.meniscus += meniscus_offset;
 	       vector<mfem_data> use_experiment;
 	       use_experiment.push_back(experiment[e]);
@@ -5305,7 +5344,7 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
 		  use_model_system = model_system_1comp;
 		  use_model_system.component_vector[0].s = solutes[i].s / experiment[e].s20w_correction;
 		  use_model_system.component_vector[0].D = D_tb;
-		  use_simulation_parameters = simulation_parameters_vec[e];
+		  use_simulation_parameters = simulation_parameters_vec[(experiment.size() > 1) ? e : exp_pos];
 		  use_simulation_parameters.meniscus += meniscus_offset;
 		  vector<mfem_data> use_experiment;
 		  use_experiment.push_back(experiment[e]);

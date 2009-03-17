@@ -1607,7 +1607,7 @@ double lamm_gsm_f(our_vector *v) {
       vector <struct mfem_data> use_experiment;
       use_experiment.push_back(our_us_fe_nnls_t->experiment[e]);
       //    printf("%d: call calc_residuals\n", this_rank); fflush(stdout);
-      //    Simulation_values sv = our_us_fe_nnls_t->calc_residuals(our_us_fe_nnls_t->experiment, solute_vector, 0e0, 1);
+      //    Simulation_values sv = our_us_fe_nnls_t->calc_residuals(our_us_fe_nnls_t->experiment, solute_vector, 0e0, 1, e);
       if(ga_sc) {
 	 if (solute_vector.size() != s_estimate_solutes) 
 	 {
@@ -1626,7 +1626,7 @@ double lamm_gsm_f(our_vector *v) {
 	    sve[e] = us_ga_interacting_calc(use_experiment, solute_vector, 0e0);
 	 }
       } else {
-	 sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1);
+	 sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1, e);
       }
       if(debug_level > 1) {
 	 printf("%d: exp %d variance %g\n", this_rank, e, sve[e].variance); fflush(stdout);
