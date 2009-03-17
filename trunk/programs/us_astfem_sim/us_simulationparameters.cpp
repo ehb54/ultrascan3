@@ -75,10 +75,11 @@ US_SimulationParameters::US_SimulationParameters(
    QLabel* lb_mins = us_label( tr( "Length of Experiment (Minutes):" ) );
    main->addWidget( lb_mins, row, 0 );
 
-   cnt_duration_mins = us_counter( 2, 0, 59, sp->duration_minutes );
+   cnt_duration_mins = us_counter( 3, 0, 59, sp->duration_minutes );
    cnt_duration_mins->setStep    ( 1 );
    cnt_duration_mins->setIncSteps( QwtCounter::Button1,   1 );
    cnt_duration_mins->setIncSteps( QwtCounter::Button2,  10 );
+   cnt_duration_mins->setIncSteps( QwtCounter::Button3,  10 );
    
    main->addWidget( cnt_duration_mins, row++, 1 );
    connect( cnt_duration_mins, SIGNAL( valueChanged        ( double ) ), 
@@ -102,10 +103,11 @@ US_SimulationParameters::US_SimulationParameters(
    QLabel* lb_delay_mins = us_label( tr( "Time Delay for Scans (Minutes):" ) );
    main->addWidget( lb_delay_mins, row, 0 );
 
-   cnt_delay_mins = us_counter( 2, 0, 59, sp->delay_minutes );
+   cnt_delay_mins = us_counter( 3, 0, 59, sp->delay_minutes );
    cnt_delay_mins->setStep    ( 1 );
    cnt_delay_mins->setIncSteps( QwtCounter::Button1,   1 );
    cnt_delay_mins->setIncSteps( QwtCounter::Button2,  10 );
+   cnt_delay_mins->setIncSteps( QwtCounter::Button3,  10 );
 
    main->addWidget( cnt_delay_mins, row++, 1 );
    connect( cnt_delay_mins, SIGNAL( valueChanged     ( double ) ), 
@@ -143,10 +145,11 @@ US_SimulationParameters::US_SimulationParameters(
    QLabel* lb_accelProfile = us_label( tr( "Acceleration Profile (rpm/sec):" ) );
    main->addWidget( lb_accelProfile, row, 0 );
 
-   cnt_acceleration = us_counter( 2, 5, 400 );
+   cnt_acceleration = us_counter( 3, 5, 400 );
    cnt_acceleration->setStep    ( 5 );
    cnt_acceleration->setIncSteps( QwtCounter::Button1,   1 );
    cnt_acceleration->setIncSteps( QwtCounter::Button2,  10 );
+   cnt_acceleration->setIncSteps( QwtCounter::Button3,  10 );
 
    cnt_acceleration->setValue( sp->acceleration );
    
@@ -173,9 +176,11 @@ US_SimulationParameters::US_SimulationParameters(
    main->addWidget( lb_speedProfile, row, 0 );
 
    current_speed_step = 0;
-   cnt_selected_speed = us_counter( 1, 1, simparams.speed_step.size(), 0 );
+   cnt_selected_speed = us_counter( 3, 1, simparams.speed_step.size(), 0 );
    cnt_selected_speed->setStep    ( 1 );
    cnt_selected_speed->setIncSteps( QwtCounter::Button1, 1 );
+   cnt_selected_speed->setIncSteps( QwtCounter::Button2, 1 );
+   cnt_selected_speed->setIncSteps( QwtCounter::Button3, 1 );
 
    main->addWidget( cnt_selected_speed, row++, 1 );
    connect( cnt_selected_speed, SIGNAL( valueChanged        ( double ) ), 

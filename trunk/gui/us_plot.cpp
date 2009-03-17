@@ -1854,3 +1854,30 @@ void US_PlotGridConfig::apply( void )
    plot->replot();
 }
 
+US_PlotPicker::US_PlotPicker( QwtPlot* plot ) 
+  : QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft, plot->canvas() )
+{
+   setSelectionFlags( QwtPicker::PointSelection );
+   setTrackerMode   ( QwtPicker::AlwaysOn );
+   setRubberBand    ( QwtPicker::CrossRubberBand );
+
+   QColor c = US_GuiSettings::plotPicker();
+   setRubberBandPen ( c );
+   setTrackerPen    ( c );
+}
+
+void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
+{
+   if ( e->button() == Qt::LeftButton ) 
+      emit mouseDown( invTransform( e->pos() ) );
+   transition( e );
+}
+
+void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
+{
+   if ( e->button() == Qt::LeftButton ) 
+      emit mouseUp( invTransform( e->pos() ) );
+   transition( e );
+}
+
+

@@ -40,15 +40,14 @@ class US_EXTERN US_Widgets : public QFrame
     //! * Alignment is set to Qt::AlignVCenter | Qt::AlignLeft\n
     //! * Margin is set to 5\n
     //! * Palette is set to US_GuiSettings::labelColor()
-    QLabel*      us_label     ( const QString&, int = 0,  int = QFont::Normal );
+    QLabel*      us_label     ( const QString&, int = 0,  int = QFont::Bold );
 
     //! Same as us_label except:\n
     //! * different default font size (-1 point)\n
     //! * color set to US_GuiSettings::editColor()
-    QLabel*      us_textlabel ( const QString&, int = -1, int = QFont::Normal );
+    QLabel*      us_textlabel ( const QString&, int = -1, int = QFont::Bold );
 
     //! Same as us_label except:\n
-    //! * different default font weight (Bold )\n
     //! * color set to US_GuiSettings::frameColor()\n
     //! * alignment set to Qt::AlignCenter\n
     //! * style set to QFrame::WinPanel | QFrame::Raised\n

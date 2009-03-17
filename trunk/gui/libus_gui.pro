@@ -19,6 +19,7 @@ HEADERS      = us_buffer.h              \
                us_model_selection.h     \
                us_passwd.h              \
                us_plot.h                \
+               us_sassoc.h              \
                us_selectmodel.h         \
                us_selectmodel3.h        \
                us_selectmodel10.h       \
@@ -35,6 +36,7 @@ SOURCES      = us_buffer.cpp              \
                us_model_selection.cpp     \
                us_passwd.cpp              \
                us_plot.cpp                \
+               us_sassoc.cpp              \
                us_selectmodel.cpp         \
                us_selectmodel3.cpp        \
                us_selectmodel10.cpp       \

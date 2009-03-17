@@ -399,7 +399,8 @@ void US_Investigator::limit_names( const QString& s )
   
    for ( int i = 0; i < investigators.size(); i++ )
    {
-      if ( investigators[ i ].lastName.contains( s ) )
+      if ( investigators[ i ].lastName.contains( 
+               QRegExp( ".*" + s + ".*", Qt::CaseInsensitive ) ) )
          lw_names->addItem( new QListWidgetItem(
             "InvID: (" + QString::number( investigators[ i ].invID ) + "), " +
             investigators[ i ].lastName + ", " + 

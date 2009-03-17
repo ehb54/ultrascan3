@@ -304,5 +304,21 @@ class US_PlotGridConfig : public US_Widgets
       void selectMinorColor( void );
       void apply           ( void );
 };
+
+class US_PlotPicker : public QwtPlotPicker
+{
+   Q_OBJECT
+
+   public:
+      US_PlotPicker( QwtPlot* );
+
+   signals:
+      void mouseDown( const QwtDoublePoint& );
+      void mouseUp  ( const QwtDoublePoint& );
+
+   protected:
+      void widgetMousePressEvent  ( QMouseEvent* ); 
+      void widgetMouseReleaseEvent( QMouseEvent* ); 
+};
 #endif
 
