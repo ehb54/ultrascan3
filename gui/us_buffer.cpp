@@ -355,7 +355,8 @@ void US_Buffer_DB::search( const QString& text )
    {
       struct buffer_info* info = &buffer_metadata[ i ];
 
-      if ( info->description.contains( QRegExp( ".*" + text + ".*" ) ) )
+      if ( info->description.contains( 
+               QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) ) )
       {
         lw_buffer_db->addItem( new QListWidgetItem( 
               QString::number( info->bufferID ) + ": " + info->description ) );

@@ -43,6 +43,11 @@ bool US_DB::open( const QString& masterPW, QString& error )
   if ( opened ) return true;
 
   QStringList defaultDB = US_Settings::defaultDB();
+  if ( defaultDB.size() < 6 )
+  {
+      error = "DB not configured";
+      return false;
+  }
 
   db.setUserName    ( defaultDB.at( 1 ) );
   db.setDatabaseName( defaultDB.at( 2 ) );

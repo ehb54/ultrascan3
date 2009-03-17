@@ -461,7 +461,8 @@ void US_Vbar::search( const QString& text )
 
    for ( int i = 0; i < peptides.size(); i++ )
    {
-      if ( peptides[ i ].contains( QRegExp( ".*" + text + ".*" ) ) )
+      if ( peptides[ i ].contains( 
+               QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) ) )
       {
          lw_peptides->addItem( peptides[ i ] );
       }
