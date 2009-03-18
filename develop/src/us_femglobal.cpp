@@ -1285,6 +1285,73 @@ int US_FemGlobal::write_model_data(vector <mfem_data> *model, QString filename) 
   return 0;
 }
 
+int US_FemGlobal::write_ascii_model_data(vector <mfem_data> *model, QString filename) {
+  unsigned int i;
+  unsigned int j;
+  unsigned int k;
+  QFile f(filename);
+  if (!f.open(IO_WriteOnly))
+  {
+    cout << "Could not open data file: " << filename << " for output\n";
+    cout << "Please check the path, file name and write permissions...\n\n";
+    return (-1);
+  }
+
+  QTextStream ts(&f);
+  ts << "# Ascii dump of experimental data\n";
+  ts << (unsigned int)(*model).size() << "\t# number of models\n";
+  for (i=0; i<(*model).size(); i++)
+  {
+     ts << (*model)[i].id << "\t# id\n";
+     ts << (*model)[i].cell << "\t# cell\n";
+     ts << (*model)[i].channel << "\t# channel\n";
+     ts << (*model)[i].wavelength << "\t# wavelength\n";
+     ts << (*model)[i].meniscus << "\t# meniscus\n";
+     ts << (*model)[i].bottom << "\t# bottom\n";
+     ts << (*model)[i].rpm << "\t# rpm\n";
+     ts << (*model)[i].s20w_correction << "\t# s20w_correction\n";
+     ts << (*model)[i].D20w_correction << "\t# D20w_correction\n";
+     ts << (unsigned int) (*model)[i].radius.size() << "\t# radius.size()\n";
+    for (j=0; j<(*model)[i].radius.size(); j++)
+    {
+       ts << (*model)[i].radius[j] << "\t# radius[j]\n";
+    }
+    ts << (unsigned int)(*model)[i].scan.size() << "\t# scan.size()\n";
+
+    for (j=0; j<(*model)[i].scan.size(); j++)
+    {
+       ts << (*model)[i].scan[j].time << "\t# time\n";
+       ts << (*model)[i].scan[j].omega_s_t << "\t# omega_s_t\n";
+      for (k=0; k<(*model)[i].radius.size(); k++)
+      {
+	 ts << (*model)[i].scan[j].conc[k] << "\t# conc[k]\n";
+	// ts << (*model)[i].scan[j].ignore[k] << "\t# ignore[k]\n";
+      }
+    }
+
+    fprintf(stderr,"model last time %g avg_temp %g vbar %g visc %g density %g vbar %g vbar20 %g rpm %u bottom %g meniscus %g scorr %g Dcorr %g\n",
+                    (*model)[i].scan[(*model)[i].scan.size()-1].time,
+                    (*model)[i].avg_temperature,
+                    (*model)[i].vbar,
+                    (*model)[i].viscosity,
+                    (*model)[i].density,
+                    (*model)[i].vbar,
+                    (*model)[i].vbar20,
+                    (*model)[i].rpm,
+                    (*model)[i].bottom,
+                    (*model)[i].meniscus,
+                    (*model)[i].s20w_correction,
+                    (*model)[i].D20w_correction);
+    ts << (*model)[i].viscosity << "\t# viscosity\n";
+    ts << (*model)[i].density << "\t# density\n";
+    ts << (*model)[i].vbar << "\t# vbar\n";
+    ts << (*model)[i].vbar20 << "\t# vbar20\n";
+    ts << (*model)[i].avg_temperature << "\t# avg_temperature\n";
+  }
+  f.close();
+  return 0;
+}
+
 int US_FemGlobal::accumulate_model_monte_carlo_data(vector <mfem_data> *accumulated_model, vector <mfem_data> *source_model, unsigned int monte_carlo_iterations)
 {
   if (!monte_carlo_iterations)

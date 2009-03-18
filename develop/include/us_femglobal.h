@@ -206,8 +206,10 @@ class US_EXTERN US_FemGlobal : public QObject
 
 		int read_model_data(vector <mfem_data> *, QString filename, bool ignore_errors = false);
 		int write_model_data(vector <mfem_data> *, QString filename);
+		int write_ascii_model_data(vector <mfem_data> *, QString filename);
 		int accumulate_model_monte_carlo_data(vector <mfem_data> *accumulated_model, vector <mfem_data> *source_model, unsigned int monte_carlo_iterations);
 		int read_mwl_model_data(vector <mfem_data> *, QString filenamebase);
+
 
 	signals:
 		void new_error(QString);
