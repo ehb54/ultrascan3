@@ -12,8 +12,9 @@ int main (int argc, char **argv)
    {
       printf(
 	     "usage: %s command params\n"
-	     "Valid commands\tparams:\n"
-	     "dump          \tinfile outfile\tConvert a binary experiment or model file to ascii\n"
+	     "Valid commands \tparams:\n"
+	     "dump_model     \tinfile outfile\tConvert a binary experiment or model file to ascii\n"
+	     "dump_analysis  \tinfile outfile\tConvert an experiment analysis file to ascii\n"
 	     , argv[0]
 	     );
       exit(-1);
@@ -23,19 +24,20 @@ int main (int argc, char **argv)
    {
       cmds.push_back(argv[i]);
    }
-   if (cmds[0].lower() == "dump") 
+   if (cmds[0].lower() == "dump_model") 
    {
       if (cmds.size() != 3) 
       {
 	 printf(
-		"usage: %s dump infile outfile\n"
+		"usage: %s %s infile outfile\n"
 		, argv[0]
+		, argv[1]
 		);
 	 exit(-101);
       }
       if (cmds[1] == cmds[2])
       {
-	 printf("% error: infile must not be the same as outfile\n", argv[0]);
+	 printf("%s error: infile must not be the same as outfile\n", argv[0]);
 	 exit(-102);
       }
       vector < mfem_data > data;
@@ -47,6 +49,29 @@ int main (int argc, char **argv)
       if (us_femglobal.write_ascii_model_data(&data, cmds[2]))
       {
 	 exit(-104);
+      }
+      exit(0);
+   }
+   if (cmds[0].lower() == "dump_analysis") 
+   {
+      if (cmds.size() != 3) 
+      {
+	 printf(
+		"usage: %s %s infile outfile\n"
+		, argv[0]
+		, argv[1]
+		);
+	 exit(-201);
+      }
+      if (cmds[1] == cmds[2])
+      {
+	 printf("%s error: infile must not be the same as outfile\n", argv[0]);
+	 exit(-202);
+      }
+      US_FemGlobal us_femglobal;
+      if (us_femglobal.convert_analysis_data(cmds[1], cmds[2]))
+      {
+	 exit(-203);
       }
       exit(0);
    }
