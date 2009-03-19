@@ -1189,6 +1189,7 @@ int US_FemGlobal::read_model_data(vector <mfem_data> *model, QString filename, b
 	 ds >> temp_scan.time;
 	 ds >> temp_scan.omega_s_t;
 	 temp_scan.conc.clear();
+	 // temp_scan.ignore.clear();
 	 for (k = 0; k < temp_model.radius.size(); k++)
 	 {
 	    ds >> double_val;
