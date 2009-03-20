@@ -50,7 +50,8 @@ class US_EXTERN US_Plot : public QVBoxLayout
 
       //US_Plot( const QString&, const QString&, const QString& );
       US_Plot( QwtPlot*& plot, const QString&, const QString&, const QString& );
-      ~US_Plot();
+
+      void quit( void );
 
    private:
       US_PlotConfig* configWidget;

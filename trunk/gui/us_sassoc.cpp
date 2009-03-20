@@ -132,7 +132,7 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
    main->addLayout( controls );
 
    // Graph
-   QBoxLayout* plotLayout = new US_Plot( plot, 
+   plotLayout = new US_Plot( plot, 
          tr( "Self-Association Profile for" ) + project,
          tr( "Total Concentration" ), 
          tr( "% of Total Concentration" ) );
@@ -218,6 +218,12 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
    main->addLayout( plotLayout );
 
    status = ! status; // Avoid warning for now
+}
+
+void US_Sassoc::closeEvent( QCloseEvent* )
+{
+   // Ensure any open plot config window closes
+   plotLayout->quit(); 
 }
 
 void US_Sassoc::recalc( void )

@@ -8,12 +8,6 @@
 #include "us_widgets_dialog.h"
 #include "us_help.h"
 
-//#include "us_editor.h"
-//#include "us_buffer.h"
-//#include "us_db.h"
-//#include "us_math.h"
-//#include "us_db_tbl_investigator.h"
-
 struct BufferIngredient
 {
    QString name;                  //!< The buffer component's name. 

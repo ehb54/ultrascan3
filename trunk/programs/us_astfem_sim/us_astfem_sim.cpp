@@ -130,7 +130,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    QBoxLayout* plot = new QVBoxLayout;
 
    // Simulation Plot
-   QBoxLayout* plot1 = new US_Plot( moviePlot, tr( "Simulation Window" ), 
+   plot1 = new US_Plot( moviePlot, tr( "Simulation Window" ), 
          tr( "Radius (cm)" ), tr( "Concentration" ) );
    us_grid  ( moviePlot );
    moviePlot->setMinimumSize( 600, 275);
@@ -158,7 +158,7 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    plot->addLayout( timeSpeed );
 
    // Saved Scans
-   QBoxLayout* plot2 = new US_Plot( scanPlot, tr( "Saved Scans" ), 
+   plot2 = new US_Plot( scanPlot, tr( "Saved Scans" ), 
          tr( "Radius (cm)" ), tr( "Concentration" ) );
    us_grid  ( scanPlot );
    scanPlot->setMinimumSize( 600, 275);
@@ -185,6 +185,12 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    plot->addLayout( completion );
 
    main->addLayout( plot, 0, 1 );
+}
+
+void US_Astfem_Sim::closeEvent( QCloseEvent* )
+{
+   plot1->quit();
+   plot2->quit();
 }
 
 void US_Astfem_Sim::init_simparams( void )
