@@ -338,7 +338,7 @@ void US_Config::open_tmpDir( void )
 
 void US_Config::closeEvent( QCloseEvent* e )
 {
-  if ( colors ) delete colors;
+  if ( colors ) colors->quit();
   if ( db     ) delete db;
   if ( font   ) delete font;
   if ( admin  ) delete admin;

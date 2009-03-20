@@ -7,6 +7,7 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags )
    : US_Widgets( true, w, flags )
 {
   setWindowTitle( "Color Configuration for UltraScan" );
+  setAttribute( Qt::WA_DeleteOnClose );
 
   QGridLayout* mainLayout = new QGridLayout( this );
   mainLayout->setSpacing( 2 );
@@ -24,7 +25,7 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags )
   leftColumn->addWidget( lbl_background, row++, 0, 1, 2 );
 
   // Plot example
-  QLayout* us_plot  = new US_Plot( plot, tr( "Sample Plot" ), 
+  us_plot  = new US_Plot( plot, tr( "Sample Plot" ), 
         tr( "X-axis" ), ( "Y-axis" ) );
   
   grid  = us_grid  ( plot );
@@ -347,9 +348,15 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags )
   reset();
 }
 
-void US_Color::closeEvent( QCloseEvent* e )
+void US_Color::closeEvent( QCloseEvent* )
 {
-   e->accept();
+   us_plot->quit();
+}
+
+void US_Color::quit( void )
+{
+   us_plot->quit();
+   close();
 }
 
 void US_Color::getCurrentSettings( void )

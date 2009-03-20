@@ -29,6 +29,8 @@ class US_Color : public US_Widgets
     //! A destructor to clean up 
     //~US_Color();
 
+    void quit( void );
+
   private:
     US_Help showhelp;
 
@@ -108,7 +110,7 @@ class US_Color : public US_Widgets
     QwtPlotCurve*  curve;
     QwtPlotPicker* pick;
 
-    QMainWindow*   us_plot;
+    US_Plot*       us_plot;
 
     struct
     {

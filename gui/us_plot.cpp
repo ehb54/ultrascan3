@@ -33,7 +33,7 @@ US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
                     Qt::RightButton );
 }
 
-// A new plot retruns a QBoxLayout
+// A new plot returns a QBoxLayout
 US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_axis, 
                   const QString& y_axis ) : QVBoxLayout()
 {
@@ -234,7 +234,7 @@ void US_Plot::plotConfigFinished( void )
    configWidget = NULL;
 }
 
-US_Plot::~US_Plot()
+void US_Plot::quit( void )
 {
    if ( configWidget ) 
    {

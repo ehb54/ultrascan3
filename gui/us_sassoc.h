@@ -23,7 +23,7 @@ class US_EXTERN US_Sassoc : public US_Widgets
       US_Sassoc( double, double, double, double, 
                  const QString&, int, bool, 
                  bool = true, QWidget* = 0, Qt::WindowFlags = 0 );
-   
+      
    private:
       double         eq    [ 2 ];
       double         stoich[ 2 ];
@@ -55,6 +55,8 @@ class US_EXTERN US_Sassoc : public US_Widgets
       QLineEdit*     le_equil1;
       QLineEdit*     le_equil2;
       
+      US_Plot*       plotLayout;
+
       US_Help        showHelp;
 
       QwtPlotPicker* pick;
@@ -75,6 +77,7 @@ class US_EXTERN US_Sassoc : public US_Widgets
       void   update_eq1Count( double                );
       void   update_eq2Count( double                );
       void   save           ( void                  );
+      void   closeEvent     ( QCloseEvent*          );
 
       void   help           ( void )
       { showHelp.show_help( "manual/sassoc.html" ); };
