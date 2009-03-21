@@ -7,8 +7,9 @@
 #include "us_constants.h"
 #include "us_investigator.h"
 
-US_Buffer_DB::US_Buffer_DB() : US_WidgetsDialog( 0, 0 )
+US_Buffer_DB::US_Buffer_DB( bool signal_wanted ) : US_WidgetsDialog( 0, 0 )
 {
+   signal = signal_wanted;
    read_template_file();
 
    buffer.component.clear();
@@ -187,8 +188,18 @@ US_Buffer_DB::US_Buffer_DB() : US_WidgetsDialog( 0, 0 )
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
    buttons->addWidget( pb_help );
 
-   QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
+   QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );;
+
+   if ( signal )
+   {
+      QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
+      connect( pb_cancel, SIGNAL( clicked() ), SLOT( reject() ) );
+      buttons->addWidget( pb_cancel );
+
+      pb_accept->setText( tr( "Accept" ) );
+   }
+
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept_buffer() ) );
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons, row, 0, 1, 3 );
@@ -1015,8 +1026,14 @@ void US_Buffer_DB::remove_component( QListWidgetItem* item )
    }
 }
 
+void US_Buffer_DB::accept_buffer( void )
+{
+   if ( signal ) emit valueChanged( buffer.density, buffer.viscosity );
+   accept();
+}
+
 /*! Reset some variables to initialization. */
-void US_Buffer_DB::reset()
+void US_Buffer_DB::reset( void )
 {
    buffer.component.clear();
    buffer.refractive_index = 0.0;

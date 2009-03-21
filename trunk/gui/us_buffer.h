@@ -41,7 +41,11 @@ class US_EXTERN US_Buffer_DB : public US_WidgetsDialog
 
    public:
 
-      US_Buffer_DB();
+      US_Buffer_DB( bool = false );
+
+   signals:
+      void valueChanged( double, double );
+
 
    private:
       //!< The currently active buffer Data. 
@@ -57,6 +61,7 @@ class US_EXTERN US_Buffer_DB : public US_WidgetsDialog
          int     bufferID;
       };
 
+      bool                 signal;
       bool                 fromHD;
       QList< buffer_info > buffer_metadata;
 
@@ -99,6 +104,7 @@ class US_EXTERN US_Buffer_DB : public US_WidgetsDialog
       void reset           ( void );
       void list_component  ( void );
       void add_component   ( void );
+      void accept_buffer   ( void );
       void remove_component( QListWidgetItem* );
       void select_buffer   ( QListWidgetItem* );
       void search          ( const QString& );
@@ -106,6 +112,7 @@ class US_EXTERN US_Buffer_DB : public US_WidgetsDialog
      
       void help ( void ) { showHelp.show_help( "manual/hydro.html" ); };
 };
+#endif
 
 #ifdef NEVER
       US_Buffer_DB( bool from_cell, int temp_invID, QWidget* = 0, QWindowFlags = 0 );
@@ -126,11 +133,9 @@ class US_EXTERN US_Buffer_DB : public US_WidgetsDialog
       void valueChanged( double density, double viscosity, 
                          double refractive_index ); 
       
-      void valueChanged( double density, double viscosity );
    
    private:
 
 };
-#endif
 #endif
 

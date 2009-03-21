@@ -298,3 +298,114 @@ void US_Math::calc_vbar( struct peptide& pep, const QString& sequence,
    // Add one water molecule for the end of the chain
    pep.mw +=  WATER_MW;
 }
+
+void US_Math::data_correction( double t, struct solution_data& d )
+{
+   double xi_max =    1.000028e-3  ;
+   double c0     =  999.83952      ; 
+   double c1     =   16.945176     ;
+   double c2     =   -7.9870401e-3 ;
+   double c3     =  -46.170461e-6  ;
+   double c4     =  105.56302e-9   ;
+   double c5     = -280.54253e-12  ;
+   double b      =   16.879850e-3  ;
+
+   double t2 = t * t;
+   double t3 = t * t2;
+   double t4 = t * t3;
+   double t5 = t * t4;
+  
+   /*!
+   The density of water.  An empirical equation derived from
+   density vs temperature data. See Krell, J. Chem. & Eng. Data
+   1975, 20.
+
+   \f[  \rho_t = \xi_{max}{{c_0 + c_1 * t + c_2 * t^2 + c_3 * t^3 + c_4 * t^4 + c_5 * t^5}
+                 \over{ 1 + bt }}
+   \f]
+
+   where:<br>
+     \f$ \xi_{max} =   1.000028   \times 10^{-3} \f$ <br>
+     \f$ c_0 =  999.83952                  \f$ <br>
+     \f$ c_1 =   16.945176                 \f$ <br>
+     \f$ c_2 =   -7.9870401 \times 10^{-3} \f$ <br>
+     \f$ c_3 =  -46.170461  \times 10^{-6} \f$ <br>
+     \f$ c_4 =  105.56302   \times 10^{-9} \f$ <br>
+     \f$ c_5 = -280.54253   \times 10^{-12}\f$ <br>
+     \f$ b   = 16.879850    \times 10^{-3}\f$ <br>
+   */
+
+   d.density_wt = 
+      xi_max * ( c0     + c1 * t + c2 * t2 + c3 * t3 + c4 * t4 + c5 * t5 ) /
+      ( 1.0 + b * t );
+
+   /*!
+      Viscosity of water. <br>
+      Implements an empirical equation taken from CRC Handbook of
+      Chemistry and Physics, 55th Edition.<br><br>
+      For temperature 0 to 20 degress C:
+
+      \f[  \log_{10} \eta_t ={ c_0 \over{ c_1 + c_2 ( t-20 )
+               + c_3 ( t - 20 )^2 }} - c_4
+      \f]
+
+      where:<br>
+      \f$ \eta \f$ = viscosity in centipoise ( gm / sec-cm / 100 )<br>
+      \f$ t \f$ = temperature ( Celcius )<br>
+      \f$ c_0 = 1301\f$<br>
+      \f$ c_1 = 998.333\f$<br>
+      \f$ c_2 = 8.1855\f$
+      \f$ c_3 = 0.00585\f$
+      \f$ c_4 = 3.30233\f$
+
+      For temperature 20 to 100 degrees C:
+
+      \f[
+           \log_{10}{\eta_t\over\eta_{20}} = { {c_1(20 - t) -c_2(t-20)^2}\over {t+c_3}}
+      \f]
+
+      where:<br>
+      \f$ \eta \f$ = viscosity in centipoise ( gm / sec-cm / 100 )<br>
+      \f$ t \f$ = temperature ( Celcius )<br>
+      \f$ c_1 = 1.3272\f$<br>
+      \f$ c_2 = 1.053 \times 10^{-3}\f$<br>
+      \f$ c_3 = 105\f$
+   */
+
+   double exponent;
+   double t20;
+
+   if ( t < 20.0 )
+   {
+      c0 = 1301.0;
+      c1 =  998.333;
+      c2 =    8.1855; 
+      c3 =    0.00585;
+      c4 =    3.30233;
+
+      t20 = t - 20.0;
+
+      exponent = ( c0 / ( c1 + c2 * t20 + c2 * sq( t20 ) ) ) - c4;
+
+      d.viscosity_wt = 100.0 * pow( 10.0, exponent );
+   }
+   else
+   {
+      c1 =   1.3272;
+      c2 =   1.053e-3;
+      c3 = 105.0;
+
+      t20 = 20.0 - t;
+
+      exponent = ( c1 * t20 - c2 * sq( t20 ) ) / ( t + c3 );
+      
+      d.viscosity_wt = 100.0 * VISC_20W * pow( 10.0, exponent );
+   }
+
+   d.density_tb   = d.density * d.density_wt / DENS_20W;
+   d.viscosity_tb = d.viscosity * d.viscosity_wt / ( 100.0 * VISC_20W );
+   d.buoyancyb    = 1.0 - d.vbar * d.density_tb;
+   d.buoyancyw    = 1.0 - d.vbar20 * DENS_20W;
+   d.correction   = d.buoyancyw / d.buoyancyb * 
+                    d.viscosity_tb / ( 100.0 * VISC_20W );
+}

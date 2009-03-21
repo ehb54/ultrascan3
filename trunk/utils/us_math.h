@@ -54,6 +54,22 @@ struct peptide
 	uint   residues;
 };
 
+struct solution_data
+{
+   double density;
+   double density_wt;
+   double density_tb;
+   double viscosity;
+   double viscosity_wt;
+   double viscosity_tb;
+   double buoyancyb;
+   double buoyancyw;
+   double vbar;
+   double vbar20;
+   double correction;
+};
+
+
 //! \brief A collecion of methematical routines.  All functions are static.
 class US_EXTERN US_Math
 {
@@ -109,6 +125,11 @@ class US_EXTERN US_Math
       static float  linefit   ( float** , float** , float* , float* , float* , 
                               float*  , int );
 */
+      //! \brief Correct buffer data for temperature
+      //! \param t  Temperture of solution
+      //! \param d  Data to be corrected
+
+      static void data_correction( double, struct solution_data& );
 };
 #endif
 
