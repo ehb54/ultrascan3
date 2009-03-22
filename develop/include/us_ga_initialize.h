@@ -179,6 +179,10 @@ class US_EXTERN US_GA_Initialize : public QFrame
 		QListBox *lb_solutes;
 		QProgressBar *progress;
 
+	public slots:
+		
+		QString calc_stats(struct MonteCarloStats *, const vector <double>, QString);
+	
 	private slots:
 	
 		void update_k_range(double);
@@ -221,7 +225,6 @@ class US_EXTERN US_GA_Initialize : public QFrame
 		void closeEvent(QCloseEvent *);
 		void getMouseReleased(const QMouseEvent &);
 		void getMousePressed(const QMouseEvent &);
-		QString calc_stats(struct MonteCarloStats *, const vector <double>, QString);
 
 };
 

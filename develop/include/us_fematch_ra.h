@@ -8,6 +8,8 @@
 #include "us_plotdata.h"
 #include "us_3dsolutes.h"
 #include "us_astfem_rsa.h"
+#include "us_ga_initialize.h"
+#include "us_montecarlostats.h"
 #include "../3dplot/mesh2mainwindow.h"
 
 #include <qbuttongroup.h>
@@ -99,7 +101,6 @@ class  US_EXTERN US_FeMatchRa_W : public Data_Control_W
 		QPushButton *pb_loadModel;
 		QPushButton *pb_loadConstraints;
 		QPushButton *pb_model;
-		QPushButton *pb_parameter;
 
 		QwtCounter *cnt_simpoints;
 		QwtCounter *cnt_band_volume;

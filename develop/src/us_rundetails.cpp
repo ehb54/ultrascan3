@@ -202,7 +202,7 @@ RunDetails_F::RunDetails_F(int ed, int stat, struct runinfo *temp_run_inf, QWidg
 						temp_sum += (*run_inf).temperature[i][j][scan_counter[i][j]];
 
 // this doesn't have to be in order for cases where scans have been deleted during editing:
-
+//cout << "Time: " << (*run_inf).time[i][j][scan_counter[i][j]] << endl;
 						correction_sum += (*run_inf).time[i][j][scan_counter[i][j]] -
 						((*run_inf).omega_s_t[i][j][scan_counter[i][j]] / (float) pow (omega, 2));
 //cout << "Correction_sum: " << correction_sum << ", omega_s_t: " << (*run_inf).omega_s_t[i][j][scan_counter[i][j]] << ", time: " << (*run_inf).time[i][j][scan_counter[i][j]] << endl;
@@ -1129,6 +1129,7 @@ void RunDetails_F::update_screen()
 	if ((status == 0) && (edit_type == 1 || edit_type == 3 || edit_type == 5))
 	{
 		(*run_inf).time_correction = correction_sum / (*run_inf).total_scans;
+//		cout << "Time Corrections: " << (*run_inf).time_correction << endl;
 		if ((*run_inf).time_correction < 0 && GUI)
 		{
 			QMessageBox::message(tr("Attention:"),tr("This dataset appears to have been aquired\n"
