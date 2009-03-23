@@ -436,7 +436,7 @@ void US_Report_Veloc::write_file(Data_Control_W *data_control)
 								+ QString::number(data_control->run_inf.buffer_serialnumber[i][j]) + ")\n");
 					}
 					ts << "</ul></ul><p>\n";
-					
+
 					flag = false;
 					ts << tr("<ul>\n   <b>Experimental Data:</b>\n   <p>\n   <ul>\n");
 					ps << "<p><hr><p>" << str1 << tr("\n<b>Experimental Data:</b>\n<p>\n");
@@ -547,6 +547,32 @@ void US_Report_Veloc::write_file(Data_Control_W *data_control)
 					if (!pflag)
 					{
 						ps << tr("<p>(not available)<p>\n");
+					}
+// Discrete Nonlinear Model Analysis Report:
+					flag = false;
+					for (unsigned int k=0; k<20; k++)
+					{
+						str1.sprintf(baseName + "ga_sc_res-%d.%d%d", k, i+1, j+1);
+						testfile.setName(str1);
+						if (testfile.exists())
+						{
+							flag = true;
+						}
+					}
+					if (flag)
+					{
+						ts << tr("\n   </ul>\n   <p>\n   <b>Discrete Nonlinear Model Analysis (Genetic Algorithm/Monte Carlo):</b>\n   <p>\n   <ul>\n");
+						for (unsigned int k=0; k<20; k++)
+						{
+							str1.sprintf(baseName + "ga_sc_res-%d.%d%d", k, i+1, j+1);
+							testfile.setName(str1);
+							if (testfile.exists())
+							{
+								str2.sprintf(htmlDir + "/" + data_control->run_inf.run_id + ".ga_sc_res-%d.%d%d", k, i+1, j+1);
+								copy(str1, str2);
+								ts << "      <li><a href=" << str1.sprintf(data_control->run_inf.run_id + ".ga_sc_res-%d.%d%d", k, i+1, j+1) << tr(">Analysis Report for ") + modelString[k] + " model</a>\n";
+							}
+						}
 					}
 					for (unsigned int k=0; k<analysis_type.size(); k++)
 					{

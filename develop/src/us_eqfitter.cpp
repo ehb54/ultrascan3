@@ -1134,7 +1134,7 @@ int US_EqFitter::NNLS_individual()
 			for (j=0; j<points_per_dataset[dataset_counter]; j++)
 			{
 				y_raw[counter2] = *yval_it;
-				nnls_b[j] = *yval_it+20;
+				nnls_b[j] = *yval_it+120;
 				counter2++;
 				yval_it++;
 				nnls_a[counter4] = 1.0; // pos baseline term (i.e, exp[MW=0]), used in first column
@@ -1160,7 +1160,7 @@ int US_EqFitter::NNLS_individual()
 
 			nnls(nnls_a, points_per_dataset[dataset_counter], points_per_dataset[dataset_counter], order,
 			     nnls_b, nnls_x, &nnls_rnorm, nnls_wp, nnls_zzp, nnls_indexp);
-			(*scanfit_vector)[i].baseline = nnls_x[0] - 20; // adjust (+) baseline term
+			(*scanfit_vector)[i].baseline = nnls_x[0] - 120; // adjust (+) baseline term
 			for (int l=1; l<order; l++)
 			{
 //cout << "l: " << l << ", nnls_x: " << nnls_x[l] << ", amplitude: " ;

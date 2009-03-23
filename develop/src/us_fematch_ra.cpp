@@ -75,14 +75,6 @@ void US_FeMatchRa_W::setup_GUI()
 	pb_loadModel->setEnabled(false);
 	connect(pb_loadModel, SIGNAL(clicked()), SLOT(load_model()));
 
-	pb_fit = new QPushButton(tr("Simulate Model"), this);
-	Q_CHECK_PTR(pb_fit);
-	pb_fit->setAutoDefault(false);
-	pb_fit->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_fit->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_fit->setEnabled(false);
-	connect(pb_fit, SIGNAL(clicked()), SLOT(fit()));
-
 	lbl_variance = new QLabel(tr(" Variance:"),this);
 	lbl_variance->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
 	lbl_variance->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
@@ -101,7 +93,7 @@ void US_FeMatchRa_W::setup_GUI()
 	pb_model->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	pb_model->setEnabled(false);
 	connect(pb_model, SIGNAL(clicked()), SLOT(show_model()));
-	
+
 	cnt_model= new QwtCounter(this);
 	cnt_model->setNumButtons(3);
 	cnt_model->setRange(0, 0, 0);
@@ -169,7 +161,7 @@ void US_FeMatchRa_W::setup_GUI()
 	cnt_band_volume->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	cnt_band_volume->setValue(band_volume);
 	connect(cnt_band_volume, SIGNAL(valueChanged(double)), SLOT(update_band_volume(double)));
-	
+
 	bg_plotmode = new QButtonGroup(4, Qt::Horizontal, "Simulate data using parameters from model or from Monte Carlo statistics:", this);
 	bg_plotmode->setExclusive(true);
 	bg_plotmode->setEnabled(false);
@@ -209,6 +201,7 @@ void US_FeMatchRa_W::setup_GUI()
 	subGrid1->addMultiCellWidget(pb_details, j, j, 2, 3);
 	j++;
 	//subGrid1->addMultiCellWidget(pb_second_plot, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(pb_loadModel, j, j, 0, 1);
 	subGrid1->addMultiCellWidget(pb_save, j, j, 2, 3);
 	j++;
 	subGrid1->addMultiCellWidget(pb_print, j, j, 0, 1);
@@ -255,9 +248,6 @@ void US_FeMatchRa_W::setup_GUI()
 	subGrid1->addMultiCellWidget(cmb_radialGrid, j, j, 0, 3);
 	j++;
 	subGrid1->addMultiCellWidget(cmb_timeGrid, j, j, 0, 3);
-	j++;
-	subGrid1->addMultiCellWidget(pb_loadModel, j, j, 0, 1);
-	subGrid1->addMultiCellWidget(pb_fit, j, j, 2, 3);
 	j++;
 	subGrid1->addWidget(lbl_variance, j, 0);
 	subGrid1->addWidget(lbl_variance2, j, 1);
@@ -313,7 +303,7 @@ void US_FeMatchRa_W::save()
 	}
 	QString filename, str, mc_str;
 	vector <double> val;
-	str.sprintf(".%d%d", selected_cell+1, selected_lambda+1);
+	str.sprintf("-%d.%d%d", msv[0].model, selected_cell+1, selected_lambda+1);
 	filename = USglobal->config_list.result_dir + "/" + run_inf.run_id + ".ga_sc_res" + str;
 	QFile res_f(filename);
 	if (res_f.open(IO_WriteOnly | IO_Translate))
@@ -322,7 +312,7 @@ void US_FeMatchRa_W::save()
 		ts <<    "****************************************************\n";
 		ts << tr("* Nonlinear Model Fit - Genetic Algorithm analysis *\n");
 		ts << "****************************************************\n\n\n";
-		ts << tr("Data Report for Run \"") << run_inf.run_id << tr("\", Cell ") << (selected_cell + 1) 
+		ts << tr("Data Report for Run \"") << run_inf.run_id << tr("\", Cell ") << (selected_cell + 1)
 			<< tr(", Wavelength ") << (selected_lambda + 1) << "\n\n";
 		ts << tr("Detailed Run Information:\n\n");
 		ts << tr("Cell Description:        ") << run_inf.cell_id[selected_cell] << "\n";
@@ -388,10 +378,10 @@ void US_FeMatchRa_W::save()
 						mc_flag = true;
 					}
 				}
-					
+
 				if (mc_flag)
 				{
-					mc_str += gai->calc_stats(&stats, val, ga_param[i].name); 
+					mc_str += gai->calc_stats(&stats, val, ga_param[i].name);
 					str.sprintf(tr(ga_param[i].name + ":\t %6.4e (%6.4e, %6.4e)\n"), stats.mean, stats.conf95low, stats.conf95high);
 					ts << str;
 				}
@@ -412,7 +402,7 @@ void US_FeMatchRa_W::save()
 			}
 		}
 		ts << "\n\n";
-		delete gai;	
+		delete gai;
 		ts << tr("Scan Information: \n\n");
 		ts << tr("Scan:     Corrected Time:  Plateau Concentration: \n\n");
 		for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
@@ -462,7 +452,7 @@ void US_FeMatchRa_W::view()
 		return;
 	}
 	QString filename, str;
-	str.sprintf(".%d%d", selected_cell+1, selected_lambda+1);
+	str.sprintf("-%d.%d%d", msv[0].model, selected_cell+1, selected_lambda+1);
 	filename = USglobal->config_list.result_dir + "/" + run_inf.run_id + ".ga_sc_res" + str;
 	TextEdit *e;
 	e = new TextEdit();
@@ -533,7 +523,7 @@ float US_FeMatchRa_W::fit()
 			res[i][j] = absorbance[i][j] - sim[i][j];
 			rmsd += pow(res[i][j], 2.0);
 		}
-		
+
 		s_curve[i] = edit_plot->insertCurve("Simulated Model Data");
 		r_curve[i] = analysis_plot->insertCurve("Residual Data");
 		edit_plot->setCurvePen(s_curve[i], QPen(Qt::red, 1, SolidLine));
@@ -619,14 +609,12 @@ void US_FeMatchRa_W::load_model()
 		else
 		{
 			printError(4); // successfully loaded a new model
-			update_model(1);
 			assign_parameters();
 			current_model = 0;
 			cnt_parameter->setEnabled(true);
 			cnt_model->setRange(1, msv.size(), 1);
 			cnt_model->setValue(current_model + 1);
 			pb_model->setEnabled(true);
-			pb_fit->setEnabled(true);
 			//pb_second_plot->setEnabled(true);
 			if (msv.size() > 1)
 			{
@@ -638,6 +626,7 @@ void US_FeMatchRa_W::load_model()
 				cnt_model->setEnabled(false);
 				bg_plotmode->setEnabled(false);
 			}
+			update_model(1);
 		}
 	}
 }
@@ -723,14 +712,15 @@ void US_FeMatchRa_W::update_model(double val)
 {
 	current_model = (unsigned int) (val - 1);
 	ms = msv[current_model];
+	fit();
 }
-		
+
 void US_FeMatchRa_W::update_parameter(double val)
 {
 	current_parameter = (unsigned int) val - 1;
 	show_parameter();
 }
-		
+
 void US_FeMatchRa_W::assign_parameters()
 {
 	unsigned int j;
@@ -827,6 +817,7 @@ void US_FeMatchRa_W::assign_parameters()
 void US_FeMatchRa_W::select_plotmode(int val)
 {
 	plotmode = val;
+	fit();
 }
 
 void US_FeMatchRa_W::assign_model()
