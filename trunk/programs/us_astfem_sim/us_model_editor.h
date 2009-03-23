@@ -7,6 +7,7 @@
 #include "us_widgets_dialog.h"
 #include "us_femglobal.h"
 #include "us_help.h"
+#include "us_predict1.h"
 
 //! \brief A window to edit a model for simulation
 
@@ -60,19 +61,18 @@ class US_ModelEditor : public US_WidgetsDialog
 		QString      c0_file;
 
       struct ModelSystem& model;
+      struct hydrosim     simcomp;
       
-		//struct hydrosim simcomp;
-
-		void update_component( void );
 		void update_sD       ( void );
-		void update_shape    ( void );
       bool verify_model    ( void );
       void error           ( const QString& );
+		void update_component  ( void );
 
 	private slots:
 
       void help( void ){ showhelp.show_help( "manual/astfem_component.html" ); };
       
+		void update_shape      ( void );
       void change_component1 ( int );
       void change_spinbox    ( int );
 		void get_vbar          ( void );

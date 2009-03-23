@@ -305,12 +305,12 @@ void US_ModelEditor::update_component( void )
    struct SimulationComponent*          sc  = &model.component_vector[ component ]; 
    vector< struct SimulationComponent >* scl = &model.component_vector; 
    
-   le_sed        = us_lineedit( QString::number( sc->s         , 'e', 4 ) );
-   le_diff       = us_lineedit( QString::number( sc->D         , 'e', 4 ) );
-   le_extinction = us_lineedit( QString::number( sc->extinction, 'e', 4 ) );
-   le_vbar       = us_lineedit( QString::number( sc->vbar20    , 'e', 4 ) );
-   le_mw         = us_lineedit( QString::number( sc->mw        , 'e', 4 ) );
-   le_f_f0       = us_lineedit( QString::number( sc->f_f0      , 'e', 4 ) );
+   le_sed       ->setText( QString::number( sc->s         , 'e', 4 ) );
+   le_diff      ->setText( QString::number( sc->D         , 'e', 4 ) );
+   le_extinction->setText( QString::number( sc->extinction, 'e', 4 ) );
+   le_vbar      ->setText( QString::number( sc->vbar20    , 'e', 4 ) );
+   le_mw        ->setText( QString::number( sc->mw        , 'e', 4 ) );
+   le_f_f0      ->setText( QString::number( sc->f_f0      , 'e', 4 ) );
    
    if      ( sc->shape == "sphere"  ) cb_sphere  ->setEnabled( true );
    else if ( sc->shape == "prolate" ) cb_prolate ->setEnabled( true );
@@ -471,19 +471,14 @@ void US_ModelEditor::update_vbar( double vbar )
 
 void US_ModelEditor::simulate_component( void )
 {
-   QMessageBox::information( this, "Under construction", 
-         "US_ModelEditor::simulate_component Not implemented yet" );
-
-   /*
-   US_Hydro1* hydro = new US_Hydro1( &simcomp );
-   connect( hydro, SIGNAL( updated() ), SLOT( update_component() ) );
-   hydro1->exec();
+   US_Predict1* hydro = new US_Predict1( simcomp );
+   connect( hydro, SIGNAL( changed() ), SLOT( update_shape() ) );
+   hydro->exec();
    
    cb_prolate->setEnabled( true );
    cb_oblate ->setEnabled( true );
    cb_rod    ->setEnabled( true );
    cb_sphere ->setEnabled( true );
-   */
 }
 
 void US_ModelEditor::select_prolate( void )
@@ -541,40 +536,40 @@ void US_ModelEditor::select_sphere( void )
 void US_ModelEditor::update_shape( void )
 {
    struct SimulationComponent* sc = &model.component_vector[ component ];
-   
-   switch( shape )
+
+   switch ( shape )
    {
       case 1:
-         //sc->s     = simcomp.prolate.sedcoeff;
-         //sc->D     = simcomp.prolate.diffcoeff;
-         //sc->f_f0  = simcomp.prolate.f_f0;
+         sc->s     = simcomp.prolate.sedcoeff;
+         sc->D     = simcomp.prolate.diffcoeff;
+         sc->f_f0  = simcomp.prolate.f_f0;
          sc->shape = "prolate";
          break;
       
       case 2:
-         //sc->s     = simcomp.oblate.sedcoeff;
-         //sc->D     = simcomp.oblate.diffcoeff;
-         //sc->f_f0  = simcomp.oblate.f_f0;
+         sc->s     = simcomp.oblate.sedcoeff;
+         sc->D     = simcomp.oblate.diffcoeff;
+         sc->f_f0  = simcomp.oblate.f_f0;
          sc->shape = "oblate";
          break;
 
       case 3:
-         //sc->s     = simcomp.rod.sedcoeff;
-         //sc->D     = simcomp.rod.diffcoeff;
-         //sc->f_f0  = simcomp.rod.f_f0;
+         sc->s     = simcomp.rod.sedcoeff;
+         sc->D     = simcomp.rod.diffcoeff;
+         sc->f_f0  = simcomp.rod.f_f0;
          sc->shape = "rod";
          break;
       case 4:
 
-         //sc->s     = simcomp.sphere.sedcoeff;
-         //sc->D     = simcomp.sphere.diffcoeff;
-         //sc->f_f0  = simcomp.sphere.f_f0;
+         sc->s     = simcomp.sphere.sedcoeff;
+         sc->D     = simcomp.sphere.diffcoeff;
+         sc->f_f0  = simcomp.sphere.f_f0;
          sc->shape = "sphere";
          break;
    }
 
-   //sc->mw     = simcomp.mw;
-   //sc->vbar20 = simcomp.vbar;
+   sc->mw     = simcomp.mw;
+   sc->vbar20 = simcomp.vbar;
    
    update_component();
    
