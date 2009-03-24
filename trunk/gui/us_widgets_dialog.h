@@ -72,7 +72,7 @@ class US_EXTERN US_WidgetsDialog : public QDialog
     //! \param fontAdjust -  adjustment to default point size\n
     //! * Color is set to US_GuiSettings::editColor()\n
     //! * ReadOnly is false
-    QLineEdit*   us_lineedit  ( const QString& = 0, int = -1 );
+    QLineEdit*   us_lineedit  ( const QString& = 0, int = 0 );
 
     //! \param fontAdjust -  adjustment to default font size\n
     //! * Color is set to US_GuiSettings::editColor()

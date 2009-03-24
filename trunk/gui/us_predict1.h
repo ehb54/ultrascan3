@@ -3,8 +3,6 @@
 
 #include <QtGui>
 
-#include "qwt_counter.h"
-
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_plot.h"
@@ -70,8 +68,6 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       QLineEdit*     le_vbar;
       QLineEdit*     le_axial;
 
-      QwtCounter*    cnt_axial;
-                     
       QLabel*        lb_info;
       QLabel*        lb_sphere [ 8 ];
       QLabel*        lb_prolate[ 8 ];
@@ -94,7 +90,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
    private slots:
       void new_value    ( const QwtDoublePoint& );
       void mouseU       ( const QwtDoublePoint& );
-      void update_ratio ( double                );
+      //void update_ratio ( double                );
       void update_ratio ( const QString&        );
       void update_mw    ( const QString&        );
       void degC         ( const QString&        ); 

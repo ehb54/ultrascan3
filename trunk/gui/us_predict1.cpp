@@ -110,18 +110,13 @@ US_Predict1::US_Predict1( struct hydrosim& params,
                       SLOT  ( update_ratio( const QString& ) ) );
    controls->addWidget( le_axial, c_row++, 1 );
 
-   cnt_axial = us_counter( 3, 1.1, ( ARRAYSIZE + 1 ) / 10.0 );
-   cnt_axial->setValue( ratio );
-   cnt_axial->setStep ( 0.1  );
-   connect( cnt_axial, SIGNAL( valueChanged( double ) ),
-                       SLOT  ( update_ratio( double ) ) );
-   controls->addWidget( cnt_axial, c_row++, 0, 1, 2 );
-
    // Information
    QPalette p = US_GuiSettings::editColor();
 
-   lb_info = us_banner( 
-         tr( "Please select an axial ratio..." ), -1, QFont::Bold );
+   lb_info = us_banner(
+         tr( "Please select an axial ratio by\n"
+             "dragging the white bar with the\n"
+             "mouse to change the axial ratio" ) );
    lb_info->setPalette( p );
    controls->addWidget( lb_info, c_row, 0, 3, 2 );
    c_row += 3;
@@ -249,13 +244,6 @@ US_Predict1::US_Predict1( struct hydrosim& params,
    update();
 }
 
-
-void US_Predict1::update_ratio( double r )
-{
-   QwtDoublePoint p( r, 0.0 );
-   mouseU( p );
-}
-
 void US_Predict1::update_ratio( const QString& r )
 {
    QwtDoublePoint p( r.toDouble(), 0.0 );
@@ -340,6 +328,12 @@ void US_Predict1::vbar( const QString& s )
 void US_Predict1::new_value( const QwtDoublePoint& p )
 {
    ratio = p.x();
+
+   le_axial ->disconnect();
+   le_axial->setText( QString::number( ratio, 'f', 1 ) );
+
+   connect( le_axial, SIGNAL( textChanged ( const QString& ) ), 
+                      SLOT  ( update_ratio( const QString& ) ) );
    update();
 }
 
@@ -362,7 +356,9 @@ void US_Predict1::mouseU( const QwtDoublePoint& p )
                 "for axial ratios less than 6.0" );
    
    else if ( ratio >= 6.0 && ratio <= 100.0 )
-      msg = tr( "Please select an axial ratio..." );
+      msg = tr( "Please select an axial ratio by\n"
+                "dragging the white bar with the\n"
+                "mouse to change the axial ratio" );
 
    else if ( ratio > 100 )
    {
@@ -379,17 +375,12 @@ void US_Predict1::mouseU( const QwtDoublePoint& p )
    plot->replot();
 
    le_axial ->disconnect();
-   cnt_axial->disconnect();
    
    le_axial->setText( QString::number( ratio, 'f', 1 ) );
-   cnt_axial->setValue( ratio );
 
    connect( le_axial, SIGNAL( textChanged ( const QString& ) ), 
                       SLOT  ( update_ratio( const QString& ) ) );
    
-   connect( cnt_axial, SIGNAL( valueChanged( double ) ),
-                       SLOT  ( update_ratio( double ) ) );
-
    update();
 }
 
