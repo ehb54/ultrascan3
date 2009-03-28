@@ -177,6 +177,8 @@ SOURCES += \
   src/us_hydrodyn_overlap.cpp \
   src/us_hydrodyn_overlap_reduction.cpp \
   src/us_hydrodyn_pat.cpp \
+  src/us_hydrodyn_pdb_parsing.cpp \
+  src/us_hydrodyn_pdb_visualization.cpp \
   src/us_hydrodyn_results.cpp \
   src/us_hydrodyn_supc.cpp \
   src/us_imgviewer.cpp \
@@ -368,6 +370,8 @@ HEADERS += \
   include/us_hydrodyn_overlap_reduction.h \
   include/us_hydrodyn_pdbdefs.h \
   include/us_hydrodyn_pat.h \
+  include/us_hydrodyn_pdb_parsing.h \
+  include/us_hydrodyn_pdb_visualization.h \
   include/us_hydrodyn_results.h \
   include/us_hydrodyn_supc.h \
   include/us_imgviewer.h \
@@ -395,7 +399,7 @@ HEADERS += \
   include/us_register.h \
   include/us_reorder.h \
   include/us_resplot.h \
-	include/us_revision.h \
+  include/us_revision.h \
   include/us_rundetails.h \
   include/us_sa2d.h \
   include/us_sa2d_control.h \

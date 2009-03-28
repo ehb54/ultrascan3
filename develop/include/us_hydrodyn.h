@@ -34,6 +34,8 @@
 #include "us_hydrodyn_misc.h"
 #include "us_hydrodyn_grid.h"
 #include "us_hydrodyn_results.h"
+#include "us_hydrodyn_pdb_visualization.h"
+#include "us_hydrodyn_pdb_parsing.h"
 
 //standard C and C++ defs:
 
@@ -69,7 +71,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 				grid_widget,
 				hydro_widget,
 				results_widget,
-				misc_widget;
+				misc_widget,
+				pdb_parsing_widget,
+				pdb_visualization_widget;
 		QMenuBar *m;
 		QPrinter printer;
 		QFont ft;
@@ -80,6 +84,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QString residue_filename, bead_model_file;
 		struct residue current_residue;
 		struct asa_options asa;
+		struct pdb_visualization pdb_vis;
+		struct pdb_parsing pdb_parse;
 		struct hydro_options hydro;
 		struct grid_options grid;
 		struct hydro_results results;
@@ -105,33 +111,25 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QLabel *lbl_pdb_file;
 		QLabel *lbl_model;
 		QLabel *lbl_table;
-		QLabel *lbl_tabletabs;
-		QLabel *lbl_options;
 		QLabel *lbl_somo;
 		QLabel *lbl_bead_model_prefix;
 
+		QPopupMenu *lookup_tables;
+		QPopupMenu *somo_options;
+		QPopupMenu *pdb_options;
+		QPopupMenu *configuration;
+		QMenuBar *menu;
+		
 		QLineEdit *le_bead_model_file;
 		QLineEdit *le_bead_model_prefix;
 
 		QPushButton *pb_save;
-		QPushButton *pb_reset;
-		QPushButton *pb_write_config;
-		QPushButton *pb_load_config;
 		QPushButton *pb_select_residue_file;
 		QPushButton *pb_load_pdb;
-		QPushButton *pb_atom;
-		QPushButton *pb_residue;
-		QPushButton *pb_hybrid;
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;
 		QPushButton *pb_somo;
 		QPushButton *pb_visualize;
-		QPushButton *pb_show_asa;
-		QPushButton *pb_show_overlap;
-		QPushButton *pb_show_bead_output;
-		QPushButton *pb_show_hydro;
-		QPushButton *pb_show_misc;
-		QPushButton *pb_show_grid;
 		QPushButton *pb_view_pdb;
 		QPushButton *pb_load_bead_model;
 		QPushButton *pb_calc_hydro;
@@ -157,7 +155,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		US_Hydrodyn_Misc *misc_window;
 		US_Hydrodyn_Results *results_window;
 		US_Hydrodyn_Grid *grid_window;
-
+		US_Hydrodyn_PDB_Visualization *pdb_visualization_window;
+		US_Hydrodyn_PDB_Parsing *pdb_parsing_window;
 		QProcess *rasmol;
 
 #ifdef WIN32
@@ -215,6 +214,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void show_misc();
 		void show_grid(); // show grid options
 		void view_pdb(); // show pdb file in editor
+		void pdb_parsing(); // pdb parsing options
+		void pdb_visualization(); // pdb visualization options
 		void view_asa(); // show asa file in editor
 		void stop_calc(); // stop some operations
 		void view_file(const QString &); // call editor to view a file
