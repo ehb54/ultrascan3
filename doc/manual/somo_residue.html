@@ -79,11 +79,12 @@ presently including:
 <p>
 The <i>Residue anhydrous mol. vol. (A^3)</i> field has to be filled with a 
 value usually derived from crystallography (see Tsai et al., J. Mol. Biol.
-290:253-266, 1999; Nadassy et a., Nucl. Acid Res. 29:3362-3376, 2001; Voss
+290:253-266, 1999; Nadassy et al., Nucl. Acid Res. 29:3362-3376, 2001; Voss
 and Gerstein, J. Mol. Biol. 346:477-492, 2005; Perkins, Eur. J. Biochem. 
 157:169-180, 1986). This is the volume that defines the total anhydrous volume
 of the bead(s) that will be used to model the residue, and for non tabulated
-entries it can be computed using on-line programs such as the <sup>3</sup>V Contact Volume Calculator (<a href="http://www.molmovdb.org/cgi-bin/3v.cgi">http://www.molmovdb.org/cgi-bin/3v.cgi</a>; a 0   Angstrom probe radius should be used).
+entries it can be computed using on-line programs such as the <sup>3</sup>V Contact Volume Calculator (<a href="http://www.molmovdb.org/cgi-bin/3v.cgi">http://www.molmovdb.org/cgi-bin/3v.cgi</a>; a 0   Angstrom probe radius should be used). For ions, we used the values in Table I of
+Kiriukhin and Collins (Biophys. Chem. 99:155-168, 2002).
 <br>In contrast, the <i>Residue partial spec. vol. (cm^3/g)</i> field pertains to
 the solution partial specific volume (psv) of the residue (in water @ 20°C),
 and is used to compute the global psv of the model, necessary to determine
@@ -92,14 +93,17 @@ Tabulated values are available for amino acids and some carbohydrates (see Perki
 Eur. J. Biochem. 157:169-180, 1986), or can be computed using the Cohn and Edsall method
 (Cohn and Edsall, Proteins, amino acids and peptides as ions and dipolar ions, Reinhold
 Publ. Comp., 1965, pp. 370-381; see also Durchschlag and Zipper, Biophys. Chem. 93:
-141-157, 2001).
+141-157, 2001). For ions, it was computed directly from the anhydrous mol. vol. (cm<sup>3</sup>)
+multiplied by Avogadro's number and divided by the molecular weight.
 <br>Finally, the <i>Max. Accessible Surface Area (A^2)</i> field is entered. It is
 used for control purposes only, to calculate the percentage accessible surface
 area (ASA) of each residue with respect to this theoretical maximum value. For
 amino acids, it was taken from the tabulated values of Gly-XXX-Gly tripeptides
-(Miller et al., J. Mol. Biol. 196:641-656, 1987). For the other entries currently
-present in the <i>somo.residue</i> file, it was computed on isolated moieties
-using the <sup>3</sup>V Contact Volume Calculator (see above) with a 1.4 A probe radius. 
+(Miller et al., J. Mol. Biol. 196:641-656, 1987). For ions, it was computed
+from the radius (Table I of Kiriukhin and Collins, Biophys. Chem. 99:155-168, 2002).
+For the other entries currently present in the <i>somo.residue</i> file, it was computed
+on isolated moieties using the <sup>3</sup>V Contact Volume Calculator (see above) with
+a 1.4 A probe radius. 
 
 <p>When all fields have been filled, the residue is accepted by pressing the
 <b>Accept Residue and Continue</b> button, and the <i>Number of Residues in File
@@ -185,8 +189,10 @@ are assigned so to label the beads as:
 The next field, <i>Hydration Number for Bead</i>, assigns a
 theoretical number of water of hydration molecules to the bead. For amino acids,
 this number is defined for each residue side- and main-chain based on the values 
-reported by Kuntz and Kauzmann (Adv. Protein Chem. 28:239-345, 1974). For the
-other residues, and for further information, see Brookes et al., Eur. Biophys. J.
+reported by Kuntz and Kauzmann (Adv. Protein Chem. 28:239-345, 1974). For carbohydrates,
+we used the values of  Shiio (J. Am. Chem. Soc. 80:70-73, 1958). For ions, we used the
+values in Table I of Kiriukhin and Collins (Biophys. Chem. 99:155-168, 2002).
+For the other residues, and for further information, see Brookes et al., Eur. Biophys. J.
 in press, 2009, and Rai et al., Structure 13:723-734, 2005. The volume of 
 these water molecule(s) (defined under the <b>Miscellaneous Options</b>;
 see <a href=somo_misc.html>here</a>) will be later automatically added to the

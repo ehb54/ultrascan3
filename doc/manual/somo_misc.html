@@ -32,9 +32,12 @@ the hydrodynamic computations stages. The <b>Calculate vbar</b> checkbox
 allows the computation of the <b>partial specific volume (vbar)</b> in standard
 conditions (water @ 20°C) of the structure from its composition, using the
 residues' values stored in the <a href= "somo-residue-0.png">residue table</a>
-(default: <b>active</b>). Alternatively, a vbar value (either computed by
+(default: <b>active</b>). Alternatively, a <i>vbar</i> value (either computed by
 other means or measured) can be entered in the <i>Enter a vbar value (cm^3/g)</i>
-field. The <b>Select vbar</b> button will instead load a vbar value from XXXX.
+field. If a significant number of non-coded or incomplete residues are skipped when
+parsing the PDB file, the computed <i>vbar</i> could be not correct; in this case,
+entering an experimental value will be the best option.  The <b>Select vbar</b>
+button will instead load a vbar value from XXXX.
 <br>The <i>Hydration Water Vol. (A^3)</i> field sets the volume of the water
 of hydration molecules, which has been found (Gerstein and Chothia, Proc. Natl.
 Acad. Sci. USA 93:10167-10172, 1996) to be on average 24.5 A<sup>3</sup>,
