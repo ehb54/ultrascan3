@@ -19,7 +19,7 @@ QLabel* US_WidgetsDialog::us_label( const QString& labelString, int fontAdjust,
 {
   QLabel* newLabel = new QLabel( labelString, this );
 
-  newLabel->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
+//  newLabel->setFrameStyle( QFrame::StyledPanel | QFrame::Raised );
   newLabel->setAlignment ( Qt::AlignVCenter | Qt::AlignLeft );
   newLabel->setMargin    ( 2 );
   newLabel->setAutoFillBackground( true );
@@ -127,35 +127,67 @@ QListWidget* US_WidgetsDialog::us_listwidget ( int fontAdjust )
 }
 
 // checkbox
-QCheckBox* US_WidgetsDialog::us_checkbox( const QString& text, bool state )
+QBoxLayout* US_WidgetsDialog::us_checkbox( 
+      const QString& text, QCheckBox*& cb, bool state )
 {
-  QCheckBox* cb = new QCheckBox( text.toAscii(), this );
-  
-  cb->setFont( QFont ( US_GuiSettings::fontFamily(), 
-                       US_GuiSettings::fontSize(),
-                       QFont::Bold ) );
-  
-  cb->setPalette( US_GuiSettings::normalColor() );
-  cb->setAutoFillBackground( true );
+  QPalette p    = US_GuiSettings::normalColor();
+  QFont    font = QFont( US_GuiSettings::fontFamily(),
+                         US_GuiSettings::fontSize  (),
+                         QFont::Bold );
 
-  cb->setChecked( state );
-  return cb;
+  QFontMetrics fm( font );
+ 
+  QLabel* lb_spacer = new QLabel;
+  lb_spacer->setFixedWidth        ( fm.width( "w" ) ); // Space as wide as a 'w'
+  lb_spacer->setAutoFillBackground( true );
+  lb_spacer->setPalette           ( p );
+  
+  cb = new QCheckBox( text.toAscii(), this );
+  cb->setFont              ( font );
+  cb->setPalette           ( p );
+  cb->setAutoFillBackground( true );
+  cb->setChecked           ( state );
+
+  QBoxLayout* layout = new QHBoxLayout;
+  layout->setContentsMargins( 0, 0, 0, 0 );
+  layout->setSpacing        ( 0 );
+
+  layout->addWidget( lb_spacer );
+  layout->addWidget( cb );
+
+  return layout;
 }
 
 // radiobutton
-QRadioButton* US_WidgetsDialog::us_radiobutton( const QString& text, bool state )
+QGridLayout* US_WidgetsDialog::us_radiobutton( 
+      const QString& text, QRadioButton*& rb, bool state )
 {
-  QRadioButton* rb = new QRadioButton( text.toAscii(), this );
-  
-  rb->setFont( QFont ( US_GuiSettings::fontFamily(), 
-                       US_GuiSettings::fontSize(),
-                       QFont::Bold ) );
-  
-  rb->setPalette( US_GuiSettings::normalColor() );
-  rb->setAutoFillBackground( true );
+  QPalette p    = US_GuiSettings::normalColor();
+  QFont    font = QFont( US_GuiSettings::fontFamily(),
+                         US_GuiSettings::fontSize  (),
+                         QFont::Bold );
 
-  rb->setChecked( state );
-  return rb;
+  QFontMetrics fm( font );
+
+  QLabel* lb_spacer = new QLabel;
+  lb_spacer->setFixedWidth        ( fm.width( "w" ) ); // Space as wide as a 'w'
+  lb_spacer->setAutoFillBackground( true );
+  lb_spacer->setPalette           ( p );
+
+  rb = new QRadioButton( text.toAscii(), this );
+  rb->setAutoFillBackground( true );
+  rb->setFont              ( font );
+  rb->setPalette           ( p );
+  rb->setChecked           ( state );
+
+  QGridLayout* layout = new QGridLayout;
+  layout->setSpacing        ( 0 );
+  layout->setContentsMargins( 0, 0, 0, 0 );
+
+  layout->addWidget( lb_spacer, 0, 0 );
+  layout->addWidget( rb       , 0, 1 );
+
+  return layout;
 }
 
 // Progress Bar

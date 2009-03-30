@@ -82,15 +82,20 @@ class US_EXTERN US_Widgets : public QFrame
 
     //! \param text - Text to set with checkbox
     //! \param state - Initial check state\n
+    //! \param checkbox - reference to a pointer of the checkbox\n
     //! * Font weight is bold\n
     //! * Color is set to US_GuiSettings::normalColor()
-    QCheckBox*   us_checkbox  ( const QString&, bool = false );
+    QBoxLayout* us_checkbox  ( const QString&, QCheckBox*&, bool = false );
 
+    //! Create a radiobutton with a specifice palette (normal) and 
+    //! indentation of the button
     //! \param text - Text to set with radiobutton
+    //! \param rb - pointer to the radio button
     //! \param state - Checked ( true or false )
     //! * Color is set to US_GuiSettings::editColor()
-    QRadioButton* us_radiobutton( const QString&, bool = false );
-
+    //QRadioButton* us_radiobutton( const QString&, bool = false );
+    QGridLayout* us_radiobutton( 
+          const QString& text, QRadioButton*& rb, bool state = false );
     //! \param low   - Lower bound of progress
     //! \param high  - Upper bound of progress
     //! \param value - Initial value between low and high\n

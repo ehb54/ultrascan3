@@ -134,9 +134,10 @@ US_SimulationParameters::US_SimulationParameters(
    QLabel* lb_rotorAccel = us_label( tr( "Simulate Rotor Acceleration:" ) );
    main->addWidget( lb_rotorAccel, row, 0 );
 
-   cb_acceleration_flag = us_checkbox( 
-         tr( "(Check to enable)" ), sp->acceleration_flag );
-   main->addWidget( cb_acceleration_flag, row++, 1 );
+   QBoxLayout* acceleration_flag = us_checkbox( tr( "(Check to enable)" ), 
+         cb_acceleration_flag, sp->acceleration_flag );
+
+   main->addLayout( acceleration_flag, row++, 1 );
    
    connect( cb_acceleration_flag, SIGNAL( clicked          () ), 
                                   SLOT  ( acceleration_flag() ) );
@@ -188,16 +189,17 @@ US_SimulationParameters::US_SimulationParameters(
 
    // Right Column
    row = 1;
-
    // Centerpiece
-   rb_standard = us_radiobutton( 
-         tr( "Standard Centerpiece" ), ! simparams.band_forming ); 
-   main->addWidget( rb_standard, row, 2 );
+  
+   QGridLayout* rb1 = us_radiobutton( tr( "Standard Centerpiece" ), 
+         rb_standard, ! simparams.band_forming ); 
 
-   rb_band = us_radiobutton( 
-         tr( "Band-forming Centerpiece" ), simparams.band_forming );
+   main->addLayout( rb1, row, 2 );
+
+   QGridLayout* rb2 = us_radiobutton( tr( "Band-forming Centerpiece" ), 
+         rb_band, simparams.band_forming );
    
-   main->addWidget( rb_band, row++, 3 );
+   main->addLayout( rb2, row++, 3 );
    
    connect( rb_standard, SIGNAL( toggled           ( bool ) ), 
                          SLOT  ( select_centerpiece( bool ) ) );
