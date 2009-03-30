@@ -163,14 +163,20 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   QLabel* beckman = us_label( "Beckman Time Bug Correction:" );
   otherSettings->addWidget( beckman, row, 0 );
 
-  QBoxLayout* radiobutton = new QHBoxLayout();
+  QGridLayout* radiobutton = new QGridLayout();
   radiobutton->setSpacing( 0 );
+  radiobutton->setContentsMargins( 0, 0, 0, 0 );
 
-  rb_on = us_radiobutton( tr( "On" ) );
-  radiobutton->addWidget( rb_on );
+  QLabel* lb_background = new QLabel;
+  lb_background->setAutoFillBackground( true );
+  lb_background->setPalette( US_GuiSettings::normalColor() );
+  //radiobutton->addWidget( lb_background, 0, 0, 1, 2 );
 
-  rb_off = us_radiobutton( tr( "Off" ), true );
-  radiobutton->addWidget( rb_off );
+  QGridLayout* rb1 = us_radiobutton( tr( "On" ), rb_on );
+  radiobutton->addLayout( rb1, 0, 0 );
+
+  QGridLayout* rb2 = us_radiobutton( tr( "Off" ), rb_off, true );
+  radiobutton->addLayout( rb2, 0, 1 );
 
   otherSettings->addLayout( radiobutton, row++, 1 );
 

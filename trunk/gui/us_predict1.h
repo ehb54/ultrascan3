@@ -40,7 +40,8 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
 	Q_OBJECT
 
 	public:
-		US_Predict1( struct hydrosim&,  QWidget* = 0, Qt::WindowFlags = 0 );
+		US_Predict1( struct hydrosim&, QWidget* = 0, Qt::WindowFlags = 0 );
+      void update( void );
 
    signals:
       void changed( void );
@@ -84,8 +85,6 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       QwtPlotCurve*  vline_curve;
 
       US_Help        showHelp;
-
-      void update       ( void );
 
    private slots:
       void new_value    ( const QwtDoublePoint& );

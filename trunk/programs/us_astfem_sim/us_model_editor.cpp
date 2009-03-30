@@ -20,8 +20,8 @@ US_ModelEditor::US_ModelEditor(
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing( 2 );
 
-   component = 0; // Initial component
-   shape     = 1; // Inital shape (prolate)
+   component = 0;       // Initial component
+   shape     = PROLATE; // Inital shape (prolate)
    c0_file   = "";
    
    // Convenience
@@ -126,27 +126,31 @@ US_ModelEditor::US_ModelEditor(
    
    main->addWidget( sb_count, row++, 1 );
 
-   // Checkboxes
+   // Radio buttons
 
-   cb_prolate = us_checkbox( "Prolate Ellipsoid" );
-   cb_prolate->setEnabled( false );
-   connect( cb_prolate,  SIGNAL( clicked  () ), SLOT( select_prolate() ) );
-   main->addWidget( cb_prolate, row, 0 );
+   QGridLayout* prolate = us_radiobutton( "Prolate Ellipsoid", rb_prolate, true );
+   rb_prolate->setEnabled( false );
+   main->addLayout( prolate, row, 0 );
 
-   cb_oblate  = us_checkbox( "Oblate Ellipsoid" );;
-   cb_oblate->setEnabled( false );
-   connect( cb_oblate,  SIGNAL( clicked () ), SLOT( select_oblate() ) );
-   main->addWidget( cb_oblate, row++, 1 );
+   QGridLayout* oblate  = us_radiobutton( "Oblate Ellipsoid", rb_oblate );;
+   rb_oblate->setEnabled( false );
+   main->addLayout( oblate, row++, 1 );
    
-   cb_rod     = us_checkbox( "Long Rod" );
-   cb_rod->setEnabled( false );
-   connect( cb_rod,  SIGNAL( clicked() ), SLOT( select_rod() ) );
-   main->addWidget( cb_rod, row, 0 );
+   QGridLayout* rod     = us_radiobutton( "Long Rod", rb_rod );
+   rb_rod->setEnabled( false );
+   main->addLayout( rod, row, 0 );
    
-   cb_sphere  = us_checkbox( "Sphere" );
-   cb_sphere->setEnabled( false );
-   connect( cb_sphere,  SIGNAL( clicked () ), SLOT( select_sphere() ) );
-   main->addWidget( cb_sphere, row++, 1 );
+   QGridLayout* sphere  = us_radiobutton( "Sphere", rb_sphere );
+   rb_sphere->setEnabled( false );
+   main->addLayout( sphere, row++, 1 );
+
+   QButtonGroup* shapeButtons = new QButtonGroup( this );
+   shapeButtons->addButton( rb_prolate, PROLATE );
+   shapeButtons->addButton( rb_oblate , OBLATE  );
+   shapeButtons->addButton( rb_rod    , ROD     );
+   shapeButtons->addButton( rb_sphere , SPHERE  );
+   connect( shapeButtons, SIGNAL( buttonClicked( int ) ),
+                          SLOT  ( select_shape ( int ) ) );
 
    // Right column
 
@@ -156,9 +160,6 @@ US_ModelEditor::US_ModelEditor(
    main->addWidget( lb_linked, row++, 2, 1, 2 );
 
    // Combo box
-   // Note:  Why is this a combo box?  There is no function associated with it.
-   //cmb_component2 = us_comboBox();
-   //cmb_component2->setMaxVisibleItems( 5 );
    cmb_component2 = us_listwidget();
    cmb_component2->setEnabled( false );
    cmb_component2->setMaximumHeight( (int)( cmb_component1->height() * 1.7 ) );
@@ -166,7 +167,6 @@ US_ModelEditor::US_ModelEditor(
    for ( uint i = 0; i < sc->show_component.size(); i++ )
       cmb_component2->addItem(  (*scl)[ sc->show_component[ i ] ].name );
    
-   //main->addWidget( cmb_component2, row++, 2, 1, 2 );
    main->addWidget( cmb_component2, row++, 2, 2, 2 );
    row++;
 
@@ -296,10 +296,10 @@ void US_ModelEditor::change_spinbox( int value )
 
 void US_ModelEditor::update_component( void )
 {
-   cb_prolate->setEnabled( false );
-   cb_oblate ->setEnabled( false );
-   cb_rod    ->setEnabled( false );
-   cb_sphere ->setEnabled( false );
+   rb_prolate->setEnabled( false );
+   rb_oblate ->setEnabled( false );
+   rb_rod    ->setEnabled( false );
+   rb_sphere ->setEnabled( false );
 
    // Convenience 
    struct SimulationComponent*          sc  = &model.component_vector[ component ]; 
@@ -312,10 +312,10 @@ void US_ModelEditor::update_component( void )
    le_mw        ->setText( QString::number( sc->mw        , 'e', 4 ) );
    le_f_f0      ->setText( QString::number( sc->f_f0      , 'e', 4 ) );
    
-   if      ( sc->shape == "sphere"  ) cb_sphere  ->setEnabled( true );
-   else if ( sc->shape == "prolate" ) cb_prolate ->setEnabled( true );
-   else if ( sc->shape == "oblate"  ) cb_oblate  ->setEnabled( true );
-   else if ( sc->shape == "rod"     ) cb_rod     ->setEnabled( true );
+   if      ( sc->shape == "sphere"  ) rb_sphere  ->setDown( true );
+   else if ( sc->shape == "prolate" ) rb_prolate ->setDown( true );
+   else if ( sc->shape == "oblate"  ) rb_oblate  ->setDown( true );
+   else if ( sc->shape == "rod"     ) rb_rod     ->setDown( true );
    
    // Find the associated components for component1 and enter them into the
    // linked component list:
@@ -475,62 +475,16 @@ void US_ModelEditor::simulate_component( void )
    connect( hydro, SIGNAL( changed() ), SLOT( update_shape() ) );
    hydro->exec();
    
-   cb_prolate->setEnabled( true );
-   cb_oblate ->setEnabled( true );
-   cb_rod    ->setEnabled( true );
-   cb_sphere ->setEnabled( true );
+   rb_prolate->setEnabled( true );
+   rb_oblate ->setEnabled( true );
+   rb_rod    ->setEnabled( true );
+   rb_sphere ->setEnabled( true );
 }
 
-void US_ModelEditor::select_prolate( void )
+void US_ModelEditor::select_shape( int new_shape )
 {
-   if ( cb_prolate->isChecked() )
-   {
-      shape = 1;
-      cb_prolate->setChecked( true  );
-      cb_oblate ->setChecked( false );
-      cb_rod    ->setChecked( false );
-      cb_sphere ->setChecked( false );
-      update_shape();
-   }
-}
-
-void US_ModelEditor::select_oblate( void )
-{
-   if ( cb_oblate->isChecked() )
-   {
-      shape = 2;
-      cb_prolate->setChecked( false );
-      cb_oblate ->setChecked( true  );
-      cb_rod    ->setChecked( false );
-      cb_sphere->setChecked ( false );
-      update_shape();
-   }
-}
-
-void US_ModelEditor::select_rod( void )
-{
-   if ( cb_rod->isChecked() )
-   {
-      shape = 3;
-      cb_prolate->setChecked( false );
-      cb_oblate ->setChecked( false );
-      cb_rod    ->setChecked( true  );
-      cb_sphere ->setChecked( false );
-      update_shape();
-   }
-}
-
-void US_ModelEditor::select_sphere( void )
-{
-   if ( cb_sphere->isChecked() )
-   {
-      shape = 4;
-      cb_prolate->setChecked( false );
-      cb_oblate ->setChecked( false );
-      cb_rod    ->setChecked( false );
-      cb_sphere ->setChecked( true );
-      update_shape();
-   }
+   shape = new_shape;
+   update_shape();
 }
 
 void US_ModelEditor::update_shape( void )
@@ -539,27 +493,27 @@ void US_ModelEditor::update_shape( void )
 
    switch ( shape )
    {
-      case 1:
+      case PROLATE:
          sc->s     = simcomp.prolate.sedcoeff;
          sc->D     = simcomp.prolate.diffcoeff;
          sc->f_f0  = simcomp.prolate.f_f0;
          sc->shape = "prolate";
          break;
       
-      case 2:
+      case OBLATE:
          sc->s     = simcomp.oblate.sedcoeff;
          sc->D     = simcomp.oblate.diffcoeff;
          sc->f_f0  = simcomp.oblate.f_f0;
          sc->shape = "oblate";
          break;
 
-      case 3:
+      case ROD:
          sc->s     = simcomp.rod.sedcoeff;
          sc->D     = simcomp.rod.diffcoeff;
          sc->f_f0  = simcomp.rod.f_f0;
          sc->shape = "rod";
          break;
-      case 4:
+      case SPHERE:
 
          sc->s     = simcomp.sphere.sedcoeff;
          sc->D     = simcomp.sphere.diffcoeff;
@@ -573,10 +527,10 @@ void US_ModelEditor::update_shape( void )
    
    update_component();
    
-   cb_prolate->setEnabled( true );
-   cb_oblate ->setEnabled( true );
-   cb_rod    ->setEnabled( true );
-   cb_sphere ->setEnabled( true );
+   rb_prolate->setEnabled( true );
+   rb_oblate ->setEnabled( true );
+   rb_rod    ->setEnabled( true );
+   rb_sphere ->setEnabled( true );
 }
 
 void US_ModelEditor::load_c0( void )

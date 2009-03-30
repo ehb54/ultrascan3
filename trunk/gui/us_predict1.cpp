@@ -23,6 +23,7 @@ US_Predict1::US_Predict1( struct hydrosim& params,
 
    double x = 1.1;
 
+   // DOCUMENT ME
    for ( int i = 0; i < ARRAYSIZE; i++, x += 0.10000 )
    {
       prolate[ i ] = pow( x, -1.0 / 3.0 ) * sqrt( sq( x ) - 1.0 ) / 

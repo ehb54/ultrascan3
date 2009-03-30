@@ -55,8 +55,8 @@ US_SelectModel3::US_SelectModel3(
    main->addWidget( lbl_commonVbar, row, 0 );
    
    model3VbarFlag = true;
-   cb_commonVbar = us_checkbox( "", Qt::Checked );
-   main->addWidget( cb_commonVbar, row++, 1 );
+   QBoxLayout* vbar_layout = us_checkbox( "", cb_commonVbar, Qt::Checked );
+   main->addLayout( vbar_layout, row++, 1 );
 
    QPushButton* pb_vbar = us_pushbutton( tr( "Common vbar Value" ) );
    main->addWidget( pb_vbar, row, 0 );

@@ -23,42 +23,42 @@ class US_ModelEditor : public US_WidgetsDialog
             Qt::WindowFlags = 0 );
 
    private:
-      US_Help      showhelp;
+      US_Help       showhelp;
+                    
+      int           component;
+      int           shape;
+      enum          { PROLATE, OBLATE, ROD, SPHERE };
                    
-      int          component;
-      int          shape;
-
-      QLabel*      lb_header;
+      QLabel*       lb_header;
+                    
+		QLineEdit*    le_sed;
+		QLineEdit*    le_diff;
+		QLineEdit*    le_extinction;
+		QLineEdit*    le_vbar;
+		QLineEdit*    le_mw;
+		QLineEdit*    le_f_f0;
+		QLineEdit*    le_conc;
+		QLineEdit*    le_c0;
+		QLineEdit*    le_koff;
+		QLineEdit*    le_keq;
+		QLineEdit*    le_sigma;
+		QLineEdit*    le_delta;
+		QLineEdit*    le_stoich;
                    
-		QLineEdit*   le_sed;
-		QLineEdit*   le_diff;
-		QLineEdit*   le_extinction;
-		QLineEdit*   le_vbar;
-		QLineEdit*   le_mw;
-		QLineEdit*   le_f_f0;
-		QLineEdit*   le_conc;
-		QLineEdit*   le_c0;
-		QLineEdit*   le_koff;
-		QLineEdit*   le_keq;
-		QLineEdit*   le_sigma;
-		QLineEdit*   le_delta;
-		QLineEdit*   le_stoich;
-                   
-		QComboBox*   cmb_component1;
-		//QComboBox*   cmb_component2;
-		QListWidget*   cmb_component2;
+		QComboBox*    cmb_component1;
+		QListWidget*  cmb_component2;
 
-      QSpinBox*    sb_count;
+      QSpinBox*     sb_count;
 
-      QPushButton* pb_vbar;
-      QPushButton* pb_load_c0;
+      QPushButton*  pb_vbar;
+      QPushButton*  pb_load_c0;
 
-		QCheckBox*   cb_rod;
-      QCheckBox*   cb_oblate;
-      QCheckBox*   cb_sphere;
-      QCheckBox*   cb_prolate;
+		QRadioButton* rb_rod;
+      QRadioButton* rb_oblate;
+      QRadioButton* rb_sphere;
+      QRadioButton* rb_prolate;
 
-		QString      c0_file;
+		QString       c0_file;
 
       struct ModelSystem& model;
       struct hydrosim     simcomp;
@@ -78,10 +78,7 @@ class US_ModelEditor : public US_WidgetsDialog
 		void get_vbar          ( void );
 		void simulate_component( void );
 
-		void select_rod        ( void );
-		void select_prolate    ( void );
-		void select_oblate     ( void );
-		void select_sphere     ( void );
+      void select_shape      ( int  );
 		void load_c0           ( void );
 		void load_model        ( void );
 		void save_model        ( void );

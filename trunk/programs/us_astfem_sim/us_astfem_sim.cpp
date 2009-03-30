@@ -93,12 +93,12 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    connect ( pb_simParms, SIGNAL( clicked() ) , SLOT( sim_parameters() ) );
    buttonbox->addWidget( pb_simParms );
 
-   cb_movie = us_checkbox( "Show Movie", movieFlag );
-   buttonbox->addWidget( cb_movie );
+   QBoxLayout* movie = us_checkbox( "Show Movie", cb_movie, movieFlag );
+   buttonbox->addLayout( movie );
 
-   cb_timeCorr = us_checkbox( "Use Time Correction", time_correctionFlag );
+   QBoxLayout* timeCorr = us_checkbox( "Use Time Correction", cb_timeCorr, time_correctionFlag );
    connect( cb_timeCorr, SIGNAL( clicked() ), SLOT( update_time_corr() ) );
-   buttonbox->addWidget( cb_timeCorr );
+   buttonbox->addLayout( timeCorr );
 
    pb_start = us_pushbutton( tr( "Start Simulation"), false );
    connect( pb_start, SIGNAL( clicked() ), SLOT( start_simulation() ) );
