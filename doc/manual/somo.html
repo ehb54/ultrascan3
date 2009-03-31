@@ -22,8 +22,6 @@
 <center>
 <h2>
 SOMO - Solution Modeler (Bead Modeler for NMR and X-ray structures):</h2>
-<p>
-<img SRC="somo.png" ALT="SOMO Screen">
 </center>
 <p>
 The SOMO (SOlution MOdeller) module of UltraScan is a bead modelling
@@ -32,7 +30,7 @@ respectively at the Istituto Nazionale per la Ricerca sul Cancro (IST,
 Genova, Italy) and at the University of Glasgow (Glasgow, Scotland,
 UK). The original code was mainly written by B. Spotorno, G. Tassara,
 N. Rai and M. Nollmann. SOMO is based on a reduced representation of
-a biomacromolecule, starting from its atomic coordinates, as a set of
+a biomacromolecule, starting from its atomic coordinates (PDB format), as a set of
 non-overlapping beads of different radii, from which the hydrodynamic
 properties can be calculated using the Garcia de la Torre-Bloomfield rigid-body
 approach (García de la Torre and Bloomfield, Q. Rev. Biophys. 14:81-139,
@@ -53,17 +51,111 @@ hydrodynamic computations beads that are buried and thus non in contact
 with the solvent, a large span in the size of the structures that can
 be analysed with this method without loss of precision is obtained:
 currently, structures from 5K to 250K have been successfully studied.
-
 <p>
-<b>Modify Lookup Tables:</b>
+<p>
+<p>
+<h3><b>General description:</b></h3>
+<p>
+<P>
+The program main window contains an upper bar from which all the options
+governing its operations can be controlled, and a main panel for program
+execution. However, due to its high level of sophistication, properly setting all
+the available options can be non-trivial for the general user. Therefore,
+the SOMO module is distributed with pre-defined default options that should
+allow the direct conversion of a PDB-formatted biomacromolecular structure
+file into a bead model, and the computation of its hydrodynamic properties,
+without the need of accessing the advanced options menus.
+In particular, the SOMO approach is based on properly defining the atoms and
+residues found in PDB files, and the rules allowing their conversion
+into beads. The SOMO distribution includes the definition of all the standard
+amino acids, nucleotides, carbohydrates, and common prosthetic groups and 
+co-factors, but this list is by no means exhaustive, and the need to code for
+"new" residues is not a remote possibility. As this operation can be demanding,
+notwithstanding the user-friendly GUI governing it, the pre-defined set of options
+include an approximate method to deal with either missing atoms within coded residues,
+and/or not yet coded residues. However, be aware that for best performance, the structure
+should contain all residues and atoms that are present in the "real" macromolecule
+studied in solution, and all residues should be properly coded in the SOMO tables
+(see below).
+<p>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<center>
+<td><center><img SRC="somo-main.png" ALT="SOMO Screen"></td>
+</tr> 
+</center>
+<td align=justify>
+<p>
+<p>
+
+<p><b>Run SOMO Program:</b>
+<p>
+These functions control the execution of the SOMO program, whose progress is
+recorded in the right-side main window. The first step is to select a lookup table
+by clicking on <i><b>Select Lookup Table</b></i> (default: <i>somo.residue</i>).
+You can create multiple lookup tables for different conditions. The lookup table
+needs to contain all atoms and residues defined in your molecule to be loaded in
+the next step. By default, SOMO will automatically load the last used <i>*.residue</i> table.
+As soon as the lookup table has been successfully loaded, the <i><b>Load PDB File</b></i>
+button will become active and you can load a PDB structure file from
+NMR or X-ray crystallography experiments. Selecting a PBD file will also
+automatically call the molecular visualization program <i>RasMol</i> (Sayle RA, Milner-
+White EJ. RasMol: biomolecular graphics for all. Trends Biochem. Sci. 20:374-376,
+1995) which will display the structure(s) in a pop-up window. <i>RasMol</i>
+needs to be installed in <pre><b>$ULTRASCAN/bin</b></pre> for 32 bit
+machines, and <pre><b>$ULTRASCAN/bin64</b></pre> for 64 bit platforms.
+You can get a copy of <i>RasMol</i> from <a href="http://www.umass.edu/microbio/rasmol/">
+http://www.umass.edu/microbio/rasmol/</a> or from <a href="http://openrasmol.org/#Software">
+http://openrasmol.org/#Software</a>.<p>
+The PDB file can contain multiple models and if so, multiple models will be displayed by
+<i>RasMol</i> and in the list box. In this case, you can select just a single model,
+or multiple models by holding the crtl key while clicking on the models' names (crtl-A selects
+all models). If multiple models are selected, all subsequent operations
+are carried out sequentially on the selected models. Once one or multiple
+models are selected, the <i><b>Build SOMO Bead Model</b></i> and <i><b>Build
+Grid Bead Model</b></i> buttons will become active, offering two alternative
+ways of generating a bead model based on the settings selected
+above. Once bead model(s) generation is completed, the progress bar will be at 100% and the bead model(s) can be visualized with <i>RasMol</i> by clicking on <i><b>Visualize Bead Model</b></i>.
+The results of the acessible surface area (ASA) computations (see below) can also be visualized
+in a pop-up window by clicking on the <i><b>Show ASA Results</b></i> button. Alternatively, you
+can skip all of these steps and load a previously generated bead model by clicking on <i><b>Load
+Bead Model File</b></i> from the menu. In this case, and if the model was generated/saved in the
+SOMO format, the various settings/parameters used in model generation will be displayed in
+the right-side main window. The hydrodynamic parameters can be then determined by clicking on <i><b>Calculate Hydrodynamics</b></i>. A partial list of parameters can be seen in
+a pop-up window as soon as the calculations are completed by clicking on <a href=
+"somo-results.png"><i><b>Show Hydrodynamic Calculations</b></i></a>. A full list of all the parameters is also available as a text file, which can be opened from the results' pop-up window. Operations can be halted at any moment by clicking on the <i><b>Stop</b></i> button. To avoid inadvertendly loosing data, the <i><b>Close</b></i> button will not immediately close SOMO, but confirmation will be required in a pop-up window.
+</td>
+
+</table>
+<p>
+<p>
+<h3><b>Options menus:</b></h3>
+<p>
+Four pull-down menus are presently available to access the various SOMO options:
+<p>
+<i><b>
+Lookup Tables<br>
+SOMO Options<br>
+PDB Options<br>
+Configurations</b></i>
+<p>
 <p>
 <table BORDER CELLSPACING=5 CELLPADDING=5>
 <tr>
-<td><img SRC="somo-0.png" ALT="Lookup Tables"></td>
+<p>
+<i><b>Lookup Tables:</b></i>
+<p>
+<p>
+<p>
+<td><center><img SRC="somo-tab1.png" ALT="Lookup Tables"></td>
 </tr>
 <tr>
 <td align=justify>
-In this section you can define the hybridizations, atoms and residues
+From this pull-down menu, you can call three different sub-menus controlling
+the three tables containing the definitions of the atoms and residues found in
+PDB files.<br>
+More in detail, you can define/edit the hybridizations, atoms and residues
 that need to be interpreted as beads in the bead model generation.
 These parameters are collected in different tables that are used 
 as the components from which the bead sizes and positions are calculated.
@@ -95,27 +187,28 @@ add new atoms to it by filling out the fields and clicking on
 the file.</li>
 <li>
 <b>Add/Edit Residue:</b> Use this function to modify the <a href=
-"somo-residue-0.png">residue table</a>. The use of this module is described in
+"somo-residue.png">residue table</a>. The use of this module is described in
 <a href="somo_residue.html">this help file</a>.
 </ul>
 </td>
 </tr>
 </table>
 <p>
-<b>Modify SOMO Options:</b>
+<b><i>SOMO Options:</i></b>
 <p>
 
 <table BORDER CELLSPACING=5 CELLPADDING=5>
 <tr>
-<td><img SRC="somo-3.png" ALT="Modify SOMO Options"></td>
+<td><center><img SRC="somo-tab2.png" ALT="Modify SOMO Options"></td>
 </tr>
 <tr>
 <td align=justify>
-In this section you can set all options for different steps in the program.
-These options are saved in a system wide config file <pre>
-$ULTRASCAN/etc/somo.config</pre> Every time you close the SOMO program,
-the currently defined options will be saved in <pre>
-$HOME/ultrascan/etc/somo.config</pre>
+From this pull-down menu, you can access various panels where you can set all
+the available options for different steps in the program. These options are saved
+in a system wide config file
+<pre>$ULTRASCAN/etc/somo.config</pre>
+Every time you close the SOMO program, the currently defined options will be saved in
+<pre>$HOME/ultrascan/etc/somo.config</pre>
 where they will be reloaded from upon startup.
 <ul>
 <li>
@@ -140,7 +233,7 @@ href=somo_overlap.html>here</a>.
 <b>Hydrodynamic Calculations:</b> This module allows you to change
 the options for calculating the hydrodynamic parameters from the bead
 models. A detailed description of this module can be found <a
-href=somo_results.html>here</a>.
+href=somo_hydro.html>here</a>.
 
 <li>
 <b>Miscellaneous Options:</b> This module allows you to either automatically
@@ -164,6 +257,56 @@ Biophys. J. 72:408-415, 1997). The Grid module accepts as input either PDB files
 or previously-generated bead models. A detailed description of this module can
 be found <a href=somo_grid.html>here</a>.
 
+</ul>
+</td>
+</tr>
+</table>
+
+<p>
+<b><i>PDB Options:</i></b>
+<p>
+
+<table BORDER CELLSPACING=5 CELLPADDING=5>
+<tr>
+<td><center><img SRC="somo-tab3.png" ALT="Modify SOMO Options"></td>
+</tr>
+<tr>
+<td align=justify>
+<p>
+From this pull-down menu, you can access two panels controlling the options for
+parsing the PDB file and for the model(s) visualization by RasMol.
+
+<ul>
+<li>
+<b>Parsing:</b> This module allows you to change the options to be used during
+the parsing of a PDB file, like how to deal with solvent molecules, explicit hydrogen
+atoms, alternate conformations, and with missing atoms/residues. A detailed description
+of this module can be found <a href=somo_parsing.html>here</a>. (Remark: some of the
+options listed are not presently active).
+
+<li>
+<b>Visualization:</b> This module allows you to select alternative visualization modes
+used by RasMol. A detailed description of this module can be found <a href=somo_rasmol.html>here</a>. (Remark: some of the options listed are not presently active).
+
+</ul>
+</td>
+</tr>
+</table>
+
+
+
+<p>
+<b><i>Configurations:</i></b>
+<p>
+
+<table BORDER CELLSPACING=5 CELLPADDING=5>
+<tr>
+<td><center><img SRC="somo-tab4.png" ALT="Modify SOMO Options"></td>
+</tr>
+<tr>
+<td align=justify>
+
+<ul>
 <li>
 <b>Load Configuration:</b> This button allows you to retrieve a particular
 set of options previously saved in a user-specified configuration file (see below).
@@ -184,52 +327,7 @@ button will reset the standard configuration file as well to default options.
 </tr>
 </table>
 
-<p><b>Run SOMO Program:</b>
-<p>
-<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
-<tr>
-<td><img SRC="somo-4.png" ALT="Run Somo Program"></td>
-</tr> 
-<td align=justify>
-These functions control the execution of the SOMO program, whose progress is
-recorded in the right-side main window. The first step is to select a lookup table
-by clicking on <i><b>Select Lookup Table</b></i> (default: <i>somo.residue</i>).
-You can create multiple lookup tables for different conditions. The lookup table
-needs to contain all atoms and residues defined in your molecule to be loaded in
-the next step. By default, SOMO will automatically load the last used <i>*.residue</i> table.
-As soon as the lookup table has been successfully loaded, the <i><b>Load PDB File</b></i>
-button will become active and you can load a PDB structure file from
-NMR or X-ray crystallography experiments. Selecting a PBD file will also
-automatically call the molecular visualization program <i>RasMol</i> (Sayle RA, Milner-
-White EJ. RasMol: biomolecular graphics for all. Trends Biochem. Sci. 20:374-376,
-1995) which will display the structure(s) in a pop-up window. <i>RasMol</i>
-needs to be installed in <pre><b>$ULTRASCAN/bin</b></pre> for 32 bit
-machines, and <pre><b>$ULTRASCAN/bin64</b></pre> for 64 bit platforms.
-You can get a copy of <i>RasMol</i> from <a href="http://www.umass.edu/microbio/rasmol/">
-http://www.umass.edu/microbio/rasmol/</a> or from <a href="http://openrasmol.org/#Software">
-http://openrasmol.org/#Software</a>.<p>
-The PDB file can contain multiple models and if so, multiple models will be displayed by
-<i>RasMol</i> and in the list box. In this case, you can select just a single model,
-or multiple models by holding the crtl key while clicking on the models' names (crtl-A selects
-all models). If multiple models are selected, all subsequent operations
-are carried out sequentially on the selected models. Once one or multiple
-models are selected, the <i><b>Build SOMO Bead Model</b></i> and <i><b>Build
-Grid Bead Model</b></i> buttons will become active, offering two alternative
-ways of generating a bead model based on the settings selected
-above. Once bead model(s) generation is completed, the progress bar will be at 100% and the bead model(s) can be visualized with <i>RasMol</i> by clicking on <i><b>Visualize Bead Model</b></i>.
-The results of the ASA computations can also be visualized in a pop-up window by clicking
-on the <i><b>Show ASA Results</b></i> button. Alternatively, you can skip all of
-these steps and load a previously generated bead model by clicking on <i><b>Load Bead Model File</b></i> from the menu. In this case, and if the model was generated/saved in the SOMO
-format, the various settings/parameters used in model generation will be displayed in
-the right-side main window. The hydrodynamic parameters can be then determined by clicking on <i><b>Calculate Hydrodynamics</b></i>. A partial list of parameters can be seen in
-a pop-up window as soon as the calculations are completed by clicking on <i><b>Show Hydrodynamic Calculations</b></i>. A full list of all the parameters is also available as a text file,
-which can be opened from the results' pop-up window. Operations can be halted at any moment by
-clicking on the <i><b>Stop</b></i> button. To avoid inadvertendly loosing data, the
-<i><b>Close</b></i> button will not immediately close SOMO, but confirmation will be 
-required in a pop-up window.
-</td>
 
-</table>
 <p>
 <hr>
 <font face="helvetica" size="-1">
