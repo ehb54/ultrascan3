@@ -151,7 +151,7 @@ void US_Hydrodyn_Misc::setupGUI()
 	cnt_avg_hydration->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cnt_avg_hydration, SIGNAL(valueChanged(double)), SLOT(update_avg_hydration(double)));
 
-	lbl_avg_volume = new QLabel(tr(" Average bead/atom volume: "), this);
+	lbl_avg_volume = new QLabel(tr(" Average bead/atom volume (A^3): "), this);
 	Q_CHECK_PTR(lbl_avg_volume);
 	lbl_avg_volume->setAlignment(AlignLeft|AlignVCenter);
 	lbl_avg_volume->setMinimumWidth(200);
