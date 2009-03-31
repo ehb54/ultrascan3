@@ -11,9 +11,9 @@
 
 using namespace US_ConstantModels;
 
-void US_ModelSelection::selectModel( struct ModelSystem& ms )
+void US_ModelSelection::selectModel( struct ModelSystem& ms, bool equlibrium )
 {
-   US_SelectModel* select = new US_SelectModel( ms.model );
+   US_SelectModel* select = new US_SelectModel( ms.model, equlibrium );
   
    ms.description = "Default ASTFEM Model";
    ms.component_vector.clear();

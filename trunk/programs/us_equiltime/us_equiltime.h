@@ -6,6 +6,8 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_predict1.h"
+#include "us_femglobal.h"
+#include "us_editor.h"
 
 #include "qwt_counter.h"
 
@@ -18,7 +20,10 @@ class US_EXTERN US_EquilTime : public US_Widgets
 
 	private:
 
-      struct  hydrosim simcomp;
+      struct hydrosim             simcomp;
+      struct ModelSystem          system;
+      struct SimulationParameters simparams;
+      
       double  mw;
       double  s;
       double  D;
@@ -68,21 +73,23 @@ class US_EXTERN US_EquilTime : public US_Widgets
 
       QCheckBox*    cb_monitor;
       QTextEdit*    te_speedlist;
-      QTextEdit*    te_info;
 
+      US_Editor*    te_info;
+
+      QPushButton*  pb_saveExp;
+      QPushButton*  pb_changeModel;
       QPushButton*  pb_estimate;
-      QPushButton*  pb_save;
 
    private slots:
-      void simulate_component( void );
-      void update_params     ( void );
-      void new_shape         ( int  );
       void update_speeds     ( int  );
       void new_lowspeed      ( double );
       void new_highspeed     ( double );
       void new_speedstep     ( double );
-      void save              ( void );
       void simulate          ( void );
+      void load_experiment   ( void );
+      void new_model         ( void );
+      void change_model      ( void );
+      void load_model        ( void );
 
       void help              ( void )
       { showHelp.show_help("manual/calc_equiltime.html"); };

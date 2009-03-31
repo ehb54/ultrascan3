@@ -17,7 +17,7 @@ class US_EXTERN US_ModelSelection
 
       //! \param ms A reference to the location where the model is to be 
       //!           stored.
-		static void selectModel( struct ModelSystem& );
+		static void selectModel( struct ModelSystem&, bool = false );
 		
    private:
       static void initAssoc1( struct ModelSystem&, 

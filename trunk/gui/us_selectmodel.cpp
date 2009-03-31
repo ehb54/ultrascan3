@@ -6,8 +6,8 @@
 
 using namespace US_ConstantModels;
 
-US_SelectModel::US_SelectModel( int& selection, bool show_equation ) 
-   : US_WidgetsDialog( 0, 0 ), modelSelected( selection )
+US_SelectModel::US_SelectModel( int& selection, bool equlibrium, 
+   bool show_equation ) : US_WidgetsDialog( 0, 0 ), modelSelected( selection )
 {
    setWindowTitle( tr( "Model Selection - UltraScan Analysis" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -29,13 +29,24 @@ US_SelectModel::US_SelectModel( int& selection, bool show_equation )
    int fw = 0;
    int fh = 0;
 
+   QFont        f = lw_models->font();
+   QFontMetrics fm( f );
+
    for ( int i = 0; i < models.size(); i++ )
    {
-      lw_models->addItem( models[ i ] );
+      // For equlibrium selection, we only want a subset
+      if ( equlibrium && ( i == Ideal2Comp || 
+                           i == Ideal3Comp ||
+                           i == Fixed      ||
+                           i == UserHetero ||
+                           i == UserMonoIncompMono ||
+                           i == UserMonoIncompNmer ||
+                           i == UserIrreversible ) ) continue;
+
+      QListWidgetItem* item = new QListWidgetItem( models[ i ], 0, i );
+      lw_models->addItem( item );
 
       // Adjust list widget size to show everything (prevent scrolling)
-      QFont        f = lw_models->item( i )->font();
-      QFontMetrics fm( f );
       int          w = fm.width( models[ i ] );
       fh            += fm.lineSpacing() + 4; // Add for borders of list items
       
@@ -43,7 +54,6 @@ US_SelectModel::US_SelectModel( int& selection, bool show_equation )
    }
 
    lw_models->setMinimumSize( fw + 10 , fh );
-
 
    QListWidgetItem* item = lw_models->item( 0 );
    item->setSelected( true ) ;
@@ -76,7 +86,7 @@ void US_SelectModel::cancel()
 
 void US_SelectModel::select_model()
 {
-   select_model( lw_models->currentRow() ); 
+   select_model( lw_models->currentItem()->type() ); 
 }
 
 void US_SelectModel::help()
