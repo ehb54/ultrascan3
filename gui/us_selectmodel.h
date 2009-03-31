@@ -17,7 +17,7 @@ class US_EXTERN US_SelectModel : public US_WidgetsDialog
       //! \param selection - Location for index of selected model
       //! \param show_equation - A flag to control a popup giving model
       //!                        details
-		US_SelectModel( int&, bool = false );
+		US_SelectModel( int&, bool = false, bool = false );
 		
    private:
       int&         modelSelected;
