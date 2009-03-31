@@ -163,7 +163,7 @@ void US_Hydrodyn::setupGUI()
 	lookup_tables->insertItem(tr("Add/Edit &Hybridization"), this, SLOT(hybrid()));
 	lookup_tables->insertItem(tr("Add/Edit &Atom"), this, SLOT(atom()));
 	lookup_tables->insertItem(tr("Add/Edit &Residue"), this, SLOT(residue()));
-	
+
 	somo_options = new QPopupMenu;
 	somo_options->insertItem(tr("&ASA Calculation"), this, SLOT(show_asa()));
 	somo_options->insertItem(tr("&Overlap Reduction"), this, SLOT(show_overlap()));
@@ -171,11 +171,11 @@ void US_Hydrodyn::setupGUI()
 	somo_options->insertItem(tr("&Miscellaneous Options"), this, SLOT(show_misc()));
 	somo_options->insertItem(tr("&Bead Model Output"), this, SLOT(show_bead_output()));
 	somo_options->insertItem(tr("&Grid Functions (AtoB))"), this, SLOT(show_grid()));
-	
+
 	pdb_options = new QPopupMenu;
 	pdb_options->insertItem(tr("&Parsing"), this, SLOT(pdb_parsing()));
 	pdb_options->insertItem(tr("&Visualization"), this, SLOT(pdb_visualization()));
-	
+
 	configuration = new QPopupMenu;
    configuration->insertItem(tr("&Load Configuration"), this, SLOT(load_config()));
    configuration->insertItem(tr("&Save Current Configuration"), this, SLOT(write_config()));
@@ -184,14 +184,14 @@ void US_Hydrodyn::setupGUI()
 	QFrame *frame;
 	frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
-	
+
 	menu = new QMenuBar(frame);
 	menu->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	menu->insertItem(tr("&Lookup Tables"), lookup_tables);
 	menu->insertItem(tr("&SOMO Options"), somo_options);
 	menu->insertItem(tr("&PDB Options"), pdb_options);
 	menu->insertItem(tr("&Configurations"), configuration);
-	
+
    lbl_somo = new QLabel(tr("SOMO Program:"), this);
    Q_CHECK_PTR(lbl_somo);
    lbl_somo->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -658,21 +658,21 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
 #if defined(DEBUG_MULTI_RESIDUE)
    for (map < QString, int >::iterator it = atom_counts.begin();
 	it != atom_counts.end();
-	it++) 
+	it++)
    {
       printf("atom count map %s map pos %d\n",
 	     it->first.ascii(), it->second);
    }
    for (map < QString, int >::iterator it = has_OXT.begin();
 	it != has_OXT.end();
-	it++) 
+	it++)
    {
       printf("has_OXT map %s map value %d\n",
 	     it->first.ascii(), it->second);
    }
 #endif
    // end of atom count build
-}  
+}
 
 int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model)
 {
@@ -693,7 +693,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	 PDB_atom *this_atom = &(model->molecule[j].atom[k]);
 	 this_atom->active = false;
 
-	 QString count_idx = 
+	 QString count_idx =
 	    QString("%1_%2_%3")
 	    .arg(j)
 	    .arg(this_atom->resName)
@@ -710,7 +710,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	 for (unsigned int m = 0; m < residue_list.size(); m++)
 	 {
 	    if ((residue_list[m].name == this_atom->resName &&
-		 (int)residue_list[m].r_atom.size() ==	     
+		 (int)residue_list[m].r_atom.size() ==
 		 atom_counts[count_idx] - has_OXT[count_idx] &&
 		 this_atom->name != "OXT" &&
 		 (k || this_atom->name != "N" || !regular_N_handling)) ||
@@ -738,7 +738,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 		      ,has_OXT[count_idx]
 		      );
 #endif
-		 
+
 	       this_atom->p_residue = &(residue_list[m]);
 #if defined(DEBUG)
 	       printf("residue match %d resName %s \n", m, residue_list[m].name.ascii());
@@ -892,7 +892,7 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
    for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
       for (unsigned int j = i + 1; j < bead_model.size(); j++) {
 #if defined(DEBUG_OVERLAP_2)
-	 if(i == 2 && (j == 107 || j == 108)) 
+	 if(i == 2 && (j == 107 || j == 108))
 	    printf("x1 overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - %s\n",
 		   i, j,
 		   bead_model[i].chain,
@@ -953,7 +953,7 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
 		    pow(bead_model[i].bead_coordinate.axis[2] -
 			bead_model[j].bead_coordinate.axis[2], 2));
 #if defined(DEBUG_OVERLAP_2)
-	    if(i == 2 && (j == 107 || j == 108)) 
+	    if(i == 2 && (j == 107 || j == 108))
 	       printf("x2 overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - %s\n",
 		      i, j,
 		      bead_model[i].chain,
@@ -1021,7 +1021,7 @@ public:
       if (
 	  //	(PRO_N_override ? 0 : pdb_atom.bead_assignment)
 	  pdb_atom.atom_assignment
-	  < 
+	  <
 	  //	(objIn.PRO_N_override ? 0 : objIn.pdb_atom.bead_assignment)
 	  objIn.pdb_atom.atom_assignment
 	  )
@@ -1036,13 +1036,13 @@ public:
 };
 
 // #define DEBUG
-int US_Hydrodyn::create_beads(QString *error_string) 
+int US_Hydrodyn::create_beads(QString *error_string)
 {
 
    editor->append("Creating beads from model\n");
    qApp->processEvents();
    active_atoms.clear();
-    
+
    // #define DEBUG_MM
 #if defined(DEBUG_MM)
    {
@@ -1052,7 +1052,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
       for (i = 0; i < no_of_molecules; i++) {
 	 no_of_atoms +=  model_vector[current_model].molecule[i].atom.size();
       }
-      
+
       editor->append(QString("There are %1 atoms in %2 molecule(s) in this model\n").arg(no_of_atoms).arg(no_of_molecules));
    }
 #endif
@@ -1066,7 +1066,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
       {
 	 PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
 
-	 QString count_idx = 
+	 QString count_idx =
 	    QString("%1_%2_%3")
 	    .arg(j)
 	    .arg(this_atom->resName)
@@ -1085,27 +1085,27 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	 this_atom->bead_assignment = -1;
 	 this_atom->atom_assignment = -1;
 	 this_atom->chain = -1;
-	
+
 	 // find residue in residues
 	 int respos = -1;
 #if defined(DEBUG)
-	 printf("residue search name %s resName %s\n", 
-		this_atom->name.ascii(), 
+	 printf("residue search name %s resName %s\n",
+		this_atom->name.ascii(),
 		this_atom->resName.ascii());
 #endif
 	 for (unsigned int m = 0; m < residue_list.size(); m++)
 	 {
 	    if ((residue_list[m].name == this_atom->resName &&
-		 (int)residue_list[m].r_atom.size() ==	     
+		 (int)residue_list[m].r_atom.size() ==
 		 atom_counts[count_idx] - has_OXT[count_idx] &&
 		 this_atom->name != "OXT" &&
-		 (k || this_atom->name != "N" || !regular_N_handling)) || 
-		(residue_list[m].name == "OXT" 
+		 (k || this_atom->name != "N" || !regular_N_handling)) ||
+		(residue_list[m].name == "OXT"
 		 && this_atom->name == "OXT") ||
 		(!k &&
 		 this_atom->name == "N" &&
 		 regular_N_handling &&
-		 residue_list[m].name == "N1")) 
+		 residue_list[m].name == "N1"))
 	    {
 	       respos = (int) m;
 	       this_atom->p_residue = &(residue_list[m]);
@@ -1133,7 +1133,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 #endif
 	 }
 	 int atompos = -1;
-	
+
 	 if (respos != -1)
 	 {
 	    // clear tmp_used if new resSeq
@@ -1179,7 +1179,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	       if (!residue_list[respos].r_atom[m].tmp_used &&
 		   (residue_list[respos].r_atom[m].name == this_atom->name ||
 		    (
-		     this_atom->name == "N" && 
+		     this_atom->name == "N" &&
 		     regular_N_handling &&
 		     !k &&
 		     residue_list[respos].r_atom[m].name == "N1"
@@ -1216,7 +1216,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	       this_atom->chain = (int) this_atom->p_residue->r_bead[this_atom->bead_assignment].chain;
 
 #if defined(DEBUG)
-	       printf("found atom %s %s in residue %d pos %d bead asgn %d %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s ba %d\n", 
+	       printf("found atom %s %s in residue %d pos %d bead asgn %d %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s ba %d\n",
 		      this_atom->name.ascii(), this_atom->resName.ascii(), respos, atompos,
 		      this_atom->p_atom->bead_assignment,
 		      this_atom->bead_assignment,
@@ -1230,7 +1230,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 #endif
 	    }
 	 }
-	
+
 	 if (this_atom->active)
 	 {
 #if defined(DEBUG)
@@ -1265,8 +1265,8 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	    PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
 
 #if defined(DEBUG)
-	    printf("p1 j k %d %d %lx %s %d\n", j, k, 
-		   (long unsigned int)this_atom->p_atom, 
+	    printf("p1 j k %d %d %lx %s %d\n", j, k,
+		   (long unsigned int)this_atom->p_atom,
 		   this_atom->active ? "active" : "not active",
 		   this_atom->bead_assignment
 		   ); fflush(stdout);
@@ -1342,8 +1342,8 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	 for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
 	    PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
 
-	    printf("p1 j k %d %d %lx %s %d %d\n", j, k,  
-		   (long unsigned int)this_atom->p_atom, 
+	    printf("p1 j k %d %d %lx %s %d %d\n", j, k,
+		   (long unsigned int)this_atom->p_atom,
 		   this_atom->active ? "active" : "not active",
 		   this_atom->bead_assignment,
 		   this_atom->atom_assignment
@@ -1415,9 +1415,9 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	  bead_count,
 	  tot_bead_mw);
 #endif
-	
+
    return 0;
-}  
+}
 
 # define POP_MC              (1 << 0)
 # define POP_SC              (1 << 1)
@@ -1497,7 +1497,7 @@ void US_Hydrodyn::radial_reduction()
 	  buried_overlap.fuse_beads_percent,
 	  buried_overlap.remove_sync_percent,
 	  buried_overlap.remove_hierarch_percent,
-	  
+
 	  grid_overlap.fuse_beads ? "Y" : "N",
 	  grid_overlap.remove_hierarch ? "Y" : "N",
 	  grid_overlap.remove_sync ? "Y" : "N",
@@ -1619,7 +1619,7 @@ void US_Hydrodyn::radial_reduction()
    stage_loop:
 
       qApp->processEvents();
-      if (stopFlag) 
+      if (stopFlag)
       {
 	 return;
       }
@@ -1668,7 +1668,7 @@ void US_Hydrodyn::radial_reduction()
 
       do {
 	 qApp->processEvents();
-	 if (stopFlag) 
+	 if (stopFlag)
 	 {
 	    return;
 	 }
@@ -1845,7 +1845,7 @@ void US_Hydrodyn::radial_reduction()
 	 // write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_ap-%1-%2").arg(k).arg(iter) + DOTSOMO + ".tsv", &bead_model);
 	 // write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model-ap-%1-%2").arg(k).arg(iter) + DOTSOMO, &bead_model);
 	 qApp->processEvents();
-	 if (stopFlag) 
+	 if (stopFlag)
 	 {
 	    return;
 	 }
@@ -2315,7 +2315,7 @@ void US_Hydrodyn::radial_reduction()
 #endif
 	       } // if max intersection length > TOLERANCE
 	       qApp->processEvents();
-	       if (stopFlag) 
+	       if (stopFlag)
 	       {
 		  return;
 	       }
@@ -2510,7 +2510,7 @@ void US_Hydrodyn::radial_reduction()
 		     if (
 			 !reduced[pairs[i].j] &&
 			 (bead_model[pairs[i].j].exposed_code != 1 ||
-			  methods[k] & RR_EXPOSED || 
+			  methods[k] & RR_EXPOSED ||
 			  methods[k] & RR_ALL) &&
 			 (!(methods[k] & RR_MCSC) ||
 			  bead_model[pairs[i].j].chain == 0 ||
@@ -2591,7 +2591,7 @@ void US_Hydrodyn::radial_reduction()
 	       // write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_ar-%1-%2").arg(k).arg(iter) + DOTSOMO + ".tsv", &bead_model);
 	       // write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model-ar-%1-%2").arg(k).arg(iter) + DOTSOMO, &bead_model);
 	       qApp->processEvents();
-	       if (stopFlag) 
+	       if (stopFlag)
 	       {
 		  return;
 	       }
@@ -2634,10 +2634,10 @@ void US_Hydrodyn::radial_reduction()
    write_bead_tsv(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO + ".tsv", &bead_model);
    write_bead_spt(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO, &bead_model);
 #endif
-   //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
+   //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
    //		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
    //		 DOTSOMO, &bead_model);
-   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
+   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
 		    QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + DOTSOMO
 		    , &bead_model);
    editor->append("Finished with popping and radial reduction\n");
@@ -2673,7 +2673,7 @@ int US_Hydrodyn::compute_asa()
 
       editor->append(QString("There are %1 atoms in %2 chain(s) in this model\n").arg(no_of_atoms).arg(no_of_molecules));
    }
-   if (stopFlag) 
+   if (stopFlag)
    {
       return -1;
    }
@@ -2683,7 +2683,7 @@ int US_Hydrodyn::compute_asa()
       editor->append("Errors found during the initial creation of beads\n");
       progress->setProgress(mppos);
       qApp->processEvents();
-      if (stopFlag) 
+      if (stopFlag)
       {
 	 return -1;
       }
@@ -2732,7 +2732,7 @@ int US_Hydrodyn::compute_asa()
       // surfracer
       editor->append("Computing ASA via SurfRacer\n");
       qApp->processEvents();
-      if (stopFlag) 
+      if (stopFlag)
       {
 	 return -1;
       }
@@ -2746,7 +2746,7 @@ int US_Hydrodyn::compute_asa()
       progress->setProgress(ppos++); // 2
       qApp->processEvents();
       editor->append("Return from Computing ASA\n");
-      if (stopFlag) 
+      if (stopFlag)
       {
 	 return -1;
       }
@@ -2755,7 +2755,7 @@ int US_Hydrodyn::compute_asa()
 	 editor->append("Errors found during ASA calculation\n");
 	 progress->setProgress(mppos);
 	 qApp->processEvents();
-	 if (stopFlag) 
+	 if (stopFlag)
 	 {
 	    return -1;
 	 }
@@ -2803,7 +2803,7 @@ int US_Hydrodyn::compute_asa()
       // surfracer
       editor->append("Computing ASA via ASAB1\n");
       qApp->processEvents();
-      if (stopFlag) 
+      if (stopFlag)
       {
 	 return -1;
       }
@@ -2819,7 +2819,7 @@ int US_Hydrodyn::compute_asa()
       progress->setProgress(ppos++); // 2
       qApp->processEvents();
       editor->append("Return from Computing ASA\n");
-      if (stopFlag) 
+      if (stopFlag)
       {
 	 return -1;
       }
@@ -2828,7 +2828,7 @@ int US_Hydrodyn::compute_asa()
 	 editor->append("Errors found during ASA calculation\n");
 	 progress->setProgress(mppos);
 	 qApp->processEvents();
-	 if (stopFlag) 
+	 if (stopFlag)
 	 {
 	    return -1;
 	 }
@@ -2855,7 +2855,7 @@ int US_Hydrodyn::compute_asa()
    printf("made it to here\n"); fflush(stdout);
 
    FILE *asaf = fopen(QString(somo_tmp_dir + "/atom.asa"), "w");
-	
+
 
    // for (unsigned int i = 0; i < model_vector.size (); i++)
    {
@@ -2881,7 +2881,7 @@ int US_Hydrodyn::compute_asa()
 		    this_atom->resName.ascii(),
 		    this_atom->resSeq.ascii(),
 		    this_atom->asa);
-		
+
 
 	    for (unsigned int m = 0; m < 3; m++) {
 	       this_atom->bead_cog_coordinate.axis[m] = 0;
@@ -2895,7 +2895,7 @@ int US_Hydrodyn::compute_asa()
 
    progress->setProgress(ppos++); // 3
    qApp->processEvents();
-   if (stopFlag) 
+   if (stopFlag)
    {
       return -1;
    }
@@ -3141,7 +3141,7 @@ int US_Hydrodyn::compute_asa()
 
    progress->setProgress(ppos++); // 4
    qApp->processEvents();
-   if (stopFlag) 
+   if (stopFlag)
    {
       return -1;
    }
@@ -3209,7 +3209,7 @@ int US_Hydrodyn::compute_asa()
 
    progress->setProgress(ppos++); // 5
    qApp->processEvents();
-   if (stopFlag) 
+   if (stopFlag)
    {
       return -1;
    }
@@ -3244,7 +3244,7 @@ int US_Hydrodyn::compute_asa()
    // compute com of entire molecule
    progress->setProgress(ppos++); // 6
    qApp->processEvents();
-   if (stopFlag) 
+   if (stopFlag)
    {
       return -1;
    }
@@ -3425,7 +3425,7 @@ int US_Hydrodyn::compute_asa()
    // pass 4 print results
    progress->setProgress(ppos++); // 7
    qApp->processEvents();
-   if (stopFlag) 
+   if (stopFlag)
    {
       return -1;
    }
@@ -3583,7 +3583,7 @@ int US_Hydrodyn::compute_asa()
 #endif
 
    write_bead_asa(somo_dir + SLASH +
-		  project + QString("_%1").arg(current_model + 1) + 
+		  project + QString("_%1").arg(current_model + 1) +
 		  QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "")
 		  + DOTSOMO + ".asa_res", &bead_model);
 
@@ -3594,7 +3594,7 @@ int US_Hydrodyn::compute_asa()
 
    progress->setProgress(ppos++); // 8
    qApp->processEvents();
-   if (stopFlag) 
+   if (stopFlag)
    {
       return -1;
    }
@@ -3801,7 +3801,7 @@ int US_Hydrodyn::compute_asa()
       editor->append(QString("Begin popping stage %1\n").arg(k + 1));
       progress->setProgress(ppos++); // 9, 10, 11
       qApp->processEvents();
-      if (stopFlag) 
+      if (stopFlag)
       {
 	 return -1;
       }
@@ -3997,7 +3997,7 @@ int US_Hydrodyn::compute_asa()
       progress->setProgress(ppos++); // 12,13,14
       editor->append(QString("Beads popped %1.\nBegin radial reduction stage %2\n").arg(beads_popped).arg(k + 1));
       qApp->processEvents();
-      if (stopFlag) 
+      if (stopFlag)
       {
 	 return -1;
       }
@@ -4638,7 +4638,7 @@ int US_Hydrodyn::compute_asa()
 		     if (
 			 !reduced[pairs[i].j] &&
 			 (bead_model[pairs[i].j].exposed_code != 1 ||
-			  methods[k] & RR_EXPOSED || 
+			  methods[k] & RR_EXPOSED ||
 			  methods[k] & RR_ALL) &&
 			 (!(methods[k] & RR_MCSC) ||
 			  bead_model[pairs[i].j].chain == 0 ||
@@ -4730,7 +4730,7 @@ int US_Hydrodyn::compute_asa()
 #endif
 	 progress->setProgress(ppos++); // 15,16,17
 	 qApp->processEvents();
-	 if (stopFlag) 
+	 if (stopFlag)
 	 {
 	    return -1;
 	 }
@@ -4766,13 +4766,13 @@ int US_Hydrodyn::compute_asa()
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
    //		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
    //		 DOTSOMO, &bead_model);
-   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
+   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
 		    QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + DOTSOMO
 		    , &bead_model);
    editor->append("Finished with popping and radial reduction\n");
    progress->setProgress(mppos - (asa.recheck_beads ? 1 : 0));
    qApp->processEvents();
-   if (stopFlag) 
+   if (stopFlag)
    {
       return -1;
    }
@@ -5086,28 +5086,28 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
       decpts = 4;
    }
 
-   QString fstring_somo = 
+   QString fstring_somo =
       QString("%.%1f\t%.%2f\t%.%3f\t%.%4f\t%.2f\t%d\t%s\t%.4f\n").
       arg(decpts).
       arg(decpts).
       arg(decpts).
       arg(decpts);
 
-   QString fstring_beams = 
+   QString fstring_beams =
       QString("%.%1f\t%.%2f\t%.%3f\n").
       arg(decpts).
       arg(decpts).
       arg(decpts);
 
-   QString fstring_rmc = 
+   QString fstring_rmc =
       QString("%.%1f\t%.0f\t%d\n"). // zero digit MW
       arg(decpts);
 
-   QString fstring_rmc1 = 
+   QString fstring_rmc1 =
       QString("%.%1f\t%.0f\t%d\t%d\t%s\n"). // zero digit MW
       arg(decpts);
 
-   QString fstring_hydro = 
+   QString fstring_hydro =
       QString("%.%1f\t%.%2f\t%.%3f\t%.%4f\n").
       arg(decpts).
       arg(decpts).
@@ -5125,35 +5125,35 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
    case 2: // include bead-original residue correspondence
       for (unsigned int i = 0; i < model->size(); i++) {
 	 use_model.push_back(&(*model)[i]);
-      }    
+      }
       break;
    case 1: // exposed sidechain -> exposed main chain -> buried
       for (unsigned int i = 0; i < model->size(); i++) {
-	 if ((*model)[i].visibility == 1 && 
+	 if ((*model)[i].visibility == 1 &&
 	     (*model)[i].chain == 1) {
 	    use_model.push_back(&(*model)[i]);
 	 }
-      }    
+      }
       for (unsigned int i = 0; i < model->size(); i++) {
-	 if ((*model)[i].visibility == 1 && 
+	 if ((*model)[i].visibility == 1 &&
 	     (*model)[i].chain == 0) {
 	    use_model.push_back(&(*model)[i]);
 	 }
-      }    
+      }
       for (unsigned int i = 0; i < model->size(); i++) {
-	 if ((*model)[i].visibility == 0 && 
+	 if ((*model)[i].visibility == 0 &&
 	     (*model)[i].chain == 1) {
 	    use_model.push_back(&(*model)[i]);
 	 }
-      }    
+      }
       for (unsigned int i = 0; i < model->size(); i++) {
-	 if ((*model)[i].visibility == 0 && 
+	 if ((*model)[i].visibility == 0 &&
 	     (*model)[i].chain == 0) {
 	    use_model.push_back(&(*model)[i]);
 	 }
-      }    
-    
-   default : 
+      }
+
+   default :
       break;
    }
 
@@ -5226,7 +5226,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
 	    for (unsigned int j = 0; j < use_model[i]->all_beads.size(); j++)
 	    {
 	       QString tmp_serial = use_model[i]->all_beads[j]->resSeq;
-	  
+
 	       residues += "," +
 		  (use_model[i]->all_beads[j]->resName +
 		   (use_model[i]->all_beads[j]->org_chain ? ".SC." : (regular_N_handling ? ".PB." : ".MC.")) +
@@ -5289,14 +5289,14 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
 	      "Bead Model Output:\n"
 	      "  Sequence:                   %s\n"
 	      "\n"
-	    
-	      ,bead_output.sequence ? 
-	      (bead_output.sequence == 1 ? 
+
+	      ,bead_output.sequence ?
+	      (bead_output.sequence == 1 ?
 	       "exposed sidechain -> exposed main chain -> buried" :
 	       "include bead-original residue correspondence") :
 	      "as in original PDB file"
 	      );
-    
+
       fprintf(fsomo, options_log.ascii());
       fclose(fsomo);
    }
@@ -5320,7 +5320,7 @@ void US_Hydrodyn::bead_check()
    for(unsigned int i = 0; i < bead_model.size(); i++) {
       active_atoms.push_back(&bead_model[i]);
    }
-    
+
    QString error_string = "";
    int retval = us_hydrodyn_asab1_main(active_atoms,
 				       &asa,
@@ -5330,7 +5330,7 @@ void US_Hydrodyn::bead_check()
 				       editor,
 				       this
 				       );
-   if (stopFlag) 
+   if (stopFlag)
    {
       return;
    }
@@ -5362,10 +5362,10 @@ void US_Hydrodyn::bead_check()
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + "_pre_recheck" + DOTSOMO, &bead_model);
    //  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + "_pre_recheck" + DOTSOMO, &bead_model);
 
-   for (unsigned int i = 0; i < bead_model.size(); i++) 
+   for (unsigned int i = 0; i < bead_model.size(); i++)
    {
-      float surface_area = 
-	 (asa.probe_radius + bead_model[i].bead_computed_radius) * 
+      float surface_area =
+	 (asa.probe_radius + bead_model[i].bead_computed_radius) *
 	 (asa.probe_radius + bead_model[i].bead_computed_radius) * 4 * M_PI;
       QString msg = "";
       if(bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area) {
@@ -5390,14 +5390,14 @@ void US_Hydrodyn::bead_check()
 	 }
       }
 #endif
-      
+
       printf("bead %d %.2f %.2f %.2f %s %s\n",
 	     i,
 	     bead_model[i].bead_computed_radius,
 	     surface_area,
 	     bead_model[i].bead_recheck_asa,
 	     (bead_model[i].bead_recheck_asa >
-	      (asa.threshold_percent / 100.0) * surface_area) ? 
+	      (asa.threshold_percent / 100.0) * surface_area) ?
 	     "exposed" : "buried",
 	     msg.ascii());
    }
@@ -5425,7 +5425,7 @@ void US_Hydrodyn::select_model(int val)
    }
    msg += "\n";
    editor->setText(msg);
-	
+
    // check integrity of PDB file and confirm that all residues are correctly defined in residue table
    if (results_widget)
    {
@@ -5468,9 +5468,9 @@ void US_Hydrodyn::visualize()
 			    (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
 			    QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 			    DOTSOMO + ".spt");
-	    
+
 	    rasmol->setWorkingDirectory(somo_dir);
-	      
+
 	    rasmol->setArguments(argument);
 	    if (!rasmol->start())
 	    {
@@ -5505,7 +5505,7 @@ int US_Hydrodyn::calc_grid()
       results_widget = false;
    }
 
-   if(!bead_model_prefix.contains("a2b")) 
+   if(!bead_model_prefix.contains("a2b"))
    {
       if(bead_model_prefix.length()) {
 	 bead_model_prefix += "-a2b";
@@ -5522,13 +5522,13 @@ int US_Hydrodyn::calc_grid()
 	    printf("in calc_grid: somo_processed %d\n", current_model); fflush(stdout);
 	    editor->append(QString("Gridding bead model %1\n").arg(current_model + 1));
 	    qApp->processEvents();
-	    bead_models[current_model] = 
-	       us_hydrodyn_grid_atob(&bead_models[current_model], 
+	    bead_models[current_model] =
+	       us_hydrodyn_grid_atob(&bead_models[current_model],
 				     &grid,
 				     progress,
 				     editor,
 				     this);
-	    if (stopFlag) 
+	    if (stopFlag)
 	    {
 	       editor->append("Stopped by user\n\n");
 	       pb_grid->setEnabled(true);
@@ -5539,10 +5539,10 @@ int US_Hydrodyn::calc_grid()
 	    bead_model = bead_models[current_model];
 	    any_models = true;
 	    somo_processed[current_model] = 1;
-	    if (grid.overlaps) 
+	    if (grid.overlaps)
 	    {
 	       radial_reduction();
-	       if (stopFlag) 
+	       if (stopFlag)
 	       {
 		  editor->append("Stopped by user\n\n");
 		  pb_grid->setEnabled(true);
@@ -5556,7 +5556,7 @@ int US_Hydrodyn::calc_grid()
 	    {
 	       editor->append("Rechecking beads\n");
 	       qApp->processEvents();
-	       if (stopFlag) 
+	       if (stopFlag)
 	       {
 		  editor->append("Stopped by user\n\n");
 		  pb_grid->setEnabled(true);
@@ -5569,7 +5569,7 @@ int US_Hydrodyn::calc_grid()
 		  bead_model[i].bead_color = 6;
 	       }
 	       bead_check();
-	       if (stopFlag) 
+	       if (stopFlag)
 	       {
 		  editor->append("Stopped by user\n\n");
 		  pb_grid->setEnabled(true);
@@ -5583,8 +5583,8 @@ int US_Hydrodyn::calc_grid()
 	    //	     (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
 	    //	     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 	    //		     DOTSOMO, &bead_model, bead_model_from_file);
-	    write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
-			     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + 
+	    write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+			     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 			     DOTSOMO, &bead_model);
 	 } else {
 	    QString error_string;
@@ -5592,7 +5592,7 @@ int US_Hydrodyn::calc_grid()
 	    // create bead model from atoms
 	    editor->append(QString("Gridding atom model %1\n").arg(current_model + 1));
 	    qApp->processEvents();
-	    if (stopFlag) 
+	    if (stopFlag)
 	    {
 	       editor->append("Stopped by user\n\n");
 	       pb_grid->setEnabled(true);
@@ -5601,7 +5601,7 @@ int US_Hydrodyn::calc_grid()
 	       return -1;
 	    }
 	    int retval = create_beads(&error_string);
-	    if (stopFlag) 
+	    if (stopFlag)
 	    {
 	       editor->append("Stopped by user\n\n");
 	       pb_grid->setEnabled(true);
@@ -5667,14 +5667,14 @@ int US_Hydrodyn::calc_grid()
 		  if (bead_models.size() < current_model + 1) {
 		     bead_models.resize(current_model + 1);
 		  }
-		
-		  bead_models[current_model] = 
+
+		  bead_models[current_model] =
 		     us_hydrodyn_grid_atob(&bead_model,
 					   &grid,
 					   progress,
 					   editor,
 					   this);
-		  if (stopFlag) 
+		  if (stopFlag)
 		  {
 		     editor->append("Stopped by user\n\n");
 		     pb_grid->setEnabled(true);
@@ -5690,12 +5690,12 @@ int US_Hydrodyn::calc_grid()
 		  any_models = true;
 		  somo_processed[current_model] = 1;
 		  printf("back from grid_atob 1\n"); fflush(stdout);
-		  if (grid.overlaps) 
+		  if (grid.overlaps)
 		  {
 		     radial_reduction();
 		     bead_models[current_model] = bead_model;
 		  }
-		  if (stopFlag) 
+		  if (stopFlag)
 		  {
 		     editor->append("Stopped by user\n\n");
 		     pb_grid->setEnabled(true);
@@ -5714,7 +5714,7 @@ int US_Hydrodyn::calc_grid()
 		     bead_check();
 		     bead_models[current_model] = bead_model;
 		  }
-		  if (stopFlag) 
+		  if (stopFlag)
 		  {
 		     editor->append("Stopped by user\n\n");
 		     pb_grid->setEnabled(true);
@@ -5727,8 +5727,8 @@ int US_Hydrodyn::calc_grid()
 		  //		 (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
 		  //		 QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 		  //		 DOTSOMO, &bead_model, bead_model_from_file);
-		  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) + 
-				   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + 
+		  write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
+				   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 				   DOTSOMO, &bead_model);
 
 	       }
@@ -5737,7 +5737,7 @@ int US_Hydrodyn::calc_grid()
       }
    }
 
-   if (stopFlag) 
+   if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
       pb_grid->setEnabled(true);
@@ -5781,7 +5781,7 @@ int US_Hydrodyn::calc_somo()
       progress->reset();
       return -1;
    }
-    
+
    if (!residue_list.size() ||
        !model_vector.size())
    {
@@ -5813,12 +5813,12 @@ int US_Hydrodyn::calc_somo()
    msg += "\n";
    editor->setText(msg);
 
-   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) 
+   for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++)
    {
-      if (!any_errors && lb_model->isSelected(current_model)) 
+      if (!any_errors && lb_model->isSelected(current_model))
       {
 	 any_models = true;
-	 if(!compute_asa()) 
+	 if(!compute_asa())
 	 {
 	    somo_processed[current_model] = 1;
 	    if (asa.recheck_beads)
@@ -5826,7 +5826,7 @@ int US_Hydrodyn::calc_somo()
 	       // puts("recheck beads disabled");
 	       editor->append("Rechecking beads\n");
 	       qApp->processEvents();
-		  
+
 	       bead_check();
 	       editor->append("Finished rechecking beads\n");
 	       progress->setProgress(19);
@@ -5861,7 +5861,7 @@ int US_Hydrodyn::calc_somo()
    else
    {
       editor->append("Errors encountered\n\n");
-   }	    
+   }
 
    pb_somo->setEnabled(true);
    pb_grid->setEnabled(true);
@@ -5912,9 +5912,9 @@ void US_Hydrodyn::calc_hydro()
 		  .arg((fabs((hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance) - overlap_tolerance) > 1e-5)
 		       ? QString("\nNOTICE: Overlap reduction bead overlap tolerance %1 does not equal the manually selected hydrodynamic calculations bead overlap cut-off %2\n")
 		       .arg(overlap_tolerance).arg(hydro.overlap) : ""));
-							  
+
    qApp->processEvents();
-   if (stopFlag) 
+   if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
@@ -5943,7 +5943,7 @@ void US_Hydrodyn::calc_hydro()
 				      editor,
 				      this);
    chdir(somo_tmp_dir);
-   if (stopFlag) 
+   if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
@@ -6177,7 +6177,7 @@ void US_Hydrodyn::read_residue_file()
 	 {
 	    new_residue.unique_name = QString("%1%2")
 	       .arg(new_residue.name)
-	       .arg(dup_residue_map[new_residue.name] ? 
+	       .arg(dup_residue_map[new_residue.name] ?
 		    QString("_%1").arg(dup_residue_map[new_residue.name]) : "");
 	    dup_residue_map[new_residue.name]++;
 	    printf("residue name %s unique name %s\n"
@@ -6195,9 +6195,9 @@ void US_Hydrodyn::read_residue_file()
    printf("map index:\n");
    for (map < QString, vector < int > >::iterator it = multi_residue_map.begin();
 	it != multi_residue_map.end();
-	it++) 
+	it++)
    {
-      for (unsigned int i = 0; i < it->second.size(); i++) 
+      for (unsigned int i = 0; i < it->second.size(); i++)
       {
 	 printf("residue %s map pos %u\n",
 		it->first.ascii(), it->second[i]);
@@ -6315,7 +6315,7 @@ void US_Hydrodyn::view_asa()
 void US_Hydrodyn::load_bead_model()
 {
    QString filename = QFileDialog::getOpenFileName(somo_dir, QString("*%1.bead_model *%2.beams *%3.BEAD_MODEL *%4.BEAMS")
-						   .arg(DOTSOMO).arg(DOTSOMO).arg(DOTSOMOCAP).arg(DOTSOMOCAP), 
+						   .arg(DOTSOMO).arg(DOTSOMO).arg(DOTSOMOCAP).arg(DOTSOMOCAP),
 						   this);
    if (!filename.isEmpty())
    {
@@ -6327,7 +6327,7 @@ void US_Hydrodyn::load_bead_model()
       pb_grid->setEnabled(false);
       bead_model_prefix = "";
       le_bead_model_prefix->setText(bead_model_prefix);
-		
+
       if (results_widget)
       {
 	 results_window->close();
@@ -6400,7 +6400,7 @@ void US_Hydrodyn::read_pdb(const QString &filename)
 	    {
 	       if (str1.mid(16,1) == " " || str1.mid(16,1) == "A")
 	       {
-		  if (str1.mid(16,1) == "A") 
+		  if (str1.mid(16,1) == "A")
 		  {
 		     editor->append(QString("Atom %1 conformation A selected").arg(str1.mid(6,5)));
 		  }
@@ -7122,6 +7122,23 @@ void US_Hydrodyn::read_config(const QString& fname)
    misc.vbar = str.toDouble();
    ts >> str;
    ts.readLine();
+   misc.avg_radius = str.toDouble();
+   ts >> str;
+   ts.readLine();
+   misc.avg_mass = str.toDouble();
+   ts >> str;
+   ts.readLine();
+   misc.avg_hydration = str.toDouble();
+   ts >> str;
+   ts.readLine();
+   misc.avg_volume = str.toDouble();
+   ts >> str;
+   ts.readLine();
+   misc.avg_vbar = str.toDouble();
+
+
+   ts >> str;
+   ts.readLine();
    hydro.unit = str.toInt();
    ts >> str;
    ts.readLine();
@@ -7164,7 +7181,7 @@ void US_Hydrodyn::read_config(const QString& fname)
 // pdb_visualization options:
 
    ts >> str; // visualization option
-   ts.readLine(); 
+   ts.readLine();
    pdb_vis.visualization = str.toInt();
    ts >> str;
    ts.readLine();
@@ -7173,22 +7190,22 @@ void US_Hydrodyn::read_config(const QString& fname)
 // pdb_parsing options:
 
    ts >> str; // skip hydrogens?
-   ts.readLine(); 
+   ts.readLine();
    pdb_parse.skip_hydrogen = (bool) str.toInt();
    ts >> str; // skip water molecules?
-   ts.readLine(); 
+   ts.readLine();
    pdb_parse.skip_water = (bool) str.toInt();
    ts >> str; // skip alternate conformations?
-   ts.readLine(); 
+   ts.readLine();
    pdb_parse.alternate = (bool) str.toInt();
    ts >> str; // find free SH atoms?
-   ts.readLine(); 
+   ts.readLine();
    pdb_parse.find_sh = (bool) str.toInt();
    ts >> str; // missing residue choice
-   ts.readLine(); 
+   ts.readLine();
    pdb_parse.missing_residues = str.toInt();
    ts >> str; // missing atom choice
-   ts.readLine(); 
+   ts.readLine();
    pdb_parse.missing_atoms = str.toInt();
 
 }
@@ -7253,7 +7270,7 @@ void US_Hydrodyn::reset()
    grid_overlap.remove_sync_percent = 1.0;
    grid_overlap.translate_out = false;
    grid_overlap.show_translate = false;
-   
+
 	sidechain_overlap.title = "exposed side chain beads";
    mainchain_overlap.title = "exposed main/main and main/side chain beads";
    buried_overlap.title = "buried beads";
@@ -7261,7 +7278,7 @@ void US_Hydrodyn::reset()
 
    bead_output.sequence = 0;
    bead_output.output = 0;
-	
+
    asa.probe_radius = (float) 1.4;
    asa.probe_recheck_radius = (float) 1.4;
    asa.threshold = 20.0;
@@ -7277,10 +7294,15 @@ void US_Hydrodyn::reset()
    grid.overlaps = true;	// true: remove overlaps
    grid.tangency = false;	// true: Expand beads to tangency
    grid.cube_side = 10.0;
-	
+
    misc.hydrovol = 24.041;
    misc.compute_vbar = true;
    misc.vbar = 0.72;
+   misc.avg_radius = 1.7;
+   misc.avg_mass = 16.0;
+   misc.avg_hydration = 0.1;
+   misc.avg_volume = 20.0;
+   misc.avg_vbar = 0.72;
    overlap_tolerance = 0.001;
 
    hydro.unit = -10; 					// exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
@@ -7368,17 +7390,22 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << asa.recheck_beads << "\t\t# flag for rechecking beads\n";
       ts << asa.method << "\t\t# flag for ASAB1/Surfracer method\n";
       ts << asa.asab1_step << "\t\t# ASAB1 step size\n";
-		
+
       ts << grid.cubic << "\t\t# flag to apply cubic grid\n";
       ts << grid.hydrate << "\t\t# flag to hydrate original model (grid)\n";
       ts << grid.center << "\t\t# flag for positioning bead in center of mass or cubelet (grid)\n";
       ts << grid.overlaps << "\t\t# flag for removing overlaps (grid)\n";
       ts << grid.tangency << "\t\t# flag for expanding beads to tangency (grid)\n";
       ts << grid.cube_side << "\t\t# Length of cube side (grid)\n";
-		
+
       ts << misc.hydrovol << "\t\t# hydration volume\n";
       ts << misc.compute_vbar << "\t\t# flag for selecting vbar calculation\n";
       ts << misc.vbar << "\t\t# vbar value\n";
+      ts << misc.avg_radius << "\t\t# Average atomic radius value\n";
+      ts << misc.avg_mass << "\t\t# Average atomic mass value\n";
+      ts << misc.avg_hydration << "\t\t# Average atomic hydration value\n";
+      ts << misc.avg_volume << "\t\t# Average bead/atom volume value\n";
+      ts << misc.avg_vbar << "\t\t# Average vbar value\n";
 
       ts << hydro.unit << "\t\t# exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)\n";
       ts << hydro.reference_system << "\t\t# flag for reference system\n";
@@ -7392,7 +7419,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << hydro.viscosity << "\t\t# flag false: include beads in volume correction for intrinsic viscosity, true: exclude\n";
       ts << hydro.overlap_cutoff << "\t\t# flag for overlap cutoff: false: same as in model building, true: enter manually\n";
       ts << hydro.overlap << "\t\t# overlap value\n";
-      
+
 		ts << pdb_vis.visualization << "\t\t# PDB visualization option\n";
 		ts << pdb_vis.filename << "\t\t# RasMol color filename\n";
 
@@ -7402,7 +7429,7 @@ void US_Hydrodyn::write_config(const QString& fname)
 		ts << pdb_parse.find_sh << "\t\t# find SH groups?\n";
 		ts << pdb_parse.missing_residues << "\t\t# how to handle missing residues\n";
 		ts << pdb_parse.missing_atoms << "\t\t# how to handle missing atoms\n";
-		
+
 		f.close();
    }
 }
@@ -7628,7 +7655,7 @@ void US_Hydrodyn::append_options_log_somo()
 	     "  Bead ASA Threshold %%:       %.1f\n"
 	     "  ASAB1 Step Size (A):        %.1f\n"
 	     "\n"
-		  
+
 	     ,asa.calculation ? "On" : "Off"
 	     ,asa.recheck_beads ? "On" : "Off"
 	     ,asa.method ? "Rolling Sphere" : "Voronoi Tesselation"
@@ -7652,7 +7679,7 @@ void US_Hydrodyn::append_options_log_somo()
 	     "      Remove Overlaps hierarchically:             %s\n"
 	     "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
 	     "      Outward Translation:                        %s\n"
-		  
+
 	     "    Exposed Main and side chain beads:\n"
 	     "      Fuse Beads:                                 %s\n"
 	     "      Fuse Beads that overlap by more than:       %.1f\n"
@@ -7661,7 +7688,7 @@ void US_Hydrodyn::append_options_log_somo()
 	     "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
 	     "      Remove Overlaps hierarchically:             %s\n"
 	     "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
-		  
+
 	     "    Buried beads:\n"
 	     "      Fuse Beads:                                 %s\n"
 	     "      Fuse Beads that overlap by more than:       %.1f\n"
@@ -7670,7 +7697,7 @@ void US_Hydrodyn::append_options_log_somo()
 	     "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
 	     "      Remove Overlaps hierarchically:             %s\n"
 	     "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
-	     
+
 		  "    Grid beads:\n"
 	     "      Fuse Beads:                                 %s\n"
 	     "      Fuse Beads that overlap by more than:       %.1f\n"
@@ -7680,7 +7707,7 @@ void US_Hydrodyn::append_options_log_somo()
 	     "      Remove Overlaps hierarchically:             %s\n"
 	     "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
 	     "\n"
-		  
+
 	     ,overlap_tolerance
 
 	     ,sidechain_overlap.fuse_beads ? "On" : "Off"
@@ -7691,7 +7718,7 @@ void US_Hydrodyn::append_options_log_somo()
 	     ,sidechain_overlap.remove_hierarch ? "On" : "Off"
 	     ,sidechain_overlap.remove_hierarch_percent
 	     ,sidechain_overlap.translate_out ? "On" : "Off"
-		  
+
 	     ,mainchain_overlap.fuse_beads ? "On" : "Off"
 	     ,mainchain_overlap.fuse_beads_percent
 	     ,mainchain_overlap.remove_overlap ? "On" : "Off"
@@ -7699,7 +7726,7 @@ void US_Hydrodyn::append_options_log_somo()
 	     ,mainchain_overlap.remove_sync_percent
 	     ,mainchain_overlap.remove_hierarch ? "On" : "Off"
 	     ,mainchain_overlap.remove_hierarch_percent
-		  
+
 	     ,buried_overlap.fuse_beads ? "On" : "Off"
 	     ,buried_overlap.fuse_beads_percent
 	     ,buried_overlap.remove_overlap ? "On" : "Off"
@@ -7707,7 +7734,7 @@ void US_Hydrodyn::append_options_log_somo()
 	     ,buried_overlap.remove_sync_percent
 	     ,buried_overlap.remove_hierarch ? "On" : "Off"
 	     ,buried_overlap.remove_hierarch_percent
-	     
+
 		  ,grid_overlap.fuse_beads ? "On" : "Off"
 	     ,grid_overlap.fuse_beads_percent
 	     ,grid_overlap.remove_overlap ? "On" : "Off"
@@ -7717,10 +7744,10 @@ void US_Hydrodyn::append_options_log_somo()
 	     ,grid_overlap.remove_hierarch_percent
 	     );
    options_log += s;
-}	
+}
 
 
-	    
+
 void US_Hydrodyn::append_options_log_atob()
 {
    QString s;
@@ -7749,7 +7776,7 @@ void US_Hydrodyn::append_options_log_atob()
    options_log += s;
 }
 
-void US_Hydrodyn::stop_calc() 
+void US_Hydrodyn::stop_calc()
 {
    stopFlag = true;
    pb_stop_calc->setEnabled(false);
