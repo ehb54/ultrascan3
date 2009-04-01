@@ -31,8 +31,11 @@ US_Editor::US_Editor( int menu, bool readonly, QWidget* parent,
          fileMenu->addAction( fontAction );
          fileMenu->addAction( clearAction );
 
-         menuBar()->setPalette( US_GuiSettings::normalColor() );
    }
+
+   menuBar()->setPalette( US_GuiSettings::normalColor() );
+   menuBar()->setFont   ( QFont( US_GuiSettings::fontFamily(),
+                          US_GuiSettings::fontSize() ) );
 
    currentFont = QFont( "Courier", 11, QFont::Bold );
    
