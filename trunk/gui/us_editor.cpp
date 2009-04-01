@@ -30,7 +30,8 @@ US_Editor::US_Editor( int menu, bool readonly, QWidget* parent,
          fileMenu->addAction( printAction );
          fileMenu->addAction( fontAction );
          fileMenu->addAction( clearAction );
-
+         fileMenu->setFont  ( QFont( US_GuiSettings::fontFamily(),
+                                     US_GuiSettings::fontSize() - 1 ) );
    }
 
    menuBar()->setPalette( US_GuiSettings::normalColor() );
