@@ -110,7 +110,7 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
 	cb_atom_stop->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
 	cb_atom_skip = new QCheckBox(bg_atoms);
-	cb_atom_skip->setText(tr(" List them, skip atoms and proceed"));
+	cb_atom_skip->setText(tr(" List them, skip entire residue and proceed"));
 	cb_atom_skip->setEnabled(true);
 	cb_atom_skip->setMinimumHeight(minHeight1);
 	cb_atom_skip->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
