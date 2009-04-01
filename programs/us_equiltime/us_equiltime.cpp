@@ -426,6 +426,8 @@ void US_EquilTime::update_speeds( int type )
          
          for ( int i = 0; i < speed_count; i++ )
          {
+            double rpm = rpm_start + i * increment;
+            rpm = round( rpm / 100.0 + - 0.5 ) * 100.0;  // Round to closest 100
             speed_steps <<  rpm_start + i * increment;
             te_speedlist->append( QString::number( i + 1 ) + ": rpm = " + 
                              QString::number( speed_steps[ i ], 'f', 3 ) );

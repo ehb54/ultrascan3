@@ -39,6 +39,8 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_
 {
    setSpacing( 0 );
 
+   QFont buttonFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() - 2 );
+
    // Add the tool bar 
    QToolBar* toolBar = new QToolBar;
    toolBar->setAutoFillBackground( true );
@@ -49,24 +51,28 @@ US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_
    btnZoom->setIcon(QIcon( zoom_xpm ) );
    btnZoom->setCheckable( true );
    btnZoom->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   btnZoom->setFont( buttonFont );
    connect( btnZoom, SIGNAL( toggled( bool ) ), SLOT( zoom( bool ) ) );
 
    QToolButton* btnPrint = new QToolButton( toolBar );
    btnPrint->setText( "Print" );
    btnPrint->setIcon( QIcon( print_xpm ) );
    btnPrint->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   btnPrint->setFont( buttonFont );
    connect( btnPrint, SIGNAL( clicked() ), SLOT( print() ) );
 
    QToolButton* btnSVG = new QToolButton( toolBar );
    btnSVG->setText( "SVG" );
    btnSVG->setIcon( QIcon( print_xpm ) );
    btnSVG->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   btnSVG->setFont( buttonFont );
    connect( btnSVG, SIGNAL( clicked() ), SLOT( svg() ) );
 
    QToolButton* btnConfig = new QToolButton( toolBar );
    btnConfig->setText( "Config" );
    btnConfig->setIcon(QIcon( configure_32_xpm ) );
    btnConfig->setToolButtonStyle( Qt::ToolButtonTextUnderIcon );
+   btnConfig->setFont( buttonFont );
    connect( btnConfig, SIGNAL( clicked() ), SLOT( config() ) );
 
    toolBar->addWidget( btnZoom   );
