@@ -23,28 +23,73 @@
 <h2>
 SOMO - Miscellaneous Options Module:</h2>
 <p>
-<img SRC="somo-misc.png" ALT="SOMO Miscellaneous Options Screen">
+<img SRC="somo-misc1.png" ALT="SOMO Miscellaneous Options Screen">
 </center>
 <p>
 
 In this module, you can set some options affecting both the model building and
 the hydrodynamic computations stages. The <b>Calculate vbar</b> checkbox
-allows the computation of the <b>partial specific volume (vbar)</b> in standard
+allows the computation of the <i>partial specific volume (vbar)</i> in standard
 conditions (water @ 20°C) of the structure from its composition, using the
 residues' values stored in the <a href= "somo-residue-0.png">residue table</a>
 (default: <b>active</b>). Alternatively, a <i>vbar</i> value (either computed by
-other means or measured) can be entered in the <i>Enter a vbar value (cm^3/g)</i>
+other means or measured) can be entered in the <i><b>Enter a vbar value (cm^3/g)</b></i>
 field. If a significant number of non-coded or incomplete residues are skipped when
 parsing the PDB file, the computed <i>vbar</i> could be not correct; in this case,
 entering an experimental value will be the best option.  The <b>Select vbar</b>
-button will instead load a vbar value from XXXX.
-<br>The <i>Hydration Water Vol. (A^3)</i> field sets the volume of the water
+button will instead load a <i>vbar</i> value  calculated from  protein sequence by using
+the <a href=vbar.html>UltraScan vbar calculation routine</a>.
+<br>The <i><b>Hydration Water Vol. (A^3)</b></i> field sets the volume of the water
 of hydration molecules, which has been found (Gerstein and Chothia, Proc. Natl.
 Acad. Sci. USA 93:10167-10172, 1996) to be on average 24.5 A<sup>3</sup>,
 different from that of either bulk (29.7 A<sup>3</sup>) or isolated (11.5
-A<sup>3</sup>) water molecules (default: <b>24.041 A<sup>3</sup></b>). 
+A<sup>3</sup>) water molecules (default: <b>24.041 A<sup>3</sup></b>). <br>
+In the <b>Average Parameters for Automatic Bead Builder:</b> submenu contains a
+series of fields governing the <i>average parameters</i> that will be used by the
+<i>Automatic Bead Builder</i> routine when this option is selected (see
+<a href=somo_pdb_parsing.html>here</a>) for either non-coded residues and/or for
+coded residues with missing atoms.<br> 
+
+<ul>
+<li>
+<b><i>Average atomic radius (A):</i></b>. This is the radius used by the ASA routines
+(see <a href=somo_asa.html>here</a>) to compute the <i>accessible surface area</i>
+of the non-coded residue. The <b>default</b> value <b>(1.7 A)</b>  was derived by averaging
+the atomic radii present in the current (April 2009) version of the default <i>somo.atom</i>
+table.
+
+<li>
+<b><i>Average atomic mass (Da):</i></b>. This is an average atomic mass for atoms within
+non-coded residues used in the computation of the total mass of the model. The <b>default</b>
+value <b>(16 Da)</b> was derived by averaging the atomic masses present in the current (April 2009) version of the default <i>somo.atom</i> table. In any case, we strongly suggest to enter a global value in the <i>Total Mass of Model</i> field in the <a href=somo_hydro.html><b><i>SOMO Hydrodynamic
+Calculation Options</i></b></a> panel when dealing with structures containing non-coded
+residues.
 
 
+<li>
+<b><i>Average atomic hydration:</i></b>. This value will be multiplied by the number of atoms
+present in the non-coded residue to determine an hydration number (which will be rounded to the
+next integer). The volume calculated from this hydration number multiplied by the <i> hydration
+water volume</i> (see above) will be added to the bead volume (see below) to determine the final
+volume of the bead. The <b>default</b> value <b>(0.1)</b>  was derived by averaging the hydration 
+number of a bead divided by the number of atoms assigned to it for each bead present in the current (April 2009) version of the default <i>somo.residue</i> table.
+
+<li>
+<b><i>Average bead/atom volume:</i></b>. This value will be multiplied by the number of atoms
+present in the non-coded residue to determine the anhydrous volume of the bead that will
+represent them, to which the volume of the water of hydration will be then added (see above).
+The <b>default</b> value <b>(20 A<sup>3</sup>)</b>  was derived by averaging the bead volume 
+divided by the number of atoms assigned to it for each bead present in the current (April 2009) version of the default <i>somo.residue</i> table.
+
+<li>
+<b><i>Average Residue vbar:</i></b>. This value will be used in the computation of the global 
+<i>vbar</i> of the model. The <b>default</b> value <b>(0.72 cm<sup>3</sup>/g)</b> is that of
+the average protein. It could be changed when dealing with other kind of biomacromolecules. In
+any case, we strongly suggest to enter a global (better if experimental) value for <i>vbar</i> 
+in the <b><i>Enter vbar:</i></b> field above when dealing with structures containing non-coded
+residues.
+
+</ul>
 <hr>
 <font face="helvetica" size="-1">
 www contact: <a href="mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a>

@@ -27,6 +27,46 @@ SOMO - Bead Model Output Format Options Module:</h2>
 </center>
 <p>
 
+In this module, you can select the bead file output options. Currently, we are providing three
+options, which can be independently activated (i.e., more than a single file type can be 
+simultaneously written). These options are:
+
+<ul>
+<li>
+<b><i>SOMO</i></b>. This is the new format developed for <b><i>UltraScan-SOMO</i></b>. In the first line are listed first the total beads number (<i>n</i>) and then the partial speficic volume <i>vbar</i> of the model. The properties of each bead are then listed in <i>n</i> successive lines of 8 columns each:<br>
+<i>x</i>, <i>y</i>, <i>z</i> coordinates, radius, mass, color coding, correspondence with original
+PDB residue, bead ASA.<br>
+At the end of the data, the methods and parameters used to generate the bead model are listed. This
+list will be displayed on the progress window of the main SOMO panel upon loading a SOMO-formatted
+bead model file.
+
+<li>
+<b><i>BEAMS</i></b>. This is the originally developed old <i><b>SOMO/BEAMS</b></i> format. It is fully described in the original publications (Rai et al., Structure 13:723-734, 2005; Spotorno et al., Eur. J. Biophys. 25:373-384, 26:417, 1997).
+
+<li>
+<b><i>HYDRO</i></b>. This is the format utilized by Josè Garcìa de la Torre's program
+<i><b>Hydro</b></i>. See <a href=http://leonardo.inf.um.es/macromol/programs/programs.htm>here</a>  for more information.
+
+</ul>
+<p>
+In the <i><b>Bead Sequence Format</b></i> section, two mutually exclusive options are selectable,
+valid for all three formats:
+<p>
+<ul>
+<li>
+<i>as in original PDB</i>, which will list the beads in the same sequence as the original PDB
+residues from which they were derived.<br>
+
+<li>
+<i>exposed dise-chain-->exposed main-chain-->buried</i>, which will list the beads according to
+the specified sequence.
+</ul>
+<p>
+The last option, <b><i>For BEAMS format only: Include bead - original residue correspondence</i></b>, is available only
+for the old <b><i>BEAMS</i></b> format, in which the bead-residue correspondence could be optionally written. This correspondance is <i>always</i> enclosed in the new <b><i>SOMO</i></b> format, and
+cannot be written in <b><i>HYDRO</i></b> formatted files.
+
+
 <hr>
 <font face="helvetica" size="-1">
 www contact: <a href="mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a>
