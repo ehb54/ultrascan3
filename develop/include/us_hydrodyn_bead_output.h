@@ -29,12 +29,14 @@ using namespace std;
 
 struct bead_output_options
 {
-	int output; 		// 0 = SOMO
-							// 1 = BEAMS
-							// 2 = HYDRO
-	int sequence;		// 0 = as in original pdb file
-							// 1 = exposed sidechain -> exposed main chain -> buried
-							// 2 = include bead-original residue correspondence
+	int output; 					// 0 = SOMO
+										// 1 = BEAMS
+										// 2 = HYDRO
+	int sequence;					// 0 = as in original pdb file
+										// 1 = exposed sidechain -> exposed main chain -> buried
+										// 2 = include bead-original residue correspondence
+	bool correspondence; 		// true = include bead - original residue correspondence (default=true)
+										// can only be selected when BEAMS output format is selected
 };
 
 class US_EXTERN US_Hydrodyn_Bead_Output : public QFrame
@@ -59,13 +61,14 @@ class US_EXTERN US_Hydrodyn_Bead_Output : public QFrame
 		
 		QButtonGroup *bg_output;
 		QButtonGroup *bg_sequence;
+		QButtonGroup *bg_beams;
 
 		QCheckBox *cb_somo_output;
 		QCheckBox *cb_beams_output;
 		QCheckBox *cb_hydro_output;
 		QCheckBox *cb_pdb_sequence;
 		QCheckBox *cb_chain_sequence;
-		QCheckBox *cb_correspondence_sequence;
+		QCheckBox *cb_correspondence;
 		
 		
 	private slots:
@@ -73,7 +76,7 @@ class US_EXTERN US_Hydrodyn_Bead_Output : public QFrame
 		void setupGUI();
 		void select_output(int);
 		void select_sequence(int);
-
+		void select_correspondence();
 		void cancel();
 		void help();
 	

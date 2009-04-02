@@ -62,7 +62,7 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 
 	// bg_output->setButton((*bead_output).output);
 
-	bg_sequence = new QButtonGroup(3, Qt::Vertical, "Bead Sequence Format:", this);
+	bg_sequence = new QButtonGroup(2, Qt::Vertical, "Bead Sequence Format:", this);
 	bg_sequence->setExclusive(true);
 	connect(bg_sequence, SIGNAL(clicked(int)), this, SLOT(select_sequence(int)));
 
@@ -80,14 +80,18 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 	cb_chain_sequence->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_chain_sequence->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
-	cb_correspondence_sequence = new QCheckBox(bg_sequence);
-	cb_correspondence_sequence->setText(tr(" include bead - original residue correspondence "));
-	cb_correspondence_sequence->setEnabled(true);
-	cb_correspondence_sequence->setMinimumHeight(minHeight1);
-	cb_correspondence_sequence->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_correspondence_sequence->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-
 	bg_sequence->setButton((*bead_output).sequence);
+
+	bg_beams = new QButtonGroup(1, Qt::Vertical, "BEAMS Format:", this);
+	
+	cb_correspondence = new QCheckBox(bg_beams);
+	cb_correspondence->setText(tr(" include bead - original residue correspondence "));
+	cb_correspondence->setEnabled(true);
+	cb_correspondence->setChecked((*bead_output).correspondence);
+	cb_correspondence->setMinimumHeight(minHeight1);
+	cb_correspondence->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cb_correspondence->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cb_correspondence, SIGNAL(clicked()), this, SLOT(select_correspondence()));
 
 	pb_cancel = new QPushButton(tr("Close"), this);
 	Q_CHECK_PTR(pb_cancel);
@@ -108,10 +112,12 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 
 	background->addMultiCellWidget(lbl_info, j, j, 0, 1);
 	j++;
-	background->addMultiCellWidget(bg_output, j, j+1, 0, 1);
-	j+=3;
-	background->addMultiCellWidget(bg_sequence, j, j+3, 0, 1);
-	j+=4;
+	background->addMultiCellWidget(bg_output, j, j, 0, 1);
+	j++;
+	background->addMultiCellWidget(bg_sequence, j, j, 0, 1);
+	j++;
+	background->addMultiCellWidget(bg_beams, j, j, 0, 1);
+	j++;
 	background->addWidget(pb_help, j, 0);
 	background->addWidget(pb_cancel, j, 1);
 }
@@ -128,6 +134,11 @@ void US_Hydrodyn_Bead_Output::select_output(int val)
 void US_Hydrodyn_Bead_Output::select_sequence(int val)
 {
 	(*bead_output).sequence = val;
+}
+
+void US_Hydrodyn_Bead_Output::select_correspondence()
+{
+	(*bead_output).correspondence = cb_correspondence->isChecked();
 }
 
 void US_Hydrodyn_Bead_Output::cancel()

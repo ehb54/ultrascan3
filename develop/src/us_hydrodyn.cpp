@@ -7069,6 +7069,10 @@ void US_Hydrodyn::read_config(const QString& fname)
    bead_output.sequence = str.toInt();
    ts >> str;
    ts.readLine();
+   bead_output.correspondence = (bool) str.toInt();
+   
+	ts >> str;
+   ts.readLine();
    asa.probe_radius = str.toFloat();
    ts >> str;
    ts.readLine();
@@ -7278,6 +7282,7 @@ void US_Hydrodyn::reset()
 
    bead_output.sequence = 0;
    bead_output.output = 0;
+	bead_output.correspondence = true;
 
    asa.probe_radius = (float) 1.4;
    asa.probe_recheck_radius = (float) 1.4;
@@ -7382,6 +7387,7 @@ void US_Hydrodyn::write_config(const QString& fname)
 
       ts << bead_output.output << "\t\t# flag for selecting output format\n";
       ts << bead_output.sequence << "\t\t# flag for selecting sequence format\n";
+      ts << bead_output.correspondence << "\t\t# flag for residue correspondence (BEAMS only)\n";
       ts << asa.probe_radius << "\t\t# probe radius in angstrom\n";
       ts << asa.probe_recheck_radius << "\t\t# probe recheck radius in angstrom\n";
       ts << asa.threshold << "\t\t# ASA threshold\n";
