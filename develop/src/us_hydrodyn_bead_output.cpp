@@ -86,7 +86,14 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 	
 	cb_correspondence = new QCheckBox(bg_beams);
 	cb_correspondence->setText(tr(" include bead - original residue correspondence "));
-	cb_correspondence->setEnabled(true);
+	if((*bead_output).output & 1 << 1)
+	{
+		cb_correspondence->setEnabled(true);
+	}
+	else
+	{
+		cb_correspondence->setEnabled(false);
+	}
 	cb_correspondence->setChecked((*bead_output).correspondence);
 	cb_correspondence->setMinimumHeight(minHeight1);
 	cb_correspondence->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -124,9 +131,20 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 
 void US_Hydrodyn_Bead_Output::select_output(int val)
 {
-	if((*bead_output).output & 1 << val) {
+	if((*bead_output).output & 1 << val)
+	{
+		if (val == 1)
+		{
+			cb_correspondence->setEnabled(false);
+		}
 	  (*bead_output).output &= ~(1 << val);
-	} else {
+	}
+	else
+	{
+		if (val == 1)
+		{
+			cb_correspondence->setEnabled(true);
+		}
 	  (*bead_output).output |= (1 << val);
 	}
 }

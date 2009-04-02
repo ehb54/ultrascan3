@@ -7303,10 +7303,10 @@ void US_Hydrodyn::reset()
    misc.hydrovol = 24.041;
    misc.compute_vbar = true;
    misc.vbar = 0.72;
-   misc.avg_radius = 1.7;
-   misc.avg_mass = 16.0;
-   misc.avg_hydration = 0.1;
-   misc.avg_volume = 20.0;
+   misc.avg_radius = 1.68;
+   misc.avg_mass = 15.92;
+   misc.avg_hydration = 0.46;
+   misc.avg_volume = 15.3;
    misc.avg_vbar = 0.72;
    overlap_tolerance = 0.001;
 
