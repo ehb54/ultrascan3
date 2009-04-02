@@ -3993,8 +3993,22 @@ int US_fe_nnls_t::run(int status)
 		      1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
 		      start_tv.tv_usec);
 	       fflush(stdout);
+	       {
+		  
+		  QFile f("email_text_" + startDateTime.toString("yyMMddhhmmss"));
+		  if (f.open(IO_WriteOnly | IO_Append))
+		  {
+		     
+		     QTextStream ts(&f);
+		     ts << "\n" << "jid: " << startDateTime.toString("yyMMddhhmmss") 
+			<< " jt: "
+			<< (1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec - start_tv.tv_usec)
+			<< " maxrss: " << maxrss 
+			<< "\n";
+		  }
+		  f.close();
+	       }
 #endif
-
 	    }
 	 } // end of !multi_experiment_flag
 
