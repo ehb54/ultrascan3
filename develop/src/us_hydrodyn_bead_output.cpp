@@ -86,7 +86,7 @@ void US_Hydrodyn_Bead_Output::setupGUI()
 	
 	cb_correspondence = new QCheckBox(bg_beams);
 	cb_correspondence->setText(tr(" include bead - original residue correspondence "));
-	if((*bead_output).output & 1 << 1)
+	if((*bead_output).output & US_HYDRODYN_OUTPUT_BEAMS)
 	{
 		cb_correspondence->setEnabled(true);
 	}
