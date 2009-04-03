@@ -652,7 +652,7 @@ void US_Astfem_RSA::initialize_rg() // Setup reaction groups
 		}
 		if (m==(*system).assoc_vector.size() )
 		{
-			break; 	// no more rule with unused components
+			return; 	// no more rule with unused components
 		}
 		else
 		{
@@ -704,7 +704,7 @@ void US_Astfem_RSA::initialize_rg() // Setup reaction groups
 					isnew = true; 	// check if tmp_rule[m].comp1 is in tmp_rg.GroupComponent
 					for (j=0; j<tmp_rg.GroupComponent.size(); j++)
 					{
-						if (tmp_rule[m].component3 == (int)tmp_rg.GroupComponent[j]) isnew = false;
+						if (tmp_rule[m].component3 == (int)tmp_rg.GroupComponent[j] || tmp_rule[m].component3 == -1 ) isnew = false;
 					}
 					if (isnew) tmp_rg.GroupComponent.push_back( tmp_rule[m].component3 );
 
@@ -721,6 +721,8 @@ void US_Astfem_RSA::initialize_rg() // Setup reaction groups
 		i ++;
 
 	} // while (i)
+
+   printf("out init_rg\n");
 }
 
 
