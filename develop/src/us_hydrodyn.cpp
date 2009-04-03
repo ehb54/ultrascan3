@@ -6208,6 +6208,60 @@ void US_Hydrodyn::read_residue_file()
 
 void US_Hydrodyn::load_pdb()
 {
+	QString message = "";
+	if (pdb_parse.missing_residues == 1)
+	{
+		message += tr("You have selected to skip missing residues, are you sure you want to proceed?\n");
+	}
+	if (pdb_parse.missing_residues == 2)
+	{
+		message += tr("You have selected to replace missing residues with an average residue, are\n");
+		message += tr("you sure you want to proceed without reviewing the average residue settings?\n");
+	}
+	if (message != "")
+	{
+   	QMessageBox mb(tr("UltraScan"), tr("Attention:\n" + message),
+			QMessageBox::Information,
+			QMessageBox::Yes | QMessageBox::Default,
+			QMessageBox::Cancel | QMessageBox::Escape,
+			QMessageBox::NoButton);
+		mb.setButtonText(QMessageBox::Yes, tr("Yes"));
+		mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+		switch(mb.exec())
+		{
+			case QMessageBox::Cancel:
+			{
+				return;
+      	}
+		}
+	}
+	message = "";
+	if (pdb_parse.missing_atoms == 1)
+	{
+		message += tr("You have selected to skip missing atoms, are you sure you want to proceed?\n");
+	}
+	if (pdb_parse.missing_atoms == 2)
+	{
+		message += tr("You have selected to replace missing atoms with an average atom, are\n");
+		message += tr("you sure you want to proceed without reviewing the average atom settings?\n");
+	}
+	if (message != "")
+	{
+   	QMessageBox mb(tr("UltraScan"), tr("Attention:\n" + message),
+			QMessageBox::Information,
+			QMessageBox::Yes | QMessageBox::Default,
+			QMessageBox::Cancel | QMessageBox::Escape,
+			QMessageBox::NoButton);
+		mb.setButtonText(QMessageBox::Yes, tr("Yes"));
+		mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+		switch(mb.exec())
+		{
+			case QMessageBox::Cancel:
+			{
+				return;
+      	}
+		}
+	}
    cout << somo_pdb_dir << endl;
    QString filename = QFileDialog::getOpenFileName(somo_pdb_dir,
 						   "Structures (*.pdb *.PDB)",
@@ -7070,7 +7124,7 @@ void US_Hydrodyn::read_config(const QString& fname)
    ts >> str;
    ts.readLine();
    bead_output.correspondence = (bool) str.toInt();
-   
+
 	ts >> str;
    ts.readLine();
    asa.probe_radius = str.toFloat();
@@ -7304,8 +7358,8 @@ void US_Hydrodyn::reset()
    misc.compute_vbar = true;
    misc.vbar = 0.72;
    misc.avg_radius = 1.68;
-   misc.avg_mass = 15.92;
-   misc.avg_hydration = 0.46;
+   misc.avg_mass = 16.0;
+   misc.avg_hydration = 0.4;
    misc.avg_volume = 15.3;
    misc.avg_vbar = 0.72;
    overlap_tolerance = 0.001;
