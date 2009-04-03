@@ -147,6 +147,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
                af_params.start_time = current_time;
                
                calculate_ni( current_speed, sp->rotorspeed, CT0, simdata, true );
+               if ( stopFlag ) return 1;
 
                // Add the acceleration time:
                accel_time    = af_params.dt * af_params.time_steps;
@@ -155,7 +156,6 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
                emit new_time( current_time );
                qApp->processEvents();
                
-               if ( stopFlag ) return 1;
             }  // End of acceleration
 
             duration = (uint) ( sp->duration_hours * 3600 + 
@@ -199,6 +199,7 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
             af_params.start_time = current_time;
             
             calculate_ni( sp->rotorspeed, sp->rotorspeed, CT0, simdata, false );
+            if ( stopFlag ) return 1;
 
             // Set the current time to the last scan of this speed step
             current_time = sp->duration_hours * 3600 +
@@ -214,7 +215,6 @@ int US_Astfem_RSA::calculate( //struct ModelSystem&          system,
 
             qApp->processEvents();
 
-            if ( stopFlag ) return 1;
          } // Speed step loop
          
          emit current_component( k + 1 );
@@ -932,8 +932,9 @@ int US_Astfem_RSA::calculate_ni( double rpm_start, double rpm_stop,
 
       if ( show_movie )
       {
+         if ( stopFlag ) break;
          emit new_scan( x, C0 );
-         emit new_time( (float) simscan.time );
+         emit new_time( simscan.time );
          qApp->processEvents();
          US_Sleep::msleep( 10 ); // 10 ms to let the display update.
       }
@@ -1785,7 +1786,6 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0 )
    {
       emit calc_done();
       qApp->processEvents();
-      US_Sleep::msleep( 10 );
    }
 
    for ( uint i = 0; i < num_comp; i++ )
@@ -2258,8 +2258,9 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
       
       if ( show_movie )
       {
+         if ( stopFlag ) break;
          emit new_scan( x, CT0 );
-         emit new_time( (float) simscan.time );
+         emit new_time( simscan.time );
          qApp->processEvents();
          US_Sleep::msleep( 10 ); // 10 ms to let the display update.
       }
@@ -2470,6 +2471,8 @@ int US_Astfem_RSA::calculate_ra2( double rpm_start, double rpm_stop,
    } // time loop
 
    emit new_scan( x, CT0 );
+   qApp->processEvents();
+   US_Sleep::msleep( 10 ); // 10 ms to let the display update.
 
    for ( uint i = 0; i < Mcomp; i++ )
    {

@@ -38,15 +38,16 @@ US_Editor::US_Editor( int menu, bool readonly, QWidget* parent,
    menuBar()->setFont   ( QFont( US_GuiSettings::fontFamily(),
                           US_GuiSettings::fontSize() ) );
 
-   currentFont = QFont( "Courier", 11, QFont::Bold );
+   currentFont = QFont( "Courier", US_GuiSettings::fontSize() - 1, 
+         QFont::Bold );
    
    e = new QTextEdit( this );
    e->setFont          ( currentFont );
-   e->setPalette( US_GuiSettings::editColor() );
-   e->setAcceptRichText( false );
+   e->setPalette       ( US_GuiSettings::editColor() );
+   e->setAcceptRichText( true );
    e->setWordWrapMode  ( QTextOption::WrapAtWordBoundaryOrAnywhere );
    e->setReadOnly      ( readonly );
-   setCentralWidget( e );
+   setCentralWidget    ( e );
 }
 
 void US_Editor::saveAs(  )
