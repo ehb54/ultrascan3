@@ -52,7 +52,7 @@ program, while the fourth is in the planning stage.
 them. In the current SOMO implementation, the hydrogen atoms are "included" in the heavy
  atoms to which they are bound, but we do not exclude to make the skipping as an option
 to allow users to explicitly treat hydrogens; obviously, this will call for a re-definition
-of all atoms and residues in the <i>somo.atom</i> and <i>somo.residue</i> files.
+of all atoms and residues in the <i>somo.hybrid</i>, <i>somo.atom</i>, and <i>somo.residue</i> files.
 
 <li>
 <b><i>Skip solvent water molecules</i></b>. In the current SOMO implementation, the water
@@ -77,8 +77,8 @@ is because currently there's no distinction in PDB files between cysteines and c
 this involves slightly different physico-chemical parameters (e.g., two H atoms are lost when
 a S-S bridge is formed), we plan to offer an automatic "free SH" finder by checking the distances
 between all sulphur atoms in CYS residues. Those that won't be within bonding distance from another CYS will be considered as free SH, and their residue name changed to CYH, for which the coding is already provided within the <i>somo.residue</i> file. Users wishing to deal with this problem now
-can manually edit their PDB file and change the name of the CYS residues that they know are not
-S-S bonded to CYH.
+can manually edit their PDB file and change to CYH the name of the CYS residues that they know are not
+S-S bonded.
 
 </ul>
 </td>
@@ -118,15 +118,19 @@ their contribution to the hydrodynamics will be missed. Second, their contributi
 weight and partial specific volume of the structure will be also missed, although this can be
 bypassed by entering global values in the appropriate fields (respectively in the
 <a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and
-<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels). Therefore, this option should be used only if the skipped residue(s) is (are) known to <b>not</b> likely contribute to the hydrodynamics, and by entering appropriate global values for the molecular weight and partial specific volume.
+<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels). Therefore, this option should be used only if the skipped residue(s) is (are) known to <b>not</b> likely contribute to the hydrodynamics, and by entering appropriate global values for the molecular weight and partial specific volume. In any case, if non-coded residues
+are found and this option is selected, a pop-up window will appear asking for entering appropriate values
+for the global molecular weight and partial specific volume (this request can, however, be skipped).
 
 <li>
 <b><i>Use automatic bead builder (approximate method)</i></b>. This is a "patch" option, allowing
 to roughly define a <b>single</b> "side-chain" bead for each non-coded residue. This procedure is based on an "average" volume for each atom (with an "average" molecular weight and hydration number), from which a global volume (and molecular weight) is calculated. An "average" radius for each atom is
-also provided for the ASA routines (see <a href=somo_asa.html>here</a>). The bead is then placed at the center of mass of <b>all</b> the atoms within the non-coded residue, and an "average" partial specific volume and color-coding ("13", light magenta) are also assigned to it. All these "average" values can be modified in the <a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panel. As with the second option, the approximations introduced in the molecular weight and partial specific volume can be bypassed by entering global values in the appropriate fields (respectively in the
+also provided for the ASA routines (see <a href=somo_asa.html>here</a>). The bead is then placed at the center of mass of <b>all</b> the atoms within the non-coded residue, and an "average" partial specific volume and color-coding ("10", light green) are also assigned to it. All these "average" values can be modified in the <a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panel. As with the second option, the approximations introduced in the molecular weight and partial specific volume can be bypassed by entering global values in the appropriate fields (respectively in the
 <a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and
-<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels).<br>
-This is the <b>defaut</b> option for this subpanel, since it will allow users to process virtually
+<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels). In any case, if non-coded residues
+are found and this option is selected, a pop-up window will appear asking for entering appropriate values
+for the global molecular weight and partial specific volume (this request can, however, be skipped).<br>
+This is the <b>default</b> option for this subpanel, since it will allow users to process virtually
 any PDB file without updating the definitions files.
 
 </ul>
@@ -155,16 +159,15 @@ In the <b>If missing atoms within a residue are found:</b>  subpanel, the user c
 <b>side chain</b> atoms). The program is therefore halted, waiting for proper action to be taken.
 
 <li>
-<b><i>List them, skip whole residue and proceed</i></b>. This is the least rigorous option, as skipping residues will affect the computations on two levels. First, if the skipped residues are exposed, their contribution to the hydrodynamics will be missed. Second, their contribution to the molecular weight and partial specific volume of the structure will be also missed, although this
+<b><i>List them, skip entire residue and proceed</i></b>. This is the least rigorous option, as skipping residues will affect the computations on two levels. First, if the skipped residues are exposed, their contribution to the hydrodynamics will be missed. Second, their contribution to the molecular weight and partial specific volume of the structure will be also missed, although this
 can be bypassed by entering global values in the appropriate fields (respectively in the
 <a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and
 <a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels). Therefore, this option
-should be used only if the skipped residue(s) is (are) known to <b>not</b> likely contribute to the hydrodynamics, and by entering appropriate global values for the molecular weight and partial specific volume. The reason why only the missing atoms <b>cannot</b> be skipped is because they
-might be used to define the position of the bead, so their absence <b>cannot</b> be tolerated.
+should be used only if the skipped residue(s) is (are) known to <b>not</b> likely contribute to the hydrodynamics, and by entering appropriate global values for the molecular weight and partial specific volume. In any case, if this option is selected, and missing atoms within coded residues are found, a pop-up window will appear asking for entering appropriate values for the global molecular weight and partial specific volume (this request can, however, be skipped). The reason why only the missing atoms <b>cannot</b> be skipped is because they might be used to define the position of the bead, so their absence <b>cannot</b> be tolerated.
 
 <li>
 <b><i>Use approximate method to generate bead</i></b>. This is a "patch" option, allowing
-to roughly define a <b>single</b> bead for the whole residue. See the <b><i>Use automatic bead builder (approximate method)</i></b> above for the explanation of this procedure.<br>
+to roughly define a <b>single</b> bead for the whole residue. See the <b><i>Use automatic bead builder (approximate method)</i></b> above for the explanation of this procedure. As for the previous option, if this option is selected and missing atoms within a coded residue are found, a pop-up window will appear asking for entering appropriate values for the global molecular weight and partial specific volume (this request can, however, be skipped).<br>
 This is the <b>defaut</b> option for this subpanel, since it will allow users to process virtually
 any PDB file without updating the definitions files, but for more accurate results we <b>strongly</b> recommend to switch to the first option in this subpanel and take appropriate action(s).
 

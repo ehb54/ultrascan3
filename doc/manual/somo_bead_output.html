@@ -33,7 +33,7 @@ simultaneously written). These options are:
 
 <ul>
 <li>
-<b><i>SOMO</i></b>. This is the new format developed for <b><i>UltraScan-SOMO</i></b>. In the first line are listed first the total beads number (<i>n</i>) and then the partial speficic volume <i>vbar</i> of the model. The properties of each bead are then listed in <i>n</i> successive lines of 8 columns each:<br>
+<b><i>SOMO</i></b>. This is the new format developed for <b><i>UltraScan-SOMO</i></b> (<b>default</b>). In the first line are listed the number of beads (<i>n</i>) and then the partial specific volume <i>vbar</i> of the model. The properties of each bead are then listed in <i>n</i> successive lines of 8 columns each:<br>
 <i>x</i>, <i>y</i>, <i>z</i> coordinates, radius, mass, color coding, correspondence with original
 PDB residue, bead ASA.<br>
 At the end of the data, the methods and parameters used to generate the bead model are listed. This
@@ -41,7 +41,7 @@ list will be displayed on the progress window of the main SOMO panel upon loadin
 bead model file.
 
 <li>
-<b><i>BEAMS</i></b>. This is the originally developed old <i><b>SOMO/BEAMS</b></i> format. It is fully described in the original publications (Rai et al., Structure 13:723-734, 2005; Spotorno et al., Eur. J. Biophys. 25:373-384, 26:417, 1997).
+<b><i>BEAMS</i></b>. This is the originally developed old <i><b>SOMO/BEAMS</b></i> format. It is fully described in the original publications (Rai et al., Structure 13:723-734, 2005; Spotorno et al., Eur. J. Biophys. 25:373-384, 26:417, 1997). It basically consists of two files, one with the number of beads, <i>vbar</i>, and  <i>x</i>, <i>y</i>, <i>z</i> coordinates, and the other with the radius, mass, color coding, and optional correspondence with original PDB residue (*.rmc file, see below).
 
 <li>
 <b><i>HYDRO</i></b>. This is the format utilized by Josè Garcìa de la Torre's program
@@ -55,16 +55,16 @@ valid for all three formats:
 <ul>
 <li>
 <i>as in original PDB</i>, which will list the beads in the same sequence as the original PDB
-residues from which they were derived.<br>
+residues from which they were derived (<b>default</b>).<br>
+
 
 <li>
-<i>exposed dise-chain-->exposed main-chain-->buried</i>, which will list the beads according to
+<i>exposed side-chain-->exposed main-chain-->buried</i>, which will list the beads according to
 the specified sequence.
 </ul>
+
 <p>
-The last option, <b><i>For BEAMS format only: Include bead - original residue correspondence</i></b>, is available only
-for the old <b><i>BEAMS</i></b> format, in which the bead-residue correspondence could be optionally written. This correspondance is <i>always</i> enclosed in the new <b><i>SOMO</i></b> format, and
-cannot be written in <b><i>HYDRO</i></b> formatted files.
+The last option, which applies only to the old <b><i>BEAMS format</i></b>, allows to <i>Include bead - original residue correspondence</i> in the *.rmc file. This correspondance is <i>always</i> enclosed in the new <b><i>SOMO</i></b> format, and cannot be written in <b><i>HYDRO</i></b> formatted files.
 
 
 <hr>

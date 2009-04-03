@@ -44,18 +44,18 @@ while ASAB1 was more reliable and is thus presented as the default option. As fo
 bead re-check, only the rolling sphere method is available.
 <p>
 The first two checkboxes, <b>Perform ASA Calculation</b> and <b>Re-check bead ASA</b>,
-enable or disable these operations. Both are recommended.
+enable or disable these operations. Both are recommended (<b>default</b>).
 <br>Next is the choice of the ASA method for operating on the atomic structure (PDB file),
-<b>Voronoi Tessellation</b> or <b>Rolling Sphere</b>. <b>Rolling Sphere</b> is the default.
+<b>Voronoi Tessellation</b> or <b>Rolling Sphere</b>. <b>Rolling Sphere</b> is the <b>default</b>.
 <br>In the <i>ASA Probe Radius (A)</i> field, you set the radius of the
 hypothetical (water) molecule used to probe the surface of the molecule for 
-accessibility. The default value is 1.4 Angstroms.
+accessibility. The <b>default</b> value is <b>1.4 Angstroms</b>.
 <br>Likewise, in the <i>ASA Probe Recheck Radius (A)</i> field, you set the
 radius of the probe used to re-check the beads in the final bead model for
-accessibility. The default value is 1.4 Angstroms.
+accessibility. The <b>default</b> value is <b>1.4 Angstroms</b>.
 <br>In the <i>ASA Threshold (A^2)</i> field, you set the accessible surface
 area threshold above which a main- or side-chain will be considered 
-exposed to the solvent. The default value is 20 A<sup>2</sup>.
+exposed to the solvent. The <b>default</b> value is <b>20 A<sup>2</sup></b>.
 <br>The <i>Bead ASA Threshold %</i> field lets you set the % of the surface
 of a bead that must be at least accessible to re-classify as exposed a bead
 previously considered to be buried. Beads are initially assigned as being
@@ -63,9 +63,10 @@ buried or exposed based on the status of the main- or side-chain they represent.
 However, during overlap removal some beads initially classified as buried may
 become exposed, hence the need to re-check their status. This operation is 
 performed if the <b>Re-check bead ASA</b> checkbox is selected (recommended).
-The default value is 50%.
+The <b>default</b> value is <b>50%</b>.
 <br>The <i>ASAB1 Step Size (A)</i> field defines the increment between the 2D slices
-in which the structure (or the model) is subdivided in the rolling sphere method, which are then integrated. The default value is 1 Angstrom.
+in which the structure (or the model) is subdivided in the rolling sphere method, which are then integrated.
+The <b>default</b> value is <b>1 Angstrom</b>.
 
 <p>
 <hr>

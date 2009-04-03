@@ -54,32 +54,33 @@ coded residues with missing atoms.<br>
 <li>
 <b><i>Average atomic radius (A):</i></b>. This is the radius used by the ASA routines
 (see <a href=somo_asa.html>here</a>) to compute the <i>accessible surface area</i>
-of the non-coded residue. The <b>default</b> value <b>(1.7 A)</b>  was derived by averaging
-the atomic radii present in the current (April 2009) version of the default <i>somo.atom</i>
-table.
+of the non-coded residue. The <b>default</b> value <b>(1.68 A)</b>  was derived by averaging
+the atomic radii of the C,O,P,N,S elements present in the current (April 2009) version of the default <i>somo.atom</i> table. Averaging over <b>all</b> elements produced essentially the same value, 1.67 A.
 
 <li>
 <b><i>Average atomic mass (Da):</i></b>. This is an average atomic mass for atoms within
 non-coded residues used in the computation of the total mass of the model. The <b>default</b>
-value <b>(16 Da)</b> was derived by averaging the atomic masses present in the current (April 2009) version of the default <i>somo.atom</i> table. In any case, we strongly suggest to enter a global value in the <i>Total Mass of Model</i> field in the <a href=somo_hydro.html><b><i>SOMO Hydrodynamic
-Calculation Options</i></b></a> panel when dealing with structures containing non-coded
-residues.
+value <b>(16 Da)</b> was derived by averaging the atomic masses of the C,O,P,N,S elements present in the current (April 2009) version of the default <i>somo.atom</i> table. Including <b>all</b> elements produced a slightly larger value, 17.6 Da. In any case, we strongly suggest to enter a global value in the <i>Total Mass of Model</i> field in the <a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> panel when dealing with structures containing non-coded residues.
 
 
 <li>
 <b><i>Average atomic hydration:</i></b>. This value will be multiplied by the number of atoms
 present in the non-coded residue to determine an hydration number (which will be rounded to the
-next integer). The volume calculated from this hydration number multiplied by the <i> hydration
-water volume</i> (see above) will be added to the bead volume (see below) to determine the final
-volume of the bead. The <b>default</b> value <b>(0.1)</b>  was derived by averaging the hydration 
-number of a bead divided by the number of atoms assigned to it for each bead present in the current (April 2009) version of the default <i>somo.residue</i> table.
+closest integer). The volume calculated from this hydration number multiplied by the <i>hydration
+water volume</i> (see above) will be added to the anhydrous bead volume (see below) to determine the final
+volume of the bead. The <b>default</b> value <b>(0.4)</b> is a compromise between the value derived
+for amino acids and carbohydrates (0.3) and that for nucleotides/nucleosides and prosthetic groups, 0.5.
+These number were calculated by averaging the hydration number of a bead divided by the number of atoms
+assigned to it for the beads defined in the current (April 2009) version of the default <i>somo.residue</i> table.  This value should perhaps be adapted to the kind of non-coded residue(s) being roughly modeled by the <i>Automatic Bead Builder</i>.
 
 <li>
 <b><i>Average bead/atom volume:</i></b>. This value will be multiplied by the number of atoms
 present in the non-coded residue to determine the anhydrous volume of the bead that will
 represent them, to which the volume of the water of hydration will be then added (see above).
-The <b>default</b> value <b>(20 A<sup>3</sup>)</b>  was derived by averaging the bead volume 
-divided by the number of atoms assigned to it for each bead present in the current (April 2009) version of the default <i>somo.residue</i> table.
+The <b>default</b> value <b>(15.3 A<sup>3</sup>)</b>  was derived by averaging the bead volume 
+divided by the number of atoms assigned to it for each bead present in the current (April 2009) version of the default <i>somo.residue</i> table. Volumes by categories are: 17.8 A<sup>3</sup> for amino acids,
+15.3 A<sup>3</sup> for carbohdrates, 14.7 A<sup>3</sup> for nucleotides/nucleosides, and 11.8
+A<sup>3</sup> for prosthetic groups.
 
 <li>
 <b><i>Average Residue vbar:</i></b>. This value will be used in the computation of the global 

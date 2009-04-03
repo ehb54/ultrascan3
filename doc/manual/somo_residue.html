@@ -26,10 +26,10 @@ SOMO - Residue Definition Module:</h2>
 <img SRC="somo-residue.png" ALT="SOMO Screen">
 </center>
 <p>
-In this module is used to define all residues that can be found in PDB files. 
-In this module, you also can define the 
-rules which used to convert them into beads. You can add new residues or
-modify the properties of the existing ones. Three panels are available:
+This module is used to define all residues that can be found in PDB files. 
+In this module, you can also define the rules which are used to convert them
+into beads. You can add new residues or modify the properties of the existing
+ones. Three panels are available:
 <p>
 <ol>
 <li> <b>Define Residue Properties</b>
@@ -86,8 +86,8 @@ of the bead(s) that will be used to model the residue, and for non tabulated
 entries it can be computed using on-line programs such as the <sup>3</sup>V Contact Volume Calculator (<a href="http://www.molmovdb.org/cgi-bin/3v.cgi">http://www.molmovdb.org/cgi-bin/3v.cgi</a>; a 0   Angstrom probe radius should be used). For ions, we used the values in Table I of
 Kiriukhin and Collins (Biophys. Chem. 99:155-168, 2002).
 <br>In contrast, the <i>Residue partial spec. vol. (cm^3/g)</i> field pertains to
-the solution partial specific volume (psv) of the residue (in water @ 20°C),
-and is used to compute the global psv of the model, necessary to determine
+the solution partial specific volume (<i>vbar</i>) of the residue (in water @ 20°C),
+and is used to compute the global <i>vbar</i> of the model, necessary to determine
 the sedimentation coefficient from the translational frictional coefficient. 
 Tabulated values are available for amino acids and some carbohydrates (see Perkins,
 Eur. J. Biochem. 157:169-180, 1986), or can be computed using the Cohn and Edsall method
@@ -178,7 +178,8 @@ are assigned so to label the beads as:
 <li>- White: USED for fused beads
 <li>- Grey: USED for previously buried beads exposed on re-check
 <li>- Light Blue: carbon monoxide
-<li>- Light Green: unassigned
+<li>- Light Green: USED by the Automatic Bead Builder for non-coded residues (see <a
+href=somo_pdb_parsing.html>here</a>)
 <li>- Light Cyan: bases in DNA/RNA, oxygen, 13P
 <li>- Light Red: heme, NAD, other co-factors, some prosthetic groups and ions, PO<sub>2</sub>
 <li>- Light Magenta: carbohydrates (including sugar rings in nucleotides), some ions
@@ -209,7 +210,8 @@ between the atoms assigned to the bead and marked "yes" in the
 <p>Currently, only the "Center of gravity" option is being used.
 <p>Each bead needs then to be defined as belonging to the <i>backbone</i>
 or to the <i>sidechain</i> of the molecule by clicking the appropriate box
-in the <i>This Bead is part of the:</i> field.
+in the <i>This Bead is part of the:</i> field. This determines at which sequential stage the bead
+will be processed during overlap removal.
 <br>The <i>Bead Volume</i> field defines the anhydrous volume (in A<sup>3</sup>) assigned
 to the bead. IMPORTANT: the sum of the volumes of the bead(s) defining a residue
 MUST match the <i>Residue anhydrous mol. vol.</i> entered in Panel 1. The
@@ -223,7 +225,7 @@ will NOT add up to the entire molecule volume, and MUST be then proportionally
 rescaled. The volume of all other entries in the current <i>somo.residue</i> table
 were determined in this way.
 <br>The next two fields, <i>Bead Mol. Weight</i> and <i> Bead hydrated Volume,
-        Radius</i> are for visualization only, and will display respectively the
+Radius</i> are for visualization only, and will display respectively the
 bead molecular weight, calculated from the values (taken from the <a href=
 "somo-2.png">atom table</a>) of the atoms assigned to the bead, and its hydrated
 molecular volume and hydrated radius (derived by summing to the anhydrous 
@@ -234,7 +236,7 @@ pressed (see below).
 for Bead (multi-selection OK)</i> window, you can see the list of all the atoms
 that belong to the residue, as defined previously in Panel 2. By clicking on
 an atom, it will be also displayed in the <i>Currently defined Atoms for Bead</i>
-window to the left. Once all atoms belongin to a bead have been selected, the
+window to the left. Once all atoms belonging to a bead have been selected, the
 bead is accepted by clicking on the <b>Accept Bead Definition</b> button.
 <br>If the residue is represented by more than one bead, the process is repeated
 until all beads have been processed. The residue can then be added to the file
