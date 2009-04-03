@@ -5,9 +5,10 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
-#include "us_predict1.h"
 #include "us_femglobal.h"
 #include "us_editor.h"
+#include "us_astfem_math.h"
+#include "us_astfem_rsa.h"
 
 #include "qwt_counter.h"
 
@@ -19,15 +20,10 @@ class US_EXTERN US_EquilTime : public US_Widgets
 		US_EquilTime();
 
 	private:
-
-      struct hydrosim             simcomp;
-      struct ModelSystem          system;
+      struct ModelSystem          model;
       struct SimulationParameters simparams;
-      
-      double  mw;
-      double  s;
-      double  D;
-             
+      vector< struct mfem_data >  astfem_data;
+
       enum    { PROLATE, OBLATE, ROD, SPHERE };
       enum    { INNER, OUTER, CENTER, CUSTOM };
       enum    { SIGMA, RPM };
@@ -43,33 +39,30 @@ class US_EXTERN US_EquilTime : public US_Widgets
       int     speed_count;
 
       double* sim_radius;
+      double* concentration;
+      uint    radius_points;
+
+      double  current_time;
+      double  step_time;
+      double  next_scan_time;
 
       QList< double > speed_steps;
 
-      US_Help       showHelp;
-      QwtPlot*      equilibrium_plot;
-
-      QRadioButton* rb_prolate;
-      QRadioButton* rb_oblate;
-      QRadioButton* rb_rod;
-      QRadioButton* rb_sphere;
-
-      QLineEdit*    le_mw;
-      QLineEdit*    le_sed;
-      QLineEdit*    le_diff;
+      US_Help        showHelp;
+      QwtPlot*       equilibrium_plot;
+      QwtPlotCurve*  current_curve;
+      US_Astfem_RSA* astfem_rsa;
 
       QLabel*       lb_lowspeed;
       QLabel*       lb_highspeed;
 
       QwtCounter*   cnt_top;
       QwtCounter*   cnt_bottom;
-      QwtCounter*   cnt_tolerance;
-      QwtCounter*   cnt_timeIncrement;
-      QwtCounter*   cnt_delta_r;
-      QwtCounter*   cnt_delta_t;
       QwtCounter*   cnt_lowspeed;
       QwtCounter*   cnt_highspeed;
       QwtCounter*   cnt_speedsteps;
+      QwtCounter*   cnt_tolerance;
+      QwtCounter*   cnt_timeIncrement;
 
       QCheckBox*    cb_monitor;
       QTextEdit*    te_speedlist;
@@ -80,8 +73,12 @@ class US_EXTERN US_EquilTime : public US_Widgets
       QPushButton*  pb_changeModel;
       QPushButton*  pb_estimate;
 
+      void init_simparams    ( void );
+      void init_astfem_data  ( void );
+
    private slots:
       void update_speeds     ( int  );
+      void new_channel       ( int  );
       void new_lowspeed      ( double );
       void new_highspeed     ( double );
       void new_speedstep     ( double );
@@ -91,8 +88,12 @@ class US_EXTERN US_EquilTime : public US_Widgets
       void change_model      ( void );
       void load_model        ( void );
 
+      void check_equil       ( vector< double >&, double* );
+
+      void set_time          ( double time )
+      { step_time = time; };
+
       void help              ( void )
       { showHelp.show_help("manual/calc_equiltime.html"); };
-
 };
 #endif

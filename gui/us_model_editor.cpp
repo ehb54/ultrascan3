@@ -27,6 +27,8 @@ US_ModelEditor::US_ModelEditor(
    // Convenience
    struct SimulationComponent*           sc  = &model.component_vector[ component ]; 
    vector< struct SimulationComponent >* scl = &model.component_vector; 
+
+   sc->density = DENS_20W;
    
    int row    = 0;
 
@@ -522,8 +524,9 @@ void US_ModelEditor::update_shape( void )
          break;
    }
 
-   sc->mw     = simcomp.mw;
-   sc->vbar20 = simcomp.vbar;
+   sc->mw      = simcomp.mw;
+   sc->vbar20  = simcomp.vbar;
+   sc->density = simcomp.density;
    
    update_component();
    

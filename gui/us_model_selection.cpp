@@ -11,15 +11,15 @@
 
 using namespace US_ConstantModels;
 
-void US_ModelSelection::selectModel( struct ModelSystem& ms, bool equlibrium )
+void US_ModelSelection::selectModel( struct ModelSystem& ms, bool equilibrium )
 {
-   US_SelectModel* select = new US_SelectModel( ms.model, equlibrium );
+   US_SelectModel* select = new US_SelectModel( ms.model, equilibrium );
   
    ms.description = "Default ASTFEM Model";
    ms.component_vector.clear();
    ms.assoc_vector.clear();
 
-   bool  model3_vbarflag = true; 
+   bool   model3_vbarflag = true; 
    double mw_upperLimit   = 1.0e5;
    double mw_lowerLimit   = 1.0e4;
    double model3_vbar     = 0.72;

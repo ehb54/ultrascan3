@@ -95,6 +95,7 @@ struct SimulationComponent
    double sigma;
    double delta;
    double extinction;
+   double density;
    double concentration;
    double f_f0;
    bool   show_conc;

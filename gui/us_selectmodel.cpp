@@ -35,12 +35,13 @@ US_SelectModel::US_SelectModel( int& selection, bool equlibrium,
    for ( int i = 0; i < models.size(); i++ )
    {
       // For equlibrium selection, we only want a subset
-      if ( equlibrium && ( i == Ideal2Comp || 
-                           i == Ideal3Comp ||
-                           i == Fixed      ||
-                           i == UserHetero ||
+      if ( equlibrium && ( i == Ideal2Comp         || 
+                           i == Ideal3Comp         ||
+                           i == Fixed              ||
+                           i == UserHetero         ||
                            i == UserMonoIncompMono ||
                            i == UserMonoIncompNmer ||
+                           i == TwoComponent       ||
                            i == UserIrreversible ) ) continue;
 
       QListWidgetItem* item = new QListWidgetItem( models[ i ], 0, i );
