@@ -46,12 +46,6 @@ void US_FeMatchRa_W::setup_GUI()
 	{
 		resplot = new US_ResidualPlot(0, 0);
 	}
-	/*
-	pb_second_plot->setText(tr("Plot Simulation"));
-	pb_second_plot->setEnabled(false);
-	pb_second_plot->disconnect();
-	*/
-	delete pb_second_plot;
 	delete pb_reset;
 	delete smoothing_lbl;
 	delete smoothing_counter;
@@ -67,13 +61,10 @@ void US_FeMatchRa_W::setup_GUI()
 
 	lbl1_excluded->setText(tr("RMSD:"));
 
-	pb_loadModel = new QPushButton(tr("Load Model"), this);
-	Q_CHECK_PTR(pb_loadModel);
-	pb_loadModel->setAutoDefault(false);
-	pb_loadModel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	pb_loadModel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-	pb_loadModel->setEnabled(false);
-	connect(pb_loadModel, SIGNAL(clicked()), SLOT(load_model()));
+	pb_second_plot->setText(tr("Load Model"));
+	pb_second_plot->setEnabled(false);
+	pb_second_plot->disconnect();
+	connect(pb_second_plot, SIGNAL(clicked()), SLOT(load_model()));
 
 	lbl_variance = new QLabel(tr(" Variance:"),this);
 	lbl_variance->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label) );
@@ -200,8 +191,7 @@ void US_FeMatchRa_W::setup_GUI()
 	subGrid1->addMultiCellWidget(pb_load, j, j, 0, 1);
 	subGrid1->addMultiCellWidget(pb_details, j, j, 2, 3);
 	j++;
-	//subGrid1->addMultiCellWidget(pb_second_plot, j, j, 0, 1);
-	subGrid1->addMultiCellWidget(pb_loadModel, j, j, 0, 1);
+	subGrid1->addMultiCellWidget(pb_second_plot, j, j, 0, 1);
 	subGrid1->addMultiCellWidget(pb_save, j, j, 2, 3);
 	j++;
 	subGrid1->addMultiCellWidget(pb_print, j, j, 0, 1);
@@ -291,7 +281,7 @@ void US_FeMatchRa_W::enableButtons()
 	pb_save->setEnabled(false);
 	pb_view->setEnabled(false);
 	pb_print->setEnabled(false);
-	pb_loadModel->setEnabled(true);
+	pb_second_plot->setEnabled(true);
 }
 
 void US_FeMatchRa_W::save()
@@ -615,7 +605,6 @@ void US_FeMatchRa_W::load_model()
 			cnt_model->setRange(1, msv.size(), 1);
 			cnt_model->setValue(current_model + 1);
 			pb_model->setEnabled(true);
-			//pb_second_plot->setEnabled(true);
 			if (msv.size() > 1)
 			{
 				bg_plotmode->setEnabled(true);
