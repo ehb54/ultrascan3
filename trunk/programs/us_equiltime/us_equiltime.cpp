@@ -283,6 +283,8 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    right->setStretchFactor( te_info, 2 );
 
    main->addLayout( right ); 
+
+   model.component_vector.clear();
    update_speeds( speed_type );
 }
 
@@ -396,6 +398,34 @@ void US_EquilTime::new_channel( int channel )
    equilibrium_plot->replot();
 }
 
+double US_EquilTime::rpmFromSigma( double sigma )
+{
+   double T     = K0 + 20.0;  // 20C for now
+   double mw    = model.component_vector[ 0 ].mw;
+   double vbar  = model.component_vector[ 0 ].vbar20;
+   double rho   = model.component_vector[ 0 ].density;
+
+   double rpm   = 30.0 / M_PI * 
+                  sqrt( sigma * R * T * 2 / ( mw * ( 1 - vbar * rho ) ) );
+   
+   rpm = floor( rpm / 100.0 + 0.5 ) * 100.0;  // Round to closest 100
+   
+   return rpm;
+}
+
+double US_EquilTime::sigmaFromRpm( double rpm )
+{
+   double T     = K0 + 20.0;  // 20C for now
+   double mw    = model.component_vector[ 0 ].mw;
+   double vbar  = model.component_vector[ 0 ].vbar20;
+   double rho   = model.component_vector[ 0 ].density;
+
+   double sigma = mw * ( 1 - vbar * rho ) * sq( M_PI / 30.0 * rpm ) / 
+                  ( 2 * R * T );
+
+   return sigma;
+}
+
 void US_EquilTime::update_speeds( int type )
 {
    speed_steps.clear();
@@ -403,28 +433,44 @@ void US_EquilTime::update_speeds( int type )
 
    if ( type == SIGMA )
    {
-      if ( type != speed_type )
+      // Determine max sigma
+      double max_sigma;
+      
+      if ( model.component_vector.size() > 0 ) 
       {
-         lb_lowspeed ->setText( tr( "Low Speed (sigma):"  ) );
-         lb_highspeed->setText( tr( "High Speed (sigma):" ) );
-         
-         // Reset counters
-         cnt_lowspeed ->disconnect();
-         cnt_highspeed->disconnect();
-         cnt_lowspeed ->setRange( 0.1, 10, 0.01 );
-         cnt_lowspeed ->setValue( sigma_start );
-         cnt_highspeed->setRange( 0.1, 10, 0.01 );
-         cnt_highspeed->setValue( sigma_stop );
-         
-         connect( cnt_lowspeed, SIGNAL( valueChanged( double ) ),
-                                SLOT  ( new_lowspeed( double ) ) );
+         max_sigma   = sigmaFromRpm( 60000.0 );
 
-         connect( cnt_highspeed, SIGNAL( valueChanged ( double ) ),
-                                 SLOT  ( new_highspeed( double ) ) );
-
-         if ( fabs( sigma_stop - sigma_start ) < 1.0e-4 ) speed_count = 1;
-         cnt_speedsteps->setValue( speed_count );
+         if ( type != speed_type )
+         {
+            sigma_start = sigmaFromRpm( cnt_lowspeed ->value() );
+            sigma_stop  = sigmaFromRpm( cnt_highspeed->value() );
+         }
       }
+      else 
+         max_sigma = 10;
+
+      if ( sigma_start > max_sigma ) sigma_start = max_sigma;
+      if ( sigma_stop  > max_sigma ) sigma_stop  = max_sigma;
+
+      lb_lowspeed ->setText( tr( "Low Speed (sigma):"  ) );
+      lb_highspeed->setText( tr( "High Speed (sigma):" ) );
+      
+      // Reset counters
+      cnt_lowspeed ->disconnect();
+      cnt_highspeed->disconnect();
+      cnt_lowspeed ->setRange( 0.1, max_sigma, 0.01 );
+      cnt_lowspeed ->setValue( sigma_start );
+      cnt_highspeed->setRange( 0.1, max_sigma, 0.01 );
+      cnt_highspeed->setValue( sigma_stop );
+      
+      connect( cnt_lowspeed, SIGNAL( valueChanged( double ) ),
+                             SLOT  ( new_lowspeed( double ) ) );
+
+      connect( cnt_highspeed, SIGNAL( valueChanged ( double ) ),
+                              SLOT  ( new_highspeed( double ) ) );
+
+      if ( fabs( sigma_stop - sigma_start ) < 0.1 ) speed_count = 1;
+      cnt_speedsteps->setValue( speed_count );
 
       if ( speed_count > 1 )
       {
@@ -446,29 +492,32 @@ void US_EquilTime::update_speeds( int type )
    }
    else
    {
-      if ( type != speed_type )
+      if ( model.component_vector.size() > 0 &&  type != speed_type )
       {
-         lb_lowspeed ->setText( tr( "Low Speed (rpm):"  ) );
-         lb_highspeed->setText( tr( "High Speed (rpm):" ) );
-         
-         // Reset counters
-         cnt_lowspeed ->disconnect();
-         cnt_highspeed->disconnect();
-
-         cnt_lowspeed  ->setRange( 100, 60000, 100 );
-         cnt_lowspeed  ->setValue( rpm_start );
-         cnt_highspeed ->setRange( 100, 60000, 100 );
-         cnt_highspeed ->setValue( rpm_stop );
-         
-         connect( cnt_lowspeed, SIGNAL( valueChanged( double ) ),
-                                SLOT  ( new_lowspeed( double ) ) );
-
-         connect( cnt_highspeed, SIGNAL( valueChanged ( double ) ),
-                                 SLOT  ( new_highspeed( double ) ) );
-
-         if ( fabs( rpm_stop - rpm_start ) < 100.0 ) speed_count = 1;
-         cnt_speedsteps->setValue( speed_count );
+         rpm_start = rpmFromSigma( cnt_lowspeed ->value() );
+         rpm_stop  = rpmFromSigma( cnt_highspeed->value() );
       }
+
+      lb_lowspeed ->setText( tr( "Low Speed (rpm):"  ) );
+      lb_highspeed->setText( tr( "High Speed (rpm):" ) );
+      
+      // Reset counters
+      cnt_lowspeed ->disconnect();
+      cnt_highspeed->disconnect();
+
+      cnt_lowspeed  ->setRange( 100, 60000, 100 );
+      cnt_lowspeed  ->setValue( rpm_start );
+      cnt_highspeed ->setRange( 100, 60000, 100 );
+      cnt_highspeed ->setValue( rpm_stop );
+      
+      connect( cnt_lowspeed, SIGNAL( valueChanged( double ) ),
+                             SLOT  ( new_lowspeed( double ) ) );
+
+      connect( cnt_highspeed, SIGNAL( valueChanged ( double ) ),
+                              SLOT  ( new_highspeed( double ) ) );
+
+      if ( fabs( rpm_stop - rpm_start ) < 100.0 ) speed_count = 1;
+      cnt_speedsteps->setValue( speed_count );
 
       if ( speed_count > 1 )
       {
@@ -525,6 +574,7 @@ void US_EquilTime::load_experiment( void )
 
    // Initialize.  Can be updated in model editor
    model.component_vector[ 0 ].density = DENS_20W;
+   update_speeds( speed_type );
 }
 
 void US_EquilTime::new_model( void )
@@ -533,6 +583,10 @@ void US_EquilTime::new_model( void )
 
    if ( model.model >= 0 )
    {
+      // Set a default partial concentration in OD
+      if ( model.component_vector[ 0 ].concentration == 1.0 )
+         model.component_vector[ 0 ].concentration = 0.3;
+            
       // Will be deleted when closed
       US_ModelEditor* component_dialog = new US_ModelEditor( model );
 
@@ -542,6 +596,8 @@ void US_EquilTime::new_model( void )
          pb_saveExp    ->setEnabled( true );
          pb_estimate   ->setEnabled( true );
       }
+
+      update_speeds( speed_type );
    }
 }
 
@@ -582,6 +638,7 @@ void US_EquilTime::load_model( void )
 
    // Initialize.  Can be updated in model editor
    model.component_vector[ 0 ].density = DENS_20W;
+   update_speeds( speed_type );
 }
 
 void US_EquilTime::init_simparams( void )
@@ -684,6 +741,14 @@ void US_EquilTime::init_astfem_data( void )
 
 void US_EquilTime::simulate( void )
 {
+   for ( uint k = 0 ; k < model.component_vector.size(); k++ )
+   {
+      struct mfem_initial* c0 = &model.component_vector[ k ].c0;
+      
+      c0->radius.clear();
+      c0->concentration.clear();
+   }
+
    simparams.meniscus = cnt_top   ->value();
    simparams.bottom   = cnt_bottom->value();
 
@@ -701,12 +766,7 @@ void US_EquilTime::simulate( void )
 
    init_astfem_data();
 
-   te_info->e->append( tr( "Sigma\tRPM\tTime Increment\tTotal Time\n" ) );
-
-   double T     = K0 + astfem_data[ 0 ].avg_temperature;  // 20C for now
-   double mw    = model.component_vector[ 0 ].mw;
-   double vbar  = model.component_vector[ 0 ].vbar20;
-   double rho   = model.component_vector[ 0 ].density;
+   te_info->e->append( tr( "Sigma   RPM     Time Increment  Total Time\n" ) );
 
    for ( int i = 0; i < speed_steps.count(); i++ )
    {
@@ -715,12 +775,8 @@ void US_EquilTime::simulate( void )
       // Set up simparams for this step
       if ( speed_type == SIGMA )
       {
-         double sigma = speed_steps[ i ];
-         double rpm   = 30.0 / M_PI * 
-                        sqrt( sigma * R * T / ( mw * ( 1 - vbar * rho ) ) );
-   
-         rpm = floor( rpm / 100.0 + 0.5 ) * 100.0;  // Round to closest 100
-         simparams.speed_step[ 0 ].rotorspeed = (int) rpm;
+         double sigma                         =  speed_steps[ i ];
+         simparams.speed_step[ 0 ].rotorspeed = (int) rpmFromSigma( sigma ); 
       }
       else
          simparams.speed_step[ 0 ].rotorspeed = (int) speed_steps[ i ];
@@ -732,52 +788,32 @@ void US_EquilTime::simulate( void )
       current_curve->setPen( QPen( Qt::green ) );
       current_curve->attach( equilibrium_plot );
 
-      next_scan_time = cnt_timeIncrement->value() * 60.0; 
-      step_time      = 0.0;
+      // Set up for next step
+      astfem_data[ 0 ].scan[ 0 ].time = 0.0;
+      next_scan_time                  = cnt_timeIncrement->value() * 60.0; 
+      step_time                       = 0.0;
 
+      // Do the simulation
       astfem_rsa->calculate( astfem_data );
 
       current_time += step_time;
 
-      // Set up for next step
-      simparams.band_firstScanIsConcentration = true;
-      astfem_data[ 0 ].scan[ 0 ].time = 0.0;
+      // Copy last scan data to initial concentration
 
-      // Convert last scan data to initial concentration
-      // Interpolate from last scan to astfem_data
-      
-      vector< double >* radius = &astfem_data[ 0 ].radius;
-      vector< double >* conc   = &astfem_data[ 0 ].scan[ 0 ].conc;
-
-      uint ja = 0;
-
-      for ( uint j = 0; j < astfem_data[ 0 ].radius.size(); j++ )
+      for ( uint k = 0 ; k < model.component_vector.size(); k++ )
       {
-         uint   i;
-         double xs = (*radius)[ j ];
+         struct mfem_initial* c0 = &model.component_vector[ k ].c0;
+         
+         c0->radius.clear();
+         c0->concentration.clear();
 
-         for ( i = ja; i < simparams.simpoints; i++ )
-            if ( sim_radius[ i ] > xs + 1.e-12 )  break;
-      
-         if ( i == 0 )                      
-            (*conc)[ j ] = concentration[ 0 ];   // Use the first value
-      
-         else if ( i == simparams.simpoints )     // x[j] > last point
-            (*conc)[ j ] = concentration[ i - 1 ];
-
-         else
+         for ( uint j = 0; j < simparams.simpoints; j++ )
          {
-            double a   = sim_radius[ i - 1 ];
-            double b   = sim_radius[ i ];
-
-            double tmp = ( xs - a ) / ( b - a );
-
-            (*conc)[ j ] = concentration[ i - 1 ] * ( 1.0 - tmp ) +
-                           concentration[ i ] * tmp;
-            ja = i - 1;
+            c0->radius       .push_back( sim_radius   [ j ] );
+            c0->concentration.push_back( concentration[ j ] );
          }
       }
-      
+
       concentration = NULL;  // Force allocation of new plot data
       
       // Draw curve 
@@ -786,11 +822,10 @@ void US_EquilTime::simulate( void )
       
       // Output results
       int    rpm   = simparams.speed_step[ 0 ].rotorspeed;
-      double sigma = mw * ( 1 - vbar * rho ) * sq( M_PI / 30.0 * rpm ) / 
-                     ( R * T );
+      double sigma = sigmaFromRpm( rpm );
       
       QString results;
-      results.sprintf( "%6.4f\t%5d\t%6.2f hours\t\t%6.2f hours", 
+      results.sprintf( "%6.4f  %5d   %6.2f hours    %6.2f hours", 
             sigma, rpm, step_time / 3600.0, current_time / 3600.0 );
 
       te_info->e->append( results );
