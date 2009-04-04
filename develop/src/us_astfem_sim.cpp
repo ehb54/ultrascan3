@@ -282,6 +282,8 @@ void US_Astfem_Sim::closeEvent(QCloseEvent *e)
 // load a model from the list
 void US_Astfem_Sim::new_model()
 {
+	system.component_vector.clear();
+	system.assoc_vector.clear();
 	US_ModelSelection *model_sel;
 	model_sel = new US_ModelSelection();
 	model_sel->select_model(&system);

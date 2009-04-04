@@ -578,6 +578,13 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system, struct SimulationParame
 			}
 		}
 	}
+	rg.clear();
+	af_params.s.clear();
+	af_params.D.clear();
+	af_params.kext.clear();
+	af_params.role.clear();
+	af_params.local_index.clear();
+	af_params.association.clear();
 	if (vC0 != NULL)	delete [] vC0;
 
 #if defined(DEBUG_ALLOC)
@@ -722,7 +729,6 @@ void US_Astfem_RSA::initialize_rg() // Setup reaction groups
 
 	} // while (i)
 
-   printf("out init_rg\n");
 }
 
 
@@ -2369,60 +2375,87 @@ void US_Astfem_RSA::ReactionOneStep_Euler_imp(unsigned int Npts, double **C1, do
 	// general cases
 	unsigned int iter, iter_max = 20; 		// maximum number of Newton iteration allowed
 	double **A, *y0, *delta_n, *b, diff;
+	double *y0_ref, *y1_ref, diff_ref;
 
 	y0 = new double [num_comp];
 	delta_n = new double [num_comp];
 	b = new double [num_comp];
 	initialize_2d(num_comp, num_comp, &A);
+
+	y0_ref = new double [num_comp];		// reference y0
+	y1_ref = new double [num_comp];		// reference y1 (no need recalculate y1, if y0 same)
+   for(i=0;i<num_comp;i++) 
+   {
+      y0_ref[i] = 0.;
+      y1_ref[i] = 0.;
+   }
+   
 	//   for(i=0;i<num_comp;i++) A[i] = new double [num_comp];
 	//	cout << "Npts: " << Npts << "num_comp: " << num_comp << endl;
 	for (j=0; j<Npts; j++)
 	{
 		ct = 0.;
+      diff_ref = 0.;
 		for(i=0;i<num_comp;i++)
 		{
 			y0[i]=C1[i][j];
 			delta_n[i]=0.;
 			ct += fabs(y0[i]);
+         diff_ref += fabs(y0_ref[i]-y0[i]);
 		}
 
-		for(iter=0; iter<iter_max;iter++) 		// Newton iteration
-		{
-			for(i=0;i<num_comp;i++) y0[i]=C1[i][j]+delta_n[i];
+      if(diff_ref<ct*1.e-7 || diff_ref<1.e-9)
+      {
+		   for(i=0;i<num_comp;i++) C1[i][j] = y1_ref[i];
+      } 
+      else 
+      {
 
-			Reaction_dydt(y0, b);						// b=dy/dt
+		   for(iter=0; iter<iter_max;iter++) 		// Newton iteration
+		   {
+			   for(i=0;i<num_comp;i++) y0[i]=C1[i][j]+delta_n[i];
 
-			Reaction_dfdy(y0, A);						// A=df/dy
+			   Reaction_dydt(y0, b);						// b=dy/dt
 
-			for(i=0;i<num_comp;i++)
-			{
-				for(k=0;k<num_comp;k++) A[i][k] *= (-TimeStep);
-				A[i][i] += 2.;
-				b[i] = -(2.*delta_n[i] - TimeStep * b[i]);
-			}
+			   Reaction_dfdy(y0, A);						// A=df/dy
 
-			if( GaussElim(num_comp, A, b) ==-1 )
-			{
-				printf("Matrix singular in Reaction_Euler_imp: model 12\n");
-				break;
-			}
-			else
-			{
-				diff = 0.;
-				for(i=0;i<num_comp;i++)
-				{
-					delta_n[i] += b[i];
-					diff += fabs(delta_n[i]);
-				}
-			}
-			if( diff < 1.e-7*ct ) break;
-		} // end of Newton iteration;
+			   for(i=0;i<num_comp;i++)
+			   {
+				   for(k=0;k<num_comp;k++) A[i][k] *= (-TimeStep);
+				   A[i][i] += 2.;
+				   b[i] = -(2.*delta_n[i] - TimeStep * b[i]);
+			   }
 
-		for(i=0;i<num_comp;i++) C1[i][j] += delta_n[i];
+			   if( GaussElim(num_comp, A, b) ==-1 )
+			   {
+				   printf("Matrix singular in Reaction_Euler_imp: model 12\n");
+				   break;
+			   }
+			   else
+			   {
+				   diff = 0.;
+				   for(i=0;i<num_comp;i++)
+				   {
+					   delta_n[i] += b[i];
+					   diff += fabs(delta_n[i]);
+				   }
+			   }
+			   if( diff < 1.e-7*ct ) break;
+		   } // end of Newton iteration;
+		   for(i=0;i<num_comp;i++) 
+         {
+            y0_ref[i] = C1[i][j];
+            C1[i][j] += delta_n[i];
+            y1_ref[i] = C1[i][j];
+         }
+
+      } // if diff_ref
 
 	} // end of j (pts)
 
 	clear_2d(num_comp, A);
+	delete [] y0_ref;
+	delete [] y1_ref;
 	delete [] b;
 	delete [] delta_n;
 	delete [] y0;
