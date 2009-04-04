@@ -73,8 +73,10 @@ class US_EXTERN US_EquilTime : public US_Widgets
       QPushButton*  pb_changeModel;
       QPushButton*  pb_estimate;
 
-      void init_simparams    ( void );
-      void init_astfem_data  ( void );
+      void   init_simparams    ( void );
+      void   init_astfem_data  ( void );
+      double rpmFromSigma      ( double sigma );
+      double sigmaFromRpm      ( double rpm   );
 
    private slots:
       void update_speeds     ( int  );
