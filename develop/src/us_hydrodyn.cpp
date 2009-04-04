@@ -170,7 +170,7 @@ void US_Hydrodyn::setupGUI()
 	somo_options->insertItem(tr("&Hydrodynamic Calculations"), this, SLOT(show_hydro()));
 	somo_options->insertItem(tr("&Miscellaneous Options"), this, SLOT(show_misc()));
 	somo_options->insertItem(tr("&Bead Model Output"), this, SLOT(show_bead_output()));
-	somo_options->insertItem(tr("&Grid Functions (AtoB))"), this, SLOT(show_grid()));
+	somo_options->insertItem(tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
 
 	pdb_options = new QPopupMenu;
 	pdb_options->insertItem(tr("&Parsing"), this, SLOT(pdb_parsing()));
@@ -6247,7 +6247,7 @@ void US_Hydrodyn::load_pdb()
 	message = "";
 	if (pdb_parse.missing_atoms == 1)
 	{
-		message += tr("You have selected to skip coded residues conting missing atoms.\n"
+		message += tr("You have selected to skip coded residues containing missing atoms.\n"
 						  "If your model contains missing atoms, the calculated molecular\n"
 				 		  "weight and vbar may be incorrect, and you should manually enter\n"
 						  "a global value for the molecular weight in the SOMO hydrodynamic\n"
