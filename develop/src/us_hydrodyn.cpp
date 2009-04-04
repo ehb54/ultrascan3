@@ -6211,12 +6211,21 @@ void US_Hydrodyn::load_pdb()
 	QString message = "";
 	if (pdb_parse.missing_residues == 1)
 	{
-		message += tr("You have selected to skip missing residues, are you sure you want to proceed?\n");
+		message += tr("You have selected to skip missing residues. If your model contains missing\n"
+						  "residues, the calculated molecular weight and vbar may be incorrect, and\n"
+						  "you should manually enter a global value for the molecular weight in the\n"
+						  "SOMO hydrodynamic options, and a global value for the vbar in the SOMO\n"
+						  "Miscellaneous options.\n\nAre you sure you want to proceed?");
 	}
 	if (pdb_parse.missing_residues == 2)
 	{
-		message += tr("You have selected to replace missing residues with an average residue, are\n");
-		message += tr("you sure you want to proceed without reviewing the average residue settings?\n");
+		message += tr("You have selected to replace non-coded residues with an average residue.\n"
+						  "If your model contains non-coded residues, the calculated molecular weight\n"
+						  "and vbar may be incorrect. Therefore, you could manually enter a global\n"
+						  "value for the molecular weight in the SOMO hydrodynamic options, and a\n"
+				 		  "global value for the vbar in the SOMO Miscellaneous options. You can also\n"
+						  "review the average residue settings in the SOMO Miscellaneous options.\n\n"
+						  "Are you sure you want to proceed?");
 	}
 	if (message != "")
 	{
@@ -6238,12 +6247,23 @@ void US_Hydrodyn::load_pdb()
 	message = "";
 	if (pdb_parse.missing_atoms == 1)
 	{
-		message += tr("You have selected to skip missing atoms, are you sure you want to proceed?\n");
+		message += tr("You have selected to skip coded residues conting missing atoms.\n"
+						  "If your model contains missing atoms, the calculated molecular\n"
+				 		  "weight and vbar may be incorrect, and you should manually enter\n"
+						  "a global value for the molecular weight in the SOMO hydrodynamic\n"
+						  "options, and a global value for the vbar in the SOMO Miscellaneous\n"
+						  "options.\n\nAre you sure you want to proceed?");
 	}
 	if (pdb_parse.missing_atoms == 2)
 	{
-		message += tr("You have selected to replace missing atoms with an average atom, are\n");
-		message += tr("you sure you want to proceed without reviewing the average atom settings?\n");
+		message += tr("You have selected to replace coded residues containing missing atoms\n"
+						  "with an average residue. If your model contains coded residues with\n"
+						  "missing atoms, the calculated molecular weight and vbar may be incorrect.\n"
+						  "Therefore, you could manually enter a global value for the molecular weight\n"
+				 		  "in the SOMO hydrodynamic options, and a global value for the vbar in the\n"
+						  "SOMO Miscellaneous options. You can also review the average residue settings\n"
+				 		  "in the SOMO Miscellaneous options.\n\n"
+						  "Are you sure you want to proceed?");
 	}
 	if (message != "")
 	{
@@ -7335,7 +7355,7 @@ void US_Hydrodyn::reset()
    grid_overlap.title = "Grid beads";
 
    bead_output.sequence = 0;
-   bead_output.output = 0;
+   bead_output.output = 1;
 	bead_output.correspondence = true;
 
    asa.probe_radius = (float) 1.4;
@@ -7384,8 +7404,8 @@ void US_Hydrodyn::reset()
 	pdb_parse.skip_water = true;
 	pdb_parse.alternate = true;
 	pdb_parse.find_sh = false;
-	pdb_parse.missing_residues = 2;
-	pdb_parse.missing_atoms = 2;
+	pdb_parse.missing_residues = 0;
+	pdb_parse.missing_atoms = 0;
 }
 
 void US_Hydrodyn::write_config(const QString& fname)
