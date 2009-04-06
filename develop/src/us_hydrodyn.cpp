@@ -777,9 +777,17 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 			   {
 			      failure_errors++;
 			   }
+			   if (pdb_parse.missing_atoms == 1)
+			   {
+			      bead_exceptions[count_idx] = 2;
+			   }
+			   if (pdb_parse.missing_atoms == 2)
+			   {
+			      bead_exceptions[count_idx] = 3;
+			   }
 			   error_string->
 			      append(QString("").
-				     sprintf("missing atom chain %s molecule %d atom %s residue %s %s\n",
+				     sprintf("Missing atom: chain %s molecule %d atom %s residue %s %s\n",
 					     lastChainID.ascii(),
 					     j + 1,
 					     residue_list[lastResPos].r_atom[l].name.ascii(),
@@ -814,26 +822,83 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 		 && this_atom->resName != "DOD"
 		 && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
 	    {
-	       errors_found++;
-	       if (pdb_parse.missing_residues == 0)
+	       QString msg_tag;
+	       bool do_error_msg = true;
+	       if (pdb_parse.missing_residues == 0 &&
+		   pdb_parse.missing_atoms == 0)
 	       {
 		  failure_errors++;
-	       } 
-	       if (pdb_parse.missing_residues == 1)
-	       {
-		  bead_exceptions[count_idx] = 2;
+		  msg_tag = "Missing residue or atom";
+	       } else {
+		  // ok, we have three cases here:
+		  // 1. residue does exist & residue/atom doesn't
+		  //    1.1 skip missing atoms controls
+		  // 2. residue does exist & residue/atom does
+		  //    2.1 there must be a missing atom since count doesn't match so atom controls
+		  // 3. residue does not exist
+		  //    3.1 skip missing residue control
+		  // ---------------------
+		  //
+		  // note: we're just checking the 1st of multiple possibilities
+		  puts("cases---");
+		  if (multi_residue_map[this_atom->resName].size()) 
+		  {
+		     // residue exists, does residue/atom?
+		     QString idx = QString("%1|%2|%3")
+			.arg(this_atom->resName)
+			.arg(this_atom->name)
+			.arg(0); 
+		     printf("cases residue found: idx %s\n", idx.ascii());
+		     if (valid_atom_map[idx].size()) 
+		     {
+			puts("case 2.1");
+			msg_tag = "Missing or extra atom in residue";
+		     } else {
+			// atom does not exist, skip missing atoms controls
+			puts("case 1.1");
+			msg_tag = "Missing atom";
+		     }
+		     if (pdb_parse.missing_atoms == 0)
+		     {
+			failure_errors++;
+		     }
+		     if (pdb_parse.missing_atoms == 1)
+		     {
+			bead_exceptions[count_idx] = 2;
+		     }
+		     if (pdb_parse.missing_atoms == 2)
+		     {
+			bead_exceptions[count_idx] = 3;
+		     }
+		  } else {
+		     // residue does not exist, skip missing residue controls
+		     puts("case 3.1");
+		     msg_tag = "Missing residue";
+		     if (pdb_parse.missing_residues == 0)
+		     {
+			failure_errors++;
+		     }
+		     if (pdb_parse.missing_residues == 1)
+		     {
+			bead_exceptions[count_idx] = 2;
+		     }
+		     if (pdb_parse.missing_residues == 2)
+		     {
+			bead_exceptions[count_idx] = 3;
+		     }
+		  }
 	       }
-	       if (pdb_parse.missing_residues == 2)
-	       {
-		  bead_exceptions[count_idx] = 3;
+	       if (do_error_msg) {
+		  errors_found++;
+		  error_string->append(QString("").sprintf("%s: chain %s molecule %d atom %s residue %s %s\n",
+							   msg_tag.ascii(),
+							   this_atom->chainID.ascii(),
+							   j + 1,
+							   this_atom->name.ascii(),
+							   this_atom->resSeq.ascii(),
+							   this_atom->resName.ascii()
+							   ));
 	       }
-	       error_string->append(QString("").sprintf("unknown residue chain %s molecule %d atom %s residue %s %s\n",
-							this_atom->chainID.ascii(),
-							j + 1,
-							this_atom->name.ascii(),
-							this_atom->resSeq.ascii(),
-							this_atom->resName.ascii()
-							));
 	    }
 	 } else {
 	    int atompos = -1;
@@ -6272,7 +6337,13 @@ void US_Hydrodyn::read_residue_file()
 		   ); fflush(stdout);
 	    multi_residue_map[new_residue.name].push_back(residue_list.size());
 	    residue_list.push_back(new_residue);
-
+	    for (unsigned int k = 0; k < new_residue.r_atom.size(); k++) {
+	       QString idx = QString("%1|%2|%3")
+		  .arg(new_residue.name)
+		  .arg(new_residue.r_atom[k].name)
+		  .arg(multi_residue_map[new_residue.name].size() - 1);
+	       valid_atom_map[idx].push_back(k);
+	    }
 	 }
       }
       f.close();
