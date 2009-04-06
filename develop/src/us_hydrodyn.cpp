@@ -159,38 +159,38 @@ void US_Hydrodyn::setupGUI()
    int minHeight1 = 30;
    bead_model_file = "";
 
-	lookup_tables = new QPopupMenu;
-	lookup_tables->insertItem(tr("Add/Edit &Hybridization"), this, SLOT(hybrid()));
-	lookup_tables->insertItem(tr("Add/Edit &Atom"), this, SLOT(atom()));
-	lookup_tables->insertItem(tr("Add/Edit &Residue"), this, SLOT(residue()));
+   lookup_tables = new QPopupMenu;
+   lookup_tables->insertItem(tr("Add/Edit &Hybridization"), this, SLOT(hybrid()));
+   lookup_tables->insertItem(tr("Add/Edit &Atom"), this, SLOT(atom()));
+   lookup_tables->insertItem(tr("Add/Edit &Residue"), this, SLOT(residue()));
 
-	somo_options = new QPopupMenu;
-	somo_options->insertItem(tr("&ASA Calculation"), this, SLOT(show_asa()));
-	somo_options->insertItem(tr("&Overlap Reduction"), this, SLOT(show_overlap()));
-	somo_options->insertItem(tr("&Hydrodynamic Calculations"), this, SLOT(show_hydro()));
-	somo_options->insertItem(tr("&Miscellaneous Options"), this, SLOT(show_misc()));
-	somo_options->insertItem(tr("&Bead Model Output"), this, SLOT(show_bead_output()));
-	somo_options->insertItem(tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
+   somo_options = new QPopupMenu;
+   somo_options->insertItem(tr("&ASA Calculation"), this, SLOT(show_asa()));
+   somo_options->insertItem(tr("&Overlap Reduction"), this, SLOT(show_overlap()));
+   somo_options->insertItem(tr("&Hydrodynamic Calculations"), this, SLOT(show_hydro()));
+   somo_options->insertItem(tr("&Miscellaneous Options"), this, SLOT(show_misc()));
+   somo_options->insertItem(tr("&Bead Model Output"), this, SLOT(show_bead_output()));
+   somo_options->insertItem(tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
+   
+   pdb_options = new QPopupMenu;
+   pdb_options->insertItem(tr("&Parsing"), this, SLOT(pdb_parsing()));
+   pdb_options->insertItem(tr("&Visualization"), this, SLOT(pdb_visualization()));
 
-	pdb_options = new QPopupMenu;
-	pdb_options->insertItem(tr("&Parsing"), this, SLOT(pdb_parsing()));
-	pdb_options->insertItem(tr("&Visualization"), this, SLOT(pdb_visualization()));
-
-	configuration = new QPopupMenu;
+   configuration = new QPopupMenu;
    configuration->insertItem(tr("&Load Configuration"), this, SLOT(load_config()));
    configuration->insertItem(tr("&Save Current Configuration"), this, SLOT(write_config()));
    configuration->insertItem(tr("&Reset to Default Configuration"), this, SLOT(reset()));
 
-	QFrame *frame;
-	frame = new QFrame(this);
+   QFrame *frame;
+   frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
-
-	menu = new QMenuBar(frame);
-	menu->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	menu->insertItem(tr("&Lookup Tables"), lookup_tables);
-	menu->insertItem(tr("&SOMO Options"), somo_options);
-	menu->insertItem(tr("&PDB Options"), pdb_options);
-	menu->insertItem(tr("&Configurations"), configuration);
+   
+   menu = new QMenuBar(frame);
+   menu->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   menu->insertItem(tr("&Lookup Tables"), lookup_tables);
+   menu->insertItem(tr("&SOMO Options"), somo_options);
+   menu->insertItem(tr("&PDB Options"), pdb_options);
+   menu->insertItem(tr("&Configurations"), configuration);
 
    lbl_somo = new QLabel(tr("SOMO Program:"), this);
    Q_CHECK_PTR(lbl_somo);
@@ -922,10 +922,13 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	 PDB_model org_model = *model;
 	 model->molecule.clear();
 	 // we may need to redo the residues also
-	 // model->residue.clear();
+	 model->residue.clear();
+	 printf("vbar before: %g\n", model->vbar);
 	 for (unsigned int j = 0; j < org_model.molecule.size(); j++)
 	 {
 	    PDB_chain tmp_chain;
+	    QString lastResSeq = "";
+	    QString lastResName = "";
 	    for (unsigned int k = 0; k < org_model.molecule[j].atom.size(); k++)
 	    {
 	       QString count_idx =
@@ -936,6 +939,12 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	       if (bead_exceptions[count_idx] == 1)
 	       {
 		  tmp_chain.atom.push_back(org_model.molecule[j].atom[k]);
+		  if (org_model.molecule[j].atom[k].resSeq != lastResSeq) 
+		  {
+		     lastResSeq = org_model.molecule[j].atom[k].resSeq;
+		     lastResName = org_model.molecule[j].atom[k].resName;
+		     model->residue.push_back(residue_list[multi_residue_map[lastResName][0]]);
+		  }
 	       } else {
 		  printf("removing molecule %u atom %u from model\n", 
 			 j, k);
@@ -943,6 +952,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	    }
 	    model->molecule.push_back(tmp_chain);
 	 }
+	 calc_vbar(model);
+	 update_vbar();
+	 printf("vbar after: %g\n", model->vbar);
       }
    }
    return 0;
