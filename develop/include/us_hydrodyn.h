@@ -170,6 +170,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		map < QString, vector <int> > multi_residue_map; // maps residue to index of residue_list
 		map < QString, int > atom_counts;
 		map < QString, int > has_OXT;
+		map < QString, int > bead_exceptions; // 1 == ok, 2 == skip, 3 == use automatic bead builder
 		vector <struct PDB_model> model_vector;
 		bool bead_model_from_file;
 		vector <int> somo_processed;

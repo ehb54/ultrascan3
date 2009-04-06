@@ -681,6 +681,8 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
    // compare expanded list of residues to model ... list missing atoms missing
    int errors_found = 0;
    get_atom_map(model);
+   bool failure_errors = 0;
+   bead_exceptions.clear();
 
    for (unsigned int j = 0; j < model->molecule.size(); j++)
    {
@@ -692,12 +694,16 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
       {
 	 PDB_atom *this_atom = &(model->molecule[j].atom[k]);
 	 this_atom->active = false;
-
 	 QString count_idx =
 	    QString("%1_%2_%3")
 	    .arg(j)
 	    .arg(this_atom->resName)
 	    .arg(this_atom->resSeq);
+
+	 if (!bead_exceptions[count_idx])
+	 {
+	    bead_exceptions[count_idx] = 1;
+	 }
 
 	 // find residue in residues
 #if defined(DEBUG)
@@ -767,6 +773,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 			if (!residue_list[lastResPos].r_atom[l].tmp_flag)
 			{
 			   errors_found++;
+			   if (pdb_parse.missing_atoms == 0)
+			   {
+			      failure_errors++;
+			   }
 			   error_string->
 			      append(QString("").
 				     sprintf("missing atom chain %s molecule %d atom %s residue %s %s\n",
@@ -805,6 +815,18 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 		 && this_atom->resName != "HOH" && (this_atom->altLoc == "A" || this_atom->altLoc == " ")))
 	    {
 	       errors_found++;
+	       if (pdb_parse.missing_residues == 0)
+	       {
+		  failure_errors++;
+	       } 
+	       if (pdb_parse.missing_residues == 1)
+	       {
+		  bead_exceptions[count_idx] = 2;
+	       }
+	       if (pdb_parse.missing_residues == 2)
+	       {
+		  bead_exceptions[count_idx] = 3;
+	       }
 	       error_string->append(QString("").sprintf("unknown residue chain %s molecule %d atom %s residue %s %s\n",
 							this_atom->chainID.ascii(),
 							j + 1,
@@ -836,6 +858,8 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	    if (atompos == -1)
 	    {
 	       errors_found++;
+	       // currently, we still fail for unknown or 'extra' atoms
+	       failure_errors++;
 	       error_string->append(QString("").sprintf("unknown atom chain %s molecule %d atom %s residue %s %s\n",
 							this_atom->chainID.ascii(),
 							j + 1,
@@ -854,6 +878,24 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	    if (!residue_list[lastResPos].r_atom[l].tmp_flag)
 	    {
 	       errors_found++;
+	       if (pdb_parse.missing_atoms == 0)
+	       {
+		  failure_errors++;
+	       } else {
+		  QString count_idx =
+		     QString("%1_%2_%3")
+		     .arg(j)
+		     .arg(residue_list[lastResPos].r_atom[l].name)
+		     .arg(lastResSeq);
+		  if (pdb_parse.missing_atoms == 1)
+		  {
+		     bead_exceptions[count_idx] = 2;
+		  }
+		  if (pdb_parse.missing_atoms == 2)
+		  {
+		     bead_exceptions[count_idx] = 3;
+		  }
+	       }
 	       error_string->
 		  append(QString("").
 			 sprintf("missing atom chain %s molecule %d atom %s residue %s %s\n",
@@ -867,11 +909,43 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
       }
    }
 
-   if(error_string->length()) {
-      return errors_found;
-   } else {
-      return 0;
+   if (error_string->length())
+   {
+      if (failure_errors > 0) 
+      {
+	 return errors_found;
+      } else {
+	 editor->append("Encountered the following warnings with your PDB structure:\n" + *error_string);
+	 *error_string = "";
+	 // repair model...
+	 // this is "skip only", "automatic bead generation later"
+	 PDB_model org_model = *model;
+	 model->molecule.clear();
+	 // we may need to redo the residues also
+	 // model->residue.clear();
+	 for (unsigned int j = 0; j < org_model.molecule.size(); j++)
+	 {
+	    PDB_chain tmp_chain;
+	    for (unsigned int k = 0; k < org_model.molecule[j].atom.size(); k++)
+	    {
+	       QString count_idx =
+		  QString("%1_%2_%3")
+		  .arg(j)
+		  .arg(org_model.molecule[j].atom[k].resName)
+		  .arg(org_model.molecule[j].atom[k].resSeq);
+	       if (bead_exceptions[count_idx] == 1)
+	       {
+		  tmp_chain.atom.push_back(org_model.molecule[j].atom[k]);
+	       } else {
+		  printf("removing molecule %u atom %u from model\n", 
+			 j, k);
+	       }
+	    }
+	    model->molecule.push_back(tmp_chain);
+	 }
+      }
    }
+   return 0;
 }
 
 // #define DEBUG_OVERLAP
@@ -6208,80 +6282,80 @@ void US_Hydrodyn::read_residue_file()
 
 void US_Hydrodyn::load_pdb()
 {
-	QString message = "";
-	if (pdb_parse.missing_residues == 1)
-	{
-		message += tr("You have selected to skip missing residues. If your model contains missing\n"
-						  "residues, the calculated molecular weight and vbar may be incorrect, and\n"
-						  "you should manually enter a global value for the molecular weight in the\n"
-						  "SOMO hydrodynamic options, and a global value for the vbar in the SOMO\n"
-						  "Miscellaneous options.\n\nAre you sure you want to proceed?");
-	}
-	if (pdb_parse.missing_residues == 2)
-	{
-		message += tr("You have selected to replace non-coded residues with an average residue.\n"
-						  "If your model contains non-coded residues, the calculated molecular weight\n"
-						  "and vbar may be incorrect. Therefore, you could manually enter a global\n"
-						  "value for the molecular weight in the SOMO hydrodynamic options, and a\n"
-				 		  "global value for the vbar in the SOMO Miscellaneous options. You can also\n"
-						  "review the average residue settings in the SOMO Miscellaneous options.\n\n"
-						  "Are you sure you want to proceed?");
-	}
-	if (message != "")
-	{
-   	QMessageBox mb(tr("UltraScan"), tr("Attention:\n" + message),
-			QMessageBox::Information,
-			QMessageBox::Yes | QMessageBox::Default,
-			QMessageBox::Cancel | QMessageBox::Escape,
-			QMessageBox::NoButton);
-		mb.setButtonText(QMessageBox::Yes, tr("Yes"));
-		mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
-		switch(mb.exec())
-		{
-			case QMessageBox::Cancel:
-			{
-				return;
-      	}
-		}
-	}
-	message = "";
-	if (pdb_parse.missing_atoms == 1)
-	{
-		message += tr("You have selected to skip coded residues containing missing atoms.\n"
-						  "If your model contains missing atoms, the calculated molecular\n"
-				 		  "weight and vbar may be incorrect, and you should manually enter\n"
-						  "a global value for the molecular weight in the SOMO hydrodynamic\n"
-						  "options, and a global value for the vbar in the SOMO Miscellaneous\n"
-						  "options.\n\nAre you sure you want to proceed?");
-	}
-	if (pdb_parse.missing_atoms == 2)
-	{
-		message += tr("You have selected to replace coded residues containing missing atoms\n"
-						  "with an average residue. If your model contains coded residues with\n"
-						  "missing atoms, the calculated molecular weight and vbar may be incorrect.\n"
-						  "Therefore, you could manually enter a global value for the molecular weight\n"
-				 		  "in the SOMO hydrodynamic options, and a global value for the vbar in the\n"
-						  "SOMO Miscellaneous options. You can also review the average residue settings\n"
-				 		  "in the SOMO Miscellaneous options.\n\n"
-						  "Are you sure you want to proceed?");
-	}
-	if (message != "")
-	{
-   	QMessageBox mb(tr("UltraScan"), tr("Attention:\n" + message),
-			QMessageBox::Information,
-			QMessageBox::Yes | QMessageBox::Default,
-			QMessageBox::Cancel | QMessageBox::Escape,
-			QMessageBox::NoButton);
-		mb.setButtonText(QMessageBox::Yes, tr("Yes"));
-		mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
-		switch(mb.exec())
-		{
-			case QMessageBox::Cancel:
-			{
-				return;
-      	}
-		}
-	}
+   QString message = "";
+   if (pdb_parse.missing_residues == 1)
+   {
+      message += tr("You have selected to skip missing residues. If your model contains missing\n"
+		    "residues, the calculated molecular weight and vbar may be incorrect, and\n"
+		    "you should manually enter a global value for the molecular weight in the\n"
+		    "SOMO hydrodynamic options, and a global value for the vbar in the SOMO\n"
+		    "Miscellaneous options.\n\nAre you sure you want to proceed?");
+   }
+   if (pdb_parse.missing_residues == 2)
+   {
+      message += tr("You have selected to replace non-coded residues with an average residue.\n"
+		    "If your model contains non-coded residues, the calculated molecular weight\n"
+		    "and vbar may be incorrect. Therefore, you could manually enter a global\n"
+		    "value for the molecular weight in the SOMO hydrodynamic options, and a\n"
+		    "global value for the vbar in the SOMO Miscellaneous options. You can also\n"
+		    "review the average residue settings in the SOMO Miscellaneous options.\n\n"
+		    "Are you sure you want to proceed?");
+   }
+   if (message != "")
+   {
+      QMessageBox mb(tr("UltraScan"), tr("Attention:\n" + message),
+		     QMessageBox::Information,
+		     QMessageBox::Yes | QMessageBox::Default,
+		     QMessageBox::Cancel | QMessageBox::Escape,
+		     QMessageBox::NoButton);
+      mb.setButtonText(QMessageBox::Yes, tr("Yes"));
+      mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+      switch(mb.exec())
+      {
+      case QMessageBox::Cancel:
+	 {
+	    return;
+	 }
+      }
+   }
+   message = "";
+   if (pdb_parse.missing_atoms == 1)
+   {
+      message += tr("You have selected to skip coded residues containing missing atoms.\n"
+		    "If your model contains missing atoms, the calculated molecular\n"
+		    "weight and vbar may be incorrect, and you should manually enter\n"
+		    "a global value for the molecular weight in the SOMO hydrodynamic\n"
+		    "options, and a global value for the vbar in the SOMO Miscellaneous\n"
+		    "options.\n\nAre you sure you want to proceed?");
+   }
+   if (pdb_parse.missing_atoms == 2)
+   {
+      message += tr("You have selected to replace coded residues containing missing atoms\n"
+		    "with an average residue. If your model contains coded residues with\n"
+		    "missing atoms, the calculated molecular weight and vbar may be incorrect.\n"
+		    "Therefore, you could manually enter a global value for the molecular weight\n"
+		    "in the SOMO hydrodynamic options, and a global value for the vbar in the\n"
+		    "SOMO Miscellaneous options. You can also review the average residue settings\n"
+		    "in the SOMO Miscellaneous options.\n\n"
+		    "Are you sure you want to proceed?");
+   }
+   if (message != "")
+   {
+      QMessageBox mb(tr("UltraScan"), tr("Attention:\n" + message),
+		     QMessageBox::Information,
+		     QMessageBox::Yes | QMessageBox::Default,
+		     QMessageBox::Cancel | QMessageBox::Escape,
+		     QMessageBox::NoButton);
+      mb.setButtonText(QMessageBox::Yes, tr("Yes"));
+      mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+      switch(mb.exec())
+      {
+      case QMessageBox::Cancel:
+	 {
+	    return;
+	 }
+      }
+   }
    cout << somo_pdb_dir << endl;
    QString filename = QFileDialog::getOpenFileName(somo_pdb_dir,
 						   "Structures (*.pdb *.PDB)",
@@ -7145,7 +7219,7 @@ void US_Hydrodyn::read_config(const QString& fname)
    ts.readLine();
    bead_output.correspondence = (bool) str.toInt();
 
-	ts >> str;
+   ts >> str;
    ts.readLine();
    asa.probe_radius = str.toFloat();
    ts >> str;
@@ -7263,7 +7337,7 @@ void US_Hydrodyn::read_config(const QString& fname)
    pdb_vis.visualization = str.toInt();
    ts >> str;
    ts.readLine();
-	pdb_vis.filename = str; // custom Rasmol script file
+   pdb_vis.filename = str; // custom Rasmol script file
 
 // pdb_parsing options:
 
@@ -7349,15 +7423,15 @@ void US_Hydrodyn::reset()
    grid_overlap.translate_out = false;
    grid_overlap.show_translate = false;
 
-	sidechain_overlap.title = "exposed side chain beads";
+   sidechain_overlap.title = "exposed side chain beads";
    mainchain_overlap.title = "exposed main/main and main/side chain beads";
    buried_overlap.title = "buried beads";
    grid_overlap.title = "Grid beads";
 
    bead_output.sequence = 0;
    bead_output.output = 1;
-	bead_output.correspondence = true;
-
+   bead_output.correspondence = true;
+	
    asa.probe_radius = (float) 1.4;
    asa.probe_recheck_radius = (float) 1.4;
    asa.threshold = 20.0;
@@ -7397,15 +7471,15 @@ void US_Hydrodyn::reset()
    hydro.overlap_cutoff = false;		// false: same as in model building, true: enter manually
    hydro.overlap = 0.0;					// overlap
 
-	pdb_vis.visualization = 0; 					// default RasMol colors
-	pdb_vis.filename = USglobal->config_list.system_dir + "/etc/rasmol.spt"; //default color file
-
-	pdb_parse.skip_hydrogen = true;
-	pdb_parse.skip_water = true;
-	pdb_parse.alternate = true;
-	pdb_parse.find_sh = false;
-	pdb_parse.missing_residues = 0;
-	pdb_parse.missing_atoms = 0;
+   pdb_vis.visualization = 0; 					// default RasMol colors
+   pdb_vis.filename = USglobal->config_list.system_dir + "/etc/rasmol.spt"; //default color file
+   
+   pdb_parse.skip_hydrogen = true;
+   pdb_parse.skip_water = true;
+   pdb_parse.alternate = true;
+   pdb_parse.find_sh = false;
+   pdb_parse.missing_residues = 0;
+   pdb_parse.missing_atoms = 0;
 }
 
 void US_Hydrodyn::write_config(const QString& fname)

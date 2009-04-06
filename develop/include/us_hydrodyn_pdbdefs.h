@@ -74,6 +74,7 @@ struct PDB_atom
         vector <struct PDB_atom *> all_beads;  // this is used to keep track of beads that have been popped together
         QString residue_list;             // for loaded bead models
         int group;                        // used in surfracer for breaking up groups of atoms
+        QString count_idx;                // used in us_hydrodyn for backtracking on bead/atom exceptions
 };
 
 struct PDB_chain	// chain in PDB file
