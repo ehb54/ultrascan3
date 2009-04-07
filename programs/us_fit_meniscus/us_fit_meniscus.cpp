@@ -61,7 +61,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    misc->addLayout( quadratic ); 
    misc->addLayout( cubic     ); 
 
-   QLabel* lb_fit = us_label( tr( "Miniscus at minimum:" ) );
+   QLabel* lb_fit = us_label( tr( "Meniscus at minimum:" ) );
    misc->addWidget( lb_fit );
 
    le_fit = us_lineedit( "" );
@@ -119,7 +119,6 @@ void US_FitMeniscus::plot_data( void )
    // Remove any non-data lines and put values in arrays
    for ( int i = 0; i < lines.size(); i++ )
    {
-
       QStringList values = lines[ i ].split( ',', QString::SkipEmptyParts );
       if ( values.size() > 1 ) 
       {
@@ -143,11 +142,15 @@ void US_FitMeniscus::plot_data( void )
 
    te_data->e->setPlainText( parsed.join( "\n" ) );
 
-   meniscus_plot->setAxisScale( QwtPlot::xBottom, minx - 0.005, maxx + 0.005 );
+   double overscan = ( maxx - minx ) * 0.10;  // 10% overscan
+
+   meniscus_plot->setAxisScale( QwtPlot::xBottom, 
+         minx - overscan, maxx + overscan );
+   
    meniscus_plot->setAxisScale( QwtPlot::yLeft  , miny - 1.0  , maxy + 1.0   );
 
    raw_curve = us_curve( meniscus_plot, tr( "Raw Data" ) ); 
-   raw_curve->setPen( QPen( Qt::white ) );
+   raw_curve->setPen( QPen( Qt::yellow ) );
 
    raw_curve->setData( radius_values, rmsd_values, count );
 
@@ -159,11 +162,11 @@ void US_FitMeniscus::plot_data( void )
 
    US_Matrix::lsfit( c, radius_values, rmsd_values, count, order + 1 );
 
-   int fit_count = (int) ( ( maxx - minx ) / 0.001 );
+   int fit_count = (int) ( ( maxx - minx + 2 * overscan ) / 0.001 );
 
    double* fit_x = new double[ fit_count ];
    double* fit_y = new double[ fit_count ];
-   double x      = minx;
+   double x      = minx - overscan;
    double minimum;
 
    if (  fit_order == QUADRATIC )
@@ -209,14 +212,14 @@ void US_FitMeniscus::plot_data( void )
    }
 
    fit_curve = us_curve( meniscus_plot, tr( "Fitted Data" ) ); 
-   fit_curve->setPen( QPen( Qt::yellow ) );
+   fit_curve->setPen( QPen( Qt::red ) );
    fit_curve->setData( fit_x, fit_y, fit_count );
 
 
    // Plot the minimum
 
    minimum_curve = us_curve( meniscus_plot, tr( "Minimum Pointer" ) ); 
-   minimum_curve->setPen( QPen( Qt::red ) );
+   minimum_curve->setPen( QPen( Qt::cyan ) );
 
    double radius_min[ 2 ];
    double rmsd_min  [ 2 ];
