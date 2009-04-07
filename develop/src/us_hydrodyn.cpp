@@ -5,6 +5,7 @@
 #include "../include/us_hydrodyn_asab1.h"
 #include "../include/us_hydrodyn_grid_atob.h"
 #include <qregexp.h>
+#include <qfont.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -6780,6 +6781,15 @@ int US_Hydrodyn::read_bead_model(QString filename)
 	    tmp_atom.chainID = "CHAIN";
 	    bead_model.push_back(tmp_atom);
 	 }
+	 QFont save_font = editor->currentFont();
+	 QFont new_font = QFont("Courier");
+	 new_font.setStretch(75);
+	 editor->setCurrentFont(new_font);
+	 while (!ts.atEnd()) 
+	 {
+	    editor->append(ts.readLine());
+	 }
+	 editor->setCurrentFont(save_font);
 	 f.close();
 	 if (bead_count != (int)bead_model.size())
 	 {
