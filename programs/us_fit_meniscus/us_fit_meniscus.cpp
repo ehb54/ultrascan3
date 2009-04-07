@@ -17,7 +17,9 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 
    te_data = new US_Editor( US_Editor::LOAD, false );
    
-   QFontMetrics fm( te_data->font() );
+   QFontMetrics fm( QFont( US_GuiSettings::fontFamily(), 
+                           US_GuiSettings::fontSize()   ) );
+   
    te_data->setMinimumHeight( fm.height() * 20 );
    te_data->setFixedWidth ( fm.width( '0' ) * 20 );
 
