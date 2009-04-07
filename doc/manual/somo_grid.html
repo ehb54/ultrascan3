@@ -27,7 +27,22 @@ SOMO - Grid Options Module:</h2>
 </center>
 <p>
 
-UNDER CONSTRUCTION
+This module controls the parameter of the <b>Build Grid Bead Model (AtoB)</b> routine, which is still under development at this stage.
+<p>
+In the <i>Computations Relative to:</i> section, the user selects if the coordinates of each bead built by the grid routine have to be placed in the <b>Center of Mass (default)</b> between all atoms whose centers fall within the cubelet, or in the <b>Center of Cubelet</b>. These options are obviously mutually exclusive.
+<p>
+The <i>Cube Side (Angstrom):</i> field determines the dimension of the grid cubelets (<b>default: 10 A</b>).
+<p>
+The next four independently selectable options controls other steps or feautures of the grid-based method:
+<p>
+<i>Apply Cubic Grid</i> allows the grid procedure to be executed (<b>deafult: active</b>). It could be deselected to allow the use of the Grid module for overlap removal of a previously loaded bead model.
+<p>
+<i>Remove Overlaps</i> allows the execution of the overlap removal routines (see <a
+href=somo_overlap.html>here</a>; <b>default: active</b>).
+<p>
+<i>Hydrate the Original Model</i>. This routine is <b>not</b> fully operational yet. It was developed by Marcelo Nollmann for his revision of the original AtoB program. More explanations will be provided once the routine will be fully implemented and tested.
+<p>
+Likewise, the <i>Expand Bead to Tangency</i> routine has not been fully implemented at this stage. The idea behind this procedure was to cope with the voids sometimes generated between beads by the Grid approach. More explanations will be provided once the routine will be fully implemented and tested.
 
 
 <hr>

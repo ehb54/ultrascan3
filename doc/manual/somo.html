@@ -72,8 +72,10 @@ amino acids, nucleotides, carbohydrates, and common prosthetic groups and
 co-factors, but this list is by no means exhaustive, and the need to code for
 "new" residues is not a remote possibility. As this operation can be demanding,
 notwithstanding the user-friendly GUI governing it, the pre-defined set of options
-include an approximate method to deal with either missing atoms within coded residues,
-and/or not yet coded residues. However, be aware that for best performance, the structure
+<b>will</b> include an approximate method to deal with either missing atoms within coded residues,
+and/or not yet coded residues. In the present <b>beta1</b> release, an option is available
+to <b>skip</b> non-coded residues and/or coded residues with missing atoms (<b>not</b> the
+default option). However, be aware that for best performance, the structure
 should contain all residues and atoms that are present in the "real" macromolecule
 studied in solution, and all residues should be properly coded in the SOMO tables
 (see below).
@@ -284,7 +286,7 @@ parsing the PDB file and for the model(s) visualization by RasMol.
 <b>Parsing:</b> This module allows you to change the options to be used during
 the parsing of a PDB file, like how to deal with solvent molecules, explicit hydrogen
 atoms, alternate conformations, and with missing atoms/residues. A detailed description
-of this module can be found <a href=somo_parsing.html>here</a>. (Remark: some of the
+of this module can be found <a href=somo_pdb_parsing.html>here</a>. (Remark: some of the
 options listed are not presently active).
 
 <li>

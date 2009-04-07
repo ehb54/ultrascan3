@@ -101,15 +101,15 @@ The next two subpanels deal with non-coded residues and missing atoms, respectiv
 
 
 <p>
-In the <b>If non-coded residues are found:</b> subpanel, the user can choose between three
-options:
+In the <b>If non-coded residues are found:</b> subpanel, the user will be able to choose between three
+options, but <b>only the first two</b> are presently available:
 
 <ul>
 <li>
 <b><i>List them and stop operation</i></b>. This is the most rigorous option, and calls for
 properly define the "new" residue in the <i>somo.residue</i> (and in the <i>somo.atom</i>, if
 "new" atoms are also present) file(s). The program is therefore halted, waiting for proper action
-to be taken.
+to be taken. Presently, this is the <b>default</b> option for this subpanel.
 
 <li>
 <b><i>List them, skip residue and proceed</i></b>. This is the least rigorous option, as skipping
@@ -118,22 +118,32 @@ their contribution to the hydrodynamics will be missed. Second, their contributi
 weight and partial specific volume of the structure will be also missed, although this can be
 bypassed by entering global values in the appropriate fields (respectively in the
 <a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and
-<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels). Therefore, this option should be used only if the skipped residue(s) is (are) known to <b>not</b> likely contribute to the hydrodynamics, and by entering appropriate global values for the molecular weight and partial specific volume. In any case, if non-coded residues
-are found and this option is selected, a pop-up window will appear asking for entering appropriate values
-for the global molecular weight and partial specific volume (this request can, however, be skipped).
+<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels). Therefore, this option should be used only if the skipped residue(s) is (are) known to <b>not</b> likely contribute to the hydrodynamics, and by entering appropriate global values for the molecular weight and partial specific volume. Be aware, however, that the <i>total volume</i> of the bead model, used in the <i>Volume Correction</i>, will likely be <b>underestimated</b> (unless the skipped residues are all buried), thus affecting the computation of the <i>Rotational Diffusion Coefficient</i> and of the <i>Intrinsic Viscosity</i> (see <a href=somo_hydro.html>here</a> for more explanations on this subject).<br>
+In any case, if this option is selected, the pop-up window shown below will appear warning of the potential errors and suggesting to enter appropriate values for the global molecular weight and partial specific volume.
+</ul>
+</tr>
 
+<tr>
+<p>
+<td><center><img SRC="somo-warning1.png" ALT="Warning for skipping non-coded residues"></td>
+<p>
+</tr>
+
+<td align=justify>
+
+<ul>
 <li>
-<b><i>Use automatic bead builder (approximate method)</i></b>. This is a "patch" option, allowing
-to roughly define a <b>single</b> "side-chain" bead for each non-coded residue. This procedure is based on an "average" volume for each atom (with an "average" molecular weight and hydration number), from which a global volume (and molecular weight) is calculated. An "average" radius for each atom is
-also provided for the ASA routines (see <a href=somo_asa.html>here</a>). The bead is then placed at the center of mass of <b>all</b> the atoms within the non-coded residue, and an "average" partial specific volume and color-coding ("10", light green) are also assigned to it. All these "average" values can be modified in the <a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panel. As with the second option, the approximations introduced in the molecular weight and partial specific volume can be bypassed by entering global values in the appropriate fields (respectively in the
-<a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and
-<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels). In any case, if non-coded residues
-are found and this option is selected, a pop-up window will appear asking for entering appropriate values
-for the global molecular weight and partial specific volume (this request can, however, be skipped).<br>
-This is the <b>default</b> option for this subpanel, since it will allow users to process virtually
+<b><i>Use automatic bead builder (approximate method)</i></b>. <i>NOT YET IMPLEMENTED</i><br>
+This is a "patch" option, allowing to roughly define a <b>single</b> "side-chain" bead for each non-coded residue. This procedure is based on an "average" volume for each atom (with an "average" molecular weight and hydration number), from which a global volume (and molecular weight) is calculated. An "average" radius for each atom is
+also provided for the ASA routines (see <a href=somo_asa.html>here</a>). The bead is then placed at the center of mass of <b>all</b> the atoms within the non-coded residue, and an "average" partial specific volume and color-coding ("10", light green) are also assigned to it. All these "average" values can be modified in the
+<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panel. As with the second option, the approximations introduced in the molecular weight and partial specific volume can be bypassed by entering global values in the appropriate fields (respectively in the
+<a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and in the <a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels. In any case, a pop-up window will appear asking for entering appropriate values for the global molecular weight and partial specific volume, and prompting to check the approximate method parameters.<br>
+This will be the default option for this subpanel, since it will allow users to process virtually
 any PDB file without updating the definitions files.
 
 </ul>
+</tr>
+
 </td>
 </tr>
 </table>
@@ -151,25 +161,36 @@ any PDB file without updating the definitions files.
 
 
 <p>
-In the <b>If missing atoms within a residue are found:</b>  subpanel, the user can choose between three options:
+In the <b>If missing atoms within a residue are found:</b>  subpanel, the user will be able to choose between three
+options, but <b>only the first two</b> are presently available:
 
 <ul>
 <li>
 <b><i>List them and stop operation (fix it with WHATIF)</i></b>. This is the most rigorous option, and calls for either manually build the missing atoms in the PDB file, or, for proteins, to use an automatic missing atom(s) builder such as WHATIF (<a href="http://swift.cmbi.ru.nl/servers/html/index.html">http://swift.cmbi.ru.nl/servers/html/index.html</a>; WARNING: WHATIF will <b>not</b> build missing <b>main chain </b> atoms, only
-<b>side chain</b> atoms). The program is therefore halted, waiting for proper action to be taken.
+<b>side chain</b> atoms). The program is therefore halted, waiting for proper action to be taken. Presently, this is the <b>default</b> option for this subpanel.
 
 <li>
-<b><i>List them, skip entire residue and proceed</i></b>. This is the least rigorous option, as skipping residues will affect the computations on two levels. First, if the skipped residues are exposed, their contribution to the hydrodynamics will be missed. Second, their contribution to the molecular weight and partial specific volume of the structure will be also missed, although this
-can be bypassed by entering global values in the appropriate fields (respectively in the
-<a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and
-<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels). Therefore, this option
-should be used only if the skipped residue(s) is (are) known to <b>not</b> likely contribute to the hydrodynamics, and by entering appropriate global values for the molecular weight and partial specific volume. In any case, if this option is selected, and missing atoms within coded residues are found, a pop-up window will appear asking for entering appropriate values for the global molecular weight and partial specific volume (this request can, however, be skipped). The reason why only the missing atoms <b>cannot</b> be skipped is because they might be used to define the position of the bead, so their absence <b>cannot</b> be tolerated.
+<b><i>List them, skip entire residue and proceed</i></b>. This is the least rigorous option, as skipping residues will affect the computations on two levels. First, if the skipped residues are exposed, their contribution to the hydrodynamics will be missed. Second, their contribution to the molecular weight and partial specific volume of the structure will be also missed, although this can be bypassed by entering global values in the appropriate fields (respectively in the <a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and
+<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels). Therefore, this option should be used only if the skipped residue(s) is (are) known to <b>not</b> likely contribute to the hydrodynamics, and by entering appropriate global values for the molecular weight and partial specific volume. Be aware, however, that the <i>total volume</i> of the bead model, used in the <i>Volume Correction</i>, will then likely be <b>underestimated</b> (unless the skipped residues are all buried), thus affecting the computation of the <i>Rotational Diffusion Coefficient</i> and of the <i>Intrinsic Viscosity</i> (see <a href=somo_hydro.html>here</a> for more explanations on this subject).<br>
+In any case, if this option is selected, the pop-up window shown below will appear suggesting to enter appropriate values for the global molecular weight and partial specific volume. The reason why only the missing atoms <b>cannot</b> be skipped is because they might be used to define the position of the bead, so their absence <b>cannot</b> be tolerated.
+
+</ul>
+</tr>
+
+<tr>
+<p>
+<td><center><img SRC="somo-warning3.png" ALT="Warning for skipping non-coded residues"></td>
+<p>
+</tr>
+
+<td align=justify>
+
+<ul>
 
 <li>
-<b><i>Use approximate method to generate bead</i></b>. This is a "patch" option, allowing
-to roughly define a <b>single</b> bead for the whole residue. See the <b><i>Use automatic bead builder (approximate method)</i></b> above for the explanation of this procedure. As for the previous option, if this option is selected and missing atoms within a coded residue are found, a pop-up window will appear asking for entering appropriate values for the global molecular weight and partial specific volume (this request can, however, be skipped).<br>
-This is the <b>defaut</b> option for this subpanel, since it will allow users to process virtually
-any PDB file without updating the definitions files, but for more accurate results we <b>strongly</b> recommend to switch to the first option in this subpanel and take appropriate action(s).
+<b><i>Use approximate method to generate bead</i></b>. <i>NOT YET IMPLEMENTED</i><br>
+This is a "patch" option, allowing to roughly define a <b>single</b> bead for the whole residue. See the <b><i>Use automatic bead builder (approximate method)</i></b> above for the explanation of this procedure. The only relevant difference will be that the parameters used to define the <b>single</b> bead used to represent incomplete residues will be those of the atoms present in the residue, taken from the <i>somo.residue</i> file. As for the previous option, if this option is selected a pop-up window will appear asking for entering appropriate values for the global molecular weight and partial specific volume (this request can, however, be skipped).<br>
+This will be the defaut option for this subpanel, since it will allow users to process virtually any PDB file without updating the definitions files, but for more accurate results we <b>strongly</b> recommend to switch to the first option in this subpanel and take appropriate action(s).
 
 </ul>
 </td>
