@@ -1,17 +1,36 @@
 #include "us_editor.h"
+#include "us_settings.h"
 #include "us_gui_settings.h"
 
-US_Editor::US_Editor( int menu, bool readonly, QWidget* parent, 
-      Qt::WindowFlags flags ) : QMainWindow( parent, flags )                                                             
+US_Editor::US_Editor( int menu, bool readonly, const QString& extention, 
+      QWidget* parent,  Qt::WindowFlags flags ) : QMainWindow( parent, flags )                                                             
 {
+   file_extention = extention;
    filename = "";
    
+   QMenu* fileMenu = menuBar()->addMenu( tr( "&File" ) );
+   fileMenu->setFont  ( QFont( US_GuiSettings::fontFamily(),
+                               US_GuiSettings::fontSize() - 1 ) );
+
    // Add menu types as necessary
    switch ( menu )
    {
+      case LOAD:
+         QAction* loadAction = new QAction( tr( "&Load" ), this );;
+         loadAction->setShortcut( tr( "Ctrl+L" ) );
+         connect( loadAction, SIGNAL( triggered() ), this, SLOT( load() ) );
+
+         QAction* saveAction = new QAction( tr( "&Save" ), this );;
+         saveAction->setShortcut( tr( "Ctrl+S" ) );
+         connect( saveAction, SIGNAL( triggered() ), this, SLOT( save() ) );
+
+         fileMenu->addAction( loadAction );
+         fileMenu->addAction( saveAction );
+         // Fall through
+
       default:
-         QAction* saveAsAction = new QAction( tr( "&SaveAs" ), this );;
-         saveAsAction->setShortcut( tr( "Ctrl+S" ) );
+         QAction* saveAsAction = new QAction( tr( "Save&As" ), this );;
+         saveAsAction->setShortcut( tr( "Ctrl+A" ) );
          connect( saveAsAction, SIGNAL( triggered() ), this, SLOT( saveAs() ) );
 
          QAction* clearAction = new QAction( tr( "Clear" ), this );;
@@ -25,13 +44,10 @@ US_Editor::US_Editor( int menu, bool readonly, QWidget* parent,
          fontAction->setShortcut( tr( "Ctrl+F" ) );
          connect( fontAction, SIGNAL( triggered() ), this, SLOT( update_font() ) );
 
-         QMenu* fileMenu = menuBar()->addMenu( tr( "&File" ) );
          fileMenu->addAction( saveAsAction );
          fileMenu->addAction( printAction );
          fileMenu->addAction( fontAction );
          fileMenu->addAction( clearAction );
-         fileMenu->setFont  ( QFont( US_GuiSettings::fontFamily(),
-                                     US_GuiSettings::fontSize() - 1 ) );
    }
 
    menuBar()->setPalette( US_GuiSettings::normalColor() );
@@ -50,6 +66,45 @@ US_Editor::US_Editor( int menu, bool readonly, QWidget* parent,
    setCentralWidget    ( e );
 }
 
+void US_Editor::load( void )
+{
+   QString fn;
+   QString text;
+
+   fn = QFileDialog::getOpenFileName( this, 
+         tr( "Open File" ), 
+         US_Settings::dataDir(), 
+         file_extention );
+
+  if ( fn == "" ) return;
+
+  filename = fn;
+
+  QFile f( filename );
+
+  if ( f.open( QIODevice::ReadOnly | QIODevice::Text ) )
+  {
+     QTextStream t( &f );
+
+     text = t.readAll();
+     f.close(  );
+
+     e->setPlainText( text );
+  }
+  else
+     QMessageBox::information( this,
+           tr( "Error" ),
+           tr( "Could not open\n\n" ) + fn + tr( "\n\n for reading." ) );
+}
+
+void US_Editor::save(  )
+{
+   if ( filename == "" ) 
+      saveAs();
+   else
+      saveFile();
+}
+
 void US_Editor::saveAs(  )
 {
    QString fn;
@@ -58,9 +113,16 @@ void US_Editor::saveAs(  )
    
    if ( ! fn.isEmpty(  ) )
    {
+      filename = fn;
+      saveFile();
+   }
+}
+
+void US_Editor::saveFile( void )
+{
       QString text = e->toPlainText();
       
-      QFile f( fn );
+      QFile f( filename );
 
       if ( f.open( QIODevice::WriteOnly | QIODevice::Text ) )
       {
@@ -71,11 +133,8 @@ void US_Editor::saveAs(  )
       }
       else
          QMessageBox::information( this,
-               tr( "Error" ),
-               tr( "Could not open\n\n" ) + fn + tr( "\n\n for writing." ) );
-
-      filename = fn;
-   }
+            tr( "Error" ),
+            tr( "Could not open\n\n" ) + filename + tr( "\n\n for writing." ) );
 }
 
 void US_Editor::update_font(  )

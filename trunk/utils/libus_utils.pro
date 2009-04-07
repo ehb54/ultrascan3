@@ -16,6 +16,7 @@ HEADERS      = us_astfem_math.h \
                us_http_post.h   \
                us_license_t.h   \
                us_math.h        \
+               us_matrix.h      \
                us_settings.h    \
                us_stiffbase.h   \
                us_util.h
@@ -30,6 +31,7 @@ SOURCES      = us_astfem_math.cpp \
                us_http_post.cpp   \
                us_license_t.cpp   \
                us_math.cpp        \
+               us_matrix.cpp      \
                us_settings.cpp    \
                us_stiffbase.cpp   \
                us_util.cpp
