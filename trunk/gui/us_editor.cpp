@@ -12,15 +12,18 @@ US_Editor::US_Editor( int menu, bool readonly, const QString& extention,
    fileMenu->setFont  ( QFont( US_GuiSettings::fontFamily(),
                                US_GuiSettings::fontSize() - 1 ) );
 
+   QAction* loadAction;
+   QAction* saveAction;
+
    // Add menu types as necessary
    switch ( menu )
    {
       case LOAD:
-         QAction* loadAction = new QAction( tr( "&Load" ), this );;
+         loadAction = new QAction( tr( "&Load" ), this );;
          loadAction->setShortcut( tr( "Ctrl+L" ) );
          connect( loadAction, SIGNAL( triggered() ), this, SLOT( load() ) );
 
-         QAction* saveAction = new QAction( tr( "&Save" ), this );;
+         saveAction = new QAction( tr( "&Save" ), this );;
          saveAction->setShortcut( tr( "Ctrl+S" ) );
          connect( saveAction, SIGNAL( triggered() ), this, SLOT( save() ) );
 
