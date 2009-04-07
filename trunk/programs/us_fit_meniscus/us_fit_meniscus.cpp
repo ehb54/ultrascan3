@@ -4,6 +4,8 @@
 #include "us_math.h"
 #include "us_matrix.h"
 
+#include "qwt_plot_marker.h"
+
 US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 {
    setWindowTitle( tr( "Fit Meniscus from 2DSA Data" ) );
@@ -232,8 +234,17 @@ void US_FitMeniscus::plot_data( void )
 
    minimum_curve->setData( radius_min, rmsd_min, 2 );
 
+   QwtPlotMarker* pm = new QwtPlotMarker();
+   pm->setValue( minimum, miny + 3.0 );
+   pm->setSymbol( QwtSymbol( QwtSymbol::Cross, 
+            QBrush( Qt::white ), QPen( Qt::white ), QSize( 9, 9 ) ) );
+   pm->setLabel( QString::number( minimum, 'f', 5 ) );
+   pm->setLabelAlignment( Qt::AlignTop );
+
+   pm->attach( meniscus_plot );
+
    meniscus_plot->replot();
 
-   le_fit->setText( QString::number( minimum, 'f', 8 ) );
+   le_fit->setText( QString::number( minimum, 'f', 5 ) );
 }
 
