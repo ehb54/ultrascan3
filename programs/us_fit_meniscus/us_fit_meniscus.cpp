@@ -19,7 +19,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    
    QFontMetrics fm( te_data->font() );
    te_data->setMinimumHeight( fm.height() * 20 );
-   te_data->setMaximumWidth ( fm.width( '0' ) * 20 );
+   te_data->setFixedWidth ( fm.width( '0' ) * 20 );
 
    main->addWidget( te_data, row, 0, 20, 1 );
 
@@ -46,7 +46,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    QGridLayout* cubic     = 
       us_radiobutton( tr( "Cubic Fit"     ), rb_cubic );
 
-   rb_cubic->setMinimumWidth( rb_quadratic->width() );
+   rb_cubic->setFixedWidth( rb_quadratic->width() );
 
    QButtonGroup* fitGroup = new QButtonGroup;
    fitGroup->addButton( rb_quadratic, QUADRATIC );
