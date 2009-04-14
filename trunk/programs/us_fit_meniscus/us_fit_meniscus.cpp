@@ -238,7 +238,7 @@ void US_FitMeniscus::plot_data( void )
    minimum_curve->setData( radius_min, rmsd_min, 2 );
 
    QwtPlotMarker* pm = new QwtPlotMarker();
-   pm->setValue( minimum, miny + 3.0 );
+   pm->setValue( minimum, miny + 3.0 * dy );
    pm->setSymbol( QwtSymbol( QwtSymbol::Cross, 
             QBrush( Qt::white ), QPen( Qt::white ), QSize( 9, 9 ) ) );
    pm->setLabel( QString::number( minimum, 'f', 5 ) );
