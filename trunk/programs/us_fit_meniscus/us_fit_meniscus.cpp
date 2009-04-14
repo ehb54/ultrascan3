@@ -148,8 +148,11 @@ void US_FitMeniscus::plot_data( void )
 
    meniscus_plot->setAxisScale( QwtPlot::xBottom, 
          minx - overscan, maxx + overscan );
-   
-   meniscus_plot->setAxisScale( QwtPlot::yLeft  , miny - 1.0  , maxy + 1.0   );
+    
+   // Adjust y axis to scale all the data
+   double dy = fabs( maxy - miny ) / 10.0;
+
+   meniscus_plot->setAxisScale( QwtPlot::yLeft, miny - dy, maxy + dy );
 
    raw_curve = us_curve( meniscus_plot, tr( "Raw Data" ) ); 
    raw_curve->setPen( QPen( Qt::yellow ) );
@@ -229,8 +232,8 @@ void US_FitMeniscus::plot_data( void )
    radius_min[ 0 ] = minimum;
    radius_min[ 1 ] = minimum;
 
-   rmsd_min  [ 0 ] = miny - 1.0;
-   rmsd_min  [ 0 ] = miny + 2.0;
+   rmsd_min  [ 0 ] = miny - 1.0 * dy;
+   rmsd_min  [ 0 ] = miny + 2.0 * dy;
 
    minimum_curve->setData( radius_min, rmsd_min, 2 );
 
