@@ -6953,7 +6953,7 @@ void US_Hydrodyn::calc_vbar(struct PDB_model *model)
       mw_sum += mw;
       mw_vbar_sum += mw * (*model).residue[i].vbar;
    }
-   (*model).vbar = (mw_vbar_sum/mw_sum) - 0.002125;
+   (*model).vbar = (mw_vbar_sum/mw_sum); //  - 0.002125;
    //cout << "VBAR: " << (*model).vbar << endl;
 }
 
