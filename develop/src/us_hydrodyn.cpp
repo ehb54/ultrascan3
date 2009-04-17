@@ -6299,7 +6299,7 @@ void US_Hydrodyn::read_residue_file()
 	       error_count++;
 	       QString tmp_msg = 
 		  tr(QString(
-			     "\nThe bead atom assignment has exceeded the number of beads.\n"
+			     "\nThe atom's bead assignment has exceeded the number of beads.\n"
 			     "For residue: %1 and Atom: %2 "
 			     "on line %3 of the residue file.\n")
 		     .arg(new_residue.comment)
