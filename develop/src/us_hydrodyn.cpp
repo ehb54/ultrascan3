@@ -6262,7 +6262,7 @@ void US_Hydrodyn::read_residue_file()
    unsigned int numatoms, numbeads, i, j, positioner;
    QFile f(residue_filename);
    int error_count = 0;
-   int line_count = 0;
+   int line_count = 1;
    QString error_msg = tr("Residue file errors:\n");
    QString error_text = tr("Residue file errors:\n");
    cout << "residue file name: " << residue_filename << endl;
@@ -6284,11 +6284,11 @@ void US_Hydrodyn::read_residue_file()
 	 ts >> numbeads;
 	 ts >> new_residue.vbar;
 	 ts.readLine(); // read rest of line
+	 line_count++;
 	 new_residue.r_atom.clear();
 	 new_residue.r_bead.clear();
 	 for (j=0; j<numatoms; j++)
 	 {
-	    line_count++;
 	    ts >> new_atom.name;
 	    ts >> new_atom.hybrid.name;
 	    ts >> new_atom.hybrid.mw;
@@ -6328,6 +6328,7 @@ void US_Hydrodyn::read_residue_file()
 	    }
 	    ts >> new_atom.serial_number;
 	    str2 = ts.readLine(); // read rest of line
+	    line_count++;
 	    if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
 	    {
 	       new_residue.r_atom.push_back(new_atom);
@@ -6342,13 +6343,13 @@ void US_Hydrodyn::read_residue_file()
 	 }
 	 for (j=0; j<numbeads; j++)
 	 {
-	    line_count++;
 	    ts >> new_bead.hydration;
 	    ts >> new_bead.color;
 	    ts >> new_bead.placing_method;
 	    ts >> new_bead.chain;
 	    ts >> new_bead.volume;
 	    str2 = ts.readLine(); // read rest of line
+	    line_count++;
 	    printf("residue name %s loading bead %d placing method %d\n",
 		   new_residue.name.ascii(),
 		   j, new_bead.placing_method); fflush(stdout);
