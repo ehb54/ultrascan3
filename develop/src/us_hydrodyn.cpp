@@ -92,6 +92,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    pdb_visualization_widget = false;
    pdb_parsing_widget = false;
    residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
+   editor = (QTextEdit *)0;
    read_residue_file();
    setupGUI();
    //	global_Xpos += 30;
@@ -3780,7 +3781,8 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG)
    printf("or sc fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n"
 	  "or scmc fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n"
-	  "or bb fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n",
+	  "or bb fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n"
+	  "or gb fb %s rh %s rs %s to %s st %s ro %s %f %f %f\n",
 	  sidechain_overlap.fuse_beads ? "Y" : "N",
 	  sidechain_overlap.remove_hierarch ? "Y" : "N",
 	  sidechain_overlap.remove_sync ? "Y" : "N",
@@ -3809,7 +3811,7 @@ int US_Hydrodyn::compute_asa()
 	  buried_overlap.remove_overlap ? "Y" : "N",
 	  buried_overlap.fuse_beads_percent,
 	  buried_overlap.remove_sync_percent,
-	  buried_overlap.remove_hierarch_percent);
+	  buried_overlap.remove_hierarch_percent,
 
 	  grid_overlap.fuse_beads ? "Y" : "N",
 	  grid_overlap.remove_hierarch ? "Y" : "N",
@@ -6259,6 +6261,10 @@ void US_Hydrodyn::read_residue_file()
    QString str1, str2;
    unsigned int numatoms, numbeads, i, j, positioner;
    QFile f(residue_filename);
+   int error_count = 0;
+   int line_count = 0;
+   QString error_msg = tr("Residue file errors:\n");
+   QString error_text = tr("Residue file errors:\n");
    cout << "residue file name: " << residue_filename << endl;
    residue_list.clear();
    map < QString, int > dup_residue_map;
@@ -6269,6 +6275,7 @@ void US_Hydrodyn::read_residue_file()
       while (!ts.atEnd())
       {
 	 new_residue.comment = ts.readLine();
+	 line_count++;
 	 ts >> new_residue.name;
 	 ts >> new_residue.type;
 	 ts >> new_residue.molvol;
@@ -6281,11 +6288,35 @@ void US_Hydrodyn::read_residue_file()
 	 new_residue.r_bead.clear();
 	 for (j=0; j<numatoms; j++)
 	 {
+	    line_count++;
 	    ts >> new_atom.name;
 	    ts >> new_atom.hybrid.name;
 	    ts >> new_atom.hybrid.mw;
 	    ts >> new_atom.hybrid.radius;
 	    ts >> new_atom.bead_assignment;
+	    if (new_atom.bead_assignment >= numbeads) 
+	    {
+	       error_count++;
+	       QString tmp_msg = 
+		  tr(QString(
+			     "\nThe bead atom assignment has exceeded the number of beads.\n"
+			     "For residue: %1 and Atom: %2 "
+			     "on line %3 of the residue file.\n")
+		     .arg(new_residue.comment)
+		     .arg(new_atom.name)
+		     .arg(line_count)
+		     );
+	       error_text += tmp_msg;
+	       if (error_count < 5) 
+	       {
+		  error_msg += tmp_msg;
+	       } else {
+		  if (error_count == 5)
+		  {
+		     error_msg += "Further errors not listed\n";
+		  }
+	       }
+	    }
 	    ts >> positioner;
 	    if(positioner == 0)
 	    {
@@ -6311,6 +6342,7 @@ void US_Hydrodyn::read_residue_file()
 	 }
 	 for (j=0; j<numbeads; j++)
 	 {
+	    line_count++;
 	    ts >> new_bead.hydration;
 	    ts >> new_bead.color;
 	    ts >> new_bead.placing_method;
@@ -6362,6 +6394,14 @@ void US_Hydrodyn::read_residue_file()
       }
    }
 #endif
+   if (error_count)
+   {
+      QMessageBox::message(tr("ERRORS:"), error_msg);
+      if (editor) 
+      {
+	 editor->append(error_text);
+      }
+   } 
 }
 
 void US_Hydrodyn::load_pdb()
