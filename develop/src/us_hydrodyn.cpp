@@ -5258,7 +5258,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
       arg(decpts);
 
    QString fstring_rmc1 =
-      QString("%.%1f\t%.0f\t%d\t%d\t%s\n"). // zero digit MW
+      QString("%.%1f\t%.0f\t%d\t%s\n"). // zero digit MW
       arg(decpts);
 
    QString fstring_hydro =
@@ -5423,7 +5423,6 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
 		    use_model[i]->bead_computed_radius,
 		    use_model[i]->bead_ref_mw,
 		    get_color(use_model[i]),
-		    use_model[i]->serial,
 		    residues.ascii()
 		    );
 	 }
