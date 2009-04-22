@@ -27,16 +27,16 @@ using namespace std;
 
 struct misc_options
 {
-	double vbar;
-	double hydrovol;
-	bool compute_vbar;		// true = compute
-		 							// false = use user specified value
+   double vbar;
+   double hydrovol;
+   bool compute_vbar;		// true = compute
+                                // false = use user specified value
 
-	double avg_hydration,
-			 avg_mass,
-			 avg_volume,
-			 avg_radius,
-			 avg_vbar;
+   double avg_hydration;
+   double avg_mass;
+   double avg_volume;
+   double avg_radius;
+   double avg_vbar;
 };
 
 class US_EXTERN US_Hydrodyn_Misc : public QFrame

@@ -91,7 +91,7 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
 
 	cb_residue_auto = new QCheckBox(bg_residues);
 	cb_residue_auto->setText(tr(" Use automatic bead builder (approximate method)"));
-	cb_residue_auto->setEnabled(false);
+	cb_residue_auto->setEnabled(true);
 	cb_residue_auto->setMinimumHeight(minHeight1);
 	cb_residue_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_residue_auto->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));

@@ -168,11 +168,23 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		vector <PDB_atom *>      active_atoms;
 		vector <struct residue>   residue_list;
 		map < QString, vector <int> > multi_residue_map; // maps residue to index of residue_list
-		map < QString, vector <int> > valid_atom_map; // maps resName|atomName|pos 
-		//                                               in multi_residue_map to index of atoms
-		map < QString, int > atom_counts;
-		map < QString, int > has_OXT;
-		map < QString, int > bead_exceptions; // 1 == ok, 2 == skip, 3 == use automatic bead builder
+		map < QString, vector <int> > valid_atom_map;    // maps resName|atomName|pos 
+		//                                                  in multi_residue_map to index of atoms
+		map < QString, int > atom_counts;     // maps molecule #|resName|resSeq to count
+                //                                       counts how many atoms are in each residue
+		map < QString, int > has_OXT;         // maps molecule #|resName|resSeq to {0,1}
+		map < QString, int > bead_exceptions; // maps molecule #|resName|resSeq to count
+		//                                       1 == ok
+		//                                       2 == skip
+		//                                       3 == use automatic bead builder for residue
+		//                                       4 == use automatic bead builder for atom
+
+		// save_residue_list and save_multi_residue_map contain the results of 'read_residue_file'
+		// the automatic bead builder adds temporary residues, so it uses these to reset the values
+		// in lieu of re-reading the residue file...
+		vector <struct residue>   save_residue_list;
+		map < QString, vector <int> > save_multi_residue_map; // maps residue to index of residue_list
+
 		vector <struct PDB_model> model_vector;
 		bool bead_model_from_file;
 		vector <int> somo_processed;
