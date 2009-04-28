@@ -17,10 +17,6 @@ class US_EXTERN US_FitMeniscus : public US_Widgets
 		US_FitMeniscus();
 
 	private:
-      enum { QUADRATIC, CUBIC };
-
-      int           fit_order;
-
       QLineEdit*    le_fit;
       QLineEdit*    le_rms_error;
 
@@ -36,8 +32,6 @@ class US_EXTERN US_FitMeniscus : public US_Widgets
       QwtPlotCurve* minimum_curve;
 	
 	public slots:
-
-      void fit_type ( int  );
       void plot_data( void );
 
 		void help     ( void )
