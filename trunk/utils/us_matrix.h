@@ -21,8 +21,12 @@ public:
 
    static bool Cholesky_SolveSystem( double**, double*, int );
 
+   static void LU_SolveSystem   ( double**, double*&, int       );
+   static void LU_Decomposition ( double**, int*,     bool, int );
+   static void LU_BackSubstitute( double**, double*&, int*, int );
+
 private:
-   static void print_matrix( double**, int );
+   static void print_matrix( double**, int, int );
    static void print_vector( double* , int );
 };
 

@@ -39,6 +39,8 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    main->addLayout( plot, row, 1, 20, 1 );
    row += 20;
 
+   QBoxLayout* misc = new QHBoxLayout;
+   /*
    fit_order = QUADRATIC;
 
    QRadioButton* rb_quadratic;
@@ -58,10 +60,19 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    connect( fitGroup, SIGNAL( buttonClicked( int ) ),
                       SLOT  ( fit_type     ( int ) ) );
 
-   QBoxLayout* misc = new QHBoxLayout;
 
    misc->addLayout( quadratic ); 
    misc->addLayout( cubic     ); 
+   */
+
+   QLabel* lb_order = us_label( tr( "Fit Order:" ) );
+   misc->addWidget( lb_order );
+
+   sb_order = new QSpinBox();
+   sb_order->setRange( 2, 9 );
+   sb_order->setValue( 2 );
+   sb_order->setPalette( US_GuiSettings::editColor() );
+   misc->addWidget( sb_order );
 
    QLabel* lb_fit = us_label( tr( "Meniscus at minimum:" ) );
    misc->addWidget( lb_fit );
@@ -69,6 +80,15 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    le_fit = us_lineedit( "" );
    le_fit->setReadOnly( true );
    misc->addWidget( le_fit );
+
+   QLabel* lb_rms_error = us_label( tr( "RMS Error:" ) );
+   misc->addWidget( lb_rms_error );
+   
+   le_rms_error = us_lineedit( "" );
+   le_rms_error->setReadOnly( true );
+   misc->addWidget( le_rms_error );
+
+
 
    main->addLayout( misc, row++, 0, 1, 2 );
 
@@ -161,9 +181,10 @@ void US_FitMeniscus::plot_data( void )
 
    // Do the fit and get the minimum
 
-   double c[ 4 ];
+   double c[ 10 ];
 
-   int order = ( fit_order == QUADRATIC ) ? 2 : 3;
+   //int order = ( fit_order == QUADRATIC ) ? 2 : 3;
+   int order = sb_order->value();
 
    US_Matrix::lsfit( c, radius_values, rmsd_values, count, order + 1 );
 
@@ -171,56 +192,84 @@ void US_FitMeniscus::plot_data( void )
 
    double* fit_x = new double[ fit_count ];
    double* fit_y = new double[ fit_count ];
-   double x      = minx - overscan;
+   double  x     = minx - overscan;
    double minimum;
 
-   if (  fit_order == QUADRATIC )
+   for ( int i = 0; i < fit_count; i++, x += 0.001 )
    {
-      for ( int i = 0; i < fit_count; i++, x += 0.001 )
-      {
-         fit_x[ i ] = x;
-         fit_y[ i ] = c[ 0 ] + c[ 1 ] * x + c[ 2 ] * sq( x );
-      }
+      fit_x[ i ] = x;
+      fit_y[ i ] = c[ 0 ];
 
+      for ( int j = 1; j <= order; j++ ) fit_y[ i ] += c[ j ] * pow( x, j );
+   }
+
+   // Calculate Root Mean Square Error
+   double rms_error = 0.0;
+
+   for ( int i = 0; i < count; i++ )
+   {
+      double x = radius_values[ i ];
+      double y = rmsd_values  [ i ];
+
+      double y_calc = c[ 0 ];
+      for ( int j = 1; j <= order; j++ )  y_calc += c[ j ] * pow( x, j );
+      rms_error += sq ( fabs ( y_calc - y ) );
+   }
+
+   le_rms_error->setText( QString::number( sqrt( rms_error / count ), 'e', 3 ) );
+
+   // Find the minimum
+   if ( order == 2 )
+   {
       // Take the derivitive and get the minimum
       // c1 + 2 * c2 * x = 0
       minimum = - c[ 1 ] / ( 2.0 * c[ 2 ] );
-
    }
    else
    {
-      for ( int i = 0; i < fit_count; i++, x += 0.001 )
+      // Find the zero of the derivitive
+      double dxdy  [ 9 ];
+      double d2xdy2[ 8 ];
+
+      // First take the derivitive
+      for ( int i = 0; i < order; i++ ) dxdy[ i ] = c[ i + 1 ] * ( i + 1 );
+
+      // And we'll need the 2nd derivitive
+      for ( int i = 0; i < order - 1; i++ ) d2xdy2[ i ] = dxdy[ i + 1 ] * ( i + 1 );
+
+      // We'll do a quadratic fit for the initial estimate
+      double q[ 3 ];
+      US_Matrix::lsfit( q, radius_values, rmsd_values, count, 3 );
+      minimum = - q[ 1 ] / ( 2.0 * q[ 2 ] );
+
+      const double epsilon = 1.0e-4;
+
+      int    k = 0;
+      double f;
+      double f_prime;
+      do
       {
-         fit_x[ i ] = x;
-         fit_y[ i ] = c[ 0 ] 
-                    + c[ 1 ] * x 
-                    + c[ 2 ] * x * x
-                    + c[ 3 ] * x * x * x;
-      }
+        // f is the 1st derivitive
+        f = dxdy[ 0 ];
+        for ( int i = 1; i < order; i++ ) f += dxdy[ i ] * pow( minimum, i );
 
-      // Take the derivitive and get the minimum
-      // c1 + 2 * c2 * x + 3 * c3 * x^2 = 0
+        // f_prime is the 2nd derivitive
+        f_prime = d2xdy2[ 0 ];
+        for ( int i = 1; i < order - 1; i++ ) f_prime += d2xdy2[ i ] * pow( minimum, i );
 
-      double a = 3 * c[ 3 ];
-      double b = 2 * c[ 2 ];
-      double d =     c[ 1 ];  // c is already used
+        if ( fabs( f ) < epsilon ) break;
+        if ( k++ > 10 ) break;
 
-      double discriminant = sq( b ) - 4 * a * d;
+        // Get the next estimate
+        minimum -= f / f_prime;
 
-      double root1 = ( - b + sqrt ( discriminant ) ) / ( 2 * a );
-      double root2 = ( - b - sqrt ( discriminant ) ) / ( 2 * a );
-
-      if ( root1 < maxx  && root1 > minx ) 
-         minimum = root1;
-      else
-         minimum = root2;
+      } while ( true );
    }
 
    fit_curve = us_curve( meniscus_plot, tr( "Fitted Data" ) ); 
    fit_curve->setPen( QPen( Qt::red ) );
    fit_curve->setData( fit_x, fit_y, fit_count );
-
-
+   
    // Plot the minimum
 
    minimum_curve = us_curve( meniscus_plot, tr( "Minimum Pointer" ) ); 
@@ -237,6 +286,7 @@ void US_FitMeniscus::plot_data( void )
 
    minimum_curve->setData( radius_min, rmsd_min, 2 );
 
+   
    QwtPlotMarker* pm = new QwtPlotMarker();
    pm->setValue( minimum, miny + 3.0 * dy );
    pm->setSymbol( QwtSymbol( QwtSymbol::Cross, 
@@ -246,8 +296,8 @@ void US_FitMeniscus::plot_data( void )
 
    pm->attach( meniscus_plot );
 
-   meniscus_plot->replot();
-
    le_fit->setText( QString::number( minimum, 'f', 5 ) );
+   
+   meniscus_plot->replot();
 }
 
