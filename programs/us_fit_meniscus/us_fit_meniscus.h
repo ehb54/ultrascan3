@@ -22,10 +22,13 @@ class US_EXTERN US_FitMeniscus : public US_Widgets
       int           fit_order;
 
       QLineEdit*    le_fit;
+      QLineEdit*    le_rms_error;
 
       US_Help       showHelp;
       
       US_Editor*    te_data;
+
+      QSpinBox*     sb_order;
 
       QwtPlot*      meniscus_plot;
       QwtPlotCurve* raw_curve;

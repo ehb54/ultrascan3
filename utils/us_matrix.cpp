@@ -6,11 +6,84 @@
 #include <QtCore>
 
 void US_Matrix::lsfit( double* c, double* x, double* y,
-                       int n, int order, bool /* mesg */ )
+                       int N, int order, bool /* mesg */ )
 {
+#define LT
+//#define CHOLESKY
+#ifdef LT
+
+   double** A = new double* [ N ];
+   
+   // N x order matrix
+   for ( int i = 0; i < N; i++ ) A[ i ] = new double [ order ];
+
+   double* b = new double [ N ];
+
+   // Create the matrix equation
+   for ( int i = 0; i < N; i++ )
+   {
+      b[ i ]      = y[ i ];
+      A[ i ][ 0 ] = 1.0;
+      
+      for ( int j = 1; j < order; j++ ) A[ i ][ j ] = pow( x[ i ], j );
+   }
+
+   // Now calculate ATA and ATb
+   double** AT  = new double* [ order ];
+   double*  ATb = new double  [ order ];
+   double** ATA = new double* [ order ];
+
+   for ( int i = 0; i < order; i++ ) AT [ i ] = new double [ N ];
+   for ( int i = 0; i < order; i++ ) ATA[ i ] = new double [ order ];
+
+   // Transpose
+   for ( int i = 0; i < order; i++ )
+      for ( int j = 0; j < N; j++ )
+         AT[ i ][ j ] = A[ j ][ i ];
+
+   // Multiply
+   for ( int i = 0; i < order; i++ )
+   {
+      for ( int j = 0; j < order; j++ )
+      {
+         ATA[ i ][ j ] = 0.0;
+
+         for ( int k = 0; k < N; k++ )
+            ATA[ i ][ j ] += AT[ i ][ k ] * A[ k ][ j ];
+      }
+
+      ATb[ i ] = 0.0;
+
+      for ( int k = 0; k < N; k++ )
+         ATb[ i ] += AT[ i ][ k ] * b[ k ];
+   }
+
+   LU_SolveSystem( ATA, ATb, order );
+
+   for ( int i = 0; i < order; i++ )  c[ i ] = ATb[ i ];
+
+   // Clean up
+   for ( int i = 0; i < N; i++ ) delete [] A[ i ];
+   
+   for ( int i = 0; i < order; i++ )
+   {
+      delete [] AT [ i ];
+      delete [] ATA[ i ];
+   }
+
+   delete [] A;
+   delete [] AT;
+   delete [] ATA;
+   delete [] ATb;
+   delete [] b;
+
+
+#endif
+
+#ifdef CHOLESKY
    double** A = new double* [ order ];
    
-   for ( int i = 0; i < order; i++ ) A[ i ] = new double [ order ]; 
+   for ( int i = 0; i < N; i++ ) A[ i ] = new double [ order ]; 
 
    double* b = new double [ order ];
    
@@ -35,7 +108,7 @@ void US_Matrix::lsfit( double* c, double* x, double* y,
 
    */
 
-   A[ 0 ][ 0 ] = n;
+   A[ 0 ][ 0 ] = N;
    
    for ( int i = 1; i < order; i++ )
    {
@@ -43,7 +116,7 @@ void US_Matrix::lsfit( double* c, double* x, double* y,
       {
          A[ i ][ j ] = 0;
          
-         for ( int k = 0; k < n; k++ )
+         for ( int k = 0; k < N; k++ )
             A[ i ][ j ] += pow( x[ k ], i ) * pow( x[ k ], j );
       }
    } 
@@ -57,7 +130,7 @@ void US_Matrix::lsfit( double* c, double* x, double* y,
    {
       b[ i ] = 0;
 
-      for ( int k = 0; k < n; k++ )
+      for ( int k = 0; k < N; k++ )
          b[ i ] += y[ k ] * pow( x[ k ], i );
    }
    
@@ -65,9 +138,11 @@ void US_Matrix::lsfit( double* c, double* x, double* y,
    // Solve the system Ax=b using Cholesky decomposition:
 
    // Ax=b, A=LL', L(L'x)=b, L'x=y, Ly=b (solve for y), now L'x=y (solve for x)
-
+qDebug() << "A";
    Cholesky_Decomposition( A, order );
+qDebug() << "B";
    Cholesky_SolveSystem  ( A, b, order );
+qDebug() << "C";
    
    for ( int i = 0; i < order; i++ )  c[ i ] = b[ i ];
    
@@ -88,10 +163,15 @@ void US_Matrix::lsfit( double* c, double* x, double* y,
    }
    */
 
-   for ( int i = 0; i < order; i++ ) delete [] A[ i ];
+qDebug() << "D";
+   for ( int i = 0; i < N; i++ ) delete [] A[ i ];
    
-   delete [] A;
-   delete [] b;
+qDebug() << "E";
+//   delete [] A;
+qDebug() << "F";
+//   delete [] b;
+qDebug() << "G";
+#endif
 }
 
 /* This method factors the n by n symmetric positive definite matrix A as LL(T)
@@ -176,10 +256,176 @@ void US_Matrix::print_vector( double* v, int n )
    qDebug() << s;
 }
 
-void US_Matrix::print_matrix( double** m, int n )
+void US_Matrix::print_matrix( double** A, int rows, int columns )
 {
-   for ( int i = 0; i < n; i++ ) print_vector( m[ i ], n );
+   for ( int i = 0; i < rows; i++ ) print_vector( A[ i ], columns );
    qDebug() << "\n";
+}
+
+/* luDecomposition performs LU Decomposition on a matrix. This routine
+   must be given an array to mark the row permutations and a flag to mark
+   whether the number of permutations was even or odd.  Reference: Numerical
+   Recipes in C.
+*/
+
+void US_Matrix::LU_Decomposition( double** matrix, int* index, bool parity, int n )
+{
+   // imax is position of largest element in the row.
+   int imax = 0;
+   
+   // amax is value of largest element in the row. 
+   // dum is a temporary variable.
+
+   double amax;
+   double dum = 0;
+
+   // scaling factor for each row is stored here
+   double* scaling = new double[ n ];
+
+   // a small number != zero
+   double tiny = 1.0E-20;
+   
+   // Is the number of pivots even?
+   parity = true;
+
+   // Loop over rows to get the scaling information
+   // The largest element in the row is the inverse of the scaling factor.
+   for ( int i = 0; i < n; i++ ) 
+   {
+      amax = 0;
+
+      for ( int j = 0; j < n; j++ ) 
+      {
+         if ( fabs( matrix[ i ][ j ]) > amax ) amax = matrix[ i ][ j ]; 
+      }
+
+      if ( amax == 0 )
+      { 
+         qDebug() << "Singular Matrix";
+      }
+
+      // Save the scaling
+      scaling[ i ] = 1.0 / amax;
+   }
+
+   // Loop over columns using Crout's Method.
+   for ( int j = 0; j < n; j++ ) 
+   {
+      // lower left corner
+      for ( int i = 0; i < j; i++ ) 
+      {
+         dum = matrix[ i ][ j ];
+
+         for ( int k = 0; k < i; k++ )
+            dum -= matrix[ i ][ k ] * matrix[ k ][ j ];
+         
+         matrix[ i ][ j ] = dum;
+      }
+
+      // Initialize search for largest element
+      amax = 0.0;
+      
+      // upper right corner
+      for ( int i = j; i < n; i++ ) 
+      {
+         dum = matrix[ i ][ j ];
+
+         for ( int k = 0; k < j; k++ ) 
+            dum -= matrix[ i ][ k ] * matrix[ k ][ j ];
+         
+         matrix[ i ][ j ] = dum;
+
+         if ( scaling[ i ] * fabs( dum ) > amax ) 
+         {
+            amax = scaling[ i ]* fabs( dum );
+            imax = i;
+         }
+      }
+
+      // Change rows if it is necessary
+      if ( j != imax)
+      {
+         for ( int k = 0; k < n; k++ ) 
+         {
+            dum                 = matrix[ imax ][ k ];
+            matrix[ imax ][ k ] = matrix[ j    ][ k ];
+            matrix[ j    ][ k ] = dum;
+         }
+
+         // Change parity
+         parity = ! parity;
+         scaling[ imax ] = scaling[ j ];
+      }
+
+      // Mark the column with the pivot row.
+      index[ j ] = imax;
+
+      // replace zeroes on the diagonal with a small number.
+      if ( matrix[ j ][ j ] == 0.0 ) matrix[ j ][ j ] = tiny; 
+
+      // Divide by the pivot element
+      if ( j != n ) 
+      {
+         dum = 1.0 / matrix[ j ][ j ];
+         for ( int i = j + 1; i < n; i++ )  matrix[ i ][ j ] *= dum; 
+      }
+   }
+
+   delete [] scaling;
+}
+
+/*  Do the backsubstitution on matrix a which is the LU decomposition
+    of the original matrix. b is the right hand side vector which is NX1. b is
+    replaced by the solution. index is the array that marks the row
+    permutations.
+*/
+
+void US_Matrix::LU_BackSubstitute( double** A, double*& b, int* index, int n ) 
+{
+   int ip;
+   int ii = -1;
+   
+   double sum;
+
+   for ( int i = 0; i < n; i++ ) 
+   {
+      ip      = index[ i ];
+      sum     = b[ ip ];
+      b[ ip ] = b[ i ];
+      
+      if ( ii != -1 ) 
+      {
+         for ( int j = ii; j < i; j++ )  sum -= A[ i ][ j ] * b[ j ]; 
+      }
+      else 
+         if ( sum != 0 )  ii = i; 
+      
+      b[ i ] = sum;
+   }
+
+   for ( int i = n - 1; i >= 0; i-- )
+   {
+      sum = b[ i ];
+      
+      for ( int j = i + 1; j < n; j++ ) sum -= A[ i ][ j ] * b[ j ]; 
+      
+      b[ i ] = sum / A[ i ][ i ];
+   }
+}
+
+/* Solve a set of linear equations. a is a square matrix of coefficients.
+   b is the right hand side. b is replaced by solution.  Target is replaced by
+   its LU decomposition.
+*/
+
+void US_Matrix::LU_SolveSystem( double** A, double*& b, int n )
+{
+   bool parity = true;
+   int* index  = new int[ n ];
+   
+   LU_Decomposition ( A, index, parity, n );
+   LU_BackSubstitute( A, b, index, n );
+   delete [] index;
 }
 
 #ifdef NEVER
