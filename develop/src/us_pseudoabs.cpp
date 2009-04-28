@@ -908,6 +908,7 @@ void US_PseudoAbs::plotMouseReleased(const QMouseEvent &e)
 	pb_show2->setEnabled(true);
 	delete [] scan;
 	delete [] intensity;
+	lbl_message->setText(tr("Average scan intensities\nhave been determined..."));
 }
 
 void US_PseudoAbs::markref()
