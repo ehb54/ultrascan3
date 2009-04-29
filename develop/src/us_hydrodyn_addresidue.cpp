@@ -187,7 +187,8 @@ void US_AddResidue::setupGUI()
 	cmb_type->insertItem("Heme");
 	cmb_type->insertItem("Phosphate");
 	cmb_type->insertItem("Co-factor");
-	cmb_type->insertItem("Co-factor");
+	cmb_type->insertItem("Ion");
+	cmb_type->insertItem("Detergent");
 	cmb_type->setMinimumHeight(minHeight1);
 	connect(cmb_type, SIGNAL(activated(int)), this, SLOT(select_type(int)));
 
@@ -799,8 +800,53 @@ void US_AddResidue::read_residue_file(const QString & filename)
 							&& new_residue.vbar > 0.0
 							&& new_residue.asa > 0.0)
 			{
+				QString str3 ;
+				switch (new_residue.type)
+				{
+					case 0:
+					{
+						str3 = "Amino Acid";
+						break;
+					}
+					case 1:
+					{
+						str3 = "Sugar Moiety";
+						break;
+					}
+					case 2:
+					{
+						str3 = "Nucleotide";
+						break;
+					}
+					case 3:
+					{
+						str3 = "Heme";
+						break;
+					}
+					case 4:
+					{
+						str3 = "Phosphate";
+						break;
+					}
+					case 5:
+					{
+						str3 = "Co-factor";
+						break;
+					}
+					case 6:
+					{
+						str3 = "Ion";
+						break;
+					}
+					case 7:
+					{
+						str3 = "Detergent";
+						break;
+					}
+				}
 				residue_list.push_back(new_residue);
 				str1.sprintf("%d: ", i);
+				str1 += str3 + ", ";
 				if (new_residue.comment.isEmpty())
 				{
 					str1 += new_residue.name;
