@@ -15,7 +15,7 @@
 
 // #define DEBUG
 // #define DEBUG1
-#define AUTO_BB_DEBUG
+// #define AUTO_BB_DEBUG
 
 #ifndef WIN32
 #   include <unistd.h>
@@ -687,8 +687,15 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
    bool failure_errors = 0;
    bead_exceptions.clear();
 
-   residue_list = save_residue_list;
-   multi_residue_map = save_multi_residue_map;
+   // residue types are for automatic build builder to determine
+   // if we have a protein, so that a special 'temporary' residue can
+   // be created
+
+   vector < map < unsigned int, unsigned int > > residue_types;
+   vector < unsigned int > last_residue_type;
+
+   residue_types.resize(model->molecule.size());
+   last_residue_type.resize(model->molecule.size());
 
    for (unsigned int j = 0; j < model->molecule.size(); j++)
    {
@@ -734,6 +741,8 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 		 residue_list[m].name == "N1"))
 	    {
 	       respos = (int) m;
+	       residue_types[j][residue_list[m].type]++;
+	       last_residue_type[j] = residue_list[m].type;
 
 #if defined(DEBUG_MULTI_RESIDUE)
 	       printf("atom name %s residue name %s pos %u atom.size() %u map %s size %u has oxt %d\n"
@@ -994,13 +1003,25 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	 // we may need to redo the residues also
 	 model->residue.clear();
 	 printf("vbar before: %g\n", model->vbar);
-	 map < QString, int > new_residues;    // maps resName|atom_count to {0,1} for duplicate checks
 	 QString new_residue_name = "";
 	 for (unsigned int j = 0; j < org_model.molecule.size(); j++)
 	 {
 	    PDB_chain tmp_chain;
 	    QString lastResSeq = "";
 	    QString lastResName = "";
+
+	    bool auto_bb_aa = false;             // are we doing special amino acid handling?
+	    map < QString, int > aa_main_chain;  // to make sure we have a good main chain
+	    int current_bead_assignment;
+	    if (last_residue_type[j] == 0 &&      
+		residue_types[j].size() == 1) 
+	    {
+	       // only amino acids, so we can create two beads
+#if defined(AUTO_BB_DEBUG)
+	       puts("auto_bb_amino_acids");
+#endif
+	       auto_bb_aa = true;
+	    }
 
 	    for (unsigned int k = 0; k < org_model.molecule[j].atom.size(); k++)
 	    {
@@ -1032,11 +1053,25 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 		     PDB_atom *this_atom = &org_model.molecule[j].atom[k];
 		     QString new_residue_idx = this_atom->resName;  // we could add atom_count to the idx for counting by unique atom counts...
 #if defined(AUTO_BB_DEBUG)
-			printf("1.0 <%s>\n", new_residue_idx.ascii());
+		     printf("1.0 <%s> residue types %u, last_type %u\n", 
+			    new_residue_idx.ascii(),
+			    residue_types[j].size(),
+			    last_residue_type[j]
+			    );
 #endif
 		     
 		     if (this_atom->resSeq != lastResSeq) 
 		     {
+			current_bead_assignment = 0;
+			if (auto_bb_aa) 
+			{
+			   // reset the main chain counts
+			   aa_main_chain.clear();
+			   aa_main_chain["N"] = 0;
+			   aa_main_chain["CA"] = 0;
+			   aa_main_chain["C"] = 0;
+			   aa_main_chain["O"] = 0;
+			}
 			lastResSeq = org_model.molecule[j].atom[k].resSeq;
 			lastResName = org_model.molecule[j].atom[k].resName;
 			// this is a new unknown residue
@@ -1072,6 +1107,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 			residue_list.push_back(new_residue);
 			lastResSeq = org_model.molecule[j].atom[k].resSeq;
 			lastResName = org_model.molecule[j].atom[k].resName;
+#if defined(AUTO_BB_DEBUG)
+			printf("1.1b <%s>\n", new_residue.name.ascii());
+#endif
 			model->residue.push_back(residue_list[multi_residue_map[new_residue.name][0]]);
 		     } else {
 			new_residue_name = QString("%1_%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
@@ -1095,16 +1133,70 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 			exit(-1);
 		     }
 		     // ok, now we can push back the modified atom
+		     if (auto_bb_aa)
+		     {
+			if (residue_list[respos].r_atom.size() < 4) 
+			{
+			   aa_main_chain[this_atom->name]++;
+			   if (residue_list[respos].r_atom.size() == 3) 
+			   {
+			      // early handling in case of no side chain
+			      if (aa_main_chain["N"] == 1 &&
+				  aa_main_chain["CA"] == 1 &&
+				  aa_main_chain["C"] == 1 &&
+				  aa_main_chain["O"] == 1)
+			      {
+				 residue_list[respos].type = 0;
+				 residue_list[respos].r_bead[0].chain = 0;  // main chain
+			      }
+			   }
+			} else {
+			   if (residue_list[respos].r_atom.size() == 4) 
+			   {
+			      if (aa_main_chain["N"] == 1 &&
+				  aa_main_chain["CA"] == 1 &&
+				  aa_main_chain["C"] == 1 &&
+				  aa_main_chain["O"] == 1)
+			      {
+				 // ok, we have a proper backbone
+				 // so we have to redo the beads etc.
+				 current_bead_assignment = 1;
+				 // redo 1st bead
+				 residue_list[respos].type = 0;
+
+				 residue_list[respos].r_bead[0].hydration = 
+				    (unsigned int)(misc.avg_hydration * 4 + .5);
+				 residue_list[respos].r_bead[0].chain = 0;  // main chain
+				 residue_list[respos].r_bead[0].volume = misc.avg_volume * 4;
+				 residue_list[respos].r_bead[0].mw = misc.avg_mass * 4;
+
+				 // create a 2nd bead
+				 residue_list[respos].r_bead.push_back(residue_list[respos].r_bead[0]);
+				 residue_list[respos].r_bead[1].hydration = 
+				    (unsigned int)(misc.avg_hydration * (atom_counts[count_idx] - 4) + .5);
+				 residue_list[respos].r_bead[1].chain = 1;  // side chain
+				 residue_list[respos].r_bead[1].volume =
+				    misc.avg_volume * (atom_counts[count_idx] - 4);
+				 residue_list[respos].r_bead[1].mw = 
+				    misc.avg_mass * (atom_counts[count_idx] - 4);
+			      }
+			   }
+			}
+		     }
+			   
 		     new_atom.name = this_atom->name;
 		     new_atom.hybrid.name = this_atom->name;
 		     new_atom.hybrid.mw = misc.avg_mass;
 		     new_atom.hybrid.radius = misc.avg_radius;
-		     new_atom.bead_assignment = 0; // only one bead
-		     new_atom.positioner = false;
+		     new_atom.bead_assignment = current_bead_assignment; 
+		     new_atom.positioner = true;
 		     new_atom.serial_number = residue_list[respos].r_atom.size();
 		     residue_list[respos].r_atom.push_back(new_atom);
 		     PDB_atom atom_to_add = org_model.molecule[j].atom[k];
 		     atom_to_add.resName = new_residue.name;
+#if defined(AUTO_BB_DEBUG)
+		     printf("1.3 <%s>\n", new_residue.name.ascii());
+#endif
 		     tmp_chain.atom.push_back(atom_to_add);
 		  }
 		  break;
@@ -1379,7 +1471,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 
 	 // find residue in residues
 	 int respos = -1;
-#if defined(DEBUG)
+#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
 	 printf("residue search name %s resName %s\n",
 		this_atom->name.ascii(),
 		this_atom->resName.ascii());
@@ -1400,7 +1492,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	    {
 	       respos = (int) m;
 	       this_atom->p_residue = &(residue_list[m]);
-#if defined(DEBUG)
+#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
 	       printf("residue match %d resName %s \n", m, residue_list[m].name.ascii());
 #endif
 	       break;
@@ -1506,7 +1598,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	       this_atom->atom_assignment = atompos;
 	       this_atom->chain = (int) this_atom->p_residue->r_bead[this_atom->bead_assignment].chain;
 
-#if defined(DEBUG)
+#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
 	       printf("found atom %s %s in residue %d pos %d bead asgn %d %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s ba %d\n",
 		      this_atom->name.ascii(), this_atom->resName.ascii(), respos, atompos,
 		      this_atom->p_atom->bead_assignment,
@@ -1524,7 +1616,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 
 	 if (this_atom->active)
 	 {
-#if defined(DEBUG)
+#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
 	    puts("active atom"); fflush(stdout);
 #endif
 	    this_atom->active = false;
@@ -1555,7 +1647,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 	 for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
 	    PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
 
-#if defined(DEBUG)
+#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
 	    printf("p1 j k %d %d %lx %s %d\n", j, k,
 		   (long unsigned int)this_atom->p_atom,
 		   this_atom->active ? "active" : "not active",
@@ -3237,6 +3329,8 @@ int US_Hydrodyn::compute_asa()
 
 	       // do we have a new bead?
 	       // we want to put the N on a previous bead unless it is the first one of the molecule
+	       // ONLY FOR residue type = 0! (amino acid)
+	       // AND ONLY for residues not part of the 'auto bead builder'
 
 	       if (!create_beads_normally ||
 		   (
@@ -3248,7 +3342,7 @@ int US_Hydrodyn::compute_asa()
 		      this_atom->chain == 0 &&
 		      this_atom->name == "N" &&
 		      count_actives))) {
-#if defined(DEBUG)
+#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
 		  printf("pass 2 active %s %s %d new bead chain %d\n",
 			 this_atom->name.ascii(),
 			 this_atom->resName.ascii(),
@@ -3269,7 +3363,7 @@ int US_Hydrodyn::compute_asa()
 			if(this_atom->name == "N") {
 			   printf("ERROR double N on sequential sidechains! PRO PRO?\n");
 			}
-#if defined(DEBUG)
+#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
 			printf("adding sidechain N %f %f to this_atom\n",
 			       sidechain_N->asa,
 			       sidechain_N->mw
@@ -6404,6 +6498,7 @@ void US_Hydrodyn::read_residue_file()
    QString error_text = tr("Residue file errors:\n");
    cout << "residue file name: " << residue_filename << endl;
    residue_list.clear();
+   new_residues.clear();
    map < QString, int > dup_residue_map;
    i=1;
    if (f.open(IO_ReadOnly|IO_Translate))
@@ -6657,6 +6752,9 @@ void US_Hydrodyn::load_pdb()
 #endif
       QFileInfo fi(filename);
       project = fi.baseName();
+      new_residues.clear();
+      residue_list = save_residue_list;
+      multi_residue_map = save_multi_residue_map;
       read_pdb(filename);
       QString error_string = "";
       for(unsigned int i = 0; i < model_vector.size(); i++)
@@ -6970,6 +7068,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
 	    editor->append(ts.readLine());
 	 }
 	 editor->setCurrentFont(save_font);
+	 editor->append(QString("\nvbar: %1\n\n").arg(results.vbar));
 	 f.close();
 	 if (bead_count != (int)bead_model.size())
 	 {
@@ -6985,6 +7084,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
 	 lb_model->insertItem("Model 1 from bead_model file");
 	 lb_model->setSelected(0, true);
 	 lb_model->setEnabled(false);
+	 model_vector.resize(1);
+	 model_vector[0].vbar = results.vbar;
 	 somo_processed.resize(lb_model->numRows());
 	 bead_models.resize(lb_model->numRows());
 	 current_model = 0;
@@ -7083,6 +7184,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
 	    return -1;
 	 }
 	 bead_model_from_file = true;
+	 f.close();
+	 editor->append(QString("\nvbar: %1\n\n").arg(results.vbar));
 	 editor->append("Bead model loaded\n\n");
 	 // write_bead_spt(somo_dir + SLASH + project +
 	 //	       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
@@ -7092,6 +7195,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
 	 lb_model->insertItem("Model 1 from beams file");
 	 lb_model->setSelected(0, true);
 	 lb_model->setEnabled(false);
+	 model_vector.resize(1);
+	 model_vector[0].vbar = results.vbar;
 	 somo_processed.resize(lb_model->numRows());
 	 bead_models.resize(lb_model->numRows());
 	 current_model = 0;

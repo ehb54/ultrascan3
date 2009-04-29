@@ -184,6 +184,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		// in lieu of re-reading the residue file...
 		vector <struct residue>   save_residue_list;
 		map < QString, vector <int> > save_multi_residue_map; // maps residue to index of residue_list
+		map < QString, int > new_residues;    // maps resName|atom_count to {0,1} for duplicate checks 
 
 		vector <struct PDB_model> model_vector;
 		bool bead_model_from_file;

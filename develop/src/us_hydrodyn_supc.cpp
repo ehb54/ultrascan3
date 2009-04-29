@@ -1045,7 +1045,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    {
       active_model = k;
 
-      editor->append(QString("\nProcessing model %1 bead count %2\n").arg(k+1).arg(bead_count[k]));
+      editor->append(QString("\nProcessing model %1 bead count %2 vbar %3%4\n")
+		     .arg(k+1)
+		     .arg(bead_count[k])
+		     .arg(us_hydrodyn->misc.compute_vbar ?
+			  (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
+			  us_hydrodyn->misc.vbar)
+		     .arg(us_hydrodyn->misc.compute_vbar ? "" : " (User Entered)")
+		     );
 
       supc_free_alloced_2();
 
