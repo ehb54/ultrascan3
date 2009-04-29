@@ -133,6 +133,7 @@ class US_AddResidue : public QWidget
 		void help();
 		void select_atom_file();
 		void select_residue_file();
+		void read_residue_file(const QString &);
 		void select_residue(int);
 		void select_r_atom(int);
 		void select_r_bead(int);

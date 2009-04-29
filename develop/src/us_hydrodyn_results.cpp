@@ -224,7 +224,7 @@ void US_Hydrodyn_Results::setupGUI()
 	pb_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
 	connect(pb_load_results, SIGNAL(clicked()), SLOT(load_results()));
 
-	pb_load_beadmodel = new QPushButton(tr("Load Bead Model"), this);
+	pb_load_beadmodel = new QPushButton(tr("View Bead Model File"), this);
 	Q_CHECK_PTR(pb_load_beadmodel);
 	pb_load_beadmodel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
 	pb_load_beadmodel->setMinimumHeight(minHeight1);

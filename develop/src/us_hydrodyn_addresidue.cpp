@@ -187,6 +187,7 @@ void US_AddResidue::setupGUI()
 	cmb_type->insertItem("Heme");
 	cmb_type->insertItem("Phosphate");
 	cmb_type->insertItem("Co-factor");
+	cmb_type->insertItem("Co-factor");
 	cmb_type->setMinimumHeight(minHeight1);
 	connect(cmb_type, SIGNAL(activated(int)), this, SLOT(select_type(int)));
 
@@ -673,11 +674,11 @@ void US_AddResidue::add()
 	int sum=0;
 	for (i=0; i<new_residue.r_bead.size(); i++)
 	{
-		sum += (int) (new_residue.r_bead[i].volume * 100 + 0.5); //
+		sum += (int) (new_residue.r_bead[i].volume * 10000 + 0.5); //
 	}
 	str1.sprintf("Residue volume: %7.2f A^3, Sum of beads: %7.2f A^3\n\n"
 			"Please correct the bead volume and try again...", new_residue.molvol, (float) (sum/100));
-	if (sum != (int) (new_residue.molvol * 100 + 0.5))
+	if (fabs(sum - (new_residue.molvol * 10000 + 0.5) > 1))
 	{
 		QMessageBox::message("Attention:", "The residue volume does not match the volume of the beads:\n\n" + str1);
 		pb_add->setEnabled(false);
@@ -717,10 +718,115 @@ void US_AddResidue::add()
 	reset();
 }
 
+void US_AddResidue::read_residue_file(const QString & filename)
+{
+	QString str1, str2;
+	unsigned int numatoms, numbeads, i, j, positioner;
+	QFile f(filename);
+	residue_list.clear();
+	lb_residues->clear();
+	i=1;
+	if (f.open(IO_ReadOnly))
+	{
+		QTextStream ts(&f);
+		while (!ts.atEnd())
+		{
+			new_residue.comment = ts.readLine();
+			ts >> new_residue.name;
+			ts >> new_residue.type;
+			ts >> new_residue.molvol;
+			ts >> new_residue.asa;
+			ts >> numatoms;
+			ts >> numbeads;
+			ts >> new_residue.vbar;
+//				cout << "name: " << new_residue.name << ", type: " << new_residue.type
+//						<< ", molvol: " << new_residue.molvol << ", asa: " << new_residue.asa <<
+//						", numatoms: " << numatoms << ", beads: " << numbeads << ", vbar: " << new_residue.vbar << endl;
+			ts.readLine(); // read rest of line
+			new_residue.r_atom.clear();
+			new_residue.r_bead.clear();
+			for (j=0; j<numatoms; j++)
+			{
+				ts >> new_atom.name;
+				ts >> new_atom.hybrid.name;
+				ts >> new_atom.hybrid.mw;
+				ts >> new_atom.hybrid.radius;
+				ts >> new_atom.bead_assignment;
+				ts >> positioner;
+//					cout << "Atom: " << new_atom.name << ": " << new_atom.mw << ", " << new_atom.radius << ", "
+//					<< new_atom.bead_assignment << endl;
+				if(positioner == 0)
+				{
+					new_atom.positioner = false;
+				}
+				else
+				{
+					new_atom.positioner = true;
+				}
+				ts >> new_atom.serial_number;
+				str2 = ts.readLine(); // read rest of line
+				if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
+				{
+					new_residue.r_atom.push_back(new_atom);
+/*						str1.sprintf("%d: ", j+1);
+					str1 += new_atom.name;
+					cmb_r_atoms->insertItem(str1);
+*/
+				}
+				else
+				{
+					QMessageBox::warning(this, tr("UltraScan Warning"),
+												tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n\nAtom "
+														+ new_atom.name + " cannot be read and will be deleted from List."),
+				  QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+				}
+			}
+			for (j=0; j<numbeads; j++)
+			{
+				ts >> new_bead.hydration;
+				ts >> new_bead.color;
+				ts >> new_bead.placing_method;
+				ts >> new_bead.chain;
+				ts >> new_bead.volume;
+				str2 = ts.readLine(); // read rest of line
+				new_residue.r_bead.push_back(new_bead);
+//					str1.sprintf("Bead %d: defined", j+1);
+//					cmb_r_beads->insertItem(str1);
+			}
+			calc_bead_mw(&new_residue);
+			if ( !new_residue.name.isEmpty()
+							&& new_residue.molvol > 0.0
+							&& new_residue.vbar > 0.0
+							&& new_residue.asa > 0.0)
+			{
+				residue_list.push_back(new_residue);
+				str1.sprintf("%d: ", i);
+				if (new_residue.comment.isEmpty())
+				{
+					str1 += new_residue.name;
+				}
+				else
+				{
+					str1 += new_residue.name + " (" + new_residue.comment + ")";
+				}
+				lb_residues->insertItem(str1);
+				i++;
+			}
+		}
+		f.close();
+	}
+	else
+	{
+		QMessageBox::warning(this, tr("UltraScan Warning"),
+		tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n"
+		"Please select a different file."),
+		QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+	}
+}
+
 void US_AddResidue::select_residue_file()
 {
-	QString old_filename = residue_filename, str1, str2;
-	unsigned int numatoms, numbeads, i, j, positioner;
+	QString old_filename = residue_filename, str1;
 	residue_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.residue *.RESIDUE", this);
 	if (residue_filename.isEmpty())
 	{
@@ -732,97 +838,34 @@ void US_AddResidue::select_residue_file()
 		QFile f(residue_filename);
 		residue_list.clear();
 		lb_residues->clear();
-		i=1;
-		if (f.open(IO_ReadOnly|IO_Translate))
+		if (f.open(IO_ReadWrite|IO_Translate))
 		{
-			QTextStream ts(&f);
-			while (!ts.atEnd())
-			{
-				new_residue.comment = ts.readLine();
-				ts >> new_residue.name;
-				ts >> new_residue.type;
-				ts >> new_residue.molvol;
-				ts >> new_residue.asa;
-				ts >> numatoms;
-				ts >> numbeads;
-				ts >> new_residue.vbar;
-//				cout << "name: " << new_residue.name << ", type: " << new_residue.type
-//						<< ", molvol: " << new_residue.molvol << ", asa: " << new_residue.asa <<
-//						", numatoms: " << numatoms << ", beads: " << numbeads << ", vbar: " << new_residue.vbar << endl;
-				ts.readLine(); // read rest of line
-				new_residue.r_atom.clear();
-				new_residue.r_bead.clear();
-				for (j=0; j<numatoms; j++)
-				{
-					ts >> new_atom.name;
-					ts >> new_atom.hybrid.name;
-					ts >> new_atom.hybrid.mw;
-					ts >> new_atom.hybrid.radius;
-					ts >> new_atom.bead_assignment;
-					ts >> positioner;
-//					cout << "Atom: " << new_atom.name << ": " << new_atom.mw << ", " << new_atom.radius << ", "
-//					<< new_atom.bead_assignment << endl;
-					if(positioner == 0)
-					{
-						new_atom.positioner = false;
-					}
-					else
-					{
-						new_atom.positioner = true;
-					}
-					ts >> new_atom.serial_number;
-					str2 = ts.readLine(); // read rest of line
-					if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
-					{
-						new_residue.r_atom.push_back(new_atom);
-/*						str1.sprintf("%d: ", j+1);
-						str1 += new_atom.name;
-						cmb_r_atoms->insertItem(str1);
-*/
-					}
-					else
-					{
-						QMessageBox::warning(this, tr("UltraScan Warning"),
-						tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n\nAtom "
-						+ new_atom.name + " cannot be read and will be deleted from List."),
-						QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
-					}
-				}
-				for (j=0; j<numbeads; j++)
-				{
-					ts >> new_bead.hydration;
-					ts >> new_bead.color;
-					ts >> new_bead.placing_method;
-					ts >> new_bead.chain;
-					ts >> new_bead.volume;
-					str2 = ts.readLine(); // read rest of line
-					new_residue.r_bead.push_back(new_bead);
-//					str1.sprintf("Bead %d: defined", j+1);
-//					cmb_r_beads->insertItem(str1);
-				}
-				calc_bead_mw(&new_residue);
-				if ( !new_residue.name.isEmpty()
-					&& new_residue.molvol > 0.0
-					&& new_residue.vbar > 0.0
-					&& new_residue.asa > 0.0)
-				{
-					residue_list.push_back(new_residue);
-					str1.sprintf("%d: ", i);
-					if (new_residue.comment.isEmpty())
-					{
-						str1 += new_residue.name;
-					}
-					else
-					{
-						str1 += new_residue.name + " (" + new_residue.comment + ")";
-					}
-					lb_residues->insertItem(str1);
-					i++;
-				}
-			}
 			f.close();
+			read_residue_file(residue_filename);
 			pb_select_atom_file->setEnabled(false);
 			pb_select_residue_file->setEnabled(false);
+		}
+		else
+		{
+			QMessageBox mb(tr("UltraScan Warning"),
+			tr("Please note:\n\nThere was a problem opening this\nfile with read/write permission.\n"
+			"This file cannot be modified.\n\nDo you want to open the file in read-only mode"),
+			QMessageBox::Question,
+			QMessageBox::Yes | QMessageBox::Default,
+	  		QMessageBox::No,
+			QMessageBox::Cancel | QMessageBox::Escape, 0, 0, false, 0);
+			switch (mb.exec())
+			{
+				case QMessageBox::Yes:
+				{
+					select_residue_file();
+					break;
+				}
+				default:
+				{
+					return;	
+				}
+			}
 		}
 	}
 	str1.sprintf(tr(" Number of Residues in File: %d"), residue_list.size());
@@ -1017,6 +1060,13 @@ void US_AddResidue::update_hydration(double val)
 
 void US_AddResidue::select_bead_color(int val)
 {
+	if (val == 0 || val == 6)
+	{
+		QMessageBox::warning(this, tr("UltraScan Warning"),
+		tr("Please note:\n\nBlack and brown are reserved colors,\nplease choose a different color."),
+		QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+		return;
+	}
 	new_bead.color = (unsigned int) val;
 }
 
@@ -1575,6 +1625,13 @@ void US_AddResidue::write_residue_file()
 			lb_residues->insertItem(str1);
 		}
 		f.close();
+	}
+	else
+	{
+		QMessageBox::warning(this, tr("UltraScan Warning"),
+		tr("Please note:\n\nThis file was opened in read-only mode.\n"
+		"This file cannot be edited.\nPlease select a different file."),
+		QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
 	}
 }
 
