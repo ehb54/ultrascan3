@@ -189,6 +189,7 @@ void US_AddResidue::setupGUI()
 	cmb_type->insertItem("Co-factor");
 	cmb_type->insertItem("Ion");
 	cmb_type->insertItem("Detergent");
+	cmb_type->insertItem("Other");
 	cmb_type->setMinimumHeight(minHeight1);
 	connect(cmb_type, SIGNAL(activated(int)), this, SLOT(select_type(int)));
 
@@ -374,6 +375,7 @@ void US_AddResidue::setupGUI()
 	cmb_bead_color->insertItem(QPixmap(color_lightmagenta), " (13)");
 	cmb_bead_color->insertItem(QPixmap(color_yellow), " (14)");
 	cmb_bead_color->insertItem(QPixmap(color_brightwhite), " (15)");
+	cmb_bead_color->setCurrentItem(1);
 	cmb_bead_color->setEnabled(false);
 	connect(cmb_bead_color, SIGNAL(activated(int)), this, SLOT(select_bead_color(int)));
 
@@ -1111,6 +1113,7 @@ void US_AddResidue::select_bead_color(int val)
 		QMessageBox::warning(this, tr("UltraScan Warning"),
 		tr("Please note:\n\nBlack and brown are reserved colors,\nplease choose a different color."),
 		QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+		cmb_bead_color->setCurrentItem(1);
 		return;
 	}
 	new_bead.color = (unsigned int) val;
@@ -1489,6 +1492,15 @@ void US_AddResidue::accept_bead()
 		pb_add->setEnabled(false);
 		return;
 	}
+	if (new_bead.color == 0 || new_bead.color == 6)
+	{
+		QMessageBox::warning(this, tr("UltraScan Warning"),
+		tr("Please note:\n\nBlack and brown are reserved colors,\nplease choose a different bead color."),
+		QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+		cmb_bead_color->setCurrentItem(1);
+		return;
+	}
+	
 	QString str;
 	str.sprintf("Bead %d: defined", current_bead + 1);
 	cmb_r_beads->changeItem(str, current_bead);
