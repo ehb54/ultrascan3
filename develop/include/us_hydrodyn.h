@@ -185,7 +185,15 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		vector <struct residue>   save_residue_list;
 		map < QString, vector <int> > save_multi_residue_map; // maps residue to index of residue_list
 		map < QString, int > new_residues;    // maps resName|atom_count to {0,1} for duplicate checks 
-
+		map < QString, vector < QString > > molecules_residues_atoms; 
+		//                                  maps molecule #|resSeq to vector of atom names
+		map < QString, QString > molecules_residue_name; 
+		//                                  maps molecule #|resSeq to residue name
+		vector < QString > molecules_idx_seq; // vector of idx's
+		map < QString, vector < QString > > molecules_residue_errors; 
+		//                                  maps molecule #|resSeq to vector of errors
+		//                                  each element in the vector corresponds to
+		//                                       the dup_residue_map pos for the residue
 		vector <struct PDB_model> model_vector;
 		bool bead_model_from_file;
 		vector <int> somo_processed;
@@ -221,6 +229,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		int create_beads(QString *error_string); // turn pdb/atom model into bead_model
 		void get_atom_map(PDB_model *);
 		int check_for_missing_atoms(QString *error_string, PDB_model *);
+		void build_molecule_maps(PDB_model *model); // sets up maps for molecule
 		int overlap_check(bool sc, bool mc, bool buried); // check for overlaps
 		int compute_asa(); // calculate maximum accessible surface area
 		void show_asa();

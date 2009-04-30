@@ -16,6 +16,7 @@
 // #define DEBUG
 // #define DEBUG1
 // #define AUTO_BB_DEBUG
+#define BUILD_MAPS_DEBUG
 
 #ifndef WIN32
 #   include <unistd.h>
@@ -677,6 +678,118 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
    // end of atom count build
 }
 
+void US_Hydrodyn::build_molecule_maps(PDB_model *model)
+{
+   // creates molecules_residues_atoms map
+   // molecules_residues_atoms maps molecule #|resSeq to vector of atom names
+   molecules_residues_atoms.clear();
+   // molecules_residue_name maps molecule #|resSeq to residue name
+   molecules_residue_name.clear();
+   // molecules_idx_seq is a vector of the idx's
+   molecules_idx_seq.clear();
+   molecules_residue_errors.clear();
+
+   // pass 1 setup molecule basic maps
+   for (unsigned int j = 0; j < model->molecule.size(); j++)
+   {
+      for (unsigned int k = 0; k < model->molecule[j].atom.size(); k++)
+      {
+	 QString idx = QString("%1|%2").arg(j).arg(model->molecule[j].atom[k].resSeq);
+	 molecules_residues_atoms[idx].push_back(model->molecule[j].atom[k].name);
+	 if (!molecules_residue_name[idx])
+	 {
+	    molecules_residue_name[idx] = model->molecule[j].atom[k].resName;
+	    molecules_idx_seq.push_back(idx);
+	 }
+      }
+   }
+
+   // pass 2 setup error maps
+   for (unsigned int i = 0; i < molecules_idx_seq.size(); i++)
+   {
+      QString idx = molecules_idx_seq[i];
+      QString resName = molecules_residue_name[idx];
+      if (multi_residue_map[resName].size())
+      {
+	 for (unsigned int j = 0; j < multi_residue_map[resName].size(); j++)
+	 {
+	    QString error_msg = "";
+	    // for this residue, clear flags
+	    for (unsigned int r = 0; 
+		 r < residue_list[multi_residue_map[resName][j]].r_atom.size(); 
+		 r++)
+	    {
+	       residue_list[multi_residue_map[resName][j]].r_atom[r].tmp_used = false;
+	    }
+
+	    // now set flags
+	    // first check for non-coded atoms
+	    for (unsigned int k = 0; k < molecules_residues_atoms[idx].size(); k++)
+	    {
+	       bool found = false;
+	       bool any = false;
+	       for (unsigned int r = 0; 
+		    !found && r < residue_list[multi_residue_map[resName][j]].r_atom.size(); 
+		    r++)
+	       {
+		  if (residue_list[multi_residue_map[resName][j]].r_atom[r].name == 
+		      molecules_residues_atoms[idx][k]) 
+		  {
+		     any = true;
+		     if (!residue_list[multi_residue_map[resName][j]].r_atom[r].tmp_used)
+		     {
+			residue_list[multi_residue_map[resName][j]].r_atom[r].tmp_used = true;
+			found = true;
+		     }
+		  }
+	       }
+	       if (!found)
+	       {
+		  error_msg += QString("%1coded atom %2. ")
+		     .arg(any ? "Duplicate " : "Non-")
+		     .arg(molecules_residues_atoms[idx][k]);
+	       }
+	    }
+	    // now check for missing atoms
+	    for (unsigned int r = 0; 
+		 r < residue_list[multi_residue_map[resName][j]].r_atom.size(); 
+		 r++)
+	    {
+	       if (!residue_list[multi_residue_map[resName][j]].r_atom[r].tmp_used)
+	       {
+		  error_msg += QString("Missing atom %1. ")
+		     .arg(residue_list[multi_residue_map[resName][j]].r_atom[r].name);
+	       }
+	    }
+	    molecules_residue_errors[idx].push_back(error_msg);
+	 }
+      } else {
+	 molecules_residue_errors[idx].push_back("Non-coded residue. ");
+      }
+   }
+
+#if defined(BUILD_MAPS_DEBUG)
+   cout << "--------molecules_residue_errors---------\n";
+   for (unsigned int i = 0; i < molecules_idx_seq.size(); i++)
+   {
+      QString idx = molecules_idx_seq[i];
+      QString resName = molecules_residue_name[idx];
+      if (molecules_residue_errors[idx].size())
+      {
+	 for (unsigned int j = 0; j < molecules_residue_errors[idx].size(); j++) 
+	 {
+	    if (molecules_residue_errors[idx][j].length()) 
+	    {
+	       cout << QString("Molecule idx <%1> resName <%2> match <%3> errors:\n")
+		  .arg(idx).arg(resName).arg(j);
+	       cout << molecules_residue_errors[idx][j] << endl;
+	    }
+	 }
+      }
+   }
+#endif	 
+}
+
 int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model)
 {
    // go through molecules, build vector of residues
@@ -697,11 +810,16 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
    residue_types.resize(model->molecule.size());
    last_residue_type.resize(model->molecule.size());
 
+   build_molecule_maps(model);
+
+   // keep track of errors shown
+   map < QString, bool > error_shown;
+
    for (unsigned int j = 0; j < model->molecule.size(); j++)
    {
       QString lastResSeq = "";
       unsigned int lastResPos = 0;
-      QString lastChainID = "";
+      QString lastChainID = " ";
       bool spec_N1 = false;
       for (unsigned int k = 0; k < model->molecule[j].atom.size(); k++)
       {
@@ -800,14 +918,44 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 			   {
 			      bead_exceptions[count_idx] = 4;
 			   }
-			   error_string->
-			      append(QString("").
-				     sprintf("Missing atom: chain %s molecule %d atom %s residue %s %s\n",
-					     lastChainID.ascii(),
-					     j + 1,
-					     residue_list[lastResPos].r_atom[l].name.ascii(),
-					     lastResSeq.ascii(),
-					     residue_list[lastResPos].name.ascii()));
+			   if (!error_shown[count_idx]) 
+			   {
+			      QString this_error = QString("%1Molecule %2 Residue %3 %4: ")
+				 .arg(lastChainID == " " ? "" : ("Chain " + lastChainID))
+				 .arg(j + 1)
+				 .arg(residue_list[lastResPos].name)
+				 .arg(lastResSeq);
+			      QString idx = QString("%1|%2").arg(j).arg(lastResSeq);
+			      switch (molecules_residue_errors[idx].size())
+			      {
+			      case 0: 
+				 this_error += QString("Missing atom %1.\n").arg(residue_list[lastResPos].r_atom[l].name);
+				 break;
+			      case 1:
+				 this_error += molecules_residue_errors[idx][0] + "\n";
+				 break;
+			      default :
+				 {
+				    this_error += "\n";
+				    for (unsigned int t = 0; t < molecules_residue_errors[idx].size(); t++)
+				    {
+				       this_error += QString("    Residue file entry %1: %2\n").
+					  arg(t+1).arg(molecules_residue_errors[idx][t]);
+				    }
+				 }
+				 break;
+			      }
+			      error_string->append(this_error);
+			      error_shown[count_idx] = true;
+			   }
+			   // error_string->
+			   // append(QString("").
+			   //     sprintf("Missing atom: chain %s molecule %d atom %s residue %s %s\n",
+			   //	     lastChainID.ascii(),
+			   //	     j + 1,
+			   //	     residue_list[lastResPos].r_atom[l].name.ascii(),
+			   //	     lastResSeq.ascii(),
+			   //	     residue_list[lastResPos].name.ascii()));
 			}
 		     }
 		  }
@@ -888,7 +1036,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 		  } else {
 		     // residue does not exist, skip missing residue controls
 		     puts("case 3.1");
-		     msg_tag = "Missing residue";
+		     msg_tag = "Non-coded residue";
 		     if (pdb_parse.missing_residues == 0)
 		     {
 			failure_errors++;
@@ -905,14 +1053,45 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	       }
 	       if (do_error_msg) {
 		  errors_found++;
-		  error_string->append(QString("").sprintf("%s: chain %s molecule %d atom %s residue %s %s\n",
-							   msg_tag.ascii(),
-							   this_atom->chainID.ascii(),
-							   j + 1,
-							   this_atom->name.ascii(),
-							   this_atom->resSeq.ascii(),
-							   this_atom->resName.ascii()
-							   ));
+		  if (!error_shown[count_idx]) 
+		  {
+		     QString this_error = QString("%1Molecule %2 Residue %3 %4: ")
+			.arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID))
+			.arg(j + 1)
+			.arg(this_atom->resName)
+			.arg(this_atom->resSeq);
+		     QString idx = QString("%1|%2").arg(j).arg(this_atom->resSeq);
+		     switch (molecules_residue_errors[idx].size())
+		     {
+		     case 0: 
+			this_error += msg_tag;
+			break;
+		     case 1:
+			this_error += molecules_residue_errors[idx][0] + "\n";
+			break;
+		     default :
+			{
+			   this_error += "\n";
+			   for (unsigned int t = 0; t < molecules_residue_errors[idx].size(); t++)
+			   {
+			      this_error += QString("    Residue file entry %1: %2\n").
+				 arg(t+1).arg(molecules_residue_errors[idx][t]);
+			   }
+			}
+			break;
+		     }
+		     error_string->append(this_error);
+		     error_shown[count_idx] = true;
+		  }
+		  
+		  // error_string->append(QString("").sprintf("%s: chain %s molecule %d atom %s residue %s %s\n",
+		  //				   msg_tag.ascii(),
+		  //				   this_atom->chainID.ascii(),
+		  //				   j + 1,
+		  //				   this_atom->name.ascii(),
+		  //				   this_atom->resSeq.ascii(),
+		  //				   this_atom->resName.ascii()
+		  //				   ));
 	       }
 	    }
 	 } else {
@@ -940,13 +1119,45 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	       errors_found++;
 	       // currently, we still fail for unknown or 'extra' atoms
 	       failure_errors++;
-	       error_string->append(QString("").sprintf("unknown atom chain %s molecule %d atom %s residue %s %s\n",
-							this_atom->chainID.ascii(),
-							j + 1,
-							this_atom->name.ascii(),
-							this_atom->resSeq.ascii(),
-							this_atom->resName.ascii()
-							));
+	       if (!error_shown[count_idx]) 
+	       {
+		  QString this_error = QString("%1Molecule %2 Residue %3 %4: ")
+		     .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID))
+		     .arg(j + 1)
+		     .arg(this_atom->resName)
+		     .arg(this_atom->resSeq);
+		  QString idx = QString("%1|%2").arg(j).arg(this_atom->resSeq);
+		  switch (molecules_residue_errors[idx].size())
+		  {
+		  case 0: 
+		     this_error += QString("Unknown atom %1.\n").arg(this_atom->name);
+		     break;
+		  case 1:
+		     this_error += molecules_residue_errors[idx][0] + "\n";
+		     break;
+		  default :
+		     {
+			this_error += "\n";
+			for (unsigned int t = 0; t < molecules_residue_errors[idx].size(); t++)
+			{
+			   this_error += QString("    Residue file entry %1: %2\n").
+			      arg(t+1).arg(molecules_residue_errors[idx][t]);
+			}
+		     }
+		     break;
+		  }
+		  error_string->append(this_error);
+		  error_shown[count_idx] = true;
+	       }
+		  
+
+	       // error_string->append(QString("").sprintf("unknown atom chain %s molecule %d atom %s residue %s %s\n",
+	       //				this_atom->chainID.ascii(),
+	       //				j + 1,
+	       //				this_atom->name.ascii(),
+	       //				this_atom->resSeq.ascii(),
+	       //				this_atom->resName.ascii()
+	       //				));
 	    }
 	 }
       }
@@ -958,15 +1169,15 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	    if (!residue_list[lastResPos].r_atom[l].tmp_flag)
 	    {
 	       errors_found++;
+	       QString count_idx =
+		  QString("%1|%2|%3")
+		  .arg(j)
+		  .arg(residue_list[lastResPos].r_atom[l].name)
+		  .arg(lastResSeq);
 	       if (pdb_parse.missing_atoms == 0)
 	       {
 		  failure_errors++;
 	       } else {
-		  QString count_idx =
-		     QString("%1|%2|%3")
-		     .arg(j)
-		     .arg(residue_list[lastResPos].r_atom[l].name)
-		     .arg(lastResSeq);
 		  if (pdb_parse.missing_atoms == 1)
 		  {
 		     bead_exceptions[count_idx] = 2;
@@ -976,14 +1187,44 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 		     bead_exceptions[count_idx] = 3;
 		  }
 	       }
-	       error_string->
-		  append(QString("").
-			 sprintf("missing atom chain %s molecule %d atom %s residue %s %s\n",
-				 lastChainID.ascii(),
-				 j + 1,
-				 residue_list[lastResPos].r_atom[l].name.ascii(),
-				 lastResSeq.ascii(),
-				 residue_list[lastResPos].name.ascii()));
+	       if (!error_shown[count_idx]) 
+	       {
+		  QString this_error = QString("%1Molecule %2 Residue %3 %4: ")
+		     .arg(lastChainID == " " ? "" : ("Chain " + lastChainID))
+		     .arg(j + 1)
+		     .arg(residue_list[lastResPos].name)
+		     .arg(lastResSeq);
+		  QString idx = QString("%1|%2").arg(j).arg(lastResSeq);
+		  switch (molecules_residue_errors[idx].size())
+		  {
+		  case 0: 
+		     this_error += QString("Missing atom %1.\n").arg(residue_list[lastResPos].r_atom[l].name);
+		     break;
+		  case 1:
+		     this_error += molecules_residue_errors[idx][0] + "\n";
+		     break;
+		  default :
+		     {
+			this_error += "\n";
+			for (unsigned int t = 0; t < molecules_residue_errors[idx].size(); t++)
+			{
+			   this_error += QString("    Residue file entry %1: %2\n").
+			      arg(t+1).arg(molecules_residue_errors[idx][t]);
+			}
+		     }
+		     break;
+		  }
+		  error_string->append(this_error);
+		  error_shown[count_idx] = true;
+	       }
+	       // error_string->
+	       //  append(QString("").
+	       // sprintf("missing atom chain %s molecule %d atom %s residue %s %s\n",
+	       //	 lastChainID.ascii(),
+	       //	 j + 1,
+	       //	 residue_list[lastResPos].r_atom[l].name.ascii(),
+	       //	 lastResSeq.ascii(),
+	       //	 residue_list[lastResPos].name.ascii()));
 	    }
 	 }
       }
@@ -1214,7 +1455,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 	 printf("vbar after: %g\n", model->vbar);
       }
    }
-#if defined(AUTO_BB_DEBUG)
+#if defined(AUTO_BB_DEBUG) || 1
    QString str1;
    QFile f(somo_tmp_dir + SLASH + "tmp.somo.residue");
    if (f.open(IO_WriteOnly|IO_Translate))
@@ -1254,6 +1495,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
       f.close();
    }
 #endif
+   if (!misc.compute_vbar) 
+   {
+      editor->append(QString("vbar: %1 (User Entered)\n").arg(misc.vbar));
+   }
    return 0;
 }
 
@@ -6498,6 +6743,7 @@ void US_Hydrodyn::read_residue_file()
    QString error_text = tr("Residue file errors:\n");
    cout << "residue file name: " << residue_filename << endl;
    residue_list.clear();
+   multi_residue_map.clear();
    new_residues.clear();
    map < QString, int > dup_residue_map;
    i=1;
@@ -6878,6 +7124,12 @@ void US_Hydrodyn::read_pdb(const QString &filename)
       while (!ts.atEnd())
       {
 	 str1 = ts.readLine();
+	 if (str1.left(6) == "HEADER")
+	 {
+	    QString tmp_str = str1.mid(10,62);
+	    tmp_str.replace(QRegExp("\\s+")," ");
+	    editor->append(QString("Reading pdb: %1\n").arg(tmp_str));
+	 }
 	 if (str1.left(5) == "MODEL") // we have a new model in a multi-model file
 	 {
 	    model_flag = true; // we are using model descriptions (possibly multiple models)
