@@ -32,6 +32,8 @@ class US_EXTERN US_Hydrodyn_Overlap : public QFrame
 		US_Hydrodyn_Overlap(struct overlap_reduction *, struct overlap_reduction *,
 		struct overlap_reduction *, struct overlap_reduction *, double *, bool *,
   		QWidget *p = 0, const char *name = 0);
+		US_Hydrodyn_Overlap(struct overlap_reduction *, double *, bool *,
+		QWidget *p = 0, const char *name = 0);
 		~US_Hydrodyn_Overlap();
 
 	public:
@@ -40,8 +42,9 @@ class US_EXTERN US_Hydrodyn_Overlap : public QFrame
 		struct overlap_reduction *mainchain_overlap;
 		struct overlap_reduction *buried_overlap;
 		struct overlap_reduction *grid_overlap;
-		bool *overlap_widget;
+		bool *overlap_widget, show_grid_only;
 		double *overlap_tolerance;
+		int tab;
 		
 		US_Config *USglobal;
 		US_Hydrodyn_OR *sidechain_OR;

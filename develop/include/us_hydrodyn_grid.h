@@ -12,6 +12,7 @@
 #include <qcheckbox.h>
 #include <qwt_counter.h>
 #include "us_util.h"
+#include "us_hydrodyn_overlap.h"
 
 //standard C and C++ defs:
 
@@ -25,7 +26,6 @@ struct grid_options
 	bool hydrate; 	// true: hydrate model
 	bool center; 	// true: center of mass
 						// false: center of cubelet
-	bool overlaps;	// true: remove overlaps
 	bool tangency;	// true: Expand beads to tangency
 	double cube_side; 
 };
@@ -35,13 +35,18 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
 	Q_OBJECT
 
 	public:
-		US_Hydrodyn_Grid(struct grid_options *, bool *, QWidget *p = 0, const char *name = 0);
+		US_Hydrodyn_Grid(struct overlap_reduction *, struct grid_options *,
+							  double *, bool *, QWidget *p = 0, const char *name = 0);
 		~US_Hydrodyn_Grid();
 
 	public:
 		
 		struct grid_options *grid;
+		struct overlap_reduction *grid_overlap;
 		bool *grid_widget;
+		bool overlap_widget;
+		double *overlap_tolerance;
+		US_Hydrodyn_Overlap *overlap_window;
 		
 		QwtCounter *cnt_cube_side;
 		QButtonGroup *bg_center;
@@ -49,7 +54,6 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
 		QCheckBox *cb_hydrate;
 		QCheckBox *cb_center_mass;
 		QCheckBox *cb_center_cubelet;
-		QCheckBox *cb_overlaps;
 		QCheckBox *cb_tangency;
 		
 		US_Config *USglobal;
@@ -57,6 +61,7 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
 		QLabel *lbl_info;
 		QLabel *lbl_cube_side;
 
+		QPushButton *pb_overlaps;
 		QPushButton *pb_help;
 		QPushButton *pb_cancel;
 
@@ -68,7 +73,7 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
 		void set_hydrate();
 		void set_tangency();
 		void set_cubic();
-		void set_overlaps();
+		void overlaps();
 		void cancel();
 		void help();
 	

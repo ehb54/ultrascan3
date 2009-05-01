@@ -1,10 +1,13 @@
 #include "../include/us_hydrodyn_grid.h"
 
-US_Hydrodyn_Grid::US_Hydrodyn_Grid(struct grid_options *grid,
-bool *grid_widget, QWidget *p, const char *name) : QFrame(p, name)
+US_Hydrodyn_Grid::US_Hydrodyn_Grid(struct overlap_reduction *grid_overlap,
+struct grid_options *grid, double *overlap_tolerance, bool *grid_widget,
+QWidget *p, const char *name) : QFrame(p, name)
 {
+	this->grid_overlap = grid_overlap;
 	this->grid = grid;
 	this->grid_widget = grid_widget;
+	this->overlap_tolerance = overlap_tolerance;
 	*grid_widget = true;
 	USglobal=new US_Config();
 	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -13,6 +16,7 @@ bool *grid_widget, QWidget *p, const char *name) : QFrame(p, name)
 	global_Xpos += 30;
 	global_Ypos += 30;
 	setGeometry(global_Xpos, global_Ypos, 0, 0);
+	overlap_widget = false;
 }
 
 US_Hydrodyn_Grid::~US_Hydrodyn_Grid()
@@ -89,12 +93,12 @@ void US_Hydrodyn_Grid::setupGUI()
 	cb_tangency->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 	connect(cb_tangency, SIGNAL(clicked()), this, SLOT(set_tangency()));
 
-	cb_overlaps = new QCheckBox(this);
-	cb_overlaps->setText(tr(" Remove Overlaps "));
-	cb_overlaps->setChecked((*grid).overlaps);
-	cb_overlaps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-	cb_overlaps->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	connect(cb_overlaps, SIGNAL(clicked()), this, SLOT(set_overlaps()));
+	pb_overlaps = new QPushButton(tr(" Adjust Overlap Options "), this);
+	Q_CHECK_PTR(pb_overlaps);
+	pb_overlaps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+	pb_overlaps->setMinimumHeight(minHeight1);
+	pb_overlaps->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+	connect(pb_overlaps, SIGNAL(clicked()), SLOT(overlaps()));
 
 	pb_cancel = new QPushButton(tr("Close"), this);
 	Q_CHECK_PTR(pb_cancel);
@@ -123,7 +127,7 @@ void US_Hydrodyn_Grid::setupGUI()
 	background->addWidget(cb_cubic, j, 0);
 	background->addWidget(cb_hydrate, j, 1);
 	j++;
-	background->addWidget(cb_overlaps, j, 0);
+	background->addWidget(pb_overlaps, j, 0);
 	background->addWidget(cb_tangency, j, 1);
 	j++;
 	background->addWidget(pb_help, j, 0);
@@ -155,14 +159,31 @@ void US_Hydrodyn_Grid::set_tangency()
 	(*grid).tangency = cb_tangency->isChecked();
 }
 
-void US_Hydrodyn_Grid::set_overlaps()
-{
-	(*grid).overlaps = cb_overlaps->isChecked();
-}
-
 void US_Hydrodyn_Grid::cancel()
 {
 	close();
+}
+
+void US_Hydrodyn_Grid::overlaps()
+{
+	if (overlap_widget)
+	{
+		if (overlap_window->isVisible())
+		{
+			overlap_window->raise();
+		}
+		else
+		{
+			overlap_window->show();
+		}
+		return;
+	}
+	else
+	{
+		overlap_window = new US_Hydrodyn_Overlap(grid_overlap, overlap_tolerance, &overlap_widget);
+		overlap_window->show();
+	}
+
 }
 
 void US_Hydrodyn_Grid::help()
@@ -174,6 +195,10 @@ void US_Hydrodyn_Grid::help()
 
 void US_Hydrodyn_Grid::closeEvent(QCloseEvent *e)
 {
+	if (overlap_widget)
+	{
+		overlap_window->close();
+	}
 	*grid_widget = false;
 	global_Xpos -= 30;
 	global_Ypos -= 30;

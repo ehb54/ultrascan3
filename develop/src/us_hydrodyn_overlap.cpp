@@ -19,6 +19,24 @@ QWidget *p, const char *name) : QFrame(p, name)
 	global_Xpos += 30;
 	global_Ypos += 30;
 	setGeometry(global_Xpos, global_Ypos, 0, 0);
+	show_grid_only = false;
+}
+
+US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *grid_overlap,
+double *overlap_tolerance, bool *overlap_widget, QWidget *p, const char *name) : QFrame(p, name)
+{
+	this->grid_overlap = grid_overlap;
+	this->overlap_widget = overlap_widget;
+	this->overlap_tolerance = overlap_tolerance;
+	*overlap_widget = true;
+	USglobal=new US_Config();
+	setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+	setCaption(tr("SOMO Bead Overlap Reduction Options"));
+	show_grid_only = true;
+	setupGUI();
+	global_Xpos += 30;
+	global_Ypos += 30;
+	setGeometry(global_Xpos, global_Ypos, 0, 0);
 }
 
 US_Hydrodyn_Overlap::~US_Hydrodyn_Overlap()
@@ -29,11 +47,17 @@ US_Hydrodyn_Overlap::~US_Hydrodyn_Overlap()
 void US_Hydrodyn_Overlap::setupGUI()
 {
 	int minHeight1 = 30;
-
-	sidechain_OR = new US_Hydrodyn_OR(sidechain_overlap, this);
-	mainchain_OR = new US_Hydrodyn_OR(mainchain_overlap, this);
-	buried_OR = new US_Hydrodyn_OR(buried_overlap, this);
-	grid_OR = new US_Hydrodyn_OR(grid_overlap, this);
+	if (show_grid_only)
+	{
+		grid_OR = new US_Hydrodyn_OR(grid_overlap, this);
+	}
+	else
+	{
+		sidechain_OR = new US_Hydrodyn_OR(sidechain_overlap, this);
+		mainchain_OR = new US_Hydrodyn_OR(mainchain_overlap, this);
+		buried_OR = new US_Hydrodyn_OR(buried_overlap, this);
+		grid_OR = new US_Hydrodyn_OR(grid_overlap, this);
+	}
 	//buried_OR->cnt_fuse->setEnabled(false);
 	//buried_OR->cb_fuse->setEnabled(false);
 
@@ -65,10 +89,17 @@ void US_Hydrodyn_Overlap::setupGUI()
 
 	tw_overlap = new QTabWidget(this);
 	tw_overlap->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-	tw_overlap->addTab(sidechain_OR, "Exposed Side chain beads");
-	tw_overlap->addTab(mainchain_OR, "Exposed Main and side chain beads");
-	tw_overlap->addTab(buried_OR, "Buried beads");
-	tw_overlap->addTab(grid_OR, "Grid beads");
+	if (show_grid_only)
+	{
+		tw_overlap->addTab(grid_OR, "Grid beads");
+	}
+	else
+	{
+		tw_overlap->addTab(sidechain_OR, "Exposed Side chain beads");
+		tw_overlap->addTab(mainchain_OR, "Exposed Main and side chain beads");
+		tw_overlap->addTab(buried_OR, "Buried beads");
+		tw_overlap->addTab(grid_OR, "Grid beads");
+	}
 
 	pb_cancel = new QPushButton(tr("Close"), this);
 	Q_CHECK_PTR(pb_cancel);

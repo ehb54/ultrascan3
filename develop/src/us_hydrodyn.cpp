@@ -617,63 +617,63 @@ static void outward_translate_2_spheres(float *r1, // radius of sphere 1
 
 void US_Hydrodyn::get_atom_map(PDB_model *model)
 {
-   atom_counts.clear();
-   has_OXT.clear();
-   for (unsigned int j = 0; j < model->molecule.size(); j++)
-   {
-      QString lastResSeq = "";
-      QString lastResName = "";
-      int atom_count = 0;
-      for (unsigned int k = 0; k < model->molecule[j].atom.size(); k++)
-      {
-	 PDB_atom *this_atom = &(model->molecule[j].atom[k]);
-	 if (lastResSeq != this_atom->resSeq ||
-	     lastResName != this_atom->resName)
-	 {
+	atom_counts.clear();
+	has_OXT.clear();
+	for (unsigned int j = 0; j < model->molecule.size(); j++)
+	{
+		QString lastResSeq = "";
+		QString lastResName = "";
+		int atom_count = 0;
+		for (unsigned int k = 0; k < model->molecule[j].atom.size(); k++)
+		{
+			PDB_atom *this_atom = &(model->molecule[j].atom[k]);
+			if (lastResSeq != this_atom->resSeq ||
+						 lastResName != this_atom->resName)
+			{
 	    // new residue
-	    if (lastResSeq)
-	    {
-	       atom_counts[QString("%1|%2|%3")
-			   .arg(j)
-			   .arg(lastResName)
-			   .arg(lastResSeq)] = atom_count;
-	    }
-	    lastResSeq = this_atom->resSeq;
-	    lastResName = this_atom->resName;
-	    atom_count = 0;
-	 }
-	 if(this_atom->name == "OXT") {
-	    has_OXT[QString("%1|%2|%3")
-		    .arg(j)
-		    .arg(this_atom->resName)
-		    .arg(this_atom->resSeq)]++;
-	 }
-	 atom_count++;
-      }
-      if (lastResSeq)
-      {
-	 atom_counts[QString("%1|%2|%3")
-		     .arg(j)
-		     .arg(lastResName)
-		     .arg(lastResSeq)] = atom_count;
-      }
-   }
+				if (lastResSeq)
+				{
+					atom_counts[QString("%1|%2|%3")
+							.arg(j)
+							.arg(lastResName)
+							.arg(lastResSeq)] = atom_count;
+				}
+				lastResSeq = this_atom->resSeq;
+				lastResName = this_atom->resName;
+				atom_count = 0;
+			}
+			if(this_atom->name == "OXT") {
+				has_OXT[QString("%1|%2|%3")
+						.arg(j)
+						.arg(this_atom->resName)
+						.arg(this_atom->resSeq)]++;
+			}
+			atom_count++;
+		}
+		if (lastResSeq)
+		{
+			atom_counts[QString("%1|%2|%3")
+					.arg(j)
+					.arg(lastResName)
+					.arg(lastResSeq)] = atom_count;
+		}
+	}
 
 #if defined(DEBUG_MULTI_RESIDUE)
-   for (map < QString, int >::iterator it = atom_counts.begin();
-	it != atom_counts.end();
-	it++)
-   {
-      printf("atom count map %s map pos %d\n",
-	     it->first.ascii(), it->second);
-   }
-   for (map < QString, int >::iterator it = has_OXT.begin();
-	it != has_OXT.end();
-	it++)
-   {
-      printf("has_OXT map %s map value %d\n",
-	     it->first.ascii(), it->second);
-   }
+	for (map < QString, int >::iterator it = atom_counts.begin();
+			 it != atom_counts.end();
+			 it++)
+	{
+		printf("atom count map %s map pos %d\n",
+				 it->first.ascii(), it->second);
+	}
+	for (map < QString, int >::iterator it = has_OXT.begin();
+			 it != has_OXT.end();
+			 it++)
+	{
+		printf("has_OXT map %s map value %d\n",
+				 it->first.ascii(), it->second);
+	}
 #endif
    // end of atom count build
 }
@@ -6169,7 +6169,7 @@ int US_Hydrodyn::calc_grid()
 	    bead_model = bead_models[current_model];
 	    any_models = true;
 	    somo_processed[current_model] = 1;
-	    if (grid.overlaps)
+	    if (grid_overlap.remove_overlap)
 	    {
 	       radial_reduction();
 	       if (stopFlag)
@@ -6216,7 +6216,9 @@ int US_Hydrodyn::calc_grid()
 	    write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
 			     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
 			     DOTSOMO, &bead_model);
-	 } else {
+	 }
+	 else
+	 {
 	    QString error_string;
 	    printf("in calc_grid: !somo_processed %d\n", current_model); fflush(stdout);
 	    // create bead model from atoms
@@ -6320,7 +6322,7 @@ int US_Hydrodyn::calc_grid()
 		  any_models = true;
 		  somo_processed[current_model] = 1;
 		  printf("back from grid_atob 1\n"); fflush(stdout);
-		  if (grid.overlaps)
+		  if (grid_overlap.remove_overlap)
 		  {
 		     radial_reduction();
 		     bead_models[current_model] = bead_model;
@@ -7885,9 +7887,6 @@ void US_Hydrodyn::read_config(const QString& fname)
    grid.center = (bool) str.toInt();
    ts >> str;
    ts.readLine();
-   grid.overlaps = (bool) str.toInt();
-   ts >> str;
-   ts.readLine();
    grid.tangency = (bool) str.toInt();
    ts >> str;
    ts.readLine();
@@ -7994,122 +7993,121 @@ void US_Hydrodyn::read_config(const QString& fname)
 
 void US_Hydrodyn::reset()
 {
-   QMessageBox mb(tr("UltraScan"), tr("Attention:\nAre you sure you want to reset to the default options?\nAll currently defined options will be reset."),
-		  QMessageBox::Information,
-		  QMessageBox::Yes | QMessageBox::Default,
-		  QMessageBox::Cancel | QMessageBox::Escape,
-		  QMessageBox::No);
-   mb.setButtonText(QMessageBox::Yes, tr("Yes"));
-   mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
-   mb.setButtonText(QMessageBox::No, tr("Save Current Options"));
-   switch(mb.exec())
-   {
-   case QMessageBox::Cancel:
-      {
-	 return;
-      }
-   case QMessageBox::No:
-      {
-	 write_config();
-      }
-   }
-   sidechain_overlap.remove_overlap = true;
-   sidechain_overlap.fuse_beads = true;
-   sidechain_overlap.fuse_beads_percent = 70.0;
-   sidechain_overlap.remove_hierarch = true;
-   sidechain_overlap.remove_hierarch_percent = 1.0;
-   sidechain_overlap.remove_sync = false;
-   sidechain_overlap.remove_sync_percent = 1.0;
-   sidechain_overlap.translate_out = true;
-   sidechain_overlap.show_translate = true;
+	QMessageBox mb(tr("UltraScan"), tr("Attention:\nAre you sure you want to reset to the default options?\nAll currently defined options will be reset."),
+		QMessageBox::Information,
+		QMessageBox::Yes | QMessageBox::Default,
+		QMessageBox::Cancel | QMessageBox::Escape,
+		QMessageBox::No);
+	mb.setButtonText(QMessageBox::Yes, tr("Yes"));
+	mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
+	mb.setButtonText(QMessageBox::No, tr("Save Current Options"));
+	switch(mb.exec())
+	{
+		case QMessageBox::Cancel:
+		{
+			return;
+		}
+		case QMessageBox::No:
+		{
+			write_config();
+		}
+	}
+	sidechain_overlap.remove_overlap = true;
+	sidechain_overlap.fuse_beads = true;
+	sidechain_overlap.fuse_beads_percent = 70.0;
+	sidechain_overlap.remove_hierarch = true;
+	sidechain_overlap.remove_hierarch_percent = 1.0;
+	sidechain_overlap.remove_sync = false;
+	sidechain_overlap.remove_sync_percent = 1.0;
+	sidechain_overlap.translate_out = true;
+	sidechain_overlap.show_translate = true;
 
-   mainchain_overlap.remove_overlap = true;
-   mainchain_overlap.fuse_beads = true;
-   mainchain_overlap.fuse_beads_percent = 70.0;
-   mainchain_overlap.remove_hierarch = true;
-   mainchain_overlap.remove_hierarch_percent = 1.0;
-   mainchain_overlap.remove_sync = false;
-   mainchain_overlap.remove_sync_percent = 1.0;
-   mainchain_overlap.translate_out = false;
-   mainchain_overlap.show_translate = false;
+	mainchain_overlap.remove_overlap = true;
+	mainchain_overlap.fuse_beads = true;
+	mainchain_overlap.fuse_beads_percent = 70.0;
+	mainchain_overlap.remove_hierarch = true;
+	mainchain_overlap.remove_hierarch_percent = 1.0;
+	mainchain_overlap.remove_sync = false;
+	mainchain_overlap.remove_sync_percent = 1.0;
+	mainchain_overlap.translate_out = false;
+	mainchain_overlap.show_translate = false;
 
-   buried_overlap.remove_overlap = true;
-   buried_overlap.fuse_beads = false;
-   buried_overlap.fuse_beads_percent = 0.0;
-   buried_overlap.remove_hierarch = true;
-   buried_overlap.remove_hierarch_percent = 1.0;
-   buried_overlap.remove_sync = false;
-   buried_overlap.remove_sync_percent = 1.0;
-   buried_overlap.translate_out = false;
-   buried_overlap.show_translate = false;
+	buried_overlap.remove_overlap = true;
+	buried_overlap.fuse_beads = false;
+	buried_overlap.fuse_beads_percent = 0.0;
+	buried_overlap.remove_hierarch = true;
+	buried_overlap.remove_hierarch_percent = 1.0;
+	buried_overlap.remove_sync = false;
+	buried_overlap.remove_sync_percent = 1.0;
+	buried_overlap.translate_out = false;
+	buried_overlap.show_translate = false;
 
-   grid_overlap.remove_overlap = true;
-   grid_overlap.fuse_beads = false;
-   grid_overlap.fuse_beads_percent = 0.0;
-   grid_overlap.remove_hierarch = true;
-   grid_overlap.remove_hierarch_percent = 1.0;
-   grid_overlap.remove_sync = false;
-   grid_overlap.remove_sync_percent = 1.0;
-   grid_overlap.translate_out = false;
-   grid_overlap.show_translate = false;
+	grid_overlap.remove_overlap = true;
+	grid_overlap.fuse_beads = false;
+	grid_overlap.fuse_beads_percent = 0.0;
+	grid_overlap.remove_hierarch = true;
+	grid_overlap.remove_hierarch_percent = 1.0;
+	grid_overlap.remove_sync = false;
+	grid_overlap.remove_sync_percent = 1.0;
+	grid_overlap.translate_out = false;
+	grid_overlap.show_translate = false;
 
-   sidechain_overlap.title = "exposed side chain beads";
-   mainchain_overlap.title = "exposed main/main and main/side chain beads";
-   buried_overlap.title = "buried beads";
-   grid_overlap.title = "Grid beads";
+	sidechain_overlap.title = "exposed side chain beads";
+	mainchain_overlap.title = "exposed main/main and main/side chain beads";
+	buried_overlap.title = "buried beads";
+	grid_overlap.title = "Grid beads";
 
-   bead_output.sequence = 0;
-   bead_output.output = 1;
-   bead_output.correspondence = true;
+	bead_output.sequence = 0;
+	bead_output.output = 1;
+	bead_output.correspondence = true;
 	
-   asa.probe_radius = (float) 1.4;
-   asa.probe_recheck_radius = (float) 1.4;
-   asa.threshold = 20.0;
-   asa.threshold_percent = 50.0;
-   asa.calculation = true;
-   asa.recheck_beads = true;
-   asa.method = true; // by default use ASAB1
-   asa.asab1_step = 1.0;
+	asa.probe_radius = (float) 1.4;
+	asa.probe_recheck_radius = (float) 1.4;
+	asa.threshold = 20.0;
+	asa.threshold_percent = 50.0;
+	asa.calculation = true;
+	asa.recheck_beads = true;
+	asa.method = true; // by default use ASAB1
+	asa.asab1_step = 1.0;
 
-   grid.cubic = true; 		// apply cubic grid
-   grid.hydrate = false; 	// true: hydrate model
-   grid.center = false; 	// true: center of cubelet, false: center of mass
-   grid.overlaps = true;	// true: remove overlaps
-   grid.tangency = false;	// true: Expand beads to tangency
-   grid.cube_side = 10.0;
+	grid.cubic = true; 		// apply cubic grid
+	grid.hydrate = false; 	// true: hydrate model
+	grid.center = false; 	// true: center of cubelet, false: center of mass
+	grid.tangency = false;	// true: Expand beads to tangency
+	grid.cube_side = 10.0;
 
-   misc.hydrovol = 24.041;
-   misc.compute_vbar = true;
-   misc.vbar = 0.72;
-   misc.avg_radius = 1.68;
-   misc.avg_mass = 16.0;
-   misc.avg_hydration = 0.4;
-   misc.avg_volume = 15.3;
-   misc.avg_vbar = 0.72;
-   overlap_tolerance = 0.001;
+	misc.hydrovol = 24.041;
+	misc.compute_vbar = true;
+	misc.vbar = 0.72;
+	misc.avg_radius = 1.68;
+	misc.avg_mass = 16.0;
+	misc.avg_hydration = 0.4;
+	misc.avg_volume = 15.3;
+	misc.avg_vbar = 0.72;
+	overlap_tolerance = 0.001;
 
-   hydro.unit = -10; 					// exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
-   hydro.reference_system = false;	// false: diffusion center, true: cartesian origin (default false)
-   hydro.boundary_cond = false;		// false: stick, true: slip (default false)
-   hydro.volume_correction = false;	// false: Automatic, true: manual (provide value)
-   hydro.volume = 0.0;					// volume correction
-   hydro.mass_correction = false;		// false: Automatic, true: manual (provide value)
-   hydro.mass = 0.0;						// mass correction
-   hydro.bead_inclusion = false;		// false: exclude hidden beads; true: use all beads
-   hydro.rotational = false;			// false: include beads in volume correction for rotational diffusion, true: exclude
-   hydro.viscosity = false;				// false: include beads in volume correction for intrinsic viscosity, true: exclude
-   hydro.overlap_cutoff = false;		// false: same as in model building, true: enter manually
-   hydro.overlap = 0.0;					// overlap
+	hydro.unit = -10; 					// exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
+	hydro.reference_system = false;	// false: diffusion center, true: cartesian origin (default false)
+	hydro.boundary_cond = false;		// false: stick, true: slip (default false)
+	hydro.volume_correction = false;	// false: Automatic, true: manual (provide value)
+	hydro.volume = 0.0;					// volume correction
+	hydro.mass_correction = false;		// false: Automatic, true: manual (provide value)
+	hydro.mass = 0.0;						// mass correction
+	hydro.bead_inclusion = false;		// false: exclude hidden beads; true: use all beads
+	hydro.rotational = false;			// false: include beads in volume correction for rotational diffusion, true: exclude
+	hydro.viscosity = false;				// false: include beads in volume correction for intrinsic viscosity, true: exclude
+	hydro.overlap_cutoff = false;		// false: same as in model building, true: enter manually
+	hydro.overlap = 0.0;					// overlap
 
-   pdb_vis.visualization = 0; 					// default RasMol colors
-   pdb_vis.filename = USglobal->config_list.system_dir + "/etc/rasmol.spt"; //default color file
-   
-   pdb_parse.skip_hydrogen = true;
-   pdb_parse.skip_water = true;
-   pdb_parse.alternate = true;
-   pdb_parse.find_sh = false;
-   pdb_parse.missing_residues = 0;
-   pdb_parse.missing_atoms = 0;
+	pdb_vis.visualization = 0; 					// default RasMol colors
+	pdb_vis.filename = USglobal->config_list.system_dir + "/etc/rasmol.spt"; //default color file
+	
+	pdb_parse.skip_hydrogen = true;
+	pdb_parse.skip_water = true;
+	pdb_parse.alternate = true;
+	pdb_parse.find_sh = false;
+	pdb_parse.missing_residues = 0;
+	pdb_parse.missing_atoms = 0;
 }
 
 void US_Hydrodyn::write_config(const QString& fname)
@@ -8178,7 +8176,6 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << grid.cubic << "\t\t# flag to apply cubic grid\n";
       ts << grid.hydrate << "\t\t# flag to hydrate original model (grid)\n";
       ts << grid.center << "\t\t# flag for positioning bead in center of mass or cubelet (grid)\n";
-      ts << grid.overlaps << "\t\t# flag for removing overlaps (grid)\n";
       ts << grid.tangency << "\t\t# flag for expanding beads to tangency (grid)\n";
       ts << grid.cube_side << "\t\t# Length of cube side (grid)\n";
 
@@ -8220,205 +8217,206 @@ void US_Hydrodyn::write_config(const QString& fname)
 
 void US_Hydrodyn::show_asa()
 {
-   if (asa_widget)
-   {
-      if (asa_window->isVisible())
-      {
-	 asa_window->raise();
-      }
-      else
-      {
-	 asa_window->show();
-      }
-      return;
-   }
-   else
-   {
-      asa_window = new US_Hydrodyn_ASA(&asa, &asa_widget);
-      asa_window->show();
-   }
+	if (asa_widget)
+	{
+		if (asa_window->isVisible())
+		{
+			asa_window->raise();
+		}
+		else
+		{
+			asa_window->show();
+		}
+		return;
+	}
+	else
+	{
+		asa_window = new US_Hydrodyn_ASA(&asa, &asa_widget);
+		asa_window->show();
+	}
 }
 
 void US_Hydrodyn::pdb_visualization()
 {
-   if (pdb_visualization_widget)
-   {
-      if (pdb_visualization_window->isVisible())
-      {
+	if (pdb_visualization_widget)
+	{
+		if (pdb_visualization_window->isVisible())
+		{
 			pdb_visualization_window->raise();
-      }
-      else
-      {
+		}
+		else
+		{
 			pdb_visualization_window->show();
-      }
-      return;
-   }
-   else
-   {
-      pdb_visualization_window = new US_Hydrodyn_PDB_Visualization(&pdb_vis, &pdb_visualization_widget);
-      pdb_visualization_window->show();
-   }
+		}
+		return;
+	}
+	else
+	{
+		pdb_visualization_window = new US_Hydrodyn_PDB_Visualization(&pdb_vis, &pdb_visualization_widget);
+		pdb_visualization_window->show();
+	}
 }
 
 void US_Hydrodyn::pdb_parsing()
 {
-   if (pdb_parsing_widget)
-   {
-      if (pdb_parsing_window->isVisible())
-      {
+	if (pdb_parsing_widget)
+	{
+		if (pdb_parsing_window->isVisible())
+		{
 			pdb_parsing_window->raise();
-      }
-      else
-      {
+		}
+		else
+		{
 			pdb_parsing_window->show();
-      }
-      return;
-   }
-   else
-   {
-      pdb_parsing_window = new US_Hydrodyn_PDB_Parsing(&pdb_parse, &pdb_parsing_widget);
-      pdb_parsing_window->show();
-   }
+		}
+		return;
+	}
+	else
+	{
+		pdb_parsing_window = new US_Hydrodyn_PDB_Parsing(&pdb_parse, &pdb_parsing_widget);
+		pdb_parsing_window->show();
+	}
 }
 
 void US_Hydrodyn::show_overlap()
 {
-   if (overlap_widget)
-   {
-      if (overlap_window->isVisible())
-      {
-	 overlap_window->raise();
-      }
-      else
-      {
-	 overlap_window->show();
-      }
-      return;
-   }
-   else
-   {
-      overlap_window = new US_Hydrodyn_Overlap(&sidechain_overlap,
-					       &mainchain_overlap, &buried_overlap, &grid_overlap, &overlap_tolerance, &overlap_widget);
-      overlap_window->show();
-   }
+	if (overlap_widget)
+	{
+		if (overlap_window->isVisible())
+		{
+			overlap_window->raise();
+		}
+		else
+		{
+			overlap_window->show();
+		}
+		return;
+	}
+	else
+	{
+		overlap_window = new US_Hydrodyn_Overlap(&sidechain_overlap,
+				&mainchain_overlap, &buried_overlap, &grid_overlap, &overlap_tolerance, &overlap_widget);
+		overlap_window->show();
+	}
 }
 
 void US_Hydrodyn::show_bead_output()
 {
-   if (bead_output_widget)
-   {
-      if (bead_output_window->isVisible())
-      {
-	 bead_output_window->raise();
-      }
-      else
-      {
-	 bead_output_window->show();
-      }
-      return;
-   }
-   else
-   {
-      bead_output_window = new US_Hydrodyn_Bead_Output(&bead_output, &bead_output_widget);
-      bead_output_window->show();
-   }
+	if (bead_output_widget)
+	{
+		if (bead_output_window->isVisible())
+		{
+			bead_output_window->raise();
+		}
+		else
+		{
+			bead_output_window->show();
+		}
+		return;
+	}
+	else
+	{
+		bead_output_window = new US_Hydrodyn_Bead_Output(&bead_output, &bead_output_widget);
+		bead_output_window->show();
+	}
 }
 
 void US_Hydrodyn::show_misc()
 {
-   if (misc_widget)
-   {
-      if (misc_window->isVisible())
-      {
-	 misc_window->raise();
-      }
-      else
-      {
-	 misc_window->show();
-      }
-      return;
-   }
-   else
-   {
-      misc_window = new US_Hydrodyn_Misc(&misc, &misc_widget);
-      connect(misc_window, SIGNAL(vbar_changed()), this, SLOT(update_vbar()));
-      misc_window->show();
-   }
-   update_vbar();
+	if (misc_widget)
+	{
+		if (misc_window->isVisible())
+		{
+			misc_window->raise();
+		}
+		else
+		{
+			misc_window->show();
+		}
+		return;
+	}
+	else
+	{
+		misc_window = new US_Hydrodyn_Misc(&misc, &misc_widget);
+		connect(misc_window, SIGNAL(vbar_changed()), this, SLOT(update_vbar()));
+		misc_window->show();
+	}
+	update_vbar();
 }
 
 void US_Hydrodyn::show_hydro()
 {
-   if (hydro_widget)
-   {
-      if (hydro_window->isVisible())
-      {
-	 hydro_window->raise();
-      }
-      else
-      {
-	 hydro_window->show();
-      }
-      return;
-   }
-   else
-   {
-      hydro_window = new US_Hydrodyn_Hydro(&hydro, &hydro_widget);
-      hydro_window->show();
-   }
+	if (hydro_widget)
+	{
+		if (hydro_window->isVisible())
+		{
+			hydro_window->raise();
+		}
+		else
+		{
+			hydro_window->show();
+		}
+		return;
+	}
+	else
+	{
+		hydro_window = new US_Hydrodyn_Hydro(&hydro, &hydro_widget);
+		hydro_window->show();
+	}
 }
 
 void US_Hydrodyn::show_grid()
 {
-   if (grid_widget)
-   {
-      if (grid_window->isVisible())
-      {
-	 grid_window->raise();
-      }
-      else
-      {
-	 grid_window->show();
-      }
-      return;
-   }
-   else
-   {
-      grid_window = new US_Hydrodyn_Grid(&grid, &grid_widget);
-      grid_window->show();
-   }
+	if (grid_widget)
+	{
+		if (grid_window->isVisible())
+		{
+			grid_window->raise();
+		}
+		else
+		{
+			grid_window->show();
+		}
+		return;
+	}
+	else
+	{
+		grid_window = new US_Hydrodyn_Grid(&grid_overlap, &grid,
+		 &overlap_tolerance, &grid_widget);
+		grid_window->show();
+	}
 }
 
 void US_Hydrodyn::printError(const QString &str)
 {
-   QMessageBox::warning(this, tr("UltraScan Warning"), tr("Please note:\n\n") +
+	QMessageBox::warning(this, tr("UltraScan Warning"), tr("Please note:\n\n") +
 			tr(str), QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
 }
 
 void US_Hydrodyn::closeAttnt(QProcess *proc, QString message)
 {
-   switch( QMessageBox::information( this,
-				     tr("Attention!"),	message + tr(" is still running.\n"
-								     "Do you want to close it?"),
-				     tr("&Kill"), tr("&Close gracefully"), tr("Leave running"),
-				     0,      // Enter == button 0
-				     2 ) )   // Escape == button 2
-   {
-   case 0:
-      {
-	 proc->kill();
-	 break;
-      }
-   case 1:
-      {
-	 proc->tryTerminate();
-	 break;
-      }
-   case 2:
-      {
-	 break;
-      }
-   }
+	switch( QMessageBox::information( this,
+			  tr("Attention!"),	message + tr(" is still running.\n"
+					  "Do you want to close it?"),
+		 tr("&Kill"), tr("&Close gracefully"), tr("Leave running"),
+			 0,      // Enter == button 0
+	 2 ) )   // Escape == button 2
+	{
+		case 0:
+		{
+			proc->kill();
+			break;
+		}
+		case 1:
+		{
+			proc->tryTerminate();
+			break;
+		}
+		case 2:
+		{
+			break;
+		}
+	}
 }
 
 void US_Hydrodyn::append_options_log_somo()
@@ -8545,7 +8543,6 @@ void US_Hydrodyn::append_options_log_atob()
 	     "  Cube Side (Angstrom):       %.1f\n"
 	     "  Apply Cubic Grid:           %s\n"
 	     "  Hydrate the Original Model: %s\n"
-	     "  Remove Overlaps:            %s\n"
 	     "  Expand Beads to Tangency:   %s\n"
 	     "\n"
 
@@ -8553,7 +8550,6 @@ void US_Hydrodyn::append_options_log_atob()
 	     ,grid.cube_side
 	     ,grid.cubic ? "On" : "Off"
 	     ,grid.hydrate ? "On" : "Off"
-	     ,grid.overlaps ? "On" : "Off"
 	     ,grid.tangency ? "On" : "Off"
 	     );
 
