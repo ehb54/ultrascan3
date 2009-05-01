@@ -773,7 +773,9 @@ void US_Hydrodyn::build_molecule_maps(PDB_model *model)
             }
             molecules_residue_errors[idx].push_back(error_msg);
          }
-      } else {
+      } 
+      else 
+      {
          molecules_residue_errors[idx].push_back("Non-coded residue. ");
       }
    }
@@ -1002,7 +1004,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                {
                   failure_errors++;
                   msg_tag = "Missing residue or atom";
-               } else {
+               } 
+               else 
+               {
                   // ok, we have three cases here:
                   // 1. residue does exist & residue/atom doesn't
                   //    1.1 skip missing atoms controls
@@ -1026,7 +1030,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      {
                         puts("case 2.1");
                         msg_tag = "Missing or extra atom in residue";
-                     } else {
+                     } 
+                     else
+                     {
                         // atom does not exist, skip missing atoms controls
                         puts("case 1.1");
                         msg_tag = "Missing atom";
@@ -1043,7 +1049,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      {
                         bead_exceptions[count_idx] = 4;
                      }
-                  } else {
+                  } 
+                  else 
+                  {
                      // residue does not exist, skip missing residue controls
                      puts("case 3.1");
                      msg_tag = "Non-coded residue";
@@ -1104,7 +1112,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                   //               ));
                }
             }
-         } else {
+         }
+         else 
+         {
             int atompos = -1;
             for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
             {
@@ -1187,7 +1197,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                if (pdb_parse.missing_atoms == 0)
                {
                   failure_errors++;
-               } else {
+               } 
+               else 
+               {
                   if (pdb_parse.missing_atoms == 1)
                   {
                      bead_exceptions[count_idx] = 2;
@@ -1245,7 +1257,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
       if (failure_errors > 0) 
       {
          return errors_found;
-      } else {
+      }
+      else 
+      {
          editor->append("Encountered the following warnings with your PDB structure:\n" + *error_string);
          *error_string = "";
          // repair model...
@@ -1263,7 +1277,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 
             bool auto_bb_aa = false;             // are we doing special amino acid handling?
             map < QString, int > aa_main_chain;  // to make sure we have a good main chain
-            int current_bead_assignment;
+            int current_bead_assignment = 0;
             if (last_residue_type[j] == 0 &&      
                 residue_types[j].size() == 1) 
             {
@@ -1362,7 +1376,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         printf("1.1b <%s>\n", new_residue.name.ascii());
 #endif
                         model->residue.push_back(residue_list[multi_residue_map[new_residue.name][0]]);
-                     } else {
+                     } 
+                     else
+                     {
                         new_residue_name = QString("%1_%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
 #if defined(AUTO_BB_DEBUG)
                         printf("1.2 <%s>\n", new_residue_name.ascii());
@@ -1401,7 +1417,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                                  residue_list[respos].r_bead[0].chain = 0;  // main chain
                               }
                            }
-                        } else {
+                        } 
+                        else 
+                        {
                            if (residue_list[respos].r_atom.size() == 4) 
                            {
                               if (aa_main_chain["N"] == 1 &&
@@ -1765,7 +1783,9 @@ int US_Hydrodyn::create_beads(QString *error_string)
                                                         this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
                return (US_SURFRACER_ERR_MISSING_RESIDUE);
             }
-         } else {
+         } 
+         else 
+         {
 #if defined(DEBUG)
             printf("found residue pos %d\n", respos);
 #endif
@@ -1838,7 +1858,9 @@ int US_Hydrodyn::create_beads(QString *error_string)
                                                         j + 1, k, this_atom->name.ascii(),
                                                         this_atom->resName.ascii(),
                                                         this_atom->coordinate.axis[0], this_atom->coordinate.axis[1], this_atom->coordinate.axis[2]));
-            } else {
+            } 
+            else 
+            {
                this_atom->active = true;
                this_atom->radius = residue_list[respos].r_atom[atompos].hybrid.radius;
                this_atom->mw = residue_list[respos].r_atom[atompos].hybrid.mw;
@@ -1882,7 +1904,9 @@ int US_Hydrodyn::create_beads(QString *error_string)
             {
                this_atom->active = true;
                active_atoms.push_back(this_atom);
-            } else {
+            }
+            else 
+            {
 #if defined(DEBUG)
                printf
                   ("skipped bound waters & H %s %s rad %f resseq %s\n",
@@ -2097,7 +2121,9 @@ void US_Hydrodyn::radial_reduction()
       for (unsigned int m = 0; m < 3; m++) {
          molecular_cog[m] /= molecular_mw;
       }
-   } else {
+   } 
+   else 
+   {
       printf("ERROR: this molecule has zero mw!\n");
    }
 
@@ -2679,7 +2705,9 @@ void US_Hydrodyn::radial_reduction()
                            int use_bead;
                            if (bead_model[max_bead1].chain == 1) {
                               use_bead = max_bead2;
-                           } else {
+                           } 
+                           else 
+                           {
                               use_bead = max_bead1;
                            }
                            // one bead to shrink
@@ -2703,7 +2731,9 @@ void US_Hydrodyn::radial_reduction()
                               bead_model[use_bead].bead_computed_radius = (float)(TOLERANCE - 1e-5);
                               reduced[use_bead] = false;
                            }
-                        } else {
+                        }
+                        else 
+                        {
                            int use_bead = max_bead1;
                            if (!bead_model[use_bead].normalized_ot_is_valid) {
                               float norm = 0.0;
@@ -2721,7 +2751,9 @@ void US_Hydrodyn::radial_reduction()
                                     bead_model[use_bead].normalized_ot.axis[l] /= norm;
                                  }
                                  bead_model[use_bead].normalized_ot_is_valid = true;
-                              } else {
+                              } 
+                              else 
+                              {
                                  printf("wow! bead %d is at the molecular cog!\n", use_bead);
                               }
                            }
@@ -2742,7 +2774,9 @@ void US_Hydrodyn::radial_reduction()
                                     bead_model[use_bead].normalized_ot.axis[l] /= norm;
                                  }
                                  bead_model[use_bead].normalized_ot_is_valid = true;
-                              } else {
+                              }
+                              else 
+                              {
                                  printf("wow! bead %d is at the molecular cog!\n", use_bead);
                               }
                            }
@@ -2759,7 +2793,9 @@ void US_Hydrodyn::radial_reduction()
                                                        bead_model[max_bead2].normalized_ot.axis
                                                        );
                         }
-                     } else {
+                     }
+                     else 
+                     {
                         // no outward translation is required for either bead
                         // are we shrinking just 1 bead ... if we are dealing with buried beads, then
                         // only buried beads should be shrunk, not exposed beads
@@ -2793,13 +2829,19 @@ void US_Hydrodyn::radial_reduction()
                            if (methods[k] & RR_BURIED) {
                               if (bead_model[max_bead1].exposed_code == 1) {
                                  use_bead = max_bead2;
-                              } else {
+                              }
+                              else 
+                              {
                                  use_bead = max_bead1;
                               }
-                           } else {
+                           }
+                           else 
+                           {
                               if (bead_model[max_bead1].chain == 1) {
                                  use_bead = max_bead2;
-                              } else {
+                              }
+                              else 
+                              {
                                  use_bead = max_bead1;
                               }
                            }
@@ -2824,7 +2866,9 @@ void US_Hydrodyn::radial_reduction()
                               bead_model[use_bead].bead_computed_radius = (float)(TOLERANCE - 1e-5);
                               reduced[use_bead] = false;
                            }
-                        } else {
+                        }
+                        else 
+                        {
                            // two beads to shrink
                            int use_bead = max_bead1;
 #if defined(DEBUG2)
@@ -2961,7 +3005,9 @@ void US_Hydrodyn::radial_reduction()
 #if defined(DEBUG2)
             printf("out of while 2\n");
 #endif
-         } else {
+         }
+         else 
+         {
             // simultaneous reduction
 
             do {
@@ -3121,10 +3167,14 @@ void US_Hydrodyn::radial_reduction()
                                           radius_delta * bead_model[use_bead].normalized_ot.axis[l];
                                     }
                                     bead_model[use_bead].normalized_ot_is_valid = true;
-                                 } else {
+                                 }
+                                 else 
+                                 {
                                     printf("wow! bead %d is at the molecular cog!\n", use_bead);
                                  }
-                              } else {
+                              }
+                              else 
+                              {
                                  for (unsigned int l = 0; l < 3; l++) {
                                     bead_model[use_bead].bead_coordinate.axis[l] +=
                                        radius_delta * bead_model[use_bead].normalized_ot.axis[l];
@@ -3199,10 +3249,14 @@ void US_Hydrodyn::radial_reduction()
                                           radius_delta * bead_model[use_bead].normalized_ot.axis[l];
                                     }
                                     bead_model[use_bead].normalized_ot_is_valid = true;
-                                 } else {
+                                 }
+                                 else 
+                                 {
                                     printf("wow! bead %d is at the molecular cog!\n", use_bead);
                                  }
-                              } else {
+                              }
+                              else 
+                              {
                                  for (unsigned int l = 0; l < 3; l++) {
                                     bead_model[use_bead].bead_coordinate.axis[l] +=
                                        radius_delta * bead_model[use_bead].normalized_ot.axis[l];
@@ -3637,7 +3691,9 @@ int US_Hydrodyn::compute_asa()
                         this_atom->is_bead = false;
                      }
                   }
-               } else {
+               }
+               else 
+               {
 #if defined(DEBUG)
                   printf("pass 2 active %s %s %d not a new bead\n",
                          this_atom->name.ascii(),
@@ -3671,7 +3727,9 @@ int US_Hydrodyn::compute_asa()
                    this_atom->name == "N" &&
                    last_main_chain_bead) {
                   use_atom = last_main_chain_bead;
-               } else {
+               }
+               else 
+               {
                   use_atom = last_main_bead;
                }
 
@@ -3712,7 +3770,9 @@ int US_Hydrodyn::compute_asa()
                          use_atom->bead_cog_coordinate.axis[1],
                          use_atom->bead_cog_coordinate.axis[2]);
 #endif
-               } else {
+               }
+               else 
+               {
 #if defined(DEBUG_COG)
                   fprintf(stderr, "notice: atom %s %s %d excluded from cog calculation in bead %s %s %d\n",
                           this_atom->name.ascii(),
@@ -3753,7 +3813,9 @@ int US_Hydrodyn::compute_asa()
 
                count_actives++;
 
-            } else {
+            }
+            else 
+            {
                this_atom->is_bead = false;
             }
          }
@@ -3771,7 +3833,9 @@ int US_Hydrodyn::compute_asa()
              molecular_cog[2],
              molecular_mw);
 #endif
-   } else {
+   }
+   else 
+   {
       printf("ERROR: this molecule has zero mw!\n");
    }
 
@@ -3839,7 +3903,9 @@ int US_Hydrodyn::compute_asa()
                      last_main_chain_bead->bead_ref_mw += 1.01f;
                   }
                   last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
-               } else {
+               }
+               else 
+               {
                   last_main_chain_bead = this_atom;
                }
             }
@@ -3957,7 +4023,9 @@ int US_Hydrodyn::compute_asa()
                for (unsigned int m = 0; m < 3; m++) {
                   if (this_atom->bead_cog_mw) {
                      this_atom->bead_cog_coordinate.axis[m] /= this_atom->bead_cog_mw;
-                  } else {
+                  }
+                  else 
+                  {
                      this_atom->bead_cog_coordinate.axis[m] = 0;
                   }
                }
@@ -3999,7 +4067,9 @@ int US_Hydrodyn::compute_asa()
                              this_atom->serial);
                      break;
                   }
-               } else {
+               }
+               else 
+               {
                   fprintf(stderr, "serious internal error 1 on %s %s %d, quitting\n",
                           this_atom->name.ascii(),
                           this_atom->resName.ascii(),
@@ -4032,7 +4102,9 @@ int US_Hydrodyn::compute_asa()
                    this_atom->visibility ||
                    !asa.calculation) {
                   this_atom->exposed_code = 1;  // exposed
-               } else {
+               }
+               else 
+               {
                   if (this_atom->chain == 0) {
                      this_atom->exposed_code = 10;  // main chain, buried
                   }
@@ -4055,7 +4127,9 @@ int US_Hydrodyn::compute_asa()
                   printf("saving last mc asa %.2f\n", mc_asab1);
                }
 #endif
-            } else {
+            }
+            else 
+            {
                this_atom->placing_method = -1;
             }
          }
@@ -4818,7 +4892,9 @@ int US_Hydrodyn::compute_asa()
                            int use_bead;
                            if (bead_model[max_bead1].chain == 1) {
                               use_bead = max_bead2;
-                           } else {
+                           }
+                           else 
+                           {
                               use_bead = max_bead1;
                            }
                            // one bead to shrink
@@ -4842,7 +4918,9 @@ int US_Hydrodyn::compute_asa()
                               bead_model[use_bead].bead_computed_radius = (float)(TOLERANCE - 1e-5);
                               reduced[use_bead] = false;
                            }
-                        } else {
+                        }
+                        else 
+                        {
                            int use_bead = max_bead1;
                            if (!bead_model[use_bead].normalized_ot_is_valid) {
                               float norm = 0.0;
@@ -4860,7 +4938,9 @@ int US_Hydrodyn::compute_asa()
                                     bead_model[use_bead].normalized_ot.axis[l] /= norm;
                                  }
                                  bead_model[use_bead].normalized_ot_is_valid = true;
-                              } else {
+                              }
+                              else 
+                              {
                                  printf("wow! bead %d is at the molecular cog!\n", use_bead);
                               }
                            }
@@ -4881,7 +4961,9 @@ int US_Hydrodyn::compute_asa()
                                     bead_model[use_bead].normalized_ot.axis[l] /= norm;
                                  }
                                  bead_model[use_bead].normalized_ot_is_valid = true;
-                              } else {
+                              }
+                              else 
+                              {
                                  printf("wow! bead %d is at the molecular cog!\n", use_bead);
                               }
                            }
@@ -4898,7 +4980,9 @@ int US_Hydrodyn::compute_asa()
                                                        bead_model[max_bead2].normalized_ot.axis
                                                        );
                         }
-                     } else {
+                     }
+                     else 
+                     {
                         // no outward translation is required for either bead
                         // are we shrinking just 1 bead ... if we are dealing with buried beads, then
                         // only buried beads should be shrunk, not exposed beads
@@ -4932,13 +5016,19 @@ int US_Hydrodyn::compute_asa()
                            if (methods[k] & RR_BURIED) {
                               if (bead_model[max_bead1].exposed_code == 1) {
                                  use_bead = max_bead2;
-                              } else {
+                              }
+                              else 
+                              {
                                  use_bead = max_bead1;
                               }
-                           } else {
+                           }
+                           else 
+                           {
                               if (bead_model[max_bead1].chain == 1) {
                                  use_bead = max_bead2;
-                              } else {
+                              }
+                              else 
+                              {
                                  use_bead = max_bead1;
                               }
                            }
@@ -4963,7 +5053,9 @@ int US_Hydrodyn::compute_asa()
                               bead_model[use_bead].bead_computed_radius = (float)(TOLERANCE - 1e-5);
                               reduced[use_bead] = false;
                            }
-                        } else {
+                        }
+                        else 
+                        {
                            // two beads to shrink
                            int use_bead = max_bead1;
 #if defined(DEBUG2)
@@ -5095,7 +5187,9 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG2)
             printf("out of while 2\n");
 #endif
-         } else {
+         }
+         else 
+         {
             // simultaneous reduction
             // #define DEBUG
             do {
@@ -5252,10 +5346,14 @@ int US_Hydrodyn::compute_asa()
                                           radius_delta * bead_model[use_bead].normalized_ot.axis[l];
                                     }
                                     bead_model[use_bead].normalized_ot_is_valid = true;
-                                 } else {
+                                 }
+                                 else 
+                                 {
                                     printf("wow! bead %d is at the molecular cog!\n", use_bead);
                                  }
-                              } else {
+                              }
+                              else 
+                              {
                                  for (unsigned int l = 0; l < 3; l++) {
                                     bead_model[use_bead].bead_coordinate.axis[l] +=
                                        radius_delta * bead_model[use_bead].normalized_ot.axis[l];
@@ -5330,10 +5428,14 @@ int US_Hydrodyn::compute_asa()
                                           radius_delta * bead_model[use_bead].normalized_ot.axis[l];
                                     }
                                     bead_model[use_bead].normalized_ot_is_valid = true;
-                                 } else {
+                                 }
+                                 else 
+                                 {
                                     printf("wow! bead %d is at the molecular cog!\n", use_bead);
                                  }
-                              } else {
+                              }
+                              else 
+                              {
                                  for (unsigned int l = 0; l < 3; l++) {
                                     bead_model[use_bead].bead_coordinate.axis[l] +=
                                        radius_delta * bead_model[use_bead].normalized_ot.axis[l];
@@ -5473,7 +5575,9 @@ int US_Hydrodyn::get_color(PDB_atom *a) {
       if (a->exposed_code != 1) {
          color = 6;
       }
-   } else {
+   }
+   else 
+   {
       color = 1;
       if (a->exposed_code != 1) {
          color = 10;
@@ -5876,7 +5980,9 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
                //  + QString("%1").arg((*use_model)[i].all_beads[j].serial);
                residues += QString("%1").arg(tmp_serial);
             }
-         } else {
+         }
+         else 
+         {
             residues = use_model[i]->residue_list;
          }
 
@@ -6118,7 +6224,9 @@ void US_Hydrodyn::visualize()
                                                            "Please check to make sure RASMOL is properly installed..."));
                return;
             }
-         } else {
+         }
+         else 
+         {
             editor->append(QString("Model %1 - selected but bead model not built\n").arg(current_model + 1));
          }
       }
@@ -6149,7 +6257,9 @@ int US_Hydrodyn::calc_grid()
    {
       if(bead_model_prefix.length()) {
          bead_model_prefix += "-a2b";
-      } else {
+      }
+      else 
+      {
          bead_model_prefix += "a2b";
       }
       le_bead_model_prefix->setText(bead_model_prefix);
@@ -6282,12 +6392,16 @@ int US_Hydrodyn::calc_grid()
                      break;
                   }
                }
-            } else {
+            }
+            else 
+            {
                if(error_string.length()) {
                   printError("Encountered unknown atom(s) error:\n" +
                              error_string);
                   any_errors = true;
-               } else {
+               }
+               else 
+               {
                   // ok, we have the basic "bead" info loaded...
                   unsigned int i = current_model;
                   bead_model.clear();
@@ -6477,12 +6591,16 @@ int US_Hydrodyn::calc_somo()
                bead_check();
                editor->append("Finished rechecking beads\n");
                progress->setProgress(19);
-            } else {
+            }
+            else 
+            {
                editor->append("No rechecking of beads\n");
                qApp->processEvents();
             }
             bead_models[current_model] = bead_model;
-         } else {
+         }
+         else 
+         {
             any_errors = true;
          }
       }
@@ -6550,7 +6668,9 @@ void US_Hydrodyn::calc_hydro()
             //          (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
             //          QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
             //          DOTSOMO, &bead_model, bead_model_from_file);
-         } else {
+         }
+         else 
+         {
             editor->append(QString("Model %1 - selected but bead model not built\n").arg(current_model + 1));
          }
       }
@@ -6809,7 +6929,9 @@ void US_Hydrodyn::read_residue_file()
                if (error_count < 5) 
                {
                   error_msg += tmp_msg;
-               } else {
+               }
+               else 
+               {
                   if (error_count == 5)
                   {
                      error_msg += "Further errors not listed\n";
@@ -7263,13 +7385,17 @@ int US_Hydrodyn::read_bead_model(QString filename)
          QTextStream ts(&f);
          if (!ts.atEnd()) {
             ts >> bead_count;
-         } else {
+         }
+         else 
+         {
             editor->append("Error in line 1!\n");
             return 1;
          }
          if (!ts.atEnd()) {
             ts >> results.vbar;
-         } else {
+         }
+         else 
+         {
             editor->append("Error in line 1!\n");
             return 1;
          }
@@ -7281,45 +7407,59 @@ int US_Hydrodyn::read_bead_model(QString filename)
             {
                if (!ts.atEnd()) {
                   ts >>  tmp_atom.bead_coordinate.axis[i];
-               } else {
+               }
+               else 
+               {
                   editor->append(QString("\nError in line %1!\n").arg(linepos));
                   return linepos;
                }
             }
             if (!ts.atEnd()) {
                ts >>  tmp_atom.bead_computed_radius;
-            } else {
+            }
+            else 
+            {
                editor->append(QString("\nError in line %1!\n").arg(linepos));
                return linepos;
             }
             if (!ts.atEnd()) {
                ts >>  tmp_atom.bead_mw;
                tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
-            } else {
+            }
+            else 
+            {
                editor->append(QString("\nError in line %1!\n").arg(linepos));
                return linepos;
             }
             if (!ts.atEnd()) {
                ts >>  tmp_atom.bead_color;
-            } else {
+            }
+            else 
+            {
                editor->append(QString("\nError in line %1!\n").arg(linepos));
                return linepos;
             }
             if (!ts.atEnd()) {
                tmp_atom.serial = linepos;
-            } else {
+            }
+            else 
+            {
                editor->append(QString("\nError in line %1!\n").arg(linepos));
                return linepos;
             }
             if (!ts.atEnd()) {
                ts >>  tmp_atom.residue_list;
-            } else {
+            }
+            else 
+            {
                editor->append(QString("\nError in line %1!\n").arg(linepos));
                return linepos;
             }
             if (!ts.atEnd()) {
                ts >>  tmp_atom.bead_recheck_asa;
-            } else {
+            }
+            else 
+            {
                editor->append(QString("\nError in line %1!\n").arg(linepos));
                return linepos;
             }
@@ -7375,20 +7515,26 @@ int US_Hydrodyn::read_bead_model(QString filename)
          QTextStream ts(&f);
          if (!ts.atEnd()) {
             ts >> bead_count;
-         } else {
+         }
+         else 
+         {
             editor->append("Error in line 1!\n");
             return 1;
          }
          if (!ts.atEnd()) {
             ts >> results.vbar;
-         } else {
+         }
+         else 
+         {
             editor->append("Error in line 1!\n");
             return 1;
          }
          QString rmcfile;
          if (!ts.atEnd()) {
             ts >> rmcfile;
-         } else {
+         }
+         else 
+         {
             editor->append("Error in line 1!\n");
             return 1;
          }
@@ -7396,7 +7542,9 @@ int US_Hydrodyn::read_bead_model(QString filename)
          {
             if (!ts.atEnd()) {
                ts >> results.vbar;
-            } else {
+            }
+            else 
+            {
                editor->append("Error in line 1!\n");
                return 1;
             }
@@ -7414,27 +7562,35 @@ int US_Hydrodyn::read_bead_model(QString filename)
                {
                   if (!ts.atEnd()) {
                      ts >>  tmp_atom.bead_coordinate.axis[i];
-                  } else {
+                  }
+                  else 
+                  {
                      editor->append(QString("\nError in line %1!\n").arg(linepos));
                      return linepos;
                   }
                }
                if (!tsrmc.atEnd()) {
                   tsrmc >>  tmp_atom.bead_computed_radius;
-               } else {
+               }
+               else 
+               {
                   editor->append(QString("\nError in line %1!\n").arg(linepos));
                   return linepos;
                }
                if (!tsrmc.atEnd()) {
                   tsrmc >>  tmp_atom.bead_mw;
                   tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
-               } else {
+               }
+               else 
+               {
                   editor->append(QString("\nError in line %1!\n").arg(linepos));
                   return linepos;
                }
                if (!tsrmc.atEnd()) {
                   tsrmc >>  tmp_atom.bead_color;
-               } else {
+               }
+               else 
+               {
                   editor->append(QString("\nError in line %1!\n").arg(linepos));
                   return linepos;
                }
@@ -8504,14 +8660,6 @@ void US_Hydrodyn::append_options_log_somo()
              "      Remove Overlaps hierarchically:             %s\n"
              "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
 
-             "    Grid beads:\n"
-             "      Fuse Beads:                                 %s\n"
-             "      Fuse Beads that overlap by more than:       %.1f\n"
-             "      Remove Overlaps:                            %s\n"
-             "      Remove Overlaps synchronously:              %s\n"
-             "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
-             "      Remove Overlaps hierarchically:             %s\n"
-             "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
              "\n"
 
              ,overlap_tolerance
@@ -8541,13 +8689,6 @@ void US_Hydrodyn::append_options_log_somo()
              ,buried_overlap.remove_hierarch ? "On" : "Off"
              ,buried_overlap.remove_hierarch_percent
 
-             ,grid_overlap.fuse_beads ? "On" : "Off"
-             ,grid_overlap.fuse_beads_percent
-             ,grid_overlap.remove_overlap ? "On" : "Off"
-             ,grid_overlap.remove_sync ? "On" : "Off"
-             ,grid_overlap.remove_sync_percent
-             ,grid_overlap.remove_hierarch ? "On" : "Off"
-             ,grid_overlap.remove_hierarch_percent
              );
    options_log += s;
 }
@@ -8570,11 +8711,34 @@ void US_Hydrodyn::append_options_log_atob()
              "  Expand Beads to Tangency:   %s\n"
              "\n"
 
+             "Overlap Reduction:\n"
+             "  Bead Overlap Tolerance:     %f\n"
+
+             "    Grid beads:\n"
+             "      Fuse Beads:                                 %s\n"
+             "      Fuse Beads that overlap by more than:       %.1f\n"
+             "      Remove Overlaps:                            %s\n"
+             "      Remove Overlaps synchronously:              %s\n"
+             "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+             "      Remove Overlaps hierarchically:             %s\n"
+             "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+             "\n"
+
              ,grid.center ? "Center of Mass" : "Center of Cubelet"
              ,grid.cube_side
              ,grid.cubic ? "On" : "Off"
              ,grid.hydrate ? "On" : "Off"
              ,grid.tangency ? "On" : "Off"
+
+             ,overlap_tolerance
+
+             ,grid_overlap.fuse_beads ? "On" : "Off"
+             ,grid_overlap.fuse_beads_percent
+             ,grid_overlap.remove_overlap ? "On" : "Off"
+             ,grid_overlap.remove_sync ? "On" : "Off"
+             ,grid_overlap.remove_sync_percent
+             ,grid_overlap.remove_hierarch ? "On" : "Off"
+             ,grid_overlap.remove_hierarch_percent
              );
 
    options_log += s;
