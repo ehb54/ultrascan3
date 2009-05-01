@@ -59,7 +59,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		int get_color(PDB_atom *);
 		struct misc_options misc;
 		double overlap_tolerance;
-		bool stopFlag;
+		bool stopFlag, calcAutoHydro;
 
 	private:
 		bool 	residue_widget,
@@ -114,6 +114,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		QLabel *lbl_somo;
 		QLabel *lbl_bead_model_prefix;
 
+		QCheckBox *cb_calcAutoHydro;
+		
 		QPopupMenu *lookup_tables;
 		QPopupMenu *somo_options;
 		QPopupMenu *pdb_options;
@@ -273,6 +275,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 		void print();
 		void update_font();
 		void clear_display();
+		void set_calcAutoHydro();
 
 
 

@@ -93,6 +93,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    results_widget = false;
    pdb_visualization_widget = false;
    pdb_parsing_widget = false;
+	calcAutoHydro = false;
    residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
    editor = (QTextEdit *)0;
    read_residue_file();
@@ -302,7 +303,14 @@ void US_Hydrodyn::setupGUI()
    pb_grid->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_grid, SIGNAL(clicked()), SLOT(calc_grid()));
 
-   pb_view_asa = new QPushButton(tr("Show ASA Results"), this);
+	cb_calcAutoHydro = new QCheckBox(this);
+	cb_calcAutoHydro->setText(tr(" Automatically Calculate Hydrodynamics "));
+	cb_calcAutoHydro->setChecked(calcAutoHydro);
+	cb_calcAutoHydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+	cb_calcAutoHydro->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+	connect(cb_calcAutoHydro, SIGNAL(clicked()), this, SLOT(set_calcAutoHydro()));
+   
+	pb_view_asa = new QPushButton(tr("Show ASA Results"), this);
    Q_CHECK_PTR(pb_view_asa);
    pb_view_asa->setMinimumHeight(minHeight1);
    pb_view_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -399,6 +407,8 @@ void US_Hydrodyn::setupGUI()
    j++;
    background->addWidget(pb_somo, j, 0);
    background->addWidget(pb_grid, j, 1);
+   j++;
+   background->addWidget(cb_calcAutoHydro, j, 1);
    j++;
    background->addWidget(pb_view_asa, j, 0);
    background->addWidget(pb_visualize, j, 1);
@@ -6393,6 +6403,11 @@ int US_Hydrodyn::calc_grid()
    pb_grid->setEnabled(true);
    pb_somo->setEnabled(true);
    pb_stop_calc->setEnabled(false);
+	if (calcAutoHydro)
+	{
+		calc_hydro();
+	}
+
    return (flag);
 }
 
@@ -6498,6 +6513,10 @@ int US_Hydrodyn::calc_somo()
    pb_somo->setEnabled(true);
    pb_grid->setEnabled(true);
    pb_stop_calc->setEnabled(false);
+	if (calcAutoHydro)
+	{
+		calc_hydro();
+	}
    return 0;
 }
 
@@ -8396,11 +8415,11 @@ void US_Hydrodyn::printError(const QString &str)
 void US_Hydrodyn::closeAttnt(QProcess *proc, QString message)
 {
 	switch( QMessageBox::information( this,
-			  tr("Attention!"),	message + tr(" is still running.\n"
-					  "Do you want to close it?"),
-		 tr("&Kill"), tr("&Close gracefully"), tr("Leave running"),
-			 0,      // Enter == button 0
-	 2 ) )   // Escape == button 2
+			tr("Attention!"),	message + tr(" is still running.\n"
+			"Do you want to close it?"),
+			tr("&Kill"), tr("&Close gracefully"), tr("Leave running"),
+			0,      // Enter == button 0
+	 		2 ) )   // Escape == button 2
 	{
 		case 0:
 		{
@@ -8417,6 +8436,11 @@ void US_Hydrodyn::closeAttnt(QProcess *proc, QString message)
 			break;
 		}
 	}
+}
+
+void US_Hydrodyn::set_calcAutoHydro()
+{
+	calcAutoHydro = cb_calcAutoHydro->isChecked();
 }
 
 void US_Hydrodyn::append_options_log_somo()
