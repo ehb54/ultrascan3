@@ -118,7 +118,7 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
 
 	cb_atom_auto = new QCheckBox(bg_atoms);
 	cb_atom_auto->setText(tr(" Use approximate method to generate bead"));
-	cb_atom_auto->setEnabled(false);
+	cb_atom_auto->setEnabled(true);
 	cb_atom_auto->setMinimumHeight(minHeight1);
 	cb_atom_auto->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 	cb_atom_auto->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));

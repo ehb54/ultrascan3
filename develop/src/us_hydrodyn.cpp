@@ -698,6 +698,11 @@ void US_Hydrodyn::build_molecule_maps(PDB_model *model)
    // molecules_idx_seq is a vector of the idx's
    molecules_idx_seq.clear();
    molecules_residue_errors.clear();
+   molecules_residue_missing_counts.clear();
+   molecules_residue_min_missing.clear();
+   molecules_residue_missing_atoms.clear();
+   molecules_residue_missing_atoms_beads.clear();
+   molecules_residue_missing_atoms_skip.clear();
 
    // pass 1 setup molecule basic maps
    for (unsigned int j = 0; j < model->molecule.size(); j++)
@@ -721,9 +726,12 @@ void US_Hydrodyn::build_molecule_maps(PDB_model *model)
       QString resName = molecules_residue_name[idx];
       if (multi_residue_map[resName].size())
       {
+         int minimum_missing = INT_MAX; // find the entry with the minimum # of missing atoms
+         int minimum_missing_pos = 0;   // and its position
          for (unsigned int j = 0; j < multi_residue_map[resName].size(); j++)
          {
             QString error_msg = "";
+            int missing_count = 0;
             // for this residue, clear flags
             for (unsigned int r = 0; 
                  r < residue_list[multi_residue_map[resName][j]].r_atom.size(); 
@@ -755,12 +763,15 @@ void US_Hydrodyn::build_molecule_maps(PDB_model *model)
                }
                if (!found)
                {
+                  missing_count = -1;
                   error_msg += QString("%1coded atom %2. ")
                      .arg(any ? "Duplicate " : "Non-")
                      .arg(molecules_residues_atoms[idx][k]);
                }
             }
             // now check for missing atoms
+            vector < QString > missing_atoms;
+            vector < unsigned int > missing_atoms_beads;
             for (unsigned int r = 0; 
                  r < residue_list[multi_residue_map[resName][j]].r_atom.size(); 
                  r++)
@@ -769,14 +780,42 @@ void US_Hydrodyn::build_molecule_maps(PDB_model *model)
                {
                   error_msg += QString("Missing atom %1. ")
                      .arg(residue_list[multi_residue_map[resName][j]].r_atom[r].name);
+                  if ( missing_count != -1 )
+                  {
+                     missing_atoms.push_back(residue_list[multi_residue_map[resName][j]].r_atom[r].name);
+                     missing_atoms_beads.push_back(residue_list[multi_residue_map[resName][j]].r_atom[r].bead_assignment);
+                     molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
+                                                          .arg(idx)
+                                                          .arg(j)
+                                                          .arg(r)] = true;
+                     missing_count++;
+                  }
                }
             }
             molecules_residue_errors[idx].push_back(error_msg);
+            molecules_residue_missing_counts[idx].push_back(missing_count);
+            molecules_residue_missing_atoms[idx].push_back(missing_atoms);
+            molecules_residue_missing_atoms_beads[idx].push_back(missing_atoms_beads);
+            if ( missing_count >= 0 && missing_count < minimum_missing )
+            {
+               minimum_missing = missing_count;
+               minimum_missing_pos = j;
+            }
          }
-      } 
+         if ( minimum_missing < INT_MAX )
+         {
+            molecules_residue_min_missing[idx] = minimum_missing_pos;
+         } 
+         else
+         {
+            molecules_residue_min_missing[idx] = -1;
+         }
+      }
       else 
       {
          molecules_residue_errors[idx].push_back("Non-coded residue. ");
+         molecules_residue_missing_counts[idx].push_back(-1);
+         molecules_residue_min_missing[idx] = -1;
       }
    }
 
@@ -795,6 +834,20 @@ void US_Hydrodyn::build_molecule_maps(PDB_model *model)
                cout << QString("Molecule idx <%1> resName <%2> match <%3> errors:\n")
                   .arg(idx).arg(resName).arg(j);
                cout << molecules_residue_errors[idx][j] << endl;
+            }
+         }
+         if ( molecules_residue_min_missing[idx] > -1 )
+         {
+            int k = molecules_residue_min_missing[idx];
+            cout << QString("^^^ Minimum missing position <%1> ma.sz %2 mab.sz %3\n")
+               .arg(k)
+               .arg(molecules_residue_missing_atoms[idx][k].size())
+               .arg(molecules_residue_missing_atoms_beads[idx][k].size());
+            for ( unsigned int j = 0; j < molecules_residue_missing_atoms[idx][k].size(); j++ )
+            {
+               cout << QString(".... missing atom %1 bead %2\n")
+                  .arg(molecules_residue_missing_atoms[idx][k][j])
+                  .arg(molecules_residue_missing_atoms_beads[idx][k][j]);
             }
          }
       }
@@ -917,6 +970,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 
                         if (!residue_list[lastResPos].r_atom[l].tmp_flag)
                         {
+                           // missing atoms
                            errors_found++;
                            if (pdb_parse.missing_atoms == 0)
                            {
@@ -1047,7 +1101,15 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      }
                      if (pdb_parse.missing_atoms == 2)
                      {
-                        bead_exceptions[count_idx] = 4;
+                        if ( molecules_residue_min_missing[QString("%1|%2").arg(j).arg(this_atom->resSeq)] == -1 )
+                        {
+                           failure_errors++;
+                           bead_exceptions[count_idx] = 5;
+                        } 
+                        else
+                        {
+                           bead_exceptions[count_idx] = 4;
+                        }
                      }
                   } 
                   else 
@@ -1206,7 +1268,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                   }
                   if (pdb_parse.missing_atoms == 2)
                   {
-                     bead_exceptions[count_idx] = 3;
+                     bead_exceptions[count_idx] = 4;
                   }
                }
                if (!error_shown[count_idx]) 
@@ -1278,6 +1340,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
             bool auto_bb_aa = false;             // are we doing special amino acid handling?
             map < QString, int > aa_main_chain;  // to make sure we have a good main chain
             int current_bead_assignment = 0;
+            bool one_bead = false;               // fall back to one bead for missing atoms
             if (last_residue_type[j] == 0 &&      
                 residue_types[j].size() == 1) 
             {
@@ -1307,7 +1370,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                   }
                   break;
                case 2:
-               case 4: // we need to handle automatic beads for atoms later
+               case 5: // extra or non-coded atom
                   printf("removing molecule %u atom %u from model\n", 
                          j, k);
                   break;
@@ -1469,6 +1532,262 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      tmp_chain.atom.push_back(atom_to_add);
                   }
                   break;
+               case 4: // missing atoms
+                  {
+                     PDB_atom *this_atom = &org_model.molecule[j].atom[k];
+                     QString idx = QString("%1|%2").arg(j).arg(org_model.molecule[j].atom[k].resSeq);
+                     QString new_residue_idx = this_atom->resName;  
+                     int pos = molecules_residue_min_missing[idx];
+                     if ( pos < 0 )
+                     {
+                        cout << QString("Internal error: idx %1 Missing atom error %2 ! < 0!\n")
+                           .arg(idx)
+                           .arg(pos);
+                        exit(-1);
+                     }
+                     cout << QString("ta->resseq %1, pos %2\n").arg(this_atom->resName).arg(pos);
+                     int orgrespos = multi_residue_map[this_atom->resName][pos];
+                     if (this_atom->resSeq != lastResSeq) 
+                     {
+                        // new residue to create with existing atoms, but increased values...
+                        // possibly for a multi-bead residue
+                        one_bead = false;
+                        current_bead_assignment = 0;
+                        lastResSeq = org_model.molecule[j].atom[k].resSeq;
+                        lastResName = org_model.molecule[j].atom[k].resName;
+                        // setup how many atoms are missing from each bead
+                        vector < int > beads_missing_atom_count;
+                        printf("orgrespos %d\n", orgrespos);
+                        beads_missing_atom_count.resize(residue_list[orgrespos].r_bead.size());
+
+                        for ( unsigned int i = 0; i < beads_missing_atom_count.size(); i++ )
+                        {
+                           beads_missing_atom_count[i] = 0;
+                        }
+                        // accumulate missing atom count for each bead
+                        for ( unsigned int i = 0; i < molecules_residue_missing_atoms[idx][pos].size(); i++ )
+                        {
+                           beads_missing_atom_count[molecules_residue_missing_atoms_beads[idx][pos][i]]++;
+                        }
+                        // do any of these leave an empty bead?
+                        // first, we need to know how many atoms are in each bead...
+                        vector < int > atoms_per_bead;
+                        atoms_per_bead.resize(residue_list[orgrespos].r_bead.size());
+                        for ( unsigned int i = 0; i < atoms_per_bead.size(); i++ )
+                        {
+                           atoms_per_bead[i] = 0;
+                        }
+                        for ( unsigned int i = 0; i < residue_list[orgrespos].r_atom.size(); i++ )
+                        {
+                           atoms_per_bead[residue_list[orgrespos].r_atom[i].bead_assignment]++;
+                        }
+                        
+                        for ( unsigned int i = 0; i < beads_missing_atom_count.size(); i++ )
+                        {
+                           if ( atoms_per_bead[i] - beads_missing_atom_count[i] < 1 )
+                           {
+                              // ugh, fall back to one bead!
+                              one_bead = true;
+                              printf("notice: fallback to one bead for missing atom\n");
+                           }
+                        }
+
+                        vector < double > atoms_scale_weight; // multiplier for atoms weight
+                        vector < double > atoms_scale_radius; // multiplier for atoms radii
+                        atoms_scale_weight.resize(residue_list[orgrespos].r_bead.size());
+                        atoms_scale_radius.resize(residue_list[orgrespos].r_bead.size());
+                        if ( one_bead )
+                        {
+                           // sum molecular weight & radii cubed for total bead & bead sans missing
+                           double tot_mw = 0;
+                           double tot_mw_missing = 0;
+                           double tot_radii3 = 0;
+                           double tot_radii3_missing = 0;
+                           for ( unsigned int i = 0; i < residue_list[orgrespos].r_atom.size(); i++ )
+                           {
+                              tot_mw += residue_list[orgrespos].r_atom[i].hybrid.mw;
+                              tot_radii3 += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3.0);
+                              if ( !molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
+                                                                         .arg(idx)
+                                                                         .arg(pos)
+                                                                         .arg(i)] )
+                              {
+                                 tot_mw_missing += residue_list[orgrespos].r_atom[i].hybrid.mw;
+                                 tot_radii3_missing += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3.0);
+                              }
+                           }
+                           atoms_scale_weight[0] = 
+                              tot_mw / tot_mw_missing;
+                           atoms_scale_radius[0] = 
+                              pow(tot_radii3 / tot_radii3_missing, 1.0/3.0);
+                        }
+                        else
+                        {
+                           // sum molecular weight & radii cubed for total bead & bead sans missing
+                           vector < double > tot_mw;
+                           vector < double > tot_mw_missing;
+                           vector < double > tot_radii3;
+                           vector < double > tot_radii3_missing;
+                           for ( unsigned int i = 0; i < beads_missing_atom_count.size(); i++ )
+                           {
+                              tot_mw.push_back(0.0);
+                              tot_mw_missing.push_back(0.0);
+                              tot_radii3.push_back(0.0);
+                              tot_radii3_missing.push_back(0.0);
+                           }
+                           for ( unsigned int i = 0; i < residue_list[orgrespos].r_atom.size(); i++ )
+                           {
+                              tot_mw[residue_list[orgrespos].r_atom[i].bead_assignment]
+                                 += residue_list[orgrespos].r_atom[i].hybrid.mw;
+                              tot_radii3[residue_list[orgrespos].r_atom[i].bead_assignment]
+                                 += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3.0);
+                              if ( !molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
+                                                                         .arg(idx)
+                                                                         .arg(pos)
+                                                                         .arg(i)] )
+                              {
+                                 tot_mw_missing[residue_list[orgrespos].r_atom[i].bead_assignment]
+                                    += residue_list[orgrespos].r_atom[i].hybrid.mw;
+                                 tot_radii3_missing[residue_list[orgrespos].r_atom[i].bead_assignment]
+                                    += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3.0);
+                              }
+                           }
+                           for ( unsigned int i = 0; i < beads_missing_atom_count.size(); i++ )
+                           {
+                              atoms_scale_weight[i] = 
+                                 tot_mw[i] / tot_mw_missing[i];
+                              atoms_scale_radius[i] = 
+                                 pow(tot_radii3[i] / tot_radii3_missing[i], 1.0/3.0);
+                           }
+                        }
+
+                        // create the new residue
+                        new_residues[new_residue_idx]++;
+                        new_residue_name = QString("%1_%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
+#if defined(AUTO_BB_DEBUG)
+                        printf("a1.1 <%s>\n", new_residue_name.ascii());
+#endif
+                        atom_counts[QString("%1|%2|%3")
+                                    .arg(j)
+                                    .arg(new_residue_name)
+                                    .arg(this_atom->resSeq)] = atom_counts[count_idx];
+                        new_residue.comment = QString("Temporary residue %1").arg(new_residue_name);
+                        new_residue.name = new_residue_name;
+                        new_residue.type = residue_list[orgrespos].type;
+                        new_residue.molvol = residue_list[orgrespos].molvol;
+                        new_residue.asa = residue_list[orgrespos].asa;
+                        new_residue.vbar = residue_list[orgrespos].vbar;
+                        new_residue.r_atom.clear();
+                        new_residue.r_bead.clear();
+
+                        // create the beads
+                        if ( one_bead )
+                        {
+                           new_bead.volume = 0;
+                           new_bead.mw = 0;
+                           for ( unsigned int i = 0; i < residue_list[orgrespos].r_bead.size(); i++ )
+                           {
+                              new_bead.volume += residue_list[orgrespos].r_bead[i].volume;
+                              new_bead.mw += residue_list[orgrespos].r_bead[i].mw;
+                           }
+                           new_bead.hydration = (unsigned int)(misc.avg_hydration * atom_counts[count_idx] + .5);
+                           new_bead.color = 10;         // light green
+                           new_bead.placing_method = 0; // cog
+                           new_bead.chain = 1;          // side chain
+                           new_residue.r_bead.push_back(new_bead);
+                           // create the atoms
+                           for ( unsigned int i = 0; i < residue_list[orgrespos].r_atom.size(); i++ )
+                           {
+                              if ( !molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
+                                                                         .arg(idx)
+                                                                         .arg(pos)
+                                                                         .arg(i)] )
+                              {
+                                 new_atom = residue_list[orgrespos].r_atom[i];
+                                 new_atom.hybrid.mw *= atoms_scale_weight[0]; // misc.avg_mass;
+                                 new_atom.hybrid.mw = (int)(new_atom.hybrid.mw * 100 + .5) / 100.0;
+                                 new_atom.hybrid.radius *= atoms_scale_radius[0]; // misc.avg_radius;
+                                 new_atom.hybrid.radius = (int)(new_atom.hybrid.radius * 100 + .5) / 100.0;
+                                 new_atom.bead_assignment = 0; 
+                                 new_atom.positioner = true;
+                                 new_residue.r_atom.push_back(new_atom);
+                              }
+                           }
+                        } 
+                        else
+                        {
+                           for ( unsigned int i = 0; i < residue_list[orgrespos].r_bead.size(); i++ )
+                           {
+                              new_bead = residue_list[orgrespos].r_bead[i];
+                              if ( beads_missing_atom_count[i] )
+                              {
+                                 // only set the beads with missing atoms
+                                 new_bead.color = 10;
+                                 new_bead.placing_method = 0;
+                              }
+                              new_residue.r_bead.push_back(new_bead);
+                           }
+                           for ( unsigned int i = 0; i < residue_list[orgrespos].r_atom.size(); i++ )
+                           {
+                              if ( !molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
+                                                                         .arg(idx)
+                                                                         .arg(pos)
+                                                                         .arg(i)] )
+                              {
+                                 new_atom = residue_list[orgrespos].r_atom[i];
+                                 if ( beads_missing_atom_count[new_atom.bead_assignment] )
+                                 {
+                                    new_atom.hybrid.mw *= atoms_scale_weight[new_atom.bead_assignment]; // misc.avg_mass;
+                                    new_atom.hybrid.mw = (int)(new_atom.hybrid.mw * 100 + .5) / 100.0;
+                                    new_atom.hybrid.radius *= atoms_scale_radius[new_atom.bead_assignment]; // misc.avg_radius;
+                                    new_atom.hybrid.radius = (int)(new_atom.hybrid.radius * 100 + .5) / 100.0;
+                                    new_atom.positioner = true;
+                                 }
+                                 new_residue.r_atom.push_back(new_atom);
+                              }
+                           }
+                        }
+                        multi_residue_map[new_residue.name].push_back(residue_list.size());
+                        residue_list.push_back(new_residue);
+                        lastResSeq = org_model.molecule[j].atom[k].resSeq;
+                        lastResName = org_model.molecule[j].atom[k].resName;
+#if defined(AUTO_BB_DEBUG)
+                        printf("a1.1b <%s>\n", new_residue.name.ascii());
+#endif
+                        model->residue.push_back(residue_list[multi_residue_map[new_residue.name][0]]);
+                     }
+                     else
+                     {
+                        new_residue_name = QString("%1_%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
+#if defined(AUTO_BB_DEBUG)
+                        printf("a1.2 <%s>\n", new_residue_name.ascii());
+#endif
+                        if (new_residue_name != new_residue.name)
+                        {
+                           QMessageBox::message(tr("Internal error:"), 
+                                                tr("Unexpected new residue name inconsistancy (a).\n") +
+                                                QString("\"%1\" != \"%2\"").arg(new_residue_name).arg(new_residue.name));
+                           exit(-1);
+                        }
+                     }
+                     // the new residue should always be the last one, since we just added it
+                     int respos = residue_list.size() - 1;
+                     if (new_residue.name != residue_list[respos].name)
+                     {
+                        QMessageBox::message(tr("Internal error:"), 
+                                             tr("Unexpected new residue name residue_list inconsistancy (a)."));
+                        exit(-1);
+                     }
+                     // ok, now we can push back the modified atom
+                     PDB_atom atom_to_add = org_model.molecule[j].atom[k];
+                     atom_to_add.resName = new_residue.name;
+#if defined(AUTO_BB_DEBUG)
+                     printf("a1.3 <%s>\n", new_residue.name.ascii());
+#endif
+                     tmp_chain.atom.push_back(atom_to_add);
+                  }
+                  break;
+                     
                default:
                   QMessageBox::message(tr("Internal error:"), 
                                        tr("Unhandled bead_exception code."));
@@ -7289,11 +7608,25 @@ void US_Hydrodyn::read_pdb(const QString &filename)
             editor->append("\nResidue sequence from " + project +".pdb model " +
                            QString("%1").arg(model_vector.size() + 1) + ": \n");
             str = "";
-            for (unsigned int m=0; m<temp_model.residue.size(); m++ )
+            // the residue list is wrong if there are unknown residues
+            for ( unsigned int i = 0; i < temp_model.molecule.size(); i++ )
             {
-               str += temp_model.residue[m].name + " ";
+               QString lastResSeq = "";
+               for ( unsigned int j = 0; j < temp_model.molecule[i].atom.size(); j++ )
+               {
+                  if ( temp_model.molecule[i].atom[j].resSeq != lastResSeq )
+                  {
+                     str += temp_model.molecule[i].atom[j].resName + " ";
+                     lastResSeq = temp_model.molecule[i].atom[j].resSeq;
+                  }
+               }
             }
+            // for (unsigned int m=0; m<temp_model.residue.size(); m++ )
+            // {
+            //   str += temp_model.residue[m].name + " ";
+            // }
             editor->append(str);
+            // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
             calc_vbar(&temp_model); // update the calculated vbar for this model
             model_vector.push_back(temp_model); // save the model in the model vector.
             clear_temp_chain(&temp_chain); // we are done with this molecule and can delete it
@@ -7342,12 +7675,26 @@ void US_Hydrodyn::read_pdb(const QString &filename)
       temp_model.molecule.push_back(temp_chain);
       editor->append("\nResidue sequence from " + project +".pdb:\n");
       str = "";
-      for (unsigned int m=0; m<temp_model.residue.size(); m++ )
+      // the residue list is wrong if there are unknown residues
+      for ( unsigned int i = 0; i < temp_model.molecule.size(); i++ )
       {
-         str += temp_model.residue[m].name + " ";
+         QString lastResSeq = "";
+         for ( unsigned int j = 0; j < temp_model.molecule[i].atom.size(); j++ )
+         {
+            if ( temp_model.molecule[i].atom[j].resSeq != lastResSeq )
+            {
+               str += temp_model.molecule[i].atom[j].resName + " ";
+               lastResSeq = temp_model.molecule[i].atom[j].resSeq;
+            }
+         }
       }
+      // for (unsigned int m=0; m<temp_model.residue.size(); m++ )
+      // {
+      //   str += temp_model.residue[m].name + " ";
+      // }
       editor->append(str);
       temp_model.model_id = 1;
+      // calc_vbar is wrong if there unknown residues, fixed later in check_for_missing_atoms()
       calc_vbar(&temp_model); // update the calculated vbar for this model
       model_vector.push_back(temp_model);
       clear_temp_chain(&temp_chain);

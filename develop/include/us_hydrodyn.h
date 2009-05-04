@@ -180,7 +180,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       //                                       1 == ok
       //                                       2 == skip
       //                                       3 == use automatic bead builder for residue
-      //                                       4 == use automatic bead builder for atom
+      //                                       4 == use automatic bead builder for missing atom
+      //                                       5 == not ok, duplicate or non-coded atom
 
       // save_residue_list and save_multi_residue_map contain the results of 'read_residue_file'
       // the automatic bead builder adds temporary residues, so it uses these to reset the values
@@ -197,6 +198,24 @@ class US_EXTERN US_Hydrodyn : public QFrame
       //                                  maps molecule #|resSeq to vector of errors
       //                                  each element in the vector corresponds to
       //                                  the dup_residue_map pos for the residue
+      map < QString, vector < int > >     molecules_residue_missing_counts; 
+      //                                  maps molecule #|resSeq to vector of missing count
+      //                                  if any atoms errors that are "non-missing" i.e.
+      //                                  duplicate or non-coded, then the value is set to -1
+      map < QString, vector < vector < QString > > > molecules_residue_missing_atoms; 
+      //                                  maps molecule #|resSeq to vector of vector of missing atoms
+      //                                  each vector in the vector corresponds to
+      //                                  the dup_residue_map pos for the residue
+      map < QString, vector < vector < unsigned int > > > molecules_residue_missing_atoms_beads; 
+      //                                  maps molecule #|resSeq to vector of vector of missing atoms beads
+      //                                  each vector in the vector corresponds to
+      //                                  the dup_residue_map pos for the residue
+      map < QString, bool >               molecules_residue_missing_atoms_skip;
+      //                                  maps molecule #|resSeq|multiresmappos|atom_no to flag 
+      //                                  if true, the atom should be skipped
+      map < QString, int >                molecules_residue_min_missing; 
+      //                                  maps molecule #|resSeq to pos of entry with minimum missing count
+
       vector <struct PDB_model> model_vector;
       bool bead_model_from_file;
       vector <int> somo_processed;
