@@ -876,7 +876,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
    last_residue_type.resize(model->molecule.size());
 
    build_molecule_maps(model);
-   abb_msgs = "";
+   QString abb_msgs = "";
 
    // keep track of errors shown
    map < QString, bool > error_shown;
@@ -1986,6 +1986,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
             editor->append("\n" + abb_msgs);
             editor->setColor(sav_color);
             editor->setCurrentFont(save_font);
+            last_abb_msgs = "\n\nAutomatic Bead Builder messages:\n" + abb_msgs.replace("ABB: ","  ");
          }
          
          calc_vbar(model);
@@ -6566,6 +6567,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
               );
 
       fprintf(fsomo, options_log.ascii());
+      fprintf(fsomo, last_abb_msgs.ascii());
       fclose(fsomo);
    }
    if (fbeams) {
@@ -7635,6 +7637,7 @@ void US_Hydrodyn::load_pdb()
    if (!filename.isEmpty())
    {
       options_log = "";
+      last_abb_msgs = "";
       bead_model_from_file = false;
       int errors_found = 0;
       lbl_pdb_file->setText( QDir::convertSeparators( filename ) );
