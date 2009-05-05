@@ -1694,6 +1694,28 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                            new_bead.color = 10;         // light green
                            new_bead.placing_method = 0; // cog
                            new_bead.chain = 1;          // side chain
+                           // do we have an AA with a complete PB?
+                           if ( auto_bb_aa &&
+                                !molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
+                                                                      .arg(idx)
+                                                                      .arg(pos)
+                                                                      .arg(0)] &&
+                                !molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
+                                                                      .arg(idx)
+                                                                      .arg(pos)
+                                                                      .arg(1)] &&
+                                !molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
+                                                                      .arg(idx)
+                                                                      .arg(pos)
+                                                                      .arg(2)] &&
+                                !molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
+                                                                      .arg(idx)
+                                                                      .arg(pos)
+                                                                      .arg(3)] )
+                           {
+                              new_bead.chain = 0;      // main chain
+                           }
+
                            new_residue.r_bead.push_back(new_bead);
                            // create the atoms
                            for ( unsigned int i = 0; i < residue_list[orgrespos].r_atom.size(); i++ )
