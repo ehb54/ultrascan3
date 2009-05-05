@@ -215,7 +215,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       //                                  if true, the atom should be skipped
       map < QString, int >                molecules_residue_min_missing; 
       //                                  maps molecule #|resSeq to pos of entry with minimum missing count
-
+      QString abb_msgs; // automatic bead builder message log
       vector <struct PDB_model> model_vector;
       bool bead_model_from_file;
       vector <int> somo_processed;
