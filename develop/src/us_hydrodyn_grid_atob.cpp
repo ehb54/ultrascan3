@@ -9,8 +9,8 @@ static US_Hydrodyn *us_hydrodyn;
 
 #define NR_END 1
 #define FREE_ARG char*
-#define VW_average_radius 1.5	/* Van der Walls average radius equal to 1.5 A */
-#define EXPANSION_COEF 0.2	/*how much bigger LMAX will be with respect to the protein max size! (0.2=20%) */
+#define VW_average_radius 1.5   /* Van der Walls average radius equal to 1.5 A */
+#define EXPANSION_COEF 0.2   /*how much bigger LMAX will be with respect to the protein max size! (0.2=20%) */
 
 // #define DEBUG
 // #define DEBUG_ATOB
@@ -26,17 +26,17 @@ particle_max_size(PDB * pdb)
    for (p = pdb; p; p = p->next)
       for (t = p->next; t; t = t->next)
       {
-	 temp = ((p->x) - (t->x)) * ((p->x) - (t->x));
-	 temp += ((p->y) - (t->y)) * ((p->y) - (t->y));
-	 temp += ((p->z) - (t->z)) * ((p->z) - (t->z));
-	 if (temp > max_size)
-	    max_size = temp;
-	 //	    printf("%f %f %f - %f %f %f\n", 
-	 //   p->x, t->x,
-	 //   p->y, t->y,
-	 //   p->z, t->z);
+         temp = ((p->x) - (t->x)) * ((p->x) - (t->x));
+         temp += ((p->y) - (t->y)) * ((p->y) - (t->y));
+         temp += ((p->z) - (t->z)) * ((p->z) - (t->z));
+         if (temp > max_size)
+            max_size = temp;
+         //       printf("%f %f %f - %f %f %f\n", 
+         //   p->x, t->x,
+         //   p->y, t->y,
+         //   p->z, t->z);
 
-	 // printf("temp %d %f\n", countr++, temp); fflush(stdout);
+         // printf("temp %d %f\n", countr++, temp); fflush(stdout);
       }
 
    return ((float) sqrt(max_size));
@@ -88,7 +88,7 @@ f3tensor(long nrl, long nrh, long ncl, long nch, long ndl, long ndh)
       t[i] = t[i - 1] + ncol;
       t[i][ncl] = t[i - 1][ncl] + ncol * ndep;
       for (j = ncl + 1; j <= nch; j++)
-	 t[i][j] = t[i][j - 1] + ndep;
+         t[i][j] = t[i][j - 1] + ndep;
    }
 
    /* return pointer to array of pointers to rows */
@@ -165,17 +165,17 @@ AtoB(PDB * pdb, long npoints, float dx,
    fflush(stdout);
 #endif
 
-   for (i = 0; i < npoints; i++)	/* clears up r0 and mass */
+   for (i = 0; i < npoints; i++)   /* clears up r0 and mass */
       for (j = 0; j < npoints; j++)
-	 for (k = 0; k < npoints; k++)
-	 {
-	    ro[i][j][k] = 0.0;
-	    mass[i][j][k] = 0.0;
-	    x[i][j][k] = 0.0;
-	    y[i][j][k] = 0.0;
-	    z[i][j][k] = 0.0;
-	    //    w[i][j][k].i=0;
-	 }
+         for (k = 0; k < npoints; k++)
+         {
+            ro[i][j][k] = 0.0;
+            mass[i][j][k] = 0.0;
+            x[i][j][k] = 0.0;
+            y[i][j][k] = 0.0;
+            z[i][j][k] = 0.0;
+            //    w[i][j][k].i=0;
+         }
 
 #if defined(DEBUG)
    puts("in atob 3b");
@@ -194,7 +194,7 @@ AtoB(PDB * pdb, long npoints, float dx,
    puts("in atob 3c");
    fflush(stdout);
 #endif
-   for (p = pdb, pp = prop, n = 0; p; p = p->next, pp = pp->next, n++)	/* over the atoms  */
+   for (p = pdb, pp = prop, n = 0; p; p = p->next, pp = pp->next, n++)   /* over the atoms  */
    {
 #if defined(DEBUG)
       printf("n = %d p = %lx dx = %f\n", (int) n, (long unsigned int) p, dx);
@@ -212,21 +212,21 @@ AtoB(PDB * pdb, long npoints, float dx,
       fflush(stdout);
 #endif
 
-      ro[x_c][y_c][z_c] += pow(pp->rVW, 3);	/* = ctte*electron_density*gaussian */
+      ro[x_c][y_c][z_c] += pow(pp->rVW, 3);   /* = ctte*electron_density*gaussian */
 #if defined(DEBUG)
       puts("in atob 3c_2");
       fflush(stdout);
 #endif
       mass[x_c][y_c][z_c] += (float) pp->mass;
-      if (centre_or_cog == 1)	//calculates centre of mass
+      if (centre_or_cog == 1)   //calculates centre of mass
       {
 #if defined(DEBUG)
-	 puts("in atob 3c_3_cog");
-	 fflush(stdout);
+         puts("in atob 3c_3_cog");
+         fflush(stdout);
 #endif
-	 x[x_c][y_c][z_c] += (float) (p->x) * (pp->mass);
-	 y[x_c][y_c][z_c] += (float) (p->y) * (pp->mass);
-	 z[x_c][y_c][z_c] += (float) (p->z) * (pp->mass);
+         x[x_c][y_c][z_c] += (float) (p->x) * (pp->mass);
+         y[x_c][y_c][z_c] += (float) (p->y) * (pp->mass);
+         z[x_c][y_c][z_c] += (float) (p->z) * (pp->mass);
       }
 #if defined(DEBUG)
       puts("in atob 3c_4");
@@ -246,10 +246,10 @@ AtoB(PDB * pdb, long npoints, float dx,
    fflush(stdout);
 #endif
 
-   for (i = 0; i < npoints; i++)	/* Now the radius of the beads are in r0[][][] */
+   for (i = 0; i < npoints; i++)   /* Now the radius of the beads are in r0[][][] */
       for (j = 0; j < npoints; j++)
-	 for (k = 0; k < npoints; k++)
-	    ro[i][j][k] = pow((double)ro[i][j][k], 0.333333);
+         for (k = 0; k < npoints; k++)
+            ro[i][j][k] = pow((double)ro[i][j][k], 0.333333);
 
 #if defined(DEBUG)
    puts("in atob 4 b");
@@ -258,7 +258,7 @@ AtoB(PDB * pdb, long npoints, float dx,
 
    // writes down results in PDB and PHYSPROP linked lists
 
-   npdb = (PDB *) malloc(sizeof(PDB));	//allocates new pdb structure file
+   npdb = (PDB *) malloc(sizeof(PDB));   //allocates new pdb structure file
    current = npdb;
    prev = npdb;
    nthis = nprop;
@@ -269,78 +269,78 @@ AtoB(PDB * pdb, long npoints, float dx,
    printf("npoints %d\n", (int)npoints); fflush(stdout);
 #endif
 
-   for (i = 0; i < npoints; i++)	/* clears up r0 */
+   for (i = 0; i < npoints; i++)   /* clears up r0 */
    {
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 free_f3tensor(mass, 0, npoints, 0, npoints, 0, npoints);
-	 free_f3tensor(ro, 0, npoints, 0, npoints, 0, npoints);
-	 free_f3tensor(x, 0, npoints, 0, npoints, 0, npoints);
-	 free_f3tensor(y, 0, npoints, 0, npoints, 0, npoints);
-	 free_f3tensor(z, 0, npoints, 0, npoints, 0, npoints);
-	 return npdb;
+         free_f3tensor(mass, 0, npoints, 0, npoints, 0, npoints);
+         free_f3tensor(ro, 0, npoints, 0, npoints, 0, npoints);
+         free_f3tensor(x, 0, npoints, 0, npoints, 0, npoints);
+         free_f3tensor(y, 0, npoints, 0, npoints, 0, npoints);
+         free_f3tensor(z, 0, npoints, 0, npoints, 0, npoints);
+         return npdb;
       }
       for (j = 0; j < npoints; j++)
-	 for (k = 0; k < npoints; k++)
-	 {
-	    if (ro[i][j][k] > 0.000001)
-	    {
-	       natoms2++;
-	       prev = current;
-	       nprev = nthis;
-	       if (centre_or_cog == 1)	//calculates centre of mass for locating the beads
-	       {
-		  current->x = (float) (x[i][j][k] / mass[i][j][k]);
-		  current->y = (float) (y[i][j][k] / mass[i][j][k]);
-		  current->z = (float) (z[i][j][k] / mass[i][j][k]);
+         for (k = 0; k < npoints; k++)
+         {
+            if (ro[i][j][k] > 0.000001)
+            {
+               natoms2++;
+               prev = current;
+               nprev = nthis;
+               if (centre_or_cog == 1)   //calculates centre of mass for locating the beads
+               {
+                  current->x = (float) (x[i][j][k] / mass[i][j][k]);
+                  current->y = (float) (y[i][j][k] / mass[i][j][k]);
+                  current->z = (float) (z[i][j][k] / mass[i][j][k]);
 
-	       }
-	       else	//puts centres of cells
-	       {
-		  current->x = dx * i + (float) (dx * npoints / 2);
-		  current->y = dx * j + (float) (dx * npoints / 2);
-		  current->z = dx * k + (float) (dx * npoints / 2);
-	       }
+               }
+               else   //puts centres of cells
+               {
+                  current->x = dx * i + (float) (dx * npoints / 2);
+                  current->y = dx * j + (float) (dx * npoints / 2);
+                  current->z = dx * k + (float) (dx * npoints / 2);
+               }
 
-	       current->atnum = natoms2;
-	       current->bval = 1;
-	       current->resnum = (int) (natoms2);
-	       strcpy(current->insert, " ");
-	       strcpy(current->junk, "ATOM");
-	       strcpy(current->resnam, resnam);
-	       strcpy(current->atnam, atnam);
-	       strcpy(current->chain, "A");
-	       current->occ = 1.0;
-	       //printf("#%d: x=%f , y=%f, z=%f\n",i,current->x,current->y,current->z);
-	       //fprintf(stderr,"\n >>>>> set bead radius = %d !!! >>> \n",set_bead_radius);
-	       //assigns radius, mass and colour
-	       if (centre_or_cog == 1 || set_bead_radius == 0)
-		  nthis->rVW = (float) ro[i][j][k];	/*Van der Walls radii */
-	       else
-	       {
-		  if (ro[i][j][k] <= (float) (dx / 2))	//if coord centre of cell, it puts a maximum radius
-		     nthis->rVW = (float) ro[i][j][k];	//equal to half the cell's diameter
-		  else
-		  {
-		     nthis->rVW = (float) (dx / 2);
-		     fprintf(stderr, "\n >>>>> changing radius of bead %d!!! >>> \n", (int) natoms2);
-		  }
-	       }
+               current->atnum = natoms2;
+               current->bval = 1;
+               current->resnum = (int) (natoms2);
+               strcpy(current->insert, " ");
+               strcpy(current->junk, "ATOM");
+               strcpy(current->resnam, resnam);
+               strcpy(current->atnam, atnam);
+               strcpy(current->chain, "A");
+               current->occ = 1.0;
+               //printf("#%d: x=%f , y=%f, z=%f\n",i,current->x,current->y,current->z);
+               //fprintf(stderr,"\n >>>>> set bead radius = %d !!! >>> \n",set_bead_radius);
+               //assigns radius, mass and colour
+               if (centre_or_cog == 1 || set_bead_radius == 0)
+                  nthis->rVW = (float) ro[i][j][k];   /*Van der Walls radii */
+               else
+               {
+                  if (ro[i][j][k] <= (float) (dx / 2))   //if coord centre of cell, it puts a maximum radius
+                     nthis->rVW = (float) ro[i][j][k];   //equal to half the cell's diameter
+                  else
+                  {
+                     nthis->rVW = (float) (dx / 2);
+                     fprintf(stderr, "\n >>>>> changing radius of bead %d!!! >>> \n", (int) natoms2);
+                  }
+               }
 
-	       nthis->mass = (float) mass[i][j][k];	/* atomic mass */
-	       nthis->f = (float) 6;	/* assigns electron density. */
-	       temp = (PDB *) malloc(sizeof(PDB));
-	       ntemp = (PHYSPROP *) malloc(sizeof(PHYSPROP));
+               nthis->mass = (float) mass[i][j][k];   /* atomic mass */
+               nthis->f = (float) 6;   /* assigns electron density. */
+               temp = (PDB *) malloc(sizeof(PDB));
+               ntemp = (PHYSPROP *) malloc(sizeof(PHYSPROP));
 
-	       current->next = temp;
-	       current = temp;
-	       nthis->next = ntemp;
+               current->next = temp;
+               current = temp;
+               nthis->next = ntemp;
 
-	       nthis = ntemp;
+               nthis = ntemp;
 
-	    }
-	 }
+            }
+         }
    }
    prev->next = NULL;
    nprev->next = NULL;
@@ -351,12 +351,12 @@ AtoB(PDB * pdb, long npoints, float dx,
    printf("\nNumber of atoms in AtoB model at dx=%.2f A: %d\n", dx, (int) natoms2);
 #endif
    /*    for(i=0,p=npdb,pp=nprop;p;p=p->next,pp=pp->next,i++)
-	 {
-	 //fprintf(fptr,"%f\t%f\t%f\n",p->x,p->y,p->z); //writes output file
-	 //fprintf(rmc,"%f\t%.0f\t%.0f\n",pp->rVW,pp->mass,pp->f);// writes RMC file
+         {
+         //fprintf(fptr,"%f\t%f\t%f\n",p->x,p->y,p->z); //writes output file
+         //fprintf(rmc,"%f\t%.0f\t%.0f\n",pp->rVW,pp->mass,pp->f);// writes RMC file
 
-	 //printf("%d:%f\t%.0f\t%.0f\n",i,pp->rVW,pp->mass,pp->f);
-	 }
+         //printf("%d:%f\t%.0f\t%.0f\n",i,pp->rVW,pp->mass,pp->f);
+         }
    */
 
    *natoms3 = natoms2;
@@ -374,22 +374,22 @@ AtoB(PDB * pdb, long npoints, float dx,
 
    for (n = 1, i = 0; i < npoints; i++)
       for (j = 0; j < npoints; j++)
-	 for (k = 0; k < npoints; k++)
-	 {
-	    if (mass[i][j][k] > 0)	//gets only if there is a bead
-	    {
-	       fprintf(fptr, "\n\nBead %d: ", n);
+         for (k = 0; k < npoints; k++)
+         {
+            if (mass[i][j][k] > 0)   //gets only if there is a bead
+            {
+               fprintf(fptr, "\n\nBead %d: ", n);
 
-	       for (p = pdb, nn = 0; p; p = p->next, nn++)	// goes over all atoms
-		  if (((int) ((p->x) / dx) + (int) (npoints / 2)) == i)
-		     if (((int) ((p->y) / dx) + (int) (npoints / 2)) == j)
-			if (((int) ((p->z) / dx) + (int) (npoints / 2)) == k)
-			{
-			   fprintf(fptr, "%d-", nn);
-			}
-	       n++;
-	    }
-	 }
+               for (p = pdb, nn = 0; p; p = p->next, nn++)   // goes over all atoms
+                  if (((int) ((p->x) / dx) + (int) (npoints / 2)) == i)
+                     if (((int) ((p->y) / dx) + (int) (npoints / 2)) == j)
+                        if (((int) ((p->z) / dx) + (int) (npoints / 2)) == k)
+                        {
+                           fprintf(fptr, "%d-", nn);
+                        }
+               n++;
+            }
+         }
 
    fclose(fptr);
 
@@ -408,10 +408,10 @@ AtoB(PDB * pdb, long npoints, float dx,
 }
 
 vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
-					  grid_options * use_grid_options, 
-					  QProgressBar * use_progress, 
-					  QTextEdit * use_editor,
-					  US_Hydrodyn * use_us_hydrodyn)
+                                          grid_options * use_grid_options, 
+                                          QProgressBar * use_progress, 
+                                          QTextEdit * use_editor,
+                                          US_Hydrodyn * use_us_hydrodyn)
 {
    // do our stuff
    
@@ -437,68 +437,68 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       if ((*bead_model)[i].active)
       {
 #if defined(DEBUG)
-	 puts("grid_atob 1 a"); fflush(stdout);
+         puts("grid_atob 1 a"); fflush(stdout);
 #endif
-	 PDB tmp_pdb;
+         PDB tmp_pdb;
 
-	 tmp_pdb.x = (*bead_model)[i].bead_coordinate.axis[0];
-	 tmp_pdb.y = (*bead_model)[i].bead_coordinate.axis[1];
-	 tmp_pdb.z = (*bead_model)[i].bead_coordinate.axis[2];
+         tmp_pdb.x = (*bead_model)[i].bead_coordinate.axis[0];
+         tmp_pdb.y = (*bead_model)[i].bead_coordinate.axis[1];
+         tmp_pdb.z = (*bead_model)[i].bead_coordinate.axis[2];
 
-	 tmp_pdb.occ = (*bead_model)[i].occupancy;	// ?emre
-	 tmp_pdb.bval = 1;
+         tmp_pdb.occ = (*bead_model)[i].occupancy;   // ?emre
+         tmp_pdb.bval = 1;
 
-	 tmp_pdb.next = (PDB *) 0;
+         tmp_pdb.next = (PDB *) 0;
 
-	 tmp_pdb.atnum = (*bead_model)[i].serial;
-	 tmp_pdb.resnum = 1; // (*bead_model)[i].resSeq;
+         tmp_pdb.atnum = (*bead_model)[i].serial;
+         tmp_pdb.resnum = 1; // (*bead_model)[i].resSeq;
 
-	 strcpy(tmp_pdb.junk, "ATOM");
+         strcpy(tmp_pdb.junk, "ATOM");
 #if defined(DEBUG)
-	 puts("grid_atob 1 b"); fflush(stdout);
+         puts("grid_atob 1 b"); fflush(stdout);
 #endif
-	 strncpy(tmp_pdb.atnam, (*bead_model)[i].name.ascii(), 7);
-	 tmp_pdb.atnam[7] = 0;
+         strncpy(tmp_pdb.atnam, (*bead_model)[i].name.ascii(), 7);
+         tmp_pdb.atnam[7] = 0;
 
-	 strncpy(tmp_pdb.resnam, (*bead_model)[i].resName.ascii(), 7);
-	 tmp_pdb.resnam[7] = 0;
+         strncpy(tmp_pdb.resnam, (*bead_model)[i].resName.ascii(), 7);
+         tmp_pdb.resnam[7] = 0;
 
-	 strncpy(tmp_pdb.insert, (*bead_model)[i].iCode.ascii(), 7);
-	 tmp_pdb.insert[7] = 0;
+         strncpy(tmp_pdb.insert, (*bead_model)[i].iCode.ascii(), 7);
+         tmp_pdb.insert[7] = 0;
 
-	 strncpy(tmp_pdb.chain, (*bead_model)[i].chainID.ascii(), 7);
-	 tmp_pdb.chain[7] = 0;
-	 pdb.push_back(tmp_pdb);
+         strncpy(tmp_pdb.chain, (*bead_model)[i].chainID.ascii(), 7);
+         tmp_pdb.chain[7] = 0;
+         pdb.push_back(tmp_pdb);
 
-	 PHYSPROP tmp_prop;
+         PHYSPROP tmp_prop;
 
-	 tmp_prop.f = (*bead_model)[i].bead_color;
-	 tmp_prop.rVW = (*bead_model)[i].bead_computed_radius;
-	 tmp_prop.mass = (*bead_model)[i].bead_mw;
+         tmp_prop.f = (*bead_model)[i].bead_color;
+         tmp_prop.rVW = (*bead_model)[i].bead_computed_radius;
+         tmp_prop.mass = (*bead_model)[i].bead_mw;
 
-	 tmp_prop.next = (PHYSPROP *) 0;
+         tmp_prop.next = (PHYSPROP *) 0;
 
-	 prop.push_back(tmp_prop);
+         prop.push_back(tmp_prop);
 #if defined(DEBUG)
-	 puts("grid_atob 1 g"); fflush(stdout);
+         puts("grid_atob 1 g"); fflush(stdout);
 #endif
-	 if (max_radius < tmp_prop.rVW) {
-	    max_radius = tmp_prop.rVW;
-	 }
+         if (max_radius < tmp_prop.rVW) {
+            max_radius = tmp_prop.rVW;
+         }
 #if defined(DEBUG_ATOB)
-	 printf(
-		"%f %f %f %f %f %d %d %f %f %f\n"
-		,tmp_pdb.x
-		,tmp_pdb.y
-		,tmp_pdb.z
-		,tmp_pdb.occ
-		,tmp_pdb.bval
-		,tmp_pdb.atnum
-		,tmp_pdb.resnum
-		,tmp_prop.f
-		,tmp_prop.rVW
-		,tmp_prop.mass
-		);
+         printf(
+                "%f %f %f %f %f %d %d %f %f %f\n"
+                ,tmp_pdb.x
+                ,tmp_pdb.y
+                ,tmp_pdb.z
+                ,tmp_pdb.occ
+                ,tmp_pdb.bval
+                ,tmp_pdb.atnum
+                ,tmp_pdb.resnum
+                ,tmp_prop.f
+                ,tmp_prop.rVW
+                ,tmp_prop.mass
+                );
 #endif
 
       }
@@ -558,12 +558,12 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    long natoms3;
 #if defined(DEBUG_ATOB)
    printf("npoints %d\n"
-	  "cube side %f\n"
-	  "max radius %f\n"
-	  ,(int)npoints
-	  ,(float) use_grid_options->cube_side
-	  ,max_radius
-	  );
+          "cube side %f\n"
+          "max radius %f\n"
+          ,(int)npoints
+          ,(float) use_grid_options->cube_side
+          ,max_radius
+          );
 #endif
 
    qApp->processEvents();
@@ -574,16 +574,16 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    }
 
    PDB *result_pdb = AtoB((PDB *) & pdb[0],
-			  2 * npoints,
-			  (float) use_grid_options->cube_side,
-			  (PHYSPROP *) & prop[0],
-			  (PHYSPROP *) & nprop[0],
-			  &natoms3,
-			  use_grid_options->center ? 0 : 1,
-			  "tmp_atob",
-			  use_grid_options->tangency ? 1 : 0,
-			  "PB",
-			  "RES");
+                          2 * npoints,
+                          (float) use_grid_options->cube_side,
+                          (PHYSPROP *) & prop[0],
+                          (PHYSPROP *) & nprop[0],
+                          &natoms3,
+                          use_grid_options->center ? 0 : 1,
+                          "tmp_atob",
+                          use_grid_options->tangency ? 1 : 0,
+                          "PB",
+                          "RES");
 #if defined(DEBUG)
    puts("grid_atob 6");
    fflush(stdout);
@@ -620,6 +620,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       tmp_atom.iCode = QString(this_pdb->insert);
       tmp_atom.chainID = QString(this_pdb->chain);
       tmp_atom.chain = 1;
+      tmp_atom.active = 1;
       result_bead_model.push_back(tmp_atom);
    }
 #if defined(DEBUG)
