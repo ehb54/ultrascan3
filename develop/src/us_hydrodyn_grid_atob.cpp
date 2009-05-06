@@ -217,7 +217,7 @@ AtoB(PDB * pdb, long npoints, float dx,
       puts("in atob 3c_2");
       fflush(stdout);
 #endif
-      mass[x_c][y_c][z_c] += (int) pp->mass;
+      mass[x_c][y_c][z_c] += (float) pp->mass;
       if (centre_or_cog == 1)	//calculates centre of mass
       {
 #if defined(DEBUG)

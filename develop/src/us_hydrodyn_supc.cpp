@@ -1045,14 +1045,21 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    {
       active_model = k;
 
-      editor->append(QString("\nProcessing model %1 bead count %2 vbar %3%4\n")
+      QColor save_color = editor->color();
+      editor->setColor("dark blue");
+      editor->append(QString("\nProcessing model %1 bead count %2 vbar %3%4%5%6\n")
 		     .arg(k+1)
 		     .arg(bead_count[k])
 		     .arg(us_hydrodyn->misc.compute_vbar ?
 			  (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
 			  us_hydrodyn->misc.vbar)
 		     .arg(us_hydrodyn->misc.compute_vbar ? "" : " (User Entered)")
+                     .arg(hydro->mass_correction ? 
+                          QString(" MW %1 (User Entered)").arg(hydro->mass) : "")
+                     .arg(hydro->volume_correction ? 
+                          QString(" Volume %1 (User Entered)").arg(hydro->volume) : "")
 		     );
+      editor->setColor(save_color);
 
       supc_free_alloced_2();
 

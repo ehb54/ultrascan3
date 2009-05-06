@@ -1977,14 +1977,14 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
          } // molecules
 
          {
-            QColor sav_color = editor->color();
+            QColor save_color = editor->color();
             QFont save_font = editor->currentFont();
             QFont new_font = save_font;
             new_font.setStretch(70);
             editor->setCurrentFont(new_font);
             editor->setColor("blue");
             editor->append("\n" + abb_msgs);
-            editor->setColor(sav_color);
+            editor->setColor(save_color);
             editor->setCurrentFont(save_font);
             last_abb_msgs = "\n\nAutomatic Bead Builder messages:\n" + abb_msgs.replace("ABB: ","  ");
          }
@@ -2045,10 +2045,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
       {
          str += QString(" MW = %1").arg(hydro.mass);
       }
-      QColor sav_color = editor->color();
+      QColor save_color = editor->color();
       editor->setColor("red");
       editor->append(str + "\n");
-      editor->setColor(sav_color);
+      editor->setColor(save_color);
    }
    return 0;
 }
@@ -7792,11 +7792,15 @@ void US_Hydrodyn::read_pdb(const QString &filename)
       while (!ts.atEnd())
       {
          str1 = ts.readLine();
-         if (str1.left(6) == "HEADER")
+         if ( str1.left(6) == "HEADER" ||
+              str1.left(5) == "TITLE" )
          {
             QString tmp_str = str1.mid(10,62);
             tmp_str.replace(QRegExp("\\s+")," ");
-            editor->append(QString("Reading pdb: %1\n").arg(tmp_str));
+            QColor save_color = editor->color();
+            editor->setColor("dark green");
+            editor->append(QString("PDB %1: %2").arg(str1.left(6)).arg(tmp_str));
+            editor->setColor(save_color);
          }
          if (str1.left(5) == "MODEL") // we have a new model in a multi-model file
          {
