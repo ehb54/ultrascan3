@@ -170,10 +170,12 @@ SOURCES += \
   src/us_hydrodyn_asa.cpp \
   src/us_hydrodyn_asab1.cpp \
   src/us_hydrodyn_bead_output.cpp \
+  src/us_hydrodyn_core.cpp \
   src/us_hydrodyn_grid.cpp \
   src/us_hydrodyn_grid_atob.cpp \
   src/us_hydrodyn_hydro.cpp \
   src/us_hydrodyn_misc.cpp \
+  src/us_hydrodyn_other.cpp \
   src/us_hydrodyn_overlap.cpp \
   src/us_hydrodyn_overlap_reduction.cpp \
   src/us_hydrodyn_pat.cpp \

@@ -58,7 +58,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       ~US_Hydrodyn();
       int get_color(PDB_atom *);
       struct misc_options misc;
+      struct misc_options default_misc;
       double overlap_tolerance;
+      double default_overlap_tolerance;
       bool stopFlag, calcAutoHydro;
 
    private:
@@ -85,12 +87,18 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString residue_filename, bead_model_file;
       struct residue current_residue;
       struct asa_options asa;
+      struct asa_options default_asa;
       struct pdb_visualization pdb_vis;
+      struct pdb_visualization default_pdb_vis;
       struct pdb_parsing pdb_parse;
+      struct pdb_parsing default_pdb_parse;
       struct hydro_options hydro;
+      struct hydro_options default_hydro;
       struct grid_options grid;
+      struct grid_options default_grid;
       struct hydro_results results;
       struct bead_output_options bead_output;
+      struct bead_output_options default_bead_output;
       struct residue new_residue;
       struct atom new_atom;
       struct bead new_bead;
@@ -98,6 +106,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct overlap_reduction mainchain_overlap;
       struct overlap_reduction buried_overlap;
       struct overlap_reduction grid_overlap;
+      struct overlap_reduction default_sidechain_overlap;
+      struct overlap_reduction default_mainchain_overlap;
+      struct overlap_reduction default_buried_overlap;
+      struct overlap_reduction default_grid_overlap;
       QString project;   // name of the current project - derived from the prefix of the pdb filename
       QString bead_model_prefix;
       QString somo_dir;
@@ -268,10 +280,12 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void view_file(const QString &); // call editor to view a file
       void bead_check(); // recheck beads
       void read_config(const QString &);
+      void read_config(QFile &);
       void load_config();
       void write_config();
       void write_config(const QString &);
       void reset();
+      void set_default();
       void visualize();
       void update_bead_model_file(const QString &);
       void update_bead_model_prefix(const QString &);
@@ -289,7 +303,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void update_vbar(); // update the results.vbar everytime something changes the vbar in options or calculation
       void append_options_log_somo(); // append somo options to options_log 
       void append_options_log_atob(); // append atob options to options_log 
-
+      QString default_differences_load_pdb();
+      QString default_differences_somo();
+      QString default_differences_grid();
+      QString default_differences_hydro();
       // editor functions:
       void save();
       void print();
