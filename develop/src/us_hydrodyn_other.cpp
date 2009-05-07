@@ -1283,10 +1283,8 @@ void US_Hydrodyn::set_default()
    default_hydro = hydro;
    default_pdb_vis = pdb_vis;
    default_pdb_parse = pdb_parse;
+   default_grid = grid;
 }
-
-
-
 
 void US_Hydrodyn::view_file(const QString &filename)
 {
@@ -1298,8 +1296,6 @@ void US_Hydrodyn::view_file(const QString &filename)
    edit->load(filename);
    edit->show();
 }
-
-
 
 void US_Hydrodyn::closeEvent(QCloseEvent *e)
 {
@@ -2276,6 +2272,32 @@ QString US_Hydrodyn::default_differences_grid()
    if ( grid_overlap.remove_hierarch_percent != default_grid_overlap.remove_hierarch_percent )
    {
       str += QString(base + sub + "Hierarchical Overlap Reduction Step Size %: %1\n").arg(grid_overlap.remove_hierarch_percent);
+   }
+
+   base = "Grid Functions (AtoB) -> ";
+   if ( grid.center != default_grid.center )
+   {
+      str += QString(base +  "Computations Relative to: Center of %1\n")
+         .arg(grid.center ? "Cublet" : "Mass");
+   }
+   if ( grid.cube_side != default_grid.cube_side )
+   {
+      str += QString(base + "Cube Side (Angstrom): %1\n").arg(grid.cube_side);
+   }
+   if ( grid.cubic != default_grid.cubic )
+   {
+      str += QString(base + "Apply Cubic Grid: %1\n")
+         .arg(grid.cubic ? "On" : "Off");
+   }
+   if ( grid.hydrate != default_grid.hydrate )
+   {
+      str += QString(base + "Hydrate the Original Model: %1\n")
+         .arg(grid.hydrate ? "On" : "Off");
+   }
+   if ( grid.tangency != default_grid.tangency )
+   {
+      str += QString(base + "Expand Beads to Tangency: %1\n")
+         .arg(grid.tangency ? "On" : "Off");
    }
    return str;
 }

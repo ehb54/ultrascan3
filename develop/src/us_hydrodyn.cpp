@@ -693,6 +693,7 @@ void US_Hydrodyn::reset()
    hydro = default_hydro;
    pdb_vis = default_pdb_vis;
    pdb_parse = default_pdb_parse;
+   grid = default_grid;
    clear_display();
 }
 
