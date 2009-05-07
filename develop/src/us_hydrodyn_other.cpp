@@ -2283,5 +2283,104 @@ QString US_Hydrodyn::default_differences_grid()
 QString US_Hydrodyn::default_differences_hydro()
 {
    QString str = "";
+   QString base = "SOMO Options -> Hydrodynamic Calculations -> ";
+   if ( hydro.unit != default_hydro.unit )
+   {
+      str += QString(base + "Model units (-10 = Angstrom, -9 = nanometer): %1\n").arg(hydro.unit);
+   }
+   if ( hydro.reference_system != default_hydro.reference_system )
+   {
+      str += QString(base + "Computations Relative to: %1\n")
+         .arg(hydro.reference_system ? "Cartesian Origin" : "Diffusion Center");
+   }
+   if ( hydro.boundary_cond != default_hydro.boundary_cond )
+   {
+      str += QString(base + "Boundary Conditions: %1\n")
+         .arg(hydro.boundary_cond ? "Slip" : "Stick");
+   }
+   if ( hydro.mass_correction != default_hydro.mass_correction )
+   {
+      str += QString(base + "Total Mass of Model: %1\n")
+         .arg(hydro.mass_correction ? "Manual" : "Automatic");
+   }
+   if ( hydro.mass != default_hydro.mass )
+   {
+      str += QString(base + "Entered Mass: %1\n").arg(hydro.mass);
+   }
+   if ( hydro.volume_correction != default_hydro.volume_correction )
+   {
+      str += QString(base + "Total Volume of Model: %1\n")
+         .arg(hydro.volume_correction ? "Manual" : "Automatic");
+   }
+   if ( hydro.volume != default_hydro.volume )
+   {
+      str += QString(base + "Entered Volume: %1\n").arg(hydro.volume);
+   }
+   if ( hydro.bead_inclusion != default_hydro.bead_inclusion )
+   {
+      str += QString(base + "Inclusion of Buried Beads in Hydrodynamic Calculations: %1\n")
+         .arg(hydro.bead_inclusion ? "Include" : "Exclude");
+   }
+   if ( hydro.rotational != default_hydro.rotational )
+   {
+      str += QString(base + "Include Buried Beads in Volume Correction, Rotational Diffusion: %1\n")
+         .arg(hydro.rotational ? "Exclude" : "Include");
+   }
+   if ( hydro.viscosity != default_hydro.viscosity )
+   {
+      str += QString(base + "Include Buried Beads in Volume Correction, Intrinsic Viscosity: %1\n")
+         .arg(hydro.viscosity ? "Exclude" : "Include");
+   }
+   if ( hydro.overlap_cutoff != default_hydro.overlap_cutoff )
+   {
+      str += QString(base + "Overlap cut-off: %1\n")
+         .arg(hydro.overlap_cutoff ? "Manual" : "From Bead Model");
+   }
+   if ( hydro.overlap != default_hydro.overlap )
+   {
+      str += QString(base + "Entered verlap cutoff%1\n").arg(hydro.overlap);
+   }
+   return str;
+}
+
+QString US_Hydrodyn::default_differences_misc()
+{
+   QString str = "";
+   QString base = "SOMO Options -> Miscellaneous Options -> ";
+
+   if ( misc.compute_vbar != default_misc.compute_vbar )
+   {
+      str += QString(base + "Calculate vbar: %1\n")
+         .arg(misc.compute_vbar ? "On" : "Off");
+   }
+   if ( misc.vbar != default_misc.vbar )
+   {
+      str += QString(base + "Entered vbar value: %1\n").arg(misc.vbar);
+   }
+   if ( misc.hydrovol != default_misc.hydrovol )
+   {
+      str += QString(base + "Hydration Water Vol. (A^3): %1\n").arg(misc.hydrovol);
+   }
+   QString sub = " Automatic Bead Builder -> Average ";
+   if ( misc.avg_radius != default_misc.avg_radius )
+   {
+      str += QString(base + sub + "atomic radius (A): %1\n").arg(misc.avg_radius);
+   }
+   if ( misc.avg_mass != default_misc.avg_mass )
+   {
+      str += QString(base + sub + "atomic mass (Da): %1\n").arg(misc.avg_mass);
+   }
+   if ( misc.avg_hydration != default_misc.avg_hydration )
+   {
+      str += QString(base + sub + "atomic hydration: %1\n").arg(misc.avg_hydration);
+   }
+   if ( misc.avg_volume != default_misc.avg_volume )
+   {
+      str += QString(base + sub + "bead/atom volume (A^3): %1\n").arg(misc.avg_volume);
+   }
+   if ( misc.avg_vbar != default_misc.avg_vbar )
+   {
+      str += QString(base + sub + "Residue vbar: %1\n").arg(misc.avg_vbar);
+   }
    return str;
 }

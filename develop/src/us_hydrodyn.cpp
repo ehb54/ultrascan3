@@ -796,7 +796,7 @@ void US_Hydrodyn::load_pdb()
       lbl_pdb_file->setText( QDir::convertSeparators( filename ) );
       editor->setText("\n\n");
       {
-         QString str = default_differences_load_pdb();
+         QString str = default_differences_misc() + default_differences_load_pdb();
          if ( str != "" )
          {
             QColor save_color = editor->color();
@@ -997,7 +997,7 @@ int US_Hydrodyn::calc_somo()
    append_options_log_somo();
    editor->setText("\n");
    {
-      QString str = default_differences_somo();
+      QString str = default_differences_misc() + default_differences_somo();
       if ( str != "" )
       {
          QColor save_color = editor->color();
@@ -1117,7 +1117,7 @@ int US_Hydrodyn::calc_grid()
    pb_stop_calc->setEnabled(true);
    append_options_log_atob();
    {
-      QString str = default_differences_grid();
+      QString str = default_differences_misc() + default_differences_grid();
       if ( str != "" )
       {
          QColor save_color = editor->color();
@@ -1481,7 +1481,7 @@ void US_Hydrodyn::calc_hydro()
    pb_calc_hydro->setEnabled(false);
    puts("calc hydro (supc)");
    {
-      QString str = default_differences_hydro();
+      QString str = default_differences_misc() + default_differences_hydro();
       if ( str != "" )
       {
          QColor save_color = editor->color();

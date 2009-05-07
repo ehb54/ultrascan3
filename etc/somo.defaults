@@ -1,0 +1,82 @@
+SOMO Config file - computer generated, please do not edit...
+1		# Remove side chain overlaps flag
+1		# Fuse beads flag
+70		# Bead fusing threshold (%)
+1		# Remove overlaps hierarchical flag
+1		# Percent hierarchical step
+0		# Remove overlaps synchronously flag
+1		# Percent synchronously step
+1		# Outward translation flag
+1		# flag for showing outward translation widget
+1		# Remove mainchain overlaps flag
+1		# Fuse beads flag
+70		# Bead fusing threshold (%)
+1		# Remove overlaps hierarchical flag
+1		# Percent hierarchical step
+0		# Remove overlaps synchronously flag
+1		# percent synchronously step
+0		# Outward translation flag
+0		# flag for showing outward translation widget
+1		# Remove buried beads overlaps flag
+0		# Fuse beads flag
+0		# Bead fusing threshold (%)
+1		# Remove overlaps hierarchical flag
+1		# Percent hierarchical step
+0		# Remove overlaps synchronously flag
+1		# Percent synchronously step
+0		# Outward translation flag
+0		# flag for showing outward translation widget
+1		# Remove grid bead overlaps flag
+0		# Fuse beads flag
+0		# Bead fusing threshold (%)
+1		# Remove overlaps hierarchical flag
+1		# Percent hierarchical step
+0		# Remove overlaps synchronously flag
+1		# Percent synchronously step
+0		# Outward translation flag
+0		# flag for showing outward translation widget
+0.001		# bead overlap tolerance
+1		# flag for selecting output format
+0		# flag for selecting sequence format
+1		# flag for residue correspondence (BEAMS only)
+1.4		# probe radius in angstrom
+1.4		# probe recheck radius in angstrom
+20		# ASA threshold
+50		# ASA threshold percent
+1		# flag for calculation of ASA
+1		# flag for rechecking beads
+1		# flag for ASAB1/Surfracer method
+1		# ASAB1 step size
+1		# flag to apply cubic grid
+0		# flag to hydrate original model (grid)
+0		# flag for positioning bead in center of mass or cubelet (grid)
+0		# flag for expanding beads to tangency (grid)
+10		# Length of cube side (grid)
+24.041		# hydration volume
+1		# flag for selecting vbar calculation
+0.72		# vbar value
+1.68		# Average atomic radius value
+16		# Average atomic mass value
+0.4		# Average atomic hydration value
+15.3		# Average bead/atom volume value
+0.72		# Average vbar value
+-10		# exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
+0		# flag for reference system
+0		# flag for boundary condition: false: stick, true: slip
+0		# flag for volume correction - false: Automatic, true: manual
+0		# volume correction value for manual entry
+0		# flag for mass correction: false: Automatic, true: manual
+0		# mass correction value for manual entry
+0		# flag for bead inclusion in computation - false: exclude hidden beads; true: use all beads
+0		# flag false: include beads in volume correction for rotational diffusion, true: exclude
+0		# flag false: include beads in volume correction for intrinsic viscosity, true: exclude
+0		# flag for overlap cutoff: false: same as in model building, true: enter manually
+0		# overlap value
+0		# PDB visualization option
+/root/ultrascan/etc/rasmol.spt		# RasMol color filename
+1		# skip hydrogen atoms?
+1		# skip water molecules?
+1		# skip alternate conformations?
+0		# find SH groups?
+0		# how to handle missing residues
+0		# how to handle missing atoms

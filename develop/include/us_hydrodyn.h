@@ -307,6 +307,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString default_differences_somo();
       QString default_differences_grid();
       QString default_differences_hydro();
+      QString default_differences_misc();
       // editor functions:
       void save();
       void print();
