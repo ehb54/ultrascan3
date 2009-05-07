@@ -995,6 +995,17 @@ int US_Hydrodyn::calc_somo()
    pb_grid->setEnabled(false);
    options_log = "";
    append_options_log_somo();
+   editor->setText("\n");
+   {
+      QString str = default_differences_somo();
+      if ( str != "" )
+      {
+         QColor save_color = editor->color();
+         editor->setColor("dark red");
+         editor->append("\nNon-default options:\n" + str + "\n");
+         editor->setColor(save_color);
+      } 
+   }
 
    if (stopFlag)
    {
@@ -1025,7 +1036,7 @@ int US_Hydrodyn::calc_somo()
    bool any_models = false;
    somo_processed.resize(lb_model->numRows());
    bead_models.resize(lb_model->numRows());
-   QString msg = QString("\n\n%1 models selected:").arg(project);
+   QString msg = QString("\n%1 models selected:").arg(project);
    for(int i = 0; i < lb_model->numRows(); i++) {
       somo_processed[i] = 0;
       if (lb_model->isSelected(i)) {
@@ -1034,7 +1045,7 @@ int US_Hydrodyn::calc_somo()
       }
    }
    msg += "\n";
-   editor->setText(msg);
+   editor->append(msg);
 
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++)
    {
@@ -1105,6 +1116,16 @@ int US_Hydrodyn::calc_grid()
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    append_options_log_atob();
+   {
+      QString str = default_differences_grid();
+      if ( str != "" )
+      {
+         QColor save_color = editor->color();
+         editor->setColor("dark red");
+         editor->append("Non-default options:\n" + str + "\n");
+         editor->setColor(save_color);
+      }
+   }
    int flag = 0;
    bool any_errors = false;
    bool any_models = false;
@@ -1459,6 +1480,16 @@ void US_Hydrodyn::calc_hydro()
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
    puts("calc hydro (supc)");
+   {
+      QString str = default_differences_hydro();
+      if ( str != "" )
+      {
+         QColor save_color = editor->color();
+         editor->setColor("dark red");
+         editor->append("Non-default options:\n" + str + "\n");
+         editor->setColor(save_color);
+      }
+   }
    editor->append("Begin hydrodynamic calculations\n\n");
    results.s20w_sd = 0.0;
    results.D20w_sd = 0.0;
