@@ -44,13 +44,14 @@ class US_EXTERN US_Hydrodyn_Bead_Output : public QFrame
 	Q_OBJECT
 
 	public:
-		US_Hydrodyn_Bead_Output(struct bead_output_options *, bool *, QWidget *p = 0, const char *name = 0);
+		US_Hydrodyn_Bead_Output(struct bead_output_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
 		~US_Hydrodyn_Bead_Output();
 
 	public:
 		
 		struct bead_output_options *bead_output;
 		bool *bead_output_widget;
+                void *us_hydrodyn;
 		
 		US_Config *USglobal;
 

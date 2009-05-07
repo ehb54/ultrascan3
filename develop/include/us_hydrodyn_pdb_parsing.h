@@ -43,13 +43,14 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public QFrame
 	Q_OBJECT
 
 	public:
-		US_Hydrodyn_PDB_Parsing(struct pdb_parsing *, bool *, QWidget *p = 0, const char *name = 0);
+		US_Hydrodyn_PDB_Parsing(struct pdb_parsing *, bool *, void *, QWidget *p = 0, const char *name = 0);
 		~US_Hydrodyn_PDB_Parsing();
 
 	public:
 		
 		struct pdb_parsing *pdb;
 		bool *pdb_parsing_widget;
+                void *us_hydrodyn;
 		
 		US_Config *USglobal;
 

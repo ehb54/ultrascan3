@@ -41,13 +41,13 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
 	Q_OBJECT
 
 	public:
-		US_Hydrodyn_ASA(struct asa_options *, bool *, QWidget *p = 0, const char *name = 0);
+		US_Hydrodyn_ASA(struct asa_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
 		~US_Hydrodyn_ASA();
 
 	public:
 		struct asa_options *asa;
 		bool *asa_widget;
-
+                void *us_hydrodyn;
 		US_Config *USglobal;
 
 		QLabel *lbl_info;

@@ -2384,3 +2384,21 @@ QString US_Hydrodyn::default_differences_misc()
    }
    return str;
 }
+
+void US_Hydrodyn::display_default_differences()
+{
+   QString str = 
+      default_differences_misc() + 
+      default_differences_load_pdb() +
+      default_differences_somo() +
+      default_differences_hydro() +
+      default_differences_grid();
+   
+   if ( str != "" )
+   {
+      QColor save_color = editor->color();
+      editor->setColor("dark red");
+      editor->append("\nNon-default options:\n" + str + "\n");
+      editor->setColor(save_color);
+   } 
+}

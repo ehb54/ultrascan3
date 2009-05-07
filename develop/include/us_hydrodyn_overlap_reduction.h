@@ -37,11 +37,12 @@ class US_EXTERN US_Hydrodyn_OR : public QFrame
 	Q_OBJECT
 
 	public:
-		US_Hydrodyn_OR(struct overlap_reduction *, QWidget *p = 0, const char *name = 0);
+		US_Hydrodyn_OR(struct overlap_reduction *, void *, QWidget *p = 0, const char *name = 0);
 		~US_Hydrodyn_OR();
 
 	public:
 		struct overlap_reduction *o_r;
+                void *us_hydrodyn;
 
 		US_Config *USglobal;
 

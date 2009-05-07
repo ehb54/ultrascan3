@@ -510,7 +510,7 @@ void US_Hydrodyn::show_overlap()
    else
    {
       overlap_window = new US_Hydrodyn_Overlap(&sidechain_overlap,
-                                               &mainchain_overlap, &buried_overlap, &grid_overlap, &overlap_tolerance, &overlap_widget);
+                                               &mainchain_overlap, &buried_overlap, &grid_overlap, &overlap_tolerance, &overlap_widget, this);
       overlap_window->show();
    }
 }
@@ -531,7 +531,7 @@ void US_Hydrodyn::show_hydro()
    }
    else
    {
-      hydro_window = new US_Hydrodyn_Hydro(&hydro, &hydro_widget);
+      hydro_window = new US_Hydrodyn_Hydro(&hydro, &hydro_widget, this);
       hydro_window->show();
    }
 }
@@ -552,7 +552,7 @@ void US_Hydrodyn::show_misc()
    }
    else
    {
-      misc_window = new US_Hydrodyn_Misc(&misc, &misc_widget);
+      misc_window = new US_Hydrodyn_Misc(&misc, &misc_widget, this);
       connect(misc_window, SIGNAL(vbar_changed()), this, SLOT(update_vbar()));
       misc_window->show();
    }
@@ -575,7 +575,7 @@ void US_Hydrodyn::show_bead_output()
    }
    else
    {
-      bead_output_window = new US_Hydrodyn_Bead_Output(&bead_output, &bead_output_widget);
+      bead_output_window = new US_Hydrodyn_Bead_Output(&bead_output, &bead_output_widget, this);
       bead_output_window->show();
    }
 }
@@ -597,7 +597,7 @@ void US_Hydrodyn::show_grid()
    else
    {
       grid_window = new US_Hydrodyn_Grid(&grid_overlap, &grid,
-                                         &overlap_tolerance, &grid_widget);
+                                         &overlap_tolerance, &grid_widget, this);
       grid_window->show();
    }
 }

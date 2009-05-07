@@ -44,13 +44,14 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
 	Q_OBJECT
 
 	public:
-		US_Hydrodyn_Misc(struct misc_options *, bool *, QWidget *p = 0, const char *name = 0);
+		US_Hydrodyn_Misc(struct misc_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
 		~US_Hydrodyn_Misc();
 
 	public:
 
 		struct misc_options *misc;
 		bool *misc_widget;
+                void *us_hydrodyn;
 
 		US_Config *USglobal;
 		US_Vbar_DB *vbar_dlg;

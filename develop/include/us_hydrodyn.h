@@ -237,6 +237,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
   #pragma warning ( default: 4251 )
 #endif
 
+   public slots:
+      void display_default_differences();
+      void clear_display();
+
    private slots:
       void load_pdb();
       void load_bead_model();
@@ -312,7 +316,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void save();
       void print();
       void update_font();
-      void clear_display();
       void set_calcAutoHydro();
 
    protected slots:

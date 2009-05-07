@@ -36,7 +36,7 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
 
 	public:
 		US_Hydrodyn_Grid(struct overlap_reduction *, struct grid_options *,
-							  double *, bool *, QWidget *p = 0, const char *name = 0);
+							  double *, bool *, void *, QWidget *p = 0, const char *name = 0);
 		~US_Hydrodyn_Grid();
 
 	public:
@@ -55,6 +55,7 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
 		QCheckBox *cb_center_mass;
 		QCheckBox *cb_center_cubelet;
 		QCheckBox *cb_tangency;
+                void *us_hydrodyn;
 		
 		US_Config *USglobal;
 		

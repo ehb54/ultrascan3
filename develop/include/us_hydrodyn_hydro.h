@@ -47,13 +47,14 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
 	Q_OBJECT
 
 	public:
-		US_Hydrodyn_Hydro(struct hydro_options *, bool *, QWidget *p = 0, const char *name = 0);
+		US_Hydrodyn_Hydro(struct hydro_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
 		~US_Hydrodyn_Hydro();
 
 	public:
 
 		struct hydro_options *hydro;
 		bool *hydro_widget;
+                void *us_hydrodyn;
 
 		US_Config *USglobal;
 
