@@ -41,6 +41,8 @@ struct hydro_results
 	double tau;
 	double tau_sd;
 	double vbar;
+	double asa_rg_pos;
+	double asa_rg_neg;
 };
 
 class US_EXTERN US_Hydrodyn_Results : public QFrame

@@ -122,6 +122,8 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    results.rs_sd = 0.0;
    results.rg_sd = 0.0;
    results.tau_sd = 0.0;
+   results.asa_rg_pos = 0.0;
+   results.asa_rg_neg = 0.0;
    rasmol = new QProcess(this);
    rasmol->setWorkingDirectory(
                                QDir(USglobal->config_list.system_dir +
@@ -3871,6 +3873,8 @@ int US_Hydrodyn::compute_asa()
                  "please check the text window");
       return -1;
    }
+   results.asa_rg_pos = 0.0;
+   results.asa_rg_neg = 0.0;
    editor->append("PDB structure ok\n");
    int mppos = 18 + (asa.recheck_beads ? 1 : 0);
    progress->setTotalSteps(mppos);
@@ -6328,16 +6332,16 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
            "\n\n\n"
            "\tTOTAL ASA OF THE MOLECULE    = %.0f\t[A^2] (Threshold used: %.1f A^2]\n"
            "\tTOTAL VOLUME OF THE MOLECULE = %-.2f\t[A^3]\n"
-           //     "\tRADIUS OF GYRATION (+r) =  %-.2f\t[A]\n"
-           //     "\tRADIUS OF GYRATION (-r) =  %-.2f   [A]\n"
+           "\tRADIUS OF GYRATION (+r) =  %-.2f   [A]\n"
+           "\tRADIUS OF GYRATION (-r) =  %-.2f   [A]\n"
            "\tMASS OF THE MOLECULE    =  %.0f   [Da]\n"
            "\tCENTRE OF MASS          =  %.4f %.4f %.4f [A]\n"
            ,
            total_asa,
            asa.threshold,
            total_vol,
-           // 0.0,
-           // 0.0,
+           results.asa_rg_pos,
+           results.asa_rg_neg,
            total_mass,
            last_molecular_cog.axis[0], last_molecular_cog.axis[1], last_molecular_cog.axis[2]
            );
