@@ -384,7 +384,9 @@ void US_Hydrodyn::setupGUI()
    file->insertItem( tr("Save"),  this, SLOT(save()),    ALT+Key_S );
    file->insertItem( tr("Print"), this, SLOT(print()),   ALT+Key_P );
    file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
-   editor->setWordWrap (QTextEdit::WidgetWidth);
+   //   editor->setWordWrap (QTextEdit::WidgetWidth);
+   editor->setWordWrap (QTextEdit::NoWrap);
+   clear_display();
 
    int rows=13, columns = 3, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
@@ -486,7 +488,7 @@ void US_Hydrodyn::show_asa()
    }
    else
    {
-      asa_window = new US_Hydrodyn_ASA(&asa, &asa_widget);
+      asa_window = new US_Hydrodyn_ASA(&asa, &asa_widget, this);
       asa_window->show();
    }
 }
@@ -616,7 +618,7 @@ void US_Hydrodyn::pdb_parsing()
    }
    else
    {
-      pdb_parsing_window = new US_Hydrodyn_PDB_Parsing(&pdb_parse, &pdb_parsing_widget);
+      pdb_parsing_window = new US_Hydrodyn_PDB_Parsing(&pdb_parse, &pdb_parsing_widget, this);
       pdb_parsing_window->show();
    }
 }
@@ -646,6 +648,7 @@ void US_Hydrodyn::load_config()
 {
    QString fname = QFileDialog::getOpenFileName ( somo_dir, "*.config", 0, 0, "Please select a SOMO configuration file...", 0, TRUE );
    read_config(fname);
+   clear_display();
 }
 
 void US_Hydrodyn::write_config()
@@ -690,6 +693,7 @@ void US_Hydrodyn::reset()
    hydro = default_hydro;
    pdb_vis = default_pdb_vis;
    pdb_parse = default_pdb_parse;
+   clear_display();
 }
 
 void US_Hydrodyn::select_residue_file()
@@ -1726,4 +1730,6 @@ void US_Hydrodyn::print()
 void US_Hydrodyn::clear_display()
 {
    editor->clear();
+   editor->setText("\n");
+   display_default_differences();
 }
