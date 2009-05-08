@@ -911,7 +911,9 @@ void US_AddResidue::select_residue_file()
          {
          case QMessageBox::Yes:
             {
-               select_residue_file();
+               read_residue_file(residue_filename);
+               pb_select_atom_file->setEnabled(false);
+               pb_select_residue_file->setEnabled(false);
                break;
             }
          default:
