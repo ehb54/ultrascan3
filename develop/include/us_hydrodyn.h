@@ -62,6 +62,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       double overlap_tolerance;
       double default_overlap_tolerance;
       bool stopFlag, calcAutoHydro;
+      QLabel *lbl_core_progress;
 
    private:
       bool residue_widget;

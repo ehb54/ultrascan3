@@ -386,6 +386,14 @@ void US_Hydrodyn::setupGUI()
    file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
    //   editor->setWordWrap (QTextEdit::WidgetWidth);
    editor->setWordWrap (QTextEdit::NoWrap);
+
+   lbl_core_progress = new QLabel("", this);
+   Q_CHECK_PTR(lbl_core_progress);
+   lbl_core_progress->setAlignment(AlignHCenter|AlignVCenter);
+   lbl_core_progress->setMinimumHeight(minHeight1);
+   lbl_core_progress->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_core_progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
+
    clear_display();
 
    int rows=13, columns = 3, spacing = 2, j=0, margin=4;
@@ -430,6 +438,7 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_stop_calc, j, 0);
    background->addWidget(progress, j, 1);
    //   background->addMultiCellWidget(progress, j, j, 0, 1);
+   background->addWidget(lbl_core_progress, j, 2);
 }
 
 

@@ -374,6 +374,7 @@ supc_free_alloced()
       free(q);
       q = 0;
    }
+   us_hydrodyn->lbl_core_progress->setText("");
 }
 
 static void
@@ -3021,12 +3022,16 @@ riempimatrice()
 
       progress->setProgress(ppos++);
       qApp->processEvents();
+      us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2")
+                                              .arg(i+1)
+                                              .arg(nat));
       if (us_hydrodyn->stopFlag)
       {
 	 return;
       }
 
       printf("%s%d%s%d", "Iteration  ", i + 1, " of ", nat);
+      
       fflush(stdout);
 
       for (j = 0; j < nat; j++)
@@ -3072,6 +3077,9 @@ choldc(int N)
 
       printf("%s%d%s%d", "Iteration  ", i + 1, " of ", 3 * N);
       fflush(stdout);
+      us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2")
+                                              .arg(i+1)
+                                              .arg(3 * N));
 
       for (j = i; j < 3 * N; j++)
       {
@@ -4129,6 +4137,9 @@ inverti(int N)
 
       printf("%s%d%s%d", "Iteration  ", j, " of ", 3 * N);
       fflush(stdout);
+      us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2")
+                                              .arg(j)
+                                              .arg(3 * N));
 
       k1 = (int) (floor((j - 1) / 3.0));
       k2 = (j - 1) % 3;

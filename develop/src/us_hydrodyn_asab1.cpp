@@ -231,6 +231,7 @@ asab1_free_alloced()
       free(asa);
       asa = 0;
    }
+   us_hydrodyn->lbl_core_progress->setText("");
 }
 
 static int
@@ -321,6 +322,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
                        US_Hydrodyn *use_us_hydrodyn
                        )
 {
+
    em("asab1_main");
    em("asab1_main 1");
    //  nmax1 = 4000;
@@ -523,6 +525,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
 
    Dz = ((float) fabs(maxz - minz)) / passi;
    printf("\n\n\n");
+
    for (i = 1; i < passi; i++)   /* iteration for the number of steps */
    {
       qApp->processEvents();
@@ -561,6 +564,13 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
          scala();
          plotinit();
       }
+
+      us_hydrodyn->lbl_core_progress->setText(QString("Iteration %1 of %2 with %3 %4")
+                                              .arg(i+1)
+                                              .arg(passi)
+                                              .arg(cont1)
+                                              .arg(flag1 == 0 ? "atoms" : "beads"));
+      qApp->processEvents();
 
       nc = 0;
       printf("%s%d\t", "Iteration number  = ", i + 1);
