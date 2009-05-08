@@ -66,7 +66,7 @@ private:
     void        setImage(const QImage& newimage);
 
 public slots:
-	void openFile(QString);
+   void openFile(QString);
 
 
 private slots:

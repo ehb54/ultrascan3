@@ -22,65 +22,65 @@ using namespace std;
 
 struct grid_options
 {
-	bool cubic; 	// apply cubic grid
-	bool hydrate; 	// true: hydrate model
-	bool center; 	// true: center of mass
-						// false: center of cubelet
-	bool tangency;	// true: Expand beads to tangency
-	double cube_side; 
+   bool cubic;    // apply cubic grid
+   bool hydrate;    // true: hydrate model
+   bool center;    // true: center of mass
+                  // false: center of cubelet
+   bool tangency;   // true: Expand beads to tangency
+   double cube_side; 
 };
 
 class US_EXTERN US_Hydrodyn_Grid : public QFrame
 {
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
-		US_Hydrodyn_Grid(struct overlap_reduction *, struct grid_options *,
-							  double *, bool *, void *, QWidget *p = 0, const char *name = 0);
-		~US_Hydrodyn_Grid();
+   public:
+      US_Hydrodyn_Grid(struct overlap_reduction *, struct grid_options *,
+                       double *, bool *, void *, QWidget *p = 0, const char *name = 0);
+      ~US_Hydrodyn_Grid();
 
-	public:
-		
-		struct grid_options *grid;
-		struct overlap_reduction *grid_overlap;
-		bool *grid_widget;
-		bool overlap_widget;
-		double *overlap_tolerance;
-		US_Hydrodyn_Overlap *overlap_window;
-		
-		QwtCounter *cnt_cube_side;
-		QButtonGroup *bg_center;
-		QCheckBox *cb_cubic;
-		QCheckBox *cb_hydrate;
-		QCheckBox *cb_center_mass;
-		QCheckBox *cb_center_cubelet;
-		QCheckBox *cb_tangency;
+   public:
+      
+      struct grid_options *grid;
+      struct overlap_reduction *grid_overlap;
+      bool *grid_widget;
+      bool overlap_widget;
+      double *overlap_tolerance;
+      US_Hydrodyn_Overlap *overlap_window;
+      
+      QwtCounter *cnt_cube_side;
+      QButtonGroup *bg_center;
+      QCheckBox *cb_cubic;
+      QCheckBox *cb_hydrate;
+      QCheckBox *cb_center_mass;
+      QCheckBox *cb_center_cubelet;
+      QCheckBox *cb_tangency;
                 void *us_hydrodyn;
-		
-		US_Config *USglobal;
-		
-		QLabel *lbl_info;
-		QLabel *lbl_cube_side;
+      
+      US_Config *USglobal;
+      
+      QLabel *lbl_info;
+      QLabel *lbl_cube_side;
 
-		QPushButton *pb_overlaps;
-		QPushButton *pb_help;
-		QPushButton *pb_cancel;
+      QPushButton *pb_overlaps;
+      QPushButton *pb_help;
+      QPushButton *pb_cancel;
 
-	private slots:
-		
-		void setupGUI();
-		void update_cube_side(double);
-		void select_center(int);
-		void set_hydrate();
-		void set_tangency();
-		void set_cubic();
-		void overlaps();
-		void cancel();
-		void help();
-	
-	protected slots:
+   private slots:
+      
+      void setupGUI();
+      void update_cube_side(double);
+      void select_center(int);
+      void set_hydrate();
+      void set_tangency();
+      void set_cubic();
+      void overlaps();
+      void cancel();
+      void help();
+   
+   protected slots:
 
-		void closeEvent(QCloseEvent *);
+      void closeEvent(QCloseEvent *);
 
 };
 

@@ -15,26 +15,26 @@
 
 class US_EXTERN US_DB_Widgets : public US_DB
 {
-	public:	
-		US_DB_Widgets ( QWidget* p = 0, const char* name = 0 );
-		~US_DB_Widgets( void ) {};
+   public:   
+      US_DB_Widgets ( QWidget* p = 0, const char* name = 0 );
+      ~US_DB_Widgets( void ) {};
 
-		QLabel*          label         ( const QString&, int = 0,  
-		                                 int = QFont::Normal );
-		
-		QLabel*          textlabel     ( const QString&, int = -1,
-		                                 int = QFont::Normal );
-		
-		QLabel*          banner        ( const QString&, int = 0,
-		                                 int = QFont::Bold );
+      QLabel*          label         ( const QString&, int = 0,  
+                                       int = QFont::Normal );
+      
+      QLabel*          textlabel     ( const QString&, int = -1,
+                                       int = QFont::Normal );
+      
+      QLabel*          banner        ( const QString&, int = 0,
+                                       int = QFont::Bold );
 
-		QPushButton*     pushbutton    ( const QString&, bool = true ); 
-		QTextEdit*       textedit      ( void );
-		QCheckBox*       checkbox      ( const QString&, bool = false );
-		QListBox*        listbox       ( const QString&, bool = true );
-		QProgressDialog* progressdialog( const QString&, const QString&, int );
-		QLineEdit*       lineedit      ( const QString& );
-		QComboBox*       combobox      ( const QString&, int = false );
+      QPushButton*     pushbutton    ( const QString&, bool = true ); 
+      QTextEdit*       textedit      ( void );
+      QCheckBox*       checkbox      ( const QString&, bool = false );
+      QListBox*        listbox       ( const QString&, bool = true );
+      QProgressDialog* progressdialog( const QString&, const QString&, int );
+      QLineEdit*       lineedit      ( const QString& );
+      QComboBox*       combobox      ( const QString&, int = false );
 };
 #endif
 

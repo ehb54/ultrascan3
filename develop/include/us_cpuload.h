@@ -39,7 +39,7 @@ private:
 };
 
 //
-//	The main window
+//   The main window
 //
 class US_EXTERN CpuloadWin : public QFrame
 {
@@ -58,7 +58,7 @@ class US_EXTERN CpuloadWin : public QFrame
     int cputmrID;
     
 public:
-		US_Config *USglobal;
+      US_Config *USglobal;
 
     CpuloadWin(QWidget *p = 0, const char *name = 0);
     ~CpuloadWin();

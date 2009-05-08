@@ -11,23 +11,23 @@
 
 class US_EXTERN US_Report_Equil : public QWidget
 {
-	Q_OBJECT
-	
-	public:
-	
-		US_Report_Equil(bool flag, QWidget *p=0, const char *name=0);
-		~US_Report_Equil();
+   Q_OBJECT
+   
+   public:
+   
+      US_Report_Equil(bool flag, QWidget *p=0, const char *name=0);
+      ~US_Report_Equil();
 
-	private:
-		US_Config *USglobal;
-		Data_Control_W *data_control;
-	
-		public slots:
-		void generate(Data_Control_W *data_control);
-		
-	private slots:
-		void load();
-		void view(QString);
+   private:
+      US_Config *USglobal;
+      Data_Control_W *data_control;
+   
+      public slots:
+      void generate(Data_Control_W *data_control);
+      
+   private slots:
+      void load();
+      void view(QString);
 };
 #endif
 

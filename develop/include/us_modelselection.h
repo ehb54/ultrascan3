@@ -11,17 +11,17 @@ using namespace std;
 
 class US_EXTERN US_ModelSelection : public QObject
 {
-	Q_OBJECT
-	public:
+   Q_OBJECT
+   public:
 
-		US_ModelSelection(QObject * parent=0, const char * name=0);
-		~US_ModelSelection();
+      US_ModelSelection(QObject * parent=0, const char * name=0);
+      ~US_ModelSelection();
 
-	public slots:
+   public slots:
 
-		void select_model(struct ModelSystem *);
-		void initializeAssociation1(struct ModelSystem *, unsigned int, unsigned int, unsigned int);
-		void initializeAssociation2(struct ModelSystem *);
+      void select_model(struct ModelSystem *);
+      void initializeAssociation1(struct ModelSystem *, unsigned int, unsigned int, unsigned int);
+      void initializeAssociation2(struct ModelSystem *);
 };
 
 #endif

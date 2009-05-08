@@ -18,21 +18,21 @@
 
 class US_EXTERN US_DB_RtvImage : public US_DB_RtvInvestigator
 {
-	Q_OBJECT
-	
-	public:
-		US_DB_RtvImage(QWidget *p=0, const char *name="us_rtvimage");
-		~US_DB_RtvImage();
-		
-		
-		int *item_ImageID;
-		int ImageID;
-	public slots:
-		void show_image();
-	protected slots:
-		void checkImage();	
-	   void check_image(int);
-	   void select_image(int); 	
+   Q_OBJECT
+   
+   public:
+      US_DB_RtvImage(QWidget *p=0, const char *name="us_rtvimage");
+      ~US_DB_RtvImage();
+      
+      
+      int *item_ImageID;
+      int ImageID;
+   public slots:
+      void show_image();
+   protected slots:
+      void checkImage();   
+      void check_image(int);
+      void select_image(int);    
 };
 
 #endif

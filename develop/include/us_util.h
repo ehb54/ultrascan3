@@ -182,8 +182,8 @@ class US_EXTERN US_Config : public QObject
     static QString get_home_dir();
     void           move_files();
 
-	signals:
-		void errorMessage(QString, QString);
+   signals:
+      void errorMessage(QString, QString);
 
 };
 

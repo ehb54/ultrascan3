@@ -32,32 +32,32 @@
 
 class US_Editor : public QFrame
 {
-	Q_OBJECT
+   Q_OBJECT
 public:
-	US_Editor(int flag, QWidget *parent=0, const char *name=0 );
-	~US_Editor();
-	QTextEdit *e;
-	QFont ft;
-	QString fileName;
-	
+   US_Editor(int flag, QWidget *parent=0, const char *name=0 );
+   ~US_Editor();
+   QTextEdit *e;
+   QFont ft;
+   QString fileName;
+   
 public slots:
-	void newDoc();
-	void load();
-	void load(const QString &fileName);
-	void save();
-	void saveAs();
-	void print();
-	void update_font();
-	void closeDoc();
-	void append(const QString &);
-	
+   void newDoc();
+   void load();
+   void load(const QString &fileName);
+   void save();
+   void saveAs();
+   void print();
+   void update_font();
+   void closeDoc();
+   void append(const QString &);
+   
 protected:
-	void resizeEvent( QResizeEvent * );
+   void resizeEvent( QResizeEvent * );
 
 private:
-	int flag;
-	QMenuBar *m;
-	QPrinter printer;
+   int flag;
+   QMenuBar *m;
+   QPrinter printer;
 };
 
 /****************************************************************************
@@ -82,11 +82,11 @@ class TextEdit : public QMainWindow
 
 public:
     TextEdit( QWidget *parent = 0, const char *name = 0 );
-	 TextEdit(int id, QWidget *parent = 0, const char *name = 0);
+    TextEdit(int id, QWidget *parent = 0, const char *name = 0);
     void load( const QString &f );
-	 void load_text(QString);
-	 int tableID;
-	
+    void load_text(QString);
+    int tableID;
+   
 private:
     void setupFileActions();
     void setupEditActions();
@@ -99,7 +99,7 @@ private slots:
     void fileOpen();
     void fileSave();
     void fileSaveAs();
-	 void fileSaveDB();
+    void fileSaveDB();
     void filePrint();
     void fileClose();
     void fileExit();
@@ -125,18 +125,18 @@ private slots:
     void editorChanged( QWidget * );
 
 private:
-	US_DB *currentDB;
+   US_DB *currentDB;
     QAction *actionTextBold,
-	*actionTextUnderline,
-	*actionTextItalic,
-	*actionTextColor,
-	*actionAlignLeft,
-	*actionAlignCenter,
-	*actionAlignRight,
-	*actionAlignJustify;
+   *actionTextUnderline,
+   *actionTextItalic,
+   *actionTextColor,
+   *actionAlignLeft,
+   *actionAlignCenter,
+   *actionAlignRight,
+   *actionAlignJustify;
     QComboBox *comboStyle,
-	*comboFont,
-	*comboSize;
+   *comboFont,
+   *comboSize;
     QTabWidget *tabWidget;
     QMap<QTextEdit*, QString> filenames;
 

@@ -76,42 +76,42 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
 
    struct peptide
    {
-		uint a;
-		uint b;
-		uint c;
-		uint d;
-		uint e;
-		uint f;
-		uint g;
-		uint h;
-		uint i;
-		uint j; //Hao (James Nowick)
-		uint k;
-		uint l;
-		uint m;
-		uint n;
-		uint o; //delta-linked ornithin (James Nowick)
-		uint p;
-		uint q;
-		uint r;
-		uint s;
-		uint t;
-		uint u; // currently unused
-		uint v;
-		uint w;
-		uint x;
-		uint y;
-		uint z;
-		uint dab; // diaminobutyric acid (John Kulp), symbol: "+"
-		uint dpr; // diaminopropanoic acid (John Kulp), symbol: "@"
-		float vbar;
-		float vbar20;
-		float mw;
-		float vbar_sum;
-		float weight;
-		float e280;
-		uint residues;
-	};
+      uint a;
+      uint b;
+      uint c;
+      uint d;
+      uint e;
+      uint f;
+      uint g;
+      uint h;
+      uint i;
+      uint j; //Hao (James Nowick)
+      uint k;
+      uint l;
+      uint m;
+      uint n;
+      uint o; //delta-linked ornithin (James Nowick)
+      uint p;
+      uint q;
+      uint r;
+      uint s;
+      uint t;
+      uint u; // currently unused
+      uint v;
+      uint w;
+      uint x;
+      uint y;
+      uint z;
+      uint dab; // diaminobutyric acid (John Kulp), symbol: "+"
+      uint dpr; // diaminopropanoic acid (John Kulp), symbol: "@"
+      float vbar;
+      float vbar20;
+      float mw;
+      float vbar_sum;
+      float weight;
+      float e280;
+      uint residues;
+   };
 
 
    unsigned long square(int);
@@ -147,7 +147,7 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
    float random_range(float, float);
    float standard_distribution(float);
    float normal_distribution(float, float, float);
-	double erfc(double);
+   double erfc(double);
 
    void get_1d_limits(double **, double *, double *, int, int start_count=0);
    void get_1d_limits(float **, float *, float *, int, int start_count=0);
@@ -165,14 +165,14 @@ int nnls(double *a, int a_dim1, int m, int n, double *b, double *x,
    float adjust_vbar(float vbar, float temperature);
    float calc_buoyancy_tb(float, float, float);
    float calc_bottom(int /* rotor */, int /* centerpiece */, 
-						   int /* channel */, unsigned int /* rpm */);
+                     int /* channel */, unsigned int /* rpm */);
    float calc_bottom(vector <struct rotorInfo>,
                      vector <struct centerpieceInfo> cp_list,
                      int /* rotor list index */,
                      int /* centerpiece list index */,
                      int /* channel */,
                      unsigned int /* rpm */);
-	double stretch(int /*rotor id*/, unsigned int /*rotor speed*/);
+   double stretch(int /*rotor id*/, unsigned int /*rotor speed*/);
 
 #ifdef WIN32
   /* The following was derived from glibc source for IA32 architecture. */

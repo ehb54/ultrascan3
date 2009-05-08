@@ -27,55 +27,55 @@ using namespace std;
 
 struct pdb_visualization
 {
-	int visualization;	// 0 = Default RASMOL settings
-								// 1 = Space-filling, colors as bead colors
-								// 2 = Custom script file
-	QString filename;		// custom file name
+   int visualization;   // 0 = Default RASMOL settings
+                        // 1 = Space-filling, colors as bead colors
+                        // 2 = Custom script file
+   QString filename;      // custom file name
 };
 
 class US_EXTERN US_Hydrodyn_PDB_Visualization : public QFrame
 {
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
-		US_Hydrodyn_PDB_Visualization(struct pdb_visualization *, bool *, QWidget *p = 0, const char *name = 0);
-		~US_Hydrodyn_PDB_Visualization();
+   public:
+      US_Hydrodyn_PDB_Visualization(struct pdb_visualization *, bool *, QWidget *p = 0, const char *name = 0);
+      ~US_Hydrodyn_PDB_Visualization();
 
-	public:
-		
-		struct pdb_visualization *pdb;
-		bool *pdb_visualization_widget;
-		
-		US_Config *USglobal;
+   public:
+      
+      struct pdb_visualization *pdb;
+      bool *pdb_visualization_widget;
+      
+      US_Config *USglobal;
 
-		QLabel *lbl_info;
+      QLabel *lbl_info;
 
-		QPushButton *pb_help;
-		QPushButton *pb_cancel;
-		QPushButton *pb_filename;
-		
-		QButtonGroup *bg_visualization;
+      QPushButton *pb_help;
+      QPushButton *pb_cancel;
+      QPushButton *pb_filename;
+      
+      QButtonGroup *bg_visualization;
 
-		QCheckBox *cb_default;
-		QCheckBox *cb_spacefilling;
-		QCheckBox *cb_custom;
+      QCheckBox *cb_default;
+      QCheckBox *cb_spacefilling;
+      QCheckBox *cb_custom;
 
-		QLineEdit *le_filename;
-		
-		
-	private slots:
-		
-		void setupGUI();
-		void select_option(int);
-		void select_filename();
-		void update_filename(const QString &);
+      QLineEdit *le_filename;
+      
+      
+   private slots:
+      
+      void setupGUI();
+      void select_option(int);
+      void select_filename();
+      void update_filename(const QString &);
 
-		void cancel();
-		void help();
-	
-	protected slots:
+      void cancel();
+      void help();
+   
+   protected slots:
 
-		void closeEvent(QCloseEvent *);
+      void closeEvent(QCloseEvent *);
 };
 
 

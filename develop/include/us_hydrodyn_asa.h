@@ -26,70 +26,70 @@ using namespace std;
 
 struct asa_options
 {
-	float probe_radius;
-	float probe_recheck_radius;
-	float threshold;
-	float threshold_percent;
-	bool calculation;
-	bool recheck_beads;
-	int method;  // 0 == surfracer , 1 == asab1
-	float asab1_step;
+   float probe_radius;
+   float probe_recheck_radius;
+   float threshold;
+   float threshold_percent;
+   bool calculation;
+   bool recheck_beads;
+   int method;  // 0 == surfracer , 1 == asab1
+   float asab1_step;
 };
 
 class US_EXTERN US_Hydrodyn_ASA : public QFrame
 {
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
-		US_Hydrodyn_ASA(struct asa_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
-		~US_Hydrodyn_ASA();
+   public:
+      US_Hydrodyn_ASA(struct asa_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
+      ~US_Hydrodyn_ASA();
 
-	public:
-		struct asa_options *asa;
-		bool *asa_widget;
+   public:
+      struct asa_options *asa;
+      bool *asa_widget;
                 void *us_hydrodyn;
-		US_Config *USglobal;
+      US_Config *USglobal;
 
-		QLabel *lbl_info;
-		QLabel *lbl_probe_radius;
-		QLabel *lbl_probe_recheck_radius;
-		QLabel *lbl_asa_threshold;
-		QLabel *lbl_asa_threshold_percent;
-		QLabel *lbl_asab1_step;
-		
-		QwtCounter *cnt_probe_radius;
-		QwtCounter *cnt_probe_recheck_radius;
-		QwtCounter *cnt_asa_threshold;
-		QwtCounter *cnt_asa_threshold_percent;
-		QwtCounter *cnt_asab1_step;
+      QLabel *lbl_info;
+      QLabel *lbl_probe_radius;
+      QLabel *lbl_probe_recheck_radius;
+      QLabel *lbl_asa_threshold;
+      QLabel *lbl_asa_threshold_percent;
+      QLabel *lbl_asab1_step;
+      
+      QwtCounter *cnt_probe_radius;
+      QwtCounter *cnt_probe_recheck_radius;
+      QwtCounter *cnt_asa_threshold;
+      QwtCounter *cnt_asa_threshold_percent;
+      QwtCounter *cnt_asab1_step;
 
-		QCheckBox *cb_asa_calculation;
-		QCheckBox *cb_bead_check;
-		QCheckBox *cb_surfracer;
-		QCheckBox *cb_asab1;
+      QCheckBox *cb_asa_calculation;
+      QCheckBox *cb_bead_check;
+      QCheckBox *cb_surfracer;
+      QCheckBox *cb_asab1;
 
-		QPushButton *pb_help;
-		QPushButton *pb_cancel;
-		
-		QButtonGroup *bg_asa_method;
+      QPushButton *pb_help;
+      QPushButton *pb_cancel;
+      
+      QButtonGroup *bg_asa_method;
 
-	private slots:
-		
-		void setupGUI();
-		void update_probe_radius(double);
-		void update_probe_recheck_radius(double);
-		void update_asa_threshold(double);
-		void update_asa_threshold_percent(double);
-		void update_asab1_step(double);
-		void select_asa_method(int);
-		void set_asa_calculation();
-		void set_bead_check();
-		void cancel();
-		void help();
-	
-	protected slots:
+   private slots:
+      
+      void setupGUI();
+      void update_probe_radius(double);
+      void update_probe_recheck_radius(double);
+      void update_asa_threshold(double);
+      void update_asa_threshold_percent(double);
+      void update_asab1_step(double);
+      void select_asa_method(int);
+      void set_asa_calculation();
+      void set_bead_check();
+      void cancel();
+      void help();
+   
+   protected slots:
 
-		void closeEvent(QCloseEvent *);
+      void closeEvent(QCloseEvent *);
 };
 
 

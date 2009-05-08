@@ -29,7 +29,7 @@ struct misc_options
 {
    double vbar;
    double hydrovol;
-   bool compute_vbar;		// true = compute
+   bool compute_vbar;      // true = compute
                                 // false = use user specified value
 
    double avg_hydration;
@@ -41,68 +41,68 @@ struct misc_options
 
 class US_EXTERN US_Hydrodyn_Misc : public QFrame
 {
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
-		US_Hydrodyn_Misc(struct misc_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
-		~US_Hydrodyn_Misc();
+   public:
+      US_Hydrodyn_Misc(struct misc_options *, bool *, void *, QWidget *p = 0, const char *name = 0);
+      ~US_Hydrodyn_Misc();
 
-	public:
+   public:
 
-		struct misc_options *misc;
-		bool *misc_widget;
+      struct misc_options *misc;
+      bool *misc_widget;
                 void *us_hydrodyn;
 
-		US_Config *USglobal;
-		US_Vbar_DB *vbar_dlg;
+      US_Config *USglobal;
+      US_Vbar_DB *vbar_dlg;
 
-		QLabel *lbl_info;
-		QLabel *lbl_vbar;
-		QLabel *lbl_hydrovol;
-		QLabel *lbl_avg_banner;
-		QLabel *lbl_avg_radius;
-		QLabel *lbl_avg_mass;
-		QLabel *lbl_avg_hydration;
-		QLabel *lbl_avg_volume;
-		QLabel *lbl_avg_vbar;
+      QLabel *lbl_info;
+      QLabel *lbl_vbar;
+      QLabel *lbl_hydrovol;
+      QLabel *lbl_avg_banner;
+      QLabel *lbl_avg_radius;
+      QLabel *lbl_avg_mass;
+      QLabel *lbl_avg_hydration;
+      QLabel *lbl_avg_volume;
+      QLabel *lbl_avg_vbar;
 
-		QPushButton *pb_help;
-		QPushButton *pb_cancel;
-		QPushButton *pb_vbar;
+      QPushButton *pb_help;
+      QPushButton *pb_cancel;
+      QPushButton *pb_vbar;
 
-		QLineEdit *le_vbar;
-		QCheckBox *cb_vbar;
-		QwtCounter *cnt_hydrovol;
-		QwtCounter *cnt_avg_radius;
-		QwtCounter *cnt_avg_mass;
-		QwtCounter *cnt_avg_hydration;
-		QwtCounter *cnt_avg_volume;
-		QwtCounter *cnt_avg_vbar;
+      QLineEdit *le_vbar;
+      QCheckBox *cb_vbar;
+      QwtCounter *cnt_hydrovol;
+      QwtCounter *cnt_avg_radius;
+      QwtCounter *cnt_avg_mass;
+      QwtCounter *cnt_avg_hydration;
+      QwtCounter *cnt_avg_volume;
+      QwtCounter *cnt_avg_vbar;
 
-	private slots:
+   private slots:
 
-		void setupGUI();
-		void set_vbar();
-		void select_vbar();
-		void update_vbar_signal(float, float);
-		void update_vbar(const QString &);
-		void update_hydrovol(double);
-		void update_avg_radius(double);
-		void update_avg_mass(double);
-		void update_avg_hydration(double);
-		void update_avg_volume(double);
-		void update_avg_vbar(double);
+      void setupGUI();
+      void set_vbar();
+      void select_vbar();
+      void update_vbar_signal(float, float);
+      void update_vbar(const QString &);
+      void update_hydrovol(double);
+      void update_avg_radius(double);
+      void update_avg_mass(double);
+      void update_avg_hydration(double);
+      void update_avg_volume(double);
+      void update_avg_vbar(double);
 
-		void cancel();
-		void help();
+      void cancel();
+      void help();
 
-	protected slots:
+   protected slots:
 
-		void closeEvent(QCloseEvent *);
+      void closeEvent(QCloseEvent *);
 
-	signals:
+   signals:
 
-		void vbar_changed();
+      void vbar_changed();
 };
 
 

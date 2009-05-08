@@ -23,9 +23,9 @@
 
 struct Gaussian
 {
-	double mean;
-	double amplitude;
-	double sigma;
+   double mean;
+   double amplitude;
+   double sigma;
 };
 
 struct WavelengthProfile
@@ -35,111 +35,111 @@ struct WavelengthProfile
   #pragma warning ( disable: 4251 )
 #endif
 
-	vector <struct Gaussian> gaussian;
+   vector <struct Gaussian> gaussian;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
 
-	float scale;
-	unsigned int lambda_scale;
-	unsigned int lambda_min;
-	unsigned int lambda_max;
-	QString filename;
-	QString filenameBasis;
-	int curve_number;
+   float scale;
+   unsigned int lambda_scale;
+   unsigned int lambda_min;
+   unsigned int lambda_max;
+   QString filename;
+   QString filenameBasis;
+   int curve_number;
 // use this amplitude to scale the final distribution for any 
 // desired extinction coefficient at any wavelength
-	float amplitude;
-	float nnls_factor;
-	float nnls_percentage;
+   float amplitude;
+   float nnls_factor;
+   float nnls_percentage;
 };
 
 class US_EXTERN US_Spectrum : public QFrame
 {
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
-		US_Spectrum(QWidget *p = 0, const char *name = 0);
-		~US_Spectrum();
-		US_Config *USglobal;
-		
-	private:
-		QwtPlot *data_plot, *residuals_plot;
-		struct WavelengthProfile target;
+   public:
+      US_Spectrum(QWidget *p = 0, const char *name = 0);
+      ~US_Spectrum();
+      US_Config *USglobal;
+      
+   private:
+      QwtPlot *data_plot, *residuals_plot;
+      struct WavelengthProfile target;
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
 
-		vector <struct WavelengthProfile> basis;
-		vector <unsigned int> curve;
-		vector <unsigned int> lambda_min;
-		vector <unsigned int> lambda_max;
+      vector <struct WavelengthProfile> basis;
+      vector <unsigned int> curve;
+      vector <unsigned int> lambda_min;
+      vector <unsigned int> lambda_max;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
 
-		unsigned int min, max, lambda_scale;
-		int current_scan;
-		float scale;
-		int solution_curve;
-		QPushButton *pb_load_target;
-		QPushButton *pb_load_basis;
-		QPushButton *pb_load_fit;
-		QPushButton *pb_fit;
-		QPushButton *pb_help;
-		QPushButton *pb_save;
-		QPushButton *pb_extrapolate;
-		QPushButton *pb_overlap;
-		QPushButton *pb_close;
-		QPushButton *pb_reset_basis;
-		QPushButton *pb_delete;
-		QPushButton *pb_update;
-		QPushButton *pb_difference;
-		QPushButton *pb_print_fit;
-		QPushButton *pb_print_residuals;
+      unsigned int min, max, lambda_scale;
+      int current_scan;
+      float scale;
+      int solution_curve;
+      QPushButton *pb_load_target;
+      QPushButton *pb_load_basis;
+      QPushButton *pb_load_fit;
+      QPushButton *pb_fit;
+      QPushButton *pb_help;
+      QPushButton *pb_save;
+      QPushButton *pb_extrapolate;
+      QPushButton *pb_overlap;
+      QPushButton *pb_close;
+      QPushButton *pb_reset_basis;
+      QPushButton *pb_delete;
+      QPushButton *pb_update;
+      QPushButton *pb_difference;
+      QPushButton *pb_print_fit;
+      QPushButton *pb_print_residuals;
 
-		QLabel *lbl_info;
-		QLabel *lbl_wavelength;
-		QLabel *lbl_extinction;
-		
-		QListBox *lb_basis;
-		QListBox *lb_target;
+      QLabel *lbl_info;
+      QLabel *lbl_wavelength;
+      QLabel *lbl_extinction;
+      
+      QListBox *lb_basis;
+      QListBox *lb_target;
 
-		QLineEdit *le_wavelength;
-		QLineEdit *le_extinction;
-		QLineEdit *le_rmsd;
+      QLineEdit *le_wavelength;
+      QLineEdit *le_extinction;
+      QLineEdit *le_rmsd;
 
-	protected slots:
-		void closeEvent(QCloseEvent *e);
-		
-	private slots:
-		void setup_GUI();
-		void printError(const int &);
-		void select_basis(const QMouseEvent &);
-		void delete_basis(int);
-		void load_basis();
-		void load_target();
-		void edit_basis(int);
-		void edit_target(int);
-		void load_fit();
-		void load_gaussian_profile(struct WavelengthProfile &, const QString &);
-		void reset_basis();
-		void fit();
-		void help();
-		void update_scale();
-		void delete_scan();
-		void save();
-		void extrapolate();
-		void overlap();
-		void difference();
-		void reset_edit_gui();
-		void find_amplitude(struct WavelengthProfile &);
-		void print_residuals();
-		void print_fit();
-		void print_profile(struct WavelengthProfile &);
+   protected slots:
+      void closeEvent(QCloseEvent *e);
+      
+   private slots:
+      void setup_GUI();
+      void printError(const int &);
+      void select_basis(const QMouseEvent &);
+      void delete_basis(int);
+      void load_basis();
+      void load_target();
+      void edit_basis(int);
+      void edit_target(int);
+      void load_fit();
+      void load_gaussian_profile(struct WavelengthProfile &, const QString &);
+      void reset_basis();
+      void fit();
+      void help();
+      void update_scale();
+      void delete_scan();
+      void save();
+      void extrapolate();
+      void overlap();
+      void difference();
+      void reset_edit_gui();
+      void find_amplitude(struct WavelengthProfile &);
+      void print_residuals();
+      void print_fit();
+      void print_profile(struct WavelengthProfile &);
 };
 
 #endif

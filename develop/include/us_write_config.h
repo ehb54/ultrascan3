@@ -12,8 +12,8 @@ public:
   ~US_Write_Config();
 
 public:
-	bool write_config(struct Config);
-	void errorMessage( QString&, QString& );
+   bool write_config(struct Config);
+   void errorMessage( QString&, QString& );
 };
 
 #endif

@@ -11,22 +11,22 @@
 
 class US_EXTERN US_Report_EquilProject : public QWidget
 {
-	Q_OBJECT
-	
-	public:
-	
-		US_Report_EquilProject(bool flag, QWidget *p=0, const char *name=0);
-		~US_Report_EquilProject();
+   Q_OBJECT
+   
+   public:
+   
+      US_Report_EquilProject(bool flag, QWidget *p=0, const char *name=0);
+      ~US_Report_EquilProject();
 
-	private:
-		US_Config *USglobal;
-		//QString fileName;
+   private:
+      US_Config *USglobal;
+      //QString fileName;
 
-	public slots:
-		void generate(QString);
-	private slots:
-		void load();
-		void view(QString);
+   public slots:
+      void generate(QString);
+   private slots:
+      void load();
+      void view(QString);
 };
 #endif
 

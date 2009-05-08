@@ -17,7 +17,7 @@ public:
     QwtThermo *th[ThermoCnt];
     QLabel  *lb[ThermoCnt];
     int memtmrID;
-	US_Config *USglobal;
+   US_Config *USglobal;
     
 public:
 

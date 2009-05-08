@@ -23,13 +23,13 @@
 
 int
 us_hydrodyn_asab1_main(vector <PDB_atom *> active_atoms, 
-		       asa_options *asa_opts,
-		       hydro_results *use_results,
-		       bool use_recheck,
-		       QProgressBar *progress,
-		       QTextEdit *editor,
-		       US_Hydrodyn *use_us_hydrodyn
-		       );
+             asa_options *asa_opts,
+             hydro_results *use_results,
+             bool use_recheck,
+             QProgressBar *progress,
+             QTextEdit *editor,
+             US_Hydrodyn *use_us_hydrodyn
+             );
 
 #define US_HYDRODYN_ASAB1_ERR_MEMORY_ALLOC   -1
 

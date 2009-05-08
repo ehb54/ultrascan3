@@ -10,29 +10,29 @@
 class US_EXTERN US_SetModel : public QDialog
 {
 
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
+   public:
 
-		US_SetModel(unsigned int *temp_components, int *temp_model, 
-		QWidget *p = 0, const char *name = 0);
-		~US_SetModel();
-		US_Config *USglobal;
-		unsigned int *components;
-		int *model;
-		QLabel *lbl_model;
-		QListBox *lb_model;
-		QLabel *lbl_comp;
-		QwtCounter *ct_comp;
-		QPushButton *pb_cancel;
-		QPushButton *pb_help;
-		QPushButton *pb_ok;
+      US_SetModel(unsigned int *temp_components, int *temp_model, 
+      QWidget *p = 0, const char *name = 0);
+      ~US_SetModel();
+      US_Config *USglobal;
+      unsigned int *components;
+      int *model;
+      QLabel *lbl_model;
+      QListBox *lb_model;
+      QLabel *lbl_comp;
+      QwtCounter *ct_comp;
+      QPushButton *pb_cancel;
+      QPushButton *pb_help;
+      QPushButton *pb_ok;
 
-	private slots:
+   private slots:
 
-		void assign_component(double);
-		void select_model(int);
-		void help();
+      void assign_component(double);
+      void select_model(int);
+      void help();
 };
 #endif
 

@@ -11,24 +11,24 @@
 
 class US_EXTERN US_Report_Veloc : public QWidget
 {
-	Q_OBJECT
-	
-	public:
-	
-		US_Report_Veloc(bool flag, QWidget *p=0, const char *name=0);
-		~US_Report_Veloc();
+   Q_OBJECT
+   
+   public:
+   
+      US_Report_Veloc(bool flag, QWidget *p=0, const char *name=0);
+      ~US_Report_Veloc();
 
-	private:
-		Data_Control_W *data_control;
-		US_Config *USglobal;
-		
-	public slots:
-		void write_file(Data_Control_W *data_control);
-	
-	private slots:
-		void load();
-		void view(QString);		
-	
+   private:
+      Data_Control_W *data_control;
+      US_Config *USglobal;
+      
+   public slots:
+      void write_file(Data_Control_W *data_control);
+   
+   private slots:
+      void load();
+      void view(QString);      
+   
 };
 
 #endif

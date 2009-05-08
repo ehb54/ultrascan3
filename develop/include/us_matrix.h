@@ -71,7 +71,7 @@ void generalLeastSquares(float **, unsigned int, unsigned int, float *, float **
 void print_matrix( double **, int, int);
 void print_vector( double **, unsigned int, const char *);
 void calc_A_transpose_A(double*** /*original matrix*/, double*** /*product matrix*/, 
-			unsigned int /*rows*/, unsigned int /*columns*/, unsigned int /*threads*/);
+         unsigned int /*rows*/, unsigned int /*columns*/, unsigned int /*threads*/);
 void calc_A_transpose_A(float*** /*original matrix*/, float*** /*product matrix*/, 
 unsigned int /*rows*/, unsigned int /*columns*/);
 void calc_matrix_times_matrix(double ***, double ***, double ***, unsigned int, unsigned int);
@@ -86,12 +86,12 @@ class US_lsfit
 //
 // Class to solve general linear least squares problem:
 //
-//	 MIN chi-square
+//    MIN chi-square
 //
 public:
 
-	US_lsfit(double *coeff, double *x, double *y, int n, int ord, bool mesg);
-	
+   US_lsfit(double *coeff, double *x, double *y, int n, int ord, bool mesg);
+   
 //
 // coeff returns the coefficients for best least-squares fit
 // x contains the x values of the raw data
@@ -99,13 +99,13 @@ public:
 // n contains the dimension of x and y
 // ord is the order of the function to be fitted
 //
-	~US_lsfit();
+   ~US_lsfit();
 
 private:
-	
-	double **A, *b, *c, *xval, *yval;
-	int order, numpoints, i, j, k;
-	void calc_coeff_polynomial();
+   
+   double **A, *b, *c, *xval, *yval;
+   int order, numpoints, i, j, k;
+   void calc_coeff_polynomial();
 };
 
 
@@ -116,14 +116,14 @@ void conc_dep_s(adouble, adouble **, adouble **, double ***, adouble, unsigned i
 void conc_dep_s(adouble, adouble **, adouble **, float ***, adouble, unsigned int points);
 #endif
 void conc_dep_d(float, double **, double **, double ***, double ***, double ***,
-					 float, unsigned int, double **, double **, double **);
+                float, unsigned int, double **, double **, double **);
 void conc_dep_d(float, float **, float **, float ***, float ***, float ***,
-					 float, unsigned int, float **, float **, float **);
+                float, unsigned int, float **, float **, float **);
 #ifdef ADOLC
 void conc_dep_d(adouble, adouble **, adouble **, float ***, float ***, float ***,
-					 adouble, unsigned int, adouble **, adouble **, adouble **);
+                adouble, unsigned int, adouble **, adouble **, adouble **);
 void conc_dep_d(adouble, adouble **, adouble **, double ***, double ***, double ***,
-					 adouble, unsigned int, adouble **, adouble **, adouble **);
+                adouble, unsigned int, adouble **, adouble **, adouble **);
 #endif
 
 #include <qthread.h>
@@ -135,10 +135,10 @@ class ata_d_thr_t : public QThread
  public:
   ata_d_thr_t(int);
   void ata_d_thr_setup(unsigned int,
-		       unsigned int,
-		       unsigned int,
-		       double ***,
-		       vector <vector <dpairs> > *);
+             unsigned int,
+             unsigned int,
+             double ***,
+             vector <vector <dpairs> > *);
 
   void ata_d_thr_shutdown();
   void ata_d_thr_wait();

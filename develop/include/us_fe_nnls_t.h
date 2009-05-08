@@ -22,11 +22,11 @@ using namespace std;
 class US_EXTERN US_fe_nnls_t 
 // : public QWidget
 {
-   //	Q_OBJECT
-	
+   //   Q_OBJECT
+   
  public:
-	
-   //		US_fe_nnls_t(QWidget *p = 0, const char *name = 0);
+   
+   //      US_fe_nnls_t(QWidget *p = 0, const char *name = 0);
    US_fe_nnls_t();
    ~US_fe_nnls_t();
    vector <struct mfem_data> experiment;

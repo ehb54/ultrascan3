@@ -4,11 +4,11 @@
 #include <qstring.h>
 
 int surfracer_main(float probe_radius, 
-		   vector <PDB_atom *> active_atoms,
-		   bool recheck,
-		   QProgressBar *progress,
-		   QTextEdit *editor
-		   );
+         vector <PDB_atom *> active_atoms,
+         bool recheck,
+         QProgressBar *progress,
+         QTextEdit *editor
+         );
 
 #define US_SURFRACER_ERR_MISSING_RESIDUE     1
 #define US_SURFRACER_ERR_MISSING_ATOM        2

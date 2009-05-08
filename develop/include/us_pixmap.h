@@ -9,10 +9,10 @@
 
 class US_Pixmap
 {
-	public:
-	US_Pixmap();
-	~US_Pixmap();
-	void save_file(QString, QPixmap);
+   public:
+   US_Pixmap();
+   ~US_Pixmap();
+   void save_file(QString, QPixmap);
 };
 
 #endif

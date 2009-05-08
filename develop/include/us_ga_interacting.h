@@ -5,8 +5,8 @@
 #include "../include/us_fe_nnls_t.h"
 
 Simulation_values us_ga_interacting_calc(vector <struct mfem_data>, 
-					 vector <Solute>,
-					 double);
+                vector <Solute>,
+                double);
 
 extern void print_ModelSystem(struct ModelSystem *);
 extern void print_SimulationParameters(struct SimulationParameters *);

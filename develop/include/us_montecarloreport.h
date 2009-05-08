@@ -10,21 +10,21 @@
 
 class US_EXTERN US_Report_MonteCarlo: public QWidget
 {
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
-	
-		US_Report_MonteCarlo( bool,    QWidget* p = 0, const char* name = 0 );
-		US_Report_MonteCarlo( QString, QWidget* p = 0, const char* name = 0 );
-		~US_Report_MonteCarlo() {};
+   public:
+   
+      US_Report_MonteCarlo( bool,    QWidget* p = 0, const char* name = 0 );
+      US_Report_MonteCarlo( QString, QWidget* p = 0, const char* name = 0 );
+      ~US_Report_MonteCarlo() {};
 
-		void generate( const QString& );
+      void generate( const QString& );
 
-	private:
-		US_Config* USglobal;
+   private:
+      US_Config* USglobal;
 
-		void load( void );
-		void view( const QString& );
+      void load( void );
+      void view( const QString& );
 };
 #endif
 

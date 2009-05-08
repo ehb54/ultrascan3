@@ -14,25 +14,25 @@
 
 class US_ResidualPlot : public QWidget
 {
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
- 	   US_ResidualPlot(int, int, mfem_data *, QWidget *parent=0, const char *name=0 );
- 	   US_ResidualPlot(int, int, double **, unsigned int, unsigned int, QWidget *parent=0, const char *name=0 );
- 	   US_ResidualPlot(QWidget *parent=0, const char *name=0 );
- 	  ~US_ResidualPlot();
+   public:
+       US_ResidualPlot(int, int, mfem_data *, QWidget *parent=0, const char *name=0 );
+       US_ResidualPlot(int, int, double **, unsigned int, unsigned int, QWidget *parent=0, const char *name=0 );
+       US_ResidualPlot(QWidget *parent=0, const char *name=0 );
+      ~US_ResidualPlot();
 
-	private:
+   private:
 
-		double **residuals;
-		unsigned int scans, points;
-		
-	public slots:
-		void setData(struct mfem_data *, int, int);
-		void setData(double **, int, int, unsigned int, unsigned int);
+      double **residuals;
+      unsigned int scans, points;
+      
+   public slots:
+      void setData(struct mfem_data *, int, int);
+      void setData(double **, int, int, unsigned int, unsigned int);
 
-	protected: 
-		void paintEvent(QPaintEvent *);
+   protected: 
+      void paintEvent(QPaintEvent *);
 };
 
 #endif

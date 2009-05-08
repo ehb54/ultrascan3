@@ -40,7 +40,7 @@ struct MonthDay NewYearsDay(int year);
 struct MonthDay MartinLutherKingDay(int year);
 struct MonthDay WashingtonsBirthday(int year);
 struct MonthDay GoodFriday(int year);
-struct MonthDay Easter(int year);	/* valid years 326 to 2599 A.D. */
+struct MonthDay Easter(int year);   /* valid years 326 to 2599 A.D. */
 struct MonthDay MemorialDay(int year);
 struct MonthDay IndependenceDay(int year);
 struct MonthDay LaborDay(int year);
@@ -62,25 +62,25 @@ class US_EXTERN US_Calendar : public QWidget
   Q_OBJECT
 public:
 
-	US_Calendar(QWidget *parent=0);
-	~US_Calendar();
- 	US_Config *USglobal;
-	QPushButton *pb_cancel;
-	QPushButton *pb_accept;
-	QLabel *date_lbl;
-	
-	QString Display_Date;
-	
+   US_Calendar(QWidget *parent=0);
+   ~US_Calendar();
+    US_Config *USglobal;
+   QPushButton *pb_cancel;
+   QPushButton *pb_accept;
+   QLabel *date_lbl;
+   
+   QString Display_Date;
+   
 signals:
-	void dateChanged(QString);
-	
+   void dateChanged(QString);
+   
 public slots:
   void slotDayClassify(int,int,char*);
   void slotDayLabel(int,int,int,char*);
 private slots:
-	void quit();
-	void accept();
-	void update_Date(QString);
+   void quit();
+   void accept();
+   void update_Date(QString);
 private:
   DateInput* dateinput;
 };
@@ -119,7 +119,7 @@ public:
   void hide();
   const QDate getQDate();
 
-	US_Config *USglobal;
+   US_Config *USglobal;
 signals:
   void classifyRequest(int mon, int yr, char*);
   void dayLabel(int, int, int, char*);

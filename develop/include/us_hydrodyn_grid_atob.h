@@ -34,17 +34,17 @@ typedef struct pdb_entry
 
 typedef struct physical_properties
 {
-   REAL f, rVW;		/*electron density */
+   REAL f, rVW;      /*electron density */
    REAL mass;
    struct physical_properties *next;
 
 } PHYSPROP;
 
 vector <PDB_atom> us_hydrodyn_grid_atob(vector <PDB_atom> *bead_model, 
-					grid_options *our_grid_options,
-					QProgressBar *progress,
-					QTextEdit *editor,
-					US_Hydrodyn* us_hydrodyn
-					);
+               grid_options *our_grid_options,
+               QProgressBar *progress,
+               QTextEdit *editor,
+               US_Hydrodyn* us_hydrodyn
+               );
 
 #endif

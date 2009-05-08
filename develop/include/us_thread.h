@@ -9,20 +9,20 @@
 
 class CATA_D_Thread : public QThread
 {
-	public:
-	
-		double ***product, ***A;
-		unsigned int i,j,k, end_j, end_k;
-		virtual void run();
+   public:
+   
+      double ***product, ***A;
+      unsigned int i,j,k, end_j, end_k;
+      virtual void run();
 };
 
 class CATA_F_Thread : public QThread
 {
-	public:
-	
-		float ***product, ***A;
-		unsigned int i,j,k, end_j, end_k;
-		virtual void run();
+   public:
+   
+      float ***product, ***A;
+      unsigned int i,j,k, end_j, end_k;
+      virtual void run();
 };
 #endif
 #endif    
