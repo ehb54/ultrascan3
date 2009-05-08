@@ -1116,7 +1116,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         // create new_residue
                         new_residue.comment = QString("Temporary residue %1").arg(new_residue_name);
                         new_residue.name = new_residue_name;
-                        new_residue.type = 5;  // other
+                        new_residue.type = 8;  // other
                         new_residue.molvol = misc.avg_volume * atom_counts[count_idx];
                         // new_residue.asa = misc.avg_asa * atom_counts[count_idx];
                         new_residue.asa = 0;

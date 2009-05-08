@@ -45,9 +45,9 @@ int pct_mutation;
 int pct_replication;
 int pct_subtree_dup;
 int pct_plague;
-double pct_node_mutation;	 /* this is inline with the other operations, ie. not exclusive like the above */
-double pct_point_mutation;	/* this is inline with the other operations, ie. not exclusive like the above */
-int point_crossover;		  // this flag puts on a 1 or 2 pt crossover instead of the normal crossover
+double pct_node_mutation;    /* this is inline with the other operations, ie. not exclusive like the above */
+double pct_point_mutation;   /* this is inline with the other operations, ie. not exclusive like the above */
+int point_crossover;        // this flag puts on a 1 or 2 pt crossover instead of the normal crossover
 
 
 int cut_mutation;
@@ -58,24 +58,24 @@ int cut_plague;
 int pop_size;
 int max_generations;
 
-int max_arg;			   /* the number of external arguments */
-int new_tree_depth;		/* the initial trees will have this as a max depth */
-int mutate_tree_depth;	 /* when mutating, this will be the max depth of the new subtree */
-double beta;			   /* this is the expected value of the selection exponential distribution */
+int max_arg;            /* the number of external arguments */
+int new_tree_depth;      /* the initial trees will have this as a max depth */
+int mutate_tree_depth;    /* when mutating, this will be the max depth of the new subtree */
+double beta;            /* this is the expected value of the selection exponential distribution */
 double beta_divisor;
 
 int ramped;
 int list_best;
-double rand_seed;		  /* -1 means use timer */
+double rand_seed;        /* -1 means use timer */
 int elitism;
 double tolerance;
-double bloat_cutoff;	   /* zero means no bloat control, otherwise when max pop size > bloat control, terminate */
-int fitness_reinit;		/* if non-zero, recalls fitness_init every n-th ngeneration */
-int remove_duplicates;	 /* remove duplicates in pop to maximize diversity, replace with new random trees */
-int force_rooted;		  /* if == -1, use anything, ow. use element # */
+double bloat_cutoff;      /* zero means no bloat control, otherwise when max pop size > bloat control, terminate */
+int fitness_reinit;      /* if non-zero, recalls fitness_init every n-th ngeneration */
+int remove_duplicates;    /* remove duplicates in pop to maximize diversity, replace with new random trees */
+int force_rooted;        /* if == -1, use anything, ow. use element # */
 long fitness_evals;
 long fitness_skipped;
-int skip_fitness;		  /* turn on fancy fitness skipping */
+int skip_fitness;        /* turn on fancy fitness skipping */
 int use_alt_tree_hash;
 
 int first_match_gen;
@@ -101,7 +101,7 @@ double fitness_param_5;
 double fitness_param_6;
 double fitness_param_7;
 
-double fitness_out_1;	// five more values for local output
+double fitness_out_1;   // five more values for local output
 double fitness_out_2;
 double fitness_out_3;
 double fitness_out_4;
@@ -118,7 +118,7 @@ double fitness_out_14;
 double fitness_out_15;
 
 double solute_early_l2_termination; // stop when this is met
-long solute_max_mfem_calls;		 // stop when mfem calls exceeds this
+long solute_max_mfem_calls;       // stop when mfem calls exceeds this
 
 char *cachedir;
 unsigned int initial_diskcache_size; // this is number of entries, multiply by vector size to get disk space
@@ -160,7 +160,7 @@ char *migrate_out_mv_new_to_current;
 char *migrate_in_filename[MAX_MIGRATE_IN_FILES];
 int migrate_in_file_count;
 
-int end_save_best;				// save best # to output
+int end_save_best;            // save best # to output
 char *end_save_best_filename;
 int save_every_fitness_after_generation; // number of generations before saving starts
 int save_every_fitness_best; // # to save best every generation
@@ -217,7 +217,7 @@ typedef struct _Solute_center
    double k;
    double r;
 }
-   Solute_center;
+Solute_center;
 
 vector<Solute_center> solute_centers;
 
@@ -239,27 +239,27 @@ value f_solute(value *, void *v)
       double *d = (double *)n->data;
       if(!ga_sc && s_proximity_limit && sp[RESULT_STACK])
       {
-	 int i;
-	 for(i = 0; i < sp[RESULT_STACK]; i+=2)
-	 {
-	    if(fabs(d[0] - stack[RESULT_STACK][i]) < s_proximity_limit)
-	    {
-	       if(debug_level > 4)
-	       {
-		  printf("s proximity limit exclusion %g %g %g\n", d[0], stack[RESULT_STACK][i], fabs(d[0] - stack[RESULT_STACK][i]));
-	       }
-	       if(proximity_inactivates)
-	       {
-		  ((char *)n->data)[SOLUTE_DATA_PROX_FLAG] = 0;
-		  ((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] = 0;
-	       }
-	       else
-	       {
-		  ((char *)n->data)[SOLUTE_DATA_PROX_FLAG] = 1;
-	       }
-	       return(0);
-	    }
-	 }
+         int i;
+         for(i = 0; i < sp[RESULT_STACK]; i+=2)
+         {
+            if(fabs(d[0] - stack[RESULT_STACK][i]) < s_proximity_limit)
+            {
+               if(debug_level > 4)
+               {
+                  printf("s proximity limit exclusion %g %g %g\n", d[0], stack[RESULT_STACK][i], fabs(d[0] - stack[RESULT_STACK][i]));
+               }
+               if(proximity_inactivates)
+               {
+                  ((char *)n->data)[SOLUTE_DATA_PROX_FLAG] = 0;
+                  ((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] = 0;
+               }
+               else
+               {
+                  ((char *)n->data)[SOLUTE_DATA_PROX_FLAG] = 1;
+               }
+               return(0);
+            }
+         }
       }
       push_stack(RESULT_STACK, d[0]); // sedimentation
       push_stack(RESULT_STACK, d[1]); // k (f_ratio)
@@ -356,125 +356,125 @@ void f_node_mutate_solute(void *v)
       node_mutate_count++;
       if(use_random_normal || ga_sc)
       {
-	 double_pair v;
-	 random_normal_sd_1 = (d[3] - d[2])/(6.0 * log(2.0 + 2.0 * this_generation) / log(2.0));
-	 random_normal_sd_2 = (d[5] - d[4])/(6.0 * log(2.0 + 2.0 * this_generation) / log(2.0));
-	 v = random_normal(d[0], random_normal_sd_1, d[1], random_normal_sd_2);
-	 //	  printf("%d: v.x %.4g %.4g [%.4g,%.4g,%.4g] v.y %.4g %.4g [%.4g,%.4g,%.4g]\n",
-	 //	 this_rank,
-	 //	 v.x, random_normal_sd_1,
-	 //	 d[0], d[2], d[3],
-	 //	 v.y, random_normal_sd_2,
-	 //	 d[1], d[4], d[5]); fflush(stdout);
+         double_pair v;
+         random_normal_sd_1 = (d[3] - d[2])/(6.0 * log(2.0 + 2.0 * this_generation) / log(2.0));
+         random_normal_sd_2 = (d[5] - d[4])/(6.0 * log(2.0 + 2.0 * this_generation) / log(2.0));
+         v = random_normal(d[0], random_normal_sd_1, d[1], random_normal_sd_2);
+         //     printf("%d: v.x %.4g %.4g [%.4g,%.4g,%.4g] v.y %.4g %.4g [%.4g,%.4g,%.4g]\n",
+         //    this_rank,
+         //    v.x, random_normal_sd_1,
+         //    d[0], d[2], d[3],
+         //    v.y, random_normal_sd_2,
+         //    d[1], d[4], d[5]); fflush(stdout);
 
-	 if(sel > .4 || ga_sc)
-	 {
-	    node_mutate_count_D++;
-	    d[1] = v.y;
-	    if(d[1] < d[4])
-	    {
-	       d[1] = d[4];
-	    }
-	    else
-	    {
-	       if(d[1] > d[5])
-	       {
-		  d[1] = d[5];
-	       }
-	    }
-	    if (ga_sc) 
-	    {
-	       s_rounding = d[4];
-	    }
-	    d[1] = roundn(d[1], 1, solute_rounding);
-	 }
-	 if(sel < .6 && !ga_sc)
-	 {
-	    node_mutate_count_s++;
-	    d[0] = v.x;
-	    if(d[0] < d[2])
-	    {
-	       d[0] = d[2];
-	    }
-	    else
-	    {
-	       if(d[0] > d[3])
-	       {
-		  d[0] = d[3];
-	       }
-	    }
-	    d[0] = roundn(d[0], s_rounding, solute_rounding);
-	 }
+         if(sel > .4 || ga_sc)
+         {
+            node_mutate_count_D++;
+            d[1] = v.y;
+            if(d[1] < d[4])
+            {
+               d[1] = d[4];
+            }
+            else
+            {
+               if(d[1] > d[5])
+               {
+                  d[1] = d[5];
+               }
+            }
+            if (ga_sc) 
+            {
+               s_rounding = d[4];
+            }
+            d[1] = roundn(d[1], 1, solute_rounding);
+         }
+         if(sel < .6 && !ga_sc)
+         {
+            node_mutate_count_s++;
+            d[0] = v.x;
+            if(d[0] < d[2])
+            {
+               d[0] = d[2];
+            }
+            else
+            {
+               if(d[0] > d[3])
+               {
+                  d[0] = d[3];
+               }
+            }
+            d[0] = roundn(d[0], s_rounding, solute_rounding);
+         }
       }
       else
       {
-	 if(sel > .4)
-	 {
-	    node_mutate_count_D++;
-	    if(drand48() > .5)
-	    {
-	       d[1] += (drand48() * (d[5] - d[4]) + d[4]) * SOLUTE_MUTATE_MULT;
-	       if(d[1] > d[5])
-	       {
-		  d[1] = d[4];
-	       }
-	    }
-	    else
-	    {
-	       d[1] -= (drand48() * (d[5] - d[4]) + d[4]) * SOLUTE_MUTATE_MULT;
-	       if(d[1] < d[4])
-	       {
-		  d[1] = d[4];
-	       }
-	    }
-	    d[1] = roundn(d[1], 1, solute_rounding);
-	 }
-	 if(sel < .6)
-	 {
-	    node_mutate_count_s++;
-	    if(drand48() > .5)
-	    {
-	       d[0] += (drand48() * (d[3] - d[2]) + d[2]) * SOLUTE_MUTATE_MULT;
-	       if(d[0] > d[3])
-	       {
-		  d[0] = d[3];
-	       }
-	    }
-	    else
-	    {
-	       d[0] -= (drand48() * (d[3] - d[2]) + d[2]) * SOLUTE_MUTATE_MULT;
-	       if(d[0] < d[2])
-	       {
-		  d[0] = d[2];
-	       }
-	    }
-	    d[0] = roundn(d[0], s_rounding, solute_rounding);
-	 }
+         if(sel > .4)
+         {
+            node_mutate_count_D++;
+            if(drand48() > .5)
+            {
+               d[1] += (drand48() * (d[5] - d[4]) + d[4]) * SOLUTE_MUTATE_MULT;
+               if(d[1] > d[5])
+               {
+                  d[1] = d[4];
+               }
+            }
+            else
+            {
+               d[1] -= (drand48() * (d[5] - d[4]) + d[4]) * SOLUTE_MUTATE_MULT;
+               if(d[1] < d[4])
+               {
+                  d[1] = d[4];
+               }
+            }
+            d[1] = roundn(d[1], 1, solute_rounding);
+         }
+         if(sel < .6)
+         {
+            node_mutate_count_s++;
+            if(drand48() > .5)
+            {
+               d[0] += (drand48() * (d[3] - d[2]) + d[2]) * SOLUTE_MUTATE_MULT;
+               if(d[0] > d[3])
+               {
+                  d[0] = d[3];
+               }
+            }
+            else
+            {
+               d[0] -= (drand48() * (d[3] - d[2]) + d[2]) * SOLUTE_MUTATE_MULT;
+               if(d[0] < d[2])
+               {
+                  d[0] = d[2];
+               }
+            }
+            d[0] = roundn(d[0], s_rounding, solute_rounding);
+         }
       }
       if(d[0] < 1e-14 && !ga_sc)
       {
-	 printf("%d: mutate solute d[0] %.4g d[2] %.4g d[3] %.4g\n", this_rank, d[0], d[2], d[3]);
-	 fflush(stdout);
+         printf("%d: mutate solute d[0] %.4g d[2] %.4g d[3] %.4g\n", this_rank, d[0], d[2], d[3]);
+         fflush(stdout);
       }
       if(d[0] < d[2])
       {
-	 d[0] = d[2];
+         d[0] = d[2];
       }
       if(d[0] > d[3])
       {
-	 d[0] = d[3];
+         d[0] = d[3];
       }
       if(d[1] < d[4])
       {
-	 d[1] = d[4];
+         d[1] = d[4];
       }
       if(d[1] > d[5])
       {
-	 d[1] = d[5];
+         d[1] = d[5];
       }
       if(node_mutate_reactivates)
       {
-	 ((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] = 1;
+         ((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] = 1;
       }
       return;
    }
@@ -491,7 +491,7 @@ unsigned int f_hash_solute(void *v)
    {
       for(i = 0; i < (n->data_size - 1); i++)
       {
-	 hash += x[i];
+         hash += x[i];
       }
    }
    return hash;
@@ -503,9 +503,9 @@ void f_fprint_params_solute(FILE *f, void *v)
    node *n = (node *)v;
    double *d = (double *)(n->data);
    fprintf(f, "[%g %g]%s(%.5g)",
-	   d[0], d[1],
-	   ((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ? "" : "i",
-	   ((double *)n->data)[SOLUTE_DATA_CONCENTRATION]);
+           d[0], d[1],
+           ((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ? "" : "i",
+           ((double *)n->data)[SOLUTE_DATA_CONCENTRATION]);
 }
 
 value f_write(value *args, void *)
@@ -610,7 +610,7 @@ value f_exp(value *args, void *)
    {
       for(i = 1; i < args[1]; i++)
       {
-	 r *= args[0];
+         r *= args[0];
       }
       return r;
    }
@@ -630,7 +630,7 @@ value f_factorial(value *args, void *)
       value j, r = 1;
       for(j = 2; j<= args[0]; j++)
       {
-	 r *= j;
+         r *= j;
       }
       return(r);
    }
@@ -708,7 +708,7 @@ void setup_elements()
    {
       max_element_weight += elements[i].init_weight;
       if(i < max_e - 1)
-	 max_element_weight_no_eot += elements[i].init_weight;
+         max_element_weight_no_eot += elements[i].init_weight;
       elements[i].weight_sum = max_element_weight;
    }
 }
@@ -725,7 +725,7 @@ node *new_node()
    for(i = 0; i < MAX_BR; i++)
    {
       n->children[i] = (node *)0;   // no children
-      n->argv[i] = 0;			   // no argument assignments
+      n->argv[i] = 0;            // no argument assignments
    }
    n->data = 0;
    n->data_size = 0;
@@ -738,10 +738,10 @@ void free_node(node *n)
    {
       if(n->data)
       {
-	 //  puts("free n->data");
-	 free(n->data);
+         //  puts("free n->data");
+         free(n->data);
       }
-      //	puts("free n");
+      //   puts("free n");
       free(n);
    }
 }
@@ -754,7 +754,7 @@ void free_tree(node *n)
       int i;
       for(i = 0; i < MAX_BR; i++)
       {
-	 free_tree(n->children[i]);
+         free_tree(n->children[i]);
       }
       free_node(n);
    }
@@ -773,7 +773,7 @@ int set_tree_pos(node *n, node *nodes[], int offset)
    {
       if(n->children[i])
       {
-	 offset = set_tree_pos(n->children[i], nodes, offset);
+         offset = set_tree_pos(n->children[i], nodes, offset);
       }
    }
    return offset;
@@ -799,8 +799,8 @@ population *new_population(node *n, int points)
    {
       if((p->data = (void *)malloc(pop_data_size)) == NULL)
       {
-	 fputs("new_population data malloc failure\r\n", stderr);
-	 exit(-1);
+         fputs("new_population data malloc failure\r\n", stderr);
+         exit(-1);
       }
    }
    if((p->nodes = (node **)malloc(sizeof(node) * points)) == NULL)
@@ -872,7 +872,7 @@ int count_tree_points(node *n)
    {
       if(n->children[i])
       {
-	 r += count_tree_points(n->children[i]);
+         r += count_tree_points(n->children[i]);
       }
    }
    return r;
@@ -886,7 +886,7 @@ int count_tree_active_points(node *n)
    {
       if(n->children[i])
       {
-	 r += count_tree_active_points(n->children[i]);
+         r += count_tree_active_points(n->children[i]);
       }
    }
    return r;
@@ -905,22 +905,22 @@ void prune_tree(node *n, int prune_at)
    {
       for(i = 0; i < n->e->argc; i++)
       {
-	 if(n->children[i])
-	 {
-	    prune_tree(n->children[i], prune_at);
-	 }
+         if(n->children[i])
+         {
+            prune_tree(n->children[i], prune_at);
+         }
       }
    }
    else
    {
       for(i = 0; i < n->e->argc; i++)
       {
-	 if(n->children[i])
-	 {
-	    free_tree(n->children[i]);
-	    n->children[i] = (node *)0;
-	    n->argv[i] = (int)floor(drand48() * max_arg);
-	 }
+         if(n->children[i])
+         {
+            free_tree(n->children[i]);
+            n->children[i] = (node *)0;
+            n->argv[i] = (int)floor(drand48() * max_arg);
+         }
       }
    }
 }
@@ -945,20 +945,20 @@ node *delete_inactive_next_active_node(node *n, population *p)
    // deletes inactives and returns next active or zero of none left.
    node *m;
    //  printf("delete_inactive_next <points %d> solute[%g %g] %d\n", p->points, ((double *)n->data)[0], ((double *)n->data)[1],
-   //	 ((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS]);
+   //    ((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS]);
    // delete any inactive
    while(!((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS])
    {
-      //	puts("delete_inactive_next found inactive");
+      //   puts("delete_inactive_next found inactive");
       m = n;
       n = n->children[0];
       free_node(m); // clear inactive node
       p->points--;
       if(!n)
       {
-	 // no children left
-	 // puts("no children left");
-	 return 0;
+         // no children left
+         // puts("no children left");
+         return 0;
       }
    }
    // ok, we have an active node
@@ -968,7 +968,7 @@ node *delete_inactive_next_active_node(node *n, population *p)
       // now point to next inactive or zero
       if(!(n->children[0] = delete_inactive_next_active_node(n->children[0], p)))
       {
-	 n->argv[0] = 0;
+         n->argv[0] = 0;
       }
    }
    // return the active node
@@ -983,13 +983,13 @@ void delete_inactive_nodes(population *p)
    {
       if(!p->root->children[0])
       {
-	 puts("no active child!");
-	 list_tree(p->root);
-	 puts("");
-	 fprintf(stderr, "no active child!\n");
-	 exit(-1);
+         puts("no active child!");
+         list_tree(p->root);
+         puts("");
+         fprintf(stderr, "no active child!\n");
+         exit(-1);
       }
-      //	printf("inactive root %d\n", ((char *)p->root->data)[SOLUTE_DATA_ACTIVE_OFS]);
+      //   printf("inactive root %d\n", ((char *)p->root->data)[SOLUTE_DATA_ACTIVE_OFS]);
       n = p->root;
       p->root = p->root->children[0];
       free_node(n);
@@ -998,18 +998,18 @@ void delete_inactive_nodes(population *p)
    //  puts("ok, root is now an active one");
    if(p->root->children[0])
    {
-      //	puts("with children");
+      //   puts("with children");
       if(!(p->root->children[0] = delete_inactive_next_active_node(p->root->children[0], p)))
       {
-	 p->root->argv[0] = 0;
+         p->root->argv[0] = 0;
       }
    }
    if(p->points < 1 || p->points != p->active_points)
    {
       fprintf(stderr, "delete inactive nodes error : p->points %d p->active_points %d\n",
-	      p->points,
-	      p->active_points
-	      );
+              p->points,
+              p->active_points
+              );
       exit(-1);
    }
    set_tree_pos(p->root, p->nodes, 0);
@@ -1030,11 +1030,11 @@ void list_tree(node *n)
    {
       if(n->children[i])
       {
-	 list_tree(n->children[i]);
+         list_tree(n->children[i]);
       }
       else
       {
-	 printf("@%d ", n->argv[i]);
+         printf("@%d ", n->argv[i]);
       }
    }
    printf(") ");
@@ -1053,7 +1053,7 @@ void serialize_out_tree(FILE *f, node *n)
       fputc(n->children[i] ? 1 : 0, f);
       if(n->children[i])
       {
-	 serialize_out_tree(f, n->children[i]);
+         serialize_out_tree(f, n->children[i]);
       }
       fwrite(&n->argv[i], sizeof(n->argv[i]), 1, f);
    }
@@ -1107,16 +1107,16 @@ node *serialize_in_tree(FILE *f)
    {
       if(fgetc(f))
       {
-	 if(!(n->children[i] = serialize_in_tree(f)))
-	 {
-	    fprintf(stderr, "premature eof in serialize_in_tree\n");
-	    free_node(n);
-	    return((node *)0);
-	 }
+         if(!(n->children[i] = serialize_in_tree(f)))
+         {
+            fprintf(stderr, "premature eof in serialize_in_tree\n");
+            free_node(n);
+            return((node *)0);
+         }
       }
       else
       {
-	 n->children[i] = 0;
+         n->children[i] = 0;
       }
       fread(&n->argv[i], sizeof(n->argv[i]), 1, f);
    }
@@ -1127,8 +1127,8 @@ node *serialize_in_tree(FILE *f)
    {
       if((n->data = (void *)malloc(n->data_size)) == NULL)
       {
-	 fprintf(stderr, "serialize in tree malloc of size %d failed\n", n->data_size);
-	 exit(-1);
+         fprintf(stderr, "serialize in tree malloc of size %d failed\n", n->data_size);
+         exit(-1);
       }
       fread(n->data, n->data_size, 1, f);
    }
@@ -1213,19 +1213,19 @@ int cmp_tree(node *n1, node *n2)
    for(i = 0; i < n1->e->argc; i++)
    {
       if((n1->children[i] && !n2->children[i]) ||
-	 (!n1->children[i] && n2->children[i]) ||
-	 n1->data_size != n2->data_size || 
-	 (n1->data_size && memcmp(n1->data, n2->data, n1->data_size)))
-	 return 0;
+         (!n1->children[i] && n2->children[i]) ||
+         n1->data_size != n2->data_size || 
+         (n1->data_size && memcmp(n1->data, n2->data, n1->data_size)))
+         return 0;
       if(n1->children[i])
       {
-	 if(!cmp_tree(n1->children[i], n2->children[i]))
-	    return 0;
+         if(!cmp_tree(n1->children[i], n2->children[i]))
+            return 0;
       }
       else
       {
-	 if(n1->argv[i] != n2->argv[i])
-	    return 0;
+         if(n1->argv[i] != n2->argv[i])
+            return 0;
       }
    }
    return 1;
@@ -1243,11 +1243,11 @@ unsigned int tree_hash(node *n)
    {
       if(n->children[i])
       {
-	 hash += ((tree_hash(n->children[i]) * (i+1)) << 1);
+         hash += ((tree_hash(n->children[i]) * (i+1)) << 1);
       }
       else
       {
-	 hash += (i + 1) * (n->argv[i] + 1);
+         hash += (i + 1) * (n->argv[i] + 1);
       }
    }
    return hash;
@@ -1261,64 +1261,64 @@ value evaluate(node *n, value *args)
    {
    case CTL_NONE :
       {
-	 for(i = 0; i < n->e->argc; i++)
-	 {
-	    l[i] = n->children[i] ? evaluate(n->children[i], args) : args[n->argv[i]];
-	 }
-	 return(n->e->func(l, (void *)n));
-	 break;
+         for(i = 0; i < n->e->argc; i++)
+         {
+            l[i] = n->children[i] ? evaluate(n->children[i], args) : args[n->argv[i]];
+         }
+         return(n->e->func(l, (void *)n));
+         break;
       }
    case CTL_WHILETERMINALS :
       {
-	 int j, k;
-	 int length;
-	 //	  int length = (int)args[0];
-	 //	  if(length < 1) {
-	 //	length = 1;
-	 //	  }
-	 length = max_arg;
-	 while(nonempty_stack(ARGUMENT_STACK))
-	 {
-	    for(j = 0; j < length; j++)
-	    {
-	       k = j % max_arg;
-	       args[k] = pop_stack(ARGUMENT_STACK);
-	    }
-	    if(n->children[0])
-	    {
-	       evaluate(n->children[0], args);
-	    }
-	 }
-	 return 0;
-	 break;
+         int j, k;
+         int length;
+         //     int length = (int)args[0];
+         //     if(length < 1) {
+         //   length = 1;
+         //     }
+         length = max_arg;
+         while(nonempty_stack(ARGUMENT_STACK))
+         {
+            for(j = 0; j < length; j++)
+            {
+               k = j % max_arg;
+               args[k] = pop_stack(ARGUMENT_STACK);
+            }
+            if(n->children[0])
+            {
+               evaluate(n->children[0], args);
+            }
+         }
+         return 0;
+         break;
       }
    case CTL_WHILETERMINALSWRITE :
       {
-	 int j, k;
-	 //	  value ret;
-	 int length = (int)args[0];
-	 if(length < 1)
-	 {
-	    length = 1;
-	 }
-	 //	  length = max_arg;
-	 while(nonempty_stack(ARGUMENT_STACK))
-	 {
-	    for(j = 0; j < length; j++)
-	    {
-	       k = j % max_arg;
-	       args[k] = pop_stack(ARGUMENT_STACK);
-	    }
-	    push_stack(0, n->children[1] ? evaluate(n->children[1], args) : args[n->argv[1]]);
-	 }
-	 return 0;
-	 break;
+         int j, k;
+         //     value ret;
+         int length = (int)args[0];
+         if(length < 1)
+         {
+            length = 1;
+         }
+         //     length = max_arg;
+         while(nonempty_stack(ARGUMENT_STACK))
+         {
+            for(j = 0; j < length; j++)
+            {
+               k = j % max_arg;
+               args[k] = pop_stack(ARGUMENT_STACK);
+            }
+            push_stack(0, n->children[1] ? evaluate(n->children[1], args) : args[n->argv[1]]);
+         }
+         return 0;
+         break;
       }
    default:
       {
-	 fprintf(stderr, "evaluate unknown control structure\r\n");
-	 exit(-1);
-	 break;
+         fprintf(stderr, "evaluate unknown control structure\r\n");
+         exit(-1);
+         break;
       }
    }
    return 0;
@@ -1332,7 +1332,7 @@ int pick_a_random_function(int weight)
    {
       if(elements[r].weight_sum > pos && !elements[r].rooted)
       {
-	 return(r);
+         return(r);
       }
    }
    fputs("pick_a_random_function fall-through error\r\n", stderr);
@@ -1347,7 +1347,7 @@ int pick_a_random_function_rooted(int weight)
    {
       if(elements[r].weight_sum > pos)
       {
-	 return(r);
+         return(r);
       }
    }
    fputs("pick_a_random_function fall-through error\r\n", stderr);
@@ -1367,12 +1367,12 @@ node *new_random_subtree(int i, int max_depth)
       j = pick_a_random_function(max_element_weight);
       if(j < max_e - 1 && max_depth > 1)
       {
-	 n->children[i] = new_random_subtree(j, max_depth - 1);
+         n->children[i] = new_random_subtree(j, max_depth - 1);
       }
       else
       {
-	 n->argv[i] = this_global_arg;
-	 this_global_arg = (this_global_arg + 1) % max_arg;
+         n->argv[i] = this_global_arg;
+         this_global_arg = (this_global_arg + 1) % max_arg;
       }
    }
    return(n);
@@ -1496,7 +1496,7 @@ double test_fitness(node *n)
       ev2 = ev * ev;
       if(ev2 < tolerance)
       {
-	 ev2 = 0e0;
+         ev2 = 0e0;
       }
       fit += ev2;
    }
@@ -1527,7 +1527,7 @@ double test_fitness_cubic(node *n)
       ev2 = ev * ev;
       if(ev2 < tolerance)
       {
-	 ev2 = 0e0;
+         ev2 = 0e0;
       }
       fit += ev2;
    }
@@ -1555,12 +1555,12 @@ double test_fitness_quartic(node *n)
    {
       pass_fit_args[0] = fit_args[0];
       ev = evaluate(n, pass_fit_args) - (fit_args[0] * fit_args[0] * fit_args[0] * fit_args[0] +
-					 fit_args[0] * fit_args[0] * fit_args[0] + 1);
+                                         fit_args[0] * fit_args[0] * fit_args[0] + 1);
 
       ev2 = ev * ev;
       if(ev2 < tolerance)
       {
-	 ev2 = 0e0;
+         ev2 = 0e0;
       }
       fit += ev2;
    }
@@ -1585,17 +1585,17 @@ double mmp_fitness(node *n)
    {
       for(fit_args[1] = 0; fit_args[1] < fit_args[0]; fit_args[1]++)
       {
-	 pass_fit_args[0] = fit_args[0];
-	 pass_fit_args[1] = fit_args[1];
-	 pass_fit_args[2] = fit_args[2];
-	 pass_fit_args[3] = fit_args[3];
-	 ev = evaluate(n, pass_fit_args) - fit_cmp[fit_args[0]-2][fit_args[1]];
-	 ev2 = ev * ev;
-	 if(ev2 < tolerance)
-	 {
-	    ev2 = 0e0;
-	 }
-	 fit += ev2;
+         pass_fit_args[0] = fit_args[0];
+         pass_fit_args[1] = fit_args[1];
+         pass_fit_args[2] = fit_args[2];
+         pass_fit_args[3] = fit_args[3];
+         ev = evaluate(n, pass_fit_args) - fit_cmp[fit_args[0]-2][fit_args[1]];
+         ev2 = ev * ev;
+         if(ev2 < tolerance)
+         {
+            ev2 = 0e0;
+         }
+         fit += ev2;
       }
    }
    //  printf("--%.4g\n", fit);
@@ -1613,7 +1613,7 @@ void fitness_init_null()
    return;
 }
 
-#define MAX_DIM	12
+#define MAX_DIM   12
 #define TEST_CASES 25
 #define FINAL_TEST_CASES 1000
 
@@ -1642,28 +1642,28 @@ void fitness_init_pointhyperplane()
       dot = 0e0;
       for(j = 0; j < use_dim; j++)
       {
-	 hyperplanes[i][j] = 2e0 * drand48() - 1e0;
-	 points[i][j] = 2e0 * drand48() - 1e0;
-	 dot += hyperplanes[i][j] * points[i][j];
+         hyperplanes[i][j] = 2e0 * drand48() - 1e0;
+         points[i][j] = 2e0 * drand48() - 1e0;
+         dot += hyperplanes[i][j] * points[i][j];
       }
       dots[i] = dot;
       if(dots[i] >= 0)
       {
-	 signs[i] = 1;
+         signs[i] = 1;
       }
       else
       {
-	 signs[i] = 0;
+         signs[i] = 0;
       }
-      /*	printf("\t%d hyperplane (", i);
-	for(j = 0; j < use_dim; j++) {
-	printf("%.4g ", hyperplanes[i][j]);
-	}
-	printf(") point (");
-	for(j = 0; j < use_dim; j++) {
-	printf("%.4g ", points[i][j]);
-	}
-	printf(") dot %.4g\n", dot);
+      /*   printf("\t%d hyperplane (", i);
+           for(j = 0; j < use_dim; j++) {
+           printf("%.4g ", hyperplanes[i][j]);
+           }
+           printf(") point (");
+           for(j = 0; j < use_dim; j++) {
+           printf("%.4g ", points[i][j]);
+           }
+           printf(") dot %.4g\n", dot);
       */
    }
 }
@@ -1680,14 +1680,14 @@ double fitness_pointhyperplane_dot(node *n)
    {
       for(j = 0, k = 0; j < use_dim; j++, k++)
       {
-	 pass_fit_args[k++] = hyperplanes[i][j];
-	 pass_fit_args[k] = points[i][j];
+         pass_fit_args[k++] = hyperplanes[i][j];
+         pass_fit_args[k] = points[i][j];
       }
       ev = evaluate(n, pass_fit_args) - dots[i];
       ev2 = ev * ev;
       if(ev2 < tolerance)
       {
-	 ev2 = 0e0;
+         ev2 = 0e0;
       }
       fit += ev2;
    }
@@ -1705,30 +1705,30 @@ double fitness_pointhyperplane_sign(node *n)
    {
       for(j = 0, k = 0; j < use_dim; j++, k++)
       {
-	 pass_fit_args[k++] = hyperplanes[i][j];
-	 pass_fit_args[k] = points[i][j];
+         pass_fit_args[k++] = hyperplanes[i][j];
+         pass_fit_args[k] = points[i][j];
       }
       if(evaluate(n, pass_fit_args) >= -tolerance)
       {
-	 if(signs[i])
-	 {
-	    ev = 0; // good match
-	 }
-	 else
-	 {
-	    ev = 1;
-	 }
+         if(signs[i])
+         {
+            ev = 0; // good match
+         }
+         else
+         {
+            ev = 1;
+         }
       }
       else
       {
-	 if(signs[i])
-	 {
-	    ev = 1;
-	 }
-	 else
-	 {
-	    ev = 0;
-	 }
+         if(signs[i])
+         {
+            ev = 1;
+         }
+         else
+         {
+            ev = 0;
+         }
       }
       fit += ev;
    }
@@ -1753,28 +1753,28 @@ double fitness_final_check_pointhyperplane_dot(node *n)
       test_dot = 0e0;
       for(j = 0; j < use_dim; j++)
       {
-	 test_hyperplane[j] = 2e0 * drand48() - 1e0;
-	 test_point[j] = 2e0 * drand48() - 1e0;
-	 test_dot += test_hyperplane[j] * test_point[j];
+         test_hyperplane[j] = 2e0 * drand48() - 1e0;
+         test_point[j] = 2e0 * drand48() - 1e0;
+         test_dot += test_hyperplane[j] * test_point[j];
       }
       if(test_dot >= 0)
       {
-	 test_sign = 1;
+         test_sign = 1;
       }
       else
       {
-	 test_sign = 0;
+         test_sign = 0;
       }
       for(j = 0, k = 0; j < use_dim; j++, k++)
       {
-	 pass_fit_args[k++] = test_hyperplane[j];
-	 pass_fit_args[k] = test_point[j];
+         pass_fit_args[k++] = test_hyperplane[j];
+         pass_fit_args[k] = test_point[j];
       }
       ev = evaluate(n, pass_fit_args) - test_dot;
       ev2 = ev * ev;
       if(ev2 < tolerance)
       {
-	 ev2 = 0e0;
+         ev2 = 0e0;
       }
       fit += ev2;
    }
@@ -1797,44 +1797,44 @@ double fitness_final_check_pointhyperplane_sign(node *n)
       test_dot = 0e0;
       for(j = 0; j < use_dim; j++)
       {
-	 test_hyperplane[j] = 2e0 * drand48() - 1e0;
-	 test_point[j] = 2e0 * drand48() - 1e0;
-	 test_dot += test_hyperplane[j] * test_point[j];
+         test_hyperplane[j] = 2e0 * drand48() - 1e0;
+         test_point[j] = 2e0 * drand48() - 1e0;
+         test_dot += test_hyperplane[j] * test_point[j];
       }
       if(test_dot >= 0)
       {
-	 test_sign = 1;
+         test_sign = 1;
       }
       else
       {
-	 test_sign = 0;
+         test_sign = 0;
       }
       for(j = 0, k = 0; j < use_dim; j++, k++)
       {
-	 pass_fit_args[k++] = test_hyperplane[j];
-	 pass_fit_args[k] = test_point[j];
+         pass_fit_args[k++] = test_hyperplane[j];
+         pass_fit_args[k] = test_point[j];
       }
       if(evaluate(n, pass_fit_args) >= -tolerance)
       {
-	 if(test_sign)
-	 {
-	    ev = 0; // good match
-	 }
-	 else
-	 {
-	    ev = 1;
-	 }
+         if(test_sign)
+         {
+            ev = 0; // good match
+         }
+         else
+         {
+            ev = 1;
+         }
       }
       else
       {
-	 if(test_sign)
-	 {
-	    ev = 1;
-	 }
-	 else
-	 {
-	    ev = 0;
-	 }
+         if(test_sign)
+         {
+            ev = 1;
+         }
+         else
+         {
+            ev = 0;
+         }
       }
       fit += ev;
    }
@@ -1860,25 +1860,25 @@ void fitness_init_pointhyperplane_multi_dim()
       dot = 0e0;
       for(j = 0; j < use_dim; j++)
       {
-	 dots_md[i][j] = 0e0;
-	 hyperplanes[i][j] = 2e0 * drand48() - 1e0;
-	 points[i][j] = 2e0 * drand48() - 1e0;
-	 dot = hyperplanes[i][j] * points[i][j];
-	 for(d = 0; d <= j; d++)
-	 {
-	    dots_md[i][d] += dot;
-	 }
+         dots_md[i][j] = 0e0;
+         hyperplanes[i][j] = 2e0 * drand48() - 1e0;
+         points[i][j] = 2e0 * drand48() - 1e0;
+         dot = hyperplanes[i][j] * points[i][j];
+         for(d = 0; d <= j; d++)
+         {
+            dots_md[i][d] += dot;
+         }
       }
       for(d = 0; d < use_dim; d++)
       {
-	 if(dots_md[i][d] >= 0)
-	 {
-	    signs_md[i][d] = 1;
-	 }
-	 else
-	 {
-	    signs_md[i][d] = 0;
-	 }
+         if(dots_md[i][d] >= 0)
+         {
+            signs_md[i][d] = 1;
+         }
+         else
+         {
+            signs_md[i][d] = 0;
+         }
       }
    }
    /*  for(d = 0; d < use_dim; d++) {
@@ -1910,18 +1910,18 @@ double fitness_pointhyperplane_multi_dim_dot(node *n)
    {
       for(d = 0; d < use_dim; d++)
       {
-	 for(j = 0, k = 0; j < use_dim; j++, k++)
-	 {
-	    pass_fit_args[k++] = hyperplanes[i][j % (d+1)];  // loop around the points
-	    pass_fit_args[k] = points[i][j % (d+1)];
-	 }
-	 ev = evaluate(n, pass_fit_args) - dots_md[i][d];
-	 ev2 = ev * ev;
-	 if(ev2 < tolerance)
-	 {
-	    ev2 = 0e0;
-	 }
-	 fit += ev2;
+         for(j = 0, k = 0; j < use_dim; j++, k++)
+         {
+            pass_fit_args[k++] = hyperplanes[i][j % (d+1)];  // loop around the points
+            pass_fit_args[k] = points[i][j % (d+1)];
+         }
+         ev = evaluate(n, pass_fit_args) - dots_md[i][d];
+         ev2 = ev * ev;
+         if(ev2 < tolerance)
+         {
+            ev2 = 0e0;
+         }
+         fit += ev2;
       }
    }
    return(sqrt(fit));
@@ -1939,34 +1939,34 @@ double fitness_pointhyperplane_multi_dim_sign(node *n)
    {
       for(d = 0; d < use_dim; d++)
       {
-	 for(j = 0, k = 0; j < use_dim; j++, k++)
-	 {
-	    pass_fit_args[k++] = hyperplanes[i][j % (d+1)];  // loop around the points
-	    pass_fit_args[k] = points[i][j % (d+1)];
-	 }
-	 if(evaluate(n, pass_fit_args) >= -tolerance)
-	 {
-	    if(signs_md[i][d])
-	    {
-	       ev = 0; // good match
-	    }
-	    else
-	    {
-	       ev = 1;
-	    }
-	 }
-	 else
-	 {
-	    if(signs_md[i][d])
-	    {
-	       ev = 1;
-	    }
-	    else
-	    {
-	       ev = 0;
-	    }
-	 }
-	 fit += ev;
+         for(j = 0, k = 0; j < use_dim; j++, k++)
+         {
+            pass_fit_args[k++] = hyperplanes[i][j % (d+1)];  // loop around the points
+            pass_fit_args[k] = points[i][j % (d+1)];
+         }
+         if(evaluate(n, pass_fit_args) >= -tolerance)
+         {
+            if(signs_md[i][d])
+            {
+               ev = 0; // good match
+            }
+            else
+            {
+               ev = 1;
+            }
+         }
+         else
+         {
+            if(signs_md[i][d])
+            {
+               ev = 1;
+            }
+            else
+            {
+               ev = 0;
+            }
+         }
+         fit += ev;
       }
    }
    return(fit);
@@ -2000,23 +2000,23 @@ void fitness_init_pointhyperplane_stack_multi_h()
       number_of_h[i] = use_h;
       for(h = 0; h < use_h; h++)
       {
-	 dot = 0e0;
-	 for(j = 0; j < use_dim; j++)
-	 {
-	    dots_mh[i][h] = 0e0;
-	    hyperplanes_mh[i][h][j] = 2e0 * drand48() - 1e0;
-	    points_mh[i][h][j] = 2e0 * drand48() - 1e0;
-	    dot += hyperplanes_mh[i][h][j] * points_mh[i][h][j];
-	 }
-	 dots_mh[i][h] = dot;
-	 if(dots_mh[i][h] >= 0)
-	 {
-	    signs_mh[i][h] = 1;
-	 }
-	 else
-	 {
-	    signs_mh[i][h] = 0;
-	 }
+         dot = 0e0;
+         for(j = 0; j < use_dim; j++)
+         {
+            dots_mh[i][h] = 0e0;
+            hyperplanes_mh[i][h][j] = 2e0 * drand48() - 1e0;
+            points_mh[i][h][j] = 2e0 * drand48() - 1e0;
+            dot += hyperplanes_mh[i][h][j] * points_mh[i][h][j];
+         }
+         dots_mh[i][h] = dot;
+         if(dots_mh[i][h] >= 0)
+         {
+            signs_mh[i][h] = 1;
+         }
+         else
+         {
+            signs_mh[i][h] = 0;
+         }
       }
    }
    /*  for(i = 0; i < TEST_CASES; i++) {
@@ -2051,46 +2051,46 @@ double fitness_pointhyperplane_stack_multi_h_sign(node *n)
       stacks_init();
       for(h = 0; h < number_of_h[i]; h++)
       {
-	 for(j = 0, k = 0; j < use_dim; j++, k++)
-	 {
-	    push_stack(1, hyperplanes_mh[i][h][j]);
-	    push_stack(1, points_mh[i][h][j]);
-	 }
+         for(j = 0, k = 0; j < use_dim; j++, k++)
+         {
+            push_stack(1, hyperplanes_mh[i][h][j]);
+            push_stack(1, points_mh[i][h][j]);
+         }
       }
       evaluate(n, pass_fit_args);
       for(h = 0; h < number_of_h[i]; h++)
       {
-	 if(nonempty_stack(RESULT_STACK))
-	 {
-	    ret = pop_stack(RESULT_STACK);
-	    if(ret >= -tolerance)
-	    {
-	       if(signs_mh[i][h])
-	       {
-		  ev = 0; // good match
-	       }
-	       else
-	       {
-		  ev = 1;
-	       }
-	    }
-	    else
-	    {
-	       if(signs_mh[i][h])
-	       {
-		  ev = 1;
-	       }
-	       else
-	       {
-		  ev = 0;
-	       }
-	    }
-	 }
-	 else
-	 {
-	    ev = use_dim * 2; // penalize missing args
-	 }
-	 fit += ev;
+         if(nonempty_stack(RESULT_STACK))
+         {
+            ret = pop_stack(RESULT_STACK);
+            if(ret >= -tolerance)
+            {
+               if(signs_mh[i][h])
+               {
+                  ev = 0; // good match
+               }
+               else
+               {
+                  ev = 1;
+               }
+            }
+            else
+            {
+               if(signs_mh[i][h])
+               {
+                  ev = 1;
+               }
+               else
+               {
+                  ev = 0;
+               }
+            }
+         }
+         else
+         {
+            ev = use_dim * 2; // penalize missing args
+         }
+         fit += ev;
       }
       fit += use_dim * 2 * sp[RESULT_STACK];  // penalize excess args
    }
@@ -2117,74 +2117,74 @@ double fitness_final_check_pointhyperplane_stack_multi_h_sign(node *n)
    {
       stacks_init();
       use_h = (int)floor(1+drand48()*(MAX_H - 1));
-      //	printf("use_h %d\n", use_h);
+      //   printf("use_h %d\n", use_h);
       for(h = 0; h < use_h; h++)
       {
-	 test_dots[h] = 0e0;
-	 for(j = 0; j < use_dim; j++)
-	 {
-	    test_hyperplanes[h][j] = 2e0 * drand48() - 1e0;
-	    test_points[h][j] = 2e0 * drand48() - 1e0;
-	    test_dots[h] += test_hyperplanes[h][j] * test_points[h][j];
-	 }
-	 if(test_dots[h] >= 0)
-	 {
-	    test_signs[h] = 1;
-	 }
-	 else
-	 {
-	    test_signs[h] = 0;
-	 }
+         test_dots[h] = 0e0;
+         for(j = 0; j < use_dim; j++)
+         {
+            test_hyperplanes[h][j] = 2e0 * drand48() - 1e0;
+            test_points[h][j] = 2e0 * drand48() - 1e0;
+            test_dots[h] += test_hyperplanes[h][j] * test_points[h][j];
+         }
+         if(test_dots[h] >= 0)
+         {
+            test_signs[h] = 1;
+         }
+         else
+         {
+            test_signs[h] = 0;
+         }
       }
       for(h = 0; h < use_h; h++)
       {
-	 for(j = 0, k = 0; j < use_dim; j++, k++)
-	 {
-	    push_stack(1, test_hyperplanes[h][j]);
-	    push_stack(1, test_points[h][j]);
-	 }
+         for(j = 0, k = 0; j < use_dim; j++, k++)
+         {
+            push_stack(1, test_hyperplanes[h][j]);
+            push_stack(1, test_points[h][j]);
+         }
       }
-      //	puts("stack 1 before evaluate:\n");
-      //	print_stack(ARGUMENT_STACK);
+      //   puts("stack 1 before evaluate:\n");
+      //   print_stack(ARGUMENT_STACK);
       evaluate(n, pass_fit_args);
-      //	puts("stack 0 after evaluate:\n");
-      //	print_stack(RESULT_STACK);
-      //	for(h = 0; h < use_h; h++) {
-      //	  printf("test_signs[%d] %d\n", h, test_signs[h]);
-      //	}
+      //   puts("stack 0 after evaluate:\n");
+      //   print_stack(RESULT_STACK);
+      //   for(h = 0; h < use_h; h++) {
+      //     printf("test_signs[%d] %d\n", h, test_signs[h]);
+      //   }
       for(h = 0; h < use_h; h++)
       {
-	 if(nonempty_stack(RESULT_STACK))
-	 {
-	    ret = pop_stack(RESULT_STACK);
-	    if(ret >= -tolerance)
-	    {
-	       if(test_signs[h])
-	       {
-		  ev = 0; // good match
-	       }
-	       else
-	       {
-		  ev = 1;
-	       }
-	    }
-	    else
-	    {
-	       if(test_signs[h])
-	       {
-		  ev = 1;
-	       }
-	       else
-	       {
-		  ev = 0;
-	       }
-	    }
-	 }
-	 else
-	 {
-	    ev = use_dim * 2;
-	 }
-	 fit += ev;
+         if(nonempty_stack(RESULT_STACK))
+         {
+            ret = pop_stack(RESULT_STACK);
+            if(ret >= -tolerance)
+            {
+               if(test_signs[h])
+               {
+                  ev = 0; // good match
+               }
+               else
+               {
+                  ev = 1;
+               }
+            }
+            else
+            {
+               if(test_signs[h])
+               {
+                  ev = 1;
+               }
+               else
+               {
+                  ev = 0;
+               }
+            }
+         }
+         else
+         {
+            ev = use_dim * 2;
+         }
+         fit += ev;
       }
       fit += use_dim * 2 * sp[RESULT_STACK];
    }
@@ -2211,12 +2211,12 @@ void fitness_init_solute()
    if(fitness_param_2 <= 10e0)
    {
       fitness_param_2 = 101;
-      //	printf("scan points set to %g, use -Y to set otherwise\n", fitness_param_2);
+      //   printf("scan points set to %g, use -Y to set otherwise\n", fitness_param_2);
    }
    if(fitness_param_3 <= 0.4e0)
    {
       fitness_param_3 = 1.5e0;
-      //	printf("concentration clipping set to %g, use -Z to set otherwise\n", fitness_param_3);
+      //   printf("concentration clipping set to %g, use -Z to set otherwise\n", fitness_param_3);
    }
    //  mfem_fitness_init((int)fitness_param_2, fitness_param_3, clip_bottom, cell_top, cell_bottom);
    // todo new fitness stuff
@@ -2228,12 +2228,12 @@ void fitness_init_solute()
      char line[MAX_INPUT_LIN_LENGTH];
      char *p;
      int i;
-	  
+     
      if(load_file = fopen("l2_configuration", "r")) {
      double s;
 
      while(fgets(line, sizeof(line), load_file) != NULL) {
-		
+      
      p = strchr(line, ' ');
      if(!p) {
      fprintf(stderr, "l2_configuration file format error\n");
@@ -2289,11 +2289,11 @@ double fitness_solute(node *n)
       solute.k = stack[RESULT_STACK][i + 1];
       if(ga_mw)
       {
-	 solute.s =
-	    pow(pow((solute.s * our_us_fe_nnls_t->experiment[0].vbar20)/(AVOGADRO * M_PI), 2e0)/6e0,1e0/3e0) *
-	    (1e0 -  DENS_20W *
-	     our_us_fe_nnls_t->experiment[0].vbar20) /
-	    (3e0 * solute.k * our_us_fe_nnls_t->experiment[0].vbar20 * VISC_20W);
+         solute.s =
+            pow(pow((solute.s * our_us_fe_nnls_t->experiment[0].vbar20)/(AVOGADRO * M_PI), 2e0)/6e0,1e0/3e0) *
+            (1e0 -  DENS_20W *
+             our_us_fe_nnls_t->experiment[0].vbar20) /
+            (3e0 * solute.k * our_us_fe_nnls_t->experiment[0].vbar20 * VISC_20W);
       }
       solute_vector.push_back(solute);
    }
@@ -2301,8 +2301,8 @@ double fitness_solute(node *n)
    {
       for(u = 0; u < solute_vector.size(); u++)
       {
-	 printf("%d: solute_vector[%d] = %g %g\n", this_rank, u, solute_vector[u].s, solute_vector[u].k);
-	 fflush(stdout);
+         printf("%d: solute_vector[%d] = %g %g\n", this_rank, u, solute_vector[u].s, solute_vector[u].k);
+         fflush(stdout);
       }
    }
    unsigned int e;
@@ -2314,31 +2314,31 @@ double fitness_solute(node *n)
       vector <struct mfem_data> use_experiment;
       use_experiment.push_back(our_us_fe_nnls_t->experiment[e]);
       //  printf("%d: call calc_residuals %lx\n", this_rank, &our_us_fe_nnls_t->experiment); fflush(stdout);
-      //	Simulation_values sv = our_us_fe_nnls_t->calc_residuals(our_us_fe_nnls_t->experiment, solute_vector, 0e0, 1);
+      //   Simulation_values sv = our_us_fe_nnls_t->calc_residuals(our_us_fe_nnls_t->experiment, solute_vector, 0e0, 1);
       if(ga_sc) {
-	 if (solute_vector.size() != s_estimate_solutes) 
-	 {
-	    printf("%d: !! solute_vector.size() (%u) != s_estimate_solutes (%u)\n", 
-		   this_rank, (unsigned int)solute_vector.size(), s_estimate_solutes); fflush(stdout);
-	    Simulation_values sv;
-	    vector<double> no_noise;
-	    vector<double> variances;
-	    sv.solutes = solute_vector;
-	    sv.variance = 1e99;
-	    variances.push_back(sv.variance);
-	    sv.ti_noise = no_noise;
-	    sv.ri_noise = no_noise;
-	    sve[e] = sv;
-	 } else {
-	    sve[e] = us_ga_interacting_calc(use_experiment, solute_vector, 0e0);
-	 }
+         if (solute_vector.size() != s_estimate_solutes) 
+         {
+            printf("%d: !! solute_vector.size() (%u) != s_estimate_solutes (%u)\n", 
+                   this_rank, (unsigned int)solute_vector.size(), s_estimate_solutes); fflush(stdout);
+            Simulation_values sv;
+            vector<double> no_noise;
+            vector<double> variances;
+            sv.solutes = solute_vector;
+            sv.variance = 1e99;
+            variances.push_back(sv.variance);
+            sv.ti_noise = no_noise;
+            sv.ri_noise = no_noise;
+            sve[e] = sv;
+         } else {
+            sve[e] = us_ga_interacting_calc(use_experiment, solute_vector, 0e0);
+         }
       } else {
-	 sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1, e);
+         sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1, e);
       }
       if(debug_level > 1)
       {
-	 printf("%d: exp %d variance %g\n", this_rank, e, sve[e].variance);
-	 fflush(stdout);
+         printf("%d: exp %d variance %g\n", this_rank, e, sve[e].variance);
+         fflush(stdout);
       }
       //  printf("%d: back from calc_residuals\n", this_rank); fflush(stdout);
    } // for e
@@ -2348,12 +2348,12 @@ double fitness_solute(node *n)
    {
       for(e = 1; e < our_us_fe_nnls_t->experiment.size(); e++)
       {
-	 result += sve[e].variance;
-	 unsigned int f;
-	 for(f = 0; f < tot_solutes.size(); f++)
-	 {
-	    tot_solutes[f].c += sve[e].solutes[f].c;
-	 }
+         result += sve[e].variance;
+         unsigned int f;
+         for(f = 0; f < tot_solutes.size(); f++)
+         {
+            tot_solutes[f].c += sve[e].solutes[f].c;
+         }
       }
    }
    ga_last_sve = sve;
@@ -2369,43 +2369,43 @@ double fitness_solute(node *n)
    {
       if (tot_solutes.size())
       {
-	 //	result = sv.variance;
-	 for(u = 0; u < tot_solutes.size(); u++)
-	 {
-	    //	  printf("results tot_solutes[%d] = %g %g %g\n", u, tot_solutes[u].s, tot_solutes[u].k, tot_solutes[u].c);
-	    if(tot_solutes[u].c > SOLUTE_CONCENTRATION_THRESHOLD)
-	    {
-	       nonzeros++;
-	    }
-	    while(m && (!((char *)m->data)[SOLUTE_DATA_ACTIVE_OFS] ||
-			((char *)m->data)[SOLUTE_DATA_PROX_FLAG]))
-	    {
-	       if(((char *)m->data)[SOLUTE_DATA_PROX_FLAG])
-	       {
-		  ((double *)(m->data))[SOLUTE_DATA_CONCENTRATION] = 0e0;
-	       }
-	       m = m->children[0];
-	    }
-	    if(!m)
-	    {
-	       fprintf(stderr, "fitness_solute  unexpected termination\n");
-	       exit(-1);
-	    }
-	    ((double *)(m->data))[SOLUTE_DATA_CONCENTRATION] = tot_solutes[u].c;
-	    if(concentration_inactivate_prob &&
-	       ((double *)(m->data))[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD &&
-	       drand48() < concentration_inactivate_prob)
-	    {
-	       ((double *)(m->data))[SOLUTE_DATA_CONCENTRATION] = 0e0;
-	       ((char *)(m->data))[SOLUTE_DATA_ACTIVE_OFS] = 0;
-	       //	  puts("solute inactivated!");
-	    }
-	    m = m->children[0];
-	 }
+         //   result = sv.variance;
+         for(u = 0; u < tot_solutes.size(); u++)
+         {
+            //     printf("results tot_solutes[%d] = %g %g %g\n", u, tot_solutes[u].s, tot_solutes[u].k, tot_solutes[u].c);
+            if(tot_solutes[u].c > SOLUTE_CONCENTRATION_THRESHOLD)
+            {
+               nonzeros++;
+            }
+            while(m && (!((char *)m->data)[SOLUTE_DATA_ACTIVE_OFS] ||
+                        ((char *)m->data)[SOLUTE_DATA_PROX_FLAG]))
+            {
+               if(((char *)m->data)[SOLUTE_DATA_PROX_FLAG])
+               {
+                  ((double *)(m->data))[SOLUTE_DATA_CONCENTRATION] = 0e0;
+               }
+               m = m->children[0];
+            }
+            if(!m)
+            {
+               fprintf(stderr, "fitness_solute  unexpected termination\n");
+               exit(-1);
+            }
+            ((double *)(m->data))[SOLUTE_DATA_CONCENTRATION] = tot_solutes[u].c;
+            if(concentration_inactivate_prob &&
+               ((double *)(m->data))[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD &&
+               drand48() < concentration_inactivate_prob)
+            {
+               ((double *)(m->data))[SOLUTE_DATA_CONCENTRATION] = 0e0;
+               ((char *)(m->data))[SOLUTE_DATA_ACTIVE_OFS] = 0;
+               //     puts("solute inactivated!");
+            }
+            m = m->children[0];
+         }
       }
       else
       {
-	 result = 1e100;
+         result = 1e100;
       }
    } else {
       result = sqrt(result);
@@ -2417,16 +2417,16 @@ double fitness_solute(node *n)
    {
       if(regularize_on_RMSD)
       {
-	 result += result * regularization_factor * nonzeros;
+         result += result * regularization_factor * nonzeros;
       }
       else
       {
-	 result += pow(sqrt(result) * regularization_factor * nonzeros, 2.0);
+         result += pow(sqrt(result) * regularization_factor * nonzeros, 2.0);
       }
    }
    //  printf("result regularized %g\n", result);
    //  fflush(stdout);
-   //	printf("%d: result %g\n", this_rank, result); fflush(stdout);
+   //   printf("%d: result %g\n", this_rank, result); fflush(stdout);
    return result;
 }
 
@@ -2462,7 +2462,7 @@ double solute_distance_l2(node *n)
       result += (factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i])) * (factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i]));
       if(fabs(factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i])) > l1)
       {
-	 l1 = fabs(factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i]));
+         l1 = fabs(factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i]));
       }
    }
    fitness_param_6 = l1;
@@ -2487,11 +2487,11 @@ double solute_distance_from_target(node *n)
    {
       for(i = 0; i < sp[RESULT_STACK]; i++)
       {
-	 result += (factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i])) * (factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i]));
-	 if(fabs(factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i])) > l1)
-	 {
-	    l1 = fabs(factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i]));
-	 }
+         result += (factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i])) * (factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i]));
+         if(fabs(factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i])) > l1)
+         {
+            l1 = fabs(factor[i % 2] * (stack[RESULT_STACK][i] - l2_comps[i]));
+         }
       }
    }
    else
@@ -2571,31 +2571,31 @@ void solute_test_perfect_fitness_run()
    {
       if(*line != '#')
       {
-	 s = atof(line);
-	 p = strchr(line, ' ');
-	 if(!p)
-	 {
-	    fprintf(stderr, "save_concentration file format error\n");
-	    exit(-1);
-	 }
-	 p++;
-	 k = atof(p);
-	 // p = strchr(p, ' ');
-	 //	  if(!p) {
-	 //	fprintf(stderr, "save_concentration file format error\n");
-	 //	exit(-1);
-	 //	  }
-	 //	  p++;
-	 //	  conc = atof(p);
+         s = atof(line);
+         p = strchr(line, ' ');
+         if(!p)
+         {
+            fprintf(stderr, "save_concentration file format error\n");
+            exit(-1);
+         }
+         p++;
+         k = atof(p);
+         // p = strchr(p, ' ');
+         //     if(!p) {
+         //   fprintf(stderr, "save_concentration file format error\n");
+         //   exit(-1);
+         //     }
+         //     p++;
+         //     conc = atof(p);
 
-	 //	  printf("adding s %g d %g conc %g\n", s, d, conc);
-	 //	  k =  k_calc(s, d, use_vbar);
-	 // todo fix this!
-	 printf("adding s %g k %g\n", s, k);
+         //     printf("adding s %g d %g conc %g\n", s, d, conc);
+         //     k =  k_calc(s, d, use_vbar);
+         // todo fix this!
+         printf("adding s %g k %g\n", s, k);
 
-	 push_stack(RESULT_STACK, s);
-	 push_stack(RESULT_STACK, k);
-	 //	  push_stack(CONCENTRATION_STACK, conc);
+         push_stack(RESULT_STACK, s);
+         push_stack(RESULT_STACK, k);
+         //     push_stack(CONCENTRATION_STACK, conc);
       }
    }
    puts("mfem_fitness");
@@ -2742,7 +2742,7 @@ void fitness_test()
      push_stack(CONSTANTS_STACK, FITNESS_CONSTANT_NEG_1);
      }
      printf("%g", mfem_fitness(1));
-     //	puts("constant concentrations stack:");
+     //   puts("constant concentrations stack:");
      for(i = 0; i < sp[RESULT_STACK]; i++) {
      printf("|%g", stack[RESULT_STACK][i]);
      }
@@ -2785,15 +2785,15 @@ int partition(double *A, population *pop[], int p, int r)
    {
       if(A[j] <= x)
       {
-	 i++;
+         i++;
 
-	 tmp = A[i];
-	 A[i] = A[j];
-	 A[j] = tmp;
+         tmp = A[i];
+         A[i] = A[j];
+         A[j] = tmp;
 
-	 tmp_pop = pop[i];
-	 pop[i] = pop[j];
-	 pop[j] = tmp_pop;
+         tmp_pop = pop[i];
+         pop[i] = pop[j];
+         pop[j] = tmp_pop;
       }
    }
    i++;
@@ -2835,19 +2835,19 @@ int partition_hash(double *A, unsigned int *B, population *pop[], int p, int r)
    {
       if(A[j] < x || (A[j] == x && B[j] <= x_B))
       {
-	 i++;
+         i++;
 
-	 tmp = A[i];
-	 A[i] = A[j];
-	 A[j] = tmp;
+         tmp = A[i];
+         A[i] = A[j];
+         A[j] = tmp;
 
-	 tmp_B = B[i];
-	 B[i] = B[j];
-	 B[j] = tmp_B;
+         tmp_B = B[i];
+         B[i] = B[j];
+         B[j] = tmp_B;
 
-	 tmp_pop = pop[i];
-	 pop[i] = pop[j];
-	 pop[j] = tmp_pop;
+         tmp_pop = pop[i];
+         pop[i] = pop[j];
+         pop[j] = tmp_pop;
       }
    }
    i++;
@@ -2876,8 +2876,8 @@ node *dup_tree(node *n)
    {
       if((dup->data = (void *)malloc(n->data_size)) == NULL)
       {
-	 fprintf(stderr, "dup_tree malloc of size %d failed\n", n->data_size);
-	 exit(-1);
+         fprintf(stderr, "dup_tree malloc of size %d failed\n", n->data_size);
+         exit(-1);
       }
       dup->data_size = n->data_size;
       memcpy(dup->data, n->data, dup->data_size);
@@ -2886,11 +2886,11 @@ node *dup_tree(node *n)
    {
       if(n->children[i])
       {
-	 dup->children[i] = dup_tree(n->children[i]);
+         dup->children[i] = dup_tree(n->children[i]);
       }
       else
       {
-	 dup->argv[i] = n->argv[i];
+         dup->argv[i] = n->argv[i];
       }
    }
    return dup;
@@ -2899,12 +2899,12 @@ node *dup_tree(node *n)
 void pstats(FILE *fp)
 {
    fprintf(fp, "%d: crossover %lu mutate %lu replicate %lu subtree_duplicate %lu beta_overflow %lu\n",
-	   this_rank,
-	   crossover_count,
-	   mutate_count,
-	   replicate_count,
-	   subtree_duplicate_count,
-	   beta_overflow);
+           this_rank,
+           crossover_count,
+           mutate_count,
+           replicate_count,
+           subtree_duplicate_count,
+           beta_overflow);
 }
 
 node *replicate(population *mom)
@@ -2936,7 +2936,7 @@ node *mutate(population *mom)
       int spawn_arg = spawn_pos - spawn_remove_node->pos;
 
       if(spawn_remove_node->children[spawn_arg])
-	 free_tree(spawn_remove_node->children[spawn_arg]);
+         free_tree(spawn_remove_node->children[spawn_arg]);
 
       spawn_remove_node->children[spawn_arg] = new_random_tree(mutate_tree_depth);
 
@@ -2971,44 +2971,44 @@ node *crossover(population *mom, population *dad)
       int dad_pos;
       node *spawn_remove_node;
       int spawn_arg;
-      //	printf("mom(spawn) pos %d\n", spawn_pos);
+      //   printf("mom(spawn) pos %d\n", spawn_pos);
       do
       {
-	 dad_pos = (int)(drand48() * (1 + dad->points)) - 1; // - 1 to allow root selection
-	 counter++;
-	 if(counter > 100000)
-	 {
-	    fprintf(stderr, "stuck trying to find non-root element in crossover\r\n");
-	    exit(-1);
-	 }
+         dad_pos = (int)(drand48() * (1 + dad->points)) - 1; // - 1 to allow root selection
+         counter++;
+         if(counter > 100000)
+         {
+            fprintf(stderr, "stuck trying to find non-root element in crossover\r\n");
+            exit(-1);
+         }
       }
       while(dad_pos < 0 && dad->root->e->rooted);
-      //	printf("dad pos %d\n", dad_pos);
+      //   printf("dad pos %d\n", dad_pos);
       spawn_remove_node = tmp_pop->nodes[spawn_pos]; // one from the duped mom
       spawn_arg = spawn_pos - spawn_remove_node->pos;  // which argument to moms duped node will be replaced ->pos is
       // the base position.
-      if(spawn_remove_node->children[spawn_arg])		   // is the selected position a non-terminal
-	 free_tree(spawn_remove_node->children[spawn_arg]);
+      if(spawn_remove_node->children[spawn_arg])         // is the selected position a non-terminal
+         free_tree(spawn_remove_node->children[spawn_arg]);
 
       if(dad_pos >= 0)
-      {								   // does dad have anything besides a root?
-	 node *dad_insert_node = dad->nodes[dad_pos];
-	 int dad_arg = dad_pos - dad_insert_node->pos;
+      {                           // does dad have anything besides a root?
+         node *dad_insert_node = dad->nodes[dad_pos];
+         int dad_arg = dad_pos - dad_insert_node->pos;
 
-	 if(dad_insert_node->children[dad_arg])
-	 {
-	    node * tmptree = dup_tree(dad_insert_node->children[dad_arg]);
-	    spawn_remove_node->children[spawn_arg] = tmptree;
-	 }
-	 else
-	 {
-	    spawn_remove_node->children[spawn_arg] = (node *)0;
-	    spawn_remove_node->argv[spawn_arg] = dad_insert_node->argv[dad_arg];
-	 }
+         if(dad_insert_node->children[dad_arg])
+         {
+            node * tmptree = dup_tree(dad_insert_node->children[dad_arg]);
+            spawn_remove_node->children[spawn_arg] = tmptree;
+         }
+         else
+         {
+            spawn_remove_node->children[spawn_arg] = (node *)0;
+            spawn_remove_node->argv[spawn_arg] = dad_insert_node->argv[dad_arg];
+         }
       }
       else
       {
-	 spawn_remove_node->children[spawn_arg] = dup_tree(dad->root);
+         spawn_remove_node->children[spawn_arg] = dup_tree(dad->root);
       }
       free(tmp_pop->nodes);
       free(tmp_pop);
@@ -3019,28 +3019,28 @@ node *crossover(population *mom, population *dad)
       int dad_pos;
       do
       {
-	 dad_pos = (int)(drand48() * (1 + dad->points)) - 1; // - 1 to allow root selection
-	 counter++;
-	 if(counter > 100000)
-	 {
-	    fprintf(stderr, "stuck trying to find non-root element in crossover\r\n");
-	    exit(-1);
-	 }
+         dad_pos = (int)(drand48() * (1 + dad->points)) - 1; // - 1 to allow root selection
+         counter++;
+         if(counter > 100000)
+         {
+            fprintf(stderr, "stuck trying to find non-root element in crossover\r\n");
+            exit(-1);
+         }
       }
       while(dad_pos < 0 && dad->root->e->rooted);
       if(dad_pos >= 0)
       {
-	 node *dad_insert_node = dad->nodes[dad_pos];
-	 int dad_arg = dad_pos - dad_insert_node->pos;
+         node *dad_insert_node = dad->nodes[dad_pos];
+         int dad_arg = dad_pos - dad_insert_node->pos;
 
-	 if(dad_insert_node->children[dad_arg])
-	 {  // is there a tree here?
-	    return(dup_tree(dad_insert_node->children[dad_arg]));
-	 }
-	 else
-	 {
-	    return(dup_tree(dad_insert_node));
-	 }
+         if(dad_insert_node->children[dad_arg])
+         {  // is there a tree here?
+            return(dup_tree(dad_insert_node->children[dad_arg]));
+         }
+         else
+         {
+            return(dup_tree(dad_insert_node));
+         }
       }
       return(dup_tree(dad->root));
    }
@@ -3075,23 +3075,23 @@ node *crossover_1pt(population *mom, population *dad)
       spawn_remove_node = tmp_pop->nodes[spawn_pos]; // one from the duped mom
       spawn_arg = spawn_pos - spawn_remove_node->pos;  // which argument to moms duped node will be replaced ->pos is
       // the base position.
-      if(spawn_remove_node->children[spawn_arg])		   // is the selected position a non-terminal
-	 free_tree(spawn_remove_node->children[spawn_arg]);
+      if(spawn_remove_node->children[spawn_arg])         // is the selected position a non-terminal
+         free_tree(spawn_remove_node->children[spawn_arg]);
 
       {
-	 node *dad_insert_node = dad->nodes[spawn_pos];
-	 int dad_arg = spawn_pos - dad_insert_node->pos;
+         node *dad_insert_node = dad->nodes[spawn_pos];
+         int dad_arg = spawn_pos - dad_insert_node->pos;
 
-	 if(dad_insert_node->children[dad_arg])
-	 {
-	    node * tmptree = dup_tree(dad_insert_node->children[dad_arg]);
-	    spawn_remove_node->children[spawn_arg] = tmptree;
-	 }
-	 else
-	 {
-	    spawn_remove_node->children[spawn_arg] = (node *)0;
-	    spawn_remove_node->argv[spawn_arg] = dad_insert_node->argv[dad_arg];
-	 }
+         if(dad_insert_node->children[dad_arg])
+         {
+            node * tmptree = dup_tree(dad_insert_node->children[dad_arg]);
+            spawn_remove_node->children[spawn_arg] = tmptree;
+         }
+         else
+         {
+            spawn_remove_node->children[spawn_arg] = (node *)0;
+            spawn_remove_node->argv[spawn_arg] = dad_insert_node->argv[dad_arg];
+         }
       }
       free(tmp_pop->nodes);
       free(tmp_pop);
@@ -3128,23 +3128,23 @@ node *crossover_2pt(population *mom, population *dad)
       spawn_remove_node = tmp_pop->nodes[spawn_pos]; // one from the duped mom
       spawn_arg = spawn_pos - spawn_remove_node->pos;  // which argument to moms duped node will be replaced ->pos is
       // the base position.
-      if(spawn_remove_node->children[spawn_arg])		   // is the selected position a non-terminal
-	 free_tree(spawn_remove_node->children[spawn_arg]);
+      if(spawn_remove_node->children[spawn_arg])         // is the selected position a non-terminal
+         free_tree(spawn_remove_node->children[spawn_arg]);
 
       {
-	 node *dad_insert_node = dad->nodes[spawn_pos];
-	 int dad_arg = spawn_pos - dad_insert_node->pos;
+         node *dad_insert_node = dad->nodes[spawn_pos];
+         int dad_arg = spawn_pos - dad_insert_node->pos;
 
-	 if(dad_insert_node->children[dad_arg])
-	 {
-	    node * tmptree = dup_tree(dad_insert_node->children[dad_arg]);
-	    spawn_remove_node->children[spawn_arg] = tmptree;
-	 }
-	 else
-	 {
-	    spawn_remove_node->children[spawn_arg] = (node *)0;
-	    spawn_remove_node->argv[spawn_arg] = dad_insert_node->argv[dad_arg];
-	 }
+         if(dad_insert_node->children[dad_arg])
+         {
+            node * tmptree = dup_tree(dad_insert_node->children[dad_arg]);
+            spawn_remove_node->children[spawn_arg] = tmptree;
+         }
+         else
+         {
+            spawn_remove_node->children[spawn_arg] = (node *)0;
+            spawn_remove_node->argv[spawn_arg] = dad_insert_node->argv[dad_arg];
+         }
       }
       free(tmp_pop->nodes);
       free(tmp_pop);
@@ -3160,7 +3160,7 @@ void node_mutate(node *n)
    {
       if(n->children[i])
       {
-	 node_mutate(n->children[i]);
+         node_mutate(n->children[i]);
       }
    }
 }
@@ -3178,8 +3178,8 @@ void point_node_mutate(node *n, int points)
    {
       if(!(n = n->children[0]))
       {
-	 fprintf(stderr, "point node mutate overflow!\n");
-	 exit(-1);
+         fprintf(stderr, "point node mutate overflow!\n");
+         exit(-1);
       }
    }
    pct_node_mutation = 100;
@@ -3197,38 +3197,38 @@ int node_inactivate(population *p)
       i = (int)floor(p->points * drand48()); // pick a s range
       if(debug_level > 2)
       {
-	 printf("%d: node had %d points will inactivate # %d\n", this_rank, p->points, i);
+         printf("%d: node had %d points will inactivate # %d\n", this_rank, p->points, i);
       }
       n = p->root;
       while(i > 0)
       {
-	 if(!(n = n->children[0]))
-	 {
-	    fprintf(stderr, "node_inactivate error, no child!\n");
-	    exit(-1);
-	 }
-	 i--;
+         if(!(n = n->children[0]))
+         {
+            fprintf(stderr, "node_inactivate error, no child!\n");
+            exit(-1);
+         }
+         i--;
       }
       if(((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS])
       {
-	 ((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] = 0;
-	 ((double *)n->data)[SOLUTE_DATA_CONCENTRATION] = 0e0;
-	 p->active_points--;
-	 return 1;
+         ((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] = 0;
+         ((double *)n->data)[SOLUTE_DATA_CONCENTRATION] = 0e0;
+         p->active_points--;
+         return 1;
       }
       else
       {
-	 if(debug_level > 2)
-	 {
-	    printf("inactive already inactive\n");
-	 }
+         if(debug_level > 2)
+         {
+            printf("inactive already inactive\n");
+         }
       }
    }
    else
    {
       if(debug_level > 2)
       {
-	 printf("node had %d points only %d active, will skip\n", p->points, p->active_points);
+         printf("node had %d points only %d active, will skip\n", p->points, p->active_points);
       }
    }
    return 0;
@@ -3256,34 +3256,34 @@ int pop_selection()
 void print_stats()
 {
    printf(
-	  "%d: %d max generations\n"
+          "%d: %d max generations\n"
 
-	  "%d: %d population size\n"
+          "%d: %d population size\n"
 
-	  "%d: %d crossover percent\n"
-	  "%d: %.4g point mutation percent\n"
-	  "%d: %d subtree dup percent\n"
-	  "%d: %d replication percent\n"
+          "%d: %d crossover percent\n"
+          "%d: %.4g point mutation percent\n"
+          "%d: %d subtree dup percent\n"
+          "%d: %d replication percent\n"
 
-	  "%d: %d number of terminals (external variables)\n"
+          "%d: %d number of terminals (external variables)\n"
 
-	  "%d: %d new tree depth\n"
-	  "%d: %d mutate tree depth\n"
-	  "%d: %.4g migration probability\n"
-	  "%d: %.4g regularization\n"
-	  ,
-	  this_rank, max_generations,
-	  this_rank, pop_size,
-	  this_rank, pct_crossover,
-	  this_rank, pct_point_mutation,
-	  this_rank, pct_subtree_dup,
-	  this_rank, pct_replication,
-	  this_rank, max_arg,
-	  this_rank, new_tree_depth,
-	  this_rank, mutate_tree_depth,
-	  this_rank, migrate_prob,
-	  this_rank, regularization_factor
-	  );
+          "%d: %d new tree depth\n"
+          "%d: %d mutate tree depth\n"
+          "%d: %.4g migration probability\n"
+          "%d: %.4g regularization\n"
+          ,
+          this_rank, max_generations,
+          this_rank, pop_size,
+          this_rank, pct_crossover,
+          this_rank, pct_point_mutation,
+          this_rank, pct_subtree_dup,
+          this_rank, pct_replication,
+          this_rank, max_arg,
+          this_rank, new_tree_depth,
+          this_rank, mutate_tree_depth,
+          this_rank, migrate_prob,
+          this_rank, regularization_factor
+          );
    fflush(stdout);
 }
 
@@ -3296,44 +3296,44 @@ void save_every_this_pop(population *p, int g)
       node *m = p->root;
       while(m)
       {
-	 while(m && (!((char *)m->data)[SOLUTE_DATA_ACTIVE_OFS] ||
-		     ((double *)m->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
-	       )
-	 {
-	    m = m->children[0];
-	 }
-	 if(m)
-	 {
-	    active_points++;
-	    m = m->children[0];
-	 }
+         while(m && (!((char *)m->data)[SOLUTE_DATA_ACTIVE_OFS] ||
+                     ((double *)m->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
+               )
+         {
+            m = m->children[0];
+         }
+         if(m)
+         {
+            active_points++;
+            m = m->children[0];
+         }
       }
       if(active_points)
       {
-	 m = p->root;
-	 fprintf(save_every_fitness_file, "%d|%g|%d", g, p->fitness , active_points);
-	 for(j = 0; j < FITNESS_NO_OF_CONSTANTS; j++)
-	 {
-	    fprintf(save_every_fitness_file, "|%g", ((double *)p->data)[j]);
-	 }
-	 while(m)
-	 {
-	    while(m && (!((char *)m->data)[SOLUTE_DATA_ACTIVE_OFS] ||
-			((double *)m->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
-		  )
-	    {
-	       m = m->children[0];
-	    }
-	    if(m)
-	    {
-	       fprintf(save_every_fitness_file, "|%g|%g|%g" ,
-		       ((double *)m->data)[0],
-		       ((double *)m->data)[1],
-		       ((double *)m->data)[SOLUTE_DATA_CONCENTRATION]);
-	       m = m->children[0];
-	    }
-	 }
-	 fprintf(save_every_fitness_file, "\n");
+         m = p->root;
+         fprintf(save_every_fitness_file, "%d|%g|%d", g, p->fitness , active_points);
+         for(j = 0; j < FITNESS_NO_OF_CONSTANTS; j++)
+         {
+            fprintf(save_every_fitness_file, "|%g", ((double *)p->data)[j]);
+         }
+         while(m)
+         {
+            while(m && (!((char *)m->data)[SOLUTE_DATA_ACTIVE_OFS] ||
+                        ((double *)m->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
+                  )
+            {
+               m = m->children[0];
+            }
+            if(m)
+            {
+               fprintf(save_every_fitness_file, "|%g|%g|%g" ,
+                       ((double *)m->data)[0],
+                       ((double *)m->data)[1],
+                       ((double *)m->data)[SOLUTE_DATA_CONCENTRATION]);
+               m = m->children[0];
+            }
+         }
+         fprintf(save_every_fitness_file, "\n");
       }
    }
 }
@@ -3351,14 +3351,14 @@ Simulation_values node_to_sv(node *n)
    {
       solute.s = stack[RESULT_STACK][i];
       solute.k = stack[RESULT_STACK][i + 1];
-      //	if(ga_mw) {
-      //	solute.s =
-      //		pow(pow((solute.s * our_us_fe_nnls_t->experiment[0].vbar20)/(AVOGADRO * M_PI), 2e0)/6e0,1e0/3e0) *
-      //		(1e0 - our_us_fe_nnls_t->experiment[0].density *
-      //		 our_us_fe_nnls_t->experiment[0].vbar20) /
-      //		(3e0 * solute.k * our_us_fe_nnls_t->experiment[0].vbar20 *
-      //		 our_us_fe_nnls_t->experiment[0].viscosity * .01);
-      //	}
+      //   if(ga_mw) {
+      //   solute.s =
+      //      pow(pow((solute.s * our_us_fe_nnls_t->experiment[0].vbar20)/(AVOGADRO * M_PI), 2e0)/6e0,1e0/3e0) *
+      //      (1e0 - our_us_fe_nnls_t->experiment[0].density *
+      //       our_us_fe_nnls_t->experiment[0].vbar20) /
+      //      (3e0 * solute.k * our_us_fe_nnls_t->experiment[0].vbar20 *
+      //       our_us_fe_nnls_t->experiment[0].viscosity * .01);
+      //   }
       solute_vector.push_back(solute);
    }
    Simulation_values sv;
@@ -3370,36 +3370,36 @@ Simulation_values node_to_sv(node *n)
       vector <struct mfem_data> use_experiment;
       use_experiment.push_back(our_us_fe_nnls_t->experiment[e]);
       if(ga_sc) {
-	 if (solute_vector.size() != s_estimate_solutes) 
-	 {
-	    printf("%d: !! solute_vector.size() (%u) != s_estimate_solutes (%u)\n", 
-		   this_rank, (unsigned int)solute_vector.size(), s_estimate_solutes); fflush(stdout);
-	    Simulation_values sv;
-	    vector<double> no_noise;
-	    vector<double> variances;
-	    sv.solutes = solute_vector;
-	    sv.variance = 1e99;
-	    variances.push_back(sv.variance);
-	    sv.ti_noise = no_noise;
-	    sv.ri_noise = no_noise;
-	    sve[e] = sv;
-	 } else {
-	    sve[e] = us_ga_interacting_calc(use_experiment, solute_vector, 0e0);
-	 }
+         if (solute_vector.size() != s_estimate_solutes) 
+         {
+            printf("%d: !! solute_vector.size() (%u) != s_estimate_solutes (%u)\n", 
+                   this_rank, (unsigned int)solute_vector.size(), s_estimate_solutes); fflush(stdout);
+            Simulation_values sv;
+            vector<double> no_noise;
+            vector<double> variances;
+            sv.solutes = solute_vector;
+            sv.variance = 1e99;
+            variances.push_back(sv.variance);
+            sv.ti_noise = no_noise;
+            sv.ri_noise = no_noise;
+            sve[e] = sv;
+         } else {
+            sve[e] = us_ga_interacting_calc(use_experiment, solute_vector, 0e0);
+         }
       } else {
-	 sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1, e);
+         sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1, e);
       }
    } // for e
    if(our_us_fe_nnls_t->experiment.size() > 1)
    {
       for(e = 1; e < our_us_fe_nnls_t->experiment.size(); e++)
       {
-	 unsigned int f;
-	 sve[0].variance += sve[e].variance;
-	 for(f = 0; f < sve[0].solutes.size(); f++)
-	 {
-	    sve[0].solutes[f].c += sve[e].solutes[f].c;
-	 }
+         unsigned int f;
+         sve[0].variance += sve[e].variance;
+         for(f = 0; f < sve[0].solutes.size(); f++)
+         {
+            sve[0].solutes[f].c += sve[e].solutes[f].c;
+         }
       }
    }
    return(sve[0]);
@@ -3416,14 +3416,14 @@ vector<Solute> node_to_solute_vector(node *n)
    {
       solute.s = stack[RESULT_STACK][i];
       solute.k = stack[RESULT_STACK][i + 1];
-      //	if(ga_mw) {
-      //	solute.s =
-      //		pow(pow((solute.s * our_us_fe_nnls_t->experiment[0].vbar20)/(AVOGADRO * M_PI), 2e0)/6e0,1e0/3e0) *
-      //		(1e0 - our_us_fe_nnls_t->experiment[0].density *
-      //		 our_us_fe_nnls_t->experiment[0].vbar20) /
-      //		(3e0 * solute.k * our_us_fe_nnls_t->experiment[0].vbar20 *
-      //		 our_us_fe_nnls_t->experiment[0].viscosity * .01);
-      //	}
+      //   if(ga_mw) {
+      //   solute.s =
+      //      pow(pow((solute.s * our_us_fe_nnls_t->experiment[0].vbar20)/(AVOGADRO * M_PI), 2e0)/6e0,1e0/3e0) *
+      //      (1e0 - our_us_fe_nnls_t->experiment[0].density *
+      //       our_us_fe_nnls_t->experiment[0].vbar20) /
+      //      (3e0 * solute.k * our_us_fe_nnls_t->experiment[0].vbar20 *
+      //       our_us_fe_nnls_t->experiment[0].viscosity * .01);
+      //   }
       solute_vector.push_back(solute);
    }
    return(solute_vector);
@@ -3435,15 +3435,15 @@ void list_node_as_solute_vector(node *n)
    for(unsigned int i = 0; i < solute_vector.size(); i++)
    {
       printf("%d: best solute %d %.4g %.4g\n",
-	     this_rank, i, solute_vector[i].s, solute_vector[i].k);
+             this_rank, i, solute_vector[i].s, solute_vector[i].k);
    }
    fflush(stdout);
 }
 
 // two migrate ins' for a ring topo
 #define MIGRATE_IN_BUFS   2
-#define MIGRATE_OUT	   2
-#define MIGRATE_BUFS	  3
+#define MIGRATE_OUT      2
+#define MIGRATE_BUFS     3
 
 char *migrate_buffer[MIGRATE_BUFS];
 unsigned int migrate_size[MIGRATE_BUFS];
@@ -3485,12 +3485,12 @@ void alloc_migrate_buffers()
    {
       if((migrate_buffer[i] = (char *)malloc(migrate_size[i])) == NULL)
       {
-	 fputs("migrate buffers malloc failure\r\n", stderr);
-	 MPI_Abort(MPI_COMM_WORLD, -1);
-	 exit(-1);
+         fputs("migrate buffers malloc failure\r\n", stderr);
+         MPI_Abort(MPI_COMM_WORLD, -1);
+         exit(-1);
       }
       migrate_read_pos[i] =
-	 migrate_end_pos[i] = 0;
+         migrate_end_pos[i] = 0;
    }
 }
 
@@ -3559,7 +3559,7 @@ void buffer_serialize_out_tree(int buf, node *n)
       bufwrite(&c, 1, buf);
       if(n->children[i])
       {
-	 buffer_serialize_out_tree(buf, n->children[i]);
+         buffer_serialize_out_tree(buf, n->children[i]);
       }
       bufwrite(&n->argv[i], sizeof(n->argv[i]), buf);
    }
@@ -3614,16 +3614,16 @@ node *buffer_serialize_in_tree(int buf)
    {
       if(bufgetc(buf))
       {
-	 if(!(n->children[i] = buffer_serialize_in_tree(buf)))
-	 {
-	    fprintf(stderr, "premature eof in serialize_in_tree\n");
-	    free_node(n);
-	    return((node *)0);
-	 }
+         if(!(n->children[i] = buffer_serialize_in_tree(buf)))
+         {
+            fprintf(stderr, "premature eof in serialize_in_tree\n");
+            free_node(n);
+            return((node *)0);
+         }
       }
       else
       {
-	 n->children[i] = 0;
+         n->children[i] = 0;
       }
       bufread(&n->argv[i], sizeof(n->argv[i]), buf);
    }
@@ -3634,8 +3634,8 @@ node *buffer_serialize_in_tree(int buf)
    {
       if((n->data = (void *)malloc(n->data_size)) == NULL)
       {
-	 fprintf(stderr, "serialize in tree malloc of size %d failed\n", n->data_size);
-	 exit(-1);
+         fprintf(stderr, "serialize in tree malloc of size %d failed\n", n->data_size);
+         exit(-1);
       }
       bufread(n->data, n->data_size, buf);
    }
@@ -3671,8 +3671,8 @@ void buffer_close_serial_input(int buf)
 }
 
 void generations(double *A1, unsigned int *B1, population *pn1[],
-		 double *A2, unsigned int *B2, population *pn2[],
-		 int max_g)
+                 double *A2, unsigned int *B2, population *pn2[],
+                 int max_g)
 {
    /*
     * First, A1 is the initial pop population, then we will make 
@@ -3717,1230 +3717,1230 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
    {
       for(g = 0; !all_last_gen; g++)
       {
-	 //	if(this_rank == 1 && g == max_generations) {
-	 //	  printf("1: sleeping 30\n"); fflush(stdout);
-	 //	  sleep(30);
-	 //	  printf("1: done sleeping 30\n"); fflush(stdout);
-	 //	}
+         //   if(this_rank == 1 && g == max_generations) {
+         //     printf("1: sleeping 30\n"); fflush(stdout);
+         //     sleep(30);
+         //     printf("1: done sleeping 30\n"); fflush(stdout);
+         //   }
 
-	 this_generation = g;
+         this_generation = g;
 
-	 if(fitness_reinit && !(g % fitness_reinit))
-	 {
-	    fitness_init();
-	    if(skip_fitness)
-	    {
-	       for(i = 0; i < pop_size; i++)
-	       {
-		  pn[i]->fitness_valid = 0;
-	       }
-	    }
-	 }
+         if(fitness_reinit && !(g % fitness_reinit))
+         {
+            fitness_init();
+            if(skip_fitness)
+            {
+               for(i = 0; i < pop_size; i++)
+               {
+                  pn[i]->fitness_valid = 0;
+               }
+            }
+         }
 
-	 /* selection: sort by fitness */
-	 //	printf("%d: generation %d sort 1\n", this_rank, g);
+         /* selection: sort by fitness */
+         //   printf("%d: generation %d sort 1\n", this_rank, g);
 
-	 if(debug_level > 4)
-	 {
-	    double save_prob = concentration_inactivate_prob;
-	    concentration_inactivate_prob = 0;
-	    puts("debug_level 5a");
-	    for(i = 0; i < pop_size; i++)
-	    {
-	       printf("%d %g <%g> %d %d %u ", i, A[i], fitness(pn[i]->root), pn[i]->points, pn[i]->active_points, B[i]);
-	       list_tree(pn[i]->root);
-	       puts("");
-	    }
-	    concentration_inactivate_prob = save_prob;
-	 }
+         if(debug_level > 4)
+         {
+            double save_prob = concentration_inactivate_prob;
+            concentration_inactivate_prob = 0;
+            puts("debug_level 5a");
+            for(i = 0; i < pop_size; i++)
+            {
+               printf("%d %g <%g> %d %d %u ", i, A[i], fitness(pn[i]->root), pn[i]->points, pn[i]->active_points, B[i]);
+               list_tree(pn[i]->root);
+               puts("");
+            }
+            concentration_inactivate_prob = save_prob;
+         }
 
-	 quicksort_hash(A, B, pn, 0, pop_size - 1);
-	 if(A[0] > best_fitness + ROUNDING_THRESHOLD)
-	 {
-	    fprintf(stderr, "fitness got worse! g %d %g %g %g\n",g, A[0], best_fitness, fabs(A[0] - best_fitness));
-	 }
-	 if(A[0] < best_fitness)
-	 {
-	    best_fitness = A[0];
-	 }
-	 if(debug_level > 4)
-	 {
-	    double save_prob = concentration_inactivate_prob;
-	    concentration_inactivate_prob = 0;
-	    puts("debug_level 5");
-	    printf("%d %g <%g> %d %d %u ", 0, A[0], fitness(pn[0]->root), pn[0]->points, pn[0]->active_points, B[0]);
-	    list_tree(pn[0]->root);
-	    concentration_inactivate_prob = save_prob;
-	 }
+         quicksort_hash(A, B, pn, 0, pop_size - 1);
+         if(A[0] > best_fitness + ROUNDING_THRESHOLD)
+         {
+            fprintf(stderr, "fitness got worse! g %d %g %g %g\n",g, A[0], best_fitness, fabs(A[0] - best_fitness));
+         }
+         if(A[0] < best_fitness)
+         {
+            best_fitness = A[0];
+         }
+         if(debug_level > 4)
+         {
+            double save_prob = concentration_inactivate_prob;
+            concentration_inactivate_prob = 0;
+            puts("debug_level 5");
+            printf("%d %g <%g> %d %d %u ", 0, A[0], fitness(pn[0]->root), pn[0]->points, pn[0]->active_points, B[0]);
+            list_tree(pn[0]->root);
+            concentration_inactivate_prob = save_prob;
+         }
 
-	 if(remove_duplicates)
-	 {
-	    //	  printf("%d: generation %d mark duplicates\n", this_rank, g);
-	    last_pos = 0;
-	    for(i = 1; i < pop_size; i++)
-	    {
-	       if(debug_level > 3)
-	       {
-		  printf("checking pop %d:", i);
-	       }
-	       if(fabs(A[i] - A[last_pos]) < MATCH_TOLERANCE && B[i] == B[last_pos])
-	       {
-		  if(debug_level > 3)
-		  {
-		     printf(" A & B match");
-		  }
-		  if(cmp_tree(pn[i]->root, pn[last_pos]->root))
-		  {
-		     if(debug_level > 3)
-		     {
-			printf(" trees match, replacing\n");
-		     }
-		     replace_population_node(pn[i], new_random_tree_rooted(new_tree_depth));
-		     fitness_evals++;
-		     A[i] = fitness(pn[i]->root);
-		     /*
-		       ((double *)pn[i]->data)[FITNESS_CONSTANT_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_1];
-		       ((double *)pn[i]->data)[FITNESS_CONSTANT_NEG_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_NEG_1];
-		     */
-		     if(A[i] < tolerance)
-			A[i] = 0e0;
-		     pn[i]->fitness = A[i];
-		     pn[i]->fitness_valid = 1;
-		     pn[i]->active_points = count_tree_active_points(pn[i]->root);
-		     B[i] = tree_hash(pn[i]->root) + (pn[i]->active_points << 22);
-		     // was - tree_hash(pn[i]->root) * pn[i]->points;
-		  }
-		  else
-		  {
-		     if(debug_level > 3)
-		     {
-			printf(" trees don't match\n");
-		     }
-		     last_pos = i;
-		  }
-	       }
-	       else
-	       {
-		  if(debug_level > 3)
-		  {
-		     if(A[i] != A[last_pos])
-		     {
-			printf(" A doesn't match %g %g", A[i], A[last_pos]);
-		     }
-		     if(B[i] != B[last_pos])
-		     {
-			printf(" B doesn't match %u %u", B[i], B[last_pos]);
-		     }
-		  }
-		  last_pos = i;
-	       }
-	       if(debug_level > 3)
-	       {
-		  puts("");
-	       }
-	    }
-	    quicksort_hash(A, B, pn, 0, pop_size - 1);
-	 }
+         if(remove_duplicates)
+         {
+            //     printf("%d: generation %d mark duplicates\n", this_rank, g);
+            last_pos = 0;
+            for(i = 1; i < pop_size; i++)
+            {
+               if(debug_level > 3)
+               {
+                  printf("checking pop %d:", i);
+               }
+               if(fabs(A[i] - A[last_pos]) < MATCH_TOLERANCE && B[i] == B[last_pos])
+               {
+                  if(debug_level > 3)
+                  {
+                     printf(" A & B match");
+                  }
+                  if(cmp_tree(pn[i]->root, pn[last_pos]->root))
+                  {
+                     if(debug_level > 3)
+                     {
+                        printf(" trees match, replacing\n");
+                     }
+                     replace_population_node(pn[i], new_random_tree_rooted(new_tree_depth));
+                     fitness_evals++;
+                     A[i] = fitness(pn[i]->root);
+                     /*
+                       ((double *)pn[i]->data)[FITNESS_CONSTANT_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_1];
+                       ((double *)pn[i]->data)[FITNESS_CONSTANT_NEG_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_NEG_1];
+                     */
+                     if(A[i] < tolerance)
+                        A[i] = 0e0;
+                     pn[i]->fitness = A[i];
+                     pn[i]->fitness_valid = 1;
+                     pn[i]->active_points = count_tree_active_points(pn[i]->root);
+                     B[i] = tree_hash(pn[i]->root) + (pn[i]->active_points << 22);
+                     // was - tree_hash(pn[i]->root) * pn[i]->points;
+                  }
+                  else
+                  {
+                     if(debug_level > 3)
+                     {
+                        printf(" trees don't match\n");
+                     }
+                     last_pos = i;
+                  }
+               }
+               else
+               {
+                  if(debug_level > 3)
+                  {
+                     if(A[i] != A[last_pos])
+                     {
+                        printf(" A doesn't match %g %g", A[i], A[last_pos]);
+                     }
+                     if(B[i] != B[last_pos])
+                     {
+                        printf(" B doesn't match %u %u", B[i], B[last_pos]);
+                     }
+                  }
+                  last_pos = i;
+               }
+               if(debug_level > 3)
+               {
+                  puts("");
+               }
+            }
+            quicksort_hash(A, B, pn, 0, pop_size - 1);
+         }
 
-	 if(debug_level > 4)
-	 {
-	    double save_prob = concentration_inactivate_prob;
-	    concentration_inactivate_prob = 0;
-	    puts("debug_level 5a");
-	    puts("debug_level 5b");
-	    printf("%d %g <%g> %d %d %u ", 0, A[0], fitness(pn[0]->root), pn[0]->points, pn[0]->active_points, B[0]);
-	    list_tree(pn[0]->root);
-	    concentration_inactivate_prob = save_prob;
-	 }
+         if(debug_level > 4)
+         {
+            double save_prob = concentration_inactivate_prob;
+            concentration_inactivate_prob = 0;
+            puts("debug_level 5a");
+            puts("debug_level 5b");
+            printf("%d %g <%g> %d %d %u ", 0, A[0], fitness(pn[0]->root), pn[0]->points, pn[0]->active_points, B[0]);
+            list_tree(pn[0]->root);
+            concentration_inactivate_prob = save_prob;
+         }
 
-	 tot_individual_size  = 0e0;
-	 if(A[0] > best_fitness + ROUNDING_THRESHOLD)
-	 {
-	    fprintf(stderr, "fitness got worse after remove duplicates! g %d %g %g %g\n", g, A[0], best_fitness, fabs(A[0] - best_fitness));
-	 }
-	 for(i = 0; i < pop_size; i++)
-	 {
-	    tot_individual_size += pn[i]->active_points;
-	 }
+         tot_individual_size  = 0e0;
+         if(A[0] > best_fitness + ROUNDING_THRESHOLD)
+         {
+            fprintf(stderr, "fitness got worse after remove duplicates! g %d %g %g %g\n", g, A[0], best_fitness, fabs(A[0] - best_fitness));
+         }
+         for(i = 0; i < pop_size; i++)
+         {
+            tot_individual_size += pn[i]->active_points;
+         }
 
-	 avg_individual_size = tot_individual_size / pop_size;
+         avg_individual_size = tot_individual_size / pop_size;
 
-	 printf("%d: generation %d best fit %.4g size %d avg size %.2f\n", this_rank, g, pn[0]->fitness, pn[0]->active_points, avg_individual_size);
-	 fflush(stdout);
+         printf("%d: generation %d best fit %.4g size %d avg size %.2f\n", this_rank, g, pn[0]->fitness, pn[0]->active_points, avg_individual_size);
+         fflush(stdout);
 
-	 //	printf("%d: generation %d avg individual size %.2f\n", this_rank, g, avg_individual_size);
-	 /* print out first few of the generation */
-	 for(i = 0; i < list_best; i++)
-	 {
-	    //	  printf("%g %d %d %u ", A[i], pn[i]->points, pn[i]->active_points, B[i]);
-	    //	  list_tree(pn[i]->root);
-	    //	  puats("");
-	    list_node_as_solute_vector(pn[i]->root);
-	 }
+         //   printf("%d: generation %d avg individual size %.2f\n", this_rank, g, avg_individual_size);
+         /* print out first few of the generation */
+         for(i = 0; i < list_best; i++)
+         {
+            //     printf("%g %d %d %u ", A[i], pn[i]->points, pn[i]->active_points, B[i]);
+            //     list_tree(pn[i]->root);
+            //     puats("");
+            list_node_as_solute_vector(pn[i]->root);
+         }
 
-	 //	puts("gen 0");
-	 if(bloat_cutoff && avg_individual_size > bloat_cutoff)
-	 {
-	    printf("bloat_cutoff avg individual size %.2f\n", avg_individual_size);
-	    printf("%ld\n", (long)(pn[0]->root));
-	    list_tree(pn[0]->root);
-	    break;
-	 }
-	 //	puts("gen 0.a");
+         //   puts("gen 0");
+         if(bloat_cutoff && avg_individual_size > bloat_cutoff)
+         {
+            printf("bloat_cutoff avg individual size %.2f\n", avg_individual_size);
+            printf("%ld\n", (long)(pn[0]->root));
+            list_tree(pn[0]->root);
+            break;
+         }
+         //   puts("gen 0.a");
 
-	 //	printf("l2 %g\n", solute_distance_l2(pn[0]->root));
+         //   printf("l2 %g\n", solute_distance_l2(pn[0]->root));
 
-	 if(solute_early_l2_termination &&
-	    solute_early_l2_termination > solute_distance_l2(pn[0]->root))
-	 {
-	    printf("early termination\n");
-	    if(first_match_gen == INT_MAX)
-	    {
-	       first_match_gen = g;
-	       first_match_B = B[0];
-	       best_match_gen = g;
-	       best_match_B = B[0];
-	    }
-	    else
-	    {
-	       if(best_match_B > B[0])
-	       {
-		  best_match_gen = g;
-		  best_match_B = B[0];
-	       }
-	    }
-	    list_tree(pn[0]->root);
-	    break;
-	 }
+         if(solute_early_l2_termination &&
+            solute_early_l2_termination > solute_distance_l2(pn[0]->root))
+         {
+            printf("early termination\n");
+            if(first_match_gen == INT_MAX)
+            {
+               first_match_gen = g;
+               first_match_B = B[0];
+               best_match_gen = g;
+               best_match_B = B[0];
+            }
+            else
+            {
+               if(best_match_B > B[0])
+               {
+                  best_match_gen = g;
+                  best_match_B = B[0];
+               }
+            }
+            list_tree(pn[0]->root);
+            break;
+         }
 
-	 if(solute_max_mfem_calls &&
-	    solute_max_mfem_calls < fitness_mfem_calls)
-	 {
-	    printf("solute_max_mfem_calls %d > %ld\n", fitness_mfem_calls, solute_max_mfem_calls);
-	    list_tree(pn[0]->root);
-	    break;
-	 }
+         if(solute_max_mfem_calls &&
+            solute_max_mfem_calls < fitness_mfem_calls)
+         {
+            printf("solute_max_mfem_calls %d > %ld\n", fitness_mfem_calls, solute_max_mfem_calls);
+            list_tree(pn[0]->root);
+            break;
+         }
 
-	 if(A[0] < tolerance)
-	 {
-	    printf("perfect fit\n");
-	    if(first_match_gen == INT_MAX)
-	    {
-	       first_match_gen = g;
-	       first_match_B = B[0];
-	       best_match_gen = g;
-	       best_match_B = B[0];
-	    }
-	    else
-	    {
-	       if(best_match_B > B[0])
-	       {
-		  best_match_gen = g;
-		  best_match_B = B[0];
-	       }
-	    }
-	 }
+         if(A[0] < tolerance)
+         {
+            printf("perfect fit\n");
+            if(first_match_gen == INT_MAX)
+            {
+               first_match_gen = g;
+               first_match_B = B[0];
+               best_match_gen = g;
+               best_match_B = B[0];
+            }
+            else
+            {
+               if(best_match_B > B[0])
+               {
+                  best_match_gen = g;
+                  best_match_B = B[0];
+               }
+            }
+         }
 
-	 //	puts("gen 0.b");
-	 /* set p to end of the population chain */
-	 p = last_population(pn[0]);
-	 //	puts("gen 0.c");
+         //   puts("gen 0.b");
+         /* set p to end of the population chain */
+         p = last_population(pn[0]);
+         //   puts("gen 0.c");
 
-	 /* generation: survivors reproduce to complete population */
+         /* generation: survivors reproduce to complete population */
 
-	 /*
-	  * we must 1st determine type of new population member creation
-	  * i.e. reproduction via
-	  * crossover, mutation, replication or subtree duplication
-	  * then select from population based upon fitness, we need
-	  * to create a uniformly distributed random number and
-	  * transform it to a non-uniform monotonically decreasing
-	  * distribution.  
-	  * and perform the 
-	  */
-	 {
-	    population *mom, *dad;
-	    //	  node *offspring;
-	    int reproduction;
+         /*
+          * we must 1st determine type of new population member creation
+          * i.e. reproduction via
+          * crossover, mutation, replication or subtree duplication
+          * then select from population based upon fitness, we need
+          * to create a uniformly distributed random number and
+          * transform it to a non-uniform monotonically decreasing
+          * distribution.  
+          * and perform the 
+          */
+         {
+            population *mom, *dad;
+            //     node *offspring;
+            int reproduction;
 
-	    //	  puts("regen");
+            //     puts("regen");
 
-	    if(gen_mult_sd && g && !(g % gen_mult_sd))
-	    {
-	       random_normal_sd_1 *= gen_mult_sd_factor;
-	       random_normal_sd_2 *= gen_mult_sd_factor;
-	       if(debug_level)
-	       {
-		  printf("new sd multipliers %g %g\n", random_normal_sd_1, random_normal_sd_2);
-	       }
-	    }
+            if(gen_mult_sd && g && !(g % gen_mult_sd))
+            {
+               random_normal_sd_1 *= gen_mult_sd_factor;
+               random_normal_sd_2 *= gen_mult_sd_factor;
+               if(debug_level)
+               {
+                  printf("new sd multipliers %g %g\n", random_normal_sd_1, random_normal_sd_2);
+               }
+            }
 
-	    if(save_every_fitness_file && g >= save_every_fitness_after_generation)
-	    {
-	       int use_pop_size = save_every_fitness_best ? save_every_fitness_best : pop_size;
-	       for(i = 0; i < use_pop_size; i++)
-	       {
-		  save_every_this_pop(pn[i], g);
-	       }
-	       fflush(save_every_fitness_file);
-	    }
+            if(save_every_fitness_file && g >= save_every_fitness_after_generation)
+            {
+               int use_pop_size = save_every_fitness_best ? save_every_fitness_best : pop_size;
+               for(i = 0; i < use_pop_size; i++)
+               {
+                  save_every_this_pop(pn[i], g);
+               }
+               fflush(save_every_fitness_file);
+            }
 
-	    bufinit(MIGRATE_OUT);
-	    if(migrate_prob)
-	    {
-	       if(p_migrate_in)
-	       {
-		  delete_population(p_migrate_in);
-		  p_migrate_in = (population *)0;
-		  free(p_migrate_in_n);
-	       }
-	       p_migrate_in_size = 0;
-	       for(int j = 0; j < MIGRATE_IN_BUFS; j++)
-	       {
-		  if(migrate_end_pos[j])
-		  {
-		     while((n_migrate_in = buffer_serialize_in_tree(j)))
-		     {
-			p_migrate_in = insert_population_node(p_migrate_in, n_migrate_in);
-			if(debug_level > 2)
-			{
-			   printf("%d:", p_migrate_in_size);
-			   list_tree(p_migrate_in->root);
-			   puts("");
-			}
-			p_migrate_in_size++;
-		     }
-		  }
-	       }
-	       if(debug_level > 1)
-	       {
-		  printf("migrate in %d individuals for %d buffs\n", p_migrate_in_size, MIGRATE_IN_BUFS);
-	       }
-	       if(p_migrate_in_size)
-	       {
-		  if(NULL == (p_migrate_in_n = (population **)malloc(p_migrate_in_size * sizeof(population *))))
-		  {
-		     fprintf(stderr, "malloc failure\n");
-		     exit(-1);
-		  }
-		  p_migrate_in = first_population(p_migrate_in);
-		  for(i = 0; i < p_migrate_in_size; i++)
-		  {
-		     if(!p_migrate_in)
-		     {
-			fprintf(stderr, "p_migrate_in ran out, ugh!\n");
-			exit(-1);
-		     }
-		     p_migrate_in_n[i] = p_migrate_in;
-		     p_migrate_in = p_migrate_in->next;
-		  }
-	       }
-	    }
+            bufinit(MIGRATE_OUT);
+            if(migrate_prob)
+            {
+               if(p_migrate_in)
+               {
+                  delete_population(p_migrate_in);
+                  p_migrate_in = (population *)0;
+                  free(p_migrate_in_n);
+               }
+               p_migrate_in_size = 0;
+               for(int j = 0; j < MIGRATE_IN_BUFS; j++)
+               {
+                  if(migrate_end_pos[j])
+                  {
+                     while((n_migrate_in = buffer_serialize_in_tree(j)))
+                     {
+                        p_migrate_in = insert_population_node(p_migrate_in, n_migrate_in);
+                        if(debug_level > 2)
+                        {
+                           printf("%d:", p_migrate_in_size);
+                           list_tree(p_migrate_in->root);
+                           puts("");
+                        }
+                        p_migrate_in_size++;
+                     }
+                  }
+               }
+               if(debug_level > 1)
+               {
+                  printf("migrate in %d individuals for %d buffs\n", p_migrate_in_size, MIGRATE_IN_BUFS);
+               }
+               if(p_migrate_in_size)
+               {
+                  if(NULL == (p_migrate_in_n = (population **)malloc(p_migrate_in_size * sizeof(population *))))
+                  {
+                     fprintf(stderr, "malloc failure\n");
+                     exit(-1);
+                  }
+                  p_migrate_in = first_population(p_migrate_in);
+                  for(i = 0; i < p_migrate_in_size; i++)
+                  {
+                     if(!p_migrate_in)
+                     {
+                        fprintf(stderr, "p_migrate_in ran out, ugh!\n");
+                        exit(-1);
+                     }
+                     p_migrate_in_n[i] = p_migrate_in;
+                     p_migrate_in = p_migrate_in->next;
+                  }
+               }
+            }
 
-	    // set best for each number of active points so that we can gsm each best
-	    // active points population member
-	    // and read in the in populations
+            // set best for each number of active points so that we can gsm each best
+            // active points population member
+            // and read in the in populations
 
-	    any_gsm = 0;
-	    if(ga_sc)
-	    {
-	       any_gsm = 0;
-	    }
-	    // todo gsm not active
+            any_gsm = 0;
+            if(ga_sc)
+            {
+               any_gsm = 0;
+            }
+            // todo gsm not active
 
-	    if(any_gsm &&
-	       g >= elitist_gsm_generation_start &&
-	       (inverse_hessian_prob ||
-		conjugate_gradient_prob ||
-		steepest_descent_prob)) {
-	       for(i = 0; i < GSM_MAX_SEARCH_TYPE; i++) {
-		  use_gsm_type[i] = 0;
-		  if(inverse_hessian_prob &&
-		     inverse_hessian_prob > drand48()) {
-		     use_gsm_type[INVERSE_HESSIAN]++;
-		     any_gsm++;
-		  }
-		  if(conjugate_gradient_prob &&
-		     conjugate_gradient_prob > drand48()) {
-		     use_gsm_type[CONJUGATE_GRADIENT]++;
-		     any_gsm++;
-		  }
-		  if(steepest_descent_prob &&
-		     steepest_descent_prob > drand48()) {
-		     use_gsm_type[STEEPEST_DESCENT]++;
-		     any_gsm++;
-		  }
-	       }
-	       if(any_gsm) {
-		  int j, active_points_index;
-		  puts("will gsm");
-		  for(i = 0; i < new_tree_depth; i++) {
-		     best_index[i] = 0;
-		     for(j = 0; j < elitist_gsm; j++) {
-			best[j][i] = -1;
-		     }
-		  }
-		  puts("any_gsm 1");
-		  for(i = 0; i < pop_size; i++) {
-		     if(debug_level > 1) {
-			if(pn[i]->active_points != count_tree_active_points(pn[i]->root)) {
-			   printf("active points match error\n");
-			   pn[i]->active_points = count_tree_active_points(pn[i]->root);
-			}
-		     }
-		     gsm_this_index[i] = 0;
-		     active_points_index = pn[i]->active_points - 1;
-		     if(best[best_index[active_points_index]][active_points_index] == -1) {
-			gsm_this_index[i] = 1;
-			best[best_index[active_points_index]][active_points_index] = i;
-			if(best_index[active_points_index] < elitist_gsm - 1) {
-			   best_index[active_points_index]++;
-			   printf("best_index[%d] = %d\n", active_points_index, best_index[active_points_index]);
-			}
-		     }
-		  }
+            if(any_gsm &&
+               g >= elitist_gsm_generation_start &&
+               (inverse_hessian_prob ||
+                conjugate_gradient_prob ||
+                steepest_descent_prob)) {
+               for(i = 0; i < GSM_MAX_SEARCH_TYPE; i++) {
+                  use_gsm_type[i] = 0;
+                  if(inverse_hessian_prob &&
+                     inverse_hessian_prob > drand48()) {
+                     use_gsm_type[INVERSE_HESSIAN]++;
+                     any_gsm++;
+                  }
+                  if(conjugate_gradient_prob &&
+                     conjugate_gradient_prob > drand48()) {
+                     use_gsm_type[CONJUGATE_GRADIENT]++;
+                     any_gsm++;
+                  }
+                  if(steepest_descent_prob &&
+                     steepest_descent_prob > drand48()) {
+                     use_gsm_type[STEEPEST_DESCENT]++;
+                     any_gsm++;
+                  }
+               }
+               if(any_gsm) {
+                  int j, active_points_index;
+                  puts("will gsm");
+                  for(i = 0; i < new_tree_depth; i++) {
+                     best_index[i] = 0;
+                     for(j = 0; j < elitist_gsm; j++) {
+                        best[j][i] = -1;
+                     }
+                  }
+                  puts("any_gsm 1");
+                  for(i = 0; i < pop_size; i++) {
+                     if(debug_level > 1) {
+                        if(pn[i]->active_points != count_tree_active_points(pn[i]->root)) {
+                           printf("active points match error\n");
+                           pn[i]->active_points = count_tree_active_points(pn[i]->root);
+                        }
+                     }
+                     gsm_this_index[i] = 0;
+                     active_points_index = pn[i]->active_points - 1;
+                     if(best[best_index[active_points_index]][active_points_index] == -1) {
+                        gsm_this_index[i] = 1;
+                        best[best_index[active_points_index]][active_points_index] = i;
+                        if(best_index[active_points_index] < elitist_gsm - 1) {
+                           best_index[active_points_index]++;
+                           printf("best_index[%d] = %d\n", active_points_index, best_index[active_points_index]);
+                        }
+                     }
+                  }
 
-		  puts("any_gsm 2");
-		  for(i = 0; i < new_tree_depth; i++) {
-		     for(j = 0; j < elitist_gsm; j++) {
-			if(best[j][i] != -1) {
-			   printf("best[%d][%d]: %g %d %d %u ", 
-				  j, i, 
-				  A[best[j][i]], 
-				  pn[best[j][i]]->points, 
-				  pn[best[j][i]]->active_points, 
-				  B[best[j][i]]);
-			   list_tree(pn[best[j][i]]->root);
-			   puts("");
-			} else {
-			   //		  printf("best[%d][%d]: unset\n", j, i);
-			}
-		     }
-		  }
-	       }
-	    }
+                  puts("any_gsm 2");
+                  for(i = 0; i < new_tree_depth; i++) {
+                     for(j = 0; j < elitist_gsm; j++) {
+                        if(best[j][i] != -1) {
+                           printf("best[%d][%d]: %g %d %d %u ", 
+                                  j, i, 
+                                  A[best[j][i]], 
+                                  pn[best[j][i]]->points, 
+                                  pn[best[j][i]]->active_points, 
+                                  B[best[j][i]]);
+                           list_tree(pn[best[j][i]]->root);
+                           puts("");
+                        } else {
+                           //        printf("best[%d][%d]: unset\n", j, i);
+                        }
+                     }
+                  }
+               }
+            }
 
-	    puts("any_gsm 3");
+            puts("any_gsm 3");
 
-	    for(i = 0; i < pop_size; i++)
-	    {
-	       if(!(i % 25) || debug_level > 3)
-	       {
-		  printf("%d: generation %d completed %d of %d\n", this_rank, g, i, pop_size );
-		  fflush(stdout);
-	       }
+            for(i = 0; i < pop_size; i++)
+            {
+               if(!(i % 25) || debug_level > 3)
+               {
+                  printf("%d: generation %d completed %d of %d\n", this_rank, g, i, pop_size );
+                  fflush(stdout);
+               }
 #if defined USE_GSM
-	       if(any_gsm && gsm_this_index[i])
-	       {
-		  if(pn[i]->no_gsm_improvement)
-		  {
-		     puts("any_gsm 3a");
-		     puts("gsm skipped, no improvement");
-		     p = insert_population_node(p, dup_tree(pn[i]->root));
-		     p->fitness = pn[i]->fitness;
-		     p->fitness_valid = pn[i]->fitness_valid;
-		     p->active_points = pn[i]->active_points;
-		     p->no_gsm_improvement = pn[i]->no_gsm_improvement;
-		     memcpy(p->data, pn[i]->data, pop_data_size);
-		  }
-		  else
-		  {
-		     puts("any_gsm 3b");
-		     node *n = pn[i]->root, *m;
-		     double *d, *e;
-		     char any_improvement = 0;
-		     p = insert_population_node(p, dup_tree(pn[i]->root));
-		     m = p->root;
-		     p->fitness_valid = 0;
-		     if(use_gsm_type[INVERSE_HESSIAN])
-		     {
-			gsm_this_node(INVERSE_HESSIAN, p->root, inverse_hessian_iter, inverse_hessian_h);
-		     }
-		     if(use_gsm_type[CONJUGATE_GRADIENT])
-		     {
-			gsm_this_node(CONJUGATE_GRADIENT, p->root, conjugate_gradient_iter, conjugate_gradient_h);
-		     }
-		     if(use_gsm_type[STEEPEST_DESCENT])
-		     {
-			gsm_this_node(STEEPEST_DESCENT, p->root, steepest_descent_iter, steepest_descent_h);
-		     }
-		     fitness_evals++;
-		     p->fitness = fitness(p->root);
-		     /*
-		       ((double *)p->data)[FITNESS_CONSTANT_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_1];
-		       ((double *)p->data)[FITNESS_CONSTANT_NEG_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_NEG_1];
-		     */
-		     if(p->fitness < tolerance)
-		     {
-			p->fitness = 0e0;
-		     }
-		     p->active_points = count_tree_active_points(p->root);
-		     p->fitness_valid = 1;
-		     if(p->fitness >= pn[i]->fitness)
-		     {
-			//		fprintf(stderr, "gsm made fitness worse!, reverting g %d %g %g %g (%g)\n", g, p->fitness, pn[i]->fitness, fabs(p->fitness - pn[i]->fitness), fitness(pn[i]->root));
-			if(debug_level > 1 && p->fitness > pn[i]->fitness)
-			{
-			   puts("gsm made fitness worse");
-			}
-		     }
-		     else
-		     {
-			any_improvement = 1;
-			/*		while(!any_improvement && n) {
-			  d = (double *)n->data;
-			  e = (double *)m->data;
-			  if(((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] !=
-			  ((char *)m->data)[SOLUTE_DATA_ACTIVE_OFS]) {
-			  fprintf(stderr, "unexpected mismatch!\n");
-			  exit(-1);
-			  } else {
-			  if(((char *)m->data)[SOLUTE_DATA_ACTIVE_OFS]) {
-			  if(d[0] != e[0] || d[1] != e[1]) {
-			  any_improvement++;
-			  }
-			  }
-			  }
-			  n = n->children[0];
-			  m = m->children[0];
-			  }
-			*/
-		     }
-		     if(!any_improvement)
-		     {
-			puts("no gsm improvement!!");
-			p->no_gsm_improvement = 1;
-			p->fitness_valid = 1;
-			p->fitness = pn[i]->fitness;
-			p->active_points = pn[i]->active_points;
-			memcpy(p->data, pn[i]->data, pop_data_size);
-		     }
-		  }
-	       }
-	       else
+               if(any_gsm && gsm_this_index[i])
+               {
+                  if(pn[i]->no_gsm_improvement)
+                  {
+                     puts("any_gsm 3a");
+                     puts("gsm skipped, no improvement");
+                     p = insert_population_node(p, dup_tree(pn[i]->root));
+                     p->fitness = pn[i]->fitness;
+                     p->fitness_valid = pn[i]->fitness_valid;
+                     p->active_points = pn[i]->active_points;
+                     p->no_gsm_improvement = pn[i]->no_gsm_improvement;
+                     memcpy(p->data, pn[i]->data, pop_data_size);
+                  }
+                  else
+                  {
+                     puts("any_gsm 3b");
+                     node *n = pn[i]->root, *m;
+                     double *d, *e;
+                     char any_improvement = 0;
+                     p = insert_population_node(p, dup_tree(pn[i]->root));
+                     m = p->root;
+                     p->fitness_valid = 0;
+                     if(use_gsm_type[INVERSE_HESSIAN])
+                     {
+                        gsm_this_node(INVERSE_HESSIAN, p->root, inverse_hessian_iter, inverse_hessian_h);
+                     }
+                     if(use_gsm_type[CONJUGATE_GRADIENT])
+                     {
+                        gsm_this_node(CONJUGATE_GRADIENT, p->root, conjugate_gradient_iter, conjugate_gradient_h);
+                     }
+                     if(use_gsm_type[STEEPEST_DESCENT])
+                     {
+                        gsm_this_node(STEEPEST_DESCENT, p->root, steepest_descent_iter, steepest_descent_h);
+                     }
+                     fitness_evals++;
+                     p->fitness = fitness(p->root);
+                     /*
+                       ((double *)p->data)[FITNESS_CONSTANT_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_1];
+                       ((double *)p->data)[FITNESS_CONSTANT_NEG_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_NEG_1];
+                     */
+                     if(p->fitness < tolerance)
+                     {
+                        p->fitness = 0e0;
+                     }
+                     p->active_points = count_tree_active_points(p->root);
+                     p->fitness_valid = 1;
+                     if(p->fitness >= pn[i]->fitness)
+                     {
+                        //      fprintf(stderr, "gsm made fitness worse!, reverting g %d %g %g %g (%g)\n", g, p->fitness, pn[i]->fitness, fabs(p->fitness - pn[i]->fitness), fitness(pn[i]->root));
+                        if(debug_level > 1 && p->fitness > pn[i]->fitness)
+                        {
+                           puts("gsm made fitness worse");
+                        }
+                     }
+                     else
+                     {
+                        any_improvement = 1;
+                        /*      while(!any_improvement && n) {
+                                d = (double *)n->data;
+                                e = (double *)m->data;
+                                if(((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] !=
+                                ((char *)m->data)[SOLUTE_DATA_ACTIVE_OFS]) {
+                                fprintf(stderr, "unexpected mismatch!\n");
+                                exit(-1);
+                                } else {
+                                if(((char *)m->data)[SOLUTE_DATA_ACTIVE_OFS]) {
+                                if(d[0] != e[0] || d[1] != e[1]) {
+                                any_improvement++;
+                                }
+                                }
+                                }
+                                n = n->children[0];
+                                m = m->children[0];
+                                }
+                        */
+                     }
+                     if(!any_improvement)
+                     {
+                        puts("no gsm improvement!!");
+                        p->no_gsm_improvement = 1;
+                        p->fitness_valid = 1;
+                        p->fitness = pn[i]->fitness;
+                        p->active_points = pn[i]->active_points;
+                        memcpy(p->data, pn[i]->data, pop_data_size);
+                     }
+                  }
+               }
+               else
 #endif
 
-	       {
-		  if(i < elitism)
-		  {
-		     // find i-th unique member to dup
-		     if(!i)
-		     {
-			if(debug_level > 3)
-			{
-			   printf("elitism dupped node %d\n", i);
-			}
-			p = insert_population_node(p, dup_tree(pn[i]->root));
-			p->fitness = pn[i]->fitness;
-			p->fitness_valid = pn[i]->fitness_valid;
-			p->active_points = pn[i]->active_points;
-			p->no_gsm_improvement = pn[i]->no_gsm_improvement;
-			memcpy(p->data, pn[i]->data, pop_data_size);
-		     }
-		     else
-		     {
-			int j, k = i;
-			double last_A = A[0], last_B = B[0];
-			if(debug_level > 3)
-			{
-			   printf("elitism find next different %d\n", i);
-			}
-			for(j = 1; j < pop_size && k > 0; j++)
-			{
-			   if(A[j] != last_A || B[j] != last_B)
-			   {
-			      k--;
-			      last_A = A[j];
-			      last_B = B[j];
-			   }
-			}
-			if(j < pop_size)
-			{
-			   j--;
-			   if(debug_level > 3)
-			   {
-			      printf("elitism found next different %d\n", j);
-			   }
-			   p = insert_population_node(p, dup_tree(pn[j]->root));
-			   p->fitness = pn[j]->fitness;
-			   p->fitness_valid = pn[j]->fitness_valid;
-			   p->active_points = pn[j]->active_points;
-			   p->no_gsm_improvement = pn[j]->no_gsm_improvement;
-			   memcpy(p->data, pn[j]->data, pop_data_size);
-			}
-			else
-			{
-			   // just duplicate the original one
-			   if(debug_level > 3)
-			   {
-			      printf("elitism just duplicate original one %d\n", i);
-			   }
-			   p = insert_population_node(p, dup_tree(pn[i]->root));
-			   p->fitness = pn[i]->fitness;
-			   p->fitness_valid = pn[i]->fitness_valid;
-			   p->active_points = pn[i]->active_points;
-			   p->no_gsm_improvement = pn[i]->no_gsm_improvement;
-			   memcpy(p->data, pn[i]->data, pop_data_size);
-			}
-		     }
-		     //		if(elitist_gsm && i < elitist_gsm && g > elitist_gsm_generation_start) {
-		     //		  int j;
-		     //		  if(inverse_hessian_prob &&
-		     //		 inverse_hessian_prob > drand48()) {
-		     //
-		     //		gsm_this_node(INVERSE_HESSIAN, p->root, inverse_hessian_iter, inverse_hessian_h);
-		     //		p->fitness_valid = 0;
-		     //		  }
-		     //		  if(conjugate_gradient_prob &&
-		     //		 conjugate_gradient_prob > drand48()) {
-		     //		gsm_this_node(CONJUGATE_GRADIENT, p->root, conjugate_gradient_iter, conjugate_gradient_h);
-		     //		p->fitness_valid = 0;
-		     //		  }
-		     //		  if(steepest_descent_prob &&
-		     //		 steepest_descent_prob > drand48()) {
-		     //		gsm_this_node(STEEPEST_DESCENT, p->root, steepest_descent_iter, steepest_descent_h);
-		     //		p->fitness_valid = 0;
-		     //		  }
-		     //		}
-		  }
-		  else
-		  {
-		     if(debug_level > 3)
-		     {
-			printf("reproduce %d\n", i);
-		     }
-		     /* select mom */
-		     mom = pn[pop_selection()];
-		     reproduction = (int) (100 * drand48());
-		     if(debug_level > 3)
-		     {
-			printf("reproduction %d\n", reproduction);
-		     }
-		     if(migrate_prob && drand48() < migrate_prob)
-		     {
-			int j;
-			if(debug_level > 3)
-			{
-			   puts("migrate:add_serial_output");
-			}
-			buffer_serialize_out_tree(MIGRATE_OUT, mom->root);
-			if(p_migrate_in_size)
-			{
-			   j = (int)floor(drand48() * p_migrate_in_size);
-			   p = insert_population_node(p, dup_tree(p_migrate_in_n[j]->root));
-			}
-			else
-			{
-			   // just duplicate migrated out element
-			   p = insert_population_node(p, dup_tree(mom->root));
-			}
-			p->fitness_valid = 0;
-		     }
-		     else
-		     {
-			if(reproduction < cut_mutation)
-			{
-			   /* crossover */
-			   if(debug_level > 3)
-			   {
-			      printf("crossover\n");
-			   }
-			   do
-			   {
-			      dad = pn[pop_selection()];
-			   }
-			   while(dad == mom);
-			   switch(point_crossover)
-			   {
-			   case 0 :
-			      {
-				 p = insert_population_node(p, crossover(mom, dad));
-				 if(prune_depth && p->points > prune_depth)
-				 {
-				    //			puts("prune tree");
-				    prune_tree(p->root, prune_depth);
-				    p->points = prune_depth;
-				    // 			puts("end prune tree");
-				 }
-				 if(inactive_control)
-				 {
-				    node *n = p->root;
-				    do
-				    {
-				       ((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] = 1;
-				    }
-				    while((n = n->children[0]));
-				 }
-				 break;
-			      }
-			   case 1 :
-			      {
-				 p = insert_population_node(p, crossover_1pt(mom, dad));
-				 break;
-			      }
-			   case 2 :
-			      {
-				 p = insert_population_node(p, crossover_2pt(mom, dad));
-				 break;
-			      }
-			   default :
-			      {
-				 fprintf(stderr, "unexpected case fallthrough\n");
-				 exit(-1);
-				 break;
-			      }
-			   }
-			   p->fitness_valid = 0;
-			}
-			else
-			{
-			   if(reproduction < cut_replication)
-			   {
-			      /* mutation */
-			      if(debug_level > 3)
-			      {
-				 printf("mutation\n");
-			      }
-			      p = insert_population_node(p, mutate(mom));
-			      if(prune_depth && p->points > prune_depth)
-			      {
-				 prune_tree(p->root, prune_depth);
-				 p->points = prune_depth;
-			      }
-			      p->fitness_valid = 0;
-			   }
-			   else
-			   {
-			      if(reproduction < cut_subtree_dup)
-			      {
-				 /* replication */
-				 if(debug_level > 3)
-				 {
-				    printf("replication\n");
-				 }
-				 p = insert_population_node(p, replicate(mom));
-				 p->fitness_valid = mom->fitness_valid;
-				 p->fitness = mom->fitness;
-				 p->active_points = mom->active_points;
-				 p->no_gsm_improvement = mom->no_gsm_improvement;
-				 memcpy(p->data, mom->data, pop_data_size);
-			      }
-			      else
-			      {
-				 if(reproduction < cut_plague)
-				 {
-				    /* subtree duplication */
-				    if(debug_level > 3)
-				    {
-				       printf("subtree duplication\n");
-				    }
-				    p = insert_population_node(p, subtree_duplicate(mom));
-				    p->fitness_valid = 0;
-				 }
-				 else
-				 {
-				    if(debug_level > 3)
-				    {
-				       printf("plagueish - new random tree\n");
-				    }
-				    p = insert_population_node(p, new_random_tree_rooted(new_tree_depth));
-				    p->fitness_valid = 0;
-				 }
-			      }
-			   }
-			}
-			if(pct_point_mutation &&
-			   pct_point_mutation > drand48() * 100e0)
-			{
-			   node_mutate_count =
-			      node_mutate_count_s =
-			      node_mutate_count_D = 0;
-			   if(debug_level > 3)
-			   {
-			      puts("point node mutate");
-			   }
-			   point_node_mutate(p->root, p->points);
-			   if(debug_level > 1)
-			   {
-			      printf("point_node_mutate_count %d s %d D %d\n", node_mutate_count, node_mutate_count_s, node_mutate_count_D);
-			   }
-			   if(node_mutate_count)
-			   {
-			      p->fitness_valid = 0;
-			   }
-			}
-			else
-			{
-			   if(pct_node_mutation)
-			   {
-			      node_mutate_count =
-				 node_mutate_count_s =
-				 node_mutate_count_D = 0;
-			      if(debug_level > 3)
-			      {
-				 puts("node mutate");
-			      }
-			      node_mutate(p->root);
-			      if(debug_level > 1)
-			      {
-				 printf("node_mutate_count %d s %d D %d\n", node_mutate_count, node_mutate_count_s, node_mutate_count_D);
-			      }
-			      if(node_mutate_count)
-			      {
-				 p->fitness_valid = 0;
-			      }
-			   }
-			}
-		     }
-		     if(generation_inactivate_prob &&
-			drand48() < generation_inactivate_prob)
-		     {
-			if(debug_level > 3)
-			{
-			   puts("inactivate some node");
-			}
-			if(node_inactivate(p))
-			{
-			   p->fitness_valid = 0;
-			}
-		     }
+               {
+                  if(i < elitism)
+                  {
+                     // find i-th unique member to dup
+                     if(!i)
+                     {
+                        if(debug_level > 3)
+                        {
+                           printf("elitism dupped node %d\n", i);
+                        }
+                        p = insert_population_node(p, dup_tree(pn[i]->root));
+                        p->fitness = pn[i]->fitness;
+                        p->fitness_valid = pn[i]->fitness_valid;
+                        p->active_points = pn[i]->active_points;
+                        p->no_gsm_improvement = pn[i]->no_gsm_improvement;
+                        memcpy(p->data, pn[i]->data, pop_data_size);
+                     }
+                     else
+                     {
+                        int j, k = i;
+                        double last_A = A[0], last_B = B[0];
+                        if(debug_level > 3)
+                        {
+                           printf("elitism find next different %d\n", i);
+                        }
+                        for(j = 1; j < pop_size && k > 0; j++)
+                        {
+                           if(A[j] != last_A || B[j] != last_B)
+                           {
+                              k--;
+                              last_A = A[j];
+                              last_B = B[j];
+                           }
+                        }
+                        if(j < pop_size)
+                        {
+                           j--;
+                           if(debug_level > 3)
+                           {
+                              printf("elitism found next different %d\n", j);
+                           }
+                           p = insert_population_node(p, dup_tree(pn[j]->root));
+                           p->fitness = pn[j]->fitness;
+                           p->fitness_valid = pn[j]->fitness_valid;
+                           p->active_points = pn[j]->active_points;
+                           p->no_gsm_improvement = pn[j]->no_gsm_improvement;
+                           memcpy(p->data, pn[j]->data, pop_data_size);
+                        }
+                        else
+                        {
+                           // just duplicate the original one
+                           if(debug_level > 3)
+                           {
+                              printf("elitism just duplicate original one %d\n", i);
+                           }
+                           p = insert_population_node(p, dup_tree(pn[i]->root));
+                           p->fitness = pn[i]->fitness;
+                           p->fitness_valid = pn[i]->fitness_valid;
+                           p->active_points = pn[i]->active_points;
+                           p->no_gsm_improvement = pn[i]->no_gsm_improvement;
+                           memcpy(p->data, pn[i]->data, pop_data_size);
+                        }
+                     }
+                     //      if(elitist_gsm && i < elitist_gsm && g > elitist_gsm_generation_start) {
+                     //        int j;
+                     //        if(inverse_hessian_prob &&
+                     //       inverse_hessian_prob > drand48()) {
+                     //
+                     //      gsm_this_node(INVERSE_HESSIAN, p->root, inverse_hessian_iter, inverse_hessian_h);
+                     //      p->fitness_valid = 0;
+                     //        }
+                     //        if(conjugate_gradient_prob &&
+                     //       conjugate_gradient_prob > drand48()) {
+                     //      gsm_this_node(CONJUGATE_GRADIENT, p->root, conjugate_gradient_iter, conjugate_gradient_h);
+                     //      p->fitness_valid = 0;
+                     //        }
+                     //        if(steepest_descent_prob &&
+                     //       steepest_descent_prob > drand48()) {
+                     //      gsm_this_node(STEEPEST_DESCENT, p->root, steepest_descent_iter, steepest_descent_h);
+                     //      p->fitness_valid = 0;
+                     //        }
+                     //      }
+                  }
+                  else
+                  {
+                     if(debug_level > 3)
+                     {
+                        printf("reproduce %d\n", i);
+                     }
+                     /* select mom */
+                     mom = pn[pop_selection()];
+                     reproduction = (int) (100 * drand48());
+                     if(debug_level > 3)
+                     {
+                        printf("reproduction %d\n", reproduction);
+                     }
+                     if(migrate_prob && drand48() < migrate_prob)
+                     {
+                        int j;
+                        if(debug_level > 3)
+                        {
+                           puts("migrate:add_serial_output");
+                        }
+                        buffer_serialize_out_tree(MIGRATE_OUT, mom->root);
+                        if(p_migrate_in_size)
+                        {
+                           j = (int)floor(drand48() * p_migrate_in_size);
+                           p = insert_population_node(p, dup_tree(p_migrate_in_n[j]->root));
+                        }
+                        else
+                        {
+                           // just duplicate migrated out element
+                           p = insert_population_node(p, dup_tree(mom->root));
+                        }
+                        p->fitness_valid = 0;
+                     }
+                     else
+                     {
+                        if(reproduction < cut_mutation)
+                        {
+                           /* crossover */
+                           if(debug_level > 3)
+                           {
+                              printf("crossover\n");
+                           }
+                           do
+                           {
+                              dad = pn[pop_selection()];
+                           }
+                           while(dad == mom);
+                           switch(point_crossover)
+                           {
+                           case 0 :
+                              {
+                                 p = insert_population_node(p, crossover(mom, dad));
+                                 if(prune_depth && p->points > prune_depth)
+                                 {
+                                    //         puts("prune tree");
+                                    prune_tree(p->root, prune_depth);
+                                    p->points = prune_depth;
+                                    //          puts("end prune tree");
+                                 }
+                                 if(inactive_control)
+                                 {
+                                    node *n = p->root;
+                                    do
+                                    {
+                                       ((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] = 1;
+                                    }
+                                    while((n = n->children[0]));
+                                 }
+                                 break;
+                              }
+                           case 1 :
+                              {
+                                 p = insert_population_node(p, crossover_1pt(mom, dad));
+                                 break;
+                              }
+                           case 2 :
+                              {
+                                 p = insert_population_node(p, crossover_2pt(mom, dad));
+                                 break;
+                              }
+                           default :
+                              {
+                                 fprintf(stderr, "unexpected case fallthrough\n");
+                                 exit(-1);
+                                 break;
+                              }
+                           }
+                           p->fitness_valid = 0;
+                        }
+                        else
+                        {
+                           if(reproduction < cut_replication)
+                           {
+                              /* mutation */
+                              if(debug_level > 3)
+                              {
+                                 printf("mutation\n");
+                              }
+                              p = insert_population_node(p, mutate(mom));
+                              if(prune_depth && p->points > prune_depth)
+                              {
+                                 prune_tree(p->root, prune_depth);
+                                 p->points = prune_depth;
+                              }
+                              p->fitness_valid = 0;
+                           }
+                           else
+                           {
+                              if(reproduction < cut_subtree_dup)
+                              {
+                                 /* replication */
+                                 if(debug_level > 3)
+                                 {
+                                    printf("replication\n");
+                                 }
+                                 p = insert_population_node(p, replicate(mom));
+                                 p->fitness_valid = mom->fitness_valid;
+                                 p->fitness = mom->fitness;
+                                 p->active_points = mom->active_points;
+                                 p->no_gsm_improvement = mom->no_gsm_improvement;
+                                 memcpy(p->data, mom->data, pop_data_size);
+                              }
+                              else
+                              {
+                                 if(reproduction < cut_plague)
+                                 {
+                                    /* subtree duplication */
+                                    if(debug_level > 3)
+                                    {
+                                       printf("subtree duplication\n");
+                                    }
+                                    p = insert_population_node(p, subtree_duplicate(mom));
+                                    p->fitness_valid = 0;
+                                 }
+                                 else
+                                 {
+                                    if(debug_level > 3)
+                                    {
+                                       printf("plagueish - new random tree\n");
+                                    }
+                                    p = insert_population_node(p, new_random_tree_rooted(new_tree_depth));
+                                    p->fitness_valid = 0;
+                                 }
+                              }
+                           }
+                        }
+                        if(pct_point_mutation &&
+                           pct_point_mutation > drand48() * 100e0)
+                        {
+                           node_mutate_count =
+                              node_mutate_count_s =
+                              node_mutate_count_D = 0;
+                           if(debug_level > 3)
+                           {
+                              puts("point node mutate");
+                           }
+                           point_node_mutate(p->root, p->points);
+                           if(debug_level > 1)
+                           {
+                              printf("point_node_mutate_count %d s %d D %d\n", node_mutate_count, node_mutate_count_s, node_mutate_count_D);
+                           }
+                           if(node_mutate_count)
+                           {
+                              p->fitness_valid = 0;
+                           }
+                        }
+                        else
+                        {
+                           if(pct_node_mutation)
+                           {
+                              node_mutate_count =
+                                 node_mutate_count_s =
+                                 node_mutate_count_D = 0;
+                              if(debug_level > 3)
+                              {
+                                 puts("node mutate");
+                              }
+                              node_mutate(p->root);
+                              if(debug_level > 1)
+                              {
+                                 printf("node_mutate_count %d s %d D %d\n", node_mutate_count, node_mutate_count_s, node_mutate_count_D);
+                              }
+                              if(node_mutate_count)
+                              {
+                                 p->fitness_valid = 0;
+                              }
+                           }
+                        }
+                     }
+                     if(generation_inactivate_prob &&
+                        drand48() < generation_inactivate_prob)
+                     {
+                        if(debug_level > 3)
+                        {
+                           puts("inactivate some node");
+                        }
+                        if(node_inactivate(p))
+                        {
+                           p->fitness_valid = 0;
+                        }
+                     }
 
 
-		     //		if(!elitist_gsm && g > elitist_gsm_generation_start) {
-		     //		  if(inverse_hessian_prob &&
-		     //		 inverse_hessian_prob > drand48()) {
-		     //		gsm_this_node(INVERSE_HESSIAN, p->root, inverse_hessian_iter, inverse_hessian_h);
-		     //		p->fitness_valid = 0;
-		     //		  }
-		     //		  if(conjugate_gradient_prob &&
-		     //		 conjugate_gradient_prob > drand48()) {
-		     //		gsm_this_node(CONJUGATE_GRADIENT, p->root, conjugate_gradient_iter, conjugate_gradient_h);
-		     //		p->fitness_valid = 0;
-		     //		  }
-		     //		  if(steepest_descent_prob &&
-		     //		 steepest_descent_prob > drand48()) {
-		     //		gsm_this_node(STEEPEST_DESCENT, p->root, steepest_descent_iter, steepest_descent_h);
-		     //		p->fitness_valid = 0;
-		     //		  }
-		     //		}
-		  }
-	       }
+                     //      if(!elitist_gsm && g > elitist_gsm_generation_start) {
+                     //        if(inverse_hessian_prob &&
+                     //       inverse_hessian_prob > drand48()) {
+                     //      gsm_this_node(INVERSE_HESSIAN, p->root, inverse_hessian_iter, inverse_hessian_h);
+                     //      p->fitness_valid = 0;
+                     //        }
+                     //        if(conjugate_gradient_prob &&
+                     //       conjugate_gradient_prob > drand48()) {
+                     //      gsm_this_node(CONJUGATE_GRADIENT, p->root, conjugate_gradient_iter, conjugate_gradient_h);
+                     //      p->fitness_valid = 0;
+                     //        }
+                     //        if(steepest_descent_prob &&
+                     //       steepest_descent_prob > drand48()) {
+                     //      gsm_this_node(STEEPEST_DESCENT, p->root, steepest_descent_iter, steepest_descent_h);
+                     //      p->fitness_valid = 0;
+                     //        }
+                     //      }
+                  }
+               }
 
-	       pn_next[i] = p;
+               pn_next[i] = p;
 
-	       if(skip_fitness && p->fitness_valid)
-	       {
-		  if(debug_level > 3)
-		  {
-		     puts("skip fitness");
-		  }
-		  fitness_skipped++;
-		  /*	  A_next[i] = fitness(p->root);
-		    if(A_next[i] < tolerance)
-		    A_next[i] = 0e0;
-		    if(fabs(A_next[i] - p->fitness) > TOLERANCE) {
-		    printf("bad fitness match %g %g\n", A_next[i], p->fitness);
-		    list_tree(p->root);
-		    exit(-1);
-		    } else { */
-		  A_next[i] = p->fitness;
-		  //	  }
-	       }
-	       else
-	       {
-		  p->no_gsm_improvement = 0;
-		  if(debug_level > 3)
-		  {
-		     puts("process fitness");
-		  }
-		  fitness_evals++;
-		  A_next[i] = fitness(p->root);
-		  /*
-		    ((double *)p->data)[FITNESS_CONSTANT_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_1];
-		    ((double *)p->data)[FITNESS_CONSTANT_NEG_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_NEG_1];
-		  */
-		  if(A_next[i] < tolerance)
-		     A_next[i] = 0e0;
-		  p->fitness = A_next[i];
-		  p->fitness_valid = 1;
-		  p->active_points = count_tree_active_points(p->root);
-	       }
+               if(skip_fitness && p->fitness_valid)
+               {
+                  if(debug_level > 3)
+                  {
+                     puts("skip fitness");
+                  }
+                  fitness_skipped++;
+                  /*     A_next[i] = fitness(p->root);
+                         if(A_next[i] < tolerance)
+                         A_next[i] = 0e0;
+                         if(fabs(A_next[i] - p->fitness) > TOLERANCE) {
+                         printf("bad fitness match %g %g\n", A_next[i], p->fitness);
+                         list_tree(p->root);
+                         exit(-1);
+                         } else { */
+                  A_next[i] = p->fitness;
+                  //     }
+               }
+               else
+               {
+                  p->no_gsm_improvement = 0;
+                  if(debug_level > 3)
+                  {
+                     puts("process fitness");
+                  }
+                  fitness_evals++;
+                  A_next[i] = fitness(p->root);
+                  /*
+                    ((double *)p->data)[FITNESS_CONSTANT_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_1];
+                    ((double *)p->data)[FITNESS_CONSTANT_NEG_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_NEG_1];
+                  */
+                  if(A_next[i] < tolerance)
+                     A_next[i] = 0e0;
+                  p->fitness = A_next[i];
+                  p->fitness_valid = 1;
+                  p->active_points = count_tree_active_points(p->root);
+               }
 
-	       if(inactivation_deletes && p->active_points < p->points)
-	       {
-		  if(debug_level > 2)
-		  {
-		     puts("delete_inactive_nodes before:");
-		     list_tree(p->root);
-		     puts("");
-		  }
-		  delete_inactive_nodes(p);
-		  if(debug_level > 2)
-		  {
-		     puts("delete_inactive_nodes after:");
-		     list_tree(p->root);
-		     puts("");
-		  }
-	       }
+               if(inactivation_deletes && p->active_points < p->points)
+               {
+                  if(debug_level > 2)
+                  {
+                     puts("delete_inactive_nodes before:");
+                     list_tree(p->root);
+                     puts("");
+                  }
+                  delete_inactive_nodes(p);
+                  if(debug_level > 2)
+                  {
+                     puts("delete_inactive_nodes after:");
+                     list_tree(p->root);
+                     puts("");
+                  }
+               }
 
-	       B_next[i] = tree_hash(p->root) + (p->active_points << 22);
-	       // was - tree_hash(p->root) * p->points;
-	       //	puts("next");
+               B_next[i] = tree_hash(p->root) + (p->active_points << 22);
+               // was - tree_hash(p->root) * p->points;
+               //   puts("next");
 
-	    }
+            }
 
-	    if(debug_level > 1)
-	    {
-	       for(i = 0; i < pop_size; i++)
-	       {
-		  if(pn[i]->no_gsm_improvement)
-		  {
-		     printf("no gsm improvement pop # %d\n", i);
-		  }
-	       }
-	    }
+            if(debug_level > 1)
+            {
+               for(i = 0; i < pop_size; i++)
+               {
+                  if(pn[i]->no_gsm_improvement)
+                  {
+                     printf("no gsm improvement pop # %d\n", i);
+                  }
+               }
+            }
 
 
-	    //	  if(migrate_prob) {
-	    // MPI stuff
-	    buffer_close_serial_output(MIGRATE_OUT);
-	    mpi_ga_msg_out.gen = g;
-	    mpi_ga_msg_out.size = migrate_end_pos[MIGRATE_OUT];
-	    mpi_ga_msg_out.fitness = pn[0]->fitness;
-	    // worker sends generation completion message to master
-	    //	  printf("%d: worker sends generation completion message gen %d size %d\n", this_rank, g, migrate_end_pos[MIGRATE_OUT]); fflush(stdout);
+            //     if(migrate_prob) {
+            // MPI stuff
+            buffer_close_serial_output(MIGRATE_OUT);
+            mpi_ga_msg_out.gen = g;
+            mpi_ga_msg_out.size = migrate_end_pos[MIGRATE_OUT];
+            mpi_ga_msg_out.fitness = pn[0]->fitness;
+            // worker sends generation completion message to master
+            //     printf("%d: worker sends generation completion message gen %d size %d\n", this_rank, g, migrate_end_pos[MIGRATE_OUT]); fflush(stdout);
 #if defined(US_DEBUG_MPI)
 
-	    printf("%d: MPI_Send generation comp msg %d MPI_CHAR\n", this_rank, sizeof(mpi_ga_msg_out));
-	    fflush(stdout);
-	    fflush(stdout);
+            printf("%d: MPI_Send generation comp msg %d MPI_CHAR\n", this_rank, sizeof(mpi_ga_msg_out));
+            fflush(stdout);
+            fflush(stdout);
 #endif
 
-	    return_stat = MPI_Send(&mpi_ga_msg_out,
-				   sizeof(mpi_ga_msg_out),
-				   MPI_CHAR,
-				   0,
-				   0,
-				   MPI_COMM_WORLD);
+            return_stat = MPI_Send(&mpi_ga_msg_out,
+                                   sizeof(mpi_ga_msg_out),
+                                   MPI_CHAR,
+                                   0,
+                                   0,
+                                   MPI_COMM_WORLD);
 #if defined(US_DEBUG_MPI)
 
-	    printf("%d: MPI returned %d from send to 0\n", this_rank, return_stat);
-	    fflush(stdout);
+            printf("%d: MPI returned %d from send to 0\n", this_rank, return_stat);
+            fflush(stdout);
 #endif
 
-	    if(migrate_end_pos[MIGRATE_OUT])
-	    {
-	       // send out buffer if we have one
-	       //	printf("%d: send out buffer size %d\n", this_rank, migrate_end_pos[MIGRATE_OUT]); fflush(stdout);
-	       //	buffer_list_serial(MIGRATE_OUT); fflush(stdout);
+            if(migrate_end_pos[MIGRATE_OUT])
+            {
+               // send out buffer if we have one
+               //   printf("%d: send out buffer size %d\n", this_rank, migrate_end_pos[MIGRATE_OUT]); fflush(stdout);
+               //   buffer_list_serial(MIGRATE_OUT); fflush(stdout);
 #if defined(US_DEBUG_MPI)
-	       printf("%d: MPI_Send emigrants %d %d MPI_CHAR\n", this_rank, 1001 + this_rank, migrate_end_pos[MIGRATE_OUT]);
-	       fflush(stdout);
-	       fflush(stdout);
+               printf("%d: MPI_Send emigrants %d %d MPI_CHAR\n", this_rank, 1001 + this_rank, migrate_end_pos[MIGRATE_OUT]);
+               fflush(stdout);
+               fflush(stdout);
 #endif
 
-	       return_stat = MPI_Send(migrate_buffer[MIGRATE_OUT],
-				      migrate_end_pos[MIGRATE_OUT],
-				      MPI_CHAR,
-				      0,
-				      1001 + this_rank,
-				      MPI_COMM_WORLD);
-#if defined(US_DEBUG_MPI)
-
-	       printf("%d: MPI returned %d send to 0\n", this_rank, return_stat);
-	       fflush(stdout);
-#endif
-
-	    }
-
-	    // receive masters' response
-
-	    for(int j = 0; j < MIGRATE_IN_BUFS; j++)
-	    {
-	       bufinit(j); // reinit migrate in buffer
-	       //	printf("%d: proc migrate in buffer %d\n", this_rank, j); fflush(stdout);
+               return_stat = MPI_Send(migrate_buffer[MIGRATE_OUT],
+                                      migrate_end_pos[MIGRATE_OUT],
+                                      MPI_CHAR,
+                                      0,
+                                      1001 + this_rank,
+                                      MPI_COMM_WORLD);
 #if defined(US_DEBUG_MPI)
 
-	       printf("%d: MPI_Recv immigrants msg %d %d MPI_CHAR\n", this_rank, (j*2)+1, sizeof(mpi_ga_msg_in));
-	       fflush(stdout);
-	       fflush(stdout);
+               printf("%d: MPI returned %d send to 0\n", this_rank, return_stat);
+               fflush(stdout);
 #endif
 
-	       return_stat = MPI_Recv(&mpi_ga_msg_in,
-				      sizeof(mpi_ga_msg_in),
-				      MPI_CHAR,
-				      0,
-				      (j*2)+1,
-				      MPI_COMM_WORLD,
-				      &mpi_status);
+            }
+
+            // receive masters' response
+
+            for(int j = 0; j < MIGRATE_IN_BUFS; j++)
+            {
+               bufinit(j); // reinit migrate in buffer
+               //   printf("%d: proc migrate in buffer %d\n", this_rank, j); fflush(stdout);
 #if defined(US_DEBUG_MPI)
 
-	       printf("%d: MPI returned %d from 0 gen %d size %d\n", this_rank, return_stat, mpi_ga_msg_in.gen, mpi_ga_msg_in.size);
-	       fflush(stdout);
+               printf("%d: MPI_Recv immigrants msg %d %d MPI_CHAR\n", this_rank, (j*2)+1, sizeof(mpi_ga_msg_in));
+               fflush(stdout);
+               fflush(stdout);
 #endif
 
-	       if(j || !mpi_ga_msg_in.gen)
-	       {
-		  printf("%d: proc migrate in buffer %d has size %d\n", this_rank, j, mpi_ga_msg_in.size);
-		  fflush(stdout);
-		  // receive migration in buffers
-		  if(mpi_ga_msg_in.size > 0)
-		  {
-#if defined(US_DEBUG_MPI)
-		     printf("%d: MPI_Recv immigrants buf %d %d MPI_CHAR\n", this_rank, (j*2)+2, mpi_ga_msg_in.size);
-		     fflush(stdout);
-		     fflush(stdout);
-#endif
-
-		     return_stat = MPI_Recv(migrate_buffer[j],
-					    mpi_ga_msg_in.size,
-					    MPI_CHAR,
-					    0,
-					    (j*2)+2,
-					    MPI_COMM_WORLD,
-					    &mpi_status);
+               return_stat = MPI_Recv(&mpi_ga_msg_in,
+                                      sizeof(mpi_ga_msg_in),
+                                      MPI_CHAR,
+                                      0,
+                                      (j*2)+1,
+                                      MPI_COMM_WORLD,
+                                      &mpi_status);
 #if defined(US_DEBUG_MPI)
 
-		     printf("%d: MPI returned %d from 0\n", this_rank, return_stat);
-		     fflush(stdout);
+               printf("%d: MPI returned %d from 0 gen %d size %d\n", this_rank, return_stat, mpi_ga_msg_in.gen, mpi_ga_msg_in.size);
+               fflush(stdout);
 #endif
 
-		     migrate_end_pos[j] = mpi_ga_msg_in.size;
-		     //		printf("listing buffer %d\n", j);
-		     //		buffer_list_serial(j);
-		     //		fflush(stdout);
-		  }
-		  else
-		  {
-		     migrate_end_pos[j] = 0;
-		  }
-	       }
-	       else
-	       {
-		  // close up shop
-		  printf("%d: close up shop\n", this_rank);
-		  fflush(stdout);
-		  quicksort_hash(A, B, pn, 0, pop_size - 1);   /* one last sort */
-		  vector<Solute> solutes;
-		  int use_gsm = 1;
+               if(j || !mpi_ga_msg_in.gen)
+               {
+                  printf("%d: proc migrate in buffer %d has size %d\n", this_rank, j, mpi_ga_msg_in.size);
+                  fflush(stdout);
+                  // receive migration in buffers
+                  if(mpi_ga_msg_in.size > 0)
+                  {
+#if defined(US_DEBUG_MPI)
+                     printf("%d: MPI_Recv immigrants buf %d %d MPI_CHAR\n", this_rank, (j*2)+2, mpi_ga_msg_in.size);
+                     fflush(stdout);
+                     fflush(stdout);
+#endif
+
+                     return_stat = MPI_Recv(migrate_buffer[j],
+                                            mpi_ga_msg_in.size,
+                                            MPI_CHAR,
+                                            0,
+                                            (j*2)+2,
+                                            MPI_COMM_WORLD,
+                                            &mpi_status);
 #if defined(US_DEBUG_MPI)
 
-		  use_gsm = 0;
+                     printf("%d: MPI returned %d from 0\n", this_rank, return_stat);
+                     fflush(stdout);
 #endif
 
-		  if(/* !ga_sc &&  */ use_gsm)
-		  {
-		     printf("%d: start use_gsm %d %g\n", this_rank, inverse_hessian_iter, inverse_hessian_h);
-		     fflush(stdout);
-		     p = insert_population_node(p, dup_tree(pn[0]->root));
-		     p->fitness_valid = 0;
-		     gsm_this_node(INVERSE_HESSIAN, p->root, inverse_hessian_iter, inverse_hessian_h);
-		     printf("%d: start use_gsm 1\n", this_rank);
-		     fflush(stdout);
-		     fitness_evals++;
-		     p->fitness = fitness(p->root);
-		     if(p->fitness < tolerance)
-		     {
-			p->fitness = 0e0;
-		     }
-		     printf("%d: start use_gsm 2\n", this_rank);
-		     fflush(stdout);
-		     p->active_points = count_tree_active_points(p->root);
-		     p->fitness_valid = 1;
-		     printf("%d: start use_gsm 3\n", this_rank);
-		     fflush(stdout);
-		     if(p->fitness >= pn[0]->fitness)
-		     {
-			fprintf(stdout, "%d: gsm made fitness worse!, reverting g %d %g %g %g (%g)\n", this_rank, g, p->fitness, pn[0]->fitness, fabs(p->fitness - pn[0]->fitness), fitness(pn[0]->root));
-			fflush(stdout);
-			solutes = node_to_solute_vector(pn[0]->root);
-			mpi_ga_msg_out.fitness = pn[0]->fitness;
-			printf("%d: start use_gsm 4\n", this_rank);
-			fflush(stdout);
-		     }
-		     else
-		     {
-			printf("%d: start use_gsm 5\n", this_rank);
-			fflush(stdout);
-			solutes = node_to_solute_vector(p->root);
-			mpi_ga_msg_out.fitness = p->fitness;
-		     }
-		  }
-		  else
-		  {
-		     solutes = node_to_solute_vector(pn[0]->root);
-		     mpi_ga_msg_out.fitness = pn[0]->fitness;
-		  }
-		  mpi_ga_msg_out.gen = -1;
-		  mpi_ga_msg_out.size = (int) solutes.size();
-
-		  printf("%d: worker sending out final solutes preamble size %u\n", this_rank, (unsigned int)solutes.size());
-		  fflush(stdout);
+                     migrate_end_pos[j] = mpi_ga_msg_in.size;
+                     //      printf("listing buffer %d\n", j);
+                     //      buffer_list_serial(j);
+                     //      fflush(stdout);
+                  }
+                  else
+                  {
+                     migrate_end_pos[j] = 0;
+                  }
+               }
+               else
+               {
+                  // close up shop
+                  printf("%d: close up shop\n", this_rank);
+                  fflush(stdout);
+                  quicksort_hash(A, B, pn, 0, pop_size - 1);   /* one last sort */
+                  vector<Solute> solutes;
+                  int use_gsm = 1;
 #if defined(US_DEBUG_MPI)
 
-		  printf("%d: MPI_Send generation comp msg (final!) %d MPI_CHAR\n", this_rank, sizeof(mpi_ga_msg_out));
-		  fflush(stdout);
-		  fflush(stdout);
+                  use_gsm = 0;
 #endif
 
-		  return_stat = MPI_Send(&mpi_ga_msg_out,
-					 sizeof(mpi_ga_msg_out),
-					 MPI_CHAR,
-					 0,
-					 0,
-					 MPI_COMM_WORLD);
+                  if(/* !ga_sc &&  */ use_gsm)
+                  {
+                     printf("%d: start use_gsm %d %g\n", this_rank, inverse_hessian_iter, inverse_hessian_h);
+                     fflush(stdout);
+                     p = insert_population_node(p, dup_tree(pn[0]->root));
+                     p->fitness_valid = 0;
+                     gsm_this_node(INVERSE_HESSIAN, p->root, inverse_hessian_iter, inverse_hessian_h);
+                     printf("%d: start use_gsm 1\n", this_rank);
+                     fflush(stdout);
+                     fitness_evals++;
+                     p->fitness = fitness(p->root);
+                     if(p->fitness < tolerance)
+                     {
+                        p->fitness = 0e0;
+                     }
+                     printf("%d: start use_gsm 2\n", this_rank);
+                     fflush(stdout);
+                     p->active_points = count_tree_active_points(p->root);
+                     p->fitness_valid = 1;
+                     printf("%d: start use_gsm 3\n", this_rank);
+                     fflush(stdout);
+                     if(p->fitness >= pn[0]->fitness)
+                     {
+                        fprintf(stdout, "%d: gsm made fitness worse!, reverting g %d %g %g %g (%g)\n", this_rank, g, p->fitness, pn[0]->fitness, fabs(p->fitness - pn[0]->fitness), fitness(pn[0]->root));
+                        fflush(stdout);
+                        solutes = node_to_solute_vector(pn[0]->root);
+                        mpi_ga_msg_out.fitness = pn[0]->fitness;
+                        printf("%d: start use_gsm 4\n", this_rank);
+                        fflush(stdout);
+                     }
+                     else
+                     {
+                        printf("%d: start use_gsm 5\n", this_rank);
+                        fflush(stdout);
+                        solutes = node_to_solute_vector(p->root);
+                        mpi_ga_msg_out.fitness = p->fitness;
+                     }
+                  }
+                  else
+                  {
+                     solutes = node_to_solute_vector(pn[0]->root);
+                     mpi_ga_msg_out.fitness = pn[0]->fitness;
+                  }
+                  mpi_ga_msg_out.gen = -1;
+                  mpi_ga_msg_out.size = (int) solutes.size();
+
+                  printf("%d: worker sending out final solutes preamble size %u\n", this_rank, (unsigned int)solutes.size());
+                  fflush(stdout);
 #if defined(US_DEBUG_MPI)
 
-		  printf("%d: MPI returned %d from send to 0\n", this_rank, return_stat);
-		  fflush(stdout);
+                  printf("%d: MPI_Send generation comp msg (final!) %d MPI_CHAR\n", this_rank, sizeof(mpi_ga_msg_out));
+                  fflush(stdout);
+                  fflush(stdout);
 #endif
 
-		  printf("%d: worker sending out final solutes size %u\n", this_rank, (unsigned int)solutes.size() * (unsigned int)sizeof(Solute));
-		  fflush(stdout);
+                  return_stat = MPI_Send(&mpi_ga_msg_out,
+                                         sizeof(mpi_ga_msg_out),
+                                         MPI_CHAR,
+                                         0,
+                                         0,
+                                         MPI_COMM_WORLD);
 #if defined(US_DEBUG_MPI)
 
-		  printf("%d: MPI_Send results %d %d MPI_CHAR\n", this_rank, 1000 + this_rank, solutes.size() * sizeof(Solute));
-		  fflush(stdout);
-		  fflush(stdout);
+                  printf("%d: MPI returned %d from send to 0\n", this_rank, return_stat);
+                  fflush(stdout);
 #endif
 
-		  for(unsigned int l=0; l<solutes.size(); l++)
-		  {
-		     printf("%d: final solute %u s %g ff0 %g\n", this_rank, l, solutes[l].s, solutes[l].k);
-		     fflush(stdout);
-		  }
-		  return_stat = MPI_Send(&solutes[0],
-					 solutes.size() * sizeof(Solute),
-					 MPI_CHAR,
-					 0,
-					 1000 + this_rank,
-					 MPI_COMM_WORLD);
+                  printf("%d: worker sending out final solutes size %u\n", this_rank, (unsigned int)solutes.size() * (unsigned int)sizeof(Solute));
+                  fflush(stdout);
 #if defined(US_DEBUG_MPI)
 
-		  printf("%d: MPI returned %d from send to %d\n", this_rank, return_stat, 0);
-		  fflush(stdout);
+                  printf("%d: MPI_Send results %d %d MPI_CHAR\n", this_rank, 1000 + this_rank, solutes.size() * sizeof(Solute));
+                  fflush(stdout);
+                  fflush(stdout);
 #endif
 
-		  // & send results (later)
-		  //	  printf("%d: worker finishing\n", this_rank); fflush(stdout);
-		  if(end_save_best)
-		  {
-		     QString end_save_filename_qs =
-			our_us_fe_nnls_t->experiment[0].id + "_GA_" +
-			our_us_fe_nnls_t->startDateTime.toString("yyMMddhhmmss")  + QString(".%1.deme").arg(this_rank);
-		     printf("%d: saving best in %s\n", this_rank, end_save_filename_qs.ascii());
-		     fflush(stdout);
-		     FILE *end_save_best_file;
-		     node *n;
-		     //		double *d;
-		     //		int j;
-		     int active_points;
-		     if(end_save_best > pop_size)
-		     {
-			end_save_best = pop_size;
-		     }
-		     if(NULL == (end_save_best_file = fopen(end_save_filename_qs.ascii(), "w")))
-		     {
-			fprintf(stderr, "%d: save file open error, can't open \"%s\" for writing\n", this_rank, end_save_filename_qs.ascii());
-			printf("%d: max rss %ld pages\n", this_rank, maxrss);
-			fflush(stdout);
-			printf("%d: goodbye\n", this_rank);
-			fflush(stdout);
-			MPI_Abort(MPI_COMM_WORLD, -3);
-			exit(-1);
-		     }
-		     for(i = 0; i < end_save_best; i++)
-		     {
-			active_points = 0;
-			n = pn[i]->root;
-			while(n)
-			{
-			   while(n && (!((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ||
-				       ((double *)n->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
-				 )
-			   {
-			      n = n->children[0];
-			   }
-			   if(n)
-			   {
-			      active_points++;
-			      n = n->children[0];
-			   }
-			}
-			if(active_points > 0)
-			{
-			   n = pn[i]->root;
-			   fprintf(end_save_best_file, "%g|%d", A[i] , active_points);
-			   //		for(j = 0; j < FITNESS_NO_OF_CONSTANTS; j++) {
-			   //		  fprintf(end_save_best_file, "|%g", ((double *)pn[i]->data)[j]);
-			   //		}
-			   while(n)
-			   {
-			      while(n && (!((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ||
-					  ((double *)n->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
-				    )
-			      {
-				 n = n->children[0];
-			      }
-			      if(n)
-			      {
-				 fprintf(end_save_best_file, "|%g|%g|%g" ,
-					 ((double *)n->data)[0],
-					 ((double *)n->data)[1],
-					 ((double *)n->data)[SOLUTE_DATA_CONCENTRATION]);
-				 n = n->children[0];
-			      }
-			   }
-			   fprintf(end_save_best_file, "\n");
-			}
-		     }
-		     fclose(end_save_best_file);
-		  }
-		  printf("%d: max rss %ld pages\n", this_rank, maxrss);
-		  fflush(stdout);
-		  printf("%d: return\n", this_rank);
-		  fflush(stdout);
-		  // monte carlo changes
-		  //	  MPI_Finalize();
-		  //	  exit(0);
-		  return;
-	       }
+                  for(unsigned int l=0; l<solutes.size(); l++)
+                  {
+                     printf("%d: final solute %u s %g ff0 %g\n", this_rank, l, solutes[l].s, solutes[l].k);
+                     fflush(stdout);
+                  }
+                  return_stat = MPI_Send(&solutes[0],
+                                         solutes.size() * sizeof(Solute),
+                                         MPI_CHAR,
+                                         0,
+                                         1000 + this_rank,
+                                         MPI_COMM_WORLD);
 #if defined(US_DEBUG_MPI)
-	       printf("%d: end of buffer in loop\n", this_rank);
-	       fflush(stdout);
+
+                  printf("%d: MPI returned %d from send to %d\n", this_rank, return_stat, 0);
+                  fflush(stdout);
 #endif
 
-	    }
-	    // } (always for MPI, no mpi_prob
+                  // & send results (later)
+                  //     printf("%d: worker finishing\n", this_rank); fflush(stdout);
+                  if(end_save_best)
+                  {
+                     QString end_save_filename_qs =
+                        our_us_fe_nnls_t->experiment[0].id + "_GA_" +
+                        our_us_fe_nnls_t->startDateTime.toString("yyMMddhhmmss")  + QString(".%1.deme").arg(this_rank);
+                     printf("%d: saving best in %s\n", this_rank, end_save_filename_qs.ascii());
+                     fflush(stdout);
+                     FILE *end_save_best_file;
+                     node *n;
+                     //      double *d;
+                     //      int j;
+                     int active_points;
+                     if(end_save_best > pop_size)
+                     {
+                        end_save_best = pop_size;
+                     }
+                     if(NULL == (end_save_best_file = fopen(end_save_filename_qs.ascii(), "w")))
+                     {
+                        fprintf(stderr, "%d: save file open error, can't open \"%s\" for writing\n", this_rank, end_save_filename_qs.ascii());
+                        printf("%d: max rss %ld pages\n", this_rank, maxrss);
+                        fflush(stdout);
+                        printf("%d: goodbye\n", this_rank);
+                        fflush(stdout);
+                        MPI_Abort(MPI_COMM_WORLD, -3);
+                        exit(-1);
+                     }
+                     for(i = 0; i < end_save_best; i++)
+                     {
+                        active_points = 0;
+                        n = pn[i]->root;
+                        while(n)
+                        {
+                           while(n && (!((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ||
+                                       ((double *)n->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
+                                 )
+                           {
+                              n = n->children[0];
+                           }
+                           if(n)
+                           {
+                              active_points++;
+                              n = n->children[0];
+                           }
+                        }
+                        if(active_points > 0)
+                        {
+                           n = pn[i]->root;
+                           fprintf(end_save_best_file, "%g|%d", A[i] , active_points);
+                           //      for(j = 0; j < FITNESS_NO_OF_CONSTANTS; j++) {
+                           //        fprintf(end_save_best_file, "|%g", ((double *)pn[i]->data)[j]);
+                           //      }
+                           while(n)
+                           {
+                              while(n && (!((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ||
+                                          ((double *)n->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
+                                    )
+                              {
+                                 n = n->children[0];
+                              }
+                              if(n)
+                              {
+                                 fprintf(end_save_best_file, "|%g|%g|%g" ,
+                                         ((double *)n->data)[0],
+                                         ((double *)n->data)[1],
+                                         ((double *)n->data)[SOLUTE_DATA_CONCENTRATION]);
+                                 n = n->children[0];
+                              }
+                           }
+                           fprintf(end_save_best_file, "\n");
+                        }
+                     }
+                     fclose(end_save_best_file);
+                  }
+                  printf("%d: max rss %ld pages\n", this_rank, maxrss);
+                  fflush(stdout);
+                  printf("%d: return\n", this_rank);
+                  fflush(stdout);
+                  // monte carlo changes
+                  //     MPI_Finalize();
+                  //     exit(0);
+                  return;
+               }
+#if defined(US_DEBUG_MPI)
+               printf("%d: end of buffer in loop\n", this_rank);
+               fflush(stdout);
+#endif
 
-	    if(debug_level > 3)
-	    {
-	       puts("delete_pop");
-	    }
-	    /* we're done, so delete old population */
-	    for(i = 0; i < pop_size; i++)
-	    {
-	       //	printf("del pop %d\n", i);
-	       delete_population(pn[i]);
-	    }
+            }
+            // } (always for MPI, no mpi_prob
 
-	    /* switch pops */
-	    //	  puts("switch pops");
+            if(debug_level > 3)
+            {
+               puts("delete_pop");
+            }
+            /* we're done, so delete old population */
+            for(i = 0; i < pop_size; i++)
+            {
+               //   printf("del pop %d\n", i);
+               delete_population(pn[i]);
+            }
 
-	    A_tmp = A;
-	    B_tmp = B;
-	    pn_tmp = pn;
+            /* switch pops */
+            //     puts("switch pops");
 
-	    A = A_next;
-	    B = B_next;
-	    pn = pn_next;
+            A_tmp = A;
+            B_tmp = B;
+            pn_tmp = pn;
 
-	    A_next = A_tmp;
-	    B_next = B_tmp;
-	    pn_next = pn_tmp;
-	 }
+            A = A_next;
+            B = B_next;
+            pn = pn_next;
 
-	 pstats(stdout);
+            A_next = A_tmp;
+            B_next = B_tmp;
+            pn_next = pn_tmp;
+         }
+
+         pstats(stdout);
       }
       ; /* end of generations for loop */
    }
@@ -4956,7 +4956,7 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
       int use_pop_size = save_every_fitness_best ? save_every_fitness_best : pop_size;
       for(i = 0; i < use_pop_size; i++)
       {
-	 save_every_this_pop(pn[i], g);
+         save_every_this_pop(pn[i], g);
       }
       fflush(save_every_fitness_file);
    }
@@ -4970,18 +4970,18 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
       printf("perfect fit\n");
       if(first_match_gen == INT_MAX)
       {
-	 first_match_gen = g;
-	 first_match_B = B[0];
-	 best_match_gen = g;
-	 best_match_B = B[0];
+         first_match_gen = g;
+         first_match_B = B[0];
+         best_match_gen = g;
+         best_match_B = B[0];
       }
       else
       {
-	 if(best_match_B > B[0])
-	 {
-	    best_match_gen = g;
-	    best_match_B = B[0];
-	 }
+         if(best_match_B > B[0])
+         {
+            best_match_gen = g;
+            best_match_B = B[0];
+         }
       }
    }
 
@@ -4995,150 +4995,150 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
       value fitness_final_check_value;
       if(first_match_gen <= max_g)
       {
-	 if((fitness_final_check_value = fitness_final_check(pn[0]->root)) < tolerance)
-	 {
-	    perfect_fit = 1;
-	 }
+         if((fitness_final_check_value = fitness_final_check(pn[0]->root)) < tolerance)
+         {
+            perfect_fit = 1;
+         }
       }
       else
       {
-	 fitness_final_check_value =  fitness_final_check(pn[0]->root);
+         fitness_final_check_value =  fitness_final_check(pn[0]->root);
       }
 
       printf("fitness evals %ld skipped %ld\n", fitness_evals, fitness_skipped);
 
       printf(
-	     "perfect fit after final check %d\n"
-	     "first perfect fit found in generation %d <%u>\n"
-	     "best perfect fit found in generation %d <%u>\n"
-	     ,
-	     perfect_fit,
-	     first_match_gen,
-	     first_match_B,
-	     best_match_gen,
-	     best_match_B);
+             "perfect fit after final check %d\n"
+             "first perfect fit found in generation %d <%u>\n"
+             "best perfect fit found in generation %d <%u>\n"
+             ,
+             perfect_fit,
+             first_match_gen,
+             first_match_B,
+             best_match_gen,
+             best_match_B);
       printf("%d|%d|%d|%d|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%g|%lu|%g|%g|%d|%d|%d|%d|%d|%d|%d|%u|%d|%u|%d|%g|%g|%g|%d|%g|%d|%g|%g|%d|%g|%g|%g|%g|",
-	     pop_size,
-	     max_arg,
-	     fitness_reinit,
-	     remove_duplicates,
-	     beta_divisor,
-	     beta_overflow * 100e0 / (selection_count * 1e0),
-	     fitness_param_1,
-	     fitness_param_2,
-	     fitness_param_3,
-	     fitness_param_4,
-	     fitness_param_5,
-	     fitness_param_6,
-	     fitness_param_7,
-	     fitness_out_1,
-	     fitness_out_2,
-	     fitness_out_3,
-	     fitness_out_4,
-	     fitness_out_5,
-	     fitness_out_6,
-	     fitness_out_7,
-	     fitness_out_8,
-	     fitness_out_9,
-	     fitness_out_10,
-	     fitness_out_11,
-	     fitness_out_12,
-	     fitness_out_13,
-	     fitness_out_14,
-	     fitness_out_15,
-	     total_time,
-	     fitness_final_check_value,
-	     pct_node_mutation,
-	     pct_crossover,
-	     pct_mutation,
-	     pct_subtree_dup,
-	     pct_replication,
-	     elitism,
-	     ramped,
-	     first_match_gen,
-	     first_match_B,
-	     best_match_gen,
-	     best_match_B,
-	     perfect_fit,
-	     migrate_prob,
-	     concentration_inactivate_prob,
-	     generation_inactivate_prob,
-	     node_mutate_reactivates,
-	     pct_point_mutation,
-	     use_random_normal,
-	     random_normal_sd_1,
-	     random_normal_sd_2,
-	     gen_mult_sd,
-	     gen_mult_sd_factor,
-	     min_f_ratio,
-	     max_f_ratio,
-	     use_vbar
-	     );
+             pop_size,
+             max_arg,
+             fitness_reinit,
+             remove_duplicates,
+             beta_divisor,
+             beta_overflow * 100e0 / (selection_count * 1e0),
+             fitness_param_1,
+             fitness_param_2,
+             fitness_param_3,
+             fitness_param_4,
+             fitness_param_5,
+             fitness_param_6,
+             fitness_param_7,
+             fitness_out_1,
+             fitness_out_2,
+             fitness_out_3,
+             fitness_out_4,
+             fitness_out_5,
+             fitness_out_6,
+             fitness_out_7,
+             fitness_out_8,
+             fitness_out_9,
+             fitness_out_10,
+             fitness_out_11,
+             fitness_out_12,
+             fitness_out_13,
+             fitness_out_14,
+             fitness_out_15,
+             total_time,
+             fitness_final_check_value,
+             pct_node_mutation,
+             pct_crossover,
+             pct_mutation,
+             pct_subtree_dup,
+             pct_replication,
+             elitism,
+             ramped,
+             first_match_gen,
+             first_match_B,
+             best_match_gen,
+             best_match_B,
+             perfect_fit,
+             migrate_prob,
+             concentration_inactivate_prob,
+             generation_inactivate_prob,
+             node_mutate_reactivates,
+             pct_point_mutation,
+             use_random_normal,
+             random_normal_sd_1,
+             random_normal_sd_2,
+             gen_mult_sd,
+             gen_mult_sd_factor,
+             min_f_ratio,
+             max_f_ratio,
+             use_vbar
+             );
       list_tree(pn[0]->root);
       puts("");
       if(end_save_best)
       {
-	 FILE *end_save_best_file;
-	 node *n;
-	 //	  double *d;
-	 int j;
-	 int active_points;
-	 if(end_save_best > pop_size)
-	 {
-	    end_save_best = pop_size;
-	 }
-	 if(NULL == (end_save_best_file = fopen(end_save_best_filename, "w")))
-	 {
-	    fprintf(stderr, "save file open error, can't open \"%s\" for writing\n", end_save_best_filename);
-	    exit(-1);
-	 }
-	 for(i = 0; i < end_save_best; i++)
-	 {
-	    active_points = 0;
-	    n = pn[i]->root;
-	    while(n)
-	    {
-	       while(n && (!((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ||
-			   ((double *)n->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
-		     )
-	       {
-		  n = n->children[0];
-	       }
-	       if(n)
-	       {
-		  active_points++;
-		  n = n->children[0];
-	       }
-	    }
-	    if(active_points > 0)
-	    {
-	       n = pn[i]->root;
-	       fprintf(end_save_best_file, "%g|%d", A[i] , active_points);
-	       for(j = 0; j < FITNESS_NO_OF_CONSTANTS; j++)
-	       {
-		  fprintf(end_save_best_file, "|%g", ((double *)pn[i]->data)[j]);
-	       }
-	       while(n)
-	       {
-		  while(n && (!((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ||
-			      ((double *)n->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
-			)
-		  {
-		     n = n->children[0];
-		  }
-		  if(n)
-		  {
-		     fprintf(end_save_best_file, "|%g|%g|%g" ,
-			     ((double *)n->data)[0],
-			     ((double *)n->data)[1],
-			     ((double *)n->data)[SOLUTE_DATA_CONCENTRATION]);
-		     n = n->children[0];
-		  }
-	       }
-	       fprintf(end_save_best_file, "\n");
-	    }
-	 }
-	 fclose(end_save_best_file);
+         FILE *end_save_best_file;
+         node *n;
+         //     double *d;
+         int j;
+         int active_points;
+         if(end_save_best > pop_size)
+         {
+            end_save_best = pop_size;
+         }
+         if(NULL == (end_save_best_file = fopen(end_save_best_filename, "w")))
+         {
+            fprintf(stderr, "save file open error, can't open \"%s\" for writing\n", end_save_best_filename);
+            exit(-1);
+         }
+         for(i = 0; i < end_save_best; i++)
+         {
+            active_points = 0;
+            n = pn[i]->root;
+            while(n)
+            {
+               while(n && (!((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ||
+                           ((double *)n->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
+                     )
+               {
+                  n = n->children[0];
+               }
+               if(n)
+               {
+                  active_points++;
+                  n = n->children[0];
+               }
+            }
+            if(active_points > 0)
+            {
+               n = pn[i]->root;
+               fprintf(end_save_best_file, "%g|%d", A[i] , active_points);
+               for(j = 0; j < FITNESS_NO_OF_CONSTANTS; j++)
+               {
+                  fprintf(end_save_best_file, "|%g", ((double *)pn[i]->data)[j]);
+               }
+               while(n)
+               {
+                  while(n && (!((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ||
+                              ((double *)n->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
+                        )
+                  {
+                     n = n->children[0];
+                  }
+                  if(n)
+                  {
+                     fprintf(end_save_best_file, "|%g|%g|%g" ,
+                             ((double *)n->data)[0],
+                             ((double *)n->data)[1],
+                             ((double *)n->data)[SOLUTE_DATA_CONCENTRATION]);
+                     n = n->children[0];
+                  }
+               }
+               fprintf(end_save_best_file, "\n");
+            }
+         }
+         fclose(end_save_best_file);
       }
    }
    ga_best_sve.clear();
@@ -5177,8 +5177,8 @@ void set_command_opt(char *line)
    }
    token[tokens - 1] = p;
    while(strlen(p) &&
-	 (p[strlen(p) - 1] == '\n' ||
-	  p[strlen(p) - 1] == '\r'))
+         (p[strlen(p) - 1] == '\n' ||
+          p[strlen(p) - 1] == '\r'))
    {
       p[strlen(p) - 1] = 0;
    }
@@ -5187,7 +5187,7 @@ void set_command_opt(char *line)
       printf("config file line:");
       for(i = 0; i < tokens; i++)
       {
-	 printf(" [%s]", token[i]);
+         printf(" [%s]", token[i]);
       }
       puts("");
    }
@@ -5213,8 +5213,8 @@ void set_command_opt(char *line)
       max_arg = atoi(token[1]);
       if(max_arg < 1)
       {
-	 fprintf(stderr,"less than one variable!\n");
-	 exit(-1);
+         fprintf(stderr,"less than one variable!\n");
+         exit(-1);
       }
       valid_token = 1;
    }
@@ -5237,8 +5237,8 @@ void set_command_opt(char *line)
    {
       if(NULL == (cachedir = (char *)malloc(strlen(token[1]) + 1)))
       {
-	 fprintf(stderr, "malloc failure\n");
-	 exit(-1);
+         fprintf(stderr, "malloc failure\n");
+         exit(-1);
       }
       strcpy(cachedir, token[1]);
       valid_token = 1;
@@ -5279,8 +5279,8 @@ void set_command_opt(char *line)
       max_generations = atoi(token[1]);
       if(max_generations < 0)
       {
-	 fprintf(stderr,"less than zero generations!\n");
-	 exit(-1);
+         fprintf(stderr,"less than zero generations!\n");
+         exit(-1);
       }
       valid_token = 1;
    }
@@ -5299,8 +5299,8 @@ void set_command_opt(char *line)
       new_tree_depth = atoi(token[1]);
       if(new_tree_depth < 1)
       {
-	 fprintf(stderr,"less than one new tree depth!\n");
-	 exit(-1);
+         fprintf(stderr,"less than one new tree depth!\n");
+         exit(-1);
       }
       valid_token = 1;
    }
@@ -5309,8 +5309,8 @@ void set_command_opt(char *line)
       mutate_tree_depth = atoi(token[1]);
       if(mutate_tree_depth < 2)
       {
-	 fprintf(stderr,"less than two mutate tree depth!\n");
-	 exit(-1);
+         fprintf(stderr,"less than two mutate tree depth!\n");
+         exit(-1);
       }
       valid_token = 1;
    }
@@ -5434,11 +5434,11 @@ void set_command_opt(char *line)
    if(!strcmp(token[0], "migrate_out"))
    {
       if(NULL == (migrate_out_filename = (char *)malloc(strlen(token[1]) + 1)) ||
-	 NULL == (migrate_out_filename_new = (char *)malloc(strlen(token[1]) + 1 + strlen(".new"))) ||
-	 NULL == (migrate_out_mv_new_to_current = (char *)malloc((2 * strlen(token[1])) + 1 + strlen(".new") + strlen("mv ") + strlen(" "))))
+         NULL == (migrate_out_filename_new = (char *)malloc(strlen(token[1]) + 1 + strlen(".new"))) ||
+         NULL == (migrate_out_mv_new_to_current = (char *)malloc((2 * strlen(token[1])) + 1 + strlen(".new") + strlen("mv ") + strlen(" "))))
       {
-	 fprintf(stderr, "malloc failure\n");
-	 exit(-1);
+         fprintf(stderr, "malloc failure\n");
+         exit(-1);
       }
       strcpy(migrate_out_filename, token[1]);
       strcpy(migrate_out_filename_new, token[1]);
@@ -5450,13 +5450,13 @@ void set_command_opt(char *line)
    {
       if(migrate_in_file_count >= MAX_MIGRATE_IN_FILES - 1)
       {
-	 fprintf(stderr, "maximum number of migrate_in files exceeded [%d]\n", MAX_MIGRATE_IN_FILES);
-	 exit(-1);
+         fprintf(stderr, "maximum number of migrate_in files exceeded [%d]\n", MAX_MIGRATE_IN_FILES);
+         exit(-1);
       }
       if(NULL == (migrate_in_filename[migrate_in_file_count] = (char *)malloc(strlen(token[1]) + 1)))
       {
-	 fprintf(stderr, "malloc failure\n");
-	 exit(-1);
+         fprintf(stderr, "malloc failure\n");
+         exit(-1);
       }
       strcpy(migrate_in_filename[migrate_in_file_count], token[1]);
       migrate_in_file_count++;
@@ -5467,8 +5467,8 @@ void set_command_opt(char *line)
       end_save_best = atoi(token[1]);
       if(NULL == (end_save_best_filename = (char *)malloc(strlen(token[2]) + 1)))
       {
-	 fprintf(stderr, "malloc failure\n");
-	 exit(-1);
+         fprintf(stderr, "malloc failure\n");
+         exit(-1);
       }
       strcpy(end_save_best_filename, token[2]);
       valid_token = 1;
@@ -5484,8 +5484,8 @@ void set_command_opt(char *line)
       save_every_fitness_after_generation = atoi(token[2]);
       if(NULL == (save_every_fitness_filename = (char *)malloc(strlen(token[3]) + 1)))
       {
-	 fprintf(stderr, "malloc failure\n");
-	 exit(-1);
+         fprintf(stderr, "malloc failure\n");
+         exit(-1);
       }
       strcpy(save_every_fitness_filename, token[3]);
       valid_token = 1;
@@ -5619,7 +5619,7 @@ void set_command_opt(char *line)
        init();
        puts("fitness_init");
        fitness_init();
-       //	solute_test_perfect_fitness_run();
+       //   solute_test_perfect_fitness_run();
        regularize(token[1]);
        exit(0);
        }
@@ -5629,7 +5629,7 @@ void set_command_opt(char *line)
        init();
        puts("fitness_init");
        fitness_init();
-       //	solute_test_perfect_fitness_run();
+       //   solute_test_perfect_fitness_run();
        regularize(token[2]);
        exit(0);
        }
@@ -5689,57 +5689,57 @@ void set_command_opt(char *line)
       min_s = 1e99;
       max_s = -1e99;
       {
-	 FILE *load_file = fopen(token[1], "r");
-	 char line[MAX_INPUT_LIN_LENGTH];
-	 Solute_center solute_center;
-	 if(!load_file)
-	 {
-	    fprintf(stderr, "can't open centered_points file <%s>\n", token[1]);
-	    exit(-1);
-	 }
-	 while(fgets(line, sizeof(line), load_file) != NULL)
-	 {
-	    if(*line != '#')
-	    {
-	       solute_center.s = atof(line);
-	       p = strchr(line, ' ');
-	       if(!p)
-	       {
-		  fprintf(stderr, "centered_points file format error\n");
-		  exit(-1);
-	       }
-	       p++;
-	       solute_center.k = atof(p);
-	       p = strchr(p, ' ');
-	       if(!p)
-	       {
-		  fprintf(stderr, "save_concentration file format error\n");
-		  exit(-1);
-	       }
-	       p++;
-	       solute_center.r = atof(p);
+         FILE *load_file = fopen(token[1], "r");
+         char line[MAX_INPUT_LIN_LENGTH];
+         Solute_center solute_center;
+         if(!load_file)
+         {
+            fprintf(stderr, "can't open centered_points file <%s>\n", token[1]);
+            exit(-1);
+         }
+         while(fgets(line, sizeof(line), load_file) != NULL)
+         {
+            if(*line != '#')
+            {
+               solute_center.s = atof(line);
+               p = strchr(line, ' ');
+               if(!p)
+               {
+                  fprintf(stderr, "centered_points file format error\n");
+                  exit(-1);
+               }
+               p++;
+               solute_center.k = atof(p);
+               p = strchr(p, ' ');
+               if(!p)
+               {
+                  fprintf(stderr, "save_concentration file format error\n");
+                  exit(-1);
+               }
+               p++;
+               solute_center.r = atof(p);
 
-	       //	  solute_center.r = .1;
+               //     solute_center.r = .1;
 
-	       printf("adding solute_center [%g,%g] r %g\n",
-		      solute_center.s,
-		      solute_center.k, solute_center.r);
+               printf("adding solute_center [%g,%g] r %g\n",
+                      solute_center.s,
+                      solute_center.k, solute_center.r);
 
-	       solute_centers.push_back(solute_center);
-	       if(solute_center.s - (solute_center.r * 1e-13) < min_s)
-	       {
-		  min_s = solute_center.s - (solute_center.r * 1e-13);
-		  if(min_s < 1e-15)
-		  {
-		     min_s =  1e-15;
-		  }
-	       }
-	       if(solute_center.s + (solute_center.r * 1e-13) > max_s)
-	       {
-		  max_s = solute_center.s + (solute_center.r * 1e-13);
-	       }
-	    }
-	 }
+               solute_centers.push_back(solute_center);
+               if(solute_center.s - (solute_center.r * 1e-13) < min_s)
+               {
+                  min_s = solute_center.s - (solute_center.r * 1e-13);
+                  if(min_s < 1e-15)
+                  {
+                     min_s =  1e-15;
+                  }
+               }
+               if(solute_center.s + (solute_center.r * 1e-13) > max_s)
+               {
+                  max_s = solute_center.s + (solute_center.r * 1e-13);
+               }
+            }
+         }
       }
 
       printf("max centered solutes %d = new_tree_depth\n", new_tree_depth = solute_centers.size());
@@ -5827,7 +5827,7 @@ void ga_setup(struct ga_data GA_Params, int myrank, US_fe_nnls_t *pass_us_fe_nnl
       fitness_param_1 = .1;
       if(!myrank)
       {
-	 printf("solute mutate pct set to %g, use -X to set otherwise\n", fitness_param_1);
+         printf("solute mutate pct set to %g, use -X to set otherwise\n", fitness_param_1);
       }
    }
    pct_replication = 0;
@@ -6005,11 +6005,11 @@ void ga_setup(struct ga_data GA_Params, int myrank, US_fe_nnls_t *pass_us_fe_nnl
       pct_plague < 0 || pct_plague > 100)
    {
       fprintf(stderr,"crossover %d\nmutation %d\nreplication %d\nsubtree dup %d\nplague %d\n",
-	      pct_crossover,
-	      pct_mutation,
-	      pct_replication,
-	      pct_subtree_dup,
-	      pct_plague);
+              pct_crossover,
+              pct_mutation,
+              pct_replication,
+              pct_subtree_dup,
+              pct_plague);
 
       fprintf(stderr,"percentages don't add up to 100\n");
       MPI_Abort(MPI_COMM_WORLD, -5);
@@ -6049,49 +6049,49 @@ void ga_setup(struct ga_data GA_Params, int myrank, US_fe_nnls_t *pass_us_fe_nnl
       printf("%d: fitness_init\n", this_rank);
       fflush(stdout);
       fitness_init();
-      //	solute_test_perfect_fitness_run();
+      //   solute_test_perfect_fitness_run();
       if(fitness_param_4 >= 1e0)
       {
-	 puts("fitness_test");
-	 fitness_test();
-	 exit(-1);
+         puts("fitness_test");
+         fitness_test();
+         exit(-1);
       }
 
       /* initial random population */
       printf("%d: init pop\n", this_rank);
       for(i = 0 ; i < pop_size; i++)
       {
-	 if(ramped & i < half_pop_size)
-	 {
-	    use_tree_depth = (int)floor(1e0 + i * half_slope);
-	 }
-	 p = insert_population_node(p, new_random_tree_rooted(use_tree_depth));
-	 pn[i] = p;
-	 A[i] = fitness(p->root);
-	 if(debug_level > 1)
-	 {
-	    list_tree(p->root);
-	    puts("");
-	 }
-	 /*
-	   ((double *)p->data)[FITNESS_CONSTANT_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_1];
-	   ((double *)p->data)[FITNESS_CONSTANT_NEG_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_NEG_1];
-	 */
-	 fitness_evals++;
-	 if(A[i] < tolerance)
-	    A[i] = 0e0;
-	 p->fitness = A[i];
-	 p->fitness_valid = 1;
-	 p->active_points = count_tree_active_points(p->root);
-	 B[i] = tree_hash(p->root) + (p->active_points << 22);
-	 // was - tree_hash(p->root) * p->points;
-	 //	  B[i] = tree_hash(p->root) * p->points;
-	 //	  list_tree(p->root);
-	 //	  puts("");
-	 //	  gsm_this_node(STEEPEST_DESCENT, p->root, 5, .01);
-	 //	  gsm_this_node(CONJUGATE_GRADIENT, p->root, 5, .01);
-	 //	  gsm_this_node(INVERSE_HESSIAN, p->root, 5, .01);
-	 //	  exit(0);
+         if(ramped & i < half_pop_size)
+         {
+            use_tree_depth = (int)floor(1e0 + i * half_slope);
+         }
+         p = insert_population_node(p, new_random_tree_rooted(use_tree_depth));
+         pn[i] = p;
+         A[i] = fitness(p->root);
+         if(debug_level > 1)
+         {
+            list_tree(p->root);
+            puts("");
+         }
+         /*
+           ((double *)p->data)[FITNESS_CONSTANT_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_1];
+           ((double *)p->data)[FITNESS_CONSTANT_NEG_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_NEG_1];
+         */
+         fitness_evals++;
+         if(A[i] < tolerance)
+            A[i] = 0e0;
+         p->fitness = A[i];
+         p->fitness_valid = 1;
+         p->active_points = count_tree_active_points(p->root);
+         B[i] = tree_hash(p->root) + (p->active_points << 22);
+         // was - tree_hash(p->root) * p->points;
+         //     B[i] = tree_hash(p->root) * p->points;
+         //     list_tree(p->root);
+         //     puts("");
+         //     gsm_this_node(STEEPEST_DESCENT, p->root, 5, .01);
+         //     gsm_this_node(CONJUGATE_GRADIENT, p->root, 5, .01);
+         //     gsm_this_node(INVERSE_HESSIAN, p->root, 5, .01);
+         //     exit(0);
       }
 
       alloc_migrate_buffers();
@@ -6117,18 +6117,18 @@ void ga_setup(struct ga_data GA_Params, int myrank, US_fe_nnls_t *pass_us_fe_nnl
       buffer_list_serial(MIGRATE_OUT);
       bufrewind(MIGRATE_OUT);
       {
-	 node *n;
-	 n = buffer_serialize_in_tree(MIGRATE_OUT);
-	 //	  printf("before comparison:");
-	 //	  list_tree(n);
-	 printf("comparison value %d:\n", cmp_tree(pn[0]->root, n));
-	 n = buffer_serialize_in_tree(MIGRATE_OUT);
-	 //	  printf("before comparison:");
-	 //	  list_tree(n);
-	 printf("comparison value %d:\n", cmp_tree(pn[3]->root, n));
-	 printf("bad comparison value %d:\n", cmp_tree(pn[1]->root, n));
-	 printf("last read %lu\n", buffer_serialize_in_tree(MIGRATE_OUT));
-	 buffer_close_serial_input(MIGRATE_OUT);
+         node *n;
+         n = buffer_serialize_in_tree(MIGRATE_OUT);
+         //     printf("before comparison:");
+         //     list_tree(n);
+         printf("comparison value %d:\n", cmp_tree(pn[0]->root, n));
+         n = buffer_serialize_in_tree(MIGRATE_OUT);
+         //     printf("before comparison:");
+         //     list_tree(n);
+         printf("comparison value %d:\n", cmp_tree(pn[3]->root, n));
+         printf("bad comparison value %d:\n", cmp_tree(pn[1]->root, n));
+         printf("last read %lu\n", buffer_serialize_in_tree(MIGRATE_OUT));
+         buffer_close_serial_input(MIGRATE_OUT);
       }
 #endif
 
@@ -6269,196 +6269,196 @@ int main(int argc, char **argv)
       switch(c)
       {
       case 'A' :
-	 initial_diskcache_size = atoi(optarg);
-	 break;
+         initial_diskcache_size = atoi(optarg);
+         break;
       case '1' :
-	 point_crossover = 1;
-	 break;
+         point_crossover = 1;
+         break;
       case 'T' :
-	 skip_fitness++;
-	 break;
+         skip_fitness++;
+         break;
       case '2' :
-	 point_crossover = 2;
-	 break;
+         point_crossover = 2;
+         break;
       case 'a' :
-	 max_arg = atoi(optarg);
-	 if(max_arg < 1)
-	 {
-	    fprintf(stderr,"less than one variable!\n");
-	    exit(-1);
-	 }
-	 break;
+         max_arg = atoi(optarg);
+         if(max_arg < 1)
+         {
+            fprintf(stderr,"less than one variable!\n");
+            exit(-1);
+         }
+         break;
       case 'b' :
-	 bloat_cutoff = atoi(optarg);
-	 break;
+         bloat_cutoff = atoi(optarg);
+         break;
       case 'B' :
-	 beta_divisor = atof(optarg);
-	 break;
+         beta_divisor = atof(optarg);
+         break;
       case 'c' :
-	 pct_crossover = atoi(optarg);
-	 break;
+         pct_crossover = atoi(optarg);
+         break;
       case 'C' :
-	 cachedir = optarg;
-	 break;
+         cachedir = optarg;
+         break;
       case 'd' :
-	 debug_level++;
-	 break;
+         debug_level++;
+         break;
       case 'D' :
-	 remove_duplicates = 1;
-	 break;
+         remove_duplicates = 1;
+         break;
       case 'e' :
-	 elitism = atoi(optarg);
-	 break;
+         elitism = atoi(optarg);
+         break;
       case 'E' :
-	 force_rooted = atoi(optarg);
-	 break;
+         force_rooted = atoi(optarg);
+         break;
       case 'f' :
-	 puts("load config");
-	 load_config_file(optarg);
-	 break;
+         puts("load config");
+         load_config_file(optarg);
+         break;
       case 'F' :
-	 fitness_reinit = atoi(optarg);
-	 break;
+         fitness_reinit = atoi(optarg);
+         break;
       case 'G' :
-	 printf("load experiment filenames <%s> not valid\n", optarg);
-	 //	  fitness_load_experiment_filenames(optarg); break;
-	 exit(-1);
-	 break;
+         printf("load experiment filenames <%s> not valid\n", optarg);
+         //     fitness_load_experiment_filenames(optarg); break;
+         exit(-1);
+         break;
       case 'H' :
-	 use_alt_tree_hash++;
-	 break;
+         use_alt_tree_hash++;
+         break;
       case 'g' :
-	 max_generations = atoi(optarg);
-	 if(max_generations < 0)
-	 {
-	    fprintf(stderr,"less than zero generations!\n");
-	    exit(-1);
-	 }
-	 break;
+         max_generations = atoi(optarg);
+         if(max_generations < 0)
+         {
+            fprintf(stderr,"less than zero generations!\n");
+            exit(-1);
+         }
+         break;
       case 'l' :
-	 list_best = atoi(optarg);
-	 break;
+         list_best = atoi(optarg);
+         break;
       case 'L' :
-	 if(NULL == (base_directory = (char *)malloc(strlen(optarg) + 1)))
-	 {
-	    fprintf(stderr, "malloc failure\n");
-	    exit(-1);
-	 }
-	 strcpy(base_directory, optarg);
-	 if(chdir(optarg))
-	 {
-	    fprintf(stderr, "could not change directory to '%s'\n", optarg);
-	    exit(-1);
-	 }
-	 break;
+         if(NULL == (base_directory = (char *)malloc(strlen(optarg) + 1)))
+         {
+            fprintf(stderr, "malloc failure\n");
+            exit(-1);
+         }
+         strcpy(base_directory, optarg);
+         if(chdir(optarg))
+         {
+            fprintf(stderr, "could not change directory to '%s'\n", optarg);
+            exit(-1);
+         }
+         break;
 
       case 'n' :
-	 pct_node_mutation = atof(optarg);
-	 break;
+         pct_node_mutation = atof(optarg);
+         break;
       case 'N' :
-	 new_tree_depth = atoi(optarg);
-	 if(new_tree_depth < 1)
-	 {
-	    fprintf(stderr,"less than one new tree depth!\n");
-	    exit(-1);
-	 }
-	 break;
+         new_tree_depth = atoi(optarg);
+         if(new_tree_depth < 1)
+         {
+            fprintf(stderr,"less than one new tree depth!\n");
+            exit(-1);
+         }
+         break;
       case 'o' :
-	 {
-	    char x[strlen(optarg)+1];
-	    strcpy(x, optarg);
-	    set_command_opt(x);
-	 }
-	 break;
+         {
+            char x[strlen(optarg)+1];
+            strcpy(x, optarg);
+            set_command_opt(x);
+         }
+         break;
       case 'M' :
-	 mutate_tree_depth = atoi(optarg);
-	 if(mutate_tree_depth < 2)
-	 {
-	    fprintf(stderr,"less than two mutate tree depth!\n");
-	    exit(-1);
-	 }
-	 break;
+         mutate_tree_depth = atoi(optarg);
+         if(mutate_tree_depth < 2)
+         {
+            fprintf(stderr,"less than two mutate tree depth!\n");
+            exit(-1);
+         }
+         break;
       case 'm' :
-	 pct_mutation = atoi(optarg);
-	 break;
+         pct_mutation = atoi(optarg);
+         break;
       case 'p' :
-	 pop_size = atoi(optarg);
-	 break;
+         pop_size = atoi(optarg);
+         break;
       case 'P' :
-	 pct_plague = atoi(optarg);
-	 break;
+         pct_plague = atoi(optarg);
+         break;
       case 's' :
-	 pct_subtree_dup = atoi(optarg);
-	 break;
+         pct_subtree_dup = atoi(optarg);
+         break;
       case 'r' :
-	 ramped = 1;
-	 break;
+         ramped = 1;
+         break;
       case 't' :
-	 tolerance = atof(optarg);
-	 break;
+         tolerance = atof(optarg);
+         break;
       case 'R' :
-	 rand_seed = atof(optarg);
-	 break;
+         rand_seed = atof(optarg);
+         break;
       case 'X' :
-	 fitness_param_1 = atof(optarg);
-	 break;
+         fitness_param_1 = atof(optarg);
+         break;
       case 'Y' :
-	 fitness_param_2 = atof(optarg);
-	 break;
+         fitness_param_2 = atof(optarg);
+         break;
       case 'Z' :
-	 fitness_param_3 = atof(optarg);
-	 break;
+         fitness_param_3 = atof(optarg);
+         break;
       case 'U' :
-	 fitness_param_4 = atof(optarg);
-	 break;
+         fitness_param_4 = atof(optarg);
+         break;
       case 'V' :
-	 fitness_param_5 = atof(optarg);
-	 break;
+         fitness_param_5 = atof(optarg);
+         break;
       case 'h' :
       case '?' :
       default :
-	 printf(
-		"-1		 set crossover to 1 point crossover (only GA safe)\n"
-		"-2		 set crossover to 2 point crossover (only GA safe)\n"
-		"-a int	 number of terminals (external variables) >0\n"
-		"-A int	 cache entries (default 32)\n"
-		"-b float   max average individual size cutoff/bloat control (default 0 = off)\n"
-		"-B float   set exponential ranking selection Beta divisor (Beta = pop_size/divisor, default 8)\n"
-		"-c int	 crossover percent (default 85)\n"
-		"-C string  cachedir (mfemcache)\n"
-		"-d		 debug/multiple times does more\n"
-		"-D		 remove duplicates & replace with new random trees to maintain diversity\n"
-		"-e int	 elitism count (default 0)\n"
-		"-E int	 rooted element # (default -1 = any function)\n"
-		"-f name	configuration file\n"
-		"-F int	 re init fitness every n-th generation (default 0 = off)\n"
-		"-g int	 generations >0\n"
-		"-G name	mfem datafile\n"
-		"-H		 use alternate tree hash function\n"
-		"-l int	 print out best # of pop members (max(5,population_size))\n"
-		"-L string  base directory for configuration files\n"
-		"-m int	 mutation percent (default 10)\n"
-		"-M int	 mutate tree depth >1\n"
-		"-n float   node mutation percent (default 0)\n"
-		"-N int	 new tree depth >1\n"
-		"-o string  option in config file format\n"
-		"-p int	 population size >1\n"
-		"-P int	 percent plague (default 0)\n"
-		"-r		 use ramped half & half initialization\n"
-		"-R float   set random seed ( < 0 implies use timer, default)\n"
-		"-s int	 subtree dup percent\n"
-		"-t float   set tolerance (default %g)\n"
-		"-T		 turn on fitness skipping\n"
-		"-U float   set fitness parameter 4 (default 0)\n"
-		"-V float   set fitness parameter 5 (default 0)\n"
-		"-X float   set fitness parameter 1 (default 0)\n"
-		"-Y float   set fitness parameter 2 (default 0)\n"
-		"-Z float   set fitness parameter 3 (default 0)\n"
-		,
-		TOLERANCE
-		);
-	 exit(0);
-	 break;
+         printf(
+                "-1       set crossover to 1 point crossover (only GA safe)\n"
+                "-2       set crossover to 2 point crossover (only GA safe)\n"
+                "-a int    number of terminals (external variables) >0\n"
+                "-A int    cache entries (default 32)\n"
+                "-b float   max average individual size cutoff/bloat control (default 0 = off)\n"
+                "-B float   set exponential ranking selection Beta divisor (Beta = pop_size/divisor, default 8)\n"
+                "-c int    crossover percent (default 85)\n"
+                "-C string  cachedir (mfemcache)\n"
+                "-d       debug/multiple times does more\n"
+                "-D       remove duplicates & replace with new random trees to maintain diversity\n"
+                "-e int    elitism count (default 0)\n"
+                "-E int    rooted element # (default -1 = any function)\n"
+                "-f name   configuration file\n"
+                "-F int    re init fitness every n-th generation (default 0 = off)\n"
+                "-g int    generations >0\n"
+                "-G name   mfem datafile\n"
+                "-H       use alternate tree hash function\n"
+                "-l int    print out best # of pop members (max(5,population_size))\n"
+                "-L string  base directory for configuration files\n"
+                "-m int    mutation percent (default 10)\n"
+                "-M int    mutate tree depth >1\n"
+                "-n float   node mutation percent (default 0)\n"
+                "-N int    new tree depth >1\n"
+                "-o string  option in config file format\n"
+                "-p int    population size >1\n"
+                "-P int    percent plague (default 0)\n"
+                "-r       use ramped half & half initialization\n"
+                "-R float   set random seed ( < 0 implies use timer, default)\n"
+                "-s int    subtree dup percent\n"
+                "-t float   set tolerance (default %g)\n"
+                "-T       turn on fitness skipping\n"
+                "-U float   set fitness parameter 4 (default 0)\n"
+                "-V float   set fitness parameter 5 (default 0)\n"
+                "-X float   set fitness parameter 1 (default 0)\n"
+                "-Y float   set fitness parameter 2 (default 0)\n"
+                "-Z float   set fitness parameter 3 (default 0)\n"
+                ,
+                TOLERANCE
+                );
+         exit(0);
+         break;
       }
    }
 
@@ -6496,11 +6496,11 @@ int main(int argc, char **argv)
       pct_plague < 0 || pct_plague > 100)
    {
       fprintf(stderr,"crossover %d\nmutation %d\nreplication %d\nsubtree dup %d\nplague %d\n",
-	      pct_crossover,
-	      pct_mutation,
-	      pct_replication,
-	      pct_subtree_dup,
-	      pct_plague);
+              pct_crossover,
+              pct_mutation,
+              pct_replication,
+              pct_subtree_dup,
+              pct_plague);
 
       fprintf(stderr,"percentages don't add up to 100\n");
       exit(-1);
@@ -6550,9 +6550,9 @@ int main(int argc, char **argv)
       solute_test_perfect_fitness_run();
       if(fitness_param_4 >= 1e0)
       {
-	 puts("fitness_test");
-	 fitness_test();
-	 exit(-1);
+         puts("fitness_test");
+         fitness_test();
+         exit(-1);
       }
 
       /* initial random population */
@@ -6560,37 +6560,37 @@ int main(int argc, char **argv)
       fflush(stdout);
       for(i = 0 ; i < pop_size; i++)
       {
-	 if(ramped & i < half_pop_size)
-	 {
-	    use_tree_depth = (int)floor(1e0 + i * half_slope);
-	 }
-	 p = insert_population_node(p, new_random_tree_rooted(use_tree_depth));
-	 if(debug_level > 0)
-	 {
-	    list_tree(p->root);
-	    puts("");
-	 }
-	 pn[i] = p;
-	 A[i] = fitness(p->root);
-	 /*
-	   ((double *)p->data)[FITNESS_CONSTANT_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_1];
-	   ((double *)p->data)[FITNESS_CONSTANT_NEG_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_NEG_1];
-	 */
-	 fitness_evals++;
-	 if(A[i] < tolerance)
-	    A[i] = 0e0;
-	 p->fitness = A[i];
-	 p->fitness_valid = 1;
-	 p->active_points = count_tree_active_points(p->root);
-	 B[i] = tree_hash(p->root) + (p->active_points << 22);
-	 // was - tree_hash(p->root) * p->points;
-	 //	  B[i] = tree_hash(p->root) * p->points;
-	 //	  list_tree(p->root);
-	 //	  puts("");
-	 //	  gsm_this_node(STEEPEST_DESCENT, p->root, 5, .01);
-	 //	  gsm_this_node(CONJUGATE_GRADIENT, p->root, 5, .01);
-	 //	  gsm_this_node(INVERSE_HESSIAN, p->root, 5, .01);
-	 //	  exit(0);
+         if(ramped & i < half_pop_size)
+         {
+            use_tree_depth = (int)floor(1e0 + i * half_slope);
+         }
+         p = insert_population_node(p, new_random_tree_rooted(use_tree_depth));
+         if(debug_level > 0)
+         {
+            list_tree(p->root);
+            puts("");
+         }
+         pn[i] = p;
+         A[i] = fitness(p->root);
+         /*
+           ((double *)p->data)[FITNESS_CONSTANT_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_1];
+           ((double *)p->data)[FITNESS_CONSTANT_NEG_1] = stack[CONSTANTS_STACK][FITNESS_CONSTANT_NEG_1];
+         */
+         fitness_evals++;
+         if(A[i] < tolerance)
+            A[i] = 0e0;
+         p->fitness = A[i];
+         p->fitness_valid = 1;
+         p->active_points = count_tree_active_points(p->root);
+         B[i] = tree_hash(p->root) + (p->active_points << 22);
+         // was - tree_hash(p->root) * p->points;
+         //     B[i] = tree_hash(p->root) * p->points;
+         //     list_tree(p->root);
+         //     puts("");
+         //     gsm_this_node(STEEPEST_DESCENT, p->root, 5, .01);
+         //     gsm_this_node(CONJUGATE_GRADIENT, p->root, 5, .01);
+         //     gsm_this_node(INVERSE_HESSIAN, p->root, 5, .01);
+         //     exit(0);
       }
 #if defined(SERIALIZATION_TEST)
       puts("serial test");
@@ -6612,14 +6612,14 @@ int main(int argc, char **argv)
       list_serial_file("serial_out_test");
       init_serial_input("serial_out_test");
       {
-	 node *n;
-	 n = get_serial_input();
-	 printf("comparison value %d:\n", cmp_tree(pn[0]->root, n));
-	 n = get_serial_input();
-	 printf("comparison value %d:\n", cmp_tree(pn[3]->root, n));
-	 printf("bad comparison value %d:\n", cmp_tree(pn[1]->root, n));
-	 printf("last read %lu\n", get_serial_input());
-	 close_serial_input();
+         node *n;
+         n = get_serial_input();
+         printf("comparison value %d:\n", cmp_tree(pn[0]->root, n));
+         n = get_serial_input();
+         printf("comparison value %d:\n", cmp_tree(pn[3]->root, n));
+         printf("bad comparison value %d:\n", cmp_tree(pn[1]->root, n));
+         printf("last read %lu\n", get_serial_input());
+         close_serial_input();
       }
       exit(0);
 #endif

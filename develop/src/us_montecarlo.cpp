@@ -1,12 +1,12 @@
 #include "../include/us_montecarlo.h"
 
 US_MonteCarlo::US_MonteCarlo(struct MonteCarlo *temp_mc, bool *temp_mc_widget, QWidget *parent, const char *name) 
-: QFrame(parent, name, true)
+   : QFrame(parent, name, true)
 {
-	plot_status = "parameter";
+   plot_status = "parameter";
    mc = temp_mc;
    mc_widget = temp_mc_widget;
-   *mc_widget = true;	
+   *mc_widget = true;   
    USglobal = new US_Config();
    pm = new US_Pixmap();
    stats.points = 0;
@@ -27,13 +27,13 @@ US_MonteCarlo::US_MonteCarlo(struct MonteCarlo *temp_mc, bool *temp_mc_widget, Q
    int column7 = 40;
    int span = column1 + column2 + column3 + column4 + column5 + column6 + column7 + 6 * spacing;
    bins = 50;
-   print_plot = false;		// show colors in plots, only b/w for printing
-   stats_widget = false;	//	is the statistics  widget visible or active?
-   beowulf_widget = false;	//	is the beowulf  widget visible or active?
-   file_read = false;		// flag decides if update_parameter has to be called or not 
-   file_ok = false;			// if we are above 20 iterations and the file exists, the file is OK, also decides if file_read is set
-   from_public = false;		// don't send error messages when the iterations are below 20 and updated from an external routine
-   dont_show = false;		// don't show the gui stuff when writing the file
+   print_plot = false;      // show colors in plots, only b/w for printing
+   stats_widget = false;   //   is the statistics  widget visible or active?
+   beowulf_widget = false;   //   is the beowulf  widget visible or active?
+   file_read = false;      // flag decides if update_parameter has to be called or not 
+   file_ok = false;         // if we are above 20 iterations and the file exists, the file is OK, also decides if file_read is set
+   from_public = false;      // don't send error messages when the iterations are below 20 and updated from an external routine
+   dont_show = false;      // don't show the gui stuff when writing the file
 
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("Monte Carlo Control Window"));
@@ -61,7 +61,7 @@ US_MonteCarlo::US_MonteCarlo(struct MonteCarlo *temp_mc, bool *temp_mc_widget, Q
    le_filename->setGeometry(xpos, ypos, column2 + column3 + spacing, buttonh);
    le_filename->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_filename->setText(" " + (*mc).filename);
-   connect(le_filename, SIGNAL(textChanged(const QString &)), SLOT(update_file(const QString &)));	
+   connect(le_filename, SIGNAL(textChanged(const QString &)), SLOT(update_file(const QString &)));   
 
    xpos += column2 + column3 + 2 * spacing;
 
@@ -161,8 +161,8 @@ US_MonteCarlo::US_MonteCarlo(struct MonteCarlo *temp_mc, bool *temp_mc_widget, Q
    cnt_percent_bootstrap->setValue((*mc).percent_bootstrap);
    cnt_percent_bootstrap->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    cnt_percent_bootstrap->setGeometry(xpos, ypos-1, column2 + column3 - column7, buttonh - 2);
-// connect(cnt_percent_bootstrap, SIGNAL(buttonReleased(double)), SLOT(update_percent_bootstrap(double)));
-	connect(cnt_percent_bootstrap, SIGNAL(valueChanged(double)), SLOT(update_percent_bootstrap(double)));
+   // connect(cnt_percent_bootstrap, SIGNAL(buttonReleased(double)), SLOT(update_percent_bootstrap(double)));
+   connect(cnt_percent_bootstrap, SIGNAL(valueChanged(double)), SLOT(update_percent_bootstrap(double)));
 
    xpos = border + column1 + column2 + column3 + 3 * spacing;
 
@@ -179,11 +179,11 @@ US_MonteCarlo::US_MonteCarlo(struct MonteCarlo *temp_mc, bool *temp_mc_widget, Q
    lb_rules->setSelected((*mc).rule, true);
    lb_rules->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    lb_rules->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-   lb_rules->insertItem(tr("SD of Point Rule"));				// rule 0
-   lb_rules->insertItem(tr("SD of Run or Point Rule"));	// rule 1
-   lb_rules->insertItem(tr("SD of Run Rule")); 				// rule 2
-   lb_rules->insertItem(tr("SD of 5 Point Average"));		// rule 3
-   lb_rules->insertItem(tr("SD of 10 Point Average"));		// etc...
+   lb_rules->insertItem(tr("SD of Point Rule"));            // rule 0
+   lb_rules->insertItem(tr("SD of Run or Point Rule"));   // rule 1
+   lb_rules->insertItem(tr("SD of Run Rule"));             // rule 2
+   lb_rules->insertItem(tr("SD of 5 Point Average"));      // rule 3
+   lb_rules->insertItem(tr("SD of 10 Point Average"));      // etc...
    lb_rules->insertItem(tr("SD of 15 Point Average"));
    lb_rules->insertItem(tr("SD of 20 Point Average"));
    lb_rules->insertItem(tr("SD of 25 Point Average"));
@@ -228,8 +228,8 @@ US_MonteCarlo::US_MonteCarlo(struct MonteCarlo *temp_mc, bool *temp_mc_widget, Q
    cnt_percent_gaussian->setValue((*mc).percent_gaussian);
    cnt_percent_gaussian->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    cnt_percent_gaussian->setGeometry(xpos, ypos+1, column2 + column3 - column7, buttonh-2);
-// connect(cnt_percent_gaussian, SIGNAL(buttonReleased(double)), SLOT(update_percent_gaussian(double)));
-	connect(cnt_percent_gaussian, SIGNAL(valueChanged(double)), SLOT(update_percent_gaussian(double)));
+   // connect(cnt_percent_gaussian, SIGNAL(buttonReleased(double)), SLOT(update_percent_gaussian(double)));
+   connect(cnt_percent_gaussian, SIGNAL(valueChanged(double)), SLOT(update_percent_gaussian(double)));
 
 
    xpos = border + column1 + column2 + column3 + 3 * spacing;
@@ -284,7 +284,7 @@ US_MonteCarlo::US_MonteCarlo(struct MonteCarlo *temp_mc, bool *temp_mc_widget, Q
    le_ignoreVariance->setGeometry(xpos, ypos, column4, buttonh);
    le_ignoreVariance->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_ignoreVariance->setText(str);
-   connect(le_ignoreVariance, SIGNAL(textChanged(const QString &)), SLOT(update_ignoreVariance(const QString &)));	
+   connect(le_ignoreVariance, SIGNAL(textChanged(const QString &)), SLOT(update_ignoreVariance(const QString &)));   
 
    xpos = border;
    ypos += buttonh + 2 * spacing;
@@ -383,7 +383,7 @@ US_MonteCarlo::US_MonteCarlo(struct MonteCarlo *temp_mc, bool *temp_mc_widget, Q
    le_noiseLevel->setGeometry(xpos, ypos, 60, buttonh);
    le_noiseLevel->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_noiseLevel->setText(str);
-   connect(le_noiseLevel, SIGNAL(textChanged(const QString &)), SLOT(update_noiseLevel(const QString &)));	
+   connect(le_noiseLevel, SIGNAL(textChanged(const QString &)), SLOT(update_noiseLevel(const QString &)));   
 
    xpos += 60 + spacing;
 
@@ -403,10 +403,10 @@ US_MonteCarlo::US_MonteCarlo(struct MonteCarlo *temp_mc, bool *temp_mc_widget, Q
    pb_beowulf->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    pb_beowulf->setGeometry(xpos, ypos, buttonw+20, buttonh);
 #ifdef WIN32
-pb_beowulf->setEnabled(false);
+   pb_beowulf->setEnabled(false);
 #endif
 #ifdef UNIX
-connect(pb_beowulf, SIGNAL(clicked()), SLOT(beowulf()));
+   connect(pb_beowulf, SIGNAL(clicked()), SLOT(beowulf()));
 #endif
    xpos = border;
    ypos += buttonh + spacing;
@@ -426,7 +426,7 @@ connect(pb_beowulf, SIGNAL(clicked()), SLOT(beowulf()));
    le_iterations->setGeometry(xpos, ypos, column2, buttonh);
    le_iterations->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_iterations->setText(str);
-   connect(le_iterations, SIGNAL(textChanged(const QString &)), SLOT(update_total_iterations(const QString &)));	
+   connect(le_iterations, SIGNAL(textChanged(const QString &)), SLOT(update_total_iterations(const QString &)));   
 
    ypos += buttonh + spacing;
    xpos = border;
@@ -464,7 +464,7 @@ connect(pb_beowulf, SIGNAL(clicked()), SLOT(beowulf()));
    le_seed->setGeometry(xpos, ypos, column2, buttonh);
    le_seed->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_seed->setText(str);
-   connect(le_seed, SIGNAL(textChanged(const QString &)), SLOT(select_seed(const QString &)));	
+   connect(le_seed, SIGNAL(textChanged(const QString &)), SLOT(select_seed(const QString &)));   
 
    xpos = border;
    ypos += buttonh + 3 * spacing;
@@ -528,8 +528,8 @@ connect(pb_beowulf, SIGNAL(clicked()), SLOT(beowulf()));
    le_bins->setGeometry(xpos, ypos, column2, buttonh);
    le_bins->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_bins->setText(str);
-   connect(le_bins, SIGNAL(textChanged(const QString &)), SLOT(update_bins(const QString &)));	
-   connect(le_bins, SIGNAL(returnPressed()), SLOT(show_parameter()));	
+   connect(le_bins, SIGNAL(textChanged(const QString &)), SLOT(update_bins(const QString &)));   
+   connect(le_bins, SIGNAL(returnPressed()), SLOT(show_parameter()));   
 
    ypos += buttonh + spacing;
    xpos = border;
@@ -666,26 +666,26 @@ connect(pb_beowulf, SIGNAL(clicked()), SLOT(beowulf()));
    histogram_plot->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    histogram_plot->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
    histogram_plot->setTitle(tr("Histogram"));
-//histogram_plot->setPlotBackground(USglobal->global_colors.plot);		//old version
-   histogram_plot->setCanvasBackground(USglobal->global_colors.plot);		//new version
+   //histogram_plot->setPlotBackground(USglobal->global_colors.plot);      //old version
+   histogram_plot->setCanvasBackground(USglobal->global_colors.plot);      //new version
    histogram_plot->setMargin(USglobal->config_list.margin);
    histogram_plot->enableOutline(true);
    histogram_plot->setAxisTitle(QwtPlot::xBottom, tr("Bins"));
    histogram_plot->setAxisTitle(QwtPlot::yLeft, tr("Frequency"));
    histogram_plot->setOutlinePen(white);
    histogram_plot->setOutlineStyle(Qwt::Rect);
-	histogram_plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
-	histogram_plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	histogram_plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	histogram_plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	histogram_plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
-	histogram_plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
-	histogram_plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));			
-	
+   histogram_plot->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
+   histogram_plot->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+   histogram_plot->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   histogram_plot->setAxisTitleFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+   histogram_plot->setAxisFont(QwtPlot::xBottom, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
+   histogram_plot->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
+   histogram_plot->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));         
+   
    connect(histogram_plot, SIGNAL(plotMousePressed(const QMouseEvent &)),
-          SLOT(plotMousePressed( const QMouseEvent&)));
+           SLOT(plotMousePressed( const QMouseEvent&)));
    connect(histogram_plot, SIGNAL(plotMouseReleased(const QMouseEvent &)),
-          SLOT(plotMouseReleased( const QMouseEvent&)));
+           SLOT(plotMouseReleased( const QMouseEvent&)));
 
    global_Xpos += 30;
    global_Ypos += 30;
@@ -715,11 +715,11 @@ void US_MonteCarlo::closeEvent(QCloseEvent *e)
       stats_window->close();
    }
 #ifdef UNIX
-if (beowulf_widget)
-{
-	beowulf_widget = false;
-	beowulf_W->close();
-}
+   if (beowulf_widget)
+   {
+      beowulf_widget = false;
+      beowulf_W->close();
+   }
 #endif
    e->accept();
 }
@@ -733,39 +733,39 @@ void US_MonteCarlo::beowulf()
 #ifdef UNIX
 void US_MonteCarlo::beowulf()
 {
-	QString str=USglobal->config_list.root_dir + "/beowulf.start";
-	QFile f(str);
-	if(f.open(IO_WriteOnly | IO_Translate))
-	{
-		QTextStream ts(&f);
-		ts << (*mc).fitName << endl;
-		ts << (*mc).data_type << endl; // 0=gaussian, 1=bootstrap, 2=mixed 
-		ts << (*mc).iterations << endl;
-		ts << (*mc).filename << endl;
-		ts << (*mc).append << endl;
-		ts << (*mc).status << endl;		// true = run, false = stop
-		ts << (*mc).addNoise << endl;
-		ts << (*mc).percent_bootstrap << endl;
-		ts << (*mc).percent_gaussian << endl;
-		ts << (*mc).rule << endl;
-		ts << (*mc).varianceThreshold << endl;
-		ts << (*mc).parameterNoise << endl;
-		ts << (*mc).run_id << endl;
-		ts << (*mc).parameters << endl;
-		for (unsigned int i=0; i<(*mc).parameter.size(); i++)
-		{
-			ts << (*mc).parameter[i] << endl;
-		}
-		f.close();
-	}
-	else
-	{
-		QMessageBox::message(tr("Attention:"), tr("Unable to write the Beowulf Start File:\n\n")
-													  + str + tr("\n\nPlease make sure you have write permission."));
-	}
-	
-	beowulf_W = new US_Beowulf((*mc).filename, (*mc).experiment, &beowulf_widget);
-	beowulf_W->show();
+   QString str=USglobal->config_list.root_dir + "/beowulf.start";
+   QFile f(str);
+   if(f.open(IO_WriteOnly | IO_Translate))
+   {
+      QTextStream ts(&f);
+      ts << (*mc).fitName << endl;
+      ts << (*mc).data_type << endl; // 0=gaussian, 1=bootstrap, 2=mixed 
+      ts << (*mc).iterations << endl;
+      ts << (*mc).filename << endl;
+      ts << (*mc).append << endl;
+      ts << (*mc).status << endl;      // true = run, false = stop
+      ts << (*mc).addNoise << endl;
+      ts << (*mc).percent_bootstrap << endl;
+      ts << (*mc).percent_gaussian << endl;
+      ts << (*mc).rule << endl;
+      ts << (*mc).varianceThreshold << endl;
+      ts << (*mc).parameterNoise << endl;
+      ts << (*mc).run_id << endl;
+      ts << (*mc).parameters << endl;
+      for (unsigned int i=0; i<(*mc).parameter.size(); i++)
+      {
+         ts << (*mc).parameter[i] << endl;
+      }
+      f.close();
+   }
+   else
+   {
+      QMessageBox::message(tr("Attention:"), tr("Unable to write the Beowulf Start File:\n\n")
+                           + str + tr("\n\nPlease make sure you have write permission."));
+   }
+   
+   beowulf_W = new US_Beowulf((*mc).filename, (*mc).experiment, &beowulf_widget);
+   beowulf_W->show();
 }
 #endif
 
@@ -870,96 +870,96 @@ void US_MonteCarlo::select_seed(const QString &val)
 }
 
 /* // Alternative method for filtering out duplicates
-void US_MonteCarlo::update_parameter()
-{
-	QString trash;
-	float val;
-	vector <float> test_v;
-	unsigned int count = 0, totalcount=0;
-	parameter_value.clear();
-	QFile f((*mc).filename);
-	if (!f.exists())
-	{
-		file_error();
-		return;
-	}
-	f.open(IO_ReadOnly);
-	QFile test_f("/tmp/new.mc");
-	test_f.open(IO_WriteOnly | IO_Translate);
-	QTextStream ts2(&test_f);
-	QTextStream ts(&f);
-	while (!ts.eof())
-	{
-		struct lines temp_row;
-		ts >> trash;	// word "Iteration"
-		if (trash != "")
-		{
-			ts >> trash;	// iteration number
-			ts >> trash;	// seed
-			for (unsigned int i=0; i<(*mc).parameters; i++)
-			{
-				ts >> val;
-				temp_row.value.push_back(val);
-			}
-			if (count == 0)
-			{
-				parameter_value.push_back(temp_row);
-				test_v = temp_row.value;
-				count ++;
-			}
-			else if (count>0)
-			{
-				if (test_v[5] != temp_row.value[5] && test_v[15] != temp_row.value[15] && test_v[25] != temp_row.value[25])
-				{
-					parameter_value.push_back(temp_row);
-					test_v = temp_row.value;
-					ts2 << "Iteration " << count << " (00000): ";
-					for (unsigned int i=0; i<(*mc).parameters; i++)
-					{
-						ts2 << temp_row.value[i] << " ";
-					}
-					ts2 << "\n";
-					count ++;
-					cout << "Count: " << count << endl;
-				}
-				else
-				{
-					cout << "they are the same, totalcount: " << totalcount << "\n";
-				}
-			}
-			totalcount++;
-		}
-	}
-	f.close();
-	test_f.close();
-	if (count > 20)
-	{
-		file_read = true;
-		file_ok = true;
-		pb_save->setEnabled(true);
-		pb_print->setEnabled(true);
-		pb_statistics->setEnabled(true);
-	}
-	else
-	{
-		file_ok = false;
-		if (!from_public)		//if we couldn't find 20 entries or more and the stuff comes from the local process signal an error
-		{
-			file_error();
-		}
-		return;
-	}
-	stats.points = count-1;
-	trash.sprintf(" %d", stats.points);
-	lbl_entries2->setText(trash);
-	progress->setProgress(count-1);
-	show_parameter(lb_parameters->currentItem());
-}
+   void US_MonteCarlo::update_parameter()
+   {
+   QString trash;
+   float val;
+   vector <float> test_v;
+   unsigned int count = 0, totalcount=0;
+   parameter_value.clear();
+   QFile f((*mc).filename);
+   if (!f.exists())
+   {
+   file_error();
+   return;
+   }
+   f.open(IO_ReadOnly);
+   QFile test_f("/tmp/new.mc");
+   test_f.open(IO_WriteOnly | IO_Translate);
+   QTextStream ts2(&test_f);
+   QTextStream ts(&f);
+   while (!ts.eof())
+   {
+   struct lines temp_row;
+   ts >> trash;   // word "Iteration"
+   if (trash != "")
+   {
+   ts >> trash;   // iteration number
+   ts >> trash;   // seed
+   for (unsigned int i=0; i<(*mc).parameters; i++)
+   {
+   ts >> val;
+   temp_row.value.push_back(val);
+   }
+   if (count == 0)
+   {
+   parameter_value.push_back(temp_row);
+   test_v = temp_row.value;
+   count ++;
+   }
+   else if (count>0)
+   {
+   if (test_v[5] != temp_row.value[5] && test_v[15] != temp_row.value[15] && test_v[25] != temp_row.value[25])
+   {
+   parameter_value.push_back(temp_row);
+   test_v = temp_row.value;
+   ts2 << "Iteration " << count << " (00000): ";
+   for (unsigned int i=0; i<(*mc).parameters; i++)
+   {
+   ts2 << temp_row.value[i] << " ";
+   }
+   ts2 << "\n";
+   count ++;
+   cout << "Count: " << count << endl;
+   }
+   else
+   {
+   cout << "they are the same, totalcount: " << totalcount << "\n";
+   }
+   }
+   totalcount++;
+   }
+   }
+   f.close();
+   test_f.close();
+   if (count > 20)
+   {
+   file_read = true;
+   file_ok = true;
+   pb_save->setEnabled(true);
+   pb_print->setEnabled(true);
+   pb_statistics->setEnabled(true);
+   }
+   else
+   {
+   file_ok = false;
+   if (!from_public)      //if we couldn't find 20 entries or more and the stuff comes from the local process signal an error
+   {
+   file_error();
+   }
+   return;
+   }
+   stats.points = count-1;
+   trash.sprintf(" %d", stats.points);
+   lbl_entries2->setText(trash);
+   progress->setProgress(count-1);
+   show_parameter(lb_parameters->currentItem());
+   }
 */
 
 void US_MonteCarlo::update_parameter()
 {
-	plot_status = "parameter";
+   plot_status = "parameter";
    lb_parameters->setEnabled(false);
    QString trash, str;
    float val;
@@ -979,11 +979,11 @@ void US_MonteCarlo::update_parameter()
    while (!ts.eof())
    {
       struct lines temp_row;
-      ts >> trash;	// word "Iteration"
+      ts >> trash;   // word "Iteration"
       if (trash != "")
       {
-         ts >> trash;	// iteration number
-         ts >> trash;	// seed
+         ts >> trash;   // iteration number
+         ts >> trash;   // seed
          for (unsigned int i=0; i<(*mc).parameters; i++)
          {
             ts >> val;
@@ -1017,7 +1017,7 @@ void US_MonteCarlo::update_parameter()
    else
    {
       file_ok = false;
-      if (!from_public)		//if we couldn't find 20 entries or more and the stuff comes from the local process signal an error
+      if (!from_public)      //if we couldn't find 20 entries or more and the stuff comes from the local process signal an error
       {
          file_error();
       }
@@ -1034,9 +1034,9 @@ void US_MonteCarlo::update_parameter()
 void US_MonteCarlo::file_error()
 {
    QMessageBox::message(tr("Attention:"), tr("The file ") + (*mc).filename + tr("\n"
-                                         "does not exist or does not have enough entries.\n\n"
-                                         "Please add more Monte Carlo iterations before\n"
-                                         "trying again, at least 20 iterations are needed.\n"));
+                                                                                "does not exist or does not have enough entries.\n\n"
+                                                                                "Please add more Monte Carlo iterations before\n"
+                                                                                "trying again, at least 20 iterations are needed.\n"));
 }
 
 void US_MonteCarlo::show_parameter()
@@ -1082,95 +1082,95 @@ void US_MonteCarlo::plotMouseReleased(const QMouseEvent &e)
    double x1, x2;
    p2 = e.pos();
    x1 = min(histogram_plot->invTransform(QwtPlot::xBottom, p1.x()),
-           histogram_plot->invTransform(QwtPlot::xBottom, p2.x()));
+            histogram_plot->invTransform(QwtPlot::xBottom, p2.x()));
    x2 = max(histogram_plot->invTransform(QwtPlot::xBottom, p1.x()),
-           histogram_plot->invTransform(QwtPlot::xBottom, p2.x()));
-	if ((*mc).run_id.right(1) == "3" && plot_status=="mw_distro") // fixed MW distro model
-	{
-		QString filename2;
-		QPixmap p;
-		vector <float> tempx, tempy;
-		tempx.clear(); 
-		tempy.clear(); 
-		for (unsigned int i=0; i<amplitude.size(); i++)
-		{
-			if ((mw[i] < x2) && (mw[i] > x1))
-			{
-				tempx.push_back(mw[i]);
-				tempy.push_back(amplitude[i]);
-			}
-		}
-		double *x, *y;
-		x = new double [tempx.size()];
-		y = new double [tempx.size()];
-		for (unsigned int i=0; i<tempx.size(); i++)
-		{
-			x[i] = tempx[i];
-			y[i] = tempy[i];
-		}
-		QwtSymbol symbol;
-		QPen p_histo, mwline;
-		p_histo.setWidth(3);
-		mwline.setWidth(2);
-		symbol.setSize(7);
-		symbol.setStyle(QwtSymbol::Ellipse);
-		if (print_plot)
-		{
-			p_histo.setColor(Qt::white);
-			mwline.setColor(Qt::gray);
-			symbol.setPen(Qt::black);
-			symbol.setBrush(Qt::white);
-		}
-		else
-		{
-			p_histo.setColor(Qt::red);
-			mwline.setColor(Qt::cyan);
-			symbol.setPen(Qt::blue);
-			symbol.setBrush(Qt::yellow);
-		}
-		histogram_plot->clear();
-		unsigned int curve1 = histogram_plot->insertCurve("Histogram");
-		unsigned int curve2 = histogram_plot->insertCurve("Plot");
-		histogram_plot->setCurveData(curve1, x, y, tempx.size());
-		histogram_plot->setCurveData(curve2, x, y, tempx.size());
-		histogram_plot->setAxisTitle(QwtPlot::xBottom, "Molecular Weight");
-		histogram_plot->setTitle("Molecular Weight Distribution");
-		histogram_plot->setCurveStyle(curve1, QwtCurve::Sticks);
-		histogram_plot->setCurveStyle(curve2, QwtCurve::Lines);
-		histogram_plot->setCurvePen(curve1, p_histo);
-		histogram_plot->setCurvePen(curve2, mwline);
-		histogram_plot->setCurveSymbol(curve1, symbol);
-		histogram_plot->replot();
-		qApp->processEvents();
-		filename2 = htmlDir + "/mw-distro.";
-		p = QPixmap::grabWidget(histogram_plot, 2, 2, histogram_plot->width() - 4, histogram_plot->height() - 4);
-		pm->save_file(filename2, p);
-		delete [] x;
-		delete [] y;
-	}
-	else
-	{
-		for (unsigned int i=0; i<parameter_value.size(); i++)
-		{
-			temp_row = parameter_value[i];
-			if ((temp_row.value[current_item] < x2) && (temp_row.value[current_item] > x1))
-			{
-				temp_parval.push_back(temp_row);
-				count ++;
-			}
-		}
-		parameter_value.clear();
-		for (unsigned int i=0; i<count; i++)
-		{
-			parameter_value.push_back(temp_parval[i]);
-		}
-		stats.points = count;
-		show_parameter(current_item);
-		str.sprintf(" %d", stats.points);
-		lbl_entries2->setText(str);
-		progress->setProgress(count);
-		lbl_current_iteration2->setText(str);
-	}
+            histogram_plot->invTransform(QwtPlot::xBottom, p2.x()));
+   if ((*mc).run_id.right(1) == "3" && plot_status=="mw_distro") // fixed MW distro model
+   {
+      QString filename2;
+      QPixmap p;
+      vector <float> tempx, tempy;
+      tempx.clear(); 
+      tempy.clear(); 
+      for (unsigned int i=0; i<amplitude.size(); i++)
+      {
+         if ((mw[i] < x2) && (mw[i] > x1))
+         {
+            tempx.push_back(mw[i]);
+            tempy.push_back(amplitude[i]);
+         }
+      }
+      double *x, *y;
+      x = new double [tempx.size()];
+      y = new double [tempx.size()];
+      for (unsigned int i=0; i<tempx.size(); i++)
+      {
+         x[i] = tempx[i];
+         y[i] = tempy[i];
+      }
+      QwtSymbol symbol;
+      QPen p_histo, mwline;
+      p_histo.setWidth(3);
+      mwline.setWidth(2);
+      symbol.setSize(7);
+      symbol.setStyle(QwtSymbol::Ellipse);
+      if (print_plot)
+      {
+         p_histo.setColor(Qt::white);
+         mwline.setColor(Qt::gray);
+         symbol.setPen(Qt::black);
+         symbol.setBrush(Qt::white);
+      }
+      else
+      {
+         p_histo.setColor(Qt::red);
+         mwline.setColor(Qt::cyan);
+         symbol.setPen(Qt::blue);
+         symbol.setBrush(Qt::yellow);
+      }
+      histogram_plot->clear();
+      unsigned int curve1 = histogram_plot->insertCurve("Histogram");
+      unsigned int curve2 = histogram_plot->insertCurve("Plot");
+      histogram_plot->setCurveData(curve1, x, y, tempx.size());
+      histogram_plot->setCurveData(curve2, x, y, tempx.size());
+      histogram_plot->setAxisTitle(QwtPlot::xBottom, "Molecular Weight");
+      histogram_plot->setTitle("Molecular Weight Distribution");
+      histogram_plot->setCurveStyle(curve1, QwtCurve::Sticks);
+      histogram_plot->setCurveStyle(curve2, QwtCurve::Lines);
+      histogram_plot->setCurvePen(curve1, p_histo);
+      histogram_plot->setCurvePen(curve2, mwline);
+      histogram_plot->setCurveSymbol(curve1, symbol);
+      histogram_plot->replot();
+      qApp->processEvents();
+      filename2 = htmlDir + "/mw-distro.";
+      p = QPixmap::grabWidget(histogram_plot, 2, 2, histogram_plot->width() - 4, histogram_plot->height() - 4);
+      pm->save_file(filename2, p);
+      delete [] x;
+      delete [] y;
+   }
+   else
+   {
+      for (unsigned int i=0; i<parameter_value.size(); i++)
+      {
+         temp_row = parameter_value[i];
+         if ((temp_row.value[current_item] < x2) && (temp_row.value[current_item] > x1))
+         {
+            temp_parval.push_back(temp_row);
+            count ++;
+         }
+      }
+      parameter_value.clear();
+      for (unsigned int i=0; i<count; i++)
+      {
+         parameter_value.push_back(temp_parval[i]);
+      }
+      stats.points = count;
+      show_parameter(current_item);
+      str.sprintf(" %d", stats.points);
+      lbl_entries2->setText(str);
+      progress->setProgress(count);
+      lbl_current_iteration2->setText(str);
+   }
 }
 
 void US_MonteCarlo::show_parameter(int item)
@@ -1189,9 +1189,9 @@ void US_MonteCarlo::show_parameter(int item)
    if (!file_ok)
    {
       QMessageBox::message(tr("Attention:"), tr("The file ") + (*mc).filename + tr("\n"
-                                            "didn't have have enough entries last time it\n"
-                                            "was read. Please click on \"Update\" before\n"
-                                            "proceeding.\n"));
+                                                                                   "didn't have have enough entries last time it\n"
+                                                                                   "was read. Please click on \"Update\" before\n"
+                                                                                   "proceeding.\n"));
       return;
    }
    QFile f;
@@ -1199,8 +1199,8 @@ void US_MonteCarlo::show_parameter(int item)
    if(!f.open(IO_WriteOnly | IO_Translate))
    {
       QMessageBox::message(tr("Attention:"), tr("Unable to open data file for Monte Carlo Analysis!\n"
-                                            "Please make sure that the disk is not full\n"
-                                            "or write protected."));
+                                                "Please make sure that the disk is not full\n"
+                                                "or write protected."));
       return;
    }
    QTextStream ts(&f);
@@ -1399,418 +1399,418 @@ void US_MonteCarlo::stop()
 
 void US_MonteCarlo::print()
 {
-	QPrinter printer;
-	bool print_bw =  false;
-	bool print_inv =  false;
-	US_SelectPlot *sp;
-	sp = new US_SelectPlot(&print_bw, &print_inv);
-	sp->exec();
-	if	(printer.setup(0))
-	{
-		if (print_bw)
-		{
-			PrintFilter pf;
-			pf.setOptions(QwtPlotPrintFilter::PrintTitle
-							 |QwtPlotPrintFilter::PrintMargin
-							 |QwtPlotPrintFilter::PrintLegend
-							 |QwtPlotPrintFilter::PrintGrid);
-			histogram_plot->print(printer, pf);
-		}
-		else if (print_inv)
-		{
-			PrintFilterDark pf;
-			pf.setOptions(QwtPlotPrintFilter::PrintTitle
-							 |QwtPlotPrintFilter::PrintMargin
-							 |QwtPlotPrintFilter::PrintLegend
-							 |QwtPlotPrintFilter::PrintGrid);
-			histogram_plot->print(printer, pf);
-		}
-		else
-		{
-			histogram_plot->print(printer);
-		}
-	}
+   QPrinter printer;
+   bool print_bw =  false;
+   bool print_inv =  false;
+   US_SelectPlot *sp;
+   sp = new US_SelectPlot(&print_bw, &print_inv);
+   sp->exec();
+   if   (printer.setup(0))
+   {
+      if (print_bw)
+      {
+         PrintFilter pf;
+         pf.setOptions(QwtPlotPrintFilter::PrintTitle
+                       |QwtPlotPrintFilter::PrintMargin
+                       |QwtPlotPrintFilter::PrintLegend
+                       |QwtPlotPrintFilter::PrintGrid);
+         histogram_plot->print(printer, pf);
+      }
+      else if (print_inv)
+      {
+         PrintFilterDark pf;
+         pf.setOptions(QwtPlotPrintFilter::PrintTitle
+                       |QwtPlotPrintFilter::PrintMargin
+                       |QwtPlotPrintFilter::PrintLegend
+                       |QwtPlotPrintFilter::PrintGrid);
+         histogram_plot->print(printer, pf);
+      }
+      else
+      {
+         histogram_plot->print(printer);
+      }
+   }
 }
 
 void US_MonteCarlo::save()
 {
-	createHtmlDir();
-	QString filename, filename2, str;
-	QPixmap p;
-	QFile f;
-	dont_show = false;
-	filename = USglobal->config_list.result_dir + "/" + (*mc).run_id + ".Monte-Carlo";
-	f.setName(filename);
-	f.open(IO_WriteOnly | IO_Translate);
-	QTextStream ts(&f);
-	ts << (*mc).run_id << endl;	
-	ts << (*mc).parameter.size() << endl;	
-	for (unsigned int i=0; i<(*mc).parameter.size(); i++)
-	{
-		ts << (*mc).parameter[i] << endl;	
-	}
-	f.close();
-	filename = htmlDir + "/" + (*mc).run_id + ".res";
-	f.setName(filename);
-	f.open(IO_WriteOnly | IO_Translate);
-	ts << "***************************************************\n";
-	ts << tr("* Monte Carlo Results for ") << (*mc).run_id << "\n";
-	ts << "***************************************************\n\n\n";
-	switch ((*mc).data_type)
-	{
-		case 0:
-		{
-			ts << tr("Monte Carlo Random Data Generation Method: Normal Gaussian\n");
-			break;
-		}
-      case 1:
-		{
-			ts << tr("Monte Carlo Random Data Generation Method: Bootstrap\n\n");
-			break;
-		}
-      case 2:
-		{
-			ts << tr("Monte Carlo Random Data Generation Method: Mixed Bootstrap and Normal Gaussian\n");
-			ts << tr("with ") << (*mc).percent_bootstrap << tr("% bootstrap and the remainder of points with ") 
-			   << (*mc).percent_gaussian << tr("% gaussian noise\n\n");
-			break;
-		}
-		if ((*mc).data_type != 1)
-		{
-			switch ((*mc).rule)
-			{
-				case 0:
-				{
-					ts << tr("Monte Carlo data points were generated using the standard deviation of the\n");
-					ts << tr("original data points.\n");
-					break;
-				}
-				case 1:
-				{
-					ts << tr("Monte Carlo data points were generated using the standard deviation of the\n");
-					ts << tr("original data points, or using the standard deviation of the initial fit, if\n");
-					ts << tr("it is larger.\n\n");
-					break;
-				}
-				case 2:
-				{
-					ts << tr("Monte Carlo data points were generated using the standard deviation of the\n");
-					ts << tr("initial fit.\n\n");
-					break;
-				}
-				case 3:
-				{
-					ts << tr("Monte Carlo data points were generated using a 5 point Gaussian smoothing kernel\n");
-					ts << tr("on the standard deviation of the initial fit.\n\n");
-					break;
-				}
-				case 4:
-				{
-					ts << tr("Monte Carlo data points were generated using a 10 point Gaussian smoothing kernel\n");
-					ts << tr("on the standard deviation of the initial fit.\n\n");
-					break;
-				}
-				case 5:
-				{
-					ts << tr("Monte Carlo data points were generated using a 15 point Gaussian smoothing kernel\n");
-					ts << tr("on the standard deviation of the initial fit.\n\n");
-					break;
-				}
-				case 6:
-				{
-					ts << tr("Monte Carlo data points were generated using a 20 point Gaussian smoothing kernel\n");
-					ts << tr("on the standard deviation of the initial fit.\n\n");
-					break;
-				}
-				case 7:
-				{
-					ts << tr("Monte Carlo data points were generated using a 25 point Gaussian smoothing kernel\n");
-					ts << tr("on the standard deviation of the initial fit.\n\n");
-					break;
-				}
-				case 8:
-				{
-					ts << tr("Monte Carlo data points were generated using a 30 point Gaussian smoothing kernel\n");
-					ts << tr("on the standard deviation of the initial fit.\n\n");
-					break;
-				}
-			}
-		}
-	}
-	ts << tr("Total Monte Carlo Iterations for this Analysis: ") << stats.points << "\n";
-	ts << str.sprintf(tr("Initial guesses for each iteration had %3.2f"), (*mc).parameterNoise) << tr(" % noise added\n");
-	ts << str.sprintf(tr("Monte Carlo iterations with a variance larger than %2.4e were ignored\n"), (*mc).varianceThreshold);
-	ts << str.sprintf(tr("There were %d fitted parameters analyzed in this Monte Carlo run.\n"), (*mc).parameter.size());
-	f.close();
+   createHtmlDir();
+   QString filename, filename2, str;
+   QPixmap p;
+   QFile f;
+   dont_show = false;
+   filename = USglobal->config_list.result_dir + "/" + (*mc).run_id + ".Monte-Carlo";
+   f.setName(filename);
+   f.open(IO_WriteOnly | IO_Translate);
+   QTextStream ts(&f);
+   ts << (*mc).run_id << endl;   
+   ts << (*mc).parameter.size() << endl;   
+   for (unsigned int i=0; i<(*mc).parameter.size(); i++)
+   {
+      ts << (*mc).parameter[i] << endl;   
+   }
+   f.close();
+   filename = htmlDir + "/" + (*mc).run_id + ".res";
+   f.setName(filename);
+   f.open(IO_WriteOnly | IO_Translate);
+   ts << "***************************************************\n";
+   ts << tr("* Monte Carlo Results for ") << (*mc).run_id << "\n";
+   ts << "***************************************************\n\n\n";
+   switch ((*mc).data_type)
+   {
+   case 0:
+      {
+         ts << tr("Monte Carlo Random Data Generation Method: Normal Gaussian\n");
+         break;
+      }
+   case 1:
+      {
+         ts << tr("Monte Carlo Random Data Generation Method: Bootstrap\n\n");
+         break;
+      }
+   case 2:
+      {
+         ts << tr("Monte Carlo Random Data Generation Method: Mixed Bootstrap and Normal Gaussian\n");
+         ts << tr("with ") << (*mc).percent_bootstrap << tr("% bootstrap and the remainder of points with ") 
+            << (*mc).percent_gaussian << tr("% gaussian noise\n\n");
+         break;
+      }
+      if ((*mc).data_type != 1)
+      {
+         switch ((*mc).rule)
+         {
+         case 0:
+            {
+               ts << tr("Monte Carlo data points were generated using the standard deviation of the\n");
+               ts << tr("original data points.\n");
+               break;
+            }
+         case 1:
+            {
+               ts << tr("Monte Carlo data points were generated using the standard deviation of the\n");
+               ts << tr("original data points, or using the standard deviation of the initial fit, if\n");
+               ts << tr("it is larger.\n\n");
+               break;
+            }
+         case 2:
+            {
+               ts << tr("Monte Carlo data points were generated using the standard deviation of the\n");
+               ts << tr("initial fit.\n\n");
+               break;
+            }
+         case 3:
+            {
+               ts << tr("Monte Carlo data points were generated using a 5 point Gaussian smoothing kernel\n");
+               ts << tr("on the standard deviation of the initial fit.\n\n");
+               break;
+            }
+         case 4:
+            {
+               ts << tr("Monte Carlo data points were generated using a 10 point Gaussian smoothing kernel\n");
+               ts << tr("on the standard deviation of the initial fit.\n\n");
+               break;
+            }
+         case 5:
+            {
+               ts << tr("Monte Carlo data points were generated using a 15 point Gaussian smoothing kernel\n");
+               ts << tr("on the standard deviation of the initial fit.\n\n");
+               break;
+            }
+         case 6:
+            {
+               ts << tr("Monte Carlo data points were generated using a 20 point Gaussian smoothing kernel\n");
+               ts << tr("on the standard deviation of the initial fit.\n\n");
+               break;
+            }
+         case 7:
+            {
+               ts << tr("Monte Carlo data points were generated using a 25 point Gaussian smoothing kernel\n");
+               ts << tr("on the standard deviation of the initial fit.\n\n");
+               break;
+            }
+         case 8:
+            {
+               ts << tr("Monte Carlo data points were generated using a 30 point Gaussian smoothing kernel\n");
+               ts << tr("on the standard deviation of the initial fit.\n\n");
+               break;
+            }
+         }
+      }
+   }
+   ts << tr("Total Monte Carlo Iterations for this Analysis: ") << stats.points << "\n";
+   ts << str.sprintf(tr("Initial guesses for each iteration had %3.2f"), (*mc).parameterNoise) << tr(" % noise added\n");
+   ts << str.sprintf(tr("Monte Carlo iterations with a variance larger than %2.4e were ignored\n"), (*mc).varianceThreshold);
+   ts << str.sprintf(tr("There were %d fitted parameters analyzed in this Monte Carlo run.\n"), (*mc).parameter.size());
+   f.close();
 
-	ts.width(14);
-	ts.flags(0x1000);
-	progress->setTotalSteps(parameter_value.size());
-	progress->reset();
-	if ((*mc).run_id.right(1) == "3") // fixed MW distro model
-	{
-		// first calculate the offsets to grab the correct amplitudes for summing from each iteration
-		// the offsets are the variance (first parameter), then the number of components and the baseline for each scan.
-		// we need to sum the corresponding amplitudes from each scan and from each iteration
-		unsigned int components = 0, i = 1, j, k, l;
-		// first parameter is variance, we'll skip it and count until we get to the first baseline
-		// go through the first scan to get the number of components:
-		while (!(*mc).parameter[i].contains("Baseline")) 
-		{
-			components ++;
-			i++;
-		}
-//		cout << "Components: " << components << endl;
-		// the number of scans is the total parameters minus the variance
-		// divided by the number of components + one for the baseline
-//		scans = ((*mc).parameter.size()-1)/(components + 1);
-//		cout << "Scans: " << scans << endl;
-//		cout << "Iterations: " << parameter_value.size() << endl;
-		
-		amplitude.clear();
-		amplitude.resize(components); // this vector will sum all corresponding component's amplitudes
-		mw.clear();
-		mw.resize(components);
-		// first iterate over all Monte Carlo iterations:
-		for (i=0; i<parameter_value.size(); i++) // these are the total iterations
-		{
-			// now iterate over all parameters in this iteration
-			l = 0;
-			
-			for (j=1; j<(*mc).parameter.size(); j++) // we don't want the variance and the baseline from each iteration
-			{
-				k = 0;
-				while ((*mc).parameter[j].contains("Amplitude"))
-				{
-//					cout << "Parameter value: " << parameter_value[i].value[j] << ", alternate: " << (*mc).parameter[j] << endl;
-					amplitude[k] += parameter_value[i].value[j];
-					j ++;
-					k ++;
-				}
-				l++;
-//				cout << "Scan " << l << ", j: " << j << ", Monte Carlo iteration: " << i << endl;
-				// now go on to the next scan
-			}
-			progress->setProgress(i);
-		}
-		filename = htmlDir + "/" + "mw-distro.dat";
-		f.setName(filename);
-		mw[0] = (*mc).mw_lowerLimit;
-		float tmp_mw, mw_step = ((*mc).mw_upperLimit - (*mc).mw_lowerLimit)/(components-1);
-		tmp_mw = mw[0];
-		double *x, *y;
-		x = new double [amplitude.size()];
-		y = new double [amplitude.size()];
-		if (f.open(IO_WriteOnly | IO_Translate))
-		{
-			for (l=0; l<amplitude.size(); l++)
-			{
-				mw[l] = tmp_mw;
-				y[l] = amplitude[l];
-				ts << mw[l] << ", " << amplitude[l] << endl;
-				x[l] = mw[l];
-				tmp_mw += mw_step;
-			}
-			f.close();
-		}
-		double sum1[2], sum2[2], sum3[2], sumz[2], sum4[2], maxval[2];
-		unsigned int highest[2];
-		sum1[0] = 0.0;
-		sum2[0] = 0.0;
-		sum3[0] = 0.0;
-		sum4[0] = 0.0;
-		sumz[0] = 0.0;
-		maxval[0] = 0.0;
-		sum1[1] = 0.0;
-		sum2[1] = 0.0;
-		sum3[1] = 0.0;
-		sum4[1] = 0.0;
-		sumz[1] = 0.0;
-		maxval[1] = 0.0;
-		highest[0] = 0;
-		highest[1] = 0;
-		for (unsigned int i=0; i<amplitude.size(); i++)
-		{
-			sum1[0] += amplitude[i] * mw[i];
-			if (amplitude[i] > maxval[0])
-			{
-				maxval[0] = amplitude[i];
-				highest[0] = i;
-			}
-			sum2[0] += amplitude[i];
-			sum3[0] += amplitude[i]/mw[i];
-			sum4[0] += amplitude[i]/mw[i];
-			sumz[0] += mw[i]*mw[i]*amplitude[i];
-   	}
-		for (unsigned int i=1; i<amplitude.size(); i++)
-		{
-			sum1[1] += amplitude[i] * mw[i];
-			if (amplitude[i] > maxval[1])
-			{
-				maxval[1] = amplitude[i];
-				highest[1] = i;
-			}
-			sum2[1] += amplitude[i];
-			sum3[1] += amplitude[i]/mw[i];
-			sum4[1] += amplitude[i]/mw[i];
-			sumz[1] += mw[i]*mw[i]*amplitude[i];
-   	}
-		filename = htmlDir + "/" + "mw-distro.res";
-		f.setName(filename);
-		if (f.open(IO_WriteOnly | IO_Translate))
-		{
-			ts << "Average Molecular Weights including the first molecular weight point:\n\n";
-			ts << "   Weight-Average Molecular Weight:   " << sum1[0]/sum2[0] << endl;
-			ts << "   Number-Average Molecular Weight:   " << sum2[0]/sum4[0] << endl;
-			ts << "   Z-Average Molecular Weight:        " << sumz[0]/sum1[0] << endl;
-			ts << "   Peak Molecular Weight:             " << mw[highest[0]] << "\n\n\n";
-			ts << "Average Molecular Weights without the first molecular weight point:\n\n";
-			ts << "   Weight-Average Molecular Weight:   " << sum1[1]/sum2[1] << endl;
-			ts << "   Number-Average Molecular Weight:   " << sum2[1]/sum4[1] << endl;
-			ts << "   Z-Average Molecular Weight:        " << sumz[1]/sum1[1] << endl;
-			ts << "   Peak Molecular Weight:             " << mw[highest[1]] << "\n\n\n";
-			f.close();
-		}		
-	   if (!dont_show)
-		{
-			f.setName(htmlDir + "/variance.res");
-			show_parameter(0);
-			qApp->processEvents();
-			filename2 = htmlDir + "/variance.";
-			p = QPixmap::grabWidget(histogram_plot, 2, 2, histogram_plot->width() - 4, histogram_plot->height() - 4);
-			pm->save_file(filename2, p);
-			if (f.open(IO_WriteOnly | IO_Translate))
-			{
-				float center, conf99low, conf99high, conf95low, conf95high;
-				center = (stats.mode1 + stats.mode2)/2;
-				conf99low = stats.mean - 2.576 * stats.std_deviation;
-				conf99high = stats.mean + 2.576 * stats.std_deviation;
-				conf95low = stats.mean - 1.96 * stats.std_deviation;
-				conf95high = stats.mean + 1.96 * stats.std_deviation;
-				ts << tr("Parameter Info:\n\n");
-				ts << tr("Results for the Variance of this Monte Carlo Analysis\n\n");
-				ts << tr("Maximum Value:             ") << stats.high << "\n";
-				ts << tr("Minimum Value:             ") << stats.low << "\n";
-				ts << tr("Mean Value:                ") << stats.mean << "\n";
-				ts << tr("Median Value:              ") << stats.median << "\n";
-				ts << tr("Skew Value:                ") << stats.skew << "\n";
-				ts << tr("Kurtosis Value:            ") << stats.kurtosis << "\n";
-				ts << tr("Lower Mode Limit:          ") << stats.mode1 << "\n";
-				ts << tr("Upper Mode Limit:          ") << stats.mode2 << "\n";
-				ts << tr("Mode Center:               ") << center << "\n";
-				ts << tr("95% Confidence Limits:     +") << (conf95high - center) << ", -" << (center - conf95low) << "\n";
-				ts << tr("99% Confidence Limits:     +") << (conf99high - center) << ", -" << (center - conf99low) << "\n";
-				ts << tr("Standard Deviation:        ") << stats.std_deviation << "\n";
-				ts << tr("Standard Error:            ") << stats.std_error << "\n";
-				ts << tr("Variance:                  ") << stats.variance << "\n";
-				ts << tr("Correlation Coefficient:   ") << stats.correlation << "\n";
-				ts << tr("Gaussian Area:             ") << stats.area << "\n";
-				str.sprintf(tr(" %e (low),  %e (high)\n"), conf95low, conf95high);	// the standard error of the distribution
-				ts << tr("95 % Confidence Interval: ") << str;
-				str.sprintf(tr(" %e (low),  %e (high)\n"), conf99low, conf99high);	// the standard error of the distribution
-				ts << tr("99 % Confidence Interval: ") << str;
-				f.close();
-			}
-			QwtSymbol symbol;
-			QPen p_histo, mwline;
-			p_histo.setWidth(3);
-			mwline.setWidth(2);
-			symbol.setSize(7);
-			symbol.setStyle(QwtSymbol::Ellipse);
-			if (print_plot)
-			{
-				p_histo.setColor(Qt::white);
-				mwline.setColor(Qt::gray);
-				symbol.setPen(Qt::black);
-				symbol.setBrush(Qt::white);
-			}
-			else
-			{
-				p_histo.setColor(Qt::red);
-				mwline.setColor(Qt::cyan);
-				symbol.setPen(Qt::blue);
-				symbol.setBrush(Qt::yellow);
-			}
-			histogram_plot->clear();
-			unsigned int curve1 = histogram_plot->insertCurve("Histogram");
-			unsigned int curve2 = histogram_plot->insertCurve("Plot");
-			histogram_plot->setCurveData(curve1, x, y, amplitude.size());
-			histogram_plot->setCurveData(curve2, x, y, amplitude.size());
-			histogram_plot->setAxisTitle(QwtPlot::xBottom, "Molecular Weight");
-			histogram_plot->setTitle("Molecular Weight Distribution");
-			histogram_plot->setCurveStyle(curve1, QwtCurve::Sticks);
-			histogram_plot->setCurveStyle(curve2, QwtCurve::Lines);
-			histogram_plot->setCurvePen(curve1, p_histo);
-			histogram_plot->setCurvePen(curve2, mwline);
-			histogram_plot->setCurveSymbol(curve1, symbol);
-			histogram_plot->replot();
-			plot_status = "mw_distro";
-			
-			qApp->processEvents();
-			filename2 = htmlDir + "/mw-distro.";
-			p = QPixmap::grabWidget(histogram_plot, 2, 2, histogram_plot->width() - 4, histogram_plot->height() - 4);
-			pm->save_file(filename2, p);
-			delete [] x;
-			delete [] y;
-		}
-	}
-	else
-	{
-		for (unsigned int i=0; i<(*mc).parameter.size(); i++)
-		{
-			f.setName(htmlDir + str.sprintf("/parameter-%d.res", i));
-			show_parameter((int)i);
-			qApp->processEvents();
-			filename2 = htmlDir + str.sprintf("/parameter-%d.", i);
-			p = QPixmap::grabWidget(histogram_plot, 2, 2, histogram_plot->width() - 4, histogram_plot->height() - 4);
-			pm->save_file(filename2, p);
-			if (f.open(IO_WriteOnly | IO_Translate))
-			{
-				float center, conf99low, conf99high, conf95low, conf95high;
-				center = (stats.mode1 + stats.mode2)/2;
-				conf99low = stats.mean - 2.576 * stats.std_deviation;
-				conf99high = stats.mean + 2.576 * stats.std_deviation;
-				conf95low = stats.mean - 1.96 * stats.std_deviation;
-				conf95high = stats.mean + 1.96 * stats.std_deviation;
-				ts << tr("Parameter Info:\n\n");
-				ts << tr("Results for Parameter ") << (*mc).parameter[i] << "\n\n";
-				ts << tr("Maximum Value:             ") << stats.high << "\n";
-				ts << tr("Minimum Value:             ") << stats.low << "\n";
-				ts << tr("Mean Value:                ") << stats.mean << "\n";
-				ts << tr("Median Value:              ") << stats.median << "\n";
-				ts << tr("Skew Value:                ") << stats.skew << "\n";
-				ts << tr("Kurtosis Value:            ") << stats.kurtosis << "\n";
-				ts << tr("Lower Mode Limit:          ") << stats.mode1 << "\n";
-				ts << tr("Upper Mode Limit:          ") << stats.mode2 << "\n";
-				ts << tr("Mode Center:               ") << center << "\n";
-				ts << tr("95% Confidence Limits:     +") << (conf95high - center) << ", -" << (center - conf95low) << "\n";
-				ts << tr("99% Confidence Limits:     +") << (conf99high - center) << ", -" << (center - conf99low) << "\n";
-				ts << tr("Standard Deviation:        ") << stats.std_deviation << "\n";
-				ts << tr("Standard Error:            ") << stats.std_error << "\n";
-				ts << tr("Variance:                  ") << stats.variance << "\n";
-				ts << tr("Correlation Coefficient:   ") << stats.correlation << "\n";
-				ts << tr("Gaussian Area:             ") << stats.area << "\n";
-				str.sprintf(tr(" %e (low),  %e (high)\n"), conf95low, conf95high);	// the standard error of the distribution
-				ts << tr("95 % Confidence Interval: ") << str;
-				str.sprintf(tr(" %e (low),  %e (high)\n"), conf99low, conf99high);	// the standard error of the distribution
-				ts << tr("99 % Confidence Interval: ") << str;
-				if((*mc).parameter[i].contains("Ln(Association Constant", true) == 1)
-				{
-					float kd_val = 1.0/exp(stats.mean);
-					float kd_min = 1.0/exp(conf95high);
-					float kd_max = 1.0/exp(conf95low);
-					ts << tr("\n\nKd:                        ") << kd_val << "\n";
-					ts << tr("95% Confidence Limits:     +") << (kd_max - kd_val) << ", -" << (kd_val - kd_min) << "\n";
-				}
-				f.close();
-			}
-			progress->setProgress(i);
-		}
-	}
-	progress->setTotalSteps((*mc).iterations);
-	progress->reset();
-	progress->setProgress(stats.points);
-	dont_show = false;
+   ts.width(14);
+   ts.flags(0x1000);
+   progress->setTotalSteps(parameter_value.size());
+   progress->reset();
+   if ((*mc).run_id.right(1) == "3") // fixed MW distro model
+   {
+      // first calculate the offsets to grab the correct amplitudes for summing from each iteration
+      // the offsets are the variance (first parameter), then the number of components and the baseline for each scan.
+      // we need to sum the corresponding amplitudes from each scan and from each iteration
+      unsigned int components = 0, i = 1, j, k, l;
+      // first parameter is variance, we'll skip it and count until we get to the first baseline
+      // go through the first scan to get the number of components:
+      while (!(*mc).parameter[i].contains("Baseline")) 
+      {
+         components ++;
+         i++;
+      }
+      //      cout << "Components: " << components << endl;
+      // the number of scans is the total parameters minus the variance
+      // divided by the number of components + one for the baseline
+      //      scans = ((*mc).parameter.size()-1)/(components + 1);
+      //      cout << "Scans: " << scans << endl;
+      //      cout << "Iterations: " << parameter_value.size() << endl;
+      
+      amplitude.clear();
+      amplitude.resize(components); // this vector will sum all corresponding component's amplitudes
+      mw.clear();
+      mw.resize(components);
+      // first iterate over all Monte Carlo iterations:
+      for (i=0; i<parameter_value.size(); i++) // these are the total iterations
+      {
+         // now iterate over all parameters in this iteration
+         l = 0;
+         
+         for (j=1; j<(*mc).parameter.size(); j++) // we don't want the variance and the baseline from each iteration
+         {
+            k = 0;
+            while ((*mc).parameter[j].contains("Amplitude"))
+            {
+               //               cout << "Parameter value: " << parameter_value[i].value[j] << ", alternate: " << (*mc).parameter[j] << endl;
+               amplitude[k] += parameter_value[i].value[j];
+               j ++;
+               k ++;
+            }
+            l++;
+            //            cout << "Scan " << l << ", j: " << j << ", Monte Carlo iteration: " << i << endl;
+            // now go on to the next scan
+         }
+         progress->setProgress(i);
+      }
+      filename = htmlDir + "/" + "mw-distro.dat";
+      f.setName(filename);
+      mw[0] = (*mc).mw_lowerLimit;
+      float tmp_mw, mw_step = ((*mc).mw_upperLimit - (*mc).mw_lowerLimit)/(components-1);
+      tmp_mw = mw[0];
+      double *x, *y;
+      x = new double [amplitude.size()];
+      y = new double [amplitude.size()];
+      if (f.open(IO_WriteOnly | IO_Translate))
+      {
+         for (l=0; l<amplitude.size(); l++)
+         {
+            mw[l] = tmp_mw;
+            y[l] = amplitude[l];
+            ts << mw[l] << ", " << amplitude[l] << endl;
+            x[l] = mw[l];
+            tmp_mw += mw_step;
+         }
+         f.close();
+      }
+      double sum1[2], sum2[2], sum3[2], sumz[2], sum4[2], maxval[2];
+      unsigned int highest[2];
+      sum1[0] = 0.0;
+      sum2[0] = 0.0;
+      sum3[0] = 0.0;
+      sum4[0] = 0.0;
+      sumz[0] = 0.0;
+      maxval[0] = 0.0;
+      sum1[1] = 0.0;
+      sum2[1] = 0.0;
+      sum3[1] = 0.0;
+      sum4[1] = 0.0;
+      sumz[1] = 0.0;
+      maxval[1] = 0.0;
+      highest[0] = 0;
+      highest[1] = 0;
+      for (unsigned int i=0; i<amplitude.size(); i++)
+      {
+         sum1[0] += amplitude[i] * mw[i];
+         if (amplitude[i] > maxval[0])
+         {
+            maxval[0] = amplitude[i];
+            highest[0] = i;
+         }
+         sum2[0] += amplitude[i];
+         sum3[0] += amplitude[i]/mw[i];
+         sum4[0] += amplitude[i]/mw[i];
+         sumz[0] += mw[i]*mw[i]*amplitude[i];
+      }
+      for (unsigned int i=1; i<amplitude.size(); i++)
+      {
+         sum1[1] += amplitude[i] * mw[i];
+         if (amplitude[i] > maxval[1])
+         {
+            maxval[1] = amplitude[i];
+            highest[1] = i;
+         }
+         sum2[1] += amplitude[i];
+         sum3[1] += amplitude[i]/mw[i];
+         sum4[1] += amplitude[i]/mw[i];
+         sumz[1] += mw[i]*mw[i]*amplitude[i];
+      }
+      filename = htmlDir + "/" + "mw-distro.res";
+      f.setName(filename);
+      if (f.open(IO_WriteOnly | IO_Translate))
+      {
+         ts << "Average Molecular Weights including the first molecular weight point:\n\n";
+         ts << "   Weight-Average Molecular Weight:   " << sum1[0]/sum2[0] << endl;
+         ts << "   Number-Average Molecular Weight:   " << sum2[0]/sum4[0] << endl;
+         ts << "   Z-Average Molecular Weight:        " << sumz[0]/sum1[0] << endl;
+         ts << "   Peak Molecular Weight:             " << mw[highest[0]] << "\n\n\n";
+         ts << "Average Molecular Weights without the first molecular weight point:\n\n";
+         ts << "   Weight-Average Molecular Weight:   " << sum1[1]/sum2[1] << endl;
+         ts << "   Number-Average Molecular Weight:   " << sum2[1]/sum4[1] << endl;
+         ts << "   Z-Average Molecular Weight:        " << sumz[1]/sum1[1] << endl;
+         ts << "   Peak Molecular Weight:             " << mw[highest[1]] << "\n\n\n";
+         f.close();
+      }      
+      if (!dont_show)
+      {
+         f.setName(htmlDir + "/variance.res");
+         show_parameter(0);
+         qApp->processEvents();
+         filename2 = htmlDir + "/variance.";
+         p = QPixmap::grabWidget(histogram_plot, 2, 2, histogram_plot->width() - 4, histogram_plot->height() - 4);
+         pm->save_file(filename2, p);
+         if (f.open(IO_WriteOnly | IO_Translate))
+         {
+            float center, conf99low, conf99high, conf95low, conf95high;
+            center = (stats.mode1 + stats.mode2)/2;
+            conf99low = stats.mean - 2.576 * stats.std_deviation;
+            conf99high = stats.mean + 2.576 * stats.std_deviation;
+            conf95low = stats.mean - 1.96 * stats.std_deviation;
+            conf95high = stats.mean + 1.96 * stats.std_deviation;
+            ts << tr("Parameter Info:\n\n");
+            ts << tr("Results for the Variance of this Monte Carlo Analysis\n\n");
+            ts << tr("Maximum Value:             ") << stats.high << "\n";
+            ts << tr("Minimum Value:             ") << stats.low << "\n";
+            ts << tr("Mean Value:                ") << stats.mean << "\n";
+            ts << tr("Median Value:              ") << stats.median << "\n";
+            ts << tr("Skew Value:                ") << stats.skew << "\n";
+            ts << tr("Kurtosis Value:            ") << stats.kurtosis << "\n";
+            ts << tr("Lower Mode Limit:          ") << stats.mode1 << "\n";
+            ts << tr("Upper Mode Limit:          ") << stats.mode2 << "\n";
+            ts << tr("Mode Center:               ") << center << "\n";
+            ts << tr("95% Confidence Limits:     +") << (conf95high - center) << ", -" << (center - conf95low) << "\n";
+            ts << tr("99% Confidence Limits:     +") << (conf99high - center) << ", -" << (center - conf99low) << "\n";
+            ts << tr("Standard Deviation:        ") << stats.std_deviation << "\n";
+            ts << tr("Standard Error:            ") << stats.std_error << "\n";
+            ts << tr("Variance:                  ") << stats.variance << "\n";
+            ts << tr("Correlation Coefficient:   ") << stats.correlation << "\n";
+            ts << tr("Gaussian Area:             ") << stats.area << "\n";
+            str.sprintf(tr(" %e (low),  %e (high)\n"), conf95low, conf95high);   // the standard error of the distribution
+            ts << tr("95 % Confidence Interval: ") << str;
+            str.sprintf(tr(" %e (low),  %e (high)\n"), conf99low, conf99high);   // the standard error of the distribution
+            ts << tr("99 % Confidence Interval: ") << str;
+            f.close();
+         }
+         QwtSymbol symbol;
+         QPen p_histo, mwline;
+         p_histo.setWidth(3);
+         mwline.setWidth(2);
+         symbol.setSize(7);
+         symbol.setStyle(QwtSymbol::Ellipse);
+         if (print_plot)
+         {
+            p_histo.setColor(Qt::white);
+            mwline.setColor(Qt::gray);
+            symbol.setPen(Qt::black);
+            symbol.setBrush(Qt::white);
+         }
+         else
+         {
+            p_histo.setColor(Qt::red);
+            mwline.setColor(Qt::cyan);
+            symbol.setPen(Qt::blue);
+            symbol.setBrush(Qt::yellow);
+         }
+         histogram_plot->clear();
+         unsigned int curve1 = histogram_plot->insertCurve("Histogram");
+         unsigned int curve2 = histogram_plot->insertCurve("Plot");
+         histogram_plot->setCurveData(curve1, x, y, amplitude.size());
+         histogram_plot->setCurveData(curve2, x, y, amplitude.size());
+         histogram_plot->setAxisTitle(QwtPlot::xBottom, "Molecular Weight");
+         histogram_plot->setTitle("Molecular Weight Distribution");
+         histogram_plot->setCurveStyle(curve1, QwtCurve::Sticks);
+         histogram_plot->setCurveStyle(curve2, QwtCurve::Lines);
+         histogram_plot->setCurvePen(curve1, p_histo);
+         histogram_plot->setCurvePen(curve2, mwline);
+         histogram_plot->setCurveSymbol(curve1, symbol);
+         histogram_plot->replot();
+         plot_status = "mw_distro";
+         
+         qApp->processEvents();
+         filename2 = htmlDir + "/mw-distro.";
+         p = QPixmap::grabWidget(histogram_plot, 2, 2, histogram_plot->width() - 4, histogram_plot->height() - 4);
+         pm->save_file(filename2, p);
+         delete [] x;
+         delete [] y;
+      }
+   }
+   else
+   {
+      for (unsigned int i=0; i<(*mc).parameter.size(); i++)
+      {
+         f.setName(htmlDir + str.sprintf("/parameter-%d.res", i));
+         show_parameter((int)i);
+         qApp->processEvents();
+         filename2 = htmlDir + str.sprintf("/parameter-%d.", i);
+         p = QPixmap::grabWidget(histogram_plot, 2, 2, histogram_plot->width() - 4, histogram_plot->height() - 4);
+         pm->save_file(filename2, p);
+         if (f.open(IO_WriteOnly | IO_Translate))
+         {
+            float center, conf99low, conf99high, conf95low, conf95high;
+            center = (stats.mode1 + stats.mode2)/2;
+            conf99low = stats.mean - 2.576 * stats.std_deviation;
+            conf99high = stats.mean + 2.576 * stats.std_deviation;
+            conf95low = stats.mean - 1.96 * stats.std_deviation;
+            conf95high = stats.mean + 1.96 * stats.std_deviation;
+            ts << tr("Parameter Info:\n\n");
+            ts << tr("Results for Parameter ") << (*mc).parameter[i] << "\n\n";
+            ts << tr("Maximum Value:             ") << stats.high << "\n";
+            ts << tr("Minimum Value:             ") << stats.low << "\n";
+            ts << tr("Mean Value:                ") << stats.mean << "\n";
+            ts << tr("Median Value:              ") << stats.median << "\n";
+            ts << tr("Skew Value:                ") << stats.skew << "\n";
+            ts << tr("Kurtosis Value:            ") << stats.kurtosis << "\n";
+            ts << tr("Lower Mode Limit:          ") << stats.mode1 << "\n";
+            ts << tr("Upper Mode Limit:          ") << stats.mode2 << "\n";
+            ts << tr("Mode Center:               ") << center << "\n";
+            ts << tr("95% Confidence Limits:     +") << (conf95high - center) << ", -" << (center - conf95low) << "\n";
+            ts << tr("99% Confidence Limits:     +") << (conf99high - center) << ", -" << (center - conf99low) << "\n";
+            ts << tr("Standard Deviation:        ") << stats.std_deviation << "\n";
+            ts << tr("Standard Error:            ") << stats.std_error << "\n";
+            ts << tr("Variance:                  ") << stats.variance << "\n";
+            ts << tr("Correlation Coefficient:   ") << stats.correlation << "\n";
+            ts << tr("Gaussian Area:             ") << stats.area << "\n";
+            str.sprintf(tr(" %e (low),  %e (high)\n"), conf95low, conf95high);   // the standard error of the distribution
+            ts << tr("95 % Confidence Interval: ") << str;
+            str.sprintf(tr(" %e (low),  %e (high)\n"), conf99low, conf99high);   // the standard error of the distribution
+            ts << tr("99 % Confidence Interval: ") << str;
+            if((*mc).parameter[i].contains("Ln(Association Constant", true) == 1)
+            {
+               float kd_val = 1.0/exp(stats.mean);
+               float kd_min = 1.0/exp(conf95high);
+               float kd_max = 1.0/exp(conf95low);
+               ts << tr("\n\nKd:                        ") << kd_val << "\n";
+               ts << tr("95% Confidence Limits:     +") << (kd_max - kd_val) << ", -" << (kd_val - kd_min) << "\n";
+            }
+            f.close();
+         }
+         progress->setProgress(i);
+      }
+   }
+   progress->setTotalSteps((*mc).iterations);
+   progress->reset();
+   progress->setProgress(stats.points);
+   dont_show = false;
 }
 
 void US_MonteCarlo::quit()
@@ -1828,7 +1828,7 @@ void US_MonteCarlo::update_iteration()
 {
    from_public = true;
    update_parameter();
-   from_public = false;	
+   from_public = false;   
 }
 
 void US_MonteCarlo::update_total_iterations(const QString &val)

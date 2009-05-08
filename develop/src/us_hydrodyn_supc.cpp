@@ -1,8 +1,8 @@
 /*       PROGRAM SUPC VERSION 4.0 (Updated 31 Jan 2001)       */
 /*                            4.1 (Updated  3 Jun 2004)       */
-/*			      4.2 (Updated 14 Jun 2007) introduced overlap choice in over.c */
-/*				                        introduced version # in supc.c */
-/*				                        fixed MAX EXT in supc.c */
+/*               4.2 (Updated 14 Jun 2007) introduced overlap choice in over.c */
+/*                                    introduced version # in supc.c */
+/*                                    fixed MAX EXT in supc.c */
 /*       Readapted for Linux from Win version 15/5/2002       */
 /* Computation of the hydrodynamic properties of rigid models */
 /* composed of non-overlapping beads of different radii.      */
@@ -17,7 +17,7 @@
 #define  TE 293.15
 #define  SMAX 256
 #define  RM_COMMAND "rm "
-#include <stdlib.h>		/* Added for 'print_time' function use */
+#include <stdlib.h>      /* Added for 'print_time' function use */
 
 #include <stdio.h>
 #include <math.h>
@@ -34,12 +34,12 @@
 
 struct dati1
 {
-   float x, y, z;		/* coordinates of the bead center    */
-   float r;			/* hydrated radius of the bead       */
-   float ru;			/* unhydrated radius of the bead     */
-   float m;			/* mass of the bead                  */
-   int col;			/* color of the bead                 */
-   char *cor;			/* correspondence between beads and AA */
+   float x, y, z;      /* coordinates of the bead center    */
+   float r;         /* hydrated radius of the bead       */
+   float ru;         /* unhydrated radius of the bead     */
+   float m;         /* mass of the bead                  */
+   int col;         /* color of the bead                 */
+   char *cor;         /* correspondence between beads and AA */
 };
 
 static hydro_results *supc_results;
@@ -305,14 +305,14 @@ static void dww(char *s) {
 
 // #define NMAX 1690
 
-static struct dati1 *dt = 0;	// [2 * NMAX];
-static struct dati1 *dtn = 0;	// [NMAX];
-static float *rRi = 0;		// [3 * NMAX];
-static float *b1 = 0;		// [3 * NMAX];
-static float *p = 0;		// [3 * NMAX];
-static float *gp = 0;		// [NMAX][9];
-static float *q = 0;		// [NMAX][NMAX][9];
-static float *a = 0;		// [3 * NMAX][3 * NMAX];
+static struct dati1 *dt = 0;   // [2 * NMAX];
+static struct dati1 *dtn = 0;   // [NMAX];
+static float *rRi = 0;      // [3 * NMAX];
+static float *b1 = 0;      // [3 * NMAX];
+static float *p = 0;      // [3 * NMAX];
+static float *gp = 0;      // [NMAX][9];
+static float *q = 0;      // [NMAX][NMAX][9];
+static float *a = 0;      // [3 * NMAX][3 * NMAX];
 
 static int nmax;
 // static QApplication *qApp;
@@ -496,12 +496,12 @@ print_time_2IO(int seconds)
 #endif
 
 /*********************************************************
- *							 *
- *	    Procedure:                                   *
+ *                      *
+ *       Procedure:                                   *
  *                                                        *
  *           void Gets_date(char *day, char *month,       *
  *                             char *year, int *numday,   *
- *			      char *hour)                *
+ *               char *hour)                *
  *                                                        *
  **********************************************************/
 static void
@@ -530,26 +530,26 @@ Gets_date(char *day, char *month, int *year, int *numday, char *hour)
 
 int
 us_hydrodyn_supc_main(hydro_results *hydro_results, 
-		      hydro_options *hydro, 
-		      double use_overlap_tolerance,
-		      vector < vector <PDB_atom> > *use_bead_models, 
-		      vector <int> *somo_processed,
-		      vector <PDB_model> *use_model_vector,
-		      QListBox *lb_model,
-		      const char *filename,
-		      const char *res_filename,
-		      QProgressBar *use_progress,
-		      QTextEdit *use_editor,
-		      US_Hydrodyn *use_us_hydrodyn)
+                      hydro_options *hydro, 
+                      double use_overlap_tolerance,
+                      vector < vector <PDB_atom> > *use_bead_models, 
+                      vector <int> *somo_processed,
+                      vector <PDB_model> *use_model_vector,
+                      QListBox *lb_model,
+                      const char *filename,
+                      const char *res_filename,
+                      QProgressBar *use_progress,
+                      QTextEdit *use_editor,
+                      US_Hydrodyn *use_us_hydrodyn)
 {
    dt = 0;
    dtn = 0;
    rRi = 0;
-   b1 = 0;	
-   p = 0;	
-   gp = 0;	
-   q = 0;	
-   a = 0;	
+   b1 = 0;   
+   p = 0;   
+   gp = 0;   
+   q = 0;   
+   a = 0;   
    tot_partvol = 0.0;
 
    //  vector <PDB_atom> *bead_model;
@@ -579,23 +579,23 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    QString use_filename = filename;
    for (int current_model = 0; current_model < (int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
-	 if ((*somo_processed)[current_model]) {
-	    model_idx.push_back(current_model);
-	    vector < int > tmp_active_idx;
-	    int tmp_count = 0;
-	    for(int i = 0; i < (int)(*bead_models)[current_model].size(); i++) {
-	       if((*bead_models)[current_model][i].active) {
-		  tmp_active_idx.push_back(i);
-		  tmp_count++;
-	       }
-	    }
-	    bead_count.push_back(tmp_count);
-	    active_idx.push_back(tmp_active_idx);
-	    models_to_proc++;
-	    if (nmax < (int) (*bead_models)[current_model].size()) {
-	       nmax = (int) (*bead_models)[current_model].size();
-	    }
-	 }
+         if ((*somo_processed)[current_model]) {
+            model_idx.push_back(current_model);
+            vector < int > tmp_active_idx;
+            int tmp_count = 0;
+            for(int i = 0; i < (int)(*bead_models)[current_model].size(); i++) {
+               if((*bead_models)[current_model][i].active) {
+                  tmp_active_idx.push_back(i);
+                  tmp_count++;
+               }
+            }
+            bead_count.push_back(tmp_count);
+            active_idx.push_back(tmp_active_idx);
+            models_to_proc++;
+            if (nmax < (int) (*bead_models)[current_model].size()) {
+               nmax = (int) (*bead_models)[current_model].size();
+            }
+         }
       }
    }
 
@@ -680,12 +680,12 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       scanf("%d", &cdmolix);
       if (cdmolix == 1)
       {
-	 printf("\n-Enter filename prefix  ");
-	 scanf("%s", fil001);
-	 getchar();
-	 printf("\n-Enter first file number   ");
-	 scanf("%d", &num001);
-	 numor = 1;
+         printf("\n-Enter filename prefix  ");
+         scanf("%s", fil001);
+         getchar();
+         printf("\n-Enter first file number   ");
+         scanf("%d", &num001);
+         numor = 1;
       }
       r1 = 'y';
       flag_mem = 1;
@@ -693,14 +693,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       /* Initialization for average values */
 
       Rg = Rgu = RSt = CfT = CST = CSTF = CdT = CfR1 = CdR1 = RE = REC = VIM = VIMC = 
-	 CTH = CTM = 0.0;
+         CTH = CTM = 0.0;
 
 #if defined(TSUDA_DOUBLESUM)
       REDS = RETM = RETV = VIMDS = VIMTM = VIMTV = 0.0;
 #endif
 
       Rg2 = Rgu2 = RSt2 = CfT2 = CST2 = CSTF2 = CdT2 = CfR12 = CdR12 = RE2 = REC2 = VIM2 = VIMC2 =
-	 CTH2 = CTM2 = 0.0;
+         CTH2 = CTM2 = 0.0;
 
 #if defined(TSUDA_DOUBLESUM)
       REDS2 = RETM2 = RETV2 = VIMDS2 = VIMTM2 = VIMTV2 = 0.0;
@@ -708,14 +708,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
       for (k = 0; k < 3; k++)
       {
-	 RSr[k] = RSr2[k] = 0.0;
-	 CfR[k] = CfR2[k] = 0.0;
-	 CdR[k] = CdR2[k] = 0.0;
+         RSr[k] = RSr2[k] = 0.0;
+         CfR[k] = CfR2[k] = 0.0;
+         CdR[k] = CdR2[k] = 0.0;
       }
       for (k = 0; k < 5; k++)
       {
-	 RT[k] = RT2[k] = 0.0;
-	 CT[k] = CT2[k] = 0.0;
+         RT[k] = RT2[k] = 0.0;
+         CT[k] = CT2[k] = 0.0;
       }
    }
 
@@ -725,11 +725,11 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       r1 = 'a';
       while ((r1 != 'n') && (r1 != 'N') && (r1 != 'y') && (r1 != 'S'))
       {
-	 intestazione();
-	 printf("\n\n\n** Number of models to analyze:___ %d", num);
-	 printf("\n** Do you want the results printed to a file ? (y/n) :___ ");
-	 scanf("%s", &r1);
-	 getchar();
+         intestazione();
+         printf("\n\n\n** Number of models to analyze:___ %d", num);
+         printf("\n** Do you want the results printed to a file ? (y/n) :___ ");
+         scanf("%s", &r1);
+         getchar();
       }
    }
 
@@ -759,17 +759,17 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       fclose(new_mol);
       if (fe == 2)
       {
-	 strcpy(command, RM_COMMAND);
-	 strcat(command, risultati);
-	 if (system(command) != 0)
-	    printf("Error writing file");
+         strcpy(command, RM_COMMAND);
+         strcat(command, risultati);
+         if (system(command) != 0)
+            printf("Error writing file");
       }
       if (fe == 3)
       {
-	 goto a50;
-	 /*		printf("** Insert the name of results file :___ ");
-			scanf("%s",risultati);
-			getchar();  */
+         goto a50;
+         /*      printf("** Insert the name of results file :___ ");
+                 scanf("%s",risultati);
+                 getchar();  */
       }
    }
 
@@ -779,9 +779,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    printf("factor to turn them into nanometers [else insert 1].\n");
    printf("The following table shows some examples of conversions:\n\n");
 
-   printf("- - )	micrometers => nanometers [ Conversion factor = 1000 ]\n");
-   printf("- - )	nanometers  => nanometers [ Conversion factor = 1    ]\n");
-   printf("- - )	angstroms   => nanometers [ Conversion factor = 0.1  ]\n\n");
+   printf("- - )   micrometers => nanometers [ Conversion factor = 1000 ]\n");
+   printf("- - )   nanometers  => nanometers [ Conversion factor = 1    ]\n");
+   printf("- - )   angstroms   => nanometers [ Conversion factor = 0.1  ]\n\n");
    printf("\n** Insert the conversion factor :___ ");
 
    scanf("%f", &fconv);
@@ -853,18 +853,18 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       getchar();
       if ((sfecalc == 2) && (volcor == 1))
       {
-	 printf("\n YOU HAVE SELECTED TO EXCLUDE BEADS COLOR CODED \"6\"\n\n");
-	 printf("\n HOWEVER, THEIR VOLUME MAY BE IMPORTANT FOR THE\n");
-	 printf("\n ROTATIONAL DIFFUSION AND INTRINSIC VISCOSITY CORRECTIONS\n");
-	 printf("\n You may choose to include their volume in:\n\n");
+         printf("\n YOU HAVE SELECTED TO EXCLUDE BEADS COLOR CODED \"6\"\n\n");
+         printf("\n HOWEVER, THEIR VOLUME MAY BE IMPORTANT FOR THE\n");
+         printf("\n ROTATIONAL DIFFUSION AND INTRINSIC VISCOSITY CORRECTIONS\n");
+         printf("\n You may choose to include their volume in:\n\n");
 
-	 printf(" 0) Neither correction\n");
-	 printf(" 1) The rotational diffusion correction only\n");
-	 printf(" 2) The intrinsic viscosity correction only\n");
-	 printf(" 3) Both corrections\n\n");
-	 printf(" Select (0/1/2/3) :___ ");
-	 scanf("%d", &colorsixf);
-	 getchar();
+         printf(" 0) Neither correction\n");
+         printf(" 1) The rotational diffusion correction only\n");
+         printf(" 2) The intrinsic viscosity correction only\n");
+         printf(" 3) Both corrections\n\n");
+         printf(" Select (0/1/2/3) :___ ");
+         scanf("%d", &colorsixf);
+         getchar();
 
       }
 
@@ -946,8 +946,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    if ((sfecalc == 2) && (volcor == 1))
    {
       colorsixf = 
-	 (hydro->rotational ? 1 : 0) + 
-	 (hydro->viscosity ? 2 : 0);
+         (hydro->rotational ? 1 : 0) + 
+         (hydro->viscosity ? 2 : 0);
    }
    //    init_da_a();
 #endif
@@ -975,68 +975,68 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       /* Check for file existence and selects whole or part of the models for sequential files only   */
       if (cdmolix == 1) // never true in our case, cdmolix == 2
       {
-	 sprintf(molecola, "%s%d", fil001, num001);
-	 num001 = num001 + 1;
-	 mol = fopen(molecola, "r");
-	 while (mol == NULL)
-	 {
-	    printf("\n");
-	    printf("The Model(s) do not exist!!!\n");
-	    printf("Insert the models' correct prefix :___");
-	    scanf("%s", molecola);
-	    mol = fopen(molecola, "r");
-	 }
-	 fscanf(mol, "%d", &nat);
-	 fclose(mol);
-	 if (k == 0)
-	 {
-	    printf("\n%s%d%s", "** TOTAL Number of BEADS in the MODELS :___", nat, " **\n\n");
-	    prima = (-1);
-	    while ((prima < 0) || (prima > (nat - 1)))
-	    {
-	       printf("%s", "** Insert FIRST BEAD # to be included:___");
-	       scanf("%d", &prima);
-	       getchar();
-	       printf("\n");
-	    }
-	    ultima = nat + 1;
-	    while ((ultima < prima) || (ultima > nat))
-	    {
-	       printf("%s", "** Insert LAST BEAD # to be included:___");
-	       scanf("%d", &ultima);
-	       getchar();
-	       printf("\n");
-	    }
-	 }
-	 tot_mol = fopen("tot_mol", "wb");
-	 fprintf(tot_mol, "%s\n", molecola);
-	 fprintf(tot_mol, "%d\t%d\t%d\n", nat, prima, ultima);
-	 fclose(tot_mol);
+         sprintf(molecola, "%s%d", fil001, num001);
+         num001 = num001 + 1;
+         mol = fopen(molecola, "r");
+         while (mol == NULL)
+         {
+            printf("\n");
+            printf("The Model(s) do not exist!!!\n");
+            printf("Insert the models' correct prefix :___");
+            scanf("%s", molecola);
+            mol = fopen(molecola, "r");
+         }
+         fscanf(mol, "%d", &nat);
+         fclose(mol);
+         if (k == 0)
+         {
+            printf("\n%s%d%s", "** TOTAL Number of BEADS in the MODELS :___", nat, " **\n\n");
+            prima = (-1);
+            while ((prima < 0) || (prima > (nat - 1)))
+            {
+               printf("%s", "** Insert FIRST BEAD # to be included:___");
+               scanf("%d", &prima);
+               getchar();
+               printf("\n");
+            }
+            ultima = nat + 1;
+            while ((ultima < prima) || (ultima > nat))
+            {
+               printf("%s", "** Insert LAST BEAD # to be included:___");
+               scanf("%d", &ultima);
+               getchar();
+               printf("\n");
+            }
+         }
+         tot_mol = fopen("tot_mol", "wb");
+         fprintf(tot_mol, "%s\n", molecola);
+         fprintf(tot_mol, "%d\t%d\t%d\n", nat, prima, ultima);
+         fclose(tot_mol);
       }
 
       else
       {  // this code is always executed
 
 #if defined(USE_MAIN)
-	 if (num != 1)
-	 {
-	    printf("\n%s%d%s", "** Insert file name of model #", k + 1, " to be analyzed :___ ");
-	 }
-	 else
-	 {
-	    printf("\n** Insert file name of the model to be analyzed :___ ");
-	 }
-	 scanf("%s", molecola);
-	 getchar();
+         if (num != 1)
+         {
+            printf("\n%s%d%s", "** Insert file name of model #", k + 1, " to be analyzed :___ ");
+         }
+         else
+         {
+            printf("\n** Insert file name of the model to be analyzed :___ ");
+         }
+         scanf("%s", molecola);
+         getchar();
 
-	 init_da_a();
+         init_da_a();
 #endif
-	 printf("opening file: %s\n",  QString(use_filename).arg(model_idx[k] + 1).ascii());
-	 strncpy(molecola, QString(use_filename).arg(model_idx[k] + 1).ascii(), SMAX); // first model
+         printf("opening file: %s\n",  QString(use_filename).arg(model_idx[k] + 1).ascii());
+         strncpy(molecola, QString(use_filename).arg(model_idx[k] + 1).ascii(), SMAX); // first model
 
-	 active_model = k;
+         active_model = k;
 
-	 init_da_a();	    
+         init_da_a();       
       }
    }
 
@@ -1049,17 +1049,17 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       QColor save_color = editor->color();
       editor->setColor("dark blue");
       editor->append(QString("\nProcessing model %1 bead count %2 vbar %3%4%5%6\n")
-		     .arg(k+1)
-		     .arg(bead_count[k])
-		     .arg(us_hydrodyn->misc.compute_vbar ?
-			  (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
-			  us_hydrodyn->misc.vbar)
-		     .arg(us_hydrodyn->misc.compute_vbar ? "" : " (User Entered)")
+                     .arg(k+1)
+                     .arg(bead_count[k])
+                     .arg(us_hydrodyn->misc.compute_vbar ?
+                          (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0 :
+                          us_hydrodyn->misc.vbar)
+                     .arg(us_hydrodyn->misc.compute_vbar ? "" : " (User Entered)")
                      .arg(hydro->mass_correction ? 
                           QString(" MW %1 (User Entered)").arg(hydro->mass) : "")
                      .arg(hydro->volume_correction ? 
                           QString(" Volume %1 (User Entered)").arg(hydro->volume) : "")
-		     );
+                     );
       editor->setColor(save_color);
 
       supc_free_alloced_2();
@@ -1069,17 +1069,17 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       printf("nat = %d\n", nat);
       if (int retval = supc_alloc_2())
       {
-	 supc_free_alloced();
-	 return retval;
+         supc_free_alloced();
+         return retval;
       }
-	
+   
       ppos = 1;
       mppos = (1 + 3 + 3) * nat + 17;
       progress->setTotalSteps(mppos);
@@ -1087,8 +1087,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       fscanf(tot_mol, "%f", &raflag);
@@ -1099,16 +1099,16 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       inp_inter();
       printf("\n\n- Starting PAT ...\n");
       {
-	 int retval = us_hydrodyn_pat_main(nmax);
-	 printf("pat returns %d\n", retval);
+         int retval = us_hydrodyn_pat_main(nmax);
+         printf("pat returns %d\n", retval);
       }
       printf("\n\n- End of PAT ...\n\n");
       progress->setProgress(ppos++); // 2
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       out_inter();
@@ -1124,25 +1124,25 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
       for (i = 0; i < nat; i++)
       {
-	 x = fabs(dt[i].x - dtn[i].x);
-	 y = fabs(dt[i].y - dtn[i].y);
-	 z = fabs(dt[i].z - dtn[i].z);
+         x = fabs(dt[i].x - dtn[i].x);
+         y = fabs(dt[i].y - dtn[i].y);
+         z = fabs(dt[i].z - dtn[i].z);
 
-	 if ((x > 1) || (y > 1) || (z > 1))
-	    flag_norm = 1;
+         if ((x > 1) || (y > 1) || (z > 1))
+            flag_norm = 1;
       }
 
       for (i = 0; i < nat; i++)
       {
-	 dt[i].x = dtn[i].x;
-	 dt[i].y = dtn[i].y;
-	 dt[i].z = dtn[i].z;
+         dt[i].x = dtn[i].x;
+         dt[i].y = dtn[i].y;
+         dt[i].z = dtn[i].z;
       }
 #if defined(DEBUG_WW)
       for (i = 0; i < nat; i++) {
-	 cks += (double)dt[i].x;
-	 cks += (double)dt[i].y;
-	 cks += (double)dt[i].z;
+         cks += (double)dt[i].x;
+         cks += (double)dt[i].y;
+         cks += (double)dt[i].z;
       }
       dww("main before overlap");
 #endif
@@ -1150,37 +1150,37 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       if (overlap() == 1)
       {
 #if defined(USE_MAIN)
-	 printf("\n\n Hit any key to exit");
-	 getchar();
+         printf("\n\n Hit any key to exit");
+         getchar();
 #else
 # if defined(DEBUG_WW)
-	 dww("final/overlaps");
-	 fclose(logfx);
+         dww("final/overlaps");
+         fclose(logfx);
 # endif
-	 printf("overlaps detected\n");
-	 supc_free_alloced();
-	 progress->setProgress(mppos); 
-	 qApp->processEvents();
-	 if (us_hydrodyn->stopFlag)
-	 {
-	    supc_free_alloced();
-	    return -1;
-	 }
-	 return US_HYDRODYN_SUPC_OVERLAPS_EXIST;
+         printf("overlaps detected\n");
+         supc_free_alloced();
+         progress->setProgress(mppos); 
+         qApp->processEvents();
+         if (us_hydrodyn->stopFlag)
+         {
+            supc_free_alloced();
+            return -1;
+         }
+         return US_HYDRODYN_SUPC_OVERLAPS_EXIST;
 #endif
-	 break;
+         break;
       }
-      /*		MOVED INSIDE INIT.C
-			printf("\n\n Starting function: ragir()\n");
-			ragir(); 
-			printf("\n End of function: ragir()\n"); */
+      /*      MOVED INSIDE INIT.C
+              printf("\n\n Starting function: ragir()\n");
+              ragir(); 
+              printf("\n End of function: ragir()\n"); */
 
       progress->setProgress(ppos++); //3
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
       /* RECOMPUTING THE CENTER OF MASS */
 
@@ -1190,13 +1190,13 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       zm = 0.0;
 
       for (i = 0; i < nat; i++)
-	 mtx += dt[i].m;
+         mtx += dt[i].m;
 
       for (i = 0; i < nat; i++)
       {
-	 xm += dt[i].x * dt[i].m;
-	 ym += dt[i].y * dt[i].m;
-	 zm += dt[i].z * dt[i].m;
+         xm += dt[i].x * dt[i].m;
+         ym += dt[i].y * dt[i].m;
+         zm += dt[i].z * dt[i].m;
       }
 
       xm = xm / mtx;
@@ -1212,8 +1212,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 #if defined(TSUDA_DOUBLESUM)
       printf("\n Starting function: doublesum()\n");
@@ -1224,8 +1224,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       printf("\n Starting function: calcqij()\n");
@@ -1235,8 +1235,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       presentazione();
@@ -1244,32 +1244,32 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #if defined(CREATE_EXE_TIME)
       if (flag_mem == 1)
       {
-	 exe_time = fopen("exe_time", "wb");
-	 fprintf(exe_time, "\n%s\n", "BEAMS -           IST. CBA                    COEFF/SUPC");
-	 fprintf(exe_time, "\n%s\n\n", "*** Computational Method : SUPERMATRIX INVERSION chol ***");
-	 fprintf(exe_time, "Date: %s %d %s %d %s\n", day, numday, month, year, hour);
-	 fprintf(exe_time, "%s", "MODEL FILE NAME :___ ");
-	 fprintf(exe_time, "%s\n", molecola);
-	 fprintf(exe_time, "%s%d\n", "BEADS in the MODEL :___ ", numero_sfere);
-	 // fprintf(exe_time, "%s%d\n", "FIRST BEAD # INCLUDED  :___ ", prima);
-	 // fprintf(exe_time, "%s%d\n", "LAST BEAD # INCLUDED :___ ", ultima);
+         exe_time = fopen("exe_time", "wb");
+         fprintf(exe_time, "\n%s\n", "BEAMS -           IST. CBA                    COEFF/SUPC");
+         fprintf(exe_time, "\n%s\n\n", "*** Computational Method : SUPERMATRIX INVERSION chol ***");
+         fprintf(exe_time, "Date: %s %d %s %d %s\n", day, numday, month, year, hour);
+         fprintf(exe_time, "%s", "MODEL FILE NAME :___ ");
+         fprintf(exe_time, "%s\n", molecola);
+         fprintf(exe_time, "%s%d\n", "BEADS in the MODEL :___ ", numero_sfere);
+         // fprintf(exe_time, "%s%d\n", "FIRST BEAD # INCLUDED  :___ ", prima);
+         // fprintf(exe_time, "%s%d\n", "LAST BEAD # INCLUDED :___ ", ultima);
 
-	 if (flag_norm == 1)
-	    fprintf(exe_time, "\n%s\n\n", "- NORMALIZED MOLECULE -");
-	 else
-	    fprintf(exe_time, "\n");
-	 fclose(exe_time);
-	 // system("date >> exe_time");
+         if (flag_norm == 1)
+            fprintf(exe_time, "\n%s\n\n", "- NORMALIZED MOLECULE -");
+         else
+            fprintf(exe_time, "\n");
+         fclose(exe_time);
+         // system("date >> exe_time");
       }
 #endif
 
-      primo = time(NULL);	/* Gets system time */
+      primo = time(NULL);   /* Gets system time */
       progress->setProgress(ppos++); // 7
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       riempimatrice();
@@ -1277,8 +1277,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       inverti(nat);
@@ -1287,8 +1287,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       visco();
@@ -1299,8 +1299,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       printf("- Matrix KSI_T  : ");
@@ -1311,8 +1311,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       printf("- Matrix KSI_OC : ");
@@ -1322,8 +1322,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       calcR();
@@ -1332,8 +1332,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
       printf("- Matrix KSI_Rr  : ");
       sigmarRcalc1();
@@ -1343,8 +1343,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
       printf("- Matrix KSI_OR: ");
       sigmaoRcalc();
@@ -1353,8 +1353,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       diffcalc();
@@ -1363,8 +1363,8 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       relax_rigid_calc();
@@ -1373,33 +1373,33 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 supc_free_alloced();
-	 return -1;
+         supc_free_alloced();
+         return -1;
       }
 
       if (cd == 2)
       {
-	 calcD();
-	 DDtcalc();
+         calcD();
+         DDtcalc();
       }
 
       printf("- Matrix Doc      : calculated\n");
       printf("- Matrix Doct     : calculated\n");
       printf("- Matrix Dot      : calculated\n");
       printf("- Matrix Dr       : calculated\n");
-      secondo = time(NULL);	/* Gets system time again */
+      secondo = time(NULL);   /* Gets system time again */
 
 #if defined(CREATE_EXE_TIME)
       if (flag_mem == 1)
       {
-	 // system("date >> exe_time");
-	 exe_time = fopen("exe_time", "ab");
-	 print_time_2IO((int) difftime(secondo, primo));
-	 /*
-	   Substitute the previous line with the following for compiling under SUN O.S.
-	   print_time_2IO(secondo-primo);
-	 */
-	 fclose(exe_time);
+         // system("date >> exe_time");
+         exe_time = fopen("exe_time", "ab");
+         print_time_2IO((int) difftime(secondo, primo));
+         /*
+           Substitute the previous line with the following for compiling under SUN O.S.
+           print_time_2IO(secondo-primo);
+         */
+         fclose(exe_time);
       }
 #endif
 
@@ -1410,155 +1410,155 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       totvolb = 0.0;
 
       if ((volcor == 1) && (sfecalc == 2))
-	 totvolb = interm1 / (6.0 * ETAo);
+         totvolb = interm1 / (6.0 * ETAo);
 
       if ((volcor == 1) && ((colorsixf == 2) || (colorsixf == 3)))
-	 totvol = interm1 / (6.0 * ETAo);
+         totvol = interm1 / (6.0 * ETAo);
       else
       {
-	 for (i = 0; i < nat; i++)
-	    totvol += (4.0 / 3.0 * PI * dt[i].r * dt[i].r * dt[i].r);
-	 totvolb = totvol;
+         for (i = 0; i < nat; i++)
+            totvol += (4.0 / 3.0 * PI * dt[i].r * dt[i].r * dt[i].r);
+         totvolb = totvol;
       }
       for (i = 0; i < nat; i++)
-	 totsup += PI * dt[i].r * dt[i].r * 4.0;
+         totsup += PI * dt[i].r * dt[i].r * 4.0;
 
-      if (num != 1)		/* average values of parameters */
+      if (num != 1)      /* average values of parameters */
       {
 
-	 temp = 0.0;
+         temp = 0.0;
 
-	 if (cc == 1)
-	    bc = 6;
-	 else
-	    bc = 4;
+         if (cc == 1)
+            bc = 6;
+         else
+            bc = 4;
 
-	 if (mascor == 1)
-	    mascor1 = (float) pesmol;
+         if (mascor == 1)
+            mascor1 = (float) pesmol;
 
-	 CfT += f * 1.0E-7 * fconv;
-	 CfT2 += pow((f * 1.0E-7 * fconv), 2);
+         CfT += f * 1.0E-7 * fconv;
+         CfT2 += pow((f * 1.0E-7 * fconv), 2);
 
-	 CdT += (KB * TE * 1.0E7) / f * fconv1;
-	 CdT2 += pow(((KB * TE * 1.0E7) / f * fconv1), 2);
+         CdT += (KB * TE * 1.0E7) / f * fconv1;
+         CdT2 += pow(((KB * TE * 1.0E7) / f * fconv1), 2);
 
-	 if ((raflag == -1.0) || (raflag == -3.0))
-	 {
-	    CST += (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO);
-	    CST2 += pow((mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), 2);
-	 }
+         if ((raflag == -1.0) || (raflag == -3.0))
+         {
+            CST += (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO);
+            CST2 += pow((mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), 2);
+         }
 
-	 if ((raflag == -2.0) || (raflag == -3.0) || (raflag == -5.0))
-	 {
-	    CSTF += (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
-	    CSTF2 += pow((mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), 2);
-	 }
+         if ((raflag == -2.0) || (raflag == -3.0) || (raflag == -5.0))
+         {
+            CSTF += (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
+            CSTF2 += pow((mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), 2);
+         }
 
-	 Rg += ro * fconv;
-	 Rg2 += pow((ro * fconv), 2);
+         Rg += ro * fconv;
+         Rg2 += pow((ro * fconv), 2);
 
-	 if ((raflag == -1.0) || (raflag == -3.0))
-	 {
-	    Rgu += rou * fconv;
-	    Rgu2 += pow((rou * fconv), 2);
-	 }
+         if ((raflag == -1.0) || (raflag == -3.0))
+         {
+            Rgu += rou * fconv;
+            Rgu2 += pow((rou * fconv), 2);
+         }
 
-	 RSt += f * fconv / (bc * PI * ETAo);
-	 RSt2 += pow((f * fconv / (bc * PI * ETAo)), 2);
+         RSt += f * fconv / (bc * PI * ETAo);
+         RSt2 += pow((f * fconv / (bc * PI * ETAo)), 2);
 
-	 temp = 0.0;
-	 for (i = 0; i < 3; i++)
-	    temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3);
-	 CfR1 += temp / 3.0;
-	 CfR12 += pow((temp / 3.0), 2);
+         temp = 0.0;
+         for (i = 0; i < 3; i++)
+            temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3);
+         CfR1 += temp / 3.0;
+         CfR12 += pow((temp / 3.0), 2);
 
-	 temp = 0.0;
-	 for (i = 0; i < 3; i++)
-	    temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
-	 CdR1 += temp / 3.0;
-	 CdR12 += pow((temp / 3.0), 2);
+         temp = 0.0;
+         for (i = 0; i < 3; i++)
+            temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
+         CdR1 += temp / 3.0;
+         CdR12 += pow((temp / 3.0), 2);
 
-	 for (i = 0; i < 3; i++)
-	 {
-	    temp = 0.0;
-	    RSr[i] += pow((3.0 / Dr[i * 4] / bc / 4.0 / PI / ETAo), 0.333333L) * fconv;
-	    temp += pow((3.0 / Dr[i * 4] / bc / 4.0 / PI / ETAo), 0.333333L) * fconv;
-	    RSr2[i] += pow(temp, 2);
+         for (i = 0; i < 3; i++)
+         {
+            temp = 0.0;
+            RSr[i] += pow((3.0 / Dr[i * 4] / bc / 4.0 / PI / ETAo), 0.333333L) * fconv;
+            temp += pow((3.0 / Dr[i * 4] / bc / 4.0 / PI / ETAo), 0.333333L) * fconv;
+            RSr2[i] += pow(temp, 2);
 
-	    CdR[i] += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
-	    temp = (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
-	    CdR2[i] += pow(temp, 2);
+            CdR[i] += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
+            temp = (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
+            CdR2[i] += pow(temp, 2);
 
-	    CfR[i] += 1.0E-21 / Dr[i * 4] * pow(fconv, 3.0f);
-	    temp = 1.0E-21 / Dr[i * 4] * pow(fconv, 3.0f);
-	    CfR2[i] += pow(temp, 2.0f);
-	 }
+            CfR[i] += 1.0E-21 / Dr[i * 4] * pow(fconv, 3.0f);
+            temp = 1.0E-21 / Dr[i * 4] * pow(fconv, 3.0f);
+            CfR2[i] += pow(temp, 2.0f);
+         }
 
-	 if (mascor == 2)
-	 {
-	    correz = pesmol / mascor1;
-	    vol_mas = mascor1;
-	 }
-	 else
-	 {
-	    correz = 1.0;
-	    vol_mas = pesmol;
-	 }
+         if (mascor == 2)
+         {
+            correz = pesmol / mascor1;
+            vol_mas = mascor1;
+         }
+         else
+         {
+            correz = 1.0;
+            vol_mas = pesmol;
+         }
 
-	 VIM += vis * correz * pow(fconv, 3);
-	 temp = vis * correz * pow(fconv, 3);
-	 VIM2 += pow(temp, 2.0f);
+         VIM += vis * correz * pow(fconv, 3);
+         temp = vis * correz * pow(fconv, 3);
+         VIM2 += pow(temp, 2.0f);
 
-	 RE += 1.0E7 * pow((0.3 * pesmol * vis / (PI * AVO)), 0.333333) * fconv;
-	 temp = 1.0E7 * pow((0.3 * pesmol * vis / (PI * AVO)), 0.333333) * fconv;
-	 RE2 += pow(temp, 2);
+         RE += 1.0E7 * pow((0.3 * pesmol * vis / (PI * AVO)), 0.333333) * fconv;
+         temp = 1.0E7 * pow((0.3 * pesmol * vis / (PI * AVO)), 0.333333) * fconv;
+         RE2 += pow(temp, 2);
 
-	 VIMC += (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
-	 temp = (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
-	 VIMC2 += pow(temp, 2);
+         VIMC += (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
+         temp = (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
+         VIMC2 += pow(temp, 2);
 
-	 REC += 1.0E7 * pow((0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO)), 0.333333) * fconv;
-	 temp = 1.0E7 * pow((0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO)), 0.333333) * fconv;
-	 REC2 += pow(temp, 2);
+         REC += 1.0E7 * pow((0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO)), 0.333333) * fconv;
+         temp = 1.0E7 * pow((0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO)), 0.333333) * fconv;
+         REC2 += pow(temp, 2);
 
 #if defined(TSUDA_DOUBLESUM)
-	 VIMDS += (vis4 * correz) * pow(fconv, 3);
-	 temp = (vis4 * correz) * pow(fconv, 3);
-	 VIMDS2 += pow(temp, 2.0f);
+         VIMDS += (vis4 * correz) * pow(fconv, 3);
+         temp = (vis4 * correz) * pow(fconv, 3);
+         VIMDS2 += pow(temp, 2.0f);
 
-	 REDS += 1.0E7 * pow((0.3 * pesmol * vis4 / (PI * AVO)), 0.333333) * fconv;
-	 temp = 1.0E7 * pow((0.3 * pesmol * vis4 / (PI * AVO)), 0.333333) * fconv;
-	 REDS2 += pow(temp, 2);
+         REDS += 1.0E7 * pow((0.3 * pesmol * vis4 / (PI * AVO)), 0.333333) * fconv;
+         temp = 1.0E7 * pow((0.3 * pesmol * vis4 / (PI * AVO)), 0.333333) * fconv;
+         REDS2 += pow(temp, 2);
 
-	 VIMTM += (vis1 * correz) * pow(fconv, 3);
-	 temp = (vis1 * correz) * pow(fconv, 3);
-	 VIMTM2 += pow(temp, 2.0f);
+         VIMTM += (vis1 * correz) * pow(fconv, 3);
+         temp = (vis1 * correz) * pow(fconv, 3);
+         VIMTM2 += pow(temp, 2.0f);
 
-	 RETM += 1.0E7 * pow((0.3 * pesmol * vis1 / (PI * AVO)), 0.333333) * fconv;
-	 temp = 1.0E7 * pow((0.3 * pesmol * vis1 / (PI * AVO)), 0.333333) * fconv;
-	 RETM2 += pow(temp, 2.0f);
+         RETM += 1.0E7 * pow((0.3 * pesmol * vis1 / (PI * AVO)), 0.333333) * fconv;
+         temp = 1.0E7 * pow((0.3 * pesmol * vis1 / (PI * AVO)), 0.333333) * fconv;
+         RETM2 += pow(temp, 2.0f);
 
-	 VIMTV += (vis2 * correz) * pow(fconv, 3);
-	 temp = (vis2 * correz) * pow(fconv, 3);
-	 VIMTV2 += pow(temp, 2.0f);
+         VIMTV += (vis2 * correz) * pow(fconv, 3);
+         temp = (vis2 * correz) * pow(fconv, 3);
+         VIMTV2 += pow(temp, 2.0f);
 
-	 RETV += 1.0E7 * pow((0.3 * pesmol * vis2 / (PI * AVO)), 0.333333) * fconv;
-	 temp = 1.0E7 * pow((0.3 * pesmol * vis2 / (PI * AVO)), 0.333333) * fconv;
-	 RETV2 += pow(temp, 2);
+         RETV += 1.0E7 * pow((0.3 * pesmol * vis2 / (PI * AVO)), 0.333333) * fconv;
+         temp = 1.0E7 * pow((0.3 * pesmol * vis2 / (PI * AVO)), 0.333333) * fconv;
+         RETV2 += pow(temp, 2);
 #endif
 
-	 for (i = 0; i < 5; i++)
-	 {
-	    CT[i] += tao[i] * pow(fconv, 3.0f);
-	    temp = tao[i] * pow(fconv, 3.0f);
-	    CT2[i] += pow(temp, 2.0f);
-	 }
-	 CTM += taom * pow(fconv, 3.0f);
-	 temp = taom * pow(fconv, 3.0f);
-	 CTM2 += pow(temp, 2.0f);
-	 CTH += taoh * 1.0E9 * pow(fconv, 3.0f);
-	 temp = taoh * 1.0E9 * pow(fconv, 3.0f);
-	 CTH2 += pow(temp, 2.0f);
+         for (i = 0; i < 5; i++)
+         {
+            CT[i] += tao[i] * pow(fconv, 3.0f);
+            temp = tao[i] * pow(fconv, 3.0f);
+            CT2[i] += pow(temp, 2.0f);
+         }
+         CTM += taom * pow(fconv, 3.0f);
+         temp = taom * pow(fconv, 3.0f);
+         CTM2 += pow(temp, 2.0f);
+         CTH += taoh * 1.0E9 * pow(fconv, 3.0f);
+         temp = taoh * 1.0E9 * pow(fconv, 3.0f);
+         CTH2 += pow(temp, 2.0f);
 
       }
 
@@ -1567,67 +1567,67 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       stampa_ris();
 
       if (flag_mem == 1)
-	 mem_ris();
+         mem_ris();
 
       if (num != 1)
       {
-	 if ((raflag == -4.0) || (raflag == -5.0))	/* CLEARING THE MEMORY SPACE ALLOCATED FOR AA-BEADS CORRESPONDENCE */
-	 {
-	    for (i = 0; i < nat; i++)
-	    {
-	       free(dt[i].cor);
-	    }
-	 }
+         if ((raflag == -4.0) || (raflag == -5.0))   /* CLEARING THE MEMORY SPACE ALLOCATED FOR AA-BEADS CORRESPONDENCE */
+         {
+            for (i = 0; i < nat; i++)
+            {
+               free(dt[i].cor);
+            }
+         }
       }
       if (num == 1)
       {
-	 while (scelta == 1)
-	 {
-	    print_time((int) difftime(secondo, primo));
+         while (scelta == 1)
+         {
+            print_time((int) difftime(secondo, primo));
 
-	    /*
-	      Substitute the previous line with the following for compiling under SUN O.S.
+            /*
+              Substitute the previous line with the following for compiling under SUN O.S.
 
-	      print_time(secondo-primo);
-	    */
+              print_time(secondo-primo);
+            */
 #if defined(USE_MAIN)
-	    printf("\n\n- Options : 		\n\n");
-	    printf("  0) EXIT\n");
-	    printf("  1) VIEW MATRICES\n");
+            printf("\n\n- Options :       \n\n");
+            printf("  0) EXIT\n");
+            printf("  1) VIEW MATRICES\n");
 
-	    if (flag_norm == 1)
-	    {
-	       printf("  2) STORE Bead Model\n\n");
-	       printf("  Select (0/1/2) : ");
-	    }
-	    else
-	    {
-	       printf("\n");
-	       printf("  Select (0/1) : ");
-	    }
+            if (flag_norm == 1)
+            {
+               printf("  2) STORE Bead Model\n\n");
+               printf("  Select (0/1/2) : ");
+            }
+            else
+            {
+               printf("\n");
+               printf("  Select (0/1) : ");
+            }
 
-	    scanf("%d", &scelta);
-	    getchar();
+            scanf("%d", &scelta);
+            getchar();
 
-	    if (scelta == 1)
-	       vedimatrici();
+            if (scelta == 1)
+               vedimatrici();
 #else
-	    scelta = 0;
+            scelta = 0;
 #endif
-	 }
+         }
 
-	 if (scelta == 2)
-	 {
-	    presentazione();
-	    mem_mol();
-	 }
-	 if ((raflag == -4.0) || (raflag == -5.0))	/* CLEARING THE MEMORY SPACE ALLOCATED FOR AA-BEADS CORRESPONDENCE */
-	 {
-	    for (i = 0; i < numero_sfere; i++)
-	    {
-	       free(dt[i].cor);
-	    }
-	 }
+         if (scelta == 2)
+         {
+            presentazione();
+            mem_mol();
+         }
+         if ((raflag == -4.0) || (raflag == -5.0))   /* CLEARING THE MEMORY SPACE ALLOCATED FOR AA-BEADS CORRESPONDENCE */
+         {
+            for (i = 0; i < numero_sfere; i++)
+            {
+               free(dt[i].cor);
+            }
+         }
       }
 
    }
@@ -1746,63 +1746,63 @@ vedimatrici()
       switch (mtt)
       {
       case 0:
-	 return;
+         return;
       case 1:
-	 {
-	    presentazione();
-	    printf("\n- Matrix : KSI_T\n\n\n");
-	    stampamatrice(sigmat);
-	 }
-	 break;
+         {
+            presentazione();
+            printf("\n- Matrix : KSI_T\n\n\n");
+            stampamatrice(sigmat);
+         }
+         break;
       case 2:
-	 {
-	    presentazione();
-	    printf("\n- Matrix : KSI_OC\n\n\n");
-	    stampamatrice(sigmaoc);
-	 }
-	 break;
+         {
+            presentazione();
+            printf("\n- Matrix : KSI_OC\n\n\n");
+            stampamatrice(sigmaoc);
+         }
+         break;
       case 3:
-	 {
-	    presentazione();
-	    printf("\n- Matrix : KSIRr\n\n\n");
-	    stampamatrice(sigmaRr);
-	 }
-	 break;
+         {
+            presentazione();
+            printf("\n- Matrix : KSIRr\n\n\n");
+            stampamatrice(sigmaRr);
+         }
+         break;
       case 4:
-	 {
-	    presentazione();
-	    printf("\n- Matrix : KSIR_OR\n\n\n");
-	    stampamatrice(sigmaoR);
-	 }
-	 break;
+         {
+            presentazione();
+            printf("\n- Matrix : KSIR_OR\n\n\n");
+            stampamatrice(sigmaoR);
+         }
+         break;
       case 5:
-	 {
-	    presentazione();
-	    printf("\n- Matrix : Doc\n\n\n");
-	    stampamatrice1(Doc);
-	 }
-	 break;
+         {
+            presentazione();
+            printf("\n- Matrix : Doc\n\n\n");
+            stampamatrice1(Doc);
+         }
+         break;
       case 6:
-	 {
-	    presentazione();
-	    printf("\n- Matrix : Doct\n\n\n");
-	    stampamatrice1(Doct);
-	 }
-	 break;
+         {
+            presentazione();
+            printf("\n- Matrix : Doct\n\n\n");
+            stampamatrice1(Doct);
+         }
+         break;
       case 7:
-	 {
-	    presentazione();
-	    printf("\n- Matrix : Dot\n\n\n");
-	    stampamatrice1(Dot);
-	 }
-	 break;
+         {
+            presentazione();
+            printf("\n- Matrix : Dot\n\n\n");
+            stampamatrice1(Dot);
+         }
+         break;
       case 8:
-	 {
-	    presentazione();
-	    printf("\n- Matrix : Dr\n\n\n");
-	    stampamatrice1l(Dr);
-	 }
-	 break;
+         {
+            presentazione();
+            printf("\n- Matrix : Dr\n\n\n");
+            stampamatrice1l(Dr);
+         }
+         break;
       }
    }
 }
@@ -1822,9 +1822,9 @@ stampamatrice(float *n)
    if (metodo != 3)
    {
       if (cc == 1)
-	 ss = 6.0 * PI * ETAo;
+         ss = 6.0 * PI * ETAo;
       else
-	 ss = 4.0 * PI * ETAo;
+         ss = 4.0 * PI * ETAo;
    }
 
    for (i = 0; i < 3; i++)
@@ -1853,9 +1853,9 @@ stampamatrice1(float *n)
    if (metodo != 3)
    {
       if (cc == 1)
-	 ss = 6.0 * PI * ETAo;
+         ss = 6.0 * PI * ETAo;
       else
-	 ss = 4.0 * PI * ETAo;
+         ss = 4.0 * PI * ETAo;
    }
 
    for (i = 0; i < 3; i++)
@@ -1880,9 +1880,9 @@ stampamatrice1l(long double *n)
    if (metodo != 3)
    {
       if (cc == 1)
-	 ss = 6.0 * PI * ETAo;
+         ss = 6.0 * PI * ETAo;
       else
-	 ss = 4.0 * PI * ETAo;
+         ss = 4.0 * PI * ETAo;
    }
 
    for (i = 0; i < 3; i++)
@@ -1918,24 +1918,24 @@ stampa_ris()
    if (volcor == 1)
    {
       if ((colorsixf == 0) && (sfecalc == 2))
-	 printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
-		"  [nm^3] (NO contribution from buried beads)");
+         printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
+                "  [nm^3] (NO contribution from buried beads)");
       if ((colorsixf == 1) && (sfecalc == 2))
       {
-	 printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
-		"  [nm^3] (contribution from buried beads only for Dr)");
-	 printf("%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])");
+         printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
+                "  [nm^3] (contribution from buried beads only for Dr)");
+         printf("%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])");
       }
       if ((colorsixf == 2) && (sfecalc == 2))
       {
-	 printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
-		"  [nm^3] (contribution from buried beads only for [n])");
-	 printf("%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)");
+         printf("%s%.2f%s\n", "- Used BEADS Volume = ", volcor1 * pow(fconv, 3.0f),
+                "  [nm^3] (contribution from buried beads only for [n])");
+         printf("%s%.2f%s\n", "- Used BEADS Volume = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)");
       }
       if ((colorsixf == 3) && (sfecalc == 2))
-	 printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+         printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
       if (sfecalc == 1)
-	 printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+         printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
    }
    if (volcor == 2)
       printf("%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
@@ -1954,31 +1954,31 @@ stampa_ris()
    if (raflag == -1.0) 
    {
       printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-	     (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+             (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO);
    }
 
    if ((raflag == -2.0) || (raflag == -5.0))
    {
       printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
-	     (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+             (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
-	 printf
-	    ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+         printf
+            ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
    }
 
    if (raflag == -3.0)
    {
       printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
-	     (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+             (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
-	 printf
-	    ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+         printf
+            ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
 
       printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-	     (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+             (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
    }
 
    temp = 0.0;
@@ -2033,18 +2033,18 @@ stampa_ris()
     
 
    printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ", pow((3.0 / Dr[0] / bc / 4.0 / PI / ETAo), (0.33333L)) * fconv,
-	  "[nm]");
+          "[nm]");
    printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ", pow((3.0 / Dr[4] / bc / 4.0 / PI / ETAo), (0.33333L)) * fconv,
-	  "[nm]");
+          "[nm]");
    printf("%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
-	  pow((3.0 / Dr[8] / bc / 4.0 / PI / ETAo), (0.33333L)) * fconv, "[nm]");
+          pow((3.0 / Dr[8] / bc / 4.0 / PI / ETAo), (0.33333L)) * fconv, "[nm]");
 
    printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF RESISTANCE  :  ", roR[0] * fconv, roR[1] * fconv, roR[2] * fconv,
-	  "[nm]");
+          "[nm]");
    printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF MASS        :  ", xm * fconv, ym * fconv, zm * fconv, "[nm]");
    if (cd == 2)
       printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF DIFFUSION   :  ", roD[0] * fconv, roD[1] * fconv, roD[2] * fconv,
-	     "[nm]");
+             "[nm]");
 
    printf("%s%5.2f\t%5.2f\t%5.2f\t%s\n\n", "- CENTRE OF VISCOSITY   :  ", vc[0] * fconv, vc[1] * fconv, vc[2] * fconv, "[nm]");
 
@@ -2068,7 +2068,7 @@ stampa_ris()
    {
       // printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY(GDLT corrected) = ",
       printf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY       = ",
-	     (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
+             (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
       supc_results->viscosity = (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3);
       einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO), 0.33333);
       einst = 1E7 * einst;
@@ -2079,7 +2079,7 @@ stampa_ris()
    {
       // printf("%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
       printf("%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY       = ",
-	     (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
+             (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
       supc_results->viscosity = (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3);
       einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / (PI * AVO), 0.33333);
       einst = 1E7 * einst;
@@ -2134,9 +2134,9 @@ stampa_ris()
 
    printf("\n%s", "- MAX EXTENSIONS:");
    printf("\n%s%.2f%s%s%.2f%s%s%.2f%s\n", "[X axis] = ", (maxx * fconv), " [nm];  ", "[Y axis] = ", (maxy * fconv), " [nm];  ",
-	  "[Z axis] = ", (maxz * fconv), " [nm]");
+          "[Z axis] = ", (maxz * fconv), " [nm]");
    printf("%s%.1f%s%.1f%s%.1f%s\n\n", "- AXIAL RATIOS : [X:Z] = ", (maxx / maxz), "; [X:Y] = ", (maxx / maxy), "; [Y:Z] = ",
-	  (maxy / maxz), "");
+          (maxy / maxz), "");
 
    //    system("sleep 3");
 
@@ -2193,24 +2193,24 @@ mem_ris()
    if (volcor == 1)
    {
       if ((colorsixf == 0) && (sfecalc == 2))
-	 fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f),
-		 "  [nm^3] (NO contribution from buried beads)");
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f),
+                 "  [nm^3] (NO contribution from buried beads)");
       if ((colorsixf == 1) && (sfecalc == 2))
       {
-	 fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f),
-		 "  [nm^3] (contribution from buried beads only for Dr)");
-	 fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])");
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f),
+                 "  [nm^3] (contribution from buried beads only for Dr)");
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])");
       }
       if ((colorsixf == 2) && (sfecalc == 2))
       {
-	 fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f),
-		 "  [nm^3] (contribution from buried beads only for [n])");
-	 fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)");
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f),
+                 "  [nm^3] (contribution from buried beads only for [n])");
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)");
       }
       if ((colorsixf == 3) && (sfecalc == 2))
-	 fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
       if (sfecalc == 1)
-	 fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
    }
    if (volcor == 2)
       fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
@@ -2226,27 +2226,27 @@ mem_ris()
 
    if (raflag == -1.0)
       fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-	      (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
 
    if ((raflag == -2.0) || (raflag == -5.0))
    {
       fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF.           = ",
-	      (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "        [S] (20C,w)");
+              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "        [S] (20C,w)");
       if ((nat + colorzero + colorsix) < numero_sfere)
-	 fprintf(ris,
-		 "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+         fprintf(ris,
+                 "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
    }
 
    if (raflag == -3.0)
    {
       fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
-	      (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
       if ((nat + colorzero + colorsix) < numero_sfere)
-	 fprintf(ris,
-		 "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
+         fprintf(ris,
+                 "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
 
       fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-	      (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
    }
 
    temp = 0.0;
@@ -2262,11 +2262,11 @@ mem_ris()
    fprintf(ris, "%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] (w@20C)");
    fprintf(ris, "%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] (w@20C)");
    fprintf(ris, "%s%.2Lf\t%s\n", "- ROT. DIFF. COEFF.  [ X ] = ", KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3),
-	   "[1/s] (20C,w)");
+           "[1/s] (20C,w)");
    fprintf(ris, "%s%.2Lf\t%s\n", "- ROT. DIFF. COEFF.  [ Y ] = ", KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3),
-	   "[1/s] (20C,w)");
+           "[1/s] (20C,w)");
    fprintf(ris, "%s%.2Lf\t%s\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3),
-	   "[1/s] (20C,w)");
+           "[1/s] (20C,w)");
 
    fprintf(ris, "%s%.2f\t%s\n", "- MOLECULAR WEIGHT (from file)   = ", pesmol, "[Da]");
    if (sfecalc == 2)
@@ -2298,20 +2298,20 @@ mem_ris()
    fprintf(ris, "%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * PI * ETAo), "[nm]");
 
    fprintf(ris, "%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ",
-	   pow((3.0 / Dr[0] / bc / 4.0 / PI / ETAo), (long double)(0.33333)) * fconv, "[nm]");
+           pow((3.0 / Dr[0] / bc / 4.0 / PI / ETAo), (long double)(0.33333)) * fconv, "[nm]");
    fprintf(ris, "%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ Y ] = ",
-	   pow((3.0 / Dr[4] / bc / 4.0 / PI / ETAo), (long double)(0.33333)) * fconv, "[nm]");
+           pow((3.0 / Dr[4] / bc / 4.0 / PI / ETAo), (long double)(0.33333)) * fconv, "[nm]");
    fprintf(ris, "%s%.2f\t%s\n\n", "- ROTATIONAL STOKES' RADIUS [ Z ] = ",
-	   pow((3.0 / Dr[8] / bc / 4.0 / PI / ETAo),(long double) (0.33333)) * fconv, "[nm]");
+           pow((3.0 / Dr[8] / bc / 4.0 / PI / ETAo),(long double) (0.33333)) * fconv, "[nm]");
    fprintf(ris, "%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF RESISTANCE   :  ", roR[0] * fconv, roR[1] * fconv, roR[2] * fconv,
-	   "[nm]");
+           "[nm]");
    fprintf(ris, "%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF MASS         :  ", xm * fconv, ym * fconv, zm * fconv, "[nm]");
    if (cd == 2)
       fprintf(ris, "%s%5.2f\t%5.2f\t%5.2f\t%s\n", "- CENTRE OF DIFFUSION    :  ", roD[0] * fconv, roD[1] * fconv,
-	      roD[2] * fconv, "[nm]");
+              roD[2] * fconv, "[nm]");
 
    fprintf(ris, "%s%5.2f\t%5.2f\t%5.2f\t%s\n\n", "- CENTRE OF VISCOSITY    :  ", vc[0] * fconv, vc[1] * fconv, vc[2] * fconv,
-	   "[nm]");
+           "[nm]");
 
    if (mascor == 2)
    {
@@ -2334,7 +2334,7 @@ mem_ris()
    {
       // fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected) = ",
       fprintf(ris, "%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY        = ",
-	      (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
+              (vis * correz + vis3 * totvol / vol_mas) * pow(fconv, 3), "[cm^3/g]");
       einst = pow(0.3 * vol_mas * (vis * correz + vis3 * totvol / vol_mas) / (PI * AVO), 0.33333);
       einst = 1E7 * einst;
       // fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
@@ -2344,7 +2344,7 @@ mem_ris()
    {
       // fprintf(ris, "%s%.2f\t%s\n", "- INTRINSIC VISCOSITY (GDLT corrected)  = ",
       fprintf(ris, "%s%.2f\t%s\n", "- CORRECTED INTRINSIC VISCOSITY         = ",
-	      (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
+              (vis * correz + vis3 * volcor1 / vol_mas) * pow(fconv, 3), "[cm^3/g]");
       einst = pow(0.3 * vol_mas * (vis * correz + vis3 * volcor1 / vol_mas) / (PI * AVO), 0.33333);
       einst = 1E7 * einst;
       // fprintf(ris, "%s%.2f\t%s\n", "- EINSTEIN'S RADIUS (GDLT corrected)   = ", einst * fconv, "[nm]");
@@ -2397,9 +2397,9 @@ mem_ris()
 
    fprintf(ris, "\n%s", "- MAX EXTENSIONS:");
    fprintf(ris, "\n%s%.2f%s%s%.2f%s%s%.2f%s\n", "[X axis] = ", (maxx * fconv), " [nm];  ", "[Y axis] = ", (maxy * fconv),
-	   " [nm];  ", "[Z axis] = ", (maxz * fconv), " [nm]");
+           " [nm];  ", "[Z axis] = ", (maxz * fconv), " [nm]");
    fprintf(ris, "%s%.1f%s%.1f%s%.1f%s\n\n", "- AXIAL RATIOS : [X:Z] = ", (maxx / maxz), "; [X:Y] = ", (maxx / maxy),
-	   "; [Y:Z] = ", (maxy / maxz), "");
+           "; [Y:Z] = ", (maxy / maxz), "");
 
    fprintf(ris, "\n********************************************************************************\n");
 
@@ -2446,8 +2446,8 @@ val_med()
       temp = fabs((CSTF2 - pow(CSTF, 2) / num) / (num - 1));
       fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv from file) ", CSTF / num, sqrt(temp), "[S]");
       if ((nat + colorzero + colorsix) < numero_sfere)
-	 fprintf(ris,
-		 "- !!WARNING: ONLY PART(S) OF THE MODELS HAVE BEEN ANALYZED, BUT THE PSV UTILIZED    IS THAT OF THE ENTIRE MODEL!! - \n");
+         fprintf(ris,
+                 "- !!WARNING: ONLY PART(S) OF THE MODELS HAVE BEEN ANALYZED, BUT THE PSV UTILIZED    IS THAT OF THE ENTIRE MODEL!! - \n");
       supc_results->s20w = CSTF / num;
       supc_results->s20w_sd = sqrt(temp);
    }
@@ -2459,8 +2459,8 @@ val_med()
       supc_results->s20w = CSTF / num;
       supc_results->s20w_sd = sqrt(temp);
       if ((nat + colorzero + colorsix) < numero_sfere)
-	 fprintf(ris,
-		 "- !!WARNING: ONLY PART(S) OF THE MODELS HAVE BEEN ANALYZED, BUT THE PSV UTILIZED    IS THAT OF THE ENTIRE MODEL!! - \n");
+         fprintf(ris,
+                 "- !!WARNING: ONLY PART(S) OF THE MODELS HAVE BEEN ANALYZED, BUT THE PSV UTILIZED    IS THAT OF THE ENTIRE MODEL!! - \n");
       temp = fabs((CST2 - pow(CST, 2) / num) / (num - 1));
       fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv unhyd.rad.)", CST / num, sqrt(temp), "[S]");
    }
@@ -2591,7 +2591,7 @@ val_med()
       fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Weighted average)    ", (taom / taod), (sqrt(1 / taod)), "[ns]");
       stdinv = (taoh / taodin) + ((sqrt(1 / taodin)));
       fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Weighted average)    ", (1 / (taoh / taodin)),
-	      ((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
+              ((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
    }
 
    if (taoflag == 2.0)
@@ -2624,7 +2624,7 @@ val_med()
       fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Weighted average)    ", (taom / taod), (sqrt(1 / taod)), "[ns]");
       stdinv = (taoh / taodin) + ((sqrt(1 / taodin)));
       fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Weighted average)    ", (1 / (taoh / taodin)),
-	      ((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
+              ((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
    }
 
    if (taoflag == 0.0)
@@ -2671,7 +2671,7 @@ val_med()
       fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Weighted average)    ", (taom / taod), (sqrt(1 / taod)), "[ns]");
       stdinv = (taoh / taodin) + ((sqrt(1 / taodin)));
       fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Weighted average)    ", (1 / (taoh / taodin)),
-	      ((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
+              ((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
    }
 
    temp = fabs((CTM2 - pow(CTM, 2) / num) / (num - 1));
@@ -2794,7 +2794,7 @@ mem_mol()
       getchar();
       fclose(new_mol1);
       if ((risp2 == 'y') || (risp2 == 'Y'))
-	 goto a100;
+         goto a100;
    }
 
    if (nat == numero_sfere)
@@ -2817,14 +2817,14 @@ mem_mol()
 
       if (new_mol1 != NULL)
       {
-	 printf("\n");
-	 printf("*** CAUTION : File already exists ! ***\n");
-	 printf("** Do you want change the file name ? (y/n) :___ ");
-	 scanf("%s", &risp3);
-	 getchar();
-	 fclose(new_mol1);
-	 if ((risp3 == 'y') || (risp3 == 'Y'))
-	    goto a150;
+         printf("\n");
+         printf("*** CAUTION : File already exists ! ***\n");
+         printf("** Do you want change the file name ? (y/n) :___ ");
+         scanf("%s", &risp3);
+         getchar();
+         fclose(new_mol1);
+         if ((risp3 == 'y') || (risp3 == 'Y'))
+            goto a150;
 
       }
    }
@@ -2875,32 +2875,32 @@ mem_mol()
       new_rmc = fopen(nragcol, "w");
       if ((raflag == 0.0) || (raflag == -2.0))
       {
-	 for (i = 0; i < nat; i++)
-	 {
-	    fprintf(new_rmc, "%f\t", dt[i].r);
-	    fprintf(new_rmc, "%f\t", dt[i].m);
-	    fprintf(new_rmc, "%d\n", dt[i].col);
-	 }
+         for (i = 0; i < nat; i++)
+         {
+            fprintf(new_rmc, "%f\t", dt[i].r);
+            fprintf(new_rmc, "%f\t", dt[i].m);
+            fprintf(new_rmc, "%d\n", dt[i].col);
+         }
       }
       if ((raflag == -1.0) || (raflag == -3.0))
       {
-	 for (i = 0; i < nat; i++)
-	 {
-	    fprintf(new_rmc, "%f\t", dt[i].r);
-	    fprintf(new_rmc, "%f\t", dt[i].ru);
-	    fprintf(new_rmc, "%f\t", dt[i].m);
-	    fprintf(new_rmc, "%d\n", dt[i].col);
-	 }
+         for (i = 0; i < nat; i++)
+         {
+            fprintf(new_rmc, "%f\t", dt[i].r);
+            fprintf(new_rmc, "%f\t", dt[i].ru);
+            fprintf(new_rmc, "%f\t", dt[i].m);
+            fprintf(new_rmc, "%d\n", dt[i].col);
+         }
       }
       if ((raflag == -4.0) || (raflag == -5.0))
       {
-	 for (i = 0; i < nat; i++)
-	 {
-	    fprintf(new_rmc, "%f\t", dt[i].r);
-	    fprintf(new_rmc, "%f\t", dt[i].m);
-	    fprintf(new_rmc, "%d\t", dt[i].col);
-	    fprintf(new_rmc, "%s\n", dt[i].cor);
-	 }
+         for (i = 0; i < nat; i++)
+         {
+            fprintf(new_rmc, "%f\t", dt[i].r);
+            fprintf(new_rmc, "%f\t", dt[i].m);
+            fprintf(new_rmc, "%d\t", dt[i].col);
+            fprintf(new_rmc, "%s\n", dt[i].cor);
+         }
       }
       fclose(new_rmc);
    }
@@ -2923,12 +2923,12 @@ maxest()
    {
       for (j = i + 1; j < nat; j++)
       {
-	 if ((temp = (fabs(dt[i].x - dt[j].x) + dt[i].r + dt[j].r)) > maxx)
-	    maxx = temp;
-	 if ((temp = (fabs(dt[i].y - dt[j].z) + dt[i].r + dt[j].r)) > maxy)
-	    maxy = temp;
-	 if ((temp = (fabs(dt[i].z - dt[j].z) + dt[i].r + dt[j].r)) > maxz)
-	    maxz = temp;
+         if ((temp = (fabs(dt[i].x - dt[j].x) + dt[i].r + dt[j].r)) > maxx)
+            maxx = temp;
+         if ((temp = (fabs(dt[i].y - dt[j].z) + dt[i].r + dt[j].r)) > maxy)
+            maxy = temp;
+         if ((temp = (fabs(dt[i].z - dt[j].z) + dt[i].r + dt[j].r)) > maxz)
+            maxz = temp;
       }
    }
 
@@ -2957,10 +2957,10 @@ autovalori()
    for (a1 = 0; a1 < 3; a1++)
       for (a2 = 0; a2 < 3; a2++)
       {
-	 if (fabs(Dr[a1 * 3 + a2]) < 0.0000000001)
-	    a[a1][a2] = 0.0;
-	 else
-	    a[a1][a2] = Dr[a1 * 3 + a2] * KB * TE / 1.0E-21;
+         if (fabs(Dr[a1 * 3 + a2]) < 0.0000000001)
+            a[a1][a2] = 0.0;
+         else
+            a[a1][a2] = Dr[a1 * 3 + a2] * KB * TE / 1.0E-21;
       }
 
    if ((a[0][1] == 0.0) && (a[1][2] == 0.0) && (a[0][2] == 0.0))
@@ -2990,9 +2990,9 @@ autovalori()
    {
       b = (-(a[0][0] + a[1][1] + a[2][2]));
       c = a[0][0] * a[1][1] + a[0][0] * a[2][2] + a[1][1] * a[2][2] - a[0][2] * a[2][0] - a[1][2] * a[2][1] -
-	 a[0][1] * a[1][0];
+         a[0][1] * a[1][0];
       d = (-a[0][0] * a[1][1] * a[2][2] - 2.0 * a[0][1] * a[0][2] * a[1][2] + a[0][2] * a[0][2] * a[1][1] +
-	   a[1][2] * a[1][2] * a[0][0] + a[0][1] * a[0][1] * a[2][2]);
+           a[1][2] * a[1][2] * a[0][0] + a[0][1] * a[0][1] * a[2][2]);
       terzo(b, c, d);
    }
 
@@ -3027,7 +3027,7 @@ riempimatrice()
                                               .arg(nat));
       if (us_hydrodyn->stopFlag)
       {
-	 return;
+         return;
       }
 
       printf("%s%d%s%d", "Iteration  ", i + 1, " of ", nat);
@@ -3036,13 +3036,13 @@ riempimatrice()
 
       for (j = 0; j < nat; j++)
       {
-	 for (k = 0; k < 3; k++)
-	 {
-	    for (l = 0; l < 3; l++)
-	    {
-	       a[(3 * i + k) * (3 * nat) + 3 * j + l] = q[i * (nat * 9) + j * 9 + k * 3 + l];
-	    }
-	 }
+         for (k = 0; k < 3; k++)
+         {
+            for (l = 0; l < 3; l++)
+            {
+               a[(3 * i + k) * (3 * nat) + 3 * j + l] = q[i * (nat * 9) + j * 9 + k * 3 + l];
+            }
+         }
       }
 
       printf("%c", '\r');
@@ -3072,7 +3072,7 @@ choldc(int N)
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 return;
+         return;
       }
 
       printf("%s%d%s%d", "Iteration  ", i + 1, " of ", 3 * N);
@@ -3084,21 +3084,21 @@ choldc(int N)
       for (j = i; j < 3 * N; j++)
       {
 
-	 for (sum = a[i * (3 * nat) + j], k = i - 1; k >= 0; k--)
-	 {
-	    sum -= a[i * (3 * nat) + k] * a[j * (3 * nat) + k];
-	 }
-	 if (i == j)
-	 {
-	    if (sum <= 0.0)
-	    {
-	       printf("The matrix to be inverted is not defined positive");
-	       exit(0);
-	    }
-	    p[i] = sqrt(sum);
-	 }
-	 else
-	    a[j * (3 * nat) + i] = sum / p[i];
+         for (sum = a[i * (3 * nat) + j], k = i - 1; k >= 0; k--)
+         {
+            sum -= a[i * (3 * nat) + k] * a[j * (3 * nat) + k];
+         }
+         if (i == j)
+         {
+            if (sum <= 0.0)
+            {
+               printf("The matrix to be inverted is not defined positive");
+               exit(0);
+            }
+            p[i] = sqrt(sum);
+         }
+         else
+            a[j * (3 * nat) + i] = sum / p[i];
 
       }
       printf("%c", '\r');
@@ -3117,14 +3117,14 @@ cholsl(int N)
    for (i = 0; i < 3 * N; i++)
    {
       for (sum = b1[i], k = i - 1; k >= 0; k--)
-	 sum -= a[i * (3 * nat) + k] * rRi[k];
+         sum -= a[i * (3 * nat) + k] * rRi[k];
       rRi[i] = sum / p[i];
    }
 
    for (i = 3 * N - 1; i >= 0; i--)
    {
       for (sum = rRi[i], k = i + 1; k < 3 * N; k++)
-	 sum -= a[k * (3 * nat) + i] * rRi[k];
+         sum -= a[k * (3 * nat) + i] * rRi[k];
       rRi[i] = sum / p[i];
    }
 }
@@ -3150,10 +3150,10 @@ inizializza_b1()
 // diff.c
 
 /**********************************************************************/
-/*								      */
+/*                              */
 /* Function that computes the relaxation times for a rigid model      */
 /* Changed the taoh and taom means 3/6/2004 (always five times)       */
-/*								      */
+/*                              */
 /**********************************************************************/
 
 static void
@@ -3174,9 +3174,9 @@ relax_rigid_calc()
    ddr[1] = dl2;
    ddr[2] = dl3;
 
-   /*		printf("\nValori ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
-		scanf("%s",&pluto1);
-		getchar();    */
+   /*      printf("\nValori ddr[0] ddr[1] ddr[2] : %Lf\t%Lf\t%Lf\n",ddr[0],ddr[1],ddr[2]);
+           scanf("%s",&pluto1);
+           getchar();    */
 
    for (a = 0; a < 3; a++)
    {
@@ -3194,11 +3194,11 @@ relax_rigid_calc()
       pd[1] = ddr[1];
       pd[2] = ddr[2];
       if (ddr[2] <= ddr[1])
-	 a = (int) 2.0;
+         a = (int) 2.0;
 
-      /*		printf("\nCaso 1, valore a= %d\n",a);
-			scanf("%s",&pluto1);
-			getchar();    */
+      /*      printf("\nCaso 1, valore a= %d\n",a);
+              scanf("%s",&pluto1);
+              getchar();    */
    }
 
    if ((fabs(ddr[0] - ddr[2]) / ddr[0]) < 0.01)
@@ -3210,11 +3210,11 @@ relax_rigid_calc()
       pd[1] = ddr[2];
       pd[2] = ddr[1];
       if (ddr[1] <= ddr[2])
-	 a = (int) 2.0;
+         a = (int) 2.0;
 
-      /*     	 	printf("\nCaso 2, valore a= %d\n",a);
-			scanf("%s",&pluto1);
-			getchar();    */
+      /*            printf("\nCaso 2, valore a= %d\n",a);
+                    scanf("%s",&pluto1);
+                    getchar();    */
    }
 
    if ((fabs(ddr[1] - ddr[2]) / ddr[1]) < 0.01)
@@ -3226,11 +3226,11 @@ relax_rigid_calc()
       pd[1] = ddr[1];
       pd[2] = ddr[0];
       if (ddr[0] <= ddr[1])
-	 a = (int) 2.0;
+         a = (int) 2.0;
 
-      /*		printf("\nCaso 3, valore a= %d\n",a);
-			scanf("%s",&pluto1);
-			getchar();     */
+      /*      printf("\nCaso 3, valore a= %d\n",a);
+              scanf("%s",&pluto1);
+              getchar();     */
    }
 
    if (a == 1.0)
@@ -3245,7 +3245,7 @@ relax_rigid_calc()
       taoh = 1.0 / taoh;
       for (a = 0; a < 5; a++)
       {
-	 tao[a] = tao[a] * 1E-09;
+         tao[a] = tao[a] * 1E-09;
       }
       taom = ((1.0 / tao[0]) + (2 * (1.0 / tao[1])) + (2 * (1.0 / tao[3]))) / 5;
    }
@@ -3262,7 +3262,7 @@ relax_rigid_calc()
       taoh = 1.0 / taoh;
       for (a = 0; a < 5; a++)
       {
-	 tao[a] = tao[a] * 1E-09;
+         tao[a] = tao[a] * 1E-09;
       }
       taom = ((2 * (1.0 / tao[1])) + (2 * (1.0 / tao[3])) + (1.0 / tao[4])) / 5;
    }
@@ -3270,9 +3270,9 @@ relax_rigid_calc()
    if (a == 0.0)
 
    {
-      /*		printf("\nCaso 4, valore a= %d\n",a);
-			scanf("%s",&pluto1);
-			getchar();      */
+      /*      printf("\nCaso 4, valore a= %d\n",a);
+              scanf("%s",&pluto1);
+              getchar();      */
 
       ddd[0] = ddr[0];
       ddd[1] = ddr[1];
@@ -3280,50 +3280,50 @@ relax_rigid_calc()
 
       if ((ddr[2] > ddr[1]) && (ddr[2] > ddr[0]))
       {
-	 if (ddr[1] > ddr[0])
-	 {
-	    ddr[2] = ddd[2];
-	    ddr[1] = ddd[1];
-	    ddr[0] = ddd[0];
-	 }
-	 else
-	 {
-	    ddr[2] = ddd[2];
-	    ddr[1] = ddd[0];
-	    ddr[0] = ddd[1];
-	 }
+         if (ddr[1] > ddr[0])
+         {
+            ddr[2] = ddd[2];
+            ddr[1] = ddd[1];
+            ddr[0] = ddd[0];
+         }
+         else
+         {
+            ddr[2] = ddd[2];
+            ddr[1] = ddd[0];
+            ddr[0] = ddd[1];
+         }
       }
 
       else if ((ddr[1] > ddr[2]) && (ddr[1] > ddr[0]))
       {
-	 if (ddr[2] > ddr[0])
-	 {
-	    ddr[2] = ddd[1];
-	    ddr[1] = ddd[2];
-	    ddr[0] = ddd[0];
-	 }
-	 else
-	 {
-	    ddr[2] = ddd[1];
-	    ddr[1] = ddd[0];
-	    ddr[0] = ddd[2];
-	 }
+         if (ddr[2] > ddr[0])
+         {
+            ddr[2] = ddd[1];
+            ddr[1] = ddd[2];
+            ddr[0] = ddd[0];
+         }
+         else
+         {
+            ddr[2] = ddd[1];
+            ddr[1] = ddd[0];
+            ddr[0] = ddd[2];
+         }
       }
 
       else
       {
-	 if (ddr[2] > ddr[1])
-	 {
-	    ddr[2] = ddd[0];
-	    ddr[1] = ddd[2];
-	    ddr[0] = ddd[1];
-	 }
-	 else
-	 {
-	    ddr[2] = ddd[0];
-	    ddr[1] = ddd[1];
-	    ddr[0] = ddd[2];
-	 }
+         if (ddr[2] > ddr[1])
+         {
+            ddr[2] = ddd[0];
+            ddr[1] = ddd[2];
+            ddr[0] = ddd[1];
+         }
+         else
+         {
+            ddr[2] = ddd[0];
+            ddr[1] = ddd[1];
+            ddr[0] = ddd[2];
+         }
       }
       pd[0] = ddr[0] * ddr[0] + ddr[1] * ddr[1] + ddr[2] * ddr[2] - ddr[0] * ddr[1] - ddr[0] * ddr[2] - ddr[1] * ddr[2];
       pd[0] = pow(pd[0], (long double).5);
@@ -3336,9 +3336,9 @@ relax_rigid_calc()
       taoflag = 0.0;
       for (a = 0; a < 5; a++)
       {
-	 taoh += tao[a];
-	 tao[a] = tao[a] * 1E-09;
-	 taom += 1.0 / tao[a];
+         taoh += tao[a];
+         tao[a] = tao[a] * 1E-09;
+         taom += 1.0 / tao[a];
       }
       taoh = taoh / 5.0;
       taoh = 1.0 / taoh;
@@ -3350,16 +3350,16 @@ relax_rigid_calc()
       /*      printf("\n%s%d%s%f\n","Tao[",a,"] = ",tao[a]);     */
       tao[a] = 1.0 / tao[a];
       /*      printf("\n%s%d%s%Lg\n","Tao[",a,"] = ",tao[a]);
-	      scanf("%s",&pluto1);
-	      getchar();       */
+              scanf("%s",&pluto1);
+              getchar();       */
    }
 
 }
 
 /**********************************************************************/
-/*								      */
+/*                              */
 /* Function that calculates the diffusion tensors for a rigid model   */
-/*								      */
+/*                              */
 /**********************************************************************/
 
 static void
@@ -3372,10 +3372,10 @@ diffcalc()
    {
       for (j = 0; j < 6; j++)
       {
-	 if (j < 3)
-	    ro[i][j] = sigmat[j + 3 * i];
-	 else
-	    ro[i][j] = soct[j - 3 + 3 * i];
+         if (j < 3)
+            ro[i][j] = sigmat[j + 3 * i];
+         else
+            ro[i][j] = soct[j - 3 + 3 * i];
       }
    }
 
@@ -3383,10 +3383,10 @@ diffcalc()
    {
       for (j = 0; j < 6; j++)
       {
-	 if (j < 3)
-	    ro[i][j] = sigmaoc[j + 3 * i - 9];
-	 else
-	    ro[i][j] = sigmaoR[j + 3 * i - 12];
+         if (j < 3)
+            ro[i][j] = sigmaoc[j + 3 * i - 9];
+         else
+            ro[i][j] = sigmaoR[j + 3 * i - 12];
       }
    }
 
@@ -3394,24 +3394,24 @@ diffcalc()
 
    for (i = 0; i < 6; i++)
       for (j = 0; j < 6; j++)
-	 ro[i][j] = inver[i][j];	/* WITHOUT CONSTANTS         */
+         ro[i][j] = inver[i][j];   /* WITHOUT CONSTANTS         */
    /* (BOLTZMANN & TEMPERATURE) */
 
    for (i = 0; i < 3; i++)
       for (j = 0; j < 3; j++)
-	 Dot[j + 3 * i] = ro[i][j];
+         Dot[j + 3 * i] = ro[i][j];
 
    for (i = 0; i < 3; i++)
       for (j = 3; j < 6; j++)
-	 Doct[j - 3 + 3 * i] = ro[i][j];
+         Doct[j - 3 + 3 * i] = ro[i][j];
 
    for (i = 3; i < 6; i++)
       for (j = 0; j < 3; j++)
-	 Doc[j + 3 * i - 9] = ro[i][j];
+         Doc[j + 3 * i - 9] = ro[i][j];
 
    for (i = 3; i < 6; i++)
       for (j = 3; j < 6; j++)
-	 Dr[j + 3 * i - 12] = ro[i][j];
+         Dr[j + 3 * i - 12] = ro[i][j];
 
 }
 
@@ -3456,8 +3456,8 @@ ragir()
 
       if ((raflag == -1.0) || (raflag == -3.0))
       {
-	 rgu = 1.8 * dt[i].ru * dt[i].ru;
-	 rou2 += dt[i].m * (pow((dt[i].x - xm), 2) + pow((dt[i].y - ym), 2) + pow((dt[i].z - zm), 2) + rgu);
+         rgu = 1.8 * dt[i].ru * dt[i].ru;
+         rou2 += dt[i].m * (pow((dt[i].x - xm), 2) + pow((dt[i].y - ym), 2) + pow((dt[i].z - zm), 2) + rgu);
       }
    }
 
@@ -3481,7 +3481,7 @@ ragir()
      for(i=0;i<nat;i++)
      {
      if(dt[i].col==6)  ;
-	
+   
      else
 
      {
@@ -3521,7 +3521,7 @@ init_da_a()
 {
 
 #if defined(DEBUG_FILES)
-   mol = fopen(molecola, "r");	/* Check for the file existence  */
+   mol = fopen(molecola, "r");   /* Check for the file existence  */
    // this is the .beams_file
 
    while (mol == NULL)
@@ -3605,13 +3605,13 @@ initarray()
          fprintf(logfx,"dt[%d]=",i);
       }
       for (int j = 0; j < 34; j++) {
-	 if(i < 5 || i > nat - 5) {
-	    fprintf(logfx,"%d ",dt[i].cor[j]);
-	 }
-	 cks += (double)dt[i].cor[j];
+         if(i < 5 || i > nat - 5) {
+            fprintf(logfx,"%d ",dt[i].cor[j]);
+         }
+         cks += (double)dt[i].cor[j];
       }
       if(i < 5 || i > nat - 5) {
-	 fprintf(logfx,"\n");
+         fprintf(logfx,"\n");
       }
    }
    dww("initarray 1");
@@ -3624,11 +3624,11 @@ initarray()
    fscanf(mol, "%d", &nat);
    fscanf(mol, "%f", &raggio);
    printf("!! opening molecola == '%s' nat == %d raggio == %f\n",
-	  molecola, nat, raggio);
+          molecola, nat, raggio);
 #endif
    raggio = -2.0;
 
-   if (raggio == 0.0)		/* Variable hydrated radii only */
+   if (raggio == 0.0)      /* Variable hydrated radii only */
    {
       fscanf(mol, "%s", ragcol);
 
@@ -3636,21 +3636,21 @@ initarray()
 
       for (i = 0; i < nat; i++)
       {
-	 fscanf(mol, "%f", &dt[i].x);
-	 fscanf(mol, "%f", &dt[i].y);
-	 fscanf(mol, "%f", &dt[i].z);
-	 fscanf(rmc, "%f", &dt[i].r);
-	 fscanf(rmc, "%f", &dt[i].m);
-	 fscanf(rmc, "%d", &dt[i].col);
+         fscanf(mol, "%f", &dt[i].x);
+         fscanf(mol, "%f", &dt[i].y);
+         fscanf(mol, "%f", &dt[i].z);
+         fscanf(rmc, "%f", &dt[i].r);
+         fscanf(rmc, "%f", &dt[i].m);
+         fscanf(rmc, "%d", &dt[i].col);
       }
 #if defined(DEBUG_WW)
       for (i = 0; i < nat; i++) {
-	 cks += (double)dt[i].x;
-	 cks += (double)dt[i].y;
-	 cks += (double)dt[i].z;
-	 cks += (double)dt[i].r;
-	 cks += (double)dt[i].m;
-	 cks += (double)dt[i].col;
+         cks += (double)dt[i].x;
+         cks += (double)dt[i].y;
+         cks += (double)dt[i].z;
+         cks += (double)dt[i].r;
+         cks += (double)dt[i].m;
+         cks += (double)dt[i].col;
       }
       dww("initarray 2");
 #endif
@@ -3659,7 +3659,7 @@ initarray()
       goto a1200;
    }
 
-   if (raggio == -1.0)		/* Variable hydrated and unhydrated radii */
+   if (raggio == -1.0)      /* Variable hydrated and unhydrated radii */
    {
 
       fscanf(mol, "%s", ragcol);
@@ -3668,19 +3668,19 @@ initarray()
 
       for (i = 0; i < nat; i++)
       {
-	 fscanf(mol, "%f", &dt[i].x);
-	 fscanf(mol, "%f", &dt[i].y);
-	 fscanf(mol, "%f", &dt[i].z);
-	 fscanf(rmc, "%f", &dt[i].r);
-	 fscanf(rmc, "%f", &dt[i].ru);
-	 fscanf(rmc, "%f", &dt[i].m);
-	 fscanf(rmc, "%d", &dt[i].col);
+         fscanf(mol, "%f", &dt[i].x);
+         fscanf(mol, "%f", &dt[i].y);
+         fscanf(mol, "%f", &dt[i].z);
+         fscanf(rmc, "%f", &dt[i].r);
+         fscanf(rmc, "%f", &dt[i].ru);
+         fscanf(rmc, "%f", &dt[i].m);
+         fscanf(rmc, "%d", &dt[i].col);
       }
       fclose(rmc);
       goto a1200;
    }
 
-   if (raggio == -2.0)		/* Variable hydrated radii and part. spec. vol. */
+   if (raggio == -2.0)      /* Variable hydrated radii and part. spec. vol. */
    {
 
 #if defined(DEBUG_FILES)
@@ -3688,16 +3688,16 @@ initarray()
 
       fscanf(mol, "%f", &partvol);
       printf("!! partvol %f vbar %f %s %f\n", 
-	     partvol, (*model_vector)[model_idx[active_model]].vbar,
-	     us_hydrodyn->misc.compute_vbar ? "computed-vbar" : "user vbar",
-	     us_hydrodyn->misc.vbar
-	     );
+             partvol, (*model_vector)[model_idx[active_model]].vbar,
+             us_hydrodyn->misc.compute_vbar ? "computed-vbar" : "user vbar",
+             us_hydrodyn->misc.vbar
+             );
       rmc = fopen(ragcol, "r");
 #endif
 
       partvol = (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0;
       if (!us_hydrodyn->misc.compute_vbar) {
-	 partvol = us_hydrodyn->misc.vbar;
+         partvol = us_hydrodyn->misc.vbar;
       }
       tot_partvol += partvol;
 
@@ -3706,7 +3706,7 @@ initarray()
 
       int decpts = -(int)log10(us_hydrodyn->overlap_tolerance/9.9999) + 1;
       if (decpts < 4) {
-	 decpts = 4;
+         decpts = 4;
       }
       int decpow = (int)pow(10.0, (decpts));
       printf("!!rounding to %d digits (%d)\n", decpts, decpow);
@@ -3714,38 +3714,38 @@ initarray()
 
       for (i = 0; i < nat; i++)
       {
-	 dt[i].x = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[0];
-	 dt[i].y = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[1];
-	 dt[i].z = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[2];
-	 dt[i].r = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_computed_radius;
-	 dt[i].m = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_ref_mw;
-	 dt[i].col = us_hydrodyn->get_color(&((*bead_models)[model_idx[active_model]][active_idx[active_model][i]]));
-	 dt[i].x = ((int)((dt[i].x * decpow) + (dt[i].x > 0 ? 0.5 : -0.5))) / (float)decpow;
-	 dt[i].y = ((int)((dt[i].y * decpow) + (dt[i].y > 0 ? 0.5 : -0.5))) / (float)decpow;
-	 dt[i].z = ((int)((dt[i].z * decpow) + (dt[i].z > 0 ? 0.5 : -0.5))) / (float)decpow;
-	 dt[i].r = ((int)((dt[i].r * decpow) + (dt[i].r > 0 ? 0.5 : -0.5))) / (float)decpow;
-	 dt[i].m = ((int)(dt[i].m * 100.0)) / 100.0;
+         dt[i].x = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[0];
+         dt[i].y = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[1];
+         dt[i].z = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[2];
+         dt[i].r = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_computed_radius;
+         dt[i].m = (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_ref_mw;
+         dt[i].col = us_hydrodyn->get_color(&((*bead_models)[model_idx[active_model]][active_idx[active_model][i]]));
+         dt[i].x = ((int)((dt[i].x * decpow) + (dt[i].x > 0 ? 0.5 : -0.5))) / (float)decpow;
+         dt[i].y = ((int)((dt[i].y * decpow) + (dt[i].y > 0 ? 0.5 : -0.5))) / (float)decpow;
+         dt[i].z = ((int)((dt[i].z * decpow) + (dt[i].z > 0 ? 0.5 : -0.5))) / (float)decpow;
+         dt[i].r = ((int)((dt[i].r * decpow) + (dt[i].r > 0 ? 0.5 : -0.5))) / (float)decpow;
+         dt[i].m = ((int)(dt[i].m * 100.0)) / 100.0;
 #if defined(DEBUG_FILES)
-	 {
-	    float fx, fy, fz, fr, fm;
-	    int fc;
-	    fscanf(mol, "%f", &fx);
-	    fscanf(mol, "%f", &fy);
-	    fscanf(mol, "%f", &fz);
-	    fscanf(rmc, "%f", &fr);
-	    fscanf(rmc, "%f", &fm);
-	    fscanf(rmc, "%d", &fc);
-	    printf("!!(%f %f %f) %f %f %f %f %f %d\n",
-		   (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[0],
-		   dt[i].x, fx,
-		   dt[i].x - fx,
-		   dt[i].y - fy,
-		   dt[i].z - fz,
-		   dt[i].r - fr,
-		   dt[i].m - fm,
-		   dt[i].col - fc
-		   ); fflush(stdout);
-	 }
+         {
+            float fx, fy, fz, fr, fm;
+            int fc;
+            fscanf(mol, "%f", &fx);
+            fscanf(mol, "%f", &fy);
+            fscanf(mol, "%f", &fz);
+            fscanf(rmc, "%f", &fr);
+            fscanf(rmc, "%f", &fm);
+            fscanf(rmc, "%d", &fc);
+            printf("!!(%f %f %f) %f %f %f %f %f %d\n",
+                   (*bead_models)[model_idx[active_model]][active_idx[active_model][i]].bead_coordinate.axis[0],
+                   dt[i].x, fx,
+                   dt[i].x - fx,
+                   dt[i].y - fy,
+                   dt[i].z - fz,
+                   dt[i].r - fr,
+                   dt[i].m - fm,
+                   dt[i].col - fc
+                   ); fflush(stdout);
+         }
 #endif
       }
 #if defined(DEBUG_FILES)
@@ -3754,7 +3754,7 @@ initarray()
       goto a1200;
    }
 
-   if (raggio == -3.0)		/* Variable hydrated and unhydrated radii and psv */
+   if (raggio == -3.0)      /* Variable hydrated and unhydrated radii and psv */
    {
 
       fscanf(mol, "%s", ragcol);
@@ -3765,20 +3765,20 @@ initarray()
 
       for (i = 0; i < nat; i++)
       {
-	 fscanf(mol, "%f", &dt[i].x);
-	 fscanf(mol, "%f", &dt[i].y);
-	 fscanf(mol, "%f", &dt[i].z);
-	 fscanf(rmc, "%f", &dt[i].r);
-	 fscanf(rmc, "%f", &dt[i].ru);
-	 fscanf(rmc, "%f", &dt[i].m);
-	 fscanf(rmc, "%d", &dt[i].col);
+         fscanf(mol, "%f", &dt[i].x);
+         fscanf(mol, "%f", &dt[i].y);
+         fscanf(mol, "%f", &dt[i].z);
+         fscanf(rmc, "%f", &dt[i].r);
+         fscanf(rmc, "%f", &dt[i].ru);
+         fscanf(rmc, "%f", &dt[i].m);
+         fscanf(rmc, "%d", &dt[i].col);
       }
 
       fclose(rmc);
       goto a1200;
    }
 
-   if (raggio == -4.0)		/* Variable hydrated radii and bead-aminoacids correspondence */
+   if (raggio == -4.0)      /* Variable hydrated radii and bead-aminoacids correspondence */
    {
 
       fscanf(mol, "%s", ragcol);
@@ -3787,21 +3787,21 @@ initarray()
 
       for (i = 0; i < nat; i++)
       {
-	 fscanf(mol, "%f", &dt[i].x);
-	 fscanf(mol, "%f", &dt[i].y);
-	 fscanf(mol, "%f", &dt[i].z);
-	 fscanf(rmc, "%f", &dt[i].r);
-	 fscanf(rmc, "%f", &dt[i].m);
-	 fscanf(rmc, "%d", &dt[i].col);
-	 dt[i].cor = (char *) malloc(10 * sizeof(char));
-	 fscanf(rmc, "%s", dt[i].cor);
+         fscanf(mol, "%f", &dt[i].x);
+         fscanf(mol, "%f", &dt[i].y);
+         fscanf(mol, "%f", &dt[i].z);
+         fscanf(rmc, "%f", &dt[i].r);
+         fscanf(rmc, "%f", &dt[i].m);
+         fscanf(rmc, "%d", &dt[i].col);
+         dt[i].cor = (char *) malloc(10 * sizeof(char));
+         fscanf(rmc, "%s", dt[i].cor);
       }
 
       fclose(rmc);
       goto a1200;
    }
 
-   if (raggio == -5.0)		/* Variable hydrated radii, bead-aminoacids correspondence and psv */
+   if (raggio == -5.0)      /* Variable hydrated radii, bead-aminoacids correspondence and psv */
    {
 
       fscanf(mol, "%s", ragcol);
@@ -3812,31 +3812,31 @@ initarray()
 
       for (i = 0; i < nat; i++)
       {
-	 fscanf(mol, "%f", &dt[i].x);
-	 fscanf(mol, "%f", &dt[i].y);
-	 fscanf(mol, "%f", &dt[i].z);
-	 fscanf(rmc, "%f", &dt[i].r);
-	 fscanf(rmc, "%f", &dt[i].m);
-	 fscanf(rmc, "%d", &dt[i].col);
-	 dt[i].cor = (char *) malloc(10 * sizeof(char));
-	 fscanf(rmc, "%s", dt[i].cor);
+         fscanf(mol, "%f", &dt[i].x);
+         fscanf(mol, "%f", &dt[i].y);
+         fscanf(mol, "%f", &dt[i].z);
+         fscanf(rmc, "%f", &dt[i].r);
+         fscanf(rmc, "%f", &dt[i].m);
+         fscanf(rmc, "%d", &dt[i].col);
+         dt[i].cor = (char *) malloc(10 * sizeof(char));
+         fscanf(rmc, "%s", dt[i].cor);
       }
 
       fclose(rmc);
       goto a1200;
    }
 
-   else			/* Constant radius, mass and color */
+   else         /* Constant radius, mass and color */
    {
       vt = 1;
       for (i = 0; i < nat; i++)
       {
-	 fscanf(mol, "%f", &dt[i].x);
-	 fscanf(mol, "%f", &dt[i].y);
-	 fscanf(mol, "%f", &dt[i].z);
-	 dt[i].r = raggio;
-	 dt[i].m = (float) 1.0;
-	 dt[i].col = 1;
+         fscanf(mol, "%f", &dt[i].x);
+         fscanf(mol, "%f", &dt[i].y);
+         fscanf(mol, "%f", &dt[i].z);
+         dt[i].r = raggio;
+         dt[i].m = (float) 1.0;
+         dt[i].col = 1;
       }
    }
 
@@ -3852,8 +3852,8 @@ initarray()
       partvolc2 = 0.0;
       for (i = 0; i < nat; i++)
       {
-	 partvolc1 = partvolc1 + (4.0 / 3.0 * PI * dt[i].ru * dt[i].ru * dt[i].ru * fconv1 * fconv1 * fconv1 * 1E-21);
-	 partvolc2 = partvolc2 + dt[i].m;
+         partvolc1 = partvolc1 + (4.0 / 3.0 * PI * dt[i].ru * dt[i].ru * dt[i].ru * fconv1 * fconv1 * fconv1 * 1E-21);
+         partvolc2 = partvolc2 + dt[i].m;
       }
       partvolc = partvolc1 * AVO / partvolc2;
    }
@@ -3862,37 +3862,37 @@ initarray()
    else
    {
       if ((raggio == 0.0) || (raggio == -2.0))
-	 for (i = 0; i < nat; i++)
-	 {
-	    dt[i].x = dt[i + prima - 1].x;
-	    dt[i].y = dt[i + prima - 1].y;
-	    dt[i].z = dt[i + prima - 1].z;
-	    dt[i].r = dt[i + prima - 1].r;
-	    dt[i].m = dt[i + prima - 1].m;
-	    dt[i].col = dt[i + prima - 1].col;
-	 }
+         for (i = 0; i < nat; i++)
+         {
+            dt[i].x = dt[i + prima - 1].x;
+            dt[i].y = dt[i + prima - 1].y;
+            dt[i].z = dt[i + prima - 1].z;
+            dt[i].r = dt[i + prima - 1].r;
+            dt[i].m = dt[i + prima - 1].m;
+            dt[i].col = dt[i + prima - 1].col;
+         }
       if ((raggio == -1.0) || (raggio == -3.0))
-	 for (i = 0; i < nat; i++)
-	 {
-	    dt[i].x = dt[i + prima - 1].x;
-	    dt[i].y = dt[i + prima - 1].y;
-	    dt[i].z = dt[i + prima - 1].z;
-	    dt[i].r = dt[i + prima - 1].r;
-	    dt[i].m = dt[i + prima - 1].m;
-	    dt[i].ru = dt[i + prima - 1].ru;
-	    dt[i].col = dt[i + prima - 1].col;
-	 }
+         for (i = 0; i < nat; i++)
+         {
+            dt[i].x = dt[i + prima - 1].x;
+            dt[i].y = dt[i + prima - 1].y;
+            dt[i].z = dt[i + prima - 1].z;
+            dt[i].r = dt[i + prima - 1].r;
+            dt[i].m = dt[i + prima - 1].m;
+            dt[i].ru = dt[i + prima - 1].ru;
+            dt[i].col = dt[i + prima - 1].col;
+         }
       if ((raggio == -4.0) || (raggio == -5.0))
-	 for (i = 0; i < nat; i++)
-	 {
-	    dt[i].x = dt[i + prima - 1].x;
-	    dt[i].y = dt[i + prima - 1].y;
-	    dt[i].z = dt[i + prima - 1].z;
-	    dt[i].r = dt[i + prima - 1].r;
-	    dt[i].m = dt[i + prima - 1].m;
-	    dt[i].col = dt[i + prima - 1].col;
-	    dt[i].cor = dt[i + prima - 1].cor;
-	 }
+         for (i = 0; i < nat; i++)
+         {
+            dt[i].x = dt[i + prima - 1].x;
+            dt[i].y = dt[i + prima - 1].y;
+            dt[i].z = dt[i + prima - 1].z;
+            dt[i].r = dt[i + prima - 1].r;
+            dt[i].m = dt[i + prima - 1].m;
+            dt[i].col = dt[i + prima - 1].col;
+            dt[i].cor = dt[i + prima - 1].cor;
+         }
 
    }
 
@@ -3910,7 +3910,7 @@ initarray()
    // for (i = 0; i < nat; i++) {
    //      printf("bead %d col %d\n", i, dt[i].col);
    // if(dt[i].col == 6) {
-   //	count6++;
+   //   count6++;
    //      }
    //    }
 
@@ -3918,14 +3918,14 @@ initarray()
       j = 0;
       for (i = 0; i < nat; i++)
       {
-	 if (dt[i].col == 0);
+         if (dt[i].col == 0);
 
-	 else
+         else
 
-	 {
-	    dt[j] = dt[i];
-	    j++;
-	 }
+         {
+            dt[j] = dt[i];
+            j++;
+         }
 
       }
       colorzero = nat - j;
@@ -3934,24 +3934,24 @@ initarray()
 
    //    editor->append(QString("initarray - 2 (remove cc 0): %1 beads\n").arg(nat));
 
-   if (sfecalc == 2)		/* computation with all beads or with only the 'exposed'                           beads */
+   if (sfecalc == 2)      /* computation with all beads or with only the 'exposed'                           beads */
 
    {
       j = 0;
       interm1 = 0;
       for (i = 0; i < nat; i++)
       {
-	 /*     if(colorsixf==1)     */
-	 interm1 += pow(dt[i].r, 3) * PI * 8.0 * ETAo;	/* calculating the total volume correction of the beads, including the buried ones */
+         /*     if(colorsixf==1)     */
+         interm1 += pow(dt[i].r, 3) * PI * 8.0 * ETAo;   /* calculating the total volume correction of the beads, including the buried ones */
 
-	 if (dt[i].col == 6);
+         if (dt[i].col == 6);
 
-	 else
+         else
 
-	 {
-	    dt[j] = dt[i];
-	    j++;
-	 }
+         {
+            dt[j] = dt[i];
+            j++;
+         }
 
       }
       colorsix = nat - j;
@@ -4034,71 +4034,71 @@ inv6x6(float a[6][6])
    {
       for (j = 0; j < 6; j++)
       {
-	 for (i1 = 0; i1 < 5; i1++)
-	 {
-	    i2 = i1;
-	    if (i1 >= i)
-	       i2 = i1 + 1;
-	    for (j1 = 0; j1 < 5; j1++)
-	    {
-	       j2 = j1;
-	       if (j1 >= j)
-		  j2 = j1 + 1;
-	       a1[i1][j1] = a[i2][j2];
-	    }
-	 }
+         for (i1 = 0; i1 < 5; i1++)
+         {
+            i2 = i1;
+            if (i1 >= i)
+               i2 = i1 + 1;
+            for (j1 = 0; j1 < 5; j1++)
+            {
+               j2 = j1;
+               if (j1 >= j)
+                  j2 = j1 + 1;
+               a1[i1][j1] = a[i2][j2];
+            }
+         }
 
-	 det = 0.0;
-	 for (j1 = 0; j1 < 5; j1++)
-	 {
+         det = 0.0;
+         for (j1 = 0; j1 < 5; j1++)
+         {
 
-	    for (i2 = 0; i2 < 4; i2++)
-	    {
-	       for (j2 = 0; j2 < 4; j2++)
-	       {
-		  j3 = j2;
-		  if (j2 >= j1)
-		     j3 = j2 + 1;
-		  a2[i2][j2] = a1[i2 + 1][j3];
-	       }
-	    }
+            for (i2 = 0; i2 < 4; i2++)
+            {
+               for (j2 = 0; j2 < 4; j2++)
+               {
+                  j3 = j2;
+                  if (j2 >= j1)
+                     j3 = j2 + 1;
+                  a2[i2][j2] = a1[i2 + 1][j3];
+               }
+            }
 
-	    c1 = a2[0][0] * (a2[1][1] * (a2[2][2] * a2[3][3] - a2[2][3] * a2[3][2])
-			     - a2[1][2] * (a2[2][1] * a2[3][3] - a2[2][3] * a2[3][1])
-			     + a2[1][3] * (a2[2][1] * a2[3][2] - a2[2][2] * a2[3][1]));
-	    c1 = c1 - a2[0][1] * (a2[1][0] * (a2[2][2] * a2[3][3] - a2[2][3] * a2[3][2])
-				  - a2[1][2] * (a2[2][0] * a2[3][3] - a2[3][0] * a2[2][3])
-				  + a2[1][3] * (a2[2][0] * a2[3][2] - a2[3][0] * a2[2][2]));
-	    c1 = c1 + a2[0][2] * (a2[1][0] * (a2[2][1] * a2[3][3] - a2[3][1] * a2[2][3])
-				  - a2[1][1] * (a2[2][0] * a2[3][3] - a2[2][3] * a2[3][0])
-				  + a2[1][3] * (a2[2][0] * a2[3][1] - a2[2][1] * a2[3][0]));
-	    c1 = c1 - a2[0][3] * (a2[1][0] * (a2[2][1] * a2[3][2] - a2[2][2] * a2[3][1])
-				  - a2[1][1] * (a2[2][0] * a2[3][2] - a2[3][0] * a2[2][2])
-				  + a2[1][2] * (a2[2][0] * a2[3][1] - a2[2][1] * a2[3][0]));
+            c1 = a2[0][0] * (a2[1][1] * (a2[2][2] * a2[3][3] - a2[2][3] * a2[3][2])
+                             - a2[1][2] * (a2[2][1] * a2[3][3] - a2[2][3] * a2[3][1])
+                             + a2[1][3] * (a2[2][1] * a2[3][2] - a2[2][2] * a2[3][1]));
+            c1 = c1 - a2[0][1] * (a2[1][0] * (a2[2][2] * a2[3][3] - a2[2][3] * a2[3][2])
+                                  - a2[1][2] * (a2[2][0] * a2[3][3] - a2[3][0] * a2[2][3])
+                                  + a2[1][3] * (a2[2][0] * a2[3][2] - a2[3][0] * a2[2][2]));
+            c1 = c1 + a2[0][2] * (a2[1][0] * (a2[2][1] * a2[3][3] - a2[3][1] * a2[2][3])
+                                  - a2[1][1] * (a2[2][0] * a2[3][3] - a2[2][3] * a2[3][0])
+                                  + a2[1][3] * (a2[2][0] * a2[3][1] - a2[2][1] * a2[3][0]));
+            c1 = c1 - a2[0][3] * (a2[1][0] * (a2[2][1] * a2[3][2] - a2[2][2] * a2[3][1])
+                                  - a2[1][1] * (a2[2][0] * a2[3][2] - a2[3][0] * a2[2][2])
+                                  + a2[1][2] * (a2[2][0] * a2[3][1] - a2[2][1] * a2[3][0]));
 
-	    elem = 1.0;
-	    if (j1 == 1)
-	       elem = (-1.0);
-	    if (j1 == 3)
-	       elem = (-1.0);
+            elem = 1.0;
+            if (j1 == 1)
+               elem = (-1.0);
+            if (j1 == 3)
+               elem = (-1.0);
 
-	    det = det + c1 * elem * a1[0][j1];
+            det = det + c1 * elem * a1[0][j1];
 
-	 }
+         }
 
-	 elem1 = (-1.0);
-	 for (j2 = 0; j2 <= i + j; j2++)
-	    elem1 = elem1 * (-1.0);
-	 inver[j][i] = det * elem1;
-	 if (i == 0)
-	    k1 = k1 + det * elem1 * a[i][j];
+         elem1 = (-1.0);
+         for (j2 = 0; j2 <= i + j; j2++)
+            elem1 = elem1 * (-1.0);
+         inver[j][i] = det * elem1;
+         if (i == 0)
+            k1 = k1 + det * elem1 * a[i][j];
       }
    }
 
    for (i = 0; i < 6; i++)
    {
       for (j = 0; j < 6; j++)
-	 inver[j][i] = inver[j][i] / k1;
+         inver[j][i] = inver[j][i] / k1;
    }
 
 }
@@ -4132,7 +4132,7 @@ inverti(int N)
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-	 return;
+         return;
       }
 
       printf("%s%d%s%d", "Iteration  ", j, " of ", 3 * N);
@@ -4146,18 +4146,18 @@ inverti(int N)
 
       if (j != 1)
       {
-	 b1[j - 2] = 0.0;
-	 b1[j - 1] = 1.0;
+         b1[j - 2] = 0.0;
+         b1[j - 1] = 1.0;
       }
 
       cholsl(N);
 
       for (i = 1; i <= 3 * N; i++)
       {
-	 k3 = (int) (floor((i - 1) / 3.0));
-	 k4 = (i - 1) % 3;
-	 k5 = k2 + 3 * k4;
-	 q[k3 * (nat * 9) + k1 * 9 + k5] = rRi[i - 1];
+         k3 = (int) (floor((i - 1) / 3.0));
+         k4 = (i - 1) % 3;
+         k5 = k2 + 3 * k4;
+         q[k3 * (nat * 9) + k1 * 9 + k5] = rRi[i - 1];
       }
 
       printf("%c", '\r');
@@ -4264,9 +4264,9 @@ sigmaocalc()
    {
       for (j = 0; j < nat; j++)
       {
-	 sigmaoc[i] += dt[j].r * (gp[j * 9 + 6 + i] * dt[j].y - gp[j * 9 + 3 + i] * dt[j].z);	/* manca 6*PI*ETAo */
-	 sigmaoc[i + 3] += dt[j].r * (gp[j * 9 + i] * dt[j].z - gp[j * 9 + 6 + i] * dt[j].x);
-	 sigmaoc[i + 6] += dt[j].r * (gp[j * 9 + 3 + i] * dt[j].x - gp[j * 9 + i] * dt[j].y);
+         sigmaoc[i] += dt[j].r * (gp[j * 9 + 6 + i] * dt[j].y - gp[j * 9 + 3 + i] * dt[j].z);   /* manca 6*PI*ETAo */
+         sigmaoc[i + 3] += dt[j].r * (gp[j * 9 + i] * dt[j].z - gp[j * 9 + 6 + i] * dt[j].x);
+         sigmaoc[i + 6] += dt[j].r * (gp[j * 9 + 3 + i] * dt[j].x - gp[j * 9 + i] * dt[j].y);
       }
 
    }
@@ -4289,12 +4289,12 @@ sigmaocalc1()
    {
       for (j = 0; j < nat; j++)
       {
-	 for (i = 0; i < 3; i++)
-	 {
-	    sigmaoc[i] += (q[k * (nat * 9) + j * 9 + 6 + i] * dt[k].y - q[k * (nat * 9) + j * 9 + 3 + i] * dt[k].z);
-	    sigmaoc[i + 3] += (q[k * (nat * 9) + j * 9 + i] * dt[k].z - q[k * (nat * 9) + j * 9 + 6 + i] * dt[k].x);
-	    sigmaoc[i + 6] += (q[k * (nat * 9) + j * 9 + 3 + i] * dt[k].x - q[k * (nat * 9) + j * 9 + i] * dt[k].y);
-	 }
+         for (i = 0; i < 3; i++)
+         {
+            sigmaoc[i] += (q[k * (nat * 9) + j * 9 + 6 + i] * dt[k].y - q[k * (nat * 9) + j * 9 + 3 + i] * dt[k].z);
+            sigmaoc[i + 3] += (q[k * (nat * 9) + j * 9 + i] * dt[k].z - q[k * (nat * 9) + j * 9 + 6 + i] * dt[k].x);
+            sigmaoc[i + 6] += (q[k * (nat * 9) + j * 9 + 3 + i] * dt[k].x - q[k * (nat * 9) + j * 9 + i] * dt[k].y);
+         }
       }
    }
 }
@@ -4310,16 +4310,16 @@ sigmatcalc1()
    for (i = 0; i < nat; i++)
    {
       for (k = 0; k < 9; k++)
-	 gp[i * 9 + k] = 0.0;
+         gp[i * 9 + k] = 0.0;
 
       for (j = 0; j < nat; j++)
       {
-	 for (k = 0; k < 9; k++)
-	    gp[i * 9 + k] += q[i * (nat * 9) + j * 9 + k] * dt[j].r;
+         for (k = 0; k < 9; k++)
+            gp[i * 9 + k] += q[i * (nat * 9) + j * 9 + k] * dt[j].r;
       }
 
       for (k = 0; k < 9; k++)
-	 gp[i * 9 + k] = (1.0 / dt[i].r) * gp[i * 9 + k];
+         gp[i * 9 + k] = (1.0 / dt[i].r) * gp[i * 9 + k];
    }
 
    for (k = 0; k < 9; k++)
@@ -4327,7 +4327,7 @@ sigmatcalc1()
       sigmat[k] = 0.0;
 
       for (i = 0; i < nat; i++)
-	 sigmat[k] += dt[i].r * gp[i * 9 + k];
+         sigmat[k] += dt[i].r * gp[i * 9 + k];
 
       isigmat[k] = sigmat[k];
    }
@@ -4353,8 +4353,8 @@ sigmatcalc2()
    {
       for (j = 0; j < nat; j++)
       {
-	 for (k = 0; k < 9; k++)
-	    sigmat[k] += q[i * (nat * 9) + j * 9 + k];
+         for (k = 0; k < 9; k++)
+            sigmat[k] += q[i * (nat * 9) + j * 9 + k];
       }
    }
 
@@ -4380,74 +4380,74 @@ sigmarRcalc1()
 
       kmeno = k - 1;
       if (k == 0)
-	 kmeno = 2;
+         kmeno = 2;
 
       kpiu = k + 1;
       if (k == 2)
-	 kpiu = 0;
+         kpiu = 0;
 
       for (l = 0; l < 3; l++)
       {
 
-	 sigmaRr[3 * k + l] = 0.0;
+         sigmaRr[3 * k + l] = 0.0;
 
-	 lmeno = l - 1;
-	 if (l == 0)
-	    lmeno = 2;
+         lmeno = l - 1;
+         if (l == 0)
+            lmeno = 2;
 
-	 lpiu = l + 1;
-	 if (l == 2)
-	    lpiu = 0;
+         lpiu = l + 1;
+         if (l == 2)
+            lpiu = 0;
 
-	 for (i = 0; i < nat; i++)
-	 {
+         for (i = 0; i < nat; i++)
+         {
 
-	    xi[0] = rRi[3 * i + kpiu];
-	    xi[1] = rRi[3 * i + kmeno];
+            xi[0] = rRi[3 * i + kpiu];
+            xi[1] = rRi[3 * i + kmeno];
 
-	    for (j = 0; j < nat; j++)
-	    {
+            for (j = 0; j < nat; j++)
+            {
 
-	       xj[0] = rRi[3 * j + lpiu];
-	       xj[1] = rRi[3 * j + lmeno];
+               xj[0] = rRi[3 * j + lpiu];
+               xj[1] = rRi[3 * j + lmeno];
 
-	       interm = xi[0] * xj[0] * q[i * (nat * 9) + j * 9 + 3 * kmeno + lmeno];
-	       interm = interm + xi[1] * xj[1] * q[i * (nat * 9) + j * 9 + 3 * kpiu + lpiu];
-	       interm = interm - xi[0] * xj[1] * q[i * (nat * 9) + j * 9 + 3 * kmeno + lpiu];
-	       interm = interm - xi[1] * xj[0] * q[i * (nat * 9) + j * 9 + 3 * kpiu + lmeno];
+               interm = xi[0] * xj[0] * q[i * (nat * 9) + j * 9 + 3 * kmeno + lmeno];
+               interm = interm + xi[1] * xj[1] * q[i * (nat * 9) + j * 9 + 3 * kpiu + lpiu];
+               interm = interm - xi[0] * xj[1] * q[i * (nat * 9) + j * 9 + 3 * kmeno + lpiu];
+               interm = interm - xi[1] * xj[0] * q[i * (nat * 9) + j * 9 + 3 * kpiu + lmeno];
 
-	       /*			 interm=dt[j].r*interm;	*/
-	       sigmaRr[3 * k + l] += interm;
+               /*          interm=dt[j].r*interm;   */
+               sigmaRr[3 * k + l] += interm;
 
-	    }
+            }
 
-	 }
+         }
       }
    }
 
    interm = 0.0;
-   /*		printf("%d%d\n\n volcor,colorsixf",volcor,"   ",colorsixf);
-		scanf("%d",&test);
-		getchar();  */
+   /*      printf("%d%d\n\n volcor,colorsixf",volcor,"   ",colorsixf);
+           scanf("%d",&test);
+           getchar();  */
    if ((volcor == 1) && ((colorsixf == 1) || (colorsixf == 3)))
-      interm = interm1;	/* total vol. of beads, buried included */
+      interm = interm1;   /* total vol. of beads, buried included */
    else
    {
       if (volcor == 1)
       {
-	 for (i = 0; i < nat; i++)
-	    interm += pow(dt[i].r, 3) * PI * 8.0 * ETAo;
+         for (i = 0; i < nat; i++)
+            interm += pow(dt[i].r, 3) * PI * 8.0 * ETAo;
       }
       else
-	 interm = volcor1 * 6.0 * ETAo;	/* manual volume correction */
+         interm = volcor1 * 6.0 * ETAo;   /* manual volume correction */
    }
 
    for (i = 0; i < 3; i++)
    {
       if (cc == 1)
-	 sigmaRr[4 * i] += interm;
+         sigmaRr[4 * i] += interm;
       else
-	 sigmaRr[4 * i] += 0.0;
+         sigmaRr[4 * i] += 0.0;
    }
 
    if (cc == 1)
@@ -4479,32 +4479,32 @@ overlap()
    {
       for (j = i + 1; j < nat; j++)
       {
-	 dist = pow((dt[i].x - dt[j].x), 2) + pow((dt[i].y - dt[j].y), 2) + pow((dt[i].z - dt[j].z), 2);
-	 overlval = (dist - pow((dt[i].r + dt[j].r), 2));
-	 // if (dist - pow((dt[i].r + dt[j].r), 2)) < -0.01)
-	 if (sqrt(dist) - (dt[i].r + dt[j].r) < -overlap_tolerance)
-	 {
-	    editor->append(QString("").sprintf("\n%s%d%s%d%s%.6f\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
-					       -(sqrt(dist) - (dt[i].r + dt[j].r))));
-	    printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
-		   (sqrt(dist) - (dt[i].r + dt[j].r)));
+         dist = pow((dt[i].x - dt[j].x), 2) + pow((dt[i].y - dt[j].y), 2) + pow((dt[i].z - dt[j].z), 2);
+         overlval = (dist - pow((dt[i].r + dt[j].r), 2));
+         // if (dist - pow((dt[i].r + dt[j].r), 2)) < -0.01)
+         if (sqrt(dist) - (dt[i].r + dt[j].r) < -overlap_tolerance)
+         {
+            editor->append(QString("").sprintf("\n%s%d%s%d%s%.6f\n", "ERROR: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",
+                                               -(sqrt(dist) - (dt[i].r + dt[j].r))));
+            printf("\n%s%d%s%d%s%.6f\n", "OVERLAP AMONG BEAD ", i + 1, " and BEAD ", j + 1, " | Value = ",
+                   (sqrt(dist) - (dt[i].r + dt[j].r)));
 #if defined(USE_MAIN)
-	    printf("\n** Do you want to proceed anyway? (y/n) ");
-	    scanf("%s", &r5);
-	    getchar();
-	    if ((r5 == 'y') || (r5 == 'Y'))
-	    {
-	       flag = 0;
-	    }
-	    else
-	    {
-	       flag = 1;
-	       goto a99;
-	    }
+            printf("\n** Do you want to proceed anyway? (y/n) ");
+            scanf("%s", &r5);
+            getchar();
+            if ((r5 == 'y') || (r5 == 'Y'))
+            {
+               flag = 0;
+            }
+            else
+            {
+               flag = 1;
+               goto a99;
+            }
 #else
-	    return (1);
+            return (1);
 #endif
-	 }
+         }
 
       }
    }
@@ -4586,58 +4586,58 @@ calcqij()
    {
       for (j = i; j < nat; j++)
       {
-	 ri = dt[i].r;
-	 rj = dt[j].r;
+         ri = dt[i].r;
+         rj = dt[j].r;
 
-	 if (cc == 1)	/* Corrected 9 Oct 1997 MR */
-	    etai = 6.0 * PI * ETAo * ri;
-	 else
-	    etai = 4 * PI * ETAo * ri;
+         if (cc == 1)   /* Corrected 9 Oct 1997 MR */
+            etai = 6.0 * PI * ETAo * ri;
+         else
+            etai = 4 * PI * ETAo * ri;
 
-	 aa = 0.0;
+         aa = 0.0;
 
-	 qqx = dt[i].x - dt[j].x;
-	 aa += qqx * qqx;
-	 tempji[0] = (-qqx);
-	 tempij[0] = qqx;
+         qqx = dt[i].x - dt[j].x;
+         aa += qqx * qqx;
+         tempji[0] = (-qqx);
+         tempij[0] = qqx;
 
-	 qqy = dt[i].y - dt[j].y;
-	 aa += qqy * qqy;
-	 tempji[1] = (-qqy);
-	 tempij[1] = qqy;
+         qqy = dt[i].y - dt[j].y;
+         aa += qqy * qqy;
+         tempji[1] = (-qqy);
+         tempij[1] = qqy;
 
-	 qqz = dt[i].z - dt[j].z;
-	 aa += qqz * qqz;
-	 tempji[2] = (-qqz);
-	 tempij[2] = qqz;
+         qqz = dt[i].z - dt[j].z;
+         aa += qqz * qqz;
+         tempji[2] = (-qqz);
+         tempij[2] = qqz;
 
-	 aa = sqrt(aa);
-	 dij = aa;
+         aa = sqrt(aa);
+         dij = aa;
 
-	 for (k = 0; k < 3; k++)
-	 {
-	    for (l = 0; l < 3; l++)
-	    {
-	       inx = l + 3 * k;
-	       if (k == l)
-		  del = 1.0;
-	       else
-		  del = 0.0;
+         for (k = 0; k < 3; k++)
+         {
+            for (l = 0; l < 3; l++)
+            {
+               inx = l + 3 * k;
+               if (k == l)
+                  del = 1.0;
+               else
+                  del = 0.0;
 
-	       if (i == j)
-		  q[i * (nat * 9) + j * 9 + inx] = del / etai;
-	       else
-	       {
-		  d2 = dij * dij;
-		  qq = (tempji[l] * tempji[k]) / d2;
-		  rr = (dt[i].r * dt[i].r + dt[j].r * dt[j].r);
-		  tt = del + qq + (rr / d2) * (del / 3.0 - qq);
-		  tt = tt / (dij * 8.0 * PI * ETAo);
-		  q[i * (nat * 9) + j * 9 + inx] = tt;
-		  q[j * (nat * 9) + i * 9 + inx] = tt;
-	       }
-	    }
-	 }
+               if (i == j)
+                  q[i * (nat * 9) + j * 9 + inx] = del / etai;
+               else
+               {
+                  d2 = dij * dij;
+                  qq = (tempji[l] * tempji[k]) / d2;
+                  rr = (dt[i].r * dt[i].r + dt[j].r * dt[j].r);
+                  tt = del + qq + (rr / d2) * (del / 3.0 - qq);
+                  tt = tt / (dij * 8.0 * PI * ETAo);
+                  q[i * (nat * 9) + j * 9 + inx] = tt;
+                  q[j * (nat * 9) + i * 9 + inx] = tt;
+               }
+            }
+         }
       }
    }
 
@@ -4666,9 +4666,9 @@ calcR()
 
    for (i = 0; i < 3; i++)
       roR[i] =
-	 temp[3 * i] * (sigmaoc[7] - sigmaoc[5]) + temp[3 * i + 1] * (sigmaoc[2] - sigmaoc[6]) + temp[3 * i +
-												      2] * (sigmaoc[3] -
-													    sigmaoc[1]);
+         temp[3 * i] * (sigmaoc[7] - sigmaoc[5]) + temp[3 * i + 1] * (sigmaoc[2] - sigmaoc[6]) + temp[3 * i +
+                                                                                                      2] * (sigmaoc[3] -
+                                                                                                            sigmaoc[1]);
 
    for (i = 0; i < nat; i++)
    {
@@ -4729,7 +4729,7 @@ secondo(long double b, long double c)
       dl3 = (-b - sqrt(b * b - 4.0 * c)) / 2.0;
    }
    else
-      coco = 1;		/* TWO COMPLEX CONJUGATED EIGENVALUES */
+      coco = 1;      /* TWO COMPLEX CONJUGATED EIGENVALUES */
 
    /*
      if(coco==1)
@@ -4782,7 +4782,7 @@ terzo(long double b, long double c, long double d)
    pfraz = pfraz - pin;
 
    if ((s > 0.0) && ((pin != 0) || ((pin == 0) && (pfraz > 0.01))))
-      coco = 1;		/* TWO COMPLEX CONJUGATED EIGENVALUES */
+      coco = 1;      /* TWO COMPLEX CONJUGATED EIGENVALUES */
 
    else if ((s < 0.0) && ((pin != 0) || ((pin == 0) && (pfraz > 0.01))))
    {
@@ -4806,23 +4806,23 @@ terzo(long double b, long double c, long double d)
 
       if (alfa < 0.0)
       {
-	 alfa = (-alfa);
-	 alf1 = (-pow(alfa, unterzo));
+         alfa = (-alfa);
+         alf1 = (-pow(alfa, unterzo));
       }
 
       else
-	 alf1 = pow(alfa, unterzo);
+         alf1 = pow(alfa, unterzo);
 
       beta = (-q / 2.0 - sqrt(q * q / 4.0 + p * p * p / 27.0));
 
       if (beta < 0.0)
       {
-	 beta = (-beta);
-	 bet1 = (-pow(beta, unterzo));
+         beta = (-beta);
+         bet1 = (-pow(beta, unterzo));
       }
 
       else
-	 bet1 = pow(beta, unterzo);
+         bet1 = pow(beta, unterzo);
 
       dl1 = alf1 + bet1;
       dl2 = (-(alf1 + bet1) / 2.0);
@@ -4869,55 +4869,55 @@ visco()
    {
       for (j = 0; j < nat; j++)
       {
-	 etai = 1.0;
+         etai = 1.0;
 
-	 etai = 1.0 / (6.0 * PI * dt[j].r * ETAo);
+         etai = 1.0 / (6.0 * PI * dt[j].r * ETAo);
 
-	 cv[0] += etai * (8.0 * q[i * (nat * 9) + j * 9 + 0] +
-			  6.0 * q[i * (nat * 9) + j * 9 + 4] + 6.0 * q[i * (nat * 9) + j * 9 + 8]);
-	 cv[1] += etai * (q[i * (nat * 9) + j * 9 + 1] + q[i * (nat * 9) + j * 9 + 3]);
-	 cv[2] += etai * (q[i * (nat * 9) + j * 9 + 2] + q[i * (nat * 9) + j * 9 + 6]);
-	 bb[0] += etai * ((dt[i].x + dt[j].x) *
-			  (4.0 * q[i * (nat * 9) + j * 9 + 0] +
-			   3.0 * q[i * (nat * 9) + j * 9 + 4] +
-			   3.0 * q[i * (nat * 9) + j * 9 + 8]) +
-			  dt[j].y * (3.0 * q[i * (nat * 9) + j * 9 + 3] -
-				     2.0 * q[i * (nat * 9) + j * 9 + 1]) +
-			  dt[j].z * (3.0 * q[i * (nat * 9) + j * 9 + 6] -
-				     2.0 * q[i * (nat * 9) + j * 9 + 2]) +
-			  dt[j].y * (3.0 * q[i * (nat * 9) + j * 9 + 1] -
-				     2.0 * q[i * (nat * 9) + j * 9 + 3]) +
-			  dt[j].z * (3.0 * q[i * (nat * 9) + j * 9 + 2] - 2.0 * q[i * (nat * 9) + j * 9 + 6]));
+         cv[0] += etai * (8.0 * q[i * (nat * 9) + j * 9 + 0] +
+                          6.0 * q[i * (nat * 9) + j * 9 + 4] + 6.0 * q[i * (nat * 9) + j * 9 + 8]);
+         cv[1] += etai * (q[i * (nat * 9) + j * 9 + 1] + q[i * (nat * 9) + j * 9 + 3]);
+         cv[2] += etai * (q[i * (nat * 9) + j * 9 + 2] + q[i * (nat * 9) + j * 9 + 6]);
+         bb[0] += etai * ((dt[i].x + dt[j].x) *
+                          (4.0 * q[i * (nat * 9) + j * 9 + 0] +
+                           3.0 * q[i * (nat * 9) + j * 9 + 4] +
+                           3.0 * q[i * (nat * 9) + j * 9 + 8]) +
+                          dt[j].y * (3.0 * q[i * (nat * 9) + j * 9 + 3] -
+                                     2.0 * q[i * (nat * 9) + j * 9 + 1]) +
+                          dt[j].z * (3.0 * q[i * (nat * 9) + j * 9 + 6] -
+                                     2.0 * q[i * (nat * 9) + j * 9 + 2]) +
+                          dt[j].y * (3.0 * q[i * (nat * 9) + j * 9 + 1] -
+                                     2.0 * q[i * (nat * 9) + j * 9 + 3]) +
+                          dt[j].z * (3.0 * q[i * (nat * 9) + j * 9 + 2] - 2.0 * q[i * (nat * 9) + j * 9 + 6]));
 
-	 cv[4] += etai * (8.0 * q[i * (nat * 9) + j * 9 + 4] +
-			  6.0 * q[i * (nat * 9) + j * 9 + 8] + 6.0 * q[i * (nat * 9) + j * 9 + 0]);
-	 cv[5] += etai * (q[i * (nat * 9) + j * 9 + 5] + q[i * (nat * 9) + j * 9 + 7]);
-	 cv[3] += etai * (q[i * (nat * 9) + j * 9 + 3] + q[i * (nat * 9) + j * 9 + 1]);
-	 bb[1] += etai * ((dt[i].y + dt[j].y) * (4.0 * q[i * (nat * 9) + j * 9 + 4] +
-						 3.0 * q[i * (nat * 9) + j * 9 + 8] +
-						 3.0 * q[i * (nat * 9) + j * 9 + 0]) +
-			  dt[j].z * (3.0 * q[i * (nat * 9) + j * 9 + 7] -
-				     2.0 * q[i * (nat * 9) + j * 9 + 5]) +
-			  dt[j].x * (3.0 * q[i * (nat * 9) + j * 9 + 1] -
-				     2.0 * q[i * (nat * 9) + j * 9 + 3]) +
-			  dt[j].z * (3.0 * q[i * (nat * 9) + j * 9 + 5] -
-				     2.0 * q[i * (nat * 9) + j * 9 + 7]) +
-			  dt[j].x * (3.0 * q[i * (nat * 9) + j * 9 + 3] - 2.0 * q[i * (nat * 9) + j * 9 + 1]));
+         cv[4] += etai * (8.0 * q[i * (nat * 9) + j * 9 + 4] +
+                          6.0 * q[i * (nat * 9) + j * 9 + 8] + 6.0 * q[i * (nat * 9) + j * 9 + 0]);
+         cv[5] += etai * (q[i * (nat * 9) + j * 9 + 5] + q[i * (nat * 9) + j * 9 + 7]);
+         cv[3] += etai * (q[i * (nat * 9) + j * 9 + 3] + q[i * (nat * 9) + j * 9 + 1]);
+         bb[1] += etai * ((dt[i].y + dt[j].y) * (4.0 * q[i * (nat * 9) + j * 9 + 4] +
+                                                 3.0 * q[i * (nat * 9) + j * 9 + 8] +
+                                                 3.0 * q[i * (nat * 9) + j * 9 + 0]) +
+                          dt[j].z * (3.0 * q[i * (nat * 9) + j * 9 + 7] -
+                                     2.0 * q[i * (nat * 9) + j * 9 + 5]) +
+                          dt[j].x * (3.0 * q[i * (nat * 9) + j * 9 + 1] -
+                                     2.0 * q[i * (nat * 9) + j * 9 + 3]) +
+                          dt[j].z * (3.0 * q[i * (nat * 9) + j * 9 + 5] -
+                                     2.0 * q[i * (nat * 9) + j * 9 + 7]) +
+                          dt[j].x * (3.0 * q[i * (nat * 9) + j * 9 + 3] - 2.0 * q[i * (nat * 9) + j * 9 + 1]));
 
-	 cv[8] += etai * (8.0 * q[i * (nat * 9) + j * 9 + 8] +
-			  6.0 * q[i * (nat * 9) + j * 9 + 4] + 6.0 * q[i * (nat * 9) + j * 9 + 0]);
-	 cv[6] += etai * (q[i * (nat * 9) + j * 9 + 6] + q[i * (nat * 9) + j * 9 + 2]);
-	 cv[7] += etai * (q[i * (nat * 9) + j * 9 + 7] + q[i * (nat * 9) + j * 9 + 5]);
-	 bb[2] += etai * ((dt[i].z + dt[j].z) * (4.0 * q[i * (nat * 9) + j * 9 + 8] +
-						 3.0 * q[i * (nat * 9) + j * 9 + 4] +
-						 3.0 * q[i * (nat * 9) + j * 9 + 0]) +
-			  dt[j].x * (3.0 * q[i * (nat * 9) + j * 9 + 2] -
-				     2.0 * q[i * (nat * 9) + j * 9 + 6]) +
-			  dt[j].y * (3.0 * q[i * (nat * 9) + j * 9 + 5] -
-				     2.0 * q[i * (nat * 9) + j * 9 + 7]) +
-			  dt[j].x * (3.0 * q[i * (nat * 9) + j * 9 + 6] -
-				     2.0 * q[i * (nat * 9) + j * 9 + 2]) +
-			  dt[j].y * (3.0 * q[i * (nat * 9) + j * 9 + 7] - 2.0 * q[i * (nat * 9) + j * 9 + 5]));
+         cv[8] += etai * (8.0 * q[i * (nat * 9) + j * 9 + 8] +
+                          6.0 * q[i * (nat * 9) + j * 9 + 4] + 6.0 * q[i * (nat * 9) + j * 9 + 0]);
+         cv[6] += etai * (q[i * (nat * 9) + j * 9 + 6] + q[i * (nat * 9) + j * 9 + 2]);
+         cv[7] += etai * (q[i * (nat * 9) + j * 9 + 7] + q[i * (nat * 9) + j * 9 + 5]);
+         bb[2] += etai * ((dt[i].z + dt[j].z) * (4.0 * q[i * (nat * 9) + j * 9 + 8] +
+                                                 3.0 * q[i * (nat * 9) + j * 9 + 4] +
+                                                 3.0 * q[i * (nat * 9) + j * 9 + 0]) +
+                          dt[j].x * (3.0 * q[i * (nat * 9) + j * 9 + 2] -
+                                     2.0 * q[i * (nat * 9) + j * 9 + 6]) +
+                          dt[j].y * (3.0 * q[i * (nat * 9) + j * 9 + 5] -
+                                     2.0 * q[i * (nat * 9) + j * 9 + 7]) +
+                          dt[j].x * (3.0 * q[i * (nat * 9) + j * 9 + 6] -
+                                     2.0 * q[i * (nat * 9) + j * 9 + 2]) +
+                          dt[j].y * (3.0 * q[i * (nat * 9) + j * 9 + 7] - 2.0 * q[i * (nat * 9) + j * 9 + 5]));
       }
    }
 
@@ -4935,36 +4935,36 @@ visco()
       for (j = 0; j < nat; j++)
       {
 
-	 /*    etai=bc*PI*dt[j].r;  */
+         /*    etai=bc*PI*dt[j].r;  */
 
-	 etai = 1.0;
+         etai = 1.0;
 
-	 temp =
-	    (dt[i].x - vc[0]) * q[i * (nat * 9) + j * 9 + 0] *
-	    (dt[j].x - vc[0]) + (dt[i].y - vc[1]) * q[i * (nat * 9) + j * 9 + 4] * (dt[j].y - vc[1]) +
-	    (dt[i].z - vc[2]) * q[i * (nat * 9) + j * 9 + 8] * (dt[j].z - vc[2]);
-	 temp1 = (dt[i].x - vc[0]) * ((dt[j].y - vc[1]) * (q[i * (nat * 9) + j * 9 + 3]) +
-				      (dt[j].z - vc[2]) * q[i * (nat * 9) + j * 9 + 6]);
-	 temp2 = (dt[i].y - vc[1]) * ((dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 1]) +
-				      (dt[j].z - vc[2]) * q[i * (nat * 9) + j * 9 + 7]);
-	 temp3 = (dt[i].z - vc[2]) * ((dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 2]) +
-				      (dt[j].y - vc[1]) * q[i * (nat * 9) + j * 9 + 5]);
-	 sum1 = temp1 + temp2 + temp3;
+         temp =
+            (dt[i].x - vc[0]) * q[i * (nat * 9) + j * 9 + 0] *
+            (dt[j].x - vc[0]) + (dt[i].y - vc[1]) * q[i * (nat * 9) + j * 9 + 4] * (dt[j].y - vc[1]) +
+            (dt[i].z - vc[2]) * q[i * (nat * 9) + j * 9 + 8] * (dt[j].z - vc[2]);
+         temp1 = (dt[i].x - vc[0]) * ((dt[j].y - vc[1]) * (q[i * (nat * 9) + j * 9 + 3]) +
+                                      (dt[j].z - vc[2]) * q[i * (nat * 9) + j * 9 + 6]);
+         temp2 = (dt[i].y - vc[1]) * ((dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 1]) +
+                                      (dt[j].z - vc[2]) * q[i * (nat * 9) + j * 9 + 7]);
+         temp3 = (dt[i].z - vc[2]) * ((dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 2]) +
+                                      (dt[j].y - vc[1]) * q[i * (nat * 9) + j * 9 + 5]);
+         sum1 = temp1 + temp2 + temp3;
 
-	 temp1 = (dt[i].x - vc[0]) * ((dt[j].y - vc[1]) * (q[i * (nat * 9) + j * 9 + 1]) +
-				      (dt[j].z - vc[2]) * q[i * (nat * 9) + j * 9 + 2]);
-	 temp2 = (dt[i].y - vc[1]) * ((dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 3]) +
-				      (dt[j].z - vc[2]) * q[i * (nat * 9) + j * 9 + 5]);
-	 temp3 = (dt[i].z - vc[2]) * ((dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 6]) +
-				      (dt[j].y - vc[1]) * q[i * (nat * 9) + j * 9 + 7]);
-	 sum11 = temp1 + temp2 + temp3;
+         temp1 = (dt[i].x - vc[0]) * ((dt[j].y - vc[1]) * (q[i * (nat * 9) + j * 9 + 1]) +
+                                      (dt[j].z - vc[2]) * q[i * (nat * 9) + j * 9 + 2]);
+         temp2 = (dt[i].y - vc[1]) * ((dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 3]) +
+                                      (dt[j].z - vc[2]) * q[i * (nat * 9) + j * 9 + 5]);
+         temp3 = (dt[i].z - vc[2]) * ((dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 6]) +
+                                      (dt[j].y - vc[1]) * q[i * (nat * 9) + j * 9 + 7]);
+         sum11 = temp1 + temp2 + temp3;
 
-	 temp1 = (dt[i].x - vc[0]) * (dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 4] + q[i * (nat * 9) + j * 9 + 8]);
-	 temp2 = (dt[i].y - vc[1]) * (dt[j].y - vc[1]) * (q[i * (nat * 9) + j * 9 + 0] + q[i * (nat * 9) + j * 9 + 8]);
-	 temp3 = (dt[i].z - vc[2]) * (dt[j].z - vc[2]) * (q[i * (nat * 9) + j * 9 + 0] + q[i * (nat * 9) + j * 9 + 4]);
-	 sum111 = temp1 + temp2 + temp3;
+         temp1 = (dt[i].x - vc[0]) * (dt[j].x - vc[0]) * (q[i * (nat * 9) + j * 9 + 4] + q[i * (nat * 9) + j * 9 + 8]);
+         temp2 = (dt[i].y - vc[1]) * (dt[j].y - vc[1]) * (q[i * (nat * 9) + j * 9 + 0] + q[i * (nat * 9) + j * 9 + 8]);
+         temp3 = (dt[i].z - vc[2]) * (dt[j].z - vc[2]) * (q[i * (nat * 9) + j * 9 + 0] + q[i * (nat * 9) + j * 9 + 4]);
+         sum111 = temp1 + temp2 + temp3;
 
-	 vis += etai * ((1.0 / 15.0) * temp + (1.0 / 20.0) * sum1 - (1.0 / 30.0) * sum11 + (1.0 / 20.0) * sum111);
+         vis += etai * ((1.0 / 15.0) * temp + (1.0 / 20.0) * sum1 - (1.0 / 30.0) * sum11 + (1.0 / 20.0) * sum111);
 
       }
    }
@@ -5024,63 +5024,63 @@ tsuda()
    {
       for (j = 0; j < nat; j++)
       {
-	 if (i != j)
-	 {
-	    ri = dt[i].r;
+         if (i != j)
+         {
+            ri = dt[i].r;
 
-	    rj = dt[j].r;
+            rj = dt[j].r;
 
-	    Ri = sqrt(pow((dt[i].x - xm), 2) + pow((dt[i].y - ym), 2) + pow((dt[i].z - zm), 2));
+            Ri = sqrt(pow((dt[i].x - xm), 2) + pow((dt[i].y - ym), 2) + pow((dt[i].z - zm), 2));
 
-	    Rj = sqrt(pow((dt[j].x - xm), 2) + pow((dt[j].y - ym), 2) + pow((dt[j].z - zm), 2));
+            Rj = sqrt(pow((dt[j].x - xm), 2) + pow((dt[j].y - ym), 2) + pow((dt[j].z - zm), 2));
 
-	    R = sqrt(pow((dt[i].x - dt[j].x), 2) + pow((dt[i].y - dt[j].y), 2) + pow((dt[i].z - dt[j].z), 2));
+            R = sqrt(pow((dt[i].x - dt[j].x), 2) + pow((dt[i].y - dt[j].y), 2) + pow((dt[i].z - dt[j].z), 2));
 
-	    RRcosalfa = (dt[i].x - xm) * (dt[j].x - xm) + (dt[i].y - ym) * (dt[j].y - ym) + (dt[i].z - zm) * (dt[j].z - zm);
+            RRcosalfa = (dt[i].x - xm) * (dt[j].x - xm) + (dt[i].y - ym) * (dt[j].y - ym) + (dt[i].z - zm) * (dt[j].z - zm);
 
-	    a1 = log10((R * R - (ri - rj) * (ri - rj)) / (R * R + (ri - rj) * (ri - rj)));
+            a1 = log10((R * R - (ri - rj) * (ri - rj)) / (R * R + (ri - rj) * (ri - rj)));
 
-	    a2 = (52 * (Ri * Ri + Rj * Rj) + 34 * (ri * ri + rj * rj) - 54 * R * R) / (5 * R);
+            a2 = (52 * (Ri * Ri + Rj * Rj) + 34 * (ri * ri + rj * rj) - 54 * R * R) / (5 * R);
 
-	    a3 = 104 * ri * ri * (RRcosalfa - Ri * Ri) / (15 * R * R * R) -
-	       104 * rj * rj * (Rj * Rj - RRcosalfa) / (15 * R * R * R);
+            a3 = 104 * ri * ri * (RRcosalfa - Ri * Ri) / (15 * R * R * R) -
+               104 * rj * rj * (Rj * Rj - RRcosalfa) / (15 * R * R * R);
 
-	    a4 = a1 * ((Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) +
-		       4.0 / 3.0 * (Ri * Ri * ri * ri + Rj * Rj * rj * rj)) / (10 * R * ri * rj);
+            a4 = a1 * ((Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) +
+                       4.0 / 3.0 * (Ri * Ri * ri * ri + Rj * Rj * rj * rj)) / (10 * R * ri * rj);
 
-	    a5 = 3.0 * rj * rj - 3.0 * R * R - 5.0 * ri * ri +
-	       a1 * (-ri * ri * (6.0 * rj * rj - 3.0 * ri * ri - 2.0 * R * R) +
-		     3.0 * (R * R - rj * rj) * (R * R - rj * rj)) / (4.0 * ri * rj);
+            a5 = 3.0 * rj * rj - 3.0 * R * R - 5.0 * ri * ri +
+               a1 * (-ri * ri * (6.0 * rj * rj - 3.0 * ri * ri - 2.0 * R * R) +
+                     3.0 * (R * R - rj * rj) * (R * R - rj * rj)) / (4.0 * ri * rj);
 
-	    a6 = (3.0 * (RRcosalfa - Ri * Ri) * (RRcosalfa - Ri * Ri) - R * R * Ri * Ri) * a5 / (15 * R * R * R * R * R);
+            a6 = (3.0 * (RRcosalfa - Ri * Ri) * (RRcosalfa - Ri * Ri) - R * R * Ri * Ri) * a5 / (15 * R * R * R * R * R);
 
-	    a7 = 3.0 * ri * ri - 3.0 * R * R - 5.0 * rj * rj +
-	       a1 * (-rj * rj * (6.0 * ri * ri - 3.0 * rj * rj - 2.0 * R * R) +
-		     3.0 * (R * R - ri * ri) * (R * R - ri * ri)) / (4.0 * ri * rj);
+            a7 = 3.0 * ri * ri - 3.0 * R * R - 5.0 * rj * rj +
+               a1 * (-rj * rj * (6.0 * ri * ri - 3.0 * rj * rj - 2.0 * R * R) +
+                     3.0 * (R * R - ri * ri) * (R * R - ri * ri)) / (4.0 * ri * rj);
 
-	    a8 = (3.0 * (Rj * Rj - RRcosalfa) * (Rj * Rj - RRcosalfa) - R * R * Rj * Rj) * a7 / (15 * R * R * R * R * R);
+            a8 = (3.0 * (Rj * Rj - RRcosalfa) * (Rj * Rj - RRcosalfa) - R * R * Rj * Rj) * a7 / (15 * R * R * R * R * R);
 
-	    a9 = 1.0 + a1 * (rj * rj - ri * ri - R * R) / (4.0 * ri * rj);
+            a9 = 1.0 + a1 * (rj * rj - ri * ri - R * R) / (4.0 * ri * rj);
 
-	    a10 = 4.0 * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (RRcosalfa - Ri * Ri) * a9 / (5.0 * R * R * R);
+            a10 = 4.0 * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (RRcosalfa - Ri * Ri) * a9 / (5.0 * R * R * R);
 
-	    a11 = 1.0 + a1 * (ri * ri - rj * rj - R * R) / (4.0 * ri * rj);
+            a11 = 1.0 + a1 * (ri * ri - rj * rj - R * R) / (4.0 * ri * rj);
 
-	    a12 = 4.0 * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (Rj * Rj - RRcosalfa) * a11 / (5.0 * R * R * R);
+            a12 = 4.0 * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (Rj * Rj - RRcosalfa) * a11 / (5.0 * R * R * R);
 
-	    a13 = 4.0 * (RRcosalfa - Ri * Ri) * (Rj * Rj - RRcosalfa) / (5.0 * R * R * R * R * R);
+            a13 = 4.0 * (RRcosalfa - Ri * Ri) * (Rj * Rj - RRcosalfa) / (5.0 * R * R * R * R * R);
 
-	    a14 = a13 * (R * R + ri * ri + rj * rj + a1 * ((ri * ri - rj * rj) * (ri * ri - rj * rj) - R * R * R * R));
+            a14 = a13 * (R * R + ri * ri + rj * rj + a1 * ((ri * ri - rj * rj) * (ri * ri - rj * rj) - R * R * R * R));
 
-	    a15 = 2.0 * (Ri * Ri * Rj * Rj - RRcosalfa * RRcosalfa) / (5.0 * R * R * R * R * R);
+            a15 = 2.0 * (Ri * Ri * Rj * Rj - RRcosalfa * RRcosalfa) / (5.0 * R * R * R * R * R);
 
-	    a16 =
-	       a15 * (R * R - ri * ri - rj * rj +
-		      a1 / (4.0 * ri * rj) * ((ri + rj) * (ri + rj) - R * R) * (R * R - (ri - rj) * (ri - rj)));
+            a16 =
+               a15 * (R * R - ri * ri - rj * rj +
+                      a1 / (4.0 * ri * rj) * ((ri + rj) * (ri + rj) - R * R) * (R * R - (ri - rj) * (ri - rj)));
 
-	    I += (ri * ri * rj * rj) * (a2 + a3 + a4 + a6 + a8 - a10 - a12 - a14 - a16);
+            I += (ri * ri * rj * rj) * (a2 + a3 + a4 + a6 + a8 - a10 - a12 - a14 - a16);
 
-	 }
+         }
       }
       E += ri * ri * (ri * ri + Ri * Ri);
 
@@ -5138,64 +5138,64 @@ tsuda1()
    {
       for (j = 0; j < nat; j++)
       {
-	 if (i != j)
-	 {
-	    ri = dt[i].r;
+         if (i != j)
+         {
+            ri = dt[i].r;
 
-	    rj = dt[j].r;
+            rj = dt[j].r;
 
-	    Ri = sqrt(pow((dt[i].x - vc[0]), 2) + pow((dt[i].y - vc[1]), 2) + pow((dt[i].z - vc[2]), 2));
+            Ri = sqrt(pow((dt[i].x - vc[0]), 2) + pow((dt[i].y - vc[1]), 2) + pow((dt[i].z - vc[2]), 2));
 
-	    Rj = sqrt(pow((dt[j].x - vc[0]), 2) + pow((dt[j].y - vc[1]), 2) + pow((dt[j].z - vc[2]), 2));
+            Rj = sqrt(pow((dt[j].x - vc[0]), 2) + pow((dt[j].y - vc[1]), 2) + pow((dt[j].z - vc[2]), 2));
 
-	    R = sqrt(pow((dt[i].x - dt[j].x), 2) + pow((dt[i].y - dt[j].y), 2) + pow((dt[i].z - dt[j].z), 2));
+            R = sqrt(pow((dt[i].x - dt[j].x), 2) + pow((dt[i].y - dt[j].y), 2) + pow((dt[i].z - dt[j].z), 2));
 
-	    RRcosalfa = (dt[i].x - vc[0]) * (dt[j].x - vc[0]) + (dt[i].y - vc[1]) * (dt[j].y - vc[1]) +
-	       (dt[i].z - vc[2]) * (dt[j].z - vc[2]);
+            RRcosalfa = (dt[i].x - vc[0]) * (dt[j].x - vc[0]) + (dt[i].y - vc[1]) * (dt[j].y - vc[1]) +
+               (dt[i].z - vc[2]) * (dt[j].z - vc[2]);
 
-	    a1 = log10((R * R - (ri - rj) * (ri - rj)) / (R * R + (ri - rj) * (ri - rj)));
+            a1 = log10((R * R - (ri - rj) * (ri - rj)) / (R * R + (ri - rj) * (ri - rj)));
 
-	    a2 = (52 * (Ri * Ri + Rj * Rj) + 34 * (ri * ri + rj * rj) - 54 * R * R) / (5 * R);
+            a2 = (52 * (Ri * Ri + Rj * Rj) + 34 * (ri * ri + rj * rj) - 54 * R * R) / (5 * R);
 
-	    a3 = 104 * ri * ri * (RRcosalfa - Ri * Ri) / (15 * R * R * R) -
-	       104 * rj * rj * (Rj * Rj - RRcosalfa) / (15 * R * R * R);
+            a3 = 104 * ri * ri * (RRcosalfa - Ri * Ri) / (15 * R * R * R) -
+               104 * rj * rj * (Rj * Rj - RRcosalfa) / (15 * R * R * R);
 
-	    a4 = a1 * ((Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) +
-		       4.0 / 3.0 * (Ri * Ri * ri * ri + Rj * Rj * rj * rj)) / (10 * R * ri * rj);
+            a4 = a1 * ((Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) +
+                       4.0 / 3.0 * (Ri * Ri * ri * ri + Rj * Rj * rj * rj)) / (10 * R * ri * rj);
 
-	    a5 = 3.0 * rj * rj - 3.0 * R * R - 5.0 * ri * ri +
-	       a1 * (-ri * ri * (6.0 * rj * rj - 3.0 * ri * ri - 2.0 * R * R) +
-		     3.0 * (R * R - rj * rj) * (R * R - rj * rj)) / (4.0 * ri * rj);
+            a5 = 3.0 * rj * rj - 3.0 * R * R - 5.0 * ri * ri +
+               a1 * (-ri * ri * (6.0 * rj * rj - 3.0 * ri * ri - 2.0 * R * R) +
+                     3.0 * (R * R - rj * rj) * (R * R - rj * rj)) / (4.0 * ri * rj);
 
-	    a6 = (3.0 * (RRcosalfa - Ri * Ri) * (RRcosalfa - Ri * Ri) - R * R * Ri * Ri) * a5 / (15 * R * R * R * R * R);
+            a6 = (3.0 * (RRcosalfa - Ri * Ri) * (RRcosalfa - Ri * Ri) - R * R * Ri * Ri) * a5 / (15 * R * R * R * R * R);
 
-	    a7 = 3.0 * ri * ri - 3.0 * R * R - 5.0 * rj * rj +
-	       a1 * (-rj * rj * (6.0 * ri * ri - 3.0 * rj * rj - 2.0 * R * R) +
-		     3.0 * (R * R - ri * ri) * (R * R - ri * ri)) / (4.0 * ri * rj);
+            a7 = 3.0 * ri * ri - 3.0 * R * R - 5.0 * rj * rj +
+               a1 * (-rj * rj * (6.0 * ri * ri - 3.0 * rj * rj - 2.0 * R * R) +
+                     3.0 * (R * R - ri * ri) * (R * R - ri * ri)) / (4.0 * ri * rj);
 
-	    a8 = (3.0 * (Rj * Rj - RRcosalfa) * (Rj * Rj - RRcosalfa) - R * R * Rj * Rj) * a7 / (15 * R * R * R * R * R);
+            a8 = (3.0 * (Rj * Rj - RRcosalfa) * (Rj * Rj - RRcosalfa) - R * R * Rj * Rj) * a7 / (15 * R * R * R * R * R);
 
-	    a9 = 1.0 + a1 * (rj * rj - ri * ri - R * R) / (4.0 * ri * rj);
+            a9 = 1.0 + a1 * (rj * rj - ri * ri - R * R) / (4.0 * ri * rj);
 
-	    a10 = 4.0 * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (RRcosalfa - Ri * Ri) * a9 / (5.0 * R * R * R);
+            a10 = 4.0 * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (RRcosalfa - Ri * Ri) * a9 / (5.0 * R * R * R);
 
-	    a11 = 1.0 + a1 * (ri * ri - rj * rj - R * R) / (4.0 * ri * rj);
+            a11 = 1.0 + a1 * (ri * ri - rj * rj - R * R) / (4.0 * ri * rj);
 
-	    a12 = 4.0 * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (Rj * Rj - RRcosalfa) * a11 / (5.0 * R * R * R);
+            a12 = 4.0 * (Ri * Ri - Rj * Rj + ri * ri - rj * rj) * (Rj * Rj - RRcosalfa) * a11 / (5.0 * R * R * R);
 
-	    a13 = 4.0 * (RRcosalfa - Ri * Ri) * (Rj * Rj - RRcosalfa) / (5.0 * R * R * R * R * R);
+            a13 = 4.0 * (RRcosalfa - Ri * Ri) * (Rj * Rj - RRcosalfa) / (5.0 * R * R * R * R * R);
 
-	    a14 = a13 * (R * R + ri * ri + rj * rj + a1 * ((ri * ri - rj * rj) * (ri * ri - rj * rj) - R * R * R * R));
+            a14 = a13 * (R * R + ri * ri + rj * rj + a1 * ((ri * ri - rj * rj) * (ri * ri - rj * rj) - R * R * R * R));
 
-	    a15 = 2.0 * (Ri * Ri * Rj * Rj - RRcosalfa * RRcosalfa) / (5.0 * R * R * R * R * R);
+            a15 = 2.0 * (Ri * Ri * Rj * Rj - RRcosalfa * RRcosalfa) / (5.0 * R * R * R * R * R);
 
-	    a16 =
-	       a15 * (R * R - ri * ri - rj * rj +
-		      a1 / (4.0 * ri * rj) * ((ri + rj) * (ri + rj) - R * R) * (R * R - (ri - rj) * (ri - rj)));
+            a16 =
+               a15 * (R * R - ri * ri - rj * rj +
+                      a1 / (4.0 * ri * rj) * ((ri + rj) * (ri + rj) - R * R) * (R * R - (ri - rj) * (ri - rj)));
 
-	    I += (ri * ri * rj * rj) * (a2 + a3 + a4 + a6 + a8 - a10 - a12 - a14 - a16);
+            I += (ri * ri * rj * rj) * (a2 + a3 + a4 + a6 + a8 - a10 - a12 - a14 - a16);
 
-	 }
+         }
       }
       E += ri * ri * (ri * ri + Ri * Ri);
 
@@ -5238,20 +5238,20 @@ doublesum()
       for (j = 0; j < nat; j++)
       {
 
-	 rj = dt[j].r;
+         rj = dt[j].r;
 
-	 Rj = sqrt(pow((dt[j].x - xm), 2) + pow((dt[j].y - ym), 2) + pow((dt[j].z - zm), 2));
+         Rj = sqrt(pow((dt[j].x - xm), 2) + pow((dt[j].y - ym), 2) + pow((dt[j].z - zm), 2));
 
-	 if (i != j)
-	 {
+         if (i != j)
+         {
 
-	    R = sqrt(pow((dt[i].x - dt[j].x), 2) + pow((dt[i].y - dt[j].y), 2) + pow((dt[i].z - dt[j].z), 2));
+            R = sqrt(pow((dt[i].x - dt[j].x), 2) + pow((dt[i].y - dt[j].y), 2) + pow((dt[i].z - dt[j].z), 2));
 
-	    RRcosalfa = (dt[i].x - xm) * (dt[j].x - xm) + (dt[i].y - ym) * (dt[j].y - ym) + (dt[i].z - zm) * (dt[j].z - zm);
+            RRcosalfa = (dt[i].x - xm) * (dt[j].x - xm) + (dt[i].y - ym) * (dt[j].y - ym) + (dt[i].z - zm) * (dt[j].z - zm);
 
-	    a2 += 6.0 * PI * ETAo * ri * rj * RRcosalfa / R;
+            a2 += 6.0 * PI * ETAo * ri * rj * RRcosalfa / R;
 
-	 }
+         }
       }
    }
 

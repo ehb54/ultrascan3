@@ -94,7 +94,7 @@ void print_our_matrix(our_matrix *m) {
    for(i = 0; i < m->rows; i++) {
       printf("%d: %d:", this_rank, i);
       for(j = 0; j <= m->cols; j++) {
-	 printf(" %.6g", m->d[(i * m->cols) + j]);
+         printf(" %.6g", m->d[(i * m->cols) + j]);
       }
       puts("");
    }
@@ -287,7 +287,7 @@ void mult_our_matrix_vmv(our_vector *vd, our_matrix *m, our_vector *vs) {
    set_our_vector(vd, 0e0);
    for(i = 0; i < m->rows; i++) {
       for(j = 0; j < m->cols; j++) {
-	 vd->d[i] += m->d[(i * m->cols) + j] * vs->d[j];
+         vd->d[i] += m->d[(i * m->cols) + j] * vs->d[j];
       }
    }
 }
@@ -316,35 +316,35 @@ void clip_our_vector_scaled(our_vector *v) {
       j = i+1;
       if (ga_sc) 
       {
-	 if (v->d[i] < 0) 
-	 {
-	    v->d[i] = 0;
-	 }
-	 if (v->d[i] > 1) 
-	 {
-	    v->d[i] = 1;
-	 }
+         if (v->d[i] < 0) 
+         {
+            v->d[i] = 0;
+         }
+         if (v->d[i] > 1) 
+         {
+            v->d[i] = 1;
+         }
       } else {
-	 if(ga_mw) {
-	    if(v->d[i] < .01) {
-	       v->d[i] = .01;
-	    } 
-	 } else {
-	    if(v->d[i] < .1) {
-	       v->d[i] = 1;
-	    } else {
-	       if(v->d[i] > 200) {
-		  v->d[i] = 200;
-	       }
-	    }
-	 }
-	 if(v->d[j] < 1) {
-	    v->d[j] = 1;
-	 } else {
-	    if(v->d[j] > 50) {
-	       v->d[j] = 50;
-	    }
-	 }
+         if(ga_mw) {
+            if(v->d[i] < .01) {
+               v->d[i] = .01;
+            } 
+         } else {
+            if(v->d[i] < .1) {
+               v->d[i] = 1;
+            } else {
+               if(v->d[i] > 200) {
+                  v->d[i] = 200;
+               }
+            }
+         }
+         if(v->d[j] < 1) {
+            v->d[j] = 1;
+         } else {
+            if(v->d[j] > 50) {
+               v->d[j] = 50;
+            }
+         }
       }
    }
 }
@@ -396,21 +396,21 @@ long min_gsm_5_1(our_vector *i, double f(our_vector *), void df(our_vector *, ou
       printf("begin\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
       printf("%d: global %ld, iter %ld fitness %.12g |grad|=%.12g last reps %d\n", this_rank, global_iter++, 
-	     iter, fitness = f(i), l2norm_our_vector(u, zero), last_reps); fflush(stdout);
+             iter, fitness = f(i), l2norm_our_vector(u, zero), last_reps); fflush(stdout);
       printf("%d: ", this_rank);
       print_our_vector(i);
       fflush(stdout);
       if(!fitness) {
-	 free_our_vector(v_s1);
-	 free_our_vector(v_s2);
-	 free_our_vector(v_s3);
-	 free_our_vector(v_s4);
-	 free_our_vector(zero);
-	 free_our_vector(u);
-	 return(0);
+         free_our_vector(v_s1);
+         free_our_vector(v_s2);
+         free_our_vector(v_s3);
+         free_our_vector(v_s4);
+         free_our_vector(zero);
+         free_our_vector(u);
+         return(0);
       }
       /*    printf("i : ");
-	    print_our_vector(i); */
+            print_our_vector(i); */
       /* find minimum of f(i - t u) */
       /* alg 5_2 */
 
@@ -423,7 +423,7 @@ long min_gsm_5_1(our_vector *i, double f(our_vector *), void df(our_vector *, ou
       s2 = 5e-1;
       mult_our_vector_vvs(v_s2, u, -s2);
       /*    printf("v_s2 after mult_our_vector_vvs : ");
-	    print_our_vector(v_s2); */
+            print_our_vector(v_s2); */
       /*    printf("i : "); */
       add_our_vector_vv(v_s2, i);
       g_s2 = f(v_s2);
@@ -434,24 +434,24 @@ long min_gsm_5_1(our_vector *i, double f(our_vector *), void df(our_vector *, ou
       gettimeofday(&tv1, NULL);
 
       while(g_s2 > g_s1 && s2 - s1 > epsilon) {
-	 s3 = s2;
-	 s2 *= 5e-1;
-	 mult_our_vector_vvs(v_s2, u, -s2);
-	 add_our_vector_vv(v_s2, i);
-	 g_s2 = f(v_s2);
+         s3 = s2;
+         s2 *= 5e-1;
+         mult_our_vector_vvs(v_s2, u, -s2);
+         add_our_vector_vv(v_s2, i);
+         g_s2 = f(v_s2);
       }
 
       if(s2 - s1 <= epsilon || s3 - s2 <= epsilon) {
-	 /* ugh, no decrease */
-	 printf("%d: no initial decrease, terminating pos = ", this_rank);
-	 /*      print_our_vector(i); */
-	 free_our_vector(v_s1);
-	 free_our_vector(v_s2);
-	 free_our_vector(v_s3);
-	 free_our_vector(v_s4);
-	 free_our_vector(zero);
-	 free_our_vector(u);
-	 return(max_iter - iter);
+         /* ugh, no decrease */
+         printf("%d: no initial decrease, terminating pos = ", this_rank);
+         /*      print_our_vector(i); */
+         free_our_vector(v_s1);
+         free_our_vector(v_s2);
+         free_our_vector(v_s3);
+         free_our_vector(v_s4);
+         free_our_vector(zero);
+         free_our_vector(u);
+         return(max_iter - iter);
       }
 
       mult_our_vector_vvs(v_s3, u,-s3);
@@ -467,186 +467,186 @@ long min_gsm_5_1(our_vector *i, double f(our_vector *), void df(our_vector *, ou
       reps = 0;
       gettimeofday(&tv2, NULL);
       if(show_times)
-	 printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+         printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
       printf("%d: start line search\n", this_rank); 
       fflush(stdout);
       gettimeofday(&tv1, NULL);
       while(s2 - s1 > epsilon && s3 - s2 > epsilon && reps++ < MAX_REPS) {
       
 #if defined(DEBUG_GSM)
-	 printf("start\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
+         printf("start\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
 
-	 s1_s2 = 1e0 / (s1 - s2);
-	 s1_s3 = 1e0 / (s1 - s3);
-	 s2_s3 = 1e0 / (s2 - s3);
+         s1_s2 = 1e0 / (s1 - s2);
+         s1_s3 = 1e0 / (s1 - s3);
+         s2_s3 = 1e0 / (s2 - s3);
 
-	 s1_2 = s1 * s1;
-	 s2_2 = s2 * s2;
-	 s3_2 = s3 * s3;
+         s1_2 = s1 * s1;
+         s2_2 = s2 * s2;
+         s3_2 = s3 * s3;
 
-	 a = ((g_s1 - g_s3) * s1_s3 - (g_s2 - g_s3) * s2_s3) * s1_s2;
+         a = ((g_s1 - g_s3) * s1_s3 - (g_s2 - g_s3) * s2_s3) * s1_s2;
 
-	 /* printf("new a = %.12g\n",a); */
-	 b = (g_s3 * (s2_2 - s1_2) + g_s2 * (s1_2 - s3_2) + g_s1 * (s3_2 - s2_2)) *
-	    s1_s2 * s1_s3 * s2_s3;
+         /* printf("new a = %.12g\n",a); */
+         b = (g_s3 * (s2_2 - s1_2) + g_s2 * (s1_2 - s3_2) + g_s1 * (s3_2 - s2_2)) *
+            s1_s2 * s1_s3 * s2_s3;
 
-	 /* printf("new b = %.12g\n",b); */
+         /* printf("new b = %.12g\n",b); */
 
-	 if(fabs(a) < MIN_A) {
-	    /* maybe we should switch to a bisection method? */
-	    printf("%d: a limit reached\n", this_rank);
-	    printf("%d: done iter %ld, i = ", this_rank, iter); 
-	    print_our_vector(i); fflush(stdout);
-	    free_our_vector(v_s1);
-	    free_our_vector(v_s2);
-	    free_our_vector(v_s3);
-	    free_our_vector(v_s4);
-	    free_our_vector(zero);
-	    free_our_vector(u);
-	    return(max_iter - iter);
-	 }
+         if(fabs(a) < MIN_A) {
+            /* maybe we should switch to a bisection method? */
+            printf("%d: a limit reached\n", this_rank);
+            printf("%d: done iter %ld, i = ", this_rank, iter); 
+            print_our_vector(i); fflush(stdout);
+            free_our_vector(v_s1);
+            free_our_vector(v_s2);
+            free_our_vector(v_s3);
+            free_our_vector(v_s4);
+            free_our_vector(zero);
+            free_our_vector(u);
+            return(max_iter - iter);
+         }
 
-	 x = -b / (2e0 * a);
+         x = -b / (2e0 * a);
 
-	 prev_g_s2 = g_s2;
-	 prev_s2 = s2;
+         prev_g_s2 = g_s2;
+         prev_s2 = s2;
 
 #if defined(DEBUG_GSM)
-	 printf("new x = %.12g\n", x);
+         printf("new x = %.12g\n", x);
 #endif
 
-	 if(x < s1) {
+         if(x < s1) {
 #if defined(DEBUG_GSM)
-	    printf("p1 ");
+            printf("p1 ");
 #endif
-	    if(x < (s1 + s1 - s2)) { /* keep it close */
-	       x = s1 + s1 - s2;
-	       if(x < 0) {
-		  x = s1 / 2;
-	       }
-	    }
-	    if(x < 0) { /* ugh we're in the wrong direction! */
-	       printf("%d: unexpected minimum pos %.12g\n", this_rank, x);
-	       active_exit(-1);
-	    } 
-	    /* ok, take x, s1, s2 */
-	    v_tmp = v_s3;
-	    v_s3 = v_s2;
-	    g_s3 = g_s2;
-	    s3 = s2;
-	    v_s2 = v_s1;
-	    g_s2 = g_s1;
-	    s2 = s1;
-	    v_s1 = v_tmp;
-	
-	    s1 = x;
-	    mult_our_vector_vvs(v_s1, u, -s1);
-	    add_our_vector_vv(v_s1, i);
-	    g_s1 = f(v_s1);
-	 } else {
-	    if(x < s2) {
+            if(x < (s1 + s1 - s2)) { /* keep it close */
+               x = s1 + s1 - s2;
+               if(x < 0) {
+                  x = s1 / 2;
+               }
+            }
+            if(x < 0) { /* ugh we're in the wrong direction! */
+               printf("%d: unexpected minimum pos %.12g\n", this_rank, x);
+               active_exit(-1);
+            } 
+            /* ok, take x, s1, s2 */
+            v_tmp = v_s3;
+            v_s3 = v_s2;
+            g_s3 = g_s2;
+            s3 = s2;
+            v_s2 = v_s1;
+            g_s2 = g_s1;
+            s2 = s1;
+            v_s1 = v_tmp;
+   
+            s1 = x;
+            mult_our_vector_vvs(v_s1, u, -s1);
+            add_our_vector_vv(v_s1, i);
+            g_s1 = f(v_s1);
+         } else {
+            if(x < s2) {
 #if defined(DEBUG_GSM)
-	       printf("p2 ");
+               printf("p2 ");
 #endif
-	       /* ok, take s1, x, s2 */
-	       v_tmp = v_s3;
-	       v_s3 = v_s2;
-	       g_s3 = g_s2;
-	       s3 = s2;
-	       v_s2 = v_tmp;
-	
-	       s2 = x;
-	       /*	  printf("x = %.12g\n", x); */
-	       mult_our_vector_vvs(v_s2, u, -s2);
-	       add_our_vector_vv(v_s2, i);
-	       g_s2 = f(v_s2);
-	    } else {
-	       if(x < s3) {
+               /* ok, take s1, x, s2 */
+               v_tmp = v_s3;
+               v_s3 = v_s2;
+               g_s3 = g_s2;
+               s3 = s2;
+               v_s2 = v_tmp;
+   
+               s2 = x;
+               /*     printf("x = %.12g\n", x); */
+               mult_our_vector_vvs(v_s2, u, -s2);
+               add_our_vector_vv(v_s2, i);
+               g_s2 = f(v_s2);
+            } else {
+               if(x < s3) {
 #if defined(DEBUG_GSM)
-		  printf("p3 ");
+                  printf("p3 ");
 #endif
-		  /* ok, take s2, x, s3 */
-		  v_tmp = v_s1;
-		  v_s1 = v_s2;
-		  g_s1 = g_s2;
-		  s1 = s2;
-		  v_s2 = v_tmp;
-	
-		  s2 = x;
-		  mult_our_vector_vvs(v_s2, u, -s2);
-		  add_our_vector_vv(v_s2, i);
-		  g_s2 = f(v_s2);
-	       } else {
-		  /* ugh x >= s3.. well why not? */
-		  if(x > (s3 + s3 - s2)) { /* keep it close */
-		     mult_our_vector_vvs(v_s4, u, -x);
-		     add_our_vector_vv(v_s4, i);
-		     g_s4 = f(v_s4);
-		     if(g_s4 > g_s2 &&
-			g_s4 > g_s3 &&
-			g_s4 > g_s1) {
-			x = (s3 + s3 - s2);
-		     }
-		  }
-		  /* take s2, s3, x */
+                  /* ok, take s2, x, s3 */
+                  v_tmp = v_s1;
+                  v_s1 = v_s2;
+                  g_s1 = g_s2;
+                  s1 = s2;
+                  v_s2 = v_tmp;
+   
+                  s2 = x;
+                  mult_our_vector_vvs(v_s2, u, -s2);
+                  add_our_vector_vv(v_s2, i);
+                  g_s2 = f(v_s2);
+               } else {
+                  /* ugh x >= s3.. well why not? */
+                  if(x > (s3 + s3 - s2)) { /* keep it close */
+                     mult_our_vector_vvs(v_s4, u, -x);
+                     add_our_vector_vv(v_s4, i);
+                     g_s4 = f(v_s4);
+                     if(g_s4 > g_s2 &&
+                        g_s4 > g_s3 &&
+                        g_s4 > g_s1) {
+                        x = (s3 + s3 - s2);
+                     }
+                  }
+                  /* take s2, s3, x */
 #if defined(DEBUG_GSM)
-		  printf("p4 ");
+                  printf("p4 ");
 #endif
-	    
-		  v_tmp = v_s1;
-		  v_s1 = v_s2;
-		  g_s1 = g_s2;
-		  s1 = s2;
-		  v_s2 = v_s3;
-		  g_s2 = g_s3;
-		  s2 = s3;
-		  v_s3 = v_tmp;
-	
-		  s3 = x;
-		  mult_our_vector_vvs(v_s3, u, -s3);
-		  add_our_vector_vv(v_s3, i);
-		  g_s3 = f(v_s3);
-	       }
-	    }
-	 }
+       
+                  v_tmp = v_s1;
+                  v_s1 = v_s2;
+                  g_s1 = g_s2;
+                  s1 = s2;
+                  v_s2 = v_s3;
+                  g_s2 = g_s3;
+                  s2 = s3;
+                  v_s3 = v_tmp;
+   
+                  s3 = x;
+                  mult_our_vector_vvs(v_s3, u, -s3);
+                  add_our_vector_vv(v_s3, i);
+                  g_s3 = f(v_s3);
+               }
+            }
+         }
       
-	 if(fabs(prev_g_s2 - g_s2) < epsilon) {
-	    printf("%d: fabs(g-prev) < epsilon\n", this_rank); fflush(stdout);
-	    break;
-	 }
-	 /*      puts(""); */
+         if(fabs(prev_g_s2 - g_s2) < epsilon) {
+            printf("%d: fabs(g-prev) < epsilon\n", this_rank); fflush(stdout);
+            break;
+         }
+         /*      puts(""); */
       }
       last_reps = reps;
       /*    printf("v_s2 ");
-	    print_our_vector(v_s2); */
+            print_our_vector(v_s2); */
 
       if(g_s2 < g_s3 && g_s2 < g_s1) {
-	 copy_our_vector(i, v_s2);
-	 g_s4 = g_s2;
+         copy_our_vector(i, v_s2);
+         g_s4 = g_s2;
       } else {
-	 if(g_s1 < g_s3) {
-	    copy_our_vector(i, v_s1);
-	    g_s4 = g_s1;
-	 } else {
-	    copy_our_vector(i, v_s3);
-	    g_s4 = g_s3;
-	 }
+         if(g_s1 < g_s3) {
+            copy_our_vector(i, v_s1);
+            g_s4 = g_s1;
+         } else {
+            copy_our_vector(i, v_s3);
+            g_s4 = g_s3;
+         }
       }
 
       if(evenn) {
-	 switch(queries) {
-	 case 8 : i->d[(6 * N_2) - 1] = 0;
-	 case 7 :
-	 case 6 : i->d[(4 * N_2) - 1] = 0;
-	 case 5 :
-	 case 4 : i->d[(2 * N_2) - 1] = 0; 
-	 default : break;
-	 }
+         switch(queries) {
+         case 8 : i->d[(6 * N_2) - 1] = 0;
+         case 7 :
+         case 6 : i->d[(4 * N_2) - 1] = 0;
+         case 5 :
+         case 4 : i->d[(2 * N_2) - 1] = 0; 
+         default : break;
+         }
       }
       gettimeofday(&tv2, NULL);
       if(show_times)
-	 printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+         printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
       printf("%d: df start\n", this_rank); 
       fflush(stdout);
       df(u, i);
@@ -656,29 +656,29 @@ long min_gsm_5_1(our_vector *i, double f(our_vector *), void df(our_vector *, ou
 #endif
 
       if(!(global_iter % 5)) {
-	 //      int r, s, j;
+         //      int r, s, j;
       
-	 printf("%d: query4i_intermediate|alg4|%s|%d|%.12g|%d|%d|%d|%d|%d|%.12g|%.12g|%.12g|%.12g|%ld|%d|%d|%d|%.12g|%ld|%ld", this_rank,
-		(f(i) <= 0e0) ? "success" : "fail",
-		N, 
-		f(i),
-		queries,
-		fitness_type,
-		0,
-		this_iterations + prev_iterations, 
-		go, 
-		0e0,
-		0e0,
-		0e0,
-		0e0,
-		iterations_max,
-		0,
-		0,
-		0,
-		min_acceptable,
-		0L, 0L
-		); 
-	 puts(""); 
+         printf("%d: query4i_intermediate|alg4|%s|%d|%.12g|%d|%d|%d|%d|%d|%.12g|%.12g|%.12g|%.12g|%ld|%d|%d|%d|%.12g|%ld|%ld", this_rank,
+                (f(i) <= 0e0) ? "success" : "fail",
+                N, 
+                f(i),
+                queries,
+                fitness_type,
+                0,
+                this_iterations + prev_iterations, 
+                go, 
+                0e0,
+                0e0,
+                0e0,
+                0e0,
+                iterations_max,
+                0,
+                0,
+                0,
+                min_acceptable,
+                0L, 0L
+                ); 
+         puts(""); 
       }
    }
 
@@ -737,7 +737,7 @@ long min_fr_pr_cgd(our_vector *i, double f(our_vector *), void df(our_vector *, 
    while(l2norm_our_vector(u, zero) >= epsilon && iter++ < max_iter) {
       this_iterations++;
       printf("%d: global %ld, iter %ld fitness %.12g |grad|=%.12g last reps %d\n", this_rank, global_iter++, 
-	     iter, fitness = f(i), l2norm_our_vector(u, zero), last_reps); fflush(stdout);
+             iter, fitness = f(i), l2norm_our_vector(u, zero), last_reps); fflush(stdout);
       printf("%d: ", this_rank);
       print_our_vector(i);
 #if defined(DEBUG_GSM)
@@ -745,18 +745,18 @@ long min_fr_pr_cgd(our_vector *i, double f(our_vector *), void df(our_vector *, 
 #endif
       fflush(stdout);
       if(!fitness) {
-	 free_our_vector(v_s1);
-	 free_our_vector(v_s2);
-	 free_our_vector(v_s3);
-	 free_our_vector(v_s4);
-	 free_our_vector(v_h);
-	 free_our_vector(v_g);
-	 free_our_vector(zero);
-	 free_our_vector(u);
-	 return(0);
+         free_our_vector(v_s1);
+         free_our_vector(v_s2);
+         free_our_vector(v_s3);
+         free_our_vector(v_s4);
+         free_our_vector(v_h);
+         free_our_vector(v_g);
+         free_our_vector(zero);
+         free_our_vector(u);
+         return(0);
       }
       /*    printf("i : ");
-	    print_our_vector(i); */
+            print_our_vector(i); */
       /* find minimum of f(i - t u) */
       /* alg 5_2 */
 
@@ -769,7 +769,7 @@ long min_fr_pr_cgd(our_vector *i, double f(our_vector *), void df(our_vector *, 
       s2 = 5e-1;
       mult_our_vector_vvs(v_s2, u, -s2);
       /*    printf("v_s2 after mult_our_vector_vvs : ");
-	    print_our_vector(v_s2); */
+            print_our_vector(v_s2); */
       /*    printf("i : "); */
       add_our_vector_vv(v_s2, i);
       print_our_vector(v_s2);
@@ -786,26 +786,26 @@ long min_fr_pr_cgd(our_vector *i, double f(our_vector *), void df(our_vector *, 
 #endif
 
       while(g_s2 > g_s1 && s2 - s1 > epsilon) {
-	 s3 = s2;
-	 s2 *= 5e-1;
-	 mult_our_vector_vvs(v_s2, u, -s2);
-	 add_our_vector_vv(v_s2, i);
-	 g_s2 = f(v_s2);
+         s3 = s2;
+         s2 *= 5e-1;
+         mult_our_vector_vvs(v_s2, u, -s2);
+         add_our_vector_vv(v_s2, i);
+         g_s2 = f(v_s2);
       }
 
       if(s2 - s1 <= epsilon || s3 - s2 <= epsilon) {
-	 /* ugh, no decrease */
-	 printf("%d: no initial decrease, terminating pos = ", this_rank);
-	 /*      print_our_vector(i); */
-	 free_our_vector(v_s1);
-	 free_our_vector(v_s2);
-	 free_our_vector(v_s3);
-	 free_our_vector(v_s4);
-	 free_our_vector(v_h);
-	 free_our_vector(v_g);
-	 free_our_vector(zero);
-	 free_our_vector(u);
-	 return(max_iter - iter);
+         /* ugh, no decrease */
+         printf("%d: no initial decrease, terminating pos = ", this_rank);
+         /*      print_our_vector(i); */
+         free_our_vector(v_s1);
+         free_our_vector(v_s2);
+         free_our_vector(v_s3);
+         free_our_vector(v_s4);
+         free_our_vector(v_h);
+         free_our_vector(v_g);
+         free_our_vector(zero);
+         free_our_vector(u);
+         return(max_iter - iter);
       }
 
       mult_our_vector_vvs(v_s3, u,-s3);
@@ -821,7 +821,7 @@ long min_fr_pr_cgd(our_vector *i, double f(our_vector *), void df(our_vector *, 
 
       gettimeofday(&tv2, NULL);
       if(show_times)
-	 printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+         printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
       printf("%d: start line search\n", this_rank); 
       fflush(stdout);
       gettimeofday(&tv1, NULL);
@@ -829,186 +829,186 @@ long min_fr_pr_cgd(our_vector *i, double f(our_vector *), void df(our_vector *, 
       while(s2 - s1 > epsilon && s3 - s2 > epsilon && reps++ < MAX_REPS) {
       
 #if defined(DEBUG_GSM)
-	 printf("start\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
+         printf("start\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
 
-	 s1_s2 = 1e0 / (s1 - s2);
-	 s1_s3 = 1e0 / (s1 - s3);
-	 s2_s3 = 1e0 / (s2 - s3);
+         s1_s2 = 1e0 / (s1 - s2);
+         s1_s3 = 1e0 / (s1 - s3);
+         s2_s3 = 1e0 / (s2 - s3);
 
-	 s1_2 = s1 * s1;
-	 s2_2 = s2 * s2;
-	 s3_2 = s3 * s3;
+         s1_2 = s1 * s1;
+         s2_2 = s2 * s2;
+         s3_2 = s3 * s3;
 
-	 a = ((g_s1 - g_s3) * s1_s3 - (g_s2 - g_s3) * s2_s3) * s1_s2;
+         a = ((g_s1 - g_s3) * s1_s3 - (g_s2 - g_s3) * s2_s3) * s1_s2;
 
-	 /* printf("new a = %.12g\n",a); */
-	 b = (g_s3 * (s2_2 - s1_2) + g_s2 * (s1_2 - s3_2) + g_s1 * (s3_2 - s2_2)) *
-	    s1_s2 * s1_s3 * s2_s3;
+         /* printf("new a = %.12g\n",a); */
+         b = (g_s3 * (s2_2 - s1_2) + g_s2 * (s1_2 - s3_2) + g_s1 * (s3_2 - s2_2)) *
+            s1_s2 * s1_s3 * s2_s3;
 
-	 /* printf("new b = %.12g\n",b); */
+         /* printf("new b = %.12g\n",b); */
 
-	 if(fabs(a) < MIN_A) {
-	    /* maybe we should switch to a bisection method? */
-	    printf("%d: a limit reached", this_rank);
-	    printf("done iter %ld, i = ", iter);
-	    print_our_vector(i);
-	    free_our_vector(v_s1);
-	    free_our_vector(v_s2);
-	    free_our_vector(v_s3);
-	    free_our_vector(v_s4);
-	    free_our_vector(v_h);
-	    free_our_vector(v_g);
-	    free_our_vector(zero);
-	    free_our_vector(u);
-	    return(max_iter - iter);
-	 }
+         if(fabs(a) < MIN_A) {
+            /* maybe we should switch to a bisection method? */
+            printf("%d: a limit reached", this_rank);
+            printf("done iter %ld, i = ", iter);
+            print_our_vector(i);
+            free_our_vector(v_s1);
+            free_our_vector(v_s2);
+            free_our_vector(v_s3);
+            free_our_vector(v_s4);
+            free_our_vector(v_h);
+            free_our_vector(v_g);
+            free_our_vector(zero);
+            free_our_vector(u);
+            return(max_iter - iter);
+         }
 
-	 x = -b / (2e0 * a);
+         x = -b / (2e0 * a);
 
-	 prev_g_s2 = g_s2;
-	 prev_s2 = s2;
+         prev_g_s2 = g_s2;
+         prev_s2 = s2;
 
 #if defined(DEBUG_GSM)
-	 printf("new x = %.12g\n", x);
+         printf("new x = %.12g\n", x);
 #endif
 
-	 if(x < s1) {
+         if(x < s1) {
 #if defined(DEBUG_GSM)
-	    printf("p1 ");
+            printf("p1 ");
 #endif
-	    if(x < (s1 + s1 - s2)) { /* keep it close */
-	       x = s1 + s1 - s2;
-	       if(x < 0) {
-		  x = s1 / 2;
-	       }
-	    }
-	    if(x < 0) { /* ugh we're in the wrong direction! */
-	       printf("%d: unexpected minimum pos %.12g\n", this_rank, x);
-	       //	  active_exit(-1);
-	       if(s1 < 0) {
-		  s1 = 0;
-	       }
-	       x = 0;
-	    } 
-	    /* ok, take x, s1, s2 */
-	    v_tmp = v_s3;
-	    v_s3 = v_s2;
-	    g_s3 = g_s2;
-	    s3 = s2;
-	    v_s2 = v_s1;
-	    g_s2 = g_s1;
-	    s2 = s1;
-	    v_s1 = v_tmp;
-	
-	    s1 = x;
-	    mult_our_vector_vvs(v_s1, u, -s1);
-	    add_our_vector_vv(v_s1, i);
-	    g_s1 = f(v_s1);
-	 } else {
-	    if(x < s2) {
+            if(x < (s1 + s1 - s2)) { /* keep it close */
+               x = s1 + s1 - s2;
+               if(x < 0) {
+                  x = s1 / 2;
+               }
+            }
+            if(x < 0) { /* ugh we're in the wrong direction! */
+               printf("%d: unexpected minimum pos %.12g\n", this_rank, x);
+               //     active_exit(-1);
+               if(s1 < 0) {
+                  s1 = 0;
+               }
+               x = 0;
+            } 
+            /* ok, take x, s1, s2 */
+            v_tmp = v_s3;
+            v_s3 = v_s2;
+            g_s3 = g_s2;
+            s3 = s2;
+            v_s2 = v_s1;
+            g_s2 = g_s1;
+            s2 = s1;
+            v_s1 = v_tmp;
+   
+            s1 = x;
+            mult_our_vector_vvs(v_s1, u, -s1);
+            add_our_vector_vv(v_s1, i);
+            g_s1 = f(v_s1);
+         } else {
+            if(x < s2) {
 #if defined(DEBUG_GSM)
-	       printf("p2 ");
+               printf("p2 ");
 #endif
-	       /* ok, take s1, x, s2 */
-	       v_tmp = v_s3;
-	       v_s3 = v_s2;
-	       g_s3 = g_s2;
-	       s3 = s2;
-	       v_s2 = v_tmp;
-	
-	       s2 = x;
-	       /*	  printf("x = %.12g\n", x); */
-	       mult_our_vector_vvs(v_s2, u, -s2);
-	       add_our_vector_vv(v_s2, i);
-	       g_s2 = f(v_s2);
-	    } else {
-	       if(x < s3) {
+               /* ok, take s1, x, s2 */
+               v_tmp = v_s3;
+               v_s3 = v_s2;
+               g_s3 = g_s2;
+               s3 = s2;
+               v_s2 = v_tmp;
+   
+               s2 = x;
+               /*     printf("x = %.12g\n", x); */
+               mult_our_vector_vvs(v_s2, u, -s2);
+               add_our_vector_vv(v_s2, i);
+               g_s2 = f(v_s2);
+            } else {
+               if(x < s3) {
 #if defined(DEBUG_GSM)
-		  printf("p3 ");
+                  printf("p3 ");
 #endif
-		  /* ok, take s2, x, s3 */
-		  v_tmp = v_s1;
-		  v_s1 = v_s2;
-		  g_s1 = g_s2;
-		  s1 = s2;
-		  v_s2 = v_tmp;
-	
-		  s2 = x;
-		  mult_our_vector_vvs(v_s2, u, -s2);
-		  add_our_vector_vv(v_s2, i);
-		  g_s2 = f(v_s2);
-	       } else {
-		  /* ugh x >= s3.. well why not? */
-		  if(x > (s3 + s3 - s2)) { /* keep it close */
-		     mult_our_vector_vvs(v_s4, u, -x);
-		     add_our_vector_vv(v_s4, i);
-		     g_s4 = f(v_s4);
-		     if(g_s4 > g_s2 &&
-			g_s4 > g_s3 &&
-			g_s4 > g_s1) {
-			x = (s3 + s3 - s2);
-		     }
-		  }
-		  /* take s2, s3, x */
+                  /* ok, take s2, x, s3 */
+                  v_tmp = v_s1;
+                  v_s1 = v_s2;
+                  g_s1 = g_s2;
+                  s1 = s2;
+                  v_s2 = v_tmp;
+   
+                  s2 = x;
+                  mult_our_vector_vvs(v_s2, u, -s2);
+                  add_our_vector_vv(v_s2, i);
+                  g_s2 = f(v_s2);
+               } else {
+                  /* ugh x >= s3.. well why not? */
+                  if(x > (s3 + s3 - s2)) { /* keep it close */
+                     mult_our_vector_vvs(v_s4, u, -x);
+                     add_our_vector_vv(v_s4, i);
+                     g_s4 = f(v_s4);
+                     if(g_s4 > g_s2 &&
+                        g_s4 > g_s3 &&
+                        g_s4 > g_s1) {
+                        x = (s3 + s3 - s2);
+                     }
+                  }
+                  /* take s2, s3, x */
 #if defined(DEBUG_GSM)
-		  printf("p4 ");
+                  printf("p4 ");
 #endif
-	    
-		  v_tmp = v_s1;
-		  v_s1 = v_s2;
-		  g_s1 = g_s2;
-		  s1 = s2;
-		  v_s2 = v_s3;
-		  g_s2 = g_s3;
-		  s2 = s3;
-		  v_s3 = v_tmp;
-	
-		  s3 = x;
-		  mult_our_vector_vvs(v_s3, u, -s3);
-		  add_our_vector_vv(v_s3, i);
-		  g_s3 = f(v_s3);
-	       }
-	    }
-	 }
+       
+                  v_tmp = v_s1;
+                  v_s1 = v_s2;
+                  g_s1 = g_s2;
+                  s1 = s2;
+                  v_s2 = v_s3;
+                  g_s2 = g_s3;
+                  s2 = s3;
+                  v_s3 = v_tmp;
+   
+                  s3 = x;
+                  mult_our_vector_vvs(v_s3, u, -s3);
+                  add_our_vector_vv(v_s3, i);
+                  g_s3 = f(v_s3);
+               }
+            }
+         }
       
-	 if(fabs(prev_g_s2 - g_s2) < epsilon) {
-	    printf("%d: fabs(g-prev) < epsilon\n", this_rank); fflush(stdout);
-	    break;
-	 }
-	 /*      puts(""); */
+         if(fabs(prev_g_s2 - g_s2) < epsilon) {
+            printf("%d: fabs(g-prev) < epsilon\n", this_rank); fflush(stdout);
+            break;
+         }
+         /*      puts(""); */
       }
       last_reps = reps;
       /*    printf("v_s2 ");
-	    print_our_vector(v_s2); */
+            print_our_vector(v_s2); */
       if(g_s2 < g_s3 && g_s2 < g_s1) {
-	 copy_our_vector(i, v_s2);
-	 g_s4 = g_s2;
+         copy_our_vector(i, v_s2);
+         g_s4 = g_s2;
       } else {
-	 if(g_s1 < g_s3) {
-	    copy_our_vector(i, v_s1);
-	    g_s4 = g_s1;
-	 } else {
-	    copy_our_vector(i, v_s3);
-	    g_s4 = g_s3;
-	 }
+         if(g_s1 < g_s3) {
+            copy_our_vector(i, v_s1);
+            g_s4 = g_s1;
+         } else {
+            copy_our_vector(i, v_s3);
+            g_s4 = g_s3;
+         }
       }
 
 
       if(evenn) {
-	 switch(queries) {
-	 case 8 : i->d[(6 * N_2) - 1] = 0;
-	 case 7 :
-	 case 6 : i->d[(4 * N_2) - 1] = 0;
-	 case 5 :
-	 case 4 : i->d[(2 * N_2) - 1] = 0; 
-	 default : break;
-	 }
+         switch(queries) {
+         case 8 : i->d[(6 * N_2) - 1] = 0;
+         case 7 :
+         case 6 : i->d[(4 * N_2) - 1] = 0;
+         case 5 :
+         case 4 : i->d[(2 * N_2) - 1] = 0; 
+         default : break;
+         }
       }
 
       gettimeofday(&tv2, NULL);
       if(show_times)
-	 printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+         printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
       printf("%d: df start\n", this_rank); 
       fflush(stdout);
       df(u, i);
@@ -1019,16 +1019,16 @@ long min_fr_pr_cgd(our_vector *i, double f(our_vector *), void df(our_vector *, 
       ggd = dot_our_vector(v_g, v_g);
       /*    printf("ggd = %.12g\n", ggd);*/
       if(ggd == 0e0) {
-	 puts("ggd == 0e0, returning");
-	 free_our_vector(v_s1);
-	 free_our_vector(v_s2);
-	 free_our_vector(v_s3);
-	 free_our_vector(v_s4);
-	 free_our_vector(v_h);
-	 free_our_vector(v_g);
-	 free_our_vector(zero);
-	 free_our_vector(u);
-	 return(0);
+         puts("ggd == 0e0, returning");
+         free_our_vector(v_s1);
+         free_our_vector(v_s2);
+         free_our_vector(v_s3);
+         free_our_vector(v_s4);
+         free_our_vector(v_h);
+         free_our_vector(v_g);
+         free_our_vector(zero);
+         free_our_vector(u);
+         return(0);
       }
       sub_our_vector_vvv(v_s4, u, v_g);
       gg = dot_our_vector(v_s4, u);
@@ -1039,34 +1039,34 @@ long min_fr_pr_cgd(our_vector *i, double f(our_vector *), void df(our_vector *, 
       copy_our_vector(u, v_h);
       gettimeofday(&tv2, NULL);
       if(show_times)
-	 printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+         printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
       fflush(stdout);
 
       if(!(global_iter % 5)) {
-	 //      int r, s, j;
+         //      int r, s, j;
       
-	 printf("%d: query4i_intermediate|alg3|%s|%d|%.12g|%d|%d|%d|%d|%d|%.12g|%.12g|%.12g|%.12g|%ld|%d|%d|%d|%.12g|%ld|%ld", this_rank,
-		(f(i) <= 0e0) ? "success" : "fail",
-		N, 
-		f(i),
-		queries,
-		fitness_type,
-		0,
-		this_iterations + prev_iterations, 
-		go, 
-		0e0,
-		0e0,
-		0e0,
-		0e0,
-		iterations_max,
-		0,
-		0,
-		0,
-		min_acceptable,
-		0L, 0L
-		); 
-		
-	 puts(""); 
+         printf("%d: query4i_intermediate|alg3|%s|%d|%.12g|%d|%d|%d|%d|%d|%.12g|%.12g|%.12g|%.12g|%ld|%d|%d|%d|%.12g|%ld|%ld", this_rank,
+                (f(i) <= 0e0) ? "success" : "fail",
+                N, 
+                f(i),
+                queries,
+                fitness_type,
+                0,
+                this_iterations + prev_iterations, 
+                go, 
+                0e0,
+                0e0,
+                0e0,
+                0e0,
+                iterations_max,
+                0,
+                0,
+                0,
+                min_acceptable,
+                0L, 0L
+                ); 
+      
+         puts(""); 
       }
    }
 
@@ -1146,29 +1146,29 @@ long min_hessian_bfgs(our_vector *ip, double f(our_vector *), void df(our_vector
       printf("begin\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
       printf("%d: global %ld, iter %ld fitness %.12g |grad|=%.12g last reps %d\n", this_rank, global_iter++, 
-	     iter, fitness = f(ip), l2norm_our_vector(u, zero), last_reps); fflush(stdout);
+             iter, fitness = f(ip), l2norm_our_vector(u, zero), last_reps); fflush(stdout);
       printf("%d: ", this_rank);
       print_our_vector(ip);
       /*    print_our_vector(u); */
       fflush(stdout);
       /*    printf("ip : ");
-	    print_our_vector(ip); */
+            print_our_vector(ip); */
       /* find minimum of f(ip - t u) */
       /* alg 5_2 */
       if(!fitness) {
-	 free_our_vector(v_s1);
-	 free_our_vector(v_s2);
-	 free_our_vector(v_s3);
-	 free_our_vector(v_s4);
-	 free_our_vector(v_g);
-	 free_our_vector(v_dg);
-	 free_our_vector(v_hdg);
-	 free_our_vector(v_p);
-	 free_our_vector(v_dx);
-	 free_our_vector(zero);
-	 free_our_vector(u);
-	 free_our_matrix(hessian);
-	 return(0);
+         free_our_vector(v_s1);
+         free_our_vector(v_s2);
+         free_our_vector(v_s3);
+         free_our_vector(v_s4);
+         free_our_vector(v_g);
+         free_our_vector(v_dg);
+         free_our_vector(v_hdg);
+         free_our_vector(v_p);
+         free_our_vector(v_dx);
+         free_our_vector(zero);
+         free_our_vector(u);
+         free_our_matrix(hessian);
+         return(0);
       }
 
       s1 = 0e0;
@@ -1180,7 +1180,7 @@ long min_hessian_bfgs(our_vector *ip, double f(our_vector *), void df(our_vector
       s2 = 5e-1;
       mult_our_vector_vvs(v_s2, u, -s2);
       /*    printf("v_s2 after mult_our_vector_vvs : ");
-	    print_our_vector(v_s2); */
+            print_our_vector(v_s2); */
       /*    printf("i : "); */
       add_our_vector_vv(v_s2, ip);
       g_s2 = f(v_s2);
@@ -1191,30 +1191,30 @@ long min_hessian_bfgs(our_vector *ip, double f(our_vector *), void df(our_vector
       gettimeofday(&tv1, NULL);
 
       while(g_s2 > g_s1 && s2 - s1 > epsilon) {
-	 s3 = s2;
-	 s2 *= 5e-1;
-	 mult_our_vector_vvs(v_s2, u, -s2);
-	 add_our_vector_vv(v_s2, ip);
-	 g_s2 = f(v_s2);
+         s3 = s2;
+         s2 *= 5e-1;
+         mult_our_vector_vvs(v_s2, u, -s2);
+         add_our_vector_vv(v_s2, ip);
+         g_s2 = f(v_s2);
       }
 
       if(s2 - s1 <= epsilon || s3 - s2 <= epsilon) {
-	 /* ugh, no decrease */
-	 printf("%d: no initial decrease, terminating pos = ", this_rank);
-	 /*      print_our_vector(ip); */
-	 free_our_vector(v_s1);
-	 free_our_vector(v_s2);
-	 free_our_vector(v_s3);
-	 free_our_vector(v_s4);
-	 free_our_vector(v_g);
-	 free_our_vector(v_dg);
-	 free_our_vector(v_hdg);
-	 free_our_vector(v_p);
-	 free_our_vector(v_dx);
-	 free_our_vector(zero);
-	 free_our_vector(u);
-	 free_our_matrix(hessian);
-	 return(max_iter - iter);
+         /* ugh, no decrease */
+         printf("%d: no initial decrease, terminating pos = ", this_rank);
+         /*      print_our_vector(ip); */
+         free_our_vector(v_s1);
+         free_our_vector(v_s2);
+         free_our_vector(v_s3);
+         free_our_vector(v_s4);
+         free_our_vector(v_g);
+         free_our_vector(v_dg);
+         free_our_vector(v_hdg);
+         free_our_vector(v_p);
+         free_our_vector(v_dx);
+         free_our_vector(zero);
+         free_our_vector(u);
+         free_our_matrix(hessian);
+         return(max_iter - iter);
       }
 
       mult_our_vector_vvs(v_s3, u,-s3);
@@ -1231,7 +1231,7 @@ long min_hessian_bfgs(our_vector *ip, double f(our_vector *), void df(our_vector
 
       gettimeofday(&tv2, NULL);
       if(show_times)
-	 printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+         printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
       printf("%d: start line search\n", this_rank); 
       fflush(stdout);
       gettimeofday(&tv1, NULL);
@@ -1239,190 +1239,190 @@ long min_hessian_bfgs(our_vector *ip, double f(our_vector *), void df(our_vector
       while(s2 - s1 > epsilon && s3 - s2 > epsilon && reps++ < MAX_REPS) {
       
 #if defined(DEBUG_GSM)
-	 printf("start\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
+         printf("start\t{%.12g,%.12g,%.12g} = {%.12g,%.12g,%.12g}\n", s1, s2, s3, g_s1, g_s2, g_s3);
 #endif
 
-	 s1_s2 = 1e0 / (s1 - s2);
-	 s1_s3 = 1e0 / (s1 - s3);
-	 s2_s3 = 1e0 / (s2 - s3);
+         s1_s2 = 1e0 / (s1 - s2);
+         s1_s3 = 1e0 / (s1 - s3);
+         s2_s3 = 1e0 / (s2 - s3);
 
-	 s1_2 = s1 * s1;
-	 s2_2 = s2 * s2;
-	 s3_2 = s3 * s3;
+         s1_2 = s1 * s1;
+         s2_2 = s2 * s2;
+         s3_2 = s3 * s3;
 
-	 a = ((g_s1 - g_s3) * s1_s3 - (g_s2 - g_s3) * s2_s3) * s1_s2;
+         a = ((g_s1 - g_s3) * s1_s3 - (g_s2 - g_s3) * s2_s3) * s1_s2;
 
-	 /* printf("new a = %.12g\n",a); */
-	 b = (g_s3 * (s2_2 - s1_2) + g_s2 * (s1_2 - s3_2) + g_s1 * (s3_2 - s2_2)) *
-	    s1_s2 * s1_s3 * s2_s3;
+         /* printf("new a = %.12g\n",a); */
+         b = (g_s3 * (s2_2 - s1_2) + g_s2 * (s1_2 - s3_2) + g_s1 * (s3_2 - s2_2)) *
+            s1_s2 * s1_s3 * s2_s3;
 
-	 /* printf("new b = %.12g\n",b); */
+         /* printf("new b = %.12g\n",b); */
 
-	 if(fabs(a) < MIN_A) {
-	    /* maybe we should switch to a bisection method? */
-	    printf("%d: a limit reached", this_rank);
-	    printf("done iter %ld, i = ", iter);
-	    print_our_vector(ip);
-	    free_our_vector(v_s1);
-	    free_our_vector(v_s2);
-	    free_our_vector(v_s3);
-	    free_our_vector(v_s4);
-	    free_our_vector(v_g);
-	    free_our_vector(v_dg);
-	    free_our_vector(v_hdg);
-	    free_our_vector(v_p);
-	    free_our_vector(v_dx);
-	    free_our_vector(zero);
-	    free_our_vector(u);
-	    free_our_matrix(hessian);
-	    return(max_iter - iter);
-	 }
+         if(fabs(a) < MIN_A) {
+            /* maybe we should switch to a bisection method? */
+            printf("%d: a limit reached", this_rank);
+            printf("done iter %ld, i = ", iter);
+            print_our_vector(ip);
+            free_our_vector(v_s1);
+            free_our_vector(v_s2);
+            free_our_vector(v_s3);
+            free_our_vector(v_s4);
+            free_our_vector(v_g);
+            free_our_vector(v_dg);
+            free_our_vector(v_hdg);
+            free_our_vector(v_p);
+            free_our_vector(v_dx);
+            free_our_vector(zero);
+            free_our_vector(u);
+            free_our_matrix(hessian);
+            return(max_iter - iter);
+         }
 
-	 x = -b / (2e0 * a);
+         x = -b / (2e0 * a);
 
-	 prev_g_s2 = g_s2;
-	 prev_s2 = s2;
+         prev_g_s2 = g_s2;
+         prev_s2 = s2;
 
 #if defined(DEBUG_GSM)
-	 printf("new x = %.12g\n", x);
+         printf("new x = %.12g\n", x);
 #endif
 
-	 if(x < s1) {
+         if(x < s1) {
 #if defined(DEBUG_GSM)
-	    printf("p1 ");
+            printf("p1 ");
 #endif
-	    if(x < (s1 + s1 - s2)) { /* keep it close */
-	       x = s1 + s1 - s2;
-	       if(x < 0) {
-		  x = s1 / 2;
-	       }
-	    }
-	    if(x < 0) { /* ugh we're in the wrong direction! */
-	       printf("%d: unexpected minimum pos %.12g\n", this_rank, x);
-	       if(s1 < 0) {
-		  s1 = 0;
-	       }
-	       x = 0;
-	       //	  active_exit(-1);
-	    } 
-	    /* ok, take x, s1, s2 */
-	    v_tmp = v_s3;
-	    v_s3 = v_s2;
-	    g_s3 = g_s2;
-	    s3 = s2;
-	    v_s2 = v_s1;
-	    g_s2 = g_s1;
-	    s2 = s1;
-	    v_s1 = v_tmp;
-	
-	    s1 = x;
-	    mult_our_vector_vvs(v_s1, u, -s1);
-	    add_our_vector_vv(v_s1, ip);
-	    g_s1 = f(v_s1);
-	 } else {
-	    if(x < s2) {
+            if(x < (s1 + s1 - s2)) { /* keep it close */
+               x = s1 + s1 - s2;
+               if(x < 0) {
+                  x = s1 / 2;
+               }
+            }
+            if(x < 0) { /* ugh we're in the wrong direction! */
+               printf("%d: unexpected minimum pos %.12g\n", this_rank, x);
+               if(s1 < 0) {
+                  s1 = 0;
+               }
+               x = 0;
+               //     active_exit(-1);
+            } 
+            /* ok, take x, s1, s2 */
+            v_tmp = v_s3;
+            v_s3 = v_s2;
+            g_s3 = g_s2;
+            s3 = s2;
+            v_s2 = v_s1;
+            g_s2 = g_s1;
+            s2 = s1;
+            v_s1 = v_tmp;
+   
+            s1 = x;
+            mult_our_vector_vvs(v_s1, u, -s1);
+            add_our_vector_vv(v_s1, ip);
+            g_s1 = f(v_s1);
+         } else {
+            if(x < s2) {
 #if defined(DEBUG_GSM)
-	       printf("p2 ");
+               printf("p2 ");
 #endif
-	       /* ok, take s1, x, s2 */
-	       v_tmp = v_s3;
-	       v_s3 = v_s2;
-	       g_s3 = g_s2;
-	       s3 = s2;
-	       v_s2 = v_tmp;
-	
-	       s2 = x;
-	       /*	  printf("x = %.12g\n", x); */
-	       mult_our_vector_vvs(v_s2, u, -s2);
-	       add_our_vector_vv(v_s2, ip);
-	       g_s2 = f(v_s2);
-	    } else {
-	       if(x < s3) {
+               /* ok, take s1, x, s2 */
+               v_tmp = v_s3;
+               v_s3 = v_s2;
+               g_s3 = g_s2;
+               s3 = s2;
+               v_s2 = v_tmp;
+   
+               s2 = x;
+               /*     printf("x = %.12g\n", x); */
+               mult_our_vector_vvs(v_s2, u, -s2);
+               add_our_vector_vv(v_s2, ip);
+               g_s2 = f(v_s2);
+            } else {
+               if(x < s3) {
 #if defined(DEBUG_GSM)
-		  printf("p3 ");
+                  printf("p3 ");
 #endif
-		  /* ok, take s2, x, s3 */
-		  v_tmp = v_s1;
-		  v_s1 = v_s2;
-		  g_s1 = g_s2;
-		  s1 = s2;
-		  v_s2 = v_tmp;
-	
-		  s2 = x;
-		  mult_our_vector_vvs(v_s2, u, -s2);
-		  add_our_vector_vv(v_s2, ip);
-		  g_s2 = f(v_s2);
-	       } else {
-		  /* ugh x >= s3.. well why not? */
-		  if(x > (s3 + s3 - s2)) { /* keep it close */
-		     mult_our_vector_vvs(v_s4, u, -x);
-		     add_our_vector_vv(v_s4, ip);
-		     g_s4 = f(v_s4);
-		     if(g_s4 > g_s2 &&
-			g_s4 > g_s3 &&
-			g_s4 > g_s1) {
-			x = (s3 + s3 - s2);
-		     }
-		  }
-		  /* take s2, s3, x */
+                  /* ok, take s2, x, s3 */
+                  v_tmp = v_s1;
+                  v_s1 = v_s2;
+                  g_s1 = g_s2;
+                  s1 = s2;
+                  v_s2 = v_tmp;
+   
+                  s2 = x;
+                  mult_our_vector_vvs(v_s2, u, -s2);
+                  add_our_vector_vv(v_s2, ip);
+                  g_s2 = f(v_s2);
+               } else {
+                  /* ugh x >= s3.. well why not? */
+                  if(x > (s3 + s3 - s2)) { /* keep it close */
+                     mult_our_vector_vvs(v_s4, u, -x);
+                     add_our_vector_vv(v_s4, ip);
+                     g_s4 = f(v_s4);
+                     if(g_s4 > g_s2 &&
+                        g_s4 > g_s3 &&
+                        g_s4 > g_s1) {
+                        x = (s3 + s3 - s2);
+                     }
+                  }
+                  /* take s2, s3, x */
 #if defined(DEBUG_GSM)
-		  printf("p4 ");
+                  printf("p4 ");
 #endif
-	    
-		  v_tmp = v_s1;
-		  v_s1 = v_s2;
-		  g_s1 = g_s2;
-		  s1 = s2;
-		  v_s2 = v_s3;
-		  g_s2 = g_s3;
-		  s2 = s3;
-		  v_s3 = v_tmp;
-	
-		  s3 = x;
-		  mult_our_vector_vvs(v_s3, u, -s3);
-		  add_our_vector_vv(v_s3, ip);
-		  g_s3 = f(v_s3);
-	       }
-	    }
-	 }
+       
+                  v_tmp = v_s1;
+                  v_s1 = v_s2;
+                  g_s1 = g_s2;
+                  s1 = s2;
+                  v_s2 = v_s3;
+                  g_s2 = g_s3;
+                  s2 = s3;
+                  v_s3 = v_tmp;
+   
+                  s3 = x;
+                  mult_our_vector_vvs(v_s3, u, -s3);
+                  add_our_vector_vv(v_s3, ip);
+                  g_s3 = f(v_s3);
+               }
+            }
+         }
       
-	 if(fabs(prev_g_s2 - g_s2) < epsilon) {
-	    printf("%d: fabs(g-prev) < epsilon\n", this_rank); fflush(stdout);
-	    break;
-	 }
-	 /*      puts(""); */
+         if(fabs(prev_g_s2 - g_s2) < epsilon) {
+            printf("%d: fabs(g-prev) < epsilon\n", this_rank); fflush(stdout);
+            break;
+         }
+         /*      puts(""); */
       }
       last_reps = reps;
       if(g_s2 < g_s3 && g_s2 < g_s1) {
-	 copy_our_vector(v_p, v_s2);
-	 g_s4 = g_s2;
+         copy_our_vector(v_p, v_s2);
+         g_s4 = g_s2;
       } else {
-	 if(g_s1 < g_s3) {
-	    copy_our_vector(v_p, v_s1);
-	    g_s4 = g_s1;
-	 } else {
-	    copy_our_vector(v_p, v_s3);
-	    g_s4 = g_s3;
-	 }
+         if(g_s1 < g_s3) {
+            copy_our_vector(v_p, v_s1);
+            g_s4 = g_s1;
+         } else {
+            copy_our_vector(v_p, v_s3);
+            g_s4 = g_s3;
+         }
       }
 
 
       if(evenn) {
-	 switch(queries) {
-	 case 8 : v_p->d[(6 * N_2) - 1] = 0;
-	 case 7 :
-	 case 6 : v_p->d[(4 * N_2) - 1] = 0;
-	 case 5 :
-	 case 4 : v_p->d[(2 * N_2) - 1] = 0; 
-	 default : break;
-	 }
+         switch(queries) {
+         case 8 : v_p->d[(6 * N_2) - 1] = 0;
+         case 7 :
+         case 6 : v_p->d[(4 * N_2) - 1] = 0;
+         case 5 :
+         case 4 : v_p->d[(2 * N_2) - 1] = 0; 
+         default : break;
+         }
       }
 
       /*    printf("v_dx:"); print_our_vector(v_dx); */
 
       gettimeofday(&tv2, NULL);
       if(show_times)
-	 printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+         printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
       printf("%d: df start\n", this_rank); 
       fflush(stdout);
       df(v_g, v_p);                 /* new gradient in v_g (old in u) */
@@ -1444,38 +1444,38 @@ long min_hessian_bfgs(our_vector *ip, double f(our_vector *), void df(our_vector
       sumxi = dot_our_vector(v_dx, v_dx);
 
       /*    printf("fac %.12g fae %.12g sumdg %.12g sumxi %.12g\n",
-	    fac, fae, sumdg, sumxi); */
+            fac, fae, sumdg, sumxi); */
 
       if(fac > sqrt(epsilon * sumdg * sumxi)) {
-	 fac = 1e0/fac;
-	 fad = 1e0/fae;
+         fac = 1e0/fac;
+         fad = 1e0/fae;
 
-	 for(i = 0; i < v_dg->len; i++) {
-	    v_dg->d[i] = fac * v_dx->d[i] - fad * v_hdg->d[i];
-	 }
-	 for(i = 0; i < v_dg->len; i++) {
-	    for(j = i; j < v_dg->len; j++) {
-	       hessian->d[(i * hessian->cols) + j] +=
-		  fac * v_dx->d[i] * v_dx->d[j] - 
-		  fad * v_hdg->d[i] * v_hdg->d[j] +
-		  fae * v_dg->d[i] * v_dg->d[j];
-	       hessian->d[(j * hessian->cols) + i] =
-		  hessian->d[(i * hessian->cols) + j];
-	    }
-	 }
+         for(i = 0; i < v_dg->len; i++) {
+            v_dg->d[i] = fac * v_dx->d[i] - fad * v_hdg->d[i];
+         }
+         for(i = 0; i < v_dg->len; i++) {
+            for(j = i; j < v_dg->len; j++) {
+               hessian->d[(i * hessian->cols) + j] +=
+                  fac * v_dx->d[i] * v_dx->d[j] - 
+                  fad * v_hdg->d[i] * v_hdg->d[j] +
+                  fae * v_dg->d[i] * v_dg->d[j];
+               hessian->d[(j * hessian->cols) + i] =
+                  hessian->d[(i * hessian->cols) + j];
+            }
+         }
       }
       mult_our_matrix_vmv(u, hessian, v_g);
       gettimeofday(&tv2, NULL);
       if(show_times)
-	 printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
+         printf("time = %ld %ld\n", tv2.tv_sec - tv1.tv_sec,  tv2.tv_usec - tv1.tv_usec);
       fflush(stdout);
 
       /*    mult_our_vector_vs(u, -1e0); */
       /*
-	print_our_vector(u);
-	print_our_matrix(hessian);
-	print_our_vector(v_g);
-	printf("|u|=%.12g\n", l2norm_our_vector(u, zero)); 
+        print_our_vector(u);
+        print_our_matrix(hessian);
+        print_our_vector(v_g);
+        printf("|u|=%.12g\n", l2norm_our_vector(u, zero)); 
       */
 
 #if defined(DEBUG_GSM)
@@ -1483,31 +1483,31 @@ long min_hessian_bfgs(our_vector *ip, double f(our_vector *), void df(our_vector
 #endif
 
       if(!(global_iter % 5)) {
-	 //      int r, s, j;
+         //      int r, s, j;
       
-	 printf("%d: query4i_intermediate|alg4|%s|%d|%.12g|%d|%d|%.12g|%d|%d|%.12g|%.12g|%.12g|%.12g|%ld|%d|%d|%d|%.12g|%ld|%ld",
-		this_rank,
-		(f(ip) <= 0e0) ? "success" : "fail",
-		N, 
-		f(ip),
-		queries,
-		fitness_type,
-		0e0,
-		this_iterations + prev_iterations, 
-		go, 
-		0e0,
-		0e0,
-		0e0,
-		0e0,
-		iterations_max,
-		0,
-		0,
-		0,
-		min_acceptable,
-		0L, 0L
-		); 
+         printf("%d: query4i_intermediate|alg4|%s|%d|%.12g|%d|%d|%.12g|%d|%d|%.12g|%.12g|%.12g|%.12g|%ld|%d|%d|%d|%.12g|%ld|%ld",
+                this_rank,
+                (f(ip) <= 0e0) ? "success" : "fail",
+                N, 
+                f(ip),
+                queries,
+                fitness_type,
+                0e0,
+                this_iterations + prev_iterations, 
+                go, 
+                0e0,
+                0e0,
+                0e0,
+                0e0,
+                iterations_max,
+                0,
+                0,
+                0,
+                min_acceptable,
+                0L, 0L
+                ); 
       
-	 puts(""); fflush(stdout);
+         puts(""); fflush(stdout);
       }
    }
 
@@ -1541,22 +1541,22 @@ double lamm_gsm_f(our_vector *v) {
    for(i = 0; i < v->len; i++) {
       if (ga_sc) 
       {
-	 if(i % 2) {
-	    push_stack(RESULT_STACK, ff0_estimates[(i - 1)/2][0]);
-	 } else {
-	    //	    printf("lamm_gsm_f push value vdi %d %g %g %g %g\n", i, v->d[i], vlen->d[i], vmin->d[i], v->d[i] *  vlen->d[i] + vmin->d[i]);
-	    push_stack(RESULT_STACK, v->d[i] * vlen->d[i] + vmin->d[i]);
-	 }
+         if(i % 2) {
+            push_stack(RESULT_STACK, ff0_estimates[(i - 1)/2][0]);
+         } else {
+            //       printf("lamm_gsm_f push value vdi %d %g %g %g %g\n", i, v->d[i], vlen->d[i], vmin->d[i], v->d[i] *  vlen->d[i] + vmin->d[i]);
+            push_stack(RESULT_STACK, v->d[i] * vlen->d[i] + vmin->d[i]);
+         }
       } else {
-	 if(i % 2) {
-	    push_stack(RESULT_STACK, v->d[i] * 1e0);
-	 } else {
-	    if(ga_mw) {
-	       push_stack(RESULT_STACK, v->d[i]);
-	    } else {
-	       push_stack(RESULT_STACK, v->d[i] * s_rounding);
-	    }
-	 }
+         if(i % 2) {
+            push_stack(RESULT_STACK, v->d[i] * 1e0);
+         } else {
+            if(ga_mw) {
+               push_stack(RESULT_STACK, v->d[i]);
+            } else {
+               push_stack(RESULT_STACK, v->d[i] * s_rounding);
+            }
+         }
       }
    }
    //  print_stack(RESULT_STACK);
@@ -1573,12 +1573,12 @@ double lamm_gsm_f(our_vector *v) {
       solute.s = stack[RESULT_STACK][i];
       solute.k = stack[RESULT_STACK][i + 1];
       if(ga_mw) {
-	 solute.s = 
-	    pow(pow((solute.s * our_us_fe_nnls_t->experiment[0].vbar20)/(AVOGADRO * M_PI), 2e0)/6e0,1e0/3e0) * 
-	    (1e0 - our_us_fe_nnls_t->experiment[0].density * 
-	     our_us_fe_nnls_t->experiment[0].vbar20) / 
-	    (3e0 * solute.k * our_us_fe_nnls_t->experiment[0].vbar20 * 
-	     our_us_fe_nnls_t->experiment[0].viscosity * .01);
+         solute.s = 
+            pow(pow((solute.s * our_us_fe_nnls_t->experiment[0].vbar20)/(AVOGADRO * M_PI), 2e0)/6e0,1e0/3e0) * 
+            (1e0 - our_us_fe_nnls_t->experiment[0].density * 
+             our_us_fe_nnls_t->experiment[0].vbar20) / 
+            (3e0 * solute.k * our_us_fe_nnls_t->experiment[0].vbar20 * 
+             our_us_fe_nnls_t->experiment[0].viscosity * .01);
       }
       solute_vector.push_back(solute);
    }
@@ -1588,15 +1588,15 @@ double lamm_gsm_f(our_vector *v) {
       vector<Solute> reverse;
       for (u = 0; u < solute_vector.size(); u++) 
       {
-	 //	  printf("pushing back u=%u\n", solute_vector.size() - u - 1); fflush(stdout);
-	 reverse.push_back(solute_vector[solute_vector.size() - u - 1]);
+         //     printf("pushing back u=%u\n", solute_vector.size() - u - 1); fflush(stdout);
+         reverse.push_back(solute_vector[solute_vector.size() - u - 1]);
       }
       solute_vector = reverse;
    }
-	  
+     
    if(debug_level > 1) {
       for(u = 0; u < solute_vector.size(); u++) {
-	 printf("%d: gsm solute_vector[%u] = %g %g\n", this_rank, u, solute_vector[u].s, solute_vector[u].k); fflush(stdout);
+         printf("%d: gsm solute_vector[%u] = %g %g\n", this_rank, u, solute_vector[u].s, solute_vector[u].k); fflush(stdout);
       }
    }
    unsigned int e;
@@ -1609,27 +1609,27 @@ double lamm_gsm_f(our_vector *v) {
       //    printf("%d: call calc_residuals\n", this_rank); fflush(stdout);
       //    Simulation_values sv = our_us_fe_nnls_t->calc_residuals(our_us_fe_nnls_t->experiment, solute_vector, 0e0, 1, e);
       if(ga_sc) {
-	 if (solute_vector.size() != s_estimate_solutes) 
-	 {
-	    printf("%d: !! solute_vector.size() (%u) != s_estimate_solutes (%u)\n", 
-		   this_rank, (unsigned int)solute_vector.size(), s_estimate_solutes); fflush(stdout);
-	    Simulation_values sv;
-	    vector<double> no_noise;
-	    vector<double> variances;
-	    sv.solutes = solute_vector;
-	    sv.variance = 1e99;
-	    variances.push_back(sv.variance);
-	    sv.ti_noise = no_noise;
-	    sv.ri_noise = no_noise;
-	    sve[e] = sv;
-	 } else {
-	    sve[e] = us_ga_interacting_calc(use_experiment, solute_vector, 0e0);
-	 }
+         if (solute_vector.size() != s_estimate_solutes) 
+         {
+            printf("%d: !! solute_vector.size() (%u) != s_estimate_solutes (%u)\n", 
+                   this_rank, (unsigned int)solute_vector.size(), s_estimate_solutes); fflush(stdout);
+            Simulation_values sv;
+            vector<double> no_noise;
+            vector<double> variances;
+            sv.solutes = solute_vector;
+            sv.variance = 1e99;
+            variances.push_back(sv.variance);
+            sv.ti_noise = no_noise;
+            sv.ri_noise = no_noise;
+            sve[e] = sv;
+         } else {
+            sve[e] = us_ga_interacting_calc(use_experiment, solute_vector, 0e0);
+         }
       } else {
-	 sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1, e);
+         sve[e] = our_us_fe_nnls_t->calc_residuals(use_experiment, solute_vector, 0e0, 1, e);
       }
       if(debug_level > 1) {
-	 printf("%d: exp %d variance %g\n", this_rank, e, sve[e].variance); fflush(stdout);
+         printf("%d: exp %d variance %g\n", this_rank, e, sve[e].variance); fflush(stdout);
       }
       //  printf("%d: back from calc_residuals\n", this_rank); fflush(stdout);
    } // for e
@@ -1637,11 +1637,11 @@ double lamm_gsm_f(our_vector *v) {
    result = sve[0].variance;
    if(our_us_fe_nnls_t->experiment.size() > 1) {
       for(e = 1; e < our_us_fe_nnls_t->experiment.size(); e++) {
-	 result += sve[e].variance;
-	 unsigned int f;
-	 for(f = 0; f < tot_solutes.size(); f++) {
-	    tot_solutes[f].c += sve[e].solutes[f].c;
-	 }
+         result += sve[e].variance;
+         unsigned int f;
+         for(f = 0; f < tot_solutes.size(); f++) {
+            tot_solutes[f].c += sve[e].solutes[f].c;
+         }
       }
    }
    if(debug_level > 0) {
@@ -1650,22 +1650,22 @@ double lamm_gsm_f(our_vector *v) {
    if (!ga_sc) 
    {
       if(tot_solutes.size()) {
-	 for(u = 0; u < tot_solutes.size(); u++) {
-	    //      printf("results tot_solutes[%d] = %g %g %g\n", u, tot_solutes[u].s, tot_solutes[u].k, tot_solutes[u].c);
-	    if(tot_solutes[u].c > SOLUTE_CONCENTRATION_THRESHOLD) {
-	       nonzeros++;
-	    }
-	 }
+         for(u = 0; u < tot_solutes.size(); u++) {
+            //      printf("results tot_solutes[%d] = %g %g %g\n", u, tot_solutes[u].s, tot_solutes[u].k, tot_solutes[u].c);
+            if(tot_solutes[u].c > SOLUTE_CONCENTRATION_THRESHOLD) {
+               nonzeros++;
+            }
+         }
       } else {
-	 result = 1e100;
+         result = 1e100;
       }
    }
    //  printf("%d: gsm fitness_solute done\n", this_rank); fflush(stdout);
    if(!ga_sc && regularization_factor && nonzeros) {
       if(regularize_on_RMSD) {
-	 result += result * regularization_factor * nonzeros;
+         result += result * regularization_factor * nonzeros;
       } else {
-	 result += pow(sqrt(result) * regularization_factor * nonzeros, 2.0);
+         result += pow(sqrt(result) * regularization_factor * nonzeros, 2.0);
       }
    }
    return result;
@@ -1703,8 +1703,8 @@ void lamm_gsm_df(our_vector *vd, our_vector *v) {
       //    print_our_vector(v);
       if (ga_sc) 
       {
-	 vd->d[i+1] = 0;
-	 i++;
+         vd->d[i+1] = 0;
+         i++;
       }
    }
    //  printf("after gradient search:");
@@ -1716,20 +1716,20 @@ void node_set_to_our_vector(node *n, our_vector *v) {
    double *d;
    for(i = 0; i < v->len; i+=2) {
       while(n && !((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS]) {
-	 n = n->children[0];
+         n = n->children[0];
       }
       if(!n) {
-	 fprintf(stderr, "node set to our_vector unexpected termination\n");
-	 exit(-1);
+         fprintf(stderr, "node set to our_vector unexpected termination\n");
+         exit(-1);
       }
       d = (double *)(n->data);
       if (ga_sc)
       {
-	 d[0] = floorn(v->d[i], ff0_estimates[i / 2][0], solute_rounding);
-	 d[1] = ff0_estimates[i / 2][0];
+         d[0] = floorn(v->d[i], ff0_estimates[i / 2][0], solute_rounding);
+         d[1] = ff0_estimates[i / 2][0];
       } else {
-	 d[0] = floorn(v->d[i], s_rounding, solute_rounding);
-	 d[1] = floorn(v->d[i+1], 1, solute_rounding);
+         d[0] = floorn(v->d[i], s_rounding, solute_rounding);
+         d[1] = floorn(v->d[i+1], 1, solute_rounding);
       }
       n = n->children[0];
    }
@@ -1773,13 +1773,13 @@ void gsm_this_node(int gsm_method, node *n, int iter, double use_h) {
    printf("%d: gsm this node 0\n", this_rank); fflush(stdout);
    for(i = 0; i < v->len; i+= 2, j++) {
       while(!((char *)m->data)[SOLUTE_DATA_ACTIVE_OFS]) {
-	 printf("%d: skipping inactive i = %d, j = %d\n", this_rank, i, j); fflush(stdout);
-	 j++;
-	 m = m->children[0];
-	 if(!m) {
-	    fprintf(stderr,"out of indices in gsm this node!\n");
-	    exit(-1);
-	 }
+         printf("%d: skipping inactive i = %d, j = %d\n", this_rank, i, j); fflush(stdout);
+         j++;
+         m = m->children[0];
+         if(!m) {
+            fprintf(stderr,"out of indices in gsm this node!\n");
+            exit(-1);
+         }
       }
       printf("%d: adding active i = %d < %d, j = %d\n", this_rank, i, v->len, j); fflush(stdout);
       s_estimate_indices[i / 2] = j;
@@ -1792,29 +1792,29 @@ void gsm_this_node(int gsm_method, node *n, int iter, double use_h) {
    for(i = 0; i < v->len; i += 2) {
       v->d[i] = stack[RESULT_STACK][v->len - i - 2];
       if(!ga_mw && !ga_sc) {
-	 v->d[i] /= s_rounding;
+         v->d[i] /= s_rounding;
       }
       v->d[i+1] = stack[RESULT_STACK][v->len - 1 - i];
       v->d[i+1] *= 1e0;
       if(ga_sc) {
-	 // ga_sc we need to rescale 
-	 double scale;
-	 scale = fabs(v->d[i] - 2*v->d[i]);
-	 vmin->d[i] = v->d[i] - scale;
-	 if (vmin->d[i] < s_estimates[i / 2][0]) 
-	 {
-	    vmin->d[i] = s_estimates[i / 2][0];
-	 }
-	 vmax->d[i] = v->d[i] + scale;
-	 if (vmax->d[i] > s_estimates[i / 2][1]) 
-	 {
-	    vmax->d[i] = s_estimates[i / 2][1];
-	 }
-	 vlen->d[i] = vmax->d[i] - vmin->d[i];
-	 printf("scale pos %d scale %g vmin %g vmax %g vlen %g\n",
-		i, scale, vmin->d[i], vmax->d[i], vlen->d[i]); fflush(stdout);
-	 v->d[i] = (v->d[i] - vmin->d[i]) / vlen->d[i]; // so we have from zero to 1
-	 v->d[i+1] = 0;
+         // ga_sc we need to rescale 
+         double scale;
+         scale = fabs(v->d[i] - 2*v->d[i]);
+         vmin->d[i] = v->d[i] - scale;
+         if (vmin->d[i] < s_estimates[i / 2][0]) 
+         {
+            vmin->d[i] = s_estimates[i / 2][0];
+         }
+         vmax->d[i] = v->d[i] + scale;
+         if (vmax->d[i] > s_estimates[i / 2][1]) 
+         {
+            vmax->d[i] = s_estimates[i / 2][1];
+         }
+         vlen->d[i] = vmax->d[i] - vmin->d[i];
+         printf("scale pos %d scale %g vmin %g vmax %g vlen %g\n",
+                i, scale, vmin->d[i], vmax->d[i], vlen->d[i]); fflush(stdout);
+         v->d[i] = (v->d[i] - vmin->d[i]) / vlen->d[i]; // so we have from zero to 1
+         v->d[i+1] = 0;
       }
    }
    /*  {
@@ -1851,20 +1851,20 @@ void gsm_this_node(int gsm_method, node *n, int iter, double use_h) {
    clip_our_vector_scaled(v);
    for(i = 0; i < v->len; i++) {
       if(i % 2) {
-	 v->d[i] *= 1e0;
-	 if(ga_sc) {
-	    v->d[i] = ff0_estimates[(i - 1) / 2][0];
-	 }
+         v->d[i] *= 1e0;
+         if(ga_sc) {
+            v->d[i] = ff0_estimates[(i - 1) / 2][0];
+         }
       } else {
-	 if (ga_sc) 
-	 {
-	    v->d[i] = v->d[i] * vlen->d[i] + vmin->d[i];
-	 } else {
-	    if (!ga_mw) 
-	    {
-	       v->d[i] *= s_rounding;
-	    }
-	 }
+         if (ga_sc) 
+         {
+            v->d[i] = v->d[i] * vlen->d[i] + vmin->d[i];
+         } else {
+            if (!ga_mw) 
+            {
+               v->d[i] *= s_rounding;
+            }
+         }
       }
    }
    printf("%d: after scaling back: \n", this_rank);

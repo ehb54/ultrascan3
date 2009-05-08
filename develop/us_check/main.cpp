@@ -5,13 +5,13 @@
 
 int main (int argc, char **argv)
 {
-	QApplication a(argc, argv);
-	
-	US_Check *us_check;
-	us_check = new US_Check();
+   QApplication a(argc, argv);
+   
+   US_Check *us_check;
+   us_check = new US_Check();
 
-	us_check->show();
-	a.setMainWidget(us_check);
-	a.setDesktopSettingsAware(false);
-	return a.exec();
+   us_check->show();
+   a.setMainWidget(us_check);
+   a.setDesktopSettingsAware(false);
+   return a.exec();
 }
