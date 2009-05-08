@@ -159,43 +159,42 @@ void US_Hydrodyn_PDB_Parsing::setupGUI()
 void US_Hydrodyn_PDB_Parsing::skip_hydrogen()
 {
    (*pdb).skip_hydrogen = cb_skip_hydrogen->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_PDB_Parsing::skip_water()
 {
    (*pdb).skip_water = cb_skip_water->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_PDB_Parsing::alternate()
 {
    (*pdb).alternate = cb_alternate->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_PDB_Parsing::find_sh()
 {
    (*pdb).find_sh = cb_find_sh->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_PDB_Parsing::residue(int val)
 {
    (*pdb).missing_residues = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_PDB_Parsing::atom(int val)
 {
    (*pdb).missing_atoms = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_PDB_Parsing::cancel()
 {
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
    close();
 }
 

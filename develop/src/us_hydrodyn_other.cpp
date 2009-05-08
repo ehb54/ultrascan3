@@ -2420,7 +2420,14 @@ void US_Hydrodyn::display_default_differences()
    {
       QColor save_color = editor->color();
       editor->setColor("dark red");
-      editor->append("\nNon-default options:\n" + str + "\n");
+      editor->append("\nNon-default options:\n" + str );
       editor->setColor(save_color);
    } 
+   else
+   {
+      QColor save_color = editor->color();
+      editor->setColor("dark green");
+      editor->append("\nAll options set to default values\n");
+      editor->setColor(save_color);
+   }
 }

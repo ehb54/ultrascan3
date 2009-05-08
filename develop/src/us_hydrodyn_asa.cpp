@@ -203,7 +203,6 @@ void US_Hydrodyn_ASA::setupGUI()
 
 void US_Hydrodyn_ASA::cancel()
 {
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
    close();
 }
 
@@ -225,49 +224,49 @@ void US_Hydrodyn_ASA::closeEvent(QCloseEvent *e)
 void US_Hydrodyn_ASA::update_probe_radius(double val)
 {
    (*asa).probe_radius = (float) val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_ASA::update_probe_recheck_radius(double val)
 {
    (*asa).probe_recheck_radius = (float) val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_ASA::update_asa_threshold(double val)
 {
    (*asa).threshold = (float) val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_ASA::update_asa_threshold_percent(double val)
 {
    (*asa).threshold_percent = (float) val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_ASA::update_asab1_step(double val)
 {
    (*asa).asab1_step = (float) val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_ASA::set_asa_calculation()
 {
    (*asa).calculation = cb_asa_calculation->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_ASA::set_bead_check()
 {
    (*asa).recheck_beads = cb_bead_check->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_ASA::select_asa_method(int val)
 {
    (*asa).method = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 

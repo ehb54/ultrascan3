@@ -384,8 +384,8 @@ void US_Hydrodyn::setupGUI()
    file->insertItem( tr("Save"),  this, SLOT(save()),    ALT+Key_S );
    file->insertItem( tr("Print"), this, SLOT(print()),   ALT+Key_P );
    file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
-   //   editor->setWordWrap (QTextEdit::WidgetWidth);
-   editor->setWordWrap (QTextEdit::NoWrap);
+   editor->setWordWrap (QTextEdit::WidgetWidth);
+   // editor->setWordWrap (QTextEdit::NoWrap);
 
    lbl_core_progress = new QLabel("", this);
    Q_CHECK_PTR(lbl_core_progress);
@@ -808,22 +808,7 @@ void US_Hydrodyn::load_pdb()
       bead_model_from_file = false;
       int errors_found = 0;
       lbl_pdb_file->setText( QDir::convertSeparators( filename ) );
-      editor->setText("\n\n");
-      {
-         QString str = default_differences_misc() + default_differences_load_pdb();
-         if ( str != "" )
-         {
-            QColor save_color = editor->color();
-            // QFont save_font = editor->currentFont();
-            // QFont new_font = QFont("Courier");
-            // new_font.setStretch(70);
-            // editor->setCurrentFont(new_font);
-            editor->setColor("dark red");
-            editor->append("Non-default options:\n" + str + "\n");
-            editor->setColor(save_color);
-            // editor->setCurrentFont(save_font);
-         }
-      }
+      clear_display();
 
 #if defined(START_RASMOL)
       QStringList argument;
@@ -1009,17 +994,7 @@ int US_Hydrodyn::calc_somo()
    pb_grid->setEnabled(false);
    options_log = "";
    append_options_log_somo();
-   editor->setText("\n");
-   {
-      QString str = default_differences_misc() + default_differences_somo();
-      if ( str != "" )
-      {
-         QColor save_color = editor->color();
-         editor->setColor("dark red");
-         editor->append("\nNon-default options:\n" + str + "\n");
-         editor->setColor(save_color);
-      } 
-   }
+   display_default_differences();
 
    if (stopFlag)
    {
@@ -1105,14 +1080,14 @@ int US_Hydrodyn::calc_somo()
    }
    if (any_models && !any_errors)
    {
-      editor->append("Build bead model completed\n\n");
+      editor->append("Build bead model completed\n");
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
    }
    else
    {
-      editor->append("Errors encountered\n\n");
+      editor->append("Errors encountered\n");
    }
 
    pb_somo->setEnabled(true);
@@ -1130,16 +1105,7 @@ int US_Hydrodyn::calc_grid()
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    append_options_log_atob();
-   {
-      QString str = default_differences_misc() + default_differences_grid();
-      if ( str != "" )
-      {
-         QColor save_color = editor->color();
-         editor->setColor("dark red");
-         editor->append("Non-default options:\n" + str + "\n");
-         editor->setColor(save_color);
-      }
-   }
+   display_default_differences();
    int flag = 0;
    bool any_errors = false;
    bool any_models = false;
@@ -1406,14 +1372,14 @@ int US_Hydrodyn::calc_grid()
 
    if (any_models && !any_errors)
    {
-      editor->append("Build bead model completed\n\n");
+      editor->append("Build bead model completed\n");
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
    }
    else
    {
-      editor->append("Errors encountered\n\n");
+      editor->append("Errors encountered\n");
    }
 
    pb_grid->setEnabled(true);
@@ -1494,17 +1460,8 @@ void US_Hydrodyn::calc_hydro()
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
    puts("calc hydro (supc)");
-   {
-      QString str = default_differences_misc() + default_differences_hydro();
-      if ( str != "" )
-      {
-         QColor save_color = editor->color();
-         editor->setColor("dark red");
-         editor->append("Non-default options:\n" + str + "\n");
-         editor->setColor(save_color);
-      }
-   }
-   editor->append("Begin hydrodynamic calculations\n\n");
+   display_default_differences();
+   editor->append("\nBegin hydrodynamic calculations\n\n");
    results.s20w_sd = 0.0;
    results.D20w_sd = 0.0;
    results.viscosity_sd = 0.0;
@@ -1633,7 +1590,7 @@ void US_Hydrodyn::calc_hydro()
    }
 
    pb_stop_calc->setEnabled(false);
-   editor->append("Calculate hydrodynamics completed\n\n");
+   editor->append("Calculate hydrodynamics completed\n");
    qApp->processEvents();
 }
 

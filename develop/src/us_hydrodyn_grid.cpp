@@ -86,6 +86,7 @@ void US_Hydrodyn_Grid::setupGUI()
    cb_hydrate->setChecked((*grid).hydrate);
    cb_hydrate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_hydrate->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_hydrate->setEnabled(false);
    connect(cb_hydrate, SIGNAL(clicked()), this, SLOT(set_hydrate()));
 
    cb_tangency = new QCheckBox(this);
@@ -93,6 +94,7 @@ void US_Hydrodyn_Grid::setupGUI()
    cb_tangency->setChecked((*grid).tangency);
    cb_tangency->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_tangency->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_tangency->setEnabled(false);
    connect(cb_tangency, SIGNAL(clicked()), this, SLOT(set_tangency()));
 
    pb_overlaps = new QPushButton(tr(" Adjust Overlap Options "), this);
@@ -139,36 +141,35 @@ void US_Hydrodyn_Grid::setupGUI()
 void US_Hydrodyn_Grid::update_cube_side(double val)
 {
    (*grid).cube_side = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Grid::select_center(int val)
 {
    (*grid).center = (bool) val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Grid::set_hydrate()
 {
    (*grid).hydrate = cb_hydrate->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Grid::set_cubic()
 {
    (*grid).cubic = cb_cubic->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Grid::set_tangency()
 {
    (*grid).tangency = cb_tangency->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Grid::cancel()
 {
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
    close();
 }
 
@@ -191,7 +192,7 @@ void US_Hydrodyn_Grid::overlaps()
       overlap_window = new US_Hydrodyn_Overlap(grid_overlap, overlap_tolerance, &overlap_widget, us_hydrodyn);
       overlap_window->show();
    }
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 
 }
 

@@ -134,7 +134,6 @@ void US_Hydrodyn_Overlap::setupGUI()
 
 void US_Hydrodyn_Overlap::cancel()
 {
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
    close();
 }
 
@@ -156,6 +155,6 @@ void US_Hydrodyn_Overlap::closeEvent(QCloseEvent *e)
 void US_Hydrodyn_Overlap::update_overlap_tolerance(double val)
 {
    *overlap_tolerance = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

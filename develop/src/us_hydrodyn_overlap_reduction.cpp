@@ -149,7 +149,7 @@ void US_Hydrodyn_OR::set_remove()
    {
       cb_translate->setEnabled((*o_r).remove_overlap);
    }
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_OR::set_fuse()
@@ -162,7 +162,7 @@ void US_Hydrodyn_OR::set_fuse()
    {
       (*o_r).fuse_beads = false;
    }
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_OR::set_hierarch()
@@ -180,7 +180,7 @@ void US_Hydrodyn_OR::set_hierarch()
    cb_sync->disconnect();
    cb_sync->setChecked((*o_r).remove_sync);
    connect(cb_sync, SIGNAL(clicked()), SLOT(set_sync()));
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_OR::set_sync()
@@ -198,7 +198,7 @@ void US_Hydrodyn_OR::set_sync()
    cb_hierarch->disconnect();
    cb_hierarch->setChecked((*o_r).remove_hierarch);
    connect(cb_hierarch, SIGNAL(clicked()), SLOT(set_hierarch()));
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_OR::set_translate()
@@ -211,24 +211,24 @@ void US_Hydrodyn_OR::set_translate()
    {
       (*o_r).translate_out = false;
    }
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_OR::update_fuse(double val)
 {
    (*o_r).fuse_beads_percent = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_OR::update_sync(double val)
 {
    (*o_r).remove_sync_percent = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_OR::update_hierarch(double val)
 {
    (*o_r).remove_hierarch_percent = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

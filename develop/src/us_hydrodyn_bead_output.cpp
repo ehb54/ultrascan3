@@ -149,24 +149,23 @@ void US_Hydrodyn_Bead_Output::select_output(int val)
       }
       (*bead_output).output |= (1 << val);
    }
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Bead_Output::select_sequence(int val)
 {
    (*bead_output).sequence = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Bead_Output::select_correspondence()
 {
    (*bead_output).correspondence = cb_correspondence->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Bead_Output::cancel()
 {
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
    close();
 }
 

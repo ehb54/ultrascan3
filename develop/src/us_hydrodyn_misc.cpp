@@ -255,7 +255,7 @@ void US_Hydrodyn_Misc::update_vbar_signal(float val1, float val2)
    (*misc).vbar = val2;
    le_vbar->setText(str.sprintf("%5.3f", (*misc).vbar));
    emit vbar_changed();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::select_vbar()
@@ -267,7 +267,7 @@ void US_Hydrodyn_Misc::select_vbar()
    connect(vbar_dlg, SIGNAL(valueChanged(float, float)), SLOT(update_vbar_signal(float, float)));
    vbar_dlg->exec();
    emit vbar_changed();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::set_vbar()
@@ -276,12 +276,11 @@ void US_Hydrodyn_Misc::set_vbar()
    le_vbar->setEnabled(!(*misc).compute_vbar);
    pb_vbar->setEnabled(!(*misc).compute_vbar);
    emit vbar_changed();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::cancel()
 {
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
    close();
 }
 
@@ -295,37 +294,37 @@ void US_Hydrodyn_Misc::help()
 void US_Hydrodyn_Misc::update_hydrovol(double val)
 {
    (*misc).hydrovol = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::update_avg_radius(double val)
 {
    (*misc).avg_radius = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::update_avg_mass(double val)
 {
    (*misc).avg_mass = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::update_avg_hydration(double val)
 {
    (*misc).avg_hydration = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::update_avg_volume(double val)
 {
    (*misc).avg_volume = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::update_avg_vbar(double val)
 {
    (*misc).avg_vbar = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::closeEvent(QCloseEvent *e)

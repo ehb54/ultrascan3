@@ -278,37 +278,37 @@ void US_Hydrodyn_Hydro::setupGUI()
 void US_Hydrodyn_Hydro::update_unit(double val)
 {
    (*hydro).unit = (int) val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::update_volume(const QString &str)
 {
    (*hydro).volume = str.toDouble();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::update_mass(const QString &str)
 {
    (*hydro).mass = str.toDouble();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::update_overlap(const QString &str)
 {
    (*hydro).overlap = str.toDouble();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::select_reference_system(int val)
 {
    (*hydro).reference_system = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::select_boundary_cond(int val)
 {
    (*hydro).boundary_cond = val;
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::select_bead_inclusion(int val)
@@ -324,7 +324,7 @@ void US_Hydrodyn_Hydro::select_bead_inclusion(int val)
       cb_viscosity->setEnabled(!(*hydro).bead_inclusion);
       cb_rotational->setEnabled(!(*hydro).bead_inclusion);
    }
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::select_volume_correction(int val)
@@ -341,38 +341,37 @@ void US_Hydrodyn_Hydro::select_volume_correction(int val)
       cb_viscosity->setEnabled(!(*hydro).bead_inclusion);
       cb_rotational->setEnabled(!(*hydro).bead_inclusion);
    }
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::select_mass_correction(int val)
 {
    (*hydro).mass_correction = val;
    le_mass->setEnabled((*hydro).mass_correction);
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::select_overlap(int val)
 {
    (*hydro).overlap_cutoff = val;
    le_overlap->setEnabled((*hydro).overlap_cutoff);
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::set_rotational()
 {
    (*hydro).rotational = cb_rotational->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::set_viscosity()
 {
    (*hydro).viscosity = cb_viscosity->isChecked();
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Hydro::cancel()
 {
-   ((US_Hydrodyn *)us_hydrodyn)->clear_display();
    close();
 }
 
