@@ -769,14 +769,10 @@ void US_Hydrodyn::load_pdb()
    }
    if (pdb_parse.missing_atoms == 2)
    {
-      message += tr("You have selected to replace coded residues containing missing atoms\n"
-                    "with an average residue. If your model contains coded residues with\n"
-                    "missing atoms, the calculated molecular weight and vbar may be incorrect.\n"
-                    "Therefore, you could manually enter a global value for the molecular weight\n"
-                    "in the SOMO hydrodynamic options, and a global value for the vbar in the\n"
-                    "SOMO Miscellaneous options. You can also review the average residue settings\n"
-                    "in the SOMO Miscellaneous options.\n\n"
-                    "Are you sure you want to proceed?");
+      message += tr("You have selected to model coded residues with missing atoms\n"
+                    "with an approximate method.  For best results, you should complete\n"
+                    "the structure.\n\n"
+                    "Do you want to proceed anyway?");
    }
    if (message != "")
    {
