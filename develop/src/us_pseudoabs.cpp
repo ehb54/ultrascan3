@@ -14,6 +14,12 @@ US_PseudoAbs::US_PseudoAbs(QWidget *parent, const char* name) : QFrame(parent, n
    average_adjusted = false;
    ready_for_averaging = false;
 
+   for (unsigned int i=0; i<16; i++)
+   {
+      channel_text[i] = "";
+   }
+
+
    lbl_header = new QLabel(tr("Convert Intensity Data\nto Pseudo-Absorbance Data"), this);
    lbl_header->setAlignment(AlignCenter|AlignVCenter);
    lbl_header->setFrameStyle(QFrame::WinPanel|Raised);
