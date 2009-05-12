@@ -150,6 +150,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_load_bead_model;
       QPushButton *pb_calc_hydro;
       QPushButton *pb_show_hydro_results;
+      QPushButton *pb_grid_pdb;
       QPushButton *pb_grid;
       QPushButton *pb_view_asa;
       QPushButton *pb_stop_calc;
@@ -264,7 +265,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void select_model(int);
       void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
       int calc_somo();    // compute asa and then refine bead_model
-      int calc_grid();    // compute grid model
+      int calc_grid_pdb(); // compute grid model from pdb
+      int calc_grid();     // compute grid model from bead model
       int create_beads(QString *error_string); // turn pdb/atom model into bead_model
       void get_atom_map(PDB_model *);
       int check_for_missing_atoms(QString *error_string, PDB_model *);

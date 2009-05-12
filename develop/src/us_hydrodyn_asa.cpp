@@ -86,7 +86,7 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_probe_recheck_radius->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_probe_recheck_radius, SIGNAL(valueChanged(double)), SLOT(update_probe_recheck_radius(double)));
 
-   lbl_asa_threshold = new QLabel(tr(" ASA Threshold (A^2): "), this);
+   lbl_asa_threshold = new QLabel(tr(" SOMO ASA Threshold (A^2): "), this);
    Q_CHECK_PTR(lbl_asa_threshold);
    lbl_asa_threshold->setAlignment(AlignLeft|AlignVCenter);
    lbl_asa_threshold->setMinimumHeight(minHeight1);
@@ -104,7 +104,7 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_asa_threshold->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_asa_threshold, SIGNAL(valueChanged(double)), SLOT(update_asa_threshold(double)));
 
-   lbl_asa_threshold_percent = new QLabel(tr(" Bead ASA Threshold %: "), this);
+   lbl_asa_threshold_percent = new QLabel(tr(" SOMO Bead ASA Threshold %: "), this);
    Q_CHECK_PTR(lbl_asa_threshold_percent);
    lbl_asa_threshold_percent->setAlignment(AlignLeft|AlignVCenter);
    lbl_asa_threshold_percent->setMinimumHeight(minHeight1);
@@ -121,6 +121,42 @@ void US_Hydrodyn_ASA::setupGUI()
    cnt_asa_threshold_percent->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cnt_asa_threshold_percent->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_asa_threshold_percent, SIGNAL(valueChanged(double)), SLOT(update_asa_threshold_percent(double)));
+
+   lbl_asa_grid_threshold = new QLabel(tr(" Grid ASA Threshold (A^2): "), this);
+   Q_CHECK_PTR(lbl_asa_grid_threshold);
+   lbl_asa_grid_threshold->setAlignment(AlignLeft|AlignVCenter);
+   lbl_asa_grid_threshold->setMinimumHeight(minHeight1);
+   lbl_asa_grid_threshold->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_asa_grid_threshold->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_asa_grid_threshold= new QwtCounter(this);
+   Q_CHECK_PTR(cnt_asa_grid_threshold);
+   cnt_asa_grid_threshold->setRange(0, 100, 0.1);
+   cnt_asa_grid_threshold->setValue((*asa).grid_threshold);
+   cnt_asa_grid_threshold->setMinimumHeight(minHeight1);
+   cnt_asa_grid_threshold->setEnabled(true);
+   cnt_asa_grid_threshold->setNumButtons(3);
+   cnt_asa_grid_threshold->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_asa_grid_threshold->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_asa_grid_threshold, SIGNAL(valueChanged(double)), SLOT(update_asa_grid_threshold(double)));
+
+   lbl_asa_grid_threshold_percent = new QLabel(tr(" Grid Bead ASA Threshold %: "), this);
+   Q_CHECK_PTR(lbl_asa_grid_threshold_percent);
+   lbl_asa_grid_threshold_percent->setAlignment(AlignLeft|AlignVCenter);
+   lbl_asa_grid_threshold_percent->setMinimumHeight(minHeight1);
+   lbl_asa_grid_threshold_percent->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_asa_grid_threshold_percent->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_asa_grid_threshold_percent= new QwtCounter(this);
+   Q_CHECK_PTR(cnt_asa_grid_threshold_percent);
+   cnt_asa_grid_threshold_percent->setRange(0, 100, 0.1);
+   cnt_asa_grid_threshold_percent->setValue((*asa).grid_threshold_percent);
+   cnt_asa_grid_threshold_percent->setMinimumHeight(minHeight1);
+   cnt_asa_grid_threshold_percent->setEnabled(true);
+   cnt_asa_grid_threshold_percent->setNumButtons(3);
+   cnt_asa_grid_threshold_percent->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_asa_grid_threshold_percent->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_asa_grid_threshold_percent, SIGNAL(valueChanged(double)), SLOT(update_asa_grid_threshold_percent(double)));
 
    lbl_asab1_step = new QLabel(tr(" ASAB1 Step Size (A): "), this);
    Q_CHECK_PTR(lbl_asab1_step);
@@ -172,7 +208,7 @@ void US_Hydrodyn_ASA::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=6, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=8, columns = 2, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -193,6 +229,12 @@ void US_Hydrodyn_ASA::setupGUI()
    j++;
    background->addWidget(lbl_asa_threshold_percent, j, 0);
    background->addWidget(cnt_asa_threshold_percent, j, 1);
+   j++;
+   background->addWidget(lbl_asa_grid_threshold, j, 0);
+   background->addWidget(cnt_asa_grid_threshold, j, 1);
+   j++;
+   background->addWidget(lbl_asa_grid_threshold_percent, j, 0);
+   background->addWidget(cnt_asa_grid_threshold_percent, j, 1);
    j++;
    background->addWidget(lbl_asab1_step, j, 0);
    background->addWidget(cnt_asab1_step, j, 1);
@@ -242,6 +284,18 @@ void US_Hydrodyn_ASA::update_asa_threshold(double val)
 void US_Hydrodyn_ASA::update_asa_threshold_percent(double val)
 {
    (*asa).threshold_percent = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_ASA::update_asa_grid_threshold(double val)
+{
+   (*asa).grid_threshold = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_ASA::update_asa_grid_threshold_percent(double val)
+{
+   (*asa).grid_threshold_percent = (float) val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

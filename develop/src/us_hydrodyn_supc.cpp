@@ -1642,6 +1642,11 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    {
       val_med();
    }
+   else
+   {
+      supc_results->total_beads_sd = 0;
+      supc_results->used_beads_sd = 0;
+   }
 
    fclose(tot_mol);
 

@@ -901,6 +901,12 @@ void US_Hydrodyn::read_config(QFile& f)
    asa.threshold_percent = str.toFloat();
    ts >> str;
    ts.readLine();
+   asa.grid_threshold = str.toFloat();
+   ts >> str;
+   ts.readLine();
+   asa.grid_threshold_percent = str.toFloat();
+   ts >> str;
+   ts.readLine();
    asa.calculation = (bool) str.toInt();
    ts >> str;
    ts.readLine();
@@ -1109,8 +1115,10 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << bead_output.correspondence << "\t\t# flag for residue correspondence (BEAMS only)\n";
       ts << asa.probe_radius << "\t\t# probe radius in angstrom\n";
       ts << asa.probe_recheck_radius << "\t\t# probe recheck radius in angstrom\n";
-      ts << asa.threshold << "\t\t# ASA threshold\n";
-      ts << asa.threshold_percent << "\t\t# ASA threshold percent\n";
+      ts << asa.threshold << "\t\t# SOMO ASA threshold\n";
+      ts << asa.threshold_percent << "\t\t# SOMO ASA threshold percent\n";
+      ts << asa.grid_threshold << "\t\t# Grid ASA threshold\n";
+      ts << asa.grid_threshold_percent << "\t\t# Grid ASA threshold percent\n";
       ts << asa.calculation << "\t\t# flag for calculation of ASA\n";
       ts << asa.recheck_beads << "\t\t# flag for rechecking beads\n";
       ts << asa.method << "\t\t# flag for ASAB1/Surfracer method\n";
@@ -1227,6 +1235,8 @@ void US_Hydrodyn::set_default()
       asa.probe_recheck_radius = (float) 1.4;
       asa.threshold = 20.0;
       asa.threshold_percent = 50.0;
+      asa.grid_threshold = 10.0;
+      asa.grid_threshold_percent = 30.0;
       asa.calculation = true;
       asa.recheck_beads = true;
       asa.method = true; // by default use ASAB1
@@ -1880,8 +1890,8 @@ void US_Hydrodyn::append_options_log_somo()
              "  ASA Method:                 %s\n"
              "  ASA Probe Radius (A):       %.2f\n"
              "  Probe Recheck Radius (A):   %.2f\n"
-             "  ASA Threshold (A^2):        %.1f\n"
-             "  Bead ASA Threshold %%:       %.1f\n"
+             "  SOMO ASA Threshold (A^2):   %.1f\n"
+             "  SOMO Bead ASA Threshold %%:  %.1f\n"
              "  ASAB1 Step Size (A):        %.1f\n"
              "\n"
 
@@ -1965,6 +1975,29 @@ void US_Hydrodyn::append_options_log_atob()
    QString s;
 
    s.sprintf("Grid model built with the following options:\n");
+   options_log += s;
+
+   s.sprintf(
+             "ASA Calculation:\n"
+             "  Perform ASA Calculation:    %s\n"
+             "  Recheck Bead ASA:           %s\n"
+             "  ASA Method:                 %s\n"
+             "  ASA Probe Radius (A):       %.2f\n"
+             "  Probe Recheck Radius (A):   %.2f\n"
+             "  Grid ASA Threshold (A^2):   %.1f\n"
+             "  Grid Bead ASA Threshold %%:  %.1f\n"
+             "  ASAB1 Step Size (A):        %.1f\n"
+             "\n"
+
+             ,asa.calculation ? "On" : "Off"
+             ,asa.recheck_beads ? "On" : "Off"
+             ,asa.method ? "Rolling Sphere" : "Voronoi Tesselation"
+             ,asa.probe_radius
+             ,asa.probe_recheck_radius
+             ,asa.grid_threshold
+             ,asa.grid_threshold_percent
+             ,asa.asab1_step
+             );
    options_log += s;
 
    s.sprintf(
@@ -2108,11 +2141,19 @@ QString US_Hydrodyn::default_differences_somo()
    }
    if ( asa.threshold != default_asa.threshold )
    {
-      str += QString(base + sub + "ASA Threshold (A^2): %1\n").arg(asa.threshold);
+      str += QString(base + sub + "SOMO ASA Threshold (A^2): %1\n").arg(asa.threshold);
    }
    if ( asa.threshold_percent != default_asa.threshold_percent )
    {
-      str += QString(base + sub + "Bead ASA Threshold %: %1\n").arg(asa.threshold_percent);
+      str += QString(base + sub + "SOMO Bead ASA Threshold %: %1\n").arg(asa.threshold_percent);
+   }
+   if ( asa.grid_threshold != default_asa.grid_threshold )
+   {
+      str += QString(base + sub + "Grid ASA Threshold (A^2): %1\n").arg(asa.grid_threshold);
+   }
+   if ( asa.grid_threshold_percent != default_asa.grid_threshold_percent )
+   {
+      str += QString(base + sub + "Grid Bead ASA Threshold %: %1\n").arg(asa.grid_threshold_percent);
    }
    if ( asa.asab1_step != default_asa.asab1_step )
    {

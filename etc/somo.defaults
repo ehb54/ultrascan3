@@ -41,8 +41,10 @@ SOMO Config file - computer generated, please do not edit...
 1		# flag for residue correspondence (BEAMS only)
 1.4		# probe radius in angstrom
 1.4		# probe recheck radius in angstrom
-20		# ASA threshold
-50		# ASA threshold percent
+20		# SOMO ASA threshold
+50		# SOMO ASA threshold percent
+10		# Grid ASA threshold
+30		# Grid ASA threshold percent
 1		# flag for calculation of ASA
 1		# flag for rechecking beads
 1		# flag for ASAB1/Surfracer method
