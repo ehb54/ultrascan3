@@ -83,8 +83,12 @@ are reduced by the selected % value in each step, and the ensemble is then
 re-screened; beads no longer having an overlap are dropped from the list. If the
 <b>Outward Translation</b> checkbox is selected, the beads centers are also moved
 outwardly by the same amount along a line connecting them  with the cog of the
-molecule. The <b>synchronous</b>  procedure is potentially time-consuming and has
-<b>not</b> been fully tested at this stage.
+molecule. The <b>synchronous</b>  procedure is time-consuming, especially when
+large structures are analyzed. Its full testing is in progress at this time, and
+initial results suggest that while the quality of the models appears to be higher
+than that of models generated with the hierarchical procedure (more uniform bead sizes,
+less space between beads), the hydrodynamic parameters are similar, and tend to be
+identical for large structures.
 <br>In the <b>hierarchical procedure</b>, the biggest overlap between a couple
 of beads is first removed by proportionally reducing their radii. If the
 <b>Outward Translation</b> checkbox is selected, the beads centers are also moved
@@ -205,7 +209,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on August 26, 2008.
+Last modified on May 12, 2009.
 </font>
 </body>
 </html>

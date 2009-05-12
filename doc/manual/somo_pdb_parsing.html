@@ -102,7 +102,7 @@ The next two subpanels deal with non-coded residues and missing atoms, respectiv
 
 <p>
 In the <b>If non-coded residues are found:</b> subpanel, the user will be able to choose between three
-options, but <b>only the first two</b> are presently available:
+options:
 
 <ul>
 <li>
@@ -133,17 +133,23 @@ In any case, if this option is selected, the pop-up window shown below will appe
 
 <ul>
 <li>
-<b><i>Use automatic bead builder (approximate method)</i></b>. <i>NOT YET IMPLEMENTED</i><br>
+<b><i>Use automatic bead builder (approximate method)</i></b>.<br>
 This is a "patch" option, allowing to roughly define a <b>single</b> "side-chain" bead for each non-coded residue. This procedure is based on an "average" volume for each atom (with an "average" molecular weight and hydration number), from which a global volume (and molecular weight) is calculated. An "average" radius for each atom is
 also provided for the ASA routines (see <a href=somo_asa.html>here</a>). The bead is then placed at the center of mass of <b>all</b> the atoms within the non-coded residue, and an "average" partial specific volume and color-coding ("10", light green) are also assigned to it. All these "average" values can be modified in the
-<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panel. As with the second option, the approximations introduced in the molecular weight and partial specific volume can be bypassed by entering global values in the appropriate fields (respectively in the
-<a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and in the <a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels. In any case, a pop-up window will appear asking for entering appropriate values for the global molecular weight and partial specific volume, and prompting to check the approximate method parameters.<br>
-This will be the default option for this subpanel, since it will allow users to process virtually
-any PDB file without updating the definitions files.
-
+<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panel. However, the  will first
+perform a check to recognize if the non-coded residue has the structure of an amino acid (i.e., if the N, CA, C, and O atoms are
+<b>all</b> present). In this case, it will generate a standard "peptide bond" bead for these atoms, and a second bead for the non-coded side chain using the approximate method. In any case, as with the previous option, the approximations introduced in the molecular weight and partial specific volume can be bypassed by entering global values in the appropriate fields (respectively in the <a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and in the 
+<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels. As for the previous option, if this option is selected a pop-up window will appear asking for entering appropriate values for the global molecular weight and partial specific volume, and prompting to check the approximate method parameters.
 </ul>
 </tr>
 
+<tr>
+<p>
+<td><center><img SRC="somo-warning3.png" ALT="Warning for using the automatic bead builder"></td>
+<p>
+</tr>
+
+<td align=justify>
 </td>
 </tr>
 </table>
@@ -162,7 +168,7 @@ any PDB file without updating the definitions files.
 
 <p>
 In the <b>If missing atoms within a residue are found:</b>  subpanel, the user will be able to choose between three
-options, but <b>only the first two</b> are presently available:
+options:
 
 <ul>
 <li>
@@ -179,7 +185,7 @@ In any case, if this option is selected, the pop-up window shown below will appe
 
 <tr>
 <p>
-<td><center><img SRC="somo-warning3.png" ALT="Warning for skipping non-coded residues"></td>
+<td><center><img SRC="somo-warning2.png" ALT="Warning for skipping non-coded residues"></td>
 <p>
 </tr>
 
@@ -188,13 +194,22 @@ In any case, if this option is selected, the pop-up window shown below will appe
 <ul>
 
 <li>
-<b><i>Use approximate method to generate bead</i></b>. <i>NOT YET IMPLEMENTED</i><br>
-This is a "patch" option, allowing to roughly define a <b>single</b> bead for the whole residue. See the <b><i>Use automatic bead builder (approximate method)</i></b> above for the explanation of this procedure. The only relevant difference will be that the parameters used to define the <b>single</b> bead used to represent incomplete residues will be those of the atoms present in the residue, taken from the <i>somo.residue</i> file. As for the previous option, if this option is selected a pop-up window will appear asking for entering appropriate values for the global molecular weight and partial specific volume (this request can, however, be skipped).<br>
-This will be the defaut option for this subpanel, since it will allow users to process virtually any PDB file without updating the definitions files, but for more accurate results we <b>strongly</b> recommend to switch to the first option in this subpanel and take appropriate action(s).
+<b><i>Use approximate method to generate bead</i></b>.
+This is a "patch" option, allowing to keep the original bead definitions. It is based on the assumption that the missing atoms were present in the original macromolecule, but could not be located experimentally. If the missing atoms are <b>not</b> among those defining the position of the bead, nothing is really affected. When one or more (but not all) the atoms determining the position are missing, the remaining ones are used to position the bead. If <b>all</b> the position-determining atoms are missing, then the bead will be positioned at the cog of all the atoms present. If <b>all</b> the atoms of a bead are missing, their parameters
+(mass, volume, hydration) will be added to those of the next bead, creating a single bead positioned on the cog of all atoms present. For instance, for an amino acid completely missing the side-chain, the peptide bond size and mass will be that of the original peptide bond <b>plus</b> that of the missing side chain, positioned as a regular peptide bond bead.<br>
+If coded residues contains extra or non-coded <i>atoms</i>, they will be treated as non-coded residues with the <i>automatic bead builder</i>. As for the previous option, if this option is selected a pop-up window will appear asking if it's OK to proceed.<br>
+
 
 </ul>
 </td>
 </tr>
+
+
+<p>
+<td><center><img SRC="somo-warning4.png" ALT="Warning for skipping non-coded residues"></td>
+<p>
+
+
 </table>
 
 
@@ -213,7 +228,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on August 26, 2008.
+Last modified on May 12, 2009.
 </font>
 </body>
 </html>

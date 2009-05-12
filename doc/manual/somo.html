@@ -72,13 +72,17 @@ amino acids, nucleotides, carbohydrates, and common prosthetic groups and
 co-factors, but this list is by no means exhaustive, and the need to code for
 "new" residues is not a remote possibility. As this operation can be demanding,
 notwithstanding the user-friendly GUI governing it, the pre-defined set of options
-<b>will</b> include an approximate method to deal with either missing atoms within coded residues,
-and/or not yet coded residues. In the present <b>beta1</b> release, an option is available
-to <b>skip</b> non-coded residues and/or coded residues with missing atoms (<b>not</b> the
-default option). However, be aware that for best performance, the structure
-should contain all residues and atoms that are present in the "real" macromolecule
-studied in solution, and all residues should be properly coded in the SOMO tables
-(see below).
+includes approximate methods to deal with either missing atoms within coded residues,
+and/or not yet coded residues. The available options are to <b>skip</b> non-coded
+residues and/or coded residues with missing atoms (<b>not</b> the default option),
+or to <b>generate</b> a single bead for each non-coded residue using <b>average</b>
+parameters. For coded residues with missing atoms, since most often this is due to
+lack of crystallographic data, there's the option of using the <b>complete residue</b>'s
+bead(s), appropriately positioned. Obviously, there's <b>no cure</b> for completely
+missing residues, which will have to be built in the original structure for reliable
+results, since the structure should contain all residues and atoms that are present
+in the "real" macromolecule studied in solution. Therefore, for best performance all
+residues should be properly coded in the SOMO tables (see below).
 <p>
 <p>
 <table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
@@ -91,42 +95,59 @@ studied in solution, and all residues should be properly coded in the SOMO table
 <p>
 <p>
 
-<p><b>Run SOMO Program:</b>
+<p><b>SOMO Program:</b>
 <p>
 These functions control the execution of the SOMO program, whose progress is
-recorded in the right-side main window. The first step is to select a lookup table
-by clicking on <i><b>Select Lookup Table</b></i> (default: <i>somo.residue</i>).
-You can create multiple lookup tables for different conditions. The lookup table
-needs to contain all atoms and residues defined in your molecule to be loaded in
-the next step. By default, SOMO will automatically load the last used <i>*.residue</i> table.
+recorded in the right-side main window (in the picture above, a snapshot of the
+messages during the model building phase of the 8RAT.pdb structure is shown).
+The first step is to select a lookup table by clicking on <i><b>Select Lookup Table</b></i>
+(default: <i>somo.residue</i>). You can create multiple lookup tables for different conditions.
+The lookup table needs to contain all atoms and residues present in the (macro)molecule
+to be loaded in the next step. By default, SOMO will automatically load the last used <i>*.residue</i> table.
 As soon as the lookup table has been successfully loaded, the <i><b>Load PDB File</b></i>
-button will become active and you can load a PDB structure file from
-NMR or X-ray crystallography experiments. Selecting a PBD file will also
-automatically call the molecular visualization program <i>RasMol</i> (Sayle RA, Milner-
-White EJ. RasMol: biomolecular graphics for all. Trends Biochem. Sci. 20:374-376,
-1995) which will display the structure(s) in a pop-up window. <i>RasMol</i>
-needs to be installed in <pre><b>$ULTRASCAN/bin</b></pre> for 32 bit
-machines, and <pre><b>$ULTRASCAN/bin64</b></pre> for 64 bit platforms.
-You can get a copy of <i>RasMol</i> from <a href="http://www.umass.edu/microbio/rasmol/">
+button will become active and you can load a PDB structure file, such as those derived
+from NMR or X-ray crystallography data. Selecting a PBD file will also automatically call
+the molecular visualization program <i>RasMol</i> (Sayle RA, Milner-White EJ. RasMol:
+biomolecular graphics for all. Trends Biochem. Sci. 20:374-376, 1995) which will display
+the structure(s) in a pop-up window. <i>RasMol</i> needs to be installed in
+<pre><b>$ULTRASCAN/bin</b></pre> for 32 bit machines, and <pre><b>$ULTRASCAN/bin64</b></pre>
+for 64 bit platforms. You can get a copy of <i>RasMol</i> from <a href="http://www.umass.edu/microbio/rasmol/">
 http://www.umass.edu/microbio/rasmol/</a> or from <a href="http://openrasmol.org/#Software">
-http://openrasmol.org/#Software</a>.<p>
+http://openrasmol.org/#Software</a>. In addition, the HEADER and TITLE fields of the PDB file
+will be displayed in the progress window. <p>
 The PDB file can contain multiple models and if so, multiple models will be displayed by
 <i>RasMol</i> and in the list box. In this case, you can select just a single model,
 or multiple models by holding the crtl key while clicking on the models' names (crtl-A selects
-all models). If multiple models are selected, all subsequent operations
-are carried out sequentially on the selected models. Once one or multiple
-models are selected, the <i><b>Build SOMO Bead Model</b></i> and <i><b>Build
-Grid Bead Model</b></i> buttons will become active, offering two alternative
-ways of generating a bead model based on the settings selected
-above. Once bead model(s) generation is completed, the progress bar will be at 100% and the bead model(s) can be visualized with <i>RasMol</i> by clicking on <i><b>Visualize Bead Model</b></i>.
-The results of the acessible surface area (ASA) computations (see below) can also be visualized
-in a pop-up window by clicking on the <i><b>Show ASA Results</b></i> button. Alternatively, you
-can skip all of these steps and load a previously generated bead model by clicking on <i><b>Load
-Bead Model File</b></i> from the menu. In this case, and if the model was generated/saved in the
-SOMO format, the various settings/parameters used in model generation will be displayed in
-the right-side main window. The hydrodynamic parameters can be then determined by clicking on <i><b>Calculate Hydrodynamics</b></i>. A partial list of parameters can be seen in
-a pop-up window as soon as the calculations are completed by clicking on <a href=
-"somo-results.png"><i><b>Show Hydrodynamic Calculations</b></i></a>. A full list of all the parameters is also available as a text file, which can be opened from the results' pop-up window. Operations can be halted at any moment by clicking on the <i><b>Stop</b></i> button. To avoid inadvertendly loosing data, the <i><b>Close</b></i> button will not immediately close SOMO, but confirmation will be required in a pop-up window.
+all models). If multiple models are selected, all subsequent operations are carried out
+sequentially on the selected models. Once one or multiple models are selected, the
+<i><b>Build SOMO Bead Model</b></i> and <i><b>Build Grid Bead Model</b></i> buttons
+will become active, offering two alternative ways of generating a bead model based on the
+settings selected above. Since model building can take some time, depending on the settings
+and especially for large structures, selecting the <b>Automatic Calculate Hydrodynamics</b>
+checkbox will allow the direct computation of the hydrodynamic parameters as soon as the model(s) 
+generation has been completed. If this checkbox is not selected (<b>default</b> option), at the
+end of the model building phase the progress bar will be at 100% and the bead model(s) can be
+visualized with <i>RasMol</i> by clicking on <i><b>Visualize Bead Model</b></i> (recommended,
+comparing the original structure with the bead model could reveal unforeseen problems).
+The results of the accessible surface area (ASA) computations (see below) can also be visualized
+in a pop-up window by clicking on the <i><b>Show ASA Results</b></i> button; this file also includes the
+computation of the radius of gyratio (R<sub>g</sub>) directly from the atomic coordinates of the structure.<p>
+Alternatively, you can skip all of these steps and load a previously generated bead model by clicking
+on <i><b>Load Bead Model File</b></i> from the menu. In this case, and if the model was generated/saved
+in the SOMO format, the various settings/parameters used in model generation will be displayed in
+the right-side main window.<p>
+The hydrodynamic parameters can be then determined by clicking on <i><b>Calculate Hydrodynamics</b></i>.
+A partial list of parameters can be seen in a pop-up window as soon as the calculations are completed by
+clicking on <a href="somo-results.png"><i><b>Show Hydrodynamic Calculations</b></i></a>. A full list of
+all the parameters is also available as a text file, which can be opened from the results' pop-up window. <p>
+The black bar at the bottom of the progress window will instead report the detailed advancement of some of the
+steps in the various phases, like the current slice and atoms (or beads) involved in the ASA routine,
+and the iterations in the supermatrix inversion in the hydrodynamic computations. For small structures,
+these numbers will be barely noticeable, but for large structures they will allow a more in depth
+monitoring of the various stages. <p>
+Operations can be halted at any moment by clicking on the <i><b>Stop</b></i> button. To avoid inadvertendly
+loosing data, the <i><b>Close</b></i> button will not immediately close SOMO, but confirmation will be required
+in a pop-up window.
 </td>
 
 </table>
@@ -350,7 +371,7 @@ The latest version of this document can always be found at:
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on August 26, 2008.
+Last modified on May 12, 2009.
 </font>
 </body>
 </html>

@@ -75,7 +75,10 @@ presently including:
 <li>Heme
 <li>Phosphate
 <li>Co-factor
-</ul
+<li>Ion
+<li>Detergent
+<li>Other
+</ul>
 <p>
 The <i>Residue anhydrous mol. vol. (A^3)</i> field has to be filled with a 
 value usually derived from crystallography (see Tsai et al., J. Mol. Biol.
@@ -83,7 +86,8 @@ value usually derived from crystallography (see Tsai et al., J. Mol. Biol.
 and Gerstein, J. Mol. Biol. 346:477-492, 2005; Perkins, Eur. J. Biochem. 
 157:169-180, 1986). This is the volume that defines the total anhydrous volume
 of the bead(s) that will be used to model the residue, and for non tabulated
-entries it can be computed using on-line programs such as the <sup>3</sup>V Contact Volume Calculator (<a href="http://www.molmovdb.org/cgi-bin/3v.cgi">http://www.molmovdb.org/cgi-bin/3v.cgi</a>; a 0   Angstrom probe radius should be used). For ions, we used the values in Table I of
+entries it can be computed using on-line programs such as the <sup>3</sup>V Contact Volume Calculator (<a href="http://www.molmovdb.org/cgi-bin/3v.cgi">http://www.molmovdb.org/cgi-bin/3v.cgi</a>; a 0
+Angstrom probe radius should be used). For ions, we used the values in Table I of
 Kiriukhin and Collins (Biophys. Chem. 99:155-168, 2002).
 <br>In contrast, the <i>Residue partial spec. vol. (cm^3/g)</i> field pertains to
 the solution partial specific volume (<i>vbar</i>) of the residue (in water @ 20°C),
@@ -93,7 +97,9 @@ Tabulated values are available for amino acids and some carbohydrates (see Perki
 Eur. J. Biochem. 157:169-180, 1986), or can be computed using the Cohn and Edsall method
 (Cohn and Edsall, Proteins, amino acids and peptides as ions and dipolar ions, Reinhold
 Publ. Comp., 1965, pp. 370-381; see also Durchschlag and Zipper, Biophys. Chem. 93:
-141-157, 2001). For ions, it was computed directly from the anhydrous mol. vol. (cm<sup>3</sup>)
+141-157, 2001; Durchschlag and Zipper, J. Appl. Cryst. 30:803-807, 1997; Durchschlag
+and Zipper, Prog. Colloid Polym. Sci. 94:20-39, 1994). For ions,
+it was computed directly from the anhydrous mol. vol. (cm<sup>3</sup>)
 multiplied by Avogadro's number and divided by the molecular weight.
 <br>Finally, the <i>Max. Accessible Surface Area (A^2)</i> field is entered. It is
 used for control purposes only, to calculate the percentage accessible surface
@@ -151,7 +157,7 @@ and the <b>Continue</b> button can then be pressed.
 <td>
 
 <p>In the last panel of this module, the atoms in each residue are assigned
-to bead(s), and their properties are then defined.
+to bead(s), and each bead's properties are then defined.
 <br>According to the value entered in the <i>Number of Beads for Residue</i>
 field in Panel 1, the <i>Select Residue Bead to be defined</i> pull-down menu
 will allow to select a bead from the list. All subsequent operations will affect
@@ -160,23 +166,25 @@ the selected bead only.
 pull-down menu. Be aware that two colors are presently reserved to "label"
 the beads so that they can be automatically excluded from the hydrodynamic
 computations, colors "0" (black) and "6" (brown), so they should NOT be used.
-In addition, we color-code "7" (white) exposed beads that are fused together,
-and "8" (grey) beads that were originally labeled as buried ("6") but are found
-to be above the exposure threshold upon re-check.
+To avoid they inadvertent selection, a Warning pop-up will appear if color "0" or
+"6" are chosen, with this message: "Black and brown are reserved colors, please
+chose a different color". In addition, we color-code "7" (white) exposed beads
+that are fused together, and "8" (grey) beads that were originally labeled as
+buried ("6") but are found to be above the exposure threshold upon re-check.
 In the <a href="somo-residue-3.png">residue table</a> (an excerpt of the current 
 <i>somo.residue</i> is shown) provided with the UltraScan distribution, the colors
 are assigned so to label the beads as:
 <p>
 <ol>
-0. - Black: RESERVED for very small beads (always excluded from computations)
+0. - Black: RESERVED, automatically assigned to very small beads (always excluded from computations)
 <li>- Blue: protein main-chain
 <li>- Green: protein acidic side-chain (D,E)
 <li>- Cyan: protein hydrophobic side-chain (A,V,L,I,F,W)
 <li>- Red: protein polar side-chain (H,Y,S,T,N,Q)
 <li>- Magenta: protein non-polar side-chain (C,M,P)
-<li>- Brown: RESERVED for buried beads
+<li>- Brown: RESERVED for buried beads (automatically assigned during model generation)
 <li>- White: USED for fused beads
-<li>- Grey: USED for previously buried beads exposed on re-check
+<li>- Grey: USED for previously buried beads found to be exposed on re-check
 <li>- Light Blue: carbon monoxide
 <li>- Light Green: USED by the Automatic Bead Builder for non-coded residues (see <a
 href=somo_pdb_parsing.html>here</a>)
@@ -278,7 +286,7 @@ latest version of this document can always be found at:
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on August 26, 2008.
+Last modified on May 12, 2009.
 </font>
 
 </body>
