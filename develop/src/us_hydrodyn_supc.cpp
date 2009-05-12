@@ -322,7 +322,9 @@ static int ppos;
 static int mppos;
 static double overlap_tolerance;
 static float tot_tot_beads;
+static float tot_tot_beads2;
 static float tot_used_beads;
+static float tot_used_beads2;
 static vector <PDB_model> *model_vector;
 static vector <int> model_idx;  // maps seq model # to bead_models offset
 static vector < vector <PDB_atom> > *bead_models;
@@ -554,7 +556,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
    //  vector <PDB_atom> *bead_model;
    tot_tot_beads = 0;
+   tot_tot_beads2 = 0;
    tot_used_beads = 0;
+   tot_used_beads2 = 0;
 
    progress = use_progress;
    editor = use_editor;
@@ -1632,8 +1636,12 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
    }
 
+   supc_results->num_models = num;
+   
    if (num != 1)
+   {
       val_med();
+   }
 
    fclose(tot_mol);
 
@@ -1914,6 +1922,7 @@ stampa_ris()
    printf("\n\n%s%d\n", "- Used BEADS Number  = ", nat);
    supc_results->used_beads = nat;
    tot_used_beads += (float)nat;
+   tot_used_beads2 += (float)nat * (float)nat;
 
    if (volcor == 1)
    {
@@ -2163,6 +2172,7 @@ mem_ris()
    fprintf(ris, "%s\n", molecola);
    fprintf(ris, "%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere);
    tot_tot_beads += (float) numero_sfere;
+   tot_tot_beads2 += (float) numero_sfere * (float) numero_sfere;
    supc_results->total_beads = numero_sfere;
    supc_results->vbar = partvol;
     
@@ -2422,7 +2432,9 @@ val_med()
    fprintf(ris, "\n\t AVERAGE PARAMETERS \n");
    fprintf(ris, "\n\t\t\t\t Mean value\tSt. Dev.\n");
    supc_results->total_beads = tot_tot_beads / num;
+   supc_results->total_beads_sd = sqrt(fabs((tot_tot_beads2 - tot_tot_beads * tot_tot_beads / num ) / (num - 1.0)));
    supc_results->used_beads = tot_used_beads / num;
+   supc_results->used_beads_sd = sqrt(fabs((tot_used_beads2 - tot_used_beads * tot_used_beads / num ) / (num - 1.0)));
    supc_results->vbar = tot_partvol / num;
 
    temp = fabs((CfT2 - pow(CfT, 2) / num) / (num - 1));

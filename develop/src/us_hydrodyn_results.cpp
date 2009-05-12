@@ -44,7 +44,18 @@ void US_Hydrodyn_Results::setupGUI()
    lbl_total_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_total_beads = new QLineEdit(this, "total_beads Line Edit");
-   le_total_beads->setText(QString("%1").arg((*results).total_beads));
+   if ( fabs(results->total_beads_sd) <= 1e-100 )
+   {
+      le_total_beads->setText(QString("%1").arg(results->total_beads));
+   }
+   else
+   {
+      le_total_beads->setText(QString("").sprintf("%u (%4.2e)", 
+                                                  (int)(results->total_beads + .5),
+                                                  results->total_beads_sd));
+   }
+
+      
    le_total_beads->setReadOnly(true);
    le_total_beads->setMinimumWidth(200);
    le_total_beads->setAlignment(AlignVCenter);
@@ -58,7 +69,16 @@ void US_Hydrodyn_Results::setupGUI()
    lbl_used_beads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    le_used_beads = new QLineEdit(this, "used_beads Line Edit");
-   le_used_beads->setText(QString("%1").arg((*results).used_beads));
+   if ( fabs(results->used_beads_sd) <= 1e-100 )
+   {
+      le_used_beads->setText(QString("%1").arg(results->used_beads));
+   }
+   else
+   {
+      le_used_beads->setText(QString("").sprintf("%u (%4.2e)", 
+                                                  (int)(results->used_beads + .5),
+                                                  results->used_beads_sd));
+   }
    le_used_beads->setReadOnly(true);
    le_used_beads->setAlignment(AlignVCenter);
    le_used_beads->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));

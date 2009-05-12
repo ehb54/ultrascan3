@@ -569,7 +569,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
                                               .arg(i+1)
                                               .arg(passi)
                                               .arg(cont1)
-                                              .arg(flag1 == 0 ? "atoms" : "beads"));
+                                              .arg(recheck ? "beads" : "atoms"));
       qApp->processEvents();
 
       nc = 0;

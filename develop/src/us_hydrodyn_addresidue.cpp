@@ -1736,7 +1736,7 @@ void US_AddResidue::write_residue_file()
                break;
             }
          }
-         str1.sprintf("%d: ", i);
+         str1.sprintf("%d: ", i + 1);
          str1 += str3 + ", ";
          if (residue_list[i].comment.isEmpty())
          {
