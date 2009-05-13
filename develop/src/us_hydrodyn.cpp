@@ -665,7 +665,13 @@ void US_Hydrodyn::pdb_visualization()
 void US_Hydrodyn::load_config()
 {
    QString fname = QFileDialog::getOpenFileName ( somo_dir, "*.config", 0, 0, "Please select a SOMO configuration file...", 0, TRUE );
-   read_config(fname);
+   if ( read_config(fname) )
+   {
+      QMessageBox::message(tr("Please note:"), 
+                           tr("The configuration file was found to be corrupt.\n"
+                              "Resorting to default values."));
+      set_default();
+   }
    clear_display();
 }
 
@@ -1004,6 +1010,15 @@ int US_Hydrodyn::calc_somo()
    append_options_log_somo();
    display_default_differences();
 
+   if ( bead_model_prefix.contains("a2b") )
+   {
+      bead_model_prefix.replace("-a2bg","");
+      bead_model_prefix.replace("-a2b","");
+      bead_model_prefix.replace("a2bg","");
+      bead_model_prefix.replace("a2b","");
+      le_bead_model_prefix->setText(bead_model_prefix);
+   }
+
    if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
@@ -1132,9 +1147,10 @@ int US_Hydrodyn::calc_grid_pdb()
       results_widget = false;
    }
 
-   if(!bead_model_prefix.contains("a2b"))
+   if ( !bead_model_prefix.contains("a2b") )
    {
-      if(bead_model_prefix.length()) {
+      if ( bead_model_prefix.length() ) 
+      {
          bead_model_prefix += "-a2b";
       }
       else 
@@ -1365,14 +1381,22 @@ int US_Hydrodyn::calc_grid()
       results_widget = false;
    }
 
-   if(!bead_model_prefix.contains("a2b"))
+   if ( !bead_model_prefix.contains("a2bg") )
    {
-      if(bead_model_prefix.length()) {
-         bead_model_prefix += "-a2b";
+      if( bead_model_prefix.length() )
+      {
+         if ( bead_model_prefix.contains(QRegExp("a2b$")) )
+         {
+            bead_model_prefix += "g";
+         }
+         else
+         {
+            bead_model_prefix += "-a2bg";
+         }
       }
       else 
       {
-         bead_model_prefix += "a2b";
+         bead_model_prefix += "a2bg";
       }
       le_bead_model_prefix->setText(bead_model_prefix);
    }

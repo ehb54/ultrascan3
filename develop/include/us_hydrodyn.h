@@ -286,8 +286,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void stop_calc(); // stop some operations
       void view_file(const QString &); // call editor to view a file
       void bead_check(); // recheck beads
-      void read_config(const QString &);
-      void read_config(QFile &);
+      int read_config(const QString &);
+      int read_config(QFile &);
       void load_config();
       void write_config();
       void write_config(const QString &);
