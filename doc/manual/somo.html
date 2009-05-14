@@ -120,22 +120,31 @@ The PDB file can contain multiple models and if so, multiple models will be disp
 or multiple models by holding the crtl key while clicking on the models' names (crtl-A selects
 all models). If multiple models are selected, all subsequent operations are carried out
 sequentially on the selected models. Once one or multiple models are selected, the
-<i><b>Build SOMO Bead Model</b></i> and <i><b>Build Grid Bead Model</b></i> buttons
+<i><b>Build SOMO Bead Model</b></i> and <i><b>Build AtoB (Grid) Bead Model</b></i> buttons
 will become active, offering two alternative ways of generating a bead model based on the
-settings selected above. Since model building can take some time, depending on the settings
+settings selected above. If the AtoB (Grid) method is selected, a "a2b" prefix is automatically added
+to the model filename. Note that you can keep processing a loaded PDB file after changing any of the
+various model-building options (see below). A third button, <i><b>Build Grid Bead Model</b></i>, will operate 
+the Grid routine on a <i>previously generated</i> bead model. This button is not available until
+a PDB file has been processed with either one of the two bead modeling primary options (see above),
+or until a previously-generated bead model file has been loaded (see below). If this operation is launched, 
+a "a2bg" prefix is automatically added to the filename of the new bead model.<br>
+Since model building can take some time, depending on the settings
 and especially for large structures, selecting the <b>Automatic Calculate Hydrodynamics</b>
 checkbox will allow the direct computation of the hydrodynamic parameters as soon as the model(s) 
 generation has been completed. If this checkbox is not selected (<b>default</b> option), at the
 end of the model building phase the progress bar will be at 100% and the bead model(s) can be
 visualized with <i>RasMol</i> by clicking on <i><b>Visualize Bead Model</b></i> (recommended,
-comparing the original structure with the bead model could reveal unforeseen problems).
+comparing the original structure with the bead model could reveal previously unforeseen problems).
 The results of the accessible surface area (ASA) computations (see below) can also be visualized
 in a pop-up window by clicking on the <i><b>Show ASA Results</b></i> button; this file also includes the
 computation of the radius of gyratio (R<sub>g</sub>) directly from the atomic coordinates of the structure.<p>
 Alternatively, you can skip all of these steps and load a previously generated bead model by clicking
 on <i><b>Load Bead Model File</b></i> from the menu. In this case, and if the model was generated/saved
 in the SOMO format, the various settings/parameters used in model generation will be displayed in
-the right-side main window.<p>
+the right-side main window. Note that you can <i>decrease</i> the number of beads used, and thus the
+resolution of the model, by applying a grid procedure on a previously-generated bead model with the
+<i><b>Build Grid Bead Model</b></i> option (see above). This is particularly useful when large structures are analyzed.<p>
 The hydrodynamic parameters can be then determined by clicking on <i><b>Calculate Hydrodynamics</b></i>.
 A partial list of parameters can be seen in a pop-up window as soon as the calculations are completed by
 clicking on <a href="somo-results.png"><i><b>Show Hydrodynamic Calculations</b></i></a>. A full list of
@@ -143,7 +152,7 @@ all the parameters is also available as a text file, which can be opened from th
 The black bar at the bottom of the progress window will instead report the detailed advancement of some of the
 steps in the various phases, like the current slice and atoms (or beads) involved in the ASA routine,
 and the iterations in the supermatrix inversion in the hydrodynamic computations. For small structures,
-these numbers will be barely noticeable, but for large structures they will allow a more in depth
+these numbers will be barely flashing by in the box, but for large structures they will allow a more in depth
 monitoring of the various stages. <p>
 Operations can be halted at any moment by clicking on the <i><b>Stop</b></i> button. To avoid inadvertendly
 loosing data, the <i><b>Close</b></i> button will not immediately close SOMO, but confirmation will be required
@@ -345,8 +354,12 @@ the program.
 
 <li>
 <b>Reset to Default Options:</b> Click on this button to reset all
-options to default values. When exiting just after clicking on this
-button will reset the standard configuration file as well to default options.
+options to default values. The defaults values are stored in a file
+(<i>somo.defaults</i>), but are also hard-coded in the program. If the
+<i>somo.defaults</i> file is either missing or doesn't have the right
+format, US-SOMO will automatically use the hard-coded default values.
+When exiting just after clicking on this button will reset the standard
+configuration file as well to default options.
 
 </ul>
 </td>
@@ -371,7 +384,7 @@ The latest version of this document can always be found at:
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 12, 2009.
+Last modified on May 13, 2009.
 </font>
 </body>
 </html>

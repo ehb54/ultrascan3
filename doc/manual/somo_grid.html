@@ -27,11 +27,13 @@ SOMO - Grid Options Module:</h2>
 </center>
 <p>
 
-This module controls the parameter of the <b>Build Grid Bead Model (AtoB)</b> routine, which is still under development at this stage.
+This module controls the parameter of the <b>Build AtoB (Grid) Bead Model </b> routine, which is still under development at this stage. Currently, a basic mode is implemented, in which the cubic grid is applied, beads are generated and labeled <b>all</b> as
+being buried, and the overlaps are all removed in one pass. The ASA re-check routine <b>must</b> be active to properly classify
+the beads as being exposed or buried following overlap removal. This step is controlled by its own parameter, see <a href=somo_asa.html>here</a>.
 <p>
 In the <i>Computations Relative to:</i> section, the user selects if the coordinates of each bead built by the grid routine have to be placed in the <b>Center of Mass (default)</b> between all atoms whose centers fall within the cubelet, or in the <b>Center of Cubelet</b>. These options are obviously mutually exclusive.
 <p>
-The <i>Cube Side (Angstrom):</i> field determines the dimension of the grid cubelets (<b>default: 10 A</b>).
+The <i>Cube Side (Angstrom):</i> field determines the dimension of the grid cubelets (<b>default: 5 A</b>).
 <p>
 The next three independently selectable options controls other steps or features of the grid-based method:
 <p>
@@ -61,7 +63,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 12, 2009.
+Last modified on May 13, 2009.
 </font>
 </body>
 </html>

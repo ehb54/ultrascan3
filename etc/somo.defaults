@@ -53,7 +53,7 @@ SOMO Config file - computer generated, please do not edit...
 0		# flag to hydrate original model (grid)
 0		# flag for positioning bead in center of mass or cubelet (grid)
 0		# flag for expanding beads to tangency (grid)
-10		# Length of cube side (grid)
+5		# Length of cube side (grid)
 24.041		# hydration volume
 1		# flag for selecting vbar calculation
 0.72		# vbar value
