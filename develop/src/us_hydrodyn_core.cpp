@@ -22,7 +22,7 @@
 // #define DEBUG
 // #define DEBUG1
 // #define AUTO_BB_DEBUG
-#define BUILD_MAPS_DEBUG
+// #define BUILD_MAPS_DEBUG
 
 #ifndef WIN32
 #   include <unistd.h>
