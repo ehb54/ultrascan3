@@ -465,7 +465,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
    // compare expanded list of residues to model ... list missing atoms missing
    int errors_found = 0;
    get_atom_map(model);
-   bool failure_errors = 0;
+   int failure_errors = 0;
    bead_exceptions.clear();
 
    // residue types are for automatic build builder to determine
@@ -1311,14 +1311,14 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                            for ( unsigned int i = 0; i < residue_list[orgrespos].r_atom.size(); i++ )
                            {
                               tot_mw += residue_list[orgrespos].r_atom[i].hybrid.mw;
-                              tot_radii3 += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3.0);
+                              tot_radii3 += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3);
                               if ( !molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
                                                                          .arg(idx)
                                                                          .arg(pos)
                                                                          .arg(i)] )
                               {
                                  tot_mw_missing += residue_list[orgrespos].r_atom[i].hybrid.mw;
-                                 tot_radii3_missing += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3.0);
+                                 tot_radii3_missing += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3);
                               }
                            }
                            atoms_scale_weight[0] = 
@@ -1345,7 +1345,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                               tot_mw[residue_list[orgrespos].r_atom[i].bead_assignment]
                                  += residue_list[orgrespos].r_atom[i].hybrid.mw;
                               tot_radii3[residue_list[orgrespos].r_atom[i].bead_assignment]
-                                 += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3.0);
+                                 += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3);
                               if ( !molecules_residue_missing_atoms_skip[QString("%1|%2|%3")
                                                                          .arg(idx)
                                                                          .arg(pos)
@@ -1354,7 +1354,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                                  tot_mw_missing[residue_list[orgrespos].r_atom[i].bead_assignment]
                                     += residue_list[orgrespos].r_atom[i].hybrid.mw;
                                  tot_radii3_missing[residue_list[orgrespos].r_atom[i].bead_assignment]
-                                    += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3.0);
+                                    += pow(residue_list[orgrespos].r_atom[i].hybrid.radius, 3);
                               }
                            }
                            for ( unsigned int i = 0; i < beads_missing_atom_count.size(); i++ )

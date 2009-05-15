@@ -681,7 +681,7 @@ void US_AddResidue::add()
    }
    str1.sprintf("Residue volume: %7.2f A^3, Sum of beads: %7.2f A^3\n\n"
                 "Please correct the bead volume and try again...", new_residue.molvol, (float) (sum/10000));
-   if (fabs(sum - (new_residue.molvol * 10000 + 0.5) > 1))
+   if (fabs(sum - (new_residue.molvol * 10000 + 0.5)) > 1)
    {
       QMessageBox::message("Attention:", "The residue volume does not match the volume of the beads:\n\n" + str1);
       pb_add->setEnabled(false);
