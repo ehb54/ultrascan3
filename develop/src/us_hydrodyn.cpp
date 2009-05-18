@@ -1140,6 +1140,12 @@ int US_Hydrodyn::calc_grid_pdb()
       results_widget = false;
    }
 
+   if ( bead_model_prefix.contains("a2bg") )
+   {
+      bead_model_prefix.replace("-a2bg","");
+      bead_model_prefix.replace("a2bg","");
+      le_bead_model_prefix->setText(bead_model_prefix);
+   }
    if ( !bead_model_prefix.contains("a2b") )
    {
       if ( bead_model_prefix.length() ) 
@@ -1152,6 +1158,7 @@ int US_Hydrodyn::calc_grid_pdb()
       }
       le_bead_model_prefix->setText(bead_model_prefix);
    }
+
 
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
