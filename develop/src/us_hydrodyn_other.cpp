@@ -1172,7 +1172,7 @@ void US_Hydrodyn::set_default()
    QFile f;
    QString str;
    // only keep one copy of defaults in system root dir
-   f.setName(USglobal->config_list.root_dir + "/etc/somo.defaults");
+   f.setName(USglobal->config_list.system_dir + "/etc/somo.defaults");
    bool config_read = false;
    if (f.open(IO_ReadOnly)) // read system directory
    {
