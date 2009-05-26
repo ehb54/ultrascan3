@@ -658,6 +658,16 @@ void US_Hydrodyn::pdb_visualization()
 void US_Hydrodyn::load_config()
 {
    QString fname = QFileDialog::getOpenFileName ( somo_dir, "*.config", 0, 0, "Please select a SOMO configuration file...", 0, TRUE );
+   if ( fname == QString::null )
+   {
+      QColor save_color = editor->color();
+      editor->setColor("red");
+      editor->append(tr("\nLoad configuration canceled."));
+      editor->setColor(save_color);
+      display_default_differences();
+      return;
+   }
+
    if ( read_config(fname) )
    {
       QMessageBox::message(tr("Please note:"), 
@@ -1815,7 +1825,6 @@ void US_Hydrodyn::print()
       p.end();            // send job to printer
    }
 }
-
 void US_Hydrodyn::clear_display()
 {
    editor->clear();

@@ -17,11 +17,11 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *sidechain_ove
    USglobal=new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("SOMO Bead Overlap Reduction Options"));
+   show_grid_only = false;
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
    setGeometry(global_Xpos, global_Ypos, 0, 0);
-   show_grid_only = false;
 }
 
 US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *grid_overlap,
