@@ -54,6 +54,8 @@ SimulationParameters use_simulation_parameters;
 
 static bool multi_experiment_flag;
 
+static vector < double > avg_gasc_rmsd;
+
 static void setup_model_system_1comp() {
    unsigned int i;
    vector<QString> model_sys_1comp_full_text;
@@ -367,7 +369,8 @@ void US_fe_nnls_t::WriteResultsSC(vector <struct mfem_data> experiment, vector<S
                           " search parameters %4, rmsd %5, iterations %6\n").
                arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
                arg(sve[e].solutes.size()).
-               arg(sqrt(sve[e].variance)).
+               // arg(sqrt(sve[e].variance)).
+               arg(avg_gasc_rmsd[e] / monte_carlo_iterations).
                arg(iterations).
                arg(meniscus + experiment[e].meniscus);
          } else {
@@ -375,7 +378,8 @@ void US_fe_nnls_t::WriteResultsSC(vector <struct mfem_data> experiment, vector<S
                           " search parameters %4, rmsd %5, iterations %6\n").
                arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
                arg(sve[e].solutes.size()).
-               arg(sqrt(sve[e].variance)).
+               // arg(sqrt(sve[e].variance)).
+               arg(avg_gasc_rmsd[e] / monte_carlo_iterations).
                arg(iterations);
          }
          f3.close();
@@ -1907,6 +1911,9 @@ int US_fe_nnls_t::run(int status)
       use_size = 1;
    }
 
+   avg_gasc_rmsd.resize(use_size);
+   memset(&avg_gasc_rmsd[0], 0, sizeof(double) * avg_gasc_rmsd.size());
+
    if (status)
    {
       MPI_Finalize();
@@ -2461,7 +2468,7 @@ int US_fe_nnls_t::run(int status)
             {
                sve.push_back(sv);
                vector <struct mfem_data> use_experiment;
-               use_experiment.push_back(experiment[e]);
+               use_experiment.push_back(this_monte_carlo ? org_experiment[e] : experiment[e]);
                for (unsigned int l=0; l < final_use_solutes.size(); l++)
                {
                   // printf("0: final_use_solute 1 e%u %u s %g ff0 %g\n", e, l, final_use_solutes[l].s, final_use_solutes[l].k);
@@ -2470,6 +2477,8 @@ int US_fe_nnls_t::run(int status)
                if (analysis_type == "GA_SC")
                {
                   sve[e] = us_ga_interacting_calc(use_experiment, final_use_solutes, 0e0);
+                  avg_gasc_rmsd[e] += sqrt(sve[e].variance);
+                  // printf("gasc_1 e %u %g\n", e, sqrt(sve[e].variance)); fflush(stdout);
                } else {
                   sve[e] = calc_residuals(use_experiment, final_use_solutes, 0e0, 1, e);
                }
@@ -2536,7 +2545,7 @@ int US_fe_nnls_t::run(int status)
                {
                   sve.push_back(sv);
                   vector <struct mfem_data> use_experiment;
-                  use_experiment.push_back(experiment[e]);
+                  use_experiment.push_back(this_monte_carlo ? org_experiment[e] : experiment[e]);
                   for (unsigned int l=0; l < final_use_solutes.size(); l++)
                   {
                      // printf("0: final_use_solute 2 e%u %u s %g ff0 %g\n", e, l, final_use_solutes[l].s, final_use_solutes[l].k);
@@ -2545,6 +2554,7 @@ int US_fe_nnls_t::run(int status)
                   if (analysis_type == "GA_SC")
                   {
                      sve[e] = us_ga_interacting_calc(use_experiment, final_use_solutes, 0e0);
+                     // printf("gasc_2 e %u %g\n", e, sqrt(sve[e].variance)); fflush(stdout);
                   } else {
                      sve[e] = calc_residuals(use_experiment, final_use_solutes, 0e0, 1, e);
                   }
