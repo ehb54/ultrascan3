@@ -1116,6 +1116,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         // create new_residue
                         new_residue.comment = QString("Temporary residue %1").arg(new_residue_name);
                         new_residue.name = new_residue_name;
+                        new_residue.unique_name = new_residue_name;
                         new_residue.type = 8;  // other
                         new_residue.molvol = misc.avg_volume * atom_counts[count_idx];
                         // new_residue.asa = misc.avg_asa * atom_counts[count_idx];
@@ -1221,7 +1222,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         }
                      }
             
-                     new_atom.name = this_atom->name;
+                     new_atom.name = (this_atom->name == "OXT" ? "OXT'" : this_atom->name);
                      new_atom.hybrid.name = this_atom->name;
                      new_atom.hybrid.mw = misc.avg_mass;
                      new_atom.hybrid.radius = misc.avg_radius;
@@ -1231,10 +1232,15 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      residue_list[respos].r_atom.push_back(new_atom);
                      PDB_atom atom_to_add = org_model.molecule[j].atom[k];
                      atom_to_add.resName = new_residue.name;
+                     if ( atom_to_add.name == "OXT" )
+                     {
+                        atom_to_add.name = "OXT'";
+                     }
 #if defined(AUTO_BB_DEBUG)
-                     printf("1.3 <%s>\n", new_residue.name.ascii());
+                     printf("1.3 <%s> adding <%s> respos %u\n", new_residue.name.ascii(), atom_to_add.name.ascii(), respos);
 #endif
                      tmp_chain.atom.push_back(atom_to_add);
+                     model->residue[model->residue.size() - 1] = residue_list[residue_list.size() - 1];
                   }
                   break;
                case 4: // missing atoms
@@ -1386,6 +1392,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                                     .arg(this_atom->resSeq)] = atom_counts[count_idx];
                         new_residue.comment = QString("Temporary residue %1").arg(new_residue_name);
                         new_residue.name = new_residue_name;
+                        new_residue.unique_name = new_residue_name;
                         new_residue.type = residue_list[orgrespos].type;
                         new_residue.molvol = residue_list[orgrespos].molvol;
                         new_residue.asa = residue_list[orgrespos].asa;
@@ -1457,6 +1464,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                                                                          .arg(i)] )
                               {
                                  new_atom = residue_list[orgrespos].r_atom[i];
+                                 if ( new_atom.name == "OXT" )
+                                 {
+                                    new_atom.name = "OXT'";
+                                 }
                                  new_atom.hybrid.mw *= atoms_scale_weight[0]; // misc.avg_mass;
                                  new_atom.hybrid.mw = (int)(new_atom.hybrid.mw * 100 + .5) / 100.0;
                                  new_atom.hybrid.radius *= atoms_scale_radius[0]; // misc.avg_radius;
@@ -1561,10 +1572,15 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      // ok, now we can push back the modified atom
                      PDB_atom atom_to_add = org_model.molecule[j].atom[k];
                      atom_to_add.resName = new_residue.name;
+                     if ( atom_to_add.name == "OXT" )
+                     {
+                        atom_to_add.name = "OXT'";
+                     }
 #if defined(AUTO_BB_DEBUG)
                      printf("a1.3 <%s>\n", new_residue.name.ascii());
 #endif
                      tmp_chain.atom.push_back(atom_to_add);
+                     model->residue[model->residue.size() - 1] = residue_list[residue_list.size() - 1];
                   }
                   break;
                      
