@@ -19,10 +19,14 @@ static float
 particle_max_size(PDB * pdb)
 {
 
-   PDB *p, *t;
-   float max_size = 0.0, temp = 0.0;
+   PDB *p;
+   float max_size = 0.0;
+   float temp = 0.0;
 
    // int countr = 0;
+   // false assumption : particle is centered at 0,0,0
+#if defined (OLD_WAY)
+   PDB *t;
    for (p = pdb; p; p = p->next)
       for (t = p->next; t; t = t->next)
       {
@@ -38,6 +42,19 @@ particle_max_size(PDB * pdb)
 
          // printf("temp %d %f\n", countr++, temp); fflush(stdout);
       }
+#else
+   for (p = pdb; p; p = p->next)
+   {
+      temp = (p->x) * (p->x) + (p->y) * (p->y) + (p->z) * (p->z);
+      if (temp > max_size)
+      {
+            max_size = temp;
+      }
+   }
+
+#endif
+
+
 
    return ((float) sqrt(max_size));
 
