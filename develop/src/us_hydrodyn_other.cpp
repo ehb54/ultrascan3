@@ -760,6 +760,10 @@ void US_Hydrodyn::update_vbar()
 {
    if (misc.compute_vbar && model_vector.size() > 0) // after reading the pdb file, the vbar is calculated.
    {// If we computed vbar, we assign this to result.vbar, which should be used in the calculation.
+      if (current_model >= model_vector.size())
+      {
+         current_model = 0;
+      }
       results.vbar = model_vector[current_model].vbar;
    }
    else
