@@ -24,8 +24,7 @@ bool US_DB::test_db_connection(
         const QString& user, const QString& password, 
         QString& error )
 {
-  QSqlDatabase db = QSqlDatabase();
-  db.addDatabase( "QMYSQL" );
+  QSqlDatabase db = QSqlDatabase::addDatabase( "QMYSQL" );
   db.setUserName    ( user     );
   db.setDatabaseName( dbname   );
   db.setHostName    ( host     );

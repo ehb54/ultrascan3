@@ -1,7 +1,5 @@
 #include "us_settings.h"
 
-#define BASE "/home/bdubbs/ultrascan"
-
 // Programs
 QString US_Settings::browser( void )
 {
