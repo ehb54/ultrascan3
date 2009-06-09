@@ -29,11 +29,25 @@ class US_EXTERN US_Hydrodyn_Overlap : public QFrame
    Q_OBJECT
 
    public:
-      US_Hydrodyn_Overlap(struct overlap_reduction *, struct overlap_reduction *,
-                                    struct overlap_reduction *, struct overlap_reduction *, double *, bool *, void *,
-        QWidget *p = 0, const char *name = 0);
-                US_Hydrodyn_Overlap(struct overlap_reduction *, double *, bool *, void *,
-      QWidget *p = 0, const char *name = 0);
+      US_Hydrodyn_Overlap(struct overlap_reduction *, 
+                          struct overlap_reduction *,
+                          struct overlap_reduction *, 
+                          struct overlap_reduction *, 
+                          struct overlap_reduction *, 
+                          struct overlap_reduction *, 
+                          double *, 
+                          bool *, 
+                          void *,
+                          QWidget *p = 0, 
+                          const char *name = 0);
+      US_Hydrodyn_Overlap(struct overlap_reduction *, 
+                          struct overlap_reduction *,
+                          struct overlap_reduction *, 
+                          double *, 
+                          bool *, 
+                          void *,
+                          QWidget *p = 0, 
+                          const char *name = 0);
       ~US_Hydrodyn_Overlap();
 
    public:
@@ -41,17 +55,21 @@ class US_EXTERN US_Hydrodyn_Overlap : public QFrame
       struct overlap_reduction *sidechain_overlap;
       struct overlap_reduction *mainchain_overlap;
       struct overlap_reduction *buried_overlap;
+      struct overlap_reduction *grid_exposed_overlap;
+      struct overlap_reduction *grid_buried_overlap;
       struct overlap_reduction *grid_overlap;
       bool *overlap_widget, show_grid_only;
       double *overlap_tolerance;
       int tab;
-                void *us_hydrodyn;
+      void *us_hydrodyn;
       
       US_Config *USglobal;
       US_Hydrodyn_OR *sidechain_OR;
       US_Hydrodyn_OR *mainchain_OR;
       US_Hydrodyn_OR *buried_OR;
       US_Hydrodyn_OR *grid_OR;
+      US_Hydrodyn_OR *grid_exposed_OR;
+      US_Hydrodyn_OR *grid_buried_OR;
 
       QLabel *lbl_info;
 

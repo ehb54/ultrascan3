@@ -28,6 +28,7 @@ struct grid_options
                   // false: center of cubelet
    bool tangency;   // true: Expand beads to tangency
    double cube_side; 
+   bool enable_asa;   // true:-> run asa buried/exposed code
 };
 
 class US_EXTERN US_Hydrodyn_Grid : public QFrame
@@ -35,13 +36,22 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
    Q_OBJECT
 
    public:
-      US_Hydrodyn_Grid(struct overlap_reduction *, struct grid_options *,
-                       double *, bool *, void *, QWidget *p = 0, const char *name = 0);
+      US_Hydrodyn_Grid(struct overlap_reduction *,
+                       struct overlap_reduction *,
+                       struct overlap_reduction *,
+                       struct grid_options *,
+                       double *, 
+                       bool *, 
+                       void *, 
+                       QWidget *p = 0, 
+                       const char *name = 0);
       ~US_Hydrodyn_Grid();
 
    public:
       
       struct grid_options *grid;
+      struct overlap_reduction *grid_exposed_overlap;
+      struct overlap_reduction *grid_buried_overlap;
       struct overlap_reduction *grid_overlap;
       bool *grid_widget;
       bool overlap_widget;
@@ -55,7 +65,8 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
       QCheckBox *cb_center_mass;
       QCheckBox *cb_center_cubelet;
       QCheckBox *cb_tangency;
-                void *us_hydrodyn;
+      QCheckBox *cb_enable_asa;
+      void *us_hydrodyn;
       
       US_Config *USglobal;
       
@@ -73,6 +84,7 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
       void select_center(int);
       void set_hydrate();
       void set_tangency();
+      void set_enable_asa();
       void set_cubic();
       void overlaps();
       void cancel();

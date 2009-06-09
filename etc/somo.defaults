@@ -26,6 +26,24 @@ SOMO Config file - computer generated, please do not edit...
 1		# Percent synchronously step
 0		# Outward translation flag
 0		# flag for showing outward translation widget
+1		# Remove exposed grid bead overlaps flag
+0		# Fuse beads flag
+0		# Bead fusing threshold (%)
+1		# Remove overlaps hierarchical flag
+1		# Percent hierarchical step
+0		# Remove overlaps synchronously flag
+1		# Percent synchronously step
+1		# Outward translation flag
+1		# flag for showing outward translation widget
+1		# Remove buried grid bead overlaps flag
+0		# Fuse beads flag
+0		# Bead fusing threshold (%)
+1		# Remove overlaps hierarchical flag
+1		# Percent hierarchical step
+0		# Remove overlaps synchronously flag
+1		# Percent synchronously step
+0		# Outward translation flag
+0		# flag for showing outward translation widget
 1		# Remove grid bead overlaps flag
 0		# Fuse beads flag
 0		# Bead fusing threshold (%)
@@ -54,6 +72,7 @@ SOMO Config file - computer generated, please do not edit...
 0		# flag for positioning bead in center of mass or cubelet (grid)
 0		# flag for expanding beads to tangency (grid)
 5		# Length of cube side (grid)
+1		# Enable ASA options
 24.041		# hydration volume
 1		# flag for selecting vbar calculation
 0.72		# vbar value

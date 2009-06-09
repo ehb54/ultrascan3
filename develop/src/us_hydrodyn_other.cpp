@@ -863,6 +863,57 @@ int US_Hydrodyn::read_config(QFile& f)
    if ( ts.readLine() == QString::null ) return -1;
    buried_overlap.show_translate = (bool) str.toInt();
 
+
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid_exposed_overlap.remove_overlap = (bool) str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid_exposed_overlap.fuse_beads = (bool) str.toInt();
+   ts >> grid_exposed_overlap.fuse_beads_percent;
+   if ( ts.readLine() == QString::null ) return -1;
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid_exposed_overlap.remove_hierarch = (bool) str.toInt();
+   ts >> grid_exposed_overlap.remove_hierarch_percent;
+   if ( ts.readLine() == QString::null ) return -1;
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid_exposed_overlap.remove_sync = (bool) str.toInt();
+   ts >> grid_exposed_overlap.remove_sync_percent;
+   if ( ts.readLine() == QString::null ) return -1;
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid_exposed_overlap.translate_out = (bool) str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid_exposed_overlap.show_translate = (bool) str.toInt();
+
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid_buried_overlap.remove_overlap = (bool) str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid_buried_overlap.fuse_beads = (bool) str.toInt();
+   ts >> grid_buried_overlap.fuse_beads_percent;
+   if ( ts.readLine() == QString::null ) return -1;
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid_buried_overlap.remove_hierarch = (bool) str.toInt();
+   ts >> grid_buried_overlap.remove_hierarch_percent;
+   if ( ts.readLine() == QString::null ) return -1;
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid_buried_overlap.remove_sync = (bool) str.toInt();
+   ts >> grid_buried_overlap.remove_sync_percent;
+   if ( ts.readLine() == QString::null ) return -1;
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid_buried_overlap.translate_out = (bool) str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid_buried_overlap.show_translate = (bool) str.toInt();
+
    ts >> str;
    if ( ts.readLine() == QString::null ) return -1;
    grid_overlap.remove_overlap = (bool) str.toInt();
@@ -887,6 +938,7 @@ int US_Hydrodyn::read_config(QFile& f)
    ts >> str;
    if ( ts.readLine() == QString::null ) return -1;
    grid_overlap.show_translate = (bool) str.toInt();
+
    ts >> str;
    if ( ts.readLine() == QString::null ) return -1;
    overlap_tolerance = str.toDouble();
@@ -947,6 +999,9 @@ int US_Hydrodyn::read_config(QFile& f)
    ts >> str;
    if ( ts.readLine() == QString::null ) return -1;
    grid.cube_side = str.toDouble();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -1;
+   grid.enable_asa = (bool) str.toInt();
 
    ts >> str;
    if ( ts.readLine() == QString::null ) return -1;
@@ -1012,7 +1067,9 @@ int US_Hydrodyn::read_config(QFile& f)
    sidechain_overlap.title = "exposed side chain beads";
    mainchain_overlap.title = "exposed main/main and\nmain/side chain beads";
    buried_overlap.title = "buried beads";
-   grid_overlap.title = "Grid beads";
+   grid_exposed_overlap.title = "exposed grid beads";
+   grid_buried_overlap.title = "buried grid beads";
+   grid_overlap.title = "grid beads";
 
    // pdb_visualization options:
 
@@ -1113,6 +1170,26 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << buried_overlap.translate_out << "\t\t# Outward translation flag\n";
       ts << buried_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
 
+      ts << grid_exposed_overlap.remove_overlap << "\t\t# Remove exposed grid bead overlaps flag\n";
+      ts << grid_exposed_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
+      ts << grid_exposed_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
+      ts << grid_exposed_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+      ts << grid_exposed_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
+      ts << grid_exposed_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
+      ts << grid_exposed_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
+      ts << grid_exposed_overlap.translate_out << "\t\t# Outward translation flag\n";
+      ts << grid_exposed_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
+
+      ts << grid_buried_overlap.remove_overlap << "\t\t# Remove buried grid bead overlaps flag\n";
+      ts << grid_buried_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
+      ts << grid_buried_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
+      ts << grid_buried_overlap.remove_hierarch << "\t\t# Remove overlaps hierarchical flag\n";
+      ts << grid_buried_overlap.remove_hierarch_percent << "\t\t# Percent hierarchical step\n";
+      ts << grid_buried_overlap.remove_sync << "\t\t# Remove overlaps synchronously flag\n";
+      ts << grid_buried_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
+      ts << grid_buried_overlap.translate_out << "\t\t# Outward translation flag\n";
+      ts << grid_buried_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
+
       ts << grid_overlap.remove_overlap << "\t\t# Remove grid bead overlaps flag\n";
       ts << grid_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
       ts << grid_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
@@ -1122,6 +1199,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << grid_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
       ts << grid_overlap.translate_out << "\t\t# Outward translation flag\n";
       ts << grid_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
+
       ts << overlap_tolerance << "\t\t# bead overlap tolerance\n";
 
       ts << bead_output.output << "\t\t# flag for selecting output format\n";
@@ -1143,6 +1221,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << grid.center << "\t\t# flag for positioning bead in center of mass or cubelet (grid)\n";
       ts << grid.tangency << "\t\t# flag for expanding beads to tangency (grid)\n";
       ts << grid.cube_side << "\t\t# Length of cube side (grid)\n";
+      ts << grid.enable_asa << "\t\t# flag for enabling asa options (grid)\n";
 
       ts << misc.hydrovol << "\t\t# hydration volume\n";
       ts << misc.compute_vbar << "\t\t# flag for selecting vbar calculation\n";
@@ -1240,6 +1319,26 @@ void US_Hydrodyn::set_default()
       buried_overlap.translate_out = false;
       buried_overlap.show_translate = false;
       
+      grid_exposed_overlap.remove_overlap = true;
+      grid_exposed_overlap.fuse_beads = false;
+      grid_exposed_overlap.fuse_beads_percent = 0.0;
+      grid_exposed_overlap.remove_hierarch = true;
+      grid_exposed_overlap.remove_hierarch_percent = 1.0;
+      grid_exposed_overlap.remove_sync = false;
+      grid_exposed_overlap.remove_sync_percent = 1.0;
+      grid_exposed_overlap.translate_out = true;
+      grid_exposed_overlap.show_translate = true;
+      
+      grid_buried_overlap.remove_overlap = true;
+      grid_buried_overlap.fuse_beads = false;
+      grid_buried_overlap.fuse_beads_percent = 0.0;
+      grid_buried_overlap.remove_hierarch = true;
+      grid_buried_overlap.remove_hierarch_percent = 1.0;
+      grid_buried_overlap.remove_sync = false;
+      grid_buried_overlap.remove_sync_percent = 1.0;
+      grid_buried_overlap.translate_out = false;
+      grid_buried_overlap.show_translate = false;
+      
       grid_overlap.remove_overlap = true;
       grid_overlap.fuse_beads = false;
       grid_overlap.fuse_beads_percent = 0.0;
@@ -1250,10 +1349,14 @@ void US_Hydrodyn::set_default()
       grid_overlap.translate_out = false;
       grid_overlap.show_translate = false;
       
+      overlap_tolerance = 0.001;
+
       sidechain_overlap.title = "exposed side chain beads";
       mainchain_overlap.title = "exposed main/main and main/side chain beads";
       buried_overlap.title = "buried beads";
-      grid_overlap.title = "Grid beads";
+      grid_exposed_overlap.title = "exposed grid beads";
+      grid_buried_overlap.title = "buried grid beads";
+      grid_overlap.title = "grid beads";
       
       bead_output.sequence = 0;
       bead_output.output = 1;
@@ -1274,7 +1377,8 @@ void US_Hydrodyn::set_default()
       grid.hydrate = false;    // true: hydrate model
       grid.center = false;    // true: center of cubelet, false: center of mass
       grid.tangency = false;   // true: Expand beads to tangency
-      grid.cube_side = 10.0;
+      grid.cube_side = 5.0;
+      grid.enable_asa = true;   // true: enable asa 
       
       misc.hydrovol = 24.041;
       misc.compute_vbar = true;
@@ -1313,6 +1417,8 @@ void US_Hydrodyn::set_default()
    default_sidechain_overlap = sidechain_overlap;
    default_mainchain_overlap = mainchain_overlap;
    default_buried_overlap = buried_overlap;
+   default_grid_exposed_overlap = grid_exposed_overlap;
+   default_grid_buried_overlap = grid_buried_overlap;
    default_grid_overlap = grid_overlap;
    default_bead_output = bead_output;
    default_asa = asa;
@@ -2035,10 +2141,32 @@ void US_Hydrodyn::append_options_log_atob()
              "  Apply Cubic Grid:           %s\n"
              "  Hydrate the Original Model: %s\n"
              "  Expand Beads to Tangency:   %s\n"
+             "  Enable ASA options:         %s\n"
              "\n"
 
-             "Overlap Reduction:\n"
+             "Grid (AtoB) Overlap Reduction:\n"
              "  Bead Overlap Tolerance:     %f\n"
+
+             "    Exposed beads:\n"
+             "      Fuse Beads:                                 %s\n"
+             "      Fuse Beads that overlap by more than:       %.1f\n"
+             "      Remove Overlaps:                            %s\n"
+             "      Remove Overlaps synchronously:              %s\n"
+             "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+             "      Remove Overlaps hierarchically:             %s\n"
+             "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+             "      Outward Translation:                        %s\n"
+             "\n"
+
+             "    Buried beads:\n"
+             "      Fuse Beads:                                 %s\n"
+             "      Fuse Beads that overlap by more than:       %.1f\n"
+             "      Remove Overlaps:                            %s\n"
+             "      Remove Overlaps synchronously:              %s\n"
+             "      Synchronous Overlap Reduction Step Size %%:  %.1f\n"
+             "      Remove Overlaps hierarchically:             %s\n"
+             "      Hierarchical Overlap Reduction Step Size %%: %.1f\n"
+             "\n"
 
              "    Grid beads:\n"
              "      Fuse Beads:                                 %s\n"
@@ -2055,8 +2183,26 @@ void US_Hydrodyn::append_options_log_atob()
              ,grid.cubic ? "On" : "Off"
              ,grid.hydrate ? "On" : "Off"
              ,grid.tangency ? "On" : "Off"
+             ,grid.enable_asa ? "On" : "Off"
 
              ,overlap_tolerance
+
+             ,grid_exposed_overlap.fuse_beads ? "On" : "Off"
+             ,grid_exposed_overlap.fuse_beads_percent
+             ,grid_exposed_overlap.remove_overlap ? "On" : "Off"
+             ,grid_exposed_overlap.remove_sync ? "On" : "Off"
+             ,grid_exposed_overlap.remove_sync_percent
+             ,grid_exposed_overlap.remove_hierarch ? "On" : "Off"
+             ,grid_exposed_overlap.remove_hierarch_percent
+             ,grid_exposed_overlap.translate_out ? "On" : "Off"
+
+             ,grid_buried_overlap.fuse_beads ? "On" : "Off"
+             ,grid_buried_overlap.fuse_beads_percent
+             ,grid_buried_overlap.remove_overlap ? "On" : "Off"
+             ,grid_buried_overlap.remove_sync ? "On" : "Off"
+             ,grid_buried_overlap.remove_sync_percent
+             ,grid_buried_overlap.remove_hierarch ? "On" : "Off"
+             ,grid_buried_overlap.remove_hierarch_percent
 
              ,grid_overlap.fuse_beads ? "On" : "Off"
              ,grid_overlap.fuse_beads_percent
@@ -2188,7 +2334,7 @@ QString US_Hydrodyn::default_differences_somo()
       str += QString(base + sub + "ASAB1 Step Size (A): %1\n").arg(asa.asab1_step);
    }
 
-   sub = "Overlap Reduction -> ";
+   sub = "SoMo Overlap Reduction -> ";
    if ( overlap_tolerance != default_overlap_tolerance )
    {
       str += QString(base + sub + "Bead Overlap Tolerance: %1\n").arg(overlap_tolerance);
@@ -2308,8 +2454,81 @@ QString US_Hydrodyn::default_differences_grid()
    QString str = "";
 
    QString base = "SOMO Options -> ";
-   QString sub = "Overlap Reduction -> ";
-   QString sub2 = "Grid Beads -> ";
+   QString sub = "AtoB (Grid) Overlap Reduction -> ";
+   QString sub2 = "Exposed Grid Beads -> ";
+   if ( grid_exposed_overlap.fuse_beads != default_grid_exposed_overlap.fuse_beads )
+   {
+      str += QString(base + sub + sub2 + "Fuse Beads: %1\n")
+         .arg(grid_exposed_overlap.fuse_beads ? "On" : "Off");
+   }
+   if ( grid_exposed_overlap.fuse_beads_percent != default_grid_exposed_overlap.fuse_beads_percent )
+   {
+      str += QString(base + sub + sub2 + "Fuse Beads that overlap by more than: %1\n").arg(grid_exposed_overlap.fuse_beads_percent);
+   }
+   if ( grid_exposed_overlap.remove_overlap != default_grid_exposed_overlap.remove_overlap )
+   {
+      str += QString(base + sub + sub2 + "Remove Overlaps: %1\n")
+         .arg(grid_exposed_overlap.remove_overlap ? "On" : "Off");
+   }
+   if ( grid_exposed_overlap.remove_sync != default_grid_exposed_overlap.remove_sync )
+   {
+      str += QString(base + sub + sub2 + "Remove Overlaps synchronously: %1\n")
+         .arg(grid_exposed_overlap.remove_sync ? "On" : "Off");
+   }
+   if ( grid_exposed_overlap.remove_sync_percent != default_grid_exposed_overlap.remove_sync_percent )
+   {
+      str += QString(base + sub + sub2 + "Synchronous Overlap Reduction Step Size %: %1\n").arg(grid_exposed_overlap.remove_sync_percent);
+   }
+   if ( grid_exposed_overlap.remove_hierarch != default_grid_exposed_overlap.remove_hierarch )
+   {
+      str += QString(base + sub + sub2 + "Remove Overlaps hierarchically: %1\n")
+         .arg(grid_exposed_overlap.remove_hierarch ? "On" : "Off");
+   }
+   if ( grid_exposed_overlap.remove_hierarch_percent != default_grid_exposed_overlap.remove_hierarch_percent )
+   {
+      str += QString(base + sub + sub2 + "Hierarchical Overlap Reduction Step Size %: %1\n").arg(grid_exposed_overlap.remove_hierarch_percent);
+   }
+   if ( grid_exposed_overlap.translate_out != default_grid_exposed_overlap.translate_out )
+   {
+      str += QString(base + sub + sub2 + "Outward Translation: %1\n")
+         .arg(grid_exposed_overlap.translate_out ? "On" : "Off");
+   }
+
+   sub2 = "Buried Grid Beads -> ";
+   if ( grid_buried_overlap.fuse_beads != default_grid_buried_overlap.fuse_beads )
+   {
+      str += QString(base + sub + sub2 + "Fuse Beads: %1\n")
+         .arg(grid_buried_overlap.fuse_beads ? "On" : "Off");
+   }
+   if ( grid_buried_overlap.fuse_beads_percent != default_grid_buried_overlap.fuse_beads_percent )
+   {
+      str += QString(base + sub + sub2 + "Fuse Beads that overlap by more than: %1\n").arg(grid_buried_overlap.fuse_beads_percent);
+   }
+   if ( grid_buried_overlap.remove_overlap != default_grid_buried_overlap.remove_overlap )
+   {
+      str += QString(base + sub + sub2 + "Remove Overlaps: %1\n")
+         .arg(grid_buried_overlap.remove_overlap ? "On" : "Off");
+   }
+   if ( grid_buried_overlap.remove_sync != default_grid_buried_overlap.remove_sync )
+   {
+      str += QString(base + sub + sub2 + "Remove Overlaps synchronously: %1\n")
+         .arg(grid_buried_overlap.remove_sync ? "On" : "Off");
+   }
+   if ( grid_buried_overlap.remove_sync_percent != default_grid_buried_overlap.remove_sync_percent )
+   {
+      str += QString(base + sub + sub2 + "Synchronous Overlap Reduction Step Size %: %1\n").arg(grid_buried_overlap.remove_sync_percent);
+   }
+   if ( grid_buried_overlap.remove_hierarch != default_grid_buried_overlap.remove_hierarch )
+   {
+      str += QString(base + sub + sub2 + "Remove Overlaps hierarchically: %1\n")
+         .arg(grid_buried_overlap.remove_hierarch ? "On" : "Off");
+   }
+   if ( grid_buried_overlap.remove_hierarch_percent != default_grid_buried_overlap.remove_hierarch_percent )
+   {
+      str += QString(base + sub + sub2 + "Hierarchical Overlap Reduction Step Size %: %1\n").arg(grid_buried_overlap.remove_hierarch_percent);
+   }
+
+   sub2 = "Grid Beads -> ";
    if ( grid_overlap.fuse_beads != default_grid_overlap.fuse_beads )
    {
       str += QString(base + sub + sub2 + "Fuse Beads: %1\n")
@@ -2340,7 +2559,7 @@ QString US_Hydrodyn::default_differences_grid()
    }
    if ( grid_overlap.remove_hierarch_percent != default_grid_overlap.remove_hierarch_percent )
    {
-      str += QString(base + sub + "Hierarchical Overlap Reduction Step Size %: %1\n").arg(grid_overlap.remove_hierarch_percent);
+      str += QString(base + sub + sub2 + "Hierarchical Overlap Reduction Step Size %: %1\n").arg(grid_overlap.remove_hierarch_percent);
    }
 
    base = "Grid Functions (AtoB) -> ";
@@ -2367,6 +2586,11 @@ QString US_Hydrodyn::default_differences_grid()
    {
       str += QString(base + "Expand Beads to Tangency: %1\n")
          .arg(grid.tangency ? "On" : "Off");
+   }
+   if ( grid.enable_asa != default_grid.enable_asa )
+   {
+      str += QString(base + "Enable ASA options: %1\n")
+         .arg(grid.enable_asa ? "On" : "Off");
    }
    return str;
 }

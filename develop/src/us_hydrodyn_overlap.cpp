@@ -2,13 +2,21 @@
 #include "../include/us_hydrodyn.h"
 
 US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *sidechain_overlap,
-                                         struct overlap_reduction *mainchain_overlap, struct overlap_reduction *buried_overlap,
-                                         struct overlap_reduction *grid_overlap, double *overlap_tolerance, bool *overlap_widget, void *us_hydrodyn,
+                                         struct overlap_reduction *mainchain_overlap, 
+                                         struct overlap_reduction *buried_overlap,
+                                         struct overlap_reduction *grid_exposed_overlap,
+                                         struct overlap_reduction *grid_buried_overlap,
+                                         struct overlap_reduction *grid_overlap,
+                                         double *overlap_tolerance,
+                                         bool *overlap_widget, 
+                                         void *us_hydrodyn,
                                          QWidget *p, const char *name) : QFrame(p, name)
 {
    this->sidechain_overlap = sidechain_overlap;
    this->mainchain_overlap = mainchain_overlap;
    this->buried_overlap = buried_overlap;
+   this->grid_exposed_overlap = grid_exposed_overlap;
+   this->grid_buried_overlap = grid_buried_overlap;
    this->grid_overlap = grid_overlap;
    this->overlap_widget = overlap_widget;
    this->overlap_tolerance = overlap_tolerance;
@@ -16,7 +24,7 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *sidechain_ove
    *overlap_widget = true;
    USglobal=new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   setCaption(tr("SOMO Bead Overlap Reduction Options"));
+   setCaption(tr("SoMo Bead Overlap Reduction Options"));
    show_grid_only = false;
    setupGUI();
    global_Xpos += 30;
@@ -24,9 +32,17 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *sidechain_ove
    setGeometry(global_Xpos, global_Ypos, 0, 0);
 }
 
-US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *grid_overlap,
-                                         double *overlap_tolerance, bool *overlap_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame(p, name)
+US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *grid_exposed_overlap,
+                                         struct overlap_reduction *grid_buried_overlap,
+                                         struct overlap_reduction *grid_overlap,
+                                         double *overlap_tolerance, 
+                                         bool *overlap_widget, 
+                                         void *us_hydrodyn, 
+                                         QWidget *p, 
+                                         const char *name) : QFrame(p, name)
 {
+   this->grid_exposed_overlap = grid_exposed_overlap;
+   this->grid_buried_overlap = grid_buried_overlap;
    this->grid_overlap = grid_overlap;
    this->overlap_widget = overlap_widget;
    this->overlap_tolerance = overlap_tolerance;
@@ -34,7 +50,7 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *grid_overlap,
    *overlap_widget = true;
    USglobal=new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   setCaption(tr("SOMO Bead Overlap Reduction Options"));
+   setCaption(tr("Grid Bead Overlap Reduction Options"));
    show_grid_only = true;
    setupGUI();
    global_Xpos += 30;
@@ -52,19 +68,21 @@ void US_Hydrodyn_Overlap::setupGUI()
    int minHeight1 = 30;
    if (show_grid_only)
    {
+      grid_exposed_OR = new US_Hydrodyn_OR(grid_exposed_overlap, us_hydrodyn, this);
+      grid_buried_OR = new US_Hydrodyn_OR(grid_buried_overlap, us_hydrodyn, this);
       grid_OR = new US_Hydrodyn_OR(grid_overlap, us_hydrodyn, this);
+      lbl_info = new QLabel(tr("Grid Bead Overlap Reduction Options:"), this);
    }
    else
    {
       sidechain_OR = new US_Hydrodyn_OR(sidechain_overlap, us_hydrodyn, this);
       mainchain_OR = new US_Hydrodyn_OR(mainchain_overlap, us_hydrodyn, this);
       buried_OR = new US_Hydrodyn_OR(buried_overlap, us_hydrodyn, this);
-      grid_OR = new US_Hydrodyn_OR(grid_overlap, us_hydrodyn, this);
+      lbl_info = new QLabel(tr("SoMo Bead Overlap Reduction Options:"), this);
    }
    //buried_OR->cnt_fuse->setEnabled(false);
    //buried_OR->cb_fuse->setEnabled(false);
 
-   lbl_info = new QLabel(tr("Bead Overlap Reduction Options:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(AlignCenter|AlignVCenter);
@@ -94,6 +112,8 @@ void US_Hydrodyn_Overlap::setupGUI()
    tw_overlap->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    if (show_grid_only)
    {
+      tw_overlap->addTab(grid_exposed_OR, "Exposed grid beads");
+      tw_overlap->addTab(grid_buried_OR, "Buried grid beads");
       tw_overlap->addTab(grid_OR, "Grid beads");
    }
    else
@@ -101,7 +121,6 @@ void US_Hydrodyn_Overlap::setupGUI()
       tw_overlap->addTab(sidechain_OR, "Exposed Side chain beads");
       tw_overlap->addTab(mainchain_OR, "Exposed Main and side chain beads");
       tw_overlap->addTab(buried_OR, "Buried beads");
-      tw_overlap->addTab(grid_OR, "Grid beads");
    }
 
    pb_cancel = new QPushButton(tr("Close"), this);

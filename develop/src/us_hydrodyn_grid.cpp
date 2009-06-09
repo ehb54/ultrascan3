@@ -1,10 +1,18 @@
 #include "../include/us_hydrodyn_grid.h"
 #include "../include/us_hydrodyn.h"
 
-US_Hydrodyn_Grid::US_Hydrodyn_Grid(struct overlap_reduction *grid_overlap,
-                                   struct grid_options *grid, double *overlap_tolerance, bool *grid_widget, void *us_hydrodyn,
-                                   QWidget *p, const char *name) : QFrame(p, name)
+US_Hydrodyn_Grid::US_Hydrodyn_Grid(struct overlap_reduction *grid_exposed_overlap,
+                                   struct overlap_reduction *grid_buried_overlap,
+                                   struct overlap_reduction *grid_overlap,
+                                   struct grid_options *grid,
+                                   double *overlap_tolerance,
+                                   bool *grid_widget,
+                                   void *us_hydrodyn,
+                                   QWidget *p, 
+                                   const char *name) : QFrame(p, name)
 {
+   this->grid_exposed_overlap = grid_exposed_overlap;
+   this->grid_buried_overlap = grid_buried_overlap;
    this->grid_overlap = grid_overlap;
    this->grid = grid;
    this->grid_widget = grid_widget;
@@ -97,6 +105,14 @@ void US_Hydrodyn_Grid::setupGUI()
    cb_tangency->setEnabled(false);
    connect(cb_tangency, SIGNAL(clicked()), this, SLOT(set_tangency()));
 
+   cb_enable_asa = new QCheckBox(this);
+   cb_enable_asa->setText(tr(" Enable ASA options "));
+   cb_enable_asa->setChecked((*grid).enable_asa);
+   cb_enable_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_enable_asa->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_enable_asa->setEnabled(true);
+   connect(cb_enable_asa, SIGNAL(clicked()), this, SLOT(set_enable_asa()));
+
    pb_overlaps = new QPushButton(tr(" Adjust Overlap Options "), this);
    Q_CHECK_PTR(pb_overlaps);
    pb_overlaps->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -118,7 +134,7 @@ void US_Hydrodyn_Grid::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=6, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=7, columns = 2, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -133,6 +149,8 @@ void US_Hydrodyn_Grid::setupGUI()
    j++;
    background->addWidget(pb_overlaps, j, 0);
    background->addWidget(cb_tangency, j, 1);
+   j++;
+   background->addWidget(cb_enable_asa, j, 1);
    j++;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
@@ -168,6 +186,12 @@ void US_Hydrodyn_Grid::set_tangency()
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_Grid::set_enable_asa()
+{
+   (*grid).enable_asa = cb_enable_asa->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_Grid::cancel()
 {
    close();
@@ -189,7 +213,12 @@ void US_Hydrodyn_Grid::overlaps()
    }
    else
    {
-      overlap_window = new US_Hydrodyn_Overlap(grid_overlap, overlap_tolerance, &overlap_widget, us_hydrodyn);
+      overlap_window = new US_Hydrodyn_Overlap(grid_exposed_overlap,
+                                               grid_buried_overlap,
+                                               grid_overlap, 
+                                               overlap_tolerance, 
+                                               &overlap_widget, 
+                                               us_hydrodyn);
       overlap_window->show();
    }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();

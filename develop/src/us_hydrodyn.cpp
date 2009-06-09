@@ -83,6 +83,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    grid_widget = false;
    hydro_widget = false;
    overlap_widget = false;
+   grid_overlap_widget = false;
    bead_output_widget = false;
    results_widget = false;
    pdb_visualization_widget = false;
@@ -167,7 +168,8 @@ void US_Hydrodyn::setupGUI()
 
    somo_options = new QPopupMenu;
    somo_options->insertItem(tr("&ASA Calculation"), this, SLOT(show_asa()));
-   somo_options->insertItem(tr("&Overlap Reduction"), this, SLOT(show_overlap()));
+   somo_options->insertItem(tr("&SoMo Overlap Reduction"), this, SLOT(show_overlap()));
+   somo_options->insertItem(tr("AtoB (Grid) &Overlap Reduction"), this, SLOT(show_grid_overlap()));
    somo_options->insertItem(tr("&Hydrodynamic Calculations"), this, SLOT(show_hydro()));
    somo_options->insertItem(tr("&Miscellaneous Options"), this, SLOT(show_misc()));
    somo_options->insertItem(tr("&Bead Model Output"), this, SLOT(show_bead_output()));
@@ -521,8 +523,41 @@ void US_Hydrodyn::show_overlap()
    else
    {
       overlap_window = new US_Hydrodyn_Overlap(&sidechain_overlap,
-                                               &mainchain_overlap, &buried_overlap, &grid_overlap, &overlap_tolerance, &overlap_widget, this);
+                                               &mainchain_overlap, 
+                                               &buried_overlap, 
+                                               &grid_exposed_overlap, 
+                                               &grid_buried_overlap, 
+                                               &grid_overlap, 
+                                               &overlap_tolerance, 
+                                               &overlap_widget, 
+                                               this);
       overlap_window->show();
+   }
+}
+
+void US_Hydrodyn::show_grid_overlap()
+{
+   if (grid_overlap_widget)
+   {
+      if (grid_overlap_window->isVisible())
+      {
+         grid_overlap_window->raise();
+      }
+      else
+      {
+         grid_overlap_window->show();
+      }
+      return;
+   }
+   else
+   {
+      grid_overlap_window = new US_Hydrodyn_Overlap(&grid_exposed_overlap, 
+                                                    &grid_buried_overlap, 
+                                                    &grid_overlap, 
+                                                    &overlap_tolerance, 
+                                                    &grid_overlap_widget, 
+                                                    this);
+      grid_overlap_window->show();
    }
 }
 
@@ -607,8 +642,13 @@ void US_Hydrodyn::show_grid()
    }
    else
    {
-      grid_window = new US_Hydrodyn_Grid(&grid_overlap, &grid,
-                                         &overlap_tolerance, &grid_widget, this);
+      grid_window = new US_Hydrodyn_Grid(&grid_exposed_overlap,
+                                         &grid_buried_overlap,
+                                         &grid_overlap, 
+                                         &grid,
+                                         &overlap_tolerance, 
+                                         &grid_widget,
+                                         this);
       grid_window->show();
    }
 }
@@ -712,6 +752,8 @@ void US_Hydrodyn::reset()
    sidechain_overlap = default_sidechain_overlap;
    mainchain_overlap = default_mainchain_overlap;
    buried_overlap = default_buried_overlap;
+   grid_exposed_overlap = default_grid_exposed_overlap;
+   grid_buried_overlap = default_grid_buried_overlap;
    grid_overlap = default_grid_overlap;
    bead_output = default_bead_output;
    asa = default_asa;

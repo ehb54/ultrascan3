@@ -70,6 +70,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool hybrid_widget;
       bool asa_widget;
       bool overlap_widget;
+      bool grid_overlap_widget;
       bool bead_output_widget;
       bool grid_widget;
       bool hydro_widget;
@@ -106,10 +107,14 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct overlap_reduction sidechain_overlap;
       struct overlap_reduction mainchain_overlap;
       struct overlap_reduction buried_overlap;
+      struct overlap_reduction grid_exposed_overlap;
+      struct overlap_reduction grid_buried_overlap;
       struct overlap_reduction grid_overlap;
       struct overlap_reduction default_sidechain_overlap;
       struct overlap_reduction default_mainchain_overlap;
       struct overlap_reduction default_buried_overlap;
+      struct overlap_reduction default_grid_exposed_overlap;
+      struct overlap_reduction default_grid_buried_overlap;
       struct overlap_reduction default_grid_overlap;
       QString project;   // name of the current project - derived from the prefix of the pdb filename
       QString bead_model_prefix;
@@ -167,6 +172,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_AddHybridization *addHybrid;
       US_Hydrodyn_ASA *asa_window;
       US_Hydrodyn_Overlap *overlap_window;
+      US_Hydrodyn_Overlap *grid_overlap_window;
       US_Hydrodyn_Bead_Output *bead_output_window;
       US_Hydrodyn_Hydro *hydro_window;
       US_Hydrodyn_Misc *misc_window;
@@ -275,6 +281,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int compute_asa(); // calculate maximum accessible surface area
       void show_asa();
       void show_overlap();
+      void show_grid_overlap();
       void show_bead_output();
       void show_hydro();
       void show_misc();
