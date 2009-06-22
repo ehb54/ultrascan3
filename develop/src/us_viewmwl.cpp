@@ -1541,7 +1541,7 @@ void US_ViewMWL::update(unsigned int time)
       if(export_mode) // show wavelength data
       {
          plot_2d->setAxisTitle(QwtPlot::xBottom, tr("Wavelength (in nm)"));
-         lbl_update->setText(tr(str.sprintf("Showing scans at %6.3f cm... ", min_radius)));
+         lbl_update->setText(tr(str.sprintf("Showing scans at %6.2f nm (%u)... ", min_lambda, min_lambda_element)));
          qApp->processEvents();
          curves = new unsigned int [max_time - min_time + 1];
          data = new double *[max_time - min_time + 1];
@@ -1594,7 +1594,7 @@ void US_ViewMWL::update(unsigned int time)
       else // show radial data
       {
          plot_2d->setAxisTitle(QwtPlot::xBottom, tr("Radius (in cm)"));
-         lbl_update->setText(tr(str.sprintf("Showing scans at %6.2f nm... ", min_lambda)));
+         lbl_update->setText(tr(str.sprintf("Showing scans at %6.2f nm (%u)... ", min_lambda, min_lambda_element)));
          qApp->processEvents();
          curves = new unsigned int [max_time - min_time + 1];
          data = new double *[max_time - min_time + 1];
