@@ -167,6 +167,7 @@ SOURCES += \
   src/us_hydrodyn_addatom.cpp \
   src/us_hydrodyn_addhybrid.cpp \
   src/us_hydrodyn_addresidue.cpp \
+  src/us_hydrodyn_addsaxs.cpp \
   src/us_hydrodyn_asa.cpp \
   src/us_hydrodyn_asab1.cpp \
   src/us_hydrodyn_bead_output.cpp \
@@ -361,6 +362,7 @@ HEADERS += \
   include/us_hydrodyn_addatom.h \
   include/us_hydrodyn_addhybrid.h \
   include/us_hydrodyn_addresidue.h \
+  include/us_hydrodyn_addsaxs.h \
   include/us_hydrodyn_asa.h \
   include/us_hydrodyn_asab1.h \
   include/us_hydrodyn_bead_output.h \

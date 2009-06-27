@@ -27,6 +27,7 @@
 #include "us_hydrodyn_pdbdefs.h"
 #include "us_hydrodyn_addatom.h"
 #include "us_hydrodyn_addresidue.h"
+#include "us_hydrodyn_addsaxs.h"
 #include "us_hydrodyn_overlap.h"
 #include "us_hydrodyn_bead_output.h"
 #include "us_hydrodyn_asa.h"
@@ -68,6 +69,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool residue_widget;
       bool atom_widget;
       bool hybrid_widget;
+      bool saxs_widget;
       bool asa_widget;
       bool overlap_widget;
       bool grid_overlap_widget;
@@ -134,13 +136,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QLabel *lbl_bead_model_prefix;
 
       QCheckBox *cb_calcAutoHydro;
-      
+
       QPopupMenu *lookup_tables;
       QPopupMenu *somo_options;
       QPopupMenu *pdb_options;
       QPopupMenu *configuration;
       QMenuBar *menu;
-      
+
       QLineEdit *le_bead_model_file;
       QLineEdit *le_bead_model_prefix;
 
@@ -170,6 +172,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_AddAtom *addAtom;
       US_AddResidue *addResidue;
       US_AddHybridization *addHybrid;
+      US_AddSaxs *addSaxs;
       US_Hydrodyn_ASA *asa_window;
       US_Hydrodyn_Overlap *overlap_window;
       US_Hydrodyn_Overlap *grid_overlap_window;
@@ -191,7 +194,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       vector <PDB_atom *>           active_atoms;
       vector <struct residue>       residue_list;
       map < QString, vector <int> > multi_residue_map; // maps residue to index of residue_list
-      map < QString, vector <int> > valid_atom_map;    // maps resName|atomName|pos 
+      map < QString, vector <int> > valid_atom_map;    // maps resName|atomName|pos
       //                                                  in multi_residue_map to index of atoms
       map < QString, int > atom_counts;     // maps molecule #|resName|resSeq to count
       //                                       counts how many atoms are in each residue
@@ -208,32 +211,32 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // in lieu of re-reading the residue file...
       vector <struct residue>   save_residue_list;
       map < QString, vector <int> > save_multi_residue_map; // maps residue to index of residue_list
-      map < QString, int > new_residues;    // maps resName|atom_count to {0,1} for duplicate checks 
-      map < QString, vector < QString > > molecules_residues_atoms; 
+      map < QString, int > new_residues;    // maps resName|atom_count to {0,1} for duplicate checks
+      map < QString, vector < QString > > molecules_residues_atoms;
       //                                  maps molecule #|resSeq to vector of atom names
-      map < QString, QString > molecules_residue_name; 
+      map < QString, QString > molecules_residue_name;
       //                                  maps molecule #|resSeq to residue name
       vector < QString > molecules_idx_seq; // vector of idx's
-      map < QString, vector < QString > > molecules_residue_errors; 
+      map < QString, vector < QString > > molecules_residue_errors;
       //                                  maps molecule #|resSeq to vector of errors
       //                                  each element in the vector corresponds to
       //                                  the dup_residue_map pos for the residue
-      map < QString, vector < int > >     molecules_residue_missing_counts; 
+      map < QString, vector < int > >     molecules_residue_missing_counts;
       //                                  maps molecule #|resSeq to vector of missing count
       //                                  if any atoms errors that are "non-missing" i.e.
       //                                  duplicate or non-coded, then the value is set to -1
-      map < QString, vector < vector < QString > > > molecules_residue_missing_atoms; 
+      map < QString, vector < vector < QString > > > molecules_residue_missing_atoms;
       //                                  maps molecule #|resSeq to vector of vector of missing atoms
       //                                  each vector in the vector corresponds to
       //                                  the dup_residue_map pos for the residue
-      map < QString, vector < vector < unsigned int > > > molecules_residue_missing_atoms_beads; 
+      map < QString, vector < vector < unsigned int > > > molecules_residue_missing_atoms_beads;
       //                                  maps molecule #|resSeq to vector of vector of missing atoms beads
       //                                  each vector in the vector corresponds to
       //                                  the dup_residue_map pos for the residue
       map < QString, bool >               molecules_residue_missing_atoms_skip;
-      //                                  maps molecule #|resSeq|multiresmappos|atom_no to flag 
+      //                                  maps molecule #|resSeq|multiresmappos|atom_no to flag
       //                                  if true, the atom should be skipped
-      map < QString, int >                molecules_residue_min_missing; 
+      map < QString, int >                molecules_residue_min_missing;
       //                                  maps molecule #|resSeq to pos of entry with minimum missing count
       QString last_abb_msgs; // automatic bead builder message log
       vector <struct PDB_model> model_vector;
@@ -268,6 +271,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void atom();
       void hybrid();
       void residue();
+      void saxs();
       void select_model(int);
       void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
       int calc_somo();    // compute asa and then refine bead_model
@@ -315,8 +319,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void closeAttnt(QProcess *, QString);
       void calc_vbar(struct PDB_model *);
       void update_vbar(); // update the results.vbar everytime something changes the vbar in options or calculation
-      void append_options_log_somo(); // append somo options to options_log 
-      void append_options_log_atob(); // append atob options to options_log 
+      void append_options_log_somo(); // append somo options to options_log
+      void append_options_log_atob(); // append atob options to options_log
       QString default_differences_load_pdb();
       QString default_differences_somo();
       QString default_differences_grid();

@@ -78,6 +78,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    atom_widget = false;
    residue_widget = false;
    hybrid_widget = false;
+   saxs_widget = false;
    asa_widget = false;
    misc_widget = false;
    grid_widget = false;
@@ -165,6 +166,7 @@ void US_Hydrodyn::setupGUI()
    lookup_tables->insertItem(tr("Add/Edit &Hybridization"), this, SLOT(hybrid()));
    lookup_tables->insertItem(tr("Add/Edit &Atom"), this, SLOT(atom()));
    lookup_tables->insertItem(tr("Add/Edit &Residue"), this, SLOT(residue()));
+   lookup_tables->insertItem(tr("Add/Edit &SAXS coefficients"), this, SLOT(saxs()));
 
    somo_options = new QPopupMenu;
    somo_options->insertItem(tr("&ASA Calculation"), this, SLOT(show_asa()));
@@ -174,7 +176,7 @@ void US_Hydrodyn::setupGUI()
    somo_options->insertItem(tr("&Miscellaneous Options"), this, SLOT(show_misc()));
    somo_options->insertItem(tr("&Bead Model Output"), this, SLOT(show_bead_output()));
    somo_options->insertItem(tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
-   
+
    pdb_options = new QPopupMenu;
    pdb_options->insertItem(tr("&Parsing"), this, SLOT(pdb_parsing()));
    pdb_options->insertItem(tr("&Visualization"), this, SLOT(pdb_visualization()));
@@ -187,7 +189,7 @@ void US_Hydrodyn::setupGUI()
    QFrame *frame;
    frame = new QFrame(this);
    frame->setMinimumHeight(minHeight1);
-   
+
    menu = new QMenuBar(frame);
    menu->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    menu->insertItem(tr("&Lookup Tables"), lookup_tables);
@@ -315,7 +317,7 @@ void US_Hydrodyn::setupGUI()
    cb_calcAutoHydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_calcAutoHydro->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_calcAutoHydro, SIGNAL(clicked()), this, SLOT(set_calcAutoHydro()));
-   
+
    pb_view_asa = new QPushButton(tr("Show ASA Results"), this);
    Q_CHECK_PTR(pb_view_asa);
    pb_view_asa->setMinimumHeight(minHeight1);
@@ -485,6 +487,19 @@ void US_Hydrodyn::residue()
    }
 }
 
+void US_Hydrodyn::saxs()
+{
+   if (saxs_widget)
+   {
+      addSaxs->raise();
+   }
+   else
+   {
+      addSaxs = new US_AddSaxs(&saxs_widget, 0);
+      addSaxs->show();
+   }
+}
+
 void US_Hydrodyn::show_asa()
 {
    if (asa_widget)
@@ -523,13 +538,13 @@ void US_Hydrodyn::show_overlap()
    else
    {
       overlap_window = new US_Hydrodyn_Overlap(&sidechain_overlap,
-                                               &mainchain_overlap, 
-                                               &buried_overlap, 
-                                               &grid_exposed_overlap, 
-                                               &grid_buried_overlap, 
-                                               &grid_overlap, 
-                                               &overlap_tolerance, 
-                                               &overlap_widget, 
+                                               &mainchain_overlap,
+                                               &buried_overlap,
+                                               &grid_exposed_overlap,
+                                               &grid_buried_overlap,
+                                               &grid_overlap,
+                                               &overlap_tolerance,
+                                               &overlap_widget,
                                                this);
       overlap_window->show();
    }
@@ -551,11 +566,11 @@ void US_Hydrodyn::show_grid_overlap()
    }
    else
    {
-      grid_overlap_window = new US_Hydrodyn_Overlap(&grid_exposed_overlap, 
-                                                    &grid_buried_overlap, 
-                                                    &grid_overlap, 
-                                                    &overlap_tolerance, 
-                                                    &grid_overlap_widget, 
+      grid_overlap_window = new US_Hydrodyn_Overlap(&grid_exposed_overlap,
+                                                    &grid_buried_overlap,
+                                                    &grid_overlap,
+                                                    &overlap_tolerance,
+                                                    &grid_overlap_widget,
                                                     this);
       grid_overlap_window->show();
    }
@@ -644,9 +659,9 @@ void US_Hydrodyn::show_grid()
    {
       grid_window = new US_Hydrodyn_Grid(&grid_exposed_overlap,
                                          &grid_buried_overlap,
-                                         &grid_overlap, 
+                                         &grid_overlap,
                                          &grid,
-                                         &overlap_tolerance, 
+                                         &overlap_tolerance,
                                          &grid_widget,
                                          this);
       grid_window->show();
@@ -710,7 +725,7 @@ void US_Hydrodyn::load_config()
 
    if ( read_config(fname) )
    {
-      QMessageBox::message(tr("Please note:"), 
+      QMessageBox::message(tr("Please note:"),
                            tr("The configuration file was found to be corrupt.\n"
                               "Resorting to default values."));
       set_default();
@@ -1122,14 +1137,14 @@ int US_Hydrodyn::calc_somo()
                editor->append("Finished rechecking beads\n");
                progress->setProgress(19);
             }
-            else 
+            else
             {
                editor->append("No rechecking of beads\n");
                qApp->processEvents();
             }
             bead_models[current_model] = bead_model;
          }
-         else 
+         else
          {
             any_errors = true;
          }
@@ -1200,11 +1215,11 @@ int US_Hydrodyn::calc_grid_pdb()
    }
    if ( !bead_model_prefix.contains("a2b") )
    {
-      if ( bead_model_prefix.length() ) 
+      if ( bead_model_prefix.length() )
       {
          bead_model_prefix += "-a2b";
       }
-      else 
+      else
       {
          bead_model_prefix += "a2b";
       }
@@ -1270,14 +1285,14 @@ int US_Hydrodyn::calc_grid_pdb()
                   }
                }
             }
-            else 
+            else
             {
                if(error_string.length()) {
                   printError("Encountered unknown atom(s) error:\n" +
                              error_string);
                   any_errors = true;
                }
-               else 
+               else
                {
                   // ok, we have the basic "bead" info loaded...
                   unsigned int i = current_model;
@@ -1446,7 +1461,7 @@ int US_Hydrodyn::calc_grid()
             bead_model_prefix += "-a2bg";
          }
       }
-      else 
+      else
       {
          bead_model_prefix += "a2bg";
       }
@@ -1620,7 +1635,7 @@ void US_Hydrodyn::visualize()
                return;
             }
          }
-         else 
+         else
          {
             editor->append(QString("Model %1 - selected but bead model not built\n").arg(current_model + 1));
          }
@@ -1660,7 +1675,7 @@ void US_Hydrodyn::calc_hydro()
             //          QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
             //          DOTSOMO, &bead_model, bead_model_from_file);
          }
-         else 
+         else
          {
             editor->append(QString("Model %1 - selected but bead model not built\n").arg(current_model + 1));
          }

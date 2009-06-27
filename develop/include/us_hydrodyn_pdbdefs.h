@@ -95,55 +95,66 @@ struct PDB_model
 
 struct bead
 {
-   unsigned int hydration;         // number of waters bound
-   unsigned int color;            // color of bead
-   unsigned int placing_method;   // baric method
+   unsigned int hydration;       // number of waters bound
+   unsigned int color;           // color of bead
+   unsigned int placing_method;  // baric method
                                  // 0: place the bead at the center of gravity of all atoms
                                  // 1: placing the bead at the position of the furthest atom
                                  // specified in the p3 file
                                  // 2: no positioning necessary (only one atom to place)
    unsigned int visibility;      // 0 = hidden
                                  // 1 = exposed
-   unsigned int chain;            // 0 = main chain
+   unsigned int chain;           // 0 = main chain
                                  // 1 = side chain
-   float          volume;            // anhydrous bead volume
-   float          mw;               // bead mw
+   float        volume;          // anhydrous bead volume
+   float        mw;              // bead mw
+};
+
+struct saxs
+{
+   QString name;                 // name of atom, for example, CD+2
+   float   a[4];                 // a coefficients
+   float   b[4];                 // b coefficients
+   float   c;                    // c coefficient
+   float   radius;               // radius of hybridization
+   float   volume;               // atomic volume
 };
 
 struct hybridization
 {
-   QString name;                   // for example, N4H3
-   float mw;                  // molecular weight of hybridization
-   float radius;                  // radius of hybridization
+   QString name;                 // for example, N4H3
+   float   mw;                   // molecular weight of hybridization
+   float   radius;               // radius of hybridization
+   QString saxs_name;            // name for SAXS coefficients
 };
 
 struct atom
 {
-   QString name;                   // for example, CA
+   QString name;                 // for example, CA
    hybridization hybrid;         // hybridization of atom
-   unsigned int bead_assignment;   // which bead this atom belongs to
-   bool positioner;               // does this atom control position? (yes=1, no=0)
+   unsigned int bead_assignment; // which bead this atom belongs to
+   bool         positioner;      // does this atom control position? (yes=1, no=0)
    unsigned int serial_number;   // the serial number the atom occupies in the residue
-        bool tmp_flag;               // used for finding missing residues
-        bool tmp_used;               // used for avoiding duplicate usage
+   bool         tmp_flag;        // used for finding missing residues
+   bool         tmp_used;        // used for avoiding duplicate usage
 };
 
 struct residue
 {
-   QString name;
-   QString unique_name;
-   QString comment;
+   QString      name;
+   QString      unique_name;
+   QString      comment;
    unsigned int type;            // 0: amino acid
                                  // 1: sugar
                                  // 2: nucleotide
                                  // 3: lipid
                                  // 4: detergent
                                  // 5: other
-   float molvol;                  // the molecular volume of the residue
-   float vbar;                     // the partial specific volume of the residue
-   float asa;                     // maximum accessible surface area (A^2)
-   vector <struct atom> r_atom;   // the atoms in the residue
-   vector <struct bead> r_bead;   // the beads used to describe the residue
+   float molvol;                 // the molecular volume of the residue
+   float vbar;                   // the partial specific volume of the residue
+   float asa;                    // maximum accessible surface area (A^2)
+   vector <struct atom> r_atom;  // the atoms in the residue
+   vector <struct bead> r_bead;  // the beads used to describe the residue
 };
 
 #endif
