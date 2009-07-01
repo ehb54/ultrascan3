@@ -112,11 +112,10 @@ struct bead
 
 struct saxs
 {
-   QString name;                 // name of atom, for example, CD+2
+   QString saxs_name;            // name of atom, for example, CD+2
    float   a[4];                 // a coefficients
    float   b[4];                 // b coefficients
    float   c;                    // c coefficient
-   float   radius;               // radius of hybridization
    float   volume;               // atomic volume
 };
 
@@ -137,6 +136,7 @@ struct atom
    unsigned int serial_number;   // the serial number the atom occupies in the residue
    bool         tmp_flag;        // used for finding missing residues
    bool         tmp_used;        // used for avoiding duplicate usage
+   float        saxs_excl_vol;   // SAXS excluded volume value
 };
 
 struct residue

@@ -5,7 +5,7 @@ US_AddSaxs::US_AddSaxs(bool *widget_flag, QWidget *p, const char *name) : QWidge
    this->widget_flag = widget_flag;
    *widget_flag = true;
    USglobal = new US_Config();
-   saxs_filename = USglobal->config_list.system_dir + "/etc/somo.saxs";
+   saxs_filename = USglobal->config_list.system_dir + "/etc/somo.saxs_atoms";
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("SoMo: Modify Saxs Lookup Tables"));
    setupGUI();
@@ -58,18 +58,18 @@ void US_AddSaxs::setupGUI()
    lbl_number_of_saxs->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_number_of_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_name = new QLabel(tr(" SAXS Name:"), this);
-   Q_CHECK_PTR(lbl_name);
-   lbl_name->setMinimumHeight(minHeight1);
-   lbl_name->setAlignment(AlignLeft|AlignVCenter);
-   lbl_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+   lbl_saxs_name = new QLabel(tr(" SAXS Atom Identifier:"), this);
+   Q_CHECK_PTR(lbl_saxs_name);
+   lbl_saxs_name->setMinimumHeight(minHeight1);
+   lbl_saxs_name->setAlignment(AlignLeft|AlignVCenter);
+   lbl_saxs_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   le_name = new QLineEdit(this, "SAXS name Line Edit");
-   le_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   le_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   le_name->setMinimumHeight(minHeight1);
-   connect(le_name, SIGNAL(textChanged(const QString &)), SLOT(update_name(const QString &)));
+   le_saxs_name = new QLineEdit(this, "SAXS name Line Edit");
+   le_saxs_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_saxs_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_saxs_name->setMinimumHeight(minHeight1);
+   connect(le_saxs_name, SIGNAL(textChanged(const QString &)), SLOT(update_saxs_name(const QString &)));
 
    lbl_a1 = new QLabel(tr(" Coefficient a(1):"), this);
    Q_CHECK_PTR(lbl_a1);
@@ -201,7 +201,7 @@ void US_AddSaxs::setupGUI()
    le_volume->setMinimumHeight(minHeight1);
    connect(le_volume, SIGNAL(textChanged(const QString &)), SLOT(update_volume(const QString &)));
 
-   pb_add = new QPushButton(tr("Add Saxs to File"), this);
+   pb_add = new QPushButton(tr("Add SAXS Atom to File"), this);
    Q_CHECK_PTR(pb_add);
    pb_add->setEnabled(true);
    pb_add->setMinimumHeight(minHeight1);
@@ -227,8 +227,8 @@ void US_AddSaxs::setupGUI()
    background->addWidget(lbl_number_of_saxs, j, 0);
    background->addWidget(cmb_saxs, j, 1);
    j++;
-   background->addWidget(lbl_name, j, 0);
-   background->addWidget(le_name, j, 1);
+   background->addWidget(lbl_saxs_name, j, 0);
+   background->addWidget(le_saxs_name, j, 1);
    j++;
    background->addWidget(lbl_a1, j, 0);
    background->addWidget(le_a1, j, 1);
@@ -271,7 +271,7 @@ void US_AddSaxs::add()
    QString str1;
    for (int i=0; i<(int) saxs_list.size(); i++)
    {
-      if (saxs_list[i].name.upper() == current_saxs.name.upper())
+      if (saxs_list[i].saxs_name.upper() == current_saxs.saxs_name.upper())
       {
          item = i;
          saxs_list[i].a[0] = current_saxs.a[0];
@@ -298,7 +298,7 @@ void US_AddSaxs::add()
       QTextStream ts(&f);
       for (unsigned int i=0; i<saxs_list.size(); i++)
       {
-         ts << saxs_list[i].name.upper() << "\t"
+         ts << saxs_list[i].saxs_name.upper() << "\t"
             << saxs_list[i].a[0] << "\t"
             << saxs_list[i].a[1] << "\t"
             << saxs_list[i].a[2] << "\t"
@@ -310,7 +310,7 @@ void US_AddSaxs::add()
             << saxs_list[i].c << "\t"
             << saxs_list[i].volume << endl;
          str1.sprintf("%d: ", i+1);
-         str1 += saxs_list[i].name.upper();
+         str1 += saxs_list[i].saxs_name.upper();
          cmb_saxs->insertItem(str1);
       }
       f.close();
@@ -324,7 +324,7 @@ void US_AddSaxs::add()
 void US_AddSaxs::select_file()
 {
    QString old_filename = saxs_filename, str1, str2;
-   saxs_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.saxs *.SAXS", this);
+   saxs_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.saxs_atoms *.SAXS_ATOMS", this);
    if (saxs_filename.isEmpty())
    {
       saxs_filename = old_filename;
@@ -341,7 +341,7 @@ void US_AddSaxs::select_file()
          QTextStream ts(&f);
          while (!ts.atEnd())
          {
-            ts >> current_saxs.name;
+            ts >> current_saxs.saxs_name;
             ts >> current_saxs.a[0];
             ts >> current_saxs.a[1];
             ts >> current_saxs.a[2];
@@ -353,11 +353,11 @@ void US_AddSaxs::select_file()
             ts >> current_saxs.c;
             ts >> current_saxs.volume;
             str2 = ts.readLine(); // read rest of line
-            if (!current_saxs.name.isEmpty())
+            if (!current_saxs.saxs_name.isEmpty())
             {
                saxs_list.push_back(current_saxs);
                str1.sprintf("%d: ", i);
-               str1 += current_saxs.name;
+               str1 += current_saxs.saxs_name;
                cmb_saxs->insertItem(str1);
                i++;
             }
@@ -370,9 +370,9 @@ void US_AddSaxs::select_file()
    pb_add->setEnabled(true);
 }
 
-void US_AddSaxs::update_name(const QString &str)
+void US_AddSaxs::update_saxs_name(const QString &str)
 {
-   current_saxs.name = str;
+   current_saxs.saxs_name = str;
 }
 
 void US_AddSaxs::update_a1(const QString &str)
@@ -428,7 +428,7 @@ void US_AddSaxs::update_volume(const QString &str)
 void US_AddSaxs::select_saxs(int val)
 {
    QString str;
-   le_name->setText(saxs_list[val].name.upper());
+   le_saxs_name->setText(saxs_list[val].saxs_name.upper());
    str.sprintf("%3.4f", saxs_list[val].a[0]);
    le_a1->setText(str);
    str.sprintf("%3.4f", saxs_list[val].a[1]);

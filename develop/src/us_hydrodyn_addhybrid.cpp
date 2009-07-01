@@ -39,7 +39,7 @@ void US_AddHybridization::setupGUI()
 
    lbl_table = new QLabel(tr(" not selected"),this);
    lbl_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
-   lbl_table->setAlignment(AlignCenter|AlignVCenter);
+   lbl_table->setAlignment(AlignLeft|AlignVCenter);
    lbl_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_table->setMinimumHeight(minHeight1);
    lbl_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -50,6 +50,27 @@ void US_AddHybridization::setupGUI()
    cmb_hybrid->setSizeLimit(5);
    cmb_hybrid->setMinimumHeight(minHeight1);
    connect(cmb_hybrid, SIGNAL(activated(int)), this, SLOT(select_hybrid(int)));
+
+   pb_select_saxs_file = new QPushButton(tr("Load SAXS Coefficient File"), this);
+   Q_CHECK_PTR(pb_select_saxs_file);
+   pb_select_saxs_file->setMinimumHeight(minHeight1);
+   pb_select_saxs_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_saxs_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_select_saxs_file, SIGNAL(clicked()), SLOT(select_saxs_file()));
+
+   lbl_table_saxs = new QLabel(tr(" not selected"),this);
+   lbl_table_saxs->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+   lbl_table_saxs->setAlignment(AlignLeft|AlignVCenter);
+   lbl_table_saxs->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   lbl_table_saxs->setMinimumHeight(minHeight1);
+   lbl_table_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+   cmb_saxs = new QComboBox(false, this, "Hybridization Listing" );
+   cmb_saxs->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cmb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cmb_saxs->setSizeLimit(5);
+   cmb_saxs->setMinimumHeight(minHeight1);
+   connect(cmb_saxs, SIGNAL(activated(int)), this, SLOT(select_saxs(int)));
 
    lbl_mw = new QLabel(tr(" Molecular Weight:"), this);
    Q_CHECK_PTR(lbl_mw);
@@ -70,6 +91,13 @@ void US_AddHybridization::setupGUI()
    lbl_number_of_hybrids->setAlignment(AlignLeft|AlignVCenter);
    lbl_number_of_hybrids->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_number_of_hybrids->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+   lbl_number_of_saxs = new QLabel(tr(" Number of SAXS Atoms in File: 0"), this);
+   Q_CHECK_PTR(lbl_number_of_saxs);
+   lbl_number_of_saxs->setMinimumHeight(minHeight1);
+   lbl_number_of_saxs->setAlignment(AlignLeft|AlignVCenter);
+   lbl_number_of_saxs->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_number_of_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_radius = new QLabel(tr(" Radius (A):"), this);
    Q_CHECK_PTR(lbl_radius);
@@ -120,8 +148,14 @@ void US_AddHybridization::setupGUI()
    background->addWidget(pb_select_file, j, 0);
    background->addWidget(lbl_table, j, 1);
    j++;
+   background->addWidget(pb_select_saxs_file, j, 0);
+   background->addWidget(lbl_table_saxs, j, 1);
+   j++;
    background->addWidget(lbl_number_of_hybrids, j, 0);
    background->addWidget(cmb_hybrid, j, 1);
+   j++;
+   background->addWidget(lbl_number_of_saxs, j, 0);
+   background->addWidget(cmb_saxs, j, 1);
    j++;
    background->addWidget(lbl_name, j, 0);
    background->addWidget(le_name, j, 1);
@@ -146,6 +180,7 @@ void US_AddHybridization::add()
       if (hybrid_list[i].name.upper() == current_hybrid.name.upper())
       {
          item = i;
+         hybrid_list[i].saxs_name = current_hybrid.saxs_name;
          hybrid_list[i].mw = current_hybrid.mw;
          hybrid_list[i].radius = current_hybrid.radius;
       }
@@ -162,7 +197,7 @@ void US_AddHybridization::add()
       QTextStream ts(&f);
       for (unsigned int i=0; i<hybrid_list.size(); i++)
       {
-         ts << hybrid_list[i].name.upper() << "\t" << hybrid_list[i].mw << "\t" << hybrid_list[i].radius << endl;
+         ts << hybrid_list[i].saxs_name << "\t" << hybrid_list[i].name.upper() << "\t" << hybrid_list[i].mw << "\t" << hybrid_list[i].radius << endl;
          //         cout << "item: " << item << ", " << hybrid_list[i].name.upper() << "\t" << hybrid_list[i].mw << "\t" << hybrid_list[i].radius << ", " <<  hybrid_filename << endl;
          str1.sprintf("%d: ", i+1);
          str1 += hybrid_list[i].name.upper();
@@ -196,6 +231,7 @@ void US_AddHybridization::select_file()
          QTextStream ts(&f);
          while (!ts.atEnd())
          {
+            ts >> current_hybrid.saxs_name;
             ts >> current_hybrid.name;
             ts >> current_hybrid.mw;
             ts >> current_hybrid.radius;
@@ -215,6 +251,62 @@ void US_AddHybridization::select_file()
    str1.sprintf(tr(" Number of Hybridizations in File: %d"), hybrid_list.size());
    lbl_number_of_hybrids->setText(str1);
    pb_add->setEnabled(true);
+   if (!hybrid_filename.isEmpty() && !saxs_filename.isEmpty())
+   {
+      select_hybrid(0);
+   }
+}
+
+void US_AddHybridization::select_saxs_file()
+{
+   QString old_filename = saxs_filename, str1, str2;
+   saxs_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.saxs_atoms *.SAXS_ATOMS", this);
+   if (saxs_filename.isEmpty())
+   {
+      saxs_filename = old_filename;
+   }
+   else
+   {
+      lbl_table_saxs->setText(saxs_filename);
+      QFile f(saxs_filename);
+      saxs_list.clear();
+      cmb_saxs->clear();
+      unsigned int i=1;
+      if (f.open(IO_ReadOnly|IO_Translate))
+      {
+         QTextStream ts(&f);
+         while (!ts.atEnd())
+         {
+            ts >> current_saxs.saxs_name;
+            ts >> current_saxs.a[0];
+            ts >> current_saxs.a[1];
+            ts >> current_saxs.a[2];
+            ts >> current_saxs.a[3];
+            ts >> current_saxs.b[0];
+            ts >> current_saxs.b[1];
+            ts >> current_saxs.b[2];
+            ts >> current_saxs.b[3];
+            ts >> current_saxs.c;
+            ts >> current_saxs.volume;
+            str2 = ts.readLine(); // read rest of line
+            if (!current_saxs.saxs_name.isEmpty())
+            {
+               saxs_list.push_back(current_saxs);
+               str1.sprintf("%d: ", i);
+               str1 += current_saxs.saxs_name;
+               cmb_saxs->insertItem(str1);
+               i++;
+            }
+         }
+         f.close();
+      }
+   }
+   str1.sprintf(tr(" Number of SAXS Entries in File: %d"), saxs_list.size());
+   lbl_number_of_saxs->setText(str1);
+   if (!hybrid_filename.isEmpty() && !saxs_filename.isEmpty())
+   {
+      select_hybrid(0);
+   }
 }
 
 void US_AddHybridization::update_mw(const QString &str)
@@ -240,6 +332,21 @@ void US_AddHybridization::select_hybrid(int val)
    str.sprintf("%3.4f", hybrid_list[val].radius);
    le_radius->setText(str);
    le_name->setText(hybrid_list[val].name.upper());
+   unsigned int i;
+   for (i=0; i<saxs_list.size(); i++)
+   {
+      if (saxs_list[i].saxs_name == hybrid_list[val].saxs_name)
+      {
+         cmb_saxs->setCurrentItem(i);
+         break;
+      }
+   }
+}
+
+void US_AddHybridization::select_saxs(int val)
+{
+   current_hybrid.saxs_name = saxs_list[val].saxs_name;
+   cout << current_hybrid.saxs_name << endl;
 }
 
 void US_AddHybridization::closeEvent(QCloseEvent *e)

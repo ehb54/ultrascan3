@@ -44,12 +44,12 @@ class US_AddSaxs : public QWidget
       QLabel *lbl_b4;
       QLabel *lbl_c;
       QLabel *lbl_volume;
-      QLabel *lbl_name;
+      QLabel *lbl_saxs_name;
       QLabel *lbl_number_of_saxs;
 
       QComboBox *cmb_saxs;
 
-      QLineEdit *le_name;
+      QLineEdit *le_saxs_name;
       QLineEdit *le_a1;
       QLineEdit *le_a2;
       QLineEdit *le_a3;
@@ -68,7 +68,7 @@ class US_AddSaxs : public QWidget
       void add();
       void select_file();
       void setupGUI();
-      void update_name(const QString &);
+      void update_saxs_name(const QString &);
       void update_a1(const QString &);
       void update_a2(const QString &);
       void update_a3(const QString &);

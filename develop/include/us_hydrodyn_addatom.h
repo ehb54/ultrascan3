@@ -13,6 +13,7 @@
 #include <qlabel.h>
 #include <qwidget.h>
 #include <qcombobox.h>
+#include <qcheckbox.h>
 #include <qpushbutton.h>
 #include <qframe.h>
 
@@ -34,11 +35,17 @@ class US_AddAtom : public QWidget
       QPushButton *pb_delete;
       QPushButton *pb_select_atom_file;
       QPushButton *pb_select_hybrid_file;
+      QPushButton *pb_select_saxs_file;
 
       QLabel *lbl_info;
       QLabel *lbl_hybrid_table;
       QLabel *lbl_atom_table;
+      QLabel *lbl_saxs_table;
       QLabel *lbl_name;
+      QLabel *lbl_saxs_name1;
+      QLabel *lbl_saxs_name2;
+      QLabel *lbl_saxs_excl_vol1;
+      QLabel *lbl_saxs_excl_vol2;
       QLabel *lbl_hybrid1;
       QLabel *lbl_hybrid2;
       QLabel *lbl_mw1;
@@ -50,26 +57,34 @@ class US_AddAtom : public QWidget
 
       QComboBox *cmb_atom;
       QComboBox *cmb_hybrid;
+      QCheckBox *cb_excl_vol;
       QLineEdit *le_name;
+      QLineEdit *le_excl_vol;
       struct atom current_atom;
       struct hybridization current_hybrid;
+      struct saxs current_saxs;
       vector <struct atom> atom_list;
       vector <struct hybridization> hybrid_list;
+      vector <struct saxs> saxs_list;
       QString atom_filename;
       QString hybrid_filename;
+      QString saxs_filename;
 
    private slots:
       void add();
       void select_atom_file();
       void select_hybrid_file();
+      void select_saxs_file();
       void setupGUI();
       void update_name(const QString &);
+      void update_excl_vol(const QString &);
       void update_hybridization_name(const QString &);
       void select_hybrid(int);
       void select_atom(int);
       void delete_atom();
       void write_atom_file();
       void sort_atoms();
+      void set_excl_vol();
 
    protected slots:
       void closeEvent(QCloseEvent *);
