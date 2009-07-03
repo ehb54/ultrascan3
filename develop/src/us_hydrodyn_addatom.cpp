@@ -505,8 +505,9 @@ void US_AddAtom::select_saxs_file()
 
 void US_AddAtom::select_hybrid(int i)
 {
+   if (saxs_list.size() == 0) return;
    QString str;
-   float val;
+   float val=0.0;
    current_atom.hybrid.saxs_name = hybrid_list[i].saxs_name;
    current_atom.hybrid.mw = hybrid_list[i].mw;
    current_atom.hybrid.name = hybrid_list[i].name;
@@ -516,16 +517,13 @@ void US_AddAtom::select_hybrid(int i)
    str.sprintf("%3.2f: ", current_atom.hybrid.radius);
    lbl_radius2->setText(str);
    lbl_hybrid2->setText(current_atom.hybrid.name);
-   if (saxs_list.size() > 0)
+   for (unsigned int j=0; j<saxs_list.size(); j++)
    {
-      for (unsigned int j=0; j<saxs_list.size(); j++)
+      if (saxs_list[j].saxs_name == current_atom.hybrid.saxs_name)
       {
-         if (saxs_list[j].saxs_name == current_atom.hybrid.saxs_name)
-         {
-            lbl_saxs_name2->setText(current_atom.hybrid.saxs_name);
-            val = saxs_list[j].volume;
-            break;
-         }
+         lbl_saxs_name2->setText(current_atom.hybrid.saxs_name);
+         val = saxs_list[j].volume;
+         break;
       }
    }
    if (cb_excl_vol->isChecked())
