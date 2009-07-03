@@ -961,9 +961,10 @@ void US_FeMatchRa_W::reduce(list <Parameter> *p, double *mode, double *mean, dou
    par1.clear(); // clear for repopulation with combined parameters that are identical
    pit1 = par2.begin();
    pit2 = par2.begin();
-   while (pit2 != par2.end())
+   while ( ++pit2 != par2.end() )
    {
-      pit2++; // increment one so we can compare with the next higher up
+      //pit2++; // increment one so we can compare with the next higher up
+
       if ((*pit1).x == (*pit2).x)
       {
          (*pit1).y += (*pit2).y; // if they are the same, add frequencies
