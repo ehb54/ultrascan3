@@ -49,7 +49,7 @@ class US_EXTERN US_Hydrodyn_ASA : public QFrame
    public:
       struct asa_options *asa;
       bool *asa_widget;
-                void *us_hydrodyn;
+      void *us_hydrodyn;
       US_Config *USglobal;
 
       QLabel *lbl_info;

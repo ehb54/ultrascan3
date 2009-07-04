@@ -37,6 +37,7 @@
 #include "us_hydrodyn_results.h"
 #include "us_hydrodyn_pdb_visualization.h"
 #include "us_hydrodyn_pdb_parsing.h"
+#include "us_hydrodyn_saxs_options.h"
 
 //standard C and C++ defs:
 
@@ -80,6 +81,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool misc_widget;
       bool pdb_parsing_widget;
       bool pdb_visualization_widget;
+      bool saxs_options_widget;
 
       QMenuBar *m;
       QPrinter printer;
@@ -100,6 +102,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct hydro_options default_hydro;
       struct grid_options grid;
       struct grid_options default_grid;
+      struct saxs_options saxs_options;
+      struct saxs_options default_saxs_options;
       struct hydro_results results;
       struct bead_output_options bead_output;
       struct bead_output_options default_bead_output;
@@ -183,6 +187,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Grid *grid_window;
       US_Hydrodyn_PDB_Visualization *pdb_visualization_window;
       US_Hydrodyn_PDB_Parsing *pdb_parsing_window;
+      US_Hydrodyn_SaxsOptions *saxs_options_window;
       QProcess *rasmol;
 
 #ifdef WIN32
@@ -290,6 +295,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void show_hydro();
       void show_misc();
       void show_grid(); // show grid options
+      void show_saxs_options();
       void view_pdb(); // show pdb file in editor
       void pdb_parsing(); // pdb parsing options
       void pdb_visualization(); // pdb visualization options
@@ -326,6 +332,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString default_differences_grid();
       QString default_differences_hydro();
       QString default_differences_misc();
+      QString default_differences_saxs_options();
       // editor functions:
       void save();
       void print();

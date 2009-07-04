@@ -69,17 +69,6 @@ void US_ConstraintControl::update(struct constraint c)
    le_low->setText(str.sprintf("%6.4e", c.low));
    le_low->setEnabled(c.fit);
    connect(le_low, SIGNAL(textChanged(const QString &)), SLOT(setLow(const QString &)));
-   
-   if (c.fit)
-   {
-      le_high->setEnabled(true);
-      le_low->setEnabled(true);
-   }
-   else
-   {
-      le_high->setEnabled(false);
-      le_low->setEnabled(false);
-   }
 }
 
 void US_ConstraintControl::setLow(const QString &val)
@@ -98,14 +87,7 @@ void US_ConstraintControl::setHigh(const QString &val)
 
 void US_ConstraintControl::setFit()
 {
-   if (cb_fit->isChecked())
-   {
-      setFit(true);
-   }
-   else
-   {
-      setFit(false);
-   }
+   setFit(cb_fit->isChecked());
    emit constraintChanged(c);
 }
 

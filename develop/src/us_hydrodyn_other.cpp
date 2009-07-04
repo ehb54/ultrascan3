@@ -1101,6 +1101,38 @@ int US_Hydrodyn::read_config(QFile& f)
    if ( ts.readLine() == QString::null ) return -1;
    pdb_parse.missing_atoms = str.toInt();
    if ( !ts.atEnd() ) return -1;
+
+   // saxs options:
+      ts << saxs_options.wavelength << "\t\t# scattering wavelength\n";
+      ts << saxs_options.start_angle << "\t\t# starting angle\n";
+      ts << saxs_options.end_angle << "\t\t# ending angle\n";
+      ts << saxs_options.water_e_density << "\t\t# Water electron density\n";
+      ts << saxs_options.max_size << "\t\t# maximum size\n";
+      ts << saxs_options.bin_size << "\t\t# bin size\n";
+      ts << saxs_options.hydrate_pdb << "\t\t# hydrate PDB model? true = yes\n";
+
+   ts >> str; // wavelength
+   if ( ts.readLine() == QString::null ) return -1;
+   saxs_options.wavelength = str.toFloat();
+   ts >> str; // start angle
+   if ( ts.readLine() == QString::null ) return -1;
+   saxs_options.start_angle = str.toFloat();
+   ts >> str; // end angle
+   if ( ts.readLine() == QString::null ) return -1;
+   saxs_options.end_angle = str.toFloat();
+   ts >> str; // water electron density
+   if ( ts.readLine() == QString::null ) return -1;
+   saxs_options.water_e_density = str.toFloat();
+   ts >> str; // maximum size
+   if ( ts.readLine() == QString::null ) return -1;
+   saxs_options.max_size = str.toFloat();
+   ts >> str; // bin size
+   if ( ts.readLine() == QString::null ) return -1;
+   saxs_options.bin_size = str.toFloat();
+   ts >> str; // hydrate pdb model?
+   if ( ts.readLine() == QString::null ) return -1;
+   saxs_options.hydrate_pdb = (bool) str.toInt();
+   
    f.close();
    return 0;
 }
@@ -1255,6 +1287,14 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << pdb_parse.missing_residues << "\t\t# how to handle missing residues\n";
       ts << pdb_parse.missing_atoms << "\t\t# how to handle missing atoms\n";
 
+      ts << saxs_options.wavelength << "\t\t# scattering wavelength\n";
+      ts << saxs_options.start_angle << "\t\t# starting angle\n";
+      ts << saxs_options.end_angle << "\t\t# ending angle\n";
+      ts << saxs_options.water_e_density << "\t\t# Water electron density\n";
+      ts << saxs_options.max_size << "\t\t# maximum size\n";
+      ts << saxs_options.bin_size << "\t\t# bin size\n";
+      ts << saxs_options.hydrate_pdb << "\t\t# hydrate PDB model? true = yes\n";
+      
       f.close();
    }
 }
@@ -1412,6 +1452,14 @@ void US_Hydrodyn::set_default()
       pdb_parse.find_sh = false;
       pdb_parse.missing_residues = 0;
       pdb_parse.missing_atoms = 0;
+
+      saxs_options.wavelength = 1.5;         // scattering wavelength
+      saxs_options.start_angle = 0.1;        // start angle
+      saxs_options.end_angle = 4.0;          // ending angle
+      saxs_options.water_e_density = 0.334;  // water electron density in e/A^3
+      saxs_options.max_size = 40.0;          // maximum size (A)
+      saxs_options.bin_size = 0.4;           // Bin size (A)
+      saxs_options.hydrate_pdb = true;       // Hydrate the PDB model? (true/false)
    }
 
    default_sidechain_overlap = sidechain_overlap;
@@ -1428,6 +1476,7 @@ void US_Hydrodyn::set_default()
    default_pdb_vis = pdb_vis;
    default_pdb_parse = pdb_parse;
    default_grid = grid;
+   default_saxs_options = saxs_options;
 }
 
 void US_Hydrodyn::view_file(const QString &filename)
@@ -2700,6 +2749,43 @@ QString US_Hydrodyn::default_differences_misc()
    return str;
 }
 
+QString US_Hydrodyn::default_differences_saxs_options()
+{
+   QString str = "";
+   QString base = "SOMO Options -> Saxs Options -> ";
+
+   if ( saxs_options.hydrate_pdb != default_saxs_options.hydrate_pdb )
+   {
+      str += QString(base + "Hydrate Original PDB Model: %1\n")
+         .arg(saxs_options.hydrate_pdb ? "On" : "Off");
+   }
+   if ( saxs_options.wavelength != default_saxs_options.wavelength )
+   {
+      str += QString(base + "Entered wavelength value: %1\n").arg(saxs_options.wavelength);
+   }
+   if ( saxs_options.start_angle != default_saxs_options.start_angle )
+   {
+      str += QString(base + "Start Angle: %1\n").arg(saxs_options.start_angle );
+   }
+   if ( saxs_options.end_angle != default_saxs_options.end_angle )
+   {
+      str += QString(base + "Ending Angle: %1\n").arg(saxs_options.end_angle );
+   }
+   if ( saxs_options.water_e_density != default_saxs_options.water_e_density )
+   {
+      str += QString(base + "Water electron density value: %1\n").arg(saxs_options.water_e_density );
+   }
+   if ( saxs_options.max_size != default_saxs_options.max_size )
+   {
+      str += QString(base + "Maximum size: %1\n").arg(saxs_options.max_size );
+   }
+   if ( saxs_options.bin_size != default_saxs_options.bin_size )
+   {
+      str += QString(base + "Bin size: %1\n").arg(saxs_options.bin_size );
+   }
+   return str;
+}
+
 void US_Hydrodyn::display_default_differences()
 {
    QString str = 
@@ -2707,6 +2793,7 @@ void US_Hydrodyn::display_default_differences()
       default_differences_load_pdb() +
       default_differences_somo() +
       default_differences_hydro() +
+      default_differences_saxs_options() +
       default_differences_grid();
    
    if ( str != "" )

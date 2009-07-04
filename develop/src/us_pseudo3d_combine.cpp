@@ -739,7 +739,7 @@ void US_Pseudo3D_Combine::set_limits()
    if (autolimit)
    {
       cnt_plot_smax->setRange(0.0, smax * 10, pow(10.0, (double)((int) (log10(smax*10)-3.0))));
-      cnt_plot_smin->setRange(0.0, smax * 10, pow(10.0, (double)((int) (log10(smax*10)-3.0))));
+      cnt_plot_smin->setRange(-(smax/50), smax * 10, pow(10.0, (double)((int) (log10(smax*10)-3.0))));
       smax += (smax-smin)/20;
       smin -= (smax-smin)/20;
       fmax += (fmax-fmin)/20;

@@ -79,6 +79,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    residue_widget = false;
    hybrid_widget = false;
    saxs_widget = false;
+   saxs_options_widget = false;
    asa_widget = false;
    misc_widget = false;
    grid_widget = false;
@@ -176,6 +177,7 @@ void US_Hydrodyn::setupGUI()
    somo_options->insertItem(tr("&Miscellaneous Options"), this, SLOT(show_misc()));
    somo_options->insertItem(tr("&Bead Model Output"), this, SLOT(show_bead_output()));
    somo_options->insertItem(tr("&Grid Functions (AtoB)"), this, SLOT(show_grid()));
+   somo_options->insertItem(tr("SA&XS Options"), this, SLOT(show_saxs_options()));
 
    pdb_options = new QPopupMenu;
    pdb_options->insertItem(tr("&Parsing"), this, SLOT(pdb_parsing()));
@@ -620,6 +622,27 @@ void US_Hydrodyn::show_misc()
    update_vbar();
 }
 
+void US_Hydrodyn::show_saxs_options()
+{
+   if (saxs_options_widget)
+   {
+      if (saxs_options_window->isVisible())
+      {
+         saxs_options_window->raise();
+      }
+      else
+      {
+         saxs_options_window->show();
+      }
+      return;
+   }
+   else
+   {
+      saxs_options_window = new US_Hydrodyn_SaxsOptions(&saxs_options, &saxs_options_widget, this);
+      saxs_options_window->show();
+   }
+}
+
 void US_Hydrodyn::show_bead_output()
 {
    if (bead_output_widget)
@@ -778,6 +801,7 @@ void US_Hydrodyn::reset()
    pdb_vis = default_pdb_vis;
    pdb_parse = default_pdb_parse;
    grid = default_grid;
+   saxs_options = default_saxs_options;
    clear_display();
 }
 

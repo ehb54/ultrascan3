@@ -119,6 +119,17 @@ struct saxs
    float   volume;               // atomic volume
 };
 
+struct saxs_options
+{
+   float   wavelength;           // scattering wavelengths
+   float   start_angle;          // start angle
+   float   end_angle;            // ending angle
+   float   water_e_density;      // water electron density in e/A^3
+   float   max_size;             // maximum size (A)
+   float   bin_size;             // Bin size (A)
+   bool    hydrate_pdb;          // Hydrate the PDB model? (true/false)
+};
+
 struct hybridization
 {
    QString name;                 // for example, N4H3
