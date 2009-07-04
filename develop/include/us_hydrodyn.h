@@ -132,7 +132,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       US_Config *USglobal;
 
-      QLabel *lbl_info;
+      QLabel *lbl_info1;
+      QLabel *lbl_info2;
+      QLabel *lbl_info3;
       QLabel *lbl_pdb_file;
       QLabel *lbl_model;
       QLabel *lbl_table;
@@ -153,6 +155,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_save;
       QPushButton *pb_select_residue_file;
       QPushButton *pb_load_pdb;
+      QPushButton *pb_pdb_saxs;
+      QPushButton *pb_bead_saxs;
       QPushButton *pb_help;
       QPushButton *pb_cancel;
       QPushButton *pb_somo;
@@ -315,6 +319,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void update_bead_model_prefix(const QString &);
       void calc_hydro();
       void radial_reduction();
+      void pdb_saxs();
+      void bead_saxs();
       void show_hydro_results();
       void write_bead_asa(QString, vector <PDB_atom> *);
       void write_bead_tsv(QString, vector <PDB_atom> *);

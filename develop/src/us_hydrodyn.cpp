@@ -199,13 +199,29 @@ void US_Hydrodyn::setupGUI()
    menu->insertItem(tr("&PDB Options"), pdb_options);
    menu->insertItem(tr("&Configurations"), configuration);
 
-   lbl_somo = new QLabel(tr("SOMO Program:"), this);
-   Q_CHECK_PTR(lbl_somo);
-   lbl_somo->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_somo->setAlignment(AlignCenter|AlignVCenter);
-   lbl_somo->setMinimumHeight(minHeight1);
-   lbl_somo->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   lbl_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+   lbl_info1 = new QLabel(tr("PDB Functions:"), this);
+   Q_CHECK_PTR(lbl_info1);
+   lbl_info1->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_info1->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info1->setMinimumHeight(minHeight1);
+   lbl_info1->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_info1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   lbl_info2 = new QLabel(tr("Bead Model Functions:"), this);
+   Q_CHECK_PTR(lbl_info2);
+   lbl_info2->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_info2->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info2->setMinimumHeight(minHeight1);
+   lbl_info2->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_info2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   lbl_info3 = new QLabel(tr("Hydrodynamic Calculations:"), this);
+   Q_CHECK_PTR(lbl_info3);
+   lbl_info3->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_info3->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info3->setMinimumHeight(minHeight1);
+   lbl_info3->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_info3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
    pb_select_residue_file = new QPushButton(tr("Select Lookup Table"), this);
    Q_CHECK_PTR(pb_select_residue_file);
@@ -296,6 +312,22 @@ void US_Hydrodyn::setupGUI()
    pb_somo->setEnabled(false);
    pb_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_somo, SIGNAL(clicked()), SLOT(calc_somo()));
+
+   pb_pdb_saxs = new QPushButton(tr("PDB-SAXS Functions"), this);
+   Q_CHECK_PTR(pb_pdb_saxs);
+   pb_pdb_saxs->setMinimumHeight(minHeight1);
+   pb_pdb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_pdb_saxs->setEnabled(false);
+   pb_pdb_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_pdb_saxs, SIGNAL(clicked()), SLOT(pdb_saxs()));
+
+   pb_bead_saxs = new QPushButton(tr("Beadmodel-SAXS Functions"), this);
+   Q_CHECK_PTR(pb_bead_saxs);
+   pb_bead_saxs->setMinimumHeight(minHeight1);
+   pb_bead_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_bead_saxs->setEnabled(false);
+   pb_bead_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_bead_saxs, SIGNAL(clicked()), SLOT(bead_saxs()));
 
    pb_grid_pdb = new QPushButton(tr("Build AtoB (Grid) Bead Model"), this);
    Q_CHECK_PTR(pb_grid_pdb);
@@ -407,9 +439,9 @@ void US_Hydrodyn::setupGUI()
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(frame, j, j, 0, 1);
-   background->addMultiCellWidget(editor, j, j+12, 2, 2);
+   background->addMultiCellWidget(editor, j, j+16, 2, 2);
    j++;
-   background->addMultiCellWidget(lbl_somo, j, j, 0, 1);
+   background->addMultiCellWidget(lbl_info1, j, j, 0, 1);
    j++;
    background->addWidget(pb_select_residue_file, j, 0);
    background->addWidget(lbl_table, j, 1);
@@ -418,9 +450,13 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(lbl_pdb_file, j, 1);
    j++;
    background->addWidget(lbl_model, j, 0);
-   background->addMultiCellWidget(lb_model, j, j+1, 1, 1);
+   background->addMultiCellWidget(lb_model, j, j+2, 1, 1);
    j++;
    background->addWidget(pb_view_pdb, j, 0);
+   j++;
+   background->addWidget(pb_pdb_saxs, j, 0);
+   j++;
+   background->addMultiCellWidget(lbl_info2, j, j, 0, 1);
    j++;
    background->addWidget(lbl_bead_model_prefix, j, 0);
    background->addWidget(le_bead_model_prefix, j, 1);
@@ -437,15 +473,19 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_load_bead_model, j, 0);
    background->addWidget(le_bead_model_file, j, 1);
    j++;
+   background->addWidget(pb_bead_saxs, j, 0);
+   j++;
+   background->addMultiCellWidget(lbl_info3, j, j, 0, 1);
+   j++;
    background->addWidget(pb_calc_hydro, j, 0);
    background->addWidget(pb_show_hydro_results, j, 1);
    j++;
-   background->addWidget(pb_help, j, 0);
-   background->addWidget(pb_cancel, j, 1);
-   j++;
    background->addWidget(pb_stop_calc, j, 0);
    background->addWidget(progress, j, 1);
-   //   background->addMultiCellWidget(progress, j, j, 0, 1);
+// background->addMultiCellWidget(progress, j, j, 0, 1);
+   j++;
+   background->addWidget(pb_help, j, 0);
+   background->addWidget(pb_cancel, j, 1);
    background->addWidget(lbl_core_progress, j, 2);
 }
 
@@ -983,8 +1023,10 @@ void US_Hydrodyn::select_model(int val)
 {
    current_model = val;
    QString msg = QString("\n\n%1 models selected:").arg(project);
-   for(int i = 0; i < lb_model->numRows(); i++) {
-      if (lb_model->isSelected(i)) {
+   for(int i = 0; i < lb_model->numRows(); i++)
+   {
+      if (lb_model->isSelected(i))
+      {
          current_model = i;
          msg += QString(" %1").arg(i+1);
       }
@@ -1003,13 +1045,17 @@ void US_Hydrodyn::select_model(int val)
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
    pb_visualize->setEnabled(false);
-
+   pb_pdb_saxs->setEnabled(true);
 }
-void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model) {
+
+void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model)
+{
    {
       FILE *f = fopen(fname.ascii(), "w");
-      for (unsigned int i = 0; i < model->size(); i++) {
-         if ((*model)[i].active) {
+      for (unsigned int i = 0; i < model->size(); i++)
+      {
+         if ((*model)[i].active)
+         {
             fwrite(&((*model)[i].bead_cog_coordinate.axis[0]), sizeof(float), 3, f);
             float color[3] = { .2f, .2f, ((*model)[i].all_beads.size() / 5) > 1 ? 1 : ((*model)[i].all_beads.size() / 5) };
             fwrite(color, sizeof(float), 3, f);
@@ -1020,8 +1066,10 @@ void US_Hydrodyn::write_bead_ebf(QString fname, vector<PDB_atom> *model) {
    }
    {
       FILE *f = fopen(QString("%1-info").arg(fname).ascii(), "w");
-      for (unsigned int i = 0; i < model->size(); i++) {
-         if ((*model)[i].active) {
+      for (unsigned int i = 0; i < model->size(); i++)
+      {
+         if ((*model)[i].active)
+         {
             float color[3] = { .2f, .2f, ((*model)[i].all_beads.size() / 5) > 1 ? 1 : ((*model)[i].all_beads.size() / 5) };
             fprintf(f,"%f %f %f %f %f %f %f\n",
                     (*model)[i].bead_coordinate.axis[0],
@@ -1068,6 +1116,12 @@ void US_Hydrodyn::load_bead_model()
          pb_visualize->setEnabled(true);
          pb_calc_hydro->setEnabled(true);
          pb_grid->setEnabled(true);
+         pb_bead_saxs->setEnabled(true);
+         pb_pdb_saxs->setEnabled(false);
+      }
+      else
+      {
+         pb_bead_saxs->setEnabled(false);
       }
       // bead_model_prefix = "";
    }
@@ -1906,9 +1960,18 @@ void US_Hydrodyn::print()
       p.end();            // send job to printer
    }
 }
+
 void US_Hydrodyn::clear_display()
 {
    editor->clear();
    editor->setText("\n");
    display_default_differences();
+}
+
+void US_Hydrodyn::pdb_saxs()
+{
+}
+
+void US_Hydrodyn::bead_saxs()
+{
 }
