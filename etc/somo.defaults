@@ -72,7 +72,7 @@ SOMO Config file - computer generated, please do not edit...
 0		# flag for positioning bead in center of mass or cubelet (grid)
 0		# flag for expanding beads to tangency (grid)
 5		# Length of cube side (grid)
-1		# Enable ASA options
+1		# flag for enabling asa options (grid)
 24.041		# hydration volume
 1		# flag for selecting vbar calculation
 0.72		# vbar value
@@ -94,10 +94,17 @@ SOMO Config file - computer generated, please do not edit...
 0		# flag for overlap cutoff: false: same as in model building, true: enter manually
 0		# overlap value
 0		# PDB visualization option
-/root/ultrascan/etc/rasmol.spt		# RasMol color filename
+/home/user/demeler/us/ultrascan/etc/rasmol.spt		# RasMol color filename
 1		# skip hydrogen atoms?
 1		# skip water molecules?
 1		# skip alternate conformations?
 0		# find SH groups?
 0		# how to handle missing residues
 0		# how to handle missing atoms
+1.5		# scattering wavelength
+0.1		# starting angle
+4		# ending angle
+0.334		# Water electron density
+40		# maximum size
+0.4		# bin size
+1		# hydrate PDB model? true = yes

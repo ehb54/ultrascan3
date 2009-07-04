@@ -81,7 +81,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    cnt_start_angle= new QwtCounter(this);
    Q_CHECK_PTR(cnt_start_angle);
-   cnt_start_angle->setRange(0, 10, 0.01);
+   cnt_start_angle->setRange(0, 90, 0.001);
    cnt_start_angle->setValue((*saxs_options).start_angle);
    cnt_start_angle->setMinimumHeight(minHeight1);
    cnt_start_angle->setEnabled(true);
@@ -99,7 +99,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    cnt_end_angle= new QwtCounter(this);
    Q_CHECK_PTR(cnt_end_angle);
-   cnt_end_angle->setRange(0, 10, 0.01);
+   cnt_end_angle->setRange(0, 90, 0.001);
    cnt_end_angle->setValue((*saxs_options).end_angle);
    cnt_end_angle->setMinimumHeight(minHeight1);
    cnt_end_angle->setEnabled(true);
@@ -117,7 +117,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    cnt_water_e_density= new QwtCounter(this);
    Q_CHECK_PTR(cnt_water_e_density);
-   cnt_water_e_density->setRange(0, 10, 0.01);
+   cnt_water_e_density->setRange(0, 10, 0.001);
    cnt_water_e_density->setValue((*saxs_options).water_e_density);
    cnt_water_e_density->setMinimumHeight(minHeight1);
    cnt_water_e_density->setEnabled(true);
@@ -135,7 +135,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    cnt_max_size= new QwtCounter(this);
    Q_CHECK_PTR(cnt_max_size);
-   cnt_max_size->setRange(0, 10, 0.01);
+   cnt_max_size->setRange(0, 100, 0.01);
    cnt_max_size->setValue((*saxs_options).max_size);
    cnt_max_size->setMinimumHeight(minHeight1);
    cnt_max_size->setEnabled(true);
@@ -153,7 +153,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    cnt_bin_size= new QwtCounter(this);
    Q_CHECK_PTR(cnt_bin_size);
-   cnt_bin_size->setRange(0, 10, 0.01);
+   cnt_bin_size->setRange(0, 100, 0.01);
    cnt_bin_size->setValue((*saxs_options).bin_size);
    cnt_bin_size->setMinimumHeight(minHeight1);
    cnt_bin_size->setEnabled(true);

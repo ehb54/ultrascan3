@@ -74,10 +74,10 @@ void US_Hydrodyn::read_residue_file()
             ts >> new_atom.hybrid.mw;
             ts >> new_atom.hybrid.radius;
             ts >> new_atom.bead_assignment;
-            if (new_atom.bead_assignment >= numbeads) 
+            if (new_atom.bead_assignment >= numbeads)
             {
                error_count++;
-               QString tmp_msg = 
+               QString tmp_msg =
                   tr(QString(
                              "\nThe atom's bead assignment has exceeded the number of beads.\n"
                              "For residue: %1 and Atom: %2 "
@@ -87,11 +87,11 @@ void US_Hydrodyn::read_residue_file()
                      .arg(line_count)
                      );
                error_text += tmp_msg;
-               if (error_count < 5) 
+               if (error_count < 5)
                {
                   error_msg += tmp_msg;
                }
-               else 
+               else
                {
                   if (error_count == 5)
                   {
@@ -180,11 +180,11 @@ void US_Hydrodyn::read_residue_file()
    if (error_count)
    {
       QMessageBox::message(tr("ERRORS:"), error_msg);
-      if (editor) 
+      if (editor)
       {
          editor->append(error_text);
       }
-   } 
+   }
    save_residue_list = residue_list;
    save_multi_residue_map = multi_residue_map;
 }
@@ -502,7 +502,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          if (!ts.atEnd()) {
             ts >> bead_count;
          }
-         else 
+         else
          {
             editor->append("Error in line 1!\n");
             return 1;
@@ -510,7 +510,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          if (!ts.atEnd()) {
             ts >> results.vbar;
          }
-         else 
+         else
          {
             editor->append("Error in line 1!\n");
             return 1;
@@ -524,7 +524,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                if (!ts.atEnd()) {
                   ts >>  tmp_atom.bead_coordinate.axis[i];
                }
-               else 
+               else
                {
                   editor->append(QString("\nError in line %1!\n").arg(linepos));
                   return linepos;
@@ -533,7 +533,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
             if (!ts.atEnd()) {
                ts >>  tmp_atom.bead_computed_radius;
             }
-            else 
+            else
             {
                editor->append(QString("\nError in line %1!\n").arg(linepos));
                return linepos;
@@ -542,7 +542,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                ts >>  tmp_atom.bead_mw;
                tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
             }
-            else 
+            else
             {
                editor->append(QString("\nError in line %1!\n").arg(linepos));
                return linepos;
@@ -550,7 +550,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
             if (!ts.atEnd()) {
                ts >>  tmp_atom.bead_color;
             }
-            else 
+            else
             {
                editor->append(QString("\nError in line %1!\n").arg(linepos));
                return linepos;
@@ -558,7 +558,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
             if (!ts.atEnd()) {
                tmp_atom.serial = linepos;
             }
-            else 
+            else
             {
                editor->append(QString("\nError in line %1!\n").arg(linepos));
                return linepos;
@@ -566,7 +566,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
             if (!ts.atEnd()) {
                ts >>  tmp_atom.residue_list;
             }
-            else 
+            else
             {
                editor->append(QString("\nError in line %1!\n").arg(linepos));
                return linepos;
@@ -574,7 +574,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
             if (!ts.atEnd()) {
                ts >>  tmp_atom.bead_recheck_asa;
             }
-            else 
+            else
             {
                editor->append(QString("\nError in line %1!\n").arg(linepos));
                return linepos;
@@ -592,7 +592,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          QFont new_font = QFont("Courier");
          new_font.setStretch(75);
          editor->setCurrentFont(new_font);
-         while (!ts.atEnd()) 
+         while (!ts.atEnd())
          {
             editor->append(ts.readLine());
          }
@@ -632,7 +632,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          if (!ts.atEnd()) {
             ts >> bead_count;
          }
-         else 
+         else
          {
             editor->append("Error in line 1!\n");
             return 1;
@@ -640,7 +640,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          if (!ts.atEnd()) {
             ts >> results.vbar;
          }
-         else 
+         else
          {
             editor->append("Error in line 1!\n");
             return 1;
@@ -649,7 +649,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          if (!ts.atEnd()) {
             ts >> rmcfile;
          }
-         else 
+         else
          {
             editor->append("Error in line 1!\n");
             return 1;
@@ -659,7 +659,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
             if (!ts.atEnd()) {
                ts >> results.vbar;
             }
-            else 
+            else
             {
                editor->append("Error in line 1!\n");
                return 1;
@@ -679,7 +679,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                   if (!ts.atEnd()) {
                      ts >>  tmp_atom.bead_coordinate.axis[i];
                   }
-                  else 
+                  else
                   {
                      editor->append(QString("\nError in line %1!\n").arg(linepos));
                      return linepos;
@@ -688,7 +688,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                if (!tsrmc.atEnd()) {
                   tsrmc >>  tmp_atom.bead_computed_radius;
                }
-               else 
+               else
                {
                   editor->append(QString("\nError in line %1!\n").arg(linepos));
                   return linepos;
@@ -697,7 +697,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                   tsrmc >>  tmp_atom.bead_mw;
                   tmp_atom.bead_ref_mw = tmp_atom.bead_mw;
                }
-               else 
+               else
                {
                   editor->append(QString("\nError in line %1!\n").arg(linepos));
                   return linepos;
@@ -705,7 +705,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
                if (!tsrmc.atEnd()) {
                   tsrmc >>  tmp_atom.bead_color;
                }
-               else 
+               else
                {
                   editor->append(QString("\nError in line %1!\n").arg(linepos));
                   return linepos;
@@ -783,286 +783,286 @@ int US_Hydrodyn::read_config(QFile& f)
    }
    if ( f.handle() == -1 && !f.open(IO_ReadOnly) )
    {
-      return -1;
+      return -2;
    }
 
    QTextStream ts(&f);
-   if ( ts.readLine() == QString::null ) return -1; // first line is comment
+   if ( ts.readLine() == QString::null ) return -10000; // first line is comment
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10001;
    sidechain_overlap.remove_overlap = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10002;
    sidechain_overlap.fuse_beads = (bool) str.toInt();
    ts >> sidechain_overlap.fuse_beads_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10003;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10004;
    sidechain_overlap.remove_hierarch = (bool) str.toInt();
    ts >> sidechain_overlap.remove_hierarch_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10005;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10006;
    sidechain_overlap.remove_sync = (bool) str.toInt();
    ts >> sidechain_overlap.remove_sync_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10007;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10008;
    sidechain_overlap.translate_out = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10009;
    sidechain_overlap.show_translate = (bool) str.toInt();
 
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10010;
    mainchain_overlap.remove_overlap = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10011;
    mainchain_overlap.fuse_beads = (bool) str.toInt();
    ts >> mainchain_overlap.fuse_beads_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10012;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10013;
    mainchain_overlap.remove_hierarch = (bool) str.toInt();
    ts >> mainchain_overlap.remove_hierarch_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10014;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10015;
    mainchain_overlap.remove_sync = (bool) str.toInt();
    ts >> mainchain_overlap.remove_sync_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10016;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10017;
    mainchain_overlap.translate_out = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10018;
    mainchain_overlap.show_translate = (bool) str.toInt();
 
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10020;
    buried_overlap.remove_overlap = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10021;
    buried_overlap.fuse_beads = (bool) str.toInt();
    ts >> buried_overlap.fuse_beads_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10022;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10023;
    buried_overlap.remove_hierarch = (bool) str.toInt();
    ts >> buried_overlap.remove_hierarch_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10024;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10025;
    buried_overlap.remove_sync = (bool) str.toInt();
    ts >> buried_overlap.remove_sync_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10026;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10027;
    buried_overlap.translate_out = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10028;
    buried_overlap.show_translate = (bool) str.toInt();
 
 
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10030;
    grid_exposed_overlap.remove_overlap = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10031;
    grid_exposed_overlap.fuse_beads = (bool) str.toInt();
    ts >> grid_exposed_overlap.fuse_beads_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10032;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10033;
    grid_exposed_overlap.remove_hierarch = (bool) str.toInt();
    ts >> grid_exposed_overlap.remove_hierarch_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10034;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10035;
    grid_exposed_overlap.remove_sync = (bool) str.toInt();
    ts >> grid_exposed_overlap.remove_sync_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10036;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10037;
    grid_exposed_overlap.translate_out = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10038;
    grid_exposed_overlap.show_translate = (bool) str.toInt();
 
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10040;
    grid_buried_overlap.remove_overlap = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10041;
    grid_buried_overlap.fuse_beads = (bool) str.toInt();
    ts >> grid_buried_overlap.fuse_beads_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10042;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10043;
    grid_buried_overlap.remove_hierarch = (bool) str.toInt();
    ts >> grid_buried_overlap.remove_hierarch_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10044;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10045;
    grid_buried_overlap.remove_sync = (bool) str.toInt();
    ts >> grid_buried_overlap.remove_sync_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10046;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10047;
    grid_buried_overlap.translate_out = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10048;
    grid_buried_overlap.show_translate = (bool) str.toInt();
 
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10050;
    grid_overlap.remove_overlap = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10051;
    grid_overlap.fuse_beads = (bool) str.toInt();
    ts >> grid_overlap.fuse_beads_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10052;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10053;
    grid_overlap.remove_hierarch = (bool) str.toInt();
    ts >> grid_overlap.remove_hierarch_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10054;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10055;
    grid_overlap.remove_sync = (bool) str.toInt();
    ts >> grid_overlap.remove_sync_percent;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10056;
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10057;
    grid_overlap.translate_out = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10058;
    grid_overlap.show_translate = (bool) str.toInt();
 
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10059;
    overlap_tolerance = str.toDouble();
 
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10060;
    bead_output.output = str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10061;
    bead_output.sequence = str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10062;
    bead_output.correspondence = (bool) str.toInt();
 
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10070;
    asa.probe_radius = str.toFloat();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10071;
    asa.probe_recheck_radius = str.toFloat();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10072;
    asa.threshold = str.toFloat();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10073;
    asa.threshold_percent = str.toFloat();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10074;
    asa.grid_threshold = str.toFloat();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10075;
    asa.grid_threshold_percent = str.toFloat();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10076;
    asa.calculation = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10077;
    asa.recheck_beads = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10078;
    asa.method = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10079;
    asa.asab1_step = str.toFloat();
 
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10080;
    grid.cubic = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10081;
    grid.hydrate = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10082;
    grid.center = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10083;
    grid.tangency = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10084;
    grid.cube_side = str.toDouble();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10085;
    grid.enable_asa = (bool) str.toInt();
 
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10090;
    misc.hydrovol = str.toDouble();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10091;
    misc.compute_vbar = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10092;
    misc.vbar = str.toDouble();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10093;
    misc.avg_radius = str.toDouble();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10094;
    misc.avg_mass = str.toDouble();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10095;
    misc.avg_hydration = str.toDouble();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10096;
    misc.avg_volume = str.toDouble();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10097;
    misc.avg_vbar = str.toDouble();
 
    ts >> str;
    ts.readLine();
    hydro.unit = str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10100;
    hydro.reference_system = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10101;
    hydro.boundary_cond = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10102;
    hydro.volume_correction = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10103;
    hydro.volume = str.toDouble();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10104;
    hydro.mass_correction = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10105;
    hydro.mass = str.toDouble();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10106;
    hydro.bead_inclusion = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10107;
    hydro.rotational = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10108;
    hydro.viscosity = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10109;
    hydro.overlap_cutoff = (bool) str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10110;
    hydro.overlap = str.toDouble();
    sidechain_overlap.title = "exposed side chain beads";
    mainchain_overlap.title = "exposed main/main and\nmain/side chain beads";
@@ -1074,65 +1074,56 @@ int US_Hydrodyn::read_config(QFile& f)
    // pdb_visualization options:
 
    ts >> str; // visualization option
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10120;
    pdb_vis.visualization = str.toInt();
    ts >> str;
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10121;
    pdb_vis.filename = str; // custom Rasmol script file
 
    // pdb_parsing options:
 
    ts >> str; // skip hydrogens?
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10130;
    pdb_parse.skip_hydrogen = (bool) str.toInt();
    ts >> str; // skip water molecules?
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10131;
    pdb_parse.skip_water = (bool) str.toInt();
    ts >> str; // skip alternate conformations?
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10132;
    pdb_parse.alternate = (bool) str.toInt();
    ts >> str; // find free SH atoms?
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10133;
    pdb_parse.find_sh = (bool) str.toInt();
    ts >> str; // missing residue choice
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10134;
    pdb_parse.missing_residues = str.toInt();
    ts >> str; // missing atom choice
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -10135;
    pdb_parse.missing_atoms = str.toInt();
-   if ( !ts.atEnd() ) return -1;
-
-   // saxs options:
-      ts << saxs_options.wavelength << "\t\t# scattering wavelength\n";
-      ts << saxs_options.start_angle << "\t\t# starting angle\n";
-      ts << saxs_options.end_angle << "\t\t# ending angle\n";
-      ts << saxs_options.water_e_density << "\t\t# Water electron density\n";
-      ts << saxs_options.max_size << "\t\t# maximum size\n";
-      ts << saxs_options.bin_size << "\t\t# bin size\n";
-      ts << saxs_options.hydrate_pdb << "\t\t# hydrate PDB model? true = yes\n";
 
    ts >> str; // wavelength
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -100140;
    saxs_options.wavelength = str.toFloat();
    ts >> str; // start angle
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -100141;
    saxs_options.start_angle = str.toFloat();
    ts >> str; // end angle
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -100142;
    saxs_options.end_angle = str.toFloat();
    ts >> str; // water electron density
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -100143;
    saxs_options.water_e_density = str.toFloat();
    ts >> str; // maximum size
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -100144;
    saxs_options.max_size = str.toFloat();
    ts >> str; // bin size
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -100145;
    saxs_options.bin_size = str.toFloat();
    ts >> str; // hydrate pdb model?
-   if ( ts.readLine() == QString::null ) return -1;
+   if ( ts.readLine() == QString::null ) return -100146;
    saxs_options.hydrate_pdb = (bool) str.toInt();
-   
+   if ( !ts.atEnd() ) return -10150;
+
    f.close();
    return 0;
 }
@@ -1294,7 +1285,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << saxs_options.max_size << "\t\t# maximum size\n";
       ts << saxs_options.bin_size << "\t\t# bin size\n";
       ts << saxs_options.hydrate_pdb << "\t\t# hydrate PDB model? true = yes\n";
-      
+
       f.close();
    }
 }
@@ -1303,14 +1294,17 @@ void US_Hydrodyn::set_default()
 {
    QFile f;
    QString str;
+   int j;
    // only keep one copy of defaults in system root dir
    f.setName(USglobal->config_list.system_dir + "/etc/somo.defaults");
    bool config_read = false;
    if (f.open(IO_ReadOnly)) // read system directory
    {
-      if ( read_config(f) )
+      j=read_config(f);
+            cout << j << endl;
+      if ( j )
       {
-         QMessageBox::message(tr("Please note:"), 
+         QMessageBox::message(tr("Please note:"),
                               tr("The somo.default configuration file was found to be corrupt.\n"
                                  "Resorting to hard-coded defaults."));
       }
@@ -1321,8 +1315,8 @@ void US_Hydrodyn::set_default()
    }
    else
    {
-      QMessageBox::message(tr("Notice:"), 
-                           tr("Configuration defaults file ") + 
+      QMessageBox::message(tr("Notice:"),
+                           tr("Configuration defaults file ") +
                            f.name() + tr(" not found\nUsing hard-coded defaults."));
    }
 
@@ -1338,7 +1332,7 @@ void US_Hydrodyn::set_default()
       sidechain_overlap.remove_sync_percent = 1.0;
       sidechain_overlap.translate_out = true;
       sidechain_overlap.show_translate = true;
-      
+
       mainchain_overlap.remove_overlap = true;
       mainchain_overlap.fuse_beads = true;
       mainchain_overlap.fuse_beads_percent = 70.0;
@@ -1348,7 +1342,7 @@ void US_Hydrodyn::set_default()
       mainchain_overlap.remove_sync_percent = 1.0;
       mainchain_overlap.translate_out = false;
       mainchain_overlap.show_translate = false;
-      
+
       buried_overlap.remove_overlap = true;
       buried_overlap.fuse_beads = false;
       buried_overlap.fuse_beads_percent = 0.0;
@@ -1358,7 +1352,7 @@ void US_Hydrodyn::set_default()
       buried_overlap.remove_sync_percent = 1.0;
       buried_overlap.translate_out = false;
       buried_overlap.show_translate = false;
-      
+
       grid_exposed_overlap.remove_overlap = true;
       grid_exposed_overlap.fuse_beads = false;
       grid_exposed_overlap.fuse_beads_percent = 0.0;
@@ -1368,7 +1362,7 @@ void US_Hydrodyn::set_default()
       grid_exposed_overlap.remove_sync_percent = 1.0;
       grid_exposed_overlap.translate_out = true;
       grid_exposed_overlap.show_translate = true;
-      
+
       grid_buried_overlap.remove_overlap = true;
       grid_buried_overlap.fuse_beads = false;
       grid_buried_overlap.fuse_beads_percent = 0.0;
@@ -1378,7 +1372,7 @@ void US_Hydrodyn::set_default()
       grid_buried_overlap.remove_sync_percent = 1.0;
       grid_buried_overlap.translate_out = false;
       grid_buried_overlap.show_translate = false;
-      
+
       grid_overlap.remove_overlap = true;
       grid_overlap.fuse_beads = false;
       grid_overlap.fuse_beads_percent = 0.0;
@@ -1388,7 +1382,7 @@ void US_Hydrodyn::set_default()
       grid_overlap.remove_sync_percent = 1.0;
       grid_overlap.translate_out = false;
       grid_overlap.show_translate = false;
-      
+
       overlap_tolerance = 0.001;
 
       sidechain_overlap.title = "exposed side chain beads";
@@ -1397,11 +1391,11 @@ void US_Hydrodyn::set_default()
       grid_exposed_overlap.title = "exposed grid beads";
       grid_buried_overlap.title = "buried grid beads";
       grid_overlap.title = "grid beads";
-      
+
       bead_output.sequence = 0;
       bead_output.output = 1;
       bead_output.correspondence = true;
-      
+
       asa.probe_radius = (float) 1.4;
       asa.probe_recheck_radius = (float) 1.4;
       asa.threshold = 20.0;
@@ -1412,14 +1406,14 @@ void US_Hydrodyn::set_default()
       asa.recheck_beads = true;
       asa.method = true; // by default use ASAB1
       asa.asab1_step = 1.0;
-      
+
       grid.cubic = true;       // apply cubic grid
       grid.hydrate = false;    // true: hydrate model
       grid.center = false;    // true: center of cubelet, false: center of mass
       grid.tangency = false;   // true: Expand beads to tangency
       grid.cube_side = 5.0;
-      grid.enable_asa = true;   // true: enable asa 
-      
+      grid.enable_asa = true;   // true: enable asa
+
       misc.hydrovol = 24.041;
       misc.compute_vbar = true;
       misc.vbar = 0.72;
@@ -1429,7 +1423,7 @@ void US_Hydrodyn::set_default()
       misc.avg_volume = 15.3;
       misc.avg_vbar = 0.72;
       overlap_tolerance = 0.001;
-      
+
       hydro.unit = -10;                // exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
       hydro.reference_system = false;   // false: diffusion center, true: cartesian origin (default false)
       hydro.boundary_cond = false;      // false: stick, true: slip (default false)
@@ -1442,10 +1436,10 @@ void US_Hydrodyn::set_default()
       hydro.viscosity = false;            // false: include beads in volume correction for intrinsic viscosity, true: exclude
       hydro.overlap_cutoff = false;      // false: same as in model building, true: enter manually
       hydro.overlap = 0.0;               // overlap
-      
+
       pdb_vis.visualization = 0;                // default RasMol colors
       pdb_vis.filename = USglobal->config_list.system_dir + "/etc/rasmol.spt"; //default color file
-      
+
       pdb_parse.skip_hydrogen = true;
       pdb_parse.skip_water = true;
       pdb_parse.alternate = true;
@@ -1577,7 +1571,7 @@ int US_Hydrodyn::get_color(PDB_atom *a) {
          color = 6;
       }
    }
-   else 
+   else
    {
       color = 1;
       if (a->exposed_code != 1) {
@@ -1982,7 +1976,7 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
                residues += QString("%1").arg(tmp_serial);
             }
          }
-         else 
+         else
          {
             residues = use_model[i]->residue_list;
          }
@@ -2300,13 +2294,13 @@ QString US_Hydrodyn::default_differences_load_pdb()
       QString opt = "Unknown state";
       switch ( pdb_parse.missing_residues )
       {
-      case 0 : 
+      case 0 :
          opt = "List them and stop operation";
          break;
-      case 1 : 
+      case 1 :
          opt = "List them, skip residue and proceed";
          break;
-      case 2 : 
+      case 2 :
          opt = "Use automatic bead builder (approximate method)";
          break;
       }
@@ -2318,13 +2312,13 @@ QString US_Hydrodyn::default_differences_load_pdb()
       QString opt = "Unknown state";
       switch ( pdb_parse.missing_atoms )
       {
-      case 0 : 
+      case 0 :
          opt = "List them and stop operation";
          break;
-      case 1 : 
+      case 1 :
          opt = "List them, skip residue and proceed";
          break;
-      case 2 : 
+      case 2 :
          opt = "Use automatic bead builder (approximate method)";
          break;
       }
@@ -2788,21 +2782,21 @@ QString US_Hydrodyn::default_differences_saxs_options()
 
 void US_Hydrodyn::display_default_differences()
 {
-   QString str = 
-      default_differences_misc() + 
+   QString str =
+      default_differences_misc() +
       default_differences_load_pdb() +
       default_differences_somo() +
       default_differences_hydro() +
       default_differences_saxs_options() +
       default_differences_grid();
-   
+
    if ( str != "" )
    {
       QColor save_color = editor->color();
       editor->setColor("dark red");
       editor->append("\nNon-default options:\n" + str );
       editor->setColor(save_color);
-   } 
+   }
    else
    {
       QColor save_color = editor->color();
