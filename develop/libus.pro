@@ -183,6 +183,7 @@ SOURCES += \
   src/us_hydrodyn_pdb_parsing.cpp \
   src/us_hydrodyn_pdb_visualization.cpp \
   src/us_hydrodyn_results.cpp \
+  src/us_hydrodyn_saxs.cpp \
   src/us_hydrodyn_saxs_options.cpp \
   src/us_hydrodyn_supc.cpp \
   src/us_imgviewer.cpp \
@@ -378,6 +379,7 @@ HEADERS += \
   include/us_hydrodyn_pdb_parsing.h \
   include/us_hydrodyn_pdb_visualization.h \
   include/us_hydrodyn_results.h \
+  include/us_hydrodyn_saxs.h \
   include/us_hydrodyn_saxs_options.h \
   include/us_hydrodyn_supc.h \
   include/us_imgviewer.h \
