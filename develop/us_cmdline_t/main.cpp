@@ -18,6 +18,7 @@ int main (int argc, char **argv)
              "dump_solutes   \tinfile outfile\tConvert an solute analysis file to ascii\n"
              "create_solutes \toutfile #_of_grids smin smax sres fmin fmax fres\n"
              "               \t              \tCreate a solute file\n"
+             "mwl_info       \tinfile\tlist mwl file info\n"
              , argv[0]
              );
       exit(-1);
@@ -235,6 +236,102 @@ int main (int argc, char **argv)
       ds << (unsigned int)0;
       ds << (unsigned int)0;
       f_out.close();
+      exit(0);
+   }
+   if (cmds[0].lower() == "mwl_info") 
+   {
+      if (cmds.size() != 2) 
+      {
+         printf(
+                "usage: %s %s infile\n"
+                , argv[0]
+                , argv[1]
+                );
+         exit(-501);
+      }
+      QFile f_in(cmds[1]);
+      if (!f_in.open(IO_ReadOnly))
+      {
+         fprintf(stderr, "%s: File open error : %s\n", argv[0], argv[2]);
+         exit(-502);
+      }
+      struct channel channel_data;
+      struct cell cell_data;
+
+      QString filter, str1, str2, filename;
+      unsigned int i, j, k, scans, radius_points, wavelengths;
+      QFile f;
+      Q_UINT16 int16;
+      Q_UINT32 int32;
+      Q_INT16 signed_int16;
+      float fval;
+
+      channel_data.data.clear();
+      cell_data.cell_channel.clear();
+      struct time_point timepoint_data;
+      struct radial_scan rscan;
+
+      QDataStream ds(&f_in);
+      ds >> int16;
+      cell_data.cell_number = int16;
+      printf("cell number: %u\n", int16);
+      
+      ds >> int16;
+      cell_data.centerpiece = int16;
+      printf("centerpiece: %u\n", int16);
+      
+      ds >> int16;
+      channel_data.channel_number = int16;
+      printf("channel number: %u\n", int16);
+      
+      ds >> channel_data.contents;
+      ds >> int16;
+      channel_data.measurement_mode = int16;
+      ds >> fval;
+      // min_od = fval;
+      ds >> fval;
+      // max_od = fval;
+      ds >> int32;
+      scans = int32;
+      printf("scans: %u\n", int32);
+      QFile fout(QString("%1.index").arg(argv[2]));
+      fout.open(IO_WriteOnly);
+      QTextStream tsout(&fout);
+      for (i=0; i<scans; i++) {
+         // printf("mwl reading scan %u\n", i);
+         timepoint_data.radius.clear();
+         timepoint_data.scan.clear();
+         ds >> timepoint_data.rotor_speed;
+         ds >> timepoint_data.time;
+         ds >> timepoint_data.omega_2_t;
+         ds >> timepoint_data.temperature;
+         ds >> int32;
+         radius_points = int32;
+         for (j=0; j<radius_points; j++) {
+            ds >> fval;
+            //cout << fval << endl;
+            timepoint_data.radius.push_back(fval);
+         }
+         ds >> int32;
+         wavelengths = int32;
+         for (j=0; j<wavelengths; j++) {
+            ds >> fval;
+            rscan.wavelength = fval;
+            if (!i) {
+               tsout << j << "\t" << fval << endl;
+            }
+            rscan.absorbance.clear();
+            for (k=0; k<radius_points; k++) {
+               ds >> signed_int16;
+               rscan.absorbance.push_back(signed_int16);
+            }
+            timepoint_data.scan.push_back(rscan);
+         }
+         channel_data.data.push_back(timepoint_data);
+      }
+      cell_data.cell_channel.push_back(channel_data);
+      fout.close();
+      f_in.close();
       exit(0);
    }
    printf("%s error: %s unknown command\n", argv[0], argv[1]);

@@ -106,7 +106,7 @@ void US_Hydrodyn_Grid::setupGUI()
    connect(cb_tangency, SIGNAL(clicked()), this, SLOT(set_tangency()));
 
    cb_enable_asa = new QCheckBox(this);
-   cb_enable_asa->setText(tr(" Enable ASA options "));
+   cb_enable_asa->setText(tr(" Enable ASA screening "));
    cb_enable_asa->setChecked((*grid).enable_asa);
    cb_enable_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_enable_asa->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));

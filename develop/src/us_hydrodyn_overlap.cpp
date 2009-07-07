@@ -114,7 +114,7 @@ void US_Hydrodyn_Overlap::setupGUI()
    {
       tw_overlap->addTab(grid_exposed_OR, "Exposed grid beads");
       tw_overlap->addTab(grid_buried_OR, "Buried grid beads");
-      tw_overlap->addTab(grid_OR, "Grid beads");
+      tw_overlap->addTab(grid_OR, "Non-screened grid beads");
    }
    else
    {

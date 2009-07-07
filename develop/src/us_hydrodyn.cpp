@@ -305,7 +305,7 @@ void US_Hydrodyn::setupGUI()
    le_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_prefix, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_prefix(const QString &)));
 
-   pb_somo = new QPushButton(tr("Build SOMO Bead Model"), this);
+   pb_somo = new QPushButton(tr("Build SoMo Bead Model"), this);
    Q_CHECK_PTR(pb_somo);
    pb_somo->setMinimumHeight(minHeight1);
    pb_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));

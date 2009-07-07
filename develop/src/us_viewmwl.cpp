@@ -490,7 +490,7 @@ void US_ViewMWL::load()
             for (j=0; j<columns; j++)
             {
                ts >> fval;
-               timepoint_data.radius.push_back(fval);
+               timepoint_data.radius.push_back(fval); // offset + 0.06);
             }
             while (!ts.eof())
             {

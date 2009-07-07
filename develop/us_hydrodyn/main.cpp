@@ -12,7 +12,7 @@ int main (int argc, char **argv)
       delete us_register;
       US_Hydrodyn *hydrodyn;
       hydrodyn = new US_Hydrodyn();
-      hydrodyn->setCaption("SoMo Solution Modeler");
+      hydrodyn->setCaption("SOMO Solution Modeler");
       hydrodyn->show();
       a.setMainWidget(hydrodyn);
       a.setDesktopSettingsAware(false);

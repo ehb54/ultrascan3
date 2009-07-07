@@ -2632,7 +2632,7 @@ QString US_Hydrodyn::default_differences_grid()
    }
    if ( grid.enable_asa != default_grid.enable_asa )
    {
-      str += QString(base + "Enable ASA options: %1\n")
+      str += QString(base + "Enable ASA screening: %1\n")
          .arg(grid.enable_asa ? "On" : "Off");
    }
    return str;
