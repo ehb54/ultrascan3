@@ -3515,8 +3515,12 @@ void US_EqFitter::write_data()
          if (f1.open(IO_WriteOnly | IO_Translate))
          {
             QTextStream ts(&f1);
+            ts.reset();
             ts.width(14);
-            ts.flags(0x1000);
+            ts.setf(QTextStream::scientific);
+            ts.precision(10);
+//            ts.width(20);
+            //cout.precision(10);
             ts << "\"x^2-x_r^2\"" << "\t" << tr("\"Fitted Data\"") <<"\t" << tr("\"Raw Data\"" )<< "\t" << tr("\"Residuals\"") << endl;
             xm_sqr = pow((*scanfit_vector)[i].x[(*scanfit_vector)[i].start_index], 2);
             vector<float>::iterator yval_it = (*scanfit_vector)[i].y.begin() + (*scanfit_vector)[i].start_index;
@@ -3531,8 +3535,9 @@ void US_EqFitter::write_data()
                   x = pow((*scanfit_vector)[i].x[(*scanfit_vector)[i].start_index + j], 2) - xm_sqr;
                }
                resid = y_guess[point_counter] - *yval_it;
-               yval_it ++;
+//               cout << ts.precision() << y_guess[point_counter] <<"\t" << *yval_it << "\t" << resid << endl;
                ts << x << "\t" << y_guess[point_counter] <<"\t" << *yval_it << "\t" << resid << endl;
+               yval_it ++;
                point_counter++;
             }
             f1.flush();

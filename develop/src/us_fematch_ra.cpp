@@ -344,6 +344,7 @@ void US_FeMatchRa_W::save()
       gai = new US_GA_Initialize();
       MonteCarloStats stats;
       list <Parameter>::iterator pit1;
+      cout << msv.size() << endl;
       if (msv.size() > 1) // then we have a Monte Carlo distribution
       {
          ts << tr("Monte Carlo Iterations: ") << msv.size() << "\n\n";
