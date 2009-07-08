@@ -349,7 +349,6 @@ void US_FeMatchRa_W::save()
          ts << tr("Monte Carlo Iterations: ") << msv.size() << "\n\n";
          ts << tr("Monte Carlo Statistics:\n");
          mc_str = "";
-         cout << "ga parameter size: " << ga_param.size() << endl;
          for (i=0; i<ga_param.size(); i++)
          {
             val.clear();
@@ -361,7 +360,6 @@ void US_FeMatchRa_W::save()
                }
             }
             bool mc_flag = false;
-            cout << "val size: " << val.size() << endl;
             if (val.size() > 0)
             {
                double test_val = val[0];
