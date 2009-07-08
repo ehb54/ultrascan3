@@ -1442,7 +1442,7 @@ surfracer_main(float prober,
    //puts("Integrated into UltraScan by E. Brookes");
    // #define DEBUG
 
-#if defined(DEBUG)
+#if defined(xDEBUG)
    for (unsigned int m = 0; m < residue_list.size(); m++ )
    {
       printf("residue %d name %s\n", m, residue_list[m].name.ascii());
