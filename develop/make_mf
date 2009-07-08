@@ -1,10 +1,20 @@
 #!/bin/sh
+
+#This is primarily for Windows 
+
+qmake libus.pro
+qmake us_all.pro
+
+[ -e *.vcproj ] && sed -i -e 's/Release\\\\/..\\bin\\/' *.vcproj
+[ -e *.vcproj ] && sed -i -e 's/Debug\\\\/..\\bin\\/' *.vcproj
+
 for each in us*; do
   if [ -d $each ]; then
     cd $each
     echo $each
-    [ -f us*.pro ] && qmake us*.pro
+    #[ -f us*.pro ] && qmake us*.pro
     [ -e *.vcproj ] && sed -i -e 's/Release\\\\/..\\..\\bin\\/' *.vcproj
+    [ -e *.vcproj ] && sed -i -e 's/Debug\\\\/..\\..\\bin\\/' *.vcproj
     cd ..
   fi
 done
