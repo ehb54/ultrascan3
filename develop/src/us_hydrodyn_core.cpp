@@ -2422,7 +2422,7 @@ void US_Hydrodyn::radial_reduction()
    write_bead_spt(somo_tmp_dir + SLASH + "bead_model_start" + DOTSOMO, &bead_model);
 #endif
    for ( unsigned int k = ( grid.enable_asa ? 0 : 3 ); 
-         k < ( grid.enable_asa ? 3 : 4 );
+         k < (unsigned int)( grid.enable_asa ? 3 : 4 );
          k++ )
    {
       // only grid method
