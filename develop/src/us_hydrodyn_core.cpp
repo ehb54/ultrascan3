@@ -1673,6 +1673,8 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 }
 
 // #define DEBUG_OVERLAP
+// #define DEBUG
+// #define DEBUG2
 
 // # define TOLERANCE 0.001       // this is used to place a limit on the allowed radial overlap
 #define TOLERANCE overlap_tolerance
@@ -2419,8 +2421,17 @@ void US_Hydrodyn::radial_reduction()
    write_bead_tsv(somo_tmp_dir + SLASH + "bead_model_start" + DOTSOMO + ".tsv", &bead_model);
    write_bead_spt(somo_tmp_dir + SLASH + "bead_model_start" + DOTSOMO, &bead_model);
 #endif
-   for(unsigned int k = 3; k < sizeof(methods) / sizeof(int); k++) {
+   for ( unsigned int k = ( grid.enable_asa ? 0 : 3 ); 
+         k < ( grid.enable_asa ? 3 : 4 );
+         k++ )
+   {
       // only grid method
+      if ( !methods[k] ||
+           (grid.enable_asa && k == 1) )
+      {
+         printf("skipping stage %d\n", k);
+         continue;
+      }
 
    stage_loop:
 
@@ -2674,6 +2685,7 @@ void US_Hydrodyn::radial_reduction()
 
 
       // radial reduction phase
+
 #if defined(TIMING)
       gettimeofday(&start_tv, NULL);
 #endif
@@ -2716,7 +2728,7 @@ void US_Hydrodyn::radial_reduction()
             for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
                for (unsigned int j = i + 1; j < bead_model.size(); j++) {
 #if defined(DEBUG)
-                  printf("checking radial stage %d beads %d %d on chains %d %d exposed code %d %d active %s %s max il %f\n",
+                  printf("checking radial stage %d beads %d %d on chains %d %d exposed code %d %d active %s %s max il %f %s %s %s %s\n",
                          k, i, j,
                          bead_model[i].chain,
                          bead_model[j].chain,
@@ -2724,19 +2736,37 @@ void US_Hydrodyn::radial_reduction()
                          bead_model[j].exposed_code,
                          bead_model[i].active ? "Y" : "N",
                          bead_model[j].active ? "Y" : "N",
-                         max_intersection_length
+                         max_intersection_length,
+                         (methods[k] & RR_BURIED) ? "RR_BURIED" : "!RR_BURIED",
+                         (methods[k] & RR_SC) ? "RR_SC" : "!RR_SC",
+                         (methods[k] & RR_MCSC) ? "RR_MCSC" : "!RR_MCSC",
+                         (bead_model[i].active &&
+                          bead_model[j].active &&
+                          (methods[k] & RR_MCSC ||
+                           ((methods[k] & RR_SC) &&
+                            bead_model[i].chain == 1 &&
+                            bead_model[j].chain == 1)) &&
+                          ((methods[k] & RR_BURIED) ||
+                           (bead_model[i].exposed_code == 1 &&
+                            bead_model[j].exposed_code == 1)) &&
+                          bead_model[i].bead_computed_radius > TOLERANCE &&
+                          bead_model[j].bead_computed_radius > TOLERANCE) ? "logic true" : "logic false"
                          );
 #endif
+                  //                  bool active = bead_model[i].active && bead_model[j].active;
+                     
                   if (
                       bead_model[i].active &&
                       bead_model[j].active &&
-                      (methods[k] & RR_MCSC ||
+                      (
+                       methods[k] & RR_MCSC ||
                        ((methods[k] & RR_SC) &&
                         bead_model[i].chain == 1 &&
                         bead_model[j].chain == 1)) &&
                       ((methods[k] & RR_BURIED) ||
                        (bead_model[i].exposed_code == 1 ||
-                        bead_model[j].exposed_code == 1)) &&
+                        bead_model[j].exposed_code == 1)
+                       ) &&
                       bead_model[i].bead_computed_radius > TOLERANCE &&
                       bead_model[j].bead_computed_radius > TOLERANCE
                       ) {
@@ -2823,9 +2853,16 @@ void US_Hydrodyn::radial_reduction()
                      }
                   }
                }
+#if defined(DEBUG) 
+               printf("1: max intersection length %f\n", max_intersection_length);
+#endif
+
 
                if (max_intersection_length > TOLERANCE) {
                   count++;
+#if defined(DEBUG) 
+                  printf("1: count %d\n", count);
+#endif
                   pairs[max_pair].active = false;
                   max_bead1 = pairs[max_pair].i;
                   max_bead2 = pairs[max_pair].j;
@@ -2834,15 +2871,24 @@ void US_Hydrodyn::radial_reduction()
                   printf("reducing beads %d %d\n", max_bead1, max_bead2);
 #endif
                   do {
+#if defined(DEBUG3) 
+                     puts("rr0");
+#endif
                      if (methods[k] & OUTWARD_TRANSLATION ||
                          ((bead_model[max_bead1].chain == 1 ||
                            bead_model[max_bead2].chain == 1) &&
                           methods[0] & OUTWARD_TRANSLATION)) {
                         // new 1 step ot
+#if defined(DEBUG3) 
+                        puts("rr1");
+#endif
                         if((methods[k] & RR_MCSC &&
                             (bead_model[max_bead1].chain == 1 ||
                              bead_model[max_bead2].chain == 1))
                            ) {
+#if defined(DEBUG3) 
+                           puts("rr2");
+#endif
                            // new 1 bead 1 OT / treat as no ot...
                            int use_bead;
                            if (bead_model[max_bead1].chain == 1) {
@@ -2877,6 +2923,9 @@ void US_Hydrodyn::radial_reduction()
                         else 
                         {
                            int use_bead = max_bead1;
+#if defined(DEBUG3) 
+                           printf("rr4 notv %d\n", bead_model[use_bead].normalized_ot_is_valid);
+#endif
                            if (!bead_model[use_bead].normalized_ot_is_valid) {
                               float norm = 0.0;
                               for (unsigned int l = 0; l < 3; l++) {
@@ -2938,6 +2987,9 @@ void US_Hydrodyn::radial_reduction()
                      }
                      else 
                      {
+#if defined(DEBUG3) 
+                        puts("rr5");
+#endif
                         // no outward translation is required for either bead
                         // are we shrinking just 1 bead ... if we are dealing with buried beads, then
                         // only buried beads should be shrunk, not exposed beads
@@ -3011,6 +3063,9 @@ void US_Hydrodyn::radial_reduction()
                         }
                         else 
                         {
+#if defined(DEBUG3) 
+                           puts("rr6");
+#endif
                            // two beads to shrink
                            int use_bead = max_bead1;
 #if defined(DEBUG2)
@@ -3145,7 +3200,7 @@ void US_Hydrodyn::radial_reduction()
                }
             } while(count);
 #if defined(DEBUG2)
-            printf("out of while 2\n");
+            printf("out of while 2 count = %d\n", count);
 #endif
          }
          else 
@@ -3476,6 +3531,8 @@ void US_Hydrodyn::radial_reduction()
                     , &bead_model);
    editor->append("Finished with popping and radial reduction\n");
 }
+
+//------------------------------ end of radial reduction ------------------------------------------------------
 
 int US_Hydrodyn::compute_asa()
 {
@@ -5666,11 +5723,11 @@ int US_Hydrodyn::compute_asa()
    return 0;
 }
 
-void US_Hydrodyn::bead_check()
+void US_Hydrodyn::bead_check( bool use_threshold )
 {
    // recheck beads here
 
-   puts("bead recheck");
+   printf("bead recheck use threshold%s\n", use_threshold ? "" : " percent");
    active_atoms.clear();
    for(unsigned int i = 0; i < bead_model.size(); i++) {
       active_atoms.push_back(&bead_model[i]);
@@ -5723,7 +5780,12 @@ void US_Hydrodyn::bead_check()
          (asa.probe_radius + bead_model[i].bead_computed_radius) *
          (asa.probe_radius + bead_model[i].bead_computed_radius) * 4 * M_PI;
       QString msg = "";
-      if(bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area) {
+      if( use_threshold ?
+          ( bead_model[i].bead_recheck_asa > asa.threshold )        
+          :
+          ( bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area )
+          )
+      {
          // now exposed
          if(bead_model[i].exposed_code != 1) {
             // was buried
@@ -5751,8 +5813,12 @@ void US_Hydrodyn::bead_check()
              bead_model[i].bead_computed_radius,
              surface_area,
              bead_model[i].bead_recheck_asa,
-             (bead_model[i].bead_recheck_asa >
-              (asa.threshold_percent / 100.0) * surface_area) ?
+             (
+              use_threshold ?
+              ( bead_model[i].bead_recheck_asa > asa.threshold )        
+              :
+              ( bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area )
+              ) ?
              "exposed" : "buried",
              msg.ascii());
    }

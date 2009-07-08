@@ -1415,44 +1415,127 @@ int US_Hydrodyn::calc_grid_pdb()
                   bead_model = bead_models[current_model];
                   any_models = true;
                   somo_processed[current_model] = 1;
+#if defined(DEBUG)
                   printf("back from grid_atob 1\n"); fflush(stdout);
-                  if (grid_overlap.remove_overlap)
+#endif
+                  if ( grid.enable_asa ) 
                   {
-                     radial_reduction();
-                     bead_models[current_model] = bead_model;
-                  }
-                  if (stopFlag)
-                  {
-                     editor->append("Stopped by user\n\n");
-                     pb_grid_pdb->setEnabled(true);
-                     pb_somo->setEnabled(true);
-                     progress->reset();
-                     return -1;
-                  }
-                  if (asa.recheck_beads)
-                  {
-                     editor->append("Rechecking beads\n");
+                     editor->append("ASA check\n");
                      qApp->processEvents();
+                     // set all beads buried
                      for(unsigned int i = 0; i < bead_model.size(); i++) {
                         bead_model[i].exposed_code = 6;
                         bead_model[i].bead_color = 6;
+                        bead_model[i].chain = 1; // all 'side' chain
                      }
                      double save_threshold = asa.threshold;
                      double save_threshold_percent = asa.threshold_percent;
                      asa.threshold = asa.grid_threshold;
                      asa.threshold_percent = asa.grid_threshold_percent;
-                     bead_check();
+                     bead_check(true);
                      asa.threshold = save_threshold;
                      asa.threshold_percent = save_threshold_percent;
                      bead_models[current_model] = bead_model;
+#if defined(DEBUG)
+                     for(unsigned int i = 0; i < bead_model.size(); i++) {
+                        printf("after asa bead %d exposed %d color %d chain %d active %d mw %f vol %f cr %f [%f,%f,%f]\n",
+                               i,
+                               bead_model[i].exposed_code,
+                               bead_model[i].bead_color,
+                               bead_model[i].chain,
+                               bead_model[i].active,
+                               bead_model[i].bead_ref_mw,
+                               bead_model[i].bead_ref_volume,
+                               bead_model[i].bead_computed_radius,
+                               bead_model[i].bead_coordinate.axis[0],
+                               bead_model[i].bead_coordinate.axis[1],
+                               bead_model[i].bead_coordinate.axis[2]
+                               
+                               );
+                     }
+#endif
+                     // now apply radial reduction with outward translation using
+
+                     // grid_exposed/buried_overlap
+                     overlap_reduction save_sidechain_overlap = sidechain_overlap;
+                     overlap_reduction save_mainchain_overlap = mainchain_overlap;
+                     overlap_reduction save_buried_overlap = buried_overlap;
+                     sidechain_overlap = grid_exposed_overlap;
+                     mainchain_overlap = grid_exposed_overlap;
+                     buried_overlap = grid_buried_overlap;
+                     radial_reduction();
+                     sidechain_overlap = save_sidechain_overlap;
+                     mainchain_overlap = save_mainchain_overlap;
+                     buried_overlap = save_buried_overlap;
+
+                     bead_models[current_model] = bead_model;
+                     // grid_buried_overlap
+
+                     if (asa.recheck_beads)
+                     {
+                        editor->append("Rechecking beads\n");
+                        qApp->processEvents();
+                        double save_threshold = asa.threshold;
+                        double save_threshold_percent = asa.threshold_percent;
+                        asa.threshold = asa.grid_threshold;
+                        asa.threshold_percent = asa.grid_threshold_percent;
+                        bead_check();
+                        asa.threshold = save_threshold;
+                        asa.threshold_percent = save_threshold_percent;
+                        bead_models[current_model] = bead_model;
+                     } 
+                     
                   }
-                  if (stopFlag)
+                  else
                   {
-                     editor->append("Stopped by user\n\n");
-                     pb_grid_pdb->setEnabled(true);
-                     pb_somo->setEnabled(true);
-                     progress->reset();
-                     return -1;
+                     if (grid_overlap.remove_overlap)
+                     {
+                        radial_reduction();
+                        bead_models[current_model] = bead_model;
+                     }
+                     if (stopFlag)
+                     {
+                        editor->append("Stopped by user\n\n");
+                        pb_grid_pdb->setEnabled(true);
+                        pb_somo->setEnabled(true);
+                        progress->reset();
+                        return -1;
+                     }
+                     if (asa.recheck_beads)
+                     {
+                        editor->append("Rechecking beads\n");
+                        qApp->processEvents();
+                        // all buried
+                        for(unsigned int i = 0; i < bead_model.size(); i++) {
+                           bead_model[i].exposed_code = 6;
+                           bead_model[i].bead_color = 6;
+                        }
+                        double save_threshold = asa.threshold;
+                        double save_threshold_percent = asa.threshold_percent;
+                        asa.threshold = asa.grid_threshold;
+                        asa.threshold_percent = asa.grid_threshold_percent;
+                        bead_check();
+                        asa.threshold = save_threshold;
+                        asa.threshold_percent = save_threshold_percent;
+                        bead_models[current_model] = bead_model;
+                     } 
+                     else 
+                     {
+                        // all exposed
+                        for(unsigned int i = 0; i < bead_model.size(); i++) {
+                           bead_model[i].exposed_code = 1;
+                           bead_model[i].bead_color = 8;
+                        }
+                        bead_models[current_model] = bead_model;
+                     }
+                     if (stopFlag)
+                     {
+                        editor->append("Stopped by user\n\n");
+                        pb_grid_pdb->setEnabled(true);
+                        pb_somo->setEnabled(true);
+                        progress->reset();
+                        return -1;
+                     }
                   }
 
                   // write_bead_spt(somo_dir + SLASH + project +
@@ -1569,52 +1652,134 @@ int US_Hydrodyn::calc_grid()
             }
             bead_model = bead_models[current_model];
             any_models = true;
-            somo_processed[current_model] = 1;
-            if (grid_overlap.remove_overlap)
-            {
-               radial_reduction();
-               if (stopFlag)
-               {
-                  editor->append("Stopped by user\n\n");
-                  pb_grid_pdb->setEnabled(true);
-                  pb_somo->setEnabled(true);
-                  progress->reset();
-                  return -1;
-               }
-               bead_models[current_model] = bead_model;
+            if (somo_processed.size() < current_model + 1) {
+               somo_processed.resize(current_model + 1);
             }
-            if (asa.recheck_beads)
+            somo_processed[current_model] = 1;
+            if ( grid.enable_asa ) 
             {
-               editor->append("Rechecking beads\n");
+               editor->append("ASA check\n");
                qApp->processEvents();
-               if (stopFlag)
-               {
-                  editor->append("Stopped by user\n\n");
-                  pb_grid_pdb->setEnabled(true);
-                  pb_somo->setEnabled(true);
-                  progress->reset();
-                  return -1;
-               }
+               // set all beads buried
                for(unsigned int i = 0; i < bead_model.size(); i++) {
                   bead_model[i].exposed_code = 6;
                   bead_model[i].bead_color = 6;
+                  bead_model[i].chain = 1; // all 'side' chain
                }
                double save_threshold = asa.threshold;
                double save_threshold_percent = asa.threshold_percent;
                asa.threshold = asa.grid_threshold;
                asa.threshold_percent = asa.grid_threshold_percent;
-               bead_check();
+               bead_check(true);
                asa.threshold = save_threshold;
                asa.threshold_percent = save_threshold_percent;
-               if (stopFlag)
-               {
-                  editor->append("Stopped by user\n\n");
-                  pb_grid_pdb->setEnabled(true);
-                  pb_somo->setEnabled(true);
-                  progress->reset();
-                  return -1;
-               }
                bead_models[current_model] = bead_model;
+#if defined(DEBUG)
+               for(unsigned int i = 0; i < bead_model.size(); i++) {
+                  printf("after asa bead %d exposed %d color %d chain %d active %d mw %f vol %f cr %f [%f,%f,%f]\n",
+                         i,
+                         bead_model[i].exposed_code,
+                         bead_model[i].bead_color,
+                         bead_model[i].chain,
+                         bead_model[i].active,
+                         bead_model[i].bead_ref_mw,
+                         bead_model[i].bead_ref_volume,
+                         bead_model[i].bead_computed_radius,
+                         bead_model[i].bead_coordinate.axis[0],
+                         bead_model[i].bead_coordinate.axis[1],
+                         bead_model[i].bead_coordinate.axis[2]
+                               
+                         );
+               }
+#endif
+               // now apply radial reduction with outward translation using
+               
+               // grid_exposed/buried_overlap
+               overlap_reduction save_sidechain_overlap = sidechain_overlap;
+               overlap_reduction save_mainchain_overlap = mainchain_overlap;
+               overlap_reduction save_buried_overlap = buried_overlap;
+               sidechain_overlap = grid_exposed_overlap;
+               mainchain_overlap = grid_exposed_overlap;
+               buried_overlap = grid_buried_overlap;
+               radial_reduction();
+               sidechain_overlap = save_sidechain_overlap;
+               mainchain_overlap = save_mainchain_overlap;
+               buried_overlap = save_buried_overlap;
+               
+               bead_models[current_model] = bead_model;
+               // grid_buried_overlap
+               
+               if (asa.recheck_beads)
+               {
+                  editor->append("Rechecking beads\n");
+                  qApp->processEvents();
+                  double save_threshold = asa.threshold;
+                  double save_threshold_percent = asa.threshold_percent;
+                  asa.threshold = asa.grid_threshold;
+                  asa.threshold_percent = asa.grid_threshold_percent;
+                  bead_check();
+                  asa.threshold = save_threshold;
+                  asa.threshold_percent = save_threshold_percent;
+                  bead_models[current_model] = bead_model;
+               } 
+            }
+            else
+            {
+               if (grid_overlap.remove_overlap)
+               {
+                  radial_reduction();
+                  if (stopFlag)
+                  {
+                     editor->append("Stopped by user\n\n");
+                     pb_grid_pdb->setEnabled(true);
+                     pb_somo->setEnabled(true);
+                     progress->reset();
+                     return -1;
+                  }
+                  bead_models[current_model] = bead_model;
+               }
+               if (asa.recheck_beads)
+               {
+                  editor->append("Rechecking beads\n");
+                  qApp->processEvents();
+                  if (stopFlag)
+                  {
+                     editor->append("Stopped by user\n\n");
+                     pb_grid_pdb->setEnabled(true);
+                     pb_somo->setEnabled(true);
+                     progress->reset();
+                     return -1;
+                  }
+                  // Set all beads buried
+                  for(unsigned int i = 0; i < bead_model.size(); i++) {
+                     bead_model[i].exposed_code = 6;
+                     bead_model[i].bead_color = 6;
+                  }
+                  double save_threshold = asa.threshold;
+                  double save_threshold_percent = asa.threshold_percent;
+                  asa.threshold = asa.grid_threshold;
+                  asa.threshold_percent = asa.grid_threshold_percent;
+                  bead_check();
+                  asa.threshold = save_threshold;
+                  asa.threshold_percent = save_threshold_percent;
+                  if (stopFlag)
+                  {
+                     editor->append("Stopped by user\n\n");
+                     pb_grid_pdb->setEnabled(true);
+                     pb_somo->setEnabled(true);
+                     progress->reset();
+                     return -1;
+                  }
+                  else 
+                  {
+                     // all exposed
+                     for(unsigned int i = 0; i < bead_model.size(); i++) {
+                        bead_model[i].exposed_code = 1;
+                        bead_model[i].bead_color = 8;
+                     }
+                  }
+                  bead_models[current_model] = bead_model;
+               }
             }
             // write_bead_spt(somo_dir + SLASH + project +
             //        (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +

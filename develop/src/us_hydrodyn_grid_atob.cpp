@@ -623,6 +623,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       tmp_atom.bead_mw = this_prop->mass;
       tmp_atom.mw = this_prop->mass;
       tmp_atom.bead_ref_mw = this_prop->mass;
+      tmp_atom.bead_ref_volume = 0;
       tmp_atom.bead_color = 1;
       tmp_atom.serial = this_pdb->atnum;
       tmp_atom.exposed_code = 1;
@@ -633,6 +634,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       tmp_atom.chainID = QString(this_pdb->chain);
       tmp_atom.chain = 1;
       tmp_atom.active = 1;
+      tmp_atom.normalized_ot_is_valid = false;
       result_bead_model.push_back(tmp_atom);
    }
 #if defined(DEBUG)
