@@ -349,6 +349,7 @@ void US_FeMatchRa_W::save()
          ts << tr("Monte Carlo Iterations: ") << msv.size() << "\n\n";
          ts << tr("Monte Carlo Statistics:\n");
          mc_str = "";
+         cout << "ga parameter size: " << ga_param.size() << endl;
          for (i=0; i<ga_param.size(); i++)
          {
             val.clear();
@@ -360,25 +361,28 @@ void US_FeMatchRa_W::save()
                }
             }
             bool mc_flag = false;
-            double test_val = val[0];
-            for (j=1; j<val.size(); j++) // check if there is a variation in the parameters over all distros, if so, call MC stats
+            cout << "val size: " << val.size() << endl;
+            if (val.size() > 0)
             {
-               if (test_val != val[j])
+               double test_val = val[0];
+               for (j=1; j<val.size(); j++) // check if there is a variation in the parameters over all distros, if so, call MC stats
                {
-                  mc_flag = true;
+                  if (test_val != val[j])
+                  {
+                     mc_flag = true;
+                  }
                }
-            }
-
-            if (mc_flag)
-            {
-               mc_str += gai->calc_stats(&stats, val, ga_param[i].name);
-               str.sprintf(tr(ga_param[i].name + ":\t %6.4e (%6.4e, %6.4e)\n"), stats.mean, stats.conf95low, stats.conf95high);
-               ts << str;
-            }
-            else
-            {
-               str.sprintf(tr(ga_param[i].name + ":\t %6.4e \n"), val[0]); // all values are the same for this parameter
-               ts << str;
+               if (mc_flag)
+               {
+                  mc_str += gai->calc_stats(&stats, val, ga_param[i].name);
+                  str.sprintf(tr(ga_param[i].name + ":\t %6.4e (%6.4e, %6.4e)\n"), stats.mean, stats.conf95low, stats.conf95high);
+                  ts << str;
+               }
+               else
+               {
+                  str.sprintf(tr(ga_param[i].name + ":\t %6.4e \n"), val[0]); // all values are the same for this parameter
+                  ts << str;
+               }
             }
          }
          ts << mc_str;
