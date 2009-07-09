@@ -80,6 +80,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    hybrid_widget = false;
    saxs_widget = false;
    saxs_options_widget = false;
+   saxs_plot_widget = false;
    asa_widget = false;
    misc_widget = false;
    grid_widget = false;
@@ -938,6 +939,7 @@ void US_Hydrodyn::load_pdb()
                                                    "Please select a PDB file...");
    if (!filename.isEmpty())
    {
+      pdb_file = filename;
       options_log = "";
       last_abb_msgs = "";
       bead_model_from_file = false;
@@ -1418,7 +1420,7 @@ int US_Hydrodyn::calc_grid_pdb()
 #if defined(DEBUG)
                   printf("back from grid_atob 1\n"); fflush(stdout);
 #endif
-                  if ( grid.enable_asa ) 
+                  if ( grid.enable_asa )
                   {
                      editor->append("ASA check\n");
                      qApp->processEvents();
@@ -1450,7 +1452,7 @@ int US_Hydrodyn::calc_grid_pdb()
                                bead_model[i].bead_coordinate.axis[0],
                                bead_model[i].bead_coordinate.axis[1],
                                bead_model[i].bead_coordinate.axis[2]
-                               
+
                                );
                      }
 #endif
@@ -1483,8 +1485,8 @@ int US_Hydrodyn::calc_grid_pdb()
                         asa.threshold = save_threshold;
                         asa.threshold_percent = save_threshold_percent;
                         bead_models[current_model] = bead_model;
-                     } 
-                     
+                     }
+
                   }
                   else
                   {
@@ -1518,8 +1520,8 @@ int US_Hydrodyn::calc_grid_pdb()
                         asa.threshold = save_threshold;
                         asa.threshold_percent = save_threshold_percent;
                         bead_models[current_model] = bead_model;
-                     } 
-                     else 
+                     }
+                     else
                      {
                         // all exposed
                         for(unsigned int i = 0; i < bead_model.size(); i++) {
@@ -1656,7 +1658,7 @@ int US_Hydrodyn::calc_grid()
                somo_processed.resize(current_model + 1);
             }
             somo_processed[current_model] = 1;
-            if ( grid.enable_asa ) 
+            if ( grid.enable_asa )
             {
                editor->append("ASA check\n");
                qApp->processEvents();
@@ -1688,12 +1690,12 @@ int US_Hydrodyn::calc_grid()
                          bead_model[i].bead_coordinate.axis[0],
                          bead_model[i].bead_coordinate.axis[1],
                          bead_model[i].bead_coordinate.axis[2]
-                               
+
                          );
                }
 #endif
                // now apply radial reduction with outward translation using
-               
+
                // grid_exposed/buried_overlap
                overlap_reduction save_sidechain_overlap = sidechain_overlap;
                overlap_reduction save_mainchain_overlap = mainchain_overlap;
@@ -1705,10 +1707,10 @@ int US_Hydrodyn::calc_grid()
                sidechain_overlap = save_sidechain_overlap;
                mainchain_overlap = save_mainchain_overlap;
                buried_overlap = save_buried_overlap;
-               
+
                bead_models[current_model] = bead_model;
                // grid_buried_overlap
-               
+
                if (asa.recheck_beads)
                {
                   editor->append("Rechecking beads\n");
@@ -1721,7 +1723,7 @@ int US_Hydrodyn::calc_grid()
                   asa.threshold = save_threshold;
                   asa.threshold_percent = save_threshold_percent;
                   bead_models[current_model] = bead_model;
-               } 
+               }
             }
             else
             {
@@ -1770,7 +1772,7 @@ int US_Hydrodyn::calc_grid()
                      progress->reset();
                      return -1;
                   }
-                  else 
+                  else
                   {
                      // all exposed
                      for(unsigned int i = 0; i < bead_model.size(); i++) {
@@ -2135,8 +2137,26 @@ void US_Hydrodyn::clear_display()
 
 void US_Hydrodyn::pdb_saxs()
 {
+   if (saxs_plot_widget)
+   {
+      saxs_plot_window->raise();
+   }
+   else
+   {
+      saxs_plot_window = new US_Hydrodyn_Saxs(&saxs_plot_widget, pdb_file, 0, 0);
+      saxs_plot_window->show();
+   }
 }
 
 void US_Hydrodyn::bead_saxs()
 {
+   if (saxs_plot_widget)
+   {
+      saxs_plot_window->raise();
+   }
+   else
+   {
+      saxs_plot_window = new US_Hydrodyn_Saxs(&saxs_plot_widget, bead_model_file, 1, 0);
+      saxs_plot_window->show();
+   }
 }

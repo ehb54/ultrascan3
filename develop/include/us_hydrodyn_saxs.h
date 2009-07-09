@@ -12,6 +12,10 @@
 #include <qwt_counter.h>
 #include <qbuttongroup.h>
 #include <qtextedit.h>
+#include <qprogressbar.h>
+#include <qmenubar.h>
+#include <qfileinfo.h>
+#include <qprinter.h>
 
 #include <qwt_plot.h>
 
@@ -33,34 +37,48 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
    Q_OBJECT
 
    public:
-      US_Hydrodyn_Saxs(bool *, QWidget *p = 0, const char *name = 0);
+      US_Hydrodyn_Saxs(bool *, QString, int, QWidget *p = 0, const char *name = 0);
       ~US_Hydrodyn_Saxs();
 
    public:
       bool *saxs_widget;
+      int source;
       US_Config *USglobal;
 
       QLabel *lbl_info;
       QLabel *lbl_filename1;
       QLabel *lbl_filename2;
 
+      QPrinter printer;
+
       QPushButton *pb_plot_pr;
       QPushButton *pb_plot_saxs;
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
+      QFont ft;
+
       QTextEdit *editor;
 
-      QwtPlot *pr_plot;
-      QwtPlot *saxs_plot;
+      QMenuBar *m;
+
+      QwtPlot *plot_pr;
+      QwtPlot *plot_saxs;
+
+      QProgressBar *progress_pr;
+      QProgressBar *progress_saxs;
 
    private slots:
 
       void setupGUI();
-      void plot_pr();
-      void plot_saxs();
+      void show_plot_pr();
+      void show_plot_saxs();
       void cancel();
       void help();
+      void clear_display();
+      void print();
+      void update_font();
+      void save();
 
    protected slots:
 

@@ -38,6 +38,7 @@
 #include "us_hydrodyn_pdb_visualization.h"
 #include "us_hydrodyn_pdb_parsing.h"
 #include "us_hydrodyn_saxs_options.h"
+#include "us_hydrodyn_saxs.h"
 
 //standard C and C++ defs:
 
@@ -82,6 +83,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool pdb_parsing_widget;
       bool pdb_visualization_widget;
       bool saxs_options_widget;
+      bool saxs_plot_widget;
 
       QMenuBar *m;
       QPrinter printer;
@@ -90,7 +92,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool create_beads_normally; // true = normal, false = atoms are beads
       bool regular_N_handling; // true = PB methed, false = MC method
       unsigned int current_model;
-      QString residue_filename, bead_model_file;
+      QString residue_filename, bead_model_file, pdb_file;
       struct residue current_residue;
       struct asa_options asa;
       struct asa_options default_asa;
@@ -191,6 +193,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Grid *grid_window;
       US_Hydrodyn_PDB_Visualization *pdb_visualization_window;
       US_Hydrodyn_PDB_Parsing *pdb_parsing_window;
+      US_Hydrodyn_Saxs *saxs_plot_window;
       US_Hydrodyn_SaxsOptions *saxs_options_window;
       QProcess *rasmol;
 
