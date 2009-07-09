@@ -2747,7 +2747,7 @@ QString US_Hydrodyn::default_differences_saxs_options()
 {
    QString str = "";
    QString base = "SOMO Options -> Saxs Options -> ";
-
+   cout << saxs_options.hydrate_pdb << ", " << default_saxs_options.hydrate_pdb << endl;
    if ( saxs_options.hydrate_pdb != default_saxs_options.hydrate_pdb )
    {
       str += QString(base + "Hydrate Original PDB Model: %1\n")

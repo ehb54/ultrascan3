@@ -51,8 +51,11 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cb_hydrate_pdb = new QCheckBox(this);
    cb_hydrate_pdb->setText(tr(" Hydrate the Original Model (PDB files only)"));
    cb_hydrate_pdb->setEnabled(true);
+   cb_hydrate_pdb->setChecked((*saxs_options).hydrate_pdb);
    cb_hydrate_pdb->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_hydrate_pdb->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_hydrate_pdb, SIGNAL(clicked()), this, SLOT(set_hydrate_pdb()));
+   set_hydrate_pdb();
 
    lbl_wavelength = new QLabel(tr(" Wavelength (Angstrom): "), this);
    Q_CHECK_PTR(lbl_wavelength);

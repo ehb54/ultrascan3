@@ -32,6 +32,7 @@ class US_AddAtom : public QWidget
 
       QPushButton *pb_add;
       QPushButton *pb_close;
+      QPushButton *pb_help;
       QPushButton *pb_delete;
       QPushButton *pb_select_atom_file;
       QPushButton *pb_select_hybrid_file;
@@ -72,6 +73,7 @@ class US_AddAtom : public QWidget
 
    private slots:
       void add();
+      void help();
       void select_atom_file();
       void select_hybrid_file();
       void select_saxs_file();

@@ -209,6 +209,13 @@ void US_AddSaxs::setupGUI()
    pb_add->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_add, SIGNAL(clicked()), SLOT(add()));
 
+   pb_help = new QPushButton(tr("Help"), this);
+   Q_CHECK_PTR(pb_help);
+   pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_help->setMinimumHeight(minHeight1);
+   pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_help, SIGNAL(clicked()), SLOT(help()));
+
    pb_close = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_close);
    pb_close->setMinimumHeight(minHeight1);
@@ -260,7 +267,9 @@ void US_AddSaxs::setupGUI()
    background->addWidget(lbl_volume, j, 0);
    background->addWidget(le_volume, j, 1);
    j++;
-   background->addWidget(pb_add, j, 0);
+   background->addMultiCellWidget(pb_add, j, j, 0, 1);
+   j++;
+   background->addWidget(pb_help, j, 0);
    background->addWidget(pb_close, j, 1);
 
 }
@@ -459,3 +468,11 @@ void US_AddSaxs::closeEvent(QCloseEvent *e)
    *widget_flag = false;
    e->accept();
 }
+
+void US_AddSaxs::help()
+{
+   US_Help *online_help;
+   online_help = new US_Help(this);
+   online_help->show_help("manual/somo_add_saxs.html");
+}
+

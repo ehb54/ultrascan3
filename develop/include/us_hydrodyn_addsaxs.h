@@ -29,6 +29,7 @@ class US_AddSaxs : public QWidget
       bool *widget_flag;
 
       QPushButton *pb_add;
+      QPushButton *pb_help;
       QPushButton *pb_close;
       QPushButton *pb_select_file;
 
@@ -66,6 +67,7 @@ class US_AddSaxs : public QWidget
 
    private slots:
       void add();
+      void help();
       void select_file();
       void setupGUI();
       void update_saxs_name(const QString &);
