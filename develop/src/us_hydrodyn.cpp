@@ -891,7 +891,7 @@ void US_Hydrodyn::load_pdb()
       mb.setButtonText(QMessageBox::Cancel, tr("Cancel"));
       switch(mb.exec())
       {
-      case QMessageBox::Cancel:
+         case QMessageBox::Cancel:
          {
             return;
          }
@@ -990,6 +990,7 @@ void US_Hydrodyn::load_pdb()
       editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
       bead_models.clear();
       somo_processed.clear();
+
    }
    else
    {
@@ -1010,6 +1011,10 @@ void US_Hydrodyn::load_pdb()
    pb_calc_hydro->setEnabled(false);
    pb_visualize->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
+   if (lb_model->numRows() == 1)
+   {
+      select_model(0);
+   }
 }
 
 void US_Hydrodyn::view_pdb()

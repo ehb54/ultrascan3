@@ -20,6 +20,7 @@
 #include <qwt_plot.h>
 
 #include "us_util.h"
+#include "us_hydrodyn_pdbdefs.h"
 
 //standard C and C++ defs:
 
@@ -41,18 +42,24 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       ~US_Hydrodyn_Saxs();
 
    public:
-      bool *saxs_widget;
+      bool *saxs_widget, initial;
       int source;
       US_Config *USglobal;
 
       QLabel *lbl_info;
       QLabel *lbl_filename1;
       QLabel *lbl_filename2;
+      QLabel *lbl_hybrid_table;
+      QLabel *lbl_atom_table;
+      QLabel *lbl_saxs_table;
 
       QPrinter printer;
 
       QPushButton *pb_plot_pr;
       QPushButton *pb_plot_saxs;
+      QPushButton *pb_select_atom_file;
+      QPushButton *pb_select_hybrid_file;
+      QPushButton *pb_select_saxs_file;
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
@@ -68,6 +75,16 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QProgressBar *progress_pr;
       QProgressBar *progress_saxs;
 
+      struct atom current_atom;
+      struct hybridization current_hybrid;
+      struct saxs current_saxs;
+      vector <struct atom> atom_list;
+      vector <struct hybridization> hybrid_list;
+      vector <struct saxs> saxs_list;
+      QString atom_filename;
+      QString hybrid_filename;
+      QString saxs_filename;
+
    private slots:
 
       void setupGUI();
@@ -79,6 +96,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void print();
       void update_font();
       void save();
+      void select_atom_file();
+      void select_hybrid_file();
+      void select_saxs_file();
+      void select_atom_file(const QString &);
+      void select_hybrid_file(const QString &);
+      void select_saxs_file(const QString &);
 
    protected slots:
 

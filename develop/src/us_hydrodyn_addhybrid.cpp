@@ -54,6 +54,7 @@ void US_AddHybridization::setupGUI()
    pb_select_saxs_file = new QPushButton(tr("Load SAXS Coefficient File"), this);
    Q_CHECK_PTR(pb_select_saxs_file);
    pb_select_saxs_file->setMinimumHeight(minHeight1);
+   pb_select_saxs_file->setEnabled(false);
    pb_select_saxs_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_select_saxs_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_saxs_file, SIGNAL(clicked()), SLOT(select_saxs_file()));
@@ -255,6 +256,7 @@ void US_AddHybridization::select_file()
             }
          }
          f.close();
+         pb_select_saxs_file->setEnabled(true);
       }
    }
    str1.sprintf(tr(" Number of Hybridizations in File: %d"), hybrid_list.size());

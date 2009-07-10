@@ -36,6 +36,12 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(bool *saxs_widget, QString filename, int sour
       }
    }
    lbl_filename2->setText(fi.baseName() + "." + fi.extension( FALSE ));
+   atom_filename = USglobal->config_list.system_dir + "/etc/somo.atom";
+   hybrid_filename = USglobal->config_list.system_dir + "/etc/somo.hybrid";
+   saxs_filename =  USglobal->config_list.system_dir + "/etc/somo.saxs_atoms";
+   select_saxs_file(saxs_filename);
+   select_hybrid_file(hybrid_filename);
+   select_atom_file(atom_filename);
    global_Xpos += 30;
    global_Ypos += 30;
    setGeometry(global_Xpos, global_Ypos, 0, 0);
@@ -70,6 +76,48 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_filename2->setAlignment(AlignLeft|AlignVCenter);
    lbl_filename2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_filename2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+   pb_select_atom_file = new QPushButton(tr("Load Atom Definition File"), this);
+   Q_CHECK_PTR(pb_select_atom_file);
+   pb_select_atom_file->setMinimumHeight(minHeight1);
+   pb_select_atom_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_atom_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_select_atom_file, SIGNAL(clicked()), SLOT(select_atom_file()));
+
+   pb_select_hybrid_file = new QPushButton(tr("Load Hybridization File"), this);
+   Q_CHECK_PTR(pb_select_hybrid_file);
+   pb_select_hybrid_file->setMinimumHeight(minHeight1);
+   pb_select_hybrid_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_hybrid_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_select_hybrid_file, SIGNAL(clicked()), SLOT(select_hybrid_file()));
+
+   pb_select_saxs_file = new QPushButton(tr("Load SAXS Coefficient File"), this);
+   Q_CHECK_PTR(pb_select_saxs_file);
+   pb_select_saxs_file->setMinimumHeight(minHeight1);
+   pb_select_saxs_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_saxs_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_select_saxs_file, SIGNAL(clicked()), SLOT(select_saxs_file()));
+
+   lbl_atom_table = new QLabel(tr(" not selected"),this);
+   lbl_atom_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+   lbl_atom_table->setAlignment(AlignLeft|AlignVCenter);
+   lbl_atom_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   lbl_atom_table->setMinimumHeight(minHeight1);
+   lbl_atom_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+   lbl_hybrid_table = new QLabel(tr(" not selected"),this);
+   lbl_hybrid_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+   lbl_hybrid_table->setAlignment(AlignLeft|AlignVCenter);
+   lbl_hybrid_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   lbl_hybrid_table->setMinimumHeight(minHeight1);
+   lbl_hybrid_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
+   lbl_saxs_table = new QLabel(tr(" not selected"),this);
+   lbl_saxs_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
+   lbl_saxs_table->setAlignment(AlignLeft|AlignVCenter);
+   lbl_saxs_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   lbl_saxs_table->setMinimumHeight(minHeight1);
+   lbl_saxs_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
    pb_plot_pr = new QPushButton(tr("Plot P(r) distribution"), this);
    Q_CHECK_PTR(pb_plot_pr);
@@ -171,10 +219,19 @@ void US_Hydrodyn_Saxs::setupGUI()
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
-   background->addMultiCellWidget(plot_saxs, j, j+3, 2, 2);
+   background->addMultiCellWidget(plot_saxs, j, j+6, 2, 2);
    j++;
    background->addWidget(lbl_filename1, j, 0);
    background->addWidget(lbl_filename2, j, 1);
+   j++;
+   background->addWidget(pb_select_atom_file, j, 0);
+   background->addWidget(lbl_atom_table, j, 1);
+   j++;
+   background->addWidget(pb_select_hybrid_file, j, 0);
+   background->addWidget(lbl_hybrid_table, j, 1);
+   j++;
+   background->addWidget(pb_select_saxs_file, j, 0);
+   background->addWidget(lbl_saxs_table, j, 1);
    j++;
    background->addWidget(pb_plot_saxs, j, 0);
    background->addWidget(progress_saxs, j, 1);
@@ -287,6 +344,134 @@ void US_Hydrodyn_Saxs::save()
    }
 }
 
+void US_Hydrodyn_Saxs::select_atom_file()
+{
+   QString old_filename = atom_filename;
+   atom_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.atom *.ATOM", this);
+   if (atom_filename.isEmpty())
+   {
+      atom_filename = old_filename;
+      return;
+   }
+   else
+   {
+      select_atom_file(atom_filename);
+   }
+}
 
+void US_Hydrodyn_Saxs::select_atom_file(const QString &filename)
+{
+   QString str1;
+   QFileInfo fi(filename);
+   lbl_atom_table->setText(fi.baseName() + "." + fi.extension());
+   atom_list.clear();
+   QFile f(filename);
+   if (f.open(IO_ReadOnly|IO_Translate))
+   {
+      QTextStream ts(&f);
+      while (!ts.atEnd())
+      {
+         ts >> current_atom.name;
+         ts >> current_atom.hybrid.name;
+         ts >> current_atom.hybrid.mw;
+         ts >> current_atom.hybrid.radius;
+         ts >> current_atom.saxs_excl_vol;
+         str1 = ts.readLine(); // read rest of line
+         if (!current_atom.name.isEmpty() && current_atom.hybrid.radius > 0.0 && current_atom.hybrid.mw > 0.0)
+         {
+            atom_list.push_back(current_atom);
+         }
+      }
+      f.close();
+   }
+}
 
+void US_Hydrodyn_Saxs::select_hybrid_file()
+{
+   QString old_filename = hybrid_filename;
+   hybrid_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.hybrid *.HYBRID", this);
+   if (hybrid_filename.isEmpty())
+   {
+      hybrid_filename = old_filename;
+      return;
+   }
+   else
+   {
+      select_hybrid_file(hybrid_filename);
+   }
+}
+
+void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
+{
+   QString str1;
+   QFileInfo fi(filename);
+   lbl_hybrid_table->setText(fi.baseName() + "." + fi.extension());
+   QFile f(filename);
+   hybrid_list.clear();
+   if (f.open(IO_ReadOnly|IO_Translate))
+   {
+      QTextStream ts(&f);
+      while (!ts.atEnd())
+      {
+         ts >> current_hybrid.saxs_name;
+         ts >> current_hybrid.name;
+         ts >> current_hybrid.mw;
+         ts >> current_hybrid.radius;
+         str1 = ts.readLine(); // read rest of line
+         if (!current_hybrid.name.isEmpty() && current_hybrid.radius > 0.0 && current_hybrid.mw > 0.0)
+         {
+            hybrid_list.push_back(current_hybrid);
+         }
+      }
+      f.close();
+   }
+}
+
+void US_Hydrodyn_Saxs::select_saxs_file()
+{
+   QString old_filename = saxs_filename;
+   saxs_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.saxs_atoms *.SAXS_ATOMS", this);
+   if (saxs_filename.isEmpty())
+   {
+      saxs_filename = old_filename;
+      return;
+   }
+   else
+   {
+      select_saxs_file(saxs_filename);
+   }
+}
+
+void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
+{
+   QString str1;
+   QFileInfo fi(filename);
+   lbl_saxs_table->setText(fi.baseName() + "." + fi.extension());
+   QFile f(filename);
+   saxs_list.clear();
+   if (f.open(IO_ReadOnly|IO_Translate))
+   {
+      QTextStream ts(&f);
+      while (!ts.atEnd())
+      {
+         ts >> current_saxs.saxs_name;
+         ts >> current_saxs.a[0];
+         ts >> current_saxs.a[1];
+         ts >> current_saxs.a[2];
+         ts >> current_saxs.a[3];
+         ts >> current_saxs.b[0];
+         ts >> current_saxs.b[1];
+         ts >> current_saxs.b[2];
+         ts >> current_saxs.b[3];
+         ts >> current_saxs.c;
+         ts >> current_saxs.volume;
+         str1 = ts.readLine(); // read rest of line
+         if (!current_saxs.saxs_name.isEmpty())
+         {
+            saxs_list.push_back(current_saxs);
+         }
+      }
+      f.close();
+   }
+}
 
