@@ -9,6 +9,7 @@ TRANSLATIONS = $${TARGET}_DE_de.ts
 HEADERS      = us_astfem_math.h \
                us_astfem_rsa.h  \
                us_constants.h   \
+               us_crc.h         \
                us_crypto.h      \
                us_global.h      \
                us_femglobal.h   \
@@ -24,6 +25,7 @@ HEADERS      = us_astfem_math.h \
 SOURCES      = us_astfem_math.cpp \
                us_astfem_rsa.cpp  \
                us_constants.cpp   \
+               us_crc.cpp         \
                us_crypto.cpp      \
                us_femglobal.cpp   \
                us_hardware.cpp    \
