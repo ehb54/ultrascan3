@@ -964,6 +964,9 @@ void US_FeMatchRa_W::reduce(list <Parameter> *p, double *mode, double *mean, dou
    par1.clear(); // clear for repopulation with combined parameters that are identical
    pit1 = par2.begin();
    pit2 = par2.begin();
+
+   bool push_last = true;
+
    while ( ++pit2 != par2.end() )
    {
       //pit2++; // increment one so we can compare with the next higher up
@@ -971,13 +974,20 @@ void US_FeMatchRa_W::reduce(list <Parameter> *p, double *mode, double *mean, dou
       if ((*pit1).x == (*pit2).x)
       {
          (*pit1).y += (*pit2).y; // if they are the same, add frequencies
+         push_last = true;
       }
       else
       {
          par1.push_back(*pit1); // if they are not the same
+         push_last = false;
          pit1 = pit2; // jump to next higher point in list and set iterator to next point.
       }
    }
+
+   // Handle the case where one or more par1 x values are the same at the end of the lsit.
+   // Also handles the case where there is only one entry in the list
+   if ( push_last ) par1.push_back(*pit1);
+
    (*p).clear();
    for (pit1 = par1.begin(); pit1 != par1.end(); pit1++)
    {
