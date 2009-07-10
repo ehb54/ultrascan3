@@ -78,9 +78,17 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       struct atom current_atom;
       struct hybridization current_hybrid;
       struct saxs current_saxs;
+
+#ifdef WIN32
+     #pragma warning ( disable: 4251 )
+#endif
       vector <struct atom> atom_list;
       vector <struct hybridization> hybrid_list;
       vector <struct saxs> saxs_list;
+#ifdef WIN32
+     #pragma warning ( default: 4251 )
+#endif      
+      
       QString atom_filename;
       QString hybrid_filename;
       QString saxs_filename;
