@@ -27,6 +27,7 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
    show_model       = false;
    loading          = true;
    pm               = new US_Pixmap();
+   zscaling         = 10.0;
 
    lbl_info = new QLabel(tr("Multiwavelength Data Viewer"), this);
    Q_CHECK_PTR(lbl_info);
@@ -84,6 +85,12 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
    lbl_average->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_average->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
+   lbl_zscaling = new QLabel(tr(" 3D z-Scale:"), this);
+   Q_CHECK_PTR(lbl_zscaling);
+   lbl_zscaling->setAlignment(AlignLeft|AlignVCenter);
+   lbl_zscaling->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_zscaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
    cnt_max_lambda= new QwtCounter(this);
    Q_CHECK_PTR(cnt_max_lambda);
    cnt_max_lambda->setRange(200.0, 800.0, 0.1);
@@ -139,6 +146,14 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
    cnt_average->setNumButtons(3);
    cnt_average->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_average, SIGNAL(valueChanged(double)), SLOT(update_average(double)));
+
+   cnt_zscaling = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_zscaling);
+   cnt_zscaling->setRange(0, 10000, 0.1);
+   cnt_zscaling->setValue(zscaling);
+   cnt_zscaling->setNumButtons(3);
+   cnt_zscaling->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_zscaling, SIGNAL(valueChanged(double)), SLOT(update_zscaling(double)));
 
    cb_ascii = new QCheckBox(this);
    cb_ascii->setText(tr(" Load ASCII Data"));
@@ -1200,6 +1215,9 @@ void US_ViewMWL::setup_GUI()
    controlGrid->addWidget(lbl_average, j, 0);
    controlGrid->addWidget(cnt_average, j, 1);
    j++;
+   controlGrid->addWidget(lbl_zscaling, j, 0);
+   controlGrid->addWidget(cnt_zscaling, j, 1);
+   j++;
    controlGrid->addWidget(lbl_status, j, 0);
    controlGrid->addWidget(progress, j, 1);
    //controlGrid->setColStretch(1, 1);
@@ -1291,6 +1309,11 @@ void US_ViewMWL::update_min_time(double val)
 void US_ViewMWL::update_average(double val)
 {
    average = (unsigned int) val;
+}
+
+void US_ViewMWL::update_zscaling(double val)
+{
+   zscaling = (float) val;
 }
 
 void US_ViewMWL::select_cell(int cell)
@@ -1508,6 +1531,7 @@ void US_ViewMWL::update(unsigned int time)
       controlvar_3d.minx = min_lambda;
       controlvar_3d.maxy = max_radius;
       controlvar_3d.miny = min_radius;
+      controlvar_3d.zscaling = zscaling;
       controlvar_3d.meshx = rows;
       controlvar_3d.meshy = columns;
 
@@ -1654,7 +1678,7 @@ void US_ViewMWL::update(unsigned int time)
             {
                for (k=0; k<model_vector[lambda_flag[min_lambda_element]].radius.size(); k++)
                {
-                  if(i - 1 < model_vector[lambda_flag[min_lambda_element]].scan.size()) 
+                  if(i - 1 < model_vector[lambda_flag[min_lambda_element]].scan.size())
                   {
                      model_data[j][k] = model_vector[lambda_flag[min_lambda_element]].scan[i-1].conc[k];
                      // cout << "Abs: " << model_vector[lambda_flag[min_lambda_element]].scan[i-1].conc[k] << endl;
@@ -1757,7 +1781,7 @@ void US_ViewMWL::update(unsigned int time, QString imageDir)
    controlvar_3d.minx = min_lambda;
    controlvar_3d.maxy = max_radius;
    controlvar_3d.miny = min_radius;
-   controlvar_3d.zscaling = 1e-10;
+   controlvar_3d.zscaling = zscaling;
    controlvar_3d.meshx = rows;
    controlvar_3d.meshy = columns;
 
