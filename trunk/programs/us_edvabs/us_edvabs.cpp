@@ -41,28 +41,43 @@ US_Edvabs::US_Edvabs() : US_Widgets()
 
    pb_load = us_pushbutton( tr( "Load Data" ) );
    //connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
-   specs->addWidget( pb_load, s_row, 0 );
+   specs->addWidget( pb_load, s_row, 0, 1, 2 );
 
    le_file = us_lineedit( "", 1 );
    le_file->setReadOnly( true );
-   specs->addWidget( le_file, s_row++, 1 );
+   specs->addWidget( le_file, s_row++, 2, 1, 2 );
 
+   //////
+   QLabel* lb_cell = us_label( tr( "Cell" ), -1 );
+   //lb_cell->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   specs->addWidget( lb_cell, s_row, 0 );
+
+   QwtCounter* ct_cell = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   specs->addWidget( ct_cell, s_row, 1 );
+
+   QLabel* lb_channel = us_label( tr( "Channel" ), -1 );
+   //lb_channel->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   specs->addWidget( lb_channel, s_row, 2 );
+
+   QwtCounter* ct_channel = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   specs->addWidget( ct_channel, s_row++, 3 );
+   
    lb_id = us_label( "Run ID", -1 );
    lb_id->setAlignment( Qt::AlignCenter );
    specs->addWidget( lb_id, s_row, 0 );
 
    le_id = us_lineedit( "", 1 );
    //le_id->setReadOnly( true );
-   specs->addWidget( le_id, s_row++, 1 );
+   specs->addWidget( le_id, s_row, 1 );
 
    lb_active = us_label( "Active Data", -1 );
    lb_active->setAlignment( Qt::AlignCenter );
-   specs->addWidget( lb_active, s_row, 0 );
+   specs->addWidget( lb_active, s_row, 2 );
 
    le_active = us_lineedit( "", 1 );
    le_active->setReadOnly( true );
-   specs->addWidget( le_active, s_row++, 1 );
-
+   specs->addWidget( le_active, s_row++, 3 );
+/*
    lb_centerpiece = us_label( tr( "Specify Centerpiece" ), -1 );
    lb_centerpiece->setAlignment( Qt::AlignCenter );
    specs->addWidget( lb_centerpiece, s_row, 0 );
@@ -136,46 +151,52 @@ US_Edvabs::US_Edvabs() : US_Widgets()
 
    for ( uint i = 0; i < rotor_list.size(); i++ )
       cb_rotor->addItem( rotor_list[ i ].type );
-
+*/
+   QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
+   specs->addWidget( lb_scan, s_row++, 0, 1, 4 );
+   
    // Meniscus row
    pb_meniscus = us_pushbutton( tr( "Specify Meniscus" ), false );
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
-   specs->addWidget( pb_meniscus, s_row, 0 );
+   specs->addWidget( pb_meniscus, s_row, 0, 1, 2 );
 
    le_meniscus = us_lineedit( "", 1 );
    le_meniscus->setReadOnly( true );
-   specs->addWidget( le_meniscus, s_row++, 1 );
+   specs->addWidget( le_meniscus, s_row++, 2, 1, 2 );
 
    // Data range row
    pb_dataRange = us_pushbutton( tr( "Specify Data Range" ), false );
    //connect( pb_dataRange, SIGNAL( clicked() ), SLOT( help() ) );
-   specs->addWidget( pb_dataRange, s_row, 0 );
+   specs->addWidget( pb_dataRange, s_row, 0, 1, 2 );
 
    le_dataRange = us_lineedit( "", 1 );
    le_dataRange->setReadOnly( true );
-   specs->addWidget( le_dataRange, s_row++, 1 );
+   specs->addWidget( le_dataRange, s_row++, 2, 1, 2 );
 
    // Plataeu row
    pb_plateau = us_pushbutton( tr( "Specify Plateau" ), false );
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
-   specs->addWidget( pb_plateau, s_row, 0 );
+   specs->addWidget( pb_plateau, s_row, 0, 1, 2 );
 
    le_plateau = us_lineedit( "", 1 );
    le_plateau->setReadOnly( true );
-   specs->addWidget( le_plateau, s_row++, 1 );
+   specs->addWidget( le_plateau, s_row++, 2, 1, 2 );
 
    // Baseline row
    pb_baseline = us_pushbutton( tr( "Specify Baseline" ), false );
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
-   specs->addWidget( pb_baseline, s_row, 0 );
+   specs->addWidget( pb_baseline, s_row, 0, 1, 2 );
 
    le_baseline = us_lineedit( "", 1 );
    le_baseline->setReadOnly( true );
-   specs->addWidget( le_baseline, s_row++, 1 );
+   specs->addWidget( le_baseline, s_row++, 2, 1, 2 );
 
    edits = new QGridLayout;
    int e_row = 0;
 
+   QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
+   edits->addWidget( lb_edit, e_row++, 0, 1, 4 );
+   
    // Scans
    lb_from = us_label( tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
@@ -245,6 +266,8 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
    edits->addWidget( pb_invert, e_row++, 0, 1, 4 );
   
+   QPushButton* pb_write = us_pushbutton( tr( "Save Current Edit Profile" ), false );
+   edits->addWidget( pb_write, e_row++, 0, 1, 4 );
 
 /*
 
@@ -331,8 +354,6 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    buttons->addWidget( pb_details );
 /*
 */
-   QPushButton* pb_write = us_pushbutton( tr( "Write" ), false );
-   buttons->addWidget( pb_write );
 
 
 
@@ -364,13 +385,13 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    left->addLayout( edits );
 
    left->addStretch();
-
+/*
    pb_edit = us_pushbutton( tr( "Edit Data" ), false );
    left->addWidget( pb_edit );
    connect( pb_edit, SIGNAL( clicked() ), SLOT( menu() ) );
    // Temporary enable for demo
    pb_edit->setEnabled( true );
-
+*/
 
    left->addLayout( buttons );
 
@@ -378,7 +399,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    main->addLayout( plot );
  
    edit_menu = false;
-   menu();
+   //menu();
 }
 
 void US_Edvabs::reset( void )
