@@ -33,6 +33,7 @@ class US_EXTERN US_FitMeniscus : public US_Widgets
 	
 	public slots:
       void plot_data( void );
+      void plot_data( int );
 
 		void help     ( void )
       { showHelp.show_help( "manual/fit_meniscus.html" ); };
