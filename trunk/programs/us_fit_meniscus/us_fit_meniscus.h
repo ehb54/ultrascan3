@@ -11,12 +11,12 @@
 
 class US_EXTERN US_FitMeniscus : public US_Widgets
 {
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
-		US_FitMeniscus();
+   public:
+      US_FitMeniscus();
 
-	private:
+   private:
       QLineEdit*    le_fit;
       QLineEdit*    le_rms_error;
 
@@ -30,12 +30,13 @@ class US_EXTERN US_FitMeniscus : public US_Widgets
       QwtPlotCurve* raw_curve;
       QwtPlotCurve* fit_curve;
       QwtPlotCurve* minimum_curve;
-	
-	public slots:
+   
+   public slots:
+      void reset    ( void );
       void plot_data( void );
       void plot_data( int );
 
-		void help     ( void )
+      void help     ( void )
       { showHelp.show_help( "manual/fit_meniscus.html" ); };
 };
 #endif

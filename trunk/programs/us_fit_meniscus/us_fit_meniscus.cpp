@@ -71,8 +71,12 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
 
    QBoxLayout* buttons = new QHBoxLayout;
 
-   QPushButton* pb_reset = us_pushbutton( tr( "Plot" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( plot_data() ) );
+   QPushButton* pb_plot = us_pushbutton( tr( "Plot" ) );
+   connect( pb_plot, SIGNAL( clicked() ), SLOT( plot_data() ) );
+   buttons->addWidget( pb_plot );
+
+   QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
+   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
    buttons->addWidget( pb_reset );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
@@ -84,6 +88,17 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons, row, 0, 1, 2 );
+}
+
+void US_FitMeniscus::reset( void )
+{
+   meniscus_plot->clear();
+   meniscus_plot->replot();
+   
+   te_data->e   ->setPlainText( "" );
+   sb_order     ->setValue( 2 );
+   le_fit       ->setText( "" );
+   le_rms_error ->setText( "" );
 }
 
 void US_FitMeniscus::plot_data( int )
@@ -135,6 +150,8 @@ void US_FitMeniscus::plot_data( void )
          count++;
       }
    }
+
+   if ( count < 3 ) return;
 
    te_data->e->setPlainText( parsed.join( "\n" ) );
 
