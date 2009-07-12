@@ -93,6 +93,7 @@ void US_Editor::load( void )
      f.close(  );
 
      e->setPlainText( text );
+     emit US_EditorLoadComplete();
   }
   else
      QMessageBox::information( this,

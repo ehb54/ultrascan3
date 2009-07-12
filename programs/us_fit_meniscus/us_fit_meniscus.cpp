@@ -18,6 +18,8 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    int row = 0;
 
    te_data = new US_Editor( US_Editor::LOAD, false );
+   connect( te_data, SIGNAL( US_EditorLoadComplete() ), 
+                     SLOT  ( plot_data()             ) );
    
    QFontMetrics fm( QFont( US_GuiSettings::fontFamily(), 
                            US_GuiSettings::fontSize()   ) );
