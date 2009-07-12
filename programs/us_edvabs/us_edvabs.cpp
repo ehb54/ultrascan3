@@ -48,28 +48,36 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( le_file, s_row++, 2, 1, 2 );
 
    //////
-   QLabel* lb_cell = us_label( tr( "Cell" ), -1 );
+   QLabel* lb_cell = us_label( tr( "Cell:" ), -1 );
    //lb_cell->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    specs->addWidget( lb_cell, s_row, 0 );
 
-   QwtCounter* ct_cell = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   specs->addWidget( ct_cell, s_row, 1 );
+   //QwtCounter* ct_cell = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   //specs->addWidget( ct_cell, s_row, 1 );
+   QComboBox* cb_cell = us_comboBox();
+   specs->addWidget( cb_cell, s_row, 1 );
 
-   QLabel* lb_channel = us_label( tr( "Channel" ), -1 );
+   QLabel* lb_channel = us_label( tr( "Channel:" ), -1 );
    //lb_channel->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    specs->addWidget( lb_channel, s_row, 2 );
 
-   QwtCounter* ct_channel = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   specs->addWidget( ct_channel, s_row++, 3 );
+   //QwtCounter* ct_channel = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   //specs->addWidget( ct_channel, s_row++, 3 );
+   QComboBox* cb_channel = us_comboBox();
+   specs->addWidget( cb_channel, s_row++, 3 );
    
-   lb_id = us_label( "Run ID", -1 );
-   lb_id->setAlignment( Qt::AlignCenter );
-   specs->addWidget( lb_id, s_row, 0 );
+   QPushButton* pb_details = us_pushbutton( tr( "Run Details" ), false );
+   specs->addWidget( pb_details, s_row, 0, 1, 2 );
+
+   lb_id = us_label( "Run ID:", -1 );
+   //lb_id->setAlignment( Qt::AlignCenter );
+   specs->addWidget( lb_id, s_row, 2 );
 
    le_id = us_lineedit( "", 1 );
    //le_id->setReadOnly( true );
-   specs->addWidget( le_id, s_row, 1 );
+   specs->addWidget( le_id, s_row++, 3 );
 
+/*
    lb_active = us_label( "Active Data", -1 );
    lb_active->setAlignment( Qt::AlignCenter );
    specs->addWidget( lb_active, s_row, 2 );
@@ -77,7 +85,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    le_active = us_lineedit( "", 1 );
    le_active->setReadOnly( true );
    specs->addWidget( le_active, s_row++, 3 );
-/*
+
    lb_centerpiece = us_label( tr( "Specify Centerpiece" ), -1 );
    lb_centerpiece->setAlignment( Qt::AlignCenter );
    specs->addWidget( lb_centerpiece, s_row, 0 );
@@ -152,8 +160,6 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    for ( uint i = 0; i < rotor_list.size(); i++ )
       cb_rotor->addItem( rotor_list[ i ].type );
 */
-   QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
-   specs->addWidget( lb_scan, s_row++, 0, 1, 4 );
    
    // Meniscus row
    pb_meniscus = us_pushbutton( tr( "Specify Meniscus" ), false );
@@ -194,8 +200,8 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    edits = new QGridLayout;
    int e_row = 0;
 
-   QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
-   edits->addWidget( lb_edit, e_row++, 0, 1, 4 );
+   QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
+   edits->addWidget( lb_scan, e_row++, 0, 1, 4 );
    
    // Scans
    lb_from = us_label( tr( "Scan Focus from:" ), -1 );
@@ -214,11 +220,11 @@ US_Edvabs::US_Edvabs() : US_Widgets()
 
    // Edit pushbuttons
    pb_edit1 = us_pushbutton( tr( "Edit Single Scan" ), false );
-   edits->addWidget( pb_edit1, e_row, 0, 1, 2 );
+   edits->addWidget( pb_edit1, e_row++, 0, 1, 4 );
 
-   pb_editRange = us_pushbutton( tr( "Edit Scan Range" ), false );
-   edits->addWidget( pb_editRange, e_row++, 2, 1, 2 );
-
+   //pb_editRange = us_pushbutton( tr( "Edit Scan Range" ), false );
+   //edits->addWidget( pb_editRange, e_row++, 2, 1, 2 );
+/*
    lb_exclude = us_label( tr( "Exclude from:" ), -1 );
    lb_exclude->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    edits->addWidget( lb_exclude, e_row, 0 );
@@ -232,13 +238,19 @@ US_Edvabs::US_Edvabs() : US_Widgets()
 
    ct_exclude2 = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
    edits->addWidget( ct_exclude2, e_row++, 3 );
-
+*/
    // Exclude pushbuttons
    pb_exclude = us_pushbutton( tr( "Exclude Single Scan" ), false );
    edits->addWidget( pb_exclude, e_row, 0, 1, 2 );
 
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    edits->addWidget( pb_excludeRange, e_row++, 2, 1, 2 );
+
+   pb_exclusion = us_pushbutton( tr( "Exclusion Profile" ), false );
+   edits->addWidget( pb_exclusion, e_row++, 0, 1, 4 );
+
+   QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
+   edits->addWidget( lb_edit, e_row++, 0, 1, 4 );
 
    // Noise
    lb_noise = us_label( tr( "Subtract RI Noise:" ), -1 );
@@ -252,22 +264,19 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    pb_noise = us_pushbutton( tr( "Subtract Residuals" ), false );
    edits->addWidget( pb_noise, e_row++, 2, 1, 2 );
 
-   pb_exclusion = us_pushbutton( tr( "Exclusion Profile" ), false );
-   edits->addWidget( pb_exclusion, e_row++, 0, 1, 4 );
-
    pb_subtract = us_pushbutton( tr( "Subtract Baseline" ), false );
-   edits->addWidget( pb_subtract, e_row++, 0, 1, 4 );
+   edits->addWidget( pb_subtract, e_row, 0, 1, 2 );
    
    pb_spikes = us_pushbutton( tr( "Remove Spikes" ), false );
    //connect( pb_spikes, SIGNAL( clicked() ), SLOT( help() ) );
-   edits->addWidget( pb_spikes, e_row++, 0, 1, 4 );
+   edits->addWidget( pb_spikes, e_row++, 2, 1, 2 );
    
    pb_invert = us_pushbutton( tr( "Invert Sign" ), false );
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
-   edits->addWidget( pb_invert, e_row++, 0, 1, 4 );
+   edits->addWidget( pb_invert, e_row, 0, 1, 2 );
   
    QPushButton* pb_write = us_pushbutton( tr( "Save Current Edit Profile" ), false );
-   edits->addWidget( pb_write, e_row++, 0, 1, 4 );
+   edits->addWidget( pb_write, e_row++, 2, 1, 2 );
 
 /*
 
@@ -350,8 +359,6 @@ US_Edvabs::US_Edvabs() : US_Widgets()
 
    QBoxLayout* buttons = new QHBoxLayout;
 
-   QPushButton* pb_details = us_pushbutton( tr( "Run Details" ), false );
-   buttons->addWidget( pb_details );
 /*
 */
 
