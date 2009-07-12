@@ -17,6 +17,9 @@ class US_EXTERN US_Editor : public QMainWindow
 
 	   QTextEdit* e;
    
+   signals:
+      void US_EditorLoadComplete( void );
+
    private:
 
 	   QFont      currentFont;
