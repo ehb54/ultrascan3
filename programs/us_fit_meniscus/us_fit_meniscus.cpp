@@ -23,7 +23,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
                            US_GuiSettings::fontSize()   ) );
    
    te_data->setMinimumHeight( fm.height() * 20 );
-   te_data->setFixedWidth ( fm.width( '0' ) * 20 );
+   te_data->setFixedWidth ( fm.width( '0' ) * 22 );
 
    main->addWidget( te_data, row, 0, 20, 1 );
 
@@ -48,6 +48,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    sb_order->setRange( 2, 9 );
    sb_order->setValue( 2 );
    sb_order->setPalette( US_GuiSettings::editColor() );
+   connect( sb_order, SIGNAL( valueChanged( int ) ), SLOT( plot_data( int ) ) );
    misc->addWidget( sb_order );
 
    QLabel* lb_fit = us_label( tr( "Meniscus at minimum:" ) );
@@ -63,8 +64,6 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    le_rms_error = us_lineedit( "" );
    le_rms_error->setReadOnly( true );
    misc->addWidget( le_rms_error );
-
-
 
    main->addLayout( misc, row++, 0, 1, 2 );
 
@@ -85,6 +84,11 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons, row, 0, 1, 2 );
+}
+
+void US_FitMeniscus::plot_data( int )
+{
+   plot_data();
 }
 
 void US_FitMeniscus::plot_data( void )
@@ -125,8 +129,8 @@ void US_FitMeniscus::plot_data( void )
          maxy = max( maxy, rmsd_values[ count ] );
 
          // Reformat
-         parsed << QString::number( radius_values[ count ], 'f', 4 ) + ", " +
-                   QString::number( rmsd_values  [ count ], 'f', 4 ); 
+         parsed << QString::number( radius_values[ count ], 'e', 6 ) + ", " +
+                   QString::number( rmsd_values  [ count ], 'e', 6 ); 
 
          count++;
       }
