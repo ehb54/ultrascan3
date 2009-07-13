@@ -44,21 +44,22 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    //connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    specs->addWidget( pb_load, s_row, 0, 1, 2 );
 
+   QPushButton* pb_details = us_pushbutton( tr( "Run Details" ), false );
+   specs->addWidget( pb_details, s_row++, 2, 1, 2 );
    //le_file = us_lineedit( "", 1 );
    //le_file->setReadOnly( true );
    //specs->addWidget( le_file, s_row++, 2, 1, 2 );
 
-   lb_id = us_label( "Run ID:", -1 );
+   // Row 1a
+   lb_id = us_label( "Run Info:", -1 );
    //lb_id->setAlignment( Qt::AlignCenter );
-   specs->addWidget( lb_id, s_row, 2 );
+   specs->addWidget( lb_id, s_row, 0 );
 
    le_id = us_lineedit( "", 1 );
    //le_id->setReadOnly( true );
-   specs->addWidget( le_id, s_row++, 3 );
+   specs->addWidget( le_id, s_row++, 1, 1, 3 );
 
    // Row 2
-   QPushButton* pb_details = us_pushbutton( tr( "Run Details" ), false );
-   specs->addWidget( pb_details, s_row, 0, 1, 2 );
 
    //////
    QLabel* lb_cell = us_label( tr( "Cell:" ), -1 );
