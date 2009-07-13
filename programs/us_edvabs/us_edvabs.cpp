@@ -64,31 +64,31 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    //////
    QLabel* lb_cell = us_label( tr( "Cell:" ), -1 );
    //lb_cell->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   specs->addWidget( lb_cell, s_row, 2 );
+   specs->addWidget( lb_cell, s_row, 0 );
 
    //QwtCounter* ct_cell = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
    //specs->addWidget( ct_cell, s_row, 1 );
    QComboBox* cb_cell = us_comboBox();
-   specs->addWidget( cb_cell, s_row++, 3 );
+   specs->addWidget( cb_cell, s_row, 1 );
 
    // Row 3
    QLabel* lb_channel = us_label( tr( "Channel:" ), -1 );
    //lb_channel->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   specs->addWidget( lb_channel, s_row, 0 );
+   specs->addWidget( lb_channel, s_row, 2 );
 
    //QwtCounter* ct_channel = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
    //specs->addWidget( ct_channel, s_row++, 3 );
    QComboBox* cb_channel = us_comboBox();
-   specs->addWidget( cb_channel, s_row, 1 );
+   specs->addWidget( cb_channel, s_row++, 3 );
    
    QLabel* lb_wavelength = us_label( tr( "Wavelength:" ), -1 );
    //lb_channel->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   specs->addWidget( lb_wavelength, s_row, 2 );
+   specs->addWidget( lb_wavelength, s_row, 0 );
 
    //QwtCounter* ct_channel = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
    //specs->addWidget( ct_channel, s_row++, 3 );
    QComboBox* cb_wavelength = us_comboBox();
-   specs->addWidget( cb_wavelength, s_row++, 3 );
+   specs->addWidget( cb_wavelength, s_row++, 1 );
    
 /*
    lb_active = us_label( "Active Data", -1 );
