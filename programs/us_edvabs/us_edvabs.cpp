@@ -39,35 +39,14 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs = new QGridLayout;
    int s_row = 0;
 
+   // Row 1
    pb_load = us_pushbutton( tr( "Load Data" ) );
    //connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    specs->addWidget( pb_load, s_row, 0, 1, 2 );
 
-   le_file = us_lineedit( "", 1 );
-   le_file->setReadOnly( true );
-   specs->addWidget( le_file, s_row++, 2, 1, 2 );
-
-   //////
-   QLabel* lb_cell = us_label( tr( "Cell:" ), -1 );
-   //lb_cell->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   specs->addWidget( lb_cell, s_row, 0 );
-
-   //QwtCounter* ct_cell = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   //specs->addWidget( ct_cell, s_row, 1 );
-   QComboBox* cb_cell = us_comboBox();
-   specs->addWidget( cb_cell, s_row, 1 );
-
-   QLabel* lb_channel = us_label( tr( "Channel:" ), -1 );
-   //lb_channel->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   specs->addWidget( lb_channel, s_row, 2 );
-
-   //QwtCounter* ct_channel = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   //specs->addWidget( ct_channel, s_row++, 3 );
-   QComboBox* cb_channel = us_comboBox();
-   specs->addWidget( cb_channel, s_row++, 3 );
-   
-   QPushButton* pb_details = us_pushbutton( tr( "Run Details" ), false );
-   specs->addWidget( pb_details, s_row, 0, 1, 2 );
+   //le_file = us_lineedit( "", 1 );
+   //le_file->setReadOnly( true );
+   //specs->addWidget( le_file, s_row++, 2, 1, 2 );
 
    lb_id = us_label( "Run ID:", -1 );
    //lb_id->setAlignment( Qt::AlignCenter );
@@ -77,6 +56,39 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    //le_id->setReadOnly( true );
    specs->addWidget( le_id, s_row++, 3 );
 
+   // Row 2
+   QPushButton* pb_details = us_pushbutton( tr( "Run Details" ), false );
+   specs->addWidget( pb_details, s_row, 0, 1, 2 );
+
+   //////
+   QLabel* lb_cell = us_label( tr( "Cell:" ), -1 );
+   //lb_cell->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   specs->addWidget( lb_cell, s_row, 2 );
+
+   //QwtCounter* ct_cell = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   //specs->addWidget( ct_cell, s_row, 1 );
+   QComboBox* cb_cell = us_comboBox();
+   specs->addWidget( cb_cell, s_row++, 3 );
+
+   // Row 3
+   QLabel* lb_channel = us_label( tr( "Channel:" ), -1 );
+   //lb_channel->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   specs->addWidget( lb_channel, s_row, 0 );
+
+   //QwtCounter* ct_channel = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   //specs->addWidget( ct_channel, s_row++, 3 );
+   QComboBox* cb_channel = us_comboBox();
+   specs->addWidget( cb_channel, s_row, 1 );
+   
+   QLabel* lb_wavelength = us_label( tr( "Wavelength:" ), -1 );
+   //lb_channel->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   specs->addWidget( lb_wavelength, s_row, 2 );
+
+   //QwtCounter* ct_channel = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   //specs->addWidget( ct_channel, s_row++, 3 );
+   QComboBox* cb_wavelength = us_comboBox();
+   specs->addWidget( cb_wavelength, s_row++, 3 );
+   
 /*
    lb_active = us_label( "Active Data", -1 );
    lb_active->setAlignment( Qt::AlignCenter );
@@ -161,6 +173,50 @@ US_Edvabs::US_Edvabs() : US_Widgets()
       cb_rotor->addItem( rotor_list[ i ].type );
 */
    
+   // Row 4
+   QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
+   specs->addWidget( lb_scan, s_row++, 0, 1, 4 );
+   
+   // Row 5
+
+   // Scans
+   lb_from = us_label( tr( "Scan Focus from:" ), -1 );
+   lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   specs->addWidget( lb_from, s_row, 0 );
+
+   ct_from = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   specs->addWidget( ct_from, s_row, 1 );
+
+   lb_to = us_label( tr( "to:" ), -1 );
+   lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   specs->addWidget( lb_to, s_row, 2 );
+
+   ct_to = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   specs->addWidget( ct_to, s_row++, 3 );
+   
+   // Row 6
+   // Exclude pushbuttons
+   pb_exclude = us_pushbutton( tr( "Exclude Single Scan" ), false );
+   specs->addWidget( pb_exclude, s_row, 0, 1, 2 );
+
+   pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
+   specs->addWidget( pb_excludeRange, s_row++, 2, 1, 2 );
+   
+   // Row 7
+
+   pb_exclusion = us_pushbutton( tr( "Exclusion Profile" ), false );
+   specs->addWidget( pb_exclusion, s_row, 0, 1, 2 );
+
+   // Edit pushbuttons
+   pb_edit1 = us_pushbutton( tr( "Edit Single Scan" ), false );
+   specs->addWidget( pb_edit1, s_row++, 2, 1, 2 );
+
+   // Row 8
+   QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
+   specs->addWidget( lb_edit, s_row++, 0, 1, 4 );
+
+   
+   
    // Meniscus row
    pb_meniscus = us_pushbutton( tr( "Specify Meniscus" ), false );
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
@@ -197,30 +253,9 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    le_baseline->setReadOnly( true );
    specs->addWidget( le_baseline, s_row++, 2, 1, 2 );
 
-   edits = new QGridLayout;
-   int e_row = 0;
+   //edits = new QGridLayout;
+   //int e_row = 0;
 
-   QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
-   edits->addWidget( lb_scan, e_row++, 0, 1, 4 );
-   
-   // Scans
-   lb_from = us_label( tr( "Scan Focus from:" ), -1 );
-   lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   edits->addWidget( lb_from, e_row, 0 );
-
-   ct_from = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   edits->addWidget( ct_from, e_row, 1 );
-
-   lb_to = us_label( tr( "to:" ), -1 );
-   lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   edits->addWidget( lb_to, e_row, 2 );
-
-   ct_to = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   edits->addWidget( ct_to, e_row++, 3 );
-
-   // Edit pushbuttons
-   pb_edit1 = us_pushbutton( tr( "Edit Single Scan" ), false );
-   edits->addWidget( pb_edit1, e_row++, 0, 1, 4 );
 
    //pb_editRange = us_pushbutton( tr( "Edit Scan Range" ), false );
    //edits->addWidget( pb_editRange, e_row++, 2, 1, 2 );
@@ -239,44 +274,32 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    ct_exclude2 = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
    edits->addWidget( ct_exclude2, e_row++, 3 );
 */
-   // Exclude pushbuttons
-   pb_exclude = us_pushbutton( tr( "Exclude Single Scan" ), false );
-   edits->addWidget( pb_exclude, e_row, 0, 1, 2 );
-
-   pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
-   edits->addWidget( pb_excludeRange, e_row++, 2, 1, 2 );
-
-   pb_exclusion = us_pushbutton( tr( "Exclusion Profile" ), false );
-   edits->addWidget( pb_exclusion, e_row++, 0, 1, 4 );
-
-   QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
-   edits->addWidget( lb_edit, e_row++, 0, 1, 4 );
 
    // Noise
    lb_noise = us_label( tr( "Subtract RI Noise:" ), -1 );
    lb_noise->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   edits->addWidget( lb_noise, e_row, 0 );
+   specs->addWidget( lb_noise, s_row, 0 );
 
    ct_noise = us_counter ( 1, 4.0, 9.0 );
    ct_noise->setStep( 1.0 );
-   edits->addWidget( ct_noise, e_row, 1 );
+   specs->addWidget( ct_noise, s_row, 1 );
 
    pb_noise = us_pushbutton( tr( "Subtract Residuals" ), false );
-   edits->addWidget( pb_noise, e_row++, 2, 1, 2 );
+   specs->addWidget( pb_noise, s_row++, 2, 1, 2 );
 
    pb_subtract = us_pushbutton( tr( "Subtract Baseline" ), false );
-   edits->addWidget( pb_subtract, e_row, 0, 1, 2 );
+   specs->addWidget( pb_subtract, s_row, 0, 1, 2 );
    
    pb_spikes = us_pushbutton( tr( "Remove Spikes" ), false );
    //connect( pb_spikes, SIGNAL( clicked() ), SLOT( help() ) );
-   edits->addWidget( pb_spikes, e_row++, 2, 1, 2 );
+   specs->addWidget( pb_spikes, s_row++, 2, 1, 2 );
    
    pb_invert = us_pushbutton( tr( "Invert Sign" ), false );
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
-   edits->addWidget( pb_invert, e_row, 0, 1, 2 );
+   specs->addWidget( pb_invert, s_row, 0, 1, 2 );
   
    QPushButton* pb_write = us_pushbutton( tr( "Save Current Edit Profile" ), false );
-   edits->addWidget( pb_write, e_row++, 2, 1, 2 );
+   specs->addWidget( pb_write, s_row++, 2, 1, 2 );
 
 /*
 
@@ -389,7 +412,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
 
    left->addLayout( specs );
-   left->addLayout( edits );
+   //left->addLayout( edits );
 
    left->addStretch();
 /*
