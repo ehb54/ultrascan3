@@ -113,7 +113,7 @@ void US_FitMeniscus::plot_data( void )
    meniscus_plot->clear();
 
    QString contents = te_data->e->toPlainText();
-   contents.remove( QRegExp( "[^0-9\\.,\\n]" ) );
+   contents.remove( QRegExp( "[^0-9eE\\.,\\n\\+\\-]" ) );
 
    QStringList lines = contents.split( "\n", QString::SkipEmptyParts );
    QStringList parsed;
