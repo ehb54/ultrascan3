@@ -1549,6 +1549,23 @@ US_fe_nnls_t::init_run(const QString & data_file,
             // no multi-e sc
             simulation_parameters_vec[0] = simulation_parameters;
          }
+#if defined(DYNAMIC_ROUNDING)
+         unsigned int points_vbar          = DR_POINTS;
+         unsigned int points_mw            = DR_POINTS;
+         unsigned int points_s             = DR_POINTS;
+         unsigned int points_d             = DR_POINTS;
+         unsigned int points_sigma         = DR_POINTS;
+         unsigned int points_delta         = DR_POINTS;
+         unsigned int points_concentration = DR_POINTS;
+         unsigned int points_f_f0          = DR_POINTS;
+         unsigned int points_keq           = DR_POINTS;
+         unsigned int points_koff          = DR_POINTS;
+         if (!myrank)
+         {
+            cout << "0: dynamic rounding grid points:" << DR_POINTS << endl;
+         }
+#endif
+
          // ok, now setup the buckets & resolution of the buckets
          {
             unsigned int i;
@@ -1565,7 +1582,12 @@ US_fe_nnls_t::init_run(const QString & data_file,
                   temp_bucket.s_min = scp->vbar20.low;
                   temp_bucket.s_max = scp->vbar20.high;
                   temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+#if defined(DYNAMIC_ROUNDING)
+                  temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = (double) points_vbar;
+#else
                   temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_VBAR;
+#endif
+                  
                   if (!myrank)
                   {
                      cout << "0:element:" << GA_Params.solute.size() << endl;
@@ -1582,7 +1604,12 @@ US_fe_nnls_t::init_run(const QString & data_file,
                   temp_bucket.s_min = scp->mw.low;
                   temp_bucket.s_max = scp->mw.high;
                   temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+#if defined(DYNAMIC_ROUNDING)
+                  temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = (double) points_mw;
+#else
                   temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_MW;
+#endif
+
                   if (!myrank)
                   {
                      cout << "0:element:" << GA_Params.solute.size() << endl;
@@ -1599,7 +1626,11 @@ US_fe_nnls_t::init_run(const QString & data_file,
                   temp_bucket.s_min = scp->s.low;
                   temp_bucket.s_max = scp->s.high;
                   temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+#if defined(DYNAMIC_ROUNDING)
+                  temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = (double) points_s;
+#else
                   temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_S;
+#endif
                   if (!myrank)
                   {
                      cout << "0:element:" << GA_Params.solute.size() << endl;
@@ -1616,7 +1647,11 @@ US_fe_nnls_t::init_run(const QString & data_file,
                   temp_bucket.s_min = scp->D.low;
                   temp_bucket.s_max = scp->D.high;
                   temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+#if defined(DYNAMIC_ROUNDING)
+                  temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = (double) points_d;
+#else
                   temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_D;
+#endif
                   if (!myrank)
                   {
                      cout << "0:element:" << GA_Params.solute.size() << endl;
@@ -1633,7 +1668,11 @@ US_fe_nnls_t::init_run(const QString & data_file,
                   temp_bucket.s_min = scp->sigma.low;
                   temp_bucket.s_max = scp->sigma.high;
                   temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+#if defined(DYNAMIC_ROUNDING)
+                  temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = (double) points_sigma;
+#else
                   temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_SIGMA;
+#endif
                   if (!myrank)
                   {
                      cout << "0:element:" << GA_Params.solute.size() << endl;
@@ -1650,7 +1689,11 @@ US_fe_nnls_t::init_run(const QString & data_file,
                   temp_bucket.s_min = scp->delta.low;
                   temp_bucket.s_max = scp->delta.high;
                   temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+#if defined(DYNAMIC_ROUNDING)
+                  temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = (double) points_delta;
+#else
                   temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_DELTA;
+#endif
                   if (!myrank)
                   {
                      cout << "0:element:" << GA_Params.solute.size() << endl;
@@ -1667,7 +1710,11 @@ US_fe_nnls_t::init_run(const QString & data_file,
                   temp_bucket.s_min = scp->concentration.low;
                   temp_bucket.s_max = scp->concentration.high;
                   temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+#if defined(DYNAMIC_ROUNDING)
+                  temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = (double) points_concentration;
+#else
                   temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_CONCENTRATION;
+#endif
                   if (!myrank)
                   {
                      cout << "0:element:" << GA_Params.solute.size() << endl;
@@ -1684,7 +1731,11 @@ US_fe_nnls_t::init_run(const QString & data_file,
                   temp_bucket.s_min = scp->f_f0.low;
                   temp_bucket.s_max = scp->f_f0.high;
                   temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+#if defined(DYNAMIC_ROUNDING)
+                  temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = (double) points_f_f0;
+#else
                   temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_F_F0;
+#endif
                   if (!myrank)
                   {
                      cout << "0:element:" << GA_Params.solute.size() << endl;
@@ -1707,7 +1758,11 @@ US_fe_nnls_t::init_run(const QString & data_file,
                   temp_bucket.s_min = acp->keq.low;
                   temp_bucket.s_max = acp->keq.high;
                   temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+#if defined(DYNAMIC_ROUNDING)
+                  temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = (double) points_keq;
+#else
                   temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_KEQ;
+#endif
                   if (!myrank)
                   {
                      cout << "0:element:" << GA_Params.solute.size() << endl;
@@ -1724,7 +1779,11 @@ US_fe_nnls_t::init_run(const QString & data_file,
                   temp_bucket.s_min = acp->koff.low;
                   temp_bucket.s_max = acp->koff.high;
                   temp_bucket.s = (temp_bucket.s_min + temp_bucket.s_max) / 2e0;
+#if defined(DYNAMIC_ROUNDING)
+                  temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = (double) points_koff;
+#else
                   temp_bucket.ff0 = temp_bucket.ff0_min = temp_bucket.ff0_max = ROUNDING_KOFF;
+#endif
                   if (!myrank)
                   {
                      cout << "0:element:" << GA_Params.solute.size() << endl;
@@ -1899,6 +1958,7 @@ int US_fe_nnls_t::run(int status)
 #if defined(GLOBAL_JOB_TIMING)
    gettimeofday(&start_tv, NULL);
 #endif
+   us_randomize();
 
    int iterative = use_iterative;
    vector <struct gene> sav_solutions;

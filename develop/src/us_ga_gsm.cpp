@@ -1725,7 +1725,12 @@ void node_set_to_our_vector(node *n, our_vector *v) {
       d = (double *)(n->data);
       if (ga_sc)
       {
+#if defined(DYNAMIC_ROUNDING)
+         double spacing = (d[3] - d[2]) / (d[4] - 1);
+         d[0] = d[2] + floor(.5 + (v->d[i] - d[2]) / spacing) * spacing;
+#else
          d[0] = floorn(v->d[i], ff0_estimates[i / 2][0], solute_rounding);
+#endif
          d[1] = ff0_estimates[i / 2][0];
       } else {
          d[0] = floorn(v->d[i], s_rounding, solute_rounding);

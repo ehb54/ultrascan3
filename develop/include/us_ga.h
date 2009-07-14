@@ -114,4 +114,11 @@ extern double s_rounding;
 #define ROUNDING_KEQ              1
 #define ROUNDING_KOFF             1e-6
 
+// define dynamic rounding to use grid point rounding in GA_SC
+#define DYNAMIC_ROUNDING
+
+// the number of points for dynamic rounding, this could be put under 
+// advanced user control either as a single value for all ranges or range specific...
+#define DR_POINTS 200         
+
 #endif

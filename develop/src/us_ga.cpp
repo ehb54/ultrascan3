@@ -303,9 +303,17 @@ void f_init_solute(void *v)
    if (ga_sc) 
    {
       s_rounding = d[4];
+#if defined(DYNAMIC_ROUNDING)
+      double spacing = (d[3] - d[2]) / (d[4] - 1);
+      d[0] = d[2] + floor(.5 + drand48() * (d[3] - d[2]) / spacing) * spacing;
+#else
+      d[0] = roundn((drand48() * (d[3] - d[2])) + d[2], s_rounding, solute_rounding);
+#endif
+      d[1] = d[4]; // ga_sc fixes d[1]
+   } else {
+      d[0] = roundn((drand48() * (d[3] - d[2])) + d[2], s_rounding, solute_rounding);
+      d[1] = roundn((drand48() * (d[5] - d[4])) + d[4], 1, solute_rounding);
    }
-   d[0] = roundn((drand48() * (d[3] - d[2])) + d[2], s_rounding, solute_rounding);
-   d[1] = roundn((drand48() * (d[5] - d[4])) + d[4], 1, solute_rounding);
    if(debug_level > 1 &&
       (d[0] < d[2] || d[0] > d[3] ||
        (!ga_sc && (d[1] < d[4] || d[1] > d[5]))))
@@ -358,7 +366,12 @@ void f_node_mutate_solute(void *v)
       {
          double_pair v;
          random_normal_sd_1 = (d[3] - d[2])/(6.0 * log(2.0 + 2.0 * this_generation) / log(2.0));
-         random_normal_sd_2 = (d[5] - d[4])/(6.0 * log(2.0 + 2.0 * this_generation) / log(2.0));
+         if ( ga_sc )
+         {
+            random_normal_sd_2 = random_normal_sd_1;
+         } else {
+            random_normal_sd_2 = (d[5] - d[4])/(6.0 * log(2.0 + 2.0 * this_generation) / log(2.0));
+         }
          v = random_normal(d[0], random_normal_sd_1, d[1], random_normal_sd_2);
          //     printf("%d: v.x %.4g %.4g [%.4g,%.4g,%.4g] v.y %.4g %.4g [%.4g,%.4g,%.4g]\n",
          //    this_rank,
@@ -367,7 +380,7 @@ void f_node_mutate_solute(void *v)
          //    v.y, random_normal_sd_2,
          //    d[1], d[4], d[5]); fflush(stdout);
 
-         if(sel > .4 || ga_sc)
+         if(sel > .4 && !ga_sc)
          {
             node_mutate_count_D++;
             d[1] = v.y;
@@ -388,10 +401,14 @@ void f_node_mutate_solute(void *v)
             }
             d[1] = roundn(d[1], 1, solute_rounding);
          }
-         if(sel < .6 && !ga_sc)
+         if(sel < .6 || ga_sc)
          {
             node_mutate_count_s++;
             d[0] = v.x;
+#if defined(DYNAMIC_ROUNDING)
+            double spacing = (d[3] - d[2]) / (d[4] - 1);
+            d[0] = d[2] + floor(.5 + (d[0] - d[2]) / spacing) * spacing;
+#endif
             if(d[0] < d[2])
             {
                d[0] = d[2];
@@ -403,7 +420,9 @@ void f_node_mutate_solute(void *v)
                   d[0] = d[3];
                }
             }
+#if !defined(DYNAMIC_ROUNDING)
             d[0] = roundn(d[0], s_rounding, solute_rounding);
+#endif
          }
       }
       else
@@ -1411,15 +1430,15 @@ void init()
 {
    gettimeofday(&global_start_tv, NULL);
    signal(SIGFPE, SIG_IGN);
-   if(rand_seed < 0 )
+   if(rand_seed <= 0 )
    {
       struct timeval tv;
       gettimeofday(&tv, NULL);
-      srand48(tv.tv_usec);
+      srand48(tv.tv_usec + this_rank);
    }
    else
    {
-      srand48((long int)rand_seed);
+      srand48((long int)rand_seed + this_rank);
    }
    stacks_init();
 
