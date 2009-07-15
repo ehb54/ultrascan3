@@ -1,5 +1,3 @@
-# gui.pri defines SINGLEDIR
-
 include( ../../gui.pri )
 include( $${SINGLEDIR}/qtsingleapplication.pri )
 

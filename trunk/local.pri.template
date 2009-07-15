@@ -1,0 +1,29 @@
+# Profile include file for local use
+#  Copy file to local.pri and change variables to match your installation
+
+
+DEBUGORRELEASE += debug 
+
+unix {
+  # Local flags
+  #QMAKE_CXXFLAGS_DEBUG += -pg
+  #QMAKE_LFLAGS_DEBUG += -pg
+
+  QWTPATH     = /usr/local/qwt-5.1.1
+  SINGLEDIR   = /opt/qt/addons/qtsingleapplication-2.5_1-commercial/src/
+}
+
+win32 {
+  QCAPATH     = C:/qca-2.0.1
+  QWTPATH     = C:/qwt/qwt-5.1.1
+  
+  contains( DEBUGORRELEASE, debug ) {
+    QWTLIB      = $$QWTPATH/lib/qwtd5.lib
+    QCALIB      = $$QCAPATH/lib/qcad2.lib
+  } else {
+    QWTLIB      = $$QWTPATH/lib/qwt5.lib
+    QCALIB      = $$QCAPATH/lib/qcad.lib
+  }
+
+  SINGLEDIR   = C:/Qt/4.4.3/addons/singleapp
+}
