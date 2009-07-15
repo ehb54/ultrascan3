@@ -1566,6 +1566,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
          }
 #endif
 
+         bool range_error = false;
          // ok, now setup the buckets & resolution of the buckets
          {
             unsigned int i;
@@ -1596,7 +1597,18 @@ US_fe_nnls_t::init_run(const QString & data_file,
                      cout << "0: vbarmax:" << temp_bucket.s_max << endl;
                      cout << "0: rounding:" << temp_bucket.ff0 << endl;
                   }
+                  if ( temp_bucket.s_min >= temp_bucket.s_max )
+                  {
+                     if ( !myrank )
+                     {
+                        fprintf(stderr, 
+                                "GA_SC ERROR: Zero or inverted range on VBAR component %d (%g >= %g)\n",
+                                i, temp_bucket.s_min, temp_bucket.s_max);
+                     }
+                     range_error = true;
+                  }
                   GA_Params.solute.push_back(temp_bucket);
+                     
                }
 
                if (scp->mw.fit) 
@@ -1617,6 +1629,16 @@ US_fe_nnls_t::init_run(const QString & data_file,
                      cout << "0: mwmin:" << temp_bucket.s_min << endl;
                      cout << "0: mwmax:" << temp_bucket.s_max << endl;
                      cout << "0: rounding:" << temp_bucket.ff0 << endl;
+                  }
+                  if ( temp_bucket.s_min >= temp_bucket.s_max )
+                  {
+                     if ( !myrank )
+                     {
+                        fprintf(stderr, 
+                                "GA_SC ERROR: Zero or inverted range on MW component %d (%g >= %g)\n",
+                                i, temp_bucket.s_min, temp_bucket.s_max);
+                     }
+                     range_error = true;
                   }
                   GA_Params.solute.push_back(temp_bucket);
                }
@@ -1639,6 +1661,16 @@ US_fe_nnls_t::init_run(const QString & data_file,
                      cout << "0: smax:" << temp_bucket.s_max << endl;
                      cout << "0: rounding:" << temp_bucket.ff0 << endl;
                   }
+                  if ( temp_bucket.s_min >= temp_bucket.s_max )
+                  {
+                     if ( !myrank )
+                     {
+                        fprintf(stderr, 
+                                "GA_SC ERROR: Zero or inverted range on S component %d (%g >= %g)\n",
+                                i, temp_bucket.s_min, temp_bucket.s_max);
+                     }
+                     range_error = true;
+                  }
                   GA_Params.solute.push_back(temp_bucket);
                }
 
@@ -1659,6 +1691,16 @@ US_fe_nnls_t::init_run(const QString & data_file,
                      cout << "0: Dmin:" << temp_bucket.s_min << endl;
                      cout << "0: Dmax:" << temp_bucket.s_max << endl;
                      cout << "0: rounding:" << temp_bucket.ff0 << endl;
+                  }
+                  if ( temp_bucket.s_min >= temp_bucket.s_max )
+                  {
+                     if ( !myrank )
+                     {
+                        fprintf(stderr, 
+                                "GA_SC ERROR: Zero or inverted range on D component %d (%g >= %g)\n",
+                                i, temp_bucket.s_min, temp_bucket.s_max);
+                     }
+                     range_error = true;
                   }
                   GA_Params.solute.push_back(temp_bucket);
                }
@@ -1681,6 +1723,16 @@ US_fe_nnls_t::init_run(const QString & data_file,
                      cout << "0: sigmamax:" << temp_bucket.s_max << endl;
                      cout << "0: rounding:" << temp_bucket.ff0 << endl;
                   }
+                  if ( temp_bucket.s_min >= temp_bucket.s_max )
+                  {
+                     if ( !myrank )
+                     {
+                        fprintf(stderr, 
+                                "GA_SC ERROR: Zero or inverted range on SIGMA component %d (%g >= %g)\n",
+                                i, temp_bucket.s_min, temp_bucket.s_max);
+                     }
+                     range_error = true;
+                  }
                   GA_Params.solute.push_back(temp_bucket);
                }
 
@@ -1701,6 +1753,16 @@ US_fe_nnls_t::init_run(const QString & data_file,
                      cout << "0: deltamin:" << temp_bucket.s_min << endl;
                      cout << "0: deltamax:" << temp_bucket.s_max << endl;
                      cout << "0: rounding:" << temp_bucket.ff0 << endl;
+                  }
+                  if ( temp_bucket.s_min >= temp_bucket.s_max )
+                  {
+                     if ( !myrank )
+                     {
+                        fprintf(stderr, 
+                                "GA_SC ERROR: Zero or inverted range on DELTA component %d (%g >= %g)\n",
+                                i, temp_bucket.s_min, temp_bucket.s_max);
+                     }
+                     range_error = true;
                   }
                   GA_Params.solute.push_back(temp_bucket);
                }
@@ -1723,6 +1785,16 @@ US_fe_nnls_t::init_run(const QString & data_file,
                      cout << "0: concentrationmax:" << temp_bucket.s_max << endl;
                      cout << "0: rounding:" << temp_bucket.ff0 << endl;
                   }
+                  if ( temp_bucket.s_min >= temp_bucket.s_max )
+                  {
+                     if ( !myrank )
+                     {
+                        fprintf(stderr, 
+                                "GA_SC ERROR: Zero or inverted range on CONCENTRATION component %d (%g >= %g)\n",
+                                i, temp_bucket.s_min, temp_bucket.s_max);
+                     }
+                     range_error = true;
+                  }
                   GA_Params.solute.push_back(temp_bucket);
                }
 
@@ -1743,6 +1815,16 @@ US_fe_nnls_t::init_run(const QString & data_file,
                      cout << "0: f_f0min:" << temp_bucket.s_min << endl;
                      cout << "0: f_f0max:" << temp_bucket.s_max << endl;
                      cout << "0: rounding:" << temp_bucket.ff0 << endl;
+                  }
+                  if ( temp_bucket.s_min >= temp_bucket.s_max )
+                  {
+                     if ( !myrank )
+                     {
+                        fprintf(stderr, 
+                                "GA_SC ERROR: Zero or inverted range on FRICTIONAL RATIO component %d (%g >= %g)\n",
+                                i, temp_bucket.s_min, temp_bucket.s_max);
+                     }
+                     range_error = true;
                   }
                   GA_Params.solute.push_back(temp_bucket);
                }
@@ -1771,6 +1853,16 @@ US_fe_nnls_t::init_run(const QString & data_file,
                      cout << "0: keqmax:" << temp_bucket.s_max << endl;
                      cout << "0: rounding:" << temp_bucket.ff0 << endl;
                   }
+                  if ( temp_bucket.s_min >= temp_bucket.s_max )
+                  {
+                     if ( !myrank )
+                     {
+                        fprintf(stderr, 
+                                "GA_SC ERROR: Zero or inverted range on K_EQ component %d (%g >= %g)\n",
+                                i, temp_bucket.s_min, temp_bucket.s_max);
+                     }
+                     range_error = true;
+                  }
                   GA_Params.solute.push_back(temp_bucket);
                }
 
@@ -1792,11 +1884,29 @@ US_fe_nnls_t::init_run(const QString & data_file,
                      cout << "0: koffmax:" << temp_bucket.s_max << endl;
                      cout << "0: rounding:" << temp_bucket.ff0 << endl;
                   }
+                  if ( temp_bucket.s_min >= temp_bucket.s_max )
+                  {
+                     if ( !myrank )
+                     {
+                        fprintf(stderr, 
+                                "GA_SC ERROR: Zero or inverted range on K_OFF component %d (%g >= %g)\n",
+                                i, temp_bucket.s_min, temp_bucket.s_max);
+                     }
+                     range_error = true;
+                  }
                   GA_Params.solute.push_back(temp_bucket);
                }
 
             }
             GA_Params.initial_solutes = GA_Params.solute.size();
+            if ( range_error )
+            {
+               fflush(stderr);
+               MPI_Barrier(MPI_COMM_WORLD);
+               MPI_Abort(MPI_COMM_WORLD, -801);
+               exit(-801);
+            }
+
             if (!myrank) 
             {
                cout << "0:total gene size:" << GA_Params.solute.size() << endl;
