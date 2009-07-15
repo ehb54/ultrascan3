@@ -1,6 +1,6 @@
-unix:  SINGLEDIR = /opt/qt-4.5.0/addons/qtsingleapplication-2.5_1-commercial/src/
-win32: SINGLEDIR = C:/Qt/4.4.3/addons/singleapp
+# library.pri defines SINGLEDIR
 
+include( ../../library.pri )
 include( $${SINGLEDIR}/qtsingleapplication.pri )
 
 # Not a gui program
