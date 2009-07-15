@@ -1,4 +1,6 @@
 # Profile include file for applications
+#  Copy file to gui.pri and change QWTPATH, QCAPATH, SINGLEDIR to match your installation
+#  Also see library.pri.template
 
 TEMPLATE     = app
 DESTDIR      = ../../bin
@@ -20,6 +22,7 @@ unix {
 
   DEPENDPATH   += ../../gui ../../utils ../../db $$QWTPATH/include ..
   INCLUDEPATH  += ../../gui ../../utils ../../db $$QWTPATH/include ..
+  SINGLEDIR    = /opt/qt/addons/qtsingleapplication-2.5_1-commercial/src/
 }
 
 win32 {
@@ -36,6 +39,7 @@ win32 {
 
   DEPENDPATH   += ../../gui ../../utils ../../db $$QWTPATH/src ..
   INCLUDEPATH  += ../../gui ../../utils ../../db $$QWTPATH/src ..
+  SINGLEDIR               = C:/Qt/4.4.3/addons/singleapp
 }
 
 

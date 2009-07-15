@@ -1,4 +1,6 @@
 # Profile include file for libraries
+#  Copy file to library.pri and change QWTPATH, QCAPATH, SINGLEDIR to match your installation
+#  Also see gui.pri.template
 
 TEMPLATE     = lib
 CONFIG       += debug qt thread warn
@@ -15,6 +17,7 @@ unix {
   INCLUDEPATH  += ../gui ../utils ../db $$QWTPATH/include
   DEFINES      += LINUX
   DESTDIR      = ../lib
+  SINGLEDIR    = /opt/qt/addons/qtsingleapplication-2.5_1-commercial/src/
 }
 
 win32 {
@@ -28,6 +31,7 @@ win32 {
   QMAKE_CXXFLAGS_RELEASE += /wd4996
   DEFINES                += US_MAKE_DLL
   DESTDIR                 = ../bin
+  SINGLEDIR               = C:/Qt/4.4.3/addons/singleapp
 }
 
 
