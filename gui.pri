@@ -1,6 +1,6 @@
 # Profile include file for applications
-#  Copy file to gui.pri and change QWTPATH, QCAPATH, SINGLEDIR to match your installation
-#  Also see library.pri.template
+
+!include( local.pri ) error( "local.pri is missing.  Copy from local.pri.template and update variables as appropriate" )
 
 TEMPLATE     = app
 DESTDIR      = ../../bin
@@ -9,12 +9,9 @@ MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 
 
-CONFIG       += debug qt thread warn
+CONFIG       += $$DEBUGORRELEASE qt thread warn
 
 unix {
-#  QMAKE_CXXFLAGS_DEBUG += -pg
-#  QMAKE_LFLAGS_DEBUG += -pg
-  QWTPATH     = /usr/local/qwt-5.1.1
   LIBS       += -lus_utils -lus_gui -lus_db -L../../lib
   LIBS       += -lqca
   LIBS       += -lqwt -L$$QWTPATH/lib
@@ -22,16 +19,13 @@ unix {
 
   DEPENDPATH   += ../../gui ../../utils ../../db $$QWTPATH/include ..
   INCLUDEPATH  += ../../gui ../../utils ../../db $$QWTPATH/include ..
-  SINGLEDIR    = /opt/qt/addons/qtsingleapplication-2.5_1-commercial/src/
 }
 
 win32 {
-  QWTPATH     = C:/qwt/qwt-5.1.1
   LIBS       += ../../lib/libus_utils.lib
   LIBS       += ../../lib/libus_db.lib
   LIBS       += ../../lib/libus_gui.lib
-  #  Fix this for release
-  LIBS       += $$QWTPATH/lib/qwtd5.lib
+  LIBS       += $$QWTLIB
 
   QMAKE_LFLAGS           += /MACHINE:X86 /INCREMENTAL:NO 
   QMAKE_CXXFLAGS_DEBUG   += /wd4996
@@ -39,7 +33,6 @@ win32 {
 
   DEPENDPATH   += ../../gui ../../utils ../../db $$QWTPATH/src ..
   INCLUDEPATH  += ../../gui ../../utils ../../db $$QWTPATH/src ..
-  SINGLEDIR               = C:/Qt/4.4.3/addons/singleapp
 }
 
 

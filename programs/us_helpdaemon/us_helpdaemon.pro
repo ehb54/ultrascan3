@@ -1,5 +1,3 @@
-# library.pri defines SINGLEDIR
-
 include( ../../library.pri )
 include( $${SINGLEDIR}/qtsingleapplication.pri )
 
@@ -7,7 +5,6 @@ include( $${SINGLEDIR}/qtsingleapplication.pri )
 
 TEMPLATE      = app
 
-CONFIG       += debug qt thread warn
 TARGET        = us_helpdaemon
 
 DEPENDPATH   += ../../utils 

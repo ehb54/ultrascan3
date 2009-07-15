@@ -5,6 +5,7 @@
 #include "us_edvabs.h"
 #include "us_license_t.h"
 #include "us_license.h"
+#include "us_settings.h"
 #include "us_gui_settings.h"
 
 //! \brief Main program for US_Edvabs. Loads translators and starts
@@ -23,7 +24,6 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-
 US_Edvabs::US_Edvabs() : US_Widgets()
 {
    setWindowTitle( tr( "Edit Velocity Absorbance Data" ) );
@@ -36,166 +36,67 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    QVBoxLayout* left = new QVBoxLayout;
 
    // Start of Grid Layout
-   specs = new QGridLayout;
+   QGridLayout* specs = new QGridLayout;
    int s_row = 0;
 
    // Row 1
-   pb_load = us_pushbutton( tr( "Load Data" ) );
-   //connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
+   QPushButton* pb_load = us_pushbutton( tr( "Load Data" ) );
+   connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    specs->addWidget( pb_load, s_row, 0, 1, 2 );
 
-   QPushButton* pb_details = us_pushbutton( tr( "Run Details" ), false );
+   pb_details = us_pushbutton( tr( "Run Details" ), false );
    specs->addWidget( pb_details, s_row++, 2, 1, 2 );
-   //le_file = us_lineedit( "", 1 );
-   //le_file->setReadOnly( true );
-   //specs->addWidget( le_file, s_row++, 2, 1, 2 );
-
-   // Row 1a
-   lb_id = us_label( "Run Info:", -1 );
-   //lb_id->setAlignment( Qt::AlignCenter );
-   specs->addWidget( lb_id, s_row, 0 );
-
-   le_id = us_lineedit( "", 1 );
-   //le_id->setReadOnly( true );
-   specs->addWidget( le_id, s_row++, 1, 1, 3 );
 
    // Row 2
+   QLabel* lb_info = us_label( "Run Info:", -1 );
+   specs->addWidget( lb_info, s_row, 0 );
 
-   //////
-   QLabel* lb_cell = us_label( tr( "Cell:" ), -1 );
-   //lb_cell->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   specs->addWidget( lb_cell, s_row, 0 );
-
-   //QwtCounter* ct_cell = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   //specs->addWidget( ct_cell, s_row, 1 );
-   QComboBox* cb_cell = us_comboBox();
-   specs->addWidget( cb_cell, s_row, 1 );
+   le_info = us_lineedit( "", 1 );
+   le_info->setReadOnly( true );
+   specs->addWidget( le_info, s_row++, 1, 1, 3 );
 
    // Row 3
+   QLabel* lb_cell = us_label( tr( "Cell:" ), -1 );
+   specs->addWidget( lb_cell, s_row, 0 );
+
+   cb_cell = us_comboBox();
+   specs->addWidget( cb_cell, s_row, 1 );
+
    QLabel* lb_channel = us_label( tr( "Channel:" ), -1 );
-   //lb_channel->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    specs->addWidget( lb_channel, s_row, 2 );
 
-   //QwtCounter* ct_channel = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   //specs->addWidget( ct_channel, s_row++, 3 );
-   QComboBox* cb_channel = us_comboBox();
+   cb_channel = us_comboBox();
    specs->addWidget( cb_channel, s_row++, 3 );
    
+   // Row 4
    QLabel* lb_wavelength = us_label( tr( "Wavelength:" ), -1 );
-   //lb_channel->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    specs->addWidget( lb_wavelength, s_row, 0 );
 
-   //QwtCounter* ct_channel = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   //specs->addWidget( ct_channel, s_row++, 3 );
-   QComboBox* cb_wavelength = us_comboBox();
+   cb_wavelength = us_comboBox();
    specs->addWidget( cb_wavelength, s_row++, 1 );
    
-/*
-   lb_active = us_label( "Active Data", -1 );
-   lb_active->setAlignment( Qt::AlignCenter );
-   specs->addWidget( lb_active, s_row, 2 );
-
-   le_active = us_lineedit( "", 1 );
-   le_active->setReadOnly( true );
-   specs->addWidget( le_active, s_row++, 3 );
-
-   lb_centerpiece = us_label( tr( "Specify Centerpiece" ), -1 );
-   lb_centerpiece->setAlignment( Qt::AlignCenter );
-   specs->addWidget( lb_centerpiece, s_row, 0 );
-
-   cb_centerpiece = us_comboBox();
-   //cb_centerpiece->setEnabled( false );
-   cb_centerpiece->setFont( QFont( US_GuiSettings::fontFamily(), 
-                                   US_GuiSettings::fontSize() + 1 ) );
-   specs->addWidget( cb_centerpiece, s_row++, 1 );
-
-   if ( ! US_Hardware::readCenterpieceInfo( cp_list ) )
-   {
-      QMessageBox::critical( this, 
-            tr( "UltraScan Failure" ),
-            tr( "Could not read centerpiece file" ) );
-      exit( 1 );
-   }
-         
-   cb_centerpiece->addItem( tr( "Not specified" ) );
-
-   for ( uint i = 0; i < cp_list.size(); i++ )
-   {
-      QString display = cp_list[ i ].material + ", " 
-         + QString::number( cp_list[ i ].channels * 2 ) + tr( " channels, " )
-         + QString::number( cp_list[ i ].pathlength, 'f', 2 ) + " cm ";
-
-      switch (cp_list[i].sector)
-      {
-         case 0:
-            display += tr( "(standard)" );
-            break;
-         case 1:
-            display += tr( "(rectangular)" );
-            break;
-         case 2:
-            display += tr( "(circular)" );
-            break;
-         case 3:
-            display += tr( "(synthetic)" );
-            break;
-         case 4:
-            display += tr( "(band-forming)" );
-            break;
-         default:
-            display += tr( "(undefined sector shape)" );
-            break;
-      }
-      
-      cb_centerpiece->addItem( display );
-   }
-
-   lb_rotor = us_label( tr( "Specify Rotor" ), -1 );
-   lb_rotor->setAlignment( Qt::AlignCenter );
-   specs->addWidget( lb_rotor, s_row, 0 );
-
-   cb_rotor = us_comboBox();
-   //cb_rotor->setEnabled( false );
-   specs->addWidget( cb_rotor, s_row++, 1 );
-
-   if ( ! US_Hardware::readRotorInfo( rotor_list ) )
-   {
-      QMessageBox::critical( this, 
-            tr( "UltraScan Failure" ),
-            tr( "Could not read rotor file" ) );
-      exit( 1 );
-   }
-         
-   cb_rotor->addItem( tr( "Not specified" ) );
-   cb_rotor->setFont( QFont( US_GuiSettings::fontFamily(), 
-                             US_GuiSettings::fontSize() + 1 ) );
-
-   for ( uint i = 0; i < rotor_list.size(); i++ )
-      cb_rotor->addItem( rotor_list[ i ].type );
-*/
-   
-   // Row 4
+   // Row 5
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
    specs->addWidget( lb_scan, s_row++, 0, 1, 4 );
    
-   // Row 5
+   // Row 6
 
    // Scans
-   lb_from = us_label( tr( "Scan Focus from:" ), -1 );
+   QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    specs->addWidget( lb_from, s_row, 0 );
 
    ct_from = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
    specs->addWidget( ct_from, s_row, 1 );
 
-   lb_to = us_label( tr( "to:" ), -1 );
+   QLabel* lb_to = us_label( tr( "to:" ), -1 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    specs->addWidget( lb_to, s_row, 2 );
 
    ct_to = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
    specs->addWidget( ct_to, s_row++, 3 );
    
-   // Row 6
+   // Row 7
    // Exclude pushbuttons
    pb_exclude = us_pushbutton( tr( "Exclude Single Scan" ), false );
    specs->addWidget( pb_exclude, s_row, 0, 1, 2 );
@@ -203,21 +104,18 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    specs->addWidget( pb_excludeRange, s_row++, 2, 1, 2 );
    
-   // Row 7
+   // Row 8
 
    pb_exclusion = us_pushbutton( tr( "Exclusion Profile" ), false );
    specs->addWidget( pb_exclusion, s_row, 0, 1, 2 );
 
-   // Edit pushbuttons
    pb_edit1 = us_pushbutton( tr( "Edit Single Scan" ), false );
    specs->addWidget( pb_edit1, s_row++, 2, 1, 2 );
 
-   // Row 8
+   // Row 9
    QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
    specs->addWidget( lb_edit, s_row++, 0, 1, 4 );
 
-   
-   
    // Meniscus row
    pb_meniscus = us_pushbutton( tr( "Specify Meniscus" ), false );
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
@@ -254,30 +152,8 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    le_baseline->setReadOnly( true );
    specs->addWidget( le_baseline, s_row++, 2, 1, 2 );
 
-   //edits = new QGridLayout;
-   //int e_row = 0;
-
-
-   //pb_editRange = us_pushbutton( tr( "Edit Scan Range" ), false );
-   //edits->addWidget( pb_editRange, e_row++, 2, 1, 2 );
-/*
-   lb_exclude = us_label( tr( "Exclude from:" ), -1 );
-   lb_exclude->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   edits->addWidget( lb_exclude, e_row, 0 );
-
-   ct_exclude = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   edits->addWidget( ct_exclude, e_row, 1 );
-
-   lb_to2 = us_label( tr( "to:" ), -1 );
-   lb_to2->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   edits->addWidget( lb_to2, e_row, 2 );
-
-   ct_exclude2 = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
-   edits->addWidget( ct_exclude2, e_row++, 3 );
-*/
-
    // Noise
-   lb_noise = us_label( tr( "Subtract RI Noise:" ), -1 );
+   QLabel* lb_noise = us_label( tr( "Subtract RI Noise:" ), -1 );
    lb_noise->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    specs->addWidget( lb_noise, s_row, 0 );
 
@@ -299,95 +175,12 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
    specs->addWidget( pb_invert, s_row, 0, 1, 2 );
   
-   QPushButton* pb_write = us_pushbutton( tr( "Save Current Edit Profile" ), false );
+   pb_write = us_pushbutton( tr( "Save Current Edit Profile" ), false );
    specs->addWidget( pb_write, s_row++, 2, 1, 2 );
 
-/*
-
-
-   row += s_row;
-////////////////
-   QGridLayout* edit = new QGridLayout;
-   int e_row = 0;
-
-   // Instructions (3 rows)
-   QLabel* lb_step = us_label( tr( "Step-by-Step<br>Instructions:" ), -1 );
-   lb_step->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   edit->addWidget( lb_step, e_row, 0, 3, 1 );
-
-   QTextEdit* te_instructions = us_textedit();
-   edit->addWidget( te_instructions, e_row, 1, 3, 3 );
-
-   e_row += 3;
-
-   specs->addLayout( edit, 1, 4, 6, 4 );
-   */
-///////////////
-
-
-
-
-/*
-   te_data = new US_Editor( US_Editor::LOAD, false );
-   
-   QFontMetrics fm( QFont( US_GuiSettings::fontFamily(), 
-                           US_GuiSettings::fontSize()   ) );
-   
-   te_data->setMinimumHeight( fm.height() * 20 );
-   te_data->setFixedWidth ( fm.width( '0' ) * 20 );
-
-   main->addWidget( te_data, row, 0, 20, 1 );
-
-   QBoxLayout* plot = new US_Plot( meniscus_plot, 
-         tr( "Meniscus Fit" ),
-         tr( "Radius" ), tr( "2DSA Meniscus RMSD Value" ) );
-   
-   us_grid( meniscus_plot );
-   
-   meniscus_plot->setMinimumSize( 400, 400 );
-   meniscus_plot->setAxisScale( QwtPlot::xBottom, 5.7, 6.8 );
-
-   main->addLayout( plot, row, 1, 20, 1 );
-   row += 20;
-
-   QBoxLayout* misc = new QHBoxLayout;
-
-   QLabel* lb_order = us_label( tr( "Fit Order:" ) );
-   misc->addWidget( lb_order );
-
-   sb_order = new QSpinBox();
-   sb_order->setRange( 2, 9 );
-   sb_order->setValue( 2 );
-   sb_order->setPalette( US_GuiSettings::editColor() );
-   misc->addWidget( sb_order );
-
-   QLabel* lb_fit = us_label( tr( "Meniscus at minimum:" ) );
-   misc->addWidget( lb_fit );
-
-   le_fit = us_lineedit( "" );
-   le_fit->setReadOnly( true );
-   misc->addWidget( le_fit );
-
-   QLabel* lb_rms_error = us_label( tr( "RMS Error:" ) );
-   misc->addWidget( lb_rms_error );
-   
-   le_rms_error = us_lineedit( "" );
-   le_rms_error->setReadOnly( true );
-   misc->addWidget( le_rms_error );
-
-
-
-   main->addLayout( misc, row++, 0, 1, 2 );
-*/
    // Button rows
 
    QBoxLayout* buttons = new QHBoxLayout;
-
-/*
-*/
-
-
-
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
@@ -401,42 +194,65 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
    buttons->addWidget( pb_accept );
 
-   /////////////////
+   // Plot layout on right side of window
    QBoxLayout* plot = new US_Plot( data_plot, 
          tr( "Absorbance Data" ),
          tr( "Radius (in cm)" ), tr( "Absorbance" ) );
-   
-   //us_grid( data_plot );
    
    data_plot->setMinimumSize( 600, 400 );
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
 
    left->addLayout( specs );
-   //left->addLayout( edits );
-
    left->addStretch();
-/*
-   pb_edit = us_pushbutton( tr( "Edit Data" ), false );
-   left->addWidget( pb_edit );
-   connect( pb_edit, SIGNAL( clicked() ), SLOT( menu() ) );
-   // Temporary enable for demo
-   pb_edit->setEnabled( true );
-*/
-
    left->addLayout( buttons );
 
    main->addLayout( left );
    main->addLayout( plot );
- 
-   edit_menu = false;
-   //menu();
 }
 
 void US_Edvabs::reset( void )
 {
-   qDebug() << "reset";
-   lb_from->setVisible( false );
+   le_info     ->setText( "" );
+   le_meniscus ->setText( "" );
+   le_dataRange->setText( "" );
+   le_plateau  ->setText( "" );
+   le_baseline ->setText( "" );
+
+   ct_from->setMinValue( 0 );
+   ct_from->setMaxValue( 0 );
+   ct_from->setValue   ( 0 );
+
+   ct_to->setMinValue( 0 );
+   ct_to->setMaxValue( 0 );
+   ct_to->setValue   ( 0 );
+
+   cb_cell      ->clear();
+   cb_channel   ->clear();
+   cb_wavelength->clear();
+
+   ct_noise->setValue( 4 );
+
+   data_plot->clear();
+   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
+   data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
+   data_plot->replot();
+
+   // Disable pushbuttons
+   pb_details     ->setEnabled( false );
+   pb_exclude     ->setEnabled( false );
+   pb_excludeRange->setEnabled( false );
+   pb_exclusion   ->setEnabled( false );
+   pb_edit1       ->setEnabled( false );
+   pb_meniscus    ->setEnabled( false );
+   pb_dataRange   ->setEnabled( false );
+   pb_plateau     ->setEnabled( false );
+   pb_baseline    ->setEnabled( false );
+   pb_noise       ->setEnabled( false );
+   pb_subtract    ->setEnabled( false );
+   pb_spikes      ->setEnabled( false );
+   pb_invert      ->setEnabled( false );
+   pb_write       ->setEnabled( false );
 }
 
 /*
@@ -641,94 +457,47 @@ void US_FitMeniscus::plot_data( void )
    meniscus_plot->replot();
 }
 */
-void US_Edvabs::menu( void )
+void US_Edvabs::load( void )
 {  
-   if ( edit_menu )
-   {
-      lb_from        ->setHidden( false );
-      ct_from        ->setHidden( false );
-      lb_to2         ->setHidden( false );
-      lb_to          ->setHidden( false );
-      ct_to          ->setHidden( false );
-      lb_exclude     ->setHidden( false );
-      ct_exclude     ->setHidden( false );
-      ct_exclude2    ->setHidden( false );
-      pb_edit1       ->setHidden( false );
-      pb_editRange   ->setHidden( false );
-      pb_exclude     ->setHidden( false );
-      pb_excludeRange->setHidden( false );
-      lb_noise       ->setHidden( false );
-      ct_noise       ->setHidden( false );
-      pb_noise       ->setHidden( false );
-      pb_exclusion   ->setHidden( false );
-      pb_subtract    ->setHidden( false );
-      pb_spikes      ->setHidden( false );
-      pb_invert      ->setHidden( false );
+   reset();
 
-      pb_load        ->setHidden( true );
-      le_file        ->setHidden( true );
-      lb_id          ->setHidden( true );
-      le_id          ->setHidden( true );
-      lb_active      ->setHidden( true );
-      le_active      ->setHidden( true );
-      lb_centerpiece ->setHidden( true );
-      cb_centerpiece ->setHidden( true );
-      lb_rotor       ->setHidden( true );
-      cb_rotor       ->setHidden( true );
-      pb_meniscus    ->setHidden( true );
-      le_meniscus    ->setHidden( true );
-      pb_dataRange   ->setHidden( true );
-      le_dataRange   ->setHidden( true );
-      pb_plateau     ->setHidden( true );
-      le_plateau     ->setHidden( true );
-      pb_baseline    ->setHidden( true );
-      le_baseline    ->setHidden( true );
-                    
-      pb_edit->setText( tr( "Edit Specifications Menu" ) );
-   }
-   else
+   // Ask for data directory
+   QString dir = QFileDialog::getExistingDirectory( this, 
+         tr("Raw Data Directory"),
+         US_Settings::dataDir(),
+         QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
+
+   if ( dir.isEmpty() ) return; 
+
+
+   QStringList components = dir.split( QRegExp( "[/\\\\]" ), QString::SkipEmptyParts );  
+   
+   QString runID = components.last();
+
+   QStringList nameFilters = ( QStringList() << runID + ".?.?.?*" );
+
+   QStringList files = QDir::entryList( nameFilters, 
+         QDir::Files | QDir::Readable, QDir::Name );
+
+   // For each file matching format, read into local structure
+   for ( int i = 0; i < files.size; i++ )
    {
-      pb_load        ->setHidden( false );
-      le_file        ->setHidden( false );
-      lb_id          ->setHidden( false );
-      le_id          ->setHidden( false );
-      lb_active      ->setHidden( false );
-      le_active      ->setHidden( false );
-      lb_centerpiece ->setHidden( false );
-      cb_centerpiece ->setHidden( false );
-      lb_rotor       ->setHidden( false );
-      cb_rotor       ->setHidden( false );
-      pb_meniscus    ->setHidden( false );
-      le_meniscus    ->setHidden( false );
-      pb_dataRange   ->setHidden( false );
-      le_dataRange   ->setHidden( false );
-      pb_plateau     ->setHidden( false );
-      le_plateau     ->setHidden( false );
-      pb_baseline    ->setHidden( false );
-      le_baseline    ->setHidden( false );
-                     
-      lb_from        ->setHidden( true );
-      ct_from        ->setHidden( true );
-      lb_to          ->setHidden( true );
-      lb_to2         ->setHidden( true );
-      ct_to          ->setHidden( true );
-      lb_exclude     ->setHidden( true );
-      ct_exclude     ->setHidden( true );
-      ct_exclude2    ->setHidden( true );
-      pb_edit1       ->setHidden( true );
-      pb_editRange   ->setHidden( true );
-      pb_exclude     ->setHidden( true );
-      pb_excludeRange->setHidden( true );
-      lb_noise       ->setHidden( true );
-      ct_noise       ->setHidden( true );
-      pb_noise       ->setHidden( true );
-      pb_exclusion   ->setHidden( true );
-      pb_subtract    ->setHidden( true );
-      pb_spikes      ->setHidden( true );
-      pb_invert      ->setHidden( true );
-      
-      pb_edit->setText( tr( "Edit Data Menu" ) );
+      // US_DataIO::readRawDataBlob( files[ i ], data structure for input data );
+      //QFile f = QFile( files[ i ] );
+      //f.open( QIODevice::ReadOnly );
+      //QDataStream ds( &f );
+
+      //ds.writeRawData( char_ptr, length );
+      // ...
+
+
+      //f.close();
    }
 
-   edit_menu = ! edit_menu;
+   qDebug() << "comp : " << components;
+   qDebug() << "dir  : " << dir;
+   qDebug() << "runID: " << runID;
+
+   // Update fields
+
 }
