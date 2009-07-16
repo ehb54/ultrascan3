@@ -1,3 +1,4 @@
+// #define RUN_SHORT
 #define NO_US
 #include "../include/us_fe_nnls_t.h"
 #include "../include/us_ga.h"
@@ -1204,14 +1205,18 @@ US_fe_nnls_t::init_run(const QString & data_file,
          monte_carlo_iterations = GA_Params.monte_carlo;
          ds >> GA_Params.demes;
          ds >> GA_Params.generations;
-         //   GA_Params.generations = 2;
+#if defined(RUN_SHORT)
+         GA_Params.generations = 2;
+#endif
          ds >> GA_Params.crossover;
          ds >> GA_Params.mutation;
          ds >> GA_Params.plague;
          ds >> GA_Params.elitism;
          ds >> GA_Params.migration_rate;
          ds >> GA_Params.genes;
-         //   GA_Params.genes = 10;
+#if defined(RUN_SHORT)
+         GA_Params.genes = 10;
+#endif
          ds >> GA_Params.initial_solutes;
          ds >> GA_Params.random_seed;
          if (!myrank)

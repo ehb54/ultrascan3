@@ -406,8 +406,11 @@ void f_node_mutate_solute(void *v)
             node_mutate_count_s++;
             d[0] = v.x;
 #if defined(DYNAMIC_ROUNDING)
-            double spacing = (d[3] - d[2]) / (d[4] - 1);
-            d[0] = d[2] + floor(.5 + (d[0] - d[2]) / spacing) * spacing;
+            if ( ga_sc ) 
+            {
+               double spacing = (d[3] - d[2]) / (d[4] - 1);
+               d[0] = d[2] + floor(.5 + (d[0] - d[2]) / spacing) * spacing;
+            }
 #endif
             if(d[0] < d[2])
             {
@@ -420,8 +423,13 @@ void f_node_mutate_solute(void *v)
                   d[0] = d[3];
                }
             }
-#if !defined(DYNAMIC_ROUNDING)
-            d[0] = roundn(d[0], s_rounding, solute_rounding);
+#if defined(DYNAMIC_ROUNDING)
+            if ( !ga_sc )
+            {
+#endif
+               d[0] = roundn(d[0], s_rounding, solute_rounding);
+#if defined(DYNAMIC_ROUNDING)
+            }
 #endif
          }
       }
