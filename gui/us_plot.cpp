@@ -1355,10 +1355,10 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    QLabel* lb_scaleStep = us_label( tr( "Step:" ) );
 
    le_scaleFrom = us_lineedit( 
-         QString::number( plot->axisScaleDiv( axis )->lBound() ), 1 );
+         QString::number( plot->axisScaleDiv( axis )->lowerBound() ), 1 );
    
    le_scaleTo   = us_lineedit( 
-         QString::number( plot->axisScaleDiv( axis )->hBound() ), 1 );
+         QString::number( plot->axisScaleDiv( axis )->upperBound() ), 1 );
    
    le_scaleStep = us_lineedit( 
          QString::number( plot->axisStepSize( axis )           ), 1 );
