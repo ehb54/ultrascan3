@@ -75,6 +75,11 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
    // Write data type
    write( ds, data.type, 2, crc );
 
+   // Create and write a guid
+   uuid_t uuid;
+   uuid_generate( uuid );
+   write( ds, (char*) &uuid, 16, crc );
+
    // Write description
    char desc[ 240 ];
    bzero( desc, sizeof desc );
@@ -98,10 +103,10 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
    {
       for ( uint j = 0; j < data.scanData[ i ].values.size(); j++ )
       {
-         reading* r  = &data.scanData[ i ].values[ j ];
+         reading* r = &data.scanData[ i ].values[ j ];
 
-         min_radius  = min( min_radius, r->d.radius );
-         max_radius  = max( max_radius, r->d.radius );
+         min_radius = min( min_radius, r->d.radius );
+         max_radius = max( max_radius, r->d.radius );
 
          p.min_data1 = min( p.min_data1, r->value );
          p.max_data1 = max( p.max_data1, r->value );
@@ -120,10 +125,12 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
    float delta = (float) ( r2 - r1 );
    write( ds, (char*) &delta, 4, crc );
 
+
    write( ds, (char*) &p.min_data1, 4, crc );
    write( ds, (char*) &p.max_data1, 4, crc );
    write( ds, (char*) &p.min_data2, 4, crc );
    write( ds, (char*) &p.max_data2, 4, crc );
+
 
    // Write out scan count
    short int count = (short int) data.scanData.size();
