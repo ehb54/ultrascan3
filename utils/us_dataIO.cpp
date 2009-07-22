@@ -116,8 +116,11 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
       }
    }
 
-   write( ds, (char*) &min_radius,  4, crc );
-   write( ds, (char*) &max_radius,  4, crc );
+   short int min_r = (int) ( min_radius * 1000.0 );
+   short int max_r = (int) ( max_radius * 1000.0 );
+
+   write( ds, (char*) &min_r,  2, crc );
+   write( ds, (char*) &max_r,  2, crc );
 
    // Distance between radius entries
    double r1 = data.scanData[ 0 ].values[ 0 ].d.radius;
@@ -170,26 +173,24 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
    write( ds, (char*) &w, 4, crc );
 
    // Write reading
-   double    delta = ( p.max_data1 - p.min_data1 ) / 65536;
+   double    delta  = ( p.max_data1 - p.min_data1 ) / 65536;
+   double    delta2 = ( p.max_data2 - p.min_data2 ) / 65536;
    double    v;   // value
    short int si;  // short int
+
+   bool      stdDev = ( p.min_data2 != 0.0 || p.max_data2 != 0.0 );
 
    for ( unsigned int i = 0; i < data.values.size(); i++ )
    {
       v  = data.values[ i ].value;
       si = (short int) ( ( v - p.min_data1 ) / delta );
       write( ds, (char*) &si, 2, crc );
-   }
 
-   // If applicable, write std deviation
-   if ( p.min_data2 == 0.0 && p.max_data2 == 0.0 )
-   {
-      delta = ( p.max_data2 - p.min_data2 ) / 65536;
-      
-      for ( unsigned int i = 0; i < data.values.size(); i++ )
+      // If applicable, write std deviation
+      if ( stdDev )
       {
          v = data.values[ i ].stdDev;
-         si = (short int) ( ( v - p.min_data2 ) / delta );
+         si = (short int) ( ( v - p.min_data2 ) / delta2 );
          write( ds, (char*) &si, 2, crc );
       }
    }
@@ -204,3 +205,165 @@ void US_DataIO::write( QDataStream& ds, char* c, int len, unsigned long& crc )
    ds.writeRawData(                       c, len );
    US_Crc::crc32  ( crc, (unsigned char*) c, len );
 }
+
+int US_DataIO::readRawData( const QString& file, rawData& data )
+{
+   QFile f( file );
+   if ( ! f.open( QIODevice::ReadOnly ) ) return CANTOPEN;
+   QDataStream ds( &f );
+
+   int           err = OK;
+   unsigned long crc = 0xffffffffUL;
+
+   try
+   {
+      // Read magic number
+      char magic[ 4 ];
+      read( ds, magic, 4, crc );
+      if ( ! strncmp( magic, "USDA", 4 ) ) throw NOT_USDATA;
+    
+      // Read and get the file type
+      char type[ 3 ];
+      read( ds, type, 2, crc );
+      type[ 2 ] = '\0';
+    
+      QStringList types = QStringList() << "RA" << "IP" << "RI" << "FI" 
+                                        << "WA" << "WI";
+    
+      if ( ! types.contains( QString( type ) ) ) throw BADTYPE;
+      strncpy( data.type, type, 2 );
+    
+      // Get the guid
+      read( ds, data.guid, 16, crc );
+    
+      // Get the description
+      char desc[ 240 ];
+      read( ds, desc, 240, crc );
+      data.description = QString( desc );
+
+      // Get the parameters to expand the values
+
+      union
+      {
+         char      c[ 2 ];
+         short int I;
+      } si;
+
+      read( ds, si.c, 2, crc );
+      double min_radius = si.I / 1000.0;
+
+      read( ds, si.c, 2, crc );
+      double max_radius = si.I / 1000.0;
+
+      union
+      {
+         char  c[ 4 ];
+         int   I;
+         float f;
+      } v;
+
+      read( ds, v.c, 4, crc );
+      double delta_radius = v.f;
+
+      read( ds, v.c, 4, crc );
+      double min_data1 = v.f;
+
+      read( ds, v.c, 4, crc );
+      double max_data1 = v.f;
+
+      read( ds, v.c, 4, crc );
+      double min_data2 = v.f;
+
+      read( ds, v.c, 4, crc );
+      double max_data2 = v.f;
+
+      short int scan_count;
+      read( ds, (char*) &scan_count, 2, crc );
+
+      // Read each scan
+      for ( int i = 0 ; i < scan_count; i ++ )
+      {
+         read( ds, v.c, 4, crc );
+         if ( ! strncmp( v.c, "DATA", 4 ) ) throw NOTSYNC;
+
+         scan s;
+         
+         // Temperature
+         read( ds, si.c, 2, crc );
+         s.temperature = si.I / 10.0;
+
+         // RPM
+         read( ds, si.c, 2, crc );
+         s.rpm = si.I;
+
+         // Seconds
+         read( ds, v.c, 4, crc );
+         s.seconds = v.I;
+
+         // Omega2t
+         read( ds, v.c, 4, crc );
+         s.omega2t = v.f;
+
+         // Wavelength
+         read( ds, v.c, 4, crc );
+         s.wavelength = v.f;
+
+         // Get the readings
+         double  radius  = min_radius;
+         double  factor1 = ( max_data1 - min_data1 ) / 65536.0;
+         double  factor2 = ( max_data2 - min_data2 ) / 65536.0;
+         bool    stdDev  = ( min_data2 != 0.0 || max_data2 != 0.0 );
+
+         do
+         {
+            reading r;
+
+            r.d.radius = radius;
+            
+            read( ds, si.c, 2, crc );
+            r.value = si.I * factor1 + min_data1;
+
+            if ( stdDev )
+            {
+               read( ds, si.c, 2, crc );
+               r.stdDev = si.I * factor2 + min_data1;
+            }
+            else
+               r.stdDev = 0.0;
+
+            // Add the reading to the scan
+            s.values.push_back( r );
+            
+            radius += delta_radius;
+
+         } while ( radius < max_radius );
+
+         // Get the interpolated bitmap;
+         uint bytes = s.values.size();
+         s.interpolated = new unsigned char[ bytes ];
+         read( ds, (char*) s.interpolated, bytes, crc );
+
+         // Add the scan to the data
+         data.scanData.push_back( s );
+      }
+
+      // Read the crc
+      unsigned long read_crc;
+      ds.readRawData( (char*) &read_crc , 4 );
+      if ( crc != read_crc ) throw BADCRC;
+
+   } catch( int error )
+   {
+      err = error;
+   }
+
+   f.close();
+   return err;
+}
+
+void US_DataIO::read( QDataStream& ds, char* c, int len, unsigned long& crc )
+{
+   ds.readRawData(                       c, len );
+   US_Crc::crc32 ( crc, (unsigned char*) c, len );
+}
+
