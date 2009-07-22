@@ -77,11 +77,11 @@ class US_DataIO
 {
    public:
 
-      enum { OK, CANTOPEN, BADCRC };
+      enum { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, NOTSYNC };
 
       static bool readLegacyFile( const QString&, beckmanRaw& );
       static int  writeRawData  ( const QString&, rawData& );
-//      static int  readRawData   ( const QString&, rawData& );
+      static int  readRawData   ( const QString&, rawData& );
 
    private:
 
@@ -98,6 +98,7 @@ class US_DataIO
                              unsigned long&, const parameters& );
 
       static void write( QDataStream&, char*, int, unsigned long& );
+      static void read ( QDataStream&, char*, int, unsigned long& );
 };
 
 #endif
