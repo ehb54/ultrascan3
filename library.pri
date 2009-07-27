@@ -16,7 +16,8 @@ unix {
   DEPENDPATH   += ../gui ../utils ../db $$QWTPATH/include
   INCLUDEPATH  += ../gui ../utils ../db $$QWTPATH/include $$QCAPATH/include/QtCrypto
   DEFINES      += LINUX
-  DESTDIR      = ../lib
+  LIBS         += -luuid
+  DESTDIR       = ../lib
 }
 
 win32 {
