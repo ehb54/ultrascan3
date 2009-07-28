@@ -73,15 +73,15 @@ US_Convert::US_Convert() : US_Widgets()
 
    // Write pushbuttons
 
-   QBoxLayout* write = new QHBoxLayout;
+   QBoxLayout* writeButtons = new QHBoxLayout;
    pb_write = us_pushbutton( tr( "Write Current Data" ), false );
-   //connect( pb_load, SIGNAL( clicked() ), SLOT( write() ) );
-   write->addWidget( pb_write );
+   connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
+   writeButtons->addWidget( pb_write );
 
    pb_writeAll = us_pushbutton( tr( "Write All Data" ), false );
-   //connect( pb_load, SIGNAL( clicked() ), SLOT( writeAll() ) );
-   write->addWidget( pb_writeAll );
-   main->addLayout( write, row++, 0, 1, 2 );
+   connect( pb_writeAll, SIGNAL( clicked() ), SLOT( writeAll() ) );
+   writeButtons->addWidget( pb_writeAll );
+   main->addLayout( writeButtons, row++, 0, 1, 2 );
 
    // Standard pushbuttons
 
@@ -150,21 +150,18 @@ void US_Convert::load( void )
       good << files[ i ];
    }
 
+   runType = files[ 0 ].right( 3 ).left( 2 ).toUpper(); // 1st 2 chars of extention
+
    QStringList channels;
-   QStringList cells;
 
    // Parse the good filenames to determine cells and channels
    for ( int i = 0; i < good.size(); i++ )
    {
       QChar c = good[ i ].at( 0 );
       if ( c.isLetter() && ! channels.contains( c ) ) channels << c;
-   
-      QString cell = good[ i ].right( 1 );  // Get the last character
-      if ( ! cells.contains( cell ) ) cells << cell;
    }
 
    if ( channels.isEmpty() ) channels << "A";
-
 
 // This is not, strictly speaking, correct. The combo boxes need to be updated
 // according to cell, then channel, then wavelength.  That is, a run may
@@ -173,7 +170,6 @@ void US_Convert::load( void )
 // This should be a rarity and is ignored for now.
 
    // Populate the combo boxes
-   cb_cell   ->insertItems( 0, cells );
    cb_channel->insertItems( 0, channels );
 
    // Now read the data.
@@ -182,20 +178,31 @@ void US_Convert::load( void )
    {
       beckmanRaw data;
       US_DataIO::readLegacyFile( dir + good[ i ], data );
+
+      // Add channel
+      QChar c = good[ i ].at( 0 );  // Get 1st character
+
+      data.channel = ( c.isDigit() ) ? 'A' : c.toAscii();
+
       raw_scans << data;
    }
 
-   // Get wavelengths
+   // We can't trust the filename for cell number
+   // Get wavelengths and cell numbers
    
+   QStringList cells;
    QStringList wavelengths;
 
    for ( int i = 0; i < raw_scans.size(); i++ )
    {
       QString wl = QString::number( raw_scans[ i ].t.wavelength, 'f', 1 );
       if ( ! wavelengths.contains( wl ) ) wavelengths << wl;
+
+      QString s = QString::number( raw_scans[ i ].cell );
+      if ( ! cells.contains( s ) ) cells << s;
    }
 
-   //cb_wavelength->insertItems( 0, wavelengths );
+   cb_cell->insertItems( 0, cells );
 
    // Merge wavelengths
 
@@ -240,9 +247,221 @@ void US_Convert::load( void )
 }
 
 void US_Convert::write( void )
-{  
+{ 
+   // Specify the filename
+   QString     dirname    = le_dir->text();
+   QStringList components = dirname.split( "/", QString::SkipEmptyParts );
+   QString     runID      = components.last();
+
+   QString     cell       = cb_cell      ->currentText();
+   QString     channel    = cb_channel   ->currentText();
+   QString     wavelength = cb_wavelength->currentText();
+
+   QString filename   = runID      + "." 
+                      + runType    + "." 
+                      + cell       + "." 
+                      + channel    + "." 
+                      + wavelength + ".auc";
+
+   int err = write( filename );
+   
+   if ( err != US_DataIO::OK )
+   {
+      // Try to delete the file and tell the user   
+   }
+   else 
+   {
+      QMessageBox::information( this,
+            tr( "Success" ),
+            dirname + filename + tr( " written." ) );
+   }        
 }
 
 void US_Convert::writeAll( void )
 {  
+}
+
+int US_Convert::write( const QString& filename )
+{
+   // Convert the data into the UltraScan3 data structure
+   QStringList parts = filename.split( "." );
+   QString     runType    = parts[ 1 ];
+   int         cell       = parts[ 2 ].toInt();
+   char        channel    = parts[ 3 ].at( 0 ).toAscii();
+   double      wavelength = parts[ 4 ].toDouble();
+   rawData     newScan;
+
+   // Get a list of the data that matches the cell / channel / wl
+
+   QList< beckmanRaw* > data;
+
+   for ( int i = 0; i < raw_scans.size(); i++ )
+   {
+      if ( raw_scans[ i ].cell == cell       &&
+           raw_scans[ i ].channel == channel &&
+           fabs ( raw_scans[ i ].t.wavelength - wavelength ) < 5.0 )
+         data << &raw_scans[ i ];
+   }
+
+   // Sort the list according to time.  Use a simple bubble sort
+   for ( int i = 0; i < data.size(); i++ )
+   {
+      for ( int j = i + i; j < data.size(); j++ )
+      {
+         if ( data[ j ]->seconds < data[ i ]->seconds ) data.swap( i, j );
+      }
+   }
+
+   if ( data.isEmpty() ) return US_DataIO::NODATA; 
+
+   strncpy( newScan.type, runType.toAscii().constData(), 2 );
+   // GUID is done by US_DataIO.
+   newScan.cell    = cell;
+   newScan.channel = channel;
+   newScan.description = data[ 0 ]->description;
+   
+   // Get the min and max radius
+   double min_radius = 100.0;
+   double max_radius = 0.0;
+
+   for ( int i = 0; i < data.size(); i++ )
+   {
+      double first = data[ i ]->readings[ 0 ].d.radius;
+
+      uint   size  = data[ i ]->readings.size();
+      double last  = data[ i ]->readings[ size - 1 ].d.radius; 
+
+      min_radius = min( min_radius, first );
+      max_radius = max( max_radius, last );
+   }
+
+   // Convert the scans
+   
+   // Set the distance between readings to a constant for now
+   double delta_r = 0.001;
+
+   for ( int i = 0; i < data.size(); i++ )
+   {
+      scan s;
+      s.temperature = data[ i ]->temperature;
+      s.rpm         = data[ i ]->rpm;
+      s.seconds     = data[ i ]->seconds;
+      s.omega2t     = data[ i ]->omega2t;
+      s.wavelength  = data[ i ]->t.wavelength;
+
+      // Readings here and interpolated array
+      int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
+
+      int bitmap_size = ( radius_count + 7 ) / 8;
+      s.interpolated = (unsigned char*) malloc( bitmap_size );
+      bzero( s.interpolated, bitmap_size );
+
+/////////
+
+      /*
+         There are two indexes needed here.  The new radius as iterated
+         from min_radius to max_radius and the pointer to the current 
+         scan readings is j.  
+
+         The old scan reading is data[ i ]->values[ j ]
+
+         If the current new radius is within 0.0003 of the data[ i ]->values[ j ].d.radius
+            copy data[ i ]->values[ j ].value into the new reading
+            copy data[ i ]->values[ j ].stdDev into the new reading
+            increment j
+
+         If the current new radius is less than data[ i ]->values[ 0 ].d.radius,
+         then 
+            copy data[ i ]->values[ 0 ].value into the new reading
+            set the std dev to 0.0.
+            set the interpolated flag
+         
+         If the current new radius is greater than data[ i ]->values[ last() ].d.radius
+            copy data[ i ]->values[ last ].value into the new reading
+            set the std dev to 0.0.
+            set the interpolated flag
+
+         else
+            interplate between data[ i ]->values[ j ] and data[ i ]->values[ j -1 ]
+            set the std dev to 0.0.
+            set the interpolated flag
+
+         Append the new reading and continue.
+      
+      */
+      double radius = min_radius;
+      double r0     = data[ i ]->readings[ 0 ].d.radius;
+      uint   rCount = data[ i ]->readings.size();       
+      double rLast  = data[ i ]->readings[ rCount - 1 ].d.radius;
+      
+      int    k      = 0;
+      
+      for ( int j = 0; j < radius_count; j++ )
+      {
+         reading r;
+
+         double  dr = radius - data[ i ]->readings[ k ].d.radius;
+
+         r.d.radius = radius;
+         
+         if ( dr < 3.0e-4 ) // A value
+         {
+            r.value  = data[ i ]->readings[ k ].value;
+            r.stdDev = data[ i ]->readings[ k ].stdDev;
+            k++;
+         }
+         else if ( radius < r0 ) // Before the first
+         {
+            r.value  = data[ i ]->readings[ 0 ].value;
+            r.stdDev = 0.0;
+            setInterpolated( s.interpolated, j );
+         }
+         else if ( radius > rLast ) // After the last
+         {
+            r.value  = data[ i ]->readings[ rCount - 1 ].value;
+            r.stdDev = 0.0;
+            setInterpolated( s.interpolated, j );
+         }
+         else  // Interpolate the value
+         {
+            double dv = data[ i ]->readings[ k     ].value - 
+                        data[ i ]->readings[ k - 1 ].value;
+            
+            double dR = data[ i ]->readings[ k     ].d.radius -
+                        data[ i ]->readings[ k - 1 ].d.radius;
+
+            r.value  =  data[ i ]->readings[ k - 1 ].value + dv * ( dR - dr ) / dR;
+            
+            r.stdDev = 0.0;
+            setInterpolated( s.interpolated, j );
+         }
+
+         s.values.push_back( r );
+
+         radius += delta_r;
+      }
+
+      newScan.scanData.push_back( s );
+   }
+
+   
+   // Get the directory and write out the data
+   QString dirname = le_dir->text();
+
+   int result = US_DataIO::writeRawData( dirname + filename, newScan );
+   
+   // Delete the bitmaps we allocated
+
+   for ( uint i = 0; i < newScan.scanData.size(); i++ ) 
+      delete newScan.scanData[ i ].interpolated;
+  
+   return result;
+}
+
+void US_Convert::setInterpolated ( unsigned char* bitmap, int location )
+{
+   int byte = location / 8;
+   int bit  = location % 8;
+
+   bitmap[ byte ] |= 1 << 7 - bit;
 }

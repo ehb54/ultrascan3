@@ -203,7 +203,7 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
 void US_DataIO::write( QDataStream& ds, char* c, int len, unsigned long& crc )
 {
    ds.writeRawData(                       c, len );
-   US_Crc::crc32  ( crc, (unsigned char*) c, len );
+   crc = US_Crc::crc32  ( crc, (unsigned char*) c, len );
 }
 
 int US_DataIO::readRawData( const QString& file, rawData& data )
@@ -364,6 +364,6 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
 void US_DataIO::read( QDataStream& ds, char* c, int len, unsigned long& crc )
 {
    ds.readRawData(                       c, len );
-   US_Crc::crc32 ( crc, (unsigned char*) c, len );
+   crc = US_Crc::crc32 ( crc, (unsigned char*) c, len );
 }
 
