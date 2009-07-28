@@ -17,7 +17,9 @@ class US_Convert : public US_Widgets
 	private:
 
       US_Help       showHelp;
-     
+    
+      QString       runType;
+
       QLineEdit*    le_dir;
 
       QComboBox*    cb_cell;
@@ -29,11 +31,17 @@ class US_Convert : public US_Widgets
 
       QList< beckmanRaw > raw_scans;      
 
-	public slots:
+      int  write           ( const QString& );
+      void setInterpolated ( unsigned char*, int );
+
+	private slots:
       void load     ( void );
       void reset    ( void );
 
       void write    ( void );
+
+
+
       void writeAll ( void );
 		void help     ( void )
       { showHelp.show_help( "manual/us_convert.html" ); };

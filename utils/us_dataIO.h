@@ -36,6 +36,7 @@ class beckmanRaw
    public:
    QString description;
    char    type;   // I P R W F
+   char    channel;
    int     cell;
    double  temperature;
    double  rpm;
@@ -68,6 +69,8 @@ class rawData
    public:
    char    type[ 2 ];
    char    guid[ 16 ];
+   int     cell;
+   char    channel;
    QString description;
    
    vector< scan > scanData;
@@ -77,7 +80,7 @@ class US_DataIO
 {
    public:
 
-      enum { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, NOTSYNC };
+      enum { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, NOTSYNC, NODATA };
 
       static bool readLegacyFile( const QString&, beckmanRaw& );
       static int  writeRawData  ( const QString&, rawData& );

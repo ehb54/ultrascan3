@@ -73,6 +73,6 @@ class US_EXTERN US_Crc
 {
    public:
       static unsigned long crc32( 
-         unsigned long&, const unsigned char*, unsigned int );
+         unsigned long, const unsigned char*, unsigned int );
 };
 
