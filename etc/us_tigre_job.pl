@@ -9,12 +9,12 @@
 
 @bcfdowncount = `pbsnodes -l`;
 # laredo is down
-# @laredodowncount = `ssh laredo pbsnodes -l`;
+@laredodowncount = `ssh laredo pbsnodes -l`;
 @alamodowncount = `ssh alamo pbsnodes -l`;
 
-$bcf_no_procs = 42 - 2 * @bcfdowncount;
+$bcf_no_procs = 40 - 2 * @bcfdowncount;
 $alamo_no_procs = 31 - 2 * @alamodowncount;
-$laredo_no_procs = 8 - 4 * @laredodowncount;
+$laredo_no_procs = 40 - 4 * @laredodowncount;
 
 # END USER EDITABLE SECTION
 
@@ -358,7 +358,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
        'bin'   ,
        'bin64' ,
        'bin' ,
-       'bin'   ,
+       'bin64'   ,
        'bin'   ,
        'bin'   ,
 	 'bin64'
@@ -469,7 +469,7 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   $bcf_no_procs ,
 	   $alamo_no_procs ,
 	   $laredo_no_procs ,
-	   100 ,
+	   2048 , # hlrb2
 	   32 , # ng2.vpac.monash
 	   64 #meta
 	   );
@@ -618,7 +618,7 @@ $FACTORYTYPE = $factorytypes[$usesys];
 $BIN = $bins[$usesys];
 $LD_XML = $ld_xml[$usesys];
 $LD_QUEUE = $queues[$usesys];
-$PROJECT = "<project>ULTRASCAN</project>" if $default_system eq 'lonestar.tacc.utexas.edu';
+$PROJECT = "<project>TG-MCB070040N</project>" if $default_system eq 'lonestar.tacc.utexas.edu';
 $MAXMEM = "<maxMemory>2000</maxMemory>" if $SYSTEM =~ /ng2.vpac.monash.edu.au/;
 
 $WORKTMP = "${WORK}/tmp";
