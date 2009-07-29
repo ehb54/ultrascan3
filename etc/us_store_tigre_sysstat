@@ -67,7 +67,7 @@ for($i = 0; $i < $cutoff; $i++) {
     $t->open($systems[$i] =~ /lonestar/ ? "lslogin2.lonestar.tacc.utexas.edu" : $systems[$i]);
     print OUT "$systems[$i] ";
     if(!length($t->errmsg)) {
-	if($systems[$i] =~ /tamu.edux/) {
+	if(0 && $systems[$i] =~ /hlrb/) {
 	    print OUT 'up TESTING *';
 	} else {
 	    print OUT 'up * *';
@@ -120,7 +120,8 @@ for($i = $cutoff; $i < @systems; $i++) {
     $t = new Net::Telnet(Timeout=>.1, Errmode=>'return', Port=>$globusport[$i]);
     $t->open($systems[$i]);
     if(!length($t->errmsg)) { # && !($systems[$i] =~ /^laredo/)) {
-	print OUT 'up ';
+	print OUT 'up '; # if !($systems[$i] =~ /laredo/);
+#	print OUT 'TEST ' if $systems[$i] =~ /laredo/;
 	if(!$noproxy) { #  && !($systems[$i] =~ /laredo/)) {
 	    $sys1 = &timedexec(15, "perl $ultrascan/etc/pbsinfo.pl $systems[$i] 15001 2>/dev/null");
 	    chomp $sys1;
