@@ -1029,7 +1029,7 @@ void US_Hydrodyn::view_pdb()
 void US_Hydrodyn::select_model(int val)
 {
    current_model = val;
-   QString msg = QString("\n\n%1 models selected:").arg(project);
+   QString msg = QString("\n%1 models selected:").arg(project);
    for(int i = 0; i < lb_model->numRows(); i++)
    {
       if (lb_model->isSelected(i))
@@ -1039,7 +1039,7 @@ void US_Hydrodyn::select_model(int val)
       }
    }
    msg += "\n";
-   editor->setText(msg);
+   editor->append(msg);
 
    // check integrity of PDB file and confirm that all residues are correctly defined in residue table
    if (results_widget)
