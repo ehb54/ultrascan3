@@ -163,11 +163,12 @@ void US_Convert::load( void )
 
    if ( channels.isEmpty() ) channels << "A";
 
-// This is not, strictly speaking, correct. The combo boxes need to be updated
-// according to cell, then channel, then wavelength.  That is, a run may
-// have multiple cells for one cell, but only one channel for another cell.
+   // This is not, strictly speaking, correct. The combo boxes need to be
+   // updated according to cell, then channel, then wavelength.  That is, a run
+   // may have multiple cells for one cell, but only one channel for another
+   // cell.
 
-// This should be a rarity and is ignored for now.
+   // This should be a rarity and is ignored for now.
 
    // Populate the combo boxes
    cb_channel->insertItems( 0, channels );
@@ -351,12 +352,9 @@ int US_Convert::write( const QString& filename )
 
       // Readings here and interpolated array
       int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
-
       int bitmap_size = ( radius_count + 7 ) / 8;
       s.interpolated = (unsigned char*) malloc( bitmap_size );
       bzero( s.interpolated, bitmap_size );
-
-/////////
 
       /*
          There are two indexes needed here.  The new radius as iterated
@@ -387,11 +385,11 @@ int US_Convert::write( const QString& filename )
             set the interpolated flag
 
          Append the new reading and continue.
-      
       */
+
       double radius = min_radius;
       double r0     = data[ i ]->readings[ 0 ].d.radius;
-      uint   rCount = data[ i ]->readings.size();       
+      int    rCount = data[ i ]->readings.size();       
       double rLast  = data[ i ]->readings[ rCount - 1 ].d.radius;
       
       int    k      = 0;
@@ -399,12 +397,11 @@ int US_Convert::write( const QString& filename )
       for ( int j = 0; j < radius_count; j++ )
       {
          reading r;
-
          double  dr = radius - data[ i ]->readings[ k ].d.radius;
 
          r.d.radius = radius;
          
-         if ( dr < 3.0e-4 ) // A value
+         if ( dr > -3.0e-4   &&  k < rCount ) // A value
          {
             r.value  = data[ i ]->readings[ k ].value;
             r.stdDev = data[ i ]->readings[ k ].stdDev;
@@ -416,7 +413,7 @@ int US_Convert::write( const QString& filename )
             r.stdDev = 0.0;
             setInterpolated( s.interpolated, j );
          }
-         else if ( radius > rLast ) // After the last
+         else if ( radius > rLast  ||  k >= rCount ) // After the last
          {
             r.value  = data[ i ]->readings[ rCount - 1 ].value;
             r.stdDev = 0.0;
@@ -430,14 +427,15 @@ int US_Convert::write( const QString& filename )
             double dR = data[ i ]->readings[ k     ].d.radius -
                         data[ i ]->readings[ k - 1 ].d.radius;
 
-            r.value  =  data[ i ]->readings[ k - 1 ].value + dv * ( dR - dr ) / dR;
-            
+            dr = radius - data[ i ]->readings[ k - 1 ].d.radius;
+
+            r.value  =  data[ i ]->readings[ k - 1 ].value + dr * dv / dR;
             r.stdDev = 0.0;
+
             setInterpolated( s.interpolated, j );
          }
 
          s.values.push_back( r );
-
          radius += delta_r;
       }
 
