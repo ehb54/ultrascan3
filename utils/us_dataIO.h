@@ -80,7 +80,7 @@ class US_DataIO
 {
    public:
 
-      enum { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, NOTSYNC, NODATA };
+      enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, NOTSYNC, NODATA };
 
       static bool readLegacyFile( const QString&, beckmanRaw& );
       static int  writeRawData  ( const QString&, rawData& );
