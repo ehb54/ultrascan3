@@ -245,6 +245,7 @@ void US_Hydrodyn_Misc::setupGUI()
 void US_Hydrodyn_Misc::update_vbar(const QString &str)
 {
    (*misc).vbar = str.toDouble();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_Misc::update_vbar_signal(float val1, float val2)

@@ -2352,7 +2352,8 @@ QString US_Hydrodyn::default_differences_somo()
    {
       str += QString(base + sub + "ASA Probe Radius (A): %1\n").arg(asa.probe_radius);
    }
-   if ( asa.probe_recheck_radius != default_asa.probe_recheck_radius )
+   if ( asa.probe_recheck_radius != default_asa.probe_recheck_radius &&
+        asa.recheck_beads )
    {
       str += QString(base + sub + "Probe Recheck Radius (A): %1\n").arg(asa.probe_recheck_radius);
    }
@@ -2372,7 +2373,8 @@ QString US_Hydrodyn::default_differences_somo()
    {
       str += QString(base + sub + "Grid Bead ASA Threshold %: %1\n").arg(asa.grid_threshold_percent);
    }
-   if ( asa.asab1_step != default_asa.asab1_step )
+   if ( asa.asab1_step != default_asa.asab1_step &&
+        asa.method )
    {
       str += QString(base + sub + "ASAB1 Step Size (A): %1\n").arg(asa.asab1_step);
    }
@@ -2389,7 +2391,8 @@ QString US_Hydrodyn::default_differences_somo()
       str += QString(base + sub + sub2 + "Fuse Beads: %1\n")
          .arg(sidechain_overlap.fuse_beads ? "On" : "Off");
    }
-   if ( sidechain_overlap.fuse_beads_percent != default_sidechain_overlap.fuse_beads_percent )
+   if ( sidechain_overlap.fuse_beads_percent != default_sidechain_overlap.fuse_beads_percent &&
+        sidechain_overlap.fuse_beads )
    {
       str += QString(base + sub + sub2 + "Fuse Beads that overlap by more than: %1\n").arg(sidechain_overlap.fuse_beads_percent);
    }
@@ -2398,25 +2401,30 @@ QString US_Hydrodyn::default_differences_somo()
       str += QString(base + sub + sub2 + "Remove Overlaps: %1\n")
          .arg(sidechain_overlap.remove_overlap ? "On" : "Off");
    }
-   if ( sidechain_overlap.remove_sync != default_sidechain_overlap.remove_sync )
+   if ( sidechain_overlap.remove_sync != default_sidechain_overlap.remove_sync &&
+        sidechain_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps synchronously: %1\n")
          .arg(sidechain_overlap.remove_sync ? "On" : "Off");
    }
-   if ( sidechain_overlap.remove_sync_percent != default_sidechain_overlap.remove_sync_percent )
+   if ( sidechain_overlap.remove_sync_percent != default_sidechain_overlap.remove_sync_percent &&
+        sidechain_overlap.remove_overlap && sidechain_overlap.remove_sync )
    {
       str += QString(base + sub + sub2 + "Synchronous Overlap Reduction Step Size %: %1\n").arg(sidechain_overlap.remove_sync_percent);
    }
-   if ( sidechain_overlap.remove_hierarch != default_sidechain_overlap.remove_hierarch )
+   if ( sidechain_overlap.remove_hierarch != default_sidechain_overlap.remove_hierarch &&
+        sidechain_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps hierarchically: %1\n")
          .arg(sidechain_overlap.remove_hierarch ? "On" : "Off");
    }
-   if ( sidechain_overlap.remove_hierarch_percent != default_sidechain_overlap.remove_hierarch_percent )
+   if ( sidechain_overlap.remove_hierarch_percent != default_sidechain_overlap.remove_hierarch_percent &&
+        sidechain_overlap.remove_overlap && sidechain_overlap.remove_hierarch )
    {
       str += QString(base + sub + sub2 + "Hierarchical Overlap Reduction Step Size %: %1\n").arg(sidechain_overlap.remove_hierarch_percent);
    }
-   if ( sidechain_overlap.translate_out != default_sidechain_overlap.translate_out )
+   if ( sidechain_overlap.translate_out != default_sidechain_overlap.translate_out &&
+        sidechain_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Outward Translation: %1\n")
          .arg(sidechain_overlap.translate_out ? "On" : "Off");
@@ -2428,7 +2436,8 @@ QString US_Hydrodyn::default_differences_somo()
       str += QString(base + sub + sub2 + "Fuse Beads: %1\n")
          .arg(mainchain_overlap.fuse_beads ? "On" : "Off");
    }
-   if ( mainchain_overlap.fuse_beads_percent != default_mainchain_overlap.fuse_beads_percent )
+   if ( mainchain_overlap.fuse_beads_percent != default_mainchain_overlap.fuse_beads_percent &&
+        mainchain_overlap.fuse_beads )
    {
       str += QString(base + sub + sub2 + "Fuse Beads that overlap by more than: %1\n").arg(mainchain_overlap.fuse_beads_percent);
    }
@@ -2437,21 +2446,25 @@ QString US_Hydrodyn::default_differences_somo()
       str += QString(base + sub + sub2 + "Remove Overlaps: %1\n")
          .arg(mainchain_overlap.remove_overlap ? "On" : "Off");
    }
-   if ( mainchain_overlap.remove_sync != default_mainchain_overlap.remove_sync )
+   if ( mainchain_overlap.remove_sync != default_mainchain_overlap.remove_sync &&
+        mainchain_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps synchronously: %1\n")
          .arg(mainchain_overlap.remove_sync ? "On" : "Off");
    }
-   if ( mainchain_overlap.remove_sync_percent != default_mainchain_overlap.remove_sync_percent )
+   if ( mainchain_overlap.remove_sync_percent != default_mainchain_overlap.remove_sync_percent &&
+        mainchain_overlap.remove_overlap && mainchain_overlap.remove_sync )
    {
       str += QString(base + sub + sub2 + "Synchronous Overlap Reduction Step Size %: %1\n").arg(mainchain_overlap.remove_sync_percent);
    }
-   if ( mainchain_overlap.remove_hierarch != default_mainchain_overlap.remove_hierarch )
+   if ( mainchain_overlap.remove_hierarch != default_mainchain_overlap.remove_hierarch  &&
+        mainchain_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps hierarchically: %1\n")
          .arg(mainchain_overlap.remove_hierarch ? "On" : "Off");
    }
-   if ( mainchain_overlap.remove_hierarch_percent != default_mainchain_overlap.remove_hierarch_percent )
+   if ( mainchain_overlap.remove_hierarch_percent != default_mainchain_overlap.remove_hierarch_percent &&
+        mainchain_overlap.remove_overlap && mainchain_overlap.remove_hierarch )
    {
       str += QString(base + sub + sub2 + "Hierarchical Overlap Reduction Step Size %: %1\n").arg(mainchain_overlap.remove_hierarch_percent);
    }
@@ -2462,30 +2475,36 @@ QString US_Hydrodyn::default_differences_somo()
       str += QString(base + sub + sub2 + "Fuse Beads: %1\n")
          .arg(buried_overlap.fuse_beads ? "On" : "Off");
    }
-   if ( buried_overlap.fuse_beads_percent != default_buried_overlap.fuse_beads_percent )
+   if ( buried_overlap.fuse_beads_percent != default_buried_overlap.fuse_beads_percent &&
+        buried_overlap.fuse_beads )
    {
       str += QString(base + sub + sub2 + "Fuse Beads that overlap by more than: %1\n").arg(buried_overlap.fuse_beads_percent);
    }
-   if ( buried_overlap.remove_overlap != default_buried_overlap.remove_overlap )
+   if ( buried_overlap.remove_overlap != default_buried_overlap.remove_overlap &&
+        buried_overlap.fuse_beads )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps: %1\n")
          .arg(buried_overlap.remove_overlap ? "On" : "Off");
    }
-   if ( buried_overlap.remove_sync != default_buried_overlap.remove_sync )
+   if ( buried_overlap.remove_sync != default_buried_overlap.remove_sync && 
+        buried_overlap.fuse_beads )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps synchronously: %1\n")
          .arg(buried_overlap.remove_sync ? "On" : "Off");
    }
-   if ( buried_overlap.remove_sync_percent != default_buried_overlap.remove_sync_percent )
+   if ( buried_overlap.remove_sync_percent != default_buried_overlap.remove_sync_percent &&
+        buried_overlap.fuse_beads && buried_overlap.remove_sync )
    {
       str += QString(base + sub + sub2 + "Synchronous Overlap Reduction Step Size %: %1\n").arg(buried_overlap.remove_sync_percent);
    }
-   if ( buried_overlap.remove_hierarch != default_buried_overlap.remove_hierarch )
+   if ( buried_overlap.remove_hierarch != default_buried_overlap.remove_hierarch &&
+        buried_overlap.fuse_beads )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps hierarchically: %1\n")
          .arg(buried_overlap.remove_hierarch ? "On" : "Off");
    }
-   if ( buried_overlap.remove_hierarch_percent != default_buried_overlap.remove_hierarch_percent )
+   if ( buried_overlap.remove_hierarch_percent != default_buried_overlap.remove_hierarch_percent &&
+        buried_overlap.fuse_beads && buried_overlap.remove_hierarch )
    {
       str += QString(base + sub + "Hierarchical Overlap Reduction Step Size %: %1\n").arg(buried_overlap.remove_hierarch_percent);
    }
@@ -2504,7 +2523,8 @@ QString US_Hydrodyn::default_differences_grid()
       str += QString(base + sub + sub2 + "Fuse Beads: %1\n")
          .arg(grid_exposed_overlap.fuse_beads ? "On" : "Off");
    }
-   if ( grid_exposed_overlap.fuse_beads_percent != default_grid_exposed_overlap.fuse_beads_percent )
+   if ( grid_exposed_overlap.fuse_beads_percent != default_grid_exposed_overlap.fuse_beads_percent &&
+        grid_exposed_overlap.fuse_beads )
    {
       str += QString(base + sub + sub2 + "Fuse Beads that overlap by more than: %1\n").arg(grid_exposed_overlap.fuse_beads_percent);
    }
@@ -2513,25 +2533,30 @@ QString US_Hydrodyn::default_differences_grid()
       str += QString(base + sub + sub2 + "Remove Overlaps: %1\n")
          .arg(grid_exposed_overlap.remove_overlap ? "On" : "Off");
    }
-   if ( grid_exposed_overlap.remove_sync != default_grid_exposed_overlap.remove_sync )
+   if ( grid_exposed_overlap.remove_sync != default_grid_exposed_overlap.remove_sync &&
+        grid_exposed_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps synchronously: %1\n")
          .arg(grid_exposed_overlap.remove_sync ? "On" : "Off");
    }
-   if ( grid_exposed_overlap.remove_sync_percent != default_grid_exposed_overlap.remove_sync_percent )
+   if ( grid_exposed_overlap.remove_sync_percent != default_grid_exposed_overlap.remove_sync_percent &&
+        grid_exposed_overlap.remove_overlap && grid_exposed_overlap.remove_sync )
    {
       str += QString(base + sub + sub2 + "Synchronous Overlap Reduction Step Size %: %1\n").arg(grid_exposed_overlap.remove_sync_percent);
    }
-   if ( grid_exposed_overlap.remove_hierarch != default_grid_exposed_overlap.remove_hierarch )
+   if ( grid_exposed_overlap.remove_hierarch != default_grid_exposed_overlap.remove_hierarch &&
+        grid_exposed_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps hierarchically: %1\n")
          .arg(grid_exposed_overlap.remove_hierarch ? "On" : "Off");
    }
-   if ( grid_exposed_overlap.remove_hierarch_percent != default_grid_exposed_overlap.remove_hierarch_percent )
+   if ( grid_exposed_overlap.remove_hierarch_percent != default_grid_exposed_overlap.remove_hierarch_percent &&
+        grid_exposed_overlap.remove_overlap && grid_exposed_overlap.remove_hierarch )
    {
       str += QString(base + sub + sub2 + "Hierarchical Overlap Reduction Step Size %: %1\n").arg(grid_exposed_overlap.remove_hierarch_percent);
    }
-   if ( grid_exposed_overlap.translate_out != default_grid_exposed_overlap.translate_out )
+   if ( grid_exposed_overlap.translate_out != default_grid_exposed_overlap.translate_out &&
+        grid_exposed_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Outward Translation: %1\n")
          .arg(grid_exposed_overlap.translate_out ? "On" : "Off");
@@ -2543,7 +2568,8 @@ QString US_Hydrodyn::default_differences_grid()
       str += QString(base + sub + sub2 + "Fuse Beads: %1\n")
          .arg(grid_buried_overlap.fuse_beads ? "On" : "Off");
    }
-   if ( grid_buried_overlap.fuse_beads_percent != default_grid_buried_overlap.fuse_beads_percent )
+   if ( grid_buried_overlap.fuse_beads_percent != default_grid_buried_overlap.fuse_beads_percent &&
+        grid_buried_overlap.fuse_beads )
    {
       str += QString(base + sub + sub2 + "Fuse Beads that overlap by more than: %1\n").arg(grid_buried_overlap.fuse_beads_percent);
    }
@@ -2552,21 +2578,25 @@ QString US_Hydrodyn::default_differences_grid()
       str += QString(base + sub + sub2 + "Remove Overlaps: %1\n")
          .arg(grid_buried_overlap.remove_overlap ? "On" : "Off");
    }
-   if ( grid_buried_overlap.remove_sync != default_grid_buried_overlap.remove_sync )
+   if ( grid_buried_overlap.remove_sync != default_grid_buried_overlap.remove_sync &&
+        grid_buried_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps synchronously: %1\n")
          .arg(grid_buried_overlap.remove_sync ? "On" : "Off");
    }
-   if ( grid_buried_overlap.remove_sync_percent != default_grid_buried_overlap.remove_sync_percent )
+   if ( grid_buried_overlap.remove_sync_percent != default_grid_buried_overlap.remove_sync_percent &&
+        grid_buried_overlap.remove_overlap && grid_buried_overlap.remove_sync )
    {
       str += QString(base + sub + sub2 + "Synchronous Overlap Reduction Step Size %: %1\n").arg(grid_buried_overlap.remove_sync_percent);
    }
-   if ( grid_buried_overlap.remove_hierarch != default_grid_buried_overlap.remove_hierarch )
+   if ( grid_buried_overlap.remove_hierarch != default_grid_buried_overlap.remove_hierarch &&
+        grid_buried_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps hierarchically: %1\n")
          .arg(grid_buried_overlap.remove_hierarch ? "On" : "Off");
    }
-   if ( grid_buried_overlap.remove_hierarch_percent != default_grid_buried_overlap.remove_hierarch_percent )
+   if ( grid_buried_overlap.remove_hierarch_percent != default_grid_buried_overlap.remove_hierarch_percent &&
+        grid_buried_overlap.remove_overlap && grid_buried_overlap.remove_hierarch )
    {
       str += QString(base + sub + sub2 + "Hierarchical Overlap Reduction Step Size %: %1\n").arg(grid_buried_overlap.remove_hierarch_percent);
    }
@@ -2577,7 +2607,8 @@ QString US_Hydrodyn::default_differences_grid()
       str += QString(base + sub + sub2 + "Fuse Beads: %1\n")
          .arg(grid_overlap.fuse_beads ? "On" : "Off");
    }
-   if ( grid_overlap.fuse_beads_percent != default_grid_overlap.fuse_beads_percent )
+   if ( grid_overlap.fuse_beads_percent != default_grid_overlap.fuse_beads_percent &&
+        grid_overlap.fuse_beads )
    {
       str += QString(base + sub + sub2 + "Fuse Beads that overlap by more than: %1\n").arg(grid_overlap.fuse_beads_percent);
    }
@@ -2586,21 +2617,25 @@ QString US_Hydrodyn::default_differences_grid()
       str += QString(base + sub + sub2 + "Remove Overlaps: %1\n")
          .arg(grid_overlap.remove_overlap ? "On" : "Off");
    }
-   if ( grid_overlap.remove_sync != default_grid_overlap.remove_sync )
+   if ( grid_overlap.remove_sync != default_grid_overlap.remove_sync &&
+        grid_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps synchronously: %1\n")
          .arg(grid_overlap.remove_sync ? "On" : "Off");
    }
-   if ( grid_overlap.remove_sync_percent != default_grid_overlap.remove_sync_percent )
+   if ( grid_overlap.remove_sync_percent != default_grid_overlap.remove_sync_percent &&
+        grid_overlap.remove_overlap && grid_overlap.remove_sync )
    {
       str += QString(base + sub + sub2 + "Synchronous Overlap Reduction Step Size %: %1\n").arg(grid_overlap.remove_sync_percent);
    }
-   if ( grid_overlap.remove_hierarch != default_grid_overlap.remove_hierarch )
+   if ( grid_overlap.remove_hierarch != default_grid_overlap.remove_hierarch &&
+        grid_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps hierarchically: %1\n")
          .arg(grid_overlap.remove_hierarch ? "On" : "Off");
    }
-   if ( grid_overlap.remove_hierarch_percent != default_grid_overlap.remove_hierarch_percent )
+   if ( grid_overlap.remove_hierarch_percent != default_grid_overlap.remove_hierarch_percent &&
+        grid_overlap.remove_overlap && grid_overlap.remove_hierarch )
    {
       str += QString(base + sub + sub2 + "Hierarchical Overlap Reduction Step Size %: %1\n").arg(grid_overlap.remove_hierarch_percent);
    }
@@ -2661,7 +2696,8 @@ QString US_Hydrodyn::default_differences_hydro()
       str += QString(base + "Total Mass of Model: %1\n")
          .arg(hydro.mass_correction ? "Manual" : "Automatic");
    }
-   if ( hydro.mass != default_hydro.mass )
+   if ( hydro.mass != default_hydro.mass &&
+        hydro.mass_correction )
    {
       str += QString(base + "Entered Mass: %1\n").arg(hydro.mass);
    }
@@ -2670,7 +2706,8 @@ QString US_Hydrodyn::default_differences_hydro()
       str += QString(base + "Total Volume of Model: %1\n")
          .arg(hydro.volume_correction ? "Manual" : "Automatic");
    }
-   if ( hydro.volume != default_hydro.volume )
+   if ( hydro.volume != default_hydro.volume &&
+        hydro.volume_correction )
    {
       str += QString(base + "Entered Volume: %1\n").arg(hydro.volume);
    }
@@ -2694,9 +2731,10 @@ QString US_Hydrodyn::default_differences_hydro()
       str += QString(base + "Overlap cut-off: %1\n")
          .arg(hydro.overlap_cutoff ? "Manual" : "From Bead Model");
    }
-   if ( hydro.overlap != default_hydro.overlap )
+   if ( hydro.overlap != default_hydro.overlap &&
+        hydro.overlap_cutoff )
    {
-      str += QString(base + "Entered verlap cutoff%1\n").arg(hydro.overlap);
+      str += QString(base + "Entered overlap cutoff: %1\n").arg(hydro.overlap);
    }
    return str;
 }
@@ -2711,7 +2749,8 @@ QString US_Hydrodyn::default_differences_misc()
       str += QString(base + "Calculate vbar: %1\n")
          .arg(misc.compute_vbar ? "On" : "Off");
    }
-   if ( misc.vbar != default_misc.vbar )
+   if ( misc.vbar != default_misc.vbar &&
+        !misc.compute_vbar )
    {
       str += QString(base + "Entered vbar value: %1\n").arg(misc.vbar);
    }

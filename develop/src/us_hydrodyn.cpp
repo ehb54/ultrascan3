@@ -414,7 +414,7 @@ void US_Hydrodyn::setupGUI()
    editor = new QTextEdit(this);
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    editor->setReadOnly(true);
-   editor->setMinimumWidth(500);
+   editor->setMinimumWidth(550);
    m = new QMenuBar(editor, "menu" );
    m->setMinimumHeight(minHeight1);
    m->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
