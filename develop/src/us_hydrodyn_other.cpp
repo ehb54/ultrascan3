@@ -2487,24 +2487,24 @@ QString US_Hydrodyn::default_differences_somo()
          .arg(buried_overlap.remove_overlap ? "On" : "Off");
    }
    if ( buried_overlap.remove_sync != default_buried_overlap.remove_sync && 
-        buried_overlap.fuse_beads )
+        buried_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps synchronously: %1\n")
          .arg(buried_overlap.remove_sync ? "On" : "Off");
    }
    if ( buried_overlap.remove_sync_percent != default_buried_overlap.remove_sync_percent &&
-        buried_overlap.fuse_beads && buried_overlap.remove_sync )
+        buried_overlap.remove_overlap && buried_overlap.remove_sync )
    {
       str += QString(base + sub + sub2 + "Synchronous Overlap Reduction Step Size %: %1\n").arg(buried_overlap.remove_sync_percent);
    }
    if ( buried_overlap.remove_hierarch != default_buried_overlap.remove_hierarch &&
-        buried_overlap.fuse_beads )
+        buried_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps hierarchically: %1\n")
          .arg(buried_overlap.remove_hierarch ? "On" : "Off");
    }
    if ( buried_overlap.remove_hierarch_percent != default_buried_overlap.remove_hierarch_percent &&
-        buried_overlap.fuse_beads && buried_overlap.remove_hierarch )
+        buried_overlap.remove_overlap && buried_overlap.remove_hierarch )
    {
       str += QString(base + sub + "Hierarchical Overlap Reduction Step Size %: %1\n").arg(buried_overlap.remove_hierarch_percent);
    }
@@ -2716,15 +2716,17 @@ QString US_Hydrodyn::default_differences_hydro()
       str += QString(base + "Inclusion of Buried Beads in Hydrodynamic Calculations: %1\n")
          .arg(hydro.bead_inclusion ? "Include" : "Exclude");
    }
-   if ( hydro.rotational != default_hydro.rotational )
+   if ( hydro.rotational != default_hydro.rotational &&
+        !hydro.bead_inclusion )
    {
       str += QString(base + "Include Buried Beads in Volume Correction, Rotational Diffusion: %1\n")
-         .arg(hydro.rotational ? "Exclude" : "Include");
+         .arg(hydro.rotational ? "Include" : "Exclude" );
    }
-   if ( hydro.viscosity != default_hydro.viscosity )
+   if ( hydro.viscosity != default_hydro.viscosity  &&
+        !hydro.bead_inclusion )
    {
       str += QString(base + "Include Buried Beads in Volume Correction, Intrinsic Viscosity: %1\n")
-         .arg(hydro.viscosity ? "Exclude" : "Include");
+         .arg(hydro.viscosity ? "Include" : "Exclude");
    }
    if ( hydro.overlap_cutoff != default_hydro.overlap_cutoff )
    {
