@@ -24,6 +24,8 @@
 // #define AUTO_BB_DEBUG
 // #define BUILD_MAPS_DEBUG
 
+#define USE_THREADS
+
 #ifndef WIN32
 #   include <unistd.h>
 #   define TIMING
@@ -46,14 +48,6 @@ static struct timeval start_tv, end_tv;
 #endif
 #define DOTSOMO      ""
 #define DOTSOMOCAP   ""
-
-struct BPair {
-   int i;
-   int j;
-   float separation;
-   bool active;
-};
-
 
 #if defined(TO_DO)
 static void outward_translate_1_sphere_1_fixed(
@@ -2225,6 +2219,8 @@ int US_Hydrodyn::create_beads(QString *error_string)
    return 0;
 }
 
+
+
 # define POP_MC              (1 << 0)
 # define POP_SC              (1 << 1)
 # define POP_MCSC            (1 << 2)
@@ -2241,6 +2237,166 @@ int US_Hydrodyn::create_beads(QString *error_string)
 # define OUTWARD_TRANSLATION (1 << 13)
 # define RR_HIERC            (1 << 14)
 # define MIN_OVERLAP 0.0
+
+//--------- thread for radial reduction ------------
+
+// #define DEBUG_THREAD
+
+radial_reduction_thr_t::radial_reduction_thr_t(int a_thread) : QThread()
+{
+   thread = a_thread;
+   work_to_do = 0;
+   work_done = 1;
+   work_to_do_waiters = 0;
+   work_done_waiters = 0;
+}
+
+void radial_reduction_thr_t::radial_reduction_thr_setup(
+                                                        unsigned int methodk,
+                                                        vector <PDB_atom> *p_bead_model,
+                                                        vector <bool> *p_last_reduced,
+                                                        vector <bool> *p_reduced,
+                                                        vector <BPair> *p_my_pairs,
+                                                        unsigned int threads,
+                                                        double overlap_tolerance
+                                                        )
+{
+   /* this starts up a new work load for the thread */
+   this->methodk = methodk;
+   this->p_bead_model = p_bead_model;
+   this->p_my_pairs = p_my_pairs;
+   this->p_last_reduced = p_last_reduced;
+   this->p_reduced = p_reduced;
+   this->overlap_tolerance = overlap_tolerance;
+   
+   this->threads = threads;
+
+   work_mutex.lock();
+   work_to_do = 1;
+   work_done = 0;
+   work_mutex.unlock();
+   cond_work_to_do.wakeOne();
+#if defined(DEBUG_THREAD)
+   cerr << "thread " << thread << " has new work to do\n";
+#endif
+}
+
+void radial_reduction_thr_t::radial_reduction_thr_shutdown()
+{
+   /* this signals the thread to exit the run method */
+   work_mutex.lock();
+   work_to_do = -1;
+   work_mutex.unlock();
+   cond_work_to_do.wakeOne();
+
+#if defined(DEBUG_THREAD)
+   cerr << "thread " << thread << " shutdown requested\n";
+#endif
+}
+
+void radial_reduction_thr_t::radial_reduction_thr_wait()
+{
+   /* this is for the master thread to wait until the work is done */
+   work_mutex.lock();
+
+#if defined(DEBUG_THREAD)
+   cerr << "thread " << thread << " has a waiter\n";
+#endif
+
+   while(!work_done) {
+      cond_work_done.wait(&work_mutex);
+   }
+   work_done = 0;
+   work_mutex.unlock();
+
+#if defined(DEBUG_THREAD)
+   cerr << "thread " << thread << " waiter released\n";
+#endif
+}
+
+void radial_reduction_thr_t::run()
+{
+   while(1)
+   {
+      work_mutex.lock();
+#if defined(DEBUG_THREAD)
+      cerr << "thread " << thread << " waiting for work\n";
+#endif
+      work_to_do_waiters++;
+      while(!work_to_do)
+      {
+         cond_work_to_do.wait(&work_mutex);
+      }
+      if(work_to_do == -1)
+      {
+#if defined(DEBUG_THREAD)
+         cerr << "thread " << thread << " shutting down\n";
+#endif
+         work_mutex.unlock();
+         return;
+      }
+
+      work_to_do_waiters = 0;
+      work_mutex.unlock();
+#if defined(DEBUG_THREAD)
+      cerr << "thread " << thread << " starting work\n";
+#endif
+      BPair pair;
+
+      for ( unsigned int i = thread; i < (*p_bead_model).size() - 1; i += threads )
+      {
+         (*p_reduced)[i] = false;
+         if (1 || (*p_last_reduced)[i]) {
+            for (unsigned int j = i + 1; j < (*p_bead_model).size(); j++) {
+               if ((1 || (*p_last_reduced)[j]) &&
+                   (*p_bead_model)[i].active &&
+                   (*p_bead_model)[j].active &&
+                   (methodk & RR_MCSC ||
+                    ((methodk & RR_SC) &&
+                     (*p_bead_model)[i].chain == 1 &&
+                     (*p_bead_model)[j].chain == 1)) &&
+                   ((methodk & RR_BURIED) ||
+                    ((*p_bead_model)[i].exposed_code == 1 ||
+                     (*p_bead_model)[j].exposed_code == 1)) &&
+                   (*p_bead_model)[i].bead_computed_radius > TOLERANCE &&
+                   (*p_bead_model)[j].bead_computed_radius > TOLERANCE
+                   ) {
+                  float separation =
+                     (*p_bead_model)[i].bead_computed_radius +
+                     (*p_bead_model)[j].bead_computed_radius -
+                     sqrt(
+                          pow((*p_bead_model)[i].bead_coordinate.axis[0] -
+                              (*p_bead_model)[j].bead_coordinate.axis[0], 2) +
+                          pow((*p_bead_model)[i].bead_coordinate.axis[1] -
+                              (*p_bead_model)[j].bead_coordinate.axis[1], 2) +
+                          pow((*p_bead_model)[i].bead_coordinate.axis[2] -
+                              (*p_bead_model)[j].bead_coordinate.axis[2], 2));
+                  
+                  if (separation <= TOLERANCE) {
+                     continue;
+                  }
+                  
+                  pair.i = i;
+                  pair.j = j;
+                  pair.separation = separation;
+                  (*p_my_pairs).push_back(pair);
+               }
+            }
+         } // if last_reduced[i]
+      }
+
+#if defined(DEBUG_THREAD)
+      cerr << "thread " << thread << " finished work\n";
+#endif
+      work_mutex.lock();
+      work_done = 1;
+      work_to_do = 0;
+      work_mutex.unlock();
+      cond_work_done.wakeOne();
+   }
+}
+
+//--------- end thread for radial reduction ------------
 
 void US_Hydrodyn::radial_reduction()
 {
@@ -2473,9 +2629,7 @@ void US_Hydrodyn::radial_reduction()
       float intersection_volume = 0;
       int max_bead1 = 0;
       int max_bead2 = 0;
-#if defined(DEBUG1) || defined(DEBUG)
       unsigned iter = 0;
-#endif
       bool overlaps_exist;
 #if defined(TIMING)
       gettimeofday(&start_tv, NULL);
@@ -2494,6 +2648,9 @@ void US_Hydrodyn::radial_reduction()
 #if defined(DEBUG1) || defined(DEBUG)
          printf("popping iteration %d\n", iter++);
 #endif
+         lbl_core_progress->setText(QString("Stage %1 popping iteration %2").arg(k+1).arg(iter));
+         qApp->processEvents();
+
          max_intersection_volume = -1;
          overlaps_exist = false;
          if (methods[k] & (POP_MC | POP_SC | POP_MCSC | POP_EXPOSED | POP_BURIED | POP_ALL)) {
@@ -2581,6 +2738,8 @@ void US_Hydrodyn::radial_reduction()
             bool back_to_zero = false;
             if (overlaps_exist) {
                beads_popped++;
+               lbl_core_progress->setText(QString("Stage %1 popping iteration %2 beads popped %3").arg(k+1).arg(iter).arg(beads_popped));
+               qApp->processEvents();
                //#define DEBUG_FUSED
 #if defined(DEBUG1) || defined(DEBUG) || defined(DEBUG_FUSED)
                printf("popping beads %u %u int vol %f mw1 %f mw2 %f v1 %f v2 %f c1 [%f,%f,%f] c2 [%f,%f,%f]\n",
@@ -2721,6 +2880,8 @@ void US_Hydrodyn::radial_reduction()
 #if defined(DEBUG1) || defined(DEBUG)
             printf("preprocessing processing hierarchical radial reduction\n");
 #endif
+            lbl_core_progress->setText(QString("Stage %1 hierarchical radial reduction").arg(k+1));
+            qApp->processEvents();
             max_intersection_length = 0;
             pairs.clear();
             count = 0;
@@ -2809,13 +2970,18 @@ void US_Hydrodyn::radial_reduction()
                }
             }
             // ok, now we have the list of pairs
+            lbl_core_progress->setText(QString("Stage %1 hierarchical radial reduction").arg(k+1));
+            qApp->processEvents();
             max_bead1 =
                max_bead2 = -1;
             float radius_delta;
             do {
+               iter++;
 #if defined(DEBUG1) || defined(DEBUG)
-               printf("processing hierarchical radial reduction iteration %d\n", iter++);
+               printf("processing hierarchical radial reduction iteration %d\n", iter);
 #endif
+               lbl_core_progress->setText(QString("Stage %1 hierarchical radial reduction iteration %2").arg(k+1).arg(iter));
+               qApp->processEvents();
                max_intersection_length = 0;
                int max_pair = -1;
                count = 0;
@@ -3206,6 +3372,17 @@ void US_Hydrodyn::radial_reduction()
          else 
          {
             // simultaneous reduction
+            lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction").arg(k+1));
+            qApp->processEvents();
+#if defined(USE_THREADS)
+            unsigned int threads = USglobal->config_list.numThreads;
+            vector < radial_reduction_thr_t* > radial_reduction_thr_threads(threads);
+            for ( unsigned int j = 0; j < threads; j++ )
+            {
+               radial_reduction_thr_threads[j] = new radial_reduction_thr_t(j);
+               radial_reduction_thr_threads[j]->start();
+            }
+#endif
 
             do {
 #if defined(DEBUG_OVERLAP)
@@ -3220,6 +3397,8 @@ void US_Hydrodyn::radial_reduction()
                printf("processing simultaneous radial reduction iteration %d\n", iter);
                editor->append(QString(" %1").arg(iter));
 #endif
+               lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction iteration %2").arg(k+1).arg(iter));
+               qApp->processEvents();
                if(iter > 10000) {
                   printf("too many iterations\n");
                   exit(-1);
@@ -3228,6 +3407,51 @@ void US_Hydrodyn::radial_reduction()
                pairs.clear();
                count = 0;
                reduced[bead_model.size() - 1] = false;
+#if defined(USE_THREADS)
+               {
+                  unsigned int i;
+                  unsigned int j;
+
+                  vector < BPair > my_pairs[threads];
+                  for ( j = 0; j < threads; j++ )
+                  {
+# if defined(DEBUG_THREAD)
+                     cout << "thread " << j << endl;
+# endif
+                     radial_reduction_thr_threads[j]->radial_reduction_thr_setup(
+                                                        methods[k],
+                                                        &bead_model,
+                                                        &last_reduced,
+                                                        &reduced,
+                                                        &my_pairs[j],
+                                                        threads,
+                                                        overlap_tolerance
+                                                        );
+
+                  }
+
+                  for ( j = 0; j < threads; j++ )
+                  {
+                     radial_reduction_thr_threads[j]->radial_reduction_thr_wait();
+                  }
+
+                  // merge results
+                  for ( j = 0; j < threads; j++ )
+                  {
+                     for ( i = 0; i < my_pairs[j].size(); i++ ) 
+                     {
+                        pairs.push_back(my_pairs[j][i]);
+                        
+                        if (my_pairs[j][i].separation > max_intersection_length) {
+                           max_intersection_length = my_pairs[j][i].separation;
+                           max_bead1 = my_pairs[j][i].i;
+                           max_bead2 = my_pairs[j][i].j;
+                        }
+                        count++;
+                     }
+                  }
+               }
+#else // !defined(USE_THREADS)
                for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
                   reduced[i] = false;
                   if (1 || last_reduced[i]) {
@@ -3301,9 +3525,13 @@ void US_Hydrodyn::radial_reduction()
                      }
                   } // if last_reduced[i]
                }
+#endif // !defined(USE_THERADS)
+
 #if defined(DEBUG1) || defined(DEBUG)
                printf("processing radial reduction sync iteration %d pairs to process %d max int len %f\n", iter, count, max_intersection_length);
 #endif
+               lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction iteration %2 pairs %3").arg(k+1).arg(iter).arg(count));
+               qApp->processEvents();
                if (max_intersection_length > TOLERANCE) {
 #if defined(DEBUG1) || defined(DEBUG)
                   printf("processing radial reduction sync iteration %d pairs to process %d\n", iter, count);
@@ -3485,6 +3713,27 @@ void US_Hydrodyn::radial_reduction()
                   return;
                }
             } while(count);
+#if defined(USE_THREADS)
+            {
+               unsigned int j;
+               // destroy
+               
+               for ( j = 0; j < threads; j++ )
+               {
+                  radial_reduction_thr_threads[j]->radial_reduction_thr_shutdown();
+               }
+               
+               for ( j = 0; j < threads; j++ )
+               {
+                  radial_reduction_thr_threads[j]->wait();
+               }
+               
+               for ( j = 0; j < threads; j++ )
+               {
+                  delete radial_reduction_thr_threads[j];
+               }
+            }
+#endif
          }
 #if defined(TIMING)
          gettimeofday(&end_tv, NULL);
@@ -4707,9 +4956,7 @@ int US_Hydrodyn::compute_asa()
       float intersection_volume = 0;
       int max_bead1 = 0;
       int max_bead2 = 0;
-#if defined(DEBUG1) || defined(DEBUG)
       unsigned iter = 0;
-#endif
       bool overlaps_exist;
 #if defined(TIMING)
       gettimeofday(&start_tv, NULL);
@@ -4725,9 +4972,12 @@ int US_Hydrodyn::compute_asa()
       do {
          // write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_bp-%1-%2").arg(k).arg(iter) + DOTSOMO + ".tsv", &bead_model);
          // write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model-bp-%1-%2").arg(k).arg(iter) + DOTSOMO, &bead_model);
+         iter++;
 #if defined(DEBUG1) || defined(DEBUG)
          printf("popping iteration %d\n", iter++);
 #endif
+         lbl_core_progress->setText(QString("Stage %1 popping iteration %2").arg(k+1).arg(iter));
+         qApp->processEvents();
          max_intersection_volume = -1;
          overlaps_exist = false;
          if (methods[k] & (POP_MC | POP_SC | POP_MCSC | POP_EXPOSED | POP_BURIED | POP_ALL)) {
@@ -4815,6 +5065,8 @@ int US_Hydrodyn::compute_asa()
             bool back_to_zero = false;
             if (overlaps_exist) {
                beads_popped++;
+               lbl_core_progress->setText(QString("Stage %1 popping iteration %2 beads popped %3").arg(k+1).arg(iter).arg(beads_popped));
+               qApp->processEvents();
                //#define DEBUG_FUSED
 #if defined(DEBUG1) || defined(DEBUG) || defined(DEBUG_FUSED)
                printf("popping beads %u %u int vol %f mw1 %f mw2 %f v1 %f v2 %f c1 [%f,%f,%f] c2 [%f,%f,%f]\n",
@@ -4955,6 +5207,8 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG1) || defined(DEBUG)
             printf("preprocessing processing hierarchical radial reduction\n");
 #endif
+            lbl_core_progress->setText(QString("Stage %1 hierarchical radial reduction").arg(k+1));
+            qApp->processEvents();
             max_intersection_length = 0;
             pairs.clear();
             count = 0;
@@ -5025,13 +5279,18 @@ int US_Hydrodyn::compute_asa()
                }
             }
             // ok, now we have the list of pairs
+            lbl_core_progress->setText(QString("Stage %1 hierarchical radial reduction").arg(k+1));
+            qApp->processEvents();
             max_bead1 =
                max_bead2 = -1;
             float radius_delta;
             do {
+               iter++;
 #if defined(DEBUG1) || defined(DEBUG)
-               printf("processing hierarchical radial reduction iteration %d\n", iter++);
+               printf("processing hierarchical radial reduction iteration %d\n", iter);
 #endif
+               lbl_core_progress->setText(QString("Stage %1 hierarchical radial reduction iteration %2").arg(k+1).arg(iter));
+               qApp->processEvents();
                max_intersection_length = 0;
                int max_pair = -1;
                count = 0;
@@ -5392,7 +5651,17 @@ int US_Hydrodyn::compute_asa()
          else 
          {
             // simultaneous reduction
-            // #define DEBUG
+            lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction").arg(k+1));
+            qApp->processEvents();
+#if defined(USE_THREADS)
+            unsigned int threads = USglobal->config_list.numThreads;
+            vector < radial_reduction_thr_t* > radial_reduction_thr_threads(threads);
+            for ( unsigned int j = 0; j < threads; j++ )
+            {
+               radial_reduction_thr_threads[j] = new radial_reduction_thr_t(j);
+               radial_reduction_thr_threads[j]->start();
+            }
+#endif
             do {
 #if defined(DEBUG_OVERLAP)
                overlap_check(methods[k] & RR_SC ? true : false,
@@ -5401,9 +5670,13 @@ int US_Hydrodyn::compute_asa()
 #endif
                // write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_br-%1-%2").arg(k).arg(iter) + DOTSOMO + ".tsv", &bead_model);
                // write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model-br-%1-%2").arg(k).arg(iter) + DOTSOMO, &bead_model);
+               iter++;
 #if defined(DEBUG1) || defined(DEBUG)
-               printf("processing simultaneous radial reduction iteration %d\n", iter++);
+               printf("processing simultaneous radial reduction iteration %d\n", iter);
 #endif
+               lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction iteration %2").arg(k+1).arg(iter));
+               qApp->processEvents();
+
                if(iter > 10000) {
                   printf("too many iterations\n");
                   exit(-1);
@@ -5412,11 +5685,57 @@ int US_Hydrodyn::compute_asa()
                pairs.clear();
                count = 0;
                reduced[bead_model.size() - 1] = false;
+
+#if defined(USE_THREADS)
+               {
+                  unsigned int i;
+                  unsigned int j;
+
+                  vector < BPair > my_pairs[threads];
+                  for ( j = 0; j < threads; j++ )
+                  {
+# if defined(DEBUG_THREAD)
+                     cout << "thread " << j << endl;
+# endif
+                     radial_reduction_thr_threads[j]->radial_reduction_thr_setup(
+                                                        methods[k],
+                                                        &bead_model,
+                                                        &last_reduced,
+                                                        &reduced,
+                                                        &my_pairs[j],
+                                                        threads,
+                                                        overlap_tolerance
+                                                        );
+
+                  }
+
+                  for ( j = 0; j < threads; j++ )
+                  {
+                     radial_reduction_thr_threads[j]->radial_reduction_thr_wait();
+                  }
+
+                  // merge results
+                  for ( j = 0; j < threads; j++ )
+                  {
+                     for ( i = 0; i < my_pairs[j].size(); i++ ) 
+                     {
+                        pairs.push_back(my_pairs[j][i]);
+                        
+                        if (my_pairs[j][i].separation > max_intersection_length) {
+                           max_intersection_length = my_pairs[j][i].separation;
+                           max_bead1 = my_pairs[j][i].i;
+                           max_bead2 = my_pairs[j][i].j;
+                        }
+                        count++;
+                     }
+                  }
+               }
+#else // !defined(USE_THREADS)
                for (unsigned int i = 0; i < bead_model.size() - 1; i++) {
                   reduced[i] = false;
                   if (1 || last_reduced[i]) {
                      for (unsigned int j = i + 1; j < bead_model.size(); j++) {
-#if defined(DEBUGX)
+# if defined(DEBUGX)
                         printf("checking radial stage %d beads %d %d on chains %d %d exposed code %d %d active %s %s max il %f\n",
                                k, i, j,
                                bead_model[i].chain,
@@ -5427,7 +5746,7 @@ int US_Hydrodyn::compute_asa()
                                bead_model[j].active ? "Y" : "N",
                                max_intersection_length
                                );
-#endif
+# endif
                         if ((1 || last_reduced[j]) &&
                             bead_model[i].active &&
                             bead_model[j].active &&
@@ -5457,7 +5776,7 @@ int US_Hydrodyn::compute_asa()
                               continue;
                            }
 
-#if defined(DEBUG)
+# if defined(DEBUG)
                            printf("beads %d %d with radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] have a sep of %f\n",
                                   i, j,
                                   bead_model[i].bead_computed_radius,
@@ -5469,7 +5788,7 @@ int US_Hydrodyn::compute_asa()
                                   bead_model[j].bead_coordinate.axis[1],
                                   bead_model[j].bead_coordinate.axis[2],
                                   separation);
-#endif
+# endif
 
                            if (separation > max_intersection_length) {
                               max_intersection_length = separation;
@@ -5485,6 +5804,8 @@ int US_Hydrodyn::compute_asa()
                      }
                   } // if last_reduced[i]
                }
+#endif // !defined(USE_THERADS)
+
 #if defined(DEBUG1) || defined(DEBUG)
                printf("processing radial reduction sync iteration %d pairs to process %d max int len %f\n", iter, count, max_intersection_length);
 #endif
@@ -5492,6 +5813,8 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG1) || defined(DEBUG)
                   printf("processing radial reduction sync iteration %d pairs to process %d\n", iter, count);
 #endif
+                  lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction iteration %2 pairs %3").arg(k+1).arg(iter).arg(count));
+                  qApp->processEvents();
                   for (unsigned int i = 0; i < pairs.size(); i++) {
                      if (
                          !reduced[pairs[i].i] &&
@@ -5663,7 +5986,29 @@ int US_Hydrodyn::compute_asa()
                // write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_ar-%1-%2").arg(k).arg(iter) + DOTSOMO + ".tsv", &bead_model);
                // write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model-ar-%1-%2").arg(k).arg(iter) + DOTSOMO, &bead_model);
             } while(count);
+#if defined(USE_THREADS)
+            {
+               unsigned int j;
+               // destroy
+               
+               for ( j = 0; j < threads; j++ )
+               {
+                  radial_reduction_thr_threads[j]->radial_reduction_thr_shutdown();
+               }
+               
+               for ( j = 0; j < threads; j++ )
+               {
+                  radial_reduction_thr_threads[j]->wait();
+               }
+               
+               for ( j = 0; j < threads; j++ )
+               {
+                  delete radial_reduction_thr_threads[j];
+               }
+            }
+#endif
          }
+
 #if defined(TIMING)
          gettimeofday(&end_tv, NULL);
          printf("radial reduction %d time %lu\n",

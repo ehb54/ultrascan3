@@ -353,4 +353,64 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void closeEvent(QCloseEvent *);
 };
 
+
+#include <qthread.h>
+#include <qwaitcondition.h>
+#include <qmutex.h>
+
+struct BPair {
+   int i;
+   int j;
+   float separation;
+   bool active;
+};
+
+
+class radial_reduction_thr_t : public QThread
+{
+ public:
+  radial_reduction_thr_t(int);
+  void radial_reduction_thr_setup(
+                                  unsigned int,
+                                  vector <PDB_atom> *,
+                                  vector <bool> *,
+                                  vector <bool> *,
+                                  vector <BPair> *,
+                                  unsigned int,
+                                  double
+                                  );
+  void radial_reduction_thr_shutdown();
+  void radial_reduction_thr_wait();
+  virtual void run();
+
+ private:
+
+  int methodk;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+  vector <PDB_atom> *p_bead_model;
+  vector <bool> *p_last_reduced;
+  vector <bool> *p_reduced;
+  vector <BPair> *p_my_pairs;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+  unsigned int threads;
+
+  double overlap_tolerance;
+
+  int thread;
+  QMutex work_mutex;
+  int work_to_do;
+  QWaitCondition cond_work_to_do;
+  int work_done;
+  QWaitCondition cond_work_done;
+  int work_to_do_waiters;
+  int work_done_waiters;
+};
+
 #endif
