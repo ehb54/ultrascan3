@@ -3710,6 +3710,27 @@ void US_Hydrodyn::radial_reduction()
                qApp->processEvents();
                if (stopFlag)
                {
+#if defined(USE_THREADS)
+                  {
+                     unsigned int j;
+                     // destroy
+                     
+                     for ( j = 0; j < threads; j++ )
+                     {
+                        radial_reduction_thr_threads[j]->radial_reduction_thr_shutdown();
+                     }
+                     
+                     for ( j = 0; j < threads; j++ )
+                     {
+                        radial_reduction_thr_threads[j]->wait();
+                     }
+                     
+                     for ( j = 0; j < threads; j++ )
+                     {
+                        delete radial_reduction_thr_threads[j];
+                     }
+                  }
+#endif
                   return;
                }
             } while(count);
@@ -5983,6 +6004,32 @@ int US_Hydrodyn::compute_asa()
                   }
                }
                last_reduced = reduced;
+               qApp->processEvents();
+               if ( stopFlag )
+               {
+#if defined(USE_THREADS)
+                  {
+                     unsigned int j;
+                     // destroy
+                     
+                     for ( j = 0; j < threads; j++ )
+                     {
+                        radial_reduction_thr_threads[j]->radial_reduction_thr_shutdown();
+                     }
+                     
+                     for ( j = 0; j < threads; j++ )
+                     {
+                        radial_reduction_thr_threads[j]->wait();
+                     }
+                     
+                     for ( j = 0; j < threads; j++ )
+                     {
+                        delete radial_reduction_thr_threads[j];
+                     }
+                  }
+#endif
+                  return -1;
+               }
                // write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_ar-%1-%2").arg(k).arg(iter) + DOTSOMO + ".tsv", &bead_model);
                // write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model-ar-%1-%2").arg(k).arg(iter) + DOTSOMO, &bead_model);
             } while(count);
