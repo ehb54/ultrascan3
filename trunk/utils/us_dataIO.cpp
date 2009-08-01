@@ -181,17 +181,17 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
    write( ds, (char*) &valueCount, 4, crc );
 
    // Write reading
-   double    delta  = ( p.max_data1 - p.min_data1 ) / 65536;
-   double    delta2 = ( p.max_data2 - p.min_data2 ) / 65536;
-   double    v;   // value
-   short int si;  // short int
+   double             delta  = ( p.max_data1 - p.min_data1 ) / 65536;
+   double             delta2 = ( p.max_data2 - p.min_data2 ) / 65536;
+   double             v;   // value
+   unsigned short int si;  // short int
 
    bool      stdDev = ( p.min_data2 != 0.0 || p.max_data2 != 0.0 );
 
    for ( unsigned int i = 0; i < data.values.size(); i++ )
    {
       v  = data.values[ i ].value;
-      si = (short int) ( ( v - p.min_data1 ) / delta );
+      si = (unsigned short int) ( ( v - p.min_data1 ) / delta );
 
       write( ds, (char*) &si, 2, crc );
 
@@ -199,7 +199,7 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
       if ( stdDev )
       {
          v = data.values[ i ].stdDev;
-         si = (short int) ( ( v - p.min_data2 ) / delta2 );
+         si = (unsigned short int) ( ( v - p.min_data2 ) / delta2 );
          write( ds, (char*) &si, 2, crc );
       }
    }
@@ -254,8 +254,8 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
 
       union
       {
-         char      c[ 2 ];
-         short int I;
+         char               c[ 2 ];
+         unsigned short int I;
       } si;
 
       read( ds, si.c, 2, crc );
@@ -339,7 +339,7 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
             if ( stdDev )
             {
                read( ds, si.c, 2, crc );
-               r.stdDev = si.I * factor2 + min_data1;
+               r.stdDev = si.I * factor2 + min_data2;
             }
             else
                r.stdDev = 0.0;

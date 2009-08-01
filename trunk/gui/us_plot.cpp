@@ -1883,6 +1883,8 @@ void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
 {
    if ( e->button() == Qt::LeftButton ) 
       emit mouseDown( invTransform( e->pos() ) );
+   if ( e->button() == Qt::LeftButton && e->modifiers() == Qt::ControlModifier )
+      emit cMouseDown( invTransform( e->pos() ) );
    transition( e );
 }
 
@@ -1890,6 +1892,8 @@ void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
 {
    if ( e->button() == Qt::LeftButton ) 
       emit mouseUp( invTransform( e->pos() ) );
+   if ( e->button() == Qt::LeftButton && e->modifiers() == Qt::ControlModifier )
+      emit cMouseUp( invTransform( e->pos() ) );
    transition( e );
 }
 

@@ -26,6 +26,9 @@ int main( int argc, char* argv[] )
 
 US_Edvabs::US_Edvabs() : US_Widgets()
 {
+   data.scanData.clear();
+   cellList.clear();
+
    setWindowTitle( tr( "Edit Velocity Absorbance Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
@@ -60,12 +63,14 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( lb_cell, s_row, 0 );
 
    cb_cell = us_comboBox();
+   cb_cell->setInsertPolicy( QComboBox::InsertAlphabetically );
    specs->addWidget( cb_cell, s_row, 1 );
 
    QLabel* lb_channel = us_label( tr( "Channel:" ), -1 );
    specs->addWidget( lb_channel, s_row, 2 );
 
    cb_channel = us_comboBox();
+   cb_channel->setInsertPolicy( QComboBox::InsertAlphabetically );
    specs->addWidget( cb_channel, s_row++, 3 );
    
    // Row 4
@@ -73,6 +78,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( lb_wavelength, s_row, 0 );
 
    cb_wavelength = us_comboBox();
+   cb_wavelength->setInsertPolicy( QComboBox::InsertAlphabetically );
    specs->addWidget( cb_wavelength, s_row++, 1 );
    
    // Row 5
@@ -87,6 +93,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( lb_from, s_row, 0 );
 
    ct_from = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   ct_from->setStep( 1 );
    specs->addWidget( ct_from, s_row, 1 );
 
    QLabel* lb_to = us_label( tr( "to:" ), -1 );
@@ -94,6 +101,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( lb_to, s_row, 2 );
 
    ct_to = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
+   ct_to->setStep( 1 );
    specs->addWidget( ct_to, s_row++, 3 );
    
    // Row 7
@@ -203,6 +211,9 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
 
+   pick = new US_PlotPicker( data_plot );
+   pick->setRubberBand( QwtPicker::VLineRubberBand );
+
    left->addLayout( specs );
    left->addStretch();
    left->addLayout( buttons );
@@ -253,251 +264,255 @@ void US_Edvabs::reset( void )
    pb_spikes      ->setEnabled( false );
    pb_invert      ->setEnabled( false );
    pb_write       ->setEnabled( false );
+
+   // Clear the raw data structure
+   for ( uint j = 0; j < data.scanData.size(); j++ )
+   {
+      delete data.scanData[ j ].interpolated;
+      data.scanData[ j ].values.clear();
+   }
+
+   data.scanData.clear();
+
+   // Clear the cell info structures
+   for ( int i = 0; i < cellList.size(); i++ )
+   {
+      for ( int j = 0; j < cellList[ i ].channelList.size(); j++ )
+         cellList[ i ].channelList[ j ].wavelength.clear();
+         
+      cellList[ i ].channelList.clear();
+   }
+
+   cellList.clear();
+
+   // Clear the plot
+   data_plot->disconnect();
+   data_plot->detachItems();
 }
 
-/*
-void US_FitMeniscus::plot_data( void )
-{
-   meniscus_plot->clear();
-
-   QString contents = te_data->e->toPlainText();
-   contents.remove( QRegExp( "[^0-9\\.,\\n]" ) );
-
-   QStringList lines = contents.split( "\n", QString::SkipEmptyParts );
-   QStringList parsed;
-
-   double* radius_values = new double[ lines.size() ];
-   double* rmsd_values   = new double[ lines.size() ];
-   
-   int     count = 0;
-
-   double  minx = 1e20;
-   double  maxx = 0.0;
-
-   double  miny = 1e20;
-   double  maxy = 0.0;
-
-   // Remove any non-data lines and put values in arrays
-   for ( int i = 0; i < lines.size(); i++ )
-   {
-      QStringList values = lines[ i ].split( ',', QString::SkipEmptyParts );
-      if ( values.size() > 1 ) 
-      {
-         radius_values[ count ] = values[ 0 ].toDouble();
-         rmsd_values  [ count ] = values[ 1 ].toDouble();
-
-         // Find min and max
-         minx = min( minx, radius_values[ count ] );
-         maxx = max( maxx, radius_values[ count ] );
-
-         miny = min( miny, rmsd_values[ count ] );
-         maxy = max( maxy, rmsd_values[ count ] );
-
-         // Reformat
-         parsed << QString::number( radius_values[ count ], 'f', 4 ) + ", " +
-                   QString::number( rmsd_values  [ count ], 'f', 4 ); 
-
-         count++;
-      }
-   }
-
-   te_data->e->setPlainText( parsed.join( "\n" ) );
-
-   double overscan = ( maxx - minx ) * 0.10;  // 10% overscan
-
-   meniscus_plot->setAxisScale( QwtPlot::xBottom, 
-         minx - overscan, maxx + overscan );
-    
-   // Adjust y axis to scale all the data
-   double dy = fabs( maxy - miny ) / 10.0;
-
-   meniscus_plot->setAxisScale( QwtPlot::yLeft, miny - dy, maxy + dy );
-
-   raw_curve = us_curve( meniscus_plot, tr( "Raw Data" ) ); 
-   raw_curve->setPen( QPen( Qt::yellow ) );
-
-   raw_curve->setData( radius_values, rmsd_values, count );
-
-   // Do the fit and get the minimum
-
-   double c[ 10 ];
-
-   int order = sb_order->value();
-
-   US_Matrix::lsfit( c, radius_values, rmsd_values, count, order + 1 );
-
-   int fit_count = (int) ( ( maxx - minx + 2 * overscan ) / 0.001 );
-
-   double* fit_x = new double[ fit_count ];
-   double* fit_y = new double[ fit_count ];
-   double  x     = minx - overscan;
-   double minimum;
-
-   for ( int i = 0; i < fit_count; i++, x += 0.001 )
-   {
-      fit_x[ i ] = x;
-      fit_y[ i ] = c[ 0 ];
-
-      for ( int j = 1; j <= order; j++ ) 
-         fit_y[ i ] += c[ j ] * pow( x, j );
-   }
-
-   // Calculate Root Mean Square Error
-   double rms_err = 0.0;
-
-   for ( int i = 0; i < count; i++ )
-   {
-      double x = radius_values[ i ];
-      double y = rmsd_values  [ i ];
-
-      double y_calc = c[ 0 ];
-      
-      for ( int j = 1; j <= order; j++ )  
-         y_calc += c[ j ] * pow( x, j );
-      
-      rms_err += sq ( fabs ( y_calc - y ) );
-   }
-
-   le_rms_error->setText( QString::number( sqrt( rms_err / count ), 'e', 3 ) );
-
-   // Find the minimum
-   if ( order == 2 )
-   {
-      // Take the derivitive and get the minimum
-      // c1 + 2 * c2 * x = 0
-      minimum = - c[ 1 ] / ( 2.0 * c[ 2 ] );
-   }
-   else
-   {
-      // Find the zero of the derivitive
-      double dxdy  [ 9 ];
-      double d2xdy2[ 8 ];
-
-      // First take the derivitive
-      for ( int i = 0; i < order; i++ ) 
-         dxdy[ i ] = c[ i + 1 ] * ( i + 1 );
-
-      // And we'll need the 2nd derivitive
-      for ( int i = 0; i < order - 1; i++ ) 
-         d2xdy2[ i ] = dxdy[ i + 1 ] * ( i + 1 );
-
-      // We'll do a quadratic fit for the initial estimate
-      double q[ 3 ];
-      US_Matrix::lsfit( q, radius_values, rmsd_values, count, 3 );
-      minimum = - q[ 1 ] / ( 2.0 * q[ 2 ] );
-
-      const double epsilon = 1.0e-4;
-
-      int    k = 0;
-      double f;
-      double f_prime;
-      do
-      {
-        // f is the 1st derivitive
-        f = dxdy[ 0 ];
-        for ( int i = 1; i < order; i++ ) f += dxdy[ i ] * pow( minimum, i );
-
-        // f_prime is the 2nd derivitive
-        f_prime = d2xdy2[ 0 ];
-        for ( int i = 1; i < order - 1; i++ ) 
-           f_prime += d2xdy2[ i ] * pow( minimum, i );
-
-        if ( fabs( f ) < epsilon ) break;
-        if ( k++ > 10 ) break;
-
-        // Get the next estimate
-        minimum -= f / f_prime;
-
-      } while ( true );
-   }
-
-   fit_curve = us_curve( meniscus_plot, tr( "Fitted Data" ) ); 
-   fit_curve->setPen( QPen( Qt::red ) );
-   fit_curve->setData( fit_x, fit_y, fit_count );
-   
-   // Plot the minimum
-
-   minimum_curve = us_curve( meniscus_plot, tr( "Minimum Pointer" ) ); 
-   minimum_curve->setPen( QPen( QBrush( Qt::cyan ), 3.0 ) );
-
-   double radius_min[ 2 ];
-   double rmsd_min  [ 2 ];
-
-   radius_min[ 0 ] = minimum;
-   radius_min[ 1 ] = minimum;
-
-   rmsd_min  [ 0 ] = miny - 1.0 * dy;
-   rmsd_min  [ 0 ] = miny + 2.0 * dy;
-
-   minimum_curve->setData( radius_min, rmsd_min, 2 );
-
-   // Put the minimum in the line edit box also
-   le_fit->setText( QString::number( minimum, 'f', 5 ) );
-
-   // Add the marker label -- bold, font size default + 1, lines 3 pixels wide
-   QPen markerPen( QBrush( Qt::white ), 3.0 );
-   markerPen.setWidth( 3 );
-   
-   QwtPlotMarker* pm = new QwtPlotMarker();
-   QwtText        label( QString::number( minimum, 'f', 5 ) );
-   QFont          font( pm->label().font() );
-
-   font.setBold( true );
-   font.setPointSize( font.pointSize() + 1 );
-   label.setFont( font );
-
-   pm->setValue( minimum, miny + 3.0 * dy );
-   pm->setSymbol( QwtSymbol( QwtSymbol::Cross, 
-            QBrush( Qt::white ), markerPen, QSize( 9, 9 ) ) );
-   pm->setLabel( label );
-   pm->setLabelAlignment( Qt::AlignTop );
-
-   pm->attach( meniscus_plot );
-
-   meniscus_plot->replot();
-}
-*/
 void US_Edvabs::load( void )
 {  
    reset();
 
    // Ask for data directory
-   QString dir = QFileDialog::getExistingDirectory( this, 
+   workingDir = QFileDialog::getExistingDirectory( this, 
          tr("Raw Data Directory"),
          US_Settings::dataDir(),
          QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
 
-   if ( dir.isEmpty() ) return; 
+   if ( workingDir.isEmpty() ) return; 
 
 
-   QStringList components = dir.split( QRegExp( "[/\\\\]" ), QString::SkipEmptyParts );  
+   QStringList components = 
+      workingDir.split( QRegExp( "[/\\\\]" ), QString::SkipEmptyParts );  
    
-   QString runID = components.last();
+   runID = components.last();
 
-   QStringList nameFilters = ( QStringList() << runID + ".?.?.?*" );
+   QStringList nameFilters = QStringList( runID + ".*.auc" );
 
-   QStringList files = QDir::entryList( nameFilters, 
+   QDir d( workingDir );
+
+   files =  d.entryList( nameFilters, 
          QDir::Files | QDir::Readable, QDir::Name );
 
-   // For each file matching format, read into local structure
-   for ( int i = 0; i < files.size; i++ )
+   if ( files.size() == 0 )
    {
-      // US_DataIO::readRawDataBlob( files[ i ], data structure for input data );
-      //QFile f = QFile( files[ i ] );
-      //f.open( QIODevice::ReadOnly );
-      //QDataStream ds( &f );
-
-      //ds.writeRawData( char_ptr, length );
-      // ...
-
-
-      //f.close();
+      QMessageBox::warning( this,
+            tr( "No Files Found" ),
+            tr( "There were no files of the form:\n" ) + nameFilters[ 0 ]
+            + tr( "\nfound in the specified directory." ) );
+      return;
    }
 
-   qDebug() << "comp : " << components;
-   qDebug() << "dir  : " << dir;
-   qDebug() << "runID: " << runID;
+   // Look for cell / channel / wavelength combinations
+   
+   for ( int i = 0; i < files.size(); i++ )
+   {
+      cell     c;
+      channels ch;
 
-   // Update fields
+      QStringList part = files[ i ].split( "." );
 
+      c.cellNum  = part[ 2 ].toInt();
+      ch.channel = part[ 3 ].at( 0 );
+      double wl  = part[ 4 ].toDouble();
+
+      if ( ! cellList.contains( c ) ) cellList << c;
+      
+      int ii = cellList.indexOf( c );
+
+      if ( ! cellList[ ii ].channelList.contains( ch ) )  
+          cellList[ ii ].channelList << ch;
+      
+      // Don't need a test here.  The cell/channel/wavelength combination
+      // is unique
+      int jj = cellList[ ii ].channelList.indexOf( ch );
+      cellList[ ii ].channelList[ jj ].wavelength << wl; 
+   }
+
+   for ( int i = 0; i < cellList.size(); i++ )
+      cb_cell->addItem( QString::number( cellList[ i ].cellNum ) );
+   
+   le_info->setText( runID );
+   set_channels();
+   plot_current();
+}
+
+void US_Edvabs::set_channels( void )
+{
+   cell c;
+   c.cellNum = cb_cell->currentText().toInt();
+   
+   int cIndex = cellList.indexOf( c );
+
+   for ( int j = 0; j < cellList[ cIndex ].channelList.size(); j++ )
+      cb_channel->addItem( QString( cellList[ cIndex ].channelList[ j ].channel ) );
+
+   set_wavelengths();
+}
+
+void US_Edvabs::set_wavelengths( void )
+{
+   cell c;
+   c.cellNum = cb_cell->currentText().toInt();
+   
+   channels ch;
+   ch.channel = cb_channel->currentText().at( 0 );
+
+   int cIndex  = cellList.indexOf( c );
+   int chIndex = cellList[ cIndex ].channelList.indexOf( ch );
+
+   int count = cellList[ cIndex ].channelList[ chIndex ].wavelength.size();
+
+   for ( int k = 0; k < count; k++ )
+   {
+      int wl = (int)cellList[ cIndex ].channelList[ chIndex ].wavelength[ k ];
+      cb_wavelength->addItem( QString::number( wl ) );
+   }
+}
+
+void US_Edvabs::plot_current( void )
+{
+   // Read the data
+
+   QString cell    = cb_cell      ->currentText();
+   QString channel = cb_channel   ->currentText();
+   QString wl      = cb_wavelength->currentText();
+
+   QRegExp match( runID + "\\.[A-Z]{2}\\." + cell + "." + channel + "." + wl + ".auc" ); 
+   int index = files.indexOf( match );
+
+   if ( index < 0 ) 
+   {
+      QMessageBox::warning( this,
+         tr( "UltraScan Error" ),
+         tr( "Internal error.  Could not match cell / channel / wavelength" ) );
+      return;
+   }
+
+   QString filename = workingDir + files[ index ];
+   int result = US_DataIO::readRawData( filename, data );
+   if ( result != US_DataIO::OK )
+   {
+      QMessageBox::warning( this,
+         tr( "UltraScan Error" ),
+         tr( "Could not read data file.  Error: " ) 
+         + QString::number( result ) );
+      return;
+   }
+   
+   QString s = le_info->text() + " (" + data.description  + ")";
+   le_info->setText( s );
+
+   // Plot Title
+
+   QStringList parts = files[ index ].split( "." );
+   QString     title;
+
+   if ( parts[ 1 ] == "RA" )
+   {
+      title = "Radial Absorbance Data\nRun ID: "
+            + runID + " Cell: " + cell + " Wavelength: " + wl;
+   }
+   else 
+      title = "File type not recognized";
+
+   data_plot->setTitle( title );
+
+   // Plot Axes
+
+   // All the plot radii will be the same
+
+   double rmin = data.scanData[ 0 ].values.front().d.radius - 0.010; // Padding
+   double rmax = data.scanData[ 0 ].values.back() .d.radius + 0.010;
+   double vmin =  1.0e99;
+   double vmax = -1.0e99;
+
+   for ( uint i = 0; i < data.scanData.size(); i++ )
+   {
+      for ( uint j = 0; j < data.scanData[ i ].values.size(); j++ )
+      {
+         vmin = min( vmin, data.scanData[ i ].values[ j ].value );
+         vmax = max( vmax, data.scanData[ i ].values[ j ].value );
+      }
+   }
+
+   vmin = min( vmin * 0.98, vmin * 1.02 );  // Handle sign for padding
+   vmax = max( vmax * 0.98, vmax * 1.02 ); 
+
+   data_plot->setAxisScale( QwtPlot::yLeft  , vmin, vmax );
+   data_plot->setAxisScale( QwtPlot::xBottom, rmin, rmax );
+
+   // Plot Curves
+
+   grid = us_grid( data_plot );
+
+   int size = data.scanData[ 0 ].values.size();
+
+   double* r = new double[ size ];
+   double* v = new double[ size ];
+
+   for ( uint i = 0; i < data.scanData.size(); i++ )
+   {
+      
+      for ( int j = 0; j < size; j++ )
+      {
+         r[ j ] = data.scanData[ i ].values[ j ].d.radius;
+         v[ j ] = data.scanData[ i ].values[ j ].value;
+      }
+
+      QString title = tr( "Raw Data at " )
+         + QString::number( data.scanData[ i ].seconds ) + tr( " seconds" );
+
+      QwtPlotCurve* c = us_curve( data_plot, title );
+      c->setData( r, v, size );
+   }
+
+   data_plot->replot();
+
+   delete r;
+   delete v;
+
+   // Set the Scan spin boxes
+   ct_from->setMinValue( 1.0 );
+   ct_from->setMaxValue(  data.scanData.size() );
+
+   ct_to  ->setMinValue( 1.0 );
+   ct_to  ->setMaxValue(  data.scanData.size() );
+
+   // Enable pushbuttons
+
+   pb_meniscus ->setEnabled( true );
+   pb_dataRange->setEnabled( true );
+   pb_plateau  ->setEnabled( true );
+   pb_baseline ->setEnabled( true );
+
+   connect( pick, SIGNAL( cMouseDown( const QwtDoublePoint& ) ),
+                  SLOT  ( mouse     ( const QwtDoublePoint& ) ) );
+
+}
+
+void US_Edvabs::mouse( const QwtDoublePoint& p )
+{
+   qDebug() << p;
 }

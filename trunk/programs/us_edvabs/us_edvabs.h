@@ -7,6 +7,7 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
+#include "us_dataIO.h"
 
 class US_EXTERN US_Edvabs : public US_Widgets
 {
@@ -17,12 +18,42 @@ class US_EXTERN US_Edvabs : public US_Widgets
 
 	private:
 
-      US_Help       showHelp;
+      rawData data;
+
+      US_Help        showHelp;
+      US_PlotPicker* pick;
       
+      class channels
+      {
+         public:
+            QChar channel;
+            QList< double > wavelength;
+            
+            bool operator== ( const channels& x )
+              const { return channel == x.channel; };
+      };
+
+      class cell
+      {
+         public:
+            int cellNum;
+            QList< channels > channelList;
+
+            bool operator== ( const cell& x )
+              const { return cellNum == x.cellNum; };
+      };
+
+      QList< cell > cellList;
+      QString       workingDir;
+      QString       runID;
+      QStringList   files;
+
+
       QwtPlot*      data_plot;
       QwtPlotCurve* raw_curve;
       QwtPlotCurve* fit_curve;
       QwtPlotCurve* minimum_curve;
+      QwtPlotGrid*  grid;
 
       QLineEdit*    le_info;
       QLineEdit*    le_meniscus;
@@ -54,9 +85,14 @@ class US_EXTERN US_Edvabs : public US_Widgets
       QwtCounter*   ct_to;
       QwtCounter*   ct_noise;
 	
-	public slots:
-      //void plot_data( void );
+      void set_channels   ( void );
+      void set_wavelengths( void );
+      void plot_current   ( void );
+
+	private slots:
+
       void load     ( void );
+      void mouse    ( const QwtDoublePoint& );
 
       void reset    ( void );
 		void help     ( void )
