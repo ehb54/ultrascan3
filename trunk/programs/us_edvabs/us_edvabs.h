@@ -3,6 +3,8 @@
 
 #include <QtGui>
 
+#include "qwt_plot_marker.h"
+
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
@@ -17,8 +19,18 @@ class US_EXTERN US_Edvabs : public US_Widgets
 		US_Edvabs();
 
 	private:
-
       rawData data;
+
+      enum { MENISCUS, RANGE, PLATAEU, BASELINE, FINISHED } step;
+
+      double meniscus;
+      double meniscus_left;
+      double range_left;
+      double range_right;
+      double plateau;
+      double baseline;
+
+
 
       US_Help        showHelp;
       US_PlotPicker* pick;
@@ -52,8 +64,11 @@ class US_EXTERN US_Edvabs : public US_Widgets
       QwtPlot*      data_plot;
       QwtPlotCurve* raw_curve;
       QwtPlotCurve* fit_curve;
+      QwtPlotCurve* v_line;
       QwtPlotCurve* minimum_curve;
       QwtPlotGrid*  grid;
+
+      QwtPlotMarker* marker;
 
       QLineEdit*    le_info;
       QLineEdit*    le_meniscus;
@@ -88,6 +103,10 @@ class US_EXTERN US_Edvabs : public US_Widgets
       void set_channels   ( void );
       void set_wavelengths( void );
       void plot_current   ( void );
+      void set_pbColors   ( QPushButton* );
+      void draw_vline     ( double );
+      int  index          ( scan*, double );
+      void next_step      ( void );
 
 	private slots:
 
