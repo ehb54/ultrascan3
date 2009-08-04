@@ -26,6 +26,13 @@ int main( int argc, char* argv[] )
 
 US_Edvabs::US_Edvabs() : US_Widgets()
 {
+   step          = MENISCUS;
+   meniscus_left = 0.0;
+   range_left    = 0.0;
+   range_right   = 0.0;
+   plateau       = 0.0;
+   baseline      = 0.0;
+
    data.scanData.clear();
    cellList.clear();
 
@@ -288,6 +295,8 @@ void US_Edvabs::reset( void )
    // Clear the plot
    data_plot->disconnect();
    data_plot->detachItems();
+
+   step = MENISCUS;
 }
 
 void US_Edvabs::load( void )
@@ -356,6 +365,32 @@ void US_Edvabs::load( void )
    le_info->setText( runID );
    set_channels();
    plot_current();
+
+   // Enable pushbuttons
+
+   pb_meniscus ->setEnabled( true );
+   pb_dataRange->setEnabled( true );
+   pb_plateau  ->setEnabled( true );
+   pb_baseline ->setEnabled( true );
+
+   step = MENISCUS;
+   set_pbColors( pb_meniscus );
+}
+
+void US_Edvabs::set_pbColors( QPushButton* pb )
+{
+   QPalette p = US_GuiSettings::pushbColor();
+   
+   pb_meniscus ->setPalette( p );
+   pb_dataRange->setPalette( p );
+   pb_plateau  ->setPalette( p );
+   pb_baseline ->setPalette( p );
+
+   if ( pb != NULL )
+   {
+      p.setColor( QPalette::Button, Qt::green );
+      pb->setPalette( p );
+   }
 }
 
 void US_Edvabs::set_channels( void )
@@ -500,19 +535,153 @@ void US_Edvabs::plot_current( void )
    ct_to  ->setMinValue( 1.0 );
    ct_to  ->setMaxValue(  data.scanData.size() );
 
-   // Enable pushbuttons
 
-   pb_meniscus ->setEnabled( true );
-   pb_dataRange->setEnabled( true );
-   pb_plateau  ->setEnabled( true );
-   pb_baseline ->setEnabled( true );
-
-   connect( pick, SIGNAL( cMouseDown( const QwtDoublePoint& ) ),
-                  SLOT  ( mouse     ( const QwtDoublePoint& ) ) );
+   connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+                  SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
 
 }
 
 void US_Edvabs::mouse( const QwtDoublePoint& p )
 {
-   qDebug() << p;
+   switch ( step )
+   {
+      case MENISCUS:
+         if ( meniscus_left == 0.0 )
+         {
+            meniscus_left = p.x();
+            draw_vline( meniscus_left );
+         }
+         else
+         {
+            double meniscus_right = p.x();
+            
+            // Swap values if necessary
+            if ( meniscus_right < meniscus_left )
+            {
+               double temp    = meniscus_left;
+               meniscus_left  = meniscus_right;
+               meniscus_right = temp;
+            }
+
+            // Find the radius for the max value
+            
+            double maximum = -1.0e99;
+            
+            for ( uint i = 0; i < data.scanData.size(); i++ )
+            {
+               scan* s = &data.scanData[ i ];
+
+               int start = index( s, meniscus_left  );
+               int end   = index( s, meniscus_right );
+
+               for ( int j = start; j <= end; j++ )
+               {
+                  if ( maximum < s->values[ j ].value )
+                  {
+                     maximum  = s->values[ j ].value;
+                     meniscus = s->values[ j ].d.radius;
+                  }
+               }
+            }
+            
+            // Display the value
+            QString m;
+            le_meniscus->setText( m.sprintf( "%.3f", meniscus ) );
+
+            // Remove the left line
+            v_line->detach();
+            delete v_line;
+            v_line = NULL;
+
+            // Create a marker
+            marker = new QwtPlotMarker;
+            QBrush brush( Qt::white );
+            QPen   pen  ( brush, 2.0 );
+            
+            marker->setValue( meniscus, maximum );
+            marker->setSymbol( QwtSymbol( 
+                        QwtSymbol::Cross, 
+                        brush,
+                        pen,
+                        QSize ( 8, 8 ) ) );
+
+            marker->attach( data_plot );
+            data_plot->replot();
+
+            next_step();
+         }         
+         break;
+
+      default:
+         break;
+   }
 }
+
+int US_Edvabs::index( scan* s, double r )
+{
+   for ( uint i = 0; i < s->values.size(); i++ )
+   {
+      if ( fabs( s->values[ i ].d.radius - r ) < 5.0e-4 ) return i;
+   }
+
+   return -1;
+}
+
+
+void US_Edvabs::draw_vline( double radius )
+{
+   double r[ 2 ];
+
+   r[ 0 ] = radius;
+   r[ 1 ] = radius;
+
+   QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
+
+   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
+
+   double v[ 2 ];
+   v [ 0 ] = y_axis->upperBound() - padding;
+   v [ 1 ] = y_axis->lowerBound() + padding;
+
+   v_line = us_curve( data_plot, "V-Line" );
+   v_line->setData( r, v, 2 );
+
+   QPen pen = QPen( QBrush( Qt::white ), 2.0 );
+   v_line->setPen( pen );
+
+   data_plot->replot();
+}
+
+void US_Edvabs::next_step( void )
+{
+   QPushButton* pb;
+   
+   if      ( meniscus    == 0.0 ) 
+   {
+      step = MENISCUS;
+      pb   = pb_meniscus;
+   }
+   else if ( range_right == 0.0 ) 
+   {
+      step = RANGE;
+      pb   = pb_dataRange;
+   }
+   else if ( plateau     == 0.0 ) 
+   {
+      step = PLATAEU;
+      pb   = pb_plateau;
+   }
+   else if ( baseline    == 0.0 ) 
+   {
+      step = BASELINE;
+      pb   = pb_baseline;
+   }
+   else
+   {
+      step = FINISHED;
+      pb   = NULL;
+   }
+qDebug() << "step" << step;
+   set_pbColors( pb );
+}
+
