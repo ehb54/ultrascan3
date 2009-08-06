@@ -71,6 +71,13 @@ US_Convert::US_Convert() : US_Widgets()
    cb_wavelength->setInsertPolicy( QComboBox::InsertAlphabetically );
    main->addWidget( cb_wavelength, row++, 1 );
 
+   QLabel* lb_data = us_label( tr( "Data:" ) );
+   main->addWidget( lb_data, row, 0 );
+
+   te_data = us_textedit();
+   te_data->setReadOnly( true );
+   main->addWidget( te_data, row++, 1 );
+
    // Write pushbuttons
 
    QBoxLayout* writeButtons = new QHBoxLayout;
@@ -109,12 +116,13 @@ void US_Convert::reset( void )
    cb_wavelength->clear();
 
    le_dir->setText( "" );
+   te_data->setText( "" );
 
    pb_write   ->setEnabled( false );
    pb_writeAll->setEnabled( false );
 
    // Clear any data structures
-   raw_scans.clear();
+   legacyData.clear();
 }
 
 void US_Convert::load( void )
@@ -132,8 +140,9 @@ void US_Convert::load( void )
 
    // Get legacy file names
    QDir        d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
-   QStringList files = d.entryList();
-   QStringList good;
+   d.makeAbsolute();
+   QStringList files = d.entryList( QDir::Files );
+   QStringList fileList;
 
    // Read into local structures
    
@@ -147,17 +156,17 @@ void US_Convert::load( void )
       
       if ( rx.indexIn( f ) < 0 ) continue;
 
-      good << files[ i ];
+      fileList << files[ i ];
    }
 
    runType = files[ 0 ].right( 3 ).left( 2 ).toUpper(); // 1st 2 chars of extention
 
    QStringList channels;
 
-   // Parse the good filenames to determine cells and channels
-   for ( int i = 0; i < good.size(); i++ )
+   // Parse the filtered file list to determine cells and channels
+   for ( int i = 0; i < fileList.size(); i++ )
    {
-      QChar c = good[ i ].at( 0 );
+      QChar c = fileList[ i ].at( 0 );
       if ( c.isLetter() && ! channels.contains( c ) ) channels << c;
    }
 
@@ -175,17 +184,17 @@ void US_Convert::load( void )
 
    // Now read the data.
 
-   for ( int i = 0; i < good.size(); i++ )
+   for ( int i = 0; i < fileList.size(); i++ )
    {
       beckmanRaw data;
-      US_DataIO::readLegacyFile( dir + good[ i ], data );
+      US_DataIO::readLegacyFile( dir + "/" + fileList[ i ], data );
 
       // Add channel
-      QChar c = good[ i ].at( 0 );  // Get 1st character
+      QChar c = fileList[ i ].at( 0 );  // Get 1st character
 
       data.channel = ( c.isDigit() ) ? 'A' : c.toAscii();
 
-      raw_scans << data;
+      legacyData << data;
    }
 
    // We can't trust the filename for cell number
@@ -194,12 +203,12 @@ void US_Convert::load( void )
    QStringList cells;
    QStringList wavelengths;
 
-   for ( int i = 0; i < raw_scans.size(); i++ )
+   for ( int i = 0; i < legacyData.size(); i++ )
    {
-      QString wl = QString::number( raw_scans[ i ].t.wavelength, 'f', 1 );
+      QString wl = QString::number( legacyData[ i ].t.wavelength, 'f', 1 );
       if ( ! wavelengths.contains( wl ) ) wavelengths << wl;
 
-      QString s = QString::number( raw_scans[ i ].cell );
+      QString s = QString::number( legacyData[ i ].cell );
       if ( ! cells.contains( s ) ) cells << s;
    }
 
@@ -243,6 +252,48 @@ void US_Convert::load( void )
       cb_wavelength->addItem( QString::number( wl_average.last() ) );
    }
 
+   te_data    ->clear();
+   for ( uint i = 0; i < legacyData.size(); i++ )
+   {
+      beckmanRaw d = legacyData[ i ];
+
+/*
+      qDebug() << d.description;
+      qDebug() << d.type         << " "
+               << d.cell         << " "
+               << d.temperature  << " "
+               << d.rpm          << " "
+               << d.seconds      << " "
+               << d.omega2t      << " "
+               << d.t.wavelength << " "
+               << d.count;
+*/
+
+      te_data  ->append( d.description );
+
+      QString type(d.type);
+      QString line2 =                    type                   + " "
+                    + QString::number( d.cell )                 + " "
+                    + QString::number( d.temperature, 'f', 1 )  + " "
+                    + QString::number( d.rpm )                  + " "
+                    + QString::number( d.seconds )              + " "
+                    + QString::number( d.omega2t, 'E', 4 )      + " "
+                    + QString::number( d.t.wavelength )         + " "
+                    + QString::number( d.count );
+      te_data   ->append( line2 );
+
+      for ( uint j = 0; j < d.readings.size(); j++ )
+      {
+         reading r = d.readings[ j ];
+
+         QString line = QString::number(r.d.radius, 'f', 4 )    + " "
+                      + QString::number(r.value, 'E', 5 )       + " "
+                      + QString::number(r.stdDev, 'E', 5 );
+         te_data  ->append( line );
+      }
+      te_data  ->append( "" );
+   }
+
    pb_write   ->setEnabled( true );
    pb_writeAll->setEnabled( true );
 }
@@ -274,7 +325,7 @@ void US_Convert::write( void )
    {
       QMessageBox::information( this,
             tr( "Success" ),
-            dirname + filename + tr( " written." ) );
+            dirname + "/" + filename + tr( " written." ) );
    }        
 }
 
@@ -290,47 +341,47 @@ int US_Convert::write( const QString& filename )
    int         cell       = parts[ 2 ].toInt();
    char        channel    = parts[ 3 ].at( 0 ).toAscii();
    double      wavelength = parts[ 4 ].toDouble();
-   rawData     newScan;
+   rawData     newRawData;
 
    // Get a list of the data that matches the cell / channel / wl
 
-   QList< beckmanRaw* > data;
+   QList< beckmanRaw* > ccwLegacyData;      // legacy data with this cell/channel/wl
 
-   for ( int i = 0; i < raw_scans.size(); i++ )
+   for ( int i = 0; i < legacyData.size(); i++ )
    {
-      if ( raw_scans[ i ].cell == cell       &&
-           raw_scans[ i ].channel == channel &&
-           fabs ( raw_scans[ i ].t.wavelength - wavelength ) < 5.0 )
-         data << &raw_scans[ i ];
+      if ( legacyData[ i ].cell == cell       &&
+           legacyData[ i ].channel == channel &&
+           fabs ( legacyData[ i ].t.wavelength - wavelength ) < 5.0 )
+         ccwLegacyData << &legacyData[ i ];
    }
 
    // Sort the list according to time.  Use a simple bubble sort
-   for ( int i = 0; i < data.size(); i++ )
+   for ( int i = 0; i < ccwLegacyData.size(); i++ )
    {
-      for ( int j = i + i; j < data.size(); j++ )
+      for ( int j = i + i; j < ccwLegacyData.size(); j++ )
       {
-         if ( data[ j ]->seconds < data[ i ]->seconds ) data.swap( i, j );
+         if ( ccwLegacyData[ j ]->seconds < ccwLegacyData[ i ]->seconds ) ccwLegacyData.swap( i, j );
       }
    }
 
-   if ( data.isEmpty() ) return US_DataIO::NODATA; 
+   if ( ccwLegacyData.isEmpty() ) return US_DataIO::NODATA; 
 
-   strncpy( newScan.type, runType.toAscii().constData(), 2 );
+   strncpy( newRawData.type, runType.toAscii().constData(), 2 );
    // GUID is done by US_DataIO.
-   newScan.cell    = cell;
-   newScan.channel = channel;
-   newScan.description = data[ 0 ]->description;
+   newRawData.cell        = cell;
+   newRawData.channel     = channel;
+   newRawData.description = ccwLegacyData[ 0 ]->description;
    
    // Get the min and max radius
    double min_radius = 100.0;
    double max_radius = 0.0;
 
-   for ( int i = 0; i < data.size(); i++ )
+   for ( int i = 0; i < ccwLegacyData.size(); i++ )
    {
-      double first = data[ i ]->readings[ 0 ].d.radius;
+      double first = ccwLegacyData[ i ]->readings[ 0 ].d.radius;
 
-      uint   size  = data[ i ]->readings.size();
-      double last  = data[ i ]->readings[ size - 1 ].d.radius; 
+      uint   size  = ccwLegacyData[ i ]->readings.size();
+      double last  = ccwLegacyData[ i ]->readings[ size - 1 ].d.radius; 
 
       min_radius = min( min_radius, first );
       max_radius = max( max_radius, last );
@@ -341,14 +392,14 @@ int US_Convert::write( const QString& filename )
    // Set the distance between readings to a constant for now
    double delta_r = 0.001;
 
-   for ( int i = 0; i < data.size(); i++ )
+   for ( int i = 0; i < ccwLegacyData.size(); i++ )
    {
       scan s;
-      s.temperature = data[ i ]->temperature;
-      s.rpm         = data[ i ]->rpm;
-      s.seconds     = data[ i ]->seconds;
-      s.omega2t     = data[ i ]->omega2t;
-      s.wavelength  = data[ i ]->t.wavelength;
+      s.temperature = ccwLegacyData[ i ]->temperature;
+      s.rpm         = ccwLegacyData[ i ]->rpm;
+      s.seconds     = ccwLegacyData[ i ]->seconds;
+      s.omega2t     = ccwLegacyData[ i ]->omega2t;
+      s.wavelength  = ccwLegacyData[ i ]->t.wavelength;
 
       // Readings here and interpolated array
       int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
@@ -361,26 +412,26 @@ int US_Convert::write( const QString& filename )
          from min_radius to max_radius and the pointer to the current 
          scan readings is j.  
 
-         The old scan reading is data[ i ]->values[ j ]
+         The old scan reading is ccwLegacyData[ i ]->values[ j ]
 
-         If the current new radius is within 0.0003 of the data[ i ]->values[ j ].d.radius
-            copy data[ i ]->values[ j ].value into the new reading
-            copy data[ i ]->values[ j ].stdDev into the new reading
+         If the current new radius is within 0.0003 of the ccwLegacyData[ i ]->values[ j ].d.radius
+            copy ccwLegacyData[ i ]->values[ j ].value into the new reading
+            copy ccwLegacyData[ i ]->values[ j ].stdDev into the new reading
             increment j
 
-         If the current new radius is less than data[ i ]->values[ 0 ].d.radius,
+         If the current new radius is less than ccwLegacyData[ i ]->values[ 0 ].d.radius,
          then 
-            copy data[ i ]->values[ 0 ].value into the new reading
+            copy ccwLegacyData[ i ]->values[ 0 ].value into the new reading
             set the std dev to 0.0.
             set the interpolated flag
          
-         If the current new radius is greater than data[ i ]->values[ last() ].d.radius
-            copy data[ i ]->values[ last ].value into the new reading
+         If the current new radius is greater than ccwLegacyData[ i ]->values[ last() ].d.radius
+            copy ccwLegacyData[ i ]->values[ last ].value into the new reading
             set the std dev to 0.0.
             set the interpolated flag
 
          else
-            interplate between data[ i ]->values[ j ] and data[ i ]->values[ j -1 ]
+            interplate between ccwLegacyData[ i ]->values[ j ] and ccwLegacyData[ i ]->values[ j -1 ]
             set the std dev to 0.0.
             set the interpolated flag
 
@@ -388,48 +439,48 @@ int US_Convert::write( const QString& filename )
       */
 
       double radius = min_radius;
-      double r0     = data[ i ]->readings[ 0 ].d.radius;
-      int    rCount = data[ i ]->readings.size();       
-      double rLast  = data[ i ]->readings[ rCount - 1 ].d.radius;
+      double r0     = ccwLegacyData[ i ]->readings[ 0 ].d.radius;
+      int    rCount = ccwLegacyData[ i ]->readings.size();       
+      double rLast  = ccwLegacyData[ i ]->readings[ rCount - 1 ].d.radius;
       
       int    k      = 0;
       
       for ( int j = 0; j < radius_count; j++ )
       {
          reading r;
-         double  dr = radius - data[ i ]->readings[ k ].d.radius;
+         double  dr = radius - ccwLegacyData[ i ]->readings[ k ].d.radius;
 
          r.d.radius = radius;
          
          if ( dr > -3.0e-4   &&  k < rCount ) // A value
          {
-            r.value  = data[ i ]->readings[ k ].value;
-            r.stdDev = data[ i ]->readings[ k ].stdDev;
+            r.value  = ccwLegacyData[ i ]->readings[ k ].value;
+            r.stdDev = ccwLegacyData[ i ]->readings[ k ].stdDev;
             k++;
          }
          else if ( radius < r0 ) // Before the first
          {
-            r.value  = data[ i ]->readings[ 0 ].value;
+            r.value  = ccwLegacyData[ i ]->readings[ 0 ].value;
             r.stdDev = 0.0;
             setInterpolated( s.interpolated, j );
          }
          else if ( radius > rLast  ||  k >= rCount ) // After the last
          {
-            r.value  = data[ i ]->readings[ rCount - 1 ].value;
+            r.value  = ccwLegacyData[ i ]->readings[ rCount - 1 ].value;
             r.stdDev = 0.0;
             setInterpolated( s.interpolated, j );
          }
          else  // Interpolate the value
          {
-            double dv = data[ i ]->readings[ k     ].value - 
-                        data[ i ]->readings[ k - 1 ].value;
+            double dv = ccwLegacyData[ i ]->readings[ k     ].value - 
+                        ccwLegacyData[ i ]->readings[ k - 1 ].value;
             
-            double dR = data[ i ]->readings[ k     ].d.radius -
-                        data[ i ]->readings[ k - 1 ].d.radius;
+            double dR = ccwLegacyData[ i ]->readings[ k     ].d.radius -
+                        ccwLegacyData[ i ]->readings[ k - 1 ].d.radius;
 
-            dr = radius - data[ i ]->readings[ k - 1 ].d.radius;
+            dr = radius - ccwLegacyData[ i ]->readings[ k - 1 ].d.radius;
 
-            r.value  =  data[ i ]->readings[ k - 1 ].value + dr * dv / dR;
+            r.value  =  ccwLegacyData[ i ]->readings[ k - 1 ].value + dr * dv / dR;
             r.stdDev = 0.0;
 
             setInterpolated( s.interpolated, j );
@@ -439,19 +490,19 @@ int US_Convert::write( const QString& filename )
          radius += delta_r;
       }
 
-      newScan.scanData.push_back( s );
+      newRawData.scanData.push_back( s );
    }
 
    
    // Get the directory and write out the data
    QString dirname = le_dir->text();
 
-   int result = US_DataIO::writeRawData( dirname + filename, newScan );
+   int result = US_DataIO::writeRawData( dirname + "/" + filename, newRawData );
    
    // Delete the bitmaps we allocated
 
-   for ( uint i = 0; i < newScan.scanData.size(); i++ ) 
-      delete newScan.scanData[ i ].interpolated;
+   for ( uint i = 0; i < newRawData.scanData.size(); i++ ) 
+      delete newRawData.scanData[ i ].interpolated;
   
    return result;
 }
