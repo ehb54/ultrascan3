@@ -29,7 +29,9 @@ class US_Convert : public US_Widgets
       QPushButton*  pb_write;
       QPushButton*  pb_writeAll;
 
-      QList< beckmanRaw > raw_scans;      
+      QTextEdit*    te_data;
+
+      QList< beckmanRaw > legacyData;      
 
       int  write           ( const QString& );
       void setInterpolated ( unsigned char*, int );
