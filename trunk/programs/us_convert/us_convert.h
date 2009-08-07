@@ -9,15 +9,14 @@
 
 class US_Convert : public US_Widgets
 {
-	Q_OBJECT
-
-	public:
-		US_Convert();
+  Q_OBJECT
+  public:
+      US_Convert();
 
 	private:
 
       US_Help       showHelp;
-    
+
       QString       runType;
 
       QLineEdit*    le_dir;
@@ -31,14 +30,14 @@ class US_Convert : public US_Widgets
 
       QTextEdit*    te_data;
 
-      QList< beckmanRaw > legacyData;      
+      QList< beckmanRaw > legacyData;
 
       QProgressBar* progress;
 
       int  write           ( const QString& );
       void setInterpolated ( unsigned char*, int );
 
-	private slots:
+  private slots:
       void load     ( void );
       void reset    ( void );
 
@@ -47,7 +46,7 @@ class US_Convert : public US_Widgets
 
 
       void writeAll ( void );
-		void help     ( void )
+      void help     ( void )
       { showHelp.show_help( "manual/us_convert.html" ); };
 };
 #endif
