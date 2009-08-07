@@ -71,8 +71,21 @@ US_Convert::US_Convert() : US_Widgets()
    cb_wavelength->setInsertPolicy( QComboBox::InsertAlphabetically );
    main->addWidget( cb_wavelength, row++, 1 );
 
+   // Create a group box to include a progress bar in the data label section
+   QGroupBox* group_box    = new QGroupBox();
+   QGridLayout* data_label = new QGridLayout( this );
+   data_label->setSpacing         ( 0 );
+   data_label->setContentsMargins ( 0, 0, 0, 0 );
+
    QLabel* lb_data = us_label( tr( "Data:" ) );
-   main->addWidget( lb_data, row, 0 );
+   data_label->addWidget( lb_data, 0, 0 );
+   progress = us_progressBar( 0, 100, 0 );
+   progress -> reset();
+   progress -> setVisible( false );
+   data_label->addWidget( progress, 1, 0 );
+
+   group_box->setLayout(data_label);
+   main->addWidget( group_box, row, 0 );
 
    te_data = us_textedit();
    te_data->setReadOnly( true );
@@ -252,7 +265,12 @@ void US_Convert::load( void )
       cb_wavelength->addItem( QString::number( wl_average.last() ) );
    }
 
+   // Initialize textedit box and progress bar
    te_data    ->clear();
+   progress   ->setRange( 0, legacyData.size()-1 );
+   progress   ->setValue( 0 );
+   progress   ->setVisible( true );
+
    for ( uint i = 0; i < legacyData.size(); i++ )
    {
       beckmanRaw d = legacyData[ i ];
@@ -291,9 +309,12 @@ void US_Convert::load( void )
                       + QString::number(r.stdDev, 'E', 5 );
          te_data  ->append( line );
       }
-      te_data  ->append( "" );
+      te_data  ->append( "" );      // a blank line between files
+      progress ->setValue( i );     // update progress
+      qApp     ->processEvents();
    }
 
+   progress   ->setVisible( false );
    pb_write   ->setEnabled( true );
    pb_writeAll->setEnabled( true );
 }
