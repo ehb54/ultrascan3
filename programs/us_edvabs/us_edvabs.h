@@ -19,21 +19,19 @@ class US_EXTERN US_Edvabs : public US_Widgets
 		US_Edvabs();
 
 	private:
-      rawData data;
 
-      enum { MENISCUS, RANGE, PLATAEU, BASELINE, FINISHED } step;
+      enum { MENISCUS, RANGE, PLATEAU, BASELINE, FINISHED } step;
 
-      double meniscus;
-      double meniscus_left;
-      double range_left;
-      double range_right;
-      double plateau;
-      double baseline;
+      rawData          data;
+      double           meniscus;
+      double           meniscus_left;
+      double           range_left;
+      double           range_right;
+      QList< double >  plateau;
+      double           baseline;
+      QMap< int, int > includes;
 
-
-
-      US_Help        showHelp;
-      US_PlotPicker* pick;
+      US_Help          showHelp;
       
       class channels
       {
@@ -55,50 +53,50 @@ class US_EXTERN US_Edvabs : public US_Widgets
               const { return cellNum == x.cellNum; };
       };
 
-      QList< cell > cellList;
-      QString       workingDir;
-      QString       runID;
-      QStringList   files;
+      QList< cell >  cellList;
+      QString        workingDir;
+      QString        runID;
+      QStringList    files;
 
 
-      QwtPlot*      data_plot;
-      QwtPlotCurve* raw_curve;
-      QwtPlotCurve* fit_curve;
-      QwtPlotCurve* v_line;
-      QwtPlotCurve* minimum_curve;
-      QwtPlotGrid*  grid;
-
+      QwtPlot*       data_plot;
+      QwtPlotCurve*  raw_curve;
+      QwtPlotCurve*  fit_curve;
+      QwtPlotCurve*  v_line;
+      QwtPlotCurve*  minimum_curve;
+      QwtPlotGrid*   grid;
       QwtPlotMarker* marker;
+      US_PlotPicker* pick;
 
-      QLineEdit*    le_info;
-      QLineEdit*    le_meniscus;
-      QLineEdit*    le_dataRange;
-      QLineEdit*    le_plateau;
-      QLineEdit*    le_baseline;
-
-      QPushButton*  pb_details;
-      QPushButton*  pb_exclude;
-      QPushButton*  pb_excludeRange;
-      QPushButton*  pb_exclusion;
-      QPushButton*  pb_edit1;
-      QPushButton*  pb_meniscus;
-      QPushButton*  pb_dataRange;
-      QPushButton*  pb_plateau;
-      QPushButton*  pb_baseline;
-      QPushButton*  pb_noise;
-      QPushButton*  pb_subtract;
-      QPushButton*  pb_spikes;
-      QPushButton*  pb_invert;
-      QPushButton*  pb_write;
-
-
-      QComboBox*    cb_cell;
-      QComboBox*    cb_channel;
-      QComboBox*    cb_wavelength;
-
-      QwtCounter*   ct_from;
-      QwtCounter*   ct_to;
-      QwtCounter*   ct_noise;
+      QLineEdit*     le_info;
+      QLineEdit*     le_meniscus;
+      QLineEdit*     le_dataRange;
+      QLineEdit*     le_plateau;
+      QLineEdit*     le_baseline;
+                    
+      QPushButton*   pb_details;
+      QPushButton*   pb_exclude;
+      QPushButton*   pb_excludeRange;
+      QPushButton*   pb_exclusion;
+      QPushButton*   pb_include;
+      QPushButton*   pb_edit1;
+      QPushButton*   pb_meniscus;
+      QPushButton*   pb_dataRange;
+      QPushButton*   pb_plateau;
+      QPushButton*   pb_baseline;
+      QPushButton*   pb_noise;
+      QPushButton*   pb_subtract;
+      QPushButton*   pb_spikes;
+      QPushButton*   pb_invert;
+      QPushButton*   pb_write;
+                    
+      QComboBox*     cb_cell;
+      QComboBox*     cb_channel;
+      QComboBox*     cb_wavelength;
+                    
+      QwtCounter*    ct_from;
+      QwtCounter*    ct_to;
+      QwtCounter*    ct_noise;
 	
       void set_channels   ( void );
       void set_wavelengths( void );
@@ -107,14 +105,30 @@ class US_EXTERN US_Edvabs : public US_Widgets
       void draw_vline     ( double );
       int  index          ( scan*, double );
       void next_step      ( void );
+      void plot_all       ( void );
+      void plot_range     ( void );
+      void plot_last      ( void );
+      void init_includes  ( void );
 
 	private slots:
 
-      void load     ( void );
-      void mouse    ( const QwtDoublePoint& );
+      void load         ( void );
+      void mouse        ( const QwtDoublePoint& );
+      void set_meniscus ( void );
+      void set_dataRange( void );
+      void set_plateau  ( void );
+      void set_baseline ( void );
+      void focus_from   ( double );
+      void focus_to     ( double );
+      void focus        ( int, int );
+      void exclude_one  ( void );
+      void exclude_range( void );
+      void exclusion    ( void );
+      void edit_scan    ( void );
+      void include      ( void );
 
-      void reset    ( void );
-		void help     ( void )
+      void reset        ( void );
+		void help         ( void )
       { showHelp.show_help( "manual/edit_velocity.html" ); };
 };
 #endif
