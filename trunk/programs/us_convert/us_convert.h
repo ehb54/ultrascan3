@@ -33,6 +33,8 @@ class US_Convert : public US_Widgets
 
       QList< beckmanRaw > legacyData;      
 
+      QProgressBar* progress;
+
       int  write           ( const QString& );
       void setInterpolated ( unsigned char*, int );
 
