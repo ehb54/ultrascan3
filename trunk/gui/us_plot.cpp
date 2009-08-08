@@ -1881,19 +1881,33 @@ US_PlotPicker::US_PlotPicker( QwtPlot* plot )
 
 void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
 {
-   if ( e->button() == Qt::LeftButton ) 
-      emit mouseDown( invTransform( e->pos() ) );
-   if ( e->button() == Qt::LeftButton && e->modifiers() == Qt::ControlModifier )
-      emit cMouseDown( invTransform( e->pos() ) );
+   // Prevent spurious clicks
+   static QTime last_click;
+
+   if ( last_click.isNull() || last_click.elapsed() > 300 )
+   {
+      last_click.start();
+      if ( e->button() == Qt::LeftButton ) 
+         emit mouseDown( invTransform( e->pos() ) );
+      if ( e->button() == Qt::LeftButton && e->modifiers() == Qt::ControlModifier )
+         emit cMouseDown( invTransform( e->pos() ) );
+   }
    transition( e );
 }
 
 void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
 {
-   if ( e->button() == Qt::LeftButton ) 
-      emit mouseUp( invTransform( e->pos() ) );
-   if ( e->button() == Qt::LeftButton && e->modifiers() == Qt::ControlModifier )
-      emit cMouseUp( invTransform( e->pos() ) );
+   static QTime last_click;
+
+   if ( last_click.isNull() || last_click.elapsed() > 300 ) 
+   {
+      last_click.start();
+      if ( e->button() == Qt::LeftButton )
+         emit mouseUp( invTransform( e->pos() ) );
+      
+      if ( e->button() == Qt::LeftButton && e->modifiers() == Qt::ControlModifier )
+         emit cMouseUp( invTransform( e->pos() ) );
+   }
    transition( e );
 }
 

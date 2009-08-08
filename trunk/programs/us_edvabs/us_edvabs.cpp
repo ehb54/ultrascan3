@@ -56,27 +56,35 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( le_info, s_row++, 1, 1, 3 );
 
    // Row 3
-   QLabel* lb_cell = us_label( tr( "Cell:" ), -1 );
-   specs->addWidget( lb_cell, s_row, 0 );
+   QLabel* lb_tripple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
+   specs->addWidget( lb_tripple, s_row, 0, 1, 2 );
 
-   cb_cell = us_comboBox();
-   cb_cell->setInsertPolicy( QComboBox::InsertAlphabetically );
-   specs->addWidget( cb_cell, s_row, 1 );
+   cb_tripple = us_comboBox();
+   cb_tripple->setInsertPolicy( QComboBox::InsertAlphabetically );
+   specs->addWidget( cb_tripple, s_row++, 2, 1, 2 );
+   
+   
+   //QLabel* lb_cell = us_label( tr( "Cell:" ), -1 );
+   //specs->addWidget( lb_cell, s_row, 0 );
 
-   QLabel* lb_channel = us_label( tr( "Channel:" ), -1 );
-   specs->addWidget( lb_channel, s_row, 2 );
+   //cb_cell = us_comboBox();
+   //cb_cell->setInsertPolicy( QComboBox::InsertAlphabetically );
+   //specs->addWidget( cb_cell, s_row, 1 );
 
-   cb_channel = us_comboBox();
-   cb_channel->setInsertPolicy( QComboBox::InsertAlphabetically );
-   specs->addWidget( cb_channel, s_row++, 3 );
+   //QLabel* lb_channel = us_label( tr( "Channel:" ), -1 );
+   //specs->addWidget( lb_channel, s_row, 2 );
+
+   //cb_channel = us_comboBox();
+   //cb_channel->setInsertPolicy( QComboBox::InsertAlphabetically );
+   //specs->addWidget( cb_channel, s_row++, 3 );
    
    // Row 4
-   QLabel* lb_wavelength = us_label( tr( "Wavelength:" ), -1 );
-   specs->addWidget( lb_wavelength, s_row, 0 );
+   //QLabel* lb_wavelength = us_label( tr( "Wavelength:" ), -1 );
+   //specs->addWidget( lb_wavelength, s_row, 0 );
 
-   cb_wavelength = us_comboBox();
-   cb_wavelength->setInsertPolicy( QComboBox::InsertAlphabetically );
-   specs->addWidget( cb_wavelength, s_row++, 1 );
+   //cb_wavelength = us_comboBox();
+   //cb_wavelength->setInsertPolicy( QComboBox::InsertAlphabetically );
+   //specs->addWidget( cb_wavelength, s_row++, 1 );
    
    // Row 5
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
@@ -101,7 +109,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    ct_to->setStep( 1 );
    specs->addWidget( ct_to, s_row++, 3 );
    
-   // Exclude and Include  pushbuttons
+   // Exclude and Include pushbuttons
    // Row 7
    pb_exclude = us_pushbutton( tr( "Exclude Single Scan" ), false );
    connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude_one() ) );
@@ -112,7 +120,6 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( pb_excludeRange, s_row++, 2, 1, 2 );
    
    // Row 8
-
    pb_exclusion = us_pushbutton( tr( "Exclusion Profile" ), false );
    connect( pb_exclusion, SIGNAL( clicked() ), SLOT( exclusion() ) );
    specs->addWidget( pb_exclusion, s_row, 0, 1, 2 );
@@ -122,7 +129,6 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( pb_edit1, s_row++, 2, 1, 2 );
 
    // Row 9
-
    pb_include = us_pushbutton( tr( "Include All" ), false );
    connect( pb_include, SIGNAL( clicked() ), SLOT( include() ) );
    specs->addWidget( pb_include, s_row++, 0, 1, 4 );
@@ -183,18 +189,17 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( pb_subtract, s_row, 0, 1, 2 );
    
    pb_spikes = us_pushbutton( tr( "Remove Spikes" ), false );
-   //connect( pb_spikes, SIGNAL( clicked() ), SLOT( help() ) );
+   //connect( pb_spikes, SIGNAL( clicked() ), SLOT( remove_spikes() ) );
    specs->addWidget( pb_spikes, s_row++, 2, 1, 2 );
    
    pb_invert = us_pushbutton( tr( "Invert Sign" ), false );
-   //connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
+   //connect( pb_help, SIGNAL( clicked() ), SLOT( invert() ) );
    specs->addWidget( pb_invert, s_row, 0, 1, 2 );
   
    pb_write = us_pushbutton( tr( "Save Current Edit Profile" ), false );
    specs->addWidget( pb_write, s_row++, 2, 1, 2 );
 
    // Button rows
-
    QBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
@@ -215,10 +220,6 @@ US_Edvabs::US_Edvabs() : US_Widgets()
          tr( "Radius (in cm)" ), tr( "Absorbance" ) );
    
    data_plot->setMinimumSize( 600, 400 );
-   data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
-   data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
-
-   grid = us_grid( data_plot );
 
    pick = new US_PlotPicker( data_plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
@@ -251,19 +252,22 @@ void US_Edvabs::reset( void )
    ct_to->setMaxValue( 0 );
    ct_to->setValue   ( 0 );
 
-   cb_cell      ->clear();
-   cb_channel   ->clear();
-   cb_wavelength->clear();
+   cb_tripple   ->clear();
+   //cb_cell      ->clear();
+   //cb_channel   ->clear();
+   //cb_wavelength->clear();
 
    ct_noise->setValue( 4 );
 
-   data_plot->clear();
-   grid = us_grid( data_plot );
-   pick = new US_PlotPicker( data_plot );
-   pick->setRubberBand( QwtPicker::VLineRubberBand );
+   data_plot->detachItems();
+
+   pick->disconnect();
+   //pick = new US_PlotPicker( data_plot );
+   //pick->setRubberBand( QwtPicker::VLineRubberBand );
 
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
+   grid = us_grid( data_plot );
    data_plot->replot();
 
    // Disable pushbuttons
@@ -291,17 +295,6 @@ void US_Edvabs::reset( void )
    }
 
    data.scanData.clear();
-
-   // Clear the cell info structures
-   for ( int i = 0; i < cellList.size(); i++ )
-   {
-      for ( int j = 0; j < cellList[ i ].channelList.size(); j++ )
-         cellList[ i ].channelList[ j ].wavelength.clear();
-         
-      cellList[ i ].channelList.clear();
-   }
-
-   cellList.clear();
    includes.clear();
 
    step          = MENISCUS;
@@ -311,11 +304,6 @@ void US_Edvabs::reset( void )
    range_right   = 0.0;
    plateau.clear();
    baseline      = 0.0;
-
-   // Clear the plot
-   data_plot->disconnect();
-   data_plot->detachItems();
-
 }
 
 void US_Edvabs::load( void )
@@ -356,33 +344,15 @@ void US_Edvabs::load( void )
    
    for ( int i = 0; i < files.size(); i++ )
    {
-      cell     c;
-      channels ch;
-
       QStringList part = files[ i ].split( "." );
 
-      c.cellNum  = part[ 2 ].toInt();
-      ch.channel = part[ 3 ].at( 0 );
-      double wl  = part[ 4 ].toDouble();
-
-      if ( ! cellList.contains( c ) ) cellList << c;
-      
-      int ii = cellList.indexOf( c );
-
-      if ( ! cellList[ ii ].channelList.contains( ch ) )  
-          cellList[ ii ].channelList << ch;
-      
-      // Don't need a test here.  The cell/channel/wavelength combination
-      // is unique
-      int jj = cellList[ ii ].channelList.indexOf( ch );
-      cellList[ ii ].channelList[ jj ].wavelength << wl; 
+      QString t = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
+      if ( ! tripples.contains( t ) ) tripples << t;
    }
 
-   for ( int i = 0; i < cellList.size(); i++ )
-      cb_cell->addItem( QString::number( cellList[ i ].cellNum ) );
+   cb_tripple->addItems( tripples );
    
    le_info->setText( runID );
-   set_channels();
    plot_current();
 
    // Enable pushbuttons
@@ -420,45 +390,17 @@ void US_Edvabs::set_pbColors( QPushButton* pb )
    }
 }
 
-void US_Edvabs::set_channels( void )
-{
-   cell c;
-   c.cellNum = cb_cell->currentText().toInt();
-   
-   int cIndex = cellList.indexOf( c );
-
-   for ( int j = 0; j < cellList[ cIndex ].channelList.size(); j++ )
-      cb_channel->addItem( QString( cellList[ cIndex ].channelList[ j ].channel ) );
-
-   set_wavelengths();
-}
-
-void US_Edvabs::set_wavelengths( void )
-{
-   cell c;
-   c.cellNum = cb_cell->currentText().toInt();
-   
-   channels ch;
-   ch.channel = cb_channel->currentText().at( 0 );
-
-   int cIndex  = cellList.indexOf( c );
-   int chIndex = cellList[ cIndex ].channelList.indexOf( ch );
-
-   int count = cellList[ cIndex ].channelList[ chIndex ].wavelength.size();
-
-   for ( int k = 0; k < count; k++ )
-   {
-      int wl = (int)cellList[ cIndex ].channelList[ chIndex ].wavelength[ k ];
-      cb_wavelength->addItem( QString::number( wl ) );
-   }
-}
-
 void US_Edvabs::plot_current( void )
 {
    // Read the data
-   QString cell    = cb_cell      ->currentText();
-   QString channel = cb_channel   ->currentText();
-   QString wl      = cb_wavelength->currentText();
+   
+   QString tripple = cb_tripple->currentText();
+   QStringList parts = tripple.split( " / " );
+
+   QString cell    = parts[ 0 ];
+   QString channel = parts[ 1 ];
+   QString wl      = parts[ 2 ];
+
 
    QRegExp match( runID + "\\.[A-Z]{2}\\." + cell + "." + channel + "." + wl + ".auc" ); 
    int index = files.indexOf( match );
@@ -488,8 +430,9 @@ void US_Edvabs::plot_current( void )
    le_info->setText( s );
 
    // Plot Title
-   QStringList parts = files[ index ].split( "." );
-   QString     title;
+   parts = files[ index ].split( "." );
+   
+   QString title;
 
    if ( parts[ 1 ] == "RA" )
    {
@@ -501,7 +444,7 @@ void US_Edvabs::plot_current( void )
 
    data_plot->setTitle( title );
 
-   // Initialize include map
+   // Initialize include list
    init_includes();
 
    // Plot current data for cell / channel / wavelength tripple
@@ -514,10 +457,23 @@ void US_Edvabs::plot_current( void )
    ct_to  ->setMinValue( 0.0 );
    ct_to  ->setMaxValue(  data.scanData.size() );
 
-
    connect( pick, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
                   SLOT  ( mouse   ( const QwtDoublePoint& ) ) );
+}
 
+void US_Edvabs::replot( void )
+{
+   switch( step )
+   {
+      case PLATEAU:
+         plot_range();
+
+      case BASELINE:
+         plot_last();
+
+      default:
+         plot_all();
+   }
 }
 
 void US_Edvabs::mouse( const QwtDoublePoint& p )
@@ -692,8 +648,7 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
             le_baseline->setText( str.sprintf( "%.3f (%.3e)", p.x(), baseline ) );
          }
 
-
-            next_step();
+         next_step();
          break;
 
       default:
@@ -836,28 +791,33 @@ void US_Edvabs::set_baseline( void )
 
 void US_Edvabs::plot_all( void )
 {
-   data_plot->clear();
+   data_plot->detachItems(); 
    grid = us_grid( data_plot );
-   pick = new US_PlotPicker( data_plot );
-   pick->setRubberBand( QwtPicker::VLineRubberBand );
-
-   // Reset the scan curves within the new limits
-   data_plot->setAxisAutoScale( QwtPlot::yLeft );
-   data_plot->setAxisAutoScale( QwtPlot::xBottom );
 
    int size = data.scanData[ 0 ].values.size();
 
    double* r = new double[ size ];
    double* v = new double[ size ];
 
+   double maxR = -1.0e99;
+   double minR =  1.0e99;
+   double maxV = -1.0e99;
+   double minV =  1.0e99;
+
    for ( uint i = 0; i < data.scanData.size(); i++ )
    {
+      if ( ! includes.contains( i ) ) continue;
       scan* s = &data.scanData[ i ];
 
       for ( int j = 0; j < size; j++ )
       {
          r[ j ] = s->values[ j ].d.radius;
          v[ j ] = s->values[ j ].value;
+
+         maxR = max( maxR, r[ j ] );
+         minR = min( minR, r[ j ] );
+         maxV = max( maxV, v[ j ] );
+         minV = min( minV, v[ j ] );
       }
 
       QString title = tr( "Raw Data at " )
@@ -867,26 +827,33 @@ void US_Edvabs::plot_all( void )
       c->setData( r, v, size );
    }
 
+   // Reset the scan curves within the new limits
+   double padR = ( maxR - minR ) / 30.0;
+   double padV = ( maxV - minV ) / 30.0;
+
+   data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
+   data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
+
    data_plot->replot();
 
-   delete r;
-   delete v;
+   delete [] r;
+   delete [] v;
 }
 
 void US_Edvabs::plot_range( void )
 {
-   data_plot->clear();
+   data_plot->detachItems();
    grid = us_grid( data_plot ); 
-   pick = new US_PlotPicker( data_plot );
-   pick->setRubberBand( QwtPicker::CrossRubberBand );
-
-   // Reset the scan curves within the new limits
-   data_plot->setAxisAutoScale( QwtPlot::yLeft );
-   data_plot->setAxisAutoScale( QwtPlot::xBottom );
+   
+   double maxR = -1.0e99;
+   double minR =  1.0e99;
+   double maxV = -1.0e99;
+   double minV =  1.0e99;
 
    // For each scan
    for ( uint i = 0; i < data.scanData.size(); i++ )
    {
+      if ( ! includes.contains( i ) ) continue;
       scan*   s     = &data.scanData[ i ];
       int     count = 0;
       uint    size  = s->values.size();
@@ -900,6 +867,12 @@ void US_Edvabs::plot_range( void )
          {
             r[ count ] = s->values[ j ].d.radius;
             v[ count ] = s->values[ j ].value;
+
+            maxR = max( maxR, r[ count ] );
+            minR = min( minR, r[ count ] );
+            maxV = max( maxV, v[ count ] );
+            minV = min( minV, v[ count ] );
+
             count++;
          }
       }
@@ -909,24 +882,33 @@ void US_Edvabs::plot_range( void )
 
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setData( r, v, count );
+
+      delete [] r;
+      delete [] v;
    }
+
+   // Reset the scan curves within the new limits
+   double padR = ( maxR - minR ) / 30.0;
+   double padV = ( maxV - minV ) / 30.0;
+
+   data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
+   data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
 
    data_plot->replot();
 }
 
 void US_Edvabs::plot_last( void )
 {
-   data_plot->clear();
+   data_plot->detachItems();
    grid = us_grid( data_plot ); 
-   pick = new US_PlotPicker( data_plot );
-   pick->setRubberBand( QwtPicker::CrossRubberBand );
 
-   // Reset the scan curves within the new limits
-   data_plot->setAxisAutoScale( QwtPlot::yLeft );
-   data_plot->setAxisAutoScale( QwtPlot::xBottom );
+   double maxR = -1.0e99;
+   double minR =  1.0e99;
+   double maxV = -1.0e99;
+   double minV =  1.0e99;
 
    // Plot only the last scan
-   scan*   s     = &data.scanData[ data.scanData.size() - 1 ];;
+   scan*   s     = &data.scanData[ includes.last() ];;
    int     count = 0;
    uint    size  = s->values.size();
    double* r     = new double[ size ];
@@ -939,6 +921,12 @@ void US_Edvabs::plot_last( void )
       {
          r[ count ] = s->values[ j ].d.radius;
          v[ count ] = s->values[ j ].value;
+
+         maxR = max( maxR, r[ count ] );
+         minR = min( minR, r[ count ] );
+         maxV = max( maxV, v[ count ] );
+         minV = min( minV, v[ count ] );
+
          count++;
       }
    }
@@ -949,7 +937,17 @@ void US_Edvabs::plot_last( void )
    QwtPlotCurve* c = us_curve( data_plot, title );
    c->setData( r, v, count );
 
+   // Reset the scan curves within the new limits
+   double padR = ( maxR - minR ) / 30.0;
+   double padV = ( maxV - minV ) / 30.0;
+
+   data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
+   data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
+
    data_plot->replot();
+
+   delete [] r;
+   delete [] v;
 }
 
 void US_Edvabs::focus_from( double scan )
@@ -1047,21 +1045,45 @@ void US_Edvabs::focus( int from, int to )
 void US_Edvabs::init_includes( void )
 {
    includes.clear();
-   includes.insert( 0, 0 );  // A dummy value so we index at 1
-   for ( uint i = 0; i < data.scanData.size(); i++ )
-      includes.insert( i + 1, i + 1 );
+   for ( uint i = 0; i < data.scanData.size(); i++ ) includes << i;
 }
 
 void US_Edvabs::exclude_one( void )
 {
-   //int scan = (int)ct_from->value();
+   int scan = (int)ct_from->value();
 
-   QMessageBox::information( this, "Not yet", "Exclude scan implemented yet" );
+   // Offset by 1 for scan number vs index
+   includes.removeAt( scan - 1 );
+   replot();
+   reset_excludes();
+}
+
+void US_Edvabs::reset_excludes( void )
+{
+   ct_from->disconnect();
+   ct_from->setValue   ( 0 );
+   ct_from->setMaxValue( includes.size() );
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+
+   ct_to->disconnect();
+   ct_to->setValue   ( 0 );
+   ct_to->setMaxValue( includes.size() );
+   connect( ct_to, SIGNAL( valueChanged ( double ) ),
+                   SLOT  ( focus_to   ( double ) ) );
+
 }
 
 void US_Edvabs::exclude_range( void )
 {
-   QMessageBox::information( this, "Not yet", "Exclude range not implemented yet" );
+   int scanStart = (int)ct_from->value();
+   int scanEnd   = (int)ct_to  ->value();
+
+   for ( int i = scanStart - 1; i < scanEnd - 1; i++ )
+      includes.removeAt( i );
+
+   replot();
+   reset_excludes();
 }
 
 void US_Edvabs::exclusion( void )
@@ -1076,6 +1098,8 @@ void US_Edvabs::edit_scan( void )
 
 void US_Edvabs::include( void )
 {
-   QMessageBox::information( this, "Not yet", "Include not implemented yet" );
+   init_includes();
+   replot();
+   reset_excludes();
 }
 
