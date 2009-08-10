@@ -474,7 +474,7 @@ void saxs_Iq_thr_t::run()
       unsigned int q_points = (*q).size();
       if ( !thread ) 
       {
-         progress->setTotalSteps(as1 / threads);
+         progress->setTotalSteps((int)(1.15f * as1 / threads));
       }
 #if defined(DEBUG_THREAD)
       cerr << "thread " << thread << " as1 = " << as1 
@@ -536,6 +536,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
    // right now we are going with first residue map entry
    stopFlag = false;
    pb_stop->setEnabled(true);
+   pb_plot_saxs->setEnabled(false);
    progress_saxs->reset();
 
 #if defined(BUG_DEBUG)
@@ -560,6 +561,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          editor->append(tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
+         pb_plot_saxs->setEnabled(true);
          return;
       }
          
@@ -599,6 +601,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   editor->append(tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
+                  pb_plot_saxs->setEnabled(true);
                   return;
                }
                continue;
@@ -623,6 +626,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   editor->append(tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
+                  pb_plot_saxs->setEnabled(true);
                   return;
                }
                continue;
@@ -651,6 +655,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   editor->append(tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
+                  pb_plot_saxs->setEnabled(true);
                   return;
                }
                continue;
@@ -684,6 +689,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   editor->append(tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
+                  pb_plot_saxs->setEnabled(true);
                   return;
                }
                continue;
@@ -730,6 +736,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          editor->append(tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
+         pb_plot_saxs->setEnabled(true);
          return;
       }
 #if defined(SAXS_DEBUG)
@@ -802,6 +809,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          editor->append(tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
+         pb_plot_saxs->setEnabled(true);
          return;
       }
       vector < double > I;
@@ -900,6 +908,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             editor->append(tr("Terminated by user request.\n"));
             progress_saxs->reset();
             lbl_core_progress->setText("");
+            pb_plot_saxs->setEnabled(true);
             return;
          }
 
@@ -918,7 +927,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       unsigned int as1 = as - 1;
       double rik; // distance from atom i to k 
       double qrik; // q * rik
-      progress_saxs->setTotalSteps(as1);
+      progress_saxs->setTotalSteps((int)(as1 * 1.15));
       for ( unsigned int i = 0; i < as1; i++ )
       {
          // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
@@ -931,6 +940,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             editor->append(tr("Terminated by user request.\n"));
             progress_saxs->reset();
             lbl_core_progress->setText("");
+            pb_plot_saxs->setEnabled(true);
             return;
          }
          for ( unsigned int k = i + 1; k < as; k++ )
@@ -984,10 +994,15 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 #if defined(SAXS_DEBUG)
       cout << "plot # " << p << endl;
 #endif
+      for ( unsigned int i = 0; i < plotted_I[p].size(); i++ ) 
+      {
+         plotted_I[p][i] = log10(plotted_I[p][i]);
+      }
       plot_saxs->setCurveData(Iq, (double *)&(plotted_q[p][0]), (double *)&(plotted_I[p][0]), q_points);
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
       plot_saxs->replot();
    }
+   pb_plot_saxs->setEnabled(true);
 }
 
 void US_Hydrodyn_Saxs::print()
