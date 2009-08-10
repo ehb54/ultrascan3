@@ -94,7 +94,7 @@ SOMO Config file - computer generated, please do not edit...
 0		# flag for overlap cutoff: false: same as in model building, true: enter manually
 0		# overlap value
 0		# PDB visualization option
-/home/user/demeler/us/ultrascan/etc/rasmol.spt		# RasMol color filename
+/root/ultrascan/etc/rasmol.spt		# RasMol color filename
 1		# skip hydrogen atoms?
 1		# skip water molecules?
 1		# skip alternate conformations?
@@ -104,6 +104,7 @@ SOMO Config file - computer generated, please do not edit...
 1.5		# scattering wavelength
 0.1		# starting angle
 4		# ending angle
+0.2		# angle stepsize
 0.334		# Water electron density
 40		# maximum size
 0.4		# bin size
