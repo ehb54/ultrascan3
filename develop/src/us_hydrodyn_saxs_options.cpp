@@ -10,6 +10,7 @@ US_Hydrodyn_SaxsOptions::US_Hydrodyn_SaxsOptions(struct saxs_options *saxs_optio
    USglobal=new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("SOMO SAXS Simulation Options"));
+   update_q();
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -111,6 +112,78 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cnt_end_angle->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_end_angle, SIGNAL(valueChanged(double)), SLOT(update_end_angle(double)));
 
+   lbl_delta_angle = new QLabel(tr(" Angle Stepsize: "), this);
+   Q_CHECK_PTR(lbl_delta_angle);
+   lbl_delta_angle->setAlignment(AlignLeft|AlignVCenter);
+   lbl_delta_angle->setMinimumHeight(minHeight1);
+   lbl_delta_angle->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_delta_angle->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_delta_angle= new QwtCounter(this);
+   Q_CHECK_PTR(cnt_delta_angle);
+   cnt_delta_angle->setRange(0, 90, 0.001);
+   cnt_delta_angle->setValue((*saxs_options).delta_angle);
+   cnt_delta_angle->setMinimumHeight(minHeight1);
+   cnt_delta_angle->setEnabled(true);
+   cnt_delta_angle->setNumButtons(3);
+   cnt_delta_angle->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_delta_angle->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_delta_angle, SIGNAL(valueChanged(double)), SLOT(update_delta_angle(double)));
+
+   lbl_start_q = new QLabel(tr(" Starting q: "), this);
+   Q_CHECK_PTR(lbl_start_q);
+   lbl_start_q->setAlignment(AlignLeft|AlignVCenter);
+   lbl_start_q->setMinimumHeight(minHeight1);
+   lbl_start_q->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_start_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_start_q= new QwtCounter(this);
+   Q_CHECK_PTR(cnt_start_q);
+   cnt_start_q->setRange(0, 90, 0.001);
+   cnt_start_q->setValue((*saxs_options).start_q);
+   cnt_start_q->setMinimumHeight(minHeight1);
+   cnt_start_q->setEnabled(true);
+   cnt_start_q->setNumButtons(3);
+   cnt_start_q->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_start_q->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_start_q, SIGNAL(valueChanged(double)), SLOT(update_start_q(double)));
+
+   lbl_end_q = new QLabel(tr(" Ending q: "), this);
+   Q_CHECK_PTR(lbl_end_q);
+   lbl_end_q->setAlignment(AlignLeft|AlignVCenter);
+   lbl_end_q->setMinimumHeight(minHeight1);
+   lbl_end_q->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_end_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_end_q= new QwtCounter(this);
+   Q_CHECK_PTR(cnt_end_q);
+   cnt_end_q->setRange(0, 90, 0.001);
+   cnt_end_q->setValue((*saxs_options).end_q);
+   cnt_end_q->setMinimumHeight(minHeight1);
+   cnt_end_q->setEnabled(true);
+   cnt_end_q->setNumButtons(3);
+   cnt_end_q->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_end_q->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_end_q, SIGNAL(valueChanged(double)), SLOT(update_end_q(double)));
+
+   lbl_delta_q = new QLabel(tr(" q Stepsize: "), this);
+   Q_CHECK_PTR(lbl_delta_q);
+   lbl_delta_q->setAlignment(AlignLeft|AlignVCenter);
+   lbl_delta_q->setMinimumHeight(minHeight1);
+   lbl_delta_q->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_delta_q->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_delta_q= new QwtCounter(this);
+   Q_CHECK_PTR(cnt_delta_q);
+   cnt_delta_q->setRange(0, 90, 0.001);
+   cnt_delta_q->setValue((*saxs_options).delta_q);
+   cnt_delta_q->setMinimumHeight(minHeight1);
+   cnt_delta_q->setEnabled(true);
+   cnt_delta_q->setNumButtons(3);
+   cnt_delta_q->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_delta_q->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_delta_q, SIGNAL(valueChanged(double)), SLOT(update_delta_q(double)));
+
    lbl_water_e_density = new QLabel(tr(" Water electron density (A^3): "), this);
    Q_CHECK_PTR(lbl_water_e_density);
    lbl_water_e_density->setAlignment(AlignLeft|AlignVCenter);
@@ -179,7 +252,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=8, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=12, columns = 2, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -194,6 +267,18 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    j++;
    background->addWidget(lbl_end_angle, j, 0);
    background->addWidget(cnt_end_angle, j, 1);
+   j++;
+   background->addWidget(lbl_delta_angle, j, 0);
+   background->addWidget(cnt_delta_angle, j, 1);
+   j++;
+   background->addWidget(lbl_start_q, j, 0);
+   background->addWidget(cnt_start_q, j, 1);
+   j++;
+   background->addWidget(lbl_end_q, j, 0);
+   background->addWidget(cnt_end_q, j, 1);
+   j++;
+   background->addWidget(lbl_delta_q, j, 0);
+   background->addWidget(cnt_delta_q, j, 1);
    j++;
    background->addWidget(lbl_water_e_density, j, 0);
    background->addWidget(cnt_water_e_density, j, 1);
@@ -210,6 +295,8 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    j++;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
+
+   setMinimumWidth(350);
 }
 
 void US_Hydrodyn_SaxsOptions::cancel()
@@ -235,18 +322,126 @@ void US_Hydrodyn_SaxsOptions::closeEvent(QCloseEvent *e)
 void US_Hydrodyn_SaxsOptions::update_wavelength(double val)
 {
    (*saxs_options).wavelength = (float) val;
+   update_q();
+   cnt_start_q->setValue(saxs_options->start_q);
+   cnt_end_q->setValue(saxs_options->end_q);
+   cnt_delta_q->setValue(saxs_options->delta_q);
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SaxsOptions::update_start_angle(double val)
 {
    (*saxs_options).start_angle = (float) val;
+   if ( saxs_options->start_angle > 
+        saxs_options->end_angle )
+   {
+      saxs_options->start_angle = saxs_options->end_angle;
+      cnt_start_angle->setValue(saxs_options->end_angle);
+   }
+   update_q();
+   cnt_start_q->setValue(saxs_options->start_q);
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SaxsOptions::update_end_angle(double val)
 {
    (*saxs_options).end_angle = (float) val;
+   if ( saxs_options->start_angle > 
+        saxs_options->end_angle )
+   {
+      saxs_options->end_angle = saxs_options->start_angle;
+      cnt_end_angle->setValue(saxs_options->start_angle);
+   }
+   update_q();
+   cnt_end_q->setValue(saxs_options->end_q);
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_delta_angle(double val)
+{
+   (*saxs_options).delta_angle = (float) val;
+   update_q();
+   cnt_delta_q->setValue(saxs_options->delta_q);
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_q()
+{
+   // note changes to this section should be updated in US_Hydrodyn_Saxs::US_Hydrodyn_Saxs()
+   if ( saxs_options->wavelength == 0 )
+   {
+      saxs_options->start_q = 
+         saxs_options->end_q = 
+         saxs_options->delta_q = 0;
+   }
+   else
+   {
+      saxs_options->start_q = 4.0 * M_PI * 
+         sin(saxs_options->start_angle * M_PI / 180.0) / 
+         saxs_options->wavelength;
+      saxs_options->start_q =  floor(saxs_options->start_q * 1000.0 + 0.5) / 1000.0;
+      saxs_options->end_q = 4.0 * M_PI * 
+         sin(saxs_options->end_angle * M_PI / 180.0) / 
+         saxs_options->wavelength;
+      saxs_options->end_q =  floor(saxs_options->end_q * 1000.0 + 0.5) / 1000.0;
+      saxs_options->delta_q = 4.0 * M_PI * 
+         sin(saxs_options->delta_angle * M_PI / 180.0) / 
+         saxs_options->wavelength;
+      saxs_options->delta_q =  floor(saxs_options->delta_q * 1000.0 + 0.5) / 1000.0;
+   }         
+}      
+
+void US_Hydrodyn_SaxsOptions::update_start_q(double val)
+{
+   (*saxs_options).start_q = (float) val;
+   if ( saxs_options->start_q > 
+        saxs_options->end_q )
+   {
+      saxs_options->start_q = saxs_options->end_q;
+      cnt_start_q->setValue(saxs_options->end_q);
+   }
+
+   saxs_options->start_angle = 
+      floor(
+            (asin(saxs_options->wavelength * saxs_options->start_q / 
+                  (4.0 * M_PI)) * 180.0 / M_PI) * 100.0 + 0.5
+            ) / 100.0;
+   cnt_start_angle->setValue(saxs_options->start_angle);
+
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_end_q(double val)
+{
+   (*saxs_options).end_q = (float) val;
+   if ( saxs_options->start_q > 
+        saxs_options->end_q )
+   {
+      saxs_options->end_q = saxs_options->start_q;
+      cnt_end_q->setValue(saxs_options->start_q);
+   }
+
+   saxs_options->end_angle = 
+      floor(
+            (asin(saxs_options->wavelength * saxs_options->end_q / 
+                  (4.0 * M_PI)) * 180.0 / M_PI) * 100.0 + 0.5
+            ) / 100.0;
+   cnt_end_angle->setValue(saxs_options->end_angle);
+
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_delta_q(double val)
+{
+   (*saxs_options).delta_q = (float) val;
+
+   saxs_options->delta_angle = 
+      floor(
+            (asin(saxs_options->wavelength * saxs_options->delta_q / 
+                  (4.0 * M_PI)) * 180.0 / M_PI) * 100.0 + 0.5
+            ) / 100.0;
+   cnt_delta_angle->setValue(saxs_options->delta_angle);
+
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -273,5 +468,3 @@ void US_Hydrodyn_SaxsOptions::set_hydrate_pdb()
    (*saxs_options).hydrate_pdb = cb_hydrate_pdb->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
-
-

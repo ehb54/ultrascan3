@@ -208,6 +208,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       map < QString, vector <int> > multi_residue_map; // maps residue to index of residue_list
       map < QString, vector <int> > valid_atom_map;    // maps resName|atomName|pos
       //                                                  in multi_residue_map to index of atoms
+      map < QString, QString >      residue_atom_hybrid_map;
+      //                                       maps resName|atomName to hybrid_name
       map < QString, int > atom_counts;     // maps molecule #|resName|resSeq to count
       //                                       counts how many atoms are in each residue
       map < QString, int > has_OXT;         // maps molecule #|resName|resSeq to {0,1}

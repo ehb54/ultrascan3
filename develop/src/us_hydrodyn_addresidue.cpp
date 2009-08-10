@@ -18,7 +18,7 @@
 #include "../include/color_white.xpm"
 #include "../include/color_yellow.xpm"
 
-
+// #define DEBUG_RESIDUE
 
 US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *p, const char *name) : QWidget( p, name)
 {
@@ -28,9 +28,11 @@ US_AddResidue::US_AddResidue(bool *widget_flag, const double hydrovol, QWidget *
    online_help = NULL;
    USglobal = new US_Config();
    position_flag = false;
+   hydration_flag = false;
    existing_residue = false;
    current_atom = 0;
    current_bead = 0;
+   atom_hydration = 0;
    atom_filename = USglobal->config_list.system_dir + "/etc/somo.atom";
    residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -308,6 +310,24 @@ void US_AddResidue::setupGUI()
    cb_positioning->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_positioning, SIGNAL(clicked()), SLOT(set_positioning()));
 
+   lbl_atom_hydration = new QLabel(tr(" Hydration Number for Atom: "), this);
+   Q_CHECK_PTR(lbl_atom_hydration);
+   lbl_atom_hydration->setMinimumHeight(minHeight1);
+   lbl_atom_hydration->setAlignment(AlignLeft|AlignVCenter);
+   lbl_atom_hydration->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_atom_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_atom_hydration = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_atom_hydration);
+   cnt_atom_hydration->setRange(0, 100, 1);
+   cnt_atom_hydration->setValue(0);
+   cnt_atom_hydration->setMinimumHeight(minHeight1);
+   cnt_atom_hydration->setEnabled(true);
+   cnt_atom_hydration->setNumButtons(3);
+   cnt_atom_hydration->setEnabled(false);
+   cnt_atom_hydration->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_atom_hydration, SIGNAL(valueChanged(double)), SLOT(update_atom_hydration(double)));
+
    pb_accept_atom = new QPushButton(tr("Assign Current Atom"), this);
    Q_CHECK_PTR(pb_accept_atom);
    pb_accept_atom->setEnabled(false);
@@ -379,12 +399,15 @@ void US_AddResidue::setupGUI()
    cmb_bead_color->setEnabled(false);
    connect(cmb_bead_color, SIGNAL(activated(int)), this, SLOT(select_bead_color(int)));
 
-   lbl_hydration = new QLabel(tr(" Hydration Number for Bead: "), this);
-   Q_CHECK_PTR(lbl_hydration);
-   lbl_hydration->setMinimumHeight(minHeight1);
-   lbl_hydration->setAlignment(AlignLeft|AlignVCenter);
-   lbl_hydration->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   cb_hydration = new QCheckBox(this);
+   cb_hydration->setText(tr(" Override Bead Hydration Value: "));
+   cb_hydration->setChecked(hydration_flag);
+   cb_hydration->setEnabled(false);
+   cb_hydration->setMinimumHeight(minHeight1);
+   //   cb_hydration->setAlignment(AlignLeft|AlignVCenter);
+   cb_hydration->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   cb_hydration->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   connect(cb_hydration, SIGNAL(clicked()), SLOT(set_hydration()));
 
    cnt_hydration= new QwtCounter(this);
    Q_CHECK_PTR(cnt_hydration);
@@ -504,6 +527,20 @@ void US_AddResidue::setupGUI()
    le_bead_mw->setEnabled(true);
    le_bead_mw->setReadOnly(true);
 
+   lbl_bead_hydro_from_atom = new QLabel(tr(" Bead Hydration from Atoms' Values: "), this);
+   Q_CHECK_PTR(lbl_bead_hydro_from_atom);
+   lbl_bead_hydro_from_atom->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bead_hydro_from_atom->setMinimumHeight(minHeight1);
+   lbl_bead_hydro_from_atom->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_bead_hydro_from_atom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_bead_hydro_from_atom = new QLineEdit(this, "Bead Hydration from Atoms' Line Edit");
+   le_bead_hydro_from_atom->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_bead_hydro_from_atom->setMinimumHeight(minHeight1);
+   le_bead_hydro_from_atom->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bead_hydro_from_atom->setEnabled(true);
+   le_bead_hydro_from_atom->setReadOnly(true);
+
    lbl_bead_hydrovol = new QLabel(tr(" Bead hydrated Volume, Radius: "), this);
    Q_CHECK_PTR(lbl_bead_hydrovol);
    lbl_bead_hydrovol->setAlignment(AlignLeft|AlignVCenter);
@@ -620,6 +657,9 @@ void US_AddResidue::setupGUI()
    background->addWidget(lbl_positioning, j, 0);
    background->addWidget(cb_positioning, j, 1);
    j++;
+   background->addWidget(lbl_atom_hydration, j, 0);
+   background->addWidget(cnt_atom_hydration, j, 1);
+   j++;
    background->addWidget(pb_accept_atom, j, 0);
    background->addWidget(pb_atom_continue, j, 1);
    j = 0;
@@ -632,9 +672,6 @@ void US_AddResidue::setupGUI()
    background->addWidget(lbl_bead_color, j, 3);
    background->addWidget(cmb_bead_color, j, 4);
    j++;
-   background->addWidget(lbl_hydration, j, 3);
-   background->addWidget(cnt_hydration, j, 4);
-   j++;
    background->addWidget(lbl_placing, j, 3);
    background->addWidget(cmb_placing, j, 4);
    j++;
@@ -644,21 +681,27 @@ void US_AddResidue::setupGUI()
    bl->addWidget(rb_sidechain);
    background->addLayout(bl, j, 4);
    j++;
-   background->addWidget(lbl_bead_volume, j, 3);
-   background->addWidget(le_bead_volume, j, 4);
-   j++;
-   background->addWidget(lbl_bead_mw, j, 3);
-   background->addWidget(le_bead_mw, j, 4);
-   j++;
-   background->addWidget(lbl_bead_hydrovol, j, 3);
-   background->addWidget(le_bead_hydrovol, j, 4);
-   j++;
    background->addWidget(lbl_list_beadatom, j, 3);
    background->addWidget(lbl_select_beadatom, j, 4);
    j++;
    background->addMultiCellWidget(lb_list_beadatom, j, j+7, 3, 3);
    background->addMultiCellWidget(lb_select_beadatom, j, j+7, 4, 4);
    j+=8;
+   background->addWidget(lbl_bead_volume, j, 3);
+   background->addWidget(le_bead_volume, j, 4);
+   j++;
+   background->addWidget(lbl_bead_mw, j, 3);
+   background->addWidget(le_bead_mw, j, 4);
+   j++;
+   background->addWidget(lbl_bead_hydro_from_atom, j, 3);
+   background->addWidget(le_bead_hydro_from_atom, j, 4);
+   j++;
+   background->addWidget(cb_hydration, j, 3);
+   background->addWidget(cnt_hydration, j, 4);
+   j++;
+   background->addWidget(lbl_bead_hydrovol, j, 3);
+   background->addWidget(le_bead_hydrovol, j, 4);
+   j++;
    background->addWidget(pb_accept_bead, j, 3);
    background->addWidget(pb_reset, j, 4);
    j++;
@@ -667,6 +710,52 @@ void US_AddResidue::setupGUI()
    j++;
    background->addWidget(pb_help, j, 3);
    background->addWidget(pb_close, j, 4);
+
+   enable_area_1(false);
+   enable_area_2(false);
+   enable_area_3(false);
+}
+
+void US_AddResidue::enable_area_1(bool state)
+{
+   cnt_numatoms->setEnabled(state);
+   cnt_numbeads->setEnabled(state);
+   le_asa->setEnabled(state);
+   le_molvol->setEnabled(state);
+   le_vbar->setEnabled(state);
+   cmb_type->setEnabled(state);
+   le_residue_name->setEnabled(state);
+   le_residue_comment->setEnabled(state);
+   pb_reset->setEnabled(state);
+   pb_accept_residue->setEnabled(state);
+}
+
+void US_AddResidue::enable_area_2(bool state)
+{
+   cmb_r_atoms->setEnabled(state);
+   cmb_atoms->setEnabled(state);
+   cmb_atoms->setEnabled(state);
+   cmb_hybrids->setEnabled(state);
+   cb_positioning->setEnabled(state);
+   cnt_atom_hydration->setEnabled(state);
+   pb_accept_atom->setEnabled(state);
+   pb_atom_continue->setEnabled(state);
+}
+
+void US_AddResidue::enable_area_3(bool state)
+{
+   cmb_r_beads->setEnabled(state);
+   cmb_bead_color->setEnabled(state);
+   cmb_placing->setEnabled(state);
+   rb_backbone->setEnabled(state);
+   rb_sidechain->setEnabled(state);
+   le_bead_volume->setEnabled(state);
+   le_bead_mw->setEnabled(state);
+   le_bead_hydro_from_atom->setEnabled(state);
+   cb_hydration->setEnabled(false);
+   le_bead_hydrovol->setEnabled(state);
+   lb_list_beadatom->setEnabled(state);
+   lb_select_beadatom->setEnabled(state);
 }
 
 void US_AddResidue::add()
@@ -767,6 +856,7 @@ void US_AddResidue::read_residue_file(const QString & filename)
                new_atom.positioner = true;
             }
             ts >> new_atom.serial_number;
+            ts >> new_atom.hydration;
             str2 = ts.readLine(); // read rest of line
             if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
             {
@@ -897,6 +987,8 @@ void US_AddResidue::select_residue_file()
          read_residue_file(residue_filename);
          pb_select_atom_file->setEnabled(false);
          pb_select_residue_file->setEnabled(false);
+         
+         enable_area_1(true);
       }
       else
       {
@@ -932,11 +1024,13 @@ void US_AddResidue::calc_bead_mw(struct residue *res)
    for (unsigned int i=0; i<(*res).r_bead.size(); i++)
    {
       (*res).r_bead[i].mw = 0.0;
+      (*res).r_bead[i].atom_hydration = 0;
       for (unsigned int j=0; j<(*res).r_atom.size(); j++)
       {
          if ((*res).r_atom[j].bead_assignment == i)
          {
             (*res).r_bead[i].mw += (*res).r_atom[j].hybrid.mw;
+            (*res).r_bead[i].atom_hydration += (*res).r_atom[j].hydration;
          }
       }
    }
@@ -996,16 +1090,6 @@ void US_AddResidue::select_atom_file()
             }
          }
          pb_select_residue_file->setEnabled(true);
-         cnt_numatoms->setEnabled(true);
-         cnt_numbeads->setEnabled(true);
-         le_asa->setEnabled(true);
-         le_molvol->setEnabled(true);
-         le_vbar->setEnabled(true);
-         cmb_type->setEnabled(true);
-         le_residue_name->setEnabled(true);
-         le_residue_comment->setEnabled(true);
-         pb_reset->setEnabled(true);
-         pb_accept_residue->setEnabled(true);
       }
    }
 }
@@ -1073,10 +1157,17 @@ void US_AddResidue::select_type(int val)
 void US_AddResidue::update_hybrid(int val)
 {
    cmb_hybrids->clear();
+#if defined(DEBUG_RESIDUE)
+   cout << "update hybrid val " << val << endl;
+#endif
    for (unsigned int i=0; i<atom_list.size(); i++)
    {
       if(atom_list[i].name == cmb_atoms->text(val))
       {
+#if defined(DEBUG_RESIDUE)
+         cout << "adding atom_list[" << i << "].name = " << atom_list[i].name 
+              << " hybrid.name " << atom_list[i].hybrid.name << endl;
+#endif
          cmb_hybrids->insertItem(atom_list[i].hybrid.name);
       }
    }
@@ -1106,11 +1197,23 @@ void US_AddResidue::select_beadatom()
    calc_bead_mw(&new_residue);
    str.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
    le_bead_mw->setText(str);
+   str.sprintf("%u",new_residue.r_bead[current_bead].atom_hydration);
+   le_bead_hydro_from_atom->setText(str);
+   new_residue.r_bead[current_bead].hydration = new_residue.r_bead[current_bead].atom_hydration;
+   cnt_hydration->setValue(new_residue.r_bead[current_bead].hydration);
+   cb_hydration->setChecked(false);
 }
 
 void US_AddResidue::update_hydration(double val)
 {
    new_bead.hydration = (unsigned int) val;
+   cb_hydration->setChecked ( new_bead.hydration != 
+                              new_bead.atom_hydration );
+}
+
+void US_AddResidue::update_atom_hydration(double val)
+{
+   new_atom.hydration = (unsigned int) val;
 }
 
 void US_AddResidue::select_bead_color(int val)
@@ -1147,8 +1250,14 @@ void US_AddResidue::select_r_bead(int val)
       cnt_hydration->setValue(new_residue.r_bead[current_bead].hydration);
       str.sprintf("%7.2f", new_residue.r_bead[current_bead].volume);
       le_bead_volume->setText(str);
+      calc_bead_mw(&new_residue);
       str.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
       le_bead_mw->setText(str);
+      str.sprintf("%u",new_residue.r_bead[current_bead].atom_hydration);
+      le_bead_hydro_from_atom->setText(str);
+      cb_hydration->setChecked ( new_residue.r_bead[current_bead].atom_hydration != 
+                                 new_residue.r_bead[current_bead].hydration );
+      new_bead.atom_hydration = new_residue.r_bead[current_bead].atom_hydration;
       float h_volume;
       h_volume = new_residue.r_bead[current_bead].hydration * hydrovol + new_residue.r_bead[current_bead].volume;
       float radius = pow((h_volume * (3.0/(4.0*M_PI))), 1.0/3.0);
@@ -1192,7 +1301,7 @@ void US_AddResidue::select_r_bead(int val)
 
 void US_AddResidue::select_r_atom(int val)
 {
-   if (existing_residue)
+   if (1 || existing_residue)
    {
       if (new_residue.r_atom[val].positioner)
       {
@@ -1202,15 +1311,25 @@ void US_AddResidue::select_r_atom(int val)
       {
          cb_positioning->setChecked(false);
       }
-      for (unsigned int i=0; i<atom_list.size(); i++)
+      for ( unsigned int i = 0; i < (unsigned int) cmb_atoms->count(); i++ )
       {
-         if(atom_list[i].name == new_residue.r_atom[val].name)
+         if (cmb_atoms->text(i) == new_residue.r_atom[val].name) 
          {
             cmb_atoms->setCurrentItem(i);
+            update_hybrid(i);
+            for ( unsigned int j = 0; j < (unsigned int) cmb_hybrids->count(); j++ ) 
+            {
+               if (cmb_hybrids->text(j) == new_residue.r_atom[val].hybrid.name) 
+               {
+                  cmb_hybrids->setCurrentItem(j);
+                  break;
+               }
+            }
             break;
          }
       }
-   }
+      cnt_atom_hydration->setValue((double) new_residue.r_atom[val].hydration);
+   } 
 }
 
 void US_AddResidue::select_residue(int val)
@@ -1229,8 +1348,10 @@ void US_AddResidue::select_residue(int val)
    le_vbar->setText(str.sprintf("%5.3f", residue_list[val].vbar));
    le_asa->setText(str.sprintf("%7.2f", residue_list[val].asa));
    new_residue = residue_list[val];
-   //   print_residue (new_residue);
-   //   print_residue (residue_list[val]);
+#if defined(DEBUG_RESIDUE)
+   print_residue (new_residue);
+   print_residue (residue_list[val]);
+#endif
 }
 
 void US_AddResidue::print_residue(struct residue res)
@@ -1252,6 +1373,7 @@ void US_AddResidue::print_residue(struct residue res)
       cout << "\tBead Assignment:" << res.r_atom[i].bead_assignment << endl;
       cout << "\tPositioner:" << res.r_atom[i].positioner << endl;
       cout << "\tSerial #:" << res.r_atom[i].serial_number << endl;
+      cout << "\tHydration:" << res.r_atom[i].hydration << endl;
    }
    cout << endl;
    cout << "Number of beads: " << res.r_bead.size() << endl;
@@ -1287,6 +1409,7 @@ void US_AddResidue::reset()
    le_bead_volume->setText("0.0");
    le_bead_mw->setText("0.0");
    le_bead_hydrovol->setText("0.0, 0.0");
+   le_bead_hydro_from_atom->setText("0");
    cnt_numbeads->setEnabled(true);
    cnt_numbeads->setValue(0);
    cnt_numatoms->setEnabled(true);
@@ -1303,16 +1426,21 @@ void US_AddResidue::reset()
    pb_accept_atom->setEnabled(false);
    pb_atom_continue->setEnabled(false);
    pb_accept_atom->setEnabled(false);
-   cmb_r_atoms->setEnabled(false);
    cmb_r_atoms->clear();
-   cmb_atoms->setCurrentItem(0);
+   //   cmb_atoms->setCurrentItem(0);
+   cmb_r_atoms->setEnabled(false);
+   cmb_hybrids->setEnabled(false);
 
    cmb_r_beads->setEnabled(false);
    cmb_r_beads->clear();
    cmb_bead_color->setEnabled(false);
    cmb_bead_color->setCurrentItem(0);
+   cb_hydration->setEnabled(false);
+   cb_hydration->setChecked(false);
    cnt_hydration->setEnabled(false);
    cnt_hydration->setValue(0);
+   cnt_atom_hydration->setEnabled(false);
+   cnt_atom_hydration->setValue(0);
    cmb_placing->setCurrentItem(0);
    cmb_placing->setEnabled(false);
    /*
@@ -1330,6 +1458,8 @@ void US_AddResidue::reset()
    cb_positioning->setEnabled(false);
    cb_positioning->setChecked(false);
    existing_residue = false;
+   enable_area_2(false);
+   enable_area_3(false);
 }
 
 void US_AddResidue::accept_residue()
@@ -1354,15 +1484,18 @@ void US_AddResidue::accept_residue()
       le_asa->setEnabled(false);
       cmb_type->setEnabled(false);
       cmb_r_atoms->setEnabled(true);
+      cmb_hybrids->setEnabled(true);
       cnt_numbeads->setEnabled(false);
       cnt_numatoms->setEnabled(false);
       pb_accept_residue->setEnabled(false);
       pb_accept_atom->setEnabled(true);
       cb_positioning->setEnabled(true);
+      cnt_atom_hydration->setEnabled(true);
       pb_select_atom_file->setEnabled(false);
       pb_select_residue_file->setEnabled(false);
       current_atom = 0;
       cmb_r_atoms->setCurrentItem(current_atom);
+      enable_area_2(true);
    }
    if(existing_residue)
    {
@@ -1383,6 +1516,23 @@ void US_AddResidue::accept_residue()
          cmb_r_atoms->insertItem(str);
       }
       cmb_r_atoms->setCurrentItem(0);
+      for ( unsigned int i = 0; i < (unsigned int) cmb_atoms->count(); i++ )
+      {
+         if (cmb_atoms->text(i) == new_residue.r_atom[0].name) 
+         {
+            cmb_atoms->setCurrentItem(i);
+            update_hybrid(i);
+            for ( unsigned int j = 0; j < (unsigned int) cmb_hybrids->count(); j++ ) 
+            {
+               if (cmb_hybrids->text(j) == new_residue.r_atom[0].hybrid.name) 
+               {
+                  cmb_hybrids->setCurrentItem(j);
+                  break;
+               }
+            }
+            break;
+         }
+      }
       if (new_residue.r_atom[0].positioner)
       {
          cb_positioning->setChecked(true);
@@ -1391,6 +1541,18 @@ void US_AddResidue::accept_residue()
       {
          cb_positioning->setChecked(false);
       }
+      cnt_atom_hydration->setValue((double) new_residue.r_atom[0].hydration);
+   }
+   else
+   {
+      for ( unsigned int i = 0; i < new_residue.r_atom.size(); i++ )
+      {
+         new_residue.r_atom[i].hydration = 0;
+         new_residue.r_atom[i].positioner = true;
+      }
+      cb_positioning->setChecked(true);
+      cnt_atom_hydration->setValue(0);
+      cnt_atom_hydration->setEnabled(true);
    }
    // if we loaded an existing residue for editing and all atoms have been defined, we can activate the
    // Continue button at this point. First, we need to check that the atoms all have been defined.
@@ -1414,6 +1576,9 @@ void US_AddResidue::atom_continue()
 {
    QString str;
    pb_accept_atom->setEnabled(false);
+   cb_hydration->setEnabled(true);
+   cb_hydration->setEnabled(true);
+   cb_hydration->setChecked(false);
    cnt_hydration->setEnabled(true);
    cmb_r_beads->setEnabled(true);
    cmb_bead_color->setEnabled(true);
@@ -1458,6 +1623,8 @@ void US_AddResidue::atom_continue()
    }
    pb_accept_bead->setEnabled(true);
    pb_atom_continue->setEnabled(false);
+   enable_area_2(false);
+   enable_area_3(true);
    /*
      lb_select_beadatom->setCurrentItem(0);
 
@@ -1534,10 +1701,12 @@ void US_AddResidue::accept_atom()
    int current_item1, current_item2=0;
    if (existing_residue)
    {
-      position_flag = new_residue.r_atom[cmb_r_atoms->currentItem()].positioner;
+         position_flag = new_residue.r_atom[cmb_r_atoms->currentItem()].positioner;
    }
-   //   cout << "Residue print accept_atom() - 1: \n";
-   //   print_residue(new_residue);
+#if defined(DEBUG_RESIDUE)
+   cout << "Residue print accept_atom() - 1: \n";
+   print_residue(new_residue);
+#endif
    QString str;
    // find current hybridization in atom_list:
    current_item1 = cmb_r_atoms->currentItem();
@@ -1554,10 +1723,12 @@ void US_AddResidue::accept_atom()
       unsigned int bead = new_residue.r_atom[current_item1].bead_assignment;
       unsigned int snum = new_residue.r_atom[current_item1].serial_number;
       bool pos = new_residue.r_atom[current_item1].positioner;
+      unsigned int hydration =  new_residue.r_atom[current_item1].hydration;
       new_residue.r_atom[current_item1] = atom_list[current_item2];
       new_residue.r_atom[current_item1].bead_assignment = bead;
       new_residue.r_atom[current_item1].positioner = pos;
       new_residue.r_atom[current_item1].serial_number = snum;
+      new_residue.r_atom[current_item1].hydration = hydration;
    }
    else
    {
@@ -1567,8 +1738,9 @@ void US_AddResidue::accept_atom()
    // assign a serial number specific to this residue so atoms can be distinguished
    // and prevented from being used twice in different beads
 
+   new_residue.r_atom[current_item1].hydration = (unsigned int) cnt_atom_hydration->value();
    new_residue.r_atom[current_item1].serial_number = current_item1;
-   new_residue.r_atom[current_item1].positioner = position_flag;
+   new_residue.r_atom[current_item1].positioner = cb_positioning->isChecked(); // position_flag;
    str.sprintf("Atom %d: " + atom_list[current_item2].name, current_item1+1);
    str += " (" + new_residue.r_atom[current_item1].hybrid.name + ", Positioning: ";
    if (new_residue.r_atom[current_item1].positioner)
@@ -1593,8 +1765,10 @@ void US_AddResidue::accept_atom()
    {
       pb_atom_continue->setEnabled(true); // all atoms are defined now
    }
-   //   cout << "Residue print accept_atom() - 2: \n";
-   //   print_residue(new_residue);
+#if defined(DEBUG_RESIDUE)
+   cout << "Residue print accept_atom() - 2: \n";
+   print_residue(new_residue);
+#endif
 }
 
 void US_AddResidue::set_chain(int val)
@@ -1611,6 +1785,18 @@ void US_AddResidue::set_positioning()
    else
    {
       position_flag = false;
+   }
+}
+
+void US_AddResidue::set_hydration()
+{
+   if (cb_hydration->isChecked())
+   {
+      hydration_flag = true;
+   }
+   else
+   {
+      hydration_flag = false;
    }
 }
 
@@ -1675,7 +1861,8 @@ void US_AddResidue::write_residue_file()
                << "\t" << residue_list[i].r_atom[j].hybrid.radius
                << "\t" << residue_list[i].r_atom[j].bead_assignment
                << "\t" << (unsigned int) residue_list[i].r_atom[j].positioner
-               << "\t" << residue_list[i].r_atom[j].serial_number << endl;
+               << "\t" << residue_list[i].r_atom[j].serial_number 
+               << "\t" << residue_list[i].r_atom[j].hydration << endl;
          }
          for (unsigned int j=0; j<residue_list[i].r_bead.size(); j++)
          {

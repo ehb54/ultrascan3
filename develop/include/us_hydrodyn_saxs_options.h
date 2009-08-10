@@ -44,6 +44,10 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel *lbl_wavelength;
       QLabel *lbl_start_angle;
       QLabel *lbl_end_angle;
+      QLabel *lbl_delta_angle;
+      QLabel *lbl_start_q;
+      QLabel *lbl_end_q;
+      QLabel *lbl_delta_q;
       QLabel *lbl_water_e_density;
       QLabel *lbl_max_size;
       QLabel *lbl_bin_size;
@@ -51,6 +55,10 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QwtCounter *cnt_wavelength;
       QwtCounter *cnt_start_angle;
       QwtCounter *cnt_end_angle;
+      QwtCounter *cnt_delta_angle;
+      QwtCounter *cnt_start_q;
+      QwtCounter *cnt_end_q;
+      QwtCounter *cnt_delta_q;
       QwtCounter *cnt_water_e_density;
       QwtCounter *cnt_max_size;
       QwtCounter *cnt_bin_size;
@@ -60,12 +68,18 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
+      void update_q();
+
    private slots:
       
       void setupGUI();
       void update_wavelength(double);
       void update_start_angle(double);
       void update_end_angle(double);
+      void update_delta_angle(double);
+      void update_start_q(double);
+      void update_end_q(double);
+      void update_delta_q(double);
       void update_water_e_density(double);
       void update_max_size(double);
       void update_bin_size(double);

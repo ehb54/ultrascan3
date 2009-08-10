@@ -46,6 +46,7 @@ void US_Hydrodyn::read_residue_file()
    cout << "residue file name: " << residue_filename << endl;
    residue_list.clear();
    multi_residue_map.clear();
+   residue_atom_hybrid_map.clear();
    new_residues.clear();
    map < QString, int > dup_residue_map;
    i=1;
@@ -109,10 +110,15 @@ void US_Hydrodyn::read_residue_file()
                new_atom.positioner = true;
             }
             ts >> new_atom.serial_number;
+            ts >> new_atom.hydration;
             str2 = ts.readLine(); // read rest of line
             line_count++;
             if (!new_atom.name.isEmpty() && new_atom.hybrid.radius > 0.0 && new_atom.hybrid.mw > 0.0)
             {
+               residue_atom_hybrid_map[
+                                       QString("%1|%2")
+                                       .arg(new_residue.name).arg(new_atom.name)] 
+                  = new_atom.hybrid.name;
                new_residue.r_atom.push_back(new_atom);
             }
             else
@@ -1102,25 +1108,28 @@ int US_Hydrodyn::read_config(QFile& f)
    pdb_parse.missing_atoms = str.toInt();
 
    ts >> str; // wavelength
-   if ( ts.readLine() == QString::null ) return -100140;
+   if ( ts.readLine() == QString::null ) return -10140;
    saxs_options.wavelength = str.toFloat();
    ts >> str; // start angle
-   if ( ts.readLine() == QString::null ) return -100141;
+   if ( ts.readLine() == QString::null ) return -10141;
    saxs_options.start_angle = str.toFloat();
    ts >> str; // end angle
-   if ( ts.readLine() == QString::null ) return -100142;
+   if ( ts.readLine() == QString::null ) return -10142;
    saxs_options.end_angle = str.toFloat();
+   ts >> str; // delta angle
+   if ( ts.readLine() == QString::null ) return -10143;
+   saxs_options.delta_angle = str.toFloat();
    ts >> str; // water electron density
-   if ( ts.readLine() == QString::null ) return -100143;
+   if ( ts.readLine() == QString::null ) return -10144;
    saxs_options.water_e_density = str.toFloat();
    ts >> str; // maximum size
-   if ( ts.readLine() == QString::null ) return -100144;
+   if ( ts.readLine() == QString::null ) return -10145;
    saxs_options.max_size = str.toFloat();
    ts >> str; // bin size
-   if ( ts.readLine() == QString::null ) return -100145;
+   if ( ts.readLine() == QString::null ) return -10146;
    saxs_options.bin_size = str.toFloat();
    ts >> str; // hydrate pdb model?
-   if ( ts.readLine() == QString::null ) return -100146;
+   if ( ts.readLine() == QString::null ) return -10147;
    saxs_options.hydrate_pdb = (bool) str.toInt();
    if ( !ts.atEnd() ) return -10150;
 
@@ -1281,6 +1290,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << saxs_options.wavelength << "\t\t# scattering wavelength\n";
       ts << saxs_options.start_angle << "\t\t# starting angle\n";
       ts << saxs_options.end_angle << "\t\t# ending angle\n";
+      ts << saxs_options.delta_angle << "\t\t# angle stepsize\n";
       ts << saxs_options.water_e_density << "\t\t# Water electron density\n";
       ts << saxs_options.max_size << "\t\t# maximum size\n";
       ts << saxs_options.bin_size << "\t\t# bin size\n";
@@ -1450,6 +1460,7 @@ void US_Hydrodyn::set_default()
       saxs_options.wavelength = 1.5;         // scattering wavelength
       saxs_options.start_angle = 0.1f;       // start angle
       saxs_options.end_angle = 4.0;          // ending angle
+      saxs_options.delta_angle = 0.2f;       // angle stepsize
       saxs_options.water_e_density = 0.334f; // water electron density in e/A^3
       saxs_options.max_size = 40.0;          // maximum size (A)
       saxs_options.bin_size = 0.4f;          // Bin size (A)
@@ -1769,6 +1780,8 @@ void US_Hydrodyn::write_bead_asa(QString fname, vector<PDB_atom> *model) {
          total_asa += (*model)[i].bead_asa;
          total_ref_asa += (*model)[i].ref_asa;
          total_mass += (*model)[i].bead_ref_mw;
+         printf("write_bead_asa model[%d].bead_ref_mw %g\n",
+                i, (*model)[i].bead_ref_mw);
          total_vol += (*model)[i].bead_ref_volume_unhydrated;
 
          QString residue =
@@ -2805,6 +2818,10 @@ QString US_Hydrodyn::default_differences_saxs_options()
    {
       str += QString(base + "Ending Angle: %1\n").arg(saxs_options.end_angle );
    }
+   if ( saxs_options.delta_angle != default_saxs_options.delta_angle )
+   {
+      str += QString(base + "Angle Stepsize: %1\n").arg(saxs_options.delta_angle );
+   }
    if ( saxs_options.water_e_density != default_saxs_options.water_e_density )
    {
       str += QString(base + "Water electron density value: %1\n").arg(saxs_options.water_e_density );
@@ -2827,7 +2844,7 @@ void US_Hydrodyn::display_default_differences()
       default_differences_load_pdb() +
       default_differences_somo() +
       default_differences_hydro() +
-      default_differences_saxs_options() +
+      // until default values are decided upon      default_differences_saxs_options() +
       default_differences_grid();
 
    if ( str != "" )

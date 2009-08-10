@@ -482,11 +482,11 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_show_hydro_results, j, 1);
    j++;
    background->addWidget(pb_stop_calc, j, 0);
-   background->addWidget(progress, j, 1);
+   background->addWidget(pb_cancel, j, 1);
 // background->addMultiCellWidget(progress, j, j, 0, 1);
    j++;
    background->addWidget(pb_help, j, 0);
-   background->addWidget(pb_cancel, j, 1);
+   background->addWidget(progress, j, 1);
    background->addWidget(lbl_core_progress, j, 2);
 }
 
@@ -2148,8 +2148,35 @@ void US_Hydrodyn::pdb_saxs()
    }
    else
    {
-      saxs_plot_window = new US_Hydrodyn_Saxs(&saxs_plot_widget, pdb_file, 0, 0);
-      saxs_plot_window->show();
+      vector < unsigned int > selected_models;
+      for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
+      {
+         if ( lb_model->isSelected(i) ) 
+         {
+            selected_models.push_back(i);
+         }
+      }
+      if ( selected_models.size() != 1 )
+      {
+         QMessageBox::message(tr("Please note:"),
+                              tr("You must select exactly one model to perform SAXS functions.."));
+      } 
+      else
+      {
+         saxs_plot_window = new US_Hydrodyn_Saxs(
+                                                 &saxs_plot_widget,
+                                                 &saxs_options,
+                                                 pdb_file,
+                                                 residue_list,
+                                                 model_vector,
+                                                 selected_models,
+                                                 multi_residue_map,
+                                                 residue_atom_hybrid_map,
+                                                 0, 
+                                                 0
+                                                 );
+         saxs_plot_window->show();
+      }
    }
 }
 
@@ -2161,7 +2188,34 @@ void US_Hydrodyn::bead_saxs()
    }
    else
    {
-      saxs_plot_window = new US_Hydrodyn_Saxs(&saxs_plot_widget, bead_model_file, 1, 0);
-      saxs_plot_window->show();
+      vector < unsigned int > selected_models;
+      for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
+      {
+         if ( lb_model->isSelected(i) ) 
+         {
+            selected_models.push_back(i);
+         }
+      }
+      if ( selected_models.size() != 1 )
+      {
+         QMessageBox::message(tr("Please note:"),
+                              tr("You must select exactly one model to perform SAXS functions.."));
+      } 
+      else
+      {
+         saxs_plot_window = new US_Hydrodyn_Saxs(
+                                                 &saxs_plot_widget,
+                                                 &saxs_options,
+                                                 bead_model_file,
+                                                 residue_list,
+                                                 model_vector,
+                                                 selected_models,
+                                                 multi_residue_map,
+                                                 residue_atom_hybrid_map,
+                                                 1, 
+                                                 0
+                                                 );
+         saxs_plot_window->show();
+      }
    }
 }

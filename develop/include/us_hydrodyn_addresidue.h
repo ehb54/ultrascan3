@@ -38,8 +38,10 @@ class US_AddResidue : public QWidget
       bool *widget_flag;
       bool existing_residue;
       bool position_flag; // 0 = not involved, 1 = determines position
+      bool hydration_flag; // 0 = use atoms', 1 = use manual value
       unsigned int current_atom;
       unsigned int current_bead;
+      unsigned int atom_hydration;
       double hydrovol;
       vector <QString> hybrids;
       vector <QString> atoms;
@@ -71,12 +73,14 @@ class US_AddResidue : public QWidget
       QLabel *lbl_beadchain;
       QLabel *lbl_bead_volume;
       QLabel *lbl_bead_mw;
+      QLabel *lbl_bead_hydro_from_atom;
       QLabel *lbl_bead_hydrovol;
 
       QLabel *lbl_info2;
       QLabel *lbl_r_atoms;
       QLabel *lbl_define_atom;
       QLabel *lbl_define_hybrid;
+      QLabel *lbl_atom_hydration;
 
       QLabel *lbl_info3;
       QLabel *lbl_r_beads;
@@ -97,6 +101,7 @@ class US_AddResidue : public QWidget
       QComboBox *cmb_placing;
 
       QCheckBox *cb_positioning;
+      QCheckBox *cb_hydration;
 
       QRadioButton *rb_sidechain;
       QRadioButton *rb_backbone;
@@ -106,6 +111,7 @@ class US_AddResidue : public QWidget
       QListBox *lb_select_beadatom;
       QListBox *lb_list_beadatom;
 
+      QwtCounter *cnt_atom_hydration;
       QwtCounter *cnt_hydration;
       QwtCounter *cnt_numbeads;
       QwtCounter *cnt_numatoms;
@@ -117,6 +123,7 @@ class US_AddResidue : public QWidget
       QLineEdit *le_residue_comment;
       QLineEdit *le_bead_volume;
       QLineEdit *le_bead_mw;
+      QLineEdit *le_bead_hydro_from_atom;
       QLineEdit *le_bead_hydrovol;
       struct residue new_residue;
       struct atom new_atom;
@@ -153,15 +160,20 @@ class US_AddResidue : public QWidget
       void update_vbar(const QString &);
       void update_asa(const QString &);
       void update_bead_volume(const QString &);
+      void update_atom_hydration(double);
       void update_hydration(double);
       void update_numatoms(double);
       void update_numbeads(double);
       void update_hybrid(int);
       void set_positioning();
+      void set_hydration();
       void set_chain(int);
       void atom_continue();
       void write_residue_file();
       void calc_bead_mw(struct residue *);
+      void enable_area_1(bool);
+      void enable_area_2(bool);
+      void enable_area_3(bool);
 
    protected slots:
       void closeEvent(QCloseEvent *);

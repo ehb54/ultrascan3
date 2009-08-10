@@ -1631,7 +1631,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                << "\t" << residue_list[i].r_atom[j].hybrid.radius
                << "\t" << residue_list[i].r_atom[j].bead_assignment
                << "\t" << (unsigned int) residue_list[i].r_atom[j].positioner
-               << "\t" << residue_list[i].r_atom[j].serial_number << endl;
+               << "\t" << residue_list[i].r_atom[j].serial_number 
+               << "\t" << residue_list[i].r_atom[j].hydration
+               << endl;
          }
          for (unsigned int j=0; j<residue_list[i].r_bead.size(); j++)
          {

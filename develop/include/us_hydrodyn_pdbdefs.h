@@ -23,7 +23,7 @@ struct PDB_atom
    QString name;
    QString altLoc;
    QString resName;
-        QString chainID;
+   QString chainID;
    QString resSeq;
    QString iCode;
    struct point coordinate;
@@ -33,48 +33,48 @@ struct PDB_atom
    QString charge;
    unsigned int accessibility;
 
-        // assigned in surfracer
-        bool active;
-        float asa;           // maximum accessible surface area (A^2)
-        struct residue *p_residue;        // NULL if not found
-        struct atom *p_atom;              // NULL if not found
-        float radius;
+   // assigned in surfracer
+   bool active;
+   float asa;           // maximum accessible surface area (A^2)
+   struct residue *p_residue;        // NULL if not found
+   struct atom *p_atom;              // NULL if not found
+   float radius;
 
-        // assigned after return from compute_asa()
-        bool is_bead;                     // 0 = no, 1 = yes this is the bead info
-        int bead_number;                  // sequence of bead #'s
-        int bead_assignment;              // position in residue->r_bead[]
-        int atom_assignment;              // position in residue->r_atom[]
-        int visibility;                   // 0 = hidden, 1 = exposed
-        int chain;                        // 0 = main, 1 = side
-        int org_chain;                    // 0 = main, 1 = side
-        float bead_asa;
-        float ref_asa;           // reference asa from the residue table
-        int exposed_code;                 // 1 exposed, 6 side chain buried, 10 main chain buried
-        bool bead_positioner;             // true if an atom had a bead positioner
-        float mw;
-        float bead_mw;
-        float bead_recheck_asa;
-        float bead_cog_mw;                // mw of those atoms contributing to the bead_cog
+   // assigned after return from compute_asa()
+   bool is_bead;                     // 0 = no, 1 = yes this is the bead info
+   int bead_number;                  // sequence of bead #'s
+   int bead_assignment;              // position in residue->r_bead[]
+   int atom_assignment;              // position in residue->r_atom[]
+   int visibility;                   // 0 = hidden, 1 = exposed
+   int chain;                        // 0 = main, 1 = side
+   int org_chain;                    // 0 = main, 1 = side
+   float bead_asa;
+   float ref_asa;           // reference asa from the residue table
+   int exposed_code;                 // 1 exposed, 6 side chain buried, 10 main chain buried
+   bool bead_positioner;             // true if an atom had a bead positioner
+   float mw;
+   float bead_mw;
+   float bead_recheck_asa;
+   float bead_cog_mw;                // mw of those atoms contributing to the bead_cog
    point bead_position_coordinate;
    point bead_cog_coordinate;
    point bead_coordinate;
-        bool normalized_ot_is_valid;      // true if the normalized ot is valid computed
-        point normalized_ot;              // the ot
+   bool normalized_ot_is_valid;      // true if the normalized ot is valid computed
+   point normalized_ot;              // the ot
    unsigned int bead_hydration;
    unsigned int bead_color;
-        float bead_ref_volume;            // this is taken from the bead structure+hydration
-        float bead_ref_volume_unhydrated; // this is taken from the bead structure
-        float bead_ref_mw;                // ditto
-        float bead_computed_radius;       // from ref_volume
-        float bead_actual_radius;         // used for radial reduction % computation, does not get reduced
+   float bead_ref_volume;            // this is taken from the bead structure+hydration
+   float bead_ref_volume_unhydrated; // this is taken from the bead structure
+   float bead_ref_mw;                // ditto
+   float bead_computed_radius;       // from ref_volume
+   float bead_actual_radius;         // used for radial reduction % computation, does not get reduced
    int placing_method;             // baric method (see struct bead->placing method, -1 undefined
 
   //        float vol_intersection            // temporary value used in popping
-        vector <struct PDB_atom *> all_beads;  // this is used to keep track of beads that have been popped together
-        QString residue_list;             // for loaded bead models
-        int group;                        // used in surfracer for breaking up groups of atoms
-        QString count_idx;                // used in us_hydrodyn for backtracking on bead/atom exceptions
+   vector <struct PDB_atom *> all_beads;  // this is used to keep track of beads that have been popped together
+   QString residue_list;             // for loaded bead models
+   int group;                        // used in surfracer for breaking up groups of atoms
+   QString count_idx;                // used in us_hydrodyn for backtracking on bead/atom exceptions
 };
 
 struct PDB_chain   // chain in PDB file
@@ -108,6 +108,8 @@ struct bead
                                  // 1 = side chain
    float        volume;          // anhydrous bead volume
    float        mw;              // bead mw
+   bool         hydration_flag;  // false = use sum of atom's hydrations, true = bead hydration overrides
+   unsigned int atom_hydration;  // number of waters bound based upon sum of atoms' hydrations
 };
 
 struct saxs
@@ -124,6 +126,10 @@ struct saxs_options
    float   wavelength;           // scattering wavelengths
    float   start_angle;          // start angle
    float   end_angle;            // ending angle
+   float   delta_angle;          // angle stepsize
+   float   start_q;              // start q
+   float   end_q;                // ending q
+   float   delta_q;              // q stepsize
    float   water_e_density;      // water electron density in e/A^3
    float   max_size;             // maximum size (A)
    float   bin_size;             // Bin size (A)
@@ -148,6 +154,7 @@ struct atom
    bool         tmp_flag;        // used for finding missing residues
    bool         tmp_used;        // used for avoiding duplicate usage
    float        saxs_excl_vol;   // SAXS excluded volume value
+   unsigned int hydration;       // atomic hydration
 };
 
 struct residue
