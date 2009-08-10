@@ -36,15 +36,15 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    else
    {
       our_saxs_options->start_q = 4.0 * M_PI * 
-         sin(our_saxs_options->start_angle * M_PI / 180.0) / 
+         sin(our_saxs_options->start_angle * M_PI / 360.0) / 
          our_saxs_options->wavelength;
       our_saxs_options->start_q =  floor(our_saxs_options->start_q * 1000.0 + 0.5) / 1000.0;
       our_saxs_options->end_q = 4.0 * M_PI * 
-         sin(our_saxs_options->end_angle * M_PI / 180.0) / 
+         sin(our_saxs_options->end_angle * M_PI / 360.0) / 
          our_saxs_options->wavelength;
       our_saxs_options->end_q =  floor(our_saxs_options->end_q * 1000.0 + 0.5) / 1000.0;
       our_saxs_options->delta_q = 4.0 * M_PI * 
-         sin(our_saxs_options->delta_angle * M_PI / 180.0) / 
+         sin(our_saxs_options->delta_angle * M_PI / 360.0) / 
          our_saxs_options->wavelength;
       our_saxs_options->delta_q =  floor(our_saxs_options->delta_q * 1000.0 + 0.5) / 1000.0;
    }         

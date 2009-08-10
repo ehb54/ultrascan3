@@ -377,15 +377,15 @@ void US_Hydrodyn_SaxsOptions::update_q()
    else
    {
       saxs_options->start_q = 4.0 * M_PI * 
-         sin(saxs_options->start_angle * M_PI / 180.0) / 
+         sin(saxs_options->start_angle * M_PI / 360.0) / 
          saxs_options->wavelength;
       saxs_options->start_q =  floor(saxs_options->start_q * 1000.0 + 0.5) / 1000.0;
       saxs_options->end_q = 4.0 * M_PI * 
-         sin(saxs_options->end_angle * M_PI / 180.0) / 
+         sin(saxs_options->end_angle * M_PI / 360.0) / 
          saxs_options->wavelength;
       saxs_options->end_q =  floor(saxs_options->end_q * 1000.0 + 0.5) / 1000.0;
       saxs_options->delta_q = 4.0 * M_PI * 
-         sin(saxs_options->delta_angle * M_PI / 180.0) / 
+         sin(saxs_options->delta_angle * M_PI / 360.0) / 
          saxs_options->wavelength;
       saxs_options->delta_q =  floor(saxs_options->delta_q * 1000.0 + 0.5) / 1000.0;
    }         
@@ -401,10 +401,12 @@ void US_Hydrodyn_SaxsOptions::update_start_q(double val)
       cnt_start_q->setValue(saxs_options->end_q);
    }
 
+   // note 360 / M_PI since 'theta' is 1/2 scattering angle
+
    saxs_options->start_angle = 
       floor(
             (asin(saxs_options->wavelength * saxs_options->start_q / 
-                  (4.0 * M_PI)) * 180.0 / M_PI) * 100.0 + 0.5
+                  (4.0 * M_PI)) * 360.0 / M_PI) * 100.0 + 0.5
             ) / 100.0;
    cnt_start_angle->setValue(saxs_options->start_angle);
 
@@ -424,7 +426,7 @@ void US_Hydrodyn_SaxsOptions::update_end_q(double val)
    saxs_options->end_angle = 
       floor(
             (asin(saxs_options->wavelength * saxs_options->end_q / 
-                  (4.0 * M_PI)) * 180.0 / M_PI) * 100.0 + 0.5
+                  (4.0 * M_PI)) * 360.0 / M_PI) * 100.0 + 0.5
             ) / 100.0;
    cnt_end_angle->setValue(saxs_options->end_angle);
 
@@ -438,7 +440,7 @@ void US_Hydrodyn_SaxsOptions::update_delta_q(double val)
    saxs_options->delta_angle = 
       floor(
             (asin(saxs_options->wavelength * saxs_options->delta_q / 
-                  (4.0 * M_PI)) * 180.0 / M_PI) * 100.0 + 0.5
+                  (4.0 * M_PI)) * 360.0 / M_PI) * 100.0 + 0.5
             ) / 100.0;
    cnt_delta_angle->setValue(saxs_options->delta_angle);
 
