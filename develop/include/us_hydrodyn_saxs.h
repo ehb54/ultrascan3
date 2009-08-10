@@ -76,8 +76,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QPrinter printer;
 
-      QPushButton *pb_plot_pr;
       QPushButton *pb_plot_saxs;
+      QPushButton *pb_load_saxs;
+      QPushButton *pb_clear_plot_saxs;
+      QPushButton *pb_plot_pr;
+      QPushButton *pb_load_pr;
+      QPushButton *pb_clear_plot_pr;
       QPushButton *pb_select_atom_file;
       QPushButton *pb_select_hybrid_file;
       QPushButton *pb_select_saxs_file;
@@ -127,6 +131,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       unsigned int current_model;
 
+      QString model_filename;
+
       QString atom_filename;
       QString hybrid_filename;
       QString saxs_filename;
@@ -138,8 +144,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
    private slots:
 
       void setupGUI();
-      void show_plot_pr();
       void show_plot_saxs();
+      void load_saxs();
+      void clear_plot_saxs();
+      void show_plot_pr();
+      void load_pr();
+      void clear_plot_pr();
       void cancel();
       void help();
       void stop();

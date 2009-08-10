@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn.h"
+#include "../include/us_revision.h"
 
 #include <time.h>
 
@@ -83,6 +84,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
       }
    }
    lbl_filename2->setText(fi.baseName() + "." + fi.extension( FALSE ));
+   model_filename = fi.baseName() + "." + fi.extension( FALSE );
    atom_filename = USglobal->config_list.system_dir + "/etc/somo.atom";
    hybrid_filename = USglobal->config_list.system_dir + "/etc/somo.hybrid";
    saxs_filename =  USglobal->config_list.system_dir + "/etc/somo.saxs_atoms";
@@ -174,6 +176,27 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_saxs_table->setMinimumHeight(minHeight1);
    lbl_saxs_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
+   pb_plot_saxs = new QPushButton(tr("Plot SAXS Curve"), this);
+   Q_CHECK_PTR(pb_plot_saxs);
+   pb_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_plot_saxs->setMinimumHeight(minHeight1);
+   pb_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_plot_saxs, SIGNAL(clicked()), SLOT(show_plot_saxs()));
+
+   pb_load_saxs = new QPushButton(tr("Load SAXS Experimental Data"), this);
+   Q_CHECK_PTR(pb_load_saxs);
+   pb_load_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_saxs->setMinimumHeight(minHeight1);
+   pb_load_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_load_saxs, SIGNAL(clicked()), SLOT(load_saxs()));
+
+   pb_clear_plot_saxs = new QPushButton(tr("Clear SAXS Curve"), this);
+   Q_CHECK_PTR(pb_clear_plot_saxs);
+   pb_clear_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_clear_plot_saxs->setMinimumHeight(minHeight1);
+   pb_clear_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_clear_plot_saxs, SIGNAL(clicked()), SLOT(clear_plot_saxs()));
+
    pb_plot_pr = new QPushButton(tr("Plot P(r) distribution"), this);
    Q_CHECK_PTR(pb_plot_pr);
    pb_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -181,12 +204,19 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_plot_pr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_plot_pr, SIGNAL(clicked()), SLOT(show_plot_pr()));
 
-   pb_plot_saxs = new QPushButton(tr("Plot SAXS Curve"), this);
-   Q_CHECK_PTR(pb_plot_saxs);
-   pb_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_plot_saxs->setMinimumHeight(minHeight1);
-   pb_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_plot_saxs, SIGNAL(clicked()), SLOT(show_plot_saxs()));
+   pb_load_pr = new QPushButton(tr("Load P(r) Distribution"), this);
+   Q_CHECK_PTR(pb_load_pr);
+   pb_load_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_pr->setMinimumHeight(minHeight1);
+   pb_load_pr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_load_pr, SIGNAL(clicked()), SLOT(load_pr()));
+
+   pb_clear_plot_pr = new QPushButton(tr("Clear P(r) Distribution"), this);
+   Q_CHECK_PTR(pb_clear_plot_pr);
+   pb_clear_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_clear_plot_pr->setMinimumHeight(minHeight1);
+   pb_clear_plot_pr->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_clear_plot_pr, SIGNAL(clicked()), SLOT(clear_plot_pr()));
 
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
@@ -218,8 +248,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
    plot_saxs->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_saxs->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-   plot_saxs->setAxisTitle(QwtPlot::xBottom, tr("q"));
-   plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("I(q)"));
+   plot_saxs->setAxisTitle(QwtPlot::xBottom, tr("q (1/Angstrom)"));
+   plot_saxs->setAxisTitle(QwtPlot::yLeft, tr("Log10 I(q)"));
    plot_saxs->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_saxs->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot_saxs->setAxisFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
@@ -240,7 +270,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_pr->setPalette( QPalette(USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot, USglobal->global_colors.cg_plot));
    plot_pr->setGridMajPen(QPen(USglobal->global_colors.major_ticks, 0, DotLine));
    plot_pr->setGridMinPen(QPen(USglobal->global_colors.minor_ticks, 0, DotLine));
-   plot_pr->setAxisTitle(QwtPlot::xBottom, tr("Distance (Angstrom))"));
+   plot_pr->setAxisTitle(QwtPlot::xBottom, tr("Distance (Angstrom)"));
    plot_pr->setAxisTitle(QwtPlot::yLeft, tr("Frequency"));
    plot_pr->setTitleFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 3, QFont::Bold));
    plot_pr->setAxisTitleFont(QwtPlot::yLeft, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
@@ -285,11 +315,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_core_progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
 
-   int rows=9, columns = 3, spacing = 2, j=0, margin=4;
+   int rows=11, columns = 3, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
-   background->addMultiCellWidget(plot_saxs, j, j+6, 2, 2);
+   background->addMultiCellWidget(plot_saxs, j, j+8, 2, 2);
    j++;
    background->addWidget(lbl_filename1, j, 0);
    background->addWidget(lbl_filename2, j, 1);
@@ -306,8 +336,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(pb_plot_saxs, j, 0);
    background->addWidget(progress_saxs, j, 1);
    j++;
+   background->addWidget(pb_load_saxs, j, 0);
+   background->addWidget(pb_clear_plot_saxs, j, 1);
+   j++;
    background->addWidget(pb_plot_pr, j, 0);
    background->addWidget(progress_pr, j, 1);
+   j++;
+   background->addWidget(pb_load_pr, j, 0);
+   background->addWidget(pb_clear_plot_pr, j, 1);
    j++;
    background->addMultiCellWidget(editor, j, j, 0, 1);
    background->addMultiCellWidget(plot_pr, j, j+3, 2, 2);
@@ -319,9 +355,9 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(lbl_core_progress, j, 2);
 
    background->setColSpacing(2, 600);
-   background->setColStretch(0, 2);
-   background->setColStretch(1, 2);
-   background->setColStretch(2, 10);
+   //   background->setColStretch(0, 2);
+   //   background->setColStretch(1, 2);
+   //   background->setColStretch(2, 10);
 }
 
 void US_Hydrodyn_Saxs::cancel()
@@ -353,6 +389,17 @@ void US_Hydrodyn_Saxs::closeEvent(QCloseEvent *e)
 void US_Hydrodyn_Saxs::show_plot_pr()
 {
 }
+
+void US_Hydrodyn_Saxs::load_pr()
+{
+}
+
+void US_Hydrodyn_Saxs::clear_plot_pr()
+{
+   plot_pr->clear();
+   plot_pr->replot();
+}
+
 
 //--------- thread for saxs I(q) plot -----------
 
@@ -1001,6 +1048,27 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       plot_saxs->setCurveData(Iq, (double *)&(plotted_q[p][0]), (double *)&(plotted_I[p][0]), q_points);
       plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
       plot_saxs->replot();
+
+      // save the data to a file
+      FILE *fsaxs = fopen(USglobal->config_list.system_dir + 
+                          "/somo/saxs/" + QString("%1").arg(lbl_filename2->text()) +
+                          QString("_%1").arg(current_model + 1) + 
+                          ".dat",
+                          "w");
+      fprintf(fsaxs,
+              "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
+              , model_filename.ascii()
+              , US_Version.ascii()
+              , REVISION
+              , our_saxs_options->start_q
+              , our_saxs_options->end_q
+              , our_saxs_options->delta_q
+              );
+      for ( unsigned int i = 0; i < q.size(); i++ )
+      {
+         fprintf(fsaxs, "%.6e\t%.6e\n", q[i], plotted_I[p][i]);
+      }
+      fclose(fsaxs);
    }
    pb_plot_saxs->setEnabled(true);
 }
@@ -1031,6 +1099,50 @@ void US_Hydrodyn_Saxs::print()
       }
       p.end();            // send job to printer
    }
+}
+
+void US_Hydrodyn_Saxs::load_saxs()
+{
+   QString filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/somo/saxs", "*", this);
+   if (filename.isEmpty())
+   {
+      return;
+   }
+   QFile f(filename);
+   vector < double > I;
+   vector < double > q;
+   double new_I, new_q;
+   if ( f.open(IO_ReadOnly) )
+   {
+      QTextStream ts(&f);
+      editor->append(ts.readLine());
+      while ( !ts.atEnd() )
+      {
+         ts >> new_q;
+         ts >> new_I;
+         ts.readLine();
+         I.push_back(new_I);
+         q.push_back(new_q);
+      }
+      f.close();
+      long Iq = plot_saxs->insertCurve("I(q) vs q");
+      plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
+      plotted_q.push_back(q);
+      plotted_I.push_back(I);
+      unsigned int q_points = q.size();
+      unsigned int p = plotted_q.size() - 1;
+      plot_saxs->setCurveData(Iq, (double *)&(plotted_q[p][0]), (double *)&(plotted_I[p][0]), q_points);
+      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+      plot_saxs->replot();
+   }
+}
+
+void US_Hydrodyn_Saxs::clear_plot_saxs()
+{
+   plotted_q.clear();
+   plotted_I.clear();
+   plot_saxs->clear();
+   plot_saxs->replot();
 }
 
 void US_Hydrodyn_Saxs::clear_display()
