@@ -1,8 +1,11 @@
 #include "../include/us_hydrodyn_saxs.h"
 #include "../include/us_hydrodyn.h"
 
+#include <time.h>
+
 #define SAXS_DEBUG
 #define USE_THREADS
+// #define BUG_DEBUG
 
 US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    bool                           *saxs_widget,
@@ -91,6 +94,12 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    setGeometry(global_Xpos, global_Ypos, 0, 0);
    stopFlag = false;
    pb_stop->setEnabled(false);
+   plot_colors.clear();
+   plot_colors.push_back(Qt::yellow);
+   plot_colors.push_back(Qt::green);
+   plot_colors.push_back(Qt::cyan);
+   plot_colors.push_back(Qt::blue);
+   plot_colors.push_back(Qt::red);
 }
 
 US_Hydrodyn_Saxs::~US_Hydrodyn_Saxs()
@@ -480,9 +489,9 @@ void saxs_Iq_thr_t::run()
 #endif
          if ( !thread ) 
          {
-            lbl_core_progress->setText(QString("Atom %1 of %2\n").arg(i+1).arg(as));
+            // lbl_core_progress->setText(QString("Atom %1 of %2\n").arg(i+1).arg(as));
             progress->setProgress(i+1);
-            //            qApp->processEvents();
+            // qApp->processEvents();
          }
          if ( *stopFlag ) 
          {
@@ -528,6 +537,14 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
    stopFlag = false;
    pb_stop->setEnabled(true);
    progress_saxs->reset();
+
+#if defined(BUG_DEBUG)
+   qApp->processEvents();
+   cout << " sleep 1 a" << endl;
+   sleep(1);
+   cout << " sleep 1 a done" << endl;
+#endif
+   
    for ( unsigned int i = 0; i < selected_models.size(); i++ )
    {
       current_model = selected_models[i];
@@ -690,6 +707,12 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             atoms.push_back(new_atom);
          }
       }
+#if defined(BUG_DEBUG)
+      qApp->processEvents();
+      cout << " sleep 1 b" << endl;
+      sleep(1);
+      cout << " sleep 1 b done" << endl;
+#endif
       // ok now we have all the atoms
       unsigned int q_points = 
          (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5);
@@ -734,6 +757,13 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       float vi; // excluded water vol
       float vie; // excluded water * e density
 
+#if defined(BUG_DEBUG)
+      qApp->processEvents();
+      cout << " sleep 1 c" << endl;
+      sleep(1);
+      cout << " sleep 1 c done" << endl;
+#endif
+
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
          saxs saxs = saxs_map[atoms[i].saxs_name];
@@ -761,6 +791,12 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 #endif
       editor->append("f' computed, starting computation of I(q)\n");
       qApp->processEvents();
+#if defined(BUG_DEBUG)
+      qApp->processEvents();
+      cout << " sleep 1 d" << endl;
+      sleep(1);
+      cout << " sleep 1 d done" << endl;
+#endif
       if ( stopFlag ) 
       {
          editor->append(tr("Terminated by user request.\n"));
@@ -774,6 +810,12 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       {
          I[j] = 0;
       }
+#if defined(BUG_DEBUG)
+      qApp->processEvents();
+      cout << " sleep 1 d.1" << endl;
+      sleep(1);
+      cout << " sleep 1 d.1 done" << endl;
+#endif
 #if defined(USE_THREADS)
       {
          unsigned int j;
@@ -813,14 +855,19 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          // sleep app loop
          {
             int all_done;
+            timespec ns;
+            timespec ns_ret;
+            ns.tv_sec = 0;
+            ns.tv_nsec = 500000000l;
+
             do {
                all_done = threads;
                for ( j = 0; j < threads; j++ )
                {
                   all_done -= saxs_Iq_thr_threads[j]->saxs_Iq_thr_work_status();
                }
-               sleep(1);
                qApp->processEvents();
+               nanosleep(&ns, &ns_ret);
             } while(all_done);
          }
 
@@ -874,7 +921,9 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       progress_saxs->setTotalSteps(as1);
       for ( unsigned int i = 0; i < as1; i++ )
       {
-         lbl_core_progress->setText(QString("Atom %1 of %2\n").arg(i+1).arg(as));
+         // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
+         // cout << lcp << endl;
+         // lbl_core_progress->setText(lcp);
          progress_saxs->setProgress(i+1);
          qApp->processEvents();
          if ( stopFlag ) 
@@ -907,6 +956,12 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          I[j] *= 2; // we only computed one symmetric side
       }
 #endif
+#if defined(BUG_DEBUG)
+      qApp->processEvents();
+      cout << " sleep 1 d.2" << endl;
+      sleep(1);
+      cout << " sleep 1 d.2 done" << endl;
+#endif
       lbl_core_progress->setText("");
       qApp->processEvents();
       progress_saxs->reset();
@@ -914,10 +969,23 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       cout << "I computed\n";
 #endif
       editor->append("I(q) computed.\n");
+#if defined(BUG_DEBUG)
+      qApp->processEvents();
+      cout << " sleep 1 e" << endl;
+      sleep(1);
+      cout << " sleep 1 e done" << endl;
+#endif
       long Iq = plot_saxs->insertCurve("I(q) vs q");
+
       plot_saxs->setCurveStyle(Iq, QwtCurve::Lines);
-      plot_saxs->setCurveData(Iq, (double *)&q[0], (double *)&I[0], q_points);
-      plot_saxs->setCurvePen(Iq, QPen(Qt::yellow, 2, SolidLine));
+      plotted_q.push_back(q);
+      plotted_I.push_back(I);
+      unsigned int p = plotted_q.size() - 1;
+#if defined(SAXS_DEBUG)
+      cout << "plot # " << p << endl;
+#endif
+      plot_saxs->setCurveData(Iq, (double *)&(plotted_q[p][0]), (double *)&(plotted_I[p][0]), q_points);
+      plot_saxs->setCurvePen(Iq, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
       plot_saxs->replot();
    }
 }

@@ -121,7 +121,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    cnt_delta_angle= new QwtCounter(this);
    Q_CHECK_PTR(cnt_delta_angle);
-   cnt_delta_angle->setRange(0, 90, 0.001);
+   cnt_delta_angle->setRange(0.001, 90, 0.001);
    cnt_delta_angle->setValue((*saxs_options).delta_angle);
    cnt_delta_angle->setMinimumHeight(minHeight1);
    cnt_delta_angle->setEnabled(true);
@@ -175,7 +175,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    cnt_delta_q= new QwtCounter(this);
    Q_CHECK_PTR(cnt_delta_q);
-   cnt_delta_q->setRange(0, 90, 0.001);
+   cnt_delta_q->setRange(0.001, 90, 0.001);
    cnt_delta_q->setValue((*saxs_options).delta_q);
    cnt_delta_q->setMinimumHeight(minHeight1);
    cnt_delta_q->setEnabled(true);

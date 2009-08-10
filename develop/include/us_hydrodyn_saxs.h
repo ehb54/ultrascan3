@@ -105,12 +105,16 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 #ifdef WIN32
      #pragma warning ( disable: 4251 )
 #endif
-      vector < atom >          atom_list;
-      vector < hybridization > hybrid_list;
-      vector < saxs >          saxs_list;
-      vector < residue >       residue_list;
-      vector < PDB_model >     model_vector;
-      vector < unsigned int >  selected_models;
+      vector < atom >              atom_list;
+      vector < hybridization >     hybrid_list;
+      vector < saxs >              saxs_list;
+      vector < residue >           residue_list;
+      vector < PDB_model >         model_vector;
+      vector < unsigned int >      selected_models;
+      vector < QColor >            plot_colors;
+      vector < vector < double > > plotted_q;
+      vector < vector < double > > plotted_I;
+
 #ifdef WIN32
      #pragma warning ( default: 4251 )
 #endif      
