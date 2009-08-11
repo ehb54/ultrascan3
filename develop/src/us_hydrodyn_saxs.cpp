@@ -6,6 +6,7 @@
 #include <time.h>
 
 #define SAXS_DEBUG
+#define SAXS_DEBUG2
 #define USE_THREADS
 // #define BUG_DEBUG
 // #define RESCALE_B

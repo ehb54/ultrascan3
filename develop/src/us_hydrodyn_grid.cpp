@@ -94,7 +94,7 @@ void US_Hydrodyn_Grid::setupGUI()
    cb_hydrate->setChecked((*grid).hydrate);
    cb_hydrate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_hydrate->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   cb_hydrate->setEnabled(false);
+   cb_hydrate->setEnabled(true);
    connect(cb_hydrate, SIGNAL(clicked()), this, SLOT(set_hydrate()));
 
    cb_tangency = new QCheckBox(this);

@@ -75,6 +75,7 @@ struct PDB_atom
    QString residue_list;             // for loaded bead models
    int group;                        // used in surfracer for breaking up groups of atoms
    QString count_idx;                // used in us_hydrodyn for backtracking on bead/atom exceptions
+   unsigned int atom_hydration;      // used for atob grid hydration
 };
 
 struct PDB_chain   // chain in PDB file

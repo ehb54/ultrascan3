@@ -1223,6 +1223,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      new_atom.bead_assignment = current_bead_assignment; 
                      new_atom.positioner = true;
                      new_atom.serial_number = residue_list[respos].r_atom.size();
+                     new_atom.hydration = this_atom->atom_hydration;
                      residue_list[respos].r_atom.push_back(new_atom);
                      PDB_atom atom_to_add = org_model.molecule[j].atom[k];
                      atom_to_add.resName = new_residue.name;
@@ -2014,6 +2015,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
                this_atom->bead_assignment = this_atom->p_atom->bead_assignment;
                this_atom->atom_assignment = atompos;
                this_atom->chain = (int) this_atom->p_residue->r_bead[this_atom->bead_assignment].chain;
+               this_atom->atom_hydration =  residue_list[respos].r_atom[atompos].hydration;
 
 #if defined(DEBUG) || defined(AUTO_BB_DEBUG)
                printf("found atom %s %s in residue %d pos %d bead asgn %d %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s ba %d\n",

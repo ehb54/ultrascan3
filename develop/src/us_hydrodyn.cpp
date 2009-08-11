@@ -34,6 +34,8 @@
 #define DOTSOMO      ""
 #define DOTSOMOCAP   ""
 
+#define GRID_HYDRATE_DEBUG
+
 // static bool no_rr;
 
 US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
@@ -1391,6 +1393,23 @@ int US_Hydrodyn::calc_grid_pdb()
                            }
                            this_atom->bead_number = bead_model.size();
                            this_atom->bead_computed_radius = this_atom->radius;
+                           if ( grid.hydrate && this_atom->atom_hydration ) 
+                           {
+                              double additional_radius = pow(this_atom->atom_hydration * misc.hydrovol, 1.0f/3.0f);
+                              this_atom->bead_computed_radius += additional_radius;
+#if defined(GRID_HYDRATE_DEBUG)
+                              printf("hydrating atom %s %s %u hydration %u radius %f + %f -> %f\n"
+                                     , this_atom->name.ascii()
+                                     , this_atom->resName.ascii()
+                                     , this_atom->resSeq.ascii()
+                                     , this_atom->atom_hydration
+                                     , this_atom->radius
+                                     , additional_radius
+                                     , this_atom->bead_computed_radius 
+                                     );
+#endif
+                           }
+
                            this_atom->bead_actual_radius = this_atom->bead_computed_radius;
                            this_atom->bead_mw = this_atom->mw;
                            bead_model.push_back(*this_atom);
