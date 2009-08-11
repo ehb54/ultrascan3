@@ -150,7 +150,7 @@ void US_AddAtom::setupGUI()
    lbl_saxs_excl_vol1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_saxs_excl_vol1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_saxs_excl_vol2 = new QLabel(tr(" Enter Excluded Volume:"), this);
+   lbl_saxs_excl_vol2 = new QLabel(tr(" Enter Excluded Volume (A^3):"), this);
    Q_CHECK_PTR(lbl_saxs_excl_vol2);
    lbl_saxs_excl_vol2->setMinimumHeight(minHeight1);
    lbl_saxs_excl_vol2->setAlignment(AlignLeft|AlignVCenter);

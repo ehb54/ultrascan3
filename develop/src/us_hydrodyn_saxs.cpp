@@ -1,4 +1,5 @@
 #include "../include/us_hydrodyn_saxs.h"
+#include "../include/us_hydrodyn_saxs_options.h"
 #include "../include/us_hydrodyn.h"
 #include "../include/us_revision.h"
 
@@ -39,15 +40,15 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
       our_saxs_options->start_q = 4.0 * M_PI * 
          sin(our_saxs_options->start_angle * M_PI / 360.0) / 
          our_saxs_options->wavelength;
-      our_saxs_options->start_q =  floor(our_saxs_options->start_q * 1000.0 + 0.5) / 1000.0;
+      our_saxs_options->start_q =  floor(our_saxs_options->start_q * SAXS_Q_ROUNDING + 0.5) / SAXS_Q_ROUNDING;
       our_saxs_options->end_q = 4.0 * M_PI * 
          sin(our_saxs_options->end_angle * M_PI / 360.0) / 
          our_saxs_options->wavelength;
-      our_saxs_options->end_q =  floor(our_saxs_options->end_q * 1000.0 + 0.5) / 1000.0;
+      our_saxs_options->end_q =  floor(our_saxs_options->end_q * SAXS_Q_ROUNDING + 0.5) / SAXS_Q_ROUNDING;
       our_saxs_options->delta_q = 4.0 * M_PI * 
          sin(our_saxs_options->delta_angle * M_PI / 360.0) / 
          our_saxs_options->wavelength;
-      our_saxs_options->delta_q =  floor(our_saxs_options->delta_q * 1000.0 + 0.5) / 1000.0;
+      our_saxs_options->delta_q =  floor(our_saxs_options->delta_q * SAXS_Q_ROUNDING + 0.5) / SAXS_Q_ROUNDING;
    }         
 
    this->residue_list = residue_list;
@@ -1009,11 +1010,11 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             }
          }
       }
+#endif
       for ( unsigned int j = 0; j < q_points; j++ )
       {
          I[j] *= 2; // we only computed one symmetric side
       }
-#endif
 #if defined(BUG_DEBUG)
       qApp->processEvents();
       cout << " sleep 1 d.2" << endl;
