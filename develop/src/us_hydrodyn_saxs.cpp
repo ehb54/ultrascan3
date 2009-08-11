@@ -7,6 +7,7 @@
 #define SAXS_DEBUG
 #define USE_THREADS
 // #define BUG_DEBUG
+// #define RESCALE_B
 
 US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    bool                           *saxs_widget,
@@ -1050,25 +1051,49 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       plot_saxs->replot();
 
       // save the data to a file
-      FILE *fsaxs = fopen(USglobal->config_list.system_dir + 
-                          "/somo/saxs/" + QString("%1").arg(lbl_filename2->text()) +
-                          QString("_%1").arg(current_model + 1) + 
-                          ".dat",
-                          "w");
-      fprintf(fsaxs,
-              "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
-              , model_filename.ascii()
-              , US_Version.ascii()
-              , REVISION
-              , our_saxs_options->start_q
-              , our_saxs_options->end_q
-              , our_saxs_options->delta_q
-              );
-      for ( unsigned int i = 0; i < q.size(); i++ )
+      QString fsaxs_name = 
+         USglobal->config_list.root_dir + 
+         "/somo/saxs/" + QString("%1").arg(lbl_filename2->text()) +
+         QString("_%1").arg(current_model + 1) + 
+         ".dat";
+#if defined(SAXS_DEBUG)
+      cout << "output file " << fsaxs_name << endl;
+#endif
+
+      FILE *fsaxs = fopen(fsaxs_name, "w");
+      if ( fsaxs ) 
       {
-         fprintf(fsaxs, "%.6e\t%.6e\n", q[i], plotted_I[p][i]);
+#if defined(SAXS_DEBUG)
+         cout << "writing " << fsaxs_name << endl;
+#endif
+         editor->append(tr("SAXS curve file: ") + fsaxs_name + tr(" created.\n"));
+         fprintf(fsaxs,
+                 "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
+                 , model_filename.ascii()
+                 , US_Version.ascii()
+                 , REVISION
+                 , our_saxs_options->start_q
+                 , our_saxs_options->end_q
+                 , our_saxs_options->delta_q
+                 );
+         for ( unsigned int i = 0; i < q.size(); i++ )
+         {
+            fprintf(fsaxs, "%.6e\t%.6e\n", q[i], plotted_I[p][i]);
+         }
+         fclose(fsaxs);
+      } 
+      else
+      {
+#if defined(SAXS_DEBUG)
+         cout << "can't create " << fsaxs_name << endl;
+#endif
+         editor->append(tr("WARNING: Could not create SAXS curve file: ") + fsaxs_name + "\n");
+         QMessageBox mb(tr("UltraScan Warning"),
+                        tr("The output file ") + fsaxs_name + tr(" could not be created."), 
+                        QMessageBox::Critical,
+                        QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+         mb.exec();
       }
-      fclose(fsaxs);
    }
    pb_plot_saxs->setEnabled(true);
 }
@@ -1103,7 +1128,7 @@ void US_Hydrodyn_Saxs::print()
 
 void US_Hydrodyn_Saxs::load_saxs()
 {
-   QString filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/somo/saxs", "*", this);
+   QString filename = QFileDialog::getOpenFileName(USglobal->config_list.root_dir + "/somo/saxs", "*", this);
    if (filename.isEmpty())
    {
       return;
@@ -1317,6 +1342,12 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
                  << "] a[0] = "
                  << current_saxs.a[0]
                  << endl;
+#endif
+#if defined(RESCALE_B)
+            for ( unsigned int i = 0; i < 4; i++ )
+            {
+               current_saxs.b[i] /= 16.0f * M_PI * M_PI;
+            }
 #endif
             saxs_list.push_back(current_saxs);
             saxs_map[current_saxs.saxs_name] = current_saxs;
