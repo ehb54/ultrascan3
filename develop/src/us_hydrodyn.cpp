@@ -1395,10 +1395,11 @@ int US_Hydrodyn::calc_grid_pdb()
                            this_atom->bead_computed_radius = this_atom->radius;
                            if ( grid.hydrate && this_atom->atom_hydration ) 
                            {
-                              double additional_radius = pow(this_atom->atom_hydration * misc.hydrovol, 1.0f/3.0f);
+                              double additional_radius = 
+                                 pow(3 * this_atom->atom_hydration * misc.hydrovol / (M_PI * 4), 1.0f/3.0f);
                               this_atom->bead_computed_radius += additional_radius;
 #if defined(GRID_HYDRATE_DEBUG)
-                              printf("hydrating atom %s %s %u hydration %u radius %f + %f -> %f\n"
+                              printf("hydrating atom %s %s %s hydration %u radius %f + %f -> %f\n"
                                      , this_atom->name.ascii()
                                      , this_atom->resName.ascii()
                                      , this_atom->resSeq.ascii()
