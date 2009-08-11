@@ -7,6 +7,9 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_run_details.h"
+#include "us_exclude_profile.h"
+#include "us_sleep.h"
 
 //! \brief Main program for US_Edvabs. Loads translators and starts
 //         the class US_FitMeniscus.
@@ -45,6 +48,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( pb_load, s_row, 0, 1, 2 );
 
    pb_details = us_pushbutton( tr( "Run Details" ), false );
+   connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
    specs->addWidget( pb_details, s_row++, 2, 1, 2 );
 
    // Row 2
@@ -56,35 +60,12 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( le_info, s_row++, 1, 1, 3 );
 
    // Row 3
-   QLabel* lb_tripple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
-   specs->addWidget( lb_tripple, s_row, 0, 1, 2 );
+   QLabel* lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
+   specs->addWidget( lb_triple, s_row, 0, 1, 2 );
 
-   cb_tripple = us_comboBox();
-   cb_tripple->setInsertPolicy( QComboBox::InsertAlphabetically );
-   specs->addWidget( cb_tripple, s_row++, 2, 1, 2 );
-   
-   
-   //QLabel* lb_cell = us_label( tr( "Cell:" ), -1 );
-   //specs->addWidget( lb_cell, s_row, 0 );
-
-   //cb_cell = us_comboBox();
-   //cb_cell->setInsertPolicy( QComboBox::InsertAlphabetically );
-   //specs->addWidget( cb_cell, s_row, 1 );
-
-   //QLabel* lb_channel = us_label( tr( "Channel:" ), -1 );
-   //specs->addWidget( lb_channel, s_row, 2 );
-
-   //cb_channel = us_comboBox();
-   //cb_channel->setInsertPolicy( QComboBox::InsertAlphabetically );
-   //specs->addWidget( cb_channel, s_row++, 3 );
-   
-   // Row 4
-   //QLabel* lb_wavelength = us_label( tr( "Wavelength:" ), -1 );
-   //specs->addWidget( lb_wavelength, s_row, 0 );
-
-   //cb_wavelength = us_comboBox();
-   //cb_wavelength->setInsertPolicy( QComboBox::InsertAlphabetically );
-   //specs->addWidget( cb_wavelength, s_row++, 1 );
+   cb_triple = us_comboBox();
+   cb_triple->setInsertPolicy( QComboBox::InsertAlphabetically );
+   specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
    
    // Row 5
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
@@ -252,18 +233,10 @@ void US_Edvabs::reset( void )
    ct_to->setMaxValue( 0 );
    ct_to->setValue   ( 0 );
 
-   cb_tripple   ->clear();
-   //cb_cell      ->clear();
-   //cb_channel   ->clear();
-   //cb_wavelength->clear();
-
-   ct_noise->setValue( 4 );
-
+   cb_triple->clear();
+   ct_noise ->setValue( 4 );
    data_plot->detachItems();
-
-   pick->disconnect();
-   //pick = new US_PlotPicker( data_plot );
-   //pick->setRubberBand( QwtPicker::VLineRubberBand );
+   pick     ->disconnect();
 
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
@@ -304,6 +277,14 @@ void US_Edvabs::reset( void )
    range_right   = 0.0;
    plateau.clear();
    baseline      = 0.0;
+}
+
+void US_Edvabs::details( void )
+{  
+   int index = cb_triple->currentIndex();
+   US_RunDetails dialog( allData, index, runID, workingDir, triples );
+   dialog.exec();
+   US_Sleep::msleep( 100 );  // Need this to delay US_RunDetails deletion
 }
 
 void US_Edvabs::load( void )
@@ -347,16 +328,25 @@ void US_Edvabs::load( void )
       QStringList part = files[ i ].split( "." );
 
       QString t = part[ 2 ] + " / " + part[ 3 ] + " / " + part[ 4 ];
-      if ( ! tripples.contains( t ) ) tripples << t;
+      if ( ! triples.contains( t ) ) triples << t;
    }
 
-   cb_tripple->addItems( tripples );
+   cb_triple->addItems( triples );
    
    le_info->setText( runID );
+
+//read_all_data();
+//if ( allData.isEmpty() ) return;
+//data = allData[ 0 ];
+
    plot_current();
 
-   // Enable pushbuttons
+// Temporary test
+allData << data;
 
+
+   // Enable pushbuttons
+   pb_details  ->setEnabled( true );
    pb_include  ->setEnabled( true );
    pb_exclusion->setEnabled( true );
    pb_meniscus ->setEnabled( true );
@@ -394,12 +384,12 @@ void US_Edvabs::plot_current( void )
 {
    // Read the data
    
-   QString tripple = cb_tripple->currentText();
-   QStringList parts = tripple.split( " / " );
+   QString     triple  = cb_triple->currentText();
+   QStringList parts   = triple.split( " / " );
 
-   QString cell    = parts[ 0 ];
-   QString channel = parts[ 1 ];
-   QString wl      = parts[ 2 ];
+   QString     cell    = parts[ 0 ];
+   QString     channel = parts[ 1 ];
+   QString     wl      = parts[ 2 ];
 
 
    QRegExp match( runID + "\\.[A-Z]{2}\\." + cell + "." + channel + "." + wl + ".auc" ); 
@@ -447,7 +437,7 @@ void US_Edvabs::plot_current( void )
    // Initialize include list
    init_includes();
 
-   // Plot current data for cell / channel / wavelength tripple
+   // Plot current data for cell / channel / wavelength triple
    plot_all();
 
    // Set the Scan spin boxes
@@ -1004,27 +994,32 @@ void US_Edvabs::focus( int from, int to )
    else
       pb_excludeRange->setEnabled( true );
 
+   QList< int > focus;  // We don't care if -1 is in the list
+   for ( int i = from - 1; i <= to - 1; i++ ) focus << i;  
+
+   set_colors( focus );
+}
+
+void US_Edvabs::set_colors( const QList< int >& focus )
+{
    // Get pointers to curves
    QwtPlotItemList        list = data_plot->itemList();
    QList< QwtPlotCurve* > curves;
    
-   // Put a dummy on the front for the indexes to be the same
-   curves << dynamic_cast< QwtPlotCurve* >( list[ 0 ] );
-
    for ( int i = 0; i < list.size(); i++ )
    {
       if ( list[ i ]->title().text().contains( "Raw" ) )
          curves << dynamic_cast< QwtPlotCurve* >( list[ i ] );
    }
 
-   QPen   p   = curves[ 1 ]->pen();
-   QBrush b   = curves[ 1 ]->brush();
+   QPen   p   = curves[ 0 ]->pen();
+   QBrush b   = curves[ 0 ]->brush();
    QColor std = US_GuiSettings::plotCurve();
 
    // Mark these scans in red
-   for ( int i = 1; i < curves.size(); i++ )
+   for ( int i = 0; i < curves.size(); i++ )
    {
-      if ( i >= from  &&  i <= to )
+      if ( focus.contains( i ) )
       {
          p.setColor( Qt::red );
          b.setColor( Qt::red );
@@ -1088,7 +1083,39 @@ void US_Edvabs::exclude_range( void )
 
 void US_Edvabs::exclusion( void )
 {
-   QMessageBox::information( this, "Not yet", "Exclude profile not implemented yet" );
+   reset_excludes();
+   US_ExcludeProfile exclude( includes );
+ 
+   connect( &exclude, SIGNAL( update_exclude_profile( QList< int > ) ), 
+            this    , SLOT  ( update_excludes       ( QList< int > ) ) );
+   
+   connect( &exclude, SIGNAL( cancel_exclude_profile( void ) ), 
+            this    , SLOT  ( cancel_excludes       ( void ) ) );
+
+   connect( &exclude, SIGNAL( finish_exclude_profile( QList< int > ) ), 
+            this    , SLOT  ( finish_excludes       ( QList< int > ) ) );
+
+   exclude.exec();
+}
+
+void US_Edvabs::update_excludes( QList< int > scanProfile )
+{
+   set_colors( scanProfile );
+}
+
+void US_Edvabs::cancel_excludes( void )
+{
+   QList< int > focus;
+   set_colors( focus );  // Focus on no curves
+}
+
+void US_Edvabs::finish_excludes( QList< int > excludes )
+{
+   for ( int i = 0; i < excludes.size(); i++ )
+      includes.removeAll( excludes[ i ] );
+
+   replot();
+   reset_excludes();
 }
 
 void US_Edvabs::edit_scan( void )
