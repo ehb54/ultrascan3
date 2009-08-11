@@ -4,12 +4,16 @@
 #include "../include/us_revision.h"
 
 #include <time.h>
+#include <qstringlist.h>
+#include <qinputdialog.h>
+#include <qregexp.h>
 
 #define SAXS_DEBUG
 #define SAXS_DEBUG2
 #define USE_THREADS
 // #define BUG_DEBUG
 // #define RESCALE_B
+#define SAXS_MIN_Q 1e-6
 
 US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    bool                           *saxs_widget,
@@ -807,6 +811,10 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       {
          f[j].resize(atoms.size());
          q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
+         if ( q[j] < SAXS_MIN_Q ) 
+         {
+            q[j] = SAXS_MIN_Q;
+         }
          q2[j] = q[j] * q[j];
       }
 
@@ -832,7 +840,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          {
             // note: since there are only a few 'saxs' coefficient sets
             // the saxs.c + saxs.a[i] * exp() can be precomputed
-            // possibly saving time... but this isn't our most computational step
+            // possibly saving time... but this isn't our most computationally intensive step
             // so I'm holding off for now.
 
             f[j][i] = saxs.c + 
@@ -1136,17 +1144,75 @@ void US_Hydrodyn_Saxs::load_saxs()
       return;
    }
    QFile f(filename);
+   QString ext = QFileInfo(filename).extension(FALSE).lower();
    vector < double > I;
    vector < double > q;
    double new_I, new_q;
+   unsigned int Icolumn = 1;
+   bool dolog10 = false;
+   QString res = "";
    if ( f.open(IO_ReadOnly) )
    {
       QTextStream ts(&f);
+      if ( ext == "int" ) 
+      {
+         dolog10 = true;
+         QStringList lst;
+         lst << "I(q)   Difference intensity"
+             << "Ia(q)  Atomic scattering"
+             << "Ic(q)  Shape scattering"
+             << "Ib(q)  Border layer scattering Ib(q)";
+         bool ok;
+         res = QInputDialog::getItem(
+                                             "Crysol's .int format has four available datasets", 
+                                             "Select the set you wish to plot::", lst, 0, FALSE, &ok,
+                                             this );
+         if ( ok ) {
+            // user selected an item and pressed OK
+            Icolumn = 0;
+            if ( res.contains(QRegExp("^I.q. ")) ) 
+            {
+               Icolumn = 1;
+            } 
+            if ( res.contains(QRegExp("^Ia.q. ")) ) 
+            {
+               Icolumn = 2;
+            } 
+            if ( res.contains(QRegExp("^Ic.q. ")) ) 
+            {
+               Icolumn = 3;
+            } 
+            if ( res.contains(QRegExp("^Ib.q. ")) ) 
+            {
+               Icolumn = 4;
+            } 
+            if ( !Icolumn ) 
+            {
+               cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
+               f.close();
+               return;
+            }
+            cout << " column " << Icolumn << endl;
+         } 
+         else
+         {
+            f.close();
+            return;
+         }
+      }
+      editor->append(QString("Loading SAXS data from %1 %2\n").arg(filename).arg(res));
       editor->append(ts.readLine());
       while ( !ts.atEnd() )
       {
          ts >> new_q;
-         ts >> new_I;
+         for ( unsigned int i = 0; i < Icolumn; i++ )
+         {
+            ts >> new_I;
+         }
+         if ( dolog10 )
+         {
+            new_I = log10(new_I);
+         }
          ts.readLine();
          I.push_back(new_I);
          q.push_back(new_q);
