@@ -29,6 +29,9 @@ int main( int argc, char* argv[] )
 
 US_Edvabs::US_Edvabs() : US_Widgets()
 {
+   check  = QIcon( qApp->applicationDirPath() + "/../etc/check.png" );
+   invert = 1.0;
+
    setWindowTitle( tr( "Edit Velocity Absorbance Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
@@ -174,7 +177,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( pb_spikes, s_row++, 2, 1, 2 );
    
    pb_invert = us_pushbutton( tr( "Invert Sign" ), false );
-   //connect( pb_help, SIGNAL( clicked() ), SLOT( invert() ) );
+   connect( pb_invert, SIGNAL( clicked() ), SLOT( invert_values() ) );
    specs->addWidget( pb_invert, s_row, 0, 1, 2 );
   
    pb_write = us_pushbutton( tr( "Save Current Edit Profile" ), false );
@@ -353,6 +356,7 @@ allData << data;
    pb_dataRange->setEnabled( true );
    pb_plateau  ->setEnabled( true );
    pb_baseline ->setEnabled( true );
+   pb_invert   ->setEnabled( true );
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_from   ( double ) ) );
@@ -802,7 +806,7 @@ void US_Edvabs::plot_all( void )
       for ( int j = 0; j < size; j++ )
       {
          r[ j ] = s->values[ j ].d.radius;
-         v[ j ] = s->values[ j ].value;
+         v[ j ] = s->values[ j ].value * invert;
 
          maxR = max( maxR, r[ j ] );
          minR = min( minR, r[ j ] );
@@ -856,7 +860,7 @@ void US_Edvabs::plot_range( void )
               s->values[ j ].d.radius <= range_right )
          {
             r[ count ] = s->values[ j ].d.radius;
-            v[ count ] = s->values[ j ].value;
+            v[ count ] = s->values[ j ].value * invert;
 
             maxR = max( maxR, r[ count ] );
             minR = min( minR, r[ count ] );
@@ -910,7 +914,7 @@ void US_Edvabs::plot_last( void )
            s->values[ j ].d.radius <= range_right )
       {
          r[ count ] = s->values[ j ].d.radius;
-         v[ count ] = s->values[ j ].value;
+         v[ count ] = s->values[ j ].value * invert;
 
          maxR = max( maxR, r[ count ] );
          minR = min( minR, r[ count ] );
@@ -1129,4 +1133,21 @@ void US_Edvabs::include( void )
    replot();
    reset_excludes();
 }
+
+void US_Edvabs::invert_values( void )
+{
+   if ( invert == 1.0 )
+   {
+      invert = -1.0;
+      pb_invert->setIcon( check );
+   }
+   else
+   {
+      invert = 1.0;
+      pb_invert->setIcon( QIcon() );
+   }
+
+   replot();
+}
+
 
