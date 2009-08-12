@@ -11,10 +11,12 @@
 #define SAXS_DEBUG
 #define SAXS_DEBUG2
 // #define SAXS_DEBUG_F
+// #define SAXS_DEBUG_FV
 // #define USE_THREADS
 // #define BUG_DEBUG
 // #define RESCALE_B
 #define SAXS_MIN_Q 1e-6
+#define ONLY_PHYSICAL_F
 
 US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    bool                           *saxs_widget,
@@ -865,7 +867,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          saxs saxs = saxs_map[atoms[i].saxs_name];
          vi = atoms[i].excl_vol;
          vie = vi * our_saxs_options->water_e_density;
-         m_pi_vi23 = -M_PI * pow(vi, 2.0/3.0); // - pi * pow(v,2/3)
+         m_pi_vi23 = -M_PI * pow(vi,2.0/3.0); // - pi * pow(v,2/3)
 #if defined(SAXS_DEBUG_F)
          cout << i << "\t"
               << atoms[i].saxs_name << "\t";
@@ -898,6 +900,32 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                     << "\t" 
                     << (f[j][i] + vie * exp(m_pi_vi23 * q2[j]))
                     << "\n";
+            }
+#endif
+#if defined(SAXS_DEBUG_FV)
+            if (1 || (q[j] > .0099 && q[j] < .0101)) {
+               cout << q[j] 
+                    << "\t" 
+                    << q2[j] 
+                    << "\t" 
+                    << vi
+                    << "\t" 
+                    << vie
+                    << "\t" 
+                    << m_pi_vi23
+                    << "\t" 
+                    << m_pi_vi23 * q2[j]
+                    << "\t" 
+                    << vie * exp(m_pi_vi23 * q2[j])
+                    << "\t" 
+                    << f[j][i]
+                    << "\n";
+            }
+#endif
+#if defined(ONLY_PHYSICAL_F)
+            if ( f[j][i] < 0.0f ) 
+            {
+               f[j][i] = 0.0f;
             }
 #endif
          }
