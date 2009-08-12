@@ -24,16 +24,20 @@ class US_EXTERN US_Edvabs : public US_Widgets
 
       rawData            data;
       QList< rawData >   allData;
+
       double             meniscus;
       double             meniscus_left;
       double             range_left;
       double             range_right;
-      QList< double >    plateau;
       double             baseline;
+      double             invert;
       QList< int >       includes;
+      QList< double >    plateau;
 
       US_Help            showHelp;
-      
+
+      QIcon              check;
+
       QString            workingDir;
       QString            runID;
       QStringList        files;
@@ -111,6 +115,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       void cancel_excludes( void );
       void edit_scan      ( void );
       void include        ( void );
+      void invert_values  ( void );
                           
       void reset          ( void );
 		void help           ( void )
