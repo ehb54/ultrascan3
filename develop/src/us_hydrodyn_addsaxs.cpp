@@ -240,23 +240,23 @@ void US_AddSaxs::setupGUI()
    background->addWidget(lbl_a1, j, 0);
    background->addWidget(le_a1, j, 1);
    j++;
-   background->addWidget(lbl_a2, j, 0);
-   background->addWidget(le_a2, j, 1);
-   j++;
-   background->addWidget(lbl_a3, j, 0);
-   background->addWidget(le_a3, j, 1);
-   j++;
-   background->addWidget(lbl_a4, j, 0);
-   background->addWidget(le_a4, j, 1);
-   j++;
    background->addWidget(lbl_b1, j, 0);
    background->addWidget(le_b1, j, 1);
+   j++;
+   background->addWidget(lbl_a2, j, 0);
+   background->addWidget(le_a2, j, 1);
    j++;
    background->addWidget(lbl_b2, j, 0);
    background->addWidget(le_b2, j, 1);
    j++;
+   background->addWidget(lbl_a3, j, 0);
+   background->addWidget(le_a3, j, 1);
+   j++;
    background->addWidget(lbl_b3, j, 0);
    background->addWidget(le_b3, j, 1);
+   j++;
+   background->addWidget(lbl_a4, j, 0);
+   background->addWidget(le_a4, j, 1);
    j++;
    background->addWidget(lbl_b4, j, 0);
    background->addWidget(le_b4, j, 1);
@@ -284,12 +284,12 @@ void US_AddSaxs::add()
       {
          item = i;
          saxs_list[i].a[0] = current_saxs.a[0];
-         saxs_list[i].a[1] = current_saxs.a[1];
-         saxs_list[i].a[2] = current_saxs.a[2];
-         saxs_list[i].a[3] = current_saxs.a[3];
          saxs_list[i].b[0] = current_saxs.b[0];
+         saxs_list[i].a[1] = current_saxs.a[1];
          saxs_list[i].b[1] = current_saxs.b[1];
+         saxs_list[i].a[2] = current_saxs.a[2];
          saxs_list[i].b[2] = current_saxs.b[2];
+         saxs_list[i].a[3] = current_saxs.a[3];
          saxs_list[i].b[3] = current_saxs.b[3];
          saxs_list[i].c = current_saxs.c;
          saxs_list[i].volume = current_saxs.volume;
@@ -309,12 +309,12 @@ void US_AddSaxs::add()
       {
          ts << saxs_list[i].saxs_name.upper() << "\t"
             << saxs_list[i].a[0] << "\t"
-            << saxs_list[i].a[1] << "\t"
-            << saxs_list[i].a[2] << "\t"
-            << saxs_list[i].a[3] << "\t"
             << saxs_list[i].b[0] << "\t"
+            << saxs_list[i].a[1] << "\t"
             << saxs_list[i].b[1] << "\t"
+            << saxs_list[i].a[2] << "\t"
             << saxs_list[i].b[2] << "\t"
+            << saxs_list[i].a[3] << "\t"
             << saxs_list[i].b[3] << "\t"
             << saxs_list[i].c << "\t"
             << saxs_list[i].volume << endl;
@@ -352,12 +352,12 @@ void US_AddSaxs::select_file()
          {
             ts >> current_saxs.saxs_name;
             ts >> current_saxs.a[0];
-            ts >> current_saxs.a[1];
-            ts >> current_saxs.a[2];
-            ts >> current_saxs.a[3];
             ts >> current_saxs.b[0];
+            ts >> current_saxs.a[1];
             ts >> current_saxs.b[1];
+            ts >> current_saxs.a[2];
             ts >> current_saxs.b[2];
+            ts >> current_saxs.a[3];
             ts >> current_saxs.b[3];
             ts >> current_saxs.c;
             ts >> current_saxs.volume;
@@ -440,18 +440,18 @@ void US_AddSaxs::select_saxs(int val)
    le_saxs_name->setText(saxs_list[val].saxs_name.upper());
    str.sprintf("%3.4f", saxs_list[val].a[0]);
    le_a1->setText(str);
-   str.sprintf("%3.4f", saxs_list[val].a[1]);
-   le_a2->setText(str);
-   str.sprintf("%3.4f", saxs_list[val].a[2]);
-   le_a3->setText(str);
-   str.sprintf("%3.4f", saxs_list[val].a[3]);
-   le_a4->setText(str);
    str.sprintf("%3.4f", saxs_list[val].b[0]);
    le_b1->setText(str);
+   str.sprintf("%3.4f", saxs_list[val].a[1]);
+   le_a2->setText(str);
    str.sprintf("%3.4f", saxs_list[val].b[1]);
    le_b2->setText(str);
+   str.sprintf("%3.4f", saxs_list[val].a[2]);
+   le_a3->setText(str);
    str.sprintf("%3.4f", saxs_list[val].b[2]);
    le_b3->setText(str);
+   str.sprintf("%3.4f", saxs_list[val].a[3]);
+   le_a4->setText(str);
    str.sprintf("%3.4f", saxs_list[val].b[3]);
    le_b4->setText(str);
    str.sprintf("%3.4f", saxs_list[val].c);
