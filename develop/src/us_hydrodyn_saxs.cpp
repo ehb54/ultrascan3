@@ -10,6 +10,7 @@
 
 #define SAXS_DEBUG
 #define SAXS_DEBUG2
+// #define SAXS_DEBUG_F
 #define USE_THREADS
 // #define BUG_DEBUG
 // #define RESCALE_B
@@ -828,13 +829,34 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       sleep(1);
       cout << " sleep 1 c done" << endl;
 #endif
-
+#if defined(SAXS_DEBUG_F)
+      cout << "atom #\tsaxs name\tq:";
+      for ( unsigned int j = 0; j < q_points; j++ )
+      {
+         if (q[j] > .0099 && q[j] < .0101) {
+            cout << q[j] << "\t";
+         }
+      }
+      cout << endl;
+      cout << "\t\tq^2:";
+      for ( unsigned int j = 0; j < q_points; j++ )
+      {
+         if (q[j] > .0099 && q[j] < .0101) {
+            cout << q2[j] << "\t";
+         }
+      }
+      cout << endl;
+#endif
       for ( unsigned int i = 0; i < atoms.size(); i++ )
       {
          saxs saxs = saxs_map[atoms[i].saxs_name];
          vi = atoms[i].excl_vol;
          vie = vi * our_saxs_options->water_e_density;
          m_pi_vi23 = -M_PI * pow(vi, 2.0/3.0); // - pi * pow(v,2/3)
+#if defined(SAXS_DEBUG_F)
+         cout << i << "\t"
+              << atoms[i].saxs_name << "\t";
+#endif
          
          for ( unsigned int j = 0; j < q_points; j++ )
          {
@@ -849,7 +871,24 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                saxs.a[2] * exp(-saxs.b[2] * q2[j]) +
                saxs.a[3] * exp(-saxs.b[3] * q2[j]) -
                vie * exp(m_pi_vi23 * q2[j]);
+#if defined(SAXS_DEBUG_F)
+            if (q[j] > .0099 && q[j] < .0101) {
+               cout << QString("").sprintf("a1 %f b1 %f a2 %f b2 %f a3 %f b3 %f a4 %f b4 %f c %f q %f q^2 %f\n"
+                                           , saxs.a[0] , saxs.b[0]
+                                           , saxs.a[1] , saxs.b[1]
+                                           , saxs.a[2] , saxs.b[2]
+                                           , saxs.a[3] , saxs.b[3]
+                                           , saxs.c
+                                           , q[j]
+                                           , q2[j]);
+               cout << (f[j][i] + vie * exp(m_pi_vi23 * q2[j]))
+                    << "\t";
+            }
+#endif
          }
+#if defined(SAXS_DEBUG_F)
+         cout << endl;
+#endif
       }
 #if defined(SAXS_DEBUG)
       cout << "f' computed, now compute I\n";
@@ -1392,12 +1431,12 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
       {
          ts >> current_saxs.saxs_name;
          ts >> current_saxs.a[0];
-         ts >> current_saxs.a[1];
-         ts >> current_saxs.a[2];
-         ts >> current_saxs.a[3];
          ts >> current_saxs.b[0];
+         ts >> current_saxs.a[1];
          ts >> current_saxs.b[1];
+         ts >> current_saxs.a[2];
          ts >> current_saxs.b[2];
+         ts >> current_saxs.a[3];
          ts >> current_saxs.b[3];
          ts >> current_saxs.c;
          ts >> current_saxs.volume;
