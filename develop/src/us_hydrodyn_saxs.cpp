@@ -702,7 +702,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                continue;
             }
 
-            if ( !atom_map.count(this_atom->name) )
+            if ( !atom_map.count(this_atom->name + "~" + hybrid_name) )
             {
                cout << "error: atom_map missing for hybrid_name "
                     << hybrid_name 
@@ -711,9 +711,10 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                     << endl;
                QColor save_color = editor->color();
                editor->setColor("red");
-               editor->append(QString("%1Molecule %2 Residue %3 %4 Hybrid %5 name missing from Atom file. Atom skipped.\n")
+               editor->append(QString("%1Molecule %2 Atom %3 Residue %4 %5 Hybrid %6 name missing from Atom file. Atom skipped.\n")
                               .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                               .arg(j+1)
+                              .arg(this_atom->name)
                               .arg(this_atom->resName)
                               .arg(this_atom->resSeq)
                               .arg(hybrid_name)
@@ -731,7 +732,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                continue;
             }
 
-            new_atom.excl_vol = atom_map[this_atom->name].saxs_excl_vol;
+            new_atom.excl_vol = atom_map[this_atom->name + "~" + hybrid_name].saxs_excl_vol;
 
             new_atom.saxs_name = hybrid_map[hybrid_name].saxs_name; 
 
@@ -1424,7 +1425,7 @@ void US_Hydrodyn_Saxs::select_atom_file(const QString &filename)
          if (!current_atom.name.isEmpty() && current_atom.hybrid.radius > 0.0 && current_atom.hybrid.mw > 0.0)
          {
             atom_list.push_back(current_atom);
-            atom_map[current_atom.name] = current_atom;
+            atom_map[current_atom.name + "~" + current_atom.hybrid.name] = current_atom;
          }
       }
       f.close();
