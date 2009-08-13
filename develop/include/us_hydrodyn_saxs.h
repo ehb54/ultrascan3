@@ -182,7 +182,11 @@ class saxs_Iq_thr_t : public QThread
   void saxs_Iq_thr_setup(
                          vector < saxs_atom > *atoms,
                          vector < vector < double > > *f,
+                         vector < vector < double > > *fc,
+                         vector < vector < double > > *fp,
                          vector < double > *I,
+                         vector < double > *Ia,
+                         vector < double > *Ic,
                          vector < double > *q,
                          unsigned int threads,
                          QProgressBar *progress,
@@ -202,7 +206,11 @@ class saxs_Iq_thr_t : public QThread
 
   vector < saxs_atom > *atoms;
   vector < vector < double > > *f;
+  vector < vector < double > > *fc;
+  vector < vector < double > > *fp;
   vector < double > *I;
+  vector < double > *Ia;
+  vector < double > *Ic;
   vector < double > *q;
 
 #ifdef WIN32

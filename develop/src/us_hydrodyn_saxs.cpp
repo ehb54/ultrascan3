@@ -16,7 +16,7 @@
 // #define BUG_DEBUG
 // #define RESCALE_B
 #define SAXS_MIN_Q 1e-6
-#define ONLY_PHYSICAL_F
+// #define ONLY_PHYSICAL_F
 
 US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    bool                           *saxs_widget,
@@ -427,7 +427,11 @@ saxs_Iq_thr_t::saxs_Iq_thr_t(int a_thread) : QThread()
 void saxs_Iq_thr_t::saxs_Iq_thr_setup(
                                       vector < saxs_atom > *atoms,
                                       vector < vector < double > > *f,
+                                      vector < vector < double > > *fc,
+                                      vector < vector < double > > *fp,
                                       vector < double > *I,
+                                      vector < double > *Ia,
+                                      vector < double > *Ic,
                                       vector < double > *q,
                                       unsigned int threads,
                                       QProgressBar *progress,
@@ -438,7 +442,11 @@ void saxs_Iq_thr_t::saxs_Iq_thr_setup(
    /* this starts up a new work load for the thread */
    this->atoms = atoms;
    this->f = f;
+   this->fc = fc;
+   this->fp = fp;
    this->I = I;
+   this->Ia = Ia;
+   this->Ic = Ic;
    this->q = q;
    this->threads = threads;
    this->progress = progress;
@@ -528,6 +536,7 @@ void saxs_Iq_thr_t::run()
       unsigned int as1 = as - 1;
       double rik; // distance from atom i to k 
       double qrik; // q * rik
+      double sqrikd; // sin * q * rik / qrik
       unsigned int q_points = (*q).size();
       if ( !thread ) 
       {
@@ -582,7 +591,10 @@ void saxs_Iq_thr_t::run()
             for ( unsigned int j = 0; j < q_points; j++ )
             {
                qrik = rik * (*q)[j];
-               (*I)[j] += (*f)[j][i] * (*f)[j][k] * sin(qrik) / qrik;
+               sqrikd = sin(qrik) / qrik;
+               (*I)[j] += (*fp)[j][i] * (*f)[j][k] * sqrikd;
+               (*Ia)[j] += (*f)[j][i] * (*f)[j][k] * sqrikd;
+               (*Ic)[j] += (*fc)[j][i] * (*fc)[j][k] * sqrikd;
             }
          }
       }
@@ -817,8 +829,12 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
            << " q points:" << q_points
            << endl;
 #endif
-      vector < vector < double > > f;  // f(q,i)
+      vector < vector < double > > f;  // f(q,i) / atomic
+      vector < vector < double > > fc;  // excluded volume
+      vector < vector < double > > fp;  // f - fc
       f.resize(q_points);
+      fc.resize(q_points);
+      fp.resize(q_points);
       vector < double > q;  // store q grid
       vector < double > q2; // store q^2
       q.resize(q_points);
@@ -827,6 +843,8 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       for ( unsigned int j = 0; j < q_points; j++ )
       {
          f[j].resize(atoms.size());
+         fc[j].resize(atoms.size());
+         fp[j].resize(atoms.size());
          q[j] = our_saxs_options->start_q + j * our_saxs_options->delta_q;
          if ( q[j] < SAXS_MIN_Q ) 
          {
@@ -891,15 +909,16 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                saxs.a[0] * exp(-saxs.b[0] * q2[j]) +
                saxs.a[1] * exp(-saxs.b[1] * q2[j]) +
                saxs.a[2] * exp(-saxs.b[2] * q2[j]) +
-               saxs.a[3] * exp(-saxs.b[3] * q2[j]) -
-               vie * exp(m_pi_vi23 * q2[j]);
+               saxs.a[3] * exp(-saxs.b[3] * q2[j]);
+            fc[j][i] =  vie * exp(m_pi_vi23 * q2[j]);
+            fp[j][i] = f[j][i] - fc[j][i];
 #if defined(SAXS_DEBUG_F)
             if (1 || (q[j] > .0099 && q[j] < .0101)) {
                cout << q[j] 
                     << "\t" 
                     << q2[j] 
                     << "\t" 
-                    << (f[j][i] + vie * exp(m_pi_vi23 * q2[j]))
+                    << f[j][i]
                     << "\n";
             }
 #endif
@@ -919,14 +938,14 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                     << "\t" 
                     << vie * exp(m_pi_vi23 * q2[j])
                     << "\t" 
-                    << f[j][i]
+                    << fp[j][i]
                     << "\n";
             }
 #endif
 #if defined(ONLY_PHYSICAL_F)
-            if ( f[j][i] < 0.0f ) 
+            if ( fp[j][i] < 0.0f ) 
             {
-               f[j][i] = 0.0f;
+               fp[j][i] = 0.0f;
             }
 #endif
          }
@@ -954,10 +973,16 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          return;
       }
       vector < double > I;
+      vector < double > Ia;
+      vector < double > Ic;
       I.resize(q_points);
+      Ia.resize(q_points);
+      Ic.resize(q_points);
       for ( unsigned int j = 0; j < q_points; j++ )
       {
          I[j] = 0.0f;
+         Ia[j] = 0.0f;
+         Ic[j] = 0.0f;
       }
 #if defined(BUG_DEBUG)
       qApp->processEvents();
@@ -977,22 +1002,34 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             
          }
          vector < vector < double > > It;
+         vector < vector < double > > Ita;
+         vector < vector < double > > Itc;
          It.resize(threads);
+         Ita.resize(threads);
+         Itc.resize(threads);
          for ( j = 0; j < threads; j++ )
          {
 # if defined(DEBUG_THREAD)
             cout << "thread " << j << endl;
 # endif
             It[j].resize(q_points);
+            Ita[j].resize(q_points);
+            Itc[j].resize(q_points);
             for ( unsigned int k = 0; k < q_points; k++ )
             {
-               It[j][k] = 0;
+               It[j][k] = 0.0f;
+               Ita[j][k] = 0.0f;
+               Itc[j][k] = 0.0f;
             }
             
             saxs_Iq_thr_threads[j]->saxs_Iq_thr_setup(
                                                       &atoms,
                                                       &f,
+                                                      &fc,
+                                                      &fp,
                                                       &It[j],
+                                                      &Ita[j],
+                                                      &Itc[j],
                                                       &q,
                                                       threads,
                                                       progress_saxs,
@@ -1059,6 +1096,8 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             for ( unsigned int k = 0; k < q_points; k++ )
             {
                I[k] += It[j][k];
+               Ia[k] += Ita[j][k];
+               Ic[k] += Itc[j][k];
             }
          }
       }
@@ -1068,6 +1107,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       unsigned int as1 = as - 1;
       double rik; // distance from atom i to k 
       double qrik; // q * rik
+      double sqrikd; // sin * q * rik / qrik
       progress_saxs->setTotalSteps((int)(as1 * 1.15));
       for ( unsigned int i = 0; i < as1; i++ )
       {
@@ -1111,12 +1151,15 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             for ( unsigned int j = 0; j < q_points; j++ )
             {
                qrik = rik * q[j];
-               I[j] += f[j][i] * f[j][k] * sin(qrik) / qrik;
+               sqrikd = sin(qrik) / qrik;
+               I[j] += fp[j][i] * fp[j][k] * sqrikd;
+               Ia[j] += f[j][i] * f[j][k] * sqrikd;
+               Ic[j] += fc[j][i] * fc[j][k] * sqrikd;
 #if defined(SAXS_DEBUG_F)
                cout << QString("").sprintf("I[%f] += (%f * %f) * (sin(%f) / %f) == %f\n"
                                            , q[j]
-                                           , f[j][i]
-                                           , f[j][k]
+                                           , fp[j][i]
+                                           , fp[j][k]
                                            , qrik
                                            , qrik
                                            , I[j]);
@@ -1178,7 +1221,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          USglobal->config_list.root_dir + 
          "/somo/saxs/" + QString("%1").arg(lbl_filename2->text()) +
          QString("_%1").arg(current_model + 1) + 
-         ".dat";
+         ".ssaxs";
 #if defined(SAXS_DEBUG)
       cout << "output file " << fsaxs_name << endl;
 #endif
@@ -1201,7 +1244,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                  );
          for ( unsigned int i = 0; i < q.size(); i++ )
          {
-            fprintf(fsaxs, "%.6e\t%.6e\n", q[i], plotted_I[p][i]);
+            fprintf(fsaxs, "%.6e\t%.6e\t%.6e\t%.6e\n", q[i], I[i], Ia[i], Ic[i]);
          }
          fclose(fsaxs);
       } 
@@ -1298,6 +1341,47 @@ void US_Hydrodyn_Saxs::load_saxs()
             if ( res.contains(QRegExp("^Ib.q. ")) ) 
             {
                Icolumn = 4;
+            } 
+            if ( !Icolumn ) 
+            {
+               cerr << "US_Hydrodyn_Saxs::load_saxs : unknown type error" << endl;
+               f.close();
+               return;
+            }
+            cout << " column " << Icolumn << endl;
+         } 
+         else
+         {
+            f.close();
+            return;
+         }
+      }
+      if ( ext == "ssaxs" ) 
+      {
+         dolog10 = true;
+         QStringList lst;
+         lst << "I(q)   Difference intensity"
+             << "Ia(q)  Atomic scattering"
+             << "Ic(q)  Shape scattering";
+         bool ok;
+         res = QInputDialog::getItem(
+                                             "There are three available datasets", 
+                                             "Select the set you wish to plot::", lst, 0, FALSE, &ok,
+                                             this );
+         if ( ok ) {
+            // user selected an item and pressed OK
+            Icolumn = 0;
+            if ( res.contains(QRegExp("^I.q. ")) ) 
+            {
+               Icolumn = 1;
+            } 
+            if ( res.contains(QRegExp("^Ia.q. ")) ) 
+            {
+               Icolumn = 2;
+            } 
+            if ( res.contains(QRegExp("^Ic.q. ")) ) 
+            {
+               Icolumn = 3;
             } 
             if ( !Icolumn ) 
             {
