@@ -76,6 +76,7 @@ SOMO Config file - computer generated, please do not edit...
 24.041		# hydration volume
 1		# flag for selecting vbar calculation
 0.72		# vbar value
+1		# flag for usage of peptide bond rule
 1.68		# Average atomic radius value
 16		# Average atomic mass value
 0.4		# Average atomic hydration value
