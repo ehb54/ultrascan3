@@ -85,6 +85,14 @@ void US_Hydrodyn_Misc::setupGUI()
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(update_vbar(const QString &)));
 
+   cb_pb_rule_on = new QCheckBox(this);
+   cb_pb_rule_on->setText(tr(" Enable Peptide Bond Rule "));
+   cb_pb_rule_on->setChecked((*misc).pb_rule_on);
+   cb_pb_rule_on->setMinimumHeight(minHeight1);
+   cb_pb_rule_on->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pb_rule_on->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_pb_rule_on, SIGNAL(clicked()), SLOT(set_pb_rule_on()));
+
    lbl_avg_banner = new QLabel(tr("Average Parameters for Automatic Bead Builder:"), this);
    Q_CHECK_PTR(lbl_avg_banner);
    lbl_avg_banner->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -207,7 +215,7 @@ void US_Hydrodyn_Misc::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=6, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=7, columns = 2, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -220,6 +228,8 @@ void US_Hydrodyn_Misc::setupGUI()
    j++;
    background->addWidget(lbl_hydrovol, j, 0);
    background->addWidget(cnt_hydrovol, j, 1);
+   j++;
+   background->addWidget(cb_pb_rule_on, j, 0);
    j++;
    background->addMultiCellWidget(lbl_avg_banner, j, j, 0, 1);
    j++;
@@ -277,6 +287,12 @@ void US_Hydrodyn_Misc::set_vbar()
    le_vbar->setEnabled(!(*misc).compute_vbar);
    pb_vbar->setEnabled(!(*misc).compute_vbar);
    emit vbar_changed();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Misc::set_pb_rule_on()
+{
+   (*misc).pb_rule_on = cb_pb_rule_on->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

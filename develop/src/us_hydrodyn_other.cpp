@@ -1020,18 +1020,21 @@ int US_Hydrodyn::read_config(QFile& f)
    misc.vbar = str.toDouble();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -10093;
-   misc.avg_radius = str.toDouble();
+   misc.pb_rule_on = (bool) str.toInt();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -10094;
-   misc.avg_mass = str.toDouble();
+   misc.avg_radius = str.toDouble();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -10095;
-   misc.avg_hydration = str.toDouble();
+   misc.avg_mass = str.toDouble();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -10096;
-   misc.avg_volume = str.toDouble();
+   misc.avg_hydration = str.toDouble();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -10097;
+   misc.avg_volume = str.toDouble();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -10098;
    misc.avg_vbar = str.toDouble();
 
    ts >> str;
@@ -1258,6 +1261,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << misc.hydrovol << "\t\t# hydration volume\n";
       ts << misc.compute_vbar << "\t\t# flag for selecting vbar calculation\n";
       ts << misc.vbar << "\t\t# vbar value\n";
+      ts << misc.pb_rule_on << "\t\t# flag for usage of peptide bond rule\n";
       ts << misc.avg_radius << "\t\t# Average atomic radius value\n";
       ts << misc.avg_mass << "\t\t# Average atomic mass value\n";
       ts << misc.avg_hydration << "\t\t# Average atomic hydration value\n";
@@ -1427,6 +1431,7 @@ void US_Hydrodyn::set_default()
       misc.hydrovol = 24.041;
       misc.compute_vbar = true;
       misc.vbar = 0.72;
+      misc.pb_rule_on = true;
       misc.avg_radius = 1.68;
       misc.avg_mass = 16.0;
       misc.avg_hydration = 0.4;
@@ -2768,6 +2773,11 @@ QString US_Hydrodyn::default_differences_misc()
         !misc.compute_vbar )
    {
       str += QString(base + "Entered vbar value: %1\n").arg(misc.vbar);
+   }
+   if ( misc.pb_rule_on != default_misc.pb_rule_on )
+   {
+      str += QString(base + "Peptide bond rule: %1\n")
+         .arg(misc.pb_rule_on ? "On" : "Off");
    }
    if ( misc.hydrovol != default_misc.hydrovol )
    {

@@ -514,12 +514,12 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                  (int)residue_list[m].r_atom.size() ==
                  atom_counts[count_idx] - has_OXT[count_idx] &&
                  this_atom->name != "OXT" &&
-                 (k || this_atom->name != "N" || !regular_N_handling)) ||
+                 (k || this_atom->name != "N" || !misc.pb_rule_on)) ||
                 (residue_list[m].name == "OXT"
                  && this_atom->name == "OXT") ||
                 (!k &&
                  this_atom->name == "N" &&
-                 regular_N_handling &&
+                 misc.pb_rule_on &&
                  residue_list[m].name == "N1"))
             {
                respos = (int) m;
@@ -561,7 +561,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      for (unsigned int l = 0; l < residue_list[lastResPos].r_atom.size(); l++)
                      {
                         if (spec_N1 &&
-                            regular_N_handling &&
+                            misc.pb_rule_on &&
                             residue_list[lastResPos].r_atom[l].name == "N") {
                            residue_list[lastResPos].r_atom[l].tmp_flag = true;
                            spec_N1 = false;
@@ -810,7 +810,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                if (residue_list[respos].r_atom[m].name == this_atom->name ||
                    (
                     this_atom->name == "N" &&
-                    regular_N_handling &&
+                    misc.pb_rule_on &&
                     !k &&
                     residue_list[respos].r_atom[m].name == "N1"
                     )
@@ -1832,7 +1832,6 @@ public:
    }
 };
 
-// #define DEBUG
 int US_Hydrodyn::create_beads(QString *error_string)
 {
 
@@ -1896,12 +1895,12 @@ int US_Hydrodyn::create_beads(QString *error_string)
                  (int)residue_list[m].r_atom.size() ==
                  atom_counts[count_idx] - has_OXT[count_idx] &&
                  this_atom->name != "OXT" &&
-                 (k || this_atom->name != "N" || !regular_N_handling)) ||
+                 (k || this_atom->name != "N" || !misc.pb_rule_on)) ||
                 (residue_list[m].name == "OXT"
                  && this_atom->name == "OXT") ||
                 (!k &&
                  this_atom->name == "N" &&
-                 regular_N_handling &&
+                 misc.pb_rule_on &&
                  residue_list[m].name == "N1"))
             {
                respos = (int) m;
@@ -1970,7 +1969,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
             for (unsigned int m = 0; m < residue_list[respos].r_atom.size(); m++)
             {
 #if defined(DEBUG)
-               if(this_atom->name == "N" && !k && regular_N_handling) {
+               if(this_atom->name == "N" && !k && misc.pb_rule_on) {
                   printf("this_atom->name == N/N1 this residue_list[%d].r_atom[%d].name == %s\n",
                          respos, m, residue_list[respos].r_atom[m].name.ascii());
                }
@@ -1979,7 +1978,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
                    (residue_list[respos].r_atom[m].name == this_atom->name ||
                     (
                      this_atom->name == "N" &&
-                     regular_N_handling &&
+                     misc.pb_rule_on &&
                      !k &&
                      residue_list[respos].r_atom[m].name == "N1"
                      )
@@ -2114,7 +2113,8 @@ int US_Hydrodyn::create_beads(QString *error_string)
             sortable_PDB_atom tmp_sortable_pdb_atom;
             tmp_sortable_pdb_atom.pdb_atom = *this_atom;
             tmp_sortable_pdb_atom.PRO_N_override = false;
-            if(this_atom->resName == "PRO" &&
+            if(misc.pb_rule_on &&
+               this_atom->resName == "PRO" &&
                this_atom->name == "N") {
                tmp_sortable_pdb_atom.PRO_N_override = true;
             }
@@ -4049,7 +4049,6 @@ int US_Hydrodyn::compute_asa()
                     this_atom->resSeq.ascii(),
                     this_atom->asa);
 
-
             for (unsigned int m = 0; m < 3; m++) {
                this_atom->bead_cog_coordinate.axis[m] = 0;
                this_atom->bead_position_coordinate.axis[m] = 0;
@@ -4101,7 +4100,6 @@ int US_Hydrodyn::compute_asa()
                       this_atom->placing_method,
                       this_atom->bead_assignment); fflush(stdout);
 #endif
-
                molecular_mw += this_atom->mw;
                for (unsigned int m = 0; m < 3; m++) {
                   molecular_cog[m] += this_atom->coordinate.axis[m] * this_atom->mw;
@@ -4122,7 +4120,7 @@ int US_Hydrodyn::compute_asa()
                      this_atom->chain != last_chain ||
                      this_atom->resName != last_resName ||
                      this_atom->resSeq != last_resSeq) &&
-                    !(regular_N_handling &&
+                    !(misc.pb_rule_on &&
                       this_atom->chain == 0 &&
                       this_atom->name == "N" &&
                       count_actives))) {
@@ -4141,7 +4139,7 @@ int US_Hydrodyn::compute_asa()
                   last_chain = this_atom->chain;
                   last_resName = this_atom->resName;
                   last_resSeq = this_atom->resSeq;
-                  if (create_beads_normally) {
+                  if (create_beads_normally && misc.pb_rule_on) {
                      if(sidechain_N &&
                         this_atom->chain == 1) {
                         if(this_atom->name == "N") {
@@ -4159,8 +4157,7 @@ int US_Hydrodyn::compute_asa()
                         sidechain_N->bead_asa = 0;
                         sidechain_N = (PDB_atom *) 0;
                      }
-                     if(regular_N_handling &&
-                        this_atom->name == "N" &&
+                     if(this_atom->name == "N" &&
                         this_atom->chain == 1) {
                         sidechain_N = this_atom;
                         this_atom->is_bead = false;
@@ -4196,9 +4193,10 @@ int US_Hydrodyn::compute_asa()
 
                // special nitrogen asa handling
                PDB_atom *use_atom;
-               if (create_beads_normally &&
+               if (misc.pb_rule_on &&
+                   create_beads_normally &&
                    this_atom->chain == 0 &&
-                   regular_N_handling &&
+                   misc.pb_rule_on &&
                    this_atom->name == "N" &&
                    last_main_chain_bead) {
                   use_atom = last_main_chain_bead;
@@ -4220,7 +4218,6 @@ int US_Hydrodyn::compute_asa()
                       );
 #endif
                // accum
-
                if (!create_beads_normally ||
                    this_atom->bead_positioner) {
 #if defined(DEBUG_COG)
@@ -4273,7 +4270,7 @@ int US_Hydrodyn::compute_asa()
                }
 
                if (this_atom->chain == 0 &&
-                   regular_N_handling &&
+                   misc.pb_rule_on &&
                    this_atom->name == "N" &&
                    !count_actives)
                {
@@ -4329,7 +4326,7 @@ int US_Hydrodyn::compute_asa()
    // next main chain back one
 
    // for (unsigned int i = 0; i < model_vector.size (); i++)   {
-   {
+   if (misc.pb_rule_on) {
       unsigned int i = current_model;
       for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
          PDB_atom *last_main_chain_bead = (PDB_atom *) 0;

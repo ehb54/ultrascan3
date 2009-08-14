@@ -17,6 +17,7 @@
 // #define RESCALE_B
 #define SAXS_MIN_Q 1e-6
 // #define ONLY_PHYSICAL_F
+// #define I_MULT_2
 
 US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    bool                           *saxs_widget,
@@ -186,14 +187,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_saxs_table->setMinimumHeight(minHeight1);
    lbl_saxs_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   pb_plot_saxs = new QPushButton(tr("Plot SAXS Curve"), this);
+   pb_plot_saxs = new QPushButton(tr("Compute SAXS Curve"), this);
    Q_CHECK_PTR(pb_plot_saxs);
    pb_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_plot_saxs->setMinimumHeight(minHeight1);
    pb_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_plot_saxs, SIGNAL(clicked()), SLOT(show_plot_saxs()));
 
-   pb_load_saxs = new QPushButton(tr("Load SAXS Experimental Data"), this);
+   pb_load_saxs = new QPushButton(tr("Load SAXS Curve"), this);
    Q_CHECK_PTR(pb_load_saxs);
    pb_load_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load_saxs->setMinimumHeight(minHeight1);
@@ -804,7 +805,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
 #endif
       // ok now we have all the atoms
       unsigned int q_points = 
-         (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5);
+         (unsigned int)floor(((our_saxs_options->end_q - our_saxs_options->start_q) / our_saxs_options->delta_q) + .5) + 1;
          
       editor->append(QString("Number of atoms %1.\n"
                              "q range %2 to %3 with a stepsize of %4 giving %5 q-points.\n")
@@ -1171,15 +1172,19 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          }
       }
 #endif
+#if defined(I_MULT_2)
       for ( unsigned int j = 0; j < q_points; j++ )
       {
          I[j] *= 2; // we only computed one symmetric side
+         Ia[j] *= 2; // we only computed one symmetric side
+         Ic[j] *= 2; // we only computed one symmetric side
 #if defined(SAXS_DEBUG_F)
          cout << QString("").sprintf("I[%f] = %f\n",
                                      q[j],
                                      I[j]);
 #endif
       }
+#endif
 #if defined(BUG_DEBUG)
       qApp->processEvents();
       cout << " sleep 1 d.2" << endl;

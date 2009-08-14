@@ -31,6 +31,7 @@ struct misc_options
    double hydrovol;
    bool compute_vbar;      // true = compute
                                 // false = use user specified value
+   bool pb_rule_on;      // true = move N back etc, false = do not
 
    double avg_hydration;
    double avg_mass;
@@ -72,6 +73,7 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
 
       QLineEdit *le_vbar;
       QCheckBox *cb_vbar;
+      QCheckBox *cb_pb_rule_on;
       QwtCounter *cnt_hydrovol;
       QwtCounter *cnt_avg_radius;
       QwtCounter *cnt_avg_mass;
@@ -83,6 +85,7 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
 
       void setupGUI();
       void set_vbar();
+      void set_pb_rule_on();
       void select_vbar();
       void update_vbar_signal(float, float);
       void update_vbar(const QString &);
