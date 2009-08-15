@@ -102,7 +102,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    //   global_Ypos += 30;
    //   setGeometry(global_Xpos, global_Ypos, 0, 0);
    create_beads_normally = true;
-   regular_N_handling = true;
+   alt_method = false;
    rasmol = NULL;
    chdir(somo_tmp_dir);
    printf("%s\n", QString(somo_tmp_dir).ascii());

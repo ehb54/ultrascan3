@@ -90,7 +90,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QFont ft;
 
       bool create_beads_normally; // true = normal, false = atoms are beads
-      bool regular_N_handling; // true = PB methed, false = MC method
+      bool alt_method; // true = new bead method, false = original bead method
       unsigned int current_model;
       QString residue_filename, bead_model_file, pdb_file;
       struct residue current_residue;
