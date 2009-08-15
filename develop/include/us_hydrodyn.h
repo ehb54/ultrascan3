@@ -66,6 +66,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       double default_overlap_tolerance;
       bool stopFlag, calcAutoHydro;
       QLabel *lbl_core_progress;
+      void set_disabled();
 
    private:
       bool residue_widget;
@@ -205,6 +206,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       vector < vector <PDB_atom> >  bead_models;
       vector <PDB_atom *>           active_atoms;
       vector <struct residue>       residue_list;
+      vector <struct residue>       residue_list_no_pbr;
       map < QString, vector <int> > multi_residue_map; // maps residue to index of residue_list
       map < QString, vector <int> > valid_atom_map;    // maps resName|atomName|pos
       //                                                  in multi_residue_map to index of atoms
@@ -224,6 +226,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // the automatic bead builder adds temporary residues, so it uses these to reset the values
       // in lieu of re-reading the residue file...
       vector <struct residue>   save_residue_list;
+      vector <struct residue>   save_residue_list_no_pbr;
       map < QString, vector <int> > save_multi_residue_map; // maps residue to index of residue_list
       map < QString, int > new_residues;    // maps resName|atom_count to {0,1} for duplicate checks
       map < QString, vector < QString > > molecules_residues_atoms;
@@ -282,7 +285,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool assign_atom(const QString &, struct PDB_chain *, QString *);
       void cancel();
       void help();
-      void atom();
+      void edit_atom();
       void hybrid();
       void residue();
       void saxs();

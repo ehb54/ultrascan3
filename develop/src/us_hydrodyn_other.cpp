@@ -68,6 +68,10 @@ void US_Hydrodyn::read_residue_file()
          line_count++;
          new_residue.r_atom.clear();
          new_residue.r_bead.clear();
+         vector < vector < atom > > new_atoms;
+         new_atoms.resize(numbeads);
+         vector < atom > alt_atoms;
+         
          for (j=0; j<numatoms; j++)
          {
             ts >> new_atom.name;
@@ -120,6 +124,7 @@ void US_Hydrodyn::read_residue_file()
                                        .arg(new_residue.name).arg(new_atom.name)] 
                   = new_atom.hybrid.name;
                new_residue.r_atom.push_back(new_atom);
+               new_atoms[new_atom.bead_assignment].push_back(new_atom);
             }
             else
             {
@@ -127,6 +132,17 @@ void US_Hydrodyn::read_residue_file()
                                     tr("Please note:\n\nThere was an error reading\nthe selected Residue File!\n\nAtom "
                                        + new_atom.name + " cannot be read and will be deleted from List."),
                                     QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+            }
+         }
+         {
+            unsigned int serial = 0;
+            for ( unsigned int i = 0; i < new_atoms.size(); i++ )
+            {
+               for ( unsigned int j = 0; j < new_atoms[i].size(); j++ )
+               {
+                  new_atoms[i][j].serial_number = serial++;
+                  alt_atoms.push_back(new_atoms[i][j]);
+               }
             }
          }
          for (j=0; j<numbeads; j++)
@@ -159,6 +175,10 @@ void US_Hydrodyn::read_residue_file()
                    ); fflush(stdout);
             multi_residue_map[new_residue.name].push_back(residue_list.size());
             residue_list.push_back(new_residue);
+            struct residue alt_residue;
+            alt_residue = new_residue;
+            alt_residue.r_atom = alt_atoms;
+            residue_list_no_pbr.push_back(alt_residue);
             for (unsigned int k = 0; k < new_residue.r_atom.size(); k++) {
                QString idx = QString("%1|%2|%3")
                   .arg(new_residue.name)
@@ -192,6 +212,7 @@ void US_Hydrodyn::read_residue_file()
       }
    }
    save_residue_list = residue_list;
+   save_residue_list_no_pbr = residue_list_no_pbr;
    save_multi_residue_map = multi_residue_map;
 }
 

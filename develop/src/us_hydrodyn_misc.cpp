@@ -293,7 +293,9 @@ void US_Hydrodyn_Misc::set_vbar()
 void US_Hydrodyn_Misc::set_pb_rule_on()
 {
    (*misc).pb_rule_on = cb_pb_rule_on->isChecked();
+
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+   ((US_Hydrodyn *)us_hydrodyn)->set_disabled();
 }
 
 void US_Hydrodyn_Misc::cancel()

@@ -168,7 +168,7 @@ void US_Hydrodyn::setupGUI()
 
    lookup_tables = new QPopupMenu;
    lookup_tables->insertItem(tr("Add/Edit &Hybridization"), this, SLOT(hybrid()));
-   lookup_tables->insertItem(tr("Add/Edit &Atom"), this, SLOT(atom()));
+   lookup_tables->insertItem(tr("Add/Edit &Atom"), this, SLOT(edit_atom()));
    lookup_tables->insertItem(tr("Add/Edit &Residue"), this, SLOT(residue()));
    lookup_tables->insertItem(tr("Add/Edit &SAXS coefficients"), this, SLOT(saxs()));
 
@@ -493,6 +493,18 @@ void US_Hydrodyn::setupGUI()
 }
 
 
+void US_Hydrodyn::set_disabled()
+{
+   pb_somo->setEnabled(false);
+   pb_grid_pdb->setEnabled(false);
+   pb_grid->setEnabled(false);
+   pb_show_hydro_results->setEnabled(false);
+   pb_calc_hydro->setEnabled(false);
+   pb_visualize->setEnabled(false);
+   pb_pdb_saxs->setEnabled(false);
+   le_bead_model_file->setText(" not selected ");
+}
+
 void US_Hydrodyn::hybrid()
 {
    if (hybrid_widget)
@@ -506,7 +518,7 @@ void US_Hydrodyn::hybrid()
    }
 }
 
-void US_Hydrodyn::atom()
+void US_Hydrodyn::edit_atom()
 {
    if (atom_widget)
    {
@@ -973,7 +985,14 @@ void US_Hydrodyn::load_pdb()
       QFileInfo fi(filename);
       project = fi.baseName();
       new_residues.clear();
-      residue_list = save_residue_list;
+      if ( misc.pb_rule_on )
+      {
+         residue_list = save_residue_list;
+      }
+      else
+      {
+         residue_list = save_residue_list_no_pbr;
+      }
       multi_residue_map = save_multi_residue_map;
       read_pdb(filename);
       QString error_string = "";
