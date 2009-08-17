@@ -870,6 +870,7 @@ void US_Hydrodyn::select_residue_file()
       return;
    }
    read_residue_file();
+   set_disabled();
    lbl_table->setText( QDir::convertSeparators( residue_filename ) );
 }
 

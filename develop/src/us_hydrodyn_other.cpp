@@ -45,6 +45,7 @@ void US_Hydrodyn::read_residue_file()
    QString error_text = tr("Residue file errors:\n");
    cout << "residue file name: " << residue_filename << endl;
    residue_list.clear();
+   residue_list_no_pbr.clear();
    multi_residue_map.clear();
    residue_atom_hybrid_map.clear();
    new_residues.clear();
@@ -169,9 +170,12 @@ void US_Hydrodyn::read_residue_file()
                .arg(dup_residue_map[new_residue.name] ?
                     QString("_%1").arg(dup_residue_map[new_residue.name]) : "");
             dup_residue_map[new_residue.name]++;
-            printf("residue name %s unique name %s\n"
+            printf("residue name %s unique name %s atom size %u alt size %u pos %u\n"
                    ,new_residue.name.ascii()
                    ,new_residue.unique_name.ascii()
+                   ,new_residue.r_atom.size()
+                   ,alt_atoms.size()
+                   ,residue_list.size()
                    ); fflush(stdout);
             multi_residue_map[new_residue.name].push_back(residue_list.size());
             residue_list.push_back(new_residue);
@@ -237,6 +241,7 @@ void US_Hydrodyn::calc_vbar(struct PDB_model *model)
 
 void US_Hydrodyn::calc_bead_mw(struct residue *res)
 {
+   double rmw = 0.0;
    for (unsigned int i=0; i<(*res).r_bead.size(); i++)
    {
       (*res).r_bead[i].mw = 0.0;
@@ -245,9 +250,13 @@ void US_Hydrodyn::calc_bead_mw(struct residue *res)
          if ((*res).r_atom[j].bead_assignment == i)
          {
             (*res).r_bead[i].mw += (*res).r_atom[j].hybrid.mw;
+            rmw += (*res).r_atom[j].hybrid.mw;
+            // cout << res->name << " bead " << i << " atom " << res->r_atom[j].name << " mw " << res->r_atom[j].hybrid.mw << endl;
          }
       }
+      cout << res->name << " bead " << i << " mw " << res->r_bead[i].mw << endl;
    }
+   cout << res->name << " mw " << rmw << endl;
 }
 
 void US_Hydrodyn::clear_temp_chain(struct PDB_chain *temp_chain) // clear all the memory from the vectors in temp_chain
