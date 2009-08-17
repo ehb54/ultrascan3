@@ -173,9 +173,9 @@ void US_Hydrodyn::read_residue_file()
             printf("residue name %s unique name %s atom size %u alt size %u pos %u\n"
                    ,new_residue.name.ascii()
                    ,new_residue.unique_name.ascii()
-                   ,new_residue.r_atom.size()
-                   ,alt_atoms.size()
-                   ,residue_list.size()
+                   ,(unsigned int) new_residue.r_atom.size()
+                   ,(unsigned int) alt_atoms.size()
+                   ,(unsigned int) residue_list.size()
                    ); fflush(stdout);
             multi_residue_map[new_residue.name].push_back(residue_list.size());
             residue_list.push_back(new_residue);
