@@ -24,12 +24,11 @@ class US_Convert : public US_Widgets
       US_PlotPicker* pick;
 
       QString       runType;
+      QStringList   triples;
 
       QLineEdit*    le_dir;
 
-      QComboBox*    cb_cell;
-      QComboBox*    cb_channel;
-      QComboBox*    cb_wavelength;
+      QComboBox*    cb_triple;                // cell, channel, wavelength
 
       QwtCounter*   ct_from;
       QwtCounter*   ct_to;
@@ -67,6 +66,7 @@ class US_Convert : public US_Widgets
       void exclude_one     ( void );
       void exclude_range   ( void );
       void include         ( void );
+      void reset_scan_ctrls( void );
       void write           ( void );
       void writeAll        ( void );
 		  void help            ( void )
