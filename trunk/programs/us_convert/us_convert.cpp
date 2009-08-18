@@ -29,95 +29,75 @@ US_Convert::US_Convert() : US_Widgets()
    setWindowTitle( tr( "Convert Legacy Raw Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QHBoxLayout* main = new QHBoxLayout( this );
-   main->setSpacing         ( 2 );
-   main->setContentsMargins ( 2, 2, 2, 2 );
-
-   QGridLayout* left = new QGridLayout;
+   QGridLayout* settings = new QGridLayout;
 
    int row = 0;
 
    // Row 1
    QPushButton* pb_load = us_pushbutton( tr( "Load Legacy Data" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
-   left->addWidget( pb_load, row++, 0, 1, 2 );
+   settings->addWidget( pb_load, row++, 0, 1, 2 );
 
    QLabel* lb_dir = us_label( tr( "Directory:" ) );
-   left->addWidget( lb_dir, row, 0 );
+   settings->addWidget( lb_dir, row++, 0 );
 
+   // Row 2
    le_dir = us_lineedit( "", 1 );
    le_dir->setReadOnly( true );
-   left->addWidget( le_dir, row++, 1 );
-
+   settings->addWidget( le_dir, row++, 0, 1, 2 );
 
    // Cell / Channel / Wavelength
 
-   // Row 2
-   QLabel* lb_cell = us_label( tr( "Cell:" ) );
-   left->addWidget( lb_cell, row, 0 );
-
-   cb_cell = us_comboBox();
-   cb_cell->setInsertPolicy( QComboBox::InsertAlphabetically );
-   left->addWidget( cb_cell, row++, 1 );
-
    // Row 3
-   QLabel* lb_channel = us_label( tr( "Channel:" ) );
-   left->addWidget( lb_channel, row, 0 );
+   QLabel* lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
+   settings->addWidget( lb_triple, row, 0 );
 
-   cb_channel = us_comboBox();
-   cb_channel->setInsertPolicy( QComboBox::InsertAlphabetically );
-   left->addWidget( cb_channel, row++, 1 );
-
-   // Row 4
-   QLabel* lb_wavelength = us_label( tr( "Wavelength:" ) );
-   left->addWidget( lb_wavelength, row, 0 );
-
-   cb_wavelength = us_comboBox();
-   cb_wavelength->setInsertPolicy( QComboBox::InsertAlphabetically );
-   left->addWidget( cb_wavelength, row++, 1 );
+   cb_triple = us_comboBox();
+   cb_triple->setInsertPolicy( QComboBox::InsertAlphabetically );
+   settings->addWidget( cb_triple, row++, 1 );
 
    // Scan Controls
 
-   // Row 5
+   // Row 4
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
-   left->addWidget( lb_scan, row++, 0, 1, 2 );
+   settings->addWidget( lb_scan, row++, 0, 1, 2 );
 
-   // Row 6
+   // Row 5
 
    QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   left->addWidget( lb_from, row, 0 );
+   settings->addWidget( lb_from, row, 0 );
 
    ct_from = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
    ct_from->setStep( 1 );
-   left->addWidget( ct_from, row++, 1 );
+   settings->addWidget( ct_from, row++, 1 );
 
-   // Row 7
+   // Row 6
    QLabel* lb_to = us_label( tr( "Scan Focus to:" ), -1 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   left->addWidget( lb_to, row, 0 );
+   settings->addWidget( lb_to, row, 0 );
 
    ct_to = us_counter ( 2, 0.0, 0.0 ); // Update range upon load
    ct_to->setStep( 1 );
-   left->addWidget( ct_to, row++, 1 );
+   settings->addWidget( ct_to, row++, 1 );
 
    // Exclude and Include pushbuttons
-   // Row 8
+   // Row 7
    pb_exclude = us_pushbutton( tr( "Exclude Single Scan" ), false );
    connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude_one() ) );
-   left->addWidget( pb_exclude, row, 0 );
+   settings->addWidget( pb_exclude, row, 0 );
    
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
-   left->addWidget( pb_excludeRange, row++, 1 );
+   settings->addWidget( pb_excludeRange, row++, 1 );
 
-   // Row 9
+   // Row 8
    pb_include = us_pushbutton( tr( "Include All" ), false );
    connect( pb_include, SIGNAL( clicked() ), SLOT( include() ) );
-   left->addWidget( pb_include, row++, 0, 1, 2 );
+   settings->addWidget( pb_include, row++, 0, 1, 2 );
 
    // Write pushbuttons
-   // Row 10
+   // Row 9
    QBoxLayout* writeButtons = new QHBoxLayout;
    pb_write = us_pushbutton( tr( "Write Current Data" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
@@ -126,13 +106,13 @@ US_Convert::US_Convert() : US_Widgets()
    pb_writeAll = us_pushbutton( tr( "Write All Data" ), false );
    connect( pb_writeAll, SIGNAL( clicked() ), SLOT( writeAll() ) );
    writeButtons->addWidget( pb_writeAll );
-   left->addLayout( writeButtons, row++, 0, 1, 2 );
+   settings->addLayout( writeButtons, row++, 0, 1, 2 );
 
    // Standard pushbuttons
 
    QBoxLayout* buttons = new QHBoxLayout;
 
-   // Row 11
+   // Row 10
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
    buttons->addWidget( pb_reset );
@@ -145,9 +125,7 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
    buttons->addWidget( pb_accept );
 
-   left->addLayout( buttons, row++, 0, 1, 2 );
-
-   // Plot layout on right side of window
+   // Plot layout for the right side of window
    QBoxLayout* plot = new US_Plot( data_plot,
                                    tr( "Absorbance Data" ),
                                    tr( "Radius (in cm)" ), 
@@ -160,15 +138,26 @@ US_Convert::US_Convert() : US_Widgets()
    pick = new US_PlotPicker( data_plot );
    pick->setRubberBand( QwtPicker::VLineRubberBand );
 
+   // Now let's assemble the page
+   QHBoxLayout* main = new QHBoxLayout( this );
+   main->setSpacing         ( 2 );
+   main->setContentsMargins ( 2, 2, 2, 2 );
+
+   QVBoxLayout* left     = new QVBoxLayout;
+   QSpacerItem* spacer   = new QSpacerItem( 20, 20, 
+                           QSizePolicy::Minimum, QSizePolicy::Expanding );
+
+   left->addLayout( settings );
+   left->addItem( spacer );
+   left->addLayout( buttons );
    main->addLayout( left );
+   
    main->addLayout( plot );
 }
 
 void US_Convert::reset( void )
 {
-   cb_cell      ->clear();
-   cb_channel   ->clear();
-   cb_wavelength->clear();
+   cb_triple    ->clear();
 
    le_dir->setText( "" );
 
@@ -198,6 +187,7 @@ void US_Convert::reset( void )
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
    grid = us_grid( data_plot );
    data_plot->replot();
+
 }
 
 // User pressed the load data button
@@ -300,16 +290,6 @@ void US_Convert::read( void )
 
    if ( channels.isEmpty() ) channels << "A";
 
-   // This is not, strictly speaking, correct. The combo boxes need to be
-   // updated according to cell, then channel, then wavelength.  That is, a run
-   // may have multiple cells for one cell, but only one channel for another
-   // cell.
-
-   // This should be a rarity and is ignored for now.
-
-   // Populate the combo boxes
-   cb_channel->insertItems( 0, channels );
-
    // Now read the data.
 
    for ( int i = 0; i < fileList.size(); i++ )
@@ -325,22 +305,15 @@ void US_Convert::read( void )
       legacyData << data;
    }
 
-   // We can't trust the filename for cell number
-   // Get wavelengths and cell numbers
+   // Get wavelengths
    
-   QStringList cells;
    QStringList wavelengths;
 
    for ( int i = 0; i < legacyData.size(); i++ )
    {
       QString wl = QString::number( legacyData[ i ].t.wavelength, 'f', 1 );
       if ( ! wavelengths.contains( wl ) ) wavelengths << wl;
-
-      QString s = QString::number( legacyData[ i ].cell );
-      if ( ! cells.contains( s ) ) cells << s;
    }
-
-   cb_cell->insertItems( 0, cells );
 
    // Merge wavelengths
 
@@ -376,18 +349,44 @@ void US_Convert::read( void )
       for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ]; 
 
       wl_average << (int) round( sum / modes[ i ].size() );
-
-      cb_wavelength->addItem( QString::number( wl_average.last() ) );
    }
+
+   // Now that we have a more reliable list of wavelengths, let's
+   // find out the possible cell, channel, and wavelength combinations
+   for ( int i = 0; i < legacyData.size(); i++ )
+   {
+      QString cell       = QString::number( legacyData[ i ].cell );
+      QString channel    = QString( legacyData[ i ].channel );
+      double wl          = legacyData[ i ].t.wavelength;
+      QString wavelength = "0";
+
+      // find the average wavelength
+      for ( int j = 0; j < wl_average.size(); j++ )
+      {
+         if ( wl_average[ j ] - wl < 5.0 )
+         {
+            wavelength = QString::number( wl_average[ j ] );
+            break;
+         }
+      }
+
+      QString t = cell + " / " + channel + " / " + wavelength;
+      if (! triples.contains( t ) ) triples << t;
+   }
+
+   cb_triple->addItems( triples );
 
 }
 
 void US_Convert::convert( void )
 {
    // Convert the data into the UltraScan3 data structure
-   int         cell       = cb_cell      ->currentText().toInt();
-   char        channel    = cb_channel   ->currentText().at( 0 ).toAscii();
-   double      wavelength = cb_wavelength->currentText().toDouble();
+   QString triple         = cb_triple->currentText();
+   QStringList parts      = triple.split(" / ");
+
+   int         cell       = parts[ 0 ].toInt();
+   char        channel    = parts[ 1 ].toAscii()[ 0 ];
+   double      wavelength = parts[ 2 ].toDouble();
 
 /*
    qDebug() << cell       << " "
@@ -559,9 +558,12 @@ void US_Convert::write( void )
    QStringList components = dirname.split( "/", QString::SkipEmptyParts );
    QString     runID      = components.last();
 
-   QString     cell       = cb_cell      ->currentText();
-   QString     channel    = cb_channel   ->currentText();
-   QString     wavelength = cb_wavelength->currentText();
+   QString triple         = cb_triple->currentText();
+   QStringList parts      = triple.split(" / ");
+
+   QString     cell       = parts[ 0 ];
+   QString     channel    = parts[ 1 ];
+   QString     wavelength = parts[ 2 ];
 
    QString filename   = runID      + "." 
                       + runType    + "." 
@@ -592,8 +594,9 @@ int US_Convert::write( const QString& filename )
    if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
 
    // Create duplicate structure that doesn't contain excluded scans
+   // Delete back to front, since structure changes with each deletion
    rawData filteredRawData = newRawData;
-   for ( uint i = 0; i < filteredRawData.scanData.size(); i++ )
+   for ( int i = filteredRawData.scanData.size() - 1; i >= 0; i-- )
    {
       if ( ! includes.contains( i ) )
          filteredRawData.scanData.erase( filteredRawData.scanData.begin() + i );
@@ -606,6 +609,10 @@ int US_Convert::write( const QString& filename )
  
 void US_Convert::writeAll( void )
 {  
+   QMessageBox notImplemented;
+
+   notImplemented.setText( tr( "This feature has not been implemented yet." ) );
+   notImplemented.exec();
 }
 
 void US_Convert::setInterpolated ( unsigned char* bitmap, int location )
@@ -624,11 +631,13 @@ void US_Convert::plot_current( void )
 
    QStringList components = dirname.split( "/", QString::SkipEmptyParts );
    QString     runID      = components.last();
-//   QString        cell    = newRawData.cell;
-//   QString        channel = newRawData.channel;
-   QString     cell       = cb_cell      ->currentText();
-   QString     channel    = cb_channel   ->currentText();
-   QString     wl         = cb_wavelength->currentText();
+
+   QString triple         = cb_triple->currentText();
+   QStringList parts      = triple.split(" / ");
+
+   QString     cell       = parts[ 0 ];
+   QString     channel    = parts[ 1 ];
+   QString     wl         = parts[ 2 ];
 
    // Plot Title
    QString title;
@@ -821,6 +830,8 @@ void US_Convert::exclude_one( void )
 
    // Offset by 1 for scan number vs index
    includes.removeAt( scan - 1 );
+   reset_scan_ctrls();
+
    replot();
 }
 
@@ -829,10 +840,12 @@ void US_Convert::exclude_range( void )
    int scanStart = (int)ct_from->value();
    int scanEnd   = (int)ct_to  ->value();
 
-   // Let's be careful which one we remove---the array
+   // Let's remove back to front---the array
    // shifts with each deletion
-   for ( int i = scanStart - 1; i < scanEnd - 1; i++ )
-      includes.removeAt( scanStart - 1 );     // not ( i )
+   for ( int i = scanEnd - 1; i >= scanStart - 1; i-- )
+      includes.removeAt( scanStart - 1 );
+
+   reset_scan_ctrls();
 
    replot();
 }
@@ -840,6 +853,25 @@ void US_Convert::exclude_range( void )
 void US_Convert::include( void )
 {
    init_includes();
+   reset_scan_ctrls();
+
    replot();
+}
+
+void US_Convert::reset_scan_ctrls( void )
+{
+
+   ct_from->disconnect();
+   ct_from->setValue   ( 0 );
+
+   ct_to->disconnect();
+   ct_to->setValue   ( 0 );
+
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+
+   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_to     ( double ) ) );
+
 }
 
