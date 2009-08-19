@@ -1,6 +1,9 @@
 //! \file us_fit_meniscus_main.cpp
 
 #include <QApplication>
+#include <QDomDocument>
+
+#include <uuid/uuid.h>
 
 #include "us_edvabs.h"
 #include "us_license_t.h"
@@ -303,6 +306,7 @@ void US_Edvabs::reset( void )
    clear_rawData( data, false );
 
    includes.clear();
+   changed_points.clear();
 
    step          = MENISCUS;
    meniscus      = 0.0;
@@ -1192,20 +1196,24 @@ void US_Edvabs::finish_excludes( QList< int > excludes )
 
 void US_Edvabs::edit_scan( void )
 {
-   int i = (int)ct_from->value();
+   // Need to handle excluded scans
+   int index = (int)ct_from->value();
+   int scan  = includes[ index - 1 ];
 
-   US_EditScan* dialog = new US_EditScan( data.scanData[ i ], invert );
+   US_EditScan* dialog = new US_EditScan( data.scanData[ scan ], invert );
    connect( dialog, SIGNAL( scan_updated( QList< QPointF > ) ),
                     SLOT  ( update_scan ( QList< QPointF > ) ) );
    dialog->exec();
    qApp->processEvents();
    delete dialog;
-   //US_Sleep::msleep( 1000 );  // Need this to delay dialog deletion
 }
 
 void US_Edvabs::update_scan( QList< QPointF > changes )
 {
-   int scan = (int)ct_from->value();
+   // Need to handle excluded scans
+   // Need to save date for write
+   int index = (int)ct_from->value();
+   int scan  = includes[ index - 1 ];
 
    for ( int i = 0; i < changes.size(); i++ )
    {
@@ -1214,6 +1222,12 @@ void US_Edvabs::update_scan( QList< QPointF > changes )
 
       data.scanData[ scan ].values[ point ].value = value;
    }
+
+   // Save changes for writing output
+   edits e;
+   e.scan    = scan;
+   e.changes = changes;
+   changed_points << e;
 
    data_plot->replot();
 }
@@ -1279,7 +1293,6 @@ bool US_Edvabs::spike_check( scan* s, int point, int start, int end,
       // Interpolate
       *value = slope * radius + intercept;
       changes_made = true;
-      //qDebug() << "Remove spikes: " << radius << *val << *value;
       return true;
    }
 
@@ -1457,7 +1470,6 @@ void US_Edvabs::new_triple( int index )
 
 void US_Edvabs::write( void )
 {
-   /*
    QString s;
 
    // Check if complete
@@ -1493,7 +1505,7 @@ void US_Edvabs::write( void )
       
       if ( ! ok ) return;
 
-      editID.remove( QRegExp( "^[\\w\\d_-]" ) );
+      editID.remove( QRegExp( "[^\\w\\d_-]" ) );
    }
 
    // Determine file name
@@ -1502,22 +1514,160 @@ void US_Edvabs::write( void )
    QString filename = files[ cb_triple->currentIndex() ];
    int     index = filename.indexOf( '.' ) + 1;
    filename.insert( index, editID + "." );
-   filename.replace( QRegExp( "auc$" ), "edits" );
+   filename.replace( QRegExp( "auc$" ), "xml" );
 
    qDebug() << workingDir << filename;
 
+   QFile f( workingDir + filename );
 
+   if ( ! f.open( QFile::WriteOnly | QFile::Text ) )
+   {
+      QMessageBox::information( this,
+            tr( "File write error" ),
+            tr( "Could not open the file\n" ) + workingDir + filename
+            + tr( "\n for writing.  Check your permissions." ) );
+      return;
+   }
 
+   QTextStream ts( &f );
+
+   QDomDocument doc( "UltraScanEdits" );
+
+   QDomElement root = doc.createElement( "experiment" );
+   doc.appendChild( root );
+
+   // Write identification
+   QDomElement id = doc.createElement( "identification" );
+   root.appendChild( id );
+
+   QDomElement runid = doc.createElement( "runid" );
+   runid.setAttribute( "value", runID );
+   id.appendChild( runid );
+
+   QDomElement guid = doc.createElement( "uuid" );
+   char uuid[ 37 ];
+   uuid_unparse( (const unsigned char*)data.guid, uuid );
+   guid.setAttribute( "value", uuid );
+   id.appendChild( guid );
+
+   QString     triple  = cb_triple->currentText();
+   QStringList parts   = triple.split( " / " );
+
+   QString     cell    = parts[ 0 ];
+   QString     channel = parts[ 1 ];
+   QString     wl      = parts[ 2 ];
+
+   QDomElement run = doc.createElement( "run" );
+   run.setAttribute( "cell"      , cell );
+   run.setAttribute( "channel"   , channel );
+   run.setAttribute( "wavelength", wl );
+   root.appendChild( run );
 
    // Write excluded scans
+   if ( data.scanData.size() > (uint) includes.size() )
+   {
+      QDomElement excludes = doc.createElement( "excludes" );
+      run.appendChild( excludes );
+
+      for ( uint i = 0; i < data.scanData.size(); i++ )
+      {
+         if ( ! includes.contains( i ) )
+         {
+            QDomElement exclude = doc.createElement( "exclude" );
+            exclude.setAttribute( "scan", i );
+            excludes.appendChild( exclude );
+         }
+      }
+   }
+
    // Write edits
-   // Write meniscus, range, plataeu, basline
+   if ( ! changed_points.isEmpty() )
+   {
+      QDomElement edited = doc.createElement( "edited" );
+      run.appendChild( edited );
+
+      for ( int i = 0; i < changed_points.size(); i++ )
+      {
+         edits* e = &changed_points[ i ];
+
+         for ( int j = 0; j < e->changes.size(); j++ )
+         {
+            QDomElement edit = doc.createElement( "edit" );
+            edit.setAttribute( "scan"  , e->scan );
+            edit.setAttribute( "radius", e->changes[ j ].x() );
+            edit.setAttribute( "value" , e->changes[ j ].y() );
+            edited.appendChild( edit );
+         }
+      }
+   }
+
+   // Write meniscus, range, plataeu, baseline
+   QDomElement parameters = doc.createElement( "parameters" );
+   run.appendChild( parameters );
+
+   QDomElement m = doc.createElement( "meniscus" );
+   m.setAttribute( "value", meniscus );
+   parameters.appendChild( m );
+
+   QDomElement dataRange = doc.createElement( "data_range" );
+   dataRange.setAttribute( "left" , range_left );
+   dataRange.setAttribute( "right", range_right );
+   parameters.appendChild( dataRange );
+
+
+   QDomElement p = doc.createElement( "plateaus" );
+   parameters.appendChild( p );
+
+   for ( uint i = 0; i < data.scanData.size(); i++ )
+   {
+      QDomElement element = doc.createElement( "plateau" );
+      element.setAttribute( "scan" , i );
+      element.setAttribute( "value", plateau[ i ] );
+      p.appendChild( element );
+   }
+
+   QDomElement bl = doc.createElement( "baseline" );
+   bl.setAttribute( "value", baseline );
+   parameters.appendChild( bl );
+   
+   QDomElement operations = doc.createElement( "operations" );
+   run.appendChild( operations );
+   
    // Write RI Noise
+   if ( ! pb_subtract->icon().isNull() )
+   {
+      QDomElement riNoise = doc.createElement( "subtract_ri_noise" );
+      riNoise.setAttribute( "order", noise_order );
+      operations.appendChild( riNoise );
+   }
+
    // Write Subtract Baseline
+   if ( ! pb_subBaseline->icon().isNull() )
+   {
+      QDomElement subBaseline = doc.createElement( "subtract_baseline" );
+      operations.appendChild( subBaseline );
+   }
+
    // Write Remove Spikes
+   if ( ! pb_spikes->icon().isNull() )
+   {
+      QDomElement spikes = doc.createElement( "remove_spikes" );
+      operations.appendChild( spikes );
+   }
+
    // Write Invert
+   if ( invert == -1.0 )
+   {
+      QDomElement invert = doc.createElement( "invert" );
+      operations.appendChild( invert );
+   }
+
+   const int indentSize = 4;
+   doc.save( ts, indentSize );
+
+   f.close();
 
    changes_made = false;
-   pb_write->setIcon( check );
-   */
+   pb_write->setEnabled( false );
+   pb_write->setIcon   ( check );
 }

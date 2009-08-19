@@ -1,6 +1,7 @@
 include( ../../gui.pri )
 
 TARGET        = us_edvabs
+QT           += xml
 
 HEADERS       = us_edvabs.h          \
                 us_exclude_profile.h \
