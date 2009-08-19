@@ -25,6 +25,11 @@ class US_EXTERN US_Edvabs : public US_Widgets
       rawData            data;
       QList< rawData >   allData;
 
+      bool               partial_reset;
+      bool               changes_made;
+      bool               spikes;
+      int                noise_order;
+      int                triple_index;
       double             meniscus;
       double             meniscus_left;
       double             range_left;
@@ -33,6 +38,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       double             invert;
       QList< int >       includes;
       QList< double >    plateau;
+      QList< double >    residuals;
 
       US_Help            showHelp;
 
@@ -40,6 +46,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
 
       QString            workingDir;
       QString            runID;
+      QString            editID;
       QStringList        files;
       QStringList        triples;
                       
@@ -73,52 +80,69 @@ class US_EXTERN US_Edvabs : public US_Widgets
       QPushButton*       pb_spikes;
       QPushButton*       pb_invert;
       QPushButton*       pb_write;
+      QPushButton*       pb_residuals;
+      QPushButton*       pb_subBaseline;
+      QPushButton*       pb_undo;
                         
       QComboBox*         cb_triple;
-      QComboBox*         cb_cell;
-      QComboBox*         cb_channel;
-      QComboBox*         cb_wavelength;
                         
       QwtCounter*        ct_from;
       QwtCounter*        ct_to;
       QwtCounter*        ct_noise;
 	
-      void set_pbColors   ( QPushButton* );
-      void draw_vline     ( double );
-      int  index          ( scan*, double );
-      void next_step      ( void );
-      void replot         ( void );
-      void plot_current   ( void );
-      void plot_all       ( void );
-      void plot_range     ( void );
-      void plot_last      ( void );
-      void init_includes  ( void );
-      void reset_excludes ( void );
-      void set_colors     ( const QList< int >& );
+      void set_pbColors      ( QPushButton* );
+      void draw_vline        ( double );
+      int  index             ( scan*, double );
+      void next_step         ( void );
+
+      void replot            ( void );
+      void plot_current      ( void );
+      void plot_all          ( void );
+      void plot_range        ( void );
+      void plot_last         ( void );
+      void plot_current      ( int  );
+      void init_includes     ( void );
+      
+      void reset_excludes    ( void );
+      void set_colors        ( const QList< int >& );
+      bool spike_check       ( scan*, int, int, int, double* );
+      void clear_rawData     ( rawData&, bool=false );
                           
 	private slots:         
-      void load           ( void );
-      void details        ( void );
-      void mouse          ( const QwtDoublePoint& );
-      void set_meniscus   ( void );
-      void set_dataRange  ( void );
-      void set_plateau    ( void );
-      void set_baseline   ( void );
-      void focus_from     ( double );
-      void focus_to       ( double );
-      void focus          ( int, int );
-      void exclude_one    ( void );
-      void exclude_range  ( void );
-      void exclusion      ( void );
-      void update_excludes( QList< int > );
-      void finish_excludes( QList< int > );
-      void cancel_excludes( void );
-      void edit_scan      ( void );
-      void include        ( void );
-      void invert_values  ( void );
-                          
-      void reset          ( void );
-		void help           ( void )
+      void load              ( void );
+      void details           ( void );
+      void new_triple        ( int  );
+
+      void focus_from        ( double );
+      void focus_to          ( double );
+      void focus             ( int, int );
+      
+      void exclude_one       ( void );
+      void exclude_range     ( void );
+      void exclusion         ( void );
+      void update_excludes   ( QList< int > );
+      void finish_excludes   ( QList< int > );
+      void cancel_excludes   ( void );
+      void edit_scan         ( void );
+      void update_scan       ( QList< QPointF > );
+      void include           ( void );
+
+      void set_meniscus      ( void );
+      void set_dataRange     ( void );
+      void set_plateau       ( void );
+      void set_baseline      ( void );
+      void mouse             ( const QwtDoublePoint& );
+
+      void noise             ( void );
+      void subtract_residuals( void );
+      void subtract_baseline ( void );
+      void remove_spikes     ( void );
+      void invert_values     ( void );
+      void undo              ( void );
+      void write             ( void );
+                             
+      void reset             ( void );
+      void help              ( void )
       { showHelp.show_help( "manual/edit_velocity.html" ); };
 };
 #endif

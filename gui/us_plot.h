@@ -314,14 +314,18 @@ class US_PlotPicker : public QwtPlotPicker
       US_PlotPicker( QwtPlot* );
 
    signals:
-      void mouseDown ( const QwtDoublePoint& );
-      void cMouseDown( const QwtDoublePoint& );
-      void mouseUp   ( const QwtDoublePoint& );
-      void cMouseUp  ( const QwtDoublePoint& );
+      void mouseDown    ( const QwtDoublePoint& );
+      void cMouseDown   ( const QwtDoublePoint& );
+      void cMouseDownRaw( QMouseEvent* );
+      void mouseUp      ( const QwtDoublePoint& );
+      void cMouseUp     ( const QwtDoublePoint& );
+      void mouseDrag    ( const QwtDoublePoint& );
+      void cMouseDrag   ( const QwtDoublePoint& );
 
    protected:
       void widgetMousePressEvent  ( QMouseEvent* ); 
       void widgetMouseReleaseEvent( QMouseEvent* ); 
+      void widgetMouseMoveEvent   ( QMouseEvent* ); 
 };
 #endif
 

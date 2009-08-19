@@ -9,7 +9,9 @@
 #include "us_gui_settings.h"
 #include "us_run_details.h"
 #include "us_exclude_profile.h"
-#include "us_sleep.h"
+#include "us_ri_noise.h"
+#include "us_edit_scan.h"
+#include "us_math.h"
 
 //! \brief Main program for US_Edvabs. Loads translators and starts
 //         the class US_FitMeniscus.
@@ -29,7 +31,7 @@ int main( int argc, char* argv[] )
 
 US_Edvabs::US_Edvabs() : US_Widgets()
 {
-   check  = QIcon( qApp->applicationDirPath() + "/../etc/check.png" );
+   check  = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
    invert = 1.0;
 
    setWindowTitle( tr( "Edit Velocity Absorbance Data" ) );
@@ -67,9 +69,11 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( lb_triple, s_row, 0, 1, 2 );
 
    cb_triple = us_comboBox();
-   cb_triple->setInsertPolicy( QComboBox::InsertAlphabetically );
+   //cb_triple->setInsertPolicy( QComboBox::InsertAlphabetically );
+   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+                       SLOT  ( new_triple         ( int ) ) );
    specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
-   
+
    // Row 5
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
    specs->addWidget( lb_scan, s_row++, 0, 1, 4 );
@@ -158,30 +162,34 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( le_baseline, s_row++, 2, 1, 2 );
 
    // Noise
-   QLabel* lb_noise = us_label( tr( "Subtract RI Noise:" ), -1 );
-   lb_noise->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   specs->addWidget( lb_noise, s_row, 0 );
+   
+   pb_noise = us_pushbutton( tr( "Determine RI Noise" ), false );
+   connect( pb_noise, SIGNAL( clicked() ), SLOT( noise() ) );
+   specs->addWidget( pb_noise, s_row, 0, 1, 2 );
 
-   ct_noise = us_counter ( 1, 4.0, 9.0 );
-   ct_noise->setStep( 1.0 );
-   specs->addWidget( ct_noise, s_row, 1 );
+   pb_residuals = us_pushbutton( tr( "Subtract Noise" ), false );
+   connect( pb_residuals, SIGNAL( clicked() ), SLOT( subtract_residuals() ) );
+   specs->addWidget( pb_residuals, s_row++, 2, 1, 2 );
 
-   pb_noise = us_pushbutton( tr( "Subtract Residuals" ), false );
-   specs->addWidget( pb_noise, s_row++, 2, 1, 2 );
-
-   pb_subtract = us_pushbutton( tr( "Subtract Baseline" ), false );
-   specs->addWidget( pb_subtract, s_row, 0, 1, 2 );
+   pb_subBaseline = us_pushbutton( tr( "Subtract Baseline" ), false );
+   connect( pb_subBaseline, SIGNAL( clicked() ), SLOT( subtract_baseline() ) );
+   specs->addWidget( pb_subBaseline, s_row, 0, 1, 2 );
    
    pb_spikes = us_pushbutton( tr( "Remove Spikes" ), false );
-   //connect( pb_spikes, SIGNAL( clicked() ), SLOT( remove_spikes() ) );
+   connect( pb_spikes, SIGNAL( clicked() ), SLOT( remove_spikes() ) );
    specs->addWidget( pb_spikes, s_row++, 2, 1, 2 );
    
    pb_invert = us_pushbutton( tr( "Invert Sign" ), false );
    connect( pb_invert, SIGNAL( clicked() ), SLOT( invert_values() ) );
    specs->addWidget( pb_invert, s_row, 0, 1, 2 );
   
+   pb_undo = us_pushbutton( tr( "Undo Edits" ), false );
+   connect( pb_undo, SIGNAL( clicked() ), SLOT( undo() ) );
+   specs->addWidget( pb_undo, s_row++, 2, 1, 2 );
+
    pb_write = us_pushbutton( tr( "Save Current Edit Profile" ), false );
-   specs->addWidget( pb_write, s_row++, 2, 1, 2 );
+   connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
+   specs->addWidget( pb_write, s_row++, 0, 1, 4 );
 
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
@@ -215,11 +223,14 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    main->addLayout( left );
    main->addLayout( plot );
 
+   partial_reset = false;
    reset();
 }
 
 void US_Edvabs::reset( void )
 {
+   changes_made = false;
+
    le_info     ->setText( "" );
    le_meniscus ->setText( "" );
    le_dataRange->setText( "" );
@@ -236,8 +247,7 @@ void US_Edvabs::reset( void )
    ct_to->setMaxValue( 0 );
    ct_to->setValue   ( 0 );
 
-   cb_triple->clear();
-   ct_noise ->setValue( 4 );
+
    data_plot->detachItems();
    pick     ->disconnect();
 
@@ -248,29 +258,50 @@ void US_Edvabs::reset( void )
 
    // Disable pushbuttons
    pb_details     ->setEnabled( false );
+
    pb_exclude     ->setEnabled( false );
    pb_excludeRange->setEnabled( false );
    pb_exclusion   ->setEnabled( false );
    pb_include     ->setEnabled( false );
    pb_edit1       ->setEnabled( false );
+   
    pb_meniscus    ->setEnabled( false );
    pb_dataRange   ->setEnabled( false );
    pb_plateau     ->setEnabled( false );
    pb_baseline    ->setEnabled( false );
+   
    pb_noise       ->setEnabled( false );
-   pb_subtract    ->setEnabled( false );
+   pb_residuals   ->setEnabled( false );
+   pb_subBaseline ->setEnabled( false );
    pb_spikes      ->setEnabled( false );
    pb_invert      ->setEnabled( false );
+   pb_undo        ->setEnabled( false );
+   
    pb_write       ->setEnabled( false );
 
-   // Clear the raw data structure
-   for ( uint j = 0; j < data.scanData.size(); j++ )
+   // Remove icons
+   pb_noise       ->setIcon( QIcon() );
+   pb_residuals   ->setIcon( QIcon() );
+   pb_subBaseline ->setIcon( QIcon() );
+   pb_spikes      ->setIcon( QIcon() );
+   pb_invert      ->setIcon( QIcon() );
+
+   pb_write       ->setIcon( QIcon() );
+
+   // We use a class variable to pass a parameter to avoid
+   // clearing all data when selecting a different triple
+   if ( ! partial_reset )
    {
-      delete data.scanData[ j ].interpolated;
-      data.scanData[ j ].values.clear();
+      // Clear the raw data structures
+      for ( int j = 0; j < allData.size(); j++ )
+         clear_rawData( allData[ j ] );
+
+      allData.clear();
+      editID.clear();
    }
 
-   data.scanData.clear();
+   clear_rawData( data, false );
+
    includes.clear();
 
    step          = MENISCUS;
@@ -280,20 +311,35 @@ void US_Edvabs::reset( void )
    range_right   = 0.0;
    plateau.clear();
    baseline      = 0.0;
+   invert        = 1.0;
+   noise_order   = 0;
+}
+
+void US_Edvabs::clear_rawData( rawData& raw, bool deleteFlag )
+{  
+   for ( uint j = 0; j < raw.scanData.size(); j++ )
+   {
+      // When we copy from allData to data, the pointers to the interpolated
+      // array are copied.  The flag prevents a double deletion.
+      if ( deleteFlag ) delete raw.scanData[ j ].interpolated;
+      raw.scanData[ j ].values.clear();
+   }
+
+   raw.scanData.clear();
 }
 
 void US_Edvabs::details( void )
 {  
    int index = cb_triple->currentIndex();
-   US_RunDetails dialog( allData, index, runID, workingDir, triples );
-   dialog.exec();
-   US_Sleep::msleep( 100 );  // Need this to delay US_RunDetails deletion
+   US_RunDetails* dialog 
+      = new US_RunDetails( allData, index, runID, workingDir, triples );
+   dialog->exec();
+   qApp->processEvents();
+   delete dialog;
 }
 
 void US_Edvabs::load( void )
 {  
-   reset();
-
    // Ask for data directory
    workingDir = QFileDialog::getExistingDirectory( this, 
          tr("Raw Data Directory"),
@@ -302,6 +348,7 @@ void US_Edvabs::load( void )
 
    if ( workingDir.isEmpty() ) return; 
 
+   //reset();
    workingDir.replace( "\\", "/" );  // WIN32 issue
 
    QStringList components =  workingDir.split( "/", QString::SkipEmptyParts );  
@@ -334,19 +381,45 @@ void US_Edvabs::load( void )
       if ( ! triples.contains( t ) ) triples << t;
    }
 
+   cb_triple->disconnect();
+   cb_triple->clear();
    cb_triple->addItems( triples );
+   connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+                       SLOT  ( new_triple         ( int ) ) );
+   triple_index = 0;
    
    le_info->setText( runID );
 
-//read_all_data();
-//if ( allData.isEmpty() ) return;
-//data = allData[ 0 ];
+   // Read all data
+   if ( workingDir.right( 1 ) != "/" ) workingDir += "/"; // Ensure trailing /
 
-   plot_current();
+   for ( int i = 0; i < files.size(); i++ )
+   {
+      QString filename = workingDir + files[ i ];
+      
+      int result = US_DataIO::readRawData( filename, data );
+      if ( result != US_DataIO::OK )
+      {
+         QMessageBox::warning( this,
+            tr( "UltraScan Error" ),
+            tr( "Could not read data file.  Error: " ) 
+            + QString::number( result ) + "\n" + filename );
+      }
 
-// Temporary test
-allData << data;
+      allData << data;
+      data.scanData.clear();
+   }
 
+   if ( allData.isEmpty() )
+   {
+      QMessageBox::warning( this,
+         tr( "UltraScan Error" ),
+         tr( "Could not read any data file." ) );
+      return;
+   }
+
+   data = allData[ 0 ];
+   plot_current( 0 );
 
    // Enable pushbuttons
    pb_details  ->setEnabled( true );
@@ -355,13 +428,16 @@ allData << data;
    pb_meniscus ->setEnabled( true );
    pb_dataRange->setEnabled( true );
    pb_plateau  ->setEnabled( true );
+   pb_noise    ->setEnabled( true );
    pb_baseline ->setEnabled( true );
+   pb_spikes   ->setEnabled( true );
    pb_invert   ->setEnabled( true );
+   pb_undo     ->setEnabled( true );
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_from   ( double ) ) );
 
-   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
+   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_to     ( double ) ) );
 
    step = MENISCUS;
@@ -384,10 +460,9 @@ void US_Edvabs::set_pbColors( QPushButton* pb )
    }
 }
 
-void US_Edvabs::plot_current( void )
+void US_Edvabs::plot_current( int index )
 {
    // Read the data
-   
    QString     triple  = cb_triple->currentText();
    QStringList parts   = triple.split( " / " );
 
@@ -395,31 +470,6 @@ void US_Edvabs::plot_current( void )
    QString     channel = parts[ 1 ];
    QString     wl      = parts[ 2 ];
 
-
-   QRegExp match( runID + "\\.[A-Z]{2}\\." + cell + "." + channel + "." + wl + ".auc" ); 
-   int index = files.indexOf( match );
-
-   if ( index < 0 ) 
-   {
-      QMessageBox::warning( this,
-         tr( "UltraScan Error" ),
-         tr( "Internal error.  Could not match cell / channel / wavelength" ) );
-      return;
-   }
-
-   if ( workingDir.right( 1 ) != "/" ) workingDir += "/"; // Ensure trailing /
-   QString filename = workingDir + files[ index ];
-   
-   int result = US_DataIO::readRawData( filename, data );
-   if ( result != US_DataIO::OK )
-   {
-      QMessageBox::warning( this,
-         tr( "UltraScan Error" ),
-         tr( "Could not read data file.  Error: " ) 
-         + QString::number( result ) + "\n" + filename );
-      return;
-   }
-   
    QString s = le_info->text() + " (" + data.description  + ")";
    le_info->setText( s );
 
@@ -539,6 +589,7 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
             marker->attach( data_plot );
             data_plot->replot();
 
+            pb_meniscus->setIcon( check );
             next_step();
          }         
          break;
@@ -569,6 +620,7 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
                      range_left, range_right ) );
 
             plot_range();
+            pb_dataRange->setIcon( check );
             next_step();
          }
 
@@ -610,6 +662,7 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
          }
 
          plot_last();
+         pb_plateau->setIcon( check );
          next_step();
          break;
 
@@ -640,8 +693,12 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
 
             QString str;
             le_baseline->setText( str.sprintf( "%.3f (%.3e)", p.x(), baseline ) );
+
          }
 
+         pb_subBaseline->setEnabled( true );
+         pb_write      ->setEnabled( true );
+         pb_baseline   ->setIcon   ( check );
          next_step();
          break;
 
@@ -726,6 +783,8 @@ void US_Edvabs::set_meniscus( void )
    meniscus_left = 0.0;
    step          = MENISCUS;
    set_pbColors( pb_meniscus );
+   pb_meniscus->setIcon( QIcon() );
+   pb_write   ->setEnabled( false );
    plot_all();
 }
 
@@ -744,6 +803,8 @@ void US_Edvabs::set_dataRange( void )
    range_right = 0.0;
    step        = RANGE;
    set_pbColors( pb_dataRange );
+   pb_dataRange->setIcon( QIcon() );
+   pb_write    ->setEnabled( false );
    plot_all();
 }
 
@@ -761,6 +822,8 @@ void US_Edvabs::set_plateau( void )
    plateau.clear();
    step = PLATEAU;
    set_pbColors( pb_plateau );
+   pb_plateau->setIcon( QIcon() );
+   pb_write  ->setEnabled( false );
    plot_range();
 }
 
@@ -778,6 +841,10 @@ void US_Edvabs::set_baseline( void )
    baseline  = 0.0;
    step      = BASELINE;
    set_pbColors( pb_baseline );
+
+   pb_baseline   ->setIcon( QIcon() );
+   pb_subBaseline->setEnabled( false );
+   pb_write      ->setEnabled( false );
    
    // Only display last curve
    plot_last();
@@ -1049,10 +1116,10 @@ void US_Edvabs::init_includes( void )
 
 void US_Edvabs::exclude_one( void )
 {
-   int scan = (int)ct_from->value();
+   int i = (int)ct_from->value();
 
    // Offset by 1 for scan number vs index
-   includes.removeAt( scan - 1 );
+   includes.removeAt( i - 1 );
    replot();
    reset_excludes();
 }
@@ -1070,7 +1137,6 @@ void US_Edvabs::reset_excludes( void )
    ct_to->setMaxValue( includes.size() );
    connect( ct_to, SIGNAL( valueChanged ( double ) ),
                    SLOT  ( focus_to   ( double ) ) );
-
 }
 
 void US_Edvabs::exclude_range( void )
@@ -1078,8 +1144,8 @@ void US_Edvabs::exclude_range( void )
    int scanStart = (int)ct_from->value();
    int scanEnd   = (int)ct_to  ->value();
 
-   for ( int i = scanStart - 1; i < scanEnd - 1; i++ )
-      includes.removeAt( i );
+   for ( int i = scanEnd; i >= scanStart; i-- )
+      includes.removeAt( i - 1 );
 
    replot();
    reset_excludes();
@@ -1088,18 +1154,20 @@ void US_Edvabs::exclude_range( void )
 void US_Edvabs::exclusion( void )
 {
    reset_excludes();
-   US_ExcludeProfile exclude( includes );
+   US_ExcludeProfile* exclude = new US_ExcludeProfile( includes );
  
-   connect( &exclude, SIGNAL( update_exclude_profile( QList< int > ) ), 
-            this    , SLOT  ( update_excludes       ( QList< int > ) ) );
+   connect( exclude, SIGNAL( update_exclude_profile( QList< int > ) ), 
+            this   , SLOT  ( update_excludes       ( QList< int > ) ) );
    
-   connect( &exclude, SIGNAL( cancel_exclude_profile( void ) ), 
-            this    , SLOT  ( cancel_excludes       ( void ) ) );
+   connect( exclude, SIGNAL( cancel_exclude_profile( void ) ), 
+            this   , SLOT  ( cancel_excludes       ( void ) ) );
 
-   connect( &exclude, SIGNAL( finish_exclude_profile( QList< int > ) ), 
-            this    , SLOT  ( finish_excludes       ( QList< int > ) ) );
+   connect( exclude, SIGNAL( finish_exclude_profile( QList< int > ) ), 
+            this   , SLOT  ( finish_excludes       ( QList< int > ) ) );
 
-   exclude.exec();
+   exclude->exec();
+   qApp->processEvents();
+   delete exclude;
 }
 
 void US_Edvabs::update_excludes( QList< int > scanProfile )
@@ -1124,7 +1192,30 @@ void US_Edvabs::finish_excludes( QList< int > excludes )
 
 void US_Edvabs::edit_scan( void )
 {
-   QMessageBox::information( this, "Not yet", "Edit Scan not implemented yet" );
+   int i = (int)ct_from->value();
+
+   US_EditScan* dialog = new US_EditScan( data.scanData[ i ], invert );
+   connect( dialog, SIGNAL( scan_updated( QList< QPointF > ) ),
+                    SLOT  ( update_scan ( QList< QPointF > ) ) );
+   dialog->exec();
+   qApp->processEvents();
+   delete dialog;
+   //US_Sleep::msleep( 1000 );  // Need this to delay dialog deletion
+}
+
+void US_Edvabs::update_scan( QList< QPointF > changes )
+{
+   int scan = (int)ct_from->value();
+
+   for ( int i = 0; i < changes.size(); i++ )
+   {
+      int    point = (int)changes[ i ].x();
+      double value =      changes[ i ].y();
+
+      data.scanData[ scan ].values[ point ].value = value;
+   }
+
+   data_plot->replot();
 }
 
 void US_Edvabs::include( void )
@@ -1150,4 +1241,283 @@ void US_Edvabs::invert_values( void )
    replot();
 }
 
+bool US_Edvabs::spike_check( scan* s, int point, int start, int end, 
+      double* value )
+{
+   static double r[ 20 ];  // Spare room -- normally 10
+   static double v[ 20 ];
 
+   double* x = &r[ 0 ];
+   double* y = &v[ 0 ];
+
+   double  slope;
+   double  intercept;
+   double  sigma;
+   double  correlation;
+   int     count = 0;
+
+   const double threshold = 10.0;
+
+   for ( int k = start; k <= end; k++ ) // For oeach point in the range
+   {
+      if ( k != point ) // Exclude the probed point from fit
+      {
+         r[ count ] = s->values[ k ].d.radius;
+         v[ count ] = s->values[ k ].value; 
+         count++;
+      }
+   }
+      
+   US_Math::linefit( &x, &y, &slope, &intercept, &sigma, &correlation, count );
+
+   // If there is more than a 3-fold difference, it is a spike
+   double* val    = &s->values[ point ].value;
+   double  radius =  s->values[ point ].d.radius;
+
+   if ( fabs( slope * radius + intercept - *val ) > threshold * sigma )
+   {
+      // Interpolate
+      *value = slope * radius + intercept;
+      changes_made = true;
+      //qDebug() << "Remove spikes: " << radius << *val << *value;
+      return true;
+   }
+
+   return false;  // Not a spike
+}
+
+void US_Edvabs::remove_spikes( void )
+{
+// This is working the whole scan.  Perhaps we should be just working 
+// from the defined range.  
+
+   double smoothed_value;
+
+   // For each scan
+   for ( uint i = 0; i < data.scanData.size(); i++ )
+   {
+      scan* s      = &data.scanData[ i ];
+      int   points = s->values.size();
+      
+      // Note that a changed point can affect succeeding points
+      for ( int j = 0; j < 5; j++ ) // Beginning 5 points
+      {
+         if ( spike_check( s, j, 0, 10, &smoothed_value ) )
+            s->values[ j ].value = smoothed_value;
+      }
+
+      for ( int j = 5; j < points - 5; j++ ) // Middle points
+      {
+         if ( spike_check( s, j, j - 5, j + 5, &smoothed_value ) )
+            s->values[ j ].value = smoothed_value;
+      }
+
+      for ( int j = points - 5; j < points; j++ ) // Last 5 points
+      {
+         if ( spike_check( s, j, points - 10, points, &smoothed_value ) )
+            s->values[ j ].value = smoothed_value;
+      }
+   }
+
+   // Don't forget to update the rawData in allData
+
+   // We can probably set up an undo here -- just copy data from 
+   // allData back to data.
+
+   pb_spikes->setIcon   ( check );
+   pb_spikes->setEnabled( false );
+   replot();
+}
+
+void US_Edvabs::undo( void )
+{
+   // Copy from allData to data
+   int index = cb_triple->currentIndex();
+   data = allData[ index ];
+
+   // Reset buttons and structures
+   pb_spikes->setEnabled( true );
+
+   invert      = 1.0;
+   spikes      = false;
+   noise_order = 0;
+
+   // Remove icons
+   pb_noise       ->setIcon( QIcon() );
+   pb_residuals   ->setIcon( QIcon() );
+   pb_subBaseline ->setIcon( QIcon() );
+   pb_spikes      ->setIcon( QIcon() );
+   pb_invert      ->setIcon( QIcon() );
+
+   replot();
+}
+
+void US_Edvabs::noise( void )
+{
+   residuals.clear();
+   US_RiNoise* dialog = new US_RiNoise( data, noise_order, residuals );
+   int code = dialog->exec();
+   qApp->processEvents();
+
+   if ( code == QDialog::Accepted )
+   {
+      pb_noise      ->setIcon( check );
+      pb_residuals  ->setEnabled( true );
+      qDebug() << residuals;
+   }
+   else
+      pb_residuals->setEnabled( false );
+
+   delete dialog;
+}
+
+void US_Edvabs::subtract_residuals( void )
+{
+   for ( uint i = 0; i < data.scanData.size(); i++ )
+   {
+     for ( uint j = 0; j <  data.scanData[ i ].values.size(); j++ )
+     {
+         data.scanData[ i ].values[ j ].value -= residuals[ i ];
+     }
+   }
+
+   pb_residuals->setEnabled( false );
+   pb_residuals->setIcon   ( check );
+   replot();
+}
+
+void US_Edvabs::subtract_baseline( void )
+{
+   for ( uint i = 0; i < data.scanData.size(); i++ )
+   {
+     for ( uint j = 0; j <  data.scanData[ i ].values.size(); j++ )
+     {
+         data.scanData[ i ].values[ j ].value -= baseline;
+     }
+   }
+
+   pb_subBaseline->setEnabled( false );
+   pb_subBaseline->setIcon   ( check );
+   replot();
+}
+
+void US_Edvabs::new_triple( int index )
+{
+   if ( changes_made )
+   {
+      QMessageBox mb;
+      mb.setIcon( QMessageBox::Question );
+      mb.setText( tr( "Ignore Edits?" ) );
+      mb.setInformativeText( 
+            tr( "Edits have been made.  If you want to keep them,\n"
+                "cancel and write the outputs first." ) );
+      mb.addButton( tr( "Ignore Edits" ), QMessageBox::RejectRole );
+      mb.addButton( tr( "Return to previous selection" ), QMessageBox::NoRole );
+      int result = mb.exec();
+
+      if ( result == QMessageBox::RejectRole )
+      {
+         cb_triple->disconnect();
+         cb_triple->setCurrentIndex( triple_index );
+         connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
+                             SLOT  ( new_triple         ( int ) ) );
+         return;
+      }
+   }
+
+   triple_index = index;
+   partial_reset = true;
+   reset();
+   partial_reset = false;
+   data = allData[ index ];
+   plot_current( index );
+
+   // Enable pushbuttons
+   pb_details  ->setEnabled( true );
+   pb_include  ->setEnabled( true );
+   pb_exclusion->setEnabled( true );
+   pb_meniscus ->setEnabled( true );
+   pb_dataRange->setEnabled( true );
+   pb_plateau  ->setEnabled( true );
+   pb_noise    ->setEnabled( true );
+   pb_baseline ->setEnabled( true );
+   pb_spikes   ->setEnabled( true );
+   pb_invert   ->setEnabled( true );
+   pb_undo     ->setEnabled( true );
+
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+
+   connect( ct_to,   SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_to     ( double ) ) );
+
+   step = MENISCUS;
+   set_pbColors( pb_meniscus );
+}
+
+void US_Edvabs::write( void )
+{
+   /*
+   QString s;
+
+   // Check if complete
+   if ( meniscus == 0.0 )
+      s = tr( "meniscus" );
+   else if ( range_right == 0.0 || range_left == 0.0 )
+      s = tr( "data range" );
+   else if ( plateau.isEmpty() )
+      s = tr( "plateau" );
+   else if ( baseline == 0.0 )
+      s = tr( "baseline" );
+
+   if ( ! s.isEmpty() )
+   {
+      QMessageBox::information( this,
+            tr( "Date missing" ),
+            tr( "You must define the " ) + s 
+            + tr( "before writing the edit profile." ) );
+      return;
+   }
+
+   // Ask for editID if not yet defined
+   if ( editID.isEmpty() )
+   {
+      QString today =  QDate::currentDate().toString( "yyyyMMdd" );
+
+      bool ok;
+      editID = QInputDialog::getText( this, 
+            tr( "Input a unique Edit ID for this edit session" ),
+            tr( "Use alphanumeric characters, underscores, or hyphens (no spaces)" ), 
+            QLineEdit::Normal,
+            today, &ok);
+      
+      if ( ! ok ) return;
+
+      editID.remove( QRegExp( "^[\\w\\d_-]" ) );
+   }
+
+   // Determine file name
+   // workingDir + runID + editID + data type + cell + channel + wavelength + ".edits"
+
+   QString filename = files[ cb_triple->currentIndex() ];
+   int     index = filename.indexOf( '.' ) + 1;
+   filename.insert( index, editID + "." );
+   filename.replace( QRegExp( "auc$" ), "edits" );
+
+   qDebug() << workingDir << filename;
+
+
+
+
+   // Write excluded scans
+   // Write edits
+   // Write meniscus, range, plataeu, basline
+   // Write RI Noise
+   // Write Subtract Baseline
+   // Write Remove Spikes
+   // Write Invert
+
+   changes_made = false;
+   pb_write->setIcon( check );
+   */
+}
