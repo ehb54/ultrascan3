@@ -22,6 +22,15 @@ class US_EXTERN US_Edvabs : public US_Widgets
 
       enum { MENISCUS, RANGE, PLATEAU, BASELINE, FINISHED } step;
 
+      class edits
+      {
+         public:
+            int scan;
+            QList< QPointF > changes;
+      };
+
+      QList< edits >     changed_points;
+
       rawData            data;
       QList< rawData >   allData;
 
