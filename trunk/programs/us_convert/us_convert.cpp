@@ -54,6 +54,7 @@ US_Convert::US_Convert() : US_Widgets()
 
    cb_triple = us_comboBox();
    cb_triple->setInsertPolicy( QComboBox::InsertAlphabetically );
+   connect( cb_triple, SIGNAL( activated( int ) ), SLOT( changeCcw( int ) ) );
    settings->addWidget( cb_triple, row++, 1 );
 
    // Scan Controls
@@ -63,7 +64,6 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( lb_scan, row++, 0, 1, 2 );
 
    // Row 5
-
    QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_from, row, 0 );
@@ -108,11 +108,18 @@ US_Convert::US_Convert() : US_Widgets()
    writeButtons->addWidget( pb_writeAll );
    settings->addLayout( writeButtons, row++, 0, 1, 2 );
 
+   // Progress bar
+   // Row 10
+   progress = us_progressBar( 0, 100, 0 );
+   progress -> reset();
+   progress -> setVisible( false );
+   settings -> addWidget( progress, row++, 0, 1, 2 );
+
    // Standard pushbuttons
 
    QBoxLayout* buttons = new QHBoxLayout;
 
-   // Row 10
+   // Row 11
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
    buttons->addWidget( pb_reset );
@@ -180,6 +187,9 @@ void US_Convert::reset( void )
    // Clear any data structures
    legacyData.clear();
    includes.clear();
+   ccwLegacyData.clear();
+   newRawData.scanData.clear();
+   triples.clear();
 
    data_plot->detachItems();
    pick     ->disconnect();
@@ -395,7 +405,8 @@ void US_Convert::convert( void )
 */
 
    // Get a list of the data that matches the cell / channel / wl
-
+   ccwLegacyData.clear();
+   newRawData.scanData.clear();
    for ( int i = 0; i < legacyData.size(); i++ )
    {
       if ( legacyData[ i ].cell == cell       &&
@@ -422,7 +433,7 @@ void US_Convert::convert( void )
    newRawData.description = ccwLegacyData[ 0 ]->description;
    
    // Get the min and max radius
-   double min_radius = 100.0;
+   double min_radius = 10000.0;
    double max_radius = 0.0;
 
    for ( int i = 0; i < ccwLegacyData.size(); i++ )
@@ -449,6 +460,11 @@ void US_Convert::convert( void )
       s.seconds     = ccwLegacyData[ i ]->seconds;
       s.omega2t     = ccwLegacyData[ i ]->omega2t;
       s.wavelength  = ccwLegacyData[ i ]->t.wavelength;
+
+      // Enable progress bar
+      progress ->setRange( 0, ccwLegacyData.size() );
+      progress ->setValue( 0 );
+      progress ->setVisible( true );
 
       // Readings here and interpolated array
       int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
@@ -540,13 +556,27 @@ void US_Convert::convert( void )
       }
 
       newRawData.scanData.push_back( s );
+
+      progress ->setValue( i );
+      qApp     ->processEvents();
    }
   
    // Delete the bitmaps we allocated
 
    for ( uint i = 0; i < newRawData.scanData.size(); i++ ) 
       delete newRawData.scanData[ i ].interpolated;
+
+   progress ->setVisible( false );
   
+}
+
+void US_Convert::changeCcw( int index )
+{
+   // Convert data for this cell / channel / wavelength
+   convert();
+
+   // and redo plot
+   plot_current();
 }
 
 void US_Convert::write( void )
@@ -642,13 +672,22 @@ void US_Convert::plot_current( void )
    // Plot Title
    QString title;
    
-   if ( strncmp(newRawData.type, "RA", 2) == 0 )
+   if ( strncmp( newRawData.type, "RA", 2 ) == 0 )
    {
       title = "Radial Absorbance Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
    }
-      else
-         title = "File type not recognized";
+
+   else if ( strncmp( newRawData.type, "WA", 2 ) == 0 )
+   {
+      title = "Wavelength Data\nRun ID: "
+            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      data_plot->setAxisTitle( QwtPlot::yLeft, "Wavelength" );
+      data_plot->setAxisTitle( QwtPlot::xBottom, "Value" );
+   }
+
+   else
+      title = "File type not recognized";
    
    data_plot->setTitle( title );
    
@@ -665,6 +704,7 @@ void US_Convert::plot_current( void )
    ct_to  ->setMinValue( 0.0 );
    ct_to  ->setMaxValue(  newRawData.scanData.size() );
   
+   reset_scan_ctrls();
 }
 
 void US_Convert::init_includes( void )
