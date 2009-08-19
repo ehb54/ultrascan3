@@ -1890,7 +1890,10 @@ void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
       if ( e->button() == Qt::LeftButton ) 
          emit mouseDown( invTransform( e->pos() ) );
       if ( e->button() == Qt::LeftButton && e->modifiers() == Qt::ControlModifier )
-         emit cMouseDown( invTransform( e->pos() ) );
+      {
+         emit cMouseDown   ( invTransform( e->pos() ) );
+         emit cMouseDownRaw( e );
+      }
    }
    transition( e );
 }
@@ -1908,6 +1911,26 @@ void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
       if ( e->button() == Qt::LeftButton && e->modifiers() == Qt::ControlModifier )
          emit cMouseUp( invTransform( e->pos() ) );
    }
+   transition( e );
+}
+
+void US_PlotPicker::widgetMouseMoveEvent( QMouseEvent* e )
+{
+   static QTime last_click;
+
+   // Slow things down a bit
+   if ( last_click.isNull() || last_click.elapsed() > 100 )
+   {
+      last_click.start();
+      if ( e->button() == Qt::LeftButton )
+         emit mouseDrag( invTransform( e->pos() ) );
+
+      if ( e->modifiers() == Qt::ControlModifier )
+      {
+         emit cMouseDrag( invTransform( e->pos() ) );
+      }
+   }
+
    transition( e );
 }
 
