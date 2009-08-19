@@ -46,6 +46,7 @@ class US_Convert : public US_Widgets
       QList< int >  includes;                  // list of points to include in plot
       QwtPlot*      data_plot;
       QwtPlotGrid*  grid;
+      QProgressBar* progress;
 
       int  write           ( const QString& );
       void setInterpolated ( unsigned char*, int );
@@ -60,6 +61,7 @@ class US_Convert : public US_Widgets
       void reset           ( void );
       void read            ( void );
       void convert         ( void );
+      void changeCcw       ( int  );
       void focus_from      ( double );
       void focus_to        ( double );
       void focus           ( int, int );
