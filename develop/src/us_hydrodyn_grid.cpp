@@ -90,7 +90,7 @@ void US_Hydrodyn_Grid::setupGUI()
    connect(cb_cubic, SIGNAL(clicked()), this, SLOT(set_cubic()));
 
    cb_hydrate = new QCheckBox(this);
-   cb_hydrate->setText(tr(" Hydrate the Original Model "));
+   cb_hydrate->setText(tr(" Add theoretical hydration (PDB only)"));
    cb_hydrate->setChecked((*grid).hydrate);
    cb_hydrate->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_hydrate->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));

@@ -503,11 +503,12 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
          }
 
          // find residue in residues
-#if defined(DEBUG)
-         printf("check_for_missing_atoms search name %s resName %s\n",
-                this_atom->name.ascii(),
-                this_atom->resName.ascii());
-#endif
+         if ( advanced_config.debug_1 )
+         {
+            printf("check_for_missing_atoms search name %s resName %s\n",
+                   this_atom->name.ascii(),
+                   this_atom->resName.ascii());
+         }
          int respos = -1;
     
          for ( unsigned int m = 0; m < residue_list.size(); m++ )
@@ -516,13 +517,23 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                  (int)residue_list[m].r_atom.size() ==
                  atom_counts[count_idx] - has_OXT[count_idx] &&
                  this_atom->name != "OXT" &&
-                 (k || this_atom->name != "N" || !misc.pb_rule_on)) ||
+                 (k ||
+                  this_atom->name != "N" || 
+                  this_atom->resName == "PRO" ||
+                  !misc.pb_rule_on)) ||
+
+                // if pb_rule is off, final OXT before P needs to use OXT-P
+
                 (residue_list[m].name == "OXT"
-                 && this_atom->name == "OXT") ||
+                 && this_atom->name == "OXT" && (misc.pb_rule_on || this_atom->resName != "PRO")) ||
+                (residue_list[m].name == "OXT-P"
+                 && (this_atom->name == "OXT" && !misc.pb_rule_on && this_atom->resName == "PRO")) ||
+
                 (!k &&
                  this_atom->name == "N" &&
                  misc.pb_rule_on &&
-                 residue_list[m].name == "N1"))
+                 residue_list[m].name == "N1" &&
+                 this_atom->resName != "PRO"))
             {
                respos = (int) m;
                residue_types[j][residue_list[m].type]++;
@@ -544,15 +555,17 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 #endif
 
                this_atom->p_residue = &(residue_list[m]);
-#if defined(DEBUG)
-               printf("residue match %d resName %s \n", m, residue_list[m].name.ascii());
-               printf("resname %s respos %d mappos %d mapsize %u\n"
-                      ,this_atom->resName.ascii()
-                      ,m
-                      ,multi_residue_map[this_atom->resName][0]
-                      ,multi_residue_map[this_atom->resName].size()
-                      );
-#endif
+               if ( advanced_config.debug_1 )
+               {
+                  
+                  printf("residue match %d resName %s \n", m, residue_list[m].name.ascii());
+                  printf("resname %s respos %d mappos %d mapsize %u\n"
+                         ,this_atom->resName.ascii()
+                         ,m
+                         ,multi_residue_map[this_atom->resName][0]
+                         ,multi_residue_map[this_atom->resName].size()
+                         );
+               }
                if (lastResSeq != this_atom->resSeq)
                {
                   // new residue
@@ -818,7 +831,8 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                     this_atom->name == "N" &&
                     misc.pb_rule_on &&
                     !k &&
-                    residue_list[respos].r_atom[m].name == "N1"
+                    residue_list[respos].r_atom[m].name == "N1" &&
+                    this_atom->resName != "PRO"
                     )
                    )
                {
@@ -1037,9 +1051,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                 residue_types[j].size() == 1) 
             {
                // only amino acids, so we can create two beads
-#if defined(AUTO_BB_DEBUG)
-               puts("auto_bb_amino_acids");
-#endif
+               if ( advanced_config.debug_2  )
+               {
+                  puts("auto_bb_amino_acids");
+               }
                auto_bb_aa = true;
             }
 
@@ -1085,14 +1100,14 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 
                      PDB_atom *this_atom = &org_model.molecule[j].atom[k];
                      QString new_residue_idx = this_atom->resName;  // we could add atom_count to the idx for counting by unique atom counts...
-#if defined(AUTO_BB_DEBUG)
-                     printf("1.0 <%s> residue types %u, last_type %u\n", 
-                            new_residue_idx.ascii(),
-                            residue_types[j].size(),
-                            last_residue_type[j]
-                            );
-#endif
-           
+                     if ( advanced_config.debug_2  )
+                     {
+                        printf("1.0 <%s> residue types %u, last_type %u\n", 
+                               new_residue_idx.ascii(),
+                               residue_types[j].size(),
+                               last_residue_type[j]
+                               );
+                     }           
                      if (this_atom->resSeq != lastResSeq) 
                      {
 
@@ -1119,9 +1134,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                            .arg(this_atom->resName)
                            .arg(this_atom->resSeq)
                            .arg(new_residue_name);
-#if defined(AUTO_BB_DEBUG)
-                        printf("1.1 <%s>\n", new_residue_name.ascii());
-#endif
+                        if ( advanced_config.debug_2  )
+                        {
+                           printf("1.1 <%s>\n", new_residue_name.ascii());
+                        }
                         atom_counts[QString("%1|%2|%3")
                                     .arg(j)
                                     .arg(new_residue_name)
@@ -1148,17 +1164,19 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         residue_list.push_back(new_residue);
                         lastResSeq = org_model.molecule[j].atom[k].resSeq;
                         lastResName = org_model.molecule[j].atom[k].resName;
-#if defined(AUTO_BB_DEBUG)
-                        printf("1.1b <%s>\n", new_residue.name.ascii());
-#endif
+                        if ( advanced_config.debug_2  )
+                        {
+                           printf("1.1b <%s>\n", new_residue.name.ascii());
+                        }
                         model->residue.push_back(residue_list[multi_residue_map[new_residue.name][0]]);
                      }
                      else
                      {
                         new_residue_name = QString("%1_NC%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
-#if defined(AUTO_BB_DEBUG)
-                        printf("1.2 <%s>\n", new_residue_name.ascii());
-#endif
+                        if ( advanced_config.debug_2  )
+                        {
+                           printf("1.2 <%s>\n", new_residue_name.ascii());
+                        }
                         if (new_residue_name != new_residue.name)
                         {
                            QMessageBox::message(tr("Internal error:"), 
@@ -1250,9 +1268,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      {
                         atom_to_add.name = "OXT'";
                      }
-#if defined(AUTO_BB_DEBUG)
-                     printf("1.3 <%s> adding <%s> respos %u\n", new_residue.name.ascii(), atom_to_add.name.ascii(), respos);
-#endif
+                     if ( advanced_config.debug_2  )
+                     {
+                        printf("1.3 <%s> adding <%s> respos %u\n", new_residue.name.ascii(), atom_to_add.name.ascii(), respos);
+                     }
                      tmp_chain.atom.push_back(atom_to_add);
                      model->residue[model->residue.size() - 1] = residue_list[residue_list.size() - 1];
                   }
@@ -1397,9 +1416,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                            .arg(new_residue_name)
                            .arg(one_bead ? " as one bead" : "");
 
-#if defined(AUTO_BB_DEBUG)
-                        printf("a1.1 <%s>\n", new_residue_name.ascii());
-#endif
+                        if ( advanced_config.debug_2  )
+                        {
+                           printf("a1.1 <%s>\n", new_residue_name.ascii());
+                        }
                         atom_counts[QString("%1|%2|%3")
                                     .arg(j)
                                     .arg(new_residue_name)
@@ -1556,17 +1576,19 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         residue_list.push_back(new_residue);
                         lastResSeq = org_model.molecule[j].atom[k].resSeq;
                         lastResName = org_model.molecule[j].atom[k].resName;
-#if defined(AUTO_BB_DEBUG)
-                        printf("a1.1b <%s>\n", new_residue.name.ascii());
-#endif
+                        if ( advanced_config.debug_2  )
+                        {
+                           printf("a1.1b <%s>\n", new_residue.name.ascii());
+                        }
                         model->residue.push_back(residue_list[multi_residue_map[new_residue.name][0]]);
                      }
                      else
                      {
                         new_residue_name = QString("%1_MA%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
-#if defined(AUTO_BB_DEBUG)
-                        printf("a1.2 <%s>\n", new_residue_name.ascii());
-#endif
+                        if ( advanced_config.debug_2  )
+                        {
+                           printf("a1.2 <%s>\n", new_residue_name.ascii());
+                        }
                         if (new_residue_name != new_residue.name)
                         {
                            QMessageBox::message(tr("Internal error:"), 
@@ -1590,9 +1612,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      {
                         atom_to_add.name = "OXT'";
                      }
-#if defined(AUTO_BB_DEBUG)
-                     printf("a1.3 <%s>\n", new_residue.name.ascii());
-#endif
+                     if ( advanced_config.debug_2  )
+                     {
+                        printf("a1.3 <%s>\n", new_residue.name.ascii());
+                     }
                      tmp_chain.atom.push_back(atom_to_add);
                      model->residue[model->residue.size() - 1] = residue_list[residue_list.size() - 1];
                   }
@@ -1908,30 +1931,44 @@ int US_Hydrodyn::create_beads(QString *error_string)
 
          // find residue in residues
          int respos = -1;
-#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
-         printf("residue search name %s resName %s\n",
-                this_atom->name.ascii(),
-                this_atom->resName.ascii());
-#endif
+         if ( advanced_config.debug_1 ||
+              advanced_config.debug_2 )
+         {
+            printf("residue search name %s resName %s\n",
+                   this_atom->name.ascii(),
+                   this_atom->resName.ascii());
+         }
+         
          for (unsigned int m = 0; m < residue_list.size(); m++)
          {
             if ((residue_list[m].name == this_atom->resName &&
                  (int)residue_list[m].r_atom.size() ==
                  atom_counts[count_idx] - has_OXT[count_idx] &&
                  this_atom->name != "OXT" &&
-                 (k || this_atom->name != "N" || !misc.pb_rule_on)) ||
+                 (k ||
+                  this_atom->name != "N" ||
+                  this_atom->resName == "PRO" ||
+                  !misc.pb_rule_on)) ||
+
+                // if pb_rule is off, final OXT before P needs to use OXT-P
                 (residue_list[m].name == "OXT"
-                 && this_atom->name == "OXT") ||
+                 && this_atom->name == "OXT" && (misc.pb_rule_on || this_atom->resName != "PRO")) ||
+                (residue_list[m].name == "OXT-P"
+                 && (this_atom->name == "OXT" && !misc.pb_rule_on && this_atom->resName == "PRO")) ||
+
                 (!k &&
                  this_atom->name == "N" &&
                  misc.pb_rule_on &&
-                 residue_list[m].name == "N1"))
+                 residue_list[m].name == "N1" &&
+                 this_atom->resName != "PRO"))
             {
                respos = (int) m;
                this_atom->p_residue = &(residue_list[m]);
-#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
-               printf("residue match %d resName %s \n", m, residue_list[m].name.ascii());
-#endif
+               if ( advanced_config.debug_1 ||
+                    advanced_config.debug_2 )
+               {
+                  printf("residue match %d resName %s \n", m, residue_list[m].name.ascii());
+               }
                break;
             }
          }
@@ -1950,9 +1987,13 @@ int US_Hydrodyn::create_beads(QString *error_string)
          } 
          else 
          {
+               if ( advanced_config.debug_1 ||
+                    advanced_config.debug_2 )
+               {
 #if defined(DEBUG)
             printf("found residue pos %d\n", respos);
 #endif
+               }
          }
          int atompos = -1;
 
@@ -1965,6 +2006,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
             if (this_atom->resSeq != last_resSeq ||
                 this_atom->resName != last_resName ||
                 residue_list[respos].name == "OXT" ||
+                residue_list[respos].name == "OXT-P" ||
                 residue_list[respos].name == "N1")
             {
 #if defined(DEBUG)
@@ -1977,6 +2019,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
                last_resSeq = this_atom->resSeq;
                last_resName = this_atom->resName;
                if(residue_list[respos].name == "OXT" ||
+                  residue_list[respos].name == "OXT-P" ||
                   residue_list[respos].name == "N1") {
                   last_resSeq = "";
                }
@@ -2004,7 +2047,8 @@ int US_Hydrodyn::create_beads(QString *error_string)
                      this_atom->name == "N" &&
                      misc.pb_rule_on &&
                      !k &&
-                     residue_list[respos].r_atom[m].name == "N1"
+                     residue_list[respos].r_atom[m].name == "N1" &&
+                     this_atom->resName != "PRO"
                      )
                     )
                    )
@@ -2028,6 +2072,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
                this_atom->active = true;
                this_atom->radius = residue_list[respos].r_atom[atompos].hybrid.radius;
                this_atom->mw = residue_list[respos].r_atom[atompos].hybrid.mw;
+                  
                this_atom->placing_method =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method;
                this_atom->bead_hydration =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].hydration;
                this_atom->bead_color =  this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].color;
@@ -2040,27 +2085,55 @@ int US_Hydrodyn::create_beads(QString *error_string)
                this_atom->chain = (int) this_atom->p_residue->r_bead[this_atom->bead_assignment].chain;
                this_atom->atom_hydration =  residue_list[respos].r_atom[atompos].hydration;
 
-#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
-               printf("found atom %s %s in residue %d pos %d bead asgn %d %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s ba %d\n",
-                      this_atom->name.ascii(), this_atom->resName.ascii(), respos, atompos,
-                      this_atom->p_atom->bead_assignment,
-                      this_atom->bead_assignment,
-                      this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method,
-                      this_atom->mw,
-                      this_atom->bead_ref_mw,
-                      residue_list[respos].r_atom[atompos].hybrid.name.ascii(),
-                      this_atom->p_atom->hybrid.name.ascii(),
-                      this_atom->p_atom->bead_assignment
-                      );
-#endif
+               if ( misc.pb_rule_on &&
+                    this_atom->resName == "PRO" &&
+                    this_atom->name == "N" &&
+                    !k )
+               {
+                  if ( advanced_config.debug_1 )
+                  {
+                     puts("handled +1 mw for first N on PRO");
+                  }
+                  this_atom->mw += 1.0;
+                  // bead ref mw handled in pass 2b
+               }
+               if ( !misc.pb_rule_on &&
+                    this_atom->name == "N" &&
+                    !k )
+               {
+                  if ( advanced_config.debug_1 )
+                  {
+                     puts("handled +1 mw for first N");
+                  }
+                  this_atom->mw += 1.0;
+                  this_atom->bead_ref_mw += 1.0;
+               }
+
+               if ( advanced_config.debug_1 ||
+                    advanced_config.debug_2 )
+               {
+                  printf("found atom %s %s in residue %d pos %d bead asgn %d %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s ba %d\n",
+                         this_atom->name.ascii(), this_atom->resName.ascii(), respos, atompos,
+                         this_atom->p_atom->bead_assignment,
+                         this_atom->bead_assignment,
+                         this_atom->p_residue->r_bead[this_atom->p_atom->bead_assignment].placing_method,
+                         this_atom->mw,
+                         this_atom->bead_ref_mw,
+                         residue_list[respos].r_atom[atompos].hybrid.name.ascii(),
+                         this_atom->p_atom->hybrid.name.ascii(),
+                         this_atom->p_atom->bead_assignment
+                         );
+               }
             }
          }
 
          if (this_atom->active)
          {
-#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
-            puts("active atom"); fflush(stdout);
-#endif
+            if ( advanced_config.debug_1 ||
+                 advanced_config.debug_2 )
+            {
+               puts("active atom"); fflush(stdout);
+            }
             this_atom->active = false;
             if (this_atom->name != "H" &&
                 this_atom->name != "D" &&
@@ -2082,24 +2155,23 @@ int US_Hydrodyn::create_beads(QString *error_string)
          }
       }
    }
-#if defined(DEBUG)
-   puts("before sort::");
-#endif
    {
       for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
          for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
             PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
-
-#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
-            printf("p1 %s j k %d %d %lx %s %d\n", 
-                   this_atom->name.ascii(),
-                   j, k,
-                   (long unsigned int)this_atom->p_atom,
-                   this_atom->active ? "active" : "not active",
-                   this_atom->bead_assignment
-                   ); fflush(stdout);
-#endif
-
+            
+            if ( advanced_config.debug_1 ||
+                 advanced_config.debug_2 )
+            {
+               printf("p1 %s j k %d %d %lx %s %d\n", 
+                      this_atom->name.ascii(),
+                      j, k,
+                      (long unsigned int)this_atom->p_atom,
+                      this_atom->active ? "active" : "not active",
+                      this_atom->bead_assignment
+                      ); fflush(stdout);
+            }
+            
             // this_atom->bead_assignment =
             // (this_atom->p_atom ? (int) this_atom->p_atom->bead_assignment : -1);
             // this_atom->chain =
@@ -2164,88 +2236,90 @@ int US_Hydrodyn::create_beads(QString *error_string)
    puts("sorting disabled");
 #endif
 
-#if defined(DEBUG)
-   puts("after sort::");
-   // list them again...
+   if ( advanced_config.debug_1 )
    {
-      for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
-         for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
-            PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
-
-            printf("p1 %s j k %d %d %lx %s %d %d\n", 
-                   this_atom->name.ascii(),
-                   j, k,
-                   (long unsigned int)this_atom->p_atom,
-                   this_atom->active ? "active" : "not active",
-                   this_atom->bead_assignment,
-                   this_atom->atom_assignment
+      puts("after sort::");
+      // list them again...
+      {
+         for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
+            for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
+               PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
+               
+               printf("p1 %s j k %d %d %lx %s %d %d\n", 
+                      this_atom->name.ascii(),
+                      j, k,
+                      (long unsigned int)this_atom->p_atom,
+                      this_atom->active ? "active" : "not active",
+                      this_atom->bead_assignment,
+                      this_atom->atom_assignment
                    ); fflush(stdout);
-         }
-      }
-   }
-#endif
-   // #define DEBUG_MW
-#if defined(DEBUG_MW)
-   puts("mw totals:::");
-   double tot_atom_mw = 0e0;
-   double tot_bead_mw = 0e0;
-   double prev_bead_mw = 0e0;
-   double prev_atom_mw = 0e0;
-   int bead_count = 0;
-   int atom_count = 0;
-   int last_asgn = -1;
-   int last_res = "";
-   QString last_resName = "";
-   {
-      for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
-         for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
-            PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
-            if(this_atom->active) {
-               if(last_asgn != (int)this_atom->bead_assignment ||
-                  last_res != this_atom->resSeq) {
-                  if(bead_count) {
-                     printf("res %s %s bead %d bead_mw %f sum atom mw %f diff %f\n",
-                            last_res.ascii(),
-                            last_resName.ascii(),
-                            last_asgn,
-                            prev_bead_mw,
-                            prev_atom_mw,
-                            prev_bead_mw -
-                            prev_atom_mw
-                            );
-                  }
-                  prev_bead_mw = 0;
-                  prev_atom_mw = 0;
-
-                  bead_count++;
-                  tot_bead_mw += this_atom->bead_ref_mw;
-                  prev_bead_mw += this_atom->bead_ref_mw;
-                  last_asgn = (int)this_atom->bead_assignment;
-                  last_res = this_atom->resSeq;
-                  last_resName = this_atom->resName;
-               }
-               atom_count++;
-               tot_atom_mw += this_atom->mw;
-               prev_atom_mw += this_atom->mw;
             }
          }
       }
-      printf("res %s %s bead %d bead_mw %f sum atom mw %f diff %f\n",
-             last_res.ascii(),
-             last_resName.ascii(),
-             last_asgn,
-             prev_bead_mw,
-             prev_atom_mw,
-             prev_bead_mw -
-             prev_atom_mw
-             );
    }
-   printf("~~tot atom %d mw %f tot bead %d mw %f\n",
-          atom_count,
-          tot_atom_mw,
-          bead_count,
-          tot_bead_mw);
-#endif
+
+   if ( advanced_config.debug_1 )
+   {
+      puts("mw totals:::");
+      double tot_atom_mw = 0e0;
+      double tot_bead_mw = 0e0;
+      double prev_bead_mw = 0e0;
+      double prev_atom_mw = 0e0;
+      int bead_count = 0;
+      int atom_count = 0;
+      int last_asgn = -1;
+      QString last_res = "";
+      QString last_resName = "";
+      {
+         for (unsigned int j = 0; j < model_vector[current_model].molecule.size (); j++) {
+            for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size (); k++) {
+               PDB_atom *this_atom = &model_vector[current_model].molecule[j].atom[k];
+               if(this_atom->active) {
+                  if(last_asgn != (int)this_atom->bead_assignment ||
+                     last_res != this_atom->resSeq) {
+                     if(bead_count) {
+                        printf("res %s %s bead %d bead_mw %f sum atom mw %f diff %f\n",
+                               last_res.ascii(),
+                               last_resName.ascii(),
+                               last_asgn,
+                               prev_bead_mw,
+                               prev_atom_mw,
+                               prev_bead_mw -
+                               prev_atom_mw
+                               );
+                     }
+                     prev_bead_mw = 0;
+                     prev_atom_mw = 0;
+                     
+                     bead_count++;
+                     tot_bead_mw += this_atom->bead_ref_mw;
+                     prev_bead_mw += this_atom->bead_ref_mw;
+                     last_asgn = (int)this_atom->bead_assignment;
+                     last_res = this_atom->resSeq;
+                     last_resName = this_atom->resName;
+                  }
+                  atom_count++;
+                  tot_atom_mw += this_atom->mw;
+                  prev_atom_mw += this_atom->mw;
+               }
+            }
+         }
+         printf("res %s %s bead %d bead_mw %f sum atom mw %f diff %f\n",
+                last_res.ascii(),
+                last_resName.ascii(),
+                last_asgn,
+                prev_bead_mw,
+                prev_atom_mw,
+                prev_bead_mw -
+                prev_atom_mw
+                );
+      }
+      printf("~~tot atom %d mw %f tot bead %d mw %f\n",
+             atom_count,
+             tot_atom_mw,
+             bead_count,
+             tot_bead_mw);
+   }
 
    return 0;
 }
@@ -4046,7 +4120,6 @@ int US_Hydrodyn::compute_asa()
    }
 
    // pass 1 assign bead #'s, chain #'s, initialize data
-   printf("made it to here\n"); fflush(stdout);
 
    FILE *asaf = fopen(QString(somo_tmp_dir + "/atom.asa"), "w");
 
@@ -4119,14 +4192,15 @@ int US_Hydrodyn::compute_asa()
             // printf("p2 i j k %d %d %d %lx\n", i, j, k, this_atom->p_atom); fflush(stdout);
             // this_atom->bead_positioner = false;
             if (this_atom->active) {
-#if defined(DEBUG)
-               printf("pass 2 active %s %s %d pm %d %d\n",
-                      this_atom->name.ascii(),
-                      this_atom->resName.ascii(),
-                      this_atom->serial,
-                      this_atom->placing_method,
-                      this_atom->bead_assignment); fflush(stdout);
-#endif
+               if ( advanced_config.debug_1 )
+               {
+                  printf("pass 2 active %s %s %d pm %d %d\n",
+                         this_atom->name.ascii(),
+                         this_atom->resName.ascii(),
+                         this_atom->serial,
+                         this_atom->placing_method,
+                         this_atom->bead_assignment); fflush(stdout);
+               }
                molecular_mw += this_atom->mw;
                for (unsigned int m = 0; m < 3; m++) {
                   molecular_cog[m] += this_atom->coordinate.axis[m] * this_atom->mw;
@@ -4151,13 +4225,15 @@ int US_Hydrodyn::compute_asa()
                       this_atom->chain == 0 &&
                       this_atom->name == "N" &&
                       count_actives))) {
-#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
-                  printf("pass 2 active %s %s %d new bead chain %d\n",
-                         this_atom->name.ascii(),
-                         this_atom->resName.ascii(),
-                         this_atom->serial,
-                         this_atom->chain); fflush(stdout);
-#endif
+                  if ( advanced_config.debug_1 ||
+                       advanced_config.debug_2 )
+                  {
+                     printf("pass 2 active %s %s %d new bead chain %d\n",
+                            this_atom->name.ascii(),
+                            this_atom->resName.ascii(),
+                            this_atom->serial,
+                            this_atom->chain); fflush(stdout);
+                  }
 
                   // this_atom->bead_positioner = true;
                   this_atom->is_bead = true;
@@ -4172,12 +4248,14 @@ int US_Hydrodyn::compute_asa()
                         if(this_atom->name == "N") {
                            printf("ERROR double N on sequential sidechains! PRO PRO?\n");
                         }
-#if defined(DEBUG) || defined(AUTO_BB_DEBUG)
-                        printf("adding sidechain N %f %f to this_atom\n",
-                               sidechain_N->asa,
-                               sidechain_N->mw
-                               );
-#endif
+                        if ( advanced_config.debug_1 ||
+                             advanced_config.debug_2 )
+                        {
+                           printf("adding sidechain N %f %f to this_atom\n",
+                                  sidechain_N->asa,
+                                  sidechain_N->mw
+                                  );
+                        }
                         this_atom->bead_asa += sidechain_N->bead_asa;
                         this_atom->bead_mw += sidechain_N->bead_mw;
                         sidechain_N->bead_mw = 0;
@@ -4193,12 +4271,13 @@ int US_Hydrodyn::compute_asa()
                }
                else 
                {
-#if defined(DEBUG)
-                  printf("pass 2 active %s %s %d not a new bead\n",
-                         this_atom->name.ascii(),
-                         this_atom->resName.ascii(),
-                         this_atom->serial); fflush(stdout);
-#endif
+                  if ( advanced_config.debug_1 )
+                  {
+                     printf("pass 2 active %s %s %d not a new bead\n",
+                            this_atom->name.ascii(),
+                            this_atom->resName.ascii(),
+                            this_atom->serial); fflush(stdout);
+                  }
                   if (this_atom->bead_positioner) {
 
                      if (last_main_bead->bead_positioner &&
@@ -4235,51 +4314,55 @@ int US_Hydrodyn::compute_asa()
 
                use_atom->bead_asa += this_atom->asa;
                use_atom->bead_mw += this_atom->mw;
-#if defined(DEBUG)
-               printf("atom %s %s p_atom.hybrid.mw %f atom.mw %f\n",
-                      this_atom->name.ascii(),
-                      this_atom->resName.ascii(),
-                      this_atom->p_atom->hybrid.mw,
-                      this_atom->mw
-                      );
-#endif
+               if ( advanced_config.debug_1 )
+               {
+                  printf("atom %s %s p_atom.hybrid.mw %f atom.mw %f\n",
+                         this_atom->name.ascii(),
+                         this_atom->resName.ascii(),
+                         this_atom->p_atom->hybrid.mw,
+                         this_atom->mw
+                         );
+               }
                // accum
                if (!create_beads_normally ||
                    this_atom->bead_positioner) {
-#if defined(DEBUG_COG)
-                  printf("adding cog from %d to %d mw %f totmw %f (this pos [%f,%f,%f], org pos [%f,%f,%f])\n", this_atom->serial, use_atom->serial, this_atom->mw, use_atom->bead_cog_mw,
-                         this_atom->coordinate.axis[0],
-                         this_atom->coordinate.axis[1],
-                         this_atom->coordinate.axis[2],
-                         use_atom->bead_cog_coordinate.axis[0],
-                         use_atom->bead_cog_coordinate.axis[1],
-                         use_atom->bead_cog_coordinate.axis[2]
-                         );
-#endif
+                  if ( advanced_config.debug_3 )
+                  {
+                     printf("adding cog from %d to %d mw %f totmw %f (this pos [%f,%f,%f], org pos [%f,%f,%f])\n", this_atom->serial, use_atom->serial, this_atom->mw, use_atom->bead_cog_mw,
+                            this_atom->coordinate.axis[0],
+                            this_atom->coordinate.axis[1],
+                            this_atom->coordinate.axis[2],
+                            use_atom->bead_cog_coordinate.axis[0],
+                            use_atom->bead_cog_coordinate.axis[1],
+                            use_atom->bead_cog_coordinate.axis[2]
+                            );
+                  }
                   use_atom->bead_cog_mw += this_atom->mw;
                   for (unsigned int m = 0; m < 3; m++) {
                      use_atom->bead_cog_coordinate.axis[m] +=
                         this_atom->coordinate.axis[m] * this_atom->mw;
                   }
-#if defined(DEBUG_COG)
-                  printf("afterwards: target mw %f pos [%f,%f,%f]\n",
-                         use_atom->bead_cog_mw,
-                         use_atom->bead_cog_coordinate.axis[0],
-                         use_atom->bead_cog_coordinate.axis[1],
-                         use_atom->bead_cog_coordinate.axis[2]);
-#endif
+                  if ( advanced_config.debug_3 )
+                  {
+                     printf("afterwards: target mw %f pos [%f,%f,%f]\n",
+                            use_atom->bead_cog_mw,
+                            use_atom->bead_cog_coordinate.axis[0],
+                            use_atom->bead_cog_coordinate.axis[1],
+                            use_atom->bead_cog_coordinate.axis[2]);
+                  }
                }
                else 
                {
-#if defined(DEBUG_COG)
-                  fprintf(stderr, "notice: atom %s %s %d excluded from cog calculation in bead %s %s %d\n",
-                          this_atom->name.ascii(),
-                          this_atom->resName.ascii(),
-                          this_atom->serial,
-                          use_atom->name.ascii(),
-                          use_atom->resName.ascii(),
-                          use_atom->serial);
-#endif
+                  if ( advanced_config.debug_3 )
+                  {
+                     fprintf(stderr, "notice: atom %s %s %d excluded from cog calculation in bead %s %s %d\n",
+                             this_atom->name.ascii(),
+                             this_atom->resName.ascii(),
+                             this_atom->serial,
+                             use_atom->name.ascii(),
+                             use_atom->resName.ascii(),
+                             use_atom->serial);
+                  }
                }
 
                if (!create_beads_normally ||
@@ -4324,13 +4407,14 @@ int US_Hydrodyn::compute_asa()
       for (unsigned int m = 0; m < 3; m++) {
          molecular_cog[m] /= molecular_mw;
       }
-#if defined(DEBUG1) || defined(DEBUG)
-      printf("molecular cog [%f,%f,%f] mw %f\n",
-             molecular_cog[0],
-             molecular_cog[1],
-             molecular_cog[2],
-             molecular_mw);
-#endif
+      if ( advanced_config.debug_3 )
+      {
+         printf("molecular cog [%f,%f,%f] mw %f\n",
+                molecular_cog[0],
+                molecular_cog[1],
+                molecular_cog[2],
+                molecular_mw);
+      }
    }
    else 
    {
@@ -4349,47 +4433,99 @@ int US_Hydrodyn::compute_asa()
    }
 
    // pass 2b move bead_ref_volume, ref_mw, computed_radius from
-   // next main chain back one
+   // next main chain back one including adjustments for GLY, PRO, OXT
 
    // for (unsigned int i = 0; i < model_vector.size (); i++)   {
    {
       unsigned int i = current_model;
       for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
+         bool first_is_pro = false;
+         unsigned int main_chain_beads = 0;
          PDB_atom *last_main_chain_bead = (PDB_atom *) 0;
-
          for (unsigned int k = 0; k < model_vector[i].molecule[j].atom.size (); k++) {
             PDB_atom *this_atom = &(model_vector[i].molecule[j].atom[k]);
-
-#if defined(DEBUG)
-            printf("pass 2b active %d is_bead %d chain %d atom %s %s %d pm %d\n",
-                   this_atom->active,
-                   this_atom->is_bead,
-                   this_atom->chain,
-                   this_atom->name.ascii(),
-                   this_atom->resName.ascii(),
-                   this_atom->serial,
-                   this_atom->placing_method); fflush(stdout);
-#endif
-            if (this_atom->name == "OXT" &&
-                last_main_chain_bead) {
-#if defined(DEBUG)
-               printf("pass 2b active OXT %s %s %d last %s %s %d mw org %f mw new %f\n",
+            if ( advanced_config.debug_1 )
+            {
+               printf("pass 2b active %d is_bead %d chain %d atom %s %s %d pm %d\n",
+                      this_atom->active,
+                      this_atom->is_bead,
+                      this_atom->chain,
                       this_atom->name.ascii(),
                       this_atom->resName.ascii(),
                       this_atom->serial,
-                      last_main_chain_bead->name.ascii(),
-                      last_main_chain_bead->resName.ascii(),
-                      last_main_chain_bead->serial,
-                      last_main_chain_bead->bead_ref_mw,
-                      this_atom->bead_ref_mw
-                      );
-               fflush(stdout);
-#endif
+                      this_atom->placing_method); fflush(stdout);
+            }
+            if ( this_atom->active &&
+                 this_atom->is_bead &&
+                 this_atom->chain == 0 )
+            {
+               main_chain_beads++;
+            }
+            if ( 
+                misc.pb_rule_on &&
+                !k &&
+                this_atom->resName == "PRO" 
+                )
+            {
+               if ( advanced_config.debug_1 )
+               {
+                  puts("pass 2b PRO 1st is pro recognized");
+               }
+               first_is_pro = true;
+            }
+            if ( 
+                first_is_pro &&
+                this_atom->active &&
+                this_atom->is_bead &&
+                this_atom->chain == 1 &&
+                this_atom->resName == "PRO"
+                )
+            {
+               if ( advanced_config.debug_1 )
+               {
+                  puts("pass 2b PRO 1st N +1 mw adjustment");
+               }
+               this_atom->bead_ref_mw += 1.0;
+               // what about a volume adjustment?
+               first_is_pro = false;
+            }
+                 
+            if (this_atom->name == "OXT" &&
+                last_main_chain_bead) {
+               if ( advanced_config.debug_1 )
+               {
+                  printf("pass 2b active OXT %s %s %d last %s %s %d mw org %f mw new %f\n",
+                         this_atom->name.ascii(),
+                         this_atom->resName.ascii(),
+                         this_atom->serial,
+                         last_main_chain_bead->name.ascii(),
+                         last_main_chain_bead->resName.ascii(),
+                         last_main_chain_bead->serial,
+                         last_main_chain_bead->bead_ref_mw,
+                         this_atom->bead_ref_mw
+                         );
+                  fflush(stdout);
+               }
                this_atom->is_bead = false;
                last_main_chain_bead->bead_ref_volume = this_atom->bead_ref_volume;
                last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
-               if (last_main_chain_bead->resName == "GLY") {
+               if (last_main_chain_bead->resName == "GLY") 
+               {
+                  if ( advanced_config.debug_1 )
+                  {
+                     puts("pass 2b GLY adjustment +1");
+                  }
                   last_main_chain_bead->bead_ref_mw += 1.01f;
+               }
+               if ( !misc.pb_rule_on &&
+                    main_chain_beads == 1 &&
+                    this_atom->resName != "PRO" )
+               {
+                  if ( advanced_config.debug_1 )
+                  {
+                     puts("pass 2b main_chain bead adjustment +1");
+                  }
+                  last_main_chain_bead->bead_ref_mw += 1.0;
                }
                last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
             } // OXT
@@ -4397,30 +4533,46 @@ int US_Hydrodyn::compute_asa()
             if (this_atom->active &&
                 this_atom->is_bead &&
                 this_atom->chain == 0) {
-#if defined(DEBUG)
+               if ( advanced_config.debug_1 )
+               {
                   printf("pass 2b active, bead, chain == 0 %s %s %d pm %d\n",
                          this_atom->name.ascii(),
                          this_atom->resName.ascii(),
                          this_atom->serial,
                          this_atom->placing_method); fflush(stdout);
-#endif
+               }
+
                if (misc.pb_rule_on &&
                    last_main_chain_bead &&
                    (this_atom->resName == "PRO" ||
                     last_main_chain_bead->resName == "PRO")
                    ) {
-#if defined(DEBUG)
-                  printf("pass 2b active PRO %s %s %d pm %d\n",
-                         this_atom->name.ascii(),
-                         this_atom->resName.ascii(),
-                         this_atom->serial,
-                         this_atom->placing_method); fflush(stdout);
-#endif
+
+                  if ( advanced_config.debug_1 )
+                  {
+                     printf("pass 2b active PRO %s %s %d pm %d\n",
+                            this_atom->name.ascii(),
+                            this_atom->resName.ascii(),
+                            this_atom->serial,
+                            this_atom->placing_method); fflush(stdout);
+                  }
+
                   last_main_chain_bead->bead_ref_volume = this_atom->bead_ref_volume;
                   last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
                   last_main_chain_bead->bead_computed_radius = this_atom->bead_computed_radius;
                   if (this_atom->resName == "GLY") {
                      last_main_chain_bead->bead_ref_mw -= 1.01f;
+                     if ( advanced_config.debug_1 )
+                     {
+                        puts("pass 2b GLY adjustment -1");
+                     }
+                  }
+                  if (last_main_chain_bead->resName == "GLY") {
+                     last_main_chain_bead->bead_ref_mw += 1.01f;
+                     if ( advanced_config.debug_1 )
+                     {
+                        puts("pass 2b GLY adjustment +1");
+                     }
                   }
                } // PRO
                last_main_chain_bead = this_atom;

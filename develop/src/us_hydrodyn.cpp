@@ -75,6 +75,17 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
 
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("SOMO Solution Bead Modeler"));
+   advanced_config.auto_view_pdb = true;
+   advanced_config.scroll_editor = false;
+   advanced_config.auto_calc_somo = false;
+   advanced_config.auto_show_hydro = false;
+   advanced_config.debug_1 = false;
+   advanced_config.debug_2 = false;
+   advanced_config.debug_3 = false;
+   advanced_config.debug_4 = false;
+   advanced_config.debug_5 = false;
+   advanced_config.debug_6 = false;
+   advanced_config.debug_7 = false;
    set_default();   // setup configuration defaults before reading initial config
    read_config(""); // specify default configuration by leaving argument empty
    atom_widget = false;
@@ -93,6 +104,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    results_widget = false;
    pdb_visualization_widget = false;
    pdb_parsing_widget = false;
+   advanced_config_widget = false;
    calcAutoHydro = false;
    residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
    editor = (QTextEdit *)0;
@@ -190,6 +202,7 @@ void US_Hydrodyn::setupGUI()
    configuration->insertItem(tr("&Load Configuration"), this, SLOT(load_config()));
    configuration->insertItem(tr("&Save Current Configuration"), this, SLOT(write_config()));
    configuration->insertItem(tr("&Reset to Default Configuration"), this, SLOT(reset()));
+   configuration->insertItem(tr("&Advanced Configuration"), this, SLOT(show_advanced_config()));
 
    QFrame *frame;
    frame = new QFrame(this);
@@ -426,8 +439,7 @@ void US_Hydrodyn::setupGUI()
    file->insertItem( tr("Save"),  this, SLOT(save()),    ALT+Key_S );
    file->insertItem( tr("Print"), this, SLOT(print()),   ALT+Key_P );
    file->insertItem( tr("Clear Display"), this, SLOT(clear_display()),   ALT+Key_X );
-   editor->setWordWrap (QTextEdit::WidgetWidth);
-   // editor->setWordWrap (QTextEdit::NoWrap);
+   editor->setWordWrap (advanced_config.scroll_editor ? QTextEdit::NoWrap : QTextEdit::WidgetWidth);
 
    lbl_core_progress = new QLabel("", this);
    Q_CHECK_PTR(lbl_core_progress);
@@ -977,7 +989,8 @@ void US_Hydrodyn::load_pdb()
       argument.append(QFileInfo(filename).fileName());
       rasmol->setWorkingDirectory(QFileInfo(filename).dirPath());
       rasmol->setArguments(argument);
-      if (!rasmol->start())
+      if (advanced_config.auto_view_pdb &&
+          !rasmol->start())
       {
          QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
                                                      "Please check to make sure RASMOL is properly installed..."));
@@ -1033,9 +1046,14 @@ void US_Hydrodyn::load_pdb()
    pb_calc_hydro->setEnabled(false);
    pb_visualize->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
+   bead_models_as_loaded = bead_models;
    if (lb_model->numRows() == 1)
    {
       select_model(0);
+   }
+   if ( advanced_config.auto_calc_somo )
+   {
+      calc_somo();
    }
 }
 
@@ -1176,6 +1194,7 @@ int US_Hydrodyn::calc_somo()
    options_log = "";
    append_options_log_somo();
    display_default_differences();
+   model_vector = model_vector_as_loaded;
 
    if ( bead_model_prefix.contains("a2b") )
    {
@@ -1297,6 +1316,7 @@ int US_Hydrodyn::calc_grid_pdb()
    pb_stop_calc->setEnabled(true);
    append_options_log_atob();
    display_default_differences();
+   model_vector = model_vector_as_loaded;
    int flag = 0;
    bool any_errors = false;
    bool any_models = false;
@@ -2070,6 +2090,10 @@ void US_Hydrodyn::calc_hydro()
 
    pb_stop_calc->setEnabled(false);
    editor->append("Calculate hydrodynamics completed\n");
+   if ( advanced_config.auto_show_hydro ) 
+   {
+      show_hydro_results();
+   }
    qApp->processEvents();
 }
 
@@ -2093,6 +2117,27 @@ void US_Hydrodyn::show_hydro_results()
       results_window->show();
    }
    puts("show hydro");
+}
+
+void US_Hydrodyn::show_advanced_config()
+{
+   if (advanced_config_widget)
+   {
+      if (advanced_config_window->isVisible())
+      {
+         advanced_config_window->raise();
+      }
+      else
+      {
+         advanced_config_window->show();
+      }
+      return;
+   }
+   else
+   {
+      advanced_config_window = new US_Hydrodyn_AdvancedConfig(&advanced_config, &advanced_config_widget, this);
+      advanced_config_window->show();
+   }
 }
 
 void US_Hydrodyn::help()

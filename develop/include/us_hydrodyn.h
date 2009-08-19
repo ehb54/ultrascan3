@@ -39,6 +39,7 @@
 #include "us_hydrodyn_pdb_parsing.h"
 #include "us_hydrodyn_saxs_options.h"
 #include "us_hydrodyn_saxs.h"
+#include "us_hydrodyn_advanced_config.h"
 
 //standard C and C++ defs:
 
@@ -62,11 +63,13 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int get_color(PDB_atom *);
       struct misc_options misc;
       struct misc_options default_misc;
+      struct advanced_config advanced_config;
       double overlap_tolerance;
       double default_overlap_tolerance;
       bool stopFlag, calcAutoHydro;
       QLabel *lbl_core_progress;
       void set_disabled();
+      QTextEdit *editor;
 
    private:
       bool residue_widget;
@@ -85,6 +88,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool pdb_visualization_widget;
       bool saxs_options_widget;
       bool saxs_plot_widget;
+      bool advanced_config_widget;
 
       QMenuBar *m;
       QPrinter printer;
@@ -175,7 +179,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
 
       QProgressBar *progress;
-      QTextEdit *editor;
       TextEdit *e;
 
       QListBox *lb_model;
@@ -196,6 +199,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_PDB_Parsing *pdb_parsing_window;
       US_Hydrodyn_Saxs *saxs_plot_window;
       US_Hydrodyn_SaxsOptions *saxs_options_window;
+      US_Hydrodyn_AdvancedConfig *advanced_config_window;
       QProcess *rasmol;
 
 #ifdef WIN32
@@ -204,6 +208,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       vector <PDB_atom>             bead_model;
       vector < vector <PDB_atom> >  bead_models;
+      vector < vector <PDB_atom> >  bead_models_as_loaded;
       vector <PDB_atom *>           active_atoms;
       vector <struct residue>       residue_list;
       vector <struct residue>       residue_list_no_pbr;
@@ -257,6 +262,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       //                                  maps molecule #|resSeq to pos of entry with minimum missing count
       QString last_abb_msgs; // automatic bead builder message log
       vector <struct PDB_model> model_vector;
+      vector <struct PDB_model> model_vector_as_loaded;
       bool bead_model_from_file;
       vector <int> somo_processed;
       QString options_log;
@@ -308,6 +314,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void show_misc();
       void show_grid(); // show grid options
       void show_saxs_options();
+      void show_advanced_config();
       void view_pdb(); // show pdb file in editor
       void pdb_parsing(); // pdb parsing options
       void pdb_visualization(); // pdb visualization options
