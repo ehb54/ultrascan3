@@ -39,10 +39,12 @@ class US_Convert : public US_Widgets
       QPushButton*  pb_exclude;
       QPushButton*  pb_excludeRange;
       QPushButton*  pb_include;
+      QPushButton*  pb_details;
 
       QList< beckmanRaw > legacyData;          // legacy data from file
       QList< beckmanRaw* > ccwLegacyData;      // legacy data with this cell/channel/wl
-      rawData     newRawData;                  // filtered legacy data in new raw format
+      rawData       newRawData;                // filtered legacy data in new raw format
+      QList< rawData > allData;                // all the data, separated by c/c/w
 
       QList< int >  includes;                  // list of points to include in plot
       QwtPlot*      data_plot;
@@ -59,9 +61,10 @@ class US_Convert : public US_Widgets
    
 	private slots:
       void load            ( void );
+      void details         ( void );
       void reset           ( void );
       void read            ( void );
-      void convert         ( void );
+      void convert         ( bool showProgressBar = false );
       void changeCcw       ( int  );
       void focus_from      ( double );
       void focus_to        ( double );
