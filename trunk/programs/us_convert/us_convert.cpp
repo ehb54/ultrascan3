@@ -7,6 +7,7 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
+#include "us_run_details.h"
 
 //! \brief Main program for us_convert. Loads translators and starts
 //         the class US_Convert.
@@ -36,7 +37,11 @@ US_Convert::US_Convert() : US_Widgets()
    // Row 1
    QPushButton* pb_load = us_pushbutton( tr( "Load Legacy Data" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
-   settings->addWidget( pb_load, row++, 0, 1, 2 );
+   settings->addWidget( pb_load, row, 0 );
+
+   pb_details = us_pushbutton( tr( "Run Details" ), false );
+   connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
+   settings->addWidget( pb_details, row++, 1 );
 
    QLabel* lb_dir = us_label( tr( "Directory:" ) );
    settings->addWidget( lb_dir, row++, 0 );
@@ -173,6 +178,7 @@ void US_Convert::reset( void )
    pb_include     ->setEnabled( false );
    pb_write       ->setEnabled( false );
    pb_writeAll    ->setEnabled( false );
+   pb_details     ->setEnabled( false );
 
    ct_from->disconnect();
    ct_from->setMinValue( 0 );
@@ -190,6 +196,7 @@ void US_Convert::reset( void )
    ccwLegacyData.clear();
    newRawData.scanData.clear();
    triples.clear();
+   allData.clear();
 
    data_plot->detachItems();
    pick     ->disconnect();
@@ -236,9 +243,37 @@ void US_Convert::load( void )
 
 */
 
-   convert();             // Now convert the data to the new format
+   // we know all the triples from read, so we can convert all the data
+   allData.clear();
+   if ( triples.size() == 1 )
+   {
+      convert( true );
+      allData << newRawData;
+   }
 
-   plot_current();        // And show the user what we have
+   else
+   {
+      progress ->setRange( 0, triples.size() );
+      progress ->setValue( 0 );
+      progress ->setVisible( true );
+
+      for ( currentTriple = 0; currentTriple < triples.size(); currentTriple++ )
+      {
+         // Convert data for this cell / channel / wavelength
+         convert();
+
+         // and save it
+         allData << newRawData;
+
+         progress ->setValue( currentTriple );
+         qApp     ->processEvents();
+      }
+   }
+
+   progress ->setVisible( false );
+
+   currentTriple = 0;     // Now let's show the user the first one
+   plot_current();
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_from   ( double ) ) );
@@ -250,6 +285,7 @@ void US_Convert::load( void )
    pb_include ->setEnabled( true );
    pb_write   ->setEnabled( true );
    pb_writeAll->setEnabled( true );
+   pb_details ->setEnabled( true );
 }
 
 void US_Convert::read( void )
@@ -411,7 +447,7 @@ void US_Convert::read( void )
    currentTriple = 0;
 }
 
-void US_Convert::convert( void )
+void US_Convert::convert( bool showProgressBar )
 {
    // Convert the data into the UltraScan3 data structure
    QString triple         = triples[ currentTriple ];
@@ -485,9 +521,12 @@ void US_Convert::convert( void )
       s.wavelength  = ccwLegacyData[ i ]->t.wavelength;
 
       // Enable progress bar
-      progress ->setRange( 0, ccwLegacyData.size() );
-      progress ->setValue( 0 );
-      progress ->setVisible( true );
+      if ( showProgressBar )
+      {
+         progress ->setRange( 0, ccwLegacyData.size() );
+         progress ->setValue( 0 );
+         progress ->setVisible( true );
+      }
 
       // Readings here and interpolated array
       int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
@@ -580,7 +619,7 @@ void US_Convert::convert( void )
 
       newRawData.scanData.push_back( s );
 
-      progress ->setValue( i );
+      if ( showProgressBar ) progress ->setValue( i );
       qApp     ->processEvents();
    }
   
@@ -589,18 +628,31 @@ void US_Convert::convert( void )
    for ( uint i = 0; i < newRawData.scanData.size(); i++ ) 
       delete newRawData.scanData[ i ].interpolated;
 
-   progress ->setVisible( false );
+   if ( showProgressBar ) progress ->setVisible( false );
   
+}
+
+void US_Convert::details( void )
+{
+   QString     dirname    = le_dir->text();
+   if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
+
+   QStringList components = dirname.split( "/", QString::SkipEmptyParts );
+   QString     runID      = components.last();
+
+   US_RunDetails* dialog
+      = new US_RunDetails( allData, currentTriple, runID, dirname, triples );
+   dialog->exec();
+   qApp->processEvents();
+   delete dialog;
+
 }
 
 void US_Convert::changeCcw( int index )
 {
    currentTriple = index;
 
-   // Convert data for this cell / channel / wavelength
-   convert();
-
-   // and redo plot
+   // Redo plot
    plot_current();
 }
 
@@ -650,7 +702,7 @@ int US_Convert::write( const QString& filename )
 
    // Create duplicate structure that doesn't contain excluded scans
    // Delete back to front, since structure changes with each deletion
-   rawData filteredRawData = newRawData;
+   rawData filteredRawData = allData[ currentTriple ];
    for ( int i = filteredRawData.scanData.size() - 1; i >= 0; i-- )
    {
       if ( ! includes.contains( i ) )
@@ -670,14 +722,7 @@ void US_Convert::writeAll( void )
    init_includes();
 
    for ( currentTriple = 0; currentTriple < triples.size(); currentTriple++ )
-   {
-      // Convert data for this cell / channel / wavelength
-      convert();
-
-      // and write it out
       write();
-
-   }
 
    includes = saveIncludes;
    currentTriple = saveCurrentTriple;
@@ -694,7 +739,9 @@ void US_Convert::setInterpolated ( unsigned char* bitmap, int location )
 
 void US_Convert::plot_current( void )
 {
-   if ( newRawData.scanData.empty() ) return;
+   rawData currentData = allData[ currentTriple ];
+
+   if ( currentData.scanData.empty() ) return;
 
    // Specify the filename
    QString     dirname    = le_dir->text();
@@ -715,34 +762,34 @@ void US_Convert::plot_current( void )
    QString xLegend = "Radius (in cm)";
    QString yLegend = "Absorbance";
 
-   if ( strncmp( newRawData.type, "RA", 2 ) == 0 )
+   if ( strncmp( currentData.type, "RA", 2 ) == 0 )
    {
       title = "Radial Absorbance Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
    }
 
-   else if ( strncmp( newRawData.type, "IP", 2 ) == 0 )
+   else if ( strncmp( currentData.type, "IP", 2 ) == 0 )
    {
       title = "Interference Data\nRun ID: "
             + runID + " Cell: " + cell + " Radius: " + wl;
       yLegend = "Interference";
    }
 
-   else if ( strncmp( newRawData.type, "RI", 2 ) == 0 )
+   else if ( strncmp( currentData.type, "RI", 2 ) == 0 )
    {
       title = "Radial Intensity Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
       yLegend = "Radial Intensity";
    }
 
-   else if ( strncmp( newRawData.type, "FI", 2 ) == 0 )
+   else if ( strncmp( currentData.type, "FI", 2 ) == 0 )
    {
       title = "Fluorescence Intensity Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
       yLegend = "Fluorescence Intensity";
    }
       
-   else if ( strncmp( newRawData.type, "WA", 2 ) == 0 )
+   else if ( strncmp( currentData.type, "WA", 2 ) == 0 )
    {
       title = "Wavelength Data\nRun ID: "
             + runID + " Cell: " + cell + " Radius: " + wl;
@@ -750,7 +797,7 @@ void US_Convert::plot_current( void )
       yLegend = "Value";
    }
 
-   else if ( strncmp( newRawData.type, "WI", 2 ) == 0 )
+   else if ( strncmp( currentData.type, "WI", 2 ) == 0 )
    {
       title = "Wavelength Intensity Data\nRun ID: "
             + runID + " Cell: " + cell + " Radius: " + wl;
@@ -784,15 +831,17 @@ void US_Convert::plot_current( void )
 void US_Convert::init_includes( void )
 {
    includes.clear();
-   for ( uint i = 0; i < newRawData.scanData.size(); i++ ) includes << i;
+   for ( uint i = 0; i < allData[ currentTriple ].scanData.size(); i++ ) includes << i;
 }
 
 void US_Convert::plot_all( void )
 {
+   rawData currentData = allData[ currentTriple ];
+
    data_plot->detachItems();
    grid = us_grid( data_plot );
 
-   int size = newRawData.scanData[ 0 ].values.size();
+   int size = currentData.scanData[ 0 ].values.size();
 
    double* r = new double[ size ];
    double* v = new double[ size ];
@@ -802,10 +851,10 @@ void US_Convert::plot_all( void )
    double maxV = -1.0e99;
    double minV =  1.0e99;
 
-   for ( uint i = 0; i < newRawData.scanData.size(); i++ )
+   for ( uint i = 0; i < currentData.scanData.size(); i++ )
    {
       if ( ! includes.contains( i ) ) continue;
-      scan* s = &newRawData.scanData[ i ];
+      scan* s = &currentData.scanData[ i ];
 
       for ( int j = 0; j < size; j++ )
       {

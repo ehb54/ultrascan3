@@ -2,7 +2,9 @@ include( ../../gui.pri )
 
 TARGET        = us_convert
 
-HEADERS       = us_convert.h
+HEADERS       = us_convert.h \
+                us_run_details.h
 
-SOURCES       = us_convert.cpp 
+SOURCES       = us_convert.cpp \
+                us_run_details.cpp
 
