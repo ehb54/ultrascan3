@@ -223,6 +223,8 @@ void US_Convert::load( void )
 
       for ( int j = 0; j < d.readings.size(); j++ )
       {
+         if ( i != legacyData.size() - 1 ) continue;
+
          reading r = d.readings[ j ];
 
          QString line = QString::number(r.d.radius, 'f', 4 )    + " "
@@ -230,7 +232,6 @@ void US_Convert::load( void )
                       + QString::number(r.stdDev, 'E', 5 );
          qDebug() << line;
       }
-
    }
 
 */
@@ -322,12 +323,18 @@ void US_Convert::read( void )
    for ( int i = 0; i < legacyData.size(); i++ )
    {
       QString wl = QString::number( legacyData[ i ].t.wavelength, 'f', 1 );
-      if ( ! wavelengths.contains( wl ) ) wavelengths << wl;
+      wavelengths << wl;
    }
 
    // Merge wavelengths
 
    wavelengths.sort();
+
+/*
+   qDebug() << "Wavelengths found:";
+   for ( int i = 0; i < wavelengths.size(); i++ )
+      qDebug() << wavelengths[ i ];
+*/
 
    QList< QList< double > > modes;
    QList< double >          mode;
@@ -335,8 +342,8 @@ void US_Convert::read( void )
    for ( int i = 0; i < wavelengths.size(); i++ )
    {
       double wl = wavelengths[ i ].toDouble();
-      
-      if ( ! mode.empty()  &&  mode.last() - wl > 5.0 )
+
+      if ( ! mode.empty()  &&  fabs( mode.last() - wl ) > 5.0 )
       {
          modes << mode;
          mode.clear();
@@ -350,6 +357,16 @@ void US_Convert::read( void )
    // Now we have a list of modes.  
    // Average each list and round to the closest integer.
    
+/*
+   qDebug() << "Modes:";
+   for ( int i = 0; i < modes.size(); i++ )
+   {
+      qDebug() << "i: " << i;
+      for ( int j = 0; j < mode.size(); j++ )
+         qDebug() << "  " << modes[ i ][ j ];
+   }
+*/
+
    QList< int > wl_average;
 
    for ( int i = 0; i < modes.size(); i++ )
@@ -360,6 +377,12 @@ void US_Convert::read( void )
 
       wl_average << (int) round( sum / modes[ i ].size() );
    }
+
+/*
+   qDebug() << "Wavelength average:";
+   for ( int i = 0; i < wl_average.size(); i++ )
+      qDebug() << "  " << wl_average[ i ];
+*/
 
    // Now that we have a more reliable list of wavelengths, let's
    // find out the possible cell, channel, and wavelength combinations
@@ -373,7 +396,7 @@ void US_Convert::read( void )
       // find the average wavelength
       for ( int j = 0; j < wl_average.size(); j++ )
       {
-         if ( wl_average[ j ] - wl < 5.0 )
+         if ( fabs( wl_average[ j ] - wl ) < 5.0 )
          {
             wavelength = QString::number( wl_average[ j ] );
             break;
@@ -399,8 +422,8 @@ void US_Convert::convert( void )
    double      wavelength = parts[ 2 ].toDouble();
 
 /*
-   qDebug() << cell       << " "
-            << channel    << " "
+   qDebug() << cell       << " / "
+            << channel    << " / "
             << wavelength;
 */
 
@@ -433,7 +456,7 @@ void US_Convert::convert( void )
    newRawData.description = ccwLegacyData[ 0 ]->description;
    
    // Get the min and max radius
-   double min_radius = 10000.0;
+   double min_radius = 1.0e99;
    double max_radius = 0.0;
 
    for ( int i = 0; i < ccwLegacyData.size(); i++ )
@@ -617,7 +640,7 @@ void US_Convert::write( void )
 
 int US_Convert::write( const QString& filename )
 {
-   if ( ccwLegacyData.isEmpty() ) return US_DataIO::NODATA; 
+   if ( newRawData.scanData.empty() ) return US_DataIO::NODATA; 
 
    // Get the directory and write out the data
    QString dirname = le_dir->text();
@@ -655,6 +678,8 @@ void US_Convert::setInterpolated ( unsigned char* bitmap, int location )
 
 void US_Convert::plot_current( void )
 {
+   if ( newRawData.scanData.empty() ) return;
+
    // Specify the filename
    QString     dirname    = le_dir->text();
    if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
@@ -669,27 +694,60 @@ void US_Convert::plot_current( void )
    QString     channel    = parts[ 1 ];
    QString     wl         = parts[ 2 ];
 
-   // Plot Title
+   // Plot Title and legends
    QString title;
-   
+   QString xLegend = "Radius (in cm)";
+   QString yLegend = "Absorbance";
+
    if ( strncmp( newRawData.type, "RA", 2 ) == 0 )
    {
       title = "Radial Absorbance Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
    }
 
+   else if ( strncmp( newRawData.type, "IP", 2 ) == 0 )
+   {
+      title = "Interference Data\nRun ID: "
+            + runID + " Cell: " + cell + " Radius: " + wl;
+      yLegend = "Interference";
+   }
+
+   else if ( strncmp( newRawData.type, "RI", 2 ) == 0 )
+   {
+      title = "Radial Intensity Data\nRun ID: "
+            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      yLegend = "Radial Intensity";
+   }
+
+   else if ( strncmp( newRawData.type, "FI", 2 ) == 0 )
+   {
+      title = "Fluorescence Intensity Data\nRun ID: "
+            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      yLegend = "Fluorescence Intensity";
+   }
+      
    else if ( strncmp( newRawData.type, "WA", 2 ) == 0 )
    {
       title = "Wavelength Data\nRun ID: "
-            + runID + " Cell: " + cell + " Wavelength: " + wl;
-      data_plot->setAxisTitle( QwtPlot::yLeft, "Wavelength" );
-      data_plot->setAxisTitle( QwtPlot::xBottom, "Value" );
+            + runID + " Cell: " + cell + " Radius: " + wl;
+      xLegend = "Wavelength";
+      yLegend = "Value";
+   }
+
+   else if ( strncmp( newRawData.type, "WI", 2 ) == 0 )
+   {
+      title = "Wavelength Intensity Data\nRun ID: "
+            + runID + " Cell: " + cell + " Radius: " + wl;
+      xLegend = "Wavelength";
+      yLegend = "Value";
    }
 
    else
       title = "File type not recognized";
    
    data_plot->setTitle( title );
+   data_plot->setAxisTitle( QwtPlot::yLeft, yLegend );
+   data_plot->setAxisTitle( QwtPlot::xBottom, xLegend );
    
    // Initialize include list
    init_includes();
