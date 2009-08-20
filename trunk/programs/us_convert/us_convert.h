@@ -25,6 +25,7 @@ class US_Convert : public US_Widgets
 
       QString       runType;
       QStringList   triples;
+      int           currentTriple;
 
       QLineEdit*    le_dir;
 

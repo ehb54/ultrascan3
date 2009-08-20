@@ -408,13 +408,13 @@ void US_Convert::read( void )
    }
 
    cb_triple->addItems( triples );
-
+   currentTriple = 0;
 }
 
 void US_Convert::convert( void )
 {
    // Convert the data into the UltraScan3 data structure
-   QString triple         = cb_triple->currentText();
+   QString triple         = triples[ currentTriple ];
    QStringList parts      = triple.split(" / ");
 
    int         cell       = parts[ 0 ].toInt();
@@ -595,6 +595,8 @@ void US_Convert::convert( void )
 
 void US_Convert::changeCcw( int index )
 {
+   currentTriple = index;
+
    // Convert data for this cell / channel / wavelength
    convert();
 
@@ -611,7 +613,7 @@ void US_Convert::write( void )
    QStringList components = dirname.split( "/", QString::SkipEmptyParts );
    QString     runID      = components.last();
 
-   QString triple         = cb_triple->currentText();
+   QString triple         = triples[ currentTriple ];
    QStringList parts      = triple.split(" / ");
 
    QString     cell       = parts[ 0 ];
@@ -661,11 +663,25 @@ int US_Convert::write( const QString& filename )
 }
  
 void US_Convert::writeAll( void )
-{  
-   QMessageBox notImplemented;
+{
+   int saveCurrentTriple = currentTriple;
+   QList< int > saveIncludes = includes;
 
-   notImplemented.setText( tr( "This feature has not been implemented yet." ) );
-   notImplemented.exec();
+   init_includes();
+
+   for ( currentTriple = 0; currentTriple < triples.size(); currentTriple++ )
+   {
+      // Convert data for this cell / channel / wavelength
+      convert();
+
+      // and write it out
+      write();
+
+   }
+
+   includes = saveIncludes;
+   currentTriple = saveCurrentTriple;
+
 }
 
 void US_Convert::setInterpolated ( unsigned char* bitmap, int location )
@@ -687,7 +703,7 @@ void US_Convert::plot_current( void )
    QStringList components = dirname.split( "/", QString::SkipEmptyParts );
    QString     runID      = components.last();
 
-   QString triple         = cb_triple->currentText();
+   QString triple         = triples[ currentTriple ];
    QStringList parts      = triple.split(" / ");
 
    QString     cell       = parts[ 0 ];
