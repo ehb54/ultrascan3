@@ -50,6 +50,8 @@ void US_Hydrodyn::read_residue_file()
    residue_atom_hybrid_map.clear();
    new_residues.clear();
    map < QString, int > dup_residue_map;
+   map < QString, bool > pbr_override_map; // maps positioner for overwrite
+
    i=1;
    if (f.open(IO_ReadOnly|IO_Translate))
    {
@@ -126,6 +128,14 @@ void US_Hydrodyn::read_residue_file()
                   = new_atom.hybrid.name;
                new_residue.r_atom.push_back(new_atom);
                new_atoms[new_atom.bead_assignment].push_back(new_atom);
+               if ( new_residue.name.contains(QRegExp("^PBR-")) )
+               {
+                  pbr_override_map[ QString("%1|%2|%3|%4")
+                                    .arg(new_residue.name == "PBR-P" ? "P" : "NP" )
+                                    .arg(new_atom.name)
+                                    .arg(new_atom.hybrid.name)
+                                    .arg(new_atom.bead_assignment) ] = new_atom.positioner;
+               }                   
             }
             else
             {
@@ -207,6 +217,46 @@ void US_Hydrodyn::read_residue_file()
       }
    }
 #endif
+
+   // process residue list for adjustments pbr vs non-pbr
+   for ( unsigned int i = 0; i < residue_list.size(); i++ )
+   {
+      // only AA's
+      if ( residue_list[i].type == 0 &&
+           !residue_list[i].name.contains(QRegExp("^PBR-")) )
+      {
+         for ( unsigned int j = 0; j < residue_list[i].r_atom.size(); j++ )
+         {
+            QString arg = 
+               QString("%1|%2|%3|%4")
+               .arg(residue_list[i].name == "PRO" ? "P" : "NP" )
+               .arg(residue_list[i].r_atom[j].name)
+               .arg(residue_list[i].r_atom[j].hybrid.name)
+               .arg(residue_list[i].r_atom[j].bead_assignment);
+            if ( pbr_override_map.count(arg) ) 
+            {
+               residue_list[i].r_atom[j].positioner = pbr_override_map[arg];
+            }
+         }
+      }
+   }
+   // point OXT to PBR-OXT for pbr rule
+   if ( multi_residue_map["OXT"].size() == 1 &&
+        multi_residue_map["PBR-OXT"].size() == 1 )
+   {
+      int posOXT = multi_residue_map["OXT"][0];
+      int posPBR_OXT = multi_residue_map["PBR-OXT"][0];
+      residue_list[posOXT] = residue_list[posPBR_OXT];
+      residue_list[posOXT].name = "OXT";
+   } 
+   else
+   {
+      error_count++;
+      QString msg = "Warning: PBR rule OXT not replaced with OXT-P because there is not exactly 1 OXT and 1 PBR-OXT\n";
+      error_text += msg;
+      error_msg += msg;
+   }
+
    if (error_count)
    {
       QMessageBox::message(tr("ERRORS:"), error_msg);
@@ -215,6 +265,7 @@ void US_Hydrodyn::read_residue_file()
          editor->append(error_text);
       }
    }
+
    save_residue_list = residue_list;
    save_residue_list_no_pbr = residue_list_no_pbr;
    save_multi_residue_map = multi_residue_map;
