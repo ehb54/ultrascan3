@@ -1821,8 +1821,10 @@ init2()
    }
 
    for(int i = 0; i < nat; i++) {
-      printf("%d %.2f %.2f %.2f %.2f %d %d\n", 
+      printf("%d %s %s %.4f %.4f %.4f %.4f %d %d\n", 
              i,
+             active_atoms[i]->name.ascii(),
+             active_atoms[i]->resName.ascii(),
              dt[i].r, 
              dt[i].x, 
              dt[i].y, 

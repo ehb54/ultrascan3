@@ -4577,8 +4577,44 @@ int US_Hydrodyn::compute_asa()
                } // PRO
                last_main_chain_bead = this_atom;
             }
+         } // for k < atom.size()
+         // fix up mw, vol at end for no OXT when PBR rule is on
+         if ( misc.pb_rule_on &&
+              last_main_chain_bead &&
+              last_main_chain_bead->p_residue->type == 0 &&
+              last_main_chain_bead->name != "PRO" &&
+              !has_OXT[QString("%1|%2|%3")
+               .arg(j)
+               .arg(last_main_chain_bead->resName)
+               .arg(last_main_chain_bead->resSeq)])
+         {
+            if ( advanced_config.debug_1 )
+            {
+               puts("pass 2b OXT adjustment");
+            }
+            if ( multi_residue_map["PBR-NO-OXT"].size() == 1 )
+            {
+               int pos = multi_residue_map["PBR-NO-OXT"][0];
+               last_main_chain_bead->bead_ref_volume = residue_list[pos].r_bead[0].volume;
+               last_main_chain_bead->bead_ref_mw = residue_list[pos].r_bead[0].mw;
+               last_main_chain_bead->bead_computed_radius = pow(3 * last_main_chain_bead->bead_ref_volume / (4.0*M_PI), 1.0/3);
+               if (last_main_chain_bead->resName == "GLY") {
+                  last_main_chain_bead->bead_ref_mw += 1.01f;
+                  if ( advanced_config.debug_1 )
+                  {
+                     puts("pass 2b GLY adjustment +1 on last MC of atom");
+                  }
+               }
+            }
+            else
+            {
+               QColor save_color = editor->color();
+               editor->setColor("red");
+               editor->append("Chain has no terminating OXT and PBR-NO-OXT isn't uniquely defined in the residue file.");
+               editor->setColor(save_color);
+            }
          }
-      }
+      } // for j < molecule.size()
    }
 
    progress->setProgress(ppos++); // 5
