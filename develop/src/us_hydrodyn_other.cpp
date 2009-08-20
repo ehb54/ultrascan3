@@ -512,6 +512,7 @@ void US_Hydrodyn::read_pdb(const QString &filename)
    lb_model->setEnabled(true);
    lb_model->setSelected(0, true);
    current_model = 0;
+   model_vector_as_loaded = model_vector;
 }
 
 int US_Hydrodyn::read_bead_model(QString filename)
@@ -656,6 +657,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          current_model = 0;
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
+         bead_models_as_loaded = bead_models;
          return 0;
       }
    }
@@ -783,11 +785,10 @@ int US_Hydrodyn::read_bead_model(QString filename)
          current_model = 0;
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
-
+         bead_models_as_loaded = bead_models;
          return 0;
       }
    }
-
    editor->append("File read error\n");
    return -2;
 }
@@ -1452,7 +1453,7 @@ void US_Hydrodyn::set_default()
       asa.asab1_step = 1.0;
 
       grid.cubic = true;       // apply cubic grid
-      grid.hydrate = false;    // true: hydrate model
+      grid.hydrate = true;    // true: hydrate model
       grid.center = false;    // true: center of cubelet, false: center of mass
       grid.tangency = false;   // true: Expand beads to tangency
       grid.cube_side = 5.0;
@@ -2227,12 +2228,12 @@ void US_Hydrodyn::append_options_log_atob()
 
    s.sprintf(
              "Grid Functions (AtoB):\n"
-             "  Computations Relative to:   %s\n"
-             "  Cube Side (Angstrom):       %.1f\n"
-             "  Apply Cubic Grid:           %s\n"
-             "  Hydrate the Original Model: %s\n"
-             "  Expand Beads to Tangency:   %s\n"
-             "  Enable ASA options:         %s\n"
+             "  Computations Relative to:             %s\n"
+             "  Cube Side (Angstrom):                 %.1f\n"
+             "  Apply Cubic Grid:                     %s\n"
+             "  Add theoretical hydration (PDB only): %s\n"
+             "  Expand Beads to Tangency:             %s\n"
+             "  Enable ASA options:                   %s\n"
              "\n"
 
              "Grid (AtoB) Overlap Reduction:\n"
@@ -2705,7 +2706,7 @@ QString US_Hydrodyn::default_differences_grid()
    }
    if ( grid.hydrate != default_grid.hydrate )
    {
-      str += QString(base + "Hydrate the Original Model: %1\n")
+      str += QString(base + " Add theoretical hydration (PDB only): %1\n")
          .arg(grid.hydrate ? "On" : "Off");
    }
    if ( grid.tangency != default_grid.tangency )
