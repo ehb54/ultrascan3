@@ -226,6 +226,7 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
 {
    atom_counts.clear();
    has_OXT.clear();
+
    for (unsigned int j = 0; j < model->molecule.size(); j++)
    {
       QString lastResSeq = "";
@@ -264,6 +265,86 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
                      .arg(lastResName)
                      .arg(lastResSeq)] = atom_count;
       }
+   }
+
+   // pass for broken chains
+   // later add distance check for CA-N ?
+   broken_chain_end.clear();
+   broken_chain_head.clear();
+   int breaks = 0;
+   int total_aa = 0;
+   for (unsigned int j = 0; j < model->molecule.size(); j++)
+   {
+      QString lastResSeq = "";
+      QString lastResName = "";
+      QString lastChainID = "";
+      // count non AA types
+      int non_aa = 0;
+      int aa = 0;
+      for (unsigned int k = 0; k < model->molecule[j].atom.size(); k++)
+      {
+         PDB_atom *this_atom = &(model->molecule[j].atom[k]);
+         
+         if ( lastResSeq != this_atom->resSeq ||
+              lastResName != this_atom->resName )
+         {
+            if ( multi_residue_map.count(this_atom->resName) &&
+                 residue_list[multi_residue_map[this_atom->resName][0]].type == 0 )
+            {
+               aa++;
+               total_aa++;
+            }
+            else
+            {
+               non_aa++;
+            }
+            if ( lastResSeq != "" &&
+                 lastResSeq.toInt() + 1 !=  this_atom->resSeq.toInt() )
+            {
+               breaks++;
+               broken_chain_end[QString("%1|%2")
+                                .arg(lastResSeq)
+                                .arg(lastResName)] = true;
+               broken_chain_head[QString("%1|%2")
+                                 .arg(this_atom->resSeq)
+                                 .arg(this_atom->resName)] = true;
+
+               QColor save_color = editor->color();
+               editor->setColor("dark red");
+               editor->append(
+                              QString("Warning: break in residue sequence: %1Molecule %2 Residue %3 %4 & %5 %6.")
+                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                              .arg(j + 1)
+                              .arg(lastResName)
+                              .arg(lastResSeq)
+                              .arg(this_atom->resName)
+                              .arg(this_atom->resSeq)
+                              );
+               editor->setColor(save_color);
+            }
+            lastChainID = this_atom->chainID;
+            lastResSeq = this_atom->resSeq;
+            lastResName = this_atom->resName;
+         }
+      }
+      if ( aa && non_aa )
+      {
+         QColor save_color = editor->color();
+         editor->setColor("dark magenta");
+         editor->append(
+                        QString("Notice: %1found %2 non Amino Acids in a chain containing %3 AA Residues.")
+                        .arg(lastChainID == " " ? "" : ("Chain " + lastChainID + " "))
+                        .arg(non_aa)
+                        .arg(aa)
+                        );
+         editor->setColor(save_color);
+      }
+   }
+   // should be chain based
+   if ( !total_aa || !advanced_config.pbr_broken_logic )
+   {
+      broken_chain_end.clear();
+      broken_chain_head.clear();
    }
 
 #if defined(DEBUG_MULTI_RESIDUE)
@@ -4172,6 +4253,7 @@ int US_Hydrodyn::compute_asa()
    int count_actives;
    float molecular_cog[3] = { 0, 0, 0 };
    float molecular_mw = 0;
+   QString cog_msg = "COG calc summary information\n";
 
    // for (unsigned int i = 0; i < model_vector.size (); i++)
    {
@@ -4224,7 +4306,11 @@ int US_Hydrodyn::compute_asa()
                     !(misc.pb_rule_on &&
                       this_atom->chain == 0 &&
                       this_atom->name == "N" &&
-                      count_actives))) {
+                      count_actives &&
+                      !broken_chain_head.count(QString("%1|%2")
+                                               .arg(this_atom->resSeq)
+                                               .arg(this_atom->resName))
+                      ) ) ) {
                   if ( advanced_config.debug_1 ||
                        advanced_config.debug_2 )
                   {
@@ -4302,8 +4388,10 @@ int US_Hydrodyn::compute_asa()
                if (misc.pb_rule_on &&
                    create_beads_normally &&
                    this_atom->chain == 0 &&
-                   misc.pb_rule_on &&
                    this_atom->name == "N" &&
+                   !broken_chain_head.count(QString("%1|%2")
+                                           .arg(this_atom->resSeq)
+                                           .arg(this_atom->resName)) &&
                    last_main_chain_bead) {
                   use_atom = last_main_chain_bead;
                }
@@ -4328,7 +4416,11 @@ int US_Hydrodyn::compute_asa()
                    this_atom->bead_positioner) {
                   if ( advanced_config.debug_3 )
                   {
-                     printf("adding cog from %d to %d mw %f totmw %f (this pos [%f,%f,%f], org pos [%f,%f,%f])\n", this_atom->serial, use_atom->serial, this_atom->mw, use_atom->bead_cog_mw,
+                     printf("adding cog from %d to %d mw %f totmw %f (this pos [%f,%f,%f], org pos [%f,%f,%f])\n", 
+                            this_atom->serial, 
+                            use_atom->serial, 
+                            this_atom->mw, 
+                            use_atom->bead_cog_mw,
                             this_atom->coordinate.axis[0],
                             this_atom->coordinate.axis[1],
                             this_atom->coordinate.axis[2],
@@ -4337,6 +4429,7 @@ int US_Hydrodyn::compute_asa()
                             use_atom->bead_cog_coordinate.axis[2]
                             );
                   }
+                  cog_msg += QString("adding %1 to %2\n").arg(this_atom->serial).arg(use_atom->serial);
                   use_atom->bead_cog_mw += this_atom->mw;
                   for (unsigned int m = 0; m < 3; m++) {
                      use_atom->bead_cog_coordinate.axis[m] +=
@@ -4388,12 +4481,9 @@ int US_Hydrodyn::compute_asa()
 
                if (this_atom->chain == 0 &&
                    this_atom->name == "CA") {
-
                   last_main_chain_bead = this_atom;
                }
-
                count_actives++;
-
             }
             else 
             {
@@ -4401,6 +4491,10 @@ int US_Hydrodyn::compute_asa()
             }
          }
       }
+   }
+   if ( advanced_config.debug_3 )
+   {
+      cout << cog_msg;
    }
 
    if (molecular_mw) {
@@ -4507,6 +4601,23 @@ int US_Hydrodyn::compute_asa()
                   fflush(stdout);
                }
                this_atom->is_bead = false;
+               // override broken head OXT residue
+               if ( misc.pb_rule_on &&
+                    this_atom->resName != "PRO" &&
+                    broken_chain_head.count(QString("%1|%2")
+                                            .arg(this_atom->resSeq)
+                                            .arg(this_atom->resName)) &&
+                    multi_residue_map.count("NPBR-OXT") )
+               {
+                  if ( advanced_config.debug_1 )
+                  {
+                     puts("pass 2b broken head OXT NPBR replacement");
+                  }
+                  int posNPBR_OXT = multi_residue_map["NPBR-OXT"][0];
+                  this_atom->bead_ref_volume = residue_list[posNPBR_OXT].r_bead[0].volume;
+                  this_atom->bead_ref_mw = residue_list[posNPBR_OXT].r_bead[0].mw;
+               }
+                  
                last_main_chain_bead->bead_ref_volume = this_atom->bead_ref_volume;
                last_main_chain_bead->bead_ref_mw = this_atom->bead_ref_mw;
                if (last_main_chain_bead->resName == "GLY") 
@@ -4544,6 +4655,9 @@ int US_Hydrodyn::compute_asa()
 
                if (misc.pb_rule_on &&
                    last_main_chain_bead &&
+                   !broken_chain_head.count(QString("%1|%2")
+                                            .arg(this_atom->resSeq)
+                                            .arg(this_atom->resName)) &&
                    (this_atom->resName == "PRO" ||
                     last_main_chain_bead->resName == "PRO")
                    ) {
@@ -4577,6 +4691,62 @@ int US_Hydrodyn::compute_asa()
                } // PRO
                last_main_chain_bead = this_atom;
             }
+
+            // fix up mw, vol at end for broken end when PBR rule is on
+            if ( misc.pb_rule_on &&
+                 this_atom->p_residue->type == 0 &&
+                 this_atom->is_bead &&
+                 this_atom->chain == 0 &&
+                 broken_chain_end.count(QString("%1|%2")
+                                        .arg(this_atom->resSeq)
+                                        .arg(this_atom->resName)) &&
+                 !broken_chain_head.count(QString("%1|%2")
+                                        .arg(this_atom->resSeq)
+                                        .arg(this_atom->resName)) &&
+                 this_atom->resName != "PRO" &&
+                 (k || this_atom->name != "N")
+                 )
+            {
+               if ( advanced_config.debug_1 )
+               {
+                  printf("pass 2b broken end adjustment %s %s %s org mw %.4f vol %.4f\n",
+                         this_atom->name.ascii(),
+                         this_atom->resName.ascii(),
+                         this_atom->resSeq.ascii(),
+                         this_atom->bead_ref_mw,
+                         this_atom->bead_ref_volume);
+               }
+               if ( multi_residue_map["PBR-NO-OXT"].size() == 1 )
+               {
+                  int pos = multi_residue_map["PBR-NO-OXT"][0];
+                  this_atom->bead_ref_volume = residue_list[pos].r_bead[0].volume;
+                  this_atom->bead_ref_mw = residue_list[pos].r_bead[0].mw;
+                  this_atom->bead_computed_radius = pow(3 * last_main_chain_bead->bead_ref_volume / (4.0*M_PI), 1.0/3);
+                  if (this_atom->resName == "GLY") {
+                     this_atom->bead_ref_mw += 1.01f;
+                     if ( advanced_config.debug_1 )
+                     {
+                        puts("pass 2b GLY adjustment +1 on broken end");
+                     }
+                  }
+                  if ( advanced_config.debug_1 )
+                  {
+                     printf("pass 2b broken end adjustment %s %s %s new mw %.4f vol %.4f\n",
+                            this_atom->name.ascii(),
+                            this_atom->resName.ascii(),
+                            this_atom->resSeq.ascii(),
+                            this_atom->bead_ref_mw,
+                            this_atom->bead_ref_volume);
+                  }
+               }
+               else
+               {
+                  QColor save_color = editor->color();
+                  editor->setColor("red");
+                  editor->append("Chain has broken end and PBR-NO-OXT isn't uniquely defined in the residue file.");
+                  editor->setColor(save_color);
+               }
+            }
          } // for k < atom.size()
          // fix up mw, vol at end for no OXT when PBR rule is on
          if ( misc.pb_rule_on &&
@@ -4586,11 +4756,14 @@ int US_Hydrodyn::compute_asa()
               !has_OXT[QString("%1|%2|%3")
                .arg(j)
                .arg(last_main_chain_bead->resName)
-               .arg(last_main_chain_bead->resSeq)])
+               .arg(last_main_chain_bead->resSeq)]  &&
+              !broken_chain_head.count(QString("%1|%2")
+                                       .arg(last_main_chain_bead->resSeq)
+                                       .arg(last_main_chain_bead->resName)) )
          {
             if ( advanced_config.debug_1 )
             {
-               puts("pass 2b OXT adjustment");
+               puts("pass 2b missing OXT adjustment");
             }
             if ( multi_residue_map["PBR-NO-OXT"].size() == 1 )
             {

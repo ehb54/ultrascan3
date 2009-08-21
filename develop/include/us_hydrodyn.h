@@ -70,6 +70,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QLabel *lbl_core_progress;
       void set_disabled();
       QTextEdit *editor;
+      void play_sounds(int);
 
    private:
       bool residue_widget;
@@ -260,6 +261,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       //                                  if true, the atom should be skipped
       map < QString, int >                molecules_residue_min_missing;
       //                                  maps molecule #|resSeq to pos of entry with minimum missing count
+      map < QString, bool >               broken_chain_end;
+      //                                  maps molecule #|resSeq to flag indicating broken end of chain
+      map < QString, bool >               broken_chain_head;
+      //                                  maps molecule #|resSeq to flag indicating broken head of chain
       QString last_abb_msgs; // automatic bead builder message log
       vector <struct PDB_model> model_vector;
       vector <struct PDB_model> model_vector_as_loaded;

@@ -64,6 +64,22 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    cb_auto_show_hydro->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_auto_show_hydro, SIGNAL(clicked()), this, SLOT(set_auto_show_hydro()));
 
+   cb_pbr_broken_logic = new QCheckBox(this);
+   cb_pbr_broken_logic->setText(tr(" Enable logic for broken chains with peptide bond rule"));
+   cb_pbr_broken_logic->setEnabled(true);
+   cb_pbr_broken_logic->setChecked((*advanced_config).pbr_broken_logic);
+   cb_pbr_broken_logic->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_pbr_broken_logic->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_pbr_broken_logic, SIGNAL(clicked()), this, SLOT(set_pbr_broken_logic()));
+
+   cb_use_sounds = new QCheckBox(this);
+   cb_use_sounds->setText(tr(" Activate sound notifications"));
+   cb_use_sounds->setEnabled(true);
+   cb_use_sounds->setChecked((*advanced_config).use_sounds);
+   cb_use_sounds->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_use_sounds->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_use_sounds, SIGNAL(clicked()), this, SLOT(set_use_sounds()));
+
    cb_debug_1 = new QCheckBox(this);
    cb_debug_1->setText(tr(" Debug molecular weight/volume adjustments"));
    cb_debug_1->setEnabled(true);
@@ -102,7 +118,7 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=9, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=11, columns = 2, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -114,6 +130,10 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    background->addMultiCellWidget(cb_auto_calc_somo, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(cb_auto_show_hydro, j, j, 0, 1);
+   j++;
+   background->addMultiCellWidget(cb_pbr_broken_logic, j, j, 0, 1);
+   j++;
+   background->addMultiCellWidget(cb_use_sounds, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(cb_debug_1, j, j, 0, 1);
    j++;
@@ -167,6 +187,18 @@ void US_Hydrodyn_AdvancedConfig::set_auto_calc_somo()
 void US_Hydrodyn_AdvancedConfig::set_auto_show_hydro()
 {
    (*advanced_config).auto_show_hydro = cb_auto_show_hydro->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_AdvancedConfig::set_pbr_broken_logic()
+{
+   (*advanced_config).pbr_broken_logic = cb_pbr_broken_logic->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_AdvancedConfig::set_use_sounds()
+{
+   (*advanced_config).use_sounds = cb_use_sounds->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

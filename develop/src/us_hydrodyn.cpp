@@ -79,6 +79,8 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    advanced_config.scroll_editor = false;
    advanced_config.auto_calc_somo = false;
    advanced_config.auto_show_hydro = false;
+   advanced_config.pbr_broken_logic = true;
+   advanced_config.use_sounds = false;
    advanced_config.debug_1 = false;
    advanced_config.debug_2 = false;
    advanced_config.debug_3 = false;
@@ -167,6 +169,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
          putenv( rmp );
       }
    }
+   play_sounds(1);
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -1306,6 +1309,10 @@ int US_Hydrodyn::calc_somo()
    if (calcAutoHydro)
    {
       calc_hydro();
+   } 
+   else
+   {
+      play_sounds(1);
    }
    return 0;
 }
@@ -1648,6 +1655,10 @@ int US_Hydrodyn::calc_grid_pdb()
    {
       calc_hydro();
    }
+   else
+   {
+      play_sounds(1);
+   }
 
    return (flag);
 }
@@ -1888,6 +1899,10 @@ int US_Hydrodyn::calc_grid()
    {
       calc_hydro();
    }
+   else
+   {
+      play_sounds(1);
+   }
 
    return (flag);
 }
@@ -2094,6 +2109,7 @@ void US_Hydrodyn::calc_hydro()
    {
       show_hydro_results();
    }
+   play_sounds(1);
    qApp->processEvents();
 }
 

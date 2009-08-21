@@ -30,6 +30,8 @@ struct advanced_config
    bool scroll_editor; // side scrolling of editor on/off
    bool auto_calc_somo; // automatically calc somo on load
    bool auto_show_hydro; // automatically show hydro calc
+   bool pbr_broken_logic; // enable logic for broken chains when pb_rule_on
+   bool use_sounds; // turns on sound events
    bool debug_1;
    bool debug_2;
    bool debug_3;
@@ -58,6 +60,8 @@ class US_EXTERN US_Hydrodyn_AdvancedConfig : public QFrame
       QCheckBox *cb_scroll_editor;
       QCheckBox *cb_auto_calc_somo;
       QCheckBox *cb_auto_show_hydro;
+      QCheckBox *cb_pbr_broken_logic;
+      QCheckBox *cb_use_sounds;
       QCheckBox *cb_debug_1;
       QCheckBox *cb_debug_2;
       QCheckBox *cb_debug_3;
@@ -71,6 +75,8 @@ class US_EXTERN US_Hydrodyn_AdvancedConfig : public QFrame
       void set_scroll_editor();
       void set_auto_calc_somo();
       void set_auto_show_hydro();
+      void set_pbr_broken_logic();
+      void set_use_sounds();
       void set_debug_1();
       void set_debug_2();
       void set_debug_3();

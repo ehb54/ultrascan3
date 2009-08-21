@@ -16,6 +16,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <qsound.h>
 
 #ifndef WIN32
 #   include <unistd.h>
@@ -240,6 +241,21 @@ void US_Hydrodyn::read_residue_file()
          }
       }
    }
+   // save OXT to NPBR-OXT
+   if ( multi_residue_map["OXT"].size() == 1 )
+   {
+      int posOXT = multi_residue_map["OXT"][0];
+      int posNPBR_OXT = residue_list.size();
+      residue_list.push_back(residue_list[posOXT]);
+      residue_list[posNPBR_OXT].name = "NPBR-OXT";
+      residue_list_no_pbr.push_back(residue_list[posNPBR_OXT]);
+      multi_residue_map["NPBR-OXT"].push_back(posNPBR_OXT);
+      if ( residue_list.size() != residue_list_no_pbr.size() )
+      {
+         printf("Inconsistant residue lists - internal error.\n");
+      }
+   } // else errors handled below
+
    // point OXT to PBR-OXT for pbr rule
    if ( multi_residue_map["OXT"].size() == 1 &&
         multi_residue_map["PBR-OXT"].size() == 1 )
@@ -2954,3 +2970,41 @@ void US_Hydrodyn::display_default_differences()
       editor->setColor(save_color);
    }
 }
+
+
+// probably should replace with enum of event types
+// and a more through matrix of sound events
+void US_Hydrodyn::play_sounds(int type)
+{
+   if ( advanced_config.use_sounds &&
+        QSound::available )
+   {
+      QString sound_base = USglobal->config_list.root_dir + "sounds/";
+      switch (type)
+      {
+      case 1 :
+         {
+            QString sf = sound_base + "somo_done.wav";
+            if ( QFileInfo(sf).exists() )
+            {
+               QSound::play(sf);
+            }
+            else
+            {
+               cout << "Can't locate sound file " << sf << endl;
+            }
+         }
+         break;
+      default :
+         break;
+      }
+   }
+   else
+   {
+      if ( advanced_config.use_sounds )
+      {
+         puts("sound not available");
+      }
+   }
+}
+
