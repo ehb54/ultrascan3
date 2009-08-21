@@ -115,10 +115,15 @@ US_Convert::US_Convert() : US_Widgets()
 
    // Progress bar
    // Row 10
+   lb_progress = us_label( tr( "Progress:" ) , -1 );
+   lb_progress->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
+   lb_progress->setVisible( false );
+   settings->addWidget( lb_progress, row, 0 );
+
    progress = us_progressBar( 0, 100, 0 );
    progress -> reset();
    progress -> setVisible( false );
-   settings -> addWidget( progress, row++, 0, 1, 2 );
+   settings -> addWidget( progress, row++, 1 );
 
    // Standard pushbuttons
 
@@ -253,9 +258,11 @@ void US_Convert::load( void )
 
    else
    {
-      progress ->setRange( 0, triples.size() );
-      progress ->setValue( 0 );
-      progress ->setVisible( true );
+      progress    ->setRange( 0, triples.size() );
+      progress    ->setValue( 0 );
+      lb_progress ->setText( tr( "Converting:" ) );
+      lb_progress ->setVisible( true );
+      progress    ->setVisible( true );
 
       for ( currentTriple = 0; currentTriple < triples.size(); currentTriple++ )
       {
@@ -270,7 +277,8 @@ void US_Convert::load( void )
       }
    }
 
-   progress ->setVisible( false );
+   lb_progress ->setVisible( false );
+   progress    ->setVisible( false );
 
    currentTriple = 0;     // Now let's show the user the first one
    plot_current();
@@ -339,6 +347,11 @@ void US_Convert::read( void )
 
    // Now read the data.
 
+   progress    ->setRange( 0, fileList.size() - 1 );
+   progress    ->setValue( 0 );
+   lb_progress ->setText( tr( "Reading:" ) );
+   lb_progress ->setVisible( true );
+   progress    ->setVisible( true );
    for ( int i = 0; i < fileList.size(); i++ )
    {
       beckmanRaw data;
@@ -350,7 +363,13 @@ void US_Convert::read( void )
       data.channel = ( c.isDigit() ) ? 'A' : c.toAscii();
 
       legacyData << data;
+
+      progress ->setValue( i );
+      qApp     ->processEvents();
    }
+
+   lb_progress ->setVisible( false );
+   progress    ->setVisible( false );
 
    // Get wavelengths
    
@@ -523,9 +542,11 @@ void US_Convert::convert( bool showProgressBar )
       // Enable progress bar
       if ( showProgressBar )
       {
-         progress ->setRange( 0, ccwLegacyData.size() );
-         progress ->setValue( 0 );
-         progress ->setVisible( true );
+         progress    ->setRange( 0, ccwLegacyData.size() - 1 );
+         progress    ->setValue( 0 );
+         lb_progress ->setText( tr( "Converting:" ) );
+         lb_progress ->setVisible( true );
+         progress    ->setVisible( true );
       }
 
       // Readings here and interpolated array
@@ -628,7 +649,11 @@ void US_Convert::convert( bool showProgressBar )
    for ( uint i = 0; i < newRawData.scanData.size(); i++ ) 
       delete newRawData.scanData[ i ].interpolated;
 
-   if ( showProgressBar ) progress ->setVisible( false );
+   if ( showProgressBar )
+   {
+      lb_progress ->setVisible( false );
+      progress    ->setVisible( false );
+   }
   
 }
 
@@ -714,19 +739,63 @@ int US_Convert::write( const QString& filename )
    return result;
 }
  
-void US_Convert::writeAll( void )
+int US_Convert::writeAll( void )
 {
-   int saveCurrentTriple = currentTriple;
-   QList< int > saveIncludes = includes;
+   if ( allData[ 0 ].scanData.empty() ) return US_DataIO::NODATA; 
 
-   init_includes();
+   // Get the directory and write out the data
+   QString dirname = le_dir->text();
+   if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
 
-   for ( currentTriple = 0; currentTriple < triples.size(); currentTriple++ )
-      write();
+   QStringList components = dirname.split( "/", QString::SkipEmptyParts );
+   QString     runID      = components.last();
 
-   includes = saveIncludes;
-   currentTriple = saveCurrentTriple;
+   int result;
 
+   progress    ->setRange( 0, triples.size() - 1 );
+   progress    ->setValue( 0 );
+   lb_progress ->setText( tr( "Writing:" ) );
+   lb_progress ->setVisible( true );
+   progress    ->setVisible( true );
+
+   for ( int i = 0; i < triples.size(); i++ )
+   {
+      QString triple         = triples[ i ];
+      QStringList parts      = triple.split(" / ");
+
+      QString     cell       = parts[ 0 ];
+      QString     channel    = parts[ 1 ];
+      QString     wavelength = parts[ 2 ];
+
+      QString filename   = runID      + "." 
+                         + runType    + "." 
+                         + cell       + "." 
+                         + channel    + "." 
+                         + wavelength + ".auc";
+
+      rawData currentData = allData[ i ];
+      result = US_DataIO::writeRawData( dirname + filename, allData[ i ] );
+
+      progress ->setValue( i );
+      qApp     ->processEvents();
+   }
+
+   lb_progress ->setVisible( false );
+   progress    ->setVisible( false );
+
+   if ( result != US_DataIO::OK )
+   {
+      // Try to delete the file and tell the user   
+   }
+   else 
+   {
+      QMessageBox::information( this,
+            tr( "Success" ),
+            QString::number( triples.size() ) + " " + 
+            runID + tr( " files written." ) );
+   }        
+
+   return result;
 }
 
 void US_Convert::setInterpolated ( unsigned char* bitmap, int location )
@@ -851,6 +920,12 @@ void US_Convert::plot_all( void )
    double maxV = -1.0e99;
    double minV =  1.0e99;
 
+   progress    ->setRange( 0, currentData.scanData.size() - 1 );
+   progress    ->setValue( 0 );
+   lb_progress ->setText( tr( "Plotting:" ) );
+   lb_progress ->setVisible( true );
+   progress    ->setVisible( true );
+
    for ( uint i = 0; i < currentData.scanData.size(); i++ )
    {
       if ( ! includes.contains( i ) ) continue;
@@ -872,7 +947,13 @@ void US_Convert::plot_all( void )
 
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setData( r, v, size );
+
+      progress ->setValue( i );
+      qApp     ->processEvents();
    }
+
+   lb_progress ->setVisible( false );
+   progress    ->setVisible( false );
 
    // Reset the scan curves within the new limits
    double padR = ( maxR - minR ) / 30.0;

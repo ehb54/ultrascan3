@@ -49,6 +49,8 @@ class US_Convert : public US_Widgets
       QList< int >  includes;                  // list of points to include in plot
       QwtPlot*      data_plot;
       QwtPlotGrid*  grid;
+
+      QLabel*       lb_progress;
       QProgressBar* progress;
 
       int  write           ( const QString& );
@@ -74,7 +76,7 @@ class US_Convert : public US_Widgets
       void include         ( void );
       void reset_scan_ctrls( void );
       void write           ( void );
-      void writeAll        ( void );
+      int  writeAll        ( void );
 		  void help            ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
 };
