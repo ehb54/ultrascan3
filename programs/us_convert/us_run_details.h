@@ -31,6 +31,7 @@ class US_EXTERN US_RunDetails : public US_WidgetsDialog
       QLineEdit*   le_rotorSpeed;
 
       QwtPlot*     data_plot;
+      QwtPlotGrid* grid;
 
    private slots:
       void update( int );

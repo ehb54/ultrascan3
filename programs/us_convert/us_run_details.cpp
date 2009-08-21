@@ -37,7 +37,7 @@ US_RunDetails::US_RunDetails( const QList< rawData >& data, int index,
    axisTitle.setText( tr( "Time between Scans (min)" ) );
    data_plot->setAxisTitle( QwtPlot::yRight, axisTitle );
 
-   us_grid( data_plot );
+   grid = us_grid( data_plot );
    row += 6;
 
    // Row
@@ -54,7 +54,7 @@ US_RunDetails::US_RunDetails( const QList< rawData >& data, int index,
    main->addWidget( lb_runID, row, 0 );
 
    lw_triples = us_listwidget();
-   lw_triples->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum );
+   //lw_triples->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum );
    lw_triples->setMinimumSize( 50, 50 );
    main->addWidget( lw_triples, row, 2, 5, 3 );
 
@@ -129,8 +129,6 @@ US_RunDetails::US_RunDetails( const QList< rawData >& data, int index,
    main->addWidget( pb_close, row++, 2, 1, 3 );
 
    update( index );
-   connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
-                        SLOT  ( update           ( int ) ) );
 }
 
 void US_RunDetails::update( int index )
@@ -175,6 +173,9 @@ void US_RunDetails::update( int index )
    int    mins  = (int) round( ( last - hours * 3600.0 ) / 60.0 );
    le_runLen->setText( s.sprintf( "%d hours %02d min", hours, mins ) );
 
+   lw_triples->disconnect();
+   lw_triples->clear();
+
    for ( int i = 0; i < triples.size(); i++ )
    {
       int scans = dataList[ i ].scanData.size();
@@ -182,6 +183,8 @@ void US_RunDetails::update( int index )
    }
 
    lw_triples->setCurrentRow( index );
+   connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
+                        SLOT  ( update           ( int ) ) );
 
    double maxTemp = -1.0e99;
    double minTemp =  1.0e99;
@@ -229,9 +232,16 @@ void US_RunDetails::update( int index )
                 "results may be affected significantly." ) );
    }
 
+   data_plot->clear();
+
    // Draw the plots
    data_plot->setAxisScale( QwtPlot::yLeft, 0.0, 60.0 );
-   data_plot->setAxisScale( QwtPlot::xBottom, 1.0, scanCount, 1.0 );
+   data_plot->setAxisScale( QwtPlot::xBottom, 1.0, scanCount, 5.0 );
+
+   //QwtScaleDiv* xScale = data_plot->axisScalDiv( QwtPlot::xBottom );
+   grid->enableYMin( false );
+   //QwtScaleDiv xScale = grid->xScaleDiv();
+
 
    QwtSymbol sym;
 
