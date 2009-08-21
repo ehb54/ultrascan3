@@ -85,7 +85,6 @@ class US_EXTERN US_Edvabs : public US_Widgets
       QPushButton*       pb_plateau;
       QPushButton*       pb_baseline;
       QPushButton*       pb_noise;
-      QPushButton*       pb_subtract;
       QPushButton*       pb_spikes;
       QPushButton*       pb_invert;
       QPushButton*       pb_write;

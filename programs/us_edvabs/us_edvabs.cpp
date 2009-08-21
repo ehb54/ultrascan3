@@ -1376,7 +1376,6 @@ void US_Edvabs::noise( void )
    {
       pb_noise      ->setIcon( check );
       pb_residuals  ->setEnabled( true );
-      qDebug() << residuals;
    }
    else
       pb_residuals->setEnabled( false );
@@ -1516,8 +1515,6 @@ void US_Edvabs::write( void )
    filename.insert( index, editID + "." );
    filename.replace( QRegExp( "auc$" ), "xml" );
 
-   qDebug() << workingDir << filename;
-
    QFile f( workingDir + filename );
 
    if ( ! f.open( QFile::WriteOnly | QFile::Text ) )
@@ -1532,7 +1529,6 @@ void US_Edvabs::write( void )
    QTextStream ts( &f );
 
    QDomDocument doc( "UltraScanEdits" );
-
    QDomElement root = doc.createElement( "experiment" );
    doc.appendChild( root );
 
@@ -1614,7 +1610,6 @@ void US_Edvabs::write( void )
    dataRange.setAttribute( "right", range_right );
    parameters.appendChild( dataRange );
 
-
    QDomElement p = doc.createElement( "plateaus" );
    parameters.appendChild( p );
 
@@ -1632,9 +1627,9 @@ void US_Edvabs::write( void )
    
    QDomElement operations = doc.createElement( "operations" );
    run.appendChild( operations );
-   
+ 
    // Write RI Noise
-   if ( ! pb_subtract->icon().isNull() )
+   if ( ! pb_residuals->icon().isNull() )
    {
       QDomElement riNoise = doc.createElement( "subtract_ri_noise" );
       riNoise.setAttribute( "order", noise_order );
