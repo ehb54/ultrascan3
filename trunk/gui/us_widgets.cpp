@@ -298,7 +298,7 @@ QwtPlotGrid* US_Widgets::us_grid( QwtPlot* plot )
 QwtPlotCurve* US_Widgets::us_curve( QwtPlot* plot, const QString& title )
 {
   QwtPlotCurve* curve = new QwtPlotCurve( title );
-  curve->setRenderHint( QwtPlotItem::RenderAntialiased );
+  //curve->setRenderHint( QwtPlotItem::RenderAntialiased );
   curve->setPen       ( QPen( US_GuiSettings::plotCurve() ) );
   curve->setYAxis     ( QwtPlot::yLeft );
   curve->attach       ( plot );
