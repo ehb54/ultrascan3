@@ -37,7 +37,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    check  = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
    invert = 1.0;
 
-   setWindowTitle( tr( "Edit Velocity Absorbance Data" ) );
+   setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
    QHBoxLayout* main = new QHBoxLayout( this );
@@ -72,7 +72,6 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( lb_triple, s_row, 0, 1, 2 );
 
    cb_triple = us_comboBox();
-   //cb_triple->setInsertPolicy( QComboBox::InsertAlphabetically );
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
                        SLOT  ( new_triple         ( int ) ) );
    specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
@@ -250,6 +249,8 @@ void US_Edvabs::reset( void )
    ct_to->setMaxValue( 0 );
    ct_to->setValue   ( 0 );
 
+   cb_triple->disconnect();
+   cb_triple->clear();
 
    data_plot->detachItems();
    pick     ->disconnect();
@@ -352,7 +353,7 @@ void US_Edvabs::load( void )
 
    if ( workingDir.isEmpty() ) return; 
 
-   //reset();
+   reset();
    workingDir.replace( "\\", "/" );  // WIN32 issue
 
    QStringList components =  workingDir.split( "/", QString::SkipEmptyParts );  
@@ -385,8 +386,6 @@ void US_Edvabs::load( void )
       if ( ! triples.contains( t ) ) triples << t;
    }
 
-   cb_triple->disconnect();
-   cb_triple->clear();
    cb_triple->addItems( triples );
    connect( cb_triple, SIGNAL( currentIndexChanged( int ) ), 
                        SLOT  ( new_triple         ( int ) ) );
@@ -486,6 +485,12 @@ void US_Edvabs::plot_current( int index )
    {
       title = "Radial Absorbance Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
+   }
+   else if ( parts[ 1 ] == "RI" )
+   {
+      title = "Radial Intensity Data\nRun ID: "
+            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Intensity " ) );
    }
    else 
       title = "File type not recognized";
@@ -1301,7 +1306,7 @@ bool US_Edvabs::spike_check( scan* s, int point, int start, int end,
 
 void US_Edvabs::remove_spikes( void )
 {
-// This is working the whole scan.  Perhaps we should be just working 
+// FIXME. This is working the whole scan.  We should be just working 
 // from the defined range.  
 
    double smoothed_value;
@@ -1331,11 +1336,6 @@ void US_Edvabs::remove_spikes( void )
             s->values[ j ].value = smoothed_value;
       }
    }
-
-   // Don't forget to update the rawData in allData
-
-   // We can probably set up an undo here -- just copy data from 
-   // allData back to data.
 
    pb_spikes->setIcon   ( check );
    pb_spikes->setEnabled( false );
@@ -1497,10 +1497,10 @@ void US_Edvabs::write( void )
 
       bool ok;
       editID = QInputDialog::getText( this, 
-            tr( "Input a unique Edit ID for this edit session" ),
-            tr( "Use alphanumeric characters, underscores, or hyphens (no spaces)" ), 
-            QLineEdit::Normal,
-            today, &ok);
+         tr( "Input a unique Edit ID for this edit session" ),
+         tr( "Use alphanumeric characters, underscores, or hyphens (no spaces)" ),
+         QLineEdit::Normal,
+         today, &ok);
       
       if ( ! ok ) return;
 
@@ -1508,7 +1508,8 @@ void US_Edvabs::write( void )
    }
 
    // Determine file name
-   // workingDir + runID + editID + data type + cell + channel + wavelength + ".edits"
+   // workingDir + runID + editID + data type + cell + channel + wavelength 
+   //            + ".xml"
 
    QString filename = files[ cb_triple->currentIndex() ];
    int     index = filename.indexOf( '.' ) + 1;
@@ -1542,7 +1543,7 @@ void US_Edvabs::write( void )
 
    QDomElement guid = doc.createElement( "uuid" );
    char uuid[ 37 ];
-   uuid_unparse( (const unsigned char*)data.guid, uuid );
+   uuid_unparse( (unsigned char*)data.guid, uuid );
    guid.setAttribute( "value", uuid );
    id.appendChild( guid );
 
@@ -1560,7 +1561,7 @@ void US_Edvabs::write( void )
    root.appendChild( run );
 
    // Write excluded scans
-   if ( data.scanData.size() > (uint) includes.size() )
+   if ( data.scanData.size() > (uint)includes.size() )
    {
       QDomElement excludes = doc.createElement( "excludes" );
       run.appendChild( excludes );
