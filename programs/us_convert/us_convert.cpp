@@ -356,6 +356,7 @@ void US_Convert::read( void )
    {
       beckmanRaw data;
       US_DataIO::readLegacyFile( dir + fileList[ i ], data );
+      qApp->processEvents();
 
       // Add channel
       QChar c = fileList[ i ].at( 0 );  // Get 1st character
