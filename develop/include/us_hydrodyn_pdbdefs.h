@@ -61,7 +61,7 @@ struct PDB_atom
    point bead_coordinate;
    bool normalized_ot_is_valid;      // true if the normalized ot is valid computed
    point normalized_ot;              // the ot
-   unsigned int bead_hydration;
+   float bead_hydration;
    unsigned int bead_color;
    float bead_ref_volume;            // this is taken from the bead structure+hydration
    float bead_ref_volume_unhydrated; // this is taken from the bead structure
@@ -75,7 +75,7 @@ struct PDB_atom
    QString residue_list;             // for loaded bead models
    int group;                        // used in surfracer for breaking up groups of atoms
    QString count_idx;                // used in us_hydrodyn for backtracking on bead/atom exceptions
-   unsigned int atom_hydration;      // used for atob grid hydration
+   float atom_hydration;      // used for atob grid hydration
 };
 
 struct PDB_chain   // chain in PDB file
@@ -96,7 +96,7 @@ struct PDB_model
 
 struct bead
 {
-   unsigned int hydration;       // number of waters bound
+   float        hydration;       // number of waters bound
    unsigned int color;           // color of bead
    unsigned int placing_method;  // baric method
                                  // 0: place the bead at the center of gravity of all atoms
@@ -110,7 +110,7 @@ struct bead
    float        volume;          // anhydrous bead volume
    float        mw;              // bead mw
    bool         hydration_flag;  // false = use sum of atom's hydrations, true = bead hydration overrides
-   unsigned int atom_hydration;  // number of waters bound based upon sum of atoms' hydrations
+   float        atom_hydration;  // number of waters bound based upon sum of atoms' hydrations
 };
 
 struct saxs
@@ -155,7 +155,7 @@ struct atom
    bool         tmp_flag;        // used for finding missing residues
    bool         tmp_used;        // used for avoiding duplicate usage
    float        saxs_excl_vol;   // SAXS excluded volume value
-   unsigned int hydration;       // atomic hydration
+   float        hydration;       // atomic hydration / needed float for ABB
 };
 
 struct residue

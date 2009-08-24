@@ -172,7 +172,6 @@ void US_Hydrodyn_PDB_Parsing::alternate()
 {
    (*pdb).alternate = cb_alternate->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_PDB_Parsing::find_sh()
@@ -184,12 +183,14 @@ void US_Hydrodyn_PDB_Parsing::find_sh()
 void US_Hydrodyn_PDB_Parsing::residue(int val)
 {
    (*pdb).missing_residues = val;
+   ((US_Hydrodyn *)us_hydrodyn)->set_disabled();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_PDB_Parsing::atom(int val)
 {
    (*pdb).missing_atoms = val;
+   ((US_Hydrodyn *)us_hydrodyn)->set_disabled();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

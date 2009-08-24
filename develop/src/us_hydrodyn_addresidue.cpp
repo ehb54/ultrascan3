@@ -1197,7 +1197,7 @@ void US_AddResidue::select_beadatom()
    calc_bead_mw(&new_residue);
    str.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
    le_bead_mw->setText(str);
-   str.sprintf("%u",new_residue.r_bead[current_bead].atom_hydration);
+   str.sprintf("%f",new_residue.r_bead[current_bead].atom_hydration);
    le_bead_hydro_from_atom->setText(str);
    new_residue.r_bead[current_bead].hydration = new_residue.r_bead[current_bead].atom_hydration;
    cnt_hydration->setValue(new_residue.r_bead[current_bead].hydration);
@@ -1253,7 +1253,7 @@ void US_AddResidue::select_r_bead(int val)
       calc_bead_mw(&new_residue);
       str.sprintf("%7.2f", new_residue.r_bead[current_bead].mw);
       le_bead_mw->setText(str);
-      str.sprintf("%u",new_residue.r_bead[current_bead].atom_hydration);
+      str.sprintf("%f",new_residue.r_bead[current_bead].atom_hydration);
       le_bead_hydro_from_atom->setText(str);
       cb_hydration->setChecked ( new_residue.r_bead[current_bead].atom_hydration != 
                                  new_residue.r_bead[current_bead].hydration );
@@ -1723,7 +1723,7 @@ void US_AddResidue::accept_atom()
       unsigned int bead = new_residue.r_atom[current_item1].bead_assignment;
       unsigned int snum = new_residue.r_atom[current_item1].serial_number;
       bool pos = new_residue.r_atom[current_item1].positioner;
-      unsigned int hydration =  new_residue.r_atom[current_item1].hydration;
+      float hydration =  new_residue.r_atom[current_item1].hydration;
       new_residue.r_atom[current_item1] = atom_list[current_item2];
       new_residue.r_atom[current_item1].bead_assignment = bead;
       new_residue.r_atom[current_item1].positioner = pos;

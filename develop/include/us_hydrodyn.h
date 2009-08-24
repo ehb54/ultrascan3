@@ -265,6 +265,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       //                                  maps molecule #|resSeq to flag indicating broken end of chain
       map < QString, bool >               broken_chain_head;
       //                                  maps molecule #|resSeq to flag indicating broken head of chain
+      map < QString, bool >               unknown_residues;
+      //                                  maps resName to flag for unknown residue
+      
       QString last_abb_msgs; // automatic bead builder message log
       vector <struct PDB_model> model_vector;
       vector <struct PDB_model> model_vector_as_loaded;

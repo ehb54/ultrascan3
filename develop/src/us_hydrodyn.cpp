@@ -81,6 +81,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    advanced_config.auto_show_hydro = false;
    advanced_config.pbr_broken_logic = true;
    advanced_config.use_sounds = false;
+   advanced_config.expert_mode = false;
    advanced_config.debug_1 = false;
    advanced_config.debug_2 = false;
    advanced_config.debug_3 = false;
@@ -892,7 +893,8 @@ void US_Hydrodyn::select_residue_file()
 void US_Hydrodyn::load_pdb()
 {
    QString message = "";
-   if (pdb_parse.missing_residues == 1)
+   if ( pdb_parse.missing_residues == 1 &&
+        !advanced_config.expert_mode )
    {
       message += tr("You have selected to skip missing residues. If your model contains missing\n"
                     "residues, the calculated molecular weight and vbar may be incorrect, and\n"
@@ -900,7 +902,8 @@ void US_Hydrodyn::load_pdb()
                     "SOMO hydrodynamic options, and a global value for the vbar in the SOMO\n"
                     "Miscellaneous options.\n\nAre you sure you want to proceed?");
    }
-   if (pdb_parse.missing_residues == 2)
+   if ( pdb_parse.missing_residues == 2 &&
+        !advanced_config.expert_mode )
    {
       message += tr("You have selected to replace non-coded residues with an average residue.\n"
                     "If your model contains non-coded residues, the calculated molecular weight\n"
@@ -928,7 +931,8 @@ void US_Hydrodyn::load_pdb()
       }
    }
    message = "";
-   if (pdb_parse.missing_atoms == 1)
+   if ( pdb_parse.missing_atoms == 1 &&
+        !advanced_config.expert_mode )
    {
       message += tr("You have selected to skip coded residues containing missing atoms.\n"
                     "If your model contains missing atoms, the calculated molecular\n"
@@ -937,7 +941,8 @@ void US_Hydrodyn::load_pdb()
                     "options, and a global value for the vbar in the SOMO Miscellaneous\n"
                     "options.\n\nAre you sure you want to proceed?");
    }
-   if (pdb_parse.missing_atoms == 2)
+   if ( pdb_parse.missing_atoms == 2 &&
+        !advanced_config.expert_mode )
    {
       message += tr("You have selected to model coded residues with missing atoms\n"
                     "with an approximate method.  For best results, you should complete\n"
@@ -967,13 +972,13 @@ void US_Hydrodyn::load_pdb()
                                                    this,
                                                    "Open Structure Files",
                                                    "Please select a PDB file...");
+   int errors_found = 0;
    if (!filename.isEmpty())
    {
       pdb_file = filename;
       options_log = "";
       last_abb_msgs = "";
       bead_model_from_file = false;
-      int errors_found = 0;
       lbl_pdb_file->setText( QDir::convertSeparators( filename ) );
       clear_display();
 
@@ -1025,10 +1030,10 @@ void US_Hydrodyn::load_pdb()
                        arg(i + 1) + "please check the text window");
          }
       }
+      model_vector_as_loaded = model_vector;
       editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
       bead_models.clear();
       somo_processed.clear();
-
    }
    else
    {
@@ -1050,11 +1055,12 @@ void US_Hydrodyn::load_pdb()
    pb_visualize->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
-   if (lb_model->numRows() == 1)
+   if ( lb_model->numRows() == 1 )
    {
       select_model(0);
    }
-   if ( advanced_config.auto_calc_somo )
+   if ( advanced_config.auto_calc_somo  &&
+        !errors_found )
    {
       calc_somo();
    }
@@ -1198,7 +1204,6 @@ int US_Hydrodyn::calc_somo()
    append_options_log_somo();
    display_default_differences();
    model_vector = model_vector_as_loaded;
-
    if ( bead_model_prefix.contains("a2b") )
    {
       bead_model_prefix.replace("-a2bg","");
@@ -1207,7 +1212,6 @@ int US_Hydrodyn::calc_somo()
       bead_model_prefix.replace("a2b","");
       le_bead_model_prefix->setText(bead_model_prefix);
    }
-
    if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
@@ -1446,7 +1450,7 @@ int US_Hydrodyn::calc_grid_pdb()
                                  pow(3 * this_atom->atom_hydration * misc.hydrovol / (M_PI * 4), 1.0f/3.0f);
                               this_atom->bead_computed_radius += additional_radius;
 #if defined(GRID_HYDRATE_DEBUG)
-                              printf("hydrating atom %s %s %s hydration %u radius %f + %f -> %f\n"
+                              printf("hydrating atom %s %s %s hydration %f radius %f + %f -> %f\n"
                                      , this_atom->name.ascii()
                                      , this_atom->resName.ascii()
                                      , this_atom->resSeq.ascii()

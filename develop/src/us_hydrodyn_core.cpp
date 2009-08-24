@@ -298,8 +298,17 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
             {
                non_aa++;
             }
+            if ( advanced_config.debug_2 )
+            {
+               printf("unknown_residues.count(%s) %d\n",
+                      this_atom->resName.ascii(),
+                      unknown_residues.count(this_atom->resName));
+            }
             if ( lastResSeq != "" &&
-                 lastResSeq.toInt() + 1 !=  this_atom->resSeq.toInt() )
+                 ( lastResSeq.toInt() + 1 !=  this_atom->resSeq.toInt() ||
+                   !multi_residue_map.count(this_atom->resName) ||
+                   unknown_residues.count(this_atom->resName) ||
+                   unknown_residues.count(lastResName) ) )
             {
                breaks++;
                broken_chain_end[QString("%1|%2")
@@ -312,7 +321,7 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
                QColor save_color = editor->color();
                editor->setColor("dark red");
                editor->append(
-                              QString("Warning: break in residue sequence: %1Molecule %2 Residue %3 %4 & %5 %6.")
+                              QString(tr("Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4 & %5 %6."))
                               .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                               .arg(j + 1)
                               .arg(lastResName)
@@ -332,7 +341,7 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
          QColor save_color = editor->color();
          editor->setColor("dark magenta");
          editor->append(
-                        QString("Notice: %1found %2 non Amino Acids in a chain containing %3 AA Residues.")
+                        QString(tr("Notice: %1found %2 non or unknown Amino Acids in a chain containing %3 AA Residues."))
                         .arg(lastChainID == " " ? "" : ("Chain " + lastChainID + " "))
                         .arg(non_aa)
                         .arg(aa)
@@ -402,7 +411,7 @@ void US_Hydrodyn::build_molecule_maps(PDB_model *model)
    {
       QString idx = molecules_idx_seq[i];
       QString resName = molecules_residue_name[idx];
-      if (multi_residue_map[resName].size())
+      if (multi_residue_map.count(resName))
       {
          int minimum_missing = INT_MAX; // find the entry with the minimum # of missing atoms
          int minimum_missing_pos = 0;   // and its position
@@ -494,6 +503,12 @@ void US_Hydrodyn::build_molecule_maps(PDB_model *model)
          molecules_residue_errors[idx].push_back("Non-coded residue. ");
          molecules_residue_missing_counts[idx].push_back(-1);
          molecules_residue_min_missing[idx] = -1;
+         unknown_residues[resName] = true;
+         
+         if ( advanced_config.debug_2 )
+         {
+            printf("unknown residue %s\n", resName.ascii());
+         }
       }
    }
 
@@ -1209,6 +1224,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         // to worry about duplicates and alternate duplicates
                         new_residues[new_residue_idx]++;
                         new_residue_name = QString("%1_NC%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
+                        unknown_residues[new_residue_name] = true;
                         abb_msgs += QString("ABB: %1Molecule %2 Residue %3 %4 Non-coded residue %5 created.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
@@ -1254,6 +1270,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      else
                      {
                         new_residue_name = QString("%1_NC%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
+                        unknown_residues[new_residue_name] = true;
                         if ( advanced_config.debug_2  )
                         {
                            printf("1.2 <%s>\n", new_residue_name.ascii());
@@ -1341,7 +1358,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      new_atom.bead_assignment = current_bead_assignment; 
                      new_atom.positioner = true;
                      new_atom.serial_number = residue_list[respos].r_atom.size();
-                     new_atom.hydration = this_atom->atom_hydration;
+                     new_atom.hydration = misc.avg_hydration;
                      residue_list[respos].r_atom.push_back(new_atom);
                      PDB_atom atom_to_add = org_model.molecule[j].atom[k];
                      atom_to_add.resName = new_residue.name;
@@ -1489,6 +1506,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         // create the new residue
                         new_residues[new_residue_idx]++;
                         new_residue_name = QString("%1_MA%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
+                        unknown_residues[new_residue_name] = true;
                         abb_msgs += QString("ABB: %1Molecule %2 Residue %3 %4 Missing atom residue copy %5 created%6.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
@@ -1666,6 +1684,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      else
                      {
                         new_residue_name = QString("%1_MA%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
+                        unknown_residues[new_residue_name] = true;
                         if ( advanced_config.debug_2  )
                         {
                            printf("a1.2 <%s>\n", new_residue_name.ascii());
@@ -1730,7 +1749,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
          update_vbar();
          printf("vbar after: %g\n", model->vbar);
       }
-   } 
+   }
 #if defined(AUTO_BB_DEBUG) || 1
    QString str1;
    QFile f(somo_tmp_dir + SLASH + "tmp.somo.residue");
@@ -4075,7 +4094,6 @@ int US_Hydrodyn::compute_asa()
                  error_string);
       return US_SURFRACER_ERR_MISSING_ATOM;
    }
-
 
    if(asa.method == 0) {
       // surfracer

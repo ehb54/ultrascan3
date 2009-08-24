@@ -80,6 +80,14 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    cb_use_sounds->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_use_sounds, SIGNAL(clicked()), this, SLOT(set_use_sounds()));
 
+   cb_expert_mode = new QCheckBox(this);
+   cb_expert_mode->setText(tr(" Expert mode (skip some warning messages)"));
+   cb_expert_mode->setEnabled(true);
+   cb_expert_mode->setChecked((*advanced_config).expert_mode);
+   cb_expert_mode->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_expert_mode->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_expert_mode, SIGNAL(clicked()), this, SLOT(set_expert_mode()));
+
    cb_debug_1 = new QCheckBox(this);
    cb_debug_1->setText(tr(" Debug molecular weight/volume adjustments"));
    cb_debug_1->setEnabled(true);
@@ -118,7 +126,7 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=11, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=12, columns = 2, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -134,6 +142,8 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    background->addMultiCellWidget(cb_pbr_broken_logic, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(cb_use_sounds, j, j, 0, 1);
+   j++;
+   background->addMultiCellWidget(cb_expert_mode, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(cb_debug_1, j, j, 0, 1);
    j++;
@@ -199,6 +209,26 @@ void US_Hydrodyn_AdvancedConfig::set_pbr_broken_logic()
 void US_Hydrodyn_AdvancedConfig::set_use_sounds()
 {
    (*advanced_config).use_sounds = cb_use_sounds->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_AdvancedConfig::set_expert_mode()
+{
+   (*advanced_config).expert_mode = cb_expert_mode->isChecked();
+   if ( cb_expert_mode->isChecked() )
+   {
+      cb_auto_view_pdb->setChecked(false);
+      set_auto_view_pdb();
+      cb_auto_calc_somo->setChecked(true);
+      set_auto_calc_somo();
+      cb_auto_calc_somo->setChecked(true);
+      set_auto_calc_somo();
+      cb_auto_show_hydro->setChecked(true);
+      set_auto_show_hydro();
+      cb_scroll_editor->setChecked(true);
+      set_scroll_editor();
+   }
+
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

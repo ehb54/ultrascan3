@@ -52,6 +52,7 @@ void US_Hydrodyn::read_residue_file()
    new_residues.clear();
    map < QString, int > dup_residue_map;
    map < QString, bool > pbr_override_map; // maps positioner for overwrite
+   unknown_residues.clear(); // keep track of unknown residues
 
    i=1;
    if (f.open(IO_ReadOnly|IO_Translate))
