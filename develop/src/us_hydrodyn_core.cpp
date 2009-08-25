@@ -1117,6 +1117,8 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 
    if (error_string->length())
    {
+      // to remove from unknown those that have 2 beads and a correct main chain
+      vector < QString > unknown_aa_residues_to_check; 
       if (failure_errors > 0) 
       {
          return errors_found;
@@ -1507,6 +1509,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         new_residues[new_residue_idx]++;
                         new_residue_name = QString("%1_MA%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
                         unknown_residues[new_residue_name] = true;
+                        if ( new_residue.type = residue_list[orgrespos].type == 0 ) // aa
+                        {
+                           unknown_aa_residues_to_check.push_back(new_residue_name);
+                        }
                         abb_msgs += QString("ABB: %1Molecule %2 Residue %3 %4 Missing atom residue copy %5 created%6.\n")
                            .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                            .arg(j+1)
@@ -1748,6 +1754,44 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
          calc_vbar(model);
          update_vbar();
          printf("vbar after: %g\n", model->vbar);
+
+         // remove from unknown any aa residues that have 2 beads and a side chain
+         // with a N,C,CA,O MC
+         for ( unsigned int i = 0; i < unknown_aa_residues_to_check.size(); i++ )
+         {
+            if ( advanced_config.debug_2  )
+            {
+               printf("unknown residue %s checking for removal from broken\n",
+                      unknown_aa_residues_to_check[i].ascii());
+            }
+            unsigned int respos = multi_residue_map[unknown_aa_residues_to_check[i]][0];
+            if ( residue_list[respos].r_bead.size() == 2 &&
+                 residue_list[respos].r_atom.size() > 4 ) 
+            {
+               map < QString, int > aa_main_chain;  // to make sure we have a good main chain
+               aa_main_chain.clear();
+               aa_main_chain["N"] = 0;
+               aa_main_chain["CA"] = 0;
+               aa_main_chain["C"] = 0;
+               aa_main_chain["O"] = 0;
+               for ( unsigned int j = 0; j < residue_list[respos].r_atom.size(); j++ )
+               {
+                  aa_main_chain[residue_list[respos].r_atom[j].name]++;
+               }
+               if (aa_main_chain["N"] == 1 &&
+                   aa_main_chain["CA"] == 1 &&
+                   aa_main_chain["C"] == 1 &&
+                   aa_main_chain["O"] == 1)
+               {
+                  if ( advanced_config.debug_2  )
+                  {
+                     printf("unknown residue %s removed from broken override\n",
+                            unknown_aa_residues_to_check[i].ascii());
+                  }
+                  unknown_residues.erase(unknown_aa_residues_to_check[i]);
+               }
+            }
+         }
       }
    }
 #if defined(AUTO_BB_DEBUG) || 1
