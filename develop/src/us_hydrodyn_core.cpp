@@ -1509,7 +1509,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         new_residues[new_residue_idx]++;
                         new_residue_name = QString("%1_MA%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
                         unknown_residues[new_residue_name] = true;
-                        if ( new_residue.type = residue_list[orgrespos].type == 0 ) // aa
+                        if (residue_list[orgrespos].type == 0 ) // aa
                         {
                            unknown_aa_residues_to_check.push_back(new_residue_name);
                         }
