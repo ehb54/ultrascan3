@@ -4,6 +4,8 @@
 
 // NOTICE : GA_SC can only handle 1 experiment at this time!
 
+// these is the 's' exclusion zone
+#define EXCLUDE_S(x) (x >= -0.1e-13 && x <= 0.1e-13)
 
 // this constructor is used for non-gui calls from the command line. It
 // reads an input file with all the details assigned from a web interface
@@ -1569,7 +1571,14 @@ void US_GridControl_T::write_experiment()
                                  solutes.component.end(),
                                  solute) == solutes.component.end())
                         {
-                           solutes.component.push_back(solute);
+                           if ( EXCLUDE_S(use_s) )
+                           {
+                              printf("skipped, exclusion zone %g %g\n", use_s, use_k);
+                           }
+                           else
+                           {
+                              solutes.component.push_back(solute);
+                           }
                         }
                         else
                         {
@@ -1704,7 +1713,14 @@ void US_GridControl_T::write_experiment()
                                       solutes.component.end(),
                                       solute) == solutes.component.end())
                               {
-                                 solutes.component.push_back(solute);
+                                 if ( EXCLUDE_S(use_s) )
+                                 {
+                                    printf("skipped, exclusion zone %g %g\n", use_s, use_k);
+                                 }
+                                 else
+                                 {
+                                    solutes.component.push_back(solute);
+                                 }
                               }
                               else
                               {

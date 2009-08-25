@@ -300,9 +300,9 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
             }
             if ( advanced_config.debug_2 )
             {
-               printf("unknown_residues.count(%s) %d\n",
+               printf("unknown_residues.count(%s) %u\n",
                       this_atom->resName.ascii(),
-                      unknown_residues.count(this_atom->resName));
+                      (unsigned int)unknown_residues.count(this_atom->resName));
             }
             if ( lastResSeq != "" &&
                  ( lastResSeq.toInt() + 1 !=  this_atom->resSeq.toInt() ||
@@ -659,7 +659,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                          ,this_atom->resName.ascii()
                          ,m
                          ,multi_residue_map[this_atom->resName][0]
-                         ,multi_residue_map[this_atom->resName].size()
+                         ,(unsigned int)multi_residue_map[this_atom->resName].size()
                          );
                }
                if (lastResSeq != this_atom->resSeq)
@@ -1202,7 +1202,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                      {
                         printf("1.0 <%s> residue types %u, last_type %u\n", 
                                new_residue_idx.ascii(),
-                               residue_types[j].size(),
+                               (unsigned int)residue_types[j].size(),
                                last_residue_type[j]
                                );
                      }           
