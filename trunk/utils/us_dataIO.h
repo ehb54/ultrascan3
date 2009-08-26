@@ -3,9 +3,6 @@
 #define US_DATAIO_H
 
 #include <QtCore>
-#include <vector>
-
-using namespace std;
 
 class US_DataIO
 {
