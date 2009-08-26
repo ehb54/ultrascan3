@@ -16,12 +16,13 @@ class US_EXTERN US_RiNoise : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      US_RiNoise( const rawData&, int&, QList< double >& );
+      US_RiNoise( const US_DataIO::rawData&, int&, QList< double >& );
 
    signals:
 
    private:
-      const rawData&   data;
+      const US_DataIO::rawData&   data;
+
       int&             order;
 
       QList< double >& residuals;

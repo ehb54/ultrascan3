@@ -7,9 +7,11 @@
 
 #include <qwt_legend.h>
 
-US_RunDetails::US_RunDetails( const QList< rawData >& data, int index,
-      const QString& runID, const QString& dataDir, 
-      const QStringList& cell_ch_wl )
+US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data, 
+                              int                                index,
+                              const QString&                     runID, 
+                              const QString&                     dataDir, 
+                              const QStringList&                 cell_ch_wl )
    : US_WidgetsDialog( 0, 0 ), dataList( data ), triples( cell_ch_wl )
 {
    setWindowTitle( tr( "Details for Raw Data" ) );
@@ -48,6 +50,15 @@ US_RunDetails::US_RunDetails( const QList< rawData >& data, int index,
    le_dir->setReadOnly( true );
    le_dir->setText( dataDir );
    main->addWidget( le_dir, row++, 1, 1, 5 );
+
+   // Row
+   QLabel* lb_desc = us_label( tr( "Run Description:" ) );
+   main->addWidget( lb_desc, row, 0 );
+
+   le_desc = us_lineedit();
+   le_desc->setReadOnly( true );
+   le_desc->setText( dataDir );
+   main->addWidget( le_desc, row++, 1, 1, 5 );
 
    // Row
    QLabel* lb_runID = us_label( tr( "Run Identification:" ) );
@@ -135,8 +146,10 @@ US_RunDetails::US_RunDetails( const QList< rawData >& data, int index,
 
 void US_RunDetails::update( int index )
 {
-   const rawData* r         = &dataList[ index ];
-   int            scanCount = r->scanData.size();
+   const US_DataIO::rawData* r         = &dataList[ index ];
+   int                       scanCount = r->scanData.size();
+
+   le_desc->setText( r->description );
 
    double         temp      = 0.0;
    double         rpm       = 0.0;
@@ -193,7 +206,7 @@ void US_RunDetails::update( int index )
 
    for ( int i = 0; i < scanCount; i++ )
    {
-      const scan* s = &r->scanData[ i ];
+      const US_DataIO::scan* s = &r->scanData[ i ];
 
       x[ i ] = i + 1;
       t[ i ] = s->temperature;

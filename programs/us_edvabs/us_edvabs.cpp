@@ -101,27 +101,27 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    
    // Exclude and Include pushbuttons
    // Row 7
-   pb_exclude = us_pushbutton( tr( "Exclude Single Scan" ), false );
-   connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude_one() ) );
-   specs->addWidget( pb_exclude, s_row, 0, 1, 2 );
+//   pb_exclude = us_pushbutton( tr( "Exclude Single Scan" ), false );
+//   connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude_one() ) );
+//   specs->addWidget( pb_exclude, s_row, 0, 1, 2 );
 
    pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
    connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
-   specs->addWidget( pb_excludeRange, s_row++, 2, 1, 2 );
+   specs->addWidget( pb_excludeRange, s_row, 0, 1, 2 );
    
-   // Row 8
    pb_exclusion = us_pushbutton( tr( "Exclusion Profile" ), false );
    connect( pb_exclusion, SIGNAL( clicked() ), SLOT( exclusion() ) );
-   specs->addWidget( pb_exclusion, s_row, 0, 1, 2 );
+   specs->addWidget( pb_exclusion, s_row++, 2, 1, 2 );
 
+   // Row 8
    pb_edit1 = us_pushbutton( tr( "Edit Single Scan" ), false );
    connect( pb_edit1, SIGNAL( clicked() ), SLOT( edit_scan() ) );
-   specs->addWidget( pb_edit1, s_row++, 2, 1, 2 );
+   specs->addWidget( pb_edit1, s_row, 0, 1, 2 );
 
-   // Row 9
+//   // Row 9
    pb_include = us_pushbutton( tr( "Include All" ), false );
    connect( pb_include, SIGNAL( clicked() ), SLOT( include() ) );
-   specs->addWidget( pb_include, s_row++, 0, 1, 4 );
+   specs->addWidget( pb_include, s_row++, 2, 1, 2 );
 
    // Edit label row
    QLabel* lb_edit = us_banner( tr( "Edit Controls" ) );
@@ -263,7 +263,7 @@ void US_Edvabs::reset( void )
    // Disable pushbuttons
    pb_details     ->setEnabled( false );
 
-   pb_exclude     ->setEnabled( false );
+//   pb_exclude     ->setEnabled( false );
    pb_excludeRange->setEnabled( false );
    pb_exclusion   ->setEnabled( false );
    pb_include     ->setEnabled( false );
@@ -292,19 +292,9 @@ void US_Edvabs::reset( void )
 
    pb_write       ->setIcon( QIcon() );
 
-   // We use a class variable to pass a parameter to avoid
-   // clearing all data when selecting a different triple
-   if ( ! partial_reset )
-   {
-      // Clear the raw data structures
-      for ( int j = 0; j < allData.size(); j++ )
-         clear_rawData( allData[ j ] );
-
-      allData.clear();
-      editID.clear();
-   }
-
-   clear_rawData( data, false );
+   allData.clear();
+   editID.clear();
+   data.scanData.clear();
 
    includes.clear();
    changed_points.clear();
@@ -318,19 +308,6 @@ void US_Edvabs::reset( void )
    baseline      = 0.0;
    invert        = 1.0;
    noise_order   = 0;
-}
-
-void US_Edvabs::clear_rawData( rawData& raw, bool deleteFlag )
-{  
-   for ( uint j = 0; j < raw.scanData.size(); j++ )
-   {
-      // When we copy from allData to data, the pointers to the interpolated
-      // array are copied.  The flag prevents a double deletion.
-      if ( deleteFlag ) delete raw.scanData[ j ].interpolated;
-      raw.scanData[ j ].values.clear();
-   }
-
-   raw.scanData.clear();
 }
 
 void US_Edvabs::details( void )
@@ -557,9 +534,9 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
             // Find the radius for the max value
             double maximum = -1.0e99;
             
-            for ( uint i = 0; i < data.scanData.size(); i++ )
+            for ( int i = 0; i < data.scanData.size(); i++ )
             {
-               scan* s = &data.scanData[ i ];
+               US_DataIO::scan* s = &data.scanData[ i ];
 
                int start = index( s, meniscus_left  );
                int end   = index( s, meniscus_right );
@@ -639,9 +616,10 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
 
          plateau.clear();
 
-         for ( uint i = 0; i < data.scanData.size(); i++ )
+         for ( int i = 0; i < data.scanData.size(); i++ )
          {
-            scan* s = &data.scanData[ i ];
+            US_DataIO::scan* s = &data.scanData[ i ];
+            
             int start = index( s, range_left );
             int end   = index( s, range_right );
             int pt    = index( s, p.x() );
@@ -678,7 +656,7 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
       case BASELINE:
          {
             // Use the last scan
-            scan* s = &data.scanData[ data.scanData.size() -1 ];
+            US_DataIO::scan* s = &data.scanData[ data.scanData.size() -1 ];
             
             int start = index( s, range_left );
             int end   = index( s, range_right );
@@ -716,9 +694,9 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
    }
 }
 
-int US_Edvabs::index( scan* s, double r )
+int US_Edvabs::index( US_DataIO::scan* s, double r )
 {
-   for ( uint i = 0; i < s->values.size(); i++ )
+   for ( int i = 0; i < s->values.size(); i++ )
    {
       if ( fabs( s->values[ i ].d.radius - r ) < 5.0e-4 ) return i;
    }
@@ -747,7 +725,6 @@ void US_Edvabs::draw_vline( double radius )
 
    QPen pen = QPen( QBrush( Qt::white ), 2.0 );
    v_line->setPen( pen );
-
 
    data_plot->replot();
 }
@@ -874,10 +851,11 @@ void US_Edvabs::plot_all( void )
    double maxV = -1.0e99;
    double minV =  1.0e99;
 
-   for ( uint i = 0; i < data.scanData.size(); i++ )
+   for ( int i = 0; i < data.scanData.size(); i++ )
    {
       if ( ! includes.contains( i ) ) continue;
-      scan* s = &data.scanData[ i ];
+      
+      US_DataIO::scan* s = &data.scanData[ i ];
 
       for ( int j = 0; j < size; j++ )
       {
@@ -894,6 +872,7 @@ void US_Edvabs::plot_all( void )
          + QString::number( s->seconds ) + tr( " seconds" );
 
       QwtPlotCurve* c = us_curve( data_plot, title );
+      c->setPaintAttribute( QwtPlotCurve::ClipPolygons, true );
       c->setData( r, v, size );
    }
 
@@ -921,10 +900,12 @@ void US_Edvabs::plot_range( void )
    double minV =  1.0e99;
 
    // For each scan
-   for ( uint i = 0; i < data.scanData.size(); i++ )
+   for ( int i = 0; i < data.scanData.size(); i++ )
    {
       if ( ! includes.contains( i ) ) continue;
-      scan*   s     = &data.scanData[ i ];
+      
+      US_DataIO::scan* s = &data.scanData[ i ];
+      
       int     count = 0;
       uint    size  = s->values.size();
       double* r     = new double[ size ];
@@ -978,7 +959,8 @@ void US_Edvabs::plot_last( void )
    double minV =  1.0e99;
 
    // Plot only the last scan
-   scan*   s     = &data.scanData[ includes.last() ];;
+   US_DataIO::scan* s = &data.scanData[ includes.last() ];;
+   
    int     count = 0;
    uint    size  = s->values.size();
    double* r     = new double[ size ];
@@ -1059,15 +1041,9 @@ void US_Edvabs::focus_to( double scan )
 void US_Edvabs::focus( int from, int to )
 {
    if ( from == 0 )
-   {
-      pb_exclude->setEnabled( false );
       pb_edit1  ->setEnabled( false );
-   }
    else
-   {
-      pb_exclude->setEnabled( true );
       pb_edit1  ->setEnabled( true );
-   }
 
    if ( to == 0 )
       pb_excludeRange->setEnabled( false );
@@ -1120,7 +1096,7 @@ void US_Edvabs::set_colors( const QList< int >& focus )
 void US_Edvabs::init_includes( void )
 {
    includes.clear();
-   for ( uint i = 0; i < data.scanData.size(); i++ ) includes << i;
+   for ( int i = 0; i < data.scanData.size(); i++ ) includes << i;
 }
 
 void US_Edvabs::exclude_one( void )
@@ -1217,22 +1193,66 @@ void US_Edvabs::update_scan( QList< QPointF > changes )
 {
    // Need to handle excluded scans
    // Need to save date for write
-   int index = (int)ct_from->value();
-   int scan  = includes[ index - 1 ];
+   int index         = (int)ct_from->value();
+   int current_scan  = includes[ index - 1 ];
 
    for ( int i = 0; i < changes.size(); i++ )
    {
       int    point = (int)changes[ i ].x();
       double value =      changes[ i ].y();
 
-      data.scanData[ scan ].values[ point ].value = value;
+      data.scanData[ current_scan ].values[ point ].value = value;
    }
 
    // Save changes for writing output
    edits e;
-   e.scan    = scan;
+   e.scan    = current_scan;
    e.changes = changes;
    changed_points << e;
+
+   // Set data for the curve
+   US_DataIO::scan* s = &data.scanData[ current_scan ];
+   
+   int     points = s->values.size();
+   double* r      = new double[ points ];
+   double* v      = new double[ points ];
+
+   for ( int i = 0; i < points; i++ )
+   {
+      r[ i ] = s->values[ i ].d.radius;
+      v[ i ] = s->values[ i ].value;
+   }
+
+   // Find the pointer to the current scan
+   QwtPlotItemList items   = data_plot->itemList();
+   QString         seconds = " " + QString::number( s->seconds );
+   bool            found   = false;
+
+   QwtPlotCurve* c;
+   for ( int i = 0; i < items.size(); i++ )
+   {
+      if ( items[ i ]->rtti() == QwtPlotItem::Rtti_PlotCurve )
+      {
+         c = dynamic_cast< QwtPlotCurve* >( items[ i ] );
+         if ( c->title().text().contains( seconds ) )
+         {
+            found = true;
+            break;
+         }
+      }
+   }
+
+   if ( ! found ) 
+   {
+      qDebug() << "Can't find curve!";
+      return;
+   }
+
+   // Update the curve
+   c->setData( r, v, points );
+
+   delete [] r;
+   delete [] v;
 
    data_plot->replot();
 }
@@ -1260,7 +1280,7 @@ void US_Edvabs::invert_values( void )
    replot();
 }
 
-bool US_Edvabs::spike_check( scan* s, int point, int start, int end, 
+bool US_Edvabs::spike_check( US_DataIO::scan* s, int point, int start, int end, 
       double* value )
 {
    static double r[ 20 ];  // Spare room -- normally 10
@@ -1312,9 +1332,10 @@ void US_Edvabs::remove_spikes( void )
    double smoothed_value;
 
    // For each scan
-   for ( uint i = 0; i < data.scanData.size(); i++ )
+   for ( int i = 0; i < data.scanData.size(); i++ )
    {
-      scan* s      = &data.scanData[ i ];
+      US_DataIO::scan* s = &data.scanData[ i ];
+      
       int   points = s->values.size();
       
       // Note that a changed point can affect succeeding points
@@ -1336,6 +1357,9 @@ void US_Edvabs::remove_spikes( void )
             s->values[ j ].value = smoothed_value;
       }
    }
+
+   // TODO:  Need to reset curve data!!!!!!!!!
+
 
    pb_spikes->setIcon   ( check );
    pb_spikes->setEnabled( false );
@@ -1385,14 +1409,15 @@ void US_Edvabs::noise( void )
 
 void US_Edvabs::subtract_residuals( void )
 {
-   for ( uint i = 0; i < data.scanData.size(); i++ )
+   for ( int i = 0; i < data.scanData.size(); i++ )
    {
-     for ( uint j = 0; j <  data.scanData[ i ].values.size(); j++ )
+     for ( int j = 0; j <  data.scanData[ i ].values.size(); j++ )
      {
          data.scanData[ i ].values[ j ].value -= residuals[ i ];
      }
    }
 
+   // TODO:  Need to reset curve data!!!!!!!!!
    pb_residuals->setEnabled( false );
    pb_residuals->setIcon   ( check );
    replot();
@@ -1400,14 +1425,15 @@ void US_Edvabs::subtract_residuals( void )
 
 void US_Edvabs::subtract_baseline( void )
 {
-   for ( uint i = 0; i < data.scanData.size(); i++ )
+   for ( int i = 0; i < data.scanData.size(); i++ )
    {
-     for ( uint j = 0; j <  data.scanData[ i ].values.size(); j++ )
+     for ( int j = 0; j <  data.scanData[ i ].values.size(); j++ )
      {
          data.scanData[ i ].values[ j ].value -= baseline;
      }
    }
 
+   // TODO:  Need to reset curve data!!!!!!!!!
    pb_subBaseline->setEnabled( false );
    pb_subBaseline->setIcon   ( check );
    replot();
@@ -1561,12 +1587,12 @@ void US_Edvabs::write( void )
    root.appendChild( run );
 
    // Write excluded scans
-   if ( data.scanData.size() > (uint)includes.size() )
+   if ( data.scanData.size() > includes.size() )
    {
       QDomElement excludes = doc.createElement( "excludes" );
       run.appendChild( excludes );
 
-      for ( uint i = 0; i < data.scanData.size(); i++ )
+      for ( int i = 0; i < data.scanData.size(); i++ )
       {
          if ( ! includes.contains( i ) )
          {
@@ -1614,7 +1640,7 @@ void US_Edvabs::write( void )
    QDomElement p = doc.createElement( "plateaus" );
    parameters.appendChild( p );
 
-   for ( uint i = 0; i < data.scanData.size(); i++ )
+   for ( int i = 0; i < data.scanData.size(); i++ )
    {
       QDomElement element = doc.createElement( "plateau" );
       element.setAttribute( "scan" , i );

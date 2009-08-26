@@ -52,7 +52,7 @@ bool US_DataIO::readLegacyFile( const QString& file,
       else
          r.stdDev  = 0.0;
       
-      data.readings.push_back( r );
+      data.readings << r;
    }
 
    f.close();
@@ -99,20 +99,21 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
    double min_radius =  1.0e99;
    double max_radius = -1.0e99;
 
-   for ( uint i = 0; i < data.scanData.size(); i++ )
+   scan    s;
+   reading r;
+
+   foreach( s, data.scanData )
    {
-      for ( uint j = 0; j < data.scanData[ i ].values.size(); j++ )
+      foreach( r, s.values )
       {
-         reading* r = &data.scanData[ i ].values[ j ];
+         min_radius = min( min_radius, r.d.radius );
+         max_radius = max( max_radius, r.d.radius );
 
-         min_radius = min( min_radius, r->d.radius );
-         max_radius = max( max_radius, r->d.radius );
+         p.min_data1 = min( p.min_data1, r.value );
+         p.max_data1 = max( p.max_data1, r.value );
 
-         p.min_data1 = min( p.min_data1, r->value );
-         p.max_data1 = max( p.max_data1, r->value );
-
-         p.min_data2 = min( p.min_data2, r->stdDev );
-         p.max_data2 = max( p.max_data2, r->stdDev );
+         p.min_data2 = min( p.min_data2, r.stdDev );
+         p.max_data2 = max( p.max_data2, r.stdDev );
       }
    }
 
@@ -123,9 +124,9 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
    write( ds, (char*) &max_r,  2, crc );
 
    // Distance between radius entries
-   double r1 = data.scanData[ 0 ].values[ 0 ].d.radius;
-   double r2 = data.scanData[ 0 ].values[ 1 ].d.radius;
-   float delta = (float) ( r2 - r1 );
+   double r1    = data.scanData[ 0 ].values[ 0 ].d.radius;
+   double r2    = data.scanData[ 0 ].values[ 1 ].d.radius;
+   float  delta = (float) ( r2 - r1 );
    write( ds, (char*) &delta, 4, crc );
 
    float v = (float) p.min_data1;   
@@ -145,10 +146,8 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
    write( ds, (char*) &count, 2, crc );
 
    // Loop for each scan
-   for ( uint i = 0; i < data.scanData.size(); i++ )
-   {
-      writeScan( ds, data.scanData[ i ], crc, p );
-   }
+   foreach ( s, data.scanData )
+      writeScan( ds, s, crc, p );
 
    ds.writeRawData( (char*) &crc, 4 );
    f.close();
@@ -165,8 +164,8 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
    float t = (float) data.temperature;
    write( ds, (char*) &t, 4, crc );
 
-   int r = (int) data.rpm;
-   write( ds, (char*) &r, 4, crc );
+   int rpm = (int) data.rpm;
+   write( ds, (char*) &rpm, 4, crc );
 
    int s = (int) data.seconds;   
    write( ds, (char*) &s, 4, crc );
@@ -183,33 +182,31 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
    // Write reading
    double             delta  = ( p.max_data1 - p.min_data1 ) / 65536;
    double             delta2 = ( p.max_data2 - p.min_data2 ) / 65536;
-   double             v;   // value
    unsigned short int si;  // short int
 
-   bool      stdDev = ( p.min_data2 != 0.0 || p.max_data2 != 0.0 );
+   bool    stdDev = ( p.min_data2 != 0.0 || p.max_data2 != 0.0 );
+   reading r;
 
-   for ( unsigned int i = 0; i < data.values.size(); i++ )
+   foreach ( r, data.values )
    {
-      v  = data.values[ i ].value;
-      si = (unsigned short int) ( ( v - p.min_data1 ) / delta );
+      si = (unsigned short int) ( ( r.value - p.min_data1 ) / delta );
 
       write( ds, (char*) &si, 2, crc );
 
       // If applicable, write std deviation
       if ( stdDev )
       {
-         v = data.values[ i ].stdDev;
-         si = (unsigned short int) ( ( v - p.min_data2 ) / delta2 );
+         si = (unsigned short int) ( ( r.stdDev - p.min_data2 ) / delta2 );
          write( ds, (char*) &si, 2, crc );
       }
    }
 
    // Write interpolated flags
    int flagSize = ( valueCount + 7 ) / 8;
-   write( ds, (char*) data.interpolated, flagSize, crc );
+   write( ds, data.interpolated.data(), flagSize, crc );
 }
 
-void US_DataIO::write( QDataStream& ds, char* c, int len, unsigned long& crc )
+void US_DataIO::write( QDataStream& ds, const char* c, int len, ulong& crc )
 {
    ds.writeRawData( c, len );
    crc = US_Crc::crc32( crc, (unsigned char*) c, len );
@@ -254,8 +251,8 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
 
       union
       {
-         char               c[ 2 ];
-         unsigned short int I;
+         char   c[ 2 ];
+         ushort I;
       } si;
 
       read( ds, si.c, 2, crc );
@@ -327,7 +324,7 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
          double  factor2 = ( max_data2 - min_data2 ) / 65536.0;
          bool    stdDev  = ( min_data2 != 0.0 || max_data2 != 0.0 );
 
-         for ( int i = 0; i < valueCount; i++ )
+         for ( int j = 0; j < valueCount; j++ )
          {
             reading r;
 
@@ -345,18 +342,23 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
                r.stdDev = 0.0;
 
             // Add the reading to the scan
-            s.values.push_back( r );
+            s.values << r;
             
             radius += delta_radius;
          } 
 
          // Get the interpolated bitmap;
-         int bytes = ( valueCount + 7 ) / 8;
-         s.interpolated = new unsigned char[ bytes ];
-         read( ds, (char*) s.interpolated, bytes, crc );
+         int bytes          = ( valueCount + 7 ) / 8;
+         char* interpolated = new char[ bytes ];
+         
+         read( ds, interpolated, bytes, crc );
+
+         s.interpolated = QByteArray( interpolated, bytes );
+
+         delete [] interpolated;
 
          // Add the scan to the data
-         data.scanData.push_back( s );
+         data.scanData <<  s;
       }
 
       // Read the crc
@@ -373,9 +375,9 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
    return err;
 }
 
-void US_DataIO::read( QDataStream& ds, char* c, int len, unsigned long& crc )
+void US_DataIO::read( QDataStream& ds, char* c, int len, ulong& crc )
 {
    ds.readRawData( c, len );
-   crc = US_Crc::crc32( crc, (unsigned char*) c, len );
+   crc = US_Crc::crc32( crc, (uchar*) c, len );
 }
 

@@ -250,6 +250,7 @@ void US_Convert::load( void )
 
    // we know all the triples from read, so we can convert all the data
    allData.clear();
+
    if ( triples.size() == 1 )
    {
       convert( true );
@@ -279,7 +280,7 @@ void US_Convert::load( void )
 
    lb_progress ->setVisible( false );
    progress    ->setVisible( false );
-
+   
    currentTriple = 0;     // Now let's show the user the first one
    plot_current();
 
@@ -354,7 +355,7 @@ void US_Convert::read( void )
    progress    ->setVisible( true );
    for ( int i = 0; i < fileList.size(); i++ )
    {
-      beckmanRaw data;
+      US_DataIO::beckmanRaw data;
       US_DataIO::readLegacyFile( dir + fileList[ i ], data );
       qApp->processEvents();
 
@@ -477,11 +478,11 @@ void US_Convert::convert( bool showProgressBar )
    char        channel    = parts[ 1 ].toAscii()[ 0 ];
    double      wavelength = parts[ 2 ].toDouble();
 
-/*
+   /*
    qDebug() << cell       << " / "
             << channel    << " / "
             << wavelength;
-*/
+   */
 
    // Get a list of the data that matches the cell / channel / wl
    ccwLegacyData.clear();
@@ -499,7 +500,8 @@ void US_Convert::convert( bool showProgressBar )
    {
       for ( int j = i + i; j < ccwLegacyData.size(); j++ )
       {
-         if ( ccwLegacyData[ j ]->seconds < ccwLegacyData[ i ]->seconds ) ccwLegacyData.swap( i, j );
+         if ( ccwLegacyData[ j ]->seconds < ccwLegacyData[ i ]->seconds ) 
+            ccwLegacyData.swap( i, j );
       }
    }
 
@@ -533,7 +535,7 @@ void US_Convert::convert( bool showProgressBar )
 
    for ( int i = 0; i < ccwLegacyData.size(); i++ )
    {
-      scan s;
+      US_DataIO::scan s;
       s.temperature = ccwLegacyData[ i ]->temperature;
       s.rpm         = ccwLegacyData[ i ]->rpm;
       s.seconds     = ccwLegacyData[ i ]->seconds;
@@ -553,8 +555,8 @@ void US_Convert::convert( bool showProgressBar )
       // Readings here and interpolated array
       int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
       int bitmap_size = ( radius_count + 7 ) / 8;
-      s.interpolated = (unsigned char*) malloc( bitmap_size );
-      bzero( s.interpolated, bitmap_size );
+      uchar* interpolated = new uchar[ bitmap_size ];
+      bzero( interpolated, bitmap_size );
 
       /*
          There are two indexes needed here.  The new radius as iterated
@@ -596,8 +598,11 @@ void US_Convert::convert( bool showProgressBar )
       
       for ( int j = 0; j < radius_count; j++ )
       {
-         reading r;
-         double  dr = radius - ccwLegacyData[ i ]->readings[ k ].d.radius;
+         US_DataIO::reading r;
+         double             dr = 0.0;
+
+         if ( k < rCount )
+            dr = radius - ccwLegacyData[ i ]->readings[ k ].d.radius;
 
          r.d.radius = radius;
          
@@ -611,13 +616,13 @@ void US_Convert::convert( bool showProgressBar )
          {
             r.value  = ccwLegacyData[ i ]->readings[ 0 ].value;
             r.stdDev = 0.0;
-            setInterpolated( s.interpolated, j );
+            setInterpolated( interpolated, j );
          }
          else if ( radius > rLast  ||  k >= rCount ) // After the last
          {
             r.value  = ccwLegacyData[ i ]->readings[ rCount - 1 ].value;
             r.stdDev = 0.0;
-            setInterpolated( s.interpolated, j );
+            setInterpolated( interpolated, j );
          }
          else  // Interpolate the value
          {
@@ -632,23 +637,26 @@ void US_Convert::convert( bool showProgressBar )
             r.value  =  ccwLegacyData[ i ]->readings[ k - 1 ].value + dr * dv / dR;
             r.stdDev = 0.0;
 
-            setInterpolated( s.interpolated, j );
+            setInterpolated( interpolated, j );
          }
 
-         s.values.push_back( r );
+         s.values <<  r;
          radius += delta_r;
       }
 
-      newRawData.scanData.push_back( s );
+      s.interpolated = QByteArray( (char*)interpolated, bitmap_size );
+      delete [] interpolated;
 
+      newRawData.scanData <<  s ;
+      
       if ( showProgressBar ) progress ->setValue( i );
       qApp     ->processEvents();
    }
-  
+
    // Delete the bitmaps we allocated
 
-   for ( uint i = 0; i < newRawData.scanData.size(); i++ ) 
-      delete newRawData.scanData[ i ].interpolated;
+   //for ( uint i = 0; i < newRawData.scanData.size(); i++ ) 
+   //   delete newRawData.scanData[ i ].interpolated;
 
    if ( showProgressBar )
    {
@@ -728,7 +736,8 @@ int US_Convert::write( const QString& filename )
 
    // Create duplicate structure that doesn't contain excluded scans
    // Delete back to front, since structure changes with each deletion
-   rawData filteredRawData = allData[ currentTriple ];
+   US_DataIO::rawData filteredRawData = allData[ currentTriple ];
+
    for ( int i = filteredRawData.scanData.size() - 1; i >= 0; i-- )
    {
       if ( ! includes.contains( i ) )
@@ -774,7 +783,7 @@ int US_Convert::writeAll( void )
                          + channel    + "." 
                          + wavelength + ".auc";
 
-      rawData currentData = allData[ i ];
+      US_DataIO::rawData currentData = allData[ i ];
       result = US_DataIO::writeRawData( dirname + filename, allData[ i ] );
 
       progress ->setValue( i );
@@ -809,7 +818,7 @@ void US_Convert::setInterpolated ( unsigned char* bitmap, int location )
 
 void US_Convert::plot_current( void )
 {
-   rawData currentData = allData[ currentTriple ];
+   US_DataIO::rawData currentData = allData[ currentTriple ];
 
    if ( currentData.scanData.empty() ) return;
 
@@ -901,12 +910,13 @@ void US_Convert::plot_current( void )
 void US_Convert::init_includes( void )
 {
    includes.clear();
-   for ( uint i = 0; i < allData[ currentTriple ].scanData.size(); i++ ) includes << i;
+   for ( int i = 0; i < allData[ currentTriple ].scanData.size(); i++ ) 
+      includes << i;
 }
 
 void US_Convert::plot_all( void )
 {
-   rawData currentData = allData[ currentTriple ];
+   US_DataIO::rawData currentData = allData[ currentTriple ];
 
    data_plot->detachItems();
    grid = us_grid( data_plot );
@@ -927,10 +937,10 @@ void US_Convert::plot_all( void )
    lb_progress ->setVisible( true );
    progress    ->setVisible( true );
 
-   for ( uint i = 0; i < currentData.scanData.size(); i++ )
+   for ( int i = 0; i < currentData.scanData.size(); i++ )
    {
       if ( ! includes.contains( i ) ) continue;
-      scan* s = &currentData.scanData[ i ];
+      US_DataIO::scan* s = &currentData.scanData[ i ];
 
       for ( int j = 0; j < size; j++ )
       {

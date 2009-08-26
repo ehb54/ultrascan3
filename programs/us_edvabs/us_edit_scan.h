@@ -15,14 +15,14 @@ class US_EXTERN US_EditScan : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      US_EditScan( scan&, const double );
+      US_EditScan( US_DataIO::scan&, const double );
 
    signals:
       void scan_updated( QList< QPointF > );
 
    private:
-      scan             workingScan;
-      scan&            originalScan;
+      US_DataIO::scan  workingScan;
+      US_DataIO::scan& originalScan;
       double           invert;
       double*          radii;
       double*          values;
