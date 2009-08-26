@@ -49,7 +49,7 @@ static void update_sD(SimulationComponent *sc, struct mfem_data *exp)
       (R * K20)/
       (AVOGADRO *
        sc->f_f0 * 9.0 * VISC_20W * M_PI *
-       pow((2.0 * sc->s * sc->f_f0 * sc->vbar20 * VISC_20W) / 
+       pow((2.0 * fabs(sc->s) * sc->f_f0 * sc->vbar20 * VISC_20W) / 
            (1.0 - sc->vbar20 * DENS_20W), 0.5)) / exp->D20w_correction;
 #endif
    

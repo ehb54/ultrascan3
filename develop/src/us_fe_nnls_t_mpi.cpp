@@ -446,7 +446,7 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
                ts << solutes[i].s << endl;
                //   }
                ts << (R * K20/(AVOGADRO * solutes[i].k * 9.0 * VISC_20W * M_PI
-                               * pow( (2.0 * solutes[i].s * solutes[i].k *
+                               * pow( (2.0 * fabs(solutes[i].s) * solutes[i].k *
                                        experiment[0].vbar20 * VISC_20W)/(1.0 - experiment[0].vbar20 * DENS_20W), 0.5)))
                   << endl;
                ts << "0\n0\n";
@@ -505,7 +505,7 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
                ts << sve[e].solutes[i].s << endl;
                //   }
                ts << (R * K20/(AVOGADRO * sve[e].solutes[i].k * 9.0 * VISC_20W * M_PI
-                               * pow( (2.0 * sve[e].solutes[i].s * sve[e].solutes[i].k *
+                               * pow( (2.0 * fabs(sve[e].solutes[i].s) * sve[e].solutes[i].k *
                                        experiment[e].vbar20 * VISC_20W)/(1.0 - experiment[e].vbar20 * DENS_20W), 0.5)))
                   << endl;
                ts << "0\n0\n";
@@ -697,7 +697,7 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment,
                ts << sv.solutes[i].s << endl;
                //   }
                ts << (R * K20/(AVOGADRO * sv.solutes[i].k * 9.0 * VISC_20W * M_PI
-                               * pow( (2.0 * sv.solutes[i].s * sv.solutes[i].k *
+                               * pow( (2.0 * fabs(sv.solutes[i].s) * sv.solutes[i].k *
                                        experiment[e].vbar20 * VISC_20W)/(1.0 - experiment[e].vbar20 * DENS_20W), 0.5)))
                   << endl;
                ts << "0\n0\n";
@@ -4593,7 +4593,7 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
             //   cerr << myrank << " p4\n";
             double D_20w = (R * K20) /
                (AVOGADRO * 18 * M_PI * pow(solutes[i].k * VISC_20W, 3.0/2.0) *
-                pow((solutes[i].s * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
+                pow((fabs(solutes[i].s) * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
             double D_tb = D_20w/experiment[e].D20w_correction;
 
 #if defined(DEBUG_HYDRO)
@@ -5535,7 +5535,7 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
                //   cerr << "pe1a2\n";
                double D_20w = (R * K20) /
                   (AVOGADRO * 18 * M_PI * pow(solutes[i].k * VISC_20W, 3.0/2.0) *
-                   pow((solutes[i].s * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
+                   pow((fabs(solutes[i].s) * experiment[e].vbar20)/(2.0 * (1.0 - experiment[e].vbar20 * DENS_20W)), 0.5));
                double D_tb = D_20w/experiment[e].D20w_correction;
 
                if (use_ra) {
