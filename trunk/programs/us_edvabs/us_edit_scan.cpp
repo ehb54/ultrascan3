@@ -4,7 +4,8 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
-US_EditScan::US_EditScan( scan& s, const double invertValue )
+US_EditScan::US_EditScan( US_DataIO::scan& s, 
+                          const double     invertValue )
    : US_WidgetsDialog( 0, 0 ), originalScan( s ), invert( invertValue )
 {
    dragging    = false;
@@ -129,19 +130,8 @@ void US_EditScan::drag( const QwtDoublePoint& p )
    // Ignore drag events after Mouse Up
    if ( ! dragging ) return;
 
-   //qDebug() << "Drag" << p; 
-
-   // Draw old curve with background color
-   curve->setPen   ( bgPen );
-   curve->setSymbol( bgSym );
-   curve->draw( point - 1, point + 1 );
-
-   // Redraw the relevant part of the graph
-   curve->setPen   ( fgPen );
-   curve->setSymbol( fgSym );
-   
    values[ point ] = p.y();
-   curve->draw( point - 1, point + 1 );
+   data_plot->replot();
 }
 
 void US_EditScan::start_drag( QMouseEvent* e )
@@ -150,7 +140,6 @@ void US_EditScan::start_drag( QMouseEvent* e )
 
    // Find the nearest point
    point = curve->closestPoint( e->pos() );
-   //qDebug() << "Down"  << point << radii[ point ] << values[ point ]; 
 }
 
 void US_EditScan::end_drag( const QwtDoublePoint& p )
@@ -162,7 +151,6 @@ void US_EditScan::end_drag( const QwtDoublePoint& p )
    changes << QPointF( (double) point, values[ point ] );
    
    data_plot->replot();   
-   //qDebug() << "Up" << changes; 
 }
 
 void US_EditScan::reset( void )
@@ -171,7 +159,7 @@ void US_EditScan::reset( void )
    workingScan = originalScan;
    changes.clear();
 
-   for ( uint j = 0; j < workingScan.values.size(); j++ ) 
+   for ( int j = 0; j < workingScan.values.size(); j++ ) 
    { 
       radii [ j ] = workingScan.values[ j ].d.radius;
       values[ j ] = workingScan.values[ j ].value * invert;

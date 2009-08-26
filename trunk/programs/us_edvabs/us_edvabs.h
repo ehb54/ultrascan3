@@ -31,8 +31,8 @@ class US_EXTERN US_Edvabs : public US_Widgets
 
       QList< edits >     changed_points;
 
-      rawData            data;
-      QList< rawData >   allData;
+      US_DataIO::rawData            data;
+      QList< US_DataIO::rawData >   allData;
 
       bool               partial_reset;
       bool               changes_made;
@@ -100,7 +100,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
 	
       void set_pbColors      ( QPushButton* );
       void draw_vline        ( double );
-      int  index             ( scan*, double );
+      int  index             ( US_DataIO::scan*, double );
       void next_step         ( void );
 
       void replot            ( void );
@@ -113,8 +113,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       
       void reset_excludes    ( void );
       void set_colors        ( const QList< int >& );
-      bool spike_check       ( scan*, int, int, int, double* );
-      void clear_rawData     ( rawData&, bool=false );
+      bool spike_check       ( US_DataIO::scan*, int, int, int, double* );
                           
 	private slots:         
       void load              ( void );

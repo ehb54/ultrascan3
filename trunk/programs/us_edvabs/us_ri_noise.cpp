@@ -5,9 +5,10 @@
 #include "us_gui_settings.h"
 #include "us_matrix.h"
 
-US_RiNoise::US_RiNoise( const rawData& raw, int& initial_order, 
-     QList< double >& r ): US_WidgetsDialog( 0, 0 ), data( raw ), 
-                           order( initial_order ), residuals( r )
+US_RiNoise::US_RiNoise( const US_DataIO::rawData& raw, 
+                        int&                      initial_order, 
+                        QList< double >&          r )
+  :US_WidgetsDialog( 0, 0 ), data( raw ), order( initial_order ), residuals( r )
 {
    setWindowTitle( tr( "Determine Radial Invariant Noise" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -92,8 +93,8 @@ void US_RiNoise::draw_fit( double new_order )
       // For now, all radii are spaces equally at 0.001 cm
       const double delta_r = 0.001;
 
-      const scan* s = &data.scanData[ i ];
-      int value_count = s->values.size();
+      const US_DataIO::scan* s = &data.scanData[ i ];
+      int value_count          = s->values.size();
       
 
       // Integrate using trapezoid rule

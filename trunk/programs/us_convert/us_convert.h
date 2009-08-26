@@ -13,12 +13,12 @@
 
 class US_Convert : public US_Widgets
 {
-	Q_OBJECT
+  Q_OBJECT
 
-	public:
-		US_Convert();
+  public:
+  US_Convert();
 
-	private:
+  private:
 
       US_Help        showHelp;
       US_PlotPicker* pick;
@@ -41,12 +41,12 @@ class US_Convert : public US_Widgets
       QPushButton*  pb_include;
       QPushButton*  pb_details;
 
-      QList< beckmanRaw > legacyData;          // legacy data from file
-      QList< beckmanRaw* > ccwLegacyData;      // legacy data with this cell/channel/wl
-      rawData       newRawData;                // filtered legacy data in new raw format
-      QList< rawData > allData;                // all the data, separated by c/c/w
+      QList< US_DataIO::beckmanRaw >  legacyData;     // legacy data from file
+      QList< US_DataIO::beckmanRaw* > ccwLegacyData;  // legacy data with this cell/channel/wl
+      US_DataIO::rawData              newRawData;     // filtered legacy data in new raw format
+      QList< US_DataIO::rawData >     allData;        // all the data, separated by c/c/w
 
-      QList< int >  includes;                  // list of points to include in plot
+      QList< int >  includes;                         // list of points to include in plot
       QwtPlot*      data_plot;
       QwtPlotGrid*  grid;
 
@@ -61,7 +61,7 @@ class US_Convert : public US_Widgets
       void replot          ( void );
       void set_colors      ( const QList< int >& );
    
-	private slots:
+  private slots:
       void load            ( void );
       void details         ( void );
       void reset           ( void );
@@ -77,7 +77,7 @@ class US_Convert : public US_Widgets
       void reset_scan_ctrls( void );
       void write           ( void );
       int  writeAll        ( void );
-		  void help            ( void )
+      void help            ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
 };
 #endif
