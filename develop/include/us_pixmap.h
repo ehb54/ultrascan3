@@ -6,13 +6,19 @@
 #include <qimage.h>
 #include <qbitmap.h>
 #include <qpainter.h>
+#include <qmessagebox.h>
 
-class US_Pixmap
+#include "us_util.h"
+
+class US_Pixmap : public QWidget
 {
+   Q_OBJECT
    public:
-   US_Pixmap();
-   ~US_Pixmap();
-   void save_file(QString, QPixmap);
+      US_Pixmap(QWidget * parent=0, const char * name=0);
+      ~US_Pixmap();
+
+   public:
+      void save_file(QString, QPixmap);
 };
 
 #endif

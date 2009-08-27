@@ -247,6 +247,14 @@ void US_Pseudo3D_Combine::setup_GUI()
    pb_load_distro->setAutoDefault(false);
    connect(pb_load_distro, SIGNAL(clicked()), SLOT(load_distro()));
 
+   pb_stop = new QPushButton(tr(" Stop Plotting Loop "), this);
+   Q_CHECK_PTR(pb_stop);
+   pb_stop->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   pb_stop->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   pb_stop->setAutoDefault(false);
+   pb_stop->setEnabled(false);
+   connect(pb_stop, SIGNAL(clicked()), SLOT(stop()));
+
    pb_help = new QPushButton(tr(" Help "), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -404,6 +412,7 @@ void US_Pseudo3D_Combine::setup_GUI()
    controlGrid->setRowStretch(j, 0);
    j++;
    controlGrid->addWidget(pb_loop, j, 0);
+   controlGrid->addWidget(pb_stop, j, 1);
    j++;
    controlGrid->addWidget(pb_replot3d, j, 0);
    controlGrid->addWidget(pb_reset, j, 1);
@@ -768,15 +777,31 @@ void US_Pseudo3D_Combine::set_limits()
    }
 }
 
+void US_Pseudo3D_Combine::stop()
+{
+   looping = false;
+}
+
 void US_Pseudo3D_Combine::loop()
 {
+   pb_stop->setEnabled(true);
+   looping = true;
    unsigned int i;
    for (i=0; i<system.size(); i++)
    {
-      current_distro = i;
-      cnt_current_distro->setValue(i+1);      
-      plot_3dim();
+      if (looping)
+      {
+         current_distro = i;
+         cnt_current_distro->setValue(i+1);
+         plot_3dim();
+         qApp->processEvents();
+      }
+      else
+      {
+         break;
+      }
    }
+   pb_stop->setEnabled(false);
 }
 
 void US_Pseudo3D_Combine::plot_3dim()

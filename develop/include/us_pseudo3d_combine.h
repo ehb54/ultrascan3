@@ -56,7 +56,7 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
 
       vector <struct distro_system> system;
       vector <QColor> current_gradient;
-      
+
 #ifdef WIN32
 #pragma warning ( default: 4251 )
 #endif
@@ -72,6 +72,7 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
    private:
 
       float k_range, s_range;
+      bool looping;
 
       QLabel *lbl_info1;
       QLabel *lbl_resolution;
@@ -107,6 +108,7 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
       QPushButton *pb_save;
       QPushButton *pb_reset;
       QPushButton *pb_loop;
+      QPushButton *pb_stop;
       QCheckBox *cb_autolimit;
       QCheckBox *cb_plot_s;
       QCheckBox *cb_plot_mw;
@@ -134,6 +136,7 @@ class US_EXTERN US_Pseudo3D_Combine : public QFrame
       void load_color();
       void help();
       void save();
+      void stop();
       void print();
       void reset();
       void set_limits(); // resets the plot limits in the counters

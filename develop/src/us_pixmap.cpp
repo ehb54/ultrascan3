@@ -1,7 +1,7 @@
 #include "../include/us_pixmap.h"
 
 
-US_Pixmap::US_Pixmap()
+US_Pixmap::US_Pixmap(QWidget* parent, const char* name) : QWidget(parent, name)
 {
 }
 
@@ -18,7 +18,7 @@ void US_Pixmap::save_file(QString fileName, QPixmap p)
 
    QBitmap mask(p.size());
    mask.fill(Qt::color1);
- 
+
    QPainter pic(&mask);
    pic.setPen(Qt::color0);
 
@@ -35,6 +35,13 @@ void US_Pixmap::save_file(QString fileName, QPixmap p)
    }
    pic.end();
    p.setMask(mask);
-   p.save(fileName + "png", "PNG");
+   if(!p.save(fileName + "png", "PNG"))
+   {
+      QMessageBox::information(this, tr("Disk Error:"),
+      tr("Please note:\n\nUltraScan is unable to write the image for:\n\n" +
+         fileName + ".png\n\nto disk. Please make sure the directory exists!"),
+         //1,0,0);
+      QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+   }
 }
 
