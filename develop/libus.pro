@@ -43,8 +43,8 @@ win32 {
   message ("Configuring for the Microsoft Windows Platform...")
   TEMPLATE             = vclib
   TARGET               = libus
-  #CONFIG              += qt thread warn exceptions dll release
-  CONFIG              += qt thread warn exceptions dll debug
+  CONFIG              += qt thread warn exceptions dll release
+  #CONFIG              += qt thread warn exceptions dll debug
   QMAKE_CXXFLAGS      += /EHsc          # Assume extern C functions never throw exceptions
   QMAKE_CXXFLAGS      += /Fd$(IntDir)\  # Put intermediate directories in separate location
   QMAKE_LFLAGS_DEBUG  += /NODEFAULTLIB:"msvcrt.lib"

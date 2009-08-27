@@ -133,6 +133,8 @@ struct centerpieceInfo
   float width;              // width of channel, if rectangular, or radius if sector==2, 0 otherwise.
 };
 
+#define MAX_THREADS 32
+
 struct Config
 {
   QString version;        // Current Version

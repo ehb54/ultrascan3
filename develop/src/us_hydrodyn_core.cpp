@@ -3661,7 +3661,7 @@ void US_Hydrodyn::radial_reduction()
                   unsigned int i;
                   unsigned int j;
 
-                  vector < BPair > my_pairs[threads];
+                  vector < BPair > my_pairs[ MAX_THREADS ];
                   for ( j = 0; j < threads; j++ )
                   {
 # if defined(DEBUG_THREAD)
@@ -6180,7 +6180,7 @@ int US_Hydrodyn::compute_asa()
                   unsigned int i;
                   unsigned int j;
 
-                  vector < BPair > my_pairs[threads];
+                  vector < BPair > my_pairs[ MAX_THREADS ];
                   for ( j = 0; j < threads; j++ )
                   {
 # if defined(DEBUG_THREAD)

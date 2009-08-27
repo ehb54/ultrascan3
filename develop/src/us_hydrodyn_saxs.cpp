@@ -887,7 +887,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          saxs saxs = saxs_map[atoms[i].saxs_name];
          vi = atoms[i].excl_vol;
          vie = vi * our_saxs_options->water_e_density;
-         m_pi_vi23 = -M_PI * pow(vi,2.0/3.0); // - pi * pow(v,2/3)
+         m_pi_vi23 = -M_PI * pow((double)vi,2.0/3.0); // - pi * pow(v,2/3)
 #if defined(SAXS_DEBUG_F)
          cout << i << "\t"
               << atoms[i].saxs_name << "\t";

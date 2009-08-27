@@ -2978,7 +2978,7 @@ void US_Hydrodyn::display_default_differences()
 void US_Hydrodyn::play_sounds(int type)
 {
    if ( advanced_config.use_sounds &&
-        QSound::available )
+        QSound::available() )
    {
       QString sound_base = USglobal->config_list.root_dir + "sounds/";
       switch (type)

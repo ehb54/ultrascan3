@@ -30,8 +30,8 @@ unix {
 
 win32 {
   TEMPLATE             = vcapp          # Visual C application (creates .vcproj file)
-  #CONFIG              += qt warn thread release
-  CONFIG              += qt warn thread debug
+  CONFIG              += qt warn thread release
+  #CONFIG              += qt warn thread debug
   QMAKE_CXXFLAGS      += /EHsc          # Assume extern C functions never throw exceptions
   QMAKE_CXXFLAGS      += /Fd$(IntDir)\  # Put intermediate directories in separate location
   QMAKE_LFLAGS_DEBUG  += /NODEFAULTLIB:"msvcrt.lib"

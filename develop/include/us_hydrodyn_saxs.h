@@ -119,15 +119,15 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < vector < double > > plotted_q;
       vector < vector < double > > plotted_I;
 
-#ifdef WIN32
-     #pragma warning ( default: 4251 )
-#endif      
-
       map < QString, saxs >          saxs_map;
       map < QString, hybridization > hybrid_map;
       map < QString, atom >          atom_map;
       map < QString, vector <int> >  multi_residue_map;
       map < QString, QString >       residue_atom_hybrid_map;
+
+#ifdef WIN32
+     #pragma warning ( default: 4251 )
+#endif      
 
       unsigned int current_model;
 
