@@ -247,7 +247,7 @@ static void stampamatrice1(float *n);
 static void stampamatrice1l(long double *n);
 #endif
 static void stampa_ris();
-static void mem_ris();
+static void mem_ris(int);
 static void val_med();
 static void inp_inter();
 static void out_inter();
@@ -332,6 +332,8 @@ static vector < vector <int> > active_idx;  // maps into bead_model
 static vector <int> bead_count;  // counts # of active beads
 static int active_model;
 static US_Hydrodyn *us_hydrodyn;
+static vector < float > total_asa;
+static vector < float > used_asa;
 
 static void
 supc_free_alloced()
@@ -581,20 +583,30 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    nmax = 0;
    int models_to_proc = 0;
    QString use_filename = filename;
+   total_asa.clear();
+   used_asa.clear();
    for (int current_model = 0; current_model < (int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
          if ((*somo_processed)[current_model]) {
             model_idx.push_back(current_model);
             vector < int > tmp_active_idx;
             int tmp_count = 0;
+            float this_total_asa = 0.0f;
+            float this_used_asa = 0.0f;
             for(int i = 0; i < (int)(*bead_models)[current_model].size(); i++) {
                if((*bead_models)[current_model][i].active) {
                   tmp_active_idx.push_back(i);
                   tmp_count++;
+                  this_total_asa += (*bead_models)[current_model][i].bead_asa;
+                  if ( us_hydrodyn->get_color(&(*bead_models)[current_model][i]) != 6 ) {
+                     this_used_asa += (*bead_models)[current_model][i].bead_asa;
+                  }
                }
             }
             bead_count.push_back(tmp_count);
             active_idx.push_back(tmp_active_idx);
+            total_asa.push_back(this_total_asa);
+            used_asa.push_back(this_used_asa);
             models_to_proc++;
             if (nmax < (int) (*bead_models)[current_model].size()) {
                nmax = (int) (*bead_models)[current_model].size();
@@ -1571,7 +1583,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       stampa_ris();
 
       if (flag_mem == 1)
-         mem_ris();
+         mem_ris(k);
 
       if (num != 1)
       {
@@ -2161,7 +2173,7 @@ stampa_ris()
 /**************************************************************************/
 
 static void
-mem_ris()
+mem_ris(int model)
 {
 
    float einst, bc, temp;
@@ -2176,6 +2188,7 @@ mem_ris()
    fprintf(ris, "%s", "MODEL File Name  :___ ");
    fprintf(ris, "%s\n", molecola);
    fprintf(ris, "%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere);
+   fprintf(ris, "%s%.2f [nm^2]\n", "TOTAL ASA of Beads in the MODEL :___ ", total_asa[model]);
    tot_tot_beads += (float) numero_sfere;
    tot_tot_beads2 += (float) numero_sfere * (float) numero_sfere;
    supc_results->total_beads = numero_sfere;
@@ -2230,6 +2243,7 @@ mem_ris()
    if (volcor == 2)
       fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
 
+   fprintf(ris, "%s%.2f [nm^2]\n", "- Used BEADS ASA     = ", used_asa[model]);
    if (mascor == 1)
       mascor1 = (float) pesmol;
 
