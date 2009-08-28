@@ -29,9 +29,27 @@ class US_EXTERN US_RunDetails : public US_WidgetsDialog
 
    private:
       const QList< US_DataIO::rawData >& dataList;
-      const QStringList&      triples;
+      const QStringList&                 triples;
+      
+      // key = rpm, value = triple + scan#
+      QMultiMap< int, QString >          map; 
+
+      class graphValue
+      {
+         public:
+         double seconds;
+         double rpm;
+         double temperature;
+
+         graphValue( double s, double r, double t ):
+            seconds( s ), rpm( r ), temperature( t ) {};
+         
+         bool operator < (const graphValue& other ) 
+         const { return seconds < other.seconds; };
+      };
 
       QListWidget* lw_triples;
+      QListWidget* lw_rpm;
 
       QLabel*      lb_red;
       QLabel*      lb_green;
@@ -44,7 +62,14 @@ class US_EXTERN US_RunDetails : public US_WidgetsDialog
 
       QwtPlot*     data_plot;
 
+      void         setup        ( void );
+      void         show_all_data( void );
+      void         draw_plot    ( const double*, const double*,
+                                  const double*, const double*, int );
+      void         check_temp   ( double, double );
+
    private slots:
-      void update( int );
+      void update           ( int );
+      void show_rpm_details ( int );
 };
 #endif
