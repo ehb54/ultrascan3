@@ -8,6 +8,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_run_details.h"
+#include "us_math.h"
 
 //! \brief Main program for us_convert. Loads translators and starts
 //         the class US_Convert.

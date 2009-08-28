@@ -8,7 +8,7 @@
 #include <qwt_legend.h>
 
 US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data, 
-                              int                                index,
+                              int                        /*        index */,
                               const QString&                     runID, 
                               const QString&                     dataDir, 
                               const QStringList&                 cell_ch_wl )
@@ -30,8 +30,6 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
         tr( "RPM * 1000 / Temperature " ) + QChar( 176 ) + "C" );
 
    data_plot->setMinimumSize( 400, 200 );
-   main->addLayout( plot, row, 0, 5, 6 );
-
    data_plot->enableAxis( QwtPlot::yRight );
 
    // Copy font for right axis from left axis
@@ -40,6 +38,8 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
    data_plot->setAxisTitle( QwtPlot::yRight, axisTitle );
 
    us_grid( data_plot );
+
+   main->addLayout( plot, row, 0, 5, 6 );
    row += 6;
 
    // Row
@@ -52,7 +52,7 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
    main->addWidget( le_dir, row++, 1, 1, 5 );
 
    // Row
-   QLabel* lb_desc = us_label( tr( "Run Description:" ) );
+   QLabel* lb_desc = us_label( tr( "Description:" ) );
    main->addWidget( lb_desc, row, 0 );
 
    le_desc = us_lineedit();
@@ -64,10 +64,15 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
    QLabel* lb_runID = us_label( tr( "Run Identification:" ) );
    main->addWidget( lb_runID, row, 0 );
 
+   lw_rpm = us_listwidget();
+   lw_rpm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum );
+   lw_rpm->setMinimumSize( 50, 50 );
+   main->addWidget( lw_rpm, row, 2, 5, 1 );
+
    lw_triples = us_listwidget();
    lw_triples->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum );
    lw_triples->setMinimumSize( 50, 50 );
-   main->addWidget( lw_triples, row, 2, 5, 3 );
+   main->addWidget( lw_triples, row, 3, 5, 2 );
 
    QLineEdit* le_runID = us_lineedit();
    le_runID->setReadOnly( true );
@@ -91,7 +96,7 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
    main->addWidget( le_timeCorr, row++, 1 );
 
    // Row
-   QLabel* lb_rotorSpeed = us_label( tr( "Rotor Speed:" ) );
+   QLabel* lb_rotorSpeed = us_label( tr( "Avg. Rotor Speed:" ) );
    main->addWidget( lb_rotorSpeed, row, 0 );
 
    le_rotorSpeed = us_lineedit();
@@ -139,25 +144,114 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
    connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
    main->addWidget( pb_close, row++, 2, 1, 3 );
 
-   update( index );
+   setup();
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
                         SLOT  ( update           ( int ) ) );
+
+   connect( lw_rpm    , SIGNAL( currentRowChanged( int ) ),
+                        SLOT  ( show_rpm_details ( int ) ) );
 }
 
-void US_RunDetails::update( int index )
+void US_RunDetails::setup( void )
 {
-   const US_DataIO::rawData* r         = &dataList[ index ];
-   int                       scanCount = r->scanData.size();
+   // Set length of run
+   double             last = 0.0;
+   US_DataIO::rawData data;
 
-   le_desc->setText( r->description );
+   foreach( data, dataList )
+      last = max( last, data.scanData.last().seconds );
+   
+   last       = round( last );
+   int  hours = (int)floor( last / 3600.0 );
+   int  mins  = (int) round( ( last - hours * 3600.0 ) / 60.0 );
 
-   double         temp      = 0.0;
-   double         rpm       = 0.0;
+   QString s; 
+   QString h = ( hours == 1 ) ? tr( "hour" ) : tr( "hours" );
+ 
+   le_runLen->setText( 
+         s.sprintf( "%d %s %02d min", hours, h.toAscii().data(), mins ) );
 
-   for ( int i = 0; i < scanCount; i++ )
+   // Set Time Correction
+   double correction = 0.0;
+   int    scanCount  = 0;
+
+   US_DataIO::scan scan;
+   
+   foreach( data, dataList )
    {
-      temp += r->scanData[ i ].temperature;
-      rpm  += r->scanData[ i ].rpm;
+      foreach( scan, data.scanData )
+      {
+         double omega = ( M_PI / 30.0 ) * scan.rpm;
+         correction  += scan.seconds - scan.omega2t / sq( omega );
+         scanCount++;
+      }
+   }
+
+   correction /= scanCount;
+   int minutes = (int) correction / 60;
+   int seconds = (int) correction % 60;
+
+   le_timeCorr->setText( s.sprintf( "%d min %02d sec", minutes, seconds ) );
+
+   // Set rpm list widget
+   int i = 0;
+
+   foreach( data, dataList )
+   {
+      int scanNumber = 1;
+      foreach( scan, data.scanData )
+      {
+         // Round to closest 100 rpm
+         int rpm  = (int)round( scan.rpm / 100.0 ) * 100;
+         map.insert( rpm, triples[ i ] + " / " + QString::number( scanNumber ) );
+         scanNumber++;
+      }
+
+      i++;
+   }
+
+   QList< int > rpms = map.uniqueKeys();
+   qSort( rpms );
+   QStringList  s_rpms;
+   int          rpm;
+
+   foreach( rpm, rpms ) s_rpms << QString::number( rpm ) + " RPM";
+   lw_rpm->addItems( s_rpms );
+
+   // Set triples + scans
+   for ( int i = 0; i < triples.size(); i++ )
+   {
+      int scans = dataList[ i ].scanData.size();
+      lw_triples->addItem( triples[ i ] + s.sprintf( " -- %d scans", scans ) );    
+   }
+
+   lw_triples->addItem( s.sprintf( "All scans -- %d scans", scanCount ) );    
+
+   // Set triple to indicate All Data
+   lw_triples->setCurrentRow( triples.size() );
+
+   show_all_data();
+}
+
+void US_RunDetails::show_all_data( void )
+{
+   le_desc->setText( "" );
+
+   US_DataIO::rawData triple;
+   US_DataIO::scan    scan;
+   double             temp      = 0.0;
+   double             rpm       = 0.0;
+   int                scanCount = 0;
+
+   // Note that these are not weighted averages 
+   foreach( triple, dataList )
+   {
+      foreach( scan, triple.scanData )
+      {
+         temp += scan.temperature;
+         rpm  += scan.rpm;
+         scanCount++;
+      }
    }
 
    // Set average temperature
@@ -166,63 +260,67 @@ void US_RunDetails::update( int index )
 
    // Set average rpm
    rpm /= scanCount;             // Get average
-   double omega = ( M_PI / 30.0 ) * rpm;
    rpm  = round( rpm / 100.0 );  // Round to closest 100 rpm
    le_rotorSpeed->setText( QString::number( (int)rpm * 100 ) + " RPM" );
 
-   double correction = 0.0;
-
-   for ( int i = 0; i < scanCount; i++ )
-      correction += r->scanData[ i ].seconds 
-                  - r->scanData[ i ].omega2t / sq( omega );
-
-   correction /= scanCount;
-   int minutes = (int) correction / 60;
-   int seconds = (int) correction % 60;
-
-   QString s;
-   le_timeCorr->setText( s.sprintf( "%d min %02d sec", minutes, seconds ) );
-
-   double last  = round( r->scanData[ scanCount - 1 ].seconds );
-   int    hours = (int)floor( last / 3600.0 );
-   int    mins  = (int) round( ( last - hours * 3600.0 ) / 60.0 );
-   le_runLen->setText( s.sprintf( "%d hours %02d min", hours, mins ) );
-
-   for ( int i = 0; i < triples.size(); i++ )
-   {
-      int scans = dataList[ i ].scanData.size();
-      lw_triples->addItem( triples[ i ] + s.sprintf( " -- %d scans", scans ) );    
-   }
-
-   lw_triples->setCurrentRow( index );
-
+   // Determine temperature variation
    double maxTemp = -1.0e99;
    double minTemp =  1.0e99;
 
+   foreach( triple, dataList )
+   {
+      foreach( scan, triple.scanData )
+      {
+         maxTemp = max( maxTemp, scan.temperature );
+         minTemp = min( minTemp, scan.temperature );
+      }
+   }
+
+   check_temp( minTemp, maxTemp );
+
+   // Plot the data
+   // First, put all data in a list and sort by time
+   QList< graphValue > values;
+
+   foreach( triple, dataList )
+   {
+      foreach( scan, triple.scanData )
+      {
+         values << graphValue( scan.seconds, scan.rpm, scan.temperature );
+      }
+   }
+
+   qSort( values );
+         
    double* x = new double[ scanCount ];
    double* t = new double[ scanCount ];
-   double* w = new double[ scanCount ];
+   double* r = new double[ scanCount ];
    double* m = new double[ scanCount ];
 
    for ( int i = 0; i < scanCount; i++ )
    {
-      const US_DataIO::scan* s = &r->scanData[ i ];
-
       x[ i ] = i + 1;
-      t[ i ] = s->temperature;
-      maxTemp = max( maxTemp, s->temperature );
-      minTemp = min( minTemp, s->temperature );
-
-      w[ i ] = s->rpm / 1000.0;
+      t[ i ] = values[ i ].temperature;
+      r[ i ] = values[ i ].rpm / 1000.0;
 
       double prior_seconds;
       
-      if ( i > 0 )  m[ i ] = ( s->seconds - prior_seconds ) / 60.0;
+      if ( i > 0 ) m[ i ] = ( values[ i ].seconds - prior_seconds ) / 60.0;
 
-      prior_seconds = s->seconds;
+      prior_seconds = values[ i ].seconds;
    }
 
-   if ( maxTemp - minTemp <= US_Settings::tempTolerance() )
+   draw_plot( x, t, r, m, scanCount );
+
+   delete [] x;
+   delete [] t;
+   delete [] r;
+   delete [] m;
+}
+
+void US_RunDetails::check_temp( double min, double max )
+{
+   if ( max - min <= US_Settings::tempTolerance() )
    {
       lb_red  ->setPalette( QPalette( QColor( 0x55, 0, 0 ) ) ); // Dark Red
       lb_green->setPalette( QPalette( Qt::green ) );
@@ -241,54 +339,162 @@ void US_RunDetails::update( int index )
                 + " " + QChar( 178 ) + tr( "C). The accuracy of experimental\n"
                 "results may be affected significantly." ) );
    }
+}
 
-   // Draw the plots
+void US_RunDetails::draw_plot( const double* x, const double* t, 
+      const double* r, const double* m, int count )
+{
    data_plot->setAxisScale( QwtPlot::yLeft, 0.0, 60.0 );
-   data_plot->setAxisScale( QwtPlot::xBottom, 1.0, scanCount, 1.0 );
+   data_plot->setAxisScale( QwtPlot::xBottom, 1.0, count, 1.0 );
+
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
 
    QwtSymbol sym;
 
-   sym.setStyle( QwtSymbol::Ellipse);
+   sym.setStyle( QwtSymbol::Ellipse );
    sym.setPen  ( QPen( Qt::yellow ) );
    sym.setBrush( Qt::white );
    sym.setSize ( 6 );
 
-   QwtPlotCurve* c1 = new QwtPlotCurve( tr( "Temperature" ) );
-   c1->setRenderHint( QwtPlotItem::RenderAntialiased );
-   c1->setYAxis     ( QwtPlot::yLeft );
-   c1->setPen       ( QPen( QBrush( Qt::yellow ), 2 ) );
-   c1->setSymbol    ( sym );
-   c1->attach       ( data_plot );
-   c1->setData      ( x, t, scanCount );
+   QwtPlotCurve* c1 = us_curve( data_plot, tr( "Temperature" ) );
+   c1->setPen   ( QPen( QBrush( Qt::yellow ), 2 ) );
+   c1->setSymbol( sym );
+   c1->setData  ( x, t, count );
 
    sym.setPen( QColor( Qt::green ) );
 
-   QwtPlotCurve* c2 = new QwtPlotCurve( tr( "RPM" ) );
-   c2->setRenderHint( QwtPlotItem::RenderAntialiased );
-   c2->setYAxis     ( QwtPlot::yLeft );
+   QwtPlotCurve* c2 = us_curve( data_plot, tr( "RPM" ) );
    c2->setPen       ( QPen( QBrush( Qt::green ), 2 ) );
    c2->setSymbol    ( sym );
-   c2->attach       ( data_plot );
-   c2->setData      ( x, w, scanCount );
+   c2->setData      ( x, r, count );
 
    sym.setPen( QColor( Qt::red ) );
 
-   QwtPlotCurve* c3 = new QwtPlotCurve( tr( "Scan Time Deltas" ) );
-   c3->setRenderHint( QwtPlotItem::RenderAntialiased );
+   QwtPlotCurve* c3 = us_curve( data_plot, tr( "Scan Time Deltas" ) );
    c3->setYAxis     ( QwtPlot::yRight );
    c3->setPen       ( QPen( QBrush( Qt::red ), 2 ) );
    c3->setSymbol    ( sym );
-   c3->attach       ( data_plot );
-   c3->setData      ( &x[ 1 ], &m[ 1 ], scanCount - 1 );
+   c3->setData      ( &x[ 1 ], &m[ 1 ], count - 1 );
 
-   QwtLegend* legend = new QwtLegend;
-   legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
-   data_plot->insertLegend( legend, QwtPlot::BottomLegend );
+   if ( data_plot->legend() == NULL )
+   {
+      QwtLegend* legend = new QwtLegend;
+      legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+      data_plot->insertLegend( legend, QwtPlot::BottomLegend );
+   }
 
    data_plot->replot();
-   
+}
+
+void US_RunDetails::update( int index )
+{
+   if ( lw_triples->currentItem()->text().contains( tr( "All" ) ) )
+   {
+      show_all_data();
+      return;
+   }
+
+   const US_DataIO::rawData* data      = &dataList[ index ];
+   int                       scanCount = data->scanData.size();
+
+   le_desc->setText( data->description );
+
+   double temp = 0.0;
+   double rpm  = 0.0;
+
+   for ( int i = 0; i < scanCount; i++ )
+   {
+      temp += data->scanData[ i ].temperature;
+      rpm  += data->scanData[ i ].rpm;
+   }
+
+   // Set average temperature
+   le_avgTemp->setText( QString::number( temp / scanCount, 'f', 1 ) 
+         + " " + QChar( 176 ) + "C" );
+
+   // Set average rpm
+   rpm /= scanCount;             // Get average
+   rpm  = round( rpm / 100.0 );  // Round to closest 100 rpm
+   le_rotorSpeed->setText( QString::number( (int)rpm * 100 ) + " RPM" );
+
+   double maxTemp = -1.0e99;
+   double minTemp =  1.0e99;
+
+   double* x = new double[ scanCount ];
+   double* t = new double[ scanCount ];
+   double* r = new double[ scanCount ];
+   double* m = new double[ scanCount ];
+
+   for ( int i = 0; i < scanCount; i++ )
+   {
+      const US_DataIO::scan* s = &data->scanData[ i ];
+
+      x[ i ] = i + 1;
+      t[ i ] = s->temperature;
+      maxTemp = max( maxTemp, s->temperature );
+      minTemp = min( minTemp, s->temperature );
+
+      r[ i ] = s->rpm / 1000.0;
+
+      double prior_seconds;
+      
+      if ( i > 0 )  m[ i ] = ( s->seconds - prior_seconds ) / 60.0;
+
+      prior_seconds = s->seconds;
+   }
+
+   check_temp( minTemp, maxTemp );
+   draw_plot( x, t, r, m, scanCount );
+
    delete [] x;
    delete [] t;
-   delete [] w;
+   delete [] r;
    delete [] m;
 }
+
+void US_RunDetails::show_rpm_details( int /* index */ )
+{
+   QString msg = tr( "The following scans have been measured at " )
+               + lw_rpm->currentItem()->text() + ":\n\n";
+
+   QStringList sl  = lw_rpm->currentItem()->text().split( " " ); 
+   int         rpm = sl[ 0 ].toInt();
+
+   sl = map.values( rpm );
+   qSort( sl ); // contains cell / channel / wavelength / scan
+
+   QString triple;
+
+   foreach( triple, triples )
+   {
+      QStringList scans;
+      QString     value;
+
+      foreach( value, sl )
+      {
+         if ( value.startsWith( triple ) )
+         {
+            QStringList components = value.split( " / " );
+            scans << components[ 3 ];
+         }
+      }
+      
+      if ( scans.size() == 0 ) continue;
+      
+      QStringList cellChWl = triple.split( " / " );
+
+      msg += tr( "Cell: "         ) + cellChWl[ 0 ] 
+          +  tr( ", Channel: "    ) + cellChWl[ 1 ]
+          +  tr( ", Wavelength: " ) + cellChWl[ 2 ]
+          +  tr( ", Scans: "      );
+         
+      QString scan;
+      
+      foreach( scan, scans ) msg += scan + ", ";
+      msg.replace( QRegExp( ", $" ), "\n" );
+   }
+
+   QMessageBox::information( this,
+         tr( "Speed Information" ), msg );
+}
+
