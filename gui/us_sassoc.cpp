@@ -220,12 +220,6 @@ US_Sassoc::US_Sassoc( double eq0, double eq1, double stoich1, double stoich2,
    status = ! status; // Avoid warning for now
 }
 
-void US_Sassoc::closeEvent( QCloseEvent* )
-{
-   // Ensure any open plot config window closes
-   plotLayout->quit(); 
-}
-
 void US_Sassoc::recalc( void )
 {
    for ( int i = 0; i < ARRAY_SIZE; i++ )

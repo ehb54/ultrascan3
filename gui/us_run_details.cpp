@@ -12,7 +12,7 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
                               const QString&                     runID, 
                               const QString&                     dataDir, 
                               const QStringList&                 cell_ch_wl )
-   : US_Widgets(), dataList( data ), triples( cell_ch_wl )
+   : US_WidgetsDialog( 0, 0 ), dataList( data ), triples( cell_ch_wl )
 {
    setWindowTitle( tr( "Details for Raw Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -21,7 +21,7 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
    main->setSpacing        ( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
 
-   plotType = COMBINED;
+   plotType = TEMPERATURE;
    int row  = 0;
 
    // Plot Rows

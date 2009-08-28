@@ -33,6 +33,8 @@ US_Zoomer::US_Zoomer( int xAxis, int yAxis, QwtPlotCanvas* canvas )
                     Qt::RightButton );
 }
 
+/*********************       US_Plot Class      *************************/
+
 // A new plot returns a QBoxLayout
 US_Plot::US_Plot( QwtPlot*& parent_plot, const QString& title, const QString& x_axis, 
                   const QString& y_axis ) : QVBoxLayout()
@@ -226,15 +228,19 @@ void US_Plot::config( void )
 {
    if ( configWidget ) 
    {
-      configWidget->close();
+      //configWidget->close();
    }
    configWidget = new US_PlotConfig( plot ); 
-   configWidget->setAttribute( Qt::WA_DeleteOnClose );
-   connect( configWidget, SIGNAL( plotConfigClosed  () ), 
-                          SLOT  ( plotConfigFinished() ) );
-   configWidget->show();
+   //configWidget->setAttribute( Qt::WA_DeleteOnClose );
+   //connect( configWidget, SIGNAL( plotConfigClosed  () ), 
+   //                       SLOT  ( plotConfigFinished() ) );
+   //configWidget->show();
+   configWidget->exec();
+   qApp->processEvents();
+   delete configWidget;
 }
 
+/*
 void US_Plot::plotConfigFinished( void )
 {
    configWidget = NULL;
@@ -244,16 +250,12 @@ void US_Plot::quit( void )
 {
    if ( configWidget ) 
    {
-      configWidget->close();
+      //configWidget->close();
    }
 }
+*/
 
 ////////////////////////////////////////
-
-void US_PlotPushbutton::us_plotClicked( void )
-{
-   emit US_PlotPbPushed( pb_index );
-};
 
 US_PlotPushbutton::US_PlotPushbutton( const QString& labelString, 
       QWidget* w, int index ) : QPushButton( labelString.toAscii(), w )
@@ -270,6 +272,11 @@ US_PlotPushbutton::US_PlotPushbutton( const QString& labelString,
    connect( this, SIGNAL( clicked() ), SLOT( us_plotClicked() ) );
 }
 
+void US_PlotPushbutton::us_plotClicked( void )
+{
+   emit US_PlotPbPushed( pb_index );
+};
+
 /*********************       QwtPlotConfig Class      *************************/
 
 /*! 
@@ -279,7 +286,7 @@ US_PlotPushbutton::US_PlotPushbutton( const QString& labelString,
    \param f            Window Flags
 */
 US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p, 
-  Qt::WindowFlags f ) : US_Widgets( false, p, f )
+  Qt::WindowFlags f ) : US_WidgetsDialog( p, f ) //( false, p, f )
 {
    setWindowTitle( "Local Plot Configuration" );
    setPalette( US_GuiSettings::frameColor() );
@@ -290,7 +297,7 @@ US_PlotConfig::US_PlotConfig( QwtPlot* current_plot, QWidget* p,
    plot        = current_plot;
 
    // Move this frame to get out of the way
-   move( pos() + QPoint( plot->rect().width(), 0 ) );
+   //move( pos() + QPoint( plot->rect().width(), 0 ) );
 
    int row = 0;
 
@@ -650,10 +657,14 @@ void US_PlotConfig::updateAxis( int axis )
    }
    
    axisWidget = new US_PlotAxisConfig( axis, plot );
-   axisWidget->setAttribute( Qt::WA_DeleteOnClose );
-   connect( axisWidget, SIGNAL( axisConfigClosed( void ) ),
-                        SLOT  ( axisConfigFinish( void ) ) );
-   axisWidget->show();
+   //axisWidget->setAttribute( Qt::WA_DeleteOnClose );
+   //connect( axisWidget, SIGNAL( axisConfigClosed( void ) ),
+   //                     SLOT  ( axisConfigFinish( void ) ) );
+   //axisWidget->show();
+   axisWidget->exec();
+   qApp->processEvents();
+   delete axisWidget;
+
 }
 
 /*!  \brief Open US_PlotConfig dialog for changing the 
@@ -682,10 +693,13 @@ void US_PlotConfig::updateCurve( void )
       selected << items[i]->text();
 
    curveWidget = new US_PlotCurveConfig( plot, selected );
-   curveWidget->setAttribute( Qt::WA_DeleteOnClose );
-   connect( curveWidget, SIGNAL( curveConfigClosed( void ) ),
-                         SLOT  ( curveConfigFinish( void ) ) );
-   curveWidget->show();
+   //curveWidget->setAttribute( Qt::WA_DeleteOnClose );
+   //connect( curveWidget, SIGNAL( curveConfigClosed( void ) ),
+   //                      SLOT  ( curveConfigFinish( void ) ) );
+   //curveWidget->show();
+   curveWidget->exec();
+   qApp->processEvents();
+   delete curveWidget;
 }
 
 void US_PlotConfig::updateGrid( void )
@@ -693,23 +707,26 @@ void US_PlotConfig::updateGrid( void )
    // Prevent opening more than one grid configuration
    if ( gridWidget != NULL )
    {
-      gridWidget->close();
+      //gridWidget->close();
    }
    
    gridWidget = new US_PlotGridConfig( plot );
-   gridWidget->setAttribute( Qt::WA_DeleteOnClose );
-   connect( gridWidget, SIGNAL( gridConfigClosed( void ) ),
-                        SLOT  ( gridConfigFinish( void ) ) );
-   gridWidget->show();
+   //gridWidget->setAttribute( Qt::WA_DeleteOnClose );
+   //connect( gridWidget, SIGNAL( gridConfigClosed( void ) ),
+   //                     SLOT  ( gridConfigFinish( void ) ) );
+   //gridWidget->show();
+   gridWidget->exec();
+   qApp->processEvents();
+   delete gridWidget;
 }
-
+/*
 void US_PlotConfig::closeEvent( QCloseEvent* e )
 {
    if ( axisWidget  != NULL ) axisWidget->close(); 
    if ( gridWidget  != NULL ) gridWidget->close();
-   if ( curveWidget != NULL ) curveWidget->close();
+   //if ( curveWidget != NULL ) curveWidget->close();
 
-   emit plotConfigClosed();
+   //emit plotConfigClosed();
    e->accept();
 }
 
@@ -727,7 +744,7 @@ void US_PlotConfig::gridConfigFinish( void )
 {
    gridWidget = NULL;
 }
-
+*/
 /*******************      QwtPlotCurveConfig Class      ***********************/
 
 /*! 
@@ -738,14 +755,14 @@ void US_PlotConfig::gridConfigFinish( void )
    \param flags       Widget flags
 */
 US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot, 
-      const QStringList& selected, QWidget* parent, Qt::WindowFlags flags ) 
-      : US_Widgets( false, parent, flags )
+      const QStringList& selected, QWidget* parent, Qt::WindowFlags f ) 
+      : US_WidgetsDialog( parent, f ) //( false, parent, f )
 {
    plot          = currentPlot;
    selectedItems = selected;
 
    // Keep out of the way
-   move( pos() + QPoint( plot->rect().width(), 0 ) );
+   //move( pos() + QPoint( plot->rect().width(), 0 ) );
 
    setWindowTitle( tr( "Curve Configuration" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -987,13 +1004,13 @@ US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot,
 
    main->addLayout( applyClose, row++, 0, 1, 3 );
 }
-
+/*
 void US_PlotCurveConfig::closeEvent( QCloseEvent* e )
 {
    emit curveConfigClosed();
    e->accept();
 }
-
+*/
 void US_PlotCurveConfig::updateSample( int )
 {
    lb_sample2->update(); 
@@ -1018,7 +1035,7 @@ void US_PlotCurveConfig::selectCurveColor( void )
    QPalette p       = lb_showCurveColor->palette();
    QColor   current = p.color( QPalette::Active, QPalette::Window );
    QColor   c       = QColorDialog::getColor( current, this, 
-         tr( "Select curve color" ) );
+                         tr( "Select curve color" ) );
    
    if ( c.isValid() )
    {
@@ -1033,7 +1050,7 @@ void US_PlotCurveConfig::selectSymbolInteriorColor( void )
    QPalette p       = lb_showSymbolInteriorColor->palette();
    QColor   current = p.color( QPalette::Active, QPalette::Window );
    QColor   c       = QColorDialog::getColor( current, this, 
-         tr( "Select symbol interior color" ) );
+                         tr( "Select symbol interior color" ) );
    
    if ( c.isValid() )
    {
@@ -1048,7 +1065,7 @@ void US_PlotCurveConfig::selectSymbolOutlineColor( void )
    QPalette p       = lb_showSymbolOutlineColor->palette();
    QColor   current = p.color( QPalette::Active, QPalette::Window );
    QColor   c       = QColorDialog::getColor( current, this, 
-         tr( "Select symbol outline color" ) );
+                         tr( "Select symbol outline color" ) );
    
    if ( c.isValid() )
    {
@@ -1223,13 +1240,13 @@ void US_PlotLabel::paintEvent( QPaintEvent* e )
    \param flags       Frame window flags
 */
 US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US_Widgets( false, parent, flags )
+   QWidget* parent, Qt::WindowFlags flags ) : US_WidgetsDialog( parent, flags )//( false, parent, flags )
 {
    plot = currentPlot;
    axis = currentAxis;
 
    // Keep out of the way
-   move( pos() + QPoint( plot->rect().width(), 0 ) );
+   //move( pos() + QPoint( plot->rect().width(), 0 ) );
    
    QString axisLocation;
 
@@ -1450,13 +1467,13 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
 
    main->addLayout( applyClose, row++, 0, 1, 3 );
 }
-
+/*
 void US_PlotAxisConfig::closeEvent( QCloseEvent* e )
 {
    emit axisConfigClosed();
    e->accept();
 }
-
+*/
 void US_PlotAxisConfig::selectTitleFont( void )
 {
    bool ok;
@@ -1477,7 +1494,7 @@ void US_PlotAxisConfig::selectAxisTitleColor( void )
    QPalette p       = lb_showAxisTitleColor->palette();
    QColor   current = p.color( QPalette::Window );
    QColor   c       = QColorDialog::getColor( current, this, 
-         tr( "Select Axis Title Color" ) );
+                         tr( "Select Axis Title Color" ) );
    
    if ( c.isValid() )
    {
@@ -1506,7 +1523,7 @@ void US_PlotAxisConfig::selectScaleColor( void )
    QPalette p       = lb_showScaleColor->palette();
    QColor   current = p.color( QPalette::Window );
    QColor   c       = QColorDialog::getColor( current, this, 
-         tr( "Select Scale Color" ) );
+                         tr( "Select Scale Color" ) );
 
    if ( c.isValid() )
    {
@@ -1520,7 +1537,7 @@ void US_PlotAxisConfig::selectTickColor( void )
    QPalette p       = lb_showTickColor->palette();
    QColor   current = p.color( QPalette::Window );
    QColor   c       = QColorDialog::getColor( current, this, 
-         tr( "Select Tick Color" ) );
+                         tr( "Select Tick Color" ) );
 
    if ( c.isValid() )
    {
@@ -1607,7 +1624,7 @@ void US_PlotAxisConfig::apply( void )
      \param flags       Window flags
 */
 US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot, 
-   QWidget* parent, Qt::WindowFlags flags ) : US_Widgets( false, parent, flags )
+   QWidget* parent, Qt::WindowFlags flags ) : US_WidgetsDialog( parent, flags )//( false, parent, flags )
 {
    setWindowTitle( tr( "Grid Configuration" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -1616,7 +1633,7 @@ US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot,
    grid = NULL;
 
    // Keep out of the way
-   move( pos() + QPoint( plot->rect().width(), 0 ) );
+   //move( pos() + QPoint( plot->rect().width(), 0 ) );
 
    // Get the grid - if it exists
    QwtPlotItemList list = plot->itemList();
@@ -1866,6 +1883,12 @@ void US_PlotGridConfig::apply( void )
 
    plot->replot();
 }
+
+/**************************    US_PlotPicker Class    *********************/
+
+/*!  \brief Customize plot picker characteristics and mouse events
+     \param plot  The plot to attach to
+*/
 
 US_PlotPicker::US_PlotPicker( QwtPlot* plot ) 
   : QwtPlotPicker( QwtPlot::xBottom, QwtPlot::yLeft, plot->canvas() )

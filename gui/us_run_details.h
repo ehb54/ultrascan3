@@ -11,7 +11,7 @@
 
 //! \brief A class to provide a window with the details of a run
 
-class US_EXTERN US_RunDetails : public US_Widgets
+class US_EXTERN US_RunDetails : public US_WidgetsDialog
 {
    Q_OBJECT
 

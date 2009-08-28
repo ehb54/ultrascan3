@@ -77,7 +77,6 @@ class US_EXTERN US_Sassoc : public US_Widgets
       void   update_eq1Count( double                );
       void   update_eq2Count( double                );
       void   save           ( void                  );
-      void   closeEvent     ( QCloseEvent*          );
 
       void   help           ( void )
       { showHelp.show_help( "manual/sassoc.html" ); };

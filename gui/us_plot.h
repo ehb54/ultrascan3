@@ -12,7 +12,7 @@
 #include "qwt_plot_curve.h"
 #include "qwt_symbol.h"
 
-#include "us_widgets.h"
+#include "us_widgets_dialog.h"
 #include "us_extern.h"
 
 
@@ -44,14 +44,14 @@ class US_EXTERN US_Plot : public QVBoxLayout
    Q_OBJECT
 
    public:
+      //! \param plot   - A refernce where to store the new plot for the caller
       //! \param title  - The title of the plot
       //! \param x_axis - The title of the x (bottom) axis
       //! \param y_axis - The title of the y (left) axis
 
-      //US_Plot( const QString&, const QString&, const QString& );
       US_Plot( QwtPlot*& plot, const QString&, const QString&, const QString& );
 
-      void quit( void );
+      //void quit( void );
 
    private:
       US_PlotConfig* configWidget;
@@ -66,7 +66,7 @@ class US_EXTERN US_Plot : public QVBoxLayout
       void print             ( void );
       void svg               ( void );
       void config            ( void );
-      void plotConfigFinished( void );
+      //void plotConfigFinished( void );
 };
 
 //! \brief A specialized push button class for US_Plot to automatically
@@ -96,7 +96,7 @@ class US_PlotPushbutton : public QPushButton
 //! \brief A window to allow customization of plots initialized
 //         via US_Plot
 
-class US_PlotConfig : public US_Widgets
+class US_PlotConfig : public US_WidgetsDialog
 {
    Q_OBJECT
 
@@ -104,9 +104,9 @@ class US_PlotConfig : public US_Widgets
       //! \param current_plot - The plot to be configured
       US_PlotConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
 
-   signals:
-      //! \brief A signal to tell the parent that the window iis closed
-      void plotConfigClosed( void );
+   //signals:
+      //! \brief A signal to tell the parent that the window is closed
+      //void plotConfigClosed( void );
 
    private:
       QwtPlot*     plot;
@@ -139,17 +139,17 @@ class US_PlotConfig : public US_Widgets
       void updateAxis       ( int  );
       void updateCurve      ( void );
       void updateGrid       ( void );
-      void axisConfigFinish ( void );
-      void gridConfigFinish ( void );
-      void curveConfigFinish( void );
-      void closeEvent       ( QCloseEvent* );
+      //void axisConfigFinish ( void );
+      //void gridConfigFinish ( void );
+      //void curveConfigFinish( void );
+      //void closeEvent       ( QCloseEvent* );
 };
 
 class US_PlotLabel;
 
 //! \brief A window to customize plot curves
 
-class US_PlotCurveConfig : public US_Widgets
+class US_PlotCurveConfig : public US_WidgetsDialog
 {
    Q_OBJECT
 
@@ -159,9 +159,9 @@ class US_PlotCurveConfig : public US_Widgets
       US_PlotCurveConfig( QwtPlot*, const QStringList&, QWidget* = 0, 
             Qt::WindowFlags = 0 );
 
-   signals:
+   //signals:
       //! \brief A signal to tell the parent that the window is closed
-      void curveConfigClosed( void );
+      //void curveConfigClosed( void );
 
    private:
       QwtPlot*      plot;
@@ -188,7 +188,7 @@ class US_PlotCurveConfig : public US_Widgets
       QwtSymbol::Style          symbolStyle;
 
    private slots:
-      void closeEvent               ( QCloseEvent* );
+      //void closeEvent               ( QCloseEvent* );
       void curveStyleChanged        ( int  );
       void updateSample             ( int  );
       void selectCurveColor         ( void );
@@ -219,16 +219,16 @@ class US_PlotLabel : public QWidget
 };
 
 //! \brief  A window to customize plot axes
-class US_PlotAxisConfig : public US_Widgets
+class US_PlotAxisConfig : public US_WidgetsDialog
 {
    Q_OBJECT
 
    public:
       US_PlotAxisConfig( int axis, QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
       
-   signals:
+   //signals:
       //! \brief A signal to ensure the parent knows the window is closed.
-      void axisConfigClosed( void );
+      //void axisConfigClosed( void );
 
    private:
       QwtPlot*      plot;
@@ -260,7 +260,7 @@ class US_PlotAxisConfig : public US_Widgets
       QFont         axisScaleFont;
 
    private slots:
-      void closeEvent          ( QCloseEvent* );
+      //void closeEvent          ( QCloseEvent* );
       void selectTitleFont     ( void );
       void selectAxisTitleColor( void );
       void selectScaleFont     ( void );
@@ -270,7 +270,7 @@ class US_PlotAxisConfig : public US_Widgets
 };
 
 //! \brief A window to customize a plot's grid
-class US_PlotGridConfig : public US_Widgets
+class US_PlotGridConfig : public US_WidgetsDialog
 {
    Q_OBJECT
 
@@ -278,9 +278,9 @@ class US_PlotGridConfig : public US_Widgets
       US_PlotGridConfig( QwtPlot*, QWidget* = 0, Qt::WindowFlags = 0 );
       ~US_PlotGridConfig() {};
 
-   signals:
+   //signals:
       //! \brief A signal to tell the parent that the window has been closed
-      void gridConfigClosed( void );
+      //void gridConfigClosed( void );
 
    private:
       QwtPlot*      plot;
