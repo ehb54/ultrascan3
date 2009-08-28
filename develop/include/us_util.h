@@ -133,7 +133,7 @@ struct centerpieceInfo
   float width;              // width of channel, if rectangular, or radius if sector==2, 0 otherwise.
 };
 
-#define MAX_THREADS 32
+#define MAX_THREADS 64
 
 struct Config
 {

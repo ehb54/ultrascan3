@@ -230,14 +230,14 @@ void US_Hydrodyn_Results::setupGUI()
    le_rg->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_rg->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   pb_load_asa = new QPushButton(tr("Load ASA Results File"), this);
+   pb_load_asa = new QPushButton(tr("View ASA Results File"), this);
    Q_CHECK_PTR(pb_load_asa);
    pb_load_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load_asa->setMinimumHeight(minHeight1);
    pb_load_asa->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_asa, SIGNAL(clicked()), SLOT(load_asa()));
 
-   pb_load_results = new QPushButton(tr("Load Full Hydrodynamics Results File"), this);
+   pb_load_results = new QPushButton(tr("View Full Hydrodynamics Results File"), this);
    Q_CHECK_PTR(pb_load_results);
    pb_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_load_results->setMinimumHeight(minHeight1);

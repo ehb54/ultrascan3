@@ -1509,7 +1509,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                         new_residues[new_residue_idx]++;
                         new_residue_name = QString("%1_MA%2").arg(this_atom->resName).arg(new_residues[new_residue_idx]);
                         unknown_residues[new_residue_name] = true;
-                        if (residue_list[orgrespos].type == 0 ) // aa
+                        if ( residue_list[orgrespos].type == 0 ) // aa
                         {
                            unknown_aa_residues_to_check.push_back(new_residue_name);
                         }
@@ -2026,7 +2026,7 @@ public:
 int US_Hydrodyn::create_beads(QString *error_string)
 {
 
-   editor->append("Creating beads from model\n");
+   editor->append("Creating beads from atomic model\n");
    qApp->processEvents();
    active_atoms.clear();
 
@@ -6583,7 +6583,7 @@ int US_Hydrodyn::compute_asa()
    return 0;
 }
 
-void US_Hydrodyn::bead_check( bool use_threshold )
+void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
 {
    // recheck beads here
 
@@ -6691,5 +6691,12 @@ void US_Hydrodyn::bead_check( bool use_threshold )
 #if defined(EXPOSED_TO_BURIED)
    editor->append(QString("%1 exposed beads became buried\n").arg(e2b));
 #endif
-   editor->append(QString("%1 buried beads became exposed\n").arg(b2e));
+   if ( message_type ) 
+   {
+      editor->append(QString(tr("%1 beads are exposed\n")).arg(b2e));
+   } 
+   else
+   {
+      editor->append(QString(tr("%1 previously buried beads are exposed by rechecking\n")).arg(b2e));
+   }
 }

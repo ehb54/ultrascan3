@@ -372,7 +372,7 @@ void US_Hydrodyn::setupGUI()
    cb_calcAutoHydro->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_calcAutoHydro, SIGNAL(clicked()), this, SLOT(set_calcAutoHydro()));
 
-   pb_view_asa = new QPushButton(tr("Show ASA Results"), this);
+   pb_view_asa = new QPushButton(tr("View ASA Results"), this);
    Q_CHECK_PTR(pb_view_asa);
    pb_view_asa->setMinimumHeight(minHeight1);
    pb_view_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -1266,7 +1266,7 @@ int US_Hydrodyn::calc_somo()
                editor->append("Rechecking beads\n");
                qApp->processEvents();
 
-               bead_check();
+               bead_check(false, false);
                editor->append("Finished rechecking beads\n");
                progress->setProgress(19);
             }
@@ -1510,7 +1510,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      double save_threshold_percent = asa.threshold_percent;
                      asa.threshold = asa.grid_threshold;
                      asa.threshold_percent = asa.grid_threshold_percent;
-                     bead_check(true);
+                     bead_check(true, true);
                      asa.threshold = save_threshold;
                      asa.threshold_percent = save_threshold_percent;
                      bead_models[current_model] = bead_model;
@@ -1557,7 +1557,7 @@ int US_Hydrodyn::calc_grid_pdb()
                         double save_threshold_percent = asa.threshold_percent;
                         asa.threshold = asa.grid_threshold;
                         asa.threshold_percent = asa.grid_threshold_percent;
-                        bead_check();
+                        bead_check(false, false);
                         asa.threshold = save_threshold;
                         asa.threshold_percent = save_threshold_percent;
                         bead_models[current_model] = bead_model;
@@ -1592,7 +1592,7 @@ int US_Hydrodyn::calc_grid_pdb()
                         double save_threshold_percent = asa.threshold_percent;
                         asa.threshold = asa.grid_threshold;
                         asa.threshold_percent = asa.grid_threshold_percent;
-                        bead_check();
+                        bead_check(false, false);
                         asa.threshold = save_threshold;
                         asa.threshold_percent = save_threshold_percent;
                         bead_models[current_model] = bead_model;
@@ -1752,7 +1752,7 @@ int US_Hydrodyn::calc_grid()
                double save_threshold_percent = asa.threshold_percent;
                asa.threshold = asa.grid_threshold;
                asa.threshold_percent = asa.grid_threshold_percent;
-               bead_check(true);
+               bead_check(true, true);
                asa.threshold = save_threshold;
                asa.threshold_percent = save_threshold_percent;
                bead_models[current_model] = bead_model;
@@ -1799,7 +1799,7 @@ int US_Hydrodyn::calc_grid()
                   double save_threshold_percent = asa.threshold_percent;
                   asa.threshold = asa.grid_threshold;
                   asa.threshold_percent = asa.grid_threshold_percent;
-                  bead_check();
+                  bead_check(false, false);
                   asa.threshold = save_threshold;
                   asa.threshold_percent = save_threshold_percent;
                   bead_models[current_model] = bead_model;
@@ -1841,7 +1841,7 @@ int US_Hydrodyn::calc_grid()
                   double save_threshold_percent = asa.threshold_percent;
                   asa.threshold = asa.grid_threshold;
                   asa.threshold_percent = asa.grid_threshold_percent;
-                  bead_check();
+                  bead_check(false, false);
                   asa.threshold = save_threshold;
                   asa.threshold_percent = save_threshold_percent;
                   if (stopFlag)

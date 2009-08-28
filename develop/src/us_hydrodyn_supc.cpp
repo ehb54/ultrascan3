@@ -334,6 +334,10 @@ static int active_model;
 static US_Hydrodyn *us_hydrodyn;
 static vector < float > total_asa;
 static vector < float > used_asa;
+static vector < float > total_s_a;
+static vector < float > used_s_a;
+static vector < float > total_vol;
+static vector < float > used_vol;
 
 static void
 supc_free_alloced()
@@ -585,6 +589,14 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    QString use_filename = filename;
    total_asa.clear();
    used_asa.clear();
+   total_s_a.clear();
+   used_s_a.clear();
+   total_vol.clear();
+   used_vol.clear();
+   float lconv = pow(10.0,9 + hydro->unit);
+   float lconv2 = lconv * lconv;
+   float lconv3 = lconv2 * lconv;
+
    for (int current_model = 0; current_model < (int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
          if ((*somo_processed)[current_model]) {
@@ -593,13 +605,28 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             int tmp_count = 0;
             float this_total_asa = 0.0f;
             float this_used_asa = 0.0f;
+            float this_total_s_a = 0.0f;
+            float this_used_s_a = 0.0f;
+            float this_total_vol = 0.0f;
+            float this_used_vol = 0.0f;
             for(int i = 0; i < (int)(*bead_models)[current_model].size(); i++) {
                if((*bead_models)[current_model][i].active) {
                   tmp_active_idx.push_back(i);
                   tmp_count++;
-                  this_total_asa += (*bead_models)[current_model][i].bead_asa;
+                  this_total_asa += (*bead_models)[current_model][i].bead_recheck_asa * lconv2;
+                  float bead_total_s_a = 4.0f * M_PI * lconv2 *
+                     (*bead_models)[current_model][i].bead_computed_radius *
+                     (*bead_models)[current_model][i].bead_computed_radius;
+                  this_total_s_a += bead_total_s_a;
+                  float bead_total_vol = ( 4.0f / 3.0f ) * M_PI * lconv3 *
+                     (*bead_models)[current_model][i].bead_computed_radius *
+                     (*bead_models)[current_model][i].bead_computed_radius *
+                     (*bead_models)[current_model][i].bead_computed_radius;
+                  this_total_vol += bead_total_vol;
                   if ( us_hydrodyn->get_color(&(*bead_models)[current_model][i]) != 6 ) {
-                     this_used_asa += (*bead_models)[current_model][i].bead_asa;
+                     this_used_asa += (*bead_models)[current_model][i].bead_recheck_asa * lconv2;
+                     this_used_s_a += bead_total_s_a;
+                     this_used_vol += bead_total_vol;
                   }
                }
             }
@@ -607,6 +634,10 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
             active_idx.push_back(tmp_active_idx);
             total_asa.push_back(this_total_asa);
             used_asa.push_back(this_used_asa);
+            total_s_a.push_back(this_total_s_a);
+            used_s_a.push_back(this_used_s_a);
+            total_vol.push_back(this_total_vol);
+            used_vol.push_back(this_used_vol);
             models_to_proc++;
             if (nmax < (int) (*bead_models)[current_model].size()) {
                nmax = (int) (*bead_models)[current_model].size();
@@ -2189,6 +2220,8 @@ mem_ris(int model)
    fprintf(ris, "%s\n", molecola);
    fprintf(ris, "%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere);
    fprintf(ris, "%s%.2f [nm^2]\n", "TOTAL ASA of Beads in the MODEL :___ ", total_asa[model]);
+   fprintf(ris, "%s%.2f [nm^2]\n", "TOTAL Surface Area of Beads in the MODEL :___ ", total_s_a[model]);
+   fprintf(ris, "%s%.2f [nm^3]\n", "TOTAL Volume of Beads in the MODEL :___ ", total_vol[model]);
    tot_tot_beads += (float) numero_sfere;
    tot_tot_beads2 += (float) numero_sfere * (float) numero_sfere;
    supc_results->total_beads = numero_sfere;
@@ -2244,6 +2277,8 @@ mem_ris(int model)
       fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
 
    fprintf(ris, "%s%.2f [nm^2]\n", "- Used BEADS ASA     = ", used_asa[model]);
+   fprintf(ris, "%s%.2f [nm^2]\n", "- Used BEADS S.A.    = ", used_s_a[model]);
+   fprintf(ris, "%s%.2f [nm^3]\n", "- Used BEADS Volume  = ", used_vol[model]);
    if (mascor == 1)
       mascor1 = (float) pesmol;
 
