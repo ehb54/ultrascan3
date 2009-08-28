@@ -467,7 +467,7 @@ void US_RunDetails::show_rpm_details( int /* index */ )
 
    foreach( triple, triples )
    {
-      QStringList scans;
+      QList< int > scans;
       QString     value;
 
       foreach( value, sl )
@@ -475,12 +475,13 @@ void US_RunDetails::show_rpm_details( int /* index */ )
          if ( value.startsWith( triple ) )
          {
             QStringList components = value.split( " / " );
-            scans << components[ 3 ];
+            scans << components[ 3 ].toInt();
          }
       }
       
       if ( scans.size() == 0 ) continue;
       
+      qSort( scans );
       QStringList cellChWl = triple.split( " / " );
 
       msg += tr( "Cell: "         ) + cellChWl[ 0 ] 
@@ -488,9 +489,10 @@ void US_RunDetails::show_rpm_details( int /* index */ )
           +  tr( ", Wavelength: " ) + cellChWl[ 2 ]
           +  tr( ", Scans: "      );
          
-      QString scan;
+
+      int scan;
       
-      foreach( scan, scans ) msg += scan + ", ";
+      foreach( scan, scans ) msg += QString::number( scan ) + ", ";
       msg.replace( QRegExp( ", $" ), "\n" );
    }
 
