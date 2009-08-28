@@ -559,19 +559,15 @@ void US_RunDetails::show_rpm_details( int /* index */ )
       
       if ( scans.size() == 0 ) continue;
       
-      qSort( scans );
       QStringList cellChWl = triple.split( " / " );
 
       msg += tr( "Cell: "         ) + cellChWl[ 0 ] 
           +  tr( ", Channel: "    ) + cellChWl[ 1 ]
           +  tr( ", Wavelength: " ) + cellChWl[ 2 ]
-          +  tr( ", Scans: "      );
+          +  tr( ", Scan Count: " );
          
 
-      int scan;
-      
-      foreach( scan, scans ) msg += QString::number( scan ) + ", ";
-      msg.replace( QRegExp( ", $" ), "\n" );
+      msg += QString::number( scans.size() ) + "\n";
    }
 
    QMessageBox::information( this,
