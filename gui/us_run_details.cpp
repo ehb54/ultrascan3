@@ -12,7 +12,7 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
                               const QString&                     runID, 
                               const QString&                     dataDir, 
                               const QStringList&                 cell_ch_wl )
-   : US_WidgetsDialog( 0, 0 ), dataList( data ), triples( cell_ch_wl )
+   : US_Widgets(), dataList( data ), triples( cell_ch_wl )
 {
    setWindowTitle( tr( "Details for Raw Data" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -21,7 +21,8 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
    main->setSpacing        ( 2 );
    main->setContentsMargins( 2, 2, 2, 2 );
 
-   int row = 0;
+   plotType = COMBINED;
+   int row  = 0;
 
    // Plot Rows
    QBoxLayout* plot = new US_Plot( data_plot,
@@ -37,7 +38,8 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
    axisTitle.setText( tr( "Time between Scans (min)" ) );
    data_plot->setAxisTitle( QwtPlot::yRight, axisTitle );
 
-   us_grid( data_plot );
+   QwtPlotGrid* grid = us_grid( data_plot );
+   grid->enableXMin( false );
 
    main->addLayout( plot, row, 0, 5, 6 );
    row += 6;
@@ -66,13 +68,13 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
 
    lw_rpm = us_listwidget();
    lw_rpm->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum );
-   lw_rpm->setMinimumSize( 50, 50 );
-   main->addWidget( lw_rpm, row, 2, 5, 1 );
+   lw_rpm->setMinimumSize( 100, 50 );
+   main->addWidget( lw_rpm, row, 2, 5, 2 );
 
    lw_triples = us_listwidget();
    lw_triples->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum );
-   lw_triples->setMinimumSize( 50, 50 );
-   main->addWidget( lw_triples, row, 3, 5, 2 );
+   lw_triples->setMinimumSize( 100, 50 );
+   main->addWidget( lw_triples, row, 4, 5, 2 );
 
    QLineEdit* le_runID = us_lineedit();
    le_runID->setReadOnly( true );
@@ -140,9 +142,29 @@ US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data,
 
    main->addLayout( box1, row, 1 );
 
+   QHBoxLayout* buttons = new QHBoxLayout();
+
+   QPushButton* pb_temp = us_pushbutton( tr( "Temperature" ) );
+   connect( pb_temp, SIGNAL( clicked() ), SLOT( plot_temp() ) );
+   buttons->addWidget( pb_temp );
+
+   QPushButton* pb_rpm = us_pushbutton( tr( "RPM" ) );
+   connect( pb_rpm, SIGNAL( clicked() ), SLOT( plot_rpm() ) );
+   buttons->addWidget( pb_rpm );
+
+   QPushButton* pb_interval = us_pushbutton( tr( "Interval" ) );
+   connect( pb_interval, SIGNAL( clicked() ), SLOT( plot_interval() ) );
+   buttons->addWidget( pb_interval );
+
+   QPushButton* pb_all = us_pushbutton( tr( "Combined" ) );
+   connect( pb_all, SIGNAL( clicked() ), SLOT( plot_combined() ) );
+   buttons->addWidget( pb_all );
+
    QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
    connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
-   main->addWidget( pb_close, row++, 2, 1, 3 );
+   buttons->addWidget( pb_close );
+
+   main->addLayout( buttons, row++, 2, 1, 4 );
 
    setup();
    connect( lw_triples, SIGNAL( currentRowChanged( int ) ),
@@ -344,8 +366,45 @@ void US_RunDetails::check_temp( double min, double max )
 void US_RunDetails::draw_plot( const double* x, const double* t, 
       const double* r, const double* m, int count )
 {
-   data_plot->setAxisScale( QwtPlot::yLeft, 0.0, 60.0 );
-   data_plot->setAxisScale( QwtPlot::xBottom, 1.0, count, 1.0 );
+   // Set up the axes and titles
+   QwtText axisTitle = data_plot->axisTitle( QwtPlot::yLeft );
+   
+   data_plot->setAxisTitle    ( QwtPlot::yRight, axisTitle );
+   data_plot->enableAxis      ( QwtPlot::yRight, false );
+   data_plot->setAxisAutoScale( QwtPlot::yLeft );
+   data_plot->setAxisScale    ( QwtPlot::xBottom, 1.0, count );
+   data_plot->setAxisMaxMinor ( QwtPlot::xBottom, 0 );
+   
+   switch( plotType )
+   {
+      case TEMPERATURE:
+         axisTitle.setText( tr( "RPM * 1000" ) );
+         data_plot->setAxisTitle( QwtPlot::yLeft, axisTitle );
+         break;
+
+      case RPM:
+         axisTitle.setText( tr( "Temperature " ) + QChar( 176 ) + "C" );
+         data_plot->setAxisTitle( QwtPlot::yLeft, axisTitle );
+         break;
+
+      case INTERVAL:
+         axisTitle.setText( tr( "Time between Scans (min)" ) );
+         data_plot->setAxisTitle( QwtPlot::yLeft, axisTitle );
+         break;
+
+      default:
+         axisTitle.setText( 
+               tr( "RPM * 1000 / Temperature " ) + QChar( 176 ) + "C" );
+         data_plot->setAxisTitle( QwtPlot::yLeft, axisTitle );
+
+         axisTitle.setText( tr( "Time between Scans (min)" ) );
+         data_plot->setAxisTitle( QwtPlot::yRight, axisTitle );
+         
+         data_plot->enableAxis  ( QwtPlot::yRight, true );
+         data_plot->setAxisScale( QwtPlot::yLeft, 0.0, 60.0 );
+         break;
+
+   }
 
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
 
@@ -356,30 +415,49 @@ void US_RunDetails::draw_plot( const double* x, const double* t,
    sym.setBrush( Qt::white );
    sym.setSize ( 6 );
 
-   QwtPlotCurve* c1 = us_curve( data_plot, tr( "Temperature" ) );
-   c1->setPen   ( QPen( QBrush( Qt::yellow ), 2 ) );
-   c1->setSymbol( sym );
-   c1->setData  ( x, t, count );
+   if ( plotType == TEMPERATURE  || plotType == COMBINED )
+   {
+      QwtPlotCurve* c1 = us_curve( data_plot, tr( "Temperature" ) );
+      c1->setPen   ( QPen( QBrush( Qt::yellow ), 2 ) );
+      c1->setSymbol( sym );
+      c1->setData  ( x, t, count );
+   }
 
    sym.setPen( QColor( Qt::green ) );
 
-   QwtPlotCurve* c2 = us_curve( data_plot, tr( "RPM" ) );
-   c2->setPen       ( QPen( QBrush( Qt::green ), 2 ) );
-   c2->setSymbol    ( sym );
-   c2->setData      ( x, r, count );
+   if ( plotType == RPM  || plotType == COMBINED )
+   {
+      QwtPlotCurve* c2 = us_curve( data_plot, tr( "RPM" ) );
+      c2->setPen       ( QPen( QBrush( Qt::green ), 2 ) );
+      c2->setSymbol    ( sym );
+      c2->setData      ( x, r, count );
+   }
 
    sym.setPen( QColor( Qt::red ) );
 
-   QwtPlotCurve* c3 = us_curve( data_plot, tr( "Scan Time Deltas" ) );
-   c3->setYAxis     ( QwtPlot::yRight );
-   c3->setPen       ( QPen( QBrush( Qt::red ), 2 ) );
-   c3->setSymbol    ( sym );
-   c3->setData      ( &x[ 1 ], &m[ 1 ], count - 1 );
+   if ( plotType == INTERVAL  || plotType == COMBINED )
+   {
+      QwtPlotCurve* c3 = us_curve( data_plot, tr( "Scan Time Deltas" ) );
+      if ( plotType == COMBINED ) c3->setYAxis( QwtPlot::yRight );
+      c3->setPen       ( QPen( QBrush( Qt::red ), 2 ) );
+      c3->setSymbol    ( sym );
+      c3->setData      ( &x[ 1 ], &m[ 1 ], count - 1 );
+   }
 
    if ( data_plot->legend() == NULL )
    {
       QwtLegend* legend = new QwtLegend;
+      data_plot->insertLegend( legend, QwtPlot::BottomLegend );
       legend->setFrameStyle( QFrame::Box | QFrame::Sunken );
+      
+      QList< QWidget* > items = legend->legendItems();
+
+      QFont font = items[ 0 ]->font();
+      font.setPointSize( US_GuiSettings::fontSize() );
+
+      QWidget* item;
+      foreach( item, items ) item->setFont( font );
+
       data_plot->insertLegend( legend, QwtPlot::BottomLegend );
    }
 
@@ -500,3 +578,26 @@ void US_RunDetails::show_rpm_details( int /* index */ )
          tr( "Speed Information" ), msg );
 }
 
+void US_RunDetails::plot_temp( void )
+{
+   plotType = TEMPERATURE;
+   update( lw_triples->currentRow() );
+}
+
+void US_RunDetails::plot_rpm( void )
+{
+   plotType = RPM;
+   update( lw_triples->currentRow() );
+}
+
+void US_RunDetails::plot_interval( void )
+{
+   plotType = INTERVAL;
+   update( lw_triples->currentRow() );
+}
+
+void US_RunDetails::plot_combined( void )
+{
+   plotType = COMBINED;
+   update( lw_triples->currentRow() );
+}

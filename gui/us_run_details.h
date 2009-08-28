@@ -11,7 +11,7 @@
 
 //! \brief A class to provide a window with the details of a run
 
-class US_EXTERN US_RunDetails : public US_WidgetsDialog
+class US_EXTERN US_RunDetails : public US_Widgets
 {
    Q_OBJECT
 
@@ -48,6 +48,9 @@ class US_EXTERN US_RunDetails : public US_WidgetsDialog
          const { return seconds < other.seconds; };
       };
 
+      enum pType { COMBINED, TEMPERATURE, RPM, INTERVAL };
+      pType        plotType;
+
       QListWidget* lw_triples;
       QListWidget* lw_rpm;
 
@@ -69,7 +72,11 @@ class US_EXTERN US_RunDetails : public US_WidgetsDialog
       void         check_temp   ( double, double );
 
    private slots:
-      void update           ( int );
-      void show_rpm_details ( int );
+      void update           ( int  );
+      void show_rpm_details ( int  );
+      void plot_temp        ( void );
+      void plot_rpm         ( void );
+      void plot_interval    ( void );
+      void plot_combined    ( void );
 };
 #endif

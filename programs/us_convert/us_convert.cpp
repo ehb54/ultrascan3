@@ -677,10 +677,9 @@ void US_Convert::details( void )
 
    US_RunDetails* dialog
       = new US_RunDetails( allData, currentTriple, runID, dirname, triples );
-   dialog->exec();
-   qApp->processEvents();
-   delete dialog;
-
+   dialog->show();
+   //qApp->processEvents();
+   //delete dialog;
 }
 
 void US_Convert::changeCcw( int index )
