@@ -15,7 +15,7 @@ class US_EXTERN US_EditScan : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      US_EditScan( US_DataIO::scan&, const double );
+      US_EditScan( US_DataIO::scan&, double, double, double );
 
    signals:
       void scan_updated( QList< QPointF > );
@@ -24,10 +24,13 @@ class US_EXTERN US_EditScan : public US_WidgetsDialog
       US_DataIO::scan  workingScan;
       US_DataIO::scan& originalScan;
       double           invert;
+      double           range_left;
+      double           range_right;
       double*          radii;
       double*          values;
       bool             dragging;
       int              point;
+      int              offset;
       QList< QPointF > changes;
 
       QwtPlot*         data_plot;
@@ -39,6 +42,8 @@ class US_EXTERN US_EditScan : public US_WidgetsDialog
       QPen             fgPen;
                       
       US_Help          showHelp;
+
+      void             redraw( void );
 
    private slots:
       void done        ( void );

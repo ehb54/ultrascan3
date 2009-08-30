@@ -5,8 +5,11 @@
 #include "us_gui_settings.h"
 
 US_EditScan::US_EditScan( US_DataIO::scan& s, 
-                          const double     invertValue )
-   : US_WidgetsDialog( 0, 0 ), originalScan( s ), invert( invertValue )
+                          double           invertValue,
+                          double           left,
+                          double           right )
+   : US_WidgetsDialog( 0, 0 ), originalScan( s ), invert( invertValue ), 
+                               range_left( left ), range_right( right )
 {
    dragging    = false;
    workingScan = originalScan;
@@ -32,17 +35,9 @@ US_EditScan::US_EditScan( US_DataIO::scan& s,
    pick = new US_PlotPicker( data_plot );
 
    // Draw the curve
-   uint    size  = originalScan.values.size();
-   int     count = 0;
-   radii         = new double[ size ];
-   values        = new double[ size ];
-
-   for ( uint j = 0; j < size; j++ ) 
-   { 
-      radii [ count ] = workingScan.values[ j ].d.radius;
-      values[ count ] = workingScan.values[ j ].value * invert;
-      count++;
-   }
+   int  size = originalScan.values.size();
+   radii     = new double[ size ];
+   values    = new double[ size ];
 
    curve = us_curve( data_plot, tr( "Scan Curve" ) );
 
@@ -59,11 +54,12 @@ US_EditScan::US_EditScan( US_DataIO::scan& s,
    bgSym.setBrush( US_GuiSettings::plotCanvasBG() );
    bgSym.setPen  ( bgPen );
 
-   curve->setRawData( radii, values, count );
+   //curve->setRawData( radii, values, count );
    curve->setSymbol ( fgSym );
    curve->attach    ( data_plot );
 
-   data_plot->replot();
+   //data_plot->replot();
+   redraw();
 
    // Instructions
    QHBoxLayout* instructions = new QHBoxLayout;
@@ -108,7 +104,6 @@ US_EditScan::US_EditScan( US_DataIO::scan& s,
 
    main->addLayout( buttons );
 
-
    connect( pick, SIGNAL( cMouseDownRaw( QMouseEvent* ) ),
                   SLOT  ( start_drag   ( QMouseEvent* ) ) );
 
@@ -148,8 +143,9 @@ void US_EditScan::end_drag( const QwtDoublePoint& p )
 
    // Save the change
    values[ point ] = p.y();
-   changes << QPointF( (double) point, values[ point ] );
-   
+   // Use offset to provide an index to the full data set
+   changes << QPointF( (double)( point + offset ), values[ point ] );
+
    data_plot->replot();   
 }
 
@@ -158,12 +154,32 @@ void US_EditScan::reset( void )
    dragging    = false;
    workingScan = originalScan;
    changes.clear();
+   redraw();
+}
+
+void US_EditScan::redraw( void )
+{
+   offset     = 0;
+   int  count = 0;
 
    for ( int j = 0; j < workingScan.values.size(); j++ ) 
    { 
-      radii [ j ] = workingScan.values[ j ].d.radius;
-      values[ j ] = workingScan.values[ j ].value * invert;
+      double r = workingScan.values[ j ].d.radius;
+      if ( r < range_left  )
+      {
+         offset = j;
+         continue;
+      }
+
+      if ( r > range_right ) break;
+
+      radii [ count ] = r;
+      values[ count ] = workingScan.values[ j ].value * invert;
+      count++;
    }
 
+   offset++;  // Fix off by 1 issue
+
+   curve->setRawData( radii, values, count );
    data_plot->replot();
 }

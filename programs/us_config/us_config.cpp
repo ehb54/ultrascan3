@@ -342,12 +342,3 @@ void US_Config::open_tmpDir( void )
   if ( dir != "" ) le_tmpDir->setText( dir );
 }
 
-void US_Config::closeEvent( QCloseEvent* e )
-{
-  if ( colors ) colors->quit();
-  if ( db     ) delete db;
-  if ( font   ) delete font;
-  if ( admin  ) delete admin;
-
-  e->accept();
-}
