@@ -8,7 +8,6 @@
 #include <qwt_legend.h>
 
 US_RunDetails::US_RunDetails( const QList< US_DataIO::rawData >& data, 
-                              int                        /*        index */,
                               const QString&                     runID, 
                               const QString&                     dataDir, 
                               const QStringList&                 cell_ch_wl )

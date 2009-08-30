@@ -17,14 +17,12 @@ class US_EXTERN US_RunDetails : public US_WidgetsDialog
 
    public:
       //! \param data    A reference to a list of raw data structures
-      //! \param index   The index for the current cell/channel/wavelength
-      //!                combination
       //! \param runID   The short identifier used in file names to
       //!                identify the run
       //! \param dataDir The data directory where the files were located
       //! \param cell_ch_wl A list of formatted cell/channel/wavelength
       //!                   strings that descripe each raw data structure
-      US_RunDetails( const QList< US_DataIO::rawData >&, int,
+      US_RunDetails( const QList< US_DataIO::rawData >&, 
             const QString&, const QString&, const QStringList& );
 
    private:

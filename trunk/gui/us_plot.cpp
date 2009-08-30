@@ -1918,7 +1918,8 @@ void US_PlotPicker::widgetMousePressEvent( QMouseEvent* e )
          emit cMouseDownRaw( e );
       }
    }
-   transition( e );
+   
+   QwtPlotPicker::widgetMousePressEvent( e );
 }
 
 void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
@@ -1934,7 +1935,8 @@ void US_PlotPicker::widgetMouseReleaseEvent( QMouseEvent* e )
       if ( e->button() == Qt::LeftButton && e->modifiers() == Qt::ControlModifier )
          emit cMouseUp( invTransform( e->pos() ) );
    }
-   transition( e );
+
+   QwtPlotPicker::widgetMouseReleaseEvent( e );
 }
 
 void US_PlotPicker::widgetMouseMoveEvent( QMouseEvent* e )
@@ -1954,7 +1956,7 @@ void US_PlotPicker::widgetMouseMoveEvent( QMouseEvent* e )
       }
    }
 
-   transition( e );
+   QwtPlotPicker::widgetMouseMoveEvent( e );
 }
 
 

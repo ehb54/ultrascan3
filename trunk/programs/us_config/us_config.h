@@ -95,5 +95,4 @@ private slots:
   void update_password( void );
   void save           ( void );
   void help           ( void );
-  void closeEvent     ( QCloseEvent* );
 };

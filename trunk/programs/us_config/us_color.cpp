@@ -347,18 +347,6 @@ US_Color::US_Color( QWidget* w, Qt::WindowFlags flags )
 
   reset();
 }
-
-void US_Color::closeEvent( QCloseEvent* )
-{
-   us_plot->quit();
-}
-
-void US_Color::quit( void )
-{
-   us_plot->quit();
-   close();
-}
-
 void US_Color::getCurrentSettings( void )
 {
   current.plotMargin    = US_GuiSettings::plotMargin();

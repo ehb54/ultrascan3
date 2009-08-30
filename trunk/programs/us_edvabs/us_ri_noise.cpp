@@ -19,7 +19,6 @@ US_RiNoise::US_RiNoise( const US_DataIO::rawData& raw,
 
    if ( order < 4 ) order = 4;
 
-
    QVBoxLayout* info  = new QVBoxLayout();
    
    te_details = us_textedit();
@@ -46,7 +45,7 @@ US_RiNoise::US_RiNoise( const US_DataIO::rawData& raw,
    buttons->addWidget( pb_cancel );
 
    QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( ok() ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
    buttons->addWidget( pb_accept );
 
    info->addLayout( buttons );
@@ -65,11 +64,6 @@ US_RiNoise::US_RiNoise( const US_DataIO::rawData& raw,
    draw_fit( order );
 }
 
-void US_RiNoise::ok( void )
-{
-   done( QDialog::Accepted );
-}
-
 void US_RiNoise::draw_fit( double new_order )
 {
    order = (int)new_order;
@@ -79,7 +73,6 @@ void US_RiNoise::draw_fit( double new_order )
    double* absorbance_integral = new double[ scan_count ];
    double* fit                 = new double[ scan_count ];
    double* scan_time           = new double[ scan_count ];;
-
    double* coeffs              = new double[ order ];
 
    // Calculate the integral of each scan which is needed for the least-squares
@@ -96,21 +89,11 @@ void US_RiNoise::draw_fit( double new_order )
       const US_DataIO::scan* s = &data.scanData[ i ];
       int value_count          = s->values.size();
       
-
       // Integrate using trapezoid rule
       for ( int j = 1; j < value_count; j++ )
       {
          double avg = ( s->values[ j ].value + s->values[ j - 1 ].value ) / 2.0;
          absorbance_integral[ i ] += avg * delta_r;
-         
-         /*
-         // Ff synthetic boundary centerpiece, we need to 
-         // integrate data for vHW
-         if (centerpiece.sector == 3) 
-         {
-            absorbance[scan][i] = absorbance_integral[scan];
-         }
-         */
       }
    }
 
@@ -141,9 +124,7 @@ void US_RiNoise::draw_fit( double new_order )
       fit[ i ] = 0;
       
       for ( int j = 0; j < order; j++ )
-      {
          fit[ i ] +=  coeffs[ j ] * pow( data.scanData[ i ].seconds, j );
-      }
 
       residuals << absorbance_integral[ i ] - fit[ i ];
    }

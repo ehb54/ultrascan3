@@ -664,7 +664,6 @@ void US_Convert::convert( bool showProgressBar )
       lb_progress ->setVisible( false );
       progress    ->setVisible( false );
    }
-  
 }
 
 void US_Convert::details( void )
@@ -676,7 +675,7 @@ void US_Convert::details( void )
    QString     runID      = components.last();
 
    US_RunDetails* dialog
-      = new US_RunDetails( allData, currentTriple, runID, dirname, triples );
+      = new US_RunDetails( allData, runID, dirname, triples );
    dialog->exec();
    qApp->processEvents();
    delete dialog;

@@ -31,10 +31,9 @@ class US_EXTERN US_Edvabs : public US_Widgets
 
       QList< edits >     changed_points;
 
-      US_DataIO::rawData            data;
-      QList< US_DataIO::rawData >   allData;
+      US_DataIO::rawData          data;
+      QList< US_DataIO::rawData > allData;
 
-      bool               partial_reset;
       bool               changes_made;
       bool               spikes;
       int                noise_order;
@@ -90,6 +89,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       QPushButton*       pb_write;
       QPushButton*       pb_residuals;
       QPushButton*       pb_subBaseline;
+      QPushButton*       pb_priorEdits;
       QPushButton*       pb_undo;
                         
       QComboBox*         cb_triple;
@@ -100,7 +100,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
 	
       void set_pbColors      ( QPushButton* );
       void draw_vline        ( double );
-      int  index             ( US_DataIO::scan*, double );
+      int  index             ( const US_DataIO::scan&, double );
       void next_step         ( void );
 
       void replot            ( void );
@@ -113,7 +113,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       
       void reset_excludes    ( void );
       void set_colors        ( const QList< int >& );
-      bool spike_check       ( US_DataIO::scan*, int, int, int, double* );
+      bool spike_check       ( const US_DataIO::scan&, int, int, int, double* );
                           
 	private slots:         
       void load              ( void );
@@ -124,7 +124,6 @@ class US_EXTERN US_Edvabs : public US_Widgets
       void focus_to          ( double );
       void focus             ( int, int );
       
-      void exclude_one       ( void );
       void exclude_range     ( void );
       void exclusion         ( void );
       void update_excludes   ( QList< int > );
@@ -133,6 +132,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       void edit_scan         ( void );
       void update_scan       ( QList< QPointF > );
       void include           ( void );
+      void apply_prior       ( void );
 
       void set_meniscus      ( void );
       void set_dataRange     ( void );
