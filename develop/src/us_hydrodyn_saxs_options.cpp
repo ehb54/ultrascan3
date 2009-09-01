@@ -229,7 +229,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    cnt_bin_size= new QwtCounter(this);
    Q_CHECK_PTR(cnt_bin_size);
-   cnt_bin_size->setRange(0, 100, 0.01);
+   cnt_bin_size->setRange(0.01, 100, 0.01);
    cnt_bin_size->setValue((*saxs_options).bin_size);
    cnt_bin_size->setMinimumHeight(minHeight1);
    cnt_bin_size->setEnabled(true);

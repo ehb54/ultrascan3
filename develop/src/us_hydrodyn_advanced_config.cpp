@@ -88,6 +88,14 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    cb_expert_mode->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_expert_mode, SIGNAL(clicked()), this, SLOT(set_expert_mode()));
 
+   cb_experimental_threads = new QCheckBox(this);
+   cb_experimental_threads->setText(tr(" Use threads (experimental)"));
+   cb_experimental_threads->setEnabled(true);
+   cb_experimental_threads->setChecked((*advanced_config).experimental_threads);
+   cb_experimental_threads->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_experimental_threads->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_experimental_threads, SIGNAL(clicked()), this, SLOT(set_experimental_threads()));
+
    cb_debug_1 = new QCheckBox(this);
    cb_debug_1->setText(tr(" Debug molecular weight/volume adjustments"));
    cb_debug_1->setEnabled(true);
@@ -126,7 +134,7 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=12, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=13, columns = 2, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -144,6 +152,8 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    background->addMultiCellWidget(cb_use_sounds, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(cb_expert_mode, j, j, 0, 1);
+   j++;
+   background->addMultiCellWidget(cb_experimental_threads, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(cb_debug_1, j, j, 0, 1);
    j++;
@@ -229,6 +239,12 @@ void US_Hydrodyn_AdvancedConfig::set_expert_mode()
       set_scroll_editor();
    }
 
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_AdvancedConfig::set_experimental_threads()
+{
+   (*advanced_config).experimental_threads = cb_experimental_threads->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

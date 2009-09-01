@@ -596,6 +596,10 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    float lconv = pow(10.0,9 + hydro->unit);
    float lconv2 = lconv * lconv;
    float lconv3 = lconv2 * lconv;
+   printf("lconv %e lconv2 %e lconv3 %e\n",
+          lconv,
+          lconv2,
+          lconv3);
 
    for (int current_model = 0; current_model < (int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
@@ -2219,7 +2223,7 @@ mem_ris(int model)
    fprintf(ris, "%s", "MODEL File Name  :___ ");
    fprintf(ris, "%s\n", molecola);
    fprintf(ris, "%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere);
-   fprintf(ris, "%s%.2f [nm^2]\n", "TOTAL ASA of Beads in the MODEL :___ ", total_asa[model]);
+   // fprintf(ris, "%s%.2f [nm^2]\n", "TOTAL ASA of Beads in the MODEL :___ ", total_asa[model]);
    fprintf(ris, "%s%.2f [nm^2]\n", "TOTAL Surface Area of Beads in the MODEL :___ ", total_s_a[model]);
    fprintf(ris, "%s%.2f [nm^3]\n", "TOTAL Volume of Beads in the MODEL :___ ", total_vol[model]);
    tot_tot_beads += (float) numero_sfere;
@@ -2276,7 +2280,7 @@ mem_ris(int model)
    if (volcor == 2)
       fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
 
-   fprintf(ris, "%s%.2f [nm^2]\n", "- Used BEADS ASA     = ", used_asa[model]);
+   // intf(ris, "%s%.2f [nm^2]\n", "- Used BEADS ASA     = ", used_asa[model]);
    fprintf(ris, "%s%.2f [nm^2]\n", "- Used BEADS S.A.    = ", used_s_a[model]);
    fprintf(ris, "%s%.2f [nm^3]\n", "- Used BEADS Volume  = ", used_vol[model]);
    if (mascor == 1)
@@ -2337,7 +2341,7 @@ mem_ris(int model)
       fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3), "[nm^3]");
    else
       fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", totvol * pow(fconv, 3), "[nm^3]");
-   fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL SURFACE AREA       = ", totsup * pow(fconv, 3), "[nm^2]");
+   fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL SURFACE AREA       = ", totsup * pow(fconv, 2), "[nm^2]");
 
    if (raflag == -1.0)
       fprintf(ris, "%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");

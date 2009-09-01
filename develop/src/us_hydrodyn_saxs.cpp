@@ -12,12 +12,12 @@
 #define SAXS_DEBUG2
 // #define SAXS_DEBUG_F
 // #define SAXS_DEBUG_FV
-// #define USE_THREADS
 // #define BUG_DEBUG
 // #define RESCALE_B
 #define SAXS_MIN_Q 1e-6
 // #define ONLY_PHYSICAL_F
 // #define I_MULT_2
+#define PR_DEBUG
 
 US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    bool                           *saxs_widget,
@@ -25,10 +25,12 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
                                    QString                        filename, 
                                    vector < residue >             residue_list,
                                    vector < PDB_model >           model_vector,
+                                   vector < vector <PDB_atom> >   bead_models,
                                    vector < unsigned int >        selected_models,
                                    map < QString, vector <int> >  multi_residue_map,
                                    map < QString, QString >       residue_atom_hybrid_map,
                                    int                            source,
+                                   void                           *us_hydrodyn,
                                    QWidget                        *p, 
                                    const char                     *name
                                    ) : QFrame(p, name)
@@ -62,14 +64,17 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
 
    this->residue_list = residue_list;
    this->model_vector = model_vector;
+   this->bead_models = bead_models;
    this->selected_models = selected_models;
    this->multi_residue_map = multi_residue_map;
    this->residue_atom_hybrid_map = residue_atom_hybrid_map;
    this->source = source;
+   this->us_hydrodyn = us_hydrodyn;
    USglobal=new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("SAXS Plotting Functions"));
    setupGUI();
+   editor->append("\n\n");
    QFileInfo fi(filename);
    switch (source)
    {
@@ -94,6 +99,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
          }
       }
    }
+   pb_plot_saxs->setEnabled(source ? false : true);
    lbl_filename2->setText(fi.baseName() + "." + fi.extension( FALSE ));
    model_filename = fi.baseName() + "." + fi.extension( FALSE );
    atom_filename = USglobal->config_list.system_dir + "/etc/somo.atom";
@@ -397,6 +403,192 @@ void US_Hydrodyn_Saxs::closeEvent(QCloseEvent *e)
    e->accept();
 }
 
+//--------- thread for saxs p(r) plot -----------
+
+// #define DEBUG_THREAD
+
+saxs_pr_thr_t::saxs_pr_thr_t(int a_thread) : QThread()
+{
+   thread = a_thread;
+   work_to_do = 0;
+   work_done = 1;
+   work_to_do_waiters = 0;
+   work_done_waiters = 0;
+}
+
+void saxs_pr_thr_t::saxs_pr_thr_setup(
+                                      vector < saxs_atom > *atoms,
+                                      vector < unsigned int > *hist,
+                                      double delta,
+                                      unsigned int threads,
+                                      QProgressBar *progress,
+                                      QLabel *lbl_core_progress,
+                                      bool *stopFlag
+                                      )
+{
+   /* this starts up a new work load for the thread */
+   this->atoms = atoms;
+   this->hist = hist;
+   this->delta = delta;
+   this->threads = threads;
+   this->progress = progress;
+   this->lbl_core_progress = lbl_core_progress;
+   this->stopFlag = stopFlag;
+
+   work_mutex.lock();
+   work_to_do = 1;
+   work_done = 0;
+   work_mutex.unlock();
+   cond_work_to_do.wakeOne();
+#if defined(DEBUG_THREAD)
+   cerr << "thread " << thread << " has new work to do\n";
+#endif
+}
+
+void saxs_pr_thr_t::saxs_pr_thr_shutdown()
+{
+   /* this signals the thread to exit the run method */
+   work_mutex.lock();
+   work_to_do = -1;
+   work_mutex.unlock();
+   cond_work_to_do.wakeOne();
+
+#if defined(DEBUG_THREAD)
+   cerr << "thread " << thread << " shutdown requested\n";
+#endif
+}
+
+void saxs_pr_thr_t::saxs_pr_thr_wait()
+{
+   /* this is for the master thread to wait until the work is done */
+   work_mutex.lock();
+
+#if defined(DEBUG_THREAD)
+   cerr << "thread " << thread << " has a waiter\n";
+#endif
+
+   while(!work_done) {
+      cond_work_done.wait(&work_mutex);
+   }
+   work_done = 0;
+   work_mutex.unlock();
+
+#if defined(DEBUG_THREAD)
+   cerr << "thread " << thread << " waiter released\n";
+#endif
+}
+
+int saxs_pr_thr_t::saxs_pr_thr_work_status()
+{
+   work_mutex.lock();
+   int retval = work_done;
+   work_mutex.unlock();
+   return retval;
+}
+
+void saxs_pr_thr_t::run()
+{
+   while(1)
+   {
+      work_mutex.lock();
+#if defined(DEBUG_THREAD)
+      cerr << "thread " << thread << " waiting for work\n";
+#endif
+      work_to_do_waiters++;
+      while(!work_to_do)
+      {
+         cond_work_to_do.wait(&work_mutex);
+      }
+      if(work_to_do == -1)
+      {
+#if defined(DEBUG_THREAD)
+         cerr << "thread " << thread << " shutting down\n";
+#endif
+         work_mutex.unlock();
+         return;
+      }
+
+      work_to_do_waiters = 0;
+      work_mutex.unlock();
+#if defined(DEBUG_THREAD)
+      cerr << "thread " << thread << " starting work\n";
+#endif
+      
+      unsigned int as = (*atoms).size();
+      unsigned int as1 = as - 1;
+      unsigned int pos;
+      double rik; // distance from atom i to k 
+      if ( !thread ) 
+      {
+         progress->setTotalSteps((int)(1.15f * as1 / threads));
+      }
+#if defined(DEBUG_THREAD)
+      cerr << "thread " << thread << " as1 = " << as1 
+           << endl;
+#endif
+
+      for ( unsigned int i = thread; i < as1; i += threads )
+      {
+#if defined(DEBUG_THREAD)
+         cerr << "thread " << thread << " i = " << i << endl;
+#endif
+         if ( !thread ) 
+         {
+            // lbl_core_progress->setText(QString("Atom %1 of %2\n").arg(i+1).arg(as));
+            progress->setProgress(i+1);
+            // qApp->processEvents();
+         }
+         if ( *stopFlag ) 
+         {
+            break;
+         }
+            
+         for ( unsigned int k = i + 1; k < as; k++ )
+         {
+            rik = 
+               sqrt(
+                    ((*atoms)[i].pos[0] - (*atoms)[k].pos[0]) *
+                    ((*atoms)[i].pos[0] - (*atoms)[k].pos[0]) +
+                    ((*atoms)[i].pos[1] - (*atoms)[k].pos[1]) *
+                    ((*atoms)[i].pos[1] - (*atoms)[k].pos[1]) +
+                    ((*atoms)[i].pos[2] - (*atoms)[k].pos[2]) *
+                    ((*atoms)[i].pos[2] - (*atoms)[k].pos[2])
+                    );
+#if defined(SAXS_DEBUG_F)
+            cout << "dist atoms:  "
+                 << i
+                 << " "
+                 << (*atoms)[i].saxs_name
+                 << ","
+                 << k
+                 << " "
+                 << (*atoms)[k].saxs_name
+                 << " "
+                 << rik
+                 << endl;
+#endif
+            pos = (unsigned int)floor(rik / delta);
+            if ( hist->size() <= pos )
+            {
+               hist->resize(pos + 128);
+            }
+            (*hist)[pos]++;
+         }
+      }
+
+#if defined(DEBUG_THREAD)
+      cerr << "thread " << thread << " finished work\n";
+#endif
+      work_mutex.lock();
+      work_done = 1;
+      work_to_do = 0;
+      work_mutex.unlock();
+      cond_work_done.wakeOne();
+   }
+}
+
+//--------- end thread for saxs p(r) plot -----------
+
 void US_Hydrodyn_Saxs::show_plot_pr()
 {
    stopFlag = false;
@@ -405,7 +597,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    pb_plot_saxs->setEnabled(false);
    progress_pr->reset();
    vector < unsigned int > hist;
-   float delta = 0.1;
+   float delta = our_saxs_options->bin_size;
 
 #if defined(BUG_DEBUG)
    qApp->processEvents();
@@ -418,7 +610,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    {
       current_model = selected_models[i];
 #if defined(PR_DEBUG)
-      printf("creating pr %u\n", current_model);
+      printf("creating pr %u\n", current_model); fflush(stdout);
 #endif
       editor->append(QString("\n\nPreparing file %1 model %2 for p(r) vs r plot.\n\n")
                      .arg(lbl_filename2->text())
@@ -429,79 +621,202 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          editor->append(tr("Terminated by user request.\n"));
          progress_pr->reset();
          lbl_core_progress->setText("");
-         pb_plot_saxs->setEnabled(true);
+         pb_plot_saxs->setEnabled(source ? false : true);
          pb_plot_pr->setEnabled(true);
          return;
       }
          
       vector < saxs_atom > atoms;
       saxs_atom new_atom;
-      for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
+      if ( source )
       {
-         for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
+         // bead models
+         for (unsigned int j = 0; j < bead_models[current_model].size(); j++)
          {
-            PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
-            new_atom.pos[0] = this_atom->coordinate.axis[0];
-            new_atom.pos[1] = this_atom->coordinate.axis[1];
-            new_atom.pos[2] = this_atom->coordinate.axis[2];
-
-#if defined(PR_DEBUG2)
-            cout << "Atom: "
-                 << this_atom->name
-                 << " Coordinates: "
-                 << new_atom.pos[0] << " , "
-                 << new_atom.pos[1] << " , "
-                 << new_atom.pos[2] 
-                 << endl;
-#endif
+            PDB_atom *this_atom = &(bead_models[current_model][j]);
+            new_atom.pos[0] = this_atom->bead_coordinate.axis[0];
+            new_atom.pos[1] = this_atom->bead_coordinate.axis[1];
+            new_atom.pos[2] = this_atom->bead_coordinate.axis[2];
             atoms.push_back(new_atom);
+         }
+      }
+      else 
+      {
+         // pdb files
+         for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
+         {
+            for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
+            {
+               PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+               new_atom.pos[0] = this_atom->coordinate.axis[0];
+               new_atom.pos[1] = this_atom->coordinate.axis[1];
+               new_atom.pos[2] = this_atom->coordinate.axis[2];
+               atoms.push_back(new_atom);
+            }
          }
       }
 #if defined(BUG_DEBUG)
       qApp->processEvents();
+      cout << "atoms size " << atoms.size() << endl;
       cout << " sleep 1 b" << endl;
       sleep(1);
       cout << " sleep 1 b done" << endl;
 #endif
       // ok now we have all the atoms
-      // we're just going to hard code a distance resolution for now
-      float rik; 
-      unsigned int pos;
-      progress_pr->setTotalSteps((int)(atoms.size()));
-      for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
+
+      editor->append(QString("Number of atoms %1. Bin size %2.\n")
+                     .arg(atoms.size())
+                     .arg(delta));
+      qApp->processEvents();
+
+      if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.experimental_threads &&
+           USglobal->config_list.numThreads > 1 )
       {
-         progress_pr->setProgress(i+1);
-         qApp->processEvents();
-         if ( stopFlag ) 
-         {
-            editor->append(tr("Terminated by user request.\n"));
-            progress_pr->reset();
-            lbl_core_progress->setText("");
-            pb_plot_saxs->setEnabled(true);
-            pb_plot_pr->setEnabled(true);
-            return;
-         }
-         for ( unsigned int j = i + 1; j < atoms.size(); j++ )
-         {
-            rik = 
-               sqrt(
-                    (atoms[i].pos[0] - atoms[j].pos[0]) *
-                    (atoms[i].pos[0] - atoms[j].pos[0]) +
-                    (atoms[i].pos[1] - atoms[j].pos[1]) *
-                    (atoms[i].pos[1] - atoms[j].pos[1]) +
-                    (atoms[i].pos[2] - atoms[j].pos[2]) *
-                    (atoms[i].pos[2] - atoms[j].pos[2])
-                    );
-            pos = (unsigned int)floor(rik / delta);
-            
-            if ( hist.size() < pos )
-            {
-               hist.resize(pos + 10);
-            }
-            hist[pos]++;
-         }
-      }
+         // threaded
          
+         unsigned int j;
+         unsigned int threads = USglobal->config_list.numThreads;
+         editor->append(QString("Using %1 threads.\n").arg(threads));
+         vector < saxs_pr_thr_t* > saxs_pr_thr_threads(threads);
+         for ( j = 0; j < threads; j++ )
+         {
+            saxs_pr_thr_threads[j] = new saxs_pr_thr_t(j);
+            saxs_pr_thr_threads[j]->start();
+            
+         }
+         vector < vector < unsigned int > > hists;
+         hists.resize(threads);
+         for ( j = 0; j < threads; j++ )
+         {
+# if defined(DEBUG_THREAD)
+            cout << "thread " << j << endl;
+# endif            
+            saxs_pr_thr_threads[j]->saxs_pr_thr_setup(
+                                                      &atoms,
+                                                      &hists[j],
+                                                      delta,
+                                                      threads,
+                                                      progress_pr,
+                                                      lbl_core_progress,
+                                                      &stopFlag
+                                                      );
+
+         }
+         // sleep app loop
+         {
+            int all_done;
+            timespec ns;
+            timespec ns_ret;
+            ns.tv_sec = 0;
+            ns.tv_nsec = 50000000l;
+            
+            do {
+               all_done = threads;
+               for ( j = 0; j < threads; j++ )
+               {
+                  all_done -= saxs_pr_thr_threads[j]->saxs_pr_thr_work_status();
+               }
+               qApp->processEvents();
+               nanosleep(&ns, &ns_ret);
+            } while(all_done);
+         }
+         
+         // wait for work to complete
+
+         for ( j = 0; j < threads; j++ )
+         {
+            saxs_pr_thr_threads[j]->saxs_pr_thr_wait();
+         }
+
+         // destroy
+         
+         for ( j = 0; j < threads; j++ )
+         {
+            saxs_pr_thr_threads[j]->saxs_pr_thr_shutdown();
+         }
+         
+         for ( j = 0; j < threads; j++ )
+         {
+            saxs_pr_thr_threads[j]->wait();
+         }
+         
+         for ( j = 0; j < threads; j++ )
+         {
+            delete saxs_pr_thr_threads[j];
+         }
+         
+         // merge results
+         for ( j = 0; j < threads; j++ )
+         {
+            if (hist.size() < hists[j].size() )
+            {
+               hist.resize(hists[j].size());
+            }
+            for ( unsigned int k = 0; k < hists[j].size(); k++ )
+            {
+               hist[k] += hists[j][k];
+            }
+         }
+
+      } // end threaded
+      else
+      {
+         // non-threaded
+         float rik; 
+         unsigned int pos;
+         progress_pr->setTotalSteps((int)(atoms.size()));
+         for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
+         {
+            progress_pr->setProgress(i+1);
+            qApp->processEvents();
+            if ( stopFlag ) 
+            {
+               editor->append(tr("Terminated by user request.\n"));
+               progress_pr->reset();
+               lbl_core_progress->setText("");
+               pb_plot_saxs->setEnabled(source ? false : true);
+               pb_plot_pr->setEnabled(true);
+               return;
+            }
+            for ( unsigned int j = i + 1; j < atoms.size(); j++ )
+            {
+               rik = 
+                  sqrt(
+                       (atoms[i].pos[0] - atoms[j].pos[0]) *
+                       (atoms[i].pos[0] - atoms[j].pos[0]) +
+                       (atoms[i].pos[1] - atoms[j].pos[1]) *
+                       (atoms[i].pos[1] - atoms[j].pos[1]) +
+                       (atoms[i].pos[2] - atoms[j].pos[2]) *
+                       (atoms[i].pos[2] - atoms[j].pos[2])
+                       );
+               pos = (unsigned int)floor(rik / delta);
+               if ( hist.size() <= pos )
+               {
+                  hist.resize(pos + 128);
+               }
+               hist[pos]++;
+            }
+         }
+      } // end non-threaded
+         
+#if defined(BUG_DEBUG)
+      qApp->processEvents();
+      cout << " sleep 1 bb" << endl;
+      sleep(1);
+      cout << " sleep 1 bb done" << endl;
+#endif
+      // trim hist
+#if defined(PR_DEBUG)
+      cout << "hist.size() " << hist.size() << endl;
+#endif
+      while( hist.size() && !hist[hist.size()-1] ) 
+      {
+         hist.pop_back();
+      }
+#if defined(PR_DEBUG)
+      cout << "hist.size() after " << hist.size() << endl;
+#endif
+
       // save the data to a file
       QString fpr_name = 
          USglobal->config_list.root_dir + 
@@ -514,10 +829,11 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       {
          editor->append(tr("PR curve file: ") + fpr_name + tr(" created.\n"));
          fprintf(fpr,
-                 "SOMO p(r) vs r data generated from %s by US_SOMO %s %s\n"
+                 "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f\n"
                  , model_filename.ascii()
                  , US_Version.ascii()
                  , REVISION
+                 , delta
                  );
          for ( unsigned int i = 0; i < hist.size(); i++ )
          {
@@ -539,37 +855,118 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                         QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
          mb.exec();
       }
-   }
-   long pr = plot_pr->insertCurve("P(r) vs r");
+   } // models
+
+
+   long ppr = plot_pr->insertCurve("P(r) vs r");
    vector < double > r;
-   vector < double > h;
+   vector < double > pr;
    r.resize(hist.size());
-   h.resize(hist.size());
+   pr.resize(hist.size());
    for ( unsigned int i = 0; i < hist.size(); i++) 
    {
       r[i] = i * delta;
-      h[i] = (double) hist[i];
-      printf("%e %e\n", r[i], h[i]);
+      pr[i] = (double) hist[i];
+#if defined(PR_DEBUG)
+      printf("%e %e\n", r[i], pr[i]);
+#endif
    }
 
-   int p = 0;
-   plot_pr->setCurveStyle(pr, QwtCurve::Lines);
-   plot_pr->setCurveData(pr, (double *)&(r[0]), (double *)&(h[0]), (int)hist.size());
-   plot_pr->setCurvePen(pr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+   plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
+   plotted_r.push_back(r);
+   plotted_pr.push_back(pr);
+   unsigned int p = plotted_r.size() - 1;
+
+   plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)r.size());
+   plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
    plot_pr->replot();
 
    progress_pr->setTotalSteps(1);
    progress_pr->setProgress(1);
-   pb_plot_saxs->setEnabled(true);
+   pb_plot_saxs->setEnabled(source ? false : true);
    pb_plot_pr->setEnabled(true);
 }
 
 void US_Hydrodyn_Saxs::load_pr()
 {
+   QString filename = QFileDialog::getOpenFileName(USglobal->config_list.root_dir + "/somo/saxs", "*", this);
+   if (filename.isEmpty())
+   {
+      return;
+   }
+   QFile f(filename);
+   QString ext = QFileInfo(filename).extension(FALSE).lower();
+   vector < double > r;
+   vector < double > pr;
+   double new_r, new_pr;
+   QString res = "";
+   unsigned int startline = 0;
+   unsigned int pop_last = 0;
+   if ( f.open(IO_ReadOnly) )
+   {
+      if ( ext != "sprr" ) 
+      {
+         // check for gnom output
+         QTextStream ts(&f);
+         QString tmp;
+         unsigned int pos = 0;
+         while ( !ts.atEnd() )
+         {
+            tmp = ts.readLine();
+            pos++;
+            if ( tmp.contains("Distance distribution  function of particle") ) 
+            {
+               editor->append("\nRecognized GNOM output.\n");
+               startline = pos + 4;
+               pop_last = 2;
+               break;
+            }
+         }
+         f.close();
+         f.open(IO_ReadOnly);
+      }
+
+      QTextStream ts(&f);
+      editor->append(QString("\nLoading pr(r) data from %1 %2\n").arg(filename).arg(res));
+      editor->append(ts.readLine());
+      while ( startline > 0)
+      {
+         ts.readLine();
+         startline--;
+      }
+         
+      while ( !ts.atEnd() )
+      {
+         ts >> new_r;
+         ts >> new_pr;
+         ts.readLine();
+         r.push_back(new_r);
+         pr.push_back(new_pr);
+      }
+      f.close();
+      while ( pop_last > 0 && r.size() )
+      {
+         r.pop_back();
+         pr.pop_back();
+         pop_last--;
+      }
+
+      long ppr = plot_pr->insertCurve("p(r) vs r");
+      plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
+      plotted_r.push_back(r);
+      plotted_pr.push_back(pr);
+      unsigned int p = plotted_r.size() - 1;
+
+      plot_pr->setCurveData(ppr, (double *)&(r[0]), (double *)&(pr[0]), (int)pr.size());
+      plot_pr->setCurvePen(ppr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+      plot_pr->replot();
+   }
 }
 
 void US_Hydrodyn_Saxs::clear_plot_pr()
 {
+   plotted_pr.clear();
+   plotted_r.clear();
    plot_pr->clear();
    plot_pr->replot();
 }
@@ -1162,10 +1559,13 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       sleep(1);
       cout << " sleep 1 d.1 done" << endl;
 #endif
-#if defined(USE_THREADS)
+      if ( 0 && // disabled for now
+           ((US_Hydrodyn *)us_hydrodyn)->advanced_config.experimental_threads &&
+           USglobal->config_list.numThreads > 1 )
       {
          unsigned int j;
          unsigned int threads = USglobal->config_list.numThreads;
+         editor->append(QString("Using %1 threads.\n").arg(threads));
          vector < saxs_Iq_thr_t* > saxs_Iq_thr_threads(threads);
          for ( j = 0; j < threads; j++ )
          {
@@ -1217,7 +1617,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             timespec ns_ret;
             ns.tv_sec = 0;
             ns.tv_nsec = 500000000l;
-
+            
             do {
                all_done = threads;
                for ( j = 0; j < threads; j++ )
@@ -1228,7 +1628,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                nanosleep(&ns, &ns_ret);
             } while(all_done);
          }
-
+         
          // wait for work to complete
 
          for ( j = 0; j < threads; j++ )
@@ -1274,77 +1674,79 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             }
          }
       }
-      
-#else
-      unsigned int as = atoms.size();
-      unsigned int as1 = as - 1;
-      double rik; // distance from atom i to k 
-      double qrik; // q * rik
-      double sqrikd; // sin * q * rik / qrik
-      progress_saxs->setTotalSteps((int)(as1 * 1.15));
-      for ( unsigned int i = 0; i < as1; i++ )
-      {
-         // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
-         // cout << lcp << endl;
-         // lbl_core_progress->setText(lcp);
-         progress_saxs->setProgress(i+1);
-         qApp->processEvents();
-         if ( stopFlag ) 
+      else
+      { 
+         // not threaded
+         unsigned int as = atoms.size();
+         unsigned int as1 = as - 1;
+         double rik; // distance from atom i to k 
+         double qrik; // q * rik
+         double sqrikd; // sin * q * rik / qrik
+         progress_saxs->setTotalSteps((int)(as1 * 1.15));
+         for ( unsigned int i = 0; i < as1; i++ )
          {
-            editor->append(tr("Terminated by user request.\n"));
-            progress_saxs->reset();
-            lbl_core_progress->setText("");
-            pb_plot_saxs->setEnabled(true);
-            pb_plot_pr->setEnabled(true);
-            return;
-         }
-         for ( unsigned int k = i + 1; k < as; k++ )
-         {
-            rik = 
-               sqrt(
-                    (atoms[i].pos[0] - atoms[k].pos[0]) *
-                    (atoms[i].pos[0] - atoms[k].pos[0]) +
-                    (atoms[i].pos[1] - atoms[k].pos[1]) *
-                    (atoms[i].pos[1] - atoms[k].pos[1]) +
-                    (atoms[i].pos[2] - atoms[k].pos[2]) *
-                    (atoms[i].pos[2] - atoms[k].pos[2])
-                    );
-#if defined(SAXS_DEBUG_F)
-      cout << "dist atoms:  "
-           << i
-           << " "
-           << atoms[i].saxs_name
-           << ","
-           << k
-           << " "
-           << atoms[k].saxs_name
-           << " "
-           << rik
-           << endl;
-#endif
-            for ( unsigned int j = 0; j < q_points; j++ )
+            // QString lcp = QString("Atom %1 of %2").arg(i+1).arg(as);
+            // cout << lcp << endl;
+            // lbl_core_progress->setText(lcp);
+            progress_saxs->setProgress(i+1);
+            qApp->processEvents();
+            if ( stopFlag ) 
             {
-               qrik = rik * q[j];
-               sqrikd = sin(qrik) / qrik;
-               I[j] += fp[j][i] * fp[j][k] * sqrikd;
-               Ia[j] += f[j][i] * f[j][k] * sqrikd;
-               Ic[j] += fc[j][i] * fc[j][k] * sqrikd;
+               editor->append(tr("Terminated by user request.\n"));
+               progress_saxs->reset();
+               lbl_core_progress->setText("");
+               pb_plot_saxs->setEnabled(true);
+               pb_plot_pr->setEnabled(true);
+               return;
+            }
+            for ( unsigned int k = i + 1; k < as; k++ )
+            {
+               rik = 
+                  sqrt(
+                       (atoms[i].pos[0] - atoms[k].pos[0]) *
+                       (atoms[i].pos[0] - atoms[k].pos[0]) +
+                       (atoms[i].pos[1] - atoms[k].pos[1]) *
+                       (atoms[i].pos[1] - atoms[k].pos[1]) +
+                       (atoms[i].pos[2] - atoms[k].pos[2]) *
+                       (atoms[i].pos[2] - atoms[k].pos[2])
+                       );
 #if defined(SAXS_DEBUG_F)
-               cout << QString("").sprintf("I[%f] += (%f * %f) * (sin(%f) / %f) == %f\n"
-                                           , q[j]
-                                           , fp[j][i]
-                                           , fp[j][k]
-                                           , qrik
-                                           , qrik
-                                           , I[j]);
+               cout << "dist atoms:  "
+                    << i
+                    << " "
+                    << atoms[i].saxs_name
+                    << ","
+                    << k
+                    << " "
+                    << atoms[k].saxs_name
+                    << " "
+                    << rik
+                    << endl;
 #endif
-
-                                           
-
+               for ( unsigned int j = 0; j < q_points; j++ )
+               {
+                  qrik = rik * q[j];
+                  sqrikd = sin(qrik) / qrik;
+                  I[j] += fp[j][i] * fp[j][k] * sqrikd;
+                  Ia[j] += f[j][i] * f[j][k] * sqrikd;
+                  Ic[j] += fc[j][i] * fc[j][k] * sqrikd;
+#if defined(SAXS_DEBUG_F)
+                  cout << QString("").sprintf("I[%f] += (%f * %f) * (sin(%f) / %f) == %f\n"
+                                              , q[j]
+                                              , fp[j][i]
+                                              , fp[j][k]
+                                              , qrik
+                                              , qrik
+                                              , I[j]);
+#endif
+                  
+                  
+                  
+               }
             }
          }
-      }
-#endif
+      } // end threads logic
+
 #if defined(I_MULT_2)
       for ( unsigned int j = 0; j < q_points; j++ )
       {

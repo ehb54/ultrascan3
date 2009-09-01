@@ -52,10 +52,12 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                        QString                        pdb_file, 
                        vector < residue >             residue_list,
                        vector < PDB_model >           model_vector,
+                       vector < vector <PDB_atom> >   bead_models,
                        vector < unsigned int >        selected_models,
                        map < QString, vector <int> >  multi_residue_map,
                        map < QString, QString >       residue_atom_hybrid_map,
                        int                            source, 
+                       void                           *us_hydrodyn,
                        QWidget                        *p = 0, 
                        const char                     *name = 0
                        );
@@ -114,10 +116,13 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       vector < saxs >              saxs_list;
       vector < residue >           residue_list;
       vector < PDB_model >         model_vector;
+      vector < vector <PDB_atom> > bead_models;
       vector < unsigned int >      selected_models;
       vector < QColor >            plot_colors;
       vector < vector < double > > plotted_q;
       vector < vector < double > > plotted_I;
+      vector < vector < double > > plotted_pr;
+      vector < vector < double > > plotted_r;
 
       map < QString, saxs >          saxs_map;
       map < QString, hybridization > hybrid_map;
@@ -128,6 +133,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 #ifdef WIN32
      #pragma warning ( default: 4251 )
 #endif      
+      void *us_hydrodyn;
 
       unsigned int current_model;
 
@@ -216,6 +222,52 @@ class saxs_Iq_thr_t : public QThread
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif
+  unsigned int threads;
+  QProgressBar *progress;
+  QLabel *lbl_core_progress;
+  bool *stopFlag;
+
+  int thread;
+  QMutex work_mutex;
+  int work_to_do;
+  QWaitCondition cond_work_to_do;
+  int work_done;
+  QWaitCondition cond_work_done;
+  int work_to_do_waiters;
+  int work_done_waiters;
+};
+
+class saxs_pr_thr_t : public QThread
+{
+ public:
+  saxs_pr_thr_t(int);
+  void saxs_pr_thr_setup(
+                         vector < saxs_atom > *atoms,
+                         vector < unsigned int > *hist,
+                         double delta,
+                         unsigned int threads,
+                         QProgressBar *progress,
+                         QLabel *lbl_core_progress,
+                         bool *stopFlag
+                         );
+  void saxs_pr_thr_shutdown();
+  void saxs_pr_thr_wait();
+  int saxs_pr_thr_work_status();
+  virtual void run();
+
+ private:
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+  vector < saxs_atom > *atoms;
+  vector < unsigned int > *hist;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+  double delta;
   unsigned int threads;
   QProgressBar *progress;
   QLabel *lbl_core_progress;

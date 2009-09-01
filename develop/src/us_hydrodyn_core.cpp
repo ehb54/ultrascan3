@@ -2647,6 +2647,8 @@ void radial_reduction_thr_t::run()
 
 //--------- end thread for radial reduction ------------
 
+//--------- radial reduction for beads ---------------------------------------
+
 void US_Hydrodyn::radial_reduction()
 {
    // popping radial reduction
@@ -2656,6 +2658,7 @@ void US_Hydrodyn::radial_reduction()
    // or bb fb Y rh Y rs N to N st Y ro N 0.000000 0.000000 0.000000
    float molecular_cog[3] = { 0, 0, 0 };
    float molecular_mw = 0;
+   int end_progress = progress->progress() + 10;
 
    for (unsigned int i = 0; i < bead_model.size(); i++) {
       PDB_atom *this_atom = &bead_model[i];
@@ -2884,6 +2887,7 @@ void US_Hydrodyn::radial_reduction()
       gettimeofday(&start_tv, NULL);
 #endif
       editor->append(QString("Begin popping stage %1\n").arg(k + 1));
+      progress->setProgress(progress->progress() + 1); 
       qApp->processEvents();
 
       do {
@@ -3063,6 +3067,7 @@ void US_Hydrodyn::radial_reduction()
                   editor->append(QString("Beads popped %1, Go back to stage %2\n").arg(beads_popped).arg(k));
                   printf("fused sc/mc bead in stage SC/MC, back to stage SC\n");
                   k = 0;
+                  progress->setProgress(progress->progress() - 4);
                   goto stage_loop;
                }
             }
@@ -3088,6 +3093,7 @@ void US_Hydrodyn::radial_reduction()
       write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model_pop-%1").arg(k) + DOTSOMO, &bead_model);
 #endif
       printf("stage %d beads popped %d\n", k, beads_popped);
+      progress->setProgress(progress->progress() + 1);
       editor->append(QString("Beads popped %1.\nBegin radial reduction stage %2\n").arg(beads_popped).arg(k + 1));
       qApp->processEvents();
 
@@ -4014,6 +4020,9 @@ void US_Hydrodyn::radial_reduction()
          fflush(stdout);
 #endif
 
+         progress->setProgress(progress->progress() + 1);
+         qApp->processEvents();
+
          // recompute volumes
          for (unsigned int i = 0; i < bead_model.size(); i++) {
             if (reduced_any[i]) {
@@ -4049,6 +4058,7 @@ void US_Hydrodyn::radial_reduction()
                     QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + DOTSOMO
                     , &bead_model);
    editor->append("Finished with popping and radial reduction\n");
+   progress->setProgress(end_progress); 
 }
 
 //------------------------------ end of radial reduction ------------------------------------------------------

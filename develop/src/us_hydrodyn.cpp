@@ -82,6 +82,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    advanced_config.pbr_broken_logic = true;
    advanced_config.use_sounds = false;
    advanced_config.expert_mode = false;
+   advanced_config.experimental_threads = false;
    advanced_config.debug_1 = false;
    advanced_config.debug_2 = false;
    advanced_config.debug_3 = false;
@@ -518,6 +519,7 @@ void US_Hydrodyn::set_disabled()
    pb_calc_hydro->setEnabled(false);
    pb_visualize->setEnabled(false);
    pb_pdb_saxs->setEnabled(false);
+   pb_bead_saxs->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
 }
 
@@ -1300,6 +1302,7 @@ int US_Hydrodyn::calc_somo()
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
+      pb_bead_saxs->setEnabled(true);
    }
    else
    {
@@ -1382,7 +1385,29 @@ int US_Hydrodyn::calc_grid_pdb()
                progress->reset();
                return -1;
             }
+            // compute maximum position for progress
+            int mpos =
+               2 // create beads
+               + 4 // grid_atob
+               + (grid.enable_asa ?
+                  ( 1 
+                    + 10 // radial reduction
+                    + ( asa.recheck_beads ? 2 : 0 )
+                    )
+                  : 0 )
+               + ( ( !grid.enable_asa && grid_overlap.remove_overlap ) ?
+                   ( 10 // radial reduction
+                     + ( asa.recheck_beads ? 2 : 0 )
+                     )
+                   : 0 )
+               + 1 // finish off
+               ;
+               
+            progress->reset();
+            progress->setTotalSteps(mpos);
+            progress->setProgress(progress->progress() + 1);
             int retval = create_beads(&error_string);
+            progress->setProgress(progress->progress() + 1);
             if (stopFlag)
             {
                editor->append("Stopped by user\n\n");
@@ -1472,12 +1497,14 @@ int US_Hydrodyn::calc_grid_pdb()
                      bead_models.resize(current_model + 1);
                   }
 
+                  progress->setProgress(progress->progress() + 1);
                   bead_models[current_model] =
                      us_hydrodyn_grid_atob(&bead_model,
                                            &grid,
                                            progress,
                                            editor,
                                            this);
+                  progress->setProgress(progress->progress() + 1);
                   if (stopFlag)
                   {
                      editor->append("Stopped by user\n\n");
@@ -1510,7 +1537,9 @@ int US_Hydrodyn::calc_grid_pdb()
                      double save_threshold_percent = asa.threshold_percent;
                      asa.threshold = asa.grid_threshold;
                      asa.threshold_percent = asa.grid_threshold_percent;
+                     progress->setProgress(progress->progress() + 1);
                      bead_check(true, true);
+                     progress->setProgress(progress->progress() + 1);
                      asa.threshold = save_threshold;
                      asa.threshold_percent = save_threshold_percent;
                      bead_models[current_model] = bead_model;
@@ -1541,6 +1570,7 @@ int US_Hydrodyn::calc_grid_pdb()
                      sidechain_overlap = grid_exposed_overlap;
                      mainchain_overlap = grid_exposed_overlap;
                      buried_overlap = grid_buried_overlap;
+                     progress->setProgress(progress->progress() + 1);
                      radial_reduction();
                      sidechain_overlap = save_sidechain_overlap;
                      mainchain_overlap = save_mainchain_overlap;
@@ -1557,7 +1587,9 @@ int US_Hydrodyn::calc_grid_pdb()
                         double save_threshold_percent = asa.threshold_percent;
                         asa.threshold = asa.grid_threshold;
                         asa.threshold_percent = asa.grid_threshold_percent;
+                        progress->setProgress(progress->progress() + 1);
                         bead_check(false, false);
+                        progress->setProgress(progress->progress() + 1);
                         asa.threshold = save_threshold;
                         asa.threshold_percent = save_threshold_percent;
                         bead_models[current_model] = bead_model;
@@ -1568,7 +1600,9 @@ int US_Hydrodyn::calc_grid_pdb()
                   {
                      if (grid_overlap.remove_overlap)
                      {
+                        progress->setProgress(progress->progress() + 1);
                         radial_reduction();
+                        progress->setProgress(progress->progress() + 1);
                         bead_models[current_model] = bead_model;
                      }
                      if (stopFlag)
@@ -1592,7 +1626,9 @@ int US_Hydrodyn::calc_grid_pdb()
                         double save_threshold_percent = asa.threshold_percent;
                         asa.threshold = asa.grid_threshold;
                         asa.threshold_percent = asa.grid_threshold_percent;
+                        progress->setProgress(progress->progress() + 1);
                         bead_check(false, false);
+                        progress->setProgress(progress->progress() + 1);
                         asa.threshold = save_threshold;
                         asa.threshold_percent = save_threshold_percent;
                         bead_models[current_model] = bead_model;
@@ -1615,6 +1651,7 @@ int US_Hydrodyn::calc_grid_pdb()
                         return -1;
                      }
                   }
+                  progress->setProgress(progress->progress() + 1);
 
                   // write_bead_spt(somo_dir + SLASH + project +
                   //       (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
@@ -1626,6 +1663,7 @@ int US_Hydrodyn::calc_grid_pdb()
 
                }
             }
+            progress->setProgress(progress->totalSteps());
          }
       }
    }
@@ -1645,6 +1683,7 @@ int US_Hydrodyn::calc_grid_pdb()
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
+      pb_bead_saxs->setEnabled(true);
    }
    else
    {
@@ -1717,13 +1756,36 @@ int US_Hydrodyn::calc_grid()
          if (somo_processed.size() > current_model && somo_processed[current_model]) {
             printf("in calc_grid: somo_processed %d\n", current_model); fflush(stdout);
             editor->append(QString("Gridding bead model %1\n").arg(current_model + 1));
+            // compute maximum position for progress
+            int mpos =
+               3 // grid_atob
+               + (grid.enable_asa ?
+                  ( 1 
+                    + 10 // radial reduction
+                    + ( asa.recheck_beads ? 2 : 0 )
+                    )
+                  : 0 )
+               + ( ( !grid.enable_asa && grid_overlap.remove_overlap ) ?
+                   ( 10 // radial reduction
+                     + ( asa.recheck_beads ? 2 : 0 )
+                     )
+                   : 0 )
+               + 1 // finish off
+               ;
+               
+            progress->reset();
+            progress->setTotalSteps(mpos);
+            progress->setProgress(progress->progress() + 1);
             qApp->processEvents();
+
             bead_models[current_model] =
                us_hydrodyn_grid_atob(&bead_models[current_model],
                                      &grid,
                                      progress,
                                      editor,
                                      this);
+            progress->setProgress(progress->progress() + 1);
+
             if (stopFlag)
             {
                editor->append("Stopped by user\n\n");
@@ -1752,7 +1814,9 @@ int US_Hydrodyn::calc_grid()
                double save_threshold_percent = asa.threshold_percent;
                asa.threshold = asa.grid_threshold;
                asa.threshold_percent = asa.grid_threshold_percent;
+               progress->setProgress(progress->progress() + 1);
                bead_check(true, true);
+               progress->setProgress(progress->progress() + 1);
                asa.threshold = save_threshold;
                asa.threshold_percent = save_threshold_percent;
                bead_models[current_model] = bead_model;
@@ -1783,7 +1847,9 @@ int US_Hydrodyn::calc_grid()
                sidechain_overlap = grid_exposed_overlap;
                mainchain_overlap = grid_exposed_overlap;
                buried_overlap = grid_buried_overlap;
+               progress->setProgress(progress->progress() + 1);
                radial_reduction();
+               progress->setProgress(progress->progress() + 1);
                sidechain_overlap = save_sidechain_overlap;
                mainchain_overlap = save_mainchain_overlap;
                buried_overlap = save_buried_overlap;
@@ -1799,7 +1865,9 @@ int US_Hydrodyn::calc_grid()
                   double save_threshold_percent = asa.threshold_percent;
                   asa.threshold = asa.grid_threshold;
                   asa.threshold_percent = asa.grid_threshold_percent;
+                  progress->setProgress(progress->progress() + 1);
                   bead_check(false, false);
+                  progress->setProgress(progress->progress() + 1);
                   asa.threshold = save_threshold;
                   asa.threshold_percent = save_threshold_percent;
                   bead_models[current_model] = bead_model;
@@ -1809,7 +1877,9 @@ int US_Hydrodyn::calc_grid()
             {
                if (grid_overlap.remove_overlap)
                {
+                  progress->setProgress(progress->progress() + 1);
                   radial_reduction();
+                  progress->setProgress(progress->progress() + 1);
                   if (stopFlag)
                   {
                      editor->append("Stopped by user\n\n");
@@ -1841,7 +1911,9 @@ int US_Hydrodyn::calc_grid()
                   double save_threshold_percent = asa.threshold_percent;
                   asa.threshold = asa.grid_threshold;
                   asa.threshold_percent = asa.grid_threshold_percent;
+                  progress->setProgress(progress->progress() + 1);
                   bead_check(false, false);
+                  progress->setProgress(progress->progress() + 1);
                   asa.threshold = save_threshold;
                   asa.threshold_percent = save_threshold_percent;
                   if (stopFlag)
@@ -1863,6 +1935,7 @@ int US_Hydrodyn::calc_grid()
                   bead_models[current_model] = bead_model;
                }
             }
+            progress->setProgress(progress->progress() + 1);
             // write_bead_spt(somo_dir + SLASH + project +
             //        (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
             //        QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
@@ -1870,6 +1943,7 @@ int US_Hydrodyn::calc_grid()
             write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
                              QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
                              DOTSOMO, &bead_model);
+            progress->setProgress(progress->totalSteps());
          }
       }
    }
@@ -1889,6 +1963,7 @@ int US_Hydrodyn::calc_grid()
       qApp->processEvents();
       pb_visualize->setEnabled(true);
       pb_calc_hydro->setEnabled(true);
+      pb_bead_saxs->setEnabled(true);
    }
    else
    {
@@ -2024,6 +2099,7 @@ void US_Hydrodyn::calc_hydro()
    {
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
+      pb_bead_saxs->setEnabled(true);
       pb_show_hydro_results->setEnabled(false);
       progress->reset();
       return;
@@ -2053,6 +2129,7 @@ void US_Hydrodyn::calc_hydro()
    {
       editor->append("Stopped by user\n\n");
       pb_calc_hydro->setEnabled(true);
+      pb_bead_saxs->setEnabled(true);
       pb_show_hydro_results->setEnabled(false);
       progress->reset();
       return;
@@ -2061,6 +2138,7 @@ void US_Hydrodyn::calc_hydro()
    printf("back from supc retval %d\n", retval);
    pb_show_hydro_results->setEnabled(retval ? false : true);
    pb_calc_hydro->setEnabled(true);
+   pb_bead_saxs->setEnabled(true);
    if ( retval )
    {
       editor->append("Calculate hydrodynamics failed\n\n");
@@ -2274,10 +2352,12 @@ void US_Hydrodyn::pdb_saxs()
                                                  pdb_file,
                                                  residue_list,
                                                  model_vector,
+                                                 bead_models,
                                                  selected_models,
                                                  multi_residue_map,
                                                  residue_atom_hybrid_map,
                                                  0, 
+                                                 this,
                                                  0
                                                  );
          saxs_plot_window->show();
@@ -2308,16 +2388,33 @@ void US_Hydrodyn::bead_saxs()
       } 
       else
       {
+         QString filename = bead_model_file;
+         if ( !filename.length() )
+         {
+            filename = pdb_file;
+            filename.replace(QRegExp("\\.(pdb|PDB)"), ".bead_model");
+         }
+         if ( !filename.length() )
+         {
+            filename = "unknown";
+         }
+         printf("selected models size %u bead_models.size %u\n",
+                bead_models.size(),
+                selected_models.size()
+                );
+
          saxs_plot_window = new US_Hydrodyn_Saxs(
                                                  &saxs_plot_widget,
                                                  &saxs_options,
-                                                 bead_model_file,
+                                                 filename,
                                                  residue_list,
                                                  model_vector,
+                                                 bead_models,
                                                  selected_models,
                                                  multi_residue_map,
                                                  residue_atom_hybrid_map,
                                                  1, 
+                                                 this,
                                                  0
                                                  );
          saxs_plot_window->show();
