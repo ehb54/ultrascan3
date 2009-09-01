@@ -165,20 +165,18 @@ void US_EditScan::redraw( void )
    for ( int j = 0; j < workingScan.values.size(); j++ ) 
    { 
       double r = workingScan.values[ j ].d.radius;
-      if ( r < range_left  )
+      if ( r < range_left - 0.0005  )
       {
          offset = j;
          continue;
       }
 
-      if ( r > range_right ) break;
+      if ( r > range_right + 0.0005 ) break;
 
       radii [ count ] = r;
       values[ count ] = workingScan.values[ j ].value * invert;
       count++;
    }
-
-   offset++;  // Fix off by 1 issue
 
    curve->setRawData( radii, values, count );
    data_plot->replot();
