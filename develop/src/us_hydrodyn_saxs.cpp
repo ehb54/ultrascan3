@@ -208,7 +208,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_clear_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear_plot_saxs, SIGNAL(clicked()), SLOT(clear_plot_saxs()));
 
-   pb_plot_pr = new QPushButton(tr("Plot P(r) distribution"), this);
+   pb_plot_pr = new QPushButton(tr("Compute P(r) distribution"), this);
    Q_CHECK_PTR(pb_plot_pr);
    pb_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_plot_pr->setMinimumHeight(minHeight1);
@@ -399,6 +399,169 @@ void US_Hydrodyn_Saxs::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn_Saxs::show_plot_pr()
 {
+   stopFlag = false;
+   pb_stop->setEnabled(true);
+   pb_plot_pr->setEnabled(false);
+   pb_plot_saxs->setEnabled(false);
+   progress_pr->reset();
+   vector < unsigned int > hist;
+   float delta = 0.1;
+
+#if defined(BUG_DEBUG)
+   qApp->processEvents();
+   cout << " sleep 1 a" << endl;
+   sleep(1);
+   cout << " sleep 1 a done" << endl;
+#endif
+   
+   for ( unsigned int i = 0; i < selected_models.size(); i++ )
+   {
+      current_model = selected_models[i];
+#if defined(PR_DEBUG)
+      printf("creating pr %u\n", current_model);
+#endif
+      editor->append(QString("\n\nPreparing file %1 model %2 for p(r) vs r plot.\n\n")
+                     .arg(lbl_filename2->text())
+                     .arg(current_model + 1));
+      qApp->processEvents();
+      if ( stopFlag ) 
+      {
+         editor->append(tr("Terminated by user request.\n"));
+         progress_pr->reset();
+         lbl_core_progress->setText("");
+         pb_plot_saxs->setEnabled(true);
+         pb_plot_pr->setEnabled(true);
+         return;
+      }
+         
+      vector < saxs_atom > atoms;
+      saxs_atom new_atom;
+      for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
+      {
+         for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
+         {
+            PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+            new_atom.pos[0] = this_atom->coordinate.axis[0];
+            new_atom.pos[1] = this_atom->coordinate.axis[1];
+            new_atom.pos[2] = this_atom->coordinate.axis[2];
+
+#if defined(PR_DEBUG2)
+            cout << "Atom: "
+                 << this_atom->name
+                 << " Coordinates: "
+                 << new_atom.pos[0] << " , "
+                 << new_atom.pos[1] << " , "
+                 << new_atom.pos[2] 
+                 << endl;
+#endif
+            atoms.push_back(new_atom);
+         }
+      }
+#if defined(BUG_DEBUG)
+      qApp->processEvents();
+      cout << " sleep 1 b" << endl;
+      sleep(1);
+      cout << " sleep 1 b done" << endl;
+#endif
+      // ok now we have all the atoms
+      // we're just going to hard code a distance resolution for now
+      float rik; 
+      unsigned int pos;
+      progress_pr->setTotalSteps((int)(atoms.size()));
+      for ( unsigned int i = 0; i < atoms.size() - 1; i++ )
+      {
+         progress_pr->setProgress(i+1);
+         qApp->processEvents();
+         if ( stopFlag ) 
+         {
+            editor->append(tr("Terminated by user request.\n"));
+            progress_pr->reset();
+            lbl_core_progress->setText("");
+            pb_plot_saxs->setEnabled(true);
+            pb_plot_pr->setEnabled(true);
+            return;
+         }
+         for ( unsigned int j = i + 1; j < atoms.size(); j++ )
+         {
+            rik = 
+               sqrt(
+                    (atoms[i].pos[0] - atoms[j].pos[0]) *
+                    (atoms[i].pos[0] - atoms[j].pos[0]) +
+                    (atoms[i].pos[1] - atoms[j].pos[1]) *
+                    (atoms[i].pos[1] - atoms[j].pos[1]) +
+                    (atoms[i].pos[2] - atoms[j].pos[2]) *
+                    (atoms[i].pos[2] - atoms[j].pos[2])
+                    );
+            pos = (unsigned int)floor(rik / delta);
+            
+            if ( hist.size() < pos )
+            {
+               hist.resize(pos + 10);
+            }
+            hist[pos]++;
+         }
+      }
+         
+      // save the data to a file
+      QString fpr_name = 
+         USglobal->config_list.root_dir + 
+         "/somo/saxs/" + QString("%1").arg(lbl_filename2->text()) +
+         QString("_%1").arg(current_model + 1) + 
+         ".sprr";
+      
+      FILE *fpr = fopen(fpr_name, "w");
+      if ( fpr ) 
+      {
+         editor->append(tr("PR curve file: ") + fpr_name + tr(" created.\n"));
+         fprintf(fpr,
+                 "SOMO p(r) vs r data generated from %s by US_SOMO %s %s\n"
+                 , model_filename.ascii()
+                 , US_Version.ascii()
+                 , REVISION
+                 );
+         for ( unsigned int i = 0; i < hist.size(); i++ )
+         {
+            if ( hist[i] ) {
+               fprintf(fpr, "%.6e\t%u\n", i * delta, hist[i]);
+            }
+         }
+         fclose(fpr);
+      }
+      else
+      {
+#if defined(PR_DEBUG)
+         cout << "can't create " << fpr_name << endl;
+#endif
+         editor->append(tr("WARNING: Could not create PR curve file: ") + fpr_name + "\n");
+         QMessageBox mb(tr("UltraScan Warning"),
+                        tr("The output file ") + fpr_name + tr(" could not be created."), 
+                        QMessageBox::Critical,
+                        QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+         mb.exec();
+      }
+   }
+   long pr = plot_pr->insertCurve("P(r) vs r");
+   vector < double > r;
+   vector < double > h;
+   r.resize(hist.size());
+   h.resize(hist.size());
+   for ( unsigned int i = 0; i < hist.size(); i++) 
+   {
+      r[i] = i * delta;
+      h[i] = (double) hist[i];
+      printf("%e %e\n", r[i], h[i]);
+   }
+
+   int p = 0;
+   plot_pr->setCurveStyle(pr, QwtCurve::Lines);
+   plot_pr->setCurveData(pr, (double *)&(r[0]), (double *)&(h[0]), (int)hist.size());
+   plot_pr->setCurvePen(pr, QPen(plot_colors[p % plot_colors.size()], 2, SolidLine));
+   plot_pr->replot();
+
+   progress_pr->setTotalSteps(1);
+   progress_pr->setProgress(1);
+   pb_plot_saxs->setEnabled(true);
+   pb_plot_pr->setEnabled(true);
 }
 
 void US_Hydrodyn_Saxs::load_pr()
@@ -620,6 +783,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
    stopFlag = false;
    pb_stop->setEnabled(true);
    pb_plot_saxs->setEnabled(false);
+   pb_plot_pr->setEnabled(false);
    progress_saxs->reset();
 
 #if defined(BUG_DEBUG)
@@ -645,6 +809,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs->setEnabled(true);
+         pb_plot_pr->setEnabled(true);
          return;
       }
          
@@ -685,6 +850,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs->setEnabled(true);
+                  pb_plot_pr->setEnabled(true);
                   return;
                }
                continue;
@@ -710,6 +876,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs->setEnabled(true);
+                  pb_plot_pr->setEnabled(true);
                   return;
                }
                continue;
@@ -740,6 +907,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs->setEnabled(true);
+                  pb_plot_pr->setEnabled(true);
                   return;
                }
                continue;
@@ -774,6 +942,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
                   pb_plot_saxs->setEnabled(true);
+                  pb_plot_pr->setEnabled(true);
                   return;
                }
                continue;
@@ -821,6 +990,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs->setEnabled(true);
+         pb_plot_pr->setEnabled(true);
          return;
       }
 #if defined(SAXS_DEBUG)
@@ -971,6 +1141,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          progress_saxs->reset();
          lbl_core_progress->setText("");
          pb_plot_saxs->setEnabled(true);
+         pb_plot_pr->setEnabled(true);
          return;
       }
       vector < double > I;
@@ -1088,6 +1259,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             progress_saxs->reset();
             lbl_core_progress->setText("");
             pb_plot_saxs->setEnabled(true);
+            pb_plot_pr->setEnabled(true);
             return;
          }
 
@@ -1123,6 +1295,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             progress_saxs->reset();
             lbl_core_progress->setText("");
             pb_plot_saxs->setEnabled(true);
+            pb_plot_pr->setEnabled(true);
             return;
          }
          for ( unsigned int k = i + 1; k < as; k++ )
@@ -1267,6 +1440,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       }
    }
    pb_plot_saxs->setEnabled(true);
+   pb_plot_pr->setEnabled(true);
 }
 
 void US_Hydrodyn_Saxs::print()
