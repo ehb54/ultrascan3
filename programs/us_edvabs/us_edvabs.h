@@ -44,8 +44,8 @@ class US_EXTERN US_Edvabs : public US_Widgets
       double             range_right;
       double             baseline;
       double             invert;
+      double             plateau;
       QList< int >       includes;
-      QList< double >    plateau;
       QList< double >    residuals;
 
       US_Help            showHelp;

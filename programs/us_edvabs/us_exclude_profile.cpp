@@ -125,12 +125,14 @@ void US_ExcludeProfile::update( double )
 
    QList< int > excludes;
 
-   for ( int i = 0   ; i < start - 1      ; i++ ) excludes << i;
+   for ( int i = 0; i < start - 1; i++ ) excludes << i;
+
+   // Handle values beyond last -- go from back to front to not corrupt list 
    for ( int i = stop; i < original.size(); i++ ) excludes << i;
 
-   // Handle nth here -- go from back to front to not corrupt list 
-   for ( int i = start; i < stop - 2 ; i++ )
-      if ( ( start + i ) % nth > 0 ) excludes << i;
+   // Handle nth
+   for ( int i = 0; i < stop - start + 1; i++ )
+      if ( ( start + i ) % nth > 0 ) excludes << start + i;
 
    int remaining = original.size() - excludes.size();
 

@@ -692,10 +692,10 @@ void US_Convert::changeCcw( int index )
 void US_Convert::write( void )
 { 
    // Specify the filename
-   QString     dirname    = le_dir->text();
-   if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
+   QString     rawdir    = le_dir->text();
+   //if ( rawdir.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
 
-   QStringList components = dirname.split( "/", QString::SkipEmptyParts );
+   QStringList components = rawdir.split( "/", QString::SkipEmptyParts );
    QString     runID      = components.last();
 
    QString triple         = triples[ currentTriple ];
@@ -721,7 +721,7 @@ void US_Convert::write( void )
    {
       QMessageBox::information( this,
             tr( "Success" ),
-            dirname + filename + tr( " written." ) );
+            filename + tr( " written." ) );
    }        
 }
 
@@ -730,8 +730,21 @@ int US_Convert::write( const QString& filename )
    if ( newRawData.scanData.empty() ) return US_DataIO::NODATA; 
 
    // Get the directory and write out the data
-   QString dirname = le_dir->text();
-   if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
+   QString     rawdir     = le_dir->text();
+   QStringList components = rawdir.split( "/", QString::SkipEmptyParts );
+   QString     runID      = components.last();
+
+   QDir        writeDir( US_Settings::resultDir() );
+   QString     dirname = writeDir.absolutePath() + "/" + runID + "/";
+
+   if ( ! writeDir.exists( runID ) )
+   {
+     if ( ! writeDir.mkdir( runID ) )
+     {
+        qDebug() << "mkdir failed";
+        return  US_DataIO::CANTOPEN;
+     }
+   }
 
    // Create duplicate structure that doesn't contain excluded scans
    // Delete back to front, since structure changes with each deletion
@@ -743,9 +756,7 @@ int US_Convert::write( const QString& filename )
          filteredRawData.scanData.erase( filteredRawData.scanData.begin() + i );
    }
 
-   int result = US_DataIO::writeRawData( dirname + filename, filteredRawData );
-
-   return result;
+   return US_DataIO::writeRawData( dirname + filename, filteredRawData );
 }
  
 int US_Convert::writeAll( void )
@@ -753,11 +764,22 @@ int US_Convert::writeAll( void )
    if ( allData[ 0 ].scanData.empty() ) return US_DataIO::NODATA; 
 
    // Get the directory and write out the data
-   QString dirname = le_dir->text();
-   if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
+   QString     rawdir = le_dir->text();
 
    QStringList components = dirname.split( "/", QString::SkipEmptyParts );
    QString     runID      = components.last();
+
+   QDir        writeDir( US_Settings::resultDir() );
+   QString     dirname = writeDir.absolutePath() + "/" + runID + "/";
+
+   if ( ! writeDir.exists( runID ) )
+   {
+     if ( ! writeDir.mkdir( runID ) )
+     {
+        qDebug() << "mkdir failed";
+        return US_DataIO::CANTOPEN;
+     }
+   }
 
    int result;
 
@@ -769,22 +791,24 @@ int US_Convert::writeAll( void )
 
    for ( int i = 0; i < triples.size(); i++ )
    {
-      QString triple         = triples[ i ];
+      QString     triple     = triples[ i ];
       QStringList parts      = triple.split(" / ");
 
       QString     cell       = parts[ 0 ];
       QString     channel    = parts[ 1 ];
       QString     wavelength = parts[ 2 ];
 
-      QString filename   = runID      + "." 
-                         + runType    + "." 
-                         + cell       + "." 
-                         + channel    + "." 
-                         + wavelength + ".auc";
+      QString     filename   = runID      + "." 
+                             + runType    + "." 
+                             + cell       + "." 
+                             + channel    + "." 
+                             + wavelength + ".auc";
 
       US_DataIO::rawData currentData = allData[ i ];
       result = US_DataIO::writeRawData( dirname + filename, allData[ i ] );
 
+      if ( result !=  US_DataIO::OK ) break;
+      
       progress ->setValue( i );
       qApp     ->processEvents();
    }

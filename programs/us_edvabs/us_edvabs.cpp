@@ -236,7 +236,7 @@ void US_Edvabs::reset( void )
    meniscus_left = 0.0;
    range_left    = 0.0;
    range_right   = 9.0;
-   plateau.clear();
+   plateau       = 0.0;
    baseline      = 0.0;
    invert        = 1.0;
    noise_order   = 0;
@@ -326,7 +326,7 @@ void US_Edvabs::load( void )
    // Ask for data directory
    workingDir = QFileDialog::getExistingDirectory( this, 
          tr("Raw Data Directory"),
-         US_Settings::dataDir(),
+         US_Settings::resultDir(),
          QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
 
    if ( workingDir.isEmpty() ) return; 
@@ -623,38 +623,12 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
 
       case PLATEAU:
 
-         plateau.clear();
+         plateau = p.x();
 
-         for ( int i = 0; i < data.scanData.size(); i++ )
-         {
-            US_DataIO::scan* s = &data.scanData[ i ];
-            
-            int start = index( *s, range_left );
-            int end   = index( *s, range_right );
-            int pt    = index( *s, p.x() );
-
-            if ( pt - start < 5  ||  end - pt < 5 )
-            {
-               plateau.clear();
-               QMessageBox::warning( this,
-                  tr( "Position Error" ),
-                  tr( "The selected point is too close to the edge." ) );
-               return;
-            }
-
-            double sum = 0.0;
-
-            // Average the vaule for +/- 5 points
-            for ( int j = pt - 5; j <= pt + 5; j++ )
-               sum += s->values[ j ].value;
-
-            plateau << sum / 11.0;
-         }
-         
-         // Display the data (localize str )
+         // Display the data (localize str)
          {
             QString str;
-            le_plateau->setText( str.sprintf( "%.3f", p.x() ) );
+            le_plateau->setText( str.sprintf( "%.3f", plateau ) );
          }
 
          plot_last();
@@ -686,11 +660,11 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
             for ( int j = pt - 5; j <= pt + 5; j++ )
                sum += s.values[ j ].value;
 
-            baseline = sum / 11.0;
+            double bl = sum / 11.0;
+            baseline  = p.x();
 
             QString str;
-            le_baseline->setText( str.sprintf( "%.3f (%.3e)", p.x(), baseline ) );
-
+            le_baseline->setText( str.sprintf( "%.3f (%.3e)", p.x(), bl ) );
          }
 
          pb_write      ->setEnabled( true );
@@ -752,7 +726,7 @@ void US_Edvabs::next_step( void )
       step = RANGE;
       pb   = pb_dataRange;
    }
-   else if ( plateau.isEmpty() ) 
+   else if ( plateau == 0.0 ) 
    {
       step = PLATEAU;
       pb   = pb_plateau;
@@ -815,7 +789,7 @@ void US_Edvabs::set_plateau( void )
    }
 
    le_plateau->setText( "" );
-   plateau.clear();
+   plateau = 0.0;
    step = PLATEAU;
    set_pbColors( pb_plateau );
    pb_plateau->setIcon( QIcon() );
@@ -903,7 +877,6 @@ void US_Edvabs::plot_all( void )
 void US_Edvabs::plot_range( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
-   //grid = us_grid( data_plot ); 
    
    double maxR = -1.0e99;
    double minR =  1.0e99;
@@ -1127,6 +1100,8 @@ void US_Edvabs::reset_excludes( void )
    ct_to->setMaxValue( includes.size() );
    connect( ct_to, SIGNAL( valueChanged ( double ) ),
                    SLOT  ( focus_to   ( double ) ) );
+
+   replot();
 }
 
 void US_Edvabs::exclude_range( void )
@@ -1270,7 +1245,6 @@ void US_Edvabs::update_scan( QList< QPointF > changes )
 void US_Edvabs::include( void )
 {
    init_includes();
-   replot();
    reset_excludes();
 }
 
@@ -1495,7 +1469,7 @@ void US_Edvabs::write( void )
       s = tr( "meniscus" );
    else if ( range_left == 0.0 || range_right == 9.0 )
       s = tr( "data range" );
-   else if ( plateau.isEmpty() )
+   else if ( plateau == 0.0 )
       s = tr( "plateau" );
    else if ( baseline == 0.0 )
       s = tr( "baseline" );
@@ -1622,7 +1596,7 @@ void US_Edvabs::write( void )
    run.appendChild( parameters );
 
    QDomElement m = doc.createElement( "meniscus" );
-   m.setAttribute( "value", meniscus );
+   m.setAttribute( "radius", meniscus );
    parameters.appendChild( m );
 
    QDomElement dataRange = doc.createElement( "data_range" );
@@ -1630,19 +1604,12 @@ void US_Edvabs::write( void )
    dataRange.setAttribute( "right", range_right );
    parameters.appendChild( dataRange );
 
-   QDomElement p = doc.createElement( "plateaus" );
+   QDomElement p = doc.createElement( "plateau" );
+   p.setAttribute( "radius" , plateau );
    parameters.appendChild( p );
 
-   for ( int i = 0; i < data.scanData.size(); i++ )
-   {
-      QDomElement element = doc.createElement( "plateau" );
-      element.setAttribute( "scan" , i );
-      element.setAttribute( "value", plateau[ i ] );
-      p.appendChild( element );
-   }
-
    QDomElement bl = doc.createElement( "baseline" );
-   bl.setAttribute( "value", baseline );
+   bl.setAttribute( "radius", baseline );
    parameters.appendChild( bl );
    
    QDomElement operations = doc.createElement( "operations" );
