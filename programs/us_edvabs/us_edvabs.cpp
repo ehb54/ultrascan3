@@ -168,29 +168,25 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    connect( pb_residuals, SIGNAL( clicked() ), SLOT( subtract_residuals() ) );
    specs->addWidget( pb_residuals, s_row++, 2, 1, 2 );
 
-   pb_subBaseline = us_pushbutton( tr( "Subtract Baseline" ), false );
-   connect( pb_subBaseline, SIGNAL( clicked() ), SLOT( subtract_baseline() ) );
-   specs->addWidget( pb_subBaseline, s_row, 0, 1, 2 );
-   
-   pb_spikes = us_pushbutton( tr( "Remove Spikes" ), false );
-   connect( pb_spikes, SIGNAL( clicked() ), SLOT( remove_spikes() ) );
-   specs->addWidget( pb_spikes, s_row++, 2, 1, 2 );
-   
    pb_invert = us_pushbutton( tr( "Invert Sign" ), false );
    connect( pb_invert, SIGNAL( clicked() ), SLOT( invert_values() ) );
    specs->addWidget( pb_invert, s_row, 0, 1, 2 );
   
-   pb_undo = us_pushbutton( tr( "Undo Edits" ), false );
-   connect( pb_undo, SIGNAL( clicked() ), SLOT( undo() ) );
-   specs->addWidget( pb_undo, s_row++, 2, 1, 2 );
-
-   pb_priorEdits = us_pushbutton( tr( "Apply prior edits" ), false );
+   pb_spikes = us_pushbutton( tr( "Remove Spikes" ), false );
+   connect( pb_spikes, SIGNAL( clicked() ), SLOT( remove_spikes() ) );
+   specs->addWidget( pb_spikes, s_row++, 2, 1, 2 );
+   
+   pb_priorEdits = us_pushbutton( tr( "Apply Prior Edits" ), false );
    connect( pb_priorEdits, SIGNAL( clicked() ), SLOT( apply_prior() ) );
    specs->addWidget( pb_priorEdits, s_row, 0, 1, 2 );
 
+   pb_undo = us_pushbutton( tr( "Undo Noise and Spikes" ), false );
+   connect( pb_undo, SIGNAL( clicked() ), SLOT( undo() ) );
+   specs->addWidget( pb_undo, s_row++, 2, 1, 2 );
+
    pb_write = us_pushbutton( tr( "Save Current Edit Profile" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
-   specs->addWidget( pb_write, s_row++, 2, 1, 4 );
+   specs->addWidget( pb_write, s_row++, 0, 1, 4 );
 
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
@@ -235,6 +231,16 @@ void US_Edvabs::reset( void )
 {
    changes_made = false;
 
+   step          = MENISCUS;
+   meniscus      = 0.0;
+   meniscus_left = 0.0;
+   range_left    = 0.0;
+   range_right   = 9.0;
+   plateau.clear();
+   baseline      = 0.0;
+   invert        = 1.0;
+   noise_order   = 0;
+
    le_info     ->setText( "" );
    le_meniscus ->setText( "" );
    le_dataRange->setText( "" );
@@ -255,6 +261,7 @@ void US_Edvabs::reset( void )
    cb_triple->clear();
 
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
+   data_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );
    pick     ->disconnect();
 
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
@@ -277,7 +284,6 @@ void US_Edvabs::reset( void )
    
    pb_noise       ->setEnabled( false );
    pb_residuals   ->setEnabled( false );
-   pb_subBaseline ->setEnabled( false );
    pb_spikes      ->setEnabled( false );
    pb_invert      ->setEnabled( false );
    pb_priorEdits  ->setEnabled( false );
@@ -286,9 +292,12 @@ void US_Edvabs::reset( void )
    pb_write       ->setEnabled( false );
 
    // Remove icons
+   pb_meniscus    ->setIcon( QIcon() );
+   pb_dataRange   ->setIcon( QIcon() );
+   pb_plateau     ->setIcon( QIcon() );
+   pb_baseline    ->setIcon( QIcon() );
    pb_noise       ->setIcon( QIcon() );
    pb_residuals   ->setIcon( QIcon() );
-   pb_subBaseline ->setIcon( QIcon() );
    pb_spikes      ->setIcon( QIcon() );
    pb_invert      ->setIcon( QIcon() );
 
@@ -300,15 +309,7 @@ void US_Edvabs::reset( void )
    includes      .clear();
    changed_points.clear();
 
-   step          = MENISCUS;
-   meniscus      = 0.0;
-   meniscus_left = 0.0;
-   range_left    = 0.0;
-   range_right   = 9.0;
-   plateau.clear();
-   baseline      = 0.0;
-   invert        = 1.0;
-   noise_order   = 0;
+   set_pbColors( NULL );
 }
 
 void US_Edvabs::details( void )
@@ -692,7 +693,6 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
 
          }
 
-         pb_subBaseline->setEnabled( true );
          pb_write      ->setEnabled( true );
          pb_baseline   ->setIcon   ( check );
          next_step();
@@ -839,7 +839,6 @@ void US_Edvabs::set_baseline( void )
    set_pbColors( pb_baseline );
 
    pb_baseline   ->setIcon( QIcon() );
-   pb_subBaseline->setEnabled( false );
    pb_write      ->setEnabled( false );
    
    // Only display last curve
@@ -1377,22 +1376,29 @@ void US_Edvabs::undo( void )
    // Copy from allData to data
    int index = cb_triple->currentIndex();
    data = allData[ index ];
+   replot();
 
    // Reset buttons and structures
-   pb_spikes->setEnabled( true );
+   pb_residuals->setEnabled( false );
 
-   invert      = 1.0;
+   if ( step < PLATEAU )
+   {
+      pb_noise ->setEnabled( false );
+      pb_spikes->setEnabled( false );
+   }
+   else
+   {
+      pb_noise ->setEnabled( true );
+      pb_spikes->setEnabled( true );
+   }
+
    spikes      = false;
    noise_order = 0;
 
    // Remove icons
    pb_noise       ->setIcon( QIcon() );
    pb_residuals   ->setIcon( QIcon() );
-   pb_subBaseline ->setIcon( QIcon() );
    pb_spikes      ->setIcon( QIcon() );
-   pb_invert      ->setIcon( QIcon() );
-
-   replot();
 }
 
 void US_Edvabs::noise( void )
@@ -1425,21 +1431,6 @@ void US_Edvabs::subtract_residuals( void )
 
    pb_residuals->setEnabled( false );
    pb_residuals->setIcon   ( check );
-   replot();
-}
-
-void US_Edvabs::subtract_baseline( void )
-{
-   for ( int i = 0; i < data.scanData.size(); i++ )
-   {
-     for ( int j = 0; j <  data.scanData[ i ].values.size(); j++ )
-     {
-         data.scanData[ i ].values[ j ].value -= baseline;
-     }
-   }
-
-   pb_subBaseline->setEnabled( false );
-   pb_subBaseline->setIcon   ( check );
    replot();
 }
 
@@ -1663,13 +1654,6 @@ void US_Edvabs::write( void )
       QDomElement riNoise = doc.createElement( "subtract_ri_noise" );
       riNoise.setAttribute( "order", noise_order );
       operations.appendChild( riNoise );
-   }
-
-   // Write Subtract Baseline
-   if ( ! pb_subBaseline->icon().isNull() )
-   {
-      QDomElement subBaseline = doc.createElement( "subtract_baseline" );
-      operations.appendChild( subBaseline );
    }
 
    // Write Remove Spikes

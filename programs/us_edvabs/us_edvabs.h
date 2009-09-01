@@ -88,7 +88,6 @@ class US_EXTERN US_Edvabs : public US_Widgets
       QPushButton*       pb_invert;
       QPushButton*       pb_write;
       QPushButton*       pb_residuals;
-      QPushButton*       pb_subBaseline;
       QPushButton*       pb_priorEdits;
       QPushButton*       pb_undo;
                         
@@ -142,7 +141,6 @@ class US_EXTERN US_Edvabs : public US_Widgets
 
       void noise             ( void );
       void subtract_residuals( void );
-      void subtract_baseline ( void );
       void remove_spikes     ( void );
       void invert_values     ( void );
       void undo              ( void );
