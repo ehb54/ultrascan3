@@ -186,8 +186,8 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
    write( ds, (char*)c, 4, crc );
 
    // Write reading
-   double             delta  = ( p.max_data1 - p.min_data1 ) / 65536;
-   double             delta2 = ( p.max_data2 - p.min_data2 ) / 65536;
+   double             delta  = ( p.max_data1 - p.min_data1 ) / 65535;
+   double             delta2 = ( p.max_data2 - p.min_data2 ) / 65535;
    unsigned short int si;  // short int
 
    bool    stdDev = ( p.min_data2 != 0.0 || p.max_data2 != 0.0 );
@@ -329,8 +329,8 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
 
          // Get the readings
          double  radius  = min_radius;
-         double  factor1 = ( max_data1 - min_data1 ) / 65536.0;
-         double  factor2 = ( max_data2 - min_data2 ) / 65536.0;
+         double  factor1 = ( max_data1 - min_data1 ) / 65535.0;
+         double  factor2 = ( max_data2 - min_data2 ) / 65535.0;
          bool    stdDev  = ( min_data2 != 0.0 || max_data2 != 0.0 );
 
          for ( int j = 0; j < valueCount; j++ )
