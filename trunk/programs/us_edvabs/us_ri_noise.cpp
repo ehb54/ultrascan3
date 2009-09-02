@@ -70,10 +70,10 @@ void US_RiNoise::draw_fit( double new_order )
  
    int scan_count = data.scanData.size();
 
+   double* coeffs              = new double[ order ];
    double* absorbance_integral = new double[ scan_count ];
    double* fit                 = new double[ scan_count ];
    double* scan_time           = new double[ scan_count ];;
-   double* coeffs              = new double[ order ];
 
    // Calculate the integral of each scan which is needed for the least-squares
    // polynomial fit to correct for radially invariant baseline noise. We also
@@ -97,25 +97,10 @@ void US_RiNoise::draw_fit( double new_order )
       }
    }
 
-   //   plot against the time of the scan:
    for ( int i = 0; i < scan_count; i++ )
-   {
       scan_time[ i ] =  data.scanData[ i ].seconds;
-   }
 
    US_Matrix::lsfit( coeffs, scan_time, absorbance_integral, scan_count, order );
-
-   te_details->clear();
-   QString s = tr( "Coefficients for %1th order polynomial fit\n" ).arg( order );
-   te_details->append( s );
-
-   for ( int i = 0; i < order; i++ )
-   {
-      QString coef = QString::number( coeffs[ i ], 'e', 6 );
-      if ( coef.at( 0 ) != '-' ) coef.prepend( " " );
-      s = tr( "Coefficient %1: " ).arg( i + 1 ) + coef;
-      te_details->append( s );
-   }
 
    residuals.clear();
 
@@ -129,7 +114,24 @@ void US_RiNoise::draw_fit( double new_order )
       residuals << absorbance_integral[ i ] - fit[ i ];
    }
 
+   // Write the coeefficients
+   te_details->clear();
+   QString s = tr( "Coefficients for %1th order polynomial fit\n" ).arg( order );
+   te_details->append( s );
+
+   for ( int i = 0; i < order; i++ )
+   {
+      QString coef = QString::number( coeffs[ i ], 'e', 6 );
+      if ( coef.at( 0 ) != '-' ) coef.prepend( " " );
+      s = tr( "Coefficient %1: " ).arg( i + 1 ) + coef;
+      te_details->append( s );
+   }
+
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
+
+   //  Plot against the time of the scan:
+   for ( int i = 0; i < scan_count; i++ )
+      scan_time[ i ] =  data.scanData[ i ].seconds;
 
    QwtPlotCurve* integrals = us_curve( data_plot, tr( "Integrals" ) );
    integrals->setData( scan_time, absorbance_integral, scan_count );
@@ -141,8 +143,66 @@ void US_RiNoise::draw_fit( double new_order )
 
    data_plot->replot();
 
+   delete [] coeffs;
    delete [] absorbance_integral;
    delete [] fit;
    delete [] scan_time;
+}
+
+
+// We want to be able to call this function from other places.
+void US_RiNoise::calc_residuals( const US_DataIO::rawData& data, 
+                                 int                       order, 
+                                 QList< double >&          residuals )
+{
+   int scan_count = data.scanData.size();
+
+   double* coeffs              = new double[ order ];
+   double* absorbance_integral = new double[ scan_count ];
+   double* fit                 = new double[ scan_count ];
+   double* scan_time           = new double[ scan_count ];;
+
+   // Calculate the integral of each scan which is needed for the least-squares
+   // polynomial fit to correct for radially invariant baseline noise. We also
+   // keep track of the total integral at each point.
+
+   for ( int i = 0; i < scan_count; i++ )
+   {
+      absorbance_integral[ i ] = 0;
+
+      // For now, all radii are spaces equally at 0.001 cm
+      const double delta_r = 0.001;
+
+      const US_DataIO::scan* s = &data.scanData[ i ];
+      int value_count          = s->values.size();
+      
+      // Integrate using trapezoid rule
+      for ( int j = 1; j < value_count; j++ )
+      {
+         double avg = ( s->values[ j ].value + s->values[ j - 1 ].value ) / 2.0;
+         absorbance_integral[ i ] += avg * delta_r;
+      }
+   }
+
+   for ( int i = 0; i < scan_count; i++ )
+      scan_time[ i ] =  data.scanData[ i ].seconds;
+
+   US_Matrix::lsfit( coeffs, scan_time, absorbance_integral, scan_count, order );
+
+   residuals.clear();
+
+   for ( int i = 0; i < scan_count; i++ )
+   {
+      fit[ i ] = 0;
+      
+      for ( int j = 0; j < order; j++ )
+         fit[ i ] +=  coeffs[ j ] * pow( data.scanData[ i ].seconds, j );
+
+      residuals << absorbance_integral[ i ] - fit[ i ];
+   }
+
    delete [] coeffs;
+   delete [] absorbance_integral;
+   delete [] fit;
+   delete [] scan_time;
 }

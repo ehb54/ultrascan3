@@ -1,6 +1,8 @@
 //! \file us_dataIO.cpp
 #include <uuid/uuid.h>
 
+#include <QDomDocument>
+
 #include "us_dataIO.h"
 #include "us_crc.h"
 #include "us_math.h"
@@ -390,3 +392,192 @@ void US_DataIO::read( QDataStream& ds, char* c, int len, ulong& crc )
    crc = US_Crc::crc32( crc, (uchar*) c, len );
 }
 
+int US_DataIO::readEdits( const QString& filename, editValues& parameters )
+{
+   QFile f( filename );
+   if ( ! f.open( QIODevice::ReadOnly ) ) return CANTOPEN;
+   QTextStream ds( &f );
+
+   QXmlStreamReader xml( &f );
+
+   while ( ! xml.atEnd() )
+   {
+      xml.readNext();
+
+      if ( xml.isStartElement() )
+      {
+         if ( xml.name() == "identification" ) 
+            ident ( xml, parameters );
+         
+         else if ( xml.name() == "run" ) 
+            run( xml, parameters );
+      }
+   }
+
+   bool error = xml.hasError();
+   f.close();
+   
+   if ( error ) return BADXML;
+
+   return OK;
+}
+
+void US_DataIO::ident( QXmlStreamReader& xml, editValues& parameters )
+{
+   while ( ! xml.atEnd() )
+   {
+      if ( xml.isEndElement()  &&  xml.name() == "identification" ) return;
+     
+      if ( xml.isStartElement()  &&  xml.name() == "runid" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         parameters.runID = a.value( "value" ).toString();
+      }
+
+      if ( xml.isStartElement()  &&  xml.name() == "uuid" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         parameters.uuid = a.value( "value" ).toString();
+      }
+
+      xml.readNext();
+   }
+}
+
+void US_DataIO::run( QXmlStreamReader& xml, editValues& parameters )
+{
+   QXmlStreamAttributes a = xml.attributes();
+   parameters.cell       = a.value( "cell"       ).toString();
+   parameters.channel    = a.value( "channel"    ).toString();
+   parameters.wavelength = a.value( "wavelength" ).toString();
+
+   while ( ! xml.atEnd() )
+   {
+      if ( xml.isEndElement()  &&  xml.name() == "run" ) return;
+
+      if ( xml.isStartElement()  &&  xml.name() == "parameters" )
+         params( xml, parameters );
+
+      if ( xml.isStartElement()  &&  xml.name() == "operations" )
+         operations( xml, parameters );
+
+      xml.readNext();
+   }
+}
+
+void US_DataIO::params( QXmlStreamReader& xml, editValues& parameters )
+{
+   while ( ! xml.atEnd() )
+   {
+      if ( xml.isEndElement()  &&  xml.name() == "parameters" ) return;
+
+      if ( xml.isStartElement()  &&  xml.name() == "meniscus" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         parameters.meniscus = a.value( "radius" ).toString().toDouble();
+      }
+
+      if ( xml.isStartElement()  &&  xml.name() == "plateau" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         parameters.plateau = a.value( "radius" ).toString().toDouble();
+      }
+
+      if ( xml.isStartElement()  &&  xml.name() == "baseline" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         parameters.baseline = a.value( "radius" ).toString().toDouble();
+      }
+
+      if ( xml.isStartElement()  &&  xml.name() == "data_range" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         parameters.rangeLeft  = a.value( "left"  ).toString().toDouble();
+         parameters.rangeRight = a.value( "right" ).toString().toDouble();
+      }
+
+      xml.readNext();
+   }
+}
+
+void US_DataIO::operations( QXmlStreamReader& xml, editValues& parameters )
+{
+   while ( ! xml.atEnd() )
+   {
+      if ( xml.isEndElement()  &&  xml.name() == "operations" ) return;
+
+      if ( xml.isStartElement()  &&  xml.name() == "invert" )
+         parameters.invert = -1.0;
+
+      if ( xml.isStartElement()  &&  xml.name() == "remove_spikes" )
+         parameters.removeSpikes = true;
+
+      if ( xml.isStartElement()  &&  xml.name() == "subtract_ri_noise" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         parameters.noiseOrder = a.value( "order" ).toString().toInt();
+      }
+
+      if ( xml.isStartElement()  &&  xml.name() == "edited" )
+         do_edits( xml, parameters );
+
+      if ( xml.isStartElement()  &&  xml.name() == "excludes" )
+         excludes( xml, parameters );
+
+      xml.readNext();
+   }
+}
+
+void US_DataIO::excludes( QXmlStreamReader& xml, editValues& parameters )
+{
+   while ( ! xml.atEnd() )
+   {
+      if ( xml.isEndElement()  &&  xml.name() == "excludes" ) return;
+
+      if ( xml.isStartElement()  &&  xml.name() == "exclude" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         parameters.excludes << a.value( "scan" ).toString().toInt();
+      }
+
+      xml.readNext();
+   }
+}
+
+void US_DataIO::do_edits( QXmlStreamReader& xml, editValues& parameters )
+{
+   while ( ! xml.atEnd() )
+   {
+      if ( xml.isEndElement()  &&  xml.name() == "edited" ) return;
+
+      if ( xml.isStartElement()  &&  xml.name() == "edit" )
+      {
+         edits e;
+         QXmlStreamAttributes a = xml.attributes();
+         e.scan   = a.value( "scan"   ).toString().toInt();
+         e.radius = a.value( "radius" ).toString().toDouble();
+         e.value  = a.value( "value"  ).toString().toDouble();
+
+         parameters.editedPoints << e;
+      }
+
+      xml.readNext();
+   }
+}
+
+
+
+QString US_DataIO::errorString( int code )
+{
+   switch ( code )
+   {
+      case OK        : return QObject::tr( "The operation completed successully" );
+      case CANTOPEN  : return QObject::tr( "The file cannot be opened" );
+      case BADCRC    : return QObject::tr( "The file was corrupted" );
+      case NOT_USDATA: return QObject::tr( "The file was not valid scan data" );
+      case BADTYPE   : return QObject::tr( "The filetype was not recognized" );
+      case BADXML    : return QObject::tr( "The XML file was invalid" );
+   }
+
+   return QObject::tr( "Unknown error code" );
+}
