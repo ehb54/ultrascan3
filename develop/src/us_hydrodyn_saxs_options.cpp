@@ -252,7 +252,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=12, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=9, columns = 2, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -285,14 +285,14 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    j++;
    background->addMultiCellWidget(cb_hydrate_pdb, j, j, 0, 1);
    j++;
-   background->addMultiCellWidget(lbl_pr, j, j, 0, 1);
-   j++;
-   background->addWidget(lbl_max_size, j, 0);
-   background->addWidget(cnt_max_size, j, 1);
-   j++;
-   background->addWidget(lbl_bin_size, j, 0);
-   background->addWidget(cnt_bin_size, j, 1);
-   j++;
+   //   background->addMultiCellWidget(lbl_pr, j, j, 0, 1);
+   //   j++;
+   //   background->addWidget(lbl_max_size, j, 0);
+   //   background->addWidget(cnt_max_size, j, 1);
+   //   j++;
+   //   background->addWidget(lbl_bin_size, j, 0);
+   //   background->addWidget(cnt_bin_size, j, 1);
+   //   j++;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
 

@@ -134,7 +134,17 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=13, columns = 2, spacing = 2, j=0, margin=4;
+   int rows = 8
+#if defined(DEBUG)   
+      + 5
+#endif
+      ;
+
+   int columns = 2;
+   int spacing = 2;
+   int j=0;
+   int margin=4;
+
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -147,12 +157,15 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    j++;
    background->addMultiCellWidget(cb_auto_show_hydro, j, j, 0, 1);
    j++;
+#if defined(DEBUG)   
    background->addMultiCellWidget(cb_pbr_broken_logic, j, j, 0, 1);
    j++;
+#endif
    background->addMultiCellWidget(cb_use_sounds, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(cb_expert_mode, j, j, 0, 1);
    j++;
+#if defined(DEBUG)   
    background->addMultiCellWidget(cb_experimental_threads, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(cb_debug_1, j, j, 0, 1);
@@ -161,6 +174,7 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    j++;
    background->addMultiCellWidget(cb_debug_3, j, j, 0, 1);
    j++;
+#endif
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
 }

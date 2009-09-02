@@ -75,6 +75,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QLabel *lbl_atom_table;
       QLabel *lbl_saxs_table;
       QLabel *lbl_core_progress;
+      QLabel *lbl_bin_size;
 
       QPrinter printer;
 
@@ -90,6 +91,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_stop;
       QPushButton *pb_help;
       QPushButton *pb_cancel;
+
+      QwtCounter *cnt_bin_size;
 
       QFont ft;
 
@@ -153,6 +156,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void show_plot_saxs();
       void load_saxs();
       void clear_plot_saxs();
+      void update_bin_size(double);
       void show_plot_pr();
       void load_pr();
       void clear_plot_pr();
@@ -169,6 +173,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void select_atom_file(const QString &);
       void select_hybrid_file(const QString &);
       void select_saxs_file(const QString &);
+      void normalize_pr(vector < double > *);
 
    protected slots:
 

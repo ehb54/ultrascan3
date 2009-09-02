@@ -214,6 +214,24 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_clear_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear_plot_saxs, SIGNAL(clicked()), SLOT(clear_plot_saxs()));
 
+   lbl_bin_size = new QLabel(tr(" Bin size (Angstrom): "), this);
+   Q_CHECK_PTR(lbl_bin_size);
+   lbl_bin_size->setAlignment(AlignLeft|AlignVCenter);
+   lbl_bin_size->setMinimumHeight(minHeight1);
+   lbl_bin_size->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_bin_size->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_bin_size= new QwtCounter(this);
+   Q_CHECK_PTR(cnt_bin_size);
+   cnt_bin_size->setRange(0.01, 100, 0.01);
+   cnt_bin_size->setValue(our_saxs_options->bin_size);
+   cnt_bin_size->setMinimumHeight(minHeight1);
+   cnt_bin_size->setEnabled(true);
+   cnt_bin_size->setNumButtons(3);
+   cnt_bin_size->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_bin_size->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_bin_size, SIGNAL(valueChanged(double)), SLOT(update_bin_size(double)));
+
    pb_plot_pr = new QPushButton(tr("Compute P(r) distribution"), this);
    Q_CHECK_PTR(pb_plot_pr);
    pb_plot_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -332,11 +350,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_core_progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
 
-   int rows=11, columns = 3, spacing = 2, j=0, margin=4;
+   int rows=12, columns = 3, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
-   background->addMultiCellWidget(plot_saxs, j, j+8, 2, 2);
+   background->addMultiCellWidget(plot_saxs, j, j+9, 2, 2);
    j++;
    background->addWidget(lbl_filename1, j, 0);
    background->addWidget(lbl_filename2, j, 1);
@@ -355,6 +373,9 @@ void US_Hydrodyn_Saxs::setupGUI()
    j++;
    background->addWidget(pb_load_saxs, j, 0);
    background->addWidget(pb_clear_plot_saxs, j, 1);
+   j++;
+   background->addWidget(lbl_bin_size, j, 0);
+   background->addWidget(cnt_bin_size, j, 1);
    j++;
    background->addWidget(pb_plot_pr, j, 0);
    background->addWidget(progress_pr, j, 1);
@@ -589,6 +610,37 @@ void saxs_pr_thr_t::run()
 
 //--------- end thread for saxs p(r) plot -----------
 
+void US_Hydrodyn_Saxs::normalize_pr( vector < double > *pr )
+{
+   // set distribution to a 1 peak
+   double max = 0e0;
+   if ( pr->size() )
+   {
+      (*pr)[0];
+   }
+   for ( unsigned int i = 1; i < pr->size(); i++ )
+   {
+      if ( (*pr)[i] > max )
+      {
+         max = (*pr)[i];
+      }
+   }
+   if ( max > 0e0 )
+   {
+      for ( unsigned int i = 0; i < pr->size(); i++ )
+      {
+         (*pr)[i] /= max;
+      }
+   }
+}
+
+
+void US_Hydrodyn_Saxs::update_bin_size(double val)
+{
+   our_saxs_options->bin_size = (float) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_Saxs::show_plot_pr()
 {
    stopFlag = false;
@@ -669,8 +721,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      .arg(delta));
       qApp->processEvents();
 
-      if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.experimental_threads &&
-           USglobal->config_list.numThreads > 1 )
+      if ( USglobal->config_list.numThreads > 1 )
       {
          // threaded
          
@@ -835,10 +886,17 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                  , REVISION
                  , delta
                  );
+         vector < double > pr;
+         pr.resize(hist.size());
+         for ( unsigned int i = 0; i < hist.size(); i++) 
+         {
+            pr[i] = (double) hist[i];
+         }
+         normalize_pr(&pr);
          for ( unsigned int i = 0; i < hist.size(); i++ )
          {
             if ( hist[i] ) {
-               fprintf(fpr, "%.6e\t%u\n", i * delta, hist[i]);
+               fprintf(fpr, "%.6e\t%.6e\n", i * delta, pr[i]);
             }
          }
          fclose(fpr);
@@ -871,6 +929,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       printf("%e %e\n", r[i], pr[i]);
 #endif
    }
+   normalize_pr(&pr);
 
    plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
    plotted_r.push_back(r);
@@ -954,6 +1013,7 @@ void US_Hydrodyn_Saxs::load_pr()
       long ppr = plot_pr->insertCurve("p(r) vs r");
       plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
       plotted_r.push_back(r);
+      normalize_pr(&pr);
       plotted_pr.push_back(pr);
       unsigned int p = plotted_r.size() - 1;
 

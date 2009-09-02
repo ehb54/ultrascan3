@@ -2254,35 +2254,35 @@ mem_ris(int model)
    else
       fprintf(ris, "- SLIP BOUNDARY CONDITIONS (4*PI*ETAo)\n\n");
 
-   fprintf(ris, "%s%d\n", "- Used BEADS Number  = ", nat);
+   fprintf(ris, "%s%d\n", "- Used BEADS Number       = ", nat);
    if (volcor == 1)
    {
       if ((colorsixf == 0) && (sfecalc == 2))
-         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f),
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f),
                  "  [nm^3] (NO contribution from buried beads)");
       if ((colorsixf == 1) && (sfecalc == 2))
       {
-         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f),
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f),
                  "  [nm^3] (contribution from buried beads only for Dr)");
-         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])");
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume       = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for [n])");
       }
       if ((colorsixf == 2) && (sfecalc == 2))
       {
-         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f),
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f),
                  "  [nm^3] (contribution from buried beads only for [n])");
-         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)");
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume       = ", totvol * pow(fconv, 3.0f), "  [nm^3] (for Dr)");
       }
       if ((colorsixf == 3) && (sfecalc == 2))
-         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
       if (sfecalc == 1)
-         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+         fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
    }
    if (volcor == 2)
-      fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume  = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
+      fprintf(ris, "%s%.2f%s\n", "- Used BEADS Volume       = ", volcor1 * pow(fconv, 3.0f), "  [nm^3]");
 
-   // intf(ris, "%s%.2f [nm^2]\n", "- Used BEADS ASA     = ", used_asa[model]);
-   fprintf(ris, "%s%.2f [nm^2]\n", "- Used BEADS S.A.    = ", used_s_a[model]);
-   fprintf(ris, "%s%.2f [nm^3]\n", "- Used BEADS Volume  = ", used_vol[model]);
+   // fprintf(ris, "%s%.2f [nm^2]\n", "- Used BEADS ASA          = ", used_asa[model]);
+   fprintf(ris, "%s%.2f [nm^2]\n", "- Used BEADS Surface Area = ", used_s_a[model]);
+   fprintf(ris, "%s%.2f [nm^3]\n", "- Used BEADS Volume       = ", used_vol[model]);
    if (mascor == 1)
       mascor1 = (float) pesmol;
 
@@ -2337,11 +2337,11 @@ mem_ris(int model)
            "[1/s] (20C,w)");
 
    fprintf(ris, "%s%.2f\t%s\n", "- MOLECULAR WEIGHT (from file)   = ", pesmol, "[Da]");
-   if (sfecalc == 2)
-      fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3), "[nm^3]");
-   else
-      fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", totvol * pow(fconv, 3), "[nm^3]");
-   fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL SURFACE AREA       = ", totsup * pow(fconv, 2), "[nm^2]");
+   //   if (sfecalc == 2)
+   //      fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3), "[nm^3]");
+   //   else
+   //      fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", totvol * pow(fconv, 3), "[nm^3]");
+   //   fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL SURFACE AREA       = ", totsup * pow(fconv, 2), "[nm^2]");
 
    if (raflag == -1.0)
       fprintf(ris, "%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
