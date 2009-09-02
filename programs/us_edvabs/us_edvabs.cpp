@@ -1650,12 +1650,11 @@ void US_Edvabs::write( void )
 void US_Edvabs::apply_prior( void )
 {
    QString filter = files[ cb_triple->currentIndex() ];
-   int     index  = filter.indexOf( '.' ) + 1;
+   int     index1 = filter.indexOf( '.' ) + 1;
 
-   filter.insert( index, "*." );
+   filter.insert( index1, "*." );
    filter.replace( QRegExp( "auc$" ), "xml" );
    
-qDebug() << filter;
    // Ask for edit file
    QString filename = QFileDialog::getOpenFileName( this, 
          tr( "Select a saved edit file" ),
@@ -1663,8 +1662,133 @@ qDebug() << filter;
 
    if ( filename.isEmpty() ) return; 
 
-   QMessageBox::information( this,
-         "Under Development",  "Under Development" );
+   // Read the edits
+   US_DataIO::editValues parameters;
+
+   int result = US_DataIO::readEdits( filename, parameters );
+
+   if ( result != US_DataIO::OK )
+   {
+      QMessageBox::warning( this,
+            tr( "XML Error" ),
+            tr( "An error occurred when reading edit file\n\n" ) 
+            +  US_DataIO::errorString( result ) );
+      return;
+   }
+
+   char uuid[ 37 ];
+   uuid_unparse( (unsigned char*)data.guid, uuid );
+
+   if ( parameters.uuid != uuid )
+   {
+      QMessageBox::warning( this,
+            tr( "Data Error" ),
+            tr( "The edit file was not creted using the current data" ) );
+      return;
+   }
    
+   // Reset data from allData
+   index1 = cb_triple->currentIndex();
+   data = allData[ index1 ];
+
+   // Apply the edits
+   // Specified parameters
+   QString s;
+
+   meniscus = parameters.meniscus;
+   le_meniscus->setText( s.sprintf( "%.3f", meniscus ) );
+   pb_meniscus->setIcon( check );
+   pb_meniscus->setEnabled( true );
+
+   range_left  = parameters.rangeLeft;
+   range_right = parameters.rangeRight;
+   
+   le_dataRange->setText( s.sprintf( "%.3f - %.3f",
+           range_left, range_right ) );
+   pb_dataRange->setIcon( check );
+   pb_dataRange->setEnabled( true );
+   
+   plateau = parameters.plateau;
+   le_plateau->setText( s.sprintf( "%.3f", plateau ) );
+   pb_plateau->setIcon( check );
+   pb_plateau->setEnabled( true );
+
+   baseline = parameters.baseline;
+   
+   // Calculating the value at the baseline is based on constant delta-r
+   US_DataIO::scan* scan  = &data.scanData.last();
+   double           r0    = scan->values[ 0 ].d.radius;
+   index1                 = (int)( ( baseline - r0 ) * 1000.0 ); 
+   double           value = scan->values[ index1 ].value;
+
+   le_baseline->setText( s.sprintf( "%.3f (%.3e)", baseline, value ) );
+   pb_baseline->setIcon( check );
+   pb_baseline->setEnabled( true );
+
+   // Invert
+   invert = parameters.invert;
+   
+   if ( invert == -1.0 ) pb_invert->setIcon( check );
+   else                  pb_invert->setIcon( QIcon() );
+
+   // Included scans
+   init_includes();
+   reset_excludes(); // zero exclude combo boxes
+   qSort( parameters.excludes );
+   
+   for ( int i = parameters.excludes.size(); i > 0; i-- )
+            includes.removeAt( parameters.excludes[ i - 1 ] );
+
+   pb_excludeRange->setEnabled( false );
+   pb_edit1       ->setEnabled( false );
+
+   // Edited points
+   changed_points.clear();
+
+   for ( int i = 0; i < parameters.editedPoints.size(); i++ )
+   {
+      int    scan   = parameters.editedPoints[ i ].scan;
+      double radius = parameters.editedPoints[ i ].radius;
+      double value  = parameters.editedPoints[ i ].value;
+      int    index1 = index( data.scanData[ scan ], radius );
+      
+      edits e;
+      e.scan = scan;
+      e.changes << QPointF( index1, value );
+     
+      changed_points << e;
+      
+      data.scanData[ scan ].values[ index1 ].value = value;
+   }
+
+   // Spikes
+   spikes = parameters.removeSpikes;
+
+   pb_spikes->setIcon( QIcon() );
+   pb_spikes->setEnabled( true );
+   if ( spikes ) remove_spikes();
+   
+   // Noise
+   noise_order = parameters.noiseOrder;
+   if ( noise_order > 0 )
+   {
+      US_RiNoise::calc_residuals( data, noise_order, residuals );
+      subtract_residuals();
+   }
+   else
+   {
+      pb_noise    ->setIcon( QIcon() );
+      pb_residuals->setIcon( QIcon() );
+      pb_residuals->setEnabled( false );
+   }
+
+   step        = FINISHED;
+   set_pbColors( NULL );
+
+    pb_undo->setEnabled( true );
+   pb_write->setEnabled( true );
+
+   changes_made= false;
+   replot();
 }
 

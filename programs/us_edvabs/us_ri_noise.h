@@ -15,6 +15,9 @@ class US_EXTERN US_RiNoise : public US_WidgetsDialog
 
    public:
       US_RiNoise( const US_DataIO::rawData&, int&, QList< double >& );
+      
+      static void calc_residuals( const US_DataIO::rawData&, int, 
+               QList< double >& );
 
    private:
       const US_DataIO::rawData& data;

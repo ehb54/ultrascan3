@@ -10,7 +10,7 @@ VERSION      = 10.0
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 DEFINES     += INTEL
-QT          += sql
+QT          += sql xml
 
 unix {
   DEPENDPATH   += ../gui ../utils ../db $$QWTPATH/include

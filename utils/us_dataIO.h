@@ -77,13 +77,50 @@ class US_DataIO
          QList< scan > scanData;
       };
 
+      class edits
+      {
+         public:
+         int    scan;
+         double radius;
+         double value;
+      };
 
-      enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, NOTSYNC, 
-                     NODATA };
+      class editValues
+      {
+         public:
+         editValues()
+         {
+            excludes    .clear();
+            editedPoints.clear();
+            invert       = 1.0;
+            removeSpikes = false;
+            noiseOrder   = 0;
+         };
 
-      static bool readLegacyFile( const QString&, beckmanRaw& );
-      static int  writeRawData  ( const QString&, rawData& );
-      static int  readRawData   ( const QString&, rawData& );
+         QString        runID;
+         QString        cell;
+         QString        channel;
+         QString        wavelength;
+         QString        uuid;
+         double         meniscus;
+         double         rangeLeft;
+         double         rangeRight;
+         double         plateau;
+         double         baseline;
+         QList< int >   excludes;
+         QList< edits > editedPoints;
+         int            noiseOrder;
+         double         invert;
+         bool           removeSpikes;
+      };
+
+      enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, BADXML };
+
+      static bool    readLegacyFile( const QString&, beckmanRaw& );
+      static int     writeRawData  ( const QString&, rawData& );
+      static int     readRawData   ( const QString&, rawData& );
+      static int     readEdits     ( const QString&, editValues& );
+      static QString errorString   ( int );
 
    private:
 
@@ -101,6 +138,13 @@ class US_DataIO
 
       static void write( QDataStream&, const char*, int, ulong& );
       static void read ( QDataStream&,       char*, int, ulong& );
+      
+      static void ident     ( QXmlStreamReader&, editValues& );
+      static void run       ( QXmlStreamReader&, editValues& );
+      static void params    ( QXmlStreamReader&, editValues& );
+      static void operations( QXmlStreamReader&, editValues& );
+      static void do_edits  ( QXmlStreamReader&, editValues& );
+      static void excludes  ( QXmlStreamReader&, editValues& );
 };
 
 #endif
