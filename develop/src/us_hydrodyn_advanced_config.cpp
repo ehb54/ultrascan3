@@ -64,6 +64,7 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    cb_auto_show_hydro->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_auto_show_hydro, SIGNAL(clicked()), this, SLOT(set_auto_show_hydro()));
 
+#if defined(DEBUG_CTLS)
    cb_pbr_broken_logic = new QCheckBox(this);
    cb_pbr_broken_logic->setText(tr(" Enable logic for broken chains with peptide bond rule"));
    cb_pbr_broken_logic->setEnabled(true);
@@ -71,6 +72,7 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    cb_pbr_broken_logic->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_pbr_broken_logic->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_pbr_broken_logic, SIGNAL(clicked()), this, SLOT(set_pbr_broken_logic()));
+#endif
 
    cb_use_sounds = new QCheckBox(this);
    cb_use_sounds->setText(tr(" Activate sound notifications"));
@@ -88,6 +90,7 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    cb_expert_mode->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_expert_mode, SIGNAL(clicked()), this, SLOT(set_expert_mode()));
 
+#if defined(DEBUG_CTLS)
    cb_experimental_threads = new QCheckBox(this);
    cb_experimental_threads->setText(tr(" Use threads (experimental)"));
    cb_experimental_threads->setEnabled(true);
@@ -119,6 +122,7 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    cb_debug_3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_debug_3->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_debug_3, SIGNAL(clicked()), this, SLOT(set_debug_3()));
+#endif
 
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
@@ -135,7 +139,7 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
    int rows = 8
-#if defined(DEBUG)   
+#if defined(DEBUG_CTLS)   
       + 5
 #endif
       ;
@@ -157,7 +161,7 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    j++;
    background->addMultiCellWidget(cb_auto_show_hydro, j, j, 0, 1);
    j++;
-#if defined(DEBUG)   
+#if defined(DEBUG_CTLS)   
    background->addMultiCellWidget(cb_pbr_broken_logic, j, j, 0, 1);
    j++;
 #endif
@@ -165,7 +169,7 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    j++;
    background->addMultiCellWidget(cb_expert_mode, j, j, 0, 1);
    j++;
-#if defined(DEBUG)   
+#if defined(DEBUG_CTLS)   
    background->addMultiCellWidget(cb_experimental_threads, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(cb_debug_1, j, j, 0, 1);
