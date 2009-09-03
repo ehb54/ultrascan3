@@ -565,8 +565,6 @@ void US_DataIO::do_edits( QXmlStreamReader& xml, editValues& parameters )
    }
 }
 
-
-
 QString US_DataIO::errorString( int code )
 {
    switch ( code )
@@ -577,6 +575,7 @@ QString US_DataIO::errorString( int code )
       case NOT_USDATA: return QObject::tr( "The file was not valid scan data" );
       case BADTYPE   : return QObject::tr( "The filetype was not recognized" );
       case BADXML    : return QObject::tr( "The XML file was invalid" );
+      case NODATA    : return QObject::tr( "No legacy data files were found" );
    }
 
    return QObject::tr( "Unknown error code" );

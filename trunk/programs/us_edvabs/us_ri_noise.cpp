@@ -114,7 +114,7 @@ void US_RiNoise::draw_fit( double new_order )
       residuals << absorbance_integral[ i ] - fit[ i ];
    }
 
-   // Write the coeefficients
+   // Write the coefficients
    te_details->clear();
    QString s = tr( "Coefficients for %1th order polynomial fit\n" ).arg( order );
    te_details->append( s );

@@ -766,7 +766,7 @@ int US_Convert::writeAll( void )
    // Get the directory and write out the data
    QString     rawdir = le_dir->text();
 
-   QStringList components = dirname.split( "/", QString::SkipEmptyParts );
+   QStringList components = rawdir.split( "/", QString::SkipEmptyParts );
    QString     runID      = components.last();
 
    QDir        writeDir( US_Settings::resultDir() );

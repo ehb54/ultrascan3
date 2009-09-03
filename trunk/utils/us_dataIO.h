@@ -114,7 +114,8 @@ class US_DataIO
          bool           removeSpikes;
       };
 
-      enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, BADXML };
+      enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, BADXML, 
+                     NODATA };
 
       static bool    readLegacyFile( const QString&, beckmanRaw& );
       static int     writeRawData  ( const QString&, rawData& );
