@@ -2341,10 +2341,11 @@ void US_Hydrodyn::pdb_saxs()
    } 
    else
    {
+      QString filename = project + QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "");
       if (saxs_plot_widget)
       {
          saxs_plot_window->refresh(
-                                   pdb_file,
+                                   filename,
                                    residue_list,
                                    model_vector,
                                    bead_models,
@@ -2360,7 +2361,7 @@ void US_Hydrodyn::pdb_saxs()
          saxs_plot_window = new US_Hydrodyn_Saxs(
                                                  &saxs_plot_widget,
                                                  &saxs_options,
-                                                 pdb_file,
+                                                 filename,
                                                  residue_list,
                                                  model_vector,
                                                  bead_models,
@@ -2393,16 +2394,17 @@ void US_Hydrodyn::bead_saxs()
    } 
    else
    {
-      QString filename = bead_model_file;
+      QString filename = QFileInfo(bead_model_file).baseName( TRUE ) +
+         QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "");
       if ( !filename.length() )
       {
-         filename = pdb_file;
-         filename.replace(QRegExp("\\.(pdb|PDB)"), ".bead_model");
+         filename = project + QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "");
       }
       if ( !filename.length() )
       {
          filename = "unknown";
       }
+      
       printf("selected models size %u bead_models.size %u\n",
              bead_models.size(),
              selected_models.size()
@@ -2410,7 +2412,7 @@ void US_Hydrodyn::bead_saxs()
       if (saxs_plot_widget)
       {
          saxs_plot_window->refresh(
-                                   pdb_file,
+                                   filename,
                                    residue_list,
                                    model_vector,
                                    bead_models,

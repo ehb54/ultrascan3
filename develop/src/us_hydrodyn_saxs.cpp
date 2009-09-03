@@ -100,8 +100,8 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
       }
    }
    pb_plot_saxs->setEnabled(source ? false : true);
-   lbl_filename2->setText(fi.baseName() + "." + fi.extension( FALSE ));
-   model_filename = fi.baseName() + "." + fi.extension( FALSE );
+   te_filename2->setText(filename);
+   model_filename = filename;
    atom_filename = USglobal->config_list.system_dir + "/etc/somo.atom";
    hybrid_filename = USglobal->config_list.system_dir + "/etc/somo.hybrid";
    saxs_filename =  USglobal->config_list.system_dir + "/etc/somo.saxs_atoms";
@@ -169,8 +169,8 @@ void US_Hydrodyn_Saxs::refresh(
       }
    }
    pb_plot_saxs->setEnabled(source ? false : true);
-   lbl_filename2->setText(fi.baseName() + "." + fi.extension( FALSE ));
-   model_filename = fi.baseName() + "." + fi.extension( FALSE );
+   te_filename2->setText(filename);
+   model_filename = filename;
    pb_stop->setEnabled(false);
 }
 
@@ -193,12 +193,13 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_filename1->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_filename1->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
-   lbl_filename2 = new QLabel("", this);
-   Q_CHECK_PTR(lbl_filename2);
-   lbl_filename2->setMinimumHeight(minHeight1);
-   lbl_filename2->setAlignment(AlignLeft|AlignVCenter);
-   lbl_filename2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
-   lbl_filename2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   te_filename2 = new QTextEdit(this, "");
+   Q_CHECK_PTR(te_filename2);
+   te_filename2->setMinimumHeight(minHeight1);
+   te_filename2->setAlignment(AlignLeft|AlignVCenter);
+   te_filename2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
+   te_filename2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   te_filename2->setMinimumWidth(200);
 
    pb_select_atom_file = new QPushButton(tr("Load Atom Definition File"), this);
    Q_CHECK_PTR(pb_select_atom_file);
@@ -414,7 +415,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addMultiCellWidget(plot_saxs, j, j+10, 2, 2);
    j++;
    background->addWidget(lbl_filename1, j, 0);
-   background->addWidget(lbl_filename2, j, 1);
+   background->addWidget(te_filename2, j, 1);
    j++;
    background->addWidget(pb_select_atom_file, j, 0);
    background->addWidget(lbl_atom_table, j, 1);
@@ -724,7 +725,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       printf("creating pr %u\n", current_model); fflush(stdout);
 #endif
       editor->append(QString("\n\nPreparing file %1 model %2 for p(r) vs r plot.\n\n")
-                     .arg(lbl_filename2->text())
+                     .arg(te_filename2->text())
                      .arg(current_model + 1));
       qApp->processEvents();
       if ( stopFlag ) 
@@ -928,49 +929,70 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #endif
 
       // save the data to a file
-      QString fpr_name = 
-         USglobal->config_list.root_dir + 
-         "/somo/saxs/" + QString("%1").arg(lbl_filename2->text()) +
+      QString fpr_name = USglobal->config_list.root_dir + 
+         "/somo/saxs/" + QString("%1").arg(te_filename2->text()) +
          QString("_%1").arg(current_model + 1) + 
          ".sprr";
-      
-      FILE *fpr = fopen(fpr_name, "w");
-      if ( fpr ) 
+      bool ok_to_write = true;
+      if ( QFile::exists(fpr_name) )
       {
-         editor->append(tr("PR curve file: ") + fpr_name + tr(" created.\n"));
-         fprintf(fpr,
-                 "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f\n"
-                 , model_filename.ascii()
-                 , US_Version.ascii()
-                 , REVISION
-                 , delta
-                 );
-         vector < double > pr;
-         pr.resize(hist.size());
-         for ( unsigned int i = 0; i < hist.size(); i++) 
-         {
-            pr[i] = (double) hist[i];
+         switch( QMessageBox::information( this, 
+                                           tr("Overwrite file:") + "SAXS P(r) vs. r" + tr("output file"),
+                                           tr("The P(r) curve file \"") + QString("%1").arg(te_filename2->text()) +
+                                           QString("_%1").arg(current_model + 1) + 
+                                           ".sprr" + tr("\" will be overwriten"),
+                                           "&Ok",  "&Cancel", 0,
+                                           0,      // Enter == button 0
+                                           1 ) ) { // Escape == button 2
+         case 0: // just go ahead
+            ok_to_write = true;
+            break;
+         case 1: // Cancel clicked or Escape pressed
+            ok_to_write = false;
+            break;
          }
-         normalize_pr(&pr);
-         for ( unsigned int i = 0; i < hist.size(); i++ )
-         {
-            if ( hist[i] ) {
-               fprintf(fpr, "%.6e\t%.6e\n", i * delta, pr[i]);
-            }
-         }
-         fclose(fpr);
       }
-      else
+
+      if ( ok_to_write )
       {
+         FILE *fpr = fopen(fpr_name, "w");
+         if ( fpr ) 
+         {
+            editor->append(tr("P(r) curve file: ") + fpr_name + tr(" created.\n"));
+            fprintf(fpr,
+                    "SOMO p(r) vs r data generated from %s by US_SOMO %s %s bin size %f\n"
+                    , model_filename.ascii()
+                    , US_Version.ascii()
+                    , REVISION
+                    , delta
+                    );
+            vector < double > pr;
+            pr.resize(hist.size());
+            for ( unsigned int i = 0; i < hist.size(); i++) 
+            {
+               pr[i] = (double) hist[i];
+            }
+            normalize_pr(&pr);
+            for ( unsigned int i = 0; i < hist.size(); i++ )
+            {
+               if ( hist[i] ) {
+                  fprintf(fpr, "%.6e\t%.6e\n", i * delta, pr[i]);
+               }
+            }
+            fclose(fpr);
+         }
+         else
+         {
 #if defined(PR_DEBUG)
-         cout << "can't create " << fpr_name << endl;
+            cout << "can't create " << fpr_name << endl;
 #endif
-         editor->append(tr("WARNING: Could not create PR curve file: ") + fpr_name + "\n");
-         QMessageBox mb(tr("UltraScan Warning"),
-                        tr("The output file ") + fpr_name + tr(" could not be created."), 
-                        QMessageBox::Critical,
-                        QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
-         mb.exec();
+            editor->append(tr("WARNING: Could not create PR curve file: ") + fpr_name + "\n");
+            QMessageBox mb(tr("UltraScan Warning"),
+                           tr("The output file ") + fpr_name + tr(" could not be created."), 
+                           QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+            mb.exec();
+         }
       }
    } // models
 
@@ -1316,7 +1338,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       printf("creating sax_atoms %u\n", current_model);
 #endif
       editor->append(QString("\n\nPreparing file %1 model %2 for SAXS plot.\n\n")
-                     .arg(lbl_filename2->text())
+                     .arg(te_filename2->text())
                      .arg(current_model + 1));
       qApp->processEvents();
       if ( stopFlag ) 
@@ -1918,46 +1940,68 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       // save the data to a file
       QString fsaxs_name = 
          USglobal->config_list.root_dir + 
-         "/somo/saxs/" + QString("%1").arg(lbl_filename2->text()) +
+         "/somo/saxs/" + QString("%1").arg(te_filename2->text()) +
          QString("_%1").arg(current_model + 1) + 
          ".ssaxs";
 #if defined(SAXS_DEBUG)
       cout << "output file " << fsaxs_name << endl;
 #endif
-
-      FILE *fsaxs = fopen(fsaxs_name, "w");
-      if ( fsaxs ) 
+      bool ok_to_write = true;
+      if ( QFile::exists(fsaxs_name) )
       {
-#if defined(SAXS_DEBUG)
-         cout << "writing " << fsaxs_name << endl;
-#endif
-         editor->append(tr("SAXS curve file: ") + fsaxs_name + tr(" created.\n"));
-         fprintf(fsaxs,
-                 "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
-                 , model_filename.ascii()
-                 , US_Version.ascii()
-                 , REVISION
-                 , our_saxs_options->start_q
-                 , our_saxs_options->end_q
-                 , our_saxs_options->delta_q
-                 );
-         for ( unsigned int i = 0; i < q.size(); i++ )
-         {
-            fprintf(fsaxs, "%.6e\t%.6e\t%.6e\t%.6e\n", q[i], I[i], Ia[i], Ic[i]);
+         switch( QMessageBox::information( this, 
+                                           tr("Overwrite file:") + "SAXS P(r) vs. r" + tr("output file"),
+                                           tr("The file named \"") + QString("%1").arg(te_filename2->text()) +
+                                           QString("_%1").arg(current_model + 1) + 
+                                           ".sprr" + tr("\" will be overwriten"),
+                                           "&Ok",  "&Cancel", 0,
+                                           0,      // Enter == button 0
+                                           1 ) ) { // Escape == button 1
+         case 0: // just go ahead
+            ok_to_write = true;
+            break;
+         case 1: // Cancel clicked or Escape pressed
+            ok_to_write = false;
+            break;
          }
-         fclose(fsaxs);
-      } 
-      else
+      }
+      
+      if ( ok_to_write )
       {
+         FILE *fsaxs = fopen(fsaxs_name, "w");
+         if ( fsaxs ) 
+         {
 #if defined(SAXS_DEBUG)
-         cout << "can't create " << fsaxs_name << endl;
+            cout << "writing " << fsaxs_name << endl;
 #endif
-         editor->append(tr("WARNING: Could not create SAXS curve file: ") + fsaxs_name + "\n");
-         QMessageBox mb(tr("UltraScan Warning"),
-                        tr("The output file ") + fsaxs_name + tr(" could not be created."), 
-                        QMessageBox::Critical,
-                        QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
-         mb.exec();
+            editor->append(tr("SAXS curve file: ") + fsaxs_name + tr(" created.\n"));
+            fprintf(fsaxs,
+                    "Simulated SAXS data generated from %s by US_SOMO %s %s q(%.3f:%.3f) step %.3f\n"
+                    , model_filename.ascii()
+                    , US_Version.ascii()
+                    , REVISION
+                    , our_saxs_options->start_q
+                    , our_saxs_options->end_q
+                    , our_saxs_options->delta_q
+                    );
+            for ( unsigned int i = 0; i < q.size(); i++ )
+            {
+               fprintf(fsaxs, "%.6e\t%.6e\t%.6e\t%.6e\n", q[i], I[i], Ia[i], Ic[i]);
+            }
+            fclose(fsaxs);
+         } 
+         else
+         {
+#if defined(SAXS_DEBUG)
+            cout << "can't create " << fsaxs_name << endl;
+#endif
+            editor->append(tr("WARNING: Could not create SAXS curve file: ") + fsaxs_name + "\n");
+            QMessageBox mb(tr("UltraScan Warning"),
+                           tr("The output file ") + fsaxs_name + tr(" could not be created."), 
+                           QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+            mb.exec();
+         }
       }
    }
    pb_plot_saxs->setEnabled(true);
