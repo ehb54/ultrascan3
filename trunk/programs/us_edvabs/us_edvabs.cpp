@@ -184,9 +184,13 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    connect( pb_undo, SIGNAL( clicked() ), SLOT( undo() ) );
    specs->addWidget( pb_undo, s_row++, 2, 1, 2 );
 
+   pb_float = us_pushbutton( tr( "Mark Data as Floating" ), false );
+   connect( pb_float, SIGNAL( clicked() ), SLOT( floating() ) );
+   specs->addWidget( pb_float, s_row, 0, 1, 2 );
+
    pb_write = us_pushbutton( tr( "Save Current Edit Profile" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
-   specs->addWidget( pb_write, s_row++, 0, 1, 4 );
+   specs->addWidget( pb_write, s_row++, 2, 1, 2 );
 
    // Button rows
    QBoxLayout* buttons = new QHBoxLayout;
@@ -230,6 +234,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
 void US_Edvabs::reset( void )
 {
    changes_made = false;
+   floatingData = false;
 
    step          = MENISCUS;
    meniscus      = 0.0;
@@ -289,6 +294,7 @@ void US_Edvabs::reset( void )
    pb_priorEdits  ->setEnabled( false );
    pb_undo        ->setEnabled( false );
    
+   pb_float       ->setEnabled( false );
    pb_write       ->setEnabled( false );
 
    // Remove icons
@@ -301,6 +307,7 @@ void US_Edvabs::reset( void )
    pb_spikes      ->setIcon( QIcon() );
    pb_invert      ->setIcon( QIcon() );
 
+   pb_float       ->setIcon( QIcon() );
    pb_write       ->setIcon( QIcon() );
 
    allData       .clear();
@@ -414,6 +421,7 @@ void US_Edvabs::load( void )
    pb_spikes    ->setEnabled( false );
    pb_invert    ->setEnabled( true );
    pb_priorEdits->setEnabled( true );
+   pb_float     ->setEnabled( true );
    pb_undo      ->setEnabled( true );
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
@@ -1482,6 +1490,15 @@ void US_Edvabs::new_triple( int index )
    set_pbColors( pb_meniscus );
 }
 
+void US_Edvabs::floating( void )
+{
+   floatingData = ! floatingData;
+   if ( floatingData )
+      pb_float->setIcon( check );
+   else
+      pb_float->setIcon( QIcon() );
+
+}
 void US_Edvabs::write( void )
 {
    QString s;
@@ -1659,6 +1676,13 @@ void US_Edvabs::write( void )
       operations.appendChild( invert );
    }
 
+   // Write indication of floating data
+   if ( floatingData )
+   {
+      QDomElement floating = doc.createElement( "floating_data" );
+      operations.appendChild( floating );
+   }
+
    const int indentSize = 4;
    doc.save( ts, indentSize );
 
@@ -1802,10 +1826,18 @@ void US_Edvabs::apply_prior( void )
       pb_residuals->setEnabled( false );
    }
 
+   // Floating data
+   floatingData = parameters.floatingData;
+   if ( floatingData )
+      pb_float->setIcon( check );
+   else
+      pb_float->setIcon( QIcon() );
+
+
    step        = FINISHED;
    set_pbColors( NULL );
 
-    pb_undo->setEnabled( true );
+   pb_undo ->setEnabled( true );
    pb_write->setEnabled( true );
 
    changes_made= false;

@@ -94,6 +94,7 @@ class US_DataIO
             editedPoints.clear();
             invert       = 1.0;
             removeSpikes = false;
+            floatingData = false;
             noiseOrder   = 0;
          };
 
@@ -112,6 +113,7 @@ class US_DataIO
          int                  noiseOrder;
          double               invert;
          bool                 removeSpikes;
+         bool                 floatingData;
       };
 
       enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, BADXML, 

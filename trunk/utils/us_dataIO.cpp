@@ -518,6 +518,9 @@ void US_DataIO::operations( QXmlStreamReader& xml, editValues& parameters )
       if ( xml.isStartElement()  &&  xml.name() == "remove_spikes" )
          parameters.removeSpikes = true;
 
+      if ( xml.isStartElement()  &&  xml.name() == "floating_data" )
+         parameters.floatingData = true;
+
       if ( xml.isStartElement()  &&  xml.name() == "subtract_ri_noise" )
       {
          QXmlStreamAttributes a = xml.attributes();
@@ -552,7 +555,7 @@ void US_DataIO::do_edits( QXmlStreamReader& xml, editValues& parameters )
 
       if ( xml.isStartElement()  &&  xml.name() == "edit" )
       {
-         edits e;
+         editedPoint e;
          QXmlStreamAttributes a = xml.attributes();
          e.scan   = a.value( "scan"   ).toString().toInt();
          e.radius = a.value( "radius" ).toString().toDouble();
