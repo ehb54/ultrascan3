@@ -1,4 +1,4 @@
-//! \file us_equilspeed_main.cpp
+//! \file us_equiltime_main.cpp
 
 #include <QApplication>
 

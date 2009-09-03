@@ -542,8 +542,8 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
 
             foreach ( s, data.scanData )
             {
-               int start = index( s, meniscus_left  );
-               int end   = index( s, meniscus_right );
+               int start = US_DataIO::index( s, meniscus_left  );
+               int end   = US_DataIO::index( s, meniscus_right );
 
                for ( int j = start; j <= end; j++ )
                {
@@ -634,6 +634,7 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
          plot_last();
          pb_plateau ->setIcon( check );
          pb_baseline->setEnabled( true );
+         ct_to->setValue( 0.0 );  // Uncolor all scans
          next_step();
          break;
 
@@ -642,9 +643,9 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
             // Use the last scan
             US_DataIO::scan s = data.scanData.last();
             
-            int start = index( s, range_left );
-            int end   = index( s, range_right );
-            int pt    = index( s, p.x() );
+            int start = US_DataIO::index( s, range_left );
+            int end   = US_DataIO::index( s, range_right );
+            int pt    = US_DataIO::index( s, p.x() );
 
             if ( pt - start < 5  ||  end - pt < 5 )
             {
@@ -676,17 +677,6 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
          break;
    }
 }
-
-int US_Edvabs::index( const US_DataIO::scan& s, double r )
-{
-   for ( int i = 0; i < s.values.size(); i++ )
-   {
-      if ( fabs( s.values[ i ].d.radius - r ) < 5.0e-4 ) return i;
-   }
-
-   return -1;
-}
-
 
 void US_Edvabs::draw_vline( double radius )
 {
@@ -747,73 +737,98 @@ void US_Edvabs::next_step( void )
 
 void US_Edvabs::set_meniscus( void )
 {
-   le_meniscus->setText( "" );
+   le_meniscus ->setText( "" );
+   le_dataRange->setText( "" );
+   le_plateau  ->setText( "" );
+   le_baseline ->setText( "" );
+   
    meniscus      = 0.0;
    meniscus_left = 0.0;
+   range_left    = 0.0;
+   range_right   = 9.0;
+   plateau       = 0.0;
+   baseline      = 0.0;
+   
    step          = MENISCUS;
    
    set_pbColors( pb_meniscus );
    pb_meniscus->setIcon( QIcon() );
-   pb_write   ->setEnabled( false );
+
+   pb_dataRange->setEnabled( false );
+   pb_dataRange->setIcon( QIcon() );
+   pb_plateau  ->setEnabled( false );
+   pb_plateau  ->setIcon( QIcon() );
+   pb_baseline ->setEnabled( false );
+   pb_baseline ->setIcon( QIcon() );
+   pb_write    ->setEnabled( false );
+   pb_write    ->setIcon( QIcon() );
+
+   spikes = false;
+   pb_spikes   ->setEnabled( false );
+   pb_spikes   ->setIcon( QIcon() );
+
    plot_all();
 }
 
 void US_Edvabs::set_dataRange( void )
 {
-   if ( meniscus == 0.0 )
-   {
-      QMessageBox::warning( this,
-            tr( "Sequence Error" ),
-            tr( "You must select the meniscus before the data range." ) );
-      return;
-   }
-
    le_dataRange->setText( "" );
-   range_left  = 0.0;
-   range_right = 9.0;
+   le_plateau  ->setText( "" );
+   le_baseline ->setText( "" );
+   
+   range_left    = 0.0;
+   range_right   = 9.0;
+   plateau       = 0.0;
+   baseline      = 0.0;
+   
    step        = RANGE;
    set_pbColors( pb_dataRange );
+
    pb_dataRange->setIcon( QIcon() );
+   pb_plateau  ->setEnabled( false );
+   pb_plateau  ->setIcon( QIcon() );
+   pb_baseline ->setEnabled( false );
+   pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( false );
+   pb_write    ->setIcon( QIcon() );;
+
+   spikes = false;
+   pb_spikes   ->setEnabled( false );
+   pb_spikes   ->setIcon( QIcon() );
+
    plot_all();
 }
 
 void US_Edvabs::set_plateau( void )
 {
-   if ( range_left == 0.0 || range_right == 9.0 )
-   {
-      QMessageBox::warning( this,
-            tr( "Sequence Error" ),
-            tr( "You must select the data range before the plateau." ) );
-      return;
-   }
-
-   le_plateau->setText( "" );
-   plateau = 0.0;
+   le_plateau  ->setText( "" );
+   le_baseline ->setText( "" );
+   
+   plateau       = 0.0;
+   baseline      = 0.0;
+   
    step = PLATEAU;
    set_pbColors( pb_plateau );
-   pb_plateau->setIcon( QIcon() );
-   pb_write  ->setEnabled( false );
+
+   pb_plateau  ->setIcon( QIcon() );
+   pb_baseline ->setEnabled( false );
+   pb_baseline ->setIcon( QIcon() );
+   pb_write    ->setEnabled( false );
+   pb_write    ->setIcon( QIcon() );;
+
    plot_range();
 }
 
 void US_Edvabs::set_baseline( void )
 {
-   if ( range_left == 0.0 || range_right == 9.0 )
-   {
-      QMessageBox::warning( this,
-            tr( "Sequence Error" ),
-            tr( "You must select the data range before the baseline." ) );
-      return;
-   }
-
    le_baseline->setText( "" );
    baseline  = 0.0;
    step      = BASELINE;
    set_pbColors( pb_baseline );
 
-   pb_baseline   ->setIcon( QIcon() );
-   pb_write      ->setEnabled( false );
+   pb_baseline ->setIcon( QIcon() );
+   pb_write    ->setEnabled( false );
+   pb_write    ->setIcon( QIcon() );;
    
    // Only display last curve
    plot_last();
@@ -822,7 +837,6 @@ void US_Edvabs::set_baseline( void )
 void US_Edvabs::plot_all( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); 
-   //grid = us_grid( data_plot );
 
    int size = data.scanData[ 0 ].values.size();
 
@@ -890,26 +904,25 @@ void US_Edvabs::plot_range( void )
       
       US_DataIO::scan* s = &data.scanData[ i ];
       
-      int     count = 0;
-      uint    size  = s->values.size();
-      double* r     = new double[ size ];
-      double* v     = new double[ size ];
+      int indexLeft  = US_DataIO::index( *s, range_left );
+      int indexRight = US_DataIO::index( *s, range_right );
       
-      for ( uint j = 0; j < size; j++ )
+      int     count  = 0;
+      uint    size   = s->values.size();
+      double* r      = new double[ size ];
+      double* v      = new double[ size ];
+      
+      for ( int j = indexLeft; j <= indexRight; j++ )
       {
-         if ( s->values[ j ].d.radius >= range_left &&
-              s->values[ j ].d.radius <= range_right )
-         {
-            r[ count ] = s->values[ j ].d.radius;
-            v[ count ] = s->values[ j ].value * invert;
+         r[ count ] = s->values[ j ].d.radius;
+         v[ count ] = s->values[ j ].value * invert;
 
-            maxR = max( maxR, r[ count ] );
-            minR = min( minR, r[ count ] );
-            maxV = max( maxV, v[ count ] );
-            minV = min( minV, v[ count ] );
+         maxR = max( maxR, r[ count ] );
+         minR = min( minR, r[ count ] );
+         maxV = max( maxV, v[ count ] );
+         minV = min( minV, v[ count ] );
 
-            count++;
-         }
+         count++;
       }
 
       QString title = tr( "Raw Data at " )
@@ -947,26 +960,25 @@ void US_Edvabs::plot_last( void )
    // Plot only the last scan
    US_DataIO::scan* s = &data.scanData[ includes.last() ];;
    
-   int     count = 0;
-   uint    size  = s->values.size();
-   double* r     = new double[ size ];
-   double* v     = new double[ size ];
+   int indexLeft  = US_DataIO::index( *s, range_left );
+   int indexRight = US_DataIO::index( *s, range_right );
    
-   for ( uint j = 0; j < size; j++ )
+   int     count  = 0;
+   uint    size   = s->values.size();
+   double* r      = new double[ size ];
+   double* v      = new double[ size ];
+   
+   for ( int j = indexLeft; j <= indexRight; j++ )
    {
-      if ( s->values[ j ].d.radius >= range_left &&
-           s->values[ j ].d.radius <= range_right )
-      {
-         r[ count ] = s->values[ j ].d.radius;
-         v[ count ] = s->values[ j ].value * invert;
+      r[ count ] = s->values[ j ].d.radius;
+      v[ count ] = s->values[ j ].value * invert;
 
-         maxR = max( maxR, r[ count ] );
-         minR = min( minR, r[ count ] );
-         maxV = max( maxV, v[ count ] );
-         minV = min( minV, v[ count ] );
+      maxR = max( maxR, r[ count ] );
+      minR = min( minR, r[ count ] );
+      maxV = max( maxV, v[ count ] );
+      minV = min( minV, v[ count ] );
 
-         count++;
-      }
+      count++;
    }
 
    QString title = tr( "Raw Data at " )
@@ -1101,6 +1113,9 @@ void US_Edvabs::reset_excludes( void )
    connect( ct_to, SIGNAL( valueChanged ( double ) ),
                    SLOT  ( focus_to   ( double ) ) );
 
+   pb_excludeRange->setEnabled( false );
+   pb_edit1       ->setEnabled( false );
+
    replot();
 }
 
@@ -1157,9 +1172,10 @@ void US_Edvabs::finish_excludes( QList< int > excludes )
 
 void US_Edvabs::edit_scan( void )
 {
-   int index = (int)ct_from->value();
-   int scan  = includes[ index - 1 ];
-
+   int index1 = (int)ct_from->value();
+   int scan  = includes[ index1 - 1 ];
+qDebug() << range_left  << US_DataIO::index( data.scanData[ scan ], range_left );
+qDebug() << range_right << US_DataIO::index( data.scanData[ scan ], range_right );
    US_EditScan* dialog = new US_EditScan( data.scanData[ scan ], 
          invert, range_left, range_right );
    connect( dialog, SIGNAL( scan_updated( QList< QPointF > ) ),
@@ -1172,15 +1188,16 @@ void US_Edvabs::edit_scan( void )
 void US_Edvabs::update_scan( QList< QPointF > changes )
 {
    // Handle excluded scans
-   int index         = (int)ct_from->value();
-   int current_scan  = includes[ index - 1 ];
-
+   int              index1        = (int)ct_from->value();
+   int              current_scan  = includes[ index1 - 1 ];
+   US_DataIO::scan* s             = &data.scanData[ current_scan ];
+qDebug() << changes;
    for ( int i = 0; i < changes.size(); i++ )
    {
       int    point = (int)changes[ i ].x();
       double value =      changes[ i ].y();
 
-      data.scanData[ current_scan ].values[ point ].value = value;
+      s->values[ point ].value = value;
    }
 
    // Save changes for writing output
@@ -1190,22 +1207,28 @@ void US_Edvabs::update_scan( QList< QPointF > changes )
    changed_points << e;
 
    // Set data for the curve
-   US_DataIO::scan* s = &data.scanData[ current_scan ];
-   
    int     points = s->values.size();
    double* r      = new double[ points ];
    double* v      = new double[ points ];
 
+   int left;
+   int right;
    int count = 0;
 
-   for ( int i = 0; i < points; i++ )
+   if ( range_left > 0 )
    {
-      // If the range has been set, only plot the range.
-      double radius = s->values[ i ].d.radius;
-      if ( radius < range_left  ) continue;
-      if ( radius > range_right ) break;
+      left  = US_DataIO::index( *s, range_left  );
+      right = US_DataIO::index( *s, range_right );
+   }
+   else
+   {
+      left  = 0;
+      right = points - 1;
+   }
 
-      r[ count ] = radius;
+   for ( int i = left; i <= right; i++ )
+   {
+      r[ count ] = s->values[ i ].d.radius;
       v[ count ] = s->values[ i ].value;
       count++;
    }
@@ -1316,8 +1339,8 @@ void US_Edvabs::remove_spikes( void )
    for ( int i = 0; i < data.scanData.size(); i++ ) 
    {
       US_DataIO::scan* s = &data.scanData [ i ];
-      int start  = index( *s, range_left  );
-      int end    = index( *s, range_right );
+      int start  = US_DataIO::index( *s, range_left  );
+      int end    = US_DataIO::index( *s, range_right );
       
       // Note that a changed point can affect succeeding points
 
@@ -1683,7 +1706,7 @@ void US_Edvabs::apply_prior( void )
    {
       QMessageBox::warning( this,
             tr( "Data Error" ),
-            tr( "The edit file was not creted using the current data" ) );
+            tr( "The edit file was not created using the current data" ) );
       return;
    }
    
@@ -1715,13 +1738,15 @@ void US_Edvabs::apply_prior( void )
 
    baseline = parameters.baseline;
    
-   // Calculating the value at the baseline is based on constant delta-r
-   US_DataIO::scan* scan  = &data.scanData.last();
-   double           r0    = scan->values[ 0 ].d.radius;
-   index1                 = (int)( ( baseline - r0 ) * 1000.0 ); 
-   double           value = scan->values[ index1 ].value;
+   US_DataIO::scan scan  = data.scanData.last();
+   int             pt    = US_DataIO::index( scan, baseline );
+   double          sum   = 0.0;
 
-   le_baseline->setText( s.sprintf( "%.3f (%.3e)", baseline, value ) );
+   // Average the value for +/- 5 points
+   for ( int j = pt - 5; j <= pt + 5; j++ )
+      sum += scan.values[ j ].value;
+
+   le_baseline->setText( s.sprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
    pb_baseline->setIcon( check );
    pb_baseline->setEnabled( true );
 
@@ -1731,16 +1756,16 @@ void US_Edvabs::apply_prior( void )
    if ( invert == -1.0 ) pb_invert->setIcon( check );
    else                  pb_invert->setIcon( QIcon() );
 
-   // Included scans
+   // Excluded scans
    init_includes();
-   reset_excludes(); // zero exclude combo boxes
+   reset_excludes(); // Zero exclude combo boxes
    qSort( parameters.excludes );
-   
-   for ( int i = parameters.excludes.size(); i > 0; i-- )
-            includes.removeAt( parameters.excludes[ i - 1 ] );
 
-   pb_excludeRange->setEnabled( false );
-   pb_edit1       ->setEnabled( false );
+   for ( int i = parameters.excludes.size(); i > 0; i-- )
+   {
+      qDebug() << "Excluding " << i - 1;
+      includes.removeAt( parameters.excludes[ i - 1 ] );
+   }
 
    // Edited points
    changed_points.clear();
@@ -1748,9 +1773,8 @@ void US_Edvabs::apply_prior( void )
    for ( int i = 0; i < parameters.editedPoints.size(); i++ )
    {
       int    scan   = parameters.editedPoints[ i ].scan;
-      double radius = parameters.editedPoints[ i ].radius;
+      int    index1 = (int)parameters.editedPoints[ i ].radius;
       double value  = parameters.editedPoints[ i ].value;
-      int    index1 = index( data.scanData[ scan ], radius );
       
       edits e;
       e.scan = scan;
@@ -1789,6 +1813,6 @@ void US_Edvabs::apply_prior( void )
    pb_write->setEnabled( true );
 
    changes_made= false;
-   replot();
+   plot_range();
 }
 

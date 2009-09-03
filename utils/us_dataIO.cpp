@@ -461,6 +461,12 @@ void US_DataIO::run( QXmlStreamReader& xml, editValues& parameters )
       if ( xml.isStartElement()  &&  xml.name() == "operations" )
          operations( xml, parameters );
 
+      if ( xml.isStartElement()  &&  xml.name() == "edited" )
+         do_edits( xml, parameters );
+
+      if ( xml.isStartElement()  &&  xml.name() == "excludes" )
+         excludes( xml, parameters );
+
       xml.readNext();
    }
 }
@@ -518,12 +524,6 @@ void US_DataIO::operations( QXmlStreamReader& xml, editValues& parameters )
          parameters.noiseOrder = a.value( "order" ).toString().toInt();
       }
 
-      if ( xml.isStartElement()  &&  xml.name() == "edited" )
-         do_edits( xml, parameters );
-
-      if ( xml.isStartElement()  &&  xml.name() == "excludes" )
-         excludes( xml, parameters );
-
       xml.readNext();
    }
 }
@@ -563,6 +563,22 @@ void US_DataIO::do_edits( QXmlStreamReader& xml, editValues& parameters )
 
       xml.readNext();
    }
+}
+
+int US_DataIO::index( const scan& s, double r )
+{
+   if ( r <= s.values[ 0 ].d.radius ) return 0;
+    
+   int last = s.values.size() - 1;
+   if ( r >= s.values[ last ].d.radius ) return last;
+
+   for ( int i = 0; i < s.values.size(); i++ )
+   {
+      if ( fabs( s.values[ i ].d.radius - r ) < 5.0e-4 ) return i;
+   }
+
+   // Should never happen
+   return -1;
 }
 
 QString US_DataIO::errorString( int code )

@@ -135,6 +135,7 @@ void US_EditScan::start_drag( QMouseEvent* e )
 
    // Find the nearest point
    point = curve->closestPoint( e->pos() );
+qDebug() << "point " << point;
 }
 
 void US_EditScan::end_drag( const QwtDoublePoint& p )
@@ -162,22 +163,20 @@ void US_EditScan::redraw( void )
    offset     = 0;
    int  count = 0;
 
-   for ( int j = 0; j < workingScan.values.size(); j++ ) 
+   int indexLeft  = US_DataIO::index( workingScan, range_left );
+   int indexRight = US_DataIO::index( workingScan, range_right );
+   
+   offset = indexLeft;
+
+qDebug() << "Indexes: " << indexLeft << indexRight;
+   
+   for ( int j = indexLeft; j <= indexRight; j++ ) 
    { 
-      double r = workingScan.values[ j ].d.radius;
-      if ( r < range_left - 0.0005  )
-      {
-         offset = j;
-         continue;
-      }
-
-      if ( r > range_right + 0.0005 ) break;
-
-      radii [ count ] = r;
+      radii [ count ] = workingScan.values[ j ].d.radius;
       values[ count ] = workingScan.values[ j ].value * invert;
       count++;
    }
-
+qDebug() << "offset " << offset;
    curve->setRawData( radii, values, count );
    data_plot->replot();
 }
