@@ -214,6 +214,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_clear_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear_plot_saxs, SIGNAL(clicked()), SLOT(clear_plot_saxs()));
 
+   lbl_info_prr = new QLabel(tr("P(r) vs. r  Plotting Functions:"), this);
+   Q_CHECK_PTR(lbl_info_prr);
+   lbl_info_prr->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_info_prr->setAlignment(AlignCenter|AlignVCenter);
+   lbl_info_prr->setMinimumHeight(minHeight1);
+   lbl_info_prr->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_info_prr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
    lbl_bin_size = new QLabel(tr(" Bin size (Angstrom): "), this);
    Q_CHECK_PTR(lbl_bin_size);
    lbl_bin_size->setAlignment(AlignLeft|AlignVCenter);
@@ -350,11 +358,11 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_core_progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
 
-   int rows=12, columns = 3, spacing = 2, j=0, margin=4;
+   int rows=13, columns = 3, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
-   background->addMultiCellWidget(plot_saxs, j, j+9, 2, 2);
+   background->addMultiCellWidget(plot_saxs, j, j+10, 2, 2);
    j++;
    background->addWidget(lbl_filename1, j, 0);
    background->addWidget(lbl_filename2, j, 1);
@@ -373,6 +381,8 @@ void US_Hydrodyn_Saxs::setupGUI()
    j++;
    background->addWidget(pb_load_saxs, j, 0);
    background->addWidget(pb_clear_plot_saxs, j, 1);
+   j++;
+   background->addMultiCellWidget(lbl_info_prr, j, j, 0, 1);
    j++;
    background->addWidget(lbl_bin_size, j, 0);
    background->addWidget(cnt_bin_size, j, 1);

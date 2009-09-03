@@ -75,6 +75,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QLabel *lbl_atom_table;
       QLabel *lbl_saxs_table;
       QLabel *lbl_core_progress;
+      QLabel *lbl_info_prr;
       QLabel *lbl_bin_size;
 
       QPrinter printer;
