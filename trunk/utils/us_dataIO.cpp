@@ -106,7 +106,7 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
 
    foreach( s, data.scanData )
    {
-      foreach( r, s.values )
+      foreach( r, s.readings )
       {
          min_radius = min( min_radius, r.d.radius );
          max_radius = max( max_radius, r.d.radius );
@@ -128,8 +128,8 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
    write( ds, (char*)c, 2, crc );
 
    // Distance between radius entries
-   double r1    = data.scanData[ 0 ].values[ 0 ].d.radius;
-   double r2    = data.scanData[ 0 ].values[ 1 ].d.radius;
+   double r1    = data.scanData[ 0 ].readings[ 0 ].d.radius;
+   double r2    = data.scanData[ 0 ].readings[ 1 ].d.radius;
    float  delta = (float) ( r2 - r1 );
    write( ds, (char*) &delta, 4, crc );
 
@@ -183,7 +183,7 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
    qToLittleEndian( (ushort)( ( data.wavelength - 180.0 ) * 100.0 ), c );
    write( ds, (char*)c, 2, crc );
 
-   int valueCount = data.values.size();
+   int valueCount = data.readings.size();
    qToLittleEndian( (uint)valueCount, c );
    write( ds, (char*)c, 4, crc );
 
@@ -195,7 +195,7 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
    bool    stdDev = ( p.min_data2 != 0.0 || p.max_data2 != 0.0 );
    reading r;
 
-   foreach ( r, data.values )
+   foreach ( r, data.readings )
    {
       si = (unsigned short int) ( ( r.value - p.min_data1 ) / delta );
 
@@ -353,7 +353,7 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
                r.stdDev = 0.0;
 
             // Add the reading to the scan
-            s.values << r;
+            s.readings << r;
             
             radius += delta_radius;
          } 
@@ -567,14 +567,14 @@ void US_DataIO::do_edits( QXmlStreamReader& xml, editValues& parameters )
 
 int US_DataIO::index( const scan& s, double r )
 {
-   if ( r <= s.values[ 0 ].d.radius ) return 0;
+   if ( r <= s.readings[ 0 ].d.radius ) return 0;
     
-   int last = s.values.size() - 1;
-   if ( r >= s.values[ last ].d.radius ) return last;
+   int last = s.readings.size() - 1;
+   if ( r >= s.readings[ last ].d.radius ) return last;
 
-   for ( int i = 0; i < s.values.size(); i++ )
+   for ( int i = 0; i < s.readings.size(); i++ )
    {
-      if ( fabs( s.values[ i ].d.radius - r ) < 5.0e-4 ) return i;
+      if ( fabs( s.readings[ i ].d.radius - r ) < 5.0e-4 ) return i;
    }
 
    // Should never happen

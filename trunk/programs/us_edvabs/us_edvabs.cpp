@@ -547,10 +547,10 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
 
                for ( int j = start; j <= end; j++ )
                {
-                  if ( maximum < s.values[ j ].value )
+                  if ( maximum < s.readings[ j ].value )
                   {
-                     maximum  = s.values[ j ].value;
-                     meniscus = s.values[ j ].d.radius;
+                     maximum  = s.readings[ j ].value;
+                     meniscus = s.readings[ j ].d.radius;
                   }
                }
             }
@@ -659,7 +659,7 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
 
             // Average the value for +/- 5 points
             for ( int j = pt - 5; j <= pt + 5; j++ )
-               sum += s.values[ j ].value;
+               sum += s.readings[ j ].value;
 
             double bl = sum / 11.0;
             baseline  = p.x();
@@ -838,7 +838,7 @@ void US_Edvabs::plot_all( void )
 {
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve ); 
 
-   int size = data.scanData[ 0 ].values.size();
+   int size = data.scanData[ 0 ].readings.size();
 
    double* r = new double[ size ];
    double* v = new double[ size ];
@@ -856,8 +856,8 @@ void US_Edvabs::plot_all( void )
 
       for ( int j = 0; j < size; j++ )
       {
-         r[ j ] = s->values[ j ].d.radius;
-         v[ j ] = s->values[ j ].value * invert;
+         r[ j ] = s->readings[ j ].d.radius;
+         v[ j ] = s->readings[ j ].value * invert;
 
          maxR = max( maxR, r[ j ] );
          minR = min( minR, r[ j ] );
@@ -908,14 +908,14 @@ void US_Edvabs::plot_range( void )
       int indexRight = US_DataIO::index( *s, range_right );
       
       int     count  = 0;
-      uint    size   = s->values.size();
+      uint    size   = s->readings.size();
       double* r      = new double[ size ];
       double* v      = new double[ size ];
       
       for ( int j = indexLeft; j <= indexRight; j++ )
       {
-         r[ count ] = s->values[ j ].d.radius;
-         v[ count ] = s->values[ j ].value * invert;
+         r[ count ] = s->readings[ j ].d.radius;
+         v[ count ] = s->readings[ j ].value * invert;
 
          maxR = max( maxR, r[ count ] );
          minR = min( minR, r[ count ] );
@@ -964,14 +964,14 @@ void US_Edvabs::plot_last( void )
    int indexRight = US_DataIO::index( *s, range_right );
    
    int     count  = 0;
-   uint    size   = s->values.size();
+   uint    size   = s->readings.size();
    double* r      = new double[ size ];
    double* v      = new double[ size ];
    
    for ( int j = indexLeft; j <= indexRight; j++ )
    {
-      r[ count ] = s->values[ j ].d.radius;
-      v[ count ] = s->values[ j ].value * invert;
+      r[ count ] = s->readings[ j ].d.radius;
+      v[ count ] = s->readings[ j ].value * invert;
 
       maxR = max( maxR, r[ count ] );
       minR = min( minR, r[ count ] );
@@ -1174,8 +1174,7 @@ void US_Edvabs::edit_scan( void )
 {
    int index1 = (int)ct_from->value();
    int scan  = includes[ index1 - 1 ];
-qDebug() << range_left  << US_DataIO::index( data.scanData[ scan ], range_left );
-qDebug() << range_right << US_DataIO::index( data.scanData[ scan ], range_right );
+
    US_EditScan* dialog = new US_EditScan( data.scanData[ scan ], 
          invert, range_left, range_right );
    connect( dialog, SIGNAL( scan_updated( QList< QPointF > ) ),
@@ -1191,13 +1190,13 @@ void US_Edvabs::update_scan( QList< QPointF > changes )
    int              index1        = (int)ct_from->value();
    int              current_scan  = includes[ index1 - 1 ];
    US_DataIO::scan* s             = &data.scanData[ current_scan ];
-qDebug() << changes;
+
    for ( int i = 0; i < changes.size(); i++ )
    {
       int    point = (int)changes[ i ].x();
       double value =      changes[ i ].y();
 
-      s->values[ point ].value = value;
+      s->readings[ point ].value = value;
    }
 
    // Save changes for writing output
@@ -1207,7 +1206,7 @@ qDebug() << changes;
    changed_points << e;
 
    // Set data for the curve
-   int     points = s->values.size();
+   int     points = s->readings.size();
    double* r      = new double[ points ];
    double* v      = new double[ points ];
 
@@ -1228,8 +1227,8 @@ qDebug() << changes;
 
    for ( int i = left; i <= right; i++ )
    {
-      r[ count ] = s->values[ i ].d.radius;
-      v[ count ] = s->values[ i ].value;
+      r[ count ] = s->readings[ i ].d.radius;
+      v[ count ] = s->readings[ i ].value;
       count++;
    }
 
@@ -1308,8 +1307,8 @@ bool US_Edvabs::spike_check( const US_DataIO::scan& s,
    {
       if ( k != point ) // Exclude the probed point from fit
       {
-         r[ count ] = s.values[ k ].d.radius;
-         v[ count ] = s.values[ k ].value; 
+         r[ count ] = s.readings[ k ].d.radius;
+         v[ count ] = s.readings[ k ].value; 
          count++;
       }
    }
@@ -1317,8 +1316,8 @@ bool US_Edvabs::spike_check( const US_DataIO::scan& s,
    US_Math::linefit( &x, &y, &slope, &intercept, &sigma, &correlation, count );
 
    // If there is more than a 3-fold difference, it is a spike
-   double val    =  s.values[ point ].value;
-   double radius =  s.values[ point ].d.radius;
+   double val    =  s.readings[ point ].value;
+   double radius =  s.readings[ point ].d.radius;
 
    if ( fabs( slope * radius + intercept - val ) > threshold * sigma )
    {
@@ -1347,19 +1346,19 @@ void US_Edvabs::remove_spikes( void )
       for ( int j = start; j < start + 5; j++ ) // Beginning 5 points
       {
          if ( spike_check( *s, j, start, start + 10, &smoothed_value ) )
-            s->values[ j ].value = smoothed_value;
+            s->readings[ j ].value = smoothed_value;
       }
 
       for ( int j = start + 5; j < end - 4; j++ ) // Middle points
       {
          if ( spike_check( *s, j, j - 5, j + 5, &smoothed_value ) )
-            s->values[ j ].value = smoothed_value;
+            s->readings[ j ].value = smoothed_value;
       }
 
       for ( int j = end - 4; j <= end; j++ ) // Last 5 points
       {
          if ( spike_check( *s, j, end - 10, end, &smoothed_value ) )
-            s->values[ j ].value = smoothed_value;
+            s->readings[ j ].value = smoothed_value;
       }
    }
 
@@ -1420,9 +1419,9 @@ void US_Edvabs::subtract_residuals( void )
 {
    for ( int i = 0; i < data.scanData.size(); i++ )
    {
-     for ( int j = 0; j <  data.scanData[ i ].values.size(); j++ )
+     for ( int j = 0; j <  data.scanData[ i ].readings.size(); j++ )
      {
-         data.scanData[ i ].values[ j ].value -= residuals[ i ];
+         data.scanData[ i ].readings[ j ].value -= residuals[ i ];
      }
    }
 
@@ -1744,7 +1743,7 @@ void US_Edvabs::apply_prior( void )
 
    // Average the value for +/- 5 points
    for ( int j = pt - 5; j <= pt + 5; j++ )
-      sum += scan.values[ j ].value;
+      sum += scan.readings[ j ].value;
 
    le_baseline->setText( s.sprintf( "%.3f (%.3e)", baseline, sum / 11.0 ) );
    pb_baseline->setIcon( check );
@@ -1762,10 +1761,7 @@ void US_Edvabs::apply_prior( void )
    qSort( parameters.excludes );
 
    for ( int i = parameters.excludes.size(); i > 0; i-- )
-   {
-      qDebug() << "Excluding " << i - 1;
       includes.removeAt( parameters.excludes[ i - 1 ] );
-   }
 
    // Edited points
    changed_points.clear();
@@ -1782,7 +1778,7 @@ void US_Edvabs::apply_prior( void )
      
       changed_points << e;
       
-      data.scanData[ scan ].values[ index1 ].value = value;
+      data.scanData[ scan ].readings[ index1 ].value = value;
    }
 
    // Spikes

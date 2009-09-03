@@ -564,26 +564,30 @@ void US_Convert::convert( bool showProgressBar )
          from min_radius to max_radius and the pointer to the current 
          scan readings is j.  
 
-         The old scan reading is ccwLegacyData[ i ]->values[ j ]
+         The old scan reading is ccwLegacyData[ i ]->readings[ j ]
 
-         If the current new radius is within 0.0003 of the ccwLegacyData[ i ]->values[ j ].d.radius
-            copy ccwLegacyData[ i ]->values[ j ].value into the new reading
-            copy ccwLegacyData[ i ]->values[ j ].stdDev into the new reading
+         If the current new radius is within 0.0003 of the i
+         ccwLegacyData[ i ]->readings[ j ].d.radius
+            copy ccwLegacyData[ i ]->readings[ j ].value into the new reading
+            copy ccwLegacyData[ i ]->readings[ j ].stdDev into the new reading
             increment j
 
-         If the current new radius is less than ccwLegacyData[ i ]->values[ 0 ].d.radius,
+         If the current new radius is less than i
+         ccwLegacyData[ i ]->readings[ 0 ].d.radius,
          then 
-            copy ccwLegacyData[ i ]->values[ 0 ].value into the new reading
+            copy ccwLegacyData[ i ]->readings[ 0 ].value into the new reading
             set the std dev to 0.0.
             set the interpolated flag
          
-         If the current new radius is greater than ccwLegacyData[ i ]->values[ last() ].d.radius
-            copy ccwLegacyData[ i ]->values[ last ].value into the new reading
+         If the current new radius is greater than 
+         ccwLegacyData[ i ]->readings[ last() ].d.radius
+            copy ccwLegacyData[ i ]->readings[ last ].value into the new reading
             set the std dev to 0.0.
             set the interpolated flag
 
          else
-            interplate between ccwLegacyData[ i ]->values[ j ] and ccwLegacyData[ i ]->values[ j -1 ]
+            interplate between ccwLegacyData[ i ]->readings[ j ] and 
+                               ccwLegacyData[ i ]->readings[ j -1 ]
             set the std dev to 0.0.
             set the interpolated flag
 
@@ -641,7 +645,7 @@ void US_Convert::convert( bool showProgressBar )
             setInterpolated( interpolated, j );
          }
 
-         s.values <<  r;
+         s.readings <<  r;
          radius += delta_r;
       }
 
@@ -944,7 +948,7 @@ void US_Convert::plot_all( void )
    data_plot->detachItems();
    grid = us_grid( data_plot );
 
-   int size = currentData.scanData[ 0 ].values.size();
+   int size = currentData.scanData[ 0 ].readings.size();
 
    double* r = new double[ size ];
    double* v = new double[ size ];
@@ -967,8 +971,8 @@ void US_Convert::plot_all( void )
 
       for ( int j = 0; j < size; j++ )
       {
-         r[ j ] = s->values[ j ].d.radius;
-         v[ j ] = s->values[ j ].value;
+         r[ j ] = s->readings[ j ].d.radius;
+         v[ j ] = s->readings[ j ].value;
 
          maxR = max( maxR, r[ j ] );
          minR = min( minR, r[ j ] );

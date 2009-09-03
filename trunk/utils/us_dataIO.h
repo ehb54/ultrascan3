@@ -61,7 +61,7 @@ class US_DataIO
          double seconds;
          double omega2t;
          double wavelength;
-         QList< reading > values;
+         QList< reading > readings;
          QByteArray interpolated; 
       };
 
@@ -77,7 +77,7 @@ class US_DataIO
          QList< scan > scanData;
       };
 
-      class edits
+      class editedPoint
       {
          public:
          int    scan;
@@ -97,21 +97,21 @@ class US_DataIO
             noiseOrder   = 0;
          };
 
-         QString        runID;
-         QString        cell;
-         QString        channel;
-         QString        wavelength;
-         QString        uuid;
-         double         meniscus;
-         double         rangeLeft;
-         double         rangeRight;
-         double         plateau;
-         double         baseline;
-         QList< int >   excludes;
-         QList< edits > editedPoints;
-         int            noiseOrder;
-         double         invert;
-         bool           removeSpikes;
+         QString              runID;
+         QString              cell;
+         QString              channel;
+         QString              wavelength;
+         QString              uuid;
+         double               meniscus;
+         double               rangeLeft;
+         double               rangeRight;
+         double               plateau;
+         double               baseline;
+         QList< int >         excludes;
+         QList< editedPoint > editedPoints;
+         int                  noiseOrder;
+         double               invert;
+         bool                 removeSpikes;
       };
 
       enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, BADXML, 

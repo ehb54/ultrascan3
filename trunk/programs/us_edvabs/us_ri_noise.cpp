@@ -87,12 +87,12 @@ void US_RiNoise::draw_fit( double new_order )
       const double delta_r = 0.001;
 
       const US_DataIO::scan* s = &data.scanData[ i ];
-      int value_count          = s->values.size();
+      int value_count          = s->readings.size();
       
       // Integrate using trapezoid rule
       for ( int j = 1; j < value_count; j++ )
       {
-         double avg = ( s->values[ j ].value + s->values[ j - 1 ].value ) / 2.0;
+         double avg = ( s->readings[ j ].value + s->readings[ j - 1 ].value ) / 2.0;
          absorbance_integral[ i ] += avg * delta_r;
       }
    }
@@ -174,12 +174,12 @@ void US_RiNoise::calc_residuals( const US_DataIO::rawData& data,
       const double delta_r = 0.001;
 
       const US_DataIO::scan* s = &data.scanData[ i ];
-      int value_count          = s->values.size();
+      int value_count          = s->readings.size();
       
       // Integrate using trapezoid rule
       for ( int j = 1; j < value_count; j++ )
       {
-         double avg = ( s->values[ j ].value + s->values[ j - 1 ].value ) / 2.0;
+         double avg = ( s->readings[ j ].value + s->readings[ j - 1 ].value ) / 2.0;
          absorbance_integral[ i ] += avg * delta_r;
       }
    }
