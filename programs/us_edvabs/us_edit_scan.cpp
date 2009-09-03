@@ -35,7 +35,7 @@ US_EditScan::US_EditScan( US_DataIO::scan& s,
    pick = new US_PlotPicker( data_plot );
 
    // Draw the curve
-   int  size = originalScan.values.size();
+   int  size = originalScan.readings.size();
    radii     = new double[ size ];
    values    = new double[ size ];
 
@@ -135,7 +135,6 @@ void US_EditScan::start_drag( QMouseEvent* e )
 
    // Find the nearest point
    point = curve->closestPoint( e->pos() );
-qDebug() << "point " << point;
 }
 
 void US_EditScan::end_drag( const QwtDoublePoint& p )
@@ -168,15 +167,13 @@ void US_EditScan::redraw( void )
    
    offset = indexLeft;
 
-qDebug() << "Indexes: " << indexLeft << indexRight;
-   
    for ( int j = indexLeft; j <= indexRight; j++ ) 
    { 
-      radii [ count ] = workingScan.values[ j ].d.radius;
-      values[ count ] = workingScan.values[ j ].value * invert;
+      radii [ count ] = workingScan.readings[ j ].d.radius;
+      values[ count ] = workingScan.readings[ j ].value * invert;
       count++;
    }
-qDebug() << "offset " << offset;
+
    curve->setRawData( radii, values, count );
    data_plot->replot();
 }
