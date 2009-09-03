@@ -122,6 +122,7 @@ class US_DataIO
       static int     readRawData   ( const QString&, rawData& );
       static int     readEdits     ( const QString&, editValues& );
       static QString errorString   ( int );
+      static int     index         ( const scan&, double );
 
    private:
 

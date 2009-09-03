@@ -99,7 +99,6 @@ class US_EXTERN US_Edvabs : public US_Widgets
 	
       void set_pbColors      ( QPushButton* );
       void draw_vline        ( double );
-      int  index             ( const US_DataIO::scan&, double );
       void next_step         ( void );
 
       void replot            ( void );
