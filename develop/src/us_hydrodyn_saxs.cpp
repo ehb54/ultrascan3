@@ -126,6 +126,55 @@ US_Hydrodyn_Saxs::~US_Hydrodyn_Saxs()
    *saxs_widget = false;
 }
 
+void US_Hydrodyn_Saxs::refresh(
+                               QString                        filename, 
+                               vector < residue >             residue_list,
+                               vector < PDB_model >           model_vector,
+                               vector < vector <PDB_atom> >   bead_models,
+                               vector < unsigned int >        selected_models,
+                               map < QString, vector <int> >  multi_residue_map,
+                               map < QString, QString >       residue_atom_hybrid_map,
+                               int                            source
+                               )
+{
+   this->residue_list = residue_list;
+   this->model_vector = model_vector;
+   this->bead_models = bead_models;
+   this->selected_models = selected_models;
+   this->multi_residue_map = multi_residue_map;
+   this->residue_atom_hybrid_map = residue_atom_hybrid_map;
+   this->source = source;
+   QFileInfo fi(filename);
+   switch (source)
+   {
+      case 0: // the source is a PDB file
+      {
+         lbl_filename1->setText(" PDB Filename: ");
+         break;
+      }
+      case 1: // the source is a Bead Model file
+      {
+         lbl_filename1->setText(" Bead Model Filename: ");
+         break;
+      }
+      default: // undefined
+      {
+         QMessageBox mb(tr("UltraScan"),
+                        tr("The source file has not been defined, please try again..."), QMessageBox::Critical,
+                           QMessageBox::NoButton, QMessageBox::NoButton, QMessageBox::NoButton, 0, 0, 1);
+         if (mb.exec())
+         {
+            exit(-1);
+         }
+      }
+   }
+   pb_plot_saxs->setEnabled(source ? false : true);
+   lbl_filename2->setText(fi.baseName() + "." + fi.extension( FALSE ));
+   model_filename = fi.baseName() + "." + fi.extension( FALSE );
+   pb_stop->setEnabled(false);
+}
+
+
 void US_Hydrodyn_Saxs::setupGUI()
 {
    int minHeight1 = 30;

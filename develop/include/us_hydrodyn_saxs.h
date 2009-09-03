@@ -63,6 +63,17 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
                        );
       ~US_Hydrodyn_Saxs();
 
+      void refresh(
+                   QString                        pdb_file, 
+                   vector < residue >             residue_list,
+                   vector < PDB_model >           model_vector,
+                   vector < vector <PDB_atom> >   bead_models,
+                   vector < unsigned int >        selected_models,
+                   map < QString, vector <int> >  multi_residue_map,
+                   map < QString, QString >       residue_atom_hybrid_map,
+                   int                            source
+                   );
+      
    public:
       bool *saxs_widget, initial;
       int source;

@@ -1054,6 +1054,7 @@ void US_Hydrodyn::load_pdb()
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);
+   pb_bead_saxs->setEnabled(false);
    pb_visualize->setEnabled(false);
    le_bead_model_file->setText(" not selected ");
    bead_models_as_loaded = bead_models;
@@ -2325,25 +2326,35 @@ void US_Hydrodyn::clear_display()
 
 void US_Hydrodyn::pdb_saxs()
 {
-   if (saxs_plot_widget)
+   vector < unsigned int > selected_models;
+   for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
    {
-      saxs_plot_window->raise();
+      if ( lb_model->isSelected(i) ) 
+      {
+         selected_models.push_back(i);
+      }
    }
+   if ( selected_models.size() != 1 )
+   {
+      QMessageBox::message(tr("Please note:"),
+                           tr("You must select exactly one model to perform SAXS functions.."));
+   } 
    else
    {
-      vector < unsigned int > selected_models;
-      for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
+      if (saxs_plot_widget)
       {
-         if ( lb_model->isSelected(i) ) 
-         {
-            selected_models.push_back(i);
-         }
+         saxs_plot_window->refresh(
+                                   pdb_file,
+                                   residue_list,
+                                   model_vector,
+                                   bead_models,
+                                   selected_models,
+                                   multi_residue_map,
+                                   residue_atom_hybrid_map,
+                                   0
+                                   );
+         saxs_plot_window->raise();
       }
-      if ( selected_models.size() != 1 )
-      {
-         QMessageBox::message(tr("Please note:"),
-                              tr("You must select exactly one model to perform SAXS functions.."));
-      } 
       else
       {
          saxs_plot_window = new US_Hydrodyn_Saxs(
@@ -2367,42 +2378,51 @@ void US_Hydrodyn::pdb_saxs()
 
 void US_Hydrodyn::bead_saxs()
 {
-   if (saxs_plot_widget)
+   vector < unsigned int > selected_models;
+   for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
    {
-      saxs_plot_window->raise();
+      if ( lb_model->isSelected(i) ) 
+      {
+         selected_models.push_back(i);
+      }
    }
+   if ( selected_models.size() != 1 )
+   {
+      QMessageBox::message(tr("Please note:"),
+                           tr("You must select exactly one model to perform SAXS functions.."));
+   } 
    else
    {
-      vector < unsigned int > selected_models;
-      for ( unsigned int i = 0; i < (unsigned int)lb_model->numRows(); i++ ) 
+      QString filename = bead_model_file;
+      if ( !filename.length() )
       {
-         if ( lb_model->isSelected(i) ) 
-         {
-            selected_models.push_back(i);
-         }
+         filename = pdb_file;
+         filename.replace(QRegExp("\\.(pdb|PDB)"), ".bead_model");
       }
-      if ( selected_models.size() != 1 )
+      if ( !filename.length() )
       {
-         QMessageBox::message(tr("Please note:"),
-                              tr("You must select exactly one model to perform SAXS functions.."));
-      } 
+         filename = "unknown";
+      }
+      printf("selected models size %u bead_models.size %u\n",
+             bead_models.size(),
+             selected_models.size()
+             );
+      if (saxs_plot_widget)
+      {
+         saxs_plot_window->refresh(
+                                   pdb_file,
+                                   residue_list,
+                                   model_vector,
+                                   bead_models,
+                                   selected_models,
+                                   multi_residue_map,
+                                   residue_atom_hybrid_map,
+                                   1
+                                   );
+         saxs_plot_window->raise();
+      }
       else
       {
-         QString filename = bead_model_file;
-         if ( !filename.length() )
-         {
-            filename = pdb_file;
-            filename.replace(QRegExp("\\.(pdb|PDB)"), ".bead_model");
-         }
-         if ( !filename.length() )
-         {
-            filename = "unknown";
-         }
-         printf("selected models size %u bead_models.size %u\n",
-                bead_models.size(),
-                selected_models.size()
-                );
-
          saxs_plot_window = new US_Hydrodyn_Saxs(
                                                  &saxs_plot_widget,
                                                  &saxs_options,
