@@ -36,6 +36,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
 
       bool               changes_made;
       bool               spikes;
+      bool               floatingData;
       int                noise_order;
       int                triple_index;
       double             meniscus;
@@ -89,6 +90,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       QPushButton*       pb_write;
       QPushButton*       pb_residuals;
       QPushButton*       pb_priorEdits;
+      QPushButton*       pb_float;
       QPushButton*       pb_undo;
                         
       QComboBox*         cb_triple;
@@ -143,6 +145,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       void remove_spikes     ( void );
       void invert_values     ( void );
       void undo              ( void );
+      void floating          ( void );
       void write             ( void );
                              
       void reset             ( void );
