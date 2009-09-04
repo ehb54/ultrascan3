@@ -1562,13 +1562,13 @@ void US_Hydrodyn::set_default()
       pdb_parse.missing_atoms = 0;
 
       saxs_options.wavelength = 1.5;         // scattering wavelength
-      saxs_options.start_angle = 0.1f;       // start angle
-      saxs_options.end_angle = 4.0;          // ending angle
+      saxs_options.start_angle = 0.014f;       // start angle
+      saxs_options.end_angle = 8.214;          // ending angle
       saxs_options.delta_angle = 0.2f;       // angle stepsize
       saxs_options.water_e_density = 0.334f; // water electron density in e/A^3
       saxs_options.max_size = 40.0;          // maximum size (A)
       saxs_options.bin_size = 0.4f;          // Bin size (A)
-      saxs_options.hydrate_pdb = true;       // Hydrate the PDB model? (true/false)
+      saxs_options.hydrate_pdb = false;       // Hydrate the PDB model? (true/false)
    }
 
    default_sidechain_overlap = sidechain_overlap;
