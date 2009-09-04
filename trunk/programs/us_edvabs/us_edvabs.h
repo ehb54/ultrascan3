@@ -75,6 +75,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       QLineEdit*         le_baseline;
                         
       QPushButton*       pb_details;
+      QPushButton*       pb_gaps;
       QPushButton*       pb_exclude;
       QPushButton*       pb_excludeRange;
       QPushButton*       pb_exclusion;
@@ -98,6 +99,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       QwtCounter*        ct_from;
       QwtCounter*        ct_to;
       QwtCounter*        ct_noise;
+      QwtCounter*        ct_gaps;
 	
       void set_pbColors      ( QPushButton* );
       void draw_vline        ( double );
@@ -117,6 +119,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
                           
 	private slots:         
       void load              ( void );
+      void gap_check         ( void );
       void details           ( void );
       void new_triple        ( int  );
 
