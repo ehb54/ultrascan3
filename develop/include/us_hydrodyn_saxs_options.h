@@ -40,7 +40,6 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 
       QLabel *lbl_info;
       QLabel *lbl_curve;
-      QLabel *lbl_pr;
       QLabel *lbl_wavelength;
       QLabel *lbl_start_angle;
       QLabel *lbl_end_angle;
@@ -49,8 +48,6 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel *lbl_end_q;
       QLabel *lbl_delta_q;
       QLabel *lbl_water_e_density;
-      QLabel *lbl_max_size;
-      QLabel *lbl_bin_size;
       
       QwtCounter *cnt_wavelength;
       QwtCounter *cnt_start_angle;
@@ -60,8 +57,6 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QwtCounter *cnt_end_q;
       QwtCounter *cnt_delta_q;
       QwtCounter *cnt_water_e_density;
-      QwtCounter *cnt_max_size;
-      QwtCounter *cnt_bin_size;
 
       QCheckBox *cb_hydrate_pdb;
 
@@ -81,8 +76,6 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       void update_end_q(double);
       void update_delta_q(double);
       void update_water_e_density(double);
-      void update_max_size(double);
-      void update_bin_size(double);
       void set_hydrate_pdb();
       void cancel();
       void help();
@@ -93,7 +86,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
 };
 
 // used for adjusting buttons/rounding for the q & angle
-#define SAXS_Q_ROUNDING 100000.0f
+#define SAXS_Q_ROUNDING 1000.0f
 #define SAXS_Q_BUTTONS 3
 
 #endif

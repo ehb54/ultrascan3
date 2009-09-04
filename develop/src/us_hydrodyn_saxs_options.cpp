@@ -41,14 +41,6 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_curve->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_curve->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_pr = new QLabel(tr("SAXS P(r) vs r Options:"), this);
-   Q_CHECK_PTR(lbl_pr);
-   lbl_pr->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
-   lbl_pr->setAlignment(AlignCenter|AlignVCenter);
-   lbl_pr->setMinimumHeight(minHeight1);
-   lbl_pr->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   lbl_pr->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
-
    cb_hydrate_pdb = new QCheckBox(this);
    cb_hydrate_pdb->setText(tr(" Hydrate the Original Model (PDB files only)"));
    cb_hydrate_pdb->setEnabled(true);
@@ -202,42 +194,6 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cnt_water_e_density->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_water_e_density, SIGNAL(valueChanged(double)), SLOT(update_water_e_density(double)));
 
-   lbl_max_size = new QLabel(tr(" Maximum size (Angstrom): "), this);
-   Q_CHECK_PTR(lbl_max_size);
-   lbl_max_size->setAlignment(AlignLeft|AlignVCenter);
-   lbl_max_size->setMinimumHeight(minHeight1);
-   lbl_max_size->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_max_size->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   cnt_max_size= new QwtCounter(this);
-   Q_CHECK_PTR(cnt_max_size);
-   cnt_max_size->setRange(0, 100, 0.01);
-   cnt_max_size->setValue((*saxs_options).max_size);
-   cnt_max_size->setMinimumHeight(minHeight1);
-   cnt_max_size->setEnabled(true);
-   cnt_max_size->setNumButtons(3);
-   cnt_max_size->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_max_size->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_max_size, SIGNAL(valueChanged(double)), SLOT(update_max_size(double)));
-
-   lbl_bin_size = new QLabel(tr(" Bin size (Angstrom): "), this);
-   Q_CHECK_PTR(lbl_bin_size);
-   lbl_bin_size->setAlignment(AlignLeft|AlignVCenter);
-   lbl_bin_size->setMinimumHeight(minHeight1);
-   lbl_bin_size->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_bin_size->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   cnt_bin_size= new QwtCounter(this);
-   Q_CHECK_PTR(cnt_bin_size);
-   cnt_bin_size->setRange(0.01, 100, 0.01);
-   cnt_bin_size->setValue((*saxs_options).bin_size);
-   cnt_bin_size->setMinimumHeight(minHeight1);
-   cnt_bin_size->setEnabled(true);
-   cnt_bin_size->setNumButtons(3);
-   cnt_bin_size->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_bin_size->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_bin_size, SIGNAL(valueChanged(double)), SLOT(update_bin_size(double)));
-
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -285,14 +241,6 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    j++;
    background->addMultiCellWidget(cb_hydrate_pdb, j, j, 0, 1);
    j++;
-   //   background->addMultiCellWidget(lbl_pr, j, j, 0, 1);
-   //   j++;
-   //   background->addWidget(lbl_max_size, j, 0);
-   //   background->addWidget(cnt_max_size, j, 1);
-   //   j++;
-   //   background->addWidget(lbl_bin_size, j, 0);
-   //   background->addWidget(cnt_bin_size, j, 1);
-   //   j++;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
 
@@ -450,18 +398,6 @@ void US_Hydrodyn_SaxsOptions::update_delta_q(double val)
 void US_Hydrodyn_SaxsOptions::update_water_e_density(double val)
 {
    (*saxs_options).water_e_density = (float) val;
-   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-}
-
-void US_Hydrodyn_SaxsOptions::update_max_size(double val)
-{
-   (*saxs_options).max_size = (float) val;
-   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-}
-
-void US_Hydrodyn_SaxsOptions::update_bin_size(double val)
-{
-   (*saxs_options).bin_size = (float) val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
