@@ -8,6 +8,11 @@
 #include <qinputdialog.h>
 #include <qregexp.h>
 
+#if defined(WIN32)
+# include <dos.h>
+#endif
+
+
 #define SAXS_DEBUG
 #define SAXS_DEBUG2
 // #define SAXS_DEBUG_F
@@ -816,10 +821,12 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          // sleep app loop
          {
             int all_done;
+#if !defined(WIN32)
             timespec ns;
             timespec ns_ret;
             ns.tv_sec = 0;
             ns.tv_nsec = 50000000l;
+#endif
             
             do {
                all_done = threads;
@@ -828,7 +835,11 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                   all_done -= saxs_pr_thr_threads[j]->saxs_pr_thr_work_status();
                }
                qApp->processEvents();
+#if defined(WIN32)
+               sleep(1);
+#else
                nanosleep(&ns, &ns_ret);
+#endif
             } while(all_done);
          }
          
@@ -1754,11 +1765,12 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          // sleep app loop
          {
             int all_done;
+#if !defined(WIN32)
             timespec ns;
             timespec ns_ret;
             ns.tv_sec = 0;
             ns.tv_nsec = 500000000l;
-            
+#endif
             do {
                all_done = threads;
                for ( j = 0; j < threads; j++ )
@@ -1766,7 +1778,11 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   all_done -= saxs_Iq_thr_threads[j]->saxs_Iq_thr_work_status();
                }
                qApp->processEvents();
+#if defined(WIN32)
+               sleep(1);
+#else
                nanosleep(&ns, &ns_ret);
+#endif
             } while(all_done);
          }
          

@@ -52,12 +52,20 @@ of the hydrodynamic calculation will be automatically shown after the computatio
 if this checkbox is selected.
 
 <li>
-<b><i>Activate sound notifications</i></b>. A sound file, present in the EMRE COMPLETE THAT, will be
-played after completions of EMRE COMPLETE HERE.
+<b><i>Activate sound notifications</i></b>. A sound file, named
+somo_done.wav, present in the sounds subdirectory of UltraScan, will
+be played after completion of computation of the Build SoMo Bead
+Model, Build AtoB (Grid) Bead Model, Build Grid Bead Model and
+Calculate Hydrodynamics.  Note: if Automatically Calculate Hydrodynamics
+is selected, the sound will not play until Calculate Hydrodynamics is completed.
+Sound under Linux only works if the NAS (Network Audio System) is available.
 
 <li>
-<b><i>Expert mode (skip some warning messages)</i></b>. EMRE COMPLETE HERE
-
+<b><i>Expert mode (skip some warning messages)</i></b>
+Selecting this options automatically unsets 'Automatically view PDB structure upon loading'
+and sets 'Side scroll text window', 'Automatically build somo bead model upon loading pdb', and
+'Automatically show hydrodynamic calculations'.  Also, warning message boxes associated with the automatic bead builder 
+and approximate method are not displayed.
 </ul>
 </td>
 </tr>
