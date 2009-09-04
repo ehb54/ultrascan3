@@ -1,0 +1,83 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>Add/Edit Hybridization Lookup Table</title>
+	<link href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="ultrascan1.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO - Add/Edit Hybridization Lookup Table Module:</h2>
+<p>
+<img SRC="somo-1.png" ALT="SOMO Add/Edit Hybridization Lookup Table SCREEN">
+</center>
+<p>
+
+In this module, you can edit the hybridization table, where you need to list all
+hybridizations (as defined in Tsai et al., J. Mol. Biol. 290:253-266, 1999)
+that will be used for the definitions of all atoms. Each hybridization
+requires a name, a molecular weight (given by the sum of the mw of the 
+atom being defined plus that of the hydrogen atoms bound to it) and a radius
+(in Angstrom units). Load the hybridization file first if one exists, and
+then the SAXS Coefficients File. This is required because the hybridization table
+contains also the atom identifiers linking each atom type to its X-ray
+scattering coefficients
+
+
+<ul>
+<li>
+The first field (<i><b>Number of Hybridizations in File:</b></i>) lists the existing
+hybridizations, and you can select one from the pull-down list. The format is usually
+"atom-number of bonds-H-number of hydrogens" (e.g. C4H3). The selected hybridization
+can then be edited by entering the appropriate parameters in the other fields. To enter
+a new hybridization, go to the <i><b>Hybridization Name:</b></i> field (see below).
+<li>
+The second field (<i><b>Number of SAXS Entries in File:</b></i>) lists the SAXS coefficient
+identifiers present in the relative file, which are associated with the existing hybridizations.
+An identifier can also be selected using the pull-down list to associate it with a new hybridization.
+<li>
+A new hybridization can be entered in the <i><b>Hybridization Name:</b></i> field. The
+format is usually "atom-number of bonds-H-number of hydrogens" (e.g. C4H3).
+<li>
+Edit/enter the molecular weight (given by the sum of the mw of the atom being defined plus
+that of the hydrogen atoms bound to it) in the <i><b>Molecular Weight:</b></i> field.
+<li>
+Edit/enter the atomic radius (in Angstrom units) in the <i><b>Radius (A):</b></i> field.
+</ul><p>
+After editing is completed, the updated table can be saved by clicking on
+<b><i>"Add Hybridization to File"</i></b>
+
+
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://www.ultrascan.uthscsa.edu">http://www.ultrascan.uthscsa.edu</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on September 3, 2009.
+</font>
+</body>
+</html>
