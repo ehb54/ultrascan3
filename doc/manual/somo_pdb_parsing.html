@@ -23,7 +23,7 @@
 <h2>
 SOMO - PDB Parsing Options Module:</h2>
 <p>
-<img SRC="somo-parsing.png" ALT="SOMO Miscellaneous Options Screen">
+<img SRC="somo-parsing.png" ALT="SOMO PDB Parsing Options Screen">
 </center>
 <p>
 
@@ -37,7 +37,7 @@ way SOMO reads and loads the various fields present in PDB files.
 <p>
 <p>
 
-<td><center><img SRC="somo-parsing1.png" ALT="Miscellaneous Options"></td>
+<td><center><img SRC="somo-parsing1.png" ALT="PDB Parsing Options"></td>
 </tr>
 <tr>
 <td align=justify>
@@ -136,7 +136,7 @@ In any case, if this option is selected, the pop-up window shown below will appe
 <b><i>Use automatic bead builder (approximate method)</i></b>.<br>
 This is a "patch" option, allowing to roughly define a <b>single</b> "side-chain" bead for each non-coded residue. This procedure is based on an "average" volume for each atom (with an "average" molecular weight and hydration number), from which a global volume (and molecular weight) is calculated. An "average" radius for each atom is
 also provided for the ASA routines (see <a href=somo_asa.html>here</a>). The bead is then placed at the center of mass of <b>all</b> the atoms within the non-coded residue, and an "average" partial specific volume and color-coding ("10", light green) are also assigned to it. All these "average" values can be modified in the
-<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panel. However, the  will first
+<a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panel. However, the program will first
 perform a check to recognize if the non-coded residue has the structure of an amino acid (i.e., if the N, CA, C, and O atoms are
 <b>all</b> present). In this case, it will generate a standard "peptide bond" bead for these atoms, and a second bead for the non-coded side chain using the approximate method. In any case, as with the previous option, the approximations introduced in the molecular weight and partial specific volume can be bypassed by entering global values in the appropriate fields (respectively in the <a href=somo_hydro.html><b><i>SOMO Hydrodynamic Calculation Options</i></b></a> and in the 
 <a href=somo_misc.html><b><i>Miscellaneous Options</i></b></a> panels. As for the previous option, if this option is selected a pop-up window will appear asking for entering appropriate values for the global molecular weight and partial specific volume, and prompting to check the approximate method parameters.
@@ -228,7 +228,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 12, 2009.
+Last modified on September 4, 2009.
 </font>
 </body>
 </html>

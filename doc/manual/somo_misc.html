@@ -28,7 +28,7 @@ SOMO - Miscellaneous Options Module:</h2>
 <p>
 
 In this module, you can set some options affecting both the model building and
-the hydrodynamic computations stages. The <b>Calculate vbar</b> checkbox
+the hydrodynamic computations stages. The <i><b>Calculate vbar</b></i> checkbox
 allows the computation of the <i>partial specific volume (vbar)</i> in standard
 conditions (water @ 20°C) of the structure from its composition, using the
 residues' values stored in the <a href= "somo-residue-0.png">residue table</a>
@@ -39,19 +39,34 @@ parsing the PDB file, the computed <i>vbar</i> could be not correct; likewise, i
 the <a href=somo_pdb_parsing.html><b>Automatic Bead Builder </b></a> is used for
 non-coded residues, the <i>vbar</i> could also be incorrect. In these cases, entering
 an experimental value will be the best option.
-If a <i>vbar</i> value is entered in this field (and the <b>Calculate vbar</b> checkbox
+If a <i>vbar</i> value is entered in this field (and the <i><b>Calculate vbar</b></i> checkbox
 is deselected), a message will be displayed in the progress window ("ATTENTION: vbar = ")
 when the model is being built. This should avoid the use of incorrect external <i>vbar</i>
-values resulting by inadvertently leaving the <b>Calculate vbar</b> checkbox deselected
-from a previous model-generating session. <br>The <b>Select vbar</b> button will instead load
+values resulting by inadvertently leaving the <i><b>Calculate vbar</b></i> checkbox deselected
+from a previous model-generating session. <br>The <i><b>Select vbar</b></i> button will instead load
 a <i>vbar</i> value calculated from protein sequence by using the <a href=vbar.html>UltraScan
-vbar calculation routine</a>.
+vbar calculation routine</a>. WARNING: whenever possible, use <b>experimental</b> <i>vbar</i>
+values, as many factors can affect its computation!!!! The routines provided here should be
+considered just as a best approximation in absence of experimental data.
 
 <p>The <i><b>Hydration Water Vol. (A^3)</b></i> field sets the volume of the water
 of hydration molecules, which has been found (Gerstein and Chothia, Proc. Natl.
 Acad. Sci. USA 93:10167-10172, 1996) to be on average 24.5 A<sup>3</sup>,
 different from that of either bulk (29.7 A<sup>3</sup>) or isolated (11.5
-A<sup>3</sup>) water molecules (default: <b>24.041 A<sup>3</sup></b>). <p>
+A<sup>3</sup>) water molecules (default: <b>24.041 A<sup>3</sup></b>).
+<p>
+The <i><b>Enable Peptide Bond Rule</b></i> checkbox controls if the <i>peptide
+bond rule</i> is used by the SoMo method. With this rule, the peptide bond segment is
+used for the main chain beads of a protein structure. These beads are thus positioned at
+the cog of the (CA-C-O)<sub>n</sub>-(N)<sub>(n+1)</sub> atoms, except when PRO is the (n+1)
+residue. In this case, the peptide bond bead is positioned at the cog of the (CA-C-O)<sub>n</sub>
+atoms. Additional rules control the generation of the OXT bead and of the first N atom at the
+beginning of each protein chain. All these rules are controlled by "special" residues
+in the <i>somo.residue</i> table. To gain total control over the positioning, volumes and masses
+of every bead, the <i><b>Enable Peptide Bond Rule</b></i> checkbox should be <b>deselected</b>.
+In this case, the descriptions present in the <i>somo.residue</i> table are fully effective.
+(default: <b>selected</b>). 
+<p>
 The <b>Average Parameters for Automatic Bead Builder:</b> submenu contains a
 series of fields governing the <i>average parameters</i> that will be used by the
 <i>Automatic Bead Builder</i> routine when this option is selected (see
@@ -113,7 +128,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 12, 2009.
+Last modified on September 3, 2009.
 </font>
 </body>
 </html>

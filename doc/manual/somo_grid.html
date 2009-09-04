@@ -27,25 +27,34 @@ SOMO - Grid Options Module:</h2>
 </center>
 <p>
 
-This module controls the parameter of the <b>Build AtoB (Grid) Bead Model </b> routine, which is still under development at this stage. Currently, a basic mode is implemented, in which the cubic grid is applied, beads are generated and labeled <b>all</b> as
-being buried, and the overlaps are all removed in one pass. The ASA re-check routine <b>must</b> be active to properly classify
-the beads as being exposed or buried following overlap removal. This step is controlled by its own parameter, see <a href=somo_asa.html>here</a>.
+This module controls the parameters of the <b>Build AtoB (Grid) Bead Model </b> and <b>Build Grid Bead Model</b>
+routines.
 <p>
-In the <i>Computations Relative to:</i> section, the user selects if the coordinates of each bead built by the grid routine have to be placed in the <b>Center of Mass (default)</b> between all atoms whose centers fall within the cubelet, or in the <b>Center of Cubelet</b>. These options are obviously mutually exclusive.
+In the <i>Computations Relative to:</i> section, the user selects if the coordinates of each bead built by the grid routine have to be placed in the <i><b>Center of Mass</b></i> <b>(default)</b> between all atoms (or beads) whose
+centers fall within the cubelet, or in the <i><b>Center of Cubelet</b></i>. These options are obviously mutually
+exclusive.
 <p>
-The <i>Cube Side (Angstrom):</i> field determines the dimension of the grid cubelets (<b>default: 5 A</b>).
+The <i><b>Cube Side (Angstrom):</b></i> field determines the dimension of the grid cubelets (<b>default: 5 A</b>).
 <p>
 The next three independently selectable options controls other steps or features of the grid-based method:
 <p>
-<i>Apply Cubic Grid</i> allows the grid procedure to be executed (<b>deafult: active</b>). It could be deselected to allow the use of the Grid module for overlap removal of a previously loaded bead model.
+<i><b>Apply Cubic Grid</b></i> allows the grid procedure to be executed (<b>deafult: active</b>). It could be deselected to allow the use of the Grid module for overlap removal of a previously loaded bead model.
 <p>
-<i>Hydrate the Original Model</i>. This routine is <b>not</b> available yet. It was developed by Marcelo Nollmann for his revision of the original AtoB program. More explanations will be provided once the routine will be fully implemented and tested.
+<i><b>Add Theorethical Hydration (PDB only)</b></i>. This is a newly implemented routine that uses the atomic hydration definitions present in the new version of the <i>somo.residue</i> table (see <a href="somo_residue.html">here</a>). It basically adds the volume of the water molecules theoretically bound to each atom within a cubelet to their anhydrous volumes. This enhancement greatly improves the computation of the hydrodynamic parameters using the <b>Grid (AtoB)</b> method (Brookes, Demeler and Rocco, in preparation).
 <p>
-Likewise, the <i>Expand Bead to Tangency</i> routine has not been fully implemented at this stage. The idea behind this procedure was to cope with the voids sometimes generated between beads by the Grid approach. More explanations will be provided once the routine will be fully implemented and tested.
+The <i><b>Expand Bead to Tangency</b></i> routine has not been implemented at this stage, therefore this button is not available. The idea behind this procedure was to cope with the voids sometimes generated between beads by the Grid approach. More explanations will be provided once the routine will be fully implemented and tested.
 <p>
-Finally, the <b>Adjust Overlap Options</b> button will activate the <b>Grid beads</b> tab in the
- <a href=somo_overlap.html><b>Bead Overlap Reduction Options</b></a> module, allowing the setting of the 
-various parameters governing the execution of the overlap removal routines. (<b>default: active</b>).
+The <b>Adjust Overlap Options</b> button will open the <a href=somo_grid_overlap.html><b>Grid Bead Overlap Reduction Options</b></a> module, allowing the setting of the various parameters governing the execution of the overlap removal routines.
+<p>
+Finally, the <i><b>Enable ASA Screening</b></i> option will enable the new ASA screening routine that we have
+developed to improve the <b>Build AtoB (Grid) Bead Model</b> performance. This will allow a better treatment of the beads during the overlap removal phase (see <a href=somo_grid_overlap.html>here</a>), by first screening the beads
+placed in the grid for being exposed or buried (see <a href=somo_asa.html>here</a>). Importantly, the <i>Outward
+Translation</i> can be applied during the overlap removal phase of the exposed beads, leading to much better
+reproduction of the experimental parameters nearly independently of the grid size chosen (Brookes, Demeler and Rocco,
+in preparation). If this checkbox is deselected, a basic mode is operational, in which the cubic grid is applied,
+beads are generated and labeled <b>all</b> as being buried, and the overlaps are all removed in one pass. The ASA
+re-check routine <b>must</b> be then active to properly classify the beads as being exposed or buried following
+overlap removal. This step is controlled by its own parameter, see <a href=somo_asa.html>here</a>.
 <p>
 
 <hr>
@@ -63,7 +72,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 13, 2009.
+Last modified on September 3, 2009.
 </font>
 </body>
 </html>

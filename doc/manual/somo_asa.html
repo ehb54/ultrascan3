@@ -38,42 +38,45 @@ computer program for fast exact calculation of accessible and molecular surface 
 and average surface curvature. J. Comput. Chem. 23:600-609, 2002), and a rolling sphere
 algorithm (ASAB1, see Spotorno et al., Eur. J. Biophys. 25:373-384, 26:417, 1997; Rai et al., 
 Structure 13:723-734, 2005) based on Lee and Richards' method (Lee B, Richards FM.
-The interpretation of protein structures: estimation of static accessibility. J. Mol. Biol. 55:379-400, 1971). During our testing, we found that the Voronoi method performs well
-for relatively small, compact structures, but was a bit hectic when examining large structures,
-while ASAB1 was more reliable and is thus presented as the default option. As for the
-bead re-check, only the rolling sphere method is available.
+The interpretation of protein structures: estimation of static accessibility. J. Mol. Biol. 55:379-400, 1971).
+During our testing, we found that the Voronoi method performs well for relatively small,
+compact structures, but was a bit hectic when examining large structures, while ASAB1 was
+more reliable and is thus presented as the default option. As for the bead re-check,
+only the rolling sphere method is available.
 <p>
-The first two checkboxes, <b>Perform ASA Calculation</b> and <b>Re-check bead ASA</b>,
+The first two checkboxes, <i><b>Perform ASA Calculation</b></i> and <i><b>Re-check bead ASA</b></i>,
 enable or disable these operations. Both are recommended (<b>default</b>).
 <br>Next is the choice of the ASA method for operating on the atomic structure (PDB file),
-<b>Voronoi Tessellation</b> or <b>Rolling Sphere</b>. <b>Rolling Sphere</b> is the <b>default</b>.
-<br>In the <i>ASA Probe Radius (A)</i> field, you set the radius of the
+<i><b>Voronoi Tessellation</b></i> or <i><b>Rolling Sphere</b></i>. <i><b>Rolling Sphere</b></i>
+is the <b>default</b>.
+<br>In the <i><b>ASA Probe Radius (A)</b></i> field, you set the radius of the
 hypothetical (water) molecule used to probe the surface of the molecule for 
 accessibility. The <b>default</b> value is <b>1.4 Angstroms</b>.
-<br>Likewise, in the <i>ASA Probe Recheck Radius (A)</i> field, you set the
+<br>Likewise, in the <i><b>ASA Probe Recheck Radius (A)</b></i> field, you set the
 radius of the probe used to re-check the beads in the final bead model for
 accessibility. The <b>default</b> value is <b>1.4 Angstroms</b>.
-<br>In the <i>SOMO ASA Threshold (A^2)</i> field, you set the accessible surface
+<br>In the <i><b>SOMO ASA Threshold (A^2)</b></i> field, you set the accessible surface
 area threshold above which a main- or side-chain will be considered 
-exposed to the solvent in the SOMO method. The <b>default</b> value is <b>20 A<sup>2</sup></b>.
-<br>The <i>SOMO Bead ASA Threshold %</i> field lets you set the % of the surface
+exposed to the solvent in the SoMo method. The <b>default</b> value is <b>20 A<sup>2</sup></b>.
+<br>The <i><b>SOMO Bead ASA Threshold %</b></i> field lets you set the % of the surface
 of a bead that must be at least accessible to re-classify as exposed a bead
-previously considered to be buried in the SOMO method. Beads are initially assigned as being
+previously considered to be buried in the SoMo method. Beads are initially assigned as being
 buried or exposed based on the status of the main- or side-chain they represent.
 However, during overlap removal some beads initially classified as buried may
 become exposed, hence the need to re-check their status. This operation is 
-performed if the <b>Re-check bead ASA</b> checkbox is selected (recommended).
+performed if the <i><b>Re-check bead ASA</b></i> checkbox is selected (recommended).
 The <b>default</b> value is <b>50%</b> for SOMO-type beads.
-<br>Likewise, in the <i>Grid ASA Threshold (A^2)</i> field, you set the accessible surface
+<br>Likewise, in the <i><b>Grid ASA Threshold (A^2)</b></i> field, you set the accessible surface
 area threshold above which primary beads will be considered to be exposed to the solvent
 in the AtoB (Grid) method. This will allow a better treatment of the beads during the overlap
-removal phase. <b>Note: this option has NOT yet been implemented</b>.
-<br>Finally, the <i>Grid Bead ASA Threshold %</i> field lets you set the % of the surface
+removal phase.
+<br>Finally, the <i><b>Grid Bead ASA Threshold %</b></i> field lets you set the % of the surface
 of a bead that must be at least accessible to re-classify as exposed a bead
-previously considered to be buried in the Grid (AtoB) method. Currently, beads are <b>all</b>
-initially assigned as being buried, and their final status <b>must</b> be checked by
+previously considered to be buried in the Grid (AtoB) method. If the <i>Enable ASA screening</i>
+function in the <a href=somo_grid.html>SOMO Grid Function Options (AtoB)</a> module is <b>not</b>
+selected, beads are <b>all</b> assigned as being buried, and their final status <b>must</b> be checked by
 the <b>Re-check bead ASA</b> routine. The <b>default</b> value is <b>30%</b>. 
-<br>The <i>ASAB1 Step Size (A)</i> field defines the increment between the 2D slices
+<br>The <i><b>ASAB1 Step Size (A)</b></i> field defines the increment between the 2D slices
 in which the structure (or the model) is subdivided in the rolling sphere method, which are then integrated.
 The <b>default</b> value is <b>1 Angstrom</b>.
 
@@ -93,7 +96,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on May 13, 2009.
+Last modified on September 3, 2009.
 </font>
 </body>
 </html>
