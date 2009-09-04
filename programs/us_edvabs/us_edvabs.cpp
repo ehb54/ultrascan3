@@ -76,6 +76,16 @@ US_Edvabs::US_Edvabs() : US_Widgets()
                        SLOT  ( new_triple         ( int ) ) );
    specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
 
+   // Row 4
+   pb_gaps = us_pushbutton( tr( "Check for Scan Gaps" ), false );
+   connect( pb_gaps, SIGNAL( clicked() ), SLOT( gap_check() ) );
+   specs->addWidget( pb_gaps, s_row, 0, 1, 2 );
+
+   ct_gaps = us_counter ( 1, 10.0, 100.0 ); 
+   ct_gaps->setValue( 50 );
+   ct_gaps->setStep ( 10 );
+   specs->addWidget( ct_gaps, s_row++, 2, 1, 2 );
+
    // Row 5
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
    specs->addWidget( lb_scan, s_row++, 0, 1, 4 );
@@ -276,6 +286,7 @@ void US_Edvabs::reset( void )
 
    // Disable pushbuttons
    pb_details     ->setEnabled( false );
+   pb_gaps        ->setEnabled( false );
 
    pb_excludeRange->setEnabled( false );
    pb_exclusion   ->setEnabled( false );
@@ -326,6 +337,66 @@ void US_Edvabs::details( void )
    dialog->exec();
    qApp->processEvents();
    delete dialog;
+}
+
+void US_Edvabs::gap_check( void )
+{  
+   int threshold = (int)ct_gaps->value();
+            
+   US_DataIO::scan s;
+   QString         gaps;
+
+   int scanNumber = 1;
+
+//int j = 0;
+   foreach ( s, data.scanData )
+   {
+      int maxGap    = 0;
+      int gapLength = 0;
+      int location;
+
+      for ( int i = 0; i < s.readings.size(); i++ )
+      {
+         int byte = i / 8;
+         int bit  = i % 8;
+
+         if ( s.interpolated[ byte ]  &  1 << 7 - bit )
+           gapLength++;
+         else
+           gapLength = 0;
+
+         //maxGap = max( maxGap, gapLength );
+         if ( gapLength > maxGap )
+         {
+            //qDebug() << i;
+            maxGap   = gapLength;
+            location = i;
+         }
+      }
+
+// For testing      
+threshold = 0;
+
+      if ( maxGap >= threshold )
+      { 
+         double radius = s.readings[ 0 ].d.radius + location * 0.001;
+
+         gaps += tr( "Scan " ) + QString::number( scanNumber ) + 
+                 tr( " has a maximum reading gap of " ) + QString::number( maxGap ) +
+                 tr( " starting at radius " ) + 
+                 QString::number( radius, 'f', 3 ) + "\n";
+      }
+                             
+      //qDebug() << "scan " << j++ << " maxgap is " << maxGap;
+
+      scanNumber++;
+   }
+
+   if ( ! gaps.isEmpty() )
+      QMessageBox::information( this,
+            tr( "Excessive Data Gaps" ),
+            tr( "The following have data gaps exceeding the defined"
+                " threshold\n\n" ) + gaps );
 }
 
 void US_Edvabs::load( void )
@@ -411,6 +482,7 @@ void US_Edvabs::load( void )
 
    // Enable pushbuttons
    pb_details   ->setEnabled( true );
+   pb_gaps      ->setEnabled( true );
    pb_include   ->setEnabled( true );
    pb_exclusion ->setEnabled( true );
    pb_meniscus  ->setEnabled( true );
