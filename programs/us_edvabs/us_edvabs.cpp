@@ -77,12 +77,10 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    specs->addWidget( cb_triple, s_row++, 2, 1, 2 );
 
    // Row 4
-   pb_gaps = us_pushbutton( tr( "Check for Scan Gaps" ), false );
-   connect( pb_gaps, SIGNAL( clicked() ), SLOT( gap_check() ) );
-   specs->addWidget( pb_gaps, s_row, 0, 1, 2 );
+   QLabel* lb_gaps = us_label( tr( "Threshold for Scan Gaps" ), -1 );
+   specs->addWidget( lb_gaps, s_row, 0, 1, 2 );
 
    ct_gaps = us_counter ( 1, 10.0, 100.0 ); 
-   ct_gaps->setValue( 50 );
    ct_gaps->setStep ( 10 );
    specs->addWidget( ct_gaps, s_row++, 2, 1, 2 );
 
@@ -262,6 +260,8 @@ void US_Edvabs::reset( void )
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
 
+   ct_gaps->setValue( 10 );
+
    ct_from->disconnect();
    ct_from->setMinValue( 0 );
    ct_from->setMaxValue( 0 );
@@ -286,7 +286,6 @@ void US_Edvabs::reset( void )
 
    // Disable pushbuttons
    pb_details     ->setEnabled( false );
-   pb_gaps        ->setEnabled( false );
 
    pb_excludeRange->setEnabled( false );
    pb_exclusion   ->setEnabled( false );
@@ -346,16 +345,22 @@ void US_Edvabs::gap_check( void )
    US_DataIO::scan s;
    QString         gaps;
 
-   int scanNumber = 1;
+   int             scanNumber = 1;
+   bool            deleteAll  = false;
 
-//int j = 0;
    foreach ( s, data.scanData )
    {
+      // If scan has been deleted, skip to next
+      if ( ! includes.contains( scanNumber - 1 ) ) continue;
+
       int maxGap    = 0;
       int gapLength = 0;
       int location;
 
-      for ( int i = 0; i < s.readings.size(); i++ )
+      int leftPoint  = US_DataIO::index( s, range_left  );
+      int rightPoint = US_DataIO::index( s, range_right );
+
+      for ( int i = leftPoint; i <= rightPoint; i++ )
       {
          int byte = i / 8;
          int bit  = i % 8;
@@ -365,38 +370,118 @@ void US_Edvabs::gap_check( void )
          else
            gapLength = 0;
 
-         //maxGap = max( maxGap, gapLength );
          if ( gapLength > maxGap )
          {
-            //qDebug() << i;
             maxGap   = gapLength;
             location = i;
          }
       }
 
-// For testing      
-threshold = 0;
-
       if ( maxGap >= threshold )
       { 
-         double radius = s.readings[ 0 ].d.radius + location * 0.001;
+         QwtPlotCurve* curve         = NULL;
+         bool          deleteCurrent = false;
 
-         gaps += tr( "Scan " ) + QString::number( scanNumber ) + 
-                 tr( " has a maximum reading gap of " ) + QString::number( maxGap ) +
-                 tr( " starting at radius " ) + 
-                 QString::number( radius, 'f', 3 ) + "\n";
+         // Hightlight scan
+         ct_to->setValue( 0.0 );  // Unfocus everything
+
+         QString         seconds = QString::number( s.seconds );
+         QwtPlotItemList items   = data_plot->itemList();
+         
+         for ( int i = 0; i < items.size(); i++ )
+         {
+            if ( items[ i ]->rtti() == QwtPlotItem::Rtti_PlotCurve )
+            {
+               if ( items[ i ]->title().text().contains( seconds ) )
+               {
+                  curve = dynamic_cast< QwtPlotCurve* >( items[ i ] );
+                  break;
+               }
+            }
+         }
+
+         if ( curve == NULL )
+         {
+            qDebug() << "Cannot find curve during gap check";
+            return;
+         }
+
+         // Popup unless delete all is set
+         if ( ! deleteAll )
+         {
+            // Color the selected point
+            QPen   p = curve->pen();
+            QBrush b = curve->brush();
+            
+            p.setColor( Qt::red );
+            b.setColor( Qt::red );
+
+            curve->setPen  ( p );
+            curve->setBrush( b );
+            data_plot->replot();
+
+            // Ask the user what to do
+            QMessageBox box;
+
+            box.setWindowTitle( tr( "Excessive Scan Gaps Detected" ) );
+            
+            double radius = s.readings[ 0 ].d.radius + location * 0.001;
+            
+            gaps = tr( "Scan " ) 
+                 + QString::number( scanNumber ) 
+                 + tr( " has a maximum reading gap of " ) 
+                 + QString::number( maxGap ) 
+                 + tr( " starting at radius " ) 
+                 + QString::number( radius, 'f', 3 );
+
+            box.setText( gaps );
+            box.setInformativeText( tr( "Delete?" ) );
+
+            QPushButton* pb_delete = box.addButton( tr( "Delete" ), 
+                  QMessageBox::YesRole );
+         
+            QPushButton* pb_deleteAll = box.addButton( tr( "Delete All" ), 
+                  QMessageBox::AcceptRole );
+         
+            QPushButton* pb_skip = box.addButton( tr( "Skip" ), 
+                  QMessageBox::NoRole );
+         
+            QPushButton* pb_cancel = box.addButton( tr( "Cancel" ), 
+                  QMessageBox::RejectRole );
+         
+            box.setEscapeButton ( pb_cancel );
+            box.setDefaultButton( pb_delete );
+
+            box.exec();
+
+            if ( box.clickedButton() == pb_delete )
+               deleteCurrent = true;
+
+            else if ( box.clickedButton() == pb_deleteAll )
+            {
+               deleteAll     = true;
+               deleteCurrent = true;
+            }
+            else if ( box.clickedButton() == pb_skip )
+               continue;
+            
+            else // cancel
+               return;
+         }
+
+         // Delete the scan
+         if ( deleteAll || deleteCurrent )
+         {
+            includes.removeOne( scanNumber - 1 );
+            replot();
+
+            ct_to  ->setMaxValue( includes.size() );
+            ct_from->setMaxValue( includes.size() );
+         }
       }
                              
-      //qDebug() << "scan " << j++ << " maxgap is " << maxGap;
-
       scanNumber++;
    }
-
-   if ( ! gaps.isEmpty() )
-      QMessageBox::information( this,
-            tr( "Excessive Data Gaps" ),
-            tr( "The following have data gaps exceeding the defined"
-                " threshold\n\n" ) + gaps );
 }
 
 void US_Edvabs::load( void )
@@ -482,7 +567,6 @@ void US_Edvabs::load( void )
 
    // Enable pushbuttons
    pb_details   ->setEnabled( true );
-   pb_gaps      ->setEnabled( true );
    pb_include   ->setEnabled( true );
    pb_exclusion ->setEnabled( true );
    pb_meniscus  ->setEnabled( true );
@@ -690,7 +774,12 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
             le_dataRange->setText( s.sprintf( "%.3f - %.3f", 
                      range_left, range_right ) );
 
+            step = PLATEAU;
             plot_range();
+
+            qApp->processEvents();
+            gap_check();
+            
             pb_dataRange->setIcon( check );
             pb_plateau  ->setEnabled( true );
             pb_noise    ->setEnabled( true );
