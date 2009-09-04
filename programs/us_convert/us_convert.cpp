@@ -304,7 +304,7 @@ void US_Convert::read( void )
    QString dir = QFileDialog::getExistingDirectory( this, 
          tr( "Raw Data Directory" ),
          US_Settings::dataDir(),
-         QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
+         QFileDialog::DontResolveSymlinks );
 
    if ( dir.isEmpty() ) return; 
 
@@ -312,7 +312,7 @@ void US_Convert::read( void )
    le_dir  ->setText( dir );
 
    // Get legacy file names
-   QDir        d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
+   QDir d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
    d.makeAbsolute();
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
@@ -326,7 +326,7 @@ void US_Convert::read( void )
       // Look for a proper filename match:
       // Optional channel + 4 to 6 digits + dot + file type + cell number
 
-      QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d" );
+      QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
       QString f = files[ i ].toUpper();
       
       if ( rx.indexIn( f ) < 0 ) continue;

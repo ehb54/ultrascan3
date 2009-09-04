@@ -412,7 +412,7 @@ void US_Edvabs::gap_check( void )
             // Color the selected point
             QPen   p = curve->pen();
             QBrush b = curve->brush();
-            
+
             p.setColor( Qt::red );
             b.setColor( Qt::red );
 
@@ -462,10 +462,22 @@ void US_Edvabs::gap_check( void )
                deleteAll     = true;
                deleteCurrent = true;
             }
-            else if ( box.clickedButton() == pb_skip )
+
+            else 
+            {
+               // Uncolor scan
+               p.setColor( Qt::yellow );
+               b.setColor( Qt::yellow );
+
+               curve->setPen  ( p );
+               curve->setBrush( b );
+               data_plot->replot();
+            }
+
+            if ( box.clickedButton() == pb_skip )
                continue;
             
-            else // cancel
+            if ( box.clickedButton() == pb_cancel )
                return;
          }
 
@@ -490,7 +502,7 @@ void US_Edvabs::load( void )
    workingDir = QFileDialog::getExistingDirectory( this, 
          tr("Raw Data Directory"),
          US_Settings::resultDir(),
-         QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks );
+         QFileDialog::DontResolveSymlinks );
 
    if ( workingDir.isEmpty() ) return; 
 
