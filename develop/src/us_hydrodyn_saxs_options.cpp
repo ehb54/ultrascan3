@@ -244,7 +244,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
 
-   setMinimumWidth(390);
+   setMinimumWidth(433);
 }
 
 void US_Hydrodyn_SaxsOptions::cancel()
