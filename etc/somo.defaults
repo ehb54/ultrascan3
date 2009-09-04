@@ -108,5 +108,5 @@ SOMO Config file - computer generated, please do not edit...
 0.2		# angle stepsize
 0.334		# Water electron density
 40		# maximum size
-0.4		# bin size
+1		# bin size
 0		# hydrate PDB model? true = yes

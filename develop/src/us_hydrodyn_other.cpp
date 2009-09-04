@@ -1567,7 +1567,7 @@ void US_Hydrodyn::set_default()
       saxs_options.delta_angle = 0.2f;       // angle stepsize
       saxs_options.water_e_density = 0.334f; // water electron density in e/A^3
       saxs_options.max_size = 40.0;          // maximum size (A)
-      saxs_options.bin_size = 0.4f;          // Bin size (A)
+      saxs_options.bin_size = 1.0f;          // Bin size (A)
       saxs_options.hydrate_pdb = false;       // Hydrate the PDB model? (true/false)
    }
 
@@ -1813,7 +1813,7 @@ void US_Hydrodyn::write_bead_tsv(QString fname, vector<PDB_atom> *model) {
                  "%s~%s~%s~"
                  "[%f,%f,%f]~%s~%f~%f~%f~"
                  "%d~%d~%d~%s~%f~%s~"
-                 "%d~%f~%s~%s~%d~%u~%u~"
+                 "%d~%f~%s~%s~%d~%f~%u~"
                  "%f~%f~%f~"
                  "[%f,%f,%f]~[%f,%f,%f]~[%f, %f, %f]~%u~%s\n",
 
