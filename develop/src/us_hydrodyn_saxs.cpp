@@ -10,6 +10,7 @@
 
 #if defined(WIN32)
 # include <dos.h>
+# include <stdlib.h>
 #endif
 
 
@@ -836,7 +837,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                }
                qApp->processEvents();
 #if defined(WIN32)
-               sleep(1);
+               _sleep(1);
 #else
                nanosleep(&ns, &ns_ret);
 #endif
@@ -1779,7 +1780,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                }
                qApp->processEvents();
 #if defined(WIN32)
-               sleep(1);
+               _sleep(1);
 #else
                nanosleep(&ns, &ns_ret);
 #endif
