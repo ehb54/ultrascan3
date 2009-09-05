@@ -10,12 +10,15 @@
 #include "../include/us_hydrodyn_pat.h"
 #include "../include/us_hydrodyn_asab1.h"
 #include "../include/us_hydrodyn_grid_atob.h"
+#include "../include/us_revision.h"
 #include <qregexp.h>
 #include <qfont.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+#undef DEBUG
 
 #ifndef WIN32
 #   include <unistd.h>
@@ -54,23 +57,29 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    //        O_WRONLY | O_CREAT | O_TRUNC, 0666);
    // dup2(r_stderr, STDERR_FILENO);
 
-   somo_dir = USglobal->config_list.root_dir + "/somo";
+   somo_dir = USglobal->config_list.root_dir + SLASH +  "somo";
    QDir dir1(somo_dir);
    if (!dir1.exists())
    {
       dir1.mkdir(somo_dir);
    }
-   somo_pdb_dir = somo_dir + "/structures";
+   somo_pdb_dir = somo_dir + SLASH + "structures";
    QDir dir2(somo_pdb_dir);
    if (!dir2.exists())
    {
       dir2.mkdir(somo_pdb_dir);
    }
-   somo_tmp_dir = somo_dir + "/tmp";
+   somo_tmp_dir = somo_dir + SLASH + "tmp";
    QDir dir3(somo_tmp_dir);
    if (!dir3.exists())
    {
       dir3.mkdir(somo_tmp_dir);
+   }
+   QString somo_saxs_dir = somo_dir + SLASH + "saxs";
+   QDir dir4(somo_saxs_dir);
+   if (!dir4.exists())
+   {
+      dir4.mkdir(somo_saxs_dir);
    }
 
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -142,22 +151,24 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    results.asa_rg_neg = 0.0;
    rasmol = new QProcess(this);
    rasmol->setWorkingDirectory(
-                               QDir(USglobal->config_list.system_dir +
+                               QDir(USglobal->config_list.system_dir + SLASH +
 #if defined(BIN64)
-                                    "/bin64/"
+                                     "bin64"
 #else
                                     "/bin/"
 #endif
+				    + SLASH
                                     ));
 
    bead_model_from_file = false;
-   QString RMP = "RASMOLPATH=" + USglobal->config_list.system_dir +
+   QString RMP = "RASMOLPATH=" + USglobal->config_list.system_dir + SLASH +
 #if defined(BIN64)
-      "/bin64/"
+      "bin64"
 #else
-      "/bin/"
+      "bin"
 #endif
-      ;
+     + SLASH
+     ;
    bead_model_prefix = "";
    if (!getenv("RASMOLPATH"))
    {
@@ -172,6 +183,19 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
       }
    }
    play_sounds(1);
+   editor->append(QString(tr("\n\nWelcome to UltraScan %1 revision %2 SOMO\n")
+                          // "somo dir is <%3>\n"
+                          // "somo pdb dir is <%4>\n"
+			  // "somo tmp is <%5>\n"
+			  // "somo saxs is <%6>\n"
+			  )
+		  .arg(US_Version)
+		  .arg(REVISION)
+		  // .arg(somo_dir)
+		  // .arg(somo_pdb_dir)
+		  // .arg(somo_tmp_dir)
+		  // .arg(somo_saxs_dir)
+		  );
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -992,13 +1016,16 @@ void US_Hydrodyn::load_pdb()
       argument.append("-e");
 #endif
 #if defined(BIN64)
-      argument.append(USglobal->config_list.system_dir + "/bin64/rasmol");
+      argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
 #else
-      argument.append(USglobal->config_list.system_dir + "/bin/rasmol");
+      argument.append(USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol");
 #endif
       argument.append(QFileInfo(filename).fileName());
       rasmol->setWorkingDirectory(QFileInfo(filename).dirPath());
       rasmol->setArguments(argument);
+      // editor->append(QString("starting rasmol <%1>\n").arg(argument.join("><")));
+      // printf("starting rasmol<%s><s>\n", argument.join("><").ascii());
+      // fflush(stdout);
       if (advanced_config.auto_view_pdb &&
           !rasmol->start())
       {
@@ -2406,8 +2433,8 @@ void US_Hydrodyn::bead_saxs()
       }
       
       printf("selected models size %u bead_models.size %u\n",
-             bead_models.size(),
-             selected_models.size()
+             (unsigned int)bead_models.size(),
+             (unsigned int)selected_models.size()
              );
       if (saxs_plot_widget)
       {

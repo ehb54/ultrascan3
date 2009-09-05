@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include <qsound.h>
 
+#undef DEBUG
 #ifndef WIN32
 #   include <unistd.h>
 #   define SLASH "/"

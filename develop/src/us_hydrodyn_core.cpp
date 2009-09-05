@@ -19,6 +19,7 @@
 
 // #define OLD_ASAB1_SC_COMPUTE
 
+#undef DEBUG
 // #define DEBUG
 // #define DEBUG1
 // #define AUTO_BB_DEBUG
@@ -4274,7 +4275,7 @@ int US_Hydrodyn::compute_asa()
 
    // pass 1 assign bead #'s, chain #'s, initialize data
 
-   FILE *asaf = fopen(QString(somo_tmp_dir + "/atom.asa"), "w");
+   FILE *asaf = fopen(QString(somo_tmp_dir + SLASH + "atom.asa"), "w");
 
 
    // for (unsigned int i = 0; i < model_vector.size (); i++)

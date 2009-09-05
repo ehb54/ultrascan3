@@ -1,5 +1,7 @@
 #include "../include/us_hydrodyn_grid_atob.h"
 
+#undef DEBUG
+
 /*Declaration of new structure types*/
 
 /* Declaration of prototypes...*/
