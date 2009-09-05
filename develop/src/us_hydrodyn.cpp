@@ -183,7 +183,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
       }
    }
    play_sounds(1);
-   editor->append(QString(tr("\n\nWelcome to UltraScan %1 revision %2 SOMO\n")
+   editor->append(QString(tr("\n\nWelcome to SOMO UltraScan %1 %2 SOMO\n")
                           // "somo dir is <%3>\n"
                           // "somo pdb dir is <%4>\n"
 			  // "somo tmp is <%5>\n"
