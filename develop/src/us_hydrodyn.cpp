@@ -183,19 +183,29 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
       }
    }
    play_sounds(1);
-   editor->append(QString(tr("\n\nWelcome to SOMO UltraScan %1 %2 SOMO\n")
-                          // "somo dir is <%3>\n"
-                          // "somo pdb dir is <%4>\n"
-			  // "somo tmp is <%5>\n"
-			  // "somo saxs is <%6>\n"
-			  )
+   editor->append(QString(tr("\n\nWelcome to SOMO UltraScan %1 %2\n"))
 		  .arg(US_Version)
 		  .arg(REVISION)
-		  // .arg(somo_dir)
-		  // .arg(somo_pdb_dir)
-		  // .arg(somo_tmp_dir)
-		  // .arg(somo_saxs_dir)
 		  );
+   QColor save_color = editor->color();
+   editor->setColor("red");
+   if (!dir1.exists())
+   {
+      editor->append(tr("Warning: Directory ") + somo_dir + tr(" does not exist.\n"));
+   }
+   if (!dir2.exists())
+   {
+      editor->append(tr("Warning: Directory ") + somo_pdb_dir + tr(" does not exist.\n"));
+   }
+   if (!dir3.exists())
+   {
+      editor->append(tr("Warning: Directory ") + somo_tmp_dir + tr(" does not exist.\n"));
+   }
+   if (!dir4.exists())
+   {
+      editor->append(tr("Warning: Directory ") + somo_saxs_dir + tr(" does not exist.\n"));
+   }
+   editor->setColor(save_color);
 }
 
 US_Hydrodyn::~US_Hydrodyn()
