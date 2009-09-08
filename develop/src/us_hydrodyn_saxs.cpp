@@ -8,9 +8,11 @@
 #include <qinputdialog.h>
 #include <qregexp.h>
 
+#define SLASH "/"
 #if defined(WIN32)
 # include <dos.h>
 # include <stdlib.h>
+# define SLASH "\\"
 #endif
 
 
@@ -108,9 +110,9 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    pb_plot_saxs->setEnabled(source ? false : true);
    te_filename2->setText(filename);
    model_filename = filename;
-   atom_filename = USglobal->config_list.system_dir + "/etc/somo.atom";
-   hybrid_filename = USglobal->config_list.system_dir + "/etc/somo.hybrid";
-   saxs_filename =  USglobal->config_list.system_dir + "/etc/somo.saxs_atoms";
+   atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
+   hybrid_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.hybrid";
+   saxs_filename =  USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.saxs_atoms";
    select_saxs_file(saxs_filename);
    select_hybrid_file(hybrid_filename);
    select_atom_file(atom_filename);
@@ -942,7 +944,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
       // save the data to a file
       QString fpr_name = USglobal->config_list.root_dir + 
-         "/somo/saxs/" + QString("%1").arg(te_filename2->text()) +
+         SLASH + "somo" + SLASH + "saxs" + SLASH + QString("%1").arg(te_filename2->text()) +
          QString("_%1").arg(current_model + 1) + 
          ".sprr";
       bool ok_to_write = true;
@@ -1041,7 +1043,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
 void US_Hydrodyn_Saxs::load_pr()
 {
-   QString filename = QFileDialog::getOpenFileName(USglobal->config_list.root_dir + "/somo/saxs", "*", this);
+   QString filename = QFileDialog::getOpenFileName(USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs", "*", this);
    if (filename.isEmpty())
    {
       return;
@@ -1516,6 +1518,29 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             atoms.push_back(new_atom);
          }
       }
+      
+      // save the atoms to a temporary file
+      QString fsaxs_atoms_name = 
+         USglobal->config_list.root_dir + 
+         SLASH "somo" + SLASH "saxs" + "SLASH" + "tmp" + SLASH + QString("%1").arg(te_filename2->text()) +
+         QString("_%1").arg(current_model + 1) + 
+         ".atoms";
+
+      FILE *fsaxs_atoms = fopen(fsaxs_atoms_name, "w");
+      if ( fsaxs_atoms ) 
+      {
+         for ( unsigned int i = 0; i < atoms.size(); i++ )
+         {
+            fprintf(fsaxs_atoms, "%s %.3f %.3f %.3f %.2f\n"
+                    , atoms[i].saxs_name.ascii()
+                    , atoms[i].pos[0]
+                    , atoms[i].pos[1]
+                    , atoms[i].pos[2]
+                    , atoms[i].excl_vol);
+         }
+         fclose(fsaxs_atoms);
+      }
+         
 #if defined(BUG_DEBUG)
       qApp->processEvents();
       cout << " sleep 1 b" << endl;
@@ -1957,7 +1982,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       // save the data to a file
       QString fsaxs_name = 
          USglobal->config_list.root_dir + 
-         "/somo/saxs/" + QString("%1").arg(te_filename2->text()) +
+         SLASH + "somo" + SLASH + "saxs" + SLASH + QString("%1").arg(te_filename2->text()) +
          QString("_%1").arg(current_model + 1) + 
          ".ssaxs";
 #if defined(SAXS_DEBUG)
@@ -2055,7 +2080,7 @@ void US_Hydrodyn_Saxs::print()
 
 void US_Hydrodyn_Saxs::load_saxs()
 {
-   QString filename = QFileDialog::getOpenFileName(USglobal->config_list.root_dir + "/somo/saxs", "*", this);
+   QString filename = QFileDialog::getOpenFileName(USglobal->config_list.root_dir + SLASH + "somo" + SLASH + "saxs", "*", this);
    if (filename.isEmpty())
    {
       return;
@@ -2236,7 +2261,7 @@ void US_Hydrodyn_Saxs::save()
 void US_Hydrodyn_Saxs::select_atom_file()
 {
    QString old_filename = atom_filename;
-   atom_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.atom *.ATOM", this);
+   atom_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", "*.atom *.ATOM", this);
    if (atom_filename.isEmpty())
    {
       atom_filename = old_filename;
@@ -2280,7 +2305,7 @@ void US_Hydrodyn_Saxs::select_atom_file(const QString &filename)
 void US_Hydrodyn_Saxs::select_hybrid_file()
 {
    QString old_filename = hybrid_filename;
-   hybrid_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.hybrid *.HYBRID", this);
+   hybrid_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", "*.hybrid *.HYBRID", this);
    if (hybrid_filename.isEmpty())
    {
       hybrid_filename = old_filename;
@@ -2323,7 +2348,7 @@ void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
 void US_Hydrodyn_Saxs::select_saxs_file()
 {
    QString old_filename = saxs_filename;
-   saxs_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + "/etc", "*.saxs_atoms *.SAXS_ATOMS", this);
+   saxs_filename = QFileDialog::getOpenFileName(USglobal->config_list.system_dir + SLASH + "etc", "*.saxs_atoms *.SAXS_ATOMS", this);
    if (saxs_filename.isEmpty())
    {
       saxs_filename = old_filename;

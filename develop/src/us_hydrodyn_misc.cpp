@@ -292,6 +292,12 @@ void US_Hydrodyn_Misc::set_vbar()
 
 void US_Hydrodyn_Misc::set_pb_rule_on()
 {
+   if( cb_pb_rule_on->isChecked() )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms = 0;
+      ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues = 0;
+   }
+
    (*misc).pb_rule_on = cb_pb_rule_on->isChecked();
 
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();

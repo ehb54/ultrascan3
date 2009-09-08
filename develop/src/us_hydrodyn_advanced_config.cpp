@@ -1,6 +1,8 @@
 #include "../include/us_hydrodyn_asa.h"
 #include "../include/us_hydrodyn.h"
 
+// #define DEBUG_CTLS
+
 US_Hydrodyn_AdvancedConfig::US_Hydrodyn_AdvancedConfig(struct advanced_config *advanced_config, bool *advanced_config_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame(p, name)
 {
    this->advanced_config_widget = advanced_config_widget;

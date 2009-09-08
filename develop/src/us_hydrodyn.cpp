@@ -82,6 +82,13 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
       dir4.mkdir(somo_saxs_dir);
    }
 
+   QString somo_saxs_tmp_dir = somo_dir + SLASH + "saxs" + SLASH + "tmp";
+   QDir dir5(somo_saxs_tmp_dir);
+   if (!dir5.exists())
+   {
+      dir5.mkdir(somo_saxs_tmp_dir);
+   }
+
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("SOMO Solution Bead Modeler"));
    advanced_config.auto_view_pdb = true;
@@ -204,6 +211,10 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    if (!dir4.exists())
    {
       editor->append(tr("Warning: Directory ") + somo_saxs_dir + tr(" does not exist.\n"));
+   }
+   if (!dir5.exists())
+   {
+      editor->append(tr("Warning: Directory ") + somo_saxs_tmp_dir + tr(" does not exist.\n"));
    }
    editor->setColor(save_color);
 }
@@ -924,6 +935,54 @@ void US_Hydrodyn::select_residue_file()
    read_residue_file();
    set_disabled();
    lbl_table->setText( QDir::convertSeparators( residue_filename ) );
+}
+
+
+void US_Hydrodyn::reload_pdb()
+{
+   if ( pdb_file.isEmpty() || !pb_somo->isEnabled() )
+   {
+      return;
+   }
+   editor->append("\nReloading PDB file.\n");
+   int errors_found = 0;
+   if ( misc.pb_rule_on )
+   {
+      residue_list = save_residue_list;
+   }
+   else
+   {
+      residue_list = save_residue_list_no_pbr;
+   }
+   multi_residue_map = save_multi_residue_map;
+   read_pdb(pdb_file);
+   QString error_string = "";
+   for(unsigned int i = 0; i < model_vector.size(); i++)
+   {
+      editor->append(QString("Checking the pdb structure for model %1\n").arg(i+1));
+      if (check_for_missing_atoms(&error_string, &model_vector[i]))
+      {
+         errors_found++;
+         editor->append(QString("Encountered errors with your PDB structure for model %1:\n").
+                        arg(i + 1) + error_string);
+         printError(QString("Encountered errors with your PDB structure for model %1:\n").
+                    arg(i + 1) + "please check the text window");
+      }
+   }
+   model_vector_as_loaded = model_vector;
+   editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
+   bead_models.clear();
+   somo_processed.clear();
+   update_vbar();
+   pb_somo->setEnabled(true);
+   pb_grid_pdb->setEnabled(true);
+   pb_grid->setEnabled(false);
+   pb_show_hydro_results->setEnabled(false);
+   pb_calc_hydro->setEnabled(false);
+   pb_bead_saxs->setEnabled(false);
+   pb_visualize->setEnabled(false);
+   le_bead_model_file->setText(" not selected ");
+   bead_models_as_loaded = bead_models;
 }
 
 void US_Hydrodyn::load_pdb()

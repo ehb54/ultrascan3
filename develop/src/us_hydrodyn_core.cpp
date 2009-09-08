@@ -305,16 +305,31 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
                       this_atom->resName.ascii(),
                       (unsigned int)unknown_residues.count(this_atom->resName));
             }
-            if ( lastResSeq != "" &&
-                 ( lastResSeq.toInt() + 1 !=  this_atom->resSeq.toInt() ||
-                   !multi_residue_map.count(this_atom->resName) ||
-                   unknown_residues.count(this_atom->resName) ||
-                   unknown_residues.count(lastResName) ) )
+            if ( 
+                ( lastResSeq != "" &&
+                  ( lastResSeq.toInt() + 1 !=  this_atom->resSeq.toInt() ||
+                    !multi_residue_map.count(this_atom->resName) ||
+                    unknown_residues.count(this_atom->resName) ||
+                    unknown_residues.count(lastResName) ) ) ||
+                ( lastResSeq == "" &&
+                  unknown_residues.count(this_atom->resName) 
+                  )
+                )
             {
                breaks++;
-               broken_chain_end[QString("%1|%2")
-                                .arg(lastResSeq)
-                                .arg(lastResName)] = true;
+               if ( lastResSeq != "" )
+               {
+                  broken_chain_end[QString("%1|%2")
+                                   .arg(lastResSeq)
+                                   .arg(lastResName)] = true;
+               } 
+               else
+               {
+                  broken_chain_end[QString("%1|%2")
+                                   .arg(this_atom->resSeq)
+                                   .arg(this_atom->resName)] = true;
+               }
+
                broken_chain_head[QString("%1|%2")
                                  .arg(this_atom->resSeq)
                                  .arg(this_atom->resName)] = true;
@@ -322,11 +337,18 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
                QColor save_color = editor->color();
                editor->setColor("dark red");
                editor->append(
+                              lastResSeq != "" ? 
                               QString(tr("Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4 & %5 %6."))
                               .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
                               .arg(j + 1)
                               .arg(lastResName)
                               .arg(lastResSeq)
+                              .arg(this_atom->resName)
+                              .arg(this_atom->resSeq)
+                              :
+                              QString(tr("Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4."))
+                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                              .arg(j + 1)
                               .arg(this_atom->resName)
                               .arg(this_atom->resSeq)
                               );
@@ -556,6 +578,16 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
    // compare expanded list of residues to model ... list missing atoms missing
    int errors_found = 0;
    get_atom_map(model);
+   if ( misc.pb_rule_on &&
+        (broken_chain_head.size() || broken_chain_end.size()) )
+   {
+      misc.pb_rule_on = false;
+      editor->append("Broken chain turns off Peptide Bond Rule.\n");
+      display_default_differences();
+      reload_pdb();
+      get_atom_map(model);
+   }
+         
    int failure_errors = 0;
    bead_exceptions.clear();
 
@@ -616,9 +648,12 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                  this_atom->name != "OXT" &&
                  (k ||
                   this_atom->name != "N" || 
+                  broken_chain_head.count(QString("%1|%2")
+                                          .arg(this_atom->resSeq)
+                                          .arg(this_atom->resName)) ||
                   this_atom->resName == "PRO" ||
                   !misc.pb_rule_on)) ||
-
+                
                 // if pb_rule is off, final OXT before P needs to use OXT-P
 
                 (residue_list[m].name == "OXT"
@@ -630,6 +665,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                  this_atom->name == "N" &&
                  misc.pb_rule_on &&
                  residue_list[m].name == "N1" &&
+                 !broken_chain_head.count(QString("%1|%2")
+                                          .arg(this_atom->resSeq)
+                                          .arg(this_atom->resName)) &&
                  this_atom->resName != "PRO"))
             {
                respos = (int) m;
@@ -929,6 +967,9 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                     misc.pb_rule_on &&
                     !k &&
                     residue_list[respos].r_atom[m].name == "N1" &&
+                    !broken_chain_head.count(QString("%1|%2")
+                                             .arg(this_atom->resSeq)
+                                          .arg(this_atom->resName)) &&
                     this_atom->resName != "PRO"
                     )
                    )
@@ -2092,6 +2133,9 @@ int US_Hydrodyn::create_beads(QString *error_string)
                  this_atom->name != "OXT" &&
                  (k ||
                   this_atom->name != "N" ||
+                  broken_chain_head.count(QString("%1|%2")
+                                          .arg(this_atom->resSeq)
+                                          .arg(this_atom->resName)) ||
                   this_atom->resName == "PRO" ||
                   !misc.pb_rule_on)) ||
 
@@ -2105,6 +2149,9 @@ int US_Hydrodyn::create_beads(QString *error_string)
                  this_atom->name == "N" &&
                  misc.pb_rule_on &&
                  residue_list[m].name == "N1" &&
+                 !broken_chain_head.count(QString("%1|%2")
+                                          .arg(this_atom->resSeq)
+                                          .arg(this_atom->resName)) &&
                  this_atom->resName != "PRO"))
             {
                respos = (int) m;
@@ -2193,6 +2240,9 @@ int US_Hydrodyn::create_beads(QString *error_string)
                      misc.pb_rule_on &&
                      !k &&
                      residue_list[respos].r_atom[m].name == "N1" &&
+                     !broken_chain_head.count(QString("%1|%2")
+                                              .arg(this_atom->resSeq)
+                                              .arg(this_atom->resName)) &&
                      this_atom->resName != "PRO"
                      )
                     )
@@ -4547,6 +4597,9 @@ int US_Hydrodyn::compute_asa()
                if (this_atom->chain == 0 &&
                    misc.pb_rule_on &&
                    this_atom->name == "N" &&
+                   !broken_chain_head.count(QString("%1|%2")
+                                            .arg(this_atom->resSeq)
+                                            .arg(this_atom->resName)) && 
                    !count_actives)
                {
                   last_resName = "first N";
@@ -4605,6 +4658,7 @@ int US_Hydrodyn::compute_asa()
    // for (unsigned int i = 0; i < model_vector.size (); i++)   {
    {
       unsigned int i = current_model;
+      bool placed_N1 = false;
       for (unsigned int j = 0; j < model_vector[i].molecule.size (); j++) {
          bool first_is_pro = false;
          unsigned int main_chain_beads = 0;
@@ -4639,6 +4693,38 @@ int US_Hydrodyn::compute_asa()
                   puts("pass 2b PRO 1st is pro recognized");
                }
                first_is_pro = true;
+            }
+            if ( placed_N1 &&
+                 broken_chain_end.count(QString("%1|%2")
+                                        .arg(this_atom->resSeq)
+                                        .arg(this_atom->resName))
+                 )
+            {
+               placed_N1 = false;
+               if ( advanced_config.debug_1 )
+               {
+                  printf("placed N1, found break, turned off placed N1 %s %s\n", 
+                         this_atom->resName.ascii(),
+                         this_atom->resSeq.ascii()
+                         );
+               }
+            }
+
+            if ( 
+                misc.pb_rule_on &&
+                !k &&
+                this_atom->resName != "PRO" &&
+                this_atom->name == "N" &&
+                !broken_chain_head.count(QString("%1|%2")
+                                         .arg(this_atom->resSeq)
+                                         .arg(this_atom->resName))
+                )
+            {
+               placed_N1 = true;
+               if ( advanced_config.debug_1 )
+               {
+                  puts("placed N1");
+               }
             }
             if ( 
                 first_is_pro &&
@@ -6679,7 +6765,7 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
       }
 #endif
 
-      printf("bead %d %.2f %.2f %.2f %s %s\n",
+      printf("bead %d %.2f %.2f %.2f %s %s bead mw %.2f bead ref mw %.2f\n",
              i,
              bead_model[i].bead_computed_radius,
              surface_area,
@@ -6691,7 +6777,10 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
               ( bead_model[i].bead_recheck_asa > (asa.threshold_percent / 100.0) * surface_area )
               ) ?
              "exposed" : "buried",
-             msg.ascii());
+             msg.ascii(),
+             bead_model[i].bead_mw,
+             bead_model[i].bead_ref_mw
+             );
    }
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
    //         QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +

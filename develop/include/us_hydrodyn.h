@@ -71,6 +71,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void set_disabled();
       QTextEdit *editor;
       void play_sounds(int);
+      struct pdb_parsing pdb_parse;
 
    private:
       bool residue_widget;
@@ -98,13 +99,14 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool create_beads_normally; // true = normal, false = atoms are beads
       bool alt_method; // true = new bead method, false = original bead method
       unsigned int current_model;
-      QString residue_filename, bead_model_file, pdb_file;
+      QString residue_filename;
+      QString bead_model_file;
+      QString pdb_file;
       struct residue current_residue;
       struct asa_options asa;
       struct asa_options default_asa;
       struct pdb_visualization pdb_vis;
       struct pdb_visualization default_pdb_vis;
-      struct pdb_parsing pdb_parse;
       struct pdb_parsing default_pdb_parse;
       struct hydro_options hydro;
       struct hydro_options default_hydro;
@@ -282,6 +284,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
    public slots:
       void display_default_differences();
       void clear_display();
+      void reload_pdb();
 
    private slots:
       void load_pdb();
