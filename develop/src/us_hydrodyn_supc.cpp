@@ -2286,7 +2286,7 @@ mem_ris(int model)
    if (mascor == 1)
       mascor1 = (float) pesmol;
 
-   // fprintf(ris, "%s%.2f%s\n", "- Used BEAD Mass     = ", mascor1, "  [Da]");
+   fprintf(ris, "%s%.2f%s\n", "- Used BEAD Mass     = ", mascor1, "  [Da]");
    fprintf(ris, "%s%.2f\n", "- Conversion Factor  = ", fconv);
 
    fprintf(ris, "\n%s%.3e\t%s\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] (w@20C)");
