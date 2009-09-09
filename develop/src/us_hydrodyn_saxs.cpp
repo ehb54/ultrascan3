@@ -12,6 +12,7 @@
 #if defined(WIN32)
 # include <dos.h>
 # include <stdlib.h>
+# undef SLASH
 # define SLASH "\\"
 #endif
 
