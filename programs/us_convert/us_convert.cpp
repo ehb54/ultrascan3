@@ -89,33 +89,26 @@ US_Convert::US_Convert() : US_Widgets()
 
    // Exclude and Include pushbuttons
    // Row 7
-   pb_exclude = us_pushbutton( tr( "Exclude Single Scan" ), false );
-   connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude_one() ) );
+   pb_exclude = us_pushbutton( tr( "Exclude Scan(s)" ), false );
+   connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude_scans() ) );
    settings->addWidget( pb_exclude, row, 0 );
-   
-   pb_excludeRange = us_pushbutton( tr( "Exclude Scan Range" ), false );
-   connect( pb_excludeRange, SIGNAL( clicked() ), SLOT( exclude_range() ) );
-   settings->addWidget( pb_excludeRange, row++, 1 );
 
-   // Row 8
    pb_include = us_pushbutton( tr( "Include All" ), false );
    connect( pb_include, SIGNAL( clicked() ), SLOT( include() ) );
-   settings->addWidget( pb_include, row++, 0, 1, 2 );
+   settings->addWidget( pb_include, row++, 1 );
 
    // Write pushbuttons
-   // Row 9
-   QBoxLayout* writeButtons = new QHBoxLayout;
+   // Row 8
    pb_write = us_pushbutton( tr( "Write Current Data" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
-   writeButtons->addWidget( pb_write );
+   settings->addWidget( pb_write, row, 0 );
 
    pb_writeAll = us_pushbutton( tr( "Write All Data" ), false );
    connect( pb_writeAll, SIGNAL( clicked() ), SLOT( writeAll() ) );
-   writeButtons->addWidget( pb_writeAll );
-   settings->addLayout( writeButtons, row++, 0, 1, 2 );
+   settings->addWidget( pb_writeAll, row++, 1 );
 
    // Progress bar
-   // Row 10
+   // Row 9
    lb_progress = us_label( tr( "Progress:" ) , -1 );
    lb_progress->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    lb_progress->setVisible( false );
@@ -130,7 +123,7 @@ US_Convert::US_Convert() : US_Widgets()
 
    QBoxLayout* buttons = new QHBoxLayout;
 
-   // Row 11
+   // Row 10
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
    buttons->addWidget( pb_reset );
@@ -180,7 +173,6 @@ void US_Convert::reset( void )
    le_dir->setText( "" );
 
    pb_exclude     ->setEnabled( false );
-   pb_excludeRange->setEnabled( false );
    pb_include     ->setEnabled( false );
    pb_write       ->setEnabled( false );
    pb_writeAll    ->setEnabled( false );
@@ -673,7 +665,7 @@ void US_Convert::convert( bool showProgressBar )
 void US_Convert::details( void )
 {
    QString     dirname    = le_dir->text();
-   if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
+   // if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
 
    QStringList components = dirname.split( "/", QString::SkipEmptyParts );
    QString     runID      = components.last();
@@ -697,7 +689,6 @@ void US_Convert::write( void )
 { 
    // Specify the filename
    QString     rawdir    = le_dir->text();
-   //if ( rawdir.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
 
    QStringList components = rawdir.split( "/", QString::SkipEmptyParts );
    QString     runID      = components.last();
@@ -1058,11 +1049,6 @@ void US_Convert::focus( int from, int to )
       pb_exclude->setEnabled( true );
    }
 
-   if ( to == 0 )
-      pb_excludeRange->setEnabled( false );
-   else
-      pb_excludeRange->setEnabled( true );
-
    QList< int > focus;  // We don't care if -1 is in the list
    for ( int i = from - 1; i <= to - 1; i++ ) focus << i;  
 
@@ -1106,24 +1092,14 @@ void US_Convert::set_colors( const QList< int >& focus )
    data_plot->replot();
 }
 
-void US_Convert::exclude_one( void )
-{
-   int scan = (int)ct_from->value();
-
-   // Offset by 1 for scan number vs index
-   includes.removeAt( scan - 1 );
-   reset_scan_ctrls();
-
-   replot();
-}
-
-void US_Convert::exclude_range( void )
+void US_Convert::exclude_scans( void )
 {
    int scanStart = (int)ct_from->value();
    int scanEnd   = (int)ct_to  ->value();
 
    // Let's remove back to front---the array
    // shifts with each deletion
+   // Works when single scan too
    for ( int i = scanEnd - 1; i >= scanStart - 1; i-- )
       includes.removeAt( scanStart - 1 );
 
