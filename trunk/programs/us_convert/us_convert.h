@@ -37,7 +37,6 @@ class US_Convert : public US_Widgets
       QPushButton*  pb_write;
       QPushButton*  pb_writeAll;
       QPushButton*  pb_exclude;
-      QPushButton*  pb_excludeRange;
       QPushButton*  pb_include;
       QPushButton*  pb_details;
 
@@ -71,8 +70,7 @@ class US_Convert : public US_Widgets
       void focus_from      ( double );
       void focus_to        ( double );
       void focus           ( int, int );
-      void exclude_one     ( void );
-      void exclude_range   ( void );
+      void exclude_scans   ( void );
       void include         ( void );
       void reset_scan_ctrls( void );
       void write           ( void );
