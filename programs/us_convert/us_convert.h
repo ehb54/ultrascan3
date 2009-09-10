@@ -34,6 +34,8 @@ class US_Convert : public US_Widgets
       QwtCounter*   ct_from;
       QwtCounter*   ct_to;
 
+      QwtCounter*   ct_wltolerance;
+
       QPushButton*  pb_write;
       QPushButton*  pb_writeAll;
       QPushButton*  pb_exclude;
@@ -64,6 +66,7 @@ class US_Convert : public US_Widgets
       void load            ( void );
       void details         ( void );
       void reset           ( void );
+      void resetAll        ( void );
       void read            ( void );
       void convert         ( bool showProgressBar = false );
       void changeCcw       ( int  );
