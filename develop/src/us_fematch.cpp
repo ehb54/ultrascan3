@@ -1926,7 +1926,7 @@ void US_FeMatch_W::calc_distros()
    {
       s20w.push_back(s_distribution[i] * correction);
       D20w.push_back(D_distribution[i] * K20 * viscosity/((100.0 * VISC_20W) * (run_inf.avg_temperature + K0)));
-      mw.push_back((s20w[i]/D20w[i])*(R * K20)/(1.0 - vbar20 * DENS_20W));
+      mw.push_back((fabs(s20w[i])/D20w[i])*(R * K20)/(1.0 - vbar20 * DENS_20W));
    }
 }
 
@@ -2116,6 +2116,12 @@ void US_FeMatch_W::load_model(const QString &fileName)
       model = str.toInt();
       str = ts.readLine();
       components  = str.toUInt();
+      if (components == 0)
+      {
+         QMessageBox::information(this, tr("UltraScan Error"), "Attention: This model does not contain any "
+               "solutes...\nplease check the model file or try another model.");
+         return;
+      }
       //cout << "Components: " << components << endl;
       for (i=0; i<components; i++)
       {
@@ -2132,11 +2138,11 @@ void US_FeMatch_W::load_model(const QString &fileName)
          sigma.push_back(str.toDouble());
          str = ts.readLine();
          delta.push_back(str.toDouble());
-         mw.push_back((s20w[i]/D20w[i])*(R * K20)/(1.0 - vbar20 * DENS_20W));
+         mw.push_back((fabs(s20w[i])/D20w[i])*(R * K20)/(1.0 - vbar20 * DENS_20W));
          vol = vbar20 * mw[i] / AVOGADRO;
          rad_sphere = pow((double) (vol * (3.0/4.0))/M_PI, (double) (1.0/3.0));
          f0 = rad_sphere * 6.0 * M_PI * VISC_20W;
-         fv.push_back((mw[i] * (1.0 - vbar20 * DENS_20W)) / (s20w[i] * AVOGADRO));
+         fv.push_back((mw[i] * (1.0 - vbar20 * DENS_20W)) / (fabs(s20w[i]) * AVOGADRO));
          f_f0.push_back(fv[i]/f0);
          //cout << "MW: " << mw[i] << ", s: " << s20w[i] << ", D: " << D20w[i] << ", k: " << f_f0[i] << endl;
       }
@@ -2224,11 +2230,11 @@ void US_FeMatch_W::updateParameters()
    float vol, rad_sphere, f0;
    for (i=0; i<components; i++)
    {
-      mw[i] = (s20w[i]/D20w[i])*(R * K20)/(1.0 - vbar20 * DENS_20W);
+      mw[i] = (fabs(s20w[i])/D20w[i])*(R * K20)/(1.0 - vbar20 * DENS_20W);
       vol = vbar20 * mw[i] / AVOGADRO;
       rad_sphere = pow((double) (vol * (3.0/4.0))/M_PI, (double) (1.0/3.0));
       f0 = rad_sphere * 6.0 * M_PI * VISC_20W;
-      fv[i] = (mw[i] * (1.0 - vbar20 * DENS_20W)) / (s20w[i] * AVOGADRO);
+      fv[i] = (mw[i] * (1.0 - vbar20 * DENS_20W)) / (fabs(s20w[i]) * AVOGADRO);
       f_f0[i] = fv[i]/f0;
    }
    update_distribution();
