@@ -35,7 +35,16 @@ US_Convert::US_Convert() : US_Widgets()
 
    int row = 0;
 
+   // Set the wavelength tolerance for c/c/w determination
    // Row 1
+   QLabel* lb_wltolerance = us_label( tr( "Wavelength Tolerance:" ) );
+   settings->addWidget( lb_wltolerance, row, 0 );
+
+   ct_wltolerance = us_counter ( 2, 0.0, 100.0, 5.0 ); // #buttons, low, high, start_value
+   ct_wltolerance->setStep( 0.1 );
+   settings->addWidget( ct_wltolerance, row++, 1 );
+
+   // Row 2
    QPushButton* pb_load = us_pushbutton( tr( "Load Legacy Data" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
    settings->addWidget( pb_load, row, 0 );
@@ -47,14 +56,14 @@ US_Convert::US_Convert() : US_Widgets()
    QLabel* lb_dir = us_label( tr( "Directory:" ) );
    settings->addWidget( lb_dir, row++, 0 );
 
-   // Row 2
+   // Row 3
    le_dir = us_lineedit( "", 1 );
    le_dir->setReadOnly( true );
    settings->addWidget( le_dir, row++, 0, 1, 2 );
 
    // Cell / Channel / Wavelength
 
-   // Row 3
+   // Row 4
    QLabel* lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
    settings->addWidget( lb_triple, row, 0 );
 
@@ -65,11 +74,11 @@ US_Convert::US_Convert() : US_Widgets()
 
    // Scan Controls
 
-   // Row 4
+   // Row 5
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
    settings->addWidget( lb_scan, row++, 0, 1, 2 );
 
-   // Row 5
+   // Row 6
    QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_from, row, 0 );
@@ -78,7 +87,7 @@ US_Convert::US_Convert() : US_Widgets()
    ct_from->setStep( 1 );
    settings->addWidget( ct_from, row++, 1 );
 
-   // Row 6
+   // Row 7
    QLabel* lb_to = us_label( tr( "Scan Focus to:" ), -1 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_to, row, 0 );
@@ -88,7 +97,7 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( ct_to, row++, 1 );
 
    // Exclude and Include pushbuttons
-   // Row 7
+   // Row 8
    pb_exclude = us_pushbutton( tr( "Exclude Scan(s)" ), false );
    connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude_scans() ) );
    settings->addWidget( pb_exclude, row, 0 );
@@ -98,7 +107,7 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_include, row++, 1 );
 
    // Write pushbuttons
-   // Row 8
+   // Row 9
    pb_write = us_pushbutton( tr( "Write Current Data" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
    settings->addWidget( pb_write, row, 0 );
@@ -108,7 +117,7 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_writeAll, row++, 1 );
 
    // Progress bar
-   // Row 9
+   // Row 10
    lb_progress = us_label( tr( "Progress:" ) , -1 );
    lb_progress->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    lb_progress->setVisible( false );
@@ -123,9 +132,9 @@ US_Convert::US_Convert() : US_Widgets()
 
    QBoxLayout* buttons = new QHBoxLayout;
 
-   // Row 10
+   // Row 11
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
-   connect( pb_reset, SIGNAL( clicked() ), SLOT( reset() ) );
+   connect( pb_reset, SIGNAL( clicked() ), SLOT( resetAll() ) );
    buttons->addWidget( pb_reset );
 
    QPushButton* pb_help = us_pushbutton( tr( "Help" ) );
@@ -203,6 +212,15 @@ void US_Convert::reset( void )
    grid = us_grid( data_plot );
    data_plot->replot();
 
+}
+
+void US_Convert::resetAll( void )
+{
+   reset();
+
+   ct_wltolerance->setMinValue(   0.0 );
+   ct_wltolerance->setMaxValue( 100.0 );
+   ct_wltolerance->setValue   (   5.0 );
 }
 
 // User pressed the load data button
@@ -388,12 +406,13 @@ void US_Convert::read( void )
 
    QList< QList< double > > modes;
    QList< double >          mode;
+   double wltolerance = (double)ct_wltolerance->value() + 0.05;    // to stay between wl numbers
    
    for ( int i = 0; i < wavelengths.size(); i++ )
    {
       double wl = wavelengths[ i ].toDouble();
 
-      if ( ! mode.empty()  &&  fabs( mode.last() - wl ) > 5.0 )
+      if ( ! mode.empty()  &&  fabs( mode.last() - wl ) > wltolerance )
       {
          modes << mode;
          mode.clear();
@@ -412,12 +431,12 @@ void US_Convert::read( void )
    for ( int i = 0; i < modes.size(); i++ )
    {
       qDebug() << "i: " << i;
-      for ( int j = 0; j < mode.size(); j++ )
+      for ( int j = 0; j < modes[ i ].size(); j++ )
          qDebug() << "  " << modes[ i ][ j ];
    }
 */
 
-   QList< int > wl_average;
+   QList< double > wl_average;
 
    for ( int i = 0; i < modes.size(); i++ )
    {
@@ -425,7 +444,7 @@ void US_Convert::read( void )
 
       for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ]; 
 
-      wl_average << (int) round( sum / modes[ i ].size() );
+      wl_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
    }
 
 /*
@@ -446,7 +465,7 @@ void US_Convert::read( void )
       // find the average wavelength
       for ( int j = 0; j < wl_average.size(); j++ )
       {
-         if ( fabs( wl_average[ j ] - wl ) < 5.0 )
+         if ( fabs( wl_average[ j ] - wl ) < wltolerance )
          {
             wavelength = QString::number( wl_average[ j ] );
             break;
@@ -480,11 +499,13 @@ void US_Convert::convert( bool showProgressBar )
    // Get a list of the data that matches the cell / channel / wl
    ccwLegacyData.clear();
    newRawData.scanData.clear();
+   double wltolerance = (double)ct_wltolerance->value() + 0.05;    // to stay between wl numbers
+
    for ( int i = 0; i < legacyData.size(); i++ )
    {
       if ( legacyData[ i ].cell == cell       &&
            legacyData[ i ].channel == channel &&
-           fabs ( legacyData[ i ].t.wavelength - wavelength ) < 5.0 )
+           fabs ( legacyData[ i ].t.wavelength - wavelength ) < wltolerance )
          ccwLegacyData << &legacyData[ i ];
    }
 
@@ -681,6 +702,9 @@ void US_Convert::changeCcw( int index )
 {
    currentTriple = index;
 
+   // Reset maximum scan control values
+   reset_scan_ctrls();
+
    // Redo plot
    plot_current();
 }
@@ -736,7 +760,10 @@ int US_Convert::write( const QString& filename )
    {
      if ( ! writeDir.mkdir( runID ) )
      {
-        qDebug() << "mkdir failed";
+        QMessageBox::information( this,
+              tr( "Error" ),
+              tr( "Cannot write to " ) + writeDir.absolutePath() );
+
         return  US_DataIO::CANTOPEN;
      }
    }
@@ -771,7 +798,10 @@ int US_Convert::writeAll( void )
    {
      if ( ! writeDir.mkdir( runID ) )
      {
-        qDebug() << "mkdir failed";
+        QMessageBox::information( this,
+              tr( "Error" ),
+              tr( "Cannot write to " ) + writeDir.absolutePath() );
+
         return US_DataIO::CANTOPEN;
      }
    }
@@ -916,11 +946,13 @@ void US_Convert::plot_current( void )
    plot_all();
    
    // Set the Scan spin boxes
+/*
    ct_from->setMinValue( 0.0 );
    ct_from->setMaxValue(  newRawData.scanData.size() );
    
    ct_to  ->setMinValue( 0.0 );
    ct_to  ->setMaxValue(  newRawData.scanData.size() );
+*/
   
    reset_scan_ctrls();
 }
@@ -1116,14 +1148,19 @@ void US_Convert::include( void )
    replot();
 }
 
+// Reset the boundaries on the scan controls
 void US_Convert::reset_scan_ctrls( void )
 {
 
    ct_from->disconnect();
+   ct_from->setMinValue( 0.0 );
+   ct_from->setMaxValue(  allData[ currentTriple ].scanData.size() );
    ct_from->setValue   ( 0 );
 
-   ct_to->disconnect();
-   ct_to->setValue   ( 0 );
+   ct_to  ->disconnect();
+   ct_to  ->setMinValue( 0.0 );
+   ct_to  ->setMaxValue(  allData[ currentTriple ].scanData.size() );
+   ct_to  ->setValue   ( 0 );
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_from   ( double ) ) );
