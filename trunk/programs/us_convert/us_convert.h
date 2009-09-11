@@ -30,11 +30,12 @@ class US_Convert : public US_Widgets
       QLineEdit*    le_dir;
 
       QComboBox*    cb_triple;                // cell, channel, wavelength
+      QLabel*       lb_triple;
 
       QwtCounter*   ct_from;
       QwtCounter*   ct_to;
 
-      QwtCounter*   ct_wltolerance;
+      QwtCounter*   ct_tolerance;
 
       QPushButton*  pb_write;
       QPushButton*  pb_writeAll;
@@ -68,8 +69,10 @@ class US_Convert : public US_Widgets
       void reset           ( void );
       void resetAll        ( void );
       void read            ( void );
+      void setCcwTriples   ( void );
+      void setCcrTriples   ( void );
       void convert         ( bool showProgressBar = false );
-      void changeCcw       ( int  );
+      void changeTriple    ( int  );
       void focus_from      ( double );
       void focus_to        ( double );
       void focus           ( int, int );

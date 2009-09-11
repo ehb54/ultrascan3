@@ -37,12 +37,12 @@ US_Convert::US_Convert() : US_Widgets()
 
    // Set the wavelength tolerance for c/c/w determination
    // Row 1
-   QLabel* lb_wltolerance = us_label( tr( "Wavelength Tolerance:" ) );
-   settings->addWidget( lb_wltolerance, row, 0 );
+   QLabel* lb_tolerance = us_label( tr( "Dataset Separation Tolerance:" ) );
+   settings->addWidget( lb_tolerance, row, 0 );
 
-   ct_wltolerance = us_counter ( 2, 0.0, 100.0, 5.0 ); // #buttons, low, high, start_value
-   ct_wltolerance->setStep( 0.1 );
-   settings->addWidget( ct_wltolerance, row++, 1 );
+   ct_tolerance = us_counter ( 2, 0.0, 100.0, 5.0 ); // #buttons, low, high, start_value
+   ct_tolerance->setStep( 1 );
+   settings->addWidget( ct_tolerance, row++, 1 );
 
    // Row 2
    QPushButton* pb_load = us_pushbutton( tr( "Load Legacy Data" ) );
@@ -64,12 +64,12 @@ US_Convert::US_Convert() : US_Widgets()
    // Cell / Channel / Wavelength
 
    // Row 4
-   QLabel* lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
+   lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
    settings->addWidget( lb_triple, row, 0 );
 
    cb_triple = us_comboBox();
    cb_triple->setInsertPolicy( QComboBox::InsertAlphabetically );
-   connect( cb_triple, SIGNAL( activated( int ) ), SLOT( changeCcw( int ) ) );
+   connect( cb_triple, SIGNAL( activated( int ) ), SLOT( changeTriple( int ) ) );
    settings->addWidget( cb_triple, row++, 1 );
 
    // Scan Controls
@@ -218,9 +218,10 @@ void US_Convert::resetAll( void )
 {
    reset();
 
-   ct_wltolerance->setMinValue(   0.0 );
-   ct_wltolerance->setMaxValue( 100.0 );
-   ct_wltolerance->setValue   (   5.0 );
+   ct_tolerance->setMinValue(   0.0 );
+   ct_tolerance->setMaxValue( 100.0 );
+   ct_tolerance->setValue   (   5.0 );
+   ct_tolerance->setStep( 1 );
 }
 
 // User pressed the load data button
@@ -384,6 +385,21 @@ void US_Convert::read( void )
    lb_progress ->setVisible( false );
    progress    ->setVisible( false );
 
+   if ( runType == "WA" )
+      setCcrTriples();                      // Wavelength data is handled differently here
+   else
+      setCcwTriples();
+
+   cb_triple->addItems( triples );
+   currentTriple = 0;
+}
+
+void US_Convert::setCcwTriples( void )
+{
+   // Most triples are ccw
+   lb_triple   ->setText( tr( "Cell / Channel / Wavelength" ) );
+   ct_tolerance->setStep( 1 );
+
    // Get wavelengths
    
    QStringList wavelengths;
@@ -406,13 +422,13 @@ void US_Convert::read( void )
 
    QList< QList< double > > modes;
    QList< double >          mode;
-   double wltolerance = (double)ct_wltolerance->value() + 0.05;    // to stay between wl numbers
+   double tolerance = (double)ct_tolerance->value() + 0.05;    // to stay between wl numbers
    
    for ( int i = 0; i < wavelengths.size(); i++ )
    {
       double wl = wavelengths[ i ].toDouble();
 
-      if ( ! mode.empty()  &&  fabs( mode.last() - wl ) > wltolerance )
+      if ( ! mode.empty()  &&  fabs( mode.last() - wl ) > tolerance )
       {
          modes << mode;
          mode.clear();
@@ -465,7 +481,7 @@ void US_Convert::read( void )
       // find the average wavelength
       for ( int j = 0; j < wl_average.size(); j++ )
       {
-         if ( fabs( wl_average[ j ] - wl ) < wltolerance )
+         if ( fabs( wl_average[ j ] - wl ) < tolerance )
          {
             wavelength = QString::number( wl_average[ j ] );
             break;
@@ -475,9 +491,104 @@ void US_Convert::read( void )
       QString t = cell + " / " + channel + " / " + wavelength;
       if (! triples.contains( t ) ) triples << t;
    }
+}
 
-   cb_triple->addItems( triples );
-   currentTriple = 0;
+void US_Convert::setCcrTriples( void )
+{
+   // First of all, wavelength triples are ccr.
+   lb_triple   ->setText( tr( "Cell / Channel / Radius" ) );
+   ct_tolerance->setStep( 0.1 );
+
+   // Now get the radius values
+   QStringList radii;
+
+   for ( int i = 0; i < legacyData.size(); i++ )
+   {
+      QString r = QString::number( legacyData[ i ].t.radius, 'f', 1 );
+      radii << r;
+   }
+
+   // Merge radii
+
+   radii.sort();
+
+/*
+   qDebug() << "Radius values found:";
+   for ( int i = 0; i < radii.size(); i++ )
+      qDebug() << radii[ i ];
+*/
+
+   QList< QList< double > > modes;
+   QList< double >          mode;
+   double tolerance = (double)ct_tolerance->value() + 0.05;    // to stay between r values
+   
+   for ( int i = 0; i < radii.size(); i++ )
+   {
+      double r = radii[ i ].toDouble();
+
+      if ( ! mode.empty()  &&  fabs( mode.last() - r ) > tolerance )
+      {
+         modes << mode;
+         mode.clear();
+      }
+
+      mode << r;   
+   }
+
+   if ( mode.size() > 0 ) modes << mode;
+
+   // Now we have a list of modes.  
+   // Average each list and round to the closest integer.
+   
+/*
+   qDebug() << "Modes:";
+   for ( int i = 0; i < modes.size(); i++ )
+   {
+      qDebug() << "i: " << i;
+      for ( int j = 0; j < modes[ i ].size(); j++ )
+         qDebug() << "  " << modes[ i ][ j ];
+   }
+*/
+
+   QList< double > r_average;
+
+   for ( int i = 0; i < modes.size(); i++ )
+   {
+      double sum = 0.0;
+
+      for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ]; 
+
+      r_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
+   }
+
+/*
+   qDebug() << "Radius average:";
+   for ( int i = 0; i < r_average.size(); i++ )
+      qDebug() << "  " << r_average[ i ];
+*/
+
+   // Now that we have a more reliable list of radii, let's
+   // find out the possible cell, channel, and radius combinations
+   for ( int i = 0; i < legacyData.size(); i++ )
+   {
+      QString cell       = QString::number( legacyData[ i ].cell );
+      QString channel    = QString( legacyData[ i ].channel );
+      double r           = legacyData[ i ].t.radius;
+      QString radius     = "0";
+
+      // find the average radius
+      for ( int j = 0; j < r_average.size(); j++ )
+      {
+         if ( fabs( r_average[ j ] - r ) < tolerance )
+         {
+            radius = QString::number( r_average[ j ] );
+            break;
+         }
+      }
+
+      QString t = cell + " / " + channel + " / " + radius;
+      if (! triples.contains( t ) ) triples << t;
+   }
 }
 
 void US_Convert::convert( bool showProgressBar )
@@ -499,13 +610,13 @@ void US_Convert::convert( bool showProgressBar )
    // Get a list of the data that matches the cell / channel / wl
    ccwLegacyData.clear();
    newRawData.scanData.clear();
-   double wltolerance = (double)ct_wltolerance->value() + 0.05;    // to stay between wl numbers
+   double tolerance = (double)ct_tolerance->value() + 0.05;    // to stay between wl numbers
 
    for ( int i = 0; i < legacyData.size(); i++ )
    {
       if ( legacyData[ i ].cell == cell       &&
            legacyData[ i ].channel == channel &&
-           fabs ( legacyData[ i ].t.wavelength - wavelength ) < wltolerance )
+           fabs ( legacyData[ i ].t.wavelength - wavelength ) < tolerance )
          ccwLegacyData << &legacyData[ i ];
    }
 
@@ -698,7 +809,7 @@ void US_Convert::details( void )
    delete dialog;
 }
 
-void US_Convert::changeCcw( int index )
+void US_Convert::changeTriple( int index )
 {
    currentTriple = index;
 
