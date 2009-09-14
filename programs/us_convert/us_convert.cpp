@@ -42,6 +42,7 @@ US_Convert::US_Convert() : US_Widgets()
 
    ct_tolerance = us_counter ( 2, 0.0, 100.0, 5.0 ); // #buttons, low, high, start_value
    ct_tolerance->setStep( 1 );
+   ct_tolerance->setMinimumWidth( 120 );
    settings->addWidget( ct_tolerance, row++, 1 );
 
    // Row 2
@@ -67,10 +68,12 @@ US_Convert::US_Convert() : US_Widgets()
    lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
    settings->addWidget( lb_triple, row, 0 );
 
-   cb_triple = us_comboBox();
-   cb_triple->setInsertPolicy( QComboBox::InsertAlphabetically );
-   connect( cb_triple, SIGNAL( activated( int ) ), SLOT( changeTriple( int ) ) );
-   settings->addWidget( cb_triple, row++, 1 );
+   lw_triple = us_listwidget();
+   lw_triple->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
+   lw_triple->setMinimumWidth( 50 );
+   connect( lw_triple, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
+                       SLOT  ( changeTriple( QListWidgetItem* ) ) );
+   settings->addWidget( lw_triple, row++, 1 );
 
    // Scan Controls
 
@@ -118,6 +121,9 @@ US_Convert::US_Convert() : US_Widgets()
 
    // Progress bar
    // Row 10
+   QLabel* lb_placeholder = new QLabel();
+   settings -> addWidget( lb_placeholder, row, 0, 1, 2 );
+
    lb_progress = us_label( tr( "Progress:" ) , -1 );
    lb_progress->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    lb_progress->setVisible( false );
@@ -164,8 +170,8 @@ US_Convert::US_Convert() : US_Widgets()
    main->setContentsMargins ( 2, 2, 2, 2 );
 
    QVBoxLayout* left     = new QVBoxLayout;
-   QSpacerItem* spacer   = new QSpacerItem( 20, 20, 
-                           QSizePolicy::Minimum, QSizePolicy::Expanding );
+   QSpacerItem* spacer   = new QSpacerItem( 0, 0, 
+                           QSizePolicy::Minimum, QSizePolicy::Fixed );
 
    left->addLayout( settings );
    left->addItem( spacer );
@@ -177,7 +183,7 @@ US_Convert::US_Convert() : US_Widgets()
 
 void US_Convert::reset( void )
 {
-   cb_triple    ->clear();
+   lw_triple    ->clear();
 
    le_dir->setText( "" );
 
@@ -390,7 +396,7 @@ void US_Convert::read( void )
    else
       setCcwTriples();
 
-   cb_triple->addItems( triples );
+   lw_triple->addItems( triples );
    currentTriple = 0;
 }
 
@@ -809,9 +815,9 @@ void US_Convert::details( void )
    delete dialog;
 }
 
-void US_Convert::changeTriple( int index )
+void US_Convert::changeTriple( QListWidgetItem* item )
 {
-   currentTriple = index;
+   currentTriple = lw_triple->currentRow();
 
    // Reset maximum scan control values
    reset_scan_ctrls();
@@ -1057,14 +1063,6 @@ void US_Convert::plot_current( void )
    plot_all();
    
    // Set the Scan spin boxes
-/*
-   ct_from->setMinValue( 0.0 );
-   ct_from->setMaxValue(  newRawData.scanData.size() );
-   
-   ct_to  ->setMinValue( 0.0 );
-   ct_to  ->setMaxValue(  newRawData.scanData.size() );
-*/
-  
    reset_scan_ctrls();
 }
 
