@@ -29,8 +29,8 @@ class US_Convert : public US_Widgets
 
       QLineEdit*    le_dir;
 
-      QComboBox*    cb_triple;                // cell, channel, wavelength
       QLabel*       lb_triple;
+      QListWidget*  lw_triple;                        // cell, channel, wavelength
 
       QwtCounter*   ct_from;
       QwtCounter*   ct_to;
@@ -72,7 +72,7 @@ class US_Convert : public US_Widgets
       void setCcwTriples   ( void );
       void setCcrTriples   ( void );
       void convert         ( bool showProgressBar = false );
-      void changeTriple    ( int  );
+      void changeTriple    ( QListWidgetItem* );
       void focus_from      ( double );
       void focus_to        ( double );
       void focus           ( int, int );
