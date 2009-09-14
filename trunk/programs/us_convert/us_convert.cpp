@@ -382,7 +382,24 @@ void US_Convert::read( void )
 
       data.channel = ( c.isDigit() ) ? 'A' : c.toAscii();
 
-      legacyData << data;
+      if ( runType == "RI" )                // Split out the two readings in RI data
+      {
+         US_DataIO::beckmanRaw data2 = data;  // Alter to store second dataset
+         for ( int i = 0; i < data.readings.size(); i++ )
+         {
+            data2.readings[ i ].value  = data2.readings[ i ].stdDev;   // Reading 2 in here for RI
+            data.readings[ i ].stdDev = 0.0;
+            data2.readings[ i ].stdDev = 0.0;
+         }
+
+         data2.channel = 'B';
+
+         legacyData << data;
+         legacyData << data2;
+      }
+
+      else
+         legacyData << data;
 
       progress ->setValue( i );
       qApp     ->processEvents();
