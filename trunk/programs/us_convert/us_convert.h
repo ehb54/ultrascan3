@@ -29,6 +29,9 @@ class US_Convert : public US_Widgets
 
       QLineEdit*    le_dir;
 
+      QLabel*       lb_description;
+      QLineEdit*    le_description;
+
       QLabel*       lb_triple;
       QListWidget*  lw_triple;                        // cell, channel, wavelength
 
