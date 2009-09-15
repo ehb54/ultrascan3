@@ -54,17 +54,26 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
    settings->addWidget( pb_details, row++, 1 );
 
-   QLabel* lb_dir = us_label( tr( "Directory:" ) );
-   settings->addWidget( lb_dir, row++, 0 );
-
    // Row 3
+   QLabel* lb_dir = us_label( tr( "Directory:" ) );
+   settings->addWidget( lb_dir, row++, 0, 1, 2 );
+
+   // Row 4
    le_dir = us_lineedit( "", 1 );
    le_dir->setReadOnly( true );
    settings->addWidget( le_dir, row++, 0, 1, 2 );
 
-   // Cell / Channel / Wavelength
+   // Row 5
+   lb_description = us_label( tr( "Description:" ), -1 );
+   settings->addWidget( lb_description, row++, 0, 1, 2 );
 
-   // Row 4
+   // Row 6
+   le_description = us_lineedit( "", 1 );
+   le_description->setReadOnly( true );
+   settings->addWidget( le_description, row++, 0, 1, 2 );
+
+   // Cell / Channel / Wavelength
+   // Row 7
    lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
    settings->addWidget( lb_triple, row, 0 );
 
@@ -76,12 +85,11 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( lw_triple, row++, 1 );
 
    // Scan Controls
-
-   // Row 5
+   // Row 8
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
    settings->addWidget( lb_scan, row++, 0, 1, 2 );
 
-   // Row 6
+   // Row 9
    QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_from, row, 0 );
@@ -90,7 +98,7 @@ US_Convert::US_Convert() : US_Widgets()
    ct_from->setStep( 1 );
    settings->addWidget( ct_from, row++, 1 );
 
-   // Row 7
+   // Row 10
    QLabel* lb_to = us_label( tr( "Scan Focus to:" ), -1 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_to, row, 0 );
@@ -100,7 +108,7 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( ct_to, row++, 1 );
 
    // Exclude and Include pushbuttons
-   // Row 8
+   // Row 11
    pb_exclude = us_pushbutton( tr( "Exclude Scan(s)" ), false );
    connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude_scans() ) );
    settings->addWidget( pb_exclude, row, 0 );
@@ -110,7 +118,7 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_include, row++, 1 );
 
    // Write pushbuttons
-   // Row 9
+   // Row 12
    pb_write = us_pushbutton( tr( "Write Current Data" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
    settings->addWidget( pb_write, row, 0 );
@@ -120,7 +128,7 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_writeAll, row++, 1 );
 
    // Progress bar
-   // Row 10
+   // Row 13
    QLabel* lb_placeholder = new QLabel();
    settings -> addWidget( lb_placeholder, row, 0, 1, 2 );
 
@@ -138,7 +146,7 @@ US_Convert::US_Convert() : US_Widgets()
 
    QBoxLayout* buttons = new QHBoxLayout;
 
-   // Row 11
+   // Row 14
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( resetAll() ) );
    buttons->addWidget( pb_reset );
@@ -186,6 +194,8 @@ void US_Convert::reset( void )
    lw_triple    ->clear();
 
    le_dir->setText( "" );
+
+   le_description->setText( "" );
 
    pb_exclude     ->setEnabled( false );
    pb_include     ->setEnabled( false );
@@ -661,6 +671,8 @@ void US_Convert::convert( bool showProgressBar )
    newRawData.channel     = channel;
    newRawData.description = ccwLegacyData[ 0 ]->description;
    
+   le_description->setText( newRawData.description );
+
    // Get the min and max radius
    double min_radius = 1.0e99;
    double max_radius = 0.0;
@@ -832,7 +844,7 @@ void US_Convert::details( void )
    delete dialog;
 }
 
-void US_Convert::changeTriple( QListWidgetItem* item )
+void US_Convert::changeTriple( QListWidgetItem* )
 {
    currentTriple = lw_triple->currentRow();
 
