@@ -28,6 +28,8 @@ int main( int argc, char* argv[] )
 
 US_Convert::US_Convert() : US_Widgets()
 {
+   clicking = false;
+
    setWindowTitle( tr( "Convert Legacy Raw Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
@@ -117,8 +119,18 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_include, SIGNAL( clicked() ), SLOT( include() ) );
    settings->addWidget( pb_include, row++, 1 );
 
-   // Write pushbuttons
+   // Defining data subsets
    // Row 12
+   pb_define = us_pushbutton( tr( "Define Subsets" ), false );
+   connect( pb_define, SIGNAL( clicked() ), SLOT( start_clicking() ) );
+   settings->addWidget( pb_define, row, 0 );
+
+   pb_process = us_pushbutton( tr( "Process Subsets" ) , false );
+   connect( pb_process, SIGNAL( clicked() ), SLOT( end_clicking() ) );
+   settings->addWidget( pb_process, row++, 1 );
+
+   // Write pushbuttons
+   // Row 13
    pb_write = us_pushbutton( tr( "Write Current Data" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
    settings->addWidget( pb_write, row, 0 );
@@ -128,7 +140,7 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_writeAll, row++, 1 );
 
    // Progress bar
-   // Row 13
+   // Row 14
    QLabel* lb_placeholder = new QLabel();
    settings -> addWidget( lb_placeholder, row, 0, 1, 2 );
 
@@ -146,7 +158,7 @@ US_Convert::US_Convert() : US_Widgets()
 
    QBoxLayout* buttons = new QHBoxLayout;
 
-   // Row 14
+   // Row 15
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( resetAll() ) );
    buttons->addWidget( pb_reset );
@@ -169,8 +181,10 @@ US_Convert::US_Convert() : US_Widgets()
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
 
-   pick = new US_PlotPicker( data_plot );
-   pick->setRubberBand( QwtPicker::VLineRubberBand );
+   picker = new US_PlotPicker( data_plot );
+   picker->setTrackerMode( QwtPicker::AlwaysOn ); // maybe change to ActiveOnly later
+   connect( picker, SIGNAL( appended( const QPoint& ) ),
+            this,   SLOT  ( click( const QPoint& ) ) );
 
    // Now let's assemble the page
    QHBoxLayout* main = new QHBoxLayout( this );
@@ -222,17 +236,24 @@ void US_Convert::reset( void )
    allData.clear();
 
    data_plot->detachItems();
-   pick     ->disconnect();
+   picker   ->disconnect();
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
    grid = us_grid( data_plot );
    data_plot->replot();
+   connect( picker, SIGNAL( appended( const QPoint& ) ),
+            this,   SLOT  ( click( const QPoint& ) ) );
 
+   clicking = false;
+   pb_define      ->setEnabled( false );
+   pb_process     ->setEnabled( false );
 }
 
 void US_Convert::resetAll( void )
 {
    reset();
+
+   ss_limits.clear();
 
    ct_tolerance->setMinValue(   0.0 );
    ct_tolerance->setMaxValue( 100.0 );
@@ -241,15 +262,19 @@ void US_Convert::resetAll( void )
 }
 
 // User pressed the load data button
-void US_Convert::load( void )
+void US_Convert::load( QString dir )
 {
-   read();                // Read the legacy data
+   if ( dir.isEmpty() )
+      read();                // Read the legacy data
+
+   else
+      read( dir );
 
 /*
    // Display the data that was read
    for ( int i = 0; i < legacyData.size(); i++ )
    {
-      beckmanRaw d = legacyData[ i ];
+      US_DataIO::beckmanRaw d = legacyData[ i ];
 
       qDebug() << d.description;
       qDebug() << d.type         << " "
@@ -265,7 +290,7 @@ void US_Convert::load( void )
       {
          if ( i != legacyData.size() - 1 ) continue;
 
-         reading r = d.readings[ j ];
+         US_DataIO::reading r = d.readings[ j ];
 
          QString line = QString::number(r.d.radius, 'f', 4 )    + " "
                       + QString::number(r.value, 'E', 5 )       + " "
@@ -282,6 +307,7 @@ void US_Convert::load( void )
    if ( triples.size() == 1 )
    {
       convert( true );
+
       allData << newRawData;
    }
 
@@ -336,12 +362,17 @@ void US_Convert::read( void )
    if ( dir.isEmpty() ) return; 
 
    reset();
-   le_dir  ->setText( dir );
+   read( dir );
+}
 
+void US_Convert::read( QString dir )
+{
    // Get legacy file names
    QDir d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
    d.makeAbsolute();
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
+
+   le_dir  ->setText( dir );
 
    QStringList files = d.entryList( QDir::Files );
    QStringList fileList;
@@ -395,11 +426,11 @@ void US_Convert::read( void )
       if ( runType == "RI" )                // Split out the two readings in RI data
       {
          US_DataIO::beckmanRaw data2 = data;  // Alter to store second dataset
-         for ( int i = 0; i < data.readings.size(); i++ )
+         for ( int j = 0; j < data.readings.size(); j++ )
          {
-            data2.readings[ i ].value  = data2.readings[ i ].stdDev;   // Reading 2 in here for RI
-            data.readings[ i ].stdDev = 0.0;
-            data2.readings[ i ].stdDev = 0.0;
+            data2.readings[ j ].value  = data2.readings[ j ].stdDev;   // Reading 2 in here for RI
+            data.readings [ j ].stdDev = 0.0;
+            data2.readings[ j ].stdDev = 0.0;
          }
 
          data2.channel = 'B';
@@ -408,12 +439,54 @@ void US_Convert::read( void )
          legacyData << data2;
       }
 
+      else if ( runType == "RA" && ss_limits.size() > 2 )
+      {
+         // We are subdividing the scans
+         US_DataIO::beckmanRaw data2 = data;
+
+         US_DataIO::reading r;
+
+         for ( int x = 1; x < ss_limits.size(); x++ )
+         {
+            data2.readings.clear();                  // Only need to alter readings for sub-datasets
+
+            // Go through all the readings to see which ones to include
+            for ( int y = 0; y < data.readings.size(); y++ )
+            {
+               if ( data.readings[ y ].d.radius > ss_limits[ x - 1 ] &&
+                    data.readings[ y ].d.radius < ss_limits[ x ] )
+               {
+                   // Create the current dataset point
+                   r.d.radius = data.readings[ y ].d.radius;
+                   r.value    = data.readings[ y ].value;
+                   r.stdDev   = data.readings[ y ].stdDev;
+                   data2.readings << r;
+               }
+
+            }
+
+            legacyData << data2;                     // Send the current data subset
+            data2.channel++;                         // increment the channel letter
+         }
+
+      }
+  
+      else if ( runType == "RA" )                     // Perhaps before subdividing
+      {
+         // Allow the user to process subsets
+         pb_define  ->setEnabled( true );
+
+         legacyData << data;        // For user to see single or multiple datasets
+      }
+
       else
          legacyData << data;
 
       progress ->setValue( i );
       qApp     ->processEvents();
    }
+
+   ss_limits.clear();                       // Don't need this any more
 
    lb_progress ->setVisible( false );
    progress    ->setVisible( false );
@@ -1306,5 +1379,65 @@ void US_Convert::reset_scan_ctrls( void )
    connect( ct_to  , SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_to     ( double ) ) );
 
+}
+
+void US_Convert::start_clicking( void )
+{
+   ss_limits.clear();
+
+   clicking = true;
+   pb_process ->setEnabled( true );
+}
+
+void US_Convert::click( const QPoint& p )
+{
+   if ( ! clicking ) return;
+
+   double radius = data_plot->invTransform( QwtPlot::xBottom, p.x() );
+
+   ss_limits << radius;
+
+}
+
+void US_Convert::end_clicking( void )
+{
+   clicking = false;
+   pb_process ->setEnabled( false );
+   pb_define  ->setEnabled( false );
+
+   if ( ss_limits.size() < 2 )
+   {
+      // Not enough clicks to work with
+      ss_limits.clear();
+      pb_process ->setEnabled( true );
+      return;
+   }
+
+   // Let's make sure the points are in sorted order
+   for ( int i = 0; i < ss_limits.size() - 1; i++ )
+      for ( int j = i + 1; j < ss_limits.size(); j++ )
+         if ( ss_limits[ i ] > ss_limits[ j ] )
+         {
+            double temp = ss_limits[ i ];
+            ss_limits[ i ] = ss_limits[ j ];
+            ss_limits[ j ] = temp;
+         }
+
+   // Let's make sure all the data is included somewhere
+   ss_limits[ 0 ] = 5.7;
+   ss_limits[ ss_limits.size() - 1 ] = 7.3;
+
+/*
+   for ( int i = 0; i < ss_limits.size(); i++ )
+   {
+      qDebug() << "Radius point " << i + 1 << ": " << ss_limits[ i ];
+   }
+*/
+
+   // Now that we know we're subdividing, let's reconvert the file
+   QString dir = le_dir->text();
+
+   reset();
+   load( dir );
 }
 
