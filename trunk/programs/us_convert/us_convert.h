@@ -16,12 +16,12 @@ class US_Convert : public US_Widgets
   Q_OBJECT
 
   public:
-  US_Convert();
+      US_Convert();
 
   private:
 
       US_Help        showHelp;
-      US_PlotPicker* pick;
+      US_PlotPicker* picker;
 
       QString       runType;
       QStringList   triples;
@@ -45,6 +45,8 @@ class US_Convert : public US_Widgets
       QPushButton*  pb_exclude;
       QPushButton*  pb_include;
       QPushButton*  pb_details;
+      QPushButton*  pb_define;
+      QPushButton*  pb_process;
 
       QList< US_DataIO::beckmanRaw >  legacyData;     // legacy data from file
       QList< US_DataIO::beckmanRaw* > ccwLegacyData;  // legacy data with this cell/channel/wl
@@ -58,6 +60,9 @@ class US_Convert : public US_Widgets
       QLabel*       lb_progress;
       QProgressBar* progress;
 
+      QList< double > ss_limits;                      // list of subset boundaries
+      bool clicking;
+
       int  write           ( const QString& );
       void setInterpolated ( unsigned char*, int );
       void plot_current    ( void );
@@ -67,11 +72,12 @@ class US_Convert : public US_Widgets
       void set_colors      ( const QList< int >& );
    
   private slots:
-      void load            ( void );
+      void load            ( QString dir = "" );
       void details         ( void );
       void reset           ( void );
       void resetAll        ( void );
       void read            ( void );
+      void read            ( QString );                // If you know the dirname already
       void setCcwTriples   ( void );
       void setCcrTriples   ( void );
       void convert         ( bool showProgressBar = false );
@@ -84,6 +90,9 @@ class US_Convert : public US_Widgets
       void reset_scan_ctrls( void );
       void write           ( void );
       int  writeAll        ( void );
+      void start_clicking  ( void );
+      void click           ( const QPoint& );
+      void end_clicking    ( void );
       void help            ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
 };
