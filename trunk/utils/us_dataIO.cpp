@@ -6,6 +6,9 @@
 #include "us_dataIO.h"
 #include "us_crc.h"
 #include "us_math.h"
+#include "us_matrix.h"
+
+#include <uuid/uuid.h>
 
 bool US_DataIO::readLegacyFile( const QString& file, 
                                 beckmanRaw&    data )
@@ -568,6 +571,247 @@ void US_DataIO::do_edits( QXmlStreamReader& xml, editValues& parameters )
    }
 }
 
+int US_DataIO::loadData( const QString&       directory, 
+                         const QString&       editFilename,
+                         QList< editedData >& data,
+                         QList< rawData    >& raw )
+{
+   // Determine raw file name by removing editID
+   QString rawDataFile = editFilename;
+   int index1 = editFilename.indexOf( "." );  
+   int index2 = editFilename.indexOf( ".", index1 + 1 );
+   rawDataFile.remove( index1, index2 - index1 );
+   rawDataFile.replace( "xml", "auc" );
+   
+   // Get the raw data
+   rawData d;
+   int result = readRawData( directory + "/" + rawDataFile, d );
+   if ( result != OK ) throw result;
+   raw << d;
+
+   // Get the edit data
+   editValues e;
+   result = readEdits( directory + "/" + editFilename, e );
+   if ( result != OK ) throw result;
+
+   // Check for uuid match
+   char uuid[ 37 ];
+   uuid_unparse( (uchar*)d.guid, uuid );
+   if ( QString( uuid ) != e.uuid ) throw NO_UUID_MATCH;
+
+   // Apply the edits
+   editedData ed;
+
+   QStringList sl = editFilename.split( "." );
+
+   ed.runID       = sl[ 0 ];
+   ed.editID      = sl[ 1 ];
+   ed.dataType    = sl[ 2 ];
+   ed.cell        = sl[ 3 ];
+   ed.channel     = sl[ 4 ];
+   ed.wavelength  = sl[ 5 ];
+   ed.description = d.description;
+   ed.uuid        = e.uuid;
+   ed.meniscus    = e.meniscus;
+   ed.plateau     = e.plateau;
+   ed.baseline    = e.baseline;
+   ed.floatingData= e.floatingData;
+
+   // Invert values before updating edited points
+   if ( e.invert < 0 )
+   {
+      for ( int i = 0; i < ed.scanData.size(); i++ )
+      {
+         scan* s = &ed.scanData[ i ];
+         for ( int j = 0; i < s->readings.size(); i++ )
+         {
+            s->readings[ j ].value *= e.invert;
+         }
+      }
+   }
+
+   // Update any edited points
+   for ( int i = 0; i < e.editedPoints.length(); i++ )
+   {
+      int    scan   =      e.editedPoints[ i ].scan;
+      int    index1 = (int)e.editedPoints[ i ].radius;
+      double value  =      e.editedPoints[ i ].value;
+
+      d.scanData[ scan ].readings[ index1 ].value = value;
+   }
+
+   // Do not copy excluded data or data outside the edit range
+   for ( int i = 0; i < d.scanData.length(); i++ )
+   {
+      if ( e.excludes.contains( i ) ) continue;
+
+      scan s;
+      copyRange( e.rangeLeft, e.rangeRight, d.scanData[ i ], s );
+     
+      ed.scanData << s;
+   }
+
+   if ( e.removeSpikes )
+   {
+      double smoothed_value;
+
+      // For each scan
+      for ( int i = 0; i < ed.scanData.size(); i++ )
+      {
+         scan* s   = &ed.scanData [ i ];
+         int   end = s->readings.size();
+
+         for ( int j = 0; j < 5; j++ ) // Beginning 5 points
+         {
+            if ( spike_check( *s, j, 0, 10, &smoothed_value ) )
+               s->readings[ j ].value = smoothed_value;
+         }
+
+         for ( int j = 5; j < end - 4; j++ ) // Middle points
+         {
+            if ( spike_check( *s, j, j - 5, j + 5, &smoothed_value ) )
+               s->readings[ j ].value = smoothed_value;
+         }
+
+         for ( int j = end - 4; j <= end; j++ ) // Last 5 points
+         {
+            if ( spike_check( *s, j, end - 10, end, &smoothed_value ) )
+               s->readings[ j ].value = smoothed_value;
+         }
+      }
+   }
+
+   if ( e.noiseOrder > 0 )
+   {
+      QList< double > residuals = calc_residuals( e.noiseOrder, ed.scanData );
+      
+      for ( int i = 0; i < ed.scanData.size(); i++ )
+      {
+         for ( int j = 0; j <  ed.scanData[ i ].readings.size(); j++ )
+            ed.scanData[ i ].readings[ j ].value -= residuals[ i ];
+      }
+   }
+
+   data << ed;
+   return OK;
+}
+
+void US_DataIO::copyRange ( double left, double right, 
+                            const scan& orig, scan& dest )
+{
+   dest.temperature = orig.temperature;
+   dest.rpm         = orig.rpm;
+   dest.seconds     = orig.seconds;
+   dest.omega2t     = orig.omega2t;
+   dest.wavelength  = orig.wavelength;
+
+   for ( int i = index( orig, left ); i <= index( orig, right ); i++ )
+   {
+      dest.readings << orig.readings[ i ];
+   }
+}
+
+bool US_DataIO::spike_check( const scan& s, int point, 
+                             int start, int end, double* value )
+{
+   static double r[ 20 ];  // Spare room -- normally 10
+   static double v[ 20 ];
+
+   double* x = &r[ 0 ];
+   double* y = &v[ 0 ];
+
+   double  slope;
+   double  intercept;
+   double  sigma = 0.0;
+   double  correlation;
+   int     count = 0;
+
+   const double threshold = 10.0;
+
+   for ( int k = start; k <= end; k++ ) // For each point in the range
+   {
+      if ( k != point ) // Exclude the probed point from fit
+      {
+         r[ count ] = s.readings[ k ].d.radius;
+         v[ count ] = s.readings[ k ].value;
+         count++;
+      }
+   }
+
+   US_Math::linefit( &x, &y, &slope, &intercept, &sigma, &correlation, count );
+
+   // If there is more than a threshold-fold difference, it is a spike
+   double val    =  s.readings[ point ].value;
+   double radius =  s.readings[ point ].d.radius;
+
+   if ( fabs( slope * radius + intercept - val ) > threshold * sigma )
+   {
+      // Interpolate
+      *value = slope * radius + intercept;
+      return true;
+   }
+
+   return false;  // Not a spike
+}
+
+QList< double > US_DataIO::calc_residuals( int                  order, 
+                                           const QList< scan >& sl )
+{
+   int scan_count = sl.size();
+
+   double* coeffs              = new double[ order ];
+   double* absorbance_integral = new double[ scan_count ];
+   double* fit                 = new double[ scan_count ];
+   double* scan_time           = new double[ scan_count ];;
+
+   // Calculate the integral of each scan which is needed for the least-squares
+   // polynomial fit to correct for radially invariant baseline noise. We also
+   // keep track of the total integral at each point.
+
+   for ( int i = 0; i < scan_count; i++ )
+   {
+      absorbance_integral[ i ] = 0;
+
+      // For now, all radii are spaces equally at 0.001 cm
+      const double delta_r = 0.001;
+
+      const US_DataIO::scan* s = &sl[ i ];
+      int value_count          = s->readings.size();
+
+      // Integrate using trapezoid rule
+      for ( int j = 1; j < value_count; j++ )
+      {
+         double avg = ( s->readings[ j ].value + s->readings[ j - 1 ].value ) / 2.0;
+         absorbance_integral[ i ] += avg * delta_r;
+      }
+   }
+
+   for ( int i = 0; i < scan_count; i++ )
+      scan_time[ i ] =  sl[ i ].seconds;
+
+   US_Matrix::lsfit( coeffs, scan_time, absorbance_integral, scan_count, order );
+
+   QList< double > residuals;
+
+   for ( int i = 0; i < scan_count; i++ )
+   {
+      fit[ i ] = 0;
+
+      for ( int j = 0; j < order; j++ )
+         fit[ i ] +=  coeffs[ j ] * pow( sl[ i ].seconds, j );
+
+      residuals << absorbance_integral[ i ] - fit[ i ];
+   }
+
+   delete [] coeffs;
+   delete [] absorbance_integral;
+   delete [] fit;
+   delete [] scan_time;
+
+   return residuals;
+}
+
+// Returns index of radius value
 int US_DataIO::index( const scan& s, double r )
 {
    if ( r <= s.readings[ 0 ].d.radius ) return 0;
@@ -588,13 +832,16 @@ QString US_DataIO::errorString( int code )
 {
    switch ( code )
    {
-      case OK        : return QObject::tr( "The operation completed successully" );
+      case OK        
+         : return QObject::tr( "The operation completed successully" );
       case CANTOPEN  : return QObject::tr( "The file cannot be opened" );
       case BADCRC    : return QObject::tr( "The file was corrupted" );
       case NOT_USDATA: return QObject::tr( "The file was not valid scan data" );
       case BADTYPE   : return QObject::tr( "The filetype was not recognized" );
       case BADXML    : return QObject::tr( "The XML file was invalid" );
       case NODATA    : return QObject::tr( "No legacy data files were found" );
+      case NO_UUID_MATCH
+         : return QObject::tr( "UUIDs in raw data and edit data do not match" );
    }
 
    return QObject::tr( "Unknown error code" );

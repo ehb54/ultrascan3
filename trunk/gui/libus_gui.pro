@@ -11,7 +11,8 @@ QT          += network svg
 
 TRANSLATIONS = $${TARGET}_DE_de.ts
 
-HEADERS      = us_buffer.h              \
+HEADERS      = us_analysis_base.h       \
+               us_buffer.h              \
                us_editor.h              \
                us_investigator.h        \
                us_gui_settings.h        \
@@ -32,7 +33,8 @@ HEADERS      = us_buffer.h              \
                us_widgets.h             \
                us_widgets_dialog.h
 
-SOURCES      = us_buffer.cpp              \
+SOURCES      = us_analysis_base.cpp       \
+               us_buffer.cpp              \
                us_editor.cpp              \
                us_investigator.cpp        \
                us_gui_settings.cpp        \ 
