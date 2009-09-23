@@ -68,8 +68,8 @@ class US_DataIO
       class rawData
       {
          public:
-         char    type[ 2 ];
-         char    guid[ 16 ];
+         char   type[ 2 ];
+         char   guid[ 16 ];
          int     cell;
          char    channel;
          QString description;
@@ -116,8 +116,26 @@ class US_DataIO
          bool                 floatingData;
       };
 
+      class editedData
+      {
+         public:
+         QString       runID;
+         QString       editID;
+         QString       dataType;
+         QString       cell;
+         QString       channel;
+         QString       wavelength;
+         QString       description;
+         QString       uuid;
+         double        meniscus;
+         double        plateau;
+         double        baseline;
+         bool          floatingData;
+         QList< scan > scanData;       // The interpolated data array is omitted
+      };
+
       enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, BADXML, 
-                     NODATA };
+                     NODATA, NO_UUID_MATCH };
 
       static bool    readLegacyFile( const QString&, beckmanRaw& );
       static int     writeRawData  ( const QString&, rawData& );
@@ -125,6 +143,8 @@ class US_DataIO
       static int     readEdits     ( const QString&, editValues& );
       static QString errorString   ( int );
       static int     index         ( const scan&, double );
+      static int     loadData      ( const QString&, const QString&, 
+                                     QList< editedData >&, QList< rawData >& );
 
    private:
 
@@ -149,6 +169,9 @@ class US_DataIO
       static void operations( QXmlStreamReader&, editValues& );
       static void do_edits  ( QXmlStreamReader&, editValues& );
       static void excludes  ( QXmlStreamReader&, editValues& );
-};
 
+      static void copyRange  ( double, double, const scan&, scan& );
+      static bool spike_check( const scan&, int, int, int, double* );
+      static QList< double > calc_residuals( int, const QList< scan >& );
+};
 #endif
