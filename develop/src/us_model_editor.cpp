@@ -703,6 +703,8 @@ void US_ModelEditor::select_component(int val)
          if ((*system).assoc_vector[i].component2 == current_component
              ||  (*system).assoc_vector[i].component3 == (int) current_component)
          {
+            emit current_assoc(i);
+            //cout << "Model control emitting current_assoc: " << i << endl;
             le_keq->setText(str.sprintf("%6.4e", (*system).assoc_vector[i].keq));
             le_keq->setEnabled(true);
             le_koff->setText(str.sprintf("%6.4e", (*system).assoc_vector[i].k_off));

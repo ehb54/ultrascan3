@@ -13,6 +13,7 @@ US_GAModelEditor::US_GAModelEditor(struct ModelSystem *ms, QWidget *parent, cons
 
    connect(this, SIGNAL(componentChanged(unsigned int)), this, SLOT(update_constraints(unsigned int)));
    connect(this, SIGNAL(modelLoaded()), this, SLOT(initialize_msc()));
+   connect(this, SIGNAL(current_assoc(unsigned int)), this, SLOT(update_current_assoc(unsigned int)));
    connect(le_mw, SIGNAL(returnPressed()), this, SLOT(verify_constraints()));
    connect(le_conc, SIGNAL(returnPressed()), this, SLOT(verify_constraints()));
    connect(le_f_f0, SIGNAL(returnPressed()), this, SLOT(verify_constraints()));
@@ -323,10 +324,8 @@ bool US_GAModelEditor::verify_constraints()
    {
       if (msc.component_vector_constraints[i].f_f0.fit)
       {
-         if ( msc.component_vector_constraints[i].f_f0.low >
-              (*ms).component_vector[i].f_f0
-              ||   msc.component_vector_constraints[i].f_f0.high <
-              (*ms).component_vector[i].f_f0)
+         if ( (*ms).component_vector[i].f_f0 - msc.component_vector_constraints[i].f_f0.low <= 0.0
+            || msc.component_vector_constraints[i].f_f0.high - (*ms).component_vector[i].f_f0 <= 0.0 )
          {
             cc_f_f0->update((*ms).component_vector[i].f_f0 - 1.0, 0.5, &low, &high, 1.0);
             msc.component_vector_constraints[i].f_f0.low = low;
@@ -337,10 +336,8 @@ bool US_GAModelEditor::verify_constraints()
       }
       if (msc.component_vector_constraints[i].mw.fit)
       {
-         if ( msc.component_vector_constraints[i].mw.low >
-              (*ms).component_vector[i].mw
-              ||   msc.component_vector_constraints[i].mw.high <
-              (*ms).component_vector[i].mw)
+         if ( (*ms).component_vector[i].mw - msc.component_vector_constraints[i].mw.low <= 0.0
+            || msc.component_vector_constraints[i].mw.high - (*ms).component_vector[i].mw <= 0.0)
          {
             cc_mw->update((*ms).component_vector[i].mw, (float) 0.2, &low, &high, 0.0);
             msc.component_vector_constraints[i].mw.low = low;
@@ -351,10 +348,8 @@ bool US_GAModelEditor::verify_constraints()
       }
       if (msc.component_vector_constraints[i].concentration.fit)
       {
-         if ( msc.component_vector_constraints[i].concentration.low >
-              (*ms).component_vector[i].concentration
-              ||   msc.component_vector_constraints[i].concentration.high <
-              (*ms).component_vector[i].concentration)
+         if ( (*ms).component_vector[i].concentration - msc.component_vector_constraints[i].concentration.low <= 0.0
+            || msc.component_vector_constraints[i].concentration.high - (*ms).component_vector[i].concentration <= 0.0)
          {
             cc_conc->update((*ms).component_vector[i].concentration, (float) 0.2, &low, &high, 0.0);
             msc.component_vector_constraints[i].concentration.low = low;
@@ -368,10 +363,8 @@ bool US_GAModelEditor::verify_constraints()
    {
       if (msc.assoc_vector_constraints[i].keq.fit)
       {
-         if ( msc.assoc_vector_constraints[i].keq.low >
-              (*ms).assoc_vector[i].keq
-              ||   msc.assoc_vector_constraints[i].keq.high <
-              (*ms).assoc_vector[i].keq)
+         if ( (*ms).assoc_vector[i].keq - msc.assoc_vector_constraints[i].keq.low <= 0.0
+            || msc.assoc_vector_constraints[i].keq.high - (*ms).assoc_vector[i].keq <= 0.0)
          {
             cc_keq->update((*ms).assoc_vector[i].keq, (float) 0.9, &low, &high, 0.0);
             msc.assoc_vector_constraints[i].keq.low = low;
@@ -379,10 +372,8 @@ bool US_GAModelEditor::verify_constraints()
             message += tr(str.sprintf("The constraints for the equilibrium constant of reaction %d\n", i+1));
             flag = false;
          }
-         if ( msc.assoc_vector_constraints[i].koff.low >
-              (*ms).assoc_vector[i].k_off
-              ||   msc.assoc_vector_constraints[i].koff.high <
-              (*ms).assoc_vector[i].k_off)
+         if ( (*ms).assoc_vector[i].k_off - msc.assoc_vector_constraints[i].koff.low <= 0.0
+            || msc.assoc_vector_constraints[i].koff.high - (*ms).assoc_vector[i].k_off <= 0.0)
          {
             cc_koff->update((*ms).assoc_vector[i].k_off, (float) 0.99, &low, &high, 0.0);
             msc.assoc_vector_constraints[i].koff.low = low;
@@ -451,6 +442,7 @@ void US_GAModelEditor::conc_constraintChanged(struct constraint c)
 
 void US_GAModelEditor::keq_constraintChanged(struct constraint c)
 {
+   //cout << "Current assoc: " << current_assoc << endl;
    if (msc.assoc_vector_constraints.size() > 0)
    {
       msc.assoc_vector_constraints[current_assoc].keq.low = c.low;
@@ -581,5 +573,10 @@ void US_GAModelEditor::initialize_msc()
    current_component = 0; // reset to the first component
    current_assoc = 0;
    select_component((int) current_component);
+}
+
+void US_GAModelEditor::update_current_assoc(unsigned int i)
+{
+   current_assoc = i;
 }
 

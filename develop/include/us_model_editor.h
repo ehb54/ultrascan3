@@ -122,6 +122,7 @@ class US_ModelEditor : public QDialog
    signals:
       void componentChanged(unsigned int);
       void modelLoaded();
+      void current_assoc(unsigned int);
 };
 
 #endif

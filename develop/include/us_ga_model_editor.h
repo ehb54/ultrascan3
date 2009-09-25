@@ -70,7 +70,7 @@ class US_EXTERN US_GAModelEditor : public US_ModelEditor
       void keq_constraintChanged(struct constraint);
       void koff_constraintChanged(struct constraint);
       void initialize_msc();
-
+      void update_current_assoc(unsigned int);
 // re-implemented functions:
       void setup_GUI();
       void help();
