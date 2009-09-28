@@ -8,6 +8,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_run_details.h"
+#include "us_plot.h"
 #include "us_math.h"
 
 //! \brief Main program for us_convert. Loads translators and starts
@@ -28,8 +29,6 @@ int main( int argc, char* argv[] )
 
 US_Convert::US_Convert() : US_Widgets()
 {
-   clicking = false;
-
    setWindowTitle( tr( "Convert Legacy Raw Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
@@ -122,15 +121,24 @@ US_Convert::US_Convert() : US_Widgets()
    // Defining data subsets
    // Row 12
    pb_define = us_pushbutton( tr( "Define Subsets" ), false );
-   connect( pb_define, SIGNAL( clicked() ), SLOT( start_clicking() ) );
+   connect( pb_define, SIGNAL( clicked() ), SLOT( define_subsets() ) );
    settings->addWidget( pb_define, row, 0 );
 
    pb_process = us_pushbutton( tr( "Process Subsets" ) , false );
-   connect( pb_process, SIGNAL( clicked() ), SLOT( end_clicking() ) );
+   connect( pb_process, SIGNAL( clicked() ), SLOT( process_subsets() ) );
    settings->addWidget( pb_process, row++, 1 );
 
-   // Write pushbuttons
    // Row 13
+   pb_reference = us_pushbutton( tr( "Define Reference Scans" ), false );
+   connect( pb_reference, SIGNAL( clicked() ), SLOT( define_reference() ) );
+   settings->addWidget( pb_reference, row, 0 );
+
+   pb_cancelref = us_pushbutton( tr( "Undo Reference Scans" ), false );
+   connect( pb_cancelref, SIGNAL( clicked() ), SLOT( cancel_reference() ) );
+   settings->addWidget( pb_cancelref, row++, 1 );
+
+   // Write pushbuttons
+   // Row 14
    pb_write = us_pushbutton( tr( "Write Current Data" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
    settings->addWidget( pb_write, row, 0 );
@@ -140,7 +148,7 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_writeAll, row++, 1 );
 
    // Progress bar
-   // Row 14
+   // Row 15
    QLabel* lb_placeholder = new QLabel();
    settings -> addWidget( lb_placeholder, row, 0, 1, 2 );
 
@@ -178,13 +186,15 @@ US_Convert::US_Convert() : US_Widgets()
                                    tr( "Absorbance" ) );
 
    data_plot->setMinimumSize( 600, 400 );
+
+   data_plot->enableAxis( QwtPlot::xBottom, true );
+   data_plot->enableAxis( QwtPlot::yLeft  , true );
+
    data_plot->setAxisScale( QwtPlot::xBottom, 5.7, 7.3 );
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
 
    picker = new US_PlotPicker( data_plot );
-   picker->setTrackerMode( QwtPicker::AlwaysOn ); // maybe change to ActiveOnly later
-   connect( picker, SIGNAL( appended( const QPoint& ) ),
-            this,   SLOT  ( click( const QPoint& ) ) );
+   picker ->setRubberBand( QwtPicker::VLineRubberBand );
 
    // Now let's assemble the page
    QHBoxLayout* main = new QHBoxLayout( this );
@@ -216,6 +226,7 @@ void US_Convert::reset( void )
    pb_write       ->setEnabled( false );
    pb_writeAll    ->setEnabled( false );
    pb_details     ->setEnabled( false );
+   pb_cancelref   ->setEnabled( false );
 
    ct_from->disconnect();
    ct_from->setMinValue( 0 );
@@ -234,6 +245,7 @@ void US_Convert::reset( void )
    newRawData.scanData.clear();
    triples.clear();
    allData.clear();
+   RP_averaged = false;
 
    data_plot->detachItems();
    picker   ->disconnect();
@@ -241,12 +253,12 @@ void US_Convert::reset( void )
    data_plot->setAxisScale( QwtPlot::yLeft  , 0.0, 1.5 );
    grid = us_grid( data_plot );
    data_plot->replot();
-   connect( picker, SIGNAL( appended( const QPoint& ) ),
-            this,   SLOT  ( click( const QPoint& ) ) );
 
-   clicking = false;
    pb_define      ->setEnabled( false );
    pb_process     ->setEnabled( false );
+   step           = NONE;
+
+   pb_reference   ->setEnabled( false );
 }
 
 void US_Convert::resetAll( void )
@@ -254,6 +266,8 @@ void US_Convert::resetAll( void )
    reset();
 
    ss_limits.clear();
+   reference_start = 0;
+   reference_end   = 0;
 
    ct_tolerance->setMinValue(   0.0 );
    ct_tolerance->setMaxValue( 100.0 );
@@ -437,6 +451,9 @@ void US_Convert::read( QString dir )
 
          legacyData << data;
          legacyData << data2;
+
+         pb_reference->setEnabled( true );
+
       }
 
       else if ( runType == "RA" && ss_limits.size() > 2 )
@@ -1114,6 +1131,12 @@ void US_Convert::plot_current( void )
             + runID + " Cell: " + cell + " Wavelength: " + wl;
    }
 
+   else if ( strncmp( currentData.type, "RP", 2 ) == 0 )
+   {
+      title = "Pseudo Absorbance Data\nRun ID: "
+            + runID + " Cell: " + cell + " Wavelength: " + wl;
+   }
+
    else if ( strncmp( currentData.type, "IP", 2 ) == 0 )
    {
       title = "Interference Data\nRun ID: "
@@ -1381,29 +1404,40 @@ void US_Convert::reset_scan_ctrls( void )
 
 }
 
-void US_Convert::start_clicking( void )
+void US_Convert::cClick( const QwtDoublePoint& p )
+{
+   switch ( step )
+   {
+      case SPLIT :
+         draw_vline( p.x() );
+         ss_limits << p.x();
+         break;
+
+      default :
+         break;
+
+   }
+
+}
+
+void US_Convert::define_subsets( void )
 {
    ss_limits.clear();
 
-   clicking = true;
    pb_process ->setEnabled( true );
-}
 
-void US_Convert::click( const QPoint& p )
-{
-   if ( ! clicking ) return;
+   connect( picker, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+                    SLOT  ( cClick  ( const QwtDoublePoint& ) ) );
 
-   double radius = data_plot->invTransform( QwtPlot::xBottom, p.x() );
-
-   ss_limits << radius;
+   step = SPLIT;
 
 }
 
-void US_Convert::end_clicking( void )
+void US_Convert::process_subsets( void )
 {
-   clicking = false;
    pb_process ->setEnabled( false );
    pb_define  ->setEnabled( false );
+   picker   ->disconnect();
 
    if ( ss_limits.size() < 2 )
    {
@@ -1439,5 +1473,185 @@ void US_Convert::end_clicking( void )
 
    reset();
    load( dir );
+}
+
+void US_Convert::cDrag( const QwtDoublePoint& p )
+{
+   switch ( step )
+   {
+      case REFERENCE :
+         data_plot->replot();
+         break;
+
+      default :
+         break;
+
+   }
+
+}
+
+void US_Convert::define_reference( void )
+{
+   connect( picker, SIGNAL( cMouseDown     ( const QwtDoublePoint& ) ),
+                    SLOT  ( start_reference( const QwtDoublePoint& ) ) );
+
+   connect( picker, SIGNAL( cMouseDrag( const QwtDoublePoint& ) ),
+                    SLOT  ( cDrag     ( const QwtDoublePoint& ) ) );
+
+   connect( picker, SIGNAL( cMouseUp    ( const QwtDoublePoint& ) ),
+                    SLOT  ( process_reference( const QwtDoublePoint& ) ) );
+
+   pb_reference ->setEnabled( false );
+
+   step = REFERENCE;
+}
+
+void US_Convert::start_reference( const QwtDoublePoint& p )
+{
+   reference_start   = p.x();
+
+   draw_vline( reference_start );
+   data_plot->replot();
+}
+
+void US_Convert::process_reference( const QwtDoublePoint& p )
+{
+   reference_end = p.x();
+   draw_vline( reference_end );
+   data_plot->replot();
+
+   pb_reference  ->setEnabled( false );
+   picker        ->disconnect();
+
+   // Double check if min < max
+   if ( reference_start > reference_end )
+   {
+      double temp     = reference_start;
+      reference_start = reference_end;
+      reference_end   = temp;
+   }
+
+/*
+   qDebug() << "Starting Radius: " << reference_start;
+   qDebug() << "Ending Radius:   " << reference_end;
+*/
+
+   // Calculate the averages for all triples
+   RP_calc_avg();
+
+   // Now that we have the averages, let's replot
+   RP_reference_triple = currentTriple;
+
+   // Default to displaying the first non-reference triple
+   for ( int i = 0; i < allData.size(); i++ )
+   {
+      if ( i != RP_reference_triple )
+      {
+         currentTriple = i;
+         break;
+      }
+   }
+
+   lw_triple->setCurrentRow( currentTriple );
+   plot_current();
+}
+
+void US_Convert::RP_calc_avg( void )
+{
+   if ( RP_averaged ) return;             // Average calculation has already been done
+
+   US_DataIO::rawData referenceData = allData[ currentTriple ];
+   int ref_size = referenceData.scanData[ 0 ].readings.size();
+
+   for ( int i = 0; i < referenceData.scanData.size(); i++ )
+   {
+      US_DataIO::scan s = referenceData.scanData[ i ];
+
+      int j      = 0;
+      int count  = 0;
+      double sum = 0.0;
+      while ( s.readings[ j ].d.radius < reference_start && j < ref_size )
+         j++;
+
+      while ( s.readings[ j ].d.radius < reference_end && j < ref_size )
+      {
+         sum += s.readings[ j ].value;
+         count++;
+         j++;
+      }
+      RP_averages << sum / count;
+   }
+
+/*
+   for ( int i = 0; i < referenceData.scanData.size(); i++ )
+   {
+      qDebug() << "Average " << i + 1 << ": " << RP_averages[ i ];
+   }
+*/
+
+   // Now calculate the pseudo-absorbance
+   RIData = allData;
+
+   for ( int i = 0; i < allData.size(); i++ )
+   {
+      US_DataIO::rawData* currentData = &allData[ i ];
+
+      for ( int j = 0; j < currentData->scanData.size(); j++ )
+      {
+         US_DataIO::scan* s = &currentData->scanData[ j ];
+
+         for ( int k = 0; k < s->readings.size(); k++ )
+         {
+            US_DataIO::reading* r = &s->readings[ k ];
+
+            r->value = log10(RP_averages[ j ] / r->value );
+         }
+      }
+      strncpy( currentData->type, "RP", 2);
+   }
+
+   RP_averaged = true;
+   pb_cancelref ->setEnabled( true );
+}
+
+void US_Convert::cancel_reference( void )
+{
+   RP_averaged = false;
+   allData     = RIData;
+   RIData.clear();
+
+   RP_averages.clear();
+   reference_start = 0.0;
+   reference_end   = 0.0;
+
+   pb_reference  ->setEnabled( true );
+   pb_cancelref  ->setEnabled( false );
+   currentTriple = 0;
+   lw_triple->setCurrentRow( currentTriple );
+
+   plot_current();
+}
+
+void US_Convert::draw_vline( double radius )
+{
+   double r[ 2 ];
+
+   r[ 0 ] = radius;
+   r[ 1 ] = radius;
+   QwtScaleDiv* y_axis = data_plot->axisScaleDiv( QwtPlot::yLeft );
+
+   double padding = ( y_axis->upperBound() - y_axis->lowerBound() ) / 30.0;
+
+   double v[ 2 ];
+   v [ 0 ] = y_axis->upperBound() - padding;
+   v [ 1 ] = y_axis->lowerBound() + padding;
+
+   QwtPlotCurve* v_line = us_curve( data_plot, "V-Line" );
+   v_line->setData( r, v, 2 );
+
+   QPen pen = QPen( QBrush( Qt::white ), 2.0 );
+   v_line->setPen( pen );
+
+   data_plot->replot();
 }
 
