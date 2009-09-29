@@ -29,7 +29,9 @@ class US_EXTERN US_Convert : public US_Widgets
       QStringList   triples;
       int           currentTriple;
 
+      QString       runID;
       QLineEdit*    le_dir;
+      QLineEdit*    le_runID;
 
       QLabel*       lb_description;
       QLineEdit*    le_description;
@@ -51,6 +53,8 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_process;
       QPushButton*  pb_reference;
       QPushButton*  pb_cancelref;
+      QPushButton*  pb_change_runID;
+      QPushButton*  pb_dbconnect;
 
       QList< US_DataIO::beckmanRaw >  legacyData;     // legacy data from file
       QList< US_DataIO::beckmanRaw* > ccwLegacyData;  // legacy data with this cell/channel/wl
@@ -75,6 +79,7 @@ class US_EXTERN US_Convert : public US_Widgets
       int  write           ( const QString& );
       void setInterpolated ( unsigned char*, int );
       void plot_current    ( void );
+      void plot_titles     ( void );
       void init_includes   ( void );
       void plot_all        ( void );
       void replot          ( void );
@@ -84,6 +89,7 @@ class US_EXTERN US_Convert : public US_Widgets
   private slots:
       void load            ( QString dir = "" );
       void details         ( void );
+      void change_runID    ( void );
       void reset           ( void );
       void resetAll        ( void );
       void read            ( void );

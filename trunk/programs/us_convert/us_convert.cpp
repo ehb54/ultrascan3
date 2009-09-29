@@ -55,26 +55,35 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
    settings->addWidget( pb_details, row++, 1 );
 
+   // Prepare for writing files
    // Row 3
+   pb_change_runID = us_pushbutton( tr( "Change Run ID" ), false );
+   connect( pb_change_runID, SIGNAL( clicked() ), SLOT( change_runID() ) );
+   settings->addWidget( pb_change_runID, row, 0 );
+
+   le_runID = us_lineedit( "", 1 );
+   settings->addWidget( le_runID, row++, 1 );
+
+   // Row 4
    QLabel* lb_dir = us_label( tr( "Directory:" ) );
    settings->addWidget( lb_dir, row++, 0, 1, 2 );
 
-   // Row 4
+   // Row 5
    le_dir = us_lineedit( "", 1 );
    le_dir->setReadOnly( true );
    settings->addWidget( le_dir, row++, 0, 1, 2 );
 
-   // Row 5
+   // Row 6
    lb_description = us_label( tr( "Description:" ), -1 );
    settings->addWidget( lb_description, row++, 0, 1, 2 );
 
-   // Row 6
+   // Row 7
    le_description = us_lineedit( "", 1 );
    le_description->setReadOnly( true );
    settings->addWidget( le_description, row++, 0, 1, 2 );
 
    // Cell / Channel / Wavelength
-   // Row 7
+   // Row 8
    lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
    settings->addWidget( lb_triple, row, 0 );
 
@@ -86,11 +95,11 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( lw_triple, row++, 1 );
 
    // Scan Controls
-   // Row 8
+   // Row 9
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
    settings->addWidget( lb_scan, row++, 0, 1, 2 );
 
-   // Row 9
+   // Row 10
    QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_from, row, 0 );
@@ -99,7 +108,7 @@ US_Convert::US_Convert() : US_Widgets()
    ct_from->setStep( 1 );
    settings->addWidget( ct_from, row++, 1 );
 
-   // Row 10
+   // Row 11
    QLabel* lb_to = us_label( tr( "Scan Focus to:" ), -1 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_to, row, 0 );
@@ -109,7 +118,7 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( ct_to, row++, 1 );
 
    // Exclude and Include pushbuttons
-   // Row 11
+   // Row 12
    pb_exclude = us_pushbutton( tr( "Exclude Scan(s)" ), false );
    connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude_scans() ) );
    settings->addWidget( pb_exclude, row, 0 );
@@ -119,7 +128,7 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_include, row++, 1 );
 
    // Defining data subsets
-   // Row 12
+   // Row 13
    pb_define = us_pushbutton( tr( "Define Subsets" ), false );
    connect( pb_define, SIGNAL( clicked() ), SLOT( define_subsets() ) );
    settings->addWidget( pb_define, row, 0 );
@@ -128,7 +137,8 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_process, SIGNAL( clicked() ), SLOT( process_subsets() ) );
    settings->addWidget( pb_process, row++, 1 );
 
-   // Row 13
+   // Choosing reference channel
+   // Row 15
    pb_reference = us_pushbutton( tr( "Define Reference Scans" ), false );
    connect( pb_reference, SIGNAL( clicked() ), SLOT( define_reference() ) );
    settings->addWidget( pb_reference, row, 0 );
@@ -137,8 +147,14 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_cancelref, SIGNAL( clicked() ), SLOT( cancel_reference() ) );
    settings->addWidget( pb_cancelref, row++, 1 );
 
+   // External program to enter database information
+   // Row 16
+   pb_dbconnect = us_pushbutton( tr( "Enter Database Connections" ), false );
+   connect( pb_dbconnect, SIGNAL( clicked() ), SLOT( get_dbconnect() ) );
+   settings->addWidget( pb_dbconnect, row++, 0, 1, 2 );
+
    // Write pushbuttons
-   // Row 14
+   // Row 17
    pb_write = us_pushbutton( tr( "Write Current Data" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
    settings->addWidget( pb_write, row, 0 );
@@ -148,7 +164,7 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_writeAll, row++, 1 );
 
    // Progress bar
-   // Row 15
+   // Row 18
    QLabel* lb_placeholder = new QLabel();
    settings -> addWidget( lb_placeholder, row, 0, 1, 2 );
 
@@ -163,10 +179,9 @@ US_Convert::US_Convert() : US_Widgets()
    settings -> addWidget( progress, row++, 1 );
 
    // Standard pushbuttons
-
+   // Row 19
    QBoxLayout* buttons = new QHBoxLayout;
 
-   // Row 15
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
    connect( pb_reset, SIGNAL( clicked() ), SLOT( resetAll() ) );
    buttons->addWidget( pb_reset );
@@ -220,13 +235,16 @@ void US_Convert::reset( void )
    le_dir->setText( "" );
 
    le_description->setText( "" );
+   le_runID      ->setText( "" );
 
    pb_exclude     ->setEnabled( false );
    pb_include     ->setEnabled( false );
    pb_write       ->setEnabled( false );
    pb_writeAll    ->setEnabled( false );
    pb_details     ->setEnabled( false );
+   pb_change_runID->setEnabled( false );
    pb_cancelref   ->setEnabled( false );
+   pb_dbconnect   ->setEnabled( false );
 
    ct_from->disconnect();
    ct_from->setMinValue( 0 );
@@ -363,6 +381,7 @@ void US_Convert::load( QString dir )
    pb_write   ->setEnabled( true );
    pb_writeAll->setEnabled( true );
    pb_details ->setEnabled( true );
+   pb_change_runID->setEnabled( true );
 }
 
 void US_Convert::read( void )
@@ -386,7 +405,11 @@ void US_Convert::read( QString dir )
    d.makeAbsolute();
    if ( dir.right( 1 ) != "/" ) dir += "/"; // Ensure trailing /
 
-   le_dir  ->setText( dir );
+   // Set the runID and directory
+   QStringList components = dir.split( "/", QString::SkipEmptyParts );
+   runID    = components.last();
+   le_runID ->setText( runID );
+   le_dir   ->setText( dir );
 
    QStringList files = d.entryList( QDir::Files );
    QStringList fileList;
@@ -924,14 +947,26 @@ void US_Convert::details( void )
    QString     dirname    = le_dir->text();
    // if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
 
-   QStringList components = dirname.split( "/", QString::SkipEmptyParts );
-   QString     runID      = components.last();
-
    US_RunDetails* dialog
       = new US_RunDetails( allData, runID, dirname, triples );
    dialog->exec();
    qApp->processEvents();
    delete dialog;
+}
+
+void US_Convert::change_runID( void )
+{
+   QRegExp rx( "^[A-Za-z0-9_]{1,20}$" );
+   QString new_runID = le_runID->text();
+      
+   if ( rx.indexIn( new_runID ) < 0 ) return;
+
+   runID = new_runID;
+   QMessageBox::information( this,
+            tr( "Success" ),
+            tr( "RunID has been changed to ") + runID );
+
+   plot_titles();
 }
 
 void US_Convert::changeTriple( QListWidgetItem* )
@@ -947,12 +982,7 @@ void US_Convert::changeTriple( QListWidgetItem* )
 
 void US_Convert::write( void )
 { 
-   // Specify the filename
-   QString     rawdir    = le_dir->text();
-
-   QStringList components = rawdir.split( "/", QString::SkipEmptyParts );
-   QString     runID      = components.last();
-
+   // Get the current cell/channel/wavelength
    QString triple         = triples[ currentTriple ];
    QStringList parts      = triple.split(" / ");
 
@@ -983,11 +1013,6 @@ void US_Convert::write( void )
 int US_Convert::write( const QString& filename )
 {
    if ( newRawData.scanData.empty() ) return US_DataIO::NODATA; 
-
-   // Get the directory and write out the data
-   QString     rawdir     = le_dir->text();
-   QStringList components = rawdir.split( "/", QString::SkipEmptyParts );
-   QString     runID      = components.last();
 
    QDir        writeDir( US_Settings::resultDir() );
    QString     dirname = writeDir.absolutePath() + "/" + runID + "/";
@@ -1020,12 +1045,6 @@ int US_Convert::write( const QString& filename )
 int US_Convert::writeAll( void )
 {
    if ( allData[ 0 ].scanData.empty() ) return US_DataIO::NODATA; 
-
-   // Get the directory and write out the data
-   QString     rawdir = le_dir->text();
-
-   QStringList components = rawdir.split( "/", QString::SkipEmptyParts );
-   QString     runID      = components.last();
 
    QDir        writeDir( US_Settings::resultDir() );
    QString     dirname = writeDir.absolutePath() + "/" + runID + "/";
@@ -1106,12 +1125,21 @@ void US_Convert::plot_current( void )
 
    if ( currentData.scanData.empty() ) return;
 
-   // Specify the filename
-   QString     dirname    = le_dir->text();
-   if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
+   plot_titles();
 
-   QStringList components = dirname.split( "/", QString::SkipEmptyParts );
-   QString     runID      = components.last();
+   // Initialize include list
+   init_includes();
+   
+   // Plot current data for cell / channel / wavelength triple
+   plot_all();
+   
+   // Set the Scan spin boxes
+   reset_scan_ctrls();
+}
+
+void US_Convert::plot_titles( void )
+{
+   US_DataIO::rawData currentData = allData[ currentTriple ];
 
    QString triple         = triples[ currentTriple ];
    QStringList parts      = triple.split(" / ");
@@ -1180,15 +1208,7 @@ void US_Convert::plot_current( void )
    data_plot->setTitle( title );
    data_plot->setAxisTitle( QwtPlot::yLeft, yLegend );
    data_plot->setAxisTitle( QwtPlot::xBottom, xLegend );
-   
-   // Initialize include list
-   init_includes();
-   
-   // Plot current data for cell / channel / wavelength triple
-   plot_all();
-   
-   // Set the Scan spin boxes
-   reset_scan_ctrls();
+
 }
 
 void US_Convert::init_includes( void )
@@ -1475,7 +1495,7 @@ void US_Convert::process_subsets( void )
    load( dir );
 }
 
-void US_Convert::cDrag( const QwtDoublePoint& p )
+void US_Convert::cDrag( const QwtDoublePoint& )
 {
    switch ( step )
    {
