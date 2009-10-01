@@ -107,9 +107,16 @@ class US_EXTERN US_Math
       //! use an observed linear adjustment of 0.000425 per degreee.
       
       //! \param vbar The unadjusted vbar value
-      //! \param degC The temperature used for the adjsutment
+      //! \param degC The temperature used for the adjustment
       static double adjust_vbar20( double vbar, double degC )
       { return vbar + 0.002125 + 4.25e-4 * ( degC - 25.0 ); }
+
+      //! The inverse of adjust_vbar20.  Returns vbar20.
+      
+      //! \param vbar The vbar value at the specified temperature
+      //! \param degC The temperature of the sample associated with vbar
+      static double adjust_vbar( double vbar, double degC )
+      { return vbar - 0.002125 - 4.25e-4 * ( degC - 25.0 ); }
 
 /*  
       //! \brief An overloaded version of the above function with floats 
@@ -130,6 +137,13 @@ class US_EXTERN US_Math
       //! \param d  Data to be corrected
 
       static void data_correction( double, struct solution_data& );
+
+      //! \brief A routine to calulate the value of a normally distrubted
+      //!        value.
+      //! \param sigma Standard deviation of the distribution
+      //! \param mean  Mean value of the distribution
+      //! \param x     Point where to compute desired value
+      static double normal_distribution( double, double, double );
 };
 #endif
 

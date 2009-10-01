@@ -651,6 +651,13 @@ int US_DataIO::loadData( const QString&       directory,
       ed.scanData << s;
    }
 
+   // Determine plateau values for each scan
+   for ( int i = 0; i < ed.scanData.length(); i++ )
+   {
+      int point = index( ed.scanData[ i ], ed.plateau );
+      ed.scanData[ i ].plateau = ed.scanData[ i ].readings[ point ].value;
+   }
+
    if ( e.removeSpikes )
    {
       double smoothed_value;

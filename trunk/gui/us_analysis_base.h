@@ -24,14 +24,19 @@ class US_EXTERN US_AnalysisBase : public US_Widgets
       QList< US_DataIO::editedData > dataList;
       QList< US_DataIO::rawData    > rawList;
       QStringList                    triples;
+      QList< int >                   excludedScans;
 
-      int     load_status;
-      QString directory;
-      QString editID;
-      QString runID;
+      QList< QVector< double > >     savedValues;
+
+      bool         dataLoaded;
+      QString      directory;
+      QString      editID;
+      QString      runID;
 
       US_Help      showHelp;
 
+      double       density;
+      double       viscosity;
       double       vbar;
 
       // Layouts
@@ -77,17 +82,31 @@ class US_EXTERN US_AnalysisBase : public US_Widgets
       QwtCounter*  ct_from;
       QwtCounter*  ct_to;
 
-      virtual void load  ( void );
-      virtual void update( int );
+      virtual void update   ( int );
+      virtual void data_plot( void );
 
    protected slots:
-      void tbd( void   );
-      void tbd( double );
+      virtual void reset     ( void );
+      virtual void new_triple( int  );
+      virtual void load      ( void );
+
+   private:
+      double* x_weights;
+      double* y_weights;
+      
+      double smooth_point( int, int, int, int, int = 0 );
 
    private slots:
-      void details    ( void   );
-      void get_vbar   ( void   );
-      void update_vbar( double );
-
+      void details      ( void   );
+      void get_vbar     ( void   );
+      void update_vbar  ( double );
+      void get_buffer   ( void   );
+      void update_buffer( double, double );
+      void boundary_pct ( double );
+      void boundary_pos ( double );
+      void exclude_from ( double );
+      void exclude_to   ( double );
+      void exclude      ( void   );
+      void smoothing    ( double );
 };
 #endif

@@ -289,7 +289,7 @@ void US_Math::calc_vbar( struct peptide& pep, const QString& sequence,
    pep.vbar_sum += pep.z * E_OR_Q_VBAR;
 
    // These equations are empirically derived.  The values above are for
-   // a temperature of 25C.  Adjust th evaues to 20C and the current 
+   // a temperature of 25C.  Adjust the values to 20C from the current 
    // temperature.
    
    pep.vbar20 = ( pep.weight / pep.mw ) - 0.002125;
@@ -336,8 +336,8 @@ void US_Math::data_correction( double t, struct solution_data& d )
    */
 
    d.density_wt = 
-      xi_max * ( c0     + c1 * t + c2 * t2 + c3 * t3 + c4 * t4 + c5 * t5 ) /
-      ( 1.0 + b * t );
+      xi_max * ( c0  + c1 * t + c2 * t2 + c3 * t3 + c4 * t4 + c5 * t5 ) /
+         ( 1.0 + b * t );
 
    /*!
       Viscosity of water. <br>
@@ -408,4 +408,10 @@ void US_Math::data_correction( double t, struct solution_data& d )
    d.buoyancyw    = 1.0 - d.vbar20 * DENS_20W;
    d.correction   = d.buoyancyw / d.buoyancyb * 
                     d.viscosity_tb / ( 100.0 * VISC_20W );
+}
+
+double US_Math::normal_distribution( double sigma, double mean, double x )
+{
+   double exponent = -sq( ( x - mean ) / sigma ) / 2.0;
+   return exp( exponent ) / sqrt( 2.0 * M_PI * sq( sigma ) );
 }

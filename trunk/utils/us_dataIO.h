@@ -61,6 +61,7 @@ class US_DataIO
          double seconds;
          double omega2t;
          double wavelength;
+         double plateau;         // Reading value
          QList< reading > readings;
          QByteArray interpolated; 
       };
@@ -68,8 +69,8 @@ class US_DataIO
       class rawData
       {
          public:
-         char   type[ 2 ];
-         char   guid[ 16 ];
+         char    type[ 2 ];
+         char    guid[ 16 ];
          int     cell;
          char    channel;
          QString description;
@@ -106,7 +107,7 @@ class US_DataIO
          double               meniscus;
          double               rangeLeft;
          double               rangeRight;
-         double               plateau;
+         double               plateau;       // Radius value
          double               baseline;
          QList< int >         excludes;
          QList< editedPoint > editedPoints;
@@ -128,7 +129,7 @@ class US_DataIO
          QString       description;
          QString       uuid;
          double        meniscus;
-         double        plateau;
+         double        plateau;   // Radius value
          double        baseline;
          bool          floatingData;
          QList< scan > scanData;       // The interpolated data array is omitted
