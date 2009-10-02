@@ -454,6 +454,7 @@ void EditAbsVeloc_Win::get_x(const QMouseEvent &e)
             include_flag[scan] = true;
             ik = find_indexf(limit_left, &radius[scan], points[scan]);
             jk = find_indexf(limit_right, &radius[scan], points[scan]);
+            cout << "ik: " << ik << ", jk: " << jk << ", x: " << current_R << endl;
             if ((ik < 0) || (jk < 0))
             {
                include_flag[scan] = false;
