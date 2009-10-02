@@ -454,14 +454,14 @@ void EditAbsVeloc_Win::get_x(const QMouseEvent &e)
             include_flag[scan] = true;
             ik = find_indexf(limit_left, &radius[scan], points[scan]);
             jk = find_indexf(limit_right, &radius[scan], points[scan]);
-            cout << "Scan " << scan << ": ik: " << ik << ", jk: " << jk << ", x: " << current_R << endl;
+            //cout << "Scan " << scan << ": ik: " << ik << ", jk: " << jk << ", x: " << current_R << endl;
             if ((ik < 0) || (jk < 0))
             {
                include_flag[scan] = false;
                excludeScans = true;
                str += str1.sprintf(tr("Scan %d, Wavelength %d, Cell %d\n"), scan+1, lambda+1, cell+1);
             }
-            if (jk < ik)
+            if (jk != -1 && ik != -1 && jk < ik)
             {
                QMessageBox::message(tr("Attention:"), tr("You need to pick first the left limit,\n"
                                                          "then the right. Please try again now..."));
