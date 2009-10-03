@@ -256,7 +256,9 @@ void US_AnalysisBase::load( void )
    catch ( US_DataIO::ioError error )
    {
       // There was an error reading filname or it's associated raw data
-      qDebug() << US_DataIO::errorString( error );
+      QString message = US_DataIO::errorString( error );
+      QMessageBox::critical( this, tr( "Bad Data" ), message );
+      return;
    }
 
    savedValues.clear();
@@ -474,19 +476,6 @@ void US_AnalysisBase::data_plot( void )
       }
    }
 
-///////  Place v lines at smoothing   
-/*   int x = (int)ct_smoothing->value();
-   QwtPlotCurve* c = us_curve( data_plot2, "left" );
-   r[0] = r[1] = d->scanData[ 0 ].readings[ x ].d.radius;
-   v[0] = 0.1; v[1] = 0.4;
-   c->setData( r, v, 2 );
-
-   c =  us_curve( data_plot2, "right" );
-   x = d->scanData[ 0 ].readings.size() - x;
-   r[0] = r[1] = d->scanData[ 0 ].readings[ x ].d.radius;
-   v[0] = 0.6; v[1] = 0.8;
-   c->setData( r, v, 2 ); */
-//////// 
    data_plot2->replot();
 
    delete [] r;
@@ -833,4 +822,18 @@ void US_AnalysisBase::new_triple( int index )
 
    reset();
    data_plot();
+}
+
+QString US_AnalysisBase::table_row( const QString& s1, const QString& s2 )
+{
+   QString s = "<tr><td>" + s1 + "</td><td>" + s2 + "</td></tr>\n";
+   return s;
+}
+
+QString US_AnalysisBase::table_row( const QString& s1, const QString& s2, 
+                                    const QString& s3 )
+{
+   QString s = "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3 
+             + "</td></tr>\n";
+   return s;
 }

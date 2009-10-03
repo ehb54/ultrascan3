@@ -2,6 +2,8 @@
 #ifndef US_MATRIX_H
 #define US_MATRIX_H
 
+//! \brief A set of general purpose matrix functions.  All functions
+//!        are static.
 class US_Matrix
 {
 public:
@@ -12,7 +14,7 @@ public:
    //! \param y contains the y values of the raw data
    //! \param n contains the dimension of x and y
    //! \param order is the order of the function to be fitted
-   //! \param msg is where a MessageBox of results is desired
+   //! \param msg is a currently unused boolean parameter
 
    static void lsfit( double*, double*, double*, int, int, bool = false );
    

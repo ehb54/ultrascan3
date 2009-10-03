@@ -4,6 +4,7 @@
 
 #include <QtCore>
 #include "us_extern.h"
+#include "us_dataIO.h"
 
 #define sq(x) ((x) * (x))
 #ifndef max
@@ -144,6 +145,12 @@ class US_EXTERN US_Math
       //! \param mean  Mean value of the distribution
       //! \param x     Point where to compute desired value
       static double normal_distribution( double, double, double );
+
+      //! \brief Calculate the time correction in a run due to acceleration
+      //!        of the rotor.
+      //! \param dataLList The list of editedData for the run
+
+      static double time_correction( const QList< US_DataIO::editedData >& );
 };
 #endif
 
