@@ -5,6 +5,8 @@
 
 #include "us_math.h"
 #include "us_constants.h"
+#include "us_dataIO.h"
+#include "us_matrix.h"
 
 double US_Math::box_muller( double m, double s )   
 {
@@ -414,4 +416,35 @@ double US_Math::normal_distribution( double sigma, double mean, double x )
 {
    double exponent = -sq( ( x - mean ) / sigma ) / 2.0;
    return exp( exponent ) / sqrt( 2.0 * M_PI * sq( sigma ) );
+}
+
+double US_Math::time_correction( const QList< US_DataIO::editedData >& dataList )
+{
+   int size  = dataList.size() * dataList[ 0 ].scanData.size();
+   int count = 0;
+
+   double* x = new double[ size ];
+   double* y = new double[ size ];
+   
+   double c[ 2 ];  // Looking for a linear fit
+
+   for ( int i = 0; i < dataList.size(); i++ )
+   {
+      const US_DataIO::editedData* e = &dataList[ i ];
+
+      for ( int j = 0; j < e->scanData.size(); j++ )
+      {
+        if ( e->scanData[ j ].omega2t > 9.99999e10 ) break;
+        x[ count ] = e->scanData[ j ].omega2t;
+        y[ count ] = e->scanData[ j ].seconds;
+        count++;
+      }
+   }
+
+   US_Matrix::lsfit( c, x, y, count, 2 );
+
+   delete [] x;
+   delete [] y;
+
+   return c[ 0 ]; // Return the time value corresponding to zero omega2t
 }

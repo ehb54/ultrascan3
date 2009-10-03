@@ -1,11 +1,13 @@
 //! \file us_second_moment.cpp
 
 #include <QApplication>
+#include <QtSvg>
 
 #include "us_second_moment.h"
 #include "us_license_t.h"
 #include "us_license.h"
-#include "us_math.h"
+#include "us_settings.h"
+#include "us_gui_settings.h"
 
 //! \brief Main program for us_convert. Loads translators and starts
 //         the class US_Convert.
@@ -34,17 +36,6 @@ US_SecondMoment::US_SecondMoment() : US_AnalysisBase()
    connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
    connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
-}
-
-US_SecondMoment::~US_SecondMoment()
-{
-   if ( smPoints   != NULL ) delete [] smPoints;
-   if ( smSeconds  != NULL ) delete [] smSeconds;
-   if ( te_results != NULL ) 
-   {
-      qDebug() << "Closing te_results";
-      te_results->close();
-   }
 }
 
 void US_SecondMoment::data_plot( void )
@@ -83,8 +74,6 @@ void US_SecondMoment::data_plot( void )
          tr( "Corrected Sed. Coeff. (1e-13 s)" ) );
 
    // Calculate solution parameters
-   struct solution_data solution;
-
    solution.density   = le_density  ->text().toDouble();
    solution.viscosity = le_viscosity->text().toDouble();
    solution.vbar      = le_vbar     ->text().toDouble();
@@ -154,7 +143,7 @@ void US_SecondMoment::data_plot( void )
    QwtSymbol     sym;
    
    count = 0;
-   
+
    // Curve 1
    for ( int i = 0; i < exclude; i++ )
    {
@@ -190,6 +179,8 @@ void US_SecondMoment::data_plot( void )
       count++;
    }
 
+   average_2nd = (count > 0 ) ? average / count : 0.0;
+
    sym.setPen  ( QPen  ( Qt::blue  ) );
    sym.setBrush( QBrush( Qt::white ) );
    
@@ -201,12 +192,15 @@ void US_SecondMoment::data_plot( void )
 
    x[ 0 ] = 0.0;
    x[ 1 ] = (double)( scanCount - excludedScans.size() );
-   y[ 0 ] = average / count;
-   y[ 1 ] = y[ 0 ];
+   y[ 0 ] = average_2nd;
+   y[ 1 ] = average_2nd;
 
-   curve = us_curve( data_plot1, tr( "Average" ) );
-   curve->setPen( QPen( Qt::green ) );
-   curve->setData( x, y, 2 );
+   if ( count > 0 )
+   {
+      curve = us_curve( data_plot1, tr( "Average" ) );
+      curve->setPen( QPen( Qt::green ) );
+      curve->setData( x, y, 2 );
+   }
 
    data_plot1->setAxisScale   ( QwtPlot::xBottom, 0.0, x[ 1 ] + 0.25, 1.0 );
    data_plot1->setAxisMaxMinor( QwtPlot::xBottom, 0 );
@@ -216,40 +210,131 @@ void US_SecondMoment::data_plot( void )
    delete [] y;
 }
 
-void US_SecondMoment::reset( void )
-{
-   US_AnalysisBase::reset();
-
-}
-
-
-
 void US_SecondMoment::view( void )
 {
    // Create US_Editor
    if ( te_results == NULL )
    {
-      qDebug() << "Creating US_Editor";
-      te_results = new US_Editor( US_Editor::DEFAULT, true );
-      connect( te_results, SIGNAL( destroyed( QObject* ) ),
-                           SLOT  ( edit_done( QObject* ) ) );
-      te_results->resize( 400, 300 );
+      te_results = new US_Editor( US_Editor::DEFAULT, true, QString(), this );
+      te_results->resize( 500, 400 );
       QPoint p = g.global_position();
       te_results->move( p.x() + 30, p.y() + 30 );
-
-      te_results->show();
+      te_results->e->setFont( QFont( US_GuiSettings::fontFamily() ) );
    }
 
    // Add results to window
-   te_results->e->setPlainText( results() );
+   QString s = "<html><head>\n"
+               "<style>td { padding-right: 1em;}</style>\n"
+               "</head><body>\n" +
+               results() + 
+               "</body></html>\n";
+
+   te_results->e->setHtml( s );
+   te_results->show();
 }
 
 void US_SecondMoment::save( void )
 {
-   // Write data
+   int                    index  = lw_triples->currentRow();
+   US_DataIO::editedData* d      = &dataList[ index ];
+
+   QString dir = US_Settings::reportDir();
+   QDir    folder( dir );
+   
+   if ( ! folder.exists( d->runID ) )
+   {
+      if ( ! folder.mkdir( d->runID ) )
+      {
+         QMessageBox::warning( this,
+               tr( "File error" ),
+               tr( "Could not create the directory:\n" ) +
+               dir + "/" + d->runID );
+         return;
+      }
+   }
+
+   // Note: d->runID is both directory and first segment of file name
+   QString filebase = dir + "/" + d->runID + "/" + d->runID + "." + d->cell + 
+       + "." + d->channel + "." + d->wavelength;
+   
+   QString plot1File = filebase + ".sm_plot1.svg";
+   QString plot2File = filebase + ".sm_plot2.svg";
+   QString textFile  = filebase + ".sm_data.txt";
+   QString htmlFile  = filebase + ".sm_report.html";
+
+
+   // Write plots
+   QSvgGenerator generator1;
+   generator1.setSize( QSize( 400, 300 ) );
+   generator1.setFileName( plot1File );
+   data_plot1->print( generator1 );
+
+   QSvgGenerator generator2;
+   generator2.setSize( QSize( 400, 300 ) );
+   generator2.setFileName( plot2File );
+   data_plot2->print( generator2 );
+
+   // Write moment data
+   QFile sm_data( textFile );
+   if ( ! sm_data.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
+   {
+      QMessageBox::warning( this,
+            tr( "IO Error" ),
+            tr( "Could not open\n" ) + textFile + "\n" +
+                tr( "\nfor writing" ) );
+      return;
+   }
+
+   QTextStream ts_data( &sm_data );
+
+   int scanCount = d->scanData.size();
+   int excludes  = le_skipped->text().toInt();
+   
+   if ( excludes == scanCount )
+      ts_data << "No valid scans\n";
+   else
+      for ( int i = excludes; i < scanCount; i++ )
+      {
+         ts_data << i << "\t" << smPoints[ i ] << "\t" << smSeconds[ i ] << "\n";
+      }
+
+   sm_data.close();
+
+   // Write report
+   QFile report( htmlFile );
+
+   if ( ! report.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
+   {
+      QMessageBox::warning( this,
+            tr( "IO Error" ),
+            tr( "Could not open\n" ) + htmlFile + "\n" +
+                tr( "\nfor writing" ) );
+      return;
+   }
+
+   QTextStream report_ts( &report );
+
+    report_ts << "<html><head>\n"
+         "<style>td { padding-right: 1em;}</style>\n"
+         "</head><body>\n" +
+         results() + 
+         "<h3><a href='" + textFile  + 
+                         "'>Text File of Second Moment Plot Data</a></h3>\n"
+         "<h3><a href='" + plot1File + "'>Second Moment Plot</a></h3>\n"
+         "<h3><a href='" + plot2File + "'>Velocity Plot</a></h3>\n"
+         "</body></html>\n";
+
+   report.close();
+
    // Write results
    // Tell user
-
+   QMessageBox::warning( this,
+         tr( "Success" ),
+         tr( "Wrote:\n" ) 
+         + htmlFile  + "\n" 
+         + plot1File + "\n" 
+         + plot2File + "\n" 
+         + textFile  + "\n" );
 }
 
 void US_SecondMoment::write_data( void )
@@ -258,9 +343,144 @@ void US_SecondMoment::write_data( void )
 
 QString US_SecondMoment::results( void )
 {
-   QString s = "testing";
+   int                    index  = lw_triples->currentRow();
+   US_DataIO::editedData* d      = &dataList[ index ];
 
+   QString s = 
+      tr( "<h1>Second Moment Analysis</h1>\n" )   +
+      tr( "<h2>Data Report for Run \"" ) + d->runID + tr( "\", Cell " ) + d->cell +
+      tr(  ", Wavelength " ) + d->wavelength + "</h2>\n";
+
+   s += tr( "<h3>Detailed Run Information:</h3>\n" ) + "<table>\n" +
+        table_row( tr( "Cell Description:" ), d->description )     +
+        table_row( tr( "Data Directory:"   ), directory )          +
+        table_row( tr( "Rotor Speed:"      ),  
+            QString::number( (int)d->scanData[ 0 ].rpm ) + " rpm" );
+
+   // Temperature data
+   double sum     = 0.0;
+   double maxTemp = -1.0e99;
+   double minTemp =  1.0e99;
+
+   for ( int i = 0; i < d->scanData.size(); i++ )
+   {
+      double t = d->scanData[ i ].temperature;
+      sum += t;
+      maxTemp = max( maxTemp, t );
+      minTemp = min( minTemp, t );
+   }
+
+   QString average = QString::number( sum / d->scanData.size(), 'f', 1 );
+
+   s += table_row( tr( "Average Temperature:" ), average + " &deg;C" );
+
+   if ( maxTemp - minTemp <= US_Settings::tempTolerance() )
+      s += table_row( tr( "Temperature Variation:" ), tr( "Within tolerance" ) );
+   else 
+      s += table_row( tr( "Temperature Variation:" ), 
+                      tr( "(!) OUTSIDE TOLERANCE (!)" ) );
+
+   // Time data
+   int time_correction = (int) round( US_Math::time_correction( dataList ) );
+
+   int minutes = time_correction / 60;
+   int seconds = time_correction % 60;
+
+   QString m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
+   QString sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds"  );
+   s += table_row( tr( "Time Correction:" ), 
+                   QString::number( minutes ) + m +
+                   QString::number( seconds ) + sec );
+
+   double duration = rawList.last().scanData.last().seconds;
+   minutes = (int) duration / 60;
+   seconds = (int) duration % 60;
+
+   m   = ( minutes == 1 ) ? tr( " minute" ) : tr( " minutes " );
+   sec = ( seconds == 1 ) ? tr( " second" ) : tr( " seconds" );
+
+   s += table_row( tr( "Run Duration:" ),
+                   QString::number( minutes ) + m + 
+                   QString::number( seconds ) + sec );
+
+   // Wavelength, baseline, meniscus, range
+   s += table_row( tr( "Wavelength:" ), d->wavelength )     +
+        table_row( tr( "Baseline Absorbance:" ),
+                   QString::number( d->baseline, 'f', 3 ) ) + 
+        table_row( tr( "Meniscus Position:     " ),           
+                   QString::number( d->meniscus, 'f', 3 ) );
+
+   double left  =  d->scanData[ 0 ].readings[ 0 ]  .d.radius;
+   double right =  d->scanData[ 0 ].readings.last().d.radius;
+
+   s += table_row( tr( "Edited Data starts at: " ), 
+                   QString::number( left,  'f', 3 ) ) +
+        table_row( tr( "Edited Data stops at:  " ), 
+                   QString::number( right, 'f', 3 ) ) + "</table>\n";
+
+   // Settings
+
+   s += tr( "<h3>Hydrodynamic Settings:</h3>\n" ) + 
+        "<table>\n";
+  
+   s += table_row( tr( "Viscosity corrected:" ), 
+                   QString::number( solution.viscosity, 'f', 5 ) ) +
+        table_row( tr( "Viscosity (absolute):" ),
+                   QString::number( solution.viscosity_tb, 'f', 5 ) ) +
+        table_row( tr( "Density corrected:" ),
+                   QString::number( solution.density, 'f', 6 ) + " g/ccm" ) +
+        table_row( tr( "Density (absolute):" ),
+                   QString::number( solution.density_tb, 'f', 6 ) + " g/ccm" ) +
+        table_row( tr( "Vbar:" ), 
+                   QString::number( solution.vbar, 'f', 4 ) + " ccm/g" ) +
+        table_row( tr( "Vbar corrected for 20 &deg;C:" ),
+                   QString::number( solution.vbar20, 'f', 4 ) + " ccm/g" ) +
+        table_row( tr( "Buoyancy (Water, 20 &deg;C): " ),
+                   QString::number( solution.buoyancyw, 'f', 6 ) ) +
+        table_row( tr( "Buoyancy (absolute)" ),
+                   QString::number( solution.buoyancyb, 'f', 6 ) ) +
+        table_row( tr( "Correction Factor:" ),
+                   QString::number( solution.correction, 'f', 6 ) ) + 
+        "</table>\n";
+
+   s += tr( "<h3>Data Analysis Settings:</h3>\n" ) +
+        "<table>\n" +
+
+        table_row( tr( "Smoothing Frame:" ),
+                   QString::number( (int)ct_smoothing->value() ) ) + 
+        table_row( tr( "Analyzed Boundary:" ),
+                   QString::number( (int)ct_boundaryPercent->value() ) + " %" )+
+        table_row( tr( "Boundary Position:" ),
+                   QString::number( (int)ct_boundaryPos->value() ) + " %" ) +
+        table_row( tr( "Early Scans skipped:" ),
+                   le_skipped->text() + " scans" ) +
+        table_row( tr( "Average Second Moment S: " ),
+                   QString::number( average_2nd, 'f', 5 ) + " s * 10e-13" ) +
+        "</table>";
+
+   s += tr( "<h3>Scan Information:</h3>\n" ) +
+        "<table>\n"; 
+         
+   s += table_row( tr( "Scan" ), tr( "Corrected Time" ), 
+                   tr( "Plateau Concentration" ) );
+
+   for ( int i = 0; i < d->scanData.size(); i++ )
+   {
+      QString s1;
+      QString s2;
+      QString s3;
+
+      double od   = d->scanData[ i ].plateau;
+      int    time = (int)d->scanData[ i ].seconds - time_correction; 
+
+      s1 = s1.sprintf( "%4d",             i + 1 );
+      s2 = s2.sprintf( "%4d min %2d sec", time / 60, time % 60 );
+      s3 = s3.sprintf( "%.6f OD",         od ); 
+
+      s += table_row( s1, s2, s3 );
+   }
+
+   s += "</table>";
 
    return s;
-
 }
