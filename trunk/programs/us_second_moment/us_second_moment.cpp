@@ -40,27 +40,29 @@ US_SecondMoment::US_SecondMoment() : US_AnalysisBase()
 
 void US_SecondMoment::data_plot( void )
 {
+qDebug() << "2nd M data_plot";  
    US_AnalysisBase::data_plot();
 
    int                    index  = lw_triples->currentRow();
    US_DataIO::editedData* d      = &dataList[ index ];
 
-   int    scanCount = d->scanData.size();
-   int    exclude   = 0;
-   double position  = ct_boundaryPos    ->value() / 100.0;
-   double range     = ct_boundaryPercent->value() / 100.0;
+   int     scanCount   = d->scanData.size();
+   int     exclude     = 0;
+   double  boundaryPct = ct_boundaryPercent->value() / 100.0;
+   double  positionPct = ct_boundaryPos    ->value() / 100.0;
+   double  baseline    = calc_baseline();
 
    for ( int i = 0; i < scanCount; i++ )
    {
       if ( excludedScans.contains( i ) ) continue;
       
-      double test_y = d->scanData[ i ].plateau * position;
+      double range  = d->scanData[ i ].plateau - baseline;
+      double test_y = baseline + range * positionPct;
       
       if ( d->scanData[ i ].readings[ 0 ].value > test_y ) exclude++;
    }
 
    le_skipped->setText( QString::number( exclude ) );
-
 
    // Draw plot
    data_plot1->clear();
@@ -103,8 +105,8 @@ void US_SecondMoment::data_plot( void )
       // The span is the boundary portion that is going to be analyzed (in
       // percent)
 
-      double span   = d->scanData[ i ].plateau * range;
-      double test_y = d->scanData[ i ].plateau * position;
+      double range  = d->scanData[ i ].plateau - baseline;
+      double test_y = baseline + range * positionPct;
 
       while ( d->scanData[ i ].readings[ count ].value < test_y ) count++;
 
@@ -115,7 +117,7 @@ void US_SecondMoment::data_plot( void )
          double value  = d->scanData[ i ].readings[ count ].value;
          double radius = d->scanData[ i ].readings[ count ].d.radius;
          
-         if ( value >= test_y + span ) break;
+         if ( value >= test_y + range * boundaryPct ) break;
       
          sum1 += value * sq( radius );
          sum2 += value;
@@ -149,7 +151,7 @@ void US_SecondMoment::data_plot( void )
    {
       if ( excludedScans.contains( i ) ) continue;
       
-      x[ count ] = (double)( i + 1 );
+      x[ count ] = (double)( count + 1 );
       y[ count ] = smSeconds[ i ];
       count++;
    }
@@ -173,7 +175,7 @@ void US_SecondMoment::data_plot( void )
    {
       if ( excludedScans.contains( i ) ) continue;
       
-      x[ count ] = (double)( i + 1 );
+      x[ count ] = (double)( count + 1 );
       y[ count ] = smSeconds[ i ];
       average   += smSeconds[ i ];
       count++;
@@ -293,10 +295,17 @@ void US_SecondMoment::save( void )
    if ( excludes == scanCount )
       ts_data << "No valid scans\n";
    else
+   {
+      int count = 0;
       for ( int i = excludes; i < scanCount; i++ )
       {
-         ts_data << i << "\t" << smPoints[ i ] << "\t" << smSeconds[ i ] << "\n";
+         if ( excludedScans.contains( i ) ) continue;
+
+         ts_data << count + 1 << "\t" << smPoints[ i ] 
+                 << "\t" << smSeconds[ i ] << "\n";
+         count++;
       }
+   }
 
    sm_data.close();
 
@@ -312,16 +321,29 @@ void US_SecondMoment::save( void )
       return;
    }
 
+   // Remove directory
+   filebase = d->runID + "." + d->cell + "." + d->channel + "." + d->wavelength;
+
    QTextStream report_ts( &report );
 
-    report_ts << "<html><head>\n"
+   report_ts << "<html><head>\n"
          "<style>td { padding-right: 1em;}</style>\n"
          "</head><body>\n" +
          results() + 
-         "<h3><a href='" + textFile  + 
-                         "'>Text File of Second Moment Plot Data</a></h3>\n"
-         "<h3><a href='" + plot1File + "'>Second Moment Plot</a></h3>\n"
-         "<h3><a href='" + plot2File + "'>Velocity Plot</a></h3>\n"
+         "<h3><a href='" + filebase + ".sm_data.txt'>" 
+                         "Text File of Second Moment Plot Data</a></h3>\n"
+
+         "<h3>Second Moment Plot</h3>\n"
+         "<object data='" + filebase + ".sm_plot1.svg' type='image/svg+xml' "
+         "width='800' height='600'></object>\n"
+         
+         "<h3>Velocity Plot</h3>\n"
+         "<object data='" + filebase + ".sm_plot2.svg' type='image/svg+xml' "
+         "width='800' height='600'></object>\n"
+
+         "<h3>Velocity Plot</h3>\n"
+         "<iframe src='" + filebase + ".sm_plot2.svg' width='800' height='600'></iframe>\n"
+
          "</body></html>\n";
 
    report.close();
@@ -335,10 +357,6 @@ void US_SecondMoment::save( void )
          + plot1File + "\n" 
          + plot2File + "\n" 
          + textFile  + "\n" );
-}
-
-void US_SecondMoment::write_data( void )
-{
 }
 
 QString US_SecondMoment::results( void )
@@ -358,7 +376,7 @@ QString US_SecondMoment::results( void )
             QString::number( (int)d->scanData[ 0 ].rpm ) + " rpm" );
 
    // Temperature data
-   double sum     = 0.0;
+   double sum     =  0.0;
    double maxTemp = -1.0e99;
    double minTemp =  1.0e99;
 
