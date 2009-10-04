@@ -40,7 +40,6 @@ US_SecondMoment::US_SecondMoment() : US_AnalysisBase()
 
 void US_SecondMoment::data_plot( void )
 {
-qDebug() << "2nd M data_plot";  
    US_AnalysisBase::data_plot();
 
    int                    index  = lw_triples->currentRow();
@@ -175,7 +174,7 @@ qDebug() << "2nd M data_plot";
    {
       if ( excludedScans.contains( i ) ) continue;
       
-      x[ count ] = (double)( count + 1 );
+      x[ count ] = (double)( count + 1 + exclude );
       y[ count ] = smSeconds[ i ];
       average   += smSeconds[ i ];
       count++;
@@ -267,14 +266,26 @@ void US_SecondMoment::save( void )
 
    // Write plots
    QSvgGenerator generator1;
-   generator1.setSize( QSize( 400, 300 ) );
+   generator1.setSize( data_plot1->size() );
    generator1.setFileName( plot1File );
    data_plot1->print( generator1 );
 
    QSvgGenerator generator2;
-   generator2.setSize( QSize( 400, 300 ) );
+   generator2.setSize( data_plot2->size() );
    generator2.setFileName( plot2File );
    data_plot2->print( generator2 );
+
+   //QPixmap pm = QPixmap::grabWidget( data_plot1 );
+   //pm.save( filebase + ".sm_plot1.png" );
+
+   //QPixmap pm2 = QPixmap::grabWidget( data_plot2 );
+   //pm2.save( filebase + ".sm_plot2.png", 0, 90 );
+   //pm2.save( filebase + ".sm_plot3.png", 0, 80 );
+   //pm2.save( filebase + ".sm_plot4.png", 0, 70 );
+   //pm2.save( filebase + ".sm_plot5.png", 0, 60 );
+   //pm2.save( filebase + ".sm_plot6.png", 0, 50 );
+   //pm2.save( filebase + ".sm_plot7.png", 0, 40 );
+
 
    // Write moment data
    QFile sm_data( textFile );
@@ -340,9 +351,6 @@ void US_SecondMoment::save( void )
          "<h3>Velocity Plot</h3>\n"
          "<object data='" + filebase + ".sm_plot2.svg' type='image/svg+xml' "
          "width='800' height='600'></object>\n"
-
-         "<h3>Velocity Plot</h3>\n"
-         "<iframe src='" + filebase + ".sm_plot2.svg' width='800' height='600'></iframe>\n"
 
          "</body></html>\n";
 
