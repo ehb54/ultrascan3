@@ -366,7 +366,6 @@ void US_AnalysisBase::update_buffer( double new_density, double new_viscosity )
 
 void US_AnalysisBase::data_plot( void )
 {
-qDebug() << "US_AnalysisBase::data_plot";
    int                    row  = lw_triples->currentRow();
    US_DataIO::editedData* d    = &dataList[ row ];
 

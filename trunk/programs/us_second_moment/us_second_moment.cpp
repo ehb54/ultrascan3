@@ -275,18 +275,6 @@ void US_SecondMoment::save( void )
    generator2.setFileName( plot2File );
    data_plot2->print( generator2 );
 
-   //QPixmap pm = QPixmap::grabWidget( data_plot1 );
-   //pm.save( filebase + ".sm_plot1.png" );
-
-   //QPixmap pm2 = QPixmap::grabWidget( data_plot2 );
-   //pm2.save( filebase + ".sm_plot2.png", 0, 90 );
-   //pm2.save( filebase + ".sm_plot3.png", 0, 80 );
-   //pm2.save( filebase + ".sm_plot4.png", 0, 70 );
-   //pm2.save( filebase + ".sm_plot5.png", 0, 60 );
-   //pm2.save( filebase + ".sm_plot6.png", 0, 50 );
-   //pm2.save( filebase + ".sm_plot7.png", 0, 40 );
-
-
    // Write moment data
    QFile sm_data( textFile );
    if ( ! sm_data.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
@@ -332,7 +320,7 @@ void US_SecondMoment::save( void )
       return;
    }
 
-   // Remove directory
+   // Remove directory from string
    filebase = d->runID + "." + d->cell + "." + d->channel + "." + d->wavelength;
 
    QTextStream report_ts( &report );
@@ -344,19 +332,22 @@ void US_SecondMoment::save( void )
          "<h3><a href='" + filebase + ".sm_data.txt'>" 
                          "Text File of Second Moment Plot Data</a></h3>\n"
 
-         "<h3>Second Moment Plot</h3>\n"
+         "<div><h3>Second Moment Plot</h3>\n"
          "<object data='" + filebase + ".sm_plot1.svg' type='image/svg+xml' "
-         "width='800' height='600'></object>\n"
+         "width='"  + QString::number( data_plot1->size().width()  * 1.4 ) + "' "
+         "height='" + QString::number( data_plot1->size().height() * 1.4 ) + 
+         "'></object></div>\n"
          
-         "<h3>Velocity Plot</h3>\n"
+         "<div><h3>Velocity Plot</h3>\n"
          "<object data='" + filebase + ".sm_plot2.svg' type='image/svg+xml' "
-         "width='800' height='600'></object>\n"
+         "width='"  + QString::number( data_plot2->size().width()  * 1.4 ) + "' "
+         "height='" + QString::number( data_plot2->size().height() * 1.4 ) + 
+         "'></object></div>\n"
 
          "</body></html>\n";
 
    report.close();
 
-   // Write results
    // Tell user
    QMessageBox::warning( this,
          tr( "Success" ),
