@@ -185,7 +185,7 @@ void US_Plot::svg( void )
       if ( fileName.right( 4 ) != ".svg" ) fileName += ".svg";
       QSvgGenerator generator;
       generator.setFileName( fileName );
-      generator.setSize( QSize( 800, 600 ) );
+      generator.setSize( plot->size() );
 
       plot->print( generator );
    }
