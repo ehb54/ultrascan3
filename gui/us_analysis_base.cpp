@@ -170,7 +170,7 @@ US_AnalysisBase::US_AnalysisBase() : US_Widgets()
                           SLOT  ( smoothing   ( double ) ) );
 
    ct_boundaryPercent = us_counter( 3, 10, 100, 90 );
-   ct_boundaryPos     = us_counter( 3,  0,  10,  0 );
+   ct_boundaryPos     = us_counter( 3,  0,  10,  5 );
    ct_boundaryPercent->setStep( 0.1 );
    ct_boundaryPos    ->setStep( 0.1 );
    connect( ct_boundaryPercent, SIGNAL( valueChanged( double ) ),
@@ -312,7 +312,7 @@ void US_AnalysisBase::update( int selection )
 
    ct_smoothing      ->setValue( 1  );  // Signals?
    ct_boundaryPercent->setValue( 90 );
-   ct_boundaryPos    ->setValue( 0  );
+   ct_boundaryPos    ->setValue( 5  );
 
    ct_from->setMaxValue( scanCount - excludedScans.size() );
    ct_from->setStep( 1.0 );
@@ -366,8 +366,9 @@ void US_AnalysisBase::update_buffer( double new_density, double new_viscosity )
 
 void US_AnalysisBase::data_plot( void )
 {
-   int                    index  = lw_triples->currentRow();
-   US_DataIO::editedData* d      = &dataList[ index ];
+qDebug() << "US_AnalysisBase::data_plot";
+   int                    row  = lw_triples->currentRow();
+   US_DataIO::editedData* d    = &dataList[ row ];
 
    QString header = tr( "Velocity Data for ") + d->runID;
    data_plot2->setTitle( header );
@@ -383,8 +384,9 @@ void US_AnalysisBase::data_plot( void )
 
    int     scanCount   = d->scanData.size();
    int     points      = d->scanData[ 0 ].readings.size();
-   double  range       = ct_boundaryPercent->value() / 100.0;
-   double  position    = ct_boundaryPos    ->value() / 100.0;
+   double  boundaryPct = ct_boundaryPercent->value() / 100.0;
+   double  positionPct = ct_boundaryPos    ->value() / 100.0;
+   double  baseline    = calc_baseline();
    double* r           = new double[ points ];
    double* v           = new double[ points ];
 
@@ -397,8 +399,9 @@ void US_AnalysisBase::data_plot( void )
 
       US_DataIO::scan* s = &d->scanData[ i ];
 
-      double lower_limit = s->plateau * position;
-      double upper_limit = s->plateau * range + lower_limit;
+      double range       = s->plateau - baseline;
+      double lower_limit = baseline    + range * positionPct;
+      double upper_limit = lower_limit + range * boundaryPct;
 
       int j     = 0;
       int count = 0;
@@ -787,7 +790,7 @@ void US_AnalysisBase::reset( void )
    ct_to             ->setValue( 0 );
    ct_smoothing      ->setValue( 1 );
    ct_boundaryPercent->setValue( 90 );
-   ct_boundaryPos    ->setValue( 0 );
+   ct_boundaryPos    ->setValue( 5 );
 
    connect( ct_from,            SIGNAL( valueChanged( double ) ),
                                 SLOT  ( exclude_from( double ) ) );
@@ -837,3 +840,17 @@ QString US_AnalysisBase::table_row( const QString& s1, const QString& s2,
              + "</td></tr>\n";
    return s;
 }
+
+double US_AnalysisBase::calc_baseline( void )
+{
+   int              row   = lw_triples->currentRow();
+   US_DataIO::scan* scan  = &dataList[ row ].scanData.last();
+   int              point = US_DataIO::index( *scan, dataList[ row ].baseline );
+   double           sum   = 0.0;
+   
+   for ( int j = point - 5;  j <= point + 5; j++ )
+      sum += scan->readings[ j ].value;
+
+   return sum / 11.0;
+}
+

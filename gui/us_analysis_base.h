@@ -86,11 +86,13 @@ class US_EXTERN US_AnalysisBase : public US_Widgets
       virtual void data_plot( void );
 
    protected slots:
-      virtual void reset     ( void );
-      virtual void new_triple( int  );
-      virtual void load      ( void );
-      QString      table_row( const QString&, const QString& );
-      QString      table_row( const QString&, const QString&, const QString& );
+      virtual void reset        ( void );
+      virtual void new_triple   ( int  );
+      virtual void load         ( void );
+      QString      table_row    ( const QString&, const QString& );
+      QString      table_row    ( const QString&, const QString&, 
+                                  const QString& );
+      double       calc_baseline( void );
 
    private:
       double* x_weights;

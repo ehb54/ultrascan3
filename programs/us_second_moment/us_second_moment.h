@@ -20,7 +20,6 @@ class US_SecondMoment : public US_AnalysisBase
       struct solution_data solution;
 
       void    data_plot ( void );
-      void    write_data( void );
       QString results   ( void );     
 
    private slots:
