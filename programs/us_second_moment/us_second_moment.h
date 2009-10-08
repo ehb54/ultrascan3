@@ -14,6 +14,7 @@ class US_SecondMoment : public US_AnalysisBase
 
    private:
       double               average_2nd;
+      double               time_correction;
       double*              smPoints;
       double*              smSeconds;
       US_Editor*           te_results;

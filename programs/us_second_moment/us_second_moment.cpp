@@ -42,6 +42,8 @@ void US_SecondMoment::data_plot( void )
 {
    US_AnalysisBase::data_plot();
 
+   time_correction = US_Math::time_correction( dataList );
+
    int                    index  = lw_triples->currentRow();
    US_DataIO::editedData* d      = &dataList[ index ];
 
@@ -103,34 +105,42 @@ void US_SecondMoment::data_plot( void )
 
       // The span is the boundary portion that is going to be analyzed (in
       // percent)
+qDebug() << d->scanData[ i ].plateau - baseline;
 
-      double range  = d->scanData[ i ].plateau - baseline;
-      double test_y = baseline + range * positionPct;
+      double range  = ( d->scanData[ i ].plateau - baseline ) * boundaryPct;
+      double test_y = range * positionPct;
 
-      while ( d->scanData[ i ].readings[ count ].value < test_y ) count++;
+      while ( d->scanData[ i ].readings[ count ].value - baseline < test_y ) 
+         count++;
 
       int points = d->scanData[ i ].readings.size();
 
+      if ( count == 0 ) count = 1;
+
       while ( count < points )
       {   
-         double value  = d->scanData[ i ].readings[ count ].value;
+         double value  = d->scanData[ i ].readings[ count ].value - baseline;
          double radius = d->scanData[ i ].readings[ count ].d.radius;
-         
-         if ( value >= test_y + range * boundaryPct ) break;
+
+         if ( value >= test_y + range ) break;
       
-         sum1 += value * sq( radius );
-         sum2 += value;
+         double v0 = d->scanData[ i ].readings[ count - 1 ].value - baseline;
+         double dC = value - v0;
+
+         sum1 += dC * sq( radius );
+         sum2 += dC;
          count++;
       }
 
       smPoints [ i ] = sqrt( sum1 / sum2 ); // second moment points in cm
-      
+
       double omega = d->scanData[ i ].rpm * M_PI / 30.0;
 
       // second moment s
-      smSeconds[ i ] = 1.0e13 * solution.correction            * 
-                       log( smPoints[ i ] / d->meniscus )      /
-                       ( sq( omega ) * d->scanData[ i ].seconds );
+      smSeconds[ i ] = 
+         1.0e13 * solution.correction * log( smPoints[ i ] / d->meniscus ) /
+         ( sq( omega ) * ( d->scanData[ i ].seconds - time_correction ) );
+qDebug() << smPoints [ i ] << smSeconds[ i ];      
    }
 
    double* x = new double[ scanCount ];
@@ -220,7 +230,8 @@ void US_SecondMoment::view( void )
       te_results->resize( 500, 400 );
       QPoint p = g.global_position();
       te_results->move( p.x() + 30, p.y() + 30 );
-      te_results->e->setFont( QFont( US_GuiSettings::fontFamily() ) );
+      te_results->e->setFont( QFont( US_GuiSettings::fontFamily(),
+                                     US_GuiSettings::fontSize() ) );
    }
 
    // Add results to window
@@ -398,10 +409,8 @@ QString US_SecondMoment::results( void )
                       tr( "(!) OUTSIDE TOLERANCE (!)" ) );
 
    // Time data
-   int time_correction = (int) round( US_Math::time_correction( dataList ) );
-
-   int minutes = time_correction / 60;
-   int seconds = time_correction % 60;
+   int minutes = (int)time_correction / 60;
+   int seconds = (int)time_correction % 60;
 
    QString m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
    QString sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds"  );
@@ -410,30 +419,35 @@ QString US_SecondMoment::results( void )
                    QString::number( seconds ) + sec );
 
    double duration = rawList.last().scanData.last().seconds;
-   minutes = (int) duration / 60;
-   seconds = (int) duration % 60;
 
-   m   = ( minutes == 1 ) ? tr( " minute" ) : tr( " minutes " );
+   int hours = (int) duration / 3600;
+   minutes   = (int) duration / 60 - hours * 60;
+   seconds   = (int) duration % 60;
+
+   QString h;
+   h   = ( hours   == 1 ) ? tr( " hour "   ) : tr( " hours " );
+   m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
    sec = ( seconds == 1 ) ? tr( " second" ) : tr( " seconds" );
 
    s += table_row( tr( "Run Duration:" ),
+                   QString::number( hours   ) + h + 
                    QString::number( minutes ) + m + 
                    QString::number( seconds ) + sec );
 
    // Wavelength, baseline, meniscus, range
-   s += table_row( tr( "Wavelength:" ), d->wavelength )     +
+   s += table_row( tr( "Wavelength:" ), d->wavelength + " nm" )  +
         table_row( tr( "Baseline Absorbance:" ),
-                   QString::number( d->baseline, 'f', 3 ) ) + 
+                   QString::number( calc_baseline(), 'f', 6 ) + " OD" ) + 
         table_row( tr( "Meniscus Position:     " ),           
-                   QString::number( d->meniscus, 'f', 3 ) );
+                   QString::number( d->meniscus, 'f', 3 ) + " cm" );
 
    double left  =  d->scanData[ 0 ].readings[ 0 ]  .d.radius;
    double right =  d->scanData[ 0 ].readings.last().d.radius;
 
    s += table_row( tr( "Edited Data starts at: " ), 
-                   QString::number( left,  'f', 3 ) ) +
+                   QString::number( left,  'f', 3 ) + " cm" ) +
         table_row( tr( "Edited Data stops at:  " ), 
-                   QString::number( right, 'f', 3 ) ) + "</table>\n";
+                   QString::number( right, 'f', 3 ) + " cm" ) + "</table>\n";
 
    // Settings
 
@@ -488,7 +502,7 @@ QString US_SecondMoment::results( void )
       QString s3;
 
       double od   = d->scanData[ i ].plateau;
-      int    time = (int)d->scanData[ i ].seconds - time_correction; 
+      int    time = (int)( d->scanData[ i ].seconds - time_correction ); 
 
       s1 = s1.sprintf( "%4d",             i + 1 );
       s2 = s2.sprintf( "%4d min %2d sec", time / 60, time % 60 );
