@@ -374,6 +374,10 @@ void US_AnalysisBase::data_plot( void )
 
    header = tr( "Absorbance at " ) + d->wavelength + tr( " nm" );
    data_plot2->setAxisTitle( QwtPlot::yLeft, header );
+
+   header = tr( "Radius (cm) " );
+   data_plot2->setAxisTitle( QwtPlot::xBottom, header );
+
    data_plot2->clear();
    us_grid( data_plot2 );
 
