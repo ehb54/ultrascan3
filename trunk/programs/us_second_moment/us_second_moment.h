@@ -14,14 +14,11 @@ class US_SecondMoment : public US_AnalysisBase
 
    private:
       double               average_2nd;
-      double               time_correction;
       double*              smPoints;
       double*              smSeconds;
       US_Editor*           te_results;
-      struct solution_data solution;
 
-      void    data_plot ( void );
-      QString results   ( void );     
+      void data_plot( void );
 
    private slots:
       void view     ( void );

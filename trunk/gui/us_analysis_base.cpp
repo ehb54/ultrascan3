@@ -1,12 +1,13 @@
 //! \file us_analysis_base.cpp
 
+#include <QtSvg>
+
 #include "us_analysis_base.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_run_details.h"
 #include "us_vbar.h"
 #include "us_buffer.h"
-#include "us_math.h"
 
 US_AnalysisBase::US_AnalysisBase() : US_Widgets()
 {
@@ -366,6 +367,8 @@ void US_AnalysisBase::update_buffer( double new_density, double new_viscosity )
 
 void US_AnalysisBase::data_plot( void )
 {
+
+
    int                    row  = lw_triples->currentRow();
    US_DataIO::editedData* d    = &dataList[ row ];
 
@@ -393,6 +396,22 @@ void US_AnalysisBase::data_plot( void )
    double* r           = new double[ points ];
    double* v           = new double[ points ];
 
+   // Calculate basic parameters for other functions
+   time_correction = US_Math::time_correction( dataList );
+
+   solution.density   = le_density  ->text().toDouble();
+   solution.viscosity = le_viscosity->text().toDouble();
+   solution.vbar      = le_vbar     ->text().toDouble();
+
+   double sum = 0.0;
+
+   for ( int i = 0; i < scanCount; i++ ) sum += d->scanData[ i ].temperature;
+
+   double avgTemp  = sum / scanCount;
+   solution.vbar20 = US_Math::adjust_vbar( solution.vbar, avgTemp );
+   US_Math::data_correction( avgTemp, solution );
+
+   // Draw curves
    for ( int i = 0; i < scanCount; i++ )
    {
       if ( excludedScans.contains( i ) ) continue;
@@ -830,30 +849,212 @@ void US_AnalysisBase::new_triple( int index )
    data_plot();
 }
 
-QString US_AnalysisBase::table_row( const QString& s1, const QString& s2 )
+QString US_AnalysisBase::table_row( const QString& s1, const QString& s2 ) const
 {
    QString s = "<tr><td>" + s1 + "</td><td>" + s2 + "</td></tr>\n";
    return s;
 }
 
 QString US_AnalysisBase::table_row( const QString& s1, const QString& s2, 
-                                    const QString& s3 )
+                                    const QString& s3 ) const
 {
    QString s = "<tr><td>" + s1 + "</td><td>" + s2 + "</td><td>" + s3 
              + "</td></tr>\n";
    return s;
 }
 
-double US_AnalysisBase::calc_baseline( void )
+double US_AnalysisBase::calc_baseline( void ) const
 {
-   int              row   = lw_triples->currentRow();
-   US_DataIO::scan* scan  = &dataList[ row ].scanData.last();
-   int              point = US_DataIO::index( *scan, dataList[ row ].baseline );
-   double           sum   = 0.0;
+   int                    row   = lw_triples->currentRow();
+   const US_DataIO::scan* scan  = &dataList[ row ].scanData.last();
+   int                    point = US_DataIO::index( *scan, dataList[ row ].baseline );
+   double                 sum   = 0.0;
    
    for ( int j = point - 5;  j <= point + 5; j++ )
       sum += scan->readings[ j ].value;
 
    return sum / 11.0;
 }
+
+QString US_AnalysisBase::run_details( void ) const
+{
+   int                          index  = lw_triples->currentRow();
+   const US_DataIO::editedData* d      = &dataList[ index ];
+
+   QString s =  
+        tr( "<h3>Detailed Run Information:</h3>\n" ) + "<table>\n" +
+        table_row( tr( "Cell Description:" ), d->description )     +
+        table_row( tr( "Data Directory:"   ), directory )          +
+        table_row( tr( "Rotor Speed:"      ),  
+            QString::number( (int)d->scanData[ 0 ].rpm ) + " rpm" );
+
+   // Temperature data
+   double sum     =  0.0;
+   double maxTemp = -1.0e99;
+   double minTemp =  1.0e99;
+
+   for ( int i = 0; i < d->scanData.size(); i++ )
+   {
+      double t = d->scanData[ i ].temperature;
+      sum += t;
+      maxTemp = max( maxTemp, t );
+      minTemp = min( minTemp, t );
+   }
+
+   QString average = QString::number( sum / d->scanData.size(), 'f', 1 );
+
+   s += table_row( tr( "Average Temperature:" ), average + " &deg;C" );
+
+   if ( maxTemp - minTemp <= US_Settings::tempTolerance() )
+      s += table_row( tr( "Temperature Variation:" ), tr( "Within tolerance" ) );
+   else 
+      s += table_row( tr( "Temperature Variation:" ), 
+                      tr( "(!) OUTSIDE TOLERANCE (!)" ) );
+
+   // Time data
+   int minutes = (int)time_correction / 60;
+   int seconds = (int)time_correction % 60;
+
+   QString m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
+   QString sec = ( seconds == 1 ) ? tr( " second"  ) : tr( " seconds"  );
+   s += table_row( tr( "Time Correction:" ), 
+                   QString::number( minutes ) + m +
+                   QString::number( seconds ) + sec );
+
+   double duration = rawList.last().scanData.last().seconds;
+
+   int hours = (int) duration / 3600;
+   minutes   = (int) duration / 60 - hours * 60;
+   seconds   = (int) duration % 60;
+
+   QString h;
+   h   = ( hours   == 1 ) ? tr( " hour "   ) : tr( " hours " );
+   m   = ( minutes == 1 ) ? tr( " minute " ) : tr( " minutes " );
+   sec = ( seconds == 1 ) ? tr( " second" ) : tr( " seconds" );
+
+   s += table_row( tr( "Run Duration:" ),
+                   QString::number( hours   ) + h + 
+                   QString::number( minutes ) + m + 
+                   QString::number( seconds ) + sec );
+
+   // Wavelength, baseline, meniscus, range
+   s += table_row( tr( "Wavelength:" ), d->wavelength + " nm" )  +
+        table_row( tr( "Baseline Absorbance:" ),
+                   QString::number( calc_baseline(), 'f', 6 ) + " OD" ) + 
+        table_row( tr( "Meniscus Position:     " ),           
+                   QString::number( d->meniscus, 'f', 3 ) + " cm" );
+
+   double left  =  d->scanData[ 0 ].readings[ 0 ]  .d.radius;
+   double right =  d->scanData[ 0 ].readings.last().d.radius;
+
+   s += table_row( tr( "Edited Data starts at: " ), 
+                   QString::number( left,  'f', 3 ) + " cm" ) +
+        table_row( tr( "Edited Data stops at:  " ), 
+                   QString::number( right, 'f', 3 ) + " cm" ) + "</table>\n";
+   return s;
+}
+
+QString US_AnalysisBase::hydrodynamics( void ) const
+{
+   QString s = tr( "<h3>Hydrodynamic Settings:</h3>\n" ) + 
+               "<table>\n";
+  
+   s += table_row( tr( "Viscosity corrected:" ), 
+                   QString::number( solution.viscosity, 'f', 5 ) ) +
+        table_row( tr( "Viscosity (absolute):" ),
+                   QString::number( solution.viscosity_tb, 'f', 5 ) ) +
+        table_row( tr( "Density corrected:" ),
+                   QString::number( solution.density, 'f', 6 ) + " g/ccm" ) +
+        table_row( tr( "Density (absolute):" ),
+                   QString::number( solution.density_tb, 'f', 6 ) + " g/ccm" ) +
+        table_row( tr( "Vbar:" ), 
+                   QString::number( solution.vbar, 'f', 4 ) + " ccm/g" ) +
+        table_row( tr( "Vbar corrected for 20 &deg;C:" ),
+                   QString::number( solution.vbar20, 'f', 4 ) + " ccm/g" ) +
+        table_row( tr( "Buoyancy (Water, 20 &deg;C): " ),
+                   QString::number( solution.buoyancyw, 'f', 6 ) ) +
+        table_row( tr( "Buoyancy (absolute)" ),
+                   QString::number( solution.buoyancyb, 'f', 6 ) ) +
+        table_row( tr( "Correction Factor:" ),
+                   QString::number( solution.correction, 'f', 6 ) ) + 
+        "</table>\n";
+
+   return s;
+}
+
+QString US_AnalysisBase::analysis( const QString& extra ) const
+{
+   QString s = tr( "<h3>Data Analysis Settings:</h3>\n" ) +
+               "<table>\n";
+
+   s += table_row( tr( "Smoothing Frame:" ),
+                   QString::number( (int)ct_smoothing->value() ) ) + 
+        table_row( tr( "Analyzed Boundary:" ),
+                   QString::number( (int)ct_boundaryPercent->value() ) + " %" )+
+        table_row( tr( "Boundary Position:" ),
+                   QString::number( (int)ct_boundaryPos->value() ) + " %" ) +
+        table_row( tr( "Early Scans skipped:" ),
+                   le_skipped->text() + " scans" );
+   
+   s += extra + "</table>";
+
+   return s;
+}
+
+
+QString US_AnalysisBase::scan_info( void ) const
+{
+   int                          index  = lw_triples->currentRow();
+   const US_DataIO::editedData* d      = &dataList[ index ];
+
+   QString s = tr( "<h3>Scan Information:</h3>\n" ) +
+               "<table>\n"; 
+         
+   s += table_row( tr( "Scan" ), tr( "Corrected Time" ), 
+                   tr( "Plateau Concentration" ) );
+
+   for ( int i = 0; i < d->scanData.size(); i++ )
+   {
+      QString s1;
+      QString s2;
+      QString s3;
+
+      double od   = d->scanData[ i ].plateau;
+      int    time = (int)( d->scanData[ i ].seconds - time_correction ); 
+
+      s1 = s1.sprintf( "%4d",             i + 1 );
+      s2 = s2.sprintf( "%4d min %2d sec", time / 60, time % 60 );
+      s3 = s3.sprintf( "%.6f OD",         od ); 
+
+      s += table_row( s1, s2, s3 );
+   }
+
+   s += "</table>";
+   
+   return s;
+}
+
+void US_AnalysisBase::write_plot( const QString& filename, const QwtPlot* plot )
+{
+    QSvgGenerator generator;
+    generator.setSize( plot->size() );
+    generator.setFileName( filename );
+    plot->print( generator );
+}
+
+bool US_AnalysisBase::mkdir( const QString& baseDir, const QString& subdir )
+{
+   QDir folder( baseDir );
+
+   if ( folder.exists( subdir ) ) return true;
+           
+   if ( folder.mkdir( subdir ) ) return true;
+   
+   QMessageBox::warning( this,
+      tr( "File error" ),
+      tr( "Could not create the directory:\n" ) + baseDir + "/" + subdir );
+   
+   return false;
+}
+
 
