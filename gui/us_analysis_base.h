@@ -7,6 +7,7 @@
 #include "us_widgets.h"
 #include "us_dataIO.h"
 #include "us_plot.h"
+#include "us_math.h"
 #include "us_help.h"
 
 #include "qwt_counter.h"
@@ -28,7 +29,10 @@ class US_EXTERN US_AnalysisBase : public US_Widgets
 
       QList< QVector< double > >     savedValues;
 
+      struct solution_data           solution;
+      
       bool         dataLoaded;
+      double       time_correction;
       QString      directory;
       QString      editID;
       QString      runID;
@@ -84,15 +88,22 @@ class US_EXTERN US_AnalysisBase : public US_Widgets
 
       virtual void update   ( int );
       virtual void data_plot( void );
+      static  void write_plot( const QString&, const QwtPlot* );
+      bool         mkdir     ( const QString&, const QString& );
 
    protected slots:
       virtual void reset        ( void );
       virtual void new_triple   ( int  );
       virtual void load         ( void );
-      QString      table_row    ( const QString&, const QString& );
+      QString      run_details  ( void )                           const;
+      QString      hydrodynamics( void )                           const;
+      QString      analysis     ( const QString& )                 const;
+      QString      scan_info    ( void )                           const;
+      
+      QString      table_row    ( const QString&, const QString& ) const;
       QString      table_row    ( const QString&, const QString&, 
-                                  const QString& );
-      double       calc_baseline( void );
+                                  const QString& )                 const;
+      double       calc_baseline( void )                           const;
 
    private:
       double* x_weights;
