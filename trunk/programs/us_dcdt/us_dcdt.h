@@ -14,18 +14,27 @@ class US_Dcdt : public US_AnalysisBase
 
    private:
       int                  graphType;
-      double               time_correction;
       US_Editor*           te_results;
-      struct solution_data solution;
 
-      void    data_plot ( void );
-      QString results   ( void );     
+      double**             dcdt;
+      double**             sValues;
+      double*              avgDcdt;
+      double*              avgS;
+      double               sMax;
+
+      QRadioButton*        rb_radius;
+      QwtCounter*          ct_sValue;
+
+      void    data_plot  ( void );
+      QString results    ( void );     
 
    private slots:
-      void view     ( void );
-      void save     ( void );
-      void set_graph( int  );
-      void help     ( void )
+      void    view       ( void );
+      void    save       ( void );
+      void    set_graph  ( int  );
+      void    reset      ( void );
+      void    sMaxChanged( double );
+      void    help       ( void )
       { showHelp.show_help( "manual/us_dcdt.html" ); };
 };
 #endif

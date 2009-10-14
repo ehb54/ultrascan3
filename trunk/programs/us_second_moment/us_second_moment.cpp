@@ -232,8 +232,6 @@ void US_SecondMoment::view( void )
       tr( "<h1>Second Moment Analysis</h1>\n" )   +
       tr( "<h2>Data Report for Run \"" ) + d->runID + tr( "\", Cell " ) + d->cell +
       tr(  ", Wavelength " ) + d->wavelength + "</h2>\n";
-        //       results() + 
-        //       "</body></html>\n";
    
    s += run_details();
    s += hydrodynamics();
