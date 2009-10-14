@@ -27,7 +27,7 @@ int main( int argc, char* argv[] )
 
 US_Dcdt::US_Dcdt() : US_AnalysisBase()
 {
-   setWindowTitle( tr( "Time Derivitive - dC/dt Analysis" ) );
+   setWindowTitle( tr( "Time Derivative - dC/dt Analysis" ) );
 
    te_results = NULL;
    dcdt       = NULL;
@@ -278,7 +278,7 @@ void US_Dcdt::data_plot( void )
    us_grid( data_plot1 );
 
    data_plot1->setTitle( tr( "Run " ) + d->runID + tr( ": Cell " ) + d->cell
-         + " (" + d->wavelength + tr( " nm) - Time Derivitive (dC/dt)" ) );
+         + " (" + d->wavelength + tr( " nm) - Time Derivative (dC/dt)" ) );
 
    data_plot1->setAxisTitle( QwtPlot::yLeft  , tr( "g<sup>*</sup>(s)" ) );
 
