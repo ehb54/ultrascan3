@@ -10,6 +10,8 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO.h"
+#include "us_expinfo.h"
+#include "us_ccwinfo.h"
 
 class US_EXTERN US_Convert : public US_Widgets
 {
@@ -54,7 +56,8 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_reference;
       QPushButton*  pb_cancelref;
       QPushButton*  pb_change_runID;
-      QPushButton*  pb_dbconnect;
+      QPushButton*  pb_expinfo;
+      QPushButton*  pb_ccwinfo;
 
       QList< US_DataIO::beckmanRaw >  legacyData;     // legacy data from file
       QList< US_DataIO::beckmanRaw* > ccwLegacyData;  // legacy data with this cell/channel/wl
@@ -85,7 +88,13 @@ class US_EXTERN US_Convert : public US_Widgets
       void replot          ( void );
       void set_colors      ( const QList< int >& );
       void RP_calc_avg     ( void );
-   
+  
+      bool show_plot_progress;
+      US_CCWInfo::CCWInfo  CCWData; 
+      QList< US_CCWInfo::CCWInfo > allCCWData;
+      US_ExpInfo::ExpInfo  ExpData; 
+      int writeXmlFile     ( void );
+
   private slots:
       void load            ( QString dir = "" );
       void details         ( void );
@@ -114,6 +123,12 @@ class US_EXTERN US_Convert : public US_Widgets
       void start_reference   ( const QwtDoublePoint& );
       void process_reference ( const QwtDoublePoint& );
       void cancel_reference( void );
+      void get_expinfo     ( void );
+      void update_expinfo  ( US_ExpInfo::ExpInfo& );
+      void cancel_expinfo  ( void );
+      void get_ccwinfo     ( void );
+      void update_ccwinfo  ( US_CCWInfo::CCWInfo& );
+      void cancel_ccwinfo  ( void );
       void draw_vline      ( double );
       void help            ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
