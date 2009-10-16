@@ -2343,6 +2343,7 @@ void US_GA_Initialize::getMouseReleased(const QMouseEvent &e)
 {
    QString str;
    bucket temp_solute;
+   //cout << "zoom: " << zoom << endl;
    if (zoom)
    {
       p2.x = plot->invTransform(QwtPlot::xBottom, e.x());
@@ -2429,9 +2430,9 @@ void US_GA_Initialize::getMouseReleased(const QMouseEvent &e)
    if (current_solute >= initial_solutes) // the user wants another bucket
    {
       initial_solutes++;
-      cnt_initial_solutes->disconnect();
+      //cnt_initial_solutes->disconnect();
       cnt_initial_solutes->setValue(initial_solutes);
-      connect(cnt_initial_solutes, SIGNAL(valueChanged(double)), SLOT(update_initial_solutes(double)));
+      //connect(cnt_initial_solutes, SIGNAL(valueChanged(double)), SLOT(update_initial_solutes(double)));
    }
    double s = (plot->invTransform(QwtPlot::xBottom, e.x()));
    if (current_solute > 0 && s < GA_Solute[current_solute-1].s_max)
@@ -2515,7 +2516,24 @@ void US_GA_Initialize::getMouseReleased(const QMouseEvent &e)
                   GA_Solute[current_solute].ff0_max);
       lb_solutes->insertItem(str);
       current_solute ++;
+      vector <struct SimulationComponent>::iterator comp_it;
+      MC_solute.clear();
+      MC_solute.resize(GA_Solute.size());
+     // cout << component.size() << endl;
+      for (unsigned int i=0; i<GA_Solute.size(); i++)
+      {
+         MC_solute[i].clear();
+         for (comp_it = component.begin(); comp_it != component.end(); comp_it++)
+         {
+            if ((*comp_it).s * 1.0e13 >= GA_Solute[i].s_min && (*comp_it).s * 1.0e13 <= GA_Solute[i].s_max
+                  &&  (*comp_it).f_f0 >= GA_Solute[i].ff0_min && (*comp_it).f_f0 <= GA_Solute[i].ff0_max)
+            {
+               MC_solute[i].push_back(*comp_it);
+            }
+         }
+      }
       pb_reset_peaks->setEnabled(true);
+      pb_save->setEnabled(true);
    }
    plot->replot();
 }
