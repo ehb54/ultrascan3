@@ -10,6 +10,8 @@
 #include "us_run_details.h"
 #include "us_plot.h"
 #include "us_math.h"
+#include "us_expinfo.h"
+#include "us_ccwinfo.h"
 
 //! \brief Main program for us_convert. Loads translators and starts
 //         the class US_Convert.
@@ -37,7 +39,6 @@ US_Convert::US_Convert() : US_Widgets()
    int row = 0;
 
    // Set the wavelength tolerance for c/c/w determination
-   // Row 1
    QLabel* lb_tolerance = us_label( tr( "Dataset Separation Tolerance:" ) );
    settings->addWidget( lb_tolerance, row, 0 );
 
@@ -46,17 +47,20 @@ US_Convert::US_Convert() : US_Widgets()
    ct_tolerance->setMinimumWidth( 120 );
    settings->addWidget( ct_tolerance, row++, 1 );
 
-   // Row 2
+   // External program to enter experiment information
+   pb_expinfo = us_pushbutton( tr( "Enter Experiment Information" ) );
+   connect( pb_expinfo, SIGNAL( clicked() ), SLOT( get_expinfo() ) );
+   settings->addWidget( pb_expinfo, row, 0 );
+
    QPushButton* pb_load = us_pushbutton( tr( "Load Legacy Data" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
-   settings->addWidget( pb_load, row, 0 );
+   settings->addWidget( pb_load, row++, 1 );
 
    pb_details = us_pushbutton( tr( "Run Details" ), false );
    connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
-   settings->addWidget( pb_details, row++, 1 );
+   settings->addWidget( pb_details, row++, 0, 1, 2 );
 
-   // Prepare for writing files
-   // Row 3
+   // Change Run ID
    pb_change_runID = us_pushbutton( tr( "Change Run ID" ), false );
    connect( pb_change_runID, SIGNAL( clicked() ), SLOT( change_runID() ) );
    settings->addWidget( pb_change_runID, row, 0 );
@@ -64,26 +68,23 @@ US_Convert::US_Convert() : US_Widgets()
    le_runID = us_lineedit( "", 1 );
    settings->addWidget( le_runID, row++, 1 );
 
-   // Row 4
+   // Directory
    QLabel* lb_dir = us_label( tr( "Directory:" ) );
    settings->addWidget( lb_dir, row++, 0, 1, 2 );
 
-   // Row 5
    le_dir = us_lineedit( "", 1 );
    le_dir->setReadOnly( true );
    settings->addWidget( le_dir, row++, 0, 1, 2 );
 
-   // Row 6
+   // Description
    lb_description = us_label( tr( "Description:" ), -1 );
    settings->addWidget( lb_description, row++, 0, 1, 2 );
 
-   // Row 7
    le_description = us_lineedit( "", 1 );
    le_description->setReadOnly( true );
    settings->addWidget( le_description, row++, 0, 1, 2 );
 
    // Cell / Channel / Wavelength
-   // Row 8
    lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
    settings->addWidget( lb_triple, row, 0 );
 
@@ -92,14 +93,18 @@ US_Convert::US_Convert() : US_Widgets()
    lw_triple->setMinimumWidth( 50 );
    connect( lw_triple, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
                        SLOT  ( changeTriple( QListWidgetItem* ) ) );
-   settings->addWidget( lw_triple, row++, 1 );
+   settings->addWidget( lw_triple, row++, 1, 2, 1 );
+
+   // External program to enter c/c/w information
+   pb_ccwinfo = us_pushbutton( tr( "Enter Current c/c/w Info" ), false );
+   connect( pb_ccwinfo, SIGNAL( clicked() ), SLOT( get_ccwinfo() ) );
+   settings->addWidget( pb_ccwinfo, row++, 0 );
 
    // Scan Controls
-   // Row 9
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
    settings->addWidget( lb_scan, row++, 0, 1, 2 );
 
-   // Row 10
+   // Scan focus from
    QLabel* lb_from = us_label( tr( "Scan Focus from:" ), -1 );
    lb_from->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_from, row, 0 );
@@ -108,7 +113,7 @@ US_Convert::US_Convert() : US_Widgets()
    ct_from->setStep( 1 );
    settings->addWidget( ct_from, row++, 1 );
 
-   // Row 11
+   // Scan focus to
    QLabel* lb_to = us_label( tr( "Scan Focus to:" ), -1 );
    lb_to->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
    settings->addWidget( lb_to, row, 0 );
@@ -118,7 +123,6 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( ct_to, row++, 1 );
 
    // Exclude and Include pushbuttons
-   // Row 12
    pb_exclude = us_pushbutton( tr( "Exclude Scan(s)" ), false );
    connect( pb_exclude, SIGNAL( clicked() ), SLOT( exclude_scans() ) );
    settings->addWidget( pb_exclude, row, 0 );
@@ -128,7 +132,6 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_include, row++, 1 );
 
    // Defining data subsets
-   // Row 13
    pb_define = us_pushbutton( tr( "Define Subsets" ), false );
    connect( pb_define, SIGNAL( clicked() ), SLOT( define_subsets() ) );
    settings->addWidget( pb_define, row, 0 );
@@ -138,7 +141,6 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_process, row++, 1 );
 
    // Choosing reference channel
-   // Row 15
    pb_reference = us_pushbutton( tr( "Define Reference Scans" ), false );
    connect( pb_reference, SIGNAL( clicked() ), SLOT( define_reference() ) );
    settings->addWidget( pb_reference, row, 0 );
@@ -147,14 +149,7 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_cancelref, SIGNAL( clicked() ), SLOT( cancel_reference() ) );
    settings->addWidget( pb_cancelref, row++, 1 );
 
-   // External program to enter database information
-   // Row 16
-   pb_dbconnect = us_pushbutton( tr( "Enter Database Connections" ), false );
-   connect( pb_dbconnect, SIGNAL( clicked() ), SLOT( get_dbconnect() ) );
-   settings->addWidget( pb_dbconnect, row++, 0, 1, 2 );
-
    // Write pushbuttons
-   // Row 17
    pb_write = us_pushbutton( tr( "Write Current Data" ), false );
    connect( pb_write, SIGNAL( clicked() ), SLOT( write() ) );
    settings->addWidget( pb_write, row, 0 );
@@ -164,7 +159,6 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_writeAll, row++, 1 );
 
    // Progress bar
-   // Row 18
    QLabel* lb_placeholder = new QLabel();
    settings -> addWidget( lb_placeholder, row, 0, 1, 2 );
 
@@ -179,7 +173,6 @@ US_Convert::US_Convert() : US_Widgets()
    settings -> addWidget( progress, row++, 1 );
 
    // Standard pushbuttons
-   // Row 19
    QBoxLayout* buttons = new QHBoxLayout;
 
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
@@ -244,7 +237,7 @@ void US_Convert::reset( void )
    pb_details     ->setEnabled( false );
    pb_change_runID->setEnabled( false );
    pb_cancelref   ->setEnabled( false );
-   pb_dbconnect   ->setEnabled( false );
+   pb_ccwinfo      ->setEnabled( false );
 
    ct_from->disconnect();
    ct_from->setMinValue( 0 );
@@ -263,7 +256,11 @@ void US_Convert::reset( void )
    newRawData.scanData.clear();
    triples.clear();
    allData.clear();
+   allCCWData.clear();
    RP_averaged = false;
+   show_plot_progress = true;
+   ExpData.clear();
+   CCWData.clear();
 
    data_plot->detachItems();
    picker   ->disconnect();
@@ -364,6 +361,10 @@ void US_Convert::load( QString dir )
       }
    }
 
+   // Make room for xml data
+   for ( currentTriple  = 0; currentTriple < triples.size(); currentTriple++ )
+      allCCWData << CCWData;
+
    lb_progress ->setVisible( false );
    progress    ->setVisible( false );
    
@@ -377,11 +378,14 @@ void US_Convert::load( QString dir )
                      SLOT  ( focus_to     ( double ) ) );
 
    // Ok to enable some buttons now
+   bool writeOK = ExpData.investigator != 0 &&
+                  triples.size() > 0;                  
    pb_include ->setEnabled( true );
-   pb_write   ->setEnabled( true );
-   pb_writeAll->setEnabled( true );
+   pb_write   ->setEnabled( writeOK );
+   pb_writeAll->setEnabled( writeOK );
    pb_details ->setEnabled( true );
    pb_change_runID->setEnabled( true );
+   pb_ccwinfo  ->setEnabled( true );
 }
 
 void US_Convert::read( void )
@@ -1098,15 +1102,21 @@ int US_Convert::writeAll( void )
 
    if ( result != US_DataIO::OK )
    {
-      // Try to delete the file and tell the user   
+      // Try to delete the file and tell the user
+      return result;
    }
-   else 
+
+   if ( ( result = writeXmlFile() ) != US_DataIO::OK )
    {
-      QMessageBox::information( this,
-            tr( "Success" ),
-            QString::number( triples.size() ) + " " + 
-            runID + tr( " files written." ) );
-   }        
+      // Problems writing xml file
+      qDebug() << "Problems writing xml file";
+      return result;
+   }
+
+   QMessageBox::information( this,
+         tr( "Success" ),
+         QString::number( triples.size() ) + " " + 
+         runID + tr( " files written." ) );
 
    return result;
 }
@@ -1235,11 +1245,14 @@ void US_Convert::plot_all( void )
    double maxV = -1.0e99;
    double minV =  1.0e99;
 
-   progress    ->setRange( 0, currentData.scanData.size() - 1 );
-   progress    ->setValue( 0 );
-   lb_progress ->setText( tr( "Plotting:" ) );
-   lb_progress ->setVisible( true );
-   progress    ->setVisible( true );
+   if ( show_plot_progress )
+   {
+      progress    ->setRange( 0, currentData.scanData.size() - 1 );
+      progress    ->setValue( 0 );
+      lb_progress ->setText( tr( "Plotting:" ) );
+      lb_progress ->setVisible( true );
+      progress    ->setVisible( true );
+   }
 
    for ( int i = 0; i < currentData.scanData.size(); i++ )
    {
@@ -1263,12 +1276,18 @@ void US_Convert::plot_all( void )
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setData( r, v, size );
 
-      progress ->setValue( i );
-      qApp     ->processEvents();
+      if ( show_plot_progress )
+      {
+         progress ->setValue( i );
+         qApp     ->processEvents();
+      }
    }
 
-   lb_progress ->setVisible( false );
-   progress    ->setVisible( false );
+   if ( show_plot_progress )
+   {
+      lb_progress ->setVisible( false );
+      progress    ->setVisible( false );
+   }
 
    // Reset the scan curves within the new limits
    double padR = ( maxR - minR ) / 30.0;
@@ -1277,6 +1296,7 @@ void US_Convert::plot_all( void )
    data_plot->setAxisScale( QwtPlot::yLeft  , minV - padV, maxV + padV );
    data_plot->setAxisScale( QwtPlot::xBottom, minR - padR, maxR + padR );
    
+   show_plot_progress = false;
    data_plot->replot();
  
    delete [] r;
@@ -1405,7 +1425,6 @@ void US_Convert::include( void )
 // Reset the boundaries on the scan controls
 void US_Convert::reset_scan_ctrls( void )
 {
-
    ct_from->disconnect();
    ct_from->setMinValue( 0.0 );
    ct_from->setMaxValue(  allData[ currentTriple ].scanData.size() );
@@ -1652,6 +1671,77 @@ void US_Convert::cancel_reference( void )
    plot_current();
 }
 
+void US_Convert::get_expinfo( void )
+{
+   US_ExpInfo* expinfo = new US_ExpInfo();
+
+   connect( expinfo, SIGNAL( update_expinfo_selection( US_ExpInfo::ExpInfo& ) ),
+            this   , SLOT  ( update_expinfo          ( US_ExpInfo::ExpInfo& ) ) );
+
+   connect( expinfo, SIGNAL( cancel_expinfo_selection() ),
+            this   , SLOT  ( cancel_expinfo          () ) );
+
+   expinfo->exec();
+   qApp->processEvents();
+   delete expinfo;
+}
+
+void US_Convert::update_expinfo( US_ExpInfo::ExpInfo& d )
+{
+   ExpData.clear();
+   ExpData.investigator = d.investigator;
+   ExpData.expType      = QString( d.expType );
+   ExpData.rotor        = d.rotor;
+   ExpData.date         = d.date;
+   ExpData.label        = QString( d.label );
+   ExpData.comments     = QString( d.comments );
+
+   // Ok to enable some buttons now
+   bool writeOK = ExpData.investigator != 0 &&
+                  triples.size() > 0;                  
+   pb_write   ->setEnabled( writeOK );
+   pb_writeAll->setEnabled( writeOK );
+}
+
+void US_Convert::cancel_expinfo( void )
+{
+qDebug() << "In cancel_expinfo";
+   ExpData.clear();
+}
+
+
+void US_Convert::get_ccwinfo( void )
+{
+   
+   US_CCWInfo* ccwinfo = new US_CCWInfo( ExpData.investigator );
+
+   connect( ccwinfo, SIGNAL( update_ccwinfo_selection( US_CCWInfo::CCWInfo& ) ),
+            this   , SLOT  ( update_ccwinfo          ( US_CCWInfo::CCWInfo& ) ) );
+
+   connect( ccwinfo, SIGNAL( cancel_ccwinfo_selection() ),
+            this   , SLOT  ( cancel_ccwinfo          () ) );
+
+   ccwinfo->exec();
+   qApp->processEvents();
+   delete ccwinfo;
+}
+
+void US_Convert::update_ccwinfo( US_CCWInfo::CCWInfo& d )
+{
+   // See if investigator has changed
+   ExpData.investigator = d.investigator;
+   allCCWData[ currentTriple ].investigator = d.investigator;
+   allCCWData[ currentTriple ].centerpiece  = d.centerpiece;
+   allCCWData[ currentTriple ].bufferID     = d.bufferID;
+   allCCWData[ currentTriple ].analyteID    = d.analyteID;
+}
+
+void US_Convert::cancel_ccwinfo( void )
+{
+qDebug() << "In cancel_ccwinfo";
+   allCCWData[ currentTriple ].clear();
+}
+
 void US_Convert::draw_vline( double radius )
 {
    double r[ 2 ];
@@ -1675,3 +1765,115 @@ void US_Convert::draw_vline( double radius )
    data_plot->replot();
 }
 
+int US_Convert::writeXmlFile( void )
+{ 
+   QDir        writeDir( US_Settings::resultDir() );
+   QString     dirname = writeDir.absolutePath() + "/" + runID + "/";
+
+   if ( ! writeDir.exists( runID ) )
+   {
+     if ( ! writeDir.mkdir( runID ) )
+     {
+        QMessageBox::information( this,
+              tr( "Error" ),
+              tr( "Cannot write to " ) + writeDir.absolutePath() );
+
+        return US_DataIO::CANTOPEN;
+     }
+   }
+
+   QString writeFile = runID      + "." 
+                     + runType    + ".xml";
+   QFile file( dirname + writeFile );
+   if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
+   {
+      QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "Cannot open file " ) + dirname + writeFile );
+      return US_DataIO::CANTOPEN;
+   }
+
+   progress    ->setRange( 0, triples.size() - 1 );
+   progress    ->setValue( 0 );
+   lb_progress ->setText( tr( "Writing XML:" ) );
+   lb_progress ->setVisible( true );
+   progress    ->setVisible( true );
+
+   QXmlStreamWriter xml;
+   xml.setDevice( &file );
+   xml.setAutoFormatting( true );
+
+   xml.writeStartDocument();
+   xml.writeDTD("<!DOCTYPE US_Scandata>");
+   xml.writeStartElement("US_Scandata");
+   xml.writeAttribute("version", "1.0");
+
+   // elements
+   xml.writeStartElement( "experiment" );
+   xml.writeAttribute   ( "ID", "replace with DB experimentID" );
+   xml.writeAttribute   ( "type", ExpData.expType );
+
+      xml.writeTextElement ( "name", "replace with description");
+
+      xml.writeStartElement( "investigator" );
+      xml.writeAttribute   ( "ID", QString::number( ExpData.investigator ) );
+      xml.writeEndElement  ();
+      
+      xml.writeStartElement( "operator" );
+      xml.writeAttribute   ( "ID", "replace with operator ID" );
+      xml.writeEndElement  ();
+
+      xml.writeStartElement( "rotor" );
+      xml.writeAttribute   ( "ID", QString::number( ExpData.rotor ) );
+      xml.writeEndElement  ();
+
+      xml.writeStartElement( "GUID" );
+      xml.writeAttribute   ( "ID", "replace with GUID" );
+      xml.writeEndElement  ();
+
+      // loop through the following for c/c/w combinations
+      for ( int i = 0; i < triples.size(); i++ )
+      {
+         QString triple         = triples[ i ];
+         QStringList parts      = triple.split(" / ");
+
+         QString     cell       = parts[ 0 ];
+         QString     channel    = parts[ 1 ];
+         QString     wl         = parts[ 2 ];
+
+         xml.writeStartElement( "dataset" );
+         xml.writeAttribute   ( "cell", cell );
+         xml.writeAttribute   ( "channel", channel );
+         xml.writeAttribute   ( "wavelength", wl );
+
+            xml.writeStartElement( "GUID" );
+            xml.writeAttribute   ( "ID", "replace with GUID" );
+            xml.writeEndElement  ();
+
+            xml.writeStartElement( "centerpiece" );
+            xml.writeAttribute   ( "ID", QString::number( allCCWData[ i ].centerpiece ) );
+            xml.writeEndElement  ();
+
+            xml.writeStartElement( "buffer" );
+            xml.writeAttribute   ( "ID", QString::number( allCCWData[ i ].bufferID ) );
+            xml.writeEndElement  ();
+
+            xml.writeStartElement( "analyte" );
+            xml.writeAttribute   ( "ID", QString::number( allCCWData[ i ].analyteID ) );
+            xml.writeEndElement  ();
+
+         xml.writeEndElement   ();
+      }
+
+   xml.writeTextElement ( "date", ExpData.date );
+   xml.writeTextElement ( "label", ExpData.label );
+   xml.writeTextElement ( "comments", ExpData.comments );
+
+   xml.writeEndElement(); // US_Scandata
+   xml.writeEndDocument();
+
+   lb_progress ->setVisible( false );
+   progress    ->setVisible( false );
+
+   return US_DataIO::OK;
+}
