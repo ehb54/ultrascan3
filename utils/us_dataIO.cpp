@@ -588,6 +588,7 @@ int US_DataIO::loadData( const QString&       directory,
    int result = readRawData( directory + "/" + rawDataFile, d );
    if ( result != OK ) throw result;
    raw << d;
+   qApp->processEvents();
 
    // Get the edit data
    editValues e;

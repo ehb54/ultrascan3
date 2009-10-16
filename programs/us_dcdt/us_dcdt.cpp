@@ -34,8 +34,10 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase()
    sValues    = NULL;
    avgS       = NULL;
    avgDcdt    = NULL;
+   arraySizes = NULL;
+   arrayStart = NULL;
 
-   sMax       = 20.0;
+   sMax       = 10.0;
 
    QLabel*       lb_aux    = us_banner( tr( "dC/dt Auxiliary Controls" ) );
    QLabel*       lb_sValue = us_label( tr( "S-value Cutoff:" ) );
@@ -77,7 +79,6 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase()
    controlsLayout->addWidget( lb_graph,   row++, 0, 1, 4 );
    controlsLayout->addLayout( rb_layout0, row++, 0, 1, 4 );
 
-
    connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
    connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
@@ -85,6 +86,7 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase()
 
 void US_Dcdt::reset( void )
 {
+   if ( ! dataLoaded ) return;
    US_AnalysisBase::reset();
    ct_sValue->setValue( sMax );
    rb_radius->click();
@@ -111,8 +113,9 @@ void US_Dcdt::data_plot( void )
    US_DataIO::editedData* d      = &dataList[ index ];
 
    int     scanCount   = d->scanData.size();
-   int     exclude     = 0;
-   double  positionPct = ct_boundaryPos->value() / 100.0;
+   int     skipped     = 0;
+   double  boundaryPct = ct_boundaryPercent->value() / 100.0;
+   double  positionPct = ct_boundaryPos    ->value() / 100.0;
    double  baseline    = calc_baseline();
 
    for ( int i = 0; i < scanCount; i++ )
@@ -122,16 +125,16 @@ void US_Dcdt::data_plot( void )
       double range  = d->scanData[ i ].plateau - baseline;
       double test_y = baseline + range * positionPct;
       
-      if ( d->scanData[ i ].readings[ 0 ].value > test_y ) exclude++;
+      if ( d->scanData[ i ].readings[ 0 ].value > test_y ) skipped++;
    }
 
-   le_skipped->setText( QString::number( exclude ) );
+   le_skipped->setText( QString::number( skipped ) );
 
-   if ( scanCount - exclude - excludedScans.count() < 4 )
+   if ( scanCount - skipped - excludedScans.count() < 4 )
    {
       QMessageBox::warning( this,
             tr( "Attention" ),
-            tr( "You must have at least four non-excluded scans "
+            tr( "You must have at least four non-skipped scans "
                 "for this analysis." ) );
       return;
    }
@@ -149,103 +152,130 @@ void US_Dcdt::data_plot( void )
       delete [] sValues;
       delete [] avgDcdt;
       delete [] avgS;
+      delete [] arraySizes;
+      delete [] arrayStart;
    }
    
    int points = d->scanData[ 0 ].readings.size();
 
    // Create the new arrays
-   dcdt    = new double* [ scanCount ];
-   sValues = new double* [ scanCount ];
-   avgDcdt = new double  [ points ];
-   avgS    = new double  [ points ];
+   dcdt       = new double* [ scanCount ];
+   sValues    = new double* [ scanCount ];
+   avgDcdt    = new double  [ points ];
+   avgS       = new double  [ points ];
+   arraySizes = new int     [ scanCount ];
+   arrayStart = new int     [ scanCount ];
 
    for ( int i = 0; i < scanCount; i++ )
    {
-      dcdt   [ i ] = new double [ points ];
-      sValues[ i ] = new double [ points ];
+      dcdt      [ i ] = new double [ points ];
+      sValues   [ i ] = new double [ points ];
+      arraySizes[ i ] = 0;
+      arrayStart[ i ] = 0;
    }
 
    // Calculate dcdt and sValues
 
-   int previous = exclude;
+   int previous = skipped;
    int count    = 0;
 
-   for ( int i = exclude + 1; i < scanCount; i++ )
+   for ( int i = skipped + 1; i < scanCount; i++ )
    {
       if ( excludedScans.contains( i ) ) continue;
 
-      double dt = d->scanData[ i ].seconds - d->scanData[ previous ].seconds;
+      US_DataIO::scan* thisScan = &d->scanData[ i ];
+      US_DataIO::scan* prevScan = &d->scanData[ previous ];
+
+      double range       = thisScan->plateau - baseline;
+      double lower_limit = baseline    + range * positionPct;
+      double upper_limit = lower_limit + range * boundaryPct;
+            
+      double dt = thisScan->seconds - prevScan->seconds;
       
-      double plateau     = d->scanData[ i        ].plateau;
-      double prevPlateau = d->scanData[ previous ].plateau;
+      double plateau     = thisScan->plateau;
+      double prevPlateau = prevScan->plateau;
 
       double meniscus    = d->meniscus;
-      double omega       = d->scanData[ i        ].rpm * M_PI / 30.0;
+      double omega       = thisScan->rpm * M_PI / 30.0;
+
+      int    size    = 0;
+      bool   started = false;
 
       for ( int j = 0; j < points; j++ )
       {
-         double dC = d->scanData[ i        ].readings[ j ].value / plateau -
-                     d->scanData[ previous ].readings[ j ].value / prevPlateau;
+         double currentV  = thisScan->readings[ j ].value;
+         double previousV = prevScan->readings[ j ].value;
+
+         if ( currentV < lower_limit ) continue;
+         if ( currentV > upper_limit ) break;
+
+         if ( ! started )
+         {
+            started = true;
+            arrayStart[ count ] = j;
+         }
+
+         double dC = currentV / plateau - previousV / prevPlateau;
 
          // We are really plotting g*(s) so -dC/dt is saved for the plots
-         dcdt[ count ][ j ] = -dC / dt;
+         dcdt[ count ][ size ] = -dC / dt;
       
-         double radius = d->scanData[ i ].readings[ j ].d.radius;
+         double radius = thisScan->readings[ j ].d.radius;
 
-         sValues[ count ][ j ] = 
+         sValues[ count ][ size ] = 
             solution.correction * 1.0e13 * log( radius / meniscus ) /
-            ( sq( omega ) * ( d->scanData[ previous ].seconds + dt / 2.0 ) );
+            ( sq( omega ) * ( prevScan->seconds + dt / 2.0 ) );
+
+         size++;
       }
+
+      arraySizes[ count ] = size;
 
       count++;
       previous = i;
    }
 
-   // Calculate average dcdt for plotting or writing
+   int    last  = arraySizes[ 0 ] - 1;
+   double s_max = sValues[ 0 ][ last ];
 
-   // Find the min and max g*(s) of the first scan
-   double gs_max = 0.0;
-   double gs_min = 9.9e10;
-   
-   for ( int i = 0; i < points; i++ )
-   {
-      gs_max = max( gs_max, dcdt[ 0 ][ i ] );
-      gs_min = min( gs_min, dcdt[ 0 ][ i ] );
-   }
-
-   // If the value of the y-value is larger than 1% of the total range,
-   // then we want to pick the x-value (s-value) at that point and
-   // consider it the maximum s-value.  This procedure will only be
-   // necessary for the first scan, since the cutoff criterion is 1 % of
-   // total.
-
-   double range = ( gs_max - gs_min ) / 100.0;
-   double s_max = 0.0;
-
-   for ( int i = points - 1; i > -1; i-- )
-   { 
-      if ( dcdt[ 0 ][ i ] < range )
-      {
-         s_max = sValues[ 0 ][ i ];
-         break;
-      }
-   }
+   ct_sValue->setMaxValue( ceil( s_max ) );
 
    if ( s_max < sMax )
    {
-      ct_sValue->setMaxValue( s_max );
+      if ( ct_sValue->value() > s_max )
+      {
+         ct_sValue->disconnect();
+         ct_sValue->setValue( ceil( s_max ) );
+
+         connect( ct_sValue, SIGNAL( valueChanged ( double ) ), 
+                             SLOT  ( sMaxChanged  ( double ) ) );
+      }
+
       sMax = s_max;
    }
 
+   double s_min = 9.9e10;
+
+   for ( int i = 0; i < count; i++ )
+   {
+      for ( int j = 0; j < arraySizes[ i ]; j++ )
+      {
+         s_min = min( s_min, sValues[ i ][ j ] );
+      }
+   }
+
+   // Figure the total points to plot
+   double increment   = ( s_max - s_min ) / arrayLength;
+
    // Assign new equally spaced s-values for the x-axis
-   for ( int i = 0; i < points; i++ ) 
-      avgS[ i ] = i * s_max / ( points - 1 );
+   for ( int i = 0; i < arrayLength; i++ ) 
+      avgS[ i ] = s_min + i * increment;
 
    // For each new s value, find the corresponding g*(s) through
    // linear interpolation and add up, then average by the number of
    // total scans included.
-
-   for ( int j = 0; j < points; j++ ) 
+   
+   for ( int j = 0; j < arrayLength; j++ ) 
    {
       avgDcdt[ j ] = 0.0;
 
@@ -258,7 +288,7 @@ void US_Dcdt::data_plot( void )
          while ( sValues[ i ][ k ] < avgS[ j ] ) 
          {
             k++;
-            if ( k == points ) goto next; // Skip rest of scans
+            if ( k == arraySizes[ i ] ) goto next; // Skip rest of scans
          }
 
          // Interpolate and apply y = mx + b
@@ -270,7 +300,7 @@ void US_Dcdt::data_plot( void )
          avgDcdt[ j ] += m * avgS[ j ] + b;
       }
       next:
-      avgDcdt[ j ] /= count; 
+      avgDcdt[ j ] /= ( count - 1 ); 
    }
 
    // Draw plot
@@ -296,15 +326,19 @@ void US_Dcdt::data_plot( void )
       case 0:  // Radius Plot
          data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "Radius (cm)" ) );
 
-         for ( int i = 0; i < points; i++ ) 
-            x[ i ] = d->scanData[ 0 ].readings[ i ].d.radius;
 
          for ( int i = 0; i < count; i++ )
          {
-            curve = us_curve( data_plot1, 
-                  tr( "Scan " ) + QString::number( i + exclude + 1 ) );
+            int size = 0;
+            int end  = arraySizes[ i ] + arrayStart[ i ];
 
-            curve->setData( x, dcdt[ i ], points );
+            for ( int j = arrayStart[ i ]; j < end; j++ ) 
+               x[ size++ ] = d->scanData[ 0 ].readings[ j ].d.radius;
+
+            curve = us_curve( data_plot1, 
+                  tr( "Scan " ) + QString::number( i + skipped + 1 ) );
+
+            curve->setData( x, dcdt[ i ], arraySizes[ i ] );
          }
 
          data_plot1->setAxisAutoScale( QwtPlot::xBottom );
@@ -315,21 +349,21 @@ void US_Dcdt::data_plot( void )
          for ( int i = 0; i < count; i++ )
          {
             curve = us_curve( data_plot1, 
-                  tr( "Scan " ) + QString::number( i + exclude + 1 ) );
+                  tr( "Scan " ) + QString::number( i + skipped + 1 ) );
 
-            curve->setData( sValues[ i ], dcdt[ i ], points );
+            curve->setData( sValues[ i ], dcdt[ i ], arraySizes[ i ] );
          }
          
          data_plot1->setAxisScale( QwtPlot::xBottom, 0.0, ct_sValue->value() );
 
          break;
 
-      case 2:  // Average dC/dt plot
+      case 2:  // Average dC/dt or g*(s) plot
          data_plot1->setAxisTitle( QwtPlot::yLeft, 
                                    tr( "Average g<sup>*</sup>(s)" ) );
 
          curve = us_curve( data_plot1, tr( "Average g*(s)" ) );
-         curve->setData( avgS, avgDcdt, points );
+         curve->setData( avgS, avgDcdt, arrayLength );
 
          data_plot1->setAxisScale( QwtPlot::xBottom, 0.0, ct_sValue->value() );
          break;
@@ -391,11 +425,8 @@ void US_Dcdt::save( void )
    QString plot1File = ".dcdt_analysis.svg";
    QString plot2File = ".dcdt_analysis_avg.svg";
    QString plot3File = ".dcdt_velocity.svg";
-   QString text1File = ".dcdt_scandata.txt";
-   QString text2File = ".dcdt_svalues.txt";
-   QString text3File = ".dcdt_avg_g_s.txt";
+   QString textFile  = ".dcdt_avg_g_s.txt";
    QString htmlFile  = ".dcdt_report.html";
-
 
    // Write plots
    // Save current plot type
@@ -415,79 +446,24 @@ void US_Dcdt::save( void )
    data_plot();
    write_plot( filebase + plot3File, data_plot2 );
 
-   int points    = d->scanData[ 0 ].readings.size();
-   int scanCount = d->scanData.size();
-
-   // Write dcdt analysis data
-   QFile dcdt1_data( filebase + text1File );
-   
-   if ( ! dcdt1_data.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
-   {
-      QMessageBox::warning( this,
-            tr( "IO Error" ),
-            tr( "Could not open\n" ) + filebase + text1File + "\n" +
-                tr( "\nfor writing" ) );
-      return;
-   }
-
-   QTextStream ts_data1( &dcdt1_data );
-
-   for ( int i = 0; i < points; i++ )
-   {
-      ts_data1 <<  d->scanData[ 0 ].readings[ i ].d.radius << "\t";
-      
-      for ( int j = 0; j < scanCount - 1; j++ )
-         ts_data1 << dcdt[ j ][ i ] << "\t";
-
-      ts_data1 << dcdt[ scanCount - 1 ][ i ] << endl;
-   }
-
-   dcdt1_data.close();
-
-   // Write dcdt analysis s-value data
-   QFile dcdt2_data( filebase + text2File );
-   
-   if ( ! dcdt2_data.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
-   {
-      QMessageBox::warning( this,
-            tr( "IO Error" ),
-            tr( "Could not open\n" ) + filebase + text2File + "\n" +
-                tr( "\nfor writing" ) );
-      return;
-   }
-
-   QTextStream ts_data2( &dcdt2_data );
-
-   for ( int i = 0; i < points; i++ )
-   {
-      for ( int j = 0; j < scanCount - 1; j++ )
-         ts_data2 << sValues[ j ][ i ] << "\t" 
-                  << dcdt   [ j ][ i ] << "\t";
-
-      ts_data2 << sValues[ scanCount - 1 ][ i ] << "\t" 
-               << dcdt   [ scanCount - 1 ][ i ] << endl;
-   }
-
-   dcdt2_data.close();
-
    // Write dcdt analysis average data
-   QFile dcdt3_data( filebase + text3File );
+   QFile dcdt_data( filebase + textFile );
    
-   if ( ! dcdt3_data.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
+   if ( ! dcdt_data.open( QIODevice::WriteOnly | QIODevice::Truncate ) )
    {
       QMessageBox::warning( this,
             tr( "IO Error" ),
-            tr( "Could not open\n" ) + filebase + text3File + "\n" +
+            tr( "Could not open\n" ) + filebase + textFile + "\n" +
                 tr( "\nfor writing" ) );
       return;
    }
 
-   QTextStream ts_data3( &dcdt3_data );
+   QTextStream ts_data( &dcdt_data );
 
-   for ( int i = 0; i < points; i++ )
-      ts_data3 << avgS   [ i ] << "\t" << avgDcdt[ i ] << endl;
+   for ( int i = 0; i < arrayLength; i++ )
+      ts_data << avgS   [ i ] << "\t" << avgDcdt[ i ] << endl;
 
-   dcdt3_data.close();
+   dcdt_data.close();
 
    // Write report
    QFile report( filebase + htmlFile );
@@ -522,15 +498,7 @@ void US_Dcdt::save( void )
          d->cell + tr(  ", Wavelength " ) + d->wavelength + "</h2>\n";
 
    report_ts << 
-         "<h3><a href='" + filebase + text1File + "'>" 
-         "ASCII File of Time Derivative Plot Data (Scans)</a></h3>\n";
-
-   report_ts << 
-         "<h3><a href='" + filebase + text2File + "'>" 
-         "ASCII File of Time Derivative Plot Data (S-values)</a></h3>\n";
-
-   report_ts << 
-         "<h3><a href='" + filebase + text3File + "'>" 
+         "<h3><a href='" + filebase + textFile + "'>" 
          "ASCII File of Time Derivative Plot Data (Average g(S))</a></h3>\n";
 
    report_ts <<
@@ -566,8 +534,6 @@ void US_Dcdt::save( void )
          + filebase + plot1File + "\n" 
          + filebase + plot2File + "\n" 
          + filebase + plot3File + "\n" 
-         + filebase + text1File + "\n" 
-         + filebase + text2File + "\n" 
-         + filebase + text3File );
+         + filebase + textFile );
 }
 
