@@ -13,7 +13,6 @@ US_AnalysisBase::US_AnalysisBase() : US_Widgets()
 {
    setPalette( US_GuiSettings::frameColor() );
 
-
    mainLayout      = new QHBoxLayout( this );
    mainLayout->setSpacing        ( 2 );
    mainLayout->setContentsMargins( 2, 2, 2, 2 );
@@ -367,8 +366,6 @@ void US_AnalysisBase::update_buffer( double new_density, double new_viscosity )
 
 void US_AnalysisBase::data_plot( void )
 {
-
-
    int                    row  = lw_triples->currentRow();
    US_DataIO::editedData* d    = &dataList[ row ];
 

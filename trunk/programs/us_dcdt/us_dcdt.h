@@ -13,17 +13,22 @@ class US_Dcdt : public US_AnalysisBase
       US_Dcdt();
 
    private:
-      int                  graphType;
-      US_Editor*           te_results;
+      int           graphType;
+      int*          arraySizes;
+      int*          arrayStart;
+                    
+      static const int arrayLength = 400;
+                    
+      US_Editor*    te_results;
+                    
+      double**      dcdt;
+      double**      sValues;
+      double*       avgDcdt;
+      double*       avgS;
+      double        sMax;
 
-      double**             dcdt;
-      double**             sValues;
-      double*              avgDcdt;
-      double*              avgS;
-      double               sMax;
-
-      QRadioButton*        rb_radius;
-      QwtCounter*          ct_sValue;
+      QRadioButton* rb_radius;
+      QwtCounter*   ct_sValue;
 
       void    data_plot  ( void );
       QString results    ( void );     
