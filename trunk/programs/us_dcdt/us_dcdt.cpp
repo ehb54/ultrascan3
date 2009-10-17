@@ -39,6 +39,8 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase()
 
    sMax       = 10.0;
 
+   check      = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
+
    QLabel*       lb_aux    = us_banner( tr( "dC/dt Auxiliary Controls" ) );
    QLabel*       lb_sValue = us_label( tr( "S-value Cutoff:" ) );
    ct_sValue               = us_counter( 3, 0, 20, 20 );
@@ -69,6 +71,10 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase()
    rb_layout0->addLayout( rb_layout2 );
    rb_layout0->addLayout( rb_layout3 );
 
+   pb_baseline = us_pushbutton( tr( "Subtract Baseline" ) );
+   pb_baseline->setIcon( QIcon() );
+   connect( pb_baseline, SIGNAL( clicked() ), SLOT( subtract_bl() ) );
+
    int row = 7;
 
    controlsLayout->addWidget( lb_aux,     row++, 0, 1, 4 );
@@ -78,10 +84,23 @@ US_Dcdt::US_Dcdt() : US_AnalysisBase()
    
    controlsLayout->addWidget( lb_graph,   row++, 0, 1, 4 );
    controlsLayout->addLayout( rb_layout0, row++, 0, 1, 4 );
+   controlsLayout->addWidget( pb_baseline, row++, 0, 1, 4 );
 
    connect( pb_help,  SIGNAL( clicked() ), SLOT( help() ) );
    connect( pb_view,  SIGNAL( clicked() ), SLOT( view() ) );
    connect( pb_save,  SIGNAL( clicked() ), SLOT( save() ) );
+}
+
+void US_Dcdt::subtract_bl( void )
+{
+   if ( ! dataLoaded ) return;
+
+   if ( pb_baseline->icon().isNull() )
+      pb_baseline->setIcon( check );
+   else
+      pb_baseline->setIcon( QIcon() );
+
+   data_plot();
 }
 
 void US_Dcdt::reset( void )
@@ -90,6 +109,7 @@ void US_Dcdt::reset( void )
    US_AnalysisBase::reset();
    ct_sValue->setValue( sMax );
    rb_radius->click();
+   pb_baseline->setIcon( QIcon() );
 }
 
 void US_Dcdt::sMaxChanged( double /* value */ )
@@ -175,7 +195,6 @@ void US_Dcdt::data_plot( void )
    }
 
    // Calculate dcdt and sValues
-
    int previous = skipped;
    int count    = 0;
 
@@ -190,21 +209,23 @@ void US_Dcdt::data_plot( void )
       double lower_limit = baseline    + range * positionPct;
       double upper_limit = lower_limit + range * boundaryPct;
             
-      double dt = thisScan->seconds - prevScan->seconds;
-      
-      double plateau     = thisScan->plateau;
-      double prevPlateau = prevScan->plateau;
+      double dt          = thisScan->seconds - prevScan->seconds;
+     
+      double adjust      = ( pb_baseline->icon().isNull() ) ? 0.0 : baseline; 
+
+      double plateau     = thisScan->plateau - adjust;
+      double prevPlateau = prevScan->plateau - adjust;
 
       double meniscus    = d->meniscus;
       double omega       = thisScan->rpm * M_PI / 30.0;
 
-      int    size    = 0;
-      bool   started = false;
+      int    size        = 0;
+      bool   started     = false;
 
       for ( int j = 0; j < points; j++ )
       {
-         double currentV  = thisScan->readings[ j ].value;
-         double previousV = prevScan->readings[ j ].value;
+         double currentV  = thisScan->readings[ j ].value - adjust;
+         double previousV = prevScan->readings[ j ].value - adjust;
 
          if ( currentV < lower_limit ) continue;
          if ( currentV > upper_limit ) break;
@@ -299,8 +320,8 @@ void US_Dcdt::data_plot( void )
          
          avgDcdt[ j ] += m * avgS[ j ] + b;
       }
-      next:
-      avgDcdt[ j ] /= ( count - 1 ); 
+
+next: avgDcdt[ j ] /= ( count - 1 ); 
    }
 
    // Draw plot

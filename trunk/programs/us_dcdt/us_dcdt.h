@@ -27,7 +27,10 @@ class US_Dcdt : public US_AnalysisBase
       double*       avgS;
       double        sMax;
 
+      QIcon         check;
+      QPushButton*  pb_baseline;
       QRadioButton* rb_radius;
+      
       QwtCounter*   ct_sValue;
 
       void    data_plot  ( void );
@@ -38,6 +41,7 @@ class US_Dcdt : public US_AnalysisBase
       void    save       ( void );
       void    set_graph  ( int  );
       void    reset      ( void );
+      void    subtract_bl( void );
       void    sMaxChanged( double );
       void    help       ( void )
       { showHelp.show_help( "manual/us_dcdt.html" ); };
