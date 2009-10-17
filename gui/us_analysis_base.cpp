@@ -93,8 +93,6 @@ US_AnalysisBase::US_AnalysisBase() : US_Widgets()
 
    te_desc    = us_textedit();
    lw_triples = us_listwidget();
-   connect( lw_triples, SIGNAL( currentRowChanged( int ) ), 
-                        SLOT  ( new_triple       ( int ) ) );
 
    QFont        font( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
    QFontMetrics fm  ( font );
@@ -206,7 +204,7 @@ US_AnalysisBase::US_AnalysisBase() : US_Widgets()
 void US_AnalysisBase::load( void )
 {
    // Determine the edit ID
-   dataLoaded     = false;
+   dataLoaded = false;
    reset();
    QString filter = "*.*.*.*.*.*.xml";
 
@@ -231,13 +229,14 @@ void US_AnalysisBase::load( void )
    sl = d.entryList( QStringList() << filter, 
                      QDir::Files | QDir::Readable, QDir::Name );
 
-   // Read the data into the structure
+   lw_triples  ->disconnect();
    lw_triples  ->clear();
    dataList     .clear();
    rawList      .clear();
    excludedScans.clear();
    triples      .clear();
 
+   // Read the data into the structure
    try
    {
       for ( int i = 0; i < sl.size(); i++ )
@@ -277,6 +276,9 @@ void US_AnalysisBase::load( void )
    }
 
    lw_triples->setCurrentRow( 0 );
+   connect( lw_triples, SIGNAL( currentRowChanged( int ) ), 
+                        SLOT  ( new_triple       ( int ) ) );
+
    update( 0 );
 
    // Enable other buttons
@@ -310,9 +312,23 @@ void US_AnalysisBase::update( int selection )
 
    te_desc->setText( d->description );
 
+   
+
+
+   ct_smoothing      ->disconnect();
+   ct_boundaryPercent->disconnect();
+   ct_boundaryPos    ->disconnect();
+
    ct_smoothing      ->setValue( 1  );  // Signals?
    ct_boundaryPercent->setValue( 90 );
    ct_boundaryPos    ->setValue( 5  );
+
+   connect( ct_smoothing,       SIGNAL( valueChanged( double ) ),
+                                SLOT  ( smoothing   ( double ) ) );
+   connect( ct_boundaryPercent, SIGNAL( valueChanged( double ) ),
+                                SLOT  ( boundary_pct( double ) ) );
+   connect( ct_boundaryPos,     SIGNAL( valueChanged( double ) ),
+                                SLOT  ( boundary_pos( double ) ) );
 
    ct_from->setMaxValue( scanCount - excludedScans.size() );
    ct_from->setStep( 1.0 );
@@ -427,7 +443,7 @@ void US_AnalysisBase::data_plot( void )
 
       // Plot each scan in (up to) three segments: below, in, and above
       // the specified boundaries
-      while ( s->readings[ j ].value < lower_limit  &&  j < points )
+      while (  j < points  &&  s->readings[ j ].value < lower_limit )
       {
          r[ count ] = s->readings[ j ].d.radius;
          v[ count ] = s->readings[ j ].value;
@@ -437,7 +453,7 @@ void US_AnalysisBase::data_plot( void )
 
       QString       title; 
       QwtPlotCurve* c;
-      
+
       if ( count > 1 )
       {
          title = tr( "Curve " ) + QString::number( i ) + tr( " below range" );
@@ -453,7 +469,7 @@ void US_AnalysisBase::data_plot( void )
 
       count = 0;
 
-      while ( s->readings[ j ].value < upper_limit  &&  j < points )
+      while (   j < points && s->readings[ j ].value < upper_limit )
       {
          r[ count ] = s->readings[ j ].d.radius;
          v[ count ] = s->readings[ j ].value;
@@ -582,12 +598,14 @@ void US_AnalysisBase::exclude( void )
 
 void US_AnalysisBase::smoothing( double smoothCount )
 {
+   if ( ! dataLoaded ) return;
+
    int smoothPoints = (int) smoothCount;
 
    // Restore saved data
    int                    index  = lw_triples->currentRow();
    US_DataIO::editedData* d      = &dataList[ index ];
-   
+
    for ( int i = 0; i < d->scanData.size(); i++ )
    {
       US_DataIO::scan* s = &d->scanData[ i ];
