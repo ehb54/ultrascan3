@@ -8,6 +8,8 @@ class US_DataIO
 {
    public:
 
+      static const uint format_version = 2;
+
       class reading
       {
          public:
@@ -62,6 +64,7 @@ class US_DataIO
          double omega2t;
          double wavelength;
          double plateau;         // Reading value
+         double delta_r;
          QList< reading > readings;
          QByteArray interpolated; 
       };
@@ -136,7 +139,7 @@ class US_DataIO
       };
 
       enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, BADXML, 
-                     NODATA, NO_UUID_MATCH };
+                     NODATA, NO_UUID_MATCH, BAD_VERSION };
 
       static bool    readLegacyFile( const QString&, beckmanRaw& );
       static int     writeRawData  ( const QString&, rawData& );
