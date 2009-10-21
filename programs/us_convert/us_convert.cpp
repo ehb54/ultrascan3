@@ -205,10 +205,7 @@ US_Convert::US_Convert() : US_Widgets()
    picker ->setRubberBand( QwtPicker::VLineRubberBand );
 
    // Now let's assemble the page
-   QHBoxLayout* main = new QHBoxLayout( this );
-   main->setSpacing         ( 2 );
-   main->setContentsMargins ( 2, 2, 2, 2 );
-
+   
    QVBoxLayout* left     = new QVBoxLayout;
    QSpacerItem* spacer   = new QSpacerItem( 0, 0, 
                            QSizePolicy::Minimum, QSizePolicy::Fixed );
@@ -216,9 +213,16 @@ US_Convert::US_Convert() : US_Widgets()
    left->addLayout( settings );
    left->addItem( spacer );
    left->addLayout( buttons );
-   main->addLayout( left );
    
+   QHBoxLayout* main = new QHBoxLayout( this );
+   main->setSpacing         ( 2 );
+   main->setContentsMargins ( 2, 2, 2, 2 );
+
+   main->addLayout( left );
    main->addLayout( plot );
+
+   main->setStretch( 0, 2 );
+   main->setStretch( 1, 4 );
 }
 
 void US_Convert::reset( void )
@@ -807,8 +811,10 @@ void US_Convert::convert( bool showProgressBar )
 
    // Convert the scans
    
-   // Set the distance between readings to a constant for now
-   double delta_r = 0.001;
+   // Set the distance between readings 
+   double delta_r = ( runType == "IP" ) 
+      ? ( max_radius - min_radius ) / ( ccwLegacyData[ 0 ]->readings.size() - 1 )
+      : 0.001;
 
    for ( int i = 0; i < ccwLegacyData.size(); i++ )
    {
@@ -818,6 +824,7 @@ void US_Convert::convert( bool showProgressBar )
       s.seconds     = ccwLegacyData[ i ]->seconds;
       s.omega2t     = ccwLegacyData[ i ]->omega2t;
       s.wavelength  = ccwLegacyData[ i ]->t.wavelength;
+      s.delta_r     = delta_r;
 
       // Enable progress bar
       if ( showProgressBar )
@@ -835,7 +842,21 @@ void US_Convert::convert( bool showProgressBar )
       uchar* interpolated = new uchar[ bitmap_size ];
       bzero( interpolated, bitmap_size );
 
-      /*
+      if ( runType == "IP" )
+      {
+         for ( int j = 0; j < radius_count; j++ )
+         {
+            US_DataIO::reading r;
+            r.d.radius = ccwLegacyData[ i ]->readings[ j ].d.radius;
+            r.value    = ccwLegacyData[ i ]->readings[ j ].value;
+            r.stdDev   = 0.0;
+
+            s.readings <<  r;
+         }
+      }
+      else
+      {
+         /*
          There are two indexes needed here.  The new radius as iterated
          from min_radius to max_radius and the pointer to the current 
          scan readings is j.  
@@ -868,70 +889,70 @@ void US_Convert::convert( bool showProgressBar )
             set the interpolated flag
 
          Append the new reading and continue.
-      */
+         */
 
-      double radius = min_radius;
-      double r0     = ccwLegacyData[ i ]->readings[ 0 ].d.radius;
-      int    rCount = ccwLegacyData[ i ]->readings.size();       
-      double rLast  = ccwLegacyData[ i ]->readings[ rCount - 1 ].d.radius;
-      
-      int    k      = 0;
-      
-      for ( int j = 0; j < radius_count; j++ )
-      {
-         US_DataIO::reading r;
-         double             dr = 0.0;
-
-         if ( k < rCount )
-            dr = radius - ccwLegacyData[ i ]->readings[ k ].d.radius;
-
-         r.d.radius = radius;
+         double radius = min_radius;
+         double r0     = ccwLegacyData[ i ]->readings[ 0 ].d.radius;
+         int    rCount = ccwLegacyData[ i ]->readings.size();       
+         double rLast  = ccwLegacyData[ i ]->readings[ rCount - 1 ].d.radius;
          
-         if ( dr > -3.0e-4   &&  k < rCount ) // A value
+         int    k      = 0;
+         
+         for ( int j = 0; j < radius_count; j++ )
          {
-            r.value  = ccwLegacyData[ i ]->readings[ k ].value;
-            r.stdDev = ccwLegacyData[ i ]->readings[ k ].stdDev;
-            k++;
-         }
-         else if ( radius < r0 ) // Before the first
-         {
-            r.value  = ccwLegacyData[ i ]->readings[ 0 ].value;
-            r.stdDev = 0.0;
-            setInterpolated( interpolated, j );
-         }
-         else if ( radius > rLast  ||  k >= rCount ) // After the last
-         {
-            r.value  = ccwLegacyData[ i ]->readings[ rCount - 1 ].value;
-            r.stdDev = 0.0;
-            setInterpolated( interpolated, j );
-         }
-         else  // Interpolate the value
-         {
-            double dv = ccwLegacyData[ i ]->readings[ k     ].value - 
-                        ccwLegacyData[ i ]->readings[ k - 1 ].value;
+            US_DataIO::reading r;
+            double             dr = 0.0;
+
+            if ( k < rCount )
+               dr = radius - ccwLegacyData[ i ]->readings[ k ].d.radius;
+
+            r.d.radius = radius;
             
-            double dR = ccwLegacyData[ i ]->readings[ k     ].d.radius -
-                        ccwLegacyData[ i ]->readings[ k - 1 ].d.radius;
+            if ( dr > -3.0e-4   &&  k < rCount ) // A value
+            {
+               r.value  = ccwLegacyData[ i ]->readings[ k ].value;
+               r.stdDev = ccwLegacyData[ i ]->readings[ k ].stdDev;
+               k++;
+            }
+            else if ( radius < r0 ) // Before the first
+            {
+               r.value  = ccwLegacyData[ i ]->readings[ 0 ].value;
+               r.stdDev = 0.0;
+               setInterpolated( interpolated, j );
+            }
+            else if ( radius > rLast  ||  k >= rCount ) // After the last
+            {
+               r.value  = ccwLegacyData[ i ]->readings[ rCount - 1 ].value;
+               r.stdDev = 0.0;
+               setInterpolated( interpolated, j );
+            }
+            else  // Interpolate the value
+            {
+               double dv = ccwLegacyData[ i ]->readings[ k     ].value - 
+                           ccwLegacyData[ i ]->readings[ k - 1 ].value;
+               
+               double dR = ccwLegacyData[ i ]->readings[ k     ].d.radius -
+                           ccwLegacyData[ i ]->readings[ k - 1 ].d.radius;
 
-            dr = radius - ccwLegacyData[ i ]->readings[ k - 1 ].d.radius;
+               dr = radius - ccwLegacyData[ i ]->readings[ k - 1 ].d.radius;
 
-            r.value  =  ccwLegacyData[ i ]->readings[ k - 1 ].value + dr * dv / dR;
-            r.stdDev = 0.0;
+               r.value  = ccwLegacyData[ i ]->readings[ k - 1 ].value + dr * dv / dR;
+               r.stdDev = 0.0;
 
-            setInterpolated( interpolated, j );
+               setInterpolated( interpolated, j );
+            }
+
+            s.readings <<  r;
+            radius += delta_r;
          }
-
-         s.readings <<  r;
-         radius += delta_r;
       }
-
       s.interpolated = QByteArray( (char*)interpolated, bitmap_size );
       delete [] interpolated;
 
       newRawData.scanData <<  s ;
       
       if ( showProgressBar ) progress ->setValue( i );
-      qApp     ->processEvents();
+      qApp->processEvents();
    }
 
    // Delete the bitmaps we allocated
@@ -1178,8 +1199,8 @@ void US_Convert::plot_titles( void )
    else if ( strncmp( currentData.type, "IP", 2 ) == 0 )
    {
       title = "Interference Data\nRun ID: "
-            + runID + " Cell: " + cell + " Radius: " + wl;
-      yLegend = "Interference";
+            + runID + " Cell: " + cell + " Wavelength: " + wl;
+      yLegend = "Fringes";
    }
 
    else if ( strncmp( currentData.type, "RI", 2 ) == 0 )

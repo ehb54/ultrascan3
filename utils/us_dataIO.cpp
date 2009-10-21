@@ -77,6 +77,11 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
    char magic[ 5 ] = "UCDA";
    write( ds, magic, 4, crc );
    
+   // Write format version
+   char fmt[ 3 ];
+   sprintf( fmt, "%2.2i", format_version );
+   write( ds, fmt, 2, crc );
+
    // Write data type
    write( ds, data.type, 2, crc );
 
@@ -186,6 +191,9 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
    qToLittleEndian( (ushort)( ( data.wavelength - 180.0 ) * 100.0 ), c );
    write( ds, (char*)c, 2, crc );
 
+   float delta_r = (float) data.delta_r;
+   write( ds, (char*) &delta_r, 4, crc );
+
    int valueCount = data.readings.size();
    qToLittleEndian( (uint)valueCount, c );
    write( ds, (char*)c, 4, crc );
@@ -241,6 +249,12 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
       read( ds, magic, 4, crc );
       if ( strncmp( magic, "UCDA", 4 ) != 0 ) throw NOT_USDATA;
     
+      // Check the version number
+      unsigned char ver[ 2 ];
+      read( ds, (char*) ver, 2, crc );
+      uint version = ( ( ver[ 0 ] & 0x0f ) << 8 ) | ( ver[ 1 ] & 0x0f );
+      if ( version != format_version ) throw BAD_VERSION;
+
       // Read and get the file type
       char type[ 3 ];
       read( ds, type, 2, crc );
@@ -327,6 +341,10 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
          // Wavelength
          read( ds, si.c, 2, crc );
          s.wavelength = qFromLittleEndian( si.I ) / 100.0 + 180.0;
+
+         // Delta_r
+         read( ds, v.c, 4, crc );
+         s.delta_r = v.f;
 
          // Reading count
          read( ds, v.c, 4, crc );
@@ -712,6 +730,7 @@ void US_DataIO::copyRange ( double left, double right,
    dest.seconds     = orig.seconds;
    dest.omega2t     = orig.omega2t;
    dest.wavelength  = orig.wavelength;
+   dest.delta_r     = orig.delta_r;
 
    for ( int i = index( orig, left ); i <= index( orig, right ); i++ )
    {
@@ -780,11 +799,10 @@ QList< double > US_DataIO::calc_residuals( int                  order,
    {
       absorbance_integral[ i ] = 0;
 
-      // For now, all radii are spaces equally at 0.001 cm
-      const double delta_r = 0.001;
-
       const US_DataIO::scan* s = &sl[ i ];
       int value_count          = s->readings.size();
+
+      double delta_r = s->delta_r;
 
       // Integrate using trapezoid rule
       for ( int j = 1; j < value_count; j++ )
@@ -848,6 +866,8 @@ QString US_DataIO::errorString( int code )
       case BADTYPE   : return QObject::tr( "The filetype was not recognized" );
       case BADXML    : return QObject::tr( "The XML file was invalid" );
       case NODATA    : return QObject::tr( "No legacy data files were found" );
+      case BAD_VERSION 
+         : return QObject::tr( "The file version is not supported" );
       case NO_UUID_MATCH
          : return QObject::tr( "UUIDs in raw data and edit data do not match" );
    }
