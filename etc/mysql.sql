@@ -612,6 +612,7 @@ CREATE TABLE `tblAuth` (
   `Userlevel` tinyint(4) NOT NULL default '0',
   `ClusterAuth` varchar(255) NOT NULL default 'bcf:alamo:laredo:lonestar',
   `account_activity_changed` date default NULL,
+  `AdvanceLevel` int(11) default 0,
   PRIMARY KEY  (`InvestigatorID`),
   KEY `Invid` (`InvestigatorID`),
   CONSTRAINT `0_1307` FOREIGN KEY (`InvestigatorID`) REFERENCES `tblInvestigators` (`InvID`) ON DELETE CASCADE,
