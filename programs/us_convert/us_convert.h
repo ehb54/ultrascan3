@@ -64,6 +64,8 @@ class US_EXTERN US_Convert : public US_Widgets
       US_DataIO::rawData              newRawData;     // filtered legacy data in new raw format
       QList< US_DataIO::rawData >     allData;        // all the data, separated by c/c/w
       QList< US_DataIO::rawData >     RIData;         // to save RI data, after converting to RP
+      QString       saveDir;
+      QString       saveDescription;
 
       QList< int >  includes;                         // list of points to include in plot
       QwtPlot*      data_plot;

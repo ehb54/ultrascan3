@@ -73,7 +73,6 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( lb_dir, row++, 0, 1, 2 );
 
    le_dir = us_lineedit( "", 1 );
-   le_dir->setReadOnly( true );
    settings->addWidget( le_dir, row++, 0, 1, 2 );
 
    // Description
@@ -81,7 +80,6 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( lb_description, row++, 0, 1, 2 );
 
    le_description = us_lineedit( "", 1 );
-   le_description->setReadOnly( true );
    settings->addWidget( le_description, row++, 0, 1, 2 );
 
    // Cell / Channel / Wavelength
@@ -418,6 +416,7 @@ void US_Convert::read( QString dir )
    runID    = components.last();
    le_runID ->setText( runID );
    le_dir   ->setText( dir );
+   saveDir = QString( dir );
 
    QStringList files = d.entryList( QDir::Files );
    QStringList fileList;
@@ -793,6 +792,7 @@ void US_Convert::convert( bool showProgressBar )
    newRawData.description = ccwLegacyData[ 0 ]->description;
    
    le_description->setText( newRawData.description );
+   saveDescription = QString( newRawData.description ); 
 
    // Get the min and max radius
    double min_radius = 1.0e99;
@@ -815,6 +815,9 @@ void US_Convert::convert( bool showProgressBar )
    double delta_r = ( runType == "IP" ) 
       ? ( max_radius - min_radius ) / ( ccwLegacyData[ 0 ]->readings.size() - 1 )
       : 0.001;
+
+   // qDebug() << "Current triple: " << triple << ' '
+   //          << "delta_r: " << QString::number( delta_r, 'f', 6 );
 
    for ( int i = 0; i < ccwLegacyData.size(); i++ )
    {
@@ -969,11 +972,8 @@ void US_Convert::convert( bool showProgressBar )
 
 void US_Convert::details( void )
 {
-   QString     dirname    = le_dir->text();
-   // if ( dirname.right( 1 ) != "/" ) dirname += "/"; // Ensure trailing /
-
    US_RunDetails* dialog
-      = new US_RunDetails( allData, runID, dirname, triples );
+      = new US_RunDetails( allData, runID, saveDir, triples );
    dialog->exec();
    qApp->processEvents();
    delete dialog;
@@ -997,6 +997,9 @@ void US_Convert::change_runID( void )
 void US_Convert::changeTriple( QListWidgetItem* )
 {
    currentTriple = lw_triple->currentRow();
+
+   le_dir         -> setText( saveDir );
+   le_description -> setText( saveDescription );
 
    // Reset maximum scan control values
    reset_scan_ctrls();
@@ -1147,7 +1150,7 @@ void US_Convert::setInterpolated ( unsigned char* bitmap, int location )
    int byte = location / 8;
    int bit  = location % 8;
 
-   bitmap[ byte ] |= 1 << 7 - bit;
+   bitmap[ byte ] |= 1 << ( 7 - bit );
 }
 
 void US_Convert::plot_current( void )
@@ -1302,6 +1305,7 @@ void US_Convert::plot_all( void )
          progress ->setValue( i );
          qApp     ->processEvents();
       }
+
    }
 
    if ( show_plot_progress )
@@ -1529,10 +1533,8 @@ void US_Convert::process_subsets( void )
 */
 
    // Now that we know we're subdividing, let's reconvert the file
-   QString dir = le_dir->text();
-
    reset();
-   load( dir );
+   load( saveDir );
 }
 
 void US_Convert::cDrag( const QwtDoublePoint& )
@@ -1831,25 +1833,25 @@ int US_Convert::writeXmlFile( void )
 
    // elements
    xml.writeStartElement( "experiment" );
-   xml.writeAttribute   ( "ID", "replace with DB experimentID" );
+   xml.writeAttribute   ( "id", "replace with DB experimentID" );
    xml.writeAttribute   ( "type", ExpData.expType );
 
       xml.writeTextElement ( "name", "replace with description");
 
       xml.writeStartElement( "investigator" );
-      xml.writeAttribute   ( "ID", QString::number( ExpData.investigator ) );
+      xml.writeAttribute   ( "id", QString::number( ExpData.investigator ) );
       xml.writeEndElement  ();
       
       xml.writeStartElement( "operator" );
-      xml.writeAttribute   ( "ID", "replace with operator ID" );
+      xml.writeAttribute   ( "id", "replace with operator ID" );
       xml.writeEndElement  ();
 
       xml.writeStartElement( "rotor" );
-      xml.writeAttribute   ( "ID", QString::number( ExpData.rotor ) );
+      xml.writeAttribute   ( "id", QString::number( ExpData.rotor ) );
       xml.writeEndElement  ();
 
-      xml.writeStartElement( "GUID" );
-      xml.writeAttribute   ( "ID", "replace with GUID" );
+      xml.writeStartElement( "guid" );
+      xml.writeAttribute   ( "id", "replace with GUID" );
       xml.writeEndElement  ();
 
       // loop through the following for c/c/w combinations
@@ -1867,20 +1869,20 @@ int US_Convert::writeXmlFile( void )
          xml.writeAttribute   ( "channel", channel );
          xml.writeAttribute   ( "wavelength", wl );
 
-            xml.writeStartElement( "GUID" );
-            xml.writeAttribute   ( "ID", "replace with GUID" );
+            xml.writeStartElement( "guid" );
+            xml.writeAttribute   ( "id", "replace with GUID" );
             xml.writeEndElement  ();
 
             xml.writeStartElement( "centerpiece" );
-            xml.writeAttribute   ( "ID", QString::number( allCCWData[ i ].centerpiece ) );
+            xml.writeAttribute   ( "id", QString::number( allCCWData[ i ].centerpiece ) );
             xml.writeEndElement  ();
 
             xml.writeStartElement( "buffer" );
-            xml.writeAttribute   ( "ID", QString::number( allCCWData[ i ].bufferID ) );
+            xml.writeAttribute   ( "id", QString::number( allCCWData[ i ].bufferID ) );
             xml.writeEndElement  ();
 
             xml.writeStartElement( "analyte" );
-            xml.writeAttribute   ( "ID", QString::number( allCCWData[ i ].analyteID ) );
+            xml.writeAttribute   ( "id", QString::number( allCCWData[ i ].analyteID ) );
             xml.writeEndElement  ();
 
          xml.writeEndElement   ();
