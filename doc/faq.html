@@ -30,10 +30,7 @@ should I do?</a></li>
 Windows&copy; or Macintosh operating system?</a></li>
 
 <li>
-<a href="#why_linux">Why are only the Linux and *BSD versions free?</a></li>
-
-<li>
-<a href="#license"><b><i>UltraScan</i></b> is licensed under the GPL License</a></li>
+<a href="#license"><b><i>UltraScan</i></b> License</a></li>
 
 <li>
 <a href="#support">What support is available for <b><i>UltraScan</i></b>?</a></li>
@@ -157,9 +154,8 @@ that can be used in this integrated data analysis environment.
 <li>Multi-Platform support: 
 <br>
 <ul>
-<i>Free for Academia and Nonprofit:</i><br>
+<i>Free for academia, nonprofit and for profit:</i><br>
 <li>Linux, FreeBSD, NetBSD, OpenBSD (Intel, Mac-PPC, Alpha, Sparc)
-<i>Commercial:</i><br>
 <li>MS-Windows: 95, 98, NT, 2000, XP (Intel)
 <li>Mac OS-X (Darwin/X11 support required)
 <li>SGI Irix 6.5 (MIPS)
@@ -314,8 +310,7 @@ well-written installation and GUI configuration software that'll get you
 going in no time. In addition, they come with good reference manuals and
 excellent documentation, written for converting beginners. Your local bookstore
 may also have some good reference books on Linux that are worthwhile to
-keep around. <a href=http://www.sciscan.com target=_blank>SciScan LLC</a> offers support
-for all platforms.
+keep around.
 <p><a href="#top"><img src=graphics/top.gif> Back to Top</a>
 <p>
 
@@ -340,36 +335,19 @@ archives please visit the
 <a NAME="os_support"></a>Is <b><i>UltraScan </i></b>available for the Microsoft
 Windows&copy; or Macintosh operating system?</li>
 <p>Yes, an <b><i>UltraScan </i></b> version is available for Microsoft Windows 9x, 
-ME, 2000, NT and XP, and for Macintosh OS-X with Darwin. However, these versions 
-are commercial, and are distributed by <a href=http://www.sciscan.com target=_blank>SciScan LLC</a>.
-<p><a href="#top"><img src=graphics/top.gif> Back to Top</a>
-<p>
-<li>
-<a NAME="why_linux"></a>Why are only the Linux and *BSD versions free?</li>
-<p>The Linux and *BSD operating systems are free operating systems and
-provide open source code to the underlying system program. A decision was
-made to offer <b><i>UltraScan</b></i> for free to nonprofit and academia,
-as long as a free operating system is used, for which <b><i>UltraScan</b></i>
-was developed in the first place.
-<p>
-To develop for any other operating system costs money, since
-tools need to be purchased and maintained, and additional effort needs to be
-expended to develop for these platforms. Since this additional effort doesn't
-offer any scientific merit, it is purly done for the convenience of the 
-user. The cost of providing this service has to be borne by the user.
+ME, 2000, NT and XP, and for Macintosh OS-X with Darwin.
 <p><a href="#top"><img src=graphics/top.gif> Back to Top</a>
 <p>
 <li>
 <b><i>UltraScan</i></b> License:<p>
-<a NAME="license"></a>Please click <a href="http://www.gnu.org/copyleft/gpl.html">here for the<b><i>
-UltraScan</i></b> GPL License</a>
+<a NAME="license"></a>Please click <a href="license.html">here for the<b><i>
+UltraScan</i></b> License</a>
 <p><a href="#top"><img src=graphics/top.gif> Back to Top</a>
 <p>
 <li>
 <a NAME="support"></a>What support is available for <b><i>UltraScan</i></b>?</li>
 
-<p> All support for <b><i>UltraScan</b></i> is offered by <a href=http://www.sciscan.com target=_blank>
-SciScan LLC</a>.
+<p> For support, please contact <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a> directly.
 <p><a href="#top"><img src=graphics/top.gif> Back to Top</a>
 <p>
 <li>
@@ -380,14 +358,12 @@ update your software each time a new version is released. Since frequent
 updates will be forthcoming, this feature will provide the end-user with
 an easy update facility which doesn't require any interaction by the user.
 The updates will be done automatically by a program running on your server.
-Currently, only Slackware 8.1 is supported.
+Currently, only Slackware is supported.
 <p><a href="#top"><img src=graphics/top.gif> Back to Top</a>
 <p>
 <li>
 <a NAME="how_to_install"></a>How do I install <b><i>UltraScan</i></b>?</li>
-<p>Please read the INSTALL file for details on installations. Ths file
-is available on the <a href="download.html">download page </a>for browsing,
-and is also included with the complete distribution of <b><i>UltraScan</i></b>.
+<p>Please read the <a href=install.html>INSTALL file</a> for details on installations.
 <p><a href="#top"><img src=graphics/top.gif> Back to Top</a>
 <p>
 <li>
@@ -463,7 +439,16 @@ simultaneously under Linux.
 <p>
 <li>
 <a NAME="source"></a>Is the source code available?</li>
-<p>No. UltraScan is closed source.
+<p>Yes. UltraScan is open source.
+Source code is available through the 
+<a href='http://subversion.tigris.org/'>subversion</a> source code control system.  
+To check out a current copy of the code, use the following command:</p>
+
+<b><pre>svn co svn://bcf.uthscsa.edu/ultrascan/trunk ultrascan</pre></b>
+
+<p>The current source can also be viewed at the <span class='ultrascan'>UltraScan</span>
+<a href='http://wiki.bcf.uthscsa.edu/ultrascan/browser/trunk'>wiki</a>.</p>
+
 <p><a href="#top"><img src=graphics/top.gif> Back to Top</a>
 <p>
 <li>
@@ -502,36 +487,34 @@ into your computer and debug the problem remotely.
 <li>
 <a NAME="help"></a>I need help installing Linux (Unix, FreeBSD, etc.)</li>
 <p>Linux comes with excellent documentation. Try contacting a local Linux
-User Group (LUG) for assistance. Alternatively, this service is also
-offered through the support option offered by <a href=http://www.sciscan.com target=_blank>
-SciScan</a>.
+User Group (LUG) for assistance.
 <p><a href="#top"><img src=graphics/top.gif> Back to Top</a>
 <p>
 <li>
 <a NAME="kernel"></a>What Linux kernel do I need?</li>
-<p>The latest production kernel from the 2.4 Linux source tree (version 2.4.20)
-is recommended.
+<p>Any Linux kernel from the 2.4.20 on upwards can be used for the Linux version
+of UltraScan. A recent 2.6 based Linux kernel is recommended.
 <p><a href="#top"><img src=graphics/top.gif> Back to Top</a>
 <p>
 <li>
 <a NAME="distribution"></a>What Linux distribution should I use?</li>
-<p>Any current version of RedHat, Slackware, S.u.S.e, Mandrake or
-Debian works well and is recommended. All versions are available for free
+<p>All Linux distributions known to us are supported.
+Any current version of Gentoo, Ubuntu, RedHat, Slackware, S.u.S.e, Mandrake or
+Debian can be recommended. All Linux versions are available for free
 by downloading from the Internet or by purchase through a commercial outfit
 such as <a href="http://www.linuxmall.com">Linux Mall</a> for a few dollars
-to cover the costs of burning the CD. I also have my own distribution, 
+to cover the costs of burning the CD. We also offer our own distribution, 
 which comes pre-installed with <b><i>UltraScan</i></b>. This distribution 
-is based on Slackware, my favorite distribution. It is also
-available on CD for a small fee to cover copying costs and shipping and
-handling.
+is based on Slackware, and is distributed as an iso image, which can be burnt
+to CDROM or DVD and creates a bootable disk for installation.
 <p><a href="#top"><img src=graphics/top.gif> Back to Top</a>
 <p>
 <li>
 <a NAME="dual"></a>Can <b><i>UltraScan</i></b> take advantage of my dual
 Pentium motherboard?</li>
-<p>Yes, any multiprocessor SMP motherboard is
+<p>Yes, any multiprocessor and multicore SMP motherboards are 
 supported by Linux. SMP capability is utilized through threading in the nonlinear least
-squares fitting algortihm, the Monte Carlo analysis, and many utilities.
+squares fitting algorithms, the Monte Carlo analysis, and many utilities.
 <p>
 <p><a href="#top"><img src=graphics/top.gif> Back to Top</a>
 <li>
@@ -573,7 +556,7 @@ the documentation for your specific Unix flavor for ssh and rsh for more
 details. The second issue is generally due to failed environment 
 initializations. On linux, running bash, these have to be done in 
 ~/.bashrc, not ~/.bash_login. Do not forget to set the LD_LIBRARY_PATH
-variable for QT, QWT and the UltraScan library (for dynamic installations).
+variable for Qt, QWT and the UltraScan library (for dynamic installations).
 The system directory also needs to be defined in the UltraScan configuration.
 <p>
 <a href="#top"><img src=graphics/top.gif> Back to Top</a>
@@ -598,6 +581,6 @@ The latest version of this document can always be found at:
 <a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
 </ol>
 <p>
-Last modified on January 12, 2003.
+Last modified on October 24, 2009.
 </body>
 </html>

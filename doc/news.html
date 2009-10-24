@@ -4,47 +4,183 @@
    <link href="mainstyle.css" rel="styleSheet" type="text/css">
 </head>
 <body text="#000000" bgcolor="#FFFFFF" link="#0000EF" vlink="#55188A" alink="#FF0000">
-<font size=+1><b>Latest News</b></font>
+<font size=+1><b>Latest News...</b></font>
 <p>
-<b>Note:</b> Please monitor this page for important
-bugfix information! If a bug has been found or fixed it
-will be reported here. Please report all problems to the <a
-href=http://www.ultrascan.uthscsa.edu/mailman/listinfo/ultrascan><i><b>UltraScan</i></b>
-mailing list</a>.
+<b>Oct. 14th, 2009: </b><p><a href=download.html>UltraScan 9.9 rev. 973 released</a> -- 
+Please check the <a href='http://wiki.bcf.uthscsa.edu/ultrascan/browser/trunk/develop?order=date&desc=1'>SVN
+Trac log</a> for details on bug fixes in the revision history.
 <p>
-<ul>
+<b> Announcement of release 973:</b>
 <p>
-<li><b>June 27-29, 2005:</b> <a href=workshop/>Analytical Ultracentrifugation Workshop</a>
-<p>Please mark your calendar for this year's Analytical Ultracentrifugation Workshop. 
-The workshop will focus on <b>problem solving</b> with the analytical ultracentrifuge. 
-The topics will range from hydrodynamic theory, experimental design, hands-on software
-training with UltraScan for data analysis and presentation, the new LIMS database system,
-and training on how to maintain the XLA/I instrument and diagnose instrument problems.
+Dear Colleagues,
 <p>
-<li><b>April 10th, 2005:</b> <a href=download.html>UltraScan 7.1 released</a>
+we are happy to announce that a new release of UltraScan II, # 973, 
+containing several improvements to the US-SOMO module, has been made available.
 <p>
-This is mostly a maintenance release with several bug fixes and also some
-GUI improvements.
+
+This UltraScan release also contains a new model builder module that fixes 
+a bug with invalid parameter initializations. Major changes have been made 
+to the SOMO module, which now is released as our first production version. 
+This advance has been made possible by several months of hard work mainly 
+by Emre Brookes, but Bruce Dubbs and Jeremy Mann have also made
+significant contributions to porting the program to various operating 
+systems. New releases for Mac OSX 10.4 and 10.5, Linux 32- and 64-bit, and 
+Windows XP and Vista are therefore provided on the UltraScan website:
 <p>
-<li><b>February 18th, 2005:</b> <a href=download.html>UltraScan 7.0 released</a>
+
+<A HREF="http://www.ultrascan.uthscsa.edu/">http://www.ultrascan.uthscsa.edu/</A>
 <p>
-Among the new features: 
-<ul>
-<li>All new LIMS database system
-<li>LIMS web portal for use with Apache and <i>PHP</i> module.
-<li>LIMS C(s), C(D) and C(MW) implementation
-<li>New highly efficient and highly accurate Finite Element implementation for
-Lamm equation solution (Adaptive Space-Time Finite Element Method: ASTFEM - submitted to Biophysical Journal)
-<li>New License Manager simplifies dealing with UltraScan licenses
-<li>Documentation updates
-<li>lots and lots of bug fixes, 
-</ul>
+
+Source code can be obtained from the UltraScan tracking Wiki:
 <p>
-<li><b>September 1st, 2004:</b> <a href=http://www.ultrascan.uthscsa.edu/seminar.html>UltraScan AccessGrid Seminar Series Announced</a>
+
+<A HREF="http://wiki.bcf.uthscsa.edu/ultrascan/">http://wiki.bcf.uthscsa.edu/ultrascan/</A>
 <p>
-<li><b>June 21-23, 2004:</b> <a href=http://www.ultrascan.uthscsa.edu/workshop/>UltraScan Workshop</a> at UTHSCSA (sponsored by 
-<a href=http://www.cauma.uthscsa.edu target=_blank>CAUMA</a>)
-</ul>
+
+To get your copy, please click on the &quot;Download&quot; button and 
+select  &quot;UltraScan Software&quot;.
+<p>
+
+Below you'll find a list of the new features in SOMO.
+Please send all bugs, comments and suggestions for improvements to the 
+UltraScan development team on the UltraScan Wiki pages:
+<p>
+
+<A HREF="http://wiki.bcf.uthscsa.edu/ultrascan/">http://wiki.bcf.uthscsa.edu/ultrascan/</A>
+<p>
+
+The main characteristics, operation, and testing of the earlier US-SOMO 
+beta versions are described in a paper in press (Brookes et al., Eur. 
+Biophys. J., 2009?, doi 10.1007/s00249-009-0418-0). The new additions will 
+be described in paper that will be submitted to Macromolecular Bioscences 
+as a part of the 18th AUC conference proceedings special issue (Brookes et 
+al., to be submitted).
+<p>
+
+Summary of Changes from beta-2 and this full release:
+<p>
+
+<ol>
+<li> The main GUI has been completely reworked, with a three-panels 
+subdivision reflecting the various different steps:
+
+<p>
+         PDB Functions - which controls the operations regarding choosing 
+the PDB file, selecting the model(s) if multiple models are present, and 
+view/editing the file, if necessary. In addition, there's a new button 
+giving access to a SAXS simulation module (see below)
+<p>
+
+         Bead Model Functions - which includes all the bead modeling 
+operations, like building SoMo or Grid models, viewing the ASA results, and 
+loading a previously-generated bead model. A new button giving access to 
+SAXS calculations on a bead model is also present here (see below).
+<p>
+
+         Hydrodynamic Calculations - giving access to the computation of 
+the hydrodynamic parameters and viewing the results.
+<p>
+
+<li> The synchronous overlap reduction option has been now further tested, 
+and can be considered a valid alternative to the hierarchical procedure. It 
+is more time-consuming, but produces &quot;better looking&quot; models, whose 
+hydrodynamic properties are, however, nearly indistinguishable from those
+produced by the hierarchical procedure for SoMo-kind models. See below for
+its use in the Grid-based approach.
+<p>
+
+<li> The Grid module has undergone a major reworking, and its performance 
+can now match or exceed (especially at very low grid sizes, =&lt; 3 Angstroms) 
+that of the SoMo procedure. This has been made possible by two main new 
+features:
+<p>
+
+         The theoretical hydration can be now directly assigned at the atom 
+level, instead that at the residue level. The somo.residue file and editor 
+have been changed accordingly, and proper values for amino-acids have been 
+already entered in the distributed file (it's, however, still possible to
+override the atomic values and enter a global value for each residue). With 
+this change, the Grid models of proteins can now be properly hydrated. We 
+plan to make soon the transition to the atomic level hydration also for the 
+other kind of residues (like nucleotides and carbohydrates), but users can
+of course already edit the somo.residue table to this end, if they wish.
+<p>
+
+         An ASA screening has been introduced after primary bead 
+generation. This allows discriminating between surface-exposed and buried 
+beads. For the former category, the outward translation procedure is now 
+available when removing overlaps, and this preserves the original
+(hydrated) surface much better. An ASA re-check can also be performed on 
+the final model, allowing a much better discrimination between buried and 
+exposed beads in the final, overlap-less bead model.
+<p>
+
+         In addition, the synchronous overlap removal procedure has been 
+also fully tested in the Grid procedure, and produces much &quot;better looking&quot; 
+<p>
+
+models. Although it can be very time consuming when low grid sizes are 
+used, it should be preferentially employed here (but has NOT been made as
+the default option).
+<p>
+
+<li> The full range of options for dealing with non-coded residues, and/or 
+missing atoms within coded residues, has now been fully tested, with 
+excellent results. Although it must be underscored that these are 
+approximate methods, and that complete structures and fully coded residues 
+will
+give the most reliable results, these features allow the on-the-fly 
+processing of virtually any kind of PDB-formatted file.
+<p>
+
+<li> A new SAXS simulation module has been introduced, which, however, is 
+still a work in progress, with some features already available, and some 
+not yet ready. Pressing either of the &quot;SAXS Functions&quot; buttons (see 1- 
+above) will open a pop-up window with two subpanels:
+<p>
+
+         In the first, SAXS Plotting Functions, the generation of a SAXS 
+curve from either a PDB file or a bead model is controlled, and plotted on 
+a graphic window. For PDB models, in addition to the somo.atom and 
+somo.hybrid files, it is necessary to load a third file (automatically done 
+if present), somo-saxs_atoms, which contains the five-exponential 
+coefficients of the atomic scattering factors, and the atomic volumes. This 
+file can be edited from a pull-down menu in the main panel, under &quot;Lookup 
+Tables&quot; (&quot;Add/Edit SAXS Coefficients&quot;). For bead models, appropriate 
+scattering
+coefficients will be made available in a similar file, also editable (NOT 
+YET AVAILABLE). The generation of a SAXS curve will be possible by pressing 
+the &quot;Compute SAXS Curve&quot; button, while another button allows loading a 
+previously-generated SAXS curve. Importantly, it is also possible to load a 
+CRYSOL-generated SAXS curve (already operational).
+<p>
+
+A FULLY FUNCTIONAL SAXS CURVE GENERATOR IS NOT YET AVAILABLE, SO THE 
+&quot;Compute SAXS Curve&quot; BUTTON IS NOT ACCESSIBLE IN THIS RELEASE.
+<p>
+
+         The second panel contains a distance distribution function P(r) vs 
+r generator, which is already functional. The results are plotted in 
+another graphics window, and previously-generated distributions can be also 
+uploaded. The bin size in the P(r) vs r can be controlled. The data points 
+are automatically saved in a file.
+<p>
+
+<li> Changes have been made also to the somo.hybrid and somo.atoms files, 
+and to their editors, to link them to the SAXS module and the 
+somo.saxs_atoms file.
+<p>
+
+<li> The HELP menus have been updated to fully describe all these changes, 
+additions, and improvements, EXCEPT the SAXS module for which the help 
+section has NOT yet been prepared, since it's still a work in progress.
+<p>
+
+As usual, Happy Hydrodynamics to everyone!
+<p>
+
+Mattia Rocco &amp; Borries Demeler
+</ol>
 <p>
 <hr>
 <font face=helvetica size=-1>
@@ -53,12 +189,14 @@ www contact: <a href=mailto:demeler@biochem.uthscsa.edu>Borries Demeler</a>
 This document is part of the <i><b>UltraScan</i></b> Software
 Documentation distribution. <br><a href=copyright.html>Copyright &copy; notice</a>
 <p>
+
 The latest version of this document can always be found at:
 <p>
 <ol>
 <a href=http://www.ultrascan.uthscsa.edu>http://www.ultrascan.uthscsa.edu</a>
 </ol>
 <p>
-Last modified on April 11, 2005.
+Last modified on Jan. 25, 2009.
 </body>
 </html>
+

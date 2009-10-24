@@ -1,315 +1,528 @@
-<html>
-<title>UltraScan Software Download Page</title>
-<body bgcolor=white>
-<font color=red>
-<b>PLEASE NOTE:</b>
-<p align=justify>
-We are currently upgrading the UltraScan software archive to a the latest version
-(UltraScan 7.1). Please refer to the table below to determine if your desired platform
-is supported. As we are compiling UltraScan-7.1 on different platforms we will
-gradually add all platforms to the list of available distributions.
-When selecting a license key please specify version 7.1 or 7.0.
-<p>
-Thank you for your understanding.
-</font>
-<p>
-<hr>
-<p>
+<?xml version="1.0" encoding="utf-8" ?> 
+<!DOCTYPE html 
+    PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>UltraScan Software Download Page</title>
+  <style type='text/css'>
 
-<font size=+1>
-<b><i>UltraScan</i> Software Download<p></b></font>
-<p align=justify>
-In order to use <b><i>UltraScan</b></i> a license key is required
-which can be obtained through online registration only.
-Please take a moment and register your <b><i>UltraScan</i></b> copy.
-A license key will be e-mailed to you within 1 business day. A valid
-e-mail address is required. All licenses are made available for
-free and are applicable to academic, non-profit and for-profit commercial
-use. A free license key can be obtained <a href=register.html>here</a>.
-<p align=justify>
+  .header
+  {
+    background-color: #00AAAA;
+    text-align     : center;
+    font-weight    : bold;
+  }
 
-<p>
-<center>
-<table border=1 cellspacing=0 cellpadding=5>
-<tr>
-<td bgcolor=00,AA,AA>
-<b>Supported Platforms:</b>
-</td>
-<td bgcolor=00,AA,AA colspan=2>
-<center><b>Availability:</b></center>
-</td>
-</tr>
-<tr>
-<td>
-</td>
-<td bgcolor=00,AA,AA>
-<b>Version 7.0:</b>
-</td>
-<td bgcolor=00,AA,AA>
-<b>Version 7.1:</b>
-</td>
-</tr>
-<tr>
-<td>
-<li>Linux Intel x86<br>
-(Please see <a href=debian.html>special Installation<br>notes for Debian 3.0 stable</a>)
-</td>
-<td>
-<font color=green>
-[QT-3.3.3]<br>
-[QT-3.3.4]<br>
-</font>
-</td>
-<td>
-<font color=green>
-[QT-3.3.3]<br>
-[QT-3.3.4]<br>
-</font>
-</td>
-</tr>
+  .important
+  {
+    color          : red;
+  }
+
+  .available
+  {
+    color          : green;
+  }
+  
+  .notavail
+  {
+    color          : red;
+  }
+
+  .info
+  {
+    border         : thick ridge;
+    margin         : 1em;
+    padding        : 0.2em;
+    text-align     : center;
+    font-weight    : bold;
+  }
+
+  .select
+  {
+    margin         : 0px auto;
+    border         : solid 1px black;
+
+  }
+
+  </style>
+</head>
+
+<body bgcolor='white'>
+
+<p class='important'><b>PLEASE NOTE:</b></p>
+
+<p align='justify' class='important'> Please refer to the table below to
+determine if your desired platform is supported.  When selecting a license key
+please specify version. Not all platforms are supported in each version. Thank
+you for using UltraScan!  </p>
+
+<hr/>
+
+<h3><b><i>UltraScan</i> Software Download</b></h3>
+
+<p align='justify'> In order to use <b><i>UltraScan</i></b> a license key is
+required which can be obtained through online registration only.  Please take a
+moment and register your <b><i>UltraScan</i></b> copy.  A license key will be
+e-mailed to you within 1 business day. A valid e-mail address is required. All
+licenses are made available for free and are applicable to academic, non-profit
+and for-profit commercial use. A free license key can be obtained <a
+href='register.html'>here</a>.</p>
+
+
+<table border='1' cellspacing='0' cellpadding='5'>
 
 <tr>
-<td>
-<li>Solaris 10 Intel x86
-</td>
-<td>
-<font color=red>[Not available]</font>
-</td>
-<td>
-<font color=red>[Not available yet]</font>
-</td>
+  <td class='header' colspan='2'>Supported Platforms:</td>
+  <td class='header' colspan='13'>Availability (Latest Version is 9.7):</td>
 </tr>
 
 <tr>
-<td>
-<li>Linux AMD Opteron 64-bit
-</td>
-<td>
-<font color=green>
-[QT-3.3.1]<br>
-</font>
-</td>
-<td>
-<font color=green>
-[QT-3.3.1]<br>
-</font>
-</td>
+  <td class='header'>Architecture</td>
+  <td class='header'>Operating<br/>System</td>
+  <td class='header'>Version 7.0:</td> 
+  <td class='header'>Version 7.1:</td>
+  <td class='header'>Version 7.2:</td>
+  <td class='header'>Version 7.3:</td>
+  <td class='header'>Version 8.0:</td>
+  <td class='header'>Version 9.0:</td>
+  <td class='header'>Version 9.1:</td>
+  <td class='header'>Version 9.3:</td>
+  <td class='header'>Version 9.4:</td>
+  <td class='header'>Version 9.5:</td>
+  <td class='header'>Version 9.5.1:</td>
+  <td class='header'>Version 9.6:</td>
+  <td class='header'>Version 9.7:</td>
 </tr>
 
 <tr>
-<td>
-<li>Linux Mac PPC
-</td>
-<td>
-<font color=green>
-[QT-3.3.4]<br>
-</font>
-</td>
-<td>
-<font color=green>
-[QT-3.3.4]<br>
-</font>
-</td>
+  <td class='header' rowspan='7'>Intel</td>
+  <td>Linux Intel x86<br/>(Please see 
+          <a href='debian.html'>special Installation notes for Debian 3.0 stable</a>)
+  </td>
+  <td class='available'>[Qt-3.3.3]<br/>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.3]<br/>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.3]               </td>
+  <td class='available'>[Qt-3.3.3]<br/>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]               </td>
+  <td class='available'>[Qt-3.3.4]<br/>[Qt-3.3.6]</td>
+  <td class='available'>[Qt-3.3.4]<br/>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
 </tr>
 
 <tr>
-<td>
-<li>Macintosh OS X<br>(Darwin/X11 required)
-</td>
-<td>
-<font color=green>
-[QT-3.2.2]<br>
-</font>
-</td>
-<td>
-<font color=green>
-[QT-3.2.2]<br>
-</font>
-</td>
+  <td>Microsoft Windows<br/>(98, CE, ME, NT, 2000, XP)<br/>
+      Please review this <a href='windows_notice.html' 
+      target='new'>Windows notice</a></td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.6]</td>
+  <td class='notavail'>[Not available]<br/>Development temporarily suspended</td>
+  <td class='notavail'>[Not available]<br/>Development temporarily suspended</td>
+  <td class='available'><a href=vmwareplayer.html>Available as VMWare image for Windows NT, 2000, XP, please see this link for more info</a></td>
+  <td class='available'><a href=vmwareplayer.html>Available as VMWare image for Windows NT, 2000, XP, please see this link for more info</a></td>
+  <td class='available'><a href=vmwareplayer.html>Available as VMWare image for Windows NT, 2000, XP, please see this link for more info</a></td>
+  <td class='available'><a href=vmwareplayer.html>Available as VMWare image for Windows NT, 2000, XP, please see this link for more info</a></td>
+  <td class='available'><a href=vmwareplayer.html>Available as VMWare image for Windows NT, 2000, XP, please see this link for more info</a></td>
+  <td class='available'><!--<a href=vmwareplayer.html>Available as VMWare image for Windows NT, 2000, XP, please see this link for more info</a><br/>--><a href='software/ultrascan-9.7-win32-beta4-setup.exe'>[Beta WIN32 Native Version]</a></td>
 </tr>
 
 <tr>
-<td>
-<li>Linux Sparc
-</td>
-<td>
-<font color=red>[Not available]</font>
-</td>
-<td>
-<font color=red>[Not available yet]</font>
-</td>
+  <td>Solaris 10 Intel x86</td> 
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td> 
+  <td class='notavail'>[Not available]</td> 
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
 </tr>
 
 <tr>
-<td>
-<li>Solaris 10 Sparc
-</td>
-<td>
-<font color=red>[Not available]</font>
-</td>
-<td>
-<font color=red>[Not available yet]</font>
-</td>
+  <td>FreeBSD 5.3</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Coming Soon]</td>
+  <td class='available'>[Coming Soon]</td>
+  <td class='available'>[Coming Soon]</td>
+  <td class='available'>[Coming Soon]</td>
+  <td class='available'>[Coming Soon]</td>
 </tr>
 
 <tr>
-<td>
-<li>Solaris 8 Sparc
-</td>
-<td>
-<font color=green>[QT-3.3.4]
-</td>
-<td>
-<font color=green>[QT-3.3.4]
-</td>
+  <td>NetBSD 2.0.2 </td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.7]</td>
+  <td class='available'>[Qt-3.3.7]</td>
+  <td class='available'>[Coming Soon]</td>
+  <td class='available'>[Coming Soon]</td>
+  <td class='available'>[Coming Soon]</td>
+  <td class='available'>[Coming Soon]</td>
+  <td class='available'>[Coming Soon]</td>
 </tr>
 
 <tr>
-<td>
-<li>Microsoft Windows<br>(98, CE, ME, NT, 2000, XP)
-</td>
-<td>
-<font color=green>[QT-3.3.4]
-</font>
-</td>
-<td>
-<font color=green>[QT-3.3.4]
-</font>
-</td>
+  <td>OpenBSD 3.6</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.7]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.7]</td>
+  <td class='available'>[Coming Soon]</td>
+  <td class='available'>[Coming Soon]</td>
+  <td class='available'>[Coming Soon]</td>
+  <td class='available'>[Coming Soon]</td>
+  <td class='available'>[Coming Soon]</td>
 </tr>
 
 <tr>
-<td>
-<li>SGI Irix 6.5
-</td>
-<td>
-<font color=green>[QT-3.3.4]
-</td>
-<td>
-<font color=green>[QT-3.3.4]
-</font>
-</td>
+  <td>Macintosh OS-X<br>Darwin/X11 required</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.8] Fink Packages</td>
+  <td class='available'>[Qt-3.3.8] Fink Packages</td>
+  <td class='available'>[Qt-3.3.8] Fink Packages</td>
+  <td class='available'>[Qt-3.3.8] Fink Packages</td>
+  <td class='available'>[Qt-3.3.8] Mac Disk Image</td>
+  <td class='available'>[Qt-3.3.8] Mac Disk Image</td>
+  <td class='available'>Coming Soon</td>
 </tr>
 
 <tr>
-<td>
-<li>FreeBSD 5.3
-</td>
-<td>
-<font color=green>
-[QT-3.3.4]<br>
-</font>
-</td>
-<td>
-<font color=green>[QT-3.3.4]
-</font>
-</td>
+  <td class='header'>AMD<br/>Opteron</td>
+  <td>Linux AMD Opteron 64-bit</td>
+  <td class='available'>[Qt-3.3.1]</td>
+  <td class='available'>[Qt-3.3.1]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.3]</td>
+  <td class='available'>[Qt-3.3.3]</td>
+  <td class='available'>[Qt-3.3.3]</td>
+  <td class='available'>[Qt-3.3.3]</td>
+  <td class='available'>[Qt-3.3.3]</td>
+  <td class='available'>[Qt-3.3.3]</td>
+  <td class='available'>[Qt-3.3.3]</td>
+  <td class='available'>[Qt-3.3.3]</td>
+  <td class='available'>[Qt-3.3.3]</td>
 </tr>
 
 <tr>
-<td>
-<li>NetBSD 2.0.2
-</td>
-<td>
-<font color=red>[Not available]</font>
-</td>
-<td>
-<font color=green>[QT-3.3.4]
-</font>
-</td>
+  <td class='header' rowspan='2'>Macintosh<br/>G3/G4,<br/>PPC</td> 
+  <td>Linux Mac PPC</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.6]</td>
+  <td class='available'>[Qt-3.3.6]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
 </tr>
 
 <tr>
-<td>
-<li>OpenBSD 3.6
-</td>
-<td>
-<font color=green>
-[QT-3.3.4]<br>
-</font>
-</td>
-<td>
-<font color=green>[QT-3.3.4]
-</font>
-</td>
+  <td>Macintosh OS X<br/>(Darwin/X11 required) (Please see 
+  <a href='macosx.html'>special Installation<br/>notes for Mac OS X</a>)</td>
+  <td class='available'>[Qt-3.2.2]</td>
+  <td class='available'>[Qt-3.2.2]</td>
+  <td class='available'>[Qt-3.2.2]</td>
+  <td class='available'>[Qt-3.3.5]</td>
+  <td class='available'>[Qt-3.3.5]</td>
+  <td class='available'>[Qt-3.3.7]<br>Fink Packages</td>
+  <td class='available'>[Qt-3.3.7]<br>Fink Packages</td>
+  <td class='available'>[Qt-3.3.7]<br>Fink Packages</td>
+  <td class='available'>[Qt-3.3.7]<br>Fink Packages</td>
+  <td class='available'>[Qt-3.3.7]<br>Fink Packages</td>
+  <td class='available'>[Qt-3.3.8]Mac Disk Image</td>
+  <td class='available'>[Qt-3.3.8]Mac Disk Image</td>
+  <td class='available'>[Qt-3.3.8]Mac Disk Image</td>
+</tr>
+
+<tr>
+  <td class='header' rowspan='4'>Sun<br/>Sparc</td>
+  <td>Linux Sparc</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+</tr>
+
+<tr>
+  <td>Solaris 10 Sparc</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.7]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>Coming Soon</td>
+</tr>
+	
+<tr>
+  <td>Solaris 9 Sparc</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+</tr>
+
+<tr>
+  <td>Solaris 8 Sparc</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+</tr>
+
+<tr>
+  <td class='header'>Silicon<br/>Graphics</td>
+  <td>SGI Irix 6.5</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+</tr>
+
+<tr>
+  <td class='header'>UltraScan ISO CDROM Image</td>
+  <td>Linux Intel x86 32-bit</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='available'>[Qt-3.3.4]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>[Qt-3.3.6]</td>
+  <td class='available'>[Qt-3.3.6]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+  <td class='notavail'>[Not Available]</td>
+  <td class='available'>[Qt-3.3.8]</td>
+</tr>
+
+<tr>
+  <td class='header'>Source Code, tar.gz format</td>
+  <td>Any</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>Available</td>
+  <td class='available'>Available</td>
+  <td class='available'>Available</td>
+  <td class='available'>Available</td>
+  <td class='available'>Available</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>Available</td>
+</tr>
+
+<tr>
+  <td class='header'>Source Code, tar.bz2 format</td>
+  <td>Any</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>Available</td>
+  <td class='available'>Available</td>
+  <td class='available'>Available</td>
+  <td class='available'>Available</td>
+  <td class='available'>Available</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>Available</td>
+</tr>
+
+<tr>
+<td class='header'>Source Code, zip format</td>
+  <td>Any</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>Available</td>
+  <td class='available'>Available</td>
+  <td class='available'>Available</td>
+  <td class='available'>Available</td>
+  <td class='available'>Available</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='notavail'>[Not available]</td>
+  <td class='available'>Available</td>
 </tr>
 </table>
-<center>
 
-<p align=justify>
-<form name="UltraScan Download Page" method="post" action="download.php">
-<table border=0 cellpadding=10>
-<tr align=center>
-<td colspan=4>
-<table border=1 cellpadding=5>
-<tr>
-<td>
-<b>
-<center>
-Please choose your hardware, operating system, QT Version and UltraScan Version and click
-on "Select" (Windows users: only the latest QT version is available for
-distribution with UltraScan, and QT is bundled with the UltraScan version):
-</center>
-</b>
-</td>
-</tr>
-</table>
-</td>
-</tr>
-<tr align=center bgcolor=00,AA,AA>
-<td valign=top><b>Hardware:</b></td>
-<td valign=top><b>Operating System:</b></td>
-<td valign=top><b>QT<br>Version:</b></td>
-<td valign=top><b>UltraScan<br>Version:</b></td></tr>
-<tr bgcolor=55,55,55 align=center>
+<div class='info'>
 
-<td valign=top>
-<select size=6 name=Hardware>
-<option selected value=ix86>Intel ix86</option>
-<option value=opteron>AMD Opteron 64-bit</option>
-<option value=mac>Macintosh</option>
-<option value=sparc>Sun Sparc RISC</option>
-<option value=sgi>Silicon Graphics SGI</option>
-</select>
-</td>
+  <p> Please choose your hardware, operating system, Qt Version and
+  UltraScan Version and click on "Select" (Windows users: UltraScan
+  Windows is unstable, and the latest Qt version is bundled with the Windows
+  version - Linux is recommended instead): </p>
 
-<td valign=top>
-<select size=6 name=OS>
-<option selected value=linux>Linux</option>
-<option value=win32>Windows</option>
-<option value=osx>OS-X</option>
-<option value=solaris-10>Solaris 10</option>
-<option value=solaris-9>Solaris 9</option>
-<option value=solaris-8>Solaris 8</option>
-<option value=solaris-7>Solaris 7</option>
-<option value=irix-6.5>Irix 6.5</option>
-<option value=freebsd>FreeBSD</option>
-<option value=netbsd>NetBSD</option>
-<option value=openbsd>OpenBSD</option>
-</select>
-</td>
+</div>
 
-<td valign=top>
-<select size=6 name=QT_VERSION>
-<option selected>3.3.4</option>
-<option>3.3.3</option>
-<option>3.3.2</option>
-<option>3.3.1</option>
-<option>3.2.2</option>
-</select>
-</td>
+<form name="UltraScanDownloadPage" method="post" action="download.php">
 
-<td valign=top>
-<select size=2 name=US_VERSION>
-<option>7.0</option>
-<option selected>7.1</option>
-</select></td></tr>
-<tr align=center>
-<td colspan=4>
-<input type=submit name=Submit value=Select>
-</td>
-</tr>
-</table>
+  <table class='select' cellpadding=15 cellspacing=2>
+  <tr>
+    <td class='header' valign='top'>Hardware, Source code<br>or ISO CDROM Image:</td>
+    <td class='header' valign='top'>Operating System<br>Source Compression Format:</td>
+    <td class='header' valign='top'>Qt<br/>Version:</td>
+    <td class='header' valign='top'>UltraScan<br/>Version:</td>
+  </tr>
+    
+    
+  <tr align='center' bgcolor="#555555">
+    <td valign='top'>
+      <select size='6' name='Hardware'>
+        <option selected='selected' value='ix86'>Intel ix86</option>
+        <option value='opteron'>AMD Opteron 64-bit</option>
+        <option value='mac'>Macintosh</option>
+        <option value='sparc'>Sun Sparc RISC</option>
+        <option value='sgi'>Silicon Graphics SGI</option>
+        <option value='source'>Source Code</option>
+        <option value='iso'>ISO CDROM Image</option>
+      </select>
+    </td>
+
+    <td valign='top'>
+      <select size='6' name='OS'>
+        <option selected='selected' value='linux'>Linux</option>
+        <option value='win32'>Windows</option>
+        <option value='osx'>OS-X</option>
+        <option value='solaris-10'>Solaris 10</option>
+        <option value='solaris-9'>Solaris 9</option>
+        <option value='solaris-8'>Solaris 8</option>
+        <option value='solaris-7'>Solaris 7</option>
+        <option value='irix-6.5'>Irix 6.5</option>
+        <option value='freebsd'>FreeBSD</option>
+        <option value='netbsd'>NetBSD</option>
+        <option value='openbsd'>OpenBSD</option>
+        <option value='targz'>tar.gz format</option>
+        <option value='tarbz2'>tar.bz2 format</option>
+        <option value='zip'>zip format</option>
+      </select>
+    </td>
+
+    <td valign='top'>
+      <select size='6' name='Qt_VERSION'>
+        <option selected='selected'>3.3.8</option>
+        <option>3.3.7</option>
+        <option>3.3.6</option>
+        <option>3.3.5</option>
+        <option>3.3.4</option>
+        <option>3.3.3</option>
+        <option>3.3.2</option>
+        <option>3.3.1</option>
+        <option>3.2.2</option>
+      </select>
+    </td>
+    <td valign='top'>
+      <select size='6' name='US_VERSION'>
+        <option selected='selected'>9.7</option>
+        <option>9.6</option>
+  		  <option>9.5.1</option>
+		  <option>9.5</option>
+		  <option>9.4</option>
+        <option>9.3</option>
+        <option>9.2</option>
+        <option>9.1</option>
+        <option>9.0</option>
+        <option>8.0</option>
+        <option>7.3</option>
+        <option>7.2</option>
+        <option>7.1</option>
+        <option>7.0</option>
+      </select></td>
+	</tr>
+  <tr align='center' bgcolor="#555555">
+    <td colspan='4'><input type='submit' name='Submit' value='Select'/></td>
+  </tr>
+
+  </table>
+
 </form>
+
 </body>
 </html>
