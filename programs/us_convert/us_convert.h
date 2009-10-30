@@ -10,8 +10,6 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO.h"
-#include "us_expinfo.h"
-#include "us_ccwinfo.h"
 
 class US_EXTERN US_Convert : public US_Widgets
 {
@@ -20,14 +18,43 @@ class US_EXTERN US_Convert : public US_Widgets
   public:
       US_Convert();
 
+      class TripleInfo
+      {
+         public:
+         int              tripleID;
+         int              centerpiece;
+         int              bufferID;
+         int              analyteID;
+         TripleInfo();
+      };
+
+      class ExperimentInfo
+      {
+         public:
+         int              invID;
+         QString          lastName;
+         QString          firstName;
+         QString          expType;
+         int              rotor;
+         QString          date;
+         QString          label;
+         QString          comments;
+         QList< TripleInfo > triples;
+         ExperimentInfo();
+         void clear( void );
+      };
+
   private:
 
       enum { SPLIT, REFERENCE, NONE } step;
+
+      enum ioError { OK, CANTOPEN, NODATA, NOXML, PARTIAL_XML };
 
       US_Help        showHelp;
       US_PlotPicker* picker;
 
       QString       runType;
+      QString       oldRunType;
       QStringList   triples;
       int           currentTriple;
 
@@ -46,7 +73,6 @@ class US_EXTERN US_Convert : public US_Widgets
 
       QwtCounter*   ct_tolerance;
 
-      QPushButton*  pb_write;
       QPushButton*  pb_writeAll;
       QPushButton*  pb_exclude;
       QPushButton*  pb_include;
@@ -55,9 +81,8 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_process;
       QPushButton*  pb_reference;
       QPushButton*  pb_cancelref;
-      QPushButton*  pb_change_runID;
       QPushButton*  pb_expinfo;
-      QPushButton*  pb_ccwinfo;
+      QPushButton*  pb_tripleinfo;
 
       QList< US_DataIO::beckmanRaw >  legacyData;     // legacy data from file
       QList< US_DataIO::beckmanRaw* > ccwLegacyData;  // legacy data with this cell/channel/wl
@@ -81,7 +106,6 @@ class US_EXTERN US_Convert : public US_Widgets
       int           RP_reference_triple;              // number of the triple that is the reference
       QList< double > RP_averages;
 
-      int  write           ( const QString& );
       void setInterpolated ( unsigned char*, int );
       void plot_current    ( void );
       void plot_titles     ( void );
@@ -92,15 +116,12 @@ class US_EXTERN US_Convert : public US_Widgets
       void RP_calc_avg     ( void );
   
       bool show_plot_progress;
-      US_CCWInfo::CCWInfo  CCWData; 
-      QList< US_CCWInfo::CCWInfo > allCCWData;
-      US_ExpInfo::ExpInfo  ExpData; 
+      ExperimentInfo       ExpData; 
       int writeXmlFile     ( void );
 
   private slots:
       void load            ( QString dir = "" );
       void details         ( void );
-      void change_runID    ( void );
       void reset           ( void );
       void resetAll        ( void );
       void read            ( void );
@@ -115,7 +136,6 @@ class US_EXTERN US_Convert : public US_Widgets
       void exclude_scans   ( void );
       void include         ( void );
       void reset_scan_ctrls( void );
-      void write           ( void );
       int  writeAll        ( void );
       void cClick          ( const QwtDoublePoint& );
       void define_subsets  ( void );
@@ -125,12 +145,12 @@ class US_EXTERN US_Convert : public US_Widgets
       void start_reference   ( const QwtDoublePoint& );
       void process_reference ( const QwtDoublePoint& );
       void cancel_reference( void );
-      void get_expinfo     ( void );
-      void update_expinfo  ( US_ExpInfo::ExpInfo& );
-      void cancel_expinfo  ( void );
-      void get_ccwinfo     ( void );
-      void update_ccwinfo  ( US_CCWInfo::CCWInfo& );
-      void cancel_ccwinfo  ( void );
+      void getExpInfo      ( void );
+      void updateExpInfo   ( US_Convert::ExperimentInfo& );
+      void cancelExpInfo   ( void );
+      void getTripleInfo   ( void );
+      void updateTripleInfo( US_Convert::TripleInfo& );
+      void cancelTripleInfo( void );
       void draw_vline      ( double );
       void help            ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };

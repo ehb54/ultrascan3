@@ -4,7 +4,7 @@ QT           += sql
 
 TARGET        = us_convert
 
-HEADERS       = us_convert.h us_expinfo.h us_ccwinfo.h
+HEADERS       = us_convert.h us_expinfo.h us_tripleinfo.h
 
-SOURCES       = us_convert.cpp us_expinfo.cpp us_ccwinfo.cpp
+SOURCES       = us_convert.cpp us_expinfo.cpp us_tripleinfo.cpp
 

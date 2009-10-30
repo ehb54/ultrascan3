@@ -6,21 +6,6 @@
 #include "us_db.h"
 #include "us_investigator.h"
 
-US_ExpInfo::ExpInfo::ExpInfo()
-{
-   ExpInfo::clear();
-}
-
-void US_ExpInfo::ExpInfo::clear( void )
-{
-   investigator = 0;
-   expType      = QString( "" );
-   rotor        = 0;
-   date         = QString( "" );
-   label        = QString( "" );
-   comments     = QString( "" );
-}
-
 US_ExpInfo::US_ExpInfo() : US_WidgetsDialog( 0, 0 )
 {
    setWindowTitle( tr( "Experiment Information" ) );
@@ -39,7 +24,7 @@ US_ExpInfo::US_ExpInfo() : US_WidgetsDialog( 0, 0 )
    main->addWidget( lb_DB, row++, 0, 1, 2 );
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
+   connect( pb_investigator, SIGNAL( clicked() ), SLOT( selectInvestigator() ) );
    pb_investigator->setEnabled( true );
    main->addWidget( pb_investigator, row, 0 );
 
@@ -155,7 +140,7 @@ void US_ExpInfo::reset( void )
 
 void US_ExpInfo::accept( void )
 {
-   US_ExpInfo::ExpInfo d;
+   US_Convert::ExperimentInfo d;
 
    // First get the invID
    QString invInfo = le_investigator->text();
@@ -169,8 +154,14 @@ void US_ExpInfo::accept( void )
 
    QStringList components = invInfo.split( ")", QString::SkipEmptyParts );
    components = components[0].split( "(", QString::SkipEmptyParts );
-   d.investigator = components.last().toInt();
+   d.invID = components.last().toInt();
  
+   // Get the investigator name too
+   components  = invInfo.split( ": ", QString::SkipEmptyParts );
+   components  = components.last().split( ", ", QString::SkipEmptyParts );
+   d.lastName  = components.first().toAscii();
+   d.firstName = components.last().toAscii();
+
    d.expType      = cb_expType       ->currentText();
    d.rotor        = cb_rotor         ->currentIndex();
 
@@ -179,7 +170,7 @@ void US_ExpInfo::accept( void )
    d.label        = le_label         ->text();
    d.comments     = te_comment       ->toPlainText();
 
-   emit update_expinfo_selection( d );
+   emit updateExpInfoSelection( d );
    close();
 }
 
@@ -187,20 +178,20 @@ void US_ExpInfo::cancel( void )
 {
    reset();
 
-   emit cancel_expinfo_selection();
+   emit cancelExpInfoSelection();
    close();
 }
 
-void US_ExpInfo::sel_investigator( void )
+void US_ExpInfo::selectInvestigator( void )
 {
    US_Investigator* inv_dialog = new US_Investigator( true );
    connect( inv_dialog, 
       SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
-      SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
+      SLOT  ( assignInvestigator   ( int, const QString&, const QString& ) ) );
    inv_dialog->exec();
 }
 
-void US_ExpInfo::assign_investigator( int invID,
+void US_ExpInfo::assignInvestigator( int invID,
       const QString& lname, const QString& fname)
 {
    le_investigator->setText( "InvID (" + QString::number( invID ) + "): " +
