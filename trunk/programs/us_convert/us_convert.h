@@ -3,13 +3,14 @@
 
 #include <QtGui>
 
-#include "qwt_plot_marker.h"
+//#include "qwt_plot_marker.h"
 
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO.h"
+#include "us_progressbar.h"
 
 class US_EXTERN US_Convert : public US_Widgets
 {
@@ -49,6 +50,8 @@ class US_EXTERN US_Convert : public US_Widgets
       enum { SPLIT, REFERENCE, NONE } step;
 
       enum ioError { OK, CANTOPEN, NODATA, NOXML, PARTIAL_XML };
+
+      enum operation { NO_OP, READING, CONVERTING, PLOTTING, WRITING, CANCELED };
 
       US_Help        showHelp;
       US_PlotPicker* picker;
@@ -96,8 +99,8 @@ class US_EXTERN US_Convert : public US_Widgets
       QwtPlot*      data_plot;
       QwtPlotGrid*  grid;
 
-      QLabel*       lb_progress;
-      QProgressBar* progress;
+      US_Progressbar::US_Progressbar*  progress;
+      operation     currentOperation;
 
       QList< double > ss_limits;                      // list of subset boundaries
       double        reference_start;                  // boundary of reference scans
@@ -151,6 +154,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void getTripleInfo   ( void );
       void updateTripleInfo( US_Convert::TripleInfo& );
       void cancelTripleInfo( void );
+      void cancelProgress  ( void );
       void draw_vline      ( double );
       void help            ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
