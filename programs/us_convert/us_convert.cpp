@@ -2,7 +2,6 @@
 
 #include <QApplication>
 
-#include "us_convert.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -10,8 +9,10 @@
 #include "us_run_details.h"
 #include "us_plot.h"
 #include "us_math.h"
+#include "us_convert.h"
 #include "us_expinfo.h"
 #include "us_tripleinfo.h"
+#include "us_progressbar.h"
 
 //! \brief Main program for us_convert. Loads translators and starts
 //         the class US_Convert.
@@ -151,20 +152,6 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_writeAll, SIGNAL( clicked() ), SLOT( writeAll() ) );
    settings->addWidget( pb_writeAll, row++, 0, 1, 2 );
 
-   // Progress bar
-   QLabel* lb_placeholder = new QLabel();
-   settings -> addWidget( lb_placeholder, row, 0, 1, 2 );
-
-   lb_progress = us_label( tr( "Progress:" ) , -1 );
-   lb_progress->setAlignment( Qt::AlignVCenter | Qt::AlignRight );
-   lb_progress->setVisible( false );
-   settings->addWidget( lb_progress, row, 0 );
-
-   progress = us_progressBar( 0, 100, 0 );
-   progress -> reset();
-   progress -> setVisible( false );
-   settings -> addWidget( progress, row++, 1 );
-
    // Standard pushbuttons
    QBoxLayout* buttons = new QHBoxLayout;
 
@@ -200,11 +187,8 @@ US_Convert::US_Convert() : US_Widgets()
    // Now let's assemble the page
    
    QVBoxLayout* left     = new QVBoxLayout;
-   QSpacerItem* spacer   = new QSpacerItem( 0, 0, 
-                           QSizePolicy::Minimum, QSizePolicy::Fixed );
 
    left->addLayout( settings );
-   left->addItem( spacer );
    left->addLayout( buttons );
    
    QHBoxLayout* main = new QHBoxLayout( this );
@@ -216,6 +200,14 @@ US_Convert::US_Convert() : US_Widgets()
 
    main->setStretch( 0, 2 );
    main->setStretch( 1, 4 );
+   
+   // Set up progress bar for later
+   progress = new US_Progressbar( 0, 100, 0 );
+   progress ->hide();
+   connect( progress, SIGNAL( cancelConvertOperation() ),
+            this    , SLOT  ( cancelProgress        () ) );
+   currentOperation = NO_OP;
+
 }
 
 void US_Convert::reset( void )
@@ -267,6 +259,8 @@ void US_Convert::reset( void )
    step           = NONE;
 
    pb_reference   ->setEnabled( false );
+
+   currentOperation = NO_OP;
 }
 
 void US_Convert::resetAll( void )
@@ -292,6 +286,12 @@ void US_Convert::load( QString dir )
 
    else
       read( dir );
+
+   if ( currentOperation == CANCELED )
+   {
+      resetAll();
+      return;
+   }
 
 /*
    // Display the data that was read
@@ -336,11 +336,11 @@ void US_Convert::load( QString dir )
 
    else
    {
-      progress    ->setRange( 0, triples.size() );
-      progress    ->setValue( 0 );
-      lb_progress ->setText( tr( "Converting:" ) );
-      lb_progress ->setVisible( true );
-      progress    ->setVisible( true );
+      currentOperation = CONVERTING;
+      progress ->setLegend( tr( "Converting:" ) );
+      progress ->setRange( 0, triples.size() );
+      progress ->setValue( 0 );
+      progress ->show();
 
       for ( currentTriple = 0; currentTriple < triples.size(); currentTriple++ )
       {
@@ -351,15 +351,23 @@ void US_Convert::load( QString dir )
          allData << newRawData;
 
          progress ->setValue( currentTriple );
-         qApp     ->processEvents();
       }
    }
 
-   lb_progress ->setVisible( false );
-   progress    ->setVisible( false );
-   
+   if ( currentOperation == CANCELED )
+   {
+      resetAll();
+      return;
+   }
+
    currentTriple = 0;     // Now let's show the user the first one
    plot_current();
+
+   if ( currentOperation == CANCELED )
+   {
+      resetAll();
+      return;
+   }
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_from   ( double ) ) );
@@ -372,6 +380,7 @@ void US_Convert::load( QString dir )
    pb_writeAll   ->setEnabled( true );
    pb_details    ->setEnabled( true );
    pb_tripleinfo ->setEnabled( true );
+
 }
 
 void US_Convert::read( void )
@@ -438,17 +447,16 @@ void US_Convert::read( QString dir )
    if ( channels.isEmpty() ) channels << "A";
 
    // Now read the data.
+   currentOperation = READING;
+   progress   ->setLegend( tr( "Reading:" ) );
+   progress   ->setRange( 0, fileList.size() - 1 );
+   progress   ->setValue( 0 );
+   progress   ->show();
 
-   progress    ->setRange( 0, fileList.size() - 1 );
-   progress    ->setValue( 0 );
-   lb_progress ->setText( tr( "Reading:" ) );
-   lb_progress ->setVisible( true );
-   progress    ->setVisible( true );
    for ( int i = 0; i < fileList.size(); i++ )
    {
       US_DataIO::beckmanRaw data;
       US_DataIO::readLegacyFile( dir + fileList[ i ], data );
-      qApp->processEvents();
 
       // Add channel
       QChar c = fileList[ i ].at( 0 );  // Get 1st character
@@ -517,14 +525,10 @@ void US_Convert::read( QString dir )
       else
          legacyData << data;
 
-      progress ->setValue( i );
-      qApp     ->processEvents();
+      progress->setValue( i );
    }
 
    ss_limits.clear();                       // Don't need this any more
-
-   lb_progress ->setVisible( false );
-   progress    ->setVisible( false );
 
    if ( runType == "WA" )
       setCcrTriples();                      // Wavelength data is handled differently here
@@ -838,11 +842,11 @@ void US_Convert::convert( bool showProgressBar )
       // Enable progress bar
       if ( showProgressBar )
       {
-         progress    ->setRange( 0, ccwLegacyData.size() - 1 );
-         progress    ->setValue( 0 );
-         lb_progress ->setText( tr( "Converting:" ) );
-         lb_progress ->setVisible( true );
-         progress    ->setVisible( true );
+         currentOperation = CONVERTING;
+         progress   ->setLegend( tr( "Converting:" ) );
+         progress   ->setRange( 0, ccwLegacyData.size() - 1 );
+         progress   ->setValue( 0 );
+
       }
 
       // Readings here and interpolated array
@@ -960,8 +964,7 @@ void US_Convert::convert( bool showProgressBar )
 
       newRawData.scanData <<  s ;
       
-      if ( showProgressBar ) progress ->setValue( i );
-      qApp->processEvents();
+      if ( showProgressBar ) progress->setValue( i ); 
    }
 
    // Delete the bitmaps we allocated
@@ -969,11 +972,6 @@ void US_Convert::convert( bool showProgressBar )
    //for ( uint i = 0; i < newRawData.scanData.size(); i++ ) 
    //   delete newRawData.scanData[ i ].interpolated;
 
-   if ( showProgressBar )
-   {
-      lb_progress ->setVisible( false );
-      progress    ->setVisible( false );
-   }
 }
 
 void US_Convert::details( void )
@@ -1032,12 +1030,12 @@ int US_Convert::writeAll( void )
 
    int result;
 
-   progress    ->setRange( 0, triples.size() - 1 );
-   progress    ->setValue( 0 );
-   lb_progress ->setText( tr( "Writing:" ) );
-   lb_progress ->setVisible( true );
-   progress    ->setVisible( true );
-
+   currentOperation = WRITING;
+   progress   ->setLegend( tr( "Writing:" ) );
+   progress   ->setRange( 0, triples.size() - 1 );
+   progress   ->setValue( 0 );
+   progress   ->show();
+  
    for ( int i = 0; i < triples.size(); i++ )
    {
       QString     triple     = triples[ i ];
@@ -1045,25 +1043,38 @@ int US_Convert::writeAll( void )
 
       QString     cell       = parts[ 0 ];
       QString     channel    = parts[ 1 ];
-      QString     wavelength = parts[ 2 ];
+      QString     filename;
 
-      QString     filename   = runID      + "." 
+      if ( runType == "WA" )
+      {
+          double r       = parts[ 2 ].toDouble() * 1000.0;
+          QString radius = QString::number( (int) round( r ) );
+          filename       = runID      + "." 
+                         + runType    + "." 
+                         + cell       + "." 
+                         + channel    + "." 
+                         + radius     + ".auc";
+      }
+
+      else
+      {
+          QString wavelength = parts[ 2 ];
+          filename           = runID      + "." 
                              + runType    + "." 
                              + cell       + "." 
                              + channel    + "." 
                              + wavelength + ".auc";
+      }
 
       US_DataIO::rawData currentData = allData[ i ];
       result = US_DataIO::writeRawData( dirname + filename, allData[ i ] );
 
       if ( result !=  OK ) break;
       
-      progress ->setValue( i );
-      qApp     ->processEvents();
+      progress->setValue( i );
    }
 
-   lb_progress ->setVisible( false );
-   progress    ->setVisible( false );
+   progress ->hide();
 
    if ( result != OK )
    {
@@ -1231,11 +1242,10 @@ void US_Convert::plot_all( void )
 
    if ( show_plot_progress )
    {
-      progress    ->setRange( 0, currentData.scanData.size() - 1 );
-      progress    ->setValue( 0 );
-      lb_progress ->setText( tr( "Plotting:" ) );
-      lb_progress ->setVisible( true );
-      progress    ->setVisible( true );
+      currentOperation = PLOTTING;
+      progress   ->setLegend( tr( "Plotting:" ) );
+      progress   ->setRange( 0, currentData.scanData.size() - 1 );
+      progress   ->setValue( 0 );
    }
 
    for ( int i = 0; i < currentData.scanData.size(); i++ )
@@ -1262,17 +1272,12 @@ void US_Convert::plot_all( void )
 
       if ( show_plot_progress )
       {
-         progress ->setValue( i );
-         qApp     ->processEvents();
+         progress->setValue( i );
       }
 
    }
 
-   if ( show_plot_progress )
-   {
-      lb_progress ->setVisible( false );
-      progress    ->setVisible( false );
-   }
+   progress ->hide();
 
    // Reset the scan curves within the new limits
    double padR = ( maxR - minR ) / 30.0;
@@ -1776,11 +1781,11 @@ int US_Convert::writeXmlFile( void )
       return CANTOPEN;
    }
 
-   progress    ->setRange( 0, triples.size() - 1 );
-   progress    ->setValue( 0 );
-   lb_progress ->setText( tr( "Writing XML:" ) );
-   lb_progress ->setVisible( true );
-   progress    ->setVisible( true );
+   currentOperation = WRITING;
+   progress   ->setLegend( tr( "Writing XML:" ) );
+   progress   ->setRange( 0, triples.size() - 1 );
+   progress   ->setValue( 0 );
+   progress   ->show();
 
    QXmlStreamWriter xml;
    xml.setDevice( &file );
@@ -1848,6 +1853,7 @@ int US_Convert::writeXmlFile( void )
             xml.writeEndElement  ();
 
          xml.writeEndElement   ();
+         progress   ->setValue( 0 );
       }
 
    xml.writeTextElement ( "date", ExpData.date );
@@ -1857,13 +1863,34 @@ int US_Convert::writeXmlFile( void )
    xml.writeEndElement(); // US_Scandata
    xml.writeEndDocument();
 
-   lb_progress ->setVisible( false );
-   progress    ->setVisible( false );
-
+   progress ->hide();
    if ( ExpData.triples.size() != triples.size() )
       return PARTIAL_XML;
 
    return OK;
+}
+
+void US_Convert::cancelProgress( void )
+{
+   switch ( currentOperation )
+   {
+      case NO_OP      :
+      case READING    :
+      case CONVERTING :
+      case PLOTTING   :
+         resetAll();
+         qApp->processEvents();
+         break;
+
+      case WRITING    :
+         break;
+
+      default         :
+         resetAll();
+         break;
+   }
+
+   currentOperation = CANCELED;
 }
 
 // Initializations
