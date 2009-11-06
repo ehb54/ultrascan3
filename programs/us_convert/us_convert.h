@@ -3,14 +3,11 @@
 
 #include <QtGui>
 
-//#include "qwt_plot_marker.h"
-
 #include "us_extern.h"
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO.h"
-//#include "us_process_convert.h"
 
 class US_EXTERN US_Convert : public US_Widgets
 {
@@ -45,11 +42,11 @@ class US_EXTERN US_Convert : public US_Widgets
          void clear( void );
       };
 
+      enum ioError { OK, CANTOPEN, NODATA, NOXML, PARTIAL_XML };
+
   private:
 
       enum { SPLIT, REFERENCE, NONE } step;
-
-      enum ioError { OK, CANTOPEN, NODATA, NOXML, PARTIAL_XML };
 
       US_Help        showHelp;
       US_PlotPicker* picker;
@@ -112,7 +109,6 @@ class US_EXTERN US_Convert : public US_Widgets
   
       bool show_plot_progress;
       ExperimentInfo       ExpData; 
-      int writeXmlFile     ( void );
 
   private slots:
       void load            ( QString dir = "" );

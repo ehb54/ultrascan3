@@ -167,6 +167,87 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
    this->hide();
 }
 
+// Constructor to use for writing data 
+US_ProcessConvert::US_ProcessConvert( QWidget* parent,
+                                      int& status,
+                                      QList< US_DataIO::rawData >& rawConvertedData,
+                                      US_Convert::ExperimentInfo& ExpData,
+                                      QStringList& triples,
+                                      QString runType,
+                                      QString runID,
+                                      QString dirname
+                                    ) : US_WidgetsDialog( parent, 0 )
+{
+   if ( rawConvertedData[ 0 ].scanData.empty() ) 
+   {
+      status = US_Convert::NODATA;
+      return;
+   }
+
+   createDialog();
+
+   // Write the data. In this case not triples.size() - 1, because we are
+   // going to consider the xml file as one file to write also
+   lb_progress ->setText( tr( "Writing:" ) );
+   progress    ->setRange( 0, triples.size() );
+   progress    ->setValue( 0 );
+   progress    ->show();
+   qApp        ->processEvents();
+
+   for ( int i = 0; i < triples.size(); i++ )
+   {
+      QString     triple     = triples[ i ];
+      QStringList parts      = triple.split(" / ");
+
+      QString     cell       = parts[ 0 ];
+      QString     channel    = parts[ 1 ];
+      QString     filename;
+
+      if ( runType == "WA" )
+      {
+          double r       = parts[ 2 ].toDouble() * 1000.0;
+          QString radius = QString::number( (int) round( r ) );
+          filename       = runID      + "." 
+                         + runType    + "." 
+                         + cell       + "." 
+                         + channel    + "." 
+                         + radius     + ".auc";
+      }
+
+      else
+      {
+          QString wavelength = parts[ 2 ];
+          filename           = runID      + "." 
+                             + runType    + "." 
+                             + cell       + "." 
+                             + channel    + "." 
+                             + wavelength + ".auc";
+      }
+
+      status = US_DataIO::writeRawData( dirname + filename, rawConvertedData[ i ] );
+
+      if ( status !=  US_DataIO::OK ) break;
+      
+      progress->setValue( i );
+      qApp    ->processEvents();
+   }
+
+   if ( status != US_Convert::OK )
+   {
+      // Try to delete the files and tell the user
+      this->hide();
+      return;
+   }
+
+   // Now try to write the xml file
+   status = writeXmlFile( ExpData, triples, runType, runID, dirname );
+   progress->setValue( triples.size() );
+   qApp    ->processEvents();
+
+   this->hide();
+   return;
+}
+
 void US_ProcessConvert::convert( QList< US_DataIO::beckmanRaw >& rawLegacyData,
                                  US_DataIO::rawData& newRawData,
                                  QString triple,
@@ -256,16 +337,16 @@ void US_ProcessConvert::convert( QList< US_DataIO::beckmanRaw >& rawLegacyData,
       s.wavelength  = ccwLegacyData[ i ].t.wavelength;
       s.delta_r     = delta_r;
 
-/*      // Enable progress bar
+      // We show the progress bar here if there is only one data set
       if ( showProgressBar )
       {
-         currentOperation = CONVERTING;
-         progress   ->setLegend( tr( "Converting:" ) );
-         progress   ->setRange( 0, ccwLegacyData.size() - 1 );
-         progress   ->setValue( 0 );
-
+         // Now convert the data.
+         lb_progress ->setText( tr( "Converting:" ) );
+         progress    ->setRange( 0, ccwLegacyData.size() - 1 );
+         progress    ->setValue( 0 );
+         progress    ->show();
+         qApp        ->processEvents();
       }
-*/
 
       // Readings here and interpolated array
       int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
@@ -382,7 +463,7 @@ void US_ProcessConvert::convert( QList< US_DataIO::beckmanRaw >& rawLegacyData,
 
       newRawData.scanData <<  s ;
       
-//      if ( showProgressBar ) progress->setValue( i ); 
+      if ( showProgressBar ) progress->setValue( i ); 
    }
 
    // Delete the bitmaps we allocated
@@ -638,6 +719,106 @@ void US_ProcessConvert::setCcrTriples( QList< US_DataIO::beckmanRaw >& rawLegacy
       QString t = cell + " / " + channel + " / " + radius;
       if (! triples.contains( t ) ) triples << t;
    }
+}
+
+int US_ProcessConvert::writeXmlFile( US_Convert::ExperimentInfo& ExpData,
+                                     QStringList& triples,
+                                     QString runType,
+                                     QString runID,
+                                     QString dirname )
+{ 
+   if ( ExpData.invID == 0 ) return( US_Convert::NOXML ); 
+
+   QString writeFile = runID      + "." 
+                     + runType    + ".xml";
+   QFile file( dirname + writeFile );
+   if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
+   {
+      QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "Cannot open file " ) + dirname + writeFile );
+      return( US_Convert::CANTOPEN );
+   }
+
+   QXmlStreamWriter xml;
+   xml.setDevice( &file );
+   xml.setAutoFormatting( true );
+
+   xml.writeStartDocument();
+   xml.writeDTD("<!DOCTYPE US_Scandata>");
+   xml.writeStartElement("US_Scandata");
+   xml.writeAttribute("version", "1.0");
+
+   // elements
+   xml.writeStartElement( "experiment" );
+   xml.writeAttribute   ( "id", "replace with DB experimentID" );
+   xml.writeAttribute   ( "type", ExpData.expType );
+
+      xml.writeTextElement ( "name", "replace with description");
+
+      xml.writeStartElement( "investigator" );
+      xml.writeAttribute   ( "id", QString::number( ExpData.invID ) );
+      xml.writeEndElement  ();
+      
+      xml.writeStartElement( "operator" );
+      xml.writeAttribute   ( "id", "replace with operator ID" );
+      xml.writeEndElement  ();
+
+      xml.writeStartElement( "rotor" );
+      xml.writeAttribute   ( "id", QString::number( ExpData.rotor ) );
+      xml.writeEndElement  ();
+
+      xml.writeStartElement( "guid" );
+      xml.writeAttribute   ( "id", "replace with GUID" );
+      xml.writeEndElement  ();
+
+      // loop through the following for c/c/w combinations
+      for ( int i = 0; i < ExpData.triples.size(); i++ )
+      {
+         US_Convert::TripleInfo t = ExpData.triples[ i ];
+
+         QString triple         = triples[ t.tripleID ];
+         QStringList parts      = triple.split(" / ");
+
+         QString     cell       = parts[ 0 ];
+         QString     channel    = parts[ 1 ];
+         QString     wl         = parts[ 2 ];
+
+         xml.writeStartElement( "dataset" );
+         xml.writeAttribute   ( "cell", cell );
+         xml.writeAttribute   ( "channel", channel );
+         xml.writeAttribute   ( "wavelength", wl );
+
+            xml.writeStartElement( "guid" );
+            xml.writeAttribute   ( "id", "replace with GUID" );
+            xml.writeEndElement  ();
+
+            xml.writeStartElement( "centerpiece" );
+            xml.writeAttribute   ( "id", QString::number( t.centerpiece ) );
+            xml.writeEndElement  ();
+
+            xml.writeStartElement( "buffer" );
+            xml.writeAttribute   ( "id", QString::number( t.bufferID ) );
+            xml.writeEndElement  ();
+
+            xml.writeStartElement( "analyte" );
+            xml.writeAttribute   ( "id", QString::number( t.analyteID ) );
+            xml.writeEndElement  ();
+
+         xml.writeEndElement   ();
+      }
+
+   xml.writeTextElement ( "date", ExpData.date );
+   xml.writeTextElement ( "label", ExpData.label );
+   xml.writeTextElement ( "comments", ExpData.comments );
+
+   xml.writeEndElement(); // US_Scandata
+   xml.writeEndDocument();
+
+   if ( ExpData.triples.size() != triples.size() )
+      return( US_Convert::PARTIAL_XML );
+
+   return( US_Convert::OK );
 }
 
 
