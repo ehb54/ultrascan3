@@ -548,64 +548,15 @@ int US_Convert::writeAll( void )
      }
    }
 
-   int result;
+   int status;
 
-/*
- * currentOperation = WRITING;
-   progress   ->setLegend( tr( "Writing:" ) );
-   progress   ->setRange( 0, triples.size() - 1 );
-   progress   ->setValue( 0 );
-   progress   ->show();
-*/
-  
-   for ( int i = 0; i < triples.size(); i++ )
-   {
-      QString     triple     = triples[ i ];
-      QStringList parts      = triple.split(" / ");
+   // Write the data
+   US_ProcessConvert* dialog 
+      = new US_ProcessConvert( this, status, allData, ExpData, triples, runType, runID, dirname );
+   delete dialog;
 
-      QString     cell       = parts[ 0 ];
-      QString     channel    = parts[ 1 ];
-      QString     filename;
-
-      if ( runType == "WA" )
-      {
-          double r       = parts[ 2 ].toDouble() * 1000.0;
-          QString radius = QString::number( (int) round( r ) );
-          filename       = runID      + "." 
-                         + runType    + "." 
-                         + cell       + "." 
-                         + channel    + "." 
-                         + radius     + ".auc";
-      }
-
-      else
-      {
-          QString wavelength = parts[ 2 ];
-          filename           = runID      + "." 
-                             + runType    + "." 
-                             + cell       + "." 
-                             + channel    + "." 
-                             + wavelength + ".auc";
-      }
-
-      US_DataIO::rawData currentData = allData[ i ];
-      result = US_DataIO::writeRawData( dirname + filename, allData[ i ] );
-
-      if ( result !=  OK ) break;
-      
-//      progress->setValue( i );
-   }
-
-//   progress ->hide();
-
-   if ( result != OK )
-   {
-      // Try to delete the file and tell the user
-      return result;
-   }
-
-   // Now try to write the xml file
-   if ( ( result = writeXmlFile() ) == NOXML )
+   // Now try to communicate status
+   if ( status == NOXML )
    {
       // Main xml data is missing
       QMessageBox::information( this,
@@ -614,10 +565,10 @@ int US_Convert::writeAll( void )
             tr( "'Enter Experiment Information' button \n\n " )    +
             QString::number( triples.size() ) + " "                + 
             runID + tr( " files written." ) );
-      return result;
+      return( status );
    }
 
-   else if ( result == PARTIAL_XML )
+   else if ( status == PARTIAL_XML )
    {
       // xml data is missing for one or more triples
       QMessageBox::information( this,
@@ -627,15 +578,23 @@ int US_Convert::writeAll( void )
             tr( "cell, channel, and wavelength combination \n\n " ) +
             QString::number( triples.size() ) + " "                + 
             runID + tr( " files written." ) );
-      return result;
+      return( status );
    }
 
+   else if ( status != OK )
+   {
+      // Error from writeData.
+      // Try to delete the file and tell the user
+      return( status );
+   }
+
+   // Status is OK
    QMessageBox::information( this,
          tr( "Success" ),
          QString::number( triples.size() ) + " " + 
          runID + tr( " files written." ) );
 
-   return result;
+   return( OK );
 }
 
 void US_Convert::plot_current( void )
@@ -1267,126 +1226,6 @@ void US_Convert::draw_vline( double radius )
    v_line->setPen( pen );
 
    data_plot->replot();
-}
-
-int US_Convert::writeXmlFile( void )
-{ 
-   if ( ExpData.invID == 0 ) return NOXML; 
-
-   QDir        writeDir( US_Settings::resultDir() );
-   QString     dirname = writeDir.absolutePath() + "/" + runID + "/";
-
-   if ( ! writeDir.exists( runID ) )
-   {
-     if ( ! writeDir.mkdir( runID ) )
-     {
-        QMessageBox::information( this,
-              tr( "Error" ),
-              tr( "Cannot write to " ) + writeDir.absolutePath() );
-
-        return CANTOPEN;
-     }
-   }
-
-   QString writeFile = runID      + "." 
-                     + runType    + ".xml";
-   QFile file( dirname + writeFile );
-   if ( !file.open( QIODevice::WriteOnly | QIODevice::Text) )
-   {
-      QMessageBox::information( this,
-            tr( "Error" ),
-            tr( "Cannot open file " ) + dirname + writeFile );
-      return CANTOPEN;
-   }
-
-/*   currentOperation = WRITING;
-   progress   ->setLegend( tr( "Writing XML:" ) );
-   progress   ->setRange( 0, triples.size() - 1 );
-   progress   ->setValue( 0 );
-   progress   ->show();
-*/
-
-   QXmlStreamWriter xml;
-   xml.setDevice( &file );
-   xml.setAutoFormatting( true );
-
-   xml.writeStartDocument();
-   xml.writeDTD("<!DOCTYPE US_Scandata>");
-   xml.writeStartElement("US_Scandata");
-   xml.writeAttribute("version", "1.0");
-
-   // elements
-   xml.writeStartElement( "experiment" );
-   xml.writeAttribute   ( "id", "replace with DB experimentID" );
-   xml.writeAttribute   ( "type", ExpData.expType );
-
-      xml.writeTextElement ( "name", "replace with description");
-
-      xml.writeStartElement( "investigator" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.invID ) );
-      xml.writeEndElement  ();
-      
-      xml.writeStartElement( "operator" );
-      xml.writeAttribute   ( "id", "replace with operator ID" );
-      xml.writeEndElement  ();
-
-      xml.writeStartElement( "rotor" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.rotor ) );
-      xml.writeEndElement  ();
-
-      xml.writeStartElement( "guid" );
-      xml.writeAttribute   ( "id", "replace with GUID" );
-      xml.writeEndElement  ();
-
-      // loop through the following for c/c/w combinations
-      for ( int i = 0; i < ExpData.triples.size(); i++ )
-      {
-         TripleInfo t = ExpData.triples[ i ];
-
-         QString triple         = triples[ t.tripleID ];
-         QStringList parts      = triple.split(" / ");
-
-         QString     cell       = parts[ 0 ];
-         QString     channel    = parts[ 1 ];
-         QString     wl         = parts[ 2 ];
-
-         xml.writeStartElement( "dataset" );
-         xml.writeAttribute   ( "cell", cell );
-         xml.writeAttribute   ( "channel", channel );
-         xml.writeAttribute   ( "wavelength", wl );
-
-            xml.writeStartElement( "guid" );
-            xml.writeAttribute   ( "id", "replace with GUID" );
-            xml.writeEndElement  ();
-
-            xml.writeStartElement( "centerpiece" );
-            xml.writeAttribute   ( "id", QString::number( t.centerpiece ) );
-            xml.writeEndElement  ();
-
-            xml.writeStartElement( "buffer" );
-            xml.writeAttribute   ( "id", QString::number( t.bufferID ) );
-            xml.writeEndElement  ();
-
-            xml.writeStartElement( "analyte" );
-            xml.writeAttribute   ( "id", QString::number( t.analyteID ) );
-            xml.writeEndElement  ();
-
-         xml.writeEndElement   ();
-//         progress   ->setValue( i );
-      }
-
-   xml.writeTextElement ( "date", ExpData.date );
-   xml.writeTextElement ( "label", ExpData.label );
-   xml.writeTextElement ( "comments", ExpData.comments );
-
-   xml.writeEndElement(); // US_Scandata
-   xml.writeEndDocument();
-
-//   progress ->hide();
-   if ( ExpData.triples.size() != triples.size() )
-      return PARTIAL_XML;
-
-   return OK;
 }
 
 // Initializations

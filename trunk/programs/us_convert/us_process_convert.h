@@ -7,6 +7,7 @@
 #include "us_widgets_dialog.h"
 #include "us_dataIO.h"
 #include "us_help.h"
+#include "us_convert.h"
 
 class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
 {
@@ -25,6 +26,14 @@ class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
                          QString runType,
                          double tolerance,
                          QList< double >& ss_limits );
+      US_ProcessConvert( QWidget* parent,
+                         int& status,
+                         QList< US_DataIO::rawData >& rawConvertedData,
+                         US_Convert::ExperimentInfo& ExpData,
+                         QStringList& triples,
+                         QString runType,
+                         QString runID,
+                         QString dirname );
 
    private:
       QLabel*            lb_progress;
@@ -53,6 +62,11 @@ class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
                           QStringList& triples,
                           double tolerance );
       void setInterpolated ( unsigned char*, int );
+      int writeXmlFile( US_Convert::ExperimentInfo& ExpData,
+                        QStringList& triples,
+                        QString runType,
+                        QString runID,
+                        QString dirname );
       void createDialog  ( void );
       void reset         ( void );
       void cancel        ( void );
