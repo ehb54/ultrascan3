@@ -12,7 +12,7 @@
 #include "us_convert.h"
 #include "us_expinfo.h"
 #include "us_tripleinfo.h"
-#include "us_progressbar.h"
+#include "us_process_convert.h"
 
 //! \brief Main program for us_convert. Loads translators and starts
 //         the class US_Convert.
@@ -48,18 +48,23 @@ US_Convert::US_Convert() : US_Widgets()
    ct_tolerance->setMinimumWidth( 120 );
    settings->addWidget( ct_tolerance, row++, 1 );
 
+   // Pushbuttons to load and reload data
+   QPushButton* pb_load = us_pushbutton( tr( "Load Legacy Data" ) );
+   connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
+   settings->addWidget( pb_load, row, 0 );
+
+   QPushButton* pb_reload = us_pushbutton( tr( "Reload Data" ) );
+   connect( pb_reload, SIGNAL( clicked() ), SLOT( reload() ) );
+   settings->addWidget( pb_reload, row++, 1 );
+
    // External program to enter experiment information
    pb_expinfo = us_pushbutton( tr( "Enter Experiment Information" ) );
    connect( pb_expinfo, SIGNAL( clicked() ), SLOT( getExpInfo() ) );
    settings->addWidget( pb_expinfo, row, 0 );
 
-   QPushButton* pb_load = us_pushbutton( tr( "Load Legacy Data" ) );
-   connect( pb_load, SIGNAL( clicked() ), SLOT( load() ) );
-   settings->addWidget( pb_load, row++, 1 );
-
    pb_details = us_pushbutton( tr( "Run Details" ), false );
    connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
-   settings->addWidget( pb_details, row++, 0, 1, 2 );
+   settings->addWidget( pb_details, row++, 1 );
 
    // Change Run ID
    QLabel* lb_runID = us_label( tr( "Run ID:" ) );
@@ -201,13 +206,6 @@ US_Convert::US_Convert() : US_Widgets()
    main->setStretch( 0, 2 );
    main->setStretch( 1, 4 );
    
-   // Set up progress bar for later
-   progress = new US_Progressbar( 0, 100, 0 );
-   progress ->hide();
-   connect( progress, SIGNAL( cancelConvertOperation() ),
-            this    , SLOT  ( cancelProgress        () ) );
-   currentOperation = NO_OP;
-
 }
 
 void US_Convert::reset( void )
@@ -239,8 +237,6 @@ void US_Convert::reset( void )
    // Clear any data structures
    legacyData.clear();
    includes.clear();
-   ccwLegacyData.clear();
-   newRawData.scanData.clear();
    triples.clear();
    allData.clear();
    RP_averaged        = false;
@@ -259,8 +255,6 @@ void US_Convert::reset( void )
    step           = NONE;
 
    pb_reference   ->setEnabled( false );
-
-   currentOperation = NO_OP;
 }
 
 void US_Convert::resetAll( void )
@@ -281,17 +275,15 @@ void US_Convert::resetAll( void )
 // User pressed the load data button
 void US_Convert::load( QString dir )
 {
+   bool success = false;
+
    if ( dir.isEmpty() )
-      read();                // Read the legacy data
+      success = read();                // Read the legacy data
 
    else
-      read( dir );
+      success = read( dir );
 
-   if ( currentOperation == CANCELED )
-   {
-      resetAll();
-      return;
-   }
+   if ( ! success ) return;
 
 /*
    // Display the data that was read
@@ -324,50 +316,13 @@ void US_Convert::load( QString dir )
 
 */
 
-   // we know all the triples from read, so we can convert all the data
-   allData.clear();
+   // Figure out all the triple combinations and convert data
+   success = convert();
 
-   if ( triples.size() == 1 )
-   {
-      convert( true );
+   if ( ! success ) return;
 
-      allData << newRawData;
-   }
-
-   else
-   {
-      currentOperation = CONVERTING;
-      progress ->setLegend( tr( "Converting:" ) );
-      progress ->setRange( 0, triples.size() );
-      progress ->setValue( 0 );
-      progress ->show();
-
-      for ( currentTriple = 0; currentTriple < triples.size(); currentTriple++ )
-      {
-         // Convert data for this cell / channel / wavelength
-         convert();
-
-         // and save it
-         allData << newRawData;
-
-         progress ->setValue( currentTriple );
-      }
-   }
-
-   if ( currentOperation == CANCELED )
-   {
-      resetAll();
-      return;
-   }
-
-   currentTriple = 0;     // Now let's show the user the first one
+   setTripleInfo();
    plot_current();
-
-   if ( currentOperation == CANCELED )
-   {
-      resetAll();
-      return;
-   }
 
    connect( ct_from, SIGNAL( valueChanged ( double ) ),
                      SLOT  ( focus_from   ( double ) ) );
@@ -376,14 +331,65 @@ void US_Convert::load( QString dir )
                      SLOT  ( focus_to     ( double ) ) );
 
    // Ok to enable some buttons now
-   pb_include    ->setEnabled( true );
-   pb_writeAll   ->setEnabled( true );
-   pb_details    ->setEnabled( true );
-   pb_tripleinfo ->setEnabled( true );
+   pb_include     ->setEnabled( true );
+   pb_writeAll    ->setEnabled( true );
+   pb_details     ->setEnabled( true );
+   pb_tripleinfo  ->setEnabled( true );
+
+   if ( runType == "RI" )
+      pb_reference->setEnabled( true );
+
+   else if ( runType == "RA" && ss_limits.size() < 2 )
+   {
+      // Allow user to define subsets, if he hasn't already
+      pb_define   ->setEnabled( true );
+   } 
 
 }
 
-void US_Convert::read( void )
+// User pressed the reload data button
+// Legacy data is already supposed to be present
+void US_Convert::reload( void )
+{
+   bool success = false;
+
+   triples.clear();
+
+   // In this case the runType is not changing
+   oldRunType = runType;
+
+   // Figure out all the triple combinations and convert data
+   success = convert();
+
+   if ( ! success ) return;
+
+   setTripleInfo();
+   plot_current();
+
+   connect( ct_from, SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_from   ( double ) ) );
+
+   connect( ct_to  , SIGNAL( valueChanged ( double ) ),
+                     SLOT  ( focus_to     ( double ) ) );
+
+   // Ok to enable some buttons now
+   pb_include     ->setEnabled( true );
+   pb_writeAll    ->setEnabled( true );
+   pb_details     ->setEnabled( true );
+   pb_tripleinfo  ->setEnabled( true );
+
+   if ( runType == "RI" )
+      pb_reference->setEnabled( true );
+
+   else if ( runType == "RA" && ss_limits.size() < 2 )
+   {
+      // Allow user to define subsets, if he hasn't already
+      pb_define   ->setEnabled( true );
+   } 
+
+}
+
+bool US_Convert::read( void )
 {
    // Ask for data directory
    QString dir = QFileDialog::getExistingDirectory( this, 
@@ -391,13 +397,13 @@ void US_Convert::read( void )
          US_Settings::dataDir(),
          QFileDialog::DontResolveSymlinks );
 
-   if ( dir.isEmpty() ) return; 
+   if ( dir.isEmpty() ) return( false ); 
 
    reset();
-   read( dir );
+   return( read( dir ) );
 }
 
-void US_Convert::read( QString dir )
+bool US_Convert::read( QString dir )
 {
    // Get legacy file names
    QDir d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
@@ -411,567 +417,81 @@ void US_Convert::read( QString dir )
    le_dir   ->setText( dir );
    saveDir  = QString( dir );
 
-   QStringList files = d.entryList( QDir::Files );
-   QStringList fileList;
+   oldRunType = runType;            // let's see if the runType changes
 
-   // Read into local structures
-   
-   for ( int i = 0; i < files.size(); i++ )
-   {
-      // Look for a proper filename match:
-      // Optional channel + 4 to 6 digits + dot + file type + cell number
+   // Read the data
+   US_ProcessConvert* dialog 
+      = new US_ProcessConvert( this, dir, legacyData, runType );
+   delete dialog;
 
-      QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
-      QString f = files[ i ].toUpper();
-      
-      if ( rx.indexIn( f ) < 0 ) continue;
-
-      fileList << files[ i ];
-   }
-
-   oldRunType = runType;                                // keep track of runType changing
-   runType = files[ 0 ].right( 3 ).left( 2 ).toUpper(); // 1st 2 chars of extention
+   if ( legacyData.size() == 0 ) return( false );
 
    // if runType has changed, let's clear out xml data too
    if ( oldRunType != runType ) ExpData.clear();
 
-   QStringList channels;
+   return( true );
+}
 
-   // Parse the filtered file list to determine cells and channels
-   for ( int i = 0; i < fileList.size(); i++ )
-   {
-      QChar c = fileList[ i ].at( 0 );
-      if ( c.isLetter() && ! channels.contains( c ) ) channels << c;
-   }
-
-   if ( channels.isEmpty() ) channels << "A";
-
-   // Now read the data.
-   currentOperation = READING;
-   progress   ->setLegend( tr( "Reading:" ) );
-   progress   ->setRange( 0, fileList.size() - 1 );
-   progress   ->setValue( 0 );
-   progress   ->show();
-
-   for ( int i = 0; i < fileList.size(); i++ )
-   {
-      US_DataIO::beckmanRaw data;
-      US_DataIO::readLegacyFile( dir + fileList[ i ], data );
-
-      // Add channel
-      QChar c = fileList[ i ].at( 0 );  // Get 1st character
-
-      data.channel = ( c.isDigit() ) ? 'A' : c.toAscii();
-
-      if ( runType == "RI" )                // Split out the two readings in RI data
-      {
-         US_DataIO::beckmanRaw data2 = data;  // Alter to store second dataset
-         for ( int j = 0; j < data.readings.size(); j++ )
-         {
-            data2.readings[ j ].value  = data2.readings[ j ].stdDev;   // Reading 2 in here for RI
-            data.readings [ j ].stdDev = 0.0;
-            data2.readings[ j ].stdDev = 0.0;
-         }
-
-         data2.channel = 'B';
-
-         legacyData << data;
-         legacyData << data2;
-
-         pb_reference->setEnabled( true );
-
-      }
-
-      else if ( runType == "RA" && ss_limits.size() > 2 )
-      {
-         // We are subdividing the scans
-         US_DataIO::beckmanRaw data2 = data;
-
-         US_DataIO::reading r;
-
-         for ( int x = 1; x < ss_limits.size(); x++ )
-         {
-            data2.readings.clear();                  // Only need to alter readings for sub-datasets
-
-            // Go through all the readings to see which ones to include
-            for ( int y = 0; y < data.readings.size(); y++ )
-            {
-               if ( data.readings[ y ].d.radius > ss_limits[ x - 1 ] &&
-                    data.readings[ y ].d.radius < ss_limits[ x ] )
-               {
-                   // Create the current dataset point
-                   r.d.radius = data.readings[ y ].d.radius;
-                   r.value    = data.readings[ y ].value;
-                   r.stdDev   = data.readings[ y ].stdDev;
-                   data2.readings << r;
-               }
-
-            }
-
-            legacyData << data2;                     // Send the current data subset
-            data2.channel++;                         // increment the channel letter
-         }
-
-      }
-  
-      else if ( runType == "RA" )                     // Perhaps before subdividing
-      {
-         // Allow the user to process subsets
-         pb_define  ->setEnabled( true );
-
-         legacyData << data;        // For user to see single or multiple datasets
-      }
-
-      else
-         legacyData << data;
-
-      progress->setValue( i );
-   }
-
-   ss_limits.clear();                       // Don't need this any more
+void US_Convert::setTripleInfo( void )
+{
 
    if ( runType == "WA" )
-      setCcrTriples();                      // Wavelength data is handled differently here
-   else
-      setCcwTriples();
+   {
+      // First of all, wavelength triples are ccr.
+      lb_triple   ->setText( tr( "Cell / Channel / Radius" ) );
+   
+      if ( runType != oldRunType )
+      {
+         // We only need to adjust these if the runType has changed
+         ct_tolerance->setMinimumWidth( 160 );
+         ct_tolerance->setNumButtons  ( 3 );
+         ct_tolerance->setRange       ( 0.0, 10.0 );
+         ct_tolerance->setStep        ( 0.001 );
+         ct_tolerance->setValue       ( 0.1 );
+      }
+   
 
+   }
+   else
+   {
+      // Most triples are ccw
+      lb_triple   ->setText( tr( "Cell / Channel / Wavelength" ) );
+   
+      if ( runType != oldRunType )
+      {
+         // We only need to adjust these if the runType has changed
+         ct_tolerance->setMinimumWidth( 120 );
+         ct_tolerance->setNumButtons  ( 2 );
+         ct_tolerance->setRange       ( 0.0, 100.0 );
+         ct_tolerance->setStep        ( 1.0 );
+         ct_tolerance->setValue       ( 5.0 );
+      }
+
+   }
+
+   // Load them into the list box
+   lw_triple->clear();
    lw_triple->addItems( triples );
    currentTriple = 0;
+
 }
 
-void US_Convert::setCcwTriples( void )
+bool US_Convert::convert( void )
 {
-   // Most triples are ccw
-   lb_triple   ->setText( tr( "Cell / Channel / Wavelength" ) );
-
-   if ( runType != oldRunType )
-   {
-      // We only need to adjust these if the runType has changed
-      ct_tolerance->setMinimumWidth( 120 );
-      ct_tolerance->setNumButtons  ( 2 );
-      ct_tolerance->setRange       ( 0.0, 100.0 );
-      ct_tolerance->setStep        ( 1.0 );
-      ct_tolerance->setValue       ( 5.0 );
-   }
-
-   // Get wavelengths
-   
-   QStringList wavelengths;
-
-   for ( int i = 0; i < legacyData.size(); i++ )
-   {
-      QString wl = QString::number( legacyData[ i ].t.wavelength, 'f', 1 );
-      wavelengths << wl;
-   }
-
-   // Merge wavelengths
-
-   wavelengths.sort();
-
-/*
-   qDebug() << "Wavelengths found:";
-   for ( int i = 0; i < wavelengths.size(); i++ )
-      qDebug() << wavelengths[ i ];
-*/
-
-   QList< QList< double > > modes;
-   QList< double >          mode;
-   double tolerance = (double)ct_tolerance->value() + 0.05;    // to stay between wl numbers
-   
-   for ( int i = 0; i < wavelengths.size(); i++ )
-   {
-      double wl = wavelengths[ i ].toDouble();
-
-      if ( ! mode.empty()  &&  fabs( mode.last() - wl ) > tolerance )
-      {
-         modes << mode;
-         mode.clear();
-      }
-
-      mode << wl;   
-   }
-
-   if ( mode.size() > 0 ) modes << mode;
-
-   // Now we have a list of modes.  
-   // Average each list and round to the closest integer.
-   
-/*
-   qDebug() << "Modes:";
-   for ( int i = 0; i < modes.size(); i++ )
-   {
-      qDebug() << "i: " << i;
-      for ( int j = 0; j < modes[ i ].size(); j++ )
-         qDebug() << "  " << modes[ i ][ j ];
-   }
-*/
-
-   QList< double > wl_average;
-
-   for ( int i = 0; i < modes.size(); i++ )
-   {
-      double sum = 0.0;
-
-      for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ]; 
-
-      wl_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
-   }
-
-/*
-   qDebug() << "Wavelength average:";
-   for ( int i = 0; i < wl_average.size(); i++ )
-      qDebug() << "  " << wl_average[ i ];
-*/
-
-   // Now that we have a more reliable list of wavelengths, let's
-   // find out the possible cell, channel, and wavelength combinations
-   for ( int i = 0; i < legacyData.size(); i++ )
-   {
-      QString cell       = QString::number( legacyData[ i ].cell );
-      QString channel    = QString( legacyData[ i ].channel );
-      double wl          = legacyData[ i ].t.wavelength;
-      QString wavelength = "0";
-
-      // find the average wavelength
-      for ( int j = 0; j < wl_average.size(); j++ )
-      {
-         if ( fabs( wl_average[ j ] - wl ) < tolerance )
-         {
-            wavelength = QString::number( (int) round( wl_average[ j ] ) );
-            break;
-         }
-      }
-
-      QString t = cell + " / " + channel + " / " + wavelength;
-      if (! triples.contains( t ) ) triples << t;
-   }
-}
-
-void US_Convert::setCcrTriples( void )
-{
-   // First of all, wavelength triples are ccr.
-   lb_triple   ->setText( tr( "Cell / Channel / Radius" ) );
-
-   if ( runType != oldRunType )
-   {
-      // We only need to adjust these if the runType has changed
-      ct_tolerance->setMinimumWidth( 160 );
-      ct_tolerance->setNumButtons  ( 3 );
-      ct_tolerance->setRange       ( 0.0, 10.0 );
-      ct_tolerance->setStep        ( 0.001 );
-      ct_tolerance->setValue       ( 0.1 );
-   }
-
-   // Now get the radius values
-   QStringList radii;
-
-   for ( int i = 0; i < legacyData.size(); i++ )
-   {
-      QString r = QString::number( legacyData[ i ].t.radius, 'f', 1 );
-      radii << r;
-   }
-
-   // Merge radii
-
-   radii.sort();
-
-/*
-   qDebug() << "Radius values found:";
-   for ( int i = 0; i < radii.size(); i++ )
-      qDebug() << radii[ i ];
-*/
-
-   QList< QList< double > > modes;
-   QList< double >          mode;
-   double tolerance = (double)ct_tolerance->value() + 0.05;    // to stay between r values
-   
-   for ( int i = 0; i < radii.size(); i++ )
-   {
-      double r = radii[ i ].toDouble();
-
-      if ( ! mode.empty()  &&  fabs( mode.last() - r ) > tolerance )
-      {
-         modes << mode;
-         mode.clear();
-      }
-
-      mode << r;   
-   }
-
-   if ( mode.size() > 0 ) modes << mode;
-
-   // Now we have a list of modes.  
-   // Average each list and round to the closest integer.
-   
-/*
-   qDebug() << "Modes:";
-   for ( int i = 0; i < modes.size(); i++ )
-   {
-      qDebug() << "i: " << i;
-      for ( int j = 0; j < modes[ i ].size(); j++ )
-         qDebug() << "  " << modes[ i ][ j ];
-   }
-*/
-
-   QList< double > r_average;
-
-   for ( int i = 0; i < modes.size(); i++ )
-   {
-      double sum = 0.0;
-
-      for ( int j = 0; j < modes[ i ].size(); j++ ) sum += modes[ i ][ j ]; 
-
-      r_average << (double) round( 10.0 * sum / modes[ i ].size() ) / 10.0;
-   }
-
-/*
-   qDebug() << "Radius average:";
-   for ( int i = 0; i < r_average.size(); i++ )
-      qDebug() << "  " << r_average[ i ];
-*/
-
-   // Now that we have a more reliable list of radii, let's
-   // find out the possible cell, channel, and radius combinations
-   for ( int i = 0; i < legacyData.size(); i++ )
-   {
-      QString cell       = QString::number( legacyData[ i ].cell );
-      QString channel    = QString( legacyData[ i ].channel );
-      double r           = legacyData[ i ].t.radius;
-      QString radius     = "0";
-
-      // find the average radius
-      for ( int j = 0; j < r_average.size(); j++ )
-      {
-         if ( fabs( r_average[ j ] - r ) < tolerance )
-         {
-            radius = QString::number( r_average[ j ] );
-            break;
-         }
-      }
-
-      QString t = cell + " / " + channel + " / " + radius;
-      if (! triples.contains( t ) ) triples << t;
-   }
-}
-
-void US_Convert::convert( bool showProgressBar )
-{
-   // Convert the data into the UltraScan3 data structure
-   QString triple         = triples[ currentTriple ];
-   QStringList parts      = triple.split(" / ");
-
-   int         cell       = parts[ 0 ].toInt();
-   char        channel    = parts[ 1 ].toAscii()[ 0 ];
-   double      wavelength = parts[ 2 ].toDouble();
-
-   /*
-   qDebug() << cell       << " / "
-            << channel    << " / "
-            << wavelength;
-   */
-
-   // Get a list of the data that matches the cell / channel / wl
-   ccwLegacyData.clear();
-   newRawData.scanData.clear();
    double tolerance = (double)ct_tolerance->value() + 0.05;    // to stay between wl numbers
 
-   for ( int i = 0; i < legacyData.size(); i++ )
-   {
-      if ( legacyData[ i ].cell == cell       &&
-           legacyData[ i ].channel == channel &&
-           fabs ( legacyData[ i ].t.wavelength - wavelength ) < tolerance )
-         ccwLegacyData << &legacyData[ i ];
-   }
+   // Convert the data
+   US_ProcessConvert* dialog 
+      = new US_ProcessConvert( this, legacyData, allData, triples, runType, tolerance, ss_limits );
+   delete dialog;
 
-   // Sort the list according to time.  Use a simple bubble sort
-   for ( int i = 0; i < ccwLegacyData.size(); i++ )
-   {
-      for ( int j = i + i; j < ccwLegacyData.size(); j++ )
-      {
-         if ( ccwLegacyData[ j ]->seconds < ccwLegacyData[ i ]->seconds ) 
-            ccwLegacyData.swap( i, j );
-      }
-   }
+   if ( allData.size() == 0 ) return( false );
 
-   if ( ccwLegacyData.isEmpty() ) return ; 
+   le_description->setText( allData[ 0 ].description );
+   saveDescription = QString( allData[ 0 ].description ); 
 
-   strncpy( newRawData.type, runType.toAscii().constData(), 2 );
-   // GUID is done by US_DataIO.
-   newRawData.cell        = cell;
-   newRawData.channel     = channel;
-   newRawData.description = ccwLegacyData[ 0 ]->description;
-   
-   le_description->setText( newRawData.description );
-   saveDescription = QString( newRawData.description ); 
-
-   // Get the min and max radius
-   double min_radius = 1.0e99;
-   double max_radius = 0.0;
-
-   for ( int i = 0; i < ccwLegacyData.size(); i++ )
-   {
-      double first = ccwLegacyData[ i ]->readings[ 0 ].d.radius;
-
-      uint   size  = ccwLegacyData[ i ]->readings.size();
-      double last  = ccwLegacyData[ i ]->readings[ size - 1 ].d.radius; 
-
-      min_radius = min( min_radius, first );
-      max_radius = max( max_radius, last );
-   }
-
-   // Convert the scans
-   
-   // Set the distance between readings 
-   double delta_r = ( runType == "IP" ) 
-      ? ( max_radius - min_radius ) / ( ccwLegacyData[ 0 ]->readings.size() - 1 )
-      : 0.001;
-
-   // qDebug() << "Current triple: " << triple << ' '
-   //          << "delta_r: " << QString::number( delta_r, 'f', 6 );
-
-   for ( int i = 0; i < ccwLegacyData.size(); i++ )
-   {
-      US_DataIO::scan s;
-      s.temperature = ccwLegacyData[ i ]->temperature;
-      s.rpm         = ccwLegacyData[ i ]->rpm;
-      s.seconds     = ccwLegacyData[ i ]->seconds;
-      s.omega2t     = ccwLegacyData[ i ]->omega2t;
-      s.wavelength  = ccwLegacyData[ i ]->t.wavelength;
-      s.delta_r     = delta_r;
-
-      // Enable progress bar
-      if ( showProgressBar )
-      {
-         currentOperation = CONVERTING;
-         progress   ->setLegend( tr( "Converting:" ) );
-         progress   ->setRange( 0, ccwLegacyData.size() - 1 );
-         progress   ->setValue( 0 );
-
-      }
-
-      // Readings here and interpolated array
-      int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
-      int bitmap_size = ( radius_count + 7 ) / 8;
-      uchar* interpolated = new uchar[ bitmap_size ];
-      bzero( interpolated, bitmap_size );
-
-      if ( runType == "IP" )
-      {
-         for ( int j = 0; j < radius_count; j++ )
-         {
-            US_DataIO::reading r;
-            r.d.radius = ccwLegacyData[ i ]->readings[ j ].d.radius;
-            r.value    = ccwLegacyData[ i ]->readings[ j ].value;
-            r.stdDev   = 0.0;
-
-            s.readings <<  r;
-         }
-      }
-      else
-      {
-         /*
-         There are two indexes needed here.  The new radius as iterated
-         from min_radius to max_radius and the pointer to the current 
-         scan readings is j.  
-
-         The old scan reading is ccwLegacyData[ i ]->readings[ j ]
-
-         If the current new radius is within 0.0003 of the i
-         ccwLegacyData[ i ]->readings[ j ].d.radius
-            copy ccwLegacyData[ i ]->readings[ j ].value into the new reading
-            copy ccwLegacyData[ i ]->readings[ j ].stdDev into the new reading
-            increment j
-
-         If the current new radius is less than i
-         ccwLegacyData[ i ]->readings[ 0 ].d.radius,
-         then 
-            copy ccwLegacyData[ i ]->readings[ 0 ].value into the new reading
-            set the std dev to 0.0.
-            set the interpolated flag
-         
-         If the current new radius is greater than 
-         ccwLegacyData[ i ]->readings[ last() ].d.radius
-            copy ccwLegacyData[ i ]->readings[ last ].value into the new reading
-            set the std dev to 0.0.
-            set the interpolated flag
-
-         else
-            interplate between ccwLegacyData[ i ]->readings[ j ] and 
-                               ccwLegacyData[ i ]->readings[ j -1 ]
-            set the std dev to 0.0.
-            set the interpolated flag
-
-         Append the new reading and continue.
-         */
-
-         double radius = min_radius;
-         double r0     = ccwLegacyData[ i ]->readings[ 0 ].d.radius;
-         int    rCount = ccwLegacyData[ i ]->readings.size();       
-         double rLast  = ccwLegacyData[ i ]->readings[ rCount - 1 ].d.radius;
-         
-         int    k      = 0;
-         
-         for ( int j = 0; j < radius_count; j++ )
-         {
-            US_DataIO::reading r;
-            double             dr = 0.0;
-
-            if ( k < rCount )
-               dr = radius - ccwLegacyData[ i ]->readings[ k ].d.radius;
-
-            r.d.radius = radius;
-            
-            if ( dr > -3.0e-4   &&  k < rCount ) // A value
-            {
-               r.value  = ccwLegacyData[ i ]->readings[ k ].value;
-               r.stdDev = ccwLegacyData[ i ]->readings[ k ].stdDev;
-               k++;
-            }
-            else if ( radius < r0 ) // Before the first
-            {
-               r.value  = ccwLegacyData[ i ]->readings[ 0 ].value;
-               r.stdDev = 0.0;
-               setInterpolated( interpolated, j );
-            }
-            else if ( radius > rLast  ||  k >= rCount ) // After the last
-            {
-               r.value  = ccwLegacyData[ i ]->readings[ rCount - 1 ].value;
-               r.stdDev = 0.0;
-               setInterpolated( interpolated, j );
-            }
-            else  // Interpolate the value
-            {
-               double dv = ccwLegacyData[ i ]->readings[ k     ].value - 
-                           ccwLegacyData[ i ]->readings[ k - 1 ].value;
-               
-               double dR = ccwLegacyData[ i ]->readings[ k     ].d.radius -
-                           ccwLegacyData[ i ]->readings[ k - 1 ].d.radius;
-
-               dr = radius - ccwLegacyData[ i ]->readings[ k - 1 ].d.radius;
-
-               r.value  = ccwLegacyData[ i ]->readings[ k - 1 ].value + dr * dv / dR;
-               r.stdDev = 0.0;
-
-               setInterpolated( interpolated, j );
-            }
-
-            s.readings <<  r;
-            radius += delta_r;
-         }
-      }
-      s.interpolated = QByteArray( (char*)interpolated, bitmap_size );
-      delete [] interpolated;
-
-      newRawData.scanData <<  s ;
-      
-      if ( showProgressBar ) progress->setValue( i ); 
-   }
-
-   // Delete the bitmaps we allocated
-
-   //for ( uint i = 0; i < newRawData.scanData.size(); i++ ) 
-   //   delete newRawData.scanData[ i ].interpolated;
-
+   currentTriple = 0;     // Now let's show the user the first one
+   return( true );
 }
 
 void US_Convert::details( void )
@@ -1030,11 +550,13 @@ int US_Convert::writeAll( void )
 
    int result;
 
-   currentOperation = WRITING;
+/*
+ * currentOperation = WRITING;
    progress   ->setLegend( tr( "Writing:" ) );
    progress   ->setRange( 0, triples.size() - 1 );
    progress   ->setValue( 0 );
    progress   ->show();
+*/
   
    for ( int i = 0; i < triples.size(); i++ )
    {
@@ -1071,10 +593,10 @@ int US_Convert::writeAll( void )
 
       if ( result !=  OK ) break;
       
-      progress->setValue( i );
+//      progress->setValue( i );
    }
 
-   progress ->hide();
+//   progress ->hide();
 
    if ( result != OK )
    {
@@ -1114,14 +636,6 @@ int US_Convert::writeAll( void )
          runID + tr( " files written." ) );
 
    return result;
-}
-
-void US_Convert::setInterpolated ( unsigned char* bitmap, int location )
-{
-   int byte = location / 8;
-   int bit  = location % 8;
-
-   bitmap[ byte ] |= 1 << ( 7 - bit );
 }
 
 void US_Convert::plot_current( void )
@@ -1240,13 +754,15 @@ void US_Convert::plot_all( void )
    double maxV = -1.0e99;
    double minV =  1.0e99;
 
-   if ( show_plot_progress )
+/*
+ * if ( show_plot_progress )
    {
       currentOperation = PLOTTING;
       progress   ->setLegend( tr( "Plotting:" ) );
       progress   ->setRange( 0, currentData.scanData.size() - 1 );
       progress   ->setValue( 0 );
    }
+*/
 
    for ( int i = 0; i < currentData.scanData.size(); i++ )
    {
@@ -1270,14 +786,16 @@ void US_Convert::plot_all( void )
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setData( r, v, size );
 
-      if ( show_plot_progress )
+/*
+ * if ( show_plot_progress )
       {
          progress->setValue( i );
       }
+*/
 
    }
 
-   progress ->hide();
+//   progress ->hide();
 
    // Reset the scan curves within the new limits
    double padR = ( maxR - minR ) / 30.0;
@@ -1781,11 +1299,12 @@ int US_Convert::writeXmlFile( void )
       return CANTOPEN;
    }
 
-   currentOperation = WRITING;
+/*   currentOperation = WRITING;
    progress   ->setLegend( tr( "Writing XML:" ) );
    progress   ->setRange( 0, triples.size() - 1 );
    progress   ->setValue( 0 );
    progress   ->show();
+*/
 
    QXmlStreamWriter xml;
    xml.setDevice( &file );
@@ -1853,7 +1372,7 @@ int US_Convert::writeXmlFile( void )
             xml.writeEndElement  ();
 
          xml.writeEndElement   ();
-         progress   ->setValue( 0 );
+//         progress   ->setValue( i );
       }
 
    xml.writeTextElement ( "date", ExpData.date );
@@ -1863,34 +1382,11 @@ int US_Convert::writeXmlFile( void )
    xml.writeEndElement(); // US_Scandata
    xml.writeEndDocument();
 
-   progress ->hide();
+//   progress ->hide();
    if ( ExpData.triples.size() != triples.size() )
       return PARTIAL_XML;
 
    return OK;
-}
-
-void US_Convert::cancelProgress( void )
-{
-   switch ( currentOperation )
-   {
-      case NO_OP      :
-      case READING    :
-      case CONVERTING :
-      case PLOTTING   :
-         resetAll();
-         qApp->processEvents();
-         break;
-
-      case WRITING    :
-         break;
-
-      default         :
-         resetAll();
-         break;
-   }
-
-   currentOperation = CANCELED;
 }
 
 // Initializations
