@@ -10,7 +10,7 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO.h"
-#include "us_progressbar.h"
+//#include "us_process_convert.h"
 
 class US_EXTERN US_Convert : public US_Widgets
 {
@@ -51,8 +51,6 @@ class US_EXTERN US_Convert : public US_Widgets
 
       enum ioError { OK, CANTOPEN, NODATA, NOXML, PARTIAL_XML };
 
-      enum operation { NO_OP, READING, CONVERTING, PLOTTING, WRITING, CANCELED };
-
       US_Help        showHelp;
       US_PlotPicker* picker;
 
@@ -88,8 +86,6 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_tripleinfo;
 
       QList< US_DataIO::beckmanRaw >  legacyData;     // legacy data from file
-      QList< US_DataIO::beckmanRaw* > ccwLegacyData;  // legacy data with this cell/channel/wl
-      US_DataIO::rawData              newRawData;     // filtered legacy data in new raw format
       QList< US_DataIO::rawData >     allData;        // all the data, separated by c/c/w
       QList< US_DataIO::rawData >     RIData;         // to save RI data, after converting to RP
       QString       saveDir;
@@ -99,9 +95,6 @@ class US_EXTERN US_Convert : public US_Widgets
       QwtPlot*      data_plot;
       QwtPlotGrid*  grid;
 
-      US_Progressbar::US_Progressbar*  progress;
-      operation     currentOperation;
-
       QList< double > ss_limits;                      // list of subset boundaries
       double        reference_start;                  // boundary of reference scans
       double        reference_end;
@@ -109,7 +102,6 @@ class US_EXTERN US_Convert : public US_Widgets
       int           RP_reference_triple;              // number of the triple that is the reference
       QList< double > RP_averages;
 
-      void setInterpolated ( unsigned char*, int );
       void plot_current    ( void );
       void plot_titles     ( void );
       void init_includes   ( void );
@@ -124,14 +116,14 @@ class US_EXTERN US_Convert : public US_Widgets
 
   private slots:
       void load            ( QString dir = "" );
+      void reload          ( void );
+      bool read            ( void );
+      bool read            ( QString dir );
+      void setTripleInfo   ( void );
       void details         ( void );
       void reset           ( void );
       void resetAll        ( void );
-      void read            ( void );
-      void read            ( QString );                // If you know the dirname already
-      void setCcwTriples   ( void );
-      void setCcrTriples   ( void );
-      void convert         ( bool showProgressBar = false );
+      bool convert         ( void );
       void changeTriple    ( QListWidgetItem* );
       void focus_from      ( double );
       void focus_to        ( double );
@@ -154,7 +146,6 @@ class US_EXTERN US_Convert : public US_Widgets
       void getTripleInfo   ( void );
       void updateTripleInfo( US_Convert::TripleInfo& );
       void cancelTripleInfo( void );
-      void cancelProgress  ( void );
       void draw_vline      ( double );
       void help            ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
