@@ -49,7 +49,7 @@ class  US_EXTERN US_vhwEnhanced : public Data_Control_W
       QwtCounter *division_counter;
       QwtCounter *tolerance_counter;
       US_Pixmap *pm;
-      struct fe fe1, fe2;
+      //struct fe fe1, fe2;
       unsigned int exclude, exclude_singlecurve, exclude_rangecurve;
       bool *excluded;
       bool groups_on;
@@ -60,7 +60,7 @@ class  US_EXTERN US_vhwEnhanced : public Data_Control_W
       float C_zero, *increment, *offset;
       double *radius_x, *radius_y;
       bool group_start;      //true if we are ready to select the first point of a group
-      bool fe_completed;
+      //bool fe_completed;
       float *group_sval;
       float *group_percent;
       uint *sval_label;
@@ -84,8 +84,8 @@ class  US_EXTERN US_vhwEnhanced : public Data_Control_W
    private slots:
 
       void setup_GUI();
-      void non_interacting(struct fe *);
-      void init_fe(struct fe *);
+      //void non_interacting(struct fe *);
+      //void init_fe(struct fe *);
       void write_vhw();
       void write_dis();
       void write_res();

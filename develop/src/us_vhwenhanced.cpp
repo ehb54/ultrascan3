@@ -7,12 +7,11 @@ US_vhwEnhanced::US_vhwEnhanced(QWidget *p, const char *name) : Data_Control_W(1,
    bd_position = 5;
    range_counter->setValue(bd_range);
    position_counter->setValue(bd_position);
-   fe_completed = false;
 
    pm = new US_Pixmap();
    pb_second_plot->setText(tr("Distribution Plot"));
    setup_already = false;   // for garbage collection
-   fe_completed = false; // do not include late datapoints on first pass
+   //fe_completed = false; // do not include late datapoints on first pass
    
    delete lbl1_excluded;
    delete lbl2_excluded;
@@ -532,13 +531,13 @@ int US_vhwEnhanced::plot_analysis()
          show_plot[j] = false;
       }
    }
-   if (tolerance != 0.0 && !fe_completed)
+   if (tolerance != 0.0 /*&& !fe_completed*/)
    {
       float bottom = calc_bottom(rotor_list, cp_list, run_inf.rotor, run_inf.centerpiece[selected_cell], 
             0, run_inf.rpm[selected_cell][0][0]);
       stop_point.clear();
       float Davg = (float) 5e-7;
-    float radD;
+      float radD;
       for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
       {
 // tolerance is defined as 2 * the concentration gradient divided by the initial concentration
@@ -585,17 +584,17 @@ int US_vhwEnhanced::plot_analysis()
 //         << radD <<  ", stopradius-dr: " << radius[stop_point[i]]-radD << endl;
       }
    }
-   if (tolerance == 0.0 && !fe_completed)
+   if (tolerance == 0.0 /*&& !fe_completed*/)
    {
       for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
       {
          stop_point[i] = points-1;
       }      
    }
-   for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+   for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++) //calculate the offset from the baseline for each scan
    {
       offset[i] = run_inf.plateau[selected_cell][selected_lambda][i] * bd_position/100;
-//      cout << run_inf.plateau[selected_cell][selected_lambda][i] << endl;
+      //cout << "offset[" << i << "]: " << offset[i] << ", plateau: " << run_inf.plateau[selected_cell][selected_lambda][i] << endl;
    }      
    for (i=0; i<divisions; i++)
    {
@@ -677,7 +676,7 @@ int US_vhwEnhanced::plot_analysis()
       if(count < 2) // we need at least two points to make a line
       {
          QString temp_str;
-         temp_str.sprintf("There is insufficient data to create an extrapolation\n"
+         temp_str.sprintf("(1)There is insufficient data to create an extrapolation\n"
                            "for division %d.\n", j+1);
          
          QMessageBox::message(tr("Warning:"),
@@ -720,6 +719,7 @@ int US_vhwEnhanced::plot_analysis()
          }
       }
    }
+   /*
    fe1.sed.clear();
    fe1.diff.clear();
    fe1.conc.clear();
@@ -730,6 +730,7 @@ int US_vhwEnhanced::plot_analysis()
    fe2.conc.clear();
    fe2.times.clear();
    fe2.radius.clear();
+   */
    float diff, sed, conc;
 // to get the diffusion coeficient from the sedimentation coefficient
 // when the shape is assumed to be a sphere (N is Avogadro's number, and 
@@ -748,12 +749,14 @@ int US_vhwEnhanced::plot_analysis()
          diff = (R * (K0 + run_inf.avg_temperature))/(AVOGADRO * 0.06 * M_PI * viscosity_tb 
          * pow((double) (0.045 * sed * vbar * viscosity_tb/(1 - vbar * density_tb)), (double) 0.5));
          conc = bin_count[j] * initial_concentration/divisions;
+         /*
          fe1.diff.push_back(diff);
          fe1.sed.push_back(sed);
          fe1.conc.push_back(conc);
          fe2.diff.push_back(diff);
          fe2.sed.push_back(sed);
          fe2.conc.push_back(conc);
+         */
       }
    }
    pb_cofs->setEnabled(true);
@@ -823,6 +826,7 @@ int US_vhwEnhanced::calc_sed(unsigned int div)
 //cout << "Plateau[" << i << "]: " << run_inf.plateau[selected_cell][selected_lambda][i] << ", span: " << span << endl;
 //cout << i << "\t" << run_inf.plateau[selected_cell][selected_lambda][i] << endl;
       increment[i] = span/(divisions + 1);
+      //cout << "inc[" << i << "]: " << increment[i] << ", plateau: " << run_inf.plateau[selected_cell][selected_lambda][i] << endl;
 //cout << "Increment top[" << i << "]: " << increment[i] << ", division: " << div << ", plateau: " << run_inf.plateau[selected_cell][selected_lambda][i] << endl;
    }
 
@@ -832,20 +836,20 @@ int US_vhwEnhanced::calc_sed(unsigned int div)
 // each scan. All values found are extrapolated to infinite time for a first approximation 
 // of this division's s-value.
 //
-   for (iter=0; iter<1; iter++) // refine each division 3 times for final answer
+   for (iter=0; iter<1; iter++) // refine each division 3 times for final answer (changed to 1 iteration)
    {
       j = 0;
 //
 // start with the previous division's baseline (offset[i] - which already has been plateau corrected in the previous division)
 // and add the division increment:
 //
-      while (absorbance[j][0] > (increment[j] + offset[j])) // if the first absorbance point of a scan 
+      while (absorbance[j][0] > (increment[j] + offset[j])) // if the first absorbance point of a scan
       {                                                     // is larger than our test point, it is skipped
          j++;
          if (j == run_inf.scans[selected_cell][selected_lambda])
          {
             QString temp_str;
-            temp_str.sprintf("There is insufficient data to create an extrapolation\n"
+            temp_str.sprintf("(2)There is insufficient data to create an extrapolation\n"
                               "for division %d.\nThe increment is %f and the offset is "
                               "%f concentration units\n", div+1, increment[j], offset[j]);
             QMessageBox::message(tr("Warning:"),
@@ -859,6 +863,8 @@ int US_vhwEnhanced::calc_sed(unsigned int div)
       {
          count = 0;
          testy = increment[i] + offset[i];
+         //cout << "inc[" << i << "]: " << increment[i] << ", plateau: " << run_inf.plateau[selected_cell][selected_lambda][i] << endl;
+         //cout << "division " << div << " testy: " << testy << ", i: " << i << ", offset: " << offset[i] << ", increment: " << increment[i] << ", plateau: " << run_inf.plateau[selected_cell][selected_lambda][i] << endl;
          sed_app[i][div] = -1.0; // set to minus 1 as a flag. If it is set to zero below, we want to skip later steps.
 
 //if (div == 15)
@@ -869,6 +875,7 @@ int US_vhwEnhanced::calc_sed(unsigned int div)
 
          if(absorbance[i][0] > testy)   // sometimes the first datapoint is higher due to noise, and we should really 
          {                              // search from top down to find the first lowest point
+      //if (div == 25 ) cout << "abs > testy " << endl;
             count = points - 1;
             while (absorbance[i][count] > testy && count > 0)
             {
@@ -881,10 +888,12 @@ int US_vhwEnhanced::calc_sed(unsigned int div)
          }
          else
          {
+      //if (div == 25 ) cout << "abs !> testy " << endl;
             while ((count < stop_point[i]) && (count < points - 1) && (absorbance[i][count] < testy))
             {
                count++;      // climb up the concentration gradient until one point beyond testy is reached
             }
+           // if (div == 25 ) cout << "abs[scan " << i << "][point " << count << "]: " << absorbance[i][count] << endl;
          }
 /*
 if (div == 15)
@@ -932,7 +941,7 @@ if (div == 15)
 
 // otherwise make a linear interpolation:
 
-         else   if (sed_app[i][div] != 0)// solve: y = a*x + b:   
+         else if (sed_app[i][div] != 0)// solve: y = a*x + b:
          {
 //            cout << "Count: " << count << ", i: " << i << ", delta_R: " << run_inf.delta_r << endl;
             a = (absorbance[i][count] - absorbance[i][count-1])/(run_inf.delta_r);
@@ -1014,7 +1023,7 @@ if (sed_app[i][div] <= 0)
       if(count < 2) // we need at least two points to make a line
       {
          QString temp_str;
-         temp_str.sprintf("There is insufficient data to create an extrapolation\n"
+         temp_str.sprintf("(3)There is insufficient data to create an extrapolation\n"
                            "for division %d.\n(%d points for the extrapolation)\n ", div+1, count);
          
          QMessageBox::message(tr("Warning:"),
@@ -1028,17 +1037,22 @@ if (sed_app[i][div] <= 0)
       delete [] tempy;
 //
 // refine/reassign the increment value based on the radial dilution equation and 
-// the last s-value calculated for this division:
+// the last s-value calculated for this division. If we have simulated data (lambda == 999) then we can
+// skip this step since exact plateaus are known):
 //
-      for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+
+      if (run_inf.wavelength[selected_cell][selected_lambda] != 999)
       {
-         offset_correction = increment[i]; // save old value
-         for (int k=0; k<1; k++)
+         for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
          {
-            increment[i] = (initial_concentration * bd_range/100)/(divisions+1)
-            * exp(-2.0 * intercept[0] * omega_s * run_inf.time[selected_cell][selected_lambda][i]);
-            ratio = offset_correction/increment[i];
-//cout << "offset: " << offset_correction << ", increment[" << i << "]: " << increment[i] << ", init conc: " << initial_concentration << ", iteration: " << iter << ", intercept: " << intercept[0] << endl;
+            offset_correction = increment[i]; // save old value
+            for (int k=0; k<1; k++)
+            {
+               increment[i] = (initial_concentration * bd_range/100)/(divisions+1)
+               * exp(-2.0 * intercept[0] * omega_s * run_inf.time[selected_cell][selected_lambda][i]);
+               ratio = offset_correction/increment[i];
+//cout   << "offset: " << offset_correction << ", increment[" << i << "]: " << increment[i] << ", init conc: " << initial_concentration << ", iteration: " << iter << ", intercept: " << intercept[0] << endl;
+            }
          }
       }
       if (div == 0)    // the first division has the smallest sedimentation coefficient and the largest diffusion coefficient
@@ -1102,7 +1116,7 @@ cout    << "Temp: " <<  run_inf.avg_temperature
 void US_vhwEnhanced::update_tolerance(double val)
 {
    tolerance = val;
-   fe_completed = false; // whenever the tolerance is changed the FE simulation has to be redone
+   //fe_completed = false; // whenever the tolerance is changed the FE simulation has to be redone
    plot_analysis();
 }
 
@@ -1309,7 +1323,7 @@ void US_vhwEnhanced::cofs()
    fe_completed = true;
    plot_analysis();
 }
-*/
+
 void US_vhwEnhanced::non_interacting(struct fe *temp_fe)
 {
    unsigned int i, j, k, iterations, scan=0;
@@ -1452,7 +1466,7 @@ void US_vhwEnhanced::init_fe(struct fe *temp_fe)
       }
    }
 }
-
+*/
 void US_vhwEnhanced::view()
 {
    if (step == 0)
