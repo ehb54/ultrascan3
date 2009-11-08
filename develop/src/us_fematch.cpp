@@ -783,17 +783,17 @@ void US_FeMatch_W::save()
             mb2.setButtonText(QMessageBox::No, tr("Continue..."));
             switch (mb2.exec())
             {
-            case QMessageBox::Yes:
+               case QMessageBox::Yes:
                {
                   us_3d_solutes->mainwindow->raise();
                   qApp->processEvents();
                   return;
                }
-            case QMessageBox::Cancel:
+               case QMessageBox::Cancel:
                {
                   return;
                }
-            case QMessageBox::No:
+               case QMessageBox::No:
                {
                   us_3d_solutes->mainwindow->raise();
                   us_3d_solutes->show();
@@ -833,7 +833,7 @@ void US_FeMatch_W::save()
          {
             return;
          }
-      case QMessageBox::Yes:
+         case QMessageBox::Yes:
          {
             us_3d_solutes->mainwindow->raise();
             qApp->processEvents();
@@ -850,15 +850,15 @@ void US_FeMatch_W::save()
             mb2.setButtonText(QMessageBox::No, tr("Continue..."));
             switch (mb2.exec())
             {
-            case QMessageBox::Yes:
+               case QMessageBox::Yes:
                {
                   return;
                }
-            case QMessageBox::Cancel:
+               case QMessageBox::Cancel:
                {
                   return;
                }
-            case QMessageBox::No:
+               case QMessageBox::No:
                {
                   us_3d_solutes->mainwindow->raise();
                   us_3d_solutes->show();
@@ -1165,13 +1165,14 @@ void US_FeMatch_W::write_res()
       ts << str.sprintf("Weight Average S20,W: %6.4e\n", sum_s/sum_freq);
       ts << str.sprintf("Weight Average D20,W: %6.4e\n", sum_D/sum_freq);
       ts << str.sprintf("Weight Average Molecular Weight: %6.4e\n", sum_mw/sum_freq);
+      ts << str.sprintf("Total concentration: %6.4e\n", sum_freq);
       ts << "\n\n";
       ts << tr("Distribution Information:\n\n");
-      ts << tr("Molecular Weight:    S 20,W:       D 20,W:\n\n");
+      ts << tr("Molecular Weight:\tS 20,W:\t\tD 20,W:\t\t\tconcentration:\n\n");
       for (i=0; i<components; i++)
       {
-         ts << str.sprintf("%6.4e           %6.4e    %6.4e   (%7.3f",
-                           mw[i], s20w[i], D20w[i], 100.0 * partial_concentration[i]/sum_freq);
+         ts << str.sprintf("%6.4e\t\t%6.4e\t\t%6.4e\t\t%6.4e\t(%6.3f",
+                           mw[i], s20w[i], D20w[i], partial_concentration[i], 100.0 * partial_concentration[i]/sum_freq);
          ts << " %)\n";
       }
       for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
