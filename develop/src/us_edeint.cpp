@@ -134,7 +134,6 @@ void US_EditInterferenceEquil::get_x(const QMouseEvent &e)
                            current_scan + 1, run_inf.equil_meniscus[current_scan], current_scan + 2);
                lbl_instructions2->setText(str);
                step = 5;
-               current_scan ++;
                temp_points = index2 - index1 + 1;
                temp_r = new double [temp_points];
                temp_y = new double [temp_points];
@@ -188,6 +187,7 @@ void US_EditInterferenceEquil::get_x(const QMouseEvent &e)
                   step = 3;
                   load_dataset();
                }
+               current_scan++;
                break;
             }
          case 4:   //pick right bracket of channel
