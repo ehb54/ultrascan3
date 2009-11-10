@@ -133,34 +133,37 @@ void US_EditInterferenceEquil::get_x(const QMouseEvent &e)
                               "Next, please select the meniscus for scan %d.\n"),
                            current_scan + 1, run_inf.equil_meniscus[current_scan], current_scan + 2);
                lbl_instructions2->setText(str);
-               step = 5;
-               temp_points = index2 - index1 + 1;
-               temp_r = new double [temp_points];
-               temp_y = new double [temp_points];
-               count = 0;
-               min_y = 10000;
-               max_y = -10000;
-               //      cout << "Current Scan: " << current_scan << ", current_cell: " << cell << ", step: " << step << endl;
-               for (k=index1; k<=index2; k++)
+               if ( current_scan < run_inf.scans[cell][lambda] - 1 )
                {
-                  temp_r[count] = radius[current_scan][k];
-                  temp_y[count] = absorbance[current_scan][k];
-                  min_y = min(min_y, temp_y[count]);
-                  max_y = max(max_y, temp_y[count]);
-                  //      cout << "temp_r: " << temp_r[count] << ", temp_y[count]: " << temp_y[count] << endl;
-                  count ++;
-               } 
-               edit_plt->clear();
-               temp_curve = edit_plt->insertCurve("Fringes");
-               edit_plt->setCurvePen(temp_curve, yellow);
-               edit_plt->setCurveData(temp_curve, temp_r, temp_y, temp_points);
-               edit_plt->setAxisScale(QwtPlot::xBottom, temp_r[0], temp_r[temp_points - 1], 0);
-               edit_plt->setAxisScale(QwtPlot::yLeft, min_y, max_y, 0);
-               edit_plt->replot();
-               delete [] temp_r;
-               delete [] temp_y;
-               max_y = -1000;
-               if (current_scan == run_inf.scans[cell][lambda] - 1)
+                  current_scan++;
+                  step = 5;
+                  temp_points = index2 - index1 + 1;
+                  temp_r = new double [temp_points];
+                  temp_y = new double [temp_points];
+                  count = 0;
+                  min_y = 10000;
+                  max_y = -10000;
+                  for (k=index1; k<=index2; k++)
+                  {
+                     temp_r[count] = radius[current_scan][k];
+                     temp_y[count] = absorbance[current_scan][k];
+                     min_y = min(min_y, temp_y[count]);
+                     max_y = max(max_y, temp_y[count]);
+                     count ++;
+                  } 
+                  edit_plt->clear();
+                  temp_curve = edit_plt->insertCurve("Fringes");
+                  edit_plt->setCurvePen(temp_curve, yellow);
+                  edit_plt->setCurveData(temp_curve, temp_r, temp_y, temp_points);
+                  edit_plt->setAxisScale(QwtPlot::xBottom, temp_r[0], temp_r[temp_points - 1], 0);
+                  edit_plt->setAxisScale(QwtPlot::yLeft, min_y, max_y, 0);
+                  edit_plt->replot();
+                  delete [] temp_r;
+                  delete [] temp_y;
+                  max_y = -1000;
+               }
+               //if (current_scan == run_inf.scans[cell][lambda] - 1)
+               else
                {
                   for (scan=0; scan<run_inf.scans[cell][lambda]; scan++)
                   {// find the meniscus farthest to the right:
@@ -187,7 +190,6 @@ void US_EditInterferenceEquil::get_x(const QMouseEvent &e)
                   step = 3;
                   load_dataset();
                }
-               current_scan++;
                break;
             }
          case 4:   //pick right bracket of channel
