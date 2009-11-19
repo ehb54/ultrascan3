@@ -40,6 +40,13 @@ $util_ti = .5;
 
 $execute = 1 ; # uncomment this line for live version, comment for listing commands to be executed
 
+sub check_is_resubmit {
+    $cmd = "perl $US/etc/us_gridpipe_is_resubmit.pl '$jid|$basedir/$id/$eprfile'\n";
+    print $cmd;
+    $is_resubmit = `$cmd`;
+    die "tigre job was resubmitted\n" if $is_resubmit == 1;
+}    
+
 sub failmsg {
 # email a message
     $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
@@ -702,6 +709,7 @@ if($default_system ne 'meta') {
 
 # put files to TIGRE client
 if($default_system ne 'meta') {
+    &check_is_resubmit();
     $cmd = 
 	"gsissh -p $PORT_SSH $GSI_SYSTEM rm -fr $WORKRUN
 gsissh -p $PORT_SSH $GSI_SYSTEM mkdir -p $WORKRUN
@@ -799,6 +807,7 @@ if($default_system eq 'meta') {
     
     print `echo tigre_job_start $pr_line > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
 } else {
+    &check_is_resubmit();
     $cmd = "globusrun-ws -submit -batch -term 12/31/2099 -F https://${SYSTEM}:${PORT_GLOBUS}/wsrf/services/ManagedJobFactoryService -factory-type $FACTORYTYPE -f $xmlfile > $eprfile\n";
     print $cmd;
     print `$cmd` if $execute;
@@ -839,10 +848,7 @@ if($default_system eq 'meta') {
 		print $cmd;
 		print `$cmd` if $execute;
 		sleep $ecount * 10;
-		$cmd = `perl $US/etc/us_gridpipe_is_resubmit.pl $jid|$basedir/$id/$eprfile`;
-		print $cmd;
-		$is_resubmit = `$cmd`;
-		die "tigre job was resubmitted\n" if $is_resubmit == 1;
+		&check_is_resubmit();
 		$cmd = "globusrun-ws -submit -batch -term 12/31/2099 -F https://${SYSTEM}:${PORT_GLOBUS}/wsrf/services/ManagedJobFactoryService -factory-type $FACTORYTYPE -f $xmlfile > $eprfile\n";
 		print $cmd;
 		print `$cmd` if $execute;
@@ -876,10 +882,7 @@ do {
 
     if($status =~ /^$/) {
 	$dups_blank++;
-	$cmd = `perl $US/etc/us_gridpipe_is_resubmit.pl $jid|$basedir/$id/$eprfile`;
-	print $cmd;
-	$is_resubmit = `$cmd`;
-	die "tigre job was resubmitted\n" if $is_resubmit == 1;
+	&check_is_resubmit();
 	if($dups_blank < 10) {
 	    print "bad response from checking status, sleep, retry $dups_blank of 10\n";
 	    print STDERR "bad response from checking status, sleep, retry $dups_blank of 10\n";
