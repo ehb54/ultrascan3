@@ -7,9 +7,9 @@
 # IF THIS FAILS FOR THE NUMBER OF PROCESSORS YOU HAVE SELECTED, TIGRE JOBS WILL FAIL!
 # THIS IS NOT HOW MANY PROCS THE SYSTEM HAS, BUT HOW MANY TIGRE/PBS KNOW ABOUT!!!!
 
-@bcfdowncount = `pbsnodes -l`;
+@bcfdowncount = `/opt/torque/bin/pbsnodes -l`;
 # laredo is down
-@laredodowncount = `ssh laredo pbsnodes -l`;
+@laredodowncount = `ssh laredo /opt/torque/bin/pbsnodes -l`;
 @alamodowncount = `ssh alamo pbsnodes -l`;
 
 $bcf_no_procs = 40 - 2 * @bcfdowncount;
@@ -43,7 +43,7 @@ $execute = 1 ; # uncomment this line for live version, comment for listing comma
 sub failmsg {
 # email a message
     $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
-			   To      =>  'ebrookes@cs.utsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
+			   To      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
 #			   To      =>  'ebrookes@cs.utsa.edu',
 			   Subject =>  "TIGRE JOB COMPLETION FAILED on $default_system",
 			   Type    =>  'multipart/mixed');
@@ -92,7 +92,7 @@ $_[0]
 
     $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
 			   To      => "$email",
-			   Cc      =>  'ebrookes@cs.utsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
+			   Cc      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
 #			   To      =>  'ebrookes@cs.utsa.edu',
 			   Subject =>  "Your TIGRE job running on $default_system has failed",
 			   Data => "
@@ -120,7 +120,7 @@ sub cancelmsg
 {
     $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
 			   To      => "$email",
-			   Cc      =>  'ebrookes@cs.utsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
+			   Cc      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
 #			   To      =>  'ebrookes@cs.utsa.edu',
 			   Subject =>  "Your TIGRE job running on $default_system has been canceled.",
 			   Data => "
@@ -156,6 +156,14 @@ $solutes = shift;
 
 require "$US/etc/us_gcfields.pl";
 &parsegc($gcfile);
+
+$eprfile = "us_tigre_epr${id}.xml";
+
+$cmd = "$US/etc/us_gridpipe_my_jobid.pl $basedir/$id/$eprfile\n";
+print $cmd;
+$jid = `$cmd`;
+chomp $jid;
+print "gridpipe jid is <$jid>\n";
 
 $default_system = shift;
 $default_system = "bcf.uthscsa.edu" if !$default_system;
@@ -222,7 +230,7 @@ if($default_system ne 'meta') {
 	print STDERR "$result";
 	if(!$messagesent) {
 	    $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
-				   To      =>  'ebrookes@cs.utsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
+				   To      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
 				   Subject =>  "TIGRE ERROR on $default_system",
 				   Data    => "There is an error when trying to initialize a TIGRE job on $default_system
 --------------------------------------------------------------------------------
@@ -247,7 +255,7 @@ $result
 } while($result =~ /ERROR/);
 if($messagesent) {
     $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
-			   To      =>  'ebrookes@cs.utsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
+			   To      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
 			   Subject =>  "TIGRE service restored on $default_system",
 			   Data    => "TIGRE service restored on $default_system
 --------------------------------------------------------------------------------
@@ -280,7 +288,9 @@ solutes    $solutes
 	    'laredo.uthscsa.edu' ,
 	    'a01.hlrb2.lrz-muenchen.de' ,
 	    'ng2.vpac.monash.edu.au' ,
-	    'meta'
+            'queenbee.loni-lsu.teragrid.org' ,
+            'gatekeeper.bigred.iu.teragrid.org' ,
+	    'meta' 
 	    );
 
 for($i = 0; $i < @systems; $i++) {
@@ -300,7 +310,9 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 		 9443 ,
 		 8443 ,
 		 8443 ,
-		 0
+		 8443 , # queenbee
+		 8443 , # bigred
+		 0 
 		 );
 
 @ports_ssh = (
@@ -315,7 +327,9 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	      22 ,
 	      2222 ,
 	      22 ,
-	      0
+	      22 , # queenbee
+	      22 , # bigred
+	      0 ,
 	      );
 
 @work = (
@@ -330,7 +344,9 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	 '/home/tigre' ,
 	 '/home/hlrb2/pr28ci/lu65cen' ,
 	 '/home/grid-ultrascan' ,
-	 ''
+	 '/work/brookes' ,
+	 '/N/dc/scratch/tg-ebrookes' , # bigred
+	 '' 
 	 );
 
 @factorytypes = (
@@ -346,26 +362,30 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	       'PBS' ,
 	       'PBS' ,
 	       'PBS' ,
-		 ''
+	       'Loadleveler' , # bigred
+	       'PBS' ,
+               '' 
 	       );
 
 @bins = (
-       'bin64' ,
-       'bin64' ,
-       'bin'   ,
-       'bin64' ,
-       'bin'   ,
-       'bin'   ,
-       'bin64' ,
-       'bin' ,
-       'bin64'   ,
-       'bin'   ,
-       'bin'   ,
-	 'bin64'
+         'bin64' , #lonestar
+         'bin64' , #ranger
+         'bin'   , #cosmos
+         'bin64' , #antaeus
+         'bin'   , #gridgate?
+         'bin'   , #eldorado
+         'bin64' , #bcf
+         'bin' ,   #alamo
+         'bin64'   , #laredo
+         'bin'   , #a01.hlrb2
+         'bin'   , #ng2.vpac.monash
+	 'bin64' ,  #queenbee
+	 'bin' ,  # bigred
+	 'bin64'   #meta
        );
 @executable = (
        'us_fe_nnls_t_mpi' , #lonestar
-       'us_fe_nnls_t_mpi' , #lonestar
+       'us_fe_nnls_t_mpi' , #ranger
        'us_fe_nnls_t_mpi' , #cosmos
        'us_fe_nnls_t_mpi' , #antaeus
        'us_fe_nnls_t_mpi' , #gridgate
@@ -375,6 +395,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
        'us_fe_nnls_t_mpi' , #laredo
        'us_fe_nnls_t' , #a01.hlrb2
        'us_fe_nnls_t_mpi' , #ng2.vpac.monash
+       'us_fe_nnls_t.sh' , #queenbee
+       'us_fe_nnls_t_mpi' , #bigred
        'us_fe_nnls_t_mpi' , #meta
        );
 
@@ -391,6 +413,8 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   '' ,  #laredo
 	   '' ,  #hlrb2
 	   '' ,  #ng2.vpac.monash
+	   '' ,  #queenbee
+	   '<queue>NORMAL</queue>' , # bigred
 	   '' #meta
 	   );
 
@@ -438,6 +462,13 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
     <value>/home/grid-ultrascan/ultrascan</value>
   </environment>
 ' , # ng2.vpac.monash
+	   ' 
+ <environment>
+    <name>ULTRASCAN</name>
+    <value>/home/brookes/ultrascan</value>
+  </environment>
+' , # queenbee
+	   '', # bigred
 	   '' # meta
 	   );
 
@@ -471,22 +502,26 @@ $home[$reversesystems{'ng2.vpac.monash.edu.au'}] = "/home/grid-ultrascan/";
 	   $laredo_no_procs ,
 	   2048 , # hlrb2
 	   32 , # ng2.vpac.monash
+	   64 , # queenbee
+	   64 , # bigred
 	   64 #meta
 	   );
 
 @max_time = (
-	   30 ,
-	   2880 ,
-	   120 ,
-	   120 ,
-	   120 ,
-	   120 ,
-	   60000 ,
-	   60000 ,
-	   60000 ,
-	   2880 ,
-	   10000 ,
-	   2880
+	   30 ,    # lonestar
+	   2880 ,  # ranger
+	   120 ,   # cosmos
+	   120 ,   # antaeus
+	   120 ,   # gridgate
+	   120 ,   # eldorado
+	   60000 , # bcf
+	   60000 , # alamo
+	   60000 , # laredo
+	   2880 ,  # a01.hlrb2
+	   10000 , # ng2.monash
+	   2880 ,  # queenbee
+	   2880 ,  # bigred
+	   2880    # meta
 	   );
 
 
@@ -517,6 +552,8 @@ if($analysis_type =~ /^2DSA/) {
 $max_time[0] *= 8 if $default_system =~ /hlrb2/;
 $max_time[0] *= 4 if $default_system =~ /lonestar/;
 $max_time[0] *= 4 if $default_system =~ /ranger/;
+$max_time[0] *= 8 if $default_system =~ /queenbee/;
+$max_time[0] *= 4 if $default_system =~ /bigred/;
 
 if($monte_carlo) {
     $max_time[0] *= $monte_carlo;
@@ -539,9 +576,12 @@ if($fit_ti_noise || $fit_ri_noise) {
 
 $max_time[0] = 5 if $max_time[0] <= 5;
 if($max_time[0] > 2880 &&
-   $default_system eq 'lonestar.tacc.utexas.edu') {
+   ($default_system eq 'lonestar.tacc.utexas.edu' ||
+    $default_system =~ /queenbee/ || 
+    $default_system =~ /bigred/ # bigred
+    )) {
     $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
-			   To      =>  "$email, ebrookes\@cs.utsa.edu",
+			   To      =>  "$email, emre\@biochem.uthscsa.edu",
 			   Subject =>  "TIGRE job on $default_system set to maximum time",
 			   Data    => 
 "Your TIGRE job on $default_system estimated has an estimated run time of " . ($max_time[0]/60) . " which exceeds the maximum 48 hour limit.  
@@ -570,6 +610,8 @@ $max_time[3] = $max_time[0];
 $max_time[2] = $max_time[0];
 $max_time[1] = $max_time[0];
 $max_time[9] = $max_time[0];
+$max_time[11] = $max_time[0];  # queenbee
+$max_time[12] = $max_time[0];  # bigred
 
 print "Maximum time[0]=$max_time[0]\n";
 
@@ -606,11 +648,21 @@ if( $systems[$usesys] =~ /^(bcf|alamo|laredo)/) {
     $np = $max_np[$usesys];
 }
 
+undef $hc;
+if ( $default_system =~ /bigred/ )
+{
+    $hcn = int(($np / 4) + .9999999);
+    $hc = "\n<hostCount>$hcn</hostCount>\n";
+    $np = 4 * $hcn;
+    print $hc;
+}
+
 print "np is $np\n";
 
 $SYSTEM = $systems[$usesys];
 $GSI_SYSTEM = $SYSTEM;
 $GSI_SYSTEM = "brecca.vpac.monash.edu.au" if $SYSTEM =~ /ng2.vpac.monash.edu.au/;
+$GSI_SYSTEM = "gatekeeper.iu.teragrid.org" if $SYSTEM =~ /bigred/;
 $PORT_GLOBUS = $ports_globus[$usesys];
 $PORT_SSH = $ports_ssh[$usesys];
 $WORK = $work[$usesys];
@@ -618,7 +670,12 @@ $FACTORYTYPE = $factorytypes[$usesys];
 $BIN = $bins[$usesys];
 $LD_XML = $ld_xml[$usesys];
 $LD_QUEUE = $queues[$usesys];
-$PROJECT = "<project>TG-MCB070040N</project>" if $default_system eq 'lonestar.tacc.utexas.edu';
+$PROJECT = "<project>TG-MCB070040N</project>" if 
+    $default_system eq 'lonestar.tacc.utexas.edu' || 
+    $default_system eq 'queenbee.loni-lsu.teragrid.org' ||
+    $default_system eq 'gatekeeper.bigred.iu.teragrid.org' 
+    ;
+
 $MAXMEM = "<maxMemory>2000</maxMemory>" if $SYSTEM =~ /ng2.vpac.monash.edu.au/;
 
 $WORKTMP = "${WORK}/tmp";
@@ -627,7 +684,6 @@ $WORKRUN = "${WORK}/tmp/$id";
 $cwd = "$basedir/$id";
 
 $xmlfile = "us_tigre_job_desc${id}.xml";
-$eprfile = "us_tigre_epr${id}.xml";
 
 if($default_system ne 'meta') {
     $pr_line = sprintf("[%20s][%4s][%26s][%25s][%s][%s][%s][%s][%s]",
@@ -715,7 +771,7 @@ if($default_system eq 'meta') {
 $LD_XML
   <stdout>$WORKRUN/us_job${id}.stdout</stdout>
   <stderr>$WORKRUN/us_job${id}.stderr</stderr>
-  <count>$np</count>
+  <count>$np</count>$hc
 $PROJECT
 $LD_QUEUE
   <maxWallTime>$max_time[$usesys]</maxWallTime>
@@ -746,6 +802,53 @@ if($default_system eq 'meta') {
     $cmd = "globusrun-ws -submit -batch -term 12/31/2099 -F https://${SYSTEM}:${PORT_GLOBUS}/wsrf/services/ManagedJobFactoryService -factory-type $FACTORYTYPE -f $xmlfile > $eprfile\n";
     print $cmd;
     print `$cmd` if $execute;
+    if ($default_system =~ /bcf.uthscsa.edu/) {
+    # special bcf handling 
+	print "special bcf handling\n";
+    # check for immediate fail
+	$ecount = 0;
+	$max_ecount = 10;
+	print "check the nodes\n";
+	$cmd = qq/gsissh bcf.uthscsa.edu 'rcom "uname -n; ls .globus"'\n/;
+	print $cmd;
+	print `$cmd`;
+	
+	do {
+	    print "check submit 0:\n";
+	    sleep 10;
+	    $status = `globusrun-ws -status -job-epr-file $eprfile 2> /lustre/tmp/gc_tigre_${id}_globus_stderr`;
+	    print "status is <$status>\n";
+	    $stderr = `cat /lustre/tmp/gc_tigre_${id}_globus_stderr`;
+	    print "stderr is <$stderr>\n";
+	    print STDERR $stderr;
+	    if($stderr =~ /SOAP Fault/ &&
+	       $status != /^$/) {
+		print "Soap Fault: ignoring bogus status <$status>\n";
+		$status = '';
+	    }
+	    $lastfail = 0;
+	    if(
+	       $status =~ /Failed/ ||
+	       $status =~ /FAILED/ ||
+	       $stderr =~ /failed/ ) {
+		# kill & restart
+		$lastfail = 1;
+		$ecount++;
+		print "resubmitting $ecount of $max_ecount bcf initial job fail\n";
+		$cmd = "globusrun-ws -kill -job-epr-file $eprfile 2>&1";
+		print $cmd;
+		print `$cmd` if $execute;
+		sleep $ecount * 10;
+		$cmd = `perl $US/etc/us_gridpipe_is_resubmit.pl $jid|$basedir/$id/$eprfile`;
+		print $cmd;
+		$is_resubmit = `$cmd`;
+		die "tigre job was resubmitted\n" if $is_resubmit == 1;
+		$cmd = "globusrun-ws -submit -batch -term 12/31/2099 -F https://${SYSTEM}:${PORT_GLOBUS}/wsrf/services/ManagedJobFactoryService -factory-type $FACTORYTYPE -f $xmlfile > $eprfile\n";
+		print $cmd;
+		print `$cmd` if $execute;
+	    }
+	} while($lastfail && $ecount && $ecount <= $max_ecount);
+    }
 }
 
 $dups_blank = 0;
@@ -773,6 +876,10 @@ do {
 
     if($status =~ /^$/) {
 	$dups_blank++;
+	$cmd = `perl $US/etc/us_gridpipe_is_resubmit.pl $jid|$basedir/$id/$eprfile`;
+	print $cmd;
+	$is_resubmit = `$cmd`;
+	die "tigre job was resubmitted\n" if $is_resubmit == 1;
 	if($dups_blank < 10) {
 	    print "bad response from checking status, sleep, retry $dups_blank of 10\n";
 	    print STDERR "bad response from checking status, sleep, retry $dups_blank of 10\n";

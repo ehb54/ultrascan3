@@ -7,6 +7,7 @@ $debug++;
 $dbname = "$us/etc/us_gridpipe_db";
 $globustimeout = 15; # seconds to wait for globusrun-ws commands to succeed or timeout
 $statusupdate = 10;  # seconds to wait for status update
+$globus_statusupdate = 60;  # seconds to wait for status update
 $killupdate = 60;  # seconds to wait for rekilling
 $maxkillreps = 120;  # number of times to try to kill before giving up
 $logfiledir = "/lustre/tmp";    # reset to /lustre/tmp
@@ -336,7 +337,7 @@ sub startjob_tigre_status {
 		    exit;
 		}
 	    }
-	    sleep $statusupdate;
+	    sleep $globus_statusupdate;
 	}
 	dbclose();
 	exit;
@@ -615,7 +616,7 @@ sub handle_request {
 		$db{'eprseq|' . $eprfile} =  $seq;
 		$db{$seq} = $eprfile;
 	    } 
-	    $db{'eprstatus|' . $eprfile} = "Current job state: Submitted";
+	    $db{'eprstatus|' . $eprfile} = "Current job state: Initializing_globus";
 	    $DB->sync;
 	    dbunlock();
 	    dbclose();
@@ -672,6 +673,27 @@ sub handle_request {
 		dbopen();
 		$DB->sync;
 		dbwrite('kill|' . $eprfile, 1);
+		dbclose();
+		&remove_status($status_file, $cancel_seq);
+		&tigre_kill($eprfile);
+		&tigre_del($eprfile);
+	    }
+	}
+	if($line =~ /^tigre_job_resubmit (.*)$/) {
+	    # cancel one job
+	    my $cancel_seq = $1;
+	    $valid++;
+	    dbopen();
+	    $DB->sync;
+	    %tigre = dbrocopy();
+	    dbclose();
+	    $eprfile = $tigre{$cancel_seq};
+	    print STDERR "$0: tigre_job_resubmit eprfile $eprfile\n";
+	    if($eprfile) {
+		dbopen();
+		$DB->sync;
+		dbwrite('kill|' . $eprfile, 1);
+		dbwrite('resubmit|' . "$cancel_seq|$eprfile", 1);
 		dbclose();
 		&remove_status($status_file, $cancel_seq);
 		&tigre_kill($eprfile);
