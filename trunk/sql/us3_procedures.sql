@@ -25,7 +25,7 @@ CREATE FUNCTION last_errno()
   RETURNS INT
 
 BEGIN
-  RETURN( $US3_LAST_ERRNO );
+  RETURN( @US3_LAST_ERRNO );
 
 END$$
 
@@ -272,7 +272,7 @@ CREATE PROCEDURE update_buffer ( id INT,
 
 BEGIN
 
---  CALL config();
+  CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
