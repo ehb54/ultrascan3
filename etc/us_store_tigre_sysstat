@@ -12,11 +12,14 @@ $ENV{'GLOBUS_LOCATION'} = '/share/apps/tigre/globus';
 #	     'cosmos.tamu.edu', 
 	     'a01.hlrb2.lrz-muenchen.de', 
 	     'ng2.vpac.monash.edu.au',
+	     'queenbee.loni-lsu.teragrid.org' ,
+	     'gatekeeper.bigred.iu.teragrid.org' ,
+
 	     'bcf.uthscsa.edu', 
 	     'alamo.uthscsa.edu', 
 	     'laredo.uthscsa.edu' 
 	     );
-$cutoff = 4;
+$cutoff = 6;
 # @systemssize = ( 4, 2, 2 );
 @globusport = ( 
 		8443, # lonestar
@@ -26,6 +29,9 @@ $cutoff = 4;
 #		8443, # cosmos
 		8443, # hlrb2
 		8443, # ng2.vpac.monash
+		8443, # queenbee.loni-lsu.teragrid.org
+		8443, # gatekeeper.bigred.iu.teragrid.org
+
 		9443, # bcf
 		9443, # alamo
 		9443  # laredo

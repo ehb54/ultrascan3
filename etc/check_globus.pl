@@ -6,7 +6,7 @@ use MIME::Lite;
 
 sub do_email {
     $em = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
-			   To      =>  'ebrookes@cs.utsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
+			   To      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
 			   Subject =>  "TIGRE ERROR on $system for user apache",
 			   Data    => "us_check_tigre noticed the following problem
 --------------------------------------------------------------------------------

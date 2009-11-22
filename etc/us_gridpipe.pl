@@ -25,6 +25,7 @@ flock(SYS_LOCK, 6) || die "$0: lockfile $us/etc/us_gridpipe.lock is already in u
 require "$us/etc/us_gcfields.pl";
 
 $status_file = "$us/etc/mpi_queue_status";
+$status_detail_file = "$us/etc/queue_status_detail";
 
 $pipe = "$us/etc/us_gridpipe";
 
@@ -362,6 +363,7 @@ sub write_status {
 	open(LOCK, "${outfile}.lock");
 	flock(LOCK, 2) || print STDERR "$0: Warning can not flock ${outfile}.lock, proceeding (possible status file mangling!)\n";
 	if(open(OUT, ">${outfile}.new")) {
+	    open(OUT_DETAIL, ">${status_detail_file}.new");
 	    flock(OUT, 2) || print STDERR "$0: Warning can not flock ${outfile}.new, proceeding (possible status file mangling!)\n";
 	    my $date = `date`;
 	    print OUT "Queue status snapshot as of $date\n";
@@ -381,10 +383,18 @@ sub write_status {
 	    } else {
 		my @unsorted;
 		foreach $i (keys %tigre) {
-		    if ($i =~ /^epr\|/ && !$tigre{'kill|' . $use_i}) {
+		    if ($i =~ /^epr\|/) {
 			( $use_i ) = $i =~ /^epr\|(.*)$/;
-			$status = $tigre{'eprstatus|' . $use_i};
-			push @unsorted, "$tigre{$i} $status\n";
+			if (!$tigre{'kill|' . $use_i}) {
+			    ( $jid ) = $tigre{$i} =~ /^(\d+) /;
+			    ( $mci ) = $tigre{"js|$jid"} =~ /MC iteration (\d+)/;
+			    $status = $tigre{'eprstatus|' . $use_i};
+			    if ($mci) {
+				$status .= " $mci";
+				print OUT_DETAIL "$jid " . $tigre{"js|$jid"} . "\n";
+			    }
+			    push @unsorted, "$tigre{$i} $status\n";
+			}
 		    }
 		}
 		print OUT sort 
@@ -396,10 +406,11 @@ sub write_status {
 		    $a1 <=> $b1;
 		} @unsorted;
 		close OUT;
+		close OUT_DETAIL;
 	    }
 	    open(FH, $outfile);
 	    if(flock(FH, 2)) {
-		system("mv -f ${outfile}.new $outfile");
+		system("mv -f ${outfile}.new $outfile;mv -f ${status_detail_file}.new $status_detail_file");
 	    } else {
 		close(FH);
 		print STDERR "$0: Warning can not flock $outfile\n";
