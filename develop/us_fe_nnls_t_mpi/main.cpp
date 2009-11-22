@@ -20,12 +20,12 @@ int main (int argc, char **argv)
    }
 
 
-   QString data_file, solute_file;
+   QString data_file, solute_file, job_id;
    //   QApplication a(argc, argv);
    int result = 0;
-   if(argc < 3)
+   if(argc < 4)
    {
-      cout << "Usage: us_fe_nnls_t <path/input_file> <path/solute_file>\n\n";
+      cout << "Usage: us_fe_nnls_t <path/input_file> <path/solute_file> job_id\n\n";
       MPI_Finalize();
       return(-1);
    }
@@ -33,14 +33,15 @@ int main (int argc, char **argv)
    {
       data_file = argv[1];
       solute_file = argv[2];
-      if(argc >= 4) {
-         gridopt = argv[3];
+      job_id = argv[3];
+      if(argc >= 5) {
+         gridopt = argv[4];
       }
    }
    US_fe_nnls_t *us_fe_nnls_t;
    us_fe_nnls_t = new US_fe_nnls_t();
    //   if(!myrank) {
-   result = us_fe_nnls_t->init_run(data_file, solute_file, gridopt);
+   result = us_fe_nnls_t->init_run(data_file, solute_file, job_id, gridopt);
    //   }
    us_fe_nnls_t->run(result);
    //   return (result);

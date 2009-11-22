@@ -16,6 +16,8 @@
 #include <vector>
 #include <iostream>
 #include <qdatetime.h>
+#include <qhostaddress.h>
+#include <qsocketdevice.h>
 
 using namespace std;
 
@@ -54,13 +56,23 @@ class US_EXTERN US_fe_nnls_t
    vector <QString> constraints_full_text;
    vector <QString> simulation_parameters_full_text;
    vector <SimparamsExtra> simparams_extra;
+   QHostAddress host_address_udp;
+   int host_port;
+   QSocketDevice *socket_device_udp;
+   QString job_id;
+   QString job_udp_msg_key;
+   QString job_udp_msg_status;
+   QString job_udp_msg_mc;
+   QString job_udp_msg_gen;
+   QString job_udp_msg_meniscus;
+   QString job_udp_msg_iterative;
+   void send_udp_msg();
 
  public:
    Simulation_values calc_residuals(vector <struct mfem_data>, vector <Solute>, double, int, unsigned int);
    Simulation_values calc_residuals(struct mfem_data, vector <Solute>);
    Simulation_values regularize(Simulation_values, double);
-   int init_run(const QString &, const QString &, const QString &);
-   int init_run(const QString &, const QString &);
+   int init_run(const QString &, const QString &, const QString &, const QString &);
    int run();
    int run(int);
 };

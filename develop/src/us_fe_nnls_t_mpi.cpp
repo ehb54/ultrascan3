@@ -966,9 +966,28 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment,
    }
 }
 
+
+void 
+US_fe_nnls_t::send_udp_msg()
+{
+   if ( !myrank )
+   {
+      QString msg =
+         job_udp_msg_key + 
+         job_udp_msg_status +
+         job_udp_msg_mc +
+         job_udp_msg_gen +
+         job_udp_msg_meniscus +
+         job_udp_msg_iterative;
+
+      socket_device_udp->writeBlock ( msg.ascii(), msg.length(), host_address_udp, host_port );
+   }
+}
+
 int
 US_fe_nnls_t::init_run(const QString & data_file,
                        const QString & solute_file,
+                       const QString & job_id,
                        const QString & gridopt)
 {
    // return codes:
@@ -976,6 +995,17 @@ US_fe_nnls_t::init_run(const QString & data_file,
    // -1: couldn't open data file
    // -2: couldn't open solute file
    // -3: some undefined error happened in calc_residuals
+   this->job_id = job_id;
+   job_udp_msg_key = "js|" + job_id + QString("|Processes %1. ").arg(npes);
+   host_address_udp = QHostAddress("bcf.uthscsa.edu");
+   host_port = 64002;
+   socket_device_udp = new QSocketDevice(QSocketDevice::Datagram);
+   job_udp_msg_status = "Start run. ";
+   job_udp_msg_mc = "";
+   job_udp_msg_gen = "";
+   job_udp_msg_iterative = "";
+   job_udp_msg_meniscus = "";
+   
    this->gridopt = gridopt;
    this->gridopt = "no";
    maxrss = 0l;
@@ -2070,6 +2100,10 @@ Jobqueue;
 
 int US_fe_nnls_t::run(int status)
 {
+   if(!myrank) {
+      send_udp_msg();
+      job_udp_msg_status = "Running. ";
+   }
 #if defined(GLOBAL_JOB_TIMING)
    gettimeofday(&start_tv, NULL);
 #endif
@@ -2112,6 +2146,9 @@ int US_fe_nnls_t::run(int status)
             printf("%d: monte carlo iteration %u\n", myrank, this_monte_carlo);
             if (!myrank)
             {
+               job_udp_msg_mc = QString("MC iteration %1. ").arg(this_monte_carlo);
+               send_udp_msg();
+
                printf("0: get_monte_carlo (generate monte carlo data)\n");
                fflush(stdout);
                experiment = get_monte_carlo(org_experiment, save_gaussians);
@@ -2220,10 +2257,22 @@ int US_fe_nnls_t::run(int status)
             {
                //               printf("0: master waiting for comm processes left %d\n", procsleft);
                fflush(stdout);
+               float tot_gen = 0.0;
+               int avg_gen_count = 0;
                for (i = 1; i < npes; i++)
                {
                   printf("0: master has %d at generation %d of %d\n", i, generation[i], GA_Params.generations);
+                  if ( generation[i] > -1 ) {
+                     tot_gen += generation[i];
+                     avg_gen_count++;
+                  }
                   fflush(stdout);
+               }
+                  
+               if ( avg_gen_count ) 
+               {
+                  job_udp_msg_gen = QString("Average GA generation %1. ").arg(tot_gen / avg_gen_count);
+                  send_udp_msg();
                }
 
                // master receives generation completion message from a worker
@@ -2837,6 +2886,11 @@ int US_fe_nnls_t::run(int status)
          }
       } // end for monte carlo
       printf("%d: finalizing\n", myrank);
+      if ( !myrank )
+      {
+         job_udp_msg_status = "Run finished. ";
+         send_udp_msg();
+      }
       MPI_Finalize();
       exit(0);
    }
@@ -2874,6 +2928,11 @@ int US_fe_nnls_t::run(int status)
       }
       for (this_monte_carlo = 0; this_monte_carlo < monte_carlo_iterations; multi_experiment_flag ? 0 : this_monte_carlo++)
       {
+         if ( !myrank && this_monte_carlo )
+         {
+               job_udp_msg_mc = QString("MC iteration %1. ").arg(this_monte_carlo);
+               send_udp_msg();
+         }
          if (use_multi_exp)
          {
             if (multi_experiment_count) 
@@ -4400,6 +4459,11 @@ int US_fe_nnls_t::run(int status)
    }
    printf("%d: finalizing\n", myrank);
    fflush(stdout);
+   if ( !myrank )
+   {
+      job_udp_msg_status = "Run finished. ";
+      send_udp_msg();
+   }
    MPI_Finalize();
    exit(0);
 }
