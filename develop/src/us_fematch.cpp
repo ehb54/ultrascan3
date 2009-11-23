@@ -4,6 +4,8 @@
 #endif
 #include <math.h>
 #include <float.h>
+#define USE_THREADS
+// #define DEBUG_THREADS
 
 US_FeMatch_W::US_FeMatch_W(QWidget *p, const char *name) : Data_Control_W(1, p, name)
 {
@@ -1478,6 +1480,128 @@ void fematch_thr_t::run()
    }
 }
 
+// -------------------- thread routines for astfem_ra -----------------
+
+fematch_ra_thr_t::fematch_ra_thr_t(int a_thread) : QThread()
+{
+   thread = a_thread;
+   work_to_do = 0;
+   work_done = 1;
+   work_to_do_waiters = 0;
+   work_done_waiters = 0;
+}
+
+void fematch_ra_thr_t::fematch_ra_thr_setup(
+                                            int *a_progress_pos,
+                                            ModelSystem *a_msv,
+                                            SimulationParameters *a_sp,
+                                            vector < mfem_data > *a_simdata
+                                            )
+{
+   /* this starts up a new work load for the thread */
+   progress_pos = a_progress_pos;
+   msv = a_msv;
+   sp = a_sp;
+   simdata = a_simdata;
+
+   work_mutex.lock();
+   work_to_do = 1;
+   work_done = 0;
+   work_mutex.unlock();
+   cond_work_to_do.wakeOne();
+
+#if defined(DEBUG_THREADS)
+   cerr << "thread " << thread << " has new work to do\n";
+#endif
+}
+
+void fematch_ra_thr_t::fematch_ra_thr_shutdown()
+{
+   /* this signals the thread to exit the run method */
+   work_mutex.lock();
+   work_to_do = -1;
+   work_mutex.unlock();
+   cond_work_to_do.wakeOne();
+
+#if defined(DEBUG_THREADS)
+   cerr << "thread " << thread << " shutdown requested\n";
+#endif
+}
+
+void fematch_ra_thr_t::fematch_ra_thr_wait()
+{
+   /* this is for the master thread to wait until the work is done */
+   work_mutex.lock();
+
+#if defined(DEBUG_THREADS)
+   cerr << "thread " << thread << " has a waiter\n";
+#endif
+
+   while(!work_done) {
+      cond_work_done.wait(&work_mutex);
+   }
+   work_done = 0;
+   work_mutex.unlock();
+
+#if defined(DEBUG_THREADS)
+   cerr << "thread " << thread << " waiter released\n";
+#endif
+}
+
+int fematch_ra_thr_t::fematch_ra_thr_work_status()
+{
+   work_mutex.lock();
+   int retval = work_done;
+   work_mutex.unlock();
+   return retval;
+}
+
+void fematch_ra_thr_t::run()
+{
+   while(1)
+   {
+      work_mutex.lock();      
+#if defined(DEBUG_THREADS)
+      cerr << "thread " << thread << " waiting for work\n";
+#endif
+      work_to_do_waiters++;
+      while(!work_to_do)
+      {
+         cond_work_to_do.wait(&work_mutex);
+      }
+      if(work_to_do == -1)
+      {
+#if defined(DEBUG_THREADS)
+         cerr << "thread " << thread << " shutting down\n";
+#endif
+         work_mutex.unlock();
+         return;
+      }
+
+      work_to_do_waiters = 0;
+      work_mutex.unlock();
+#if defined(DEBUG_THREADS)
+      cerr << "thread " << thread << " starting work\n";
+#endif
+      US_Astfem_RSA *astfem_rsa;
+      astfem_rsa = new US_Astfem_RSA(false);
+      astfem_rsa->calculate(msv, sp, simdata, (thread ? 0 : progress_pos) ); // calculate the model for the current thread
+      delete astfem_rsa;
+
+#if defined(DEBUG_THREADS)
+      cerr << "thread " << thread << " finished work\n";
+#endif
+      work_mutex.lock();
+      work_done = 1;
+      work_to_do = 0;
+      work_mutex.unlock();
+      cond_work_done.wakeOne();
+   }
+}
+
+
+// -------------------- end thread ra
+
 float US_FeMatch_W::calc_residuals_ra()
 {
    QString str;
@@ -1527,11 +1651,158 @@ float US_FeMatch_W::calc_residuals_ra()
       }
       delete ol;
    }
-   sp.simpoints = 200;
-   US_Astfem_RSA *astfem_rsa;
-   astfem_rsa = new US_Astfem_RSA(false);
    //US_FemGlobal fg;
    //fg.write_simulationParameters(&sp, "simparams.out");
+   sp.simpoints = 200;
+   if(!ti_noise_avail && sp.band_forming) {
+      cout << "band_firstScanIsConcentration = true\n";
+      sp.band_firstScanIsConcentration = true;
+   } else {
+      cout << "band_firstScanIsConcentration = false\n";
+      sp.band_firstScanIsConcentration = false;
+   }
+#if defined(USE_THREADS)
+   if ( USglobal->config_list.numThreads >= 1 )
+   {
+      int progress_pos = 0;
+      unsigned int j;
+      unsigned int threads = USglobal->config_list.numThreads;
+      vector < fematch_ra_thr_t* > fematch_ra_thr_threads(threads);
+      vector < vector < mfem_data > > simdatas;
+      simdatas.resize(threads);
+      
+      for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+      {
+         for (k=0; k<points; k++)
+         {
+            simdata[0].scan[i].conc[k] = 0.0;
+         }
+      }
+      
+      for ( j = 0; j < threads; j++ )
+      {
+         fematch_ra_thr_threads[j] = new fematch_ra_thr_t(j);
+         fematch_ra_thr_threads[j]->start();
+         simdatas[j] = simdata;
+      }
+      for ( j = 0; j < threads; j++ )
+      {
+# if defined(DEBUG_THREADS)
+         cout << "thread " << j << endl;
+# endif            
+         fematch_ra_thr_threads[j]->fematch_ra_thr_setup(
+                                                         &progress_pos,
+                                                         &msv[j],
+                                                         &sp,
+                                                         &simdatas[j]
+                                                         );
+      }
+      // sleep app loop
+      {
+         int all_done;
+#if !defined(WIN32)
+         timespec ns;
+         timespec ns_ret;
+         ns.tv_sec = 0;
+         ns.tv_nsec = 50000000l;
+#endif
+         
+         do {
+            all_done = threads;
+            for ( j = 0; j < threads; j++ )
+            {
+               all_done -= fematch_ra_thr_threads[j]->fematch_ra_thr_work_status();
+            }
+            progress->setProgress(progress_pos, msv[0].component_vector.size());
+#if defined(DEBUG_THREADS)
+            printf("progress_pos %d of %d\n", progress_pos, msv[0].component_vector.size());
+#endif
+            qApp->processEvents();
+#if defined(WIN32)
+            _sleep(1);
+#else
+            nanosleep(&ns, &ns_ret);
+#endif
+         } while(all_done);
+      }
+      
+      // wait for work to complete
+      
+      for ( j = 0; j < threads; j++ )
+      {
+         fematch_ra_thr_threads[j]->fematch_ra_thr_wait();
+      }
+      
+      // destroy
+      
+      for ( j = 0; j < threads; j++ )
+      {
+         fematch_ra_thr_threads[j]->fematch_ra_thr_shutdown();
+      }
+      
+      for ( j = 0; j < threads; j++ )
+      {
+         fematch_ra_thr_threads[j]->wait();
+      }
+      
+      for ( j = 0; j < threads; j++ )
+      {
+         delete fematch_ra_thr_threads[j];
+      }
+      
+      // merge results
+      for ( j = 0; j < threads; j++ )
+      {
+         // combine the current model's solution with the total solution vector:
+         for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+         {
+            for (k=0; k<points; k++)
+            {
+               solution.scan[i].conc[k] += simdatas[j][0].scan[i].conc[k];
+            }
+            //cout << "i=" << i << ": " << simdata[0].scan[i].time << ", " << simdata[0].scan[i].omega_s_t << endl;
+         }
+      }
+      progress->setProgress(1,1);
+   } 
+   else
+   {
+      US_Astfem_RSA *astfem_rsa;
+      astfem_rsa = new US_Astfem_RSA(false);
+      for (j=0; j<USglobal->config_list.numThreads; j++)
+      {
+         //fg.write_experiment(&msv[j], &sp, str.sprintf("/usr/local/ultrascan/develop/%d-model", j));
+         for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+         {
+            for (k=0; k<points; k++)
+            {
+               simdata[0].scan[i].conc[k] = 0.0;
+            }
+         }
+         /*
+           for (i=0; i<msv[j].component_vector.size(); i++)
+           {
+           cout << "s: " << msv[j].component_vector[i].s << ", D: " << msv[j].component_vector[i].D << ", c: " << msv[j].component_vector[i].concentration << " (" << msv[j].component_vector[i].name<<")\n";
+           }
+         */
+         astfem_rsa->calculate(&msv[j], &sp, &simdata); // calculate the model for the current thread
+         // combine the current model's solution with the total solution vector:
+         for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
+         {
+            for (k=0; k<points; k++)
+            {
+               solution.scan[i].conc[k] += simdata[0].scan[i].conc[k];
+            }
+            //cout << "i=" << i << ": " << simdata[0].scan[i].time << ", " << simdata[0].scan[i].omega_s_t << endl;
+         }
+         progress->setProgress(j+1);
+         qApp->processEvents();
+      }
+      delete astfem_rsa;
+   }
+#else
+   US_Astfem_RSA *astfem_rsa;
+   astfem_rsa = new US_Astfem_RSA(false);
    for (j=0; j<USglobal->config_list.numThreads; j++)
    {
       //fg.write_experiment(&msv[j], &sp, str.sprintf("/usr/local/ultrascan/develop/%d-model", j));
@@ -1548,13 +1819,6 @@ float US_FeMatch_W::calc_residuals_ra()
         cout << "s: " << msv[j].component_vector[i].s << ", D: " << msv[j].component_vector[i].D << ", c: " << msv[j].component_vector[i].concentration << " (" << msv[j].component_vector[i].name<<")\n";
         }
       */
-      if(!ti_noise_avail && sp.band_forming) {
-         cout << "band_firstScanIsConcentration = true\n";
-         sp.band_firstScanIsConcentration = true;
-      } else {
-         cout << "band_firstScanIsConcentration = false\n";
-         sp.band_firstScanIsConcentration = false;
-      }
       astfem_rsa->calculate(&msv[j], &sp, &simdata); // calculate the model for the current thread
       // combine the current model's solution with the total solution vector:
       for (i=0; i<run_inf.scans[selected_cell][selected_lambda]; i++)
@@ -1569,6 +1833,7 @@ float US_FeMatch_W::calc_residuals_ra()
       qApp->processEvents();
    }
    delete astfem_rsa;
+#endif
    plot_edit();
    long *resids;
    double **res;
@@ -1706,7 +1971,7 @@ float US_FeMatch_W::calc_residuals()
       }
 
       //fematch_thr_t *fematch_thr_threads[USglobal->config_list.numThreads];
-      vector<fematch_thr_t*> fematch_thr_threads(USglobal->config_list.numThreads);
+      vector < fematch_thr_t* > fematch_thr_threads(USglobal->config_list.numThreads);
 
       for(j = 0; j < threads; j++)
       {

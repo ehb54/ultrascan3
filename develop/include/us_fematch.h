@@ -185,5 +185,46 @@ class fematch_thr_t : public QThread
   int work_done_waiters;
 };
 
+class fematch_ra_thr_t : public QThread
+{
+ public:
+  fematch_ra_thr_t(int);
+  void fematch_ra_thr_setup(
+                            int *,
+                            ModelSystem *,
+                            SimulationParameters *,
+                            vector < mfem_data > *
+                            );
+  void fematch_ra_thr_shutdown();
+  void fematch_ra_thr_wait();
+  int fematch_ra_thr_work_status();
+  virtual void run();
+
+ private:
+  int *progress_pos;
+  ModelSystem *msv;
+  SimulationParameters *sp;
+  US_Astfem_RSA *astfem_rsa;
+
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+  vector < mfem_data > *simdata;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
+  int thread;
+  QMutex work_mutex;
+  int work_to_do;
+  QWaitCondition cond_work_to_do;
+  int work_done;
+  QWaitCondition cond_work_done;
+  int work_to_do_waiters;
+  int work_done_waiters;
+};
+
 #endif
 

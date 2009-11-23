@@ -37,7 +37,10 @@ class US_EXTERN US_Astfem_RSA : public QObject
 
    public slots:
 
-      int calculate(struct ModelSystem *, struct SimulationParameters *, vector <struct mfem_data> *);
+      int calculate(struct ModelSystem *, 
+                    struct SimulationParameters *, 
+                    vector <struct mfem_data> *, 
+                    int *progress=0);
       int calculate_ni(double,             // rpm_start
                        double,             // rpm_stop
                        mfem_initial *,      // C0

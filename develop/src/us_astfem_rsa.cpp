@@ -149,8 +149,10 @@ US_Astfem_RSA::~US_Astfem_RSA()
 {
 }
 
-int US_Astfem_RSA::calculate(struct ModelSystem *system, struct SimulationParameters *simparams,
-                             vector <struct mfem_data> *exp_data)
+int US_Astfem_RSA::calculate(struct ModelSystem *system, 
+                             struct SimulationParameters *simparams,
+                             vector <struct mfem_data> *exp_data, 
+                             int *progress_pos)
 {
 #if defined(DEBUG)
    US_FemGlobal fg;
@@ -186,6 +188,12 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system, struct SimulationParame
    adjust_limits((*simparams).speed_step[0].rotorspeed);
    for (k=0; k<(*system).component_vector.size(); k++)
    {
+      //      printf("ASTFEM RSA working on component %d of %d\n",
+      //             k, (*system).component_vector.size());
+      if ( progress_pos ) 
+      {
+         *progress_pos = (int) k;
+      }
       reacting[k] = false;
       for (j=0; j<(*system).assoc_vector.size(); j++)
       {
