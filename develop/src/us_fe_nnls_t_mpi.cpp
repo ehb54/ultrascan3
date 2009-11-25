@@ -979,7 +979,13 @@ US_fe_nnls_t::send_udp_msg()
          job_udp_msg_gen +
          job_udp_msg_meniscus +
          job_udp_msg_iterative;
-
+#if defined(DEBUG_UDP)
+      printf("writing udp message %s to host %s port %d\n",
+	     msg.ascii(),
+	     host_address_udp.toString().ascii(),
+	     host_port);
+      fflush(stdout);
+#endif
       socket_device_udp->writeBlock ( msg.ascii(), msg.length(), host_address_udp, host_port );
    }
 }
@@ -997,8 +1003,8 @@ US_fe_nnls_t::init_run(const QString & data_file,
    // -3: some undefined error happened in calc_residuals
    this->job_id = job_id;
    job_udp_msg_key = "js|" + job_id + QString("|Processes %1. ").arg(npes);
-   host_address_udp = QHostAddress("bcf.uthscsa.edu");
-   host_port = 64002;
+   host_address_udp = QHostAddress("129.111.140.173"); // bcf.uthscsa.edu");
+   host_port = 787;
    socket_device_udp = new QSocketDevice(QSocketDevice::Datagram);
    job_udp_msg_status = "Start run. ";
    job_udp_msg_mc = "";
