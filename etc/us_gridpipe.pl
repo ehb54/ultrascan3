@@ -391,6 +391,8 @@ sub write_status {
 			    $status = $tigre{'eprstatus|' . $use_i};
 			    if ($mci) {
 				$status .= " $mci";
+			    }
+			    if ( $tigre{"js|$jid"} ) {
 				print OUT_DETAIL "$jid " . $tigre{"js|$jid"} . "\n";
 			    }
 			    push @unsorted, "$tigre{$i} $status\n";
