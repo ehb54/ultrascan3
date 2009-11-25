@@ -170,6 +170,9 @@ $server = IO::Socket::INET->new(LocalPort => $port,
                                 Proto => "udp")
     || die "Couldn't start a udp server on port $port : $@\n";
 
+use Inline C;
+
+reduce_perms(48,48);
 
 print "awating UDP messages on port $port\n";
 
@@ -186,4 +189,15 @@ while(1) {
             dbclose();
         }
     }
+}
+__END__
+__C__
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+void reduce_perms(int uid, int gid) {
+    printf("reducing privilege to run as apache\n");
+    setuid((uid_t) uid);
+    setgid((gid_t) gid);
 }
