@@ -4,9 +4,11 @@
 US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *sidechain_overlap,
                                          struct overlap_reduction *mainchain_overlap, 
                                          struct overlap_reduction *buried_overlap,
+                                         bool *replicate_o_r_method_somo,
                                          struct overlap_reduction *grid_exposed_overlap,
                                          struct overlap_reduction *grid_buried_overlap,
                                          struct overlap_reduction *grid_overlap,
+                                         bool *replicate_o_r_method_grid,
                                          double *overlap_tolerance,
                                          bool *overlap_widget, 
                                          void *us_hydrodyn,
@@ -15,9 +17,11 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *sidechain_ove
    this->sidechain_overlap = sidechain_overlap;
    this->mainchain_overlap = mainchain_overlap;
    this->buried_overlap = buried_overlap;
+   this->replicate_o_r_method_somo = replicate_o_r_method_somo;
    this->grid_exposed_overlap = grid_exposed_overlap;
    this->grid_buried_overlap = grid_buried_overlap;
    this->grid_overlap = grid_overlap;
+   this->replicate_o_r_method_grid = replicate_o_r_method_grid;
    this->overlap_widget = overlap_widget;
    this->overlap_tolerance = overlap_tolerance;
    this->us_hydrodyn = us_hydrodyn;
@@ -35,6 +39,7 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *sidechain_ove
 US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *grid_exposed_overlap,
                                          struct overlap_reduction *grid_buried_overlap,
                                          struct overlap_reduction *grid_overlap,
+                                         bool *replicate_o_r_method_grid,
                                          double *overlap_tolerance, 
                                          bool *overlap_widget, 
                                          void *us_hydrodyn, 
@@ -44,6 +49,7 @@ US_Hydrodyn_Overlap::US_Hydrodyn_Overlap(struct overlap_reduction *grid_exposed_
    this->grid_exposed_overlap = grid_exposed_overlap;
    this->grid_buried_overlap = grid_buried_overlap;
    this->grid_overlap = grid_overlap;
+   this->replicate_o_r_method_grid = replicate_o_r_method_grid;
    this->overlap_widget = overlap_widget;
    this->overlap_tolerance = overlap_tolerance;
    this->us_hydrodyn = us_hydrodyn;
@@ -66,18 +72,51 @@ US_Hydrodyn_Overlap::~US_Hydrodyn_Overlap()
 void US_Hydrodyn_Overlap::setupGUI()
 {
    int minHeight1 = 30;
+   
    if (show_grid_only)
    {
-      grid_exposed_OR = new US_Hydrodyn_OR(grid_exposed_overlap, us_hydrodyn, this);
-      grid_buried_OR = new US_Hydrodyn_OR(grid_buried_overlap, us_hydrodyn, this);
-      grid_OR = new US_Hydrodyn_OR(grid_overlap, us_hydrodyn, this);
+      other_ORs.clear();
+      grid_exposed_OR = new US_Hydrodyn_OR(grid_exposed_overlap, 
+                                           replicate_o_r_method_grid, 
+                                           &other_ORs,
+                                           us_hydrodyn,
+                                           this);
+      other_ORs.push_back((void *) grid_exposed_OR);
+      grid_buried_OR = new US_Hydrodyn_OR(grid_buried_overlap, 
+                                          replicate_o_r_method_grid, 
+                                          &other_ORs,
+                                          us_hydrodyn, 
+                                          this);
+      other_ORs.push_back((void *) grid_buried_OR);
+      grid_OR = new US_Hydrodyn_OR(grid_overlap, 
+                                   replicate_o_r_method_grid, 
+                                   &other_ORs,
+                                   us_hydrodyn, 
+                                   this);
+      other_ORs.push_back((void *) grid_OR);
       lbl_info = new QLabel(tr("Grid Bead Overlap Reduction Options:"), this);
    }
    else
    {
-      sidechain_OR = new US_Hydrodyn_OR(sidechain_overlap, us_hydrodyn, this);
-      mainchain_OR = new US_Hydrodyn_OR(mainchain_overlap, us_hydrodyn, this);
-      buried_OR = new US_Hydrodyn_OR(buried_overlap, us_hydrodyn, this);
+      other_ORs.clear();
+      sidechain_OR = new US_Hydrodyn_OR(sidechain_overlap,
+                                        replicate_o_r_method_somo, 
+                                        &other_ORs,
+                                        us_hydrodyn, 
+                                        this);
+      other_ORs.push_back((void *) sidechain_OR);
+      mainchain_OR = new US_Hydrodyn_OR(mainchain_overlap,
+                                        replicate_o_r_method_somo, 
+                                        &other_ORs,
+                                        us_hydrodyn,
+                                        this);
+      other_ORs.push_back((void *) mainchain_OR);
+      buried_OR = new US_Hydrodyn_OR(buried_overlap, 
+                                     replicate_o_r_method_somo, 
+                                     &other_ORs,
+                                     us_hydrodyn, 
+                                     this);
+      other_ORs.push_back((void *) buried_OR);
       lbl_info = new QLabel(tr("SoMo Bead Overlap Reduction Options:"), this);
    }
    //buried_OR->cnt_fuse->setEnabled(false);

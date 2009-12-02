@@ -662,9 +662,11 @@ void US_Hydrodyn::show_overlap()
       overlap_window = new US_Hydrodyn_Overlap(&sidechain_overlap,
                                                &mainchain_overlap,
                                                &buried_overlap,
+                                               &replicate_o_r_method_somo,
                                                &grid_exposed_overlap,
                                                &grid_buried_overlap,
                                                &grid_overlap,
+                                               &replicate_o_r_method_grid,
                                                &overlap_tolerance,
                                                &overlap_widget,
                                                this);
@@ -691,6 +693,7 @@ void US_Hydrodyn::show_grid_overlap()
       grid_overlap_window = new US_Hydrodyn_Overlap(&grid_exposed_overlap,
                                                     &grid_buried_overlap,
                                                     &grid_overlap,
+                                                    &replicate_o_r_method_grid,
                                                     &overlap_tolerance,
                                                     &grid_overlap_widget,
                                                     this);
@@ -803,6 +806,7 @@ void US_Hydrodyn::show_grid()
       grid_window = new US_Hydrodyn_Grid(&grid_exposed_overlap,
                                          &grid_buried_overlap,
                                          &grid_overlap,
+                                         &replicate_o_r_method_grid,
                                          &grid,
                                          &overlap_tolerance,
                                          &grid_widget,

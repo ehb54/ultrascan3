@@ -4,6 +4,7 @@
 US_Hydrodyn_Grid::US_Hydrodyn_Grid(struct overlap_reduction *grid_exposed_overlap,
                                    struct overlap_reduction *grid_buried_overlap,
                                    struct overlap_reduction *grid_overlap,
+                                   bool *replicate_o_r_method_grid,
                                    struct grid_options *grid,
                                    double *overlap_tolerance,
                                    bool *grid_widget,
@@ -14,6 +15,7 @@ US_Hydrodyn_Grid::US_Hydrodyn_Grid(struct overlap_reduction *grid_exposed_overla
    this->grid_exposed_overlap = grid_exposed_overlap;
    this->grid_buried_overlap = grid_buried_overlap;
    this->grid_overlap = grid_overlap;
+   this->replicate_o_r_method_grid = replicate_o_r_method_grid;
    this->grid = grid;
    this->grid_widget = grid_widget;
    this->overlap_tolerance = overlap_tolerance;
@@ -216,6 +218,7 @@ void US_Hydrodyn_Grid::overlaps()
       overlap_window = new US_Hydrodyn_Overlap(grid_exposed_overlap,
                                                grid_buried_overlap,
                                                grid_overlap, 
+                                               replicate_o_r_method_grid,
                                                overlap_tolerance, 
                                                &overlap_widget, 
                                                us_hydrodyn);

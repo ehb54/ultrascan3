@@ -120,6 +120,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct residue new_residue;
       struct atom new_atom;
       struct bead new_bead;
+      bool replicate_o_r_method_somo;
+      bool replicate_o_r_method_grid;
       struct overlap_reduction sidechain_overlap;
       struct overlap_reduction mainchain_overlap;
       struct overlap_reduction buried_overlap;

@@ -32,9 +32,11 @@ class US_EXTERN US_Hydrodyn_Overlap : public QFrame
       US_Hydrodyn_Overlap(struct overlap_reduction *, 
                           struct overlap_reduction *,
                           struct overlap_reduction *, 
+                          bool *,
                           struct overlap_reduction *, 
                           struct overlap_reduction *, 
                           struct overlap_reduction *, 
+                          bool *,
                           double *, 
                           bool *, 
                           void *,
@@ -43,6 +45,7 @@ class US_EXTERN US_Hydrodyn_Overlap : public QFrame
       US_Hydrodyn_Overlap(struct overlap_reduction *, 
                           struct overlap_reduction *,
                           struct overlap_reduction *, 
+                          bool *,
                           double *, 
                           bool *, 
                           void *,
@@ -55,9 +58,11 @@ class US_EXTERN US_Hydrodyn_Overlap : public QFrame
       struct overlap_reduction *sidechain_overlap;
       struct overlap_reduction *mainchain_overlap;
       struct overlap_reduction *buried_overlap;
+      bool *replicate_o_r_method_somo;
       struct overlap_reduction *grid_exposed_overlap;
       struct overlap_reduction *grid_buried_overlap;
       struct overlap_reduction *grid_overlap;
+      bool *replicate_o_r_method_grid;
       bool *overlap_widget, show_grid_only;
       double *overlap_tolerance;
       int tab;
@@ -70,6 +75,16 @@ class US_EXTERN US_Hydrodyn_Overlap : public QFrame
       US_Hydrodyn_OR *grid_OR;
       US_Hydrodyn_OR *grid_exposed_OR;
       US_Hydrodyn_OR *grid_buried_OR;
+
+#ifdef WIN32
+#  pragma warning ( disable: 4251 )
+#endif
+
+      vector < void *> other_ORs;
+
+#ifdef WIN32
+#  pragma warning ( default: 4251 )
+#endif
 
       QLabel *lbl_info;
 

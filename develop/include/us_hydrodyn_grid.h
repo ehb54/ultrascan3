@@ -39,6 +39,7 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
       US_Hydrodyn_Grid(struct overlap_reduction *,
                        struct overlap_reduction *,
                        struct overlap_reduction *,
+                       bool *,
                        struct grid_options *,
                        double *, 
                        bool *, 
@@ -53,6 +54,7 @@ class US_EXTERN US_Hydrodyn_Grid : public QFrame
       struct overlap_reduction *grid_exposed_overlap;
       struct overlap_reduction *grid_buried_overlap;
       struct overlap_reduction *grid_overlap;
+      bool *replicate_o_r_method_grid;
       bool *grid_widget;
       bool overlap_widget;
       double *overlap_tolerance;

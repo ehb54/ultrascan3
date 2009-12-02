@@ -1,9 +1,16 @@
 #include "../include/us_hydrodyn_overlap_reduction.h"
 #include "../include/us_hydrodyn.h"
 
-US_Hydrodyn_OR::US_Hydrodyn_OR(struct overlap_reduction *o_r, void *us_hydrodyn, QWidget *p, const char *name) : QFrame(p, name)
+US_Hydrodyn_OR::US_Hydrodyn_OR(struct overlap_reduction *o_r, 
+                               bool *replicate_o_r_method,
+                               vector < void * > *other_ORs,
+                               void *us_hydrodyn, 
+                               QWidget *p, 
+                               const char *name) : QFrame(p, name)
 {
    this->o_r = o_r;
+   this->replicate_o_r_method = replicate_o_r_method;
+   this->other_ORs = other_ORs;
    this->us_hydrodyn = us_hydrodyn;
    USglobal=new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
@@ -34,6 +41,15 @@ void US_Hydrodyn_OR::setupGUI()
    cb_remove->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_remove->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_remove, SIGNAL(clicked()), SLOT(set_remove()));
+
+   cb_replicate_method = new QCheckBox(this);
+   cb_replicate_method->setText(tr(" Same overlap reduction method of all bead types"));
+   cb_replicate_method->setChecked(*replicate_o_r_method);
+   cb_replicate_method->setEnabled(true);
+   cb_replicate_method->setMinimumHeight(minHeight1);
+   cb_replicate_method->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_replicate_method->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_replicate_method, SIGNAL(clicked()), SLOT(set_replicate_method()));
 
    cb_fuse = new QCheckBox(this);
    cb_fuse->setText(tr(" Fuse Beads that overlap by more than: "));
@@ -123,6 +139,7 @@ void US_Hydrodyn_OR::setupGUI()
    background->addWidget(cb_remove, j, 0);
    j++;
    background->addMultiCellWidget(lbl_steps, j, j+1, 1, 1);
+   background->addWidget(cb_replicate_method, j+1, 0);
    j+=2;
    background->addWidget(cb_sync, j, 0);
    background->addWidget(cnt_sync, j, 1);
@@ -149,6 +166,31 @@ void US_Hydrodyn_OR::set_remove()
    {
       cb_translate->setEnabled((*o_r).remove_overlap);
    }
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_OR::replicate() 
+{
+   if ( *replicate_o_r_method )
+   {
+      for ( unsigned int i = 0; i < other_ORs->size(); i++ )
+      {
+         ((US_Hydrodyn_OR *)((*other_ORs)[i]))->cb_hierarch->setChecked(o_r->remove_hierarch);
+         ((US_Hydrodyn_OR *)((*other_ORs)[i]))->cb_sync->setChecked(o_r->remove_sync);
+         ((US_Hydrodyn_OR *)((*other_ORs)[i]))->o_r->remove_hierarch = o_r->remove_hierarch;
+         ((US_Hydrodyn_OR *)((*other_ORs)[i]))->o_r->remove_sync = o_r->remove_sync;
+      }
+   }
+}
+
+void US_Hydrodyn_OR::set_replicate_method()
+{
+   *replicate_o_r_method = cb_replicate_method->isChecked();
+   for ( unsigned int i = 0; i < other_ORs->size(); i++ )
+   {
+      ((US_Hydrodyn_OR *)((*other_ORs)[i]))->cb_replicate_method->setChecked(*replicate_o_r_method);
+   }
+   replicate();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -180,6 +222,7 @@ void US_Hydrodyn_OR::set_hierarch()
    cb_sync->disconnect();
    cb_sync->setChecked((*o_r).remove_sync);
    connect(cb_sync, SIGNAL(clicked()), SLOT(set_sync()));
+   replicate();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -198,6 +241,7 @@ void US_Hydrodyn_OR::set_sync()
    cb_hierarch->disconnect();
    cb_hierarch->setChecked((*o_r).remove_hierarch);
    connect(cb_hierarch, SIGNAL(clicked()), SLOT(set_hierarch()));
+   replicate();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

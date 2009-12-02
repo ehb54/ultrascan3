@@ -912,7 +912,13 @@ int US_Hydrodyn::read_config(QFile& f)
    }
 
    QTextStream ts(&f);
+
    if ( ts.readLine() == QString::null ) return -10000; // first line is comment
+
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -10001;
+   replicate_o_r_method_somo = (bool) str.toInt();
+
    ts >> str;
    if ( ts.readLine() == QString::null ) return -10001;
    sidechain_overlap.remove_overlap = (bool) str.toInt();
@@ -988,6 +994,9 @@ int US_Hydrodyn::read_config(QFile& f)
    if ( ts.readLine() == QString::null ) return -10028;
    buried_overlap.show_translate = (bool) str.toInt();
 
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -10030;
+   replicate_o_r_method_grid = (bool) str.toInt();
 
    ts >> str;
    if ( ts.readLine() == QString::null ) return -10030;
@@ -1294,6 +1303,9 @@ void US_Hydrodyn::write_config(const QString& fname)
    {
       QTextStream ts(&f);
       ts << "SOMO Config file - computer generated, please do not edit...\n";
+
+      ts << replicate_o_r_method_somo << "\t\t# Replicate overlap removal method flag\n";
+      
       ts << sidechain_overlap.remove_overlap << "\t\t# Remove side chain overlaps flag\n";
       ts << sidechain_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
       ts << sidechain_overlap.fuse_beads_percent << "\t\t# Bead fusing threshold (%)\n";
@@ -1323,6 +1335,8 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << buried_overlap.remove_sync_percent << "\t\t# Percent synchronously step\n";
       ts << buried_overlap.translate_out << "\t\t# Outward translation flag\n";
       ts << buried_overlap.show_translate << "\t\t# flag for showing outward translation widget\n";
+
+      ts << replicate_o_r_method_grid << "\t\t# Replicate overlap removal method flag\n";
 
       ts << grid_exposed_overlap.remove_overlap << "\t\t# Remove exposed grid bead overlaps flag\n";
       ts << grid_exposed_overlap.fuse_beads << "\t\t# Fuse beads flag\n";
@@ -1456,6 +1470,8 @@ void US_Hydrodyn::set_default()
    if ( !config_read )
    {
       // hard coded defaults
+      replicate_o_r_method_somo = false;
+
       sidechain_overlap.remove_overlap = true;
       sidechain_overlap.fuse_beads = true;
       sidechain_overlap.fuse_beads_percent = 70.0;
@@ -1485,6 +1501,8 @@ void US_Hydrodyn::set_default()
       buried_overlap.remove_sync_percent = 1.0;
       buried_overlap.translate_out = false;
       buried_overlap.show_translate = false;
+
+      replicate_o_r_method_grid = false;
 
       grid_exposed_overlap.remove_overlap = true;
       grid_exposed_overlap.fuse_beads = false;
