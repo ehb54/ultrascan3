@@ -1470,9 +1470,9 @@ void US_Hydrodyn::set_default()
       grid_exposed_overlap.remove_overlap = true;
       grid_exposed_overlap.fuse_beads = false;
       grid_exposed_overlap.fuse_beads_percent = 0.0;
-      grid_exposed_overlap.remove_hierarch = true;
+      grid_exposed_overlap.remove_hierarch = false;
       grid_exposed_overlap.remove_hierarch_percent = 1.0;
-      grid_exposed_overlap.remove_sync = false;
+      grid_exposed_overlap.remove_sync = true;
       grid_exposed_overlap.remove_sync_percent = 1.0;
       grid_exposed_overlap.translate_out = true;
       grid_exposed_overlap.show_translate = true;
@@ -1480,9 +1480,9 @@ void US_Hydrodyn::set_default()
       grid_buried_overlap.remove_overlap = true;
       grid_buried_overlap.fuse_beads = false;
       grid_buried_overlap.fuse_beads_percent = 0.0;
-      grid_buried_overlap.remove_hierarch = true;
+      grid_buried_overlap.remove_hierarch = false;
       grid_buried_overlap.remove_hierarch_percent = 1.0;
-      grid_buried_overlap.remove_sync = false;
+      grid_buried_overlap.remove_sync = true;
       grid_buried_overlap.remove_sync_percent = 1.0;
       grid_buried_overlap.translate_out = false;
       grid_buried_overlap.show_translate = false;
@@ -1490,9 +1490,9 @@ void US_Hydrodyn::set_default()
       grid_overlap.remove_overlap = true;
       grid_overlap.fuse_beads = false;
       grid_overlap.fuse_beads_percent = 0.0;
-      grid_overlap.remove_hierarch = true;
+      grid_overlap.remove_hierarch = false;
       grid_overlap.remove_hierarch_percent = 1.0;
-      grid_overlap.remove_sync = false;
+      grid_overlap.remove_sync = true;
       grid_overlap.remove_sync_percent = 1.0;
       grid_overlap.translate_out = false;
       grid_overlap.show_translate = false;
