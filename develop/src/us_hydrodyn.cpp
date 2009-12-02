@@ -144,6 +144,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    results.s20w = 0.0;
    results.D20w = 0.0;
    results.viscosity = 0.0;
+   results.ff0 = 0.0;
    results.rs = 0.0;
    results.rg = 0.0;
    results.vbar = 0.72;
@@ -151,6 +152,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    results.s20w_sd = 0.0;
    results.D20w_sd = 0.0;
    results.viscosity_sd = 0.0;
+   results.ff0_sd = 0.0;
    results.rs_sd = 0.0;
    results.rg_sd = 0.0;
    results.tau_sd = 0.0;
@@ -403,7 +405,7 @@ void US_Hydrodyn::setupGUI()
    pb_grid_pdb->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_grid_pdb, SIGNAL(clicked()), SLOT(calc_grid_pdb()));
 
-   pb_grid = new QPushButton(tr("Build Grid Bead Model"), this);
+   pb_grid = new QPushButton(tr("Grid Existing Bead Model"), this);
    Q_CHECK_PTR(pb_grid);
    pb_grid->setMinimumHeight(minHeight1);
    pb_grid->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));

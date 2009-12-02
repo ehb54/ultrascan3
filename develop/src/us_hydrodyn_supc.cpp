@@ -62,6 +62,7 @@ static FILE *interout;
 static char molecola[SMAX];
 static char ragcol[SMAX];
 static char risultati[SMAX];
+static char molecola_nb[SMAX];
 static char fil001[SMAX];
 // static char corresp[SMAX];
 // static char data_stp;
@@ -178,6 +179,7 @@ static float correz;
 static float Rg;
 static float Rgu;
 static float RSt;
+static float ff0_t;
 static float RSr[3];
 static float CdT;
 static float CfT;
@@ -212,6 +214,7 @@ static float REC;
 static float Rg2;
 static float Rgu2;
 static float RSt2;
+static float ff0_t2;
 static float RSr2[3];
 static float CdT2;
 static float CfT2;
@@ -746,6 +749,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       Rg = Rgu = RSt = CfT = CST = CSTF = CdT = CfR1 = CdR1 = RE = REC = VIM = VIMC = 
          CTH = CTM = 0.0;
 
+      ff0_t = 
+         ff0_t2 = 0.0;
+
 #if defined(TSUDA_DOUBLESUM)
       REDS = RETM = RETV = VIMDS = VIMTM = VIMTV = 0.0;
 #endif
@@ -932,6 +938,9 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    Rg = Rgu = RSt = CfT = CST = CSTF = CdT = CfR1 = CdR1 = RE = REC = VIM = VIMC = 
       CTH = CTM = 0.0;
 
+   ff0_t =
+      ff0_t2 = 0.0;
+
 #if defined(TSUDA_DOUBLESUM)
    REDS = RETM = RETV = VIMDS = VIMTM = VIMTV = 0.0;
 #endif
@@ -971,6 +980,12 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
     
    strncpy(molecola, QString(use_filename).arg(model_idx[0] + 1).ascii(), SMAX); // first model
    molecola[SMAX-1] = 0;
+   strncpy(molecola_nb, molecola, SMAX);
+   molecola_nb[SMAX-1] = 0;
+   if(strlen(molecola_nb) > 7) {
+      molecola_nb[strlen(molecola_nb) - 6] = 0; // remove .beams
+   }
+   
 #if defined(DEBUG_FILES)
    if(!(mol = fopen(molecola, "r"))) {
       supc_free_alloced();
@@ -1084,7 +1099,12 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 #endif
          printf("opening file: %s\n",  QString(use_filename).arg(model_idx[k] + 1).ascii());
          strncpy(molecola, QString(use_filename).arg(model_idx[k] + 1).ascii(), SMAX); // first model
-
+         molecola[SMAX-1] = 0;
+         strncpy(molecola_nb, molecola, SMAX);
+         molecola_nb[SMAX-1] = 0;
+         if(strlen(molecola_nb) > 7) {
+            molecola_nb[strlen(molecola_nb) - 6] = 0; // remove .beams
+         }
          active_model = k;
 
          init_da_a();       
@@ -1300,7 +1320,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
          fprintf(exe_time, "\n%s\n\n", "*** Computational Method : SUPERMATRIX INVERSION chol ***");
          fprintf(exe_time, "Date: %s %d %s %d %s\n", day, numday, month, year, hour);
          fprintf(exe_time, "%s", "MODEL FILE NAME :___ ");
-         fprintf(exe_time, "%s\n", molecola);
+         fprintf(exe_time, "%s\n", molecola_nb);
          fprintf(exe_time, "%s%d\n", "BEADS in the MODEL :___ ", numero_sfere);
          // fprintf(exe_time, "%s%d\n", "FIRST BEAD # INCLUDED  :___ ", prima);
          // fprintf(exe_time, "%s%d\n", "LAST BEAD # INCLUDED :___ ", ultima);
@@ -1486,6 +1506,13 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
 
          if (mascor == 1)
             mascor1 = (float) pesmol;
+
+         temp = f * 1.0E-07 * fconv / 
+            ( 6.0 * PI * ETAo *
+              pow( 3.0 * mascor1 * partvol / (4.0 * PI * AVOGADRO), 1.0/3.0));
+         ff0_t += temp;
+         ff0_t2 += temp * temp;
+         temp = 0.0;
 
          CfT += f * 1.0E-7 * fconv;
          CfT2 += pow((f * 1.0E-7 * fconv), 2);
@@ -2012,6 +2039,15 @@ stampa_ris()
    printf("%s%.2e\t%s\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] (20C,w)");
    supc_results->D20w = (KB * TE * 1.0E7) / f * fconv1;
 
+
+   //   printf("%s%.4e\n", "- FRICTIONAL RATIO (from Mass, s) = ", 
+   //     ( supc_results->mass * (1.0 - partvol * DENS_20W) / 
+   //       ( AVOGADRO * supc_results->s20w * 1e-13) ) 
+   //     /
+   //     ( 6.0 * PI * ETAo * 
+   //       pow(3.0 * supc_results->mass * partvol / (4.0 * PI * AVOGADRO), 1.0/3.0)) 
+   //     );
+
    if (raflag == -1.0) 
    {
       printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
@@ -2041,6 +2077,12 @@ stampa_ris()
       printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
    }
+
+   supc_results->ff0 = 
+      f * 1.0E-07 * fconv / ( 6.0 * PI * ETAo *
+      pow( 3.0 * supc_results->mass * partvol / (4.0 * PI * AVOGADRO), 1.0/3.0));
+
+   printf("%s%.2f\n", "- FRICTIONAL RATIO                = ", supc_results->ff0);
 
    temp = 0.0;
    for (i = 0; i < 3; i++)
@@ -2091,7 +2133,6 @@ stampa_ris()
 
    printf("%s%.2f\t%s\n", "- TRANSLATIONAL STOKES' RADIUS    = ", f * fconv / (bc * PI * ETAo), "[nm]");
    supc_results->rs = f * fconv / (bc * PI * ETAo);
-    
 
    printf("%s%.2f\t%s\n", "- ROTATIONAL STOKES' RADIUS [ X ] = ", pow((3.0 / Dr[0] / bc / 4.0 / PI / ETAo), (0.33333L)) * fconv,
           "[nm]");
@@ -2221,7 +2262,12 @@ mem_ris(int model)
 
    ris = fopen(risultati, "ab");
    fprintf(ris, "%s", "MODEL File Name  :___ ");
-   fprintf(ris, "%s\n", molecola);
+   strncpy(molecola_nb, molecola, SMAX);
+   molecola_nb[SMAX-1] = 0;
+   if(strlen(molecola_nb) > 7) {
+      molecola_nb[strlen(molecola_nb) - 6] = 0; // remove .beams
+   }
+   fprintf(ris, "%s\n", molecola_nb);
    fprintf(ris, "%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere);
    // fprintf(ris, "%s%.2f [nm^2]\n", "TOTAL ASA of Beads in the MODEL :___ ", total_asa[model]);
    fprintf(ris, "%s%.2f [nm^2]\n", "TOTAL Surface Area of Beads in the MODEL :___ ", total_s_a[model]);
@@ -2316,6 +2362,11 @@ mem_ris(int model)
       fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
               (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
    }
+
+   fprintf(ris, "%s%.2f\n", "- FRICTIONAL RATIO      = ", 
+           f * 1.0E-07 * fconv / 
+           ( 6.0 * PI * ETAo *
+             pow( 3.0 * supc_results->mass * partvol / (4.0 * PI * AVOGADRO), 1.0/3.0)));
 
    temp = 0.0;
    for (i = 0; i < 3; i++)
@@ -2534,6 +2585,11 @@ val_med()
       temp = fabs((CST2 - pow(CST, 2) / num) / (num - 1));
       fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv unhyd.rad.)", CST / num, sqrt(temp), "[S]");
    }
+
+   temp = sqrt(fabs((ff0_t2 - pow(ff0_t, 2) / num) / (num - 1)));
+   fprintf(ris, "%s\t%.2f\t%.3e\n", "- FRICTIONAL RATIO            ", ff0_t / num, temp);
+   supc_results->ff0 = ff0_t / num;
+   supc_results->ff0_sd = temp;
 
    temp = fabs((CfR12 - pow(CfR1, 2) / num) / (num - 1));
    fprintf(ris, "\n%s\t%.3e\t%.3e\t%s\n", "- ROT. FRICT. COEFF.          ", CfR1 / num, sqrt(temp), "[g*cm^2/s]");

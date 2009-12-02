@@ -805,7 +805,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          {
             saxs_pr_thr_threads[j] = new saxs_pr_thr_t(j);
             saxs_pr_thr_threads[j]->start();
-            
          }
          vector < vector < unsigned int > > hists;
          hists.resize(threads);

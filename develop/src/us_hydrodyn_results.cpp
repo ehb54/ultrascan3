@@ -210,6 +210,26 @@ void US_Hydrodyn_Results::setupGUI()
    le_rs->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_rs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
+   lbl_ff0 = new QLabel(tr(" Frictional Ratio: "), this);
+   Q_CHECK_PTR(lbl_ff0);
+   lbl_ff0->setAlignment(AlignLeft|AlignVCenter);
+   lbl_ff0->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_ff0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_ff0 = new QLineEdit(this, "ff0 Line Edit");
+   if (fabs((*results).ff0_sd) <= 1e-100)
+   {
+      le_ff0->setText(str.sprintf("%3.2f", (*results).ff0));
+   }
+   else
+   {
+      le_ff0->setText(str.sprintf("%3.2f nm (%3.2e)", (*results).ff0, (*results).ff0_sd));
+   }
+   le_ff0->setReadOnly(true);
+   le_ff0->setAlignment(AlignVCenter);
+   le_ff0->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_ff0->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
    lbl_rg = new QLabel(tr(" Radius of Gyration: "), this);
    Q_CHECK_PTR(lbl_rg);
    lbl_rg->setAlignment(AlignLeft|AlignVCenter);
@@ -265,7 +285,7 @@ void US_Hydrodyn_Results::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=11, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=12, columns = 2, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -290,6 +310,9 @@ void US_Hydrodyn_Results::setupGUI()
    j++;
    background->addWidget(lbl_rs, j, 0);
    background->addWidget(le_rs, j, 1);
+   j++;
+   background->addWidget(lbl_ff0, j, 0);
+   background->addWidget(le_ff0, j, 1);
    j++;
    background->addWidget(lbl_rg, j, 0);
    background->addWidget(le_rg, j, 1);

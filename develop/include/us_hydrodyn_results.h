@@ -46,6 +46,8 @@ struct hydro_results
    double vbar;
    double asa_rg_pos;
    double asa_rg_neg;
+   double ff0;
+   double ff0_sd;
 };
 
 class US_EXTERN US_Hydrodyn_Results : public QFrame
@@ -85,6 +87,8 @@ class US_EXTERN US_Hydrodyn_Results : public QFrame
       QLineEdit *le_tau;
       QLabel *lbl_vbar;
       QLineEdit *le_vbar;
+      QLabel *lbl_ff0;
+      QLineEdit *le_ff0;
 
       QPushButton *pb_help;
       QPushButton *pb_cancel;
