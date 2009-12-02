@@ -450,6 +450,8 @@ void US_Hydrodyn::read_pdb(const QString &filename)
    temp_model.molecule.clear();
    temp_model.residue.clear();
    clear_temp_chain(&temp_chain);
+   bool currently_aa_chain = false; // do we have an amino acid chain (pbr)
+
    if (f.open(IO_ReadOnly))
    {
       QTextStream ts(&f);
@@ -525,14 +527,31 @@ void US_Hydrodyn::read_pdb(const QString &filename)
                   }
                   else // we have a chain, let's make sure the chain is still the same
                   {
-                     if(temp_chain.chainID != str1.mid(21, 1)) // then we just started a new chain
+                     bool break_chain = ( temp_chain.chainID != str1.mid(21, 1) );
+                     QString thisResName = str1.mid(17,3).stripWhiteSpace();
+                     bool known_residue = ( multi_residue_map.count(thisResName) );
+                     bool this_is_aa =  ( known_residue &&
+                                         residue_list[multi_residue_map[thisResName][0]].type == 0 );
+                     if ( !break_chain  && 
+                          currently_aa_chain &&
+                          known_residue &&
+                          !this_is_aa )
                      {
+                        break_chain = true;
+                     } 
+                     if ( break_chain )
+                     {
+                        if ( advanced_config.debug_2 )
+                        {
+                           printf("chain break <%s>\n", str1.ascii());
+                        }
                         temp_model.molecule.push_back(temp_chain);
                         clear_temp_chain(&temp_chain);
                         temp_chain.chainID = str1.mid(21, 1); // we have to start a new chain
                         str2 = str1.mid(72, 4);
                         temp_chain.segID = str2.stripWhiteSpace();
                      }
+                     currently_aa_chain = (!known_residue || this_is_aa);
                   }
                   if (assign_atom(str1, &temp_chain, &last_resSeq)) // parse the current line and add it to temp_chain
                   { // if true, we have new residue and need to add it to the residue vector

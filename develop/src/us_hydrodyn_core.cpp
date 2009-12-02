@@ -285,7 +285,6 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
       for (unsigned int k = 0; k < model->molecule[j].atom.size(); k++)
       {
          PDB_atom *this_atom = &(model->molecule[j].atom[k]);
-         
          if ( lastResSeq != this_atom->resSeq ||
               lastResName != this_atom->resName )
          {
@@ -293,70 +292,101 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
                  residue_list[multi_residue_map[this_atom->resName][0]].type == 0 )
             {
                aa++;
-               total_aa++;
             }
             else
             {
                non_aa++;
             }
-            if ( advanced_config.debug_2 )
+         }
+      }
+      if ( aa ) 
+      {
+         lastResSeq = "";
+         lastResName = "";
+         non_aa = 0;
+         aa = 0;
+         for (unsigned int k = 0; k < model->molecule[j].atom.size(); k++)
+         {
+            PDB_atom *this_atom = &(model->molecule[j].atom[k]);
+            
+            if ( lastResSeq != this_atom->resSeq ||
+                 lastResName != this_atom->resName )
             {
-               printf("unknown_residues.count(%s) %u\n",
-                      this_atom->resName.ascii(),
-                      (unsigned int)unknown_residues.count(this_atom->resName));
-            }
-            if ( 
-                ( lastResSeq != "" &&
-                  ( lastResSeq.toInt() + 1 !=  this_atom->resSeq.toInt() ||
-                    !multi_residue_map.count(this_atom->resName) ||
-                    unknown_residues.count(this_atom->resName) ||
-                    unknown_residues.count(lastResName) ) ) ||
-                ( lastResSeq == "" &&
-                  unknown_residues.count(this_atom->resName) 
-                  )
-                )
-            {
-               breaks++;
-               if ( lastResSeq != "" )
+               if ( multi_residue_map.count(this_atom->resName) &&
+                    residue_list[multi_residue_map[this_atom->resName][0]].type == 0 )
                {
-                  broken_chain_end[QString("%1|%2")
-                                   .arg(lastResSeq)
-                                   .arg(lastResName)] = true;
-               } 
+                  aa++;
+                  total_aa++;
+               }
                else
                {
-                  broken_chain_end[QString("%1|%2")
-                                   .arg(this_atom->resSeq)
-                                   .arg(this_atom->resName)] = true;
+                  non_aa++;
                }
-
-               broken_chain_head[QString("%1|%2")
-                                 .arg(this_atom->resSeq)
-                                 .arg(this_atom->resName)] = true;
-
-               QColor save_color = editor->color();
-               editor->setColor("dark red");
-               editor->append(
-                              lastResSeq != "" ? 
-                              QString(tr("Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4 & %5 %6."))
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j + 1)
-                              .arg(lastResName)
-                              .arg(lastResSeq)
-                              .arg(this_atom->resName)
-                              .arg(this_atom->resSeq)
-                              :
-                              QString(tr("Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4."))
-                              .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
-                              .arg(j + 1)
-                              .arg(this_atom->resName)
-                              .arg(this_atom->resSeq)
-                              );
-               editor->setColor(save_color);
+               if ( advanced_config.debug_2 )
+               {
+                  printf("unknown_residues.count(%s) %u\n",
+                         this_atom->resName.ascii(),
+                         (unsigned int)unknown_residues.count(this_atom->resName));
+               }
+               if ( 
+                   ( lastResSeq != "" &&
+                     ( lastResSeq.toInt() + 1 !=  this_atom->resSeq.toInt() ||
+                       !multi_residue_map.count(this_atom->resName) ||
+                       unknown_residues.count(this_atom->resName) ||
+                       unknown_residues.count(lastResName) ) ) ||
+                   ( lastResSeq == "" &&
+                     unknown_residues.count(this_atom->resName) 
+                     )
+                   )
+               {
+                  breaks++;
+                  if ( lastResSeq != "" )
+                  {
+                     broken_chain_end[QString("%1|%2")
+                                      .arg(lastResSeq)
+                                      .arg(lastResName)] = true;
+                  } 
+                  else
+                  {
+                     broken_chain_end[QString("%1|%2")
+                                      .arg(this_atom->resSeq)
+                                      .arg(this_atom->resName)] = true;
+                  }
+                  
+                  broken_chain_head[QString("%1|%2")
+                                    .arg(this_atom->resSeq)
+                                    .arg(this_atom->resName)] = true;
+                  
+                  //               if ( multi_residue_map.count(this_atom->resName) &&
+                  //   residue_list[multi_residue_map[this_atom->resName][0]].type == 0 &&
+                  //   multi_residue_map.count(lastResName) &&
+                  //   residue_list[multi_residue_map[lastResName][0]].type == 0 )
+                  {
+                     QColor save_color = editor->color();
+                     editor->setColor("dark red");
+                     editor->append(
+                                    lastResSeq != "" ? 
+                                    QString(tr("Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4 & %5 %6."))
+                                    .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                                    .arg(j + 1)
+                                    .arg(lastResName)
+                                    .arg(lastResSeq)
+                                    .arg(this_atom->resName)
+                                    .arg(this_atom->resSeq)
+                                    :
+                                    QString(tr("Warning: break in residue sequence or unknown residue: %1Molecule %2 Residue %3 %4."))
+                                    .arg(this_atom->chainID == " " ? "" : ("Chain " + this_atom->chainID + " "))
+                                    .arg(j + 1)
+                                    .arg(this_atom->resName)
+                                    .arg(this_atom->resSeq)
+                                    );
+                     editor->setColor(save_color);
+                  }
+               }
+               lastChainID = this_atom->chainID;
+               lastResSeq = this_atom->resSeq;
+               lastResName = this_atom->resName;
             }
-            lastChainID = this_atom->chainID;
-            lastResSeq = this_atom->resSeq;
-            lastResName = this_atom->resName;
          }
       }
       if ( aa && non_aa )
