@@ -526,6 +526,7 @@ void US_PlotData::plot_resid()
          cb_ti->setChecked(false);
          cb_ri->setChecked(false);
          cb_random->setChecked(false);
+         resid_plot->setAxisTitle(QwtPlot::xBottom, tr("Radius (in cm)"));
       }
       else
       {
@@ -556,6 +557,7 @@ void US_PlotData::plot_ti()
          cb_resid->setChecked(false);
          cb_ri->setChecked(false);
          cb_random->setChecked(false);
+         resid_plot->setAxisTitle(QwtPlot::xBottom, tr("Radius (in cm)"));
       }
       else
       {
@@ -585,6 +587,7 @@ void US_PlotData::plot_ri()
          cb_resid->setChecked(false);
          cb_ti->setChecked(false);
          cb_random->setChecked(false);
+         resid_plot->setAxisTitle(QwtPlot::xBottom, tr("Scan Number"));
       }
       else
       {
@@ -614,6 +617,7 @@ void US_PlotData::plot_random()
          cb_resid->setChecked(false);
          cb_ti->setChecked(false);
          cb_ri->setChecked(false);
+         resid_plot->setAxisTitle(QwtPlot::xBottom, tr("Radius (in cm)"));
       }
       else
       {
