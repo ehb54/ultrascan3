@@ -816,12 +816,28 @@ double stretch(int rotor, unsigned int rpm)
    vector <struct rotorInfo> rotor_list;
    rotor_list.clear();
    double stretch = 0.0;
-   readRotorInfo(&rotor_list);
-   for (unsigned int i=0; i<5; i++)
+   if( readRotorInfo(&rotor_list) )
    {
-      stretch += rotor_list[rotor].coefficient[i] * pow((double) rpm, (double) i);
+      for (unsigned int i=0; i<5; i++)
+      {
+         stretch += rotor_list[rotor].coefficient[i] * pow((double) rpm, (double) i);
+      }
+   } 
+   else
+   {
+      fprintf(stderr,"ERROR reading rotor info in us_math ... no stretch!\n");
    }
    rotor_list.clear();
+   return (stretch);
+}
+
+double stretch_with_rotor_list(int rotor, unsigned int rpm, vector <rotorInfo> *rotor_list)
+{
+   double stretch = 0.0;
+   for (unsigned int i=0; i<5; i++)
+   {
+      stretch += (*rotor_list)[rotor].coefficient[i] * pow((double) rpm, (double) i);
+   }
    return (stretch);
 }
 

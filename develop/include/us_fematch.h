@@ -193,7 +193,8 @@ class fematch_ra_thr_t : public QThread
                             int *,
                             ModelSystem *,
                             SimulationParameters *,
-                            vector < mfem_data > *
+                            vector < mfem_data > *,
+                            vector < rotorInfo > *
                             );
   void fematch_ra_thr_shutdown();
   void fematch_ra_thr_wait();
@@ -211,6 +212,7 @@ class fematch_ra_thr_t : public QThread
 #endif
 
   vector < mfem_data > *simdata;
+  vector < rotorInfo > *rotor_list;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )

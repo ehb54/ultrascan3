@@ -34,13 +34,17 @@ class US_EXTERN US_Astfem_RSA : public QObject
 #ifdef WIN32
      #pragma warning ( default: 4251 )
 #endif
+      int thread;
+      vector < rotorInfo > *rotor_list;
 
    public slots:
 
       int calculate(struct ModelSystem *, 
                     struct SimulationParameters *, 
-                    vector <struct mfem_data> *, 
-                    int *progress=0);
+                    vector < mfem_data > *, 
+                    int *progress=0,
+                    int thread=0,
+                    vector < rotorInfo > *rotor_list = 0);
       int calculate_ni(double,             // rpm_start
                        double,             // rpm_stop
                        mfem_initial *,      // C0

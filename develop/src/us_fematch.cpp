@@ -6,6 +6,7 @@
 #include <float.h>
 #define USE_THREADS
 // #define DEBUG_THREADS
+// #define NO_POP_UPS
 
 US_FeMatch_W::US_FeMatch_W(QWidget *p, const char *name) : Data_Control_W(1, p, name)
 {
@@ -366,7 +367,9 @@ void US_FeMatch_W::second_plot(int val)
       resplot = new US_ResidualPlot(0,0);
    }
    resplot->setData(&residuals, global_Xpos+30, global_Ypos+30);
+#if !defined(NO_POP_UPS)
    resplot->show();
+#endif
    resplot->repaint();
    QwtSymbol symbol;
    unsigned int i, j;
@@ -1260,6 +1263,7 @@ void US_FeMatch_W::write_cofs()
 void US_FeMatch_W::fit()
 {
    calc_residuals_ra();
+#if !defined(NO_POP_UPS)
    if(!window_3d_flag)
    {
       us_3d_solutes = new US_3d_Solutes(&sa2d_ctrl_vars, &window_3d_flag, run_inf.run_id,
@@ -1281,6 +1285,7 @@ void US_FeMatch_W::fit()
    {
       us_3d_solutes->raise();
    }
+#endif
 }
 
 void US_FeMatch_W::update_s(const QString &str)
@@ -1495,7 +1500,8 @@ void fematch_ra_thr_t::fematch_ra_thr_setup(
                                             int *a_progress_pos,
                                             ModelSystem *a_msv,
                                             SimulationParameters *a_sp,
-                                            vector < mfem_data > *a_simdata
+                                            vector < mfem_data > *a_simdata,
+                                            vector < rotorInfo > *a_rotor_list
                                             )
 {
    /* this starts up a new work load for the thread */
@@ -1503,6 +1509,7 @@ void fematch_ra_thr_t::fematch_ra_thr_setup(
    msv = a_msv;
    sp = a_sp;
    simdata = a_simdata;
+   rotor_list = a_rotor_list;
 
    work_mutex.lock();
    work_to_do = 1;
@@ -1585,7 +1592,8 @@ void fematch_ra_thr_t::run()
 #endif
       US_Astfem_RSA *astfem_rsa;
       astfem_rsa = new US_Astfem_RSA(false);
-      astfem_rsa->calculate(msv, sp, simdata, (thread ? 0 : progress_pos) ); // calculate the model for the current thread
+      // calculate the model for the current thread
+      astfem_rsa->calculate(msv, sp, simdata, (thread ? 0 : progress_pos), thread, rotor_list );
       delete astfem_rsa;
 
 #if defined(DEBUG_THREADS)
@@ -1655,10 +1663,10 @@ float US_FeMatch_W::calc_residuals_ra()
    //fg.write_simulationParameters(&sp, "simparams.out");
    sp.simpoints = 200;
    if(!ti_noise_avail && sp.band_forming) {
-      cout << "band_firstScanIsConcentration = true\n";
+      // cout << "band_firstScanIsConcentration = true\n";
       sp.band_firstScanIsConcentration = true;
    } else {
-      cout << "band_firstScanIsConcentration = false\n";
+      // cout << "band_firstScanIsConcentration = false\n";
       sp.band_firstScanIsConcentration = false;
    }
 #if defined(USE_THREADS)
@@ -1667,6 +1675,12 @@ float US_FeMatch_W::calc_residuals_ra()
       int progress_pos = 0;
       unsigned int j;
       unsigned int threads = USglobal->config_list.numThreads;
+      vector < rotorInfo > rotor_list;
+      readRotorInfo(&rotor_list);
+      if ( threads > msv.size() )
+      {
+         threads = msv.size();
+      }
       vector < fematch_ra_thr_t* > fematch_ra_thr_threads(threads);
       vector < vector < mfem_data > > simdatas;
       simdatas.resize(threads);
@@ -1694,7 +1708,8 @@ float US_FeMatch_W::calc_residuals_ra()
                                                          &progress_pos,
                                                          &msv[j],
                                                          &sp,
-                                                         &simdatas[j]
+                                                         &simdatas[j],
+                                                         &rotor_list
                                                          );
       }
       // sleep app loop
@@ -1706,18 +1721,27 @@ float US_FeMatch_W::calc_residuals_ra()
          ns.tv_sec = 0;
          ns.tv_nsec = 50000000l;
 #endif
+         int last_progress = -1;
          
          do {
             all_done = threads;
             for ( j = 0; j < threads; j++ )
             {
                all_done -= fematch_ra_thr_threads[j]->fematch_ra_thr_work_status();
-            }
-            progress->setProgress(progress_pos, msv[0].component_vector.size());
 #if defined(DEBUG_THREADS)
-            printf("progress_pos %d of %d\n", progress_pos, msv[0].component_vector.size());
+               printf("thread %d status %d\n",
+                      j, fematch_ra_thr_threads[j]->fematch_ra_thr_work_status());
 #endif
-            qApp->processEvents();
+            }
+            if ( last_progress != progress_pos ) 
+            {
+               last_progress = progress_pos;
+               progress->setProgress(progress_pos, msv[0].component_vector.size());
+#if defined(DEBUG_THREADS)
+               printf("progress_pos %d of %d\n", progress_pos, msv[0].component_vector.size());
+#endif
+               qApp->processEvents();
+            }
 #if defined(WIN32)
             _sleep(1);
 #else
@@ -2430,6 +2454,10 @@ void US_FeMatch_W::create_modelsystems()
    msv.clear();
    QString str;
    unsigned int i, j, k, l, threads=USglobal->config_list.numThreads;
+   if ( threads > components )
+   {
+      threads = components;
+   }
    //unsigned int components_per_job[threads];
    unsigned int* components_per_job = (unsigned int*) malloc( threads * sizeof(unsigned int) );
 

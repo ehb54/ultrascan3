@@ -5,6 +5,7 @@
 // #define DEBUG_ALLOC
 // #define DEBUG_RSS
 // #define DEBUG
+// #define DEBUG_THREAD
 
 #if defined(DEBUG_ALLOC)
 void init_matrices_alloc();                   // initializes matrix alloc array
@@ -151,9 +152,20 @@ US_Astfem_RSA::~US_Astfem_RSA()
 
 int US_Astfem_RSA::calculate(struct ModelSystem *system, 
                              struct SimulationParameters *simparams,
-                             vector <struct mfem_data> *exp_data, 
-                             int *progress_pos)
+                             vector < mfem_data > *exp_data, 
+                             int *progress_pos,
+                             int thread,
+                             vector < rotorInfo > *rotor_list)
 {
+   this->thread = thread;
+   vector < rotorInfo > alt_rotor_list;
+   if ( !rotor_list ) 
+   {
+      printf("reading rotor list\n");
+      readRotorInfo(&alt_rotor_list);
+      rotor_list = &alt_rotor_list;
+   }
+   this->rotor_list = rotor_list;
 #if defined(DEBUG)
    US_FemGlobal fg;
    fg.write_experiment(system, simparams, "astfem_rsa-output");
@@ -188,8 +200,10 @@ int US_Astfem_RSA::calculate(struct ModelSystem *system,
    adjust_limits((*simparams).speed_step[0].rotorspeed);
    for (k=0; k<(*system).component_vector.size(); k++)
    {
-      //      printf("ASTFEM RSA working on component %d of %d\n",
-      //             k, (*system).component_vector.size());
+#if defined(DEBUG_THREAD)
+      printf("%d: ASTFEM RSA working on component %d of %d\n", thread,
+                   k, (*system).component_vector.size());
+#endif
       if ( progress_pos ) 
       {
          *progress_pos = (int) k;
@@ -923,7 +937,10 @@ int US_Astfem_RSA::calculate_ni(double rpm_start, double rpm_stop, mfem_initial 
    for (i=0; i<af_params.time_steps+1; i++) // calculate all time steps f
    {
       rpm_current = rpm_start + (rpm_stop - rpm_start) * (i+0.5)/af_params.time_steps;
-      emit current_speed((unsigned int) rpm_current);
+      if (guiFlag) 
+      {
+         emit current_speed((unsigned int) rpm_current);
+      }
 
       // printf("rpm=%12.5e time_steps i=%d C_ttl=%20.10e \n", rpm_current, i,
       //           IntConcentration(x, C0));
@@ -1226,7 +1243,10 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
    for (kkk=0; kkk<af_params.time_steps+2; kkk +=2)      // two steps in together
    {
       rpm_current = rpm_start + (rpm_stop - rpm_start) * (kkk+0.5)/af_params.time_steps;
-      emit current_speed((unsigned int) rpm_current);
+      if (guiFlag) 
+      {
+         emit current_speed((unsigned int) rpm_current);
+      }
       simscan.time = af_params.start_time + kkk * af_params.dt;
       simscan.rpm = (unsigned int) rpm_current;
       w2t_integral += (simscan.time - last_time) * pow(rpm_current * M_PI/30.0, 2.0);
@@ -1415,7 +1435,10 @@ int US_Astfem_RSA::calculate_ra2(double rpm_start, double rpm_stop, mfem_initial
 
 
    } // time loop
-   emit new_scan(&x, CT0);
+   if ( guiFlag )
+   {
+      emit new_scan(&x, CT0);
+   }
 #if defined(DEBUG)
    if (guiFlag)
    {
@@ -2755,13 +2778,13 @@ void US_Astfem_RSA::Reaction_dfdy(double *y, double **dfdy)
 void US_Astfem_RSA::adjust_limits(unsigned int speed)
 {
    // first correct meniscus to theoretical position at rest:
-   double stretch_val = stretch((*simparams).rotor, af_params.first_speed);
+   double stretch_val = stretch_with_rotor_list((*simparams).rotor, af_params.first_speed, rotor_list);
    //cout << "rotor: " << (*simparams).rotor << ", stretch: " << stretch_val << ", speed: " << speed  ;
    // this is the meniscus at rest
    af_params.current_meniscus = (*simparams).meniscus - stretch_val;
    //cout << ", 1st speed meniscus: " << (*simparams).meniscus << ", rest meniscus: " << af_params.current_meniscus;
    // calculate rotor stretch at current speed
-   stretch_val = stretch((*simparams).rotor, speed);
+   stretch_val = stretch_with_rotor_list((*simparams).rotor, speed, rotor_list);
    // add current stretch to meniscus at rest
    af_params.current_meniscus +=  stretch_val;
    // add current stretch to bottom at rest
@@ -2774,8 +2797,8 @@ void US_Astfem_RSA::adjust_limits(unsigned int speed)
 
 void US_Astfem_RSA::adjust_grid(unsigned int old_speed, unsigned int new_speed, vector <double> *radius)
 {
-   double stretch_val1 = stretch((*simparams).rotor, old_speed);
-   double stretch_val2 = stretch((*simparams).rotor, new_speed);
+   double stretch_val1 = stretch_with_rotor_list((*simparams).rotor, old_speed, rotor_list);
+   double stretch_val2 = stretch_with_rotor_list((*simparams).rotor, new_speed, rotor_list);
    for (unsigned int i=0; i<(*radius).size(); i++)
    {
       (*radius)[i] += stretch_val2 - stretch_val1;
