@@ -154,6 +154,8 @@ US_fe_nnls_t::US_fe_nnls_t()
    // US_fe_nnls_t::US_fe_nnls_t(QWidget * p, const char *name):QWidget(p, name)
 {
    fitdiffs = false;
+   rotor_list.clear();
+   readRotorInfo(&rotor_list);
 }
 
 US_fe_nnls_t::~US_fe_nnls_t()
@@ -4719,7 +4721,12 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
                } else {
                   use_simulation_parameters.band_firstScanIsConcentration = false;
                }
-               astfem_rsa.calculate(&use_model_system, &use_simulation_parameters, &use_experiment);
+               astfem_rsa.calculate(&use_model_system, 
+                                    &use_simulation_parameters, 
+                                    &use_experiment, 
+                                    0, 
+                                    0, 
+                                    &rotor_list);
                experiment[e] = use_experiment[0];
             } else {
                mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,
@@ -5650,7 +5657,12 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
                   } else {
                      use_simulation_parameters.band_firstScanIsConcentration = false;
                   }
-                  astfem_rsa.calculate(&use_model_system, &use_simulation_parameters, &use_experiment);
+                  astfem_rsa.calculate(&use_model_system, 
+                                       &use_simulation_parameters, 
+                                       &use_experiment,
+                                       0, 
+                                       0, 
+                                       &rotor_list);
                   experiment[e] = use_experiment[0];
                } else {
                   mfem[e]->set_params(100, solutes[i].s / experiment[e].s20w_correction, D_tb,

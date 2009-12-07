@@ -68,6 +68,7 @@ class US_EXTERN US_fe_nnls_t
    QString job_udp_msg_meniscus;
    QString job_udp_msg_iterative;
    void send_udp_msg();
+   vector < rotorInfo > rotor_list;
 
  public:
    Simulation_values calc_residuals(vector <struct mfem_data>, vector <Solute>, double, int, unsigned int);
