@@ -64,6 +64,7 @@ class US_EXTERN US_fe_nnls_t
    QString job_udp_msg_status;
    QString job_udp_msg_mc;
    QString job_udp_msg_gen;
+   QString job_udp_msg_gen_best;
    QString job_udp_msg_meniscus;
    QString job_udp_msg_iterative;
    void send_udp_msg();

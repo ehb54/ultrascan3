@@ -977,6 +977,7 @@ US_fe_nnls_t::send_udp_msg()
          job_udp_msg_status +
          job_udp_msg_mc +
          job_udp_msg_gen +
+         job_udp_msg_gen_best +
          job_udp_msg_meniscus +
          job_udp_msg_iterative;
 #if defined(DEBUG_UDP)
@@ -3082,6 +3083,11 @@ int US_fe_nnls_t::run(int status)
             meniscus_offset = - meniscus_range / 2.0;
             meniscus_end = meniscus_range / 2.0;
             meniscus_increment = meniscus_range / meniscus_gridpoints;
+            job_udp_msg_meniscus = 
+               QString("Meniscus %1 of %2. ")
+               .arg(1 + meniscus_results.size())
+               .arg(meniscus_gridpoints + 1);
+            send_udp_msg();
          }
 
          printf("meniscus offs %.12g end %.12g incr %.12g\n"
@@ -3630,10 +3636,18 @@ int US_fe_nnls_t::run(int status)
                                     meniscus_iterations.push_back(iterations);
 
                                     meniscus_offset += meniscus_increment;
+
                                     if (meniscus_offset <= meniscus_end)
                                     {
+                                       job_udp_msg_meniscus = 
+                                          QString("Meniscus %1 of %2. ")
+                                          .arg(1 + meniscus_results.size())
+                                          .arg(meniscus_gridpoints + 1);
+                                       send_udp_msg();
+
                                        iterations = 0;
                                        printf("meniscus increment\n");
+
                                        fflush(stdout);
                                        last_results.solutes.clear();
                                        last_results.variance = 0;
@@ -3723,8 +3737,14 @@ int US_fe_nnls_t::run(int status)
                                  meniscus_iterations.push_back(iterations);
 
                                  meniscus_offset += meniscus_increment;
+                                 
                                  if (meniscus_offset <= meniscus_end)
                                  {
+                                    job_udp_msg_meniscus = 
+                                       QString("Meniscus %1 of %2. ")
+                                       .arg(1 + meniscus_results.size())
+                                       .arg(meniscus_gridpoints + 1);
+                                    send_udp_msg();
                                     iterations = 0;
                                     printf("meniscus increment\n");
                                     fflush(stdout);
@@ -3851,8 +3871,14 @@ int US_fe_nnls_t::run(int status)
                            meniscus_iterations.push_back(iterations);
 
                            meniscus_offset += meniscus_increment;
+
                            if (meniscus_offset <= meniscus_end)
                            {
+                              job_udp_msg_meniscus = 
+                                 QString("Meniscus %1 of %2. ")
+                                 .arg(1 + meniscus_results.size())
+                                 .arg(meniscus_gridpoints + 1);
+                              send_udp_msg();
                               iterations = 0;
                               printf("meniscus increment\n");
                               fflush(stdout);
