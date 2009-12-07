@@ -576,6 +576,7 @@ void US_Edit_DB::load_dataset()
          }
       }
       str.prepend(run_inf.data_dir);
+      cout << str << endl;
       f.setName(str);
       if (f.open(IO_ReadOnly))
       {

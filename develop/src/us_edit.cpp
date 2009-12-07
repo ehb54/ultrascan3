@@ -266,6 +266,11 @@ EditData_Win::EditData_Win(QWidget *p , const char *name)
             str += "(band-forming)";
             break;
          }
+      case 5:
+         {
+            str += "(meniscus-matching)";
+            break;
+         }
       }
       cmbb_centerpiece->insertItem(str);
    }
