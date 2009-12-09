@@ -8,36 +8,19 @@ namespace US_WinData
 {
   enum
   {
-    P_CONFIG = 300, P_ADMIN, P_END, // Temporary P_END
-    P_VELOC_ABSORB, P_VELOC_INTERF, P_VELOC_FLUOR,
-    P_EQUIL_ABSORB, P_EQUIL_INTERF, P_EQUIL_FLUOR,
-    P_EDIT_WAVE,    P_VIEW_MWL,
-
-    P_VHW_ENH,      P_FEMATCH,      P_FEMATCH_RA,   P_GAINIT1, P_GAINIT2,
-    P_FEDUD,        P_SECM,         P_DCDT,         P_DCDR,    P_COFS,
-
-    P_PREDICT,      P_EQTIME,       P_GFIT,         P_LNC,
-
-    P_EXTINCT,      P_SPECTRUM,
+    P_EXIT   = 4,
+    P_CONFIG = 300, P_EDIT,           // Edit Menu
     
-    P_CPU,          P_MEM,          P_SYSLOAD,
-    P_COMBINE,      P_COMBINE_MW,   P_COMBINE_COFS, P_COMBINE_COFMW,
-    P_COMBINE_COFD, P_PSEUDO3D,     P_CREATEG,
-
-    P_ARCHIVE,      P_REORDER,      P_MERGE,        P_PSEUDOABS,
-    P_DIAG,         P_NUCL_DB,      P_CALC_HYDRO,   P_VBAR_DB,
-    P_DMA60,        P_COLORG,       /* P_EXTINCT again */
-
-    P_ASTFEM,       P_EQULILSIM,    P_EQUILTIMESIM, P_SASSOC,
-    P_MODEL1,       P_MODEL2,       P_HYDRODYN,
-
-    P_DB_VELOC,     P_DB_EQUIL,     P_DB_EQUILP,    P_DB_MC,
-    P_DB_INV,       P_DB_DATE,      P_DB_DESC,      P_DB_TYPE,
-    P_DB_REQ,       P_DB_STATUS,    P_DB_IMAGE,     P_DB_SAMP, P_DB_RUNR,
-    P_INV_DATA,     P_DB_BUFF,      P_DB_VBAR,      P_DB_DNA,  P_DB_RAW,
-    P_DB_TEMP,
-
-    P_END1
+    P_SECOND,       P_DCDT,           // Velocity Menu
+    
+    P_CONVERT,      P_FIT,            // Utilities menu
+    
+    P_ASTFEM,       P_EQUILTIMESIM,   // Simulation Menu
+    P_SASSOC,       P_MODEL1, P_MODEL2,
+    
+    P_INVESTIGATOR, P_BUFFER, P_VBAR, // Database Menu
+    
+    P_END 
   };
 
   /*!  \brief A structure to contol launching of external processes within the 
@@ -76,14 +59,75 @@ namespace US_WinData
       QObject::tr( "Configuration Program" ) 
     },
 
+/*    
     { P_ADMIN,  1, 0, "us_admin",
       QObject::tr( "Loading Administrator" ),
       QObject::tr( "Adminstrator Program"  )
     },
+*/
+    { P_EDIT,  0, 0, "us_edvabs",
+      QObject::tr( "Loading Editing Data" ),
+      QObject::tr( "Editing Data Program" )
+    },
+    
+    { P_SECOND,  0, 0, "us_second_moment",
+      QObject::tr( "Loading Second Moment Analysis" ),
+      QObject::tr( "Second Moment Analysis Program" )
+    },
+    
+    { P_DCDT,  0, 0, "us_dcdt",
+      QObject::tr( "Loading Time Derivitive Analysis" ),
+      QObject::tr( "Time Derivitive Analysis Program" )
+    },
+    
+    { P_CONVERT,  1, 0, "us_convert",
+      QObject::tr( "Loading Legacy Data Conversion" ),
+      QObject::tr( "Legacy Data Conversion Program" )
+    },
+    
+    { P_FIT,  0, 0, "us_fit_meniscus",
+      QObject::tr( "Loading Fit Meniscus" ),
+      QObject::tr( "Fit Meniscus Program" )
+    },
+   
+    { P_ASTFEM, 2, 0, "us_astfem_sim",
+       QObject::tr( "Loading Finite Element Sedimentation Simulator (ASTFEM)" ),
+       QObject::tr( "Finite Element Simulation Program (ASTFEM)" )
+    },
 
-    { P_VELOC_ABSORB,  0, 0, "us_edvabs",
-      QObject::tr( "Editing Velocity Absorbance Data" ),
-      QObject::tr( "Editing Velocity Absorbance Data Program" )
+    { P_EQUILTIMESIM, 2, 0, "us_equiltime",
+      QObject::tr( "Loading Equilibrium Time Estimation Simulator" ),
+      QObject::tr( "Equilibrium Time Estimation Program" )
+    },
+
+    { P_SASSOC, 2, 0, "us_sassoc",
+      QObject::tr( "Starting Self-Association Simulator )" ),
+      QObject::tr( "Self-Association Simulation Program" )
+    },
+
+    { P_MODEL1, 2, 0, "us_predict1",
+      QObject::tr( "Loading Molecular Modeling Simulator" ),
+      QObject::tr( "Molecular Modeling Simulation Program (1)" ) 
+    },
+
+    { P_MODEL2, 2, 0, "us_predict2",
+      QObject::tr( "Loading Molecular Modeling Simulator" ),
+      QObject::tr( "Molecular Modeling Simulation Program (2)" ) 
+    },
+
+    { P_INVESTIGATOR,  0, 0, "us_investigator",
+      QObject::tr( "Loading Managing Investigator Data" ),
+      QObject::tr( "Managing Investigator Data Data Program" )
+    },
+    
+    { P_BUFFER,  0, 0, "us_buffer",
+      QObject::tr( "Loading Editing Buffer Data" ),
+      QObject::tr( "Editing Buffer Data Program" )
+    },
+    
+    { P_VBAR,  0, 0, "us_vbar",
+      QObject::tr( "Editing Peptide Sequences" ),
+      QObject::tr( "Editing Peptide Sequences Program" )
     },
     
     { P_END, 0, 0, "", "", "" }
