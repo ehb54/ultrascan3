@@ -114,38 +114,64 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
 
   //addMenu(  P_CONFIG, tr( "&Configuration" ), file );
   //addMenu(  P_ADMIN , tr( "&Administrator" ), file );
-  file->addSeparator();
-  addMenu(  4       , tr( "E&xit"          ), file );
+  //file->addSeparator();
+  addMenu(  P_EXIT, tr( "E&xit"          ), file );
 
-  QMenu* type1 = new QMenu( tr( "&Velocity Data" ), file );
-  addMenu( 21, tr( "&Absorbance Data"     ), type1 );
-  addMenu( 22, tr( "&Interference Data"   ), type1 );
-  addMenu( 23, tr( "&Fluorescense Data"   ), type1 );
-  addMenu( 24, tr( "&Edit Cell ID's Data" ), type1 );
+  //QMenu* type1 = new QMenu( tr( "&Velocity Data" ), file );
+  //addMenu( 21, tr( "&Absorbance Data"     ), type1 );
+  //addMenu( 22, tr( "&Interference Data"   ), type1 );
+  //addMenu( 23, tr( "&Fluorescense Data"   ), type1 );
+  //addMenu( 24, tr( "&Edit Cell ID's Data" ), type1 );
 
-  QMenu* type2 = new QMenu( tr( "&Equlibrium Data" ), file );
-  addMenu( 31, tr( "&Absorbance Data"     ), type2 );
-
-
+  //QMenu* type2 = new QMenu( tr( "&Equlibrium Data" ), file );
+  //addMenu( 31, tr( "&Absorbance Data"     ), type2 );
 
   ///////////////
   QMenu* edit = new QMenu( tr( "&Edit" ), this );
-  edit->setFont( QFont( "Helvetica" ) );
-  edit->addMenu( type1 );
-  edit->addMenu( type2 );
+  //edit->setFont( QFont( "Helvetica" ) );
+  //edit->addMenu( type1 );
+  //edit->addMenu( type2 );
   //addMenu( 12, tr( "&Equilibrium Data" )    , edit );
-  addMenu( 13, tr( "Edit &Wavelength Data" ), edit );
-  addMenu( 14, tr( "View/Edit &Multiwavelength Data" ), edit );
+  //addMenu( 13, tr( "Edit &Wavelength Data" ), edit );
+  //addMenu( 14, tr( "View/Edit &Multiwavelength Data" ), edit );
+  addMenu(  P_EDIT, tr( "&Edit Data" )  , edit );
   edit->addSeparator();
   addMenu(  P_CONFIG, tr( "&Preferences" )  , edit );
   
   /////////////
   QMenu* velocity    = new QMenu( tr( "&Velocity" ), this );
+  addMenu(  P_SECOND, tr( "&Second Moment" ), velocity );
+  addMenu(  P_DCDT  , tr( "&Time Derivitive" ), velocity );
+  
   QMenu* equilibrium = new QMenu( tr( "E&quilibrium" ), this );
   QMenu* fit         = new QMenu( tr( "&Global Fit" ), this );
+  
   QMenu* utilities   = new QMenu( tr( "&Utilities" ), this );
+  addMenu(  P_CONVERT, tr( "&Convert Legacy Data" ), utilities );
+  addMenu(  P_FIT    , tr( "&Fit Meniscus"        ), utilities );
+
+
+
   QMenu* simulation  = new QMenu( tr( "S&imulation" ), this );
+  addMenu(  P_ASTFEM, tr( "&Finite Element Simulation (ASTFEM)" ), simulation );
+  addMenu(  P_EQUILTIMESIM, 
+                      tr( "Estimate Equilibrium &Times"         ), simulation );
+  addMenu(  P_SASSOC, tr( "&Self-Association Equilibrium"       ), simulation );
+  addMenu(  P_MODEL1, tr( "&Model s, D and f from MW for 4 basic shapes" ), 
+                                                                   simulation );
+  addMenu(  P_MODEL2, tr( "&Predict f and axial ratios for 4 basic shapes" ), 
+                                                                   simulation );
+
   QMenu* database    = new QMenu( tr( "&Database" ), this );
+  addMenu(  P_INVESTIGATOR, tr( "Manage Investigator &Data" ), database );
+  addMenu(  P_BUFFER      , tr( "Manage &Buffer Data"       ), database );
+  addMenu(  P_VBAR        , tr( "Manage &Peptide Sequences" ), database );
+
+  
+
+
+
+
   ///////////////
   QMenu* help = new QMenu( tr( "&Help" ), this );
   addMenu( HELP_HOME   , tr("UltraScan &Home"    ), help );
@@ -198,6 +224,7 @@ void US_Win::addMenu( int index, const QString& label, QMenu* menu )
 void US_Win::onIndexTriggered( int index )
 {
   if ( index == 4 ) close();
+//qDebug() << index << P_CONFIG << P_END;
   if ( index >= P_CONFIG && index < P_END    ) launch( index );
   if ( index >= HELP     && index < HELP_END ) help  ( index );
 }
