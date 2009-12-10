@@ -37,7 +37,7 @@
 #define DOTSOMO      ""
 #define DOTSOMOCAP   ""
 
-#define GRID_HYDRATE_DEBUG
+// #define GRID_HYDRATE_DEBUG
 
 // static bool no_rr;
 
@@ -1616,6 +1616,14 @@ int US_Hydrodyn::calc_grid_pdb()
                      progress->reset();
                      return -1;
                   }
+                  if (errorFlag)
+                  {
+                     editor->append("Error occured\n\n");
+                     pb_grid_pdb->setEnabled(true);
+                     pb_somo->setEnabled(true);
+                     progress->reset();
+                     return -1;
+                  }
                   printf("back from grid_atob 0\n"); fflush(stdout);
                   if (somo_processed.size() < current_model + 1) {
                      somo_processed.resize(current_model + 1);
@@ -1892,6 +1900,14 @@ int US_Hydrodyn::calc_grid()
             if (stopFlag)
             {
                editor->append("Stopped by user\n\n");
+               pb_grid_pdb->setEnabled(true);
+               pb_somo->setEnabled(true);
+               progress->reset();
+               return -1;
+            }
+            if (errorFlag)
+            {
+               editor->append("Error occured\n\n");
                pb_grid_pdb->setEnabled(true);
                pb_somo->setEnabled(true);
                progress->reset();

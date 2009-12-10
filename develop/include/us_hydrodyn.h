@@ -66,7 +66,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct advanced_config advanced_config;
       double overlap_tolerance;
       double default_overlap_tolerance;
-      bool stopFlag, calcAutoHydro;
+      bool stopFlag;
+      bool errorFlag;
+      bool calcAutoHydro;
       QLabel *lbl_core_progress;
       void set_disabled();
       QTextEdit *editor;

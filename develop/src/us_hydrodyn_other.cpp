@@ -374,7 +374,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    str2 = str1.mid(17, 3);
    temp_atom.resName = str2.stripWhiteSpace();
 
-   temp_atom.chainID = str1.mid(21, 1);
+   temp_atom.chainID = str1.mid(20, 2).stripWhiteSpace();
 
    temp_atom.resSeq = str1.mid(22, 5);
    temp_atom.resSeq.replace(QRegExp(" *"),"");
@@ -458,6 +458,21 @@ void US_Hydrodyn::read_pdb(const QString &filename)
       while (!ts.atEnd())
       {
          str1 = ts.readLine();
+         if ( str1.left(3) == "TER" )
+         {
+            // push back previous chain if it exists
+            if ( chain_flag )
+            {
+               printf("ter break <%s>\n", str1.ascii());
+               if ( advanced_config.debug_2 )
+               {
+                  printf("ter break <%s>\n", str1.ascii());
+               }
+               temp_model.molecule.push_back(temp_chain);
+               clear_temp_chain(&temp_chain);
+               chain_flag = false;
+            }
+         }
          if ( str1.left(6) == "HEADER" ||
               str1.left(5) == "TITLE" )
          {
@@ -511,7 +526,7 @@ void US_Hydrodyn::read_pdb(const QString &filename)
          {
             if(str1.mid(12,1) != "H" && str1.mid(13,1) != "H" &&
                str1.mid(17,3) != "HOH")
-            {
+            {                  
                if (str1.mid(16,1) == " " || str1.mid(16,1) == "A")
                {
                   if (str1.mid(16,1) == "A")

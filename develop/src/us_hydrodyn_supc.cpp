@@ -8,11 +8,12 @@
 /* composed of non-overlapping beads of different radii.      */
 
 // #define DEBUG_FILES
+#include "../include/us_math.h"
 
-#define  PI 3.141592654
-#define  ETAo 1.005E-02
-#define  DENS 0.998203
-#define  AVO 6.023E23
+#define  PI M_PI
+#define  ETAo VISC_20W
+#define  DENS DENS_20W
+#define  AVO AVOGADRO
 #define  KB 1.38066E-16
 #define  TE 293.15
 #define  SMAX 256

@@ -1,5 +1,10 @@
 #include "../include/us_hydrodyn_grid_atob.h"
 
+#include <stdlib.h>
+#ifdef OSX
+#  include <sys/malloc.h>
+#endif
+
 #undef DEBUG
 
 /*Declaration of new structure types*/
@@ -63,8 +68,8 @@ nrerror(char error_text[])
 {
    fprintf(stderr, "Numerical Recipes run-time error...\n");
    fprintf(stderr, "%s\n", error_text);
-   fprintf(stderr, "...now exiting to system...\n");
-   exit(1);
+   //   fprintf(stderr, "...now exiting to system...\n");
+   //   exit(1);
 }
 
 static float ***
@@ -77,21 +82,30 @@ f3tensor(long nrl, long nrh, long ncl, long nch, long ndl, long ndh)
    /* allocate pointers to pointers to rows */
    t = (float ***) malloc((size_t) ((nrow + NR_END) * sizeof(float **)));
    if (!t)
+   {
       nrerror("allocation failure 1 in f3tensor()");
+      return (float ***) 0;
+   }
    t += NR_END;
    t -= nrl;
 
    /* allocate pointers to rows and set pointers to them */
    t[nrl] = (float **) malloc((size_t) ((nrow * ncol + NR_END) * sizeof(float *)));
    if (!t[nrl])
+   {
       nrerror("allocation failure 2 in f3tensor()");
+      return (float ***) 0;
+   }
    t[nrl] += NR_END;
    t[nrl] -= ncl;
 
    /* allocate rows and set pointers to them */
    t[nrl][ncl] = (float *) malloc((size_t) ((nrow * ncol * ndep + NR_END) * sizeof(float)));
    if (!t[nrl][ncl])
+   {
       nrerror("allocation failure 3 in f3tensor()");
+      return (float ***) 0;
+   }      
    t[nrl][ncl] += NR_END;
    t[nrl][ncl] -= ndl;
 
@@ -125,7 +139,13 @@ static PDB *
 AtoB(PDB * pdb, long npoints, float dx,
      // long *natoms,
      PHYSPROP * prop,
-     PHYSPROP * nprop, long *natoms3, int centre_or_cog, char input_file[], int set_bead_radius, char atnam[], char resnam[])
+     PHYSPROP * nprop, 
+     long *natoms3, 
+     int centre_or_cog, 
+     char input_file[], 
+     int set_bead_radius, 
+     char atnam[], 
+     char resnam[])
 {
 #if defined(DEBUG)
    printf("npoints %ld\n", npoints);
@@ -158,14 +178,30 @@ AtoB(PDB * pdb, long npoints, float dx,
    int i, j, k, x_c, y_c, z_c, n, nn;
    long natoms2 = 0;
    char log_filename[50];
-   float ***ro, ***x, ***y, ***z;
-   float ***mass;
+   float ***ro = (float ***) 0;
+   float ***x = (float ***) 0;
+   float ***y = (float ***) 0;
+   float ***z = (float ***) 0;
+   float ***mass = (float ***) 0;
 
-   ro = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints);
-   mass = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints);
-   x = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints);
-   y = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints);
-   z = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints);
+   if ( !( ro = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints) ) ||
+        !( mass = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints) ) ||
+        !( x = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints) ) ||
+        !( y = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints) ) ||
+        !( z = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints) ) )
+   {
+      if ( ro )
+         free_f3tensor(ro, 0, npoints, 0, npoints, 0, npoints);
+      if ( x )
+         free_f3tensor(x, 0, npoints, 0, npoints, 0, npoints);
+      if ( y )
+         free_f3tensor(y, 0, npoints, 0, npoints, 0, npoints);
+      if ( z )
+         free_f3tensor(z, 0, npoints, 0, npoints, 0, npoints);
+      if ( mass )
+         free_f3tensor(mass, 0, npoints, 0, npoints, 0, npoints);
+      return (PDB *)0;
+   }
 #if defined(DEBUG)
    puts("in atob 2");
    fflush(stdout);
@@ -352,7 +388,6 @@ AtoB(PDB * pdb, long npoints, float dx,
                nthis->next = ntemp;
 
                nthis = ntemp;
-
             }
          }
    }
@@ -428,8 +463,8 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
                                           US_Hydrodyn * use_us_hydrodyn)
 {
    // do our stuff
-   
    us_hydrodyn = use_us_hydrodyn;
+   us_hydrodyn->errorFlag = false;
 #if defined(DEBUG)
    puts("grid_atob 0");
    fflush(stdout);
@@ -438,12 +473,14 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    editor = use_editor;
    vector < PDB > pdb;
    vector < PHYSPROP > prop;
-   vector < PHYSPROP > nprop;
+   //   vector < PHYSPROP > nprop;
+   PHYSPROP *nprop;
 
 #if defined(DEBUG)
    puts("grid_atob 1");
    fflush(stdout);
 #endif
+
    printf("bead model size %d\n", (int)bead_model->size()); fflush(stdout);
    float max_radius = VW_average_radius;
    for (unsigned int i = 0; i < bead_model->size(); i++)
@@ -499,6 +536,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
          if (max_radius < tmp_prop.rVW) {
             max_radius = tmp_prop.rVW;
          }
+
 #if defined(DEBUG_ATOB)
          printf(
                 "%f %f %f %f %f %d %d %f %f %f\n"
@@ -517,6 +555,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 
       }
    }
+
 #if defined(DEBUG)
    puts("grid_atob 2"); fflush(stdout);
    fflush(stdout);
@@ -558,8 +597,34 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 #endif
    npoints *= 2;
 
+   { // test alloc
+      PHYSPROP *p;
+      p = (PHYSPROP *) malloc((int) pow((double)npoints, 3) * sizeof(PHYSPROP));
+      if ( !p )
+      {
+         fprintf(stderr, "memory allocation failure\n");
+         vector < PDB_atom > pdbnull;
+         return pdbnull;
+      }
+      free(p);
+#if defined(DEBUG)
+      puts("grid_atob 3 - test alloc ok");
+      fflush(stdout);
+#endif
+   }
+   
+   // nprop.resize((int) pow((double)npoints, 3));
+   if (!(nprop = (PHYSPROP *) malloc((int) pow((double)npoints, 3) * sizeof(PHYSPROP)) ))
+   {
+      QColor save_color = us_hydrodyn->editor->color();
+      editor->setColor("red");
+      us_hydrodyn->editor->append("ERROR: Memory allocation failure.  Please try a larger grid cube size and/or close all other applications");
+      us_hydrodyn->editor->setColor(save_color);
+      us_hydrodyn->errorFlag = true;
+      vector < PDB_atom > empty_result;
+      return empty_result;
+   }
 
-   nprop.resize((int) pow((double)npoints, 3));
 #if defined(DEBUG)
    puts("grid_atob 4");
    fflush(stdout);
@@ -583,6 +648,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    qApp->processEvents();
    if (us_hydrodyn->stopFlag)
    {
+      free(nprop);
       vector < PDB_atom > empty_result;
       return empty_result;
    }
@@ -598,6 +664,18 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
                           use_grid_options->tangency ? 1 : 0,
                           "PB",
                           "RES");
+   if ( !result_pdb ) 
+   {
+      free(nprop);
+      QColor save_color = us_hydrodyn->editor->color();
+      editor->setColor("red");
+      us_hydrodyn->editor->append("ERROR: Memory allocation failure.  Please try a larger grid cube size and/or close all other applications");
+      us_hydrodyn->editor->setColor(save_color);
+      us_hydrodyn->errorFlag = true;
+      vector < PDB_atom > empty_result;
+      return empty_result;
+   }
+
 #if defined(DEBUG)
    puts("grid_atob 6");
    fflush(stdout);
@@ -605,6 +683,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    qApp->processEvents();
    if (us_hydrodyn->stopFlag)
    {
+      free(nprop);
       vector < PDB_atom > empty_result;
       return empty_result;
    }
@@ -639,6 +718,7 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       tmp_atom.normalized_ot_is_valid = false;
       result_bead_model.push_back(tmp_atom);
    }
+   free(nprop);
 #if defined(DEBUG)
    puts("grid_atob 7");
    fflush(stdout);
