@@ -363,6 +363,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void update_vbar(); // update the results.vbar everytime something changes the vbar in options or calculation
       void append_options_log_somo(); // append somo options to options_log
       void append_options_log_atob(); // append atob options to options_log
+      void list_model_vector(vector < PDB_model > *);
       QString default_differences_load_pdb();
       QString default_differences_somo();
       QString default_differences_grid();

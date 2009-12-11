@@ -470,7 +470,7 @@ void US_Hydrodyn::read_pdb(const QString &filename)
                }
                temp_model.molecule.push_back(temp_chain);
                clear_temp_chain(&temp_chain);
-               chain_flag = false;
+               chain_flag = true;
             }
          }
          if ( str1.left(6) == "HEADER" ||
@@ -552,6 +552,10 @@ void US_Hydrodyn::read_pdb(const QString &filename)
                           known_residue &&
                           !this_is_aa )
                      {
+                        if ( advanced_config.debug_2 )
+                        {
+                           printf("chain break forced  !break_chain && currently_aa_chain && known_residue && !this_is_aa\n");
+                        }
                         break_chain = true;
                      } 
                      if ( break_chain )
@@ -560,7 +564,10 @@ void US_Hydrodyn::read_pdb(const QString &filename)
                         {
                            printf("chain break <%s>\n", str1.ascii());
                         }
-                        temp_model.molecule.push_back(temp_chain);
+                        if ( temp_chain.atom.size() ) 
+                        {
+                           temp_model.molecule.push_back(temp_chain);
+                        }
                         clear_temp_chain(&temp_chain);
                         temp_chain.chainID = str1.mid(21, 1); // we have to start a new chain
                         str2 = str1.mid(72, 4);
@@ -616,6 +623,10 @@ void US_Hydrodyn::read_pdb(const QString &filename)
    lb_model->setSelected(0, true);
    current_model = 0;
    model_vector_as_loaded = model_vector;
+   if ( advanced_config.debug_2 )
+   {
+      list_model_vector(&model_vector_as_loaded);
+   }
 }
 
 int US_Hydrodyn::read_bead_model(QString filename)
@@ -3062,3 +3073,24 @@ void US_Hydrodyn::play_sounds(int type)
    }
 }
 
+
+void US_Hydrodyn::list_model_vector(vector < PDB_model > *mv)
+{
+   for ( unsigned int i = 0; i < mv->size(); i++ )
+   {
+      for ( unsigned int j = 0; j < (*mv)[i].molecule.size(); j++)
+      {
+         for (unsigned int k = 0; k < (*mv)[i].molecule[j].atom.size(); k++)
+         {
+            printf("model %u chain %u atom %u atom %s seq %u resName %s chainId %s resSeq %s\n",
+                   i, j, k, 
+                   (*mv)[i].molecule[j].atom[k].name.ascii(),
+                   (*mv)[i].molecule[j].atom[k].serial,
+                   (*mv)[i].molecule[j].atom[k].resName.ascii(),
+                   (*mv)[i].molecule[j].atom[k].chainID.ascii(),
+                   (*mv)[i].molecule[j].atom[k].resSeq.ascii()
+                   );
+         }
+      }
+   }
+}
