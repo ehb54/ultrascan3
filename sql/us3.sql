@@ -75,6 +75,7 @@ DROP TABLE IF EXISTS us3.lab ;
 
 CREATE  TABLE IF NOT EXISTS us3.lab (
   labID INT NOT NULL AUTO_INCREMENT ,
+  GUID CHAR(36) NULL ,
   name TEXT NULL ,
   building TEXT NULL ,
   room TEXT NULL ,
@@ -90,6 +91,7 @@ DROP TABLE IF EXISTS us3.abstractRotor ;
 
 CREATE  TABLE IF NOT EXISTS us3.abstractRotor (
   abstractRotorID INT NOT NULL AUTO_INCREMENT ,
+  GUID CHAR(36) NULL ,
   name TEXT NULL ,
   materialName TEXT NULL ,
   numHoles INT NULL ,
@@ -111,6 +113,7 @@ DROP TABLE IF EXISTS us3.rotor ;
 CREATE  TABLE IF NOT EXISTS us3.rotor (
   rotorID INT NOT NULL AUTO_INCREMENT ,
   abstractRotorID INT NULL ,
+  GUID CHAR(36) NULL ,
   name TEXT NULL ,
   serialNumber TEXT NULL ,
   stretchFunction TEXT NULL ,
@@ -186,6 +189,7 @@ DROP TABLE IF EXISTS us3.solution ;
 
 CREATE  TABLE IF NOT EXISTS us3.solution (
   solutionID INT NOT NULL AUTO_INCREMENT ,
+  GUID CHAR(36) NULL ,
   description VARCHAR(80) NOT NULL ,
   storageTemp TINYINT NULL DEFAULT NULL ,
   notes TEXT NULL DEFAULT NULL ,
@@ -200,6 +204,7 @@ DROP TABLE IF EXISTS us3.channelType ;
 
 CREATE  TABLE IF NOT EXISTS us3.channelType (
   channelTypeID INT NOT NULL AUTO_INCREMENT ,
+  GUID CHAR(36) NULL ,
   description TEXT NULL ,
   PRIMARY KEY (channelTypeID) )
 ENGINE = InnoDB;
@@ -237,6 +242,7 @@ DROP TABLE IF EXISTS us3.abstractCenterpiece ;
 CREATE  TABLE IF NOT EXISTS us3.abstractCenterpiece (
   abstractCenterpieceID INT NOT NULL AUTO_INCREMENT ,
   loadMethodID INT NULL ,
+  GUID CHAR(36) NULL ,
   name TEXT NULL ,
   materialName TEXT NULL ,
   maxRPM INT NULL ,
@@ -265,6 +271,7 @@ CREATE  TABLE IF NOT EXISTS us3.abstractChannel (
   channelTypeID INT NULL ,
   channelShapeID INT NULL ,
   abstractCenterpieceID INT NULL ,
+  GUID CHAR(36) NULL ,
   name VARCHAR(100) NULL ,
   number INT NULL ,
   radialBegin FLOAT NULL ,
@@ -320,6 +327,7 @@ CREATE  TABLE IF NOT EXISTS us3.cell (
   windowTypeID INT NULL ,
   abstractCenterpieceID INT NULL ,
   experimentID INT NULL ,
+  GUID CHAR(36) NULL ,
   name TEXT NULL ,
   holeNumber INT NULL ,
   centerpieceSerialNumber TEXT NULL ,
@@ -356,6 +364,7 @@ CREATE  TABLE IF NOT EXISTS us3.channel (
   solutionID INT NULL DEFAULT NULL ,
   abstractChannel_ID INT NULL DEFAULT NULL ,
   cell_ID INT NULL DEFAULT NULL ,
+  GUID CHAR(36) NULL ,
   comments TEXT NULL DEFAULT NULL ,
   dateUpdated TIMESTAMP NULL DEFAULT NULL ,
   PRIMARY KEY (channel_ID) ,
@@ -530,6 +539,7 @@ DROP TABLE IF EXISTS us3.image ;
 
 CREATE  TABLE IF NOT EXISTS us3.image (
   imageID INT NOT NULL AUTO_INCREMENT ,
+  GUID CHAR(36) NULL ,
   description VARCHAR(80) NOT NULL DEFAULT 'No description was entered for this image' ,
   gelPicture LONGBLOB NOT NULL ,
   date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
@@ -567,6 +577,7 @@ DROP TABLE IF EXISTS us3.analyte ;
 
 CREATE  TABLE IF NOT EXISTS us3.analyte (
   analyteID INT NOT NULL AUTO_INCREMENT ,
+  GUID CHAR(36) NULL ,
   type ENUM('DNA', 'Peptide', 'Other') NULL DEFAULT NULL ,
   sequence TEXT NULL DEFAULT NULL ,
   vbar FLOAT NULL DEFAULT NULL ,
@@ -626,6 +637,7 @@ DROP TABLE IF EXISTS us3.buffer ;
 
 CREATE  TABLE IF NOT EXISTS us3.buffer (
   bufferID INT NOT NULL AUTO_INCREMENT ,
+  GUID CHAR(36) NULL ,
   description TEXT NULL DEFAULT NULL ,
   spectrum TEXT NULL DEFAULT NULL ,
   pH FLOAT NULL DEFAULT NULL ,
@@ -1026,6 +1038,7 @@ DROP TABLE IF EXISTS us3.opticalSystemSetting ;
 CREATE  TABLE IF NOT EXISTS us3.opticalSystemSetting (
   opticalSystemSettingID INT NOT NULL AUTO_INCREMENT ,
   rawDataID INT NULL ,
+  GUID CHAR(36) NULL ,
   name TEXT NULL ,
   value FLOAT NULL ,
   dateUpdated TIMESTAMP NULL ,
