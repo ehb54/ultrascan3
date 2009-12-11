@@ -25,10 +25,17 @@ US_Hydrodyn_Results::~US_Hydrodyn_Results()
 
 void US_Hydrodyn_Results::setupGUI()
 {
-   int minHeight1 = 30;
+   int minHeight1 = 70;
+   int minHeight2 = 30;
    QString str;
 
-   lbl_info = new QLabel(tr("   SOMO Hydrodynamic Results (Water at 20ºC):   "), this);
+   lbl_info = new QLabel(tr(QString("SOMO Hydrodynamic Results\n"
+                                    "(%1 at %2ºC)\n(Density %3 cP, Viscosity %4 g/ml)")
+                            .arg(results->solvent_name)
+                            .arg(results->temperature)
+                            .arg(results->solvent_viscosity)
+                            .arg(results->solvent_density)
+                            ), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(AlignCenter|AlignVCenter);
@@ -253,35 +260,35 @@ void US_Hydrodyn_Results::setupGUI()
    pb_load_asa = new QPushButton(tr("View ASA Results File"), this);
    Q_CHECK_PTR(pb_load_asa);
    pb_load_asa->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_load_asa->setMinimumHeight(minHeight1);
+   pb_load_asa->setMinimumHeight(minHeight2);
    pb_load_asa->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_asa, SIGNAL(clicked()), SLOT(load_asa()));
 
    pb_load_results = new QPushButton(tr("View Full Hydrodynamics Results File"), this);
    Q_CHECK_PTR(pb_load_results);
    pb_load_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_load_results->setMinimumHeight(minHeight1);
+   pb_load_results->setMinimumHeight(minHeight2);
    pb_load_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_results, SIGNAL(clicked()), SLOT(load_results()));
 
    pb_load_beadmodel = new QPushButton(tr("View Bead Model File"), this);
    Q_CHECK_PTR(pb_load_beadmodel);
    pb_load_beadmodel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_load_beadmodel->setMinimumHeight(minHeight1);
+   pb_load_beadmodel->setMinimumHeight(minHeight2);
    pb_load_beadmodel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_beadmodel, SIGNAL(clicked()), SLOT(load_beadmodel()));
 
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_cancel->setMinimumHeight(minHeight1);
+   pb_cancel->setMinimumHeight(minHeight2);
    pb_cancel->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_cancel, SIGNAL(clicked()), SLOT(cancel()));
 
    pb_help = new QPushButton(tr("Help"), this);
    Q_CHECK_PTR(pb_help);
    pb_help->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_help->setMinimumHeight(minHeight1);
+   pb_help->setMinimumHeight(minHeight2);
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 

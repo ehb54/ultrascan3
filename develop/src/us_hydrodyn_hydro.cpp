@@ -1,5 +1,6 @@
 #include "../include/us_hydrodyn_hydro.h"
 #include "../include/us_hydrodyn.h"
+#include "../include/us_math.h"
 
 US_Hydrodyn_Hydro::US_Hydrodyn_Hydro(struct hydro_options *hydro,
                                      bool *hydro_widget, void *us_hydrodyn, QWidget *p, const char *name) : QFrame(p, name)
@@ -52,6 +53,94 @@ void US_Hydrodyn_Hydro::setupGUI()
    cnt_unit->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cnt_unit->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_unit, SIGNAL(valueChanged(double)), SLOT(update_unit(double)));
+
+   bg_solvent_conditions = new QButtonGroup(4, Qt::Horizontal, "Solvent type and conditions:", this);
+
+   lbl_solvent_name = new QLabel(tr(" Solvent:"), bg_solvent_conditions);
+   Q_CHECK_PTR(lbl_solvent_name);
+   lbl_solvent_name->setAlignment(AlignLeft|AlignVCenter);
+   lbl_solvent_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_solvent_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_solvent_name = new QLineEdit(bg_solvent_conditions, "Solvent_Name Line Edit");
+   le_solvent_name->setText((*hydro).solvent_name);
+   le_solvent_name->setAlignment(AlignVCenter);
+   le_solvent_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_solvent_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_solvent_name->setEnabled(true);
+   connect(le_solvent_name, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_name(const QString &)));
+
+   //   lbl_solvent_defaults = new QLabel(tr(" Set defaults:"), bg_solvent_conditions);
+   //   Q_CHECK_PTR(lbl_solvent_defaults);
+   //   lbl_solvent_defaults->setAlignment(AlignLeft|AlignVCenter);
+   //   lbl_solvent_defaults->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   //   lbl_solvent_defaults->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+   bg_solvent_conditions->addSpace(0);
+
+   cb_solvent_defaults = new QCheckBox(bg_solvent_conditions);
+   cb_solvent_defaults->setText("Set defaults");
+   cb_solvent_defaults->setEnabled(true);
+   cb_solvent_defaults->setChecked(false);
+   cb_solvent_defaults->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_solvent_defaults->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_solvent_defaults, SIGNAL(clicked()), this, SLOT(set_solvent_defaults()));
+
+   lbl_solvent_acronym = new QLabel(tr(" Solvent acronym:"), bg_solvent_conditions);
+   //   lbl_solvent_acronym = new QLabel(tr(" Solvent acronym (max 5 characters):"), bg_solvent_conditions);
+   Q_CHECK_PTR(lbl_solvent_acronym);
+   lbl_solvent_acronym->setAlignment(AlignLeft|AlignVCenter);
+   lbl_solvent_acronym->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_solvent_acronym->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_solvent_acronym = new QLineEdit(bg_solvent_conditions, "Solvent_Acronym Line Edit");
+   le_solvent_acronym->setText((*hydro).solvent_acronym.left(5));
+   le_solvent_acronym->setAlignment(AlignVCenter);
+   le_solvent_acronym->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_solvent_acronym->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_solvent_acronym->setEnabled(true);
+   connect(le_solvent_acronym, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_acronym(const QString &)));
+
+   lbl_temperature = new QLabel(tr(" Temperature (ºC):"), bg_solvent_conditions);
+   Q_CHECK_PTR(lbl_temperature);
+   lbl_temperature->setAlignment(AlignLeft|AlignVCenter);
+   lbl_temperature->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_temperature = new QLineEdit(bg_solvent_conditions, "Temperature Line Edit");
+   le_temperature->setText(str.sprintf("%4.2f",(*hydro).temperature));
+   le_temperature->setAlignment(AlignVCenter);
+   le_temperature->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_temperature->setEnabled(true);
+   connect(le_temperature, SIGNAL(textChanged(const QString &)), SLOT(update_temperature(const QString &)));
+
+   lbl_solvent_viscosity = new QLabel(tr(" Solvent viscosity (cP):"), bg_solvent_conditions);
+   Q_CHECK_PTR(lbl_solvent_viscosity);
+   lbl_solvent_viscosity->setAlignment(AlignLeft|AlignVCenter);
+   lbl_solvent_viscosity->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_solvent_viscosity = new QLineEdit(bg_solvent_conditions, "Solvent_Viscosity Line Edit");
+   le_solvent_viscosity->setText(str.sprintf("%f",(*hydro).solvent_viscosity));
+   le_solvent_viscosity->setAlignment(AlignVCenter);
+   le_solvent_viscosity->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_solvent_viscosity->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_solvent_viscosity->setEnabled(true);
+   connect(le_solvent_viscosity, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_viscosity(const QString &)));
+
+   lbl_solvent_density = new QLabel(tr(" Solvent density (g/ml):"), bg_solvent_conditions);
+   Q_CHECK_PTR(lbl_solvent_density);
+   lbl_solvent_density->setAlignment(AlignLeft|AlignVCenter);
+   lbl_solvent_density->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_solvent_density = new QLineEdit(bg_solvent_conditions, "Solvent_Density Line Edit");
+   le_solvent_density->setText(str.sprintf("%f",(*hydro).solvent_density));
+   le_solvent_density->setAlignment(AlignVCenter);
+   le_solvent_density->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_solvent_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_solvent_density->setEnabled(true);
+   connect(le_solvent_density, SIGNAL(textChanged(const QString &)), SLOT(update_solvent_density(const QString &)));
 
    bg_reference_system = new QButtonGroup(2, Qt::Horizontal, "Computations Relative to:", this);
    bg_reference_system->setExclusive(true);
@@ -249,7 +338,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=6, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=12, columns = 2, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -257,6 +346,8 @@ void US_Hydrodyn_Hydro::setupGUI()
    background->addWidget(lbl_unit, j, 0);
    background->addWidget(cnt_unit, j, 1);
    j++;
+   background->addMultiCellWidget(bg_solvent_conditions, j, j+5, 0, 1);
+   j+=6;
    background->addMultiCellWidget(bg_reference_system, j, j+2, 0, 1);
    j+=3;
    background->addMultiCellWidget(bg_boundary_cond, j, j+2, 0, 1);
@@ -278,6 +369,40 @@ void US_Hydrodyn_Hydro::setupGUI()
 void US_Hydrodyn_Hydro::update_unit(double val)
 {
    (*hydro).unit = (int) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::update_solvent_name(const QString &str)
+{
+   (*hydro).solvent_name = str;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::update_solvent_acronym(const QString &str)
+{
+   (*hydro).solvent_acronym = str.left(5);
+   le_solvent_acronym->setText(hydro->solvent_acronym);
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::update_temperature(const QString &str)
+{
+   (*hydro).temperature = str.toDouble();
+   //   le_temperature->setText(QString("").sprintf("%4.2f",(*hydro).temperature));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::update_solvent_viscosity(const QString &str)
+{
+   (*hydro).solvent_viscosity = str.toDouble();
+   // le_solvent_viscosity->setText(QString("").sprintf("%f",(*hydro).solvent_viscosity));
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::update_solvent_density(const QString &str)
+{
+   (*hydro).solvent_density = str.toDouble();
+   // le_solvent_density->setText(QString("").sprintf("%f",(*hydro).solvent_density));
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -367,6 +492,25 @@ void US_Hydrodyn_Hydro::set_rotational()
 void US_Hydrodyn_Hydro::set_viscosity()
 {
    (*hydro).viscosity = cb_viscosity->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Hydro::set_solvent_defaults()
+{
+   if ( cb_solvent_defaults->isChecked() )
+   {
+      cb_solvent_defaults->setChecked(false);
+      hydro->solvent_name = "Water";
+      hydro->solvent_acronym = "w";
+      hydro->temperature = K20 - K0;
+      hydro->solvent_viscosity = VISC_20W * 100;
+      hydro->solvent_density = DENS_20W;
+      le_solvent_name->setText((*hydro).solvent_name);
+      le_solvent_acronym->setText((*hydro).solvent_acronym.left(5));
+      le_temperature->setText(QString("").sprintf("%4.2f",(*hydro).temperature));
+      le_solvent_viscosity->setText(QString("").sprintf("%f",(*hydro).solvent_viscosity));
+      le_solvent_density->setText(QString("").sprintf("%f",(*hydro).solvent_density));
+   }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

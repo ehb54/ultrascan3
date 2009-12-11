@@ -29,6 +29,11 @@ using namespace std;
 struct hydro_options
 {
    int unit;                   // exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
+   QString solvent_name;
+   QString solvent_acronym;
+   double temperature;         // in C
+   double solvent_viscosity;
+   double solvent_density;
    bool reference_system;      // false: diffusion center, true: cartesian origin (default false)
    bool boundary_cond;         // false: stick, true: slip (default false)
    bool volume_correction;      // false: Automatic, true: manual (provide value)
@@ -64,7 +69,14 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       QLabel *lbl_volume;
       QLabel *lbl_mass;
       QLabel *lbl_overlap;
+      QLabel *lbl_solvent_name;
+      QLabel *lbl_solvent_defaults;
+      QLabel *lbl_solvent_acronym;
+      QLabel *lbl_temperature;
+      QLabel *lbl_solvent_viscosity;
+      QLabel *lbl_solvent_density;
       
+      QButtonGroup *bg_solvent_conditions;
       QButtonGroup *bg_reference_system;
       QButtonGroup *bg_boundary_cond;
       QButtonGroup *bg_volume_correction;
@@ -74,6 +86,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       
       QGroupBox *gb_buried;
 
+      QCheckBox *cb_solvent_defaults;
       QCheckBox *cb_diffusion_center;
       QCheckBox *cb_cartesian_origin;
       QCheckBox *cb_stick;
@@ -91,6 +104,12 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       
       QwtCounter *cnt_unit;
       
+      QLineEdit *le_solvent_name;
+      QLineEdit *le_solvent_acronym;
+      QLineEdit *le_temperature;
+      QLineEdit *le_solvent_viscosity;
+      QLineEdit *le_solvent_density;
+
       QLineEdit *le_volume;
       QLineEdit *le_mass;
       QLineEdit *le_overlap;
@@ -101,6 +120,13 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
    private slots:
 
       void setupGUI();
+
+      void update_solvent_name(const QString &str);
+      void update_solvent_acronym(const QString &str);
+      void update_temperature(const QString &str);
+      void update_solvent_viscosity(const QString &str);
+      void update_solvent_density(const QString &str);
+
       void update_unit(double);
       void update_volume(const QString &str);
       void update_mass(const QString &str);
@@ -111,6 +137,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       void select_mass_correction(int);
       void select_overlap(int);
       void select_bead_inclusion(int);
+      void set_solvent_defaults();
       void set_rotational();
       void set_viscosity();
       void cancel();

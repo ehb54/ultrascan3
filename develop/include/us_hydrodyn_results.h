@@ -48,6 +48,11 @@ struct hydro_results
    double asa_rg_neg;
    double ff0;
    double ff0_sd;
+   QString solvent_name;
+   QString solvent_acronym;
+   double temperature;
+   double solvent_viscosity;
+   double solvent_density;
 };
 
 class US_EXTERN US_Hydrodyn_Results : public QFrame

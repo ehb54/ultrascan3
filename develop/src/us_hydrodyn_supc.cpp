@@ -11,11 +11,12 @@
 #include "../include/us_math.h"
 
 #define  PI M_PI
-#define  ETAo VISC_20W
-#define  DENS DENS_20W
+// below are moved to variable values
+// #define  ETAo VISC_20W
+// #define  DENS DENS_20W
+// #define  TE 293.15
 #define  AVO AVOGADRO
 #define  KB  (8.314472e+07/AVOGADRO)
-#define  TE 293.15
 #define  SMAX 256
 #define  RM_COMMAND "rm "
 #include <stdlib.h>      /* Added for 'print_time' function use */
@@ -43,6 +44,11 @@ struct dati1
    char *cor;         /* correspondence between beads and AA */
 };
 
+static double ETAo;
+static double DENS;
+static double TE;
+static QString tag1;
+static QString tag2;
 static hydro_results *supc_results;
 static FILE *mol;
 static FILE *rmc;
@@ -563,6 +569,17 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    q = 0;   
    a = 0;   
    tot_partvol = 0.0;
+
+   ETAo = hydro->solvent_viscosity / 100;
+   DENS = hydro->solvent_density;
+   TE = K0 + hydro->temperature;
+   hydro_results->solvent_name = hydro->solvent_name;
+   hydro_results->solvent_acronym = hydro->solvent_acronym;
+   hydro_results->solvent_viscosity = hydro->solvent_viscosity;
+   hydro_results->solvent_density = hydro->solvent_density;
+   hydro_results->temperature = hydro->temperature;
+   tag1 = QString("%1@%2C").arg(hydro->solvent_acronym).arg(hydro->temperature);
+   tag2 = QString("%1C,%2").arg(hydro->temperature).arg(hydro->solvent_acronym);
 
    //  vector <PDB_atom> *bead_model;
    tot_tot_beads = 0;
@@ -1999,6 +2016,13 @@ stampa_ris()
    else
       bc = 4;
 
+   // solvent area
+   printf("Solvent:                %s\n", supc_results->solvent_name.ascii());
+   printf("Temperature:            %5.2f\n", supc_results->temperature);
+   printf("Solvent viscosity (cP): %f\n", supc_results->solvent_viscosity);
+   printf("Solvent density (g/ml): %f\n", supc_results->solvent_density);
+   printf("\n");
+
    printf("\n\n%s%d\n", "- Used BEADS Number  = ", nat);
    supc_results->used_beads = nat;
    tot_used_beads += (float)nat;
@@ -2034,10 +2058,10 @@ stampa_ris()
 
    printf("%s%.2f%s\n", "- Used BEADS Mass    = ", mascor1, "  [Da]");
    supc_results->mass = mascor1;
-   printf("\n\n%s%.3e\t%s\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] (w@20C)");
+   printf("\n\n%s%.3e\t%s (%s)\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] ", tag1.ascii());
    // supc_results->s20w = f * 1.0E-07 * fconv;
 
-   printf("%s%.2e\t%s\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] (20C,w)");
+   printf("%s%.2e\t%s (%s)\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] ", tag2.ascii());
    supc_results->D20w = (KB * TE * 1.0E7) / f * fconv1;
 
 
@@ -2051,15 +2075,15 @@ stampa_ris()
 
    if (raflag == -1.0) 
    {
-      printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-             (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+      printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+             (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO);
    }
 
    if ((raflag == -2.0) || (raflag == -5.0))
    {
-      printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
-             (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+      printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from file) = ",
+             (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
          printf
@@ -2068,15 +2092,15 @@ stampa_ris()
 
    if (raflag == -3.0)
    {
-      printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
-             (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+      printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from file) = ",
+             (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
          printf
             ("- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
 
-      printf("%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-             (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+      printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+             (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
    }
 
    supc_results->ff0 = 
@@ -2088,18 +2112,18 @@ stampa_ris()
    temp = 0.0;
    for (i = 0; i < 3; i++)
       temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3);
-   printf("\n%s%.3e\t%s\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] (w@20C)");
+   printf("\n%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] ", tag1.ascii());
    temp = 0.0;
    for (i = 0; i < 3; i++)
       temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
-   printf("%s%.0f\t%s\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] (20C,w)");
+   printf("%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.ascii());
 
-   printf("%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] (w@20C)");
-   printf("%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] (w@20C)");
-   printf("%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s (w@20C)]");
-   printf("%s%.0Lf\t%s\n", "- ROT. DIFF. COEFF.  [ X ] = ", (KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3), "[1/s] (20C,w)");
-   printf("%s%.0Lf\t%s\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3), "[1/s] (20C,w)");
-   printf("%s%.0Lf\t%s\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3), "[1/s] (20C,w)");
+   printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+   printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+   printf("%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+   printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", (KB * TE / 1.0E-21 * Dr[0]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
+   printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
+   printf("%s%.0Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
 
    printf("%s%.2f\t%s\n", "- MOLECULAR WEIGHT   (from file) = ", pesmol, "[Da]");
    if (sfecalc == 2)
@@ -2209,30 +2233,30 @@ stampa_ris()
 
    if (taoflag == 1.0)
    {
-      printf("%s\t%.2Lf\t%s\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      printf("%s\t%.2Lf\t%s\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      printf("%s\t%.2Lf\t%s\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      printf("%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    }
    if (taoflag == 2.0)
    {
-      printf("%s\t%.2Lf\t%s\n", " Tau(1) ", tao[4] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      printf("%s\t%.2Lf\t%s\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      printf("%s\t%.2Lf\t%s\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      printf("%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    }
    if (taoflag == 0.0)
    {
-      printf("%s\t%.2Lf\t%s\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      printf("%s\t%.2Lf\t%s\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      printf("%s\t%.2Lf\t%s\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      printf("%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      printf("%s\t%.2Lf\t%s\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] (20C,w)");
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      printf("%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    }
-   printf("\n%s\t%.2f\t%s\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] (20C,w)");
-   printf("%s\t%.2f\t%s\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] (20C,w) \n");
+   printf("\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+   printf("%sf\t%.2f\t%s (%s)\n\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    supc_results->tau = taoh * 1.0E+09 * pow(fconv, 3.0f);
 
    printf("\n%s", "- MAX EXTENSIONS:");
@@ -2280,6 +2304,13 @@ mem_ris(int model)
     
    // fprintf(ris, "%s%d\n", "FIRST Bead Included  :___ ", prima);
    // fprintf(ris, "%s%d\n\n", "LAST Bead Included :___ ", ultima);
+   fprintf(ris, "\n");
+
+   // solvent area
+   fprintf(ris, "Solvent:                %s\n", supc_results->solvent_name.ascii());
+   fprintf(ris, "Temperature:            %5.2f\n", supc_results->temperature);
+   fprintf(ris, "Solvent viscosity (cP): %f\n", supc_results->solvent_viscosity);
+   fprintf(ris, "Solvent density (g/ml): %f\n", supc_results->solvent_density);
    fprintf(ris, "\n");
 
    if (colorzero == 1)
@@ -2336,17 +2367,17 @@ mem_ris(int model)
    fprintf(ris, "%s%.2f%s\n", "- Used BEAD Mass     = ", mascor1, "  [Da]");
    fprintf(ris, "%s%.2f\n", "- Conversion Factor  = ", fconv);
 
-   fprintf(ris, "\n%s%.3e\t%s\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] (w@20C)");
-   fprintf(ris, "%s%.2e\t%s\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] (20C,w)");
+   fprintf(ris, "\n%s%.3e\t%s (%s)\n", "- TRANS. FRICT. COEFF.  = ", f * 1.0E-07 * fconv, "[g/s] ", tag1.ascii());
+   fprintf(ris, "%s%.2e\t%s (%s)\n", "- TRANS. DIFF. COEFF.   = ", (KB * TE * 1.0E7) / f * fconv1, "[cm^2/s] ", tag2.ascii());
 
    if (raflag == -1.0)
-      fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+      fprintf(ris, "%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
 
    if ((raflag == -2.0) || (raflag == -5.0))
    {
-      fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF.           = ",
-              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "        [S] (20C,w)");
+      fprintf(ris, "%s%.2f\t%s (%s)\n", "- SED. COEFF.           = ",
+              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "        [S] ", tag2.ascii());
       if ((nat + colorzero + colorsix) < numero_sfere)
          fprintf(ris,
                  "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
@@ -2354,14 +2385,14 @@ mem_ris(int model)
 
    if (raflag == -3.0)
    {
-      fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF. (psv from file) = ",
-              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+      fprintf(ris, "%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from file) = ",
+              (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
       if ((nat + colorzero + colorsix) < numero_sfere)
          fprintf(ris,
                  "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
 
-      fprintf(ris, "%s%.2f\t%s\n", "- SED. COEFF. (psv from unhydrated radii) = ",
-              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] (20C,w)");
+      fprintf(ris, "%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from unhydrated radii) = ",
+              (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
    }
 
    fprintf(ris, "%s%.2f\n", "- FRICTIONAL RATIO      = ", 
@@ -2372,21 +2403,21 @@ mem_ris(int model)
    temp = 0.0;
    for (i = 0; i < 3; i++)
       temp += 1.0E-21 / Dr[i * 4] * pow(fconv, 3);
-   fprintf(ris, "%s%.3e\t%s\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] (w@20C)");
+   fprintf(ris, "%s%.3e\t%s (%s)\n", "- ROT. FRICT. COEFF.    = ", temp / 3.0, "[g*cm^2/s] ", tag1.ascii());
    temp = 0.0;
    for (i = 0; i < 3; i++)
       temp += (KB * TE * Dr[i * 4] / 1.0E-21) * pow(fconv1, 3);
-   fprintf(ris, "%s%.0f\t%s\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] (20C,w)");
+   fprintf(ris, "%s%.0f\t%s (%s)\n\n", "- ROT. DIFF. COEFF.     = ", temp / 3.0, "[1/s] ", tag2.ascii());
 
-   fprintf(ris, "%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] (w@20C)");
-   fprintf(ris, "%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] (w@20C)");
-   fprintf(ris, "%s%.3Le\t%s\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] (w@20C)");
-   fprintf(ris, "%s%.2Lf\t%s\n", "- ROT. DIFF. COEFF.  [ X ] = ", KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3),
-           "[1/s] (20C,w)");
-   fprintf(ris, "%s%.2Lf\t%s\n", "- ROT. DIFF. COEFF.  [ Y ] = ", KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3),
-           "[1/s] (20C,w)");
-   fprintf(ris, "%s%.2Lf\t%s\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3),
-           "[1/s] (20C,w)");
+   fprintf(ris, "%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ X ] = ", 1.0E-21 / Dr[0] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+   fprintf(ris, "%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Y ] = ", 1.0E-21 / Dr[4] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+   fprintf(ris, "%s%.3Le\t%s (%s)\n", "- ROT. FRICT. COEFF. [ Z ] = ", 1.0E-21 / Dr[8] * pow(fconv, 3), "[g*cm^2/s] ", tag1.ascii());
+   fprintf(ris, "%s%.2Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ X ] = ", KB * TE * Dr[0] / 1.0e-21 * pow(fconv1, 3),
+           "[1/s] ", tag2.ascii());
+   fprintf(ris, "%s%.2Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", KB * TE * Dr[4] / 1.0e-21 * pow(fconv1, 3),
+           "[1/s] ", tag2.ascii());
+   fprintf(ris, "%s%.2Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3),
+           "[1/s] ", tag2.ascii());
 
    fprintf(ris, "%s%.2f\t%s\n", "- MOLECULAR WEIGHT (from file)   = ", pesmol, "[Da]");
    //   if (sfecalc == 2)
@@ -2490,30 +2521,30 @@ mem_ris(int model)
 
    if (taoflag == 1.0)
    {
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    }
    if (taoflag == 2.0)
    {
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(1) ", tao[4] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    }
    if (taoflag == 0.0)
    {
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] (20C,w)");
-      fprintf(ris, "%s\t%.2Lf\t%s\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] (20C,w)");
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(1) ", tao[0] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(2) ", tao[1] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(3) ", tao[2] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(4) ", tao[3] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+      fprintf(ris, "%s\t%.2Lf\t%s (%s)\n", " Tau(5) ", tao[4] * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    }
-   fprintf(ris, "\n%s\t%.2f\t%s\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] (20C,w)");
-   fprintf(ris, "%s\t%.2f\t%s\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] (20C,w)");
+   fprintf(ris, "\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+   fprintf(ris, "%s\t%.2f\t%s (%s)\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
 
    fprintf(ris, "\n%s", "- MAX EXTENSIONS:");
    fprintf(ris, "\n%s%.2f%s%s%.2f%s%s%.2f%s\n", "[X axis] = ", (maxx * fconv), " [nm];  ", "[Y axis] = ", (maxy * fconv),

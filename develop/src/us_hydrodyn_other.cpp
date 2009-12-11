@@ -10,6 +10,7 @@
 #include "../include/us_hydrodyn_pat.h"
 #include "../include/us_hydrodyn_asab1.h"
 #include "../include/us_hydrodyn_grid_atob.h"
+#include "../include/us_math.h"
 #include <qregexp.h>
 #include <qfont.h>
 #include <stdlib.h>
@@ -1191,8 +1192,23 @@ int US_Hydrodyn::read_config(QFile& f)
    misc.avg_vbar = str.toDouble();
 
    ts >> str;
-   ts.readLine();
+   if ( ts.readLine() == QString::null ) return -10100;
    hydro.unit = str.toInt();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -10100;
+   hydro.solvent_name = str;
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -10100;
+   hydro.solvent_acronym = str.left(5);
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -10100;
+   hydro.temperature = str.toDouble();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -10100;
+   hydro.solvent_viscosity = str.toDouble();
+   ts >> str;
+   if ( ts.readLine() == QString::null ) return -10100;
+   hydro.solvent_density = str.toDouble();
    ts >> str;
    if ( ts.readLine() == QString::null ) return -10100;
    hydro.reference_system = (bool) str.toInt();
@@ -1427,6 +1443,11 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << misc.avg_vbar << "\t\t# Average vbar value\n";
 
       ts << hydro.unit << "\t\t# exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)\n";
+      ts << hydro.solvent_name << "\t\t# solvent name\n";
+      ts << hydro.solvent_acronym << "\t\t# solvent acronym\n";
+      ts << hydro.temperature << "\t\t# solvent temperature in degrees C\n";
+      ts << hydro.solvent_viscosity << "\t\t# viscosity of the solvent in cP\n";
+      ts << hydro.solvent_density << "\t\t# desnisty of the solvent (g/ml)\n";
       ts << hydro.reference_system << "\t\t# flag for reference system\n";
       ts << hydro.boundary_cond << "\t\t# flag for boundary condition: false: stick, true: slip\n";
       ts << hydro.volume_correction << "\t\t# flag for volume correction - false: Automatic, true: manual\n";
@@ -1602,6 +1623,13 @@ void US_Hydrodyn::set_default()
       overlap_tolerance = 0.001;
 
       hydro.unit = -10;                // exponent from units in meter (example: -10 = Angstrom, -9 = nanometers)
+
+      hydro.solvent_name = "Water";
+      hydro.solvent_acronym = "w";
+      hydro.temperature = K20 - K0;
+      hydro.solvent_viscosity = VISC_20W * 100;
+      hydro.solvent_density = DENS_20W;
+
       hydro.reference_system = false;   // false: diffusion center, true: cartesian origin (default false)
       hydro.boundary_cond = false;      // false: stick, true: slip (default false)
       hydro.volume_correction = false;   // false: Automatic, true: manual (provide value)
@@ -2860,6 +2888,26 @@ QString US_Hydrodyn::default_differences_hydro()
    if ( hydro.unit != default_hydro.unit )
    {
       str += QString(base + "Model units (-10 = Angstrom, -9 = nanometer): %1\n").arg(hydro.unit);
+   }
+   if ( hydro.solvent_name != default_hydro.solvent_name )
+   {
+      str += QString(base + "Solvent name: %1\n").arg(hydro.solvent_name);
+   }
+   if ( hydro.solvent_acronym != default_hydro.solvent_acronym )
+   {
+      str += QString(base + "Solvent acronym: %1\n").arg(hydro.solvent_acronym);
+   }
+   if ( hydro.temperature != default_hydro.temperature )
+   {
+      str += QString(base + "Temperature (C): %1\n").arg(hydro.temperature);
+   }
+   if ( hydro.solvent_viscosity != default_hydro.solvent_viscosity )
+   {
+      str += QString(base + "Solvent viscosity (cP): %1\n").arg(hydro.solvent_viscosity);
+   }
+   if ( hydro.solvent_density != default_hydro.solvent_density )
+   {
+      str += QString(base + "Solvent density (g/ml): %1\n").arg(hydro.solvent_density);
    }
    if ( hydro.reference_system != default_hydro.reference_system )
    {
