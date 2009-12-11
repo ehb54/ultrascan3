@@ -14,7 +14,7 @@
 #define  ETAo VISC_20W
 #define  DENS DENS_20W
 #define  AVO AVOGADRO
-#define  KB 1.38066E-16
+#define  KB  (8.314472e+07/AVOGADRO)
 #define  TE 293.15
 #define  SMAX 256
 #define  RM_COMMAND "rm "

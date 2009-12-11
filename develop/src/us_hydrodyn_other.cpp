@@ -463,7 +463,6 @@ void US_Hydrodyn::read_pdb(const QString &filename)
             // push back previous chain if it exists
             if ( chain_flag )
             {
-               printf("ter break <%s>\n", str1.ascii());
                if ( advanced_config.debug_2 )
                {
                   printf("ter break <%s>\n", str1.ascii());
