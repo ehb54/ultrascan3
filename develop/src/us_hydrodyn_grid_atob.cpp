@@ -21,7 +21,7 @@ static US_Hydrodyn *us_hydrodyn;
 
 // #define DEBUG
 // #define DEBUG_ATOB
-
+#if defined(OLD_WAY)
 static float
 particle_max_size(PDB * pdb)
 {
@@ -57,9 +57,60 @@ particle_max_size(PDB * pdb)
             max_size = temp;
       }
    }
-
    return ((float) sqrt(max_size));
+}
+#endif
 
+static vector < float >
+particle_max_sizes(PDB * pdb)
+{
+
+   PDB *p;
+   float max_x = 0.0;
+   float max_y = 0.0;
+   float max_z = 0.0;
+   float min_x = 0.0;
+   float min_y = 0.0;
+   float min_z = 0.0;
+
+   // int countr = 0;
+
+   for (p = pdb; p; p = p->next)
+   {
+      if ( max_x < p->x )
+      {
+         max_x = p->x;
+      }
+      if ( max_y < p->y )
+      {
+         max_y = p->y;
+      }
+      if ( max_z < p->z )
+      {
+         max_z = p->z;
+      }
+
+      if ( min_x > p->x )
+      {
+         min_x = p->x;
+      }
+      if ( min_y > p->y )
+      {
+         min_y = p->y;
+      }
+      if ( min_z > p->z )
+      {
+         min_z = p->z;
+      }
+   }      
+   vector < float > results;
+   results.push_back(min_x);
+   results.push_back(max_x);
+   results.push_back(min_y);
+   results.push_back(max_y);
+   results.push_back(min_z);
+   results.push_back(max_z);
+   return results;
 }
 
 static void
@@ -135,8 +186,13 @@ free_f3tensor(float ***t, long nrl, long nrh, long ncl, long nch, long ndl, long
    ndh++;
 }
 
+
 static PDB *
-AtoB(PDB * pdb, long npoints, float dx,
+AtoB(PDB * pdb, 
+     long npoints_x, 
+     long npoints_y, 
+     long npoints_z, 
+     float dx,
      // long *natoms,
      PHYSPROP * prop,
      PHYSPROP * nprop, 
@@ -145,7 +201,8 @@ AtoB(PDB * pdb, long npoints, float dx,
      char input_file[], 
      int set_bead_radius, 
      char atnam[], 
-     char resnam[])
+     char resnam[],
+     US_Hydrodyn *us_hydrodyn)
 {
 #if defined(DEBUG)
    printf("npoints %ld\n", npoints);
@@ -184,22 +241,22 @@ AtoB(PDB * pdb, long npoints, float dx,
    float ***z = (float ***) 0;
    float ***mass = (float ***) 0;
 
-   if ( !( ro = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints) ) ||
-        !( mass = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints) ) ||
-        !( x = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints) ) ||
-        !( y = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints) ) ||
-        !( z = (float ***) f3tensor(0, npoints, 0, npoints, 0, npoints) ) )
+   if ( !( ro = (float ***) f3tensor(0, npoints_x, 0, npoints_y, 0, npoints_z) ) ||
+        !( mass = (float ***) f3tensor(0, npoints_x, 0, npoints_y, 0, npoints_z) ) ||
+        !( x = (float ***) f3tensor(0, npoints_x, 0, npoints_y, 0, npoints_z) ) ||
+        !( y = (float ***) f3tensor(0, npoints_x, 0, npoints_y, 0, npoints_z) ) ||
+        !( z = (float ***) f3tensor(0, npoints_x, 0, npoints_y, 0, npoints_z) ) )
    {
       if ( ro )
-         free_f3tensor(ro, 0, npoints, 0, npoints, 0, npoints);
+         free_f3tensor(ro, 0, npoints_x, 0, npoints_y, 0, npoints_z);
       if ( x )
-         free_f3tensor(x, 0, npoints, 0, npoints, 0, npoints);
+         free_f3tensor(x, 0, npoints_x, 0, npoints_y, 0, npoints_z);
       if ( y )
-         free_f3tensor(y, 0, npoints, 0, npoints, 0, npoints);
+         free_f3tensor(y, 0, npoints_x, 0, npoints_y, 0, npoints_z);
       if ( z )
-         free_f3tensor(z, 0, npoints, 0, npoints, 0, npoints);
+         free_f3tensor(z, 0, npoints_x, 0, npoints_y, 0, npoints_z);
       if ( mass )
-         free_f3tensor(mass, 0, npoints, 0, npoints, 0, npoints);
+         free_f3tensor(mass, 0, npoints_x, 0, npoints_y, 0, npoints_z);
       return (PDB *)0;
    }
 #if defined(DEBUG)
@@ -215,9 +272,9 @@ AtoB(PDB * pdb, long npoints, float dx,
    fflush(stdout);
 #endif
 
-   for (i = 0; i < npoints; i++)   /* clears up r0 and mass */
-      for (j = 0; j < npoints; j++)
-         for (k = 0; k < npoints; k++)
+   for (i = 0; i < npoints_x; i++)   /* clears up r0 and mass */
+      for (j = 0; j < npoints_y; j++)
+         for (k = 0; k < npoints_z; k++)
          {
             ro[i][j][k] = 0.0;
             mass[i][j][k] = 0.0;
@@ -252,9 +309,9 @@ AtoB(PDB * pdb, long npoints, float dx,
       printf("n = %d p->x = %f\n", (int) n, p->x);
       fflush(stdout);
 #endif
-      x_c = (int) ((p->x) / dx) + (int) (npoints / 2);
-      y_c = (int) ((p->y) / dx) + (int) (npoints / 2);
-      z_c = (int) ((p->z) / dx) + (int) (npoints / 2);
+      x_c = (int) ((p->x) / dx) + (int) (npoints_x / 2);
+      y_c = (int) ((p->y) / dx) + (int) (npoints_y / 2);
+      z_c = (int) ((p->z) / dx) + (int) (npoints_z / 2);
 #if defined(DEBUG)
       puts("in atob 3c_1");
       fflush(stdout);
@@ -296,9 +353,9 @@ AtoB(PDB * pdb, long npoints, float dx,
    fflush(stdout);
 #endif
 
-   for (i = 0; i < npoints; i++)   /* Now the radius of the beads are in r0[][][] */
-      for (j = 0; j < npoints; j++)
-         for (k = 0; k < npoints; k++)
+   for (i = 0; i < npoints_x; i++)   /* Now the radius of the beads are in r0[][][] */
+      for (j = 0; j < npoints_y; j++)
+         for (k = 0; k < npoints_z; k++)
             ro[i][j][k] = pow((double)ro[i][j][k], 0.333333);
 
 #if defined(DEBUG)
@@ -319,20 +376,21 @@ AtoB(PDB * pdb, long npoints, float dx,
    printf("npoints %d\n", (int)npoints); fflush(stdout);
 #endif
 
-   for (i = 0; i < npoints; i++)   /* clears up r0 */
+   for (i = 0; i < npoints_x; i++)   /* clears up r0 */
    {
+      us_hydrodyn->lbl_core_progress->setText(QString("Gridding %1 of %2").arg(i+1).arg(npoints_x));
       qApp->processEvents();
       if (us_hydrodyn->stopFlag)
       {
-         free_f3tensor(mass, 0, npoints, 0, npoints, 0, npoints);
-         free_f3tensor(ro, 0, npoints, 0, npoints, 0, npoints);
-         free_f3tensor(x, 0, npoints, 0, npoints, 0, npoints);
-         free_f3tensor(y, 0, npoints, 0, npoints, 0, npoints);
-         free_f3tensor(z, 0, npoints, 0, npoints, 0, npoints);
+         free_f3tensor(ro, 0, npoints_x, 0, npoints_y, 0, npoints_z);
+         free_f3tensor(x, 0, npoints_x, 0, npoints_y, 0, npoints_z);
+         free_f3tensor(y, 0, npoints_x, 0, npoints_y, 0, npoints_z);
+         free_f3tensor(z, 0, npoints_x, 0, npoints_y, 0, npoints_z);
+         free_f3tensor(mass, 0, npoints_x, 0, npoints_y, 0, npoints_z);
          return npdb;
       }
-      for (j = 0; j < npoints; j++)
-         for (k = 0; k < npoints; k++)
+      for (j = 0; j < npoints_y; j++)
+         for (k = 0; k < npoints_z; k++)
          {
             if (ro[i][j][k] > 0.000001)
             {
@@ -348,9 +406,9 @@ AtoB(PDB * pdb, long npoints, float dx,
                }
                else   //puts centres of cells
                {
-                  current->x = dx * i + (float) (dx * npoints / 2);
-                  current->y = dx * j + (float) (dx * npoints / 2);
-                  current->z = dx * k + (float) (dx * npoints / 2);
+                  current->x = dx * i + (float) (dx * npoints_x / 2);
+                  current->y = dx * j + (float) (dx * npoints_y / 2);
+                  current->z = dx * k + (float) (dx * npoints_z / 2);
                }
 
                current->atnum = natoms2;
@@ -393,6 +451,8 @@ AtoB(PDB * pdb, long npoints, float dx,
    }
    prev->next = NULL;
    nprev->next = NULL;
+   us_hydrodyn->lbl_core_progress->setText("");
+   qApp->processEvents();
 
 #if defined(DEBUG)
    puts("in atob 5");
@@ -421,33 +481,38 @@ AtoB(PDB * pdb, long npoints, float dx,
    }
    printf(">>Writing down correspondance file: %s\n", log_filename);
 
-   for (n = 1, i = 0; i < npoints; i++)
-      for (j = 0; j < npoints; j++)
-         for (k = 0; k < npoints; k++)
+   for (n = 1, i = 0; i < npoints_x; i++) 
+   {
+      us_hydrodyn->lbl_core_progress->setText(QString("Gridding %1 of %2").arg(i+1).arg(npoints_x));
+      qApp->processEvents();
+      for (j = 0; j < npoints_y; j++)
+         for (k = 0; k < npoints_z; k++)
          {
             if (mass[i][j][k] > 0)   //gets only if there is a bead
             {
                fprintf(fptr, "\n\nBead %d: ", n);
 
                for (p = pdb, nn = 0; p; p = p->next, nn++)   // goes over all atoms
-                  if (((int) ((p->x) / dx) + (int) (npoints / 2)) == i)
-                     if (((int) ((p->y) / dx) + (int) (npoints / 2)) == j)
-                        if (((int) ((p->z) / dx) + (int) (npoints / 2)) == k)
+                  if (((int) ((p->x) / dx) + (int) (npoints_x / 2)) == i)
+                     if (((int) ((p->y) / dx) + (int) (npoints_y / 2)) == j)
+                        if (((int) ((p->z) / dx) + (int) (npoints_z / 2)) == k)
                         {
                            fprintf(fptr, "%d-", nn);
                         }
                n++;
             }
          }
+   }
 
    fclose(fptr);
+   us_hydrodyn->lbl_core_progress->setText("");
 
    /*Freeing electron density memory! */
-   free_f3tensor(mass, 0, npoints, 0, npoints, 0, npoints);
-   free_f3tensor(ro, 0, npoints, 0, npoints, 0, npoints);
-   free_f3tensor(x, 0, npoints, 0, npoints, 0, npoints);
-   free_f3tensor(y, 0, npoints, 0, npoints, 0, npoints);
-   free_f3tensor(z, 0, npoints, 0, npoints, 0, npoints);
+   free_f3tensor(ro, 0, npoints_x, 0, npoints_y, 0, npoints_z);
+   free_f3tensor(x, 0, npoints_x, 0, npoints_y, 0, npoints_z);
+   free_f3tensor(y, 0, npoints_x, 0, npoints_y, 0, npoints_z);
+   free_f3tensor(z, 0, npoints_x, 0, npoints_y, 0, npoints_z);
+   free_f3tensor(mass, 0, npoints_x, 0, npoints_y, 0, npoints_z);
    printf("\n");
 #if defined(DEBUG)
    puts("in atob _end");
@@ -566,55 +631,76 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       prop[i].next = (PHYSPROP *) & prop[i + 1];
    }
 
-   float LMAX = 0.0;
-   float DMAX;
+   float LMAX_x = 0.0;
+   float LMAX_y = 0.0;
+   float LMAX_z = 0.0;
+   float DMAX_x;
+   float DMAX_y;
+   float DMAX_z;
    float epsilon = 0.0;
 
-   DMAX = particle_max_size((PDB *)&pdb[0]);
-   printf("0 - LMAX %f DMAX %f\n", LMAX, DMAX); fflush(stdout);
+   vector < float > DMAX = particle_max_sizes((PDB *)&pdb[0]);
+   DMAX_x = (float)(DMAX[1] - DMAX[0]);
+   DMAX_y = (float)(DMAX[3] - DMAX[2]);
+   DMAX_z = (float)(DMAX[5] - DMAX[4]);
+
 
    /*This assures that the spacing left between the box frontere and the closest particle atom
      is larger than three times the standard VW radius, that is the electron density will always
      have space left to expand at least 1.5A away from the particle surface */
-   if (EXPANSION_COEF < (float) (max_radius * 3 / DMAX))
+   if (EXPANSION_COEF < (float) (max_radius * 3 / DMAX_x))
    {
-      epsilon = (float) (max_radius * 3 / DMAX);
+      epsilon = (float) (max_radius * 3 / DMAX_x);
    }
    else
    {
       epsilon = (float)EXPANSION_COEF;
    }
+   LMAX_x = DMAX_x * (1 + epsilon);
+
+   if (EXPANSION_COEF < (float) (max_radius * 3 / DMAX_y))
+   {
+      epsilon = (float) (max_radius * 3 / DMAX_y);
+   }
+   else
+   {
+      epsilon = (float)EXPANSION_COEF;
+   }
+   LMAX_y = DMAX_y * (1 + epsilon);
+
+   if (EXPANSION_COEF < (float) (max_radius * 3 / DMAX_z))
+   {
+      epsilon = (float) (max_radius * 3 / DMAX_z);
+   }
+   else
+   {
+      epsilon = (float)EXPANSION_COEF;
+   }
+   LMAX_z = DMAX_z * (1 + epsilon);
    /*max box size is slightly (EXP_COEF*100 %) bigger than particle! */
 
-   LMAX = DMAX * (1 + epsilon);
-   printf("LMAX %f DMAX %f\n", LMAX, DMAX);
-   long npoints = (long) (LMAX / use_grid_options->cube_side);
-   printf("npoints %ld\n", npoints);
+
+   printf("0 - LMAX_x %f DMAX_x %f\n", LMAX_x, DMAX_z); fflush(stdout);
+   printf("0 - LMAX_y %f DMAX_y %f\n", LMAX_y, DMAX_y); fflush(stdout);
+   printf("0 - LMAX_z %f DMAX_z %f\n", LMAX_z, DMAX_x); fflush(stdout);
+
+   long npoints_x = (long) (LMAX_x / use_grid_options->cube_side);
+   long npoints_y = (long) (LMAX_y / use_grid_options->cube_side);
+   long npoints_z = (long) (LMAX_z / use_grid_options->cube_side);
+   printf("npoints_x %ld\n", npoints_x);
+   printf("npoints_y %ld\n", npoints_y);
+   printf("npoints_z %ld\n", npoints_z);
 
 #if defined(DEBUG)
    puts("grid_atob 3");
    fflush(stdout);
 #endif
-   npoints *= 2;
-
-   { // test alloc
-      PHYSPROP *p;
-      p = (PHYSPROP *) malloc((int) pow((double)npoints, 3) * sizeof(PHYSPROP));
-      if ( !p )
-      {
-         fprintf(stderr, "memory allocation failure\n");
-         vector < PDB_atom > pdbnull;
-         return pdbnull;
-      }
-      free(p);
-#if defined(DEBUG)
-      puts("grid_atob 3 - test alloc ok");
-      fflush(stdout);
-#endif
-   }
+   npoints_x *= 2;
+   npoints_y *= 2;
+   npoints_z *= 2;
    
-   // nprop.resize((int) pow((double)npoints, 3));
-   if (!(nprop = (PHYSPROP *) malloc((int) pow((double)npoints, 3) * sizeof(PHYSPROP)) ))
+   // nprop.resize((int)(npoints_x * npoints_y * npoints_z));
+   if (!(nprop = (PHYSPROP *) malloc((int) (npoints_x * npoints_y * npoints_z)* sizeof(PHYSPROP)) ))
    {
       QColor save_color = us_hydrodyn->editor->color();
       editor->setColor("red");
@@ -636,10 +722,15 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 
    long natoms3;
 #if defined(DEBUG_ATOB)
-   printf("npoints %d\n"
+   printf(
+          "npoints_x %d\n"
+          "npoints_y %d\n"
+          "npoints_z %d\n"
           "cube side %f\n"
           "max radius %f\n"
-          ,(int)npoints
+          ,(int)npoints_x
+          ,(int)npoints_y
+          ,(int)npoints_z
           ,(float) use_grid_options->cube_side
           ,max_radius
           );
@@ -654,7 +745,9 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
    }
 
    PDB *result_pdb = AtoB((PDB *) & pdb[0],
-                          2 * npoints,
+                          npoints_x,
+                          npoints_y,
+                          npoints_z,
                           (float) use_grid_options->cube_side,
                           (PHYSPROP *) & prop[0],
                           (PHYSPROP *) & nprop[0],
@@ -663,7 +756,10 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
                           "tmp_atob",
                           use_grid_options->tangency ? 1 : 0,
                           "PB",
-                          "RES");
+                          "RES",
+                          us_hydrodyn
+                          );
+   us_hydrodyn->lbl_core_progress->setText("");
    if ( !result_pdb ) 
    {
       free(nprop);

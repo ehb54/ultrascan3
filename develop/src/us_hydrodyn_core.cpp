@@ -6795,6 +6795,7 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
       }
 #endif
 
+#if defined(DEBUG)
       printf("bead %d %.2f %.2f %.2f %s %s bead mw %.2f bead ref mw %.2f\n",
              i,
              bead_model[i].bead_computed_radius,
@@ -6811,6 +6812,7 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
              bead_model[i].bead_mw,
              bead_model[i].bead_ref_mw
              );
+#endif
    }
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
    //         QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +

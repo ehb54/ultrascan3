@@ -1837,6 +1837,7 @@ init2()
       }
    }
 
+#if defined(DEBUG)
    for(int i = 0; i < nat; i++) {
       printf("%d %s %s %.4f %.4f %.4f %.4f %d %d\n", 
              i,
@@ -1849,7 +1850,7 @@ init2()
              dt[i].m, 
              dt[i].col);
    }
- 
+#endif
    //  fclose(init2_mol);
    // fclose(init2_rmc);
    // if (flag1 != 1)
