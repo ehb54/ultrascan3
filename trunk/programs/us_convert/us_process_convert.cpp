@@ -19,9 +19,9 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
 {
    if ( dir.isEmpty() ) return; 
 
-   createDialog();
-
    reset();
+
+   createDialog();
 
    // Get legacy file names and set channels
    QDir d( dir, "*", QDir::Name, QDir::Files | QDir::Readable );
@@ -33,22 +33,24 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
 
    QStringList fileList;
    QStringList channels;
+   QString f;
 
-   for ( int i = 0; i < files.size(); i++ )
+   foreach ( f, files )
    {
       // Look for a proper filename match:
       // Optional channel + 4 to 6 digits + dot + file type + cell number
 
       QRegExp rx( "^[A-J]?\\d{4,6}\\.(?:RA|RI|IP|FI|WA|WI)\\d$" );
-      QString f = files[ i ].toUpper();
       
-      if ( rx.indexIn( f ) < 0 ) continue;
-
-      fileList << files[ i ];
-
-      // Parse the filtered file list to determine cells and channels
-      QChar c = fileList[ i ].at( 0 );
-      if ( c.isLetter() && ! channels.contains( c ) ) channels << c;
+      if ( rx.indexIn( f.toUpper() ) >= 0 )
+      {
+         fileList << f;
+ 
+         // Parse the filtered file list to determine cells and channels
+         QChar c = f.at( 0 ).toUpper();
+         if ( c.isLetter() && ! channels.contains( c ) )
+            channels << c;
+      }
    }
 
    if ( channels.isEmpty() ) channels << "A";
@@ -84,11 +86,12 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
 
          rawLegacyData << data;
          rawLegacyData << data2;
-
       }
 
       else
+      {
          rawLegacyData << data;
+      }
 
       // Check to see if cancel button has been pressed
       if ( canceled )
@@ -97,11 +100,13 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
           break;
       }
 
+
       progress->setValue( i );
       qApp    ->processEvents();
    }
 
    this->hide();
+   this->close();
 }
 
 // Constructor to use for converting data 
@@ -114,6 +119,8 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
                                       QList< double >& ss_limits // For RA data
                                     ) : US_WidgetsDialog( parent, 0 )
 {
+   reset();
+
    if ( runType == "RA"  && ss_limits.size() > 2 )
    {
       // We need to subdivide this data
@@ -124,13 +131,14 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
 
    US_DataIO::rawData newRawData;     // filtered legacy data in new raw format
 
-   createDialog();
+   if ( triples.size() > 3 )
+      createDialog();
 
    rawConvertedData.clear();
 
    if ( triples.size() == 1 )
    {
-      convert( rawLegacyData, newRawData, triples[ 0 ], runType, tolerance, true );
+      convert( rawLegacyData, newRawData, triples[ 0 ], runType, tolerance );
 
       rawConvertedData << newRawData;
    }
@@ -138,16 +146,19 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
    else
    {
       // Now convert the data.
-      lb_progress ->setText( tr( "Converting:" ) );
-      progress    ->setRange( 0, triples.size() - 1 );
-      progress    ->setValue( 0 );
-      progress    ->show();
-      qApp        ->processEvents();
+      if ( triples.size() > 3 )
+      {
+         lb_progress ->setText( tr( "Converting:" ) );
+         progress    ->setRange( 0, triples.size() - 1 );
+         progress    ->setValue( 0 );
+         progress    ->show();
+         qApp        ->processEvents();
+      }
 
       for ( int i = 0; i < triples.size(); i++ )
       {
          // Convert data for this cell / channel / wavelength
-         convert( rawLegacyData, newRawData, triples[ i ], runType, tolerance, false );
+         convert( rawLegacyData, newRawData, triples[ i ], runType, tolerance );
 
          // and save it
          rawConvertedData << newRawData;
@@ -159,12 +170,18 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
             break;
          }
 
-         progress->setValue( i );
-         qApp    ->processEvents();
+         if ( triples.size() > 3 )
+         {
+            progress->setValue( i );
+            qApp    ->processEvents();
+         }
+
       }
    }
 
+   qApp    ->processEvents();
    this->hide();
+   this->close();
 }
 
 // Constructor to use for writing data 
@@ -183,6 +200,8 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
       status = US_Convert::NODATA;
       return;
    }
+
+   reset();
 
    createDialog();
 
@@ -236,6 +255,7 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
    {
       // Try to delete the files and tell the user
       this->hide();
+      this->close();
       return;
    }
 
@@ -245,6 +265,7 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
    qApp    ->processEvents();
 
    this->hide();
+   this->close();
    return;
 }
 
@@ -252,8 +273,7 @@ void US_ProcessConvert::convert( QList< US_DataIO::beckmanRaw >& rawLegacyData,
                                  US_DataIO::rawData& newRawData,
                                  QString triple,
                                  QString runType,
-                                 double tolerance,
-                                 bool showProgressBar )
+                                 double tolerance )
 {
    // Convert the data into the UltraScan3 data structure
    QStringList parts      = triple.split(" / ");
@@ -336,17 +356,6 @@ void US_ProcessConvert::convert( QList< US_DataIO::beckmanRaw >& rawLegacyData,
       s.omega2t     = ccwLegacyData[ i ].omega2t;
       s.wavelength  = ccwLegacyData[ i ].t.wavelength;
       s.delta_r     = delta_r;
-
-      // We show the progress bar here if there is only one data set
-      if ( showProgressBar )
-      {
-         // Now convert the data.
-         lb_progress ->setText( tr( "Converting:" ) );
-         progress    ->setRange( 0, ccwLegacyData.size() - 1 );
-         progress    ->setValue( 0 );
-         progress    ->show();
-         qApp        ->processEvents();
-      }
 
       // Readings here and interpolated array
       int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
@@ -462,8 +471,6 @@ void US_ProcessConvert::convert( QList< US_DataIO::beckmanRaw >& rawLegacyData,
       delete [] interpolated;
 
       newRawData.scanData <<  s ;
-      
-      if ( showProgressBar ) progress->setValue( i ); 
    }
 
    // Delete the bitmaps we allocated
@@ -860,9 +867,8 @@ void US_ProcessConvert::createDialog( void )
 
    main ->setColumnMinimumWidth( 1, 200 );
    main ->addLayout( buttons, row++, 1 );
-
    this ->show();
-   qApp ->processEvents();
+   qApp    ->processEvents();
 }
 
 void US_ProcessConvert::setInterpolated ( unsigned char* bitmap, int location )
@@ -875,7 +881,7 @@ void US_ProcessConvert::setInterpolated ( unsigned char* bitmap, int location )
 
 void US_ProcessConvert::reset( void )
 {
-   canceled = false;
+   canceled  = false;
 }
 
 void US_ProcessConvert::cancel( void )
