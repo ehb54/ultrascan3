@@ -131,7 +131,6 @@ class US_EXTERN US_Convert : public US_Widgets
       void cClick          ( const QwtDoublePoint& );
       void define_subsets  ( void );
       void process_subsets ( void );
-      void cDrag           ( const QwtDoublePoint& );
       void define_reference  ( void );
       void start_reference   ( const QwtDoublePoint& );
       void process_reference ( const QwtDoublePoint& );

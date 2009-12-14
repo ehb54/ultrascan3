@@ -47,8 +47,7 @@ class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
                                   US_DataIO::rawData& newRawData,
                                   QString triple, 
                                   QString runType,
-                                  double tolerance,
-                                  bool showProgressBar );
+                                  double tolerance );
       void splitRAData   ( QList< US_DataIO::beckmanRaw >& rawLegacyData,
                                      QList< double >& ss_limits );
       void setTriples( QList< US_DataIO::beckmanRaw >& rawLegacyData,

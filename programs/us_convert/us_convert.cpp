@@ -45,7 +45,7 @@ US_Convert::US_Convert() : US_Widgets()
 
    ct_tolerance = us_counter ( 2, 0.0, 100.0, 5.0 ); // #buttons, low, high, start_value
    ct_tolerance->setStep( 1 );
-   ct_tolerance->setMinimumWidth( 120 );
+   ct_tolerance->setMinimumWidth( 160 );
    settings->addWidget( ct_tolerance, row++, 1 );
 
    // Pushbuttons to load and reload data
@@ -94,6 +94,7 @@ US_Convert::US_Convert() : US_Widgets()
    lw_triple = us_listwidget();
    lw_triple->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
    lw_triple->setMinimumWidth( 50 );
+   lw_triple->setMaximumHeight( 70 );
    connect( lw_triple, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
                        SLOT  ( changeTriple( QListWidgetItem* ) ) );
    settings->addWidget( lw_triple, row++, 1, 2, 1 );
@@ -434,7 +435,15 @@ bool US_Convert::read( QString dir )
 
 void US_Convert::setTripleInfo( void )
 {
+   // Load them into the list box
+   lw_triple->clear();
+   lw_triple->addItems( triples );
+   currentTriple = 0;
+}
 
+bool US_Convert::convert( void )
+{
+   // We need to set the default tolerances before converting
    if ( runType == "WA" )
    {
       // First of all, wavelength triples are ccr.
@@ -449,7 +458,6 @@ void US_Convert::setTripleInfo( void )
          ct_tolerance->setStep        ( 0.001 );
          ct_tolerance->setValue       ( 0.1 );
       }
-   
 
    }
    else
@@ -460,7 +468,7 @@ void US_Convert::setTripleInfo( void )
       if ( runType != oldRunType )
       {
          // We only need to adjust these if the runType has changed
-         ct_tolerance->setMinimumWidth( 120 );
+         ct_tolerance->setMinimumWidth( 160 );
          ct_tolerance->setNumButtons  ( 2 );
          ct_tolerance->setRange       ( 0.0, 100.0 );
          ct_tolerance->setStep        ( 1.0 );
@@ -469,15 +477,6 @@ void US_Convert::setTripleInfo( void )
 
    }
 
-   // Load them into the list box
-   lw_triple->clear();
-   lw_triple->addItems( triples );
-   currentTriple = 0;
-
-}
-
-bool US_Convert::convert( void )
-{
    double tolerance = (double)ct_tolerance->value() + 0.05;    // to stay between wl numbers
 
    // Convert the data
@@ -713,16 +712,6 @@ void US_Convert::plot_all( void )
    double maxV = -1.0e99;
    double minV =  1.0e99;
 
-/*
- * if ( show_plot_progress )
-   {
-      currentOperation = PLOTTING;
-      progress   ->setLegend( tr( "Plotting:" ) );
-      progress   ->setRange( 0, currentData.scanData.size() - 1 );
-      progress   ->setValue( 0 );
-   }
-*/
-
    for ( int i = 0; i < currentData.scanData.size(); i++ )
    {
       if ( ! includes.contains( i ) ) continue;
@@ -733,10 +722,21 @@ void US_Convert::plot_all( void )
          r[ j ] = s->readings[ j ].d.radius;
          v[ j ] = s->readings[ j ].value;
 
+         if ( v[ j ] > 1.0e99 )
+         {
+            // For some reason v[j] is going off the scale
+            // Don't know why, but filter out for now
+            qDebug() << "(r, v) = ( " << r[j] << ", " << v[j] << ")"
+                     << " (minR, maxR) = ( " << minR << ", " << maxR << ")" << endl
+                     << " (minV, maxV) = ( " << minV << ", " << maxV << ")" << endl;
+            continue;
+         }
+
          maxR = max( maxR, r[ j ] );
          minR = min( minR, r[ j ] );
          maxV = max( maxV, v[ j ] );
          minV = min( minV, v[ j ] );
+
       }
 
       QString title = tr( "Raw Data at " )
@@ -745,16 +745,7 @@ void US_Convert::plot_all( void )
       QwtPlotCurve* c = us_curve( data_plot, title );
       c->setData( r, v, size );
 
-/*
- * if ( show_plot_progress )
-      {
-         progress->setValue( i );
-      }
-*/
-
    }
-
-//   progress ->hide();
 
    // Reset the scan curves within the new limits
    double padR = ( maxR - minR ) / 30.0;
@@ -919,6 +910,13 @@ void US_Convert::cClick( const QwtDoublePoint& p )
          ss_limits << p.x();
          break;
 
+      case REFERENCE :
+         if ( reference_start == 0.0 )
+            start_reference( p );
+
+         else
+            process_reference( p );
+     
       default :
          break;
 
@@ -977,34 +975,19 @@ void US_Convert::process_subsets( void )
    // Now that we know we're subdividing, let's reconvert the file
    reset();
    load( saveDir );
-}
 
-void US_Convert::cDrag( const QwtDoublePoint& )
-{
-   switch ( step )
-   {
-      case REFERENCE :
-         data_plot->replot();
-         break;
-
-      default :
-         break;
-
-   }
-
+   // We don't need this any more, and it interferes with subsequent
+   //  loads of RA data. 
+   ss_limits.clear();
 }
 
 void US_Convert::define_reference( void )
 {
-   connect( picker, SIGNAL( cMouseDown     ( const QwtDoublePoint& ) ),
-                    SLOT  ( start_reference( const QwtDoublePoint& ) ) );
+   connect( picker, SIGNAL( cMouseUp( const QwtDoublePoint& ) ),
+                    SLOT  ( cClick  ( const QwtDoublePoint& ) ) );
 
-   connect( picker, SIGNAL( cMouseDrag( const QwtDoublePoint& ) ),
-                    SLOT  ( cDrag     ( const QwtDoublePoint& ) ) );
-
-   connect( picker, SIGNAL( cMouseUp    ( const QwtDoublePoint& ) ),
-                    SLOT  ( process_reference( const QwtDoublePoint& ) ) );
-
+   reference_start = 0.0;
+   reference_end   = 0.0;
    pb_reference ->setEnabled( false );
 
    step = REFERENCE;
@@ -1020,6 +1003,9 @@ void US_Convert::start_reference( const QwtDoublePoint& p )
 
 void US_Convert::process_reference( const QwtDoublePoint& p )
 {
+   // Just in case we get a second click message right away
+   if ( fabs( p.x() - reference_start ) < 0.005 ) return;
+
    reference_end = p.x();
    draw_vline( reference_end );
    data_plot->replot();
