@@ -389,9 +389,9 @@ bool US_GAModelEditor::verify_constraints()
       QMessageBox::warning(this, tr("UltraScan Warning"), message,
                            QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
    }
-   current_component = 0; // reset to the first component
-   current_assoc = 0;
-   select_component((int) current_component);
+   //current_component = 0; // reset to the first component
+   //current_assoc = 0;
+   //select_component((int) current_component);
    return flag;
 }
 
