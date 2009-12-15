@@ -919,7 +919,9 @@ void US_Hydrodyn::update_vbar()
    }
    else
    {
-      results.vbar = misc.vbar;
+      results.vbar = 
+         misc.vbar - 
+         (4.25e-4 * (K0 + misc.vbar_temperature - K20));
    }
 }
 
