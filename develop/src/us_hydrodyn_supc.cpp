@@ -145,6 +145,8 @@ static float f;
 // static float tol;
 static float raggio;
 static float partvol;
+static float org_vbar;
+static float tc_vbar;
 static float tot_partvol;
 static float partvolc;
 static float partvolc1;
@@ -2023,6 +2025,18 @@ stampa_ris()
    printf("Solvent density (g/ml): %f\n", supc_results->solvent_density);
    printf("\n");
 
+   // temporary vbar area
+   printf("Original vbar:          %5.3f (%s)\n", 
+          org_vbar, 
+          us_hydrodyn->misc.compute_vbar ?
+          ( us_hydrodyn->bead_model_from_file ?
+            "from file" : "computed" ) : "user entered");
+   if ( !us_hydrodyn->misc.compute_vbar )
+   {
+      printf("Original vbar temp (C): %5.2f\n", us_hydrodyn->misc.vbar_temperature);
+   }
+   printf("Temp corrected vbar:    %5.3f\n", tc_vbar);
+
    printf("\n\n%s%d\n", "- Used BEADS Number  = ", nat);
    supc_results->used_beads = nat;
    tot_used_beads += (float)nat;
@@ -2082,8 +2096,13 @@ stampa_ris()
 
    if ((raflag == -2.0) || (raflag == -5.0))
    {
-      printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from file) = ",
-             (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
+      printf("- SED. COEFF. (psv %s) = %.2f\t%s (%s)\n", 
+             us_hydrodyn->misc.compute_vbar ?
+             ( us_hydrodyn->bead_model_from_file ?
+               "from file" : "computed" ) : "user entered",
+             (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", 
+             tag2.ascii()
+             );
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
          printf
@@ -2092,8 +2111,13 @@ stampa_ris()
 
    if (raflag == -3.0)
    {
-      printf("%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from file) = ",
-             (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
+      printf("- SED. COEFF. (psv %s) = %.2f\t%s (%s)\n",
+             us_hydrodyn->misc.compute_vbar ?
+             ( us_hydrodyn->bead_model_from_file ?
+               "from file" : "computed" ) : "user entered",
+             (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", 
+             tag2.ascii()
+             );
       supc_results->s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
          printf
@@ -2125,7 +2149,7 @@ stampa_ris()
    printf("%s%.0Lf\t%s (%s)\n", "- ROT. DIFF. COEFF.  [ Y ] = ", (KB * TE / 1.0E-21 * Dr[4]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
    printf("%s%.0Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", (KB * TE / 1.0E-21 * Dr[8]) * pow(fconv1, 3), "[1/s] ", tag2.ascii());
 
-   printf("%s%.2f\t%s\n", "- MOLECULAR WEIGHT   (from file) = ", pesmol, "[Da]");
+   printf("%s%.2f\t%s\n", "- MOLECULAR WEIGHT   (from file)         = ", pesmol, "[Da]");
    if (sfecalc == 2)
       printf("%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3.0f), "[nm^3]");
    else
@@ -2136,12 +2160,23 @@ stampa_ris()
       printf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
 
    if ((raflag == -2.0) || (raflag == -5.0))
-      printf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from file) = ", partvol, "[cm^3/g]");
+      printf("- PARTIAL SPECIFIC VOLUME %s = %.3f\t%s\n", 
+             us_hydrodyn->misc.compute_vbar ?
+             ( us_hydrodyn->bead_model_from_file ?
+               "(from file)   " : "(computed)    " ) : "(user entered)",
+             partvol, 
+             "[cm^3/g]"
+             );
 
    if (raflag == -3.0)
    {
-      printf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from file)             = ", partvol, "[cm^3/g]");
-      printf("%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
+      printf("- PARTIAL SPECIFIC VOLUME %s          = %.3f\t%s\n", 
+             us_hydrodyn->misc.compute_vbar ?
+             ( us_hydrodyn->bead_model_from_file ?
+               "(from file)   " : "(computed)    " ) : "(user entered)", 
+             partvol, "[cm^3/g]");
+      printf("%s%.3f\t%s\n", 
+             "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
    }
 
    if ((raflag == -1.0) || (raflag == -3.0))
@@ -2313,6 +2348,19 @@ mem_ris(int model)
    fprintf(ris, "Solvent density (g/ml): %f\n", supc_results->solvent_density);
    fprintf(ris, "\n");
 
+   // temporary vbar area
+   fprintf(ris, "Original vbar:          %5.3f (%s)\n", 
+           org_vbar, 
+           us_hydrodyn->misc.compute_vbar ?
+           ( us_hydrodyn->bead_model_from_file ?
+             "from file" : "computed" ) : "user entered");
+   if ( !us_hydrodyn->misc.compute_vbar )
+   {
+      fprintf(ris, "Original vbar temp (C): %5.2f\n", us_hydrodyn->misc.vbar_temperature);
+   }
+   fprintf(ris, "Temp corrected vbar:    %5.3f\n", tc_vbar);
+   fprintf(ris, "\n");
+
    if (colorzero == 1)
    {
       fprintf(ris, "%s%d%s\n", "- WARNING: THERE IS ", colorzero, " BEAD COLOR CODED '0' [RADIUS < 0.005 NM]");
@@ -2385,7 +2433,10 @@ mem_ris(int model)
 
    if (raflag == -3.0)
    {
-      fprintf(ris, "%s%.2f\t%s (%s)\n", "- SED. COEFF. (psv from file) = ",
+      fprintf(ris, "- SED. COEFF. (psv %s) = %.2f\t%s (%s)\n", 
+              us_hydrodyn->misc.compute_vbar ?
+              ( us_hydrodyn->bead_model_from_file ?
+                "from file" : "computed" ) : "user entered",
               (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "[S] ", tag2.ascii());
       if ((nat + colorzero + colorsix) < numero_sfere)
          fprintf(ris,
@@ -2419,7 +2470,7 @@ mem_ris(int model)
    fprintf(ris, "%s%.2Lf\t%s (%s)\n\n", "- ROT. DIFF. COEFF.  [ Z ] = ", KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3),
            "[1/s] ", tag2.ascii());
 
-   fprintf(ris, "%s%.2f\t%s\n", "- MOLECULAR WEIGHT (from file)   = ", pesmol, "[Da]");
+   fprintf(ris, "%s%.2f\t%s\n", "- MOLECULAR WEIGHT (from file)           = ", pesmol, "[Da]");
    //   if (sfecalc == 2)
    //      fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3), "[nm^3]");
    //   else
@@ -2430,11 +2481,19 @@ mem_ris(int model)
       fprintf(ris, "%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
 
    if ((raflag == -2.0) || (raflag == -5.0))
-      fprintf(ris, "%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from file) = ", partvol, "[cm^3/g]");
+      fprintf(ris, "- PARTIAL SPECIFIC VOLUME %s = %.3f\t%s\n", 
+              us_hydrodyn->misc.compute_vbar ?
+              ( us_hydrodyn->bead_model_from_file ?
+                "(from file)   " : "(computed)    " ) : "(user entered)",
+              partvol, "[cm^3/g]");
 
    if (raflag == -3.0)
    {
-      fprintf(ris, "%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from file)             = ", partvol, "[cm^3/g]");
+      fprintf(ris, "- PARTIAL SPECIFIC VOLUME %s          = %.3f\t%s\n",
+              us_hydrodyn->misc.compute_vbar ?
+              ( us_hydrodyn->bead_model_from_file ?
+               "(from file)   " : "(computed)    " ) : "(user entered)", 
+              partvol, "[cm^3/g]");
       fprintf(ris, "%s%.3f\t%s\n", "- PARTIAL SPECIFIC VOLUME (from unhydrated radii) = ", partvolc, "[cm^3/g]");
    }
 
@@ -2597,7 +2656,11 @@ val_med()
    if ((raflag == -2.0) || (raflag == -5.0))
    {
       temp = fabs((CSTF2 - pow(CSTF, 2) / num) / (num - 1));
-      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv from file) ", CSTF / num, sqrt(temp), "[S]");
+      fprintf(ris, "- SED. COEFF. (psv %s) \t%.2f\t\t%.2f\t\t%s\n", 
+              us_hydrodyn->misc.compute_vbar ?
+              ( us_hydrodyn->bead_model_from_file ?
+                "from file" : "computed" ) : "user entered",
+              CSTF / num, sqrt(temp), "[S]");
       if ((nat + colorzero + colorsix) < numero_sfere)
          fprintf(ris,
                  "- !!WARNING: ONLY PART(S) OF THE MODELS HAVE BEEN ANALYZED, BUT THE PSV UTILIZED    IS THAT OF THE ENTIRE MODEL!! - \n");
@@ -2608,7 +2671,11 @@ val_med()
    if (raflag == -3.0)
    {
       temp = fabs((CSTF2 - pow(CSTF, 2) / num) / (num - 1));
-      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", "- SED. COEFF. (psv from file) ", CSTF / num, sqrt(temp), "[S]");
+      fprintf(ris, "- SED. COEFF. (psv %s) \t%.2f\t\t%.2f\t\t%s\n", 
+              us_hydrodyn->misc.compute_vbar ?
+              ( us_hydrodyn->bead_model_from_file ?
+                "from file" : "computed" ) : "user entered",
+              CSTF / num, sqrt(temp), "[S]");
       supc_results->s20w = CSTF / num;
       supc_results->s20w_sd = sqrt(temp);
       if ((nat + colorzero + colorsix) < numero_sfere)
@@ -3853,10 +3920,25 @@ initarray()
       rmc = fopen(ragcol, "r");
 #endif
 
-      partvol = (int)(((*model_vector)[model_idx[active_model]].vbar * 1000) + 0.5) / 1000.0;
+      org_vbar = (*model_vector)[model_idx[active_model]].vbar;
+      partvol = (int)((
+                       (
+                        (*model_vector)[model_idx[active_model]].vbar +
+                        (4.25e-4 * (TE - K20))
+                        )
+                       * 1000) + 0.5) / 1000.0;
+
       if (!us_hydrodyn->misc.compute_vbar) {
-         partvol = us_hydrodyn->misc.vbar;
+         org_vbar = us_hydrodyn->misc.vbar;
+         partvol = (int)((
+                          (
+                           us_hydrodyn->misc.vbar -
+                           (4.25e-4 * (K0 + us_hydrodyn->misc.vbar_temperature - K20)) +
+                           (4.25e-4 * (TE - K20))
+                           )
+                          * 1000) + 0.5) / 1000.0;
       }
+      tc_vbar = partvol;
       tot_partvol += partvol;
 
       printf("psv = %f\n", partvol);

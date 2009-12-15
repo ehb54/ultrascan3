@@ -54,13 +54,6 @@ void US_Hydrodyn_Misc::setupGUI()
    cnt_hydrovol->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_hydrovol, SIGNAL(valueChanged(double)), SLOT(update_hydrovol(double)));
 
-   lbl_vbar = new QLabel(tr(" Enter a vbar value: "), this);
-   Q_CHECK_PTR(lbl_vbar);
-   lbl_vbar->setAlignment(AlignLeft|AlignVCenter);
-   lbl_vbar->setMinimumHeight(minHeight1);
-   lbl_vbar->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
    cb_vbar = new QCheckBox(this);
    cb_vbar->setText(tr(" Calculate vbar "));
    cb_vbar->setChecked((*misc).compute_vbar);
@@ -77,6 +70,14 @@ void US_Hydrodyn_Misc::setupGUI()
    pb_vbar->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_vbar, SIGNAL(clicked()), SLOT(select_vbar()));
 
+
+   lbl_vbar = new QLabel(tr(" Enter a vbar value: "), this);
+   Q_CHECK_PTR(lbl_vbar);
+   lbl_vbar->setAlignment(AlignLeft|AlignVCenter);
+   lbl_vbar->setMinimumHeight(minHeight1);
+   lbl_vbar->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
    le_vbar = new QLineEdit(this, "vbar Line Edit");
    le_vbar->setMinimumHeight(minHeight1);
    le_vbar->setEnabled(!(*misc).compute_vbar);
@@ -84,6 +85,21 @@ void US_Hydrodyn_Misc::setupGUI()
    le_vbar->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_vbar, SIGNAL(textChanged(const QString &)), SLOT(update_vbar(const QString &)));
+
+   lbl_vbar_temperature = new QLabel(tr(" Vbar measured/computed at T=(ºC): "), this);
+   Q_CHECK_PTR(lbl_vbar_temperature);
+   lbl_vbar_temperature->setAlignment(AlignLeft|AlignVCenter);
+   lbl_vbar_temperature->setMinimumHeight(minHeight1);
+   lbl_vbar_temperature->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_vbar_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_vbar_temperature = new QLineEdit(this, "vbar_temperature Line Edit");
+   le_vbar_temperature->setMinimumHeight(minHeight1);
+   le_vbar_temperature->setEnabled(!(*misc).compute_vbar);
+   le_vbar_temperature->setText(str.sprintf("%5.2f", (*misc).vbar_temperature));
+   le_vbar_temperature->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_vbar_temperature->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   connect(le_vbar_temperature, SIGNAL(textChanged(const QString &)), SLOT(update_vbar_temperature(const QString &)));
 
    cb_pb_rule_on = new QCheckBox(this);
    cb_pb_rule_on->setText(tr(" Enable Peptide Bond Rule "));
@@ -215,7 +231,7 @@ void US_Hydrodyn_Misc::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=7, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=8, columns = 2, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
@@ -225,6 +241,9 @@ void US_Hydrodyn_Misc::setupGUI()
    j++;
    background->addWidget(lbl_vbar, j, 0);
    background->addWidget(le_vbar, j, 1);
+   j++;
+   background->addWidget(lbl_vbar_temperature, j, 0);
+   background->addWidget(le_vbar_temperature, j, 1);
    j++;
    background->addWidget(lbl_hydrovol, j, 0);
    background->addWidget(cnt_hydrovol, j, 1);
@@ -258,6 +277,12 @@ void US_Hydrodyn_Misc::update_vbar(const QString &str)
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+void US_Hydrodyn_Misc::update_vbar_temperature(const QString &str)
+{
+   (*misc).vbar_temperature = str.toDouble();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
 void US_Hydrodyn_Misc::update_vbar_signal(float val1, float val2)
 {
    QString str;
@@ -286,6 +311,7 @@ void US_Hydrodyn_Misc::set_vbar()
    (*misc).compute_vbar = cb_vbar->isChecked();
    le_vbar->setEnabled(!(*misc).compute_vbar);
    pb_vbar->setEnabled(!(*misc).compute_vbar);
+   le_vbar_temperature->setEnabled(!(*misc).compute_vbar);
    emit vbar_changed();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }

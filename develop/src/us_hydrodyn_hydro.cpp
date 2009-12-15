@@ -80,7 +80,7 @@ void US_Hydrodyn_Hydro::setupGUI()
    cb_solvent_defaults = new QCheckBox(bg_solvent_conditions);
    cb_solvent_defaults->setText("Set defaults");
    cb_solvent_defaults->setEnabled(true);
-   cb_solvent_defaults->setChecked(false);
+   check_solvent_defaults();
    cb_solvent_defaults->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_solvent_defaults->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_solvent_defaults, SIGNAL(clicked()), this, SLOT(set_solvent_defaults()));
@@ -375,6 +375,7 @@ void US_Hydrodyn_Hydro::update_unit(double val)
 void US_Hydrodyn_Hydro::update_solvent_name(const QString &str)
 {
    (*hydro).solvent_name = str;
+   check_solvent_defaults();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -382,6 +383,7 @@ void US_Hydrodyn_Hydro::update_solvent_acronym(const QString &str)
 {
    (*hydro).solvent_acronym = str.left(5);
    le_solvent_acronym->setText(hydro->solvent_acronym);
+   check_solvent_defaults();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -389,6 +391,7 @@ void US_Hydrodyn_Hydro::update_temperature(const QString &str)
 {
    (*hydro).temperature = str.toDouble();
    //   le_temperature->setText(QString("").sprintf("%4.2f",(*hydro).temperature));
+   check_solvent_defaults();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -396,6 +399,7 @@ void US_Hydrodyn_Hydro::update_solvent_viscosity(const QString &str)
 {
    (*hydro).solvent_viscosity = str.toDouble();
    // le_solvent_viscosity->setText(QString("").sprintf("%f",(*hydro).solvent_viscosity));
+   check_solvent_defaults();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -403,6 +407,7 @@ void US_Hydrodyn_Hydro::update_solvent_density(const QString &str)
 {
    (*hydro).solvent_density = str.toDouble();
    // le_solvent_density->setText(QString("").sprintf("%f",(*hydro).solvent_density));
+   check_solvent_defaults();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -499,7 +504,6 @@ void US_Hydrodyn_Hydro::set_solvent_defaults()
 {
    if ( cb_solvent_defaults->isChecked() )
    {
-      cb_solvent_defaults->setChecked(false);
       hydro->solvent_name = "Water";
       hydro->solvent_acronym = "w";
       hydro->temperature = K20 - K0;
@@ -513,6 +517,19 @@ void US_Hydrodyn_Hydro::set_solvent_defaults()
    }
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
+
+void US_Hydrodyn_Hydro::check_solvent_defaults()
+{
+   cb_solvent_defaults->setChecked(
+                                   hydro->solvent_name == "Water" &&
+                                   hydro->solvent_acronym == "w" &&
+                                   hydro->temperature == K20 - K0 &&
+                                   hydro->solvent_viscosity == VISC_20W * 100 &&
+                                   hydro->solvent_density == DENS_20W
+                                   );
+}
+      
+   
 
 void US_Hydrodyn_Hydro::cancel()
 {

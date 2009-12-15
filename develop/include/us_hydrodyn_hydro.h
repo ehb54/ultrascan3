@@ -140,6 +140,7 @@ class US_EXTERN US_Hydrodyn_Hydro : public QFrame
       void set_solvent_defaults();
       void set_rotational();
       void set_viscosity();
+      void check_solvent_defaults();
       void cancel();
       void help();
 

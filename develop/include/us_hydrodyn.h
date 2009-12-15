@@ -74,6 +74,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QTextEdit *editor;
       void play_sounds(int);
       struct pdb_parsing pdb_parse;
+      bool bead_model_from_file;
 
    private:
       bool residue_widget;
@@ -277,7 +278,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString last_abb_msgs; // automatic bead builder message log
       vector <struct PDB_model> model_vector;
       vector <struct PDB_model> model_vector_as_loaded;
-      bool bead_model_from_file;
       vector <int> somo_processed;
       QString options_log;
 

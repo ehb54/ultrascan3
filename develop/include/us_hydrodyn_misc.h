@@ -28,6 +28,7 @@ using namespace std;
 struct misc_options
 {
    double vbar;
+   double vbar_temperature;
    double hydrovol;
    bool compute_vbar;      // true = compute
                                 // false = use user specified value
@@ -59,6 +60,7 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
 
       QLabel *lbl_info;
       QLabel *lbl_vbar;
+      QLabel *lbl_vbar_temperature;
       QLabel *lbl_hydrovol;
       QLabel *lbl_avg_banner;
       QLabel *lbl_avg_radius;
@@ -72,6 +74,7 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       QPushButton *pb_vbar;
 
       QLineEdit *le_vbar;
+      QLineEdit *le_vbar_temperature;
       QCheckBox *cb_vbar;
       QCheckBox *cb_pb_rule_on;
       QwtCounter *cnt_hydrovol;
@@ -89,6 +92,7 @@ class US_EXTERN US_Hydrodyn_Misc : public QFrame
       void select_vbar();
       void update_vbar_signal(float, float);
       void update_vbar(const QString &);
+      void update_vbar_temperature(const QString &);
       void update_hydrovol(double);
       void update_avg_radius(double);
       void update_avg_mass(double);

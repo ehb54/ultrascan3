@@ -1173,6 +1173,9 @@ int US_Hydrodyn::read_config(QFile& f)
    if ( ts.readLine() == QString::null ) return -10092;
    misc.vbar = str.toDouble();
    ts >> str;
+   if ( ts.readLine() == QString::null ) return -10092;
+   misc.vbar_temperature = str.toDouble();
+   ts >> str;
    if ( ts.readLine() == QString::null ) return -10093;
    misc.pb_rule_on = (bool) str.toInt();
    ts >> str;
@@ -1435,6 +1438,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << misc.hydrovol << "\t\t# hydration volume\n";
       ts << misc.compute_vbar << "\t\t# flag for selecting vbar calculation\n";
       ts << misc.vbar << "\t\t# vbar value\n";
+      ts << misc.vbar_temperature << "\t\t# manual vbar temperature \n";
       ts << misc.pb_rule_on << "\t\t# flag for usage of peptide bond rule\n";
       ts << misc.avg_radius << "\t\t# Average atomic radius value\n";
       ts << misc.avg_mass << "\t\t# Average atomic mass value\n";
@@ -1614,6 +1618,7 @@ void US_Hydrodyn::set_default()
       misc.hydrovol = 24.041;
       misc.compute_vbar = true;
       misc.vbar = 0.72;
+      misc.vbar_temperature = 20.0;
       misc.pb_rule_on = true;
       misc.avg_radius = 1.68;
       misc.avg_mass = 16.0;
@@ -2983,6 +2988,11 @@ QString US_Hydrodyn::default_differences_misc()
         !misc.compute_vbar )
    {
       str += QString(base + "Entered vbar value: %1\n").arg(misc.vbar);
+   }
+   if ( misc.vbar_temperature != default_misc.vbar_temperature &&
+        !misc.compute_vbar )
+   {
+      str += QString(base + "Vbar measured/computed at T= %1\n").arg(misc.vbar_temperature);
    }
    if ( misc.pb_rule_on != default_misc.pb_rule_on )
    {
