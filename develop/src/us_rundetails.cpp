@@ -749,6 +749,12 @@ void RunDetails_F::closeEvent(QCloseEvent *e)
 void RunDetails_F::update_id(const QString &newtext)
 {
    QString test = newtext;
+   if(test.contains(".")>0)
+   {
+      QMessageBox::message(tr("Attention:"),tr("The unique run identification can NOT contain periods,\n"
+                                               "Please remove any periods before proceeding..."));
+      return;
+   }
    if(test.contains(" ")>0)
    {
       QMessageBox::message(tr("Attention:"),tr("The unique run identification can NOT contain white space,\n"
@@ -843,6 +849,12 @@ void RunDetails_F::update_id(const QString &newtext)
    {
       QMessageBox::message(tr("Attention:"),tr("The unique run identification can NOT contain '<' or '>',\n"
                                                "Please remove '<' or '>' before proceeding..."));
+      return;
+   }
+   if(test.contains("{")>0 || test.contains("}")>0 )
+   {
+      QMessageBox::message(tr("Attention:"),tr("The unique run identification can NOT contain '{' or '}',\n"
+                                               "Please remove '{' or '}' before proceeding..."));
       return;
    }
 
