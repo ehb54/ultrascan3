@@ -2360,6 +2360,30 @@ void US_Hydrodyn::append_options_log_somo()
 
              );
    options_log += s;
+
+   s.sprintf(
+             "Miscellaneous options:\n"
+             "  Calculate vbar                 %s\n"
+             ,misc.compute_vbar ? "On" : "Off"
+             );
+   options_log += s;
+
+   if ( !misc.compute_vbar )
+   {
+      s.sprintf(
+                "  Entered vbar value             %.3f\n"
+                "  Vbar measured/computed at T=   %.2f\n"
+                ,misc.vbar
+                ,misc.vbar_temperature
+                );
+      options_log += s;
+   }
+
+   s.sprintf(
+             "  Enable Peptide Bond Rule       %s\n"
+             ,misc.pb_rule_on ? "On" : "Off"
+             );
+   options_log += s;
 }
 
 void US_Hydrodyn::append_options_log_atob()
@@ -2472,6 +2496,24 @@ void US_Hydrodyn::append_options_log_atob()
              );
 
    options_log += s;
+
+   s.sprintf(
+             "Miscellaneous options:\n"
+             "  Calculate vbar                 %s\n"
+             ,misc.compute_vbar ? "On" : "Off"
+             );
+   options_log += s;
+
+   if ( !misc.compute_vbar )
+   {
+      s.sprintf(
+                "  Entered vbar value             %.3f\n"
+                "  Vbar measured/computed at T=   %.2f\n"
+                ,misc.vbar
+                ,misc.vbar_temperature
+                );
+      options_log += s;
+   }
 }
 
 QString US_Hydrodyn::default_differences_load_pdb()

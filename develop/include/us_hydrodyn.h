@@ -180,6 +180,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_load_bead_model;
       QPushButton *pb_calc_hydro;
       QPushButton *pb_show_hydro_results;
+      QPushButton *pb_open_hydro_results;
       QPushButton *pb_grid_pdb;
       QPushButton *pb_grid;
       QPushButton *pb_view_asa;
@@ -352,6 +353,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void pdb_saxs();
       void bead_saxs();
       void show_hydro_results();
+      void open_hydro_results();
       void write_bead_asa(QString, vector <PDB_atom> *);
       void write_bead_tsv(QString, vector <PDB_atom> *);
       void write_bead_ebf(QString, vector <PDB_atom> *);

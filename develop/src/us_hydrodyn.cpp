@@ -446,11 +446,18 @@ void US_Hydrodyn::setupGUI()
    pb_show_hydro_results = new QPushButton(tr("Show Hydrodynamic Calculations"), this);
    Q_CHECK_PTR(pb_show_hydro_results);
    pb_show_hydro_results->setMinimumHeight(minHeight1);
-   //pb_show_hydro_results->setEnabled(true);
    pb_show_hydro_results->setEnabled(false);
    pb_show_hydro_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_show_hydro_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_show_hydro_results, SIGNAL(clicked()), SLOT(show_hydro_results()));
+
+   pb_open_hydro_results = new QPushButton(tr("Open Hydrodynamic Calculations File"), this);
+   Q_CHECK_PTR(pb_open_hydro_results);
+   pb_open_hydro_results->setMinimumHeight(minHeight1);
+   pb_open_hydro_results->setEnabled(true);
+   pb_open_hydro_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_open_hydro_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_open_hydro_results, SIGNAL(clicked()), SLOT(open_hydro_results()));
 
    pb_help = new QPushButton(tr("Help"), this);
    Q_CHECK_PTR(pb_help);
@@ -502,7 +509,7 @@ void US_Hydrodyn::setupGUI()
 
    clear_display();
 
-   int rows=13, columns = 3, spacing = 2, j=0, margin=4;
+   int rows=14, columns = 3, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(frame, j, j, 0, 1);
@@ -546,6 +553,8 @@ void US_Hydrodyn::setupGUI()
    j++;
    background->addWidget(pb_calc_hydro, j, 0);
    background->addWidget(pb_show_hydro_results, j, 1);
+   j++;
+   background->addWidget(pb_open_hydro_results, j, 1);
    j++;
    background->addWidget(pb_stop_calc, j, 0);
    background->addWidget(pb_cancel, j, 1);
@@ -2333,7 +2342,15 @@ void US_Hydrodyn::show_hydro_results()
       results_window = new US_Hydrodyn_Results(&results, &results_widget);
       results_window->show();
    }
-   puts("show hydro");
+}
+
+void US_Hydrodyn::open_hydro_results()
+{
+   QString filename = QFileDialog::getOpenFileName(somo_dir, "*.hydro_res *.HYDRO_RES", this);
+   if (!filename.isEmpty())
+   {
+      view_file(filename);
+   }
 }
 
 void US_Hydrodyn::show_advanced_config()
