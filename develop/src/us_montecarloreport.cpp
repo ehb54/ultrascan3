@@ -80,19 +80,19 @@ void US_Report_MonteCarlo::generate( const QString& fileName )
       QString helpDir = USglobal->config_list.help_dir + "/";
 
       str1 = helpDir   + "graphics/ultrascan1.png";
-      str2 = reportDir + "ultrascan1.png";
+      str2 = reportDir + "/ultrascan1.png";
       copy( str1, str2 );
       
       str1 = helpDir   + "graphics/printer.gif";
-      str2 = reportDir + "printer.gif";
+      str2 = reportDir + "/printer.gif";
       copy( str1, str2 );
 
       str1 = helpDir   + "graphics/netscape.gif";
-      str2 = reportDir + "netscape.gif";
+      str2 = reportDir + "/netscape.gif";
       copy( str1, str2 );
       
       str1 = USglobal->config_list.help_dir + "/mainstyle.css";
-      str2 = reportDir + "mainstyle.css";
+      str2 = reportDir + "/mainstyle.css";
       copy( str1, str2 );
       
       QTextStream ts( &f1 );
