@@ -1,0 +1,163 @@
+#ifndef US_HYDRODYN_BATCH_H
+#define US_HYDRODYN_BATCH_H
+
+// QT defs:
+
+#include <qlabel.h>
+#include <qstring.h>
+#include <qlayout.h>
+#include <qpushbutton.h>
+#include <qframe.h>
+#include <qcheckbox.h>
+#include <qwt_counter.h>
+#include <qbuttongroup.h>
+#include <qtextedit.h>
+#include <qprogressbar.h>
+#include <qmenubar.h>
+#include <qfileinfo.h>
+#include <qprinter.h>
+#include <qlistbox.h>
+#include <qdragobject.h>
+
+#include "us_util.h"
+#include "us_hydrodyn_pdb_parsing.h"
+
+//standard C and C++ defs:
+
+#include <map>
+#include <vector>
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <iostream>
+
+using namespace std;
+
+struct batch_info 
+{
+   vector < QString > file;
+   int missing_atoms;      // 0 = Halt
+                           // 1 = Skip
+                           // 2 = use approximate method
+   int missing_residues;   // 0 = Halt
+                           // 1 = Skip
+                           // 2 = use automatic bead builder (approximate method, default)
+   bool somo;
+   bool grid;
+   bool hydro;
+   bool avg_hydro;
+   QString avg_hydro_name;
+};
+
+class US_EXTERN US_Hydrodyn_Batch : public QFrame
+{
+   Q_OBJECT
+
+   public:
+      US_Hydrodyn_Batch(batch_info *batch, 
+                        bool *batch_widget, 
+                        void *us_hydrodyn, 
+                        QWidget *p = 0, 
+                        const char *name = 0);
+      ~US_Hydrodyn_Batch();
+
+   protected:
+
+      void dragEnterEvent(QDragEnterEvent *event);
+      void dropEvent(QDropEvent *event);
+
+   private:
+
+      batch_info    *batch;
+      bool          *batch_widget;
+      void          *us_hydrodyn;
+
+      US_Config     *USglobal;
+
+      QLabel        *lbl_selection;
+      QListBox      *lb_files;
+      QPushButton   *pb_add_files;
+      QPushButton   *pb_select_all;
+      QPushButton   *pb_remove_files;
+
+      QLabel        *lbl_screen;
+      QButtonGroup  *bg_residues;
+      QCheckBox     *cb_residue_stop;
+      QCheckBox     *cb_residue_skip;
+      QCheckBox     *cb_residue_auto;
+      QButtonGroup  *bg_atoms;
+      QCheckBox     *cb_atom_stop;
+      QCheckBox     *cb_atom_skip;
+      QCheckBox     *cb_atom_auto;
+      QPushButton   *pb_screen;
+
+      QLabel        *lbl_process;
+      QCheckBox     *cb_somo;
+      QCheckBox     *cb_grid;
+      QCheckBox     *cb_hydro;
+      QCheckBox     *cb_avg_hydro;
+      QLineEdit     *le_avg_hydro_name;
+      QPushButton   *pb_start;
+      QProgressBar  *progress;
+      QPushButton   *pb_stop;
+
+      QPushButton   *pb_help;
+      QPushButton   *pb_cancel;
+
+      QTextEdit     *editor;
+
+      QMenuBar      *m;
+      QPrinter      printer;
+
+      pdb_parsing   save_pdb_parse;
+      bool          save_pb_rule_on;
+      bool          save_calcAutoHydro;
+
+      bool          stopFlag;
+      QFont ft;
+
+   private slots:
+      
+      void setupGUI();
+
+      void add_files();
+      void select_all();
+      void remove_files();
+
+      void residue(int);
+      void atom(int);
+      void screen();
+
+      void start();
+      void set_somo();
+      void set_grid();
+      void set_hydro();
+      void set_avg_hydro();
+      void update_avg_hydro_name(const QString &);
+      void stop();
+
+      void cancel();
+      void help();
+
+      // editor functions:
+      void save();
+      void print();
+      void update_font();
+      void clear_display();
+
+      bool screen_pdb(QString file);
+      bool screen_bead_model(QString file);
+
+      void save_us_hydrodyn_settings();
+      void restore_us_hydrodyn_settings();
+      
+      void update_enables();
+      void disable_after_start();
+      void enable_after_stop();
+   
+   protected slots:
+
+      void closeEvent(QCloseEvent *);
+};
+
+#endif

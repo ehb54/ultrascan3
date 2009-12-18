@@ -74,7 +74,6 @@ class US_EXTERN US_Hydrodyn_PDB_Parsing : public QFrame
       QCheckBox *cb_atom_skip;
       QCheckBox *cb_atom_auto;
       
-      
    private slots:
       
       void setupGUI();

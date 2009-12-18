@@ -1,4 +1,4 @@
-#ifndef US_HYDRODYN_H
+#ifndef US_HYDRODYN_H
 #define US_HYDRODYN_H
 
 // QT defs:
@@ -40,6 +40,7 @@
 #include "us_hydrodyn_saxs_options.h"
 #include "us_hydrodyn_saxs.h"
 #include "us_hydrodyn_advanced_config.h"
+#include "us_hydrodyn_batch.h"
 
 //standard C and C++ defs:
 
@@ -75,6 +76,11 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void play_sounds(int);
       struct pdb_parsing pdb_parse;
       bool bead_model_from_file;
+      batch_info batch;
+      QString somo_dir;
+      QString somo_pdb_dir;
+      bool screen_pdb(QString);
+      bool screen_bead_model(QString);
 
    private:
       bool residue_widget;
@@ -94,6 +100,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool saxs_options_widget;
       bool saxs_plot_widget;
       bool advanced_config_widget;
+      bool batch_widget;
 
       QMenuBar *m;
       QPrinter printer;
@@ -139,8 +146,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct overlap_reduction default_grid_overlap;
       QString project;   // name of the current project - derived from the prefix of the pdb filename
       QString bead_model_prefix;
-      QString somo_dir;
-      QString somo_pdb_dir;
       QString somo_tmp_dir;
 
       point last_molecular_cog;
@@ -209,6 +214,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Saxs *saxs_plot_window;
       US_Hydrodyn_SaxsOptions *saxs_options_window;
       US_Hydrodyn_AdvancedConfig *advanced_config_window;
+      US_Hydrodyn_Batch *batch_window;
       QProcess *rasmol;
 
 #ifdef WIN32
@@ -290,12 +296,15 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void display_default_differences();
       void clear_display();
       void reload_pdb();
+      int calc_somo();    // compute asa and then refine bead_model
+      int calc_grid_pdb(); // compute grid model from pdb
+      int calc_hydro();
 
    private slots:
       void load_pdb();
-      void load_bead_model();
       void read_pdb(const QString &);
       int read_bead_model(QString);
+      void load_bead_model();
       void setupGUI();
       void select_residue_file();
       void read_residue_file();
@@ -313,8 +322,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void saxs();
       void select_model(int);
       void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
-      int calc_somo();    // compute asa and then refine bead_model
-      int calc_grid_pdb(); // compute grid model from pdb
       int calc_grid();     // compute grid model from bead model
       int create_beads(QString *error_string); // turn pdb/atom model into bead_model
       void get_atom_map(PDB_model *);
@@ -348,7 +355,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void visualize();
       void update_bead_model_file(const QString &);
       void update_bead_model_prefix(const QString &);
-      void calc_hydro();
       void radial_reduction();
       void pdb_saxs();
       void bead_saxs();
