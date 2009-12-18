@@ -1,4 +1,4 @@
-#ifndef US_HYDRODYN_H
+#ifndef US_HYDRODYN_H
 #define US_HYDRODYN_H
 
 // QT defs:
