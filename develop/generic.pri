@@ -22,7 +22,7 @@ unix {
 
  contains(UNAME,x86_64) {
     LIBS    += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d -L$(ULTRASCAN)/lib64 -lus
-		DESTDIR  = ../../bin64
+    DESTDIR  = ../../bin64
  } else {
     LIBS    += -L$(QWTDIR)/lib -lqwt -L$(QWT3DDIR)/lib -lqwtplot3d -L$(ULTRASCAN)/lib -lus
  }
@@ -37,9 +37,8 @@ win32 {
   QMAKE_LFLAGS_DEBUG  += /NODEFAULTLIB:"msvcrt.lib"
   QMAKE_LFLAGS_RELEASE =                # Remove //DELAYLOAD: statements
   LIBS                += ../../bin/libus99.lib 
-	DESTDIR              = ..\..\bin\
+  DESTDIR              = ..\..\bin\
 }
 
 macx { RC_FILE = ultrascan.icns }
-
 

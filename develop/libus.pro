@@ -26,8 +26,8 @@ unix {
   TARGET                  = us
   QMAKE_CXXFLAGS_WARN_ON += -Wno-non-virtual-dtor
   DEFINES                += UNIX
- #CONFIG                 += qt thread warn release 
-  CONFIG                 += qt thread warn debug
+  CONFIG                 += qt thread warn release 
+  #CONFIG                 += qt thread warn debug
 
   contains(UNAME,x86_64) {
     LIBS    += -L$(QWTDIR)/lib64/ -lqwt -L$(QWT3DDIR)/lib64 -lqwtplot3d
@@ -43,8 +43,8 @@ win32 {
   message ("Configuring for the Microsoft Windows Platform...")
   TEMPLATE             = vclib
   TARGET               = libus
-  CONFIG              += qt thread warn exceptions dll release
-  #CONFIG              += qt thread warn exceptions dll debug
+  #CONFIG              += qt thread warn exceptions dll release
+  CONFIG              += qt thread warn exceptions dll debug
   QMAKE_CXXFLAGS      += /EHsc          # Assume extern C functions never throw exceptions
   QMAKE_CXXFLAGS      += /Fd$(IntDir)\  # Put intermediate directories in separate location
   QMAKE_LFLAGS_DEBUG  += /NODEFAULTLIB:"msvcrt.lib"
@@ -52,7 +52,7 @@ win32 {
   DEFINES             += QT_DLL -GX QWT_USE_DLL US_MAKE_DLL
   LIBS                += $(QWTDIR)/lib/qwt.lib $(QWT3DDIR)/lib/qwtplot3d.lib 
   LIBS                += opengl32.lib glu32.lib glaux.lib
-  DESTDIR        = ../bin
+  DESTDIR              = ../bin
 }
 
 # Do not remake cpp and h files from ui files
