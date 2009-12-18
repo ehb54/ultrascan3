@@ -79,6 +79,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QPushButton   *pb_add_files;
       QPushButton   *pb_select_all;
       QPushButton   *pb_remove_files;
+      QPushButton   *pb_load_somo;
 
       QLabel        *lbl_screen;
       QButtonGroup  *bg_residues;
@@ -123,6 +124,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void add_files();
       void select_all();
       void remove_files();
+      void load_somo();
 
       void residue(int);
       void atom(int);

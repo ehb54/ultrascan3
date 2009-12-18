@@ -77,6 +77,13 @@ void US_Hydrodyn_Batch::setupGUI()
    pb_remove_files->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_remove_files, SIGNAL(clicked()), SLOT(remove_files()));
 
+   pb_load_somo = new QPushButton(tr("Load into SOMO"), this);
+   Q_CHECK_PTR(pb_load_somo);
+   pb_load_somo->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_somo->setMinimumHeight(minHeight1);
+   pb_load_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_load_somo, SIGNAL(clicked()), SLOT(load_somo()));
+
    lbl_screen = new QLabel(tr("Screen selected files:"), this);
    Q_CHECK_PTR(lbl_screen);
    lbl_screen->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
@@ -258,6 +265,7 @@ void US_Hydrodyn_Batch::setupGUI()
    hbl_selection_ops->addWidget(pb_add_files);
    hbl_selection_ops->addWidget(pb_select_all);
    hbl_selection_ops->addWidget(pb_remove_files);
+   hbl_selection_ops->addWidget(pb_load_somo);
 
    QVBoxLayout *vbl_selection = new QVBoxLayout;
    vbl_selection->addWidget(lb_files);
@@ -345,13 +353,36 @@ void US_Hydrodyn_Batch::add_files()
                                                          this,
                                                          "Open Structure Files",
                                                          "Please select a PDB file or files...");
+   QColor save_color = editor->color();
    QStringList::Iterator it = filenames.begin();
+   if ( it != filenames.end() )
+   {
+      editor->append("\n");
+   }
    while( it != filenames.end() ) 
    {
-      batch->file.push_back(*it);
-      lb_files->insertItem(*it);
+      bool dup = false;
+      for ( int i = 0; i < lb_files->numRows(); i++ )
+      {
+         if ( QString(*it) == lb_files->item(i)->text() ) 
+         {
+            dup = true;
+            break;
+         }
+      }
+      if ( !dup )
+      {
+         batch->file.push_back(*it);
+         lb_files->insertItem(*it);
+         editor->setColor("dark blue");
+         editor->append(QString(tr("File loaded: %1")).arg(*it));
+      } else {
+         editor->setColor("dark red");
+         editor->append(QString(tr("File skipped: %1 (already in list)")).arg(*it));
+      }
       ++it;
    }
+   editor->setColor(save_color);
    update_enables();
 }
 
@@ -386,20 +417,50 @@ void US_Hydrodyn_Batch::remove_files()
    update_enables();
 }
 
-void US_Hydrodyn_Batch::update_enables()
+void US_Hydrodyn_Batch::load_somo()
 {
-   bool any_selected = false;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected(i) )
       {
-         any_selected = true;
+         bool result;
+         QString file = lb_files->item(i)->text();
+         QColor save_color = editor->color();
+         if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
+         {
+            result = screen_pdb(file);
+         } else {
+            result = screen_bead_model(file);
+         }
+         if ( result ) 
+         {
+            editor->setColor("dark blue");
+            editor->append(QString(tr("Screening: %1 ok.").arg(file)));
+         } else {
+            editor->setColor("red");
+            editor->append(QString(tr("Screening: %1 FAILED.").arg(file)));
+         }
+         editor->setColor(save_color);
+         break;
       }
    }
-   pb_start->setEnabled(any_selected);
-   pb_remove_files->setEnabled(any_selected);
-   pb_screen->setEnabled(any_selected);
+   update_enables();
+}
 
+void US_Hydrodyn_Batch::update_enables()
+{
+   int count_selected = 0;
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( lb_files->isSelected(i) )
+      {
+         count_selected++;
+      }
+   }
+   pb_start->setEnabled(count_selected);
+   pb_remove_files->setEnabled(count_selected);
+   pb_screen->setEnabled(count_selected);
+   pb_load_somo->setEnabled(count_selected == 1);
    cb_avg_hydro->setEnabled(batch->hydro);
    le_avg_hydro_name->setEnabled(batch->hydro && batch->avg_hydro);
 }
@@ -465,9 +526,10 @@ void US_Hydrodyn_Batch::screen()
       if ( lb_files->isSelected(i) )
       {
          QString file = lb_files->item(i)->text();
-         // editor->append(QString(tr("Screening: %1\r").arg(file)));
+         // editor->append(QString(tr("Screening: %1").arg(file)));
          if ( stopFlag )
          {
+            
             editor->setColor("dark red");
             editor->append("Stopped by user");
             enable_after_stop();
@@ -655,7 +717,10 @@ void US_Hydrodyn_Batch::start()
 void US_Hydrodyn_Batch::stop()
 {
    stopFlag = true;
+   ((US_Hydrodyn *)us_hydrodyn)->stopFlag = true;
+   ((US_Hydrodyn *)us_hydrodyn)->pb_stop_calc->setEnabled(false);
    pb_stop->setEnabled(false);
+   qApp->processEvents();
 }
 
 void US_Hydrodyn_Batch::update_font()
@@ -735,20 +800,41 @@ void US_Hydrodyn_Batch::dragEnterEvent(QDragEnterEvent *event)
 void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
 {
    QStringList fileNames;
+   editor->append("\n");
    if ( QUriDrag::decodeLocalFiles(event, fileNames) )
    {
+      QColor save_color = editor->color();
       QStringList::Iterator it = fileNames.begin();
       while( it != fileNames.end() ) 
       {
          if ( QString(*it).contains(QRegExp("(pdb|PDB|bead_model|BEAD_MODEL|beams|BEAMS)$")) )
          {
-            batch->file.push_back(*it);
-            lb_files->insertItem(*it);
+            bool dup = false;
+            for ( int i = 0; i < lb_files->numRows(); i++ )
+            {
+               if ( QString(*it) == lb_files->item(i)->text() ) 
+               {
+                  dup = true;
+                  break;
+               }
+            }
+            if ( !dup )
+            {
+               batch->file.push_back(*it);
+               lb_files->insertItem(*it);
+               editor->setColor("dark blue");
+               editor->append(QString(tr("File loaded: %1")).arg(*it));
+            } else {
+               editor->setColor("dark red");
+               editor->append(QString(tr("File skipped: %1 (already in list)")).arg(*it));
+            }
          } else {
-            editor->append(QString(tr("\nFile skipped: %1 (not a valid file name)")).arg(*it));
+            editor->setColor("red");
+            editor->append(QString(tr("File ignored: %1 (not a valid file name)")).arg(*it));
          }
          ++it;
       }
+      editor->setColor(save_color);
    }
    update_enables();
 }

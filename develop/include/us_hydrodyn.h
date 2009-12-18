@@ -81,6 +81,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QString somo_pdb_dir;
       bool screen_pdb(QString);
       bool screen_bead_model(QString);
+      QPushButton *pb_stop_calc;
 
    private:
       bool residue_widget;
@@ -189,8 +190,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_grid_pdb;
       QPushButton *pb_grid;
       QPushButton *pb_view_asa;
-      QPushButton *pb_stop_calc;
-
 
       QProgressBar *progress;
       TextEdit *e;
