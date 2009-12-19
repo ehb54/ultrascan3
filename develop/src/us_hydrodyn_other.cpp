@@ -436,7 +436,7 @@ bool US_Hydrodyn::assign_atom(const QString &str1, struct PDB_chain *temp_chain,
    return(flag);
 }
 
-void US_Hydrodyn::read_pdb(const QString &filename)
+int US_Hydrodyn::read_pdb(const QString &filename)
 {
    lb_model->clear();
    QString str, str1, str2, temp;
@@ -584,6 +584,15 @@ void US_Hydrodyn::read_pdb(const QString &filename)
          }
       }
       f.close();
+   } else {
+      lb_model->clear();
+      model_vector.clear();
+      bead_model.clear();
+      QColor save_color = editor->color();
+      editor->setColor("red");
+      editor->append(QString("Error reading file %1").arg(filename));
+      editor->setColor(save_color);
+      return -1;
    }
    if(!model_flag)   // there were no model definitions, just a single molecule,
    {                  // we still need to save the results
@@ -627,6 +636,7 @@ void US_Hydrodyn::read_pdb(const QString &filename)
    {
       list_model_vector(&model_vector_as_loaded);
    }
+   return 0;
 }
 
 int US_Hydrodyn::read_bead_model(QString filename)

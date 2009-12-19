@@ -1190,7 +1190,7 @@ void US_Hydrodyn::load_pdb()
    }
 }
 
-bool US_Hydrodyn::screen_pdb(QString filename)
+bool US_Hydrodyn::screen_pdb(QString filename, bool display_pdb)
 {
    pdb_file = filename;
    options_log = "";
@@ -1198,7 +1198,33 @@ bool US_Hydrodyn::screen_pdb(QString filename)
    bead_model_from_file = false;
    int errors_found = 0;
    lbl_pdb_file->setText( QDir::convertSeparators( filename ) );
-   read_pdb(filename);
+
+#if defined(START_RASMOL)
+   if ( display_pdb )
+   {
+      QStringList argument;
+#if !defined(WIN32)
+      // maybe we should make this a user defined terminal window?
+      argument.append("xterm");
+      argument.append("-e");
+#endif
+#if defined(BIN64)
+      argument.append(USglobal->config_list.system_dir + SLASH + "bin64" + SLASH + "rasmol");
+#else
+      argument.append(USglobal->config_list.system_dir + SLASH + "bin" + SLASH + "rasmol");
+#endif
+      argument.append(QFileInfo(filename).fileName());
+      rasmol->setWorkingDirectory(QFileInfo(filename).dirPath());
+      rasmol->setArguments(argument);
+      if (advanced_config.auto_view_pdb &&
+          !rasmol->start())
+      {
+         QMessageBox::message(tr("Please note:"), tr("There was a problem starting RASMOL\n"
+                                                     "Please check to make sure RASMOL is properly installed..."));
+      }
+   }
+#endif
+
    QFileInfo fi(filename);
    project = fi.baseName();
    new_residues.clear();
@@ -1211,7 +1237,10 @@ bool US_Hydrodyn::screen_pdb(QString filename)
       residue_list = save_residue_list_no_pbr;
    }
    multi_residue_map = save_multi_residue_map;
-   read_pdb(filename);
+   if ( read_pdb(filename) )
+   {
+      return false;
+   }
    QString error_string = "";
    for(unsigned int i = 0; i < model_vector.size(); i++)
    {
@@ -1226,6 +1255,16 @@ bool US_Hydrodyn::screen_pdb(QString filename)
       }
    }
    model_vector_as_loaded = model_vector;
+   if ( !model_vector.size() ||
+        !model_vector[0].molecule.size() )
+   {
+      QColor save_color = editor->color();
+      editor->setColor("red");
+      editor->append(tr("ERROR : PDB file contains no atoms!"));
+      editor->setColor(save_color);
+      errors_found++;
+   }
+
    editor->append(QString("Loaded pdb file : %1\n").arg(errors_found ? "ERRORS PRESENT" : "ok"));
    bead_models.clear();
    somo_processed.clear();
@@ -1237,8 +1276,8 @@ bool US_Hydrodyn::screen_pdb(QString filename)
       results_widget = false;
    }
    // bead_model_prefix = "";
-   pb_somo->setEnabled(true);
-   pb_grid_pdb->setEnabled(true);
+   pb_somo->setEnabled(errors_found ? false : true);
+   pb_grid_pdb->setEnabled(errors_found ? false : true);
    pb_grid->setEnabled(false);
    pb_show_hydro_results->setEnabled(false);
    pb_calc_hydro->setEnabled(false);

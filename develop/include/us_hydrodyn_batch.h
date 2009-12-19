@@ -117,6 +117,27 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       bool          stopFlag;
       QFont ft;
 
+#ifdef WIN32
+  #pragma warning ( disable: 4251 )
+#endif
+
+      map < QString, int > status; 
+
+      // status values: 0 nothing done
+      //                1 file missing
+      //                2 screening now
+      //                3 screen ok
+      //                4 screen failed
+      //                5 processing now
+      //                6 processing ok
+      //                7 processing failed
+
+      vector < QString >   status_color;
+
+#ifdef WIN32
+  #pragma warning ( default: 4251 )
+#endif
+
    private slots:
       
       void setupGUI();
@@ -147,7 +168,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void update_font();
       void clear_display();
 
-      bool screen_pdb(QString file);
+      bool screen_pdb(QString file, bool display_pdb = false);
       bool screen_bead_model(QString file);
 
       void save_us_hydrodyn_settings();
@@ -156,6 +177,9 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void update_enables();
       void disable_after_start();
       void enable_after_stop();
+
+      QString get_file_name(int i);
+      void check_for_missing_files(bool display_messages);
    
    protected slots:
 

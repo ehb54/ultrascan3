@@ -79,7 +79,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       batch_info batch;
       QString somo_dir;
       QString somo_pdb_dir;
-      bool screen_pdb(QString);
+      bool screen_pdb(QString, bool display_pdb = false);
       bool screen_bead_model(QString);
       QPushButton *pb_stop_calc;
 
@@ -301,7 +301,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
    private slots:
       void load_pdb();
-      void read_pdb(const QString &);
+      int read_pdb(const QString &);
       int read_bead_model(QString);
       void load_bead_model();
       void setupGUI();
