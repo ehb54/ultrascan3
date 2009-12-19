@@ -587,7 +587,7 @@ void US_Hydrodyn_Batch::screen()
             editor->append(QString(tr("Screening: %1 FAILED.").arg(file)));
          }
          lb_files->changeItem(QString("<%1>%2").arg(status_color[status[file]]).arg(file), i);
-         lb_files->setSelected(i, true);
+         lb_files->setSelected(i, result);
          editor->setColor(save_color);
       }
    }
@@ -754,7 +754,7 @@ void US_Hydrodyn_Batch::start()
             editor->append(QString(tr("Screening: %1 FAILED.").arg(file)));
          }
          lb_files->changeItem(QString("<%1>%2").arg(status_color[status[file]]).arg(file), i);
-         lb_files->setSelected(i, true);
+         lb_files->setSelected(i, result);
          editor->setColor(save_color);
       }
    } 
