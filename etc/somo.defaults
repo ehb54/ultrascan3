@@ -118,3 +118,13 @@ w		# solvent acronym
 40		# maximum size
 1		# bin size
 0		# hydrate PDB model? true = yes
+0		# batch missing atom handling
+0		# batch missing residue handling
+1		# batch run somo
+0		# batch run grid
+1		# batch run hydro
+0		# batch avg hydro
+average 	# batch avg hydro name
+0		# batch window last height
+0		# batch window last width
+0		# batch number of files to follow

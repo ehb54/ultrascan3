@@ -47,6 +47,8 @@ struct batch_info
    bool hydro;
    bool avg_hydro;
    QString avg_hydro_name;
+   int height;
+   int width;
 };
 
 class US_EXTERN US_Hydrodyn_Batch : public QFrame
@@ -180,10 +182,12 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
 
       QString get_file_name(int i);
       void check_for_missing_files(bool display_messages);
-   
+
    protected slots:
 
       void closeEvent(QCloseEvent *);
+      void resizeEvent(QResizeEvent *);
+   
 };
 
 #endif

@@ -1318,7 +1318,48 @@ int US_Hydrodyn::read_config(QFile& f)
    ts >> str; // hydrate pdb model?
    if ( ts.readLine() == QString::null ) return -10147;
    saxs_options.hydrate_pdb = (bool) str.toInt();
-   if ( !ts.atEnd() ) return -10150;
+
+   ts >> str; // batch missing atom handling
+   if ( ts.readLine() == QString::null ) return -11000;
+   batch.missing_atoms = str.toInt();
+   ts >> str; // batch missing residue handling
+   if ( ts.readLine() == QString::null ) return -11001;
+   batch.missing_residues = str.toInt();
+   ts >> str; // batch run somo
+   if ( ts.readLine() == QString::null ) return -11002;
+   batch.somo = (bool) str.toInt();
+   ts >> str; // batch run grid
+   if ( ts.readLine() == QString::null ) return -11003;
+   batch.grid = (bool) str.toInt();
+   ts >> str; // batch run hydro
+   if ( ts.readLine() == QString::null ) return -11004;
+   batch.hydro = (bool) str.toInt();
+   ts >> str; // batch avg hydro
+   if ( ts.readLine() == QString::null ) return -11005;
+   batch.avg_hydro = (bool) str.toInt();
+   ts >> str; // batch avg hydro name
+   if ( ts.readLine() == QString::null ) return -11006;
+   batch.avg_hydro_name = str;
+   ts >> str; // batch height
+   if ( ts.readLine() == QString::null ) return -11007;
+   batch.height = str.toInt();
+   ts >> str; // batch width
+   if ( ts.readLine() == QString::null ) return -11008;
+   batch.width = str.toInt();
+
+   batch.file.clear();
+   ts >> str; // batch file list
+   if ( ts.readLine() == QString::null ) return -11010;
+   {
+      int number_of_files = str.toInt();
+      for ( int i = 0; i < number_of_files; i++ )
+      {
+         if ( (str = ts.readLine() ) == QString::null ) return -(11100 + i);
+         batch.file.push_back(str);
+      }
+   }
+
+   if ( !ts.atEnd() ) return -12000;
 
    f.close();
    return 0;
@@ -1495,6 +1536,20 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << saxs_options.bin_size << "\t\t# bin size\n";
       ts << saxs_options.hydrate_pdb << "\t\t# hydrate PDB model? true = yes\n";
 
+      ts << batch.missing_atoms << "\t\t# batch missing atom handling\n";
+      ts << batch.missing_residues << "\t\t# batch missing residue handling\n";
+      ts << batch.somo << "\t\t# batch run somo\n";
+      ts << batch.grid << "\t\t# batch run grid\n";
+      ts << batch.hydro << "\t\t# batch run hydro\n";
+      ts << batch.avg_hydro << "\t\t# batch avg hydro\n";
+      ts << batch.avg_hydro_name << "\t\t# batch avg hydro name\n";
+      ts << batch.height << "\t\t# batch window last height\n";
+      ts << batch.width << "\t\t# batch window last width\n";
+      ts << batch.file.size() << "\t\t# batch number of files to follow\n";
+      for ( unsigned int i = 0; i < batch.file.size(); i++ )
+      {
+         ts << batch.file[i] << endl;
+      }
       f.close();
    }
 }
@@ -1677,6 +1732,17 @@ void US_Hydrodyn::set_default()
       saxs_options.max_size = 40.0;          // maximum size (A)
       saxs_options.bin_size = 1.0f;          // Bin size (A)
       saxs_options.hydrate_pdb = false;       // Hydrate the PDB model? (true/false)
+
+      batch.missing_atoms = 0;
+      batch.missing_residues = 0;
+      batch.somo = true;
+      batch.grid = false;
+      batch.hydro = true;
+      batch.avg_hydro = false;
+      batch.avg_hydro_name = "average";
+      batch.height = 0;
+      batch.width = 0;
+      batch.file.clear();
    }
 
    default_sidechain_overlap = sidechain_overlap;
@@ -1694,6 +1760,7 @@ void US_Hydrodyn::set_default()
    default_pdb_parse = pdb_parse;
    default_grid = grid;
    default_saxs_options = saxs_options;
+   default_batch = batch;
 }
 
 void US_Hydrodyn::view_file(const QString &filename)

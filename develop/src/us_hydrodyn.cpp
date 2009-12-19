@@ -219,14 +219,7 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
       editor->append(tr("Warning: Directory ") + somo_saxs_tmp_dir + tr(" does not exist.\n"));
    }
    editor->setColor(save_color);
-   batch.file.clear();
-   batch.somo = true;
-   batch.grid = false;
-   batch.hydro = true;
-   batch.avg_hydro = false;
-   batch.avg_hydro_name = "";
-   batch.missing_residues = 0;
-   batch.missing_atoms = 0;
+
    batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
    batch_window->show();
 }

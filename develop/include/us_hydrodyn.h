@@ -128,6 +128,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct hydro_results results;
       struct bead_output_options bead_output;
       struct bead_output_options default_bead_output;
+      batch_info default_batch;
       struct residue new_residue;
       struct atom new_atom;
       struct bead new_bead;

@@ -36,12 +36,18 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
-   setGeometry(global_Xpos, global_Ypos, 0, 0);
+   setGeometry(global_Xpos, global_Ypos, batch->width, batch->height);
 }
 
 US_Hydrodyn_Batch::~US_Hydrodyn_Batch()
 {
    *batch_widget = false;
+}
+
+void US_Hydrodyn_Batch::resizeEvent( QResizeEvent *re )
+{
+   batch->height = re->size().height();
+   batch->width = re->size().width();
 }
 
 void US_Hydrodyn_Batch::setupGUI()
@@ -218,7 +224,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_avg_hydro, SIGNAL(clicked()), this, SLOT(set_avg_hydro()));
 
    le_avg_hydro_name = new QLineEdit(this, "avg_hydro_name Line Edit");
-   le_avg_hydro_name->setText(tr("average"));
+   le_avg_hydro_name->setText(batch->avg_hydro_name);
    le_avg_hydro_name->setAlignment(AlignCenter|AlignVCenter);
    le_avg_hydro_name->setMinimumWidth(100);
    le_avg_hydro_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -435,12 +441,15 @@ void US_Hydrodyn_Batch::select_all()
 
 void US_Hydrodyn_Batch::remove_files()
 {
+   batch->file.clear();
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected(i) )
       {
          lb_files->removeItem(i);
          i--;
+      } else {
+         batch->file.push_back(get_file_name(i));
       }
    }
    update_enables();
