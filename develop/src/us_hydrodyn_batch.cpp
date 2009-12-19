@@ -7,12 +7,13 @@ void QListBoxText::paint( QPainter *painter )
     int itemHeight = height( listBox() );
     QFontMetrics fm = painter->fontMetrics();
     int yPos = ( ( itemHeight - fm.height() ) / 2 ) + fm.ascent();
-    QRegExp rx( "^<(.*)~(.*)>(.*)$" );
+    QRegExp rx( "^<(.*)~(.*)~(.*)>(.*)$" );
     if ( rx.search(text()) != -1 ) 
     {
        bool highlighted = ( painter->backgroundColor().name() != "#ffffff" );
        painter->setPen(rx.cap(highlighted ? 2 : 1));
-       painter->drawText( 3, yPos, rx.cap(3) );
+       painter->drawText( 3, yPos, rx.cap(3) + " " + rx.cap(4));
+       printf("paint y %d <%s> <%s>\n", (int) yPos, rx.cap(3).ascii(),rx.cap(4).ascii());
     } else {
        painter->drawText( 3, yPos, text() );
     }
@@ -345,14 +346,14 @@ void US_Hydrodyn_Batch::setupGUI()
 
    status_color.clear();
    status_color.resize(8);
-   status_color[0] = "black~white";
-   status_color[1] = "red~pink";
-   status_color[2] = "dark orange~yellow";
-   status_color[3] = "dark green~light green";
-   status_color[4] = "red~pink";
-   status_color[5] = "dark orange~yellow";
-   status_color[6] = "dark blue~light blue";
-   status_color[7] = "red~pink";
+   status_color[0] = "black~white~";
+   status_color[1] = "red~pink~File missing: ";
+   status_color[2] = "dark orange~yellow~Screening: ";
+   status_color[3] = "dark green~light green~Screen done: ";
+   status_color[4] = "red~pink~Screen failed: ";
+   status_color[5] = "dark orange~yellow~Processing: ";
+   status_color[6] = "dark blue~light blue~Processing done:";
+   status_color[7] = "red~pink~Processing failed: ";
 
    check_for_missing_files(true);
    update_enables();
