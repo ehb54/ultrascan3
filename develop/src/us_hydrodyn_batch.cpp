@@ -569,6 +569,7 @@ void US_Hydrodyn_Batch::screen()
          status[file] = 2; // screening now
          lb_files->changeItem(QString("<%1>%2").arg(status_color[status[file]]).arg(file), i);
          lb_files->setSelected(i, false);
+         qApp->processEvents();
          if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
          {
             result = screen_pdb(file);
@@ -693,6 +694,7 @@ void US_Hydrodyn_Batch::start()
          status[file] = 5; // processing now
          lb_files->changeItem(QString("<%1>%2").arg(status_color[status[file]]).arg(file), i);
          lb_files->setSelected(i, false);
+         qApp->processEvents();
          if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
          {
             result = screen_pdb(file);
@@ -711,9 +713,6 @@ void US_Hydrodyn_Batch::start()
                editor->setColor(save_color);
                return;
             }
-            status[file] = 2; // screening now
-            lb_files->changeItem(QString("<%1>%2").arg(status_color[status[file]]).arg(file), i);
-            lb_files->setSelected(i, false);
             if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
             {
                save_us_hydrodyn_settings();

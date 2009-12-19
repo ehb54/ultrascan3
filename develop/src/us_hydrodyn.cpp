@@ -523,7 +523,7 @@ void US_Hydrodyn::setupGUI()
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(frame, j, j, 0, 1);
-   background->addMultiCellWidget(editor, j, j+16, 2, 2);
+   background->addMultiCellWidget(editor, j, j+17, 2, 2);
    j++;
    background->addMultiCellWidget(lbl_info1, j, j, 0, 1);
    j++;
