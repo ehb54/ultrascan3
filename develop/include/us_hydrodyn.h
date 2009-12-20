@@ -41,6 +41,7 @@
 #include "us_hydrodyn_saxs.h"
 #include "us_hydrodyn_advanced_config.h"
 #include "us_hydrodyn_batch.h"
+#include "us_hydrodyn_save.h"
 
 //standard C and C++ defs:
 
@@ -70,6 +71,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool stopFlag;
       bool errorFlag;
       bool calcAutoHydro;
+      bool setSuffix;
+      bool overwrite;
+      bool saveParams;
       QLabel *lbl_core_progress;
       void set_disabled();
       QTextEdit *editor;
@@ -77,6 +81,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct pdb_parsing pdb_parse;
       bool bead_model_from_file;
       batch_info batch;
+      save_info save_params;
       QString somo_dir;
       QString somo_pdb_dir;
       bool screen_pdb(QString, bool display_pdb = false);
@@ -102,6 +107,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool saxs_plot_widget;
       bool advanced_config_widget;
       bool batch_widget;
+      bool save_widget;
 
       QMenuBar *m;
       QPrinter printer;
@@ -164,6 +170,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QLabel *lbl_bead_model_prefix;
 
       QCheckBox *cb_calcAutoHydro;
+      QCheckBox *cb_setSuffix;
+      QCheckBox *cb_overwrite;
+      QCheckBox *cb_saveParams;
 
       QPopupMenu *lookup_tables;
       QPopupMenu *somo_options;
@@ -174,6 +183,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QLineEdit *le_bead_model_file;
       QLineEdit *le_bead_model_prefix;
 
+      QPushButton *pb_batch;
+      QPushButton *pb_batch2;
       QPushButton *pb_save;
       QPushButton *pb_select_residue_file;
       QPushButton *pb_load_pdb;
@@ -188,6 +199,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_calc_hydro;
       QPushButton *pb_show_hydro_results;
       QPushButton *pb_open_hydro_results;
+      QPushButton *pb_select_save_params;
       QPushButton *pb_grid_pdb;
       QPushButton *pb_grid;
       QPushButton *pb_view_asa;
@@ -215,6 +227,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_SaxsOptions *saxs_options_window;
       US_Hydrodyn_AdvancedConfig *advanced_config_window;
       US_Hydrodyn_Batch *batch_window;
+      US_Hydrodyn_Save *save_window;
       QProcess *rasmol;
 
 #ifdef WIN32
@@ -302,6 +315,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
    private slots:
       void load_pdb();
+      void show_batch();
       int read_pdb(const QString &);
       int read_bead_model(QString);
       void load_bead_model();
@@ -360,6 +374,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void bead_saxs();
       void show_hydro_results();
       void open_hydro_results();
+      void select_save_params();
       void write_bead_asa(QString, vector <PDB_atom> *);
       void write_bead_tsv(QString, vector <PDB_atom> *);
       void write_bead_ebf(QString, vector <PDB_atom> *);
@@ -383,6 +398,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void print();
       void update_font();
       void set_calcAutoHydro();
+      void set_setSuffix();
+      void set_overwrite();
+      void set_saveParams();
 
    protected slots:
 

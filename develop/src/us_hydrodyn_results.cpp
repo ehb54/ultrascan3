@@ -117,7 +117,7 @@ void US_Hydrodyn_Results::setupGUI()
    le_vbar->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_vbar->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_s20w = new QLabel(tr(" s(20,w): "), this);
+   lbl_s20w = new QLabel(tr(" Sedimentation coefficient s: "), this);
    Q_CHECK_PTR(lbl_s20w);
    lbl_s20w->setAlignment(AlignLeft|AlignVCenter);
    lbl_s20w->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
@@ -137,7 +137,7 @@ void US_Hydrodyn_Results::setupGUI()
    le_s20w->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    le_s20w->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   lbl_D20w = new QLabel(tr(" D(20,w), transl.: "), this);
+   lbl_D20w = new QLabel(tr(" Tr. diffusion coefficient D: "), this);
    Q_CHECK_PTR(lbl_D20w);
    lbl_D20w->setAlignment(AlignLeft|AlignVCenter);
    lbl_D20w->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));

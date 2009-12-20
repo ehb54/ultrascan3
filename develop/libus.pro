@@ -185,6 +185,7 @@ SOURCES += \
   src/us_hydrodyn_pdb_parsing.cpp \
   src/us_hydrodyn_pdb_visualization.cpp \
   src/us_hydrodyn_results.cpp \
+  src/us_hydrodyn_save.cpp \
   src/us_hydrodyn_saxs.cpp \
   src/us_hydrodyn_saxs_options.cpp \
   src/us_hydrodyn_supc.cpp \
@@ -371,6 +372,7 @@ HEADERS += \
   include/us_hydrodyn_asa.h \
   include/us_hydrodyn_asab1.h \
   include/us_hydrodyn_batch.h \
+  include/us_hydrodyn_save.h \
   include/us_hydrodyn_bead_output.h \
   include/us_hydrodyn_grid.h \
   include/us_hydrodyn_grid_atob.h \

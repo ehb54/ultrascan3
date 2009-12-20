@@ -13,7 +13,6 @@ void QListBoxText::paint( QPainter *painter )
        bool highlighted = ( painter->backgroundColor().name() != "#ffffff" );
        painter->setPen(rx.cap(highlighted ? 2 : 1));
        painter->drawText( 3, yPos, rx.cap(3) + " " + rx.cap(4));
-       printf("paint y %d <%s> <%s>\n", (int) yPos, rx.cap(3).ascii(),rx.cap(4).ascii());
     } else {
        painter->drawText( 3, yPos, text() );
     }

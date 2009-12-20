@@ -125,7 +125,12 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    pdb_visualization_widget = false;
    pdb_parsing_widget = false;
    advanced_config_widget = false;
+   batch_widget = false;
+   save_widget = false;
    calcAutoHydro = false;
+   setSuffix = true;
+   overwrite = false;
+   saveParams = false;
    residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
    editor = (QTextEdit *)0;
    read_residue_file();
@@ -220,8 +225,8 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    }
    editor->setColor(save_color);
 
-   batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
-   batch_window->show();
+   // batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
+   // batch_window->show();
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -308,7 +313,14 @@ void US_Hydrodyn::setupGUI()
    lbl_table->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lbl_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   pb_load_pdb = new QPushButton(tr("Load PDB File"), this);
+   pb_batch = new QPushButton(tr("Batch Mode Operation"), this);
+   Q_CHECK_PTR(pb_batch);
+   pb_batch->setMinimumHeight(minHeight1);
+   pb_batch->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_batch->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_batch, SIGNAL(clicked()), SLOT(show_batch()));
+
+   pb_load_pdb = new QPushButton(tr("Load Single PDB File"), this);
    Q_CHECK_PTR(pb_load_pdb);
    pb_load_pdb->setMinimumHeight(minHeight1);
    pb_load_pdb->setEnabled(true);
@@ -346,7 +358,7 @@ void US_Hydrodyn::setupGUI()
    lb_model->setVScrollBarMode(QScrollView::Auto);
    connect(lb_model, SIGNAL(selected(int)), this, SLOT(select_model(int)));
 
-   pb_load_bead_model = new QPushButton(tr("Load Bead Model File"), this);
+   pb_load_bead_model = new QPushButton(tr("Load Single Bead Model File"), this);
    Q_CHECK_PTR(pb_load_bead_model);
    pb_load_bead_model->setMinimumHeight(minHeight1);
    pb_load_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -361,12 +373,26 @@ void US_Hydrodyn::setupGUI()
    le_bead_model_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_file, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_file(const QString &)));
 
-   lbl_bead_model_prefix = new QLabel(tr(" Bead Model Prefix:"), this);
+   lbl_bead_model_prefix = new QLabel(tr(" Bead Model Suffix:"), this);
    Q_CHECK_PTR(lbl_bead_model_prefix);
    lbl_bead_model_prefix->setAlignment(AlignLeft|AlignVCenter);
    lbl_bead_model_prefix->setMinimumHeight(minHeight1);
    lbl_bead_model_prefix->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cb_setSuffix = new QCheckBox(this);
+   cb_setSuffix->setText(tr(" Automatically set suffix "));
+   cb_setSuffix->setChecked(setSuffix);
+   cb_setSuffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_setSuffix->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_setSuffix, SIGNAL(clicked()), this, SLOT(set_setSuffix()));
+
+   cb_overwrite = new QCheckBox(this);
+   cb_overwrite->setText(tr(" Overwrite existing filenames "));
+   cb_overwrite->setChecked(overwrite);
+   cb_overwrite->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_overwrite->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_overwrite, SIGNAL(clicked()), this, SLOT(set_overwrite()));
 
    le_bead_model_prefix = new QLineEdit(this, "bead_model_prefix Line Edit");
    le_bead_model_prefix->setText(tr(""));
@@ -438,6 +464,13 @@ void US_Hydrodyn::setupGUI()
    pb_visualize->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_visualize, SIGNAL(clicked()), SLOT(visualize()));
 
+   pb_batch2 = new QPushButton(tr("Batch Mode Operation"), this);
+   Q_CHECK_PTR(pb_batch2);
+   pb_batch2->setMinimumHeight(minHeight1);
+   pb_batch2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_batch2->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_batch2, SIGNAL(clicked()), SLOT(show_batch()));
+
    pb_calc_hydro = new QPushButton(tr("Calculate Hydrodynamics"), this);
    Q_CHECK_PTR(pb_calc_hydro);
    pb_calc_hydro->setEnabled(false);
@@ -461,6 +494,21 @@ void US_Hydrodyn::setupGUI()
    pb_open_hydro_results->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_open_hydro_results->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_open_hydro_results, SIGNAL(clicked()), SLOT(open_hydro_results()));
+
+   pb_select_save_params = new QPushButton(tr("Select Parameters to be Saved"), this);
+   Q_CHECK_PTR(pb_select_save_params);
+   pb_select_save_params->setMinimumHeight(minHeight1);
+   pb_select_save_params->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_save_params->setEnabled(true);
+   pb_select_save_params->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_select_save_params, SIGNAL(clicked()), SLOT(select_save_params()));
+
+   cb_saveParams = new QCheckBox(this);
+   cb_saveParams->setText(tr(" Save parameters to file "));
+   cb_saveParams->setChecked(saveParams);
+   cb_saveParams->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_saveParams->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_saveParams, SIGNAL(clicked()), this, SLOT(set_saveParams()));
 
    pb_help = new QPushButton(tr("Help"), this);
    Q_CHECK_PTR(pb_help);
@@ -512,16 +560,18 @@ void US_Hydrodyn::setupGUI()
 
    clear_display();
 
-   int rows=14, columns = 3, spacing = 2, j=0, margin=4;
+   int rows=20, columns = 3, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(frame, j, j, 0, 1);
-   background->addMultiCellWidget(editor, j, j+17, 2, 2);
+   background->addMultiCellWidget(editor, j, j+21, 2, 2);
    j++;
    background->addMultiCellWidget(lbl_info1, j, j, 0, 1);
    j++;
    background->addWidget(pb_select_residue_file, j, 0);
    background->addWidget(lbl_table, j, 1);
+   j++;
+   background->addWidget(pb_batch, j, 0);
    j++;
    background->addWidget(pb_load_pdb, j, 0);
    background->addWidget(lbl_pdb_file, j, 1);
@@ -538,6 +588,9 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(lbl_bead_model_prefix, j, 0);
    background->addWidget(le_bead_model_prefix, j, 1);
    j++;
+   background->addWidget(cb_setSuffix, j, 0);
+   background->addWidget(cb_overwrite, j, 1);
+   j++;
    background->addWidget(pb_somo, j, 0);
    background->addWidget(pb_grid_pdb, j, 1);
    j++;
@@ -546,6 +599,8 @@ void US_Hydrodyn::setupGUI()
    j++;
    background->addWidget(pb_view_asa, j, 0);
    background->addWidget(pb_visualize, j, 1);
+   j++;
+   background->addWidget(pb_batch2, j, 0);
    j++;
    background->addWidget(pb_load_bead_model, j, 0);
    background->addWidget(le_bead_model_file, j, 1);
@@ -558,6 +613,9 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_show_hydro_results, j, 1);
    j++;
    background->addWidget(pb_open_hydro_results, j, 1);
+   j++;
+   background->addWidget(pb_select_save_params, j, 0);
+   background->addWidget(cb_saveParams, j, 1);
    j++;
    background->addWidget(pb_stop_calc, j, 0);
    background->addWidget(pb_cancel, j, 1);
@@ -2261,6 +2319,21 @@ void US_Hydrodyn::set_calcAutoHydro()
    calcAutoHydro = cb_calcAutoHydro->isChecked();
 }
 
+void US_Hydrodyn::set_setSuffix()
+{
+   setSuffix = cb_setSuffix->isChecked();
+}
+
+void US_Hydrodyn::set_overwrite()
+{
+   overwrite = cb_overwrite->isChecked();
+}
+
+void US_Hydrodyn::set_saveParams()
+{
+   saveParams = cb_saveParams->isChecked();
+}
+
 void US_Hydrodyn::view_asa()
 {
    QString filename = QFileDialog::getOpenFileName(somo_dir, "*.asa_res *.ASA_RES", this);
@@ -2496,6 +2569,27 @@ void US_Hydrodyn::open_hydro_results()
    }
 }
 
+void US_Hydrodyn::select_save_params()
+{
+   if (save_widget)
+   {
+      if (save_window->isVisible())
+      {
+         save_window->raise();
+      }
+      else
+      {
+         save_window->show();
+      }
+      return;
+   }
+   else
+   {
+      save_window = new US_Hydrodyn_Save(&save_params, &save_widget, this);
+      save_window->show();
+   }
+}
+
 void US_Hydrodyn::show_advanced_config()
 {
    if (advanced_config_widget)
@@ -2514,6 +2608,27 @@ void US_Hydrodyn::show_advanced_config()
    {
       advanced_config_window = new US_Hydrodyn_AdvancedConfig(&advanced_config, &advanced_config_widget, this);
       advanced_config_window->show();
+   }
+}
+
+void US_Hydrodyn::show_batch()
+{
+   if (batch_widget)
+   {
+      if (batch_window->isVisible())
+      {
+         batch_window->raise();
+      }
+      else
+      {
+         batch_window->show();
+      }
+      return;
+   }
+   else
+   {
+      batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
+      batch_window->show();
    }
 }
 
@@ -2721,3 +2836,4 @@ void US_Hydrodyn::bead_saxs()
       }
    }
 }
+
