@@ -43,6 +43,21 @@ void US_Hydrodyn_Results::setupGUI()
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
+   lbl_name = new QLabel(tr(" Model: "), this);
+   Q_CHECK_PTR(lbl_name);
+   lbl_name->setAlignment(AlignLeft|AlignVCenter);
+   lbl_name->setMinimumWidth(200);
+   lbl_name->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   le_name = new QLineEdit(this, "name Line Edit");
+   le_name->setText(results->name);
+   le_name->setReadOnly(true);
+   le_name->setMinimumWidth(200);
+   //   le_name->setAlignment(AlignLeft|AlignVCenter);
+   le_name->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+
    lbl_total_beads = new QLabel(tr(" Total Beads in Model: "), this);
    Q_CHECK_PTR(lbl_total_beads);
    lbl_total_beads->setAlignment(AlignLeft|AlignVCenter);
@@ -292,10 +307,13 @@ void US_Hydrodyn_Results::setupGUI()
    pb_help->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_help, SIGNAL(clicked()), SLOT(help()));
 
-   int rows=12, columns = 2, spacing = 2, j=0, margin=4;
+   int rows=13, columns = 2, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
+   j++;
+   background->addWidget(lbl_name, j, 0);
+   background->addWidget(le_name, j, 1);
    j++;
    background->addWidget(lbl_total_beads, j, 0);
    background->addWidget(le_total_beads, j, 1);

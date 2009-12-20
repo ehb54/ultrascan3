@@ -75,6 +75,8 @@ void US_Hydrodyn_Batch::setupGUI()
    {
       lb_files->insertItem(batch->file[i]);
    }
+   lb_files->setCurrentItem(0);
+   lb_files->setSelected(0, false);
    lb_files->setSelectionMode(QListBox::Multi);
    connect(lb_files, SIGNAL(selectionChanged()), SLOT(update_enables()));
 
@@ -908,6 +910,8 @@ void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
    QString f;
    QColor save_color = editor->color();
    bool is_selected;
+   int item = lb_files->currentItem();
+   bool item_selected = lb_files->isSelected(item);
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       f = get_file_name(i);
@@ -931,4 +935,6 @@ void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
       lb_files->changeItem(QString("<%1>%2").arg(status_color[status[f]]).arg(f), i);
       lb_files->setSelected(i, is_selected);
    }
+   lb_files->setCurrentItem(item);
+   lb_files->setSelected(item, item_selected);
 }

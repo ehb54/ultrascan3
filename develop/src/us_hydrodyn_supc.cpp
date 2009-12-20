@@ -9,6 +9,7 @@
 
 // #define DEBUG_FILES
 #include "../include/us_math.h"
+#include <qregexp.h>
 
 #define  PI M_PI
 // below are moved to variable values
@@ -624,6 +625,7 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
           lconv2,
           lconv3);
 
+
    for (int current_model = 0; current_model < (int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
          if ((*somo_processed)[current_model]) {
@@ -673,14 +675,30 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
       }
    }
 
+
    if(!models_to_proc) {
       editor->append("\nNo selected models ready to compute hydrodynamics.\n");
       return US_HYDRODYN_SUPC_NO_SEL_MODELS;
    }
     
+      
    supc_results = hydro_results;
    supc_results->total_beads = nmax;
     
+   supc_results->name = use_filename;
+   supc_results->name.replace(QRegExp("(|_%1)\\.beams"),"");
+   if ( lb_model->numRows() > 1 && model_idx.size() ) 
+   {
+      supc_results->name += 
+         QString(" model%1: %2")
+         .arg((model_idx.size() > 1) ? "s" : "")
+         .arg(model_idx[0] + 1);
+      for ( unsigned int i = 1; i < model_idx.size(); i++ )
+      {
+         supc_results->name += QString(", %1").arg(model_idx[i] + 1);
+      }
+   }
+
    if (int retval = supc_alloc())
    {
       return retval;

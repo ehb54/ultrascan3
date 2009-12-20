@@ -402,6 +402,11 @@ void US_Hydrodyn_Save::setupGUI()
          this_lb->insertItem(descriptive_name[i]);
       }
    }
+   for ( unsigned int i = 0; i < lb_possible.size(); i++ )
+   {
+      lb_possible[i]->setCurrentItem(0);
+      lb_possible[i]->setSelected(0, false);
+   }
 
    lbl_selected = new QLabel(tr("Parameters selected"), this);
    Q_CHECK_PTR(lbl_selected);

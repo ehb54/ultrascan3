@@ -235,7 +235,7 @@ US_Hydrodyn::~US_Hydrodyn()
 
 void US_Hydrodyn::setupGUI()
 {
-   int minHeight1 = 30;
+   int minHeight1 = 27;
    bead_model_file = "";
 
    lookup_tables = new QPopupMenu;
@@ -2836,4 +2836,3 @@ void US_Hydrodyn::bead_saxs()
       }
    }
 }
-
