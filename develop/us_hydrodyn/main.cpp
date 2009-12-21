@@ -11,7 +11,12 @@ int main (int argc, char **argv)
    {
       delete us_register;
       US_Hydrodyn *hydrodyn;
-      hydrodyn = new US_Hydrodyn();
+      vector < QString > batch_file;
+      for ( int i = 1; i < a.argc(); i++ ) 
+      {
+         batch_file.push_back( a.argv()[i] );      
+      }
+      hydrodyn = new US_Hydrodyn(batch_file);
       hydrodyn->setCaption("SOMO Solution Modeler");
       hydrodyn->show();
       a.setMainWidget(hydrodyn);

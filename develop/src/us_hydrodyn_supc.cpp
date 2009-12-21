@@ -690,14 +690,28 @@ us_hydrodyn_supc_main(hydro_results *hydro_results,
    if ( lb_model->numRows() > 1 && model_idx.size() ) 
    {
       supc_results->name += 
-         QString(" model%1: %2")
-         .arg((model_idx.size() > 1) ? "s" : "")
-         .arg(model_idx[0] + 1);
-      for ( unsigned int i = 1; i < model_idx.size(); i++ )
-      {
-         supc_results->name += QString(", %1").arg(model_idx[i] + 1);
+         QString(" model%1: ")
+         .arg((model_idx.size() > 1) ? "s" : "");
+      int inc;
+      for ( unsigned int i = 0; i < model_idx.size(); i++ ) {
+         if ( i ) 
+         {
+            supc_results->name += ",";
+         }
+         for ( inc = 1;
+               (i + inc < model_idx.size()) && 
+                  (model_idx[i + inc] == model_idx[i] + inc);
+               inc++ );
+         inc--;
+         supc_results->name += QString("%1").arg(model_idx[i]+1);
+         if ( inc > 1 ) {
+            supc_results->name += QString("-%1")
+               .arg(model_idx[i+inc]+1);
+            i += inc;
+        } 
       }
    }
+   printf("model result name <%s>\n", supc_results->name.ascii());
 
    if (int retval = supc_alloc())
    {

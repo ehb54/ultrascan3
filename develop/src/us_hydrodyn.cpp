@@ -41,9 +41,12 @@
 
 // static bool no_rr;
 
-US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
+US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
+                         QWidget *p, 
+                         const char *name) : QFrame(p, name)
 {
    USglobal = new US_Config();
+   this->batch_file = batch_file;
 
    // no_rr = false;
 
@@ -225,8 +228,13 @@ US_Hydrodyn::US_Hydrodyn(QWidget *p, const char *name) : QFrame(p, name)
    }
    editor->setColor(save_color);
 
-   // batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
-   // batch_window->show();
+   if ( batch_file.size() )
+   {
+      batch.file = batch_file;
+      batch_window = new US_Hydrodyn_Batch(&batch, &batch_widget, this);
+      batch_window->show();
+      batch_window->raise();
+   }
 }
 
 US_Hydrodyn::~US_Hydrodyn()

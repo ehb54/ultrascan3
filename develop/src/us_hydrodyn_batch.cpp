@@ -71,10 +71,34 @@ void US_Hydrodyn_Batch::setupGUI()
    lb_files->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    lb_files->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
    lb_files->setEnabled(true);
+   QString load_errors;
    for ( unsigned int i = 0; i < batch->file.size(); i++ ) 
    {
-      lb_files->insertItem(batch->file[i]);
+      if ( batch->file[i].contains(QRegExp("(pdb|PDB|bead_model|BEAD_MODEL|beams|BEAMS)$")) )
+      {
+         bool dup = false;
+         if ( i ) 
+         {
+            for ( unsigned int j = 0; j < i; j++ )
+            {
+               if ( batch->file[i] == batch->file[j] )
+               {
+                  dup = true;
+                  break;
+               }
+            }
+         }
+         if ( !dup )
+         {
+            lb_files->insertItem(batch->file[i]);
+         } else {
+            load_errors += QString(tr("File skipped: %1 (already in list)\n")).arg(batch->file[i]);
+         }
+      } else {
+         load_errors += QString(tr("File skipped: %1 (not a valid file name)\n")).arg(batch->file[i]);
+      }
    }
+
    lb_files->setCurrentItem(0);
    lb_files->setSelected(0, false);
    lb_files->setSelectionMode(QListBox::Multi);
@@ -359,6 +383,13 @@ void US_Hydrodyn_Batch::setupGUI()
    check_for_missing_files(true);
    update_enables();
    clear_display();
+   if ( load_errors != "" ) 
+   {
+      QColor save_color = editor->color();
+      editor->setColor("dark red");
+      editor->append(load_errors);
+      editor->setColor(save_color);
+   }
 }
 
 void US_Hydrodyn_Batch::cancel()

@@ -60,7 +60,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
    Q_OBJECT
 
    public:
-      US_Hydrodyn(QWidget *p = 0, const char *name = 0);
+      US_Hydrodyn(vector < QString >,
+                  QWidget *p = 0, 
+                  const char *name = 0);
       ~US_Hydrodyn();
       int get_color(PDB_atom *);
       struct misc_options misc;
@@ -89,6 +91,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_stop_calc;
 
    private:
+      vector < QString > batch_file;
       bool residue_widget;
       bool atom_widget;
       bool hybrid_widget;
