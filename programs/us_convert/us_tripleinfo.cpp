@@ -1,4 +1,4 @@
-//! \file us_ccwinfo.cpp
+//! \file us_tripleinfo.cpp
 
 #include "us_convert.h"
 #include "us_tripleinfo.h"
