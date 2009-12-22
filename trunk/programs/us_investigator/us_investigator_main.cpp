@@ -1,4 +1,4 @@
-//! \file us_db_tbl_investigator_main.cpp
+//! \file us_investigator_main.cpp
 
 #include <QApplication>
 
