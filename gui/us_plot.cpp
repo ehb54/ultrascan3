@@ -752,7 +752,7 @@ void US_PlotConfig::gridConfigFinish( void )
    \param currentPlot QwtPlot widget
    \param selected    A list of curve names to be configured
    \param parent      Parent widget
-   \param flags       Widget flags
+   \param f           Widget flags
 */
 US_PlotCurveConfig::US_PlotCurveConfig( QwtPlot* currentPlot, 
       const QStringList& selected, QWidget* parent, Qt::WindowFlags f ) 
