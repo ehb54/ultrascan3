@@ -12,11 +12,10 @@ public:
    //! \param c returns the coefficients for best least-squares fit
    //! \param x contains the x values of the raw data
    //! \param y contains the y values of the raw data
-   //! \param n contains the dimension of x and y
+   //! \param N contains the dimension of x and y
    //! \param order is the order of the function to be fitted
-   //! \param msg is a currently unused boolean parameter
 
-   static void lsfit( double*, double*, double*, int, int, bool = false );
+   static void lsfit( double*, double*, double*, int, int );
    
    
    static bool Cholesky_Decomposition( double**, int );

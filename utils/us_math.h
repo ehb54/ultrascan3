@@ -148,7 +148,7 @@ class US_EXTERN US_Math
 
       //! \brief Calculate the time correction in a run due to acceleration
       //!        of the rotor.
-      //! \param dataLList The list of editedData for the run
+      //! \param dataList The list of editedData for the run
 
       static double time_correction( const QList< US_DataIO::editedData >& );
 };

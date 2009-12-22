@@ -82,7 +82,7 @@ class US_EXTERN US_Widgets : public QFrame
 
     //! \param text - Text to set with checkbox
     //! \param state - Initial check state\n
-    //! \param checkbox - reference to a pointer of the checkbox\n
+    //! \param cb - reference to a pointer of the checkbox\n
     //! * Font weight is bold\n
     //! * Color is set to US_GuiSettings::normalColor()
     QBoxLayout* us_checkbox  ( const QString&, QCheckBox*&, bool = false );

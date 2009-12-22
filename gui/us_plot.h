@@ -21,9 +21,9 @@
 class US_Zoomer: public QwtPlotZoomer
 {
    public:
-      //! \param x_axis - The title of the x (bottom) axis
-      //! \param y_axis - The title of the y (left) axis
-      //! \param y_axis - A pointer to the plot's canvas
+      //! \param xAxis - The title of the x (bottom) axis
+      //! \param yAxis - The title of the y (left) axis
+      //! \param canvas - A pointer to the plot's canvas
       US_Zoomer( int, int, QwtPlotCanvas* );
 };
 
