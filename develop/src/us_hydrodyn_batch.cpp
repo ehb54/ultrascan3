@@ -872,6 +872,10 @@ void US_Hydrodyn_Batch::start()
             if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
             {
                save_us_hydrodyn_settings();
+               if ( batch->mm_all ) 
+               {
+                  ((US_Hydrodyn *)us_hydrodyn)->lb_model->selectAll(true);
+               }
                if ( batch->somo )
                {
                   result = ((US_Hydrodyn *)us_hydrodyn)->calc_somo() ? false : true;

@@ -91,6 +91,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_stop_calc;
       struct hydro_options hydro;
       QCheckBox *cb_saveParams;
+      QListBox *lb_model;
 
    private:
       vector < QString > batch_file;
@@ -209,8 +210,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QProgressBar *progress;
       TextEdit *e;
-
-      QListBox *lb_model;
 
       US_AddAtom *addAtom;
       US_AddResidue *addResidue;
