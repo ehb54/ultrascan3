@@ -2340,6 +2340,10 @@ void US_Hydrodyn::set_overwrite()
 void US_Hydrodyn::set_saveParams()
 {
    saveParams = cb_saveParams->isChecked();
+   if ( batch_widget )
+   {
+      batch_window->cb_saveParams->setChecked(saveParams);
+   }
 }
 
 void US_Hydrodyn::view_asa()

@@ -275,6 +275,21 @@ void US_Hydrodyn_Batch::setupGUI()
    le_avg_hydro_name->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    connect(le_avg_hydro_name, SIGNAL(textChanged(const QString &)), SLOT(update_avg_hydro_name(const QString &)));
 
+   pb_select_save_params = new QPushButton(tr("Select Parameters to be Saved"), this);
+   Q_CHECK_PTR(pb_select_save_params);
+   //   pb_select_save_params->setMinimumHeight(minHeight1);
+   pb_select_save_params->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_select_save_params->setEnabled(true);
+   pb_select_save_params->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_select_save_params, SIGNAL(clicked()), SLOT(select_save_params()));
+
+   cb_saveParams = new QCheckBox(this);
+   cb_saveParams->setText(tr(" Save parameters to file "));
+   cb_saveParams->setChecked(((US_Hydrodyn *)us_hydrodyn)->saveParams);
+   cb_saveParams->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_saveParams->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_saveParams, SIGNAL(clicked()), this, SLOT(set_saveParams()));
+
    pb_start = new QPushButton(tr("Start"), this);
    Q_CHECK_PTR(pb_start);
    pb_start->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -350,6 +365,10 @@ void US_Hydrodyn_Batch::setupGUI()
    hbl_hydro->addWidget(cb_avg_hydro);
    hbl_hydro->addWidget(le_avg_hydro_name);
 
+   QHBoxLayout *hbl_save = new QHBoxLayout;
+   hbl_save->addWidget(pb_select_save_params);
+   hbl_save->addWidget(cb_saveParams);
+
    QHBoxLayout *hbl_process = new QHBoxLayout;
    hbl_process->addWidget(pb_start);
    hbl_process->addWidget(progress);
@@ -376,6 +395,7 @@ void US_Hydrodyn_Batch::setupGUI()
    leftside->addWidget(cb_grid);
    leftside->addWidget(cb_hydro);
    leftside->addLayout(hbl_hydro);
+   leftside->addLayout(hbl_save);
    leftside->addLayout(hbl_process);
    leftside->addSpacing(5);
    leftside->addLayout(hbl_help_cancel);
@@ -588,6 +608,8 @@ void US_Hydrodyn_Batch::update_enables()
    cb_hydro->setEnabled(lb_files->numRows());
    cb_avg_hydro->setEnabled(lb_files->numRows() && batch->hydro);
    le_avg_hydro_name->setEnabled(lb_files->numRows() && batch->hydro && batch->avg_hydro);
+   pb_select_save_params->setEnabled(lb_files->numRows() && batch->hydro);
+   cb_saveParams->setEnabled(lb_files->numRows() && batch->hydro);
 }
 
 void US_Hydrodyn_Batch::residue(int val)
@@ -738,6 +760,17 @@ void US_Hydrodyn_Batch::update_avg_hydro_name(const QString &str)
    batch->avg_hydro_name = str;
 }
 
+void US_Hydrodyn_Batch::select_save_params()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->select_save_params();
+}
+
+void US_Hydrodyn_Batch::set_saveParams()
+{
+   ((US_Hydrodyn *)us_hydrodyn)->saveParams = cb_saveParams->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->cb_saveParams->setChecked(((US_Hydrodyn *)us_hydrodyn)->saveParams);
+}
+
 void US_Hydrodyn_Batch::disable_after_start()
 {
    lb_files->setEnabled(false);
@@ -754,6 +787,8 @@ void US_Hydrodyn_Batch::disable_after_start()
    cb_hydro->setEnabled(false);
    cb_avg_hydro->setEnabled(false);
    le_avg_hydro_name->setEnabled(false);
+   pb_select_save_params->setEnabled(false);
+   cb_saveParams->setEnabled(false);
    pb_start->setEnabled(false);
    pb_stop->setEnabled(true);
    stopFlag = false;
@@ -774,6 +809,8 @@ void US_Hydrodyn_Batch::enable_after_stop()
    cb_somo->setEnabled(true);
    cb_grid->setEnabled(true);
    cb_hydro->setEnabled(true);
+   pb_select_save_params->setEnabled(true);
+   cb_saveParams->setEnabled(true);
    pb_start->setEnabled(true);
    pb_stop->setEnabled(false);
    update_enables();

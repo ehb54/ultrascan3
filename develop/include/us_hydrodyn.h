@@ -90,6 +90,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool screen_bead_model(QString);
       QPushButton *pb_stop_calc;
       struct hydro_options hydro;
+      QCheckBox *cb_saveParams;
 
    private:
       vector < QString > batch_file;
@@ -175,7 +176,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QCheckBox *cb_calcAutoHydro;
       QCheckBox *cb_setSuffix;
       QCheckBox *cb_overwrite;
-      QCheckBox *cb_saveParams;
 
       QPopupMenu *lookup_tables;
       QPopupMenu *somo_options;
@@ -315,6 +315,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int calc_somo();    // compute asa and then refine bead_model
       int calc_grid_pdb(); // compute grid model from pdb
       int calc_hydro();
+      void select_save_params();
 
    private slots:
       void load_pdb();
@@ -377,7 +378,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void bead_saxs();
       void show_hydro_results();
       void open_hydro_results();
-      void select_save_params();
       void write_bead_asa(QString, vector <PDB_atom> *);
       void write_bead_tsv(QString, vector <PDB_atom> *);
       void write_bead_ebf(QString, vector <PDB_atom> *);

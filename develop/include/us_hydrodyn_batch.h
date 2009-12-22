@@ -64,6 +64,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
                         QWidget *p = 0, 
                         const char *name = 0);
       ~US_Hydrodyn_Batch();
+      QCheckBox     *cb_saveParams;
 
    protected:
 
@@ -104,6 +105,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QCheckBox     *cb_hydro;
       QCheckBox     *cb_avg_hydro;
       QLineEdit     *le_avg_hydro_name;
+      QPushButton   *pb_select_save_params;
       QPushButton   *pb_start;
       QProgressBar  *progress;
       QPushButton   *pb_stop;
@@ -166,6 +168,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void set_hydro();
       void set_avg_hydro();
       void update_avg_hydro_name(const QString &);
+      void select_save_params();
+      void set_saveParams();
       void stop();
 
       void cancel();
