@@ -99,7 +99,7 @@ class US_Astfem_Sim : public US_Widgets
       void start_calc      ( unsigned int );
       void show_progress   ( unsigned int );
       void calc_over       ( void );
-      void closeEvent      ( QCloseEvent* );
+      //void closeEvent      ( QCloseEvent* );
       
       void update_movie_plot( vector< double >&, double* );
 
