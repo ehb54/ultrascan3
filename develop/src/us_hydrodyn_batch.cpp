@@ -487,10 +487,12 @@ void US_Hydrodyn_Batch::select_all()
       }
    }
 
+   disable_updates = true;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       lb_files->setSelected(i,any_not_selected);
    }
+   disable_updates = false;
    update_enables();
 }
 
@@ -509,6 +511,7 @@ void US_Hydrodyn_Batch::remove_files()
    {
       if ( lb_files->isSelected(i) )
       {
+         status[get_file_name(i)] = 0;
          lb_files->removeItem(i);
          i--;
       }
@@ -519,6 +522,7 @@ void US_Hydrodyn_Batch::remove_files()
 
 void US_Hydrodyn_Batch::load_somo()
 {
+   disable_updates = true;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected(i) )
@@ -545,6 +549,7 @@ void US_Hydrodyn_Batch::load_somo()
          break;
       }
    }
+   disable_updates = false;
    update_enables();
 }
 
@@ -555,17 +560,17 @@ void US_Hydrodyn_Batch::update_enables()
       return;
    }
    int count_selected = 0;
-   bool any_pdb_in_list = true; // false;
+   bool any_pdb_in_list = false;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected(i) )
       {
          count_selected++;
       }
-      //      if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
-      //      {
-      //         any_pdb_in_list = true;
-      //      }
+      if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
+      {
+         any_pdb_in_list = true;
+      }
    }
    pb_select_all->setEnabled(lb_files->numRows());
 
@@ -632,6 +637,7 @@ void US_Hydrodyn_Batch::restore_us_hydrodyn_settings()
 
 void US_Hydrodyn_Batch::screen()
 {
+   disable_updates = true;
    disable_after_start();
    QColor save_color = editor->color();
    editor->append(tr("\nScreen files:\n"));
@@ -654,6 +660,7 @@ void US_Hydrodyn_Batch::screen()
             editor->append("Stopped by user");
             enable_after_stop();
             editor->setColor(save_color);
+            disable_updates = false;
             return;
          }
          status[file] = 2; // screening now
@@ -682,6 +689,7 @@ void US_Hydrodyn_Batch::screen()
       }
    }
    progress->setProgress(1,1);
+   disable_updates = false;
    enable_after_stop();
 }
 
@@ -739,6 +747,8 @@ void US_Hydrodyn_Batch::disable_after_start()
    bg_residues->setEnabled(false);
    bg_atoms->setEnabled(false);
    pb_screen->setEnabled(false);
+   cb_mm_first->setEnabled(false);
+   cb_mm_all->setEnabled(false);
    cb_somo->setEnabled(false);
    cb_grid->setEnabled(false);
    cb_hydro->setEnabled(false);
@@ -759,6 +769,8 @@ void US_Hydrodyn_Batch::enable_after_stop()
    bg_residues->setEnabled(true);
    bg_atoms->setEnabled(true);
    pb_screen->setEnabled(true);
+   cb_mm_first->setEnabled(true);
+   cb_mm_all->setEnabled(true);
    cb_somo->setEnabled(true);
    cb_grid->setEnabled(true);
    cb_hydro->setEnabled(true);
@@ -771,6 +783,7 @@ void US_Hydrodyn_Batch::enable_after_stop()
 void US_Hydrodyn_Batch::start()
 {
    disable_after_start();
+   disable_updates = true;
    editor->append(tr("\nProcess files:\n"));
    check_for_missing_files(true);
    bool result;
@@ -793,6 +806,7 @@ void US_Hydrodyn_Batch::start()
             editor->append("Stopped by user");
             enable_after_stop();
             editor->setColor(save_color);
+            disable_updates = false;
             return;
          }
          status[file] = 5; // processing now
@@ -815,6 +829,7 @@ void US_Hydrodyn_Batch::start()
                editor->append("Stopped by user");
                enable_after_stop();
                editor->setColor(save_color);
+               disable_updates = false;
                return;
             }
             if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
@@ -835,6 +850,7 @@ void US_Hydrodyn_Batch::start()
                editor->append("Stopped by user");
                enable_after_stop();
                editor->setColor(save_color);
+               disable_updates = false;
                return;
             }
             if ( result && batch->hydro )
@@ -863,6 +879,7 @@ void US_Hydrodyn_Batch::start()
       }
    } 
    progress->setProgress(1,1);
+   disable_updates = false;
    enable_after_stop();
 }
 
@@ -951,6 +968,7 @@ void US_Hydrodyn_Batch::dragEnterEvent(QDragEnterEvent *event)
 
 void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
 {
+   disable_updates = true;
    QStringList fileNames;
    editor->append("\n");
    if ( QUriDrag::decodeLocalFiles(event, fileNames) )
@@ -989,6 +1007,7 @@ void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
       editor->setColor(save_color);
    }
    check_for_missing_files(true);
+   disable_updates = false;
    update_enables();
 }
 
@@ -999,6 +1018,8 @@ QString US_Hydrodyn_Batch::get_file_name(int i)
 
 void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
 {
+   bool save_disable_updates = disable_updates;
+   disable_updates = true;
    printf("check for missing files!\n");
    QString f;
    QColor save_color = editor->color();
@@ -1030,4 +1051,9 @@ void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
    }
    lb_files->setCurrentItem(item);
    lb_files->setSelected(item, item_selected);
+   disable_updates = save_disable_updates;
+   if ( !disable_updates )
+   {
+      update_enables();
+   }
 }
