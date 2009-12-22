@@ -555,17 +555,17 @@ void US_Hydrodyn_Batch::update_enables()
       return;
    }
    int count_selected = 0;
-   bool any_pdb_in_list = false;
+   bool any_pdb_in_list = true; // false;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected(i) )
       {
          count_selected++;
       }
-      if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
-      {
-         any_pdb_in_list = true;
-      }
+      //      if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
+      //      {
+      //         any_pdb_in_list = true;
+      //      }
    }
    pb_select_all->setEnabled(lb_files->numRows());
 
