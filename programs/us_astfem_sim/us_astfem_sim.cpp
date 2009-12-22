@@ -187,11 +187,11 @@ US_Astfem_Sim::US_Astfem_Sim( QWidget* p, Qt::WindowFlags f )
    main->addLayout( plot, 0, 1 );
 }
 
-void US_Astfem_Sim::closeEvent( QCloseEvent* )
+/*void US_Astfem_Sim::closeEvent( QCloseEvent* )
 {
    plot1->quit();
    plot2->quit();
-}
+}*/
 
 void US_Astfem_Sim::init_simparams( void )
 {
