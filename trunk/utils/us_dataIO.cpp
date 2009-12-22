@@ -170,7 +170,7 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
 }
 
 void US_DataIO::writeScan( QDataStream&    ds, const scan&       data, 
-                           unsigned long& crc, const parameters& p )
+                           ulong&         crc, const parameters& p )
 {
    uchar c[ 4 ];
    char  d[ 5 ] = "DATA";
