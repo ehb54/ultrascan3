@@ -19,9 +19,6 @@ class US_Database : public US_Widgets
     //!  Construct the window to manage database parameters.
     US_Database( QWidget* w = 0, Qt::WindowFlags flags = 0 );
     
-    //! A null destructor. 
-    ~US_Database() {};
-    
   private:
     QList<QStringList> dblist;
     
@@ -36,6 +33,8 @@ class US_Database : public US_Widgets
     QLineEdit*   le_password;
     QLineEdit*   le_dbname; 
     QLineEdit*   le_host;  
+    QLineEdit*   le_investigator_email;  
+    QLineEdit*   le_investigator_pw;  
 
     QListWidget* lw_entries;
 

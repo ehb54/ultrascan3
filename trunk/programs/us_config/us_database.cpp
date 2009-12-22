@@ -27,14 +27,15 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   lw_entries->setFont( QFont( US_GuiSettings::fontFamily(),
                               US_GuiSettings::fontSize() ) );
 
-  /*  This isn't doing anything
+  // /*  This isn't doing anything
   QFont*        f  = new QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
   QFontMetrics* fm = new QFontMetrics ( *f );
   int h = fm->height() * 3;  // Set box to 3 lines
 
   qDebug() << "Minimum height is " << h;
-  db_list->resize( db_list->size().width(), 10 );
-  */
+  qDebug() << fm;
+  //db_list->resize( db_list->size().width(), 10 );
+  // */
 
   // Populate db_list
   lw_entries->setCurrentRow( 0 );
@@ -86,6 +87,21 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
 
   le_host = us_lineedit( "", 0 );
   details->addWidget( le_host, row++, 1 );
+
+  // Row 6
+  QLabel* investigator = us_label( "Investigator Email:" );
+  details->addWidget( investigator, row, 0 );
+
+  le_investigator_email = us_lineedit( "", 0 );
+  details->addWidget( le_investigator_email, row++, 1 );
+
+  // Row 5
+  QLabel* investigator_pw = us_label( "Investigator Password:" );
+  details->addWidget( investigator_pw, row, 0 );
+
+  le_investigator_pw = us_lineedit( "", 0 );
+  le_investigator_pw->setEchoMode( QLineEdit::Password );
+  details->addWidget( le_investigator_pw, row++, 1 );
 
   topbox->addLayout( details );
 
@@ -206,12 +222,33 @@ void US_Database::check_add()
     return;
   }
   
+  if ( le_investigator_email->text().isEmpty() )
+  {
+    QMessageBox::information( this,
+        tr( "Attention" ), 
+        tr( "Please enter an investigator email address "
+            "before saving..." ) );
+    return;
+  }
+  
+  if ( le_investigator_pw->text().isEmpty() )
+  {
+    QMessageBox::information( this,
+        tr( "Attention" ), 
+        tr( "Please enter an investigator password "
+            "before saving..." ) );
+    return;
+  }
+  
   // Get the master PW
   QString     master_pw = pw.getPasswd();
 
   // Encrypt the DB password with the master password
-  QString     db_pw = le_password->text();
-  QStringList pw    = US_Crypto::encrypt( db_pw, master_pw );
+  QString     password = le_password->text();
+  QStringList pw       = US_Crypto::encrypt( password , master_pw );
+
+  password             = le_investigator_pw->text();
+  QStringList inv_pw   = US_Crypto::encrypt( password, master_pw );
 
   // Save the DB entry
   dblist = US_Settings::databases();
@@ -223,13 +260,16 @@ void US_Database::check_add()
      if ( db.at( 0 ) == le_description->text() )
      {
         db.replace( 1, le_username->text() );
-        db.replace( 2, le_dbname->text()   );
-        db.replace( 3, le_host->text()     ) ;
+        db.replace( 2, le_dbname  ->text() );
+        db.replace( 3, le_host    ->text() );
         db.replace( 4, pw.at( 0 )          );  // Ecnrypted password
         db.replace( 5, pw.at( 1 )          );  // Initialization vector
+        db.replace( 6, le_investigator_email->text() );  
+        db.replace( 7, inv_pw.at( 0 ) );
+        db.replace( 8, inv_pw.at( 1 ) );
 
         dblist.replace( i, db );
-        updated     = true;
+        updated = true;
         break;
      }
   }
@@ -237,8 +277,15 @@ void US_Database::check_add()
   if ( ! updated )
   {
     QStringList entry;
-    entry << le_description->text() << le_username->text() << le_dbname->text()
-          << le_host->text()        << pw.at( 0 )          << pw.at( 1 );
+    entry << le_description->text() 
+          << le_username->text() 
+          << le_dbname->text()
+          << le_host->text()        
+          << pw.at( 0 )          
+          << pw.at( 1 ) 
+          << le_investigator_email->text()  
+          << inv_pw.at( 0 )
+          << inv_pw.at( 1 );
 
     dblist << entry;
   }
@@ -284,11 +331,13 @@ void US_Database::reset( void )
   if ( DB.size() > 0 ) defaultDB = US_Settings::defaultDB().at( 0 );
   update_lw( defaultDB );
 
-  le_description->setText("");
-  le_username   ->setText("");
-  le_password   ->setText("");
-  le_dbname     ->setText("");
-  le_host       ->setText("");
+  le_description       ->setText("");
+  le_username          ->setText("");
+  le_password          ->setText("");
+  le_dbname            ->setText("");
+  le_host              ->setText("");
+  le_investigator_email->setText("");
+  le_investigator_pw   ->setText("");
 
   pb_save       ->setEnabled( false );
   pb_delete     ->setEnabled( false );
@@ -364,8 +413,11 @@ void US_Database::deleteDB( void )
 void US_Database::test_connect( void )
 {
   QString error;
-  bool ok = US_DB::test_db_connection( le_host->text(), le_dbname->text(), 
-              le_username->text(), le_password->text(), error );
+  bool ok = US_DB::test_secure_connection( 
+              le_host              ->text(), le_dbname         ->text(), 
+              le_username          ->text(), le_password       ->text(), 
+              le_investigator_email->text(), le_investigator_pw->text(), 
+              error );
 
   if ( ok ) 
     QMessageBox::information( this,
