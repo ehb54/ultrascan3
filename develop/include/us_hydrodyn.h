@@ -92,6 +92,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct hydro_options hydro;
       QCheckBox *cb_saveParams;
       QListBox *lb_model;
+      US_Hydrodyn_Save *save_util; // to enable calling of save routines regardless of whether or not widget is available
 
    private:
       vector < QString > batch_file;

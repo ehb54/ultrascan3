@@ -96,7 +96,8 @@ struct save_info
    QString file;
    vector < QString >    field;
    map < QString, bool > field_flag;
-   vector < save_data >  data;
+   vector < save_data >  data_vector;
+   save_data             data;
 };
 
 class US_EXTERN US_Hydrodyn_Save : public QFrame
@@ -104,12 +105,15 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
    Q_OBJECT
 
    public:
-      US_Hydrodyn_Save(save_info *save, 
-                        bool *save_widget, 
-                        void *us_hydrodyn, 
-                        QWidget *p = 0, 
-                        const char *name = 0);
+      US_Hydrodyn_Save(save_info *save,      
+                       void *us_hydrodyn, 
+                       bool *save_widget = 0,  // no save widget implies non-gui
+                       QWidget *p = 0, 
+                       const char *name = 0);
       ~US_Hydrodyn_Save();
+
+      QString header();                   // returns a csv format header
+      QString dataString(save_data *);  // returns a csv format data line
 
    private:
 
@@ -142,6 +146,17 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
       map < QString, QString >      section_name;
       map < QString, bool >         row_break;
       map < QString, int >          descriptive_name_to_section;
+
+      map < QString, void * >       field_to_save_data;
+      map < QString, int >          field_to_save_data_type; 
+      // valid types
+#define DT_QSTRING                  0
+#define DT_BOOL                     1
+#define DT_FLOAT                    2
+#define DT_DOUBLE                   3
+#define DT_INT                      4
+#define DT_UNSIGNED_INT             5
+#define DT_TRIPLE_DOUBLE            6
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )

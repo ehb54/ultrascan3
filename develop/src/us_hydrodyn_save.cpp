@@ -4,19 +4,14 @@
 
 US_Hydrodyn_Save::US_Hydrodyn_Save(
                                    save_info *save, 
-                                   bool *save_widget, 
                                    void *us_hydrodyn, 
+                                   bool *save_widget, 
                                    QWidget *p, 
                                    const char *name
                                    ) : QFrame(p, name)
 {
-   this->save_widget = save_widget;
    this->save = save;
    this->us_hydrodyn = us_hydrodyn;
-   *save_widget = true;
-   USglobal = new US_Config();
-   setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   setCaption(tr("Hydrodynamic Parameters to be Saved"));
    // build vectors, maps
    {
       QString data[] =
@@ -48,27 +43,27 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Used beads in model", 
             "Used beads in model", 
 
-            // "used_beads_sd", 
+            // "results.used_beads_sd", 
             // "Used beads in model s.d.", 
             // "Used beads in model s.d.", 
 
             "__BREAK__",
 
             "results.mass", 
-            "Molecular mass", 
-            "Molecular mass",
+            "Molecular mass [Da]", 
+            "Molecular mass [Da]", 
 
             "__BREAK__",
 
             "results.vbar", 
-            "Partial specific volume", 
-            "Partial specific volume", 
+            "Partial specific volume [cm^3/g]", 
+            "Partial specific volume [cm^3/g]", 
 
             "__BREAK__",
 
             "results.s20w", 
-            "Sedimentation coefficient s",
-            "Sedimentation coefficient s",
+            "Sedimentation coefficient s [S]",
+            "Sedimentation coefficient s [S]",
 
             // "results.s20w_sd", 
             // "s(20,w) standard deviation", 
@@ -76,8 +71,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 
             "__BREAK__",
             "results.D20w", 
-            "Translational diffusion coefficient D",
-            "Translational diffusion coefficient D",
+            "Translational diffusion coefficient D [cm/sec^2]",
+            "Translational diffusion coefficient D [cm/sec^2]",
 
             // "results.D20w_sd", 
             // "D(20,w) transl. s.d.", 
@@ -86,8 +81,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "__BREAK__",
 
             "results.rs", 
-            "Stokes radius", 
-            "Stokes radius", 
+            "Stokes radius [nm]", 
+            "Stokes radius [nm]", 
 
             // "results.rs_sd", 
             // "Stokes radius s.d.", 
@@ -99,15 +94,15 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Fricitional ratio", 
             "Fricitional ratio", 
 
-            // "ff0_sd", 
+            // "results.ff0_sd", 
             // "Fricitional ratio s.d.", 
             // "Fricitional ratio s.d.", 
 
             "__BREAK__",
 
             "results.rg", 
-            "Radius of gyration (from bead model)", 
-            "Radius of gyration (from bead model)", 
+            "Radius of gyration [nm] (from bead model)", 
+            "Radius of gyration [nm] (from bead model)", 
 
             // "results.rg_sd", 
             // "Radius of gyration s.d.", 
@@ -116,8 +111,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "__BREAK__",
 
             "results.tau", 
-            "Relaxation Time, tau(h)", 
-            "Relaxation Time, tau(h)", 
+            "Relaxation Time, tau(h) [ns]", 
+            "Relaxation Time, tau(h) [ns]", 
 
             // "results.tau_sd", 
             // "Relaxation Time, tau(h) s.d.", 
@@ -126,8 +121,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "__BREAK__",
 
             "results.viscosity", 
-            "Intrisic viscosity", 
-            "Intrisic viscosity", 
+            "Intrisic viscosity [cm^3/g]", 
+            "Intrisic viscosity [cm^3/g]", 
 
             // "results.viscosity_sd", 
             // "Intrisic viscosity s.d.", 
@@ -165,7 +160,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Conversion Factor",
 
             "tra_fric_coef", 
-            "Translational frictional coefficient",
+            "Translational frictional coefficient [g/s]",
             "Translational frictional coefficient",
 
             "rot_fric_coef",
@@ -176,31 +171,31 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Rotational diffusion coefficient [1/s]",
             "Rotational diffusion coefficient [1/s]",
 
-            "rot_fric_coef",
+            "rot_fric_coef_x",
             "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
             "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
 
-            "rot_diff_coef",
+            "rot_diff_coef_x",
             "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
             "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
 
-            "rot_stokes_rad",
+            "rot_stokes_rad_x",
             "Rotational Stokes' radius [ X, Y, Z ] [nm]",
             "Rotational Stokes' radius [ X, Y, Z ] [nm]",
 
-            "cen_of_res",
+            "cen_of_res_x",
             "Centre of resistance [ X, Y, Z ] [nm]",
             "Centre of resistance [ X, Y, Z ] [nm]",
 
-            "cen_of_mass",
+            "cen_of_mass_x",
             "Centre of mass [ X, Y, Z ] [nm]",
             "Centre of mass [ X, Y, Z ] [nm]",
 
-            "cen_of_diff",
+            "cen_of_diff_x",
             "Centre of diffusion [ X, Y, Z ] [nm]",
             "Centre of diffusion [ X, Y, Z ] [nm]",
 
-            "cen_of_visc",
+            "cen_of_visc_x",
             "Centre of viscosity [ X, Y, Z ] [nm]",
             "Centre of viscosity [ X, Y, Z ] [nm]",
 
@@ -248,11 +243,11 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "Relaxation times, tau(h) [ns]",
             "Relaxation times, tau(h) [ns]",
 
-            "max_ext",
-            "Maximum extensions [ X, Y, Z ] nm",
-            "Maximum extensions [ X, Y, Z ] nm",
+            "max_ext_x",
+            "Maximum extensions [ X, Y, Z ] [nm]",
+            "Maximum extensions [ X, Y, Z ] [nm]",
 
-            "axi_ratios",
+            "axi_ratios_xz",
             "Axial ratios [ X:Z, X:Y, Y:Z ] ",
             "Axial ratios [ X:Z, X:Y, Y:Z ] ",
 
@@ -270,16 +265,16 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "__BREAK__",
 
             "hydro.temperature", 
-            "Solvent Temperature (C)", 
-            "Solvent Temperature (C)", 
+            "Solvent Temperature [C]", 
+            "Solvent Temperature [C]", 
 
             "hydro.solvent_viscosity", 
-            "Solvent viscosity (cP)", 
-            "Solvent viscosity (cP)", 
+            "Solvent viscosity [cP]", 
+            "Solvent viscosity [cP]", 
 
             "hydro.solvent_density", 
-            "Solvent density (g/ml)", 
-            "solvent_density (g/ml)",
+            "Solvent density [g/ml]", 
+            "solvent_density [g/ml]",
 
             "__SECTION__",
             "ASA results:",
@@ -355,7 +350,433 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          }
       }
    }
-            
+   
+   // build field_to_save_data, ..._type
+   for ( unsigned int i = 0; i < field.size(); i++ )
+   {
+      if ( field[i] == "results.name" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.name);
+         field_to_save_data_type[field[i]] = DT_QSTRING;
+         continue;
+      }
+
+      if ( field[i] == "results.num_models" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.num_models);
+         field_to_save_data_type[field[i]] = DT_UNSIGNED_INT;
+         continue;
+      }
+
+      if ( field[i] == "results.total_beads" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.total_beads);
+         field_to_save_data_type[field[i]] = DT_FLOAT;
+         continue;
+      }
+
+      if ( field[i] == "results.total_beads_sd" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.total_beads_sd);
+         field_to_save_data_type[field[i]] = DT_FLOAT;
+         continue;
+      }
+
+      if ( field[i] == "results.used_beads" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.used_beads);
+         field_to_save_data_type[field[i]] = DT_FLOAT;
+         continue;
+      }
+
+      if ( field[i] == "results.used_beads_sd" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.used_beads_sd);
+         field_to_save_data_type[field[i]] = DT_FLOAT;
+         continue;
+      }
+
+      if ( field[i] == "results.mass" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.mass);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.vbar" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.vbar);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.s20w" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.s20w);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.s20w_sd" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.s20w_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.D20w" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.D20w);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.D20w_sd" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.D20w_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.rs" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.rs);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.rs_sd" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.rs_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.ff0" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.ff0);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.ff0_sd" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.ff0_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.rg" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.rg);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.rg_sd" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.rg_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.tau" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.tau);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.tau_sd" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.tau_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.viscosity" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.viscosity);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.viscosity_sd" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.viscosity_sd);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "tot_surf_area" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.tot_surf_area);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "tot_volume_of" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.tot_volume_of);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "num_of_unused" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.num_of_unused);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "use_beads_vol" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.use_beads_vol);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "use_beads_surf" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.use_beads_surf);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "use_bead_mass" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.use_bead_mass);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "con_factor" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.con_factor);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "tra_fric_coef" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.tra_fric_coef);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "rot_fric_coef" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.rot_fric_coef);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "rot_diff_coef" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.rot_diff_coef);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "rot_fric_coef_x" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.rot_fric_coef_x);
+         field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "rot_diff_coef_x" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.rot_diff_coef_x);
+         field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "rot_stokes_rad_x" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.rot_stokes_rad_x);
+         field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "cen_of_res_x" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.cen_of_res_x);
+         field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "cen_of_mass_x" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.cen_of_mass_x);
+         field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "cen_of_diff_x" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.cen_of_diff_x);
+         field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "cen_of_visc_x" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.cen_of_visc_x);
+         field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "unc_int_visc" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.unc_int_visc);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "unc_einst_rad" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.unc_einst_rad);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "cor_int_visc" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.cor_int_visc);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "cor_einst_rad" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.cor_einst_rad);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "rel_times_tau_1" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_1);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "rel_times_tau_2" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_2);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "rel_times_tau_3" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_3);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "rel_times_tau_4" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_4);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "rel_times_tau_5" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_5);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "rel_times_tau_m" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_m);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "rel_times_tau_h" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_h);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "max_ext_x" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.max_ext_x);
+         field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "axi_ratios_xz" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.axi_ratios_xz);
+         field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "hydro.solvent_name" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.solvent_name);
+         field_to_save_data_type[field[i]] = DT_QSTRING;
+         continue;
+      }
+
+      if ( field[i] == "hydro.solvent_acronym" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.solvent_acronym);
+         field_to_save_data_type[field[i]] = DT_QSTRING;
+         continue;
+      }
+
+      if ( field[i] == "hydro.temperature" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.temperature);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "hydro.solvent_viscosity" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.solvent_viscosity);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "hydro.solvent_density" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.hydro.solvent_density);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.asa_rg_pos" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.asa_rg_pos);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+
+      if ( field[i] == "results.asa_rg_neg" )
+      {
+         field_to_save_data[field[i]] = (void *)&(save->data.results.asa_rg_neg);
+         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         continue;
+      }
+   }
+
+   this->save_widget = save_widget;
+   if ( !save_widget )
+   {
+      return;
+   }
+   *save_widget = true;
+   USglobal = new US_Config();
+   setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   setCaption(tr("Hydrodynamic Parameters to be Saved"));
    // for now:  until we save/restore
    save->field.clear();
    save->field_flag.clear();
@@ -373,7 +794,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 
 US_Hydrodyn_Save::~US_Hydrodyn_Save()
 {
-   *save_widget = false;
+   if ( save_widget )
+   {
+      *save_widget = false;
+   }
 }
 
 void US_Hydrodyn_Save::setupGUI()
@@ -661,9 +1085,80 @@ void US_Hydrodyn_Save::rebuild()
       save->field.push_back(field[descriptive_name_to_pos[lb_selected->text(i)]]);
       printf("%s\n", field[descriptive_name_to_pos[lb_selected->text(i)]].ascii());
    }
+   header();
 }
 
 void US_Hydrodyn_Save::tab_changed(QWidget *)
 {
    update_enables_possible();
+}
+
+QString US_Hydrodyn_Save::header()
+{
+   QString result;
+   QString this_field;
+   for ( unsigned int i = 0; i < save->field.size(); i++ )
+   {
+      this_field = descriptive_name[field_to_pos[save->field[i]]].replace("\"", "''");
+      result += QString("%1\"%2\"")
+         .arg(i ? "," : "")
+         .arg(this_field);
+   }
+   printf("header() <%s>\n", result.ascii());
+   return result + "\n";
+}
+
+QString US_Hydrodyn_Save::dataString(save_data *data)
+{
+   save->data = *data;
+   QString result;
+   for ( unsigned int i = 0; i < save->field.size(); i++ )
+   {
+      switch(field_to_save_data_type[save->field[i]]) 
+      {
+      case DT_QSTRING       :
+         result += QString("%1\"%2\"")
+            .arg(i ? "," : "")
+            .arg(*((QString *)(field_to_save_data[save->field[i]])));
+         break;
+      case DT_BOOL          :
+         result += QString("%1%2")
+            .arg(i ? "," : "")
+            .arg(*((bool *)(field_to_save_data[save->field[i]])) ? 1 : 0 );
+         break;
+      case DT_FLOAT         :
+         result += QString("%1%2")
+            .arg(i ? "," : "")
+            .arg((*(float *)(field_to_save_data[save->field[i]])));
+         break;
+      case DT_DOUBLE        :
+         result += QString("%1%2")
+            .arg(i ? "," : "")
+            .arg(*((double *)(field_to_save_data[save->field[i]])));
+         break;
+      case DT_INT           :
+         result += QString("%1%2")
+            .arg(i ? "," : "")
+            .arg(*((int *)(field_to_save_data[save->field[i]])));
+         break;
+      case DT_UNSIGNED_INT  :
+         result += QString("%1%2")
+            .arg(i ? "," : "")
+            .arg(*((unsigned int *)(field_to_save_data[save->field[i]])));
+         break;
+      case DT_TRIPLE_DOUBLE :
+         result += QString("%1(%2,%3,%4)")
+            .arg(i ? "," : "")
+            .arg(*((double *)(field_to_save_data[save->field[i]])))
+            .arg(*((double *)(field_to_save_data[save->field[i]]) + 1))
+            .arg(*((double *)(field_to_save_data[save->field[i]]) + 2));
+         break;
+      default               :
+         result += QString("%1\"???\"")
+            .arg(i ? "," : "");
+         break;
+      }
+   }
+   printf("data() <%s>\n", result.ascii());
+   return result + "\n";
 }

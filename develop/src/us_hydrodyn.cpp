@@ -235,6 +235,8 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       batch_window->show();
       batch_window->raise();
    }
+
+   save_util = new US_Hydrodyn_Save(&save_params, this);
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -2597,7 +2599,7 @@ void US_Hydrodyn::select_save_params()
    }
    else
    {
-      save_window = new US_Hydrodyn_Save(&save_params, &save_widget, this);
+      save_window = new US_Hydrodyn_Save(&save_params, this, &save_widget);
       save_window->show();
    }
 }

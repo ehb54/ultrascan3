@@ -2358,6 +2358,8 @@ mem_ris(int model)
    this_data.hydro = us_hydrodyn->hydro;
    this_data.model_idx = QString("%1").arg(model);
    this_data.results.num_models = 1;
+   this_data.results.asa_rg_pos = supc_results->asa_rg_pos;
+   this_data.results.asa_rg_neg = supc_results->asa_rg_neg;
 
    ris = fopen(risultati, "ab");
    fprintf(ris, "%s", "MODEL File Name  :___ ");
@@ -2366,6 +2368,8 @@ mem_ris(int model)
    if(strlen(molecola_nb) > 7) {
       molecola_nb[strlen(molecola_nb) - 6] = 0; // remove .beams
    }
+   this_data.results.name = QString("%1").arg(molecola_nb);
+
    fprintf(ris, "%s\n", molecola_nb);
    fprintf(ris, "%s%d\n", "TOTAL Beads in the MODEL :___ ", numero_sfere);
    this_data.results.total_beads = numero_sfere;
@@ -2428,6 +2432,7 @@ mem_ris(int model)
       fprintf(ris, "- SLIP BOUNDARY CONDITIONS (4*PI*ETAo)\n\n");
 
    fprintf(ris, "%s%d\n", "- Used BEADS Number       = ", nat);
+   this_data.results.used_beads = nat;
    if (volcor == 1)
    {
       if ((colorsixf == 0) && (sfecalc == 2))
@@ -2490,7 +2495,7 @@ mem_ris(int model)
    {
       fprintf(ris, "%s%.2f\t%s (%s)\n", "- SED. COEFF.           = ",
               (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO), "        [S] ", tag2.ascii());
-      this_data.results.s20w = (mascor1 * 1.0E20 * (1.0 - partvolc * DENS)) / (f * fconv * AVO);
+      this_data.results.s20w = (mascor1 * 1.0E20 * (1.0 - partvol * DENS)) / (f * fconv * AVO);
       if ((nat + colorzero + colorsix) < numero_sfere)
          fprintf(ris,
                  "- !!WARNING: ONLY PART OF THE MODEL HAS BEEN ANALYZED, BUT THE PSV UTILIZED         IS THAT OF THE ENTIRE MODEL!! - \n");
@@ -2549,6 +2554,8 @@ mem_ris(int model)
    this_data.rot_diff_coef_z = KB * TE * Dr[8] / 1.0e-21 * pow(fconv1, 3);
 
    fprintf(ris, "%s%.2f\t%s\n", "- MOLECULAR WEIGHT (from file)           = ", pesmol, "[Da]");
+   this_data.results.mass = pesmol;
+
    //   if (sfecalc == 2)
    //      fprintf(ris, "%s%.2f\t%s\n", "- BEADS TOTAL VOLUME (from file) = ", interm1 / (6.0 * ETAo) * pow(fconv, 3), "[nm^3]");
    //   else
@@ -2727,6 +2734,7 @@ mem_ris(int model)
    fprintf(ris, "\n%s\t%.2f\t%s (%s)\n", " Tau(m) ", taom * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
    this_data.rel_times_tau_m = taom * pow(fconv, 3.0f);
    fprintf(ris, "%s\t%.2f\t%s (%s)\n", " Tau(h) ", taoh * 1.0E+09 * pow(fconv, 3.0f), "[ns] ", tag2.ascii());
+   this_data.results.tau = taoh * 1.0E+09 * pow(fconv, 3.0f);
    this_data.rel_times_tau_h = taoh * 1.0E+09 * pow(fconv, 3.0f);
 
    fprintf(ris, "\n%s", "- MAX EXTENSIONS:");
@@ -2747,6 +2755,20 @@ mem_ris(int model)
    fclose(ris);
    // add text output also
    // us_hydrodyn->save_params.data.push_back(this_data);
+   printf("s = %e\n", this_data.results.s20w);
+   if ( us_hydrodyn->saveParams )
+   {
+      QString fname = this_data.results.name + ".csv";
+      FILE *of = fopen(fname, "wb");
+      if ( of )
+      {
+         fprintf(of, "%s", us_hydrodyn->save_util->header().ascii());
+         fprintf(of, "%s", us_hydrodyn->save_util->dataString(&this_data).ascii());
+         fclose(of);
+      }
+   }
+   us_hydrodyn->save_util->header();
+   us_hydrodyn->save_util->dataString(&this_data);
 }
 
 /**************************************************************************/

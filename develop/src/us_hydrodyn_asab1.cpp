@@ -472,8 +472,11 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
    em("s8");
    ragir();
    em("s9");
-   results->asa_rg_pos = ro;
-   results->asa_rg_neg = ro1;
+   if ( !recheck )
+   {
+      results->asa_rg_pos = ro;
+      results->asa_rg_neg = ro1;
+   }
 
    qApp->processEvents();
    if (us_hydrodyn->stopFlag)
