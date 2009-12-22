@@ -33,6 +33,10 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
    USglobal = new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("SOMO Batch Operation Control"));
+   // should move to save/restore
+   batch->mm_first = true;
+   batch->mm_all = false;
+   disable_updates = false;
    setupGUI();
    global_Xpos += 30;
    global_Ypos += 30;
@@ -221,6 +225,20 @@ void US_Hydrodyn_Batch::setupGUI()
    lbl_process->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_process->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
+   cb_mm_first = new QCheckBox(this);
+   cb_mm_first->setText(tr(" Process Only First Model in PDB's with Multiple Models "));
+   cb_mm_first->setChecked(batch->mm_first);
+   cb_mm_first->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_mm_first->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_mm_first, SIGNAL(clicked()), this, SLOT(set_mm_first()));
+
+   cb_mm_all = new QCheckBox(this);
+   cb_mm_all->setText(tr(" Process All Models in PDB's with Multiple Models "));
+   cb_mm_all->setChecked(batch->mm_all);
+   cb_mm_all->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_mm_all->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_mm_all, SIGNAL(clicked()), this, SLOT(set_mm_all()));
+
    cb_somo = new QCheckBox(this);
    cb_somo->setText(tr(" Build SoMo Bead Model "));
    cb_somo->setChecked(batch->somo);
@@ -243,7 +261,7 @@ void US_Hydrodyn_Batch::setupGUI()
    connect(cb_hydro, SIGNAL(clicked()), this, SLOT(set_hydro()));
 
    cb_avg_hydro = new QCheckBox(this);
-   cb_avg_hydro->setText(tr(" Average results into file:"));
+   cb_avg_hydro->setText(tr(" Single Hydro Results File:"));
    cb_avg_hydro->setChecked(batch->avg_hydro);
    cb_avg_hydro->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_avg_hydro->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -352,6 +370,8 @@ void US_Hydrodyn_Batch::setupGUI()
    leftside->addWidget(pb_screen);
    leftside->addSpacing(2);
    leftside->addWidget(lbl_process);
+   leftside->addWidget(cb_mm_first);
+   leftside->addWidget(cb_mm_all);
    leftside->addWidget(cb_somo);
    leftside->addWidget(cb_grid);
    leftside->addWidget(cb_hydro);
@@ -426,6 +446,7 @@ void US_Hydrodyn_Batch::add_files()
    {
       editor->append("\n");
    }
+   disable_updates = true;
    while( it != filenames.end() ) 
    {
       bool dup = false;
@@ -451,6 +472,7 @@ void US_Hydrodyn_Batch::add_files()
    }
    editor->setColor(save_color);
    check_for_missing_files(true);
+   disable_updates = false;
    update_enables();
 }
 
@@ -474,17 +496,24 @@ void US_Hydrodyn_Batch::select_all()
 
 void US_Hydrodyn_Batch::remove_files()
 {
+   disable_updates = true;
    batch->file.clear();
+   for ( int i = 0; i < lb_files->numRows(); i++ )
+   {
+      if ( !lb_files->isSelected(i) )
+      {
+         batch->file.push_back(get_file_name(i));
+      }
+   }
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected(i) )
       {
          lb_files->removeItem(i);
          i--;
-      } else {
-         batch->file.push_back(get_file_name(i));
       }
    }
+   disable_updates = false;
    update_enables();
 }
 
@@ -521,20 +550,39 @@ void US_Hydrodyn_Batch::load_somo()
 
 void US_Hydrodyn_Batch::update_enables()
 {
+   if ( disable_updates )
+   {
+      return;
+   }
    int count_selected = 0;
+   bool any_pdb_in_list = false;
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       if ( lb_files->isSelected(i) )
       {
          count_selected++;
       }
+      if ( get_file_name(i).contains(QRegExp("(pdb|PDB)$")) )
+      {
+         any_pdb_in_list = true;
+      }
    }
+   pb_select_all->setEnabled(lb_files->numRows());
+
+   bg_atoms->setEnabled(any_pdb_in_list);
+   bg_residues->setEnabled(any_pdb_in_list);
+
+   cb_mm_first->setEnabled(any_pdb_in_list);
+   cb_mm_all->setEnabled(any_pdb_in_list);
+   cb_somo->setEnabled(any_pdb_in_list);
+   cb_grid->setEnabled(any_pdb_in_list);
    pb_start->setEnabled(count_selected);
    pb_remove_files->setEnabled(count_selected);
    pb_screen->setEnabled(count_selected);
    pb_load_somo->setEnabled(count_selected == 1);
-   cb_avg_hydro->setEnabled(batch->hydro);
-   le_avg_hydro_name->setEnabled(batch->hydro && batch->avg_hydro);
+   cb_hydro->setEnabled(lb_files->numRows());
+   cb_avg_hydro->setEnabled(lb_files->numRows() && batch->hydro);
+   le_avg_hydro_name->setEnabled(lb_files->numRows() && batch->hydro && batch->avg_hydro);
 }
 
 void US_Hydrodyn_Batch::residue(int val)
@@ -635,6 +683,20 @@ void US_Hydrodyn_Batch::screen()
    }
    progress->setProgress(1,1);
    enable_after_stop();
+}
+
+void US_Hydrodyn_Batch::set_mm_first()
+{
+   cb_mm_all->setChecked(!cb_mm_first->isChecked());
+   batch->mm_first = cb_mm_first->isChecked();
+   batch->mm_all = cb_mm_all->isChecked();
+}
+
+void US_Hydrodyn_Batch::set_mm_all()
+{
+   cb_mm_first->setChecked(!cb_mm_all->isChecked());
+   batch->mm_first = cb_mm_first->isChecked();
+   batch->mm_all = cb_mm_all->isChecked();
 }
 
 void US_Hydrodyn_Batch::set_somo()

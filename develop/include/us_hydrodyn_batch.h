@@ -42,6 +42,8 @@ struct batch_info
    int missing_residues;   // 0 = Halt
                            // 1 = Skip
                            // 2 = use automatic bead builder (approximate method, default)
+   bool mm_first;
+   bool mm_all;
    bool somo;
    bool grid;
    bool hydro;
@@ -95,6 +97,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       QPushButton   *pb_screen;
 
       QLabel        *lbl_process;
+      QCheckBox     *cb_mm_first;
+      QCheckBox     *cb_mm_all;
       QCheckBox     *cb_somo;
       QCheckBox     *cb_grid;
       QCheckBox     *cb_hydro;
@@ -117,6 +121,7 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       bool          save_calcAutoHydro;
 
       bool          stopFlag;
+      bool          disable_updates;
       QFont ft;
 
 #ifdef WIN32
@@ -154,6 +159,8 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
       void screen();
 
       void start();
+      void set_mm_first();
+      void set_mm_all();
       void set_somo();
       void set_grid();
       void set_hydro();

@@ -22,11 +22,15 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       QString data[] =
          {
             "__SECTION__",
-            "Hydrodynamic parameters:",
+            "Main hydro results:",
 
-            "results.num_models", 
-            "Number of models", 
-            "# models",
+            "results.name", 
+            "Model name", 
+            "Model name", 
+
+            // "results.num_models", 
+            // "Number of models", 
+            // "Number of models", 
 
             "__BREAK__",
 
@@ -37,30 +41,6 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             // "results.total_beads_sd", 
             // "Total beads in model s.d.", 
             // "Total beads in model s.d.", 
-
-            "Total surface area of beads in the model [nm^2]",
-            "Total surface area of beads in the model [nm^2]",
-            "Total surface area of beads in the model [nm^2]",
-
-            "Total volume of beads in the model [nm^3]",
-            "Total volume of beads in the model [nm^3]",
-            "Total volume of beads in the model [nm^3]",
-
-            "Number of unused beads",
-            "Number of unused beads",
-            "Number of unused beads",
-
-            "Used beads surface area [nm^2]",
-            "Used beads surface area [nm^2]",
-            "Used beads surface area [nm^2]",
-
-            "Used bead mass [Da]",
-            "Used bead mass [Da]",
-            "Used bead mass [Da]",
-
-            "Conversion Factor",
-            "Conversion Factor",
-            "Conversion Factor",
 
             "__BREAK__",
 
@@ -80,6 +60,12 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 
             "__BREAK__",
 
+            "results.vbar", 
+            "Partial specific volume", 
+            "Partial specific volume", 
+
+            "__BREAK__",
+
             "results.s20w", 
             "Sedimentation coefficient s",
             "Sedimentation coefficient s",
@@ -89,7 +75,6 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             // "s(20,w) standard deviation", 
 
             "__BREAK__",
-
             "results.D20w", 
             "Translational diffusion coefficient D",
             "Translational diffusion coefficient D",
@@ -97,16 +82,6 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             // "results.D20w_sd", 
             // "D(20,w) transl. s.d.", 
             // "D(20,w) transl. s.d.", 
-
-            "__BREAK__",
-
-            "results.viscosity", 
-            "Intrisic viscosity", 
-            "Intrisic viscosity", 
-
-            // "results.viscosity_sd", 
-            // "Intrisic viscosity s.d.", 
-            // "Intrisic viscosity s.d.", 
 
             "__BREAK__",
 
@@ -120,9 +95,19 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 
             "__BREAK__",
 
+            "results.ff0", 
+            "Fricitional ratio", 
+            "Fricitional ratio", 
+
+            // "ff0_sd", 
+            // "Fricitional ratio s.d.", 
+            // "Fricitional ratio s.d.", 
+
+            "__BREAK__",
+
             "results.rg", 
-            "Radius of gyration", 
-            "Radius of gyration", 
+            "Radius of gyration (from bead model)", 
+            "Radius of gyration (from bead model)", 
 
             // "results.rg_sd", 
             // "Radius of gyration s.d.", 
@@ -140,115 +125,134 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
 
             "__BREAK__",
 
-            "results.vbar", 
-            "Vbar", 
-            "Vbar",
+            "results.viscosity", 
+            "Intrisic viscosity", 
+            "Intrisic viscosity", 
 
-            "__BREAK__",
+            // "results.viscosity_sd", 
+            // "Intrisic viscosity s.d.", 
+            // "Intrisic viscosity s.d.", 
 
-            "results.asa_rg_pos", 
-            "Radius of gyration (+r) [A]",
-            "Radius of gyration (+r) [A]",
+            "__SECTION__",
+            "Additional hydro results:",
 
-            "results.asa_rg_neg", 
-            "Radius of gyration (-r) [A]",
-            "Radius of gyration (-r) [A]",
+            "tot_surf_area",
+            "Total surface area of beads in the model [nm^2]",
+            "Total surface area of beads in the model [nm^2]",
 
-            "__BREAK__",
+            "tot_volume_of",
+            "Total volume of beads in the model [nm^3]",
+            "Total volume of beads in the model [nm^3]",
 
-            "results.ff0", 
-            "Fricitional ratio", 
-            "Fricitional ratio", 
+            "num_of_unused",
+            "Number of unused beads",
+            "Number of unused beads",
 
-            // "ff0_sd", 
-            // "Fricitional ratio s.d.", 
-            // "Fricitional ratio s.d.", 
+            "use_beads_vol",
+            "Used beads volume [nm^3]",
+            "Used beads volume [nm^3]",
 
+            "use_beads_surf",
+            "Used beads surface area [nm^2]",
+            "Used beads surface area [nm^2]",
+
+            "use_bead_mass",
+            "Used bead mass [Da]",
+            "Used bead mass [Da]",
+
+            "con_factor",
+            "Conversion Factor",
+            "Conversion Factor",
+
+            "tra_fric_coef", 
+            "Translational frictional coefficient",
+            "Translational frictional coefficient",
+
+            "rot_fric_coef",
             "Rotational frictional coefficient [g*cm^2/s]",
             "Rotational frictional coefficient [g*cm^2/s]",
-            "Rotational frictional coefficient [g*cm^2/s]",
 
+            "rot_diff_coef",
             "Rotational diffusion coefficient [1/s]",
             "Rotational diffusion coefficient [1/s]",
-            "Rotational diffusion coefficient [1/s]",
 
+            "rot_fric_coef",
             "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
             "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
-            "Rotational frictional coefficient [ X, Y, Z ] [g*cm^2/s]",
 
+            "rot_diff_coef",
             "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
             "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
-            "Rotational diffusion coefficient [ X, Y, Z ] [1/s]",
 
+            "rot_stokes_rad",
             "Rotational Stokes' radius [ X, Y, Z ] [nm]",
             "Rotational Stokes' radius [ X, Y, Z ] [nm]",
-            "Rotational Stokes' radius [ X, Y, Z ] [nm]",
 
+            "cen_of_res",
             "Centre of resistance [ X, Y, Z ] [nm]",
             "Centre of resistance [ X, Y, Z ] [nm]",
-            "Centre of resistance [ X, Y, Z ] [nm]",
 
+            "cen_of_mass",
             "Centre of mass [ X, Y, Z ] [nm]",
             "Centre of mass [ X, Y, Z ] [nm]",
-            "Centre of mass [ X, Y, Z ] [nm]",
 
+            "cen_of_diff",
             "Centre of diffusion [ X, Y, Z ] [nm]",
             "Centre of diffusion [ X, Y, Z ] [nm]",
-            "Centre of diffusion [ X, Y, Z ] [nm]",
 
+            "cen_of_visc",
             "Centre of viscosity [ X, Y, Z ] [nm]",
             "Centre of viscosity [ X, Y, Z ] [nm]",
-            "Centre of viscosity [ X, Y, Z ] [nm]",
 
+            "unc_int_visc",
             "Uncorrected intrinsic viscosity [cm^3/g]",
             "Uncorrected intrinsic viscosity [cm^3/g]",
-            "Uncorrected intrinsic viscosity [cm^3/g]",
 
+            "unc_einst_rad",
             "Uncorrected Einstein's radius [nm]",
             "Uncorrected Einstein's radius [nm]",
-            "Uncorrected Einstein's radius [nm]",
 
+            "cor_int_visc",
             "Corrected intrinsic viscosity [cm^3/g]",
             "Corrected intrinsic viscosity [cm^3/g]",
-            "Corrected intrinsic viscosity [cm^3/g]",
 
+            "cor_einst_rad",
             "Corrected Einstein's radius [nm]",
             "Corrected Einstein's radius [nm]",
-            "Corrected Einstein's radius [nm]",
 
+            "rel_times_tau_1",
             "Relaxation times, tau(1) [ns]",
             "Relaxation times, tau(1) [ns]",
-            "Relaxation times, tau(1) [ns]",
 
+            "rel_times_tau_2",
             "Relaxation times, tau(2) [ns]",
             "Relaxation times, tau(2) [ns]",
-            "Relaxation times, tau(2) [ns]",
 
+            "rel_times_tau_3",
             "Relaxation times, tau(3) [ns]",
             "Relaxation times, tau(3) [ns]",
-            "Relaxation times, tau(3) [ns]",
 
+            "rel_times_tau_4",
             "Relaxation times, tau(4) [ns]",
             "Relaxation times, tau(4) [ns]",
-            "Relaxation times, tau(4) [ns]",
 
+            "rel_times_tau_5",
             "Relaxation times, tau(5) [ns]",
             "Relaxation times, tau(5) [ns]",
-            "Relaxation times, tau(5) [ns]",
 
+            "rel_times_tau_m",
             "Relaxation times, tau(m) [ns]",
             "Relaxation times, tau(m) [ns]",
-            "Relaxation times, tau(m) [ns]",
 
+            "rel_times_tau_h",
             "Relaxation times, tau(h) [ns]",
             "Relaxation times, tau(h) [ns]",
-            "Relaxation times, tau(h) [ns]",
 
-            "Maximum extensions [ X, Y, Z ] nm",
+            "max_ext",
             "Maximum extensions [ X, Y, Z ] nm",
             "Maximum extensions [ X, Y, Z ] nm",
 
-            "Axial ratios [ X:Z, X:Y, Y:Z ] ",
+            "axi_ratios",
             "Axial ratios [ X:Z, X:Y, Y:Z ] ",
             "Axial ratios [ X:Z, X:Y, Y:Z ] ",
 
@@ -276,6 +280,19 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "hydro.solvent_density", 
             "Solvent density (g/ml)", 
             "solvent_density (g/ml)",
+
+            "__SECTION__",
+            "ASA results:",
+
+            "__BREAK__",
+
+            "results.asa_rg_pos", 
+            "Radius of gyration (+r) [A] (from PDB atomic structure)",
+            "Radius of gyration (+r) [A] (from PDB atomic structure)",
+
+            "results.asa_rg_neg", 
+            "Radius of gyration (-r) [A] (from PDB atomic structure)",
+            "Radius of gyration (-r) [A] (from PDB atomic structure)",
 
             "__END__"
          };

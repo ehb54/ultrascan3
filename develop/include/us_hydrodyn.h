@@ -89,6 +89,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool screen_pdb(QString, bool display_pdb = false);
       bool screen_bead_model(QString);
       QPushButton *pb_stop_calc;
+      struct hydro_options hydro;
 
    private:
       vector < QString > batch_file;
@@ -128,7 +129,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct pdb_visualization pdb_vis;
       struct pdb_visualization default_pdb_vis;
       struct pdb_parsing default_pdb_parse;
-      struct hydro_options hydro;
       struct hydro_options default_hydro;
       struct grid_options grid;
       struct grid_options default_grid;
