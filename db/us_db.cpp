@@ -37,6 +37,47 @@ bool US_DB::test_db_connection(
   return status;
 }
 
+bool US_DB::test_secure_connection( 
+        const QString& host,  const QString& dbname, 
+        const QString& user,  const QString& password, 
+        const QString& email, const QString& inv_pw, 
+        QString& error )
+{
+  error = "";
+
+  QSqlDatabase db = QSqlDatabase::addDatabase( "QMYSQL" );
+  db.setConnectOptions( "CLIENT_SSL=1" );
+
+  db.setUserName    ( user     );
+  db.setDatabaseName( dbname   );
+  db.setHostName    ( host     );
+  db.setPassword    ( password );
+
+  bool OK = db.open();
+
+  if ( ! OK )
+  {
+    error = db.lastError().text();
+    db.close();
+    return false;
+  }
+
+  QString query = "select check_user( '" 
+                + email + "', '"
+                + inv_pw + "' )";
+
+  QSqlQuery q( query, db );
+
+  q.next();
+
+  OK = ( q.value( 0 ).toInt() == 1 ) ? true : false;
+
+  if ( ! OK ) error = "Investigator email or password is incorrect";
+  
+  db.close();
+  return OK;
+}
+
 bool US_DB::open( const QString& masterPW, QString& error )
 {
   if ( opened ) return true;

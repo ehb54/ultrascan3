@@ -34,6 +34,24 @@ class US_EXTERN US_DB
     static bool test_db_connection( const QString&, const QString&, 
         const QString&, const QString&, QString& );
 
+    /*! \brief This function provides a quick test of database connectivity
+        over an SSL connection.
+        The database is merely opened and then immediately closed.
+
+        \param host     The name of the host of the database server.
+        \param dbname   The name of the database to access.
+        \param user     The user name that can access the database.
+        \param password The unencrypted password for the database/user.
+        \param email    The email address of the investigator
+        \param inv_pw   The investigator's password
+        \param error    A reference to a string for error responses as defined
+                        in the class QSqlError.
+    */
+    static bool test_secure_connection( const QString&, const QString&, 
+                                        const QString&, const QString&, 
+                                        const QString&, const QString&, 
+                                        QString& );
+
     /*! \brief A function to open a database using the currently defined database
                stored by \ref US_Config and \ref US_Settings.
 
