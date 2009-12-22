@@ -17,9 +17,14 @@
 US_License::US_License( QWidget* parent, Qt::WindowFlags flags ) 
   : US_Widgets( true, parent, flags )
 {
-  setWindowTitle( "UltraScan Registration" );
+  setWindowTitle( "UltraScan III Registration" );
   setPalette( US_GuiSettings::frameColor() );
   
+  // FIXME:  This layout is positioned with absolute values.  The appearance
+  // will be poor if the user's settings are set with a large font size
+  // (probably anything over 12pt).
+
+
   const int width = 5 * pushbutton + 4 * spacing;
 
   int xpos = spacing;
@@ -27,7 +32,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
 
   // Banner
   QLabel* banner = us_banner( 
-     tr( "UltraScan Registration\nPlease enter all fields" ) );
+     tr( "UltraScan III Registration\nPlease enter all fields" ) );
 
   banner->setGeometry( 
       QRect( xpos, ypos, width, spacing + 2 * rowHeight ) );
@@ -186,23 +191,30 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   lbl_version = us_label( tr( "Version:" ), 0, QFont::Bold );
   lbl_version->setGeometry( xpos, ypos, smallColumn, rowHeight );
 
-  xpos += smallColumn + spacing;
+  //xpos += smallColumn + spacing;
+  const int adjust = 20;
+  const int center = spacing + width / 2;
 
-  xpos  = ( full_buttonw - 2 * buttonw ) / 2 + 10;
+  xpos  = center - spacing - ( buttonw + adjust ) * 3 / 2;
   ypos += 2 * rowHeight + spacing;
 
   // Row 7 - Platform/Expiration/License Status
   lbl_platform = us_label( "", 0, QFont::Bold );
-  lbl_platform->setGeometry( xpos, ypos, buttonw, rowHeight );
+  lbl_platform->setAlignment( Qt::AlignHCenter);
+  lbl_platform->setGeometry( xpos, ypos, buttonw + adjust, rowHeight );
 
-  xpos += buttonw + spacing;
+  xpos += buttonw + spacing + adjust;
+  //xpos = center - ( buttonw + adjust ) / 2;
+
   lbl_expiration = us_label( "", 0, QFont::Bold );
-  lbl_expiration->setGeometry( xpos, ypos, buttonw, rowHeight );
+  lbl_expiration->setAlignment( Qt::AlignHCenter);
+  lbl_expiration->setGeometry( xpos, ypos, buttonw + adjust, rowHeight );
 
-  xpos += buttonw + spacing;
+  xpos += buttonw + spacing + adjust;
 
   lbl_valid = us_label( "", 0, QFont::Bold );
-  lbl_valid->setGeometry( xpos, ypos, buttonw, rowHeight );
+  lbl_valid->setAlignment( Qt::AlignHCenter);
+  lbl_valid->setGeometry( xpos, ypos, buttonw + adjust, rowHeight );
 
   //xpos += buttonw + spacing;
   
@@ -226,6 +238,7 @@ US_License::US_License( QWidget* parent, Qt::WindowFlags flags )
   //pb_save = us_pushbutton( tr( "Save" ) );
   //pb_save->setGeometry( xpos, ypos, pushbutton, rowHeight );
   //connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
+
   pb_update = us_pushbutton( tr( "Register" ) );
   pb_update->setGeometry( xpos, ypos, pushbutton, rowHeight );
   connect( pb_update, SIGNAL( clicked() ), SLOT( update() ) );
