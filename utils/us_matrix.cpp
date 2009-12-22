@@ -6,7 +6,7 @@
 #include <QtCore>
 
 void US_Matrix::lsfit( double* c, double* x, double* y,
-                       int N, int order, bool /* mesg */ )
+                       int N, int order )
 {
 #define LT
 //#define CHOLESKY
