@@ -1667,7 +1667,7 @@ void US_Astfem_RSA::ComputeCoefMatrixMovingMeshL(
 }
 
 // Given total concentration of a group of components involved,
-// find the concentration of each component by equlibrium condition
+// find the concentration of each component by equilibrium condition
 void US_Astfem_RSA::decompose( struct mfem_initial* C0 )
 {
    uint num_comp = af_params.role.size();
@@ -1749,7 +1749,8 @@ void US_Astfem_RSA::decompose( struct mfem_initial* C0 )
 
    if ( k_min < 1.0e-12 ) k_min = 1.0e-12;
 
-   const uint time_max     = 100 ;  // max number of time steps to get to equlibrium
+   // Max number of time steps to get to equilibrium
+   const uint time_max     = 100; 
    double     timeStepSize = - log( 1.0e-7 ) / ( k_min * time_max );
 
    // time loop
