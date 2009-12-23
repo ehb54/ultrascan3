@@ -93,6 +93,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QCheckBox *cb_saveParams;
       QListBox *lb_model;
       US_Hydrodyn_Save *save_util; // to enable calling of save routines regardless of whether or not widget is available
+      bool batch_widget;
+      US_Hydrodyn_Batch *batch_window;
 
    private:
       vector < QString > batch_file;
@@ -113,7 +115,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool saxs_options_widget;
       bool saxs_plot_widget;
       bool advanced_config_widget;
-      bool batch_widget;
       bool save_widget;
 
       QMenuBar *m;
@@ -229,9 +230,10 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Saxs *saxs_plot_window;
       US_Hydrodyn_SaxsOptions *saxs_options_window;
       US_Hydrodyn_AdvancedConfig *advanced_config_window;
-      US_Hydrodyn_Batch *batch_window;
       US_Hydrodyn_Save *save_window;
       QProcess *rasmol;
+
+      QString setExtendedSuffix();
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )

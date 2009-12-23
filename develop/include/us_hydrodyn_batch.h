@@ -64,7 +64,9 @@ class US_EXTERN US_Hydrodyn_Batch : public QFrame
                         QWidget *p = 0, 
                         const char *name = 0);
       ~US_Hydrodyn_Batch();
+
       QCheckBox     *cb_saveParams;
+      bool          save_batch_active;
 
    protected:
 

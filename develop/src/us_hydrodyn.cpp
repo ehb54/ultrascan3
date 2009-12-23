@@ -2850,3 +2850,9 @@ void US_Hydrodyn::bead_saxs()
       }
    }
 }
+
+// QString US_Hydrodyn::getExtendedSuffix()
+// {
+//    QString result;
+//    return result;
+// }

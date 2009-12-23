@@ -2,6 +2,12 @@
 #include "../include/us_revision.h"
 #include <qregexp.h>
 
+#ifndef WIN32
+#   include <unistd.h>
+#else
+#   define chdir _chdir
+#endif
+
 void QListBoxText::paint( QPainter *painter )
 {
     int itemHeight = height( listBox() );
@@ -26,6 +32,7 @@ US_Hydrodyn_Batch::US_Hydrodyn_Batch(
                                      const char *name
                                      ) : QFrame(p, name)
 {
+   save_batch_active = false;
    this->batch_widget = batch_widget;
    this->batch = batch;
    this->us_hydrodyn = us_hydrodyn;
@@ -643,7 +650,7 @@ void US_Hydrodyn_Batch::save_us_hydrodyn_settings()
    save_calcAutoHydro = ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro;
    ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_residues = batch->missing_residues;
    ((US_Hydrodyn *)us_hydrodyn)->pdb_parse.missing_atoms = batch->missing_atoms;
-   ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro = batch->hydro;
+   ((US_Hydrodyn *)us_hydrodyn)->calcAutoHydro = false;
    if ( batch->missing_residues || batch->missing_atoms )
    {
       ((US_Hydrodyn *)us_hydrodyn)->misc.pb_rule_on = false;
@@ -829,6 +836,12 @@ void US_Hydrodyn_Batch::start()
    progress->setTotalSteps(lb_files->numRows() * 2);
 
    QColor save_color = editor->color();
+   if ( cb_avg_hydro->isChecked() )
+   {
+      save_batch_active = true;
+      ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+   }
+
    for ( int i = 0; i < lb_files->numRows(); i++ )
    {
       progress->setProgress( i * 2 );
@@ -844,6 +857,8 @@ void US_Hydrodyn_Batch::start()
             enable_after_stop();
             editor->setColor(save_color);
             disable_updates = false;
+            save_batch_active = false;
+            ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
             return;
          }
          status[file] = 5; // processing now
@@ -867,6 +882,8 @@ void US_Hydrodyn_Batch::start()
                enable_after_stop();
                editor->setColor(save_color);
                disable_updates = false;
+               save_batch_active = false;
+               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
                return;
             }
             if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
@@ -892,6 +909,8 @@ void US_Hydrodyn_Batch::start()
                enable_after_stop();
                editor->setColor(save_color);
                disable_updates = false;
+               save_batch_active = false;
+               ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
                return;
             }
             if ( result && batch->hydro )
@@ -918,7 +937,37 @@ void US_Hydrodyn_Batch::start()
          lb_files->setSelected(i, result);
          editor->setColor(save_color);
       }
-   } 
+   }
+   if ( save_batch_active )
+   {
+      chdir(((US_Hydrodyn *)us_hydrodyn)->somo_dir);
+      save_batch_active = false;
+      QString fname = batch->avg_hydro_name + ".hydro_res";
+      FILE *of = fopen(fname, "wb");
+      if ( of )
+      {
+         for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.size(); i++ )
+         {
+            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i].hydro_res.ascii());
+         }
+         fclose(of);
+      }
+      if ( ((US_Hydrodyn *)us_hydrodyn)->saveParams )
+      {
+         fname = batch->avg_hydro_name + ".csv";
+         FILE *of = fopen(fname, "wb");
+         if ( of )
+         {
+            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->header().ascii());
+            for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.size(); i++ )
+            {
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&(((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i])).ascii());
+            }
+            fclose(of);
+         }
+      }  
+   }
+   ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
    progress->setProgress(1,1);
    disable_updates = false;
    enable_after_stop();
