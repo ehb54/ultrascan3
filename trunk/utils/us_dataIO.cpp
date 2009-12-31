@@ -510,6 +510,13 @@ void US_DataIO::params( QXmlStreamReader& xml, editValues& parameters )
          parameters.plateau = a.value( "radius" ).toString().toDouble();
       }
 
+      if ( xml.isStartElement()  &&  xml.name() == "air_gap" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         parameters.airGapLeft  = a.value( "left"  ).toString().toDouble();
+         parameters.airGapRight = a.value( "right" ).toString().toDouble();
+      }
+
       if ( xml.isStartElement()  &&  xml.name() == "baseline" )
       {
          QXmlStreamAttributes a = xml.attributes();

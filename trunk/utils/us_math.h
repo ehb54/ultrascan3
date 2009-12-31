@@ -15,6 +15,11 @@
    #define min(a,b) (((a) < (b)) ? (a) : (b))
 #endif
 
+#ifndef swap_double
+   // No need to protect a and b for swap
+   #define swap_double(a,b) {double t = a; a=b; b=t;}
+#endif
+
 //! A structure used for calculating a peptide sequence
 struct peptide
 {

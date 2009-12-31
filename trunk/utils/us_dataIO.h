@@ -100,6 +100,10 @@ class US_DataIO
             removeSpikes = false;
             floatingData = false;
             noiseOrder   = 0;
+
+            // Air Gap is only for interference data
+            airGapLeft   = 0.0;
+            airGapRight  = 9.0;
          };
 
          QString              runID;
@@ -108,6 +112,8 @@ class US_DataIO
          QString              wavelength;
          QString              uuid;
          double               meniscus;
+         double               airGapLeft;
+         double               airGapRight;
          double               rangeLeft;
          double               rangeRight;
          double               plateau;       // Radius value
