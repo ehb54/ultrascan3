@@ -1,4 +1,4 @@
-//! \file us_fit_meniscus_main.cpp
+//! \file us_edvabs.cpp
 
 #include <QApplication>
 #include <QDomDocument>
@@ -40,10 +40,22 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    setWindowTitle( tr( "Edit UltraScan Data" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   QHBoxLayout* main = new QHBoxLayout( this );
-   main->setSpacing         ( 2 );
-   main->setContentsMargins ( 2, 2, 2, 2 );
+   QVBoxLayout* top = new QVBoxLayout( this );
+   top->setSpacing         ( 2 );
+   top->setContentsMargins ( 2, 2, 2, 2 );
 
+   // Put the Run Info across the entire window
+   QHBoxLayout* runInfo = new QHBoxLayout();
+   QLabel* lb_info = us_label( "Run Info:", -1 );
+   runInfo->addWidget( lb_info );
+
+   le_info = us_lineedit( "", 1 );
+   le_info->setReadOnly( true );
+   runInfo->addWidget( le_info );
+
+   top->addLayout( runInfo );
+
+   QHBoxLayout* main = new QHBoxLayout();
    QVBoxLayout* left = new QVBoxLayout;
 
    // Start of Grid Layout
@@ -59,13 +71,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
    specs->addWidget( pb_details, s_row++, 2, 1, 2 );
 
-   // Row 2
-   QLabel* lb_info = us_label( "Run Info:", -1 );
-   specs->addWidget( lb_info, s_row, 0 );
-
-   le_info = us_lineedit( "", 1 );
-   le_info->setReadOnly( true );
-   specs->addWidget( le_info, s_row++, 1, 1, 3 );
+   // Row 2 - moved to top
 
    // Row 3
    QLabel* lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
@@ -139,6 +145,18 @@ US_Edvabs::US_Edvabs() : US_Widgets()
    le_meniscus = us_lineedit( "", 1 );
    le_meniscus->setReadOnly( true );
    specs->addWidget( le_meniscus, s_row++, 2, 1, 2 );
+
+   // Air Gap row (hidden by default)
+   pb_airGap = us_pushbutton( tr( "Specify Air Gap" ), false );
+   connect( pb_airGap, SIGNAL( clicked() ), SLOT( set_airGap() ) );
+   specs->addWidget( pb_airGap, s_row, 0, 1, 2 );
+
+   le_airGap = us_lineedit( "", 1 );
+   le_airGap->setReadOnly( true );
+   specs->addWidget( le_airGap, s_row++, 2, 1, 2 );
+
+   pb_airGap->setHidden( true );
+   le_airGap->setHidden( true );
 
    // Data range row
    pb_dataRange = us_pushbutton( tr( "Specify Data Range" ), false );
@@ -234,6 +252,7 @@ US_Edvabs::US_Edvabs() : US_Widgets()
 
    main->addLayout( left );
    main->addLayout( plot );
+   top ->addLayout( main );
 
    //partial_reset = false;
    reset();
@@ -247,15 +266,18 @@ void US_Edvabs::reset( void )
    step          = MENISCUS;
    meniscus      = 0.0;
    meniscus_left = 0.0;
+   airGap_left   = 0.0;
+   airGap_right  = 9.0;
    range_left    = 0.0;
    range_right   = 9.0;
    plateau       = 0.0;
    baseline      = 0.0;
-   invert        = 1.0;
+   invert        = 1.0;  // Multiplier = 1.0 or -1.0
    noise_order   = 0;
 
    le_info     ->setText( "" );
    le_meniscus ->setText( "" );
+   le_airGap   ->setText( "" );
    le_dataRange->setText( "" );
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
@@ -273,7 +295,7 @@ void US_Edvabs::reset( void )
    ct_to->setValue   ( 0 );
 
    cb_triple->disconnect();
-   cb_triple->clear();
+   //cb_triple->clear();     // Not here -- load()
 
    data_plot->detachItems( QwtPlotItem::Rtti_PlotCurve );
    data_plot->detachItems( QwtPlotItem::Rtti_PlotMarker );
@@ -293,6 +315,7 @@ void US_Edvabs::reset( void )
    pb_edit1       ->setEnabled( false );
    
    pb_meniscus    ->setEnabled( false );
+   pb_airGap      ->setEnabled( false );
    pb_dataRange   ->setEnabled( false );
    pb_plateau     ->setEnabled( false );
    pb_baseline    ->setEnabled( false );
@@ -309,6 +332,7 @@ void US_Edvabs::reset( void )
 
    // Remove icons
    pb_meniscus    ->setIcon( QIcon() );
+   pb_airGap      ->setIcon( QIcon() );
    pb_dataRange   ->setIcon( QIcon() );
    pb_plateau     ->setIcon( QIcon() );
    pb_baseline    ->setIcon( QIcon() );
@@ -320,7 +344,7 @@ void US_Edvabs::reset( void )
    pb_float       ->setIcon( QIcon() );
    pb_write       ->setIcon( QIcon() );
 
-   allData       .clear();
+   //allData       .clear();   // Not here -- load()
    editID        .clear();
    data.scanData .clear();
    includes      .clear();
@@ -425,7 +449,8 @@ void US_Edvabs::gap_check( void )
 
             box.setWindowTitle( tr( "Excessive Scan Gaps Detected" ) );
             
-            double radius = s.readings[ 0 ].d.radius + location * 0.001;
+            double radius = s.readings[ 0 ].d.radius + 
+               location * s.delta_r;
             
             gaps = tr( "Scan " ) 
                  + QString::number( scanNumber ) 
@@ -507,6 +532,9 @@ void US_Edvabs::load( void )
    if ( workingDir.isEmpty() ) return; 
 
    reset();
+   allData.clear();
+   cb_triple->clear();
+
    workingDir.replace( "\\", "/" );  // WIN32 issue
 
    QStringList components =  workingDir.split( "/", QString::SkipEmptyParts );  
@@ -558,8 +586,9 @@ void US_Edvabs::load( void )
       {
          QMessageBox::warning( this,
             tr( "UltraScan Error" ),
-            tr( "Could not read data file.  Error: " ) 
-            + QString::number( result ) + "\n" + filename );
+            tr( "Could not read data file.\n" ) 
+            + US_DataIO::errorString( result ) + "\n" + filename );
+         return;
       }
 
       allData << data;
@@ -582,6 +611,7 @@ void US_Edvabs::load( void )
    pb_include   ->setEnabled( true );
    pb_exclusion ->setEnabled( true );
    pb_meniscus  ->setEnabled( true );
+   pb_airGap    ->setEnabled( false );
    pb_dataRange ->setEnabled( false );
    pb_plateau   ->setEnabled( false );
    pb_noise     ->setEnabled( false );
@@ -607,6 +637,7 @@ void US_Edvabs::set_pbColors( QPushButton* pb )
    QPalette p = US_GuiSettings::pushbColor();
    
    pb_meniscus ->setPalette( p );
+   pb_airGap   ->setPalette( p );
    pb_dataRange->setPalette( p );
    pb_plateau  ->setPalette( p );
    pb_baseline ->setPalette( p );
@@ -628,7 +659,19 @@ void US_Edvabs::plot_current( int index )
    QString     channel = parts[ 1 ];
    QString     wl      = parts[ 2 ];
 
-   QString s = le_info->text() + " (" + data.description  + ")";
+   QString     desc    = data.description;
+
+   dataType = QString( QChar( data.type[ 0 ] ) ) 
+            + QString( QChar( data.type[ 1 ] ) );
+
+   if ( dataType == "IP" )
+   {
+      QStringList sl = desc.split( "," );
+      sl.removeFirst();
+      desc = sl.join( "," ).trimmed();
+   }
+
+   QString s = le_info->text() + " (" + desc  + ")";
    le_info->setText( s );
 
    // Plot Title
@@ -646,6 +689,17 @@ void US_Edvabs::plot_current( int index )
       title = "Radial Intensity Data\nRun ID: "
             + runID + " Cell: " + cell + " Wavelength: " + wl;
       data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Intensity " ) );
+   }
+   else if ( parts[ 1 ] == "IP" )
+   {
+
+      title = "Radial Interference Data\nRun ID: " + runID + 
+            + "\nCell: " + cell + " Wavelength: " + wl;
+      data_plot->setAxisTitle( QwtPlot::yLeft, tr( "Fringes " ) );
+
+      // Eanble Air Gap
+      pb_airGap->setHidden( false );
+      le_airGap->setHidden( false );
    }
    else 
       title = "File type not recognized";
@@ -704,13 +758,9 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
 
             double meniscus_right = p.x();
             
-            // Swap values if necessary
+            // Swap values if necessary.  Use a macro in us_math.h
             if ( meniscus_right < meniscus_left )
-            {
-               double temp    = meniscus_left;
-               meniscus_left  = meniscus_right;
-               meniscus_right = temp;
-            }
+               swap_double( meniscus_left, meniscus_right );
 
             // Find the radius for the max value
             double          maximum = -1.0e99;
@@ -756,9 +806,48 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
             data_plot->replot();
 
             pb_meniscus->setIcon( check );
-            pb_dataRange->setEnabled( true );
+            
+            if ( dataType == "IP" )
+               pb_airGap->setEnabled( true );
+            else
+               pb_dataRange->setEnabled( true );
+           
             next_step();
          }         
+         break;
+
+      case AIRGAP:
+         if ( airGap_left == 0.0 )
+         {
+            airGap_left = p.x();
+            draw_vline( airGap_left );
+         }
+         else
+         {
+            // Sometime we get two clicks
+            if ( fabs( p.x() - airGap_left ) < 0.020 ) return;
+
+            airGap_right = p.x();
+
+            if ( airGap_right < airGap_left ) 
+               swap_double( airGap_left, airGap_right );
+
+            // Display the data
+            QString s;
+            le_airGap->setText( s.sprintf( "%.3f - %.3f", 
+                     airGap_left, airGap_right ) );
+
+            step = RANGE;
+            plot_range();
+
+            qApp->processEvents();
+            
+            pb_airGap   ->setIcon( check );
+            pb_dataRange->setEnabled( true );
+
+            next_step();
+         }
+
          break;
 
       case RANGE:
@@ -775,11 +864,7 @@ void US_Edvabs::mouse( const QwtDoublePoint& p )
             range_right = p.x();
 
             if ( range_right < range_left )
-            {
-               double temp = range_left;
-               range_left  = range_right;
-               range_right = temp;
-            }
+               swap_double( range_left, range_right );
 
             // Display the data
             QString s;
@@ -887,10 +972,15 @@ void US_Edvabs::next_step( void )
 {
    QPushButton* pb;
    
-   if      ( meniscus    == 0.0 ) 
+   if      ( meniscus == 0.0 ) 
    {
       step = MENISCUS;
       pb   = pb_meniscus;
+   }
+   else if ( airGap_right == 9.0  &&  dataType == "IP" )
+   {
+      step = AIRGAP;
+      pb   = pb_airGap;
    }
    else if ( range_right == 9.0 ) 
    {
@@ -902,7 +992,7 @@ void US_Edvabs::next_step( void )
       step = PLATEAU;
       pb   = pb_plateau;
    }
-   else if ( baseline    == 0.0 ) 
+   else if ( baseline == 0.0 ) 
    {
       step = BASELINE;
       pb   = pb_baseline;
@@ -919,12 +1009,15 @@ void US_Edvabs::next_step( void )
 void US_Edvabs::set_meniscus( void )
 {
    le_meniscus ->setText( "" );
+   le_airGap   ->setText( "" );
    le_dataRange->setText( "" );
    le_plateau  ->setText( "" );
    le_baseline ->setText( "" );
    
    meniscus      = 0.0;
    meniscus_left = 0.0;
+   airGap_left   = 0.0;
+   airGap_right  = 9.0;
    range_left    = 0.0;
    range_right   = 9.0;
    plateau       = 0.0;
@@ -943,6 +1036,39 @@ void US_Edvabs::set_meniscus( void )
    pb_baseline ->setIcon( QIcon() );
    pb_write    ->setEnabled( false );
    pb_write    ->setIcon( QIcon() );
+
+   spikes = false;
+   pb_spikes   ->setEnabled( false );
+   pb_spikes   ->setIcon( QIcon() );
+
+   plot_all();
+}
+
+void US_Edvabs::set_airGap( void )
+{
+   le_airGap   ->setText( "" );
+   le_dataRange->setText( "" );
+   le_plateau  ->setText( "" );
+   le_baseline ->setText( "" );
+   
+   airGap_left   = 0.0;
+   airGap_right  = 9.0;
+   range_left    = 0.0;
+   range_right   = 9.0;
+   plateau       = 0.0;
+   baseline      = 0.0;
+   
+   step        = AIRGAP;
+   set_pbColors( pb_airGap );
+   pb_airGap   ->setIcon( QIcon() );
+
+   pb_dataRange->setIcon( QIcon() );
+   pb_plateau  ->setEnabled( false );
+   pb_plateau  ->setIcon( QIcon() );
+   pb_baseline ->setEnabled( false );
+   pb_baseline ->setIcon( QIcon() );
+   pb_write    ->setEnabled( false );
+   pb_write    ->setIcon( QIcon() );;
 
    spikes = false;
    pb_spikes   ->setEnabled( false );
@@ -1637,6 +1763,7 @@ void US_Edvabs::new_triple( int index )
 
    triple_index = index;
    reset();
+
    data = allData[ index ];
    plot_current( index );
 
@@ -1645,6 +1772,7 @@ void US_Edvabs::new_triple( int index )
    pb_include  ->setEnabled( true );
    pb_exclusion->setEnabled( true );
    pb_meniscus ->setEnabled( true );
+   pb_airGap   ->setEnabled( true );
    pb_dataRange->setEnabled( true );
    pb_plateau  ->setEnabled( true );
    pb_noise    ->setEnabled( true );
@@ -1679,6 +1807,8 @@ void US_Edvabs::write( void )
    // Check if complete
    if ( meniscus == 0.0 )
       s = tr( "meniscus" );
+   else if ( dataType == "IP" && ( airGap_left == 0.0 || airGap_right == 9.0 ) )
+      s = tr( "air gap" );
    else if ( range_left == 0.0 || range_right == 9.0 )
       s = tr( "data range" );
    else if ( plateau == 0.0 )
@@ -1811,6 +1941,14 @@ void US_Edvabs::write( void )
    m.setAttribute( "radius", meniscus );
    parameters.appendChild( m );
 
+   if ( dataType == "IP" )
+   {
+      QDomElement airGap = doc.createElement( "air_gap" );
+      airGap.setAttribute( "left" , airGap_left );
+      airGap.setAttribute( "right", airGap_right );
+      parameters.appendChild( airGap );
+   }
+
    QDomElement dataRange = doc.createElement( "data_range" );
    dataRange.setAttribute( "left" , range_left );
    dataRange.setAttribute( "right", range_right );
@@ -1919,6 +2057,9 @@ void US_Edvabs::apply_prior( void )
    pb_meniscus->setIcon( check );
    pb_meniscus->setEnabled( true );
 
+   airGap_left  = parameters.airGapLeft;
+   airGap_right = parameters.airGapRight;
+   
    range_left  = parameters.rangeLeft;
    range_right = parameters.rangeRight;
    

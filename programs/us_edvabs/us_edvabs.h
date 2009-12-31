@@ -20,7 +20,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
 
 	private:
 
-      enum { MENISCUS, RANGE, PLATEAU, BASELINE, FINISHED } step;
+      enum { MENISCUS, AIRGAP, RANGE, PLATEAU, BASELINE, FINISHED } step;
 
       class edits
       {
@@ -29,8 +29,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
             QList< QPointF > changes;
       };
 
-      QList< edits >     changed_points;
-
+      QList< edits >              changed_points;
       US_DataIO::rawData          data;
       QList< US_DataIO::rawData > allData;
 
@@ -41,6 +40,8 @@ class US_EXTERN US_Edvabs : public US_Widgets
       int                triple_index;
       double             meniscus;
       double             meniscus_left;
+      double             airGap_left;
+      double             airGap_right;
       double             range_left;
       double             range_right;
       double             baseline;
@@ -56,6 +57,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       QString            workingDir;
       QString            runID;
       QString            editID;
+      QString            dataType;
       QStringList        files;
       QStringList        triples;
                       
@@ -70,6 +72,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
                       
       QLineEdit*         le_info;
       QLineEdit*         le_meniscus;
+      QLineEdit*         le_airGap;
       QLineEdit*         le_dataRange;
       QLineEdit*         le_plateau;
       QLineEdit*         le_baseline;
@@ -81,6 +84,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       QPushButton*       pb_include;
       QPushButton*       pb_edit1;
       QPushButton*       pb_meniscus;
+      QPushButton*       pb_airGap;
       QPushButton*       pb_dataRange;
       QPushButton*       pb_plateau;
       QPushButton*       pb_baseline;
@@ -137,6 +141,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       void apply_prior       ( void );
 
       void set_meniscus      ( void );
+      void set_airGap        ( void );
       void set_dataRange     ( void );
       void set_plateau       ( void );
       void set_baseline      ( void );
