@@ -37,15 +37,10 @@ US_ColorGradient::US_ColorGradient( QWidget* parent, Qt::WindowFlags flags )
    QBoxLayout* topbox = new QVBoxLayout( this );
    topbox->setSpacing( 2 );
 
-   QString ban1 = tr( "Please select the number of steps\n" );
-   QString ban2 = tr( "and each Color Step for your gradient:\n" );
-   QString ban3 = tr( "( Currently 1 steps; 1 total colors;\n" );
-   QString ban4 = tr( "  Not saved to any file )" );
-   QString btext = ban1 + ban2 + ban3 + ban4;
-   lb_banner1    = us_banner( btext );
-   //QSizePolicy sp = lb_banner1->sizePolicy();
-   //sp.setVerticalStretch( 0 );
-   //sp.setVerticalPolicy( QSizePolicy::Fixed );
+   lb_banner1    = us_banner( tr( "Please select the number of steps\n"
+                      "and each Color Step for your gradient:\n"
+                      "( Currently 1 step; 1 total color;\n"
+                      "  Not saved to any file )" ) );
    topbox->addWidget( lb_banner1 );
 
    // Manage most of the buttons and switches with a new layout
@@ -53,12 +48,15 @@ US_ColorGradient::US_ColorGradient( QWidget* parent, Qt::WindowFlags flags )
    QGridLayout* csbuttons = new QGridLayout();
 
    // Calculate width for color step pushbuttons
-   //QFont*        f  = new QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
-   //QFontMetrics* fm = new QFontMetrics ( *f );
-   //int w = fm->width( tr( "Temporary Directory:" ) ) + 20;
+   QFont*f          = new QFont( US_GuiSettings::fontFamily(),
+                         US_GuiSettings::fontSize() );
+   QFontMetrics* fm = new QFontMetrics ( *f );
+   int wl           = fm->width( tr( "Number of Points in this Step:" ) ) + 20;
 
    pb_begcolor = us_pushbutton( tr( "Select Starting Color" ) );
+   pb_begcolor->setMinimumWidth( wl );
    lb_begcolor = us_label( NULL );
+   lb_begcolor->setMinimumWidth( wl );
    connect( pb_begcolor, SIGNAL( clicked() ), this, SLOT( start_color() ) );
    csbuttons->addWidget( pb_begcolor, row, 0 );
    csbuttons->addWidget( lb_begcolor, row++, 1 );
@@ -66,21 +64,24 @@ US_ColorGradient::US_ColorGradient( QWidget* parent, Qt::WindowFlags flags )
    lb_nsteps   = us_label( tr( "Number of Color Steps:" ) );
    ct_nsteps   = us_counter( 2, 1.0, 101.0, 1.0 );
    ct_nsteps->setRange( 1, 101, 1 );
-   connect( ct_nsteps, SIGNAL( valueChanged( double ) ), this, SLOT( update_steps( double ) ) );
+   connect( ct_nsteps, SIGNAL( valueChanged( double ) ),
+            this,      SLOT( update_steps( double ) ) );
    csbuttons->addWidget( lb_nsteps, row, 0 );
    csbuttons->addWidget( ct_nsteps, row++, 1 );
 
    lb_stindex  = us_label( tr( "Select a Color Step:" ) );
    ct_stindex  = us_counter( 2, 1.0, 10.0, 1.0 );
    ct_stindex->setRange( 1, 101, 1 );
-   connect( ct_stindex, SIGNAL( valueChanged( double ) ), this, SLOT( update_index( double ) ) );
+   connect( ct_stindex, SIGNAL( valueChanged( double ) ),
+            this,              SLOT( update_index( double ) ) );
    csbuttons->addWidget( lb_stindex, row, 0 );
    csbuttons->addWidget( ct_stindex, row++, 1 );
 
    lb_npoints  = us_label( tr( "Number of Points in this Step:" ) );
    ct_npoints  = us_counter( 2, 1.0, 255.0, 1.0 );
    ct_npoints->setRange( 1, 255, 1 );
-   connect( ct_npoints, SIGNAL( valueChanged( double ) ), this, SLOT( update_points( double ) ) );
+   connect( ct_npoints, SIGNAL( valueChanged( double ) ),
+            this,       SLOT( update_points( double ) ) );
    csbuttons->addWidget( lb_npoints, row, 0 );
    csbuttons->addWidget( ct_npoints, row++, 1 );
 
@@ -126,8 +127,8 @@ US_ColorGradient::US_ColorGradient( QWidget* parent, Qt::WindowFlags flags )
    clr_start   = QColor( Qt::black );
    clr_step    = QColor( Qt::black );
    nbr_csteps  = 0;
-   ndx_cstep   = 1;
-   nbr_points  = 1;
+   ndx_cstep   = 0;
+   nbr_points  = 0;
    knt_csteps  = 0;
    nbr_colors  = 1;
    have_load   = false;
@@ -137,15 +138,16 @@ US_ColorGradient::US_ColorGradient( QWidget* parent, Qt::WindowFlags flags )
    cs.npoints  = 0;
    cs.color    = clr_start;
    csteps.prepend( cs );
-   grad_dir    = qApp->applicationDirPath().replace( QRegExp( "/bin$" ), QString( "/etc" ) );
+   grad_dir    = qApp->applicationDirPath()
+      .replace( QRegExp( "/bin$" ), QString( "/etc" ) );
 }
 
-//! \brief A private slot for handling choice of a start color
+//! \brief A slot for handling choice of a start color
 void US_ColorGradient::start_color( void )
 {
-   qDebug() << "start_color SLOT";
    QColor clr_temp = clr_start;
    clr_start       = QColorDialog::getColor( clr_start, this );
+
    if ( clr_start.isValid() )
    {
       lb_begcolor->setPalette( clr_start );
@@ -154,6 +156,7 @@ void US_ColorGradient::start_color( void )
    {
       clr_start   = clr_temp;
    }
+
    color_step cs;
    cs.npoints  = 0;
    cs.color    = clr_start;
@@ -161,12 +164,12 @@ void US_ColorGradient::start_color( void )
    new_mods    = true;
 }
 
-//! \brief A private slot for handling choice of a step color
+//! \brief A slot for handling choice of a step color
 void US_ColorGradient::step_color( void )
 {
-   qDebug() << "step_color SLOT";
    QColor clr_temp = clr_step;
    clr_step        = QColorDialog::getColor( clr_step, this );
+
    if ( clr_step.isValid() )
    {
       lb_stcolor->setPalette( clr_step );
@@ -175,130 +178,356 @@ void US_ColorGradient::step_color( void )
    {
       clr_step    = clr_temp;
    }
+
    color_step cs;
    cs.npoints  = nbr_points;
    cs.color    = clr_step;
    csteps.insert( ndx_cstep, cs );
    new_mods    = true;
+   knt_csteps  = ( knt_csteps < ndx_cstep ) ? ndx_cstep : knt_csteps;
 }
 
-//! \brief A private slot for handling choice of a step color
-void US_ColorGradient::help( void )
-{
-   showhelp.show_help( "manual/colorgradient.html" );
-}
-
-//! \brief A private slot for handling a click on the reset button
+//! \brief A slot for handling the reset button: clear all settings
 void US_ColorGradient::reset( void )
 {
-   qDebug() << "reset SLOT";
    csteps.clear();
    clr_start   = QColor( Qt::black );
    clr_step    = QColor( Qt::black );
+   nbr_csteps  = 0;
+   ndx_cstep   = 0;
+   nbr_points  = 0;
    knt_csteps  = 0;
-   ndx_cstep   = 1;
    nbr_colors  = 1;
+   new_mods    = false;
+   have_save   = false;
+   have_load   = false;
+
    color_step cs;
    cs.npoints  = 0;
    cs.color    = clr_start;
    csteps.prepend( cs );
+
+   lb_begcolor->setPalette( clr_start );
+   lb_stcolor->setPalette( clr_step );
+   ct_nsteps->setValue( (qreal)nbr_csteps );
+   ct_stindex->setValue( (qreal)ndx_cstep );
+   ct_npoints->setValue( (qreal)nbr_points );
+   nbr_csteps  = 0;
+   ndx_cstep   = 0;
+   nbr_points  = 0;
+
+   update_banner();
+   show_gradient();
 }
 
+/*!
+   A slot to save the color gradient step counts and colors
+   to an XML file, as specified in a file dialog.
+*/
 void US_ColorGradient::save_gradient( void )
 {
-   qDebug() << "save_gradient SLOT";
    QString save_file = grad_dir + "/new_gradient.xml";
    save_file = QFileDialog::getSaveFileName( this,
-      tr( "Select XML File Name for Gradient Save" ), grad_dir, "*.xml;*" );
+      tr( "Specify XML File Name for Gradient Save" ), grad_dir,
+      tr( "XML files (*.xml)" ) );
 
    if ( !save_file.isEmpty() )
    {
       out_filename = save_file;
+
       if ( !save_file.endsWith( "." )  &&  !save_file.endsWith( ".xml" ) )
       {
          out_filename = save_file + ".xml";
       }
+
       have_save    = true;
       new_mods     = false;
-qDebug() << "File="+out_filename;
+
+      // create the XML file holding color step information
+      QFile fileo( out_filename );
+
+      if ( !fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+      {
+         QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "Cannot open file " ) + out_filename );
+         return;
+      }
+
+      QXmlStreamWriter xmlo;
+      xmlo.setDevice( &fileo );
+      xmlo.setAutoFormatting( true );
+      xmlo.writeStartDocument( "1.0" );
+      xmlo.writeComment( "DOCTYPE UltraScanColorSteps" );
+      xmlo.writeCharacters( "\n" );
+      xmlo.writeStartElement( "colorsteps" );
+
+      // write start color
+      int npts      = 0;
+      color_step cs = csteps.at( 0 );
+      QColor ccol   = cs.color;
+      xmlo.writeStartElement( "color" );
+      xmlo.writeAttribute( "red",    QString::number( ccol.red() ) );
+      xmlo.writeAttribute( "green",  QString::number( ccol.green() ) );
+      xmlo.writeAttribute( "blue",   QString::number( ccol.blue() ) );
+      xmlo.writeAttribute( "points", "0" );
+      xmlo.writeEndElement();
+
+      // write each step's end-color and number-points
+
+      for ( int ii = 1; ii <= nbr_csteps; ii++ )
+      {
+         cs     = csteps.at( ii );
+         ccol   = cs.color;
+         npts   = cs.npoints;
+         xmlo.writeStartElement( "color" );
+         xmlo.writeAttribute( "red",    QString::number( ccol.red() ) );
+         xmlo.writeAttribute( "green",  QString::number( ccol.green() ) );
+         xmlo.writeAttribute( "blue",   QString::number( ccol.blue() ) );
+         xmlo.writeAttribute( "points", QString::number( npts ) );
+         xmlo.writeEndElement();
+      }
+
+      xmlo.writeEndElement();
+      xmlo.writeEndDocument();
+      fileo.close();
    }
 }
 
+/*!
+   A slot to load the color gradient step counts and colors
+   from an XML file, as specified in a file dialog.
+*/
 void US_ColorGradient::load_gradient( void )
 {
-   qDebug() << "load_gradient SLOT";
    QString load_file = grad_dir + "/old_gradient.xml";
    load_file = QFileDialog::getOpenFileName( this,
-         tr( "Select XML File Name for Gradient Load" ), grad_dir, "*.xml;*" );
+         tr( "Select XML File Name for Gradient Load" ), grad_dir,
+         tr( "XML files (*.xml)" ) );
 
    if ( !load_file.isEmpty() )
    {
       in_filename  = load_file;
+
       if ( !load_file.endsWith( "." )  &&  !load_file.endsWith( ".xml" ) )
       {
          in_filename  = load_file + ".xml";
       }
-      have_load    = true;
-      new_mods     = true;
-qDebug() << "File="+in_filename;
+
+      QFile filei( in_filename );
+
+      if ( !filei.open( QIODevice::ReadOnly ) )
+      {
+         QMessageBox::information( this,
+            tr( "Error" ),
+            tr( "Cannot open file " ) + in_filename );
+         return;
+      }
+
+      QXmlStreamReader xmli( &filei );
+      bool is_uscs = false;
+
+      // parse xml input file to repopulate color steps
+
+      while ( ! xmli.atEnd() )
+      {
+         xmli.readNext();
+
+         if ( xmli.isComment() )
+         { // verify DOCTYPE UltraScanColorSteps
+            QString comm = xmli.text().toString();
+
+            if ( comm.contains( "UltraScanColorSteps" ) )
+            {
+               is_uscs     = true;
+            }
+            else
+            {
+               QMessageBox::information( this, tr( "Error" ),
+                  tr( "File " ) + in_filename
+                     + tr(" is not an UltraScanColorSteps xml file.") );
+               filei.close();
+               return;
+            }
+         }
+
+         if ( xmli.isStartElement()  &&  xmli.name() == "color" )
+         {  // update color step entries
+            color_step cs;
+            QXmlStreamAttributes ats = xmli.attributes();
+            int cred    = ats.value( "red" ).toString().toInt();
+            int cgrn    = ats.value( "green" ).toString().toInt();
+            int cblu    = ats.value( "blue" ).toString().toInt();
+            nbr_points  = ats.value( "points" ).toString().toInt();
+
+            if ( nbr_points > 0 )
+            {	// step color and points
+               clr_step    = QColor( cred, cgrn, cblu );
+               nbr_colors += nbr_points;
+               cs.npoints  = nbr_points;
+               cs.color    = clr_step;
+               csteps.insert( ++ndx_cstep, cs );
+            }
+            else
+            {  // start color
+               clr_start   = QColor( cred, cgrn, cblu );
+               nbr_colors  = 1;
+               ndx_cstep   = 0;
+               cs.npoints  = 0;
+               cs.color    = clr_start;
+               csteps.clear();
+               csteps.prepend( cs );
+             
+            }
+         }
+      }
+
+      if ( xmli.hasError() )
+      {
+         QMessageBox::information( this, tr( "Error" ),
+            tr( "File " ) + in_filename + tr(" is not a valid XML file.") );
+      }
+      else if ( ! is_uscs )
+      {
+         QMessageBox::information( this, tr( "Error" ),
+            tr( "File " ) + in_filename
+               + tr(" is not an UltraScanColorSteps xml file.") );
+      }
+      else
+      {
+         have_load    = true;
+         have_save    = true;
+         new_mods     = false;
+         knt_csteps   = ndx_cstep;
+         nbr_csteps   = ndx_cstep;
+         out_filename = in_filename;
+         lb_begcolor->setPalette( clr_start );
+         lb_stcolor->setPalette( clr_step );
+         ct_stindex->setValue( (qreal)ndx_cstep );
+         ct_npoints->setValue( (qreal)nbr_points );
+         ct_nsteps->setValue( (qreal)nbr_csteps );
+
+         update_banner();
+         show_gradient();
+      }
+
+      filei.close();
    }
-   new_mods    = true;
-   if ( load_file != "" ) qDebug() << "File="+load_file;
 }
 
+/*!
+   A slot to update the number of steps upon counter change
+   and to make an appropriate change to the maximum step index.
+*/
 void US_ColorGradient::update_steps( double newval )
 {
-   qDebug() << "update_steps SLOT " << newval;
    nbr_csteps  = qRound( newval );
    ct_stindex->setRange( 1, nbr_csteps, 1 );
    new_mods    = true;
 }
 
+/*!
+   A slot to update the color step index upon counter change
+   and to update color label and point when an old index is revisited.
+*/
 void US_ColorGradient::update_index( double newval )
 {
-   qDebug() << "update_index SLOT " << newval;
    ndx_cstep   = qRound( newval );
+
+   if ( ndx_cstep <= knt_csteps )
+   {
+      // revisited step:  nbr_points, color as before
+      color_step cs = csteps.at( ndx_cstep );
+      nbr_points    = cs.npoints;
+      clr_step      = cs.color;
+      lb_stcolor->setPalette( clr_step );
+      ct_npoints->setValue( (qreal)nbr_points );
+   }
+   else
+   {
+      // new step:  save maximum step configured
+      knt_csteps  = ndx_cstep;
+   }
 }
 
+/*!
+   A slot to update the number of points for a step upon counter change
+   and to update the color step list entry accordingly.
+*/
 void US_ColorGradient::update_points( double newval )
 {
-   qDebug() << "update_points SLOT " << newval;
    nbr_points  = qRound( newval );
    new_mods    = true;
+
+   if ( ndx_cstep != knt_csteps )
+   {  // if new spec for this step, save it
+      color_step cs;
+      cs.npoints  = nbr_points;
+      cs.color    = clr_step;
+
+      if ( ndx_cstep > knt_csteps )
+      {  // new step:  insert a new color step entry
+          csteps.insert( ndx_cstep, cs );
+          knt_csteps  = ndx_cstep;
+      }
+      else
+      {  // revisited step:  replace color step entry
+          csteps.replace( ndx_cstep, cs );
+      }
+   }
+
+   new_mods    = true;
+   knt_csteps  = ( knt_csteps < ndx_cstep ) ? ndx_cstep : knt_csteps;
 }
 
+/*!
+   A slot to show the current gradient upon button click.
+   The displayed gradient is in the form of concentric circles.
+*/
 void US_ColorGradient::show_gradient( void )
 {
-//qDebug() << "show_gradient SLOT";
-
    // get width of gradient space; resize so height matches
-   int w        = lb_gradient->width();
-   lb_gradient->resize( w, w );
+   int wl       = lb_gradient->width();
+   int ml       = lb_gradient->margin() * 2;
+   wl          -= ml;
+   int wp       = wl - ml;
+   lb_gradient->setScaledContents( true );
+   lb_gradient->resize( wl, wl );
+   lb_banner1->setFixedHeight( lb_banner1->height() );
 
-   // create Pixmap of that size and count total colors
-   pm_gradient  = new QPixmap( w, w );
+   // create Pixmap of that size
+   pm_gradient  = new QPixmap( wp, wp );
    pm_gradient->fill( Qt::black );
+
+   if ( nbr_csteps < 1 )
+   {  // clear pixmap and return now, if this follow reset
+      lb_gradient->setPixmap( *pm_gradient );
+      lb_gradient->show();
+      return;
+   }
+
    QPainter* pa = new QPainter( pm_gradient );
-   nbr_colors   = 1;
 
    // do an initial step loop just to count total colors
+   nbr_colors   = 1;
    for ( int ii = 1; ii <= nbr_csteps; ii++ )
-   { // do an initial step loop just to count total colors
+   {
       color_step cs = csteps.at( ii );
       int np        = cs.npoints;
       nbr_colors   += np;
    }
 
    // calculate the geometry of the concentric circles
-   qreal wrad    = (qreal)w / 2.0;            // radius if half width
+   qreal wrad    = (qreal)wp / 2.0;           // radius is half of width
    qreal wlin    = wrad / (qreal)nbr_colors;  // width of line is radius/#colors
    qreal xcen    = wrad;                      // center is radius,radius
    qreal ycen    = wrad;
-   wrad         -= ( wlin / 2.0 );            // back off a bit on initial radius
+   wrad         -= ( wlin / 2.0 );            // back off initial radius a bit
    QPointF cenpt( xcen, ycen );               // center point
+   QColor cc     = clr_start;                 // initial color
 
-   // set the initial, outermost, circle color; then loop thru steps
-   QColor cc   = clr_start;
+   // loop through steps determining color range in each
+
    for ( int ii = 1; ii <= nbr_csteps; ii++ )
    {
       // get step color and number of points
@@ -306,19 +535,23 @@ void US_ColorGradient::show_gradient( void )
       color_step cs = csteps.at( ii );
       int np        = cs.npoints;
       QColor ec     = cs.color;
+
       // determine the delta for RGB values
       int dr        = ec.red() - oc.red();
       int dg        = ec.green() - oc.green();
       int db        = ec.blue() - oc.blue();
       qreal sr      = (qreal)np;
-      qreal ri      = (qreal)dr / sr;
-      qreal gi      = (qreal)dg / sr;
-      qreal bi      = (qreal)db / sr;
+      qreal ri      = (qreal)dr / sr;  // red interval between points
+      qreal gi      = (qreal)dg / sr;  // green interval between points
+      qreal bi      = (qreal)db / sr;  // blue interval between points
+
       // set up initial step RGB values
       qreal vr      = (qreal)cc.red();
       qreal vg      = (qreal)cc.green();
       qreal vb      = (qreal)cc.blue();
+
       // get color at each point in a step
+
       for ( int jj = 0; jj < np ; jj++ )
       {
          // determine color from RGB components
@@ -326,55 +559,60 @@ void US_ColorGradient::show_gradient( void )
          int kg        = qRound( vg );
          int kb        = qRound( vb );
          QColor lc     = QColor( kr, kg, kb );
+
          // draw circle of that color
          pa->setPen( QPen( QBrush( lc ), wlin ) );
          pa->drawEllipse( cenpt, wrad, wrad );
+
          // bump RGB values and decrement radius
          vr           += ri;
          vg           += gi;
          vb           += bi;
          wrad         -= wlin;
       }
-      // next start color is this iteration's end
+      // next start color is this step's end
       cc            = ec;
    }
-   // draw the final, innermost, circle
 
+   // draw the final, innermost, circle
    pa->setPen( QPen( QBrush( cc ), wlin ) );
    pa->drawEllipse( cenpt, wrad, wrad );
+
    // set pixel map for gradient label
    lb_gradient->setPixmap( *pm_gradient );
    lb_gradient->show();
 
    // update the banner text to reflect current color steps state
-
    update_banner();
 }
 
-void US_ColorGradient::close( void )
-{
-   qDebug() << "close SLOT";
-   qApp->quit();
-}
-
+/*!
+   A method to update the top banner text to reflect the
+   current state of the color steps. This includes information on
+   number of steps, number of total colors, and any save-file name.
+*/
 void US_ColorGradient::update_banner( void )
 {
-   // update the banner text to reflect current color steps state
+   QString steps  = ( nbr_csteps == 1 ) ?
+      "1 step" :
+      QString::number( nbr_csteps ) + " steps";
+   QString colors = QString::number( nbr_colors );
 
-   QString ban1  = tr( "Please select the number of steps\n" );
-   QString ban2  = tr( "and each Color Step for your gradient:\n" );
-   QString ban3a = tr( "( Currently 1 steps; " );
-   QString ban3b = tr( "1 total colors;\n" );
-   QString ban4  = tr( "  Not saved to any file )" );
-   QString sns   = QString::number( nbr_csteps );
-   QString snc   = QString::number( nbr_colors );
-   ban3a.replace( "1", sns );
-   ban3b.replace( "1", snc );
+   QString btext  =  tr( "Please select the number of steps\n"
+                         "and each Color Step for your gradient:\n"
+                         "( Currently %1; %2 total colors;\n" )
+                         .arg(steps).arg(colors);
+
    if ( have_save )
    {
-      ban4          = tr( "  Save file: " ) + QFileInfo( in_filename ).completeBaseName() + " )";
+      btext        += tr( "  Save file: " )
+         + QFileInfo( out_filename ).completeBaseName() + " )";
    }
-   QString btext = ban1 + ban2 + ban3a + ban3b + ban4;
-   lb_banner1->setText( btext );
+   else
+   {
+      btext        += tr( "  Not saved to any file )" );
+   }
 
+   lb_banner1->setText( btext );
 }
+
