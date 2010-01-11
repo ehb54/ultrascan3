@@ -770,12 +770,15 @@ if($default_system eq 'meta') {
 </grmsJob>
 ";
 } else {
+    $jid_in_xml = "  <argument>$jid</argument>\n" ;
+
     print JD
 "<job>
   <executable>${WORK}/ultrascan/${BIN}/$executable[$usesys]</executable>
   <directory>$WORKRUN</directory>
   <argument>$WORKRUN/experiments${timestamp}.dat</argument>
   <argument>$WORKRUN/solutes${timestamp}.dat</argument>
+$jid_in_xml
 $LD_XML
   <stdout>$WORKRUN/us_job${id}.stdout</stdout>
   <stderr>$WORKRUN/us_job${id}.stderr</stderr>
