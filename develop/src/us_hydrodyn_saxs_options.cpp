@@ -112,7 +112,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    cnt_h2o_scat_len_dens = new QwtCounter(this);
    Q_CHECK_PTR(cnt_h2o_scat_len_dens);
-   cnt_h2o_scat_len_dens->setRange(-0.1, 1.5, 0.001);
+   cnt_h2o_scat_len_dens->setRange(-0.9, 0.0, 0.001);
    cnt_h2o_scat_len_dens->setValue((*saxs_options).h2o_scat_len_dens);
    cnt_h2o_scat_len_dens->setMinimumHeight(minHeight1);
    cnt_h2o_scat_len_dens->setEnabled(true);
