@@ -138,9 +138,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct grid_options default_grid;
       struct saxs_options saxs_options;
       struct saxs_options default_saxs_options;
-      struct hydro_results results;
       struct bead_output_options bead_output;
       struct bead_output_options default_bead_output;
+      hydro_results results;
       batch_info default_batch;
       struct residue new_residue;
       struct atom new_atom;

@@ -110,21 +110,27 @@ w		# solvent acronym
 0		# find SH groups?
 0		# how to handle missing residues
 0		# how to handle missing atoms
+0.334		# Water electron density
+-0.3742		# H scattering length (*10^-12 cm)
+0.6671		# D scattering length (*10^-12 cm)
+-0.562		# H2O scattering length density (*10^-10 cm^2)
+6.404		# D2O scattering length density (*10^-10 cm^2)
+0.16		# D2O concentration (0 to 1)
+0.1		# Fraction of exchanged peptide H (0 to 1)
 1.5		# scattering wavelength
 0.014		# starting angle
 8.214		# ending angle
 0.2		# angle stepsize
-0.334		# Water electron density
 40		# maximum size
 1		# bin size
 0		# hydrate PDB model? true = yes
 0		# batch missing atom handling
-0		# batch missing residue handling
+636		# batch missing residue handling
 1		# batch run somo
 0		# batch run grid
 1		# batch run hydro
 0		# batch avg hydro
-results 	# batch avg hydro name
+average		# batch avg hydro name
 0		# batch window last height
 0		# batch window last width
 0		# batch number of files to follow

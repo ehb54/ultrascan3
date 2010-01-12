@@ -756,14 +756,14 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       if ( field[i] == "results.asa_rg_pos" )
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.asa_rg_pos);
-         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
          continue;
       }
 
       if ( field[i] == "results.asa_rg_neg" )
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.asa_rg_neg);
-         field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
          continue;
       }
    }
@@ -1153,6 +1153,19 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
             .arg(*((double *)(field_to_save_data[save->field[i]]) + 1))
             .arg(*((double *)(field_to_save_data[save->field[i]]) + 2));
          break;
+      case DT_DOUBLE_NA     :
+         {
+            double tmp = *((double *)(field_to_save_data[save->field[i]]));
+            if ( tmp >= 0 )
+            {
+               result += QString("%1%2")
+                  .arg(i ? "," : "")
+                  .arg(*((double *)(field_to_save_data[save->field[i]])));
+            } else {
+               result += ",NA";
+            }
+         }
+         break;
       default               :
          result += QString("%1\"???\"")
             .arg(i ? "," : "");
@@ -1161,4 +1174,225 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
    }
    printf("data() <%s>\n", result.ascii());
    return result + "\n";
+}
+
+vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
+{
+   // create zero data record
+   // switch to offsets 
+   
+   for ( unsigned int i = 0; i < field.size(); i++ )
+   {
+      switch(field_to_save_data_type[save->field[i]]) 
+      {
+      case DT_QSTRING       :
+         *((QString *)(field_to_save_data[save->field[i]])) = "";
+         break;
+      case DT_BOOL          :
+         *((bool *)(field_to_save_data[save->field[i]])) = 0;
+         break;
+      case DT_FLOAT         :
+         *((float *)(field_to_save_data[save->field[i]])) = 0;
+         break;
+      case DT_DOUBLE        :
+         *((double *)(field_to_save_data[save->field[i]])) = 0;
+         break;
+      case DT_INT           :
+         *((int *)(field_to_save_data[save->field[i]])) = 0;
+         break;
+      case DT_UNSIGNED_INT  :
+         *((unsigned int *)(field_to_save_data[save->field[i]])) = 0;
+         break;
+      case DT_TRIPLE_DOUBLE :
+         *((double *)(field_to_save_data[save->field[i]])) = 0;
+         *((double *)(field_to_save_data[save->field[i]]) + 1) = 0;
+         *((double *)(field_to_save_data[save->field[i]]) + 2) = 0;
+         break;
+      case DT_DOUBLE_NA     :
+         *((double *)(field_to_save_data[save->field[i]])) = 0;
+         break;
+      }
+   }
+   save_data zero = save->data;
+   save_data sum = zero;
+   save_data sum2 = zero;
+   save_data count = zero; // note counts may be different for n/a fields;
+
+   QString tmp_qstring;
+   bool tmp_bool;
+   float tmp_float;
+   double tmp_double;
+   double tmp_double_2;
+   double tmp_double_3;
+   int tmp_int;
+   unsigned int tmp_uint;
+
+   // we're going to have to be careful here, we only have one map
+
+   for ( unsigned int j = 0; j < data->size(); j++ )
+   {
+      for ( unsigned int i = 0; i < field.size(); i++ )
+      {
+         switch(field_to_save_data_type[save->field[i]]) 
+         {
+         case DT_QSTRING       :
+            save->data = (*data)[j];
+            tmp_qstring = *((QString *)(field_to_save_data[save->field[i]]));
+
+            save->data = sum;
+            if ( j )
+            {
+               *((QString *)(field_to_save_data[save->field[i]])) += ", ";
+            } else {
+               *((QString *)(field_to_save_data[save->field[i]])) = tr("Avergage: ");
+            }
+            *((QString *)(field_to_save_data[save->field[i]])) += tmp_qstring;
+            sum = save->data;
+
+            save->data = sum2;
+            if ( j )
+            {
+               *((QString *)(field_to_save_data[save->field[i]])) += ", ";
+            } else {
+               *((QString *)(field_to_save_data[save->field[i]])) = tr("Standard deviation: ");
+            }
+            *((QString *)(field_to_save_data[save->field[i]])) += tmp_qstring;
+            sum2 = save->data;
+
+            break;
+         case DT_BOOL          :
+            save->data = (*data)[j];
+            tmp_bool = *((bool *)(field_to_save_data[save->field[i]]));
+
+            save->data = sum;
+            *((bool *)(field_to_save_data[save->field[i]])) &= tmp_bool;
+            sum = save->data;
+
+            save->data = sum2;
+            *((bool *)(field_to_save_data[save->field[i]])) |= tmp_bool;
+            sum2 = save->data;
+
+            break;
+         case DT_FLOAT         :
+            save->data = (*data)[j];
+            tmp_float = *((float *)(field_to_save_data[save->field[i]]));
+
+            save->data = sum;
+            *((float *)(field_to_save_data[save->field[i]])) += tmp_float;
+            sum = save->data;
+
+            save->data = sum2;
+            *((float *)(field_to_save_data[save->field[i]])) += tmp_float * tmp_float;
+            sum2 = save->data;
+
+            save->data = count;
+            (*((float *)(field_to_save_data[save->field[i]])))++;
+            count = save->data;
+
+            break;
+         case DT_DOUBLE        :
+            save->data = (*data)[j];
+            tmp_double = *((double *)(field_to_save_data[save->field[i]]));
+
+            save->data = sum;
+            *((double *)(field_to_save_data[save->field[i]])) += tmp_double;
+            sum = save->data;
+
+            save->data = sum2;
+            *((double *)(field_to_save_data[save->field[i]])) += tmp_double * tmp_double;
+            sum2 = save->data;
+
+            save->data = count;
+            (*((double *)(field_to_save_data[save->field[i]])))++;
+            count = save->data;
+
+            break;
+         case DT_INT           :
+            save->data = (*data)[j];
+            tmp_int = *((int *)(field_to_save_data[save->field[i]]));
+
+            save->data = sum;
+            *((int *)(field_to_save_data[save->field[i]])) += tmp_int;
+            sum = save->data;
+
+            save->data = sum2;
+            *((int *)(field_to_save_data[save->field[i]])) += tmp_int * tmp_int;
+            sum2 = save->data;
+
+            save->data = count;
+            (*((int *)(field_to_save_data[save->field[i]])))++;
+            count = save->data;
+
+            break;
+         case DT_UNSIGNED_INT  :
+            save->data = (*data)[j];
+            tmp_uint = *((unsigned int *)(field_to_save_data[save->field[i]]));
+
+            save->data = sum;
+            *((unsigned int *)(field_to_save_data[save->field[i]])) += tmp_uint;
+            sum = save->data;
+
+            save->data = sum2;
+            *((unsigned int *)(field_to_save_data[save->field[i]])) += tmp_uint * tmp_uint;
+            sum2 = save->data;
+
+            save->data = count;
+            (*((unsigned int *)(field_to_save_data[save->field[i]])))++;
+            count = save->data;
+
+            break;
+
+         case DT_TRIPLE_DOUBLE :
+            save->data = (*data)[j];
+            tmp_double = *((double *)(field_to_save_data[save->field[i]]));
+            tmp_double_2 = *((double *)(field_to_save_data[save->field[i]]) + 1);
+            tmp_double_3 = *((double *)(field_to_save_data[save->field[i]]) + 2);
+
+            save->data = sum;
+            *((double *)(field_to_save_data[save->field[i]])) += tmp_double;
+            *((double *)(field_to_save_data[save->field[i]]) + 1) += tmp_double_2;
+            *((double *)(field_to_save_data[save->field[i]]) + 2) += tmp_double_3;
+            sum = save->data;
+
+            save->data = sum2;
+            *((double *)(field_to_save_data[save->field[i]])) += tmp_double * tmp_double;
+            *((double *)(field_to_save_data[save->field[i]]) + 1) += tmp_double_2 * tmp_double_2;
+            *((double *)(field_to_save_data[save->field[i]]) + 2) += tmp_double_2 * tmp_double_3;
+            sum2 = save->data;
+
+            save->data = count;
+            (*((double *)(field_to_save_data[save->field[i]])))++;
+            (*((double *)(field_to_save_data[save->field[i]]) + 1))++;
+            (*((double *)(field_to_save_data[save->field[i]]) + 2))++;
+            count = save->data;
+
+            break;
+         case DT_DOUBLE_NA     :
+            tmp_double = *((double *)(field_to_save_data[save->field[i]]));
+
+            if ( tmp_double >= 0 )
+            {
+               save->data = sum;
+               *((double *)(field_to_save_data[save->field[i]])) += tmp_double;
+               sum = save->data;
+
+               save->data = sum2;
+               *((double *)(field_to_save_data[save->field[i]])) += tmp_double * tmp_double;
+               sum2 = save->data;
+
+               save->data = count;
+               (*((double *)(field_to_save_data[save->field[i]])))++;
+               count = save->data;
+            }
+            break;
+         }
+      }
+   }
+
+   // now compute averages etc.
+
+   vector < save_data > result;
+   result.push_back(sum);
+   result.push_back(sum2);
+   return result;
 }

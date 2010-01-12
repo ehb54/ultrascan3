@@ -39,6 +39,18 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       US_Config *USglobal;
 
       QLabel *lbl_info;
+
+      QLabel *lbl_saxs_options;
+      QLabel *lbl_water_e_density;
+
+      QLabel *lbl_sans_options;
+      QLabel *lbl_h_scat_len;
+      QLabel *lbl_d_scat_len;
+      QLabel *lbl_h2o_scat_len_dens;
+      QLabel *lbl_d2o_scat_len_dens;
+      QLabel *lbl_d2o_conc;
+      QLabel *lbl_frac_of_exch_pep;
+
       QLabel *lbl_curve;
       QLabel *lbl_wavelength;
       QLabel *lbl_start_angle;
@@ -47,8 +59,16 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QLabel *lbl_start_q;
       QLabel *lbl_end_q;
       QLabel *lbl_delta_q;
-      QLabel *lbl_water_e_density;
       
+      QwtCounter *cnt_water_e_density;
+
+      QwtCounter *cnt_h_scat_len;
+      QwtCounter *cnt_d_scat_len;
+      QwtCounter *cnt_h2o_scat_len_dens;
+      QwtCounter *cnt_d2o_scat_len_dens;
+      QwtCounter *cnt_d2o_conc;
+      QwtCounter *cnt_frac_of_exch_pep;
+
       QwtCounter *cnt_wavelength;
       QwtCounter *cnt_start_angle;
       QwtCounter *cnt_end_angle;
@@ -56,7 +76,7 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
       QwtCounter *cnt_start_q;
       QwtCounter *cnt_end_q;
       QwtCounter *cnt_delta_q;
-      QwtCounter *cnt_water_e_density;
+
 
       QCheckBox *cb_hydrate_pdb;
 
@@ -68,15 +88,26 @@ class US_EXTERN US_Hydrodyn_SaxsOptions : public QFrame
    private slots:
       
       void setupGUI();
-      void update_wavelength(double);
+
+      void update_water_e_density(double);
+
+      void update_h_scat_len(double);
+      void update_d_scat_len(double);
+      void update_h2o_scat_len_dens(double);
+      void update_d2o_scat_len_dens(double);
+      void update_d2o_conc(double);
+      void update_frac_of_exch_pep(double);;
+
+      void update_wavelength(double);      
       void update_start_angle(double);
-      void update_end_angle(double);
+      void update_end_angle(double);     
       void update_delta_angle(double);
       void update_start_q(double);
       void update_end_q(double);
       void update_delta_q(double);
-      void update_water_e_density(double);
+
       void set_hydrate_pdb();
+
       void cancel();
       void help();
    

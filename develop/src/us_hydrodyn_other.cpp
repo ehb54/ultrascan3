@@ -654,6 +654,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
    QFile f(filename);
    int bead_count;
    int linepos = 0;
+   results.asa_rg_pos = -1e0;
+   results.asa_rg_neg = -1e0;
 
    if (ftype == "bead_model")
    {
@@ -1294,30 +1296,51 @@ int US_Hydrodyn::read_config(QFile& f)
    if ( ts.readLine() == QString::null ) return -10135;
    pdb_parse.missing_atoms = str.toInt();
 
-   ts >> str; // wavelength
+   ts >> str; // water electron density
    if ( ts.readLine() == QString::null ) return -10140;
+   saxs_options.water_e_density = str.toFloat();
+
+   ts >> str; // H scattering length (*10^-12 cm)
+   if ( ts.readLine() == QString::null ) return -10141;
+   saxs_options.h_scat_len = str.toFloat();
+   ts >> str; // D scattering length (*10^-12 cm)
+   if ( ts.readLine() == QString::null ) return -10142;
+   saxs_options.d_scat_len = str.toFloat();
+   ts >> str; // H2O scattering length density (*10^-10 cm^2)
+   if ( ts.readLine() == QString::null ) return -10143;
+   saxs_options.h2o_scat_len_dens = str.toFloat();
+   ts >> str; // D2O scattering length density (*10^-10 cm^2)
+   if ( ts.readLine() == QString::null ) return -10144;
+   saxs_options.d2o_scat_len_dens = str.toFloat();
+   ts >> str; // D2O concentration (0 to 1)
+   if ( ts.readLine() == QString::null ) return -10145;
+   saxs_options.d2o_conc = str.toFloat();
+   ts >> str; // Fraction of exchanged peptide H (0 to 1)
+   if ( ts.readLine() == QString::null ) return -10146;
+   saxs_options.frac_of_exch_pep = str.toFloat();
+
+   ts >> str; // wavelength
+   if ( ts.readLine() == QString::null ) return -10148;
    saxs_options.wavelength = str.toFloat();
    ts >> str; // start angle
-   if ( ts.readLine() == QString::null ) return -10141;
+   if ( ts.readLine() == QString::null ) return -10149;
    saxs_options.start_angle = str.toFloat();
    ts >> str; // end angle
-   if ( ts.readLine() == QString::null ) return -10142;
+   if ( ts.readLine() == QString::null ) return -10150;
    saxs_options.end_angle = str.toFloat();
    ts >> str; // delta angle
-   if ( ts.readLine() == QString::null ) return -10143;
+   if ( ts.readLine() == QString::null ) return -10151;
    saxs_options.delta_angle = str.toFloat();
-   ts >> str; // water electron density
-   if ( ts.readLine() == QString::null ) return -10144;
-   saxs_options.water_e_density = str.toFloat();
    ts >> str; // maximum size
-   if ( ts.readLine() == QString::null ) return -10145;
+   if ( ts.readLine() == QString::null ) return -10152;
    saxs_options.max_size = str.toFloat();
    ts >> str; // bin size
-   if ( ts.readLine() == QString::null ) return -10146;
+   if ( ts.readLine() == QString::null ) return -10153;
    saxs_options.bin_size = str.toFloat();
    ts >> str; // hydrate pdb model?
-   if ( ts.readLine() == QString::null ) return -10147;
+   if ( ts.readLine() == QString::null ) return -10154;
    saxs_options.hydrate_pdb = (bool) str.toInt();
+
 
    ts >> str; // batch missing atom handling
    if ( ts.readLine() == QString::null ) return -11000;
@@ -1527,11 +1550,19 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << pdb_parse.missing_residues << "\t\t# how to handle missing residues\n";
       ts << pdb_parse.missing_atoms << "\t\t# how to handle missing atoms\n";
 
+      ts << saxs_options.water_e_density << "\t\t# Water electron density\n";
+
+      ts << saxs_options.h_scat_len << "\t\t# H scattering length (*10^-12 cm)\n";
+      ts << saxs_options.d_scat_len << "\t\t# D scattering length (*10^-12 cm)\n";
+      ts << saxs_options.h2o_scat_len_dens << "\t\t# H2O scattering length density (*10^-10 cm^2)\n";
+      ts << saxs_options.d2o_scat_len_dens << "\t\t# D2O scattering length density (*10^-10 cm^2)\n";
+      ts << saxs_options.d2o_conc << "\t\t# D2O concentration (0 to 1)\n";
+      ts << saxs_options.frac_of_exch_pep << "\t\t# Fraction of exchanged peptide H (0 to 1)\n";
+
       ts << saxs_options.wavelength << "\t\t# scattering wavelength\n";
       ts << saxs_options.start_angle << "\t\t# starting angle\n";
       ts << saxs_options.end_angle << "\t\t# ending angle\n";
       ts << saxs_options.delta_angle << "\t\t# angle stepsize\n";
-      ts << saxs_options.water_e_density << "\t\t# Water electron density\n";
       ts << saxs_options.max_size << "\t\t# maximum size\n";
       ts << saxs_options.bin_size << "\t\t# bin size\n";
       ts << saxs_options.hydrate_pdb << "\t\t# hydrate PDB model? true = yes\n";
@@ -1724,14 +1755,22 @@ void US_Hydrodyn::set_default()
       pdb_parse.missing_residues = 0;
       pdb_parse.missing_atoms = 0;
 
-      saxs_options.wavelength = 1.5;         // scattering wavelength
-      saxs_options.start_angle = 0.014f;       // start angle
-      saxs_options.end_angle = 8.214f;          // ending angle
-      saxs_options.delta_angle = 0.2f;       // angle stepsize
       saxs_options.water_e_density = 0.334f; // water electron density in e/A^3
+
+      saxs_options.h_scat_len = -0.3742f;        // H scattering length (*10^-12 cm)
+      saxs_options.d_scat_len = 0.6671f ;        // D scattering length (*10^-12 cm)
+      saxs_options.h2o_scat_len_dens = -0.562f;  // H2O scattering length density (*10^-10 cm^2)
+      saxs_options.d2o_scat_len_dens = 6.404f;   // D2O scattering length density (*10^-10 cm^2)
+      saxs_options.d2o_conc = 0.16f;             // D2O concentration (0 to 1)
+      saxs_options.frac_of_exch_pep = 0.1f;      // Fraction of exchanged peptide H (0 to 1)
+
+      saxs_options.wavelength = 1.5;         // scattering wavelength
+      saxs_options.start_angle = 0.014f;     // start angle
+      saxs_options.end_angle = 8.214f;       // ending angle
+      saxs_options.delta_angle = 0.2f;       // angle stepsize
       saxs_options.max_size = 40.0;          // maximum size (A)
       saxs_options.bin_size = 1.0f;          // Bin size (A)
-      saxs_options.hydrate_pdb = false;       // Hydrate the PDB model? (true/false)
+      saxs_options.hydrate_pdb = false;      // Hydrate the PDB model? (true/false)
 
       batch.missing_atoms = 0;
       batch.missing_residues = 0;
@@ -3151,12 +3190,37 @@ QString US_Hydrodyn::default_differences_misc()
 QString US_Hydrodyn::default_differences_saxs_options()
 {
    QString str = "";
-   QString base = "SOMO Options -> Saxs Options -> ";
-   if ( saxs_options.hydrate_pdb != default_saxs_options.hydrate_pdb )
+   QString base = "SOMO Options -> SAXS/SANS Options -> ";
+   if ( saxs_options.water_e_density != default_saxs_options.water_e_density )
    {
-      str += QString(base + "Hydrate Original PDB Model: %1\n")
-         .arg(saxs_options.hydrate_pdb ? "On" : "Off");
+      str += QString(base + "Water electron density value: %1\n").arg(saxs_options.water_e_density );
    }
+
+   if ( saxs_options.h_scat_len != default_saxs_options.h_scat_len )
+   {
+      str += QString(base + "H scattering length (*10^-12 cm): %1\n").arg(saxs_options.h_scat_len);
+   }
+   if ( saxs_options.d_scat_len != default_saxs_options.d_scat_len )
+   {
+      str += QString(base + "*10^-12 cm): %1\n").arg(saxs_options.d_scat_len);
+   }
+   if ( saxs_options.h2o_scat_len_dens != default_saxs_options.h2o_scat_len_dens )
+   {
+      str += QString(base + "H2O scattering length density (*10^-10 cm^2): %1\n").arg(saxs_options.h2o_scat_len_dens);
+   }
+   if ( saxs_options.d2o_scat_len_dens != default_saxs_options.d2o_scat_len_dens )
+   {
+      str += QString(base + " density (*10^-10 cm^2): %1\n").arg(saxs_options.d2o_scat_len_dens);
+   }
+   if ( saxs_options.d2o_conc != default_saxs_options.d2o_conc )
+   {
+      str += QString(base + "D2O concentration (0 to 1): %1\n").arg(saxs_options.d2o_conc);
+   }
+   if ( saxs_options.frac_of_exch_pep != default_saxs_options.frac_of_exch_pep )
+   {
+      str += QString(base + " peptide H (0 to 1): %1\n").arg(saxs_options.frac_of_exch_pep);
+   }
+
    if ( saxs_options.wavelength != default_saxs_options.wavelength )
    {
       str += QString(base + "Entered wavelength value: %1\n").arg(saxs_options.wavelength);
@@ -3173,10 +3237,6 @@ QString US_Hydrodyn::default_differences_saxs_options()
    {
       str += QString(base + "Angle Stepsize: %1\n").arg(saxs_options.delta_angle );
    }
-   if ( saxs_options.water_e_density != default_saxs_options.water_e_density )
-   {
-      str += QString(base + "Water electron density value: %1\n").arg(saxs_options.water_e_density );
-   }
    if ( saxs_options.max_size != default_saxs_options.max_size )
    {
       str += QString(base + "Maximum size: %1\n").arg(saxs_options.max_size );
@@ -3184,6 +3244,11 @@ QString US_Hydrodyn::default_differences_saxs_options()
    if ( saxs_options.bin_size != default_saxs_options.bin_size )
    {
       str += QString(base + "Bin size: %1\n").arg(saxs_options.bin_size );
+   }
+   if ( saxs_options.hydrate_pdb != default_saxs_options.hydrate_pdb )
+   {
+      str += QString(base + "Hydrate Original PDB Model: %1\n")
+         .arg(saxs_options.hydrate_pdb ? "On" : "Off");
    }
    return str;
 }

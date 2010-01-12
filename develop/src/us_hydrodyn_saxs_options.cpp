@@ -9,7 +9,7 @@ US_Hydrodyn_SaxsOptions::US_Hydrodyn_SaxsOptions(struct saxs_options *saxs_optio
    *saxs_options_widget = true;
    USglobal=new US_Config();
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
-   setCaption(tr("SOMO SAXS Simulation Options"));
+   setCaption(tr("SOMO SAXS/SANS Simulation Options"));
    update_q();
    setupGUI();
    global_Xpos += 30;
@@ -25,7 +25,7 @@ US_Hydrodyn_SaxsOptions::~US_Hydrodyn_SaxsOptions()
 void US_Hydrodyn_SaxsOptions::setupGUI()
 {
    int minHeight1 = 30;
-   lbl_info = new QLabel(tr("SOMO SAXS Simulation Options:"), this);
+   lbl_info = new QLabel(tr("SOMO SAXS/SANS Simulation Options:"), this);
    Q_CHECK_PTR(lbl_info);
    lbl_info->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_info->setAlignment(AlignCenter|AlignVCenter);
@@ -33,7 +33,149 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_curve = new QLabel(tr("SAXS Curve Options:"), this);
+   lbl_saxs_options = new QLabel(tr("SAXS Options:"), this);
+   Q_CHECK_PTR(lbl_saxs_options);
+   lbl_saxs_options->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_saxs_options->setAlignment(AlignCenter|AlignVCenter);
+   lbl_saxs_options->setMinimumHeight(minHeight1);
+   lbl_saxs_options->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_saxs_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   lbl_water_e_density = new QLabel(tr(" Water electron density (e / A^3): "), this);
+   Q_CHECK_PTR(lbl_water_e_density);
+   lbl_water_e_density->setAlignment(AlignLeft|AlignVCenter);
+   lbl_water_e_density->setMinimumHeight(minHeight1);
+   lbl_water_e_density->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_water_e_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_water_e_density = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_water_e_density);
+   cnt_water_e_density->setRange(0, 10, 0.001);
+   cnt_water_e_density->setValue((*saxs_options).water_e_density);
+   cnt_water_e_density->setMinimumHeight(minHeight1);
+   cnt_water_e_density->setEnabled(true);
+   cnt_water_e_density->setNumButtons(3);
+   cnt_water_e_density->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_water_e_density->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_water_e_density, SIGNAL(valueChanged(double)), SLOT(update_water_e_density(double)));
+
+   lbl_sans_options = new QLabel(tr("SANS Options:"), this);
+   Q_CHECK_PTR(lbl_sans_options);
+   lbl_sans_options->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
+   lbl_sans_options->setAlignment(AlignCenter|AlignVCenter);
+   lbl_sans_options->setMinimumHeight(minHeight1);
+   lbl_sans_options->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
+   lbl_sans_options->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
+
+   lbl_h_scat_len = new QLabel(tr(" H scattering length (*10^-12 cm): "), this);
+   Q_CHECK_PTR(lbl_h_scat_len);
+   lbl_h_scat_len->setAlignment(AlignLeft|AlignVCenter);
+   lbl_h_scat_len->setMinimumHeight(minHeight1);
+   lbl_h_scat_len->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_h_scat_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_h_scat_len = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_h_scat_len);
+   cnt_h_scat_len->setRange(-0.5, 0.5, 0.0001);
+   cnt_h_scat_len->setValue((*saxs_options).h_scat_len);
+   cnt_h_scat_len->setMinimumHeight(minHeight1);
+   cnt_h_scat_len->setEnabled(true);
+   cnt_h_scat_len->setNumButtons(3);
+   cnt_h_scat_len->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_h_scat_len->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_h_scat_len, SIGNAL(valueChanged(double)), SLOT(update_h_scat_len(double)));
+
+   lbl_d_scat_len = new QLabel(tr(" D scattering length (*10^-12 cm): "), this);
+   Q_CHECK_PTR(lbl_d_scat_len);
+   lbl_d_scat_len->setAlignment(AlignLeft|AlignVCenter);
+   lbl_d_scat_len->setMinimumHeight(minHeight1);
+   lbl_d_scat_len->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_d_scat_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_d_scat_len = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_d_scat_len);
+   cnt_d_scat_len->setRange(0.1, 1.0, 0.0001);
+   cnt_d_scat_len->setValue((*saxs_options).d_scat_len);
+   cnt_d_scat_len->setMinimumHeight(minHeight1);
+   cnt_d_scat_len->setEnabled(true);
+   cnt_d_scat_len->setNumButtons(3);
+   cnt_d_scat_len->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_d_scat_len->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_d_scat_len, SIGNAL(valueChanged(double)), SLOT(update_d_scat_len(double)));
+
+   lbl_h2o_scat_len_dens = new QLabel(tr(" H2O scattering length density (*10^-10 cm^2): "), this);
+   Q_CHECK_PTR(lbl_h2o_scat_len_dens);
+   lbl_h2o_scat_len_dens->setAlignment(AlignLeft|AlignVCenter);
+   lbl_h2o_scat_len_dens->setMinimumHeight(minHeight1);
+   lbl_h2o_scat_len_dens->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_h2o_scat_len_dens->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_h2o_scat_len_dens = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_h2o_scat_len_dens);
+   cnt_h2o_scat_len_dens->setRange(-0.1, 1.5, 0.001);
+   cnt_h2o_scat_len_dens->setValue((*saxs_options).h2o_scat_len_dens);
+   cnt_h2o_scat_len_dens->setMinimumHeight(minHeight1);
+   cnt_h2o_scat_len_dens->setEnabled(true);
+   cnt_h2o_scat_len_dens->setNumButtons(3);
+   cnt_h2o_scat_len_dens->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_h2o_scat_len_dens->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_h2o_scat_len_dens, SIGNAL(valueChanged(double)), SLOT(update_h2o_scat_len_dens(double)));
+
+   lbl_d2o_scat_len_dens = new QLabel(tr(" D2O scattering length density (*10^-10 cm^2): "), this);
+   Q_CHECK_PTR(lbl_d2o_scat_len_dens);
+   lbl_d2o_scat_len_dens->setAlignment(AlignLeft|AlignVCenter);
+   lbl_d2o_scat_len_dens->setMinimumHeight(minHeight1);
+   lbl_d2o_scat_len_dens->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_d2o_scat_len_dens->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_d2o_scat_len_dens = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_d2o_scat_len_dens);
+   cnt_d2o_scat_len_dens->setRange(0.0, 10.0, 0.001);
+   cnt_d2o_scat_len_dens->setValue((*saxs_options).d2o_scat_len_dens);
+   cnt_d2o_scat_len_dens->setMinimumHeight(minHeight1);
+   cnt_d2o_scat_len_dens->setEnabled(true);
+   cnt_d2o_scat_len_dens->setNumButtons(3);
+   cnt_d2o_scat_len_dens->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_d2o_scat_len_dens->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_d2o_scat_len_dens, SIGNAL(valueChanged(double)), SLOT(update_d2o_scat_len_dens(double)));
+
+   lbl_d2o_conc = new QLabel(tr(" Fraction of D2O (0 - 1): "), this);
+   Q_CHECK_PTR(lbl_d2o_conc);
+   lbl_d2o_conc->setAlignment(AlignLeft|AlignVCenter);
+   lbl_d2o_conc->setMinimumHeight(minHeight1);
+   lbl_d2o_conc->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_d2o_conc->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_d2o_conc = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_d2o_conc);
+   cnt_d2o_conc->setRange(0.0, 1.0, 0.01);
+   cnt_d2o_conc->setValue((*saxs_options).d2o_conc);
+   cnt_d2o_conc->setMinimumHeight(minHeight1);
+   cnt_d2o_conc->setEnabled(true);
+   cnt_d2o_conc->setNumButtons(3);
+   cnt_d2o_conc->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_d2o_conc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_d2o_conc, SIGNAL(valueChanged(double)), SLOT(update_d2o_conc(double)));
+
+   lbl_frac_of_exch_pep = new QLabel(tr(" Fraction of exchanged peptide H (0 - 1): "), this);
+   Q_CHECK_PTR(lbl_frac_of_exch_pep);
+   lbl_frac_of_exch_pep->setAlignment(AlignLeft|AlignVCenter);
+   lbl_frac_of_exch_pep->setMinimumHeight(minHeight1);
+   lbl_frac_of_exch_pep->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_frac_of_exch_pep->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
+
+   cnt_frac_of_exch_pep = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_frac_of_exch_pep);
+   cnt_frac_of_exch_pep->setRange(0.0, 1.0, 0.01);
+   cnt_frac_of_exch_pep->setValue((*saxs_options).frac_of_exch_pep);
+   cnt_frac_of_exch_pep->setMinimumHeight(minHeight1);
+   cnt_frac_of_exch_pep->setEnabled(true);
+   cnt_frac_of_exch_pep->setNumButtons(3);
+   cnt_frac_of_exch_pep->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cnt_frac_of_exch_pep->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_frac_of_exch_pep, SIGNAL(valueChanged(double)), SLOT(update_frac_of_exch_pep(double)));
+
+   lbl_curve = new QLabel(tr("Curve Generation Options:"), this);
    Q_CHECK_PTR(lbl_curve);
    lbl_curve->setFrameStyle(QFrame::WinPanel|QFrame::Raised);
    lbl_curve->setAlignment(AlignCenter|AlignVCenter);
@@ -176,24 +318,6 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cnt_delta_q->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_delta_q, SIGNAL(valueChanged(double)), SLOT(update_delta_q(double)));
 
-   lbl_water_e_density = new QLabel(tr(" Water electron density (e / A^3): "), this);
-   Q_CHECK_PTR(lbl_water_e_density);
-   lbl_water_e_density->setAlignment(AlignLeft|AlignVCenter);
-   lbl_water_e_density->setMinimumHeight(minHeight1);
-   lbl_water_e_density->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
-   lbl_water_e_density->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
-
-   cnt_water_e_density= new QwtCounter(this);
-   Q_CHECK_PTR(cnt_water_e_density);
-   cnt_water_e_density->setRange(0, 10, 0.001);
-   cnt_water_e_density->setValue((*saxs_options).water_e_density);
-   cnt_water_e_density->setMinimumHeight(minHeight1);
-   cnt_water_e_density->setEnabled(true);
-   cnt_water_e_density->setNumButtons(3);
-   cnt_water_e_density->setFont(QFont(USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   cnt_water_e_density->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   connect(cnt_water_e_density, SIGNAL(valueChanged(double)), SLOT(update_water_e_density(double)));
-
    pb_cancel = new QPushButton(tr("Close"), this);
    Q_CHECK_PTR(pb_cancel);
    pb_cancel->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -213,6 +337,34 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
    j++;
+
+   background->addMultiCellWidget(lbl_saxs_options, j, j, 0, 1);
+   j++;
+   background->addWidget(lbl_water_e_density, j, 0);
+   background->addWidget(cnt_water_e_density, j, 1);
+   j++;
+
+   background->addMultiCellWidget(lbl_sans_options, j, j, 0, 1);
+   j++;
+   background->addWidget(lbl_h_scat_len, j, 0);
+   background->addWidget(cnt_h_scat_len, j, 1);
+   j++;
+   background->addWidget(lbl_d_scat_len, j, 0);
+   background->addWidget(cnt_d_scat_len, j, 1);
+   j++;
+   background->addWidget(lbl_h2o_scat_len_dens, j, 0);
+   background->addWidget(cnt_h2o_scat_len_dens, j, 1);
+   j++;
+   background->addWidget(lbl_d2o_scat_len_dens, j, 0);
+   background->addWidget(cnt_d2o_scat_len_dens, j, 1);
+   j++;
+   background->addWidget(lbl_d2o_conc, j, 0);
+   background->addWidget(cnt_d2o_conc, j, 1);
+   j++;
+   background->addWidget(lbl_frac_of_exch_pep, j, 0);
+   background->addWidget(cnt_frac_of_exch_pep, j, 1);
+   j++;
+
    background->addMultiCellWidget(lbl_curve, j, j, 0, 1);
    j++;
    background->addWidget(lbl_wavelength, j, 0);
@@ -236,15 +388,13 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addWidget(lbl_delta_q, j, 0);
    background->addWidget(cnt_delta_q, j, 1);
    j++;
-   background->addWidget(lbl_water_e_density, j, 0);
-   background->addWidget(cnt_water_e_density, j, 1);
-   j++;
    background->addMultiCellWidget(cb_hydrate_pdb, j, j, 0, 1);
    j++;
+
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
 
-   setMinimumWidth(433);
+   setMinimumWidth(475);
 }
 
 void US_Hydrodyn_SaxsOptions::cancel()
@@ -265,6 +415,48 @@ void US_Hydrodyn_SaxsOptions::closeEvent(QCloseEvent *e)
    global_Xpos -= 30;
    global_Ypos -= 30;
    e->accept();
+}
+
+void US_Hydrodyn_SaxsOptions::update_water_e_density(double val)
+{
+   (*saxs_options).water_e_density = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_h_scat_len(double val)
+{
+   (*saxs_options).h_scat_len = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_d_scat_len(double val)
+{
+   (*saxs_options).d_scat_len = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_h2o_scat_len_dens(double val)
+{
+   (*saxs_options).h2o_scat_len_dens = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_d2o_scat_len_dens(double val)
+{
+   (*saxs_options).d2o_scat_len_dens = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_d2o_conc(double val)
+{
+   (*saxs_options).d2o_conc = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_SaxsOptions::update_frac_of_exch_pep(double val)
+{
+   (*saxs_options).frac_of_exch_pep = (float) val;
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
 void US_Hydrodyn_SaxsOptions::update_wavelength(double val)
@@ -392,12 +584,6 @@ void US_Hydrodyn_SaxsOptions::update_delta_q(double val)
             ) / SAXS_Q_ROUNDING;
    cnt_delta_angle->setValue(saxs_options->delta_angle);
 
-   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
-}
-
-void US_Hydrodyn_SaxsOptions::update_water_e_density(double val)
-{
-   (*saxs_options).water_e_density = (float) val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

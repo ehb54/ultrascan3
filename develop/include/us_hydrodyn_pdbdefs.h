@@ -124,6 +124,15 @@ struct saxs
 
 struct saxs_options
 {
+   float   water_e_density;      // water electron density in e/A^3
+
+   float   h_scat_len;           // H scattering length (*10^-12 cm)
+   float   d_scat_len;           // D scattering length (*10^-12 cm)
+   float   h2o_scat_len_dens;    // H2O scattering length density (*10^-10 cm^2)
+   float   d2o_scat_len_dens;    // D2O scattering length density (*10^-10 cm^2)
+   float   d2o_conc;             // D2O concentration (0 to 1)
+   float   frac_of_exch_pep;     // Fraction of exchanged peptide H (0 to 1)
+
    float   wavelength;           // scattering wavelengths
    float   start_angle;          // start angle
    float   end_angle;            // ending angle
@@ -131,7 +140,6 @@ struct saxs_options
    float   start_q;              // start q
    float   end_q;                // ending q
    float   delta_q;              // q stepsize
-   float   water_e_density;      // water electron density in e/A^3
    float   max_size;             // maximum size (A)
    float   bin_size;             // Bin size (A)
    bool    hydrate_pdb;          // Hydrate the PDB model? (true/false)

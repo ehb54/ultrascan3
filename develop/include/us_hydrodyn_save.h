@@ -114,6 +114,7 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
 
       QString header();                   // returns a csv format header
       QString dataString(save_data *);  // returns a csv format data line
+      vector < save_data > stats(vector < save_data > *);  // returns a 2 vector containing avg, st.dev.
 
    private:
 
@@ -157,6 +158,7 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
 #define DT_INT                      4
 #define DT_UNSIGNED_INT             5
 #define DT_TRIPLE_DOUBLE            6
+#define DT_DOUBLE_NA                7
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )
