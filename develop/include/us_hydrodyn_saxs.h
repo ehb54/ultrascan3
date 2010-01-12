@@ -93,12 +93,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QPrinter printer;
 
-      QPushButton *pb_plot_saxs;
-      QPushButton *pb_load_saxs;
+      QPushButton *pb_plot_saxs_sans;
+      QPushButton *pb_load_saxs_sans;
       QPushButton *pb_clear_plot_saxs;
-      QPushButton *pb_plot_sans;
-      QPushButton *pb_load_sans;
-      QPushButton *pb_clear_plot_sans;
       QPushButton *pb_plot_pr;
       QPushButton *pb_load_pr;
       QPushButton *pb_clear_plot_pr;
@@ -111,6 +108,10 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_cancel;
 
       QwtCounter *cnt_bin_size;
+
+      QButtonGroup *bg_saxs_sans;
+      QRadioButton *rb_saxs;
+      QRadioButton *rb_sans;
 
       QButtonGroup *bg_curve;
       QRadioButton *rb_curve_raw;
@@ -128,7 +129,6 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QProgressBar *progress_pr;
       QProgressBar *progress_saxs;
-      QProgressBar *progress_sans;
 
       struct atom current_atom;
       struct hybridization current_hybrid;
@@ -177,12 +177,14 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
    private slots:
 
       void setupGUI();
+      void set_saxs_sans(int);
+      void show_plot_saxs_sans();
+      void load_saxs_sans();
       void show_plot_saxs();
       void load_saxs();
       void clear_plot_saxs();
       void show_plot_sans();
       void load_sans();
-      void clear_plot_sans();
       void update_bin_size(double);
       void set_curve(int);
       void show_plot_pr();
@@ -203,6 +205,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void select_hybrid_file(const QString &);
       void select_saxs_file(const QString &);
       void normalize_pr(vector < double > *);
+      void update_saxs_sans();
 
    protected slots:
 

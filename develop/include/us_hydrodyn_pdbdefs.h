@@ -144,6 +144,7 @@ struct saxs_options
    float   bin_size;             // Bin size (A)
    int     curve;                // 0 = raw, 1 = saxs, 2 = sans
    bool    hydrate_pdb;          // Hydrate the PDB model? (true/false)
+   int     saxs_sans;            // 0 = saxs, 1 = sans
 };
 
 struct hybridization
@@ -152,6 +153,8 @@ struct hybridization
    float   mw;                   // molecular weight of hybridization
    float   radius;               // radius of hybridization
    QString saxs_name;            // name for SAXS coefficients
+   float   scat_len;             // Scattering length in H20 (*10^-12 cm)
+   int     exch_prot;            // Number of exchangable protons
 };
 
 struct atom

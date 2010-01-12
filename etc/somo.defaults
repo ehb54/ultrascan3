@@ -124,11 +124,12 @@ w		# solvent acronym
 40		# maximum size
 1		# bin size
 0		# hydrate PDB model? true = yes
-0		# 0 = raw, 1 = saxs, 2 = sans
-636		# batch missing atom handling
-1		# batch missing residue handling
-0		# batch run somo
-1		# batch run grid
+1		# 0 = raw, 1 = saxs, 2 = sans
+0		# 0 = saxs, 1 = sans
+1		# batch missing atom handling
+0		# batch missing residue handling
+1		# batch run somo
+0		# batch run grid
 0		# batch run hydro
 0		# batch avg hydro
 results		# batch avg hydro name

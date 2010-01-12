@@ -1343,7 +1343,9 @@ int US_Hydrodyn::read_config(QFile& f)
    ts >> str; // curve
    if ( ts.readLine() == QString::null ) return -10155;
    saxs_options.curve = str.toInt();
-
+   ts >> str; // saxs_sans
+   if ( ts.readLine() == QString::null ) return -10156;
+   saxs_options.saxs_sans = str.toInt();
 
    ts >> str; // batch missing atom handling
    if ( ts.readLine() == QString::null ) return -11000;
@@ -1570,6 +1572,7 @@ void US_Hydrodyn::write_config(const QString& fname)
       ts << saxs_options.bin_size << "\t\t# bin size\n";
       ts << saxs_options.hydrate_pdb << "\t\t# hydrate PDB model? true = yes\n";
       ts << saxs_options.curve << "\t\t# 0 = raw, 1 = saxs, 2 = sans\n";
+      ts << saxs_options.saxs_sans << "\t\t# 0 = saxs, 1 = sans\n";
 
       ts << batch.missing_atoms << "\t\t# batch missing atom handling\n";
       ts << batch.missing_residues << "\t\t# batch missing residue handling\n";
@@ -1776,6 +1779,7 @@ void US_Hydrodyn::set_default()
       saxs_options.bin_size = 1.0f;          // Bin size (A)
       saxs_options.hydrate_pdb = false;      // Hydrate the PDB model? (true/false)
       saxs_options.curve = 0;                // 0 = raw, 1 = saxs, 2 = sans
+      saxs_options.saxs_sans = 0;            // 0 = saxs, 1 = sans
 
       batch.missing_atoms = 0;
       batch.missing_residues = 0;
@@ -3260,6 +3264,11 @@ QString US_Hydrodyn::default_differences_saxs_options()
       str += QString(base + "Curve type: %1\n")
          .arg(
               saxs_options.curve ? ((saxs_options.curve == 1) ? "SAXS" : "SANS") : "Raw");
+   }
+   if ( saxs_options.saxs_sans != default_saxs_options.saxs_sans )
+   {
+      str += QString(base + "SAXS or SANS mode: %1\n")
+         .arg(saxs_options.saxs_sans ? "SANS" : "SAXS");
    }
    return str;
 }

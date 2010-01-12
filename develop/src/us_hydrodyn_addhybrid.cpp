@@ -113,6 +113,32 @@ void US_AddHybridization::setupGUI()
    le_radius->setMinimumHeight(minHeight1);
    connect(le_radius, SIGNAL(textChanged(const QString &)), SLOT(update_radius(const QString &)));
 
+   lbl_scat_len = new QLabel(tr(" Scattering length in H2O (*10^-12 cm):"), this);
+   Q_CHECK_PTR(lbl_scat_len);
+   lbl_scat_len->setMinimumHeight(minHeight1);
+   lbl_scat_len->setAlignment(AlignLeft|AlignVCenter);
+   lbl_scat_len->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_scat_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+   le_scat_len = new QLineEdit(this, "Scat_Len Line Edit");
+   le_scat_len->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_scat_len->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_scat_len->setMinimumHeight(minHeight1);
+   connect(le_scat_len, SIGNAL(textChanged(const QString &)), SLOT(update_scat_len(const QString &)));
+
+   lbl_exch_prot = new QLabel(tr(" Number of exchangable protons:"), this);
+   Q_CHECK_PTR(lbl_exch_prot);
+   lbl_exch_prot->setMinimumHeight(minHeight1);
+   lbl_exch_prot->setAlignment(AlignLeft|AlignVCenter);
+   lbl_exch_prot->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_exch_prot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+   le_exch_prot = new QLineEdit(this, "Exch_Prot Line Edit");
+   le_exch_prot->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_exch_prot->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_exch_prot->setMinimumHeight(minHeight1);
+   connect(le_exch_prot, SIGNAL(textChanged(const QString &)), SLOT(update_exch_prot(const QString &)));
+
    lbl_name = new QLabel(tr(" Hybridization Name:"), this);
    Q_CHECK_PTR(lbl_name);
    lbl_name->setMinimumHeight(minHeight1);
@@ -174,6 +200,12 @@ void US_AddHybridization::setupGUI()
    background->addWidget(lbl_radius, j, 0);
    background->addWidget(le_radius, j, 1);
    j++;
+   background->addWidget(lbl_scat_len, j, 0);
+   background->addWidget(le_scat_len, j, 1);
+   j++;
+   background->addWidget(lbl_exch_prot, j, 0);
+   background->addWidget(le_exch_prot, j, 1);
+   j++;
    background->addMultiCellWidget(pb_add, j, j, 0, 1);
    j++;
    background->addWidget(pb_help, j, 0);
@@ -193,6 +225,8 @@ void US_AddHybridization::add()
          hybrid_list[i].saxs_name = current_hybrid.saxs_name;
          hybrid_list[i].mw = current_hybrid.mw;
          hybrid_list[i].radius = current_hybrid.radius;
+         hybrid_list[i].scat_len = current_hybrid.scat_len;
+         hybrid_list[i].exch_prot = current_hybrid.exch_prot;
       }
    }
    if (item < 0)
@@ -207,7 +241,13 @@ void US_AddHybridization::add()
       QTextStream ts(&f);
       for (unsigned int i=0; i<hybrid_list.size(); i++)
       {
-         ts << hybrid_list[i].saxs_name << "\t" << hybrid_list[i].name.upper() << "\t" << hybrid_list[i].mw << "\t" << hybrid_list[i].radius << endl;
+         ts << hybrid_list[i].saxs_name 
+            << "\t" << hybrid_list[i].name.upper() 
+            << "\t" << hybrid_list[i].mw 
+            << "\t" << hybrid_list[i].radius 
+            << "\t" << hybrid_list[i].scat_len
+            << "\t" << hybrid_list[i].exch_prot
+            << endl;
          //         cout << "item: " << item << ", " << hybrid_list[i].name.upper() << "\t" << hybrid_list[i].mw << "\t" << hybrid_list[i].radius << ", " <<  hybrid_filename << endl;
          str1.sprintf("%d: ", i+1);
          str1 += hybrid_list[i].name.upper();
@@ -245,6 +285,8 @@ void US_AddHybridization::select_file()
             ts >> current_hybrid.name;
             ts >> current_hybrid.mw;
             ts >> current_hybrid.radius;
+            ts >> current_hybrid.scat_len;
+            ts >> current_hybrid.exch_prot;
             str2 = ts.readLine(); // read rest of line
             if (!current_hybrid.name.isEmpty() && current_hybrid.radius > 0.0 && current_hybrid.mw > 0.0)
             {
@@ -330,6 +372,16 @@ void US_AddHybridization::update_radius(const QString &str)
    current_hybrid.radius = str.toFloat();
 }
 
+void US_AddHybridization::update_scat_len(const QString &str)
+{
+   current_hybrid.scat_len = str.toFloat();
+}
+
+void US_AddHybridization::update_exch_prot(const QString &str)
+{
+   current_hybrid.exch_prot = str.toInt();
+}
+
 void US_AddHybridization::update_name(const QString &str)
 {
    current_hybrid.name = str;
@@ -342,6 +394,10 @@ void US_AddHybridization::select_hybrid(int val)
    le_mw->setText(str);
    str.sprintf("%3.4f", hybrid_list[val].radius);
    le_radius->setText(str);
+   str.sprintf("%3.4f", hybrid_list[val].scat_len);
+   le_scat_len->setText(str);
+   str.sprintf("%d", hybrid_list[val].exch_prot);
+   le_exch_prot->setText(str);
    le_name->setText(hybrid_list[val].name.upper());
    unsigned int i;
    for (i=0; i<saxs_list.size(); i++)

@@ -109,8 +109,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
       }
    }
    // pb_plot_saxs->setEnabled(source ? false : true);
-   pb_plot_saxs->setEnabled(false);
-   pb_plot_sans->setEnabled(false);
+   pb_plot_saxs_sans->setEnabled(false);
    te_filename2->setText(filename);
    model_filename = filename;
    atom_filename = USglobal->config_list.system_dir + SLASH + "etc" + SLASH + "somo.atom";
@@ -180,7 +179,7 @@ void US_Hydrodyn_Saxs::refresh(
       }
    }
    // pb_plot_saxs->setEnabled(source ? false : true);
-   pb_plot_saxs->setEnabled(false);
+   pb_plot_saxs_sans->setEnabled(false);
    te_filename2->setText(filename);
    model_filename = filename;
    pb_stop->setEnabled(false);
@@ -208,6 +207,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    te_filename2 = new QTextEdit(this, "");
    Q_CHECK_PTR(te_filename2);
    te_filename2->setMinimumHeight(minHeight1);
+   te_filename2->setMaximumHeight(minHeight1);
    te_filename2->setAlignment(AlignLeft|AlignVCenter);
    te_filename2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    te_filename2->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
@@ -234,6 +234,27 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_select_saxs_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_saxs_file, SIGNAL(clicked()), SLOT(select_saxs_file()));
 
+   rb_saxs = new QRadioButton(tr("SAXS"), this);
+   rb_saxs->setEnabled(true);
+   rb_saxs->setChecked(!our_saxs_options->saxs_sans);
+   rb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_saxs->setMinimumHeight(minHeight1);
+   rb_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   rb_sans = new QRadioButton(tr("SANS"), this);
+   rb_sans->setEnabled(true);
+   rb_sans->setChecked(our_saxs_options->saxs_sans);
+   rb_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   rb_sans->setMinimumHeight(minHeight1);
+   rb_sans->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
+   bg_saxs_sans = new QButtonGroup(1, Qt::Horizontal, 0);
+   bg_saxs_sans->setRadioButtonExclusive(true);
+   bg_saxs_sans->insert(rb_saxs);
+   bg_saxs_sans->insert(rb_sans);
+   bg_saxs_sans->setMinimumHeight(minHeight1);
+   connect(bg_saxs_sans, SIGNAL(clicked(int)), SLOT(set_saxs_sans(int)));
+
    lbl_atom_table = new QLabel(tr(" not selected"),this);
    lbl_atom_table->setFrameStyle(QFrame::WinPanel|QFrame::Sunken);
    lbl_atom_table->setAlignment(AlignLeft|AlignVCenter);
@@ -255,19 +276,19 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_saxs_table->setMinimumHeight(minHeight1);
    lbl_saxs_table->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
 
-   pb_plot_saxs = new QPushButton(tr("Compute SAXS Curve"), this);
-   Q_CHECK_PTR(pb_plot_saxs);
-   pb_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_plot_saxs->setMinimumHeight(minHeight1);
-   pb_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_plot_saxs, SIGNAL(clicked()), SLOT(show_plot_saxs()));
+   pb_plot_saxs_sans = new QPushButton("", this);
+   Q_CHECK_PTR(pb_plot_saxs_sans);
+   pb_plot_saxs_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_plot_saxs_sans->setMinimumHeight(minHeight1);
+   pb_plot_saxs_sans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_plot_saxs_sans, SIGNAL(clicked()), SLOT(show_plot_saxs_sans()));
 
-   pb_load_saxs = new QPushButton(tr("Load SAXS Curve"), this);
-   Q_CHECK_PTR(pb_load_saxs);
-   pb_load_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_load_saxs->setMinimumHeight(minHeight1);
-   pb_load_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_load_saxs, SIGNAL(clicked()), SLOT(load_saxs()));
+   pb_load_saxs_sans = new QPushButton("", this);
+   Q_CHECK_PTR(pb_load_saxs_sans);
+   pb_load_saxs_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_load_saxs_sans->setMinimumHeight(minHeight1);
+   pb_load_saxs_sans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_load_saxs_sans, SIGNAL(clicked()), SLOT(load_saxs_sans()));
 
    pb_clear_plot_saxs = new QPushButton(tr("Clear SAXS Curve"), this);
    Q_CHECK_PTR(pb_clear_plot_saxs);
@@ -275,27 +296,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_clear_plot_saxs->setMinimumHeight(minHeight1);
    pb_clear_plot_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_clear_plot_saxs, SIGNAL(clicked()), SLOT(clear_plot_saxs()));
-
-   pb_plot_sans = new QPushButton(tr("Compute SANS Curve"), this);
-   Q_CHECK_PTR(pb_plot_sans);
-   pb_plot_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_plot_sans->setMinimumHeight(minHeight1);
-   pb_plot_sans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_plot_sans, SIGNAL(clicked()), SLOT(show_plot_sans()));
-
-   pb_load_sans = new QPushButton(tr("Load SANS Curve"), this);
-   Q_CHECK_PTR(pb_load_sans);
-   pb_load_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_load_sans->setMinimumHeight(minHeight1);
-   pb_load_sans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_load_sans, SIGNAL(clicked()), SLOT(load_sans()));
-
-   pb_clear_plot_sans = new QPushButton(tr("Clear SANS Curve"), this);
-   Q_CHECK_PTR(pb_clear_plot_sans);
-   pb_clear_plot_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
-   pb_clear_plot_sans->setMinimumHeight(minHeight1);
-   pb_clear_plot_sans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
-   connect(pb_clear_plot_sans, SIGNAL(clicked()), SLOT(clear_plot_sans()));
 
    lbl_info_prr = new QLabel(tr("P(r) vs. r  Plotting Functions:"), this);
    Q_CHECK_PTR(lbl_info_prr);
@@ -420,7 +420,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    plot_saxs->setAxisTitleFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize, QFont::Bold));
    plot_saxs->setAxisFont(QwtPlot::yRight, QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1));
    plot_saxs->setMargin(USglobal->config_list.margin);
-   plot_saxs->setTitle(tr("Simulated SAXS Curve"));
+   plot_saxs->setTitle("");
    plot_saxs->setCanvasBackground(USglobal->global_colors.plot);
 
    plot_pr = new QwtPlot(this);
@@ -449,10 +449,6 @@ void US_Hydrodyn_Saxs::setupGUI()
    progress_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    progress_saxs->reset();
 
-   progress_sans = new QProgressBar(this, "SANS Progress");
-   progress_sans->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
-   progress_sans->reset();
-
    progress_pr = new QProgressBar(this, "P(r) Progress");
    progress_pr->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    progress_pr->reset();
@@ -461,6 +457,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    editor->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    editor->setReadOnly(true);
    editor->setMinimumWidth(300);
+   editor->setMinimumHeight(minHeight1 * 6);
    m = new QMenuBar(editor, "menu" );
    m->setMinimumHeight(minHeight1);
    m->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -480,12 +477,12 @@ void US_Hydrodyn_Saxs::setupGUI()
    lbl_core_progress->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_core_progress->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize+1, QFont::Bold));
 
-
    int rows=13, columns = 3, spacing = 2, j=0, margin=4;
    QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(lbl_info, j, j, 0, 1);
-   background->addMultiCellWidget(plot_saxs, j, j+10, 2, 2);
+   //   background->addMultiCellWidget(plot_saxs, j, j+9, 2, 2);
+   // background->addMultiCellWidget(plot_saxs, j, j, 2, 2);
    j++;
    background->addWidget(lbl_filename1, j, 0);
    background->addWidget(te_filename2, j, 1);
@@ -499,17 +496,18 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(pb_select_saxs_file, j, 0);
    background->addWidget(lbl_saxs_table, j, 1);
    j++;
-   background->addWidget(pb_plot_saxs, j, 0);
+
+   QBoxLayout *hbl = new QHBoxLayout(0);
+   hbl->addWidget(rb_saxs);
+   hbl->addWidget(rb_sans);
+   background->addMultiCellLayout(hbl, j, j, 0, 1);
+   j++;
+
+   background->addWidget(pb_plot_saxs_sans, j, 0);
    background->addWidget(progress_saxs, j, 1);
    j++;
-   background->addWidget(pb_plot_sans, j, 0);
-   background->addWidget(progress_sans, j, 1);
-   j++;
-   background->addWidget(pb_load_saxs, j, 0);
+   background->addWidget(pb_load_saxs_sans, j, 0);
    background->addWidget(pb_clear_plot_saxs, j, 1);
-   j++;
-   background->addWidget(pb_load_sans, j, 0);
-   background->addWidget(pb_clear_plot_sans, j, 1);
    j++;
    background->addMultiCellWidget(lbl_info_prr, j, j, 0, 1);
    j++;
@@ -528,20 +526,39 @@ void US_Hydrodyn_Saxs::setupGUI()
    background->addWidget(pb_load_pr, j, 0);
    background->addWidget(pb_clear_plot_pr, j, 1);
    j++;
+   
    background->addMultiCellWidget(editor, j, j, 0, 1);
-   background->addMultiCellWidget(plot_pr, j-3, j+3, 2, 2);
-   j+=3;
+   //   background->addMultiCellWidget(editor, j, j+3, 0, 1);
+   // background->addMultiCellWidget(plot_pr, j-2, j+3, 2, 2);
+   // background->addMultiCellWidget(plot_pr, j, j, 2, 2);
+   j++;
    background->addWidget(pb_stop, j, 0);
    background->addWidget(pb_options, j, 1);
    j++;
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
-   background->addWidget(lbl_core_progress, j, 2);
+   // background->addWidget(lbl_core_progress, j, 2);
+
+   QVBoxLayout *vbl = new QVBoxLayout(0);
+   vbl->addWidget(plot_saxs);
+   vbl->addSpacing(4);
+   vbl->addWidget(plot_pr);
+   vbl->addWidget(lbl_core_progress);
+   background->addMultiCellLayout(vbl, 0, j, 2, 2);
 
    background->setColSpacing(2, 600);
-   //   background->setColStretch(0, 2);
-   //   background->setColStretch(1, 2);
-   //   background->setColStretch(2, 10);
+   //   for ( int j = 0; j < 15; j++ )
+   //   {
+   //      background->setRowStretch(j, 0);
+   //   }
+   //   background->setRowStretch(13, 1);
+
+   background->setColStretch(0, 1);
+   background->setColStretch(1, 2);
+   background->setColStretch(2, 10);
+   update_saxs_sans();
+   clear_plot_saxs();
+   clear_plot_pr();
 }
 
 void US_Hydrodyn_Saxs::cancel()
@@ -785,10 +802,24 @@ void US_Hydrodyn_Saxs::normalize_pr( vector < double > *pr )
    }
 }
 
-
 void US_Hydrodyn_Saxs::update_bin_size(double val)
 {
    our_saxs_options->bin_size = (float) val;
+   // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_Saxs::set_saxs_sans(int val)
+{
+   if ( our_saxs_options->saxs_sans != val )
+   {
+      clear_plot_saxs();
+      our_saxs_options->saxs_sans = val;
+      rb_curve_raw->setChecked(false);
+      rb_curve_saxs->setChecked(!val);
+      rb_curve_sans->setChecked(val);
+      set_curve(val + 1);
+      update_saxs_sans();
+   }
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
@@ -798,12 +829,13 @@ void US_Hydrodyn_Saxs::set_curve(int val)
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
+
 void US_Hydrodyn_Saxs::show_plot_pr()
 {
    stopFlag = false;
    pb_stop->setEnabled(true);
    pb_plot_pr->setEnabled(false);
-   pb_plot_saxs->setEnabled(false);
+   pb_plot_saxs_sans->setEnabled(false);
    progress_pr->reset();
    vector < unsigned int > hist;
    float delta = our_saxs_options->bin_size;
@@ -831,7 +863,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          progress_pr->reset();
          lbl_core_progress->setText("");
          // pb_plot_saxs->setEnabled(source ? false : true);
-         pb_plot_saxs->setEnabled(false);
+         pb_plot_saxs_sans->setEnabled(false);
          pb_plot_pr->setEnabled(true);
          return;
       }
@@ -988,8 +1020,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                editor->append(tr("Terminated by user request.\n"));
                progress_pr->reset();
                lbl_core_progress->setText("");
-               // pb_plot_saxs->setEnabled(source ? false : true);
-               pb_plot_saxs->setEnabled(false);
+               // pb_plot_saxs_sans->setEnabled(source ? false : true);
+               pb_plot_saxs_sans->setEnabled(false);
                pb_plot_pr->setEnabled(true);
                return;
             }
@@ -1127,8 +1159,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 
    progress_pr->setTotalSteps(1);
    progress_pr->setProgress(1);
-   // pb_plot_saxs->setEnabled(source ? false : true);
-   pb_plot_saxs->setEnabled(false);
+   // pb_plot_saxs_sans->setEnabled(source ? false : true);
+   pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(true);
 }
 
@@ -1425,7 +1457,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
    // right now we are going with first residue map entry
    stopFlag = false;
    pb_stop->setEnabled(true);
-   pb_plot_saxs->setEnabled(false);
+   pb_plot_saxs_sans->setEnabled(false);
    pb_plot_pr->setEnabled(false);
    progress_saxs->reset();
 
@@ -1451,7 +1483,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          editor->append(tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
-         pb_plot_saxs->setEnabled(true);
+         pb_plot_saxs_sans->setEnabled(true);
          pb_plot_pr->setEnabled(true);
          return;
       }
@@ -1492,7 +1524,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   editor->append(tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
-                  pb_plot_saxs->setEnabled(true);
+                  pb_plot_saxs_sans->setEnabled(true);
                   pb_plot_pr->setEnabled(true);
                   return;
                }
@@ -1518,7 +1550,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   editor->append(tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
-                  pb_plot_saxs->setEnabled(true);
+                  pb_plot_saxs_sans->setEnabled(true);
                   pb_plot_pr->setEnabled(true);
                   return;
                }
@@ -1549,7 +1581,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   editor->append(tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
-                  pb_plot_saxs->setEnabled(true);
+                  pb_plot_saxs_sans->setEnabled(true);
                   pb_plot_pr->setEnabled(true);
                   return;
                }
@@ -1584,7 +1616,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                   editor->append(tr("Terminated by user request.\n"));
                   progress_saxs->reset();
                   lbl_core_progress->setText("");
-                  pb_plot_saxs->setEnabled(true);
+                  pb_plot_saxs_sans->setEnabled(true);
                   pb_plot_pr->setEnabled(true);
                   return;
                }
@@ -1655,7 +1687,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          editor->append(tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
-         pb_plot_saxs->setEnabled(true);
+         pb_plot_saxs_sans->setEnabled(true);
          pb_plot_pr->setEnabled(true);
          return;
       }
@@ -1806,7 +1838,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          editor->append(tr("Terminated by user request.\n"));
          progress_saxs->reset();
          lbl_core_progress->setText("");
-         pb_plot_saxs->setEnabled(true);
+         pb_plot_saxs_sans->setEnabled(true);
          pb_plot_pr->setEnabled(true);
          return;
       }
@@ -1932,7 +1964,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
             editor->append(tr("Terminated by user request.\n"));
             progress_saxs->reset();
             lbl_core_progress->setText("");
-            pb_plot_saxs->setEnabled(true);
+            pb_plot_saxs_sans->setEnabled(true);
             pb_plot_pr->setEnabled(true);
             return;
          }
@@ -1969,7 +2001,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                editor->append(tr("Terminated by user request.\n"));
                progress_saxs->reset();
                lbl_core_progress->setText("");
-               pb_plot_saxs->setEnabled(true);
+               pb_plot_saxs_sans->setEnabled(true);
                pb_plot_pr->setEnabled(true);
                return;
             }
@@ -2137,7 +2169,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
          }
       }
    }
-   pb_plot_saxs->setEnabled(true);
+   pb_plot_saxs_sans->setEnabled(true);
    pb_plot_pr->setEnabled(true);
 }
 
@@ -2316,11 +2348,31 @@ void US_Hydrodyn_Saxs::show_plot_sans()
 {
 }
 
-void US_Hydrodyn_Saxs::load_sans()
+void US_Hydrodyn_Saxs::show_plot_saxs_sans()
 {
+   rb_sans->isChecked() ? show_plot_sans() : show_plot_saxs();
 }
 
-void US_Hydrodyn_Saxs::clear_plot_sans()
+void US_Hydrodyn_Saxs::load_saxs_sans()
+{
+   rb_sans->isChecked() ? load_sans() : load_saxs();
+}
+      
+void US_Hydrodyn_Saxs::update_saxs_sans()
+{
+   if ( rb_sans->isChecked() ) 
+   {
+      pb_plot_saxs_sans->setText(tr("Compute SANS Curve"));
+      pb_load_saxs_sans->setText(tr("Load SANS Curve"));
+      plot_saxs->setTitle(tr("Simulated SANS Curve"));
+   } else {
+      pb_plot_saxs_sans->setText(tr("Compute SAXS Curve"));
+      pb_load_saxs_sans->setText(tr("Load SAXS Curve"));
+      plot_saxs->setTitle(tr("Simulated SAXS Curve"));
+   }
+}
+
+void US_Hydrodyn_Saxs::load_sans()
 {
 }
 
@@ -2437,6 +2489,8 @@ void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
          ts >> current_hybrid.name;
          ts >> current_hybrid.mw;
          ts >> current_hybrid.radius;
+         ts >> current_hybrid.scat_len;
+         ts >> current_hybrid.exch_prot;
          str1 = ts.readLine(); // read rest of line
          if (!current_hybrid.name.isEmpty() && current_hybrid.radius > 0.0 && current_hybrid.mw > 0.0)
          {

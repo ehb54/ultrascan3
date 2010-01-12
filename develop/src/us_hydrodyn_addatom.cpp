@@ -287,6 +287,8 @@ void US_AddAtom::add()
          item = i;
          atom_list[i].hybrid.mw = current_atom.hybrid.mw;
          atom_list[i].hybrid.radius = current_atom.hybrid.radius;
+         atom_list[i].hybrid.scat_len = current_atom.hybrid.scat_len;
+         atom_list[i].hybrid.exch_prot = current_atom.hybrid.exch_prot;
          atom_list[i].hybrid.saxs_name = current_atom.hybrid.saxs_name;
          atom_list[i].saxs_excl_vol = current_atom.saxs_excl_vol;
       }
@@ -445,6 +447,8 @@ void US_AddAtom::select_hybrid_file()
             ts >> current_hybrid.name;
             ts >> current_hybrid.mw;
             ts >> current_hybrid.radius;
+            ts >> current_hybrid.scat_len;
+            ts >> current_hybrid.exch_prot;
             str2 = ts.readLine(); // read rest of line
             if (!current_hybrid.name.isEmpty() && current_hybrid.radius > 0.0 && current_hybrid.mw > 0.0)
             {
@@ -520,6 +524,8 @@ void US_AddAtom::select_hybrid(int i)
    current_atom.hybrid.mw = hybrid_list[i].mw;
    current_atom.hybrid.name = hybrid_list[i].name;
    current_atom.hybrid.radius = hybrid_list[i].radius;
+   current_atom.hybrid.scat_len = hybrid_list[i].scat_len;
+   current_atom.hybrid.exch_prot = hybrid_list[i].exch_prot;
    str.sprintf("%3.2f: ", current_atom.hybrid.mw);
    lbl_mw2->setText(str);
    str.sprintf("%3.2f: ", current_atom.hybrid.radius);
@@ -569,6 +575,8 @@ void US_AddAtom::select_atom(int val)
    current_atom.hybrid.mw = atom_list[val].hybrid.mw;
    current_atom.hybrid.name = atom_list[val].hybrid.name;
    current_atom.hybrid.radius = atom_list[val].hybrid.radius;
+   current_atom.hybrid.scat_len = atom_list[val].hybrid.scat_len;
+   current_atom.hybrid.exch_prot = atom_list[val].hybrid.exch_prot;
    current_atom.hybrid.saxs_name = atom_list[val].hybrid.saxs_name;
    current_atom.saxs_excl_vol = atom_list[val].saxs_excl_vol;
 
