@@ -9,17 +9,17 @@ namespace US_WinData
   enum
   {
     P_EXIT   = 4,
-    P_CONFIG = 300, P_EDIT,           // Edit Menu
+    P_CONFIG = 300, P_EDIT,                // Edit Menu
     
-    P_SECOND,       P_DCDT,           // Velocity Menu
+    P_SECOND,       P_DCDT,                // Velocity Menu
     
-    P_CONVERT,      P_FIT,            // Utilities menu
+    P_CONVERT,      P_FIT,    P_COLORGRAD, // Utilities menu
     
-    P_ASTFEM,       P_EQUILTIMESIM,   // Simulation Menu
+    P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
     P_SASSOC,       P_MODEL1, P_MODEL2,
-    
-    P_INVESTIGATOR, P_BUFFER, P_VBAR, // Database Menu
-    
+
+    P_INVESTIGATOR, P_BUFFER, P_VBAR,      // Database Menu
+
     P_END 
   };
 
@@ -90,6 +90,11 @@ namespace US_WinData
       QObject::tr( "Fit Meniscus Program" )
     },
    
+    { P_COLORGRAD, 0, 0, "us_colorgradient",
+      QObject::tr( "Loading Color Gradient Generator" ),
+      QObject::tr( "Color Gradient Generator Program" )
+    },
+
     { P_ASTFEM, 2, 0, "us_astfem_sim",
        QObject::tr( "Loading Finite Element Sedimentation Simulator (ASTFEM)" ),
        QObject::tr( "Finite Element Simulation Program (ASTFEM)" )
@@ -129,7 +134,7 @@ namespace US_WinData
       QObject::tr( "Editing Peptide Sequences" ),
       QObject::tr( "Editing Peptide Sequences Program" )
     },
-    
+
     { P_END, 0, 0, "", "", "" }
   };
 

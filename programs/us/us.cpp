@@ -147,8 +147,9 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   QMenu* fit         = new QMenu( tr( "&Global Fit" ), this );
   
   QMenu* utilities   = new QMenu( tr( "&Utilities" ), this );
-  addMenu(  P_CONVERT, tr( "&Convert Legacy Data" ), utilities );
-  addMenu(  P_FIT    , tr( "&Fit Meniscus"        ), utilities );
+  addMenu(  P_CONVERT  , tr( "&Convert Legacy Data"      ), utilities );
+  addMenu(  P_FIT      , tr( "&Fit Meniscus"             ), utilities );
+  addMenu(  P_COLORGRAD, tr( "Color &Gradient Generator" ), utilities );
 
 
 
@@ -444,7 +445,7 @@ void US_Win::help( int index )
       QMessageBox::information( this,
         tr( "UltraScan Credits" ),
         tr( "UltraScan III version %1\n"
-            "Copyright 1998 - 2008\n"
+            "Copyright 1998 - 2010\n"
             "Borries Demeler and the University of Texas System\n\n"
             " - Credits -\n\n"
             "The development of this software has been supported by grants\n"
@@ -484,7 +485,7 @@ void US_Win::help( int index )
         tr( "About UltraScan..." ),
         tr( "UltraScan III version %1\n"
             "%2\n"
-            "Copyright 1989 - 2008\n"
+            "Copyright 1989 - 2010\n"
             "Borries Demeler and the University of Texas System\n\n"
             "For more information, please visit:\n"
             "http://www.ultrascan.uthscsa.edu/\n\n"
