@@ -420,7 +420,7 @@ void US_Hydrodyn::setupGUI()
    pb_somo->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_somo, SIGNAL(clicked()), SLOT(calc_somo()));
 
-   pb_pdb_saxs = new QPushButton(tr("SAXS Functions"), this);
+   pb_pdb_saxs = new QPushButton(tr("SAXS/SANS Functions"), this);
    Q_CHECK_PTR(pb_pdb_saxs);
    pb_pdb_saxs->setMinimumHeight(minHeight1);
    pb_pdb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -428,7 +428,7 @@ void US_Hydrodyn::setupGUI()
    pb_pdb_saxs->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_pdb_saxs, SIGNAL(clicked()), SLOT(pdb_saxs()));
 
-   pb_bead_saxs = new QPushButton(tr("SAXS Functions"), this);
+   pb_bead_saxs = new QPushButton(tr("SAXS/SANS Functions"), this);
    Q_CHECK_PTR(pb_bead_saxs);
    pb_bead_saxs->setMinimumHeight(minHeight1);
    pb_bead_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));

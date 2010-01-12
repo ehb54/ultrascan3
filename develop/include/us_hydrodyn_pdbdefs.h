@@ -142,6 +142,7 @@ struct saxs_options
    float   delta_q;              // q stepsize
    float   max_size;             // maximum size (A)
    float   bin_size;             // Bin size (A)
+   int     curve;                // 0 = raw, 1 = saxs, 2 = sans
    bool    hydrate_pdb;          // Hydrate the PDB model? (true/false)
 };
 

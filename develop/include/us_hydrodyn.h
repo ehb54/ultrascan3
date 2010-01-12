@@ -318,6 +318,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int calc_grid_pdb(); // compute grid model from pdb
       int calc_hydro();
       void select_save_params();
+      void show_saxs_options();
 
    private slots:
       void load_pdb();
@@ -356,7 +357,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void show_hydro();
       void show_misc();
       void show_grid(); // show grid options
-      void show_saxs_options();
       void show_advanced_config();
       void view_pdb(); // show pdb file in editor
       void pdb_parsing(); // pdb parsing options

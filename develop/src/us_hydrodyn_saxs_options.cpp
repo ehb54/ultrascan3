@@ -139,7 +139,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cnt_d2o_scat_len_dens->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_d2o_scat_len_dens, SIGNAL(valueChanged(double)), SLOT(update_d2o_scat_len_dens(double)));
 
-   lbl_d2o_conc = new QLabel(tr(" Fraction of D2O (0 - 1): "), this);
+   lbl_d2o_conc = new QLabel(tr(" Buffer D2O fraction (0 - 1): "), this);
    Q_CHECK_PTR(lbl_d2o_conc);
    lbl_d2o_conc->setAlignment(AlignLeft|AlignVCenter);
    lbl_d2o_conc->setMinimumHeight(minHeight1);

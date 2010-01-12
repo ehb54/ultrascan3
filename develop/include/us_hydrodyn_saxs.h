@@ -13,6 +13,7 @@
 #include <qbuttongroup.h>
 #include <qtextedit.h>
 #include <qprogressbar.h>
+#include <qradiobutton.h>
 #include <qmenubar.h>
 #include <qfileinfo.h>
 #include <qprinter.h>
@@ -95,6 +96,9 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_plot_saxs;
       QPushButton *pb_load_saxs;
       QPushButton *pb_clear_plot_saxs;
+      QPushButton *pb_plot_sans;
+      QPushButton *pb_load_sans;
+      QPushButton *pb_clear_plot_sans;
       QPushButton *pb_plot_pr;
       QPushButton *pb_load_pr;
       QPushButton *pb_clear_plot_pr;
@@ -102,10 +106,16 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QPushButton *pb_select_hybrid_file;
       QPushButton *pb_select_saxs_file;
       QPushButton *pb_stop;
+      QPushButton *pb_options;
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
       QwtCounter *cnt_bin_size;
+
+      QButtonGroup *bg_curve;
+      QRadioButton *rb_curve_raw;
+      QRadioButton *rb_curve_saxs;
+      QRadioButton *rb_curve_sans;
 
       QFont ft;
 
@@ -118,6 +128,7 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
 
       QProgressBar *progress_pr;
       QProgressBar *progress_saxs;
+      QProgressBar *progress_sans;
 
       struct atom current_atom;
       struct hybridization current_hybrid;
@@ -169,12 +180,17 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void show_plot_saxs();
       void load_saxs();
       void clear_plot_saxs();
+      void show_plot_sans();
+      void load_sans();
+      void clear_plot_sans();
       void update_bin_size(double);
+      void set_curve(int);
       void show_plot_pr();
       void load_pr();
       void clear_plot_pr();
       void cancel();
       void help();
+      void options();
       void stop();
       void clear_display();
       void print();
