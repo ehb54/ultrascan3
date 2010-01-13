@@ -40,6 +40,7 @@ struct saxs_atom
    QString saxs_name;
    float pos[3];
    float excl_vol;
+   float b;           // scattering factor b for p(r) calcs
 };
 
 class US_EXTERN US_Hydrodyn_Saxs : public QFrame
@@ -280,7 +281,7 @@ class saxs_pr_thr_t : public QThread
   saxs_pr_thr_t(int);
   void saxs_pr_thr_setup(
                          vector < saxs_atom > *atoms,
-                         vector < unsigned int > *hist,
+                         vector < float > *hist,
                          double delta,
                          unsigned int threads,
                          QProgressBar *progress,
@@ -299,7 +300,7 @@ class saxs_pr_thr_t : public QThread
 #endif
 
   vector < saxs_atom > *atoms;
-  vector < unsigned int > *hist;
+  vector < float > *hist;
 
 #ifdef WIN32
   #pragma warning ( default: 4251 )

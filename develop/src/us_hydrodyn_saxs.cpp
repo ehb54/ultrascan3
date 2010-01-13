@@ -21,7 +21,7 @@
 #define SAXS_DEBUG2
 // #define SAXS_DEBUG_F
 // #define SAXS_DEBUG_FV
-// #define BUG_DEBUG
+#define BUG_DEBUG
 // #define RESCALE_B
 #define SAXS_MIN_Q 1e-6
 // #define ONLY_PHYSICAL_F
@@ -179,6 +179,21 @@ void US_Hydrodyn_Saxs::refresh(
       }
    }
    // pb_plot_saxs->setEnabled(source ? false : true);
+   if ( source )
+   {
+      our_saxs_options->curve = 0;
+      rb_curve_raw->setChecked(true);
+      rb_curve_saxs->setChecked(false);
+      rb_curve_sans->setChecked(false);
+      rb_curve_raw->setEnabled(false);
+      rb_curve_saxs->setEnabled(false);
+      rb_curve_sans->setEnabled(false);
+   } else {
+      rb_curve_raw->setEnabled(true);
+      rb_curve_saxs->setEnabled(true);
+      rb_curve_sans->setEnabled(true);
+   }
+      
    pb_plot_saxs_sans->setEnabled(false);
    te_filename2->setText(filename);
    model_filename = filename;
@@ -290,7 +305,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_load_saxs_sans->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_load_saxs_sans, SIGNAL(clicked()), SLOT(load_saxs_sans()));
 
-   pb_clear_plot_saxs = new QPushButton(tr("Clear SAXS Curve"), this);
+   pb_clear_plot_saxs = new QPushButton("", this);
    Q_CHECK_PTR(pb_clear_plot_saxs);
    pb_clear_plot_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
    pb_clear_plot_saxs->setMinimumHeight(minHeight1);
@@ -559,6 +574,21 @@ void US_Hydrodyn_Saxs::setupGUI()
    update_saxs_sans();
    clear_plot_saxs();
    clear_plot_pr();
+   if ( source )
+   {
+      our_saxs_options->curve = 0;
+      rb_curve_raw->setChecked(true);
+      rb_curve_saxs->setChecked(false);
+      rb_curve_sans->setChecked(false);
+      rb_curve_raw->setEnabled(false);
+      rb_curve_saxs->setEnabled(false);
+      rb_curve_sans->setEnabled(false);
+   } else {
+      rb_curve_raw->setEnabled(true);
+      rb_curve_saxs->setEnabled(true);
+      rb_curve_sans->setEnabled(true);
+   }
+      
 }
 
 void US_Hydrodyn_Saxs::cancel()
@@ -607,7 +637,7 @@ saxs_pr_thr_t::saxs_pr_thr_t(int a_thread) : QThread()
 
 void saxs_pr_thr_t::saxs_pr_thr_setup(
                                       vector < saxs_atom > *atoms,
-                                      vector < unsigned int > *hist,
+                                      vector < float > *hist,
                                       double delta,
                                       unsigned int threads,
                                       QProgressBar *progress,
@@ -814,10 +844,13 @@ void US_Hydrodyn_Saxs::set_saxs_sans(int val)
    {
       clear_plot_saxs();
       our_saxs_options->saxs_sans = val;
-      rb_curve_raw->setChecked(false);
-      rb_curve_saxs->setChecked(!val);
-      rb_curve_sans->setChecked(val);
-      set_curve(val + 1);
+      if ( !source )
+      {
+         rb_curve_raw->setChecked(false);
+         rb_curve_saxs->setChecked(!val);
+         rb_curve_sans->setChecked(val);
+         set_curve(val + 1);
+      }
       update_saxs_sans();
    }
    // ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
@@ -837,7 +870,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
    pb_plot_pr->setEnabled(false);
    pb_plot_saxs_sans->setEnabled(false);
    progress_pr->reset();
-   vector < unsigned int > hist;
+   vector < float > hist;
    float delta = our_saxs_options->bin_size;
 
 #if defined(BUG_DEBUG)
@@ -870,6 +903,11 @@ void US_Hydrodyn_Saxs::show_plot_pr()
          
       vector < saxs_atom > atoms;
       saxs_atom new_atom;
+
+      float b_bar = 0;
+      float b_bar_inv2 = 1;
+      int b_count = 0;
+
       if ( source )
       {
          // bead models
@@ -884,17 +922,68 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       }
       else 
       {
+         // compute b[0] based upon current values
+         map < QString, float > b;
+         if ( rb_curve_sans->isChecked() )
+         {
+            // for each entry in hybrid_map, compute b
+            for (map < QString, hybridization >::iterator it = hybrid_map.begin();
+                 it != hybrid_map.end();
+                 it++)
+            {
+               // it->second.scat_len, .exch_prot
+               b[it->first] = 
+                  it->second.scat_len + 
+
+                  it->second.exch_prot * 
+                  our_saxs_options->d2o_conc * 
+                  (our_saxs_options->d2o_scat_len_dens - our_saxs_options->h2o_scat_len_dens) * 1;
+               // UPDATE to 1-fraction of exchanged peptide H for peptide bond groups NH only
+#if defined(BUG_DEBUG)
+               printf("hybrid name %s b %e\n",
+                      it->first.ascii(),
+                      b[it->first]);
+#endif
+            }
+         }            
          // pdb files
          for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
          {
             for (unsigned int k = 0; k < model_vector[current_model].molecule[j].atom.size(); k++)
             {
                PDB_atom *this_atom = &(model_vector[current_model].molecule[j].atom[k]);
+               
                new_atom.pos[0] = this_atom->coordinate.axis[0];
                new_atom.pos[1] = this_atom->coordinate.axis[1];
                new_atom.pos[2] = this_atom->coordinate.axis[2];
+               
+               if ( rb_curve_sans->isChecked() )
+               {
+                  QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
+                  if ( this_atom->name == "OXT" )
+                  {
+                     mapkey = "OXT|OXT";
+                  }
+                  QString hybrid_name = residue_atom_hybrid_map[mapkey];
+                  new_atom.b = b[hybrid_name];
+                  b_count++;
+                  b_bar += new_atom.b;
+#if defined(BUG_DEBUG)
+                  printf("atom %d %d hybrid name %s, atom name %s b %e\n",
+                         j, k, 
+                         hybrid_name.ascii(),
+                         this_atom->name.ascii(),
+                         new_atom.b
+                         );
+#endif
+               }
                atoms.push_back(new_atom);
             }
+         }
+         b_bar /= b_count;
+         if ( b_bar )
+         {
+            b_bar_inv2 = 1 / (b_bar * b_bar);
          }
       }
 #if defined(BUG_DEBUG)
@@ -911,7 +1000,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      .arg(delta));
       qApp->processEvents();
 
-      if ( USglobal->config_list.numThreads > 1 )
+      // restore threading later
+      if ( 0 && USglobal->config_list.numThreads > 1 )
       {
          // threaded
          
@@ -924,7 +1014,7 @@ void US_Hydrodyn_Saxs::show_plot_pr()
             saxs_pr_thr_threads[j] = new saxs_pr_thr_t(j);
             saxs_pr_thr_threads[j]->start();
          }
-         vector < vector < unsigned int > > hists;
+         vector < vector < float > > hists;
          hists.resize(threads);
          for ( j = 0; j < threads; j++ )
          {
@@ -1041,7 +1131,18 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                {
                   hist.resize(pos + 128);
                }
-               hist[pos]++;
+               if ( rb_curve_raw->isChecked() )
+               {
+                  hist[pos]++;
+               }
+               if ( rb_curve_sans->isChecked() )
+               {
+                  // for ( unsigned int i = 0; i < hist.size(); i++ )
+                  // {
+                  //   hist[i] += (1.0 / fabs((i * delta) - rik)) * atoms[i].b * atoms[j].b * b_bar_inv2;
+                  // }
+                  hist[pos] += atoms[i].b * atoms[j].b * b_bar_inv2;
+               }
             }
          }
       } // end non-threaded
@@ -2364,10 +2465,12 @@ void US_Hydrodyn_Saxs::update_saxs_sans()
    {
       pb_plot_saxs_sans->setText(tr("Compute SANS Curve"));
       pb_load_saxs_sans->setText(tr("Load SANS Curve"));
+      pb_clear_plot_saxs->setText(tr("Clear SANS Curve"));
       plot_saxs->setTitle(tr("Simulated SANS Curve"));
    } else {
       pb_plot_saxs_sans->setText(tr("Compute SAXS Curve"));
       pb_load_saxs_sans->setText(tr("Load SAXS Curve"));
+      pb_clear_plot_saxs->setText(tr("Clear SAXS Curve"));
       plot_saxs->setTitle(tr("Simulated SAXS Curve"));
    }
 }
