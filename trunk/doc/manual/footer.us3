@@ -1,0 +1,18 @@
+
+    <hr>
+
+    <p class='footer'>www contact: <a href=
+    "mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a></p>
+    
+    <p class='footer'>This document is part of the
+      <i><b>UltraScan</b></i> Software Documentation distribution.<br>
+      <a href="copyright.html">Copyright © notice</a>.</p>
+    
+    <p class='footer'>The latest version of this document can always be found at: </p>
+    
+    <p class='footer' style="margin-left: 2em"><a href=
+      "http://www.ultrascan.uthscsa.edu">http://www.ultrascan.uthscsa.edu</a></p>
+    
+    <p class='footer'>Last modified on $Date: __DATE__ $ </p>
+  </body>
+</html>
