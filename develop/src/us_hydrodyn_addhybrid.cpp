@@ -113,7 +113,7 @@ void US_AddHybridization::setupGUI()
    le_radius->setMinimumHeight(minHeight1);
    connect(le_radius, SIGNAL(textChanged(const QString &)), SLOT(update_radius(const QString &)));
 
-   lbl_scat_len = new QLabel(tr(" Scattering length in H2O (*10^-12 cm):"), this);
+   lbl_scat_len = new QLabel(tr(" Neutron scattering length in H2O (*10^-12 cm):"), this);
    Q_CHECK_PTR(lbl_scat_len);
    lbl_scat_len->setMinimumHeight(minHeight1);
    lbl_scat_len->setAlignment(AlignLeft|AlignVCenter);
