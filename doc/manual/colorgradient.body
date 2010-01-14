@@ -1,0 +1,89 @@
+    <h2> <i>UltraScan</i> Color Gradient Generator: </h2>
+
+    <p> Color gradients can be generated for the purpose of providing
+    a third dimension to selected <b><i>UltraScan III</i></b> program graphs.
+    The color gradient panel is accessed from the main menu under the 
+    <b>Utilities</b> menu: </p>
+
+    <center> <img src="images/colorgrad1.png" alt=""> </center>
+
+    <p> Color gradients are specified with a start color and a number of
+    color steps, each one having an end color and a number of points.
+    The total number of colors in the gradient is the sum of step points
+    plus one for the start color. The steps are saved in an XML file, with
+    an option to save a PNG file with the color legend.
+    
+    <table border cellspacing="5" cellpadding="5">
+      <tr>
+        <td>
+          <img src="images/colorgrad.png" alt="">
+        </td>
+        <td>
+          <ul>
+            <li>
+              <b>Select Starting Color</b> A click on this button leads to
+              a standard color dialog. The chosen color appears in the label
+              to the right.
+            </li>
+
+            <li>
+              <b>Number of Color Steps:</b> Choose the total number of
+              color steps.
+            </li>
+            
+            <li>
+              <b>Select a Color Step:</b> Change this value to a number
+              from 1 to the number of steps, then change the number of points
+              and color for the indicated step.
+            </li>
+
+            <li>
+              <b>Number of Points in this Step:</b> Indicate the number of
+              points that the current step uses in transitioning from the
+              previous start or step color to the current step end color.
+            </li>
+            
+            <li>
+              <b>Select Step Color:</b> Click on this button and select a
+              step end color from the resulting dialog.
+            </li>
+            
+            <li>
+              <b>Help:</b> Display detailed color gradient generator help.
+            </li>
+            
+            <li>
+              <b>Reset:</b> Remove all color and points selections and revert
+              to a single one-point step with color black.
+            </li>
+            
+            <li>
+              <b>Load Gradient</b> Load gradient selections from a previously
+              saved color gradient XML file.
+            </li>
+            
+            <li>
+              <b>Show Gradient</b> Draw a representation of the currently
+              specified color gradient in the bottommost panel. The panel
+              will adjust its size so the concentric circles portion is square
+              and there is room to the right for a vertical color legend,
+              with start color at the bottom.
+            </li>
+            
+            <li>
+              <b>Save Gradient</b> Save the current color gradient to an XML
+              file. A standard file dialog is used. After giving the name of
+              the XML file, you will be given the option of also saving a PNG
+              file that contains the color legend at the displayed size and
+              with the same base name as the XML file.
+            </li>
+            
+            <li>
+              <b>Close</b> Close the color gradient generator session. If you
+              have not saved the gradient to a file, you will be given a final
+              opportunity to do so.
+            </li>
+          </ul>
+        </td>
+      </tr>
+    </table>
