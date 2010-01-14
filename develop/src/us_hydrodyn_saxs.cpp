@@ -21,7 +21,7 @@
 #define SAXS_DEBUG2
 // #define SAXS_DEBUG_F
 // #define SAXS_DEBUG_FV
-#define BUG_DEBUG
+// #define BUG_DEBUG
 // #define RESCALE_B
 #define SAXS_MIN_Q 1e-6
 // #define ONLY_PHYSICAL_F
@@ -242,7 +242,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    pb_select_hybrid_file->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_select_hybrid_file, SIGNAL(clicked()), SLOT(select_hybrid_file()));
 
-   pb_select_saxs_file = new QPushButton(tr("Load SAXS Coefficient File"), this);
+   pb_select_saxs_file = new QPushButton(tr("Load SAXS Coefficients File"), this);
    Q_CHECK_PTR(pb_select_saxs_file);
    pb_select_saxs_file->setMinimumHeight(minHeight1);
    pb_select_saxs_file->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
@@ -944,6 +944,22 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                       it->first.ascii(),
                       b[it->first]);
 #endif
+               // special exchange handling for aa pb 
+               if ( it->first == "N3H1" )
+               {
+                  b[it->first + "-aa"] = 
+                     it->second.scat_len + 
+                     
+                     it->second.exch_prot * 
+                     our_saxs_options->d2o_conc * 
+                     (our_saxs_options->d2o_scat_len_dens - our_saxs_options->h2o_scat_len_dens) *
+                     (1 - our_saxs_options->frac_of_exch_pep);
+#if defined(BUG_DEBUG)
+                  printf("hybrid name %s b %e\n",
+                         QString(it->first + "-aa").ascii(),
+                         b[it->first + "-aa"]);
+#endif
+               }
             }
          }            
          // pdb files
@@ -965,15 +981,23 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                      mapkey = "OXT|OXT";
                   }
                   QString hybrid_name = residue_atom_hybrid_map[mapkey];
+                  if ( this_atom->name == "N" &&
+                       hybrid_name == "N3H1" &&
+                       this_atom->p_residue->type == 0 )
+                  {
+                     hybrid_name += "-aa";
+                  }
                   new_atom.b = b[hybrid_name];
                   b_count++;
                   b_bar += new_atom.b;
 #if defined(BUG_DEBUG)
-                  printf("atom %d %d hybrid name %s, atom name %s b %e\n",
+                  printf("atom %d %d hybrid name %s, atom name %s b %e mapkey %s hybrid name %s\n",
                          j, k, 
                          hybrid_name.ascii(),
                          this_atom->name.ascii(),
-                         new_atom.b
+                         new_atom.b,
+                         mapkey.ascii(),
+                         hybrid_name.ascii()
                          );
 #endif
                }
@@ -1137,10 +1161,6 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                }
                if ( rb_curve_sans->isChecked() )
                {
-                  // for ( unsigned int i = 0; i < hist.size(); i++ )
-                  // {
-                  //   hist[i] += (1.0 / fabs((i * delta) - rik)) * atoms[i].b * atoms[j].b * b_bar_inv2;
-                  // }
                   hist[pos] += atoms[i].b * atoms[j].b * b_bar_inv2;
                }
             }
@@ -1169,7 +1189,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       QString fpr_name = USglobal->config_list.root_dir + 
          SLASH + "somo" + SLASH + "saxs" + SLASH + QString("%1").arg(te_filename2->text()) +
          QString("_%1").arg(current_model + 1) + 
-         ".sprr";
+         ".sprr_" + ( rb_curve_raw->isChecked() ? "r" :
+                      ( rb_curve_saxs->isChecked() ? "x" : "n" ) );
       bool ok_to_write = true;
       if ( QFile::exists(fpr_name) )
       {
@@ -1177,7 +1198,9 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                            tr("Overwrite file:") + "SAXS P(r) vs. r" + tr("output file"),
                                            tr("The P(r) curve file \"") + QString("%1").arg(te_filename2->text()) +
                                            QString("_%1").arg(current_model + 1) + 
-                                           ".sprr" + tr("\" will be overwriten"),
+                                           ".sprr_" + ( rb_curve_raw->isChecked() ? "r" :
+                                                        ( rb_curve_saxs->isChecked() ? "x" : "n" ) )
+                                           + tr("\" will be overwriten"),
                                            "&Ok",  "&Cancel", 0,
                                            0,      // Enter == button 0
                                            1 ) ) { // Escape == button 2
@@ -1282,7 +1305,7 @@ void US_Hydrodyn_Saxs::load_pr()
    unsigned int pop_last = 0;
    if ( f.open(IO_ReadOnly) )
    {
-      if ( ext != "sprr" ) 
+      if ( !ext.contains(QRegExp("^sprr(|_(x|n|r))")) )
       {
          // check for gnom output
          QTextStream ts(&f);
@@ -2219,7 +2242,9 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
                                            tr("Overwrite file:") + "SAXS P(r) vs. r" + tr("output file"),
                                            tr("The file named \"") + QString("%1").arg(te_filename2->text()) +
                                            QString("_%1").arg(current_model + 1) + 
-                                           ".sprr" + tr("\" will be overwriten"),
+                                           ".sprr_" + ( rb_curve_raw->isChecked() ? "r" :
+                                                        ( rb_curve_saxs->isChecked() ? "x" : "n" ) )
+                                           + tr("\" will be overwriten"),
                                            "&Ok",  "&Cancel", 0,
                                            0,      // Enter == button 0
                                            1 ) ) { // Escape == button 1
@@ -2594,6 +2619,7 @@ void US_Hydrodyn_Saxs::select_hybrid_file(const QString &filename)
          ts >> current_hybrid.radius;
          ts >> current_hybrid.scat_len;
          ts >> current_hybrid.exch_prot;
+         ts >> current_hybrid.num_elect;
          str1 = ts.readLine(); // read rest of line
          if (!current_hybrid.name.isEmpty() && current_hybrid.radius > 0.0 && current_hybrid.mw > 0.0)
          {

@@ -670,6 +670,8 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
          }
          int respos = -1;
     
+         int restype = residue_list[multi_residue_map[this_atom->resName][0]].type;
+
          for ( unsigned int m = 0; m < residue_list.size(); m++ )
          {
             if ((residue_list[m].name == this_atom->resName &&
@@ -678,6 +680,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                  this_atom->name != "OXT" &&
                  (k ||
                   this_atom->name != "N" || 
+                  restype != 0 ||
                   broken_chain_head.count(QString("%1|%2")
                                           .arg(this_atom->resSeq)
                                           .arg(this_atom->resName)) ||
@@ -693,6 +696,7 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 
                 (!k &&
                  this_atom->name == "N" &&
+                 restype == 0 &&
                  misc.pb_rule_on &&
                  residue_list[m].name == "N1" &&
                  !broken_chain_head.count(QString("%1|%2")
@@ -2154,6 +2158,8 @@ int US_Hydrodyn::create_beads(QString *error_string)
                    this_atom->name.ascii(),
                    this_atom->resName.ascii());
          }
+
+         int restype = residue_list[multi_residue_map[this_atom->resName][0]].type;
          
          for (unsigned int m = 0; m < residue_list.size(); m++)
          {
@@ -2163,6 +2169,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
                  this_atom->name != "OXT" &&
                  (k ||
                   this_atom->name != "N" ||
+                  restype != 0 ||
                   broken_chain_head.count(QString("%1|%2")
                                           .arg(this_atom->resSeq)
                                           .arg(this_atom->resName)) ||
@@ -2177,6 +2184,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
 
                 (!k &&
                  this_atom->name == "N" &&
+                 restype == 0 &&                  
                  misc.pb_rule_on &&
                  residue_list[m].name == "N1" &&
                  !broken_chain_head.count(QString("%1|%2")

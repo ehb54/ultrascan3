@@ -155,6 +155,7 @@ struct hybridization
    QString saxs_name;            // name for SAXS coefficients
    float   scat_len;             // Scattering length in H20 (*10^-12 cm)
    int     exch_prot;            // Number of exchangable protons
+   int     num_elect;            // Number of electrons
 };
 
 struct atom

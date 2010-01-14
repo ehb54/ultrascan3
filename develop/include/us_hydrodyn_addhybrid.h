@@ -41,6 +41,7 @@ class US_AddHybridization : public QWidget
       QLabel *lbl_radius;
       QLabel *lbl_scat_len;
       QLabel *lbl_exch_prot;
+      QLabel *lbl_num_elect;
       QLabel *lbl_name;
       QLabel *lbl_number_of_hybrids;
       QLabel *lbl_number_of_saxs;
@@ -54,6 +55,7 @@ class US_AddHybridization : public QWidget
       QLineEdit *le_radius;
       QLineEdit *le_scat_len;
       QLineEdit *le_exch_prot;
+      QLineEdit *le_num_elect;
 
       struct hybridization current_hybrid;
       vector <struct hybridization> hybrid_list;
@@ -73,6 +75,7 @@ class US_AddHybridization : public QWidget
       void update_radius(const QString &);
       void update_scat_len(const QString &);
       void update_exch_prot(const QString &);
+      void update_num_elect(const QString &);
       void select_hybrid(int);
       void select_saxs(int);
 

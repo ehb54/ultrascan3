@@ -191,6 +191,7 @@ void US_AddResidue::setupGUI()
    cmb_type->insertItem("Co-factor");
    cmb_type->insertItem("Ion");
    cmb_type->insertItem("Detergent");
+   cmb_type->insertItem("Lipid");
    cmb_type->insertItem("Other");
    cmb_type->setMinimumHeight(minHeight1);
    connect(cmb_type, SIGNAL(activated(int)), this, SLOT(select_type(int)));
@@ -936,6 +937,11 @@ void US_AddResidue::read_residue_file(const QString & filename)
                   break;
                }
             case 8:
+               {
+                  str3 = "Lipid";
+                  break;
+               }
+            case 9:
                {
                   str3 = "Other";
                   break;
@@ -1918,6 +1924,11 @@ void US_AddResidue::write_residue_file()
                break;
             }
          case 8:
+            {
+               str3 = "Lipid";
+               break;
+            }
+         case 9:
             {
                str3 = "Other";
                break;

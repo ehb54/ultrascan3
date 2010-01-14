@@ -139,6 +139,19 @@ void US_AddHybridization::setupGUI()
    le_exch_prot->setMinimumHeight(minHeight1);
    connect(le_exch_prot, SIGNAL(textChanged(const QString &)), SLOT(update_exch_prot(const QString &)));
 
+   lbl_num_elect = new QLabel(tr(" Total number of electrons:"), this);
+   Q_CHECK_PTR(lbl_num_elect);
+   lbl_num_elect->setMinimumHeight(minHeight1);
+   lbl_num_elect->setAlignment(AlignLeft|AlignVCenter);
+   lbl_num_elect->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_num_elect->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+   le_num_elect = new QLineEdit(this, "Num_Elect Line Edit");
+   le_num_elect->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_num_elect->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_num_elect->setMinimumHeight(minHeight1);
+   connect(le_num_elect, SIGNAL(textChanged(const QString &)), SLOT(update_num_elect(const QString &)));
+
    lbl_name = new QLabel(tr(" Hybridization Name:"), this);
    Q_CHECK_PTR(lbl_name);
    lbl_name->setMinimumHeight(minHeight1);
@@ -206,6 +219,9 @@ void US_AddHybridization::setupGUI()
    background->addWidget(lbl_exch_prot, j, 0);
    background->addWidget(le_exch_prot, j, 1);
    j++;
+   background->addWidget(lbl_num_elect, j, 0);
+   background->addWidget(le_num_elect, j, 1);
+   j++;
    background->addMultiCellWidget(pb_add, j, j, 0, 1);
    j++;
    background->addWidget(pb_help, j, 0);
@@ -227,6 +243,7 @@ void US_AddHybridization::add()
          hybrid_list[i].radius = current_hybrid.radius;
          hybrid_list[i].scat_len = current_hybrid.scat_len;
          hybrid_list[i].exch_prot = current_hybrid.exch_prot;
+         hybrid_list[i].num_elect = current_hybrid.num_elect;
       }
    }
    if (item < 0)
@@ -247,6 +264,7 @@ void US_AddHybridization::add()
             << "\t" << hybrid_list[i].radius 
             << "\t" << hybrid_list[i].scat_len
             << "\t" << hybrid_list[i].exch_prot
+            << "\t" << hybrid_list[i].num_elect
             << endl;
          //         cout << "item: " << item << ", " << hybrid_list[i].name.upper() << "\t" << hybrid_list[i].mw << "\t" << hybrid_list[i].radius << ", " <<  hybrid_filename << endl;
          str1.sprintf("%d: ", i+1);
@@ -287,6 +305,7 @@ void US_AddHybridization::select_file()
             ts >> current_hybrid.radius;
             ts >> current_hybrid.scat_len;
             ts >> current_hybrid.exch_prot;
+            ts >> current_hybrid.num_elect;
             str2 = ts.readLine(); // read rest of line
             if (!current_hybrid.name.isEmpty() && current_hybrid.radius > 0.0 && current_hybrid.mw > 0.0)
             {
@@ -382,6 +401,11 @@ void US_AddHybridization::update_exch_prot(const QString &str)
    current_hybrid.exch_prot = str.toInt();
 }
 
+void US_AddHybridization::update_num_elect(const QString &str)
+{
+   current_hybrid.num_elect = str.toInt();
+}
+
 void US_AddHybridization::update_name(const QString &str)
 {
    current_hybrid.name = str;
@@ -398,6 +422,8 @@ void US_AddHybridization::select_hybrid(int val)
    le_scat_len->setText(str);
    str.sprintf("%d", hybrid_list[val].exch_prot);
    le_exch_prot->setText(str);
+   str.sprintf("%d", hybrid_list[val].num_elect);
+   le_num_elect->setText(str);
    le_name->setText(hybrid_list[val].name.upper());
    unsigned int i;
    for (i=0; i<saxs_list.size(); i++)
