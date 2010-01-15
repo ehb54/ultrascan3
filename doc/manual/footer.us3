@@ -1,18 +1,26 @@
 
-    <hr>
+    <!-- footer -->
+    <hr />
 
-    <p class='footer'>www contact: <a href=
-    "mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a></p>
+    <div class='footer'>
     
-    <p class='footer'>This document is part of the
-      <i><b>UltraScan</b></i> Software Documentation distribution.<br>
-      <a href="copyright.html">Copyright © notice</a>.</p>
+    <p>This document is part of the <i><b>UltraScan</b></i> Software
+    Documentation distribution. </p>
     
-    <p class='footer'>The latest version of this document can always be found at: </p>
+    <p>Copyright &copy; 1989&mdash;2010 <a href=
+    "mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a>, Ph.D.<br/>
+    Copyright &copy; 1997&mdash;2010 <a href="http://www.uthscsa.edu">The University
+    of Texas Health Science Center at San Antonio</a><br/> 
+    All rights reserved.</p>
+
+    <p>UltraScan is free software; you can redistribute it and/or modify it
+    under the terms of the <a href="http://www.gnu.org/licenses/gpl.html"
+    rel="license">GNU General Public License</a> as published by the Free
+    Software Foundation; either version&nbsp;3 of the License, or (at your
+    option) any later version.</p>
+
+    <p>Last modified on $Date: __DATE__ $ </p>
     
-    <p class='footer' style="margin-left: 2em"><a href=
-      "http://www.ultrascan.uthscsa.edu">http://www.ultrascan.uthscsa.edu</a></p>
-    
-    <p class='footer'>Last modified on $Date: __DATE__ $ </p>
+    </div> <!-- footer -->
   </body>
 </html>

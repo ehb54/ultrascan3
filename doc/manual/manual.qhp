@@ -26,6 +26,7 @@
         <keywords>
             <keyword name="password" id="UltraScan::pw" ref="master_pw.html"/>
             <keyword name="configuration"               ref="config.html"/>
+            <keyword name="gradient"                    ref="colorgradient.html"/>
         </keywords>
         <files>
             <file>mainstyle.css</file>
@@ -53,6 +54,14 @@
             
             <file>master_pw.html</file>
             <file>images/master-pw.png</file>
+
+            <file>colorgradient.html</file>
+            <file>images/colorgrad.png</file>
+            <file>images/colorgrad1.png</file>
+
+
+
+
         </files>
     </filterSection>
 </QtHelpProject> 
