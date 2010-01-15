@@ -8,6 +8,10 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
+//const qreal lgndfrac=0.33333;   // legend 1/3th of width (1 x 2)
+const qreal lgndfrac=0.20;      // legend 1/5th of width (1 x 4)
+//const qreal lgndfrac=0.11111;   // legend 1/9th of width (1 x 8)
+
 //! \brief Main program for US_ColorGradient
 
 int main( int argc, char* argv[] )
@@ -22,6 +26,17 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
+MyButton::MyButton( int value ) : QPushButton()
+{
+   which = value;
+   connect( this, SIGNAL( clicked() ), SLOT( pushed() ) );
+}
+
+void MyButton::pushed( void )
+{
+   emit click( which );
+};
+
 /*!
    The ColorGradient constructor is a standard US_Widgets type.
    It builds the GUI with banner, various buttons and selectors
@@ -30,191 +45,148 @@ int main( int argc, char* argv[] )
 US_ColorGradient::US_ColorGradient( QWidget* parent, Qt::WindowFlags flags )
   : US_Widgets( true, parent, flags )
 {
+   // Give initial values for run time variables
+   have_save   = false;
+   new_mods    = false;
+   grad_dir    = qApp->applicationDirPath();
+   grad_dir.replace( QRegExp( "/bin$" ), QString( "/etc" ) );
+
    setWindowTitle( tr( "Color Gradient Generator" ) );
    setPalette( US_GuiSettings::frameColor() );
 
    // Set up top layout and add banner to it
-   QBoxLayout* topbox = new QVBoxLayout( this );
+   QBoxLayout* topbox    = new QVBoxLayout( this );
    topbox->setSpacing( 2 );
 
-   lb_banner1    = us_banner( tr( "Please select the number of steps\n"
-                      "and each Color Step for your gradient:\n"
-                      "( Currently 1 step; 1 total color;\n"
-                      "  Not saved to any file )" ) );
+   QGridLayout* gbuttons = new QGridLayout();
+   lb_banner1    = us_banner( "" );
+   QString btext =  tr( "Please select the number of steps\n"
+                        "and each Color Step for your gradient:\n"
+                        "( Currently 1 step; 2 total colors;\n" );
+   lb_banner1->setText( btext );
    topbox->addWidget( lb_banner1 );
 
-   // Manage most of the buttons and switches with a new layout
-   int row = 0;
-   QGridLayout* csbuttons = new QGridLayout();
-
-   // Calculate width for color step pushbuttons
-   QFont*f          = new QFont( US_GuiSettings::fontFamily(),
-                         US_GuiSettings::fontSize() );
-   QFontMetrics* fm = new QFontMetrics ( *f );
-   int wl           = fm->width( tr( "Number of Points in this Step:" ) ) + 20;
-
-   pb_begcolor = us_pushbutton( tr( "Select Starting Color" ) );
-   pb_begcolor->setMinimumWidth( wl );
-   lb_begcolor = us_label( NULL );
-   lb_begcolor->setMinimumWidth( wl );
-   connect( pb_begcolor, SIGNAL( clicked() ), this, SLOT( start_color() ) );
-   csbuttons->addWidget( pb_begcolor, row, 0 );
-   csbuttons->addWidget( lb_begcolor, row++, 1 );
-
    lb_nsteps   = us_label( tr( "Number of Color Steps:" ) );
-   ct_nsteps   = us_counter( 2, 1.0, 101.0, 1.0 );
-   ct_nsteps->setRange( 1, 101, 1 );
+   ct_nsteps   = us_counter( 2, 1.0, 10.0, 1.0 );
+   ct_nsteps->setStep( 1.0 );
+
    connect( ct_nsteps, SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_steps( double ) ) );
-   csbuttons->addWidget( lb_nsteps, row, 0 );
-   csbuttons->addWidget( ct_nsteps, row++, 1 );
 
-   lb_stindex  = us_label( tr( "Select a Color Step:" ) );
-   ct_stindex  = us_counter( 2, 1.0, 10.0, 1.0 );
-   ct_stindex->setRange( 1, 101, 1 );
-   connect( ct_stindex, SIGNAL( valueChanged( double ) ),
-            this,              SLOT( update_index( double ) ) );
-   csbuttons->addWidget( lb_stindex, row, 0 );
-   csbuttons->addWidget( ct_stindex, row++, 1 );
+   QHBoxLayout* steps = new QHBoxLayout();
 
-   lb_npoints  = us_label( tr( "Number of Points in this Step:" ) );
-   ct_npoints  = us_counter( 2, 1.0, 255.0, 1.0 );
-   ct_npoints->setRange( 1, 255, 1 );
-   connect( ct_npoints, SIGNAL( valueChanged( double ) ),
-            this,       SLOT( update_points( double ) ) );
-   csbuttons->addWidget( lb_npoints, row, 0 );
-   csbuttons->addWidget( ct_npoints, row++, 1 );
+   steps->addWidget( lb_nsteps );
+   steps->addWidget( ct_nsteps );
 
-   pb_stcolor  = us_pushbutton( tr( "Select Step Color" ) );
-   lb_stcolor  = us_label( NULL );
-   connect( pb_stcolor, SIGNAL( clicked() ), this, SLOT( step_color() ) );
-   csbuttons->addWidget( pb_stcolor, row, 0 );
-   csbuttons->addWidget( lb_stcolor, row++, 1 );
+   topbox->addLayout( steps );
+
+   QGridLayout* colors = new QGridLayout();
+   int c_row = 0;
+
+   for ( int ii = 0; ii < 11; ii++ )
+   {
+      pb_c[ ii ] = new MyButton( ii );
+      ct_c[ ii ] = us_counter( 2, 1.0, 101.0, 10.0 );
+      ct_c[ ii ]->setStep( 1.0 );
+
+      colors->addWidget( pb_c[ ii ], c_row,   0 );
+      colors->addWidget( ct_c[ ii ], c_row++, 1 );
+
+      connect( pb_c[ ii ], SIGNAL( click        ( int ) ),
+                           SLOT  ( c_click      ( int ) ) );
+
+      connect( ct_c[ ii ], SIGNAL( valueChanged ( double ) ),
+                           SLOT  ( c_cnt_change ( double ) ) );
+
+      if ( ii > 1 )
+      {
+         pb_c[ ii ]->setVisible( false );
+         ct_c[ ii ]->setVisible( false );
+      }
+      else if ( ii == 0 )
+      {
+         ct_c[ ii ]->setVisible( false );
+      }
+   }
+
+   update_banner();
+
+   topbox->addLayout( colors );
+
+   int row     = 0;
 
    pb_help     = us_pushbutton( tr( "Help" ) );
    pb_reset    = us_pushbutton( tr( "Reset" ) );
    connect( pb_help,  SIGNAL( clicked() ), this, SLOT( help() ) );
    connect( pb_reset, SIGNAL( clicked() ), this, SLOT( reset() ) );
-   csbuttons->addWidget( pb_help, row, 0 );
-   csbuttons->addWidget( pb_reset, row++, 1 );
+   gbuttons->addWidget( pb_help, row, 0 );
+   gbuttons->addWidget( pb_reset, row++, 1 );
 
    pb_load     = us_pushbutton( tr( "Load Gradient" ) );
    pb_show     = us_pushbutton( tr( "Show Gradient" ) );
    connect( pb_load, SIGNAL( clicked() ), this, SLOT( load_gradient() ) );
    connect( pb_show, SIGNAL( clicked() ), this, SLOT( show_gradient() ) );
-   csbuttons->addWidget( pb_load, row, 0 );
-   csbuttons->addWidget( pb_show, row++, 1 );
+   gbuttons->addWidget( pb_load, row, 0 );
+   gbuttons->addWidget( pb_show, row++, 1 );
 
    pb_save     = us_pushbutton( tr( "Save Gradient" ) );
    pb_close    = us_pushbutton( tr( "Close" ) );
    connect( pb_save,  SIGNAL( clicked() ), this, SLOT( save_gradient() ) );
-   connect( pb_close, SIGNAL( clicked() ), this, SLOT( close() ) );
-   csbuttons->addWidget( pb_save, row, 0 );
-   csbuttons->addWidget( pb_close, row++, 1 );
+   connect( pb_close, SIGNAL( clicked() ), this, SLOT( safe_close() ) );
+   gbuttons->addWidget( pb_save, row, 0 );
+   gbuttons->addWidget( pb_close, row++, 1 );
 
-   // Add color step buttons layout to topmost layout
-   topbox->addLayout( csbuttons );
+   // Add general purpose buttons layout to topmost layout
+   topbox->addLayout( gbuttons );
 
    // Create and add the bottom label for displaying the gradient
    QBoxLayout* showgrad = new QHBoxLayout();
    lb_gradient = us_label( NULL );
    lb_gradient->setPalette( QColor( Qt::black ) );
    showgrad->addWidget( lb_gradient );
+   width_lb     = lb_gradient->width();
+   height_lb    = lb_gradient->height();
+   margin       = lb_gradient->margin() * 2;
 
    topbox->addLayout( showgrad );
 
-   // Give initial values for run time variables
-   clr_start   = QColor( Qt::black );
-   clr_step    = QColor( Qt::black );
-   nbr_csteps  = 0;
-   ndx_cstep   = 0;
-   nbr_points  = 0;
-   knt_csteps  = 0;
-   nbr_colors  = 1;
-   have_load   = false;
-   have_save   = false;
-   new_mods    = false;
-   color_step cs;
-   cs.npoints  = 0;
-   cs.color    = clr_start;
-   csteps.prepend( cs );
-   grad_dir    = qApp->applicationDirPath()
-      .replace( QRegExp( "/bin$" ), QString( "/etc" ) );
+   show_gradient();
 }
 
-//! \brief A slot for handling choice of a start color
-void US_ColorGradient::start_color( void )
+void US_ColorGradient::c_click( int which )
 {
-   QColor clr_temp = clr_start;
-   clr_start       = QColorDialog::getColor( clr_start, this );
+   QPalette p = pb_c[ which ]->palette();
 
-   if ( clr_start.isValid() )
+   QColor color = QColorDialog::getColor( p.color( QPalette::Button ), this );
+
+   if ( color.isValid() )
    {
-      lb_begcolor->setPalette( clr_start );
-   }
-   else
-   {
-      clr_start   = clr_temp;
+      p.setColor( QPalette::Button, color );
+      pb_c[ which ]->setPalette( p );
+      new_mods    = true;
    }
 
-   color_step cs;
-   cs.npoints  = 0;
-   cs.color    = clr_start;
-   csteps.prepend( cs );
-   new_mods    = true;
+   show_gradient();
 }
 
-//! \brief A slot for handling choice of a step color
-void US_ColorGradient::step_color( void )
+void US_ColorGradient::c_cnt_change( double /*count*/ )
 {
-   QColor clr_temp = clr_step;
-   clr_step        = QColorDialog::getColor( clr_step, this );
-
-   if ( clr_step.isValid() )
-   {
-      lb_stcolor->setPalette( clr_step );
-   }
-   else
-   {
-      clr_step    = clr_temp;
-   }
-
-   color_step cs;
-   cs.npoints  = nbr_points;
-   cs.color    = clr_step;
-   csteps.insert( ndx_cstep, cs );
    new_mods    = true;
-   knt_csteps  = ( knt_csteps < ndx_cstep ) ? ndx_cstep : knt_csteps;
+
+   show_gradient();
 }
 
 //! \brief A slot for handling the reset button: clear all settings
 void US_ColorGradient::reset( void )
 {
-   csteps.clear();
-   clr_start   = QColor( Qt::black );
-   clr_step    = QColor( Qt::black );
-   nbr_csteps  = 0;
-   ndx_cstep   = 0;
-   nbr_points  = 0;
-   knt_csteps  = 0;
-   nbr_colors  = 1;
    new_mods    = false;
    have_save   = false;
-   have_load   = false;
+   is_reset    = true;
 
-   color_step cs;
-   cs.npoints  = 0;
-   cs.color    = clr_start;
-   csteps.prepend( cs );
+   ct_nsteps->setValue( 1.0 );
+   ct_c[ 1 ]->setValue( 1.0 );
 
-   lb_begcolor->setPalette( clr_start );
-   lb_stcolor->setPalette( clr_step );
-   ct_nsteps->setValue( (qreal)nbr_csteps );
-   ct_stindex->setValue( (qreal)ndx_cstep );
-   ct_npoints->setValue( (qreal)nbr_points );
-   nbr_csteps  = 0;
-   ndx_cstep   = 0;
-   nbr_points  = 0;
+   lb_gradient->resize( width_lb, height_lb );
 
    update_banner();
    show_gradient();
@@ -263,35 +235,92 @@ void US_ColorGradient::save_gradient( void )
       xmlo.writeStartElement( "colorsteps" );
 
       // write start color
-      int npts      = 0;
-      color_step cs = csteps.at( 0 );
-      QColor ccol   = cs.color;
+      int npoints    = 0;
+      QColor s_color = pb_c[ 0 ]->palette().color( QPalette::Button );
       xmlo.writeStartElement( "color" );
-      xmlo.writeAttribute( "red",    QString::number( ccol.red() ) );
-      xmlo.writeAttribute( "green",  QString::number( ccol.green() ) );
-      xmlo.writeAttribute( "blue",   QString::number( ccol.blue() ) );
+      xmlo.writeAttribute( "red",    QString::number( s_color.red() ) );
+      xmlo.writeAttribute( "green",  QString::number( s_color.green() ) );
+      xmlo.writeAttribute( "blue",   QString::number( s_color.blue() ) );
       xmlo.writeAttribute( "points", "0" );
       xmlo.writeEndElement();
+      int nsteps   = qRound( ct_nsteps->value() );
 
       // write each step's end-color and number-points
 
-      for ( int ii = 1; ii <= nbr_csteps; ii++ )
+      for ( int ii = 1; ii <= nsteps; ii++ )
       {
-         cs     = csteps.at( ii );
-         ccol   = cs.color;
-         npts   = cs.npoints;
+         s_color  = pb_c[ ii ]->palette().color( QPalette::Button );
+         npoints  = qRound( ct_c[ ii ]->value() );
          xmlo.writeStartElement( "color" );
-         xmlo.writeAttribute( "red",    QString::number( ccol.red() ) );
-         xmlo.writeAttribute( "green",  QString::number( ccol.green() ) );
-         xmlo.writeAttribute( "blue",   QString::number( ccol.blue() ) );
-         xmlo.writeAttribute( "points", QString::number( npts ) );
+         xmlo.writeAttribute( "red",    QString::number( s_color.red() ) );
+         xmlo.writeAttribute( "green",  QString::number( s_color.green() ) );
+         xmlo.writeAttribute( "blue",   QString::number( s_color.blue() ) );
+         xmlo.writeAttribute( "points", QString::number( npoints ) );
          xmlo.writeEndElement();
       }
 
       xmlo.writeEndElement();
       xmlo.writeEndDocument();
       fileo.close();
+
+      // now optionally save the color legend as a PNG file
+      QString png_fname = out_filename
+         .replace( QRegExp( ".xml$" ), QString( ".png" ) );
+      const QPixmap* mcolors = lb_gradient->pixmap();
+      int widp    = mcolors->width();
+      int hgtp    = mcolors->height();
+      int recx    = (int)( (qreal)widp * ( 1.0 - lgndfrac ) );
+      int widl    = widp - recx - 2;
+      int hgtl    = hgtp - 2;
+      QString msg = tr( "Do you want to also save the %1 x %2 color legend"
+                        " image\n in file  \"%3\" .\n" )
+                        .arg(widl).arg(hgtl).arg(png_fname);
+      QMessageBox msgBox;
+      msgBox.setText( msg );
+      msgBox.setStandardButtons( QMessageBox::No | QMessageBox::Yes );
+      msgBox.setDefaultButton( QMessageBox::Yes );
+      int result  = msgBox.exec();
+      if ( result == QMessageBox::Yes )
+      {
+         QPixmap clegend  = mcolors->copy( recx, 0, widl, hgtl );
+         clegend.toImage().save( png_fname );
+      }
    }
+}
+
+/*!
+   A slot to allow the user to save any modifications to file
+   and then to close.
+*/
+void US_ColorGradient::safe_close( void )
+{
+   if ( new_mods )
+   {	// there have been mods since last file save
+      QMessageBox msgBox;
+      msgBox.setTextFormat( Qt::RichText );
+      msgBox.setText( tr( "You have modified the gradient since the "
+         "last save to file.<br>"
+         "Do want to save to file before exiting?<ul>"
+         "<li><b>[Yes]</b> to save and close;</li>"
+         "<li><b>[No]</b> to close with no save;</li>"
+         "<li><b>[Cancel]</b> to resume gradient modifications.</li></ul>" ) );
+      msgBox.addButton( QMessageBox::Cancel );
+      msgBox.addButton( QMessageBox::No );
+      msgBox.addButton( QMessageBox::Yes );
+      msgBox.setDefaultButton( QMessageBox::Yes );
+      int result  = msgBox.exec();
+
+      if ( result == QMessageBox::Yes )
+      {
+         save_gradient();
+      }
+      else if ( result == QMessageBox::Cancel )
+      {
+         return;
+      }
+   }
+
+   this->close();
 }
 
 /*!
@@ -326,6 +355,8 @@ void US_ColorGradient::load_gradient( void )
 
       QXmlStreamReader xmli( &filei );
       bool is_uscs = false;
+      int ncolors  = 0;
+      int nsteps   = 0;
 
       // parse xml input file to repopulate color steps
 
@@ -353,32 +384,28 @@ void US_ColorGradient::load_gradient( void )
 
          if ( xmli.isStartElement()  &&  xmli.name() == "color" )
          {  // update color step entries
-            color_step cs;
             QXmlStreamAttributes ats = xmli.attributes();
-            int cred    = ats.value( "red" ).toString().toInt();
-            int cgrn    = ats.value( "green" ).toString().toInt();
-            int cblu    = ats.value( "blue" ).toString().toInt();
-            nbr_points  = ats.value( "points" ).toString().toInt();
+            int cred       = ats.value( "red" ).toString().toInt();
+            int cgrn       = ats.value( "green" ).toString().toInt();
+            int cblu       = ats.value( "blue" ).toString().toInt();
+            QColor s_color = QColor( cred, cgrn, cblu );
+            int npoints    = ats.value( "points" ).toString().toInt();
 
-            if ( nbr_points > 0 )
+            if ( npoints > 0 )
             {	// step color and points
-               clr_step    = QColor( cred, cgrn, cblu );
-               nbr_colors += nbr_points;
-               cs.npoints  = nbr_points;
-               cs.color    = clr_step;
-               csteps.insert( ++ndx_cstep, cs );
+               nsteps++;
+               ncolors    += npoints;
             }
             else
             {  // start color
-               clr_start   = QColor( cred, cgrn, cblu );
-               nbr_colors  = 1;
-               ndx_cstep   = 0;
-               cs.npoints  = 0;
-               cs.color    = clr_start;
-               csteps.clear();
-               csteps.prepend( cs );
-             
+               nsteps      = 0;
+               ncolors     = 1;
             }
+
+            QPalette pa = pb_c[ nsteps ]->palette();
+            pa.setColor( QPalette::Button, s_color );
+            pb_c[ nsteps ]->setPalette( pa );
+            ct_c[ nsteps ]->setValue( (double)npoints );
          }
       }
 
@@ -395,17 +422,10 @@ void US_ColorGradient::load_gradient( void )
       }
       else
       {
-         have_load    = true;
          have_save    = true;
          new_mods     = false;
-         knt_csteps   = ndx_cstep;
-         nbr_csteps   = ndx_cstep;
          out_filename = in_filename;
-         lb_begcolor->setPalette( clr_start );
-         lb_stcolor->setPalette( clr_step );
-         ct_stindex->setValue( (qreal)ndx_cstep );
-         ct_npoints->setValue( (qreal)nbr_points );
-         ct_nsteps->setValue( (qreal)nbr_csteps );
+         ct_nsteps->setValue( (qreal)nsteps );
 
          update_banner();
          show_gradient();
@@ -416,68 +436,22 @@ void US_ColorGradient::load_gradient( void )
 }
 
 /*!
-   A slot to update the number of steps upon counter change
-   and to make an appropriate change to the maximum step index.
+   A slot called when the number-of-steps counter changes.
+   This function changes the number of visible color buttons.
 */
 void US_ColorGradient::update_steps( double newval )
 {
-   nbr_csteps  = qRound( newval );
-   ct_stindex->setRange( 1, nbr_csteps, 1 );
+   int nsteps  = qRound( newval );
    new_mods    = true;
-}
 
-/*!
-   A slot to update the color step index upon counter change
-   and to update color label and point when an old index is revisited.
-*/
-void US_ColorGradient::update_index( double newval )
-{
-   ndx_cstep   = qRound( newval );
-
-   if ( ndx_cstep <= knt_csteps )
+   for ( int ii = 2; ii < 11; ii++ )
    {
-      // revisited step:  nbr_points, color as before
-      color_step cs = csteps.at( ndx_cstep );
-      nbr_points    = cs.npoints;
-      clr_step      = cs.color;
-      lb_stcolor->setPalette( clr_step );
-      ct_npoints->setValue( (qreal)nbr_points );
-   }
-   else
-   {
-      // new step:  save maximum step configured
-      knt_csteps  = ndx_cstep;
-   }
-}
-
-/*!
-   A slot to update the number of points for a step upon counter change
-   and to update the color step list entry accordingly.
-*/
-void US_ColorGradient::update_points( double newval )
-{
-   nbr_points  = qRound( newval );
-   new_mods    = true;
-
-   if ( ndx_cstep != knt_csteps )
-   {  // if new spec for this step, save it
-      color_step cs;
-      cs.npoints  = nbr_points;
-      cs.color    = clr_step;
-
-      if ( ndx_cstep > knt_csteps )
-      {  // new step:  insert a new color step entry
-          csteps.insert( ndx_cstep, cs );
-          knt_csteps  = ndx_cstep;
-      }
-      else
-      {  // revisited step:  replace color step entry
-          csteps.replace( ndx_cstep, cs );
-      }
+      bool show   = ( ii <= nsteps ) ? true : false;
+      pb_c[ ii ]->setVisible( show );
+      ct_c[ ii ]->setVisible( show );
    }
 
-   new_mods    = true;
-   knt_csteps  = ( knt_csteps < ndx_cstep ) ? ndx_cstep : knt_csteps;
+   show_gradient();
 }
 
 /*!
@@ -487,96 +461,120 @@ void US_ColorGradient::update_points( double newval )
 void US_ColorGradient::show_gradient( void )
 {
    // get width of gradient space; resize so height matches
-   int wl       = lb_gradient->width();
-   int ml       = lb_gradient->margin() * 2;
-   wl          -= ml;
-   int wp       = wl - ml;
-   lb_gradient->setScaledContents( true );
-   lb_gradient->resize( wl, wl );
-   lb_banner1->setFixedHeight( lb_banner1->height() );
+   int widthl   = lb_gradient->width() - margin; // width of label
+   int widthp   = widthl - margin;   // width of pixmap
+   qreal wlbl   = (qreal)widthl;
+   qreal wrec   = wlbl * lgndfrac;   // legend rect. width fraction of label
+   qreal hlbl   = wlbl - wrec - 8.0; // new height of label
+   int heightl  = (int)hlbl;         // height of label
+   int heightp  = heightl - margin;  // height of pixmap
+   int nsteps   = qRound( ct_nsteps->value() );
 
-   // create Pixmap of that size
-   pm_gradient  = new QPixmap( wp, wp );
+   if ( is_reset )
+   {  // reset back to original values if this follows reset
+      widthl       = width_lb  - margin;
+      heightl      = height_lb - margin;
+      widthp       = widthl  - margin;
+      heightp      = heightl - margin;
+   }
+   
+   lb_gradient->setScaledContents( true );
+   lb_gradient->resize( widthl, heightl );
+
+   // create Pixmap of appropriate size and aspect ratio
+   pm_gradient  = new QPixmap( widthp, heightp );
    pm_gradient->fill( Qt::black );
 
-   if ( nbr_csteps < 1 )
-   {  // clear pixmap and return now, if this follow reset
+   if ( is_reset )
+   {  // clear pixmap and return now, if this follows reset
       lb_gradient->setPixmap( *pm_gradient );
+      resize( widthl, heightl );
+      update();
+      ct_nsteps->setValue( 1.0 );
+      ct_c[ 1 ]->setValue( 1.0 );
       lb_gradient->show();
+      is_reset      = false;
       return;
    }
 
    QPainter* pa = new QPainter( pm_gradient );
 
    // do an initial step loop just to count total colors
-   nbr_colors   = 1;
-   for ( int ii = 1; ii <= nbr_csteps; ii++ )
+   int ncolors  = 1;
+   for ( int ii = 1; ii <= nsteps; ii++ )
    {
-      color_step cs = csteps.at( ii );
-      int np        = cs.npoints;
-      nbr_colors   += np;
+      int npoints   = qRound( ct_c[ ii ]->value() );
+      ncolors      += npoints;
    }
 
    // calculate the geometry of the concentric circles
-   qreal wrad    = (qreal)wp / 2.0;           // radius is half of width
-   qreal wlin    = wrad / (qreal)nbr_colors;  // width of line is radius/#colors
-   qreal xcen    = wrad;                      // center is radius,radius
-   qreal ycen    = wrad;
-   wrad         -= ( wlin / 2.0 );            // back off initial radius a bit
-   QPointF cenpt( xcen, ycen );               // center point
-   QColor cc     = clr_start;                 // initial color
+   qreal radi    = (qreal)heightp / 2.0;      // radius is half of height
+   qreal thikc   = radi / (qreal)ncolors;     // thickness is radius/#colors
+   qreal x1leg   = heightp + thikc + 4.0;     // rectangle x start
+   qreal x2leg   = (qreal)widthp - 4.0;       // rectangle x end
+   qreal y1leg   = (qreal)heightp;            // rectangle y start
+   qreal dyleg   = y1leg / (qreal)ncolors;    // y increment legend rect
+   qreal thikl   = dyleg + 1.0;              // thickness legend band lines
+   y1leg        -= ( dyleg / 2.0 );           // adjust start legend y
+   radi         -= ( thikc / 2.0 );           // back off initial radius a bit
+   QPointF cenpt( radi, radi );               // circles center point
+   QColor cc     = pb_c[ 0 ]->palette().color( QPalette::Button );
 
    // loop through steps determining color range in each
 
-   for ( int ii = 1; ii <= nbr_csteps; ii++ )
+   for ( int ii = 1; ii <= nsteps; ii++ )
    {
       // get step color and number of points
-      QColor oc     = cc;
-      color_step cs = csteps.at( ii );
-      int np        = cs.npoints;
-      QColor ec     = cs.color;
+      int npoints   = qRound( ct_c[ ii ]->value() );
+      QColor ec     = pb_c[ ii ]->palette().color( QPalette::Button );
 
       // determine the delta for RGB values
-      int dr        = ec.red() - oc.red();
-      int dg        = ec.green() - oc.green();
-      int db        = ec.blue() - oc.blue();
-      qreal sr      = (qreal)np;
-      qreal ri      = (qreal)dr / sr;  // red interval between points
-      qreal gi      = (qreal)dg / sr;  // green interval between points
-      qreal bi      = (qreal)db / sr;  // blue interval between points
+      qreal rngp    = (qreal)npoints;
+      qreal delr    = (qreal)( ec.red()   - cc.red()   ) / rngp;
+      qreal delg    = (qreal)( ec.green() - cc.green() ) / rngp;
+      qreal delb    = (qreal)( ec.blue()  - cc.blue()  ) / rngp;
 
       // set up initial step RGB values
-      qreal vr      = (qreal)cc.red();
-      qreal vg      = (qreal)cc.green();
-      qreal vb      = (qreal)cc.blue();
+      qreal dvlr    = (qreal)cc.red();
+      qreal dvlg    = (qreal)cc.green();
+      qreal dvlb    = (qreal)cc.blue();
 
       // get color at each point in a step
 
-      for ( int jj = 0; jj < np ; jj++ )
+      for ( int jj = 0; jj < npoints ; jj++ )
       {
-         // determine color from RGB components
-         int kr        = qRound( vr );
-         int kg        = qRound( vg );
-         int kb        = qRound( vb );
-         QColor lc     = QColor( kr, kg, kb );
+         // set brush color from RGB components
+         int ivlr      = qRound( dvlr );
+         int ivlg      = qRound( dvlg );
+         int ivlb      = qRound( dvlb );
+         QBrush brc    = QBrush( QColor( ivlr, ivlg, ivlb ) );
 
          // draw circle of that color
-         pa->setPen( QPen( QBrush( lc ), wlin ) );
-         pa->drawEllipse( cenpt, wrad, wrad );
+         pa->setPen( QPen( brc, thikc ) );
+         pa->drawEllipse( cenpt, radi, radi );
+
+         // draw legend rectangle line
+         pa->setPen( QPen( brc, thikl ) );
+         pa->drawLine( QPointF( x1leg, y1leg ), QPointF( x2leg, y1leg ) );
 
          // bump RGB values and decrement radius
-         vr           += ri;
-         vg           += gi;
-         vb           += bi;
-         wrad         -= wlin;
+         dvlr         += delr;
+         dvlg         += delg;
+         dvlb         += delb;
+         radi         -= thikc;
+         y1leg        -= dyleg;
       }
       // next start color is this step's end
       cc            = ec;
    }
 
    // draw the final, innermost, circle
-   pa->setPen( QPen( QBrush( cc ), wlin ) );
-   pa->drawEllipse( cenpt, wrad, wrad );
+   QBrush brc    = QBrush( cc );
+   pa->setPen( QPen( brc, thikc ) );
+   pa->drawEllipse( cenpt, radi, radi );
+   // draw last color legend horizontal line
+   pa->setPen( QPen( brc, thikl ) );
+   pa->drawLine( QPointF( x1leg, y1leg ), QPointF( x2leg, y1leg ) );
 
    // set pixel map for gradient label
    lb_gradient->setPixmap( *pm_gradient );
@@ -593,10 +591,18 @@ void US_ColorGradient::show_gradient( void )
 */
 void US_ColorGradient::update_banner( void )
 {
-   QString steps  = ( nbr_csteps == 1 ) ?
+   int ncolors    = 1;
+   int nsteps     = qRound( ct_nsteps->value() );
+
+   for ( int ii = 1; ii <= nsteps; ii++ )
+   {
+      ncolors       += qRound( ct_c[ ii ]->value() );
+   }
+
+   QString steps  = ( nsteps == 1 ) ?
       "1 step" :
-      QString::number( nbr_csteps ) + " steps";
-   QString colors = QString::number( nbr_colors );
+      QString::number( nsteps ) + " steps";
+   QString colors = QString::number( ncolors );
 
    QString btext  =  tr( "Please select the number of steps\n"
                          "and each Color Step for your gradient:\n"
