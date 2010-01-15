@@ -8,6 +8,22 @@
 #include "us_widgets.h"
 #include "us_help.h"
 
+class MyButton : public QPushButton
+{
+   Q_OBJECT
+
+   public:
+      MyButton( int );
+
+      int which;
+
+   signals:
+      void click( int );
+
+   private slots:
+      void pushed( void );
+};
+
 //! \brief Color gradient generator; output is color steps XML file.
 
 /*! \class US_ColorGradient
@@ -30,42 +46,23 @@ public:
    */
    US_ColorGradient( QWidget* = 0, Qt::WindowFlags = 0 );
   
-   struct color_step
-   {
-      int     npoints;
-      QColor  color;
-   };
-
-   /*! \brief Public static function to create color step entries
-              from an XML file.
-       \param xmlfilename The full path name to an XML color gradient file.
-       \param csteps      Returned list of color_step entries, each holding a
-                          number-points int value and step-color QColor value.
-       \return            Returns flag: 0 if ok, non-0 if error.
-   */
-   static int read_color_steps( QString xmlfilename, QList< color_step >& csteps );
-
 private:
+
    bool          have_load;
    bool          have_save;
    bool          new_mods;
-   int           nbr_csteps;
-   int           ndx_cstep;
-   int           nbr_points;
-   int           knt_csteps;
-   int           nbr_colors;
+   bool          is_reset;
+
+   int           width_lb;
+   int           height_lb;
+   int           margin;
 
    US_Help       showHelp;
 
    QLabel*       lb_banner1;
-   QLabel*       lb_begcolor;
    QLabel*       lb_nsteps;
-   QLabel*       lb_stindex;
-   QLabel*       lb_npoints;
-   QLabel*       lb_stcolor;
    QLabel*       lb_gradient;
-   QPushButton*  pb_begcolor;
-   QPushButton*  pb_stcolor;
+
    QPushButton*  pb_help;
    QPushButton*  pb_reset;
    QPushButton*  pb_load;
@@ -73,34 +70,37 @@ private:
    QPushButton*  pb_save;
    QPushButton*  pb_close;
 
+   MyButton*     pb_c[ 11 ];
+
+   QwtCounter*   ct_c[ 11 ];
+
    QwtCounter*   ct_nsteps;
    QwtCounter*   ct_stindex;
-   QwtCounter*   ct_npoints;
+
    QPixmap*      pm_gradient;
 
-   QColor        clr_start;
-   QColor        clr_step;
    QString       in_filename;
    QString       out_filename;
    QString       img_filename;
    QString       grad_dir;
 
-   QList< color_step > csteps;  
-               
+public slots:
+
+   void show_gradient  ( void );
+
 private slots:
 
-   void start_color    ( void );
-   void step_color     ( void );
+   void c_click        ( int );
+   void c_cnt_change   ( double );
    void update_steps   ( double );
-   void update_index   ( double );
-   void update_points  ( double );
    void load_gradient  ( void );
    void save_gradient  ( void );
-   void show_gradient  ( void );
+   void safe_close     ( void );
    void update_banner  ( void );
    void reset          ( void );
    void help           ( void )
    { showHelp.show_help( "manual/colorgradient.html" ); };
+
 };
 
 #endif
