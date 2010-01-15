@@ -1,23 +1,11 @@
-<?xml version="1.0"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-  "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-  <head>
-    <title> UltraScan Color Configuration Panel </title>
-    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-    <link href="mainstyle.css" rel="styleSheet" type="text/css">
-  </head>
-  <body>
+[% INCLUDE header.us3
+   title = 'UltraScan III Color Configuration Panel'
+%]
 
-    <div class='header'> <img src="images/ultrascan3.png" alt='Ultrascan logo'>
-      <i>Manual</i> 
-    </div>
-
-    <hr>
 
     <h2> Color Configuration Panel: </h2>
 
-    <center> <img src="images/color-1.png"> </center>
+    <p class='center'>img src="images/color-1.png"> </p>
 
     <p> The color configuration control can be invoked from the <a href=
     "config.html">configuration panel</a> by clicking on the <em>Change</em>
@@ -31,21 +19,22 @@
     
     <p> To change a widget's color, select the widget you would like to change
     from the screen element listbox. All applicable colors for that widget will
-    be shown in the <em>Assign new Colors</em> section. Click on the <em>Change</em> button
-    for the desired color definition of the selected widget. A <a
-    href="uscolor2.html">color dialog</a> will be displayed that lets you
-    select and define custom colors for the selected color definition.  After
-    you click on the "OK" button you will be returned to the color
+    be shown in the <em>Assign new Colors</em> section. Click on the
+    <em>Change</em> button for the desired color definition of the selected
+    widget. A <a href="uscolor2.html">color dialog</a> will be displayed that
+    lets you select and define custom colors for the selected color definition.
+    After you click on the "OK" button you will be returned to the color
     configuration control window and the new color will be applied to the
     preview section of the screen. Continue to define new colors for each
     widget until all color changes you want to make have been applied.  </p>
     
-    <p> To reset to the previous color definition, click on the <em>Reset</em> button.
-    Click on "Set as Current" to apply the colors to the current scheme. If you
-    want to save the scheme, define a name (without spaces) under <em>Save Color
-    Scheme as:</em> and click on the <em>Save Color Scheme as:</em> button. Keep in mind
-    that certain names are reserved for predefined <b><i>UltraScan</i></b>
-    color schemes, and they cannot be overridden.  </p>
+    <p> To reset to the previous color definition, click on the <em>Reset</em>
+    button.  Click on "Set as Current" to apply the colors to the current
+    scheme. If you want to save the scheme, define a name (without spaces)
+    under <em>Save Color Scheme as:</em> and click on the <em>Save Color Scheme
+    as:</em> button. Keep in mind that certain names are reserved for
+    predefined <b><i>UltraScan</i></b> color schemes, and they cannot be
+    overridden.  </p>
     
     <p> The number of colors that can be simultaneously displayed on the screen
     depends on your display adapter's memory and resolution. Common display
@@ -53,25 +42,9 @@
     </p>
     
     <p> If you want to delete a custom scheme, select the scheme and click on
-    the <em>Delete</em> button. Predefined <b><i>UltraScan</i></b> schemes cannot be
-    deleted. To select a different scheme from the list of available color
-    schemes, simply double click on the desired scheme and click on the <em>Save
-    as Current</em> button.  </p>
-    
-    <hr>
+    the <em>Delete</em> button. Predefined <b><i>UltraScan</i></b> schemes
+    cannot be deleted. To select a different scheme from the list of available
+    color schemes, simply double click on the desired scheme and click on the
+    <em>Save as Current</em> button.  </p>
 
-    <p class='footer'>www contact: <a href=
-    "mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a></p>
-    
-    <p class='footer'>This document is part of the
-      <i><b>UltraScan</b></i> Software Documentation distribution.<br>
-      <a href="copyright.html">Copyright © notice</a>.</p>
-    
-    <p class='footer'>The latest version of this document can always be found at: </p>
-    
-    <p class='footer' style="margin-left: 2em"><a href=
-      "http://www.ultrascan.uthscsa.edu">http://www.ultrascan.uthscsa.edu</a></p>
-    
-    <p class='footer'>Last modified on $Date $ </p>
-  </body>
-</html>
+[% INCLUDE footer.us3 %]
