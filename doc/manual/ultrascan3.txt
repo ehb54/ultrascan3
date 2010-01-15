@@ -1,0 +1,25 @@
+UltraScan III
+
+Copyright 1989 - 2010
+
+Copyright © 1989?2010 Borries Demeler, Ph.D.
+Copyright © 1997?2010 The University of Texas Health Science Center at San Antonio
+All rights reserved.
+
+UltraScan is free software; you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation; either version 3 of the License, or (at your option) any later
+version.
+
+For more information, please visit:
+http://www.ultrascan.uthscsa.edu/
+
+The author can be reached at:
+
+The University of Texas Health Science Center
+Department of Biochemistry
+7703 Floyd Curl Drive
+San Antonio, Texas 78229-3900
+voice: (210) 567-6592
+Fax:   (210) 567-6595
+E-mail: demeler@biochem.uthscsa.edu

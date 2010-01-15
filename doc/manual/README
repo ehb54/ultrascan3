@@ -1,0 +1,16 @@
+To make the UltraScan III documentation files for Qt Assistant,
+from ultrascan3/doc/manual just run:
+
+  make
+
+
+This requires that the Qt4 binararies are in the PATH and the Perl 
+tool tpage is available.
+
+To get tpage, check your distro for libtemplate-perl or installe it yourself
+as root:
+
+sudo cpan -i Template::Tools
+
+See http://template-toolkit.org/docs/index.html
+
