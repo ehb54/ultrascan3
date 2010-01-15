@@ -1,0 +1,229 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Manual'
+   %]
+
+<h2> Table of Contents: </h2>
+<p> <b><a name="quick" id="quick">Quick Index:</a></b> </p>
+<ul>
+  <li> <a href="start.html">Starting <b><i>UltraScan</i></b></a> </li>
+  <li> <a href="license.html"><b><i>UltraScan</i></b>License Key Registration</a> </li>
+  <li> <a href="menu.html"><b><i>UltraScan</i></b> Menu System</a> </li>
+  <li> <a href="config.html"><b><i>UltraScan</i></b> Configuration</a> (only currently valid link)</li>
+  <li> <a href="#edit">Editing Sedimentation Data</a> </li>
+  <li> <a href="#veloc">Velocity Data Analysis</a> </li>
+  <li> <a href="#equil">Equilibrium Data Analysis</a> </li>
+  <li> <a href="#least2">Nonlinear Least Squares Analysis</a> </li>
+  <li> <a href="#monte">Monte Carlo Analysis</a> </li>
+  <li> <a href="#utils"><b><i>UltraScan</i></b> Utilties</a> </li>
+  <li> <a href="#simulation"><b><i>UltraScan</i></b> Simulation Programs</a> </li>
+  <li> <a href="#database"><b><i>UltraScan</i></b> Database Frontend</a> </li>
+  <li> <a href="#additional">Additional Information</a> </li>
+</ul>
+
+<hr/>
+
+<ul>
+  <li>
+    <b><a name="edit" id="edit">Editing Sedimentation Data</a>:</b>
+    <p> Velocity Data: </p>
+    <ul>
+      <li> <a href="edit_veloc_abs.html">Editing Absorbance Velocity Data</a> </li>
+      <li> <a href="edit_veloc_if.html">Editing Interference Velocity Data</a> </li>
+      <li> <a href="details_veloc.html">Run Diagnostics and Details</a> </li>
+      <li> <a href="dataset_sed_info.html">Reviewing Dataset Information</a> </li>
+    </ul>
+
+    <p> Equilibrium Data: </p>
+
+    <ul>
+      <li> <a href="edit_equil_abs.html">Editing Absorbance Equilibrium Data</a> </li>
+      <li> <a href="edit_equil_if.html">Editing Interference Equilibrium Data</a> </li>
+      <li> <a href="details_equil.html">Run Diagnostics and Details</a> </li>
+      <li> <a href="dataset_sed_info.html">Reviewing Dataset Information</a> </li>
+    </ul>
+
+    <p> All Sedimentation Data: </p>
+
+    <ul>
+      <li> <a href="edit_spikes.html">Editing Spikes, Scratches, etc. from Experimental Data</a> </li>
+      <li> <a href="rename.html">Editing the cell contents description</a> </li>
+      <li> <a href="export.html">Exporting Sedimentation Data</a> </li>
+      <li> <a href="print.html">Printing Sedimentation Data</a> (experimental data 
+           only, check <a href="printer_control.html">here</a> for printing analysis results)
+      </li>
+    </ul>
+  </li>
+
+  <li>
+    <b><a name="veloc" id="veloc">Velocity Data Analysis</a>:</b>
+    <p> van Holde - Weischet Analysis: </p>
+    <ul>
+      <li> <a href="vhw.html">van Holde - Weischet Analysis</a> </li>
+      <li> <a href="vhw-enhanced.html">Enhanced van Holde - Weischet Analysis</a> </li>
+      <li> <a href="combine.html">Combining Integral Distribution (G(s)) Plots</a> </li>
+      <li> <a href="../tutorial/index.html">van Holde - Weischet Tutorial</a> </li>
+      <li> <a href= "http://www.biochem.uthscsa.edu/auc/publications/biophysj-1997/index.html">
+        van Holde - Weischet Data Interpretation</a>
+      </li>
+    </ul>
+
+    <p> Finite Element Analysis: </p>
+
+    <ul>
+      <li> <a href="finite.html">Finite Element Analysis</a> </li>
+      <li> <a href="finite_model.html">Model Selection</a> </li>
+      <li> <a href="finite_model_ctrl.html">Finite Element Model Control</a> </li>
+      <li> <a href="finite_fit_ctrl.html">Finite Element Fitting Control</a> </li>
+      <li> <a href="finite_tutor.html">Finite Element Tutorial</a> </li>
+      <li> <a href="finite_interpretation.html">Finite Element Results Interpretation</a> </li>
+    </ul>
+
+    <p> Other Analysis Methods: </p>
+
+    <ul>
+      <li> <a href="sa2d.html">2-dimensional Spectrum Analysis</a> </li>
+      <li> <a href="ga_initialize.html">Genetic Algorithm Analysis</a> </li>
+      <li> <a href="cofs.html">C(s) Analysis</a> </li>
+      <li> <a href="sm.html">Second Moment Analysis</a> </li>
+      <li> <a href="dcdt.html">Time Difference Analysis (dC/dt)</a> </li>
+      <li> <a href="dcdr.html">Radial Difference Analysis (dC/dr)</a> </li>
+    </ul>
+  </li>
+
+  <li>
+    <b><a name="equil" id="equil">Equilibrium Data Analysis</a>:</b>
+    <ul>
+      <li> <a href="calc_equil.html">Estimating Equilibrium Speed</a> </li>
+      <li> <a href="lncr2.html">LN(C) vs. R<sup>2</sup> Analysis</a> </li>
+      <li>Global Nonlinear Least-Squares Equilibrium Analysis:
+        <ul>
+          <li> <a href="equil1.html">Setting up a fitting project</a> </li>
+          <li> <a href="equil2.html">Model Selection</a> </li>
+          <li> <a href="equil3.html">Scan Diagnostics</a> </li>
+          <li> <a href="equil4.html">Scan Editing</a> </li>
+          <li> <a href="equil5.html">Parameter Controls</a> </li>
+          <li> <a href="equil6.html">Fitting Information</a> </li>
+          <li> <a href="equil7.html">Model-Specific Information</a>
+            <ul>
+              <li> <a href="model.html">Predefined Model Index</a> </li>
+            </ul>
+          </li>
+          <li> <a href="../tutorial/equil_tutorial.html">Equilibrium Analysis Tutorial</a> </li>
+        </ul>
+      </li>
+    </ul>
+
+    <p> <a name="nonlin" id="nonlin"></a> </p>
+  </li>
+  
+  <li> <b><a name="least2" id="least2">Nonlinear Least Squares Analysis</a></b>
+    <ul>
+      <li> <a href="nls.html">Fitting Control Functions</a> </li>
+    </ul>
+  </li>
+
+  <li>
+    <b><a name="monte" id="monte">Monte Carlo Analysis</a></b>:
+    <ul>
+      <li> <a href="monte_carlo.html">Monte Carlo Analysis</a> </li>
+      <li> <a href="monte_carlo_stats.html">Monte Carlo Statistics</a> </li>
+      <li> <a href="monte_carlo_tutorial.html">Monte Carlo Tutorial</a> </li>
+      <li> <a href="beowulf.html">Monte Carlo Analysis using a Supercomputer</a> </li>
+    </ul>
+  </li>
+  
+  <li>
+    <b><a name="utils" id="utils">Utilities</a></b>
+    <ul>
+      <li> <a href="archive.html">Data Archive Database</a> </li>
+      <li> <a href="reorder.html">Re-order Scan File Sequences</a> </li>
+      <li> <a href="rename.html">Renaming cell content identifications in edited data</a> </li>
+      <li> <a href="export.html">Exporting raw experimental data</a> </li>
+      <li> <a href="print.html">Printing raw experimental data</a> </li>
+      <li> <a href="combine.html">Combine van Holde - Weischet G(s) Distributions</a> </li>
+      <li> <a href="combine_mw.html">Combine molecular weight distributions
+        from S20,W-corrected van Holde - Weischet G(s) Distributions</a> </li>
+      <li> <a href="html_report.html">Generating html reports from analyzed data</a> </li>
+      <li> <a href="diagnostics.html">Diagnostics</a> </li>
+      <li> <a href="nucleotide.html">Calculate DNA/RNA Molecular Weights</a> </li>
+      <li> <a href="hydro.html">Buffer Corrections</a> </li>
+      <li> <a href="vbar.html">Calculate Protein Molecular Weight,
+        Extinction coefficient at 280 nm and partial specific volume
+        (v-bar) from protein sequence</a> </li>
+      <li> <a href="extinction.html">Calculate Protein Extinction Profile</a> </li>
+      <li> <a href="sysutil.html">Linux System Utilities</a> </li>
+      <li> <a href="beowulf.html">Supercomputer Support</a> </li>
+      <li> <a href="uscol.html">Color Configuration Utility</a> </li>
+      <li> <a href="usfont.html">Font Configuration Utility</a> </li>
+      <li> <a href="administrator.html">Administrator Password Utility</a> </li>
+    </ul>
+  </li>
+
+  <li>
+    <b><a name="simulation" id="simulation">Simulation Programs</a>:</b>
+    <ul>
+      <li> <a href="finsim.html">Finite Element Simulations of Velocity and
+        Approch-to-Equilibrium Experiments</a>
+        <ul>
+          <li> <a href="model_sim.html">Finite Element Model Selection</a> </li>
+        </ul>
+      </li>
+
+      <li> <a href="equilsim.html">Equilibrium Simulator</a> </li>
+      <li> <a href="calc_equiltime.html">Estimate Equilibrium Times</a> </li>
+      <li> <a href="sassoc.html">Self-Association Simulator</a> </li>
+      <li> <a href="predict1.html">Model <i>s</i>, <i>D</i> and <i>f</i>
+        from <i>MW</i> for 4 basic shapes</a> </li>
+      <li> <a href="predict2.html">Predict Molecular Dimensions from
+        <i>MW</i> and <i>s</i>, <i>MW</i> and <i>D</i>, or <i>s</i> and
+        <i>D</i> for 4 basic shapes</a> </li>
+      <li> <a href="somo.html">SOMO SOlution MOdeler</a> </li>
+    </ul>
+  </li>
+
+  <li>
+    <b><a name="database" id="database"><i>UltraScan</i> Database Frontend</a>:</b>
+    <ul>
+      <li> <a href="database.html">Introduction</a> </li>
+      <li> <a href="database_install.html">MySQL Database Installation</a> </li>
+      <li> <a href="database_config.html">Database Configuration</a> </li>
+      <li> <a href="database.html#commit.html">Committing Data to the Database</a>
+        <ol>
+          <li> <a href="tbl_investigator.html">Investigator contact information</a> </li>
+          <li> <a href="hydro.html">Buffer composition files for hydrodynamic corrections</a> </li>
+          <li> <a href="vbar.html">Peptide sequence files</a> </li>
+          <li> <a href="nucleotide.html">Nucleotide sequence files</a> </li>
+          <li> <a href="expdata_db.html">Experimental data</a> (entire runs
+            with associated data) </li>
+        </ol>
+      </li>
+
+      <li> <a href="database.html#retrieve">Retrieving Information from the Database</a>
+        <ol>
+          <li> <a href="rtv_investigator.html">Retrieve by Investigator Name</a> </li>
+          <li> <a href="rtv_date.html">Retrieve by Date</a> </li>
+          <li> <a href="rtv_description.html">Retrieve by experimental description</a> </li>
+          <li> <a href="rtv_edittype.html">Retrieve by experimental data
+            type and optical system used</a> </li>
+        </ol>
+      </li>
+
+      <li> <a href="database.html#initialize">Initializing a new Database</a> </li>
+    </ul>
+  </li>
+
+  <li>
+    <b><a name="additional" id="additional">Additional Information</a></b>
+    <ul>
+      <li> <a href="file_format.html">File Structure and File Formats</a> </li>
+      <li> <a href="print_data.html">Printing</a> </li>
+      <li> <a href="custom_plots.html">Customizing and generating
+        Publication-Quality Graphs of all <i><b>UltraScan</b></i>
+        Plots</a> </li>
+      <li> <a href= "http://www.ultrascan.uthscsa.edu/download.html">Downloading/Upgrading
+        <i><b>UltraScan</b></i></a> </li>
+    </ul>
+  </li>
+</ul>
+    
+[% INCLUDE footer.us3 %]
