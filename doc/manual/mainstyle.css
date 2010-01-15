@@ -1,11 +1,32 @@
 body 
 { 
-  margin-left     : 1em;
-	margin-right    : 1em;
-	margin-top      : 1em;
-	text-align      : justify;
-	background-color: white;
-  color           : black;
+  margin-left      : 1em;
+  margin-right     : 1em;
+  margin-top       : 1em;
+  text-align       : justify;
+  background-color : white;
+  color            : black;
+}
+
+div.footer
+{
+  padding         : 0.2em 1em;
+  margin          : 0px 1.5in;
+  background-color: #f8f8f8; /* Light Gray */
+  font-size       : 80%;
+  font-family     : "trebuchet ms", arial, helvetica sans-serif;
+}
+
+div.header
+{
+  margin           : 0px 5%;
+  font-style       : italic;
+  font-size        : 300%;
+}
+
+.center   
+{ 
+  text-align      : center; 
 }
 
 a:link    { color : #0000EF; }  /* Slightly dark blue */
@@ -13,20 +34,4 @@ a:visited { color : #55188A; }  /* Maroon */
 a:active  { color : red;     }
 
 img       { border: none; }
-
-p.footer
-{
-  font-size       : small;
-  font-family     : helvetica sans-serif;
-}
-
-/* div.header img { float : left; }
-hr             { clear : both; } */
-
-div.header
-{
-  margin: 0px 5%;
-  font-style: italic;
-  font-size: 300%;
-}
 
