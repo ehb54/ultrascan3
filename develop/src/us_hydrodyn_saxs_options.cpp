@@ -157,7 +157,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    cnt_d2o_conc->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_d2o_conc, SIGNAL(valueChanged(double)), SLOT(update_d2o_conc(double)));
 
-   lbl_frac_of_exch_pep = new QLabel(tr(" Fraction of exchanged peptide H (0 - 1): "), this);
+   lbl_frac_of_exch_pep = new QLabel(tr(" Fraction of non-exchanged peptide H (0 - 1): "), this);
    Q_CHECK_PTR(lbl_frac_of_exch_pep);
    lbl_frac_of_exch_pep->setAlignment(AlignLeft|AlignVCenter);
    lbl_frac_of_exch_pep->setMinimumHeight(minHeight1);
@@ -394,7 +394,7 @@ void US_Hydrodyn_SaxsOptions::setupGUI()
    background->addWidget(pb_help, j, 0);
    background->addWidget(pb_cancel, j, 1);
 
-   setMinimumWidth(475);
+   setMinimumWidth(550);
 }
 
 void US_Hydrodyn_SaxsOptions::cancel()

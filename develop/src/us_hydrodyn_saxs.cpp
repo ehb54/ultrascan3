@@ -16,7 +16,6 @@
 # define SLASH "\\"
 #endif
 
-
 #define SAXS_DEBUG
 #define SAXS_DEBUG2
 // #define SAXS_DEBUG_F
@@ -85,7 +84,7 @@ US_Hydrodyn_Saxs::US_Hydrodyn_Saxs(
    setupGUI();
    editor->append("\n\n");
    QFileInfo fi(filename);
-   switch (source)
+   switch ( source )
    {
       case 0: // the source is a PDB file
       {
@@ -253,21 +252,18 @@ void US_Hydrodyn_Saxs::setupGUI()
    rb_saxs->setEnabled(true);
    rb_saxs->setChecked(!our_saxs_options->saxs_sans);
    rb_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_saxs->setMinimumHeight(minHeight1);
    rb_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    rb_sans = new QRadioButton(tr("SANS"), this);
    rb_sans->setEnabled(true);
    rb_sans->setChecked(our_saxs_options->saxs_sans);
    rb_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_sans->setMinimumHeight(minHeight1);
    rb_sans->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    bg_saxs_sans = new QButtonGroup(1, Qt::Horizontal, 0);
    bg_saxs_sans->setRadioButtonExclusive(true);
    bg_saxs_sans->insert(rb_saxs);
    bg_saxs_sans->insert(rb_sans);
-   bg_saxs_sans->setMinimumHeight(minHeight1);
    connect(bg_saxs_sans, SIGNAL(clicked(int)), SLOT(set_saxs_sans(int)));
 
    lbl_atom_table = new QLabel(tr(" not selected"),this);
@@ -342,21 +338,18 @@ void US_Hydrodyn_Saxs::setupGUI()
    rb_curve_raw->setEnabled(true);
    rb_curve_raw->setChecked(our_saxs_options->curve == 0);
    rb_curve_raw->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_curve_raw->setMinimumHeight(minHeight1);
    rb_curve_raw->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    rb_curve_saxs = new QRadioButton(tr("SAXS"), this);
    rb_curve_saxs->setEnabled(true);
    rb_curve_saxs->setChecked(our_saxs_options->curve == 1);
    rb_curve_saxs->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_curve_saxs->setMinimumHeight(minHeight1);
    rb_curve_saxs->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    rb_curve_sans = new QRadioButton(tr("SANS"), this);
    rb_curve_sans->setEnabled(true);
    rb_curve_sans->setChecked(our_saxs_options->curve == 2);
    rb_curve_sans->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
-   rb_curve_sans->setMinimumHeight(minHeight1);
    rb_curve_sans->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    bg_curve = new QButtonGroup(1, Qt::Horizontal, 0);
@@ -364,8 +357,14 @@ void US_Hydrodyn_Saxs::setupGUI()
    bg_curve->insert(rb_curve_raw);
    bg_curve->insert(rb_curve_saxs);
    bg_curve->insert(rb_curve_sans);
-   bg_curve->setMinimumHeight(minHeight1);
    connect(bg_curve, SIGNAL(clicked(int)), SLOT(set_curve(int)));
+
+   cb_normalize = new QCheckBox(this);
+   cb_normalize->setText(tr(" Normalize"));
+   cb_normalize->setEnabled(true);
+   cb_normalize->setChecked(true);
+   cb_normalize->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_normalize->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
 
    pb_plot_pr = new QPushButton(tr("Compute P(r) distribution"), this);
    Q_CHECK_PTR(pb_plot_pr);
@@ -533,6 +532,7 @@ void US_Hydrodyn_Saxs::setupGUI()
    bl->addWidget(rb_curve_raw);
    bl->addWidget(rb_curve_saxs);
    bl->addWidget(rb_curve_sans);
+   bl->addWidget(cb_normalize);
    background->addMultiCellLayout(bl, j, j, 0, 1);
    j++;
    background->addWidget(pb_plot_pr, j, 0);
@@ -642,7 +642,8 @@ void saxs_pr_thr_t::saxs_pr_thr_setup(
                                       unsigned int threads,
                                       QProgressBar *progress,
                                       QLabel *lbl_core_progress,
-                                      bool *stopFlag
+                                      bool *stopFlag,
+                                      float b_bar_inv2
                                       )
 {
    /* this starts up a new work load for the thread */
@@ -653,6 +654,7 @@ void saxs_pr_thr_t::saxs_pr_thr_setup(
    this->progress = progress;
    this->lbl_core_progress = lbl_core_progress;
    this->stopFlag = stopFlag;
+   this->b_bar_inv2 = b_bar_inv2;
 
    work_mutex.lock();
    work_to_do = 1;
@@ -791,7 +793,12 @@ void saxs_pr_thr_t::run()
             {
                hist->resize(pos + 128);
             }
-            (*hist)[pos]++;
+            if ( b_bar_inv2 )
+            {
+               (*hist)[pos] += (*atoms)[i].b * (*atoms)[k].b * b_bar_inv2;
+            } else {
+               (*hist)[pos]++;
+            }
          }
       }
 
@@ -810,24 +817,27 @@ void saxs_pr_thr_t::run()
 
 void US_Hydrodyn_Saxs::normalize_pr( vector < double > *pr )
 {
-   // set distribution to a 1 peak
-   double max = 0e0;
-   if ( pr->size() )
+   if ( cb_normalize->isChecked() )
    {
-      (*pr)[0];
-   }
-   for ( unsigned int i = 1; i < pr->size(); i++ )
-   {
-      if ( (*pr)[i] > max )
+      // set distribution to a 1 peak
+      double max = 0e0;
+      if ( pr->size() )
       {
-         max = (*pr)[i];
+         (*pr)[0];
       }
-   }
-   if ( max > 0e0 )
-   {
-      for ( unsigned int i = 0; i < pr->size(); i++ )
+      for ( unsigned int i = 1; i < pr->size(); i++ )
       {
-         (*pr)[i] /= max;
+         if ( (*pr)[i] > max )
+         {
+            max = (*pr)[i];
+         }
+      }
+      if ( max > 0e0 )
+      {
+         for ( unsigned int i = 0; i < pr->size(); i++ )
+         {
+            (*pr)[i] /= max;
+         }
       }
    }
 }
@@ -886,9 +896,13 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #if defined(PR_DEBUG)
       printf("creating pr %u\n", current_model); fflush(stdout);
 #endif
-      editor->append(QString("\n\nPreparing file %1 model %2 for p(r) vs r plot.\n\n")
+      editor->append(QString("\n\nPreparing file %1 model %2 for p(r) vs r plot in %3 mode%4.\n\n")
                      .arg(te_filename2->text())
-                     .arg(current_model + 1));
+                     .arg(current_model + 1)
+                     .arg(rb_curve_raw->isChecked() ? "Raw" :
+                          ( rb_curve_saxs->isChecked() ? "SAXS" : "SANS" ) )
+                     .arg(cb_normalize->isChecked() ? ", Normalized" : "")
+                     );
       qApp->processEvents();
       if ( stopFlag ) 
       {
@@ -904,8 +918,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       vector < saxs_atom > atoms;
       saxs_atom new_atom;
 
-      float b_bar = 0;
-      float b_bar_inv2 = 1;
+      float b_bar = 0.0;
+      float b_bar_inv2 = 0.0;
       int b_count = 0;
 
       if ( source )
@@ -962,6 +976,17 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                }
             }
          }            
+         if ( rb_curve_saxs->isChecked() )
+         {
+            // for each entry in hybrid_map, compute b
+            for (map < QString, hybridization >::iterator it = hybrid_map.begin();
+                 it != hybrid_map.end();
+                 it++)
+            {
+               b[it->first] = 
+                  it->second.num_elect;
+            }
+         }            
          // pdb files
          for (unsigned int j = 0; j < model_vector[current_model].molecule.size(); j++)
          {
@@ -1001,13 +1026,48 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                          );
 #endif
                }
+
+               if ( rb_curve_saxs->isChecked() )
+               {
+                  QString mapkey = QString("%1|%2").arg(this_atom->resName).arg(this_atom->name);
+                  if ( this_atom->name == "OXT" )
+                  {
+                     mapkey = "OXT|OXT";
+                  }
+                  QString hybrid_name = residue_atom_hybrid_map[mapkey];
+                  new_atom.b = b[hybrid_name];
+                  b_count++;
+                  b_bar += new_atom.b;
+#if defined(BUG_DEBUG)
+                  printf("atom %d %d hybrid name %s, atom name %s b %e mapkey %s hybrid name %s\n",
+                         j, k, 
+                         hybrid_name.ascii(),
+                         this_atom->name.ascii(),
+                         new_atom.b,
+                         mapkey.ascii(),
+                         hybrid_name.ascii()
+                         );
+#endif
+               }
                atoms.push_back(new_atom);
             }
          }
-         b_bar /= b_count;
-         if ( b_bar )
+         if ( !rb_curve_raw->isChecked() )
          {
-            b_bar_inv2 = 1 / (b_bar * b_bar);
+            b_bar /= b_count;
+            if ( b_bar )
+            {
+               b_bar_inv2 = 1.0 / (b_bar * b_bar);
+            } else {
+               b_bar_inv2 = 0.0;
+               rb_curve_raw->setChecked(true);
+               rb_curve_saxs->setChecked(false);
+               rb_curve_sans->setChecked(false);
+               QColor save_color = editor->color();
+               editor->setColor("red");
+               editor->append(tr("WARNING: < b > is zero! Reverting to RAW mode for p(r) vs r computation."));
+               editor->setColor(save_color);
+            }
          }
       }
 #if defined(BUG_DEBUG)
@@ -1052,9 +1112,9 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                                                       threads,
                                                       progress_pr,
                                                       lbl_core_progress,
-                                                      &stopFlag
+                                                      &stopFlag,
+                                                      b_bar_inv2
                                                       );
-
          }
          // sleep app loop
          {
@@ -1158,9 +1218,8 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                if ( rb_curve_raw->isChecked() )
                {
                   hist[pos]++;
-               }
-               if ( rb_curve_sans->isChecked() )
-               {
+               } else {
+                  // good for both saxs & sans
                   hist[pos] += atoms[i].b * atoms[j].b * b_bar_inv2;
                }
             }
@@ -1186,21 +1245,18 @@ void US_Hydrodyn_Saxs::show_plot_pr()
 #endif
 
       // save the data to a file
-      QString fpr_name = USglobal->config_list.root_dir + 
-         SLASH + "somo" + SLASH + "saxs" + SLASH + QString("%1").arg(te_filename2->text()) +
-         QString("_%1").arg(current_model + 1) + 
-         ".sprr_" + ( rb_curve_raw->isChecked() ? "r" :
-                      ( rb_curve_saxs->isChecked() ? "x" : "n" ) );
+      QString fpr_name = 
+         USglobal->config_list.root_dir + 
+         SLASH + "somo" + SLASH + "saxs" + SLASH + sprr_filestring();
+
       bool ok_to_write = true;
       if ( QFile::exists(fpr_name) )
       {
          switch( QMessageBox::information( this, 
                                            tr("Overwrite file:") + "SAXS P(r) vs. r" + tr("output file"),
-                                           tr("The P(r) curve file \"") + QString("%1").arg(te_filename2->text()) +
-                                           QString("_%1").arg(current_model + 1) + 
-                                           ".sprr_" + ( rb_curve_raw->isChecked() ? "r" :
-                                                        ( rb_curve_saxs->isChecked() ? "x" : "n" ) )
-                                           + tr("\" will be overwriten"),
+                                           tr("The P(r) curve file \"") + 
+                                           sprr_filestring() +
+                                           tr("\" will be overwriten"),
                                            "&Ok",  "&Cancel", 0,
                                            0,      // Enter == button 0
                                            1 ) ) { // Escape == button 2
@@ -2229,9 +2285,7 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       // save the data to a file
       QString fsaxs_name = 
          USglobal->config_list.root_dir + 
-         SLASH + "somo" + SLASH + "saxs" + SLASH + QString("%1").arg(te_filename2->text()) +
-         QString("_%1").arg(current_model + 1) + 
-         ".ssaxs";
+         SLASH + "somo" + SLASH + "saxs" + SLASH + saxs_filestring();
 #if defined(SAXS_DEBUG)
       cout << "output file " << fsaxs_name << endl;
 #endif
@@ -2240,10 +2294,8 @@ void US_Hydrodyn_Saxs::show_plot_saxs()
       {
          switch( QMessageBox::information( this, 
                                            tr("Overwrite file:") + "SAXS P(r) vs. r" + tr("output file"),
-                                           tr("The file named \"") + QString("%1").arg(te_filename2->text()) +
-                                           QString("_%1").arg(current_model + 1) + 
-                                           ".sprr_" + ( rb_curve_raw->isChecked() ? "r" :
-                                                        ( rb_curve_saxs->isChecked() ? "x" : "n" ) )
+                                           tr("The file named \"") + 
+                                           saxs_filestring() +
                                            + tr("\" will be overwriten"),
                                            "&Ok",  "&Cancel", 0,
                                            0,      // Enter == button 0
@@ -2694,3 +2746,33 @@ void US_Hydrodyn_Saxs::select_saxs_file(const QString &filename)
    }
 }
 
+QString US_Hydrodyn_Saxs::saxs_filestring()
+{
+   QString result = 
+      QString("%1").arg(te_filename2->text()) +
+      QString("_%1").arg(current_model + 1) + 
+      ".ssaxs";
+   return result;
+}
+
+QString US_Hydrodyn_Saxs::sprr_filestring()
+{
+   QString result = 
+      QString("%1_%2b%3")
+      .arg(te_filename2->text())
+      .arg(current_model + 1)
+      .arg(our_saxs_options->bin_size);
+
+   if ( rb_curve_sans->isChecked() )
+   {
+      result += 
+         QString("D%1")
+         .arg(our_saxs_options->d2o_conc * 100);
+   }
+
+   result +=
+      QString(".sprr_%1")
+      .arg( rb_curve_raw->isChecked() ? "r" :
+            ( rb_curve_saxs->isChecked() ? "x" : "n" ) );
+   return result;
+}

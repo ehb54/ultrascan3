@@ -5180,6 +5180,12 @@ overlap()
    printf("\n** Performing overlap test **\n");
    printf("\n** WARNING: Overlaps can lead to wrong results! Detection cutoff > %f **\n", overlap_tolerance);
 
+   int decpts = -(int)log10(us_hydrodyn->overlap_tolerance/9.9999) + 1;
+   if (decpts < 4) {
+      decpts = 4;
+   }
+   int decpow = (int)pow(10.0, (decpts));
+
    for (i = 0; i < nat; i++)
    {
       for (j = i + 1; j < nat; j++)
@@ -5188,6 +5194,7 @@ overlap()
          overlval = (dist - pow((dt[i].r + dt[j].r), 2));
          // if (dist - pow((dt[i].r + dt[j].r), 2)) < -0.01)
          float diff = sqrt(dist) - (dt[i].r + dt[j].r);
+         diff = ((int)((diff * decpow) + (diff > 0 ? 0.5 : -0.5))) / (float)decpow;
          if ( diff < - overlap_tolerance ) 
          {
             printf("\n%s%d%s%d%s%.6f\n", "Notice: Overlap among bead ", i + 1, " and bead ", j + 1, ". Value = ",

@@ -2748,7 +2748,7 @@ void US_Hydrodyn::pdb_saxs()
    } 
    else
    {
-      QString filename = project + QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "");
+      QString filename = project;
       if (saxs_plot_widget)
       {
          saxs_plot_window->refresh(
@@ -2803,7 +2803,7 @@ void US_Hydrodyn::bead_saxs()
    {
       QString filename = QFileInfo(bead_model_file).baseName( TRUE ) +
          QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "");
-      if ( !filename.length() )
+      if ( !QFileInfo(bead_model_file).baseName( TRUE ).length() )
       {
          filename = project + QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "");
       }

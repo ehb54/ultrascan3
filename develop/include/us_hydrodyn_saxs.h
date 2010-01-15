@@ -114,6 +114,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       QRadioButton *rb_saxs;
       QRadioButton *rb_sans;
 
+      QCheckBox *cb_normalize;
+
       QButtonGroup *bg_curve;
       QRadioButton *rb_curve_raw;
       QRadioButton *rb_curve_saxs;
@@ -207,6 +209,8 @@ class US_EXTERN US_Hydrodyn_Saxs : public QFrame
       void select_saxs_file(const QString &);
       void normalize_pr(vector < double > *);
       void update_saxs_sans();
+      QString saxs_filestring();
+      QString sprr_filestring();
 
    protected slots:
 
@@ -286,7 +290,8 @@ class saxs_pr_thr_t : public QThread
                          unsigned int threads,
                          QProgressBar *progress,
                          QLabel *lbl_core_progress,
-                         bool *stopFlag
+                         bool *stopFlag,
+                         float b_bar_inv2
                          );
   void saxs_pr_thr_shutdown();
   void saxs_pr_thr_wait();
@@ -310,6 +315,7 @@ class saxs_pr_thr_t : public QThread
   QProgressBar *progress;
   QLabel *lbl_core_progress;
   bool *stopFlag;
+  float b_bar_inv2;
 
   int thread;
   QMutex work_mutex;

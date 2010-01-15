@@ -3219,15 +3219,15 @@ QString US_Hydrodyn::default_differences_saxs_options()
    }
    if ( saxs_options.d2o_scat_len_dens != default_saxs_options.d2o_scat_len_dens )
    {
-      str += QString(base + " density (*10^-10 cm^2): %1\n").arg(saxs_options.d2o_scat_len_dens);
+      str += QString(base + "D2O scattering length density (*10^-10 cm^2): %1\n").arg(saxs_options.d2o_scat_len_dens);
    }
    if ( saxs_options.d2o_conc != default_saxs_options.d2o_conc )
    {
-      str += QString(base + "D2O concentration (0 to 1): %1\n").arg(saxs_options.d2o_conc);
+      str += QString(base + "Buffer D2O fraction (0 to 1): %1\n").arg(saxs_options.d2o_conc);
    }
    if ( saxs_options.frac_of_exch_pep != default_saxs_options.frac_of_exch_pep )
    {
-      str += QString(base + " peptide H (0 to 1): %1\n").arg(saxs_options.frac_of_exch_pep);
+      str += QString(base + "Fraction of non-exchanged peptide H (0 to 1): %1\n").arg(saxs_options.frac_of_exch_pep);
    }
 
    if ( saxs_options.wavelength != default_saxs_options.wavelength )
@@ -3259,17 +3259,17 @@ QString US_Hydrodyn::default_differences_saxs_options()
       str += QString(base + "Hydrate Original PDB Model: %1\n")
          .arg(saxs_options.hydrate_pdb ? "On" : "Off");
    }
-   if ( saxs_options.curve != default_saxs_options.curve )
-   {
-      str += QString(base + "Curve type: %1\n")
-         .arg(
-              saxs_options.curve ? ((saxs_options.curve == 1) ? "SAXS" : "SANS") : "Raw");
-   }
-   if ( saxs_options.saxs_sans != default_saxs_options.saxs_sans )
-   {
-      str += QString(base + "SAXS or SANS mode: %1\n")
-         .arg(saxs_options.saxs_sans ? "SANS" : "SAXS");
-   }
+   //   if ( saxs_options.curve != default_saxs_options.curve )
+   //   {
+   //      str += QString(base + "Curve type: %1\n")
+   //         .arg(
+   //              saxs_options.curve ? ((saxs_options.curve == 1) ? "SAXS" : "SANS") : "Raw");
+   //   }
+   //   if ( saxs_options.saxs_sans != default_saxs_options.saxs_sans )
+   //   {
+   //      str += QString(base + "SAXS or SANS mode: %1\n")
+   //         .arg(saxs_options.saxs_sans ? "SANS" : "SAXS");
+   //   }
    return str;
 }
 
@@ -3280,8 +3280,8 @@ void US_Hydrodyn::display_default_differences()
       default_differences_load_pdb() +
       default_differences_somo() +
       default_differences_hydro() +
-      // until default values are decided upon      default_differences_saxs_options() +
-      default_differences_grid();
+      default_differences_grid() +
+      default_differences_saxs_options();
 
    if ( str != "" )
    {
