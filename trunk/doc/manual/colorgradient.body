@@ -1,11 +1,11 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Color Gradients'
+%]
+
     <h2> <i>UltraScan</i> Color Gradient Generator: </h2>
 
     <p> Color gradients can be generated for the purpose of providing
-    a third dimension to selected <b><i>UltraScan III</i></b> program graphs.
-    The color gradient panel is accessed from the main menu under the 
-    <b>Utilities</b> menu: </p>
-
-    <center> <img src="images/colorgrad1.png" alt=""> </center>
+    a third dimension to selected <b><i>UltraScan III</i></b> program graphs.</p>
 
     <p> Color gradients are specified with a start color and a number of
     color steps, each one having an end color and a number of points.
@@ -13,10 +13,10 @@
     plus one for the start color. The steps are saved in an XML file, with
     an option to save a PNG file with the color legend.
     
-    <table border cellspacing="5" cellpadding="5">
+    <table>
       <tr>
         <td>
-          <img src="images/colorgrad.png" alt="">
+          <img src="images/colorgrad.png" alt="Color Gradient Window">
         </td>
         <td>
           <ul>
@@ -87,3 +87,5 @@
         </td>
       </tr>
     </table>
+
+[% INCLUDE footer.us3 %]
