@@ -1,4 +1,4 @@
-[% INCLUDE header.us3
+[% INCLUDE header.us3/
    title = 'UltraScan III Color Gradients'
 %]
 
@@ -11,7 +11,7 @@
     color steps, each one having an end color and a number of points.
     The total number of colors in the gradient is the sum of step points
     plus one for the start color. The steps are saved in an XML file, with
-    an option to save a PNG file with the color legend.</p>
+    an option to save a PNG file with the color legend.
     
     <table>
       <tr>
@@ -21,31 +21,25 @@
         <td>
           <ul>
             <li>
-              <b>Select Starting Color</b> A click on this button leads to
-              a standard color dialog. The chosen color appears in the label
-              to the right.
-            </li>
-
-            <li>
               <b>Number of Color Steps:</b> Choose the total number of
               color steps.
             </li>
             
             <li>
-              <b>Select a Color Step:</b> Change this value to a number
-              from 1 to the number of steps, then change the number of points
-              and color for the indicated step.
+              <b>Select Starting Color:</b> Click on this button to choose
+              a start gradient color from a standard color dialog. The chosen
+              color appears in the button and the gradient displays below.
             </li>
 
             <li>
-              <b>Number of Points in this Step:</b> Indicate the number of
-              points that the current step uses in transitioning from the
-              previous start or step color to the current step end color.
+              <b>Select Step Color:</b> Click on any of the step color buttons
+              to choose an end color for the step via a standard color dialog.
             </li>
             
             <li>
-              <b>Select Step Color:</b> Click on this button and select a
-              step end color from the resulting dialog.
+              <b>Number of Points in this Step:</b> Indicate the number of
+              points for each step by setting the counter to the right of
+              the step color button.
             </li>
             
             <li>
