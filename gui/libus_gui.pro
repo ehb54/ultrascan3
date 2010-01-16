@@ -13,10 +13,11 @@ TRANSLATIONS = $${TARGET}_DE_de.ts
 
 HEADERS      = us_analysis_base.h       \
                us_buffer.h              \
+               us_colorgradIO.h         \
                us_editor.h              \
-               us_investigator.h        \
                us_gui_settings.h        \
                us_help.h                \
+               us_investigator.h        \
                us_license.h             \
                us_model_editor.h        \
                us_model_selection.h     \
@@ -35,10 +36,11 @@ HEADERS      = us_analysis_base.h       \
 
 SOURCES      = us_analysis_base.cpp       \
                us_buffer.cpp              \
+               us_colorgradIO.cpp         \
                us_editor.cpp              \
-               us_investigator.cpp        \
                us_gui_settings.cpp        \ 
                us_help.cpp                \
+               us_investigator.cpp        \
                us_license.cpp             \
                us_model_editor.cpp        \
                us_model_selection.cpp     \
