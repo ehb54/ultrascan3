@@ -151,6 +151,8 @@ US_ColorGradient::US_ColorGradient( QWidget* parent, Qt::WindowFlags flags )
    topbox->addLayout( showgrad );
 
    show_gradient();
+
+   new_mods     = false;	// don't count color,counter changes as new
 }
 
 void US_ColorGradient::c_click( int which )
@@ -422,13 +424,14 @@ void US_ColorGradient::load_gradient( void )
       }
       else
       {
-         have_save    = true;
-         new_mods     = false;
          out_filename = in_filename;
          ct_nsteps->setValue( (qreal)nsteps );
 
          update_banner();
          show_gradient();
+
+         have_save    = true;
+         new_mods     = false;
       }
 
       filei.close();
