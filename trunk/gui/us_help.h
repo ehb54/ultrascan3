@@ -12,20 +12,21 @@
   Qt Assistant for local help files.
 */
 
-// Probably could jsut be QObject
 class US_EXTERN US_Help : public QObject
 {
   Q_OBJECT
 
   public:
-    /*! \brief Allocate QProcess structures and connect browser process to
-               methods to capture any output.
-
-        \param parent A pointer to the parent widget.  This normally can be 
+    /*! \brief Simple constructor.
+        \param parent A pointer to the parent QObject.  This normally can be 
                       left as NULL.
     */  
     US_Help( QObject* = 0 );
 
+    /*! \brief Show help page in Qt assistant window cusomized for US3
+        \param Name of help page to be shown. For example,
+               "us_config.html".  Optionally prepended with "manual/"
+    */
     void show_help( const QString& );
 
   private:
@@ -34,4 +35,3 @@ class US_EXTERN US_Help : public QObject
     QProcess* assistant;
 };
 #endif
-
