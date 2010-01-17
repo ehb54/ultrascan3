@@ -23,11 +23,12 @@ US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
 
 void US_HelpDaemon::close( int /*exitCode*/, QProcess::ExitStatus /*status*/ ) 
 {
+  //qDebug() << "US_HelpDaemon::close" ;
   exit( 0 );
 }
-void US_HelpDaemon::show( const QString& page )
+void US_HelpDaemon::show( const QString& helpPage )
 {
-  if ( page == "Quit" )
+  if ( helpPage == "Quit" )
   {
     daemon.close();
     exit( 0 );
@@ -37,6 +38,9 @@ void US_HelpDaemon::show( const QString& page )
   {
     qDebug() << "assistant not running";
   }
+
+  QString page = helpPage;
+  if ( ! helpPage.contains( "manual/" ) ) page.prepend( "manual/" );
 
   QString message = "setSource qthelp://ultrascaniii/" + page + "\0";
   ts << QLatin1String( message.toAscii().data() ) << endl;
