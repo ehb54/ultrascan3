@@ -24,7 +24,7 @@ class US_EXTERN US_Help : public QObject
     US_Help( QObject* = 0 );
 
     /*! \brief Show help page in Qt assistant window cusomized for US3
-        \param Name of help page to be shown. For example,
+        \param helpFile Name of help page to be shown. For example,
                "us_config.html".  Optionally prepended with "manual/"
     */
     void show_help( const QString& );
