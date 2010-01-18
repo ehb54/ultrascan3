@@ -22,127 +22,127 @@
 //! Cohn, E. J., and Edsall, J. T. (1943) Proteins, Amino Acids, and Peptides
 //! as Ions and Dipolar Ions. New York, Reinhold.
 
-//! MW valuse have been reduce by a water molecule (18 daltons) to
+//! MW values have been reduce by a water molecule (18 daltons) to
 //! represent the weight in a peptide chain
 
 // A
-#define ALANINE_MW                 71.10
-#define ALANINE_VBAR                0.74
+#define ALANINE_MW                 71.10  //!< (A)alanine mol. wt.
+#define ALANINE_VBAR                0.74  //!< (A)alanine part. spec. vol.
 
 // B
-#define M_OR_D_MW                 114.60
-#define M_OR_D_VBAR                 0.61
+#define M_OR_D_MW                 114.60  //!< (B)M-or-D mol. wt.
+#define M_OR_D_VBAR                 0.61  //!< (B)M-or-D part. spec. vol.
 
 // C
-#define CYSTEINE_MW               103.20
-#define CYSTEINE_VBAR               0.63
-#define CYSTEINE_E280             120.00
+#define CYSTEINE_MW               103.20  //!< (C)cysteine mol. wt.
+#define CYSTEINE_VBAR               0.63  //!< (C)cysteine part. spec. vol.
+#define CYSTEINE_E280             120.00  //!< (C)cysteine ext. coeff.
 
 // D
-#define ASPARTIC_ACID_MW          115.1
-#define ASPARTIC_ACID_VBAR          0.6
+#define ASPARTIC_ACID_MW           115.1  //!< (D)aspartic acid mol. wt.
+#define ASPARTIC_ACID_VBAR           0.6  //!< (D)aspartic acic part. spec. vol.
 
 // E
-#define GLUTAMIC_ACID_MW          129.10
-#define GLUTAMIC_ACID_VBAr          0.66
+#define GLUTAMIC_ACID_MW          129.10  //!< (E)glutamic acid mol. wt.
+#define GLUTAMIC_ACID_VBAr          0.66  //!< (E)glumatic acid part. spec. vol.
 
 // F
-#define PHENYLALANINE_MW          147.20
-#define PHENYLALANINE_VBAR          0.77
+#define PHENYLALANINE_MW          147.20  //!< (F)phenylalanine mol. wt.
+#define PHENYLALANINE_VBAR          0.77  //!< (F)phenylalanine part. spec. vol.
 
 // G
-#define GLYCINE_MW                 57.10
-#define GLYCINE_VBAR                0.64
+#define GLYCINE_MW                 57.10  //!< (G)glycine mol. wt.
+#define GLYCINE_VBAR                0.64  //!< (G)glycine part. spec. vol.
 
 // H
-#define HISTIDINE_MW              137.20
-#define HISTIDINE_VBAR              0.67
+#define HISTIDINE_MW              137.20  //!< (H)histidine mol. wt.
+#define HISTIDINE_VBAR              0.67  //!< (H)histidine part. spec. vol.
 
 // I
-#define ISOLEUCINE_MW             113.2
-#define ISOLEUCINE_VBAR             0.9
+#define ISOLEUCINE_MW             113.2   //!< (I)isoleucine mol. wt.
+#define ISOLEUCINE_VBAR             0.9   //!< (I)isoleucine part. spec. vol.
 
 // J - James Nowick: Hao
 // Std is LEUCINE
-#define HAO_MW                    235.2000
-#define HAO_VBAR                    0.6497
-#define HAO_E280                 9850.0000
+#define HAO_MW                    235.2000 //!< (J)hao mol. wt.
+#define HAO_VBAR                    0.6497 //!< (J)hao part. spec. vol.
+#define HAO_E280                 9850.0000 //!< (J)hao ext. coeff.
 
 // K
-#define LYSINE_MW                 128.2
-#define LYSINE_VBAR                 0.82
+#define LYSINE_MW                 128.2   //!< (K)lysine mol. wt.
+#define LYSINE_VBAR                 0.82  //!< (K)lysine part. spec. vol.
 
 // L
-#define LEUCINE_MW                113.2
-#define LEUCINE_VBAR                0.9
+#define LEUCINE_MW                113.2   //!< (L)leucine mol. wt.
+#define LEUCINE_VBAR                0.9   //!< (L)leucine part. spec. vol.
 
 // M
-#define METHIONINE_MW             131.20
-#define METHIONINE_VBAR             0.75
+#define METHIONINE_MW             131.20  //!< (M)methionine mol. wt.
+#define METHIONINE_VBAR             0.75  //!< (M)methionine part. spec. vol.
 
 // N
-#define ASPARAGINE_MW             115.1
-#define ASPARAGINE_VBAR             0.6
+#define ASPARAGINE_MW             115.1   //!< (N)asparagine mol. wt.
+#define ASPARAGINE_VBAR             0.6   //!< (N)asparagine part. spec. vol.
 
 // O - delta-linked ornithin (James Nowick)
 // Std is Pyrrolysine
-#define ORNITHIN_MW               114.2000
-#define ORNITHIN_VBAR               0.7795
-#define ORNITHIN_E280               0.0000
+#define ORNITHIN_MW               114.2000 //!< (O)ornithin mol. wt.
+#define ORNITHIN_VBAR               0.7795 //!< (O)ornithin mol. wt.
+#define ORNITHIN_E280               0.0000 //!< (O)ornithin ext. coeff.
 
 // P
-#define PROLINE_MW                 97.10
-#define PROLINE_VBAR                0.76
+#define PROLINE_MW                 97.10  //!< (P)proline mol. wt.
+#define PROLINE_VBAR                0.76  //!< (P)proline part. spec. vol.
 
 // Q
-#define GLUTAMINE_MW              128.10
-#define GLUTAMINE_VBAR              0.67
+#define GLUTAMINE_MW              128.10  //!< (Q)glutamine mol. wt.
+#define GLUTAMINE_VBAR              0.67  //!< (Q)glutamine part. spec. vol.
 
 // R
-#define ARGININE_MW               156.2
-#define ARGININE_VBAR               0.7
+#define ARGININE_MW               156.2   //!< (R)arginine mol. wt.
+#define ARGININE_VBAR               0.7   //!< (R)arginine part. spec. vol.
 
 // S
-#define SERINE_MW                  87.10
-#define SERINE_VBAR                 0.63
+#define SERINE_MW                  87.10  //!< (S)serine mol. wt.
+#define SERINE_VBAR                 0.63  //!< (S)serine part. spec. vol.
 
 // T
-#define THREONINE_MW              101.1
-#define THREONINE_VBAR              0.7
+#define THREONINE_MW              101.1   //!< (T)threonine mol. wt.
+#define THREONINE_VBAR              0.7   //!< (T)threonine part. spec. vol.
 
 // U - currently unused
-#define SELENOCYSTEINE_MW       
-#define SELENOCYSTEINE_VBAR  
+#define SELENOCYSTEINE_MW                  //!< (U)selenocysteine mol. wt.
+#define SELENOCYSTEINE_VBAR                //!< (U)selenocysteine part. s. vol.
 
 // V
-#define VALINE_MW                  99.10
-#define VALINE_VBAR                 0.86
+#define VALINE_MW                  99.10   //!< (V)valine mol. wt.
+#define VALINE_VBAR                 0.86   //!< (V)valine part. spec. vol.
 
 // W
-#define TRYPTOPHAN_MW             186.20
-#define TRYPTOPHAN_VBAR             0.74
-#define TRYPTOPHAN_E280          5690.00
+#define TRYPTOPHAN_MW             186.20   //!< (W)tryptophan mol. wt.
+#define TRYPTOPHAN_VBAR             0.74   //!< (W)tryptophan part. spec. vol.
+#define TRYPTOPHAN_E280          5690.00   //!< (W)tryptophan ext. coeff.
 
 // X -- Use an average
-#define UNK_MW                    119.750
-#define UNK_VBAR                    0.722
+#define UNK_MW                    119.750   //!< (X)unknown mol. wt.
+#define UNK_VBAR                    0.722   //!< (X)unknown spec. vol.
 
 // Y
-#define TYROSINE_MW               163.20
-#define TYROSINE_VBAR               0.71
-#define TYROSINE_E280            1280.00
+#define TYROSINE_MW               163.20   //!< (Y)tyrosine mol. wt.
+#define TYROSINE_VBAR               0.71   //!< (Y)tyrosine part. spec. vol.
+#define TYROSINE_E280            1280.00   //!< (Y)tyrosine ext. coeff.
 
 // Z
-#define E_OR_Q_MW                 128.600
-#define E_OR_Q_VBAR                 0.665
+#define E_OR_Q_MW                 128.600   //!< (Z)E-or-Q mol. wt.
+#define E_OR_Q_VBAR                 0.665   //!< (Z)E-or-Q part. spec. vol.
 
 // John Kulp: diaminobutyric acid
-#define  DIAMINOBUTYRIC_ACID_MW   101.100
-#define  DIAMINOBUTYRIC_ACID_VBAR   0.736
+#define  DIAMINOBUTYRIC_ACID_MW   101.100   //!< diaminobutyric mol. wt.
+#define  DIAMINOBUTYRIC_ACID_VBAR   0.736   //!< diaminobutyric part.sp.vol.
 
 // John Kulp: diaminopropanoic acid
-#define  DIAMINOPROPANOIC_ACID_MW    87.100
-#define  DIAMINOPROPANOIC_ACID_VBAR   0.669
+#define  DIAMINOPROPANOIC_ACID_MW    87.100   //!< diaminopropanoic mol. wt.
+#define  DIAMINOPROPANOIC_ACID_VBAR   0.669   //!< diaminopropanoic p.s.vol.
 
 
 

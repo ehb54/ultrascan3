@@ -8,6 +8,7 @@ namespace crc
  * Generated automatically by crc32.c
  */
 
+   //! \brief Table of values used in CRC-32 calculations.
    static const unsigned long crc_table[256] =
    {
       0x00000000UL, 0x77073096UL, 0xee0e612cUL, 0x990951baUL, 0x076dc419UL,
@@ -69,9 +70,16 @@ using namespace crc;
 
 #include "us_extern.h"
 
+//! \brief Class to provide a method for CRC-32 calculations.
 class US_EXTERN US_Crc
 {
    public:
+
+      /*! \brief Update a CRC value from data of a specified length.
+          \param crc The input and updated Cyclic Redundancy Check value.
+          \param buf The byte data buffer for which to calculate a CRC.
+          \param len The length in bytes of the data to check.
+      */
       static unsigned long crc32( 
          unsigned long, const unsigned char*, unsigned int );
 };
