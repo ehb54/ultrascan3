@@ -155,7 +155,7 @@ class US_EXTERN US_Math
       //!        of the rotor.
       //! \param dataList The list of editedData for the run
 
-      static double time_correction( const QList< US_DataIO::editedData >& );
+      static double time_correction( const QVector< US_DataIO::editedData >& );
 };
 #endif
 

@@ -52,7 +52,7 @@ class US_DataIO
          } t;
          int     count;
 
-         QList< reading > readings;
+         QVector< reading > readings;
       };
 
       class scan
@@ -65,7 +65,7 @@ class US_DataIO
          double wavelength;
          double plateau;         // Reading value
          double delta_r;
-         QList< reading > readings;
+         QVector< reading > readings;
          QByteArray interpolated; 
       };
 
@@ -78,7 +78,7 @@ class US_DataIO
          char    channel;
          QString description;
          
-         QList< scan > scanData;
+         QVector< scan > scanData;
       };
 
       class editedPoint
@@ -141,7 +141,7 @@ class US_DataIO
          double        plateau;   // Radius value
          double        baseline;
          bool          floatingData;
-         QList< scan > scanData;       // The interpolated data array is omitted
+         QVector< scan > scanData;    // The interpolated data array is omitted
       };
 
       enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, BADXML, 
@@ -154,7 +154,7 @@ class US_DataIO
       static QString errorString   ( int );
       static int     index         ( const scan&, double );
       static int     loadData      ( const QString&, const QString&, 
-                                     QList< editedData >&, QList< rawData >& );
+                                     QVector< editedData >&, QVector< rawData >& );
 
    private:
 
@@ -182,6 +182,6 @@ class US_DataIO
 
       static void copyRange  ( double, double, const scan&, scan& );
       static bool spike_check( const scan&, int, int, int, double* );
-      static QList< double > calc_residuals( int, const QList< scan >& );
+      static QList< double > calc_residuals( int, const QVector< scan >& );
 };
 #endif
