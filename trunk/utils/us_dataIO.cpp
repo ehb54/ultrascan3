@@ -598,8 +598,8 @@ void US_DataIO::do_edits( QXmlStreamReader& xml, editValues& parameters )
 
 int US_DataIO::loadData( const QString&       directory, 
                          const QString&       editFilename,
-                         QList< editedData >& data,
-                         QList< rawData    >& raw )
+                         QVector< editedData >& data,
+                         QVector< rawData    >& raw )
 {
    // Determine raw file name by removing editID
    QString rawDataFile = editFilename;
@@ -667,7 +667,7 @@ int US_DataIO::loadData( const QString&       directory,
    }
 
    // Do not copy excluded data or data outside the edit range
-   for ( int i = 0; i < d.scanData.length(); i++ )
+   for ( int i = 0; i < d.scanData.size(); i++ )
    {
       if ( e.excludes.contains( i ) ) continue;
 
@@ -678,7 +678,7 @@ int US_DataIO::loadData( const QString&       directory,
    }
 
    // Determine plateau values for each scan
-   for ( int i = 0; i < ed.scanData.length(); i++ )
+   for ( int i = 0; i < ed.scanData.size(); i++ )
    {
       int point = index( ed.scanData[ i ], ed.plateau );
       ed.scanData[ i ].plateau = ed.scanData[ i ].readings[ point ].value;
@@ -788,8 +788,8 @@ bool US_DataIO::spike_check( const scan& s, int point,
    return false;  // Not a spike
 }
 
-QList< double > US_DataIO::calc_residuals( int                  order, 
-                                           const QList< scan >& sl )
+QList< double > US_DataIO::calc_residuals( int                    order, 
+                                           const QVector< scan >& sl )
 {
    int scan_count = sl.size();
 

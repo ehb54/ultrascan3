@@ -418,7 +418,7 @@ double US_Math::normal_distribution( double sigma, double mean, double x )
    return exp( exponent ) / sqrt( 2.0 * M_PI * sq( sigma ) );
 }
 
-double US_Math::time_correction( const QList< US_DataIO::editedData >& dataList )
+double US_Math::time_correction( const QVector< US_DataIO::editedData >& dataList )
 {
    int size  = dataList.size() * dataList[ 0 ].scanData.size();
    int count = 0;
