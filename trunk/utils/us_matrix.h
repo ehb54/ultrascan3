@@ -8,22 +8,70 @@ class US_Matrix
 {
 public:
 
-   //! \brief Function to solve general linear least squares problem:
-   //! \param c returns the coefficients for best least-squares fit
-   //! \param x contains the x values of the raw data
-   //! \param y contains the y values of the raw data
-   //! \param N contains the dimension of x and y
-   //! \param order is the order of the function to be fitted
-
+   /*! \brief Function to solve general linear least squares problem:
+       \param c returns the coefficients for best least-squares fit
+       \param x contains the x values of the raw data
+       \param y contains the y values of the raw data
+       \param N contains the dimension of x and y
+       \param order is the order of the function to be fitted
+   */
    static void lsfit( double*, double*, double*, int, int );
-   
-   
+ 
+   /*! This method factors the n by n symmetric positive definite matrix A
+       as LL(T) where L is a lower triangular matrix. The method assumes that
+       at least the lower triangle of A is filled on entry.
+       On exit, the lower triangle of A has been replaced by L.
+       \brief Function to factor an n x n symmetric positive definite matrix.
+       \param a Input symmetric positive definite matrix A; lower triangle
+                replaced by L on exit.
+       \param n Dimensions of A.
+   */
    static bool Cholesky_Decomposition( double**, int );
 
+   /*! Cholesky_SolveSystem expects a Cholesky-decomposed L-matrix (n x n)
+       with the lower diagonal filled, and the right hand side "b".
+       Using forward and backward substitution, the right hand side "b"
+       is replaced by the solution vector "x".
+       \brief Function to solve a Cholesky-decomposed L-matrix.
+       \param L Cholesky-decomposed L-matrix.
+       \param b Right hand side.
+       \param n Dimensions of L.
+   */
    static bool Cholesky_SolveSystem( double**, double*, int );
 
+   /*! Solve a set of linear equations. A is a square matrix of coefficients.
+       b is the right hand side. b is replaced by solution.
+       Target is replaced by its LU decomposition.
+       \brief Solve a set of linear equations.
+       \param A Square matrix of coefficients.
+       \param b Right hand side on input and solution on output.
+       \param n Dimension of matrix sides and vectors.
+   */
    static void LU_SolveSystem   ( double**, double*&, int       );
+
+   /*! Performs LU Decomposition on a matrix. This routine must be given
+       an array to mark the row permutations and a flag to mark whether
+       the number of permutations was even or odd.
+       Reference: Numerical Recipes in C.
+       \brief LU Decomposition of a matrix.
+       \param matrix The matrix to decompose.
+       \param index An index array to mark row permutations.
+       \param parity Flag of even number of permutations.
+       \param n Dimension of matrix sides.
+   */
    static void LU_Decomposition ( double**, int*,     bool, int );
+
+   /*! Do the backsubstitution on matrix A which is the LU decomposition
+       of the original matrix. b is the n x 1 right hand side vector.
+       b is replaced by the solution. index is the array that marks the row
+       permutations.
+       \brief Back substitution on a matrix which is the LU decomposition
+              of the original matrix.
+       \param A Input decomposed and output back-substituted matrix.
+       \param b Right hand side vector on input and solution on output.
+       \param index Array to be used to mark row permutations.
+       \param n Dimension of sides.
+   */
    static void LU_BackSubstitute( double**, double*&, int*, int );
 
 private:

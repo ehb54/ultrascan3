@@ -23,56 +23,57 @@
 //! A structure used for calculating a peptide sequence
 struct peptide
 {
-	uint   a;
-	uint   b;
-	uint   c;
-	uint   d;
-	uint   e;
-	uint   f;
-	uint   g;
-	uint   h;
-	uint   i;
-	uint   j; //Hao (James Nowick)
-	uint   k;
-	uint   l;
-	uint   m;
-	uint   n;
-	uint   o; //delta-linked ornithin (James Nowick)
-	uint   p;
-	uint   q;
-	uint   r;
-	uint   s;
-	uint   t;
-	uint   u; // currently unused
-	uint   v;
-	uint   w;
-	uint   x;
-	uint   y;
-	uint   z;
-	uint   dab; // diaminobutyric acid (John Kulp), symbol: "+"
-	uint   dpr; // diaminopropanoic acid (John Kulp), symbol: "@"
-	double vbar;
-	double vbar20;
-	double mw;
-	double vbar_sum;
-	double weight;
-	double e280;
-	uint   residues;
+	uint   a;        //!< alanine
+	uint   b;        //!< M or D
+	uint   c;        //!< cysteine
+	uint   d;        //!< aspartic acid
+	uint   e;        //!< glutamic acid
+	uint   f;        //!< phenylalanine
+	uint   g;        //!< glycine
+	uint   h;        //!< histidine
+	uint   i;        //!< isoleucine
+	uint   j;        //!< Hao (James Nowick)
+	uint   k;        //!< lysine
+	uint   l;        //!< leucine
+	uint   m;        //!< methionine
+	uint   n;        //!< asparagine
+	uint   o;        //!< delta-linked ornithin (James Nowick)
+	uint   p;        //!< proline
+	uint   q;        //!< glutamine
+	uint   r;        //!< arginine
+	uint   s;        //!< serine
+	uint   t;        //!< threonine
+	uint   u;        //!< currently unused
+	uint   v;        //!< valine
+	uint   w;        //!< tryptophan
+	uint   x;        //!< unknown
+	uint   y;        //!< tyrosine
+	uint   z;        //!< E or  Q
+	uint   dab;      //!< diaminobutyric acid (John Kulp), symbol: "+"
+	uint   dpr;      //!< diaminopropanoic acid (John Kulp), symbol: "@"
+	double vbar;     //!< partial specific volume
+	double vbar20;   //!< partial specific volume at 20 deg.
+	double mw;       //!< molecular weight
+	double vbar_sum; //!< vbar sum
+	double weight;   //!< weight
+	double e280;     //!< extinction coefficient at 280 nm
+	uint   residues; //!< residues     
 };
 
+//! A structure used for holding solution data
 struct solution_data
 {
-   double density;
-   double density_wt;
-   double density_tb;
-   double viscosity;
-   double viscosity_wt;
-   double viscosity_tb;
-   double buoyancyb;
-   double buoyancyw;
-   double vbar;
-   double vbar20;
-   double correction;
+   double density;       //!< density
+   double density_wt;    //!< density wt
+   double density_tb;    //!< density tb
+   double viscosity;     //!< viscosity
+   double viscosity_wt;  //!< viscosity wt
+   double viscosity_tb;  //!< viscosity tb
+   double buoyancyb;     //!< buoyancy b
+   double buoyancyw;     //!< buoyancy w
+   double vbar;          //!< partial specific volume
+   double vbar20;        //!< partial specific volume at 20 deg.
+   double correction;    //!< correction
 };
 
 
@@ -155,7 +156,7 @@ class US_EXTERN US_Math
       //!        of the rotor.
       //! \param dataList The list of editedData for the run
 
-      static double time_correction( const QVector< US_DataIO::editedData >& );
+      static double time_correction( const QList< US_DataIO::editedData >& );
 };
 #endif
 
