@@ -3,15 +3,6 @@
 #include "us_colorgradIO.h"
 #include "us_defines.h"
 
-/*! \brief Public static function to create a gradient colors list
-           from a color steps XML file.
-    \param xmlfilename The full path name to an XML color gradient file.
-    \param gcolors     Returned list of gradient colors
-    \return            Return code: 0 (XFS_OK)    -> ok;
-                                    1 (XFS_EROPN) -> can't open;
-                                    2 (XFS_ERXML) -> not xml;
-                                    3 (XFS_ERCST) -> not color steps.
-*/
 int US_ColorGradIO::read_color_gradient( QString          xmlfilename,
                                          QList< QColor >& gcolors )
 {
