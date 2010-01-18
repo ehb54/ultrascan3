@@ -251,5 +251,5 @@ bool US_DB2::isConnected ( void )
 
 int US_DB2::numRows( void )
 { 
-   return ( result )? ( mysql_num_rows( result ) ) : -1;
+   return ( result )? ( (int) mysql_num_rows( result ) ) : -1;
 }
