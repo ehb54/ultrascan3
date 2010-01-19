@@ -4,27 +4,40 @@
 #include <QtGui>
 #include "us_extern.h"
 
+/*! Class for edit and/or display of text in a main window. The text may be
+    editable or read-only. The window may be flagged to have text file load
+    and save menu items (and actions) or not. If text files may be loaded,
+    a file extension for the open file dialog may be specified.
+    \brief Class for text edit/display.
+*/
 class US_EXTERN US_Editor : public QMainWindow
 {
 	Q_OBJECT
 
    public:
-	
+      /*! \brief Text editor main window.
+          \param menu Menu types flag (LOAD for load,save actions added).
+          \param readonly Flag if read-only or not.
+          \param extension File extension for open file dialog.
+          \param parent Parent widget.
+          \param flags Standard main window flags.
+      */
       US_Editor( int, bool = false, const QString& = "Data Files (*.dat)", 
             QWidget* = 0, Qt::WindowFlags = 0 );
 
       enum { LOAD, DEFAULT };
 
-	   QTextEdit* e;
+      QTextEdit* e;      //!< class's text editor component
    
    signals:
+      //! \brief Signal that file load is complete
       void US_EditorLoadComplete( void );
 
    private:
 
 	   QFont      currentFont;
       QString    filename;
-      QString    file_extention;
+      QString    file_extension;
 	
       void saveFile   ( void );
 
