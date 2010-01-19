@@ -12,6 +12,7 @@ unix {
   QWTPATH     = /usr/local/qwt-5.1.1
   QCAPATH     = /usr/local
   SINGLEDIR   = /opt/qt/addons/qtsingleapplication-2.5_1-commercial/src/
+  MYSQLDIR    = /uar/bin/mysql
 }
 
 win32 {

@@ -15,6 +15,7 @@ unix {
   LIBS       += -lus_utils -lus_gui -lus_db -L../../lib
   LIBS       += -lqca
   LIBS       += -lqwt -L$$QWTPATH/lib
+  LIBS       += -lmysqlclient -L$$MYSQLDIR
   DEFINES    += LINUX
 
   DEPENDPATH   += ../../gui ../../utils ../../db $$QWTPATH/include ..
