@@ -2,10 +2,10 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
-US_Editor::US_Editor( int menu, bool readonly, const QString& extention, 
+US_Editor::US_Editor( int menu, bool readonly, const QString& extension, 
       QWidget* parent,  Qt::WindowFlags flags ) : QMainWindow( parent, flags )                                                             
 {
-   file_extention = extention;
+   file_extension = extension;
    filename = "";
    
    QMenu* fileMenu = menuBar()->addMenu( tr( "&File" ) );
@@ -77,7 +77,7 @@ void US_Editor::load( void )
    fn = QFileDialog::getOpenFileName( this, 
          tr( "Open File" ), 
          US_Settings::dataDir(), 
-         file_extention );
+         file_extension );
 
   if ( fn == "" ) return;
 

@@ -27,7 +27,7 @@ class US_Zoomer: public QwtPlotZoomer
       US_Zoomer( int, int, QwtPlotCanvas* );
 };
 
-//! \brief Customize plot widgits
+//! \brief Customize plot widgets
 
 /*! \class US_Plot
   Provides functions to allow configuration of plot widgets
@@ -44,7 +44,7 @@ class US_EXTERN US_Plot : public QVBoxLayout
    Q_OBJECT
 
    public:
-      //! \param plot   - A refernce where to store the new plot for the caller
+      //! \param plot   - The plot component created for the caller
       //! \param title  - The title of the plot
       //! \param x_axis - The title of the x (bottom) axis
       //! \param y_axis - The title of the y (left) axis
@@ -306,6 +306,9 @@ class US_PlotGridConfig : public US_WidgetsDialog
       void apply           ( void );
 };
 
+/*! \brief Customize plot picker characteristics and mouse events
+    \param plot The plot to attach to
+*/
 class US_PlotPicker : public QwtPlotPicker
 {
    Q_OBJECT
@@ -314,17 +317,27 @@ class US_PlotPicker : public QwtPlotPicker
       US_PlotPicker( QwtPlot* );
 
    signals:
+      //! \brief Signal mouse down (unmodified)
       void mouseDown    ( const QwtDoublePoint& );
+      //! \brief Signal mouse down (modified with control key)
       void cMouseDown   ( const QwtDoublePoint& );
+      //! \brief Signal mouse down (modified with control key, raw event)
       void cMouseDownRaw( QMouseEvent* );
+      //! \brief Signal mouse up (unmodified)
       void mouseUp      ( const QwtDoublePoint& );
+      //! \brief Signal mouse up (modified with control key)
       void cMouseUp     ( const QwtDoublePoint& );
+      //! \brief Signal mouse drag (unmodified)
       void mouseDrag    ( const QwtDoublePoint& );
+      //! \brief Signal mouse drag (modified with control key)
       void cMouseDrag   ( const QwtDoublePoint& );
 
    protected:
+      //! \brief Slot to handle mouse press event
       void widgetMousePressEvent  ( QMouseEvent* ); 
+      //! \brief Slot to handle mouse release event
       void widgetMouseReleaseEvent( QMouseEvent* ); 
+      //! \brief Slot to handle mouse move event
       void widgetMouseMoveEvent   ( QMouseEvent* ); 
 };
 #endif
