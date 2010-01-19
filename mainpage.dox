@@ -19,7 +19,7 @@
 
   - Database Library
     - \ref US_DB
-
+*/
   - Programs
      - \ref US_Win
      - \ref US_Config
@@ -29,7 +29,7 @@
        - \ref US_Font
      - \ref US_HelpDaemon
      - \ref licenseMain
-
+/*!
 Practice:<br>
    
      The density of water.  An empirical equation derived from
