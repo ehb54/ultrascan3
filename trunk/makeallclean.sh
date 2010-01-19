@@ -8,4 +8,4 @@ do
   popd
 done
 
-rm *~
+rm -f *~
