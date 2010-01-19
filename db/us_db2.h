@@ -63,6 +63,8 @@ class US_EXTERN US_DB2
     bool          connect     ( const QString&, const QString&, 
                                 const QString&, const QString&, 
                                 QString& );
+    void          rawQuery    ( const QString& );
+    int           statusQuery ( const QString& );
     void          query       ( const QString& );
     bool          next        ( void );
     QVariant      value       ( unsigned );
@@ -70,7 +72,9 @@ class US_EXTERN US_DB2
     bool          isConnected ( void );
     int           numRows     ( void );
 
-    QString       lastQueryErrorText( void ){ return error; };
+    QString       lastError   ( void ) { return error;  };
+    int           lastErrno   ( void ) { return errno;  };
+    int           lastInsertID( void );
     
   private:
     bool          connected;
@@ -80,5 +84,6 @@ class US_EXTERN US_DB2
       
     QString       certDir;
     QString       error;
+    int           errno;
 };
 #endif
