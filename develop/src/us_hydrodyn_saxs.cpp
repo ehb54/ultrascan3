@@ -817,27 +817,24 @@ void saxs_pr_thr_t::run()
 
 void US_Hydrodyn_Saxs::normalize_pr( vector < double > *pr )
 {
-   if ( cb_normalize->isChecked() )
+   // set distribution to a 1 peak
+   double max = 0e0;
+   if ( pr->size() )
    {
-      // set distribution to a 1 peak
-      double max = 0e0;
-      if ( pr->size() )
+      max = (*pr)[0];
+   }
+   for ( unsigned int i = 1; i < pr->size(); i++ )
+   {
+      if ( (*pr)[i] > max )
       {
-         (*pr)[0];
+         max = (*pr)[i];
       }
-      for ( unsigned int i = 1; i < pr->size(); i++ )
+   }
+   if ( max > 0e0 )
+   {
+      for ( unsigned int i = 0; i < pr->size(); i++ )
       {
-         if ( (*pr)[i] > max )
-         {
-            max = (*pr)[i];
-         }
-      }
-      if ( max > 0e0 )
-      {
-         for ( unsigned int i = 0; i < pr->size(); i++ )
-         {
-            (*pr)[i] /= max;
-         }
+         (*pr)[i] /= max;
       }
    }
 }
@@ -1283,16 +1280,20 @@ void US_Hydrodyn_Saxs::show_plot_pr()
                     , delta
                     );
             vector < double > pr;
+            vector < double > pr_n;
             pr.resize(hist.size());
+            pr_n.resize(hist.size());
             for ( unsigned int i = 0; i < hist.size(); i++) 
             {
                pr[i] = (double) hist[i];
+               pr_n[i] = (double) hist[i];
             }
-            normalize_pr(&pr);
+            normalize_pr(&pr_n);
+            fprintf(fpr, "r\tp(r)\tnorm. p(r)\n");
             for ( unsigned int i = 0; i < hist.size(); i++ )
             {
                if ( hist[i] ) {
-                  fprintf(fpr, "%.6e\t%.6e\n", i * delta, pr[i]);
+                  fprintf(fpr, "%.6e\t%.6e\t%.6e\n", i * delta, pr[i], pr_n[i]);
                }
             }
             fclose(fpr);
@@ -1326,7 +1327,10 @@ void US_Hydrodyn_Saxs::show_plot_pr()
       printf("%e %e\n", r[i], pr[i]);
 #endif
    }
-   normalize_pr(&pr);
+   if ( cb_normalize->isChecked() )
+   {
+      normalize_pr(&pr);
+   }
 
    plot_pr->setCurveStyle(ppr, QwtCurve::Lines);
    plotted_r.push_back(r);
@@ -1357,7 +1361,7 @@ void US_Hydrodyn_Saxs::load_pr()
    vector < double > pr;
    double new_r, new_pr;
    QString res = "";
-   unsigned int startline = 0;
+   unsigned int startline = 1;
    unsigned int pop_last = 0;
    if ( f.open(IO_ReadOnly) )
    {
@@ -1386,7 +1390,7 @@ void US_Hydrodyn_Saxs::load_pr()
       QTextStream ts(&f);
       editor->append(QString("\nLoading pr(r) data from %1 %2\n").arg(filename).arg(res));
       editor->append(ts.readLine());
-      while ( startline > 0)
+      while ( startline > 0 )
       {
          ts.readLine();
          startline--;
@@ -1411,7 +1415,10 @@ void US_Hydrodyn_Saxs::load_pr()
       long ppr = plot_pr->insertCurve("p(r) vs r");
       plot_saxs->setCurveStyle(ppr, QwtCurve::Lines);
       plotted_r.push_back(r);
-      normalize_pr(&pr);
+      if ( cb_normalize->isChecked() )
+      {
+         normalize_pr(&pr);
+      }
       plotted_pr.push_back(pr);
       unsigned int p = plotted_r.size() - 1;
 
