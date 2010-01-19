@@ -20,9 +20,9 @@ CREATE  TABLE IF NOT EXISTS us3.people (
   state CHAR(2) NULL ,
   zip VARCHAR(10) NULL ,
   phone VARCHAR(24) NULL ,
-  email VARCHAR(63) NOT NULL ,
+  email VARCHAR(63) NOT NULL UNIQUE ,
   organization VARCHAR(45) NULL ,
-  username VARCHAR(80) NOT NULL,
+  username VARCHAR(80) NULL,
   password VARCHAR(80) NOT NULL ,
   activated BOOLEAN NOT NULL DEFAULT false ,
   signup TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
@@ -616,18 +616,18 @@ CREATE  TABLE IF NOT EXISTS us3.refraction (
   PRIMARY KEY (refractionID) ,
   INDEX analyteID (analyteID ASC) ,
   INDEX bufferComponentID (bufferComponentID ASC) ,
-  CONSTRAINT analyteID
+  CONSTRAINT r_analyteID
     FOREIGN KEY (analyteID )
     REFERENCES us3.analyte (analyteID )
     ON DELETE SET NULL
     ON UPDATE CASCADE,
-  CONSTRAINT bufferComponentID
+  CONSTRAINT r_bufferComponentID
     FOREIGN KEY (bufferComponentID )
     REFERENCES us3.bufferComponent (bufferComponentID )
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB
-COMMENT = 'Either bufferComponentID or analytID will be null';
+COMMENT = 'Either bufferComponentID or analyteID will be null';
 
 
 -- -----------------------------------------------------

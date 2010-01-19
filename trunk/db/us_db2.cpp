@@ -5,7 +5,7 @@
 
 US_DB2::US_DB2()
 {
-   certDir    = qApp->applicationDirPath().replace( "/bin", "/etc/cert" );
+   certDir    = qApp->applicationDirPath().replace( "/bin", "/etc" );
    connected  = false;
    result     = NULL;
    db         = mysql_init( NULL );
@@ -66,11 +66,12 @@ bool US_DB2::test_secure_connection(
    }
 
    // Set connection to use ssl encryption
+   QString certFile = certDir + QString( "ca-cert.pem" );
    mysql_ssl_set( conn,
                   NULL,
                   NULL,
-                  "ca-cert.pem",
-                  certDir.toAscii(),
+                  certFile.toAscii(),
+                  NULL,
                   "AES128-SHA");
 
    bool OK = mysql_real_connect( 
@@ -128,23 +129,24 @@ bool US_DB2::connect( const QString& masterPW, QString& error )
    try
    {
       // Set connection to use ssl encryption
+      QString certFile = certDir + QString( "ca-cert.pem" );
       mysql_ssl_set( db,
                      NULL,
                      NULL,
-                     "ca-cert.pem",
-                     certDir.toAscii(),
+                     certFile.toAscii(),
+                     NULL,
                      "AES128-SHA");
 
-      // The CLIENT_MULTI_RESULTS flag allows for multiple result sets from a single 
-      //   stored procedure. However, it is required for any stored procedure that
-      //   returns result sets, even a single result set.
+      // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and multiple
+      //   result sets from a single stored procedure. It is required for any 
+      //   stored procedure that returns result sets.
       connected = mysql_real_connect( 
                   db,
                   host    .toAscii(), 
                   user    .toAscii(), 
                   password.toAscii(), 
                   dbname  .toAscii(), 
-                  0, NULL, CLIENT_MULTI_RESULTS );
+                  0, NULL, CLIENT_MULTI_STATEMENTS );
  
    }
 
@@ -177,17 +179,16 @@ bool US_DB2::connect(
                      certDir.toAscii(),
                      "AES128-SHA");
 
-      // The CLIENT_MULTI_RESULTS flag allows for multiple result sets from a single 
-      //   stored procedure. However, it is required for any stored procedure that
-      //   returns result sets, even a single result set.
+      // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and multiple
+      //   result sets from a single stored procedure. It is required for any 
+      //   stored procedure that returns result sets.
       connected = mysql_real_connect( 
                   db,
                   host    .toAscii(), 
                   user    .toAscii(), 
                   password.toAscii(), 
                   dbname  .toAscii(), 
-                  0, NULL, CLIENT_MULTI_RESULTS );
- 
+                  0, NULL, CLIENT_MULTI_STATEMENTS );
    }
 
    catch ( std::exception &e )
@@ -202,26 +203,79 @@ bool US_DB2::connect(
   return connected;
 }
 
-void US_DB2::query( const QString& q )
+void US_DB2::rawQuery( const QString& q )
 {
+   // Make sure that we clear out any unused
+   //   result sets
+   if ( result )
+      mysql_free_result( result ); 
+
+   while ( mysql_next_result( db ) == 0 )
+   {
+      result = mysql_store_result( db );
+      mysql_free_result( result );
+   }
+   result = NULL;
+
+   if ( mysql_query( db, q.toAscii() ) != 0 )
+      error = QString( "MySQL error: " ) + mysql_error( db );
+
+   else
+      result = mysql_store_result( db );
+}
+
+int US_DB2::statusQuery( const QString& q )
+{
+   int value = 0;
+
+   this->rawQuery( q );
    if ( result )
    {
-      // We assume that we will never use any mysql
-      // result sets other than the first one
-      mysql_free_result( result ); 
-      while ( mysql_next_result( db ) > 0 )
-      {
-         result = mysql_store_result( db );
-         mysql_free_result( result );
-      }
+      row       = mysql_fetch_row( result );
+      value     = atoi( row[ 0 ] );
+      mysql_free_result( result );
       result = NULL;
    }
 
-   if ( mysql_query( db, q.toAscii() ) == 0 )
-      result = mysql_store_result( db );
+   return value;
+}
 
-   else
-      error = QString( "Query error: " ) + mysql_error( db );
+void US_DB2::query( const QString& q )
+{
+   this->rawQuery( q );
+   if ( result )
+   {
+      // This is a 2-set result: status, then data
+      row    = mysql_fetch_row( result );
+      errno  = atoi( row[ 0 ] );        // status
+      mysql_free_result( result );
+      result = NULL;
+
+      if ( mysql_next_result( db ) == 0 ) // get the result data
+      {
+         result = mysql_store_result( db );
+         if ( ! result )
+         {
+            if ( mysql_field_count( db ) == 0 )
+               ; // We are here as the result of an INSERT, UPDATE or DELETE
+
+            else
+               ; // Error retrieving result set
+         }
+      }
+   }
+
+   if ( errno != 0 )
+   {
+      this->rawQuery( "SELECT last_error()" );
+      if ( result )
+      {
+         row       = mysql_fetch_row( result );
+         error     = row[ 0 ];
+         mysql_free_result( result );
+         result = NULL;
+      }
+   }
 }
 
 bool US_DB2::next( void )
@@ -229,10 +283,10 @@ bool US_DB2::next( void )
    row = NULL;
    if ( result )
    {
-      if ( (row = mysql_fetch_row( result )) != NULL )
+      if ( ( row = mysql_fetch_row( result ) ) != NULL )
          return true;
-   }  
-   
+   }
+
    return false;
 }
 
@@ -253,3 +307,9 @@ int US_DB2::numRows( void )
 { 
    return ( result )? ( (int) mysql_num_rows( result ) ) : -1;
 }
+
+int US_DB2::lastInsertID( void )
+{
+   return this->statusQuery( "SELECT last_insertID()" );
+}
+
