@@ -82,7 +82,7 @@ class US_EXTERN US_DB2
     MYSQL_RES*    result;
     MYSQL_ROW     row;
       
-    QString       certDir;
+    QString       certFile;
     QString       error;
     int           errno;
 };
