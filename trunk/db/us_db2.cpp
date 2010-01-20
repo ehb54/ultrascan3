@@ -5,7 +5,9 @@
 
 US_DB2::US_DB2()
 {
-   certDir    = qApp->applicationDirPath().replace( "/bin", "/etc" );
+   QString certDir    = qApp->applicationDirPath().replace( "/bin", "/etc" );
+   certFile = certDir + QString( "/ca-cert.pem" );
+
    connected  = false;
    result     = NULL;
    db         = mysql_init( NULL );
@@ -66,7 +68,6 @@ bool US_DB2::test_secure_connection(
    }
 
    // Set connection to use ssl encryption
-   QString certFile = certDir + QString( "ca-cert.pem" );
    mysql_ssl_set( conn,
                   NULL,
                   NULL,
@@ -98,7 +99,8 @@ bool US_DB2::test_secure_connection(
       if ( res )
       {
          MYSQL_ROW r = mysql_fetch_row( res );
-         OK = ( atoi( r[0] ) == 1 ) ? true : false;
+         if ( r )
+            OK = ( atoi( r[0] ) == 0 ) ? true : false;
       }
    }
    if ( ! OK )
@@ -129,7 +131,6 @@ bool US_DB2::connect( const QString& masterPW, QString& error )
    try
    {
       // Set connection to use ssl encryption
-      QString certFile = certDir + QString( "ca-cert.pem" );
       mysql_ssl_set( db,
                      NULL,
                      NULL,
@@ -175,8 +176,8 @@ bool US_DB2::connect(
       mysql_ssl_set( db,
                      NULL,
                      NULL,
-                     "ca-cert.pem",
-                     certDir.toAscii(),
+                     certFile.toAscii(),
+                     NULL,
                      "AES128-SHA");
 
       // The CLIENT_MULTI_STATEMENTS flag allows for multiple queries and multiple
