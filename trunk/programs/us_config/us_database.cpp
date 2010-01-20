@@ -2,9 +2,10 @@
 #include "us_database.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
+#include "us_passwd.h"
 #include "us_help.h"
 #include "us_crypto.h"
-#include "us_db.h"
+#include "us_db2.h"
 
 US_Database::US_Database( QWidget* w, Qt::WindowFlags flags ) 
   : US_Widgets( true, w, flags )
@@ -13,6 +14,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   setPalette( US_GuiSettings::frameColor() );
 
   setWindowTitle( "Database Configuration" );
+  setAttribute( Qt::WA_DeleteOnClose );
 
   // Set up the database list window
   QLabel* banner = us_banner( tr( "Database List" ) );
@@ -27,14 +29,12 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   lw_entries->setFont( QFont( US_GuiSettings::fontFamily(),
                               US_GuiSettings::fontSize() ) );
 
-  // /*  This isn't doing anything
+  /*  This isn't doing anything
   QFont*        f  = new QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
   QFontMetrics* fm = new QFontMetrics ( *f );
   int h = fm->height() * 3;  // Set box to 3 lines
 
-  qDebug() << "Minimum height is " << h;
-  qDebug() << fm;
-  //db_list->resize( db_list->size().width(), 10 );
+  db_list->resize( db_list->size().width(), 10 );
   // */
 
   // Populate db_list
@@ -95,7 +95,7 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   le_investigator_email = us_lineedit( "", 0 );
   details->addWidget( le_investigator_email, row++, 1 );
 
-  // Row 5
+  // Row 7
   QLabel* investigator_pw = us_label( "Investigator Password:" );
   details->addWidget( investigator_pw, row, 0 );
 
@@ -152,22 +152,31 @@ void US_Database::select_db( QListWidgetItem* entry )
   QString item = entry->text().remove( " (default)" );
 
   // Get the master PW
+
+  US_Passwd pw;
   QString master_pw = pw.getPasswd();
 
   for ( int i = 0; i < dblist.size(); i++ )
   {
     if ( item == dblist.at( i ).at( 0 ) )
     {
-      le_description->setText( item );
-      le_username   ->setText( dblist.at( i ).at( 1 ) );
-      le_dbname     ->setText( dblist.at( i ).at( 2 ) );
-      le_host       ->setText( dblist.at( i ).at( 3 ) );
+      le_description       ->setText( item );
+      le_username          ->setText( dblist.at( i ).at( 1 ) );
+      le_dbname            ->setText( dblist.at( i ).at( 2 ) );
+      le_host              ->setText( dblist.at( i ).at( 3 ) );
+      le_investigator_email->setText( dblist.at( i ).at( 6 ) );
 
-      QString cipher = dblist.at( i ).at( 4 );
-      QString iv     = dblist.at( i ).at( 5 );
-      QString pw     = US_Crypto::decrypt( cipher, master_pw, iv );
+      // DB Logon PW
+      QString cipher    = dblist.at( i ).at( 4 );
+      QString iv        = dblist.at( i ).at( 5 );
+      QString pw_string = US_Crypto::decrypt( cipher, master_pw, iv );
+      le_password->setText( pw_string );   
       
-      le_password->setText( pw );   
+      // DB Internal PW
+      cipher    = dblist.at( i ).at( 7 );
+      iv        = dblist.at( i ).at( 8 );
+      pw_string = US_Crypto::decrypt( cipher, master_pw, iv );
+      le_investigator_pw->setText( pw_string );
       
       pb_save       ->setEnabled( true );
       pb_delete     ->setEnabled( true );
@@ -241,11 +250,12 @@ void US_Database::check_add()
   }
   
   // Get the master PW
-  QString     master_pw = pw.getPasswd();
+  US_Passwd pw;
+  QString   master_pw = pw.getPasswd();
 
-  // Encrypt the DB password with the master password
+  // Encrypt the DB and investigator passwords with the master password
   QString     password = le_password->text();
-  QStringList pw       = US_Crypto::encrypt( password , master_pw );
+  QStringList pw_list  = US_Crypto::encrypt( password , master_pw );
 
   password             = le_investigator_pw->text();
   QStringList inv_pw   = US_Crypto::encrypt( password, master_pw );
@@ -262,8 +272,8 @@ void US_Database::check_add()
         db.replace( 1, le_username->text() );
         db.replace( 2, le_dbname  ->text() );
         db.replace( 3, le_host    ->text() );
-        db.replace( 4, pw.at( 0 )          );  // Ecnrypted password
-        db.replace( 5, pw.at( 1 )          );  // Initialization vector
+        db.replace( 4, pw_list.at( 0 )     );  // Ecnrypted password
+        db.replace( 5, pw_list.at( 1 )     );  // Initialization vector
         db.replace( 6, le_investigator_email->text() );  
         db.replace( 7, inv_pw.at( 0 ) );
         db.replace( 8, inv_pw.at( 1 ) );
@@ -281,8 +291,8 @@ void US_Database::check_add()
           << le_username->text() 
           << le_dbname->text()
           << le_host->text()        
-          << pw.at( 0 )          
-          << pw.at( 1 ) 
+          << pw_list.at( 0 )          
+          << pw_list.at( 1 ) 
           << le_investigator_email->text()  
           << inv_pw.at( 0 )
           << inv_pw.at( 1 );
@@ -413,7 +423,8 @@ void US_Database::deleteDB( void )
 void US_Database::test_connect( void )
 {
   QString error;
-  bool ok = US_DB::test_secure_connection( 
+  US_DB2  db;
+  bool ok = db.test_secure_connection( 
               le_host              ->text(), le_dbname         ->text(), 
               le_username          ->text(), le_password       ->text(), 
               le_investigator_email->text(), le_investigator_pw->text(), 

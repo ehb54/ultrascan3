@@ -5,7 +5,6 @@
 #include <QtCore>
 
 #include "us_widgets.h"
-#include "us_passwd.h"
 
 /*! \brief A class to allow the user to set, modify or delete
     parameters for database access.
@@ -37,8 +36,6 @@ class US_Database : public US_Widgets
     QLineEdit*   le_investigator_pw;  
 
     QListWidget* lw_entries;
-
-    US_Passwd    pw;
 
     void update_lw( const QString& = 0 );
     
