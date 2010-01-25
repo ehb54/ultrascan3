@@ -735,7 +735,9 @@ int US_Hydrodyn::read_bead_model(QString filename)
                return linepos;
             }
             if (!ts.atEnd()) {
-               ts >>  tmp_atom.bead_recheck_asa;
+               QString tmp_string;
+               ts >> tmp_string;
+               tmp_atom.bead_recheck_asa = tmp_string.toFloat();
             }
             else
             {
@@ -2862,8 +2864,7 @@ QString US_Hydrodyn::default_differences_somo()
    {
       str += QString(base + sub + sub2 + "Fuse Beads that overlap by more than: %1\n").arg(buried_overlap.fuse_beads_percent);
    }
-   if ( buried_overlap.remove_overlap != default_buried_overlap.remove_overlap &&
-        buried_overlap.fuse_beads )
+   if ( buried_overlap.remove_overlap != default_buried_overlap.remove_overlap )
    {
       str += QString(base + sub + sub2 + "Remove Overlaps: %1\n")
          .arg(buried_overlap.remove_overlap ? "On" : "Off");

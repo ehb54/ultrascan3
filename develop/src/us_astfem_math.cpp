@@ -2261,8 +2261,7 @@ int interpolate(struct mfem_data *expdata, struct mfem_data *simdata, bool use_t
       {
          cerr << "Radius comparison: " << tmp_data.radius[0] << " (simulated), " << (*expdata).radius[0] << " (experimental)\n";
          cerr << "j = " << j << ", simdata radius: " << tmp_data.radius[j] << ", expdata radius: " << (*expdata).radius[j] << endl;
-         cerr << QObject::tr("The simulated data radial
- range does not include the beginning of the experimental data's radii!\nexiting...\n");
+         cerr << QObject::tr("The simulated data radial range does not include the beginning of the experimental data's radii!\nexiting...\n");
 #if defined(USE_MPI)
          MPI_Abort(MPI_COMM_WORLD, -3);
 #endif
