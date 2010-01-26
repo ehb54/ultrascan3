@@ -1107,6 +1107,17 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
          printf("%d %.2f\n", l, asa[l]);
          float sa = 4.0f * M_PI * active_atoms[l]->radius * active_atoms[l]->radius;
          float sapp = 4.0f * M_PI * (rprobe + active_atoms[l]->radius) * (rprobe + active_atoms[l]->radius);
+
+         if ( isnan(asa[l]) )
+         {
+            printf("ASA WARNING NAN begin replaced by zero: atom %u asa %f > sa+p %f (sa %f)\n",
+                   l,
+                   asa[l],
+                   sapp,
+                   sa);
+            asa[l] = 0;
+         }
+
          if ( asa[l] > sapp )
          {
             printf("ASA WARNING: atom %u asa %f > sa+p %f (sa %f)\n",
@@ -3771,7 +3782,7 @@ cercaint(int k)
       k3 = (b - c * yy2->x) * (b - c * yy2->x) + c * c * (yy2->y * yy2->y - yy2->r * yy2->r);
 
       delta = (k2 * k2 - k1 * k3);
-      if ((delta < 0.0) && (delta > -0.00001))
+      if ((delta < 0.0)) // && (delta > -0.00001))
          delta = 0.0;
 
       iy1 = (-k2 + sqrt(delta)) / k1;
@@ -3785,13 +3796,13 @@ cercaint(int k)
       k5 = (b + a * yy2->y) * (b + a * yy2->y) + a * a * (yy2->x * yy2->x - yy2->r * yy2->r);
 
       delta = (k4 * k4 - a * a * k5);
-      if ((delta < 0.0) && (delta > -0.00001))
+      if ((delta < 0.0)) // && (delta > -0.00001))
          delta = 0.0;
 
       iy1 = (-b / a);
       iy2 = (-b / a);
-      ix1 = (-k4 + sqrt(k4 * k4 - a * a * k5)) / (a * a);
-      ix2 = (-k4 - sqrt(k4 * k4 - a * a * k5)) / (a * a);
+      ix1 = (-k4 + sqrt(delta)) / (a * a);
+      ix2 = (-k4 - sqrt(delta)) / (a * a);
    }
 }
 
