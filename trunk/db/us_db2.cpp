@@ -13,6 +13,28 @@ US_DB2::US_DB2()
    db         = mysql_init( NULL );
 }
 
+US_DB2::US_DB2( const QString& masterPW )
+{
+   QString certDir    = qApp->applicationDirPath().replace( "/bin", "/etc" );
+   certFile = certDir + QString( "/ca-cert.pem" );
+
+   connected  = false;
+   result     = NULL;
+   db         = mysql_init( NULL );
+
+   QString err;
+   if ( ! connect( masterPW, err ) )
+   {
+      errno = NOT_CONNECTED;
+      error = "US_DB2 error: could not connect";
+      return;
+   }
+
+   errno     = OK;
+   error     = "";
+   connected = true;
+}
+
 US_DB2::~US_DB2()
 {
   mysql_free_result( result );
@@ -75,15 +97,15 @@ bool US_DB2::test_secure_connection(
                   NULL,
                   "AES128-SHA");
 
-   bool OK = mysql_real_connect( 
-             conn,
-             host    .toAscii(), 
-             user    .toAscii(), 
-             password.toAscii(), 
-             dbname  .toAscii(), 
-             0, NULL, 0 );
+   bool status = mysql_real_connect( 
+                 conn,
+                 host    .toAscii(), 
+                 user    .toAscii(), 
+                 password.toAscii(), 
+                 dbname  .toAscii(), 
+                 0, NULL, 0 );
  
-   if ( ! OK )
+   if ( ! status )
    {
       error = QString( "Test secure connection open error " ) + mysql_error( conn );
       mysql_close( conn );
@@ -91,7 +113,7 @@ bool US_DB2::test_secure_connection(
    }
 
    // Let's see if the user can log in
-   OK = false;
+   status = false;
    QString q = "SELECT check_user('" + email + "', '" + pw + "')";
    if ( mysql_query( conn, q.toAscii() ) == 0 )
    {
@@ -100,15 +122,15 @@ bool US_DB2::test_secure_connection(
       {
          MYSQL_ROW r = mysql_fetch_row( res );
          if ( r )
-            OK = ( atoi( r[0] ) == 0 ) ? true : false;
+            status = ( atoi( r[0] ) == 0 ) ? true : false;
       }
    }
-   if ( ! OK )
+   if ( ! status )
       error = "Investigator email or password is incorrect";
    
    mysql_close( conn );
 
-   return OK;
+   return status;
 }
 
 bool US_DB2::connect( const QString& masterPW, QString& error )
@@ -118,7 +140,8 @@ bool US_DB2::connect( const QString& masterPW, QString& error )
   QStringList defaultDB = US_Settings::defaultDB();
   if ( defaultDB.size() < 6 )
   {
-      error = "DB not configured";
+      errno = NOT_CONNECTED;
+      error = "US_DB2 error: DB not configured";
       return false;
   }
 
@@ -156,9 +179,13 @@ bool US_DB2::connect( const QString& masterPW, QString& error )
       error = e.what();
    }
 
+   errno = OK;
    error = "";
    if ( !connected )
+   {
+      errno = NOT_CONNECTED;
       error = QString( "Connect open error: " ) + mysql_error( db );
+   }
 
   return connected;
 }
@@ -197,9 +224,13 @@ bool US_DB2::connect(
       error = e.what();
    }
 
+   errno = OK;
    error = "";
    if ( !connected )
+   {
+      errno = NOT_CONNECTED;
       error = QString( "Connect open error: " ) + mysql_error( db );
+   }
 
   return connected;
 }
