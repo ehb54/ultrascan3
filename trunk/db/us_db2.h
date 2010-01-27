@@ -46,6 +46,7 @@ class US_EXTERN US_DB2
       NO_ACCT        = 102,     //! No account with that email address was found
       INACTIVE       = 103,     //! The account has not been activated
       BADPASS        = 104,     //! Incorrect password
+      EMPTY          = 105,     //! A required parameter was empty
      
       NOTPERMITTED   = 201,     //! User does not have permission 
      
