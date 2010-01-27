@@ -114,7 +114,7 @@ bool US_DB2::test_secure_connection(
 
    // Let's see if the user can log in
    status = false;
-   QString q = "SELECT check_user('" + email + "', '" + pw + "')";
+   QString q = "SELECT check_user_email('" + email + "', '" + pw + "')";
    if ( mysql_query( conn, q.toAscii() ) == 0 )
    {
       MYSQL_RES* res = mysql_store_result( conn );

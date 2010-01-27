@@ -11,7 +11,7 @@ DELIMITER $$
 -- Verifies that the user with id is associated with
 --  the specified buffer
 DROP FUNCTION IF EXISTS verify_buffer_owner$$
-CREATE FUNCTION verify_buffer_owner( p_email VARCHAR(63),
+CREATE FUNCTION verify_buffer_owner( p_guid     CHAR(36),
                                      p_password VARCHAR(80),
                                      p_bufferID INT )
   RETURNS TINYINT
@@ -24,7 +24,7 @@ BEGIN
 
   CALL config();
 
-  IF ( verify_user( p_email, p_password ) ) THEN
+  IF ( verify_user( p_guid, p_password ) ) THEN
     SELECT COUNT(*)
     INTO   count_buffer
     FROM   bufferPerson
@@ -49,7 +49,7 @@ END$$
 
 -- Returns the count of buffers associated with id
 DROP FUNCTION IF EXISTS count_buffers$$
-CREATE FUNCTION count_buffers( p_email VARCHAR(63),
+CREATE FUNCTION count_buffers( p_guid     CHAR(36),
                                p_password VARCHAR(80) )
   RETURNS INT
   READS SQL DATA
@@ -61,7 +61,7 @@ BEGIN
   CALL config();
   SET count_buffers = 0;
 
-  IF ( verify_user( p_email, p_password ) ) THEN
+  IF ( verify_user( p_guid, p_password ) ) THEN
     SELECT COUNT(*)
     INTO count_buffers
     FROM bufferPerson
@@ -74,7 +74,7 @@ END$$
 
 -- INSERTs a new buffer with the specified information
 DROP PROCEDURE IF EXISTS new_buffer$$
-CREATE PROCEDURE new_buffer ( p_email VARCHAR(63),
+CREATE PROCEDURE new_buffer ( p_guid     CHAR(36),
                               p_password VARCHAR(80),
                               p_description TEXT,
                               p_density FLOAT,
@@ -89,7 +89,7 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
-  IF ( verify_user( p_email, p_password ) ) THEN
+  IF ( verify_user( p_guid, p_password ) ) THEN
     INSERT INTO buffer SET
       description = p_description,
       density     = p_density,
@@ -107,7 +107,7 @@ END$$
 
 -- UPDATEs an existing buffer with the specified information
 DROP PROCEDURE IF EXISTS update_buffer$$
-CREATE PROCEDURE update_buffer ( p_email VARCHAR(63),
+CREATE PROCEDURE update_buffer ( p_guid     CHAR(36),
                                  p_password VARCHAR(80),
                                  p_bufferID INT,
                                  p_description TEXT,
@@ -121,7 +121,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_buffer_owner( p_email, p_password, p_bufferID ) ) THEN
+  IF ( verify_buffer_owner( p_guid, p_password, p_bufferID ) ) THEN
     UPDATE buffer SET
       description = p_description,
       density     = p_density,
@@ -134,7 +134,7 @@ END$$
 
 -- SELECTs all buffers associated with the id
 DROP PROCEDURE IF EXISTS get_buffer_desc$$
-CREATE PROCEDURE get_buffer_desc ( p_email VARCHAR(63),
+CREATE PROCEDURE get_buffer_desc ( p_guid     CHAR(36),
                                    p_password VARCHAR(80) )
   READS SQL DATA
 
@@ -144,8 +144,8 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_email, p_password ) ) THEN
-    IF ( count_buffers( p_email, p_password ) < 1 ) THEN
+  IF ( verify_user( p_guid, p_password ) ) THEN
+    IF ( count_buffers( p_guid, p_password ) < 1 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
       SET @US3_LAST_ERROR = 'MySQL: no rows returned';
  
@@ -163,7 +163,7 @@ BEGIN
 END$$
 
 DROP PROCEDURE IF EXISTS get_buffers$$
-CREATE PROCEDURE get_buffers ( p_email VARCHAR(63),
+CREATE PROCEDURE get_buffers ( p_guid     CHAR(36),
                                p_password VARCHAR(80),
                                p_ID VARCHAR(64) )
   READS SQL DATA

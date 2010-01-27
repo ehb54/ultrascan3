@@ -10,7 +10,7 @@ DELIMITER $$
 
 -- INSERTs information for a new experiment
 DROP PROCEDURE IF EXISTS new_experiment$$
-CREATE PROCEDURE new_experiment( p_email VARCHAR(63),
+CREATE PROCEDURE new_experiment( p_guid     CHAR(36),
                                  p_password VARCHAR(80),
                                  p_exp_type ENUM('velocity', 'equilibrium', 'other'),
                                  p_rotorID INT,
@@ -24,7 +24,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_email, p_password ) ) THEN
+  IF ( verify_user( p_guid, p_password ) ) THEN
     INSERT INTO experiment SET
       type        = p_exp_type,
       rotorID     = p_rotorID,
