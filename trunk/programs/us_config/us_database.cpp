@@ -10,6 +10,8 @@
 US_Database::US_Database( QWidget* w, Qt::WindowFlags flags ) 
   : US_Widgets( true, w, flags )
 {
+  uuid.clear();
+
   // Frame layout
   setPalette( US_GuiSettings::frameColor() );
 
@@ -28,14 +30,6 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   lw_entries->setPalette( US_GuiSettings::editColor() );
   lw_entries->setFont( QFont( US_GuiSettings::fontFamily(),
                               US_GuiSettings::fontSize() ) );
-
-  /*  This isn't doing anything
-  QFont*        f  = new QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
-  QFontMetrics* fm = new QFontMetrics ( *f );
-  int h = fm->height() * 3;  // Set box to 3 lines
-
-  db_list->resize( db_list->size().width(), 10 );
-  // */
 
   // Populate db_list
   lw_entries->setCurrentRow( 0 );
@@ -93,6 +87,11 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   details->addWidget( investigator, row, 0 );
 
   le_investigator_email = us_lineedit( "", 0 );
+  
+  // Make the line edit entries wider
+  QFontMetrics fm( le_investigator_email->font() );
+  le_investigator_email->setMinimumWidth( fm.maxWidth() * 10 );
+
   details->addWidget( le_investigator_email, row++, 1 );
 
   // Row 7
@@ -148,11 +147,10 @@ void US_Database::select_db( QListWidgetItem* entry )
 {
   // When this is run, we will always have a current dblist
   
-  // Need to delete trailing (default) if that is present
+  // Delete trailing (default) if that is present
   QString item = entry->text().remove( " (default)" );
 
   // Get the master PW
-
   US_Passwd pw;
   QString master_pw = pw.getPasswd();
 
@@ -177,7 +175,9 @@ void US_Database::select_db( QListWidgetItem* entry )
       iv        = dblist.at( i ).at( 8 );
       pw_string = US_Crypto::decrypt( cipher, master_pw, iv );
       le_investigator_pw->setText( pw_string );
-      
+     
+      uuid = dblist.at( i ).at( 9 );
+
       pb_save       ->setEnabled( true );
       pb_delete     ->setEnabled( true );
       pb_testConnect->setEnabled( true );
@@ -249,6 +249,15 @@ void US_Database::check_add()
     return;
   }
   
+  if ( uuid.isEmpty() )
+  {
+    QMessageBox::information( this,
+        tr( "Attention" ), 
+        tr( "Please test the password connection "
+            "before saving..." ) );
+    return;
+  }
+  
   // Get the master PW
   US_Passwd pw;
   QString   master_pw = pw.getPasswd();
@@ -275,8 +284,9 @@ void US_Database::check_add()
         db.replace( 4, pw_list.at( 0 )     );  // Ecnrypted password
         db.replace( 5, pw_list.at( 1 )     );  // Initialization vector
         db.replace( 6, le_investigator_email->text() );  
-        db.replace( 7, inv_pw.at( 0 ) );
-        db.replace( 8, inv_pw.at( 1 ) );
+        db.replace( 7, inv_pw.at( 0 )      );
+        db.replace( 8, inv_pw.at( 1 )      );
+        db.replace( 9, uuid                );
 
         dblist.replace( i, db );
         updated = true;
@@ -295,7 +305,8 @@ void US_Database::check_add()
           << pw_list.at( 1 ) 
           << le_investigator_email->text()  
           << inv_pw.at( 0 )
-          << inv_pw.at( 1 );
+          << inv_pw.at( 1 )
+          << uuid;  
 
     dblist << entry;
   }
@@ -348,6 +359,7 @@ void US_Database::reset( void )
   le_host              ->setText("");
   le_investigator_email->setText("");
   le_investigator_pw   ->setText("");
+  uuid = "";
 
   pb_save       ->setEnabled( false );
   pb_delete     ->setEnabled( false );
@@ -357,7 +369,7 @@ void US_Database::reset( void )
 void US_Database::help( void )
 {
   US_Help* showhelp = new US_Help(this);
-  showhelp->show_help( "manual/database_config.html" );
+  showhelp->show_help( "database_config.html" );
 }
   
 void US_Database::save_default( void )
@@ -369,6 +381,16 @@ void US_Database::save_default( void )
     // Look for the current description
     if ( desc == le_description->text() ) 
     {
+      if ( dblist.at( i ).at( 9 ) == "" )
+      {
+         QMessageBox::information( this, 
+             tr( "Default Database Problem" ),
+             tr( "The current database information has not been tested "
+                  "for connectivity.\n" 
+                  "The default database has not been updated.") );
+         return;
+      }
+
       US_Settings::set_defaultDB( dblist.at( i ) );
       reset();
       
@@ -422,20 +444,40 @@ void US_Database::deleteDB( void )
 
 void US_Database::test_connect( void )
 {
-  QString error;
-  US_DB2  db;
-  bool ok = db.test_secure_connection( 
-              le_host              ->text(), le_dbname         ->text(), 
-              le_username          ->text(), le_password       ->text(), 
-              le_investigator_email->text(), le_investigator_pw->text(), 
-              error );
+   QString error;
+   US_DB2  db;
+   bool ok = db.test_secure_connection( 
+               le_host              ->text(), le_dbname         ->text(), 
+               le_username          ->text(), le_password       ->text(), 
+               le_investigator_email->text(), le_investigator_pw->text(), 
+               error );
 
-  if ( ok ) 
-    QMessageBox::information( this,
-      tr( "Database Connectiom" ),
-      tr( "The connection was successful." ) );
-  else
-    QMessageBox::warning( this,
-      tr( "Database Connectiom" ),
-      tr( "The connection failed.\n" ) + error );
+   if ( ok ) 
+   {
+      uuid = db.value( 0 ).toString();   // Set class variable uuid
+
+      // Make sure the uuid is updated in the dblist structure
+      for ( int i = 0; i < dblist.size(); i++ )
+      {
+         QString desc = dblist.at( i ).at( 0 );
+           
+         // Look for the current description
+         if ( desc == le_description->text() )
+         {
+            QStringList list = dblist.at( i );
+            list.replace( 9, uuid );
+            dblist.replace( i, list );
+            US_Settings::set_databases( dblist );
+            break;
+         }
+      }
+
+      QMessageBox::information( this,
+        tr( "Database Connectiom" ),
+        tr( "The connection was successful." ) );
+   }
+   else
+      QMessageBox::warning( this,
+        tr( "Database Connectiom" ),
+        tr( "The connection failed.\n" ) + error );
 }

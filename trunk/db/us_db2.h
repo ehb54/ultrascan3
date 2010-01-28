@@ -22,7 +22,7 @@ class US_EXTERN US_DB2
 
     /*! \brief Constructor for the US_DB2 class. Initialization is performed
         and connection is attempted. Connects to a database using the currently 
-        defined database stored by \ref US_Config and \ref US_Settings. This 
+        defined database stored by US_Config and \ref US_Settings. This 
         constructor uses an SSL connection.
 
         \param masterPW Master password to decrypt DB password
@@ -82,7 +82,7 @@ class US_EXTERN US_DB2
         \param user     The user name that can access the database.
         \param password The unencrypted password for the database/user.
         \param email    The email address of the investigator
-        \param inv_pw   The investigator's password
+        \param pw       The investigator's password
         \param error    A reference to a string for error responses.
     */
     bool test_secure_connection( const QString&, const QString&, 
@@ -91,7 +91,7 @@ class US_EXTERN US_DB2
                                  QString& );
 
     /*! \brief Connects to a database using the currently defined database
-        stored by \ref US_Config and \ref US_Settings. This constructor 
+        stored by US_Config and \ref US_Settings. This constructor 
         uses an SSL connection.
 
         \param masterPW Master password to decrypt DB password
@@ -115,7 +115,7 @@ class US_EXTERN US_DB2
     /*! \brief Implements a simple query on the active database 
         connection, cleaning up any unused results from a previous query.
 
-        \param query    A string containing the US3 query to execute.
+        \param q    A string containing the US3 query to execute.
     */
     void          rawQuery    ( const QString& );
 
@@ -125,9 +125,17 @@ class US_EXTERN US_DB2
         but no other result data. Useful for INSERT, UPDATE and DELETE 
         style queries.
 
-        \param query    A string containing the US3 query to execute.
+        \param q    A string containing the US3 query to execute.
     */
     int           statusQuery ( const QString& );
+
+    /*! \brief An overloaded method that builds the statusQuery string from
+        the passed arguments and the stored DB settings.
+
+        \param arguments A list that contains the function name and any 
+                         additional arguments needed.
+    */
+    int           statusQuery ( const QStringList& );
 
     /*! \brief Implements a general-purpose query on the active database 
         connection, cleaning up any unused results from a previous query. 
@@ -137,10 +145,19 @@ class US_EXTERN US_DB2
         individual values using the next() and value() methods. Use the 
         numRows() method to find out how many rows there are.
 
-        \param query    A string containing the US3 query to execute.
+        \param q  A string containing the US3 query to execute.
     */
     void          query       ( const QString& );
 
+    //! \brief A \a method to generate and make a CALL to the database
+    //!        and automatically add the user's guid and
+    //!        password.\n\n
+    //!  Queries are normally in the form of:\n 
+    //!  CALL function_name( guid, pw, [arg1,] ... )
+    //!  \param arguments A list that contains the function name and any 
+    //!                   additional arguments needed.
+    void          query       ( const QStringList& );
+    
     /*! \brief Fetches the next row in the result set, if one exists. 
         Returns TRUE if the operation has been successful, or FALSE 
         if there are no more rows. Use the value() function to 
@@ -192,13 +209,19 @@ class US_EXTERN US_DB2
     int           lastInsertID( void );
     
   private:
-    bool          connected;
-    MYSQL*        db;
-    MYSQL_RES*    result;
-    MYSQL_ROW     row;
+    bool       connected;
+    MYSQL*     db;
+    MYSQL_RES* result;
+    MYSQL_ROW  row;
       
-    QString       certFile;
-    QString       error;
-    int           errno;
+    QString    email;
+    QString    userPW;
+    QString    guid;
+
+    QString    certFile;
+    QString    error;
+    int        errno;
+
+    QString    buildQuery( const QStringList& );
 };
 #endif

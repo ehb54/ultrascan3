@@ -3,10 +3,9 @@
 #include "us_investigator.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
-#include "us_db.h"
+#include "us_db2.h"
+#include "us_crypto.h"
 #include "us_passwd.h"
-
-//! Constructor
 
 /*! Construct a new US_Investigator interface.
 */
@@ -25,8 +24,21 @@ US_Investigator::US_Investigator( bool signal, QWidget* p,
    main->setContentsMargins( 2, 2, 2, 2 );
    main->setSpacing( 2 );
 
-   //QLabel* lb_info = us_banner( tr( "Investigator Information" ) );
-   //main->addWidget( lb_info, row++, 0, 1, 2 );
+   // Search last name
+   QLabel* lb_search = us_label( tr( "Search:" ) );
+   main->addWidget( lb_search, row, 0 );
+
+   le_search = us_lineedit();
+   connect( le_search, SIGNAL( textChanged( const QString& ) ), 
+                       SLOT  ( limit_names( const QString& ) ) );
+   main->addWidget( le_search, row++, 1 );
+
+   // List widget
+   lw_names = us_listwidget();
+   connect( lw_names, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
+                      SLOT  ( get_inv_data     ( QListWidgetItem* ) ) );
+   main->addWidget( lw_names, row, 0, 4, 2 );
+   row += 4;
 
    QStringList DB = US_Settings::defaultDB();
    QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
@@ -45,21 +57,7 @@ US_Investigator::US_Investigator( bool signal, QWidget* p,
    main->addWidget( lb_lname, row, 0 );
 
    le_lname = us_lineedit();
-   connect( le_lname, SIGNAL( textChanged( const QString& ) ), 
-                      SLOT  ( limit_names( const QString& ) ) );
    main->addWidget( le_lname, row++, 1 );
-
-   // Pushbutton
-   QPushButton* pb_queryDB = us_pushbutton( tr( "Query DB" ) );
-   connect( pb_queryDB, SIGNAL( clicked() ), SLOT( queryDB() ) );
-   main->addWidget( pb_queryDB, row++, 0, 1, 2 );
-
-   // List widget
-   lw_names = us_listwidget();
-   connect( lw_names, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
-                      SLOT  ( get_inv_data     ( QListWidgetItem* ) ) );
-   main->addWidget( lw_names, row, 0, 4, 2 );
-   row += 4;
 
    // First Name
    QLabel* lb_fname = us_label( tr( "First Name:" ) );
@@ -108,26 +106,32 @@ US_Investigator::US_Investigator( bool signal, QWidget* p,
    main->addWidget( lb_email, row, 0 );
 
    le_email = us_lineedit();
+
+   // Make the line edit entries a little wider than the default
+   QFontMetrics fm( le_email->font() );
+   le_email->setMinimumWidth( fm.maxWidth() * 10 );
+
    main->addWidget( le_email, row++, 1 );
 
-   // Button row 1
-   QBoxLayout* buttons1 = new QHBoxLayout;
- 
-   QPushButton* pb_add = us_pushbutton( tr( "Add" ) );
-   connect( pb_add, SIGNAL( clicked() ), SLOT( add() ) );
-   buttons1->addWidget( pb_add );
- 
-   pb_update = us_pushbutton( tr( "Update" ), false );
+   // Organization
+   QLabel* lb_org = us_label( tr( "Organization:" ) );
+   main->addWidget( lb_org, row, 0 );
+
+   le_org = us_lineedit();
+   main->addWidget( le_org, row++, 1 );
+
+   // Pushbuttons
+   QHBoxLayout* buttons1 = new QHBoxLayout;
+   QPushButton* pb_queryDB = us_pushbutton( tr( "Query DB" ) );
+   connect( pb_queryDB, SIGNAL( clicked() ), SLOT( queryDB() ) );
+   buttons1->addWidget( pb_queryDB, row );
+
+   pb_update = us_pushbutton( tr( "Update DB" ), false );
    connect( pb_update, SIGNAL( clicked() ), SLOT( update() ) );
-   buttons1->addWidget( pb_update );
-   
-   pb_delete = us_pushbutton( tr( "Delete" ), false );
-   connect( pb_delete, SIGNAL( clicked() ), SLOT( del() ) );
-   buttons1->addWidget( pb_delete );
-    
+   buttons1->addWidget( pb_update, row++ );
    main->addLayout( buttons1, row++, 0, 1, 2 );
 
-   // Button row 2
+   // Button row 
    QBoxLayout* buttons2 = new QHBoxLayout;
  
    QPushButton* pb_reset = us_pushbutton( tr( "Reset" ) );
@@ -154,121 +158,50 @@ US_Investigator::US_Investigator( bool signal, QWidget* p,
    connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
    buttons2->addWidget( pb_close );
     
-   main->addLayout( buttons2, row, 0, 1, 2 );
+   main->addLayout( buttons2, row++, 0, 1, 2 );
    reset();
 }
 
 void US_Investigator::queryDB( void )
 {
-   QString query = "SELECT InvID, LastName, FirstName "
-                   "FROM tblInvestigators ";
+   US_Passwd   pw;
+   QString     masterPW  = pw.getPasswd();
+   US_DB2      db( masterPW );  // New constructor
 
-   if ( le_lname->text() != "" )
-      query += "WHERE LastName LIKE '%" + le_lname->text() + "%' ";
-
-   query += "ORDER BY LastName";
-
-   reset();
-
+   if ( db.lastErrno() != US_DB2::OK )
    {
-      US_DB     db;
-      US_Passwd pw;
-      QString   error;
+      // Error message here
+      QMessageBox::information( this,
+         tr( "DB Connection Problem" ),
+         tr( "There was an error connecting to the database:\n" ) 
+             + db.lastError() );
+      return;
+   } 
 
-      if ( ! db.open( pw.getPasswd(), error ) )
-      {
-         // Error message here
-         qDebug() << "US_Investigator::queryDB: Could not open DB";
-        
-         return;
-      }
+   QStringList query;
+   query << "get_people" << "%" + le_search->text() + "%"; 
 
-      struct US_InvestigatorData data;
-      
-      db.query( query );
+   db.query( query );
 
-      while ( db.next() )
-      {
-         data.invID     = db.value( 0 ).toInt();
-         data.lastName  = db.value( 1 ).toString();
-         data.firstName = db.value( 2 ).toString();
+   US_InvestigatorData data;
 
-         investigators << data;
-
-         lw_names->addItem( new QListWidgetItem( 
-            "InvID: (" + QString::number( data.invID ) + "), " + 
-            data.lastName + ", " + data.firstName ) );
-      }
-   }
-
-   QSqlDatabase::removeDatabase( "UltraScan" );
-}
-
-void US_Investigator::add( void )
-{
-   QMessageBox::information( this,
-      tr( "Add function disabled" ),
-      tr( "Will be implemented in conjunction with the new DB" ) );
-
-   return;
-   /*
-   if ( ! check_fields() ) return; 
-
-   switch( QMessageBox::information( this, 
-      tr( "Add this entry?" ),
-      tr( "Clicking 'Yes' will save the information\n"
-          "for this investigator to the database." ),
-      QMessageBox::Yes, QMessageBox::No ) )
+   while ( db.next() )
    {
-      case QMessageBox::Yes:
-      {
-            QString query = "INSERT INTO tblInvestigators SET "
-               "FirstName='" + le_fname->text()   + "',"
-               "LastName='"  + le_lname->text()   + "',"
-               "Address='"   + le_address->text() + "',"
-               "City='"      + le_city->text()    + "',"
-               "State='"     + le_state->text()   + "',"
-               "Zip='"       + le_zip->text()     + "',"
-               "Phone='"     + le_phone->text()   + "',"
-               "Email='"     + le_email->text();
+      data.invID     = db.value( 0 ).toInt();
+      data.lastName  = db.value( 1 ).toString();
+      data.firstName = db.value( 2 ).toString();
 
-         // Insert investigator information into tblAuth
-         QDateTime now = QDateTime::currentDateTime();
-         QSqlQuery target;
-         QString query;
-         
-         str = "INSERT INTO tblAuth(InvestigatorID, Status, Classification, "
-            "Balance, Activated, Userlevel, Signup, LastLogin, Password) VALUES(";
-         
-         str+= QString::number(newInvID)+", "; // InvID
-         str+= "'new', 'Academic User', ";     // Status, Classification
-         str+= "00000.00, 1, 0, ";             // Balance, Activated, Userlevel
+      investigators << data;
 
-         // Signup, Last Login
-         str+= "'"+now.toString(Qt::ISODate)+"', '"+now.toString(Qt::ISODate)+"', ";
-         
-         // Password
-         str+="'ffdbd2aadf002da88ffce9b31d3d7499');";
-         target.exec(str);
-
-         quit();
-         break;
-      }
-
-      case 1:
-         break;
+      lw_names->addItem( new QListWidgetItem( 
+         "InvID: (" + QString::number( data.invID ) + "), " + 
+         data.lastName + ", " + data.firstName ) );
    }
-   */
 }
 
 void US_Investigator::update( void )
 {
-   QMessageBox::information( this,
-      tr( "Update function disabled" ),
-      tr( "Will be implemented in conjunction with the new DB" ) );
-
-   return;
-/*   if ( le_invID->text().isEmpty() )
+   if ( le_invID->text().isEmpty() )
    {
       QMessageBox::information( this,
             tr( "Attention" ),
@@ -280,117 +213,63 @@ void US_Investigator::update( void )
    
    if ( ! changed() ) return;
 
-   switch( QMessageBox::information( this, 
+   int response = QMessageBox::question( this, 
       tr( "Update the entry?" ),
       tr( "Clicking 'OK' will update the information\n"
           "for this investigator in the database." ),
-      QMessageBox::Ok, QMessageBox::Cancel  ) )
+      QMessageBox::Ok, QMessageBox::Cancel );
+
+   if ( response == QMessageBox::Ok )
+   {
+      US_Passwd   pw;
+      QString     masterPW  = pw.getPasswd();
+      US_DB2      db( masterPW );  // New constructor
+      
+      if ( db.lastErrno() != US_DB2::OK )
       {
-         case QMessageBox::Ok:
-         {
+         QMessageBox::warning( this,
+            tr( "Database Error" ),   
+            tr( "US_Investigator::connectDB: Could not open DB\n" ) +
+                db.lastError() );
+         return;
+      } 
 
-            US_DB     db;
-            US_Passwd pw;
-            QString   error;
+      QStringList info = US_Settings::defaultDB();
+      
+      // DB Internal PW
+      QString cipher = info.at( 7 );
+      QString iv     = info.at( 8 );
+      QString userPW = US_Crypto::decrypt( cipher, masterPW, iv );
+      
+      QStringList query;
+      query << "update_person";
+      query << le_invID  ->text();
+      query << le_fname  ->text();
+      query << le_lname  ->text();
+      query << le_address->text();
+      query << le_city   ->text();
+      query << le_state  ->text();
+      query << le_zip    ->text();
+      query << le_phone  ->text();
+      query << le_email  ->text();
+      query << le_org    ->text();
+      query << userPW;
 
-            if ( ! db.open( pw.getPasswd(), error ) )
-            {
-               // Error message here
-               qDebug() << "US_Investigator::update: Could not open DB";
-               return;
-            }
-
-            QString query = "UPDATE tblInvestigators SET "
-               "FirstName='" + le_fname->text()   + "',"
-               "LastName='"  + le_lname->text()   + "',"
-               "Address='"   + le_address->text() + "',"
-               "City='"      + le_city->text()    + "',"
-               "State='"     + le_state->text()   + "',"
-               "Zip='"       + le_zip->text()     + "',"
-               "Phone='"     + le_phone->text()   + "',"
-               "Email='"     + le_email->text()   + "',"
-               "WHERE InvID=" + le_invID->text();
-            
-            db.query( query );
-         }
-
-         QSqlDatabase::removeDatabase( "UltraScan" );
-         break;
-
-         default:
-            break;
+      // Error check
+      if ( db.statusQuery( query ) == US_DB2::OK )
+      {
+         QMessageBox::warning( this,
+            tr( "Success" ),   
+            tr( "The entry was updated.\n" ) );
       }
-      */
-}
-
-void US_Investigator::del( void )
-{
-   QMessageBox::information( this,
-      tr( "Delete function disabled" ),
-      tr( "Will be implemented in conjunction with the new DB" ) );
-
-   return;
-/*   if ( le_invID->text() == "" )
-   {
-      QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "First select a database entry\n"
-                "to be deleted from the database" ) );
-      return;
+      else
+      {
+         QMessageBox::warning( this,
+            tr( "Database Error" ),   
+            tr( "US_Investigator::update_person: Could not update DB\n" ) +
+                db.lastError() );
+      }
    }
-
-   switch( QMessageBox::information( this, 
-      tr( "Do you want to delete this entry?" ),
-      tr( "Clicking 'Yes' will delete the information from the database" ),
-      QMessageBox::Yes, QMessageBox::No  ) )
-   {
-      case QMessageBox::Yes:
-         {
-            QSqlError::ErrorType errorType;
-            
-            QString error;
-            QString query = "DELETE FROM tblInvestigators WHERE InvID=" 
-               + le_invID->text();
-            
-            {
-               US_DB                db;
-               US_Passwd            pw;
-
-               if ( ! db.open( pw.getPasswd(), error ) )
-               {
-                  // Error message here
-                  qDebug() << "US_Investigator::update: Could not open DB";
-                  return;
-               }
-
-               db.query( query );
-
-               errorType = db.lastQueryErrorType();
-               error     = db.lastQueryErrorText();
-            }
-
-            QSqlDatabase::removeDatabase( "UltraScan" );
-
-            if ( errorType != QSqlError::NoError )
-               QMessageBox::information( this,
-                     tr( "Attention" ),
-                     tr( "Delete failed.\n"
-                         "Attempted to execute this command:\n\n" )
-                     + query + "\n\n" +
-                     tr( "Causing the following error:\n\n" )
-                     + error );
-            else
-            {
-               reset();
-               queryDB();
-            }
-
-         }
-         break;
-         
-      default:
-         break;
-   }*/
 }
 
 void US_Investigator::limit_names( const QString& s )
@@ -412,58 +291,56 @@ void US_Investigator::get_inv_data( QListWidgetItem* item )
 {
    QString entry = item->text();
 
+   
    int     left  = entry.indexOf( '(' ) + 1;
    int     right = entry.indexOf( ')' );
    QString invID = entry.mid( left, right - left );
 
-   QString query = "SELECT FirstName, LastName, Address, City,"
-                   "State, Zip, Phone, Email "
-                   "FROM tblInvestigators "
-                   "WHERE InvID=" + invID;
+   US_Passwd   pw;
+   QString     masterPW  = pw.getPasswd();
+   US_DB2      db( masterPW ); 
+
+   if ( db.lastErrno() != US_DB2::OK )
    {
-      US_DB     db;
-      US_Passwd pw;
-      QString   error;
+      QMessageBox::information( this,
+         tr( "DB Connection Problem" ),
+         tr( "There was an error connecting to the database:\n" ) 
+             + db.lastError() );
+      return;
+   } 
 
-      if ( ! db.open( pw.getPasswd(), error ) )
-      {
-         // Error message here
-         qDebug() << "US_Investigator::get_inv_data: Could not open DB";
-        
-         return;
-      }
+   QStringList query;
+   query << "get_person_info" << invID; 
+      
+   db.query( query );
+   db.next();
 
-      db.query( query );
-      db.next();
+   info.invID        = invID.toInt();
+   info.firstName    = db.value( 0 ).toString();
+   info.lastName     = db.value( 1 ).toString();
+   info.address      = db.value( 2 ).toString();
+   info.city         = db.value( 3 ).toString();
+   info.state        = db.value( 4 ).toString();
+   info.zip          = db.value( 5 ).toString();
+   info.phone        = db.value( 6 ).toString();
+   info.email        = db.value( 7 ).toString();
+   info.organization = db.value( 8 ).toString();
 
-      info.invID     = invID.toInt();
-      info.firstName = db.value( 0 ).toString();
-      info.lastName  = db.value( 1 ).toString();
-      info.address   = db.value( 2 ).toString();
-      info.city      = db.value( 3 ).toString();
-      info.state     = db.value( 4 ).toString();
-      info.zip       = db.value( 5 ).toString();
-      info.phone     = db.value( 6 ).toString();
-      info.email     = db.value( 7 ).toString();
+   //le_lname  ->disconnect();
+   le_lname  ->setText( info.lastName  ); 
+   //connect( le_search, SIGNAL( textChanged( const QString& ) ), 
+   //                    SLOT  ( limit_names( const QString& ) ) );
 
-      le_lname  ->disconnect();
-      le_lname  ->setText( info.lastName  ); 
-      connect( le_lname, SIGNAL( textChanged( const QString& ) ), 
-                         SLOT  ( limit_names( const QString& ) ) );
+   le_invID  ->setText( invID             ); 
+   le_fname  ->setText( info.firstName    ); 
+   le_address->setText( info.address      ); 
+   le_city   ->setText( info.city         ); 
+   le_state  ->setText( info.state        ); 
+   le_zip    ->setText( info.zip          ); 
+   le_phone  ->setText( info.phone        ); 
+   le_email  ->setText( info.email        ); 
+   le_org    ->setText( info.organization ); 
 
-      le_invID  ->setText( invID          ); 
-      le_fname  ->setText( info.firstName ); 
-      le_address->setText( info.address   ); 
-      le_city   ->setText( info.city      ); 
-      le_state  ->setText( info.state     ); 
-      le_zip    ->setText( info.zip       ); 
-      le_phone  ->setText( info.phone     ); 
-      le_email  ->setText( info.email     ); 
-   }
-
-   QSqlDatabase::removeDatabase( "UltraScan" );
-
-   pb_delete ->setEnabled( true );
    pb_update ->setEnabled( true );
 }
 
@@ -487,23 +364,24 @@ void US_Investigator::reset( void )
    le_zip    ->setText( "" );
    le_phone  ->setText( "" );
    le_email  ->setText( "" );
+   le_org    ->setText( "" );
 
    lw_names    ->clear();
    investigators.clear();
 
-   pb_delete ->setEnabled( false );
+   //pb_delete ->setEnabled( false );
    pb_update ->setEnabled( false );
 
-   info.invID     = -1;
-   info.lastName  = "";
-   info.firstName = "";
-   info.address   = "";
-   info.city      = "";
-   info.state     = "";
-   info.zip       = "";
-   info.phone     = "";
-   info.email     = "";
-   info.display   = "";
+   info.invID        = -1;
+   info.lastName     = "";
+   info.firstName    = "";
+   info.address      = "";
+   info.city         = "";
+   info.state        = "";
+   info.zip          = "";
+   info.phone        = "";
+   info.email        = "";
+   info.organization = "";
 }
 
 bool US_Investigator::check_fields( void )
@@ -535,12 +413,15 @@ bool US_Investigator::check_fields( void )
    if ( le_email->text().replace( strip, "\\1" ).isEmpty() )
       missing += tr( "\nEmail" );
 
+   if ( le_org->text().replace( strip, "\\1" ).isEmpty() )
+      missing += tr( "\nOfganization" );
+
 
    if ( missing != "" )
    {
       QMessageBox::information( this,
             tr( "Attention" ),
-            tr( "Update the following fiels before committing data:\n" ) +
+            tr( "Update the following fields before committing data:\n" ) +
                missing );
 
       return false;
@@ -551,14 +432,15 @@ bool US_Investigator::check_fields( void )
 
 bool US_Investigator::changed( void )
 {
-   if ( le_lname  ->text() != info.lastName  ) return true;
-   if ( le_fname  ->text() != info.firstName ) return true;
-   if ( le_address->text() != info.address   ) return true;
-   if ( le_city   ->text() != info.city      ) return true;
-   if ( le_state  ->text() != info.state     ) return true;
-   if ( le_zip    ->text() != info.zip       ) return true;
-   if ( le_phone  ->text() != info.phone     ) return true;
-   if ( le_email  ->text() != info.email     ) return true;
+   if ( le_lname  ->text() != info.lastName     ) return true;
+   if ( le_fname  ->text() != info.firstName    ) return true;
+   if ( le_address->text() != info.address      ) return true;
+   if ( le_city   ->text() != info.city         ) return true;
+   if ( le_state  ->text() != info.state        ) return true;
+   if ( le_zip    ->text() != info.zip          ) return true;
+   if ( le_phone  ->text() != info.phone        ) return true;
+   if ( le_email  ->text() != info.email        ) return true;
+   if ( le_org    ->text() != info.organization ) return true;
 
    QMessageBox::information( this,
       tr( "Attention" ),

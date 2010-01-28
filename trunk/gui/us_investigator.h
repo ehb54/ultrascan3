@@ -13,7 +13,7 @@
 /*! An interface for personal information.
     This interface can be found in "Database->Commit Data
     to DB->Investigator" and other places.  The program will save
-    investigator information to database table: tblInvestigators.    
+    investigator information to database table 'people'.    
 */
 
 class US_EXTERN US_Investigator : public US_WidgetsDialog
@@ -23,34 +23,40 @@ class US_EXTERN US_Investigator : public US_WidgetsDialog
    public:
       US_Investigator( bool = false, QWidget* = 0, Qt::WindowFlags = 0 );
 
-   signals:
-      void investigator_accepted( int, const QString&, const QString& );
-
-   private:
-      bool signal_wanted;
-
-      //! A Struct for storing investigator data in the DB.
+      //! \brief A class for storing investigator data in the DB.
 
       /*! Each element corresponds to an entry field in DB table
-          tblInvestigators.
+          'people'.
       */
-
-      struct US_InvestigatorData
+      class US_InvestigatorData
       {
-         int     invID;     /*!< The uniqe ID in the DB for the  entry. */
-         QString lastName;     
-         QString firstName;    
-         QString address;      
-         QString city;         
-         QString state;        
-         QString zip;          
-         QString phone;        
-         QString email;        
-         QString display;      
-      } info;
+         public:
+         int     invID;        //!< The uniqe ID in the DB for the entry.
+         QString lastName;     //!< Last Name
+         QString firstName;    //!< First Name   
+         QString address;      //!< Investigator's address
+         QString city;         //!< Investigator's city
+         QString state;        //!< Investigator's state
+         QString zip;          //!< Investigator's zip code
+         QString phone;        //!< Investigator's phone number
+         QString email;        //!< Investigator's email address
+         QString organization; //!< Investigator's organization
+      };
 
-      QList< struct US_InvestigatorData > investigators;
+   signals:
+      //! \brief A signal that returns data to the invoking program
+      //! \param investigatorID The index in the database for this person
+      //! \param lname The last name of the selected investigator
+      //! \param fname The first name of the selected investigator
+      void investigator_accepted( int investigatorID, 
+            const QString& lname, const QString& fname );
 
+   private:
+      bool                         signal_wanted;
+      US_InvestigatorData          info;
+      QList< US_InvestigatorData > investigators;
+
+      QLineEdit*   le_search;
       QLineEdit*   le_invID;
       QLineEdit*   le_fname;
       QLineEdit*   le_lname;
@@ -60,10 +66,10 @@ class US_EXTERN US_Investigator : public US_WidgetsDialog
       QLineEdit*   le_zip;
       QLineEdit*   le_phone;
       QLineEdit*   le_email;
+      QLineEdit*   le_org;
 
       QListWidget* lw_names;
 
-      QPushButton* pb_delete;
       QPushButton* pb_update;
 
       US_Help      showHelp;
@@ -73,16 +79,14 @@ class US_EXTERN US_Investigator : public US_WidgetsDialog
 
    private slots:
       void queryDB     ( void );
-      void add         ( void );
       void update      ( void );
-      void del         ( void );
       void reset       ( void );
       void close       ( void );
       void limit_names ( const QString& );
       void get_inv_data( QListWidgetItem* );
 
       void help        ( void )
-      { showHelp.show_help( "manual/tbl_investigator.html" ); };
+      { showHelp.show_help( "tbl_investigator.html" ); };
 
 };
 #endif
