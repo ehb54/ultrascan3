@@ -22,12 +22,12 @@ class US_EXTERN US_RunDetails : public US_WidgetsDialog
       //! \param dataDir The data directory where the files were located
       //! \param cell_ch_wl A list of formatted cell/channel/wavelength
       //!                   strings that descripe each raw data structure
-      US_RunDetails( const QList< US_DataIO::rawData >&, 
+      US_RunDetails( const QVector< US_DataIO::rawData >&, 
             const QString&, const QString&, const QStringList& );
 
    private:
-      const QList< US_DataIO::rawData >& dataList;
-      const QStringList&                 triples;
+      const QVector< US_DataIO::rawData >& dataList;
+      const QStringList&                   triples;
       
       // key = rpm, value = triple + scan#
       QMultiMap< int, QString >          map; 

@@ -22,14 +22,14 @@ class US_EXTERN US_AnalysisBase : public US_Widgets
       US_AnalysisBase();
 
    protected:
-      QList< US_DataIO::editedData > dataList;
-      QList< US_DataIO::rawData    > rawList;
-      QStringList                    triples;
-      QList< int >                   excludedScans;
+      QVector< US_DataIO::editedData > dataList;
+      QVector< US_DataIO::rawData    > rawList;
+      QStringList                      triples;
+      QList< int >                     excludedScans;
 
-      QList< QVector< double > >     savedValues;
+      QList< QVector< double > >       savedValues;
 
-      struct solution_data           solution;
+      struct solution_data             solution;
       
       bool         dataLoaded;
       double       time_correction;
