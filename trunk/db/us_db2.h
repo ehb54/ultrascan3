@@ -37,24 +37,24 @@ class US_EXTERN US_DB2
     //! Some status codes returned by the US3 database
     enum dbStatus
     {
-      OK             = 0,       //! Query ok; no error
-      ERROR          = -1,      //! Unspecified error
+      OK             = 0,       //!< Query ok; no error
+      ERROR          = -1,      //!< Unspecified error
 
-      NOT_CONNECTED  = 1,      //! Database system is not connected
+      NOT_CONNECTED  = 1,       //!< Database system is not connected
      
-      DUP_EMAIL      = 101,     //! Duplicate email addresses exist
-      NO_ACCT        = 102,     //! No account with that email address was found
-      INACTIVE       = 103,     //! The account has not been activated
-      BADPASS        = 104,     //! Incorrect password
-      EMPTY          = 105,     //! A required parameter was empty
+      DUP_EMAIL      = 101,     //!< Duplicate email addresses exist
+      NO_ACCT        = 102,     //!< No account with that email address was found
+      INACTIVE       = 103,     //!< The account has not been activated
+      BADPASS        = 104,     //!< Incorrect password
+      EMPTY          = 105,     //!< A required parameter was empty
      
-      NOTPERMITTED   = 201,     //! User does not have permission 
+      NOTPERMITTED   = 201,     //!< User does not have permission 
      
-      NOROWS         = 301,     //! No rows returned
+      NOROWS         = 301,     //!< No rows returned
      
-      INSERTNULL     = 401,     //! Attempt to insert NULL value in a NOT NULL field
-      INSERTDUP      = 402      //! Attempt to insert a duplicate value in a primary
-                                //!    or unique key field
+      INSERTNULL     = 401,     //!< Attempt to insert NULL value in a NOT NULL field
+      INSERTDUP      = 402      //!< Attempt to insert a duplicate value in a primary
+                                //!<    or unique key field
     };
 
     // Methods
