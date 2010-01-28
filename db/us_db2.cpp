@@ -64,7 +64,7 @@ bool US_DB2::test_db_connection(
                  user    .toAscii(), 
                  password.toAscii(), 
                  dbname  .toAscii(), 
-                 0, NULL, 0 );
+                 0, NULL, CLIENT_MULTI_STATEMENTS );
  
    if ( ! status )
       error = QString( "Test connection open error " ) + mysql_error( conn );
@@ -82,15 +82,14 @@ bool US_DB2::test_secure_connection(
 {
    error = "";
 
-   MYSQL* conn = mysql_init( NULL );
-   if ( ! conn )
+   if ( ! db )
    {
       error = QString( "Test secure connection allocation error" );
       return false;
    }
 
    // Set connection to use ssl encryption
-   mysql_ssl_set( conn,
+   mysql_ssl_set( db,
                   NULL,
                   NULL,
                   certFile.toAscii(),
@@ -98,59 +97,56 @@ bool US_DB2::test_secure_connection(
                   "AES128-SHA");
 
    bool status = mysql_real_connect( 
-                 conn,
+                 db,
                  host    .toAscii(), 
                  user    .toAscii(), 
                  password.toAscii(), 
                  dbname  .toAscii(), 
-                 0, NULL, 0 );
+                 0, NULL, CLIENT_MULTI_STATEMENTS );
  
    if ( ! status )
    {
-      error = QString( "Test secure connection open error " ) + mysql_error( conn );
-      mysql_close( conn );
+      error = QString( "Test secure connection open error " ) +
+              mysql_error( db );
       return false;
    }
 
    // Let's see if the user can log in
-   status = false;
-   QString q = "SELECT check_user_email('" + email + "', '" + pw + "')";
-   if ( mysql_query( conn, q.toAscii() ) == 0 )
-   {
-      MYSQL_RES* res = mysql_store_result( conn );
-      if ( res )
-      {
-         MYSQL_ROW r = mysql_fetch_row( res );
-         if ( r )
-            status = ( atoi( r[0] ) == 0 ) ? true : false;
-      }
-   }
-   if ( ! status )
-      error = "Investigator email or password is incorrect";
+   status    = false;
+   QString q = "CALL validate_user( '', '" + email + "', '" + pw + "' )";
    
-   mysql_close( conn );
+   this->query( q );
 
-   return status;
+   if ( errno != OK )
+   {
+      error = mysql_error( db );
+      return false;
+   }
+   
+   next();  // Setup for calling routine to just use value()
+
+   return true;
 }
 
 bool US_DB2::connect( const QString& masterPW, QString& error )
 {
-  if ( connected ) return true;
+   if ( connected ) return true;
 
-  QStringList defaultDB = US_Settings::defaultDB();
-  if ( defaultDB.size() < 6 )
-  {
-      errno = NOT_CONNECTED;
-      error = "US_DB2 error: DB not configured";
-      return false;
-  }
+   QStringList defaultDB = US_Settings::defaultDB();
+   if ( defaultDB.size() < 6 )
+   {
+       errno = NOT_CONNECTED;
+       error = "US_DB2 error: DB not configured";
+       return false;
+   }
 
    QString user     = defaultDB.at( 1 );
    QString dbname   = defaultDB.at( 2 );
    QString host     = defaultDB.at( 3 );
+   QString cipher   = defaultDB.at( 4 );
+   QString iv       = defaultDB.at( 5 );  // Initialization vector
 
-   QString password = US_Crypto::decrypt( defaultDB.at( 4 ), masterPW, defaultDB.at( 5 ) );
-
+   QString password = US_Crypto::decrypt( cipher, masterPW, iv );
    try
    {
       // Set connection to use ssl encryption
@@ -181,13 +177,56 @@ bool US_DB2::connect( const QString& masterPW, QString& error )
 
    errno = OK;
    error = "";
-   if ( !connected )
+   
+   if ( ! connected )
    {
       errno = NOT_CONNECTED;
       error = QString( "Connect open error: " ) + mysql_error( db );
    }
 
-  return connected;
+   email  = defaultDB.at( 6 );  // Save for later
+
+   // DB Internal PW
+   cipher = defaultDB.at( 7 );
+   iv     = defaultDB.at( 8 );
+   userPW = US_Crypto::decrypt( cipher, masterPW, iv );
+   guid   = defaultDB.at( 9 );
+
+   QString q = "CALL validate_user( '" + guid + "', '', '" + userPW + "' )";
+   
+   this->query( q );
+
+   if ( errno != OK )
+   {
+      error = mysql_error( db );
+      return false;
+   }
+   
+   next();  // Setup for calling routine to just use value()
+
+   // See if email was changed in the database
+   if ( email != this->value( 1 ).toString() )
+   {
+      QList< QStringList > dbinfo = US_Settings::databases();
+
+      for ( int i = 0; i < dbinfo.size(); i++ )
+      {
+         QStringList info = dbinfo.at( i );
+         
+         if ( info.at( 9 ) == guid )  // Found it
+         {
+            email = this->value( 1 ).toString();
+            info.replace( 6, email );
+            US_Settings::set_defaultDB( info );  // Update the current DB 
+            dbinfo.replace( i, info );
+            break;
+         }
+      }
+
+      US_Settings::set_databases( dbinfo );  // Update the full DB list
+   }
+
+   return connected;
 }
 
 bool US_DB2::connect( 
@@ -272,6 +311,11 @@ int US_DB2::statusQuery( const QString& q )
    return value;
 }
 
+int US_DB2::statusQuery( const QStringList& arguments )
+{
+   return statusQuery( buildQuery( arguments ) );
+}
+
 void US_DB2::query( const QString& q )
 {
    this->rawQuery( q );
@@ -308,6 +352,29 @@ void US_DB2::query( const QString& q )
          result = NULL;
       }
    }
+}
+
+void US_DB2::query( const QStringList& arguments )
+{
+   query( buildQuery( arguments ) );
+}
+
+QString US_DB2::buildQuery( const QStringList& arguments )
+{
+   QString newquery = "CALL " + arguments[ 0 ]
+                    + "('" + guid + "', '" + userPW + "'";
+
+   for ( int i = 1; i < arguments.size(); i++ )
+   {
+      QString arg = arguments[ i ];
+      arg.replace( "'", "\\'" );
+
+      newquery += ", '" + arg + "'";
+   }
+
+   newquery += ")";
+
+   return newquery;
 }
 
 bool US_DB2::next( void )

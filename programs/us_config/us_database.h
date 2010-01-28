@@ -20,6 +20,7 @@ class US_Database : public US_Widgets
     
   private:
     QList<QStringList> dblist;
+    QString            uuid;
     
     QPushButton* pb_add;   
     QPushButton* pb_delete;
