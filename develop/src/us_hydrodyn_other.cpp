@@ -192,11 +192,16 @@ void US_Hydrodyn::read_residue_file()
                    ,(unsigned int) residue_list.size()
                    ); fflush(stdout);
             multi_residue_map[new_residue.name].push_back(residue_list.size());
-            residue_list.push_back(new_residue);
             struct residue alt_residue;
             alt_residue = new_residue;
             alt_residue.r_atom = alt_atoms;
             residue_list_no_pbr.push_back(alt_residue);
+            if ( new_residue.type )
+            {
+               residue_list.push_back(alt_residue); // non-aa's
+            } else {
+               residue_list.push_back(new_residue);
+            }               
             for (unsigned int k = 0; k < new_residue.r_atom.size(); k++) {
                QString idx = QString("%1|%2|%3")
                   .arg(new_residue.name)

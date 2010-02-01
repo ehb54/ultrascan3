@@ -4493,7 +4493,9 @@ int US_Hydrodyn::compute_asa()
                   last_chain = this_atom->chain;
                   last_resName = this_atom->resName;
                   last_resSeq = this_atom->resSeq;
-                  if (create_beads_normally && misc.pb_rule_on) {
+                  if (create_beads_normally && 
+                      misc.pb_rule_on &&
+                      !this_atom->type) {
                      if(sidechain_N &&
                         this_atom->chain == 1) {
                         if(this_atom->name == "N") {
