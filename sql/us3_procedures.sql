@@ -33,6 +33,9 @@ BEGIN
   SET @INSERTNULL     = 401;
   SET @INSERTDUP      = 402;
 
+  SET @NO_BUFFER      = 501;
+  SET @NO_COMPONENT   = 502;
+
 END$$
 
 -- Returns the most recent error number

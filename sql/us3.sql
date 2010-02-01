@@ -595,6 +595,7 @@ DROP TABLE IF EXISTS us3.bufferComponent ;
 
 CREATE  TABLE IF NOT EXISTS us3.bufferComponent (
   bufferComponentID INT NOT NULL AUTO_INCREMENT ,
+  units VARCHAR(8) NOT NULL DEFAULT 'mM', 
   description TEXT NULL DEFAULT NULL ,
   viscosity TEXT NULL DEFAULT NULL ,
   density TEXT NULL DEFAULT NULL ,
@@ -828,6 +829,7 @@ DROP TABLE IF EXISTS us3.bufferPerson ;
 CREATE  TABLE IF NOT EXISTS us3.bufferPerson (
   bufferID INT NOT NULL ,
   personID INT NOT NULL ,
+  private TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (bufferID) ,
   INDEX bp_personID (personID ASC) ,
   INDEX bp_bufferID (bufferID ASC) ,
@@ -863,30 +865,6 @@ CREATE  TABLE IF NOT EXISTS us3.analytePerson (
   CONSTRAINT ap_analyteID
     FOREIGN KEY (analyteID )
     REFERENCES us3.analyte (analyteID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table us3.bufferComponentPerson
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.bufferComponentPerson ;
-
-CREATE  TABLE IF NOT EXISTS us3.bufferComponentPerson (
-  bufferComponentID INT NOT NULL ,
-  personID INT NOT NULL ,
-  PRIMARY KEY (bufferComponentID) ,
-  INDEX bcp_personID (personID ASC) ,
-  INDEX bcp_bufferComponentID (bufferComponentID ASC) ,
-  CONSTRAINT bcp_personID
-    FOREIGN KEY (personID )
-    REFERENCES us3.people (personID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT bcp_bufferComponentID
-    FOREIGN KEY (bufferComponentID )
-    REFERENCES us3.bufferComponent (bufferComponentID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;

@@ -274,7 +274,7 @@ bool US_DB2::connect(
   return connected;
 }
 
-void US_DB2::rawQuery( const QString& q )
+void US_DB2::rawQuery( const QString& sqlQuery )
 {
    // Make sure that we clear out any unused
    //   result sets
@@ -288,18 +288,18 @@ void US_DB2::rawQuery( const QString& q )
    }
    result = NULL;
 
-   if ( mysql_query( db, q.toAscii() ) != 0 )
+   if ( mysql_query( db, sqlQuery.toAscii() ) != 0 )
       error = QString( "MySQL error: " ) + mysql_error( db );
 
    else
       result = mysql_store_result( db );
 }
 
-int US_DB2::statusQuery( const QString& q )
+int US_DB2::statusQuery( const QString& sqlQuery )
 {
    int value = 0;
 
-   this->rawQuery( q );
+   this->rawQuery( sqlQuery );
    if ( result )
    {
       row       = mysql_fetch_row( result );
@@ -316,9 +316,9 @@ int US_DB2::statusQuery( const QStringList& arguments )
    return statusQuery( buildQuery( arguments ) );
 }
 
-void US_DB2::query( const QString& q )
+void US_DB2::query( const QString& sqlQuery )
 {
-   this->rawQuery( q );
+   this->rawQuery( sqlQuery );
    if ( result )
    {
       // This is a 2-set result: status, then data
