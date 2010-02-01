@@ -559,7 +559,8 @@ void US_Hydrodyn_Batch::load_somo()
          QColor save_color = editor->color();
          if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
          {
-            result = screen_pdb(file, true);
+            // no save/restore settings for load into somo
+            result = ((US_Hydrodyn *)us_hydrodyn)->screen_pdb(file, true);
          } else {
             result = screen_bead_model(file);
          }

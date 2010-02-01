@@ -289,6 +289,8 @@ void US_Hydrodyn::get_atom_map(PDB_model *model)
               lastResName != this_atom->resName )
          {
             if ( multi_residue_map.count(this_atom->resName) &&
+                 multi_residue_map[this_atom->resName][0] >= 0 &&
+                 multi_residue_map[this_atom->resName][0] < (int)residue_list.size() &&
                  residue_list[multi_residue_map[this_atom->resName][0]].type == 0 )
             {
                aa++;
@@ -669,8 +671,12 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
                    this_atom->resName.ascii());
          }
          int respos = -1;
-    
-         int restype = residue_list[multi_residue_map[this_atom->resName][0]].type;
+         int restype = 99;
+         if ( multi_residue_map.count(this_atom->resName) &&
+              multi_residue_map[this_atom->resName].size() )
+         {
+            restype = residue_list[multi_residue_map[this_atom->resName][0]].type;
+         }
 
          for ( unsigned int m = 0; m < residue_list.size(); m++ )
          {
@@ -2160,7 +2166,12 @@ int US_Hydrodyn::create_beads(QString *error_string)
                    this_atom->resName.ascii());
          }
 
-         int restype = residue_list[multi_residue_map[this_atom->resName][0]].type;
+         int restype = 99;
+         if ( multi_residue_map.count(this_atom->resName) &&
+              multi_residue_map[this_atom->resName].size() )
+         {
+            restype = residue_list[multi_residue_map[this_atom->resName][0]].type;
+         }
          
          for (unsigned int m = 0; m < residue_list.size(); m++)
          {
