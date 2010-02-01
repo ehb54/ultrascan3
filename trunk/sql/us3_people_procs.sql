@@ -188,7 +188,7 @@ CREATE PROCEDURE new_person ( p_guid         CHAR(36),
                               p_zip          VARCHAR(10),
                               p_phone        VARCHAR(24),
                               p_new_email    VARCHAR(63),
-                              p_new_guid     VARCHAR(63),
+                              p_new_guid     CHAR(36),
                               p_organization VARCHAR(45),
                               p_new_password VARCHAR(80) )
   MODIFIES SQL DATA
@@ -267,6 +267,7 @@ CREATE PROCEDURE update_person ( p_guid         CHAR(36),
                                  p_zip          VARCHAR(10),
                                  p_phone        VARCHAR(24),
                                  p_new_email    VARCHAR(63),
+                                 p_new_guid     CHAR(36),
                                  p_organization VARCHAR(45),
                                  p_new_password VARCHAR(80) )
   MODIFIES SQL DATA
@@ -291,7 +292,12 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( TRIM( p_new_guid ) = '' ) THEN
+    SET @US3_LAST_ERRNO = @EMPTY;
+    SET @US3_LAST_ERROR = CONCAT( 'MySQL: The new GUID parameter to the new_person ',
+                                  'procedure cannot be empty' );
+
+  ELSEIF ( verify_user( p_guid, p_password ) = @OK ) THEN
 
     -- Should we also check userlevel or something?
     UPDATE people SET
@@ -303,6 +309,7 @@ BEGIN
            zip          = p_zip,
            phone        = p_phone,
            email        = p_new_email,
+           GUID         = p_new_guid,
            organization = p_organization,
            password     = MD5(p_new_password),
            activated    = true,

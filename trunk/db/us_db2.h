@@ -53,8 +53,10 @@ class US_EXTERN US_DB2
       NOROWS         = 301,     //!< No rows returned
      
       INSERTNULL     = 401,     //!< Attempt to insert NULL value in a NOT NULL field
-      INSERTDUP      = 402      //!< Attempt to insert a duplicate value in a primary
+      INSERTDUP      = 402,     //!< Attempt to insert a duplicate value in a primary
                                 //!<    or unique key field
+      NO_BUFFER      = 501,     //!< No buffer with that ID was found
+      NO_COMPONENT   = 502      //!< No buffer component with that ID was found
     };
 
     // Methods
@@ -115,7 +117,7 @@ class US_EXTERN US_DB2
     /*! \brief Implements a simple query on the active database 
         connection, cleaning up any unused results from a previous query.
 
-        \param q    A string containing the US3 query to execute.
+        \param sqlQuery    A string containing the US3 query to execute.
     */
     void          rawQuery    ( const QString& );
 
@@ -125,7 +127,7 @@ class US_EXTERN US_DB2
         but no other result data. Useful for INSERT, UPDATE and DELETE 
         style queries.
 
-        \param q    A string containing the US3 query to execute.
+        \param sqlQuery    A string containing the US3 query to execute.
     */
     int           statusQuery ( const QString& );
 
@@ -145,7 +147,7 @@ class US_EXTERN US_DB2
         individual values using the next() and value() methods. Use the 
         numRows() method to find out how many rows there are.
 
-        \param q  A string containing the US3 query to execute.
+        \param sqlQuery  A string containing the US3 query to execute.
     */
     void          query       ( const QString& );
 
