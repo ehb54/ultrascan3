@@ -95,6 +95,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Save *save_util; // to enable calling of save routines regardless of whether or not widget is available
       bool batch_widget;
       US_Hydrodyn_Batch *batch_window;
+      QString residue_filename;
+      QLabel *lbl_table;
 
    private:
       vector < QString > batch_file;
@@ -124,7 +126,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool create_beads_normally; // true = normal, false = atoms are beads
       bool alt_method; // true = new bead method, false = original bead method
       unsigned int current_model;
-      QString residue_filename;
       QString bead_model_file;
       QString pdb_file;
       struct residue current_residue;
@@ -172,7 +173,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QLabel *lbl_info3;
       QLabel *lbl_pdb_file;
       QLabel *lbl_model;
-      QLabel *lbl_table;
       QLabel *lbl_somo;
       QLabel *lbl_bead_model_prefix;
 
@@ -319,6 +319,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       int calc_hydro();
       void select_save_params();
       void show_saxs_options();
+      void read_residue_file();
 
    private slots:
       void load_pdb();
@@ -328,7 +329,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void load_bead_model();
       void setupGUI();
       void select_residue_file();
-      void read_residue_file();
       void clear_temp_chain(struct PDB_chain *);
       // The next function returns a boolean to indicate whether the atom that was just assigned belongs
       // to a new residue or is part of a previously assigned residue

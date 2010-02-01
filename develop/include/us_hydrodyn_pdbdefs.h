@@ -48,8 +48,9 @@ struct PDB_atom
    int visibility;                   // 0 = hidden, 1 = exposed
    int chain;                        // 0 = main, 1 = side
    int org_chain;                    // 0 = main, 1 = side
+   unsigned int type;                // 0: amino acid, etc.
    float bead_asa;
-   float ref_asa;           // reference asa from the residue table
+   float ref_asa;                    // reference asa from the residue table
    int exposed_code;                 // 1 exposed, 6 side chain buried, 10 main chain buried
    bool bead_positioner;             // true if an atom had a bead positioner
    float mw;

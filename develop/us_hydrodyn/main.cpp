@@ -13,6 +13,8 @@ int main (int argc, char **argv)
    {
       bool expert = false;
       bool debug = false;
+      bool residue_file = false;
+      QString residue_filename;
       delete us_register;
       US_Hydrodyn *hydrodyn;
       vector < QString > batch_file;
@@ -32,6 +34,14 @@ int main (int argc, char **argv)
             argcbase++;
             debug = true;
          }
+         if ( QString(a.argv()[argcbase]).contains(QRegExp("^-r")) )
+         {
+            puts("residue file");
+            argcbase++;
+            residue_file = true;
+            residue_filename = a.argv()[argcbase];
+            argcbase++;
+         }
       }
       for ( int i = argcbase; i < a.argc(); i++ ) 
       {
@@ -39,6 +49,12 @@ int main (int argc, char **argv)
       }
       hydrodyn = new US_Hydrodyn(batch_file);
       hydrodyn->setCaption("SOMO Solution Modeler");
+      if ( residue_file )
+      {
+         hydrodyn->residue_filename = residue_filename;
+         hydrodyn->read_residue_file();
+         hydrodyn->lbl_table->setText( QDir::convertSeparators( residue_filename ) );
+      }
       if ( expert )
       {
          hydrodyn->advanced_config.auto_view_pdb = false;

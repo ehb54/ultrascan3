@@ -2148,6 +2148,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
          this_atom->bead_assignment = -1;
          this_atom->atom_assignment = -1;
          this_atom->chain = -1;
+         this_atom->type = 99;
 
          // find residue in residues
          int respos = -1;
@@ -2317,6 +2318,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
                this_atom->atom_assignment = atompos;
                this_atom->chain = (int) this_atom->p_residue->r_bead[this_atom->bead_assignment].chain;
                this_atom->atom_hydration =  residue_list[respos].r_atom[atompos].hydration;
+               this_atom->type = this_atom->p_residue->type;
 
                if ( misc.pb_rule_on &&
                     this_atom->resName == "PRO" &&
@@ -2345,7 +2347,7 @@ int US_Hydrodyn::create_beads(QString *error_string)
                if ( advanced_config.debug_1 ||
                     advanced_config.debug_2 )
                {
-                  printf("found atom %s %s in residue %d pos %d bead asgn %d %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s ba %d\n",
+                  printf("found atom %s %s in residue %d pos %d bead asgn %d %d placing info %d mw %f bead_ref_mw %f hybrid name %s %s ba %d chain %d\n",
                          this_atom->name.ascii(), this_atom->resName.ascii(), respos, atompos,
                          this_atom->p_atom->bead_assignment,
                          this_atom->bead_assignment,
@@ -2354,7 +2356,8 @@ int US_Hydrodyn::create_beads(QString *error_string)
                          this_atom->bead_ref_mw,
                          residue_list[respos].r_atom[atompos].hybrid.name.ascii(),
                          this_atom->p_atom->hybrid.name.ascii(),
-                         this_atom->p_atom->bead_assignment
+                         this_atom->p_atom->bead_assignment,
+                         this_atom->chain
                          );
                }
             }
@@ -2396,12 +2399,13 @@ int US_Hydrodyn::create_beads(QString *error_string)
             if ( advanced_config.debug_1 ||
                  advanced_config.debug_2 )
             {
-               printf("p1 %s j k %d %d %lx %s %d\n", 
+               printf("p1 %s j k %d %d %lx %s %d chain %d\n", 
                       this_atom->name.ascii(),
                       j, k,
                       (long unsigned int)this_atom->p_atom,
                       this_atom->active ? "active" : "not active",
-                      this_atom->bead_assignment
+                      this_atom->bead_assignment,
+                      this_atom->chain
                       ); fflush(stdout);
             }
             
