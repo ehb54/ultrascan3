@@ -36,6 +36,13 @@ BEGIN
   SET @NO_BUFFER      = 501;
   SET @NO_COMPONENT   = 502;
 
+  -- Some user levels
+  SET @US3_USER       = 0;
+  SET @US3_PRIV       = 1;
+  SET @US3_ANALYST    = 2;
+  SET @US3_SUPER      = 3;
+  SET @US3_ADMIN      = 4;
+  
 END$$
 
 -- Returns the most recent error number
@@ -225,7 +232,7 @@ BEGIN
                                   @ADMIN_EMAIL );
 
   ELSE
-    /* At this point we should have exactly 1 record */
+    -- At this point we should have exactly 1 record
     SELECT personID, password, fname, lname, phone, GUID, userlevel, activated
     INTO   @US3_ID, l_password, @FNAME, @LNAME, @PHONE, @GUID, @USERLEVEL, activated
     FROM   people
@@ -284,14 +291,39 @@ CREATE FUNCTION verify_user( p_guid     CHAR(36),
   READS SQL DATA
 
 BEGIN
-  DECLARE count_user   INT;
   DECLARE status       INT;
 
   CALL config();
-
   SET status = @OK;
+
   IF ( @US3_ID IS NULL ) THEN
     SET status = check_user( p_guid, p_password );
+
+  END IF;
+
+  RETURN( status );
+
+END$$
+
+-- Same as verify_user(), but also verifies userlevel
+DROP FUNCTION IF EXISTS verify_userlevel$$
+CREATE FUNCTION verify_userlevel( p_guid      CHAR(36),
+                                  p_password  VARCHAR(80),
+                                  p_userlevel INT )
+  RETURNS TINYINT
+  READS SQL DATA
+
+BEGIN
+  DECLARE status       INT;
+
+  CALL config();
+  SET status = verify_user( p_guid, p_password );
+
+  IF ( status = @OK && @USERLEVEL < p_userlevel ) THEN
+    SET @US3_LAST_ERRNO = @NOTPERMITTED;
+    SET @US3_LAST_ERROR = 'MySQL: Not permitted at that userlevel';
+
+    SET status = @NOTPERMITTED;
 
   END IF;
 

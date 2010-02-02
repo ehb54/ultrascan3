@@ -59,6 +59,16 @@ class US_EXTERN US_DB2
       NO_COMPONENT   = 502      //!< No buffer component with that ID was found
     };
 
+    //! Some user levels used by the US3 database procedures
+    enum dbUserlevels
+    {
+      USER           = 0,       //!< Regular user
+      PRIV           = 1,       //!< Privileged user
+      ANALYST        = 2,       //!< Data Analyst
+      SUPER          = 3,       //!< Super User
+      ADMIN          = 4,       //!< Admin
+    };
+
     // Methods
 
     /*! \brief Provides a quick test of database connectivity

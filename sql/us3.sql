@@ -27,7 +27,7 @@ CREATE  TABLE IF NOT EXISTS us3.people (
   activated BOOLEAN NOT NULL DEFAULT false ,
   signup TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ,
   lastLogin DATETIME NULL ,
-  clusterAuthorizations TEXT NOT NULL ,
+  clusterAuthorizations VARCHAR(255) NOT NULL default 'bcf:alamo:laredo:lonestar:bigred:steele:queenbee',
   userlevel TINYINT NOT NULL DEFAULT 0 ,
   PRIMARY KEY (personID) )
 ENGINE = InnoDB;
@@ -829,7 +829,7 @@ DROP TABLE IF EXISTS us3.bufferPerson ;
 CREATE  TABLE IF NOT EXISTS us3.bufferPerson (
   bufferID INT NOT NULL ,
   personID INT NOT NULL ,
-  private TINYINT NOT NULL DEFAULT 0,
+  private TINYINT NOT NULL DEFAULT 1,
   PRIMARY KEY (bufferID) ,
   INDEX bp_personID (personID ASC) ,
   INDEX bp_bufferID (bufferID ASC) ,
