@@ -83,8 +83,8 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_tripleinfo;
 
       QList< US_DataIO::beckmanRaw >  legacyData;     // legacy data from file
-      QList< US_DataIO::rawData >     allData;        // all the data, separated by c/c/w
-      QList< US_DataIO::rawData >     RIData;         // to save RI data, after converting to RP
+      QVector< US_DataIO::rawData >   allData;        // all the data, separated by c/c/w
+      QVector< US_DataIO::rawData >   RIData;         // to save RI data, after converting to RP
       QString       saveDir;
       QString       saveDescription;
 

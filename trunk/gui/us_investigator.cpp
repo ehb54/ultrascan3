@@ -346,10 +346,21 @@ void US_Investigator::get_inv_data( QListWidgetItem* item )
 
 void US_Investigator::close( void )
 {
-   if ( signal_wanted ) 
+   if ( signal_wanted )
+   {
+      if ( le_invID->text() == "" )
+      {
+         QMessageBox::information( this,
+            tr( "Attention" ),
+            tr( "Select an investigator before 'Accept':\n" ) );
+
+         return;
+      }
+
       emit investigator_accepted( le_invID->text().toInt(), 
             le_lname->text(), le_fname->text() );
-   
+   }
+
    accept();
 }
 

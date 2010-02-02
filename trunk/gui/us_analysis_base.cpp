@@ -7,7 +7,7 @@
 #include "us_gui_settings.h"
 #include "us_run_details.h"
 #include "us_vbar.h"
-#include "us_buffer.h"
+#include "us_buffer_gui.h"
 
 US_AnalysisBase::US_AnalysisBase() : US_Widgets()
 {
@@ -364,7 +364,7 @@ void US_AnalysisBase::update_vbar( double new_vbar )
 
 void US_AnalysisBase::get_buffer( void )
 {
-   US_Buffer_DB* buf_dialog = new US_Buffer_DB( true ); // Delete on close set
+   US_BufferGui* buf_dialog = new US_BufferGui( true ); // Delete on close set
    connect( buf_dialog, SIGNAL( valueChanged ( double, double ) ),
                         SLOT  ( update_buffer( double, double ) ) );
    buf_dialog->exec();

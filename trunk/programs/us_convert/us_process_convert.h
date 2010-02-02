@@ -21,14 +21,14 @@ class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
                          QString& runType );
       US_ProcessConvert( QWidget* parent,
                          QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                         QList< US_DataIO::rawData    >& rawConvertedData,
+                         QVector< US_DataIO::rawData    >& rawConvertedData,
                          QStringList& triples,
                          QString runType,
                          double tolerance,
                          QList< double >& ss_limits );
       US_ProcessConvert( QWidget* parent,
                          int& status,
-                         QList< US_DataIO::rawData >& rawConvertedData,
+                         QVector< US_DataIO::rawData >& rawConvertedData,
                          US_Convert::ExperimentInfo& ExpData,
                          QStringList& triples,
                          QString runType,
