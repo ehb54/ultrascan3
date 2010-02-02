@@ -2,7 +2,7 @@
 
 #include "us_convert.h"
 #include "us_tripleinfo.h"
-#include "us_buffer.h"
+#include "us_buffer_gui.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_db.h"
@@ -126,7 +126,7 @@ void US_TripleInfo::cancel( void )
 
 void US_TripleInfo::selectBuffer( void )
 {
-   US_Buffer_DB* buffer_dialog = new US_Buffer_DB;
+   US_BufferGui* buffer_dialog = new US_BufferGui;
 
    // This will change depending on what signal we actually get back
    connect( buffer_dialog, SIGNAL( IDChanged    ( int ) ),

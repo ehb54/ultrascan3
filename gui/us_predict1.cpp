@@ -3,7 +3,7 @@
 #include "us_predict1.h"
 #include "us_constants.h"
 #include "us_gui_settings.h"
-#include "us_buffer.h"
+#include "us_buffer_gui.h"
 #include "us_vbar.h"
 
 #include "qwt_legend.h"
@@ -286,7 +286,7 @@ void US_Predict1::update_vbar( double vbar )
 
 void US_Predict1::get_buffer( void )
 {
-   US_Buffer_DB* buffer_dialog = new US_Buffer_DB( true );
+   US_BufferGui* buffer_dialog = new US_BufferGui( true );
    connect( buffer_dialog, SIGNAL( valueChanged ( double, double ) ),
                            SLOT  ( update_buffer( double, double ) ) );
    buffer_dialog->setWindowTitle( tr( "Buffer Calculation" ) );

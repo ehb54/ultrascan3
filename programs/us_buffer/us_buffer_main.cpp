@@ -2,7 +2,7 @@
 
 #include <QApplication>
 
-#include "us_buffer.h"
+#include "us_buffer_gui.h"
 #include "us_license_t.h"
 #include "us_license.h"
 
@@ -16,7 +16,7 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   US_Buffer_DB* w = new US_Buffer_DB;
+   US_BufferGui* w = new US_BufferGui;
    w->show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
