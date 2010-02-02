@@ -8,38 +8,40 @@
 
 DELIMITER $$
 
--- Verifies that the user with id is associated with
+-- Verifies that the user has permission to modify
 --  the specified buffer
-DROP FUNCTION IF EXISTS verify_buffer_owner$$
-CREATE FUNCTION verify_buffer_owner( p_guid     CHAR(36),
-                                     p_password VARCHAR(80),
-                                     p_bufferID INT )
+DROP FUNCTION IF EXISTS verify_buffer_permission$$
+CREATE FUNCTION verify_buffer_permission( p_guid     CHAR(36),
+                                          p_password VARCHAR(80),
+                                          p_bufferID INT )
   RETURNS TINYINT
   READS SQL DATA
 
 BEGIN
-  
   DECLARE count_buffer   INT;
   DECLARE status         TINYINT;
 
   CALL config();
+  SET status   = @ERROR;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
-    SELECT COUNT(*)
-    INTO   count_buffer
-    FROM   bufferPerson
-    WHERE  bufferID = p_bufferID
-    AND    personID = @US3_ID;
+  SELECT COUNT(*)
+  INTO   count_buffer
+  FROM   bufferPerson
+  WHERE  bufferID = p_bufferID
+  AND    personID = @US3_ID;
  
-    SET status = @ERROR;
-    IF ( count_buffer = 1 ) THEN
-      SET status = @OK;
+  IF ( verify_user( p_guid, p_password ) = @OK &&
+       count_buffer > 0 ) THEN
+    SET status = @OK;
 
-    ELSE
-      SET @US3_LAST_ERRNO = @NOT_PERMITTED;
-      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to modify this buffer';
+  ELSEIF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+    SET status = @OK;
 
-    END IF;
+  ELSE
+    SET @US3_LAST_ERRNO = @NOTPERMITTED;
+    SET @US3_LAST_ERROR = 'MySQL: you do not have permission to modify this buffer';
+
+    SET status = @NOTPERMITTED;
 
   END IF;
 
@@ -140,7 +142,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_buffer_owner( p_guid, p_password, p_bufferID ) = @OK ) THEN
+  IF ( verify_buffer_permission( p_guid, p_password, p_bufferID ) = @OK ) THEN
     UPDATE buffer SET
       description = p_description,
       spectrum    = p_spectrum,
@@ -228,9 +230,10 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   description, spectrum, pH, viscosity, density
-      FROM     buffer
-      WHERE    bufferID = p_bufferID;
+      SELECT   description, spectrum, pH, viscosity, density, personID
+      FROM     buffer b, bufferPerson bp
+      WHERE    b.bufferID = bp.bufferID
+      AND      b.bufferID = p_bufferID;
 
     END IF;
 
@@ -253,9 +256,8 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_buffer_permission( p_guid, p_password, p_bufferID ) = @OK ) THEN
 
-    -- Should we also check userlevel or something?
     DELETE FROM bufferLink
     WHERE bufferID = p_bufferID;
 
@@ -384,7 +386,7 @@ BEGIN
   FROM       bufferComponent
   WHERE      bufferComponentID = p_componentID;
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_buffer_permission( p_guid, p_password, p_bufferID ) = @OK ) THEN
     IF ( count_buffers < 1 ) THEN
       SET @US3_LAST_ERRNO = @NO_BUFFER;
       SET @US3_LAST_ERROR = CONCAT('MySQL: No buffer with ID ',
@@ -442,10 +444,11 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT l.bufferComponentID, description, viscosity, density, concentration
-      FROM bufferLink l, bufferComponent c
-      WHERE l.bufferComponentID = c.bufferComponentID
-      ORDER BY l.bufferComponentID;
+      SELECT   l.bufferComponentID, description, viscosity, density, concentration
+      FROM     bufferLink l, bufferComponent c
+      WHERE    l.bufferComponentID = c.bufferComponentID
+      AND      l.bufferID = p_bufferID
+      ORDER BY description;
  
     END IF;
 
@@ -465,9 +468,7 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
-
-    -- Should we also check userlevel or something?
+  IF ( verify_buffer_permission( p_guid, p_password, p_bufferID ) = @OK ) THEN
     DELETE FROM bufferLink
     WHERE bufferID = p_bufferID;
 

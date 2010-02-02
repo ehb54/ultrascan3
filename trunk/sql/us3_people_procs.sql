@@ -46,7 +46,6 @@ CREATE FUNCTION count_people( p_guid     CHAR(36),
   READS SQL DATA
 
 BEGIN
-
   DECLARE template    VARCHAR(40);
   DECLARE count_names INT;
 
@@ -194,7 +193,6 @@ CREATE PROCEDURE new_person ( p_guid         CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
-
   DECLARE duplicate_key TINYINT DEFAULT 0;
   DECLARE null_field    TINYINT DEFAULT 0;
 
@@ -214,9 +212,8 @@ BEGIN
     SET @US3_LAST_ERROR = CONCAT( 'MySQL: The new GUID parameter to the new_person ',
                                   'procedure cannot be empty' );
 
-  ELSEIF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  ELSEIF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
 
-    -- Should we also check userlevel or something?
     INSERT INTO people SET
            fname        = p_fname,
            lname        = p_lname,
@@ -273,7 +270,6 @@ CREATE PROCEDURE update_person ( p_guid         CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
-
   DECLARE duplicate_key TINYINT DEFAULT 0;
   DECLARE null_field    TINYINT DEFAULT 0;
   DECLARE not_found     TINYINT DEFAULT 0;
@@ -297,9 +293,8 @@ BEGIN
     SET @US3_LAST_ERROR = CONCAT( 'MySQL: The new GUID parameter to the new_person ',
                                   'procedure cannot be empty' );
 
-  ELSEIF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  ELSEIF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
 
-    -- Should we also check userlevel or something?
     UPDATE people SET
            fname        = p_fname,
            lname        = p_lname,
@@ -349,9 +344,8 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
 
-    -- Should we also check userlevel or something?
     UPDATE people SET
            activated    = false,
            lastLogin    = NOW()
