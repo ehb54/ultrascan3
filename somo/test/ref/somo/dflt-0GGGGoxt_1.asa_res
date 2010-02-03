@@ -1,0 +1,14 @@
+ N.      Res.       ASA        MAX ASA         %
+ [ 1      GLY_A_4 ]	180	84	214.15
+ [ 2      GLY_A_16 ]	154	84	182.93
+ [ 3      GLY_A_102 ]	172	84	204.21
+ [ 4      GLY_A_126 ]	262	84	312.37
+
+
+
+	TOTAL ASA OF THE MOLECULE    = 767	[A^2] (Threshold used: 20.0 A^2]
+	TOTAL VOLUME OF THE MOLECULE = 265.10	[A^3]
+	RADIUS OF GYRATION (+r) =  14.29   [A]
+	RADIUS OF GYRATION (-r) =  14.13   [A]
+	MASS OF THE MOLECULE    =  231   [Da]
+	CENTRE OF MASS          =  -7.2209 21.6320 14.9092 [A]
