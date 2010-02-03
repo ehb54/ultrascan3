@@ -27,6 +27,8 @@
             <keyword name="password" id="UltraScan::pw" ref="master_pw.html"/>
             <keyword name="configuration"               ref="config.html"/>
             <keyword name="gradient"                    ref="colorgradient.html"/>
+            <keyword name="investigator"                ref="us_investigator.html"/>
+            <keyword name="buffer"                      ref="us_buffer.html"/>
         </keywords>
         <files>
             <file>mainstyle.css</file>
@@ -58,8 +60,11 @@
             <file>colorgradient.html</file>
             <file>images/colorgrad.png</file>
 
+            <file>us_investigator.html</file>
+            <file>images/us_investigator.png</file>
 
-
+            <file>us_buffer.html</file>
+            <file>images/us_buffer.png</file>
 
         </files>
     </filterSection>

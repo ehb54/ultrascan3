@@ -1,0 +1,63 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Buffer Window'
+%]
+    <h2> Manage Buffer Information: </h2>
+    <p class='center'><img src="images/us_buffer.png" 
+    alt="Buffer Window"/></p>
+
+    <p> Using this window, you can manage buffer information on your local
+    system or in the current database.  You must be identified as the
+    investigator to delete or update a buffer description in the database.</p>
+
+    <p>Pushbuttons:</p>
+
+    <ul>
+      <li>Select Investigator.  This button brings up a window that
+      allows selecting the current investigator for limiting buffer
+      descriptions.  The <b>Search</b> item also limits the display
+      of buffer descriptions.</li>
+
+      <li>Load Buffer from HD.  Brings up a dialog to load a buffer definition
+      form the hard disk.</li>
+      
+      <li>Save Buffer to HD.  Saves the current buffer definition to the hard
+      disk.</li>
+      
+      <li>Query Buffer Descriptions from DB.  Loads the buffer descriptions
+      for the selected investigator from the database.  If no investigator
+      is selected, all buffers in the database are shown.</li>
+      
+      <li>Save Buffer to DB.  Saves the current buffer definition as 
+      a new entry in the database.</li>
+
+      <li>Update Buffer in DB.  Updates the current buffer definition
+      in the database.</li>
+      
+      <li>Delete Buffer from DB.  Deletes the current buffer from
+      the database.</li>
+
+      <li>Synch components with DB.  For efficiency, buffer component
+      definitions are saved on the hard disk.  These components 
+      rarely change, however this button will update the locally
+      saved data from the current database values.  These values
+      are considered global across multiple databases.</li>
+    </ul>
+
+    <p>To display a buffer description from the database, double-click
+    on the title after getting the descriptions from the database.</p>
+
+    <p>To add or change a component to the current buffer, select the component
+    in the lower left box and input the concentration using the units
+    indicated.  To delete a component, double-click the component in the 
+    lower right box. Density and viscosity are automatically updated when
+    a component is added, updated, or removed.</p>
+
+    <p>Manually updated items:</p>
+
+    <ul>
+      <li>pH</li>
+      <li>Description</li>
+      <li>Spectrum - A series of wavelength/extinction values</li>
+    </ul>
+
+[% INCLUDE footer.us3 %]
