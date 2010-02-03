@@ -1,0 +1,31 @@
+[% INCLUDE header.us3
+   title = 'UltraScan III Investigator Window'
+%]
+    <h2> Managing Personal Information: </h2>
+    <p class='center'><img src="images/us_investigator.png" 
+    alt="Investigator Window"/></p>
+
+    <p> Using this window, you can update any personal information.  Your
+    database autorizations must allow update privileges for the record
+    being changed.</p>
+
+   <ol>
+     <li>Use <b>Query DB</b> to get a list of persons in the current database.</li>
+
+     <li>Entering text in the <b>Search</b> window narrows the number of 
+     entries visible in the list of personnel available for selection.</li>
+
+     <li>Double-clicking on the name of the investigator will populate
+     the line edit windows to allow viewing and changing personal data.</li>
+
+     <li>Change any data desired.</li>
+
+     <li>Use <b>Update DB</b> to commit the changes to the database.</li>
+   </ol> 
+
+   <p>Note:  Depending upon how the window is initiated, 
+   the <b>Close</b> button will change to <b>Accept</b>.  Accepting an
+   entry passes the selected person back to the calling program.</p>
+
+
+[% INCLUDE footer.us3 %]

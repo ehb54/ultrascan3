@@ -11,7 +11,7 @@ body
 div.footer
 {
   padding         : 0.2em 1em;
-  margin          : 0px 1.5in;
+  margin          : 0px 10%;
   background-color: #f8f8f8; /* Light Gray */
   font-size       : 80%;
   font-family     : "trebuchet ms", arial, helvetica sans-serif;
