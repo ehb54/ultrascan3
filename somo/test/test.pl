@@ -1,6 +1,7 @@
 #!/usr/bin/perl
 
 $us = $ENV{'ULTRASCAN'} || die "\$ULTRASCAN must be set\n";
+$ush = "$ENV{'HOME'}/ultrascan";
 
 #$debug++;
 $do_somo++;
@@ -163,7 +164,7 @@ sub testsomo { # file, config, expectfailure
         $fbase =~ s/\.pdb$//;
         for ( my $j = 0; $j < @refs; $j++) 
         {
-            my $forg = "$us/somo/$fbase$refs[$j]";
+            my $forg = "$ush/somo/$fbase$refs[$j]";
             my $fbak = "$us/somo/test/bak/$fbase$refs[$j]";
             if ( -e $fbak )
             {
@@ -190,7 +191,7 @@ sub testsomo { # file, config, expectfailure
         for ( my $j = 0; $j < @refs; $j++) 
         {
             $total++;
-            my $fnew = "$us/somo/$fbase$refs[$j]";
+            my $fnew = "$ush/somo/$fbase$refs[$j]";
             my $fref = "$us/somo/test/ref/somo/$config-$fbase$refs[$j]";
             `mkdir -p $us/somo/test/ref/somo > /dev/null 2>&1`;
             if (!-e $fnew) 
@@ -250,7 +251,7 @@ sub testsomo { # file, config, expectfailure
         $fbase =~ s/\.pdb$//;
         for ( my $j = 0; $j < @refs; $j++) 
         {
-            my $forg = "$us/somo/$fbase$refs[$j]";
+            my $forg = "$ush/somo/$fbase$refs[$j]";
             my $fbak = "$us/somo/test/bak/$fbase$refs[$j]";
             if ( -e $forg ) 
             {
@@ -300,7 +301,7 @@ sub testgrid { # file, config, expectfailure
         $fbase =~ s/\.pdb$//;
         for ( my $j = 0; $j < @refs; $j++) 
         {
-            my $forg = "$us/somo/$fbase$refs[$j]";
+            my $forg = "$ush/somo/$fbase$refs[$j]";
             my $fbak = "$us/somo/test/bak/$fbase$refs[$j]";
             if ( -e $fbak )
             {
@@ -327,7 +328,7 @@ sub testgrid { # file, config, expectfailure
         for ( my $j = 0; $j < @refs; $j++) 
         {
             $total++;
-            my $fnew = "$us/somo/$fbase$refs[$j]";
+            my $fnew = "$ush/somo/$fbase$refs[$j]";
             my $fref = "$us/somo/test/ref/grid/$config-$fbase$refs[$j]";
             `mkdir -p $us/somo/test/ref/grid > /dev/null 2>&1`;
             if (!-e $fnew) 
@@ -387,7 +388,7 @@ sub testgrid { # file, config, expectfailure
         $fbase =~ s/\.pdb$//;
         for ( my $j = 0; $j < @refs; $j++) 
         {
-            my $forg = "$us/somo/$fbase$refs[$j]";
+            my $forg = "$ush/somo/$fbase$refs[$j]";
             my $fbak = "$us/somo/test/bak/$fbase$refs[$j]";
             if ( -e $forg ) 
             {
