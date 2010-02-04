@@ -76,6 +76,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       bool setSuffix;
       bool overwrite;
       bool saveParams;
+      bool guiFlag;
       QLabel *lbl_core_progress;
       void set_disabled();
       QTextEdit *editor;
@@ -97,6 +98,8 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Batch *batch_window;
       QString residue_filename;
       QLabel *lbl_table;
+      void do_reset();
+      unsigned int numThreads; // local copy of USglobal->config_list.numThreads
 
    private:
       vector < QString > batch_file;
@@ -314,12 +317,15 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void display_default_differences();
       void clear_display();
       void reload_pdb();
-      int calc_somo();    // compute asa and then refine bead_model
+      int calc_somo();     // compute asa and then refine bead_model
       int calc_grid_pdb(); // compute grid model from pdb
+      int calc_grid();     // compute grid model from bead model
       int calc_hydro();
       void select_save_params();
       void show_saxs_options();
       void read_residue_file();
+      int read_config(const QString &);
+      int read_config(QFile &);
 
    private slots:
       void load_pdb();
@@ -343,7 +349,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void saxs();
       void select_model(int);
       void calc_bead_mw(struct residue *); // calculate the molecular weight of all beads in residue
-      int calc_grid();     // compute grid model from bead model
       int create_beads(QString *error_string); // turn pdb/atom model into bead_model
       void get_atom_map(PDB_model *);
       int check_for_missing_atoms(QString *error_string, PDB_model *);
@@ -365,8 +370,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void stop_calc(); // stop some operations
       void view_file(const QString &); // call editor to view a file
       void bead_check( bool use_threshold = false, bool message_type = false ); // recheck beads
-      int read_config(const QString &);
-      int read_config(QFile &);
       void load_config();
       void write_config();
       void write_config(const QString &);

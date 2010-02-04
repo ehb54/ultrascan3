@@ -124,6 +124,14 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    cb_debug_3->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_debug_3->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_debug_3, SIGNAL(clicked()), this, SLOT(set_debug_3()));
+
+   cb_debug_4 = new QCheckBox(this);
+   cb_debug_4->setText(tr(" Debug save controls"));
+   cb_debug_4->setEnabled(true);
+   cb_debug_4->setChecked((*advanced_config).debug_4);
+   cb_debug_4->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_debug_4->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cb_debug_4, SIGNAL(clicked()), this, SLOT(set_debug_4()));
 #endif
 
    pb_cancel = new QPushButton(tr("Close"), this);
@@ -179,6 +187,8 @@ void US_Hydrodyn_AdvancedConfig::setupGUI()
    background->addMultiCellWidget(cb_debug_2, j, j, 0, 1);
    j++;
    background->addMultiCellWidget(cb_debug_3, j, j, 0, 1);
+   j++;
+   background->addMultiCellWidget(cb_debug_4, j, j, 0, 1);
    j++;
 #endif
    background->addWidget(pb_help, j, 0);
@@ -283,6 +293,12 @@ void US_Hydrodyn_AdvancedConfig::set_debug_2()
 void US_Hydrodyn_AdvancedConfig::set_debug_3()
 {
    (*advanced_config).debug_3 = cb_debug_3->isChecked();
+   ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
+}
+
+void US_Hydrodyn_AdvancedConfig::set_debug_4()
+{
+   (*advanced_config).debug_4 = cb_debug_4->isChecked();
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 

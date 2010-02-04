@@ -46,7 +46,10 @@ void US_Hydrodyn::read_residue_file()
    int line_count = 1;
    QString error_msg = tr("Residue file errors:\n");
    QString error_text = tr("Residue file errors:\n");
-   cout << "residue file name: " << residue_filename << endl;
+   if ( advanced_config.debug_1 )
+   {
+      cout << "residue file name: " << residue_filename << endl;
+   }
    residue_list.clear();
    residue_list_no_pbr.clear();
    multi_residue_map.clear();
@@ -169,9 +172,12 @@ void US_Hydrodyn::read_residue_file()
             ts >> new_bead.volume;
             str2 = ts.readLine(); // read rest of line
             line_count++;
-            printf("residue name %s loading bead %d placing method %d\n",
-                   new_residue.name.ascii(),
-                   j, new_bead.placing_method); fflush(stdout);
+            if ( advanced_config.debug_1 )
+            {
+               printf("residue name %s loading bead %d placing method %d\n",
+                      new_residue.name.ascii(),
+                      j, new_bead.placing_method); fflush(stdout);
+            }
             new_residue.r_bead.push_back(new_bead);
          }
          calc_bead_mw(&new_residue);
@@ -184,13 +190,16 @@ void US_Hydrodyn::read_residue_file()
                .arg(dup_residue_map[new_residue.name] ?
                     QString("_%1").arg(dup_residue_map[new_residue.name]) : "");
             dup_residue_map[new_residue.name]++;
-            printf("residue name %s unique name %s atom size %u alt size %u pos %u\n"
-                   ,new_residue.name.ascii()
-                   ,new_residue.unique_name.ascii()
-                   ,(unsigned int) new_residue.r_atom.size()
-                   ,(unsigned int) alt_atoms.size()
-                   ,(unsigned int) residue_list.size()
-                   ); fflush(stdout);
+            if ( advanced_config.debug_1 )
+            {
+               printf("residue name %s unique name %s atom size %u alt size %u pos %u\n"
+                      ,new_residue.name.ascii()
+                      ,new_residue.unique_name.ascii()
+                      ,(unsigned int) new_residue.r_atom.size()
+                      ,(unsigned int) alt_atoms.size()
+                      ,(unsigned int) residue_list.size()
+                      ); fflush(stdout);
+            }
             multi_residue_map[new_residue.name].push_back(residue_list.size());
             struct residue alt_residue;
             alt_residue = new_residue;
@@ -329,9 +338,15 @@ void US_Hydrodyn::calc_bead_mw(struct residue *res)
             // cout << res->name << " bead " << i << " atom " << res->r_atom[j].name << " mw " << res->r_atom[j].hybrid.mw << endl;
          }
       }
-      cout << res->name << " bead " << i << " mw " << res->r_bead[i].mw << endl;
+      if ( advanced_config.debug_1 )
+      {
+         cout << res->name << " bead " << i << " mw " << res->r_bead[i].mw << endl;
+      }
    }
-   cout << res->name << " mw " << rmw << endl;
+   if ( advanced_config.debug_1 )
+   {
+      cout << res->name << " mw " << rmw << endl;
+   }
 }
 
 void US_Hydrodyn::clear_temp_chain(struct PDB_chain *temp_chain) // clear all the memory from the vectors in temp_chain
@@ -1414,6 +1429,10 @@ int US_Hydrodyn::read_config(const QString& fname)
    }
    if (!f.open(IO_ReadOnly)) // first try user's directory for default settings
    {
+      if ( !guiFlag )
+      {
+         return -1;
+      }
       f.setName(USglobal->config_list.system_dir + "/etc/somo.config");
       if (!f.open(IO_ReadOnly)) // read system directory
       {
@@ -1610,7 +1629,6 @@ void US_Hydrodyn::set_default()
    if (f.open(IO_ReadOnly)) // read system directory
    {
       j=read_config(f);
-            cout << j << endl;
       if ( j )
       {
          QMessageBox::message(tr("Please note:"),
@@ -1864,8 +1882,11 @@ void US_Hydrodyn::closeEvent(QCloseEvent *e)
 
 void US_Hydrodyn::printError(const QString &str)
 {
-   QMessageBox::warning(this, tr("UltraScan Warning"), tr("Please note:\n\n") +
-                        tr(str), QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+   if ( guiFlag )
+   {
+      QMessageBox::warning(this, tr("UltraScan Warning"), tr("Please note:\n\n") +
+                           tr(str), QMessageBox::Ok, QMessageBox::NoButton, QMessageBox::NoButton);
+   }
 }
 
 void US_Hydrodyn::closeAttnt(QProcess *proc, QString message)

@@ -3734,7 +3734,7 @@ void US_Hydrodyn::radial_reduction()
             lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction").arg(k+1));
             qApp->processEvents();
 #if defined(USE_THREADS)
-            unsigned int threads = USglobal->config_list.numThreads;
+            unsigned int threads = numThreads;
             vector < radial_reduction_thr_t* > radial_reduction_thr_threads(threads);
             for ( unsigned int j = 0; j < threads; j++ )
             {
@@ -6295,7 +6295,7 @@ int US_Hydrodyn::compute_asa()
             lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction").arg(k+1));
             qApp->processEvents();
 #if defined(USE_THREADS)
-            unsigned int threads = USglobal->config_list.numThreads;
+            unsigned int threads = numThreads;
             vector < radial_reduction_thr_t* > radial_reduction_thr_threads(threads);
             for ( unsigned int j = 0; j < threads; j++ )
             {

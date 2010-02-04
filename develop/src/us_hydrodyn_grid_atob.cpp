@@ -205,7 +205,7 @@ AtoB(PDB * pdb,
      US_Hydrodyn *us_hydrodyn)
 {
 #if defined(DEBUG)
-   printf("npoints %ld\n", npoints);
+   //   printf("npoints %ld\n", npoints);
    puts("in atob 0");
    fflush(stdout);
 #endif
@@ -813,6 +813,22 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       tmp_atom.active = 1;
       tmp_atom.normalized_ot_is_valid = false;
       result_bead_model.push_back(tmp_atom);
+#if defined(DEBUG_ATOB)
+         printf(
+                "after a2b: %d %s %s %s %s %g %g %g %g %g\n"
+                ,this_pdb->atnum
+                ,this_pdb->atnam
+                ,this_pdb->resnam
+                ,this_pdb->insert
+                ,this_pdb->chain
+                ,this_pdb->x
+                ,this_pdb->y
+                ,this_pdb->z
+                ,this_prop->rVW
+                ,this_prop->mass
+                );
+#endif
+
    }
    free(nprop);
 #if defined(DEBUG)

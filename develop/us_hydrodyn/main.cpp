@@ -2,6 +2,8 @@
 #include "../include/us_register.h"
 #include <qregexp.h>
 
+void process_script(QString, US_Hydrodyn *);
+
 int main (int argc, char **argv)
 {
    QDir *dir = new QDir(QDir::currentDirPath());
@@ -14,7 +16,11 @@ int main (int argc, char **argv)
       bool expert = false;
       bool debug = false;
       bool residue_file = false;
+      bool script = false;
+
       QString residue_filename;
+      QString script_filename;
+
       delete us_register;
       US_Hydrodyn *hydrodyn;
       vector < QString > batch_file;
@@ -24,7 +30,10 @@ int main (int argc, char **argv)
       {
          if ( QString(a.argv()[argcbase]).contains(QRegExp("^-e")) )
          {
-            puts("expert mode");
+            if ( debug )
+            {
+               puts("expert mode");
+            }
             argcbase++;
             expert = true;
          }
@@ -36,10 +45,24 @@ int main (int argc, char **argv)
          }
          if ( QString(a.argv()[argcbase]).contains(QRegExp("^-r")) )
          {
-            puts("residue file");
+            if ( debug )
+            {
+               puts("residue file");
+            }
             argcbase++;
             residue_file = true;
             residue_filename = a.argv()[argcbase];
+            argcbase++;
+         }
+         if ( QString(a.argv()[argcbase]).contains(QRegExp("^-c")) )
+         {
+            if ( debug )
+            {
+               puts("script file");
+            }
+            argcbase++;
+            script = true;
+            script_filename = a.argv()[argcbase];
             argcbase++;
          }
       }
@@ -71,7 +94,11 @@ int main (int argc, char **argv)
          hydrodyn->advanced_config.debug_6 = true;
          hydrodyn->advanced_config.debug_7 = true;
       }
-         
+      if ( script )
+      {
+         process_script(script_filename,hydrodyn);
+         hydrodyn->guiFlag = true;
+      }
       hydrodyn->show();
       a.setMainWidget(hydrodyn);
       a.setDesktopSettingsAware(false);
@@ -82,4 +109,116 @@ int main (int argc, char **argv)
       a.setDesktopSettingsAware(false);
    }
    return a.exec();
+}
+
+void process_script(QString script_filename, US_Hydrodyn *h)
+{
+   h->numThreads = 1;
+   QFile f(script_filename);
+   if ( f.open(IO_ReadOnly) )
+   {
+      h->read_residue_file();
+      QTextStream ts(&f);
+      QRegExp rx0("^(\\S+)(\\s+|$)");
+      QRegExp rx1("^(\\S+)\\s*$");
+      QRegExp rx2("^(\\S+)\\s*(\\S+)\\s*$");
+      QRegExp rx3("^(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*$");
+      h->guiFlag = false;
+      int line = 0;
+      QString loadfiletype = "";
+      while ( QString c = ts.readLine() )
+      {
+         bool ok = false;
+
+         line++;
+         rx0.search(c);
+         rx1.search(c);
+         rx2.search(c);
+         rx3.search(c);
+         //         printf("rx0.cap(1) <%s> rx1.cap(1) <%s> rx2.cap(1) <%s>\n"
+         //                ,rx0.cap(1).ascii()
+         //                ,rx1.cap(1).ascii()
+         //                ,rx2.cap(1).ascii()
+         //                );
+         if ( rx0.cap(1) == "exit" )
+         {
+            exit(0);
+         }
+         if ( rx0.cap(1) == "reset" )
+         {
+            cout << "resetting to default configuration" << endl;
+            ok = true;
+         }
+         if ( rx2.cap(1) == "load" )
+         {
+            cout << QString("loading \"%1\"\t").arg(rx2.cap(2));
+            bool result;
+            if ( rx2.cap(2).lower().contains(QRegExp("\\.config$")) ) 
+            {
+               ok = true;
+               int result2 = h->read_config(rx2.cap(2));
+               result = !result2;
+            }
+            if ( rx2.cap(2).lower().contains(QRegExp("\\.residue$")) ) 
+            {
+               ok = true;
+               h->residue_filename = rx2.cap(2);
+               h->read_residue_file();
+               h->lbl_table->setText( QDir::convertSeparators( rx2.cap(2) ) );
+            }
+            if ( rx2.cap(2).lower().contains(QRegExp(".pdb$")) ) 
+            {
+               ok = true;
+               // no save/restore settings for load into somo
+               result = h->screen_pdb(rx2.cap(2), false);
+               loadfiletype = "pdb";
+            }
+            if ( rx2.cap(2).lower().contains(QRegExp(".(bead_model|beams)$")) ) 
+            {
+               ok = true;
+               result = h->screen_bead_model(rx2.cap(2));
+               loadfiletype = "bead_model";
+            }
+            if ( ok )
+            {
+               cout << QString("%1\n").arg(result ? "ok" : "not ok");
+            } else {
+               cout << QString("unknown file load type on line %1: \"%2\"\n").arg(line).arg(c);
+               ok = true;
+            }
+         }
+         if ( rx0.cap(1) == "somo" )
+         {
+            ok = true;
+            cout << QString("somo\t");
+            bool result = h->calc_somo() ? false : true;
+            cout << QString("%1\n").arg(result ? "ok" : "not ok");
+         }
+         if ( rx0.cap(1) == "grid" )
+         {
+            ok = true;
+            cout << QString("grid\t");
+            bool result =
+               ( loadfiletype == "pdb" ? 
+                 h->calc_grid_pdb() : h->calc_grid() )
+               ? false : true;
+            cout << QString("%1\n").arg(result ? "ok" : "not ok");
+         }
+         if ( rx0.cap(1) == "hydro" )
+         {
+            ok = true;
+            cout << QString("hydro\t");
+            bool result = h->calc_hydro() ? false : true;
+            cout << QString("%1\n").arg(result ? "ok" : "not ok");
+         }
+         if ( !ok )
+         {
+            cout << QString("Unknown command on line %1: \"%2\"\n").arg(line).arg(c);
+         }
+      }
+      exit(0);
+   } else {
+      cerr << "Can not open file:" << script_filename << endl;
+      exit(-1);
+   }
 }

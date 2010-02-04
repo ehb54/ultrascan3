@@ -47,6 +47,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 {
    USglobal = new US_Config();
    this->batch_file = batch_file;
+   numThreads = USglobal->config_list.numThreads;
 
    // no_rr = false;
 
@@ -134,6 +135,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    setSuffix = true;
    overwrite = false;
    saveParams = false;
+   guiFlag = true;
    residue_filename = USglobal->config_list.system_dir + "/etc/somo.residue";
    editor = (QTextEdit *)0;
    read_residue_file();
@@ -145,7 +147,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    alt_method = false;
    rasmol = NULL;
    chdir(somo_tmp_dir);
-   printf("%s\n", QString(somo_tmp_dir).ascii());
+   if ( advanced_config.debug_5 )
+   {
+      printf("%s\n", QString(somo_tmp_dir).ascii());
+   }
    results.total_beads = 0;
    results.used_beads = 0;
    results.mass = 0.0;
@@ -204,6 +209,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
 		  .arg(US_Version)
 		  .arg(REVISION)
 		  );
+   if ( numThreads > 1 )
+   {
+      editor->append(QString(tr("Multi-threading enabled using %1 threads\n")).arg(numThreads));
+   }
    QColor save_color = editor->color();
    editor->setColor("red");
    if (!dir1.exists())
@@ -235,7 +244,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
       batch_window->show();
       batch_window->raise();
    }
-
+   
    save_util = new US_Hydrodyn_Save(&save_params, this);
 }
 
@@ -970,6 +979,25 @@ void US_Hydrodyn::write_config()
    write_config(fname);
 }
 
+void US_Hydrodyn::do_reset()
+{
+   sidechain_overlap = default_sidechain_overlap;
+   mainchain_overlap = default_mainchain_overlap;
+   buried_overlap = default_buried_overlap;
+   grid_exposed_overlap = default_grid_exposed_overlap;
+   grid_buried_overlap = default_grid_buried_overlap;
+   grid_overlap = default_grid_overlap;
+   bead_output = default_bead_output;
+   asa = default_asa;
+   misc = default_misc;
+   overlap_tolerance = default_overlap_tolerance;
+   hydro = default_hydro;
+   pdb_vis = default_pdb_vis;
+   pdb_parse = default_pdb_parse;
+   grid = default_grid;
+   saxs_options = default_saxs_options;
+}
+
 void US_Hydrodyn::reset()
 {
    QMessageBox mb(tr("UltraScan"), tr("Attention:\nAre you sure you want to reset to the default options?\nAll currently defined options will be reset."),
@@ -991,21 +1019,7 @@ void US_Hydrodyn::reset()
          write_config();
       }
    }
-   sidechain_overlap = default_sidechain_overlap;
-   mainchain_overlap = default_mainchain_overlap;
-   buried_overlap = default_buried_overlap;
-   grid_exposed_overlap = default_grid_exposed_overlap;
-   grid_buried_overlap = default_grid_buried_overlap;
-   grid_overlap = default_grid_overlap;
-   bead_output = default_bead_output;
-   asa = default_asa;
-   misc = default_misc;
-   overlap_tolerance = default_overlap_tolerance;
-   hydro = default_hydro;
-   pdb_vis = default_pdb_vis;
-   pdb_parse = default_pdb_parse;
-   grid = default_grid;
-   saxs_options = default_saxs_options;
+   do_reset();
    clear_display();
 }
 
@@ -1650,6 +1664,7 @@ int US_Hydrodyn::calc_grid_pdb()
 {
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
+   options_log = "";
    append_options_log_atob();
    display_default_differences();
    model_vector = model_vector_as_loaded;

@@ -311,7 +311,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       int s = -1;
       while ( data[i] != "__END__" )
       {
-         printf("in while, data[%u] is <%s>\n", i, data[i].ascii());
+         if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.debug_4 )
+         {
+            printf("in while, data[%u] is <%s>\n", i, data[i].ascii());
+         }
          if ( data[i].length() == 0 ) 
          {
             printf("us_hydrodyn_save DATA ERROR!\n");
@@ -323,7 +326,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          {
             s++;
             this_section = data[++i];
-            printf("in while, section is <%s>\n", this_section.ascii());
+            if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.debug_4 )
+            {
+               printf("in while, section is <%s>\n", this_section.ascii());
+            }
             i++;
             is_section = true;
          }
@@ -333,7 +339,10 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             is_row_break = true;
          }
          pos = field.size();
-         printf("in while, field[%u] is <%s>\n", i, data[i].ascii());
+         if ( ((US_Hydrodyn *)us_hydrodyn)->advanced_config.debug_4 )
+         {
+            printf("in while, field[%u] is <%s>\n", i, data[i].ascii());
+         }
          field.push_back(data[i++]);
          descriptive_name.push_back(data[i++]);
          short_name.push_back(data[i++]);

@@ -69,6 +69,7 @@ class US_EXTERN US_Hydrodyn_AdvancedConfig : public QFrame
       QCheckBox *cb_debug_1;
       QCheckBox *cb_debug_2;
       QCheckBox *cb_debug_3;
+      QCheckBox *cb_debug_4;
       QPushButton *pb_help;
       QPushButton *pb_cancel;
 
@@ -86,6 +87,7 @@ class US_EXTERN US_Hydrodyn_AdvancedConfig : public QFrame
       void set_debug_1();
       void set_debug_2();
       void set_debug_3();
+      void set_debug_4();
       void cancel();
       void help();
    
