@@ -4024,6 +4024,10 @@ relax_rigid_calc()
       tao[3] = 3.0 * (pd[1] + ddr[2]);
       tao[4] = 6.0 * pd[1] + 2.0 * pd[0];
       taoflag = 0.0;
+
+      taom = 0.0;
+      taoh = 0.0;
+
       for (a = 0; a < 5; a++)
       {
          taoh += tao[a];
