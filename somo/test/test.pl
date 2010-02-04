@@ -3,13 +3,14 @@
 $us = $ENV{'ULTRASCAN'} || die "\$ULTRASCAN must be set\n";
 
 #$debug++;
-#$do_somo++;
+$do_somo++;
 $do_grid++;
-$hydro_opts = "-d";
+# $hydro_opts = "-d";
 
 @test = ( # file, testsomo, testgrid, config file, expect failure
          '0GGG.pdb', 1, 1, 'dflt', 0,
-          ); @rest = (
+         '0GGG.pdb', 1, 1, 'rrr', 0,
+         '1HEL.pdb', 0, 1, 'rrr', 0,
          '0AP.pdb', 1, 1, 'dflt', 0,
          '0APA.pdb', 1, 1, 'dflt', 0,
          '0APAoxt.pdb', 1, 1, 'dflt', 0,
@@ -60,6 +61,56 @@ $hydro_opts = "-d";
          '0PPPoxt.pdb', 1, 1, 'dflt', 0,
          '0PPoxt.pdb', 1, 1, 'dflt', 0,
          '0Poxt.pdb', 1, 1, 'dflt', 0,
+         '0AP.pdb', 1, 1, 'rrr', 0,
+         '0APA.pdb', 1, 1, 'rrr', 0,
+         '0APAoxt.pdb', 1, 1, 'rrr', 0,
+         '0APP.pdb', 1, 1, 'rrr', 0,
+         '0APPoxt.pdb', 1, 1, 'rrr', 0,
+         '0APoxt.pdb', 1, 1, 'rrr', 0,
+         '0G.pdb', 1, 1, 'rrr', 0,
+         '0GAUGG.pdb', 1, 1, 'rrr', 1,
+         '0GAUGG.pdb', 1, 1, 'res1', 1,
+         '0GAUGG.pdb', 1, 1, 'res2', 1,
+         '0GAUGG.pdb', 1, 1, 'atom1', 0,
+         '0GAUGG.pdb', 1, 1, 'atom2', 0,
+         '0GG.pdb', 1, 1, 'rrr', 0,
+         '0GGG.pdb', 1, 1, 'rrr', 0,
+         '0GGGG.pdb', 1, 1, 'rrr', 0,
+         '0GGGGoxt.pdb', 1, 1, 'rrr', 0,
+         '0GGGoxt.pdb', 1, 1, 'rrr', 0,
+         '0GGoxt.pdb', 1, 1, 'rrr', 0,
+         '0GP.pdb', 1, 1, 'rrr', 0,
+         '0GPG.pdb', 1, 1, 'rrr', 0,
+         '0GPGoxt.pdb', 1, 1, 'rrr', 0,
+         '0GPP.pdb', 1, 1, 'rrr', 0,
+         '0GPPoxt.pdb', 1, 1, 'rrr', 0,
+         '0GPoxt.pdb', 1, 1, 'rrr', 0,
+         '0GU2GG.pdb', 1, 1, 'rrr', 1,
+         '0GU3GG.pdb', 1, 1, 'rrr', 1,
+         '0GU4GG.pdb', 1, 1, 'rrr', 1,
+         '0GUGG.pdb', 1, 1, 'rrr', 1,
+         '0GUGGoxt.pdb', 1, 1, 'rrr', 1,
+         '0Goxt.pdb', 1, 1, 'rrr', 0,
+         '0NRN.pdb', 1, 1, 'rrr', 0,
+         '0NRxCBN.pdb', 1, 1, 'rrr', 1,
+         '0P.pdb', 1, 1, 'rrr', 0,
+         '0PA.pdb', 1, 1, 'rrr', 0,
+         '0PAP.pdb', 1, 1, 'rrr', 0,
+         '0PAPoxt.pdb', 1, 1, 'rrr', 0,
+         '0PAoxt.pdb', 1, 1, 'rrr', 0,
+         '0PG.pdb', 1, 1, 'rrr', 0,
+         '0PGP.pdb', 1, 1, 'rrr', 0,
+         '0PGPoxt.pdb', 1, 1, 'rrr', 0,
+         '0PGoxt.pdb', 1, 1, 'rrr', 0,
+         '0PP.pdb', 1, 1, 'rrr', 0,
+         '0PPA.pdb', 1, 1, 'rrr', 0,
+         '0PPAoxt.pdb', 1, 1, 'rrr', 0,
+         '0PPG.pdb', 1, 1, 'rrr', 0,
+         '0PPGoxt.pdb', 1, 1, 'rrr', 0,
+         '0PPP.pdb', 1, 1, 'rrr', 0,
+         '0PPPoxt.pdb', 1, 1, 'rrr', 0,
+         '0PPoxt.pdb', 1, 1, 'rrr', 0,
+         '0Poxt.pdb', 1, 1, 'rrr', 0,
          '1HEL.pdb', 0, 1, 'dflt', 0,
          '1HEL.pdb', 1, 1, 'res1', 0,
          '1HEL.pdb', 1, 1, 'res2', 0,
@@ -234,7 +285,7 @@ sub testgrid { # file, config, expectfailure
     print "grid testing $_[$i] config $config:\n";
     my $f = "$us/somo/test/structures/$_[$i]";
     die "$f does not exist!\n" if !-e $f;
-    print OUT "load $fconfig\nload $f\ngrid\nhydro\ngrid\nhydro\ngrid\nhydro\n";
+    print OUT "load $fconfig\nload $f\ngrid\nhydro\n";
 
     print OUT "exit\n";
     close OUT;
