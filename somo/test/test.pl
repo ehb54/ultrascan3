@@ -4,9 +4,10 @@ $us = $ENV{'ULTRASCAN'} || die "\$ULTRASCAN must be set\n";
 $ush = "$ENV{'HOME'}/ultrascan";
 
 #$debug++;
-$do_somo++;
+# $do_somo++;
 $do_grid++;
 # $hydro_opts = "-d";
+$maxtimes = 2;
 
 @test = ( # file, testsomo, testgrid, config file, expect failure
          '0GGG.pdb', 1, 1, 'dflt', 0,
@@ -148,7 +149,10 @@ sub testsomo { # file, config, expectfailure
     print "somo testing $_[$i] config $config:\n";
     my $f = "$us/somo/test/structures/$_[$i]";
     die "$f does not exist!\n" if !-e $f;
-    print OUT "load $fconfig\nload $f\nsomo\nhydro\n";
+    print OUT "load $fconfig\nload $f\n";
+    for(my $i = 0; $i < $times; $i++) {
+        print OUT "somo\nhydro\n";
+    }
 
     print OUT "exit\n";
     close OUT;
@@ -286,7 +290,10 @@ sub testgrid { # file, config, expectfailure
     print "grid testing $_[$i] config $config:\n";
     my $f = "$us/somo/test/structures/$_[$i]";
     die "$f does not exist!\n" if !-e $f;
-    print OUT "load $fconfig\nload $f\ngrid\nhydro\n";
+    print OUT "load $fconfig\nload $f\n";
+    for(my $i = 0; $i < $times; $i++) {
+        print OUT "grid\nhydro\n";
+    }
 
     print OUT "exit\n";
     close OUT;
@@ -410,11 +417,13 @@ $success = $errors = $copys = 0;
 
 for($i = 0; $i < @pdbs; $i++) {
     print "trying $pdbs[$i]\n" if $debug;
-    if ( $testsomo[$i] && $do_somo) {
-        &testsomo($pdbs[$i], $config[$i], $expectfailure[$i] );
-    }
-    if ( $testgrid[$i] && $do_grid) {
-        &testgrid($pdbs[$i], $config[$i], $expectfailure[$i] );
+    for ($times = 1; $times <= $maxtimes; $times++) {
+        if ( $testsomo[$i] && $do_somo) {
+            &testsomo($pdbs[$i], $config[$i], $expectfailure[$i] );
+        }
+        if ( $testgrid[$i] && $do_grid) {
+            &testgrid($pdbs[$i], $config[$i], $expectfailure[$i] );
+        }
     }
 }
 
