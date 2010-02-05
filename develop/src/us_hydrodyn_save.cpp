@@ -91,8 +91,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
             "__BREAK__",
 
             "results.ff0", 
-            "Fricitional ratio", 
-            "Fricitional ratio", 
+            "Frictional ratio", 
+            "Frictional ratio", 
 
             // "results.ff0_sd", 
             // "Fricitional ratio s.d.", 
@@ -1189,36 +1189,39 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
 {
    // create zero data record
    // switch to offsets 
-   
    for ( unsigned int i = 0; i < field.size(); i++ )
    {
-      switch(field_to_save_data_type[save->field[i]]) 
+      //      printf("stats field %u of %u\n", i, field.size()); fflush(stdout);
+      //      printf("field[i] %s type %d\n",field[i].ascii(), field_to_save_data_type[field[i]]); fflush(stdout);
+      //      printf("save->field[i] %s\n",save->field[i].ascii()); fflush(stdout);
+
+      switch(field_to_save_data_type[field[i]]) 
       {
       case DT_QSTRING       :
-         *((QString *)(field_to_save_data[save->field[i]])) = "";
+         *((QString *)(field_to_save_data[field[i]])) = "";
          break;
       case DT_BOOL          :
-         *((bool *)(field_to_save_data[save->field[i]])) = 0;
+         *((bool *)(field_to_save_data[field[i]])) = 0;
          break;
       case DT_FLOAT         :
-         *((float *)(field_to_save_data[save->field[i]])) = 0;
+         *((float *)(field_to_save_data[field[i]])) = 0;
          break;
       case DT_DOUBLE        :
-         *((double *)(field_to_save_data[save->field[i]])) = 0;
+         *((double *)(field_to_save_data[field[i]])) = 0;
          break;
       case DT_INT           :
-         *((int *)(field_to_save_data[save->field[i]])) = 0;
+         *((int *)(field_to_save_data[field[i]])) = 0;
          break;
       case DT_UNSIGNED_INT  :
-         *((unsigned int *)(field_to_save_data[save->field[i]])) = 0;
+         *((unsigned int *)(field_to_save_data[field[i]])) = 0;
          break;
       case DT_TRIPLE_DOUBLE :
-         *((double *)(field_to_save_data[save->field[i]])) = 0;
-         *((double *)(field_to_save_data[save->field[i]]) + 1) = 0;
-         *((double *)(field_to_save_data[save->field[i]]) + 2) = 0;
+         *((double *)(field_to_save_data[field[i]])) = 0;
+         *((double *)(field_to_save_data[field[i]]) + 1) = 0;
+         *((double *)(field_to_save_data[field[i]]) + 2) = 0;
          break;
       case DT_DOUBLE_NA     :
-         *((double *)(field_to_save_data[save->field[i]])) = 0;
+         *((double *)(field_to_save_data[field[i]])) = 0;
          break;
       }
    }
@@ -1235,6 +1238,10 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
    double tmp_double_3;
    int tmp_int;
    unsigned int tmp_uint;
+   float tmp_count_float;
+   double tmp_count_double;
+   int tmp_count_int;
+   unsigned int tmp_count_uint;
 
    // we're going to have to be careful here, we only have one map
 
@@ -1242,155 +1249,155 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
    {
       for ( unsigned int i = 0; i < field.size(); i++ )
       {
-         switch(field_to_save_data_type[save->field[i]]) 
+         switch(field_to_save_data_type[field[i]]) 
          {
          case DT_QSTRING       :
             save->data = (*data)[j];
-            tmp_qstring = *((QString *)(field_to_save_data[save->field[i]]));
+            tmp_qstring = *((QString *)(field_to_save_data[field[i]]));
 
             save->data = sum;
             if ( j )
             {
-               *((QString *)(field_to_save_data[save->field[i]])) += ", ";
+               *((QString *)(field_to_save_data[field[i]])) += ", ";
             } else {
-               *((QString *)(field_to_save_data[save->field[i]])) = tr("Avergage: ");
+               *((QString *)(field_to_save_data[field[i]])) = tr("Average: ");
             }
-            *((QString *)(field_to_save_data[save->field[i]])) += tmp_qstring;
+            *((QString *)(field_to_save_data[field[i]])) += tmp_qstring;
             sum = save->data;
 
             save->data = sum2;
             if ( j )
             {
-               *((QString *)(field_to_save_data[save->field[i]])) += ", ";
+               *((QString *)(field_to_save_data[field[i]])) += ", ";
             } else {
-               *((QString *)(field_to_save_data[save->field[i]])) = tr("Standard deviation: ");
+               *((QString *)(field_to_save_data[field[i]])) = tr("Standard deviation: ");
             }
-            *((QString *)(field_to_save_data[save->field[i]])) += tmp_qstring;
+            *((QString *)(field_to_save_data[field[i]])) += tmp_qstring;
             sum2 = save->data;
 
             break;
          case DT_BOOL          :
             save->data = (*data)[j];
-            tmp_bool = *((bool *)(field_to_save_data[save->field[i]]));
+            tmp_bool = *((bool *)(field_to_save_data[field[i]]));
 
             save->data = sum;
-            *((bool *)(field_to_save_data[save->field[i]])) &= tmp_bool;
+            *((bool *)(field_to_save_data[field[i]])) &= tmp_bool;
             sum = save->data;
 
             save->data = sum2;
-            *((bool *)(field_to_save_data[save->field[i]])) |= tmp_bool;
+            *((bool *)(field_to_save_data[field[i]])) |= tmp_bool;
             sum2 = save->data;
 
             break;
          case DT_FLOAT         :
             save->data = (*data)[j];
-            tmp_float = *((float *)(field_to_save_data[save->field[i]]));
+            tmp_float = *((float *)(field_to_save_data[field[i]]));
 
             save->data = sum;
-            *((float *)(field_to_save_data[save->field[i]])) += tmp_float;
+            *((float *)(field_to_save_data[field[i]])) += tmp_float;
             sum = save->data;
 
             save->data = sum2;
-            *((float *)(field_to_save_data[save->field[i]])) += tmp_float * tmp_float;
+            *((float *)(field_to_save_data[field[i]])) += tmp_float * tmp_float;
             sum2 = save->data;
 
             save->data = count;
-            (*((float *)(field_to_save_data[save->field[i]])))++;
+            (*((float *)(field_to_save_data[field[i]])))++;
             count = save->data;
 
             break;
          case DT_DOUBLE        :
             save->data = (*data)[j];
-            tmp_double = *((double *)(field_to_save_data[save->field[i]]));
+            tmp_double = *((double *)(field_to_save_data[field[i]]));
 
             save->data = sum;
-            *((double *)(field_to_save_data[save->field[i]])) += tmp_double;
+            *((double *)(field_to_save_data[field[i]])) += tmp_double;
             sum = save->data;
 
             save->data = sum2;
-            *((double *)(field_to_save_data[save->field[i]])) += tmp_double * tmp_double;
+            *((double *)(field_to_save_data[field[i]])) += tmp_double * tmp_double;
             sum2 = save->data;
 
             save->data = count;
-            (*((double *)(field_to_save_data[save->field[i]])))++;
+            (*((double *)(field_to_save_data[field[i]])))++;
             count = save->data;
 
             break;
          case DT_INT           :
             save->data = (*data)[j];
-            tmp_int = *((int *)(field_to_save_data[save->field[i]]));
+            tmp_int = *((int *)(field_to_save_data[field[i]]));
 
             save->data = sum;
-            *((int *)(field_to_save_data[save->field[i]])) += tmp_int;
+            *((int *)(field_to_save_data[field[i]])) += tmp_int;
             sum = save->data;
 
             save->data = sum2;
-            *((int *)(field_to_save_data[save->field[i]])) += tmp_int * tmp_int;
+            *((int *)(field_to_save_data[field[i]])) += tmp_int * tmp_int;
             sum2 = save->data;
 
             save->data = count;
-            (*((int *)(field_to_save_data[save->field[i]])))++;
+            (*((int *)(field_to_save_data[field[i]])))++;
             count = save->data;
 
             break;
          case DT_UNSIGNED_INT  :
             save->data = (*data)[j];
-            tmp_uint = *((unsigned int *)(field_to_save_data[save->field[i]]));
+            tmp_uint = *((unsigned int *)(field_to_save_data[field[i]]));
 
             save->data = sum;
-            *((unsigned int *)(field_to_save_data[save->field[i]])) += tmp_uint;
+            *((unsigned int *)(field_to_save_data[field[i]])) += tmp_uint;
             sum = save->data;
 
             save->data = sum2;
-            *((unsigned int *)(field_to_save_data[save->field[i]])) += tmp_uint * tmp_uint;
+            *((unsigned int *)(field_to_save_data[field[i]])) += tmp_uint * tmp_uint;
             sum2 = save->data;
 
             save->data = count;
-            (*((unsigned int *)(field_to_save_data[save->field[i]])))++;
+            (*((unsigned int *)(field_to_save_data[field[i]])))++;
             count = save->data;
 
             break;
 
          case DT_TRIPLE_DOUBLE :
             save->data = (*data)[j];
-            tmp_double = *((double *)(field_to_save_data[save->field[i]]));
-            tmp_double_2 = *((double *)(field_to_save_data[save->field[i]]) + 1);
-            tmp_double_3 = *((double *)(field_to_save_data[save->field[i]]) + 2);
+            tmp_double = *((double *)(field_to_save_data[field[i]]));
+            tmp_double_2 = *((double *)(field_to_save_data[field[i]]) + 1);
+            tmp_double_3 = *((double *)(field_to_save_data[field[i]]) + 2);
 
             save->data = sum;
-            *((double *)(field_to_save_data[save->field[i]])) += tmp_double;
-            *((double *)(field_to_save_data[save->field[i]]) + 1) += tmp_double_2;
-            *((double *)(field_to_save_data[save->field[i]]) + 2) += tmp_double_3;
+            *((double *)(field_to_save_data[field[i]])) += tmp_double;
+            *((double *)(field_to_save_data[field[i]]) + 1) += tmp_double_2;
+            *((double *)(field_to_save_data[field[i]]) + 2) += tmp_double_3;
             sum = save->data;
 
             save->data = sum2;
-            *((double *)(field_to_save_data[save->field[i]])) += tmp_double * tmp_double;
-            *((double *)(field_to_save_data[save->field[i]]) + 1) += tmp_double_2 * tmp_double_2;
-            *((double *)(field_to_save_data[save->field[i]]) + 2) += tmp_double_2 * tmp_double_3;
+            *((double *)(field_to_save_data[field[i]])) += tmp_double * tmp_double;
+            *((double *)(field_to_save_data[field[i]]) + 1) += tmp_double_2 * tmp_double_2;
+            *((double *)(field_to_save_data[field[i]]) + 2) += tmp_double_2 * tmp_double_3;
             sum2 = save->data;
 
             save->data = count;
-            (*((double *)(field_to_save_data[save->field[i]])))++;
-            (*((double *)(field_to_save_data[save->field[i]]) + 1))++;
-            (*((double *)(field_to_save_data[save->field[i]]) + 2))++;
+            (*((double *)(field_to_save_data[field[i]])))++;
+            (*((double *)(field_to_save_data[field[i]]) + 1))++;
+            (*((double *)(field_to_save_data[field[i]]) + 2))++;
             count = save->data;
 
             break;
          case DT_DOUBLE_NA     :
-            tmp_double = *((double *)(field_to_save_data[save->field[i]]));
+            tmp_double = *((double *)(field_to_save_data[field[i]]));
 
             if ( tmp_double >= 0 )
             {
                save->data = sum;
-               *((double *)(field_to_save_data[save->field[i]])) += tmp_double;
+               *((double *)(field_to_save_data[field[i]])) += tmp_double;
                sum = save->data;
 
                save->data = sum2;
-               *((double *)(field_to_save_data[save->field[i]])) += tmp_double * tmp_double;
+               *((double *)(field_to_save_data[field[i]])) += tmp_double * tmp_double;
                sum2 = save->data;
 
                save->data = count;
-               (*((double *)(field_to_save_data[save->field[i]])))++;
+               (*((double *)(field_to_save_data[field[i]])))++;
                count = save->data;
             }
             break;
@@ -1400,8 +1407,327 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
 
    // now compute averages etc.
 
+   for ( unsigned int i = 0; i < field.size(); i++ )
+   {
+      switch(field_to_save_data_type[field[i]]) 
+      {
+      case DT_QSTRING       :
+         break;
+      case DT_BOOL          :
+         break;
+      case DT_FLOAT         :
+         save->data = count;
+         tmp_count_float = (*((float *)(field_to_save_data[field[i]])));
+
+         save->data = sum;
+         *((float *)(field_to_save_data[field[i]])) /= tmp_count_float;
+         tmp_float = *((float *)(field_to_save_data[field[i]]));
+         sum = save->data;
+         
+         save->data = sum2;
+         *((float *)(field_to_save_data[field[i]])) = 
+            sqrt(fabs((*((float *)(field_to_save_data[field[i]])) - tmp_float * tmp_float * tmp_count_float) / 
+            (tmp_count_float - 1)));
+         sum2 = save->data;
+                  
+         break;
+      case DT_DOUBLE        :
+         save->data = count;
+         tmp_count_double = (*((double *)(field_to_save_data[field[i]])));
+
+         save->data = sum;
+         *((double *)(field_to_save_data[field[i]])) /= tmp_count_double;
+         tmp_double = *((double *)(field_to_save_data[field[i]]));
+         sum = save->data;
+         
+         save->data = sum2;
+         *((double *)(field_to_save_data[field[i]])) = 
+            sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double  )
+            / (tmp_count_double - 1)));
+         sum2 = save->data;
+         
+         break;
+      case DT_INT           :
+         save->data = count;
+         tmp_count_int = (*((int *)(field_to_save_data[field[i]])));
+
+         save->data = sum;
+         *((int *)(field_to_save_data[field[i]])) /= tmp_count_int;
+         tmp_int = *((int *)(field_to_save_data[field[i]]));
+         sum = save->data;
+         
+         save->data = sum2;
+         *((int *)(field_to_save_data[field[i]])) = 
+            (*((int *)(field_to_save_data[field[i]])) - tmp_int * tmp_int * tmp_count_int) 
+            / (tmp_count_int - 1);
+         sum2 = save->data;
+         
+         break;
+      case DT_UNSIGNED_INT  :
+         save->data = count;
+         tmp_count_uint = (*((unsigned int *)(field_to_save_data[field[i]])));
+
+         save->data = sum;
+         *((unsigned int *)(field_to_save_data[field[i]])) /= tmp_count_uint;
+         tmp_uint = *((unsigned int *)(field_to_save_data[field[i]]));
+         sum = save->data;
+         
+         save->data = sum2;
+         *((unsigned int *)(field_to_save_data[field[i]])) = 
+            (*((unsigned int *)(field_to_save_data[field[i]])) - tmp_uint * tmp_uint * tmp_count_uint) 
+            / (tmp_count_uint - 1);
+         sum2 = save->data;
+         
+         break;
+         
+      case DT_TRIPLE_DOUBLE :
+         save->data = count;
+         tmp_count_double = (*((double *)(field_to_save_data[field[i]])));
+
+         save->data = sum;
+         *((double *)(field_to_save_data[field[i]])) /= tmp_count_double;
+         *((double *)(field_to_save_data[field[i]]) + 1) /= tmp_count_double;
+         *((double *)(field_to_save_data[field[i]]) + 2) /= tmp_count_double;
+         tmp_double = *((double *)(field_to_save_data[field[i]]));
+         tmp_double_2 = *((double *)(field_to_save_data[field[i]]) + 1);
+         tmp_double_3 = *((double *)(field_to_save_data[field[i]]) + 2);
+         sum = save->data;
+         
+         save->data = sum2;
+         *((double *)(field_to_save_data[field[i]])) = 
+            sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double)
+            / (tmp_count_double - 1)));
+         *((double *)(field_to_save_data[field[i]]) + 1) = 
+            sqrt(fabs((*((double *)(field_to_save_data[field[i]]) + 1) - tmp_double_2 * tmp_double_2 * tmp_count_double)
+            / (tmp_count_double - 1)));
+         *((double *)(field_to_save_data[field[i]]) + 2) = 
+            sqrt(fabs((*((double *)(field_to_save_data[field[i]]) + 2) - tmp_double_3 * tmp_double_3 * tmp_count_double)
+            / (tmp_count_double - 1)));
+         sum2 = save->data;
+         
+         break;
+      case DT_DOUBLE_NA     :
+         save->data = count;
+         tmp_count_double = (*((double *)(field_to_save_data[field[i]])));
+
+         if ( tmp_count_double >= 1 )
+         {
+            
+            save->data = sum;
+            *((double *)(field_to_save_data[field[i]])) /= tmp_count_double;
+            tmp_double = *((double *)(field_to_save_data[field[i]]));
+            sum = save->data;
+         
+            save->data = sum2;
+            *((double *)(field_to_save_data[field[i]])) = 
+               sqrt(fabs((*((double *)(field_to_save_data[field[i]])) - tmp_double * tmp_double * tmp_count_double)
+               / (tmp_count_double - 1)));
+            sum2 = save->data;
+         }
+         break;
+      }
+   }
+
    vector < save_data > result;
    result.push_back(sum);
    result.push_back(sum2);
+   return result;
+}
+
+QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats,
+                                           vector < save_data > *data)
+{
+   QString result;
+   
+   if ( stats.size() != 2 )
+   {
+      result.sprintf("INTERNAL ERROR: ******** US_Hydrodyn_Save::hydroFormatStats called with wrong size stats %u\n",
+                     (unsigned int) stats.size());
+      cout << result;
+      return result;
+   }
+   
+   //   float raflag = ((US_Hydrodyn *)us_hydrodyn)->save_params.raflag;
+   
+   QString tmpString;
+   
+   result = "\n\t AVERAGE PARAMETERS \n\n\t\t\t\t Mean value\tSt. Dev.\n\n";
+   result += QString("").sprintf("- TRANS. FRICT. COEFF.        \t%.3e\t%.3e\t[g/s]\n", 
+                                 stats[0].tra_fric_coef,
+                                 stats[1].tra_fric_coef);
+   
+   
+   result += QString("").sprintf("- TRANS. DIFF. COEFF.         \t%.2e\t%.3e\t[cm^2/s]\n", 
+                                 stats[0].results.D20w,
+                                 stats[1].results.D20w);
+   
+   //   if (raflag == -1.0)
+   //   {
+   //      result += QString("").sprintf("- SED. COEFF. (psv unhyd.rad.)\t%.2f\t\t%.2f\t\t[S]\n",
+   //                                    stats[0].results.s20w,
+   //                                    stats[1].results.s20w
+   //                                    );
+   //   }
+   
+   QString bead_model_source =
+      ((US_Hydrodyn *)us_hydrodyn)->misc.compute_vbar ?
+      ( ((US_Hydrodyn *)us_hydrodyn)->bead_model_from_file ?
+        "from file" : "computed" ) : "user entered";
+   
+   
+   //   if ((raflag == -2.0) || (raflag == -5.0) || (raflag == -3.0))
+   //   {
+   result += QString("").sprintf("- SED. COEFF. (psv %s) \t%.2f\t\t%.2f\t\t[S]\n", 
+                                 bead_model_source.ascii(),
+                                 stats[0].results.s20w,
+                                 stats[1].results.s20w);
+   //   }
+   
+   result += QString("").sprintf("- FRICTIONAL RATIO            \t%.2f\t%.3e\n\n",
+                                 stats[0].results.ff0,
+                                 stats[1].results.ff0);
+   
+   result += QString("").sprintf("- ROT. FRICT. COEFF.          \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                 stats[0].rot_fric_coef,
+                                 stats[1].rot_fric_coef);
+   result += QString("").sprintf("- ROT. DIFF. COEFF.           \t%.0f\t\t%.0f\t[1/s]\n",
+                                 stats[0].rot_diff_coef,
+                                 stats[1].rot_diff_coef);
+   result += QString("").sprintf("- ROT. FRICT. COEFF. [ X ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                 stats[0].rot_fric_coef_x,
+                                 stats[1].rot_fric_coef_x);
+   result += QString("").sprintf("- ROT. FRICT. COEFF. [ Y ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                 stats[0].rot_fric_coef_y,
+                                 stats[1].rot_fric_coef_y);
+   result += QString("").sprintf("- ROT. FRICT. COEFF. [ Z ]    \t%.3e\t%.3e\t[g*cm^2/s]\n",
+                                 stats[0].rot_fric_coef_z,
+                                 stats[1].rot_fric_coef_z);
+   result += QString("").sprintf("- ROT. DIFF. COEFF. [ X ]     \t%.0f\t\t%.0f\t[1/s]\n",
+                                 stats[0].rot_diff_coef_x,
+                                 stats[1].rot_diff_coef_x);
+   result += QString("").sprintf("- ROT. DIFF. COEFF. [ Y ]     \t%.0f\t\t%.0f\t[1/s]\n",
+                                 stats[0].rot_diff_coef_y,
+                                 stats[1].rot_diff_coef_y);
+   result += QString("").sprintf("- ROT. DIFF. COEFF. [ Z ]     \t%.0f\t\t%.0f\t[1/s]\n",
+                                 stats[0].rot_diff_coef_z,
+                                 stats[1].rot_diff_coef_z);
+   
+   result += QString("").sprintf("- RADIUS OF GYRATION          \t%.2f\t\t%.2f\t\t[nm]\n", 
+                                 stats[0].results.rg,
+                                 stats[1].results.rg);
+   
+   result += QString("").sprintf("- TRANS. STOKES' RADIUS       \t%.2f\t\t%.2f\t\t[nm]\n",
+                                 stats[0].results.rs,
+                                 stats[1].results.rs);
+   result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ X ] \t%.2f\t\t%.2f\t\t[nm]\n",
+                                 stats[0].rot_stokes_rad_x,
+                                 stats[1].rot_stokes_rad_x);
+   result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Y ] \t%.2f\t\t%.2f\t\t[nm]\n",
+                                 stats[0].rot_stokes_rad_y,
+                                 stats[1].rot_stokes_rad_y);
+   result += QString("").sprintf("- ROTAT. STOKES' RADIUS [ Z ] \t%.2f\t\t%.2f\t\t[nm]\n",
+                                 stats[0].rot_stokes_rad_z,
+                                 stats[1].rot_stokes_rad_z);
+   result += QString("").sprintf("\n- UNCORRECTED INTRINSIC VISC. \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                 stats[0].unc_int_visc,
+                                 stats[1].unc_int_visc);
+   result += QString("").sprintf("- UNCORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
+                                 stats[0].unc_einst_rad,
+                                 stats[1].unc_einst_rad);
+   result += QString("").sprintf("- CORRECTED INTRINSIC VISCOSITY\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                 stats[0].cor_int_visc,
+                                 stats[1].cor_int_visc);
+   result += QString("").sprintf("- CORRECTED EINSTEIN'S RADIUS\t%.2f\t\t%.2f\t\t[nm]\n",
+                                 stats[0].cor_einst_rad,
+                                 stats[1].cor_einst_rad);
+   
+#if defined(TSUDA_DOUBLESUM)
+   result += QString("").sprintf("- INTRINSIC VISC. (Double Sum)\t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                 stats[0].,
+                                 stats[1].);
+   result += QString("").sprintf("- EINSTEIN'S RADIUS (D. Sum)  \t%.2f\t\t%.2f\t\t[nm]\n",
+                                 stats[0].,
+                                 stats[1].);
+   result += QString("").sprintf("- INTRINSIC VISC. (Tsuda CM)  \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                 stats[0].,
+                                 stats[1].);
+   result += QString("").sprintf("- EINSTEIN'S RADIUS (Tsuda CM)\t%.2f\t\t%.2f\t\t[nm]\n",
+                                 stats[0].,
+                                 stats[1].);
+   result += QString("").sprintf("- INTRINSIC VISC. (Tsuda CV)  \t%.2f\t\t%.2f\t\t[cm^3/g]\n",
+                                 stats[0].,
+                                 stats[1].);
+   result += QString("").sprintf("- EINSTEIN'S RADIUS (Tsuda CV)\t%.2f\t\t%.2f\t\t[nm]\n",
+                                 stats[0].,
+                                 stats[1].);
+#endif
+   
+   result += QString("").sprintf("\nRELAXATION TIMES\n\n");
+   
+   result += QString("").sprintf(" Tau(1)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                 stats[0].rel_times_tau_1,
+                                 stats[1].rel_times_tau_1);
+   result += QString("").sprintf(" Tau(2)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                 stats[0].rel_times_tau_2,
+                                 stats[1].rel_times_tau_2);
+   result += QString("").sprintf(" Tau(3)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                 stats[0].rel_times_tau_3,
+                                 stats[1].rel_times_tau_3);
+   result += QString("").sprintf(" Tau(4)                       \t%.2f\t\t%.2f\t\t[ns]\n",
+                                 stats[0].rel_times_tau_4,
+                                 stats[1].rel_times_tau_4);
+   result += QString("").sprintf(" Tau(5)                       \t%.2f\t\t%.2f\t\t[ns]\n\n",
+                                 stats[0].rel_times_tau_5,
+                                 stats[1].rel_times_tau_5);
+
+   // computed weighted average
+   double meanh = 0.0;
+   double sdh = 0.0;
+   double meanm = 0.0;
+   double sdm = 0.0;
+   double summw = 0.0;
+   double V2 = 0.0;
+   double w;
+   
+   // add up mass
+   for ( unsigned int i = 0; i < data->size(); i++ )
+   {
+      summw += (*data)[i].results.mass;
+   }
+
+   // compute weighted means & V2
+   for ( unsigned int i = 0; i < data->size(); i++ )
+   {
+      w = (*data)[i].results.mass / summw;
+      V2 += w * w;
+      meanm += (*data)[i].rel_times_tau_m * w;
+      meanh += (*data)[i].rel_times_tau_h * w;
+   }
+
+   // compute sum w(i) * (xi - mean)^2
+   for ( unsigned int i = 0; i < data->size(); i++ )
+   {
+      w = (*data)[i].results.mass / summw;
+      sdm += w * ((*data)[i].rel_times_tau_m - meanm) * ((*data)[i].rel_times_tau_m - meanh);
+      sdh += w * ((*data)[i].rel_times_tau_h - meanh) * ((*data)[i].rel_times_tau_h - meanh);
+   }
+   sdm = sqrt(fabs((1.0 / (1.0 - V2)) * sdm));
+   sdh = sqrt(fabs((1.0 / (1.0 - V2)) * sdh));
+
+   result += QString("").sprintf(" Tau(m) (Weighted average)    \t%.2f\t\t%.2f\t\t[ns]\n",
+                                 meanm,
+                                 sdm);
+   result += QString("").sprintf(" Tau(h) (Weighted average)    \t%.2f\t\t%.2f\t\t[ns]\n",
+                                 meanh,
+                                 sdh);
+   
+   result += QString("").sprintf("\n Tau(m) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
+                                 stats[0].rel_times_tau_m,
+                                 stats[1].rel_times_tau_m);
+   result += QString("").sprintf(" Tau(h) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
+                                 stats[0].rel_times_tau_h,
+                                 stats[1].rel_times_tau_h);
+   
+   result += QString("").sprintf("\n****************************************************************\n");
    return result;
 }

@@ -2340,7 +2340,7 @@ stampa_ris()
 /**************************************************************************/
 /**************************************************************************/
 /**************************************************************************/
-
+   
 static void
 mem_ris(int model)
 {
@@ -2363,6 +2363,7 @@ mem_ris(int model)
    this_data.hydro_res = "";
 
    QString hydro_res;
+   QString hydro_format_string;
 
    ris = fopen(risultati, "ab");
 
@@ -3063,6 +3064,17 @@ mem_ris(int model)
    if ( us_hydrodyn->batch_widget &&
         us_hydrodyn->batch_window->save_batch_active )
    {
+      //      if ( us_hydrodyn->save_params.data_vector.size() &&
+      //           ( us_hydrodyn->save_params.raflag != raflag ||
+      //             us_hydrodyn->save_params.taoflag != taoflag ) )
+      //      {
+      //         printf("WARNING: ******* differing raflag (%f != %f) or taofalg (%f != %f)\n",
+      //                us_hydrodyn->save_params.raflag, raflag,
+      //                us_hydrodyn->save_params.taoflag, taoflag);
+      //      } else {
+      //         us_hydrodyn->save_params.raflag = raflag;
+      //         us_hydrodyn->save_params.taoflag = taoflag;
+      //      }
       us_hydrodyn->save_params.data_vector.push_back(this_data);
       printf("batch save on, push back info into save_params!\n");
    }
@@ -3373,7 +3385,6 @@ val_med()
 
    fprintf(ris, "\n****************************************************************\n");
    fclose(ris);
-
 }
 
 /**************************************************************************/

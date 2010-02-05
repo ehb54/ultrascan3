@@ -112,8 +112,10 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
                        const char *name = 0);
       ~US_Hydrodyn_Save();
 
-      QString header();                   // returns a csv format header
-      QString dataString(save_data *);  // returns a csv format data line
+      QString header();                        // returns a csv format header
+      QString dataString(save_data *);         // returns a csv format data line
+      QString hydroFormatStats(vector < save_data >, 
+                               vector < save_data > *);    // returns a 'hydro_res' format data string of the avg, st.dev.
       vector < save_data > stats(vector < save_data > *);  // returns a 2 vector containing avg, st.dev.
 
    private:

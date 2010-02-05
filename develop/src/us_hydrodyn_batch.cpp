@@ -943,6 +943,13 @@ void US_Hydrodyn_Batch::start()
    {
       chdir(((US_Hydrodyn *)us_hydrodyn)->somo_dir);
       save_batch_active = false;
+
+      vector < save_data > stats;
+      if ( ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.size() > 1 )
+      {
+         stats = ((US_Hydrodyn *)us_hydrodyn)->save_util->stats(&((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector);
+      }
+
       QString fname = batch->avg_hydro_name + ".hydro_res";
       FILE *of = fopen(fname, "wb");
       if ( of )
@@ -950,6 +957,10 @@ void US_Hydrodyn_Batch::start()
          for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.size(); i++ )
          {
             fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i].hydro_res.ascii());
+         }
+         if ( stats.size() == 2 )
+         {
+            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats(stats,&((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector).ascii());
          }
          fclose(of);
       }
@@ -963,6 +974,11 @@ void US_Hydrodyn_Batch::start()
             for ( unsigned int i = 0; i < ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.size(); i++ )
             {
                fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&(((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector[i])).ascii());
+            }
+            if ( stats.size() == 2 ) 
+            {
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&stats[0]).ascii());
+               fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->dataString(&stats[1]).ascii());
             }
             fclose(of);
          }
