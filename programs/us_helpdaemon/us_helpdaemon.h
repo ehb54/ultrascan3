@@ -22,9 +22,6 @@ class US_HelpDaemon : public QObject
     */
     US_HelpDaemon( const QString&, QObject* = 0 );
 
-    //! \brief A null destructor.
-    ~US_HelpDaemon() {};
-
   public slots:
     //! \brief Sends the web page to be shown to Qt's Assistant.
     //! \param page A QString of the page to show.
@@ -36,7 +33,6 @@ class US_HelpDaemon : public QObject
     void close( int, QProcess::ExitStatus );
 
   private:
+    static void debug( const QString& );
     QProcess    daemon;
-    QStringList args; 
-    QTextStream ts;
 };

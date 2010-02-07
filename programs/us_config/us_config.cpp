@@ -246,7 +246,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
 
 void US_Config::help( void )
 {
-  showhelp.show_help( "manual/config.html" );
+  showhelp.show_help( "config.html" );
 }
 
 void US_Config::save( void )

@@ -6,26 +6,30 @@
 US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
 {
   QString location = qApp->applicationDirPath() + "/manual.qhc";
+  QString url      = "qthelp://ultrascaniii/manual/" + page;
+
+  QStringList args;
 
   args << QLatin1String( "-collectionFile" )
-       << QLatin1String( location.toAscii().data() )
-       << QLatin1String( "-enableRemoteControl" );
+       << location
+       << QLatin1String( "-enableRemoteControl" )
+       << QLatin1String( "-showURL" )
+       << url;
+
+  debug( args.join( " " ) );
 
   daemon.start( QLatin1String( "assistant" ), args );
   daemon.waitForStarted();
 
   connect( &daemon, SIGNAL( finished ( int, QProcess::ExitStatus ) ),
                     SLOT  ( close    ( int, QProcess::ExitStatus ) ) );
-
-  ts.setDevice ( &daemon );
-  show( QString( page ) );
 }
 
 void US_HelpDaemon::close( int /*exitCode*/, QProcess::ExitStatus /*status*/ ) 
 {
-  //qDebug() << "US_HelpDaemon::close" ;
   exit( 0 );
 }
+
 void US_HelpDaemon::show( const QString& helpPage )
 {
   if ( helpPage == "Quit" )
@@ -36,14 +40,29 @@ void US_HelpDaemon::show( const QString& helpPage )
 
   if ( daemon.state() == QProcess::NotRunning ) 
   {
-    qDebug() << "assistant not running";
+    debug( "assistant not running" );
   }
 
   QString page = helpPage;
   if ( ! helpPage.contains( "manual/" ) ) page.prepend( "manual/" );
 
-  QString message = "setSource qthelp://ultrascaniii/" + page + "\0";
-  ts << QLatin1String( message.toAscii().data() ) << endl;
+  debug( "setSource qthelp://ultrascaniii/" + page );
+
+  QByteArray ba;
+  ba.append( "setSource qthelp://ultrascaniii/manual/" );
+  ba.append( page.toAscii() );
+  ba.append( '\0' );
+
+  daemon.write( ba );
+}
+
+void US_HelpDaemon::debug( const QString& message )
+{
+   QFile d( "/tmp/helpdaemon.log" );
+   d.open( QIODevice::WriteOnly | QIODevice::Text | QIODevice::Append );
+   QTextStream out ( &d );
+   out << message << endl;
+   d.close();
 }
 
 /*! \brief Main program to start up Qt's Assistant
@@ -57,8 +76,7 @@ int main( int argc, char* argv[] )
   //  Need to add uid to identifier ????
   //note: for doc files to show properly after an update, it may be necessary 
   //      to remove  ~/.local/share/data/Trolltech/Assistant/manual.qhc
-  QtSingleApplication application( "UltraScan Help Daemon", 
-      argc, argv );
+  QtSingleApplication application( "UltraScan Help Daemon", argc, argv );
   
   QString message = QString( argv[ 1 ] );
 
