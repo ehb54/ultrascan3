@@ -192,14 +192,14 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    progress->reset();
    progress->setVisible( true );
    spec->addWidget( progress, s_row++, 0, 1, 2 );
- 
-   QString degrsign( "Â°" );
+
+   QString degrsymb( "°" );
    QString xaxistitle =
       tr( "Sedimentation Coefficient corrected for water at 20" );
-   if ( degrsign.length() == 2 )
-      xaxistitle = xaxistitle.append( degrsign.at( 1 ) ) + "C";
+   if ( degrsymb.length() == 1 )
+      xaxistitle = xaxistitle + degrsymb + "C";
    else
-      xaxistitle = xaxistitle + degrsign + "C";
+      xaxistitle = xaxistitle.append( degrsymb.at( 1 ) ) + "C";
 
    QBoxLayout* plot = new US_Plot( data_plot, 
       tr( "Pseudo-3D Distribution Data" ),
