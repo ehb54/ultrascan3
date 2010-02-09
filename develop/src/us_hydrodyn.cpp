@@ -339,6 +339,13 @@ void US_Hydrodyn::setupGUI()
    pb_batch->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
    connect(pb_batch, SIGNAL(clicked()), SLOT(show_batch()));
 
+   pb_view_bead_model = new QPushButton(tr("View Bead Model File"), this);
+   Q_CHECK_PTR(pb_view_bead_model);
+   pb_view_bead_model->setMinimumHeight(minHeight1);
+   pb_view_bead_model->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1));
+   pb_view_bead_model->setPalette( QPalette(USglobal->global_colors.cg_pushb, USglobal->global_colors.cg_pushb_disabled, USglobal->global_colors.cg_pushb_active));
+   connect(pb_view_bead_model, SIGNAL(clicked()), SLOT(view_bead_model()));
+
    pb_load_pdb = new QPushButton(tr("Load Single PDB File"), this);
    Q_CHECK_PTR(pb_load_pdb);
    pb_load_pdb->setMinimumHeight(minHeight1);
@@ -637,6 +644,7 @@ void US_Hydrodyn::setupGUI()
    background->addWidget(pb_visualize, j, 1);
    j++;
    background->addWidget(pb_batch2, j, 0);
+   background->addWidget(pb_view_bead_model, j, 1);
    j++;
    background->addWidget(pb_load_bead_model, j, 0);
    background->addWidget(le_bead_model_file, j, 1);
@@ -2348,6 +2356,15 @@ void US_Hydrodyn::set_saveParams()
 void US_Hydrodyn::view_asa()
 {
    QString filename = QFileDialog::getOpenFileName(somo_dir, "*.asa_res *.ASA_RES", this);
+   if (!filename.isEmpty())
+   {
+      view_file(filename);
+   }
+}
+
+void US_Hydrodyn::view_bead_model()
+{
+   QString filename = QFileDialog::getOpenFileName(somo_dir, "*.bead_model* *.BEAD_MODEL*", this);
    if (!filename.isEmpty())
    {
       view_file(filename);

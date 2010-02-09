@@ -1862,8 +1862,10 @@ void US_Hydrodyn::set_default()
 
 void US_Hydrodyn::view_file(const QString &filename)
 {
-   US_Editor *edit;
-   edit = new US_Editor(1);
+   //   US_Editor *edit;
+   //   edit = new US_Editor(1);
+   TextEdit *edit;
+   edit = new TextEdit();
    edit->setFont(QFont("Courier"));
    edit->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    edit->setGeometry(global_Xpos + 30, global_Ypos + 30, 685, 600);

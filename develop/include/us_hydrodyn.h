@@ -215,6 +215,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QPushButton *pb_grid_pdb;
       QPushButton *pb_grid;
       QPushButton *pb_view_asa;
+      QPushButton *pb_view_bead_model;
 
       QProgressBar *progress;
       TextEdit *e;
@@ -370,6 +371,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void pdb_parsing(); // pdb parsing options
       void pdb_visualization(); // pdb visualization options
       void view_asa(); // show asa file in editor
+      void view_bead_model(); // show bead model file in editor
       void stop_calc(); // stop some operations
       void view_file(const QString &); // call editor to view a file
       void bead_check( bool use_threshold = false, bool message_type = false ); // recheck beads
