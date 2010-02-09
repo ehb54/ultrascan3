@@ -4,7 +4,7 @@
 #include "us_gui_settings.h"
 #include "us_settings.h"
 #include "us_constants.h"
-#include "us_vbar.h"
+#include "us_analyte.h"
 
 US_ModelEditor::US_ModelEditor( 
       struct ModelSystem& current_model, 
@@ -460,7 +460,7 @@ void US_ModelEditor::update_sD( void )
 
 void US_ModelEditor::get_vbar( void )
 {
-   US_Vbar* vbar_dlg = new US_Vbar( -1, true );
+   US_Analyte* vbar_dlg = new US_Analyte( -1, true );
    connect( vbar_dlg, SIGNAL( valueChanged( double ) ), 
                       SLOT  ( update_vbar ( double ) ) );
    vbar_dlg->exec();

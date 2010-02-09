@@ -6,7 +6,7 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_run_details.h"
-#include "us_vbar.h"
+#include "us_analyte.h"
 #include "us_buffer_gui.h"
 
 US_AnalysisBase::US_AnalysisBase() : US_Widgets()
@@ -349,7 +349,7 @@ void US_AnalysisBase::details( void )
 
 void US_AnalysisBase::get_vbar( void )
 {
-   US_Vbar* vbar_dialog = new US_Vbar( -1, true ); // Delete on close set
+   US_Analyte* vbar_dialog = new US_Analyte( -1, true ); // Delete on close set
    connect( vbar_dialog, SIGNAL( valueChanged( double ) ),
                          SLOT  ( update_vbar ( double ) ) );
    vbar_dialog->exec();

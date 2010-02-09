@@ -1,6 +1,6 @@
 include( ../../gui.pri )
 
-TARGET        = us_vbar
+TARGET        = us_analyte
 
 HEADERS       = us_analyte.h
 

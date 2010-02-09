@@ -1,6 +1,6 @@
-//! \file us_vbar.h
-#ifndef US_VBAR_H
-#define US_VBAR_H
+//! \file us_analyte.h
+#ifndef US_ANALYTE_H
+#define US_ANALYTE_H
 
 #include <QtGui>
 
@@ -22,6 +22,8 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
    private:
       bool         signal_wanted;
 
+      US_Help      showHelp;
+/*
       QListWidget* lw_peptides;
 
       QLineEdit*   le_temperature;
@@ -43,7 +45,6 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
 
       QStringList  peptides;
 
-      US_Help      showHelp;
 
       struct US_VbarData
       {
@@ -59,11 +60,12 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       struct peptide pep;
 
       void result_output      ( const QString& );
-
+*/
    private slots:
       void close              ( void );
       void reset              ( void );
 
+/*
       void read_peptide       ( void );
       void read_db            ( void );
       void search             ( const QString& );
@@ -79,9 +81,9 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       void del_peptide        ( void );
       void download_seq       ( void );
       void more_info          ( void );
-
+*/
       void help            ( void ) 
-      { showHelp.show_help( "analytes" ); };
+      { showHelp.show_help( "analytes.html" ); };
 };
 #endif
 
