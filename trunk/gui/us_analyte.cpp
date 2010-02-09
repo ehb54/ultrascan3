@@ -1,18 +1,18 @@
-//! \file us_vbar.cpp
-#include "us_vbar.h"
-#include "us_db.h"
+//! \file us_analyte.cpp
+#include "us_analyte.h"
+#include "us_db2.h"
 #include "us_passwd.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_investigator.h"
 
-US_Vbar::US_Vbar( int invID, bool signal, QWidget* parent, Qt::WindowFlags f )
+US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags f )
    : US_WidgetsDialog( parent, f )
 {
    signal_wanted = signal;
    vbar_info.invID = invID;
 
-   setWindowTitle( tr( "Peptide Management" ) );
+   setWindowTitle( tr( "Analyte Management" ) );
    setPalette( US_GuiSettings::frameColor() );
    setAttribute( Qt::WA_DeleteOnClose );
 
@@ -41,7 +41,7 @@ US_Vbar::US_Vbar( int invID, bool signal, QWidget* parent, Qt::WindowFlags f )
    top->addLayout( search, row++, 0 );
 
    QLabel* doubleckick = 
-      us_banner( tr( "Doubleclick on peptide to select" ), -2 );
+      us_banner( tr( "Doubleclick on analyte to select" ), -2 );
 
    top->addWidget( doubleckick, row++, 0 );
 
@@ -52,24 +52,24 @@ US_Vbar::US_Vbar( int invID, bool signal, QWidget* parent, Qt::WindowFlags f )
 
    row = 0;
 
-   QPushButton* pb_load = us_pushbutton( tr( "Load Peptide from HD" ) );
+   QPushButton* pb_load = us_pushbutton( tr( "Load Analyte from HD" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( read_peptide() ) );
    top->addWidget( pb_load, row++, 1 );
 
    QPushButton* pb_load_db = 
-      us_pushbutton( tr( "Query Peptide Info from DB" ) );
+      us_pushbutton( tr( "Query Analyte Info from DB" ) );
    connect( pb_load_db, SIGNAL( clicked() ), SLOT( read_db() ) );
    top->addWidget( pb_load_db, row++, 1 );
 
-   QPushButton* pb_enter = us_pushbutton( tr( "Enter Peptide" ) );
+   QPushButton* pb_enter = us_pushbutton( tr( "Enter Analyte" ) );
    connect( pb_enter, SIGNAL( clicked() ), SLOT( enter_peptide() ) );
    top->addWidget( pb_enter, row++, 1 );
 
-   pb_save = us_pushbutton( tr( "Save Peptide to DB" ), false );
+   pb_save = us_pushbutton( tr( "Save Analyte to DB" ), false );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save_peptide() ) );
    top->addWidget( pb_save, row++, 1 );
 
-   pb_delete = us_pushbutton( tr( "Delete Peptide from DB" ), false );
+   pb_delete = us_pushbutton( tr( "Delete Analyte from DB" ), false );
    connect( pb_delete, SIGNAL( clicked() ), SLOT( del_peptide() ) );
    top->addWidget( pb_delete, row++, 1 );
 
@@ -191,7 +191,7 @@ US_Vbar::US_Vbar( int invID, bool signal, QWidget* parent, Qt::WindowFlags f )
    reset();
 }
 
-void US_Vbar::close( void )
+void US_Analyte::close( void )
 {
    // emit signals if requested
    if ( signal_wanted )
@@ -205,7 +205,7 @@ void US_Vbar::close( void )
    accept();
 }
 
-void US_Vbar::reset( void )
+void US_Analyte::reset( void )
 {
    lw_peptides->clear();
    peptides.clear();
@@ -229,7 +229,7 @@ void US_Vbar::reset( void )
    pb_more  ->setEnabled( false );
 }
 
-void US_Vbar::read_peptide( void )
+void US_Analyte::read_peptide( void )
 {
    vbar_info.e280 = 0.0;
    vbar_info.vbar = 0.0;
@@ -343,7 +343,7 @@ void US_Vbar::read_peptide( void )
    //from_HD = true;
 }
 
-void US_Vbar::read_db( void )
+void US_Analyte::read_db( void )
 {
    QString query; 
 
@@ -366,7 +366,7 @@ void US_Vbar::read_db( void )
    if ( ! db->open( pw.getPasswd(), error ) )
    {
       // Error message here
-      qDebug() << "US_Vbar::read_db open DB error " << error;
+      qDebug() << "US_Analyte::read_db open DB error " << error;
       return;
    }
 
@@ -397,7 +397,7 @@ void US_Vbar::read_db( void )
 }
 
 /*!  Write the peptide analysis results to a text format display.  */
-void US_Vbar::result_output( const QString& res_file )
+void US_Analyte::result_output( const QString& res_file )
 {
    QString s;
    s.sprintf( "%5.3f", le_temperature->text().toFloat() );
@@ -455,7 +455,7 @@ void US_Vbar::result_output( const QString& res_file )
    lb_mw_value      ->setText( s.sprintf( "%6.4e Dalton",     pep.mw       ) );
 }
 
-void US_Vbar::search( const QString& text )
+void US_Analyte::search( const QString& text )
 {
    lw_peptides->clear();
 
@@ -469,7 +469,7 @@ void US_Vbar::search( const QString& text )
    }
 }
 
-void US_Vbar::sel_investigator( void )
+void US_Analyte::sel_investigator( void )
 {
    reset();
    
@@ -480,7 +480,7 @@ void US_Vbar::sel_investigator( void )
    inv_dialog->exec();
 }
 
-void US_Vbar::assign_investigator( int invID,
+void US_Analyte::assign_investigator( int invID,
       const QString& lname, const QString& fname)
 {
    lb_investigator->setText( "InvID (" + QString::number( invID ) + "): " +
@@ -490,7 +490,7 @@ void US_Vbar::assign_investigator( int invID,
    read_db();
 }
 
-void US_Vbar::select_peptide( QListWidgetItem* item )
+void US_Analyte::select_peptide( QListWidgetItem* item )
 {
    QString entry = item->text();
 
@@ -510,7 +510,7 @@ void US_Vbar::select_peptide( QListWidgetItem* item )
    if ( ! db->open( pw.getPasswd(), error ) )
    {
       // Error message here
-      qDebug() << "US_Vbar::select_peptide: Could not open DB\n" << error;
+      qDebug() << "US_Analyte::select_peptide: Could not open DB\n" << error;
 
       return;
    }
@@ -568,32 +568,32 @@ void US_Vbar::select_peptide( QListWidgetItem* item )
    pb_more->setEnabled  ( true );
 }
 
-void US_Vbar::view_seq( void )
+void US_Analyte::view_seq( void )
 {
    QMessageBox::information( this, "Under Construction", "Not implemented yet." );
 }
 
-void US_Vbar::enter_peptide( void )
+void US_Analyte::enter_peptide( void )
 {
    QMessageBox::information( this, "Under Construction", "Not implemented yet." );
 }
 
-void US_Vbar::save_peptide( void )
+void US_Analyte::save_peptide( void )
 {
    QMessageBox::information( this, "Under Construction", "Not implemented yet." );
 }
 
-void US_Vbar::del_peptide( void )
+void US_Analyte::del_peptide( void )
 {
    QMessageBox::information( this, "Under Construction", "Not implemented yet." );
 }
 
-void US_Vbar::download_seq( void )
+void US_Analyte::download_seq( void )
 {
    QMessageBox::information( this, "Under Construction", "Not implemented yet." );
 }
 
-void US_Vbar::more_info( void )
+void US_Analyte::more_info( void )
 {
    QMessageBox::information( this, "Under Construction", "Not implemented yet." );
 }

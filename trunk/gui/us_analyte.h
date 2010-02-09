@@ -9,12 +9,12 @@
 #include "us_help.h"
 #include "us_math.h"
 
-class US_EXTERN US_Vbar : public US_WidgetsDialog
+class US_EXTERN US_Analyte : public US_WidgetsDialog
 {
 	Q_OBJECT
 
 	public:
-		US_Vbar( int = -1, bool = false, QWidget* = 0, Qt::WindowFlags = 0 );
+		US_Analyte( int = -1, bool = false, QWidget* = 0, Qt::WindowFlags = 0 );
 
    signals:
       void valueChanged( double );
@@ -81,7 +81,7 @@ class US_EXTERN US_Vbar : public US_WidgetsDialog
       void more_info          ( void );
 
       void help            ( void ) 
-      { showHelp.show_help( "manual/vbar.html" ); };
+      { showHelp.show_help( "analytes" ); };
 };
 #endif
 
