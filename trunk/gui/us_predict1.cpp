@@ -4,7 +4,7 @@
 #include "us_constants.h"
 #include "us_gui_settings.h"
 #include "us_buffer_gui.h"
-#include "us_vbar.h"
+#include "us_analyte.h"
 
 #include "qwt_legend.h"
 
@@ -268,7 +268,7 @@ void US_Predict1::degC( const QString& s )
 
 void US_Predict1::get_peptide( void )
 {
-   US_Vbar* peptide_dialog = new US_Vbar( -1, true );
+   US_Analyte* peptide_dialog = new US_Analyte( -1, true );
    connect( peptide_dialog, SIGNAL( valueChanged( double ) ),
                             SLOT  ( update_vbar ( double ) ) );
    peptide_dialog->setWindowTitle( tr( "VBar Calculation" ) );
