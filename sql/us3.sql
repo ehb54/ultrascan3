@@ -1,6 +1,10 @@
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL';
+SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS;
+SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS;
+SET @OLD_SQL_MODE=@@SQL_MODE;
+
+SET UNIQUE_CHECKS = 0;
+SET FOREIGN_KEY_CHECKS=0;
+SET SQL_MODE='TRADITIONAL';
 
 CREATE SCHEMA IF NOT EXISTS us3 DEFAULT CHARACTER SET ascii COLLATE ascii_bin ;
 USE us3;
@@ -179,21 +183,6 @@ CREATE  TABLE IF NOT EXISTS us3.experiment (
     REFERENCES us3.rotor (rotorID )
     ON DELETE SET NULL
     ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table us3.solution
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.solution ;
-
-CREATE  TABLE IF NOT EXISTS us3.solution (
-  solutionID INT NOT NULL AUTO_INCREMENT ,
-  GUID CHAR(36) NULL ,
-  description VARCHAR(80) NOT NULL ,
-  storageTemp TINYINT NULL DEFAULT NULL ,
-  notes TEXT NULL DEFAULT NULL ,
-  PRIMARY KEY (solutionID) )
 ENGINE = InnoDB;
 
 
@@ -508,6 +497,297 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
+-- Table us3.buffer
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.buffer ;
+
+CREATE  TABLE IF NOT EXISTS us3.buffer (
+  bufferID INT NOT NULL AUTO_INCREMENT ,
+  GUID CHAR(36) NULL ,
+  description TEXT NULL DEFAULT NULL ,
+  spectrum TEXT NULL DEFAULT NULL ,
+  pH FLOAT NULL DEFAULT NULL ,
+  viscosity FLOAT NULL DEFAULT NULL ,
+  density FLOAT NULL DEFAULT NULL ,
+  PRIMARY KEY (bufferID) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table us3.bufferComponent
+-- Handle bufferComponentID in code, so they can be
+--  the same on multiple databases
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.bufferComponent ;
+
+CREATE  TABLE IF NOT EXISTS us3.bufferComponent (
+  bufferComponentID INT NOT NULL UNIQUE ,
+  units VARCHAR(8) NOT NULL DEFAULT 'mM', 
+  description TEXT NULL DEFAULT NULL ,
+  viscosity TEXT NULL DEFAULT NULL ,
+  density TEXT NULL DEFAULT NULL ,
+  PRIMARY KEY (bufferComponentID) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table us3.bufferLink
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.bufferLink ;
+
+CREATE  TABLE IF NOT EXISTS us3.bufferLink (
+  bufferID INT NOT NULL ,
+  bufferComponentID INT NOT NULL ,
+  concentration FLOAT NULL ,
+  INDEX bl_bufferID (bufferID ASC) ,
+  INDEX bl_bufferComponentID (bufferComponentID ASC) ,
+  CONSTRAINT bl_bufferID
+    FOREIGN KEY (bufferID )
+    REFERENCES us3.buffer (bufferID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT bl_bufferComponentID
+    FOREIGN KEY (bufferComponentID )
+    REFERENCES us3.bufferComponent (bufferComponentID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table us3.bufferPerson
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.bufferPerson ;
+
+CREATE  TABLE IF NOT EXISTS us3.bufferPerson (
+  bufferID INT NOT NULL ,
+  personID INT NOT NULL ,
+  private TINYINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (bufferID) ,
+  INDEX bp_personID (personID ASC) ,
+  INDEX bp_bufferID (bufferID ASC) ,
+  CONSTRAINT bp_personID
+    FOREIGN KEY (personID )
+    REFERENCES us3.people (personID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT bp_bufferID
+    FOREIGN KEY (bufferID )
+    REFERENCES us3.buffer (bufferID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table us3.bufferRefraction
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.bufferRefraction ;
+
+CREATE  TABLE IF NOT EXISTS us3.bufferRefraction (
+  refractionID INT NOT NULL AUTO_INCREMENT ,
+  bufferID INT NULL ,
+  lambda FLOAT NULL ,
+  refractiveIndex FLOAT NULL ,
+  PRIMARY KEY (refractionID) ,
+  INDEX br_bufferID (bufferID ASC) ,
+  CONSTRAINT br_bufferID
+    FOREIGN KEY (bufferID )
+    REFERENCES us3.buffer (bufferID )
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table us3.bufferExtinction
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.bufferExtinction ;
+
+CREATE  TABLE IF NOT EXISTS us3.bufferExtinction (
+  extinctionID INT NOT NULL AUTO_INCREMENT ,
+  bufferID INT NULL ,
+  lambda FLOAT NULL ,
+  molarExtinctionCoef FLOAT NULL ,
+  PRIMARY KEY (extinctionID) ,
+  INDEX be_bufferID (bufferID ASC) ,
+  CONSTRAINT be_bufferID
+    FOREIGN KEY (bufferID )
+    REFERENCES us3.buffer (bufferID )
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table us3.analyte
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.analyte ;
+
+CREATE  TABLE IF NOT EXISTS us3.analyte (
+  analyteID INT NOT NULL AUTO_INCREMENT ,
+  GUID CHAR(36) NULL ,
+  type ENUM('DNA', 'Peptide', 'Other') NULL DEFAULT NULL ,
+  sequence TEXT NULL DEFAULT NULL ,
+  vbar FLOAT NULL DEFAULT NULL ,
+  description TEXT NULL DEFAULT NULL ,
+  spectrum TEXT NULL DEFAULT NULL ,
+  molecularWeight FLOAT NULL DEFAULT NULL ,
+  PRIMARY KEY (analyteID) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table us3.analytePerson
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.analytePerson ;
+
+CREATE  TABLE IF NOT EXISTS us3.analytePerson (
+  analyteID INT NOT NULL ,
+  personID INT NOT NULL ,
+  PRIMARY KEY (analyteID) ,
+  INDEX ap_personID (personID ASC) ,
+  INDEX ap_analyteID (analyteID ASC) ,
+  CONSTRAINT ap_personID
+    FOREIGN KEY (personID )
+    REFERENCES us3.people (personID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT ap_analyteID
+    FOREIGN KEY (analyteID )
+    REFERENCES us3.analyte (analyteID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table us3.analyteRefraction
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.analyteRefraction ;
+
+CREATE  TABLE IF NOT EXISTS us3.analyteRefraction (
+  refractionID INT NOT NULL AUTO_INCREMENT ,
+  analyteID INT NULL ,
+  lambda FLOAT NULL ,
+  refractiveIndex FLOAT NULL ,
+  PRIMARY KEY (refractionID) ,
+  INDEX ar_analyteID (analyteID ASC) ,
+  CONSTRAINT ar_analyteID
+    FOREIGN KEY (analyteID )
+    REFERENCES us3.analyte (analyteID )
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table us3.analyteExtinction
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.analyteExtinction ;
+
+CREATE  TABLE IF NOT EXISTS us3.analyteExtinction (
+  extinctionID INT NOT NULL AUTO_INCREMENT ,
+  analyteID INT NULL ,
+  lambda FLOAT NULL ,
+  molarExtinctionCoef FLOAT NULL ,
+  PRIMARY KEY (extinctionID) ,
+  INDEX ae_analyteID (analyteID ASC) ,
+  CONSTRAINT ae_analyteID
+    FOREIGN KEY (analyteID )
+    REFERENCES us3.analyte (analyteID )
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table us3.solution
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.solution ;
+
+CREATE  TABLE IF NOT EXISTS us3.solution (
+  solutionID INT NOT NULL AUTO_INCREMENT ,
+  GUID CHAR(36) NULL ,
+  description VARCHAR(80) NOT NULL ,
+  storageTemp TINYINT NULL DEFAULT NULL ,
+  notes TEXT NULL DEFAULT NULL ,
+  PRIMARY KEY (solutionID) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table us3.solutionBuffer
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.solutionBuffer ;
+
+CREATE  TABLE IF NOT EXISTS us3.solutionBuffer (
+  solutionID INT NOT NULL ,
+  bufferID INT NOT NULL ,
+  PRIMARY KEY (solutionID) ,
+  INDEX sb_solutionID (solutionID ASC) ,
+  INDEX sb_bufferID (bufferID ASC) ,
+  CONSTRAINT sb_solutionID
+    FOREIGN KEY (solutionID )
+    REFERENCES us3.solution (solutionID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT sb_bufferID
+    FOREIGN KEY (bufferID )
+    REFERENCES us3.buffer (bufferID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table us3.solutionAnalyte
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.solutionAnalyte ;
+
+CREATE  TABLE IF NOT EXISTS us3.solutionAnalyte (
+  solutionID INT NOT NULL ,
+  analyteID INT NOT NULL ,
+  amount FLOAT NOT NULL ,
+  PRIMARY KEY (solutionID) ,
+  INDEX sa_solutionID (solutionID ASC) ,
+  INDEX sa_analyteID (analyteID ASC) ,
+  CONSTRAINT sa_solutionID
+    FOREIGN KEY (solutionID )
+    REFERENCES us3.solution (solutionID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT sa_analyteID
+    FOREIGN KEY (analyteID )
+    REFERENCES us3.analyte (analyteID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table us3.solutionPerson
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.solutionPerson ;
+
+CREATE  TABLE IF NOT EXISTS us3.solutionPerson (
+  solutionID INT NOT NULL ,
+  personID INT NOT NULL ,
+  PRIMARY KEY (solutionID) ,
+  INDEX sp_personID (personID ASC) ,
+  INDEX sp_solutionID (solutionID ASC) ,
+  CONSTRAINT sp_personID
+    FOREIGN KEY (personID )
+    REFERENCES us3.people (personID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT sp_solutionID
+    FOREIGN KEY (solutionID )
+    REFERENCES us3.solution (solutionID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
 -- Table us3.experimentSolutionChannel
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS us3.experimentSolutionChannel ;
@@ -571,185 +851,6 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.analyte
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.analyte ;
-
-CREATE  TABLE IF NOT EXISTS us3.analyte (
-  analyteID INT NOT NULL AUTO_INCREMENT ,
-  GUID CHAR(36) NULL ,
-  type ENUM('DNA', 'Peptide', 'Other') NULL DEFAULT NULL ,
-  sequence TEXT NULL DEFAULT NULL ,
-  vbar FLOAT NULL DEFAULT NULL ,
-  descrption TEXT NULL DEFAULT NULL ,
-  spectrum TEXT NULL DEFAULT NULL ,
-  molecularWeight FLOAT NULL DEFAULT NULL ,
-  PRIMARY KEY (analyteID) )
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table us3.bufferComponent
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.bufferComponent ;
-
-CREATE  TABLE IF NOT EXISTS us3.bufferComponent (
-  bufferComponentID INT NOT NULL AUTO_INCREMENT ,
-  units VARCHAR(8) NOT NULL DEFAULT 'mM', 
-  description TEXT NULL DEFAULT NULL ,
-  viscosity TEXT NULL DEFAULT NULL ,
-  density TEXT NULL DEFAULT NULL ,
-  PRIMARY KEY (bufferComponentID) )
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table us3.refraction
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.refraction ;
-
-CREATE  TABLE IF NOT EXISTS us3.refraction (
-  refractionID INT NOT NULL AUTO_INCREMENT ,
-  bufferComponentID INT NULL ,
-  analyteID INT NULL ,
-  lambda FLOAT NULL ,
-  refractiveIndex FLOAT NULL ,
-  PRIMARY KEY (refractionID) ,
-  INDEX analyteID (analyteID ASC) ,
-  INDEX bufferComponentID (bufferComponentID ASC) ,
-  CONSTRAINT r_analyteID
-    FOREIGN KEY (analyteID )
-    REFERENCES us3.analyte (analyteID )
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT r_bufferComponentID
-    FOREIGN KEY (bufferComponentID )
-    REFERENCES us3.bufferComponent (bufferComponentID )
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-COMMENT = 'Either bufferComponentID or analyteID will be null';
-
-
--- -----------------------------------------------------
--- Table us3.buffer
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.buffer ;
-
-CREATE  TABLE IF NOT EXISTS us3.buffer (
-  bufferID INT NOT NULL AUTO_INCREMENT ,
-  GUID CHAR(36) NULL ,
-  description TEXT NULL DEFAULT NULL ,
-  spectrum TEXT NULL DEFAULT NULL ,
-  pH FLOAT NULL DEFAULT NULL ,
-  viscosity FLOAT NULL DEFAULT NULL ,
-  density FLOAT NULL DEFAULT NULL ,
-  PRIMARY KEY (bufferID) )
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table us3.extinction
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.extinction ;
-
-CREATE  TABLE IF NOT EXISTS us3.extinction (
-  extinctionID INT NOT NULL AUTO_INCREMENT ,
-  analyteID INT NULL ,
-  bufferID INT NULL ,
-  lambda FLOAT NULL ,
-  molarExtinctionCoef FLOAT NULL ,
-  PRIMARY KEY (extinctionID) ,
-  INDEX e_analyteID (analyteID ASC) ,
-  INDEX e_bufferID (bufferID ASC) ,
-  CONSTRAINT e_analyteID
-    FOREIGN KEY (analyteID )
-    REFERENCES us3.analyte (analyteID )
-    ON DELETE SET NULL
-    ON UPDATE CASCADE,
-  CONSTRAINT e_bufferID
-    FOREIGN KEY (bufferID )
-    REFERENCES us3.buffer (bufferID )
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
-ENGINE = InnoDB
-COMMENT = 'Either bufferID or analyteID will be null';
-
-
--- -----------------------------------------------------
--- Table us3.solutionAnalyte
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.solutionAnalyte ;
-
-CREATE  TABLE IF NOT EXISTS us3.solutionAnalyte (
-  solutionID INT NOT NULL ,
-  analyteID INT NOT NULL ,
-  amount FLOAT NOT NULL ,
-  PRIMARY KEY (solutionID) ,
-  INDEX sa_solutionID (solutionID ASC) ,
-  INDEX sa_analyteID (analyteID ASC) ,
-  CONSTRAINT sa_solutionID
-    FOREIGN KEY (solutionID )
-    REFERENCES us3.solution (solutionID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT sa_analyteID
-    FOREIGN KEY (analyteID )
-    REFERENCES us3.analyte (analyteID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table us3.solutionBuffer
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.solutionBuffer ;
-
-CREATE  TABLE IF NOT EXISTS us3.solutionBuffer (
-  solutionID INT NOT NULL ,
-  bufferID INT NOT NULL ,
-  PRIMARY KEY (solutionID) ,
-  INDEX sb_solutionID (solutionID ASC) ,
-  INDEX sb_bufferID (bufferID ASC) ,
-  CONSTRAINT sb_solutionID
-    FOREIGN KEY (solutionID )
-    REFERENCES us3.solution (solutionID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT sb_bufferID
-    FOREIGN KEY (bufferID )
-    REFERENCES us3.buffer (bufferID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table us3.bufferLink
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.bufferLink ;
-
-CREATE  TABLE IF NOT EXISTS us3.bufferLink (
-  bufferID INT NOT NULL ,
-  bufferComponentID INT NOT NULL ,
-  concentration FLOAT NULL ,
-  INDEX bl_bufferID (bufferID ASC) ,
-  INDEX bl_bufferComponentID (bufferComponentID ASC) ,
-  CONSTRAINT bl_bufferID
-    FOREIGN KEY (bufferID )
-    REFERENCES us3.buffer (bufferID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT bl_bufferComponentID
-    FOREIGN KEY (bufferComponentID )
-    REFERENCES us3.bufferComponent (bufferComponentID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
 -- Table us3.imageAnalyte
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS us3.imageAnalyte ;
@@ -792,79 +893,6 @@ CREATE  TABLE IF NOT EXISTS us3.imageSolution (
   CONSTRAINT is_solutionID
     FOREIGN KEY (solutionID )
     REFERENCES us3.solution (solutionID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table us3.solutionPerson
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.solutionPerson ;
-
-CREATE  TABLE IF NOT EXISTS us3.solutionPerson (
-  solutionID INT NOT NULL ,
-  personID INT NOT NULL ,
-  PRIMARY KEY (solutionID) ,
-  INDEX sp_personID (personID ASC) ,
-  INDEX sp_solutionID (solutionID ASC) ,
-  CONSTRAINT sp_personID
-    FOREIGN KEY (personID )
-    REFERENCES us3.people (personID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT sp_solutionID
-    FOREIGN KEY (solutionID )
-    REFERENCES us3.solution (solutionID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table us3.bufferPerson
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.bufferPerson ;
-
-CREATE  TABLE IF NOT EXISTS us3.bufferPerson (
-  bufferID INT NOT NULL ,
-  personID INT NOT NULL ,
-  private TINYINT NOT NULL DEFAULT 1,
-  PRIMARY KEY (bufferID) ,
-  INDEX bp_personID (personID ASC) ,
-  INDEX bp_bufferID (bufferID ASC) ,
-  CONSTRAINT bp_personID
-    FOREIGN KEY (personID )
-    REFERENCES us3.people (personID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT bp_bufferID
-    FOREIGN KEY (bufferID )
-    REFERENCES us3.buffer (bufferID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
--- Table us3.analytePerson
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.analytePerson ;
-
-CREATE  TABLE IF NOT EXISTS us3.analytePerson (
-  analyteID INT NOT NULL ,
-  personID INT NOT NULL ,
-  PRIMARY KEY (analyteID) ,
-  INDEX ap_personID (personID ASC) ,
-  INDEX ap_analyteID (analyteID ASC) ,
-  CONSTRAINT ap_personID
-    FOREIGN KEY (personID )
-    REFERENCES us3.people (personID )
-    ON DELETE CASCADE
-    ON UPDATE CASCADE,
-  CONSTRAINT ap_analyteID
-    FOREIGN KEY (analyteID )
-    REFERENCES us3.analyte (analyteID )
     ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
