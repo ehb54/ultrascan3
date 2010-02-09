@@ -3352,7 +3352,7 @@ void US_Hydrodyn::radial_reduction()
 #if defined(DEBUG1) || defined(DEBUG)
                printf("processing hierarchical radial reduction iteration %d\n", iter);
 #endif
-               lbl_core_progress->setText(QString("Stage %1 hierarchical radial reduction iteration %2").arg(k+1).arg(iter));
+               lbl_core_progress->setText(QString("Stage %1 hierarchical reduction iteration %2 with %3 beads").arg(k+1).arg(iter).arg(pairs.size()));
                qApp->processEvents();
                max_intersection_length = 0;
                int max_pair = -1;
@@ -3769,8 +3769,8 @@ void US_Hydrodyn::radial_reduction()
                printf("processing simultaneous radial reduction iteration %d\n", iter);
                editor->append(QString(" %1").arg(iter));
 #endif
-               lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction iteration %2").arg(k+1).arg(iter));
-               qApp->processEvents();
+               //   lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction iteration %2").arg(k+1).arg(iter));
+               //               qApp->processEvents();
                if(iter > 10000) {
                   printf("too many iterations\n");
                   exit(-1);
@@ -3902,8 +3902,8 @@ void US_Hydrodyn::radial_reduction()
 #if defined(DEBUG1) || defined(DEBUG)
                printf("processing radial reduction sync iteration %d pairs to process %d max int len %f\n", iter, count, max_intersection_length);
 #endif
-               // lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction iteration %2 pairs %3").arg(k+1).arg(iter).arg(count));
-               // qApp->processEvents();
+               lbl_core_progress->setText(QString("Stage %1 simultaneous reduction iteration %2 with %3 beads").arg(k+1).arg(iter).arg(pairs.size()));
+               qApp->processEvents();
                if (max_intersection_length > TOLERANCE) {
 #if defined(DEBUG1) || defined(DEBUG)
                   printf("processing radial reduction sync iteration %d pairs to process %d\n", iter, count);
@@ -5943,7 +5943,7 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG1) || defined(DEBUG)
                printf("processing hierarchical radial reduction iteration %d\n", iter);
 #endif
-               lbl_core_progress->setText(QString("Stage %1 hierarchical radial reduction iteration %2").arg(k+1).arg(iter));
+               lbl_core_progress->setText(QString("Stage %1 hierarchical reduction iteration %2 with %3 beads").arg(k+1).arg(iter).arg(pairs.size()));
                qApp->processEvents();
                max_intersection_length = 0;
                int max_pair = -1;
@@ -6328,8 +6328,8 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG1) || defined(DEBUG)
                printf("processing simultaneous radial reduction iteration %d\n", iter);
 #endif
-               lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction iteration %2").arg(k+1).arg(iter));
-               qApp->processEvents();
+               // lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction iteration %2").arg(k+1).arg(iter));
+               // qApp->processEvents();
 
                if(iter > 10000) {
                   printf("too many iterations\n");
@@ -6467,8 +6467,8 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG1) || defined(DEBUG)
                   printf("processing radial reduction sync iteration %d pairs to process %d\n", iter, count);
 #endif
-                  // lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction iteration %2 pairs %3").arg(k+1).arg(iter).arg(count));
-                  // qApp->processEvents();
+                  lbl_core_progress->setText(QString("Stage %1 simultaneous reduction iteration %2 with %3 beads").arg(k+1).arg(iter).arg(pairs.size()));
+                  qApp->processEvents();
                   for (unsigned int i = 0; i < pairs.size(); i++) {
                      if (
                          !reduced[pairs[i].i] &&

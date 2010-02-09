@@ -2026,7 +2026,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
    scaling = 5.0;
    fprintf(fbms,
            "%d\n%s\n",
-           beads,
+           beads + 1,
            QFileInfo(fname).fileName().ascii()
            );
    fprintf(fspt,
@@ -2035,6 +2035,17 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
            );
 
    int atomno = 0;
+   for (unsigned int i = 0; i < model->size(); i++) {
+      if ((*model)[i].active) {
+         fprintf(fbms,
+                 "Pb %.2f %.2f %.2f\n",
+                 (*model)[0].bead_coordinate.axis[0] / scaling,
+                 (*model)[0].bead_coordinate.axis[1] / scaling,
+                 (*model)[0].bead_coordinate.axis[2] / scaling
+                 );
+         break;
+      }
+   }
    for (unsigned int i = 0; i < model->size(); i++) {
       if ((*model)[i].active) {
          if ((*model)[i].bead_color >= (sizeof(colormap) / sizeof(char))) {
@@ -2050,7 +2061,7 @@ void US_Hydrodyn::write_bead_spt(QString fname, vector<PDB_atom> *model) {
                  );
          fprintf(fspt,
                  "select atomno=%d\nspacefill %.2f\ncolour %s\n",
-                 atomno++,
+                 ++atomno,
                  (*model)[i].bead_computed_radius / scaling,
                  colormap[get_color(&(*model)[i])]
                  );
