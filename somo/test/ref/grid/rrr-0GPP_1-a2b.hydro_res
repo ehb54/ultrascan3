@@ -1,10 +1,10 @@
 
-BEAMS -           IST. CBA                - COEFF/SUPCW v. 4.2
+BEAMS -           IST. CBA                - COEFF/SUPCW v. 5.0
 
 **************************************************************
 ***** Computational Method : Supermatrix Inversion ***********
 **************************************************************
-* Date: Wed 3 Feb 10 22:08:25                                *
+* Date: Mon 8 Feb 10 23:39:40                                *
 **************************************************************
 MODEL File Name  :___ 0GPP_1-a2b
 TOTAL Beads in the MODEL :___ 8
@@ -16,8 +16,8 @@ Temperature:            20.00
 Solvent viscosity (cP): 1.001940
 Solvent density (g/ml): 0.998234
 
-Original vbar:          0.731 (computed)
-Temp corrected vbar:    0.731
+Original vbar:          0.731 (computed) 	[cm^3/g]
+Temp corrected vbar:    0.731            	[cm^3/g]
 
 - 'NORMALIZED' model -
 - STICK BOUNDARY CONDITIONS (6*PI*ETAo)

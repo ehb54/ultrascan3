@@ -4,10 +4,10 @@ $us = $ENV{'ULTRASCAN'} || die "\$ULTRASCAN must be set\n";
 $ush = "$ENV{'HOME'}/ultrascan";
 
 #$debug++;
-# $do_somo++;
+$do_somo++;
 $do_grid++;
 # $hydro_opts = "-d";
-$maxtimes = 2;
+$maxtimes = 1;
 
 @test = ( # file, testsomo, testgrid, config file, expect failure
          '0GGG.pdb', 1, 1, 'dflt', 0,
@@ -157,9 +157,9 @@ sub testsomo { # file, config, expectfailure
     print OUT "exit\n";
     close OUT;
 
-    my @refs = ( "_1.hydro_res",
-                 "_1.asa_res",
-                 "_1.bead_model" );
+    my @refs = ( "_1-so.hydro_res",
+                 "_1-so.asa_res",
+                 "_1-so.bead_model" );
 
     # backup existing output files
 
