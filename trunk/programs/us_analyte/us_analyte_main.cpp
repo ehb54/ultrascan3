@@ -1,13 +1,13 @@
-//! \file us_vbar_main.cpp
+//! \file us_analyte_main.cpp
 
 #include <QApplication>
 
-#include "us_vbar.h"
+#include "us_analyte.h"
 #include "us_license_t.h"
 #include "us_license.h"
 
-//! \brief Main program for US_Buffer. Loads translators and starts
-//    the class US_Buffer.
+//! \brief Main program for US_Analyte. Loads translators and starts
+//    the class US_Analyte.
 
 int main( int argc, char* argv[] )
 {
@@ -16,7 +16,7 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   US_Vbar* w = new US_Vbar;
-   w->show();                   //!< \memberof QWidget
+   US_Analyte w;
+   w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }
