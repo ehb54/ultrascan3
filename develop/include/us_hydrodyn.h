@@ -239,7 +239,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Save *save_window;
       QProcess *rasmol;
 
-      QString getExtendedSuffix(bool); 
+      QString getExtendedSuffix(bool prerun = true, bool somo = true); 
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )

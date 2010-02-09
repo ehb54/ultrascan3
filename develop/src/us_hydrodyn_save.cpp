@@ -1809,16 +1809,10 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
    //   printf("sdv %f sdrv %f\n", sdv, sdrv);
 
    
-   //   result += QString("").sprintf(" Tau(m) (Weighted average)    \t%.2f\t\t%.2f\t\t[ns]\n",
-   //                                 avgv,
-   //                                 sdv);
-   //   result += QString("").sprintf(" Tau(h) (Weighted average)    \t%.2f\t\t%.2f\t\t[ns]\n",
-   //                                 1.0 / avgrv,
-   //                                 1.0 / sdrv);
-   result += QString("").sprintf(" Tau(m) (Weighted average)    \t%.2f\t\t\t\t[ns]\n",
-                                 avgv);
-   result += QString("").sprintf(" Tau(h) (Weighted average)    \t%.2f\t\t\t\t[ns]\n",
-                                 1.0 / avgrv);
+   //   result += QString("").sprintf(" Tau(m) (Weighted average)    \t%.2f\t\t\t\t[ns]\n",
+   //                                 avgv);
+   //   result += QString("").sprintf(" Tau(h) (Weighted average)    \t%.2f\t\t\t\t[ns]\n",
+   //                                 1.0 / avgrv);
    
    result += QString("").sprintf("\n Tau(m) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
                                  stats[0].rel_times_tau_m,

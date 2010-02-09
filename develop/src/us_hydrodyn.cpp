@@ -132,7 +132,7 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    batch_widget = false;
    save_widget = false;
    calcAutoHydro = false;
-   setSuffix = true;
+   setSuffix = false;
    overwrite = false;
    saveParams = false;
    guiFlag = true;
@@ -400,7 +400,7 @@ void US_Hydrodyn::setupGUI()
    lbl_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize-1, QFont::Bold));
 
    cb_setSuffix = new QCheckBox(this);
-   cb_setSuffix->setText(tr(" Automatically set suffix "));
+   cb_setSuffix->setText(tr(" Add auto-generated suffix "));
    cb_setSuffix->setChecked(setSuffix);
    cb_setSuffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_setSuffix->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -624,8 +624,8 @@ void US_Hydrodyn::setupGUI()
    // gl_prefix_suffix->addMultiCellWidget(le_bead_model_suffix, 0, 0, 1, 2);
    // background->addLayout(gl_prefix_suffix, j, 1);   
    j++;
-   background->addWidget(cb_setSuffix, j, 0);
-   background->addWidget(cb_overwrite, j, 1);
+   background->addWidget(cb_overwrite, j, 0);
+   background->addWidget(cb_setSuffix, j, 1);
    j++;
    background->addWidget(pb_somo, j, 0);
    background->addWidget(pb_grid_pdb, j, 1);
@@ -1562,7 +1562,7 @@ int US_Hydrodyn::calc_somo()
    display_default_differences();
    model_vector = model_vector_as_loaded;
 
-   bead_model_suffix = getExtendedSuffix(true);
+   bead_model_suffix = getExtendedSuffix(false, true);
    le_bead_model_suffix->setText(bead_model_suffix);
 
    if (stopFlag)
@@ -1700,7 +1700,7 @@ int US_Hydrodyn::calc_grid_pdb()
       results_widget = false;
    }
 
-   bead_model_suffix = getExtendedSuffix(false);
+   bead_model_suffix = getExtendedSuffix(false, false);
    le_bead_model_suffix->setText(bead_model_suffix);
 
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
@@ -2073,7 +2073,7 @@ int US_Hydrodyn::calc_grid()
       results_widget = false;
    }
 
-   bead_model_suffix = getExtendedSuffix(false) + "g";
+   bead_model_suffix = getExtendedSuffix(false, false) + "g";
    le_bead_model_suffix->setText(bead_model_suffix);
 
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
@@ -2328,6 +2328,7 @@ void US_Hydrodyn::set_calcAutoHydro()
 void US_Hydrodyn::set_setSuffix()
 {
    setSuffix = cb_setSuffix->isChecked();
+   display_default_differences();
 }
 
 void US_Hydrodyn::set_overwrite()
@@ -2847,7 +2848,7 @@ void US_Hydrodyn::bead_saxs()
    }
 }
 
-QString US_Hydrodyn::getExtendedSuffix(bool somo)
+QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo)
 {
    // produce a suffix based upon settings
    // e.g.
@@ -2889,7 +2890,7 @@ QString US_Hydrodyn::getExtendedSuffix(bool somo)
               (mainchain_overlap.remove_hierarch == 
                buried_overlap.remove_hierarch ) )
          {
-            result += QString("R%1").arg(sidechain_overlap.remove_sync ? "sy" : "hi");
+            result += QString("%1").arg(sidechain_overlap.remove_sync ? "sy" : "hi");
          }
          
          if ( sidechain_overlap.remove_overlap &&
@@ -2912,7 +2913,7 @@ QString US_Hydrodyn::getExtendedSuffix(bool somo)
               (grid_buried_overlap.remove_hierarch == 
                grid_overlap.remove_hierarch ) )
          {
-            result += QString("R%1").arg(grid_exposed_overlap.remove_sync ? "sy" : "hi");
+            result += QString("%1").arg(grid_exposed_overlap.remove_sync ? "sy" : "hi");
          }
          
          if ( grid_exposed_overlap.remove_overlap &&
@@ -2932,7 +2933,10 @@ QString US_Hydrodyn::getExtendedSuffix(bool somo)
          }
       }
    }
-   result += QString(result.length() ? "-" : "") + QString(somo ? "so" : "a2b");
-   editor->append(result);
+   if ( !prerun )
+   { 
+      result += QString(result.length() ? "-" : "") + QString(somo ? "so" : "a2b");
+   }
+   //   editor->append(result);
    return result;
 }

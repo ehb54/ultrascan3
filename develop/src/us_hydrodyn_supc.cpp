@@ -3299,10 +3299,10 @@ val_med()
       taoh = taoh + (1 / (CT[3] / num) / (pow(stdinv, 2)));
       taod = taod + (1 / temp);
       taodin = taodin + (1 / (pow(stdinv, 2)));
-      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Weighted average)    ", (taom / taod), (sqrt(1 / taod)), "[ns]");
+      //      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Weighted average)    ", (taom / taod), (sqrt(1 / taod)), "[ns]");
       stdinv = (taoh / taodin) + ((sqrt(1 / taodin)));
-      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Weighted average)    ", (1 / (taoh / taodin)),
-              ((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
+      //      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Weighted average)    ", (1 / (taoh / taodin)),
+      //              ((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
    }
 
    if (taoflag == 2.0)
@@ -3332,10 +3332,10 @@ val_med()
       taoh = taoh + (1 / (CT[3] / num) / (pow(stdinv, 2)));
       taod = taod + (1 / temp);
       taodin = taodin + (1 / (pow(stdinv, 2)));
-      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Weighted average)    ", (taom / taod), (sqrt(1 / taod)), "[ns]");
+      //      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Weighted average)    ", (taom / taod), (sqrt(1 / taod)), "[ns]");
       stdinv = (taoh / taodin) + ((sqrt(1 / taodin)));
-      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Weighted average)    ", (1 / (taoh / taodin)),
-              ((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
+      // fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Weighted average)    ", (1 / (taoh / taodin)),
+      //        ((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
    }
 
    if (taoflag == 0.0)
@@ -3379,10 +3379,10 @@ val_med()
       taoh = taoh + (1 / (CT[4] / num) / (pow(stdinv, 2)));
       taod = taod + (1 / temp);
       taodin = taodin + (1 / (pow(stdinv, 2)));
-      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Weighted average)    ", (taom / taod), (sqrt(1 / taod)), "[ns]");
+      //      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(m) (Weighted average)    ", (taom / taod), (sqrt(1 / taod)), "[ns]");
       stdinv = (taoh / taodin) + ((sqrt(1 / taodin)));
-      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Weighted average)    ", (1 / (taoh / taodin)),
-              ((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
+      //      fprintf(ris, "%s\t%.2f\t\t%.2f\t\t%s\n", " Tau(h) (Weighted average)    ", (1 / (taoh / taodin)),
+      //              ((1 / (taoh / taodin)) - (1 / stdinv)), "[ns]");
    }
 
    temp = fabs((CTM2 - pow(CTM, 2) / num) / (num - 1));

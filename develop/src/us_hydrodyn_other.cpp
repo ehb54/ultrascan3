@@ -3350,6 +3350,9 @@ void US_Hydrodyn::display_default_differences()
       editor->append("\nAll options set to default values\n");
       editor->setColor(save_color);
    }
+   le_bead_model_suffix->setText(
+                                 setSuffix ? (getExtendedSuffix(true, true) + " / " +
+                                              getExtendedSuffix(true, false)) : "");
 }
 
 
