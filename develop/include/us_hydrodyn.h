@@ -146,6 +146,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct bead_output_options default_bead_output;
       hydro_results results;
       batch_info default_batch;
+      save_info default_save_params;
       struct residue new_residue;
       struct atom new_atom;
       struct bead new_bead;
@@ -165,6 +166,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       struct overlap_reduction default_grid_overlap;
       QString project;   // name of the current project - derived from the prefix of the pdb filename
       QString bead_model_prefix;
+      QString bead_model_suffix;
       QString somo_tmp_dir;
 
       point last_molecular_cog;
@@ -191,6 +193,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QLineEdit *le_bead_model_file;
       QLineEdit *le_bead_model_prefix;
+      QLineEdit *le_bead_model_suffix;
 
       QPushButton *pb_batch;
       QPushButton *pb_batch2;
@@ -236,7 +239,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       US_Hydrodyn_Save *save_window;
       QProcess *rasmol;
 
-      QString setExtendedSuffix();
+      QString getExtendedSuffix(bool); 
 
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
@@ -326,6 +329,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void read_residue_file();
       int read_config(const QString &);
       int read_config(QFile &);
+      void show_misc();
 
    private slots:
       void load_pdb();
@@ -360,7 +364,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void show_grid_overlap();
       void show_bead_output();
       void show_hydro();
-      void show_misc();
       void show_grid(); // show grid options
       void show_advanced_config();
       void view_pdb(); // show pdb file in editor

@@ -787,8 +787,13 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
    setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    setCaption(tr("Hydrodynamic Parameters to be Saved"));
    // for now:  until we save/restore
-   save->field.clear();
+   //   save->field.clear();
    save->field_flag.clear();
+   for ( unsigned int i = 0; i < save->field.size(); i++ )
+   {
+      save->field_flag[field[i]] = true;
+   }
+   header();
 
    for ( unsigned int i = 0; i < field.size(); i++ )
    {
@@ -1534,8 +1539,7 @@ vector < save_data > US_Hydrodyn_Save::stats(vector < save_data > *data)
    return result;
 }
 
-QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats,
-                                           vector < save_data > *data)
+QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats)
 {
    QString result;
    
@@ -1612,7 +1616,7 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats,
                                  stats[0].rot_diff_coef_z,
                                  stats[1].rot_diff_coef_z);
    
-   result += QString("").sprintf("- RADIUS OF GYRATION          \t%.2f\t\t%.2f\t\t[nm]\n", 
+   result += QString("").sprintf("\n- RADIUS OF GYRATION          \t%.2f\t\t%.2f\t\t[nm]\n", 
                                  stats[0].results.rg,
                                  stats[1].results.rg);
    
@@ -1676,50 +1680,145 @@ QString US_Hydrodyn_Save::hydroFormatStats(vector < save_data > stats,
    result += QString("").sprintf(" Tau(4)                       \t%.2f\t\t%.2f\t\t[ns]\n",
                                  stats[0].rel_times_tau_4,
                                  stats[1].rel_times_tau_4);
-   result += QString("").sprintf(" Tau(5)                       \t%.2f\t\t%.2f\t\t[ns]\n\n",
+   result += QString("").sprintf(" Tau(5)                       \t%.2f\t\t%.2f\t\t[ns]\n",
                                  stats[0].rel_times_tau_5,
                                  stats[1].rel_times_tau_5);
 
-   // computed weighted average
-   double meanh = 0.0;
-   double sdh = 0.0;
-   double meanm = 0.0;
-   double sdm = 0.0;
-   double summw = 0.0;
-   double V2 = 0.0;
-   double w;
+   // compute weighted mean average tau(m)
    
-   // add up mass
-   for ( unsigned int i = 0; i < data->size(); i++ )
-   {
-      summw += (*data)[i].results.mass;
-   }
-
    // compute weighted means & V2
-   for ( unsigned int i = 0; i < data->size(); i++ )
+   double v[5];
+   double rv[5];
+   double s[5];
+   double rs[5];
+   double avgv = 0.0;
+   double avgrv = 0.0;
+
+   v[0] = stats[0].rel_times_tau_1;
+   v[1] = stats[0].rel_times_tau_2;
+   v[2] = stats[0].rel_times_tau_3;
+   v[3] = stats[0].rel_times_tau_4;
+   v[4] = stats[0].rel_times_tau_5;
+
+
+   s[0] = stats[1].rel_times_tau_1;
+   s[1] = stats[1].rel_times_tau_2;
+   s[2] = stats[1].rel_times_tau_3;
+   s[3] = stats[1].rel_times_tau_4;
+   s[4] = stats[1].rel_times_tau_5;
+
+   double w[5];
+   double rw[5];
+
+   double sumw = 0.0;
+   double sumrw = 0.0;
+
+   // setup for harmonic means
+   for ( unsigned int i = 0; i < 5; i++ )
    {
-      w = (*data)[i].results.mass / summw;
-      V2 += w * w;
-      meanm += (*data)[i].rel_times_tau_m * w;
-      meanh += (*data)[i].rel_times_tau_h * w;
+      rv[i] = 1.0 / v[i];
+      rs[i] = s[i];
    }
 
-   // compute sum w(i) * (xi - mean)^2
-   for ( unsigned int i = 0; i < data->size(); i++ )
-   {
-      w = (*data)[i].results.mass / summw;
-      sdm += w * ((*data)[i].rel_times_tau_m - meanm) * ((*data)[i].rel_times_tau_m - meanh);
-      sdh += w * ((*data)[i].rel_times_tau_h - meanh) * ((*data)[i].rel_times_tau_h - meanh);
-   }
-   sdm = sqrt(fabs((1.0 / (1.0 - V2)) * sdm));
-   sdh = sqrt(fabs((1.0 / (1.0 - V2)) * sdh));
+   // compute weights
 
-   result += QString("").sprintf(" Tau(m) (Weighted average)    \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 meanm,
-                                 sdm);
-   result += QString("").sprintf(" Tau(h) (Weighted average)    \t%.2f\t\t%.2f\t\t[ns]\n",
-                                 meanh,
-                                 sdh);
+   // setup weights
+   for ( unsigned int i = 0; i < 5; i++ )
+   {
+      w[i] = 1.0 / (s[i] * s[i]);
+      rw[i] = 1.0 / (rs[i] * rs[i]);
+      sumw += w[i];
+      sumrw += rw[i];
+      //      printf("unnormalized weight [%d] = %f\n", i, w[i]);
+      //      printf("unnormalized rweight [%d] = %f\n", i, rw[i]);
+   }
+
+   // normalize weights
+   for ( unsigned int i = 0; i < 5; i++ )
+   {
+      w[i] /= sumw;
+      rw[i] /= sumrw;
+      //      printf("normalized weight [%d] = %f\n", i, w[i]);
+      //      printf("normalized rweight [%d] = %f\n", i, rw[i]);
+   }
+
+   // compute averages
+   for ( unsigned int i = 0; i < 5; i++ )
+   {
+      avgv += v[i] * w[i];
+      avgrv += rv[i] * rw[i];
+   }
+
+   //   printf("avgv %f avgrv %f\n", avgv, avgrv);
+
+   // repeat process for s.d.'s
+
+   v[0] = stats[1].rel_times_tau_1;
+   v[1] = stats[1].rel_times_tau_2;
+   v[2] = stats[1].rel_times_tau_3;
+   v[3] = stats[1].rel_times_tau_4;
+   v[4] = stats[1].rel_times_tau_5;
+
+   s[0] = stats[1].rel_times_tau_1;
+   s[1] = stats[1].rel_times_tau_2;
+   s[2] = stats[1].rel_times_tau_3;
+   s[3] = stats[1].rel_times_tau_4;
+   s[4] = stats[1].rel_times_tau_5;
+
+   // setup for harmonic means
+   for ( unsigned int i = 0; i < 5; i++ )
+   {
+      rv[i] = 1.0 / v[i];
+      rs[i] = s[i];
+   }
+
+   // compute weights
+   sumw = 0.0;
+   sumrw = 0.0;
+   double sdv = 0.0;
+   double sdrv = 0.0;
+
+   // setup weights
+   for ( unsigned int i = 0; i < 5; i++ )
+   {
+      w[i] = 1.0 / (s[i] * s[i]);
+      rw[i] = 1.0 / (rs[i] * rs[i]);
+      sumw += w[i];
+      sumrw += rw[i];
+      //      printf("unnormalized weight [%d] = %f\n", i, w[i]);
+      //      printf("unnormalized rweight [%d] = %f\n", i, rw[i]);
+   }
+
+   // normalize weights
+   for ( unsigned int i = 0; i < 5; i++ )
+   {
+      w[i] /= sumw;
+      rw[i] /= sumrw;
+      //      printf("normalized weight [%d] = %f\n", i, w[i]);
+      //      printf("normalized rweight [%d] = %f\n", i, rw[i]);
+   }
+
+   // compute averages
+
+   for ( unsigned int i = 0; i < 5; i++ )
+   {
+      sdv += v[i] * w[i];
+      sdrv += rv[i] * rw[i];
+   }
+
+   //   printf("sdv %f sdrv %f\n", sdv, sdrv);
+
+   
+   //   result += QString("").sprintf(" Tau(m) (Weighted average)    \t%.2f\t\t%.2f\t\t[ns]\n",
+   //                                 avgv,
+   //                                 sdv);
+   //   result += QString("").sprintf(" Tau(h) (Weighted average)    \t%.2f\t\t%.2f\t\t[ns]\n",
+   //                                 1.0 / avgrv,
+   //                                 1.0 / sdrv);
+   result += QString("").sprintf(" Tau(m) (Weighted average)    \t%.2f\t\t\t\t[ns]\n",
+                                 avgv);
+   result += QString("").sprintf(" Tau(h) (Weighted average)    \t%.2f\t\t\t\t[ns]\n",
+                                 1.0 / avgrv);
    
    result += QString("").sprintf("\n Tau(m) (Unweighted average)  \t%.2f\t\t%.2f\t\t[ns]\n",
                                  stats[0].rel_times_tau_m,

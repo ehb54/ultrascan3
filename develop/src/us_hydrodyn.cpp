@@ -421,6 +421,14 @@ void US_Hydrodyn::setupGUI()
    le_bead_model_prefix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    connect(le_bead_model_prefix, SIGNAL(textChanged(const QString &)), SLOT(update_bead_model_prefix(const QString &)));
 
+   le_bead_model_suffix = new QLineEdit(this, "bead_model_suffix Line Edit");
+   le_bead_model_suffix->setText(tr(""));
+   le_bead_model_suffix->setMinimumHeight(minHeight1);
+   le_bead_model_suffix->setAlignment(AlignCenter|AlignVCenter);
+   le_bead_model_suffix->setPalette(QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   le_bead_model_suffix->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   le_bead_model_suffix->setReadOnly(true);
+
    pb_somo = new QPushButton(tr("Build SoMo Bead Model"), this);
    Q_CHECK_PTR(pb_somo);
    pb_somo->setMinimumHeight(minHeight1);
@@ -580,7 +588,7 @@ void US_Hydrodyn::setupGUI()
    clear_display();
 
    int rows=20, columns = 3, spacing = 2, j=0, margin=4;
-   QGridLayout *background=new QGridLayout(this, rows, columns, margin, spacing);
+   QGridLayout *background = new QGridLayout(this, rows, columns, margin, spacing);
 
    background->addMultiCellWidget(frame, j, j, 0, 1);
    background->addMultiCellWidget(editor, j, j+21, 2, 2);
@@ -604,8 +612,17 @@ void US_Hydrodyn::setupGUI()
    j++;
    background->addMultiCellWidget(lbl_info2, j, j, 0, 1);
    j++;
-   background->addWidget(lbl_bead_model_prefix, j, 0);
-   background->addWidget(le_bead_model_prefix, j, 1);
+   //   background->addWidget(lbl_bead_model_prefix, j, 0);
+   QHBoxLayout *hbl_prefix_suffix = new QHBoxLayout;
+   hbl_prefix_suffix->addWidget(lbl_bead_model_prefix);
+   hbl_prefix_suffix->addWidget(le_bead_model_prefix);
+   // hbl_prefix_suffix->addWidget(le_bead_model_suffix);
+   background->addLayout(hbl_prefix_suffix, j, 0);
+   background->addWidget(le_bead_model_suffix, j, 1);
+   // QGridLayout *gl_prefix_suffix = new QGridLayout(1,3);
+   // gl_prefix_suffix->addMultiCellWidget(le_bead_model_prefix, 0, 0, 0, 0);
+   // gl_prefix_suffix->addMultiCellWidget(le_bead_model_suffix, 0, 0, 1, 2);
+   // background->addLayout(gl_prefix_suffix, j, 1);   
    j++;
    background->addWidget(cb_setSuffix, j, 0);
    background->addWidget(cb_overwrite, j, 1);
@@ -996,6 +1013,8 @@ void US_Hydrodyn::do_reset()
    pdb_parse = default_pdb_parse;
    grid = default_grid;
    saxs_options = default_saxs_options;
+   batch = default_batch;
+   //  save = default_save;
 }
 
 void US_Hydrodyn::reset()
@@ -1542,14 +1561,10 @@ int US_Hydrodyn::calc_somo()
    append_options_log_somo();
    display_default_differences();
    model_vector = model_vector_as_loaded;
-   if ( bead_model_prefix.contains("a2b") )
-   {
-      bead_model_prefix.replace("-a2bg","");
-      bead_model_prefix.replace("-a2b","");
-      bead_model_prefix.replace("a2bg","");
-      bead_model_prefix.replace("a2b","");
-      le_bead_model_prefix->setText(bead_model_prefix);
-   }
+
+   bead_model_suffix = getExtendedSuffix(true);
+   le_bead_model_suffix->setText(bead_model_suffix);
+
    if (stopFlag)
    {
       editor->append("Stopped by user\n\n");
@@ -1685,25 +1700,8 @@ int US_Hydrodyn::calc_grid_pdb()
       results_widget = false;
    }
 
-   if ( bead_model_prefix.contains("a2bg") )
-   {
-      bead_model_prefix.replace("-a2bg","");
-      bead_model_prefix.replace("a2bg","");
-      le_bead_model_prefix->setText(bead_model_prefix);
-   }
-   if ( !bead_model_prefix.contains("a2b") )
-   {
-      if ( bead_model_prefix.length() )
-      {
-         bead_model_prefix += "-a2b";
-      }
-      else
-      {
-         bead_model_prefix += "a2b";
-      }
-      le_bead_model_prefix->setText(bead_model_prefix);
-   }
-
+   bead_model_suffix = getExtendedSuffix(false);
+   le_bead_model_suffix->setText(bead_model_suffix);
 
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
@@ -2000,10 +1998,10 @@ int US_Hydrodyn::calc_grid_pdb()
 
                   // write_bead_spt(somo_dir + SLASH + project +
                   //       (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-                  //       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+                  //       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                   //       DOTSOMO, &bead_model, bead_model_from_file);
                   write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-                                   QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+                                   QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                                    DOTSOMO, &bead_model);
 
                }
@@ -2075,25 +2073,8 @@ int US_Hydrodyn::calc_grid()
       results_widget = false;
    }
 
-   if ( !bead_model_prefix.contains("a2bg") )
-   {
-      if( bead_model_prefix.length() )
-      {
-         if ( bead_model_prefix.contains(QRegExp("a2b$")) )
-         {
-            bead_model_prefix += "g";
-         }
-         else
-         {
-            bead_model_prefix += "-a2bg";
-         }
-      }
-      else
-      {
-         bead_model_prefix += "a2bg";
-      }
-      le_bead_model_prefix->setText(bead_model_prefix);
-   }
+   bead_model_suffix = getExtendedSuffix(false) + "g";
+   le_bead_model_suffix->setText(bead_model_suffix);
 
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
@@ -2291,10 +2272,10 @@ int US_Hydrodyn::calc_grid()
             progress->setProgress(progress->progress() + 1);
             // write_bead_spt(somo_dir + SLASH + project +
             //        (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-            //        QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+            //        QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
             //           DOTSOMO, &bead_model, bead_model_from_file);
             write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-                             QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+                             QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                              DOTSOMO, &bead_model);
             progress->setProgress(progress->totalSteps());
          }
@@ -2380,7 +2361,7 @@ void US_Hydrodyn::visualize()
             bead_model = bead_models[current_model];
             write_bead_spt(somo_dir + SLASH + project +
                            (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-                           QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+                           QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                            DOTSOMO, &bead_model);
             editor->append(QString("Visualizing model %1\n").arg(current_model + 1));
             QStringList argument;
@@ -2398,7 +2379,7 @@ void US_Hydrodyn::visualize()
             argument.append(
                             project +
                             (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-                            QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+                            QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                             DOTSOMO + ".spt");
 
             rasmol->setWorkingDirectory(somo_dir);
@@ -2448,7 +2429,7 @@ int US_Hydrodyn::calc_hydro()
 
             // write_bead_spt(somo_dir + SLASH + project +
             //          (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
-            //          QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+            //          QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
             //          DOTSOMO, &bead_model, bead_model_from_file);
          }
          else
@@ -2487,11 +2468,11 @@ int US_Hydrodyn::calc_hydro()
                                               // (bead_model_from_file ? "" : QString("_%1").arg(current_model + 1)) +
                                               // (bead_model_from_file ? "" : (models_to_proc == 1 ? "_1" : "_%1")) +
                                               (bead_model_from_file ? "" : "_%1") +
-                                              QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+                                              QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                                               DOTSOMO + ".beams").ascii(),
                                       QString(project +
                                               (bead_model_from_file ? "" : QString("_%1").arg(first_model_no)) +
-                                              QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+                                              QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                                               DOTSOMO + ".beams").ascii(),
                                       progress,
                                       editor,
@@ -2817,10 +2798,10 @@ void US_Hydrodyn::bead_saxs()
    else
    {
       QString filename = QFileInfo(bead_model_file).baseName( TRUE ) +
-         QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "");
+         QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "");
       if ( !QFileInfo(bead_model_file).baseName( TRUE ).length() )
       {
-         filename = project + QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "");
+         filename = project + QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "");
       }
       if ( !filename.length() )
       {
@@ -2866,8 +2847,92 @@ void US_Hydrodyn::bead_saxs()
    }
 }
 
-// QString US_Hydrodyn::getExtendedSuffix()
-// {
-//    QString result;
-//    return result;
-// }
+QString US_Hydrodyn::getExtendedSuffix(bool somo)
+{
+   // produce a suffix based upon settings
+   // e.g.
+   // A20 for ASA screen 20 
+   // R50 for ASA recheck 50% 
+   // hi or sy (if ALL 3 panels set to the same thing) 
+   // OT outward translation
+   // hy = hydration on in grid models,
+   // G4 grid setting in grid models & 
+   // -so for somo models
+
+   QString result = le_bead_model_prefix->text();
+
+   if ( setSuffix )
+   {
+      result += result.length() ? "-" : "";
+
+      if ( asa.calculation )
+      {
+         result += QString("A%1").arg(somo ? asa.threshold : asa.grid_threshold);
+      }
+      
+      if ( asa.recheck_beads )
+      {
+         result += QString("R%1").arg(somo ? asa.threshold_percent : asa.grid_threshold_percent);
+      }
+      
+      if ( somo ) 
+      {
+         if ( sidechain_overlap.remove_overlap &&
+              mainchain_overlap.remove_overlap &&
+              buried_overlap.remove_overlap &&
+              (sidechain_overlap.remove_sync == 
+               mainchain_overlap.remove_sync) && 
+              (mainchain_overlap.remove_sync == 
+               buried_overlap.remove_sync ) &&
+              (sidechain_overlap.remove_hierarch == 
+               mainchain_overlap.remove_hierarch) &&
+              (mainchain_overlap.remove_hierarch == 
+               buried_overlap.remove_hierarch ) )
+         {
+            result += QString("R%1").arg(sidechain_overlap.remove_sync ? "sy" : "hi");
+         }
+         
+         if ( sidechain_overlap.remove_overlap &&
+              sidechain_overlap.translate_out )
+         {
+            result += "OT";
+         }
+      }
+      if ( !somo ) 
+      {
+         if ( grid_exposed_overlap.remove_overlap &&
+              grid_buried_overlap.remove_overlap &&
+              grid_overlap.remove_overlap &&
+              (grid_exposed_overlap.remove_sync == 
+               grid_buried_overlap.remove_sync) &&
+              (grid_buried_overlap.remove_sync ==
+               grid_overlap.remove_sync ) &&
+              (grid_exposed_overlap.remove_hierarch == 
+               grid_buried_overlap.remove_hierarch) &&
+              (grid_buried_overlap.remove_hierarch == 
+               grid_overlap.remove_hierarch ) )
+         {
+            result += QString("R%1").arg(grid_exposed_overlap.remove_sync ? "sy" : "hi");
+         }
+         
+         if ( grid_exposed_overlap.remove_overlap &&
+              grid_exposed_overlap.translate_out )
+         {
+            result += "OT";
+         }
+         
+         if ( grid.hydrate )
+         {
+            result += "hy";
+         }
+         
+         if ( grid.cubic )
+         {
+            result += QString("G%1").arg(grid.cube_side);
+         }
+      }
+   }
+   result += QString(result.length() ? "-" : "") + QString(somo ? "so" : "a2b");
+   editor->append(result);
+   return result;
+}

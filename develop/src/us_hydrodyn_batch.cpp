@@ -827,6 +827,32 @@ void US_Hydrodyn_Batch::enable_after_stop()
 
 void US_Hydrodyn_Batch::start()
 {
+   if ( !((US_Hydrodyn *)us_hydrodyn)->misc.compute_vbar )
+   {
+      switch ( QMessageBox::warning(this, 
+                                    tr("UltraScan Warning"),
+                                    QString(tr("Please note:\n\nThe vbar is currently manually set to %1.\n"
+                                               "What would you like to do?\n"))
+                                    .arg(((US_Hydrodyn *)us_hydrodyn)->misc.vbar),
+                                    tr("&Stop"), 
+                                    tr("&Change the vbar setting now"),
+                                    tr("C&ontinue"),
+                                    0, // Stop == button 0
+                                    0 // Escape == button 0
+                                    ) )
+      {
+      case 0 : // stop
+         return;
+         break;
+      case 1 : // change the vbar setting now
+         ((US_Hydrodyn *)us_hydrodyn)->show_misc();
+         return;
+         break;
+      case 2 : // continue
+         break;
+      }
+   }
+
    disable_after_start();
    disable_updates = true;
    editor->append(tr("\nProcess files:\n"));
@@ -960,7 +986,7 @@ void US_Hydrodyn_Batch::start()
          }
          if ( stats.size() == 2 )
          {
-            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats(stats,&((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector).ascii());
+            fprintf(of, "%s", ((US_Hydrodyn *)us_hydrodyn)->save_util->hydroFormatStats(stats).ascii());
          }
          fclose(of);
       }

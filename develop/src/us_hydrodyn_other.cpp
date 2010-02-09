@@ -756,7 +756,10 @@ int US_Hydrodyn::read_bead_model(QString filename)
             }
             if (!ts.atEnd()) {
                QString tmp_string;
-               ts >> tmp_string;
+               // strip extra fields
+               tmp_string = ts.readLine();
+               tmp_string.replace(QRegExp("^\\s*"),"");
+               tmp_string.replace(QRegExp("\\s.*"),"");
                tmp_atom.bead_recheck_asa = tmp_string.toFloat();
             }
             else
@@ -792,7 +795,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          bead_model_from_file = true;
          editor->append("Bead model loaded\n\n");
          // write_bead_spt(somo_dir + SLASH + project +
-         //          QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+         //          QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
          //          DOTSOMO, &bead_model, true);
          lb_model->clear();
          lb_model->insertItem("Model 1 from bead_model file");
@@ -806,7 +809,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;
-         return 0;
+         return(overlap_check(true, true, true));
       }
    }
 
@@ -919,7 +922,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          editor->append(QString("\nvbar: %1\n\n").arg(results.vbar));
          editor->append("Bead model loaded\n\n");
          // write_bead_spt(somo_dir + SLASH + project +
-         //          QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+         //          QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
          //          DOTSOMO, &bead_model, true);
 
          lb_model->clear();
@@ -934,7 +937,7 @@ int US_Hydrodyn::read_bead_model(QString filename)
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;
-         return 0;
+         return(overlap_check(true, true, true));
       }
    }
    editor->append("File read error\n");
@@ -1409,6 +1412,18 @@ int US_Hydrodyn::read_config(QFile& f)
       }
    }
 
+   save_params.field.clear();
+   ts >> str; // save field list
+   if ( ts.readLine() == QString::null ) return -11500;
+   {
+      int number_of_fields = str.toInt();
+      for ( int i = 0; i < number_of_fields; i++ )
+      {
+         if ( (str = ts.readLine() ) == QString::null ) return -(11501 + i);
+         save_params.field.push_back(str);
+      }
+   }
+
    if ( !ts.atEnd() ) return -12000;
 
    f.close();
@@ -1614,6 +1629,12 @@ void US_Hydrodyn::write_config(const QString& fname)
       {
          ts << batch.file[i] << endl;
       }
+
+      ts << save_params.field.size() << "\t\t# save params number of fields to follow\n";
+      for ( unsigned int i = 0; i < save_params.field.size(); i++ )
+      {
+         ts << save_params.field[i] << endl;
+      }
       f.close();
    }
 }
@@ -1812,10 +1833,12 @@ void US_Hydrodyn::set_default()
       batch.grid = false;
       batch.hydro = true;
       batch.avg_hydro = false;
-      batch.avg_hydro_name = "average";
+      batch.avg_hydro_name = "results";
       batch.height = 0;
       batch.width = 0;
       batch.file.clear();
+
+      save_params.field.clear();
    }
 
    default_sidechain_overlap = sidechain_overlap;
@@ -1834,6 +1857,7 @@ void US_Hydrodyn::set_default()
    default_grid = grid;
    default_saxs_options = saxs_options;
    default_batch = batch;
+   default_save_params = save_params;
 }
 
 void US_Hydrodyn::view_file(const QString &filename)
@@ -3364,7 +3388,6 @@ void US_Hydrodyn::play_sounds(int type)
       }
    }
 }
-
 
 void US_Hydrodyn::list_model_vector(vector < PDB_model > *mv)
 {

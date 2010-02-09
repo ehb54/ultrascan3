@@ -2042,9 +2042,19 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
             if (separation <= TOLERANCE) {
                continue;
             }
-            retval++;
+            if ( bead_model[i].bead_computed_radius > TOLERANCE * 1.001 &&
+                 bead_model[j].bead_computed_radius > TOLERANCE * 1.001 )
+            {
+               retval++;
+               QColor save_color = editor->color();
+               editor->setColor("red");
+               editor->append(QString(tr("WARNING: Bead model has an overlap violation on beads %1 %2 overlap %3\n"))
+                              .arg(i)
+                              .arg(j)
+                              .arg(separation));
+               editor->setColor(save_color);
 #if defined(DEBUG_OVERLAP)
-            printf("overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f %f with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - needs reduction\n",
+            printf("overlap check  beads %d %d on chains %d %d exposed code %d %d active %s %s : radii %f(%s) %f(%s) with coordinates [%f,%f,%f] [%f,%f,%f] sep of %f - needs reduction\n",
                    i, j,
                    bead_model[i].chain,
                    bead_model[j].chain,
@@ -2053,7 +2063,9 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
                    bead_model[i].active ? "Y" : "N",
                    bead_model[j].active ? "Y" : "N",
                    bead_model[i].bead_computed_radius,
+                   bead_model[i].bead_computed_radius > TOLERANCE * 1.001 ? "gt tol" : "not gt tol",
                    bead_model[j].bead_computed_radius,
+                   bead_model[j].bead_computed_radius > TOLERANCE * 1.001 ? "gt tol" : "not gt tol",
                    bead_model[i].bead_coordinate.axis[0],
                    bead_model[i].bead_coordinate.axis[1],
                    bead_model[i].bead_coordinate.axis[2],
@@ -2063,6 +2075,7 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
                    separation
                    );
 #endif
+            }
          }
       }
    }
@@ -4156,10 +4169,10 @@ void US_Hydrodyn::radial_reduction()
    write_bead_spt(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO, &bead_model);
 #endif
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-   //       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+   //       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
    //       DOTSOMO, &bead_model);
    write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-                    QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + DOTSOMO
+                    QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") + DOTSOMO
                     , &bead_model);
    editor->append("Finished with popping and radial reduction\n");
    progress->setProgress(end_progress); 
@@ -5389,7 +5402,7 @@ int US_Hydrodyn::compute_asa()
 
    write_bead_asa(somo_dir + SLASH +
                   project + QString("_%1").arg(current_model + 1) +
-                  QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "")
+                  QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "")
                   + DOTSOMO + ".asa_res", &bead_model);
 
 #if defined(DEBUG_MOD)
@@ -6720,10 +6733,10 @@ int US_Hydrodyn::compute_asa()
    write_bead_spt(somo_tmp_dir + SLASH + "bead_model_end" + DOTSOMO, &bead_model);
 #endif
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-   //       QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+   //       QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
    //       DOTSOMO, &bead_model);
    write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-                    QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") + DOTSOMO
+                    QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") + DOTSOMO
                     , &bead_model);
    editor->append("Finished with popping and radial reduction\n");
    progress->setProgress(mppos - (asa.recheck_beads ? 1 : 0));
@@ -6840,10 +6853,10 @@ void US_Hydrodyn::bead_check( bool use_threshold, bool message_type )
 #endif
    }
    //  write_bead_spt(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-   //         QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+   //         QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
    //       DOTSOMO, &bead_model);
    write_bead_model(somo_dir + SLASH + project + QString("_%1").arg(current_model + 1) +
-                    QString(bead_model_prefix.length() ? ("-" + bead_model_prefix) : "") +
+                    QString(bead_model_suffix.length() ? ("-" + bead_model_suffix) : "") +
                     DOTSOMO, &bead_model);
 #if defined(EXPOSED_TO_BURIED)
    editor->append(QString("%1 exposed beads became buried\n").arg(e2b));
