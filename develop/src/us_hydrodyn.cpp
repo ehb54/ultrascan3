@@ -246,6 +246,41 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    }
    
    save_util = new US_Hydrodyn_Save(&save_params, this);
+
+   // testing for filenamecheck
+   if (0) {
+      QString f = "/root/ultrascan/somo/tmp/testfile1";
+      editor->append(QString("resulting filename <%1><%2>\n")
+                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f)));
+      editor->append(QString("resulting filename <%1><%2>\n")
+                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f, 1)));
+      editor->append(QString("resulting filename <%1><%2>\n")
+                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f)));
+      editor->append(QString("resulting filename <%1><%2>\n")
+                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f, 1)));
+
+      f = "/root/ultrascan/somo/tmp/testfile1.bead_model";
+
+      editor->append(QString("resulting filename <%1><%2>\n")
+                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f)));
+      editor->append(QString("resulting filename <%1><%2>\n")
+                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f, 1)));
+      editor->append(QString("resulting filename <%1><%2>\n")
+                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f)));
+      editor->append(QString("resulting filename <%1><%2>\n")
+                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f, 1)));
+
+      f = "/root/ultrascan/somo/tmp/testfile1.blah.bead_model";
+
+      editor->append(QString("resulting filename <%1><%2>\n")
+                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f)));
+      editor->append(QString("resulting filename <%1><%2>\n")
+                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f, 1)));
+      editor->append(QString("resulting filename <%1><%2>\n")
+                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f)));
+      editor->append(QString("resulting filename <%1><%2>\n")
+                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f, 1)));
+   }
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -2956,4 +2991,61 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo)
    }
    //   editor->append(result);
    return result;
+}
+
+QString US_Hydrodyn::fileNameCheck( QString filename, int mode )
+{
+   // checks to see if file name exists, and if it does, according to 'mode'
+   // mode == 0, stop and ask with the option for an new filename, mode == 1 auto increment, 
+
+   if ( !QFile::exists(filename) )
+   {
+      return filename;
+   }
+
+   // file does exist
+   // based upon mode, do next stuff
+
+   QFileInfo fi(filename);
+   QString path = fi.dirPath() + QDir::separator();
+   QString base = fi.baseName(true);
+   QString ext = fi.extension(false);
+   ext = ext.length() ? "." + ext : ext;
+
+   if ( mode == 1 )
+   {
+      // split filename into pieces, do increment until !exists
+      QRegExp rx("-(\\d+)$");
+      do 
+      {
+         if ( rx.search(base) != -1 ) 
+         {
+            base.replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
+         } else {
+            base += "-1";
+         }
+         filename = path + base + ext;
+      } while ( QFile::exists(filename) );
+         
+      return filename;
+   }
+
+   // do the fancy window stuff with filename split up into pieces
+   // make up a window with notice,
+   // filename dirpath (fixed) base (editable) ext (fixed)
+   // choices: auto-increment / try again 
+
+   US_Hydrodyn_File *hf = new US_Hydrodyn_File(&path, &base, &ext);
+   //   hf->show();
+   //   hf->raise();
+   //   hf->setActiveWindow();
+   hf->exec();
+
+   // delete dlg;
+   //   delete hbl_buttons;
+   //   delete pb_auto_inc;
+   //   delete pb_try_again;
+
+   filename = "failed";
+   return filename;
 }

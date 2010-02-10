@@ -809,7 +809,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;
-         return(overlap_check(true, true, true));
+         return(overlap_check(true, true, true,
+                              hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance));
       }
    }
 
@@ -937,7 +938,8 @@ int US_Hydrodyn::read_bead_model(QString filename)
          bead_models[0] = bead_model;
          somo_processed[0] = 1;
          bead_models_as_loaded = bead_models;
-         return(overlap_check(true, true, true));
+         return(overlap_check(true, true, true,
+                              hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance));
       }
    }
    editor->append("File read error\n");

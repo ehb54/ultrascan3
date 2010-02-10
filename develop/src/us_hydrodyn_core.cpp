@@ -1944,12 +1944,12 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
 // # define TOLERANCE 0.001       // this is used to place a limit on the allowed radial overlap
 #define TOLERANCE overlap_tolerance
 
-int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
+int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried, double tolerance)
 {
    int retval = 0;
 #if defined(DEBUG_OVERLAP)
    printf("overlap checking--overlap tolerance %f--%s-%s-%s--------------------\n",
-          TOLERANCE,
+          tolerance,
           sc ? "side chain" : "",
           mc ? "main & side chain" : "",
           buried ? "buried" : "");
@@ -1990,7 +1990,7 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
                             bead_model[j].bead_coordinate.axis[1], 2) +
                         pow(bead_model[i].bead_coordinate.axis[2] -
                             bead_model[j].bead_coordinate.axis[2], 2))
-                   <= TOLERANCE ? "ok" : "needs reduction"
+                   <= tolerance ? "ok" : "needs reduction"
                    );
 #endif
          if (bead_model[i].active &&
@@ -2004,8 +2004,8 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
              (buried ||
               (bead_model[i].exposed_code == 1 &&
                bead_model[j].exposed_code == 1)) &&
-             bead_model[i].bead_computed_radius > TOLERANCE &&
-             bead_model[j].bead_computed_radius > TOLERANCE
+             bead_model[i].bead_computed_radius > tolerance &&
+             bead_model[j].bead_computed_radius > tolerance
              ) {
             float separation =
                bead_model[i].bead_computed_radius +
@@ -2036,14 +2036,14 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
                       bead_model[j].bead_coordinate.axis[1],
                       bead_model[j].bead_coordinate.axis[2],
                       separation,
-                      separation <= TOLERANCE ? "ok" : "needs reduction"
+                      separation <= tolerance ? "ok" : "needs reduction"
                       );
 #endif
-            if (separation <= TOLERANCE) {
+            if (separation <= tolerance) {
                continue;
             }
-            if ( bead_model[i].bead_computed_radius > TOLERANCE * 1.001 &&
-                 bead_model[j].bead_computed_radius > TOLERANCE * 1.001 )
+            if ( bead_model[i].bead_computed_radius > tolerance * 1.001 &&
+                 bead_model[j].bead_computed_radius > tolerance * 1.001 )
             {
                retval++;
                QColor save_color = editor->color();
@@ -2063,9 +2063,9 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
                    bead_model[i].active ? "Y" : "N",
                    bead_model[j].active ? "Y" : "N",
                    bead_model[i].bead_computed_radius,
-                   bead_model[i].bead_computed_radius > TOLERANCE * 1.001 ? "gt tol" : "not gt tol",
+                   bead_model[i].bead_computed_radius > tolerance * 1.001 ? "gt tol" : "not gt tol",
                    bead_model[j].bead_computed_radius,
-                   bead_model[j].bead_computed_radius > TOLERANCE * 1.001 ? "gt tol" : "not gt tol",
+                   bead_model[j].bead_computed_radius > tolerance * 1.001 ? "gt tol" : "not gt tol",
                    bead_model[i].bead_coordinate.axis[0],
                    bead_model[i].bead_coordinate.axis[1],
                    bead_model[i].bead_coordinate.axis[2],
@@ -2081,7 +2081,7 @@ int US_Hydrodyn::overlap_check(bool sc, bool mc, bool buried)
    }
 #if defined(DEBUG_OVERLAP)
    printf("end of overlap checking--overlap tolerance %f--%s-%s-%s--violations %d------------------\n",
-          TOLERANCE,
+          tolerance,
           sc ? "side chain" : "",
           mc ? "main & side chain" : "",
           buried ? "buried" : "",
@@ -3246,7 +3246,8 @@ void US_Hydrodyn::radial_reduction()
 #if defined(DEBUG_OVERLAP)
          overlap_check(methods[k] & RR_SC ? true : false,
                        methods[k] & RR_MCSC ? true : false,
-                       methods[k] & RR_BURIED ? true : false);
+                       methods[k] & RR_BURIED ? true : false,
+                       overlap_tolerance);
 #endif
          if (methods[k] & RR_HIERC) {
 #if defined(DEBUG1) || defined(DEBUG)
@@ -3352,7 +3353,7 @@ void US_Hydrodyn::radial_reduction()
 #if defined(DEBUG1) || defined(DEBUG)
                printf("processing hierarchical radial reduction iteration %d\n", iter);
 #endif
-               lbl_core_progress->setText(QString("Stage %1 hierarchical reduction iteration %2 with %3 beads").arg(k+1).arg(iter).arg(pairs.size()));
+               lbl_core_progress->setText(QString("Stage %1 hierarch. red. it. %2 with %3 beads").arg(k+1).arg(iter).arg(pairs.size() + 1));
                qApp->processEvents();
                max_intersection_length = 0;
                int max_pair = -1;
@@ -3744,7 +3745,7 @@ void US_Hydrodyn::radial_reduction()
          else 
          {
             // simultaneous reduction
-            lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction").arg(k+1));
+            lbl_core_progress->setText(QString("Stage %1 sychronous radial reduction").arg(k+1));
             qApp->processEvents();
 #if defined(USE_THREADS)
             unsigned int threads = numThreads;
@@ -3760,16 +3761,17 @@ void US_Hydrodyn::radial_reduction()
 #if defined(DEBUG_OVERLAP)
                overlap_check(methods[k] & RR_SC ? true : false,
                              methods[k] & RR_MCSC ? true : false,
-                             methods[k] & RR_BURIED ? true : false);
+                             methods[k] & RR_BURIED ? true : false,
+                             overlap_tolerance);
 #endif
                // write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_br-%1-%2").arg(k).arg(iter) + DOTSOMO + ".tsv", &bead_model);
                // write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model-br-%1-%2").arg(k).arg(iter) + DOTSOMO, &bead_model);
                iter++;
 #if defined(DEBUG1) || defined(DEBUG)
-               printf("processing simultaneous radial reduction iteration %d\n", iter);
+               printf("processing synchronous radial reduction iteration %d\n", iter);
                editor->append(QString(" %1").arg(iter));
 #endif
-               //   lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction iteration %2").arg(k+1).arg(iter));
+               //   lbl_core_progress->setText(QString("Stage %1 synchronous radial reduction iteration %2").arg(k+1).arg(iter));
                //               qApp->processEvents();
                if(iter > 10000) {
                   printf("too many iterations\n");
@@ -3902,7 +3904,7 @@ void US_Hydrodyn::radial_reduction()
 #if defined(DEBUG1) || defined(DEBUG)
                printf("processing radial reduction sync iteration %d pairs to process %d max int len %f\n", iter, count, max_intersection_length);
 #endif
-               lbl_core_progress->setText(QString("Stage %1 simultaneous reduction iteration %2 with %3 beads").arg(k+1).arg(iter).arg(pairs.size()));
+               lbl_core_progress->setText(QString("Stage %1 synchron. red. it. %2 with %3 beads").arg(k+1).arg(iter).arg(pairs.size() + 1));
                qApp->processEvents();
                if (max_intersection_length > TOLERANCE) {
 #if defined(DEBUG1) || defined(DEBUG)
@@ -4154,7 +4156,8 @@ void US_Hydrodyn::radial_reduction()
 #if defined(DEBUG_OVERLAP)
       if(overlap_check(methods[k] & RR_SC ? true : false,
                        methods[k] & RR_MCSC ? true : false,
-                       methods[k] & RR_BURIED ? true : false)) {
+                       methods[k] & RR_BURIED ? true : false,
+                             overlap_tolerance)) {
          printf("internal over lap error... exiting!");
          exit(-1);
       }
@@ -5855,7 +5858,8 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG_OVERLAP)
          overlap_check(methods[k] & RR_SC ? true : false,
                        methods[k] & RR_MCSC ? true : false,
-                       methods[k] & RR_BURIED ? true : false);
+                       methods[k] & RR_BURIED ? true : false,
+                       overlap_tolerance);
 #endif
          if (methods[k] & RR_HIERC) {
 #if defined(DEBUG1) || defined(DEBUG)
@@ -5943,7 +5947,7 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG1) || defined(DEBUG)
                printf("processing hierarchical radial reduction iteration %d\n", iter);
 #endif
-               lbl_core_progress->setText(QString("Stage %1 hierarchical reduction iteration %2 with %3 beads").arg(k+1).arg(iter).arg(pairs.size()));
+               lbl_core_progress->setText(QString("Stage %1 hierarch. red. it. %2 with %3 beads").arg(k+1).arg(iter).arg(pairs.size() + 1));
                qApp->processEvents();
                max_intersection_length = 0;
                int max_pair = -1;
@@ -6304,8 +6308,8 @@ int US_Hydrodyn::compute_asa()
          }
          else 
          {
-            // simultaneous reduction
-            lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction").arg(k+1));
+            // synchronous reduction
+            lbl_core_progress->setText(QString("Stage %1 synchronous radial reduction").arg(k+1));
             qApp->processEvents();
 #if defined(USE_THREADS)
             unsigned int threads = numThreads;
@@ -6320,15 +6324,16 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG_OVERLAP)
                overlap_check(methods[k] & RR_SC ? true : false,
                              methods[k] & RR_MCSC ? true : false,
-                             methods[k] & RR_BURIED ? true : false);
+                             methods[k] & RR_BURIED ? true : false,
+                             overlap_tolerance);
 #endif
                // write_bead_tsv(somo_tmp_dir + SLASH + QString("bead_model_br-%1-%2").arg(k).arg(iter) + DOTSOMO + ".tsv", &bead_model);
                // write_bead_spt(somo_tmp_dir + SLASH + QString("bead_model-br-%1-%2").arg(k).arg(iter) + DOTSOMO, &bead_model);
                iter++;
 #if defined(DEBUG1) || defined(DEBUG)
-               printf("processing simultaneous radial reduction iteration %d\n", iter);
+               printf("processing synchronous radial reduction iteration %d\n", iter);
 #endif
-               // lbl_core_progress->setText(QString("Stage %1 simultaneous radial reduction iteration %2").arg(k+1).arg(iter));
+               // lbl_core_progress->setText(QString("Stage %1 synchronous radial reduction iteration %2").arg(k+1).arg(iter));
                // qApp->processEvents();
 
                if(iter > 10000) {
@@ -6467,7 +6472,7 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG1) || defined(DEBUG)
                   printf("processing radial reduction sync iteration %d pairs to process %d\n", iter, count);
 #endif
-                  lbl_core_progress->setText(QString("Stage %1 simultaneous reduction iteration %2 with %3 beads").arg(k+1).arg(iter).arg(pairs.size()));
+                  lbl_core_progress->setText(QString("Stage %1 synchron. red. it. %2 with %3 beads").arg(k+1).arg(iter).arg(pairs.size() + 1));
                   qApp->processEvents();
                   for (unsigned int i = 0; i < pairs.size(); i++) {
                      if (
@@ -6718,7 +6723,8 @@ int US_Hydrodyn::compute_asa()
 #if defined(DEBUG_OVERLAP)
       if(overlap_check(methods[k] & RR_SC ? true : false,
                        methods[k] & RR_MCSC ? true : false,
-                       methods[k] & RR_BURIED ? true : false)) {
+                       methods[k] & RR_BURIED ? true : false,
+                       overlap_tolerance)) {
          printf("internal over lap error... exiting!");
          exit(-1);
       }

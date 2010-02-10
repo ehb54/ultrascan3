@@ -42,6 +42,7 @@
 #include "us_hydrodyn_advanced_config.h"
 #include "us_hydrodyn_batch.h"
 #include "us_hydrodyn_save.h"
+#include "us_hydrodyn_file.h"
 
 //standard C and C++ defs:
 
@@ -100,6 +101,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QLabel *lbl_table;
       void do_reset();
       unsigned int numThreads; // local copy of USglobal->config_list.numThreads
+      static QString fileNameCheck( QString filename, int mode = 0 ); 
+      // checks to see if file name exists, and if it does, according to 'mode'
+      // mode == 0, stop and ask with the option for an new filename, mode == 1 auto increment, 
 
    private:
       vector < QString > batch_file;
@@ -358,7 +362,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       void get_atom_map(PDB_model *);
       int check_for_missing_atoms(QString *error_string, PDB_model *);
       void build_molecule_maps(PDB_model *model); // sets up maps for molecule
-      int overlap_check(bool sc, bool mc, bool buried); // check for overlaps
+      int overlap_check(bool sc, bool mc, bool buried, double tolerance); // check for overlaps
       int compute_asa(); // calculate maximum accessible surface area
       void show_asa();
       void show_overlap();
