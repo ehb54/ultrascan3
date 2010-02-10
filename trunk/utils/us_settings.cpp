@@ -127,6 +127,23 @@ void US_Settings::set_tmpDir( const QString& dir )
     settings.setValue( "tmpDir", dir );
 }
 
+// Base to application directory
+QString US_Settings::appBaseDir( void )
+{
+   QString base = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+#ifdef Q_WS_MAC
+   if ( base.contains( ".app/Contents" ) )
+   {
+      int ii  = base.lastIndexOf( "/bin/" );
+
+      if ( ii > 0 )
+         base    = base.left( ii );
+   }
+#endif
+  return base;
+}
+
+
 // License
 QStringList US_Settings::license( void )
 {

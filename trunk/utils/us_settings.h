@@ -62,6 +62,9 @@ class US_EXTERN US_Settings
     //! \brief Set the directory where temporary files can be stored
     static void        set_tmpDir( const QString& );
 
+    //! \brief Get the base directory in which ./bin apps reside
+    static QString     appBaseDir();
+
     // License
     
     //! \brief Get the current license
