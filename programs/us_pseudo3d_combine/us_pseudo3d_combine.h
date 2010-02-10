@@ -10,26 +10,29 @@
 #include "us_help.h"
 #include "us_editor.h"
 #include "us_plot.h"
+#include "us_colorgradIO.h"
 
-	struct solute_s
-	{
-	  int ii;
-	  int jj;
-	};
-	#define Solute struct solute_s
-
-struct distro_sys
+typedef struct solute_s
 {
-   QList <Solute> s_distro;
-   QList <Solute> mw_distro;
-   QVector <QColor> gradient;
-   QString run_name;
-   QString cell;
-   QString wavelength;
-   QString method;
-   int distro_type;
-   bool monte_carlo;
-};
+  double s;
+  double c;
+  double k;
+} Solute;
+
+typedef struct distro_sys
+{
+   QList< Solute > s_distro;
+   QList< Solute > mw_distro;
+   QList< QColor > gradient;
+   QString         run_name;
+   QString         cell;
+   QString         wavelength;
+   QString         method;
+   int             distro_type;
+   bool            monte_carlo;
+} DisSys;
+
+bool distro_lessthan( const Solute&, const Solute& );
 
 class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
 {
@@ -87,10 +90,10 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       QCheckBox*    cb_plot_s;
       QCheckBox*    cb_plot_mw;
 
-      QProgressBar* progress;
+      QProgressBar*   progress;
 
-      QVector< struct distro_sys > system;
-      QVector< QColor > gradient;
+      QList< DisSys > system;
+      QList< QColor > gradient;
 
       double        resolu;
       double        plt_smin;
@@ -115,18 +118,22 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       bool          plot_s;
       bool          looping;
 
+      QString       xa_title_s;
+      QString       xa_title_mw;
+      QString       xa_title;
+
    private slots:
 
-      void update_plot_smin( double );
-      void update_plot_smax( double );
-      void update_plot_fmin( double );
-      void update_plot_fmax( double );
       void update_resolu( double );
       void update_xreso( double );
       void update_yreso( double );
       void update_xpix( double );
       void update_ypix( double );
       void update_curr_distr( double );
+      void update_plot_fmin( double );
+      void update_plot_fmax( double );
+      void update_plot_smin( double );
+      void update_plot_smax( double );
       void plot_3dim( void );
       void plot_data( int );
       void plot_data( void );
@@ -137,14 +144,17 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       void load_distro( void );
       void load_distro( const QString& );
       void load_color( void );
+      void plotall( void );
+      void refresh( void );
       void save( void );
       void stop( void );
       void print( void );
       void reset( void );
       void set_limits( void );
-      void setup_GUI( void );
 
       void help     ( void )
       { showHelp.show_help( "manual/pseudo3d_combine.html" ); };
+
+      void sort_distro( QList< Solute >&, bool );
 };
 #endif
