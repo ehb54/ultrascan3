@@ -97,7 +97,7 @@ CREATE  TABLE IF NOT EXISTS us3.abstractRotor (
   abstractRotorID INT NOT NULL AUTO_INCREMENT ,
   GUID CHAR(36) NULL ,
   name enum( 'AN50', 'AN60', 'CFA' ) NULL ,
-  materialName enum( 'Titanium', 'Carbon fiber' ) NULL ,
+  materialName enum( 'titanium', 'carbon' ) NULL ,
   numHoles INT NULL ,
   maxRPM INT NULL ,
   magnetOffset FLOAT NULL ,
@@ -194,7 +194,7 @@ DROP TABLE IF EXISTS us3.abstractCenterpiece ;
 
 CREATE  TABLE IF NOT EXISTS us3.abstractCenterpiece (
   abstractCenterpieceID INT NOT NULL AUTO_INCREMENT ,
-  loadMethod enum('top', 'fill-hole') NULL ,
+  loadMethod enum('top', 'fill') NULL ,
   GUID CHAR(36) NULL ,
   name TEXT NULL ,
   materialName TEXT NULL ,
@@ -214,9 +214,9 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS us3.abstractChannel ;
 
 CREATE  TABLE IF NOT EXISTS us3.abstractChannel (
-  abstractChannel_ID INT NOT NULL AUTO_INCREMENT ,
-  channelType enum('reference') NULL ,
-  channelShape enum( 'sector', 'square' ) NULL ,
+  abstractChannelID INT NOT NULL AUTO_INCREMENT ,
+  channelType enum('reference','sample') NULL ,
+  channelShape enum( 'sector', 'rectangular' ) NULL ,
   GUID CHAR(36) NULL ,
   name VARCHAR(100) NULL ,
   number INT NULL ,
@@ -228,7 +228,7 @@ CREATE  TABLE IF NOT EXISTS us3.abstractChannel (
   radialBandBottom FLOAT NULL ,
   radialMeniscusPos FLOAT NULL ,
   dateUpdated DATE NULL ,
-  PRIMARY KEY (abstractChannel_ID) )
+  PRIMARY KEY (abstractChannelID) )
 ENGINE = InnoDB;
 
 
@@ -238,16 +238,16 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS us3.channel ;
 
 CREATE  TABLE IF NOT EXISTS us3.channel (
-  channel_ID INT NOT NULL AUTO_INCREMENT ,
-  abstractChannel_ID INT NULL DEFAULT NULL ,
+  channelID INT NOT NULL AUTO_INCREMENT ,
+  abstractChannelID INT NULL DEFAULT NULL ,
   GUID CHAR(36) NULL ,
   comments TEXT NULL DEFAULT NULL ,
   dateUpdated TIMESTAMP NULL DEFAULT NULL ,
-  PRIMARY KEY (channel_ID) ,
-  INDEX abstractChannel_ID (abstractChannel_ID ASC) ,
-  CONSTRAINT abstractChannel_ID
-    FOREIGN KEY (abstractChannel_ID )
-    REFERENCES us3.abstractChannel (abstractChannel_ID )
+  PRIMARY KEY (channelID) ,
+  INDEX abstractChannelID (abstractChannelID ASC) ,
+  CONSTRAINT abstractChannelID
+    FOREIGN KEY (abstractChannelID )
+    REFERENCES us3.abstractChannel (abstractChannelID )
     ON DELETE SET NULL
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
@@ -259,9 +259,9 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS us3.cell ;
 
 CREATE  TABLE IF NOT EXISTS us3.cell (
-  cell_ID INT NOT NULL AUTO_INCREMENT ,
+  cellID INT NOT NULL AUTO_INCREMENT ,
   cellType enum( 'counterbalance', 'sample', 'reference' ) NULL ,
-  windowType enum( 'Quartz', 'Saffire' ) NULL ,
+  windowType enum( 'quartz', 'saffire' ) NULL ,
   abstractCenterpieceID INT NULL ,
   experimentID INT NULL ,
   GUID CHAR(36) NULL ,
@@ -269,8 +269,9 @@ CREATE  TABLE IF NOT EXISTS us3.cell (
   holeNumber INT NULL ,
   housing TEXT NULL ,
   centerpieceSerialNumber TEXT NULL ,
+  numChannels INT ,
   dateUpdated TIMESTAMP NULL ,
-  PRIMARY KEY (cell_ID) ,
+  PRIMARY KEY (cellID) ,
   INDEX abstractCenterpieceID (abstractCenterpieceID ASC) ,
   INDEX c_experimentID (experimentID ASC) ,
   CONSTRAINT c_abstractCenterpieceID
@@ -297,18 +298,18 @@ CREATE  TABLE IF NOT EXISTS us3.rawData (
   data LONGBLOB NOT NULL ,
   comment TEXT NULL ,
   experimentID INT NOT NULL ,
-  channel_ID INT NOT NULL ,
+  channelID INT NOT NULL ,
   PRIMARY KEY (rawDataID) ,
   INDEX experimentID (experimentID ASC) ,
-  INDEX channelID (channel_ID ASC) ,
+  INDEX channelID (channelID ASC) ,
   CONSTRAINT experimentID
     FOREIGN KEY (experimentID )
     REFERENCES us3.experiment (experimentID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE,
   CONSTRAINT rd_channelID
-    FOREIGN KEY (channel_ID )
-    REFERENCES us3.channel (channel_ID )
+    FOREIGN KEY (channelID )
+    REFERENCES us3.channel (channelID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
@@ -703,9 +704,9 @@ DROP TABLE IF EXISTS us3.experimentSolutionChannel ;
 CREATE  TABLE IF NOT EXISTS us3.experimentSolutionChannel (
   experimentID INT NOT NULL ,
   solutionID INT NOT NULL ,
-  channel_ID INT NOT NULL ,
+  channelID INT NOT NULL ,
   INDEX experimentID (experimentID ASC) ,
-  INDEX channelID (channel_ID ASC) ,
+  INDEX channelID (channelID ASC) ,
   INDEX solutionID (solutionID ASC) ,
   CONSTRAINT esc_experimentID
     FOREIGN KEY (experimentID )
@@ -713,8 +714,8 @@ CREATE  TABLE IF NOT EXISTS us3.experimentSolutionChannel (
     ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT esc_channelID
-    FOREIGN KEY (channel_ID )
-    REFERENCES us3.channel (channel_ID )
+    FOREIGN KEY (channelID )
+    REFERENCES us3.channel (channelID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE,
   CONSTRAINT esc_solutionID
@@ -956,7 +957,7 @@ CREATE  TABLE IF NOT EXISTS us3.opticalSystemSetting (
     ON UPDATE CASCADE,
   CONSTRAINT oss_channelID
     FOREIGN KEY (channelID )
-    REFERENCES us3.channel (channel_ID )
+    REFERENCES us3.channel (channelID )
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT oss_fluorescenceOpSysID
