@@ -246,41 +246,6 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    }
    
    save_util = new US_Hydrodyn_Save(&save_params, this);
-
-   // testing for filenamecheck
-   if (0) {
-      QString f = "/root/ultrascan/somo/tmp/testfile1";
-      editor->append(QString("resulting filename <%1><%2>\n")
-                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f)));
-      editor->append(QString("resulting filename <%1><%2>\n")
-                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f, 1)));
-      editor->append(QString("resulting filename <%1><%2>\n")
-                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f)));
-      editor->append(QString("resulting filename <%1><%2>\n")
-                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f, 1)));
-
-      f = "/root/ultrascan/somo/tmp/testfile1.bead_model";
-
-      editor->append(QString("resulting filename <%1><%2>\n")
-                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f)));
-      editor->append(QString("resulting filename <%1><%2>\n")
-                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f, 1)));
-      editor->append(QString("resulting filename <%1><%2>\n")
-                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f)));
-      editor->append(QString("resulting filename <%1><%2>\n")
-                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f, 1)));
-
-      f = "/root/ultrascan/somo/tmp/testfile1.blah.bead_model";
-
-      editor->append(QString("resulting filename <%1><%2>\n")
-                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f)));
-      editor->append(QString("resulting filename <%1><%2>\n")
-                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f, 1)));
-      editor->append(QString("resulting filename <%1><%2>\n")
-                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f)));
-      editor->append(QString("resulting filename <%1><%2>\n")
-                     .arg(f).arg(US_Hydrodyn::fileNameCheck(f, 1)));
-   }
 }
 
 US_Hydrodyn::~US_Hydrodyn()
@@ -1607,6 +1572,10 @@ int US_Hydrodyn::calc_somo()
 
    bead_model_suffix = getExtendedSuffix(false, true);
    le_bead_model_suffix->setText(bead_model_suffix);
+   if ( !overwrite )
+   {
+      setSomoGridFile(true);
+   }
 
    if (stopFlag)
    {
@@ -1745,6 +1714,10 @@ int US_Hydrodyn::calc_grid_pdb()
 
    bead_model_suffix = getExtendedSuffix(false, false);
    le_bead_model_suffix->setText(bead_model_suffix);
+   if ( !overwrite )
+   {
+      setSomoGridFile(false);
+   }
 
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
@@ -2118,6 +2091,10 @@ int US_Hydrodyn::calc_grid()
 
    bead_model_suffix = getExtendedSuffix(false, false) + "g";
    le_bead_model_suffix->setText(bead_model_suffix);
+   if ( !overwrite )
+   {
+      setSomoGridFile(false);
+   }
 
    for (current_model = 0; current_model < (unsigned int)lb_model->numRows(); current_model++) {
       if (lb_model->isSelected(current_model)) {
@@ -2455,6 +2432,11 @@ void US_Hydrodyn::visualize()
 
 int US_Hydrodyn::calc_hydro()
 {
+   if ( !overwrite )
+   {
+      setHydroFile();
+   }
+
    stopFlag = false;
    pb_stop_calc->setEnabled(true);
    pb_calc_hydro->setEnabled(false);
@@ -2530,6 +2512,7 @@ int US_Hydrodyn::calc_hydro()
                                       progress,
                                       editor,
                                       this);
+   le_bead_model_suffix->setText(bead_model_suffix);
    chdir(somo_tmp_dir);
    if (stopFlag)
    {
@@ -2993,6 +2976,123 @@ QString US_Hydrodyn::getExtendedSuffix(bool prerun, bool somo)
    return result;
 }
 
+void US_Hydrodyn::setHydroFile()
+{
+   bool any_changes;
+   QString path;
+   QString file;
+   QString ext;
+   QString new_file;
+
+   do {
+      any_changes = false;
+      for( int i = 0; i < lb_model->numRows(); i++ )
+      {
+         if ( lb_model->isSelected(i) )
+         {
+            path = 
+               somo_dir + QDir::separator() +
+               project + QString("_%1").arg(i + 1) + 
+               (bead_model_suffix.length() ? "-" : "");
+            
+            ext = ".hydro_res";
+            file = path + bead_model_suffix + ext;
+            new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
+            if ( file != new_file )
+            {
+               le_bead_model_suffix->setText(bead_model_suffix);
+               any_changes = true;
+            }
+
+            if ( saveParams )
+            {
+               ext = ".csv";
+               file = path + bead_model_suffix + ext;
+               new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
+               if ( file != new_file )
+               {
+                  le_bead_model_suffix->setText(bead_model_suffix);
+                  any_changes = true;
+               }
+            }
+         }
+      }
+   } while ( any_changes );
+}
+
+void US_Hydrodyn::setSomoGridFile(bool somo)
+{
+   // check all selected models, all output types
+
+   bool any_changes;
+   QString path;
+   QString file;
+   QString ext;
+   QString new_file;
+
+   do {
+      any_changes = false;
+      for( int i = 0; i < lb_model->numRows(); i++ )
+      {
+         if ( lb_model->isSelected(i) )
+         {
+            path = 
+               somo_dir + QDir::separator() +
+               project + QString("_%1").arg(i + 1) + 
+               (bead_model_suffix.length() ? "-" : "");
+            
+            if (bead_output.output & US_HYDRODYN_OUTPUT_SOMO) {
+               ext = ".bead_model";
+               file = path + bead_model_suffix + ext;
+               new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
+               if ( file != new_file )
+               {
+                  le_bead_model_suffix->setText(bead_model_suffix);
+                  any_changes = true;
+               }
+            }
+            
+            if (bead_output.output & US_HYDRODYN_OUTPUT_BEAMS) {
+               ext = ".beams";
+               file = path + bead_model_suffix + ext;
+               new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
+               if ( file != new_file )
+               {
+                  le_bead_model_suffix->setText(bead_model_suffix);
+                  any_changes = true;
+               }
+               // frmc = fopen(QString("%1.rmc").arg(fname).ascii(), "w");
+               // frmc1 = fopen(QString("%1.rmc1").arg(fname).ascii(), "w");
+            }
+            
+            if (bead_output.output & US_HYDRODYN_OUTPUT_HYDRO) {
+               ext = ".dat";
+               file = path + bead_model_suffix + ext;
+               new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
+               if ( file != new_file )
+               {
+                  le_bead_model_suffix->setText(bead_model_suffix);
+                  any_changes = true;
+               }
+            }
+
+            if ( somo )
+            {
+               ext = ".asa_res";
+               file = path + bead_model_suffix + ext;
+               new_file = fileNameCheck( &path, &bead_model_suffix, &ext, 0 );
+               if ( file != new_file )
+               {
+                  le_bead_model_suffix->setText(bead_model_suffix);
+                  any_changes = true;
+               }
+            }
+         }
+      }
+   } while ( any_changes );
+}
+
+
 QString US_Hydrodyn::fileNameCheck( QString filename, int mode )
 {
    // checks to see if file name exists, and if it does, according to 'mode'
@@ -3011,6 +3111,16 @@ QString US_Hydrodyn::fileNameCheck( QString filename, int mode )
    QString base = fi.baseName(true);
    QString ext = fi.extension(false);
    ext = ext.length() ? "." + ext : ext;
+   fileNameCheck( &path, &base, &ext, mode);
+   return path + base + ext;
+}
+
+QString US_Hydrodyn::fileNameCheck( QString *path, QString *base, QString *ext, int mode )
+{
+   if ( !QFile::exists(*path + *base + *ext) )
+   {
+      return *path + *base + *ext;
+   }
 
    if ( mode == 1 )
    {
@@ -3018,16 +3128,15 @@ QString US_Hydrodyn::fileNameCheck( QString filename, int mode )
       QRegExp rx("-(\\d+)$");
       do 
       {
-         if ( rx.search(base) != -1 ) 
+         if ( rx.search(*base) != -1 ) 
          {
-            base.replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
+            base->replace(rx, QString("-%1").arg(rx.cap(1).toInt() + 1));
          } else {
-            base += "-1";
+            *base += "-1";
          }
-         filename = path + base + ext;
-      } while ( QFile::exists(filename) );
+      } while ( QFile::exists(*path + *base + *ext) );
          
-      return filename;
+      return *path + *base + *ext;
    }
 
    // do the fancy window stuff with filename split up into pieces
@@ -3035,17 +3144,24 @@ QString US_Hydrodyn::fileNameCheck( QString filename, int mode )
    // filename dirpath (fixed) base (editable) ext (fixed)
    // choices: auto-increment / try again 
 
-   US_Hydrodyn_File *hf = new US_Hydrodyn_File(&path, &base, &ext);
-   //   hf->show();
-   //   hf->raise();
-   //   hf->setActiveWindow();
-   hf->exec();
+   int result;
 
-   // delete dlg;
-   //   delete hbl_buttons;
-   //   delete pb_auto_inc;
-   //   delete pb_try_again;
+   US_Hydrodyn_File *hf = new US_Hydrodyn_File(path, base, ext, &result);
 
-   filename = "failed";
-   return filename;
+   do 
+   {
+      hf->exec();
+   } while ( result == -1 );
+
+   switch ( result )
+   {
+   case 0 : // overwrite
+   case 2 : // try again
+      break;
+   case 1 : // auto inc
+      return fileNameCheck(path, base, ext, 1);
+      break;
+   }
+   delete hf;
+   return *path + *base + *ext;
 }

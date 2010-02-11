@@ -20,18 +20,26 @@ class US_EXTERN US_Hydrodyn_File : public QDialog
       US_Hydrodyn_File(QString *dir,
                        QString *base,
                        QString *ext,
+                       int     *result,
                        QWidget *p = 0, 
                        const char *name = 0);
       ~US_Hydrodyn_File();
 
    private:
 
+      bool ok_to_close;
+
       QString *dir;
       QString *base;
       QString *ext;
 
+      int *result;
+
       QLabel *lbl_info;
-      QLabel *lbl_info2;
+      QLabel *lbl_filename;
+      QLabel *lbl_dir;
+      QLabel *lbl_update;
+      QLabel *lbl_ext;
 
       QLineEdit *le_dir;
       QLineEdit *le_base;
@@ -50,10 +58,13 @@ class US_EXTERN US_Hydrodyn_File : public QDialog
 
    private slots:
 
+      void update_base( const QString & );
       void overwrite();
       void auto_inc();
       void try_again();
       void help();
+
+      void closeEvent( QCloseEvent * );
 };
 
 #endif
