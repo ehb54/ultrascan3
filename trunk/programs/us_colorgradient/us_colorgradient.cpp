@@ -12,8 +12,7 @@
 const qreal lgndfrac=0.20;      // legend 1/5th of width (1 x 4)
 //const qreal lgndfrac=0.11111;   // legend 1/9th of width (1 x 8)
 
-//! \brief Main program for US_ColorGradient
-
+// Main program for US_ColorGradient
 int main( int argc, char* argv[] )
 {
    QApplication application( argc, argv );
@@ -22,8 +21,8 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
    US_ColorGradient w;               
-   w.show();                   //!< \memberof QWidget
-   return application.exec();  //!< \memberof QApplication
+   w.show();                   // memberof QWidget
+   return application.exec();  // memberof QApplication
 }
 
 MyButton::MyButton( int value ) : QPushButton()
@@ -37,19 +36,17 @@ void MyButton::pushed( void )
    emit click( which );
 };
 
-/*!
-   The ColorGradient constructor is a standard US_Widgets type.
-   It builds the GUI with banner, various buttons and selectors
-   and the gradient label that displays implied color gradient.
-*/
+
+// The ColorGradient constructor is a standard US_Widgets type.
+// It builds the GUI with banner, various buttons and selectors
+// and the gradient label that displays the implied color gradient.
 US_ColorGradient::US_ColorGradient( QWidget* parent, Qt::WindowFlags flags )
   : US_Widgets( true, parent, flags )
 {
    // Give initial values for run time variables
    have_save   = false;
    new_mods    = false;
-   grad_dir    = qApp->applicationDirPath();
-   grad_dir.replace( QRegExp( "/bin$" ), QString( "/etc" ) );
+   grad_dir    = US_Settings::appBaseDir() + "/etc";
 
    setWindowTitle( tr( "Color Gradient Generator" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -81,11 +78,22 @@ US_ColorGradient::US_ColorGradient( QWidget* parent, Qt::WindowFlags flags )
    topbox->addLayout( steps );
 
    QGridLayout* colors = new QGridLayout();
+
+   // check need to change style of buttons so that they can be colored
+   QStyle* btnsty  = new QPlastiqueStyle();   // style sure to be colorable
+   QString stynam  = qApp->style()->objectName();
+   bool needbsty   = stynam.startsWith( "windowsv", Qt::CaseInsensitive ) ||
+                     stynam.startsWith( "windowsx", Qt::CaseInsensitive ) ||
+                     stynam.startsWith( "mac"     , Qt::CaseInsensitive );
    int c_row = 0;
 
    for ( int ii = 0; ii < 11; ii++ )
    {
       pb_c[ ii ] = new MyButton( ii );
+
+      if ( needbsty )		// change button style for coloring if need be
+         pb_c[ ii ]->setStyle( btnsty );
+
       ct_c[ ii ] = us_counter( 2, 1.0, 101.0, 10.0 );
       ct_c[ ii ]->setStep( 1.0 );
 
@@ -178,7 +186,7 @@ void US_ColorGradient::c_cnt_change( double /*count*/ )
    show_gradient();
 }
 
-//! \brief A slot for handling the reset button: clear all settings
+// Slot for handling the reset button: clear all settings
 void US_ColorGradient::reset( void )
 {
    new_mods    = false;
@@ -194,10 +202,8 @@ void US_ColorGradient::reset( void )
    show_gradient();
 }
 
-/*!
-   A slot to save the color gradient step counts and colors
-   to an XML file, as specified in a file dialog.
-*/
+//   A slot to save the color gradient step counts and colors
+//   to an XML file, as specified in a file dialog.
 void US_ColorGradient::save_gradient( void )
 {
    QString save_file = grad_dir + "/new_gradient.xml";
@@ -290,10 +296,8 @@ void US_ColorGradient::save_gradient( void )
    }
 }
 
-/*!
-   A slot to allow the user to save any modifications to file
-   and then to close.
-*/
+// Slot to allow the user to save any modifications to file
+// and then to close.
 void US_ColorGradient::safe_close( void )
 {
    if ( new_mods )
@@ -302,7 +306,7 @@ void US_ColorGradient::safe_close( void )
       msgBox.setTextFormat( Qt::RichText );
       msgBox.setText( tr( "You have modified the gradient since the "
          "last save to file.<br>"
-         "Do want to save to file before exiting?<ul>"
+         "Do you want to save to file before exiting?<ul>"
          "<li><b>[Yes]</b> to save and close;</li>"
          "<li><b>[No]</b> to close with no save;</li>"
          "<li><b>[Cancel]</b> to resume gradient modifications.</li></ul>" ) );
@@ -325,10 +329,8 @@ void US_ColorGradient::safe_close( void )
    this->close();
 }
 
-/*!
-   A slot to load the color gradient step counts and colors
-   from an XML file, as specified in a file dialog.
-*/
+// Slot to load the color gradient step counts and colors
+// from an XML file, as specified in a file dialog.
 void US_ColorGradient::load_gradient( void )
 {
    QString load_file = grad_dir + "/old_gradient.xml";
@@ -438,10 +440,8 @@ void US_ColorGradient::load_gradient( void )
    }
 }
 
-/*!
-   A slot called when the number-of-steps counter changes.
-   This function changes the number of visible color buttons.
-*/
+// Slot called when the number-of-steps counter changes.
+// This function changes the number of visible color buttons.
 void US_ColorGradient::update_steps( double newval )
 {
    int nsteps  = qRound( newval );
@@ -457,10 +457,9 @@ void US_ColorGradient::update_steps( double newval )
    show_gradient();
 }
 
-/*!
-   A slot to show the current gradient upon button click.
-   The displayed gradient is in the form of concentric circles.
-*/
+// Slot to show the current gradient upon button click.
+// The displayed gradient is in the form of concentric circles,
+// with a rectangular vertical legend to the right.
 void US_ColorGradient::show_gradient( void )
 {
    // get width of gradient space; resize so height matches
@@ -587,11 +586,9 @@ void US_ColorGradient::show_gradient( void )
    update_banner();
 }
 
-/*!
-   A method to update the top banner text to reflect the
-   current state of the color steps. This includes information on
-   number of steps, number of total colors, and any save-file name.
-*/
+// A method to update the top banner text to reflect the
+// current state of the color steps. This includes information on
+// number of steps, number of total colors, and any save-file name.
 void US_ColorGradient::update_banner( void )
 {
    int ncolors    = 1;

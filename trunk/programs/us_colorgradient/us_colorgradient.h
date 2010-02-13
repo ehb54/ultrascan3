@@ -8,16 +8,21 @@
 #include "us_widgets.h"
 #include "us_help.h"
 
+//! \brief Class to enable tracing which button was clicked.
 class MyButton : public QPushButton
 {
    Q_OBJECT
 
    public:
+      //! \brief Constructor captures index to which button is created.
+      //! \param value Index value of button created.
       MyButton( int );
 
+      //! \brief Which-button index
       int which;
 
    signals:
+      //! \brief Click signal that includes the index of which button clicked.
       void click( int );
 
    private slots:
