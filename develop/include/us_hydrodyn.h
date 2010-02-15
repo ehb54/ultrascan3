@@ -107,6 +107,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
       // mode == 0, stop and ask with the option for an new filename, mode == 1 auto increment, 
       void setSomoGridFile(bool); // checks for file existance and resets suffix accordingly, true for somo
       void setHydroFile(); // checks for file existance and resets suffix accordingly
+      QCheckBox *cb_overwrite;
 
    private:
       vector < QString > batch_file;
@@ -190,7 +191,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
 
       QCheckBox *cb_calcAutoHydro;
       QCheckBox *cb_setSuffix;
-      QCheckBox *cb_overwrite;
 
       QPopupMenu *lookup_tables;
       QPopupMenu *somo_options;

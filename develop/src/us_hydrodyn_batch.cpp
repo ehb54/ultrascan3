@@ -853,6 +853,36 @@ void US_Hydrodyn_Batch::start()
       }
    }
 
+   bool overwriteForcedOn = false;
+   if ( !((US_Hydrodyn *)us_hydrodyn)->overwrite )
+   {
+      switch ( QMessageBox::warning(this, 
+                                    tr("UltraScan Warning"),
+                                    QString(tr("Please note:\n\n"
+                                               "Overwriting of existing files currently off.\n"
+                                               "This could cause Batch mode to block during processing.\n"
+                                               "What would you like to do?\n"))
+                                    .arg(((US_Hydrodyn *)us_hydrodyn)->misc.vbar),
+                                    tr("&Stop"), 
+                                    tr("&Turn on overwrite now"),
+                                    tr("C&ontinue anyway"),
+                                    0, // Stop == button 0
+                                    0 // Escape == button 0
+                                    ) )
+      {
+      case 0 : // stop
+         return;
+         break;
+      case 1 : // change the vbar setting now
+         ((US_Hydrodyn *)us_hydrodyn)->overwrite = true;
+         ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(true);
+         overwriteForcedOn = true;
+         break;
+      case 2 : // continue
+         break;
+      }
+   }
+
    disable_after_start();
    disable_updates = true;
    editor->append(tr("\nProcess files:\n"));
@@ -886,6 +916,11 @@ void US_Hydrodyn_Batch::start()
             disable_updates = false;
             save_batch_active = false;
             ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+            if ( overwriteForcedOn )
+            {
+               ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+               ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
+            }
             return;
          }
          status[file] = 5; // processing now
@@ -911,6 +946,11 @@ void US_Hydrodyn_Batch::start()
                disable_updates = false;
                save_batch_active = false;
                ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+               if ( overwriteForcedOn )
+               {
+                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
+               }
                return;
             }
             if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
@@ -938,6 +978,11 @@ void US_Hydrodyn_Batch::start()
                disable_updates = false;
                save_batch_active = false;
                ((US_Hydrodyn *)us_hydrodyn)->save_params.data_vector.clear();
+               if ( overwriteForcedOn )
+               {
+                  ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+                  ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
+               }
                return;
             }
             if ( result && batch->hydro )
@@ -1014,6 +1059,11 @@ void US_Hydrodyn_Batch::start()
    progress->setProgress(1,1);
    disable_updates = false;
    enable_after_stop();
+   if ( overwriteForcedOn )
+   {
+      ((US_Hydrodyn *)us_hydrodyn)->overwrite = false;
+      ((US_Hydrodyn *)us_hydrodyn)->cb_overwrite->setChecked(false);
+   }
 }
 
 void US_Hydrodyn_Batch::stop()

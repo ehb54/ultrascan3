@@ -2492,6 +2492,7 @@ int US_Hydrodyn::calc_hydro()
       progress->reset();
       return -1;
    }
+   le_bead_model_suffix->setText(bead_model_suffix);
    int retval = us_hydrodyn_supc_main(&results,
                                       &hydro,
                                       hydro.overlap_cutoff ? hydro.overlap : overlap_tolerance,
@@ -2512,7 +2513,6 @@ int US_Hydrodyn::calc_hydro()
                                       progress,
                                       editor,
                                       this);
-   le_bead_model_suffix->setText(bead_model_suffix);
    chdir(somo_tmp_dir);
    if (stopFlag)
    {
