@@ -4,6 +4,13 @@
 #include <QtGui>
 
 #include "qwt_plot_marker.h"
+#include "qwt_plot_spectrogram.h"
+#include "qwt_plot_layout.h"
+#include "qwt_plot_zoomer.h"
+#include "qwt_plot_panner.h"
+#include "qwt_scale_widget.h"
+#include "qwt_scale_draw.h"
+#include "qwt_color_map.h"
 
 #include "us_extern.h"
 #include "us_widgets.h"
@@ -11,19 +18,13 @@
 #include "us_editor.h"
 #include "us_plot.h"
 #include "us_colorgradIO.h"
-
-typedef struct solute_s
-{
-  double s;
-  double c;
-  double k;
-} Solute;
+#include "us_spectrodata.h"
 
 typedef struct distro_sys
 {
    QList< Solute > s_distro;
    QList< Solute > mw_distro;
-   QList< QColor > gradient;
+   QwtLinearColorMap* colormap;
    QString         run_name;
    QString         cell;
    QString         wavelength;
@@ -47,8 +48,7 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       QLabel*       lb_resolu;
       QLabel*       lb_xreso;
       QLabel*       lb_yreso;
-      QLabel*       lb_xpix;
-      QLabel*       lb_ypix;
+      QLabel*       lb_zfloor;
       QLabel*       lb_autolim;
       QLabel*       lb_plt_smin;
       QLabel*       lb_plt_smax;
@@ -63,8 +63,7 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       QwtCounter*   ct_resolu;
       QwtCounter*   ct_xreso;
       QwtCounter*   ct_yreso;
-      QwtCounter*   ct_xpix;
-      QwtCounter*   ct_ypix;
+      QwtCounter*   ct_zfloor;
       QwtCounter*   ct_plt_fmin;     
       QwtCounter*   ct_plt_fmax;     
       QwtCounter*   ct_plt_smin;     
@@ -74,6 +73,8 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       QwtPlot*      data_plot;
 
       QwtPlotPicker* pick;
+
+      QwtLinearColorMap* colormap;
 
       QPushButton*  pb_pltall;
       QPushButton*  pb_stopplt;
@@ -93,7 +94,7 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       QProgressBar*   progress;
 
       QList< DisSys > system;
-      QList< QColor > gradient;
+
 
       double        resolu;
       double        plt_smin;
@@ -102,11 +103,10 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       double        plt_fmax;
       double        k_range;
       double        s_range;
+      double        xreso;
+      double        yreso;
+      double        zfloor;
 
-      int           xreso;
-      int           yreso;
-      int           xpix;
-      int           ypix;
       int           curr_distr;
       int           init_solutes;
       int           mc_iters;
@@ -127,8 +127,7 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       void update_resolu( double );
       void update_xreso( double );
       void update_yreso( double );
-      void update_xpix( double );
-      void update_ypix( double );
+      void update_zfloor( double );
       void update_curr_distr( double );
       void update_plot_fmin( double );
       void update_plot_fmax( double );

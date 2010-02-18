@@ -5,6 +5,7 @@
 #include <uuid/uuid.h>
 
 #include "us_pseudo3d_combine.h"
+#include "us_spectrodata.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
@@ -45,6 +46,12 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    QHBoxLayout* main = new QHBoxLayout( this );
    QVBoxLayout* left = new QVBoxLayout();
    QGridLayout* spec = new QGridLayout();
+   main->setSpacing        ( 2 );
+   main->setContentsMargins( 2, 2, 2, 2 );
+   left->setSpacing        ( 0 );
+   left->setContentsMargins( 0, 1, 0, 1 );
+   spec->setSpacing        ( 1 );
+   spec->setContentsMargins( 0, 0, 0, 0 );
 
    int s_row = 0;
 
@@ -83,25 +90,15 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    connect( ct_yreso,  SIGNAL( valueChanged( double ) ),
             this,      SLOT( update_yreso( double ) ) );
 
-   lb_xpix       = us_label( tr( "X-pixel width:" ) );
-   lb_xpix->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_xpix, s_row, 0 );
+   lb_zfloor     = us_label( tr( "Z Floor Percent:" ) );
+   lb_zfloor->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
+   spec->addWidget( lb_zfloor, s_row, 0 );
 
-   ct_xpix       = us_counter( 3, 2.0, 50.0, 2.0 );
-   ct_xpix->setStep( 1 );
-   spec->addWidget( ct_xpix, s_row++, 1 );
-   connect( ct_xpix,   SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_xpix( double ) ) );
-
-   lb_ypix       = us_label( tr( "Y-pixel width:" ) );
-   lb_ypix->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
-   spec->addWidget( lb_ypix, s_row, 0 );
-
-   ct_ypix       = us_counter( 3, 2.0, 50.0, 2.0 );
-   ct_ypix->setStep( 1 );
-   spec->addWidget( ct_ypix, s_row++, 1 );
-   connect( ct_ypix,   SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_ypix( double ) ) );
+   ct_zfloor     = us_counter( 3, 0.0, 50.0, 1.0 );
+   ct_zfloor->setStep( 1 );
+   spec->addWidget( ct_zfloor, s_row++, 1 );
+   connect( ct_zfloor, SIGNAL( valueChanged( double ) ),
+            this,      SLOT( update_zfloor( double ) ) );
 
    lb_autolim    = us_label( tr( "Automatic Plot Limits" ) );
    lb_autolim->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
@@ -243,12 +240,8 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    spec->addWidget( progress, s_row++, 0, 1, 2 );
 
    // set up plot component window on right side
-   QString degrsymb( "°" );
-   xa_title_s  = tr( "Sedimentation Coefficient corrected for water at 20" );
-   if ( degrsymb.length() == 1 )
-      xa_title_s = xa_title_s + degrsymb + "C";
-   else
-      xa_title_s = xa_title_s.append( degrsymb.at( 1 ) ) + "C";
+   xa_title_s  = tr( "Sedimentation Coefficient corrected for water at 20" )
+      + "<span>&deg;</span>C";
    xa_title_mw = tr( "Molecular Weight (Dalton)" );
    xa_title    = xa_title_s;
 
@@ -261,9 +254,13 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
 
    data_plot->enableAxis( QwtPlot::xBottom, true );
    data_plot->enableAxis( QwtPlot::yLeft,   true );
+   data_plot->enableAxis( QwtPlot::yRight,  true );
+   data_plot->setAxisScale( QwtPlot::xBottom, 1.0, 40.0 );
+   data_plot->setAxisScale( QwtPlot::yLeft,   1.0,  4.0 );
+   data_plot->setAxisScale( QwtPlot::yRight,  0.0,  0.2 );
 
    pick = new US_PlotPicker( data_plot );
-   pick->setRubberBand( QwtPicker::VLineRubberBand );
+   pick->setRubberBand( QwtPicker::RectRubberBand );
 
    // put layouts together for overall layout
    left->addLayout( spec );
@@ -293,19 +290,16 @@ void US_Pseudo3D_Combine::reset( void )
    ct_resolu->setRange( 1, 100, 1 );
    ct_resolu->setValue( resolu );  
 
-   xreso      = 300;
-   yreso      = 300;
+   xreso      = 300.0;
+   yreso      = 300.0;
    ct_xreso->setRange( 10.0, 1000.0, 1.0 );
    ct_xreso->setValue( (double)xreso );
    ct_yreso->setRange( 10, 1000, 1 );
    ct_yreso->setValue( (double)yreso );
 
-   xpix       = 2;
-   ypix       = 2;
-   ct_xpix->setRange( 2, 50, 1 );
-   ct_xpix->setValue( (double)xpix );
-   ct_ypix->setRange( 2, 50, 1 );
-   ct_ypix->setValue( (double)ypix );
+   zfloor     = 5.0;
+   ct_zfloor->setRange( 0, 50, 1 );
+   ct_zfloor->setValue( (double)zfloor );
 
    auto_lim   = true;
    cb_autolim->setChecked( auto_lim );
@@ -336,148 +330,46 @@ void US_Pseudo3D_Combine::reset( void )
 
 void US_Pseudo3D_Combine::plot_data( void )
 {
+   if ( curr_distr < 0  ||  curr_distr >= system.size() )
+   {
+      qDebug() << "curr_distr=" << curr_distr << "  ( sys.size()=" << system.size() << " )";
+      return;
+   }
+
+   DisSys* tsys   = (DisSys*)&system.at( curr_distr );
+   QList< Solute >& sol_s = tsys->s_distro;
+   if ( !plot_s )
+      sol_s    = tsys->mw_distro;
+   colormap = tsys->colormap;
+
    data_plot->clear();
 
-   QStringList parsed;
+   QwtPlotSpectrogram *d_spectrogram = new QwtPlotSpectrogram();
+   d_spectrogram->setData( US_SpectrogramData() );
+   d_spectrogram->setColorMap( *colormap );
 
-   int     count = 0;
+   US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
 
-   double  minx = 1e20;
-   double  maxx = 0.0;
+   spec_dat.setRastRanges( xreso, yreso, resolu, zfloor );
+qDebug() << "setRaster call";
+   spec_dat.setRaster( sol_s );
+qDebug() << "setRaster  return";
 
-   double  miny = 1e20;
-   double  maxy = 0.0;
+   d_spectrogram->attach( data_plot );
 
-   // Remove any non-data lines and put values in arrays
+   QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
+   rightAxis->setColorBarEnabled( true );
+   rightAxis->setColorMap( spec_dat.range(), d_spectrogram->colorMap() );
+   data_plot->setAxisTitle( QwtPlot::yRight, "Frequency" );
+   data_plot->setAxisScale( QwtPlot::yRight,
+      spec_dat.range().minValue(), spec_dat.range().maxValue() );
+   data_plot->enableAxis( QwtPlot::yRight );
 
-   double overscan = ( maxx - minx ) * 0.10;  // 10% overscan
+   data_plot->setAxisScale( QwtPlot::yLeft,
+      spec_dat.yrange().minValue(), spec_dat.yrange().maxValue() );
 
-   data_plot->setAxisScale( QwtPlot::xBottom, 
-         minx - overscan, maxx + overscan );
-    
-   // Adjust y axis to scale all the data
-   double dy = fabs( maxy - miny ) / 10.0;
-
-   data_plot->setAxisScale( QwtPlot::yLeft, miny - dy, maxy + dy );
-
-   // Do the fit and get the minimum
-
-   double c[ 10 ];
-
-   int order = 1;
-
-   int fit_count = (int) ( ( maxx - minx + 2 * overscan ) / 0.001 );
-
-   double* fit_x = new double[ fit_count ];
-   double* fit_y = new double[ fit_count ];
-   double  x     = minx - overscan;
-   double minimum;
-
-   for ( int i = 0; i < fit_count; i++, x += 0.001 )
-   {
-      fit_x[ i ] = x;
-      fit_y[ i ] = c[ 0 ];
-
-      for ( int j = 1; j <= order; j++ ) 
-         fit_y[ i ] += c[ j ] * pow( x, j );
-   }
-
-   // Calculate Root Mean Square Error
-   double rms_err = 0.0;
-
-   for ( int i = 0; i < count; i++ )
-   {
-      double x = 1.0;
-      double y = 1.0;
-
-      double y_calc = c[ 0 ];
-      
-      for ( int j = 1; j <= order; j++ )  
-         y_calc += c[ j ] * pow( x, j );
-      
-      rms_err += sq ( fabs ( y_calc - y ) );
-   }
-
-   // Find the minimum
-   if ( order == 2 )
-   {
-      // Take the derivitive and get the minimum
-      // c1 + 2 * c2 * x = 0
-      minimum = - c[ 1 ] / ( 2.0 * c[ 2 ] );
-   }
-   else
-   {
-      // Find the zero of the derivitive
-      double dxdy  [ 9 ];
-      double d2xdy2[ 8 ];
-
-      // First take the derivitive
-      for ( int i = 0; i < order; i++ ) 
-         dxdy[ i ] = c[ i + 1 ] * ( i + 1 );
-
-      // And we'll need the 2nd derivitive
-      for ( int i = 0; i < order - 1; i++ ) 
-         d2xdy2[ i ] = dxdy[ i + 1 ] * ( i + 1 );
-
-      // We'll do a quadratic fit for the initial estimate
-      double q[ 3 ];
-      minimum = - q[ 1 ] / ( 2.0 * q[ 2 ] );
-
-      const double epsilon = 1.0e-4;
-
-      int    k = 0;
-      double f;
-      double f_prime;
-      do
-      {
-        // f is the 1st derivitive
-        f = dxdy[ 0 ];
-        for ( int i = 1; i < order; i++ ) f += dxdy[ i ] * pow( minimum, i );
-
-        // f_prime is the 2nd derivitive
-        f_prime = d2xdy2[ 0 ];
-        for ( int i = 1; i < order - 1; i++ ) 
-           f_prime += d2xdy2[ i ] * pow( minimum, i );
-
-        if ( fabs( f ) < epsilon ) break;
-        if ( k++ > 10 ) break;
-
-        // Get the next estimate
-        minimum -= f / f_prime;
-
-      } while ( true );
-   }
-
-   // Plot the minimum
-
-   double radius_min[ 2 ];
-   double rmsd_min  [ 2 ];
-
-   radius_min[ 0 ] = minimum;
-   radius_min[ 1 ] = minimum;
-
-   rmsd_min  [ 0 ] = miny - 1.0 * dy;
-   rmsd_min  [ 0 ] = miny + 2.0 * dy;
-
-   // Add the marker label -- bold, font size default + 1, lines 3 pixels wide
-   QPen markerPen( QBrush( Qt::white ), 3.0 );
-   markerPen.setWidth( 3 );
-   
-   QwtPlotMarker* pm = new QwtPlotMarker();
-   QwtText        label( QString::number( minimum, 'f', 5 ) );
-   QFont          font( pm->label().font() );
-
-   font.setBold( true );
-   font.setPointSize( font.pointSize() + 1 );
-   label.setFont( font );
-
-   pm->setValue( minimum, miny + 3.0 * dy );
-   pm->setSymbol( QwtSymbol( QwtSymbol::Cross, 
-            QBrush( Qt::white ), markerPen, QSize( 9, 9 ) ) );
-   pm->setLabel( label );
-   pm->setLabelAlignment( Qt::AlignTop );
-
-   pm->attach( data_plot );
+   data_plot->setAxisScale( QwtPlot::xBottom,
+      spec_dat.xrange().minValue(), spec_dat.xrange().maxValue() );
 
    data_plot->replot();
 }
@@ -494,27 +386,31 @@ void US_Pseudo3D_Combine::update_resolu( double dval )
 
 void US_Pseudo3D_Combine::update_xreso( double dval )
 {
-   xreso  = qRound( dval );
+   xreso  = dval;
 }
 
 void US_Pseudo3D_Combine::update_yreso( double dval )
 {
-   yreso  = qRound( dval );
+   yreso  = dval;
 }
 
-void US_Pseudo3D_Combine::update_xpix( double dval )
+void US_Pseudo3D_Combine::update_zfloor( double dval )
 {
-   xpix  = qRound( dval );
-}
-
-void US_Pseudo3D_Combine::update_ypix( double dval )
-{
-   ypix  = qRound( dval );
+   zfloor = dval;
 }
 
 void US_Pseudo3D_Combine::update_curr_distr( double dval )
 {
-   curr_distr = dval;
+   curr_distr   = qRound( dval ) - 1;
+
+   if ( curr_distr > (-1)  &&  curr_distr < system.size() )
+   {
+      DisSys* tsys = (DisSys*)&system.at( curr_distr );
+      QString tstr = "Run " + tsys->run_name + "." + tsys->cell +
+         tsys->wavelength + " (" + tsys->method + ")";
+      le_distr_info->setText( tstr );
+   }
+
 }
 
 void US_Pseudo3D_Combine::update_plot_smin( double dval )
@@ -571,7 +467,9 @@ void US_Pseudo3D_Combine::select_plot_mw()
 
 void US_Pseudo3D_Combine::load_distro()
 {
-   QString filter = tr( "Any Distro files (*.*dis.*);;" )
+   QString filter =
+      tr( "Any Distro files (" ) +
+      "*.fe*_dis.* *.cofs*_dis.* *.sa2d*_dis.* *.ga*_dis.* *.global*_dis.*);;"
       + tr( "FE files (*.fe_dis.*);;" )
       + tr( "COFS files (*.cofs_dis.*);;" )
       + tr( "2DSA files (*.sa2d_dis.*);;" )
@@ -617,22 +515,18 @@ void US_Pseudo3D_Combine::load_distro( const QString& fname )
       "sa2d_mw_dis",     "2DSA, MW Constrained",               "F",
       "ga_mw_dis",       "GA, MW Constrained",                 "F",
       "sa2d_mw_mc_dis",  "2DSA, MW Constrained, Monte Carlo",  "T",
-      "ga_mw_mc_dis",    "GA, MW Constrained, MonteCarlo",     "T",
+      "ga_mw_mc_dis",    "GA, MW Constrained, Monte Carlo",    "T",
       "global_dis",      "Global Distro",                      "T",
       "global_mc_dis",   "Global MC Distro",                   "T"
    };
    int ncdte = sizeof( cdtyp ) / sizeof( char* );
 
-   DisSys    tsys;
-   Solute    sol_s;
-   Solute    sol_mw;
+   DisSys      tsys;
+   Solute      sol_s;
+   Solute      sol_mw;
 
-   // load current gradient
-   tsys.gradient.clear();
-   for ( int jj = 0; jj < gradient.size(); jj++ )
-   {
-      tsys.gradient.append( gradient.at( jj ) );
-   }
+   // load current colormap
+   tsys.colormap = colormap;
 
    // set values based on file name
 qDebug() << "Load Distro, fname=" << fname;
@@ -661,9 +555,13 @@ qDebug() << "Load Distro, fname=" << fname;
       }
    }
 
-   tstr             = "Run " + tsys.run_name + "." +
-      tsys.cell + tsys.wavelength + " (" + tsys.method + ")";
+   tstr    = "Run " + tsys.run_name + "." + tsys.cell +
+      tsys.wavelength + " (" + tsys.method + ")";
    le_distr_info->setText( tstr );
+
+   tstr    = tsys.run_name + "." + tsys.cell +
+      tsys.wavelength + "\n" + tsys.method;
+   data_plot->setTitle( tstr );
 
    // read in and set distribution s,c,k values
    if ( tsys.distro_type > 0 )
@@ -673,12 +571,39 @@ qDebug() << "Load Distro, fname=" << fname;
       if ( filei.open( QIODevice::ReadOnly | QIODevice::Text ) )
       {
          QTextStream ts( &filei );
-         QString s1;
+         QString     s1;
          QStringList l1;
+         int         i1  = 1;
+         int         i2  = 4;
+         int         i3  = 5;
+         int         i4  = 6;
+         int         mxi = 0;
 
          if ( !ts.atEnd() )
          {
-            ts.readLine();    // discard header line
+            s1       = ts.readLine();    // interpret header line
+            l1       = s1.split( QRegExp( "\\s+" ) );
+            i1       = l1.indexOf( QRegExp( "s_20.*", Qt::CaseInsensitive ) );
+            i2       = l1.indexOf( QRegExp( "mw.*",   Qt::CaseInsensitive ) );
+            i3       = l1.indexOf( QRegExp( "freq.*", Qt::CaseInsensitive ) );
+            i4       = l1.indexOf( QRegExp( "f/f0.*", Qt::CaseInsensitive ) );
+#if 0
+qDebug() << "Header Line :" << s1;
+qDebug() << " l1.size()=" << l1.size();
+qDebug() << "  i1=" << i1;
+qDebug() << "  i2=" << i2;
+qDebug() << "  i3=" << i3;
+qDebug() << "  i4=" << i4;
+#endif
+            mxi      = ( i1 > mxi ) ? i1  : mxi;
+            mxi      = ( i2 > mxi ) ? i2  : mxi;
+            mxi      = ( i3 > mxi ) ? i3  : mxi;
+            mxi      = ( i4 > mxi ) ? i4  : mxi;
+            i1       = ( i1 < 0 )   ? mxi : i1;
+            i2       = ( i2 < 0 )   ? mxi : i2;
+            i3       = ( i3 < 0 )   ? mxi : i3;
+            i4       = ( i4 < 0 )   ? mxi : i4;
+            mxi++;
          }
 
          if ( tsys.monte_carlo )
@@ -696,15 +621,15 @@ qDebug() << "Load Distro, fname=" << fname;
             double dv4;
             s1       = ts.readLine();    // consume entire line
             l1       = s1.split( QRegExp( "\\s+" ) );
-            if ( l1.empty()  ||  l1.size() < 7 )
+            if ( l1.empty()  ||  l1.size() < mxi )
             {
-               qDebug() << "BLANK LINE: size=" << l1.size();
+               qDebug() << "BLANK/SHORT LINE: size=" << l1.size();
                continue;      // skip this line
             }
-            dv1      = l1.at( 1 ).toDouble();   // s_20,W
-            dv2      = l1.at( 4 ).toDouble();   // D_20,W
-            dv3      = l1.at( 5 ).toDouble();   // Frequency
-            dv4      = l1.at( 6 ).toDouble();   // f/f0
+            dv1      = l1.at( i1 ).toDouble();  // S_20,W
+            dv2      = l1.at( i2 ).toDouble();  // MW
+            dv3      = l1.at( i3 ).toDouble();  // Frequency
+            dv4      = l1.at( i4 ).toDouble();  // f/f0
 
             if ( dv1 == 0.0 )
                break;
@@ -746,6 +671,8 @@ qDebug() << "  s_distro size=" << tsys.s_distro.size();
       ct_plt_smin->setEnabled( false );
       ct_plt_smax->setEnabled( false );
    }
+   data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax );
+   data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
 
    pb_print->setEnabled(    true );
    pb_pltall->setEnabled(   true );
@@ -762,7 +689,7 @@ void US_Pseudo3D_Combine::load_color()
          + tr( "Gradient files (*grad*.xml);;" )
          + tr( "Any files (*)" );
 
-   // get an xml file name for the color gradient
+   // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
       tr( "Load Color Gradient File" ),
       US_Settings::appBaseDir() + "/etc",
@@ -772,24 +699,39 @@ void US_Pseudo3D_Combine::load_color()
    if ( fname.isEmpty() )
       return;
 
-   // get the gradient from the file
-   US_ColorGradIO::read_color_gradient( fname, gradient );
+   // get the map from the file
+   QList< QColor > cmcolor;
+   QList< double > cmvalue;
 
-   // save the gradient information for the current distribution
+   US_ColorGradIO::read_color_steps( fname, cmcolor, cmvalue );
+   colormap  = new QwtLinearColorMap( cmcolor.first(), cmcolor.last() );
+
+   for ( int jj = 1; jj < cmvalue.size() - 1; jj++ )
+   {
+      colormap->addColorStop( cmvalue.at( jj ), cmcolor.at( jj ) );
+   }
+
+   // save the map information for the current distribution
    if ( system.size() > curr_distr )
    {
-      DisSys tsys  = system.at( curr_distr );
-      tsys.gradient.clear();
-      tsys.gradient.append( gradient );
-      system.replace( curr_distr, tsys );
+      DisSys* tsys   = (DisSys*)&system.at( curr_distr );
+      tsys->colormap = colormap;
    }
 }
+
 void US_Pseudo3D_Combine::save()
 {}
+
 void US_Pseudo3D_Combine::plotall()
-{}
+{
+   plot_data();
+}
+
 void US_Pseudo3D_Combine::refresh()
-{}
+{
+   plot_data();
+}
+
 void US_Pseudo3D_Combine::stop()
 {}
 void US_Pseudo3D_Combine::print()
@@ -812,11 +754,11 @@ void US_Pseudo3D_Combine::set_limits()
       // find min,max for S distributions
       for ( ii = 0; ii < system.size(); ii++ )
       {
-         DisSys tsys  = system.at( ii );
-         for ( jj = 0; jj < tsys.s_distro.size(); jj++ )
+         DisSys* tsys = (DisSys*)&system.at( ii );
+         for ( jj = 0; jj < tsys->s_distro.size(); jj++ )
          {
-            double sval = tsys.s_distro.at( jj ).s;
-            double fval = tsys.s_distro.at( jj ).k;
+            double sval = tsys->s_distro.at( jj ).s;
+            double fval = tsys->s_distro.at( jj ).k;
             smin        = ( smin < sval ) ? smin : sval;
             smax        = ( smax > sval ) ? smax : sval;
             fmin        = ( fmin < fval ) ? fmin : fval;
@@ -831,11 +773,11 @@ void US_Pseudo3D_Combine::set_limits()
       // find min,max for MW distributions
       for ( ii = 0; ii < system.size(); ii++ )
       {
-         DisSys tsys  = system.at( ii );
-         for ( jj = 0; jj < tsys.mw_distro.size(); jj++ )
+         DisSys* tsys = (DisSys*)&system.at( ii );
+         for ( jj = 0; jj < tsys->mw_distro.size(); jj++ )
          {
-            double sval = tsys.mw_distro.at( jj ).s;
-            double fval = tsys.mw_distro.at( jj ).k;
+            double sval = tsys->mw_distro.at( jj ).s;
+            double fval = tsys->mw_distro.at( jj ).k;
             smin        = ( smin < sval ) ? smin : sval;
             smax        = ( smax > sval ) ? smax : sval;
             fmin        = ( fmin < fval ) ? fmin : fval;
@@ -886,6 +828,13 @@ void US_Pseudo3D_Combine::set_limits()
       plt_smax    = smax;
       plt_fmin    = fmin;
       plt_fmax    = fmax;
+   }
+   else
+   {
+      plt_smin    = ct_plt_smin->value();
+      plt_smax    = ct_plt_smax->value();
+      plt_fmin    = ct_plt_fmin->value();
+      plt_fmax    = ct_plt_fmax->value();
    }
 }
 
