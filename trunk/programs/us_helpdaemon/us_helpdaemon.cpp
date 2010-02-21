@@ -6,7 +6,10 @@
 US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
 {
   QString location = qApp->applicationDirPath() + "/manual.qhc";
-  QString url      = "qthelp://ultrascaniii/manual/" + page;
+  QString url      = "qthelp://ultrascaniii/";
+  if ( !page.contains( "manual/" ) )
+     url.append( "manual/" );
+  url.append( page );
 
   QStringList args;
 
@@ -49,7 +52,7 @@ void US_HelpDaemon::show( const QString& helpPage )
   debug( "setSource qthelp://ultrascaniii/" + page );
 
   QByteArray ba;
-  ba.append( "setSource qthelp://ultrascaniii/manual/" );
+  ba.append( "setSource qthelp://ultrascaniii/" );
   ba.append( page.toAscii() );
   ba.append( '\0' );
 
