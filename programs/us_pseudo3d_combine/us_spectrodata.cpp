@@ -180,6 +180,7 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
     int    hiyd  = nyscn / 4;
     nxd          = ( nxd < 10 ) ? 10 : ( ( nxd > hixd ) ? hixd : nxd );
     nyd          = ( nyd < 10 ) ? 10 : ( ( nyd > hiyd ) ? hiyd : nyd );
+//qDebug() << "nxd,nyd=" << nxd << "," << nyd;
 
    for ( int kk = 0; kk < nsol; kk++ )
    {   // spread z values for each distribution point
@@ -187,6 +188,11 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
       yval    = solu.at( kk ).k;
       zval    = solu.at( kk ).c - zmin;             // use z in 0,zrng range
 
+      int rx  = ( xval - xmin ) * xinc;             // x index of this point
+      int fx  = rx - nxd;                           // first reasonable x
+      int lx  = rx + nxd;                           // last reasonable x
+      fx      = ( fx > 0 )     ? fx : 0;
+      lx      = ( lx < nxpsc ) ? lx : nxpsc;
       int ry  = ( ymax - yval ) * yinc;             // y index of this point
       int fy  = ry - nyd;                           // first reasonable y
       int ly  = ry + nyd;                           // last reasonable y
@@ -199,11 +205,6 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
          double ydif   = yras - yval;
          double yterm  = exp( ydif * ydif * fssc ); // y term
          double zterm  = zval * yterm;              // combine z-value,y-term
-         int rx        = ( xval - xmin ) * xinc;    // x index of this point
-         int fx        = rx - nxd;                  // first reasonable x
-         int lx        = rx + nxd;                  // last reasonable x
-         fx            = ( fx > 0 )     ? fx : 0;
-         lx            = ( lx < nxpsc ) ? lx : nxpsc;
          int kr        = ii * nxpsc + fx;           // start raster point index
 
          for ( int jj = fx; jj < lx; jj++ )
