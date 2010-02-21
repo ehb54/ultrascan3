@@ -113,7 +113,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_plt_fmin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    spec->addWidget( lb_plt_fmin, s_row, 0 );
 
-   ct_plt_fmin   = us_counter( 3, 0.0, 50.0, 0.0 );
+   ct_plt_fmin   = us_counter( 3, 1.0, 50.0, 0.0 );
    ct_plt_fmin->setStep( 1 );
    spec->addWidget( ct_plt_fmin, s_row++, 1 );
    connect( ct_plt_fmin, SIGNAL( valueChanged( double ) ),
@@ -133,7 +133,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    lb_plt_smin->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
    spec->addWidget( lb_plt_smin, s_row, 0 );
 
-   ct_plt_smin   = us_counter( 3, 0.0, 10000.0, 0.0 );
+   ct_plt_smin   = us_counter( 3, -10.0, 10000.0, 0.0 );
    ct_plt_smin->setStep( 1 );
    spec->addWidget( ct_plt_smin, s_row++, 1 );
    connect( ct_plt_smin, SIGNAL( valueChanged( double ) ),
@@ -258,6 +258,7 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    data_plot->setAxisScale( QwtPlot::xBottom, 1.0, 40.0 );
    data_plot->setAxisScale( QwtPlot::yLeft,   1.0,  4.0 );
    data_plot->setAxisScale( QwtPlot::yRight,  0.0,  0.2 );
+   data_plot->setCanvasBackground( Qt::darkBlue );
 
    pick = new US_PlotPicker( data_plot );
    pick->setRubberBand( QwtPicker::RectRubberBand );
@@ -332,8 +333,12 @@ void US_Pseudo3D_Combine::plot_data( void )
 {
    if ( curr_distr < 0  ||  curr_distr >= system.size() )
    {
-      qDebug() << "curr_distr=" << curr_distr << "  ( sys.size()=" << system.size() << " )";
-      return;
+      int syssiz = system.size();
+      qDebug() << "curr_distr=" << curr_distr
+         << "  ( sys.size()=" << syssiz << " )";
+      syssiz--;
+      curr_distr     = curr_distr < 0 ? 0 : curr_distr;
+      curr_distr     = curr_distr > syssiz ? syssiz : curr_distr;
    }
 
    DisSys* tsys   = (DisSys*)&system.at( curr_distr );
@@ -343,6 +348,7 @@ void US_Pseudo3D_Combine::plot_data( void )
    colormap = tsys->colormap;
 
    data_plot->clear();
+   data_plot->setCanvasBackground( colormap->color1() ); 
 
    QwtPlotSpectrogram *d_spectrogram = new QwtPlotSpectrogram();
    d_spectrogram->setData( US_SpectrogramData() );
@@ -351,9 +357,7 @@ void US_Pseudo3D_Combine::plot_data( void )
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
 
    spec_dat.setRastRanges( xreso, yreso, resolu, zfloor );
-qDebug() << "setRaster call";
    spec_dat.setRaster( sol_s );
-qDebug() << "setRaster  return";
 
    d_spectrogram->attach( data_plot );
 
@@ -365,11 +369,18 @@ qDebug() << "setRaster  return";
       spec_dat.range().minValue(), spec_dat.range().maxValue() );
    data_plot->enableAxis( QwtPlot::yRight );
 
-   data_plot->setAxisScale( QwtPlot::yLeft,
-      spec_dat.yrange().minValue(), spec_dat.yrange().maxValue() );
-
-   data_plot->setAxisScale( QwtPlot::xBottom,
-      spec_dat.xrange().minValue(), spec_dat.xrange().maxValue() );
+   if ( auto_lim )
+   {
+      data_plot->setAxisScale( QwtPlot::yLeft,
+         spec_dat.yrange().minValue(), spec_dat.yrange().maxValue() );
+      data_plot->setAxisScale( QwtPlot::xBottom,
+         spec_dat.xrange().minValue(), spec_dat.xrange().maxValue() );
+   }
+   else
+   {
+      data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax );
+      data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
+   }
 
    data_plot->replot();
 }
@@ -446,7 +457,15 @@ void US_Pseudo3D_Combine::select_autolim()
    ct_plt_fmax->setEnabled( !auto_lim );
    ct_plt_smin->setEnabled( !auto_lim );
    ct_plt_smax->setEnabled( !auto_lim );
-   ct_curr_distr->setEnabled( !auto_lim );
+   if ( auto_lim )
+   {
+      set_limits();
+   }
+   else
+   {
+      ct_plt_smin->setRange( -10.0, 10000.0, 0.01 );
+      ct_plt_smax->setRange( 0.0, 10000.0, 0.01 );
+   }
 }
 
 void US_Pseudo3D_Combine::select_plot_s()
@@ -671,6 +690,15 @@ qDebug() << "  s_distro size=" << tsys.s_distro.size();
       ct_plt_smin->setEnabled( false );
       ct_plt_smax->setEnabled( false );
    }
+   else
+   {
+      plt_smin    = ct_plt_smin->value();
+      plt_smax    = ct_plt_smax->value();
+      plt_fmin    = ct_plt_fmin->value();
+      plt_fmax    = ct_plt_fmax->value();
+      ct_plt_smin->setRange( -10.0, 10000.0, 0.01 );
+      ct_plt_smax->setRange( 0.0, 10000.0, 0.01 );
+   }
    data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax );
    data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
 
@@ -835,6 +863,8 @@ void US_Pseudo3D_Combine::set_limits()
       plt_smax    = ct_plt_smax->value();
       plt_fmin    = ct_plt_fmin->value();
       plt_fmax    = ct_plt_fmax->value();
+      ct_plt_smin->setRange( -10.0, 10000.0, 0.01 );
+      ct_plt_smax->setRange( 0.0, 10000.0, 0.01 );
    }
 }
 
