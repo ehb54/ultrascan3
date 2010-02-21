@@ -1,0 +1,99 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III Pseudo-3D Combine'
+%]
+
+    <h2> <i>UltraScan</i> Pseudo-3D Combine: </h2>
+
+    <p> Solution distribution data can be displayed in pseudo-3-dimensional
+    form where the Z axis is simulated using colors in a color map. Data from
+    different cells can be combined.</p>
+
+    <img src="images/pseudo3d_combine.png" alt="Pseudo-3D Combine Main Window"/>
+
+    <ul>
+            <li>
+              <b>Pseudo-3D Resolution:</b> Choose near-100 flattening
+              parameter for Gaussian distribution of frequency points.
+            </li>
+            
+            <li>
+              <b>X Resolution:</b> Choose the number of pixels to represent the
+              full X (Sedimentation Coefficient or Molecular Weight) data range.
+            </li>
+
+            <li>
+              <b>Y Resolution:</b> Choose the number of pixels to represent the
+              full Y (Frictional Ratio) data range.
+            </li>
+
+            <li>
+              <b>Z Floor Percent:</b> Choose the percent of the Z (Frequency) range
+              to add below the minimum Z in order to affect display of faint values.
+            </li>
+            
+            <li>
+              <b>Automatic Plot Limits</b> Select to automatically set X and Y
+              plot range limits or unselect to allow explicitly setting these values.
+            </li>
+            
+            <li>
+              <b>Plot Limit f/f0 min:</b> Choose the lower plot limit for f/f0.
+            </li>
+
+            <li>
+              <b>Plot Limit f/f0 max:</b> Choose upper lower plot limit for f/f0.
+            </li>
+
+            <li>
+              <b>Plot Limit s min:</b> Choose the lower plot limit for sedimentation (or MW).
+            </li>
+
+            <li>
+              <b>Plot Limit s max:</b> Choose the upper plot limit for sedimentation (or MW).
+            </li>
+
+            <li>
+              <b>Current Distro:</b> Choose the index (1-n) of the distribution to make the current.
+            </li>
+
+            <li>
+              <b>Plot f/f0 vs s</b> Select to plot f/f0 versus sedimentation coefficient corrected
+              for water at 20<span>&deg;</span>Celsius.
+            </li>
+
+            <li>
+              <b>Plot f/f0 vs MW</b> Select to plot f/f0 versus molecular weight (Dalton).
+            </li>
+
+            <li>
+              <b>Plot all Distros</b> Loop to successively plot all loaded distributions.
+            </li>
+            
+            <li>
+              <b>Stop Plotting Loop</b> Stop the successive plot of all loaded distributions.
+            </li>
+            
+            <li>
+              <b>Refresh Pseudo-3D Plot</b> Refresh the pseudo-3d plot with current settings,
+              current color map and current distribution data.
+            </li>
+            
+            <li>
+              <b>Reset</b> Reset parameters to their default settings.
+            </li>
+            
+            <li>
+              <b>Load Distribution</b> Load distribution data as specified through a file dialog.
+            </li>
+            
+            <li>
+              <b>Load Color File</b> Load color map for Z dimension display
+              as specified through a file dialog.
+            </li>
+            
+            <li>
+              <b>Help:</b> Display detailed pseudo-3d combine help.
+            </li>
+          </ul>
+
+[% INCLUDE footer.us3 %]
