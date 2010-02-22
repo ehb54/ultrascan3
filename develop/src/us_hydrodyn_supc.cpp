@@ -4440,6 +4440,9 @@ initarray()
       int decpow = (int)pow(10.0, (decpts));
       printf("!!rounding to %d digits (%d)\n", decpts, decpow);
 
+      double pre_mw = 0e0;
+      int mw_c = 0;
+      double post_mw = 0e0;
 
       for (i = 0; i < nat; i++)
       {
@@ -4453,7 +4456,17 @@ initarray()
          dt[i].y = ((int)((dt[i].y * decpow) + (dt[i].y > 0 ? 0.5 : -0.5))) / (float)decpow;
          dt[i].z = ((int)((dt[i].z * decpow) + (dt[i].z > 0 ? 0.5 : -0.5))) / (float)decpow;
          dt[i].r = ((int)((dt[i].r * decpow) + (dt[i].r > 0 ? 0.5 : -0.5))) / (float)decpow;
-         dt[i].m = ((int)(dt[i].m * 100.0)) / 100.0;
+         pre_mw += dt[i].m;
+         {
+            // double om = dt[i].m;
+            // float omf = dt[i].m;
+            dt[i].m = ((int)(dt[i].m * 100.0 + .5)) / 100.0;
+            // double am = ((int)(om * 1e2 + 5e-1)) / 1e2;
+            // float amf = dt[i].m;
+            // printf("pre mw %d %.10f %.10f %.4f %.4f\n", i, om, am, omf, amf);
+         }
+         post_mw += dt[i].m;
+         mw_c++;
 #if defined(DEBUG_FILES)
          {
             float fx, fy, fz, fr, fm;
@@ -4477,6 +4490,7 @@ initarray()
          }
 #endif
       }
+      printf("hydro pre mw %.10f (%d), post mw %.10f (%d), diff %.10f\n", pre_mw, mw_c, post_mw, mw_c, pre_mw - post_mw);
 #if defined(DEBUG_FILES)
       fclose(rmc);
 #endif

@@ -548,6 +548,10 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 
    printf("bead model size %d\n", (int)bead_model->size()); fflush(stdout);
    float max_radius = VW_average_radius;
+   double pre_mw = 0e0;
+   double post_mw = 0e0;
+   int pre_mw_c = 0;
+   int post_mw_c = 0;
    for (unsigned int i = 0; i < bead_model->size(); i++)
    {
       if ((*bead_model)[i].active)
@@ -591,6 +595,9 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
          tmp_prop.f = (*bead_model)[i].bead_color;
          tmp_prop.rVW = (*bead_model)[i].bead_computed_radius;
          tmp_prop.mass = (*bead_model)[i].bead_mw;
+
+         pre_mw += tmp_prop.mass;
+         pre_mw_c++;
 
          tmp_prop.next = (PHYSPROP *) 0;
 
@@ -799,6 +806,8 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       tmp_atom.radius = this_prop->rVW;
       tmp_atom.bead_mw = this_prop->mass;
       tmp_atom.mw = this_prop->mass;
+      post_mw += this_prop->mass;
+      post_mw_c++;
       tmp_atom.bead_ref_mw = this_prop->mass;
       tmp_atom.bead_ref_volume = 0;
       tmp_atom.bead_color = 1;
@@ -837,6 +846,6 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 #endif
    editor->append(QString("Grid contains %1 beads\n").arg(result_bead_model.size()));
    printf("bead model size %d\n", (int)result_bead_model.size()); fflush(stdout);
-
+   printf("grid pre mw %.6f (%d), post mw %.6f (%d), diff %.6f\n", pre_mw, pre_mw_c, post_mw, post_mw_c, pre_mw - post_mw);
    return result_bead_model;
 }

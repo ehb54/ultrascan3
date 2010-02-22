@@ -124,6 +124,8 @@ void process_script(QString script_filename, US_Hydrodyn *h)
       QRegExp rx2("^(\\S+)\\s*(\\S+)\\s*$");
       QRegExp rx3("^(\\S+)\\s*(\\S+)\\s*(\\S+)\\s*$");
       h->guiFlag = false;
+      h->overwrite = true;
+      h->setSuffix = false;
       int line = 0;
       QString loadfiletype = "";
       while ( QString c = ts.readLine() )
