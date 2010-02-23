@@ -1067,11 +1067,19 @@ void US_Hydrodyn::select_residue_file()
 
 void US_Hydrodyn::reload_pdb()
 {
-   if ( pdb_file.isEmpty() || !pb_somo->isEnabled() )
+   if ( advanced_config.debug_1 )
+   {
+      printf("Reload PDB file called %d %d.\n", pdb_file.isEmpty(), !pb_somo->isEnabled());
+   }
+   if ( pdb_file.isEmpty() ) // why did we ever do this ? || !pb_somo->isEnabled() )
    {
       return;
    }
    editor->append("\nReloading PDB file.\n");
+   if ( advanced_config.debug_1 )
+   {
+      printf("Reloading PDB file.\n");
+   }
    int errors_found = 0;
    if ( misc.pb_rule_on )
    {

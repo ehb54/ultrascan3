@@ -615,6 +615,10 @@ int US_Hydrodyn::check_for_missing_atoms(QString *error_string, PDB_model *model
    {
       misc.pb_rule_on = false;
       editor->append("Broken chain turns off Peptide Bond Rule.\n");
+      if ( advanced_config.debug_1 )
+      {
+         printf("Broken chain turns off Peptide Bond Rule.\n");
+      }
       display_default_differences();
       reload_pdb();
       get_atom_map(model);
@@ -4642,13 +4646,13 @@ int US_Hydrodyn::compute_asa()
                {
                   if ( advanced_config.debug_3 )
                   {
-                     fprintf(stderr, "notice: atom %s %s %d excluded from cog calculation in bead %s %s %d\n",
-                             this_atom->name.ascii(),
-                             this_atom->resName.ascii(),
-                             this_atom->serial,
-                             use_atom->name.ascii(),
-                             use_atom->resName.ascii(),
-                             use_atom->serial);
+                     printf("notice: atom %s %s %d excluded from cog calculation in bead %s %s %d\n",
+                            this_atom->name.ascii(),
+                            this_atom->resName.ascii(),
+                            this_atom->serial,
+                            use_atom->name.ascii(),
+                            use_atom->resName.ascii(),
+                            use_atom->serial);
                   }
                }
 
