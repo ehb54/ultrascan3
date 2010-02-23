@@ -3,11 +3,60 @@
 $us = $ENV{'ULTRASCAN'} || die "\$ULTRASCAN must be set\n";
 $ush = "$ENV{'HOME'}/ultrascan";
 
-#$debug++;
+# $debug++;
 $do_somo++;
 $do_grid++;
 # $hydro_opts = "-d";
 $maxtimes = 1;
+
+while ($ARGV[0] =~ /^-/) {
+    $_ = shift;
+    last if /^--/;
+    if (/^-d/) {
+	$debug++;
+        print "debug on\n";
+	next;
+    }
+    if (/^-D/) {
+	$hydro_opts = "-d";
+        print "hydrodyn debug on\n";
+	next;
+    }
+    if (/^-s/) {
+	undef $do_somo;
+        print "somo testing disabled\n";
+	next;
+    }
+    if (/^-g/) {
+	undef $do_grid;
+        print "grid testing disabled\n";
+	next;
+    }
+    if (/^-r/) {
+	$maxtimes = shift;
+        print "maximum repetitions $maxtimes\n";
+	next;
+    }
+    if (/^-m/) {
+	$mwtest++;
+        print "molecular weight testing mode\n";
+	next;
+    }
+    if (/^-(h|\?)/) {
+        print "usage:
+$0 (-d|-D|-m|-r count|-s|-g)
+options:
+    -d debug on
+    -D hydrodyn debug on
+    -m special mw testing
+    -r set maximum repetitions (default 1)
+    -s turn off somo checks
+    -g turn off grid checks
+";
+        exit;
+    }
+    die "I don't recognize this switch: $_\n";
+}
 
 @test = ( # file, testsomo, testgrid, config file, expect failure
          '0GGG.pdb', 1, 1, 'dflt', 0,
@@ -142,7 +191,7 @@ sub testsomo { # file, config, expectfailure
     my $config = "$_[1]";
     my $expectfailure = $_[2];
     my $fconfig = "$us/somo/test/configs/${config}.config";
-    die "configuration file <fconfig> missing!\n" if !-e $fconfig;
+    die "configuration file <$fconfig> missing!\n" if !-e $fconfig;
     my $logf = "$us/somo/test/log/somo-$config-$_[$i]";
     print "logf is <$logf>\n" if $debug;
 
@@ -282,7 +331,7 @@ sub testgrid { # file, config, expectfailure
     my $config = "$_[1]";
     my $expectfailure = $_[2];
     my $fconfig = "$us/somo/test/configs/${config}.config";
-    die "configuration file <fconfig> missing!\n" if !-e $fconfig;
+    die "configuration file <$fconfig> missing!\n" if !-e $fconfig;
 
     my $logf = "$us/somo/test/log/grid-$config-$_[$i]";
     print "logf is <$logf>\n" if $debug;
@@ -411,6 +460,27 @@ sub testgrid { # file, config, expectfailure
             }
         }
     }
+}
+
+if ( $mwtest ) {
+    foreach $file ( "1AKI.pdb", "1HEL.pdb", "dimer.pdb" )
+#    foreach $file ( "0AP.pdb", "0GGGGoxt.pdb" ) 
+    {
+        print "trying $file\n" if $debug;
+        for ($times = 1; $times <= $maxtimes; $times++) {
+            for ( $a1 = 5; $a1 < 95; $a1 += 5 ) {
+                for ( $a2 = 5; $a2 < 95; $a2 += 5 ) {
+                    $cfg = "sa${a1}r${a2}";
+                    &testsomo($file, $cfg, 0 ) if $do_somo;
+                }
+            }
+            for ( $g = 1; $g < 10; $g++ ) {
+                $cfg = "g${g}";
+                &testgrid($file, $cfg, 0 ) if $do_grid;
+            }
+        }
+    }
+    exit;
 }
 
 $success = $errors = $copys = 0;

@@ -4,7 +4,7 @@ BEAMS -           IST. CBA                - COEFF/SUPCW v. 5.0
 **************************************************************
 ***** Computational Method : Supermatrix Inversion ***********
 **************************************************************
-* Date: Tue 23 Feb 10 10:48:47                                *
+* Date: Tue 23 Feb 10 14:26:03                                *
 **************************************************************
 MODEL File Name  :___ 0GGGG_1-so
 TOTAL Beads in the MODEL :___ 4
@@ -28,53 +28,53 @@ Temp corrected vbar:    0.638            	[cm^3/g]
 - Used BEAD Mass     = 229.24  [Da]
 - Conversion Factor  = 0.10
 
-- TRANS. FRICT. COEFF.  = 1.466e-08	[g/s]  (w@20C)
-- TRANS. DIFF. COEFF.   = 2.76e-06	[cm^2/s]  (20C,w)
-- SED. COEFF.           = 0.09	        [S]  (20C,w)
-- FRICTIONAL RATIO      = 2.01
-- ROT. FRICT. COEFF.    = 2.697e-22	[g*cm^2/s]  (w@20C)
-- ROT. DIFF. COEFF.     = 200292672	[1/s]  (20C,w)
+- TRANS. FRICT. COEFF.  = 1.450e-08	[g/s]  (w@20C)
+- TRANS. DIFF. COEFF.   = 2.79e-06	[cm^2/s]  (20C,w)
+- SED. COEFF.           = 0.10	        [S]  (20C,w)
+- FRICTIONAL RATIO      = 1.98
+- ROT. FRICT. COEFF.    = 2.620e-22	[g*cm^2/s]  (w@20C)
+- ROT. DIFF. COEFF.     = 219671147	[1/s]  (20C,w)
 
-- ROT. FRICT. COEFF. [ X ] = 1.096e-22	[g*cm^2/s]  (w@20C)
-- ROT. FRICT. COEFF. [ Y ] = 3.454e-22	[g*cm^2/s]  (w@20C)
-- ROT. FRICT. COEFF. [ Z ] = 3.541e-22	[g*cm^2/s]  (w@20C)
-- ROT. DIFF. COEFF.  [ X ] = 369398650.90	[1/s]  (20C,w)
-- ROT. DIFF. COEFF.  [ Y ] = 117191464.46	[1/s]  (20C,w)
-- ROT. DIFF. COEFF.  [ Z ] = 114287876.63	[1/s]  (20C,w)
+- ROT. FRICT. COEFF. [ X ] = 9.532e-23	[g*cm^2/s]  (w@20C)
+- ROT. FRICT. COEFF. [ Y ] = 3.452e-22	[g*cm^2/s]  (w@20C)
+- ROT. FRICT. COEFF. [ Z ] = 3.455e-22	[g*cm^2/s]  (w@20C)
+- ROT. DIFF. COEFF.  [ X ] = 424631202.23	[1/s]  (20C,w)
+- ROT. DIFF. COEFF.  [ Y ] = 117237404.92	[1/s]  (20C,w)
+- ROT. DIFF. COEFF.  [ Z ] = 117144845.49	[1/s]  (20C,w)
 
 - MOLECULAR WEIGHT (from file)           = 229.24	[Da]
 - PARTIAL SPECIFIC VOLUME (computed)     = 0.638	[cm^3/g]
 
-- RADIUS OF GYRATION              = 1.41	[nm]
-- TRANSLATIONAL STOKES' RADIUS    = 0.78	[nm]
-- ROTATIONAL STOKES' RADIUS [ X ] = 0.76	[nm]
+- RADIUS OF GYRATION              = 1.40	[nm]
+- TRANSLATIONAL STOKES' RADIUS    = 0.77	[nm]
+- ROTATIONAL STOKES' RADIUS [ X ] = 0.72	[nm]
 - ROTATIONAL STOKES' RADIUS [ Y ] = 1.11	[nm]
-- ROTATIONAL STOKES' RADIUS [ Z ] = 1.12	[nm]
+- ROTATIONAL STOKES' RADIUS [ Z ] = 1.11	[nm]
 
-- CENTRE OF RESISTANCE   :  -0.28	 0.43	 0.03	[nm]
-- CENTRE OF MASS         :  -0.37	 0.44	 0.05	[nm]
-- CENTRE OF DIFFUSION    :  -0.28	 0.43	 0.05	[nm]
-- CENTRE OF VISCOSITY    :  -0.30	 0.43	 0.05	[nm]
+- CENTRE OF RESISTANCE   :  -0.30	 0.40	-0.01	[nm]
+- CENTRE OF MASS         :  -0.40	 0.41	 0.01	[nm]
+- CENTRE OF DIFFUSION    :  -0.30	 0.40	 0.01	[nm]
+- CENTRE OF VISCOSITY    :  -0.32	 0.40	 0.02	[nm]
 
-- UNCORRECTED INTRINSIC VISCOSITY      = 18.81	[cm^3/g]
-- UNCORRECTED EINSTEIN'S RADIUS        = 0.88	[nm]
-- CORRECTED INTRINSIC VISCOSITY        = 21.15	[cm^3/g]
-- CORRECTED EINSTEIN'S RADIUS          = 0.92	[nm]
+- UNCORRECTED INTRINSIC VISCOSITY      = 18.22	[cm^3/g]
+- UNCORRECTED EINSTEIN'S RADIUS        = 0.87	[nm]
+- CORRECTED INTRINSIC VISCOSITY        = 20.56	[cm^3/g]
+- CORRECTED EINSTEIN'S RADIUS          = 0.91	[nm]
 
 RELAXATION TIMES
 
- Tau(1) 	1.54	[ns]  (20C,w)
- Tau(2) 	1.07	[ns]  (20C,w)
- Tau(3) 	1.08	[ns]  (20C,w)
- Tau(4) 	0.57	[ns]  (20C,w)
- Tau(5) 	0.57	[ns]  (20C,w)
+ Tau(1) 	1.52	[ns]  (20C,w)
+ Tau(2) 	1.00	[ns]  (20C,w)
+ Tau(3) 	1.02	[ns]  (20C,w)
+ Tau(4) 	0.51	[ns]  (20C,w)
+ Tau(5) 	0.51	[ns]  (20C,w)
 
- Tau(m) 	0.97	[ns]  (20C,w)
- Tau(h) 	0.83	[ns]  (20C,w)
+ Tau(m) 	0.91	[ns]  (20C,w)
+ Tau(h) 	0.76	[ns]  (20C,w)
 
 - MAX EXTENSIONS:
-[X axis] = 3.49 [nm];  [Y axis] = 1.83 [nm];  [Z axis] = 1.82 [nm]
-- AXIAL RATIOS : [X:Z] = 1.9; [X:Y] = 1.9; [Y:Z] = 1.0
+[X axis] = 3.58 [nm];  [Y axis] = 1.92 [nm];  [Z axis] = 1.72 [nm]
+- AXIAL RATIOS : [X:Z] = 2.1; [X:Y] = 1.9; [Y:Z] = 1.1
 
 
 ********************************************************************************
