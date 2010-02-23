@@ -4,7 +4,7 @@ BEAMS -           IST. CBA                - COEFF/SUPCW v. 5.0
 **************************************************************
 ***** Computational Method : Supermatrix Inversion ***********
 **************************************************************
-* Date: Mon 8 Feb 10 23:36:19                                *
+* Date: Tue 23 Feb 10 10:47:51                                *
 **************************************************************
 MODEL File Name  :___ 0GGG_1-a2b
 TOTAL Beads in the MODEL :___ 6
@@ -25,12 +25,12 @@ Temp corrected vbar:    0.638            	[cm^3/g]
 - Used BEADS Number       = 6
 - Used BEADS Volume       = 0.06  [nm^3] (NO contribution from buried beads)
 - Used BEADS Surface Area = 1.11 [nm^2]
-- Used BEAD Mass     = 172.15  [Da]
+- Used BEAD Mass     = 172.18  [Da]
 - Conversion Factor  = 0.10
 
 - TRANS. FRICT. COEFF.  = 7.690e-09	[g/s]  (w@20C)
 - TRANS. DIFF. COEFF.   = 5.26e-06	[cm^2/s]  (20C,w)
-- SED. COEFF.           = 0.13	        [S]  (20C,w)
+- SED. COEFF.           = 0.14	        [S]  (20C,w)
 - FRICTIONAL RATIO      = 1.16
 - ROT. FRICT. COEFF.    = 7.868e-23	[g*cm^2/s]  (w@20C)
 - ROT. DIFF. COEFF.     = 688102912	[1/s]  (20C,w)
@@ -42,7 +42,7 @@ Temp corrected vbar:    0.638            	[cm^3/g]
 - ROT. DIFF. COEFF.  [ Y ] = 503465935.63	[1/s]  (20C,w)
 - ROT. DIFF. COEFF.  [ Z ] = 329637979.39	[1/s]  (20C,w)
 
-- MOLECULAR WEIGHT (from file)           = 172.15	[Da]
+- MOLECULAR WEIGHT (from file)           = 172.18	[Da]
 - PARTIAL SPECIFIC VOLUME (computed)     = 0.638	[cm^3/g]
 
 - RADIUS OF GYRATION              = 1.14	[nm]

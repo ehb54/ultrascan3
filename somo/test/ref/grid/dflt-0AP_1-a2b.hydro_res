@@ -4,7 +4,7 @@ BEAMS -           IST. CBA                - COEFF/SUPCW v. 5.0
 **************************************************************
 ***** Computational Method : Supermatrix Inversion ***********
 **************************************************************
-* Date: Mon 8 Feb 10 23:36:22                                *
+* Date: Tue 23 Feb 10 10:47:54                                *
 **************************************************************
 MODEL File Name  :___ 0AP_1-a2b
 TOTAL Beads in the MODEL :___ 4
@@ -25,7 +25,7 @@ Temp corrected vbar:    0.750            	[cm^3/g]
 - Used BEADS Number       = 4
 - Used BEADS Volume       = 0.33  [nm^3] (NO contribution from buried beads)
 - Used BEADS Surface Area = 2.67 [nm^2]
-- Used BEAD Mass     = 169.21  [Da]
+- Used BEAD Mass     = 169.22  [Da]
 - Conversion Factor  = 0.10
 
 - TRANS. FRICT. COEFF.  = 9.980e-09	[g/s]  (w@20C)
@@ -42,7 +42,7 @@ Temp corrected vbar:    0.750            	[cm^3/g]
 - ROT. DIFF. COEFF.  [ Y ] = 423373668.14	[1/s]  (20C,w)
 - ROT. DIFF. COEFF.  [ Z ] = 445766753.85	[1/s]  (20C,w)
 
-- MOLECULAR WEIGHT (from file)           = 169.21	[Da]
+- MOLECULAR WEIGHT (from file)           = 169.22	[Da]
 - PARTIAL SPECIFIC VOLUME (computed)     = 0.750	[cm^3/g]
 
 - RADIUS OF GYRATION              = 0.91	[nm]

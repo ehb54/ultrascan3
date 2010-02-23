@@ -4,7 +4,7 @@ BEAMS -           IST. CBA                - COEFF/SUPCW v. 5.0
 **************************************************************
 ***** Computational Method : Supermatrix Inversion ***********
 **************************************************************
-* Date: Mon 8 Feb 10 23:40:03                                *
+* Date: Tue 23 Feb 10 10:49:15                                *
 **************************************************************
 MODEL File Name  :___ 0PPPoxt_1-so
 TOTAL Beads in the MODEL :___ 6
@@ -28,7 +28,7 @@ Temp corrected vbar:    0.758            	[cm^3/g]
 - Used BEADS Number       = 4
 - Used BEADS Volume       = 0.30  [nm^3] (NO contribution from buried beads)
 - Used BEADS Surface Area = 3.18 [nm^2]
-- Used BEAD Mass     = 309.35  [Da]
+- Used BEAD Mass     = 309.40  [Da]
 - Conversion Factor  = 0.10
 
 - TRANS. FRICT. COEFF.  = 1.252e-08	[g/s]  (w@20C)
@@ -45,7 +45,7 @@ Temp corrected vbar:    0.758            	[cm^3/g]
 - ROT. DIFF. COEFF.  [ Y ] = 221461795.34	[1/s]  (20C,w)
 - ROT. DIFF. COEFF.  [ Z ] = 158032608.46	[1/s]  (20C,w)
 
-- MOLECULAR WEIGHT (from file)           = 309.35	[Da]
+- MOLECULAR WEIGHT (from file)           = 309.40	[Da]
 - PARTIAL SPECIFIC VOLUME (computed)     = 0.758	[cm^3/g]
 
 - RADIUS OF GYRATION              = 1.21	[nm]
@@ -59,7 +59,7 @@ Temp corrected vbar:    0.758            	[cm^3/g]
 - CENTRE OF DIFFUSION    :   0.56	-0.26	-0.11	[nm]
 - CENTRE OF VISCOSITY    :   0.49	-0.25	-0.04	[nm]
 
-- UNCORRECTED INTRINSIC VISCOSITY      = 8.96	[cm^3/g]
+- UNCORRECTED INTRINSIC VISCOSITY      = 8.95	[cm^3/g]
 - UNCORRECTED EINSTEIN'S RADIUS        = 0.76	[nm]
 - CORRECTED INTRINSIC VISCOSITY        = 10.43	[cm^3/g]
 - CORRECTED EINSTEIN'S RADIUS          = 0.80	[nm]
