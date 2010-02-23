@@ -595,10 +595,12 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
          tmp_prop.f = (*bead_model)[i].bead_color;
          tmp_prop.rVW = (*bead_model)[i].bead_computed_radius;
          tmp_prop.mass = (*bead_model)[i].bead_mw;
-
-         pre_mw += tmp_prop.mass;
-         pre_mw_c++;
-
+         tmp_prop.mass = ((int)(tmp_prop.mass * 100.0 + .5)) / 100.0;
+         if ( us_hydrodyn->advanced_config.debug_1 )
+         {
+            pre_mw += ((int)((double)tmp_prop.mass * 100e0 + 5e-1)) / 1e2;
+            pre_mw_c++;
+         }
          tmp_prop.next = (PHYSPROP *) 0;
 
          prop.push_back(tmp_prop);
@@ -805,9 +807,12 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
       tmp_atom.bead_actual_radius = this_prop->rVW;
       tmp_atom.radius = this_prop->rVW;
       tmp_atom.bead_mw = this_prop->mass;
-      tmp_atom.mw = this_prop->mass;
-      post_mw += this_prop->mass;
-      post_mw_c++;
+      tmp_atom.mw = ((int)(this_prop->mass * 100 + .5)) / 100.0;
+      if ( us_hydrodyn->advanced_config.debug_1 )
+      {
+         post_mw += ((int)((double)tmp_atom.mw * 100e0 + 5e-1)) / 1e2;
+         post_mw_c++;
+      }
       tmp_atom.bead_ref_mw = this_prop->mass;
       tmp_atom.bead_ref_volume = 0;
       tmp_atom.bead_color = 1;
@@ -846,6 +851,9 @@ vector < PDB_atom > us_hydrodyn_grid_atob(vector < PDB_atom > *bead_model,
 #endif
    editor->append(QString("Grid contains %1 beads\n").arg(result_bead_model.size()));
    printf("bead model size %d\n", (int)result_bead_model.size()); fflush(stdout);
-   printf("grid pre mw %.6f (%d), post mw %.6f (%d), diff %.6f\n", pre_mw, pre_mw_c, post_mw, post_mw_c, pre_mw - post_mw);
+   if ( us_hydrodyn->advanced_config.debug_1 )
+   {
+      printf("grid pre mw %.6f (%d), post mw %.6f (%d), diff %.6f\n", pre_mw, pre_mw_c, post_mw, post_mw_c, pre_mw - post_mw);
+   }
    return result_bead_model;
 }

@@ -4149,8 +4149,15 @@ ragir()
    zm = 0.0;
    ro2 = 0.0;
 
+   // do as doubles for better sum
+   double dmt = 0e0;
    for (i = 0; i < nat; i++)
-      mt += dt[i].m;
+   {
+      dmt += ((int)((double)dt[i].m * 100e0 + 5e-1)) / 1e2;
+      //   mt += dt[i].m;
+   }
+   mt = dmt;
+   //   printf("ragir pre mw doub %f float not rounded %f float rounded %f, 14306.82 %f\n", dmt, mtu, mt, 14306.82f);
 
    for (i = 0; i < nat; i++)
    {
@@ -4440,9 +4447,11 @@ initarray()
       int decpow = (int)pow(10.0, (decpts));
       printf("!!rounding to %d digits (%d)\n", decpts, decpow);
 
-      double pre_mw = 0e0;
       int mw_c = 0;
-      double post_mw = 0e0;
+      float pre_mw = 0.0;
+      float post_mw = 0.0;
+      double dpre_mw = 0e0;
+      double dpost_mw = 0e0;
 
       for (i = 0; i < nat; i++)
       {
@@ -4456,17 +4465,18 @@ initarray()
          dt[i].y = ((int)((dt[i].y * decpow) + (dt[i].y > 0 ? 0.5 : -0.5))) / (float)decpow;
          dt[i].z = ((int)((dt[i].z * decpow) + (dt[i].z > 0 ? 0.5 : -0.5))) / (float)decpow;
          dt[i].r = ((int)((dt[i].r * decpow) + (dt[i].r > 0 ? 0.5 : -0.5))) / (float)decpow;
-         pre_mw += dt[i].m;
+         if ( us_hydrodyn->advanced_config.debug_1 )
          {
-            // double om = dt[i].m;
-            // float omf = dt[i].m;
-            dt[i].m = ((int)(dt[i].m * 100.0 + .5)) / 100.0;
-            // double am = ((int)(om * 1e2 + 5e-1)) / 1e2;
-            // float amf = dt[i].m;
-            // printf("pre mw %d %.10f %.10f %.4f %.4f\n", i, om, am, omf, amf);
+            pre_mw += dt[i].m;
+            dpre_mw += dt[i].m;
          }
+         dt[i].m = (float)((int)((double)dt[i].m * 100e0 + 5e-1)) / 1e2;
          post_mw += dt[i].m;
-         mw_c++;
+         if ( us_hydrodyn->advanced_config.debug_1 )
+         {
+            dpost_mw += ((int)((double)dt[i].m * 100e0 + 5e-1)) / 1e2;
+            mw_c++;
+         }
 #if defined(DEBUG_FILES)
          {
             float fx, fy, fz, fr, fm;
@@ -4490,7 +4500,11 @@ initarray()
          }
 #endif
       }
-      printf("hydro pre mw %.10f (%d), post mw %.10f (%d), diff %.10f\n", pre_mw, mw_c, post_mw, mw_c, pre_mw - post_mw);
+      if ( us_hydrodyn->advanced_config.debug_1 )
+      {
+         printf("hydro pre mw %.6f (%d), post mw %.6f (%d), diff %.6f\n", pre_mw, mw_c, post_mw, mw_c, pre_mw - post_mw);
+         printf("as d hydro pre mw %.6f (%d), post mw %.6f (%d), diff %.6f\n", dpre_mw, mw_c, dpost_mw, mw_c, dpre_mw - dpost_mw);
+      }
 #if defined(DEBUG_FILES)
       fclose(rmc);
 #endif
