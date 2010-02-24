@@ -3,6 +3,8 @@
 #include "us_spectrodata.h"
 #include "us_defines.h"
 
+#define LO_DTERM 0.2500    // low decay-term point (1/4)
+
 // Provides raster data for QwtSpectrogram
 US_SpectrogramData::US_SpectrogramData() : QwtRasterData()
 {
@@ -165,68 +167,115 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
    // Populate raster with z values derived from a Gaussian distribution
    //  around each distribution point.
 
-    double ssig  = xrng / ( 2.0 * resol );         // sigma values
-    double fsig  = yrng / ( 2.0 * resol );
-    double sssc  = -1.0 / ( 4.0 * ssig * ssig );   // sig scale factors
-    double fssc  = -1.0 / ( 4.0 * fsig * fsig );
+   double ssig  = xrng / ( 2.0 * resol );         // sigma values
+   double fsig  = yrng / ( 2.0 * resol );
+   double sssc  = -1.0 / ( 4.0 * ssig * ssig );   // sig scale factors
+   double fssc  = -1.0 / ( 4.0 * fsig * fsig );
 
-    // calculate radius of decay-to-zero in Gaussian distribution
-    double dmin  = sqrt( -log( 1.0e-5 ) ) * 2.0;    // terms very low
-    double xdif  = dmin * ssig * xinc;
-    double ydif  = dmin * fsig * yinc;
-    int    nxd   = qRound( xdif ) + 2;              // radius points with pad
-    int    nyd   = qRound( ydif ) + 2;
-    int    hixd  = nxpsc / 4;                       // maximum radii
-    int    hiyd  = nyscn / 4;
-    nxd          = ( nxd < 10 ) ? 10 : ( ( nxd > hixd ) ? hixd : nxd );
-    nyd          = ( nyd < 10 ) ? 10 : ( ( nyd > hiyd ) ? hiyd : nyd );
+   // calculate radius of decay-to-zero in Gaussian distribution
+   double dmin  = sqrt( -log( 1.0e-5 ) ) * 2.0;    // terms very low
+   double xdif  = dmin * ssig * xinc;
+   double ydif  = dmin * fsig * yinc;
+   int    nxd   = qRound( xdif ) + 2;              // radius points with pad
+   int    nyd   = qRound( ydif ) + 2;
+   int    hixd  = nxpsc / 4;                       // maximum radii
+   int    hiyd  = nyscn / 4;
+   nxd          = ( nxd < 10 ) ? 10 : ( ( nxd > hixd ) ? hixd : nxd );
+   nyd          = ( nyd < 10 ) ? 10 : ( ( nyd > hiyd ) ? hiyd : nyd );
 //qDebug() << "nxd,nyd=" << nxd << "," << nyd;
 
-   for ( int kk = 0; kk < nsol; kk++ )
-   {   // spread z values for each distribution point
-      xval    = solu.at( kk ).s;                    // x,y,z
-      yval    = solu.at( kk ).k;
-      zval    = solu.at( kk ).c - zmin;             // use z in 0,zrng range
+   if ( resol != 100.0 )
+   {
+      for ( int kk = 0; kk < nsol; kk++ )
+      {   // spread z values for each distribution point
+         xval    = solu.at( kk ).s;                    // x,y,z
+         yval    = solu.at( kk ).k;
+         zval    = solu.at( kk ).c - zmin;             // use z in 0,zrng range
 
-      int rx  = ( xval - xmin ) * xinc;             // x index of this point
-      int fx  = rx - nxd;                           // first reasonable x
-      int lx  = rx + nxd;                           // last reasonable x
-      fx      = ( fx > 0 )     ? fx : 0;
-      lx      = ( lx < nxpsc ) ? lx : nxpsc;
-      int ry  = ( ymax - yval ) * yinc;             // y index of this point
-      int fy  = ry - nyd;                           // first reasonable y
-      int ly  = ry + nyd;                           // last reasonable y
-      fy      = ( fy > 0 )     ? fy : 0;
-      ly      = ( ly < nyscn ) ? ly : nyscn;
+         int rx  = ( xval - xmin ) * xinc;             // x index of this point
+         int fx  = rx - nxd;                           // first reasonable x
+         int lx  = rx + nxd;                           // last reasonable x
+         fx      = ( fx > 0 )     ? fx : 0;
+         lx      = ( lx < nxpsc ) ? lx : nxpsc;
+         int ry  = ( ymax - yval ) * yinc;             // y index of this point
+         int fy  = ry - nyd;                           // first reasonable y
+         int ly  = ry + nyd;                           // last reasonable y
+         fy      = ( fy > 0 )     ? fy : 0;
+         ly      = ( ly < nyscn ) ? ly : nyscn;
 
-      for ( int ii = fy; ii < ly; ii++ )
-      {   // calculate y-term and x range for each y
-         double yras   = ymax - ( (double)ii / yinc );
-         double ydif   = yras - yval;
-         double yterm  = exp( ydif * ydif * fssc ); // y term
-         double zterm  = zval * yterm;              // combine z-value,y-term
-         int kr        = ii * nxpsc + fx;           // start raster point index
+         for ( int ii = fy; ii < ly; ii++ )
+         {   // calculate y-term and x range for each y
+            double yras   = ymax - ( (double)ii / yinc );
+            double ydif   = yras - yval;
+            double yterm  = exp( ydif * ydif * fssc ); // y term
+            double zterm  = zval * yterm;              // combine z-value,y-term
+            int kr        = ii * nxpsc + fx;           // start rast point index
 
-         for ( int jj = fx; jj < lx; jj++ )
-         {  // calculate x-term then calculate z-value for raster point
-            double xras   = (double)jj / xinc + xmin;
-            double xdif   = xras - xval;
-            double xterm  = exp( xdif * xdif * sssc );
+            for ( int jj = fx; jj < lx; jj++ )
+            {  // calculate x-term then calculate z-value for raster point
+               double xras   = (double)jj / xinc + xmin;
+               double xdif   = xras - xval;
+               double xterm  = exp( xdif * xdif * sssc );
 
-            double zin    = rdata.at( kr );         // current value there
+               double zin    = rdata.at( kr );         // current value there
 
-            // Output value according to Gaussian distribution factor.
-            // Note that the expression below adds zmin back in to a
-            // value that is really:
-            //   zval * exp( -pow( xdif, 2.0 ) / pow( 2 * ssigma, 2.0 ) )
-            //        * exp( -pow( ydif, 2.0 ) / pow( 2 * fsigma, 2.0 ) )
-            double zout   = zmin + zterm * xterm;
+               // Output value according to Gaussian distribution factor.
+               // Note that the expression below adds zmin back in to a
+               // value that is really:
+               //   zval * exp( -pow( xdif, 2.0 ) / pow( 2 * ssigma, 2.0 ) )
+               //        * exp( -pow( ydif, 2.0 ) / pow( 2 * fsigma, 2.0 ) )
+               double zout   = zmin + zterm * xterm;
 
-            // only replace input if new value is greater
-            if ( zout > zin )
-               rdata.replace( kr, zout );
+               // only replace input if new value is greater
+               if ( zout > zin )
+                  rdata.replace( kr, zout );
 
-            kr++;                                   // bump raster point index
+               kr++;                                   // bump rast point index
+            }
+         }
+      }
+   }
+   else
+   {   // for resolution=100, make all points in cirle have zval value
+      for ( int kk = 0; kk < nsol; kk++ )
+      {   // spread z values for each distribution point
+         xval    = solu.at( kk ).s;                    // x,y,z
+         yval    = solu.at( kk ).k;
+         zval    = solu.at( kk ).c;
+
+         int rx  = ( xval - xmin ) * xinc;             // x index of this point
+         int fx  = rx - nxd;                           // first reasonable x
+         int lx  = rx + nxd;                           // last reasonable x
+         fx      = ( fx > 0 )     ? fx : 0;
+         lx      = ( lx < nxpsc ) ? lx : nxpsc;
+         int ry  = ( ymax - yval ) * yinc;             // y index of this point
+         int fy  = ry - nyd;                           // first reasonable y
+         int ly  = ry + nyd;                           // last reasonable y
+         fy      = ( fy > 0 )     ? fy : 0;
+         ly      = ( ly < nyscn ) ? ly : nyscn;
+
+         for ( int ii = fy; ii < ly; ii++ )
+         {   // calculate y-term and x range for each y
+            double yras   = ymax - ( (double)ii / yinc );
+            double ydif   = yras - yval;
+            double yterm  = exp( ydif * ydif * fssc ); // y term
+            int kr        = ii * nxpsc + fx;           // start rast point index
+
+            for ( int jj = fx; jj < lx; jj++ )
+            {  // calculate x-term then calculate z-value for raster point
+               double xras   = (double)jj / xinc + xmin;
+               double xdif   = xras - xval;
+               double xterm  = exp( xdif * xdif * sssc );
+
+               double zin    = rdata.at( kr );         // current value there
+               double zdecay = yterm * xterm;          // composite decay term
+
+               // replace input if within distr radius and zout>zin
+               if ( zdecay > LO_DTERM  &&  zval > zin)
+                  rdata.replace( kr, zval );
+
+               kr++;                                   // bump rast point index
+            }
          }
       }
    }
