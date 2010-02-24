@@ -53,7 +53,7 @@
             </li>
 
             <li>
-              <b>Current Distro:</b> Choose the index (1-n) of the distribution to make the current.
+              <b>Current Distro:</b> Choose the index (1 to n) of the distribution to make the current one.
             </li>
 
             <li>
@@ -66,7 +66,7 @@
             </li>
 
             <li>
-              <b>Plot all Distros</b> Loop to successively plot all loaded distributions.
+              <b>Plot All Distros</b> Loop to successively plot all loaded distributions.
             </li>
             
             <li>
@@ -84,6 +84,7 @@
             
             <li>
               <b>Load Distribution</b> Load distribution data as specified through a file dialog.
+              Multiple distribution files may be selected.
             </li>
             
             <li>
