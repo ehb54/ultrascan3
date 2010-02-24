@@ -96,12 +96,13 @@ DROP TABLE IF EXISTS us3.abstractRotor ;
 CREATE  TABLE IF NOT EXISTS us3.abstractRotor (
   abstractRotorID INT NOT NULL AUTO_INCREMENT ,
   GUID CHAR(36) NULL ,
-  name enum( 'AN50', 'AN60', 'CFA' ) NULL ,
+  name enum( 'Simulation', 'AN50', 'AN60', 'CFA' ) NULL ,
   materialName enum( 'titanium', 'carbon' ) NULL ,
   numHoles INT NULL ,
   maxRPM INT NULL ,
   magnetOffset FLOAT NULL ,
   cellCenter FLOAT NULL ,
+  defaultStretch TEXT NULL ,
   manufacturer enum( 'Beckman' ) NULL ,
   materialRefURI TEXT NULL ,
   dateUpdated TIMESTAMP NULL ,
@@ -124,8 +125,8 @@ CREATE  TABLE IF NOT EXISTS us3.rotor (
   omega2_t FLOAT NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (rotorID) ,
-  INDEX abstractRotorID (abstractRotorID ASC) ,
-  CONSTRAINT abstractRotorID
+  INDEX ndx_rotor_abstractRotorID (abstractRotorID ASC) ,
+  CONSTRAINT fk_rotor_abstractRotorID
     FOREIGN KEY (abstractRotorID )
     REFERENCES us3.abstractRotor (abstractRotorID )
     ON DELETE SET NULL
@@ -154,32 +155,32 @@ CREATE  TABLE IF NOT EXISTS us3.experiment (
   centrifugeProtocol TEXT NULL ,
   dateUpdated DATE NULL ,
   PRIMARY KEY (experimentID) ,
-  INDEX projectID (projectID ASC) ,
-  INDEX operatorID (operatorID ASC) ,
-  INDEX instrumentID (instrumentID ASC) ,
-  INDEX labID (labID ASC) ,
-  INDEX rotorID (rotorID ASC) ,
-  CONSTRAINT projectID
+  INDEX ndx_experiment_projectID (projectID ASC) ,
+  INDEX ndx_experiment_operatorID (operatorID ASC) ,
+  INDEX ndx_experiment_instrumentID (instrumentID ASC) ,
+  INDEX ndx_experiment_labID (labID ASC) ,
+  INDEX ndx_experiment_rotorID (rotorID ASC) ,
+  CONSTRAINT fk_experiment_projectID
     FOREIGN KEY (projectID )
     REFERENCES us3.project (projectID )
     ON DELETE SET NULL
     ON UPDATE CASCADE,
-  CONSTRAINT operatorID
+  CONSTRAINT fk_experiment_operatorID
     FOREIGN KEY (operatorID )
     REFERENCES us3.people (personID )
     ON DELETE SET NULL
     ON UPDATE CASCADE,
-  CONSTRAINT instrumentID
+  CONSTRAINT fk_experiment_instrumentID
     FOREIGN KEY (instrumentID )
     REFERENCES us3.instrument (instrumentID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE,
-  CONSTRAINT labID
+  CONSTRAINT fk_experiment_labID
     FOREIGN KEY (labID )
     REFERENCES us3.lab (labID )
     ON DELETE SET NULL
     ON UPDATE CASCADE,
-  CONSTRAINT rotorID
+  CONSTRAINT fk_experiment_rotorID
     FOREIGN KEY (rotorID )
     REFERENCES us3.rotor (rotorID )
     ON DELETE SET NULL
@@ -239,13 +240,13 @@ DROP TABLE IF EXISTS us3.channel ;
 
 CREATE  TABLE IF NOT EXISTS us3.channel (
   channelID INT NOT NULL AUTO_INCREMENT ,
-  abstractChannelID INT NULL DEFAULT NULL ,
+  abstractChannelID INT NULL ,
   GUID CHAR(36) NULL ,
   comments TEXT NULL DEFAULT NULL ,
   dateUpdated TIMESTAMP NULL DEFAULT NULL ,
   PRIMARY KEY (channelID) ,
-  INDEX abstractChannelID (abstractChannelID ASC) ,
-  CONSTRAINT abstractChannelID
+  INDEX ndx_channel_abstractChannelID (abstractChannelID ASC) ,
+  CONSTRAINT fk_channel_abstractChannelID
     FOREIGN KEY (abstractChannelID )
     REFERENCES us3.abstractChannel (abstractChannelID )
     ON DELETE SET NULL
@@ -272,14 +273,14 @@ CREATE  TABLE IF NOT EXISTS us3.cell (
   numChannels INT ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (cellID) ,
-  INDEX abstractCenterpieceID (abstractCenterpieceID ASC) ,
-  INDEX c_experimentID (experimentID ASC) ,
-  CONSTRAINT c_abstractCenterpieceID
+  INDEX ndx_cell_abstractCenterpieceID (abstractCenterpieceID ASC) ,
+  INDEX ndx_cell_experimentID (experimentID ASC) ,
+  CONSTRAINT fk_cell_abstractCenterpieceID
     FOREIGN KEY (abstractCenterpieceID )
     REFERENCES us3.abstractCenterpiece (abstractCenterpieceID )
     ON DELETE SET NULL
     ON UPDATE CASCADE,
-  CONSTRAINT c_experimentID
+  CONSTRAINT fk_cell_experimentID
     FOREIGN KEY (experimentID )
     REFERENCES us3.experiment (experimentID )
     ON DELETE SET NULL
@@ -300,14 +301,14 @@ CREATE  TABLE IF NOT EXISTS us3.rawData (
   experimentID INT NOT NULL ,
   channelID INT NOT NULL ,
   PRIMARY KEY (rawDataID) ,
-  INDEX experimentID (experimentID ASC) ,
-  INDEX channelID (channelID ASC) ,
-  CONSTRAINT experimentID
+  INDEX ndx_rawData_experimentID (experimentID ASC) ,
+  INDEX ndx_rawData_channelID (channelID ASC) ,
+  CONSTRAINT fk_rawData_experimentID
     FOREIGN KEY (experimentID )
     REFERENCES us3.experiment (experimentID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE,
-  CONSTRAINT rd_channelID
+  CONSTRAINT fk_rawData_channelID
     FOREIGN KEY (channelID )
     REFERENCES us3.channel (channelID )
     ON DELETE NO ACTION
@@ -327,8 +328,8 @@ CREATE  TABLE IF NOT EXISTS us3.editedData (
   data LONGBLOB NOT NULL ,
   comment TEXT NULL ,
   PRIMARY KEY (editedDataID) ,
-  INDEX rawDataID (rawDataID ASC) ,
-  CONSTRAINT rawDataID
+  INDEX ndx_editedData_rawDataID (rawDataID ASC) ,
+  CONSTRAINT fk_editedData_rawDataID
     FOREIGN KEY (rawDataID )
     REFERENCES us3.rawData (rawDataID )
     ON DELETE NO ACTION
@@ -349,8 +350,8 @@ CREATE  TABLE IF NOT EXISTS us3.results (
   reportData LONGBLOB NULL ,
   resultData LONGBLOB NULL ,
   PRIMARY KEY (resultsID) ,
-  INDEX editDataID (editedDataID ASC) ,
-  CONSTRAINT editDataID
+  INDEX ndx_results_editDataID (editedDataID ASC) ,
+  CONSTRAINT fk_results_editDataID
     FOREIGN KEY (editedDataID )
     REFERENCES us3.editedData (editedDataID )
     ON DELETE NO ACTION
@@ -366,15 +367,14 @@ DROP TABLE IF EXISTS us3.projectPerson ;
 CREATE  TABLE IF NOT EXISTS us3.projectPerson (
   projectID INT NOT NULL ,
   personID INT NOT NULL ,
-  INDEX projectID (projectID ASC) ,
-  INDEX personID (personID ASC) ,
-  INDEX pp_projectID (projectID ASC) ,
-  CONSTRAINT personID
+  INDEX ndx_projectPerson_personID  (personID ASC) ,
+  INDEX ndx_projectPerson_projectID (projectID ASC) ,
+  CONSTRAINT fk_projectPerson_personID
     FOREIGN KEY (personID )
     REFERENCES us3.people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT pp_projectID
+  CONSTRAINT fk_projectPerson_projectID
     FOREIGN KEY (projectID )
     REFERENCES us3.project (projectID )
     ON DELETE NO ACTION
@@ -390,14 +390,14 @@ DROP TABLE IF EXISTS us3.experimentPerson ;
 CREATE  TABLE IF NOT EXISTS us3.experimentPerson (
   experimentID INT NOT NULL ,
   personID INT NOT NULL ,
-  INDEX ep_experimentID (experimentID ASC) ,
-  INDEX ep_personID (personID ASC) ,
-  CONSTRAINT ep_experimentID
+  INDEX ndx_experimentPerson_experimentID (experimentID ASC) ,
+  INDEX ndx_experimentPerson_personID (personID ASC) ,
+  CONSTRAINT fk_experimentPerson_experimentID
     FOREIGN KEY (experimentID )
     REFERENCES us3.experiment (experimentID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT ep_personID
+  CONSTRAINT fk_experimentPerson_personID
     FOREIGN KEY (personID )
     REFERENCES us3.people (personID )
     ON DELETE CASCADE
@@ -448,14 +448,14 @@ CREATE  TABLE IF NOT EXISTS us3.bufferLink (
   bufferID INT NOT NULL ,
   bufferComponentID INT NOT NULL ,
   concentration FLOAT NULL ,
-  INDEX bl_bufferID (bufferID ASC) ,
-  INDEX bl_bufferComponentID (bufferComponentID ASC) ,
-  CONSTRAINT bl_bufferID
+  INDEX ndx_bufferLink_bufferID (bufferID ASC) ,
+  INDEX ndx_bufferLink_bufferComponentID (bufferComponentID ASC) ,
+  CONSTRAINT fk_bufferLink_bufferID
     FOREIGN KEY (bufferID )
     REFERENCES us3.buffer (bufferID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT bl_bufferComponentID
+  CONSTRAINT fk_bufferLink_bufferComponentID
     FOREIGN KEY (bufferComponentID )
     REFERENCES us3.bufferComponent (bufferComponentID )
     ON DELETE CASCADE
@@ -473,14 +473,14 @@ CREATE  TABLE IF NOT EXISTS us3.bufferPerson (
   personID INT NOT NULL ,
   private TINYINT NOT NULL DEFAULT 0,
   PRIMARY KEY (bufferID) ,
-  INDEX bp_personID (personID ASC) ,
-  INDEX bp_bufferID (bufferID ASC) ,
-  CONSTRAINT bp_personID
+  INDEX ndx_bufferPerson_personID (personID ASC) ,
+  INDEX ndx_bufferPerson_bufferID (bufferID ASC) ,
+  CONSTRAINT fk_bufferPerson_personID
     FOREIGN KEY (personID )
     REFERENCES us3.people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT bp_bufferID
+  CONSTRAINT fk_bufferPerson_bufferID
     FOREIGN KEY (bufferID )
     REFERENCES us3.buffer (bufferID )
     ON DELETE CASCADE
@@ -499,8 +499,8 @@ CREATE  TABLE IF NOT EXISTS us3.bufferRefraction (
   lambda FLOAT NULL ,
   refractiveIndex FLOAT NULL ,
   PRIMARY KEY (refractionID) ,
-  INDEX br_bufferID (bufferID ASC) ,
-  CONSTRAINT br_bufferID
+  INDEX ndx_bufferRefraction_bufferID (bufferID ASC) ,
+  CONSTRAINT fk_bufferRefraction_bufferID
     FOREIGN KEY (bufferID )
     REFERENCES us3.buffer (bufferID )
     ON DELETE SET NULL
@@ -518,8 +518,8 @@ CREATE  TABLE IF NOT EXISTS us3.bufferExtinction (
   lambda FLOAT NULL ,
   molarExtinctionCoef FLOAT NULL ,
   PRIMARY KEY (extinctionID) ,
-  INDEX be_bufferID (bufferID ASC) ,
-  CONSTRAINT be_bufferID
+  INDEX ndx_bufferExtinction_bufferID (bufferID ASC) ,
+  CONSTRAINT fk_bufferExtinction_bufferID
     FOREIGN KEY (bufferID )
     REFERENCES us3.buffer (bufferID )
     ON DELETE SET NULL
@@ -535,7 +535,7 @@ DROP TABLE IF EXISTS us3.analyte ;
 CREATE  TABLE IF NOT EXISTS us3.analyte (
   analyteID INT NOT NULL AUTO_INCREMENT ,
   GUID CHAR(36) NULL ,
-  type ENUM('DNA', 'Peptide', 'Other') NULL DEFAULT NULL ,
+  type ENUM('DNA/RNA', 'Protein', 'Other') NULL DEFAULT 'Other' ,
   sequence TEXT NULL DEFAULT NULL ,
   vbar FLOAT NULL DEFAULT NULL ,
   description TEXT NULL DEFAULT NULL ,
@@ -554,14 +554,14 @@ CREATE  TABLE IF NOT EXISTS us3.analytePerson (
   analyteID INT NOT NULL ,
   personID INT NOT NULL ,
   PRIMARY KEY (analyteID) ,
-  INDEX ap_personID (personID ASC) ,
-  INDEX ap_analyteID (analyteID ASC) ,
-  CONSTRAINT ap_personID
+  INDEX ndx_analytePerson_personID  (personID ASC) ,
+  INDEX ndx_analytePerson_analyteID (analyteID ASC) ,
+  CONSTRAINT fk_analytePerson_personID
     FOREIGN KEY (personID )
     REFERENCES us3.people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT ap_analyteID
+  CONSTRAINT fk_analytePerson_analyteID
     FOREIGN KEY (analyteID )
     REFERENCES us3.analyte (analyteID )
     ON DELETE CASCADE
@@ -580,8 +580,8 @@ CREATE  TABLE IF NOT EXISTS us3.analyteRefraction (
   lambda FLOAT NULL ,
   refractiveIndex FLOAT NULL ,
   PRIMARY KEY (refractionID) ,
-  INDEX ar_analyteID (analyteID ASC) ,
-  CONSTRAINT ar_analyteID
+  INDEX ndx_analyteRefraction_analyteID (analyteID ASC) ,
+  CONSTRAINT fk_analyteRefraction_analyteID
     FOREIGN KEY (analyteID )
     REFERENCES us3.analyte (analyteID )
     ON DELETE SET NULL
@@ -599,8 +599,8 @@ CREATE  TABLE IF NOT EXISTS us3.analyteExtinction (
   lambda FLOAT NULL ,
   molarExtinctionCoef FLOAT NULL ,
   PRIMARY KEY (extinctionID) ,
-  INDEX ae_analyteID (analyteID ASC) ,
-  CONSTRAINT ae_analyteID
+  INDEX ndx_analyteExtinction_analyteID (analyteID ASC) ,
+  CONSTRAINT fk_analyteExtinction_analyteID
     FOREIGN KEY (analyteID )
     REFERENCES us3.analyte (analyteID )
     ON DELETE SET NULL
@@ -632,14 +632,14 @@ CREATE  TABLE IF NOT EXISTS us3.solutionBuffer (
   solutionID INT NOT NULL ,
   bufferID INT NOT NULL ,
   PRIMARY KEY (solutionID) ,
-  INDEX sb_solutionID (solutionID ASC) ,
-  INDEX sb_bufferID (bufferID ASC) ,
-  CONSTRAINT sb_solutionID
+  INDEX ndx_solutionBuffer_solutionID (solutionID ASC) ,
+  INDEX ndx_solutionBuffer_bufferID   (bufferID ASC) ,
+  CONSTRAINT fk_solutionBuffer_solutionID
     FOREIGN KEY (solutionID )
     REFERENCES us3.solution (solutionID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT sb_bufferID
+  CONSTRAINT fk_solutionBuffer_bufferID
     FOREIGN KEY (bufferID )
     REFERENCES us3.buffer (bufferID )
     ON DELETE CASCADE
@@ -657,14 +657,14 @@ CREATE  TABLE IF NOT EXISTS us3.solutionAnalyte (
   analyteID INT NOT NULL ,
   amount FLOAT NOT NULL ,
   PRIMARY KEY (solutionID) ,
-  INDEX sa_solutionID (solutionID ASC) ,
-  INDEX sa_analyteID (analyteID ASC) ,
-  CONSTRAINT sa_solutionID
+  INDEX ndx_solutionAnalyte_solutionID (solutionID ASC) ,
+  INDEX ndx_solutionAnalyte_analyteID (analyteID ASC) ,
+  CONSTRAINT fk_solutionAnalyte_solutionID
     FOREIGN KEY (solutionID )
     REFERENCES us3.solution (solutionID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT sa_analyteID
+  CONSTRAINT fk_solutionAnalyte_analyteID
     FOREIGN KEY (analyteID )
     REFERENCES us3.analyte (analyteID )
     ON DELETE CASCADE
@@ -681,14 +681,14 @@ CREATE  TABLE IF NOT EXISTS us3.solutionPerson (
   solutionID INT NOT NULL ,
   personID INT NOT NULL ,
   PRIMARY KEY (solutionID) ,
-  INDEX sp_personID (personID ASC) ,
-  INDEX sp_solutionID (solutionID ASC) ,
-  CONSTRAINT sp_personID
+  INDEX ndx_solutionPerson_personID (personID ASC) ,
+  INDEX ndx_solutionPerson_solutionID (solutionID ASC) ,
+  CONSTRAINT fk_solutionPerson_personID
     FOREIGN KEY (personID )
     REFERENCES us3.people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT sp_solutionID
+  CONSTRAINT fk_solutionPerson_solutionID
     FOREIGN KEY (solutionID )
     REFERENCES us3.solution (solutionID )
     ON DELETE CASCADE
@@ -705,20 +705,20 @@ CREATE  TABLE IF NOT EXISTS us3.experimentSolutionChannel (
   experimentID INT NOT NULL ,
   solutionID INT NOT NULL ,
   channelID INT NOT NULL ,
-  INDEX experimentID (experimentID ASC) ,
-  INDEX channelID (channelID ASC) ,
-  INDEX solutionID (solutionID ASC) ,
-  CONSTRAINT esc_experimentID
+  INDEX ndx_experimentSolutionChannel_experimentID (experimentID ASC) ,
+  INDEX ndx_experimentSolutionChannel_channelID (channelID ASC) ,
+  INDEX ndx_experimentSolutionChannel_solutionID (solutionID ASC) ,
+  CONSTRAINT fk_experimentSolutionChannel_experimentID
     FOREIGN KEY (experimentID )
     REFERENCES us3.experiment (experimentID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT esc_channelID
+  CONSTRAINT fk_experimentSolutionChannel_channelID
     FOREIGN KEY (channelID )
     REFERENCES us3.channel (channelID )
     ON DELETE NO ACTION
     ON UPDATE CASCADE,
-  CONSTRAINT esc_solutionID
+  CONSTRAINT fk_experimentSolutionChannel_solutionID
     FOREIGN KEY ( solutionID )
     REFERENCES us3.solution (solutionID)
     ON DELETE CASCADE
@@ -749,14 +749,14 @@ DROP TABLE IF EXISTS us3.imagePerson ;
 CREATE  TABLE IF NOT EXISTS us3.imagePerson (
   imageID INT NOT NULL ,
   personID INT NOT NULL ,
-  INDEX ip_personID (personID ASC) ,
-  INDEX imageID (imageID ASC) ,
-  CONSTRAINT ip_personID
+  INDEX ndx_imagePerson_personID (personID ASC) ,
+  INDEX ndx_imagePerson_imageID (imageID ASC) ,
+  CONSTRAINT fk_imagePerson_personID
     FOREIGN KEY (personID )
     REFERENCES us3.people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT imageID
+  CONSTRAINT fk_imagePerson_imageID
     FOREIGN KEY (imageID )
     REFERENCES us3.image (imageID )
     ON DELETE CASCADE
@@ -773,14 +773,14 @@ CREATE  TABLE IF NOT EXISTS us3.imageAnalyte (
   imageID INT NOT NULL ,
   analyteID INT NOT NULL ,
   PRIMARY KEY (imageID) ,
-  INDEX ia_imageID (imageID ASC) ,
-  INDEX ia_analyteID (analyteID ASC) ,
-  CONSTRAINT ia_imageID
+  INDEX ndx_imageAnalyte_imageID   (imageID ASC) ,
+  INDEX ndx_imageAnalyte_analyteID (analyteID ASC) ,
+  CONSTRAINT fk_imageAnalyte_imageID
     FOREIGN KEY (imageID )
     REFERENCES us3.image (imageID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT ia_analyteID
+  CONSTRAINT fk_imageAnalyte_analyteID
     FOREIGN KEY (analyteID )
     REFERENCES us3.analyte (analyteID )
     ON DELETE CASCADE
@@ -797,14 +797,14 @@ CREATE  TABLE IF NOT EXISTS us3.imageSolution (
   imageID INT NOT NULL ,
   solutionID INT NOT NULL ,
   PRIMARY KEY (imageID) ,
-  INDEX is_imageID (imageID ASC) ,
-  INDEX is_solutionID (solutionID ASC) ,
-  CONSTRAINT is_imageID
+  INDEX ndx_imageSolution_imageID    (imageID ASC) ,
+  INDEX ndx_imageSolution_solutionID (solutionID ASC) ,
+  CONSTRAINT fk_imageSolution_imageID
     FOREIGN KEY (imageID )
     REFERENCES us3.image (imageID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT is_solutionID
+  CONSTRAINT fk_imageSolution_solutionID
     FOREIGN KEY (solutionID )
     REFERENCES us3.solution (solutionID )
     ON DELETE CASCADE
@@ -817,7 +817,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS us3.avivFluorescence ;
 
-CREATE  TABLE IF NOT EXISTS us3.avivFluorescence (
+CREATE  TABLE IF NOT EXISTS us3.avivfluorescence (
   avivFluorescenceID INT NOT NULL AUTO_INCREMENT ,
   opticalSystemSettingID INT NULL ,
   topRadius FLOAT NULL ,
@@ -828,7 +828,8 @@ CREATE  TABLE IF NOT EXISTS us3.avivFluorescence (
   nmEmission FLOAT NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (avivFluorescenceID) ,
-  INDEX opticalSystemSettingID (opticalSystemSettingID ASC) )
+  INDEX ndx_avivfluorescence_opticalSystemSettingID 
+    (opticalSystemSettingID ASC) )
 ENGINE = InnoDB;
 
 
@@ -848,7 +849,8 @@ CREATE  TABLE IF NOT EXISTS us3.beckmanRadialAbsorbance (
   isIntensity BOOLEAN NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (beckmanRadialAbsorbanceID) ,
-  INDEX opticalSystemSettingID (opticalSystemSettingID ASC) )
+  INDEX ndx_beckmanRadialAbsorbance_opticalSystemSettingID 
+    (opticalSystemSettingID ASC) )
 ENGINE = InnoDB;
 
 
@@ -869,7 +871,8 @@ CREATE  TABLE IF NOT EXISTS us3.beckmanWavelengthAbsorbance (
   secondsBetween INT NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (beckmanWavelengthAbsorbanceID) ,
-  INDEX opticalSystemSettingID (opticalSystemSettingID ASC) )
+  INDEX ndx_beckmanWavelengthAbsorbance_opticalSystemSettingID 
+    (opticalSystemSettingID ASC) )
 ENGINE = InnoDB;
 
 
@@ -894,7 +897,8 @@ CREATE  TABLE IF NOT EXISTS us3.beckmanInterference (
   endingRow INT NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (beckmanInterferenceID) ,
-  INDEX opticalSystemSettingID (opticalSystemSettingID ASC) )
+  INDEX ndx_beckmanInterference_opticalSystemSettingID 
+    (opticalSystemSettingID ASC) )
 ENGINE = InnoDB;
 
 
@@ -911,7 +915,8 @@ CREATE  TABLE IF NOT EXISTS us3.multiWavelengthSystem (
   nmStepsize FLOAT NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (multiWavelengthSystemID) ,
-  INDEX opticalSystemSettingID (opticalSystemSettingID ASC) )
+  INDEX ndx_multiWavelengthSystem_opticalSystemSettingID 
+    (opticalSystemSettingID ASC) )
 ENGINE = InnoDB;
 
 
@@ -926,7 +931,8 @@ CREATE  TABLE IF NOT EXISTS us3.otherOpticalSystem (
   name TEXT NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (otherOpticalSystemID) ,
-  INDEX opticalSystemSettingID (opticalSystemSettingID ASC) )
+  INDEX ndx_otherOpticalSystem_opticalSystemSettingID 
+    (opticalSystemSettingID ASC) )
 ENGINE = InnoDB;
 
 
@@ -947,45 +953,46 @@ CREATE  TABLE IF NOT EXISTS us3.opticalSystemSetting (
   hwIndex INT NULL ,
   channelID INT NULL ,
   PRIMARY KEY (opticalSystemSettingID) ,
-  INDEX oss_rawDataID (rawDataID ASC) ,
-  INDEX oss_channelID (channelID ASC) ,
-  INDEX oss_fluorescenceOpSysID (opticalSystemSettingID ASC) ,
-  CONSTRAINT oss_rawDataID
+  INDEX ndx_opticalSystemSetting_rawDataID (rawDataID ASC) ,
+  INDEX ndx_opticalSystemSetting_channelID (channelID ASC) ,
+  INDEX ndx_opticalSystemSetting_fluorescenceOpSysID 
+    (opticalSystemSettingID ASC) ,
+  CONSTRAINT fk_opticalSystemSetting_rawDataID
     FOREIGN KEY (rawDataID )
     REFERENCES us3.rawData (rawDataID )
     ON DELETE SET NULL
     ON UPDATE CASCADE,
-  CONSTRAINT oss_channelID
+  CONSTRAINT fk_opticalSystemSetting_channelID
     FOREIGN KEY (channelID )
     REFERENCES us3.channel (channelID )
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
-  CONSTRAINT oss_fluorescenceOpSysID
+  CONSTRAINT fk_opticalSystemSetting_fluorescenceOpSysID
     FOREIGN KEY (opticalSystemSettingID )
     REFERENCES us3.avivFluorescence (opticalSystemSettingID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT oss_radialOpSysID
+  CONSTRAINT fk_opticalSystemSetting_radialOpSysID
     FOREIGN KEY (opticalSystemSettingID )
     REFERENCES us3.beckmanRadialAbsorbance (opticalSystemSettingID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT oss_wavelengthOpSysID
+  CONSTRAINT fk_opticalSystemSetting_wavelengthOpSysID
     FOREIGN KEY (opticalSystemSettingID )
     REFERENCES us3.beckmanWavelengthAbsorbance (opticalSystemSettingID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT oss_interferenceOpSysID
+  CONSTRAINT fk_opticalSystemSetting_interferenceOpSysID
     FOREIGN KEY (opticalSystemSettingID )
     REFERENCES us3.beckmanInterference (opticalSystemSettingID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT oss_MWLOpSysID
+  CONSTRAINT fk_opticalSystemSetting_MWLOpSysID
     FOREIGN KEY (opticalSystemSettingID )
     REFERENCES us3.multiWavelengthSystem (opticalSystemSettingID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT oss_otherOpSysID
+  CONSTRAINT fk_opticalSystemSetting_otherOpSysID
     FOREIGN KEY (opticalSystemSettingID )
     REFERENCES us3.otherOpticalSystem (opticalSystemSettingID )
     ON DELETE CASCADE
@@ -1003,20 +1010,20 @@ CREATE  TABLE IF NOT EXISTS us3.permits (
   collaboratorID INT NOT NULL ,
   instrumentID INT NOT NULL ,
   PRIMARY KEY (investigatorID) ,
-  INDEX p_investigatorID (investigatorID ASC) ,
-  INDEX p_collaboratorID (collaboratorID ASC) ,
-  INDEX p_instrumentID (instrumentID ASC) ,
-  CONSTRAINT p_investigatorID
+  INDEX ndx_permits_investigatorID (investigatorID ASC) ,
+  INDEX ndx_permits_collaboratorID (collaboratorID ASC) ,
+  INDEX ndx_permits_instrumentID (instrumentID ASC) ,
+  CONSTRAINT fk_permits_investigatorID
     FOREIGN KEY (investigatorID )
     REFERENCES us3.people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT p_collaboratorID
+  CONSTRAINT fk_permits_collaboratorID
     FOREIGN KEY (collaboratorID )
     REFERENCES us3.people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
-  CONSTRAINT p_instrumentID
+  CONSTRAINT fk_permits_instrumentID
     FOREIGN KEY (instrumentID )
     REFERENCES us3.instrument (instrumentID )
     ON DELETE NO ACTION
