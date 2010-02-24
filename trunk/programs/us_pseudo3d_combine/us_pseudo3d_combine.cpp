@@ -12,6 +12,9 @@
 #include "us_gui_settings.h"
 #include "us_math.h"
 #include "us_matrix.h"
+#include "us_sleep.h"
+
+#define PA_TMDIS_MS 5000   // default Plotall time per distro in milliseconds
 
 // main program
 int main( int argc, char* argv[] )
@@ -163,6 +166,11 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    le_distr_info->setReadOnly( true );
    spec->addWidget( le_distr_info, s_row++, 0, 1, 2 );
 
+   le_cmap_name  = us_lineedit(
+         tr( "Default Color Map: w-cyan-magenta-red-black" ) );
+   le_cmap_name->setReadOnly( true );
+   spec->addWidget( le_cmap_name,  s_row++, 0, 1, 2 );
+
    us_checkbox( tr( "Plot f/f0 vs s" ), cb_plot_s, true );
    spec->addWidget( cb_plot_s, s_row, 0 );
    connect( cb_plot_s,  SIGNAL( clicked() ),
@@ -173,8 +181,8 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    connect( cb_plot_mw, SIGNAL( clicked() ),
             this,       SLOT( select_plot_mw() ) );
 
-   pb_pltall     = us_pushbutton( tr( "Plot all Distros" ) );
-   pb_pltall->setEnabled( true );
+   pb_pltall     = us_pushbutton( tr( "Plot All Distros" ) );
+   pb_pltall->setEnabled( false );
    spec->addWidget( pb_pltall, s_row, 0 );
    connect( pb_pltall,  SIGNAL( clicked() ),
             this,       SLOT( plotall() ) );
@@ -186,10 +194,10 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
             this,       SLOT( stop() ) );
 
    pb_refresh    = us_pushbutton( tr( "Refresh Pseudo-3D Plot" ) );
-   pb_refresh->setEnabled( true );
+   pb_refresh->setEnabled(  false );
    spec->addWidget( pb_refresh, s_row, 0 );
    connect( pb_refresh, SIGNAL( clicked() ),
-            this,       SLOT( refresh() ) );
+            this,       SLOT( plot_data() ) );
 
    pb_reset      = us_pushbutton( tr( "Reset" ) );
    pb_reset->setEnabled( true );
@@ -209,18 +217,6 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    connect( pb_ldcolor, SIGNAL( clicked() ),
             this,       SLOT( load_color() ) );
 
-   pb_print      = us_pushbutton( tr( "Print" ) );
-   pb_print->setEnabled( true );
-   spec->addWidget( pb_print, s_row, 0 );
-   connect( pb_print,   SIGNAL( clicked() ),
-            this,       SLOT( print() ) );
-
-   pb_save       = us_pushbutton( tr( "Save" ) );
-   pb_save->setEnabled( false );
-   spec->addWidget( pb_save, s_row++, 1 );
-   connect( pb_save,    SIGNAL( clicked() ),
-            this,       SLOT( save() ) );
-
    pb_help       = us_pushbutton( tr( "Help" ) );
    pb_help->setEnabled( true );
    spec->addWidget( pb_help, s_row, 0 );
@@ -232,12 +228,6 @@ US_Pseudo3D_Combine::US_Pseudo3D_Combine() : US_Widgets()
    spec->addWidget( pb_close, s_row++, 1 );
    connect( pb_close,   SIGNAL( clicked() ),
             this,       SLOT( close() ) );
-
-   // set up progress bar
-   progress      = us_progressBar( 0, 100, 0 );
-   progress->reset();
-   progress->setVisible( true );
-   spec->addWidget( progress, s_row++, 0, 1, 2 );
 
    // set up plot component window on right side
    xa_title_s  = tr( "Sedimentation Coefficient corrected for water at 20" )
@@ -327,29 +317,46 @@ void US_Pseudo3D_Combine::reset( void )
    ct_curr_distr->setRange( 1.0, 1.0, 1.0 );
    ct_curr_distr->setValue( curr_distr );
    ct_curr_distr->setEnabled( false );
+
+   // default to white-cyan-magenta-red-black color map
+   colormap  = new QwtLinearColorMap( Qt::white, Qt::black );
+   colormap->addColorStop( 0.10, Qt::cyan );
+   colormap->addColorStop( 0.50, Qt::magenta );
+   colormap->addColorStop( 0.80, Qt::red );
+   cmapname  = tr( "Default Color Map: w-cyan-magenta-red-black" );
+
+   // set the plot-all slide show time delay in milliseconds
+   QSettings settings( "UTHSCSA", "UltraScan" );
+   patm_dlay = settings.value( "slideDelay", PA_TMDIS_MS ).toInt();
 }
 
+// plot the data
 void US_Pseudo3D_Combine::plot_data( void )
 {
    if ( curr_distr < 0  ||  curr_distr >= system.size() )
-   {
+   {   // current distro index somehow out of valid range
       int syssiz = system.size();
       qDebug() << "curr_distr=" << curr_distr
          << "  ( sys.size()=" << syssiz << " )";
       syssiz--;
-      curr_distr     = curr_distr < 0 ? 0 : curr_distr;
-      curr_distr     = curr_distr > syssiz ? syssiz : curr_distr;
+      curr_distr     = qBound( curr_distr, 0, syssiz );
    }
 
+   // get current distro
    DisSys* tsys   = (DisSys*)&system.at( curr_distr );
    QList< Solute >& sol_s = tsys->s_distro;
    if ( !plot_s )
       sol_s    = tsys->mw_distro;
    colormap = tsys->colormap;
+   cmapname = tsys->cmapname;
 
    data_plot->clear();
    data_plot->setCanvasBackground( colormap->color1() ); 
+   QString tstr = tsys->run_name + "." + tsys->cell +
+      tsys->wavelength + "\n" + tsys->method;
+   data_plot->setTitle( tstr );
 
+   // set up spectrogram data
    QwtPlotSpectrogram *d_spectrogram = new QwtPlotSpectrogram();
    d_spectrogram->setData( US_SpectrogramData() );
    d_spectrogram->setColorMap( *colormap );
@@ -361,6 +368,7 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    d_spectrogram->attach( data_plot );
 
+   // set color map and axis settings
    QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
    rightAxis->setColorBarEnabled( true );
    rightAxis->setColorMap( spec_dat.range(), d_spectrogram->colorMap() );
@@ -370,14 +378,14 @@ void US_Pseudo3D_Combine::plot_data( void )
    data_plot->enableAxis( QwtPlot::yRight );
 
    if ( auto_lim )
-   {
+   {   // auto limits
       data_plot->setAxisScale( QwtPlot::yLeft,
          spec_dat.yrange().minValue(), spec_dat.yrange().maxValue() );
       data_plot->setAxisScale( QwtPlot::xBottom,
          spec_dat.xrange().minValue(), spec_dat.xrange().maxValue() );
    }
    else
-   {
+   {   // manual limits
       data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax );
       data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
    }
@@ -420,6 +428,10 @@ void US_Pseudo3D_Combine::update_curr_distr( double dval )
       QString tstr = "Run " + tsys->run_name + "." + tsys->cell +
          tsys->wavelength + " (" + tsys->method + ")";
       le_distr_info->setText( tstr );
+      cmapname     = tsys->cmapname;
+      le_cmap_name->setText( cmapname );
+//qDebug() << "UpdCurrDistr cmapname=" << cmapname;
+      colormap     = tsys->colormap;
    }
 
 }
@@ -443,12 +455,6 @@ void US_Pseudo3D_Combine::update_plot_fmax( double dval )
 {
    plt_fmax = dval;
 }
-
-void US_Pseudo3D_Combine::plot_3dim()
-{}
-
-void US_Pseudo3D_Combine::loop()
-{}
 
 void US_Pseudo3D_Combine::select_autolim()
 {
@@ -546,6 +552,7 @@ void US_Pseudo3D_Combine::load_distro( const QString& fname )
 
    // load current colormap
    tsys.colormap = colormap;
+   tsys.cmapname = cmapname;
 
    // set values based on file name
 qDebug() << "Load Distro, fname=" << fname;
@@ -666,7 +673,7 @@ qDebug() << "  i4=" << i4;
          }
          filei.close();
       }
-qDebug() << "  s_distro size=" << tsys.s_distro.size();
+//qDebug() << "  s_distro size=" << tsys.s_distro.size();
 
       // sort and reduce distributions
       sort_distro( tsys.s_distro, true );
@@ -702,7 +709,6 @@ qDebug() << "  s_distro size=" << tsys.s_distro.size();
    data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax );
    data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
 
-   pb_print->setEnabled(    true );
    pb_pltall->setEnabled(   true );
    pb_refresh->setEnabled(  true );
    pb_reset->setEnabled(    true );
@@ -713,13 +719,13 @@ qDebug() << "  s_distro size=" << tsys.s_distro.size();
 
 void US_Pseudo3D_Combine::load_color()
 {
-   QString filter = tr( "Any XML files (*.xml);;" )
-         + tr( "Gradient files (*grad*.xml);;" )
+   QString filter = tr( "Color Map files (cm*.xml);;" )
+         + tr( "Any XML files (*.xml);;" )
          + tr( "Any files (*)" );
 
    // get an xml file name for the color map
    QString fname = QFileDialog::getOpenFileName( this,
-      tr( "Load Color Gradient File" ),
+      tr( "Load Color Map File" ),
       US_Settings::appBaseDir() + "/etc",
       filter,
       0, 0 );
@@ -738,32 +744,39 @@ void US_Pseudo3D_Combine::load_color()
    {
       colormap->addColorStop( cmvalue.at( jj ), cmcolor.at( jj ) );
    }
+   QFileInfo fi( fname );
+   cmapname  = tr( "Color Map: " ) + fi.baseName();
+   le_cmap_name->setText( cmapname );
+//qDebug() << "LoadColor cmapname=" << cmapname;
 
    // save the map information for the current distribution
    if ( system.size() > curr_distr )
    {
-      DisSys* tsys   = (DisSys*)&system.at( curr_distr );
-      tsys->colormap = colormap;
+      DisSys* tsys    = (DisSys*)&system.at( curr_distr );
+      tsys->colormap  = colormap;
+      tsys->cmapname  = cmapname;
    }
 }
 
-void US_Pseudo3D_Combine::save()
-{}
-
 void US_Pseudo3D_Combine::plotall()
 {
+   looping   = true;
+   pb_stopplt->setEnabled( true );
+   curr_distr = 0;
    plot_data();
-}
 
-void US_Pseudo3D_Combine::refresh()
-{
-   plot_data();
+   patm_id    = startTimer( patm_dlay );
+
+   if ( curr_distr == system.size() )
+      curr_distr--;
+
 }
 
 void US_Pseudo3D_Combine::stop()
-{}
-void US_Pseudo3D_Combine::print()
-{}
+{
+//qDebug() << "\t\t+++STOP+++";
+   looping  = false;
+}
 
 void US_Pseudo3D_Combine::set_limits()
 {
@@ -903,7 +916,7 @@ void US_Pseudo3D_Combine::sort_distro( QList< Solute >& listsols,
 
           sol1    = sol2;        // save entry for next iteration
       }
-qDebug() << "  SD:   reduced size=" << reduced.size();
+//qDebug() << "  SD:   reduced size=" << reduced.size();
 
       if ( reduced.size() < sizi )
       {   // if some reduction happened, replace list with reduced version
@@ -911,6 +924,36 @@ qDebug() << "  SD:   reduced size=" << reduced.size();
       }
    }
    return;
+}
+
+void US_Pseudo3D_Combine::timerEvent( QTimerEvent *event )
+{
+   int tm_id  = event->timerId();
+//qDebug() << "Timer ID:" << tm_id;
+
+   if ( tm_id != patm_id )
+   {  // if other than plot loop timer event, pass on to normal handler
+      QWidget::timerEvent( event );
+      return;
+   }
+
+   int syssiz = system.size();
+   int maxsiz = syssiz - 1;
+   int jdistr = curr_distr + 1;
+
+   if ( jdistr < syssiz  &&  looping )
+   {   // if still looping, plot the next distribution
+      curr_distr = jdistr;
+      plot_data();
+   }
+
+   if ( curr_distr >= maxsiz  ||  !looping )
+   {  // if at last distro or stop clicked, stop the loop
+      killTimer( tm_id );
+      pb_stopplt->setEnabled( false );
+      curr_distr = ( curr_distr > maxsiz ) ? maxsiz : curr_distr;
+   }
+   ct_curr_distr->setValue( curr_distr+1 );
 }
 
 

@@ -29,6 +29,7 @@ typedef struct distro_sys
    QString         cell;
    QString         wavelength;
    QString         method;
+   QString         cmapname;
    int             distro_type;
    bool            monte_carlo;
 } DisSys;
@@ -57,6 +58,7 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       QLabel*       lb_curr_distr;
 
       QLineEdit*    le_distr_info;
+      QLineEdit*    le_cmap_name;
 
       US_Help       showHelp;
  
@@ -82,8 +84,6 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       QPushButton*  pb_reset;
       QPushButton*  pb_lddistr;
       QPushButton*  pb_ldcolor;
-      QPushButton*  pb_print;
-      QPushButton*  pb_save;
       QPushButton*  pb_help;
       QPushButton*  pb_close;
 
@@ -91,10 +91,7 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       QCheckBox*    cb_plot_s;
       QCheckBox*    cb_plot_mw;
 
-      QProgressBar*   progress;
-
       QList< DisSys > system;
-
 
       double        resolu;
       double        plt_smin;
@@ -110,7 +107,8 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       int           curr_distr;
       int           init_solutes;
       int           mc_iters;
-      int           dimens;
+      int           patm_id;
+      int           patm_dlay;
 
       bool          minmax;
       bool          zoom;
@@ -121,6 +119,7 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       QString       xa_title_s;
       QString       xa_title_mw;
       QString       xa_title;
+      QString       cmapname;
 
    private slots:
 
@@ -133,10 +132,8 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       void update_plot_fmax( double );
       void update_plot_smin( double );
       void update_plot_smax( double );
-      void plot_3dim( void );
       void plot_data( int );
       void plot_data( void );
-      void loop( void );
       void select_autolim( void );
       void select_plot_s( void );
       void select_plot_mw( void );
@@ -144,15 +141,15 @@ class US_EXTERN US_Pseudo3D_Combine : public US_Widgets
       void load_distro( const QString& );
       void load_color( void );
       void plotall( void );
-      void refresh( void );
-      void save( void );
       void stop( void );
-      void print( void );
       void reset( void );
       void set_limits( void );
       void sort_distro( QList< Solute >&, bool );
 
       void help     ( void )
       { showHelp.show_help( "pseudo3d_combine.html" ); };
+
+   protected:
+      virtual void timerEvent( QTimerEvent *e );
 };
 #endif
