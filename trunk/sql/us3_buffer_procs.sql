@@ -267,7 +267,10 @@ BEGIN
     DELETE FROM bufferPerson
     WHERE bufferID = p_bufferID;
 
-    DELETE FROM extinction
+    DELETE FROM bufferExtinction
+    WHERE bufferID = p_bufferID;
+
+    DELETE FROM bufferRefraction
     WHERE bufferID = p_bufferID;
 
     DELETE FROM buffer

@@ -396,6 +396,7 @@ END$$
 
 SOURCE us3_people_procs.sql
 SOURCE us3_buffer_procs.sql
+SOURCE us3_analyte_procs.sql
 SOURCE us3_exp_procs.sql
 
 DELIMITER ;
