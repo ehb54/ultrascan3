@@ -150,7 +150,10 @@ class US_EXTERN US_Hydrodyn_Save : public QFrame
       map < QString, int >          descriptive_name_to_section;
 
       map < QString, void * >       field_to_save_data;
-      map < QString, int >          field_to_save_data_type; 
+      map < QString, int >          field_to_save_data_type;
+      map < QString, int >          field_to_precision;  // for float & doubles, typically 2
+      map < QString, char >         field_to_format;     // for float & doubles, 'e', 'f' or 'g'
+
       // valid types
 #define DT_QSTRING                  0
 #define DT_BOOL                     1

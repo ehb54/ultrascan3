@@ -381,6 +381,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.total_beads);
          field_to_save_data_type[field[i]] = DT_FLOAT;
+         field_to_precision[field[i]] = 0;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -388,6 +390,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.total_beads_sd);
          field_to_save_data_type[field[i]] = DT_FLOAT;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -395,6 +399,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.used_beads);
          field_to_save_data_type[field[i]] = DT_FLOAT;
+         field_to_precision[field[i]] = 0;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -402,6 +408,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.used_beads_sd);
          field_to_save_data_type[field[i]] = DT_FLOAT;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -409,6 +417,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.mass);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -416,6 +426,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.vbar);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -423,6 +435,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.s20w);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -430,6 +444,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.s20w_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -437,6 +453,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.D20w);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -444,6 +462,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.D20w_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -451,6 +471,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.rs);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -458,6 +480,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.rs_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -465,6 +489,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.ff0);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -472,6 +498,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.ff0_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -479,6 +507,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.rg);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -486,6 +516,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.rg_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -493,6 +525,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.tau);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -500,6 +534,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.tau_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -507,6 +543,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.viscosity);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -514,6 +552,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.viscosity_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -521,6 +561,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.tot_surf_area);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -528,6 +570,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.tot_volume_of);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -535,6 +579,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.num_of_unused);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -542,6 +588,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.use_beads_vol);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -549,6 +597,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.use_beads_surf);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -556,13 +606,17 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.use_bead_mass);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
          continue;
+         field_to_format[field[i]] = 'f';
       }
 
       if ( field[i] == "con_factor" )
       {
          field_to_save_data[field[i]] = (void *)&(save->data.con_factor);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = -1;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -570,6 +624,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.tra_fric_coef);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'e';
          continue;
       }
 
@@ -577,6 +633,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rot_fric_coef);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'e';
          continue;
       }
 
@@ -584,6 +642,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rot_diff_coef);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 0;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -591,6 +651,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rot_fric_coef_x);
          field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'e';
          continue;
       }
 
@@ -598,6 +660,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rot_diff_coef_x);
          field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         field_to_precision[field[i]] = 0;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -605,6 +669,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rot_stokes_rad_x);
          field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -612,6 +678,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.cen_of_res_x);
          field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -619,6 +687,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.cen_of_mass_x);
          field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -626,6 +696,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.cen_of_diff_x);
          field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -633,6 +705,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.cen_of_visc_x);
          field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -640,6 +714,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.unc_int_visc);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -647,6 +723,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.unc_einst_rad);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -654,6 +732,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.cor_int_visc);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -661,6 +741,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.cor_einst_rad);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -668,6 +750,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_1);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -675,6 +759,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_2);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -682,6 +768,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_3);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -689,6 +777,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_4);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -696,6 +786,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_5);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -703,6 +795,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_m);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -710,6 +804,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.rel_times_tau_h);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -717,6 +813,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.max_ext_x);
          field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -724,6 +822,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.axi_ratios_xz);
          field_to_save_data_type[field[i]] = DT_TRIPLE_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -745,6 +845,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.hydro.temperature);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -752,6 +854,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.hydro.solvent_viscosity);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -759,6 +863,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.hydro.solvent_density);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
+         field_to_precision[field[i]] = 6;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -766,6 +872,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.asa_rg_pos);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
 
@@ -773,6 +881,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.asa_rg_neg);
          field_to_save_data_type[field[i]] = DT_DOUBLE_NA;
+         field_to_precision[field[i]] = 2;
+         field_to_format[field[i]] = 'f';
          continue;
       }
    }
@@ -791,7 +901,7 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
    save->field_flag.clear();
    for ( unsigned int i = 0; i < save->field.size(); i++ )
    {
-      save->field_flag[field[i]] = true;
+      save->field_flag[save->field[i]] = true;
    }
    header();
 
@@ -1122,6 +1232,10 @@ QString US_Hydrodyn_Save::header()
    return result + "\n";
 }
 
+// #define ZARG(s) arg(s,0,field_to_format[save->field[i]],field_to_precision[save->field[i]]).replace(QRegExp("\\.0+$"),"")
+// #define DBFARG(s) printf("i = %u _field <%s> _format <%c> _precision <%d>\n",i,save->field[i].ascii(), field_to_format[save->field[i]],field_to_precision[save->field[i]]);fflush(stdout)
+#define FARG(s) arg(s,0,field_to_format[save->field[i]],field_to_precision[save->field[i]])
+
 QString US_Hydrodyn_Save::dataString(save_data *data)
 {
    save->data = *data;
@@ -1143,12 +1257,14 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
       case DT_FLOAT         :
          result += QString("%1%2")
             .arg(i ? "," : "")
-            .arg((*(float *)(field_to_save_data[save->field[i]])));
+            .FARG((*(float *)(field_to_save_data[save->field[i]])));
+         // DBFARG((*(float *)(field_to_save_data[save->field[i]])));
          break;
       case DT_DOUBLE        :
          result += QString("%1%2")
             .arg(i ? "," : "")
-            .arg(*((double *)(field_to_save_data[save->field[i]])));
+            .FARG(*((double *)(field_to_save_data[save->field[i]])));
+         // DBFARG((*(double *)(field_to_save_data[save->field[i]])));
          break;
       case DT_INT           :
          result += QString("%1%2")
@@ -1163,9 +1279,10 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
       case DT_TRIPLE_DOUBLE :
          result += QString("%1(%2,%3,%4)")
             .arg(i ? "," : "")
-            .arg(*((double *)(field_to_save_data[save->field[i]])))
-            .arg(*((double *)(field_to_save_data[save->field[i]]) + 1))
-            .arg(*((double *)(field_to_save_data[save->field[i]]) + 2));
+            .FARG(*((double *)(field_to_save_data[save->field[i]])))
+            .FARG(*((double *)(field_to_save_data[save->field[i]]) + 1))
+            .FARG(*((double *)(field_to_save_data[save->field[i]]) + 2));
+         // DBFARG((*(double *)(field_to_save_data[save->field[i]])));
          break;
       case DT_DOUBLE_NA     :
          {
@@ -1174,7 +1291,8 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
             {
                result += QString("%1%2")
                   .arg(i ? "," : "")
-                  .arg(*((double *)(field_to_save_data[save->field[i]])));
+                  .FARG(*((double *)(field_to_save_data[save->field[i]])));
+               // DBFARG((*(double *)(field_to_save_data[save->field[i]])));
             } else {
                result += ",NA";
             }
