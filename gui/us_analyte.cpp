@@ -37,6 +37,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
       db_name = DB.at( 0 );
 
    QLabel* lb_DB = us_banner( tr( "Database: " ) + db_name, -1 );
+   lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_DB, row++, 0, 1, 3 );
 
    QGridLayout* protein = us_radiobutton( tr( "Protein"      ), rb_protein, true );
@@ -65,7 +66,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    main->addWidget( pb_investigator, row, 0 );
 
    le_investigator = us_lineedit( tr( "Not Selected" ) );
-   main->addWidget( le_investigator, row++, 1 );
+   main->addWidget( le_investigator, row++, 1, 1, 2 );
 
    QBoxLayout* search = new QHBoxLayout;
 
@@ -82,14 +83,15 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
 
    // Analyte descriptions from DB
    QLabel* lb_banner1 = us_banner( tr( "Doubleclick on analyte data to select" ), -1 );
+   lb_banner1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_banner1, row++, 0 );
 
    lw_analytes = us_listwidget();
    connect( lw_analytes, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
                          SLOT  ( select_analyte   ( QListWidgetItem* ) ) );
 
-   main->addWidget( lw_analytes, row, 0, 9, 1 );
-   row += 9;
+   main->addWidget( lw_analytes, row, 0, 5, 1 );
+   row += 5;
 
    // Labels
    QHBoxLayout* description = new QHBoxLayout;
@@ -98,49 +100,51 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
 
    le_description = us_lineedit( "" ); 
    description->addWidget( le_description );
-   main->addLayout( description, row++, 0, 1, 2 );
+   main->addLayout( description, row++, 0, 1, 3 );
  
    // Go back to top of 2nd column
    row = 3;
 
    QPushButton* pb_load = us_pushbutton( tr( "Load Analyte from HD" ) );
    connect( pb_load, SIGNAL( clicked() ), SLOT( read_analyte() ) );
-   main->addWidget( pb_load, row++, 1 );
+   main->addWidget( pb_load, row, 1 );
 
    pb_save = us_pushbutton( tr( "Save Analyte to HD" ), false );
    connect( pb_save, SIGNAL( clicked() ), SLOT( save_analyte() ) );
-   main->addWidget( pb_save, row++, 1 );
+   main->addWidget( pb_save, row++, 2 );
 
    QLabel* lb_banner3 = us_banner( tr( "Database Functions" ), -2 );
-   main->addWidget( lb_banner3, row++, 1 );
+   lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   main->addWidget( lb_banner3, row++, 1, 1, 2 );
 
    QPushButton* pb_load_db = us_pushbutton( 
-         tr( "Query Analyte Descriptions from DB" ) );
+         tr( "Query Descriptions" ) );
    connect( pb_load_db, SIGNAL( clicked() ), SLOT( read_db() ) );
-   main->addWidget( pb_load_db, row++, 1 );
+   main->addWidget( pb_load_db, row, 1 );
 
    pb_save_db = us_pushbutton( tr( "Save Buffer to DB" ), false );
    connect( pb_save_db, SIGNAL( clicked() ), SLOT( save_db() ) );
-   main->addWidget( pb_save_db, row++, 1 );
+   main->addWidget( pb_save_db, row++, 2 );
 
    pb_update_db = us_pushbutton( tr( "Update Buffer in DB" ), false );
    connect( pb_update_db, SIGNAL( clicked() ), SLOT( update_db() ) );
-   main->addWidget( pb_update_db, row++, 1 );
+   main->addWidget( pb_update_db, row, 1 );
 
    pb_del_db = us_pushbutton( tr( "Delete Buffer from DB" ), false );
    connect( pb_del_db, SIGNAL( clicked() ), SLOT( delete_db() ) );
-   main->addWidget( pb_del_db, row++, 1 );
+   main->addWidget( pb_del_db, row++, 2 );
 
    QLabel* lb_banner4 = us_banner( tr( "Other Functions" ), -2 );
-   main->addWidget( lb_banner4, row++, 1 );
+   lb_banner4->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+   main->addWidget( lb_banner4, row++, 1, 1, 2 );
 
    pb_sequence = us_pushbutton( tr( "Manage Sequence" ) );
    connect( pb_sequence, SIGNAL( clicked() ), SLOT( manage_sequence() ) );
-   main->addWidget( pb_sequence, row++, 1 );
+   main->addWidget( pb_sequence, row, 1 );
 
    pb_spectrum = us_pushbutton( tr( "Manage Spectrum" ), false );
    connect( pb_spectrum, SIGNAL( clicked() ), SLOT( spectrum() ) );
-   main->addWidget( pb_spectrum, row++, 1 );
+   main->addWidget( pb_spectrum, row++, 2 );
 
    pb_more = us_pushbutton( tr( "More Info" ), false );
    connect( pb_more, SIGNAL( clicked() ), SLOT( more_info() ) );
@@ -194,7 +198,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    le_protein_residues = us_lineedit( "" );
    le_protein_residues->setReadOnly( true );
    protein_info->addWidget( le_protein_residues, prow, 1 );
-   main->addWidget( protein_widget, row, 0, 1, 2 ); 
+   main->addWidget( protein_widget, row, 0, 1, 3 ); 
    
    QLabel* lb_protein_e280 = us_label( 
          tr( "Extinction <small>(280 nm)</small>:" ) );
@@ -202,6 +206,10 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
 
    le_protein_e280 = us_lineedit( "" );
    protein_info->addWidget( le_protein_e280, prow++, 3 );
+
+   QSpacerItem* spacer1 = new QSpacerItem( 20, 0 );
+   protein_info->addItem( spacer1, prow, 0, 1, 4 );
+   protein_info->setRowStretch( prow, 100 );
    
    protein_widget->setVisible( true );
   
@@ -211,7 +219,10 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    dna_layout->setSpacing        ( 2 );
    dna_layout->setContentsMargins( 2, 2, 2, 2 );
 
+   QPalette p = US_GuiSettings::labelColor();
+
    QGroupBox*    gb_double = new QGroupBox( tr( "Calculate MW" ) );
+   gb_double->setPalette( p );
    QGridLayout*  grid1     = new QGridLayout;   
    grid1->setSpacing        ( 2 );
    grid1->setContentsMargins( 2, 2, 2, 2 );
@@ -232,7 +243,9 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    gb_double->setLayout( grid1 ); 
    dna_layout->addWidget( gb_double, 0, 0 );
 
+
    QGroupBox*    gb_three_prime = new QGroupBox( tr( "Three prime" ) );
+   gb_three_prime->setPalette( p );
    QGridLayout*  grid2          = new QGridLayout;   
    grid2->setSpacing        ( 2 );
    grid2->setContentsMargins( 2, 2, 2, 2 );
@@ -249,6 +262,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    dna_layout->addWidget( gb_three_prime, 1, 0 );
 
    QGroupBox*    gb_five_prime = new QGroupBox( tr( "Five prime" ) );
+   gb_five_prime->setPalette( p );
    QGridLayout*  grid3         = new QGridLayout;   
    grid3->setSpacing        ( 2 );
    grid3->setContentsMargins( 2, 2, 2, 2 );
@@ -258,6 +272,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
 
    grid3->addLayout( box5, 0, 0 );
    grid3->addLayout( box6, 0, 1 );
+  
    gb_five_prime->setLayout( grid3 ); 
    connect( rb_5_hydroxyl, SIGNAL( toggled          ( bool ) ), 
                            SLOT  ( update_nucleotide( bool ) ) );
@@ -267,7 +282,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    QGridLayout* ratios = new QGridLayout;
 
    QLabel* lb_ratios = us_banner( tr( "Counterion molar ratio/nucletide" ) );
-   ratios->addWidget( lb_ratios, 0, 0, 1, 2 );
+   ratios->addWidget( lb_ratios, 0, 0, 1, 3 );
 
    QLabel* lb_sodium = us_label( tr( "Sodium, Na+" ) );
    ratios->addWidget( lb_sodium, 1, 0 );
@@ -276,7 +291,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    ct_sodium->setStep( 0.01 );
    connect( ct_sodium, SIGNAL( valueChanged     ( double ) ),
                        SLOT  ( update_nucleotide( double ) ) );
-   ratios->addWidget( ct_sodium, 1, 1 );
+   ratios->addWidget( ct_sodium, 1, 1, 1, 2 );
 
    QLabel* lb_potassium = us_label( tr( "Potassium, K+" ) );
    ratios->addWidget( lb_potassium, 2, 0 );
@@ -285,7 +300,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    ct_potassium->setStep( 0.01 );
    connect( ct_potassium, SIGNAL( valueChanged     ( double ) ),
                           SLOT  ( update_nucleotide( double ) ) );
-   ratios->addWidget( ct_potassium, 2, 1 );
+   ratios->addWidget( ct_potassium, 2, 1, 1, 2 );
 
    QLabel* lb_lithium = us_label( tr( "Lithium, Li+" ) );
    ratios->addWidget( lb_lithium, 3, 0 );
@@ -294,7 +309,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    ct_lithium->setStep( 0.01 );
    connect( ct_lithium, SIGNAL( valueChanged     ( double ) ),
                         SLOT  ( update_nucleotide( double ) ) );
-   ratios->addWidget( ct_lithium, 3, 1 );
+   ratios->addWidget( ct_lithium, 3, 1, 1, 2 );
 
    QLabel* lb_magnesium = us_label( tr( "Magnesium, Mg+" ) );
    ratios->addWidget( lb_magnesium, 4, 0 );
@@ -303,7 +318,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    ct_magnesium->setStep( 0.01 );
    connect( ct_magnesium, SIGNAL( valueChanged     ( double ) ),
                           SLOT  ( update_nucleotide( double ) ) );
-   ratios->addWidget( ct_magnesium, 4, 1 );
+   ratios->addWidget( ct_magnesium, 4, 1, 1, 2 );
 
    QLabel* lb_calcium = us_label( tr( "Calcium, Ca+" ) );
    ratios->addWidget( lb_calcium, 5, 0 );
@@ -314,7 +329,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
                         SLOT  ( update_nucleotide( double ) ) );
    ratios->addWidget( ct_calcium, 5, 1 );
 
-   dna_layout->addLayout( ratios, 0, 1, 4, 1 );
+   dna_layout->addLayout( ratios, 0, 1, 4, 2 );
 
    QGridLayout* nucle_data = new QGridLayout;
    QLabel* lb_nucle_mw = us_label( tr( "MW <small>(Daltons)</small>:" ) );
@@ -343,10 +358,10 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    nucle_data->addWidget( lb_nucle_e280, 2, 2 );
 
    le_nucle_e280 = us_lineedit( "" );
-   nucle_data->addWidget( le_nucle_e280, 2, 3 );
+   nucle_data->addWidget( le_nucle_e280, 2, 2 );
 
-   dna_layout->addLayout( nucle_data, 4, 0, 2, 2 );
-   main->addWidget( dna_widget, row, 0, 2, 2 ); 
+   dna_layout->addLayout( nucle_data, 4, 0, 2, 3 );
+   main->addWidget( dna_widget, row, 0, 2, 3 ); 
    dna_widget->setVisible( false );
 
    // Lower half -- carbohydrate operations and data
@@ -360,7 +375,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    lb_carbs->setAlignment( Qt::AlignCenter );
    carbs_info->addWidget( lb_carbs, 0, 0 );
 
-   main->addWidget( carbs_widget, row, 0, 1, 2 ); 
+   main->addWidget( carbs_widget, row, 0, 1, 3 ); 
    carbs_widget->setVisible( false );
 
    row += 4;
@@ -392,7 +407,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
    buttons->addWidget( pb_accept );
 
-   main->addLayout( buttons, row, 0, 1, 2 );
+   main->addLayout( buttons, row, 0, 1, 3 );
    analyte_t = PROTEIN;
    reset();
 }
