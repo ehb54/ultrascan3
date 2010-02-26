@@ -128,7 +128,6 @@ US_Database::US_Database( QWidget* w, Qt::WindowFlags flags )
   buttons->addWidget( pb_reset, row++, 1 );
 
   pb_testConnect = us_pushbutton( tr( "Test DB Connectivity" ) );
-  pb_testConnect->setEnabled( false );
   connect( pb_testConnect, SIGNAL( clicked() ), this, SLOT( test_connect() ) );
   buttons->addWidget( pb_testConnect, row++, 0, 1, 2 );
 
@@ -180,7 +179,6 @@ void US_Database::select_db( QListWidgetItem* entry )
 
       pb_save       ->setEnabled( true );
       pb_delete     ->setEnabled( true );
-      pb_testConnect->setEnabled( true );
 
       break;
     }
@@ -317,7 +315,6 @@ void US_Database::check_add()
 
   pb_save       ->setEnabled( true );
   pb_delete     ->setEnabled( true );
-  pb_testConnect->setEnabled( true );
 } 
 
 void US_Database::update_lw( const QString& current )
@@ -363,7 +360,6 @@ void US_Database::reset( void )
 
   pb_save       ->setEnabled( false );
   pb_delete     ->setEnabled( false );
-  pb_testConnect->setEnabled( false );
 }
 
 void US_Database::help( void )
