@@ -3087,7 +3087,8 @@ mem_ris(int model)
       printf("batch save on, push back info into save_params!\n");
    }
 
-   if ( us_hydrodyn->saveParams )
+   if ( us_hydrodyn->saveParams &&
+        create_hydro_res )
    {
       QString fname = this_data.results.name + ".csv";
       FILE *of = fopen(fname, "wb");
