@@ -40,7 +40,7 @@ The next three independently selectable options controls other steps or features
 <p>
 <i><b>Apply Cubic Grid</b></i> allows the grid procedure to be executed (<b>deafult: active</b>). It could be deselected to allow the use of the Grid module for overlap removal of a previously loaded bead model.
 <p>
-<i><b>Add Theorethical Hydration (PDB only)</b></i>. This is a newly implemented routine that uses the atomic hydration definitions present in the new version of the <i>somo.residue</i> table (see <a href="somo_residue.html">here</a>). It basically adds the volume of the water molecules theoretically bound to each atom within a cubelet to their anhydrous volumes. This enhancement greatly improves the computation of the hydrodynamic parameters using the <b>Grid (AtoB)</b> method (Brookes, Demeler and Rocco, in preparation).
+<i><b>Add Theorethical Hydration (PDB only)</b></i>. This is a newly implemented routine that uses the atomic hydration definitions present in the new version of the <i>somo.residue</i> table (see <a href="somo_residue.html">here</a>). It basically adds the volume of the water molecules theoretically bound to each atom within a cubelet to their anhydrous volumes. This enhancement greatly improves the computation of the hydrodynamic parameters using the <b>Grid (AtoB)</b> method (Brookes, Demeler and Rocco, submitted).
 <p>
 The <i><b>Expand Bead to Tangency</b></i> routine has not been implemented at this stage, therefore this button is not available. The idea behind this procedure was to cope with the voids sometimes generated between beads by the Grid approach. More explanations will be provided once the routine will be fully implemented and tested.
 <p>
@@ -51,10 +51,10 @@ developed to improve the <b>Build AtoB (Grid) Bead Model</b> performance. This w
 placed in the grid for being exposed or buried (see <a href=somo_asa.html>here</a>). Importantly, the <i>Outward
 Translation</i> can be applied during the overlap removal phase of the exposed beads, leading to much better
 reproduction of the experimental parameters nearly independently of the grid size chosen (Brookes, Demeler and Rocco,
-in preparation). If this checkbox is deselected, a basic mode is operational, in which the cubic grid is applied,
+submitted). If this checkbox is deselected, a basic mode is operational, in which the cubic grid is applied,
 beads are generated and labeled <b>all</b> as being buried, and the overlaps are all removed in one pass. The ASA
 re-check routine <b>must</b> be then active to properly classify the beads as being exposed or buried following
-overlap removal. This step is controlled by its own parameter, see <a href=somo_asa.html>here</a>.
+overlap removal. This step is controlled by its own parameters, see <a href=somo_asa.html>here</a>.
 <p>
 
 <hr>
@@ -72,7 +72,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on September 3, 2009.
+Last modified on January 27, 2010.
 </font>
 </body>
 </html>

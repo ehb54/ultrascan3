@@ -34,7 +34,7 @@ Bloomfield, Q. Rev. Biophys. 14:81-139, 1981; Spotorno et al., Eur. J. Biophys.
 <br>For <b>Grid (AtoB)</b>-type bead models, three different panels are available. The 
 first two, <b>Exposed grid beads</b> and <b>Buried grid beads</b>, operate when the
 the <i>Enable ASA screening</i> function in the <a href=somo_grid.html>SOMO Grid Function Options (AtoB)</a>
-module is <b>selected</b>. The third panel, <b>Exposed grid beads</b>, is operative when
+module is <b>selected</b>. The third panel, <b>Non-screened grid beads</b>, is operative when
 the <i>Enable ASA screening</i> function in the <a href=somo_grid.html>SOMO Grid Function Options (AtoB)</a>
 module is <b>not selected</b>. In this case, ALL the beads are initially classified as
 buried and then subdivided between buried and exposed at the end of the process by the ASAB1
@@ -64,7 +64,10 @@ not exceeding the fusion threshold: <i><b>Remove Overlaps synchronously</b></i> 
 <i><b>Remove Overlaps hierarchically (larger -> smaller)</b></i>. An <i>Overlap
 Reduction Step Size (in %)</i> field controls the finesse in this stage, by
 setting the step size (in % of the involved radii) used to remove the overlaps
-(default: <b>1%</b>).
+(default: <b>1%</b>). The <b><i>Same overlap reduction method for all bead types</i></b>
+checkbox allow to automatically set the chosen procedure for all bead types (default: <b>active</b>).
+Furthermore, if this checkbox  and the <i>Automatically set suffix</i> checkbox in the main panel
+are both selected, either the "hi" or "sy" symbol is added to the <b>Bead Model Suffix</b> field in the main panel. 
 </td>
 </tr>
 </table>
@@ -81,16 +84,15 @@ large structures are analyzed. The quality of the models appears to be higher
 than that of models generated with the hierarchical procedure (more uniform bead sizes,
 less space between beads), and there's a small effect also in the calculation of the rotational
 diffusion and of the intrinsic viscosity, which appears to be linked to the volume correction
-through the number of beads classified as exposed by the ASA re-check routine. This matter is
-currently under further investigation.
+through the number of beads classified as exposed by the ASA re-check routine (default: <b>active</b>). 
 <br>In the <i><b>Remove Overlaps hierarchically (larger -> smaller)</b></i>, the biggest overlap between a couple
 of beads is first removed by proportionally reducing their radii. If the
 <i><b>Outward Translation</b></i> checkbox is selected, the beads centers are also moved
 outwardly along a line connecting them with the cog of the molecule. The
 minimal amount of translation and radius reduction leading to overlap removal
-is computed by solving a set of equations. If the <i><b>Outward Translation</b></i> is
-active, the whole set is re-screened for overlaps after each overlap is removed,
-otherwise the couple is removed from the list and the next one is treated.
+is computed by solving a set of equations.  If the <i><b>Outward Translation</b></i> is
+active, the couple is removed from the list and whole set is re-screened for overlaps after each overlap is removed,
+otherwise the couple is just removed from the list and the next one is treated.
 <br>The <i><b>Outward Translation</b></i> was devised to maintain as much as possible
 the original surface of the molecule, which would otherwise shrink when the
 overlaps are eliminated by reducing the beads' radii (default: <b>active</b>).
@@ -117,6 +119,8 @@ used for hydrodynamic computations (default: <b>active</b>).
 <i><b>Remove Overlaps hierarchically (larger -> smaller)</b></i> are present in this
 stage. They are controlled by the <i>Overlap Reduction Step Size (in %)</i>
 field, and have been fully described in the <b>Exposed grid beads</b> Panel (default: <b>hierarchical</b>).
+The <b><i>Same overlap reduction method for all bead types</i></b>
+checkbox allow to automatically set the chosen procedure for all bead types (default: <b>active</b>).
 </td>
 </tr>
 </table>
@@ -141,7 +145,10 @@ used for hydrodynamic computations (default: <b>active</b>).
 <i><b>Remove Overlaps hierarchically (larger -> smaller)</b></i> are present in this
 stage. They are controlled by the <i>Overlap Reduction Step Size (in %)</i>
 field, and have been fully described in the <b>Exposed side chain beads</b>
-Panel (default: <b>hierarchical</b>).
+Panel (default: <b>hierarchical</b>). The <b><i>Same overlap reduction method for all bead types</i></b>
+checkbox allow to automatically set the chosen procedure for all bead types (default: <b>active</b>).
+Furthermore, if this checkbox  and the <i>Automatically set suffix</i> checkbox in the main panel
+are both selected, either the "hi" or "sy" symbol is added to the <b>Bead Model Suffix</b> field in the main panel. 
 
 </td>
 </tr>
@@ -162,7 +169,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on September 3, 2009.
+Last modified on January 27, 2010.
 </font>
 </body>
 </html>

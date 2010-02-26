@@ -32,14 +32,14 @@ the bead model because the hydrodynamic interaction tensor used is valid for
 Bloomfield, Q. Rev. Biophys. 14:81-139, 1981; Spotorno et al., Eur. J. Biophys.
 25:373-384, 26:417, 1997).
 <br>For SoMo-type bead models, this operation is performed in three stages,
-treating first the <b>Exposed side chain beads</b>, then the <b>Exposed main and
-side chain beads</b>, and finally the <b>Buried beads</b>. The reason behind this
-procedure is to first adjust the "surface" of the model, dominated by the exposed
-side-chains, then complete it with the exposed main-chain segments, and finally adjust
-the buried core of the molecule. Although the last operation can be in principle avoided if
-the buried beads are excluded from the hydrodynamic computations, it is safer to
-perform it because some beads initially classified as buried might become exposed
-following overlap removal on the beads initially classified as exposed.
+treating first the overlaps between <b>Exposed side chain beads</b>, then the overlaps
+between <b>Exposed main and side chain beads</b>, and finally the overlaps between the
+<b>Buried beads</b>. The reason behind this procedure is to first adjust the "surface"
+of the model, dominated by the exposed side-chains, then complete it with the exposed
+main-chain segments, and finally adjust the buried core of the molecule. Although the
+last operation can be in principle avoided if the buried beads are excluded from the
+hydrodynamic computations, it is safer to perform it because some beads initially classified
+as buried might become exposed following overlap removal on the beads initially classified as exposed.
 Common to all three Panels, the <i>Bead Overlap Tolerance</i> field sets the
 limit (in the model's units) above which the difference between the radii of
 two beads will classify them as overlapping (default: <b>0.001</b>).
@@ -68,7 +68,10 @@ not exceeding the fusion threshold: <i><b>Remove Overlaps synchronously</b></i> 
 <i><b>Remove Overlaps hierarchically (larger -> smaller)</b></i>. An <i>Overlap
 Reduction Step Size (in %)</i> field controls the finesse in this stage, by
 setting the step size (in % of the involved radii) used to remove the overlaps
-(default: <b>1%</b>).
+(default: <b>1%</b>). The <b><i>Same overlap reduction method for all bead types</i></b>
+checkbox allow to automatically set the chosen procedure for all bead types (default: <b>active</b>).
+Furthermore, if this checkbox  and the <i>Automatically set suffix</i> checkbox in the main panel
+are both selected, either the "hi" or "sy" symbol is added to the <b>Bead Model Suffix</b> field in the main panel. 
 </td>
 </tr>
 </table>
@@ -90,8 +93,8 @@ of beads is first removed by proportionally reducing their radii. If the
 outwardly along a line connecting them with the cog of the molecule. The
 minimal amount of translation and radius reduction leading to overlap removal
 is computed by solving a set of equations. If the <i><b>Outward Translation</b></i> is
-active, the whole set is re-screened for overlaps after each overlap is removed,
-otherwise the couple is removed from the list and the next one is treated.
+active, the couple is removed from the list and whole set is re-screened for overlaps after each overlap is removed,
+otherwise the couple is just removed from the list and the next one is treated.
 <br>The <i><b>Outward Translation</b></i> was devised to maintain as much as possible
 the original surface of the molecule, which would otherwise shrink when the
 overlaps are eliminated by reducing the beads' radii (default: <b>active</b>).
@@ -118,19 +121,20 @@ and re-screens this class for overlaps, removing them if necessary, then it rest
 second step.
 <br>The second checkbox, <i><b>Remove Overlaps</b></i>, dictates if the whole procedure is active.
 It should be disallowed only for testing purposes or if the model is <b>not</b> used for
-hydrodynamic computations (default: <b>active</b>).
+hydrodynamic computations (default: <b>active</b>). Again, two alternative methods can then be selected
+to remove the remaining overlaps not exceeding the fusion threshold: <i><b>Remove Overlaps synchronously</b></i>
+and </i><b>Remove Overlaps hierarchically (larger -> smaller)</b></i>. The <i>Overlap
+Reduction Step Size (in %)</i> field controls the finesse in this stage, by
+setting the step size (in % of the involved radii) used to remove the overlaps
+(default: <b>1%</b>). The <b><i>Same overlap reduction method for all bead types</i></b>
+checkbox allow to automatically set the chosen procedure for all bead types (default: <b>active</b>).
 </td>
 </tr>
 </table>
 <table BORDER CELLSPACING=5 CELLPADDING=5>
 <tr>
 <td>
-Again, two alternative methods can then be selected to remove the remaining
-overlaps not exceeding the fusion threshold: <i><b>Remove Overlaps synchronously</b></i>
-and </i><b>Remove Overlaps hierarchically (larger -> smaller)</b></i>. The <i>Overlap
-Reduction Step Size (in %)</i> field controls the finesse in this stage, by
-setting the step size (in % of the involved radii) used to remove the overlaps
-(default: <b>1%</b>).
+
 No Outward Translation is available in this stage, because the only radii that
 are reduced are those of the main-chain beads. If an overlap is present between
 a side-chain bead and a main-chain bead, only the latter has its radius reduced,
@@ -159,7 +163,8 @@ used for hydrodynamic computations (default: <b>active</b>).
 <i><b>Remove Overlaps hierarchically (larger -> smaller)</b></i> are present in this
 stage. They are controlled by the <i>Overlap Reduction Step Size (in %)</i>
 field, and have been fully described in the <b>Exposed side chain beads</b>
-Panel (default: <b>hierarchical</b>).
+Panel (default: <b>hierarchical</b>). The <b><i>Same overlap reduction method for all bead types</i></b>
+checkbox allow to automatically set the chosen procedure for all bead types (default: <b>active</b>).
 
 </td>
 </tr>

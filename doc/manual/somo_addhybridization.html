@@ -23,26 +23,28 @@
 <h2>
 SOMO - Add/Edit Hybridization Lookup Table Module:</h2>
 <p>
-<img SRC="somo-1.png" ALT="SOMO Add/Edit Hybridization Lookup Table SCREEN">
+<img SRC="somo-hybrid.png" ALT="SOMO Add/Edit Hybridization Lookup Table SCREEN">
 </center>
 <p>
 
-In this module, you can edit the hybridization table, where you need to list all
+In this file you need to list all
 hybridizations (as defined in Tsai et al., J. Mol. Biol. 290:253-266, 1999)
 that will be used for the definitions of all atoms. Each hybridization
 requires a name, a molecular weight (given by the sum of the mw of the 
 atom being defined plus that of the hydrogen atoms bound to it) and a radius
-(in Angstrom units). Load the hybridization file first if one exists, and
-then the SAXS Coefficients File. This is required because the hybridization table
-contains also the atom identifiers linking each atom type to its X-ray
-scattering coefficients
+(in Angstrom units). In addition, the neutron scattering length in H<sub>2</sub>O,
+the number of exchangeable protons, and the total number of electrons are entered
+in this module, because they are needed by the SAXS/SANS simulator module. Load the hybridization
+file first if one exists, and then the SAXS Coefficients File. This is required because
+the hybridization table contains also the atom identifiers linking each atom type to its X-ray
+scattering coefficients.
 
 
 <ul>
 <li>
 The first field (<i><b>Number of Hybridizations in File:</b></i>) lists the existing
 hybridizations, and you can select one from the pull-down list. The format is usually
-"atom-number of bonds-H-number of hydrogens" (e.g. C4H3). The selected hybridization
+"atom-<i>number of bonds</i>-H-<i>number of hydrogens</i>" (e.g. C4H3). The selected hybridization
 can then be edited by entering the appropriate parameters in the other fields. To enter
 a new hybridization, go to the <i><b>Hybridization Name:</b></i> field (see below).
 <li>
@@ -51,12 +53,23 @@ identifiers present in the relative file, which are associated with the existing
 An identifier can also be selected using the pull-down list to associate it with a new hybridization.
 <li>
 A new hybridization can be entered in the <i><b>Hybridization Name:</b></i> field. The
-format is usually "atom-number of bonds-H-number of hydrogens" (e.g. C4H3).
+format is usually "atom-<i>number of bonds</i>-H-<i>number of hydrogens</i>" (e.g. C4H3).
 <li>
 Edit/enter the molecular weight (given by the sum of the mw of the atom being defined plus
 that of the hydrogen atoms bound to it) in the <i><b>Molecular Weight:</b></i> field.
 <li>
-Edit/enter the atomic radius (in Angstrom units) in the <i><b>Radius (A):</b></i> field.
+Edit/enter the atomic radius (in Angstrom units) in the <i><b>Radius (A):</b></i> field. This is
+the anhydrous radius used in the Accessible Surface Area (ASA) computations.
+<li>
+Edit/enter the neutron scattering length in H<sub>2</sub>O (in 10<sup>-12</sup> cm units)
+in the  <i><b>Neutron scattering length in H<sub>2</sub>O (10<sup>-12</sup> cm):</b></i> field.
+This parameter will be used in the SANS <i>P(r)</i> vs. <i>r</i> computations.
+<li>
+Edit/enter the number of exchangeable protons in the <i><b>Total number of electrons:</b></i> field.
+This parameter will be used in the SAXS <i>P(r)</i> vs. <i>r</i> computations.
+<li>
+Edit/enter the total number of electrons in the <i><b>Number of exchangeable protons:</b></i> field.
+This parameter will be used in the SANS <i>P(r)</i> vs. <i>r</i> computations.
 </ul><p>
 After editing is completed, the updated table can be saved by clicking on
 <b><i>"Add Hybridization to File"</i></b>
@@ -77,7 +90,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on September 3, 2009.
+Last modified on January 27, 2010.
 </font>
 </body>
 </html>

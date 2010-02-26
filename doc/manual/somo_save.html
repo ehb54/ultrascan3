@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
+	<title>SOMO Select Parameters to be Saved Module</title>
+	<link href="mainstyle.css" rel="styleSheet" type="text/css">
+</head>
+<body>
+<table BORDER=0 CELLPADDING=5 >
+<tr>
+<td><img SRC="ultrascan1.png" BORDER="0" ALT="UltraScan Version"> </td>
+<td>
+<center>
+<h1>
+<i>Manual</i></h1></center>
+</td>
+</tr>
+</table>
+
+<hr>
+<center>
+<h2>
+SOMO - Select Parameters to be Saved Module:</h2>
+<p>
+<img SRC="somo-save.png" ALT="SOMO Parameters to be Saved Screen">
+</center>
+<p>
+In this module you can select a series of parameters that can be saved in a comma-separated file 
+(extension <i>.csv</i>) at the end of the hydrodynamic computations. The module consists of four,
+tab-selectable screens where the parameters are subdivided according to their origin and characteristics.
+The parameters can be toggled from one window of the panel to the other (left side, list of parameters
+available; right side, parameters to be saved) by clicking on them (multiple selection available) and
+then using the arrows present between the two windows.<br>
+The four screens are <b><i>Main hydro results:</i></b>, <b><i>Additional hydro results:</i></b>, 
+<b><i>Solvent conditions:</i></b>, and <b><i>ASA results:</i></b>. Note that the order by which you select the
+parameters (<i>i.e.</i> the order by which they appear in the right-side window) will be their order in the
+saved file.<p>
+The <b><i>Main hydro results:</i></b> screen contains all parameters which are listed in the
+<a href="somo-results.png"><i><b>Show Hydrodynamic Calculations</b></i></a> pop-up window, <i>i.e.</i>:<br>
+<b>Model name<br>
+Total beads in model<br>
+Used beads in model<br>
+Molecular mass [Da]<br>
+Partial specific volume [cm^3/g]<br>
+Sedimentation coefficient s [S]<br>
+Translational diffusion coefficient D [cm^2/sec]<br>
+Stokes radius [nm]<br>
+Frictional ratio<br>
+Radius of gyration [nm] (from bead model)<br>
+Relaxation time tau(h) [ns]<br>
+Intrinsic viscosity [cm^3/g]</b><br>
+<p>
+The <b><i>Additional hydro results:</i></b> screen contains all the other parameters which are reported
+in the <i>*.hydro_res</i> file:<br>
+<b>Total surface area of beads in the model [nm^2]<br>
+Total volume of beads in the model [nm^3]<br>
+Number of unused beads</b> (<i>this differs from the *.hydro_res file because the used beads are already listed in the <b>Main
+hydro results</b> panel</i>)<br>
+<b>Used bead surface area [nm^2]<br>
+Used bead mass [Da]<br>
+Conversion Factor<br>
+Translational frictional coefficient [g/s]<br>
+Rotational frictional coefficient [g*cm^2/sec]<br>
+Rotational diffusion coefficient [1/sec]<br>
+Rotational frictional coefficient [X,Y,Z] [g*cm^2/sec]</b> (<i>this selects the three separate rot. frictional coeff. values
+along the X, Y, and Z axes</i>)<br>
+<b>Rotational diffusion coefficient [X,Y,Z] [1/sec]</b> (<i>this selects the three separate rot. diff. coeff. values
+along the X, Y, and Z axes</i>)<br>
+<b>Rotational Stokes' radius [X,Y,Z] [1/sec]</b> (<i>this selects the three separate rot. Stokes' radius values
+along the X, Y, and Z axes</i>)<br>
+<b>Centre of resistance [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)<br>
+<b>Centre of mass [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)<br>
+<b>Centre of diffusion [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)<br>
+<b>Centre of viscosity [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)<br>
+<b>Uncorrected intrinsic viscosity [cm^3/g]<br>
+Uncorrected Einstein's radius [nm]<br>
+Corrected intrinsic viscosity [cm^3/g]<br>
+Corrected Einstein's radius [nm]<br>
+Relaxation times, tau(1) [ns]<br>
+Relaxation times, tau(2) [ns]<br>
+Relaxation times, tau(3) [ns]<br>
+Relaxation times, tau(4) [ns]<br>
+Relaxation times, tau(5) [ns]<br>
+Relaxation times, tau(m) [ns]<br>
+Relaxation times, tau(h) [ns]<br>
+Maximun extensions [X, Y, Z] [nm]</b> (<i>X, Y, Z coordinates saved</i>)<br>
+<b>Axial ratios [ X:Z, X:Y, Y:Z ]</b>
+<p>
+The <b><i>Solvent conditions:</i></b> screen contains the parameters as set in the <a href=somo_hydro.html><b><i>
+Hydrodynamic Calculations</i></b></a> options module:<br>
+<b>Solvent name<br>
+Solvent acronym<br>
+Solvent Temperature [°C]<br>
+Solvent viscosity [cP]<br>
+Solvent density [g/ml]</b>
+<p>
+The <b><i>ASA results:</i></b> screen presently contains only two parameters, derived from the <b>ASAB1</b> execution:<br>
+<b>Radius of gyration (+r) [A] (from PDB atomic structure)</b> (<i>computed by taking into account the actual radius</i> r <i>
+of each atom</i>)<br>
+<b>Radius of gyration (-r) [A] (from PDB atomic structure)</b> (<i>computed without taking into account the actual radius</i> r <i>
+of each atom</i>)
+<p>
+
+
+<p>
+<hr>
+<font face="helvetica" size="-1">
+www contact: <a href="mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+This document is part of the <i><b>UltraScan</b></i> Software Documentation
+distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> The latest version of this document can always be found at:
+</font>
+<p>
+<font face="helvetica" size="-1">
+<a href="http://www.ultrascan.uthscsa.edu">http://www.ultrascan.uthscsa.edu</a>
+</font>
+<p>
+<font face="helvetica" size="-1">
+Last modified on February 1, 2010.
+</font>
+</body>
+</html>

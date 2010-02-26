@@ -24,6 +24,7 @@
 SOMO - Solution Modeler (Bead Modeler for NMR and X-ray structures):</h2>
 </center>
 <p>
+<center>Lats updated: January 2010 </center><p>
 The SOMO (SOlution MOdeller) module of UltraScan is a bead modelling
 utility that was originally developed by the Rocco and Byron labs,
 respectively at the Istituto Nazionale per la Ricerca sul Cancro (IST,
@@ -47,7 +48,7 @@ and grid-based procedures are a better treatment of the hydration water and the 
 direct correspondence between beads and original residues. For instance,
 the latter feature could be used to include flexibility effects into
 the computations. Furthermore, by identifying and excluding from the
-hydrodynamic computations beads that are buried and thus non in contact
+hydrodynamic computations beads that are buried and thus not in contact
 with the solvent, a large span in the size of the structures that can
 be analysed with this method without loss of precision is obtained:
 currently, structures from 5K to 250K have been successfully studied. Recently,
@@ -56,8 +57,8 @@ which was already included within US-SOMO, by adding the theoretical hydration,
 accessible surface area screening, and a better preservation of the original surface.
 The improved AtoB could be very useful to study large structures and complexes.
 Finally, within this new release you will find the nucleus of what wll be a fully functional
-Small-Angle X-ray Scattering (SAXS) simulator, which will work on either the original atomic
-structure, or on a bead model. Presently, only the P(r) vs. r computation is operational. 
+Small-Angle X-ray or Neutron Scattering (SAXS/SANS) simulator, which will work on either the original atomic
+structure, or on a bead model. Presently, only the pairwise-distance distribution function <i>P(r)</i> vs. <i>r</i> computation is operational. 
 <p>
 <p>
 <p>
@@ -99,6 +100,7 @@ residues should be properly coded in the SOMO tables (see below).
 </tr> 
 </center>
 <td align=justify>
+
 <p>
 <p>
 
@@ -110,47 +112,85 @@ messages during the model building phase of the 8RAT.pdb structure is shown). Th
 divided in three subpanels controlling operations that deal with the primary PDB file
 (<b>PDB Functions:</b>), operations relating the generation of bead models (<b>Bead Model
 Functions:</b>), and the computation of the hydrodynamic parameters (<b>Hydrodynamic Calculations:</b>).<p>
-
+</table>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<center>
+<td><center><img SRC="somo-PDB_functions.png" ALT="SOMO Screen"></td>
+</tr> 
+</center>
+<td align=justify>
+<p>
 <b>PDB Functions:</b><br>
-The first step is to select a lookup table by clicking on <i><b>Select Lookup Table</b></i>
-(default: <i>somo.residue</i>). You can create multiple lookup tables for different conditions.
+On launching, US-SOMO will automatically load the last used lookup table (default: <i>somo.residue</i>),
+where all the informations needed to convert the residues present in atomic structures into beads are stored.
+To select a different lookup table, click on <i><b>Select Lookup Table</b></i>. You can create multiple
+lookup tables for different conditions.
 The lookup table needs to contain all atoms and residues present in the (macro)molecule
-to be loaded in the next step. By default, SOMO will automatically load the last used <i>*.residue</i> table.
-As soon as the lookup table has been successfully loaded, the <i><b>Load PDB File</b></i>
-button will become active and you can load a PDB structure file, such as those derived
-from NMR or X-ray crystallography data. Selecting a PBD file will also automatically call
-the molecular visualization program <i>RasMol</i> (Sayle RA, Milner-White EJ. RasMol:
-biomolecular graphics for all. Trends Biochem. Sci. 20:374-376, 1995) which will display
-the structure(s) in a pop-up window. <i>RasMol</i> needs to be installed in
+to be loaded in the next step. By default, SOMO will automatically load the last used <i>*.residue</i> table.<br>
+Two alternative options are available to load an atomic structure, such as those derived from NMR or X-ray
+crystallography data, the new <i><b>Batch Mode Operation</b></i> (see <a href="somo_batch.html">here</a>),
+or the standard <i><b>Load Single PDB File</b></i>.
+Selecting a PBD file will also automatically call the molecular visualization program <i>RasMol</i>
+(Sayle RA, Milner-White EJ. RasMol: biomolecular graphics for all. Trends Biochem. Sci. 20:374-376, 1995)
+which will display the structure(s) in a pop-up window. For <i>Linux</i>-based systems, <i>RasMol</i> needs to be installed in
 <pre><b>$ULTRASCAN/bin</b></pre> for 32 bit machines, and <pre><b>$ULTRASCAN/bin64</b></pre>
 for 64 bit platforms. You can get a copy of <i>RasMol</i> from <a href="http://www.umass.edu/microbio/rasmol/">
 http://www.umass.edu/microbio/rasmol/</a> or from <a href="http://openrasmol.org/#Software">
-http://openrasmol.org/#Software</a>. In addition, the HEADER and TITLE fields of the PDB file
-will be displayed in the progress window. If problems are encountered with the selected PDB file, 
+http://openrasmol.org/#Software</a>.<p> Besides visualizing the structure, the HEADER and TITLE fields of the PDB file
+will be displayed in the progress window, followed by the residues list. If problems are encountered with the selected PDB file, 
 like the presence of non-coded residues or missing atoms within coded residues, they will be
 reported in the progress window either as <i>warnings</i> or <i>errors</i>. In the latter case, 
 the program execution will be also halted, waiting for corrective action to be taken. The original
 PDB file can be viewed and, if necessary, edited by clicking on the "<i><b>View/Edit PDB File</b></i>
-button. <p>
+button. <br>
 The PDB file can contain multiple models and if so, multiple models will be displayed by
 <i>RasMol</i> and in the list box. In this case, you can select just a single model,
 or multiple models by holding the crtl key while clicking on the models' names (crtl-A selects
-all models). If multiple models are selected, all subsequent operations (except the SAXS options)
-are carried out sequentially on the selected models. The <i><b>SAXS Functions</b></i> button will also become
-active, allowing the SAXS-related simulations to be carried out on the selected PBD structure (presently,
-the SAXS module is under development).<p>
-
+all models). If multiple models are selected, all subsequent operations (except the SAXS/SANS options)
+are carried out sequentially on the selected models. The <i><b>SAXS/SANS Functions</b></i> button will also become
+active, allowing the SAXS- or SANS-related simulations to be carried out on the selected PBD structure. Presently (Jan 2010),
+the SAXS/SANS module is under development. (see <a href="somo_saxs.html">here</a>)<p>
+</table>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<center>
+<td><center><img SRC="somo-BeadModel_functions.png" ALT="SOMO Screen"></td>
+</tr> 
+</center>
+<td align=justify>
+<p>
 <b>Bead Model Functions:</b><br>
-Once one or multiple models are selected, the <i><b>Build SOMO Bead Model</b></i> and
+Once one or multiple models are selected, the <i><b>Build SoMo Bead Model</b></i> and
 <i><b>Build AtoB (Grid) Bead Model</b></i> buttons will also become active, the last two offering
-two alternative ways of generating a bead model based on the settings selected above. If the AtoB
-(Grid) method is selected, a "a2b" prefix is automatically added to the model filename. Note that
-you can keep processing a loaded PDB file after changing any of the various model-building options
-(see below). A third button, <i><b>Build Grid Bead Model</b></i>, will operate the Grid routine on
-a <i>previously generated</i> bead model. This button is not available until a PDB file has been
-processed with either one of the two bead modeling primary options (see above), or until a previously-generated
-bead model file has been loaded (see below). If this operation is launched, a "a2bg" prefix is
-automatically added to the filename of the new bead model.<br>
+alternative ways of generating a bead model.
+In the <b>Bead Model suffix</b> field you can enter a tag that will be added to the bead model filename,
+which is automatically generated from the PDB filename by adding "_1" and the extension ".bead_model".
+In addition, if the <i>Add auto-generated suffix</i> checkbox is selected, the corresponding field above it is
+populated with a series of alphanumeric characters specifying the main options chosen. These characters
+will be also added to the bead model filename, to allow for a quick identification of the options used in its
+generation. Thus, "A20" stands for a residues' ASA cutoff threshold of 20 A (default), "R50" stands for a bead's
+ASA re-check cutoff threshold of 50% of its total surface area (default), "hi" signifies hierarchical overlap
+reduction in all stages (alternatively, "sy" stands for synchronous overlap reduction), and "OT" means
+that the outward translation option during overlap removal of exposed side-chain beads is active. The "-so" suffix
+is added if the <i><b>Build SoMo Bead Model</b></i> button is then pressed, while the "-a2b" suffix is instead
+added if the <i><b>Build AtoB (Grid) Bead Model</b></i> button is pressed. In this case, the suffix symbols
+also include "G<i>n</i>" for the grid resolution, with <i>n</i> the actual value, and "hy" if the atomic-level
+hydration option is active. Upon loading a PDB file and if the <i>Add auto-generated suffix</i> checkbox is selected,
+the corresponding field will show the two current strings available for SoMo and AtoB bead models. If any of the 
+options coded in the strings are changed, the field will be automatically updated. The final string will appear once
+a bead model generation operation is launched.
+Note that you can keep processing a loaded PDB file after changing any of the various model-building options
+(see below). If the <i>Overwrite existing filenames</i> checkbox is selected, existing filenames will be
+overwritten without a warning. Otherwise, a pop up menu will instead appear offering alternative options
+(see <a href="somo_file.html">here</a>). The <i>Overwrite existing filenames</i>
+checkbox is automatically selected for batch mode operations). A third button, <i><b>Build Grid Bead Model</b></i>,
+will operate the Grid routine on a <i>previously generated</i> bead model. This button is not available
+until a PDB file has been processed with either one of the two bead modeling primary options (see above), 
+or until a previously-generated bead model file has been loaded (see below). If this operation is launched,
+the "-a2bg" suffix is automatically added to the filename of the new bead model.<br>
 Since model building can take some time, depending on the settings
 and especially for large structures, selecting the <b>Automatic Calculate Hydrodynamics</b>
 checkbox will allow the direct computation of the hydrodynamic parameters as soon as the model(s) 
@@ -160,23 +200,53 @@ visualized with <i>RasMol</i> by clicking on <i><b>Visualize Bead Model</b></i> 
 comparing the original structure with the bead model could reveal previously unforeseen problems).
 The results of the accessible surface area (ASA) computations (see below) can also be visualized
 in a pop-up window by clicking on the <i><b>View ASA Results</b></i> button; this file also includes the
-computation of the radius of gyratio (R<sub>g</sub>) directly from the atomic coordinates of the structure.<p>
+computation of the radius of gyration (R<sub>g</sub>) directly from the atomic coordinates of the structure.
+A just-generated or previously-generated bead model file can also be opened inside a text editor by pressing
+the <b><i>View Bead Model File</b></i> button.<p>
 
-Alternatively, you can skip all of these steps and load a previously generated bead model by clicking
-on <i><b>Load Bead Model File</b></i> from the menu. In this case, and if the model was generated/saved
-in the SOMO format, the various settings/parameters used in model generation will be displayed in
+Alternatively, you can load one or multiple previously-generated bead model by clicking
+on either the <i><b>Batch Mode Operation</b></i> (see <a href="somo_batch.html">here</a>)
+or the <i><b>Load Bead Model File</b></i> buttons from the menu. In these cases, and if the model(s)
+was (were) generated/saved in the SOMO format, the various settings/parameters used in model generation will be displayed in
 the right-side main window. Note that you can <i>decrease</i> the number of beads used, and thus the
 resolution of the model, by applying a grid procedure on a previously-generated bead model with the
 <i><b>Build Grid Bead Model</b></i> option (see above). This could be useful when large structures are analyzed,
-although using the improved AtoB routine on the original PDB file increasing the grid size (<i><b>Build Grid Bead Model</b></i>)
-seems to produce better results. The <i><b>SAXS Functions</b></i> button present in this subpanel will allow
-to perform SAXS-related simulations directly on the currently loaded bead model.<p>
-
+although using the improved AtoB routine on the original PDB file while increasing the grid size (<i><b>Build Grid Bead Model</b></i>)
+seems to produce much better results. The <i><b>SAXS/SANS Functions</b></i> button present in this subpanel will allow
+to perform SAXS-or SANS-related simulations directly on the currently loaded bead model. (see <a href="somo_saxs.html">here</a>)<p>
+</table>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<center>
+<td><center><img SRC="somo-Hydrodynamic_calculations.png" ALT="SOMO Screen"></td>
+</tr> 
+</center>
+<td align=justify>
+<p>
 <b>Hydrodynamic Calculations:</b><br>
 The hydrodynamic parameters can then be determined by clicking on <i><b>Calculate Hydrodynamics</b></i>.
 A partial list of parameters can be seen in a pop-up window as soon as the calculations are completed by
-clicking on <a href="somo-results.png"><i><b>Show Hydrodynamic Calculations</b></i></a>. A full list of
-all the parameters is also available as a text file, which can be opened from the results' pop-up window. <p>
+clicking on <a href="somo_show_hydro.html"><i><b>Show Hydrodynamic Calculations</b></i></a>. The pop-up window
+will also list the solvent type, temperature and its associated density and viscosity, as set in the 
+<a href=somo_hydro.html><b><i>Hydrodynamic Calculations</i></b></a> options module. A full list of
+all the parameters is also available as a text file, which can be opened from the results' pop-up window.
+Such a list from a previously analyzed model can be opened also from the <i><b>Open Hydrodynamic Calculations File</b></i>
+button. <br> The new <i><b>Select Parameters to be Saved</b></i> button will open a pop-up window 
+(see <a href="somo_save.html">here</a>) where characterizing/computed parameters can be selected
+for saving in a comma-separated file for easy import into spreadsheets. Selecting the <b>Save parameters to file</b>
+checkbox will generate such file, with extension <i>.csv</i>. <p>
+
+</table>
+<p>
+<table BORDER CELLSPACING=5 CELLPADDING=5 bgcolor="#FFFFFF">
+<tr>
+<center>
+<td><center><img SRC="somo-bottom_bar.png" ALT="SOMO Screen"></td>
+</tr> 
+</center>
+<td align=justify>
+<p>
 The black bar at the bottom of the progress window will instead report the detailed advancement of some of the
 steps in the various phases, like the current slice and atoms (or beads) involved in the ASA routine,
 and the iterations in the supermatrix inversion in the hydrodynamic computations. For small structures,
@@ -226,14 +296,16 @@ associated excluded volumes.
 <ul>
 <li>
 <b>Add/Edit Hybridization:</b> Use this function to modify the <a href=
-"somo-1.png">hybridization table</a>. In this file you need to list all
+"somo-hybrid.png">hybridization table</a>. In this file you need to list all
 hybridizations (as defined in Tsai et al., J. Mol. Biol. 290:253-266, 1999)
 that will be used for the definitions of all atoms. Each hybridization
 requires a name, a molecular weight (given by the sum of the mw of the 
 atom being defined plus that of the hydrogen atoms bound to it) and a radius
-(in Angstrom units). Load the hybridization file first if one exists, and
-then the SAXS Coefficients File. This is required because the hybridization table
-contains also the atom identifiers linking each atom type to its X-ray
+(in Angstrom units). In addition, the neutron scattering length in H<sub>2</sub>O,
+the number of exchangeable protons, and the total number of electrons are entered
+in this module, because they are needed by the SAXS/SANS simulator module. Load the hybridization
+file first if one exists, and then the SAXS Coefficients File. This is required because
+the hybridization table contains also the atom identifiers linking each atom type to its X-ray
 scattering coefficients. The use of this module is described in
 <a href="somo_addhybridization.html">this help file</a>.
 
@@ -243,7 +315,7 @@ scattering coefficients. The use of this module is described in
 in PDB files are defined, together with their parameters (molecular weight and
 radius) loaded from the hybridization table. In addition, for SAXS simulation
 this table is also linked to the SAXS coefficients table, and the excluded volume
-for each atomic group is defined in alternative to that of the bare non-hydrogen atom
+for each atomic group can be defined in alternative to that of the bare non-hydrogen atom
 taken from the SAXS coefficient table. The use of this module is described in
 <a href="somo_addatom.html">this help file</a>.
 
@@ -273,7 +345,7 @@ Crystallography, but can be edited at will. The use of this module is described 
 
 <table BORDER CELLSPACING=5 CELLPADDING=5>
 <tr>
-<td><center><img SRC="somo-tab2a.png" ALT="Modify SOMO Options"></td>
+<td><center><img SRC="somo-tab2.png" ALT="Modify SOMO Options"></td>
 </tr>
 <tr>
 <td align=justify>
@@ -339,8 +411,9 @@ or previously-generated bead models. A detailed description of this module can
 be found <a href=somo_grid.html>here</a>.
 
 <li>
-<b>SAXS Functions:</b> This module will control the setting of the SAXS curve generator
-that is currently under development. No help is available at this time. 
+<b>SAXS/SANS Functions:</b> This module will control the setting of the SAXS/SANS curve
+and <i>P(r)</i> vs. <i>r</i> generator that is currently under development. A detailed description 
+of this module can be found <a href=somo_saxs_options.html>here</a>. 
 </ul>
 </td>
 </tr>
@@ -436,7 +509,7 @@ The latest version of this document can always be found at:
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on September 3, 2009.
+Last modified on February 12, 2010.
 </font>
 </body>
 </html>

@@ -3,7 +3,7 @@
 <html>
 <head>
 <meta content="text/html;charset=ISO-8859-1" http-equiv="Content-Type">
-	<title>SOMO SAXS Simulation Options Module</title>
+	<title>SOMO SAXS/SANS Simulation Options</title>
 	<link href="mainstyle.css" rel="styleSheet" type="text/css">
 </head>
 <body>
@@ -21,17 +21,54 @@
 <hr>
 <center>
 <h2>
-SOMO - SAXS Simulation Options Module:</h2>
+SOMO - SAXS/SANS Simulation Options:</h2>
 <p>
-<img SRC="somo-saxs_options.png" ALT="SOMO SAXS Simulation Options Screen">
+<img SRC="somo-SAXS_SANS_options.png" ALT="SOMO SAXS/SANS Simulation Options Screen">
 </center>
 <p>
-In this module, you can set the parameters and options for generating
-Small-Angle X-ray Scattering (SAXS) curves from either a PDB file or a bead model.
-<p>
-<b>This part of the US-SOMO Manual is presently under construction</b>.
 
+In this module you can set/change the parameters used by the  <a href="somo_SAXS_SANS.html"><b>SAXS/SANS Simulation Module</b></a>.
 <p>
+In the <b>SAXS Options:</b> section, currently there is only one parameter that can be set/changed, the
+<i><b>Water electron density (e / A^3):</b></i> (default: <b>0.334 e/A<sup>3</sup></b>).
+<p>
+In the <b>SANS Options:</b> section, several parameters can be controlled. The hydrogen and deuterium neutron
+scattering lengths can be set in the <b><i>H scattering length (*10^-12 cm):</b></i> (default: <b>-0.3742 x 10<sup>-12</sup> cm</b>)
+and <i><b>D scattering length (*10^-12 cm):</b></i> (default: <b>0.6671 x 10<sup>-12</sup> cm</b>) fields, respectively.
+Likewise, the H<sub>2</sub>O and D<sub>2</sub>O neutron scattering lengths densities can be set in the
+<b><i>H<sub>2</sub>O scattering length density (*10^-10 cm^2):</b></i> (default: <b>-0.562 x 10<sup>-10</sup> cm<sup>2</sup></b>)
+and <i><b>D<sub>2</sub>O scattering length density (*10^-10 cm^2):</b></i> (default: <b>6.404 x 10<sup>-10</sup> cm<sup>2</sup></b>) fields, respectively.
+<br>
+The actual D<sub>2</sub>O content in the sample is set in the <b><i>Buffer D<sub>2</sub>O fraction (0 - 1):</i></b> field
+(default: <b>0.5</b>), and the fraction of non-exchanged peptide hydrogen can be controlled in the
+<b><i>Fraction of non-exchanged peptide H (0 - 1):</b></i> field (default: <b>0.1</b>).
+<p>
+The actual scattering length <i>b</i> at the set D<sub>2</sub>O fraction <i>Y</i>, <i>b(Y)</i>, for each atom <i>i</i>,
+<i>b(Y)<sub>i</sub></i>, is then computed by the program using this equation:<p>
+<i>b(Y)<sub>i</sub></i> = <i>b(0)<sub>i</sub></i> + <i>n(H<sub>Exch</sub>)<sub>i</sub></i> * <i>Y</i> * [<i>b(D)</i> - <i>b(H)</i>] *
+[ 1- <i>f(NH<sub>Exch</sub>)<sub>i</sub></i>]
+<p>
+where <i>b(0)<sub>i</sub></i> are the neutron scattering lengths of the non-H atoms at <i>Y</i> = 0 and <i>n(H<sub>Exch</sub>)<sub>i</sub></i> are the number of exchangeable H attached to them (both tabulated in the
+<a href="somo-hybrid.png">hybridization table</a>), <i>b(D)</i> and <i>b(H)</i> are the D and H scattering lengths, respectively,
+and <i>f(NH<sub>NExch</sub>)<sub>i</sub></i> is the fraction of non-exchanged peptide bond H (which is 0 for all atoms except
+for the peptide bond N atom), all as defined in the <b>SAXS/SANS Simulation Options:</b> panel (see above).
+<p>
+The <b>Curve Generation Options:</b> section contains fields whose values are used in the simulation of either a
+SAXS or a SANS curve.<br>
+Enter either the X-ray or neutron wavelength in the <b><i>Wavelength (Angstrom):</i></b> field (default: <b>1.5 A</b> for
+SAXS; for SANS, an usual value is <b>6 A</b>).<br>
+The span and point density of the simulated curve can be controlled by entering appropriate values in the
+<b><i>Starting Angle</b></i>, <b><i>Ending Angle</b></i>, and <b><i>Angle Stepsize</b></i> fields, or in the
+corresponding <b><i>Starting q</b></i>, <b><i>Ending q</b></i>, and <b><i>q Stepsize</b></i> fields, where the
+transformation from angle units to scattering vector <i>q</i> units is automatically carried over by the program.
+Default values are <b>0.001</b> to <b>0.6 A<sup>-1</sup></b> <i>q</i> range with a <b>0.015</b> stepsize, corresponding to an
+angular range of <b>0.014</b> to <b>8.214 degrees</b> with a <b>0.2 degrees</b> stepsize for a wavelength of 1.5 A.
+<p>
+The <b>Hydrate the Original Model (PDB files only)</b> checkbox is instead currently (January 2010) inactive. In the
+future, it should allow the addition of the theoretically-bound water of hydration in specific locations at the surface
+of the atomic structure under study, for a better evaluation of the SAXS curves. 
+
+
 <hr>
 <font face="helvetica" size="-1">
 www contact: <a href="mailto:demeler@biochem.uthscsa.edu">Borries Demeler</a>
@@ -47,7 +84,7 @@ distribution. <br><a href=copyright.html>Copyright &copy; notice</a>.<br><br> Th
 </font>
 <p>
 <font face="helvetica" size="-1">
-Last modified on September 4, 2009.
+Last modified on February 26, 2010.
 </font>
 </body>
 </html>
