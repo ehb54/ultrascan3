@@ -16,7 +16,7 @@ int main( int argc, char* argv[] )
    #include "main1.inc"
 
    // License is OK.  Start up.
-   US_Analyte w;
-   w.show();                   //!< \memberof QWidget
+   US_Analyte* w = new US_Analyte();
+   w->show();                  //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
 }

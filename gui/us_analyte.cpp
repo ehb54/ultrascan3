@@ -1,167 +1,358 @@
 //! \file us_analyte.cpp
 #include "us_analyte.h"
-#include "us_db2.h"
 #include "us_passwd.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_investigator.h"
+#include "us_editor.h"
 
 US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags f )
    : US_WidgetsDialog( parent, f )
 {
    signal_wanted = signal;
-   
-   //vbar_info.invID = invID;
+   invID         = invID;
 
    setWindowTitle( tr( "Analyte Management" ) );
    setPalette( US_GuiSettings::frameColor() );
    setAttribute( Qt::WA_DeleteOnClose );
 
-   QBoxLayout* main = new QVBoxLayout( this );
+   QGridLayout* main = new QGridLayout( this );
    main->setSpacing         ( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
 
-   QStringList DB = US_Settings::defaultDB();
-   QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
-   main->addWidget( lb_DB );
-/*
-   // Top part
    int row = 0;
-   QGridLayout* top = new QGridLayout;
 
+   QStringList DB = US_Settings::defaultDB();
 
-   QBoxLayout* search = new QHBoxLayout;
-   QLabel* lb_search = us_label( tr( "Search" ) );
-   search->addWidget( lb_search );
+   QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ), -1 );
+   main->addWidget( lb_DB, row++, 0, 1, 3 );
 
-   le_search = us_lineedit();
-   connect( le_search, SIGNAL( textChanged( const QString& ) ),
-                       SLOT  ( search     ( const QString& ) ) );
-   search->addWidget( le_search);
+   QGridLayout* protein = us_radiobutton( tr( "Protein"      ), rb_protein, true );
+   QGridLayout* dna     = us_radiobutton( tr( "DNA"          ), rb_dna );
+   QGridLayout* rna     = us_radiobutton( tr( "RNA"          ), rb_rna );
+   QGridLayout* carb    = us_radiobutton( tr( "Carbohydrate" ), rb_carb );
 
-   top->addLayout( search, row++, 0 );
+   QHBoxLayout* radios = new QHBoxLayout;
+   radios->addLayout( protein );
+   radios->addLayout( dna     );
+   radios->addLayout( rna     );
+   radios->addLayout( carb    );
 
-   QLabel* doubleckick = 
-      us_banner( tr( "Doubleclick on analyte to select" ), -2 );
+   main->addLayout( radios, row++, 0, 1, 3 );
 
-   top->addWidget( doubleckick, row++, 0 );
-
-   lw_peptides = us_listwidget();
-   connect( lw_peptides, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
-                         SLOT  ( select_peptide   ( QListWidgetItem* ) ) );
-   top->addWidget( lw_peptides, row, 0, 6, 1 );
-
-   row = 0;
-
-   QPushButton* pb_load = us_pushbutton( tr( "Load Analyte from HD" ) );
-   connect( pb_load, SIGNAL( clicked() ), SLOT( read_peptide() ) );
-   top->addWidget( pb_load, row++, 1 );
-
-   QPushButton* pb_load_db = 
-      us_pushbutton( tr( "Query Analyte Info from DB" ) );
-   connect( pb_load_db, SIGNAL( clicked() ), SLOT( read_db() ) );
-   top->addWidget( pb_load_db, row++, 1 );
-
-   QPushButton* pb_enter = us_pushbutton( tr( "Enter Analyte" ) );
-   connect( pb_enter, SIGNAL( clicked() ), SLOT( enter_peptide() ) );
-   top->addWidget( pb_enter, row++, 1 );
-
-   pb_save = us_pushbutton( tr( "Save Analyte to DB" ), false );
-   connect( pb_save, SIGNAL( clicked() ), SLOT( save_peptide() ) );
-   top->addWidget( pb_save, row++, 1 );
-
-   pb_delete = us_pushbutton( tr( "Delete Analyte from DB" ), false );
-   connect( pb_delete, SIGNAL( clicked() ), SLOT( del_peptide() ) );
-   top->addWidget( pb_delete, row++, 1 );
-
-   QPushButton* pb_download = us_pushbutton( tr( "Download Sequence" ) );
-   connect( pb_download, SIGNAL( clicked() ), SLOT( download_seq() ) );
-   top->addWidget( pb_download, row++, 1 );
-
-   pb_view = us_pushbutton( tr( "View Sequence" ), false );
-   connect( pb_view, SIGNAL( clicked() ), SLOT( view_seq() ) );
-   top->addWidget( pb_view, row++, 1 );
-
-   pb_more = us_pushbutton( tr( "More Information" ), false );
-   connect( pb_more, SIGNAL( clicked() ), SLOT( more_info() ) );
-   top->addWidget( pb_more, row++, 1 );
-   
-   main->addLayout( top );
-
-   // Bottom part
-   row = 0;
-   QGridLayout* bottom = new QGridLayout;
+   QButtonGroup* typeButtons = new QButtonGroup( this );
+   typeButtons->addButton( rb_protein, PROTEIN );
+   typeButtons->addButton( rb_dna    , DNA );
+   typeButtons->addButton( rb_rna    , RNA );
+   typeButtons->addButton( rb_carb   , CARBOHYDRATE );
+   connect( typeButtons, SIGNAL( buttonClicked( int ) ),
+                         SLOT  ( analyte_type ( int ) ) );
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
    connect( pb_investigator, SIGNAL( clicked() ), SLOT( sel_investigator() ) );
-   bottom->addWidget( pb_investigator, row, 0 );
+   main->addWidget( pb_investigator, row, 0 );
 
-   QPalette p;
-   p.setColor( QPalette::Window,     Qt::lightGray );
-   p.setColor( QPalette::WindowText, Qt::black     );
+   le_investigator = us_lineedit( tr( "Not Selected" ) );
+   main->addWidget( le_investigator, row++, 1 );
 
-   lb_investigator = us_label( "Not Selected" );
-   lb_investigator->setPalette( p );
-   bottom->addWidget( lb_investigator, row++, 1 );
+   QBoxLayout* search = new QHBoxLayout;
 
-   QLabel* lb_file = us_label( tr( "Selected File:" ) );
-   bottom->addWidget( lb_file, row, 0 );
+   // Search
+   QLabel* lb_search = us_label( tr( "Search:" ) );
+   search->addWidget( lb_search );
 
-   lb_file_value = us_label( "No File Selected..." );
-   lb_file_value->setPalette( p );
-   bottom->addWidget( lb_file_value, row++, 1 );
+   le_search = us_lineedit();
+   le_search->setReadOnly( true );
+   connect( le_search, SIGNAL( textChanged( const QString& ) ),
+                       SLOT  ( search     ( const QString& ) ) );
+   search->addWidget( le_search );
+   main->addLayout( search, row++, 0 );
 
-   QLabel* lb_desc = us_label( tr( "Protein Description:" ) );
-   bottom->addWidget( lb_desc, row, 0 );
+   // Analyte descriptions from DB
+   QLabel* lb_banner1 = us_banner( tr( "Doubleclick on analyte data to select" ), -1 );
+   main->addWidget( lb_banner1, row++, 0 );
 
-   lb_desc_value = us_label( "Not Selected" );;
-   lb_desc_value->setPalette( p );
-   bottom->addWidget( lb_desc_value, row++, 1 );
+   lw_analytes = us_listwidget();
+   connect( lw_analytes, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
+                         SLOT  ( select_analyte   ( QListWidgetItem* ) ) );
 
-   QLabel* lb_temperature = 
-      us_label( tr( "Temperature <span>(&deg;C)</span>:" ) );
-   bottom->addWidget( lb_temperature, row, 0 );
+   main->addWidget( lw_analytes, row, 0, 9, 1 );
+   row += 9;
 
-   le_temperature = us_lineedit( "20.0" );
-   bottom->addWidget( le_temperature, row++, 1 );
+   // Labels
+   QHBoxLayout* description = new QHBoxLayout;
+   QLabel* lb_description = us_label( tr( "Analyte Description:" ) );
+   description->addWidget( lb_description );
 
-   QLabel* lb_vbar = us_label( tr( "vbar (temperature):" ) );
-   bottom->addWidget( lb_vbar, row, 0 );
+   le_description = us_lineedit( "" ); 
+   description->addWidget( le_description );
+   main->addLayout( description, row++, 0, 1, 2 );
+ 
+   // Go back to top of 2nd column
+   row = 3;
 
-   lb_vbar_value = us_label( "0.72000 cm<sup>3</sup>/g" );
-   lb_vbar_value->setPalette( p );
-   bottom->addWidget( lb_vbar_value, row++, 1 );
+   QPushButton* pb_load = us_pushbutton( tr( "Load Analyte from HD" ) );
+   connect( pb_load, SIGNAL( clicked() ), SLOT( read_analyte() ) );
+   main->addWidget( pb_load, row++, 1 );
 
-   QLabel* lb_vbar20 = us_label( tr( "vbar (20 <span>(&deg;C)</span>:" ) );
-   bottom->addWidget( lb_vbar20, row, 0 );
+   pb_save = us_pushbutton( tr( "Save Analyte to HD" ), false );
+   connect( pb_save, SIGNAL( clicked() ), SLOT( save_analyte() ) );
+   main->addWidget( pb_save, row++, 1 );
 
-   lb_vbar20_value = us_label( "0.72000 cm<sup>3</sup>/g" );
-   lb_vbar20_value->setPalette( p );
-   bottom->addWidget( lb_vbar20_value, row++, 1 );
+   QLabel* lb_banner3 = us_banner( tr( "Database Functions" ), -2 );
+   main->addWidget( lb_banner3, row++, 1 );
 
-   QLabel* lb_e280 = us_label( tr( "E280 (denatured):" ) );
-   bottom->addWidget( lb_e280, row, 0 );
+   QPushButton* pb_load_db = us_pushbutton( 
+         tr( "Query Analyte Descriptions from DB" ) );
+   connect( pb_load_db, SIGNAL( clicked() ), SLOT( read_db() ) );
+   main->addWidget( pb_load_db, row++, 1 );
 
-   lb_e280_value = us_label( "1.0 OD/(mol cm)" );
-   lb_e280_value->setPalette( p );
-   bottom->addWidget( lb_e280_value, row++, 1 );
+   pb_save_db = us_pushbutton( tr( "Save Buffer to DB" ), false );
+   connect( pb_save_db, SIGNAL( clicked() ), SLOT( save_db() ) );
+   main->addWidget( pb_save_db, row++, 1 );
 
-   QLabel* lb_residues = us_label( tr( "Residue Count:" ) );
-   bottom->addWidget( lb_residues, row, 0 );
+   pb_update_db = us_pushbutton( tr( "Update Buffer in DB" ), false );
+   connect( pb_update_db, SIGNAL( clicked() ), SLOT( update_db() ) );
+   main->addWidget( pb_update_db, row++, 1 );
 
-   lb_residues_value = us_label( "Not Selected" );
-   lb_residues_value->setPalette( p );
-   bottom->addWidget( lb_residues_value, row++, 1 );
+   pb_del_db = us_pushbutton( tr( "Delete Buffer from DB" ), false );
+   connect( pb_del_db, SIGNAL( clicked() ), SLOT( delete_db() ) );
+   main->addWidget( pb_del_db, row++, 1 );
 
-   QLabel* lb_mw = us_label( tr( "Molecular Weight:" ) );
-   bottom->addWidget( lb_mw, row, 0 );
+   QLabel* lb_banner4 = us_banner( tr( "Other Functions" ), -2 );
+   main->addWidget( lb_banner4, row++, 1 );
 
-   lb_mw_value = us_label( "Not Selected" );
-   lb_mw_value->setPalette( p );
-   bottom->addWidget( lb_mw_value, row++, 1 );
+   pb_sequence = us_pushbutton( tr( "Manage Sequence" ) );
+   connect( pb_sequence, SIGNAL( clicked() ), SLOT( manage_sequence() ) );
+   main->addWidget( pb_sequence, row++, 1 );
 
-   main->addLayout( bottom );
-*/
+   pb_spectrum = us_pushbutton( tr( "Manage Spectrum" ), false );
+   connect( pb_spectrum, SIGNAL( clicked() ), SLOT( spectrum() ) );
+   main->addWidget( pb_spectrum, row++, 1 );
+
+   pb_more = us_pushbutton( tr( "More Info" ), false );
+   connect( pb_more, SIGNAL( clicked() ), SLOT( more_info() ) );
+   main->addWidget( pb_more, row++, 1 );
+
+   row +=1; 
+
+   // Lower half -- protein operations and data
+   protein_widget = new QWidget( this );
+   
+   QGridLayout* protein_info   = new QGridLayout( protein_widget );
+   protein_info->setSpacing        ( 2 );
+   protein_info->setContentsMargins( 2, 2, 2, 2 );
+
+   int prow = 0;
+
+   QLabel* lb_protein_mw = us_label( tr( "MW <small>(Daltons)</small>:" ) );
+   protein_info->addWidget( lb_protein_mw, prow, 0 );
+
+   le_protein_mw = us_lineedit( "" );
+   le_protein_mw->setReadOnly( true );
+   protein_info->addWidget( le_protein_mw, prow, 1 );
+
+   QLabel* lb_protein_vbar20 = us_label( 
+         tr( "VBar <small>(cm<sup>3</sup>/g at 20 &deg;C)</small>:" ) );
+   protein_info->addWidget( lb_protein_vbar20, prow, 2 );
+
+   le_protein_vbar20 = us_lineedit( "" );
+   le_protein_vbar20->setReadOnly( true );
+   protein_info->addWidget( le_protein_vbar20, prow++, 3 );
+
+   QLabel* lb_protein_temp = us_label( 
+         tr( "Temperature <small>(&deg;C)</small>:" ) );
+   protein_info->addWidget( lb_protein_temp, prow, 0 );
+
+   le_protein_temp = us_lineedit( "" );
+   connect( le_protein_temp, SIGNAL( textChanged ( const QString& ) ), 
+                             SLOT  ( temp_changed( const QString& ) ) );
+   protein_info->addWidget( le_protein_temp, prow, 1 );
+
+   QLabel* lb_protein_vbar = us_label( 
+         tr( "VBar <small>(cm<sup>3</sup>/g at T &deg;C)</small>:" ) );
+   protein_info->addWidget( lb_protein_vbar, prow, 2 );
+
+   le_protein_vbar = us_lineedit( "" );
+   protein_info->addWidget( le_protein_vbar, prow++, 3 );
+
+   QLabel* lb_protein_residues = us_label( tr( "Residue count:" ) );
+   protein_info->addWidget( lb_protein_residues, prow, 0 );
+
+   le_protein_residues = us_lineedit( "" );
+   le_protein_residues->setReadOnly( true );
+   protein_info->addWidget( le_protein_residues, prow, 1 );
+   main->addWidget( protein_widget, row, 0, 1, 2 ); 
+   
+   QLabel* lb_protein_e280 = us_label( 
+         tr( "Extinction <small>(280 nm)</small>:" ) );
+   protein_info->addWidget( lb_protein_e280, prow, 2 );
+
+   le_protein_e280 = us_lineedit( "" );
+   protein_info->addWidget( le_protein_e280, prow++, 3 );
+   
+   protein_widget->setVisible( true );
+  
+   // Lower half -- DNA/RNA operations and data
+   dna_widget              = new QWidget( this );
+   QGridLayout* dna_layout = new QGridLayout( dna_widget );
+   dna_layout->setSpacing        ( 2 );
+   dna_layout->setContentsMargins( 2, 2, 2, 2 );
+
+   QGroupBox*    gb_double = new QGroupBox( tr( "Calculate MW" ) );
+   QGridLayout*  grid1     = new QGridLayout;   
+   grid1->setSpacing        ( 2 );
+   grid1->setContentsMargins( 2, 2, 2, 2 );
+   
+   QBoxLayout* box1 = us_checkbox( tr( "Double Stranded" ), cb_stranded, true );
+   QBoxLayout* box2 = us_checkbox( tr( "Complement Only" ), cb_mw_only );
+   grid1->addLayout( box1, 0, 0 );
+   grid1->addLayout( box2, 1, 0 );
+   connect( cb_stranded, SIGNAL( toggled        ( bool ) ), 
+                         SLOT  ( update_stranded( bool ) ) );
+   connect( cb_mw_only , SIGNAL( toggled        ( bool ) ), 
+                         SLOT  ( update_mw_only ( bool ) ) );
+   
+   QVBoxLayout* stretch1 = new QVBoxLayout;
+   stretch1->addStretch();
+   grid1->addLayout( stretch1, 2, 0 );
+
+   gb_double->setLayout( grid1 ); 
+   dna_layout->addWidget( gb_double, 0, 0 );
+
+   QGroupBox*    gb_three_prime = new QGroupBox( tr( "Three prime" ) );
+   QGridLayout*  grid2          = new QGridLayout;   
+   grid2->setSpacing        ( 2 );
+   grid2->setContentsMargins( 2, 2, 2, 2 );
+
+   QGridLayout* box3 = us_radiobutton( tr( "Hydroxyl" ), rb_3_hydroxyl, true );
+   QGridLayout* box4 = us_radiobutton( tr( "Phosphate" ), rb_3_phosphate );
+
+   grid2->addLayout( box3, 0, 0 );
+   grid2->addLayout( box4, 0, 1 );
+   gb_three_prime->setLayout( grid2 ); 
+   connect( rb_3_hydroxyl, SIGNAL( toggled          ( bool ) ), 
+                           SLOT  ( update_nucleotide( bool ) ) );
+
+   dna_layout->addWidget( gb_three_prime, 1, 0 );
+
+   QGroupBox*    gb_five_prime = new QGroupBox( tr( "Five prime" ) );
+   QGridLayout*  grid3         = new QGridLayout;   
+   grid3->setSpacing        ( 2 );
+   grid3->setContentsMargins( 2, 2, 2, 2 );
+
+   QGridLayout* box5 = us_radiobutton( tr( "Hydroxyl" ), rb_5_hydroxyl, true );
+   QGridLayout* box6 = us_radiobutton( tr( "Phosphate" ), rb_5_phosphate );
+
+   grid3->addLayout( box5, 0, 0 );
+   grid3->addLayout( box6, 0, 1 );
+   gb_five_prime->setLayout( grid3 ); 
+   connect( rb_5_hydroxyl, SIGNAL( toggled          ( bool ) ), 
+                           SLOT  ( update_nucleotide( bool ) ) );
+
+   dna_layout->addWidget( gb_five_prime, 2, 0 );
+
+   QGridLayout* ratios = new QGridLayout;
+
+   QLabel* lb_ratios = us_banner( tr( "Counterion molar ratio/nucletide" ) );
+   ratios->addWidget( lb_ratios, 0, 0, 1, 2 );
+
+   QLabel* lb_sodium = us_label( tr( "Sodium, Na+" ) );
+   ratios->addWidget( lb_sodium, 1, 0 );
+
+   ct_sodium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_sodium->setStep( 0.01 );
+   connect( ct_sodium, SIGNAL( valueChanged     ( double ) ),
+                       SLOT  ( update_nucleotide( double ) ) );
+   ratios->addWidget( ct_sodium, 1, 1 );
+
+   QLabel* lb_potassium = us_label( tr( "Potassium, K+" ) );
+   ratios->addWidget( lb_potassium, 2, 0 );
+
+   ct_potassium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_potassium->setStep( 0.01 );
+   connect( ct_potassium, SIGNAL( valueChanged     ( double ) ),
+                          SLOT  ( update_nucleotide( double ) ) );
+   ratios->addWidget( ct_potassium, 2, 1 );
+
+   QLabel* lb_lithium = us_label( tr( "Lithium, Li+" ) );
+   ratios->addWidget( lb_lithium, 3, 0 );
+
+   ct_lithium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_lithium->setStep( 0.01 );
+   connect( ct_lithium, SIGNAL( valueChanged     ( double ) ),
+                        SLOT  ( update_nucleotide( double ) ) );
+   ratios->addWidget( ct_lithium, 3, 1 );
+
+   QLabel* lb_magnesium = us_label( tr( "Magnesium, Mg+" ) );
+   ratios->addWidget( lb_magnesium, 4, 0 );
+
+   ct_magnesium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_magnesium->setStep( 0.01 );
+   connect( ct_magnesium, SIGNAL( valueChanged     ( double ) ),
+                          SLOT  ( update_nucleotide( double ) ) );
+   ratios->addWidget( ct_magnesium, 4, 1 );
+
+   QLabel* lb_calcium = us_label( tr( "Calcium, Ca+" ) );
+   ratios->addWidget( lb_calcium, 5, 0 );
+
+   ct_calcium = us_counter( 2, 0.0, 1.0, 0.0 );
+   ct_calcium->setStep( 0.01 );
+   connect( ct_calcium, SIGNAL( valueChanged     ( double ) ),
+                        SLOT  ( update_nucleotide( double ) ) );
+   ratios->addWidget( ct_calcium, 5, 1 );
+
+   dna_layout->addLayout( ratios, 0, 1, 4, 1 );
+
+   QGridLayout* nucle_data = new QGridLayout;
+   QLabel* lb_nucle_mw = us_label( tr( "MW <small>(Daltons)</small>:" ) );
+   nucle_data->addWidget( lb_nucle_mw, 0, 0 );
+
+   le_nucle_mw = us_lineedit( "", -2 );
+   le_nucle_mw->setReadOnly( true );
+   nucle_data->addWidget( le_nucle_mw, 0, 1, 1, 3 );
+
+   QLabel* lb_nucle_vbar = us_label( 
+         tr( "VBar<small>(cm<sup>3</sup>/g)</small>:" ) );
+   nucle_data->addWidget( lb_nucle_vbar, 1, 0 );
+
+   le_nucle_vbar = us_lineedit( "" );
+   nucle_data->addWidget( le_nucle_vbar, 1, 1, 1, 3 );
+
+   QLabel* lb_nucle_e260 = us_label( 
+         tr( "Extinction<small>(260 nm)</small>:" ) );
+   nucle_data->addWidget( lb_nucle_e260, 2, 0 );
+
+   le_nucle_e260 = us_lineedit( "" );
+   nucle_data->addWidget( le_nucle_e260, 2, 1 );
+
+   QLabel* lb_nucle_e280 = us_label( 
+         tr( "Extinction<small>(280 nm)</small>:" ) );
+   nucle_data->addWidget( lb_nucle_e280, 2, 2 );
+
+   le_nucle_e280 = us_lineedit( "" );
+   nucle_data->addWidget( le_nucle_e280, 2, 3 );
+
+   dna_layout->addLayout( nucle_data, 4, 0, 2, 2 );
+   main->addWidget( dna_widget, row, 0, 2, 2 ); 
+   dna_widget->setVisible( false );
+
+   // Lower half -- carbohydrate operations and data
+   carbs_widget = new QWidget( this );
+   
+   QGridLayout* carbs_info   = new QGridLayout( carbs_widget );
+   carbs_info->setSpacing        ( 2 );
+   carbs_info->setContentsMargins( 2, 2, 2, 2 );
+
+   QLabel* lb_carbs = us_label( "Under Construction" );
+   lb_carbs->setAlignment( Qt::AlignCenter );
+   carbs_info->addWidget( lb_carbs, 0, 0 );
+
+   main->addWidget( carbs_widget, row, 0, 1, 2 ); 
+   carbs_widget->setVisible( false );
+
+   row += 4;
+
    // Standard Buttons
    QBoxLayout* buttons = new QHBoxLayout;
 
@@ -185,20 +376,49 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    }
    else
       pb_accept = us_pushbutton( tr( "Close" ) );
+
    connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
    buttons->addWidget( pb_accept );
 
-   main->addLayout( buttons  );
+   main->addLayout( buttons, row, 0, 1, 2 );
+   analyte_t = PROTEIN;
    reset();
 }
 
+void US_Analyte::analyte_type( int type )
+{
+   switch ( type )
+   {
+      case PROTEIN:
+         dna_widget    ->setVisible( false );
+         carbs_widget  ->setVisible( false );
+         protein_widget->setVisible( true );
+         analyte_t = PROTEIN;
+         break;
+
+      case DNA:
+      case RNA:
+         protein_widget->setVisible( false ); 
+         carbs_widget  ->setVisible( false );
+         dna_widget    ->setVisible( true );
+         analyte_t = ( type == DNA )? DNA : RNA;
+         break;
+
+      case CARBOHYDRATE:
+         protein_widget->setVisible( false ); 
+         dna_widget    ->setVisible( false );
+         carbs_widget  ->setVisible( true );
+         analyte_t = CARBOHYDRATE;
+         break;
+   }
+
+   reset();
+}
 void US_Analyte::close( void )
 {
-   // emit signals if requested
-   if ( signal_wanted )
-   {
-      //emit valueChanged( pep.vbar );
-   }
+   // Emit signal if requested
+   if ( signal_wanted ) emit valueChanged( vbar );
+
    //emit valueChanged(pep.vbar, pep.vbar20);
    //emit e280Changed(pep.e280);
    //emit mwChanged(pep.mw);
@@ -208,267 +428,579 @@ void US_Analyte::close( void )
 
 void US_Analyte::reset( void )
 {
-   /*
-   lw_peptides->clear();
-   peptides.clear();
+   inReset = true;
+   lw_analytes->clear();
 
-   lb_investigator  ->setText( "Not Selected" );
-   lb_file_value    ->setText( "No File Selected..." );
-   lb_desc_value    ->setText( "Not Selected" );
-   lb_vbar_value    ->setText( "0.72000 cm<sup>3</sup>/g" );
-   lb_vbar20_value  ->setText( "0.72000 cm<sup>3</sup>/g" );
-   lb_e280_value    ->setText( "1.0 OD/(mol cm)" );
-   lb_residues_value->setText( "Not Selected" );
-   lb_mw_value      ->setText( "Not Selected" );
+   personID = 0;
+   analyteID.clear();
 
-   le_temperature   ->setText( "20.0" );
-   le_search        ->setText( "" );
+   le_investigator  ->setText( tr( "Not Selected" ) );
+   le_search        ->clear();
    le_search        ->setReadOnly( true );
 
-   pb_save  ->setEnabled( false );
-   pb_delete->setEnabled( false );
-   pb_view  ->setEnabled( false );
-   pb_more  ->setEnabled( false );
-   */
-}
-/*
-void US_Analyte::read_peptide( void )
-{
-   vbar_info.e280 = 0.0;
-   vbar_info.vbar = 0.0;
+   vbar     = 0.0;
+   e280     = 0.0;
+   e260     = 0.0;
 
-   QString filename = QFileDialog::getOpenFileName( this, 
-         tr( "Select the peptide file to read" ), US_Settings::dataDir(), 
-         tr( "Peptide files (*.pep)" ) );
+   filename.clear();
+   sequence.clear();
 
-   if ( filename.isEmpty() ) return;
+   le_description     ->clear();
+   le_protein_temp    ->setText( "20.0" );
+   le_protein_residues->clear();
+   le_protein_e280    ->clear();
 
-   QFileInfo fi( filename );
+   ct_sodium   ->setValue( 0.0 );
+   ct_potassium->setValue( 0.0 );
+   ct_lithium  ->setValue( 0.0 );
+   ct_magnesium->setValue( 0.0 );
+   ct_calcium  ->setValue( 0.0 );
 
-   vbar_info.filename = fi.fileName();
+   cb_stranded   ->setChecked( true );
+   cb_mw_only    ->setChecked( false );
 
-   lw_peptides->clear();
-      
-   QFile fr( filename );
-      
-   fr.open( QIODevice::ReadOnly );
-   QTextStream ts ( &fr );
-      
-   QString identifier = "";
+   rb_3_hydroxyl ->setChecked( true );
+   rb_5_hydroxyl ->setChecked( true );
 
-   while ( identifier != "DE" )
-   {
-      ts >> identifier;
-         
-      if ( ts.atEnd() )
-      {
-         QMessageBox::information( this,
-            tr( "Attention" ), 
-            tr( "The peptide file is not in the proper format!\n"
-                "The description identifier \"DE\" is missing!\n\n"
-                "Please fix this error and try again..." ) );
-         return;
-      }
-   }
+   le_nucle_mw  ->clear();
+   le_nucle_vbar->clear();
+   le_nucle_e260->clear();
+   le_nucle_e280->clear();
 
-   vbar_info.description = ts.readLine().trimmed();
+   pb_save     ->setEnabled( false );
+   pb_save_db  ->setEnabled( false );
+   pb_update_db->setEnabled( false );
+   pb_del_db   ->setEnabled( false );
+   pb_spectrum ->setEnabled( false );
+   pb_more     ->setEnabled( false );
 
-   while ( identifier != "SQ")
-   {
-      ts >> identifier;
-         
-      if ( ts.atEnd() )
-      {
-         QMessageBox::information( this,
-               tr( "Attention" ), 
-               tr( "The peptide file is not in the proper format!\n"
-                   "The sequence identifier \"SQ\" is missing!\n\n"
-                   "Please fix this error and try again..." ) );
-         return;
-      }
-   }
-      
-   ts.readLine();
-   
-   QString sequence = "";
-   identifier       = "";
-
-   while ( identifier != "//" )
-   {
-      sequence.append( identifier );
-      identifier = ts.readLine();
-      
-      if ( ts.atEnd() && identifier.trimmed() != "//" )
-      {
-         QMessageBox::information( this,
-            tr( "Attention" ), 
-            tr( "The peptide file is not in the proper format!\n"
-                "The sequence end identifier \"//\" is missing!\n\n"
-                "Please fix this error and try again..." ) );
-         return;
-      }
-   }
-
-   vbar_info.sequence = sequence;
-
-   if ( ! fr.atEnd() )
-      vbar_info.vbar = ts.readLine().toDouble();
-
-   if ( ! fr.atEnd() )
-      vbar_info.e280 = ts.readLine().toDouble();
-
-   fr.close();
-   
-   double degC = le_temperature->text().toDouble();
-   US_Math::calc_vbar( pep, sequence, degC );
-
-   if ( vbar_info.vbar > 0.0 )
-   {
-      pep.vbar20 = vbar_info.vbar;
-      pep.vbar   = US_Math::adjust_vbar20( pep.vbar20, degC );
-   }
-   else
-      vbar_info.vbar = pep.vbar20;
-
-   if ( vbar_info.e280 > 0.0 )
-      pep.e280 = vbar_info.e280;
-   else
-      vbar_info.e280 = pep.e280;
-   
-   lb_file_value->setText( fi.fileName() );
-   lb_desc_value->setText( vbar_info.description );
-   lw_peptides  ->addItem( "Showing Data from Harddrive" );
-      
-   QString res_file = US_Settings::resultDir() 
-      + "/" + fi.completeBaseName() + ".pep_res";
-   
-   result_output( res_file );
-   //from_HD = true;
+   qApp->processEvents();
+   inReset = false;
 }
 
-void US_Analyte::read_db( void )
+void US_Analyte::temp_changed( const QString& text )
 {
-   QString query; 
+   double temperature = text.toDouble();
 
-   if ( vbar_info.invID > 0 )
+   if ( ! sequence.isEmpty() )
    {
-      query = "SELECT PepID, Description FROM tblPeptide "
-              "WHERE InvestigatorID = " + QString::number( vbar_info.invID );
+      struct peptide p;
+      US_Math::calc_vbar( p, sequence, temperature );
+      le_protein_vbar->setText( QString::number( p.vbar, 'f', 4 ) );
    }
-   else
-      query = "SELECT PepID, Description FROM tblPeptide ORDER BY PepID DESC";
+}
 
-   peptides.clear();
-   lw_peptides->clear();
+void US_Analyte::read_analyte( void )
+{
+   QString fn = QFileDialog::getOpenFileName( this, 
+         tr( "Select the analyte file to read" ), US_Settings::dataDir(), 
+         tr( "Analyte files (*.fasta)" ) );
 
-   US_DB*    db = new US_DB;
-   US_Passwd pw;
-   QString   error;
+   if ( fn.isEmpty() ) return;
 
-   // Get the peptide data from the database
-   if ( ! db->open( pw.getPasswd(), error ) )
+   reset();
+   QFileInfo fi( fn );
+   filename = fi.fileName();
+
+   lw_analytes->clear();
+   QFile f( fn );
+      
+   f.open( QIODevice::ReadOnly | QIODevice::Text );
+   QTextStream ts( &f );
+
+   QString header = ts.readLine();
+
+   if ( header.at( 0 ) != '>' )
    {
-      // Error message here
-      qDebug() << "US_Analyte::read_db open DB error " << error;
+      QMessageBox::information( this,
+         tr( "Attention" ), 
+         tr( "The analyte file is not in the proper format!\n"
+             "The filemust be in fasta format!\n\n"
+             "Please fix this error and try again..." ) );
       return;
    }
 
-   db->query( query );
+   QStringList values = header.remove( 0, 1 ).split( "|" );
 
-   while ( db->next() )
+   description = values.at( 0 );
+   if ( values.size() > 1 ) vbar = values.at( 1 ).toDouble();
+   if ( values.size() > 2 ) e280 = values.at( 2 ).toDouble();
+   if ( values.size() > 3 ) e260 = values.at( 3 ).toDouble();
+
+   while ( ! ts.atEnd() ) sequence += ts.readLine().toLower();
+  
+   f.close();
+
+   QString check = sequence;
+   check.remove( QRegExp( "\\s" ) );  // Remove whitespace
+  
+   switch ( analyte_t )
    {
-      QString info = "PepID (" + db->value( 0 ).toString() + ") " + 
-                                 db->value( 1 ).toString();
-      
-      peptides << info;
+      case PROTEIN:
+         sequence.remove( QRegExp( "[^a-z\\+\\-\\?\\@]" ) );
+         break;
 
-      lw_peptides->addItem( info );
+      case DNA:
+      case RNA:
+         sequence.remove( QRegExp( "[^acgtu]" ) );
+         break;
+
+      case CARBOHYDRATE:
+         QMessageBox::information( this,
+            tr( "Attention" ),
+            tr( "The current analyte type is under construction." ) );
+         return;
    }
 
-   delete db;
-   QSqlDatabase::removeDatabase( "UltraScan" );
-
-   if ( peptides.size() == 0 )
+   if ( check != sequence )
    {
       QMessageBox::information( this,
-            tr( "Attention" ),
-            tr( "No peptide file found for the selected investigator,\n"
-                "You can 'Reset' then query DB to list all Peptide files." ) );
+         tr( "Attention" ), 
+         tr( "There are invalid characters in the sequence!\n"
+             "The filemust be in fasta format!\n\n"
+             "Please fix this error and try again..." ) );
+      return;
+   }
+
+   switch ( analyte_t )
+   {
+      case PROTEIN:
+      {
+         struct peptide p;
+         US_Math::calc_vbar( p, sequence, 20.0 );  // Always read at 20C
+
+         le_protein_mw      ->setText( QString::number( (int) p.mw ) );
+         le_protein_vbar20  ->setText( QString::number( p.vbar20, 'f', 4 ) );
+         le_protein_vbar    ->setText( QString::number( p.vbar  , 'f', 4 ) );
+         le_protein_temp    ->setText( "20.0" );
+         le_protein_residues->setText( QString::number( p.residues ) );
+         le_protein_e280    ->setText( QString::number( e280 ) );
+         break;
+      }
+
+      case DNA:
+      case RNA:
+         parse_dna();
+         update_nucleotide();
+         le_nucle_vbar->setText( QString::number( vbar, 'f', 4 ) );
+         le_nucle_e260->setText( QString::number( e260, 'f', 4 ) );
+         le_nucle_e280->setText( QString::number( e280, 'f', 4 ) );
+         break;
+
+      case CARBOHYDRATE:
+         break;
+   }
+
+   le_description->setText( description );
+   lw_analytes->addItem( tr( "Showing Data from disk drive:\n" ) + fn );
+   
+   pb_save   ->setEnabled( true );
+   pb_save_db->setEnabled( true );
+   pb_more   ->setEnabled( true );
+}
+
+void US_Analyte::parse_dna( void )
+{
+   A = sequence.count( "a" );
+   C = sequence.count( "c" );
+   G = sequence.count( "g" );
+   T = sequence.count( "t" );
+   U = sequence.count( "u" );
+}
+
+void US_Analyte::manage_sequence( void )
+{
+
+   US_SequenceEditor* edit = new US_SequenceEditor( sequence );
+   connect( edit, SIGNAL( sequenceChanged( QString ) ), 
+                  SLOT  ( update_sequence( QString ) ) );
+   edit->exec();
+}
+
+void US_Analyte::update_sequence( QString seq )
+{
+   seq = seq.toLower().remove( QRegExp( "\\s" ) );
+   QString check = seq;
+
+   if ( seq == sequence ) return;
+
+   switch ( analyte_t )
+   {
+      case PROTEIN:
+         seq.remove( QRegExp( "[^a-z\\+\\-\\?\\@]" ) );
+         break;
+
+      case DNA:
+      case RNA:
+         seq.remove( QRegExp( "[^acgtu]" ) );
+         break;
+
+      case CARBOHYDRATE:
+         break;
+   }
+
+   if ( check != seq )
+   {
+      QMessageBox::information( this,
+         tr( "Attention" ), 
+         tr( "There are invalid characters in the sequence!\n"
+             "Please fix this error and try again..." ) );
+      return;
+   }
+
+   sequence = seq;
+
+   switch ( analyte_t )
+   {
+      case PROTEIN:
+         {
+         struct peptide p;
+         double temperature = le_protein_temp->text().toDouble();
+         US_Math::calc_vbar( p, sequence, temperature );
+
+         le_protein_mw      ->setText( QString::number( (int) p.mw ) );
+         le_protein_vbar20  ->setText( QString::number( p.vbar20, 'f', 4 ) );
+         le_protein_vbar    ->setText( QString::number( p.vbar  , 'f', 4 ) );
+         le_protein_residues->setText( QString::number( p.residues ) );
+         }
+         break;
+
+      case DNA:
+      case RNA:
+         parse_dna();
+         update_nucleotide();
+         break;
+
+      case CARBOHYDRATE:
+         break;
+   }
+
+   pb_save_db->setEnabled( true );
+}
+
+void US_Analyte::update_stranded( bool checked )
+{
+   if ( inReset ) return;
+   if ( checked ) cb_mw_only->setChecked( false );
+   update_nucleotide();
+}
+
+void US_Analyte::update_mw_only( bool checked )
+{
+   if ( inReset ) return;
+   if ( checked ) cb_stranded->setChecked( false );
+   update_nucleotide();
+}
+
+void US_Analyte::update_nucleotide( bool /* value */ )
+{
+   if ( inReset ) return;
+   update_nucleotide();
+}
+
+void US_Analyte::update_nucleotide( double /* value */ )
+{
+   if ( inReset ) return;
+   update_nucleotide();
+}
+
+void US_Analyte::update_nucleotide( void )
+{
+   bool isDNA          = rb_dna       ->isChecked();
+   bool doubleStranded = cb_stranded  ->isChecked();
+   bool complement     = cb_mw_only   ->isChecked();
+   bool _3prime        = rb_3_hydroxyl->isChecked();
+   bool _5prime        = rb_5_hydroxyl->isChecked();
+
+   double MW = 0;
+   uint   total = A + G + C + T + U;
+   
+   if ( doubleStranded ) total *= 2;
+   
+   const double mw_A = 313.209;
+   const double mw_C = 289.184;
+   const double mw_G = 329.208;
+   const double mw_T = 304.196;
+   const double mw_U = 274.170;
+   
+   if ( isDNA )
+   {
+      if ( doubleStranded )
+      {
+         MW += A * mw_A;
+         MW += G * mw_G;
+         MW += C * mw_C;
+         MW += T * mw_T;
+         MW += A * mw_T;
+         MW += G * mw_C;
+         MW += C * mw_G;
+         MW += T * mw_A;
+      }
+
+      if ( complement )
+      {
+         MW += A * mw_T;
+         MW += G * mw_C;
+         MW += C * mw_G;
+         MW += T * mw_A;
+      }
+
+      if ( ! complement && ! doubleStranded )
+      {
+         MW += A * mw_A;
+         MW += G * mw_G;
+         MW += C * mw_C;
+         MW += T * mw_T;
+      }
+   }
+   else /* RNA */
+   {
+      if ( doubleStranded )
+      {
+         MW += A * ( mw_A + 15.999 );
+         MW += G * ( mw_G + 15.999 );
+         MW += C * ( mw_C + 15.999 );
+         MW += U * ( mw_U + 15.999 );
+         MW += A * ( mw_U + 15.999 );
+         MW += G * ( mw_C + 15.999 );
+         MW += C * ( mw_G + 15.999 );
+         MW += U * ( mw_A + 15.999 );
+      }
+
+      if ( complement )
+      {
+         MW += A * ( mw_U + 15.999 );
+         MW += G * ( mw_C + 15.999 );
+         MW += C * ( mw_G + 15.999 );
+         MW += U * ( mw_A + 15.999 );
+      }
+
+      if ( ! complement && ! doubleStranded )
+      {
+         MW += A * ( mw_A + 15.999 );
+         MW += G * ( mw_G + 15.999 );
+         MW += C * ( mw_C + 15.999 );
+         MW += U * ( mw_U + 15.999 );
+      }
+   }
+   
+   MW += ct_sodium   ->value() * total * 22.99;
+   MW += ct_potassium->value() * total * 39.1;
+   MW += ct_lithium  ->value() * total * 6.94;
+   MW += ct_magnesium->value() * total * 24.305;
+   MW += ct_calcium  ->value() * total * 40.08;
+   
+   if ( _3prime )
+   {
+      MW += 17.01;
+      if ( doubleStranded )  MW += 17.01; 
+   }
+   else // we have phosphate
+   {
+      MW += 94.87;
+      if ( doubleStranded ) MW += 94.87;
+   }
+
+   if ( _5prime )
+   {
+      MW -=  77.96;
+      if ( doubleStranded )  MW -= 77.96; 
+   }
+
+   QString s;
+
+   if ( doubleStranded )
+   {
+      s.sprintf(" %2.5e kD (%d A, %d G, %d C, %d U, %d T, %d bp)",
+            MW / 1000.0, A, G, C, U, T, total / 2);
    }
    else
-      le_search->setReadOnly( false );
+   {
+     s.sprintf(" %2.5e kD (%d A, %d G, %d C, %d U, %d T, %d bases)",
+            MW / 1000.0, A, G, C, U, T, total );
+   }
+   
+   le_nucle_mw->setText( s );
+
+   if ( rb_dna->isChecked() )
+   {
+
+      if ( MW > 0 && T == 0 && U > 0)
+         QMessageBox::question( this, 
+            tr( "Attention:" ),
+            tr( "Are you sure?\n"
+                "There don't appear to be any thymine residues present,\n"
+                "instead there are uracil residues in this sequence." ) );
+   }
+   else // DNA */
+   {
+      if ( MW > 0 && T > 0 && U == 0 )
+         QMessageBox::question( this,
+            tr( "Attention:" ),
+            tr( "Are you sure?\n"
+                "There don't appear to be any uracil residues present,\n"
+                "instead there are thymine residues in this sequence." ) );
+   }
 }
-*/
-/*!  Write the peptide analysis results to a text format display.  */
-/*
-void US_Analyte::result_output( const QString& res_file )
+
+void US_Analyte::save_analyte( void )
 {
+   if ( ! data_ok() ) return;
+
+   QString fn = QFileDialog::getSaveFileName( this,
+                  tr( "Analyte File in FASTA Format" ),
+                  US_Settings::dataDir(),
+                  tr( "FASTA Files (*.fasta)" ) );
+
+   if ( fn == "" ) return;
+
+   if ( fn.right( 6 ) != ".fasta" ) fn.append( ".fasta" );
+
+   QFile f( fn );
+   
+   if ( f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      QTextStream t( &f );
+
+      QString s = ">" + description;
+
+      // Add vbar20 and e280 values
+      switch ( analyte_t )
+      {
+         case PROTEIN:
+         {
+            struct peptide p;
+            double temperature = le_protein_temp->text().toDouble();
+            US_Math::calc_vbar( p, sequence, temperature );
+
+            e280 = le_protein_e280->text().toDouble();
+
+            s += "|" + QString::number( p.vbar20, 'f', 4 );
+            s += "|" + QString::number( e280,     'f', 4 );
+         }
+            break;
+
+         case DNA:
+         case RNA:
+            s += "|" + QString::number( vbar, 'f', 4 );
+            s += "|" + QString::number( e280, 'f', 4 );
+            s += "|" + QString::number( e260, 'f', 4 );
+            break;
+
+         case CARBOHYDRATE:
+            break;
+      }
+
+      t << s << endl;
+
+      for ( int i = 0; i < sequence.length() / 80; i++ )
+         t << sequence.mid( i * 80, 80 ) << endl;
+
+      if ( sequence.length() % 80 > 0 )
+         t << sequence.mid( ( sequence.length() / 80 ) * 80 ) << endl;
+
+      f.close();
+   }
+   else
+      QMessageBox::information( this,
+         tr( "Error" ),
+         tr( "Could not open\n\n" ) + fn + tr( "\n\n for writing." ) );
+}
+
+void US_Analyte::more_info( void )
+{
+   struct peptide p;
+   double temperature =  le_protein_temp->text().toDouble();
+   US_Math::calc_vbar( p, sequence, temperature );
+
    QString s;
-   s.sprintf( "%5.3f", le_temperature->text().toFloat() );
-   
-   QFile result( res_file );
-   result.open( QIODevice::WriteOnly | QIODevice::Text );
-   
-   QTextStream  res_io( &result );
+   QString s1 =
+             "***************************************************\n"     +
+         tr( "*            Analyte Analysis Results             *\n" )   +
+             "***************************************************\n\n\n" +
+         tr( "Report for:           " ) + description + "\n\n" +
 
-   res_io <<     "***************************************************\n";
-   res_io << tr( "*            Peptide Analysis Results             *\n");
-   res_io <<     "***************************************************\n\n\n";
-   res_io << tr( "Report for:         " ) << vbar_info.description << "\n\n";
+         tr( "Number of Residues:   " ) + s.sprintf( "%i", p.residues ) + " AA\n";
+   s1 += tr( "Molecular Weight:     " ) + s.sprintf( "%i", (int)p.mw )  + tr( " Dalton\n" ) +
+         
+         tr( "V-bar at 20 deg C:    " ) + 
+              QString::number( p.vbar20, 'f', 6 )   + tr( " cm^3/g\n" ) +
+         
+         tr( "V-bar at " ) + QString::number( temperature, 'f', 2 ) + " deg C: " +
+               QString::number( p.vbar, 'f', 6 ) + tr( " cm^3/g\n\n" ) +
+       
+         tr( "Extinction coefficient for the denatured\n"
+             "peptide at 280 nm: ") +
+               QString::number( p.e280, 'f', 1 ) + " OD/(mol cm)\n\n" +
+        
+         tr( "Composition: \n\n" );
+   s1 += tr( "Alanine:        " )  + s.sprintf( "%3i", p.a ) + "  ";
+   s1 += tr( "Arginine:       " )  + s.sprintf( "%3i", p.r ) + "\n";
+         
+   s1 += tr( "Asparagine:     " )  + s.sprintf( "%3i", p.n ) + "  ";
+   s1 += tr( "Aspartate:      " )  + s.sprintf( "%3i", p.d ) + "\n";
+         
+   s1 += tr( "Asparagine or \n" )  +
+         tr( "Aspartate:      " )  + s.sprintf( "%3i",p.b ) + "\n";
+         
+   s1 += tr( "Cysteine:       " )  + s.sprintf( "%3i",p.c ) + "  ";
+   s1 += tr( "Glutamate:      " )  + s.sprintf( "%3i", p.e ) + "\n";
+         
+   s1 += tr( "Glutamine:      " )  + s.sprintf( "%3i", p.q ) + "  ";
+   s1 += tr( "Glycine:        " )  + s.sprintf( "%3i", p.g ) + "\n";
+        
+   s1 += tr( "Glutamine or  \n" )  +  
+         tr( "Glutamate:      " )  + s.sprintf( "%3i", p.z ) + "\n";
+         
+   s1 += tr( "Histidine:      " )  + s.sprintf( "%3i", p.h ) + "  ";
+   s1 += tr( "Isoleucine:     " )  + s.sprintf( "%3i", p.i ) + "\n";
+         
+   s1 += tr( "Leucine:        " )  + s.sprintf( "%3i", p.l ) + "  ";
+   s1 += tr( "Lysine:         " )  + s.sprintf( "%3i", p.k ) + "\n";
+         
+   s1 += tr( "Methionine:     " )  + s.sprintf( "%3i", p.m ) + "  ";
+   s1 += tr( "Phenylalanine:  " )  + s.sprintf( "%3i", p.f ) + "\n";
+         
+   s1 += tr( "Proline:        " )  + s.sprintf( "%3i", p.p ) + "  ";
+   s1 += tr( "Serine:         " )  + s.sprintf( "%3i", p.s ) + "\n";
+         
+   s1 += tr( "Threonine:      " )  + s.sprintf( "%3i", p.t ) + "  ";
+   s1 += tr( "Tryptophan:     " )  + s.sprintf( "%3i", p.w ) + "\n";
+         
+   s1 += tr( "Tyrosine:       " )  + s.sprintf( "%3i", p.y ) + "  ";
+   s1 += tr( "Valine:         " )  + s.sprintf( "%3i", p.v ) + "\n";
+         
+   s1 += tr( "Unknown:        " )  + s.sprintf( "%3i", p.x ) + "  ";
+   s1 += tr( "Hao:            " )  + s.sprintf( "%3i", p.j ) + "\n";
+         
+   s1 += tr( "Delta-linked Ornithine:" ) + QString::number( p.o ) + "\n";
+        
+   US_Editor* edit = new US_Editor( US_Editor::LOAD, true );
+   QPoint position = this->pos();
+   edit->move( position + QPoint( 30, 50 ) );
+   edit->resize( 400, 300 );
+   edit->e->setFont(  QFont( "monospace", US_GuiSettings::fontSize() ) );
+   edit->e->setText( s1 );
+   edit->show();
+}
 
-   res_io << tr( "Number of Residues: " ) << pep.residues    << " AA\n";
-   res_io << tr( "Molecular Weight:   " ) << pep.mw          << tr( " Dalton\n" );
-   res_io << tr( "V-bar at 20 deg C:  " ) << pep.vbar20      << " cm^3/g\n";
-   res_io << tr( "V-bar at " )            << s               << " deg C: " 
-                                          << pep.vbar        << " cm^3/g\n";
-   
-   res_io << tr( "Extinction coefficient for the denatured\npeptide at 280 nm: ") 
-          << pep.e280 << " OD/(mol cm)\n\n";
-   res_io << tr( "Composition: \n\n" );
-   res_io << tr( "Alanine:\t" )                  << pep.a 
-          << tr( "\tArginine:\t" )               << pep.r << "\n";
-   res_io << tr( "Asparagine:\t" )               << pep.n 
-          << tr( "\tAspartate:\t" )              << pep.d << "\n";
-   res_io << tr( "Asparagine or\nAspartate:\t" ) << pep.b << "\n";
-   res_io << tr( "Cysteine:\t" )                 << pep.c 
-          << tr( "\tGlutamate:\t" )              << pep.e << "\n";
-   res_io << tr( "Glutamine:\t" )                << pep.q 
-          << tr( "\tGlycine:\t" )                << pep.g << "\n";
-   res_io << tr( "Glutamine or\nGlutamate:\t" )  << pep.z << "\n";
-   res_io << tr( "Histidine:\t" )                << pep.h 
-          << tr( "\tIsoleucine:\t" )             << pep.i << "\n";
-   res_io << tr( "Leucine:\t" )                  << pep.l 
-          << tr( "\tLysine:\t\t" )               << pep.k << "\n";
-   res_io << tr( "Methionine:\t" )               << pep.m 
-          << tr( "\tPhenylalanine:\t" )          << pep.f << "\n";
-   res_io << tr( "Proline:\t" )                  << pep.p 
-          << tr( "\tSerine:\t\t" )               << pep.s << "\n";
-   res_io << tr( "Threonine:\t" )                << pep.t 
-          << tr( "\tTryptophan:\t" )             << pep.w << "\n";
-   res_io << tr( "Tyrosine:\t" )                 << pep.y 
-          << tr( "\tValine:\t\t" )               << pep.v << "\n";
-   res_io << tr( "Unknown:\t" )                  << pep.x 
-          << tr( "\tHao:\t\t" )                  << pep.j << "\n";
-   res_io << tr( "Delta-linked Ornithine:\t" )   << pep.o << endl;
-   result.close();
-
-   lb_vbar_value    ->setText( s.sprintf( "%7.5f cm<sup>3</sup>/g", pep.vbar) );
-   lb_vbar20_value  ->setText( s.sprintf( "%7.5f cm<sup>3</sup>/g", pep.vbar20 ) );
-   lb_residues_value->setText( s.sprintf( "%d AA",            pep.residues ) );
-   lb_e280_value    ->setText( s.sprintf( "%.1f OD/(mol cm)", pep.e280     ) );
-   lb_mw_value      ->setText( s.sprintf( "%6.4e Dalton",     pep.mw       ) );
+void US_Analyte::connect_error( const QString& error )
+{
+   QMessageBox::warning( this, tr( "Connection Problem" ),
+      tr( "Could not connect to databasee \n" ) + error );
 }
 
 void US_Analyte::search( const QString& text )
 {
-   lw_peptides->clear();
+   lw_analytes->clear();
 
-   for ( int i = 0; i < peptides.size(); i++ )
+   for ( int i = 0; i < info.size(); i++ )
    {
-      if ( peptides[ i ].contains( 
-               QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) ) )
+      if ( info[ i ].description.contains( 
+             QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) ) )
       {
-         lw_peptides->addItem( peptides[ i ] );
+         lw_analytes->addItem( new QListWidgetItem(
+             info[ i ].analyteID + ": " + info[ i ].description, lw_analytes ) );
       }
    }
 }
@@ -478,128 +1010,397 @@ void US_Analyte::sel_investigator( void )
    reset();
    
    US_Investigator* inv_dialog = new US_Investigator( true );
+   
    connect( inv_dialog,
       SIGNAL( investigator_accepted( int, const QString&, const QString& ) ),
       SLOT  ( assign_investigator  ( int, const QString&, const QString& ) ) );
+   
    inv_dialog->exec();
 }
 
 void US_Analyte::assign_investigator( int invID,
       const QString& lname, const QString& fname)
 {
-   lb_investigator->setText( "InvID (" + QString::number( invID ) + "): " +
+   le_investigator->setText( "InvID (" + QString::number( invID ) + "): " +
          lname + ", " + fname );
 
-   vbar_info.invID = invID;
+   personID = invID;
    read_db();
 }
 
-void US_Analyte::select_peptide( QListWidgetItem* item )
+void US_Analyte::spectrum( void )
 {
-   QString entry = item->text();
+      QMessageBox::information( this,
+         tr( "Under Construction" ), 
+         tr( "Under Construction" ) );
+}
 
-   int     left  = entry.indexOf( '(' ) + 1;
-   int     right = entry.indexOf( ')' );
-   QString pepID = entry.mid( left, right - left );
-
-
-
-   QString query = "SELECT Description, Sequence, InvestigatorID, vbar, e280 "
-                   "FROM tblPeptide WHERE PepID = " + pepID;
-   
-   US_DB*    db = new US_DB;
+void US_Analyte::read_db( void )
+{
    US_Passwd pw;
-   QString   error;
+   US_DB2    db( pw.getPasswd() );
 
-   if ( ! db->open( pw.getPasswd(), error ) )
+   if ( db.lastErrno() != US_DB2::OK )
    {
-      // Error message here
-      qDebug() << "US_Analyte::select_peptide: Could not open DB\n" << error;
-
+      connect_error( db.lastError() );
       return;
    }
 
-   db->query( query );
-   db->next();
+   pb_save     ->setEnabled( false );
+   pb_save_db  ->setEnabled( false );
+   pb_update_db->setEnabled( false );
+   pb_del_db   ->setEnabled( false );
 
-   vbar_info.pepID       = pepID.toInt();
-   vbar_info.description = db->value( 0 ).toString();
-   vbar_info.sequence    = db->value( 1 ).toString();
-   QString invID         = db->value( 2 ).toString();
-   vbar_info.invID       = invID.toInt();
-   vbar_info.vbar        = db->value( 3 ).toDouble();
-   vbar_info.e280        = db->value( 4 ).toDouble();
-   
-   // Get the investigator name
-   query = "SELECT FirstName, LastName FROM tblInvestigators "
-           "WHERE InvID=" + invID;
+   le_search->setText( "" );
+   le_search->setReadOnly( true );
 
-   db->query( query );
-   db->next();
+   lw_analytes->clear();
 
-   QString fname = db->value( 0 ).toString();
-   QString lname = db->value( 1 ).toString();
 
-   delete db;
-   QSqlDatabase::removeDatabase( "UltraScan" );
+   QStringList q( "get_analyte_desc" );
+   q << QString::number( personID );
 
-   double degC = le_temperature->text().toDouble();
-   US_Math::calc_vbar( pep, vbar_info.sequence, degC );
+   db.query( q );
 
-   if ( vbar_info.e280 > 0.0 )
-      pep.e280 = vbar_info.e280;
-   else
-      vbar_info.e280 = pep.e280;
-         
-   if ( vbar_info.vbar > 0.0 )
+   if ( db.lastErrno() != 0 )
    {
-      pep.vbar20 = vbar_info.vbar;
-      pep.vbar = US_Math::adjust_vbar20( pep.vbar20, degC );
+      QMessageBox::information( this,
+            tr( "Database Error" ),
+            tr( "The following errro was returned:\n" ) + db.lastError() );
+      return; 
+   }
+
+   info.clear();
+
+   while ( db.next() )
+   {
+      struct analyte_info current;
+      current.analyteID   = db.value( 0 ).toString();
+      current.description = db.value( 1 ).toString();
+
+      QString a_type    =  db.value( 2 ).toString();
+
+           if ( a_type == "Protein" ) current.type = PROTEIN;
+      else if ( a_type == "RNA"     ) current.type = RNA;
+      else if ( a_type == "DNA"     ) current.type = DNA;
+      else                            current.type = CARBOHYDRATE;
+
+      if ( current.type == analyte_t ) info << current;
+   }
+
+   for ( int i = 0; i < info.size(); i++ )
+   {
+      lw_analytes->addItem( new QListWidgetItem(
+         info[ i ].analyteID + ": " + info[ i ].description, lw_analytes ) );
+   }
+
+   if ( info.size() == 0 )
+   {
+      QMessageBox::information( this,
+            tr( "Attention" ),
+            tr( "No analyte data found for the selected investigator,\n"
+                "You can 'Reset' then query DB to list all \n"
+                "authorized analyte files." ) );
    }
    else
-      vbar_info.vbar = pep.vbar20;
+      le_search->setReadOnly( false );
+}
 
-   lb_desc_value->setText( vbar_info.description );
+bool US_Analyte::database_ok( US_DB2& db )
+{
+   if ( db.lastErrno() == 0 ) return true;
 
-   lb_investigator->setText( "InvID (" + invID + "): " +
-         lname + ", " + fname );
+   QMessageBox::information( this,
+      tr( "Database Error" ),
+      tr( "The following error was returned:\n" ) + db.lastError() );
+
+   return false; 
+}
+
+bool US_Analyte::data_ok( void )
+{
+   // Check to see if a sequence is entered
+   if ( sequence.isEmpty() )
+   {
+      QMessageBox::information( this,
+         tr( "Attention" ), 
+         tr( "A sequence must be defined before saving." ) );
+      return false;
+   }
    
-   result_output( US_Settings::resultDir() + "/" + pepID + ".pep_res" );
+   description = le_description->text().remove( '|' );
 
-   pb_save->setEnabled  ( true );
-   pb_delete->setEnabled( true );
-   pb_view->setEnabled  ( true );
-   pb_more->setEnabled  ( true );
+   if ( description.isEmpty() )
+   {
+      QMessageBox::information( this,
+         tr( "Attention" ), 
+         tr( "A description must be entered before saving." ) );
+      return false;
+   }
+
+   return true;
 }
 
-void US_Analyte::view_seq( void )
+void US_Analyte::select_analyte( QListWidgetItem* item )
 {
-   QMessageBox::information( this, "Under Construction", "Not implemented yet." );
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   QStringList q( "get_analyte_info" );
+   
+   // Get analyteID
+   analyteID = item->text().split( ":" )[ 0 ];
+
+   q << analyteID;
+
+   db.query( q );
+
+   if ( ! database_ok( db ) ) return;
+
+   db.next();
+
+   // We know the type : analyte_t = db.value( 0 ).toAnalyte();
+   sequence         = db.value( 1 ).toString().toLower();
+   vbar             = db.value( 2 ).toDouble();
+   description      = db.value( 3 ).toString();
+   QString spectrum = db.value( 4 ).toString();
+   double  mw       = db.value( 5 ).toDouble();
+   personID         = db.value( 6 ).toInt();
+   
+   filename = "";
+   e260     = 0.0;
+   e280     = 0.0;
+
+   QStringList extinctions = spectrum.split( ";" );
+   QString     extinction;
+   
+   foreach ( extinction, extinctions )
+   {
+      QStringList e = extinction.split( ":" );
+      if ( e[ 0 ].toInt() == 260 ) e260 =  e[ 1 ].toDouble();
+      if ( e[ 0 ].toInt() == 280 ) e280 =  e[ 1 ].toDouble();
+   }
+        
+   le_description->setText( description );
+
+   // Update the window
+   switch ( analyte_t )
+   {
+      case PROTEIN:
+         {
+            struct peptide p;
+            US_Math::calc_vbar( p, sequence, 20.0 );
+
+            if ( mw == 0.0 ) mw = p.mw;
+            le_protein_mw      ->setText( QString::number( (int) mw ) );
+            le_protein_temp    ->setText( "20.0" );
+            le_protein_residues->setText( QString::number( p.residues ) );
+            
+            if ( vbar == 0.0 ) vbar = p.vbar20;
+            le_protein_vbar20->setText( QString::number( vbar, 'f', 4 ) );
+            le_protein_vbar  ->setText( QString::number( vbar, 'f', 4 ) );
+            le_protein_e280  ->setText( QString::number( e280, 'f', 4 ) );
+         }
+
+         break;
+
+      case DNA:
+      case RNA:
+         update_nucleotide();
+         le_nucle_vbar->setText( QString::number( vbar, 'f', 4 ) );
+         le_nucle_e260->setText( QString::number( e260, 'f', 4 ) );
+         le_nucle_e280->setText( QString::number( e280, 'f', 4 ) );
+         break;
+
+      case CARBOHYDRATE:
+         break;
+   }
+
+   QMessageBox::information( this,
+      tr( "Analyte Loaded Successfully" ),
+      tr( "The analyte has been loaded from the database." ) );
+
+   pb_update_db->setEnabled( true );
+   pb_del_db   ->setEnabled( true );
 }
 
-void US_Analyte::enter_peptide( void )
+void US_Analyte::save_db( void )
 {
-   QMessageBox::information( this, "Under Construction", "Not implemented yet." );
+   if ( ! data_ok() ) return;
+
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   QStringList q( "new_analyte" );
+
+   if      ( analyte_t == PROTEIN ) q << "Protein";
+   else if ( analyte_t == DNA     ) q << "DNA";
+   else if ( analyte_t == RNA     ) q << "RNA";
+   else                             q << "Other";
+
+   q << sequence;
+   q << QString::number( vbar, 'f', 4 );
+   q << description;
+
+   QString spectrum = "260:" + QString::number( e260, 'f', 4 ) + 
+                     ";280:" + QString::number( e280, 'f', 4 );
+   q << spectrum;
+
+   // Molecular weight
+        if ( analyte_t == PROTEIN )      q << le_protein_mw->text();
+   else if ( analyte_t == CARBOHYDRATE ) q << "0.0";
+   else // DNA / RNA 
+   { 
+      double mw = le_nucle_mw->text().toDouble();
+      q << QString::number( mw, 'f', 4 );
+   }
+   
+   status_query( q );
+
+   if ( ! database_ok( db ) ) return;
+
+   QMessageBox::information( this,
+      tr( "Analyte Saved" ),
+      tr( "The analyte has been saved to the database." ) );
 }
 
-void US_Analyte::save_peptide( void )
+void US_Analyte::update_db( void )
 {
-   QMessageBox::information( this, "Under Construction", "Not implemented yet." );
+   if ( ! data_ok() ) return;
+
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   QStringList q( "update_analyte" );
+ 
+   q << analyteID;
+
+   if      ( analyte_t == PROTEIN ) q << "Protein";
+   else if ( analyte_t == DNA     ) q << "DNA";
+   else if ( analyte_t == RNA     ) q << "RNA";
+   else                             q << "Other";
+
+   q << sequence;
+   q << QString::number( vbar, 'f', 4 );
+   q << description;
+
+   QString spectrum = "260:" + QString::number( e260, 'f', 4 ) + 
+                     ";280:" + QString::number( e280, 'f', 4 );
+   q << spectrum;
+
+   // Molecular weight
+        if ( analyte_t == PROTEIN )      q << le_protein_mw->text();
+   else if ( analyte_t == CARBOHYDRATE ) q << "0.0";
+   else // DNA / RNA 
+   { 
+      double mw = le_nucle_mw->text().toDouble();
+      q << QString::number( mw, 'f', 4 );
+   }
+
+   status_query( q );
+
+   if ( ! database_ok( db ) ) return;
+
+   QMessageBox::information( this,
+      tr( "Analyte Updated" ),
+      tr( "The analyte has been updated in the database." ) );
 }
 
-void US_Analyte::del_peptide( void )
+void US_Analyte::delete_db( void )
 {
-   QMessageBox::information( this, "Under Construction", "Not implemented yet." );
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   QStringList q;
+   q << "delete_analyte" << analyteID;
+   status_query( q );
+
+   if ( ! database_ok( db ) ) return;
+
+   QMessageBox::information( this,
+      tr( "Analyte Deleted" ),
+      tr( "The analyte has been deleted from the database." ) );
+
+   reset();
 }
 
-void US_Analyte::download_seq( void )
+void US_Analyte:: status_query( const QStringList& q )
 {
-   QMessageBox::information( this, "Under Construction", "Not implemented yet." );
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   db.statusQuery( q );
+
+   if ( database_ok( db ) ) return;
+   if ( db.lastErrno() != 0 )
+   {
+      QMessageBox::information( this,
+            tr( "Database Error" ),
+            tr( "The following errro was returned:\n" ) + db.lastError() );
+      return; 
+   }
 }
 
-void US_Analyte::more_info( void )
+/*  Class US_SequenceEditor */
+
+US_SequenceEditor::US_SequenceEditor( const QString& sequence ) 
+   : US_WidgetsDialog( 0, 0 )
 {
-   QMessageBox::information( this, "Under Construction", "Not implemented yet." );
+   setWindowTitle( tr( "Sequence Management" ) );
+   setPalette( US_GuiSettings::frameColor() );
+   setAttribute( Qt::WA_DeleteOnClose );
+
+   QGridLayout* main = new QGridLayout( this );
+   main->setSpacing         ( 2 );
+   main->setContentsMargins ( 2, 2, 2, 2 );
+
+   edit = new US_Editor( US_Editor::LOAD, false );
+   edit->e->setAcceptRichText( false );
+   edit->e->setText( sequence );
+   main->addWidget( edit, 0, 0, 5, 2 );
+
+   QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
+   connect( pb_cancel, SIGNAL( clicked() ), SLOT( close() ) );
+   main->addWidget( pb_cancel, 5, 0 );
+
+   QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( accept() ) );
+   main->addWidget( pb_accept, 5, 1 );
 }
-*/
+
+void US_SequenceEditor::accept( void ) 
+{
+   emit sequenceChanged( edit->e->toPlainText() );
+   close();
+}
 
