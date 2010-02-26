@@ -23,8 +23,20 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    int row = 0;
 
    QStringList DB = US_Settings::defaultDB();
+   QString     db_name;
 
-   QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ), -1 );
+   if ( DB.size() < 5 )
+   {
+      QMessageBox::warning( this,
+         tr( "Attention" ),
+         tr( "There is no default database set." ) );
+      
+      db_name = "No Default Set";
+   }
+   else
+      db_name = DB.at( 0 );
+
+   QLabel* lb_DB = us_banner( tr( "Database: " ) + db_name, -1 );
    main->addWidget( lb_DB, row++, 0, 1, 3 );
 
    QGridLayout* protein = us_radiobutton( tr( "Protein"      ), rb_protein, true );
