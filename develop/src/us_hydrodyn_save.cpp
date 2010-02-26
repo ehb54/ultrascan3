@@ -453,8 +453,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.D20w);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
-         field_to_precision[field[i]] = 2;
-         field_to_format[field[i]] = 'f';
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'e';
          continue;
       }
 
@@ -462,8 +462,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
       {
          field_to_save_data[field[i]] = (void *)&(save->data.results.D20w_sd);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
-         field_to_precision[field[i]] = 2;
-         field_to_format[field[i]] = 'f';
+         field_to_precision[field[i]] = 3;
+         field_to_format[field[i]] = 'e';
          continue;
       }
 
