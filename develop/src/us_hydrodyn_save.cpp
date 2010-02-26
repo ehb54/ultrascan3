@@ -607,8 +607,8 @@ US_Hydrodyn_Save::US_Hydrodyn_Save(
          field_to_save_data[field[i]] = (void *)&(save->data.use_bead_mass);
          field_to_save_data_type[field[i]] = DT_DOUBLE;
          field_to_precision[field[i]] = 2;
-         continue;
          field_to_format[field[i]] = 'f';
+         continue;
       }
 
       if ( field[i] == "con_factor" )
@@ -1224,9 +1224,23 @@ QString US_Hydrodyn_Save::header()
    for ( unsigned int i = 0; i < save->field.size(); i++ )
    {
       this_field = descriptive_name[field_to_pos[save->field[i]]].replace("\"", "''");
-      result += QString("%1\"%2\"")
-         .arg(i ? "," : "")
-         .arg(this_field);
+      if ( this_field.contains("[ X, Y, Z ]") ||
+           this_field.contains("[ X:Z, X:Y, Y:Z ]") )
+      {
+         QString field_x = this_field;
+         QString field_y = this_field;
+         QString field_z = this_field;
+
+         result += QString("%1\"%2\",\"%3\",\"%4\"")
+            .arg(i ? "," : "")
+            .arg(field_x.replace("[ X, Y, Z ]","X").replace("[ X:Z, X:Y, Y:Z ]","X:Z"))
+            .arg(field_y.replace("[ X, Y, Z ]","Y").replace("[ X:Z, X:Y, Y:Z ]","X:Y"))
+            .arg(field_z.replace("[ X, Y, Z ]","Z").replace("[ X:Z, X:Y, Y:Z ]","Y:Z"));
+      } else {
+         result += QString("%1\"%2\"")
+            .arg(i ? "," : "")
+            .arg(this_field);
+      }
    }
    printf("header() <%s>\n", result.ascii());
    return result + "\n";
@@ -1277,7 +1291,7 @@ QString US_Hydrodyn_Save::dataString(save_data *data)
             .arg(*((unsigned int *)(field_to_save_data[save->field[i]])));
          break;
       case DT_TRIPLE_DOUBLE :
-         result += QString("%1(%2,%3,%4)")
+         result += QString("%1%2,%3,%4")
             .arg(i ? "," : "")
             .FARG(*((double *)(field_to_save_data[save->field[i]])))
             .FARG(*((double *)(field_to_save_data[save->field[i]]) + 1))
