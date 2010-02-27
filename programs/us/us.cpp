@@ -166,7 +166,7 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   QMenu* database    = new QMenu( tr( "&Database" ), this );
   addMenu(  P_INVESTIGATOR, tr( "Manage Investigator &Data" ), database );
   addMenu(  P_BUFFER      , tr( "Manage &Buffer Data"       ), database );
-  addMenu(  P_VBAR        , tr( "Manage &Peptide Sequences" ), database );
+  addMenu(  P_VBAR        , tr( "Manage &Analyte Sequences" ), database );
 
   
 
@@ -503,9 +503,9 @@ void US_Win::help( int index )
 
     default:
       
-      if (  h[i].type == URL )
-        showhelp.show_URL( h[i].url );
-      else
+      //if (  h[i].type == URL )
+      //  showhelp.show_URL( h[i].url );
+      //else
         showhelp.show_help( h[i].url );
 
       statusBar()->showMessage( tr( "Loaded " ) + h[i].loadMsg.toAscii() );
