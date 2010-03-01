@@ -257,6 +257,13 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
    cb_model->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cb_model, SIGNAL(clicked()), SLOT(set_model()));
 
+   cb_rev_wl_axis = new QCheckBox(this);
+   cb_rev_wl_axis->setText(tr(" Reverse"));
+   cb_rev_wl_axis->setChecked(false);
+   cb_rev_wl_axis->setEnabled(true);
+   cb_rev_wl_axis->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_rev_wl_axis->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+
    pb_save = new QPushButton(tr("Save Binary Data"), this);
    Q_CHECK_PTR(pb_save);
    pb_save->setEnabled(false);
@@ -1249,7 +1256,11 @@ void US_ViewMWL::setup_GUI()
    controlGrid->addWidget(lbl_xscaling, j, 0);
    controlGrid->addWidget(cnt_xscaling, j, 1);
    j++;
-   controlGrid->addWidget(lbl_yscaling, j, 0);
+   // controlGrid->addWidget(lbl_yscaling, j, 0);
+   QHBoxLayout *hbl = new QHBoxLayout;
+   hbl->addWidget(lbl_yscaling);
+   hbl->addWidget(cb_rev_wl_axis);
+   controlGrid->addLayout(hbl, j, 0);
    controlGrid->addWidget(cnt_yscaling, j, 1);
    j++;
    controlGrid->addWidget(lbl_zscaling, j, 0);
@@ -1574,8 +1585,8 @@ void US_ViewMWL::update(unsigned int time)
          l++;
       }
       //      cout << "rows: " << rows << ", columns: " << columns << endl;
-      controlvar_3d.maxx = min_lambda;
-      controlvar_3d.minx = max_lambda;
+      controlvar_3d.maxx = cb_rev_wl_axis->isChecked() ? min_lambda : max_lambda;
+      controlvar_3d.minx = cb_rev_wl_axis->isChecked() ? max_lambda : min_lambda;
       controlvar_3d.maxy = max_radius;
       controlvar_3d.miny = min_radius;
       controlvar_3d.xscaling = xscaling;
@@ -1588,17 +1599,34 @@ void US_ViewMWL::update(unsigned int time)
       ytitle = "Wavelength (nm)";
       ztitle = "Absorbance";
 
-
-      if (widget3d_flag)
+      bool raise = widget3d_flag;
+      if ( widget3d_flag )
       {
          mainwindow->setParameters(xtitle, ytitle, ztitle, absorbance, &controlvar_3d);
-         mainwindow->raise();
       }
       else
       {
          mainwindow = new Mesh2MainWindow(&widget3d_flag, xtitle, ytitle, ztitle, absorbance, &controlvar_3d);
+      }
+
+      if ( cb_rev_wl_axis->isChecked() )
+      {
+         mainwindow->dataWidget->coordinates()->axes[Y1].setScale(new ReversedScale);
+         mainwindow->dataWidget->coordinates()->axes[Y2].setScale(new ReversedScale);
+         mainwindow->dataWidget->coordinates()->axes[Y3].setScale(new ReversedScale);
+         mainwindow->dataWidget->coordinates()->axes[Y4].setScale(new ReversedScale);
+      } else {
+         mainwindow->dataWidget->coordinates()->setStandardScale();
+      }
+      mainwindow->dataWidget->updateGL();
+
+      if ( raise )
+      {
+         mainwindow->raise();
+      } else {
          mainwindow->show();
       }
+
       QPixmap p;
       for (i=0; i<rows; i++)
       {

@@ -126,6 +126,7 @@ class US_EXTERN US_ViewMWL : public QFrame
       QCheckBox *cb_absorbance;
       QCheckBox *cb_pngs;
       QCheckBox *cb_model;
+      QCheckBox *cb_rev_wl_axis;
 
       QwtCounter *cnt_max_lambda;
       QwtCounter *cnt_min_lambda;
@@ -198,6 +199,23 @@ class US_EXTERN US_ViewMWL : public QFrame
       void setup_GUI();
       void closeEvent(QCloseEvent *);
 
+};
+
+using namespace Qwt3D;
+
+class ReversedScale : public LinearScale
+{
+ public:
+   Scale* clone() const {return new ReversedScale;}
+   QString ticLabel(unsigned int idx) const
+   {
+      unsigned int s = majors_p.size();
+      if ( idx < s )
+      {
+         return QString::number(majors_p[s - idx - 1]);
+      }
+      return QString("");
+   }
 };
 
 #endif
