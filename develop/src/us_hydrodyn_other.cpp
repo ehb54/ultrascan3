@@ -2436,6 +2436,12 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
    if (fsomo) {
       fprintf(fsomo,
               "\n"
+              "Field contents:\n"
+              "  Line 1: Number of beads, Global partial specific volume\n"
+              "  From line 2 on: X, Y, Z coordinates, Radius, Mass, Color coding, "
+              "Correspondence with original residues, ASA\n"
+
+              "\n"
               "Bead Model Output:\n"
               "  Sequence:                   %s\n"
               "\n"
@@ -2446,7 +2452,6 @@ void US_Hydrodyn::write_bead_model(QString fname, vector<PDB_atom> *model) {
                "include bead-original residue correspondence") :
               "as in original PDB file"
               );
-
       fprintf(fsomo, options_log.ascii());
       fprintf(fsomo, last_abb_msgs.ascii());
       fclose(fsomo);
