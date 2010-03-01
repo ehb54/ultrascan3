@@ -14,7 +14,7 @@
 #include "us_matrix.h"
 #include "us_sleep.h"
 
-#define PA_TMDIS_MS 5000   // default Plotall time per distro in milliseconds
+#define PA_TMDIS_MS 100   // default Plotall time per distro in milliseconds
 
 // main program
 int main( int argc, char* argv[] )
@@ -333,6 +333,14 @@ void US_Pseudo3D_Combine::reset( void )
 // plot the data
 void US_Pseudo3D_Combine::plot_data( void )
 {
+   const char* cdtyp[] = 
+   {
+      "cofs",       "fe",         "sa2d",       "ga_mc",
+      "sa2d_mc",    "ga",         "global",     "sa2d_mw",
+      "ga_mw",      "sa2d_mw_mc", "ga_mw_mc",   "global",
+      "global_mc"
+   };
+
    if ( curr_distr < 0  ||  curr_distr >= system.size() )
    {   // current distro index somehow out of valid range
       int syssiz = system.size();
@@ -352,9 +360,6 @@ void US_Pseudo3D_Combine::plot_data( void )
 
    data_plot->clear();
    data_plot->setCanvasBackground( colormap->color1() ); 
-   QString tstr = tsys->run_name + "." + tsys->cell +
-      tsys->wavelength + "\n" + tsys->method;
-   data_plot->setTitle( tstr );
 
    // set up spectrogram data
    QwtPlotSpectrogram *d_spectrogram = new QwtPlotSpectrogram();
@@ -372,7 +377,10 @@ void US_Pseudo3D_Combine::plot_data( void )
    QwtScaleWidget *rightAxis = data_plot->axisWidget( QwtPlot::yRight );
    rightAxis->setColorBarEnabled( true );
    rightAxis->setColorMap( spec_dat.range(), d_spectrogram->colorMap() );
-   data_plot->setAxisTitle( QwtPlot::yRight, "Frequency" );
+   QwtText zTitle( "Frequency" );
+   zTitle.setFont( QFont( US_GuiSettings::fontFamily(),
+      US_GuiSettings::fontSize(), QFont::Bold ) );
+   data_plot->setAxisTitle( QwtPlot::yRight, zTitle );
    data_plot->setAxisScale( QwtPlot::yRight,
       spec_dat.range().minValue(), spec_dat.range().maxValue() );
    data_plot->enableAxis( QwtPlot::yRight );
@@ -389,6 +397,37 @@ void US_Pseudo3D_Combine::plot_data( void )
       data_plot->setAxisScale( QwtPlot::xBottom, plt_smin, plt_smax );
       data_plot->setAxisScale( QwtPlot::yLeft,   plt_fmin, plt_fmax );
    }
+
+   QString tstr = tsys->run_name + "." + tsys->cell +
+      tsys->wavelength + "\n" + tsys->method;
+   QwtText qwtTitle( tstr );
+   if ( tstr.length() > 40 )
+   {
+      qwtTitle.setFont( QFont( US_GuiSettings::fontFamily(),
+         US_GuiSettings::fontSize()+1, QFont::Bold ) );
+   }
+   data_plot->setTitle( qwtTitle );
+
+   data_plot->replot();
+
+   // automatically save plot image in a PNG file
+   QPixmap plotmap( data_plot->size() );
+   plotmap.fill( US_GuiSettings::plotColor().color( QPalette::Background ) );
+   data_plot->print( plotmap );
+
+   QString ofdir  = US_Settings::reportDir() + "/" + tsys->run_name;
+   QDir dirof( ofdir );
+   if ( !dirof.exists( ) )
+      QDir( US_Settings::reportDir() ).mkdir( tsys->run_name );
+   QString celli  = "." + tsys->cell + tsys->wavelength;
+   QString methi  = QString( cdtyp[tsys->distro_type-1] );
+   methi          = methi + "_pseudo3d_f" + ( plot_s ? "s" : "mw" );
+   if ( tsys->distro_type == 12 )
+      methi          = methi + ".00";
+   QString ofname = ofdir + "/" + methi + celli + ".png";
+//qDebug() << "PNG SAVE ofname=" << ofname;
+
+   plotmap.save( ofname );
 
    data_plot->replot();
 }
@@ -525,6 +564,7 @@ void US_Pseudo3D_Combine::load_distro()
       }
    }
 }
+
 void US_Pseudo3D_Combine::load_distro( const QString& fname )
 {
    // file type table:  FilePartialName, Method, MonteCarlo
