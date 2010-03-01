@@ -1527,8 +1527,8 @@ void US_ViewMWL::update(unsigned int time)
          l++;
       }
       //      cout << "rows: " << rows << ", columns: " << columns << endl;
-      controlvar_3d.maxx = max_lambda;
-      controlvar_3d.minx = min_lambda;
+      controlvar_3d.maxx = min_lambda;
+      controlvar_3d.minx = max_lambda;
       controlvar_3d.maxy = max_radius;
       controlvar_3d.miny = min_radius;
       controlvar_3d.zscaling = zscaling;
