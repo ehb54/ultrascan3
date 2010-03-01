@@ -27,7 +27,10 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
    show_model       = false;
    loading          = true;
    pm               = new US_Pixmap();
-   zscaling         = 10.0;
+   xscaling         = 150;
+   yscaling         = 1.0;
+   zscaling         = 100.0;
+   
 
    lbl_info = new QLabel(tr("Multiwavelength Data Viewer"), this);
    Q_CHECK_PTR(lbl_info);
@@ -84,6 +87,18 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
    lbl_average->setAlignment(AlignLeft|AlignVCenter);
    lbl_average->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
    lbl_average->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+   lbl_xscaling = new QLabel(tr(" 3D x-Scale:"), this);
+   Q_CHECK_PTR(lbl_xscaling);
+   lbl_xscaling->setAlignment(AlignLeft|AlignVCenter);
+   lbl_xscaling->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_xscaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
+
+   lbl_yscaling = new QLabel(tr(" 3D y-Scale:"), this);
+   Q_CHECK_PTR(lbl_yscaling);
+   lbl_yscaling->setAlignment(AlignLeft|AlignVCenter);
+   lbl_yscaling->setPalette( QPalette(USglobal->global_colors.cg_label, USglobal->global_colors.cg_label, USglobal->global_colors.cg_label));
+   lbl_yscaling->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize - 1, QFont::Bold));
 
    lbl_zscaling = new QLabel(tr(" 3D z-Scale:"), this);
    Q_CHECK_PTR(lbl_zscaling);
@@ -146,6 +161,22 @@ US_ViewMWL::US_ViewMWL(QWidget *p, const char *name) : QFrame(p, name)
    cnt_average->setNumButtons(3);
    cnt_average->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
    connect(cnt_average, SIGNAL(valueChanged(double)), SLOT(update_average(double)));
+
+   cnt_xscaling = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_xscaling);
+   cnt_xscaling->setRange(0, 10000, 0.1);
+   cnt_xscaling->setValue(xscaling);
+   cnt_xscaling->setNumButtons(3);
+   cnt_xscaling->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_xscaling, SIGNAL(valueChanged(double)), SLOT(update_xscaling(double)));
+
+   cnt_yscaling = new QwtCounter(this);
+   Q_CHECK_PTR(cnt_yscaling);
+   cnt_yscaling->setRange(0, 10000, 0.1);
+   cnt_yscaling->setValue(yscaling);
+   cnt_yscaling->setNumButtons(3);
+   cnt_yscaling->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   connect(cnt_yscaling, SIGNAL(valueChanged(double)), SLOT(update_yscaling(double)));
 
    cnt_zscaling = new QwtCounter(this);
    Q_CHECK_PTR(cnt_zscaling);
@@ -1215,6 +1246,12 @@ void US_ViewMWL::setup_GUI()
    controlGrid->addWidget(lbl_average, j, 0);
    controlGrid->addWidget(cnt_average, j, 1);
    j++;
+   controlGrid->addWidget(lbl_xscaling, j, 0);
+   controlGrid->addWidget(cnt_xscaling, j, 1);
+   j++;
+   controlGrid->addWidget(lbl_yscaling, j, 0);
+   controlGrid->addWidget(cnt_yscaling, j, 1);
+   j++;
    controlGrid->addWidget(lbl_zscaling, j, 0);
    controlGrid->addWidget(cnt_zscaling, j, 1);
    j++;
@@ -1309,6 +1346,16 @@ void US_ViewMWL::update_min_time(double val)
 void US_ViewMWL::update_average(double val)
 {
    average = (unsigned int) val;
+}
+
+void US_ViewMWL::update_xscaling(double val)
+{
+   xscaling = (float) val;
+}
+
+void US_ViewMWL::update_yscaling(double val)
+{
+   yscaling = (float) val;
 }
 
 void US_ViewMWL::update_zscaling(double val)
@@ -1531,6 +1578,8 @@ void US_ViewMWL::update(unsigned int time)
       controlvar_3d.minx = max_lambda;
       controlvar_3d.maxy = max_radius;
       controlvar_3d.miny = min_radius;
+      controlvar_3d.xscaling = xscaling;
+      controlvar_3d.yscaling = yscaling;
       controlvar_3d.zscaling = zscaling;
       controlvar_3d.meshx = rows;
       controlvar_3d.meshy = columns;
@@ -1781,6 +1830,8 @@ void US_ViewMWL::update(unsigned int time, QString imageDir)
    controlvar_3d.minx = min_lambda;
    controlvar_3d.maxy = max_radius;
    controlvar_3d.miny = min_radius;
+   controlvar_3d.xscaling = xscaling;
+   controlvar_3d.yscaling = yscaling;
    controlvar_3d.zscaling = zscaling;
    controlvar_3d.meshx = rows;
    controlvar_3d.meshy = columns;

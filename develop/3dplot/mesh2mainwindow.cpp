@@ -367,8 +367,22 @@ Mesh2MainWindow::Mesh2MainWindow(bool *widget_flag, QString tmp_xtitle, QString 
 
    dataWidget->loadFromData(data, (*sa2d_ctrl_vars).meshx, (*sa2d_ctrl_vars).meshy,
                             (*sa2d_ctrl_vars).miny, (*sa2d_ctrl_vars).maxy, (*sa2d_ctrl_vars).minx, (*sa2d_ctrl_vars).maxx );
-   x_scale = (*sa2d_ctrl_vars).maxx/(*sa2d_ctrl_vars).maxy;
-   y_scale = 1;
+	if ((*sa2d_ctrl_vars).xscaling != 0)
+	{
+		x_scale = (*sa2d_ctrl_vars).xscaling;
+	}
+	else
+	{
+   	x_scale = (*sa2d_ctrl_vars).maxx/(*sa2d_ctrl_vars).maxy;
+	}
+	if ((*sa2d_ctrl_vars).yscaling != 0)
+	{
+		y_scale = (*sa2d_ctrl_vars).yscaling;
+	}
+	else
+	{
+   	y_scale = 1;
+	}
    z_scale = (*sa2d_ctrl_vars).zscaling;
 
    dataWidget->coordinates()->axes[X1].setLabelString(QString(xtitle));
@@ -419,8 +433,22 @@ void Mesh2MainWindow::setParameters(QString xtitle, QString ytitle, QString ztit
    //   dataWidget->setMinZ(-0.1);
    dataWidget->loadFromData(data, (*sa2d_ctrl_vars).meshx, (*sa2d_ctrl_vars).meshy,
                             (*sa2d_ctrl_vars).miny, (*sa2d_ctrl_vars).maxy, (*sa2d_ctrl_vars).minx, (*sa2d_ctrl_vars).maxx );
-   x_scale = (*sa2d_ctrl_vars).maxx/(*sa2d_ctrl_vars).maxy;
-   y_scale = 1;
+	if ((*sa2d_ctrl_vars).xscaling != 0)
+	{
+		x_scale = (*sa2d_ctrl_vars).xscaling;
+	}
+	else
+	{
+   	x_scale = (*sa2d_ctrl_vars).maxx/(*sa2d_ctrl_vars).maxy;
+	}
+	if ((*sa2d_ctrl_vars).yscaling != 0)
+	{
+		y_scale = (*sa2d_ctrl_vars).yscaling;
+	}
+	else
+	{
+   	y_scale = 1;
+	}
    z_scale = (*sa2d_ctrl_vars).zscaling;
 
    dataWidget->coordinates()->axes[X1].setLabelString(QString(xtitle));

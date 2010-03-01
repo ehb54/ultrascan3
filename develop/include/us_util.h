@@ -312,7 +312,7 @@ struct SA2d_control_variables
   double min_s, max_s, min_ff0, max_ff0, ff0;
   unsigned int resolution_s, resolution_ff0, points, meshx, meshy;
   bool fit_negBaseline, fit_posBaseline, plot_id[5][5];
-  double  minx, miny, maxx, maxy, maxz, zscaling, alpha, beta;
+  double  minx, miny, maxx, maxy, maxz, xscaling, yscaling, zscaling, alpha, beta;
 };
 
 

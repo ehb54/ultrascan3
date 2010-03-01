@@ -90,7 +90,7 @@ class US_EXTERN US_ViewMWL : public QFrame
       vector <struct mfem_data> model_vector;
       vector <struct element_3D> abs_val;
       vector <int> lambda_flag;
-      float zscaling;
+      float xscaling, yscaling, zscaling;
 
       bool widget3d_flag, pngs;
       US_Pixmap *pm;
@@ -112,6 +112,8 @@ class US_EXTERN US_ViewMWL : public QFrame
       QLabel *lbl_update;
       QLabel *lbl_update2;
       QLabel *lbl_average;
+      QLabel *lbl_xscaling;
+      QLabel *lbl_yscaling;
       QLabel *lbl_zscaling;
 
       QCheckBox *cb_set_wavelength;
@@ -132,6 +134,8 @@ class US_EXTERN US_ViewMWL : public QFrame
       QwtCounter *cnt_max_time;
       QwtCounter *cnt_min_time;
       QwtCounter *cnt_average;
+      QwtCounter *cnt_xscaling;
+      QwtCounter *cnt_yscaling;
       QwtCounter *cnt_zscaling;
 
       QPushButton *pb_save;
@@ -160,6 +164,8 @@ class US_EXTERN US_ViewMWL : public QFrame
       void update_max_radius(double);
       void update_min_radius(double);
       void update_average(double);
+      void update_xscaling(double);
+      void update_yscaling(double);
       void update_zscaling(double);
 
       void set_radius();

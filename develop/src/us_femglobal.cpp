@@ -534,7 +534,7 @@ int US_FemGlobal::read_simulationParameters(struct SimulationParameters *sp, QSt
    vector <QString> qsv;
    QFile f;
    f.setName(filename);
-   //cout << "FILE NAME: " << filename << endl;
+   cout << "FILE NAME: " << filename << endl;
    if (f.open(IO_ReadOnly | IO_Translate))
    {
       QTextStream ts(&f);
