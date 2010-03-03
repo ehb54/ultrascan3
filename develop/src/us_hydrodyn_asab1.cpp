@@ -22,7 +22,7 @@
 // #include "num.h"
 
 #include "../include/us_hydrodyn_asab1.h"
-
+#include <float.h>
 // #include "dati.h"
 // #include "var.h"
 // #define  NMAX   30000      /* max number of atoms in the molecule */
@@ -1108,7 +1108,7 @@ us_hydrodyn_asab1_main(vector <PDB_atom *> use_active_atoms,
          float sa = 4.0f * M_PI * active_atoms[l]->radius * active_atoms[l]->radius;
          float sapp = 4.0f * M_PI * (rprobe + active_atoms[l]->radius) * (rprobe + active_atoms[l]->radius);
 
-         if ( isnan(asa[l]) )
+         if ( IsNaN(asa[l]) )
          {
             printf("ASA WARNING NAN begin replaced by zero: atom %u asa %f > sa+p %f (sa %f)\n",
                    l,

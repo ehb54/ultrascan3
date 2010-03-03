@@ -5,6 +5,7 @@
 #ifndef WIN32
 #   include <unistd.h>
 #else
+#   include <direct.h>
 #   define chdir _chdir
 #endif
 
