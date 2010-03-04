@@ -13,7 +13,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
   Q_OBJECT
 
    public:
-      US_ExpInfo( void );
+      US_ExpInfo( US_Convert::ExperimentInfo& );
 
    signals:
       void updateExpInfoSelection( US_Convert::ExperimentInfo& );

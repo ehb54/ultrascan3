@@ -1124,7 +1124,7 @@ void US_Convert::cancel_reference( void )
 
 void US_Convert::getExpInfo( void )
 {
-   US_ExpInfo* expInfo = new US_ExpInfo();
+   US_ExpInfo* expInfo = new US_ExpInfo( ExpData );
 
    connect( expInfo, SIGNAL( updateExpInfoSelection( US_Convert::ExperimentInfo& ) ),
             this   , SLOT  ( updateExpInfo         ( US_Convert::ExperimentInfo& ) ) );
