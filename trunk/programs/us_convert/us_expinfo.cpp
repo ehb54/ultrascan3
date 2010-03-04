@@ -3,10 +3,11 @@
 #include "us_expinfo.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_db.h"
+#include "us_passwd.h"
+#include "us_db2.h"
 #include "us_investigator.h"
 
-US_ExpInfo::US_ExpInfo() : US_WidgetsDialog( 0, 0 )
+US_ExpInfo::US_ExpInfo( US_Convert::ExperimentInfo& eData ) : US_WidgetsDialog( 0, 0 )
 {
    setWindowTitle( tr( "Experiment Information" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -103,34 +104,41 @@ US_ExpInfo::US_ExpInfo() : US_WidgetsDialog( 0, 0 )
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
    buttons->addWidget( pb_cancel );
 
+   // Show previous values, if any
+   if ( eData.invID > 0 )
+   {
+      le_investigator->setText( "InvID (" + QString::number( eData.invID ) + "): " +
+               eData.lastName + ", " + eData.firstName );
+      for ( uint i = 0; i < sizeof( experimentTypes); i++ )
+      {
+         if ( experimentTypes[ i ] == eData.expType )
+         {
+            cb_expType->setCurrentIndex( i );
+            break;
+         }
+      }
+      cb_rotor       ->setCurrentIndex( eData.rotor      );
+      le_label       ->setText        ( eData.label      );
+      te_comment     ->setText        ( eData.comments   );
+   }
+
    main->addLayout( buttons, row++, 0, 1, 2 );
 }
 
 bool US_ExpInfo::rotorInfo( void )
 {
-   QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
-   QFile f( home + "/etc/rotor.dat" );
+   // Connect to the db
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
 
-   if ( ! f.open( QIODevice::ReadOnly | QIODevice::Text ) ) return false;
-   QTextStream ts( &f );
+   QStringList q( "get_rotor_names" );
+   db.query( q );
 
    rotorTypes.clear();
-   while ( ! ts.atEnd() )
-   {
-      // Read a line at a time
-      QString line      = ts.readLine();
+   while ( db.next() )
+      rotorTypes << db.value( 1 ).toString();
 
-      // Make sure we skip the comments
-      if ( line[ 0 ] != '#' ) 
-      {
-         QStringList parts = line.split(" ", QString::SkipEmptyParts );
-         QString rotorName = parts[ 1 ].toAscii();
-
-         rotorTypes << rotorName;
-      }
-   }
-
-   f.close();
    return true;
 }
 
@@ -140,7 +148,7 @@ void US_ExpInfo::reset( void )
 
 void US_ExpInfo::accept( void )
 {
-   US_Convert::ExperimentInfo d;
+   US_Convert::ExperimentInfo eData;
 
    // First get the invID
    QString invInfo = le_investigator->text();
@@ -154,23 +162,23 @@ void US_ExpInfo::accept( void )
 
    QStringList components = invInfo.split( ")", QString::SkipEmptyParts );
    components = components[0].split( "(", QString::SkipEmptyParts );
-   d.invID = components.last().toInt();
+   eData.invID = components.last().toInt();
  
    // Get the investigator name too
    components  = invInfo.split( ": ", QString::SkipEmptyParts );
    components  = components.last().split( ", ", QString::SkipEmptyParts );
-   d.lastName  = components.first().toAscii();
-   d.firstName = components.last().toAscii();
+   eData.lastName  = components.first().toAscii();
+   eData.firstName = components.last().toAscii();
 
-   d.expType      = cb_expType       ->currentText();
-   d.rotor        = cb_rotor         ->currentIndex();
+   eData.expType      = cb_expType       ->currentText();
+   eData.rotor        = cb_rotor         ->currentIndex();
 
-   QDateTime time = QDateTime::currentDateTime();
-   d.date         = time.toString( "yyyy-MM-dd" );
-   d.label        = le_label         ->text();
-   d.comments     = te_comment       ->toPlainText();
+   QDateTime time     = QDateTime::currentDateTime();
+   eData.date         = time.toString( "yyyy-MM-dd" );
+   eData.label        = le_label         ->text();
+   eData.comments     = te_comment       ->toPlainText();
 
-   emit updateExpInfoSelection( d );
+   emit updateExpInfoSelection( eData );
    close();
 }
 
