@@ -6,11 +6,14 @@
 #   include <unistd.h>
 #else
 #   include <direct.h>
-#   define chdir _chdir
+#   define BW_LISTBOX
 #endif
 
-void QListBoxText::paint( QPainter *painter )
-{
+// #define BW_LISTBOX
+
+#if !defined(BW_LISTBOX)
+  void QListBoxText::paint( QPainter *painter )
+  {
     int itemHeight = height( listBox() );
     QFontMetrics fm = painter->fontMetrics();
     int yPos = ( ( itemHeight - fm.height() ) / 2 ) + fm.ascent();
@@ -23,7 +26,8 @@ void QListBoxText::paint( QPainter *painter )
     } else {
        painter->drawText( 3, yPos, text() );
     }
-}
+  }
+#endif
 
 US_Hydrodyn_Batch::US_Hydrodyn_Batch(
                                      batch_info *batch, 
@@ -419,14 +423,25 @@ void US_Hydrodyn_Batch::setupGUI()
 
    status_color.clear();
    status_color.resize(8);
-   status_color[0] = "black~white~";
-   status_color[1] = "red~pink~File missing: ";
-   status_color[2] = "dark orange~yellow~Screening: ";
-   status_color[3] = "dark green~light green~Screen done: ";
-   status_color[4] = "red~pink~Screen failed: ";
-   status_color[5] = "dark orange~yellow~Processing: ";
-   status_color[6] = "dark blue~light blue~Processing done:";
-   status_color[7] = "red~pink~Processing failed: ";
+#if defined(BW_LISTBOX)
+   status_color[0] = "";
+   status_color[1] = "File missing: ";
+   status_color[2] = "Screening: ";
+   status_color[3] = "Screen done: ";
+   status_color[4] = "Screen failed: ";
+   status_color[5] = "Processing: ";
+   status_color[6] = "Processing done: ";
+   status_color[7] = "Processing failed: ";
+#else
+   status_color[0] = "<black~white~>";
+   status_color[1] = "<red~pink~File missing: >";
+   status_color[2] = "<dark orange~yellow~Screening: >";
+   status_color[3] = "<dark green~light green~Screen done: >";
+   status_color[4] = "<red~pink~Screen failed: >";
+   status_color[5] = "<dark orange~yellow~Processing: >";
+   status_color[6] = "<dark blue~light blue~Processing done: >";
+   status_color[7] = "<red~pink~Processing failed: >";
+#endif
 
    check_for_missing_files(true);
    update_enables();
@@ -695,7 +710,7 @@ void US_Hydrodyn_Batch::screen()
             return;
          }
          status[file] = 2; // screening now
-         lb_files->changeItem(QString("<%1>%2").arg(status_color[status[file]]).arg(file), i);
+         lb_files->changeItem(QString("%1%2").arg(status_color[status[file]]).arg(file), i);
          lb_files->setSelected(i, false);
          qApp->processEvents();
          if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
@@ -714,7 +729,7 @@ void US_Hydrodyn_Batch::screen()
             editor->setColor("red");
             editor->append(QString(tr("Screening: %1 FAILED.").arg(file)));
          }
-         lb_files->changeItem(QString("<%1>%2").arg(status_color[status[file]]).arg(file), i);
+         lb_files->changeItem(QString("%1%2").arg(status_color[status[file]]).arg(file), i);
          lb_files->setSelected(i, result);
          editor->setColor(save_color);
       }
@@ -925,7 +940,7 @@ void US_Hydrodyn_Batch::start()
             return;
          }
          status[file] = 5; // processing now
-         lb_files->changeItem(QString("<%1>%2").arg(status_color[status[file]]).arg(file), i);
+         lb_files->changeItem(QString("%1%2").arg(status_color[status[file]]).arg(file), i);
          lb_files->setSelected(i, false);
          qApp->processEvents();
          if ( file.contains(QRegExp(".(pdb|PDB)$")) ) 
@@ -1006,14 +1021,14 @@ void US_Hydrodyn_Batch::start()
             editor->setColor("red");
             editor->append(QString(tr("Screening: %1 FAILED.").arg(file)));
          }
-         lb_files->changeItem(QString("<%1>%2").arg(status_color[status[file]]).arg(file), i);
+         lb_files->changeItem(QString("%1%2").arg(status_color[status[file]]).arg(file), i);
          lb_files->setSelected(i, result);
          editor->setColor(save_color);
       }
    }
    if ( save_batch_active )
    {
-      chdir(((US_Hydrodyn *)us_hydrodyn)->somo_dir);
+      QDir::setCurrent(((US_Hydrodyn *)us_hydrodyn)->somo_dir);
       save_batch_active = false;
 
       vector < save_data > stats;
@@ -1197,7 +1212,18 @@ void US_Hydrodyn_Batch::dropEvent(QDropEvent *event)
 
 QString US_Hydrodyn_Batch::get_file_name(int i)
 {
+#if defined(BW_LISTBOX)
+   return lb_files->item(i)->text().replace(QRegExp(
+                                                    "^(File missing|"
+                                                    "Screening|"
+                                                    "Screen done|"
+                                                    "Screen failed|"
+                                                    "Processing|"
+                                                    "Processing done|"
+                                                    "Processing failed): "),"");
+#else
    return lb_files->item(i)->text().replace(QRegExp("<.*>"),"");
+#endif
 }   
 
 void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
@@ -1230,7 +1256,7 @@ void US_Hydrodyn_Batch::check_for_missing_files(bool display_messages)
             editor->setColor(save_color);
          }
       }
-      lb_files->changeItem(QString("<%1>%2").arg(status_color[status[f]]).arg(f), i);
+      lb_files->changeItem(QString("%1%2").arg(status_color[status[f]]).arg(f), i);
       lb_files->setSelected(i, is_selected);
    }
    lb_files->setCurrentItem(item);
