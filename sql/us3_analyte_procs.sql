@@ -85,7 +85,7 @@ BEGIN
     IF ( (p_ID != 0) && (p_ID != @US3_ID) ) THEN
       -- Uh oh, can't do that
       SET @US3_LAST_ERRNO = @NOTPERMITTED;
-      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view this analyte';
+      SET @US3_LAST_ERROR = 'MySQL: you do not have permission to view those analytes';
      
     ELSE
       -- This person is asking about his own analytes
