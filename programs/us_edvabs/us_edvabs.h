@@ -29,9 +29,9 @@ class US_EXTERN US_Edvabs : public US_Widgets
             QList< QPointF > changes;
       };
 
-      QList< edits >              changed_points;
-      US_DataIO::rawData          data;
-      QList< US_DataIO::rawData > allData;
+      QList< edits >                changed_points;
+      US_DataIO::rawData            data;
+      QVector< US_DataIO::rawData > allData;
 
       bool               changes_made;
       bool               spikes;
