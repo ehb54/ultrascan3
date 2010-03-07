@@ -255,6 +255,21 @@ QwtCounter* US_Widgets::us_counter( int buttons, double low, double high,
                                     double value )
 {
   QwtCounter* counter = new QwtCounter;
+#ifdef Q_WS_MAC
+  QList< QObject* > children = counter->children();
+  QStyle *btnstyle = new QPlastiqueStyle();
+
+  for ( int jj = 0; jj < children.size(); jj++ )
+  {
+     QWidget* cwidg = (QWidget*)children.at( jj );
+     QString clname = cwidg->metaObject()->className();
+
+     if ( !clname.isEmpty()  &&  clname.contains( "Button" ) )
+     {
+        cwidg->setStyle( btnstyle );
+     }
+  }
+#endif
   counter->setNumButtons( buttons );
   counter->setRange     ( low, high );
   counter->setValue     ( value );
