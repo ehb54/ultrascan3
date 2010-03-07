@@ -1,4 +1,4 @@
-//! \file us_buffer.cpp
+//! \file us_buffer_gui.cpp
 #include "us_buffer_gui.h"
 #include "us_gui_settings.h"
 #include "us_settings.h"
