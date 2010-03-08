@@ -24,7 +24,7 @@
 #include "../include/us_hydrodyn_asab1.h"
 #include <float.h>
 #if defined(WIN32)
-#  define isnan IsNaN
+#  define isnan _isnan
 #endif
 
 // #include "dati.h"
