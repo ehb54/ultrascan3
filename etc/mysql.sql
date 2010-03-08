@@ -1,8 +1,8 @@
--- MySQL dump 10.10
+-- MySQL dump 10.11
 --
 -- Host: localhost    Database: cauma
 -- ------------------------------------------------------
--- Server version	5.0.22-log
+-- Server version	5.0.45-log
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -610,9 +610,9 @@ CREATE TABLE `tblAuth` (
   `Signup` datetime NOT NULL default '0000-00-00 00:00:00',
   `LastLogin` datetime NOT NULL default '0000-00-00 00:00:00',
   `Userlevel` tinyint(4) NOT NULL default '0',
-  `ClusterAuth` varchar(255) NOT NULL default 'bcf:alamo:laredo:lonestar',
+  `ClusterAuth` varchar(255) NOT NULL default 'bcf:alamo:laredo:lonestar:bigred:steele:queenbee',
+  `AdvanceLevel` int(11) NOT NULL default 0,
   `account_activity_changed` date default NULL,
-  `AdvanceLevel` int(11) default 0,
   PRIMARY KEY  (`InvestigatorID`),
   KEY `Invid` (`InvestigatorID`),
   CONSTRAINT `0_1307` FOREIGN KEY (`InvestigatorID`) REFERENCES `tblInvestigators` (`InvID`) ON DELETE CASCADE,
@@ -812,7 +812,7 @@ CREATE TABLE `tblExpData` (
   `Path` varchar(250) default NULL,
   `Date` varchar(15) default NULL,
   `Temperature` float(6,4) default NULL,
-  `Duration` float(6,4) default NULL,
+  `Duration` bigint(20) default NULL,
   `Edit_type` tinyint(1) default NULL,
   `Rotor` tinyint(1) default NULL,
   `Runid` varchar(100) default NULL,
@@ -1341,3 +1341,4 @@ CREATE TABLE `tblVelocResultData` (
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
+-- Dump completed on 2010-03-08 15:03:09
