@@ -110,7 +110,6 @@ class US_EXTERN US_Hydrodyn : public QFrame
       QCheckBox *cb_overwrite;
 
    private:
-      vector < QString > batch_file;
       bool residue_widget;
       bool atom_widget;
       bool hybrid_widget;
@@ -252,7 +251,7 @@ class US_EXTERN US_Hydrodyn : public QFrame
 #ifdef WIN32
   #pragma warning ( disable: 4251 )
 #endif
-
+      vector < QString >            batch_file;
       vector <PDB_atom>             bead_model;
       vector < vector <PDB_atom> >  bead_models;
       vector < vector <PDB_atom> >  bead_models_as_loaded;
