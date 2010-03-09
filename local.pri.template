@@ -12,7 +12,6 @@ unix {
   QWTPATH     = /usr/local/qwt-5.1.1
   QCAPATH     = /usr/local
   SINGLEDIR   = /opt/qt/addons/qtsingleapplication-2.5_1-commercial/src/
-  MYSQLDIR    = /uar/bin/mysql
 }
 
 win32 {
@@ -28,4 +27,12 @@ win32 {
   }
 
   SINGLEDIR   = C:/Qt/4.4.3/addons/singleapp
+}
+
+macx {
+  QCAPATH     = /opt/local/share/qt/qca
+  QWTPATH     = /usr/local/qwt-5.2.1
+  QWTLIB      = -L$$QWTPATH/lib -lqwt
+  QCALIB      = -L$$QCAPATH/lib -lqca
+  SINGLEDIR   = /opt/local/share/qt/qtsingleapplication-2.6_1-opensource/src
 }

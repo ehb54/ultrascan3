@@ -140,7 +140,7 @@ QString US_Settings::appBaseDir( void )
          base    = base.left( ii );
    }
 #endif
-  return base;
+   return base;
 }
 
 

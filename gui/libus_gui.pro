@@ -7,6 +7,10 @@ win32 {
         LIBS  += ../lib/libus_utils.lib ../lib/libus_db.lib
 }
 
+macx {
+        LIBS   += -L../lib/ -lus_utils -lus_db
+}
+
 QT          += network svg
 
 TRANSLATIONS = $${TARGET}_DE_de.ts

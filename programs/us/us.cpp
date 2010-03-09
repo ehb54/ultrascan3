@@ -4,6 +4,7 @@
 #include "us.h"
 #include "us_license_t.h"
 #include "us_license.h"
+#include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_win_data.cpp"
 #include "us_defines.h"
@@ -274,7 +275,16 @@ void US_Win::launch( int index )
   connect ( process, SIGNAL( finished  ( int, QProcess::ExitStatus ) ),
             this   , SLOT  ( terminated( int, QProcess::ExitStatus ) ) );
 
+#ifndef Q_WS_MAC
   process->start( p[ index ].name );
+#else
+   QString procbin = US_Settings::appBaseDir() + "/bin/" + p[ index ].name;
+   QString procapp = procbin + ".app";
+   if ( QFile( procapp ).exists() )
+      process->start( procapp );
+   else
+      process->start( procbin );
+#endif
 
   if ( ! process->waitForStarted( 10000 ) ) // 10 second timeout
   {
@@ -378,7 +388,8 @@ void US_Win::splash( void )
 
 void US_Win::logo( int width )
 {
-  QString dir = qApp->applicationDirPath() + "/../etc/";  // For now -- later UltraScan sytem dir
+  // splash image directory for now (later, Ultrascan system dir?)
+  QString dir = US_Settings::appBaseDir() + "/etc/";
   QPixmap rawpix( dir + "us3-splash.png" );
 
   int ph = rawpix.height();
@@ -463,6 +474,7 @@ void US_Win::help( int index )
             "   * Weiming Cao (ASTFEM, ASTFEM-RA, Simulator)\n"
             "   * Bruce Dubbs (Win32 Port, Qt4 Port, USLIMS, \n"
             "     GNU code integration)\n"
+            "   * Gary Gorbet (Qt4 and Mac Ports)\n"
             "   * Jeremy Mann (Porting, TIGRE/Globus Integration)\n"
             "   * Yu Ning (Database Functionality)\n"
             "   * Marcelo Nollman (SOMO)\n"
@@ -502,11 +514,15 @@ void US_Win::help( int index )
       break;
 
     default:
-      
-      //if (  h[i].type == URL )
-      //  showhelp.show_URL( h[i].url );
-      //else
+
+      if (  h[i].type == URL )
+      {
+        //showhelp.show_URL( h[i].url );
+      }
+      else
+      {
         showhelp.show_help( h[i].url );
+      }
 
       statusBar()->showMessage( tr( "Loaded " ) + h[i].loadMsg.toAscii() );
       break;

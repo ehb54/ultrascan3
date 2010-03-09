@@ -1,4 +1,4 @@
-include( ../../library.pri )
+include( ../../gui.pri )
 include( $${SINGLEDIR}/qtsingleapplication.pri )
 
 # Not a gui program

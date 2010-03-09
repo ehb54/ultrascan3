@@ -3,6 +3,12 @@ include ( ../library.pri )
 QT          -= gui
 QT          += network
 unix: TARGET = us_utils
+
+macx {
+      TARGET = us_utils
+      LIBS  += -L../lib -lus_gui -lus_db
+}
+
 win32:TARGET = libus_utils
 TRANSLATIONS = $${TARGET}_DE_de.ts
 

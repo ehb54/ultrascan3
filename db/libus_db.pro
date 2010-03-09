@@ -9,6 +9,12 @@ win32 {
        LIBS        += ../lib/libus_utils.lib
 }
 
+macx {
+       TARGET       = us_db
+       LIBS        += -L/usr/local/lib/mysql -lmysqlclient
+       LIBS        += -L../lib -lus_utils
+}
+
 TRANSLATIONS = $${TARGET}_DE_de.ts
 
 HEADERS      = us_db.h      \

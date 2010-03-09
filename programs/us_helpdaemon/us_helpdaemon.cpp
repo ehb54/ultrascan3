@@ -2,10 +2,11 @@
 #include <QtSingleApplication>
 
 #include "us_helpdaemon.h"
+#include "us_settings.h"
 
 US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
 {
-  QString location = qApp->applicationDirPath() + "/manual.qhc";
+  QString location = US_Settings::appBaseDir() + "/bin/manual.qhc";
   QString url      = "qthelp://ultrascaniii/";
   if ( !page.contains( "manual/" ) )
      url.append( "manual/" );
@@ -20,8 +21,12 @@ US_HelpDaemon::US_HelpDaemon( const QString& page, QObject* o ) : QObject( o )
        << url;
 
   debug( args.join( " " ) );
-
+#ifndef Q_WS_MAC
   daemon.start( QLatin1String( "assistant" ), args );
+#else
+  QString assisloc  = US_Settings::appBaseDir() + "/bin/Assistant.app";
+  daemon.start( assisloc.toLatin1(), args );
+#endif
   daemon.waitForStarted();
 
   connect( &daemon, SIGNAL( finished ( int, QProcess::ExitStatus ) ),

@@ -4,7 +4,6 @@
 
 TEMPLATE     = app
 DESTDIR      = ../../bin
-DEFINES     += INTEL
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
 
@@ -15,8 +14,7 @@ unix {
   LIBS       += -lus_utils -lus_gui -lus_db -L../../lib
   LIBS       += -lqca
   LIBS       += -lqwt -L$$QWTPATH/lib
-  LIBS       += -lmysqlclient -L$$MYSQLDIR
-  DEFINES    += LINUX
+  DEFINES    += INTEL LINUX
 
   DEPENDPATH   += ../../gui ../../utils ../../db $$QWTPATH/include ..
   INCLUDEPATH  += ../../gui ../../utils ../../db $$QWTPATH/include ..
@@ -27,6 +25,7 @@ win32 {
   LIBS       += ../../lib/libus_db.lib
   LIBS       += ../../lib/libus_gui.lib
   LIBS       += $$QWTLIB
+  DEFINES     += INTEL
 
   QMAKE_LFLAGS           += /MACHINE:X86 /INCREMENTAL:NO 
   QMAKE_CXXFLAGS_DEBUG   += /wd4996
@@ -36,4 +35,10 @@ win32 {
   INCLUDEPATH  += ../../gui ../../utils ../../db $$QWTPATH/src ..
 }
 
+macx {
+  CONFIG     += i386 ppc
+  LIBS       += -L../../lib -lus_utils -lus_gui -lus_db
+  LIBS       += $$QWTLIB $$QCALIB
+  DEFINES    += MAC OSX 
+}
 
