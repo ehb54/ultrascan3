@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--DOCTYPE UltraScanColorSteps-->
+<colorsteps>
+    <color red="255" green="255" blue="255" points="0"/>
+    <color red="0" green="255" blue="0" points="5"/>
+    <color red="0" green="0" blue="255" points="10"/>
+    <color red="255" green="0" blue="0" points="15"/>
+    <color red="255" green="0" blue="255" points="20"/>
+</colorsteps>
