@@ -9,13 +9,12 @@ CONFIG       += $$DEBUGORRELEASE qt thread warn
 VERSION      = 10.0
 MOC_DIR      = ./moc
 OBJECTS_DIR  = ./obj
-DEFINES     += INTEL
-QT          += sql xml network
+QT          += sql xml
 
 unix {
   DEPENDPATH   += ../gui ../utils ../db $$QWTPATH/include
   INCLUDEPATH  += ../gui ../utils ../db $$QWTPATH/include $$QCAPATH/include/QtCrypto
-  DEFINES      += LINUX
+  DEFINES      += INTEL LINUX
   LIBS         += -luuid
   DESTDIR       = ../lib
 }
@@ -27,8 +26,16 @@ win32 {
   QMAKE_LFLAGS           += /IMPLIB:../lib/$${TARGET}.lib /MACHINE:X86 /INCREMENTAL:NO 
   QMAKE_CXXFLAGS_DEBUG   += /wd4996
   QMAKE_CXXFLAGS_RELEASE += /wd4996
-  DEFINES                += US_MAKE_DLL
+  DEFINES                += INTEL US_MAKE_DLL
   DESTDIR                 = ../bin
 }
 
+macx {
+  CONFIG       += i386 ppc
+  DEPENDPATH   += ../gui ../utils ../db $$QWTPATH/include
+  INCLUDEPATH  += ../gui ../utils ../db $$QWTPATH/include $$QCAPATH/include/QtCrypto
+  DEFINES      += MAC OSX
+  LIBS         += -luuid $$QCALIB $$QWTLIB
+  DESTDIR       = ../lib
+}
 
