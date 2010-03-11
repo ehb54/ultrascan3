@@ -1227,9 +1227,12 @@ void US_Hydrodyn::load_pdb()
       argument.append(QFileInfo(filename).fileName());
       rasmol->setWorkingDirectory(QFileInfo(filename).dirPath());
       rasmol->setArguments(argument);
-      // editor->append(QString("starting rasmol <%1>\n").arg(argument.join("><")));
-      // printf("starting rasmol<%s><s>\n", argument.join("><").ascii());
-      // fflush(stdout);
+      if ( advanced_config.debug_1 )
+      {
+         editor->append(QString("starting rasmol <%1>\n").arg(argument.join("><")));
+         printf("starting rasmol<%s><s>\n", argument.join("><").ascii());
+         fflush(stdout);
+      }
       if (advanced_config.auto_view_pdb &&
           !rasmol->start())
       {

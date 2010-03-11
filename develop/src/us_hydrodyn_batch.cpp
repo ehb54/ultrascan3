@@ -9,6 +9,10 @@
 #   define BW_LISTBOX
 #endif
 
+#if defined(OSX)
+#   define BW_LISTBOX
+#endif
+
 // #define BW_LISTBOX
 
 #if !defined(BW_LISTBOX)
