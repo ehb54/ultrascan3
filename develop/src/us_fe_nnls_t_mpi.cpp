@@ -56,6 +56,7 @@ SimulationParameters use_simulation_parameters;
 static bool multi_experiment_flag;
 
 static vector < double > avg_gasc_rmsd;
+static int fit_meniscus_pos;
 
 static void setup_model_system_1comp() {
    unsigned int i;
@@ -366,16 +367,28 @@ void US_fe_nnls_t::WriteResultsSC(vector <struct mfem_data> experiment, vector<S
       if (f3.open(IO_WriteOnly | IO_Append))
       {
          QTextStream ts(&f3);
-         if (meniscus != 0)
+         if ( fit_meniscus ) // meniscus != 0)
          {
-            ts << QString("Experiment %1, cell %2, wavelength %3, meniscus %7,"
-                          " search parameters %4, rmsd %5, iterations %6\n").
-               arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
-               arg(sve[e].solutes.size()).
-               // arg(sqrt(sve[e].variance)).
-               arg(avg_gasc_rmsd[e] / monte_carlo_iterations).
-               arg(iterations).
-               arg(meniscus + experiment[e].meniscus);
+            if ( !fit_meniscus_pos ) {
+               ts << QString("Experiment %1, Cell %2, Wavelength: %3\n"
+                             "\n"
+                             "Fit:  Meniscus:   RMSD:        Solutes: Iterations:\n"
+                             "\n"
+                             )
+                  .arg(experiment[e].id)
+                  .arg(experiment[e].cell + 1)
+                  .arg(experiment[e].wavelength + 1);
+            }
+            ts <<
+               QString("")
+               .sprintf("%-5d %5.4f      %.5e  %-7u  %-4u\n"
+                        ,fit_meniscus_pos
+                        ,meniscus + experiment[e].meniscus
+                        ,avg_gasc_rmsd[e] / monte_carlo_iterations
+                        ,sve[e].solutes.size()
+                        ,iterations
+                        );
+            fit_meniscus_pos++;
          } else {
             ts << QString("Experiment %1, cell %2, wavelength %3,"
                           " search parameters %4, rmsd %5, iterations %6\n").
@@ -574,36 +587,62 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
       if (f3.open(IO_WriteOnly | IO_Append))
       {
          QTextStream ts(&f3);
-         if (meniscus != 0)
+         if ( fit_meniscus ) // meniscus != 0)
          {
             //   if (!e && experiment.size() > 1) {
             //   ts << QString("Global rmsd %1 meniscus offset %2\n").
             //      arg(sqrt(sve.variance)).
             //      arg(meniscus);
             //   }
+
             if (analysis_type == "GA_SC")
             {
-               ts << QString("Experiment %1, cell %2, wavelength %3, meniscus %7,"
-                             " search parameters %4, rmsd %5, iterations %6\n").
-                  arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
-                  arg(sve[e].solutes.size()).
-                  arg(sqrt(sve[e].variance)).
-                  arg(iterations).
-                  arg(meniscus + experiment[e].meniscus);
+               if ( !fit_meniscus_pos ) {
+                  ts << QString("Experiment %1, Cell %2, Wavelength: %3\n"
+                                "\n"
+                                "Fit:  Meniscus:   RMSD:        Search parameters:  Iterations:\n"
+                                "\n"
+                                )
+                     .arg(experiment[e].id)
+                     .arg(experiment[e].cell + 1)
+                     .arg(experiment[e].wavelength + 1);
+               }
+               ts <<
+                  QString("")
+                  .sprintf("%-5d %5.4f      %.5e  %-7u  %-4u\n"
+                           ,fit_meniscus_pos
+                           ,meniscus + experiment[e].meniscus
+                           ,sqrt(sve[e].variance)
+                           ,sve[e].solutes.size()
+                           ,iterations
+                           );
+
             } else {
-               ts << QString("Experiment %1, cell %2, wavelength %3, meniscus %7,"
-                             " solutes %4, rmsd %5, iterations %6\n").
-                  arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
-                  arg(sve[e].solutes.size()).
-                  arg(sqrt(sve[e].variance) / 
-                      ((analysis_type == "2DSA" ||
-                        analysis_type == "2DSA_MW" ||
-                        analysis_type == "2DSA_RA" ||
-                        analysis_type == "2DSA_MW_RA") ? experiment.size() : 1)
-                      ).
-                  arg(iterations).
-                  arg(meniscus + experiment[e].meniscus);
+               if ( !fit_meniscus_pos ) {
+                  ts << QString("Experiment %1, Cell %2, Wavelength: %3\n"
+                                "\n"
+                                "Fit:  Meniscus:   RMSD:        Solutes: Iterations:\n"
+                                "\n"
+                                )
+                     .arg(experiment[e].id)
+                     .arg(experiment[e].cell + 1)
+                     .arg(experiment[e].wavelength + 1);
+               }
+               ts <<
+                  QString("")
+                  .sprintf("%-5d %5.4f      %.5e  %-7u  %-4u\n"
+                           ,fit_meniscus_pos
+                           ,meniscus + experiment[e].meniscus
+                           ,sqrt(sve[e].variance) / 
+                           ((analysis_type == "2DSA" ||
+                             analysis_type == "2DSA_MW" ||
+                             analysis_type == "2DSA_RA" ||
+                             analysis_type == "2DSA_MW_RA") ? experiment.size() : 1)
+                           ,sve[e].solutes.size()
+                           ,iterations
+                           );
             }
+            fit_meniscus_pos++;
          }
          else
          {
@@ -766,7 +805,7 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment,
       if (f3.open(IO_WriteOnly | IO_Append))
       {
          QTextStream ts(&f3);
-         if (meniscus != 0)
+         if ( fit_meniscus ) // meniscus != 0)
          {
             if (!e && experiment.size() > 1)
             {
@@ -779,18 +818,32 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment,
                       ).
                   arg(meniscus);
             }
-            ts << QString("Experiment %1, cell %2, wavelength %3, meniscus %7,"
-                          " solutes %4, rmsd %5, iterations %6\n").
-               arg(experiment[e].id).arg(experiment[e].cell + 1).arg(experiment[e].wavelength + 1).
-               arg(sv.solutes.size()).
-               arg(sqrt(sv.variances[e]) / 
-                   ((analysis_type == "2DSA" ||
-                     analysis_type == "2DSA_MW" ||
-                     analysis_type == "2DSA_RA" ||
-                     analysis_type == "2DSA_MW_RA") ? experiment.size() : 1)
-                   ).
-               arg(iterations).
-               arg(meniscus + experiment[e].meniscus);
+
+            if ( !fit_meniscus_pos ) {
+               ts << QString("Experiment %1, Cell %2, Wavelength: %3\n"
+                             "\n"
+                             "Fit:  Meniscus:   RMSD:        Solutes: Iterations:\n"
+                             "\n"
+                             )
+                  .arg(experiment[e].id)
+                  .arg(experiment[e].cell + 1)
+                  .arg(experiment[e].wavelength + 1);
+            }
+
+            ts <<
+               QString("")
+               .sprintf("%-5d %5.4f      %.5e  %-7u  %-4u\n"
+                        ,fit_meniscus_pos
+                        ,meniscus + experiment[e].meniscus
+                        ,sqrt(sv.variances[e]) / 
+                        ((analysis_type == "2DSA" ||
+                          analysis_type == "2DSA_MW" ||
+                          analysis_type == "2DSA_RA" ||
+                          analysis_type == "2DSA_MW_RA") ? experiment.size() : 1)
+                        ,sv.solutes.size()
+                        ,iterations
+                        );
+            fit_meniscus_pos++;
          }
          else
          {
@@ -2116,6 +2169,8 @@ int US_fe_nnls_t::run(int status)
 #if defined(GLOBAL_JOB_TIMING)
    gettimeofday(&start_tv, NULL);
 #endif
+   fit_meniscus_pos = 0;
+
    us_randomize();
 
    int iterative = use_iterative;
@@ -4282,6 +4337,7 @@ int US_fe_nnls_t::run(int status)
                         << " jt: "
                         << (1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec - start_tv.tv_usec)
                         << " maxrss: " << maxrss 
+                        << " qid: " << job_id
                         << "\n";
                   }
                   f.close();
