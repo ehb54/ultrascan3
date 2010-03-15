@@ -105,14 +105,14 @@ void US_TripleInfo::reset( void )
 
 void US_TripleInfo::accept( void )
 {
-   US_Convert::TripleInfo d;
+   US_Convert::TripleInfo dataOut;
 
-   d.centerpiece  = cb_centerpiece   ->currentIndex();
+   dataOut.centerpiece  = cb_centerpiece   ->currentIndex();
 
-   d.bufferID     = save_bufferID;
-   d.analyteID    = save_analyteID;
+   dataOut.bufferID     = save_bufferID;
+   dataOut.analyteID    = save_analyteID;
 
-   emit updateTripleInfoSelection( d );
+   emit updateTripleInfoSelection( dataOut );
    close();
 }
 

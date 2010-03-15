@@ -1,5 +1,3 @@
-//! \file us_convert.cpp
-
 #include <QApplication>
 
 #include "us_license_t.h"
@@ -15,9 +13,6 @@
 #include "us_expinfo.h"
 #include "us_tripleinfo.h"
 #include "us_process_convert.h"
-
-//! \brief Main program for us_convert. Loads translators and starts
-//         the class US_Convert.
 
 int main( int argc, char* argv[] )
 {
