@@ -758,21 +758,31 @@ int US_ProcessConvert::writeXmlFile( US_Convert::ExperimentInfo& ExpData,
 
    // elements
    xml.writeStartElement( "experiment" );
-   xml.writeAttribute   ( "id", "replace with DB experimentID" );
+   xml.writeAttribute   ( "id", QString::number( ExpData.expID ) );
    xml.writeAttribute   ( "type", ExpData.expType );
-
-      xml.writeTextElement ( "name", "replace with description");
 
       xml.writeStartElement( "investigator" );
       xml.writeAttribute   ( "id", QString::number( ExpData.invID ) );
       xml.writeEndElement  ();
       
+      xml.writeStartElement( "project" );
+      xml.writeAttribute   ( "id", QString::number( ExpData.projectID ) );
+      xml.writeEndElement  ();
+      
+      xml.writeStartElement( "lab" );
+      xml.writeAttribute   ( "id", QString::number( ExpData.labID ) );
+      xml.writeEndElement  ();
+      
+      xml.writeStartElement( "instrument" );
+      xml.writeAttribute   ( "id", QString::number( ExpData.instrumentID ) );
+      xml.writeEndElement  ();
+      
       xml.writeStartElement( "operator" );
-      xml.writeAttribute   ( "id", "replace with operator ID" );
+      xml.writeAttribute   ( "id", QString::number( ExpData.operatorID ) );
       xml.writeEndElement  ();
 
       xml.writeStartElement( "rotor" );
-      xml.writeAttribute   ( "id", QString::number( ExpData.rotor ) );
+      xml.writeAttribute   ( "id", QString::number( ExpData.rotorID ) );
       xml.writeEndElement  ();
 
       xml.writeStartElement( "guid" );
@@ -816,8 +826,10 @@ int US_ProcessConvert::writeXmlFile( US_Convert::ExperimentInfo& ExpData,
       }
 
    xml.writeTextElement ( "date", ExpData.date );
+   xml.writeTextElement ( "runTemp", ExpData.runTemp );
    xml.writeTextElement ( "label", ExpData.label );
    xml.writeTextElement ( "comments", ExpData.comments );
+   xml.writeTextElement ( "centrifugeProtocol", ExpData.centrifugeProtocol );
 
    xml.writeEndElement(); // US_Scandata
    xml.writeEndDocument();

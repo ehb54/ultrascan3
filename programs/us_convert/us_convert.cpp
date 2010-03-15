@@ -10,6 +10,8 @@
 #include "us_plot.h"
 #include "us_math.h"
 #include "us_convert.h"
+#include "us_db2.h"
+#include "us_passwd.h"
 #include "us_expinfo.h"
 #include "us_tripleinfo.h"
 #include "us_process_convert.h"
@@ -1139,15 +1141,41 @@ void US_Convert::getExpInfo( void )
 
 void US_Convert::updateExpInfo( US_Convert::ExperimentInfo& d )
 {
-   ExpData.clear();
-   ExpData.invID        = d.invID;
-   ExpData.lastName     = d.lastName;
-   ExpData.firstName    = d.firstName;
-   ExpData.expType      = QString( d.expType );
-   ExpData.rotor        = d.rotor;
-   ExpData.date         = d.date;
-   ExpData.label        = QString( d.label );
-   ExpData.comments     = QString( d.comments );
+   ExpData = d;
+
+   // Update database
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   QStringList q( "update_experiment" );
+   q  << QString::number( d.expID )
+      << QString::number( d.projectID )
+      << QString::number( d.labID )
+      << QString::number( d.instrumentID )
+      << QString::number( d.operatorID )
+      << QString::number( d.rotorID )
+      << d.expType
+      << d.runTemp
+      << d.label
+      << d.comments
+      << d.centrifugeProtocol;
+
+   db.statusQuery( q );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+            tr( "Database Error" ),
+            tr( "The following errro was returned:\n" ) + db.lastError() );
+      return;
+   }
 
 }
 
@@ -1155,7 +1183,6 @@ void US_Convert::cancelExpInfo( void )
 {
    ExpData.clear();
 }
-
 
 void US_Convert::getTripleInfo( void )
 {
@@ -1214,23 +1241,10 @@ void US_Convert::draw_vline( double radius )
    data_plot->replot();
 }
 
-// Initializations
-US_Convert::ExperimentInfo::ExperimentInfo()
+void US_Convert::connect_error( const QString& error )
 {
-   ExperimentInfo::clear();
-}
-
-void US_Convert::ExperimentInfo::clear( void )
-{
-   invID        = 0;
-   lastName     = QString( "" );
-   firstName    = QString( "" );
-   expType      = QString( "" );
-   rotor        = 0;
-   date         = QString( "" );
-   label        = QString( "" );
-   comments     = QString( "" );
-   triples.clear();               // Not to be confused with the global triples
+   QMessageBox::warning( this, tr( "Connection Problem" ),
+         tr( "Could not connect to databasee \n" ) + error );
 }
 
 US_Convert::TripleInfo::TripleInfo()
@@ -1239,3 +1253,61 @@ US_Convert::TripleInfo::TripleInfo()
    bufferID     = 0;
    analyteID    = 0;
 }
+// Initializations
+US_Convert::ExperimentInfo::ExperimentInfo()
+{
+   ExperimentInfo::clear();
+}
+
+void US_Convert::ExperimentInfo::clear( void )
+{
+   invID              = 0;
+   lastName           = QString( "" );
+   firstName          = QString( "" );
+   expID              = 0;
+   projectID          = 0;
+   labID              = 0;
+   instrumentID       = 0;
+   operatorID         = 0;
+   rotorID            = 0;
+   expType            = QString( "" );
+   runTemp            = QString( "" );
+   label              = QString( "" );
+   comments           = QString( "" );
+   centrifugeProtocol = QString( "" );
+   date               = QString( "" );
+   triples.clear();               // Not to be confused with the global triples
+}
+
+US_Convert::ExperimentInfo& US_Convert::ExperimentInfo::operator=( const ExperimentInfo& rhs )
+{
+   if ( this != &rhs )            // Guard against self assignment
+   {
+      invID        = rhs.invID;
+      lastName     = rhs.lastName;
+      firstName    = rhs.firstName;
+      expID        = rhs.expID;
+      projectID    = rhs.projectID;
+      labID        = rhs.labID;
+      instrumentID = rhs.instrumentID;
+      operatorID   = rhs.operatorID;
+      rotorID      = rhs.rotorID;
+      expType      = rhs.expType;
+      runTemp      = rhs.runTemp;
+      label        = rhs.label;
+      comments     = rhs.comments;
+      centrifugeProtocol = rhs.centrifugeProtocol;
+      date         = rhs.date;
+
+      for ( int i = 0; i < triples.size(); i++ )
+      {
+         triples[ i ].tripleID    = rhs.triples[ i ].tripleID;
+         triples[ i ].centerpiece = rhs.triples[ i ].centerpiece;
+         triples[ i ].bufferID    = rhs.triples[ i ].bufferID;
+         triples[ i ].analyteID   = rhs.triples[ i ].analyteID;
+      }
+   }
+
+   return *this;
+}
+
