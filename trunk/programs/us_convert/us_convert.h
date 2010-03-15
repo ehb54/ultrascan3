@@ -32,13 +32,22 @@ class US_EXTERN US_Convert : public US_Widgets
          int              invID;
          QString          lastName;
          QString          firstName;
+         int              expID;
+         int              projectID;
+         int              labID;
+         int              instrumentID;
+         int              operatorID;
+         int              rotorID; 
          QString          expType;
-         int              rotor;
-         QString          date;
+         QString          runTemp;
          QString          label;
          QString          comments;
+         QString          centrifugeProtocol; 
+         QString          date;
          QList< TripleInfo > triples;
          ExperimentInfo();
+         ExperimentInfo&  operator=( const ExperimentInfo& );
+         void updateDB( void );
          void clear( void );
       };
 
@@ -142,6 +151,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void updateTripleInfo( US_Convert::TripleInfo& );
       void cancelTripleInfo( void );
       void draw_vline      ( double );
+      void connect_error   ( const QString& );
       void help            ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
 };
