@@ -255,13 +255,14 @@ void US_Win::terminated( int /* code*/, QProcess::ExitStatus /* status */ )
 void US_Win::launch( int index )
 {
   index -= P_CONFIG;
+  QString pname = p[ index ].name;
 
   if ( p[ index ].maxRunCount <= p[ index ].currentRunCount && 
        p[ index ].maxRunCount > 0 ) 
   {
     QMessageBox::warning( this,
       tr( "Error" ),
-      p[ index ].name + tr( " has reached it's maximum run count." ) );
+      pname + tr( " has reached it's maximum run count." ) );
   
     return;
   }
@@ -276,30 +277,29 @@ void US_Win::launch( int index )
             this   , SLOT  ( terminated( int, QProcess::ExitStatus ) ) );
 
 #ifndef Q_WS_MAC
-  process->start( p[ index ].name );
+  process->start( pname );
 #else
-   QString procbin = US_Settings::appBaseDir() + "/bin/" + p[ index ].name;
+   QString procbin = US_Settings::appBaseDir() + "/bin/" + pname;
    QString procapp = procbin + ".app";
-   if ( QFile( procapp ).exists() )
-      process->start( procapp );
-   else
-      process->start( procbin );
+   if ( !QFile( procapp ).exists() )
+      procapp         = procbin;
+   procapp         = "open -a " + procapp;
+   process->start( procapp );
 #endif
 
   if ( ! process->waitForStarted( 10000 ) ) // 10 second timeout
   {
     QMessageBox::information( this,
       tr( "Error" ),
-      tr( "There was a problem creating a subprocess\n"
-          "for " ) + p[ index ].name );
+      tr( "There was a problem creating a subprocess\nfor " ) + pname );
   }
   else
   {
     p[ index ].currentRunCount++;
     procData* pr = new procData;
-    pr->proc = process;
-    pr->name = p[ index ].name;
-    pr->index = index;
+    pr->proc     = process;
+    pr->name     = pname;
+    pr->index    = index;
 
     procs << pr;
   }
