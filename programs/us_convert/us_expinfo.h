@@ -1,3 +1,4 @@
+//! \file us_expinfo.h
 #ifndef US_EXPINFO_H
 #define US_EXPINFO_H
 
@@ -8,15 +9,46 @@
 #include "us_help.h"
 #include "us_convert.h"
 
+/*! \class US_ExpInfo
+           This class provides the ability to associate raw data with
+           the relevant experiment parameters, such as the lab,
+           instrument, and rotor on which the experiment was run. 
+*/
+           
 class US_EXTERN US_ExpInfo : public US_WidgetsDialog
 {
-  Q_OBJECT
+   Q_OBJECT
 
    public:
+
+      /*! \brief Generic constructor for the US_ExpInfo class. To 
+                 instantiate the class a calling function must
+                 provide a structure to contain all the data.
+
+          \param dataIn  A reference to a structure that contains
+                         previously selected experiment data, if any.
+      */
       US_ExpInfo( US_Convert::ExperimentInfo& );
 
+      //! A null destructor. 
+      ~US_ExpInfo() {};
+
    signals:
+
+      /*! \brief The signal that is emitted when the user chooses
+                 to accept the current choices. This information is
+                 passed back to the calling function.
+
+          \param dataOut A reference to a structure that contains all
+                         the current experiment data
+      */
       void updateExpInfoSelection( US_Convert::ExperimentInfo& );
+
+      /*! \brief The signal that is emitted when the user chooses
+                 to cancel the current selection. In this case all
+                 previously-entered experiment parameter associations
+                 are erased.
+      */
       void cancelExpInfoSelection( void );
 
    private:
