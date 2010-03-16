@@ -13,7 +13,7 @@
 #   define BW_LISTBOX
 #endif
 
-// #define BW_LISTBOX
+#define BW_LISTBOX
 
 #if !defined(BW_LISTBOX)
   void QListBoxText::paint( QPainter *painter )
