@@ -44,7 +44,7 @@ class US_EXTERN US_BufferComponent
 class US_EXTERN US_Buffer 
 {
    public:
-      int     personID;    //!< Tnvestigator's ID of for this  buffer, 
+      int     personID;    //!< Investigator's ID of for this  buffer, 
       QString bufferID;    //!< The buffer's DB ID, or -1 if from harddrive.
       QString description; //!< The buffer's description. 
       QString spectrum;    //!< Gaussian data for absorption data

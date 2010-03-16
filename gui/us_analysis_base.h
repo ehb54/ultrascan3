@@ -116,7 +116,7 @@ class US_EXTERN US_AnalysisBase : public US_Widgets
       void get_vbar     ( void   );
       void update_vbar  ( double );
       void get_buffer   ( void   );
-      void update_buffer( double, double );
+      void update_buffer( double, double, const QString& );
       void boundary_pct ( double );
       void boundary_pos ( double );
       void exclude_from ( double );
