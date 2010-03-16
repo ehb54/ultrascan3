@@ -319,6 +319,9 @@ class US_EXTERN US_Hydrodyn : public QFrame
       vector <int> somo_processed;
       QString options_log;
 
+      bool install_new_version();         
+      // checks for new versions of somo.config, .atom, .saxs_atom, .hybrid, .residue and backs up previous versions
+
 #ifdef WIN32
   #pragma warning ( default: 4251 )
 #endif

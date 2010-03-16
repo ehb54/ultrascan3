@@ -3134,7 +3134,7 @@ QString US_Hydrodyn::default_differences_hydro()
    QString base = "SOMO Options -> Hydrodynamic Calculations -> ";
    if ( hydro.unit != default_hydro.unit )
    {
-      str += QString(base + "Model units (-10 = Angstrom, -9 = nanometer): %1\n").arg(hydro.unit);
+      str += QString(base + "Model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is : %1\n").arg(-hydro.unit);
    }
    if ( hydro.solvent_name != default_hydro.solvent_name )
    {
@@ -3431,4 +3431,160 @@ void US_Hydrodyn::list_model_vector(vector < PDB_model > *mv)
          }
       }
    }
+}
+
+bool US_Hydrodyn::install_new_version()
+{
+   vector < QString > names;
+   names.push_back("defaults");
+   names.push_back("config");
+   names.push_back("hybrid");
+   names.push_back("atom");
+   names.push_back("saxs_atoms");
+   names.push_back("residue");
+
+   vector < bool > install; 
+   install.resize(names.size());
+
+   vector < bool > backup;
+   backup.resize(names.size());
+
+   vector < QString > fnew;
+   fnew.resize(names.size());
+
+   vector < QString > fcur;
+   fcur.resize(names.size());
+
+   vector < QString > fprev;
+   fprev.resize(names.size());
+
+   // check what needs to be upgraded
+
+   bool any_upgrade = false;
+   bool any_backup = false;
+
+   for ( unsigned int i = 0; i < names.size(); i++ )
+   {
+      fnew[i] = USglobal->config_list.system_dir + "/etc/somo." + names[i] + ".new";
+      fcur[i] = USglobal->config_list.system_dir + "/etc/somo." + names[i];
+      install[i] = QFile::exists(fnew[i]);
+      any_upgrade |= install[i];
+      backup[i] = install[i] && QFile::exists(fcur[i]);
+      any_backup |= backup[i];
+   }
+
+   if ( !any_upgrade ) 
+   {
+      return true;
+   }
+
+   // make sure we come up with a new previous version # so we don't overwrite anything
+
+   bool no_version_increment = false;
+
+   unsigned int version = 1;
+
+   while ( !no_version_increment )
+   {
+      no_version_increment = true;
+      for ( unsigned int i = 0; i < names.size(); i++ )
+      {
+         if ( backup[i] )
+         {
+            while ( QFile::exists(QString("%1/etc/somo-prev-%2.%3")
+                                  .arg(USglobal->config_list.system_dir)
+                                  .arg(version)
+                                  .arg(names[i])) )
+            {
+               version++;
+               no_version_increment = false;
+            }
+         }
+      }
+   }
+
+   // ask to proceed
+
+   QString msg = tr("New versions will be installed for the following files:\n");
+   for ( unsigned int i = 0; i < names.size(); i++ )
+   {
+      if ( install[i] )
+      {
+         msg += QString("\t%1\n").arg(fcur[i]);
+      }
+   }
+
+   if ( any_backup )
+   {
+      msg += tr("\nThe existing versions of these files will be backed up as:\n");
+      for ( unsigned int i = 0; i < names.size(); i++ )
+      {
+         if ( backup[i] )
+         {
+            fprev[i] = 
+               QString("%1/etc/somo-prev-%2.%3")
+               .arg(USglobal->config_list.system_dir)
+               .arg(version)
+               .arg(names[i]);
+            msg += QString("\t%1\n").arg(fprev[i]);
+         }
+      }
+   }
+
+   msg += tr("\nDo you wish to proceed?");
+
+   switch( QMessageBox::warning( 
+                                this, 
+                                tr("New version detected"),
+                                msg,
+                                tr("&OK"),
+                                tr("&Cancel"),
+                                0, 0, 1 ) ) 
+   {
+   case 0: 
+      {
+         QDir qd;
+         for ( unsigned int i = 0; i < names.size(); i++ )
+         {
+            if ( backup[i] )
+            {
+               printf("backing up %u (<%s> to <%s>\n", i, fcur[i].ascii(), fprev[i].ascii());
+               if (!qd.rename(fcur[i], fprev[i]) )
+               {
+                  QMessageBox::critical( 0, 
+                                         tr("Could not rename file"),
+                                         QString("An error occured when trying to rename file\n"
+                                                 "%1 to %2\n"
+                                                 "Please check your permissions and try again\n")
+                                         .arg(fcur[i])
+                                         .arg(fprev[i])
+                                         );
+                  exit(-1);
+               }
+               if ( install[i] )
+               {
+                  printf("installing %u (<%s> to <%s>\n", i, fnew[i].ascii(), fcur[i].ascii());
+                  if (!qd.rename(fnew[i], fcur[i]) )
+                  {
+                     QMessageBox::critical( 0, 
+                                            tr("Could not rename file"),
+                                            QString("An error occured when trying to rename file\n"
+                                                    "%1 to %2\n"
+                                                    "Please check your permissions and try again\n")
+                                            .arg(fnew[i])
+                                            .arg(fcur[i])
+                                            );
+                     exit(-1);
+                  }
+               }
+            }
+         }
+      }
+      return true;
+      break;
+   case 1: 
+      return false;
+      break;
+   }
+   return false;
 }

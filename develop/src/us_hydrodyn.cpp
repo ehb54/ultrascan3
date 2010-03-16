@@ -110,6 +110,10 @@ US_Hydrodyn::US_Hydrodyn(vector < QString > batch_file,
    advanced_config.debug_5 = false;
    advanced_config.debug_6 = false;
    advanced_config.debug_7 = false;
+   if ( !install_new_version() )
+   {
+      exit(0);
+   }
    set_default();   // setup configuration defaults before reading initial config
    read_config(""); // specify default configuration by leaving argument empty
    atom_widget = false;

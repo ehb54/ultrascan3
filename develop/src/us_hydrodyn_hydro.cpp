@@ -36,7 +36,8 @@ void US_Hydrodyn_Hydro::setupGUI()
    lbl_info->setPalette(QPalette(USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame, USglobal->global_colors.cg_frame));
    lbl_info->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize + 1, QFont::Bold));
 
-   lbl_unit = new QLabel(tr(" Model units (-10 = Angstrom, -9 = nanometer): "), this);
+
+   lbl_unit = new QLabel(tr("Model scale (10^-x m) (10 = Angstrom, 9 = nanometer), where x is :"), this);
    Q_CHECK_PTR(lbl_unit);
    lbl_unit->setAlignment(AlignLeft|AlignVCenter);
    lbl_unit->setMinimumHeight(minHeight1);
@@ -45,8 +46,8 @@ void US_Hydrodyn_Hydro::setupGUI()
 
    cnt_unit= new QwtCounter(this);
    Q_CHECK_PTR(cnt_unit);
-   cnt_unit->setRange(-10, -5, 1);
-   cnt_unit->setValue((*hydro).unit);
+   cnt_unit->setRange(5, 10, 1);
+   cnt_unit->setValue(-(*hydro).unit);
    cnt_unit->setMinimumHeight(minHeight1);
    cnt_unit->setEnabled(true);
    cnt_unit->setNumButtons(2);
@@ -368,7 +369,7 @@ void US_Hydrodyn_Hydro::setupGUI()
 
 void US_Hydrodyn_Hydro::update_unit(double val)
 {
-   (*hydro).unit = (int) val;
+   (*hydro).unit = (int) -val;
    ((US_Hydrodyn *)us_hydrodyn)->display_default_differences();
 }
 
