@@ -444,7 +444,11 @@ void US_Analyte::analyte_type( int type )
 void US_Analyte::close( void )
 {
    // Emit signal if requested
-   if ( signal_wanted ) emit valueChanged( vbar );
+   if ( signal_wanted ) 
+   {
+      emit valueChanged  ( vbar );
+      emit valueAnalyteID( analyteID );
+   }
 
    //emit valueChanged(pep.vbar, pep.vbar20);
    //emit e280Changed(pep.e280);

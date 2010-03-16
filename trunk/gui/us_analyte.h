@@ -37,7 +37,8 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
 		US_Analyte( int = -1, bool = false, QWidget* = 0, Qt::WindowFlags = 0 );
 
    signals:
-      void valueChanged( double );
+      void valueChanged  ( double );
+      void valueAnalyteID( const QString& );
 
    private:
       bool          signal_wanted;
