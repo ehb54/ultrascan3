@@ -365,14 +365,13 @@ void US_AnalysisBase::update_vbar( double new_vbar )
 void US_AnalysisBase::get_buffer( void )
 {
    US_BufferGui* buf_dialog = new US_BufferGui( true ); // Delete on close set
-   connect( buf_dialog, SIGNAL( valueChanged ( double, double, const QString& ) ),
-                        SLOT  ( update_buffer( double, double, const QString& ) ) );
+   connect( buf_dialog, SIGNAL( valueChanged ( double, double ) ),
+                        SLOT  ( update_buffer( double, double ) ) );
    buf_dialog->exec();
    qApp->processEvents();
 }
 
-void US_AnalysisBase::update_buffer( double new_density, double new_viscosity, 
-                                     const QString& /* unused */ )
+void US_AnalysisBase::update_buffer( double new_density, double new_viscosity )
 {
    density   = new_density;
    viscosity = new_viscosity;
