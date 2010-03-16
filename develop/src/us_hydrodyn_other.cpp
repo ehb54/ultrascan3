@@ -3561,21 +3561,21 @@ bool US_Hydrodyn::install_new_version()
                                          );
                   exit(-1);
                }
-               if ( install[i] )
+            }
+            if ( install[i] )
+            {
+               printf("installing %u (<%s> to <%s>\n", i, fnew[i].ascii(), fcur[i].ascii());
+               if (!qd.rename(fnew[i], fcur[i]) )
                {
-                  printf("installing %u (<%s> to <%s>\n", i, fnew[i].ascii(), fcur[i].ascii());
-                  if (!qd.rename(fnew[i], fcur[i]) )
-                  {
-                     QMessageBox::critical( 0, 
-                                            tr("Could not rename file"),
-                                            QString("An error occured when trying to rename file\n"
-                                                    "%1 to %2\n"
-                                                    "Please check your permissions and try again\n")
-                                            .arg(fnew[i])
-                                            .arg(fcur[i])
-                                            );
-                     exit(-1);
-                  }
+                  QMessageBox::critical( 0, 
+                                         tr("Could not rename file"),
+                                         QString("An error occured when trying to rename file\n"
+                                                 "%1 to %2\n"
+                                                 "Please check your permissions and try again\n")
+                                         .arg(fnew[i])
+                                         .arg(fcur[i])
+                                         );
+                  exit(-1);
                }
             }
          }
