@@ -893,7 +893,9 @@ void US_BufferGui::remove_component( QListWidgetItem* item )
 
 void US_BufferGui::accept_buffer( void )
 {
-   if ( signal ) emit valueChanged( buffer.density, buffer.viscosity );
+   if ( signal ) 
+      emit valueChanged( buffer.density, buffer.viscosity, buffer.bufferID );
+
    accept();
 }
 

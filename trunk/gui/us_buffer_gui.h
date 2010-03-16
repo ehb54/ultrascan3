@@ -19,7 +19,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       US_BufferGui( bool = false );
 
    signals:
-      void valueChanged( double, double );
+      void valueChanged( double, double, const QString& );
 
 
    private:

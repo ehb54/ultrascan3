@@ -287,13 +287,13 @@ void US_Predict1::update_vbar( double vbar )
 void US_Predict1::get_buffer( void )
 {
    US_BufferGui* buffer_dialog = new US_BufferGui( true );
-   connect( buffer_dialog, SIGNAL( valueChanged ( double, double ) ),
-                           SLOT  ( update_buffer( double, double ) ) );
+   connect( buffer_dialog, SIGNAL( valueChanged ( double, double, const QString& ) ),
+                           SLOT  ( update_buffer( double, double, cosnt QString& ) ) );
    buffer_dialog->setWindowTitle( tr( "Buffer Calculation" ) );
    buffer_dialog->exec();
 }
 
-void US_Predict1::update_buffer( double density, double viscosity )
+void US_Predict1::update_buffer( double density, double viscosity, const QString& )
 {
    d.density   = density;
    d.viscosity = viscosity;

@@ -98,7 +98,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       void vbar         ( const QString&        );
       void get_buffer   ( void                  ); 
       void get_peptide  ( void                  ); 
-      void update_buffer( double, double        );
+      void update_buffer( double, double, const QString& );
       void update_vbar  ( double                );
 
       void help         ( void )
