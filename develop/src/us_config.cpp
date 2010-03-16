@@ -444,6 +444,10 @@ void US_Config::setDefault()
    config_list.browser = "C:/Program Files/Internet Explorer/iexplore.exe";
 #endif
 
+#ifdef OSX
+   config_list.browser = "open";
+#endif
+
    QString ultrascan = getenv( "ULTRASCAN" );
 
    // Set system directory
