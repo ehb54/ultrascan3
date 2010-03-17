@@ -186,7 +186,8 @@ BEGIN
       runTemp            = p_runTemp,
       label              = p_label,
       comment            = p_comment,
-      centrifugeProtocol = p_centrifugeProtocol
+      centrifugeProtocol = p_centrifugeProtocol,
+      dateUpdated        = NOW()
     WHERE experimentID   = p_experimentID;
 
   END IF;

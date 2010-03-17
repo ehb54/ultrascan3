@@ -9,6 +9,7 @@
 --
 
 DELETE FROM abstractRotor;
+DELETE FROM abstractCenterpiece;
 
 INSERT INTO abstractRotor SET
   abstractRotorID   = 1,
@@ -48,4 +49,137 @@ INSERT INTO abstractRotor SET
   manufacturer      = 'Beckman',
   materialRefURI    = '',
   dateUpdated       = NOW();
+
+-- either angle or width will be null, depending on shape
+INSERT INTO abstractCenterpiece SET
+  abstractCenterpieceID = 1,
+  loadMethod        = 'top',
+  GUID              = NULL,
+  name              = 'Simulation 1-channel standard',
+  materialName      = 'Simulation',
+  channels          = 1,          -- x2 for actual number
+  bottom            = '7.2',
+  shape             = 'standard',
+  maxRPM            = 60000,
+  pathLength        = 1.2,
+  angle             = 2.5,
+  width             = NULL,
+  canHoldSample     = 1,
+  materialRefURI    = '',
+  centerpieceRefURI = '',
+  dataUpdated       = NOW();
+
+-- either angle or width will be null, depending on shape
+INSERT INTO abstractCenterpiece SET
+  abstractCenterpieceID = 2,
+  loadMethod        = 'top',
+  GUID              = NULL,
+  name              = 'Epon 2-channel standard',
+  materialName      = 'Epon',
+  channels          = 1,          -- x2 for actual number
+  bottom            = '7.2',
+  shape             = 'standard',
+  maxRPM            = 42000,
+  pathLength        = 1.2,
+  angle             = 2.5,
+  width             = NULL,
+  canHoldSample     = 1,
+  materialRefURI    = '',
+  centerpieceRefURI = '',
+  dataUpdated       = NOW();
+
+-- either angle or width will be null, depending on shape
+INSERT INTO abstractCenterpiece SET
+  abstractCenterpieceID = 3,
+  loadMethod        = 'top',
+  GUID              = NULL,
+  name              = 'Aluminum 2-channel standard',
+  materialName      = 'Aluminum',
+  channels          = 1,          -- x2 for actual number
+  bottom            = '7.15',
+  shape             = 'standard',
+  maxRPM            = 60000,
+  pathLength        = 1.2,
+  angle             = 2.5,
+  width             = NULL,
+  canHoldSample     = 1,
+  materialRefURI    = '',
+  centerpieceRefURI = '',
+  dataUpdated       = NOW();
+
+-- either angle or width will be null, depending on shape
+INSERT INTO abstractCenterpiece SET
+  abstractCenterpieceID = 4,
+  loadMethod        = 'top',
+  GUID              = NULL,
+  name              = 'Epon 6-channel rectangular',
+  materialName      = 'Epon',
+  channels          = 3,          -- x2 for actual number
+  bottom            = '6.111:6.613:7.104',
+  shape             = 'rectangular',
+  maxRPM            = 48000,
+  pathLength        = 1.2,
+  angle             = NULL,
+  width             = 0.323,
+  canHoldSample     = 1,
+  materialRefURI    = '',
+  centerpieceRefURI = '',
+  dataUpdated       = NOW();
+
+-- either angle or width will be null, depending on shape
+INSERT INTO abstractCenterpiece SET
+  abstractCenterpieceID = 5,
+  loadMethod        = 'top',
+  GUID              = NULL,
+  name              = 'Titanium 2-channel standard',
+  materialName      = 'Titanium',
+  channels          = 1,          -- x2 for actual number
+  bottom            = '7.15',
+  shape             = 'standard',
+  maxRPM            = 60000,
+  pathLength        = 1.2,
+  angle             = 2.5,
+  width             = NULL,
+  canHoldSample     = 1,
+  materialRefURI    = '',
+  centerpieceRefURI = '',
+  dataUpdated       = NOW();
+
+-- either angle or width will be null, depending on shape
+INSERT INTO abstractCenterpiece SET
+  abstractCenterpieceID = 6,
+  loadMethod        = 'top',
+  GUID              = NULL,
+  name              = 'Titanium 6-channel rectangular',
+  materialName      = 'Titanium',
+  channels          = 3,          -- x2 for actual number
+  bottom            = '6.170:6.690:7.210',
+  shape             = 'rectangular',
+  maxRPM            = 60000,
+  pathLength        = 1.2,
+  angle             = NULL,
+  width             = 0.320,
+  canHoldSample     = 1,
+  materialRefURI    = '',
+  centerpieceRefURI = '',
+  dataUpdated       = NOW();
+
+-- either angle or width will be null, depending on shape
+INSERT INTO abstractCenterpiece SET
+  abstractCenterpieceID = 7,
+  loadMethod        = 'top',
+  GUID              = NULL,
+  name              = 'Epon 2-channel band forming',
+  materialName      = 'Epon',
+  channels          = 1,          -- x2 for actual number
+  bottom            = '7.2',
+  shape             = 'band forming',
+  maxRPM            = 42000,
+  pathLength        = 1.2,
+  angle             = 2.5,
+  width             = NULL,
+  canHoldSample     = 1,
+  materialRefURI    = '',
+  centerpieceRefURI = '',
+  dataUpdated       = NOW();
 
