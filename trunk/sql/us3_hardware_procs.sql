@@ -483,5 +483,88 @@ BEGIN
 
 END$$
 
+--
+-- Centerpiece procedures
+--
+
+-- SELECTs names of all abstract centerpieces
+DROP PROCEDURE IF EXISTS get_abstractCenterpiece_names$$
+CREATE PROCEDURE get_abstractCenterpiece_names ( p_guid     CHAR(36),
+                                                 p_password VARCHAR(80) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_abstract_centerpieces INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+    SELECT    COUNT(*)
+    INTO      count_abstract_centerpieces
+    FROM      abstractCenterpiece;
+
+    IF ( count_abstract_centerpieces = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+ 
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT abstractCenterpieceID, name
+      FROM abstractCenterpiece
+      ORDER BY name;
+ 
+    END IF;
+
+  END IF;
+
+END$$
+
+-- Returns a more complete list of information about one centerpiece
+DROP PROCEDURE IF EXISTS get_abstractCenterpiece_info$$
+CREATE PROCEDURE get_abstractCenterpiece_info ( p_guid     CHAR(36),
+                                                p_password VARCHAR(80),
+                                                p_abstractCenterpieceID  INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_abstract_centerpieces INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  SELECT     COUNT(*)
+  INTO       count_abstract_centerpieces
+  FROM       abstractCenterpiece
+  WHERE      abstractCenterpieceID = p_abstractCenterpieceID;
+
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+    IF ( count_abstract_centerpieces = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   name, channels, bottom, shape, maxRPM, pathLength, angle, width
+      FROM     abstractCenterpiece
+      WHERE    abstractCenterpieceID = p_abstractCenterpieceID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
 DELIMITER ;
 

@@ -94,7 +94,7 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS us3.abstractRotor ;
 
 CREATE  TABLE IF NOT EXISTS us3.abstractRotor (
-  abstractRotorID INT NOT NULL AUTO_INCREMENT ,
+  abstractRotorID INT NOT NULL UNIQUE ,
   GUID CHAR(36) NULL ,
   name enum( 'Simulation', 'AN50', 'AN60', 'CFA' ) NULL ,
   materialName enum( 'titanium', 'carbon' ) NULL ,
@@ -194,13 +194,19 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS us3.abstractCenterpiece ;
 
 CREATE  TABLE IF NOT EXISTS us3.abstractCenterpiece (
-  abstractCenterpieceID INT NOT NULL AUTO_INCREMENT ,
+  abstractCenterpieceID INT NOT NULL UNIQUE ,
   loadMethod enum('top', 'fill') NULL ,
   GUID CHAR(36) NULL ,
   name TEXT NULL ,
   materialName TEXT NULL ,
+  channels INT NOT NULL ,
+  bottom VARCHAR(20) NOT NULL ,
+  shape enum( 'standard', 'rectangular', 'circular', 'synthetic', 'band forming' )
+              NOT NULL DEFAULT 'standard',
   maxRPM INT NULL ,
   pathLength FLOAT NULL ,
+  angle FLOAT NULL ,
+  width FLOAT NULL ,
   canHoldSample INT NULL ,
   materialRefURI TEXT NULL ,
   centerpieceRefURI TEXT NULL ,

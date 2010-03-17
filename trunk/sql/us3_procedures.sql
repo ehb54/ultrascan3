@@ -399,6 +399,7 @@ SOURCE us3_people_procs.sql
 SOURCE us3_buffer_procs.sql
 SOURCE us3_analyte_procs.sql
 SOURCE us3_exp_procs.sql
+SOURCE us3_proj_procs.sql
 SOURCE us3_hardware_procs.sql
 SOURCE us3_hardware_data.sql
 
