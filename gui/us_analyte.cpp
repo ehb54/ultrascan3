@@ -10,7 +10,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    : US_WidgetsDialog( parent, f )
 {
    signal_wanted = signal;
-   invID         = invID;
+   personID      = invID;
 
    setWindowTitle( tr( "Analyte Management" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -462,10 +462,19 @@ void US_Analyte::reset( void )
    inReset = true;
    lw_analytes->clear();
 
-   personID = 0;
    analyteID.clear();
 
    le_investigator  ->setText( tr( "Not Selected" ) );
+
+   if ( personID > 0 )
+   {
+      QString lname;
+      QString fname;
+
+      if ( US_Investigator::get_person_info( personID, lname, fname ) )
+         assign_investigator( personID, lname, fname );
+   }
+
    le_search        ->clear();
    le_search        ->setReadOnly( true );
 

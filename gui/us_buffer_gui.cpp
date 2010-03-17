@@ -7,9 +7,11 @@
 #include "us_constants.h"
 #include "us_investigator.h"
 
-US_BufferGui::US_BufferGui( bool signal_wanted ) : US_WidgetsDialog( 0, 0 )
+US_BufferGui::US_BufferGui( int invID, bool signal_wanted ) 
+   : US_WidgetsDialog( 0, 0 )
 {
-   signal = signal_wanted;
+   signal   = signal_wanted;
+   personID = invID;
 
    US_BufferComponent::getAllFromHD( component_list );
 
@@ -96,7 +98,6 @@ US_BufferGui::US_BufferGui( bool signal_wanted ) : US_WidgetsDialog( 0, 0 )
    // Investigator
    le_investigator = us_lineedit( tr( "Not Selected" ) );
    le_investigator->setReadOnly( true );
-   buffer.personID = -1;
    main->addWidget( le_investigator, row++, 1, 1, 2 );
 
    // Pushbuttons
@@ -939,6 +940,17 @@ void US_BufferGui::reset( void )
    lb_units        ->setText( "" );
    le_concentration->setText( "" );
    le_concentration->setReadOnly( true );
+
+   le_investigator->setText( "Not Selected" );
+
+   if ( personID > 0 )
+   {
+      QString lname;
+      QString fname;
+
+      if ( US_Investigator::get_person_info( personID, lname, fname ) )
+         assign_investigator( personID, lname, fname );
+   }
 }
 
 /*!  Recalculate the density of the buffer based on the information in the

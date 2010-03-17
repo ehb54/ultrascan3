@@ -16,7 +16,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
 
    public:
 
-      US_BufferGui( bool = false );
+      US_BufferGui( int = - 1, bool = false );
 
    signals:
       void valueChanged ( double, double );
@@ -39,6 +39,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
 
       bool                 signal;
       bool                 fromHD;
+      int                  personID;
       QList< buffer_info > buffer_metadata;
 
       QPushButton* pb_save;
