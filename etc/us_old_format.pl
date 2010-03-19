@@ -12,6 +12,7 @@ if ( !grep /Fit:  Meniscus:/, @_ ) {
 for ( $i = 0; $i < @_; $i++ ) {
     if ( $_[$i] =~ /^Meniscus gridpoints:\s+(\d+)/ ) {
         $gridpoints = $1;
+	$gridpoints++ if 2*int($gridpoints/2) != $gridpoints;
     }
 
     if ( $_[$i] =~ /^Experiment .*, Cell / ) {
