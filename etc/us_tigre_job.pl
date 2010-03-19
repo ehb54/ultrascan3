@@ -50,8 +50,8 @@ sub check_is_resubmit {
 sub failmsg {
 # email a message
     $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
-			   To      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
-#			   To      =>  'ebrookes@cs.utsa.edu',
+			   To      => "$email",
+			   Cc      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
 			   Subject =>  "TIGRE JOB COMPLETION FAILED on $default_system",
 			   Type    =>  'multipart/mixed');
     $msg->attach(Type => 'TEXT',
@@ -1036,7 +1036,7 @@ if ($HPCAnalysisID > 0)
     grep(s/$tid\.model\./$tid\.ti_noise\./,@tinoise);
     grep(s/$tid\.model\./$tid\.ri_noise\./,@rinoise);
 
-    @text = `cat email_text_$tid`;
+    @text = `perl $ULTRASCAN/etc/us_old_format.pl email_text_$tid`;
     grep(chomp,@text);
     @text = grep(/^Experiment /, @text);
 
@@ -1070,8 +1070,9 @@ if ($HPCAnalysisID > 0)
 	$model = `cat $models[$i]` if -e $models[$i];
 	$ti = `cat $tinoise[$i]` if $tinoise[$i] && -e $tinoise[$i];
 	$ri = `cat $rinoise[$i]` if $rinoise[$i] && -e $rinoise[$i];
+	$meniscus[$i] = 0 if !length($meniscus[$i]);
 	$sql = "insert into tblHPCModel values " . 
-	    "(NULL, 0, \"$model\", \"$ti\", \"$ri\", \"$models[$i]\", \"$tinoise[$i]\", " . 
+	    "(NULL, $meniscus[$i], \"$model\", \"$ti\", \"$ri\", \"$models[$i]\", \"$tinoise[$i]\", " . 
 	    " \"$rinoise[$i]\", $rmsd[$i], $HPCAnalysisID);\n";
 	print "SQL $sql";
 	$dbh->do($sql);
