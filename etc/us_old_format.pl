@@ -30,11 +30,13 @@ for ( $i = 0; $i < @_; $i++ ) {
     }
 
     $i++;
+    $i++;
 
     # meniscus reprint
-    for ( $j = 0; $j < $gridpoints; $j++ ) {
-        $i++;
+    while ( $_[$i] =~ /^\d/ ) {
         ( $fit, $meniscus, $rmsd, $solutes, $iter ) = $_[$i] =~ /(\d+)\s+(\S+)\s+(\S+)\s+(\d+)\s+(\d+)/;
         print "$save, meniscus $meniscus, solutes $solutes, rmsd $rmsd, iterations $iter\n";
+        $i++;
     }
+    $i--;
 }
