@@ -1854,8 +1854,8 @@ void US_ViewMWL::update(unsigned int time, QString imageDir)
       l++;
    }
    //      cout << "rows: " << rows << ", columns: " << columns << endl;
-   controlvar_3d.maxx = max_lambda;
-   controlvar_3d.minx = min_lambda;
+   controlvar_3d.maxx = cb_rev_wl_axis->isChecked() ? min_lambda : max_lambda;
+   controlvar_3d.minx = cb_rev_wl_axis->isChecked() ? max_lambda : min_lambda;
    controlvar_3d.maxy = max_radius;
    controlvar_3d.miny = min_radius;
    controlvar_3d.xscaling = xscaling;
@@ -1869,16 +1869,34 @@ void US_ViewMWL::update(unsigned int time, QString imageDir)
    ztitle = "Absorbance";
 
 
+   bool raise = widget3d_flag;
    if (widget3d_flag)
    {
       mainwindow->setParameters(xtitle, ytitle, ztitle, absorbance, &controlvar_3d);
-      mainwindow->raise();
    }
    else
    {
       mainwindow = new Mesh2MainWindow(&widget3d_flag, xtitle, ytitle, ztitle, absorbance, &controlvar_3d);
+   }
+
+   if ( cb_rev_wl_axis->isChecked() )
+   {
+      mainwindow->dataWidget->coordinates()->axes[Y1].setScale(new ReversedScale);
+      mainwindow->dataWidget->coordinates()->axes[Y2].setScale(new ReversedScale);
+      mainwindow->dataWidget->coordinates()->axes[Y3].setScale(new ReversedScale);
+      mainwindow->dataWidget->coordinates()->axes[Y4].setScale(new ReversedScale);
+   } else {
+      mainwindow->dataWidget->coordinates()->setStandardScale();
+   }
+   mainwindow->dataWidget->updateGL();
+
+   if ( raise )
+   {
+      mainwindow->raise();
+   } else {
       mainwindow->show();
    }
+
    if (pngs)
    {
       str.sprintf(imageDir + "/3D-surface%05d.png", time);
