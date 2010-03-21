@@ -20,7 +20,7 @@ namespace us_win_data
          P_CONFIG = 300, P_ADMIN ,
          P_VELOC_ABSORB, P_VELOC_INTERF, P_VELOC_FLUOR,
          P_EQUIL_ABSORB, P_EQUIL_INTERF, P_EQUIL_FLUOR,
-         P_EDIT_WAVE,    P_VIEW_MWL,
+         P_EDIT_WAVE,    P_VIEW_MWL,   
 
          P_VHW_ENH,      P_FEMATCH,      P_FEMATCH_RA,   P_GAINIT1, P_GAINIT2,
          P_FEDUD,        P_SECM,         P_DCDT,         P_DCDR,    P_COFS,
@@ -44,7 +44,7 @@ namespace us_win_data
          P_DB_INV,       P_DB_DATE,      P_DB_DESC,      P_DB_TYPE,
          P_DB_REQ,       P_DB_STATUS,    P_DB_IMAGE,     P_DB_SAMP, P_DB_RUNR,
          P_INV_DATA,     P_DB_BUFF,      P_DB_VBAR,      P_DB_DNA,  P_DB_RAW,
-         P_DB_TEMP,
+         P_DB_TEMP, P_FIT_MENISCUS,
 
          P_END
       };
@@ -350,6 +350,11 @@ namespace us_win_data
          { P_DB_TEMP,      NULL, "us_db_template",
            "Loading Create Database template",
            "Create New Database Template" },
+         
+           { P_FIT_MENISCUS,       NULL, "us_meniscus",
+           "Loading Meniscus Fitting Module",
+           "Meniscus Fitting Program" },
+
 
          { P_END, NULL, "", "", "" }
       };
@@ -578,6 +583,7 @@ UsWin::UsWin( QWidget* parent, const char* name ): US_Widgets( parent, name )
    util->insertSeparator( -1 );
 
    util->insertItem(tr( "&RI/TI Noise Subtraction from Velocity Run" ), DS_NOISE    );
+   util->insertItem(tr( "&Fit Meniscus from 2DSA Velocity Data" ), P_FIT_MENISCUS    );
    util->insertItem(tr( "&Update Meniscus for Velocity Run"          ), DS_MENISCUS );
    util->insertItem(tr( "&Combine Distribution Data"), combine );
 

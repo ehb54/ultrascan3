@@ -196,6 +196,7 @@ SOURCES += \
   src/us_lncr2.cpp \
   src/us_math.cpp \
   src/us_matrix.cpp \
+  src/us_meniscus.cpp \
   src/us_meniscus_dlg.cpp \
   src/us_merge.cpp \
   src/us_mfem.cpp \
@@ -396,6 +397,7 @@ HEADERS += \
   include/us_lncr2.h \
   include/us_math.h \
   include/us_matrix.h \
+  include/us_meniscus.h \
   include/us_meniscus_dlg.h \
   include/us_merge.h \
   include/us_mfem.h \

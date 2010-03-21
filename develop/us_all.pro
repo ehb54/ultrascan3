@@ -71,6 +71,7 @@ SUBDIRS += \
     us_hydrodyn \
     us_license \
     us_lncr2 \
+    us_meniscus \
     us_merge \
     us_predict1 \
     us_predict2 \
