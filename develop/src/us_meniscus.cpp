@@ -162,8 +162,8 @@ void US_Meniscus::update_order(double val)
 void US_Meniscus::update_plot()
 {
    QString contents = editor->text(), str;
+   contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
    QStringList lines = QStringList::split("\n", contents, false);
-   QStringList parsed;
    unsigned int i, j, count=0;
    double minimum, fitymin;
    
@@ -182,8 +182,16 @@ void US_Meniscus::update_plot()
       QStringList values = QStringList::split(" ", lines[i], false);
       if ( values.size() > 1 )
       {
-         radius_values[ count ] = values[ 0 ].toDouble();
-         rmsd_values  [ count ] = values[ 1 ].toDouble();
+         if ( values.size() == 2 )
+         {
+            radius_values[ count ] = values[ 0 ].toDouble();
+            rmsd_values  [ count ] = values[ 1 ].toDouble();
+         }
+         else if ( values.size() > 2 )
+         {
+            radius_values[ count ] = values[ 1 ].toDouble();
+            rmsd_values  [ count ] = values[ 2 ].toDouble();
+         }
 
          // Find min and max
          minx = min( minx, radius_values[ count ] );
@@ -197,10 +205,7 @@ void US_Meniscus::update_plot()
    }
    if ( count < 3 ) return;
 
-   //editor->setTextFormat( parsed.join( "\n" ) );
-
    double overscan = ( maxx - minx ) * 0.10;  // 10% overscan
-
    plot_meniscus->setAxisScale( QwtPlot::xBottom,
          minx - overscan, maxx + overscan );
     
@@ -229,7 +234,7 @@ void US_Meniscus::update_plot()
 
    for (i=0; i<fit_points; i++)
    {
-      fitx[i] = radius_values[0]-0.001 + i * ((radius_values[count-1] - radius_values[0] + 0.002)/99);
+      fitx[i] = radius_values[0]-0.001 + i * ((radius_values[count-1] - radius_values[0] + 0.002)/fit_points);
       fity[i] = 0.0;
       for (j=0; j<order; j++)
       {
