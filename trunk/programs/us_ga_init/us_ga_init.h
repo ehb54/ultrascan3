@@ -19,38 +19,23 @@
 #include "us_plot.h"
 #include "us_colorgradIO.h"
 #include "us_spectrodata.h"
-
-typedef struct distro_sys
-{
-   QList< Solute > s_distro;
-   QList< Solute > mw_distro;
-   QwtLinearColorMap* colormap;
-   QString         run_name;
-   QString         cell;
-   QString         wavelength;
-   QString         method;
-   QString         cmapname;
-   int             distro_type;
-   bool            monte_carlo;
-} DisSys;
+#include "us_solutedata.h"
 
 bool distro_lessthan( const Solute&, const Solute& );
 
-class US_EXTERN US_GA_Init : public US_Widgets
+class US_EXTERN US_GA_Initialize : public US_Widgets
 {
    Q_OBJECT
 
    public:
-      US_GA_Init();
+      US_GA_Initialize();
 
    private:
 
       QLabel*       lb_info1;
       QLabel*       lb_nisols;
-      QLabel*       lb_dafmin;
-      QLabel*       lb_dafmax;
       QLabel*       lb_wsbuck;
-      QLabel*       lb_wfbuck;
+      QLabel*       lb_hfbuck;
       QLabel*       lb_info2;
       QLabel*       lb_resolu;
       QLabel*       lb_xreso;
@@ -62,16 +47,15 @@ class US_EXTERN US_GA_Init : public US_Widgets
       QLabel*       lb_plfmin;
       QLabel*       lb_plfmax;
 
-      QTextEdit*    te_sbin_data;
+      QListWidget*  lw_sbin_data;
       QTextEdit*    te_pctl_help;
+      QTextEdit*    te_status;
 
       US_Help       showHelp;
  
       QwtCounter*   ct_nisols;
-      QwtCounter*   ct_dafmin;
-      QwtCounter*   ct_dafmax;
       QwtCounter*   ct_wsbuck;
-      QwtCounter*   ct_wfbuck;
+      QwtCounter*   ct_hfbuck;
       QwtCounter*   ct_resolu;
       QwtCounter*   ct_xreso;
       QwtCounter*   ct_yreso;
@@ -83,8 +67,11 @@ class US_EXTERN US_GA_Init : public US_Widgets
 
       QwtPlot*            data_plot;
       QwtPlotSpectrogram* d_spectrogram;
+      QwtPlotCurve*       pc1;
       QwtLinearColorMap*  colormap;
       US_PlotPicker*      pick;
+
+      US_SoluteData*      soludata;
 
       QPushButton*  pb_lddistr;
       QPushButton*  pb_ldcolor;
@@ -102,17 +89,20 @@ class US_EXTERN US_GA_Init : public US_Widgets
       QCheckBox*    cb_1dplot;
       QCheckBox*    cb_2dplot;
       QCheckBox*    cb_3dplot;
+      QCheckBox*    cb_plot_s;
+      QCheckBox*    cb_plot_mw;
 
-      QList< Solute > s_distro;
-      QList< Solute > mw_distro;
+      QPen*         pickpen;
+
+      QList< Solute >  s_distro;
+      QList< Solute >  mw_distro;
+      QList< Solute >* sdistro;
 
       QwtDoublePoint  p1;
       QwtDoublePoint  p2;
 
-      double        dafmin;
-      double        dafmax;
       double        wsbuck;
-      double        wfbuck;
+      double        hfbuck;
       double        resolu;
       double        plsmin;
       double        plsmax;
@@ -131,11 +121,15 @@ class US_EXTERN US_GA_Init : public US_Widgets
       int           patm_dlay;
       int           plot_dim;
       int           distro_type;
+      int           sxset;
+      int           psdsiz;
 
       bool          minmax;
       bool          zoom;
       bool          auto_lim;
       bool          monte_carlo;
+      bool          plot_s;
+      bool          rbtn_click;
 
       QString       run_name;
       QString       cell;
@@ -145,14 +139,17 @@ class US_EXTERN US_GA_Init : public US_Widgets
       QString       xa_title_mw;
       QString       xa_title;
       QString       cmapname;
+      QString       dfilname;
+      QString       stcmline;
+      QString       stdiline;
+      QString       stdfline;
+      QString       stnpline;
 
    private slots:
 
       void update_nisols( double );
-      void update_dafmin( double );
-      void update_dafmax( double );
       void update_wsbuck( double );
-      void update_wfbuck( double );
+      void update_hfbuck( double );
       void update_resolu( double );
       void update_xreso(  double );
       void update_yreso(  double );
@@ -161,15 +158,17 @@ class US_EXTERN US_GA_Init : public US_Widgets
       void update_plfmax( double );
       void update_plsmin( double );
       void update_plsmax( double );
-      void plot_1dim( void );
-      void plot_2dim( void );
-      void plot_3dim( void );
+      void replot_data( void );
+      void plot_1dim(   void );
+      void plot_2dim(   void );
+      void plot_3dim(   void );
       void select_autolim( void );
       void select_plot1d(  void );
       void select_plot2d(  void );
       void select_plot3d(  void );
+      void select_plot_s(  void );
+      void select_plot_mw( void );
       void load_distro( void );
-      void load_distro( const QString& );
       void load_color(  void );
       void mandrawsb(   void );
       void shrinksb(    void );
@@ -179,11 +178,23 @@ class US_EXTERN US_GA_Init : public US_Widgets
       void reset(       void );
       void set_limits(  void );
       void sort_distro( QList< Solute >&, bool );
+      void highlight_solute( QwtPlotCurve* );
       void highlight_solute( int );
       void getMouseDown( const QwtDoublePoint& );
       void getMouseUp(   const QwtDoublePoint& );
+      void sclick_sbdata( const QModelIndex& );
+      void dclick_sbdata( const QModelIndex& );
+      void changeBucketRect( int, QRectF& );
+      QwtPlotCurve* drawBucketRect( int, QRectF );
+      QwtPlotCurve* drawBucketRect( int, QPointF, QPointF );
+      QwtPlotCurve* bucketCurveAt( int );
+      void erase_buckets();
+      void removeSoluteBin( int );
 
       void help     ( void )
       { showHelp.show_help( "ga_initialize.html" ); };
+
+   protected:
+      bool eventFilter( QObject*, QEvent* );
 };
 #endif

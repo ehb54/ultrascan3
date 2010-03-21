@@ -67,7 +67,7 @@ public:
    /*! \brief Sets up the internal raster, based on a set of Solute points.
        \param solu  The list of solution points for the current distribution.
    */
-   void setRaster( QList< Solute >& );
+   void setRaster( QList< Solute >* );
 
 private:
 
