@@ -295,6 +295,12 @@ void US_Meniscus::update_plot()
    
    plot_meniscus->replot();
 
+   delete [] radius_values;
+   delete [] rmsd_values;
+   delete [] c;
+   delete [] fitx;
+   delete [] fity;
+   delete polyfit;
    pb_reset->setEnabled(true);
    plot_meniscus->replot();
 }
