@@ -104,19 +104,19 @@ double US_SpectrogramData::value(double x, double y) const
 }
 
 // Set up raster values from solution distribution set.
-void US_SpectrogramData::setRaster( QList< Solute >& solu )
+void US_SpectrogramData::setRaster( QList< Solute >* solu )
 {
    double xval;
    double yval;
    double zval;
 
-   int nsol    = solu.size();          // number Solute points
+   int nsol    = solu->size();         // number Solute points
    if ( nsol < 1 )
       return;
 
-   xmin        = solu.at( 0 ).s;       // initial minima,maxima
-   ymin        = solu.at( 0 ).k;
-   zmin        = solu.at( 0 ).c;
+   xmin        = solu->at( 0 ).s;      // initial minima,maxima
+   ymin        = solu->at( 0 ).k;
+   zmin        = solu->at( 0 ).c;
    xmax        = xmin;
    ymax        = ymin;
    zmax        = zmin;
@@ -125,9 +125,9 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
 
    for ( int ii = 1; ii < nsol; ii++ )
    {
-      xval    = solu.at( ii ).s;
-      yval    = solu.at( ii ).k;
-      zval    = solu.at( ii ).c;
+      xval    = solu->at( ii ).s;
+      yval    = solu->at( ii ).k;
+      zval    = solu->at( ii ).c;
 
       xmin    = ( xval < xmin ) ? xval : xmin;
       xmax    = ( xval > xmax ) ? xval : xmax;
@@ -188,9 +188,9 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
    {
       for ( int kk = 0; kk < nsol; kk++ )
       {   // spread z values for each distribution point
-         xval    = solu.at( kk ).s;                    // x,y,z
-         yval    = solu.at( kk ).k;
-         zval    = solu.at( kk ).c - zmin;             // use z in 0,zrng range
+         xval    = solu->at( kk ).s;                   // x,y,z
+         yval    = solu->at( kk ).k;
+         zval    = solu->at( kk ).c - zmin;            // use z in 0,zrng range
 
          int rx  = ( xval - xmin ) * xinc;             // x index of this point
          int fx  = rx - nxd;                           // first reasonable x
@@ -239,9 +239,9 @@ void US_SpectrogramData::setRaster( QList< Solute >& solu )
    {   // for resolution=100, make all points in circle have zval value
       for ( int kk = 0; kk < nsol; kk++ )
       {   // spread z values for each distribution point
-         xval    = solu.at( kk ).s;                    // x,y,z
-         yval    = solu.at( kk ).k;
-         zval    = solu.at( kk ).c;
+         xval    = solu->at( kk ).s;                   // x,y,z
+         yval    = solu->at( kk ).k;
+         zval    = solu->at( kk ).c;
 
          int rx  = ( xval - xmin ) * xinc;             // x index of this point
          int fx  = rx - nxd;                           // first reasonable x
