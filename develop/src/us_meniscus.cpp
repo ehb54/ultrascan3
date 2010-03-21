@@ -250,6 +250,7 @@ void US_Meniscus::update_plot()
       rmsd += pow(rmsd_values[i] - fity[index], 2.0);
    }
    rmsd /= count;
+   rmsd = pow(rmsd, 0.5);
    str.sprintf("%8.6e", rmsd);
    le_rmsd->setText(str);
 
