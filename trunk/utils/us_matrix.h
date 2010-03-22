@@ -15,7 +15,7 @@ public:
        \param N contains the dimension of x and y
        \param order is the order of the function to be fitted
    */
-   static void lsfit( double*, double*, double*, int, int );
+   static bool lsfit( double*, double*, double*, int, int );
  
    /*! This method factors the n by n symmetric positive definite matrix A
        as LL(T) where L is a lower triangular matrix. The method assumes that

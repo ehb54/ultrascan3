@@ -113,7 +113,7 @@ void US_FitMeniscus::plot_data( void )
    meniscus_plot->clear();
 
    QString contents = te_data->e->toPlainText();
-   contents.remove( QRegExp( "[^0-9eE\\.,\\n\\+\\-]" ) );
+   contents.replace( QRegExp( "[^0-9eE\\.\\n\\+\\-]+" ), " " );
 
    QStringList lines = contents.split( "\n", QString::SkipEmptyParts );
    QStringList parsed;
@@ -132,7 +132,8 @@ void US_FitMeniscus::plot_data( void )
    // Remove any non-data lines and put values in arrays
    for ( int i = 0; i < lines.size(); i++ )
    {
-      QStringList values = lines[ i ].split( ',', QString::SkipEmptyParts );
+      QStringList values = lines[ i ].split( ' ', QString::SkipEmptyParts );
+
       if ( values.size() > 1 ) 
       {
          radius_values[ count ] = values[ 0 ].toDouble();
@@ -177,8 +178,26 @@ void US_FitMeniscus::plot_data( void )
    double c[ 10 ];
 
    int order = sb_order->value();
+//qDebug() << "sb_order->value()" << order;
+   if ( ! US_Matrix::lsfit( c, radius_values, rmsd_values, count, order + 1 ) )
+   {
+      QMessageBox::warning( this,
+            tr( "Data Problem" ),
+            tr( "The data is inadequate for this fit order" ) );
+      
+      le_fit      ->clear();
+      le_rms_error->clear();
+      meniscus_plot->replot();
 
-   US_Matrix::lsfit( c, radius_values, rmsd_values, count, order + 1 );
+      delete [] radius_values;
+      delete [] rmsd_values;
+      
+      return;  
+   }
+
+//   for ( int i = 0; i < order + 1; i++ ) qDebug() << QString::number( c[ i ], 'e', 6 );
+//   qDebug() << "------";
+
 
    int fit_count = (int) ( ( maxx - minx + 2 * overscan ) / 0.001 );
 
@@ -309,5 +328,9 @@ void US_FitMeniscus::plot_data( void )
    pm->attach( meniscus_plot );
 
    meniscus_plot->replot();
+   delete [] fit_x;
+   delete [] fit_y;
+   delete [] radius_values;
+   delete [] rmsd_values;
 }
 
