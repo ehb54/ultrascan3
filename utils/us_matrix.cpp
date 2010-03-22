@@ -5,88 +5,18 @@
 
 #include <QtCore>
 
-void US_Matrix::lsfit( double* c, double* x, double* y,
+bool US_Matrix::lsfit( double* c, double* x, double* y,
                        int N, int order )
 {
-#define LT
-//#define CHOLESKY
-#ifdef LT
+   bool status = true;
 
-   double** A = new double* [ N ];
-   
-   // N x order matrix
-   for ( int i = 0; i < N; i++ ) A[ i ] = new double [ order ];
-
-   double* b = new double [ N ];
-
-   // Create the matrix equation
-   for ( int i = 0; i < N; i++ )
-   {
-      b[ i ]      = y[ i ];
-      A[ i ][ 0 ] = 1.0;
-      
-      for ( int j = 1; j < order; j++ ) A[ i ][ j ] = pow( x[ i ], j );
-   }
-
-   // Now calculate ATA and ATb
-   double** AT  = new double* [ order ];
-   double*  ATb = new double  [ order ];
-   double** ATA = new double* [ order ];
-
-   for ( int i = 0; i < order; i++ ) AT [ i ] = new double [ N ];
-   for ( int i = 0; i < order; i++ ) ATA[ i ] = new double [ order ];
-
-   // Transpose
-   for ( int i = 0; i < order; i++ )
-      for ( int j = 0; j < N; j++ )
-         AT[ i ][ j ] = A[ j ][ i ];
-
-   // Multiply
-   for ( int i = 0; i < order; i++ )
-   {
-      for ( int j = 0; j < order; j++ )
-      {
-         ATA[ i ][ j ] = 0.0;
-
-         for ( int k = 0; k < N; k++ )
-            ATA[ i ][ j ] += AT[ i ][ k ] * A[ k ][ j ];
-      }
-
-      ATb[ i ] = 0.0;
-
-      for ( int k = 0; k < N; k++ )
-         ATb[ i ] += AT[ i ][ k ] * b[ k ];
-   }
-
-   LU_SolveSystem( ATA, ATb, order );
-
-   for ( int i = 0; i < order; i++ )  c[ i ] = ATb[ i ];
-
-   // Clean up
-   for ( int i = 0; i < N; i++ ) delete [] A[ i ];
-   
-   for ( int i = 0; i < order; i++ )
-   {
-      delete [] AT [ i ];
-      delete [] ATA[ i ];
-   }
-
-   delete [] A;
-   delete [] AT;
-   delete [] ATA;
-   delete [] ATb;
-   delete [] b;
-
-
-#endif
-
-#ifdef CHOLESKY
    double** A = new double* [ order ];
    
-   for ( int i = 0; i < N; i++ ) A[ i ] = new double [ order ]; 
+   for ( int i = 0; i < order; i++ ) 
+      A[ i ] = new double [ order ]; 
 
    double* b = new double [ order ];
-   
+
    /* To calculate the matrix, calculate the product M'M, where M is the matrix
       constructed as follows:
 
@@ -107,8 +37,8 @@ void US_Matrix::lsfit( double* c, double* x, double* y,
       linearly independent basis function sets can be used for a fit.
 
    */
-
-   A[ 0 ][ 0 ] = N;
+   
+   A[ 0 ][ 0 ] = (double) N;
    
    for ( int i = 1; i < order; i++ )
    {
@@ -120,7 +50,7 @@ void US_Matrix::lsfit( double* c, double* x, double* y,
             A[ i ][ j ] += pow( x[ k ], i ) * pow( x[ k ], j );
       }
    } 
-   
+
    // Only the lower triangular matrix is filled now, which is sufficient for
    // solution by Cholesky decomposition.
    
@@ -138,40 +68,28 @@ void US_Matrix::lsfit( double* c, double* x, double* y,
    // Solve the system Ax=b using Cholesky decomposition:
 
    // Ax=b, A=LL', L(L'x)=b, L'x=y, Ly=b (solve for y), now L'x=y (solve for x)
-qDebug() << "A";
-   Cholesky_Decomposition( A, order );
-qDebug() << "B";
-   Cholesky_SolveSystem  ( A, b, order );
-qDebug() << "C";
-   
-   for ( int i = 0; i < order; i++ )  c[ i ] = b[ i ];
-   
-   /* !!!!!!!! We don't want GUI stuff here
-   if ( mesg )
+   //print_matrix( A, order, order);
+   //print_vector( b, order );
+   if( Cholesky_Decomposition( A, order ) )
    {
-      int i;
-      //QString str1, str2;
-      str1.sprintf( "Coefficients for %d-order Polynomial fit:\n\n", order );
-
-      for ( int i = 0; i < order; i++ )
-      {
-         str2.sprintf( "%d order: %e\n", i + 1, c[ i ] );
-         str1.append(str2);
-      }
-
-      //QMessageBox::information( "Coefficients: ", str1 );
+      Cholesky_SolveSystem  ( A, b, order );
+      for ( int i = 0; i < order; i++ )  c[ i ] = b[ i ];
    }
-   */
+   else
+      status = false;
 
-qDebug() << "D";
-   for ( int i = 0; i < N; i++ ) delete [] A[ i ];
+   //print_matrix( A, order, order);
+   //print_vector( b, order );
+   //print_matrix( A, order, order);
+   //print_vector( b, order );
    
-qDebug() << "E";
-//   delete [] A;
-qDebug() << "F";
-//   delete [] b;
-qDebug() << "G";
-#endif
+   
+   // Clean up
+   for ( int i = 0; i < order; i++ ) delete A[ i ];
+   
+   delete [] A;
+   delete [] b;
+   return status;
 }
 
 /* This method factors the n by n symmetric positive definite matrix A as LL(T)
@@ -184,14 +102,19 @@ bool US_Matrix::Cholesky_Decomposition( double** a, int n )
 {
    double sum;
    double diff;
-
+//QString t;
    for ( int i = 0; i < n; i++ )
    {
       sum = 0.0;
 
-      for ( int j = 0; j < i; j++ ) sum += sq( a[ i ][ j ] );
+      for ( int j = 0; j < i; j++ )
+      {
+         sum += sq( a[ i ][ j ] );
+//qDebug() <<  t.sprintf( "us3 i j aij sum %i %i %.15f %.15f", i, j, a[ i ][ j ], sum );
+      }
       
       diff = a[ i ][ i ] - sum;
+//qDebug() <<  t.sprintf( "us3 i aii diff sum  %i, %.15f %.15f %.15f", i, a[i][i], diff, sum );
       
       if ( diff <= 0.0 )// not positive definite...
       { 
@@ -200,22 +123,26 @@ bool US_Matrix::Cholesky_Decomposition( double** a, int n )
       }
 
       a[ i ][ i ] = sqrt( diff );
-      
+//qDebug() <<  t.sprintf( "us3 i aii  %i %.15f", i, a[ i ][ i ] );
       for ( int k = i + 1; k < n; k++ )
       {
          sum = 0.0;
 
-         for ( int j = 0; j < i; j++ ) sum += a[ k ][ j ] * a[ i ][ j ];
+         for ( int j = 0; j < i; j++ ) 
+            sum += a[ k ][ j ] * a[ i ][ j ];
          
+//qDebug() <<  t.sprintf( "us3 k i aki sum %i %i %.15f %.15f", k, i, a[ k ][ i ], sum );
          a[ k ][ i ] = ( a[ k ][ i ] - sum ) / a[ i ][ i ];
+//qDebug() <<  t.sprintf( "us3 k i aki sum %i %i %.15f %.15f", k, i, a[ k ][ i ], sum );
       }
    } 
 
-   // Fill in the upper triangular with the transpose of the lower triangular:
+   // Zero the upper triangular portion
 
    for ( int i = 0; i < n - 1; i++ )
    {
-      for ( int j = i + 1; j < n; j++ ) a[ i ][ j ] = 0.0;
+      for ( int j = i + 1; j < n; j++ ) 
+         a[ i ][ j ] = 0.0;
    }
 
    return true;
@@ -227,23 +154,44 @@ bool US_Matrix::Cholesky_Decomposition( double** a, int n )
    vector "x"
 */
 bool US_Matrix::Cholesky_SolveSystem( double** L, double* b, int n ) 
-{ 
+{
+QString t;
    // Forward substitution:
+//qDebug() << ">Solve";
    for ( int i = 0; i < n; i++ )
    {
-      for ( int j = 0; j < i; j++ ) b[ i ] -=  L[ i ][ j ] * b[ j ];
-      
+      int j;
+      for ( j = 0; j < i; j++ ) 
+      {
+         b[ i ] -=  L[ i ][ j ] * b[ j ];
+      }
+
+//qDebug() << t.sprintf( "fwd %i %i %12.8f %12.8f %12.8f %12.8f", 
+//              i, j, b[i], L[i][j], b[j], L[i][i] );
       b[ i ] /= L[ i ][ i ];
    }
+//qDebug() << "After forward";
+//print_vector( b, n );  
+
 
    // Backward substitution:
    for ( int i = n - 1; i >= 0; i-- )
    {
-      for ( int j = n - 1; j > i; j-- )  b[ i] -= L[ j ][ i ] * b[ j ]; 
+      for ( int j = n - 1; j > i; j-- )  
+      {
+//qDebug() << t.sprintf( "bak %i %i %12.8f %12.8f %12.8f", i, j, b[i], L[j][i], b[j] );
+         b[ i ] -= L[ j ][ i ] * b[ j ]; 
+      }
 
+//qDebug() << t.sprintf( "i, bi, Lii %i %.15f %.15f", i, b[ i ],  L[ i ][ i ] );
       b[i] /=  L[ i ][ i ];
+
+//print_vector( b, n );      
    }
 
+//qDebug() << "After backward";
+//print_vector( b, n );      
+//qDebug() << "<Solve";
    return true;
 }
 
@@ -251,7 +199,8 @@ bool US_Matrix::Cholesky_SolveSystem( double** L, double* b, int n )
 void US_Matrix::print_vector( double* v, int n )
 {
    QString s;
-   for ( int i = 0; i < n; i++ ) s += QString::number( v[ i ] ) + " ";
+   QString t;
+   for ( int i = 0; i < n; i++ ) s += t.sprintf( "%.15f ", v[ i ] );
 
    qDebug() << s;
 }
