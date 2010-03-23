@@ -133,10 +133,15 @@ void US_FitMeniscus::plot_data( void )
    for ( int i = 0; i < lines.size(); i++ )
    {
       QStringList values = lines[ i ].split( ' ', QString::SkipEmptyParts );
-
+qDebug() << values;
       if ( values.size() > 1 ) 
       {
-         radius_values[ count ] = values[ 0 ].toDouble();
+         if ( values.size() > 2 ) values.removeFirst();
+         
+         double radius = values[ 0 ].toDouble();
+         if ( radius < 5.7  || radius > 7.3 ) continue;
+
+         radius_values[ count ] = radius;
          rmsd_values  [ count ] = values[ 1 ].toDouble();
 
          // Find min and max
