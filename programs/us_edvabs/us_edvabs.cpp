@@ -389,7 +389,7 @@ void US_Edvabs::gap_check( void )
          int byte = i / 8;
          int bit  = i % 8;
 
-         if ( s.interpolated[ byte ]  &  1 << 7 - bit )
+         if ( s.interpolated[ byte ]  &  1 << ( 7 - bit ) ) 
            gapLength++;
          else
            gapLength = 0;
