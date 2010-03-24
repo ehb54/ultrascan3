@@ -7,11 +7,11 @@
 #include "us_run_details.h"
 #include "us_plot.h"
 #include "us_math.h"
+#include "us_buffer_gui.h"
+#include "us_analyte.h"
 #include "us_convert.h"
 #include "us_db2.h"
 #include "us_passwd.h"
-#include "us_expinfo.h"
-#include "us_tripleinfo.h"
 #include "us_process_convert.h"
 
 int main( int argc, char* argv[] )
@@ -68,6 +68,7 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( lb_runID, row, 0 );
 
    le_runID = us_lineedit( "", 1 );
+   le_runID ->setMinimumWidth( 225 );
    settings->addWidget( le_runID, row++, 1 );
 
    // Directory
@@ -85,21 +86,41 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( le_description, row++, 0, 1, 2 );
 
    // Cell / Channel / Wavelength
-   lb_triple = us_label( tr( "Cell / Channel / Wavelength" ), -1 );
-   settings->addWidget( lb_triple, row, 0 );
+   lb_triple = us_banner( tr( "Cell / Channel / Wavelength" ), -1 );
+   settings->addWidget( lb_triple, row++, 0, 1, 2 );
 
    lw_triple = us_listwidget();
    lw_triple->setSizePolicy( QSizePolicy::Minimum, QSizePolicy::Fixed );
-   lw_triple->setMinimumWidth( 50 );
-   lw_triple->setMaximumHeight( 70 );
+   lw_triple->setMaximumHeight( 120 );
    connect( lw_triple, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
                        SLOT  ( changeTriple( QListWidgetItem* ) ) );
-   settings->addWidget( lw_triple, row++, 1, 2, 1 );
+   settings->addWidget( lw_triple, row, 0, 4, 1 );
 
+   QLabel* lb_ccwinfo = us_label( tr( "Enter Associated c/c/w Info:" ) );
+   settings->addWidget( lb_ccwinfo, row++, 1 );
+
+   // Set up centerpiece drop-down
+   centerpieceInfo();
+   cb_centerpiece = us_comboBox();
+   cb_centerpiece -> addItems( centerpieceTypes );
+   connect( cb_centerpiece, SIGNAL( currentIndexChanged( int ) ), 
+                            SLOT  ( getCenterpieceIndex( int ) ) );
+   settings->addWidget( cb_centerpiece, row++, 1 );
+
+   pb_buffer = us_pushbutton( tr( "Buffer" ), false );
+   connect( pb_buffer, SIGNAL( clicked() ), SLOT( selectBuffer() ) );
+   settings->addWidget( pb_buffer, row++, 1 );
+
+   pb_analyte = us_pushbutton( tr( "Analyte" ), false );
+   connect( pb_analyte, SIGNAL( clicked() ), SLOT( selectAnalyte() ) );
+   settings->addWidget( pb_analyte, row++, 1 );
+
+/*
    // External program to enter c/c/w information
    pb_tripleinfo = us_pushbutton( tr( "Enter Current c/c/w Info" ), false );
    connect( pb_tripleinfo, SIGNAL( clicked() ), SLOT( getTripleInfo() ) );
-   settings->addWidget( pb_tripleinfo, row++, 0 );
+   settings->addWidget( pb_tripleinfo, row++, 0,  1, 2 );
+*/
 
    // Scan Controls
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
@@ -220,7 +241,10 @@ void US_Convert::reset( void )
    pb_writeAll   ->setEnabled( false );
    pb_details    ->setEnabled( false );
    pb_cancelref  ->setEnabled( false );
-   pb_tripleinfo ->setEnabled( false );
+   pb_buffer     ->setEnabled( false );
+   pb_analyte    ->setEnabled( false );
+
+   cb_centerpiece->setEnabled( false );
 
    ct_from       ->disconnect();
    ct_from       ->setMinValue( 0 );
@@ -332,7 +356,10 @@ void US_Convert::load( QString dir )
    pb_include     ->setEnabled( true );
    pb_writeAll    ->setEnabled( true );
    pb_details     ->setEnabled( true );
-   pb_tripleinfo  ->setEnabled( true );
+   pb_buffer      ->setEnabled( true );
+   pb_analyte     ->setEnabled( true );
+   cb_centerpiece ->setEnabled( true );
+
 
    if ( runType == "RI" )
       pb_reference->setEnabled( true );
@@ -374,7 +401,9 @@ void US_Convert::reload( void )
    pb_include     ->setEnabled( true );
    pb_writeAll    ->setEnabled( true );
    pb_details     ->setEnabled( true );
-   pb_tripleinfo  ->setEnabled( true );
+   pb_buffer      ->setEnabled( true );
+   pb_analyte     ->setEnabled( true );
+   cb_centerpiece ->setEnabled( true );
 
    if ( runType == "RI" )
       pb_reference->setEnabled( true );
@@ -1123,8 +1152,8 @@ void US_Convert::getExpInfo( void )
 {
    US_ExpInfo* expInfo = new US_ExpInfo( ExpData );
 
-   connect( expInfo, SIGNAL( updateExpInfoSelection( US_Convert::ExperimentInfo& ) ),
-            this   , SLOT  ( updateExpInfo         ( US_Convert::ExperimentInfo& ) ) );
+   connect( expInfo, SIGNAL( updateExpInfoSelection( US_ExpInfo::ExperimentInfo& ) ),
+            this   , SLOT  ( updateExpInfo         ( US_ExpInfo::ExperimentInfo& ) ) );
 
    connect( expInfo, SIGNAL( cancelExpInfoSelection() ),
             this   , SLOT  ( cancelExpInfo         () ) );
@@ -1134,44 +1163,10 @@ void US_Convert::getExpInfo( void )
    delete expInfo;
 }
 
-void US_Convert::updateExpInfo( US_Convert::ExperimentInfo& d )
+void US_Convert::updateExpInfo( US_ExpInfo::ExperimentInfo& d )
 {
+   // Update local copy
    ExpData = d;
-
-   // Update database
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      connect_error( db.lastError() );
-      return;
-   }
-
-   QStringList q( "update_experiment" );
-   q  << QString::number( d.expID )
-      << QString::number( d.projectID )
-      << QString::number( d.labID )
-      << QString::number( d.instrumentID )
-      << QString::number( d.operatorID )
-      << QString::number( d.rotorID )
-      << d.expType
-      << d.runTemp
-      << d.label
-      << d.comments
-      << d.centrifugeProtocol;
-
-   db.statusQuery( q );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      QMessageBox::information( this,
-            tr( "Database Error" ),
-            tr( "The following errro was returned:\n" ) + db.lastError() );
-      return;
-   }
-
 }
 
 void US_Convert::cancelExpInfo( void )
@@ -1179,38 +1174,92 @@ void US_Convert::cancelExpInfo( void )
    ExpData.clear();
 }
 
-void US_Convert::getTripleInfo( void )
+void US_Convert::selectBuffer( void )
 {
-   US_TripleInfo* tripleInfo = new US_TripleInfo();
+   US_BufferGui* buffer_dialog = new US_BufferGui( ExpData.invID, true );         // Ask for a signal
 
-   connect( tripleInfo, SIGNAL( updateTripleInfoSelection( US_Convert::TripleInfo& ) ),
-            this      , SLOT  ( updateTripleInfo         ( US_Convert::TripleInfo& ) ) );
+   connect( buffer_dialog, SIGNAL( valueBufferID ( const QString& ) ),
+            this,          SLOT  ( assignBuffer  ( const QString& ) ) );
 
-   connect( tripleInfo, SIGNAL( cancelTripleInfoSelection() ),
-            this      , SLOT  ( cancelTripleInfo         () ) );
-
-   tripleInfo->exec();
-   qApp->processEvents();
-   delete tripleInfo;
+   buffer_dialog->exec();
 }
 
-void US_Convert::updateTripleInfo( US_Convert::TripleInfo& d )
+void US_Convert::assignBuffer( const QString& bufferID )
 {
-   // See if this triple has been added already
+   ExpData.triples[ findTripleIndex() ].bufferID = bufferID.toInt();
+}
+
+void US_Convert::selectAnalyte( void )
+{
+   US_Analyte* analyte_dialog = new US_Analyte( ExpData.invID, true );         // Ask for a signal
+
+   connect( analyte_dialog, SIGNAL( valueAnalyteID ( const QString& ) ),
+            this,           SLOT  ( assignAnalyte  ( const QString& ) ) );
+
+   analyte_dialog->exec();
+}
+
+void US_Convert::assignAnalyte( const QString& analyteID )
+{
+   ExpData.triples[ findTripleIndex() ].analyteID = analyteID.toInt();
+}
+
+bool US_Convert::centerpieceInfo( void )
+{
+   QString home = qApp->applicationDirPath().remove( QRegExp( "/bin$" ) );
+   QFile f( home + "/etc/centerpiece.dat" );
+   if ( ! f.open( QIODevice::ReadOnly | QIODevice::Text ) ) return false;
+   QTextStream ts( &f );
+
+   centerpieceTypes.clear();
+   while ( ! ts.atEnd() )
+   {
+      // Read a line at a time
+      QString line      = ts.readLine();
+
+      // Make sure we skip the comments
+      if ( line[ 0 ] != '#' ) 
+      {
+         QStringList parts = line.split(" ", QString::SkipEmptyParts );
+         QString material = parts[ 1 ].toAscii();
+         QString channels = QString::number( parts[ 2 ].toInt() * 2 );
+
+         int pl_index = parts[ 2 ].toInt() + 4;           // bottom position for each channel
+         QString pathlength = parts[ pl_index ].toAscii();
+
+         QString c = material   + ", "
+                   + channels   + " channels, "
+                   + pathlength + "cm";
+
+         centerpieceTypes << c;
+
+      }
+   }
+
+   f.close();
+
+   return true;
+}
+
+void US_Convert::getCenterpieceIndex( int ndx )
+{
+   ExpData.triples[ findTripleIndex() ].centerpiece = ndx;
+}
+
+int US_Convert::findTripleIndex ( void )
+{
+   // See if the current triple has been added already
    for (int i = 0; i < ExpData.triples.size(); i++ )
    {
       if ( ExpData.triples[ i ].tripleID == currentTriple )
-         ExpData.triples.removeAt( i );
+         return i;
    }
 
+   // Not found, so let's add it
+   US_ExpInfo::TripleInfo d;
    d.tripleID = currentTriple;
    ExpData.triples << d;
-
-}
-
-void US_Convert::cancelTripleInfo( void )
-{
-   // Nothing to do
+   return ExpData.triples.size() - 1;
 }
 
 void US_Convert::draw_vline( double radius )
@@ -1241,68 +1290,3 @@ void US_Convert::connect_error( const QString& error )
    QMessageBox::warning( this, tr( "Connection Problem" ),
          tr( "Could not connect to databasee \n" ) + error );
 }
-
-US_Convert::TripleInfo::TripleInfo()
-{
-   centerpiece  = 0;
-   bufferID     = 0;
-   analyteID    = 0;
-}
-// Initializations
-US_Convert::ExperimentInfo::ExperimentInfo()
-{
-   ExperimentInfo::clear();
-}
-
-void US_Convert::ExperimentInfo::clear( void )
-{
-   invID              = 0;
-   lastName           = QString( "" );
-   firstName          = QString( "" );
-   expID              = 0;
-   projectID          = 0;
-   labID              = 0;
-   instrumentID       = 0;
-   operatorID         = 0;
-   rotorID            = 0;
-   expType            = QString( "" );
-   runTemp            = QString( "" );
-   label              = QString( "" );
-   comments           = QString( "" );
-   centrifugeProtocol = QString( "" );
-   date               = QString( "" );
-   triples.clear();               // Not to be confused with the global triples
-}
-
-US_Convert::ExperimentInfo& US_Convert::ExperimentInfo::operator=( const ExperimentInfo& rhs )
-{
-   if ( this != &rhs )            // Guard against self assignment
-   {
-      invID        = rhs.invID;
-      lastName     = rhs.lastName;
-      firstName    = rhs.firstName;
-      expID        = rhs.expID;
-      projectID    = rhs.projectID;
-      labID        = rhs.labID;
-      instrumentID = rhs.instrumentID;
-      operatorID   = rhs.operatorID;
-      rotorID      = rhs.rotorID;
-      expType      = rhs.expType;
-      runTemp      = rhs.runTemp;
-      label        = rhs.label;
-      comments     = rhs.comments;
-      centrifugeProtocol = rhs.centrifugeProtocol;
-      date         = rhs.date;
-
-      for ( int i = 0; i < triples.size(); i++ )
-      {
-         triples[ i ].tripleID    = rhs.triples[ i ].tripleID;
-         triples[ i ].centerpiece = rhs.triples[ i ].centerpiece;
-         triples[ i ].bufferID    = rhs.triples[ i ].bufferID;
-         triples[ i ].analyteID   = rhs.triples[ i ].analyteID;
-      }
-   }
-
-   return *this;
-}
-

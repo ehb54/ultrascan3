@@ -188,7 +188,7 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
 US_ProcessConvert::US_ProcessConvert( QWidget* parent,
                                       int& status,
                                       QVector< US_DataIO::rawData >& rawConvertedData,
-                                      US_Convert::ExperimentInfo& ExpData,
+                                      US_ExpInfo::ExperimentInfo& ExpData,
                                       QStringList& triples,
                                       QString runType,
                                       QString runID,
@@ -728,7 +728,7 @@ void US_ProcessConvert::setCcrTriples( QList< US_DataIO::beckmanRaw >& rawLegacy
    }
 }
 
-int US_ProcessConvert::writeXmlFile( US_Convert::ExperimentInfo& ExpData,
+int US_ProcessConvert::writeXmlFile( US_ExpInfo::ExperimentInfo& ExpData,
                                      QStringList& triples,
                                      QString runType,
                                      QString runID,
@@ -792,7 +792,7 @@ int US_ProcessConvert::writeXmlFile( US_Convert::ExperimentInfo& ExpData,
       // loop through the following for c/c/w combinations
       for ( int i = 0; i < ExpData.triples.size(); i++ )
       {
-         US_Convert::TripleInfo t = ExpData.triples[ i ];
+         US_ExpInfo::TripleInfo t = ExpData.triples[ i ];
 
          QString triple         = triples[ t.tripleID ];
          QStringList parts      = triple.split(" / ");

@@ -9,6 +9,7 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO.h"
+#include "us_expinfo.h"
 
 class US_EXTERN US_Convert : public US_Widgets
 {
@@ -18,45 +19,6 @@ class US_EXTERN US_Convert : public US_Widgets
 
       //! \brief  Generic constructor for the US_Convert() program.
       US_Convert();
-
-      //! \brief  Class that contains information about relevant 
-      //!         cell/channel/wavelength combinations
-      class TripleInfo
-      {
-         public:
-         int              tripleID;           //!< The ID of this c/c/w combination
-         int              centerpiece;        //!< The ID of the centerpiece that was used
-         int              bufferID;           //!< The ID of the buffer that was associated
-         int              analyteID;          //!< The ID of the analyte that was associated
-         TripleInfo();                        //!< A generic constructor
-      };
-
-      //! \brief  Class that contains information about the hardware and other
-      //!         associations
-      class ExperimentInfo
-      {
-         public:
-         int              invID;              //!< The personID of the investigator
-         QString          lastName;           //!< The last name of the investigator
-         QString          firstName;          //!< The first name of the investigator
-         int              expID;              //!< The ID of the experiment itself
-         int              projectID;          //!< The project this experiment is associated with
-         int              labID;              //!< The lab in which the experiment was conducted
-         int              instrumentID;       //!< The identifier of the ultra-centrifuge
-         int              operatorID;         //!< The personID of the person who operated the centrifuge
-         int              rotorID;            //!< The rotor that was used
-         QString          expType;            //!< The type of experiment
-         QString          runTemp;            //!< The run temperature
-         QString          label;              //!< The experiment label, or identifying information
-         QString          comments;           //!< Comments that were associated with the experiment
-         QString          centrifugeProtocol; //!< The governing centrifuge protocol
-         QString          date;               //!< The date of the run
-         QList< TripleInfo > triples;         //!< Information about the cell/channel/wavelength info
-         ExperimentInfo();                    //!< A generic constructor
-         ExperimentInfo&  operator=( const ExperimentInfo& ); //!< An overloaded assignment operator
-         void updateDB( void );               //!< Function to update the database with changes
-         void clear( void );                  //!< Function to reset all class variables to defaults
-      };
 
       //! \brief   Some status codes returned by the us_convert program
       enum ioError
@@ -104,7 +66,10 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_reference;
       QPushButton*  pb_cancelref;
       QPushButton*  pb_expinfo;
-      QPushButton*  pb_tripleinfo;
+      QPushButton*  pb_buffer;
+      QPushButton*  pb_analyte;
+
+      QComboBox*    cb_centerpiece;
 
       QList< US_DataIO::beckmanRaw >  legacyData;     // legacy data from file
       QVector< US_DataIO::rawData >   allData;        // all the data, separated by c/c/w
@@ -132,7 +97,8 @@ class US_EXTERN US_Convert : public US_Widgets
       void RP_calc_avg     ( void );
   
       bool show_plot_progress;
-      ExperimentInfo       ExpData; 
+      US_ExpInfo::ExperimentInfo ExpData; 
+      QStringList          centerpieceTypes;
 
   private slots:
       void load            ( QString dir = "" );
@@ -160,11 +126,15 @@ class US_EXTERN US_Convert : public US_Widgets
       void process_reference ( const QwtDoublePoint& );
       void cancel_reference( void );
       void getExpInfo      ( void );
-      void updateExpInfo   ( US_Convert::ExperimentInfo& );
+      void updateExpInfo   ( US_ExpInfo::ExperimentInfo& );
       void cancelExpInfo   ( void );
-      void getTripleInfo   ( void );
-      void updateTripleInfo( US_Convert::TripleInfo& );
-      void cancelTripleInfo( void );
+      void selectBuffer    ( void );
+      void assignBuffer    ( const QString&  );
+      void selectAnalyte   ( void );
+      void assignAnalyte   ( const QString&  );
+      bool centerpieceInfo ( void );
+      void getCenterpieceIndex( int );
+      int  findTripleIndex ( void );
       void draw_vline      ( double );
       void connect_error   ( const QString& );
       void help            ( void )

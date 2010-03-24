@@ -1095,7 +1095,7 @@ int US_FemGlobal::write_model_data( vector< mfem_data >& model,
 
   QDataStream ds( &f );
   
-  ds << model.size();
+  ds << (uint)model.size();
   
   for ( uint i = 0; i < model.size(); i++ )
   {
@@ -1109,12 +1109,12 @@ int US_FemGlobal::write_model_data( vector< mfem_data >& model,
     ds << model[ i ].s20w_correction;
     ds << model[ i ].D20w_correction;
     
-    ds << model[ i ].radius.size();
+    ds << (uint)model[ i ].radius.size();
     
     for ( uint j = 0; j < model[ i ].radius.size(); j++ )
       ds << model[ i ].radius[ j ];
 
-    ds << model[ i ].scan.size();
+    ds << (uint)model[ i ].scan.size();
 
     for ( uint j = 0; j < model[ i ].scan.size(); j++ )
     {
