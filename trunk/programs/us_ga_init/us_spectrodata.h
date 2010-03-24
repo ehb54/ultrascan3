@@ -18,6 +18,7 @@ typedef struct solute_s
    double s;
    double k;
    double c;
+   double d;
 } Solute;
 
 //! \brief Class derived from QwtRasterData to supply QwtPlotSpectrogram data

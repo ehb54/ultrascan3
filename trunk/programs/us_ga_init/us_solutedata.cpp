@@ -2,6 +2,14 @@
 
 #include "us_solutedata.h"
 #include "us_defines.h"
+#include "us_math.h"
+
+// bucket vertex LessThan routine
+bool buck_vx_lessthan( const bucket &buck1, const bucket &buck2 )
+{  // TRUE iff  (sx1<sx2) ||  (sx1==sx2 && sy1<sy2)
+   return ( buck1.s_min < buck2.s_min ) ||
+      ( ( buck1.s_min == buck2.s_min ) && ( buck1.ff0_min < buck2.ff0_min ) );
+}
 
 // Holds Solute data for US_GA_Initialize
 US_SoluteData::US_SoluteData( const QString& title ) : QObject()
@@ -24,11 +32,20 @@ int US_SoluteData::clearBuckets()
    return rc;
 }
 
+int US_SoluteData::sortBuckets( QList< bucket >* buks )
+{
+   int rc = 0;
+   qSort( buks->begin(), buks->end() );
+   return rc;
+}
+
 int US_SoluteData::sortBuckets()
 {
    int rc = 0;
+   qSort( allbucks.begin(), allbucks.end() );
    return rc;
 }
+
 
 int US_SoluteData::appendBucket( bucket& buk )
 {
@@ -190,21 +207,27 @@ QRectF US_SoluteData::bucketRect(  int ix )
    return QRectF( QPointF( x1, y1 ), QPointF( x2, y2 ) );
 }
 
-QPointF US_SoluteData::bucketPoint( int ix )
+QPointF US_SoluteData::bucketPoint( int ix, bool nearest )
 {
-   bucket buk  = bucketAt( ix );
-   qreal x1    = buk.s_min;
+   bucket buk  = bucketAt( ix );    // get specified bucket
+   qreal x1    = buk.s_min;         // get vertices
    qreal x2    = buk.s_max;
    qreal y1    = buk.ff0_min;
    qreal y2    = buk.ff0_max;
 
    QPointF mpt( ( x1 + x2 ) / 2.0, ( y1 + y2 ) / 2.0 );
-   QPointF spt = mpt;
+   QPointF spt = mpt;               // get mid-point
    QPointF& pt = spt;
 
-   findNearestPoint( pt );
+   if ( nearest )                   // get nearby solute point
+      findNearestPoint( pt );
 
    return pt;
+}
+
+QPointF US_SoluteData::bucketPoint( int ix )
+{
+   return bucketPoint( ix, true );   // solute point near bucket 
 }
 
 QSizeF US_SoluteData::bucketSize(  int ix )
@@ -282,5 +305,878 @@ int US_SoluteData::removeBucketAt( int ix )
 {
    allbucks.removeAt( ix );
    return allbucks.size();
+}
+
+// do automatic calculation of bins
+int US_SoluteData::autoCalcBins( int mxsols, qreal wsbuck, qreal hfbuck )
+{
+#define _MIN_VHR_ 0.01
+#define FMIN(a,b) ((a<b)?a:b)
+#define FMAX(a,b) ((a>b)?a:b)
+   QList< bucket > tbuk1;
+   QList< bucket > tbuk2;
+   QList< bucket >* buks1 = &tbuk1;
+   QList< bucket >* buks2 = &tbuk2;
+   QList< qreal  >  cvals;
+   bucket           buk;
+   int              bukflip = 0;
+   int              nisols  = distro->size();
+   int              nssols  = nisols;
+   int              ntsols  = mxsols;
+   qreal            cval;
+   qreal            cutlo;
+   qreal            wbuckh  = wsbuck / 2.0;
+   qreal            hbuckh  = hfbuck / 2.0;
+
+   if ( ntsols < 2  ||  ntsols > nisols )
+   {
+      ntsols      = nisols;
+   }
+
+
+   // initialize work list from solute distribution and get prelim stats
+   for ( int jj = 0; jj < nisols; jj++ )
+   {
+      qreal sval  = distro->at( jj ).s;
+      qreal fval  = distro->at( jj ).k;
+      cval        = distro->at( jj ).c;
+      buk.s       = sval;
+      buk.s_min   = sval - wbuckh;
+      buk.s_max   = sval + wbuckh;
+      buk.ff0     = fval;
+      buk.ff0_min = fval - hbuckh;
+      buk.ff0_max = fval + hbuckh;
+      buk.conc    = cval;
+      buk.status  = 2;
+      buks1->append( buk );
+      cvals.append( cval );
+   }
+
+   // sort the concentrate values to find cut-off values
+   qSort( cvals.begin(), cvals.end() );
+
+   // (possibly) pare down the list based on cut-off C values
+   cutlo       = cvals.at( nisols - ntsols ); // low val in sorted concen vals
+
+   for ( int jj = 0; jj < nssols; jj++ )
+   {
+      buk         = buks1->at( jj );
+      cval        = buk.conc;
+      if ( cval >= cutlo )
+      {
+         buks2->append( buk );
+      }
+   }
+
+   nssols      = buks2->size();
+   buks1->clear();
+   buks1       = bukflip ? &tbuk1 : &tbuk2;
+   buks2       = bukflip ? &tbuk2 : &tbuk1;
+   bukflip     = 1 - bukflip;
+
+   // now perform as many passes as needed to handle all overlaps
+   bool overs  = true;
+   int npass   = 0;
+   int tstat   = 1;      // set up to skip reduced bins during 1st few passes
+
+   while ( overs )
+   {
+      int novls   = 0;
+      npass++;
+      buks2->append( buks1->at( 0 ) );
+
+      for ( int jj = 1; jj < nssols; jj++ )
+      {  // examine each of the current buckets
+         qreal horzr;
+         qreal vertr;
+         buk          = buks1->at( jj );
+
+         // don't break up bins that are already reduced for 1st few passes
+         if ( buk.status == tstat )
+         {
+            buks2->append( buk );
+            continue;
+         }
+
+         qreal cx1    = buk.s_min;
+         qreal cx2    = buk.s_max;
+         qreal cy1    = buk.ff0_min;
+         qreal cy2    = buk.ff0_max;
+
+         for ( int kk = 0; kk < jj; kk++ )
+         {  // compare current to each previous bucket
+            bucket buk2  = buks1->at( kk );
+            qreal px1    = buk2.s_min;
+            qreal px2    = buk2.s_max;
+            qreal py1    = buk2.ff0_min;
+            qreal py2    = buk2.ff0_max;
+
+            if ( cx1 < px2 )
+            {  // possible horizontal overlap
+
+               if ( cy1 < py2  &&  cy2 > py2 )
+               {  // current overlaps in its lower left
+                  novls++;
+                  buk.status   = 1;
+                  buk2         = buk;
+                  horzr        = ( px2 - cx1 ) / wsbuck;
+                  vertr        = ( py2 - cy1 ) / hfbuck;
+                  if ( vertr < horzr )
+                  {  // split vertically
+                     buk2.s_min   = FMIN(cx1,px2);
+                     buk2.s_max   = FMAX(px2,cx1);
+                     buk2.ff0_min = FMIN(py2,cy2);
+                     buk2.ff0_max = FMAX(cy2,py2);
+                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
+                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
+                        buks2->append( buk2 );
+//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+
+                     buk.s_min    = FMIN(px2,cx2);
+                     buk.s_max    = FMAX(cx2,px2);
+                     buk.ff0_min  = cy1;
+                     buk.ff0_max  = cy2;
+                  }
+
+                  else
+                  {  // split horizontally
+                     buk2.s_min   = cx1;
+                     buk2.s_max   = cx2;
+                     buk2.ff0_min = FMIN(py2,cy2);
+                     buk2.ff0_max = FMAX(cy2,py2);
+                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
+                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
+                        buks2->append( buk2 );
+//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+
+                     buk.s_min    = FMIN(px2,cx2);
+                     buk.s_max    = FMAX(cx2,px2);
+                     buk.ff0_min  = FMIN(cy1,py2);
+                     buk.ff0_max  = FMAX(py2,cy1);
+                  }
+//qDebug() << "  LL OVL: novls " << novls;
+                  break;
+               }
+
+               else if ( cy2 > py1  &&  cy1 < py1 )
+               {  // current overlaps in its upper left
+                  novls++;
+                  buk.status   = 1;
+                  buk2         = buk;
+                  horzr        = ( px2 - cx1 ) / wsbuck;
+                  vertr        = ( cy2 - py1 ) / hfbuck;
+                  if ( vertr < horzr )
+                  {  // split vertically
+                     buk2.s_min   = FMIN(cx1,px2);
+                     buk2.s_max   = FMAX(px2,cx1);
+                     buk2.ff0_min = FMIN(cy1,py1);
+                     buk2.ff0_max = FMAX(py1,cy1);
+                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
+                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
+                        buks2->append( buk2 );
+//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+
+                     buk.s_min    = FMIN(px2,cx2);
+                     buk.s_max    = FMAX(cx2,px2);
+                     buk.ff0_min  = cy1;
+                     buk.ff0_max  = cy2;
+                  }
+
+                  else
+                  {  // split horizontally
+                     buk2.s_min   = FMIN(px2,cx2);
+                     buk2.s_max   = FMAX(cx2,px2);
+                     buk2.ff0_min = FMIN(py1,cy2);
+                     buk2.ff0_max = FMAX(cy2,py1);
+                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
+                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
+                        buks2->append( buk2 );
+//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+
+                     buk.s_min    = FMIN(cx1,cx2);
+                     buk.s_max    = FMAX(cx2,cx1);
+                     buk.ff0_min  = FMIN(cy1,py1);
+                     buk.ff0_max  = FMAX(py1,cy1);
+                  }
+//qDebug() << "  UL OVL: novls " << novls;
+                  break;
+               }
+
+               else if ( cy1 > py1  &&  cy2 < py2 )
+               {  // current overlaps in its middle left
+                  novls++;
+                  buk.status   = 1;
+                  buk.s_min    = FMIN(px2,cx2);
+                  buk.s_max    = FMAX(cx2,px2);
+//qDebug() << "  UL OVL: novls " << novls;
+                  break;
+               }
+
+               else if ( cy2 > py2  &&  cy1 < py1 )
+               {  // current overlaps in both upper and lower left
+                  novls++;
+                  buk.status   = 1;
+                  buk2         = buk;
+                  horzr        = ( px2 - cx1 ) / wsbuck;
+                  vertr        = ( py2 - py1 ) / hfbuck;
+                  if ( vertr < horzr )
+                  {  // split vertically (into 3 total parts)
+                     buk2.s_min   = FMIN(cx1,px2);  // top
+                     buk2.s_max   = FMAX(px2,cx1);
+                     buk2.ff0_min = FMIN(py1,cy2);
+                     buk2.ff0_max = FMAX(cy2,py1);
+                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
+                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
+                        buks2->append( buk2 );
+//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+
+                     buk2.ff0_min = FMIN(cy1,py1);  // bottom
+                     buk2.ff0_max = FMAX(py1,cy1);
+                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
+                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
+                        buks2->append( buk2 );
+//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+
+                     buk.s_min    = FMIN(px2,cx2);  // right
+                     buk.s_max    = FMAX(cx2,px2);
+                     buk.ff0_min  = cy1;
+                     buk.ff0_max  = cy2;
+                  }
+
+                  else
+                  {  // split horizontally (into 3 total parts)
+                     buk2.s_min   = FMIN(cx1,cx2);  // top
+                     buk2.s_max   = FMAX(cx2,cx1);
+                     buk2.ff0_min = FMIN(py2,cy2);
+                     buk2.ff0_max = FMAX(cy2,py2);
+                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
+                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
+                        buks2->append( buk2 );
+//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+
+                     buk2.ff0_min = FMIN(cy1,py1);  // bottom
+                     buk2.ff0_max = FMAX(py1,cy1);
+                     horzr        = ( buk2.s_max   - buk2.s_min   ) / wsbuck;
+                     vertr        = ( buk2.ff0_max - buk2.ff0_min ) / hfbuck;
+                     if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
+                        buks2->append( buk2 );
+//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+
+                     buk.s_min    = FMIN(px2,cx2);  // middle
+                     buk.s_max    = FMAX(cx2,px2);
+                     buk.ff0_min  = FMIN(py1,py2);
+                     buk.ff0_max  = FMAX(py2,py1);
+                  }
+//qDebug() << "  UL OVL: novls " << novls;
+                  break;
+               }
+
+            }
+
+            else if ( cx1 == px1 )
+            {  // possible pure vertical overlap
+
+               if ( cy1 < py1  &&  cy2 > py1 )
+               {  // current overlaps in its upper part
+                  novls++;
+                  buk.status   = 1;
+                  buk.ff0_min  = FMIN(cy1,py1);
+                  buk.ff0_max  = FMAX(py1,cy1);
+//qDebug() << "   UV OVL: novls " << novls;
+                  break;
+               }
+            }
+         }
+         horzr        = ( buk.s_max   - buk.s_min   ) / wsbuck;
+         vertr        = ( buk.ff0_max - buk.ff0_min ) / hfbuck;
+         if ( horzr > _MIN_VHR_  &&  vertr > _MIN_VHR_ )
+            buks2->append( buk );
+//else qDebug() << "BUCKET TOO THIN H,V " << horzr << "," << vertr;
+      }
+      // get new bucket count; flip-flop input,output lists
+      nssols      = buks2->size();
+      buks1->clear();
+      buks1       = bukflip ? &tbuk1 : &tbuk2;
+      buks2       = bukflip ? &tbuk2 : &tbuk1;
+      bukflip     = 1 - bukflip;
+
+      if ( novls > 0 )
+      {  // if there were overlaps, re-sort buckets by vertex for next pass
+         qSort( buks1->begin(), buks1->end(), buck_vx_lessthan );
+      }
+
+      else if ( tstat == 1 )
+      {  // start new set of passes where reduced buckets can be reduced more
+         tstat       = 4;
+      }
+
+      else
+      {  // otherwise, we must be done!
+         overs       = false;
+      }
+   }
+
+   // do a re-sort based on center point
+   qSort( buks1->begin(), buks1->end() );
+
+   // copy the final bucket list to the master
+
+   allbucks.clear();
+
+   for ( int jj = 0; jj < nssols; jj++ )
+   {
+      allbucks.append( buks1->at( jj ) );
+   }
+
+   tbuk1.clear();
+   tbuk2.clear();
+   cvals.clear();
+   return nssols;
+}
+
+// save bucket information to file for use by GA
+int US_SoluteData::saveGAdata( QString& fname )
+{
+   int     rc   = 0;
+   int     nsol = allbucks.size();
+   QString line;
+   bucket  buk;
+
+   QFile fileo( fname );
+
+   if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      QTextStream ts( &fileo );
+      ts << nsol << endl;
+
+      for ( int jj = 0; jj < nsol; jj++ )
+      {
+         buk      = allbucks.at( jj );
+         line.sprintf(
+            "%6.4f, %6.4f, %6.4f, %6.4f",
+             buk.s_min, buk.s_max, buk.ff0_min, buk.ff0_max );
+         ts << line << endl;
+      }
+      fileo.close();
+   }
+   else
+      rc    = 1;
+
+   return rc;
+}
+
+
+// build the data lists for Monte Carlo analysis
+int US_SoluteData::buildDataMC( bool plot_s, SoluteList* ssl, SoluteList* wsl )
+{
+#define _VERY_SMALL_ 1.0E-16
+   int         rc   = 0;
+   int         nsol = distro->size();
+   int         nbuk = allbucks.size();
+   bucket      buk;          // bucket record
+   Solute      d_sol;        // solute record
+   SimComp     simc;         // simulation component record
+   SimCompList bcomp;        // sim component list
+   qreal       bsmin;        // bucket vertices
+   qreal       bsmax;
+   qreal       bfmin;
+   qreal       bfmax;
+   qreal       ssval;        // component s,w,f,c,d values
+   qreal       swval;
+   qreal       sfval;
+   qreal       scval;
+   qreal       sdval;
+
+   // build component list from solute lists
+   component.clear();
+
+   if ( plot_s )      // solute distro is s_distro
+   {
+      for ( int jj = 0; jj < nsol; jj++ )
+      {
+         d_sol    = distro->at( jj ); // get solute record ("x" is "s")
+         ssval    = d_sol.s;
+         swval    = ssval;
+         sfval    = d_sol.k;
+         scval    = d_sol.c;
+         sdval    = d_sol.d;
+
+         // find matching mw_distro
+         for ( int kk = 0; kk < nsol; kk++ )
+         {
+            qreal diffc = scval - wsl->at( kk ).c;
+            diffc       = ( diffc < 0.0 ) ? -diffc : diffc;
+            if ( sfval == wsl->at( kk ).k  &&  diffc < _VERY_SMALL_ )
+            {  // mw distro with same k,c:  get "mw" value
+               swval    = wsl->at( kk ).s;
+               break;
+            }
+         }
+
+         if ( swval == ssval )
+         {
+            qDebug() << "No matching MW solute found for S=" << ssval;
+         }
+
+         ssval   *= 1.0e-13;
+         simc.s   = ssval;               // compose simulation component
+         simc.w   = swval;
+         simc.f   = sfval;
+         simc.c   = scval;
+         simc.d   = sdval;
+         component.append( simc );       // and add it to list
+      }
+   }
+
+   else               // solute distro is mw_distro
+   {
+      for ( int jj = 0; jj < nsol; jj++ )
+      {
+         d_sol    = distro->at( jj ); // get solute record ("x" is "mw")
+         swval    = d_sol.s;
+         ssval    = swval;
+         sfval    = d_sol.k;
+         scval    = d_sol.c;
+         sdval    = d_sol.d;
+
+         // find matching s_distro
+         for ( int kk = 0; kk < nsol; kk++ )
+         {
+            qreal diffc = scval - ssl->at( kk ).c;
+            diffc       = ( diffc < 0.0 ) ? -diffc : diffc;
+            if ( sfval == ssl->at( kk ).k  &&  diffc < _VERY_SMALL_ )
+            {  // s distro with same k,c:  get "s" value
+               ssval    = ssl->at( kk ).s;
+               break;
+            }
+         }
+         ssval   *= 1.0e-13;
+         simc.s   = ssval;               // compose simulation component
+         simc.w   = swval;
+         simc.f   = sfval;
+         simc.c   = scval;
+         simc.d   = sdval;
+         component.append( simc );       // and add it to list
+      }
+   }
+   // build list of component solute data for each bucket
+   MC_solute.clear();
+
+   for ( int jj = 0; jj < nbuk; jj++ )
+   {
+      // get bucket dimensions
+      buk      = allbucks.at( jj );      // get bucket and its vertices
+      bsmin    = buk.s_min;
+      bsmax    = buk.s_max;
+      bfmin    = buk.ff0_min;
+      bfmax    = buk.ff0_max;
+      bcomp.clear();
+
+      for ( int kk = 0; kk < nsol; kk++ )
+      {  // add solute points that fall within bin dimensions
+         ssval    = distro->at( kk ).s;  // "x,y" of solute point
+         sfval    = distro->at( kk ).k;
+         if ( ssval >= bsmin  &&  ssval <= bsmax   &&
+              sfval >= bfmin  &&  sfval <= bfmax )
+         {  // solute is in this bin:  save component for bin
+            bcomp.append( component.at( kk ) );
+         }
+      }
+
+      MC_solute.append( bcomp );
+   }
+
+   return rc;
+}
+
+// complete analysis and report Monte Carlo statistics
+int US_SoluteData::reportDataMC( QString& fname, int mc_iters )
+{
+   int         rc = 0;
+   int         nbuk = MC_solute.size();
+   bucket      buk;          // bucket record
+   SimCompList bcomp;        // sim component list
+   QList< double > vals;
+
+   QFile fileo( fname );
+
+   if ( fileo.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {  // output Monte Carlo statistics to a report file
+      QList< qreal > valus;
+      QList< qreal > concs;
+      QTextStream ts( &fileo );
+      QString str1;
+
+      ts << "*****************************************"
+         "**********************************\n\n";
+      ts << "Monte Carlo Analysis Statistical Results "
+         "(from Genetic Algorithm Analysis):\n\n";
+      ts << "*****************************************"
+         "**********************************\n\n";
+      ts << "Summary:\n";
+
+      if ( nbuk < 1 )
+      {
+         return 2;
+      }
+      qreal concsum = 0.0;
+      qreal vsum    = 0.0;
+      qreal vsiz    = 0.0;
+
+      for ( int kk = 0; kk < nbuk; kk++ )
+      {  // accumulate statistics for each bin
+         bcomp    = MC_solute.at( kk );
+         ts << "\nSolute " << ( kk + 1 ) << ":\n";
+         int ksol = bcomp.size();
+         vsiz     = (double)ksol;
+
+         if ( ksol < 3 )
+         {  // Summary prints for a bin that has only a point or two
+            ts << "\nThis solute bin does not have sufficient points to"
+               "\ncalculate meaningful statistics.\n";
+
+            ts << "Average Molecular Weight: ";
+            vsum     = 0.0;
+            for ( int jj = 0; jj < ksol; jj++ )
+               vsum    += bcomp.at( jj ).w;
+            ts << ( vsum / vsiz ) << endl;
+
+            ts << "Average Concentration:    ";
+            vsum     = 0.0;
+            for ( int jj = 0; jj < ksol; jj++ )
+               vsum    += bcomp.at( jj ).c;
+            ts << ( vsum / vsiz ) << endl;
+            concs.append( vsum );
+            concsum += vsum;
+
+            ts << "Average Frictional Ratio: ";
+            vsum     = 0.0;
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               vsum    += bcomp.at( jj ).f;
+            ts << ( vsum / vsiz ) << endl;
+         }
+
+         else
+         {  // Summary prints for the typical bin with many points
+            qreal vtotal  = 0.0;
+            qreal sclmci  = (qreal)mc_iters;
+            valus.clear();
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).w );
+            outputStats( ts, valus, false, tr( "Molecular weight:        " ) );
+            valus.clear();
+
+            for ( int jj = 0; jj < ksol; jj++ )
+            {
+               qreal cval = bcomp.at( jj ).c;
+               valus.append( cval * sclmci );
+               vtotal    += cval;
+            }
+
+            concs.append( vtotal );
+            concsum   += vtotal;
+            outputStats( ts, valus, false, tr( "Concentration:           " ) );
+            valus.clear();
+
+            ts << tr( "Total Concentration:     " ) <<
+               str1.sprintf( " %6.4e\n", vtotal );
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).s );
+            outputStats( ts, valus, false, tr( "Sedimentation Coeff.:    " ) );
+            valus.clear();
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).d );
+            outputStats( ts, valus, false, tr( "Diffusion Coeff.:        " ) );
+            valus.clear();
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).f );
+            outputStats( ts, valus, false, tr( "Frictional Ratio, f/f0:  " ) );
+            valus.clear();
+         }
+      }
+
+      ts << tr( "\n\nRelative Concentrations:\n\n" );
+      ts << tr( "Total concentration: " ) << concsum << " OD\n";
+
+      for ( int jj = 0; jj < concs.size(); jj++ )
+      {
+         ts << tr( "Relative percentage of Solute " ) << ( jj + 1 )
+            << ": " << ( 100.0 * concs.at( jj ) / concsum ) << " %\n";
+      }
+
+      ts << tr( "\n\nDetailed Results:\n" );
+
+      for ( int kk = 0; kk < nbuk; kk++ )
+      {  // output detailed statistics for all the bins
+         bcomp    = MC_solute.at( kk );
+         ts << "\n*****************************************"
+            "**********************************";
+         ts << "\nSolute " << ( kk + 1 ) << ":";
+         int ksol = bcomp.size();
+         vsiz     = (double)ksol;
+
+         if ( ksol < 3 )
+         {  // just print the values for a sparse bin
+            ts << tr( "\nThis solute bin does not have sufficient points to"
+                  "\ncalculate a meaningful distribution\n" );
+
+            ts << tr( "\nMolecular Weight:\n" );
+            for ( int jj = 0; jj < ksol; jj++ )
+               ts << bcomp.at( jj ).w << endl;
+ 
+            ts << tr( "\nConcentration:\n" );
+            for ( int jj = 0; jj < ksol; jj++ )
+               ts << bcomp.at( jj ).c << endl;
+
+            ts << tr( "\nSedimentation Coefficient:\n" );
+            for ( int jj = 0; jj < ksol; jj++ )
+               ts << bcomp.at( jj ).s << endl;
+
+            ts << tr( "\nDiffusion Coefficient:\n" );
+            for ( int jj = 0; jj < ksol; jj++ )
+               ts << bcomp.at( jj ).d << endl;
+
+            ts << tr( "\nFrictional Ratio:\n" );
+            for ( int jj = 0; jj < ksol; jj++ )
+               ts << bcomp.at( jj ).f << endl;
+         }
+
+         else
+         {  // calculate and output detailed statistics for the bin
+            qreal sclmci  = (qreal)mc_iters;
+            valus.clear();
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).w );
+            outputStats( ts, valus, true, tr( "Molecular Weight" ) );
+            valus.clear();
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).c * sclmci );
+            outputStats( ts, valus, true, tr( "Concentration" ) );
+            valus.clear();
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).s );
+            outputStats( ts, valus, true, tr( "Sedimentation Coefficient" ) );
+            valus.clear();
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).d );
+            outputStats( ts, valus, true, tr( "Diffusion Coefficient" ) );
+            valus.clear();
+
+            for ( int jj = 0; jj < ksol; jj++ )
+               valus.append( bcomp.at( jj ).f );
+            outputStats( ts, valus, true, tr( "Frictional Ratio" ) );
+            valus.clear();
+
+         }
+      }
+
+      fileo.close();
+   }
+   else
+      rc    = 1;
+   return rc;
+}
+
+// output statistics for an array of values of a given type
+void US_SoluteData::outputStats( QTextStream& ts, QList< qreal >& vals,
+      bool details, QString title )
+{
+   QString str1;
+   QString str2;
+   int     nvals      = vals.size();
+   int     nbins      = 50;
+   qreal   vsiz       = (qreal)nvals;
+   qreal   binsz      = 50.0;
+   qreal   vlo        = 9.9e30;
+   qreal   vhi        = -9.9e30;
+   qreal   *xplot     = new qreal[ nvals ];
+   qreal   *yplot     = new qreal[ nvals ];
+   qreal   vsum       = 0.0;
+   qreal   vm2        = 0.0;
+   qreal   vm3        = 0.0;
+   qreal   vm4        = 0.0;
+   qreal   vmean;
+   qreal   modecen;
+   qreal   modelo;
+   qreal   modehi;
+   qreal   cnf99lo;
+   qreal   cnf99hi;
+   qreal   cnf95lo;
+   qreal   cnf95hi;
+   qreal   skew;
+   qreal   kurto;
+   qreal   vmedi;
+   qreal   slope;
+   qreal   vicep;
+   qreal   sigma;
+   qreal   corr;
+   qreal   sdevi;
+   qreal   sderr;
+   qreal   vari;
+   qreal   area;
+   qreal   bininc;
+   qreal   val;
+
+   // get basic min,max,mean information
+
+   for ( int jj = 0; jj < nvals; jj++ )
+   {
+      val       = vals.at( jj );
+      vsum     += val;
+      vlo       = ( vlo < val ) ? vlo : val;
+      vhi       = ( vhi > val ) ? vhi : val;
+      xplot[jj] = (qreal)jj;
+      yplot[jj] = val;
+   }
+
+   vmean     = vsum / vsiz;
+
+   // get difference information
+
+   for ( int jj = 0; jj < nvals; jj++ )
+   {
+      val       = vals.at( jj );
+      qreal dif = val - vmean;
+      qreal dsq = dif * dif;
+      vm2      += dsq;           // diff squared
+      vm3      += ( dsq * dif ); // cubed
+      vm4      += ( dsq * dsq ); // to the 4th
+   }
+
+   vm2      /= vsiz;
+   vm3      /= vsiz;
+   vm4      /= vsiz;
+   skew      = vm3 / pow( vm2, 1.5 );
+   kurto     = vm4 / pow( vm2, 2.0 ) - 3.0;
+   vmedi     = ( vlo + vhi ) / 2.0;
+
+   // do line fit (mainly for corr value)
+
+   US_Math::linefit( &xplot, &yplot, &slope, &vicep, &sigma, &corr, nvals );
+
+   // standard deviation and error
+
+   sdevi     = pow( vm2, 0.5 );
+   sderr     = sdevi / pow( vsiz, 0.5 );
+   vari      = vm2;
+   area      = 0.0;
+
+   xplot     = new qreal[ nbins ];
+   yplot     = new qreal[ nbins ];
+   bininc    = ( vhi - vlo ) / binsz;
+
+   // mode and confidence
+
+   for ( int ii = 0; ii < nbins; ii++ )
+   {
+      xplot[ii] = vlo + bininc * (qreal)ii;
+      yplot[ii] = 0.0;
+
+      for ( int jj = 0; jj < nvals; jj++ )
+      {
+         val       = vals.at( jj );
+         if ( val >= xplot[ ii ]  &&  val < ( xplot[ ii ] + bininc ) )
+         {
+            yplot[ii] += 1.0;
+         }
+      }
+         
+      area     += yplot[ ii ] * bininc;
+      yplot[ii] = 0.0;
+   }
+
+   val       = -1.0;
+   int thisb = 0;
+
+   for ( int ii = 0; ii < nbins; ii++ )
+   {
+      if ( yplot[ii] > val )
+      {
+         val       = yplot[ ii ];
+         thisb     = ii;
+      }
+   }
+
+   modelo    = xplot[ thisb ];
+   modehi    = modelo + bininc;
+   modecen   = ( modelo + modehi ) / 2.0;
+   cnf99lo   = vmean - 2.576 * sdevi;
+   cnf99hi   = vmean + 2.576 * sdevi;
+   cnf95lo   = vmean - 1.960 * sdevi;
+   cnf95hi   = vmean + 1.960 * sdevi;
+
+   if ( details )
+   {  // Details
+      ts << "\n\n" << tr( "Results for the " ) << title << ":\n\n";
+      ts << tr( "Maximum Value:             " ) 
+         << str1.sprintf( "%6.4e\n", vhi   );
+      ts << tr( "Minimum Value:             " ) 
+         << str1.sprintf( "%6.4e\n", vlo   );
+      ts << tr( "Mean Value:                " ) 
+         << str1.sprintf( "%6.4e\n", vmean );
+      ts << tr( "Median Value:              " ) 
+         << str1.sprintf( "%6.4e\n", vmedi );
+      ts << tr( "Skew Value:                " ) 
+         << str1.sprintf( "%6.4e\n", skew  );
+      ts << tr( "Kurtosis Value:            " ) 
+         << str1.sprintf( "%6.4e\n", kurto );
+      ts << tr( "Lower Mode Value:          " ) 
+         << str1.sprintf( "%6.4e\n", modelo );
+      ts << tr( "Upper Mode Value:          " ) 
+         << str1.sprintf( "%6.4e\n", modehi );
+      ts << tr( "Mode Center:               " ) 
+         << str1.sprintf( "%6.4e\n", modecen );
+      ts << tr( "95% Confidence Limits:     " ) 
+         << str1.sprintf( "%6.4e, -%6.4e\n",
+         ( cnf95hi - modecen ), ( modecen - cnf95lo ) );
+      ts << tr( "99% Confidence Limits:     " ) 
+         << str1.sprintf( "%6.4e, -%6.4e\n",
+         ( cnf99hi - modecen ), ( modecen - cnf99lo ) );
+      ts << tr( "Standard Deviation:        " ) 
+         << str1.sprintf( "%6.4e\n", sdevi );
+      ts << tr( "Standard Error:            " ) 
+         << str1.sprintf( "%6.4e\n", sderr );
+      ts << tr( "Variance:                  " ) 
+         << str1.sprintf( "%6.4e\n", vari );
+      ts << tr( "Correlation Coefficent:    " ) 
+         << str1.sprintf( "%6.4e\n", corr );
+      ts << tr( "Number of Bins:            " ) 
+         << str1.sprintf( "%6.4e\n", binsz );
+      ts << tr( "Distribution Area:         " ) 
+         << str1.sprintf( "%6.4e\n", area );
+
+      str1.sprintf( "%e", cnf95lo ).append( tr( " (low), " ) );
+      str2.sprintf( "%e", cnf95hi ).append( tr( " (high)\n" ) );
+      ts << tr( "95% Confidence Interval:   " ) << str1 << str2;
+
+      str1.sprintf( "%e", cnf99lo ).append( tr( " (low), " ) );
+      str2.sprintf( "%e", cnf99hi ).append( tr( " (high)\n" ) );
+      ts << tr( "99% Confidence Interval:   " ) << str1 << str2;
+   }
+
+   else
+   {  // Summary
+      ts << title << str1.sprintf( " %6.4e (%6.4e, %6.4e)\n",
+            modecen, cnf95lo, cnf95hi );
+   }
+
+   delete [] xplot;
+   delete [] yplot;
 }
 

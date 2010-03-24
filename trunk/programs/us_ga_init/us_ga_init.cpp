@@ -67,10 +67,10 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
 
    ct_nisols     = us_counter( 3, 0.0, 1000.0, 0.0 );
    ct_nisols->setStep( 1 );
-   ct_nisols->setEnabled( false );
+   ct_nisols->setEnabled( true );
    spec->addWidget( ct_nisols, s_row++, 1 );
-   connect( ct_nisols, SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_nisols( double ) ) );
+   connect( ct_nisols, SIGNAL( valueChanged(  double ) ),
+            this,      SLOT(   update_nisols( double ) ) );
 
    lb_wsbuck     = us_label( tr( "Width of s Bucket:" ) );
    lb_wsbuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
@@ -79,8 +79,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    ct_wsbuck     = us_counter( 3, 0.0, 10.0, 0.0 );
    ct_wsbuck->setStep( 1 );
    spec->addWidget( ct_wsbuck, s_row++, 1 );
-   connect( ct_wsbuck, SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_wsbuck( double ) ) );
+   connect( ct_wsbuck, SIGNAL( valueChanged(  double ) ),
+            this,      SLOT(   update_wsbuck( double ) ) );
 
    lb_hfbuck     = us_label( tr( "Height of f/f0 Bucket:" ) );
    lb_hfbuck->setAlignment( Qt::AlignVCenter | Qt::AlignLeft );
@@ -89,8 +89,8 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    ct_hfbuck     = us_counter( 3, 0.0, 1.0, 0.0 );
    ct_hfbuck->setStep( 1 );
    spec->addWidget( ct_hfbuck, s_row++, 1 );
-   connect( ct_hfbuck, SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_hfbuck( double ) ) );
+   connect( ct_hfbuck, SIGNAL( valueChanged(  double ) ),
+            this,      SLOT(   update_hfbuck( double ) ) );
 
    lb_info2      = us_banner( tr( "Pseudo-3D Controls" ) );
    spec->addWidget( lb_info2, s_row++, 0, 1, 2 );
@@ -207,12 +207,12 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    pb_lddistr->setEnabled( true );
    spec->addWidget( pb_lddistr, s_row, 0 );
    connect( pb_lddistr, SIGNAL( clicked() ),
-            this,       SLOT( load_distro() ) );
+            this,       SLOT(   load_distro() ) );
 
    us_checkbox( tr( "1-Dimensional Plot" ), cb_1dplot, true );
    spec->addWidget( cb_1dplot, s_row++, 1 );
    connect( cb_1dplot,  SIGNAL( clicked() ),
-            this,       SLOT( select_plot1d() ) );
+            this,       SLOT(   select_plot1d() ) );
 
    pb_ldcolor    = us_pushbutton( tr( "Load Color File" ) );
    pb_ldcolor->setEnabled( true );
@@ -264,25 +264,25 @@ US_GA_Initialize::US_GA_Initialize() : US_Widgets()
    pb_reset->setEnabled( false );
    spec->addWidget( pb_reset, s_row, 0 );
    connect( pb_reset,   SIGNAL( clicked() ),
-            this,       SLOT( reset() ) );
+            this,       SLOT(   reset() ) );
 
    pb_save       = us_pushbutton( tr( "Save" ) );
    pb_save->setEnabled( false );
    spec->addWidget( pb_save, s_row++, 1 );
    connect( pb_save,    SIGNAL( clicked() ),
-            this,       SLOT( save() ) );
+            this,       SLOT(   save() ) );
 
    pb_help       = us_pushbutton( tr( "Help" ) );
    pb_help->setEnabled( true );
    spec->addWidget( pb_help, s_row, 0 );
    connect( pb_help,    SIGNAL( clicked() ),
-            this,       SLOT( help() ) );
+            this,       SLOT(   help() ) );
 
    pb_close      = us_pushbutton( tr( "Close" ) );
    pb_close->setEnabled( true );
    spec->addWidget( pb_close, s_row++, 1 );
    connect( pb_close,   SIGNAL( clicked() ),
-            this,       SLOT( close() ) );
+            this,       SLOT(   close() ) );
 
    QPalette pa( lb_info1->palette() );
    te_status    = us_textedit( );
@@ -375,6 +375,7 @@ void US_GA_Initialize::reset( void )
    cb_plot_mw->setChecked( !plot_s );
 
    nisols     = 0;
+   nibuks     = 0;
    wsbuck     = 0.0;
    hfbuck     = 0.0;
    ct_nisols->setValue( (double)nisols );
@@ -382,8 +383,6 @@ void US_GA_Initialize::reset( void )
    ct_hfbuck->setRange( 0, 50, 0.01 );
    ct_wsbuck->setValue( wsbuck );
    ct_hfbuck->setValue( hfbuck );
-   ct_wsbuck->setEnabled( false );
-   ct_hfbuck->setEnabled( false );
 
    resolu     = 90.0;
    ct_resolu->setRange( 1, 100, 1 );
@@ -420,11 +419,6 @@ void US_GA_Initialize::reset( void )
    ct_plsmax->setRange( 0.0, 10000.0, 0.01 );
    ct_plsmax->setValue( plsmax );
    ct_plsmax->setEnabled( false );
-#if 0
-   plsmax     = 1.34567E+06;
-   ct_plsmax->setRange( 0.0, 1.0E+080, 1.0E+05 );
-   ct_plsmax->setValue( plsmax );
-#endif
 
    // default to white-cyan-magenta-red-black color map
    colormap   = new QwtLinearColorMap( Qt::white, Qt::black );
@@ -441,7 +435,29 @@ void US_GA_Initialize::reset( void )
 
 // save the GA data
 void US_GA_Initialize::save( void )
-{
+{ 
+   QString filter = tr( "GA data files (*.gadistro.dat);;" )
+      + tr( "Any files (*)" );
+   QString fsufx = "." + cell + wavelength + ".gadistro.dat";
+   QString fname = run_name + fsufx;
+   fname         = QFileDialog::getSaveFileName( this,
+      tr( "Save GA Data File" ),
+      US_Settings::resultDir() + "/" + fname,
+      filter,
+      0, 0 );
+   soludata->saveGAdata( fname );
+
+   if ( monte_carlo )
+   {  // if Monte Carlo, build up and analyze data, then report
+
+      soludata->buildDataMC( plot_s, &s_distro, &w_distro );  // build it
+
+      int jj        = fname.lastIndexOf( fsufx );
+      fsufx         = ".ga_stats." + cell + wavelength;
+      fname         = ( ( jj > 0 ) ? fname.left( jj ) : fname ) + fsufx;
+
+      soludata->reportDataMC( fname, mc_iters );              // report it
+   }
 }
 
 // manually draw solute bins
@@ -471,15 +487,19 @@ void US_GA_Initialize::mandrawsb( void )
    connect( pick, SIGNAL( mouseUp(    const QwtDoublePoint& ) ),
             this, SLOT( getMouseUp(   const QwtDoublePoint& ) ) );
 
-   pb_shrnksb->setEnabled( true );
+   //pb_shrnksb->setEnabled( true );
+   pb_shrnksb->setEnabled( false );
 
    wsbuck       = ( plsmax - plsmin ) / 20.0;
    hfbuck       = ( plfmax - plfmin ) / 20.0;
    double rmax  = wsbuck * 10.0;
-   double rinc  = pow( 1.0, (double)( (int)( log10( rmax - 3.0 ) ) ) );
+   double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
+   ct_wsbuck->disconnect( );
    ct_wsbuck->setRange( 0.0, rmax, rinc );
    ct_wsbuck->setValue( wsbuck );
    ct_hfbuck->setValue( hfbuck );
+   connect( ct_wsbuck, SIGNAL( valueChanged(  double ) ),
+            this,      SLOT(   update_wsbuck( double ) ) );
 }
 
 // shrink solute bins
@@ -491,6 +511,21 @@ void US_GA_Initialize::shrinksb( void )
 // auto assign solute bins
 void US_GA_Initialize::autassignsb( void )
 {
+   nisols      = ( nisols == 0 ) ? sdistro->size() : nisols;
+   pc1         = NULL;
+   lw_sbin_data->clear();
+
+   nibuks      = soludata->autoCalcBins( nisols, wsbuck, hfbuck );
+
+   for ( int jj = 0; jj < nibuks; jj++ )
+   {  // draw the auto-assigned buckets and add lines to list widget
+      QRectF rect = soludata->bucketRect( jj );
+      pc1         = drawBucketRect( jj, rect );
+
+      lw_sbin_data->addItem( soludata->bucketLine( jj ) );
+   }
+
+   data_plot->replot();
    pb_resetsb->setEnabled( true );
    pb_save->setEnabled(    true );
 }
@@ -498,17 +533,14 @@ void US_GA_Initialize::autassignsb( void )
 // reset solute bins
 void US_GA_Initialize::resetsb( void )
 {
-   ct_nisols->disconnect();
    ct_nisols->setValue( 0.0 );
-   connect( ct_nisols, SIGNAL( valueChanged(  double ) ),
-            this,      SLOT(   update_nisols( double ) ) );
-   lw_sbin_data->clear();        // clear solute bucket data
+   lw_sbin_data->clear();     // clear solute bucket data
    soludata->clearBuckets();
    sxset    = 0;
 
-   erase_buckets();              // erase bucket rectangles from plot
+   erase_buckets( true );     // erase bucket rectangles from plot and delete
 
-   nisols   = 0;
+   nibuks   = 0;
 
    data_plot->replot();
 }
@@ -533,6 +565,8 @@ void US_GA_Initialize::replot_data()
    {
       plot_3dim();
    }
+
+   setBucketPens();
 }
 
 // plot data 1-D
@@ -542,7 +576,7 @@ void US_GA_Initialize::plot_1dim( void )
 
    data_plot->setCanvasBackground( Qt::black );
 
-   sdistro       = plot_s ? &s_distro : &mw_distro;
+   sdistro       = plot_s ? &s_distro : &w_distro;
 
    int     dsize = sdistro->size();
    double* x     = new double[ dsize ];
@@ -611,7 +645,7 @@ void US_GA_Initialize::plot_2dim( void )
 
    data_plot->setCanvasBackground( Qt::black );
 
-   sdistro       = plot_s ? &s_distro : &mw_distro;
+   sdistro       = plot_s ? &s_distro : &w_distro;
 
    int     dsize = sdistro->size();
    double* x     = new double[ dsize ];
@@ -703,7 +737,7 @@ void US_GA_Initialize::plot_3dim( void )
 
    US_SpectrogramData& spec_dat = (US_SpectrogramData&)d_spectrogram->data();
 
-   sdistro       = plot_s ? &s_distro : &mw_distro;
+   sdistro       = plot_s ? &s_distro : &w_distro;
    spec_dat.setRastRanges( xreso, yreso, resolu, zfloor );
    spec_dat.setRaster( sdistro );
 
@@ -741,61 +775,73 @@ void US_GA_Initialize::plot_3dim( void )
    pb_autassb->setEnabled( !monte_carlo );
 }
 
+// update pseudo-3d resolution factor
 void US_GA_Initialize::update_resolu( double dval )
 {
    resolu = dval;
 }
 
+// update raster x resolution
 void US_GA_Initialize::update_xreso( double dval )
 {
    xreso  = dval;
 }
 
+// update raster y resolution
 void US_GA_Initialize::update_yreso( double dval )
 {
    yreso  = dval;
 }
 
+// update Z (frequency) floor percent
 void US_GA_Initialize::update_zfloor( double dval )
 {
    zfloor = dval;
 }
 
+// update number of initial solutes
 void US_GA_Initialize::update_nisols( double dval )
 {
-   nisols    = dval;
+   nisols    = qRound( dval );
 }
 
+// update width in s of buckets
 void US_GA_Initialize::update_wsbuck( double dval )
 {
    wsbuck    = dval;
 }
 
+// update height in f/f0 of buckets
 void US_GA_Initialize::update_hfbuck( double dval )
 {
    hfbuck    = dval;
 }
 
+// update plot limit s min
 void US_GA_Initialize::update_plsmin( double dval )
 {
    plsmin    = dval;
 }
 
+// update plot limit s max
 void US_GA_Initialize::update_plsmax( double dval )
 {
    plsmax    = dval;
 }
 
+// update plot limit f/f0 min
 void US_GA_Initialize::update_plfmin( double dval )
 {
    plfmin    = dval;
 }
 
+// update plot limit f/f0 max
 void US_GA_Initialize::update_plfmax( double dval )
 {
    plfmax    = dval;
 }
 
+// select automatic plot limits
 void US_GA_Initialize::select_autolim()
 {
    auto_lim   = cb_autlim->isChecked();
@@ -819,8 +865,20 @@ void US_GA_Initialize::select_autolim()
       ct_plsmin->setRange( -10.0, 1.0E+08, 1.0E+05 );
       ct_plsmax->setRange( 0.0, 1.0E+080, 1.0E+05 );
    }
+
+   wsbuck       = ( plsmax - plsmin ) / 20.0;
+   hfbuck       = ( plfmax - plfmin ) / 20.0;
+   double rmax  = wsbuck * 10.0;
+   double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
+   ct_wsbuck->disconnect( );
+   ct_wsbuck->setRange( 0.0, rmax, rinc );
+   ct_wsbuck->setValue( wsbuck );
+   ct_hfbuck->setValue( hfbuck );
+   connect( ct_wsbuck, SIGNAL( valueChanged(  double ) ),
+            this,      SLOT(   update_wsbuck( double ) ) );
 }
 
+// select 1-dimensional plot
 void US_GA_Initialize::select_plot1d()
 {
    plot_dim   = 1;
@@ -844,6 +902,7 @@ void US_GA_Initialize::select_plot1d()
    pb_autassb->setEnabled( false );
 }
 
+// select 2-dimensional plot
 void US_GA_Initialize::select_plot2d()
 {
    plot_dim   = 2;
@@ -867,6 +926,7 @@ void US_GA_Initialize::select_plot2d()
    pb_autassb->setEnabled( !monte_carlo );
 }
 
+// select 3-dimensional plot
 void US_GA_Initialize::select_plot3d()
 {
    plot_dim   = 3;
@@ -893,6 +953,7 @@ void US_GA_Initialize::select_plot3d()
    pb_autassb->setEnabled( !monte_carlo );
 }
 
+// select S (sed. coeff.) for horizontal axis
 void US_GA_Initialize::select_plot_s()
 {
    plot_s    = cb_plot_s->isChecked();
@@ -907,8 +968,20 @@ void US_GA_Initialize::select_plot_s()
    lb_wsbuck->setText( tr( "Width of s Bucket:" ) );
    lb_plsmin->setText( tr( "Plot Limit s Min:" ) );
    lb_plsmax->setText( tr( "Plot Limit s Max:" ) );
+
+   wsbuck       = ( plsmax - plsmin ) / 20.0;
+   hfbuck       = ( plfmax - plfmin ) / 20.0;
+   double rmax  = wsbuck * 10.0;
+   double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
+   ct_wsbuck->disconnect();
+   ct_wsbuck->setRange( 0.0, rmax, rinc );
+   ct_wsbuck->setValue( wsbuck );
+   ct_hfbuck->setValue( hfbuck );
+   connect( ct_wsbuck, SIGNAL( valueChanged(  double ) ),
+            this,      SLOT(   update_wsbuck( double ) ) );
 }
 
+// select MW (mol.wt.) for horizontal axis
 void US_GA_Initialize::select_plot_mw()
 {
    plot_s    = !cb_plot_mw->isChecked();
@@ -923,12 +996,24 @@ void US_GA_Initialize::select_plot_mw()
    lb_wsbuck->setText( tr( "Width of mw Bucket:" ) );
    lb_plsmin->setText( tr( "Plot Limit mw Min:" ) );
    lb_plsmax->setText( tr( "Plot Limit mw Max:" ) );
+
+   wsbuck       = ( plsmax - plsmin ) / 20.0;
+   hfbuck       = ( plfmax - plfmin ) / 20.0;
+   double rmax  = wsbuck * 10.0;
+   double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
+   ct_wsbuck->disconnect();
+   ct_wsbuck->setRange( 0.0, rmax, rinc );
+   ct_wsbuck->setValue( wsbuck );
+   ct_hfbuck->setValue( hfbuck );
+   connect( ct_wsbuck, SIGNAL( valueChanged(  double ) ),
+            this,      SLOT(   update_wsbuck( double ) ) );
 }
 
+// load the solute distribution from a file
 void US_GA_Initialize::load_distro()
 {
    Solute      sol_s;
-   Solute      sol_mw;
+   Solute      sol_w;
 
    // file types filter
    QString filter =
@@ -999,7 +1084,7 @@ void US_GA_Initialize::load_distro()
       }
    }
    s_distro.clear();
-   mw_distro.clear();
+   w_distro.clear();
 
    tstr    = run_name + "." + cell + wavelength + "\n" + method;
    data_plot->setTitle( tstr );
@@ -1018,6 +1103,7 @@ void US_GA_Initialize::load_distro()
          int         i2  = 4;
          int         i3  = 5;
          int         i4  = 6;
+         int         i5  = 3;
          int         mxi = 0;
 
          if ( !ts.atEnd() )
@@ -1028,14 +1114,17 @@ void US_GA_Initialize::load_distro()
             i2       = l1.indexOf( QRegExp( "mw.*",   Qt::CaseInsensitive ) );
             i3       = l1.indexOf( QRegExp( "freq.*", Qt::CaseInsensitive ) );
             i4       = l1.indexOf( QRegExp( "f/f0.*", Qt::CaseInsensitive ) );
+            i5       = l1.indexOf( QRegExp( "d_20.*", Qt::CaseInsensitive ) );
             mxi      = ( i1 > mxi ) ? i1  : mxi;
             mxi      = ( i2 > mxi ) ? i2  : mxi;
             mxi      = ( i3 > mxi ) ? i3  : mxi;
             mxi      = ( i4 > mxi ) ? i4  : mxi;
+            mxi      = ( i5 > mxi ) ? i5  : mxi;
             i1       = ( i1 < 0 )   ? mxi : i1;
             i2       = ( i2 < 0 )   ? mxi : i2;
             i3       = ( i3 < 0 )   ? mxi : i3;
             i4       = ( i4 < 0 )   ? mxi : i4;
+            i5       = ( i5 < 0 )   ? mxi : i5;
             mxi++;
          }
 
@@ -1052,6 +1141,7 @@ void US_GA_Initialize::load_distro()
             double dv2;
             double dv3;
             double dv4;
+            double dv5;
             s1       = ts.readLine();    // consume entire line
             l1       = s1.split( QRegExp( "\\s+" ) );
             if ( l1.empty()  ||  l1.size() < mxi )
@@ -1063,6 +1153,7 @@ void US_GA_Initialize::load_distro()
             dv2      = l1.at( i2 ).toDouble();  // MW
             dv3      = l1.at( i3 ).toDouble();  // Frequency
             dv4      = l1.at( i4 ).toDouble();  // f/f0
+            dv5      = l1.at( i5 ).toDouble();  // D_20,W
 
             if ( dv1 == 0.0 )
                break;
@@ -1071,12 +1162,14 @@ void US_GA_Initialize::load_distro()
             sol_s.s  = dv1;
             sol_s.c  = dv3;
             sol_s.k  = dv4;
-            sol_mw.s = dv2;
-            sol_mw.c = dv3;
-            sol_mw.k = dv4;
+            sol_s.d  = dv5;
+            sol_w.s  = dv2;
+            sol_w.c  = dv3;
+            sol_w.k  = dv4;
+            sol_w.d  = dv5;
 
             s_distro.append( sol_s );
-            mw_distro.append( sol_mw );
+            w_distro.append( sol_w );
          }
          filei.close();
       }
@@ -1084,7 +1177,7 @@ void US_GA_Initialize::load_distro()
       // sort and reduce distributions
       psdsiz    = s_distro.size();
       sort_distro( s_distro, true );
-      sort_distro( mw_distro, true );
+      sort_distro( w_distro, true );
    }
 
    if ( auto_lim )
@@ -1131,16 +1224,20 @@ void US_GA_Initialize::load_distro()
 
    soludata->setDistro( sdistro );
 
+   nisols       = kk;
+   nibuks       = 0;
    wsbuck       = ( plsmax - plsmin ) / 20.0;
    hfbuck       = ( plfmax - plfmin ) / 20.0;
    ct_wsbuck->setValue( wsbuck );
    ct_hfbuck->setValue( hfbuck );
+   ct_nisols->setValue( double( nisols ) );
    ct_wsbuck->setEnabled(  true );
    ct_hfbuck->setEnabled(  true );
    pb_refresh->setEnabled( true );
    pb_mandrsb->setEnabled( plot_dim != 1 );
 }
 
+// load the color map from a file
 void US_GA_Initialize::load_color()
 {
    QString filter = tr( "Color Map files (cm*.xml);;" )
@@ -1176,6 +1273,7 @@ void US_GA_Initialize::load_color()
          + stdfline + "\n" + stnpline );
 }
 
+// set plot x,y limits
 void US_GA_Initialize::set_limits()
 {
    double fmin = 1.0e30;
@@ -1194,7 +1292,7 @@ void US_GA_Initialize::set_limits()
 
    else
    {
-      sdistro     = &mw_distro;
+      sdistro     = &w_distro;
       xa_title    = xa_title_mw;
    }
 
@@ -1225,7 +1323,7 @@ void US_GA_Initialize::set_limits()
    if ( sdistro->size() > 0 )
    {
       double rmax  = smax * 10.0;
-      double rinc  = pow( 1.0, (double)( (int)( log10( rmax - 3.0 ) ) ) );
+      double rinc  = pow( 10.0, (double)( (int)( log10( rmax ) - 3.0 ) ) );
 
       ct_plsmax->setRange( 0.0, rmax, rinc );
       ct_plsmin->setRange( -( smax / 50.0 ), rmax, rinc );
@@ -1329,32 +1427,37 @@ void US_GA_Initialize::sort_distro( QList< Solute >& listsols,
    return;
 }
 
+// set bucket pens for previous and current bin
+void US_GA_Initialize::setBucketPens()
+{
+   QPen penCR( QColor( Qt::red ),   1, Qt::SolidLine );
+   QPen penCY( QColor( Qt::yellow), 1, Qt::SolidLine );
+   QPen penCB( QColor( Qt::blue),   1, Qt::SolidLine );
+
+   // current is always red
+   cbukpen   = penCR;
+
+   // previous is blue for light background, yellow for dark
+   QColor bg = data_plot->canvasBackground();
+   int csum  = bg.red() + bg.green() + bg.blue();
+   pbukpen   = ( csum > 600 ) ? penCB : penCY;
+
+   return;
+}
+
 // highlight solute bin rectangle in red; previous in yellow or blue
 void US_GA_Initialize::highlight_solute( QwtPlotCurve* bc1 )
 {
    if ( bc1 == NULL )
       return;
 
-   QPen penbc( QColor( Qt::red ),   1, Qt::SolidLine );
-   QPen penCY( QColor( Qt::yellow), 1, Qt::SolidLine );
-   QPen penCB( QColor( Qt::blue),   1, Qt::SolidLine );
-   QPen& penbp = penCY;     // previous bucket drawn Yellow by default
-
-   QColor bg   = data_plot->canvasBackground();
-   int csum    = bg.red() + bg.green() + bg.blue();
-
-   if ( csum > 600 )
-      penbp       = penCB;  // previous bucket drawn Blue if background light
-
-   if ( nisols > 0 )
+   if ( nibuks > 0  &&  pc1 != NULL )
    {  // re-color previous bucket yellow or blue
-      pc1->setPen( penbp );
+      pc1->setPen( pbukpen );
    }
 
    // current bucket borders drawn in red
-   bc1->setPen( penbc );
-
-   data_plot->replot();
+   bc1->setPen( cbukpen );
 
    pc1       = bc1;         // save previous bucket curve
    return;
@@ -1383,10 +1486,12 @@ void US_GA_Initialize::getMouseUp( const QwtDoublePoint& p )
    p2     = p;              // save the second rubberband point
 
    // draw the bucket rectangle
-   bc1    = drawBucketRect( nisols, p1, p2 );
+   bc1    = drawBucketRect( nibuks, p1, p2 );
 
    // highlight it (and turn off highlight for previous)
    highlight_solute( bc1 );
+
+   data_plot->replot();
 
    // construct and save a bucket entry
    tx[0]  = p1.x();         // upper,left and lower,right points
@@ -1425,20 +1530,19 @@ void US_GA_Initialize::getMouseUp( const QwtDoublePoint& p )
    }
 
    // bump solute bins count
-   nisols++;
-   ct_nisols->disconnect();
-   ct_nisols->setValue( (double)nisols );
-   connect( ct_nisols, SIGNAL( valueChanged( double ) ),
-            this,      SLOT( update_nisols( double ) ) );
+   nibuks++;
+   ct_nisols->setValue( (double)nibuks );
+   if ( nibuks > 2 )
+      pb_save->setEnabled(    true );
 }
 
+// draw a bucket rectangle by index and top-left,bottom-right points
 QwtPlotCurve* US_GA_Initialize::drawBucketRect( int sx,
       QPointF pt1, QPointF pt2 )
 {
    double        tx[5];
    double        ty[5];
    QwtPlotCurve* bc1;
-   QPen          penbc( QColor( Qt::red ),   1, Qt::SolidLine );
 
    tx[0]  = pt1.x();        // set 5 points needed to draw rectangle
    ty[0]  = pt1.y();
@@ -1453,15 +1557,14 @@ QwtPlotCurve* US_GA_Initialize::drawBucketRect( int sx,
 
    // create the bucket rectangle curve
    bc1    = us_curve( data_plot, QString( "bucket border %1" ).arg( sx ) );
-   bc1->setPen(   penbc );
+   bc1->setPen(   pbukpen );
    bc1->setStyle( QwtPlotCurve::Lines );
    bc1->setData(  tx, ty, 5 );
-
-   data_plot->replot();
 
    return bc1;
 }
 
+// draw a bucket rectangle by index and rectangle
 QwtPlotCurve* US_GA_Initialize::drawBucketRect( int sx, QRectF rect )
 {
    return drawBucketRect( sx, rect.topLeft(), rect.bottomRight() );
@@ -1474,19 +1577,21 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
 //qDebug() << "SCLICK sx=" << sx;
 
    highlight_solute( sx );
+   data_plot->replot();
 
    if ( rbtn_click )
    {
       int binx    = sx + 1;
       QMessageBox msgBox;
-      QString msg = tr( "Are you sure you want to delete solute bin %1" )
+      QString msg = tr( "Are you sure you want to delete solute bin %1 ?" )
          .arg( binx );
+      msgBox.setWindowTitle( tr( "GA_Init Solute Bin Delete" ) );
       msgBox.setText( msg );
       msgBox.setStandardButtons( QMessageBox::No | QMessageBox::Yes );
       msgBox.setDefaultButton( QMessageBox::Yes );
       if ( msgBox.exec() == QMessageBox::Yes )
       {
-         qDebug() << "removing Solute Bin " << binx;
+         //qDebug() << "removing Solute Bin " << binx;
          removeSoluteBin( sx );
       }
    }
@@ -1499,6 +1604,7 @@ void US_GA_Initialize::sclick_sbdata( const QModelIndex& mx )
    }
    sxset        = sx;
    rbtn_click   = false;
+
 }
 
 // solute bin list row double-clicked:  change bucket values
@@ -1511,7 +1617,7 @@ void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
 
    if ( !monte_carlo )
    {
-      pt0         = soludata->bucketPoint( sx );
+      pt0         = soludata->bucketPoint( sx, false );
    }
    else
    {
@@ -1538,14 +1644,18 @@ void US_GA_Initialize::dclick_sbdata( const QModelIndex& mx )
 
    pc1         = bc1;              // save previous bucket curve
    rbtn_click  = false;
+
+   data_plot->replot();
+
    return;
 }
 
+// change the rectangle (vertices) for a bucket
 void US_GA_Initialize::changeBucketRect( int sx, QRectF& rect )
 {
    bucket abuck  = soludata->bucketAt( sx );
 
-   QPointF bpnt  = soludata->bucketPoint( sx );
+   QPointF bpnt  = soludata->bucketPoint( sx, true );
    qreal bconc   = soludata->bucketAt( sx ).conc;
    int bstat     = 0;
 
@@ -1582,24 +1692,35 @@ QwtPlotCurve* US_GA_Initialize::bucketCurveAt( int sx )
    return (QwtPlotCurve*)NULL;
 }
 
-// erase all bucket curves
-void US_GA_Initialize::erase_buckets( )
+// erase all bucket curves (option to completely delete )
+void US_GA_Initialize::erase_buckets( bool delflag )
 {
 
-   for ( int jj = 0; jj < nisols; jj++ )
+   for ( int jj = 0; jj < nibuks; jj++ )
    {
       QwtPlotCurve* bc1 = bucketCurveAt( jj );
       if ( bc1 != NULL )
+      {
          bc1->detach();
+
+         if ( delflag )
+            delete bc1;
+      }
    }
-   nisols   = 0;
-   ct_nisols->setValue( 0.0 );
+   nibuks   = 0;
 
    data_plot->replot();
 
    return;
 }
+// erase all bucket curves (from plot only)
+void US_GA_Initialize::erase_buckets( )
+{
+   erase_buckets( false );
+   return;
+}
 
+// filter events to catch right-mouse-button-click on list widget
 bool US_GA_Initialize::eventFilter( QObject *obj, QEvent *e )
 {
    if ( obj == lw_sbin_data  &&
@@ -1615,6 +1736,7 @@ bool US_GA_Initialize::eventFilter( QObject *obj, QEvent *e )
    }
 }
 
+// remove a solute bin from data, plot, and list
 void US_GA_Initialize::removeSoluteBin( int sx )
 {
    QList< QString > lines;
@@ -1644,15 +1766,21 @@ void US_GA_Initialize::removeSoluteBin( int sx )
          pc1->setTitle( QString( "bucket border %1" ).arg( kk ) );
          curves.append( pc1 );
       }
+
+      else
+      {  // completely remove the curve itself
+         delete pc1;
+         pc1    = bucketCurveAt( ( jj > 0 ) ? (jj-1) : 0 );
+      }
    }
 
    // replace the List Widget contents and redraw bin rectangles
    lw_sbin_data->clear();
    erase_buckets();
-   nisols    = bsize - 1;
-   ct_nisols->setValue( (double)nisols );
+   nibuks    = bsize - 1;
+   ct_nisols->setValue( (double)nibuks );
 
-   for ( int jj = 0; jj < nisols; jj++ )
+   for ( int jj = 0; jj < nibuks; jj++ )
    {
       // add the Solute Bin line back in the List Widget
       lw_sbin_data->addItem( lines.at( jj ) );
@@ -1664,9 +1792,9 @@ void US_GA_Initialize::removeSoluteBin( int sx )
       pc1    = bc1;
    }
 
-   if ( nisols > 0 )
+   if ( nibuks > 0 )
    {  // highlight the next bucket if there is one
-      highlight_solute( ( sx < nisols ) ? sx : nisols );
+      highlight_solute( ( sx < nibuks ) ? sx : ( nibuks - 1) );
    }
 
    data_plot->replot();
