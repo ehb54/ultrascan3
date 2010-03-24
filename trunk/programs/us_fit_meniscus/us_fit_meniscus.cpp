@@ -25,7 +25,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
                            US_GuiSettings::fontSize()   ) );
    
    te_data->setMinimumHeight( fm.height() * 20 );
-   te_data->setFixedWidth ( fm.width( '0' ) * 22 );
+   te_data->setFixedWidth ( fm.width( " 6.003000e+00, 2.995110e+02 " ) );
 
    main->addWidget( te_data, row, 0, 20, 1 );
 
@@ -133,7 +133,7 @@ void US_FitMeniscus::plot_data( void )
    for ( int i = 0; i < lines.size(); i++ )
    {
       QStringList values = lines[ i ].split( ' ', QString::SkipEmptyParts );
-qDebug() << values;
+
       if ( values.size() > 1 ) 
       {
          if ( values.size() > 2 ) values.removeFirst();
@@ -183,7 +183,7 @@ qDebug() << values;
    double c[ 10 ];
 
    int order = sb_order->value();
-//qDebug() << "sb_order->value()" << order;
+
    if ( ! US_Matrix::lsfit( c, radius_values, rmsd_values, count, order + 1 ) )
    {
       QMessageBox::warning( this,
@@ -199,10 +199,6 @@ qDebug() << values;
       
       return;  
    }
-
-//   for ( int i = 0; i < order + 1; i++ ) qDebug() << QString::number( c[ i ], 'e', 6 );
-//   qDebug() << "------";
-
 
    int fit_count = (int) ( ( maxx - minx + 2 * overscan ) / 0.001 );
 
