@@ -30,6 +30,7 @@
             <keyword name="investigator"                ref="us_investigator.html"/>
             <keyword name="buffer"                      ref="us_buffer.html"/>
             <keyword name="pseudo3d-combine"            ref="pseudo3d_combine.html"/>
+            <keyword name="ga-initialize"               ref="ga_initialize.html"/>
         </keywords>
         <files>
             <file>mainstyle.css</file>
@@ -69,6 +70,9 @@
 
             <file>pseudo3d_combine.html</file>
             <file>images/pseudo3d_combine.png</file>
+
+            <file>ga_initialize.html</file>
+            <file>images/ga_initialize.png</file>
         </files>
     </filterSection>
 </QtHelpProject> 
