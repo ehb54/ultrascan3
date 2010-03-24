@@ -5,7 +5,14 @@
 #include "us_femglobal.h"
 #include "us_spectrodata.h"
 
-typedef struct SimulationComponent SimComp;
+typedef struct short_sim_comp_s
+{
+   double s;    // sedimentation coefficient
+   double w;    // molecular weight
+   double f;    // frictional ratio
+   double c;    // concentration
+   double d;    // diffusion coefficient
+} SimComp;
 typedef QList< SimComp >           SimCompList;
 typedef QList< SimCompList >       SimCompLL;
 typedef QList< Solute >            SoluteList;
@@ -56,6 +63,9 @@ class bucket
       }
 };
 
+//! \brief Bucket vertex less than routine for qSort.
+bool buck_vx_lessthan( const bucket&, const bucket& );
+
 /*! \class US_SoluteData
 
   Provides functions to launch a web browser for external links or
@@ -76,6 +86,7 @@ class US_SoluteData : public QObject
   public slots:
     int      clearBuckets();
     int      sortBuckets();
+    int      sortBuckets( QList< bucket >* );
     int      appendBucket( bucket& );
     int      appendBucket( QRectF, QPointF, qreal, int );
     int      appendBucket( QRectF, QPointF, qreal );
@@ -90,12 +101,18 @@ class US_SoluteData : public QObject
     bucket   nextBucket();
     bucket   currentBucket();
     QRectF   bucketRect(  int );
+    QPointF  bucketPoint( int, bool );
     QPointF  bucketPoint( int );
     QSizeF   bucketSize(  int );
     QString  bucketLine(  int );
     void     setDistro( SoluteList* );
     int      findNearestPoint( QPointF& );
     int      removeBucketAt( int );
+    int      autoCalcBins( int, qreal, qreal );
+    int      saveGAdata( QString& );
+    int      buildDataMC( bool, SoluteList*, SoluteList* );
+    int      reportDataMC( QString&, int );
+    void     outputStats( QTextStream&, QList< qreal >&, bool, QString ); 
 
   private:
     QList< bucket >  allbucks;

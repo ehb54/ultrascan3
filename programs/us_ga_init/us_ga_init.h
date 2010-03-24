@@ -93,9 +93,11 @@ class US_EXTERN US_GA_Initialize : public US_Widgets
       QCheckBox*    cb_plot_mw;
 
       QPen*         pickpen;
+      QPen          cbukpen;
+      QPen          pbukpen;
 
       QList< Solute >  s_distro;
-      QList< Solute >  mw_distro;
+      QList< Solute >  w_distro;
       QList< Solute >* sdistro;
 
       QwtDoublePoint  p1;
@@ -115,7 +117,7 @@ class US_EXTERN US_GA_Initialize : public US_Widgets
       double        zfloor;
 
       int           nisols;
-      int           init_solutes;
+      int           nibuks;
       int           mc_iters;
       int           patm_id;
       int           patm_dlay;
@@ -178,6 +180,7 @@ class US_EXTERN US_GA_Initialize : public US_Widgets
       void reset(       void );
       void set_limits(  void );
       void sort_distro( QList< Solute >&, bool );
+      void setBucketPens( void );
       void highlight_solute( QwtPlotCurve* );
       void highlight_solute( int );
       void getMouseDown( const QwtDoublePoint& );
@@ -188,6 +191,7 @@ class US_EXTERN US_GA_Initialize : public US_Widgets
       QwtPlotCurve* drawBucketRect( int, QRectF );
       QwtPlotCurve* drawBucketRect( int, QPointF, QPointF );
       QwtPlotCurve* bucketCurveAt( int );
+      void erase_buckets( bool );
       void erase_buckets();
       void removeSoluteBin( int );
 

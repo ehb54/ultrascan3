@@ -192,12 +192,12 @@ void US_SpectrogramData::setRaster( QList< Solute >* solu )
          yval    = solu->at( kk ).k;
          zval    = solu->at( kk ).c - zmin;            // use z in 0,zrng range
 
-         int rx  = ( xval - xmin ) * xinc;             // x index of this point
+         int rx  = (int)( ( xval - xmin ) * xinc );    // x index of this point
          int fx  = rx - nxd;                           // first reasonable x
          int lx  = rx + nxd;                           // last reasonable x
          fx      = ( fx > 0 )     ? fx : 0;
          lx      = ( lx < nxpsc ) ? lx : nxpsc;
-         int ry  = ( ymax - yval ) * yinc;             // y index of this point
+         int ry  = (int)( ( ymax - yval ) * yinc );    // y index of this point
          int fy  = ry - nyd;                           // first reasonable y
          int ly  = ry + nyd;                           // last reasonable y
          fy      = ( fy > 0 )     ? fy : 0;
@@ -243,12 +243,12 @@ void US_SpectrogramData::setRaster( QList< Solute >* solu )
          yval    = solu->at( kk ).k;
          zval    = solu->at( kk ).c;
 
-         int rx  = ( xval - xmin ) * xinc;             // x index of this point
+         int rx  = (int)( ( xval - xmin ) * xinc );    // x index of this point
          int fx  = rx - nxd;                           // first reasonable x
          int lx  = rx + nxd;                           // last reasonable x
          fx      = ( fx > 0 )     ? fx : 0;
          lx      = ( lx < nxpsc ) ? lx : nxpsc;
-         int ry  = ( ymax - yval ) * yinc;             // y index of this point
+         int ry  = (int)( ( ymax - yval ) * yinc );    // y index of this point
          int fy  = ry - nyd;                           // first reasonable y
          int ly  = ry + nyd;                           // last reasonable y
          fy      = ( fy > 0 )     ? fy : 0;
