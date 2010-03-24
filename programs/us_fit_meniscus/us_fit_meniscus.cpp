@@ -21,8 +21,7 @@ US_FitMeniscus::US_FitMeniscus() : US_Widgets()
    connect( te_data, SIGNAL( US_EditorLoadComplete() ), 
                      SLOT  ( plot_data()             ) );
    
-   QFontMetrics fm( QFont( US_GuiSettings::fontFamily(), 
-                           US_GuiSettings::fontSize()   ) );
+   QFontMetrics fm( te_data->e->font() ); 
    
    te_data->setMinimumHeight( fm.height() * 20 );
    te_data->setFixedWidth ( fm.width( " 6.003000e+00, 2.995110e+02 " ) );
