@@ -9,6 +9,7 @@
 #include "us_dataIO.h"
 #include "us_help.h"
 #include "us_convert.h"
+#include "us_expinfo.h"
 
 /*! \class US_ProcessConvert
            This class provides the ability to convert raw data in the
@@ -110,7 +111,7 @@ class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
       US_ProcessConvert( QWidget* ,
                          int& status,
                          QVector< US_DataIO::rawData >& ,
-                         US_Convert::ExperimentInfo& ,
+                         US_ExpInfo::ExperimentInfo& ,
                          QStringList& ,
                          QString ,
                          QString ,
@@ -142,7 +143,7 @@ class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
                           QStringList& triples,
                           double tolerance );
       void setInterpolated ( unsigned char*, int );
-      int writeXmlFile( US_Convert::ExperimentInfo& ExpData,
+      int writeXmlFile( US_ExpInfo::ExperimentInfo& ExpData,
                         QStringList& triples,
                         QString runType,
                         QString runID,

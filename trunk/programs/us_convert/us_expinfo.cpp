@@ -7,7 +7,7 @@
 #include "us_db2.h"
 #include "us_investigator.h"
 
-US_ExpInfo::US_ExpInfo( US_Convert::ExperimentInfo& dataIn ) :
+US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    US_WidgetsDialog( 0, 0 ), expInfo( dataIn )
 {
    setWindowTitle( tr( "Experiment Information" ) );
@@ -201,7 +201,7 @@ void US_ExpInfo::reset( void )
 void US_ExpInfo::accept( void )
 {
    // Get data directly from the form
-   US_Convert::ExperimentInfo dataOut;
+   ExperimentInfo dataOut;
 
    // First get the invID
    QString invInfo = le_investigator->text();
@@ -248,6 +248,8 @@ void US_ExpInfo::accept( void )
    dataOut.comments     = te_comment ->toPlainText();
    dataOut.centrifugeProtocol = le_centrifugeProtocol->text();
 
+   // Save it to the db and return
+   updateExperiment( dataOut );
    emit updateExpInfoSelection( dataOut );
    close();
 }
@@ -345,8 +347,55 @@ void US_ExpInfo::selectExperiment( QListWidgetItem* )
    expInfo.label              = db.value( 7 ).toString();
    expInfo.comments           = db.value( 8 ).toString();
    expInfo.centrifugeProtocol = db.value( 9 ).toString();
+   expInfo.date               = db.value( 10 ).toString();
 
    reset();
+}
+
+void US_ExpInfo::updateExperiment( ExperimentInfo& d )
+{
+   // Update database
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+
+   QStringList q( "update_experiment" );
+   q  << QString::number( d.expID )
+      << QString::number( d.projectID )
+      << QString::number( d.labID )
+      << QString::number( d.instrumentID )
+      << QString::number( d.operatorID )
+      << QString::number( d.rotorID )
+      << d.expType
+      << d.runTemp
+      << d.label
+      << d.comments
+      << d.centrifugeProtocol;
+
+   db.statusQuery( q );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      QMessageBox::information( this,
+            tr( "Database Error" ),
+            tr( "The following errro was returned:\n" ) + db.lastError() );
+      return;
+   }
+
+   // Get updated date info after db update
+   q.clear();
+   q << "get_experiment_info"
+     << QString::number( d.expID );
+   db.query( q );
+   db.next();
+
+   d.date               = db.value( 10 ).toString();
 }
 
 void US_ExpInfo::newExperiment( void )
@@ -610,3 +659,69 @@ void US_ExpInfo::setWidgetIndex( QListWidget* lw, QList< listInfo >& list, int I
    // If here, index was not found
    lw->setCurrentRow( 0 );
 }
+
+// Initializations
+US_ExpInfo::TripleInfo::TripleInfo()
+{
+   centerpiece  = 0;
+   bufferID     = 0;
+   analyteID    = 0;
+}
+
+US_ExpInfo::ExperimentInfo::ExperimentInfo()
+{
+   ExperimentInfo::clear();
+}
+
+void US_ExpInfo::ExperimentInfo::clear( void )
+{
+   invID              = 0;
+   lastName           = QString( "" );
+   firstName          = QString( "" );
+   expID              = 0;
+   projectID          = 0;
+   labID              = 0;
+   instrumentID       = 0;
+   operatorID         = 0;
+   rotorID            = 0;
+   expType            = QString( "" );
+   runTemp            = QString( "" );
+   label              = QString( "" );
+   comments           = QString( "" );
+   centrifugeProtocol = QString( "" );
+   date               = QString( "" );
+   triples.clear();               // Not to be confused with the global triples
+}
+
+US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const ExperimentInfo& rhs )
+{
+   if ( this != &rhs )            // Guard against self assignment
+   {
+      invID        = rhs.invID;
+      lastName     = rhs.lastName;
+      firstName    = rhs.firstName;
+      expID        = rhs.expID;
+      projectID    = rhs.projectID;
+      labID        = rhs.labID;
+      instrumentID = rhs.instrumentID;
+      operatorID   = rhs.operatorID;
+      rotorID      = rhs.rotorID;
+      expType      = rhs.expType;
+      runTemp      = rhs.runTemp;
+      label        = rhs.label;
+      comments     = rhs.comments;
+      centrifugeProtocol = rhs.centrifugeProtocol;
+      date         = rhs.date;
+
+      for ( int i = 0; i < triples.size(); i++ )
+      {
+         triples[ i ].tripleID    = rhs.triples[ i ].tripleID;
+         triples[ i ].centerpiece = rhs.triples[ i ].centerpiece;
+         triples[ i ].bufferID    = rhs.triples[ i ].bufferID;
+         triples[ i ].analyteID   = rhs.triples[ i ].analyteID;
+      }
+   }
+
+   return *this;
+}
+
