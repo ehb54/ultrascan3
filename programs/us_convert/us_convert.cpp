@@ -115,13 +115,6 @@ US_Convert::US_Convert() : US_Widgets()
    connect( pb_analyte, SIGNAL( clicked() ), SLOT( selectAnalyte() ) );
    settings->addWidget( pb_analyte, row++, 1 );
 
-/*
-   // External program to enter c/c/w information
-   pb_tripleinfo = us_pushbutton( tr( "Enter Current c/c/w Info" ), false );
-   connect( pb_tripleinfo, SIGNAL( clicked() ), SLOT( getTripleInfo() ) );
-   settings->addWidget( pb_tripleinfo, row++, 0,  1, 2 );
-*/
-
    // Scan Controls
    QLabel* lb_scan = us_banner( tr( "Scan Controls" ) );
    settings->addWidget( lb_scan, row++, 0, 1, 2 );
