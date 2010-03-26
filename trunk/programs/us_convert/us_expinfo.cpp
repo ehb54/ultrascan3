@@ -13,107 +13,89 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    setWindowTitle( tr( "Experiment Information" ) );
    setPalette( US_GuiSettings::frameColor() );
 
-   // Everything will be in the main layout
-   QGridLayout* main = new QGridLayout( this );
-   main->setSpacing         ( 2 );
-   main->setContentsMargins ( 2, 2, 2, 2 );
-
+   // Set up left panel with experiment information
+   QGridLayout* experiment = new QGridLayout;
    int row = 0;
-
-   // Database choices
-   QStringList DB = US_Settings::defaultDB();
-   QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
-   main->addWidget( lb_DB, row++, 0, 1, 2 );
-
-   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
-   connect( pb_investigator, SIGNAL( clicked() ), SLOT( selectInvestigator() ) );
-   pb_investigator->setEnabled( true );
-   main->addWidget( pb_investigator, row, 0 );
-
-   le_investigator = us_lineedit( "", 1 );
-   le_investigator->setReadOnly( true );
-   main->addWidget( le_investigator, row++, 1 );
 
    // Current experiment information
    QLabel* lb_experiment_banner = us_banner( tr( "Experiment: " ) );
-   main->addWidget( lb_experiment_banner, row++, 0, 1, 2 );
+   experiment->addWidget( lb_experiment_banner, row++, 0, 1, 2 );
 
    // Select experiment
    QLabel* lb_experiment = us_label( tr( "Double-click to select, or" ) );
-   main->addWidget( lb_experiment, row, 0 );
+   experiment->addWidget( lb_experiment, row, 0 );
    pb_newExperiment = us_pushbutton( tr( "Create New" ) );
    connect( pb_newExperiment, SIGNAL( clicked() ), SLOT( newExperiment() ) );
-   main->addWidget( pb_newExperiment, row++, 1 );
+   experiment->addWidget( pb_newExperiment, row++, 1 );
 
    lw_experiment = us_listwidget();
+   lw_experiment-> setMaximumHeight( 80 );
    connect( lw_experiment, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
                            SLOT  ( selectExperiment ( QListWidgetItem* ) ) );
-   main->addWidget( lw_experiment, row, 0, 8, 2 );
-   row += 8;
+   experiment->addWidget( lw_experiment, row, 0, 1, 2 );
+   row++; // += 4;
 
    // Experiment label
    QLabel* lb_label = us_label( tr( "Label:" ) );
-   main->addWidget( lb_label, row++, 0, 1, 2 );
+   experiment->addWidget( lb_label, row++, 0, 1, 2 );
    le_label = us_lineedit();
-   main->addWidget( le_label, row++, 0, 1, 2 );
+   experiment->addWidget( le_label, row++, 0, 1, 2 );
 
    // Project
    QLabel* lb_project = us_label( tr( "Project:" ) );
-   main->addWidget( lb_project, row, 0 );
+   experiment->addWidget( lb_project, row, 0 );
    cb_project = us_projectComboBox();
-   main->addWidget( cb_project, row++, 1 );
+   experiment->addWidget( cb_project, row++, 1 );
 
    // Experiment type
    QLabel* lb_expType = us_label( tr( "Experiment Type:" ) );
-   main->addWidget( lb_expType, row, 0 );
+   experiment->addWidget( lb_expType, row, 0 );
    cb_expType = us_expTypeComboBox();
-   main->addWidget( cb_expType, row++, 1 );
+   experiment->addWidget( cb_expType, row++, 1 );
+
+   // Now for predominantly hardware info
+   QGridLayout* hardware = new QGridLayout;
+   row = 0;
+
+   // Selected hardware information
+   QLabel* lb_hardware_banner = us_banner( tr( "Hardware: " ) );
+   hardware->addWidget( lb_hardware_banner, row++, 0, 1, 2 );
 
    // labID
    QLabel* lb_lab = us_label( tr( "Lab:" ) );
-   main->addWidget( lb_lab, row, 0 );
+   hardware->addWidget( lb_lab, row, 0 );
    cb_lab = us_labComboBox();
-   main->addWidget( cb_lab, row++, 1 );
+   hardware->addWidget( cb_lab, row++, 1 );
 
    // instrumentID
    QLabel* lb_instrument = us_label( tr( "Instrument:" ) );
-   main->addWidget( lb_instrument, row, 0 );
+   hardware->addWidget( lb_instrument, row, 0 );
    cb_instrument = us_instrumentComboBox();
-   main->addWidget( cb_instrument, row++, 1 );
+   hardware->addWidget( cb_instrument, row++, 1 );
 
    // operatorID
    QLabel* lb_operator = us_label( tr( "Operator:" ) );
-   main->addWidget( lb_operator, row, 0 );
+   hardware->addWidget( lb_operator, row, 0 );
    cb_operator = us_operatorComboBox();
-   main->addWidget( cb_operator, row++, 1 );
+   hardware->addWidget( cb_operator, row++, 1 );
 
    // Rotor used in experiment
    QLabel* lb_rotor = us_label( tr( "Rotor:" ) );
-   main->addWidget( lb_rotor, row, 0 );
+   hardware->addWidget( lb_rotor, row, 0 );
    cb_rotor = us_rotorComboBox();
-   main->addWidget( cb_rotor, row++, 1 );
+   hardware->addWidget( cb_rotor, row++, 1 );
 
    // Run Temperature
    QLabel* lb_runTemp = us_label( tr( "Run Temperature:" ) );
-   main->addWidget( lb_runTemp, row++, 0, 1, 2 );
+   hardware->addWidget( lb_runTemp, row++, 0, 1, 2 );
    le_runTemp = us_lineedit();
-   main->addWidget( le_runTemp, row++, 0, 1, 2 );
+   hardware->addWidget( le_runTemp, row++, 0, 1, 2 );
 
    // Centrifuge Protocol
    QLabel* lb_centrifugeProtocol = us_label( tr( "Centrifuge Protocol:" ) );
-   main->addWidget( lb_centrifugeProtocol, row++, 0, 1, 2 );
+   hardware->addWidget( lb_centrifugeProtocol, row++, 0, 1, 2 );
    le_centrifugeProtocol = us_lineedit();
-   main->addWidget( le_centrifugeProtocol, row++, 0, 1, 2 );
-
-   // Experiment comments
-   QLabel* lb_comment = us_label( tr( "Comments:" ) );
-   main->addWidget( lb_comment, row++, 0, 1, 2 );
-
-   te_comment = us_textedit();
-   main->addWidget( te_comment, row, 0, 4, 2 );
-   te_comment->setMinimumWidth( 320 );
-   te_comment->setReadOnly( false );
-   row += 4;
+   hardware->addWidget( le_centrifugeProtocol, row++, 0, 1, 2 );
 
    // Some pushbuttons
    QHBoxLayout* buttons = new QHBoxLayout;
@@ -129,6 +111,41 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    QPushButton* pb_cancel = us_pushbutton( tr( "Cancel" ) );
    connect( pb_cancel, SIGNAL( clicked() ), SLOT( cancel() ) );
    buttons->addWidget( pb_cancel );
+
+   // Now let's assemble the page
+   QGridLayout* main = new QGridLayout( this );
+   main->setSpacing         ( 2 );
+   main->setContentsMargins ( 2, 2, 2, 2 );
+
+   row = 0;
+
+   // Database choices
+   QStringList DB = US_Settings::defaultDB();
+   QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
+   main->addWidget( lb_DB, row++, 0, 1, 2 );
+
+   QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
+   connect( pb_investigator, SIGNAL( clicked() ), SLOT( selectInvestigator() ) );
+   pb_investigator->setEnabled( true );
+   main->addWidget( pb_investigator, row, 0 );
+
+   le_investigator = us_lineedit( "", 1 );
+   le_investigator->setReadOnly( true );
+   main->addWidget( le_investigator, row++, 1 );
+
+   main->addLayout( experiment, row, 0 );
+   main->addLayout( hardware,   row, 1 );
+   row++; // += 10;
+
+   // Experiment comments
+   QLabel* lb_comment = us_label( tr( "Comments:" ) );
+   main->addWidget( lb_comment, row++, 0, 1, 2 );
+
+   te_comment = us_textedit();
+   main->addWidget( te_comment, row, 0, 4, 2 );
+   te_comment->setMaximumHeight( 120 );
+   te_comment->setReadOnly( false );
+   row += 4;
 
    // Let's see if an investigator has been selected
    reset();
