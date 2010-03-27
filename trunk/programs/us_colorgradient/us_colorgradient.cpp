@@ -552,7 +552,7 @@ void US_ColorGradient::show_gradient( void )
          QBrush brc    = QBrush( QColor( ivlr, ivlg, ivlb ) );
 
          // draw circle of that color
-         pa->setPen( QPen( brc, thikc ) );
+         pa->setPen( QPen( brc, thikc+2.0 ) );
          pa->drawEllipse( cenpt, radi, radi );
 
          // draw legend rectangle line
