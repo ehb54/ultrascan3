@@ -33,7 +33,7 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    connect( lw_experiment, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
                            SLOT  ( selectExperiment ( QListWidgetItem* ) ) );
    experiment->addWidget( lw_experiment, row, 0, 1, 2 );
-   row++; // += 4;
+   row++;
 
    // Experiment label
    QLabel* lb_label = us_label( tr( "Label:" ) );
@@ -44,7 +44,7 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    // Project
    QLabel* lb_project = us_label( tr( "Project:" ) );
    experiment->addWidget( lb_project, row, 0 );
-   cb_project = us_projectComboBox();
+   cb_project = new US_DBComboBox( this, US_DBControl::SQL_PROJECTS );
    experiment->addWidget( cb_project, row++, 1 );
 
    // Experiment type
@@ -64,25 +64,25 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    // labID
    QLabel* lb_lab = us_label( tr( "Lab:" ) );
    hardware->addWidget( lb_lab, row, 0 );
-   cb_lab = us_labComboBox();
+   cb_lab = new US_DBComboBox( this, US_DBControl::SQL_LABS );;
    hardware->addWidget( cb_lab, row++, 1 );
 
    // instrumentID
    QLabel* lb_instrument = us_label( tr( "Instrument:" ) );
    hardware->addWidget( lb_instrument, row, 0 );
-   cb_instrument = us_instrumentComboBox();
+   cb_instrument = new US_DBComboBox( this, US_DBControl::SQL_INSTRUMENTS );
    hardware->addWidget( cb_instrument, row++, 1 );
 
    // operatorID
    QLabel* lb_operator = us_label( tr( "Operator:" ) );
    hardware->addWidget( lb_operator, row, 0 );
-   cb_operator = us_operatorComboBox();
+   cb_operator = new US_DBComboBox( this, US_DBControl::SQL_PEOPLE );
    hardware->addWidget( cb_operator, row++, 1 );
 
    // Rotor used in experiment
    QLabel* lb_rotor = us_label( tr( "Rotor:" ) );
    hardware->addWidget( lb_rotor, row, 0 );
-   cb_rotor = us_rotorComboBox();
+   cb_rotor = new US_DBComboBox( this, US_DBControl::SQL_ROTORS );
    hardware->addWidget( cb_rotor, row++, 1 );
 
    // Run Temperature
@@ -193,12 +193,12 @@ void US_ExpInfo::reset( void )
          te_comment           ->setText( expInfo.comments                     );
          le_centrifugeProtocol->setText( expInfo.centrifugeProtocol           );
    
-         setWidgetIndex  ( lw_experiment, experimentList, expInfo.expID        );
-         setComboBoxIndex( cb_project,    projectList,    expInfo.projectID    );
-         setComboBoxIndex( cb_lab,        labList,        expInfo.labID        );
-         setComboBoxIndex( cb_instrument, instrumentList, expInfo.instrumentID );
-         setComboBoxIndex( cb_operator,   operatorList,   expInfo.operatorID   );
-         setComboBoxIndex( cb_rotor,      rotorList,      expInfo.rotorID      );
+         setWidgetIndex  ( lw_experiment, experimentList, expInfo.expID       );
+         cb_project   ->setComboBoxIndex( expInfo.projectID    );
+         cb_lab       ->setComboBoxIndex( expInfo.labID        );
+         cb_instrument->setComboBoxIndex( expInfo.instrumentID );
+         cb_operator  ->setComboBoxIndex( expInfo.operatorID   );
+         cb_rotor     ->setComboBoxIndex( expInfo.rotorID      );
       
          // Experiment types combo
          for ( uint i = 0; i < sizeof( experimentTypes); i++ )
@@ -244,25 +244,15 @@ void US_ExpInfo::accept( void )
    int ndx              = lw_experiment     ->currentRow();
    dataOut.expID        = experimentList[ ndx ].ID.toInt();
 
-   ndx                  = cb_project        ->currentIndex();
-   dataOut.projectID    = projectList[ ndx ].ID.toInt();
-
-   ndx                  = cb_lab            ->currentIndex();
-   dataOut.labID        = labList[ ndx ]    .ID.toInt();
-
-   ndx                  = cb_instrument     ->currentIndex();
-   dataOut.instrumentID = instrumentList[ ndx ].ID.toInt();
-
-   ndx                  = cb_operator       ->currentIndex();
-   dataOut.operatorID   = operatorList[ ndx ].ID.toInt();
-
-   ndx                  = cb_rotor          ->currentIndex(); 
-   dataOut.rotorID      = rotorList[ ndx ].ID.toInt();
-
-   dataOut.expType      = cb_expType ->currentText();
-   dataOut.runTemp      = le_runTemp ->text(); 
-   dataOut.label        = le_label   ->text(); 
-   dataOut.comments     = te_comment ->toPlainText();
+   dataOut.projectID    = cb_project   ->getComboBoxID();
+   dataOut.labID        = cb_lab       ->getComboBoxID();
+   dataOut.instrumentID = cb_instrument->getComboBoxID();
+   dataOut.operatorID   = cb_operator  ->getComboBoxID();
+   dataOut.rotorID      = cb_rotor     ->getComboBoxID();
+   dataOut.expType      = cb_expType   ->currentText();
+   dataOut.runTemp      = le_runTemp   ->text(); 
+   dataOut.label        = le_label     ->text(); 
+   dataOut.comments     = te_comment   ->toPlainText();
    dataOut.centrifugeProtocol = le_centrifugeProtocol->text();
 
    // Save it to the db and return
@@ -464,173 +454,6 @@ void US_ExpInfo::connect_error( const QString& error )
          tr( "Could not connect to databasee \n" ) + error );
 }
 
-QComboBox* US_ExpInfo::us_projectComboBox( void )
-{
-   // Connect to the db
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      US_ExpInfo::connect_error( db.lastError() );
-      return 0;
-   }
-
-   QComboBox* cb = us_comboBox();
-
-   struct listInfo info;
-
-   QStringList q( "get_project_desc" );
-   q << QString::number( 0 );
-   db.query( q );
-
-   projectList.clear();
-   while ( db.next() )
-   {
-      info.ID       = db.value( 0 ).toString();
-      info.text     = db.value( 1 ).toString();
-      projectList << info;
-
-      cb->addItem( info.text );
-   }
-
-   return cb;
-}
-
-QComboBox* US_ExpInfo::us_labComboBox( void )
-{
-   // Connect to the db
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      US_ExpInfo::connect_error( db.lastError() );
-      return 0;
-   }
-
-   QComboBox* cb = us_comboBox();
-
-   struct listInfo info;
-
-   QStringList q( "get_lab_names" );
-   db.query( q );
-
-   labList.clear();
-   while ( db.next() )
-   {
-      info.ID      = db.value( 0 ).toString();
-      info.text    = db.value( 1 ).toString();
-      labList     << info;
-
-      cb->addItem( info.text );
-   }
-
-   return cb;
-}
-
-QComboBox* US_ExpInfo::us_instrumentComboBox( void )
-{
-   // Connect to the db
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      US_ExpInfo::connect_error( db.lastError() );
-      return 0;
-   }
-
-   QComboBox* cb = us_comboBox();
-
-   struct listInfo info;
-
-   QStringList q( "get_instrument_names" );
-   db.query( q );
-
-   instrumentList.clear();
-   while ( db.next() )
-   {
-      info.ID         = db.value( 0 ).toString();
-      info.text       = db.value( 1 ).toString();
-      instrumentList << info;
-
-      cb->addItem( info.text );
-   }
-
-   return cb;
-}
-
-QComboBox* US_ExpInfo::us_operatorComboBox( void )
-{
-   // Connect to the db
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      US_ExpInfo::connect_error( db.lastError() );
-      return 0;
-   }
-
-   QComboBox* cb = us_comboBox();
-
-   struct listInfo info;
-
-   QStringList q( "get_people" );
-   q << "";           // "Like" parameter
-   db.query( q );
-
-   operatorList.clear();
-   while ( db.next() )
-   {
-      info.ID       = db.value( 0 ).toString();
-      info.text     = db.value( 1 ).toString();
-      operatorList << info;
-
-      cb->addItem( info.text );
-   }
-
-   return cb;
-}
-
-QComboBox* US_ExpInfo::us_rotorComboBox( void )
-{
-   // Connect to the db
-   US_Passwd pw;
-   QString masterPW = pw.getPasswd();
-   US_DB2 db( masterPW );
-
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      US_ExpInfo::connect_error( db.lastError() );
-      return 0;
-   }
-
-   QComboBox* cb = us_comboBox();
-
-   struct listInfo info;
-
-   QStringList q( "get_rotor_names" );
-   db.query( q );
-
-   rotorList.clear();
-   while ( db.next() )
-   {
-      info.ID      = db.value( 0 ).toString();
-      info.text    = db.value( 1 ).toString();
-      rotorList   << info;
-
-      cb->addItem( info.text );
-   }
-
-   return cb;
-}
-
 QComboBox* US_ExpInfo::us_expTypeComboBox( void )
 {
    QComboBox* cb = us_comboBox();
@@ -644,22 +467,6 @@ QComboBox* US_ExpInfo::us_expTypeComboBox( void )
    cb->addItems( experimentTypes );
 
    return cb;
-}
-
-// Function to update a combobox so that the current choice is selected
-void US_ExpInfo::setComboBoxIndex( QComboBox* cb, QList< listInfo >& list, int ID )
-{
-   for ( int i = 0; i < list.size(); i++ )
-   {
-      if ( list[ i ].ID.toInt() == ID )
-      {
-         cb->setCurrentIndex( i );
-         return;
-      }
-   }
-
-   // If here, index was not found
-   cb->setCurrentIndex( 0 );
 }
 
 void US_ExpInfo::setWidgetIndex( QListWidget* lw, QList< listInfo >& list, int ID )
@@ -742,3 +549,106 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
    return *this;
 }
 
+// A class for creating widgets that know what they're displaying
+US_DBControl::US_DBControl( int query )
+{
+   // Initialize combo box or other type of control
+   this->widgetList.clear();
+
+   // Connect to the db
+   US_Passwd pw;
+   QString masterPW = pw.getPasswd();
+   US_DB2 db( masterPW );
+
+   this->dbError = "";
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      this->dbError = db.lastError();
+      return;
+   }
+
+   QStringList q;
+   switch ( query )
+   {
+      case SQL_PROJECTS    :
+         q << "get_project_desc"
+           << QString::number( 0 );               // the "get all my projects" parameter
+         break;
+
+      case SQL_LABS        :
+         q << "get_lab_names";
+         break;
+
+      case SQL_INSTRUMENTS :
+         q << "get_instrument_names";
+         break;
+
+      case SQL_PEOPLE      :
+         q << "get_people"
+           << "";                                 // the "like" parameter
+         break;
+
+      case SQL_ROTORS      :
+         q << "get_rotor_names";
+         break;
+
+      default              :
+         q << "get_rotor_names";
+         break;
+   }
+
+   db.query( q );
+
+   while ( db.next() )
+   {
+      struct listInfo info;
+      info.ID      = db.value( 0 ).toString();
+      info.text    = db.value( 1 ).toString();
+      this->widgetList << info;
+   }
+}
+
+US_DBComboBox::US_DBComboBox( QWidget* parent, int query )
+             : QComboBox( parent ),
+               US_DBControl( query )
+{
+
+   this->setPalette( US_GuiSettings::normalColor() );
+   this->setAutoFillBackground( true );
+   this->setFont( QFont( US_GuiSettings::fontFamily(),
+                         US_GuiSettings::fontSize  () ) );
+
+   // Check status from parent constructor
+   if ( this->dbError != "" )
+   {
+      QMessageBox::warning( this, tr( "Connection Problem" ),
+            tr( "Could not connect to databasee \n" ) + this->dbError );
+      return;
+   }
+
+   foreach( listInfo info, widgetList )
+      this->addItem( info.text );
+}
+
+// Function to update a combobox so that the current choice is selected
+void US_DBComboBox::setComboBoxIndex( int ID )
+{
+   for ( int i = 0; i < this->widgetList.size(); i++ )
+   {
+      if ( this->widgetList[ i ].ID.toInt() == ID )
+      {
+         this->setCurrentIndex( i );
+         return;
+      }
+   }
+
+   // If here, index was not found
+   this->setCurrentIndex( 0 );
+}
+
+int US_DBComboBox::getComboBoxID( void ) 
+{
+   int ndx = this->currentIndex();
+
+   return this->widgetList[ ndx ].ID.toInt();
+}
