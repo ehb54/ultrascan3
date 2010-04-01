@@ -35,6 +35,7 @@ HEADERS      = us_analysis_base.h       \
                us_selectmodel3.h        \
                us_selectmodel10.h       \
                us_selectmodel13.h       \
+               us_table.h               \
                us_widgets.h             \
                us_widgets_dialog.h
 
@@ -58,6 +59,7 @@ SOURCES      = us_analysis_base.cpp       \
                us_selectmodel3.cpp        \
                us_selectmodel10.cpp       \
                us_selectmodel13.cpp       \
+               us_table.cpp               \
                us_widgets.cpp             \
                us_widgets_dialog.cpp
 

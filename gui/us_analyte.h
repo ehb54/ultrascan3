@@ -10,6 +10,7 @@
 #include "us_math.h"
 #include "us_editor.h"
 #include "us_db2.h"
+#include "us_femglobal_new.h"
 
 #include <qwt_counter.h>
 
@@ -39,6 +40,7 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
    signals:
       void valueChanged  ( double );
       void valueAnalyteID( const QString& );
+      void component     ( US_FemGlobal_New::SimulationComponent );
 
    private:
       bool          signal_wanted;
@@ -57,8 +59,6 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       enum analyte  analyte_t;
                    
       double        vbar;     
-      double        e260;    
-      double        e280;    
                    
       struct analyte_info
       {
@@ -67,7 +67,8 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
          analyte type;
       };
 
-      QList< analyte_info > info;
+      QList< analyte_info >   info;
+      QMap < double, double > extinction;  // Wavelength, extinction index
 
 
       QString       filename;
@@ -87,12 +88,9 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       QLineEdit*    le_protein_vbar;
       QLineEdit*    le_protein_temp;
       QLineEdit*    le_protein_residues;
-      QLineEdit*    le_protein_e280;
 
       QLineEdit*    le_nucle_mw;
       QLineEdit*    le_nucle_vbar;
-      QLineEdit*    le_nucle_e260;
-      QLineEdit*    le_nucle_e280;
 
       QWidget*      protein_widget;
       QWidget*      dna_widget;
@@ -129,6 +127,7 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       void status_query       ( const QStringList& );
       bool database_ok        ( US_DB2& );
       bool data_ok            ( void );
+      void set_extinction     ( US_DB2& );
 
    private slots:
       void close              ( void );

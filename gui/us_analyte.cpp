@@ -5,6 +5,7 @@
 #include "us_gui_settings.h"
 #include "us_investigator.h"
 #include "us_editor.h"
+#include "us_table.h"
 
 US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags f )
    : US_WidgetsDialog( parent, f )
@@ -142,7 +143,7 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    connect( pb_sequence, SIGNAL( clicked() ), SLOT( manage_sequence() ) );
    main->addWidget( pb_sequence, row, 1 );
 
-   pb_spectrum = us_pushbutton( tr( "Manage Spectrum" ), false );
+   pb_spectrum = us_pushbutton( tr( "Manage Spectrum" ) );
    connect( pb_spectrum, SIGNAL( clicked() ), SLOT( spectrum() ) );
    main->addWidget( pb_spectrum, row++, 2 );
 
@@ -200,12 +201,12 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    protein_info->addWidget( le_protein_residues, prow, 1 );
    main->addWidget( protein_widget, row, 0, 1, 3 ); 
    
-   QLabel* lb_protein_e280 = us_label( 
-         tr( "Extinction <small>(280 nm)</small>:" ) );
-   protein_info->addWidget( lb_protein_e280, prow, 2 );
+   //QLabel* lb_protein_e280 = us_label( 
+   //      tr( "Extinction <small>(280 nm)</small>:" ) );
+   //protein_info->addWidget( lb_protein_e280, prow, 2 );
 
-   le_protein_e280 = us_lineedit( "" );
-   protein_info->addWidget( le_protein_e280, prow++, 3 );
+   //le_protein_e280 = us_lineedit( "" );
+   //protein_info->addWidget( le_protein_e280, prow++, 3 );
 
    QSpacerItem* spacer1 = new QSpacerItem( 20, 0 );
    protein_info->addItem( spacer1, prow, 0, 1, 4 );
@@ -346,19 +347,19 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    le_nucle_vbar = us_lineedit( "" );
    nucle_data->addWidget( le_nucle_vbar, 1, 1, 1, 3 );
 
-   QLabel* lb_nucle_e260 = us_label( 
-         tr( "Extinction<small>(260 nm)</small>:" ) );
-   nucle_data->addWidget( lb_nucle_e260, 2, 0 );
+   //QLabel* lb_nucle_e260 = us_label( 
+   //      tr( "Extinction<small>(260 nm)</small>:" ) );
+   //nucle_data->addWidget( lb_nucle_e260, 2, 0 );
 
-   le_nucle_e260 = us_lineedit( "" );
-   nucle_data->addWidget( le_nucle_e260, 2, 1 );
+   //le_nucle_e260 = us_lineedit( "" );
+   //nucle_data->addWidget( le_nucle_e260, 2, 1 );
 
-   QLabel* lb_nucle_e280 = us_label( 
-         tr( "Extinction<small>(280 nm)</small>:" ) );
-   nucle_data->addWidget( lb_nucle_e280, 2, 2 );
+   //QLabel* lb_nucle_e280 = us_label( 
+   //      tr( "Extinction<small>(280 nm)</small>:" ) );
+   //nucle_data->addWidget( lb_nucle_e280, 2, 2 );
 
-   le_nucle_e280 = us_lineedit( "" );
-   nucle_data->addWidget( le_nucle_e280, 2, 2 );
+   //le_nucle_e280 = us_lineedit( "" );
+   //nucle_data->addWidget( le_nucle_e280, 2, 2 );
 
    dna_layout->addLayout( nucle_data, 4, 0, 2, 3 );
    main->addWidget( dna_widget, row, 0, 2, 3 ); 
@@ -446,6 +447,11 @@ void US_Analyte::close( void )
    // Emit signal if requested
    if ( signal_wanted ) 
    {
+      US_FemGlobal_New::SimulationComponent sc;
+
+      // TODO: Fill in values here
+
+      emit component     ( sc );
       emit valueChanged  ( vbar );
       emit valueAnalyteID( analyteID );
    }
@@ -464,7 +470,7 @@ void US_Analyte::reset( void )
 
    analyteID.clear();
 
-   le_investigator  ->setText( tr( "Not Selected" ) );
+   le_investigator->setText( tr( "Not Selected" ) );
 
    if ( personID > 0 )
    {
@@ -475,12 +481,10 @@ void US_Analyte::reset( void )
          assign_investigator( personID, lname, fname );
    }
 
-   le_search        ->clear();
-   le_search        ->setReadOnly( true );
+   le_search->clear();
+   le_search->setReadOnly( true );
 
-   vbar     = 0.0;
-   e280     = 0.0;
-   e260     = 0.0;
+   vbar = 0.0;
 
    filename.clear();
    sequence.clear();
@@ -488,31 +492,29 @@ void US_Analyte::reset( void )
    le_description     ->clear();
    le_protein_temp    ->setText( "20.0" );
    le_protein_residues->clear();
-   le_protein_e280    ->clear();
 
-   ct_sodium   ->setValue( 0.0 );
-   ct_potassium->setValue( 0.0 );
-   ct_lithium  ->setValue( 0.0 );
-   ct_magnesium->setValue( 0.0 );
-   ct_calcium  ->setValue( 0.0 );
+   ct_sodium          ->setValue( 0.0 );
+   ct_potassium       ->setValue( 0.0 );
+   ct_lithium         ->setValue( 0.0 );
+   ct_magnesium       ->setValue( 0.0 );
+   ct_calcium         ->setValue( 0.0 );
+                      
+   cb_stranded        ->setChecked( true );
+   cb_mw_only         ->setChecked( false );
+                      
+   rb_3_hydroxyl      ->setChecked( true );
+   rb_5_hydroxyl      ->setChecked( true );
+                      
+   le_nucle_mw        ->clear();
+   le_nucle_vbar      ->clear();
+                      
+   pb_save            ->setEnabled( false );
+   pb_save_db         ->setEnabled( false );
+   pb_update_db       ->setEnabled( false );
+   pb_del_db          ->setEnabled( false );
+   pb_more            ->setEnabled( false );
 
-   cb_stranded   ->setChecked( true );
-   cb_mw_only    ->setChecked( false );
-
-   rb_3_hydroxyl ->setChecked( true );
-   rb_5_hydroxyl ->setChecked( true );
-
-   le_nucle_mw  ->clear();
-   le_nucle_vbar->clear();
-   le_nucle_e260->clear();
-   le_nucle_e280->clear();
-
-   pb_save     ->setEnabled( false );
-   pb_save_db  ->setEnabled( false );
-   pb_update_db->setEnabled( false );
-   pb_del_db   ->setEnabled( false );
-   pb_spectrum ->setEnabled( false );
-   pb_more     ->setEnabled( false );
+   extinction.clear();
 
    qApp->processEvents();
    inReset = false;
@@ -564,8 +566,18 @@ void US_Analyte::read_analyte( void )
 
    description = values.at( 0 );
    if ( values.size() > 1 ) vbar = values.at( 1 ).toDouble();
-   if ( values.size() > 2 ) e280 = values.at( 2 ).toDouble();
-   if ( values.size() > 3 ) e260 = values.at( 3 ).toDouble();
+
+   extinction.clear();
+
+   int count = ( values.size() - 2 );
+
+   for ( int i = 2; i < count; i+=2 )
+   {
+      double wavelength = values.at( i )    .toDouble();
+      double value      = values.at( i + 1 ).toDouble();
+
+      extinction[ wavelength ] = value;
+   }
 
    while ( ! ts.atEnd() ) sequence += ts.readLine().toLower();
   
@@ -614,7 +626,7 @@ void US_Analyte::read_analyte( void )
          le_protein_vbar    ->setText( QString::number( p.vbar  , 'f', 4 ) );
          le_protein_temp    ->setText( "20.0" );
          le_protein_residues->setText( QString::number( p.residues ) );
-         le_protein_e280    ->setText( QString::number( e280 ) );
+         //le_protein_e280    ->setText( QString::number( e280 ) );
          break;
       }
 
@@ -623,8 +635,8 @@ void US_Analyte::read_analyte( void )
          parse_dna();
          update_nucleotide();
          le_nucle_vbar->setText( QString::number( vbar, 'f', 4 ) );
-         le_nucle_e260->setText( QString::number( e260, 'f', 4 ) );
-         le_nucle_e280->setText( QString::number( e280, 'f', 4 ) );
+         //le_nucle_e260->setText( QString::number( e260, 'f', 4 ) );
+         //le_nucle_e280->setText( QString::number( e280, 'f', 4 ) );
          break;
 
       case CARBOHYDRATE:
@@ -904,7 +916,7 @@ void US_Analyte::save_analyte( void )
 
       QString s = ">" + description;
 
-      // Add vbar20 and e280 values
+      // Add vbar20 value
       switch ( analyte_t )
       {
          case PROTEIN:
@@ -913,22 +925,26 @@ void US_Analyte::save_analyte( void )
             double temperature = le_protein_temp->text().toDouble();
             US_Math::calc_vbar( p, sequence, temperature );
 
-            e280 = le_protein_e280->text().toDouble();
-
             s += "|" + QString::number( p.vbar20, 'f', 4 );
-            s += "|" + QString::number( e280,     'f', 4 );
          }
             break;
 
          case DNA:
          case RNA:
             s += "|" + QString::number( vbar, 'f', 4 );
-            s += "|" + QString::number( e280, 'f', 4 );
-            s += "|" + QString::number( e260, 'f', 4 );
             break;
 
          case CARBOHYDRATE:
             break;
+      }
+
+      // Add extinction values
+      QList< double > keys = extinction.keys();
+
+      for ( int i = 0; i < keys.size(); i++ )
+      {
+         s += "|" + QString::number( keys[ i ], 'f', 1 );
+         s += "|" + QString::number( extinction[ keys[ i ] ], 'f', 4 );
       }
 
       t << s << endl;
@@ -961,7 +977,8 @@ void US_Analyte::more_info( void )
          tr( "Report for:           " ) + description + "\n\n" +
 
          tr( "Number of Residues:   " ) + s.sprintf( "%i", p.residues ) + " AA\n";
-   s1 += tr( "Molecular Weight:     " ) + s.sprintf( "%i", (int)p.mw )  + tr( " Dalton\n" ) +
+   s1 += tr( "Molecular Weight:     " ) + s.sprintf( "%i", (int)p.mw )  +
+         tr( " Dalton\n" ) +
          
          tr( "V-bar at 20 deg C:    " ) + 
               QString::number( p.vbar20, 'f', 6 )   + tr( " cm^3/g\n" ) +
@@ -969,11 +986,21 @@ void US_Analyte::more_info( void )
          tr( "V-bar at " ) + QString::number( temperature, 'f', 2 ) + " deg C: " +
                QString::number( p.vbar, 'f', 6 ) + tr( " cm^3/g\n\n" ) +
        
-         tr( "Extinction coefficient for the denatured\n"
-             "peptide at 280 nm: ") +
-               QString::number( p.e280, 'f', 1 ) + " OD/(mol cm)\n\n" +
+         tr( "Extinction coefficients for the denatured analyte:\n" 
+             "  Wavelength (nm)   OD/(mol cm)\n" );
+
+   QList< double > keys = extinction.keys();
+   qSort( keys );
+
+   for ( int i = 0; i < keys.size(); i++ )
+   {
+      QString s;
+      s.sprintf( "  %4.1f          %9.4f\n", 
+            keys[ i ], extinction[ keys[ i ] ] );
+      s1 += s;
+   }
         
-         tr( "Composition: \n\n" );
+   s1 += tr( "\nComposition: \n\n" );
    s1 += tr( "Alanine:        " )  + s.sprintf( "%3i", p.a ) + "  ";
    s1 += tr( "Arginine:       " )  + s.sprintf( "%3i", p.r ) + "\n";
          
@@ -1065,14 +1092,15 @@ void US_Analyte::assign_investigator( int invID,
          lname + ", " + fname );
 
    personID = invID;
-   read_db();
+   if ( personID > 0 ) read_db();
 }
 
 void US_Analyte::spectrum( void )
 {
-      QMessageBox::information( this,
-         tr( "Under Construction" ), 
-         tr( "Under Construction" ) );
+   US_Table* dialog = new US_Table( extinction, tr( "Extinction:" ) );
+   dialog->setWindowTitle( tr( "Manage Extinction Values" ) );
+
+   dialog->exec();
 }
 
 void US_Analyte::read_db( void )
@@ -1214,19 +1242,29 @@ void US_Analyte::select_analyte( QListWidgetItem* item )
    personID         = db.value( 6 ).toInt();
    
    filename = "";
-   e260     = 0.0;
-   e280     = 0.0;
 
-   QStringList extinctions = spectrum.split( ";" );
-   QString     extinction;
+   //QStringList extinctions = spectrum.split( ";" );
+   //QString     extinction;
    
-   foreach ( extinction, extinctions )
+   //foreach ( extinction, extinctions )
+   //{
+   //   QStringList e = extinction.split( ":" );
+   //   if ( e[ 0 ].toInt() == 260 ) e260 =  e[ 1 ].toDouble();
+   //   if ( e[ 0 ].toInt() == 280 ) e280 =  e[ 1 ].toDouble();
+   //}
+     
+   q.clear();
+   q << "get_analyte_extinction" << analyteID;
+
+   extinction.clear();
+
+   while ( db.next() )
    {
-      QStringList e = extinction.split( ":" );
-      if ( e[ 0 ].toInt() == 260 ) e260 =  e[ 1 ].toDouble();
-      if ( e[ 0 ].toInt() == 280 ) e280 =  e[ 1 ].toDouble();
+      double lambda = db.value( 1 ).toDouble();
+      double coeff  = db.value( 2 ).toDouble();
+      extinction[ lambda ] = coeff;
    }
-        
+
    le_description->setText( description );
 
    // Update the window
@@ -1245,7 +1283,6 @@ void US_Analyte::select_analyte( QListWidgetItem* item )
             if ( vbar == 0.0 ) vbar = p.vbar20;
             le_protein_vbar20->setText( QString::number( vbar, 'f', 4 ) );
             le_protein_vbar  ->setText( QString::number( vbar, 'f', 4 ) );
-            le_protein_e280  ->setText( QString::number( e280, 'f', 4 ) );
          }
 
          break;
@@ -1254,8 +1291,6 @@ void US_Analyte::select_analyte( QListWidgetItem* item )
       case RNA:
          update_nucleotide();
          le_nucle_vbar->setText( QString::number( vbar, 'f', 4 ) );
-         le_nucle_e260->setText( QString::number( e260, 'f', 4 ) );
-         le_nucle_e280->setText( QString::number( e280, 'f', 4 ) );
          break;
 
       case CARBOHYDRATE:
@@ -1294,8 +1329,9 @@ void US_Analyte::save_db( void )
    q << QString::number( vbar, 'f', 4 );
    q << description;
 
-   QString spectrum = "260:" + QString::number( e260, 'f', 4 ) + 
-                     ";280:" + QString::number( e280, 'f', 4 );
+   //QString spectrum = "260:" + QString::number( e260, 'f', 4 ) + 
+   //                  ";280:" + QString::number( e280, 'f', 4 );
+   QString spectrum = "";
    q << spectrum;
 
    // Molecular weight
@@ -1307,14 +1343,43 @@ void US_Analyte::save_db( void )
       q << QString::number( mw, 'f', 4 );
    }
    
-   status_query( q );
+   db.statusQuery( q );
 
    if ( ! database_ok( db ) ) return;
+
+   analyteID = QString::number( db.lastInsertID() );
+   set_extinction( db );
 
    QMessageBox::information( this,
       tr( "Analyte Saved" ),
       tr( "The analyte has been saved to the database." ) );
 }
+
+void US_Analyte::set_extinction( US_DB2& db )
+{
+   QStringList q;
+
+   q << "delete_analyte_extinction" << analyteID;
+   db.statusQuery( q );
+
+   QList< double > keys = extinction.keys();
+   
+   q.clear();
+   q << "new_analyte_extinction" << analyteID << "" << "";
+
+   for ( int i = 0; i < keys.size(); i++ )
+   {
+      double key =  keys[ i ];
+      QString lambda = QString::number( key, 'f', 1 );
+      q[ 2 ] = lambda;
+
+      QString coeff = QString::number( extinction[ key ], 'f', 4 );
+      q[ 3 ] = coeff;
+
+      db.statusQuery( q );
+   }
+}
+
 
 void US_Analyte::update_db( void )
 {
@@ -1342,9 +1407,10 @@ void US_Analyte::update_db( void )
    q << QString::number( vbar, 'f', 4 );
    q << description;
 
-   QString spectrum = "260:" + QString::number( e260, 'f', 4 ) + 
-                     ";280:" + QString::number( e280, 'f', 4 );
-   q << spectrum;
+   //QString spectrum = "260:" + QString::number( e260, 'f', 4 ) + 
+   //                  ";280:" + QString::number( e280, 'f', 4 );
+   //q << spectrum;
+   q << " ";
 
    // Molecular weight
         if ( analyte_t == PROTEIN )      q << le_protein_mw->text();
@@ -1359,8 +1425,10 @@ void US_Analyte::update_db( void )
 
    if ( ! database_ok( db ) ) return;
 
+   set_extinction( db );
+
    QMessageBox::information( this,
-      tr( "Analyte Updated" ),
+   tr( "Analyte Updated" ),
       tr( "The analyte has been updated in the database." ) );
 }
 
