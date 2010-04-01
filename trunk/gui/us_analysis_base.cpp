@@ -39,14 +39,14 @@ US_AnalysisBase::US_AnalysisBase() : US_Widgets()
             tr( "X-Axis Title" ),
             tr( "Y-Axis Title" ) );
 
-   data_plot1->setMinimumSize( 600, 300 );
+   data_plot1->setMinimumSize( 600, 150 );
 
    plotLayout2 = new US_Plot( data_plot2,
             tr( "Plot 2 Title" ),
             tr( "X-Axis Title" ),
             tr( "Y-Axis Title" ) );
 
-   data_plot2->setMinimumSize( 600, 300 );
+   data_plot2->setMinimumSize( 600, 150 );
 
    rightLayout->addLayout( plotLayout1 );
    rightLayout->addLayout( plotLayout2 );
