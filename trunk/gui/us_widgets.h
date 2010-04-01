@@ -12,6 +12,7 @@
 
 #include "us_global.h"
 #include "us_extern.h"
+#include "us_gui_settings.h"
 
 /*! \brief Set up widgets the UltraScan way.
  
@@ -85,7 +86,7 @@ class US_EXTERN US_Widgets : public QFrame
     //! \param cb - reference to a pointer of the checkbox\n
     //! * Font weight is bold\n
     //! * Color is set to US_GuiSettings::normalColor()
-    QBoxLayout* us_checkbox  ( const QString&, QCheckBox*&, bool = false );
+    QGridLayout* us_checkbox  ( const QString&, QCheckBox*&, bool = false );
 
     //! Create a radiobutton with a specifice palette (normal) and 
     //! indentation of the button
@@ -143,5 +144,25 @@ class US_EXTERN US_Widgets : public QFrame
     QwtPlotPicker* us_picker( QwtPlot* );
 
 };
-#endif
 
+//! \brief Set a custom list widget that can override the default size
+
+class US_ListWidget : public QListWidget
+{
+   public:
+      US_ListWidget()
+      {
+         setAutoFillBackground( true );
+         setPalette( US_GuiSettings::editColor() );
+         setFont   ( QFont( US_GuiSettings::fontFamily(),
+                            US_GuiSettings::fontSize  () ) );
+
+         setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum );
+      };
+
+      virtual QSize sizeHint() const
+      {
+         return QSize( -1, -1 );  // Allow default in the class
+      };
+};
+#endif

@@ -140,7 +140,7 @@ QListWidget* US_Widgets::us_listwidget ( int fontAdjust )
 }
 
 // checkbox
-QBoxLayout* US_Widgets::us_checkbox( 
+QGridLayout* US_Widgets::us_checkbox( 
       const QString& text, QCheckBox*& cb, bool state )
 {
   QPalette p    = US_GuiSettings::normalColor();
@@ -161,12 +161,12 @@ QBoxLayout* US_Widgets::us_checkbox(
   cb->setChecked           ( state );
   cb->setAutoFillBackground( true  );
 
-  QBoxLayout* layout = new QHBoxLayout;
+  QGridLayout* layout = new QGridLayout;
   layout->setContentsMargins( 0, 0, 0, 0 );
   layout->setSpacing        ( 0 );
 
-  layout->addWidget( lb_spacer );
-  layout->addWidget( cb );
+  layout->addWidget( lb_spacer, 0, 0 );
+  layout->addWidget( cb       , 0, 1 );
 
   return layout;
 }
