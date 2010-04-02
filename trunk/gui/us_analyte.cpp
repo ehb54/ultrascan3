@@ -347,20 +347,6 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    le_nucle_vbar = us_lineedit( "" );
    nucle_data->addWidget( le_nucle_vbar, 1, 1, 1, 3 );
 
-   //QLabel* lb_nucle_e260 = us_label( 
-   //      tr( "Extinction<small>(260 nm)</small>:" ) );
-   //nucle_data->addWidget( lb_nucle_e260, 2, 0 );
-
-   //le_nucle_e260 = us_lineedit( "" );
-   //nucle_data->addWidget( le_nucle_e260, 2, 1 );
-
-   //QLabel* lb_nucle_e280 = us_label( 
-   //      tr( "Extinction<small>(280 nm)</small>:" ) );
-   //nucle_data->addWidget( lb_nucle_e280, 2, 2 );
-
-   //le_nucle_e280 = us_lineedit( "" );
-   //nucle_data->addWidget( le_nucle_e280, 2, 2 );
-
    dna_layout->addLayout( nucle_data, 4, 0, 2, 3 );
    main->addWidget( dna_widget, row, 0, 2, 3 ); 
    dna_widget->setVisible( false );
@@ -447,7 +433,8 @@ void US_Analyte::close( void )
    // Emit signal if requested
    if ( signal_wanted ) 
    {
-      US_FemGlobal_New::SimulationComponent sc;
+      //US_FemGlobal_New::SimulationComponent sc;
+      SimulationComponent sc;
 
       // TODO: Fill in values here
 
@@ -1243,20 +1230,11 @@ void US_Analyte::select_analyte( QListWidgetItem* item )
    
    filename = "";
 
-   //QStringList extinctions = spectrum.split( ";" );
-   //QString     extinction;
-   
-   //foreach ( extinction, extinctions )
-   //{
-   //   QStringList e = extinction.split( ":" );
-   //   if ( e[ 0 ].toInt() == 260 ) e260 =  e[ 1 ].toDouble();
-   //   if ( e[ 0 ].toInt() == 280 ) e280 =  e[ 1 ].toDouble();
-   //}
-     
    q.clear();
    q << "get_analyte_extinction" << analyteID;
 
    extinction.clear();
+   db.query( q );
 
    while ( db.next() )
    {

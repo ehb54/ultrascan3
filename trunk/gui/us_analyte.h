@@ -10,7 +10,8 @@
 #include "us_math.h"
 #include "us_editor.h"
 #include "us_db2.h"
-#include "us_femglobal_new.h"
+//#include "us_femglobal_new.h"
+#include "us_femglobal.h"
 
 #include <qwt_counter.h>
 
@@ -40,7 +41,8 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
    signals:
       void valueChanged  ( double );
       void valueAnalyteID( const QString& );
-      void component     ( US_FemGlobal_New::SimulationComponent );
+      //void component     ( US_FemGlobal_New::SimulationComponent );
+      void component     ( SimulationComponent );
 
    private:
       bool          signal_wanted;
