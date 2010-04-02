@@ -333,10 +333,10 @@ void US_DB2::query( const QString& sqlQuery )
          if ( ! result )
          {
             if ( mysql_field_count( db ) == 0 )
-               ; // We are here as the result of an INSERT, UPDATE or DELETE
+            {} // We are here as the result of an INSERT, UPDATE or DELETE
 
             else
-               ; // Error retrieving result set
+            {} // Error retrieving result set
          }
       }
    }
