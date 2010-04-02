@@ -4,22 +4,30 @@
 
 #include <QtCore>
 
+/*! The US_DataIO class provides data structures and static methods to
+    read and write experimental data.  */
+
+
 class US_DataIO
 {
    public:
 
+      //!  A constant value that identifies the format of the auc raw data.
+      //!  Internal programs use this value to determine if the format of the
+      //!  file is known.
       static const uint format_version = 2;
 
+      //!  A single reading of data from the centrifuge
       class reading
       {
          public:
          union
          {
-            double radius;
-            double wavelength; // Will be wavelength for W data
-         } d;
-         double value;
-         double stdDev;  // Doesn't exist for P data
+            double radius;     //!< Distance from the center of rotation (in centimeters)
+            double wavelength; //!< Overloaded entry for W style data
+         } d;                  //!< Data union for above values
+         double value;   //!< Value of the sensor's reading
+         double stdDev;  //!< Standard deviation of the reading.  Doesn't exist for P data.
       };
 
       /*!  This is the structure of a Beckman raw data file.  The file
@@ -37,61 +45,74 @@ class US_DataIO
       class beckmanRaw
       {
          public:
-         QString description;
-         char    type;   // I P R W F
-         char    channel;
-         int     cell;
-         double  temperature;
-         double  rpm;
-         double  seconds;
-         double  omega2t;
+         QString description; //!<First line of data file
+         char    type;        //!< I P R W F  (1st Element of 2nd line)
+         char    channel;     //!< Channel ('A', 'B', etc) of scan data
+         int     cell;        //!< Cell (hole) of rotor for this data
+         double  temperature; //!< Temperature while acquiring data (C)
+         double  rpm;         //!< RPM of rotor for this file
+         double  seconds;     //!< Time elapsed since start of run
+         double  omega2t;     //!< Calculated integration of w2t since start of run
          union
          {
-            double wavelength;
-            double radius;      // Will be radius for W data
-         } t;
-         int     count;
+            double wavelength;  //!< Wavlength setting of optical system
+            double radius;      //!< Will be radius for W data
+         } t;                   //!< Data union for above values
+         int     count;         //!< Actual number of readings for this scan
 
-         QVector< reading > readings;
+         QVector< reading > readings;  //!< The scan readings
       };
 
+      //!  The scanned data in the UltraScan III format and the specified
+      //!  plateau after editing.  The Beckman data is interpolated so there
+      //!  are no missing entries.  
       class scan
       {
          public:
-         double temperature;
-         double rpm;
-         double seconds;
-         double omega2t;
-         double wavelength;
-         double plateau;         // Reading value
-         double delta_r;
-         QVector< reading > readings;
+         double temperature;     //!< Temperature while acquiring data (C)
+         double rpm;             //!< RPM of rotor for this scan
+         double seconds;         //!< Time elapsed since start of run
+         double omega2t;         //!< Calculated integration of w2t since start of run
+         double wavelength;      //!< Wavlength setting of optical system
+         double plateau;         //!< Reading value
+         double delta_r;         //!< Radial distance between readings
+         QVector< reading > readings; //!< The scan readings
+         //! A bit array.  One bit for each reading.  0 is an actual reading and
+         //! 1 is an interpolated reading.
          QByteArray interpolated; 
       };
 
+      //!  All data associated with a cell / channel / wavelength (CCW)
       class rawData
       {
          public:
-         char    type[ 2 ];
-         char    guid[ 16 ];
-         int     cell;
-         char    channel;
-         QString description;
+         char    type[ 2 ];         //!< Data type: "RA", "IP", "RI", "FI"
+                                    //!< "WA" << "WI";
+
+         char    guid[ 16 ];        //!< A generated globally unique identifier
+         int     cell;              //!< Cell (hole) of rotor for this data
+         char    channel;           //!< Channel ('A', 'B', etc) of scan data
+         QString description;       //!< Descriptive data taken from \class beckmanRaw
          
-         QVector< scan > scanData;
+         QVector< scan > scanData;  //!<  The collections of scans for the CCW
       };
 
+      //! Holds changes made to a scan value.  Created by the data editor and
+      //! applied when reading data for analysis.
       class editedPoint
       {
          public:
-         int    scan;
-         double radius;
-         double value;
+         int    scan;    //!< The index of the scan
+         double radius;  //!< The radius of the value to be changed
+         double value;   //!< The new value
       };
 
+      //! A class that holds all entries assiciated with the edits of
+      //! a scan.
       class editValues
       {
          public:
+         //! A constructor that provides initial values for scan edits
          editValues()
          {
             excludes    .clear();
@@ -101,63 +122,114 @@ class US_DataIO
             floatingData = false;
             noiseOrder   = 0;
 
-            // Air Gap is only for interference data
+            //! Air Gap is only for interference data
             airGapLeft   = 0.0;
             airGapRight  = 9.0;
          };
 
-         QString              runID;
-         QString              cell;
-         QString              channel;
-         QString              wavelength;
-         QString              uuid;
-         double               meniscus;
-         double               airGapLeft;
-         double               airGapRight;
-         double               rangeLeft;
-         double               rangeRight;
-         double               plateau;       // Radius value
-         double               baseline;
-         QList< int >         excludes;
-         QList< editedPoint > editedPoints;
-         int                  noiseOrder;
-         double               invert;
-         bool                 removeSpikes;
-         bool                 floatingData;
+         QString              runID;       //!< Specified runID of raw data
+         QString              cell;        //!< Cell (hole) of rotor for this data
+         QString              channel;     //!< Channel ('A', 'B', etc) of scan data
+         QString              wavelength;  //!< Wavlength setting of optical system
+         QString              uuid;        //!< A globally uniquie ID
+         double               meniscus;    //!< Designated radius of meniscus
+         double               airGapLeft;  //!< Start of air gap for fluorescence data
+         double               airGapRight; //!< End of air gap for fluorescence data
+         double               rangeLeft;   //!< Minimum radius for valid data
+         double               rangeRight;  //!< Maximum radius for valid data
+         double               plateau;     //!< A radius value
+         double               baseline;    //!< Designated baseline value of data
+         QList< int >         excludes;    //!< A list of scans excluded from teh raw data
+         QList< editedPoint > editedPoints; //!< A list of points specifically changed
+         int                  noiseOrder;   //!< The order of the polynomial for noise removal
+         double               invert;       //!< A setting to invert the sign of the data.
+                                            //!< Valid values are 1.0 and -1.0
+         bool                 removeSpikes; //!< A setting designating whether the spike
+                                            //!< removal algorithm should be run
+         bool                 floatingData; //!< A value indicating that the density of
+                                            //!< the analyte is less than the density of
+                                            //!< the buffer.
       };
 
+      //! The CCW data after edits are applied
       class editedData
       {
          public:
-         QString       runID;
-         QString       editID;
-         QString       dataType;
-         QString       cell;
-         QString       channel;
-         QString       wavelength;
-         QString       description;
-         QString       uuid;
-         double        meniscus;
-         double        plateau;   // Radius value
-         double        baseline;
-         bool          floatingData;
-         QVector< scan > scanData;    // The interpolated data array is omitted
+         QString       runID;       //!< Specified runID of raw data
+         QString       editID;      //!< The identifier of the file that contained
+                                    //!< the edits for the data
+         QString       dataType;    //!< Sensor type
+         QString       cell;        //!< Cell (hole) of rotor for this data
+         QString       channel;     //!< Channel ('A', 'B', etc) of scan data
+         QString       wavelength;  //!< Wavlength setting of optical system
+         QString       description; //!< ASCII description of the data
+         QString       uuid;        //!< A globally uniquie ID
+         double        meniscus;    //!< Designated radius of meniscus
+         double        plateau;     //!< Location of maximum value of data.  A radius value.
+         double        baseline;    //!< Designated baseline value of data
+         bool          floatingData; //!< A value indicating that the density of
+                                     //!< the analyte is less than the density of
+                                     //!< the buffer.
+         QVector< scan > scanData;   //!< The actual data.  The interpolated data 
+                                     //!< array is omitted
       };
 
+      //! Values that are returned for various errors when managing scan data
       enum ioError { OK, CANTOPEN, BADCRC, NOT_USDATA, BADTYPE, BADXML, 
                      NODATA, NO_UUID_MATCH, BAD_VERSION };
 
+      /*! Read a set of legacy data in raw Beckman data set format
+          \param file  The filename to be read
+          \param data  A reference to the data structure location for the read data
+      */
       static bool    readLegacyFile( const QString&, beckmanRaw& );
+      
+      /*! Write a set of data to a file in the US3 binary format
+          \param file  The filename to be read
+          \param data  A reference to the data structure of
+                       th edata to be written
+      */
       static int     writeRawData  ( const QString&, rawData& );
+      
+      /*! Read a set of data in the US3 binary format
+          \param file  The filename to be read
+          \param data  A reference to the data structure for the read data
+      */
       static int     readRawData   ( const QString&, rawData& );
+
+      /*! Read a set of edit parameters in xml format
+          \param filename   The filename to be read
+          \param parameters A reference to the data structure for the read data
+      */
       static int     readEdits     ( const QString&, editValues& );
+
+      /*! A string describing the last read or write error
+          \param code  The error code to be described
+      */
       static QString errorString   ( int );
+
+      /*! Determine the index of a radius in a scan
+          \param s A reference of the scan to be searched
+          \param r The radius where the index is needed
+      */
       static int     index         ( const scan&, double );
+
+
+      /*! Load edited data into a data structure.  This is the method most
+          analysis programs will call to read data into memory.  It uses
+          the functions readRawData and readEdits.
+          \param directory    The directory of the auc files
+          \param editFilename The the file with the edited parameters
+          \param data         The location where the edited data is placed
+          \param raw          The location where the raw data is placed
+      */
+
       static int     loadData      ( const QString&, const QString&, 
                                      QVector< editedData >&, QVector< rawData >& );
 
    private:
 
+      //!  \private A private convenience class
       class parameters
       {
          public:
