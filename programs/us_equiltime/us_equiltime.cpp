@@ -231,7 +231,7 @@ US_EquilTime::US_EquilTime() : US_Widgets( true )
    cnt_timeIncrement->setStep( 1.0 );
    left->addWidget( cnt_timeIncrement, row++, 1 );
 
-   QBoxLayout* monitor = 
+   QGridLayout* monitor = 
       us_checkbox( tr( "Monitor Simulation Progress" ), cb_monitor, true );
 
    left->addLayout( monitor, row++, 0, 1, 2 );
