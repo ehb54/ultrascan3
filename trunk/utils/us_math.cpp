@@ -44,7 +44,7 @@ double US_Math::box_muller( double m, double s )
 
 double US_Math::ranf( void )
 {
-   return  (double)rand() / ( RAND_MAX + 1 );
+   return  (double)rand() / ( (double)RAND_MAX + 1.0 );
 }
 
 
