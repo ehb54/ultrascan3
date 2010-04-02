@@ -52,7 +52,7 @@ bool US_DataIO::readLegacyFile( const QString& file,
       r.d.radius = p[ 0 ].toFloat();
       r.value    = p[ 1 ].toFloat();
       
-      if ( ! interference_data & p.size() > 2 ) 
+      if ( ! interference_data && p.size() > 2 ) 
          r.stdDev  = p[ 2 ].toFloat();
       else
          r.stdDev  = 0.0;
