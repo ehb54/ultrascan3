@@ -239,11 +239,11 @@ class US_DataIO
          double max_data2;
       };
 
-      static void writeScan( QDataStream&, const scan&, ulong&, 
+      static void writeScan( QDataStream&, const scan&, quint32&, 
                              const parameters& );
 
-      static void write( QDataStream&, const char*, int, ulong& );
-      static void read ( QDataStream&,       char*, int, ulong& );
+      static void write( QDataStream&, const char*, int, quint32& );
+      static void read ( QDataStream&,       char*, int, quint32& );
       
       static void ident     ( QXmlStreamReader&, editValues& );
       static void run       ( QXmlStreamReader&, editValues& );

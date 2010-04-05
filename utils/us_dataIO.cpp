@@ -71,12 +71,13 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
    if ( ! f.open( QIODevice::WriteOnly ) ) return CANTOPEN;
    QDataStream ds( &f );
 
-   unsigned long crc = 0xffffffffUL;
-   
+   // Using quint32 to ensure same data size on all platforms
+   quint32 crc = 0xffffffffUL;
+
    // Write magic number
    char magic[ 5 ] = "UCDA";
    write( ds, magic, 4, crc );
-   
+ 
    // Write format version
    char fmt[ 3 ];
    sprintf( fmt, "%2.2i", format_version );
@@ -170,7 +171,7 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
 }
 
 void US_DataIO::writeScan( QDataStream&    ds, const scan&       data, 
-                           ulong&         crc, const parameters& p )
+                           quint32&       crc, const parameters& p )
 {
    uchar c[ 4 ];
    char  d[ 5 ] = "DATA";
@@ -227,7 +228,7 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
    write( ds, data.interpolated.data(), flagSize, crc );
 }
 
-void US_DataIO::write( QDataStream& ds, const char* c, int len, ulong& crc )
+void US_DataIO::write( QDataStream& ds, const char* c, int len, quint32& crc )
 {
    ds.writeRawData( c, len );
    crc = US_Crc::crc32( crc, (unsigned char*) c, len );
@@ -239,8 +240,8 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
    if ( ! f.open( QIODevice::ReadOnly ) ) return CANTOPEN;
    QDataStream ds( &f );
 
-   int           err = OK;
-   unsigned long crc = 0xffffffffUL;
+   int      err = OK;
+   quint32  crc = 0xffffffffUL;
 
    try
    {
@@ -394,7 +395,7 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
       }
 
       // Read the crc
-      unsigned long read_crc;
+      quint32 read_crc;
       ds.readRawData( (char*) &read_crc , 4 );
       if ( crc != qFromLittleEndian( read_crc ) ) throw BADCRC;
 
@@ -407,7 +408,7 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
    return err;
 }
 
-void US_DataIO::read( QDataStream& ds, char* c, int len, ulong& crc )
+void US_DataIO::read( QDataStream& ds, char* c, int len, quint32& crc )
 {
    ds.readRawData( c, len );
    crc = US_Crc::crc32( crc, (uchar*) c, len );
