@@ -68,6 +68,8 @@ namespace crc
 
 using namespace crc;
 
+#include <QtCore>
+
 #include "us_extern.h"
 
 //! \brief Class to provide a method for CRC-32 calculations.
@@ -80,7 +82,7 @@ class US_EXTERN US_Crc
           \param buf The byte data buffer for which to calculate a CRC.
           \param len The length in bytes of the data to check.
       */
-      static unsigned long crc32( 
-         unsigned long, const unsigned char*, unsigned int );
+      static quint32 crc32( 
+         quint32, const unsigned char*, unsigned int );
 };
 
