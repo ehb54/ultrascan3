@@ -71,9 +71,9 @@ class US_EXTERN US_Convert : public US_Widgets
 
       QComboBox*    cb_centerpiece;
 
-      QList< US_DataIO::beckmanRaw >  legacyData;     // legacy data from file
-      QVector< US_DataIO::rawData >   allData;        // all the data, separated by c/c/w
-      QVector< US_DataIO::rawData >   RIData;         // to save RI data, after converting to RP
+      QList< US_DataIO::beckmanRawScan > legacyData; // legacy data from file
+      QVector< US_DataIO::rawData >      allData;    // all the data, separated by c/c/w
+      QVector< US_DataIO::rawData >      RIData;     // to save RI data, after converting to RP
       QString       saveDir;
       QString       saveDescription;
 

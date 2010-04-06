@@ -304,7 +304,7 @@ void US_Convert::load( QString dir )
    // Display the data that was read
    for ( int i = 0; i < legacyData.size(); i++ )
    {
-      US_DataIO::beckmanRaw d = legacyData[ i ];
+      US_DataIO::beckmanRawData d = legacyData[ i ];
 
       qDebug() << d.description;
       qDebug() << d.type         << " "

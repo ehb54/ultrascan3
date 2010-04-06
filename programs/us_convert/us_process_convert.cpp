@@ -12,10 +12,12 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent ) : US_WidgetsDialog( pare
 }
 
 // Constructor to use for reading data 
-US_ProcessConvert::US_ProcessConvert( QWidget* parent,
-                                      QString dir,
-                                      QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                                      QString& runType ) : US_WidgetsDialog( parent, 0 )
+US_ProcessConvert::US_ProcessConvert( 
+      QWidget*                            parent,
+      QString                             dir,
+      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+      QString&                            runType ) 
+   : US_WidgetsDialog( parent, 0 )
 {
    if ( dir.isEmpty() ) return; 
 
@@ -64,7 +66,7 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
 
    for ( int i = 0; i < fileList.size(); i++ )
    {
-      US_DataIO::beckmanRaw data;
+      US_DataIO::beckmanRawScan data;
       US_DataIO::readLegacyFile( dir + fileList[ i ], data );
 
       // Add channel
@@ -74,7 +76,7 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
 
       if ( runType == "RI" )                // Split out the two readings in RI data
       {
-         US_DataIO::beckmanRaw data2 = data;  // Alter to store second dataset
+         US_DataIO::beckmanRawScan data2 = data;  // Alter to store second dataset
          for ( int j = 0; j < data.readings.size(); j++ )
          {
             data2.readings[ j ].value  = data2.readings[ j ].stdDev;   // Reading 2 in here for RI
@@ -110,14 +112,15 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
 }
 
 // Constructor to use for converting data 
-US_ProcessConvert::US_ProcessConvert( QWidget* parent,
-                                      QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                                      QVector< US_DataIO::rawData  >& rawConvertedData,
-                                      QStringList& triples,
-                                      QString runType,
-                                      double tolerance,
-                                      QList< double >& ss_limits // For RA data
-                                    ) : US_WidgetsDialog( parent, 0 )
+US_ProcessConvert::US_ProcessConvert( 
+      QWidget*                            parent,
+      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+      QVector< US_DataIO::rawData  >&     rawConvertedData,
+      QStringList&                        triples,
+      QString                             runType,
+      double                              tolerance,
+      QList< double >&                    ss_limits // For RA data
+  ) : US_WidgetsDialog( parent, 0 )
 {
    reset();
 
@@ -269,11 +272,12 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
    return;
 }
 
-void US_ProcessConvert::convert( QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                                 US_DataIO::rawData& newRawData,
-                                 QString triple,
-                                 QString runType,
-                                 double tolerance )
+void US_ProcessConvert::convert( 
+      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+      US_DataIO::rawData&                 newRawData,
+      QString                             triple,
+      QString                             runType,
+      double                              tolerance )
 {
    // Convert the data into the UltraScan3 data structure
    QStringList parts      = triple.split(" / ");
@@ -288,7 +292,7 @@ void US_ProcessConvert::convert( QList< US_DataIO::beckmanRaw >& rawLegacyData,
             << wavelength;
    */
 
-   QList< US_DataIO::beckmanRaw > ccwLegacyData;
+   QList< US_DataIO::beckmanRawScan > ccwLegacyData;
 
    // Get a list of the data that matches the cell / channel / wl
    ccwLegacyData.clear();
@@ -296,7 +300,7 @@ void US_ProcessConvert::convert( QList< US_DataIO::beckmanRaw >& rawLegacyData,
 
    for ( int i = 0; i < rawLegacyData.size(); i++ )
    {
-      US_DataIO::beckmanRaw data = rawLegacyData[ i ];
+      US_DataIO::beckmanRawScan data = rawLegacyData[ i ];
 
       if ( data.cell == cell       &&
            data.channel == channel &&
@@ -480,18 +484,19 @@ void US_ProcessConvert::convert( QList< US_DataIO::beckmanRaw >& rawLegacyData,
 
 }
 
-void US_ProcessConvert::splitRAData( QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                                     QList< double >& ss_limits )
+void US_ProcessConvert::splitRAData( 
+      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+      QList< double >&                    ss_limits )
 {
-   QList< US_DataIO::beckmanRaw > temp = rawLegacyData;
+   QList< US_DataIO::beckmanRawScan > temp = rawLegacyData;
    rawLegacyData.clear();
 
    for ( int i = 0; i < temp.size(); i++ )
    {
-      US_DataIO::beckmanRaw data = temp[ i ];
+      US_DataIO::beckmanRawScan data = temp[ i ];
 
       // We are subdividing the scans for RA data
-      US_DataIO::beckmanRaw data2 = data;
+      US_DataIO::beckmanRawScan data2 = data;
    
       US_DataIO::reading r;
    
@@ -520,10 +525,11 @@ void US_ProcessConvert::splitRAData( QList< US_DataIO::beckmanRaw >& rawLegacyDa
    }
 }
 
-void US_ProcessConvert::setTriples( QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                                    QStringList& triples,
-                                    QString runType,
-                                    double tolerance )
+void US_ProcessConvert::setTriples( 
+      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+      QStringList&                        triples,
+      QString                             runType,
+      double                              tolerance )
 {
    // Wavelength data is handled differently here
    if ( runType == "WA" )
@@ -533,9 +539,10 @@ void US_ProcessConvert::setTriples( QList< US_DataIO::beckmanRaw >& rawLegacyDat
 
 }
 
-void US_ProcessConvert::setCcwTriples( QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                                       QStringList& triples,
-                                       double tolerance )
+void US_ProcessConvert::setCcwTriples( 
+      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+      QStringList&                        triples,
+      double                              tolerance )
 {
    // Most triples are ccw
    triples.clear();
@@ -630,9 +637,10 @@ void US_ProcessConvert::setCcwTriples( QList< US_DataIO::beckmanRaw >& rawLegacy
    }
 }
 
-void US_ProcessConvert::setCcrTriples( QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                                       QStringList& triples,
-                                       double tolerance )
+void US_ProcessConvert::setCcrTriples( 
+      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+      QStringList&                        triples,
+      double                              tolerance )
 {
    // First of all, wavelength triples are ccr.
    triples.clear();
