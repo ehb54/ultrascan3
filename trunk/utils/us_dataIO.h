@@ -42,7 +42,7 @@ class US_DataIO
        *   opposite positions.
        */
 
-      class beckmanRaw
+      class beckmanRawScan
       {
          public:
          QString description; //!<First line of data file
@@ -92,7 +92,7 @@ class US_DataIO
          char    guid[ 16 ];        //!< A generated globally unique identifier
          int     cell;              //!< Cell (hole) of rotor for this data
          char    channel;           //!< Channel ('A', 'B', etc) of scan data
-         QString description;       //!< Descriptive data taken from \class beckmanRaw
+         QString description;       //!< Descriptive data taken from \class beckmanRawScan
          
          QVector< scan > scanData;  //!<  The collections of scans for the CCW
       };
@@ -182,7 +182,7 @@ class US_DataIO
           \param file  The filename to be read
           \param data  A reference to the data structure location for the read data
       */
-      static bool    readLegacyFile( const QString&, beckmanRaw& );
+      static bool    readLegacyFile( const QString&, beckmanRawScan& );
       
       /*! Write a set of data to a file in the US3 binary format
           \param file  The filename to be read

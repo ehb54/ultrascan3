@@ -48,7 +48,7 @@ class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
       */
       US_ProcessConvert( QWidget* ,
                          QString ,
-                         QList< US_DataIO::beckmanRaw >& ,
+                         QList< US_DataIO::beckmanRawScan >& ,
                          QString& );
 
       /*! \brief A constructor for the US_ProcessConvert class, intended for
@@ -78,7 +78,7 @@ class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
                         where one dataset ends and the next one begins.
       */
       US_ProcessConvert( QWidget* ,
-                         QList< US_DataIO::beckmanRaw >& ,
+                         QList< US_DataIO::beckmanRawScan >& ,
                          QVector< US_DataIO::rawData    >& ,
                          QStringList& ,
                          QString ,
@@ -125,29 +125,36 @@ class US_EXTERN US_ProcessConvert : public US_WidgetsDialog
       US_Help            showHelp;
    
    private slots:
-      void convert       ( QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                                  US_DataIO::rawData& newRawData,
-                                  QString triple, 
-                                  QString runType,
-                                  double tolerance );
-      void splitRAData   ( QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                                     QList< double >& ss_limits );
-      void setTriples( QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                       QStringList& triples,
-                       QString runType,
-                       double tolerance );
-      void setCcwTriples( QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                          QStringList& triples,
-                          double tolerance );
-      void setCcrTriples( QList< US_DataIO::beckmanRaw >& rawLegacyData,
-                          QStringList& triples,
-                          double tolerance );
+      void convert       ( QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+                                  US_DataIO::rawData&          newRawData,
+                                  QString                      triple, 
+                                  QString                      runType,
+                                  double                       tolerance );
+
+      void splitRAData   ( QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+                           QList< double >&                    ss_limits );
+
+      void setTriples( QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+                       QStringList&                        triples,
+                       QString                             runType,
+                       double                              tolerance );
+      
+      void setCcwTriples( QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+                          QStringList&                        triples,
+                          double                              tolerance );
+      
+      void setCcrTriples( QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+                          QStringList&                        triples,
+                          double                              tolerance );
+      
       void setInterpolated ( unsigned char*, int );
+      
       int writeXmlFile( US_ExpInfo::ExperimentInfo& ExpData,
-                        QStringList& triples,
-                        QString runType,
-                        QString runID,
-                        QString dirname );
+                        QStringList&                triples,
+                        QString                     runType,
+                        QString                     runID,
+                        QString                     dirname );
+      
       void createDialog  ( void );
       void reset         ( void );
       void cancel        ( void );

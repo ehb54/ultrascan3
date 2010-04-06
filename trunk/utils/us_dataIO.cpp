@@ -10,8 +10,8 @@
 
 #include <uuid/uuid.h>
 
-bool US_DataIO::readLegacyFile( const QString& file, 
-                                beckmanRaw&    data )
+bool US_DataIO::readLegacyFile( const QString&  file, 
+                                beckmanRawScan& data )
 {
    // Open the file for reading
    QFile f( file );
