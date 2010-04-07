@@ -597,6 +597,15 @@ void US_DataIO::do_edits( QXmlStreamReader& xml, editValues& parameters )
    }
 }
 
+int US_DataIO::loadData( const QString&         directory, 
+                         const QString&         editFilename,
+                         QVector< editedData >& data )
+{
+   QVector< rawData > raw;
+
+   return loadData( directory, editFilename, data, raw );
+}
+
 int US_DataIO::loadData( const QString&       directory, 
                          const QString&       editFilename,
                          QVector< editedData >& data,
