@@ -130,10 +130,10 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
 
    // Write all integer types as little endian
    uchar c[ 4 ];
-   qToLittleEndian( (ushort)( min_radius * 1000.0 ), c );
+   qToLittleEndian( (quint16)( min_radius * 1000.0 ), c );
    write( ds, (char*)c, 2, crc );
 
-   qToLittleEndian( (ushort)( max_radius * 1000.0 ), c );
+   qToLittleEndian( (quint16)( max_radius * 1000.0 ), c );
    write( ds, (char*)c, 2, crc );
 
    // Distance between radius entries
@@ -155,7 +155,7 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
    write( ds, (char*) &v, 4, crc );
 
    // Write out scan count
-   qToLittleEndian( (ushort)data.scanData.size(), c );
+   qToLittleEndian( (quint16)data.scanData.size(), c );
    write( ds, (char*)c, 2, crc );
 
    // Loop for each scan
@@ -180,7 +180,7 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
    float t = (float) data.temperature;
    write( ds, (char*) &t, 4, crc );
 
-   qToLittleEndian( (uint)data.rpm, c );
+   qToLittleEndian( (quint32)data.rpm, c );
    write( ds, (char*)c, 4, crc );
 
    qToLittleEndian( (uint)data.seconds, c );
@@ -189,27 +189,27 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
    float o = (float) data.omega2t;
    write( ds, (char*) &o, 4, crc );
 
-   qToLittleEndian( (ushort)( ( data.wavelength - 180.0 ) * 100.0 ), c );
+   qToLittleEndian( (quint16)( ( data.wavelength - 180.0 ) * 100.0 ), c );
    write( ds, (char*)c, 2, crc );
 
    float delta_r = (float) data.delta_r;
    write( ds, (char*) &delta_r, 4, crc );
 
-   int valueCount = data.readings.size();
-   qToLittleEndian( (uint)valueCount, c );
+   quint32 valueCount = data.readings.size();
+   qToLittleEndian( valueCount, c );
    write( ds, (char*)c, 4, crc );
 
-   // Write reading
-   double             delta  = ( p.max_data1 - p.min_data1 ) / 65535;
-   double             delta2 = ( p.max_data2 - p.min_data2 ) / 65535;
-   unsigned short int si;  // short int
+   // Write readings
+   double  delta  = ( p.max_data1 - p.min_data1 ) / 65535;
+   double  delta2 = ( p.max_data2 - p.min_data2 ) / 65535;
+   quint16 si;  
 
    bool    stdDev = ( p.min_data2 != 0.0 || p.max_data2 != 0.0 );
    reading r;
 
    foreach ( r, data.readings )
    {
-      si = (unsigned short int) ( ( r.value - p.min_data1 ) / delta );
+      si = (quint16) round( ( r.value - p.min_data1 ) / delta );
 
       qToLittleEndian( si, c );
       write( ds, (char*)c, 2, crc );
@@ -217,7 +217,7 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
       // If applicable, write std deviation
       if ( stdDev )
       {
-         si = (unsigned short int) ( ( r.stdDev - p.min_data2 ) / delta2 );
+         si = (quint16) round( ( r.stdDev - p.min_data2 ) / delta2 );
          qToLittleEndian( si, c );
          write( ds, (char*)c, 2, crc );
       }
@@ -253,7 +253,7 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
       // Check the version number
       unsigned char ver[ 2 ];
       read( ds, (char*) ver, 2, crc );
-      uint version = ( ( ver[ 0 ] & 0x0f ) << 8 ) | ( ver[ 1 ] & 0x0f );
+      quint32 version = ( ( ver[ 0 ] & 0x0f ) << 8 ) | ( ver[ 1 ] & 0x0f );
       if ( version != format_version ) throw BAD_VERSION;
 
       // Read and get the file type
@@ -279,8 +279,8 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
 
       union
       {
-         char   c[ 2 ];
-         ushort I;
+         char    c[ 2 ];
+         quint16 I;
       } si;
 
       read( ds, si.c, 2, crc );
@@ -292,9 +292,9 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
 
       union
       {
-         char  c[ 4 ];
-         int   I;
-         float f;
+         char   c[ 4 ];
+         qint32 I;
+         float  f;
       } v;
 
       read( ds, v.c, 4, crc );
@@ -313,7 +313,7 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
       double max_data2 = v.f;
 
       read( ds, si.c, 2, crc );
-      short int scan_count = qFromLittleEndian( si.I );
+      qint16 scan_count = qFromLittleEndian( si.I );
 
       // Read each scan
       for ( int i = 0 ; i < scan_count; i ++ )
