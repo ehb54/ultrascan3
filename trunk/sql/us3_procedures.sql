@@ -36,6 +36,7 @@ BEGIN
   SET @NO_BUFFER      = 501;
   SET @NO_COMPONENT   = 502;
   SET @NO_ROTOR       = 503;
+  SET @NO_ANALYTE     = 504;
 
   -- Some user levels
   SET @US3_USER       = 0;
@@ -402,5 +403,6 @@ SOURCE us3_exp_procs.sql
 SOURCE us3_proj_procs.sql
 SOURCE us3_hardware_procs.sql
 SOURCE us3_hardware_data.sql
+SOURCE us3_buffer_components.sql
 
 DELIMITER ;
