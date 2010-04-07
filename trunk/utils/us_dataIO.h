@@ -133,13 +133,13 @@ class US_DataIO
          QString              wavelength;  //!< Wavlength setting of optical system
          QString              uuid;        //!< A globally uniquie ID
          double               meniscus;    //!< Designated radius of meniscus
-         double               airGapLeft;  //!< Start of air gap for fluorescence data
-         double               airGapRight; //!< End of air gap for fluorescence data
+         double               airGapLeft;  //!< Start of air gap for interference data
+         double               airGapRight; //!< End of air gap for interfence data
          double               rangeLeft;   //!< Minimum radius for valid data
          double               rangeRight;  //!< Maximum radius for valid data
          double               plateau;     //!< A radius value
          double               baseline;    //!< Designated baseline value of data
-         QList< int >         excludes;    //!< A list of scans excluded from teh raw data
+         QList< int >         excludes;    //!< A list of scans excluded from the raw data
          QList< editedPoint > editedPoints; //!< A list of points specifically changed
          int                  noiseOrder;   //!< The order of the polynomial for noise removal
          double               invert;       //!< A setting to invert the sign of the data.
@@ -226,6 +226,16 @@ class US_DataIO
 
       static int     loadData      ( const QString&, const QString&, 
                                      QVector< editedData >&, QVector< rawData >& );
+
+      /*! This is an overloaded method to read data into memory.  It uses
+          the functions readRawData and readEdits.
+          \param directory    The directory of the auc files
+          \param editFilename The the file with the edited parameters
+          \param data         The location where the edited data is placed
+      */
+
+      static int     loadData      ( const QString&, const QString&, 
+                                     QVector< editedData >& ); 
 
    private:
 
