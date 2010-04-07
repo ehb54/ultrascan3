@@ -330,3 +330,330 @@ BEGIN
 
 END$$
 
+-- Functions and procedures associated with the analyte extinction table
+
+-- Verifies that the specified analyteID exists in the analyte table
+DROP FUNCTION IF EXISTS verify_analyteID$$
+CREATE FUNCTION verify_analyteID( p_guid      CHAR(36),
+                                  p_password  VARCHAR(80),
+                                  p_analyteID INT )
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE count_analyteID INT;
+
+  CALL config();
+  SET count_analyteID = 0;
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+    SELECT COUNT(*)
+    INTO   count_analyteID
+    FROM   analyte
+    WHERE  analyteID = p_analyteID;
+
+    IF ( count_analyteID < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_ANALYTE;
+      SET @US3_LAST_ERROR = CONCAT('MySQL: No analyte with ID ',
+                                   p_analyteID,
+                                   ' exists' );
+
+    END IF;
+
+  END IF;
+
+  RETURN( @US3_LAST_ERRNO );
+
+END$$
+
+-- Returns the row count of analyte extinction info associated with p_analyteID
+DROP FUNCTION IF EXISTS count_analyte_extinction$$
+CREATE FUNCTION count_analyte_extinction( p_guid      CHAR(36),
+                                          p_password  VARCHAR(80),
+                                          p_analyteID INT )
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+  
+  DECLARE count_extinction INT;
+
+  CALL config();
+  SET count_extinction = 0;
+
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+    SELECT COUNT(*)
+    INTO   count_extinction
+    FROM   analyteExtinction
+    WHERE  analyteID = p_analyteID;
+
+  END IF;
+
+  RETURN( count_extinction );
+
+END$$
+
+-- INSERTs a new analyte extinction value with the specified information
+DROP PROCEDURE IF EXISTS new_analyte_extinction$$
+CREATE PROCEDURE new_analyte_extinction ( p_guid                CHAR(36),
+                                          p_password            VARCHAR(80),
+                                          p_analyteID           INT,
+                                          p_lambda              FLOAT,
+                                          p_molarExtinctionCoef FLOAT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE l_analyteID INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+ 
+  IF ( verify_analyteID( p_guid, p_password, p_analyteID ) = @OK ) THEN
+    INSERT INTO analyteExtinction SET
+      analyteID           = p_analyteID,
+      lambda              = p_lambda,
+      molarExtinctionCoef = p_molarExtinctionCoef;
+    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- UPDATEs an existing analyte extinction value with the specified information
+DROP PROCEDURE IF EXISTS update_analyte_extinction$$
+CREATE PROCEDURE update_analyte_extinction ( p_guid                CHAR(36),
+                                             p_password            VARCHAR(80),
+                                             p_extinctionID        INT,
+                                             p_analyteID           INT,
+                                             p_lambda              FLOAT,
+                                             p_molarExtinctionCoef FLOAT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE l_analyteID INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+ 
+  IF ( verify_analyteID( p_guid, p_password, p_analyteID ) = @OK ) THEN
+    UPDATE analyteExtinction SET
+      analyteID           = p_analyteID,
+      lambda              = p_lambda,
+      molarExtinctionCoef = p_molarExtinctionCoef
+    WHERE extinctionID = p_extinctionID;
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- Returns extinction information about all analytes associated with p_analyteID
+DROP PROCEDURE IF EXISTS get_analyte_extinction$$
+CREATE PROCEDURE get_analyte_extinction ( p_guid      CHAR(36),
+                                          p_password  VARCHAR(80),
+                                          p_analyteID INT )
+  READS SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_analyteID( p_guid, p_password, p_analyteID ) != @OK ) THEN
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSEIF ( count_analyte_extinction( p_guid, p_password, p_analyteID ) < 1 ) THEN
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+  
+    SELECT @US3_LAST_ERRNO AS status;
+      
+  ELSE
+    -- Ok, we found some analyte extinction info
+    SELECT @OK AS status;
+  
+    SELECT   extinctionID, lambda, molarExtinctionCoef
+    FROM     analyteExtinction
+    WHERE    analyteID = p_analyteID
+    ORDER BY lambda;
+  
+  END IF;
+
+END$$
+
+-- DELETEs all extinction information associated with an analyteID
+DROP PROCEDURE IF EXISTS delete_analyte_extinction$$
+CREATE PROCEDURE delete_analyte_extinction ( p_guid      CHAR(36),
+                                             p_password  VARCHAR(80),
+                                             p_analyteID INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+
+    DELETE FROM analyteExtinction
+    WHERE analyteID = p_analyteID;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- Functions and procedures associated with the analyte refraction table
+
+-- Returns the row count of analyte refraction info associated with p_analyteID
+DROP FUNCTION IF EXISTS count_analyte_refraction$$
+CREATE FUNCTION count_analyte_refraction( p_guid      CHAR(36),
+                                          p_password  VARCHAR(80),
+                                          p_analyteID INT )
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+  
+  DECLARE count_refraction INT;
+
+  CALL config();
+  SET count_refraction = 0;
+
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+    SELECT COUNT(*)
+    INTO   count_refraction
+    FROM   analyteRefraction
+    WHERE  analyteID = p_analyteID;
+
+  END IF;
+
+  RETURN( count_refraction );
+
+END$$
+
+-- INSERTs a new analyte refraction value with the specified information
+DROP PROCEDURE IF EXISTS new_analyte_refraction$$
+CREATE PROCEDURE new_analyte_refraction ( p_guid            CHAR(36),
+                                          p_password        VARCHAR(80),
+                                          p_analyteID       INT,
+                                          p_lambda          FLOAT,
+                                          p_refractiveIndex FLOAT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE l_analyteID INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET @LAST_INSERT_ID = 0;
+ 
+  IF ( verify_analyteID( p_guid, p_password, p_analyteID ) = @OK ) THEN
+    INSERT INTO analyteRefraction SET
+      analyteID            = p_analyteID,
+      lambda               = p_lambda,
+      refractiveIndex      = p_refractiveIndex;
+    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- UPDATEs an existing analyte refraction value with the specified information
+DROP PROCEDURE IF EXISTS update_analyte_refraction$$
+CREATE PROCEDURE update_analyte_refraction ( p_guid            CHAR(36),
+                                             p_password        VARCHAR(80),
+                                             p_analyteRefractionID    INT,
+                                             p_analyteID       INT,
+                                             p_lambda          FLOAT,
+                                             p_refractiveIndex FLOAT )
+  MODIFIES SQL DATA
+
+BEGIN
+  DECLARE l_analyteID INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+ 
+  IF ( verify_analyteID( p_guid, p_password, p_analyteID ) = @OK ) THEN
+    UPDATE analyteRefraction SET
+      analyteID            = p_analyteID,
+      lambda               = p_lambda,
+      refractiveIndex      = p_refractiveIndex
+    WHERE analyteRefractionID = p_analyteRefractionID;
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- Returns refraction information about all analytes associated with p_analyteID
+DROP PROCEDURE IF EXISTS get_analyte_refraction$$
+CREATE PROCEDURE get_analyte_refraction ( p_guid      CHAR(36),
+                                          p_password  VARCHAR(80),
+                                          p_analyteID INT )
+  READS SQL DATA
+
+BEGIN
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_analyteID( p_guid, p_password, p_analyteID ) != @OK ) THEN
+    SELECT @US3_LAST_ERRNO AS status;
+
+  ELSEIF ( count_analyte_refraction( p_guid, p_password, p_analyteID ) < 1 ) THEN
+    SET @US3_LAST_ERRNO = @NOROWS;
+    SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+  
+    SELECT @US3_LAST_ERRNO AS status;
+      
+  ELSE
+    -- Ok, we found some analyte refraction info
+    SELECT @OK AS status;
+  
+    SELECT   analyteRefractionID, lambda, refractiveIndex
+    FROM     analyteRefraction
+    WHERE    analyteID = p_analyteID
+    ORDER BY lambda;
+  
+  END IF;
+
+END$$
+
+-- DELETEs all refraction information associated with a analyteID
+DROP PROCEDURE IF EXISTS delete_analyte_refraction$$
+CREATE PROCEDURE delete_analyte_refraction ( p_guid      CHAR(36),
+                                             p_password  VARCHAR(80),
+                                             p_analyteID INT )
+  MODIFIES SQL DATA
+
+BEGIN
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+
+    DELETE FROM analyteRefraction
+    WHERE analyteID = p_analyteID;
+
+  END IF;
+
+  SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
