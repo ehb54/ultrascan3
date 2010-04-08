@@ -4,13 +4,11 @@
 
 #include <uuid/uuid.h>
 
-#include "us_dataIO.h"
 #include "us_vhw_enhanced.h"
 #include "us_license_t.h"
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_math.h"
 #include "us_matrix.h"
 
 // main program
@@ -103,12 +101,16 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase()
    controlsLayout->addWidget( ct_to             , 7, 3 );
    controlsLayout->addWidget( pb_exclude        , 8, 0, 1, 4 );
 
+   connect( pb_help, SIGNAL( clicked() ),
+            this,    SLOT(   help() ) );
+   dataLoaded = false;
 
 }
 
 // load data
 void US_vHW_Enhanced::load( void )
 {
+   dataLoaded = false;
    // query the directory where .auc and .xml file are
    workingDir = QFileDialog::getExistingDirectory( this,
          tr( "Raw Data Directory" ),
@@ -118,7 +120,7 @@ void US_vHW_Enhanced::load( void )
    if ( workingDir.isEmpty() )
       return;
 
-   reset_data();
+   //reset_data();
 
    // insure we have a .auc file
    QStringList nameFilters = QStringList( "*.auc" );
@@ -151,7 +153,7 @@ void US_vHW_Enhanced::load( void )
          QDir::Files | QDir::Readable, QDir::Name );
 
    for ( int ii = 0; ii < files.size(); ii++ )
-   {
+   {  // load all data in directory; get triples
       QString file     = files[ ii ];
       QStringList part = file.split( "." );
       QString filename = workingDir + file;
@@ -182,31 +184,57 @@ void US_vHW_Enhanced::load( void )
    lw_triples->setCurrentRow( 0 );
 
    US_DataIO::editedData* d = &dataList[ 0 ];
-   le_id->setText( d->runID + " / " + d->editID );
+   le_id->setText( d->runID + " / " + d->editID );  // set ID text
+
    double tempera = 0.0;
    int    scnknt  = d->scanData.size();
+   savedValues.clear();
 
    for ( int ii = 0; ii < scnknt; ii++ )
-   {  /// sum temperature from each scan to determine average
-      tempera += d->scanData[ ii ].temperature;
+   {
+      US_DataIO::scan* s = &d->scanData[ ii ];
+
+      // sum temperature from each scan to determine average
+      tempera += s->temperature;
+
+      // save the data
+      int npts = s->readings.size();
+      QVector< double > v;
+      v.resize( npts );
+
+      for ( int jj = 0; jj < npts; jj++ )
+      {
+         v[ jj ] = s->readings[ jj ].value;
+      }
+
+      savedValues << v;
    }
 
    // display average temperature and data description
    tempera  /= (double)scnknt;
    QString t = QString::number( tempera, 'f', 1 ) + " " + QChar( 176 ) + "C";
-   le_temp->setText( t );
-   te_desc->setText( d->description );
+   le_temp->setText( t );                            // set avg temp text
+   te_desc->setText( d->description );               // set description text
 
    // Enable pushbuttons
    pb_details   ->setEnabled( true );
    pb_save      ->setEnabled( true );
    pb_view      ->setEnabled( true );
+   pb_exclude   ->setEnabled( true );
 
-   data_plot();
+   data_plot1->setCanvasBackground( Qt::black );
+   data_plot2->setCanvasBackground( Qt::black );
+   data_plot1->setMinimumSize( 600, 500 );
+   data_plot2->setMinimumSize( 600, 300 );
 
-   pb_details->disconnect( );
+   update( 0 );
+
+   //data_plot();                                      // plot data
+
+   pb_details->disconnect( );                        // reset details connect
    connect( pb_details, SIGNAL( clicked() ),
             this,       SLOT(  details() ) );
+   dataLoaded = true;
 }
 
 // details
@@ -222,80 +250,241 @@ void US_vHW_Enhanced::details( void )
 // distribution plot
 void US_vHW_Enhanced::distr_plot(  void )
 {
-   QVector< US_DataIO::scan >* sD;
-   QColor colorfg( US_GuiSettings::plotCurve() );
-   QColor colorbg( US_GuiSettings::plotCanvasBG() );
-   double xlo = 1.0e+30;
-   double xhi = 1.0e-30;
-   double ylo = 1.0e+30;
-   double yhi = 1.0e-30;
+}
 
-   vdata     = rawList[ 0 ];
-   sD        = &(vdata.scanData);
-   int nscn  = sD->size();
-   fgPen     = QPen( colorfg );
-   bgPen     = QPen( colorbg );
-   fgSym.setStyle( QwtSymbol::Ellipse );
-   fgSym.setBrush( colorfg );
-   fgSym.setPen(   fgPen );
-   fgSym.setSize(  2 );
-   bgSym     = fgSym;
-   bgSym.setBrush( colorbg );
-   bgSym.setPen(   bgPen );
-qDebug() << "scanData size=" << nscn;
+// data plot
+void US_vHW_Enhanced::data_plot( void )
+{
+   // let AnalysisBase do the lower plot
+   US_AnalysisBase::data_plot();
 
-   for ( int ii = 0; ii < nscn; ii++ )
-   {
-      QString cnam = tr( "Scan Curve %1" ).arg( ii+1 );
-      curve     = us_curve( data_plot2, cnam );
-      curve->setSymbol( fgSym );
-      curve->setStyle(  QwtPlotCurve::Lines );
-      curve->attach(    data_plot2 );
+   // handle upper (vHW Extrapolation) plot, here
+   int                    row = lw_triples->currentRow();
+   US_DataIO::editedData* d   = &dataList[ row ];
 
-      const QVector< US_DataIO::reading >& rD
-                = sD->at( ii ).readings;
-      int npts  = rD.size();
-      xx        = new double[ npts ];
-      yy        = new double[ npts ];
-qDebug() << "  scan " << ii << "  npts=" << npts;
+   int     scanCount   = d->scanData.size();
+   int     exclude     = 0;
+   double  boundaryPct = ct_boundaryPercent->value() / 100.0;
+   double  positionPct = ct_boundaryPos    ->value() / 100.0;
+   double  baseline    = calc_baseline();
+   double  meniscus    = d->meniscus;
+   double  xmax        = 0.0;
+   double  ymax        = 0.0;
+   ndivis              = qRound( ct_division->value() );
 
-      for ( int jj = 0; jj < npts; jj++ )
-      {
-         xx[ jj ]  = rD.at( jj ).d.radius;
-         yy[ jj ]  = rD.at( jj ).value;
-         xlo       = min( xlo, xx[ jj ] );
-         xhi       = max( xhi, xx[ jj ] );
-         ylo       = ( ylo < yy[ jj ] ) ? ylo : yy[ jj ];
-         yhi       = ( yhi > yy[ jj ] ) ? yhi : yy[ jj ];
-      }
-qDebug() << "    x0,y0 " << xx[0] << "," << yy[0];
-qDebug() << "    xn,yn " << xx[npts-1] << "," << yy[npts-1];
-
-      //curve->setRawData( xx, yy, npts );
-      curve->setData( xx, yy, npts );
-
-      delete [] xx;
-      delete [] yy;
+   for ( int jj = 0; jj < scanCount; jj++ )
+   {  // count the scans excluded due to position percent
+      if ( excludedScans.contains( jj ) ) continue;
+      
+      double plateau = calc_plateau( &d->scanData[ jj ] );
+      double range   = plateau - baseline;
+      double test_y  = baseline + range * positionPct;
+      
+      if ( d->scanData[ jj ].readings[ 0 ].value > test_y ) exclude++;
    }
-qDebug() << "  xl,xh " << xlo << "," << xhi;
-qDebug() << "  yl,yh " << ylo << "," << yhi;
-   double xpad = ( xhi - xlo ) / 30.0;
-   double ypad = ( yhi - ylo ) / 30.0;
-   data_plot2->setAxisScale( QwtPlot::xBottom, xlo-xpad, xhi+xpad );
-   data_plot2->setAxisScale( QwtPlot::yLeft,   ylo-ypad, yhi+ypad );
 
-   data_plot2->replot();
+   le_skipped->setText( QString::number( exclude ) );
+
+   // Draw plot
+   data_plot1->clear();
+   us_grid( data_plot1 );
+
+   data_plot1->setTitle( tr( "Run " ) + d->runID + tr( ": Cell " ) + d->cell
+             + " (" + d->wavelength + tr( " nm) - vHW Extrapolation Plot" ) );
+
+   data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "(Time)^-0.5" ) );
+   data_plot1->setAxisTitle( QwtPlot::yLeft  , 
+         tr( "Corrected Sed. Coeff. (1e-13 s)" ) );
+
+   int     ndpts     = ndivis + 1;
+   int     ntpts     = scanCount * ndpts;
+   double* ptx       = new double[ scanCount ];
+   double* pty       = new double[ ntpts ];
+   int     kk        = 0;
+
+   // Calculate the corrected sedimentation coefficients
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {
+      US_DataIO::scan* s = &d->scanData[ ii ];
+
+      double timev   = 1.0 / sqrt( s->seconds - time_correction );
+
+      if ( excludedScans.contains( ii ) )
+         timev          = -1.0;       // mark excluded scan
+
+      ptx[ ii ]      = timev;         // save corrected time and accum max
+      xmax           = ( xmax > timev ) ? xmax : timev;
+
+      double plateau = calc_plateau( s );
+      double range   = plateau - baseline;
+      double span    = range * boundaryPct;
+      double spinc   = span / double( ndivis + 1 );
+      double spanv0  = baseline + range * positionPct;
+      double omega   = s->rpm * M_PI / 30.0;
+      double omegsq  = omega * omega;
+      double correc  = solution.correction * 1.0e13;
+
+      if ( timev > 0.0 )              // get time and omega-squared term
+         timev          = ( s->seconds - time_correction ) * omegsq;
+
+      // The span is the boundary portion that is going to be analyzed (in
+      // percent)
+
+      int    points  = s->readings.size();
+      double absorbv = spanv0;        // initial absorbance for span
+
+      for ( int jj = 0; jj < ndpts; jj++ )
+      {  // walk through division points; get index to place in readings
+         int j2      = first_gteq( absorbv, s->readings, points );
+         double rv0  = -1.0;          // mark radius excluded
+
+         if ( j2 >= 0  &&  timev >= 0.0 )
+         {  // likely need to interpolate radius from two input values
+            int j1      = j2 - 1;
+
+            if ( j2 > 0 )
+            {  // interpolate radius value
+               double av1  = s->readings[ j1 ].value;
+               double av2  = s->readings[ j2 ].value;
+               double rv1  = s->readings[ j1 ].d.radius;
+               double rv2  = s->readings[ j2 ].d.radius;
+               double dav  = av2 - av1;
+               double drv  = rv2 - rv1;
+               if ( dav != 0.0 )
+                  rv0         = rv1 + ( ( absorbv - av1 ) * drv / dav );
+               else
+                  rv0         = rv1;
+            }
+
+            else
+            {
+               rv0         = -1.0;
+            }
+         }
+
+         if ( rv0 > 0.0 )
+         {  // use radius and other terms to get corrected sed. coeff. value
+            rv0         = correc * log( rv0 / meniscus ) / timev;
+if(rv0>6.5) {
+qDebug() << " rv0=" << rv0 << "   scan " << ii << "   div " << jj;
+}
+         }
+         pty[ kk++ ] = rv0;           // save sed. coeff. value
+         ymax        = ( ymax > rv0 ) ? ymax : rv0;
+         absorbv    += spinc;         // bump absorbance to next division point
+      }
+   }
+
+   int nxy    = ( scanCount > ndpts ) ? scanCount : ndpts;
+   int count  = 0;
+   double* x  = new double[ nxy ];
+   double* y  = new double[ nxy ];
+   
+   QwtPlotCurve* curve;
+   QwtSymbol     sym;
+   sym.setStyle( QwtSymbol::Ellipse );
+   sym.setPen  ( QPen( Qt::blue ) );
+   sym.setBrush( QBrush( Qt::white ) );
+   sym.setSize ( 8 );
+   
+   kk         = 0;                    // index to sed. coeff. values
+
+   // Set points for each division of each scan
+   for ( int jj = 0; jj < scanCount; jj++ )
+   {
+      if ( excludedScans.contains( jj ) )
+      {
+         kk        += ndpts;          // excluded:  bump to next scan
+         continue;
+      }
+      
+      count      = 0;
+      double xv  = ptx[ jj ];         // reciprocal square root of time value
+
+      for ( int ii = 0; ii < ndpts; ii++ )
+      {
+         double yv  = pty[ kk++ ];    // sed.coeff. values for divs in scan
+         if ( xv >= 0.0  &&  yv >= 0.0 )
+         {  // points in a scan
+            x[ count ] = xv;
+            y[ count ] = yv;
+            count++;
+         }
+      }
+
+      if ( count > 0 )
+      {  // plot the points in a scan
+         curve = us_curve( data_plot1,
+               tr( "Sed Coeff Points, scan %1" ).arg( jj+1 ) );
+
+         curve->setStyle ( QwtPlotCurve::NoCurve );
+         curve->setSymbol( sym );
+         curve->setData  ( x, y, count );
+      }
+   }
+
+   // fit lines for each division to all scan points
+
+   for ( int ii = 0; ii < ndpts; ii++ )
+   {  // walk thru divisions, fitting line to points from all scans
+      count          = 0;
+      for ( int jj = 0; jj < scanCount; jj++ )
+      {
+         if ( excludedScans.contains( jj ) ) continue;
+
+         kk         = jj * ndpts + ii;   // sed. coeff. index
+
+         if ( ptx[ jj ] > 0.0  &&  pty[ kk ] > 0.0 )
+         {  // points for scans in a division
+            x[ count ] = ptx[ jj ];
+            y[ count ] = pty[ kk ];
+            count++;
+         }
+      }
+
+      if ( count > 0 )
+      {  // fit a line to the scan points in a division
+         double slope;
+         double intcept;
+         double sigma = 0.0;
+         double correl;
+
+         US_Math::linefit( &x, &y, &slope, &intcept, &sigma, &correl, count );
+
+         x[ 0 ] = 0.0;                      // x from 0.0 to max
+         x[ 1 ] = xmax + 0.001;
+         y[ 0 ] = intcept;                  // y from intercept to y at x-max
+         y[ 1 ] = y[ 0 ] + x[ 1 ] * slope;
+
+         curve  = us_curve( data_plot1, tr( "Fitted Line %1" ).arg( ii ) );
+         curve->setPen( QPen( Qt::yellow ) );
+         curve->setData( x, y, 2 );
+      }
+   }
+
+   // set scales, then plot the points and lines
+   xmax  *= 1.05;
+   xmax   = (double)qRound( ( xmax + 0.0015 ) / 0.002 ) * 0.002;
+   ymax   = (double)qRound( ( ymax + 0.25 ) / 0.4 ) * 0.4;
+   data_plot1->setAxisScale( QwtPlot::yLeft,   0.0, ymax, 0.5 );
+   data_plot1->setAxisScale( QwtPlot::xBottom, 0.0, xmax, 0.005 );
+   data_plot1->replot();
+
+   delete [] x;                             // clean up
+   delete [] y;
+   delete [] ptx;
+   delete [] pty;
 }
 
 // save the enhanced data
 void US_vHW_Enhanced::save_data( void )
 { 
-   QString filter = tr( "GA data files (*.gadistro.dat);;" )
+   QString filter = tr( "vHW data files (*.vHW.dat);;" )
       + tr( "Any files (*)" );
-   QString fsufx = "." + cell + wavelength + ".gadistro.dat";
+   QString fsufx = "." + cell + wavelength + ".vHW.dat";
    QString fname = run_name + fsufx;
    fname         = QFileDialog::getSaveFileName( this,
-      tr( "Save GA Data File" ),
+      tr( "Save vHW Data File" ),
       US_Settings::resultDir() + "/" + fname,
       filter,
       0, 0 );
@@ -315,6 +504,7 @@ void US_vHW_Enhanced::show_vbar(   void )
 // reset the GUI
 void US_vHW_Enhanced::reset_data( void )
 {
+   update( lw_triples->currentRow() );
 #if 0
    data_plot1->detachItems( );
    data_plot1->replot();
@@ -339,11 +529,70 @@ void US_vHW_Enhanced::update_viscosi( double dval )
 }
 
 void US_vHW_Enhanced::update_vbar(    double ) {}
-void US_vHW_Enhanced::update_bdtoler( double ) {}
-void US_vHW_Enhanced::update_divis(   double ) {}
+
+void US_vHW_Enhanced::update_bdtoler( double dval )
+{
+   bdtoler   = dval;
+}
+
+void US_vHW_Enhanced::update_divis(   double dval )
+{ 
+   ndivis    = qRound( dval );
+
+   data_plot();
+}
 void US_vHW_Enhanced::update_dsmoo(   double ) {}
 void US_vHW_Enhanced::update_pcbound( double ) {}
 void US_vHW_Enhanced::update_boundpo( double ) {}
 void US_vHW_Enhanced::update_exsscan( double ) {}
 void US_vHW_Enhanced::update_exscrng( double ) {}
+
+//  find first absorbance value in array greater than or equal to a given value
+int US_vHW_Enhanced::first_gteq( double absorbv,
+      QVector< US_DataIO::reading >& readings, int points )
+{
+   int index = -1;
+
+   for ( int jj = 0; jj < points; jj++ )
+   {
+      if ( absorbv < readings[ jj ].value )
+      {
+         index     = ( jj > 0 ) ? jj : -1;
+         break;
+      }
+
+      else if ( absorbv == readings[ jj ].value )
+      {
+         index     = ( jj > 0 ) ? jj : 1;
+         break;
+      }
+   }
+   return index;
+}
+
+//  get average scan plateau value for 11 points around input value
+double US_vHW_Enhanced::calc_plateau( US_DataIO::scan* s )
+{
+   double plato  = s->plateau;
+   int    points = s->readings.size();
+//qDebug() << "calc_plateau in: " << plato << "   points " << points;
+//qDebug() << " rd0 rdn " << s->readings[0].value << s->readings[points-1].value;
+   int    j2     = first_gteq( plato, s->readings, points );
+
+   if ( j2 > 0 )
+   {
+      int    j1     = j2 - 7;
+      j2           += 4;
+      j1            = ( j1 > 0 )      ? j1 : 0;
+      j2            = ( j2 < points ) ? j2 : points;
+      plato         = 0.0;
+      for ( int jj = j1; jj < j2; jj++ )
+      {  // walk through division points; get index to place in readings
+         plato     += s->readings[ jj ].value;
+      }
+      plato        /= (double)( j2 - j1 );
+//qDebug() << "     plateau out: " << plato << "    j1 j2 " << j1 << j2;
+   }
+   return plato;
+}
 

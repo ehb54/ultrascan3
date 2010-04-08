@@ -1,6 +1,7 @@
 #ifndef US_VHW_ENHCD_H
 #define US_VHW_ENHCD_H
 
+#include "us_dataIO.h"
 #include "us_analysis_base.h"
 #include "us_editor.h"
 #include "us_math.h"
@@ -55,13 +56,11 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QPushButton*  pb_selegr;
       QPushButton*  pb_exsscn;
       QPushButton*  pb_exsrng;
-      QPushButton*  pb_help;
-      QPushButton*  pb_close;
 
       qreal         densit;
       qreal         viscos;
       qreal         vbar;
-      qreal         bdtolr;
+      qreal         bdtoler;
       qreal         invert;
       qreal*        xx;
       qreal*        yy;
@@ -69,7 +68,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       int           run_id;
       int           ncells;
       int           nwlens;
-      int           ndivs;
+      int           ndivis;
       int           dsmooth;
       int           pcbound;
       int           boundpo;
@@ -102,6 +101,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
    private slots:
 
       void load(        void );
+      void data_plot(   void );
       void distr_plot(  void );
       void save_data(   void );
       void print_data(  void );
@@ -124,6 +124,8 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       void update_boundpo( double );
       void update_exsscan( double );
       void update_exscrng( double );
+      int    first_gteq( double, QVector< US_DataIO::reading >&, int );
+      double calc_plateau( US_DataIO::scan* );
 
       void help     ( void )
       { showHelp.show_help( "vHW_enhanced.html" ); };
