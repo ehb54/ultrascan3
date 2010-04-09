@@ -128,42 +128,67 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
       }
    }
 
-   // Write all integer types as little endian
+   // Write all types as little endian
    uchar c[ 4 ];
    qToLittleEndian( (quint16)( min_radius * 1000.0 ), c );
    write( ds, (char*)c, 2, crc );
 
-   qToLittleEndian( (quint16)( max_radius * 1000.0 ), c );
+   qToLittleEndian( (qint16)( max_radius * 1000.0 ), c );
    write( ds, (char*)c, 2, crc );
 
    // Distance between radius entries
    double r1    = data.scanData[ 0 ].readings[ 0 ].d.radius;
    double r2    = data.scanData[ 0 ].readings[ 1 ].d.radius;
-   float  delta = (float) ( r2 - r1 );
-   write( ds, (char*) &delta, 4, crc );
 
-   float v = (float) p.min_data1;   
-   write( ds, (char*) &v, 4, crc );
-   
-   v = (float) p.max_data1;
-   write( ds, (char*) &v, 4, crc );
+   // The unions below are a little tricky in order to get the
+   // c++ types and architecture endian-ness right.  Floats
+   // are written to uf.f (union float - float ).  Then the 
+   // 4 bytes of the float are treated as a 32-bit unsigned int and
+   // converted to ui.u (union integer - unsigned ).  Finally
+   // the ui.c type is to satify the c++ type for the write call.
 
-   v = (float) p.min_data2;
-   write( ds, (char*) &v, 4, crc );
+   union
+   {
+      quint32 u;
+      float   f;
+   } uf;
+
+   union
+   {
+      char  c[ 4 ];
+      uchar u[ 4 ];
+   } ui;
+
+   uf.f = (float) ( r2 - r1 );  //delta r
+   qToLittleEndian( uf.u, ui.u );
+   write( ds, ui.c, 4, crc );
+
+   uf.f = (float) p.min_data1;  // minimum data value
+   qToLittleEndian( uf.u, ui.u );
+   write( ds, ui.c, 4, crc );
    
-   v = (float) p.max_data2;
-   write( ds, (char*) &v, 4, crc );
+   uf.f = (float) p.max_data1;  // maximum data value
+   qToLittleEndian( uf.u, ui.u );
+   write( ds, ui.c, 4, crc );
+
+   uf.f = (float) p.min_data2;  // minimum std deviation value
+   qToLittleEndian( uf.u, ui.u );
+   write( ds, ui.c, 4, crc );
+   
+   uf.f = (float) p.max_data2;  // maximum std deviation value
+   qToLittleEndian( uf.u, ui.u );
+   write( ds, ui.c, 4, crc );
 
    // Write out scan count
-   qToLittleEndian( (quint16)data.scanData.size(), c );
-   write( ds, (char*)c, 2, crc );
+   qToLittleEndian( (quint16)data.scanData.size(), ui.u );
+   write( ds, ui.c, 2, crc );
 
    // Loop for each scan
    foreach ( s, data.scanData )
       writeScan( ds, s, crc, p );
 
-   qToLittleEndian( crc, c );
-   ds.writeRawData( (char*)c, 4 );
+   qToLittleEndian( crc, ui.u ); // crc
+   ds.writeRawData( ui.c, 4 );
 
    f.close();
 
@@ -173,31 +198,47 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
 void US_DataIO::writeScan( QDataStream&    ds, const scan&       data, 
                            quint32&       crc, const parameters& p )
 {
-   uchar c[ 4 ];
-   char  d[ 5 ] = "DATA";
+   union
+   {
+      quint32 u;
+      float   f;
+   } uf;
+
+   union
+   {
+      char  c[ 4 ];
+      uchar u[ 4 ];
+   } ui;
+
+   char d[ 5 ] = "DATA";
    write( ds, d, 4, crc );
 
-   float t = (float) data.temperature;
-   write( ds, (char*) &t, 4, crc );
+   uf.f = (float) data.temperature;  // scan temperature
+   qToLittleEndian( uf.u, ui.u );
+   write( ds, ui.c, 4, crc );
 
-   qToLittleEndian( (quint32)data.rpm, c );
-   write( ds, (char*)c, 4, crc );
+   uf.f = (float) data.rpm;          // scan rpm
+   qToLittleEndian( uf.u, ui.u );
+   write( ds, ui.c, 4, crc );
 
-   qToLittleEndian( (uint)data.seconds, c );
-   write( ds, (char*)c, 4, crc );
+   qToLittleEndian( (quint32)data.seconds, ui.u );  // scan time
+   write( ds, ui.c, 4, crc );
 
-   float o = (float) data.omega2t;
-   write( ds, (char*) &o, 4, crc );
+   uf.f = (float) data.omega2t;      //scan omega^2 t
+   qToLittleEndian( uf.u, ui.u );
+   write( ds, ui.c, 4, crc );
 
-   qToLittleEndian( (quint16)( ( data.wavelength - 180.0 ) * 100.0 ), c );
-   write( ds, (char*)c, 2, crc );
+   // Encoded wavelength
+   qToLittleEndian( (quint16)( ( data.wavelength - 180.0 ) * 100.0 ), ui.u );
+   write( ds, ui.c, 2, crc );
 
-   float delta_r = (float) data.delta_r;
-   write( ds, (char*) &delta_r, 4, crc );
+   uf.f = (float) data.delta_r;     // delta r 
+   qToLittleEndian( uf.u, ui.u );
+   write( ds, ui.c, 4, crc );
 
-   quint32 valueCount = data.readings.size();
-   qToLittleEndian( valueCount, c );
-   write( ds, (char*)c, 4, crc );
+   quint32 valueCount = data.readings.size(); // number of values
+   qToLittleEndian( valueCount, ui.u );
+   write( ds, ui.c, 4, crc );
 
    // Write readings
    double  delta  = ( p.max_data1 - p.min_data1 ) / 65535;
@@ -209,17 +250,17 @@ void US_DataIO::writeScan( QDataStream&    ds, const scan&       data,
 
    foreach ( r, data.readings )
    {
+      // reading
       si = (quint16) round( ( r.value - p.min_data1 ) / delta );
-
-      qToLittleEndian( si, c );
-      write( ds, (char*)c, 2, crc );
+      qToLittleEndian( si, ui.u );
+      write( ds, ui.c, 2, crc );
 
       // If applicable, write std deviation
       if ( stdDev )
       {
          si = (quint16) round( ( r.stdDev - p.min_data2 ) / delta2 );
-         qToLittleEndian( si, c );
-         write( ds, (char*)c, 2, crc );
+         qToLittleEndian( si, ui.u );
+         write( ds, ui.c, 2, crc );
       }
    }
 
@@ -276,7 +317,6 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
       data.description = QString( desc );
 
       // Get the parameters to expand the values
-
       union
       {
          char    c[ 2 ];
@@ -295,22 +335,34 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
          char   c[ 4 ];
          qint32 I;
          float  f;
-      } v;
+      } u1;
 
-      read( ds, v.c, 4, crc );
-      double delta_radius = v.f;
+      union
+      {
+         char   c[ 4 ];
+         qint32 I;
+         float  f;
+      } u2;
 
-      read( ds, v.c, 4, crc );
-      double min_data1 = v.f;
+      read( ds, u1.c, 4, crc );
+      u2.I = qFromLittleEndian( u1.I );
+      double delta_radius = u2.f;
 
-      read( ds, v.c, 4, crc );
-      double max_data1 = v.f;
+      read( ds, u1.c, 4, crc );
+      u2.I = qFromLittleEndian( u1.I );
+      double min_data1 = u2.f;
 
-      read( ds, v.c, 4, crc );
-      double min_data2 = v.f;
+      read( ds, u1.c, 4, crc );
+      u2.I = qFromLittleEndian( u1.I );
+      double max_data1 = u2.f;
 
-      read( ds, v.c, 4, crc );
-      double max_data2 = v.f;
+      read( ds, u1.c, 4, crc );
+      u2.I = qFromLittleEndian( u1.I );
+      double min_data2 = u2.f;
+
+      read( ds, u1.c, 4, crc );
+      u2.I = qFromLittleEndian( u1.I );
+      double max_data2 = u2.f;
 
       read( ds, si.c, 2, crc );
       qint16 scan_count = qFromLittleEndian( si.I );
@@ -318,38 +370,42 @@ int US_DataIO::readRawData( const QString& file, rawData& data )
       // Read each scan
       for ( int i = 0 ; i < scan_count; i ++ )
       {
-         read( ds, v.c, 4, crc );
-         if ( strncmp( v.c, "DATA", 4 ) != 0 ) throw NOT_USDATA;
+         read( ds, u1.c, 4, crc );
+         if ( strncmp( u1.c, "DATA", 4 ) != 0 ) throw NOT_USDATA;
 
          scan s;
          
          // Temperature
-         read( ds, v.c, 4, crc );
-         s.temperature = v.f;
+         read( ds, u1.c, 4, crc );
+         u2.I = qFromLittleEndian( u1.I );
+         s.temperature = u2.f;
 
          // RPM
-         read( ds, v.c, 4, crc );
-         s.rpm = qFromLittleEndian( v.I );
+         read( ds, u1.c, 4, crc );
+         u2.I = qFromLittleEndian( u1.I );
+         s.rpm = u2.f;
 
          // Seconds
-         read( ds, v.c, 4, crc );
-         s.seconds = qFromLittleEndian( v.I );
+         read( ds, u1.c, 4, crc );
+         s.seconds = qFromLittleEndian( u1.I );
 
          // Omega2t
-         read( ds, v.c, 4, crc );
-         s.omega2t = v.f;
+         read( ds, u1.c, 4, crc );
+         u2.I = qFromLittleEndian( u1.I );
+         s.omega2t = u2.f;
 
          // Wavelength
          read( ds, si.c, 2, crc );
          s.wavelength = qFromLittleEndian( si.I ) / 100.0 + 180.0;
 
          // Delta_r
-         read( ds, v.c, 4, crc );
-         s.delta_r = v.f;
+         read( ds, u1.c, 4, crc );
+         u2.I = qFromLittleEndian( u1.I );
+         s.delta_r = u2.f;
 
          // Reading count
-         read( ds, v.c, 4, crc );
-         int valueCount = qFromLittleEndian( v.I );
+         read( ds, u1.c, 4, crc );
+         int valueCount = qFromLittleEndian( u1.I );
 
          // Get the readings
          double  radius  = min_radius;
