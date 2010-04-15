@@ -32,6 +32,7 @@ BEGIN
 
   SET @INSERTNULL     = 401;
   SET @INSERTDUP      = 402;
+  SET @DUPFIELD       = 403;
 
   SET @NO_BUFFER      = 501;
   SET @NO_COMPONENT   = 502;
@@ -404,5 +405,6 @@ SOURCE us3_proj_procs.sql
 SOURCE us3_hardware_procs.sql
 SOURCE us3_hardware_data.sql
 SOURCE us3_buffer_components.sql
+SOURCE us3_spectrum_procs.sql
 
 DELIMITER ;

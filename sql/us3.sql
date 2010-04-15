@@ -142,6 +142,7 @@ DROP TABLE IF EXISTS us3.experiment ;
 CREATE  TABLE IF NOT EXISTS us3.experiment (
   experimentID INT NOT NULL AUTO_INCREMENT ,
   projectID INT NULL ,
+  runID VARCHAR(80) NOT NULL ,
   labID INT NULL ,
   instrumentID INT NOT NULL ,
   operatorID INT NULL ,
@@ -420,7 +421,6 @@ CREATE  TABLE IF NOT EXISTS us3.buffer (
   bufferID INT NOT NULL AUTO_INCREMENT ,
   GUID CHAR(36) NULL ,
   description TEXT NULL DEFAULT NULL ,
-  spectrum TEXT NULL DEFAULT NULL ,
   pH FLOAT NULL DEFAULT NULL ,
   viscosity FLOAT NULL DEFAULT NULL ,
   density FLOAT NULL DEFAULT NULL ,
@@ -495,45 +495,6 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.bufferRefraction
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.bufferRefraction ;
-
-CREATE  TABLE IF NOT EXISTS us3.bufferRefraction (
-  refractionID INT NOT NULL AUTO_INCREMENT ,
-  bufferID INT NULL ,
-  lambda FLOAT NULL ,
-  refractiveIndex FLOAT NULL ,
-  PRIMARY KEY (refractionID) ,
-  INDEX ndx_bufferRefraction_bufferID (bufferID ASC) ,
-  CONSTRAINT fk_bufferRefraction_bufferID
-    FOREIGN KEY (bufferID )
-    REFERENCES us3.buffer (bufferID )
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
--- -----------------------------------------------------
--- Table us3.bufferExtinction
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.bufferExtinction ;
-
-CREATE  TABLE IF NOT EXISTS us3.bufferExtinction (
-  extinctionID INT NOT NULL AUTO_INCREMENT ,
-  bufferID INT NULL ,
-  lambda FLOAT NULL ,
-  molarExtinctionCoef FLOAT NULL ,
-  PRIMARY KEY (extinctionID) ,
-  INDEX ndx_bufferExtinction_bufferID (bufferID ASC) ,
-  CONSTRAINT fk_bufferExtinction_bufferID
-    FOREIGN KEY (bufferID )
-    REFERENCES us3.buffer (bufferID )
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
 -- Table us3.analyte
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS us3.analyte ;
@@ -576,43 +537,20 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.analyteRefraction
+-- Table us3.spectrum
 -- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.analyteRefraction ;
+DROP TABLE IF EXISTS us3.spectrum;
 
-CREATE  TABLE IF NOT EXISTS us3.analyteRefraction (
-  refractionID INT NOT NULL AUTO_INCREMENT ,
-  analyteID INT NULL ,
-  lambda FLOAT NULL ,
-  refractiveIndex FLOAT NULL ,
-  PRIMARY KEY (refractionID) ,
-  INDEX ndx_analyteRefraction_analyteID (analyteID ASC) ,
-  CONSTRAINT fk_analyteRefraction_analyteID
-    FOREIGN KEY (analyteID )
-    REFERENCES us3.analyte (analyteID )
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
+CREATE TABLE IF NOT EXISTS us3.spectrum (
+  spectrumID INT NOT NULL AUTO_INCREMENT ,
+  componentID INT NOT NULL ,
+  componentType  enum( 'Buffer', 'Analyte' ) NOT NULL,
+  opticsType enum( 'Extinction', 'Refraction', 'Fluorescence' ) NOT NULL,
+  lambda FLOAT NOT NULL ,
+  molarCoefficient FLOAT NOT NULL ,
+  PRIMARY KEY (spectrumID) ,
+  INDEX ndx_component_ID (componentID ASC) )
 ENGINE = InnoDB;
-
--- -----------------------------------------------------
--- Table us3.analyteExtinction
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.analyteExtinction ;
-
-CREATE  TABLE IF NOT EXISTS us3.analyteExtinction (
-  extinctionID INT NOT NULL AUTO_INCREMENT ,
-  analyteID INT NULL ,
-  lambda FLOAT NULL ,
-  molarExtinctionCoef FLOAT NULL ,
-  PRIMARY KEY (extinctionID) ,
-  INDEX ndx_analyteExtinction_analyteID (analyteID ASC) ,
-  CONSTRAINT fk_analyteExtinction_analyteID
-    FOREIGN KEY (analyteID )
-    REFERENCES us3.analyte (analyteID )
-    ON DELETE SET NULL
-    ON UPDATE CASCADE)
-ENGINE = InnoDB;
-
 
 -- -----------------------------------------------------
 -- Table us3.solution
