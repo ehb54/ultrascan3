@@ -26,6 +26,7 @@
 #include "us_simulationparameters.h"
 #include "us_clipdata.h"
 #include "us_modelselection.h"
+#include "us_pixmap.h"
 
 class US_EXTERN US_Astfem_Sim : public QFrame
 {
@@ -44,6 +45,10 @@ class US_EXTERN US_Astfem_Sim : public QFrame
       US_Astfem_RSA *astfem_rsa;
       struct ModelSystem system;
       struct SimulationParameters simparams;
+      int imagecounter;
+      US_Pixmap *pm;
+      bool save_movie;
+      QString imagedir;
 
 #ifdef WIN32
      #pragma warning ( disable: 4251 )
@@ -76,6 +81,7 @@ class US_EXTERN US_Astfem_Sim : public QFrame
       QLCDNumber *lcd_component;
       QLCDNumber *lcd_time;
       QCheckBox *cb_movie;
+      QCheckBox *cb_savemovie;
       QCheckBox *cb_time_correction;
       QProgressBar *progress;
 
@@ -101,6 +107,7 @@ class US_EXTERN US_Astfem_Sim : public QFrame
       void help();
       void update_movie_plot(vector <double> *, double *);
       void update_movieFlag();
+      void update_savemovie();
       void update_time_correctionFlag();
       void update_time(float);
       void update_progress(int);

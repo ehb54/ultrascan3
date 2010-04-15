@@ -31,6 +31,10 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
    movieFlag = true;
    time_correctionFlag = true;
    int minHeight1 = 26;
+   imagecounter = 0;
+   pm = new US_Pixmap();
+   save_movie = false;
+
 
    astfem_rsa = new US_Astfem_RSA(true);
    connect(astfem_rsa, SIGNAL(new_scan(vector <double> *, double *)), this, SLOT(update_movie_plot(vector <double> *, double *)));
@@ -104,6 +108,13 @@ US_Astfem_Sim::US_Astfem_Sim(QWidget *p, const char* name) : QFrame(p, name)
    cb_movie->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
    cb_movie->setMinimumHeight(minHeight1);
    connect(cb_movie, SIGNAL(clicked()), SLOT(update_movieFlag()));
+
+   cb_savemovie = new QCheckBox(" Save Movie Frames ", this);
+   cb_savemovie->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
+   cb_savemovie->setChecked(save_movie);
+   cb_savemovie->setFont(QFont( USglobal->config_list.fontFamily, USglobal->config_list.fontSize));
+   cb_savemovie->setMinimumHeight(minHeight1);
+   connect(cb_savemovie, SIGNAL(clicked()), SLOT(update_savemovie()));
 
    cb_time_correction = new QCheckBox(" Use Time Correction ", this);
    cb_time_correction->setPalette( QPalette(USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal, USglobal->global_colors.cg_normal));
@@ -240,6 +251,7 @@ void US_Astfem_Sim::setup_GUI()
    buttonBox->addWidget(pb_change_model);
    buttonBox->addWidget(pb_simulation_parameters);
    buttonBox->addWidget(cb_movie);
+   buttonBox->addWidget(cb_savemovie);
    buttonBox->addWidget(cb_time_correction);
    buttonBox->addWidget(pb_start_simulation);
    buttonBox->addWidget(pb_stop_simulation);
@@ -1084,13 +1096,22 @@ void US_Astfem_Sim::start_simulation()
 
 void US_Astfem_Sim::update_movie_plot(vector <double> *x, double *c)
 {
+   QString imageName;
+   QPixmap p;
    movie_plot->clear();
    double total_c = 0.0;
    for (unsigned int i=0; i<system.component_vector.size(); i++)
    {
       total_c += system.component_vector[i].concentration;
    }
-   movie_plot->setAxisScale(QwtPlot::yLeft, 0, total_c * 2.0, 0);
+   if (simparams.band_forming)
+   {
+      movie_plot->setAxisScale(QwtPlot::yLeft, 0, total_c * 0.5, 0);
+   }
+   else
+   {
+      movie_plot->setAxisScale(QwtPlot::yLeft, 0, total_c * 2.0, 0);
+   }
    double *r;
    r = new double [(*x).size()];
    for (unsigned int i=0; i<(*x).size(); i++)
@@ -1101,6 +1122,13 @@ void US_Astfem_Sim::update_movie_plot(vector <double> *x, double *c)
    movie_plot->setCurveData(scan, r, c, (*x).size());
    movie_plot->setCurvePen(scan, Qt::yellow);
    movie_plot->replot();
+   if (save_movie)
+   {
+      imagecounter++;
+      imageName.sprintf( imagedir + "/radius%05d.", imagecounter);
+      p = QPixmap::grabWidget(this, this->width() - movie_plot->width()-2, 2, movie_plot->width(), this->height() - scan_plot->height()-30);
+      pm->save_file(imageName, p);
+   }
    qApp->processEvents();
    delete [] r;
 }
@@ -1509,6 +1537,20 @@ void US_Astfem_Sim::update_speed(unsigned int ival)
 void US_Astfem_Sim::update_movieFlag()
 {
    movieFlag = cb_movie->isChecked();
+}
+
+void US_Astfem_Sim::update_savemovie()
+{
+   save_movie = cb_savemovie->isChecked();
+   if(save_movie)
+   {
+      imagedir = QFileDialog::getExistingDirectory(USglobal->config_list.data_dir, 0, 0,
+      tr("Please select or create a directory for the movie frame files:"), true, true);
+      if(imagedir.isEmpty())
+      {
+         imagedir = "/tmp";
+      }
+   }
 }
 
 void US_Astfem_Sim::update_time_correctionFlag()

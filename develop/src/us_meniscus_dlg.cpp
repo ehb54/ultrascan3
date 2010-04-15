@@ -70,7 +70,7 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus1->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    if (meniscus[0] == 0)
    {
-      le_meniscus1->setEnabled(false);
+      //le_meniscus1->setEnabled(false);
    }
    le_meniscus1->setText(str.sprintf("%8.5f", meniscus[0]));
    connect(le_meniscus1, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus1(const QString &)));
@@ -80,7 +80,7 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus2->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    if (meniscus[1] == 0)
    {
-      le_meniscus2->setEnabled(false);
+      //le_meniscus2->setEnabled(false);
    }
    le_meniscus2->setText(str.sprintf("%8.5f", meniscus[1]));
    connect(le_meniscus2, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus2(const QString &)));
@@ -90,7 +90,7 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus3->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    if (meniscus[2] == 0)
    {
-      le_meniscus3->setEnabled(false);
+      //le_meniscus3->setEnabled(false);
    }
    le_meniscus3->setText(str.sprintf("%8.5f", meniscus[2]));
    connect(le_meniscus3, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus3(const QString &)));
@@ -100,7 +100,7 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus4->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    if (meniscus[3] == 0)
    {
-      le_meniscus4->setEnabled(false);
+     // le_meniscus4->setEnabled(false);
    }
    le_meniscus4->setText(str.sprintf("%8.5f", meniscus[3]));
    connect(le_meniscus4, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus4(const QString &)));
@@ -110,7 +110,7 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus5->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    if (meniscus[4] == 0)
    {
-      le_meniscus5->setEnabled(false);
+      //le_meniscus5->setEnabled(false);
    }
    le_meniscus5->setText(str.sprintf("%8.5f", meniscus[4]));
    connect(le_meniscus5, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus5(const QString &)));
@@ -120,7 +120,7 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus6->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    if (meniscus[5] == 0)
    {
-      le_meniscus6->setEnabled(false);
+      //le_meniscus6->setEnabled(false);
    }
    le_meniscus6->setText(str.sprintf("%8.5f", meniscus[5]));
    connect(le_meniscus6, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus6(const QString &)));
@@ -130,7 +130,7 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus7->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    if (meniscus[6] == 0)
    {
-      le_meniscus7->setEnabled(false);
+      //le_meniscus7->setEnabled(false);
    }
    le_meniscus7->setText(str.sprintf("%8.5f", meniscus[6]));
    connect(le_meniscus7, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus7(const QString &)));
@@ -140,7 +140,7 @@ US_MeniscusDialog::US_MeniscusDialog(float *meniscus, QWidget *p, const char *na
    le_meniscus8->setPalette( QPalette(USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit, USglobal->global_colors.cg_edit) );
    if (meniscus[7] == 0)
    {
-      le_meniscus8->setEnabled(false);
+      //le_meniscus8->setEnabled(false);
    }
    le_meniscus8->setText(str.sprintf("%8.5f", meniscus[7]));
    connect(le_meniscus8, SIGNAL(textChanged(const QString &)), SLOT(update_meniscus8(const QString &)));
