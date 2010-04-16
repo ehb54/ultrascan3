@@ -66,6 +66,7 @@ class US_EXTERN US_Convert : public US_Widgets
       QPushButton*  pb_reference;
       QPushButton*  pb_cancelref;
       QPushButton*  pb_expinfo;
+      QPushButton*  pb_editExpinfo;
       QPushButton*  pb_buffer;
       QPushButton*  pb_analyte;
 
@@ -125,7 +126,9 @@ class US_EXTERN US_Convert : public US_Widgets
       void start_reference   ( const QwtDoublePoint& );
       void process_reference ( const QwtDoublePoint& );
       void cancel_reference( void );
-      void getExpInfo      ( void );
+      void newExpInfo      ( void );
+      void editExpInfo     ( void );
+      void getExpInfo      ( bool );
       void updateExpInfo   ( US_ExpInfo::ExperimentInfo& );
       void cancelExpInfo   ( void );
       void selectBuffer    ( void );
