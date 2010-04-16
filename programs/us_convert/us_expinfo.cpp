@@ -7,9 +7,14 @@
 #include "us_db2.h"
 #include "us_investigator.h"
 
-US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
+US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn, bool newInfo ) :
    US_WidgetsDialog( 0, 0 ), expInfo( dataIn )
 {
+
+   this->editing = ! newInfo;
+   if ( this->editing )
+      loadExperimentInfo();
+
    setWindowTitle( tr( "Experiment Information" ) );
    setPalette( US_GuiSettings::frameColor() );
 
@@ -21,20 +26,14 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    QLabel* lb_experiment_banner = us_banner( tr( "Experiment: " ) );
    experiment->addWidget( lb_experiment_banner, row++, 0, 1, 2 );
 
-   // Select experiment
-   QLabel* lb_experiment = us_label( tr( "Double-click to select, or" ) );
-   experiment->addWidget( lb_experiment, row, 0 );
-   pb_newExperiment = us_pushbutton( tr( "Create New" ) );
-   connect( pb_newExperiment, SIGNAL( clicked() ), SLOT( newExperiment() ) );
-   experiment->addWidget( pb_newExperiment, row++, 1 );
-
-   lw_experiment = us_listwidget();
-   lw_experiment-> setMaximumHeight( 80 );
-   connect( lw_experiment, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
-                           SLOT  ( selectExperiment ( QListWidgetItem* ) ) );
-   experiment->addWidget( lw_experiment, row, 0, 1, 2 );
-   row++;
-
+   // Show current runID
+   QLabel* lb_runID = us_label( tr( "Run ID " ) );
+   experiment->addWidget( lb_runID, row++, 0, 1, 2 );
+   le_runID = us_lineedit();
+   connect( le_runID, SIGNAL( editingFinished() ), 
+                      SLOT  ( runIDChanged   () ) );
+   experiment->addWidget( le_runID, row++, 0, 1, 2 );
+ 
    // Experiment label
    QLabel* lb_label = us_label( tr( "Label:" ) );
    experiment->addWidget( lb_label, row++, 0, 1, 2 );
@@ -44,7 +43,7 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    // Project
    QLabel* lb_project = us_label( tr( "Project:" ) );
    experiment->addWidget( lb_project, row, 0 );
-   cb_project = new US_DBComboBox( this, US_DBControl::SQL_PROJECTS );
+   cb_project = new US_DBComboBox( this, US_DBControl::SQL_GET_PROJECTS );
    experiment->addWidget( cb_project, row++, 1 );
 
    // Experiment type
@@ -64,25 +63,25 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    // labID
    QLabel* lb_lab = us_label( tr( "Lab:" ) );
    hardware->addWidget( lb_lab, row, 0 );
-   cb_lab = new US_DBComboBox( this, US_DBControl::SQL_LABS );;
+   cb_lab = new US_DBComboBox( this, US_DBControl::SQL_GET_LABS );;
    hardware->addWidget( cb_lab, row++, 1 );
 
    // instrumentID
    QLabel* lb_instrument = us_label( tr( "Instrument:" ) );
    hardware->addWidget( lb_instrument, row, 0 );
-   cb_instrument = new US_DBComboBox( this, US_DBControl::SQL_INSTRUMENTS );
+   cb_instrument = new US_DBComboBox( this, US_DBControl::SQL_GET_INSTRUMENTS );
    hardware->addWidget( cb_instrument, row++, 1 );
 
    // operatorID
    QLabel* lb_operator = us_label( tr( "Operator:" ) );
    hardware->addWidget( lb_operator, row, 0 );
-   cb_operator = new US_DBComboBox( this, US_DBControl::SQL_PEOPLE );
+   cb_operator = new US_DBComboBox( this, US_DBControl::SQL_GET_PEOPLE );
    hardware->addWidget( cb_operator, row++, 1 );
 
    // Rotor used in experiment
    QLabel* lb_rotor = us_label( tr( "Rotor:" ) );
    hardware->addWidget( lb_rotor, row, 0 );
-   cb_rotor = new US_DBComboBox( this, US_DBControl::SQL_ROTORS );
+   cb_rotor = new US_DBComboBox( this, US_DBControl::SQL_GET_ROTORS );
    hardware->addWidget( cb_rotor, row++, 1 );
 
    // Run Temperature
@@ -90,12 +89,6 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
    hardware->addWidget( lb_runTemp, row++, 0, 1, 2 );
    le_runTemp = us_lineedit();
    hardware->addWidget( le_runTemp, row++, 0, 1, 2 );
-
-   // Centrifuge Protocol
-   QLabel* lb_centrifugeProtocol = us_label( tr( "Centrifuge Protocol:" ) );
-   hardware->addWidget( lb_centrifugeProtocol, row++, 0, 1, 2 );
-   le_centrifugeProtocol = us_lineedit();
-   hardware->addWidget( le_centrifugeProtocol, row++, 0, 1, 2 );
 
    // Some pushbuttons
    QHBoxLayout* buttons = new QHBoxLayout;
@@ -155,19 +148,17 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn ) :
 void US_ExpInfo::reset( void )
 {
    le_investigator      ->clear();
-   lw_experiment        ->clear();
    le_runTemp           ->clear();
    le_label             ->clear();
-   le_centrifugeProtocol->clear();
+   le_runID             ->setText( expInfo.runID );
    te_comment           ->clear();
 
-   cb_project           ->setCurrentIndex( 0 );
-   cb_lab               ->setCurrentIndex( 0 );
-   cb_instrument        ->setCurrentIndex( 0 );
-   cb_operator          ->setCurrentIndex( 0 );
-   cb_rotor             ->setCurrentIndex( 0 );
+   cb_project           ->reset();
+   cb_lab               ->reset();
+   cb_instrument        ->reset();
+   cb_operator          ->reset();
+   cb_rotor             ->reset();
 
-   pb_newExperiment->setEnabled( false );
    pb_accept       ->setEnabled( false );
 
    if ( expInfo.invID > 0 )
@@ -176,43 +167,60 @@ void US_ExpInfo::reset( void )
       le_investigator->setText( "InvID (" + QString::number( expInfo.invID ) + "): " +
                expInfo.lastName + ", " + expInfo.firstName );
 
-      // List of experiments
-      getExperimentDesc();
-      lw_experiment->clear();
-      foreach( listInfo info, experimentList )
-         lw_experiment->addItem( new QListWidgetItem(
-               info.text, lw_experiment ) );
-
-      pb_newExperiment->setEnabled( true );
-
-      if ( expInfo.expID > 0 )
+      if ( this->editing )
       {
-         // Update controls to represent selected experiment
-         le_runTemp           ->setText( expInfo.runTemp                      );
-         le_label             ->setText( expInfo.label                        );
-         te_comment           ->setText( expInfo.comments                     );
-         le_centrifugeProtocol->setText( expInfo.centrifugeProtocol           );
-   
-         setWidgetIndex  ( lw_experiment, experimentList, expInfo.expID       );
-         cb_project   ->setComboBoxIndex( expInfo.projectID    );
-         cb_lab       ->setComboBoxIndex( expInfo.labID        );
-         cb_instrument->setComboBoxIndex( expInfo.instrumentID );
-         cb_operator  ->setComboBoxIndex( expInfo.operatorID   );
-         cb_rotor     ->setComboBoxIndex( expInfo.rotorID      );
-      
-         // Experiment types combo
-         for ( uint i = 0; i < sizeof( experimentTypes); i++ )
+         if ( expInfo.expID > 0 )
          {
-            if ( experimentTypes[ i ].toUpper() == expInfo.expType.toUpper() )
+            // Update controls to represent selected experiment
+            le_runTemp           ->setText( expInfo.runTemp                      );
+            le_label             ->setText( expInfo.label                        );
+            te_comment           ->setText( expInfo.comments                     );
+      
+//          setWidgetIndex  ( lw_experiment, experimentList, expInfo.expID       );
+            cb_project   ->setComboBoxIndex( expInfo.projectID    );
+            cb_lab       ->setComboBoxIndex( expInfo.labID        );
+            cb_instrument->setComboBoxIndex( expInfo.instrumentID );
+            cb_operator  ->setComboBoxIndex( expInfo.operatorID   );
+            cb_rotor     ->setComboBoxIndex( expInfo.rotorID      );
+         
+            // Experiment types combo
+            for ( uint i = 0; i < sizeof( experimentTypes); i++ )
             {
-               cb_expType->setCurrentIndex( i );
-               break;
+               if ( experimentTypes[ i ].toUpper() == expInfo.expType.toUpper() )
+               {
+                  cb_expType->setCurrentIndex( i );
+                  break;
+               }
             }
+   
+            pb_accept       ->setEnabled( true );
          }
-
+      }
+      else if ( checkRunID() == 0 )
+      {
+         // Then we're not editing, an investigator has been chosen, and 
+         //  the current runID doesn't exist in the db
          pb_accept       ->setEnabled( true );
       }
    }
+
+}
+
+void US_ExpInfo::runIDChanged( void )
+{
+   expInfo.runID = le_runID->text();
+
+   // If we are editing, and we've identified an investigator and an experiment
+   if ( expInfo.invID > 0 && this->editing && expInfo.expID > 0 )
+      pb_accept->setEnabled( true );
+
+   // If we are not editing, but we've identified an investigator and the runID is new
+   else if ( expInfo.invID > 0 && checkRunID() == 0 )
+      pb_accept->setEnabled( true );
+
+   else 
+      pb_accept->setEnabled( false );
+ 
 }
 
 void US_ExpInfo::accept( void )
@@ -241,10 +249,8 @@ void US_ExpInfo::accept( void )
    dataOut.firstName = components.last().toAscii();
 
    // Other experiment information
-   int ndx              = lw_experiment     ->currentRow();
-   dataOut.expID        = experimentList[ ndx ].ID.toInt();
-
    dataOut.projectID    = cb_project   ->getComboBoxID();
+   dataOut.runID        = le_runID     ->text();
    dataOut.labID        = cb_lab       ->getComboBoxID();
    dataOut.instrumentID = cb_instrument->getComboBoxID();
    dataOut.operatorID   = cb_operator  ->getComboBoxID();
@@ -253,10 +259,17 @@ void US_ExpInfo::accept( void )
    dataOut.runTemp      = le_runTemp   ->text(); 
    dataOut.label        = le_label     ->text(); 
    dataOut.comments     = te_comment   ->toPlainText();
-   dataOut.centrifugeProtocol = le_centrifugeProtocol->text();
 
    // Save it to the db and return
-   updateExperiment( dataOut );
+   if ( editing )
+   {
+      dataOut.expID = expInfo.expID;
+      updateExperiment( dataOut );
+   }
+
+   else
+      newExperiment( dataOut );
+
    emit updateExpInfoSelection( dataOut );
    close();
 }
@@ -286,48 +299,56 @@ void US_ExpInfo::assignInvestigator( int invID,
    expInfo.lastName  = lname;
    expInfo.firstName = fname;
 
+   if ( ! this->editing && checkRunID() > 1 )
+   {
+      QMessageBox::information( this,
+                tr( "Error" ),
+                tr( "This run ID is already in the database; you must " ) +
+                tr( "change that before accepting" ) );
+   }
+
    reset();
 }
 
-bool US_ExpInfo::getExperimentDesc( void )
+// Function to see if the current runID already exists in the database
+// Returns the expID, or 0 if no rows. Returns -1 if no connection to db,
+//  or unknown problem
+int US_ExpInfo::checkRunID( void )
 {
-   // Connect to the db
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
    US_DB2 db( masterPW );
-
+   
    if ( db.lastErrno() != US_DB2::OK )
    {
       connect_error( db.lastError() );
-      return false;
+      return( -1 );
    }
 
-   struct listInfo info;
-
-   QStringList q( "get_experiment_desc" );
-   q << QString::number( 0 );
+   // Let's see if we can find the run ID
+   QStringList q( "get_experiment_info_by_runID" );
+   q << expInfo.runID;
    db.query( q );
 
-   experimentList.clear();
-   lw_experiment->clear();
-   while ( db.next() )
+   if ( db.lastErrno() == US_DB2::OK )
    {
-      info.ID             = db.value( 0 ).toString();
-      info.text           = db.value( 1 ).toString();
-      experimentList      << info;
-
-      // Add the item to the list widget too
-      lw_experiment->addItem( new QListWidgetItem(
-            info.text, lw_experiment ) );
+      // Then the runID is in the db
+      db.next();
+      return( db.value( 1 ).toInt() );            // Return the expID
    }
 
-   return true;
+   else if ( db.lastErrno() != US_DB2::NOROWS )
+   {
+      // Some other error
+      return( -1 );
+   }
+
+   // We know now that this is a new run ID
+   return( 0 );
 }
 
-void US_ExpInfo::selectExperiment( QListWidgetItem* )
+void US_ExpInfo::loadExperimentInfo( void )
 {
-   int ndx = lw_experiment->currentRow();
-
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
 
@@ -338,25 +359,24 @@ void US_ExpInfo::selectExperiment( QListWidgetItem* )
       return;
    }
 
-   QStringList q( "get_experiment_info" );
-   q << experimentList[ ndx ].ID;
+   QStringList q( "get_experiment_info_by_runID" );
+   q << expInfo.runID;
    db.query( q );
    db.next();
 
-   expInfo.expID              = experimentList[ ndx ].ID.toInt();
    expInfo.projectID          = db.value( 0 ).toInt();
-   expInfo.labID              = db.value( 1 ).toInt();
-   expInfo.instrumentID       = db.value( 2 ).toInt();
-   expInfo.operatorID         = db.value( 3 ).toInt();
-   expInfo.rotorID            = db.value( 4 ).toInt();
-   expInfo.expType            = db.value( 5 ).toString();
-   expInfo.runTemp            = db.value( 6 ).toString();
-   expInfo.label              = db.value( 7 ).toString();
-   expInfo.comments           = db.value( 8 ).toString();
-   expInfo.centrifugeProtocol = db.value( 9 ).toString();
-   expInfo.date               = db.value( 10 ).toString();
+   expInfo.expID              = db.value( 1 ).toInt();
+   expInfo.labID              = db.value( 2 ).toInt();
+   expInfo.instrumentID       = db.value( 3 ).toInt();
+   expInfo.operatorID         = db.value( 4 ).toInt();
+   expInfo.rotorID            = db.value( 5 ).toInt();
+   expInfo.expType            = db.value( 6 ).toString();
+   expInfo.runTemp            = db.value( 7 ).toString();
+   expInfo.label              = db.value( 8 ).toString();
+   expInfo.comments           = db.value( 9 ).toString();
+   expInfo.centrifugeProtocol = db.value( 10 ).toString();
+   expInfo.date               = db.value( 11 ).toString();
 
-   reset();
 }
 
 void US_ExpInfo::updateExperiment( ExperimentInfo& d )
@@ -375,6 +395,7 @@ void US_ExpInfo::updateExperiment( ExperimentInfo& d )
    QStringList q( "update_experiment" );
    q  << QString::number( d.expID )
       << QString::number( d.projectID )
+      << d.runID
       << QString::number( d.labID )
       << QString::number( d.instrumentID )
       << QString::number( d.operatorID )
@@ -395,17 +416,17 @@ void US_ExpInfo::updateExperiment( ExperimentInfo& d )
       return;
    }
 
-   // Get updated date info after db update
+   // Let's get some info after db update
    q.clear();
    q << "get_experiment_info"
      << QString::number( d.expID );
    db.query( q );
    db.next();
 
-   d.date               = db.value( 10 ).toString();
+   d.date = db.value( 11 ).toString();
 }
 
-void US_ExpInfo::newExperiment( void )
+void US_ExpInfo::newExperiment( ExperimentInfo& d )
 {
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
@@ -417,21 +438,18 @@ void US_ExpInfo::newExperiment( void )
       return;
    }
 
-   // Let's just copy most things from the current experiment info
-   expInfo.runTemp  = "";
-   expInfo.label    = "New Experiment";
-   expInfo.comments = "";
    QStringList q( "new_experiment" );
-   q  << QString::number( expInfo.projectID )
-      << QString::number( expInfo.labID )
-      << QString::number( expInfo.instrumentID )
-      << QString::number( expInfo.operatorID )
-      << QString::number( expInfo.rotorID )
-      << expInfo.expType
-      << expInfo.runTemp
-      << expInfo.label
-      << expInfo.comments
-      << expInfo.centrifugeProtocol;
+   q  << QString::number( d.projectID )
+      << d.runID
+      << QString::number( d.labID )
+      << QString::number( d.instrumentID )
+      << QString::number( d.operatorID )
+      << QString::number( d.rotorID )
+      << d.expType
+      << d.runTemp
+      << d.label
+      << d.comments
+      << d.centrifugeProtocol;
 
    db.statusQuery( q );
 
@@ -443,9 +461,15 @@ void US_ExpInfo::newExperiment( void )
       return;
    }
 
-   expInfo.expID = db.lastInsertID();
+   // Let's get some info after db update
+   q.clear();
+   d.expID = db.lastInsertID();
+   q << "get_experiment_info"
+     << QString::number( d.expID );
+   db.query( q );
+   db.next();
 
-   reset();
+   d.date = db.value( 11 ).toString();
 }
 
 void US_ExpInfo::connect_error( const QString& error )
@@ -469,21 +493,6 @@ QComboBox* US_ExpInfo::us_expTypeComboBox( void )
    return cb;
 }
 
-void US_ExpInfo::setWidgetIndex( QListWidget* lw, QList< listInfo >& list, int ID )
-{
-   for ( int i = 0; i < list.size(); i++ )
-   {
-      if ( list[ i ].ID.toInt() == ID )
-      {
-         lw->setCurrentRow( i );
-         return;
-      }
-   }
-
-   // If here, index was not found
-   lw->setCurrentRow( 0 );
-}
-
 // Initializations
 US_ExpInfo::TripleInfo::TripleInfo()
 {
@@ -504,6 +513,7 @@ void US_ExpInfo::ExperimentInfo::clear( void )
    firstName          = QString( "" );
    expID              = 0;
    projectID          = 0;
+   runID              = QString( "" );
    labID              = 0;
    instrumentID       = 0;
    operatorID         = 0;
@@ -526,6 +536,7 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
       firstName    = rhs.firstName;
       expID        = rhs.expID;
       projectID    = rhs.projectID;
+      runID        = rhs.runID;
       labID        = rhs.labID;
       instrumentID = rhs.instrumentID;
       operatorID   = rhs.operatorID;
@@ -552,53 +563,56 @@ US_ExpInfo::ExperimentInfo& US_ExpInfo::ExperimentInfo::operator=( const Experim
 // A class for creating widgets that know what they're displaying
 US_DBControl::US_DBControl( int query )
 {
-   // Initialize combo box or other type of control
-   this->widgetList.clear();
+   this->query = query;
 
+}
+
+QString US_DBControl::populate( void )
+{
    // Connect to the db
    US_Passwd pw;
    QString masterPW = pw.getPasswd();
    US_DB2 db( masterPW );
 
-   this->dbError = "";
    if ( db.lastErrno() != US_DB2::OK )
    {
-      this->dbError = db.lastError();
-      return;
+      return( db.lastError() );
    }
 
    QStringList q;
-   switch ( query )
+   switch ( this->query )
    {
-      case SQL_PROJECTS    :
+      case SQL_GET_PROJECTS    :
          q << "get_project_desc"
            << QString::number( 0 );               // the "get all my projects" parameter
          break;
 
-      case SQL_LABS        :
+      case SQL_GET_LABS        :
          q << "get_lab_names";
          break;
 
-      case SQL_INSTRUMENTS :
+      case SQL_GET_INSTRUMENTS :
          q << "get_instrument_names";
          break;
 
-      case SQL_PEOPLE      :
+      case SQL_GET_PEOPLE      :
          q << "get_people"
            << "";                                 // the "like" parameter
          break;
 
-      case SQL_ROTORS      :
+      case SQL_GET_ROTORS      :
          q << "get_rotor_names";
          break;
 
-      default              :
+      default                  :
          q << "get_rotor_names";
          break;
    }
 
    db.query( q );
 
+   // Initialize combo box or other type of control
+   this->widgetList.clear();
    while ( db.next() )
    {
       struct listInfo info;
@@ -606,6 +620,8 @@ US_DBControl::US_DBControl( int query )
       info.text    = db.value( 1 ).toString();
       this->widgetList << info;
    }
+
+   return( QString( "" ) );
 }
 
 US_DBComboBox::US_DBComboBox( QWidget* parent, int query )
@@ -619,15 +635,24 @@ US_DBComboBox::US_DBComboBox( QWidget* parent, int query )
                          US_GuiSettings::fontSize  () ) );
 
    // Check status from parent constructor
-   if ( this->dbError != "" )
+   QString dbError = this->populate();
+   if ( dbError != "" )
    {
       QMessageBox::warning( this, tr( "Connection Problem" ),
-            tr( "Could not connect to databasee \n" ) + this->dbError );
+            tr( "Could not connect to databasee \n" ) + dbError );
       return;
    }
 
+   this->reset();
+}
+
+void US_DBComboBox::reset( void )
+{
+   this->clear();
    foreach( listInfo info, widgetList )
       this->addItem( info.text );
+
+   this->setCurrentIndex( 0 );
 }
 
 // Function to update a combobox so that the current choice is selected

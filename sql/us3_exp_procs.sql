@@ -108,6 +108,7 @@ DROP PROCEDURE IF EXISTS new_experiment$$
 CREATE PROCEDURE new_experiment ( p_guid         CHAR(36),
                                   p_password     VARCHAR(80),
                                   p_projectID    INT,
+                                  p_runID        VARCHAR(80),
                                   p_labID        INT,
                                   p_instrumentID INT,
                                   p_operatorID   INT,
@@ -121,6 +122,7 @@ CREATE PROCEDURE new_experiment ( p_guid         CHAR(36),
 
 BEGIN
   DECLARE l_experimentID INT;
+  DECLARE l_count_runID  INT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -128,23 +130,40 @@ BEGIN
   SET @LAST_INSERT_ID = 0;
  
   IF ( verify_user( p_guid, p_password ) = @OK ) THEN
-    INSERT INTO experiment SET
-      projectID          = p_projectID,
-      labID              = p_labID,
-      instrumentID       = p_instrumentID,
-      operatorID         = p_operatorID,
-      rotorID            = p_rotorID,
-      type               = p_type,
-      runTemp            = p_runTemp,
-      label              = p_label,
-      comment            = p_comment,
-      centrifugeProtocol = p_centrifugeProtocol ;
+    -- Can't have duplicate run ID's for this investigator
+    SELECT COUNT(*)
+    INTO   l_count_runID
+    FROM   experimentPerson p, experiment e
+    WHERE  p.experimentID = e.experimentID
+    AND    e.runID = p_runID
+    AND    p.personID = @US3_ID;
 
-    SET @LAST_INSERT_ID  = LAST_INSERT_ID();
+    IF ( l_count_runID > 0 ) THEN
+      SET @US3_LAST_ERRNO = @DUPFIELD;
+      SET @US3_LAST_ERROR = "MySQL: Duplicate runID in experiment table";
 
-    INSERT INTO experimentPerson SET
-      experimentID = @LAST_INSERT_ID,
-      personID     = @US3_ID;
+    ELSE
+      INSERT INTO experiment SET
+        projectID          = p_projectID,
+        runID              = p_runID,
+        labID              = p_labID,
+        instrumentID       = p_instrumentID,
+        operatorID         = p_operatorID,
+        rotorID            = p_rotorID,
+        type               = p_type,
+        runTemp            = p_runTemp,
+        label              = p_label,
+        comment            = p_comment,
+        centrifugeProtocol = p_centrifugeProtocol,
+        dateUpdated        = NOW() ;
+  
+      SET @LAST_INSERT_ID  = LAST_INSERT_ID();
+  
+      INSERT INTO experimentPerson SET
+        experimentID = @LAST_INSERT_ID,
+        personID     = @US3_ID;
+
+    END IF;
 
   END IF;
 
@@ -158,6 +177,7 @@ CREATE PROCEDURE update_experiment ( p_guid         CHAR(36),
                                      p_password     VARCHAR(80),
                                      p_experimentID INT,
                                      p_projectID    INT,
+                                     p_runID        VARCHAR(80),
                                      p_labID        INT,
                                      p_instrumentID INT,
                                      p_operatorID   INT,
@@ -170,25 +190,42 @@ CREATE PROCEDURE update_experiment ( p_guid         CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE l_count_runID  INT;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
   IF ( verify_experiment_permission( p_guid, p_password, p_experimentID ) = @OK ) THEN
-    UPDATE experiment SET
-      projectID          = p_projectID,
-      labID              = p_labID,
-      instrumentID       = p_instrumentID,
-      operatorID         = p_operatorID,
-      rotorID            = p_rotorID,
-      type               = p_type,
-      runTemp            = p_runTemp,
-      label              = p_label,
-      comment            = p_comment,
-      centrifugeProtocol = p_centrifugeProtocol,
-      dateUpdated        = NOW()
-    WHERE experimentID   = p_experimentID;
+    -- Can't have duplicate run ID's for this investigator
+    SELECT COUNT(*)
+    INTO   l_count_runID
+    FROM   experimentPerson p, experiment e
+    WHERE  p.experimentID = e.experimentID
+    AND    e.runID = p_runID
+    AND    p.personID = @US3_ID;
+
+    IF ( l_count_runID > 0 ) THEN
+      SET @US3_LAST_ERRNO = @DUPFIELD;
+      SET @US3_LAST_ERROR = "MySQL: Duplicate runID in experiment table";
+
+    ELSE
+      UPDATE experiment SET
+        projectID          = p_projectID,
+        runID              = p_runID,
+        labID              = p_labID,
+        instrumentID       = p_instrumentID,
+        operatorID         = p_operatorID,
+        rotorID            = p_rotorID,
+        type               = p_type,
+        runTemp            = p_runTemp,
+        label              = p_label,
+        comment            = p_comment,
+        centrifugeProtocol = p_centrifugeProtocol,
+        dateUpdated        = NOW()
+      WHERE experimentID   = p_experimentID;
+
+    END IF;
 
   END IF;
       
@@ -196,7 +233,7 @@ BEGIN
 
 END$$
 
--- Returns the experimentID, label, and type of all experiments associated with p_ID
+-- Returns the experimentID, runID, and type of all experiments associated with p_ID
 --  If p_ID = 0, retrieves information about all experiments in db
 --  Regular user can only get info about his own experiments
 DROP PROCEDURE IF EXISTS get_experiment_desc$$
@@ -223,17 +260,17 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   e.experimentID, label, type
+        SELECT   e.experimentID, runID, type
         FROM     experiment e, experimentPerson p
         WHERE    e.experimentID = p.experimentID
         AND      p.personID = p_ID
-        ORDER BY label;
+        ORDER BY runID;
    
       ELSE
-        SELECT   e.experimentID, label, type
+        SELECT   e.experimentID, runID, type
         FROM     experiment e, experimentPerson p
         WHERE    e.experimentID = p.experimentID
-        ORDER BY label;
+        ORDER BY runID;
 
       END IF;
 
@@ -257,11 +294,11 @@ BEGIN
       -- Ok, user wants his own info
       SELECT @OK AS status;
 
-      SELECT   e.experimentID, label, type
+      SELECT   e.experimentID, runID, type
       FROM     experiment e, experimentPerson p
       WHERE    e.experimentID = p.experimentID
       AND      p.personID = @US3_ID
-      ORDER BY label;
+      ORDER BY runID;
 
     END IF;
 
@@ -298,11 +335,59 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   projectID, labID, instrumentID, operatorID, rotorID, type,
-               runTemp, label, comment, centrifugeProtocol, personID
+      SELECT   projectID, runID, labID, instrumentID, operatorID, rotorID, type,
+               runTemp, label, comment, centrifugeProtocol, dateUpdated, personID
       FROM     experiment e, experimentPerson ep
       WHERE    e.experimentID = ep.experimentID
       AND      e.experimentID = p_experimentID;
+
+    END IF;
+
+  ELSE
+    SELECT @US3_LAST_ERRNO AS status;
+
+  END IF;
+
+END$$
+
+-- Returns a more complete list of information about one experiment
+-- Differs from previous procedure by searching by runID
+DROP PROCEDURE IF EXISTS get_experiment_info_by_runID$$
+CREATE PROCEDURE get_experiment_info_by_runID ( p_guid     CHAR(36),
+                                                p_password VARCHAR(80),
+                                                p_runID    VARCHAR(80) )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_experiments INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+    SELECT COUNT(*)
+    INTO   count_experiments
+    FROM   experiment e, experimentPerson p
+    WHERE  e.experimentID = p.experimentID
+    AND    p.personID     = @US3_ID
+    AND    e.runID        = p_runID;
+
+    IF ( count_experiments = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT projectID, e.experimentID, labID, instrumentID, operatorID, rotorID, type,
+             runTemp, label, comment, centrifugeProtocol, dateUpdated, personID
+      FROM   experiment e, experimentPerson p
+      WHERE  e.experimentID = p.experimentID
+      AND    p.personID     = @US3_ID
+      AND    e.runID        = p_runID;
 
     END IF;
 

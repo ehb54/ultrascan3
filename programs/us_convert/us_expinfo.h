@@ -20,7 +20,7 @@
 class US_EXTERN US_DBControl
 {
    public:
-      /*! \brief Generic constructor for the US_DBWidget class. To 
+      /*! \brief Generic constructor for the US_DBControl class. To 
                  instantiate the class a calling function must
                  provide information about which US3 stored procedure
                  to use. 
@@ -30,6 +30,11 @@ class US_EXTERN US_DBControl
                  ID and the name or other information to display in the
                  widget.
 
+                 The procedure is not automatically called in this class.
+                 That way it can be called at the appropriate time in
+                 the derived class. To call the procedure, see the
+                 populate function.
+
           \param query  The number of US3 stored procedure to execute,
                         using the dbQueries enum below
       */
@@ -38,13 +43,20 @@ class US_EXTERN US_DBControl
       //! A null destructor. 
       ~US_DBControl            () {};
 
+      /*! \brief A function to call the US3 procedure and load widgetList
+                 with appropriate information
+
+                 Returns an error message, or an empty string if no error.
+      */
+      QString populate         ( void );
+
       enum dbQueries
       {
-         SQL_PROJECTS    ,       //!< Query to get project descriptions
-         SQL_LABS        ,       //!< Query to get lab names
-         SQL_INSTRUMENTS ,       //!< Query to get instrument names
-         SQL_PEOPLE      ,       //!< Query to get names of people
-         SQL_ROTORS              //!< Query to get rotor names
+         SQL_GET_PROJECTS    ,       //!< Query to get project descriptions
+         SQL_GET_LABS        ,       //!< Query to get lab names
+         SQL_GET_INSTRUMENTS ,       //!< Query to get instrument names
+         SQL_GET_PEOPLE      ,       //!< Query to get names of people
+         SQL_GET_ROTORS              //!< Query to get rotor names
       };
 
    protected:
@@ -56,7 +68,7 @@ class US_EXTERN US_DBControl
 
       QList< listInfo >        widgetList;
 
-      QString                  dbError;
+      int                      query;
 };
 
 /*! \class US_DBComboBox
@@ -88,6 +100,11 @@ class US_EXTERN US_DBComboBox : public QComboBox, US_DBControl
 
       //! A null destructor. 
       ~US_DBComboBox           () {};
+
+      /*! \brief A function to reset the contents of the widget, from
+                 the information it reads in widgetList.
+      */
+      void reset               ( void );
 
       /*! \brief A function to set the current index of the combo box
                  to a logical ID, based on the ID of the record in the
@@ -138,6 +155,7 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          QString          firstName;          //!< The first name of the investigator
          int              expID;              //!< The ID of the experiment itself
          int              projectID;          //!< The project this experiment is associated with
+         QString          runID;              //!< The run ID
          int              labID;              //!< The lab in which the experiment was conducted
          int              instrumentID;       //!< The identifier of the ultra-centrifuge
          int              operatorID;         //!< The personID of the person who operated the centrifuge
@@ -161,8 +179,10 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
 
           \param dataIn  A reference to a structure that contains
                          previously selected experiment data, if any.
+          \param newInfo A way to distinguish between a new db instance
+                         or editing a previously existing one
       */
-      US_ExpInfo( ExperimentInfo& );
+      US_ExpInfo( ExperimentInfo&, bool newInfo = true );
 
       //! A null destructor. 
       ~US_ExpInfo() {};
@@ -187,16 +207,9 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
 
    private:
       ExperimentInfo&        expInfo;
+      bool                   editing;
 
       US_Help                showHelp;
-
-      // A list structure to contain hardware and other choices
-      struct listInfo
-      {
-         QString             ID;
-         QString             text;
-      };
-      QList< listInfo >      experimentList;
 
       QStringList            experimentTypes;
                           
@@ -205,33 +218,31 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       US_DBComboBox*         cb_instrument;
       US_DBComboBox*         cb_operator;
       US_DBComboBox*         cb_rotor;
-      QListWidget*           lw_experiment;
       QComboBox*             cb_expType;
                           
       QLineEdit*             le_investigator;
+      QLineEdit*             le_runID;
       QLineEdit*             le_runTemp;
       QLineEdit*             le_label;
-      QLineEdit*             le_centrifugeProtocol;
 
       QTextEdit*             te_comment;
                           
       QPushButton*           pb_accept;
-      QPushButton*           pb_newExperiment;
 
   private slots:
       void reset             ( void );
+      void runIDChanged      ( void );
       void accept            ( void );
       void cancel            ( void );
-      bool getExperimentDesc ( void );
       void selectInvestigator( void );
       void assignInvestigator( int, const QString&, const QString& );
-      void selectExperiment  ( QListWidgetItem* );
+      int  checkRunID        ( void );
+      void loadExperimentInfo( void );
       void updateExperiment  ( ExperimentInfo&  );
-      void newExperiment     ( void );
+      void newExperiment     ( ExperimentInfo&  );
       void connect_error     ( const QString& );
 
       QComboBox* us_expTypeComboBox   ( void );
-      void setWidgetIndex             ( QListWidget*, QList< listInfo >&, int );
 
       void help              ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };

@@ -55,9 +55,19 @@ US_Convert::US_Convert() : US_Widgets()
    settings->addWidget( pb_reload, row++, 1 );
 
    // External program to enter experiment information
-   pb_expinfo = us_pushbutton( tr( "Enter Experiment Information" ) );
-   connect( pb_expinfo, SIGNAL( clicked() ), SLOT( getExpInfo() ) );
-   settings->addWidget( pb_expinfo, row, 0 );
+   QBoxLayout* expButtons = new QHBoxLayout;
+
+   pb_expinfo = us_pushbutton( tr( "New Experiment" ) );
+   connect( pb_expinfo, SIGNAL( clicked() ), SLOT( newExpInfo() ) );
+   expButtons->addWidget( pb_expinfo );
+   pb_expinfo->setEnabled( false );
+
+   pb_editExpinfo = us_pushbutton( tr( "Edit Experiment" ) );
+   connect( pb_editExpinfo, SIGNAL( clicked() ), SLOT( editExpInfo() ) );
+   expButtons->addWidget( pb_editExpinfo );
+   pb_editExpinfo->setEnabled( false );
+
+   settings->addLayout( expButtons, row, 0 );
 
    pb_details = us_pushbutton( tr( "Run Details" ), false );
    connect( pb_details, SIGNAL( clicked() ), SLOT( details() ) );
@@ -304,7 +314,7 @@ void US_Convert::load( QString dir )
    // Display the data that was read
    for ( int i = 0; i < legacyData.size(); i++ )
    {
-      US_DataIO::beckmanRawData d = legacyData[ i ];
+      US_DataIO::beckmanRawScan d = legacyData[ i ];
 
       qDebug() << d.description;
       qDebug() << d.type         << " "
@@ -352,7 +362,8 @@ void US_Convert::load( QString dir )
    pb_buffer      ->setEnabled( true );
    pb_analyte     ->setEnabled( true );
    cb_centerpiece ->setEnabled( true );
-
+   pb_expinfo     ->setEnabled( true );
+   pb_editExpinfo ->setEnabled( true );
 
    if ( runType == "RI" )
       pb_reference->setEnabled( true );
@@ -397,6 +408,8 @@ void US_Convert::reload( void )
    pb_buffer      ->setEnabled( true );
    pb_analyte     ->setEnabled( true );
    cb_centerpiece ->setEnabled( true );
+   pb_expinfo     ->setEnabled( true );
+   pb_editExpinfo ->setEnabled( true );
 
    if ( runType == "RI" )
       pb_reference->setEnabled( true );
@@ -418,6 +431,8 @@ bool US_Convert::read( void )
          QFileDialog::DontResolveSymlinks );
 
    if ( dir.isEmpty() ) return( false ); 
+
+   dir.replace( "\\", "/" );  // WIN32 issue
 
    reset();
    return( read( dir ) );
@@ -1141,9 +1156,21 @@ void US_Convert::cancel_reference( void )
    plot_current();
 }
 
-void US_Convert::getExpInfo( void )
+void US_Convert::newExpInfo( void )
 {
-   US_ExpInfo* expInfo = new US_ExpInfo( ExpData );
+   getExpInfo( true );
+}
+
+void US_Convert:: editExpInfo( void )
+{
+   getExpInfo( false );
+}
+
+void US_Convert::getExpInfo( bool newInfo )
+{
+   ExpData.runID = le_runID -> text();
+
+   US_ExpInfo* expInfo = new US_ExpInfo( ExpData, newInfo );
 
    connect( expInfo, SIGNAL( updateExpInfoSelection( US_ExpInfo::ExperimentInfo& ) ),
             this   , SLOT  ( updateExpInfo         ( US_ExpInfo::ExperimentInfo& ) ) );
@@ -1160,6 +1187,9 @@ void US_Convert::updateExpInfo( US_ExpInfo::ExperimentInfo& d )
 {
    // Update local copy
    ExpData = d;
+
+   // The runID could have changed
+   le_runID      ->setText( ExpData.runID );
 }
 
 void US_Convert::cancelExpInfo( void )
