@@ -9,6 +9,10 @@ unix {
 UNAME = $$system(uname -a)
 DEFINES += UNIX
 }
+macx {
+UNAME = $$system(uname -a)
+DEFINES += MACX
+}
 
 unix:contains(UNAME,Linux) {
   DEFINES  += LINUX
@@ -94,5 +98,19 @@ unix:contains (UNAME, sparc) {
 win32 {
   DEFINES += WIN32 
   message ("Configuring for the Microsoft Windows Platform...")
+}
+
+macx:contains (UNAME, i386) {
+  DEFINES += MAC
+  message ("Configuring for the Macintosh Intel 386 Platform...")
+}
+
+macx {
+   QMAKE_CFLAGS   += -arch ppc -arch i386
+   QMAKE_LFLAGS   += -arch ppc -arch i386
+   CFLAGS   += -arch ppc -arch i386
+   LDFLAGS   += -arch ppc -arch i386
+   QWTDIR        = /usr/local/qt3/qwt-4.2.0
+   QWT3DDIR      = /usr/local/qt3/qwtplot3d
 }
 

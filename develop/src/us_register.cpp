@@ -29,7 +29,14 @@ US_Register::~US_Register()
 void US_Register::us_license()
 {
   proc = new QProcess(this);
+#ifndef Q_WS_MAC
   proc->addArgument("us_license");
+#else
+  US_Config* USglobal = new US_Config();
+  proc->addArgument("open");
+  proc->addArgument("-a");
+  proc->addArgument( USglobal->config_list.system_dir + "/bin/us_license.app" );
+#endif
   
   if ( ! proc->start() ) // Error
   {

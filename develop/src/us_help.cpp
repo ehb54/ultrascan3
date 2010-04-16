@@ -34,6 +34,10 @@ void US_Help::show_html_file( QString helpFile )
 void US_Help::openBrowser()
 {
   proc = new QProcess( this );
+#ifdef Q_WS_MAC
+  proc->addArgument( "open" );
+  proc->addArgument( "-a" );
+#endif
   proc->addArgument( USglobal->config_list.browser );
   proc->addArgument( URL );
 

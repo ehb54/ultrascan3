@@ -944,7 +944,19 @@ void UsWin::launch( int index )
 
    QProcess* process = new QProcess( this );
    process->setCommunication( 0 );
+#ifndef Q_WS_MAC
    process->addArgument( p[ index ].name );
+#else
+   QString procbin = USglobal->config_list.system_dir + "/bin/" + p[ index ].name;
+   QString procapp = procbin + ".app";
+
+   if ( !QFile( procapp ).exists()  &&  QFile( procbin ).exists() )
+      procapp         = procbin;
+
+   process->addArgument( "open" );
+   process->addArgument( "-a" );
+   process->addArgument( procapp );
+#endif
 
    if ( ! process->start() )
    {
