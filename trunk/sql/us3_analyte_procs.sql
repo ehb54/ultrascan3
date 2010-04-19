@@ -315,11 +315,9 @@ BEGIN
     DELETE FROM analytePerson
     WHERE analyteID = p_analyteID;
 
-    DELETE FROM analyteExtinction
-    WHERE analyteID = p_analyteID;
-
-    DELETE FROM analyteRefraction
-    WHERE analyteID = p_analyteID;
+    DELETE FROM spectrum
+    WHERE analyteID = p_analyteID
+    AND   componentType = 'Analyte';
 
     DELETE FROM analyte
     WHERE analyteID = p_analyteID;
