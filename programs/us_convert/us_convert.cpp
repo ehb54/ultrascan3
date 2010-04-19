@@ -1170,6 +1170,20 @@ void US_Convert::getExpInfo( bool newInfo )
 {
    ExpData.runID = le_runID -> text();
 
+   // Calculate average temperature
+   double sum = 0.0;
+   double count = 0.0;
+   for ( int i = 0; i < allData.size(); i++ )
+   {
+      US_DataIO::rawData raw = allData[ i ];
+      for ( int j = 0; j < raw.scanData.size(); j++ )
+         sum += raw.scanData[ j ].temperature;
+
+      count += raw.scanData.size();
+   }
+
+   ExpData.runTemp = QString::number( sum / count );
+
    US_ExpInfo* expInfo = new US_ExpInfo( ExpData, newInfo );
 
    connect( expInfo, SIGNAL( updateExpInfoSelection( US_ExpInfo::ExperimentInfo& ) ),
