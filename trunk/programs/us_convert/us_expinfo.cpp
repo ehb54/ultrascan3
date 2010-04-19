@@ -89,6 +89,7 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn, bool newInfo ) :
    hardware->addWidget( lb_runTemp, row++, 0, 1, 2 );
    le_runTemp = us_lineedit();
    hardware->addWidget( le_runTemp, row++, 0, 1, 2 );
+   le_runTemp -> setReadOnly( true );
 
    // Some pushbuttons
    QHBoxLayout* buttons = new QHBoxLayout;
@@ -148,7 +149,7 @@ US_ExpInfo::US_ExpInfo( ExperimentInfo& dataIn, bool newInfo ) :
 void US_ExpInfo::reset( void )
 {
    le_investigator      ->clear();
-   le_runTemp           ->clear();
+   le_runTemp           ->setText( expInfo.runTemp );
    le_label             ->clear();
    le_runID             ->setText( expInfo.runID );
    te_comment           ->clear();
@@ -371,7 +372,7 @@ void US_ExpInfo::loadExperimentInfo( void )
    expInfo.operatorID         = db.value( 4 ).toInt();
    expInfo.rotorID            = db.value( 5 ).toInt();
    expInfo.expType            = db.value( 6 ).toString();
-   expInfo.runTemp            = db.value( 7 ).toString();
+   // Let's go with the calculated runTemp);
    expInfo.label              = db.value( 8 ).toString();
    expInfo.comments           = db.value( 9 ).toString();
    expInfo.centrifugeProtocol = db.value( 10 ).toString();
