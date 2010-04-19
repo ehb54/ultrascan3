@@ -267,11 +267,9 @@ BEGIN
     DELETE FROM bufferPerson
     WHERE bufferID = p_bufferID;
 
-    DELETE FROM bufferExtinction
-    WHERE bufferID = p_bufferID;
-
-    DELETE FROM bufferRefraction
-    WHERE bufferID = p_bufferID;
+    DELETE FROM spectrum
+    WHERE bufferID = p_bufferID
+    AND   componentType = 'Buffer';
 
     DELETE FROM buffer
     WHERE bufferID = p_bufferID;
