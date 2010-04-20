@@ -221,6 +221,72 @@ void US_Buffer::getInfoFromDB( const QString& masterPW )
    // unfinished...
 }
 
+void US_Buffer::getSpectrum( US_DB2& db, const QString& type ) 
+{
+   QStringList q;
+   q << "get_spectrum" << bufferID << "Buffer" << type;
+
+   db.query( q );
+
+   while ( db.next() )
+   {
+      double lambda = db.value( 0 ).toDouble();
+      double value  = db.value( 1 ).toDouble();
+
+      if ( type == "Extinction" )
+         extinction[ lambda ] = value;
+      else if ( type == "Refraction" )
+         refraction[ lambda ] = value;
+      else
+         fluorescence[ lambda ] = value;
+   }
+}
+
+void US_Buffer::putSpectrum( US_DB2& db, const QString& type ) 
+{
+   QStringList q;
+   q << "new_spectrum" << bufferID << "Buffer" << type << "" << "";
+
+   if ( type == "Extinction" )
+   {
+      QList< double > keys = extinction.keys();
+
+      for ( int i = 0; i < keys.size(); i++ )
+      {
+         double wavelength = keys[ i ];
+         q[ 4 ] = QString::number( wavelength, 'f', 1 );
+         q[ 5 ] = QString::number( extinction[ wavelength ], 'e', 4 );
+         db.statusQuery( q );
+      }
+   }
+
+   else if ( type == "Refraction" )
+   {
+      QList< double > keys = refraction.keys();
+
+      for ( int i = 0; i < keys.size(); i++ )
+      {
+         double wavelength = keys[ i ];
+         q[ 4 ] = QString::number( wavelength, 'f', 1 );
+         q[ 5 ] = QString::number( refraction[ wavelength ], 'e', 4 );
+         db.statusQuery( q );
+      }
+   }
+
+   else
+   {
+      QList< double > keys = fluorescence.keys();
+
+      for ( int i = 0; i < keys.size(); i++ )
+      {
+         double wavelength = keys[ i ];
+         q[ 4 ] = QString::number( wavelength, 'f', 1 );
+         q[ 5 ] = QString::number( fluorescence[ wavelength ], 'e', 4 );
+         db.statusQuery( q );
+      }
+   }
+}
+
 bool US_Buffer::writeToDisk( const QString& filename ) const
 {
    QFile file( filename );
@@ -243,7 +309,6 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
    xml.writeAttribute( "person_id"  , QString::number( personID ) );
    xml.writeAttribute( "id"         , bufferID);
    xml.writeAttribute( "description", description );
-   xml.writeAttribute( "spectrum"   , spectrum );
    xml.writeAttribute( "ph"         , QString::number( pH       , 'f', 5 ) );
    xml.writeAttribute( "density"    , QString::number( density  , 'f', 5 ) );
    xml.writeAttribute( "viscosity"  , QString::number( viscosity, 'f', 5 ) );
@@ -257,6 +322,41 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
       xml.writeEndElement(); // component
    }
 
+   xml.writeStartElement( "spectrum" );
+
+   QList< double > keys = extinction.keys();
+
+   for ( int i = 0; i < extinction.size(); i++ )
+   {
+      xml.writeStartElement( "extinction" );
+      double wavelength = keys[ i ];
+      double value      = extinction[ wavelength ];
+      xml.writeAttribute( "wavelength", QString::number( wavelength, 'f', 1 ) );
+      xml.writeAttribute( "value"     , QString::number( value,      'e', 4 ) );
+      xml.writeEndElement(); // extinction
+   }
+
+   for ( int i = 0; i < refraction.size(); i++ )
+   {
+      xml.writeStartElement( "refraction" );
+      double wavelength = keys[ i ];
+      double value      = refraction[ wavelength ];
+      xml.writeAttribute( "wavelength", QString::number( wavelength, 'f', 1 ) );
+      xml.writeAttribute( "value"     , QString::number( value,      'e', 4 ) );
+      xml.writeEndElement(); // refraction
+   }
+
+   for ( int i = 0; i < fluorescence.size(); i++ )
+   {
+      xml.writeStartElement( "fluorescence" );
+      double wavelength = keys[ i ];
+      double value      = fluorescence[ wavelength ];
+      xml.writeAttribute( "wavelength", QString::number( wavelength, 'f', 1 ) );
+      xml.writeAttribute( "value"     , QString::number( value,      'e', 4 ) );
+      xml.writeEndElement(); // fluorescence
+   }
+
+   xml.writeEndElement(); // spectrum
    xml.writeEndElement(); // buffer
    xml.writeEndElement(); // US_Buffer
    xml.writeEndDocument();
@@ -321,7 +421,41 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
 
          component << bc; 
       } 
-         
+
+      if ( xml.isStartElement()  &&  xml.name() == "spectrum" )
+         readSpectrum( xml );
+
+      xml.readNext();
+   }
+}
+
+void US_Buffer::readSpectrum( QXmlStreamReader& xml )
+{
+   while ( ! xml.atEnd() )
+   {
+      if ( xml.isEndElement()  &&  xml.name() == "spectrum" ) break;
+
+      if ( xml.isStartElement()  &&  xml.name() == "extinction" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         extinction[ a.value( "wavelength" ).toString().toDouble() ] =
+            a.value( "value" ).toString().toDouble();
+      }
+
+      if ( xml.isStartElement()  &&  xml.name() == "refraction" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         refraction[ a.value( "wavelength" ).toString().toDouble() ] =
+            a.value( "value" ).toString().toDouble();
+      }
+
+      if ( xml.isStartElement()  &&  xml.name() == "fluorescence" )
+      {
+         QXmlStreamAttributes a = xml.attributes();
+         fluorescence[ a.value( "wavelength" ).toString().toDouble() ] =
+            a.value( "value" ).toString().toDouble();
+      }
+
       xml.readNext();
    }
 }
