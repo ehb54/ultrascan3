@@ -147,8 +147,10 @@ class US_EXTERN US_Widgets : public QFrame
 
 //! \brief Set a custom list widget that can override the default size
 
-class US_ListWidget : public QListWidget
+class US_EXTERN US_ListWidget : public QListWidget
 {
+   Q_OBJECT
+
    public:
       US_ListWidget()
       {
@@ -160,9 +162,16 @@ class US_ListWidget : public QListWidget
          setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum );
       };
 
-      virtual QSize sizeHint() const
+      QSize sizeHint() const
       {
          return QSize( -1, -1 );  // Allow default in the class
       };
+
+      void mousePressEvent( QMouseEvent* );
+
+   signals:
+      void deleteRequest( void );
+
 };
+
 #endif

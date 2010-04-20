@@ -337,3 +337,16 @@ QwtPlotPicker* US_Widgets::us_picker( QwtPlot* plot )
   return pick;
 }
 
+void US_ListWidget::mousePressEvent( QMouseEvent* event )
+{
+   if ( event->button() == Qt::RightButton )
+   {
+      emit deleteRequest();
+      event->ignore();
+      return;
+   }
+
+   QListWidget::mousePressEvent( event );
+}
+
+
