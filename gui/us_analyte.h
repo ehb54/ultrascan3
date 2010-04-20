@@ -10,8 +10,6 @@
 #include "us_math.h"
 #include "us_editor.h"
 #include "us_db2.h"
-//#include "us_femglobal_new.h"
-#include "us_femglobal.h"
 
 #include <qwt_counter.h>
 
@@ -38,11 +36,19 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
 	public:
 		US_Analyte( int = -1, bool = false, QWidget* = 0, Qt::WindowFlags = 0 );
 
+      class analyteData
+      {
+         public:
+         double                 vbar;
+         double                 mw;
+         QMap< double, double > extinction;
+         QMap< double, double > refraction;
+         QMap< double, double > fluorescence;
+         QString                description;
+      };
+
    signals:
-      void valueChanged  ( double );
-      void valueAnalyteID( const QString& );
-      //void component     ( US_FemGlobal_New::SimulationComponent );
-      void component     ( SimulationComponent );
+      void valueChanged( US_Analyte::analyteData );
 
    private:
       bool          signal_wanted;
@@ -70,8 +76,11 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       };
 
       QList< analyte_info >   info;
-      QMap < double, double > extinction;  // Wavelength, extinction index
+      QMap < double, double > extinction;   // Wavelength, extinction index
+      QMap < double, double > refraction;   // Wavelength, refraction index
+      QMap < double, double > fluorescence; // Wavelength, fluorescence index
 
+      QComboBox*    cmb_optics;
 
       QString       filename;
       QString       sequence; 
@@ -129,7 +138,7 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       void status_query       ( const QStringList& );
       bool database_ok        ( US_DB2& );
       bool data_ok            ( void );
-      void set_extinction     ( US_DB2& );
+      void set_spectrum       ( US_DB2& );
 
    private slots:
       void close              ( void );
