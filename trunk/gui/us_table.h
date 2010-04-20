@@ -14,11 +14,6 @@ class US_EXTERN US_Table : public US_WidgetsDialog
 		US_Table( QMap< double, double >&, const QString&, 
             QWidget* = 0, Qt::WindowFlags = 0 );
 
-   signals:
-      //void valueChanged( QMap< double, double > );
-      //void valueAnalyteID( const QString& );
-      //void component     ( US_FemGlobal_New::SimulationComponent );
-
    private:
       QMap< double, double >& values;
       QMap< double, double >  local;
