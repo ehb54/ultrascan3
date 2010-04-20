@@ -123,15 +123,15 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    connect( pb_load_db, SIGNAL( clicked() ), SLOT( read_db() ) );
    main->addWidget( pb_load_db, row, 1 );
 
-   pb_save_db = us_pushbutton( tr( "Save Buffer to DB" ), false );
+   pb_save_db = us_pushbutton( tr( "Save Analyte to DB" ), false );
    connect( pb_save_db, SIGNAL( clicked() ), SLOT( save_db() ) );
    main->addWidget( pb_save_db, row++, 2 );
 
-   pb_update_db = us_pushbutton( tr( "Update Buffer in DB" ), false );
+   pb_update_db = us_pushbutton( tr( "Update Analyte in DB" ), false );
    connect( pb_update_db, SIGNAL( clicked() ), SLOT( update_db() ) );
    main->addWidget( pb_update_db, row, 1 );
 
-   pb_del_db = us_pushbutton( tr( "Delete Buffer from DB" ), false );
+   pb_del_db = us_pushbutton( tr( "Delete Analyte from DB" ), false );
    connect( pb_del_db, SIGNAL( clicked() ), SLOT( delete_db() ) );
    main->addWidget( pb_del_db, row++, 2 );
 
@@ -149,7 +149,13 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
 
    pb_more = us_pushbutton( tr( "More Info" ), false );
    connect( pb_more, SIGNAL( clicked() ), SLOT( more_info() ) );
-   main->addWidget( pb_more, row++, 1 );
+   main->addWidget( pb_more, row, 1 );
+
+   cmb_optics = us_comboBox();
+   cmb_optics->addItem( tr( "Absorbance"   ) );
+   cmb_optics->addItem( tr( "Interference" ) );
+   cmb_optics->addItem( tr( "Fluorescence" ) );
+   main->addWidget( cmb_optics, row++, 2 );
 
    row +=1; 
 
@@ -201,13 +207,6 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    protein_info->addWidget( le_protein_residues, prow, 1 );
    main->addWidget( protein_widget, row, 0, 1, 3 ); 
    
-   //QLabel* lb_protein_e280 = us_label( 
-   //      tr( "Extinction <small>(280 nm)</small>:" ) );
-   //protein_info->addWidget( lb_protein_e280, prow, 2 );
-
-   //le_protein_e280 = us_lineedit( "" );
-   //protein_info->addWidget( le_protein_e280, prow++, 3 );
-
    QSpacerItem* spacer1 = new QSpacerItem( 20, 0 );
    protein_info->addItem( spacer1, prow, 0, 1, 4 );
    protein_info->setRowStretch( prow, 100 );
@@ -228,8 +227,8 @@ US_Analyte::US_Analyte( int invID, bool signal, QWidget* parent, Qt::WindowFlags
    grid1->setSpacing        ( 2 );
    grid1->setContentsMargins( 2, 2, 2, 2 );
    
-   QBoxLayout* box1 = us_checkbox( tr( "Double Stranded" ), cb_stranded, true );
-   QBoxLayout* box2 = us_checkbox( tr( "Complement Only" ), cb_mw_only );
+   QGridLayout* box1 = us_checkbox( tr( "Double Stranded" ), cb_stranded, true );
+   QGridLayout* box2 = us_checkbox( tr( "Complement Only" ), cb_mw_only );
    grid1->addLayout( box1, 0, 0 );
    grid1->addLayout( box2, 1, 0 );
    connect( cb_stranded, SIGNAL( toggled        ( bool ) ), 
@@ -433,20 +432,39 @@ void US_Analyte::close( void )
    // Emit signal if requested
    if ( signal_wanted ) 
    {
-      //US_FemGlobal_New::SimulationComponent sc;
-      SimulationComponent sc;
+      struct analyteData data;
 
-      // TODO: Fill in values here
+      data.mw           = 0.0;
+      data.vbar         = 0.0;
+      data.extinction   = extinction;
+      data.refraction   = refraction;
+      data.fluorescence = fluorescence;
+      data.description  = description;
 
-      emit component     ( sc );
-      emit valueChanged  ( vbar );
-      emit valueAnalyteID( analyteID );
+      switch ( analyte_t )
+      {
+         case PROTEIN:
+         {
+            struct peptide p;
+            US_Math::calc_vbar( p, sequence, 20.0 );  // Always evaluate at 20C
+            data.mw   = p.mw;
+            data.vbar = p.vbar;
+            break;
+         }
+
+         case DNA:
+         case RNA:
+            data.mw   = le_nucle_vbar->text().toDouble();
+            data.vbar = le_nucle_vbar->text().toDouble();
+            break;
+
+         case CARBOHYDRATE:
+            break;
+      }
+
+      emit valueChanged( data );
    }
 
-   //emit valueChanged(pep.vbar, pep.vbar20);
-   //emit e280Changed(pep.e280);
-   //emit mwChanged(pep.mw);
-   
    accept();
 }
 
@@ -475,6 +493,10 @@ void US_Analyte::reset( void )
 
    filename.clear();
    sequence.clear();
+
+   extinction  .clear();
+   refraction  .clear();
+   fluorescence.clear();
 
    le_description     ->clear();
    le_protein_temp    ->setText( "20.0" );
@@ -554,16 +576,52 @@ void US_Analyte::read_analyte( void )
    description = values.at( 0 );
    if ( values.size() > 1 ) vbar = values.at( 1 ).toDouble();
 
+   int count = values.size() - 2;
+
+   // Parse extinction values
    extinction.clear();
-
-   int count = ( values.size() - 2 );
-
-   for ( int i = 2; i < count; i+=2 )
+   int start            = 2;
+   int extinction_count = ( count > start ) ? values.at( start ).toInt() : 0;
+   
+   if (  values.size() > start + extinction_count * 2 )
    {
-      double wavelength = values.at( i )    .toDouble();
-      double value      = values.at( i + 1 ).toDouble();
+      for ( int i = 0; i < extinction_count; i += 2 )
+      {
+         double wavelength = values.at( start + i )    .toDouble();
+         double value      = values.at( start + i + 1 ).toDouble();
 
-      extinction[ wavelength ] = value;
+         extinction[ wavelength ] = value;
+      }
+   }
+
+   refraction.clear();
+   start               += extinction_count * 2 + 1;
+   int refraction_count = ( count > start ) ? values.at( start ).toInt() : 0;
+
+   if (  values.size() > start + refraction_count * 2 )
+   {
+      for ( int i = 0; i < refraction_count; i += 2 )
+      {
+         double wavelength = values.at( start + i )    .toDouble();
+         double value      = values.at( start + i + 1 ).toDouble();
+
+         refraction[ wavelength ] = value;
+      }
+   }
+
+   fluorescence.clear();
+   start                 += refraction_count * 2 + 1;
+   int fluorescence_count = ( count > start ) ? values.at( start ).toInt() : 0;
+
+   if (  values.size() > start + fluorescence_count * 2 )
+   {
+      for ( int i = 0; i < fluorescence_count; i += 2 )
+      {
+         double wavelength = values.at( start + i )    .toDouble();
+         double value      = values.at( start + i + 1 ).toDouble();
+
+         fluorescence[ wavelength ] = value;
+      }
    }
 
    while ( ! ts.atEnd() ) sequence += ts.readLine().toLower();
@@ -613,7 +671,6 @@ void US_Analyte::read_analyte( void )
          le_protein_vbar    ->setText( QString::number( p.vbar  , 'f', 4 ) );
          le_protein_temp    ->setText( "20.0" );
          le_protein_residues->setText( QString::number( p.residues ) );
-         //le_protein_e280    ->setText( QString::number( e280 ) );
          break;
       }
 
@@ -622,8 +679,6 @@ void US_Analyte::read_analyte( void )
          parse_dna();
          update_nucleotide();
          le_nucle_vbar->setText( QString::number( vbar, 'f', 4 ) );
-         //le_nucle_e260->setText( QString::number( e260, 'f', 4 ) );
-         //le_nucle_e280->setText( QString::number( e280, 'f', 4 ) );
          break;
 
       case CARBOHYDRATE:
@@ -927,11 +982,32 @@ void US_Analyte::save_analyte( void )
 
       // Add extinction values
       QList< double > keys = extinction.keys();
+      s += "|" + QString::number( keys.size() );
 
       for ( int i = 0; i < keys.size(); i++ )
       {
          s += "|" + QString::number( keys[ i ], 'f', 1 );
          s += "|" + QString::number( extinction[ keys[ i ] ], 'f', 4 );
+      }
+
+      // Add refraction values
+      keys = refraction.keys();
+      s += "|" + QString::number( keys.size() );
+
+      for ( int i = 0; i < keys.size(); i++ )
+      {
+         s += "|" + QString::number( keys[ i ], 'f', 1 );
+         s += "|" + QString::number( refraction[ keys[ i ] ], 'f', 4 );
+      }
+
+      // Add fluorescence values
+      keys = fluorescence.keys();
+      s += "|" + QString::number( keys.size() );
+
+      for ( int i = 0; i < keys.size(); i++ )
+      {
+         s += "|" + QString::number( keys[ i ], 'f', 1 );
+         s += "|" + QString::number( fluorescence[ keys[ i ] ], 'f', 4 );
       }
 
       t << s << endl;
@@ -1084,8 +1160,17 @@ void US_Analyte::assign_investigator( int invID,
 
 void US_Analyte::spectrum( void )
 {
-   US_Table* dialog = new US_Table( extinction, tr( "Extinction:" ) );
-   dialog->setWindowTitle( tr( "Manage Extinction Values" ) );
+   QString   spectrum_type = cmb_optics->currentText();
+   US_Table* dialog;
+
+   if ( spectrum_type == tr( "Absorbance" ) )
+     dialog = new US_Table( extinction, spectrum_type + ":" );
+   else if ( spectrum_type == tr( "Interference" ) )
+     dialog = new US_Table( refraction, spectrum_type + ":" );
+   else 
+     dialog = new US_Table( fluorescence, spectrum_type + ":" );
+
+   dialog->setWindowTitle( tr( "Manage %1 Values" ).arg( spectrum_type ) );
 
    dialog->exec();
 }
@@ -1243,6 +1328,28 @@ void US_Analyte::select_analyte( QListWidgetItem* item )
       extinction[ lambda ] = coeff;
    }
 
+   q[ 0 ] = "get_analyte_refraction";
+   refraction.clear();
+   db.query( q );
+
+   while ( db.next() )
+   {
+      double lambda = db.value( 1 ).toDouble();
+      double coeff  = db.value( 2 ).toDouble();
+      refraction[ lambda ] = coeff;
+   }
+
+   q[ 0 ] = "get_analyte_fluorescence";
+   fluorescence.clear();
+   //db.query( q );
+
+   while ( db.next() )
+   {
+      double lambda = db.value( 1 ).toDouble();
+      double coeff  = db.value( 2 ).toDouble();
+      fluorescence[ lambda ] = coeff;
+   }
+
    le_description->setText( description );
 
    // Update the window
@@ -1307,8 +1414,6 @@ void US_Analyte::save_db( void )
    q << QString::number( vbar, 'f', 4 );
    q << description;
 
-   //QString spectrum = "260:" + QString::number( e260, 'f', 4 ) + 
-   //                  ";280:" + QString::number( e280, 'f', 4 );
    QString spectrum = "";
    q << spectrum;
 
@@ -1326,19 +1431,23 @@ void US_Analyte::save_db( void )
    if ( ! database_ok( db ) ) return;
 
    analyteID = QString::number( db.lastInsertID() );
-   set_extinction( db );
+   set_spectrum( db );
 
    QMessageBox::information( this,
       tr( "Analyte Saved" ),
       tr( "The analyte has been saved to the database." ) );
 }
 
-void US_Analyte::set_extinction( US_DB2& db )
+void US_Analyte::set_spectrum( US_DB2& db )
 {
    QStringList q;
 
    q << "delete_analyte_extinction" << analyteID;
    db.statusQuery( q );
+   q[ 0 ] = "delete_analyte_refraction";
+   db.statusQuery( q );
+   q[ 0 ] = "delete_analyte_fluorescence";
+   //db.statusQuery( q );
 
    QList< double > keys = extinction.keys();
    
@@ -1355,6 +1464,38 @@ void US_Analyte::set_extinction( US_DB2& db )
       q[ 3 ] = coeff;
 
       db.statusQuery( q );
+   }
+
+   keys = refraction.keys();
+   
+   q[ 0 ] = "new_analyte_refraction";
+
+   for ( int i = 0; i < keys.size(); i++ )
+   {
+      double key =  keys[ i ];
+      QString lambda = QString::number( key, 'f', 1 );
+      q[ 2 ] = lambda;
+
+      QString coeff = QString::number( refraction[ key ], 'f', 4 );
+      q[ 3 ] = coeff;
+
+      db.statusQuery( q );
+   }
+
+   keys = fluorescence.keys();
+   
+   q[ 0 ] = "new_analyte_fluorescence";
+
+   for ( int i = 0; i < keys.size(); i++ )
+   {
+      double key =  keys[ i ];
+      QString lambda = QString::number( key, 'f', 1 );
+      q[ 2 ] = lambda;
+
+      QString coeff = QString::number( fluorescence[ key ], 'f', 4 );
+      q[ 3 ] = coeff;
+
+      //db.statusQuery( q );
    }
 }
 
@@ -1385,9 +1526,6 @@ void US_Analyte::update_db( void )
    q << QString::number( vbar, 'f', 4 );
    q << description;
 
-   //QString spectrum = "260:" + QString::number( e260, 'f', 4 ) + 
-   //                  ";280:" + QString::number( e280, 'f', 4 );
-   //q << spectrum;
    q << " ";
 
    // Molecular weight
@@ -1403,7 +1541,7 @@ void US_Analyte::update_db( void )
 
    if ( ! database_ok( db ) ) return;
 
-   set_extinction( db );
+   set_spectrum( db );
 
    QMessageBox::information( this,
    tr( "Analyte Updated" ),
