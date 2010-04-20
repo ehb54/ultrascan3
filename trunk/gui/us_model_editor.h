@@ -60,8 +60,8 @@ class US_ModelEditor : public US_WidgetsDialog
 
 		QString       c0_file;
 
-      struct ModelSystem& model;
-      struct hydrosim     simcomp;
+      struct ModelSystem&   model;
+      US_Predict1::Hydrosim simcomp;
       
 		void update_sD       ( void );
       bool verify_model    ( void );
