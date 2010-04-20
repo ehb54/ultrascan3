@@ -29,7 +29,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
 
       //! Return all values associated with the buffer
       //! \param buffer  Return the entire class.
-      void valueChanged( US_Buffer );
+      void valueChanged( US_Buffer buffer );
 
       //! Return the ID of the buffer in the current database.  A
       //! value of -1 indicates the data was manually input or was

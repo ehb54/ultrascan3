@@ -162,14 +162,20 @@ class US_EXTERN US_ListWidget : public QListWidget
          setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum );
       };
 
+      //!  A placeholder to specify the desired size of the widget.
+      //!  Currently it returns an invalid size for the default rendering.
       QSize sizeHint() const
       {
          return QSize( -1, -1 );  // Allow default in the class
       };
 
+      //!  An override of the base function to allow passing a custom 
+      //!  signal for the parent widget.
       void mousePressEvent( QMouseEvent* );
 
    signals:
+      //!  A signal than can be used when th eright mouse button is clicked
+      //!  in the list widget.
       void deleteRequest( void );
 
 };

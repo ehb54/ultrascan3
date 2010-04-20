@@ -17,6 +17,8 @@ class US_EXTERN US_SelectModel : public US_WidgetsDialog
       //! \param selection - Location for index of selected model
       //! \param show_equation - A flag to control a popup giving model
       //!                        details
+      //! \param equilibrium - A boolean to indicate that an equilibrium
+      //!                      model should be selected.
 		US_SelectModel( int&, bool = false, bool = false );
 		
    private:

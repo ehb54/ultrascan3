@@ -17,6 +17,8 @@ class US_EXTERN US_ModelSelection
 
       //! \param ms A reference to the location where the model is to be 
       //!           stored.
+      //! \param equilibrium A boolean value to indicate that an equlibrium model
+      //!           should be selected.
 		static void selectModel( struct ModelSystem&, bool = false );
 		
    private:

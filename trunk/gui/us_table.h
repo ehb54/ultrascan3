@@ -6,11 +6,24 @@
 #include "us_widgets_dialog.h"
 #include "us_extern.h"
 
+//! A class to provide input and update of a QMap structure.  It is 
+//! generally used for updating spectrum values in \ref US_Buffer and
+//! \ref US_Analyte.  
+
 class US_EXTERN US_Table : public US_WidgetsDialog
 {
 	Q_OBJECT
 
 	public:
+
+      //! \param map    - The QMap to be updated
+      //! \param type   - The type of spectrum.  One of Extinction, Refraction, or 
+      //!                 Fluorescence.
+      //! \param parent - The parent widget of this class.  This value is 
+      //!                 normally not specified.
+      //! \param f      - The Qt window flags of this class.  This value is
+      //!                 normally not specified.
+
 		US_Table( QMap< double, double >&, const QString&, 
             QWidget* = 0, Qt::WindowFlags = 0 );
 
