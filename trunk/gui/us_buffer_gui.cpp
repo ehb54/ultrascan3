@@ -6,6 +6,7 @@
 #include "us_passwd.h"
 #include "us_constants.h"
 #include "us_investigator.h"
+#include "us_table.h"
 
 US_BufferGui::US_BufferGui( int invID, bool signal_wanted ) 
    : US_WidgetsDialog( 0, 0 )
@@ -56,11 +57,8 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
    connect( lw_buffer_db, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
                           SLOT  ( select_buffer    ( QListWidgetItem* ) ) );
 
-   main->addWidget( lw_buffer_db, row, 0, 8, 1 );
-   row += 8;
-
-   QLabel* lb_spectrum = us_label( tr( "Spectrum: (wavelengh/extinction pairs)" ) );
-   main->addWidget( lb_spectrum, row++, 0 );
+   main->addWidget( lw_buffer_db, row, 0, 6, 1 );
+   row += 7;
 
    // Labels
    QLabel* lb_description = us_label( tr( "Buffer Description:" ) );
@@ -85,9 +83,9 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
    connect( lw_ingredients, SIGNAL( itemSelectionChanged( void ) ), 
                             SLOT  ( list_component      ( void ) ) );
    
-   main->addWidget( lw_ingredients, row, 0, 6, 1 );
+   main->addWidget( lw_ingredients, row, 0, 5, 1 );
 
-   row += 6;
+   row += 5;
 
    QPushButton* pb_synch = us_pushbutton( tr( "Synch components with DB" ) );
    connect( pb_synch, SIGNAL( clicked() ), SLOT( synch_components() ) );
@@ -110,23 +108,24 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
    main->addWidget( pb_save, row++, 1, 1, 2 );
 
    QLabel* lb_banner3 = us_banner( tr( "Database Functions" ), -2 );
+   lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_banner3, row++, 1, 1, 2 );
 
-   QPushButton* pb_load_db = us_pushbutton( tr( "Query Buffer Descriptions from DB" ) );
+   QPushButton* pb_load_db = us_pushbutton( tr( "Query Descriptions" ) );
    connect( pb_load_db, SIGNAL( clicked() ), SLOT( read_db() ) );
-   main->addWidget( pb_load_db, row++, 1, 1, 2 );
+   main->addWidget( pb_load_db, row, 1 );
 
-   pb_save_db = us_pushbutton( tr( "Save Buffer to DB" ), false );
+   pb_save_db = us_pushbutton( tr( "Save to DB" ), false );
    connect( pb_save_db, SIGNAL( clicked() ), SLOT( save_db() ) );
-   main->addWidget( pb_save_db, row++, 1, 1, 2 );
+   main->addWidget( pb_save_db, row++, 2 );
 
-   pb_update_db = us_pushbutton( tr( "Update Buffer in DB" ), false );
+   pb_update_db = us_pushbutton( tr( "Update in DB" ), false );
    connect( pb_update_db, SIGNAL( clicked() ), SLOT( update_db() ) );
-   main->addWidget( pb_update_db, row++, 1, 1, 2 );
+   main->addWidget( pb_update_db, row, 1 );
 
-   pb_del_db = us_pushbutton( tr( "Delete Buffer from DB" ), false );
+   pb_del_db = us_pushbutton( tr( "Delete from DB" ), false );
    connect( pb_del_db, SIGNAL( clicked() ), SLOT( delete_buffer() ) );
-   main->addWidget( pb_del_db, row++, 1, 1, 2 );
+   main->addWidget( pb_del_db, row++, 2 );
 
    // Buffer parameters
    QLabel* lb_density = us_label( tr( "Density (20&deg;C, g/cm<sup>3</sup>):" ) );
@@ -148,8 +147,18 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
    le_ph = us_lineedit();
    main->addWidget( le_ph, row++, 2 );
 
-   le_spectrum = us_lineedit();
-   main->addWidget( le_spectrum, row++, 1, 1, 2 );
+   QLabel* lb_optics = us_label( tr( "Optics:" ) );
+   main->addWidget( lb_optics, row, 0 );
+
+   cmb_optics = us_comboBox();
+   cmb_optics->addItem( tr( "Absorbance"   ) );
+   cmb_optics->addItem( tr( "Interference" ) );
+   cmb_optics->addItem( tr( "Fluorescence" ) );
+   main->addWidget( cmb_optics, row, 1 );
+
+   QPushButton* pb_spectrum = us_pushbutton( tr( "Manage Spectrum" ) );
+   connect( pb_spectrum, SIGNAL( clicked() ), SLOT( spectrum() ) );
+   main->addWidget( pb_spectrum, row++, 2 );
 
    le_description = us_lineedit();
    main->addWidget( le_description, row++, 1, 1, 2 );
@@ -173,8 +182,8 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
    lw_buffer = us_listwidget();
    connect( lw_buffer, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
                        SLOT  ( remove_component ( QListWidgetItem* ) ) );
-   main->addWidget( lw_buffer, row, 1, 7, 2 );
-   row += 7;
+   main->addWidget( lw_buffer, row, 1, 6, 2 );
+   row += 6;
 
    // Standard buttons
    QBoxLayout* buttons = new QHBoxLayout;
@@ -212,7 +221,6 @@ void US_BufferGui::synch_components( void )
    US_Passwd pw;
 
    qApp->processEvents();
-   // TODO: Error check 
 
    component_list.clear();
    US_BufferComponent::getAllFromDB( pw.getPasswd(), component_list );
@@ -328,6 +336,22 @@ void US_BufferGui::connect_error( const QString& error )
          tr( "Could not connect to databasee \n" ) + error );
 }
 
+void US_BufferGui::spectrum( void )
+{
+   QString   spectrum_type = cmb_optics->currentText();
+   US_Table* dialog;
+
+   if ( spectrum_type == tr( "Absorbance" ) )
+     dialog = new US_Table( buffer.extinction, spectrum_type + ":" );
+   else if ( spectrum_type == tr( "Interference" ) )
+     dialog = new US_Table( buffer.refraction, spectrum_type + ":" );
+   else
+     dialog = new US_Table( buffer.fluorescence, spectrum_type + ":" );
+
+   dialog->setWindowTitle( tr( "Manage %1 Values" ).arg( spectrum_type ) );
+   dialog->exec();
+}
+
 /*! \brief Display the appropriate data when the buffer name in the list widget
            is selected with a double click.
            \param item The description of the buffer selected.
@@ -401,7 +425,6 @@ void US_BufferGui::select_buffer( QListWidgetItem* item )
    }
 
    // Get the investigator's name and display it
-
    q.clear();
    q << "get_person_info" << personID;
 
@@ -410,17 +433,21 @@ void US_BufferGui::select_buffer( QListWidgetItem* item )
 
    QString fname = db.value( 0 ).toString();
    QString lname = db.value( 1 ).toString();
+   buffer.person =  fname + " " + lname;
 
-   le_investigator->setText( "InvID (" + personID + ") " + fname + " " + lname );
+   le_investigator->setText( "InvID (" + personID + ") " + buffer.person );
+
+   // Get spectrum data
+   buffer.getSpectrum( db, "Refraction" );
+   buffer.getSpectrum( db, "Extinction" );
+   buffer.getSpectrum( db, "Fluorescence" );
 
    // Update the rest of the buffer data
-   
    le_description->setText( buffer.description );
 
    QString s;
    le_density    ->setText( s.sprintf( " %6.4f", buffer.density     ) );
    le_viscosity  ->setText( s.sprintf( " %6.4f", buffer.viscosity ) );
-   le_spectrum   ->setText( buffer.spectrum );
    le_ph         ->setText( s.sprintf( " %6.4f", buffer.pH          ) );
    le_description->setText( buffer.description );
    
@@ -490,7 +517,6 @@ void US_BufferGui::read_buffer( void )
    le_density    ->setText( s.sprintf( "%6.4f", buffer.density   ) );
    le_viscosity  ->setText( s.sprintf( "%6.4f", buffer.viscosity ) );
    le_ph         ->setText( s.sprintf( "%6.4f", buffer.pH        ) );
-   le_spectrum   ->setText( buffer.spectrum );
    le_description->setText( buffer.description );
 
    // Don't let the user override density and viscosity calculations
@@ -559,7 +585,6 @@ void US_BufferGui::save_buffer( void )
 void US_BufferGui::update_buffer( void )
 {
    buffer.description  = le_description->text();
-   buffer.spectrum     = le_spectrum   ->text();
    
    buffer.pH           = ( le_ph->text().isEmpty() ) ? 
                          7.0 : le_ph->text().toDouble();
@@ -679,6 +704,10 @@ void US_BufferGui::save_db( void )
          db.statusQuery( q );
       }
 
+      buffer.putSpectrum( db, "Extinction" );
+      buffer.putSpectrum( db, "Refraction" );
+      buffer.putSpectrum( db, "Fluorescence" );
+
       reset();
       read_db();
    }
@@ -740,26 +769,40 @@ void US_BufferGui::update_db( void )
         << QString::number( buffer.density  , 'f', 5 )
         << QString::number( buffer.viscosity, 'f', 5 );
 
-       db.statusQuery( q );
+      db.statusQuery( q );
 
-       q.clear();
-       q << "delete_buffer_components" << buffer.bufferID;
-       db.statusQuery( q );
+      q.clear();
+      q << "delete_buffer_components" << buffer.bufferID;
+      db.statusQuery( q );
 
-       for ( int i = 0; i < buffer.component.size(); i++ )
-       {
-          q.clear();
-          q << "add_buffer_component" 
-            << buffer.bufferID
-            << buffer.component[ i ].componentID
-            << QString::number( buffer.concentration[ i ], 'f', 5 );
+      for ( int i = 0; i < buffer.component.size(); i++ )
+      {
+         q.clear();
+         q << "add_buffer_component" 
+           << buffer.bufferID
+           << buffer.component[ i ].componentID
+           << QString::number( buffer.concentration[ i ], 'f', 5 );
 
-          db.statusQuery( q );
-       }
+         db.statusQuery( q );
+      }
 
-       QMessageBox::question( this, 
-            tr( "Success" ),
-            tr( "The database has been updated\n" ) );
+      // Update spectrum by deletion and re-insertion
+      q.clear();
+      q << "delete_spectrum" << buffer.bufferID << "Buffer" << "Extinction";
+      db.statusQuery( q );
+      buffer.putSpectrum( db, "Extinction" );
+      
+      q [ 3 ] = "Refraction";
+      db.statusQuery( q );
+      buffer.putSpectrum( db, "Refraction" );
+      
+      q[ 3 ] = "Fluorescence";
+      db.statusQuery( q );
+      buffer.putSpectrum( db, "Fluorescence" );
+
+      QMessageBox::question( this, 
+           tr( "Success" ),
+           tr( "The database has been updated\n" ) );
    }
 }
 
@@ -897,6 +940,7 @@ void US_BufferGui::accept_buffer( void )
    if ( signal ) 
    {
       emit valueChanged ( buffer.density, buffer.viscosity );
+      emit valueChanged ( buffer );
       emit valueBufferID( buffer.bufferID );
    }
    accept();
@@ -929,7 +973,7 @@ void US_BufferGui::reset( void )
    le_viscosity    ->setReadOnly( false );
                    
    le_description  ->setText( "" );
-   le_spectrum     ->setText( "" );
+   //le_spectrum     ->setText( "" );
    le_ph           ->setText( "7.0" );
                    
    pb_save         ->setEnabled( false );

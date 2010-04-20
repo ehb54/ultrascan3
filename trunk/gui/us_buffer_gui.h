@@ -15,12 +15,27 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-
+      //! Main constructor
+      //! \param invID  The investigator ID in the current database
+      //! \param signal_wanted A flag to specify if one of the signals
+      //!               should be emitted when terminating the dialog
       US_BufferGui( int = - 1, bool = false );
 
    signals:
-      void valueChanged ( double, double );
-      void valueBufferID( const QString& );
+      //! Return the main values
+      //! \param density of the buffer
+      //! \param viscosity of the buffer
+      void valueChanged( double density, double viscosity );
+
+      //! Return all values associated with the buffer
+      //! \param buffer  Return the entire class.
+      void valueChanged( US_Buffer );
+
+      //! Return the ID of the buffer in the current database.  A
+      //! value of -1 indicates the data was manually input or was
+      //! returned from the local disk.
+      //! \param bufferID A string value of the returned ID
+      void valueBufferID( const QString& bufferID );
 
 
    private:
@@ -31,22 +46,27 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       //! template list (stored in us_home/etc/buffer.xml). 
       QList< US_BufferComponent > component_list;   
 
-      struct buffer_info
+      // For list widget
+      class buffer_info
       {
+         public:
          QString description;
          QString bufferID;
       };
 
-      bool                 signal;
-      bool                 fromHD;
-      int                  personID;
       QList< buffer_info > buffer_metadata;
+
+      bool         signal;
+      bool         fromHD;
+      int          personID;
 
       QPushButton* pb_save;
       QPushButton* pb_save_db;
       QPushButton* pb_update_db;
       QPushButton* pb_del_db;
       QPushButton* pb_spectrum;
+
+      QComboBox*   cmb_optics;
 
       QListWidget* lw_buffer_db;
       QListWidget* lw_ingredients;
@@ -55,8 +75,6 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       QLineEdit*   le_search;
       QLineEdit*   le_density;
       QLineEdit*   le_viscosity;
-      //QLineEdit*   le_refraction;
-      QLineEdit*   le_spectrum;
       QLineEdit*   le_ph;
       QLineEdit*   le_description;
       QLineEdit*   le_investigator;
@@ -82,6 +100,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       void delete_buffer   ( void );
       void read_db         ( void );
       void reset           ( void );
+      void spectrum        ( void );
       void list_component  ( void );
       void add_component   ( void );
       void accept_buffer   ( void );
