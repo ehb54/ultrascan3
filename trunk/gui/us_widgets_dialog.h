@@ -83,7 +83,7 @@ class US_EXTERN US_WidgetsDialog : public QDialog
     //! \param cb - reference to a pointer of the checkbox\n
     //! * Font weight is bold\n
     //! * Color is set to US_GuiSettings::normalColor()
-    QBoxLayout*   us_checkbox  ( const QString&, QCheckBox*&, bool = false );
+    QGridLayout*   us_checkbox  ( const QString&, QCheckBox*&, bool = false );
 
     //! Create a radiobutton with a specifice palette (normal) and
     //! indentation of the button
