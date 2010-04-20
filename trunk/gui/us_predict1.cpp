@@ -8,9 +8,30 @@
 
 #include "qwt_legend.h"
 
-US_Predict1::US_Predict1( struct hydrosim& params, 
-                          QWidget*         parent, 
-                          Qt::WindowFlags  f )
+US_Predict1::Hydrocomp::Hydrocomp()
+{
+   sedcoeff  = 0.0;
+   diffcoeff = 0.0;
+   f         = 0.0;
+   f_f0      = 1.0;
+   a         = 0.0;
+   b         = 0.0;
+   volume    = 0.0;
+}
+
+US_Predict1::Hydrosim::Hydrosim()
+{
+   mw          = 0.0;
+   density     = 0.0;
+   viscosity   = 0.0;
+   vbar        = 1.0;
+   temperature = 0.0;
+   axial_ratio = 0.0;
+}
+
+US_Predict1::US_Predict1( Hydrosim&       params, 
+                          QWidget*        parent, 
+                          Qt::WindowFlags f )
    : US_WidgetsDialog( parent, f ), allparams( params )
 {
    temperature = NORMAL_TEMP;
@@ -129,8 +150,12 @@ US_Predict1::US_Predict1( struct hydrosim& params,
    connect( pb_help, SIGNAL( clicked() ), SLOT( help() ) );
    buttons->addWidget( pb_help );
 
-   QPushButton* pb_accept = us_pushbutton( tr( "Close" ) );
-   connect( pb_accept, SIGNAL( clicked() ), SLOT( close() ) );
+   QPushButton* pb_close = us_pushbutton( tr( "Close" ) );
+   connect( pb_close, SIGNAL( clicked() ), SLOT( close() ) );
+   buttons->addWidget( pb_close );
+
+   QPushButton* pb_accept = us_pushbutton( tr( "Accept" ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( complete() ) );
    buttons->addWidget( pb_accept );
 
    controls->addLayout( buttons, c_row++, 0, 1, 2 );
@@ -243,6 +268,12 @@ US_Predict1::US_Predict1( struct hydrosim& params,
 
    main->addLayout( values );
    update();
+}
+
+void US_Predict1::complete( void )
+{
+   emit done();
+   close();
 }
 
 void US_Predict1::update_ratio( const QString& r )
@@ -496,7 +527,7 @@ void US_Predict1::update()
    
    allparams.sphere.sedcoeff  = ss;
    allparams.sphere.diffcoeff = Ds;
-   allparams.sphere.f_f0      = f0;
+   allparams.sphere.f         = f0;
    allparams.sphere.f_f0      = 1.0;
    allparams.sphere.a         = 1.0e+08 * rad_sphere;
    allparams.sphere.b         = 1.0e+08 * rad_sphere;
