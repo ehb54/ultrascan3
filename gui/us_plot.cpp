@@ -1272,7 +1272,7 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    Qt::CheckState checked    = ( plot->axisEnabled( axis ) ) 
       ? Qt::Checked : Qt::Unchecked;
    
-   QBoxLayout* present = us_checkbox( "", cb_present, checked );
+   QGridLayout* present = us_checkbox( "", cb_present, checked );
 
    main->addWidget( lb_present, row  , 0 );
    main->addLayout( present   , row++, 1 );
@@ -1414,8 +1414,8 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    le_reference = us_lineedit( 
          QString::number( plot->axisScaleEngine( axis )->reference() ), 1 );
 
-   QBoxLayout* refValue  = us_checkbox( QString( "Include"   ), cb_refValue );
-   QBoxLayout* symmetric = us_checkbox( QString( "Symmetric" ), cb_symmetric );
+   QGridLayout* refValue  = us_checkbox( QString( "Include"   ), cb_refValue );
+   QGridLayout* symmetric = us_checkbox( QString( "Symmetric" ), cb_symmetric );
    
    QBoxLayout* reference = new QHBoxLayout;
    reference->addWidget( le_reference );
@@ -1433,17 +1433,17 @@ US_PlotAxisConfig::US_PlotAxisConfig( int currentAxis, QwtPlot* currentPlot,
    checked = ( attributes & QwtScaleEngine::Floating  ) 
       ? Qt::Checked : Qt::Unchecked;
    
-   QBoxLayout* floating  
+   QGridLayout* floating  
       = us_checkbox( QString( "Floating Endpoints" ), cb_floating, checked );
    
    checked = ( attributes & QwtScaleEngine::Inverted ) 
       ? Qt::Checked : Qt::Unchecked;
    
-   QBoxLayout* inverted  
+   QGridLayout* inverted  
       = us_checkbox( QString( "Inverted Scale"), cb_inverted, checked );
    
    checked = ( plot->axisAutoScale( axis ) ) ? Qt::Checked : Qt::Unchecked;
-   QBoxLayout* autoscale 
+   QGridLayout* autoscale 
       = us_checkbox( QString( "Autoscale" ), cb_autoscale, checked );
 
    QBoxLayout* options = new QHBoxLayout;
@@ -1674,10 +1674,10 @@ US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot,
    QLabel* lb_enableMajor = us_label( tr( "Enable:" ) );
 
    Qt::CheckState checked = ( grid->xEnabled() ) ? Qt::Checked : Qt::Unchecked;
-   QBoxLayout* enableX = us_checkbox( tr( "Vertical" ), cb_enableX, checked );
+   QGridLayout* enableX = us_checkbox( tr( "Vertical" ), cb_enableX, checked );
 
    checked = ( grid->yEnabled() ) ? Qt::Checked : Qt::Unchecked;
-   QBoxLayout* enableY = us_checkbox( tr( "Horizontal"   ), cb_enableY, checked );
+   QGridLayout* enableY = us_checkbox( tr( "Horizontal"   ), cb_enableY, checked );
 
    QBoxLayout* enableMajor = new QHBoxLayout;
    enableMajor->addLayout( enableX );
@@ -1751,11 +1751,11 @@ US_PlotGridConfig::US_PlotGridConfig( QwtPlot* currentPlot,
    QLabel* lb_enableMinor = us_label( tr( "Enable:" ) );
 
    checked = ( grid->xMinEnabled() ) ? Qt::Checked : Qt::Unchecked;
-   QBoxLayout* enableXminor 
+   QGridLayout* enableXminor 
       = us_checkbox( tr( "Vertical" ), cb_enableXminor, checked );
 
    checked = ( grid->yMinEnabled() ) ? Qt::Checked : Qt::Unchecked;
-   QBoxLayout* enableYminor 
+   QGridLayout* enableYminor 
       = us_checkbox( tr( "Horizontal" ), cb_enableYminor, checked );
 
    QBoxLayout* enableMinor = new QHBoxLayout;
