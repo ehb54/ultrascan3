@@ -9,46 +9,52 @@
 #include "us_math.h"
 #include "us_help.h"
 
-struct hydrocomp
-{
-	double sedcoeff;
-	double diffcoeff;
-	double f;
-	double f_f0;
-	double a;
-	double b;
-	double volume;
-};
-
-struct hydrosim
-{
-	double mw;
-	double density;
-	double viscosity;
-	double vbar;
-	double temperature;
-	double axial_ratio;
-
-	struct hydrocomp sphere;
-	struct hydrocomp prolate;
-	struct hydrocomp oblate;
-	struct hydrocomp rod;
-};
 
 class US_EXTERN US_Predict1 : public US_WidgetsDialog
 {
 	Q_OBJECT
 
 	public:
-		US_Predict1( struct hydrosim&, QWidget* = 0, Qt::WindowFlags = 0 );
+      class Hydrocomp
+      {
+         public:
+            Hydrocomp();
+            double sedcoeff;
+            double diffcoeff;
+            double f;
+            double f_f0;
+            double a;
+            double b;
+            double volume;
+      };
+
+      class Hydrosim
+      {
+         public:
+            Hydrosim();
+            double mw;
+            double density;
+            double viscosity;
+            double vbar;
+            double temperature;
+            double axial_ratio;
+
+            Hydrocomp sphere;
+            Hydrocomp prolate;
+            Hydrocomp oblate;
+            Hydrocomp rod;
+      };
+
+		US_Predict1( Hydrosim&, QWidget* = 0, Qt::WindowFlags = 0 );
       void update( void );
 
    signals:
       void changed( void );
+      void done   ( void );
 
    private:
       struct solution_data d;
-      struct hydrosim&     allparams;
+      Hydrosim&      allparams;
       
       static const int ARRAYSIZE = 999;
       
@@ -89,7 +95,6 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
    private slots:
       void new_value    ( const QwtDoublePoint& );
       void mouseU       ( const QwtDoublePoint& );
-      //void update_ratio ( double                );
       void update_ratio ( const QString&        );
       void update_mw    ( const QString&        );
       void degC         ( const QString&        ); 
@@ -100,6 +105,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       void get_peptide  ( void                  ); 
       void update_buffer( double, double        );
       void update_vbar  ( double                );
+      void complete     ( void                  );
 
       void help         ( void )
       { showHelp.show_help( "manual/predict1.html" ); };
