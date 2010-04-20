@@ -44,13 +44,21 @@ class US_EXTERN US_BufferComponent
 class US_EXTERN US_Buffer 
 {
    public:
-      int     personID;    //!< Investigator's ID of for this  buffer, 
+      int     personID;    //!< Investigator's ID of for this  buffer.
+      QString person;      //!< Convenience value of investigator's name.
       QString bufferID;    //!< The buffer's DB ID, or -1 if from harddrive.
       QString description; //!< The buffer's description. 
       QString spectrum;    //!< Gaussian data for absorption data
       double  pH;          //!< Acidity or basicity of the buffer
       double  density;     //!< The density of the buffer. 
       double  viscosity;   //!< The viscosity of the buffer. 
+      
+      //! An associative array of extinction coefficients indexed by wavelength.
+      QMap< double, double > extinction;  
+      //! An associative array of refraction coefficients indexed by wavelength.
+      QMap< double, double > refraction;
+      //! An associative array of fluorescense coefficients indexed by wavelength.
+      QMap< double, double > fluorescence;
       
       //! The list of ingredients
       QList< US_BufferComponent > component;  //!< A list of components that 
@@ -72,7 +80,20 @@ class US_EXTERN US_Buffer
       //! \return A boolean success or failure
       bool readFromDisk( const QString& );
 
+      //! \brief Get spectrum data from the DB for a type
+      //! \param db The open database connection
+      //! \param type The type of data to retrieve.  One of:  "Extinction", 
+      //!             "Refraction", or "Fluorescence"
+      void getSpectrum( US_DB2&, const QString& );
+
+      //! \brief Put spectrum data to the DB for a type
+      //! \param db The open database connection
+      //! \param type The type of data to put to the DB.  One of:  "Extinction", 
+      //!             "Refraction", or "Fluorescence"
+      void putSpectrum( US_DB2&, const QString& );
+
    private:
-      void readBuffer( QXmlStreamReader& );
+      void readBuffer  ( QXmlStreamReader& );
+      void readSpectrum( QXmlStreamReader& );
 };
 #endif
