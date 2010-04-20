@@ -44,7 +44,7 @@ class US_EXTERN US_Investigator : public US_WidgetsDialog
       };
 
       //! \brief A static program to return a person's name
-      //! \param investigatorID The index in the database for this person
+      //! \param ID The index in the database for this person
       //! \param lname The last name of the investigator
       //! \param fname The first name of the investigator
       //! \return The success of the lookup

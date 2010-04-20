@@ -53,21 +53,39 @@ class US_EXTERN US_DB
                                         QString& );
 
     /*! \brief A function to open a database using the currently defined database
-               stored by \ref US_Config and \ref US_Settings.
+               stored by US_Config and \ref US_Settings.
 
         \param masterPW Master password to decrypt DB password
         \param error    A reference to a string for error responses as defined
                         in the class QSqlError.
     */
     bool      open   ( const QString&, QString& );
+    
+    /*! \brief Make an SQL query to the open database.
+        \param q  A string with the query text.
+    */
     void      query  ( const QString& );
+   
+    /*! \brief Return a value from the most recent query.
+        \param index The index of the component in a retruned row of data
+    */
     QVariant  value  ( int );
 
+    //! \brief Return the result of the most recent  attempt to open the 
+    //!        DB connection.
     bool      isOpen ( void );
+
+    /*! \brief Iterate to the next row of a returned dataset. */
     bool      next   ( void );
+
+    /*! \brief Return the number of rows resulting from the most recent SELECT 
+               statemetn. */
     int       numRows( void );
 
+    //! \brief Retrun a text description of the most recent DB result.
     QString              lastQueryErrorText( void ){ return error.text(); };
+
+    //! \brief Retrun an integer (enum value) of the most recend DB result.
     QSqlError::ErrorType lastQueryErrorType( void ){ return error.type(); };
     
   private:
