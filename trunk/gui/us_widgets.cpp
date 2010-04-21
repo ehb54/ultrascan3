@@ -341,7 +341,7 @@ void US_ListWidget::mousePressEvent( QMouseEvent* event )
 {
    if ( event->button() == Qt::RightButton )
    {
-      emit deleteRequest();
+      emit rightClick();
       event->ignore();
       return;
    }
