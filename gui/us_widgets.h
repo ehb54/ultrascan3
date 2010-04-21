@@ -174,9 +174,9 @@ class US_EXTERN US_ListWidget : public QListWidget
       void mousePressEvent( QMouseEvent* );
 
    signals:
-      //!  A signal than can be used when th eright mouse button is clicked
+      //!  A signal than can be used when the right mouse button is clicked
       //!  in the list widget.
-      void deleteRequest( void );
+      void rightClick( void );
 
 };
 
