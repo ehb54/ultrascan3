@@ -229,11 +229,9 @@ void US_vHW_Enhanced::load( void )
 
    update( 0 );
 
-   //data_plot();                                      // plot data
-
    pb_details->disconnect( );                        // reset details connect
    connect( pb_details, SIGNAL( clicked() ),
-            this,       SLOT(  details() ) );
+            this,       SLOT(   details() ) );
    dataLoaded = true;
 }
 
@@ -272,18 +270,92 @@ void US_vHW_Enhanced::data_plot( void )
    double  ymax        = 0.0;
    ndivis              = qRound( ct_division->value() );
 
-   for ( int jj = 0; jj < scanCount; jj++ )
+   for ( int ii = 0; ii < scanCount; ii++ )
    {  // count the scans excluded due to position percent
-      if ( excludedScans.contains( jj ) ) continue;
+      if ( excludedScans.contains( ii ) ) continue;
       
-      double plateau = calc_plateau( &d->scanData[ jj ] );
+      double plateau = avg_plateau( &d->scanData[ ii ] );
       double range   = plateau - baseline;
       double test_y  = baseline + range * positionPct;
       
-      if ( d->scanData[ jj ].readings[ 0 ].value > test_y ) exclude++;
+      if ( d->scanData[ ii ].readings[ 0 ].value > test_y ) exclude++;
    }
 
    le_skipped->setText( QString::number( exclude ) );
+
+   // Do first experimental plateau calcs based on horizontal zones
+   int     nrelp       = 0;
+   int     nunrp       = 0;
+   QList< double > plats;
+   QList< int >    isrel;
+   QList< int >    isunr;
+
+   for ( int ii = exclude; ii < scanCount; ii++ )
+   {
+      US_DataIO::scan* s = &d->scanData[ ii ];
+qDebug() << "p: scan " << ii+1;
+      double plateau     = zone_plateau( s, baseline );
+
+      if ( plateau > 0.0 )
+      {
+         plats.append( plateau );
+         isrel.append( ii );
+         nrelp++;
+qDebug() << "p:    *RELIABLE* " << ii+1 << nrelp;
+      }
+      else
+      {
+         isunr.append( ii );
+         nunrp++;
+qDebug() << "p:    -UNreliable- " << ii+1 << nunrp;
+      }
+   }
+qDebug() << "p: nrelp nunrp " << nrelp << nunrp;
+qDebug() << "  RELIABLE: 1st " << isrel.at(0)+1 << "  last " << isrel.last()+1;
+qDebug() << "  UNreli: 1st " << isunr.at(0)+1 << "  last " << isunr.last()+1;
+for (int jj=0;jj<isunr.size();jj++) qDebug() << "    UNr: " << isunr.at(jj)+1;
+
+   int     ndpts     = ndivis + 1;
+   int     ntpts     = scanCount * ndpts;
+   double* ptx       = new double[ scanCount ];
+   double* pty       = new double[ ntpts ];
+
+   // Find Swavg and C0 by line fit
+   // Solve for slope "a" and intercept "b" in
+   // set of equations: y = ax + b 
+   //   where x is corrected time
+   //   and   y is log of plateau concentration
+   // log( Cp ) = (-2 * Swavg * omega-sq ) t + log( C0 );
+   //   for scans with reliable plateau values
+
+   for ( int jj = 0; jj < nrelp; jj++ )
+   {
+      int ii     = isrel.at( jj );
+      ptx[ jj ]  = d->scanData[ ii ].seconds - time_correction;
+      pty[ jj ]  = log( plats.at( jj ) );
+   }
+
+   double slope;
+   double intcp;
+   double sigma;
+   double corre;
+
+   US_Math::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, nrelp );
+
+   // Determine Cp for each of the unreliable scans
+   // y = ax + b, using "a" and "b" determined above.
+   // Since y = log( Cp ), we get Cp by exponentiating
+   // the right-hand term.
+
+   for ( int jj = 0; jj < nunrp; jj++ )
+   {
+      int ii     = isunr.at( jj );
+      double tc  = d->scanData[ ii ].seconds - time_correction;
+
+      d->scanData[ ii ].plateau = exp( tc * slope + intcp );
+
+qDebug() << " jj scan plateau " << jj << ii+1 << d->scanData[ii].plateau;
+   }
 
    // Draw plot
    data_plot1->clear();
@@ -296,14 +368,10 @@ void US_vHW_Enhanced::data_plot( void )
    data_plot1->setAxisTitle( QwtPlot::yLeft  , 
          tr( "Corrected Sed. Coeff. (1e-13 s)" ) );
 
-   int     ndpts     = ndivis + 1;
-   int     ntpts     = scanCount * ndpts;
-   double* ptx       = new double[ scanCount ];
-   double* pty       = new double[ ntpts ];
    int     kk        = 0;
 
    // Calculate the corrected sedimentation coefficients
-   for ( int ii = 0; ii < scanCount; ii++ )
+   for ( int ii = exclude; ii < scanCount; ii++ )
    {
       US_DataIO::scan* s = &d->scanData[ ii ];
 
@@ -315,10 +383,9 @@ void US_vHW_Enhanced::data_plot( void )
       ptx[ ii ]      = timev;         // save corrected time and accum max
       xmax           = ( xmax > timev ) ? xmax : timev;
 
-      double plateau = calc_plateau( s );
-      double range   = plateau - baseline;
+      double range   = s->plateau - baseline;
       double span    = range * boundaryPct;
-      double spinc   = span / double( ndivis + 1 );
+      double spinc   = span / double( ndivis );
       double spanv0  = baseline + range * positionPct;
       double omega   = s->rpm * M_PI / 30.0;
       double omegsq  = omega * omega;
@@ -348,12 +415,9 @@ void US_vHW_Enhanced::data_plot( void )
                double av2  = s->readings[ j2 ].value;
                double rv1  = s->readings[ j1 ].d.radius;
                double rv2  = s->readings[ j2 ].d.radius;
-               double dav  = av2 - av1;
-               double drv  = rv2 - rv1;
-               if ( dav != 0.0 )
-                  rv0         = rv1 + ( ( absorbv - av1 ) * drv / dav );
-               else
-                  rv0         = rv1;
+               double rra  = av2 - av1;
+               rra         = ( rra == 0.0 ) ? 0.0 : ( ( rv2 - rv1 ) / rra );
+               rv0         = rv1 + ( absorbv - av1 ) * rra;
             }
 
             else
@@ -365,9 +429,9 @@ void US_vHW_Enhanced::data_plot( void )
          if ( rv0 > 0.0 )
          {  // use radius and other terms to get corrected sed. coeff. value
             rv0         = correc * log( rv0 / meniscus ) / timev;
-if(rv0>6.5) {
-qDebug() << " rv0=" << rv0 << "   scan " << ii << "   div " << jj;
-}
+//if(rv0>6.5) {
+//qDebug() << " rv0=" << rv0 << "   scan " << ii << "   div " << jj;
+//}
          }
          pty[ kk++ ] = rv0;           // save sed. coeff. value
          ymax        = ( ymax > rv0 ) ? ymax : rv0;
@@ -571,11 +635,11 @@ int US_vHW_Enhanced::first_gteq( double absorbv,
 }
 
 //  get average scan plateau value for 11 points around input value
-double US_vHW_Enhanced::calc_plateau( US_DataIO::scan* s )
+double US_vHW_Enhanced::avg_plateau( US_DataIO::scan* s )
 {
    double plato  = s->plateau;
    int    points = s->readings.size();
-//qDebug() << "calc_plateau in: " << plato << "   points " << points;
+//qDebug() << "avg_plateau in: " << plato << "   points " << points;
 //qDebug() << " rd0 rdn " << s->readings[0].value << s->readings[points-1].value;
    int    j2     = first_gteq( plato, s->readings, points );
 
@@ -594,5 +658,158 @@ double US_vHW_Enhanced::calc_plateau( US_DataIO::scan* s )
 //qDebug() << "     plateau out: " << plato << "    j1 j2 " << j1 << j2;
    }
    return plato;
+}
+
+double US_vHW_Enhanced::zone_plateau( US_DataIO::scan* s, double baseline )
+{
+   double  plato  = -1.0;
+   double  posPct = ct_boundaryPos->value() / 100.0;
+   double  starta = baseline + ( s->plateau - baseline ) * posPct;
+   int     points = s->readings.size();
+qDebug() << "zone: points=" << points;
+   int     j0     = first_gteq( starta, s->readings, points );
+           j0     = ( j0 < 0 ) ? 0 : j0;
+qDebug() << "      j0=" << j0;
+//qDebug() << "      bln v0 str " << baseline << s->readings[0].value << starta;
+   int     nzp    = PZ_POINTS;
+   int     j1     = 0;
+   int     j2     = 0;
+   int     j9     = 0;
+   int     jj     = 0;
+   int     l0     = nzp;
+   double* x      = new double[ points ];
+   double* y      = new double[ points ];
+
+   // get the first potential zone and get its slope
+
+   for ( jj = j0; jj < points; jj++ )
+   {  // accumulate x,y for all readings in the scan
+      x[ j9 ]       = s->readings[ jj ].d.radius;
+      y[ j9++ ]     = s->readings[ jj ].value;
+   }
+
+   double  sumx;
+   double  sumy;
+   double  sumxy;
+   double  sumxs;
+
+   double  slope = calc_slope( x, y, nzp, sumx, sumy, sumxy, sumxs );
+qDebug() << "         slope0 " << slope;
+
+   // get slopes for sliding zone and detect where flat
+
+   double  x0    = x[ 0 ];
+   double  y0    = y[ 0 ];
+   double  x1;
+   double  y1;
+   double  sllo1 = slope;
+   double  sllo2 = slope;
+   double  slhi1 = slope;
+   double  slavg = 0.0;
+   j9            = 0;
+   jj            = 0;
+
+   while ( l0 < points )
+   {  // loop until zone end is at readings end or flat zone ends
+      x1       = x[ l0 ];     // new values to use in slope sums
+      y1       = y[ l0++ ];
+      jj++;
+      slope    = update_slope( nzp, x0, y0, x1, y1, sumx, sumy, sumxy, sumxs );
+//qDebug() << "         jj " << jj << " slope " << slope;
+
+      if ( slope < PZ_THRLO )
+      {  // slope is below threshold, so we're in flat area
+         if ( j1 == 0 )
+         {  // first slope to fall below threshold (near zero)
+            j1     = jj;
+            j2     = jj;
+            sllo1  = slope;
+            sllo2  = slope;
+qDebug() << "           1st flat jj " << jj;
+         }
+
+         else if ( slope < sllo2 )
+         {  // slope is lowest so far
+            j2     = jj;
+            sllo2  = slope;
+qDebug() << "           low flat jj " << jj;
+         }
+         slavg += slope;
+      }
+
+      else if ( j1 > 0  &&  slope > PZ_THRHI )
+      {  // after flat area, first slope to get too high
+         j9     = jj;
+qDebug() << "           high after flat jj " << jj;
+         slhi1  = slope;
+         break;    // flat zone is over, so break out of loop
+      }
+
+      x0       = x[ jj ];     // values to remove from next iteration
+      y0       = y[ jj ];
+   }
+
+   // average plateau over flat zone
+
+   if ( j1 > j0 )
+   {
+      plato      = 0.0;
+qDebug() << "        j1 j2 j9 " << j1 << j2 << j9;
+      jj         = nzp / 2;            // bump start to middle of 1st gate`
+      j1        += jj;
+      //j9        -= 2;
+      j9         = ( j9 < j1 ) ? ( j1 + jj ) : j9;
+qDebug() << "         sll1 sll2 slh1 " << sllo1 << sllo2 << slhi1;
+      j2         = j9 - j1;            // size of overall flat zone
+      if ( j2 > PZ_HZLO )
+      {
+         for ( jj = j1; jj < j9; jj++ )
+            plato     += y[ jj ];      // sum y's in flat zone
+
+         plato     /= (double)j2;      // plateau is average
+qDebug() << "          plati plato " << s->plateau << plato;
+         s->plateau = plato;
+      }
+   }
+
+   delete [] x;                             // clean up
+   delete [] y;
+
+   return plato;
+}
+
+// calculate slope of x,y and return sums used in calculations
+double US_vHW_Enhanced::calc_slope( double* x, double* y, int npts,
+      double& sumx, double& sumy, double& sumxy, double& sumxs )
+{
+   sumx    = 0.0;
+   sumy    = 0.0;
+   sumxy   = 0.0;
+   sumxs   = 0.0;
+
+   for ( int ii = 0; ii < npts; ii++ )
+   {
+      sumx   += x[ ii ];
+      sumy   += y[ ii ];
+      sumxy  += ( x[ ii ] * y[ ii ] );
+      sumxs  += ( x[ ii ] * x[ ii ] );
+   }
+
+   return fabs( ( (double)npts * sumxy - sumx * sumy ) /
+                ( (double)npts * sumxs - sumx * sumx ) );
+}
+
+// update slope of sliding x,y by simply modifying running sums used
+double US_vHW_Enhanced::update_slope( int npts,
+      double x0, double y0, double x1, double y1,
+      double& sumx, double& sumy, double& sumxy, double& sumxs )
+{
+   sumx   += ( x1 - x0 );
+   sumy   += ( y1 - y0 );
+   sumxy  += ( x1 * y1 - x0 * y0 );
+   sumxs  += ( x1 * x1 - x0 * x0 );
+
+   return fabs( ( (double)npts * sumxy - sumx * sumy ) /
+                ( (double)npts * sumxs - sumx * sumx ) );
 }
 
