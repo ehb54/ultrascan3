@@ -12,6 +12,11 @@
 #define editedData US_DataIO::editedData
 #define rawData    US_DataIO::rawData
 
+#define PZ_THRLO  0.001  // plateau zone slope threshold (low)
+#define PZ_THRHI  0.200  // plateau zone slope threshold (high)
+#define PZ_POINTS 51     // plateau zone line fit number points
+#define PZ_HZLO   5      // plateau zone horizontal extent minimum points
+
 class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
 {
    Q_OBJECT
@@ -125,7 +130,12 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       void update_exsscan( double );
       void update_exscrng( double );
       int    first_gteq( double, QVector< US_DataIO::reading >&, int );
-      double calc_plateau( US_DataIO::scan* );
+      double avg_plateau( US_DataIO::scan* );
+      double zone_plateau( US_DataIO::scan*, double );
+      double calc_slope( double*, double*, int,
+            double&, double&, double&, double& );
+      double update_slope( int, double, double, double, double,
+            double&, double&, double&, double& );
 
       void help     ( void )
       { showHelp.show_help( "vHW_enhanced.html" ); };
