@@ -312,6 +312,8 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
    xml.writeAttribute( "ph"         , QString::number( pH       , 'f', 5 ) );
    xml.writeAttribute( "density"    , QString::number( density  , 'f', 5 ) );
    xml.writeAttribute( "viscosity"  , QString::number( viscosity, 'f', 5 ) );
+   xml.writeAttribute( "compressibility", 
+      QString::number( compressibility, 'e', 5 ) );
 
    for ( int i = 0; i < component.size(); i++ )
    {
@@ -395,13 +397,13 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
 {
    QXmlStreamAttributes a = xml.attributes();
 
-   personID    = a.value( "person_id"   ).toString().toInt();
-   bufferID    = a.value( "id"          ).toString();
-   description = a.value( "description" ).toString();
-   spectrum    = a.value( "spectrum"    ).toString();
-   pH          = a.value( "ph"          ).toString().toDouble();
-   density     = a.value( "density"     ).toString().toDouble();
-   viscosity   = a.value( "viscosity"   ).toString().toDouble();
+   personID        = a.value( "person_id"   ).toString().toInt();
+   bufferID        = a.value( "id"          ).toString();
+   description     = a.value( "description" ).toString();
+   compressibility = a.value( "compressibility" ).toString().toDouble();
+   pH              = a.value( "ph"          ).toString().toDouble();
+   density         = a.value( "density"     ).toString().toDouble();
+   viscosity       = a.value( "viscosity"   ).toString().toDouble();
 
    component    .clear();
    concentration.clear();
