@@ -92,7 +92,7 @@ class US_DataIO
          char    guid[ 16 ];        //!< A generated globally unique identifier
          int     cell;              //!< Cell (hole) of rotor for this data
          char    channel;           //!< Channel ('A', 'B', etc) of scan data
-         QString description;       //!< Descriptive data taken from \class beckmanRawScan
+         QString description;       //!< Descriptive data taken from \ref beckmanRawScan
          
          QVector< scan > scanData;  //!<  The collections of scans for the CCW
       };

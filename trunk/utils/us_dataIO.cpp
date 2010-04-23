@@ -87,9 +87,10 @@ int US_DataIO::writeRawData( const QString& file, rawData& data )
    write( ds, data.type, 2, crc );
 
    // Create and write a guid
-   uuid_t uuid;
-   uuid_generate( uuid );
-   write( ds, (char*) &uuid, 16, crc );
+   //uuid_t uuid;
+   //uuid_generate( uuid );
+   //write( ds, (char*) &uuid, 16, crc );
+   write( ds, data.guid, 16, crc );
 
    // Write description
    char desc[ 240 ];

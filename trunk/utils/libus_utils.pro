@@ -12,6 +12,10 @@ macx {
 win32:TARGET = libus_utils
 TRANSLATIONS = $${TARGET}_DE_de.ts
 
+
+# Consolidate us_femglobal and us_femglobal_new when development is 
+# progressed to a point where us_femglobal can be removed 
+
 HEADERS      = us_astfem_math.h \
                us_astfem_rsa.h  \
                us_buffer.h      \
@@ -21,6 +25,7 @@ HEADERS      = us_astfem_math.h \
                us_dataIO.h      \
                us_global.h      \
                us_femglobal.h   \
+               us_femglobal_new.h   \
                us_hardware.h    \ 
                us_http_post.h   \
                us_license_t.h   \
@@ -37,6 +42,7 @@ SOURCES      = us_astfem_math.cpp \
                us_crc.cpp         \
                us_crypto.cpp      \
                us_dataIO.cpp      \
+               us_femglobal_new.cpp   \
                us_femglobal.cpp   \
                us_hardware.cpp    \
                us_global.cpp      \

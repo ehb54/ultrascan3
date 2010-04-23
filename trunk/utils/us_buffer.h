@@ -48,11 +48,11 @@ class US_EXTERN US_Buffer
       QString person;      //!< Convenience value of investigator's name.
       QString bufferID;    //!< The buffer's DB ID, or -1 if from harddrive.
       QString description; //!< The buffer's description. 
-      QString spectrum;    //!< Gaussian data for absorption data
+      double  compressibility; //!< The buffer's compressibility
       double  pH;          //!< Acidity or basicity of the buffer
       double  density;     //!< The density of the buffer. 
       double  viscosity;   //!< The viscosity of the buffer. 
-      
+
       //! An associative array of extinction coefficients indexed by wavelength.
       QMap< double, double > extinction;  
       //! An associative array of refraction coefficients indexed by wavelength.
