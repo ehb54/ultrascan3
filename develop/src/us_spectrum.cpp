@@ -290,7 +290,7 @@ void US_Spectrum::setup_GUI()
    j++;
    buttonBox->addWidget(pb_help, j, 0, 0);
    buttonBox->addWidget(pb_close, j, 1, 0);
-   r = buttonBox->cellGeometry(1, 0);
+   //buttonBox->cellGeometry(1, 0);
 
    setGeometry(global_Xpos, global_Ypos, r.width()+10+600, 550+6+8);
    
