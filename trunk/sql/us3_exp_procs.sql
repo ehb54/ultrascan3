@@ -14,12 +14,12 @@ DROP FUNCTION IF EXISTS verify_experiment_permission$$
 CREATE FUNCTION verify_experiment_permission( p_guid         CHAR(36),
                                               p_password     VARCHAR(80),
                                               p_experimentID INT )
-  RETURNS TINYINT
+  RETURNS INT
   READS SQL DATA
 
 BEGIN
   DECLARE count_experiments INT;
-  DECLARE status            TINYINT;
+  DECLARE status            INT;
 
   CALL config();
   SET status   = @ERROR;
@@ -44,6 +44,62 @@ BEGIN
     SET status = @NOTPERMITTED;
 
   END IF;
+
+  RETURN( status );
+
+END$$
+
+-- Verifies that the operator has permission to operate the instrument,
+--  and that the instrument is in the right lab
+DROP FUNCTION IF EXISTS verify_operator_permission$$
+CREATE FUNCTION verify_operator_permission( p_guid         CHAR(36),
+                                            p_password     VARCHAR(80),
+                                            p_labID        INT,
+                                            p_instrumentID INT,
+                                            p_operatorID   INT )
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_instruments INT;
+  DECLARE count_labs        INT;
+  DECLARE status            INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @ERROR;
+  SET @US3_LAST_ERROR = '';
+
+  -- Check permits for this instrument and this operator
+  SELECT COUNT(*)
+  INTO   count_instruments
+  FROM   permits
+  WHERE  personID     = p_operatorID 
+  AND    instrumentID = p_instrumentID;
+
+  -- Check location of instrument
+  SELECT COUNT(*)
+  INTO   count_labs
+  FROM   instrument
+  WHERE  instrumentID = p_instrumentID
+  AND    labID        = p_labID;
+ 
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+    IF ( count_instruments < 1 ) THEN
+      SET @US3_LAST_ERRNO = @BADOPERATOR;
+      SET @US3_LAST_ERROR = 'MySQL: operator is not permitted to work on this instrument';
+
+    ELSEIF ( count_labs < 1 ) THEN
+      SET @US3_LAST_ERRNO = @BADLABLOCATION;
+      SET @US3_LAST_ERROR = 'MySQL: that instrument is not located in that lab';
+
+    ELSE
+      SET @US3_LAST_ERRNO = @OK;
+
+    END IF;
+
+  END IF;
+
+  SET status = @US3_LAST_ERRNO;
 
   RETURN( status );
 
@@ -129,7 +185,9 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( ( verify_user( p_guid, p_password ) = @OK ) &&
+       ( verify_operator_permission( p_guid, p_password, 
+          p_labID, p_instrumentID, p_operatorID ) = @OK ) ) THEN
     -- Can't have duplicate run ID's for this investigator
     SELECT COUNT(*)
     INTO   l_count_runID
@@ -167,6 +225,8 @@ BEGIN
 
   END IF;
 
+SELECT @LAST_INSERT_ID;
+
   SELECT @US3_LAST_ERRNO AS status;
 
 END$$
@@ -196,13 +256,17 @@ BEGIN
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
 
-  IF ( verify_experiment_permission( p_guid, p_password, p_experimentID ) = @OK ) THEN
-    -- Can't have duplicate run ID's for this investigator
+  IF ( ( verify_experiment_permission( p_guid, p_password, p_experimentID ) = @OK ) &&
+       ( verify_operator_permission( p_guid, p_password, 
+          p_labID, p_instrumentID, p_operatorID ) = @OK ) ) THEN
+    -- Let's make sure we don't result in a duplicate run ID's for this investigator
+    --  through renaming or some such
     SELECT COUNT(*)
     INTO   l_count_runID
     FROM   experimentPerson p, experiment e
     WHERE  p.experimentID = e.experimentID
     AND    e.runID = p_runID
+    AND    e.experimentID != p_experimentID
     AND    p.personID = @US3_ID;
 
     IF ( l_count_runID > 0 ) THEN

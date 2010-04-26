@@ -14,12 +14,12 @@ DROP FUNCTION IF EXISTS verify_analyte_permission$$
 CREATE FUNCTION verify_analyte_permission( p_guid      CHAR(36),
                                            p_password  VARCHAR(80),
                                            p_analyteID INT )
-  RETURNS TINYINT
+  RETURNS INT
   READS SQL DATA
 
 BEGIN
   DECLARE count_analytes INT;
-  DECLARE status         TINYINT;
+  DECLARE status         INT;
 
   CALL config();
   SET status   = @ERROR;

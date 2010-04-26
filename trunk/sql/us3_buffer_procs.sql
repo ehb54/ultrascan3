@@ -14,12 +14,12 @@ DROP FUNCTION IF EXISTS verify_buffer_permission$$
 CREATE FUNCTION verify_buffer_permission( p_guid     CHAR(36),
                                           p_password VARCHAR(80),
                                           p_bufferID INT )
-  RETURNS TINYINT
+  RETURNS INT
   READS SQL DATA
 
 BEGIN
   DECLARE count_buffer   INT;
-  DECLARE status         TINYINT;
+  DECLARE status         INT;
 
   CALL config();
   SET status   = @ERROR;
@@ -87,13 +87,13 @@ END$$
 
 -- INSERTs a new buffer with the specified information
 DROP PROCEDURE IF EXISTS new_buffer$$
-CREATE PROCEDURE new_buffer ( p_guid     CHAR(36),
-                              p_password VARCHAR(80),
-                              p_description TEXT,
-                              p_spectrum TEXT,
-                              p_pH FLOAT,
-                              p_density FLOAT,
-                              p_viscosity FLOAT )
+CREATE PROCEDURE new_buffer ( p_guid            CHAR(36),
+                              p_password        VARCHAR(80),
+                              p_description     TEXT,
+                              p_compressibility FLOAT,
+                              p_pH              FLOAT,
+                              p_density         FLOAT,
+                              p_viscosity       FLOAT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -106,11 +106,11 @@ BEGIN
  
   IF ( verify_user( p_guid, p_password ) = @OK ) THEN
     INSERT INTO buffer SET
-      description = p_description,
-      spectrum    = p_spectrum,
-      pH          = p_pH,
-      density     = p_density,
-      viscosity   = p_viscosity;
+      description     = p_description,
+      compressibility = p_compressibility,
+      pH              = p_pH,
+      density         = p_density,
+      viscosity       = p_viscosity;
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
 
@@ -126,14 +126,14 @@ END$$
 
 -- UPDATEs an existing buffer with the specified information
 DROP PROCEDURE IF EXISTS update_buffer$$
-CREATE PROCEDURE update_buffer ( p_guid     CHAR(36),
-                                 p_password VARCHAR(80),
-                                 p_bufferID INT,
-                                 p_description TEXT,
-                                 p_spectrum TEXT,
-                                 p_pH FLOAT,
-                                 p_density FLOAT,
-                                 p_viscosity FLOAT )
+CREATE PROCEDURE update_buffer ( p_guid            CHAR(36),
+                                 p_password        VARCHAR(80),
+                                 p_bufferID        INT,
+                                 p_description     TEXT,
+                                 p_compressibility FLOAT,
+                                 p_pH              FLOAT,
+                                 p_density         FLOAT,
+                                 p_viscosity       FLOAT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -144,12 +144,12 @@ BEGIN
 
   IF ( verify_buffer_permission( p_guid, p_password, p_bufferID ) = @OK ) THEN
     UPDATE buffer SET
-      description = p_description,
-      spectrum    = p_spectrum,
-      pH          = p_pH,
-      density     = p_density,
-      viscosity   = p_viscosity
-    WHERE bufferID = p_bufferID;
+      description     = p_description,
+      compressibility = p_compressibility,
+      pH              = p_pH,
+      density         = p_density,
+      viscosity       = p_viscosity
+    WHERE bufferID    = p_bufferID;
 
   END IF;
       
@@ -182,16 +182,16 @@ BEGIN
       SELECT @OK AS status;
 
       IF ( p_ID > 0 ) THEN
-        SELECT b.bufferID, description
-        FROM buffer b, bufferPerson
-        WHERE b.bufferID = bufferPerson.bufferID
-        AND bufferPerson.personID = p_ID
+        SELECT   b.bufferID, description
+        FROM     buffer b, bufferPerson
+        WHERE    b.bufferID = bufferPerson.bufferID
+        AND      bufferPerson.personID = p_ID
         ORDER BY b.bufferID DESC;
  
       ELSE
-        SELECT b.bufferID, description
-        FROM buffer b, bufferPerson
-        WHERE b.bufferID = bufferPerson.bufferID
+        SELECT   b.bufferID, description
+        FROM     buffer b, bufferPerson
+        WHERE    b.bufferID = bufferPerson.bufferID
         ORDER BY b.bufferID DESC;
       END IF;
 
@@ -230,7 +230,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   description, spectrum, pH, viscosity, density, personID
+      SELECT   description, compressibility, pH, viscosity, density, personID
       FROM     buffer b, bufferPerson bp
       WHERE    b.bufferID = bp.bufferID
       AND      b.bufferID = p_bufferID;
@@ -267,7 +267,7 @@ BEGIN
     DELETE FROM bufferPerson
     WHERE bufferID = p_bufferID;
 
-    DELETE FROM spectrum
+    DELETE FROM spectrum 
     WHERE bufferID = p_bufferID
     AND   componentType = 'Buffer';
 

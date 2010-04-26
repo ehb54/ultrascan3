@@ -59,20 +59,6 @@ ENGINE = InnoDB;
 
 
 -- -----------------------------------------------------
--- Table us3.instrument
--- -----------------------------------------------------
-DROP TABLE IF EXISTS us3.instrument ;
-
-CREATE  TABLE IF NOT EXISTS us3.instrument (
-  instrumentID INT NOT NULL AUTO_INCREMENT ,
-  name TEXT NULL ,
-  serialNumber TEXT NULL ,
-  dateUpdated TIMESTAMP NULL ,
-  PRIMARY KEY (instrumentID) )
-ENGINE = InnoDB;
-
-
--- -----------------------------------------------------
 -- Table us3.lab
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS us3.lab ;
@@ -85,6 +71,27 @@ CREATE  TABLE IF NOT EXISTS us3.lab (
   room TEXT NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (labID) )
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table us3.instrument
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.instrument ;
+
+CREATE  TABLE IF NOT EXISTS us3.instrument (
+  instrumentID INT NOT NULL AUTO_INCREMENT ,
+  labID INT NOT NULL ,
+  name TEXT NULL ,
+  serialNumber TEXT NULL ,
+  dateUpdated TIMESTAMP NULL ,
+  PRIMARY KEY (instrumentID) ,
+  INDEX ndx_instrument_labID (labID ASC) ,
+  CONSTRAINT fk_instrument_labID
+    FOREIGN KEY ( labID )
+    REFERENCES us3.lab ( labID )
+    ON DELETE CASCADE
+    ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
@@ -118,6 +125,7 @@ DROP TABLE IF EXISTS us3.rotor ;
 CREATE  TABLE IF NOT EXISTS us3.rotor (
   rotorID INT NOT NULL AUTO_INCREMENT ,
   abstractRotorID INT NULL ,
+  labID INT NOT NULL ,
   GUID CHAR(36) NULL ,
   name TEXT NULL ,
   serialNumber TEXT NULL ,
@@ -126,11 +134,17 @@ CREATE  TABLE IF NOT EXISTS us3.rotor (
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (rotorID) ,
   INDEX ndx_rotor_abstractRotorID (abstractRotorID ASC) ,
+  INDEX ndx_rotor_labID (labID ASC) ,
   CONSTRAINT fk_rotor_abstractRotorID
     FOREIGN KEY (abstractRotorID )
     REFERENCES us3.abstractRotor (abstractRotorID )
     ON DELETE SET NULL
-    ON UPDATE CASCADE)
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_rotor_labID
+    FOREIGN KEY (labID )
+    REFERENCES us3.lab (labID )
+    ON DELETE CASCADE 
+    ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
 
@@ -421,6 +435,7 @@ CREATE  TABLE IF NOT EXISTS us3.buffer (
   bufferID INT NOT NULL AUTO_INCREMENT ,
   GUID CHAR(36) NULL ,
   description TEXT NULL DEFAULT NULL ,
+  compressibility FLOAT NULL DEFAULT NULL ,
   pH FLOAT NULL DEFAULT NULL ,
   viscosity FLOAT NULL DEFAULT NULL ,
   density FLOAT NULL DEFAULT NULL ,
@@ -950,15 +965,16 @@ ENGINE = InnoDB;
 DROP TABLE IF EXISTS us3.permits ;
 
 CREATE  TABLE IF NOT EXISTS us3.permits (
-  investigatorID INT NOT NULL ,
-  collaboratorID INT NOT NULL ,
+  permitID INT NOT NULL AUTO_INCREMENT ,
+  personID INT NOT NULL ,
+  collaboratorID INT default NULL ,
   instrumentID INT NOT NULL ,
-  PRIMARY KEY (investigatorID) ,
-  INDEX ndx_permits_investigatorID (investigatorID ASC) ,
+  PRIMARY KEY (permitID) ,
+  INDEX ndx_permits_personID (personID ASC) ,
   INDEX ndx_permits_collaboratorID (collaboratorID ASC) ,
   INDEX ndx_permits_instrumentID (instrumentID ASC) ,
-  CONSTRAINT fk_permits_investigatorID
-    FOREIGN KEY (investigatorID )
+  CONSTRAINT fk_permits_personID
+    FOREIGN KEY (personID )
     REFERENCES us3.people (personID )
     ON DELETE CASCADE
     ON UPDATE CASCADE,
@@ -970,7 +986,7 @@ CREATE  TABLE IF NOT EXISTS us3.permits (
   CONSTRAINT fk_permits_instrumentID
     FOREIGN KEY (instrumentID )
     REFERENCES us3.instrument (instrumentID )
-    ON DELETE NO ACTION
+    ON DELETE CASCADE
     ON UPDATE NO ACTION)
 ENGINE = InnoDB;
 
