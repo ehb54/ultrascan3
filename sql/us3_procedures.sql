@@ -27,6 +27,8 @@ BEGIN
   SET @EMPTY          = 105;
 
   SET @NOTPERMITTED   = 201;
+  SET @BADOPERATOR    = 202;
+  SET @BADLABLOCATION = 203;
 
   SET @NOROWS         = 301;
 
@@ -38,6 +40,7 @@ BEGIN
   SET @NO_COMPONENT   = 502;
   SET @NO_ROTOR       = 503;
   SET @NO_ANALYTE     = 504;
+  SET @NO_LAB         = 505;
 
   -- Some user levels
   SET @US3_USER       = 0;
@@ -87,7 +90,7 @@ END$$
 DROP FUNCTION IF EXISTS check_user$$
 CREATE FUNCTION check_user( p_guid     CHAR(36),
                             p_password VARCHAR(80) )
-  RETURNS TINYINT
+  RETURNS INT
   READS SQL DATA
 
 BEGIN
@@ -95,7 +98,7 @@ BEGIN
   DECLARE md5_pw VARCHAR(80);
   DECLARE l_password VARCHAR(80);
   DECLARE activated INT;
-  DECLARE status TINYINT;
+  DECLARE status INT;
 
   call config();
   SET @US3_LAST_ERRNO = @OK;
@@ -185,7 +188,7 @@ END$$
 DROP FUNCTION IF EXISTS check_user_email$$
 CREATE FUNCTION check_user_email( p_email VARCHAR(63),
                                   p_password VARCHAR(80) )
-  RETURNS TINYINT
+  RETURNS INT
   READS SQL DATA
 
 BEGIN
@@ -193,7 +196,7 @@ BEGIN
   DECLARE md5_pw VARCHAR(80);
   DECLARE l_password VARCHAR(80);
   DECLARE activated INT;
-  DECLARE status TINYINT;
+  DECLARE status INT;
 
   call config();
   SET @US3_LAST_ERRNO = @OK;
@@ -290,7 +293,7 @@ END$$
 DROP FUNCTION IF EXISTS verify_user$$
 CREATE FUNCTION verify_user( p_guid     CHAR(36),
                              p_password VARCHAR(80) )
-  RETURNS TINYINT
+  RETURNS INT
   READS SQL DATA
 
 BEGIN
@@ -313,7 +316,7 @@ DROP FUNCTION IF EXISTS verify_userlevel$$
 CREATE FUNCTION verify_userlevel( p_guid      CHAR(36),
                                   p_password  VARCHAR(80),
                                   p_userlevel INT )
-  RETURNS TINYINT
+  RETURNS INT
   READS SQL DATA
 
 BEGIN
@@ -339,7 +342,7 @@ END$$
 DROP FUNCTION IF EXISTS verify_user_email$$
 CREATE FUNCTION verify_user_email( p_email VARCHAR(63),
                              p_password VARCHAR(80) )
-  RETURNS TINYINT
+  RETURNS INT
   READS SQL DATA
 
 BEGIN

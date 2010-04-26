@@ -15,7 +15,8 @@ DELIMITER $$
 -- Returns the count of all rotors in db
 DROP FUNCTION IF EXISTS count_rotors$$
 CREATE FUNCTION count_rotors ( p_guid     CHAR(36),
-                               p_password VARCHAR(80) )
+                               p_password VARCHAR(80),
+                               p_labID    INT )
   RETURNS INT
   READS SQL DATA
 
@@ -29,7 +30,8 @@ BEGIN
   IF ( verify_user( p_guid, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_rotors
-    FROM      rotor;
+    FROM      rotor
+    WHERE     labID = p_labID;
 
   END IF;
 
@@ -37,10 +39,11 @@ BEGIN
 
 END$$
 
--- SELECTs names of all rotors
+-- SELECTs names of all rotors in the specified lab
 DROP PROCEDURE IF EXISTS get_rotor_names$$
 CREATE PROCEDURE get_rotor_names ( p_guid     CHAR(36),
-                                   p_password VARCHAR(80) )
+                                   p_password VARCHAR(80),
+                                   p_labID    INT )
   READS SQL DATA
 
 BEGIN
@@ -53,7 +56,8 @@ BEGIN
   IF ( verify_user( p_guid, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_rotors
-    FROM      rotor;
+    FROM      rotor
+    WHERE     labID = p_labID;
 
     IF ( count_rotors = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
@@ -66,6 +70,7 @@ BEGIN
 
       SELECT rotorID, name
       FROM rotor
+      WHERE labID = p_labID
       ORDER BY name;
  
     END IF;
@@ -123,12 +128,14 @@ DROP PROCEDURE IF EXISTS add_rotor$$
 CREATE PROCEDURE add_rotor ( p_guid            CHAR(36),
                              p_password        VARCHAR(80),
                              p_abstractRotorID INT,
+                             p_labID           INT,
                              p_name            TEXT,
                              p_serialNumber    TEXT )
   MODIFIES SQL DATA
 
 BEGIN
   DECLARE count_abstract_rotors INT;
+  DECLARE count_labs            INT;
   DECLARE l_defaultStretch      TEXT;
 
   CALL config();
@@ -141,11 +148,22 @@ BEGIN
   FROM       abstractRotor
   WHERE      abstractRotorID = p_abstractRotorID;
 
+  SELECT     COUNT(*)
+  INTO       count_labs
+  FROM       lab
+  WHERE      labID = p_labID;
+
   IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
     IF ( count_abstract_rotors < 1 ) THEN
       SET @US3_LAST_ERRNO = @NO_ROTOR;
       SET @US3_LAST_ERROR = CONCAT('MySQL: No abstract rotor with ID ',
                                    p_abstractRotorID,
+                                   ' exists' );
+
+    ELSEIF ( count_labs < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_LAB;
+      SET @US3_LAST_ERROR = CONCAT('MySQL: No lab with ID ',
+                                   p_labID,
                                    ' exists' );
 
     ELSE
@@ -156,6 +174,7 @@ BEGIN
 
       INSERT INTO rotor SET
         abstractRotorID   = p_abstractRotorID,
+        labID             = p_labID,
         name              = p_name,
         serialNumber      = p_serialNumber,
         stretchFunction   = l_defaultStretch,
@@ -354,7 +373,8 @@ END$$
 -- Returns the count of all instruments in db
 DROP FUNCTION IF EXISTS count_instruments$$
 CREATE FUNCTION count_instruments ( p_guid     CHAR(36),
-                                    p_password VARCHAR(80) )
+                                    p_password VARCHAR(80),
+                                    p_labID    INT )
   RETURNS INT
   READS SQL DATA
 
@@ -368,7 +388,8 @@ BEGIN
   IF ( verify_user( p_guid, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_instruments
-    FROM      instrument;
+    FROM      instrument
+    WHERE     labID = p_labID;
 
   END IF;
 
@@ -379,7 +400,8 @@ END$$
 -- SELECTs names of all instruments
 DROP PROCEDURE IF EXISTS get_instrument_names$$
 CREATE PROCEDURE get_instrument_names ( p_guid     CHAR(36),
-                                        p_password VARCHAR(80) )
+                                        p_password VARCHAR(80),
+                                        p_labID    INT )
   READS SQL DATA
 
 BEGIN
@@ -392,7 +414,8 @@ BEGIN
   IF ( verify_user( p_guid, p_password ) = @OK ) THEN
     SELECT    COUNT(*)
     INTO      count_instruments
-    FROM      instrument;
+    FROM      instrument
+    WHERE     labID = p_labID;
 
     IF ( count_instruments = 0 ) THEN
       SET @US3_LAST_ERRNO = @NOROWS;
@@ -403,8 +426,9 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT instrumentID, name
-      FROM instrument
+      SELECT   instrumentID, name
+      FROM     instrument
+      WHERE    labID = p_labID 
       ORDER BY name;
  
     END IF;
@@ -460,7 +484,8 @@ DROP PROCEDURE IF EXISTS add_instrument$$
 CREATE PROCEDURE add_instrument ( p_guid            CHAR(36),
                                   p_password        VARCHAR(80),
                                   p_name            TEXT,
-                                  p_serialNumber    TEXT )
+                                  p_serialNumber    TEXT,
+                                  p_labID           INT )
   MODIFIES SQL DATA
 
 BEGIN
@@ -473,6 +498,7 @@ BEGIN
     INSERT INTO instrument SET
       name              = p_name,
       serialNumber      = p_serialNumber,
+      labID             = p_labID,
       dateUpdated       = NOW();
 
     SET @LAST_INSERT_ID = LAST_INSERT_ID();
@@ -480,6 +506,47 @@ BEGIN
   END IF;
 
   SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- SELECTs names of all operators permitted to operate a specified instrument
+DROP PROCEDURE IF EXISTS get_operator_names$$
+CREATE PROCEDURE get_operator_names ( p_guid         CHAR(36),
+                                      p_password     VARCHAR(80),
+                                      p_instrumentID INT )
+  READS SQL DATA
+
+BEGIN
+  DECLARE count_operators INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+    SELECT    COUNT(*)
+    INTO      count_operators
+    FROM      permits
+    WHERE     instrumentID = p_instrumentID;
+
+    IF ( count_operators = 0 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+ 
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   m.personID, p.lname, p.fname
+      FROM     permits m, people p
+      WHERE    m.personID = p.personID
+      AND      m.instrumentID = p_instrumentID 
+      ORDER BY p.lname, p.fname;
+ 
+    END IF;
+
+  END IF;
 
 END$$
 
