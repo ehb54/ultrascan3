@@ -76,6 +76,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       QLineEdit*   le_density;
       QLineEdit*   le_viscosity;
       QLineEdit*   le_ph;
+      QLineEdit*   le_compressibility;
       QLineEdit*   le_description;
       QLineEdit*   le_investigator;
       QLineEdit*   le_concentration;

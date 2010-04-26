@@ -57,8 +57,8 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
    connect( lw_buffer_db, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
                           SLOT  ( select_buffer    ( QListWidgetItem* ) ) );
 
-   main->addWidget( lw_buffer_db, row, 0, 6, 1 );
-   row += 7;
+   main->addWidget( lw_buffer_db, row, 0, 7, 1 );
+   row += 8;
 
    // Labels
    QLabel* lb_description = us_label( tr( "Buffer Description:" ) );
@@ -83,9 +83,9 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
    connect( lw_ingredients, SIGNAL( itemSelectionChanged( void ) ), 
                             SLOT  ( list_component      ( void ) ) );
    
-   main->addWidget( lw_ingredients, row, 0, 5, 1 );
+   main->addWidget( lw_ingredients, row, 0, 6, 1 );
 
-   row += 5;
+   row += 6;
 
    QPushButton* pb_synch = us_pushbutton( tr( "Synch components with DB" ) );
    connect( pb_synch, SIGNAL( clicked() ), SLOT( synch_components() ) );
@@ -146,6 +146,12 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
 
    le_ph = us_lineedit();
    main->addWidget( le_ph, row++, 2 );
+
+   QLabel* lb_compressibility = us_label( tr( "Compressibility:" ) );
+   main->addWidget( lb_compressibility, row, 1 );
+
+   le_compressibility = us_lineedit();
+   main->addWidget( le_compressibility, row++, 2 );
 
    QLabel* lb_optics = us_label( tr( "Optics:" ) );
    main->addWidget( lb_optics, row, 0 );
@@ -378,15 +384,15 @@ void US_BufferGui::select_buffer( QListWidgetItem* item )
    db.query( q );
    db.next(); 
    
-   buffer.bufferID    = bufferID;
-   buffer.description = db.value( 0 ).toString();
-   buffer.spectrum    = db.value( 1 ).toString();
-   buffer.pH          = db.value( 2 ).toString().toDouble();
-   buffer.viscosity   = db.value( 3 ).toString().toDouble();
-   buffer.density     = db.value( 4 ).toString().toDouble();
+   buffer.bufferID        = bufferID;
+   buffer.description     = db.value( 0 ).toString();
+   buffer.compressibility = db.value( 1 ).toString().toDouble();
+   buffer.pH              = db.value( 2 ).toString().toDouble();
+   buffer.viscosity       = db.value( 3 ).toString().toDouble();
+   buffer.density         = db.value( 4 ).toString().toDouble();
 
-   QString personID   = db.value( 5 ).toString();
-   buffer.personID    = personID.toInt();
+   QString personID       = db.value( 5 ).toString();
+   buffer.personID        = personID.toInt();
    
    buffer.component    .clear();
    buffer.concentration.clear();
@@ -449,6 +455,7 @@ void US_BufferGui::select_buffer( QListWidgetItem* item )
    le_density    ->setText( s.sprintf( " %6.4f", buffer.density     ) );
    le_viscosity  ->setText( s.sprintf( " %6.4f", buffer.viscosity ) );
    le_ph         ->setText( s.sprintf( " %6.4f", buffer.pH          ) );
+   le_compressibility->setText( s.sprintf( " %6.4f", buffer.compressibility ) );
    le_description->setText( buffer.description );
    
    // Allow modification of the just selected buffer from the DB
@@ -517,6 +524,7 @@ void US_BufferGui::read_buffer( void )
    le_density    ->setText( s.sprintf( "%6.4f", buffer.density   ) );
    le_viscosity  ->setText( s.sprintf( "%6.4f", buffer.viscosity ) );
    le_ph         ->setText( s.sprintf( "%6.4f", buffer.pH        ) );
+   le_compressibility->setText( s.sprintf( "%.3e", buffer.compressibility ) );
    le_description->setText( buffer.description );
 
    // Don't let the user override density and viscosity calculations
@@ -591,6 +599,7 @@ void US_BufferGui::update_buffer( void )
    
    buffer.density      = le_density    ->text().toDouble();
    buffer.viscosity    = le_viscosity  ->text().toDouble();
+   buffer.compressibility = le_compressibility->text().toDouble();
 
    // These are updated in other places
    //buffer.component
@@ -675,10 +684,10 @@ void US_BufferGui::save_db( void )
    {
       QStringList q( "new_buffer" );
       q << buffer.description
-        << buffer.spectrum
-        << QString::number( buffer.pH       , 'f', 5 )
-        << QString::number( buffer.density  , 'f', 5 )
-        << QString::number( buffer.viscosity, 'f', 5 );
+        << QString::number( buffer.compressibility, 'f', 5 )
+        << QString::number( buffer.pH             , 'f', 5 )
+        << QString::number( buffer.density        , 'f', 5 )
+        << QString::number( buffer.viscosity      , 'f', 5 );
 
       US_Passwd pw;
       US_DB2    db( pw.getPasswd() );
@@ -764,10 +773,10 @@ void US_BufferGui::update_db( void )
       QStringList q( "update_buffer" );
       q << buffer.bufferID
         << buffer.description
-        << buffer.spectrum
-        << QString::number( buffer.pH       , 'f', 5 )
-        << QString::number( buffer.density  , 'f', 5 )
-        << QString::number( buffer.viscosity, 'f', 5 );
+        << QString::number( buffer.compressibility, 'f', 5 )
+        << QString::number( buffer.pH             , 'f', 5 )
+        << QString::number( buffer.density        , 'f', 5 )
+        << QString::number( buffer.viscosity      , 'f', 5 );
 
       db.statusQuery( q );
 
@@ -951,41 +960,41 @@ void US_BufferGui::reset( void )
 {
    buffer.component.clear();
 
-   buffer.density     = 0.0;
-   buffer.viscosity   = 0.0;
-   buffer.description = "";
-   buffer.bufferID    = "-1";
-   buffer.spectrum    = "";
-   buffer.pH          = 7.0;
+   buffer.density         = 0.0;
+   buffer.viscosity       = 0.0;
+   buffer.description     = "";
+   buffer.bufferID        = "-1";
+   buffer.compressibility = COMP_25W;
+   buffer.pH              = 7.0;
 
-   le_search       ->setText( "" );
-   le_search       ->setReadOnly( false );
-
-   lw_buffer_db    ->clear();
-   lw_buffer       ->clear();
-
-   lb_selected     ->setText( "" );
-
-   le_density      ->setText( "0.0" );
-   le_density      ->setReadOnly( false );
+   le_search         ->setText( "" );
+   le_search         ->setReadOnly( false );
+                    
+   lw_buffer_db      ->clear();
+   lw_buffer         ->clear();
+                    
+   lb_selected       ->setText( "" );
+                    
+   le_density        ->setText( "0.0" );
+   le_density        ->setReadOnly( false );
+                     
+   le_viscosity      ->setText( "0.0" );
+   le_viscosity      ->setReadOnly( false );
+                     
+   le_description    ->setText( "" );
+   le_compressibility->setText( QString::number( buffer.compressibility, 'e', 3 ) );
+   le_ph             ->setText( "7.0" );
                    
-   le_viscosity    ->setText( "0.0" );
-   le_viscosity    ->setReadOnly( false );
-                   
-   le_description  ->setText( "" );
-   //le_spectrum     ->setText( "" );
-   le_ph           ->setText( "7.0" );
-                   
-   pb_save         ->setEnabled( false );
-   pb_save_db      ->setEnabled( false );
-   pb_update_db    ->setEnabled( false );
-   pb_del_db       ->setEnabled( false );
-   
-   lb_units        ->setText( "" );
-   le_concentration->setText( "" );
-   le_concentration->setReadOnly( true );
+   pb_save           ->setEnabled( false );
+   pb_save_db        ->setEnabled( false );
+   pb_update_db      ->setEnabled( false );
+   pb_del_db         ->setEnabled( false );
+                     
+   lb_units          ->setText( "" );
+   le_concentration  ->setText( "" );
+   le_concentration  ->setReadOnly( true );
 
-   le_investigator->setText( "Not Selected" );
+   le_investigator   ->setText( "Not Selected" );
 
    if ( personID > 0 )
    {
