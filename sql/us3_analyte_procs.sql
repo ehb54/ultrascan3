@@ -107,6 +107,7 @@ END$$
 DROP PROCEDURE IF EXISTS new_analyte$$
 CREATE PROCEDURE new_analyte ( p_guid        CHAR(36),
                                p_password    VARCHAR(80),
+                               p_analyteGUID CHAR(36),
                                p_type        VARCHAR(16),
                                p_sequence    TEXT,
                                p_vbar        FLOAT,
@@ -125,6 +126,7 @@ BEGIN
  
   IF ( verify_user( p_guid, p_password ) = @OK ) THEN
     INSERT INTO analyte SET
+      GUID        = p_analyteGUID,
       type        = p_type,
       sequence    = p_sequence,
       vbar        = p_vbar,
@@ -175,6 +177,53 @@ BEGIN
   END IF;
       
   SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- Returns the analyteID associated with the given analyteGUID
+DROP PROCEDURE IF EXISTS get_analyteID$$
+CREATE PROCEDURE get_analyteID ( p_guid        CHAR(36),
+                                 p_password    VARCHAR(80),
+                                 p_analyteGUID CHAR(36) )
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE count_anal INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET count_anal      = 0;
+
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+
+    SELECT    COUNT(*)
+    INTO      count_anal
+    FROM      analyte
+    WHERE     GUID = p_analyteGUID;
+
+    IF ( TRIM( p_analyteGUID ) = '' ) THEN
+      SET @US3_LAST_ERRNO = @EMPTY;
+      SET @US3_LAST_ERROR = CONCAT( 'MySQL: The analyteGUID parameter to the get_analyteID ',
+                                    'function cannot be empty' );
+
+    ELSEIF ( count_anal < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+ 
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   analyteID
+      FROM     analyte
+      WHERE    GUID = p_analyteGUID;
+
+    END IF;
+
+  END IF;
 
 END$$
 
@@ -281,7 +330,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   type, sequence, vbar, description, spectrum, molecularWeight, personID 
+      SELECT   GUID, type, sequence, vbar, description, spectrum, molecularWeight, personID 
       FROM     analyte a, analytePerson ap
       WHERE    a.analyteID = ap.analyteID
       AND      a.analyteID = p_analyteID;
