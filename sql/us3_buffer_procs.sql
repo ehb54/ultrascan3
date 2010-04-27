@@ -105,7 +105,8 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( ( verify_user( p_guid, p_password ) = @OK ) &&
+       ( GUID_exists( p_guid, p_password, 'buffer', p_bufferGUID ) = @OK ) ) THEN
     INSERT INTO buffer SET
       GUID            = p_bufferGUID,
       description     = p_description,

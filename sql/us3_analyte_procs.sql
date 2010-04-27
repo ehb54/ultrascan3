@@ -124,7 +124,8 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
-  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+  IF ( ( verify_user( p_guid, p_password ) = @OK ) &&
+       ( GUID_exists( p_guid, p_password, 'analyte', p_analyteGUID ) = @OK ) ) THEN
     INSERT INTO analyte SET
       GUID        = p_analyteGUID,
       type        = p_type,

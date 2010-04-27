@@ -29,6 +29,7 @@ BEGIN
   SET @NOTPERMITTED   = 201;
   SET @BADOPERATOR    = 202;
   SET @BADLABLOCATION = 203;
+  SET @BADGUID        = 204;
 
   SET @NOROWS         = 301;
 
@@ -397,6 +398,75 @@ BEGIN
     END IF;
 
   END IF;
+
+END$$
+
+DROP FUNCTION IF EXISTS GUID_exists$$
+CREATE FUNCTION GUID_exists( p_guid      CHAR(36),
+                             p_password  VARCHAR(80),
+                             p_tablename ENUM( 'buffer', 'analyte' ),
+                             p_tableGUID CHAR(36) )
+  RETURNS INT
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE pattern       CHAR(100);
+  DECLARE GUID_formatOK INT;
+  DECLARE count_GUID    INT;
+  CALL config();
+
+  SET @US3_LAST_ERRNO   = @OK;
+  SET @US3_LAST_ERROR   = '';
+  SET pattern = '^(([0-9a-fA-F]){8}-([0-9a-fA-F]){4}-([0-9a-fA-F]){4}-([0-9a-fA-F]){4}-([0-9a-fA-F]){12})$';
+  SET count_GUID        = 0;
+
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+    -- Does the GUID fit the pattern?
+    SET p_tableGUID = TRIM( p_tableGUID );
+    SELECT p_tableGUID REGEXP pattern
+    INTO GUID_formatOK;
+
+    -- Let's do the count
+    IF ( p_tablename = 'buffer' ) THEN
+      SELECT COUNT(*)
+      INTO count_GUID
+      FROM buffer
+      WHERE GUID = p_tableGUID;
+
+    ELSEIF ( p_tablename = 'analyte' ) THEN
+      SELECT COUNT(*)
+      INTO count_GUID
+      FROM analyte
+      WHERE GUID = p_tableGUID;
+
+    END IF;
+
+    -- Now calculate return status
+    IF ( TRIM( p_guid ) = '' ) THEN
+      SET @US3_LAST_ERRNO = @EMPTY;
+      SET @US3_LAST_ERROR = CONCAT( 'MySQL: The GUID parameter to the check_GUID ',
+                                    'function cannot be empty' );
+
+    ELSEIF ( NOT GUID_formatOK ) THEN
+      SET @US3_LAST_ERRNO = @BADGUID;
+      SET @US3_LAST_ERROR = 'MySQL: The specified GUID is not the correct format';
+
+    ELSEIF ( count_GUID > 0 ) THEN
+      SET @US3_LAST_ERRNO = @DUPFIELD;
+      SET @US3_LAST_ERROR = CONCAT( 'MySQL: The specified GUID is a duplicate in the ',
+                                    p_tablename,
+                                    ' table' );
+
+    ELSE
+      SET @US3_LAST_ERRNO = @OK;
+      SET @US3_LAST_ERROR = '';
+
+    END IF;
+
+  END IF;
+
+  RETURN( @US3_LAST_ERRNO );
 
 END$$
 
