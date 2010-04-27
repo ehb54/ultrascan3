@@ -89,6 +89,7 @@ END$$
 DROP PROCEDURE IF EXISTS new_buffer$$
 CREATE PROCEDURE new_buffer ( p_guid            CHAR(36),
                               p_password        VARCHAR(80),
+                              p_bufferGUID      CHAR(36),
                               p_description     TEXT,
                               p_compressibility FLOAT,
                               p_pH              FLOAT,
@@ -106,6 +107,7 @@ BEGIN
  
   IF ( verify_user( p_guid, p_password ) = @OK ) THEN
     INSERT INTO buffer SET
+      GUID            = p_bufferGUID,
       description     = p_description,
       compressibility = p_compressibility,
       pH              = p_pH,
@@ -154,6 +156,53 @@ BEGIN
   END IF;
       
   SELECT @US3_LAST_ERRNO AS status;
+
+END$$
+
+-- Returns the bufferID associated with the given bufferGUID
+DROP PROCEDURE IF EXISTS get_bufferID$$
+CREATE PROCEDURE get_bufferID ( p_guid       CHAR(36),
+                                p_password   VARCHAR(80),
+                                p_bufferGUID CHAR(36) )
+  READS SQL DATA
+
+BEGIN
+
+  DECLARE count_buff INT;
+
+  CALL config();
+  SET @US3_LAST_ERRNO = @OK;
+  SET @US3_LAST_ERROR = '';
+  SET count_buff   = 0;
+
+  IF ( verify_user( p_guid, p_password ) = @OK ) THEN
+
+    SELECT    COUNT(*)
+    INTO      count_buff
+    FROM      buffer
+    WHERE     GUID = p_bufferGUID;
+
+    IF ( TRIM( p_bufferGUID ) = '' ) THEN
+      SET @US3_LAST_ERRNO = @EMPTY;
+      SET @US3_LAST_ERROR = CONCAT( 'MySQL: The bufferGUID parameter to the get_bufferID ',
+                                    'function cannot be empty' );
+
+    ELSEIF ( count_buff < 1 ) THEN
+      SET @US3_LAST_ERRNO = @NOROWS;
+      SET @US3_LAST_ERROR = 'MySQL: no rows returned';
+ 
+      SELECT @US3_LAST_ERRNO AS status;
+
+    ELSE
+      SELECT @OK AS status;
+
+      SELECT   bufferID
+      FROM     buffer
+      WHERE    GUID = p_bufferGUID;
+
+    END IF;
+
+  END IF;
 
 END$$
 
@@ -230,7 +279,7 @@ BEGIN
     ELSE
       SELECT @OK AS status;
 
-      SELECT   description, compressibility, pH, viscosity, density, personID
+      SELECT   GUID, description, compressibility, pH, viscosity, density, personID
       FROM     buffer b, bufferPerson bp
       WHERE    b.bufferID = bp.bufferID
       AND      b.bufferID = p_bufferID;
