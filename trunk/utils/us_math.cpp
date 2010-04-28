@@ -130,7 +130,7 @@ float US_Math::linefit( float** x        , float** y    , float* slope,
 }
 */
 
-void US_Math::calc_vbar( struct peptide& pep, const QString& sequence, 
+void US_Math::calc_vbar( Peptide& pep, const QString& sequence, 
       double temperature )
 {
    pep.vbar_sum = 0.0;
@@ -301,7 +301,7 @@ void US_Math::calc_vbar( struct peptide& pep, const QString& sequence,
    pep.mw +=  WATER_MW;
 }
 
-void US_Math::data_correction( double t, struct solution_data& d )
+void US_Math::data_correction( double t, SolutionData& d )
 {
    double xi_max =    1.000028e-3  ;
    double c0     =  999.83952      ; 
