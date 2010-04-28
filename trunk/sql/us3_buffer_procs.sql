@@ -100,13 +100,22 @@ CREATE PROCEDURE new_buffer ( p_guid            CHAR(36),
 BEGIN
   DECLARE l_bufferID INT;
 
+  DECLARE duplicate_key TINYINT DEFAULT 0;
+  DECLARE null_field    TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR 1062
+    SET duplicate_key = 1;
+
+  DECLARE CONTINUE HANDLER FOR 1048
+    SET null_field = 1;
+
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
  
   IF ( ( verify_user( p_guid, p_password ) = @OK ) &&
-       ( GUID_exists( p_guid, p_password, 'buffer', p_bufferGUID ) = @OK ) ) THEN
+       ( check_GUID ( p_guid, p_password, p_bufferGUID ) = @OK ) ) THEN
     INSERT INTO buffer SET
       GUID            = p_bufferGUID,
       description     = p_description,
@@ -115,11 +124,21 @@ BEGIN
       density         = p_density,
       viscosity       = p_viscosity;
 
-    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+    IF ( duplicate_key = 1 ) THEN
+      SET @US3_LAST_ERRNO = @INSERTDUP;
+      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for GUID field";
 
-    INSERT INTO bufferPerson SET
-      bufferID    = @LAST_INSERT_ID,
-      personID    = @US3_ID;
+    ELSEIF ( null_field = 1 ) THEN
+      SET @US3_LAST_ERRNO = @INSERTNULL;
+      SET @US3_LAST_ERROR = "MySQL: NULL value for GUID field";
+
+    ELSE
+      SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+      INSERT INTO bufferPerson SET
+        bufferID    = @LAST_INSERT_ID,
+        personID    = @US3_ID;
+    END IF;
 
   END IF;
 
@@ -140,6 +159,10 @@ CREATE PROCEDURE update_buffer ( p_guid            CHAR(36),
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE not_found     TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR NOT FOUND
+    SET not_found = 1;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -153,6 +176,15 @@ BEGIN
       density         = p_density,
       viscosity       = p_viscosity
     WHERE bufferID    = p_bufferID;
+
+    IF ( not_found = 1 ) THEN
+      SET @US3_LAST_ERRNO = @NO_BUFFER;
+      SET @US3_LAST_ERROR = "MySQL: No buffer with that ID exists";
+
+    ELSE
+      SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+    END IF;
 
   END IF;
       
