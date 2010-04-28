@@ -207,12 +207,8 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
-  IF ( TRIM( p_new_guid ) = '' ) THEN
-    SET @US3_LAST_ERRNO = @EMPTY;
-    SET @US3_LAST_ERROR = CONCAT( 'MySQL: The new GUID parameter to the new_person ',
-                                  'procedure cannot be empty' );
-
-  ELSEIF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) &&
+       ( check_GUID      ( p_guid, p_password, p_new_guid ) = @OK ) ) THEN
 
     INSERT INTO people SET
            fname        = p_fname,
@@ -264,7 +260,6 @@ CREATE PROCEDURE update_person ( p_guid         CHAR(36),
                                  p_zip          VARCHAR(10),
                                  p_phone        VARCHAR(24),
                                  p_new_email    VARCHAR(63),
-                                 p_new_guid     CHAR(36),
                                  p_organization VARCHAR(45),
                                  p_new_password VARCHAR(80) )
   MODIFIES SQL DATA
@@ -288,12 +283,7 @@ BEGIN
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
-  IF ( TRIM( p_new_guid ) = '' ) THEN
-    SET @US3_LAST_ERRNO = @EMPTY;
-    SET @US3_LAST_ERROR = CONCAT( 'MySQL: The new GUID parameter to the new_person ',
-                                  'procedure cannot be empty' );
-
-  ELSEIF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
 
     UPDATE people SET
            fname        = p_fname,
@@ -304,7 +294,6 @@ BEGIN
            zip          = p_zip,
            phone        = p_phone,
            email        = p_new_email,
-           GUID         = p_new_guid,
            organization = p_organization,
            password     = MD5(p_new_password),
            activated    = true,
@@ -317,10 +306,11 @@ BEGIN
 
     ELSEIF ( null_field = 1 ) THEN
       SET @US3_LAST_ERRNO = @INSERTNULL;
-      SET @US3_LAST_ERROR = "MySQL: NULL value for a field that cannot be NULL";
+      SET @US3_LAST_ERROR = "MySQL: NULL value for email field is not allowed";
 
     ELSEIF ( not_found = 1 ) THEN
-      SET @US3_LAST_ERRNO = 1001;
+      SET @US3_LAST_ERRNO = @NO_PERSON;
+      SET @US3_LAST_ERROR = "MySQL: No person with that ID exists";
 
     ELSE
       SET @LAST_INSERT_ID = LAST_INSERT_ID();
