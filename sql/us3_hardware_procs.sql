@@ -39,7 +39,7 @@ BEGIN
 
 END$$
 
--- SELECTs names of all rotors in the specified lab
+-- SELECTs names of all rotors
 DROP PROCEDURE IF EXISTS get_rotor_names$$
 CREATE PROCEDURE get_rotor_names ( p_guid     CHAR(36),
                                    p_password VARCHAR(80),
@@ -129,6 +129,7 @@ CREATE PROCEDURE add_rotor ( p_guid            CHAR(36),
                              p_password        VARCHAR(80),
                              p_abstractRotorID INT,
                              p_labID           INT,
+                             p_rotorGUID       CHAR(36),
                              p_name            TEXT,
                              p_serialNumber    TEXT )
   MODIFIES SQL DATA
@@ -137,6 +138,15 @@ BEGIN
   DECLARE count_abstract_rotors INT;
   DECLARE count_labs            INT;
   DECLARE l_defaultStretch      TEXT;
+
+  DECLARE duplicate_key TINYINT DEFAULT 0;
+  DECLARE null_field    TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR 1062
+    SET duplicate_key = 1;
+
+  DECLARE CONTINUE HANDLER FOR 1048
+    SET null_field = 1;
 
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
@@ -153,7 +163,8 @@ BEGIN
   FROM       lab
   WHERE      labID = p_labID;
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( ( verify_userlevel( p_guid, p_password, @US3_ADMIN   ) = @OK ) &&
+       ( check_GUID      ( p_guid, p_password, p_rotorGUID  ) = @OK ) ) THEN
     IF ( count_abstract_rotors < 1 ) THEN
       SET @US3_LAST_ERRNO = @NO_ROTOR;
       SET @US3_LAST_ERROR = CONCAT('MySQL: No abstract rotor with ID ',
@@ -176,12 +187,24 @@ BEGIN
         abstractRotorID   = p_abstractRotorID,
         labID             = p_labID,
         name              = p_name,
+        GUID              = p_rotorGUID,
         serialNumber      = p_serialNumber,
         stretchFunction   = l_defaultStretch,
         omega2_t          = 0.0,
         dateUpdated       = NOW();
         
-      SET @LAST_INSERT_ID = LAST_INSERT_ID();
+      IF ( duplicate_key = 1 ) THEN
+        SET @US3_LAST_ERRNO = @INSERTDUP;
+        SET @US3_LAST_ERROR = "MySQL: Duplicate entry for GUID field";
+  
+      ELSEIF ( null_field = 1 ) THEN
+        SET @US3_LAST_ERRNO = @INSERTNULL;
+        SET @US3_LAST_ERROR = "MySQL: NULL value for GUID field";
+  
+      ELSE
+        SET @LAST_INSERT_ID = LAST_INSERT_ID();
+  
+      END IF;
 
     END IF;
 
@@ -340,25 +363,48 @@ END$$
 DROP PROCEDURE IF EXISTS add_lab$$
 CREATE PROCEDURE add_lab ( p_guid            CHAR(36),
                            p_password        VARCHAR(80),
+                           p_labGUID         CHAR(36),
                            p_name            TEXT,
                            p_building        TEXT,
                            p_room            TEXT )
   MODIFIES SQL DATA
 
 BEGIN
+  DECLARE duplicate_key TINYINT DEFAULT 0;
+  DECLARE null_field    TINYINT DEFAULT 0;
+
+  DECLARE CONTINUE HANDLER FOR 1062
+    SET duplicate_key = 1;
+
+  DECLARE CONTINUE HANDLER FOR 1048
+    SET null_field = 1;
+
   CALL config();
   SET @US3_LAST_ERRNO = @OK;
   SET @US3_LAST_ERROR = '';
   SET @LAST_INSERT_ID = 0;
 
-  IF ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) THEN
+  IF ( ( verify_userlevel( p_guid, p_password, @US3_ADMIN ) = @OK ) &&
+       ( check_GUID      ( p_guid, p_password, p_labGUID  ) = @OK ) ) THEN
     INSERT INTO lab SET
+      GUID              = p_labGUID,
       name              = p_name,
       building          = p_building,
       room              = p_room,
       dateUpdated       = NOW();
 
-    SET @LAST_INSERT_ID = LAST_INSERT_ID();
+    IF ( duplicate_key = 1 ) THEN
+      SET @US3_LAST_ERRNO = @INSERTDUP;
+      SET @US3_LAST_ERROR = "MySQL: Duplicate entry for GUID field";
+
+    ELSEIF ( null_field = 1 ) THEN
+      SET @US3_LAST_ERRNO = @INSERTNULL;
+      SET @US3_LAST_ERROR = "MySQL: NULL value for GUID field";
+
+    ELSE
+      SET @LAST_INSERT_ID = LAST_INSERT_ID();
+
+    END IF;
 
   END IF;
 
