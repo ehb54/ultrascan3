@@ -34,8 +34,15 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
 	Q_OBJECT
 
 	public:
-		US_Analyte( int = -1, bool = false, QWidget* = 0, Qt::WindowFlags = 0 );
+		US_Analyte( int             = -1, 
+                  bool            = false, 
+                  const QString&  = QString(),
+                  bool            = false,
+                  QWidget*        = 0, 
+                  Qt::WindowFlags = 0 );
 
+      enum analyte{ PROTEIN, DNA, RNA, CARBOHYDRATE };
+      
       class analyteData
       {
          public:
@@ -45,17 +52,22 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
          QMap< double, double > refraction;
          QMap< double, double > fluorescence;
          QString                description;
+         QString                guid;
+         analyte                type;
       };
 
    signals:
       void valueChanged( US_Analyte::analyteData );
 
    private:
-      bool          signal_wanted;
-
       int           personID;
+      bool          signal_wanted;
+      QString       guid;
+      bool          db_access;
+
       int           widget_selection;
       bool          inReset;
+      bool          newFile;
 
       uint          A;
       uint          C;
@@ -63,22 +75,30 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       uint          G;
       uint          U;
 
-      enum analyte{ PROTEIN, DNA, RNA, CARBOHYDRATE };
       enum analyte  analyte_t;
                    
       double        vbar;     
                    
-      struct analyte_info
+      class AnalyteInfo
       {
+         public:
          QString description;
+         QString guid;
+         QString filename;
          QString analyteID;
          analyte type;
       };
 
-      QList< analyte_info >   info;
+      QList< AnalyteInfo >    info;
       QMap < double, double > extinction;   // Wavelength, extinction index
       QMap < double, double > refraction;   // Wavelength, refraction index
       QMap < double, double > fluorescence; // Wavelength, fluorescence index
+
+      QStringList   files;
+      QStringList   filenames;
+      QStringList   GUIDs;
+      QStringList   descriptions;
+      QStringList   types;
 
       QComboBox*    cmb_optics;
 
@@ -99,6 +119,7 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       QLineEdit*    le_protein_vbar;
       QLineEdit*    le_protein_temp;
       QLineEdit*    le_protein_residues;
+      QLineEdit*    le_guid;
 
       QLineEdit*    le_nucle_mw;
       QLineEdit*    le_nucle_vbar;
@@ -133,42 +154,52 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       QwtCounter*   ct_magnesium;
       QwtCounter*   ct_calcium;
 
-      void parse_dna          ( void );
-      void connect_error      ( const QString& );
-      void status_query       ( const QStringList& );
-      bool database_ok        ( US_DB2& );
-      bool data_ok            ( void );
-      void set_spectrum       ( US_DB2& );
+      void    parse_dna       ( void );
+      void    connect_error   ( const QString& );
+
+      bool    database_ok     ( US_DB2& );
+      bool    data_ok         ( void );
+      void    status_query    ( const QStringList& );
+      
+      void    set_spectrum    ( US_DB2& );
+      bool    analyte_path    ( QString& );
+      QString get_filename    ( const QString&, const QString& );
+      QString new_guid        ( void );
+      void    load_analyte    ( void );
+      void    populate        ( void );
 
    private slots:
-      void close              ( void );
-      void reset              ( void );
-
-      void read_analyte       ( void );
-      void read_db            ( void );
-      void update_db          ( void );
-      void delete_db          ( void );
-      void save_db            ( void );
       void analyte_type       ( int  );
       void sel_investigator   ( void );
-      void manage_sequence    ( void );
-      void update_sequence    ( QString );
-      void save_analyte       ( void );
-      void more_info          ( void );
-      void spectrum           ( void );
-      void temp_changed       ( const QString& );
-      void update_nucleotide  ( void );
-      void update_nucleotide  ( bool );
-      void update_nucleotide  ( double );
-      void update_stranded    ( bool );
-      void update_mw_only     ( bool );
       void search             ( const QString& );
       void select_analyte     ( QListWidgetItem* );
-      
-      void assign_investigator( int, const QString&, const QString& );
+      void read_analyte       ( void );
+      void save_analyte       ( void );
+
+      void read_db            ( void );
+      void save_db            ( void );
+      void update_db          ( void );
+      void delete_db          ( void );
+
+      void manage_sequence    ( void );
+      void spectrum           ( void );
+      void more_info          ( void );
+      void temp_changed       ( const QString& );
+
+      void update_stranded    ( bool );
+      void update_mw_only     ( bool );
+      void update_nucleotide  ( bool );
+      void update_nucleotide  ( double );
+      void update_nucleotide  ( void );
+
+      void reset              ( void );
+      void close              ( void );
 
       void help            ( void ) 
       { showHelp.show_help( "analytes.html" ); };
+
+      void update_sequence    ( QString );
+      void assign_investigator( int, const QString&, const QString& );
 };
 #endif
 

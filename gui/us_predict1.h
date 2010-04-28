@@ -53,8 +53,8 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       void done   ( void );
 
    private:
-      struct solution_data d;
-      Hydrosim&      allparams;
+      US_Math::SolutionData d;
+      Hydrosim&             allparams;
       
       static const int ARRAYSIZE = 999;
       

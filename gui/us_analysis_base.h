@@ -29,7 +29,7 @@ class US_EXTERN US_AnalysisBase : public US_Widgets
 
       QList< QVector< double > >       savedValues;
 
-      struct solution_data             solution;
+      US_Math::SolutionData            solution;
       
       bool         dataLoaded;
       double       time_correction;

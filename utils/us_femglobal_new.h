@@ -87,6 +87,7 @@ class US_EXTERN US_FemGlobal_New
       double      delta;   // concentration dependency of D
       ShapeType   shape;
       QString     name;
+      int         analyte_type;
       MfemInitial c0;      // The radius/concentration points for a user-defined 
                            // initial concentration grid
    };

@@ -20,6 +20,7 @@ US_FemGlobal_New::SimulationComponent::SimulationComponent()
    sigma                = 0.0;
    delta                = 0.0;
    shape                = SPHERE;
+   analyte_type         = 0;  // Protein
    c0.radius       .clear();
    c0.concentration.clear();
 }
