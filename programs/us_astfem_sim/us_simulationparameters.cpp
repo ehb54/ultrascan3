@@ -134,7 +134,7 @@ US_SimulationParameters::US_SimulationParameters(
    QLabel* lb_rotorAccel = us_label( tr( "Simulate Rotor Acceleration:" ) );
    main->addWidget( lb_rotorAccel, row, 0 );
 
-   QBoxLayout* acceleration_flag = us_checkbox( tr( "(Check to enable)" ), 
+   QGridLayout* acceleration_flag = us_checkbox( tr( "(Check to enable)" ), 
          cb_acceleration_flag, sp->acceleration_flag );
 
    main->addLayout( acceleration_flag, row++, 1 );
