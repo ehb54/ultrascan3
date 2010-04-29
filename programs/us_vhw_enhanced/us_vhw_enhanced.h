@@ -9,8 +9,9 @@
 #include "us_analyte.h"
 #include "us_buffer_gui.h"
 
-#define editedData US_DataIO::editedData
-#define rawData    US_DataIO::rawData
+#define EDTDAT US_DataIO::editedData
+#define RAWDAT US_DataIO::rawData
+#define SCNDAT US_DataIO::scan
 
 #define PZ_THRLO  0.001  // plateau zone slope threshold (low)
 #define PZ_THRHI  0.200  // plateau zone slope threshold (high)
@@ -62,18 +63,20 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QPushButton*  pb_exsscn;
       QPushButton*  pb_exsrng;
 
-      qreal         densit;
-      qreal         viscos;
-      qreal         vbar;
-      qreal         bdtoler;
-      qreal         invert;
-      qreal*        xx;
-      qreal*        yy;
+      double        densit;
+      double        viscos;
+      double        vbar;
+      double        bdtoler;
+      double        invert;
+      double        divfac;
 
       int           run_id;
       int           ncells;
       int           nwlens;
-      int           ndivis;
+      int           ndivs;
+      int           nscns;
+      int           nscnu;
+      int           exclude;
       int           dsmooth;
       int           pcbound;
       int           boundpo;
@@ -100,8 +103,9 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QStringList   files;
       QStringList   triples;
 
-      US_DataIO::rawData            edata;
-      US_DataIO::rawData            vdata;
+      QList< QList< double > > cpds;
+      QList< double >          sdifs;
+      QList< double >          dseds;
 
    private slots:
 
@@ -136,6 +140,9 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
             double&, double&, double&, double& );
       double update_slope( int, double, double, double, double,
             double&, double&, double&, double& );
+      double sed_coeff( double, double, double, double,
+            QVector< US_DataIO::reading >&, int );
+      void div_seds();
 
       void help     ( void )
       { showHelp.show_help( "vHW_enhanced.html" ); };
