@@ -26,7 +26,7 @@ class US_EXTERN US_Predict2 : public US_Widgets
       double     temperature;
       US_Help    showHelp;
 
-      struct solution_data d;
+      US_Math::SolutionData d;
 
       QLabel*    lb_param1;
       QLabel*    lb_param2;
