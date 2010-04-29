@@ -17,7 +17,7 @@ int main( int argc, char* argv[] )
 
    // License is OK.  Start up.
    
-   struct hydrosim params;
+   US_Predict1::Hydrosim params;
    US_Predict1 w( params );
    w.show();                   //!< \memberof QWidget
    return application.exec();  //!< \memberof QApplication
