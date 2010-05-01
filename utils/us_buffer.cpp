@@ -204,6 +204,24 @@ void US_BufferComponent::putAllToHD(
 }
 
 //-------------
+US_Buffer::US_Buffer()
+{
+   personID        = -1;
+   compressibility = 0.0;
+   pH              = 7.0;
+   density         = 0.0;
+   viscosity       = 0.0;
+   person       .clear();
+   bufferID     .clear();
+   GUID         .clear();
+   description  .clear();
+   extinction   .clear();
+   refraction   .clear();
+   fluorescence .clear();
+   component    .clear();
+   concentration.clear();
+}
+
 void US_Buffer::getInfoFromDB( const QString& masterPW )
 {
    US_DB2 db( masterPW );
@@ -307,7 +325,8 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
    
    xml.writeStartElement( "buffer" );
    xml.writeAttribute( "person_id"  , QString::number( personID ) );
-   xml.writeAttribute( "id"         , bufferID);
+   xml.writeAttribute( "id"         , bufferID );
+   xml.writeAttribute( "guid"       , GUID     );
    xml.writeAttribute( "description", description );
    xml.writeAttribute( "ph"         , QString::number( pH       , 'f', 5 ) );
    xml.writeAttribute( "density"    , QString::number( density  , 'f', 5 ) );
@@ -399,6 +418,7 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
 
    personID        = a.value( "person_id"   ).toString().toInt();
    bufferID        = a.value( "id"          ).toString();
+   GUID            = a.value( "guid"        ).toString();
    description     = a.value( "description" ).toString();
    compressibility = a.value( "compressibility" ).toString().toDouble();
    pH              = a.value( "ph"          ).toString().toDouble();
@@ -407,6 +427,7 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
 
    component    .clear();
    concentration.clear();
+   componentIDs .clear();
 
    while ( ! xml.atEnd() )
    {
@@ -415,13 +436,8 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
       if ( xml.isStartElement()  &&  xml.name() == "component" )
       {
          QXmlStreamAttributes a = xml.attributes();
-
          concentration << a.value( "concentration" ).toString().toDouble();
-
-         US_BufferComponent bc;
-         bc.componentID   = a.value( "id" ).toString();
-
-         component << bc; 
+         componentIDs  << a.value( "id"            ).toString();
       } 
 
       if ( xml.isStartElement()  &&  xml.name() == "spectrum" )

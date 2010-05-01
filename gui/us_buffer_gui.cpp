@@ -7,6 +7,7 @@
 #include "us_constants.h"
 #include "us_investigator.h"
 #include "us_table.h"
+#include "us_util.h"
 
 US_BufferGui::US_BufferGui( int invID, bool signal_wanted ) 
    : US_WidgetsDialog( 0, 0 )
@@ -16,20 +17,25 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
 
    US_BufferComponent::getAllFromHD( component_list );
 
-   fromHD = false;
-
    setWindowTitle( tr( "Buffer Management" ) );
    setPalette( US_GuiSettings::frameColor() );
    setAttribute( Qt::WA_DeleteOnClose );
 
+   normal = US_GuiSettings::editColor();
+
+   // Very light gray for read only line edit widgets
+   gray = normal;
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
+   
+   int row = 0;
+   
    QGridLayout* main = new QGridLayout( this );
    main->setSpacing         ( 2 );
    main->setContentsMargins ( 2, 2, 2, 2 );
 
-   int row = 0;
-   
    QStringList DB = US_Settings::defaultDB();
    QLabel* lb_DB = us_banner( tr( "Database: " ) + DB.at( 0 ) );
+   lb_DB->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_DB, row++, 0, 1, 3 );
 
    QPushButton* pb_investigator = us_pushbutton( tr( "Select Investigator" ) );
@@ -51,20 +57,25 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
 
    // Buffer descriptions from DB
    QLabel* lb_banner1 = us_banner( tr( "Doubleclick on buffer data to select" ), -2 );
+   lb_banner1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_banner1, row++, 0 );
 
    lw_buffer_db = us_listwidget();
    connect( lw_buffer_db, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ), 
                           SLOT  ( select_buffer    ( QListWidgetItem* ) ) );
 
-   main->addWidget( lw_buffer_db, row, 0, 7, 1 );
-   row += 8;
+   main->addWidget( lw_buffer_db, row, 0, 6, 1 );
+   row += 7;
 
    // Labels
    QLabel* lb_description = us_label( tr( "Buffer Description:" ) );
    main->addWidget( lb_description, row++, 0 );
 
+   QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
+   main->addWidget( lb_guid, row++, 0 );
+
    QLabel* lb_buffer1 = us_label( tr( "Please select a Buffer Component:" ) );
+   lb_buffer1->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_buffer1, row++, 0 );
 
    lb_selected = us_label( "" );
@@ -72,6 +83,7 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
 
    // Buffer Components
    QLabel* lb_banner2 = us_banner( tr( "Click on item to select" ), -2  );
+   lb_banner2->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_banner2, row++, 0 );
 
    lw_ingredients = us_listwidget();
@@ -83,9 +95,9 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
    connect( lw_ingredients, SIGNAL( itemSelectionChanged( void ) ), 
                             SLOT  ( list_component      ( void ) ) );
    
-   main->addWidget( lw_ingredients, row, 0, 6, 1 );
+   main->addWidget( lw_ingredients, row, 0, 5, 1 );
 
-   row += 6;
+   row += 5;
 
    QPushButton* pb_synch = us_pushbutton( tr( "Synch components with DB" ) );
    connect( pb_synch, SIGNAL( clicked() ), SLOT( synch_components() ) );
@@ -98,34 +110,32 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
    le_investigator->setReadOnly( true );
    main->addWidget( le_investigator, row++, 1, 1, 2 );
 
-   // Pushbuttons
-   QPushButton* pb_load = us_pushbutton( tr( "Load Buffer from HD" ) );
-   connect( pb_load, SIGNAL( clicked() ), SLOT( read_buffer() ) );
-   main->addWidget( pb_load, row++, 1, 1, 2 );
+   QGridLayout* db_layout = us_radiobutton( tr( "Use Database" ), rb_db );
+   main->addLayout( db_layout, row, 1 );
 
-   pb_save = us_pushbutton( tr( "Save Buffer to HD" ), false );
-   connect( pb_save, SIGNAL( clicked() ), SLOT( save_buffer() ) );
-   main->addWidget( pb_save, row++, 1, 1, 2 );
+   QGridLayout* disk_layout = us_radiobutton( 
+         tr( "Use Local Disk" ), rb_disk, true );
+   main->addLayout( disk_layout, row++, 2 );
 
-   QLabel* lb_banner3 = us_banner( tr( "Database Functions" ), -2 );
+   QLabel* lb_banner3 = us_banner( tr( "Database/Disk Functions" ), -2 );
    lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_banner3, row++, 1, 1, 2 );
 
-   QPushButton* pb_load_db = us_pushbutton( tr( "Query Descriptions" ) );
-   connect( pb_load_db, SIGNAL( clicked() ), SLOT( read_db() ) );
-   main->addWidget( pb_load_db, row, 1 );
+   QPushButton* pb_query = us_pushbutton( tr( "Query Descriptions" ) );
+   connect( pb_query, SIGNAL( clicked() ), SLOT( query() ) );
+   main->addWidget( pb_query, row, 1 );
 
-   pb_save_db = us_pushbutton( tr( "Save to DB" ), false );
-   connect( pb_save_db, SIGNAL( clicked() ), SLOT( save_db() ) );
-   main->addWidget( pb_save_db, row++, 2 );
+   pb_save = us_pushbutton( tr( "Save Buffer" ), false );
+   connect( pb_save, SIGNAL( clicked() ), SLOT( save() ) );
+   main->addWidget( pb_save, row++, 2 );
 
-   pb_update_db = us_pushbutton( tr( "Update in DB" ), false );
-   connect( pb_update_db, SIGNAL( clicked() ), SLOT( update_db() ) );
-   main->addWidget( pb_update_db, row, 1 );
+   pb_update = us_pushbutton( tr( "Update Buffer" ), false );
+   connect( pb_update, SIGNAL( clicked() ), SLOT( update() ) );
+   main->addWidget( pb_update, row, 1 );
 
-   pb_del_db = us_pushbutton( tr( "Delete from DB" ), false );
-   connect( pb_del_db, SIGNAL( clicked() ), SLOT( delete_buffer() ) );
-   main->addWidget( pb_del_db, row++, 2 );
+   pb_del = us_pushbutton( tr( "Delete Buffer" ), false );
+   connect( pb_del, SIGNAL( clicked() ), SLOT( delete_buffer() ) );
+   main->addWidget( pb_del, row++, 2 );
 
    // Buffer parameters
    QLabel* lb_density = us_label( tr( "Density (20&deg;C, g/cm<sup>3</sup>):" ) );
@@ -169,6 +179,11 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
    le_description = us_lineedit();
    main->addWidget( le_description, row++, 1, 1, 2 );
 
+   le_guid = us_lineedit();
+   le_guid->setReadOnly( true );
+   le_guid->setPalette ( gray );
+   main->addWidget( le_guid, row++, 1, 1, 2 );
+
    lb_units = us_label( "" );
    QPalette p = lb_units->palette();
    p.setColor( QPalette::WindowText, Qt::red );
@@ -183,6 +198,7 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted )
 
    // Current buffer
    QLabel* lb_buffer = us_banner( tr( "Doubleclick on item to remove" ), -2 );
+   lb_buffer->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_buffer, row++, 1, 1, 2 );
 
    lw_buffer = us_listwidget();
@@ -259,11 +275,94 @@ void US_BufferGui::assign_investigator( int invID,
          lname + ", " + fname );
 }
 
-/*! Load buffer data from the database and populate listbox. If
-    an investigator is defined, only select the buffer files from the 
-    investigator. */
+// Get the path to the buffers.  Create it if necessary.
+bool US_BufferGui::buffer_path( QString& path )
+{
+   QDir dir;
+   path = US_Settings::dataDir() + "/buffers";
 
-void US_BufferGui::read_db()
+   if ( ! dir.exists( path ) )
+   {
+      if ( ! dir.mkpath( path ) )
+      {
+         QMessageBox::critical( this,
+               tr( "Bad Buffer Path" ),
+               tr( "Could not create default directory for buffers\n" )
+               + path );
+         return false;
+      }
+   }
+
+   return true;
+}
+
+/*! Load buffer data and populate listbox. If an investigator is defined, only
+    select the buffer files from the investigator. */
+
+void US_BufferGui::query( void )
+{
+   if ( rb_disk->isChecked() ) read_buffer();
+   else                        read_db(); 
+}
+
+//! Load buffer data from Hard Drive
+void US_BufferGui::read_buffer( void )
+{
+   QString path;
+   if ( ! buffer_path( path ) ) return;
+
+   filenames   .clear();
+   descriptions.clear();
+   le_search->  clear();
+   le_search->setPalette( gray );
+   le_search->setReadOnly( true );
+
+   pb_save  ->setEnabled( false );
+   pb_update->setEnabled( false );
+   pb_del   ->setEnabled( false );
+
+   QDir f( path );
+   QStringList filter( "B*.xml" );
+   QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
+
+   for ( int i = 0; i < f_names.size(); i++ )
+   {
+      QFile b_file( path + "/" + f_names[ i ] );
+
+      if ( ! b_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
+
+      QXmlStreamReader xml( &b_file );
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement() )
+         {
+            if ( xml.name() == "buffer" )
+            {
+               QXmlStreamAttributes a = xml.attributes();
+               descriptions << a.value( "description" ).toString();
+               GUIDs        << a.value( "guid"        ).toString();
+               filenames    << path + "/" + f_names[ i ];
+               bufferIDs    << "";
+               break;
+            }
+         }
+      }
+   }
+
+   if ( descriptions.size() == 0 )
+      lw_buffer_db->addItem( "No buffer files found." );
+   else
+   {
+      le_search->setReadOnly( false );
+      le_search->setPalette ( normal );
+      search();
+   }
+}
+
+void US_BufferGui::read_db( void )
 {
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
@@ -274,18 +373,18 @@ void US_BufferGui::read_db()
       return;
    }
 
-   pb_save     ->setEnabled( false );
-   pb_save_db  ->setEnabled( false );
-   pb_update_db->setEnabled( false );
-   pb_del_db   ->setEnabled( false );
+   bufferIDs   .clear();
+   descriptions.clear();
+   le_search->  clear();
+   le_search->setPalette( gray );
+   le_search->setReadOnly( true );
+
+   pb_save  ->setEnabled( false );
+   pb_update->setEnabled( false );
+   pb_del   ->setEnabled( false );
 
    le_search->setText( "" );
    le_search->setReadOnly( true );
-
-   buffer_metadata.clear();
-   lw_buffer_db->clear();
-   
-   struct buffer_info info;
 
    QStringList q( "get_buffer_desc" );
    q << QString::number( buffer.personID );
@@ -294,44 +393,49 @@ void US_BufferGui::read_db()
 
    while ( db.next() )
    {
-      info.bufferID    = db.value( 0 ).toString();
-      info.description = db.value( 1 ).toString();
-  
-      buffer_metadata << info;
-
-      lw_buffer_db->addItem( new QListWidgetItem(
-            info.bufferID + ": " + info.description, lw_buffer_db ) );
+      bufferIDs    << db.value( 0 ).toString();
+      descriptions << db.value( 1 ).toString();
+      GUIDs        << "";
    }
 
-   fromHD = false;
-
-   if ( buffer_metadata.size() < 1  &&  buffer.personID != -1 )
+   if ( descriptions.size() < 1  &&  buffer.personID != -1 )
       QMessageBox::information( this,
             tr( "No data" ),
             tr( "No buffer file found for the selected investigator,\n"
                 "You can click on \"Reset\", then query the DB to \n"
                 "find buffers from all Investigators." ) );
    
-   else if ( buffer_metadata.size() < 1 )
+   else if ( descriptions.size() < 1 )
       QMessageBox::information( this,
             tr( "No data" ),
             tr( "There are no buffer entries." ) );
    else
+   {
       le_search->setReadOnly( false );
+      le_search->setPalette ( normal );
+      search();
+   }
 }
 
 void US_BufferGui::search( const QString& text )
 {
-   lw_buffer_db->clear();
-   for ( int i = 0; i < buffer_metadata.size(); i++ )
-   {
-      struct buffer_info* info = &buffer_metadata[ i ];
+   lw_buffer_db  ->clear();
+   buffer_metadata.clear();
 
-      if ( info->description.contains( 
+   for ( int i = 0; i < descriptions.size(); i++ )
+   {
+      if ( descriptions[ i ].contains( 
                QRegExp( ".*" + text + ".*", Qt::CaseInsensitive ) ) )
       {
-        lw_buffer_db->addItem( new QListWidgetItem( 
-              info->bufferID + ": " + info->description, lw_buffer_db ) );
+         BufferInfo info;
+         info.index       = i;
+         info.description = descriptions[ i ];
+         info.guid        = GUIDs       [ i ];
+         info.bufferID    = bufferIDs   [ i ];
+        
+         buffer_metadata << info;
+
+         lw_buffer_db->addItem( info.description );
       }
    }
 }
@@ -346,13 +450,14 @@ void US_BufferGui::spectrum( void )
 {
    QString   spectrum_type = cmb_optics->currentText();
    US_Table* dialog;
+   QString   s = tr( "Extinction:" );
 
    if ( spectrum_type == tr( "Absorbance" ) )
-     dialog = new US_Table( buffer.extinction, spectrum_type + ":" );
+     dialog = new US_Table( buffer.extinction, s );
    else if ( spectrum_type == tr( "Interference" ) )
-     dialog = new US_Table( buffer.refraction, spectrum_type + ":" );
+     dialog = new US_Table( buffer.refraction, s );
    else
-     dialog = new US_Table( buffer.fluorescence, spectrum_type + ":" );
+     dialog = new US_Table( buffer.fluorescence, s );
 
    dialog->setWindowTitle( tr( "Manage %1 Values" ).arg( spectrum_type ) );
    dialog->exec();
@@ -364,8 +469,43 @@ void US_BufferGui::spectrum( void )
 */
 void US_BufferGui::select_buffer( QListWidgetItem* item )
 {
-   if ( fromHD ) return;
+   if ( rb_disk->isChecked() ) read_from_disk( item );
+   else                        read_from_db  ( item ); 
+   
+   // Write values to screen
+   le_description->setText( buffer.description );
+   le_guid       ->setText( buffer.GUID );
+   le_density    ->setText( QString::number( buffer.density,   'f', 4 ) );
+   le_viscosity  ->setText( QString::number( buffer.viscosity, 'f', 4 ) );
+   le_ph         ->setText( QString::number( buffer.pH,        'f', 4 ) );
+   le_compressibility->setText( 
+                      QString::number( buffer.compressibility, 'f', 4 ) );
 
+   lw_buffer->clear();
+
+   for ( int i = 0; i < buffer.componentIDs.size(); i ++ )
+      update_lw_buf( buffer.componentIDs[ i ], buffer.concentration[ i ] );
+
+   // Allow modification of the just selected buffer
+   pb_save  ->setEnabled ( true ); 
+   pb_update->setEnabled ( true ); 
+   pb_del   ->setEnabled ( true ); 
+
+   le_viscosity->setReadOnly( true );
+   le_density  ->setReadOnly( true );
+}
+
+void US_BufferGui::read_from_disk( QListWidgetItem* item )
+{
+   int row = item->listWidget()->currentRow();
+   int buf = buffer_metadata[ row ].index;
+
+   if ( ! buffer.readFromDisk( filenames[ buf ] ) )
+      qDebug() << "read failed";
+}
+
+void US_BufferGui::read_from_db( QListWidgetItem* item )
+{
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
    
@@ -376,7 +516,8 @@ void US_BufferGui::select_buffer( QListWidgetItem* item )
       return;
    }
 
-   QString bufferID = item->text().split( ':' )[ 0 ];
+   int row = item->listWidget()->currentRow();
+   QString bufferID = buffer_metadata[ row ].bufferID;
    
    QStringList q( "get_buffer_info" );
    q << bufferID;   // bufferID from list widget entry
@@ -385,48 +526,31 @@ void US_BufferGui::select_buffer( QListWidgetItem* item )
    db.next(); 
    
    buffer.bufferID        = bufferID;
-   buffer.description     = db.value( 0 ).toString();
-   buffer.compressibility = db.value( 1 ).toString().toDouble();
-   buffer.pH              = db.value( 2 ).toString().toDouble();
-   buffer.viscosity       = db.value( 3 ).toString().toDouble();
-   buffer.density         = db.value( 4 ).toString().toDouble();
+   buffer.GUID            = db.value( 0 ).toString();
+   buffer.description     = db.value( 1 ).toString();
+   buffer.compressibility = db.value( 2 ).toString().toDouble();
+   buffer.pH              = db.value( 3 ).toString().toDouble();
+   buffer.viscosity       = db.value( 4 ).toString().toDouble();
+   buffer.density         = db.value( 5 ).toString().toDouble();
 
-   QString personID       = db.value( 5 ).toString();
+   QString personID       = db.value( 6 ).toString();
    buffer.personID        = personID.toInt();
    
    buffer.component    .clear();
    buffer.concentration.clear();
    lw_buffer->clear();
 
-   q.clear();
+   buffer.componentIDs .clear();
+   buffer.concentration.clear();
+   q                   .clear();
+
    q << "get_buffer_components" <<  bufferID;
 
    db.query( q );
 
    while ( db.next() )
    {
-      QString componentID = db.value( 0 ).toString();
-      double  conc        = db.value( 4 ).toString().toDouble();
-
-      buffer.concentration << conc;
-      
-      for ( int i = 0; i < component_list.size(); i ++ )
-      {
-         if ( componentID == component_list[ i ].componentID )
-         {
-            buffer.component << component_list[ i ];
-
-            QString name = component_list[ i ].name;
-            QString unit = component_list[ i ].unit;
-      
-            QString s;
-            s.sprintf( "( %.1f ", conc );
-            
-            lw_buffer->addItem( name + s + unit + ")" );
-            break;
-         }
-      }
-      
+      buffer.componentIDs  << db.value( 0 ).toString();
       buffer.concentration << db.value( 4 ).toString().toDouble();
    }
 
@@ -447,102 +571,26 @@ void US_BufferGui::select_buffer( QListWidgetItem* item )
    buffer.getSpectrum( db, "Refraction" );
    buffer.getSpectrum( db, "Extinction" );
    buffer.getSpectrum( db, "Fluorescence" );
-
-   // Update the rest of the buffer data
-   le_description->setText( buffer.description );
-
-   QString s;
-   le_density    ->setText( s.sprintf( " %6.4f", buffer.density     ) );
-   le_viscosity  ->setText( s.sprintf( " %6.4f", buffer.viscosity ) );
-   le_ph         ->setText( s.sprintf( " %6.4f", buffer.pH          ) );
-   le_compressibility->setText( s.sprintf( " %6.4f", buffer.compressibility ) );
-   le_description->setText( buffer.description );
-   
-   // Allow modification of the just selected buffer from the DB
-   pb_update_db->setEnabled ( true ); 
-   pb_del_db   ->setEnabled ( true ); 
-
-   le_viscosity->setReadOnly( true );
-   le_density  ->setReadOnly( true );
 }
 
-//! Load buffer data from Hard Drive
-void US_BufferGui::read_buffer( void )
+void US_BufferGui::update_lw_buf( const QString& componentID, double conc )
 {
-   QString filename = QFileDialog::getOpenFileName( this, 
-         tr( "Select the buffer file to load" ), 
-         US_Settings::dataDir(), tr( "Buffer Files (*_buf.xml)" ) );
-
-   if ( filename.isEmpty() ) return;
-
-   le_investigator->setText( "Not Selected" );
-   lw_buffer_db   ->clear();
-   lw_buffer_db   ->addItem( filename );
-   
-   fromHD = true;
-
-   if ( ! buffer.readFromDisk( filename ) )
+   for ( int i = 0; i < component_list.size(); i ++ )
    {
-      QMessageBox::information( this, 
-            tr( "Attention" ), 
-            tr( "UltraScan can not read selected buffer file:\n\n" ) +
-                filename );
-      return;
-   }
-
-   // readFromDisk only populates buffer.component[ i ].bufferID, 
-   // so we need to replace it with the full component
-
-   for ( int i = 0; i < buffer.component.size(); i++ )
-   {
-      QString id = buffer.component[ i ].componentID;
-
-      for ( int j = 0; j < component_list.size(); j++ )
+      if ( componentID == component_list[ i ].componentID )
       {
-         if ( id == component_list[ j ].componentID )
-         {
-            buffer.component.replace( i, component_list[ j ] );
-            break;
-         }
+         QString name = component_list[ i ].name;
+         QString unit = component_list[ i ].unit;
+   
+         QString s = QString::number( conc, 'f', 1 );
+         
+         lw_buffer->addItem( name + " (" + s + " " + unit + ")" );
+         break;
       }
    }
-
-   lw_buffer_db->addItem( "Current Buffer was loaded" );
-   lw_buffer_db->addItem( "from Hard Drive" );
-   
-   QString s;
-   lw_buffer->clear();
-
-   for ( int i = 0; i < buffer.component.size(); i++ )
-   {
-      QString name = buffer.component[ i ].name;
-      QString unit = buffer.component[ i ].unit;
-      s.sprintf( "( %.1f ", buffer.concentration[ i ] );
-      lw_buffer->addItem( name + s + unit + ")" );
-   }
-
-   le_density    ->setText( s.sprintf( "%6.4f", buffer.density   ) );
-   le_viscosity  ->setText( s.sprintf( "%6.4f", buffer.viscosity ) );
-   le_ph         ->setText( s.sprintf( "%6.4f", buffer.pH        ) );
-   le_compressibility->setText( s.sprintf( "%.3e", buffer.compressibility ) );
-   le_description->setText( buffer.description );
-
-   // Don't let the user override density and viscosity calculations
-   if ( buffer.component.size() > 0 )
-   {
-      le_viscosity->setReadOnly( true );
-      le_density  ->setReadOnly( true );
-   }
-   else
-   {
-      le_viscosity->setReadOnly( false );
-      le_density  ->setReadOnly( false );
-   }
-
-   pb_save->setEnabled( true );
 }
 
-/*! Save buffer data to disk drive in *_buf.xml. */
+/*! Save buffer data to disk drive in B???????.xml. */
 void US_BufferGui::save_buffer( void )
 {
    if ( le_description->text().isEmpty() )
@@ -592,13 +640,14 @@ void US_BufferGui::save_buffer( void )
 
 void US_BufferGui::update_buffer( void )
 {
-   buffer.description  = le_description->text();
+   buffer.description     = le_description->text();
+                          
+   buffer.pH              = ( le_ph->text().isEmpty() ) 
+                            ? 7.0 
+                            : le_ph->text().toDouble();
    
-   buffer.pH           = ( le_ph->text().isEmpty() ) ? 
-                         7.0 : le_ph->text().toDouble();
-   
-   buffer.density      = le_density    ->text().toDouble();
-   buffer.viscosity    = le_viscosity  ->text().toDouble();
+   buffer.density         = le_density    ->text().toDouble();
+   buffer.viscosity       = le_viscosity  ->text().toDouble();
    buffer.compressibility = le_compressibility->text().toDouble();
 
    // These are updated in other places
@@ -610,48 +659,168 @@ void US_BufferGui::update_buffer( void )
 
 void US_BufferGui::delete_buffer( void )
 {
-   if ( buffer.bufferID.toInt() < 0 || lw_buffer_db->currentRow() < 0 )
+   if ( buffer.GUID.size() == 0 || lw_buffer_db->currentRow() < 0 )
    {
       QMessageBox::information( this,
             tr( "Attention" ),
-            tr( "First select the buffer which you\n"
-                "want to delete from the database" ) );
-
+            tr( "First select the buffer which you "
+                "want to delete." ) );
       return;
    }
 
    int response = QMessageBox::question( this, 
             tr( "Confirmation" ),
             tr( "Do you really want to delete this entry?\n"
-                "Clicking 'OK' will delete the selected buffer data "
-                "from the database." ),
+                "Clicking 'OK' will delete the selected buffer data." ),
             QMessageBox::Ok, QMessageBox::Cancel );
-
-   if ( response == QMessageBox::Ok )
-   {
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
-
-      // Delete the buffer data from the database
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         connect_error( db.lastError() );
-         return;
-      }
-         
-      QStringList q( "delete_buffer" );
-      q << buffer.bufferID;
-     
-      if ( db.statusQuery( q )  != US_DB2::OK )
-      {
-         QMessageBox::warning( this,
-            tr( "Attention" ),
-            tr( "Delete failed.\n\n" ) + db.lastError() );
-      }
-   }
+   
+   if ( response != QMessageBox::Ok ) return;
+   
+   if ( rb_disk->isChecked() ) delete_disk();
+   else                        delete_db(); 
 
    reset();
-   read_db();
+   query();
+}
+
+void US_BufferGui::delete_disk( void )
+{
+   QString path;
+   if ( ! buffer_path( path ) ) return;
+
+   bool    newFile;
+   QString filename = get_filename( path, le_guid->text(), newFile );
+
+   if ( ! newFile )
+   {
+      QFile f( filename );
+      f.remove();
+   }
+}
+
+// Delete the buffer data from the database
+void US_BufferGui::delete_db( void )
+{
+   US_Passwd pw;
+   US_DB2    db( pw.getPasswd() );
+
+   if ( db.lastErrno() != US_DB2::OK )
+   {
+      connect_error( db.lastError() );
+      return;
+   }
+   
+   QStringList q( "get_bufferID" );
+   q << le_guid->text();
+
+   db.query( q );
+
+   int status = db.lastErrno();
+   
+   if (  status == US_DB2::OK )
+   {
+      db.next(); 
+      QString bufferID = db.value( 0 ).toString();
+  
+      q[ 0 ] = "delete_buffer";
+      q[ 1 ] = bufferID;
+      status = db.statusQuery( q );
+   }
+  
+   if ( status  != US_DB2::OK )
+   {
+      QMessageBox::warning( this,
+         tr( "Attention" ),
+         tr( "Delete failed.\n\n" ) + db.lastError() );
+   }
+}
+
+QString US_BufferGui::get_filename( 
+      const QString& path, const QString& guid, bool& newFile )
+{
+   QDir        f( path );
+   QStringList filter( "B???????.xml" );
+   QStringList f_names = f.entryList( filter, QDir::Files, QDir::Name );
+   QString     filename;
+   newFile = true;
+
+   for ( int i = 0; i < f_names.size(); i++ )
+   {
+      QFile b_file( path + "/" + f_names[ i ] );
+
+      if ( ! b_file.open( QIODevice::ReadOnly | QIODevice::Text) ) continue;
+
+      QXmlStreamReader xml( &b_file );
+
+      while ( ! xml.atEnd() )
+      {
+         xml.readNext();
+
+         if ( xml.isStartElement() )
+         {
+            if ( xml.name() == "buffer" )
+            {
+               QXmlStreamAttributes a = xml.attributes();
+
+               if ( a.value( "guid" ).toString() == guid )
+               {
+                  newFile  = false;
+                  filename = path + "/" + f_names[ i ];
+               }
+
+               break;
+            }
+         }
+      }
+
+      b_file.close();
+      if ( ! newFile ) return filename;
+   }
+
+   // If we get here, generate a new filename
+   int number = ( f_names.size() > 0 ) ? f_names.last().mid( 1, 7 ).toInt() : 0;
+
+   return path + "/B" + QString().sprintf( "%07i", number + 1 ) + ".xml";
+}
+
+
+void US_BufferGui::save( void )
+{
+   if ( le_description->text().isEmpty() )
+   {
+      QMessageBox::information( this,
+            tr( "Attention" ), 
+            tr( "Please enter a description for\n"
+                "your buffer before saving it!" ) );
+      return;
+   }
+
+   update_buffer();
+
+   if ( le_guid->text().size() != 36 )
+      le_guid->setText( US_Util::new_guid() );
+
+   buffer.GUID = le_guid->text();
+
+   if ( rb_disk->isChecked() ) save_disk();
+   else                        save_db(); 
+}
+
+void US_BufferGui::save_disk( void )
+{
+   QString path;
+   if ( ! buffer_path( path ) ) return;
+
+   bool    newFile;
+   QString filename = get_filename( path, le_guid->text(), newFile );
+   buffer.writeToDisk( filename );
+
+   QString s = ( newFile ) ? tr( "saved" ) : tr( "updated" );
+   QMessageBox::information( this,
+         tr( "Save results" ),
+         tr( "Buffer " ) + s );
+
+   if ( newFile ) read_buffer();
 }
 
 void US_BufferGui::save_db( void )
@@ -664,17 +833,6 @@ void US_BufferGui::save_db( void )
       return;
    }
 
-   if ( le_description->text().isEmpty() )
-   {
-      QMessageBox::information( this,
-            tr( "Attention" ), 
-            tr( "Please enter a description for\n"
-                "your buffer before saving it!" ) );
-      return;
-   }
-
-   update_buffer();
-
    int response = QMessageBox::question( this, 
             tr( "UltraScan - Buffer Database" ),
             tr( "Click 'OK' to save the selected\n"
@@ -683,7 +841,8 @@ void US_BufferGui::save_db( void )
    if ( response == QMessageBox::Ok )
    {
       QStringList q( "new_buffer" );
-      q << buffer.description
+      q << buffer.GUID
+        << buffer.description
         << QString::number( buffer.compressibility, 'f', 5 )
         << QString::number( buffer.pH             , 'f', 5 )
         << QString::number( buffer.density        , 'f', 5 )
@@ -699,6 +858,15 @@ void US_BufferGui::save_db( void )
       }
 
       db.statusQuery( q );
+
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ), 
+               tr( "Error saving buffer to the database:\n" )
+               + db.lastError() );
+         return;
+      }
 
       int bufferID = db.lastInsertID();
 
@@ -722,11 +890,18 @@ void US_BufferGui::save_db( void )
    }
 }
 
+void US_BufferGui::update( void )
+{
+   update_buffer();
+   buffer.GUID = le_guid->text();
+
+   if ( rb_disk->isChecked() ) save_disk();
+   else                        update_db(); 
+}
+
 /*!  Update changed buffer data to DB table  */
 void US_BufferGui::update_db( void )
 {
-   QString str;
-
    if ( buffer.bufferID.toInt() <= 0 )
    {
       QMessageBox::information( this,
@@ -750,8 +925,6 @@ void US_BufferGui::update_db( void )
             tr( "Please enter a buffer description first!" ) );
       return;
    }
-
-   update_buffer();
 
    int response = QMessageBox::question( this, 
             tr( "Confirmation" ),
@@ -780,6 +953,15 @@ void US_BufferGui::update_db( void )
 
       db.statusQuery( q );
 
+      if ( db.lastErrno() != US_DB2::OK )
+      {
+         QMessageBox::information( this,
+               tr( "Attention" ), 
+               tr( "Error updating buffer in the database:\n" )
+               + db.lastError() );
+         return;
+      }
+
       q.clear();
       q << "delete_buffer_components" << buffer.bufferID;
       db.statusQuery( q );
@@ -801,7 +983,7 @@ void US_BufferGui::update_db( void )
       db.statusQuery( q );
       buffer.putSpectrum( db, "Extinction" );
       
-      q [ 3 ] = "Refraction";
+      q[ 3 ] = "Refraction";
       db.statusQuery( q );
       buffer.putSpectrum( db, "Refraction" );
       
@@ -809,7 +991,7 @@ void US_BufferGui::update_db( void )
       db.statusQuery( q );
       buffer.putSpectrum( db, "Fluorescence" );
 
-      QMessageBox::question( this, 
+      QMessageBox::information( this, 
            tr( "Success" ),
            tr( "The database has been updated\n" ) );
    }
@@ -889,8 +1071,7 @@ void US_BufferGui::add_component( void )
       le_density  ->setReadOnly( false );
    }
 
-   pb_save   ->setEnabled( true );
-   pb_save_db->setEnabled( true );
+   pb_save->setEnabled( true );
 
 }
 
@@ -935,7 +1116,6 @@ void US_BufferGui::remove_component( QListWidgetItem* item )
       le_viscosity->setReadOnly( false );
       le_density  ->setReadOnly( false );
       pb_save     ->setEnabled ( false );
-      pb_save_db  ->setEnabled ( false );
    }
    else
    {
@@ -967,8 +1147,10 @@ void US_BufferGui::reset( void )
    buffer.compressibility = COMP_25W;
    buffer.pH              = 7.0;
 
-   le_search         ->setText( "" );
+   le_search         ->clear();;
    le_search         ->setReadOnly( false );
+
+   le_guid           ->clear();
                     
    lw_buffer_db      ->clear();
    lw_buffer         ->clear();
@@ -981,17 +1163,17 @@ void US_BufferGui::reset( void )
    le_viscosity      ->setText( "0.0" );
    le_viscosity      ->setReadOnly( false );
                      
-   le_description    ->setText( "" );
-   le_compressibility->setText( QString::number( buffer.compressibility, 'e', 3 ) );
+   le_description    ->clear();
+   le_compressibility->clear();
+   
    le_ph             ->setText( "7.0" );
                    
    pb_save           ->setEnabled( false );
-   pb_save_db        ->setEnabled( false );
-   pb_update_db      ->setEnabled( false );
-   pb_del_db         ->setEnabled( false );
+   pb_update         ->setEnabled( false );
+   pb_del            ->setEnabled( false );
                      
    lb_units          ->setText( "" );
-   le_concentration  ->setText( "" );
+   le_concentration  ->clear();
    le_concentration  ->setReadOnly( true );
 
    le_investigator   ->setText( "Not Selected" );

@@ -47,6 +47,7 @@ class US_EXTERN US_Buffer
       int     personID;    //!< Investigator's ID of for this  buffer.
       QString person;      //!< Convenience value of investigator's name.
       QString bufferID;    //!< The buffer's DB ID, or -1 if from harddrive.
+      QString GUID;        //!< The buffer's Global Identifier
       QString description; //!< The buffer's description. 
       double  compressibility; //!< The buffer's compressibility
       double  pH;          //!< Acidity or basicity of the buffer
@@ -57,14 +58,18 @@ class US_EXTERN US_Buffer
       QMap< double, double > extinction;  
       //! An associative array of refraction coefficients indexed by wavelength.
       QMap< double, double > refraction;
-      //! An associative array of fluorescense coefficients indexed by wavelength.
+      //! An associative array of fluorescence coefficients indexed by wavelength.
       QMap< double, double > fluorescence;
       
       //! The list of ingredients
       QList< US_BufferComponent > component;  //!< A list of components that 
                                       //!< make up the buffer.
       QList< double > concentration;  //!< Concentrations for each component.
-      
+      QStringList     componentIDs;   //!< An aux list for disk input.
+
+      // Constructor of a null buffer
+      US_Buffer();
+
       //! Get the info for a buffer from the DB.  The class's bufferID 
       //! must be set.
       //! \param masterPW The user's master password.
