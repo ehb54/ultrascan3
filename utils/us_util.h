@@ -16,5 +16,9 @@ class US_EXTERN US_Util
       //! \param s String to search
       //! \param separator Delimiter to use for parsing
       static QString getToken( QString&, const QString& );
+
+
+      // \brief Generates and returns a new Global Identifier (guid)
+      static QString new_guid( void );
 };
 #endif
