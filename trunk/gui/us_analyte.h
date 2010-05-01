@@ -128,6 +128,8 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       QWidget*      dna_widget;
       QWidget*      carbs_widget;
 
+      QRadioButton* rb_db;
+      QRadioButton* rb_disk;
       QRadioButton* rb_protein;
       QRadioButton* rb_dna;
       QRadioButton* rb_rna;

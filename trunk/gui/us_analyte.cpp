@@ -131,15 +131,25 @@ US_Analyte::US_Analyte( int             invID,
    // Go back to top of 2nd column
    row = 3;
 
-   QPushButton* pb_load = us_pushbutton( tr( "Query Desc from HD" ) );
-   connect( pb_load, SIGNAL( clicked() ), SLOT( read_analyte() ) );
-   main->addWidget( pb_load, row, 1 );
+   //QPushButton* pb_load = us_pushbutton( tr( "Query Desc from HD" ) );
+   //connect( pb_load, SIGNAL( clicked() ), SLOT( read_analyte() ) );
+   //main->addWidget( pb_load, row, 1 );
 
-   pb_save = us_pushbutton( tr( "Save Analyte to HD" ), false );
-   connect( pb_save, SIGNAL( clicked() ), SLOT( save_analyte() ) );
-   main->addWidget( pb_save, row++, 2 );
+   //pb_save = us_pushbutton( tr( "Save Analyte to HD" ), false );
+   //connect( pb_save, SIGNAL( clicked() ), SLOT( save_analyte() ) );
+   //main->addWidget( pb_save, row++, 2 );
 
-   QLabel* lb_banner3 = us_banner( tr( "Database Functions" ), -2 );
+   QButtonGroup* io = new QButtonGroup;
+
+   QGridLayout* db_layout = us_radiobutton( tr( "Use Database" ), rb_db );
+   io->addButton( rb_db );
+   main->addLayout( db_layout, row, 1 );
+
+   QGridLayout* disk_layout = us_radiobutton( tr( "Use Local Disk" ), rb_disk, true );
+   io->addButton( rb_disk );
+   main->addLayout( disk_layout, row++, 2 );
+
+   QLabel* lb_banner3 = us_banner( tr( "Database/Disk Functions" ), -2 );
    lb_banner3->setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
    main->addWidget( lb_banner3, row++, 1, 1, 2 );
 
@@ -148,15 +158,15 @@ US_Analyte::US_Analyte( int             invID,
    connect( pb_load_db, SIGNAL( clicked() ), SLOT( read_db() ) );
    main->addWidget( pb_load_db, row, 1 );
 
-   pb_save_db = us_pushbutton( tr( "Save Analyte to DB" ), false );
+   pb_save_db = us_pushbutton( tr( "Save Analyte" ), false );
    connect( pb_save_db, SIGNAL( clicked() ), SLOT( save_db() ) );
    main->addWidget( pb_save_db, row++, 2 );
 
-   pb_update_db = us_pushbutton( tr( "Update Analyte in DB" ), false );
+   pb_update_db = us_pushbutton( tr( "Update Analyte" ), false );
    connect( pb_update_db, SIGNAL( clicked() ), SLOT( update_db() ) );
    main->addWidget( pb_update_db, row, 1 );
 
-   pb_del_db = us_pushbutton( tr( "Delete Analyte from DB" ), false );
+   pb_del_db = us_pushbutton( tr( "Delete Analyte" ), false );
    connect( pb_del_db, SIGNAL( clicked() ), SLOT( delete_db() ) );
    main->addWidget( pb_del_db, row++, 2 );
 
@@ -748,7 +758,7 @@ void US_Analyte::reset( void )
    le_nucle_mw        ->clear();
    le_nucle_vbar      ->clear();
                       
-   pb_save            ->setEnabled( false );
+   //pb_save            ->setEnabled( false );
    pb_save_db         ->setEnabled( false );
    pb_update_db       ->setEnabled( false );
    pb_del_db          ->setEnabled( false );
@@ -861,6 +871,7 @@ void US_Analyte::read_analyte( void )
    {
       le_search->clear();
       le_search->setReadOnly( false );
+      
       search( "" );
    }
 }
@@ -941,7 +952,7 @@ void US_Analyte::update_sequence( QString seq )
          break;
    }
 
-   pb_save   ->setEnabled( true );
+   //pb_save   ->setEnabled( true );
    pb_save_db->setEnabled( true );
    pb_more   ->setEnabled( true );
 }
@@ -1483,6 +1494,20 @@ void US_Analyte::connect_error( const QString& error )
 
 void US_Analyte::read_db( void )
 {
+   if ( rb_disk->isChecked() )
+   {
+      read_analyte();
+      return;
+   }
+
+   if ( personID < 0 )
+   {
+      QMessageBox::information( this,
+            tr( "Investigator not set" ),
+            tr( "Please select an investigator first." ) );
+      return;
+   }
+
    db_access = true;
 
    US_Passwd pw;
@@ -1494,7 +1519,7 @@ void US_Analyte::read_db( void )
       return;
    }
 
-   pb_save     ->setEnabled( false );
+   //pb_save     ->setEnabled( false );
    pb_save_db  ->setEnabled( false );
    pb_update_db->setEnabled( false );
    pb_del_db   ->setEnabled( false );
@@ -1625,7 +1650,7 @@ void US_Analyte::select_analyte( QListWidgetItem* item )
 {
    if ( ! db_access )  // Read from disk
    {
-      pb_save     ->setEnabled( false );
+      //pb_save     ->setEnabled( false );
       pb_save_db  ->setEnabled( false );
       pb_update_db->setEnabled( false );
       pb_del_db   ->setEnabled( false );
@@ -1637,7 +1662,9 @@ void US_Analyte::select_analyte( QListWidgetItem* item )
       filename = info[ index ].filename;
       populate();
 
-      pb_save     ->setEnabled( true );
+      //pb_save     ->setEnabled( true );
+      pb_del_db   ->setEnabled( true );
+      pb_update_db->setEnabled( true );
       pb_save_db  ->setEnabled( true );
       pb_more     ->setEnabled( true );
 
@@ -1750,7 +1777,7 @@ void US_Analyte::select_analyte( QListWidgetItem* item )
       tr( "Analyte Loaded Successfully" ),
       tr( "The analyte has been loaded from the database." ) );
 
-   pb_save     ->setEnabled( true );
+   //pb_save     ->setEnabled( true );
    pb_update_db->setEnabled( true );
    pb_del_db   ->setEnabled( true );
    pb_more     ->setEnabled( true );
@@ -1758,6 +1785,12 @@ void US_Analyte::select_analyte( QListWidgetItem* item )
 
 void US_Analyte::save_db( void )
 {
+   if ( rb_disk->isChecked() )
+   {
+      save_analyte();
+      return;
+   }
+
    if ( ! data_ok() ) return;
    db_access = true;
 
@@ -1873,7 +1906,11 @@ void US_Analyte::set_spectrum( US_DB2& db )
 void US_Analyte::update_db( void )
 {
    if ( ! data_ok() ) return;
-   if ( ! db_access ) return;
+   if ( ! db_access ) 
+   {
+      save_analyte();
+      return;
+   }
 
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
@@ -1921,6 +1958,23 @@ void US_Analyte::update_db( void )
 
 void US_Analyte::delete_db( void )
 {
+   if ( rb_disk->isChecked() )
+   {
+      // Find the file 
+      QString path;
+      if ( ! analyte_path( path ) ) return;
+
+      QString fn = get_filename( path, le_guid->text() );
+      
+      // Delete it
+      QFile file( fn );
+      if ( file.exists() ) file.remove();
+
+      reset();
+      read_analyte(); 
+      return;
+   }
+
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
 
