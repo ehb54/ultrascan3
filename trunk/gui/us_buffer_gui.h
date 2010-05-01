@@ -47,26 +47,34 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       QList< US_BufferComponent > component_list;   
 
       // For list widget
-      class buffer_info
+      class BufferInfo
       {
          public:
          QString description;
          QString bufferID;
+         QString guid;
+         int     index;
       };
 
-      QList< buffer_info > buffer_metadata;
+      QList< BufferInfo > buffer_metadata;
 
       bool         signal;
-      bool         fromHD;
       int          personID;
 
+      QStringList  filenames;
+      QStringList  descriptions;
+      QStringList  GUIDs;
+      QStringList  bufferIDs;
+
       QPushButton* pb_save;
-      QPushButton* pb_save_db;
-      QPushButton* pb_update_db;
-      QPushButton* pb_del_db;
+      QPushButton* pb_update;
+      QPushButton* pb_del;
       QPushButton* pb_spectrum;
 
       QComboBox*   cmb_optics;
+
+      QRadioButton* rb_db;
+      QRadioButton* rb_disk;
 
       QListWidget* lw_buffer_db;
       QListWidget* lw_ingredients;
@@ -80,26 +88,43 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       QLineEdit*   le_description;
       QLineEdit*   le_investigator;
       QLineEdit*   le_concentration;
+      QLineEdit*   le_guid;
+
+      QPalette     normal;
+      QPalette     gray;
 
       QLabel*      lb_units;
       QLabel*      lb_selected;
 
       US_Help      showHelp;
 
-      void recalc_density    ( void );
-      void recalc_viscosity  ( void );
-      void update_buffer     ( void );
-      void connect_error     ( const QString& );
+      void    read_db         ( void );
+      void    read_buffer     ( void );
+      
+      void    recalc_density  ( void );
+      void    recalc_viscosity( void );
+      void    update_buffer   ( void );
+      void    connect_error   ( const QString& );
+      bool    buffer_path     ( QString& );
+      QString get_filename    ( const QString&, const QString&, bool& );
+      void    update_lw_buf   ( const QString&, double );
+      void    read_from_disk  ( QListWidgetItem* );
+      void    read_from_db    ( QListWidgetItem* );
+      void    save_db         ( void );
+      void    save_disk       ( void );
+      void    delete_db       ( void );
+      void    delete_disk     ( void );
+      void    update_db       ( void );
+      
 
     private slots:
       void synch_components( void );
       void sel_investigator( void );
-      void read_buffer     ( void );
       void save_buffer     ( void );
-      void save_db         ( void );
-      void update_db       ( void );
+      void save            ( void );
+      void update          ( void );
       void delete_buffer   ( void );
-      void read_db         ( void );
+      void query           ( void );
       void reset           ( void );
       void spectrum        ( void );
       void list_component  ( void );
@@ -107,7 +132,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       void accept_buffer   ( void );
       void remove_component( QListWidgetItem* );
       void select_buffer   ( QListWidgetItem* );
-      void search          ( const QString& );
+      void search          ( const QString& = QString() );
       void assign_investigator( int, const QString&, const QString& );
      
       void help ( void ) { showHelp.show_help( "us_buffer.html" ); };
