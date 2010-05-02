@@ -4888,6 +4888,19 @@ int US_fe_nnls_t::run(int status)
 
 extern void clear_data(mfem_data *);
 
+// #define SAVE_SOLUTES
+#if defined(SAVE_SOLUTES)
+static void save_solutes(vector < Solute > solutes) {
+   QString outname = QString("last-solutes-%1.txt").arg(myrank);
+   FILE *out = fopen(outname.ascii(), "w");
+   for ( unsigned int i = 0; i < solutes.size(); i++ ) 
+   {
+      fprintf(out, "s %g k %g\n", solutes[i].s, solutes[i].k);
+   }
+   fclose(out);
+}
+#endif
+
 Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experiment,
                                                vector < Solute > solutes,
                                                double meniscus_offset,
@@ -4895,6 +4908,10 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
                                                unsigned int exp_pos)
 {
    //   printf("%d: calc_residuals\n", myrank); fflush(stdout);
+#if defined(SAVE_SOLUTES)
+   save_solutes(solutes);
+#endif
+
 #if defined(DEBUG_SCALING)
    for(unsigned int e = 0; e < experiment.size(); e++) {
       printf("%d: in calc residuals~~  (scaling factor) %f exp %u scan 10 conc 10 %f\n", 
