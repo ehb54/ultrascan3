@@ -3322,24 +3322,27 @@ int US_fe_nnls_t::run(int status)
          send_udp_msg();
       }
 #if defined(GLOBAL_JOB_TIMING)
-      gettimeofday(&end_tv, NULL);
-      printf("0: job time %lu\n",
-             1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
-             start_tv.tv_usec);
-      fflush(stdout);
+      if ( !myrank )
       {
-         QFile f("email_text_" + startDateTime.toString("yyMMddhhmmss"));
-         if (f.open(IO_WriteOnly | IO_Append))
+         gettimeofday(&end_tv, NULL);
+         printf("0: job time %lu\n",
+                1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
+                start_tv.tv_usec);
+         fflush(stdout);
          {
-            QTextStream ts(&f);
-            ts << "\n" << "jid: " << startDateTime.toString("yyMMddhhmmss") 
-               << " jt: "
-               << (1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec - start_tv.tv_usec)
-               << " maxrss: " << maxrss 
-               << " qid: " << job_id
-               << "\n";
+            QFile f("email_text_" + startDateTime.toString("yyMMddhhmmss"));
+            if (f.open(IO_WriteOnly | IO_Append))
+            {
+               QTextStream ts(&f);
+               ts << "\n" << "jid: " << startDateTime.toString("yyMMddhhmmss") 
+                  << " jt: "
+                  << (1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec - start_tv.tv_usec)
+                  << " maxrss: " << maxrss 
+                  << " qid: " << job_id
+                  << "\n";
+            }
+            f.close();
          }
-         f.close();
       }
 #endif
       MPI_Finalize();
