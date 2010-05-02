@@ -84,6 +84,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       int           escrng;
 
       bool          minmax;
+      bool          haveZone;
 
       QString       run_name;
       QString       cell;
@@ -106,6 +107,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QList< QList< double > > cpds;
       QList< double >          sdifs;
       QList< double >          dseds;
+      QList< double >          dcons;
 
    private slots:
 
