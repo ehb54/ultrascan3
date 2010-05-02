@@ -1012,7 +1012,7 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment,
 void 
 US_fe_nnls_t::send_udp_msg()
 {
-   if ( !myrank )
+   if ( !myrank && job_id )
    {
       QString msg =
          job_udp_msg_key + 
