@@ -204,8 +204,13 @@ class US_EXTERN US_FemGlobal : public QObject
       int read_constraints(struct ModelSystem *, struct ModelSystemConstraints *, vector <QString>);
       int write_constraints(struct ModelSystem *, struct ModelSystemConstraints *, QString);
 
-      int read_model_data(vector <mfem_data> *, QString filename, bool ignore_errors = false);
-      int write_model_data(vector <mfem_data> *, QString filename);
+      int read_model_data(vector <mfem_data> *, 
+                          QString filename, 
+                          bool ignore_errors = false,
+                          QDataStream *ds = (QDataStream *) NULL);  // set ds to read from existing stream
+      int write_model_data(vector <mfem_data> *, 
+                           QString filename,
+                           QDataStream *ds = (QDataStream *) NULL);  // set ds to append to existing stream
       int convert_analysis_data(QString infile, QString outfile);
       int write_ascii_model_data(vector <mfem_data> *, QString filename);
       int accumulate_model_monte_carlo_data(vector <mfem_data> *accumulated_model, vector <mfem_data> *source_model, unsigned int monte_carlo_iterations);

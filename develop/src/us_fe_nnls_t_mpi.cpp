@@ -28,6 +28,8 @@ double float_mc_edge_max = 0;
 #endif
 double float_mc_edge_inc;
 
+list <Expdata> expdata_list;
+
 extern int npes;
 extern int myrank;
 MPI_Status mpi_status, mpi_status2;
@@ -35,9 +37,9 @@ int monte_carlo_iterations = 1;
 int this_monte_carlo = 0;
 int use_ra = 0;
 
-static vector<struct mfem_data> org_experiment;
-vector<struct mfem_data> last_residuals;
-static vector<struct mfem_data> save_gaussians;
+static vector < struct mfem_data > org_experiment;
+vector < struct mfem_data > last_residuals;
+static vector < struct mfem_data > save_gaussians;
 
 SimulationParameters simulation_parameters;
 static vector <SimulationParameters> simulation_parameters_vec;
@@ -413,8 +415,8 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment, vector<Sol
                                 vector <Simulation_values> sve, QString tag, double meniscus, unsigned int iterations)
 {
    // this one is for the GA with possible global results
-   //   printf("0: writeresults 1 it %u mc %d\n", iterations, monte_carlo_iterations);
-   //   fflush(stdout);
+   printf("0: writeresults 1 it %u mc %d\n", iterations, monte_carlo_iterations);
+   fflush(stdout);
    unsigned int e;
    unsigned int ti_noise_offset = 0;
    unsigned int ri_noise_offset = 0;
@@ -876,26 +878,10 @@ void US_fe_nnls_t::WriteResults(vector <struct mfem_data> experiment,
    }
 }
 
-
-class Expdata
-{
-public:
-   QString tag;
-   vector<Solute> solutes;
-   vector<Simulation_values> sve;
-   Simulation_values sv;
-   bool operator==(const Expdata& objIn)
-   {
-      return (tag == objIn.tag);
-   }
-};
-
-list <Expdata> expdata_list;
-
-
 void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment, vector<Solute> solutes,
                                  vector <Simulation_values> sve, QString tag, double meniscus, unsigned int iterations)
 {
+   //   printf("0: BufferResults call sve.variance %g\n", (*expdata_iter)->sve[0].variance);
    //  this one is for the GA with possible global results
    //   printf("0: BufferResults\n");
    //  fflush(stdout);
@@ -960,6 +946,7 @@ void US_fe_nnls_t::BufferResults(vector <struct mfem_data> experiment, vector<So
       fflush(stdout);
       if (this_monte_carlo == monte_carlo_iterations - 1)
       {
+         printf("0: BufferResults call WriteResults sve.variance %g\n", (*expdata_iter).sve[0].variance);
          WriteResults(experiment, (*expdata_iter).solutes, (*expdata_iter).sve, tag, meniscus, iterations);
       }
    }
@@ -1050,7 +1037,9 @@ int
 US_fe_nnls_t::init_run(const QString & data_file,
                        const QString & solute_file,
                        const QString & job_id,
-                       const QString & gridopt)
+                       const QString & gridopt,
+                       const QString & checkpoint_file
+                       )
 {
    // return codes:
    // 0: no error
@@ -1058,6 +1047,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
    // -2: couldn't open solute file
    // -3: some undefined error happened in calc_residuals
    this->job_id = job_id;
+   this->checkpoint_file = checkpoint_file;
    job_udp_msg_key = "js|" + job_id + QString("|Processes %1. ").arg(npes);
    host_address_udp = QHostAddress("129.111.140.173"); // bcf.uthscsa.edu");
    host_port = 787;
@@ -1152,6 +1142,12 @@ US_fe_nnls_t::init_run(const QString & data_file,
          {
             SA2D_Params.monte_carlo = 1;
          }
+#if defined(RUN_SHORT)
+         if ( SA2D_Params.monte_carlo > 3 )
+         {
+            SA2D_Params.monte_carlo = 3;
+         }
+#endif
          cout << "Monte carlo: " << SA2D_Params.monte_carlo << endl; fflush(stdout);
          monte_carlo_iterations = SA2D_Params.monte_carlo;
          ds >> SA2D_Params.ff0_min;
@@ -1221,6 +1217,12 @@ US_fe_nnls_t::init_run(const QString & data_file,
          {
             SA2D_Params.monte_carlo = 1;
          }
+#if defined(RUN_SHORT)
+         if ( SA2D_Params.monte_carlo > 3 )
+         {
+            SA2D_Params.monte_carlo = 3;
+         }
+#endif
          cout << "Monte carlo: " << SA2D_Params.monte_carlo << endl;
          monte_carlo_iterations = SA2D_Params.monte_carlo;
          ds >> SA2D_Params.ff0_min;
@@ -1293,8 +1295,15 @@ US_fe_nnls_t::init_run(const QString & data_file,
          {
             GA_Params.monte_carlo = 1;
          }
+#if defined(RUN_SHORT)
+         if ( GA_Params.monte_carlo > 3 )
+         {
+            GA_Params.monte_carlo = 3;
+         }
+#endif
          cout << "Monte carlo: " << GA_Params.monte_carlo << endl;
          monte_carlo_iterations = GA_Params.monte_carlo;
+
          ds >> GA_Params.demes;
          ds >> GA_Params.generations;
 #if defined(RUN_SHORT)
@@ -1429,18 +1438,28 @@ US_fe_nnls_t::init_run(const QString & data_file,
          {
             GA_Params.monte_carlo = 1;
          }
+#if defined(RUN_SHORT)
+         if ( GA_Params.monte_carlo > 3 )
+         {
+            GA_Params.monte_carlo = 3;
+         }
+#endif
          cout << "Monte carlo: " << GA_Params.monte_carlo << endl;
          monte_carlo_iterations = GA_Params.monte_carlo;
          ds >> GA_Params.demes;
          ds >> GA_Params.generations;
-         //   GA_Params.generations = 2;
+#if defined(RUN_SHORT)
+         GA_Params.generations = 2;
+#endif
          ds >> GA_Params.crossover;
          ds >> GA_Params.mutation;
          ds >> GA_Params.plague;
          ds >> GA_Params.elitism;
          ds >> GA_Params.migration_rate;
          ds >> GA_Params.genes;
-         //   GA_Params.genes = 10;
+#if defined(RUN_SHORT)
+         GA_Params.genes = 10;
+#endif
          ds >> GA_Params.largest_oligomer;
          ds >> GA_Params.largest_oligomer_string;
          if (!myrank)
@@ -1577,17 +1596,28 @@ US_fe_nnls_t::init_run(const QString & data_file,
          {
             GA_Params.monte_carlo = 1;
          }
+#if defined(RUN_SHORT)
+         if ( GA_Params.monte_carlo > 3 )
+         {
+            GA_Params.monte_carlo = 3;
+         }
+#endif
          cout << "Monte carlo: " << GA_Params.monte_carlo << endl;
          monte_carlo_iterations = GA_Params.monte_carlo;
          ds >> GA_Params.demes;
          ds >> GA_Params.generations;
-         //   GA_Params.generations = 2;
+#if defined(RUN_SHORT)
+         GA_Params.generations = 2;
+#endif
          ds >> GA_Params.crossover;
          ds >> GA_Params.mutation;
          ds >> GA_Params.plague;
          ds >> GA_Params.elitism;
          ds >> GA_Params.migration_rate;
          ds >> GA_Params.genes;
+#if defined(RUN_SHORT)
+         GA_Params.genes = 10;
+#endif
          ds >> GA_Params.random_seed;
          if (!myrank)
          {
@@ -2160,6 +2190,288 @@ typedef struct _Jobqueue
 }
 Jobqueue;
 
+void US_fe_nnls_t::write_checkpoint(
+                                    int *monte_carlo_iteration,
+                                    vector < mfem_data > *our_org_experiment,
+                                    vector < mfem_data > *our_save_gaussians,
+                                    list < Expdata > *our_expdata_list
+                                    )
+{
+   QFile f(QString("checkpoint-%1.dat").arg(*monte_carlo_iteration));
+   if (!f.open(IO_WriteOnly))
+   {
+      cout << "Could not open checkpoint file: checkpoint.dat for output\n";
+      cout << "Please check the path, file name and write permissions...\n\n";
+      return;
+   }
+   QDataStream *ds = new QDataStream(&f);
+   *ds << *monte_carlo_iteration;
+   US_FemGlobal us_femglobal;
+   us_femglobal.write_model_data(our_org_experiment, "", ds);
+   us_femglobal.write_model_data(our_save_gaussians, "", ds);
+
+   // list < Expdata > *our_expdata_list
+   *ds << (unsigned int)our_expdata_list->size();
+
+   for ( list <Expdata>::iterator i = our_expdata_list->begin();
+         i != our_expdata_list->end();
+         i++
+         ) {
+      *ds << (*i).tag;
+
+      // vector < Solute > solutes;
+
+      *ds << (unsigned int)(*i).solutes.size();
+      for ( unsigned int j = 0;
+            j < (unsigned int)(*i).solutes.size();
+            j++ ) 
+      {
+         *ds << (*i).solutes[j].s;
+         *ds << (*i).solutes[j].k;
+         *ds << (*i).solutes[j].c;
+      }
+
+      // vector < Simulation_values > sve;
+
+      *ds << (unsigned int)(*i).sve.size();
+      for ( unsigned int j = 0;
+            j < (unsigned int)(*i).sve.size();
+            j++ ) 
+      {
+         *ds << (unsigned int)(*i).sve[j].solutes.size();
+         for ( unsigned int k = 0;
+               k < (unsigned int)(*i).sve[j].solutes.size();
+               k++ ) 
+         {
+            *ds << (*i).sve[j].solutes[k].s;
+            *ds << (*i).sve[j].solutes[k].k;
+            *ds << (*i).sve[j].solutes[k].c;
+         }
+
+         *ds << (*i).sve[j].variance;
+
+         *ds << (unsigned int)(*i).sve[j].ti_noise.size();
+         for ( unsigned int k = 0;
+               k < (unsigned int)(*i).sve[j].ti_noise.size();
+               k++ ) 
+         {
+            *ds << (*i).sve[j].ti_noise[k];
+         }         
+
+         *ds << (unsigned int)(*i).sve[j].ri_noise.size();
+         for ( unsigned int k = 0;
+               k < (unsigned int)(*i).sve[j].ri_noise.size();
+               k++ ) 
+         {
+            *ds << (*i).sve[j].ri_noise[k];
+         }         
+
+         *ds << (unsigned int)(*i).sve[j].variances.size();
+         for ( unsigned int k = 0;
+               k < (unsigned int)(*i).sve[j].variances.size();
+               k++ ) 
+         {
+            *ds << (*i).sve[j].variances[k];
+         }         
+      } // end sve
+
+      // Simulation_values sv;
+
+      *ds << (unsigned int)(*i).sv.solutes.size();
+      for ( unsigned int k = 0;
+            k < (unsigned int)(*i).sv.solutes.size();
+            k++ ) 
+      {
+         *ds << (*i).sv.solutes[k].s;
+         *ds << (*i).sv.solutes[k].k;
+         *ds << (*i).sv.solutes[k].c;
+      }
+      
+      *ds << (*i).sv.variance;
+      
+      *ds << (unsigned int)(*i).sv.ti_noise.size();
+      for ( unsigned int k = 0;
+            k < (unsigned int)(*i).sv.ti_noise.size();
+            k++ ) 
+      {
+         *ds << (*i).sv.ti_noise[k];
+      }         
+
+      *ds << (unsigned int)(*i).sv.ri_noise.size();
+      for ( unsigned int k = 0;
+            k < (unsigned int)(*i).sv.ri_noise.size();
+            k++ ) 
+      {
+         *ds << (*i).sv.ri_noise[k];
+         }         
+      
+      *ds << (unsigned int)(*i).sv.variances.size();
+      for ( unsigned int k = 0;
+            k < (unsigned int)(*i).sv.variances.size();
+            k++ ) 
+      {
+         *ds << (*i).sv.variances[k];
+      }         
+   }   
+
+   f.close();
+   printf("write_checkpoint, mc iteration now %d, our_expdata_list size %u\n", *monte_carlo_iteration, (unsigned int)our_expdata_list->size());
+}
+
+void US_fe_nnls_t::read_checkpoint(
+                                   int *monte_carlo_iteration,
+                                   vector < mfem_data > *our_org_experiment,
+                                   vector < mfem_data > *our_save_gaussians,
+                                   list < Expdata > *our_expdata_list
+                                   )
+{
+   QFile f(checkpoint_file);
+   if (!f.open(IO_ReadOnly))
+   {
+      cout << "Could not open checkpoint file: " << checkpoint_file << " for input\n";
+      cout << "Please check the path, file name and write permissions...\n\n";
+      return;
+   }
+   QDataStream *ds = new QDataStream(&f);
+   *ds >> *monte_carlo_iteration;
+   US_FemGlobal us_femglobal;
+   us_femglobal.read_model_data(our_org_experiment, "", false, ds);
+   us_femglobal.read_model_data(our_save_gaussians, "", false, ds);
+
+   // list < Expdata > *our_expdata_list
+   our_expdata_list->clear();
+   Expdata expdata;
+   unsigned int list_size;
+   unsigned int vector_size_1;
+   unsigned int vector_size_2;
+
+   *ds >> list_size; // our_expdata_list->size();
+
+   for ( unsigned int i = 0; i < list_size; i++ )
+   {
+      *ds >> expdata.tag;
+
+      // vector < Solute > solutes;
+      expdata.solutes.clear();
+      *ds >> vector_size_1;
+      for ( unsigned int j = 0;
+            j < vector_size_1;
+            j++ ) 
+      {
+         Solute tmp_solute;
+         *ds >> tmp_solute.s;
+         *ds >> tmp_solute.k;
+         *ds >> tmp_solute.c;
+         expdata.solutes.push_back(tmp_solute);
+      }
+
+      // vector < Simulation_values > sve;
+      expdata.sve.clear();
+
+      *ds >> vector_size_1;
+      for ( unsigned int j = 0;
+            j < vector_size_1;
+            j++ ) 
+      {
+         Simulation_values tmp_sv;
+         *ds >> vector_size_2;
+         for ( unsigned int k = 0;
+               k < vector_size_2;
+               k++ ) 
+         {
+            Solute tmp_solute;
+            *ds >> tmp_solute.s;
+            *ds >> tmp_solute.k;
+            *ds >> tmp_solute.c;
+            tmp_sv.solutes.push_back(tmp_solute);
+         }
+
+         *ds >> tmp_sv.variance;
+
+         *ds >> vector_size_2;
+         for ( unsigned int k = 0;
+               k < vector_size_2;
+               k++ ) 
+         {
+            double tmp_double;
+            *ds >> tmp_double;
+            tmp_sv.ti_noise.push_back(tmp_double);
+         }         
+
+         *ds >> vector_size_2;
+         for ( unsigned int k = 0;
+               k < vector_size_2;
+               k++ ) 
+         {
+            double tmp_double;
+            *ds >> tmp_double;
+            tmp_sv.ri_noise.push_back(tmp_double);
+         }         
+
+         *ds >> vector_size_2;
+         for ( unsigned int k = 0;
+               k < vector_size_2;
+               k++ ) 
+         {
+            double tmp_double;
+            *ds >> tmp_double;
+            tmp_sv.variances.push_back(tmp_double);
+         }         
+         expdata.sve.push_back(tmp_sv);
+      } // end sve
+
+      // Simulation_values sv;
+
+      *ds >> vector_size_2;
+      for ( unsigned int k = 0;
+            k < vector_size_2;
+            k++ ) 
+      {
+         Solute tmp_solute;
+         *ds >> tmp_solute.s;
+         *ds >> tmp_solute.k;
+         *ds >> tmp_solute.c;
+         expdata.sv.solutes.push_back(tmp_solute);
+      }
+
+      *ds >> expdata.sv.variance;
+
+      *ds >> vector_size_2;
+      for ( unsigned int k = 0;
+            k < vector_size_2;
+            k++ ) 
+      {
+         double tmp_double;
+         *ds >> tmp_double;
+         expdata.sv.ti_noise.push_back(tmp_double);
+      }         
+
+      *ds >> vector_size_2;
+      for ( unsigned int k = 0;
+            k < vector_size_2;
+            k++ ) 
+      {
+         double tmp_double;
+         *ds >> tmp_double;
+         expdata.sv.ri_noise.push_back(tmp_double);
+      }         
+
+      *ds >> vector_size_2;
+      for ( unsigned int k = 0;
+            k < vector_size_2;
+            k++ ) 
+      {
+         double tmp_double;
+         *ds >> tmp_double;
+         expdata.sv.variances.push_back(tmp_double);
+      }         
+      our_expdata_list->push_back(expdata);
+   }
+
+   f.close();
+   printf("read_checkpoint, mc iteration now, %d our_expdata_list size %u\n", *monte_carlo_iteration, (unsigned int)our_expdata_list->size());
+}
+
 int US_fe_nnls_t::run(int status)
 {
    if(!myrank) {
@@ -2202,10 +2514,24 @@ int US_fe_nnls_t::run(int status)
       // temporary overrides
       //   GA_Params.generations = 2;
       //   GA_Params.genes = 10;
-      for (this_monte_carlo = 0; this_monte_carlo < monte_carlo_iterations; this_monte_carlo++)
+      // 
+      this_monte_carlo = 0;
+
+      bool rewrite_email_text = false;
+      if ( checkpoint_file != "" ) 
+      {
+         // restore from checkpoint
+         read_checkpoint(&this_monte_carlo, &org_experiment, &save_gaussians, &expdata_list);
+         rewrite_email_text = true;
+      }
+      for (; this_monte_carlo < monte_carlo_iterations; this_monte_carlo++)
       {
          if (this_monte_carlo)
          {
+            if ( !myrank )
+            {
+               write_checkpoint(&this_monte_carlo, &org_experiment, &save_gaussians, &expdata_list);
+            }
             // broadcast monte carlo data to the workers
             printf("%d: monte carlo iteration %u\n", myrank, this_monte_carlo);
             if (!myrank)
@@ -2652,8 +2978,10 @@ int US_fe_nnls_t::run(int status)
                // fflush(stdout);
             }
             QFile f("email_text_" + startDateTime.toString("yyMMddhhmmss"));
-            if (this_monte_carlo == 0)
+            if (this_monte_carlo == 0 ||
+                rewrite_email_text )
             {
+               rewrite_email_text = false;
                if (f.open(IO_WriteOnly))
                {
                   QTextStream ts(&f);

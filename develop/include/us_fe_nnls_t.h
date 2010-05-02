@@ -21,6 +21,19 @@
 
 using namespace std;
 
+class Expdata
+{
+public:
+   QString tag;
+   vector < Solute > solutes;
+   vector < Simulation_values > sve;
+   Simulation_values sv;
+   bool operator==(const Expdata& objIn)
+   {
+      return (tag == objIn.tag);
+   }
+};
+
 class US_EXTERN US_fe_nnls_t 
 // : public QWidget
 {
@@ -69,14 +82,27 @@ class US_EXTERN US_fe_nnls_t
    QString job_udp_msg_iterative;
    void send_udp_msg();
    vector < rotorInfo > rotor_list;
+   QString checkpoint_file;
 
- public:
    Simulation_values calc_residuals(vector <struct mfem_data>, vector <Solute>, double, int, unsigned int);
    Simulation_values calc_residuals(struct mfem_data, vector <Solute>);
    Simulation_values regularize(Simulation_values, double);
-   int init_run(const QString &, const QString &, const QString &, const QString &);
+   int init_run(const QString &, const QString &, const QString &, const QString &, const QString &);
    int run();
    int run(int);
+
+   void write_checkpoint(
+                         int *monte_carlo_iteration,
+                         vector < mfem_data > *org_experiment,
+                         vector < mfem_data > *save_gaussians,
+                         list < Expdata > *expdata_list
+                         );
+   void read_checkpoint(
+                        int *monte_carlo_iteration,
+                        vector < mfem_data > *org_experiment,
+                        vector < mfem_data > *save_gaussians,
+                        list < Expdata > *expdata_list
+                        );
 };
 
 typedef struct _MPI_GA_Work_Msg {

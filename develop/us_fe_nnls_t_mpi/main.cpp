@@ -38,10 +38,17 @@ int main (int argc, char **argv)
          gridopt = argv[4];
       }
    }
+   
+   QString checkpoint_file = "";
+   if ( argc >= 6 ) 
+   {
+      checkpoint_file = argv[5];
+   }
+      
    US_fe_nnls_t *us_fe_nnls_t;
    us_fe_nnls_t = new US_fe_nnls_t();
    //   if(!myrank) {
-   result = us_fe_nnls_t->init_run(data_file, solute_file, job_id, gridopt);
+   result = us_fe_nnls_t->init_run(data_file, solute_file, job_id, gridopt, checkpoint_file);
    //   }
    us_fe_nnls_t->run(result);
    //   return (result);
