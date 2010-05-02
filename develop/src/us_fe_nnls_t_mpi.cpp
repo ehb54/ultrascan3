@@ -1038,7 +1038,8 @@ US_fe_nnls_t::init_run(const QString & data_file,
                        const QString & solute_file,
                        const QString & job_id,
                        const QString & gridopt,
-                       const QString & checkpoint_file
+                       const QString & checkpoint_file,
+                       int mc_cutoff
                        )
 {
    // return codes:
@@ -1048,6 +1049,7 @@ US_fe_nnls_t::init_run(const QString & data_file,
    // -3: some undefined error happened in calc_residuals
    this->job_id = job_id;
    this->checkpoint_file = checkpoint_file;
+   this->mc_cutoff = mc_cutoff;
    job_udp_msg_key = "js|" + job_id + QString("|Processes %1. ").arg(npes);
    host_address_udp = QHostAddress("129.111.140.173"); // bcf.uthscsa.edu");
    host_port = 787;
@@ -1143,9 +1145,9 @@ US_fe_nnls_t::init_run(const QString & data_file,
             SA2D_Params.monte_carlo = 1;
          }
 #if defined(RUN_SHORT)
-         if ( SA2D_Params.monte_carlo > 3 )
+         if ( SA2D_Params.monte_carlo > 4 )
          {
-            SA2D_Params.monte_carlo = 3;
+            SA2D_Params.monte_carlo = 4;
          }
 #endif
          cout << "Monte carlo: " << SA2D_Params.monte_carlo << endl; fflush(stdout);
@@ -1218,9 +1220,9 @@ US_fe_nnls_t::init_run(const QString & data_file,
             SA2D_Params.monte_carlo = 1;
          }
 #if defined(RUN_SHORT)
-         if ( SA2D_Params.monte_carlo > 3 )
+         if ( SA2D_Params.monte_carlo > 4 )
          {
-            SA2D_Params.monte_carlo = 3;
+            SA2D_Params.monte_carlo = 4;
          }
 #endif
          cout << "Monte carlo: " << SA2D_Params.monte_carlo << endl;
@@ -1296,9 +1298,9 @@ US_fe_nnls_t::init_run(const QString & data_file,
             GA_Params.monte_carlo = 1;
          }
 #if defined(RUN_SHORT)
-         if ( GA_Params.monte_carlo > 3 )
+         if ( GA_Params.monte_carlo > 4 )
          {
-            GA_Params.monte_carlo = 3;
+            GA_Params.monte_carlo = 4;
          }
 #endif
          cout << "Monte carlo: " << GA_Params.monte_carlo << endl;
@@ -1439,9 +1441,9 @@ US_fe_nnls_t::init_run(const QString & data_file,
             GA_Params.monte_carlo = 1;
          }
 #if defined(RUN_SHORT)
-         if ( GA_Params.monte_carlo > 3 )
+         if ( GA_Params.monte_carlo > 4 )
          {
-            GA_Params.monte_carlo = 3;
+            GA_Params.monte_carlo = 4;
          }
 #endif
          cout << "Monte carlo: " << GA_Params.monte_carlo << endl;
@@ -1597,9 +1599,9 @@ US_fe_nnls_t::init_run(const QString & data_file,
             GA_Params.monte_carlo = 1;
          }
 #if defined(RUN_SHORT)
-         if ( GA_Params.monte_carlo > 3 )
+         if ( GA_Params.monte_carlo > 4 )
          {
-            GA_Params.monte_carlo = 3;
+            GA_Params.monte_carlo = 4;
          }
 #endif
          cout << "Monte carlo: " << GA_Params.monte_carlo << endl;
@@ -2532,6 +2534,42 @@ int US_fe_nnls_t::run(int status)
             {
                write_checkpoint(&this_monte_carlo, &org_experiment, &save_gaussians, &expdata_list);
             }
+
+            if ( mc_cutoff && 
+                 this_monte_carlo >= mc_cutoff )
+            {
+               fprintf(stderr, "%d: MC cutoff reached\r\n", myrank);
+               fprintf(stdout, "%d: MC cutoff reached\r\n", myrank); fflush(stdout);
+               if ( !myrank ) 
+               {
+                  QFile f("email_text_" + startDateTime.toString("yyMMddhhmmss"));
+                  if (f.open(IO_WriteOnly | IO_Append))
+                  {
+                     QTextStream ts(&f);
+                     ts << "MC cutoff reached, iteration: " << mc_cutoff << endl;
+                     ts << "\nsubmitted at " + startDateTime.toString("hh:mm:ss") + " on "
+                        << startDateTime.toString("MM/dd/yyyy") + " has reached MC cutoff.\n\n";
+#if defined(GLOBAL_JOB_TIMING)
+                     gettimeofday(&end_tv, NULL);
+                     printf("0: job time %lu\n",
+                            1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec -
+                            start_tv.tv_usec);
+                     fflush(stdout);
+                     ts << "\n" << "jid: " << startDateTime.toString("yyMMddhhmmss") 
+                        << " jt: "
+                        << (1000000l * (end_tv.tv_sec - start_tv.tv_sec) + end_tv.tv_usec - start_tv.tv_usec)
+                        << " maxrss: " << maxrss 
+                        << " qid: " << job_id
+                        << "\n";
+#endif
+                     f.close();
+                  }
+               }
+
+               MPI_Finalize();
+               exit(-1);
+            }
+                  
             // broadcast monte carlo data to the workers
             printf("%d: monte carlo iteration %u\n", myrank, this_monte_carlo);
             if (!myrank)

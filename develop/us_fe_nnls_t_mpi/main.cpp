@@ -43,12 +43,22 @@ int main (int argc, char **argv)
    if ( argc >= 6 ) 
    {
       checkpoint_file = argv[5];
+      if ( checkpoint_file == "no" )
+      {
+         checkpoint_file = "";
+      }         
+   }
+
+   int mc_cutoff = 0;
+   if ( argc >= 7 ) 
+   {
+      mc_cutoff = atoi(argv[6]);
    }
       
    US_fe_nnls_t *us_fe_nnls_t;
    us_fe_nnls_t = new US_fe_nnls_t();
    //   if(!myrank) {
-   result = us_fe_nnls_t->init_run(data_file, solute_file, job_id, gridopt, checkpoint_file);
+   result = us_fe_nnls_t->init_run(data_file, solute_file, job_id, gridopt, checkpoint_file, mc_cutoff);
    //   }
    us_fe_nnls_t->run(result);
    //   return (result);
