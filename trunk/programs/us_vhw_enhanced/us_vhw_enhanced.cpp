@@ -121,8 +121,6 @@ void US_vHW_Enhanced::load( void )
    if ( workingDir.isEmpty() )
       return;
 
-   //reset_data();
-
    // insure we have a .auc file
    QStringList nameFilters = QStringList( "*.auc" );
    workingDir.replace( "\\", "/" );
@@ -314,16 +312,16 @@ qDebug() << "p: scan " << ii+1;
             plats.append( plateau );
             isrel.append( ii );
             nrelp++;
-qDebug() << "p:    *RELIABLE* " << ii+1 << nrelp;
+//qDebug() << "p:    *RELIABLE* " << ii+1 << nrelp;
          }
          else
          {
             isunr.append( ii );
             nunrp++;
-qDebug() << "p:    -UNreliable- " << ii+1 << nunrp;
+//qDebug() << "p:    -UNreliable- " << ii+1 << nunrp;
          }
-qDebug() << "p: nrelp nunrp " << nrelp << nunrp;
-qDebug() << "  RELIABLE: 1st " << isrel.at(0)+1 << "  last " << isrel.last()+1;
+//qDebug() << "p: nrelp nunrp " << nrelp << nunrp;
+//qDebug() << "  RELIABLE: 1st " << isrel.at(0)+1 << "  last " << isrel.last()+1;
 if(nunrp>0) {
 qDebug() << "  UNreli: 1st " << isunr.at(0)+1 << "  last " << isunr.last()+1;
 for (int jj=0;jj<isunr.size();jj++) qDebug() << "    UNr: " << isunr.at(jj)+1;
@@ -368,8 +366,7 @@ for (int jj=0;jj<isunr.size();jj++) qDebug() << "    UNr: " << isunr.at(jj)+1;
 
    Swavg      = slope / ( -2.0 * omega * omega );  // Swavg func of slope
 	C0         = exp( intcp );                      // C0 func of intercept
-qDebug() << "Swavg: " << Swavg << ", C0: " << C0 ;
-qDebug() << "  correc Swavg*correc " << correc << Swavg*correc;
+qDebug() << "Swavg(c): " << Swavg*correc << " C0: " << C0 ;
 
    // Determine Cp for each of the unreliable scans
    // y = ax + b, using "a" and "b" determined above.
@@ -407,67 +404,61 @@ qDebug() << " jj scan plateau " << jj << ii+1 << d->scanData[ii].plateau;
       double  cconc  = bcut;
       double  pconc  = bcut;
       double  mconc  = bcut;
-      double  tcpjj  = 0.0;
+      double  tcpij  = 0.0;
       double  cinc   = span * divfac;
-      //double  omega  = s->rpm * M_PI / 30.0;
+      omega          = s->rpm * M_PI / 30.0;
       double  oterm  = ( s->seconds - time_correction ) * omega * omega;
-      //double eterm  = -2.0 * oterm / 1.0e13;
       double  eterm  = -2.0 * oterm / correc;
-      //range          = C0 - baseline;
-      //double  c0term = (C0) * (1-boundPct)/ndivs;
-      //double  c0term = ( C0 - baseline ) * ( 1 - boundPct ) * divfac;
-      double  c0term = ( C0 - baseline ) * divfac;
-      //double  c0term = ( C0 - baseline ) * boundPct * divfac;
+      double  c0term = ( C0 - baseline ) * boundPct * divfac;
       double  sedc;
-      double  cpjj;
+      double  cpij;
 
 
       for ( int jj = 0; jj < ndivs; jj++ )
       {  // calculate partial plateaus
-         pconc        = cconc;
-         cconc       += cinc;
-         mconc        = pconc + cinc * 0.5;
+         pconc        = cconc;              // prev (baseline) div concentration
+         cconc       += cinc;               // curr (plateau) div concentration
+         mconc        = pconc + cinc * 0.5; // mid div concentration
 
+         // get sedimentation coefficient for concentration
          sedc         = sed_coeff( mconc, correc, meniscus, oterm,
                s->readings, npts );
-         cpjj         = c0term * exp( sedc * eterm );
-//qDebug() << " scn div cinc cpjj " << ii+1 << jj+1 << cinc << cpjj;
+
+         // calculate the partial concentration for this division
+         cpij         = c0term * exp( sedc * eterm );
+//qDebug() << " scn div cinc cpij " << ii+1 << jj+1 << cinc << cpij;
 //qDebug() << "  sedc eterm eso " << sedc << eterm << (eterm*sedc);
-         tcpjj       += cpjj;
-         scpds.append( cpjj );
+
+         // update Cpij sum and add to divisions list for scan
+         tcpij       += cpij;
+         scpds.append( cpij );
       }
 
-      //sdiff        = span - tcpjj;
-      sdiff        = ( span - tcpjj ) * divfac;
-qDebug() << "   tcpjj span " << tcpjj << span
-   << " tspjj/span " << (tcpjj/span);
-//qDebug() << "   tcpjj range " << tcpjj << range
-//   << " tspjj/range " << (tcpjj/range);
-#if 1
+      // get span-minus-sum_cpij and divide by number of divisions
+      sdiff        = ( span - tcpij ) * divfac;
+qDebug() << "   tcpij span " << tcpij << span
+   << " tspjj/span " << (tcpij/span);
+
       for ( int jj = 0; jj < ndivs; jj++ )
       {  // spread difference to each partial plateau concentration
-         cpjj         = scpds.at( jj );
-         //cpjj        += ( sdiff * cpjj / tcpjj );
-         cpjj        += sdiff;
-         scpds.replace( jj, cpjj );
+         cpij         = scpds.at( jj ) + sdiff;
+         scpds.replace( jj, cpij );
       }
-#endif
 
-      cpds << scpds;
+      cpds << scpds;  // add cpij list to scan's list-of-lists
    }
 
    // iterate to adjust plateaus until none needed or max iters reached
-   //int     mxiter    = 3;
-   int     mxiter    = 4;
+
    int     iter      = 1;
-   double  spdsmx    = (double)ndivs;
+   int     mxiter    = 3;          // maximum iterations
+   double  spdsmx    = 0.0005;     // threshold ratio of cp-sum-diff to C0
 
    while( iter <= mxiter )
    {
       double spdsum  = 0.0;
-      double apdsum  = 0.0;
-      double spdlo   = 1.0e20;
-      double spdhi   = -1.0e20;
+      double adiff   = 0.0;
+      double sdrati  = 0.0;
       int    count   = 0;
 qDebug() << "iter mxiter " << iter << mxiter;
 
@@ -487,73 +478,57 @@ qDebug() << "iter mxiter " << iter << mxiter;
          double  bcut   = baseline + range * positPct;
          double  pcut   = bcut     + range * boundPct;
          double  span   = pcut - bcut;
-         double  tcpjj  = 0.0;
+         double  tcpij  = 0.0;
          double  oterm  = ( s->seconds - time_correction ) * omega * omega;
-         //double  eterm  = -2.0e-13 * oterm;
          double  eterm  = -2.0 * oterm / correc;
-         //double  c0term = ( C0 - baseline ) * ( 1 - boundPct ) * divfac;
-         //double  c0term = ( C0 - bcut ) * divfac;
          double  c0term = ( C0 - baseline ) * boundPct * divfac;
-         //double  c0term = ( C0 - baseline ) * divfac;
-         //range          = C0 - baseline;
          double  sedc;
-         double  cpjj;
+         double  cpij;
          scpds          = cpds.at( ii );
          scpds.clear();
 
          // split difference between divisions
 
          for ( int jj = 0; jj < ndivs; jj++ )
-         {
-            //double  cinc   = tcpds.at( jj ) + sdiff;
+         {  // recalculate partial concentrations based on sedcoeff intercepts
             sedc           = dseds[ jj ];
-            //cpjj           = scpds.at( jj );
-            cpjj           = c0term * exp( sedc * eterm );
-            //cpjj           = scpds.at( jj ) * exp( sedc * eterm );
-            scpds.append( cpjj );
-            //scpds.replace( jj, cpjj );
-            tcpjj         += cpjj;
-//qDebug() << "    div " << jj+1 << "  tcdps cpjj " << tcpds.at(jj) << cpjj;
+            cpij           = c0term * exp( sedc * eterm );
+            scpds.append( cpij );
+            tcpij         += cpij;
+//qDebug() << "    div " << jj+1 << "  tcdps cpij " << tcpds.at(jj) << cpij;
          }
 
-         sdiff          = ( span - tcpjj ) * divfac;
-         //sdiff          = span - tcpjj;
+         // set to split span-sum difference over each division
+         sdiff          = ( span - tcpij ) * divfac;
 
          for ( int jj = 0; jj < ndivs; jj++ )
          {  // spread difference to each partial plateau concentration
-            cpjj         = scpds.at( jj );
-            //cpjj        += ( sdiff * cpjj / tcpjj );
-            cpjj        += sdiff;
-            scpds.replace( jj, cpjj );
+            cpij         = scpds.at( jj ) + sdiff;
+            scpds.replace( jj, cpij );
          }
 
          cpds.replace(  ii, scpds );
-qDebug() << "   iter scn " << iter << ii+1 << " tcpjj span "
-   << tcpjj << span << "  tcpjj/span sdiff" << (tcpjj/span) << sdiff;
-//qDebug() << "   iter scn " << iter << ii+1 << " tcpjj range "
-//   << tcpjj << range << "  tcpjj/range sdiff" << (tcpjj/range) << sdiff;
-         double adiff   = ( sdiff < 0 ) ? -sdiff : sdiff;
-         spdsum        += sdiff;
-         apdsum        += adiff;
-         spdlo          = ( spdlo < adiff ) ? spdlo : adiff;
-         spdhi          = ( spdhi > adiff ) ? spdhi : adiff;
+qDebug() << "   iter scn " << iter << ii+1 << " tcpij span "
+   << tcpij << span << "  tcpij/span sdiff" << (tcpij/span) << sdiff;
+
+         adiff          = ( sdiff < 0 ) ? -sdiff : sdiff;
+         spdsum        += adiff;  // sum of difference magnitudes
          count++;
       }
 
-      double  spdavg = spdsum / (double)count;
-      double  apdavg = apdsum / (double)count;
-qDebug() << "      iter sum avg " << iter << spdsum << spdavg;
-qDebug() << "       asum aavg " << apdsum << apdavg << " alo ahi "
-   << spdlo << spdhi;
-      iter++;
+      sdrati         = spdsum / C0;  // ratio of diffs sum to C0
+qDebug() << "    iter sum C0 sum/C0_ratio " << iter << spdsum << C0 << sdrati;
 
-      //if ( spdsum < spdsmx )
-      //   break;
+      if ( sdrati < spdsmx )  // if differences are small, we're done
+         break;
+
+      iter++;
    }
 
    int     kk = exclude * ndivs;      // index to sed. coeff. values
 
    // Calculate the corrected sedimentation coefficients
+
    for ( int ii = exclude; ii < nscns; ii++ )
    {
       SCNDAT* s      = &d->scanData[ ii ];
@@ -566,35 +541,34 @@ qDebug() << "       asum aavg " << apdsum << apdavg << " alo ahi "
          kk         += ndivs;
          continue;
       }
-      //if ( excludedScans.contains( ii ) )
-      //   timex          = -1.0;       // mark excluded scan
 
       ptx[ ii ]      = timex;         // save corrected time and accum max
       xmax           = ( xmax > timex ) ? xmax : timex;
 
       double range   = s->plateau - baseline;
-      double span    = range * boundPct;
-      double spinc   = span * divfac;               // span incr = span/ndivs
       double cconc   = baseline + range * positPct; // initial conc for span
       double omega   = s->rpm * M_PI / 30.0;
       double oterm   = ( timev > 0.0 ) ? ( timev * omega * omega ) : -1.0;
       int    points  = s->readings.size();
       double pconc;
       double mconc;
+      double cpij;
       double sedc;
       scpds          = cpds.at( ii );  // list of conc values of divs this scan
 
       for ( int jj = 0; jj < ndivs; jj++ )
       {  // walk through division points; get sed. coeff. by place in readings
-         pconc       = cconc;
-         spinc       = scpds.at( jj );
-         cconc       = pconc + spinc;
-         mconc       = pconc + spinc * 0.5;
+         pconc       = cconc;               // div base
+         cpij        = scpds.at( jj );      // div partial concentration
+         cconc       = pconc + cpij;        // absolute concentration
+         mconc       = pconc + cpij * 0.5;  // mid div concentration
 
+         // corresponding sedimentation coefficient
          sedc        = sed_coeff( mconc, correc, meniscus, oterm,
                s->readings, points );
 
-         pty[ kk++ ] = sedc;           // save sed. coeff. value
+         // y value of point is sedcoeff; calculate y max
+         pty[ kk++ ] = sedc;
          ymax        = ( ymax > sedc ) ? ymax : sedc;
       }
    }
@@ -699,7 +673,7 @@ qDebug() << "       asum aavg " << apdsum << apdavg << " alo ahi "
 
    // set scales, then plot the points and lines
    xmax  *= 1.05;
-   xmax   = (double)qRound( ( xmax + 0.0019 ) / 0.002 ) * 0.002;
+   xmax   = (double)qRound( ( xmax + 0.0009 ) / 0.001 ) * 0.001;
    ymax   = (double)qRound( ( ymax + 0.3900 ) / 0.400 ) * 0.400;
    data_plot1->setAxisScale( QwtPlot::xBottom, 0.0, xmax, 0.005 );
    data_plot1->setAxisScale( QwtPlot::yLeft,   0.0, ymax, 0.500 );
@@ -831,6 +805,7 @@ double US_vHW_Enhanced::avg_plateau( SCNDAT* s )
    return plato;
 }
 
+// find scan's plateau for identifying flat zone in its curve
 double US_vHW_Enhanced::zone_plateau( SCNDAT* s, double baseline )
 {
    double  plato  = -1.0;
@@ -953,13 +928,13 @@ qDebug() << "        j1 j2 j9 " << j1 << j2 << j9;
       j1        += jj;
       j9         = ( j9 < j1 ) ? ( j1 + jj ) : j9;
 qDebug() << "         sll1 sll2 slh1 " << sllo1 << sllo2 << slhi1;
-      j2         = j9 - j1;            // size of overall flat zone
-      if ( j2 > PZ_HZLO )
+      nzp        = j9 - j1;            // size of overall flat zone
+      if ( nzp > PZ_HZLO )
       {
          for ( jj = j1; jj < j9; jj++ )
             plato     += y[ jj ];      // sum y's in flat zone
 
-         plato     /= (double)j2;      // plateau is average
+         plato     /= (double)nzp;     // plateau is average
 qDebug() << "          plati plato " << s->plateau << plato;
          s->plateau = plato;
       }
@@ -1053,7 +1028,6 @@ void US_vHW_Enhanced::div_seds( )
    int     nscnu    = 0;
    int     row      = lw_triples->currentRow();
    EDTDAT* d        = &dataList[ row ];
-   //double  boundPct = ct_boundaryPercent->value() / 100.0;
    double  positPct = ct_boundaryPos->value() / 100.0;
    double  correc   = solution.correction * 1.0e13;
    double  baseline = calc_baseline();
@@ -1065,7 +1039,7 @@ void US_vHW_Enhanced::div_seds( )
    dcons.clear();
 
    for ( int jj = 0; jj < ndivs; jj++ )
-   {
+   {  // loop to fit points across scans in a division
       SCNDAT* s;
       double  dsed;
       double  dcon;
@@ -1074,7 +1048,7 @@ void US_vHW_Enhanced::div_seds( )
       double  corre;
       int     ii;
       int     npts;
-      double  coninc;
+      double  cpij;
       double  omega;
       double  oterm;
 //qDebug() << "div_sed div " << jj+1;
@@ -1094,7 +1068,6 @@ void US_vHW_Enhanced::div_seds( )
             }
          }
       }
-      //double  sdiff;
 
       // accumulate y values for this division
 
@@ -1103,9 +1076,9 @@ void US_vHW_Enhanced::div_seds( )
          ii       = ll[ kk ];                 // scan index
          s        = &d->scanData[ ii ];       // scan info
          npts     = s->readings.size();       // readings in this scan
-         pconc    = pp[ kk ];                 // prev conc (baseline)
-         coninc   = cpds.at( ii ).at( jj );   // partial conc (increment)
-         cconc    = pconc + coninc;           // curr conc (plateau)
+         pconc    = pp[ kk ];                 // prev concen (baseline)
+         cpij     = cpds.at( ii ).at( jj );   // partial concen (increment)
+         cconc    = pconc + cpij;             // curr concen (plateau)
          mconc    = ( cconc + pconc ) * 0.5;  // mid div concentration
          omega    = s->rpm * M_PI / 30.0;     // omega
          oterm    = ( s->seconds - time_correction ) * omega * omega;
@@ -1113,7 +1086,7 @@ void US_vHW_Enhanced::div_seds( )
          pp[ kk ] = cconc;  // division mark of concentration for scan
          yy[ kk ] = sed_coeff( mconc, correc, d->meniscus, oterm,
                                s->readings, npts );
-         zz[ kk ] = mconc;  // division mark of concentration for scan
+         zz[ kk ] = mconc;  // mid-division concentration
 //if ( kk < 2 || kk > (nscnu-3) )
 //qDebug() << "div scn " << jj+1 << ii+1 << " pconc cconc " << pconc << cconc;
 
@@ -1130,9 +1103,9 @@ void US_vHW_Enhanced::div_seds( )
       US_Math::linefit( &xx, &zz, &slope, &dcon, &sigma, &corre, nscnu );
 
       dcons.append( dcon );
+//if((jj&7)==0||jj==(ndivs-1))
+// qDebug() << "     div dsed dcon " << jj+1 << dsed << dcon;
 
-if((jj&7)==0||jj==(ndivs-1))
- qDebug() << "     div dsed dcon " << jj+1 << dsed << dcon;
    }
 qDebug() << " dsed[0] " << dseds.at(0);
 qDebug() << " dsed[L] " << dseds.at(ndivs-1);
