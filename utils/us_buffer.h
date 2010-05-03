@@ -70,11 +70,6 @@ class US_EXTERN US_Buffer
       // Constructor of a null buffer
       US_Buffer();
 
-      //! Get the info for a buffer from the DB.  The class's bufferID 
-      //! must be set.
-      //! \param masterPW The user's master password.
-      void getInfoFromDB( const QString& );
-
       //! \brief Write the buffer to a disk file
       //! \param filename  The full path, includingfilename.
       //! \return A boolean success or failure
@@ -93,7 +88,7 @@ class US_EXTERN US_Buffer
 
       //! \brief Put spectrum data to the DB for a type
       //! \param db The open database connection
-      //! \param type The type of data to put to the DB.  One of:  "Extinction", 
+      //! \param type The type of data to put to the DB.  One of:  "Extinction",
       //!             "Refraction", or "Fluorescence"
       void putSpectrum( US_DB2&, const QString& );
 

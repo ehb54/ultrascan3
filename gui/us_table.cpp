@@ -2,9 +2,14 @@
 #include "us_table.h"
 #include "us_gui_settings.h"
 
-US_Table::US_Table( QMap< double, double >& map, const QString& type,
-      QWidget* parent, Qt::WindowFlags f )
-   : US_WidgetsDialog( parent, f ), values( map )
+US_Table::US_Table( QMap< double, double >& map, 
+                          const QString&    type,
+                          bool&             change, 
+                          QWidget*          parent, 
+                          Qt::WindowFlags   f )
+   : US_WidgetsDialog( parent, f ), 
+     values( map ), 
+     changed( change )
 {
    setPalette  ( US_GuiSettings::frameColor() );
    setAttribute( Qt::WA_DeleteOnClose );
@@ -60,7 +65,12 @@ US_Table::US_Table( QMap< double, double >& map, const QString& type,
 
 void US_Table::done( void )
 {
-   values = local;
+   if ( values != local )
+   {
+      values  = local;
+      changed = true;
+   }
+
    close();
 }
 
