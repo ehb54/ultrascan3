@@ -4,7 +4,6 @@
 #include "us_constants.h"
 #include "us_gui_settings.h"
 #include "us_buffer_gui.h"
-#include "us_analyte.h"
 
 #include "qwt_legend.h"
 
@@ -30,9 +29,10 @@ US_Predict1::Hydrosim::Hydrosim()
 }
 
 US_Predict1::US_Predict1( Hydrosim&       params, 
+                          int             invID,
                           QWidget*        parent, 
                           Qt::WindowFlags f )
-   : US_WidgetsDialog( parent, f ), allparams( params )
+   : US_WidgetsDialog( parent, f ), allparams( params ), investigator( invID )
 {
    temperature = NORMAL_TEMP;
    mw          = 50000.0;  // Arbitrary starting point
@@ -299,17 +299,18 @@ void US_Predict1::degC( const QString& s )
 
 void US_Predict1::get_peptide( void )
 {
-   US_Analyte* peptide_dialog = new US_Analyte( -1, true );
-   connect( peptide_dialog, SIGNAL( valueChanged( double ) ),
-                            SLOT  ( update_vbar ( double ) ) );
+   US_Analyte* peptide_dialog = new US_Analyte( investigator, true );
+   connect( peptide_dialog, SIGNAL( valueChanged( US_Analyte::analyteData ) ),
+                            SLOT  ( update_vbar ( US_Analyte::analyteData ) ) );
    peptide_dialog->setWindowTitle( tr( "VBar Calculation" ) );
    peptide_dialog->exec();
 }
 
-void US_Predict1::update_vbar( double vbar )
+void US_Predict1::update_vbar( const US_Analyte::analyteData ad )
 {
-   d.vbar = vbar;
-   le_vbar->setText( QString::number( vbar, 'f', 4 ) );
+   analyte = ad;
+   d.vbar = ad.vbar;
+   le_vbar->setText( QString::number( d.vbar, 'f', 4 ) );
 
    US_Math::data_correction( temperature, d );
    update();
@@ -317,20 +318,20 @@ void US_Predict1::update_vbar( double vbar )
 
 void US_Predict1::get_buffer( void )
 {
-   US_BufferGui* buffer_dialog = new US_BufferGui( true );
-   connect( buffer_dialog, SIGNAL( valueChanged ( double, double ) ),
-                           SLOT  ( update_buffer( double, double ) ) );
-   buffer_dialog->setWindowTitle( tr( "Buffer Calculation" ) );
+   US_BufferGui* buffer_dialog = new US_BufferGui( investigator, true );
+   connect( buffer_dialog, SIGNAL( valueChanged ( US_Buffer ) ),
+                           SLOT  ( update_buffer( US_Buffer ) ) );
    buffer_dialog->exec();
 }
 
-void US_Predict1::update_buffer( double density, double viscosity )
+void US_Predict1::update_buffer( const US_Buffer b )
 {
-   d.density   = density;
-   d.viscosity = viscosity;
+   buffer = b;
+   d.density   = b.density;
+   d.viscosity = b.viscosity;
 
-   le_density  ->setText( QString::number( density   ) );
-   le_viscosity->setText( QString::number( viscosity ) );
+   le_density  ->setText( QString::number( d.density   ) );
+   le_viscosity->setText( QString::number( d.viscosity ) );
 
    US_Math::data_correction( temperature, d );
    update();

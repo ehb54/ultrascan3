@@ -8,6 +8,8 @@
 #include "us_plot.h"
 #include "us_math.h"
 #include "us_help.h"
+#include "us_buffer.h"
+#include "us_analyte.h"
 
 
 class US_EXTERN US_Predict1 : public US_WidgetsDialog
@@ -45,7 +47,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
             Hydrocomp rod;
       };
 
-		US_Predict1( Hydrosim&, QWidget* = 0, Qt::WindowFlags = 0 );
+		US_Predict1( Hydrosim&, int = -1, QWidget* = 0, Qt::WindowFlags = 0 );
       void update( void );
 
    signals:
@@ -53,9 +55,13 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       void done   ( void );
 
    private:
-      US_Math::SolutionData d;
-      Hydrosim&             allparams;
+      US_Math::SolutionData   d;
+      Hydrosim&               allparams;
       
+      US_Buffer               buffer;
+      US_Analyte::analyteData analyte;
+      int                     investigator;
+
       static const int ARRAYSIZE = 999;
       
       double         oblate [ ARRAYSIZE ];
@@ -93,19 +99,20 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       US_Help        showHelp;
 
    private slots:
-      void new_value    ( const QwtDoublePoint& );
-      void mouseU       ( const QwtDoublePoint& );
-      void update_ratio ( const QString&        );
-      void update_mw    ( const QString&        );
-      void degC         ( const QString&        ); 
-      void density      ( const QString&        );
-      void viscosity    ( const QString&        );
-      void vbar         ( const QString&        );
-      void get_buffer   ( void                  ); 
-      void get_peptide  ( void                  ); 
-      void update_buffer( double, double        );
-      void update_vbar  ( double                );
-      void complete     ( void                  );
+      void new_value    ( const QwtDoublePoint&   );
+      void mouseU       ( const QwtDoublePoint&   );
+      void update_ratio ( const QString&          );
+      void update_mw    ( const QString&          );
+      void degC         ( const QString&          ); 
+      void density      ( const QString&          );
+      void viscosity    ( const QString&          );
+      void vbar         ( const QString&          );
+      void get_buffer   ( void                    ); 
+      void get_peptide  ( void                    ); 
+      void complete     ( void                    );
+
+      void update_buffer( const US_Buffer               );
+      void update_vbar  ( const US_Analyte::analyteData );
 
       void help         ( void )
       { showHelp.show_help( "manual/predict1.html" ); };

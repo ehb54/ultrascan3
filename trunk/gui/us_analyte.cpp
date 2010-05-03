@@ -1473,13 +1473,14 @@ void US_Analyte::spectrum( void )
 {
    QString   spectrum_type = cmb_optics->currentText();
    US_Table* dialog;
+   bool      changed = false; //TODO Make a class variable
 
    if ( spectrum_type == tr( "Absorbance" ) )
-     dialog = new US_Table( extinction, tr( "Extinction:" ) );
+     dialog = new US_Table( extinction, tr( "Extinction:" ), changed );
    else if ( spectrum_type == tr( "Interference" ) )
-     dialog = new US_Table( refraction, tr( "Extinction:" ) );
+     dialog = new US_Table( refraction, tr( "Extinction:" ), changed );
    else 
-     dialog = new US_Table( fluorescence, tr( "Extinction:" ) );;
+     dialog = new US_Table( fluorescence, tr( "Extinction:" ), changed );;
 
    dialog->setWindowTitle( tr( "Manage %1 Values" ).arg( spectrum_type ) );
 

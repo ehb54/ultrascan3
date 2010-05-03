@@ -219,24 +219,8 @@ US_Buffer::US_Buffer()
    refraction   .clear();
    fluorescence .clear();
    component    .clear();
+   componentIDs .clear();
    concentration.clear();
-}
-
-void US_Buffer::getInfoFromDB( const QString& masterPW )
-{
-   US_DB2 db( masterPW );
-   
-   if ( db.lastErrno() != US_DB2::OK )
-   {
-      qDebug() << "Database Error" 
-               << "US_Buffer::connectDB: Could not open DB\n"
-               << db.lastError();
-      return;
-   }
-
-   QStringList q( "get_buffer_desc" );
-   db.query( q );
-   // unfinished...
 }
 
 void US_Buffer::getSpectrum( US_DB2& db, const QString& type ) 
@@ -337,7 +321,7 @@ bool US_Buffer::writeToDisk( const QString& filename ) const
    for ( int i = 0; i < component.size(); i++ )
    {
       xml.writeStartElement( "component" );
-      xml.writeAttribute( "id"           , component[ i ].componentID );
+      xml.writeAttribute( "id"           , componentIDs[ i ] );
       xml.writeAttribute( "concentration", 
             QString::number( concentration[ i ], 'f', 5 ) );
       xml.writeEndElement(); // component
@@ -425,7 +409,6 @@ void US_Buffer::readBuffer( QXmlStreamReader& xml )
    density         = a.value( "density"     ).toString().toDouble();
    viscosity       = a.value( "viscosity"   ).toString().toDouble();
 
-   component    .clear();
    concentration.clear();
    componentIDs .clear();
 
