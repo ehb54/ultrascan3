@@ -261,11 +261,18 @@ void US_BufferGui::density( const QString& d )
 
    if ( ! manualUpdate )
    {
-      buffer.component.clear();
+      buffer.component    .clear();
       buffer.concentration.clear();
-      buffer.componentIDs.clear();
-      lw_buffer->clear();
-      manualUpdate = true;
+      buffer.componentIDs .clear();
+      buffer.GUID         .clear();
+      buffer.bufferID     .clear();
+      le_guid            ->clear();
+      lw_buffer          ->clear();
+      lw_buffer          ->addItem( tr( "Manual Override" ) );
+
+      lw_buffer_db->setCurrentRow( -1 );
+      manualUpdate  = true;
+      bufferCurrent = false;
    }
 }
 
@@ -275,11 +282,18 @@ void US_BufferGui::viscosity( const QString& v )
 
    if ( ! manualUpdate )
    {
-      buffer.component.clear();
+      buffer.component    .clear();
       buffer.concentration.clear();
-      buffer.componentIDs.clear();
-      lw_buffer->clear();
-      manualUpdate = true;
+      buffer.componentIDs .clear();
+      buffer.GUID         .clear();
+      buffer.bufferID     .clear();
+      le_guid            ->clear();
+      lw_buffer          ->clear();
+      lw_buffer          ->addItem( tr( "Manual Override" ) );
+
+      lw_buffer_db->setCurrentRow( -1 );
+      manualUpdate  = true;
+      bufferCurrent = false;
    }
 }
 
@@ -1092,6 +1106,8 @@ void US_BufferGui::add_component( void )
    double partial_concentration = le_concentration->text().toDouble();
    if ( partial_concentration <= 0.0 ) return; 
 
+   if ( manualUpdate ) lw_buffer->clear();
+
    QString s;
    bool    newItem = true;
    int     current = lw_ingredients->currentRow();
@@ -1158,6 +1174,7 @@ void US_BufferGui::list_component( void )
     will be removed  and the density and viscosity will be recalculated.  */
 void US_BufferGui::remove_component( QListWidgetItem* item )
 {
+   if ( manualUpdate ) return;
    int row = lw_buffer->row( item );
 
    buffer.component    .removeAt( row );
