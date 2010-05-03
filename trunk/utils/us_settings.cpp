@@ -202,6 +202,22 @@ void US_Settings::set_beckmanBug( bool setBug )
     settings.setValue( "beckmanBug", true );
 }
 
+// us_debug
+int US_Settings::us_debug( void )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  return settings.value( "us_debug", 0 ).toInt();
+}
+
+void US_Settings::set_us_debug( int level )
+{
+  QSettings settings( "UTHSCSA", "UltraScan" );
+  if ( level == 0 )
+    settings.remove( "us_debug" );
+  else
+    settings.setValue( "us_debug", level );
+}
+
 // Threads
 int US_Settings::threads( void )
 {

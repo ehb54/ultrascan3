@@ -181,7 +181,8 @@ void US_ModelEditor::update_person( int            ID,
 
 void US_ModelEditor::get_buffer( void )
 {
-   US_BufferGui* dialog = new US_BufferGui( investigator, true );
+   US_BufferGui* dialog = new US_BufferGui( investigator, true, buffer, 
+         rb_disk->isChecked() );
    
    connect( dialog, SIGNAL( valueChanged ( US_Buffer ) ),
                     SLOT  ( update_buffer( US_Buffer ) ) );

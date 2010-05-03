@@ -48,7 +48,8 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   QGridLayout* directories = new QGridLayout();
 
   // Calculate width for directory pushbuttons
-  QFont*        f  = new QFont( US_GuiSettings::fontFamily(), US_GuiSettings::fontSize() );
+  QFont*        f  = new QFont( US_GuiSettings::fontFamily(), 
+                                US_GuiSettings::fontSize() );
   QFontMetrics* fm = new QFontMetrics ( *f );
   int w = fm->width( tr( "Temporary Directory:" ) ) + 20;
 
@@ -147,8 +148,6 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   QLabel* temperature = us_label( "Temperature Tolerance (ºC):" );
   otherSettings->addWidget( temperature, row, 0 );
 
-  //le_temperature_tol = us_lineedit( QString( "%1" ).arg( US_Settings::tempTolerance() ), 0 );
-  //otherSettings->addWidget( le_temperature_tol, row++, 1 );
   sb_temperature_tol = new QDoubleSpinBox();
   sb_temperature_tol->setRange( 0.1, 1.0 );
   sb_temperature_tol->setSingleStep( 0.1 );
@@ -170,7 +169,6 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   QLabel* lb_background = new QLabel;
   lb_background->setAutoFillBackground( true );
   lb_background->setPalette( US_GuiSettings::normalColor() );
-  //radiobutton->addWidget( lb_background, 0, 0, 1, 2 );
 
   QGridLayout* rb1 = us_radiobutton( tr( "On" ), rb_on );
   radiobutton->addLayout( rb1, 0, 0 );
@@ -179,6 +177,18 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   radiobutton->addLayout( rb2, 0, 1 );
 
   otherSettings->addLayout( radiobutton, row++, 1 );
+
+  // us_debug
+  QLabel* lb_debug = us_label( "Debug value:" );
+  otherSettings->addWidget( lb_debug, row, 0 );
+
+  sb_debug = new QSpinBox();
+  sb_debug->setRange( 0, 5 );
+  sb_debug->setValue( US_Settings::us_debug() );
+  sb_debug->setPalette( US_GuiSettings::editColor() );
+  sb_debug->setFont( QFont( US_GuiSettings::fontFamily(), 
+                            US_GuiSettings::fontSize() ) );
+  otherSettings->addWidget( sb_debug, row++, 1 );
 
   // Color Preferences
   QLabel* color = us_label( "Color Preferences:" );
@@ -209,7 +219,7 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   otherSettings->addWidget( threads, row, 0 );
 
   // Use a spin box here
-  QSpinBox* sb_threads = new QSpinBox();
+  sb_threads = new QSpinBox();
   sb_threads->setRange( 1, 64 );
   sb_threads->setValue( US_Settings::threads() );
   sb_threads->setPalette( US_GuiSettings::editColor() );
@@ -260,6 +270,7 @@ void US_Config::save( void )
    US_Settings::set_tmpDir       ( le_tmpDir     ->text()      );
    US_Settings::set_threads      ( sb_threads    ->value()     );
    US_Settings::set_beckmanBug   ( rb_on         ->isChecked() );
+   US_Settings::set_us_debug     ( sb_debug      ->value()     );
 
    QMessageBox::information( this,
          tr( "Settings Saved" ),

@@ -91,6 +91,11 @@ class US_EXTERN US_Settings
     //! \brief Set the Beckman Bug flag
     static void        set_beckmanBug( bool );
 
+    //! \brief Get the US_Debug setting
+    static int         us_debug( void );
+    //! \brief Set the US_Debug setting
+    static void        set_us_debug( int );
+
     //! \brief Get the number of threads to use for internal procesing
     static int         threads( void );
     //! \brief Set the number of threads to use for internal procesing.

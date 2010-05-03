@@ -33,53 +33,50 @@ public:
     */
     US_Config( QWidget* = 0, Qt::WindowFlags = 0 );
   
-  //! A null destructor. 
-  ~US_Config() {};
-
 private:
-  US_Help       showhelp;
-  US_Database*  db;
-  US_Font*      font;
-  US_Color*     colors;
-  US_Admin*     admin;
-               
-  QPushButton*  pb_help;
-  QPushButton*  pb_save;
-  QPushButton*  pb_cancel;
-               
-  QPushButton*  pb_browser;
-  QLineEdit*    le_browser;
-               
-  QPushButton*  pb_rootDir;
-  QLineEdit*    le_rootDir;
-               
-  QPushButton*  pb_dataDir;
-  QLineEdit*    le_dataDir;
-               
-  QPushButton*  pb_resultDir;
-  QLineEdit*    le_resultDir;
-               
-  QPushButton*  pb_reportDir;
-  QLineEdit*    le_reportDir;
-               
-  QPushButton*  pb_archiveDir;
-  QLineEdit*    le_archiveDir;
-               
-  QPushButton*  pb_tmpDir;
-  QLineEdit*    le_tmpDir;
-               
-  //QLineEdit*    le_temperature_tol;
+  US_Help         showhelp;
+  US_Database*    db;
+  US_Font*        font;
+  US_Color*       colors;
+  US_Admin*       admin;
+                 
+  QPushButton*    pb_help;
+  QPushButton*    pb_save;
+  QPushButton*    pb_cancel;
+                 
+  QPushButton*    pb_browser;
+  QLineEdit*      le_browser;
+                 
+  QPushButton*    pb_rootDir;
+  QLineEdit*      le_rootDir;
+                 
+  QPushButton*    pb_dataDir;
+  QLineEdit*      le_dataDir;
+                 
+  QPushButton*    pb_resultDir;
+  QLineEdit*      le_resultDir;
+                 
+  QPushButton*    pb_reportDir;
+  QLineEdit*      le_reportDir;
+                 
+  QPushButton*    pb_archiveDir;
+  QLineEdit*      le_archiveDir;
+                 
+  QPushButton*    pb_tmpDir;
+  QLineEdit*      le_tmpDir;
+                 
+  QSpinBox*       sb_threads;
+  QSpinBox*       sb_debug;
   QDoubleSpinBox* sb_temperature_tol;
   
-  QRadioButton* rb_on;
-  QRadioButton* rb_off;
+  QRadioButton*   rb_on;
+  QRadioButton*   rb_off;
+                  
+  QPushButton*    pb_color;
+  QPushButton*    pb_font;
+  QPushButton*    pb_db;
+  QPushButton*    pb_password;
 
-  QPushButton*  pb_color;
-  QPushButton*  pb_font;
-  QPushButton*  pb_db;
-  QPushButton*  pb_password;
-
-  QSpinBox*     sb_threads;
 
 private slots:
 

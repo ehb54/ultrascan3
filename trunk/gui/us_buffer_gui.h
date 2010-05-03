@@ -19,11 +19,13 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       //! \param invID  The investigator ID in the current database
       //! \param signal_wanted A flag to specify if one of the signals
       //!               should be emitted when terminating the dialog
-      //! \param globalID The guid of the default buffer
+      //! \param buf    The default buffer
       //! \param disk   An indicatior of whether to search the disk
       //!               (default) or DB for the default buffer
-      US_BufferGui( int = - 1,                  bool = false, 
-                    const QString& = QString(), bool = true );
+      US_BufferGui( int = - 1,                  
+                    bool = false, 
+                    const US_Buffer& = US_Buffer(), 
+                    bool = true );
    signals:
       //! Return the main values
       //! \param density of the buffer
@@ -62,6 +64,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
 
       bool          signal;
       bool          bufferCurrent;
+      bool          manualUpdate;
       int           personID;
                    
       QStringList   filenames;
@@ -120,7 +123,7 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       void    update_db       ( void );
       bool    up_to_date      ( void );
       void    set_investigator( void );
-      void    init_buffer     ( const QString& );
+      void    init_buffer     ( void );
       
     private slots:
       void synch_components   ( void );
@@ -134,6 +137,8 @@ class US_EXTERN US_BufferGui : public US_WidgetsDialog
       void list_component     ( void );
       void add_component      ( void );
       void accept_buffer      ( void );
+      void density            ( const QString& );
+      void viscosity          ( const QString& );
       void remove_component   ( QListWidgetItem* );
       void select_buffer      ( QListWidgetItem* );
       void search             ( const QString& = QString() );

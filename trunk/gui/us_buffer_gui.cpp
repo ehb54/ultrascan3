@@ -9,12 +9,18 @@
 #include "us_table.h"
 #include "us_util.h"
 
-US_BufferGui::US_BufferGui( int invID, bool signal_wanted,
-   const QString& globalID, bool disk ) : US_WidgetsDialog( 0, 0 )
+US_BufferGui::US_BufferGui( 
+      int              invID, 
+      bool             signal_wanted,
+      const US_Buffer& buf, 
+      bool             disk 
+   ) : US_WidgetsDialog( 0, 0 )
 {
    signal        = signal_wanted;
    personID      = invID;
    bufferCurrent = false;
+   manualUpdate  = false;
+   buffer        = buf;
 
    US_BufferComponent::getAllFromHD( component_list );
 
@@ -143,8 +149,8 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted,
    main->addWidget( lb_density, row, 1 );
 
    le_density = us_lineedit();
-   le_density->setReadOnly( true );
-   le_density->setPalette ( gray );
+   connect( le_density, SIGNAL( textEdited( const QString& ) ), 
+                        SLOT  ( density   ( const QString& ) ) );
    main->addWidget( le_density, row++, 2 );
 
    QLabel* lb_viscosity = 
@@ -152,8 +158,8 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted,
    main->addWidget( lb_viscosity, row, 1 );
 
    le_viscosity = us_lineedit();
-   le_viscosity->setReadOnly( true );
-   le_viscosity->setPalette ( gray );
+   connect( le_density, SIGNAL( textEdited( const QString& ) ), 
+                        SLOT  ( viscosity ( const QString& ) ) );
    main->addWidget( le_viscosity, row++, 2 );
 
    QLabel* lb_ph = us_label( tr( "pH:" ) );
@@ -188,6 +194,12 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted,
    le_guid->setReadOnly( true );
    le_guid->setPalette ( gray );
    main->addWidget( le_guid, row++, 1, 1, 2 );
+
+   if ( US_Settings::us_debug() == 0 )
+   {
+      lb_guid->setVisible( false );
+      le_guid->setVisible( false );
+   }
 
    lb_units = us_label( "" );
    QPalette p = lb_units->palette();
@@ -238,15 +250,42 @@ US_BufferGui::US_BufferGui( int invID, bool signal_wanted,
    buttons->addWidget( pb_accept );
 
    main->addLayout( buttons, row, 0, 1, 3 );
-   reset();
 
    set_investigator();
-   init_buffer( globalID );
+   init_buffer();
 }
 
-void US_BufferGui::init_buffer( const QString& globalID )
+void US_BufferGui::density( const QString& d )
 {
-   if ( ! globalID.isEmpty() )
+   buffer.density = d.toDouble();
+
+   if ( ! manualUpdate )
+   {
+      buffer.component.clear();
+      buffer.concentration.clear();
+      buffer.componentIDs.clear();
+      lw_buffer->clear();
+      manualUpdate = true;
+   }
+}
+
+void US_BufferGui::viscosity( const QString& v )
+{
+   buffer.viscosity = v.toDouble();
+
+   if ( ! manualUpdate )
+   {
+      buffer.component.clear();
+      buffer.concentration.clear();
+      buffer.componentIDs.clear();
+      lw_buffer->clear();
+      manualUpdate = true;
+   }
+}
+
+void US_BufferGui::init_buffer( void )
+{
+   if ( ! buffer.GUID.isEmpty() )
    {
       if ( rb_disk->isChecked() ) // Disk access
       {
@@ -255,10 +294,11 @@ void US_BufferGui::init_buffer( const QString& globalID )
          // Search for GUID
          for ( int i = 0; i < GUIDs.size(); i++ )
          {
-            if ( GUIDs[ i ] == globalID )
+            if ( GUIDs[ i ] == buffer.GUID )
             {
                QListWidgetItem* item = lw_buffer_db->item( i );
                read_from_db( item );
+               manualUpdate = false;
                break;
             }
          }
@@ -275,45 +315,37 @@ void US_BufferGui::init_buffer( const QString& globalID )
          }
          
          QStringList q( "get_bufferID" );
-         q << globalID;
+         q << buffer.GUID;
 
          if ( db.lastErrno() == US_DB2::OK )
          {
             db.next(); 
             QString bufferID = db.value( 0 ).toString();
             read_from_db( bufferID );
+            manualUpdate = false;
          }
       }
+   }
+   else
+   {
+      le_description->setText( buffer.description );
+      le_density    ->setText( QString::number( buffer.density,   'f', 4 ) );
+      le_viscosity  ->setText( QString::number( buffer.viscosity, 'f', 4 ) );
+      le_ph         ->setText( QString::number( buffer.pH,        'f', 4 ) );
+      le_compressibility->setText( 
+                         QString::number( buffer.compressibility, 'f', 4 ) );
    }
 }
 
 void US_BufferGui::set_investigator( void )
 {
-   if ( personID > -1 )
+   if ( personID > 0 )
    {
-      US_Passwd pw;
-      US_DB2    db( pw.getPasswd() );
+      QString lname;
+      QString fname;
 
-      if ( db.lastErrno() != US_DB2::OK )
-      {
-         connect_error( db.lastError() );
-         return;
-      }
-         
-      QStringList q( "get_person_info" );
-      q << QString::number( personID );
-
-      int status = db.lastErrno();
-
-      if (  status == US_DB2::OK )
-      {
-         db.next();
-         QString fname = db.value( 1 ).toString();
-         QString lname = db.value( 2 ).toString();
-         le_investigator->setText( 
-               "InvID (" + QString::number( personID ) + "): " 
-               + lname + ", " + fname );
-      }
+      if ( US_Investigator::get_person_info( personID, lname, fname ) )
+         assign_investigator( personID, lname, fname );
    }
 }
 
@@ -1111,6 +1143,7 @@ void US_BufferGui::add_component( void )
    
    pb_save->setEnabled( true );
    bufferCurrent = false;
+   manualUpdate  = false;
 
 }
 
@@ -1162,12 +1195,14 @@ bool US_BufferGui::up_to_date( void )
 
 void US_BufferGui::accept_buffer( void )
 {
-   if ( ! up_to_date() )
+   if ( ! up_to_date()  &&  signal )
    {
-      QMessageBox::information( this,
+      int response = QMessageBox::question( this,
             tr( "Buffer changed" ),
-            tr( "Changes have not been saved." ) );
-      return;
+            tr( "Changes have not been saved.\n\nContinue?" ),
+            QMessageBox::Yes, QMessageBox::Cancel );
+      
+      if ( response != QMessageBox::Yes ) return;
    }
 
    if ( signal ) 
@@ -1227,7 +1262,6 @@ void US_BufferGui::reset( void )
 
 /*!  Recalculate the density of the buffer based on the information in the
      template file */
-
 void US_BufferGui::recalc_density( void )
 {
    buffer.density = DENS_20W;
