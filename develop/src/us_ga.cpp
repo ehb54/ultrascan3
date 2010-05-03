@@ -1,6 +1,7 @@
 // #define US_DEBUG_MPI
 #include "../include/us_fe_nnls_t.h"
 #include <stdio.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <math.h>
@@ -4868,7 +4869,7 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
                      }
                      if(NULL == (end_save_best_file = fopen(end_save_filename_qs.ascii(), "w")))
                      {
-                        fprintf(stderr, "%d: save file open error, can't open \"%s\" for writing\n", this_rank, end_save_filename_qs.ascii());
+                        fprintf(stderr, "%d: save file open error, can't open \"%s\" for writing, errno %d\n", this_rank, end_save_filename_qs.ascii(), errno);
                         printf("%d: max rss %ld pages\n", this_rank, maxrss);
                         fflush(stdout);
                         printf("%d: goodbye\n", this_rank);
