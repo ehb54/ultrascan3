@@ -2199,7 +2199,7 @@ void US_fe_nnls_t::write_checkpoint(
                                     list < Expdata > *our_expdata_list
                                     )
 {
-   QFile f(QString("checkpoint-%1.dat").arg(*monte_carlo_iteration));
+   QFile f(QString("checkpoint-%1-%2.dat").arg(startDateTime.toString("yyMMddhhmmss")).arg(*monte_carlo_iteration));
    if (!f.open(IO_WriteOnly))
    {
       cout << "Could not open checkpoint file: checkpoint.dat for output\n";
@@ -6284,7 +6284,8 @@ Simulation_values US_fe_nnls_t::calc_residuals(vector <struct mfem_data> experim
           )
 
 #include <asm/param.h> /* HZ */
-#include <asm/page.h> /* PAGE_SIZE */
+// #include <asm/page.h> /* PAGE_SIZE */
+#include <sys/user.h> /* PAGE_SIZE */
 #define NO_TTY_VALUE DEV_ENCODE(0,0)
 #ifndef HZ
 #warning HZ not defined, assuming it is 100
