@@ -35,7 +35,8 @@ US_Config::US_Config( QWidget* parent, Qt::WindowFlags flags )
   // Directories
   
   QBoxLayout* topbox = new QVBoxLayout( this );
-  topbox->setSpacing( 2 );
+  topbox->setContentsMargins ( 2, 2, 2, 2 );
+  topbox->setSpacing         ( 2 );
 
   QLabel* banner = us_banner( tr("UltraScan %1 Configuration" ).arg( US_Version ) );
   topbox->addWidget( banner );
