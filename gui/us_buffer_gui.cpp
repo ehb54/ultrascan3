@@ -287,42 +287,37 @@ void US_BufferGui::init_buffer( void )
 {
    if ( ! buffer.GUID.isEmpty() )
    {
+      query();
+
       if ( rb_disk->isChecked() ) // Disk access
       {
-         read_buffer();
-         
          // Search for GUID
          for ( int i = 0; i < GUIDs.size(); i++ )
          {
             if ( GUIDs[ i ] == buffer.GUID )
             {
                QListWidgetItem* item = lw_buffer_db->item( i );
-               read_from_db( item );
+               lw_buffer_db->setCurrentRow( i );
+               select_buffer( item );
                manualUpdate = false;
                break;
             }
          }
       }
+
       else // DB access
       {
-         US_Passwd pw;
-         US_DB2    db( pw.getPasswd() );
-
-         if ( db.lastErrno() != US_DB2::OK )
+         // Search for bufferID
+         for ( int i = 0; i < bufferIDs.size(); i++ )
          {
-            connect_error( db.lastError() );
-            return;
-         }
-         
-         QStringList q( "get_bufferID" );
-         q << buffer.GUID;
-
-         if ( db.lastErrno() == US_DB2::OK )
-         {
-            db.next(); 
-            QString bufferID = db.value( 0 ).toString();
-            read_from_db( bufferID );
-            manualUpdate = false;
+            if ( bufferIDs[ i ] == buffer.bufferID )
+            {
+               QListWidgetItem* item = lw_buffer_db->item( i );
+               lw_buffer_db->setCurrentRow( i );
+               select_buffer( item );
+               manualUpdate = false;
+               break;
+            }
          }
       }
    }
@@ -599,6 +594,7 @@ void US_BufferGui::select_buffer( QListWidgetItem* item )
       update_lw_buf( buffer.componentIDs[ i ], buffer.concentration[ i ] );
 
    // Allow modification of the just selected buffer
+   bufferCurrent = true;
    pb_save  ->setEnabled ( true ); 
    pb_update->setEnabled ( true ); 
    pb_del   ->setEnabled ( true ); 
@@ -639,7 +635,6 @@ void US_BufferGui::read_from_db( const QString& bufferID )
       connect_error( db.lastError() );
       return;
    }
-
    
    QStringList q( "get_buffer_info" );
    q << bufferID;   // bufferID from list widget entry
@@ -1144,7 +1139,6 @@ void US_BufferGui::add_component( void )
    pb_save->setEnabled( true );
    bufferCurrent = false;
    manualUpdate  = false;
-
 }
 
 /*!  After selection of the buffer component in lw_ingredients, this method will
