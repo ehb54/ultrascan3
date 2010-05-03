@@ -677,7 +677,7 @@ $FACTORYTYPE = $factorytypes[$usesys];
 $BIN = $bins[$usesys];
 $LD_XML = $ld_xml[$usesys];
 $LD_QUEUE = $queues[$usesys];
-$PROJECT = "<project>TG-MCB070040N</project>" if 
+$PROJECT = "<project>TG-MCB070039N</project>" if
     $default_system eq 'lonestar.tacc.utexas.edu' || 
     $default_system eq 'queenbee.loni-lsu.teragrid.org' ||
     $default_system eq 'gatekeeper.bigred.iu.teragrid.org' 
@@ -930,6 +930,7 @@ gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/email_* .
 gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.model* .
 gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*noise* .
 gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/*.simulation_parameters .
+gsiscp -P $PORT_SSH ${GSI_SYSTEM}:${WORKRUN}/checkpoint*.dat .
 ";
 }
 print $cmd;
@@ -937,6 +938,23 @@ print `$cmd` if $execute;
 print "----tail us_job${id}.stderr --- from $default_system ---\n";
 print `tail /lustre/tmp/us_job${id}.stderr` if $execute;
 print "----end us_job${id}.stderr ---\n";
+
+# check for 'job complete'
+$cmd = "grep -l 'job complete' /lustre/tmp/us_job${id}.stdout";
+$res = `$cmd`;
+chomp $res;
+print "$cmd: $res\n";
+if ( $res ne "/lustre/tmp/us_job${id}.stdout" ) 
+{
+    &failmsg("Your job possibly terminated without a 'job complete' status");
+# don't die until we have tested this a bit
+#    if($default_system eq 'meta') {
+#	print `echo tigre_job_end $grms_id > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
+#    } else {
+#	print `echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
+#    }
+#    die "tigre job failed submission on $default_system\n";
+}    
 
 # email results
 print "emailing results\n";
