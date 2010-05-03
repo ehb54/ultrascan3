@@ -4872,36 +4872,16 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
                         fprintf(stderr, "%d: save file open error, can't open \"%s\" for writing, errno %d\n", this_rank, end_save_filename_qs.ascii(), errno);
                         printf("%d: max rss %ld pages\n", this_rank, maxrss);
                         fflush(stdout);
-                        printf("%d: goodbye\n", this_rank);
-                        fflush(stdout);
-                        MPI_Abort(MPI_COMM_WORLD, -3);
-                        exit(-1);
-                     }
-                     for(i = 0; i < end_save_best; i++)
-                     {
-                        active_points = 0;
-                        n = pn[i]->root;
-                        while(n)
+                        // dosn't need to die!
+                        // printf("%d: goodbye\n", this_rank);
+                        // fflush(stdout);
+                        // MPI_Abort(MPI_COMM_WORLD, -3);
+                        // exit(-1);
+                     } else {
+                        for(i = 0; i < end_save_best; i++)
                         {
-                           while(n && (!((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ||
-                                       ((double *)n->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
-                                 )
-                           {
-                              n = n->children[0];
-                           }
-                           if(n)
-                           {
-                              active_points++;
-                              n = n->children[0];
-                           }
-                        }
-                        if(active_points > 0)
-                        {
+                           active_points = 0;
                            n = pn[i]->root;
-                           fprintf(end_save_best_file, "%g|%d", A[i] , active_points);
-                           //      for(j = 0; j < FITNESS_NO_OF_CONSTANTS; j++) {
-                           //        fprintf(end_save_best_file, "|%g", ((double *)pn[i]->data)[j]);
-                           //      }
                            while(n)
                            {
                               while(n && (!((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ||
@@ -4912,17 +4892,39 @@ void generations(double *A1, unsigned int *B1, population *pn1[],
                               }
                               if(n)
                               {
-                                 fprintf(end_save_best_file, "|%g|%g|%g" ,
-                                         ((double *)n->data)[0],
-                                         ((double *)n->data)[1],
-                                         ((double *)n->data)[SOLUTE_DATA_CONCENTRATION]);
+                                 active_points++;
                                  n = n->children[0];
                               }
                            }
-                           fprintf(end_save_best_file, "\n");
+                           if(active_points > 0)
+                           {
+                              n = pn[i]->root;
+                              fprintf(end_save_best_file, "%g|%d", A[i] , active_points);
+                              //      for(j = 0; j < FITNESS_NO_OF_CONSTANTS; j++) {
+                              //        fprintf(end_save_best_file, "|%g", ((double *)pn[i]->data)[j]);
+                              //      }
+                              while(n)
+                              {
+                                 while(n && (!((char *)n->data)[SOLUTE_DATA_ACTIVE_OFS] ||
+                                             ((double *)n->data)[SOLUTE_DATA_CONCENTRATION] <= SOLUTE_CONCENTRATION_THRESHOLD)
+                                       )
+                                 {
+                                    n = n->children[0];
+                                 }
+                                 if(n)
+                                 {
+                                    fprintf(end_save_best_file, "|%g|%g|%g" ,
+                                            ((double *)n->data)[0],
+                                            ((double *)n->data)[1],
+                                            ((double *)n->data)[SOLUTE_DATA_CONCENTRATION]);
+                                    n = n->children[0];
+                                 }
+                              }
+                              fprintf(end_save_best_file, "\n");
+                           }
                         }
+                        fclose(end_save_best_file);
                      }
-                     fclose(end_save_best_file);
                   }
                   printf("%d: max rss %ld pages\n", this_rank, maxrss);
                   fflush(stdout);
