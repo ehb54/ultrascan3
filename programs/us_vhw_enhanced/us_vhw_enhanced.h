@@ -45,6 +45,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QwtPlot*       edat_plot;
       QwtPlot*       vdat_plot;
       QwtPlotCurve*  curve;
+      QwtPlotCurve*  dcurve;
       QwtPlotGrid*   egrid;
       QwtPlotGrid*   vgrid;
       US_PlotPicker* epick;
@@ -63,19 +64,39 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QPushButton*  pb_exsscn;
       QPushButton*  pb_exsrng;
 
-      double        densit;
-      double        viscos;
-      double        vbar;
+      double        boundPct;
+      double        positPct;
+      double        baseline;
+      double        plateau;
+      double        meniscus;
+      double        correc;
+      double        C0;
+      double        c0term;
+      double        Swavg;
+      double        omega;
+      double        range;
+      double        span;
+      double        basecut;
+      double        platcut;
+      //double        densit;
+      //double        viscos;
+      //double        vbar;
       double        bdtoler;
       double        invert;
       double        divfac;
+      double        cpij;
+      double        sumcpij;
+      double        sedc;
+      double        sdiff;
 
+      int           row;
       int           run_id;
       int           ncells;
       int           nwlens;
       int           ndivs;
       int           nscns;
-      int           nscnu;
+      int           ntpts;
+      int           nrpts;
       int           exclude;
       int           dsmooth;
       int           pcbound;
@@ -85,6 +106,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
 
       bool          minmax;
       bool          haveZone;
+      bool          haveDiff;
 
       QString       run_name;
       QString       cell;
@@ -109,6 +131,9 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QList< double >          dseds;
       QList< double >          dcons;
 
+      EDTDAT*       d;
+      SCNDAT*       s;
+
    private slots:
 
       void load(        void );
@@ -127,7 +152,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       void details(     void );
       void update_density( double );
       void update_viscosi( double );
-      void update_vbar(    double );
+      //void update_vbar(    double );
       void update_bdtoler( double );
       void update_divis(   double );
       void update_dsmoo(   double );
@@ -136,15 +161,14 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       void update_exsscan( double );
       void update_exscrng( double );
       int    first_gteq( double, QVector< US_DataIO::reading >&, int );
-      double avg_plateau( US_DataIO::scan* );
-      double zone_plateau( US_DataIO::scan*, double );
       double calc_slope( double*, double*, int,
             double&, double&, double&, double& );
       double update_slope( int, double, double, double, double,
             double&, double&, double&, double& );
-      double sed_coeff( double, double, double, double,
-            QVector< US_DataIO::reading >&, int );
-      void div_seds();
+      double sed_coeff( double, double );
+      double avg_plateau(  void );
+      double zone_plateau( void );
+      void   div_seds(     void );
 
       void help     ( void )
       { showHelp.show_help( "vHW_enhanced.html" ); };
