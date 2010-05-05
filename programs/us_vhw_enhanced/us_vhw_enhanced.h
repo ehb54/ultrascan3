@@ -78,9 +78,6 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       double        span;
       double        basecut;
       double        platcut;
-      //double        densit;
-      //double        viscos;
-      //double        vbar;
       double        bdtoler;
       double        invert;
       double        divfac;
@@ -88,15 +85,14 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       double        sumcpij;
       double        sedc;
       double        sdiff;
+      double        tempera;
+      double        bdiffc;
 
       int           row;
       int           run_id;
-      int           ncells;
-      int           nwlens;
-      int           ndivs;
-      int           nscns;
-      int           ntpts;
-      int           nrpts;
+      int           divsCount;
+      int           scanCount;
+      int           valueCount;
       int           exclude;
       int           dsmooth;
       int           pcbound;
@@ -130,9 +126,11 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QList< double >          sdifs;
       QList< double >          dseds;
       QList< double >          dcons;
+      QList< double >          bdrads;
+      QList< double >          bdcons;
 
-      EDTDAT*       d;
-      SCNDAT*       s;
+      US_DataIO::editedData*   d;
+      US_DataIO::scan*         s;
 
    private slots:
 
@@ -147,19 +145,13 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       void show_vbar(   void );
       void reset_data(  void );
       void sel_groups(  void );
-      void excl_sscan(  void );
-      void excl_srange( void );
       void details(     void );
-      void update_density( double );
-      void update_viscosi( double );
-      //void update_vbar(    double );
-      void update_bdtoler( double );
-      void update_divis(   double );
-      void update_dsmoo(   double );
-      void update_pcbound( double );
-      void update_boundpo( double );
-      void update_exsscan( double );
-      void update_exscrng( double );
+      void div_seds(    void );
+      void update_density(   double );
+      void update_viscosity( double );
+      void update_vbar(      double );
+      void update_bdtoler(   double );
+      void update_divis(     double );
       int    first_gteq( double, QVector< US_DataIO::reading >&, int );
       double calc_slope( double*, double*, int,
             double&, double&, double&, double& );
@@ -168,7 +160,8 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       double sed_coeff( double, double );
       double avg_plateau(  void );
       double zone_plateau( void );
-      void   div_seds(     void );
+      double find_root( double );
+      double back_diff_coeff( double );
 
       void help     ( void )
       { showHelp.show_help( "vHW_enhanced.html" ); };
