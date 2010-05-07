@@ -39,7 +39,8 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase()
             this,       SLOT(  distr_plot() ) );
 
    pb_selegr     = us_pushbutton( tr( "Select Groups" ) );
-   pb_selegr->setEnabled( true );
+   groupSel      = false;
+   pb_selegr->setEnabled( false );
    connect( pb_selegr, SIGNAL( clicked() ),
             this,       SLOT(  sel_groups() ) );
 
@@ -105,6 +106,7 @@ US_vHW_Enhanced::US_vHW_Enhanced() : US_AnalysisBase()
 
    connect( pb_help, SIGNAL( clicked() ),
             this,    SLOT(   help() ) );
+
    dataLoaded = false;
    haveZone   = false;
 
@@ -230,10 +232,18 @@ void US_vHW_Enhanced::load( void )
 
    update( 0 );
 
+   gpick      = new US_PlotPicker( data_plot1 );
+   gpick->setSelectionFlags( QwtPicker::PointSelection
+                           | QwtPicker::ClickSelection );
+   connect( gpick,    SIGNAL( mouseDown(  const QwtDoublePoint& ) ),
+            this,       SLOT( groupClick( const QwtDoublePoint& ) ) );
+   groupstep   = NONE;
+
    pb_details->disconnect( );                        // reset details connect
    connect( pb_details, SIGNAL( clicked() ),
             this,       SLOT(   details() ) );
    dataLoaded = true;
+   pb_selegr->setEnabled( true );
    le_temp->setText( t );                            // set avg temp text
 }
 
@@ -260,6 +270,8 @@ void US_vHW_Enhanced::data_plot( void )
    int     count       = 0;
    int     totalCount;
 
+   data_plot2->detachItems();
+
    // let AnalysisBase do the lower plot
    US_AnalysisBase::data_plot();
 
@@ -271,7 +283,7 @@ void US_vHW_Enhanced::data_plot( void )
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
    divfac     = 1.0 / (double)divsCount;
-   exclude    = 0;
+   nexclude   = 0;
    boundPct   = ct_boundaryPercent->value() / 100.0;
    positPct   = ct_boundaryPos    ->value() / 100.0;
    baseline   = calc_baseline();
@@ -292,11 +304,11 @@ void US_vHW_Enhanced::data_plot( void )
       range      = plateau - baseline;
       basecut    = baseline + range * positPct;
       
-      if ( d->scanData[ ii ].readings[ 0 ].value > basecut ) exclude++;
+      if ( d->scanData[ ii ].readings[ 0 ].value > basecut ) nexclude++;
    }
 qDebug() << " valueCount  totalCount" << valueCount << totalCount;
 qDebug() << "  scanCount  divsCount" << scanCount << divsCount;
-   le_skipped->setText( QString::number( exclude ) );
+   le_skipped->setText( QString::number( nexclude ) );
 
    // Do first experimental plateau calcs based on horizontal zones
 
@@ -311,7 +323,7 @@ qDebug() << "  scanCount  divsCount" << scanCount << divsCount;
 
    if ( !haveZone )
    {  // accumulate reliable,unreliable scans and plateaus
-      for ( int ii = exclude; ii < scanCount; ii++ )
+      for ( int ii = nexclude; ii < scanCount; ii++ )
       {
          s        = &d->scanData[ ii ];
 //qDebug() << "p: scan " << ii+1;
@@ -342,7 +354,7 @@ qDebug() << "  scanCount  divsCount" << scanCount << divsCount;
 
    else
    {  // had already found flat zones, so just set up to find Swavg,C0
-      for ( int ii = exclude; ii < scanCount; ii++ )
+      for ( int ii = nexclude; ii < scanCount; ii++ )
       {
          plats.append( d->scanData[ ii ].plateau );
          isrel.append( ii );
@@ -405,7 +417,7 @@ qDebug() << " jj scan plateau " << jj << ii+1 << d->scanData[ii].plateau;
    for ( int ii = 0; ii < scanCount; ii++ )
    {
       scpds.clear();                       // clear this scan's Cp list
-      if ( ii < exclude  ||  excludedScans.contains( ii ) )
+      if ( ii < nexclude  ||  excludedScans.contains( ii ) )
       {
          cpds << scpds;
          continue;
@@ -490,7 +502,7 @@ qDebug() << "iter mxiter " << iter << mxiter;
 
       for ( int ii = 0; ii < scanCount; ii++ )
       {
-         if ( ii < exclude  ||  excludedScans.contains( ii ) )
+         if ( ii < nexclude  ||  excludedScans.contains( ii ) )
             continue;
 
          s        = &d->scanData[ ii ];
@@ -546,12 +558,12 @@ qDebug() << "   +++ avgdif < avdthr (" << avgdif << avdthr << ") +++";
       iter++;
    }
 
-   int     kk     = exclude * divsCount;  // index to sed. coeff. values
+   int     kk     = nexclude * divsCount; // index to sed. coeff. values
    int     kl     = 0;                    // index/count of live scans
 
    // Calculate the corrected sedimentation coefficients
 
-   for ( int ii = exclude; ii < scanCount; ii++ )
+   for ( int ii = nexclude; ii < scanCount; ii++ )
    {
       s        = &d->scanData[ ii ];
 
@@ -586,7 +598,7 @@ qDebug() << "scn liv" << ii+1 << kl
          cconc       = pconc + cpij;        // absolute concentration
          mconc       = pconc + cpij * 0.5;  // mid div concentration
 
-         int rx      = first_gteq( mconc, s->readings, valueCount );
+         int rx      = first_gteq( mconc, s->readings, valueCount, 0 );
          divrad      = s->readings[ rx ].d.radius;  // radius this division pt.
 
          if ( divrad < bdrad  ||  mconc < bdcon )
@@ -628,10 +640,10 @@ qDebug() << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
    sym.setBrush( QBrush( Qt::white ) );
    sym.setSize ( 8 );
    
-   kk         = exclude * divsCount;  // index to sed. coeff. values
+   kk         = nexclude * divsCount; // index to sed. coeff. values
 
    // Set points for each division of each scan
-   for ( int ii = exclude; ii < scanCount; ii++ )
+   for ( int ii = nexclude; ii < scanCount; ii++ )
    {
       if ( excludedScans.contains( ii ) )
       {
@@ -669,7 +681,7 @@ qDebug() << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
    for ( int jj = 0; jj < divsCount; jj++ )
    {  // walk thru divisions, fitting line to points from all scans
       count          = 0;
-      for ( int ii = exclude; ii < scanCount; ii++ )
+      for ( int ii = nexclude; ii < scanCount; ii++ )
       {
          if ( excludedScans.contains( ii ) ) continue;
 
@@ -709,10 +721,10 @@ qDebug() << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
    ymax   = (double)qRound( ( ymax + 0.3900 ) / 0.400 ) * 0.400;
    data_plot1->setAxisScale( QwtPlot::xBottom, 0.0, xmax, 0.005 );
    data_plot1->setAxisScale( QwtPlot::yLeft,   0.0, ymax, 0.500 );
-   data_plot1->replot();
+
    count  = 0;
 
-   for ( int ii = exclude; ii < scanCount; ii++ )
+   for ( int ii = nexclude; ii < scanCount; ii++ )
    {  // accumulate points of back-diffusion cutoff line
 
       if ( !excludedScans.contains( ii ) )
@@ -727,9 +739,33 @@ qDebug() << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
    dcurve  = us_curve( data_plot2, tr( "Fitted Line BD" ) );
    dcurve->setPen( QPen( QBrush( Qt::red ), 3.0 ) );
    dcurve->setData( x, y, count );
-qDebug() << " xr0 yr0 " << x[0]       << y[0];
-qDebug() << " xrN yrN " << x[count-1] << y[count-1];
+qDebug() << " DP: xr0 yr0 " << x[0]       << y[0];
+qDebug() << " DP: xrN yrN " << x[count-1] << y[count-1];
    data_plot2->replot();
+
+   // plot any upper plot vertical excluded-scan line(s)
+
+   int frsc   = qRound( ct_from->value() ) - 1;
+   int tosc   = qRound( ct_to  ->value() );
+
+   if ( tosc > 0 )
+   {
+      frsc       = ( frsc < 0 ) ? 0 : frsc;
+      y[ 0 ]     = 0.5;
+      y[ 1 ]     = ymax - 0.1;
+
+      for ( int ii = frsc; ii < tosc; ii++ )
+      {
+         x[ 0 ]     = 1.0 / sqrt( d->scanData[ ii ].seconds - time_correction );
+         x[ 1 ]     = x[ 0 ];
+         curve      = us_curve( data_plot1,
+            tr( "Scan %1 Exclude Marker" ).arg( ii+1 ) );
+         curve->setPen( QPen( QBrush( Qt::red ), 1.0 ) );
+         curve->setData( x, y, 2 );
+      }
+   }
+
+   data_plot1->replot();
 
    delete [] x;                             // clean up
    delete [] y;
@@ -769,11 +805,39 @@ void US_vHW_Enhanced::reset_data( void )
 #if 0
    data_plot1->detachItems( );
    data_plot1->replot();
-   epick      = new US_PlotPicker( data_plot1 );
 #endif
 }
 
-void US_vHW_Enhanced::sel_groups(  void ) {}
+void US_vHW_Enhanced::sel_groups(  void )
+{
+   if ( groupSel )
+   {  // had been Select, now doing Clear
+      groupstep = NONE;
+      pb_selegr->setText( tr( "Select Groups" ) );
+
+      data_plot1->detachItems( QwtPlotItem::Rtti_PlotMarker );
+      data_plot1->replot();
+      groupdat.clear();
+      groupxy.clear();
+   }
+
+   else
+   {  // had been Clear, now doing new Select
+      groupstep = START;
+      pb_selegr->setText( tr( "Clear Groups" ) );
+      groupxy.clear();
+
+      QMessageBox::information( this, tr( "Group Selection" ),
+            tr( "Please click first ABOVE, then BELOW the intercepts on the\n"
+                "Y-axis of the van Holde - Weischet extrapolation plot to\n"
+                "define groups and to average the S-values within a group.\n\n"
+                "PLEASE NOTE:\n"
+                "This algorithm provides for multiple and also overlapping\n"
+                "groups, such that the total percentage may exceed 100%" ) );
+   }
+
+   groupSel  = !groupSel;    // reverse Select/Clear mode
+}
 
 // update density
 void US_vHW_Enhanced::update_density(  double dval )
@@ -797,6 +861,8 @@ void US_vHW_Enhanced::update_vbar(      double  dval )
 void US_vHW_Enhanced::update_bdtoler(    double dval )
 {
    bdtoler   = dval;
+
+   data_plot();
 }
 
 void US_vHW_Enhanced::update_divis(      double dval )
@@ -806,27 +872,27 @@ void US_vHW_Enhanced::update_divis(      double dval )
    data_plot();
 }
 
-// find index to first value greater than or equal to given concentration
+// index to first readings value greater than or equal to given concentration
 int US_vHW_Enhanced::first_gteq( double concenv,
-      QVector< US_DataIO::reading >& readings, int valueCount )
+      QVector< US_DataIO::reading >& readings, int valueCount, int defndx )
 {
-   int index = -1;
+   int index = defndx;
 
    for ( int jj = 0; jj < valueCount; jj++ )
    {
-      if ( concenv < readings[ jj ].value )
+      if ( readings[ jj ].value >= concenv )
       {
-         index     = ( jj > 0 ) ? jj : -1;
-         break;
-      }
-
-      else if ( concenv == readings[ jj ].value )
-      {
-         index     = ( jj > 0 ) ? jj : 0;
+         index     = jj;
          break;
       }
    }
    return index;
+}
+
+int US_vHW_Enhanced::first_gteq( double concenv,
+      QVector< US_DataIO::reading >& readings, int valueCount )
+{
+   return first_gteq( concenv, readings, valueCount, -1 );
 }
 
 //  get average scan plateau value for 11 points around input value
@@ -859,8 +925,7 @@ double US_vHW_Enhanced::zone_plateau( )
 {
    double  plato  = -1.0;
    valueCount     = s->readings.size();
-   int     j0     = first_gteq( basecut, s->readings, valueCount );
-           j0     = ( j0 < 0 ) ? 0 : j0;
+   int     j0     = first_gteq( basecut, s->readings, valueCount, 0 );
 //qDebug() << "      j0=" << j0;
    int     nzp    = PZ_POINTS;
    int     j1     = 0;
@@ -1066,7 +1131,6 @@ void US_vHW_Enhanced::div_seds( )
 {
    double* xx       = new double[ scanCount ];
    double* yy       = new double[ scanCount ];
-   double* zz       = new double[ scanCount ];
    double* pp       = new double[ scanCount ];
    double* xr       = new double[ scanCount ];
    double* yr       = new double[ scanCount ];
@@ -1081,12 +1145,11 @@ void US_vHW_Enhanced::div_seds( )
    meniscus         = d->meniscus;
 
    dseds.clear();
-   dcons.clear();
+   dslos.clear();
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {  // loop to fit points across scans in a division
       double  dsed;
-      double  dcon;
       double  slope;
       double  sigma;
       double  corre;
@@ -1104,7 +1167,7 @@ void US_vHW_Enhanced::div_seds( )
       if ( jj == 0 )
       {  // we only need to calculate x values, bcut the 1st time thru
 
-         for ( ii = exclude; ii < scanCount; ii++ )
+         for ( ii = nexclude; ii < scanCount; ii++ )
          {
             if ( !excludedScans.contains( ii ) )
             {
@@ -1130,16 +1193,15 @@ void US_vHW_Enhanced::div_seds( )
                cpij        = cpds.at( ii ).at( jj );
                //mconc       = pp[ 0 ] + cpij * 0.5;
                //mconc       = baseline + cpij * 0.5;
-               mconc       = pp[ nscnu] + cpij * 0.5;
+               mconc       = pp[ nscnu ] + cpij * 0.5;
                dsed        = sed_coeff( mconc, oterm ) * 1.0e-13;
-//dsed *= 2.0;
                //bdleft      = bdtoler * bdifsqr
                //   / ( 2.0 * dsed * omegasq * ( bottom + meniscus ) / 2.0 );
                bdleft      = bdtoler * bdifsqr
                   / ( dsed * omegasq * ( bottom + meniscus ) * timesqr );
                xbdleft     = find_root( bdleft );
-//xbdleft *= 0.8;
                radD        = bottom - ( 2.0 * xbdleft * bdifsqr * timesqr );
+
                int mm      = 0;
                int mmlast  = valueCount - 1;
 
@@ -1149,7 +1211,7 @@ void US_vHW_Enhanced::div_seds( )
                xr[ nscnu ] = radD;
                yr[ nscnu ] = s->readings[ mm ].value;
 qDebug() << "  bottom meniscus bdleft" << bottom << meniscus << bdleft;
-qDebug() << "  dsed find_root" << dsed << xbdleft;
+qDebug() << "  dsed find_root toler" << dsed << xbdleft << bdtoler;
 qDebug() << "  bdiffc bdifsqr mm" << bdiffc << bdifsqr << mm << mmlast;
 qDebug() << "BD x,y " << nscnu+1 << radD << yr[nscnu];
 
@@ -1176,13 +1238,12 @@ qDebug() << "BD x,y " << nscnu+1 << radD << yr[nscnu];
 
          pp[ kk ]   = cconc;        // division mark of concentration for scan
          yy[ kk ]   = sed_coeff( mconc, oterm );  // sedimentation coefficient
-         zz[ kk ]   = mconc;        // mid-division concentration
 
-         ii         = first_gteq( mconc, s->readings, valueCount );
-         radD       = s->readings[ ii ].d.radius;  // radius this division pt.
+         int mm     = first_gteq( mconc, s->readings, valueCount, 0 );
+         radD       = s->readings[ mm ].d.radius;  // radius this division pt.
 
          if ( radD > xr[ kk ]  &&  mconc > yr[ kk ] )
-         {
+         {  // gone beyond back-diffusion cutoff: exit loop with truncated list
             kscnu      = kk;
 qDebug() << " div kscnu" << jj+1 << kscnu
    << " radD xrkk" << radD << xr[kk] << " mconc yrkk" << mconc << yr[kk];
@@ -1195,23 +1256,34 @@ qDebug() << " div kscnu" << jj+1 << kscnu
 //qDebug() << " nscnu pp0 yy0 ppn yyn " << nscnu << yy[0] << pp[0]
 //   << yy[nscnu-1] << pp[nscnu-1];
 
-      // calculate and save the division sedcoeff
 
-      US_Math::linefit( &xx, &yy, &slope, &dsed, &sigma, &corre, kscnu );
+      if ( kscnu > 0 )
+      {
+         // calculate and save the division sedcoeff and fitted line slope
+
+         US_Math::linefit( &xx, &yy, &slope, &dsed, &sigma, &corre, kscnu );
+      }
+
+      else
+      {
+         dsed       = yy[ 0 ];
+         slope      = 0.0;
+      }
 
       dseds.append( dsed );
 
-      US_Math::linefit( &xx, &zz, &slope, &dcon, &sigma, &corre, kscnu );
-
-      dcons.append( dcon );
+      dslos.append( slope );
 //if((jj&7)==0||jj==(divsCount-1))
 // qDebug() << "     div dsed dcon " << jj+1 << dsed << dcon;
 
    }
 qDebug() << " dsed[0] " << dseds.at(0);
 qDebug() << " dsed[L] " << dseds.at(divsCount-1);
-qDebug() << " xr0 yr0 " << xr[0] << yr[0];
-qDebug() << " xrN yrN " << xr[nscnu-1] << yr[nscnu-1];
+qDebug() << " D_S: xr0 yr0 " << xr[0] << yr[0];
+qDebug() << " D_S: xrN yrN " << xr[nscnu-1] << yr[nscnu-1];
+
+   bdrads.clear();
+   bdcons.clear();
 
    for ( int kk = 0; kk < nscnu; kk++ )
    {
@@ -1221,7 +1293,6 @@ qDebug() << " xrN yrN " << xr[nscnu-1] << yr[nscnu-1];
 
    delete [] xx;                             // clean up
    delete [] yy;
-   delete [] zz;
    delete [] pp;
    delete [] ll;
    delete [] xr;
@@ -1243,6 +1314,7 @@ double US_vHW_Enhanced::find_root( double goal )
    double  xsqr      = xv * xv;
    double  rsqr_pi   = 1.0 / sqrt( M_PI );
    double  test      = exp( -xsqr ) * rsqr_pi - ( xv * erfc( xv ) );
+           test      = ( goal != 0.0 ) ? test : 0.0;
 qDebug() << "      find_root: goal test" << goal << test << " xv" << xv;
 //qDebug() << "        erfc(x)" << erfc(xv);
    int     count     = 0;
@@ -1299,4 +1371,97 @@ qDebug() << " D3 " << D3 << " density       " << density;
 qDebug() << "  bdiffc" << bdcoef << " = RT/(D1*sqrt(D2/D3))";
    return bdcoef;
 }
+
+void US_vHW_Enhanced::groupClick( const QwtDoublePoint& p )
+{
+   QwtPlotMarker* marker;
+   QwtText        label;
+   GrpInfo        cgrdata;
+   QString        gbanner;
+   int            ngroup;
+qDebug() << "groupClick: step" << groupstep
+   << "x y" << p.x() << p.y();
+
+   switch( groupstep )
+   {
+      case NONE :
+         break;
+
+      case START :
+         groupstep = END;
+         groupxy << p.x() << p.y();      // add start x,y to list
+         break;
+
+      case END :
+         groupstep = START;
+         groupxy << p.x() << p.y();      // add end x,y to list
+         ngroup    = groupxy.size() / 4;
+
+         add_group_info( );
+
+         marker    = new QwtPlotMarker;
+         cgrdata   = groupdat.at( ngroup-1 );
+
+         gbanner   = tr( "Group %1: %2 (%3%)" )
+               .arg( ngroup ).arg( cgrdata.sed ).arg( cgrdata.percent );
+         label.setText( gbanner );
+         label.setFont( QFont( US_GuiSettings::fontFamily(),
+                  -1, QFont::Bold ) );
+//qDebug() << "label.fontsiz " << label.font().pointSize();
+         //label.setColor( Qt::lightGray );
+         label.setColor( Qt::magenta );
+         //label.setColor( Qt::red );
+         label.setBackgroundBrush( QBrush( QColor( 8, 8, 8, 128 ) ) );
+
+         marker->setValue( 0.0, cgrdata.sed );
+         marker->setLabel( label );
+         marker->setLabelAlignment( Qt::AlignRight | Qt::AlignVCenter );
+         marker->attach( data_plot1 );
+
+         data_plot1->replot();
+         break;
+
+      default :
+         break;
+   }
+qDebug() << "groupClick:  nxy val" << groupxy.size();
+}
+
+void US_vHW_Enhanced::add_group_info( )
+{
+   int     ngroup  = groupxy.size() / 4;
+   int     jg      = ( ngroup - 1 ) * 4;
+   GrpInfo grdat;
+
+   grdat.x1        = groupxy.at( jg     );
+   grdat.y1        = groupxy.at( jg + 1 );
+   grdat.x2        = groupxy.at( jg + 2 );
+   grdat.y2        = groupxy.at( jg + 3 );
+   grdat.sed       = 0.0;
+   grdat.percent   = 0.0;
+   grdat.ndivs     = 0;
+   grdat.idivs.clear();
+
+   divsCount       = qRound( ct_division->value() );
+
+   for ( int jj = 0; jj < divsCount; jj++ )
+   {  // walk thru all division lines to see if within clicked range
+      double sed      = dseds.at( jj );         // intercept sed coeff
+      double slope    = dslos.at( jj );         // div line slope
+      double yh       = sed + slope * grdat.x1; // line intercept w high x
+      double yl       = sed + slope * grdat.x2; // line intercept w low x
+
+      if ( yh <= grdat.y1  &&  yl >= grdat.y2 )
+      {  // line is in group:  add division to group
+         grdat.idivs.append( jj );
+         grdat.sed      += sed;
+         grdat.ndivs++;
+      }
+   }
+   grdat.sed      /= (double)grdat.ndivs;
+   grdat.percent   = ( (double)grdat.ndivs / (double)divsCount ) * 100.0;
+
+   groupdat.append( grdat );
+}
+
 

@@ -8,6 +8,7 @@
 #include "us_run_details.h"
 #include "us_analyte.h"
 #include "us_buffer_gui.h"
+#include "qwt_plot_marker.h"
 
 #define EDTDAT US_DataIO::editedData
 #define RAWDAT US_DataIO::rawData
@@ -18,6 +19,18 @@
 #define PZ_POINTS 51     // plateau zone line fit number points
 #define PZ_HZLO   5      // plateau zone horizontal extent minimum points
 
+typedef struct groupinfo_s
+{
+   double        x1;          // x of top mouse pick
+   double        y1;          // y of top mouse pick
+   double        x2;          // x of bottom mouse pick
+   double        y2;          // y of bottom mouse pick
+   double        sed;         // average intercept sedcoeff of group
+   double        percent;     // percent fraction of all divisions
+   int           ndivs;       // number of division lines included in pick
+   QList< int >  idivs;       // list of divisions (0 to n-1) included
+} GrpInfo;
+
 class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
 {
    Q_OBJECT
@@ -26,6 +39,8 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       US_vHW_Enhanced();
 
    private:
+
+      enum { NONE, START, END } groupstep;
 
       QLabel*       lb_tolerance;
       QLabel*       lb_division;
@@ -46,10 +61,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QwtPlot*       vdat_plot;
       QwtPlotCurve*  curve;
       QwtPlotCurve*  dcurve;
-      QwtPlotGrid*   egrid;
-      QwtPlotGrid*   vgrid;
-      US_PlotPicker* epick;
-      US_PlotPicker* vpick;
+      US_PlotPicker* gpick;
       QwtSymbol      fgSym;
       QwtSymbol      bgSym;
       QPen           bgPen;
@@ -93,7 +105,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       int           divsCount;
       int           scanCount;
       int           valueCount;
-      int           exclude;
+      int           nexclude;
       int           dsmooth;
       int           pcbound;
       int           boundpo;
@@ -103,6 +115,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       bool          minmax;
       bool          haveZone;
       bool          haveDiff;
+      bool          groupSel;
 
       QString       run_name;
       QString       cell;
@@ -125,9 +138,11 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QList< QList< double > > cpds;
       QList< double >          sdifs;
       QList< double >          dseds;
-      QList< double >          dcons;
+      QList< double >          dslos;
       QList< double >          bdrads;
       QList< double >          bdcons;
+      QList< double >          groupxy;
+      QList< GrpInfo >         groupdat;
 
       US_DataIO::editedData*   d;
       US_DataIO::scan*         s;
@@ -152,7 +167,8 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       void update_vbar(      double );
       void update_bdtoler(   double );
       void update_divis(     double );
-      int    first_gteq( double, QVector< US_DataIO::reading >&, int );
+      int  first_gteq( double, QVector< US_DataIO::reading >&, int, int );
+      int  first_gteq( double, QVector< US_DataIO::reading >&, int );
       double calc_slope( double*, double*, int,
             double&, double&, double&, double& );
       double update_slope( int, double, double, double, double,
@@ -162,6 +178,8 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       double zone_plateau( void );
       double find_root( double );
       double back_diff_coeff( double );
+      void groupClick( const QwtDoublePoint& );
+      void add_group_info( void );
 
       void help     ( void )
       { showHelp.show_help( "vHW_enhanced.html" ); };
