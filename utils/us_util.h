@@ -18,7 +18,7 @@ class US_EXTERN US_Util
       static QString getToken( QString&, const QString& );
 
 
-      // \brief Generates and returns a new Global Identifier (guid)
+      //! \brief Generates and returns a new Global Identifier (guid)
       static QString new_guid( void );
 };
 #endif
