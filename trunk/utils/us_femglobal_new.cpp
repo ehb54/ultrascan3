@@ -14,7 +14,7 @@ US_FemGlobal_New::SimulationComponent::SimulationComponent()
    s                    = 0.0;
    D                    = 0.0;
    f                    = 1.0;
-   f_f0                 = 1.0;
+   f_f0                 = 1.25;
    wavelength           = 0.0;
    extinction           = 0.0;
    sigma                = 0.0;

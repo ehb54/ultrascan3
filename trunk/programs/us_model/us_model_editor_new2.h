@@ -1,4 +1,4 @@
-//! \file us_model_editor.h
+//! \file us_model_editor_new2.h
 #ifndef US_MODEL_EDITOR_H
 #define US_MODEL_EDITOR_H
 
@@ -24,6 +24,8 @@ class US_ModelEditor : public US_Widgets
 		US_ModelEditor( US_FemGlobal_New::ModelSystem&, QWidget* = 0, 
             Qt::WindowFlags = 0 );
 
+      enum optics_t { ABSORBANCE, INTERFERENCE, FLUORESCENCE };
+
    signals:
       
       //! \brief A signal that retruns the model loaded or created
@@ -33,11 +35,9 @@ class US_ModelEditor : public US_Widgets
    private:
       US_Help        showhelp;
                      
-      enum           { ABSORBANCE, INTERFERENCE, FLUORESCENCE };
       int            prior_row;
       int            investigator;
                     
-
       class ModelDesc
       {
          public:
@@ -119,7 +119,7 @@ class US_ModelEditor : public US_Widgets
       
 		void manage_components ( void );
 		void get_vbar          ( void );
-      void update_analyte    ( struct US_Analyte::analyteData );
+      void update_analyte    ( struct US_Analyte::AnalyteData );
       void change_optics     ( int  );
 		void delete_component  ( void );
       void change_component  ( int  );

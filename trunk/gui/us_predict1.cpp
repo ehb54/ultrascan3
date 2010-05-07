@@ -9,43 +9,52 @@
 
 US_Predict1::Hydrocomp::Hydrocomp()
 {
-   sedcoeff  = 0.0;
-   diffcoeff = 0.0;
-   f         = 0.0;
-   f_f0      = 1.0;
-   a         = 0.0;
-   b         = 0.0;
-   volume    = 0.0;
+   s      = 0.0;
+   D      = 0.0;
+   f      = 0.0;
+   f_f0   = 1.0;
+   a      = 0.0;
+   b      = 0.0;
+   volume = 0.0;
 }
 
 US_Predict1::Hydrosim::Hydrosim()
 {
-   mw          = 0.0;
-   density     = 0.0;
-   viscosity   = 0.0;
-   vbar        = 1.0;
-   temperature = 0.0;
-   axial_ratio = 0.0;
+   mw          = 50000.0;
+   density     = DENS_20W;
+   viscosity   = VISC_20W * 100.0;
+   vbar        = TYPICAL_VBAR;
+   temperature = 20.0;
+   axial_ratio = 10.0;
+   guid        = QString();
 }
 
-US_Predict1::US_Predict1( Hydrosim&       params, 
-                          int             invID,
-                          QWidget*        parent, 
-                          Qt::WindowFlags f )
-   : US_WidgetsDialog( parent, f ), allparams( params ), investigator( invID )
+US_Predict1::US_Predict1( Hydrosim&                     parm, 
+                          int                           invID,
+                          const US_Analyte::AnalyteData a_data,
+                          bool                          disk_access,
+                          bool                          signal_wanted )
+   : US_WidgetsDialog( 0, 0 ), 
+     allparams   ( parm ), 
+     investigator( invID ),
+     base_analyte( a_data ),
+     access      ( disk_access ),
+     signal      ( signal_wanted )
 {
-   temperature = NORMAL_TEMP;
-   mw          = 50000.0;  // Arbitrary starting point
-   ratio       = 10.0;
-   d.density   = DENS_20W;
-   d.viscosity = VISC_20W * 100.0;
-   d.vbar20    = TYPICAL_VBAR;
-   d.vbar      = TYPICAL_VBAR + ( 4.25e-4 * ( temperature - 20.0 ) );
+   analyte            = base_analyte;
+   temperature        = parm.temperature;
+   mw                 = parm.mw;  
+   ratio              = parm.axial_ratio;
+   solution.density   = parm.density;
+   solution.viscosity = parm.viscosity;
+   solution.vbar20    = parm.vbar;
+   solution.vbar      = parm.vbar + ( 4.25e-4 * ( temperature - 20.0 ) );
 
    double x = 1.1;
 
-   // DOCUMENT ME
-   for ( int i = 0; i < ARRAYSIZE; i++, x += 0.10000 )
+   // From: K.E. van Holde, Biophysical Chemistry, 2nd edition, chapter 4.1
+   // Calculate frictional ratio as a function of axial ratio
+   for ( int i = 0; i < ARRAYSIZE; i++, x += 0.1 )
    {
       prolate[ i ] = pow( x, -1.0 / 3.0 ) * sqrt( sq( x ) - 1.0 ) / 
                      log( x + sqrt( sq( x ) - 1.0 ) );
@@ -54,13 +63,17 @@ US_Predict1::US_Predict1( Hydrosim&       params,
                      ( pow( x, 2.0 / 3.0 ) * atan( sqrt( sq( x ) - 1.0 ) ) );
       
       rod[ i ]     = pow( 2.0 / 3.0, 1.0 / 3.0 ) * pow( x, 2.0 / 3.0 ) / 
-                     ( log( 2.0 * x) - 0.3 );
+                     ( log( 2.0 * x ) - 0.3 );
       
       ratio_x[ i ] = x;
    }
 
    setWindowTitle( tr( "Modeling s, D, and f from MW for 4 basic shapes" ) );
    setPalette( US_GuiSettings::frameColor() );
+
+   // Very light gray
+   QPalette gray =  US_GuiSettings::editColor();
+   gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
 
    QBoxLayout* main = new QVBoxLayout( this );
    main->setSpacing         ( 2 );
@@ -72,26 +85,46 @@ US_Predict1::US_Predict1( Hydrosim&       params,
    int c_row = 0;
 
    // Basic values
+   if ( signal )
+   {
+      QLabel* lb_density = us_label( tr( "Density" ) );
+      controls->addWidget( lb_density, c_row, 0 );
 
-   QPushButton* pb_density = us_pushbutton( tr( "Density" ) );
-   connect( pb_density, SIGNAL( clicked() ), SLOT( get_buffer() ) );
-   controls->addWidget( pb_density, c_row, 0 );
+      le_density = us_lineedit( QString::number( solution.density, 'f', 4 ) );
+      le_density->setPalette( gray );
+      le_density->setReadOnly( true );
+      controls->addWidget( le_density, c_row++, 1 );
 
-   le_density = us_lineedit();
-   le_density->setText( QString::number( DENS_20W ) );
-   connect( le_density, SIGNAL( textChanged( const QString& ) ),
-                        SLOT  ( density    ( const QString& ) ) );
-   controls->addWidget( le_density, c_row++, 1 );
+      QLabel* lb_viscosity = us_label( tr( "Viscosity" ) );
+      controls->addWidget( lb_viscosity, c_row, 0 );
 
-   QPushButton* pb_viscosity = us_pushbutton( tr( "Viscosity" ) );
-   connect( pb_viscosity, SIGNAL( clicked() ), SLOT( get_buffer() ) );
-   controls->addWidget( pb_viscosity, c_row, 0 );
+      le_viscosity = us_lineedit( QString::number( solution.viscosity, 'f', 4 ) );
+      le_viscosity->setPalette( gray );
+      le_viscosity->setReadOnly( true );
+      controls->addWidget( le_viscosity, c_row++, 1 );
+   }
+   else
+   {
+      QPushButton* pb_density = us_pushbutton( tr( "Density" ) );
+      connect( pb_density, SIGNAL( clicked() ), SLOT( get_buffer() ) );
+      controls->addWidget( pb_density, c_row, 0 );
 
-   le_viscosity = us_lineedit();
-   le_viscosity->setText( QString::number( VISC_20W * 100.0 ) );
-   connect( le_viscosity, SIGNAL( textChanged( const QString& ) ), 
-                          SLOT  ( viscosity  ( const QString& ) ) );
-   controls->addWidget( le_viscosity, c_row++, 1 );
+      le_density = us_lineedit();
+      le_density->setText( QString::number( DENS_20W ) );
+      connect( le_density, SIGNAL( textChanged( const QString& ) ),
+                           SLOT  ( density    ( const QString& ) ) );
+      controls->addWidget( le_density, c_row++, 1 );
+
+      QPushButton* pb_viscosity = us_pushbutton( tr( "Viscosity" ) );
+      connect( pb_viscosity, SIGNAL( clicked() ), SLOT( get_buffer() ) );
+      controls->addWidget( pb_viscosity, c_row, 0 );
+
+      le_viscosity = us_lineedit();
+      le_viscosity->setText( QString::number( VISC_20W * 100.0 ) );
+      connect( le_viscosity, SIGNAL( textChanged( const QString& ) ), 
+                             SLOT  ( viscosity  ( const QString& ) ) );
+      controls->addWidget( le_viscosity, c_row++, 1 );
+   }
 
    QPushButton* pb_vbar = us_pushbutton( tr( "vbar (20 deg C)" ) );
    connect( pb_vbar, SIGNAL( clicked() ), SLOT( get_peptide() ) );
@@ -106,7 +139,7 @@ US_Predict1::US_Predict1( Hydrosim&       params,
    QLabel* lb_mw = us_label( tr( "Molecular Weight:" ) );
    controls->addWidget( lb_mw, c_row, 0 );
 
-   QLineEdit* le_mw = us_lineedit();
+   le_mw = us_lineedit();
    le_mw->setText( QString::number( mw, 'e', 3 ) );
    connect( le_mw, SIGNAL( textChanged( const QString& ) ), 
                    SLOT  ( update_mw  ( const QString& ) ) );
@@ -272,7 +305,11 @@ US_Predict1::US_Predict1( Hydrosim&       params,
 
 void US_Predict1::complete( void )
 {
-   emit done();
+   if ( signal )
+   {
+      emit done();
+      emit changed( analyte );
+   }
    close();
 }
 
@@ -291,70 +328,72 @@ void US_Predict1::update_mw( const QString& s )
 void US_Predict1::degC( const QString& s )
 {
    temperature = s.toDouble();
-   d.vbar      = d.vbar20 + 4.25e-4 * ( temperature - 20.0 );
+   solution.vbar      = solution.vbar20 + 4.25e-4 * ( temperature - 20.0 );
 
-   US_Math::data_correction( temperature, d );
+   US_Math::data_correction( temperature, solution );
    update();
 }
 
 void US_Predict1::get_peptide( void )
 {
-   US_Analyte* peptide_dialog = new US_Analyte( investigator, true );
-   connect( peptide_dialog, SIGNAL( valueChanged( US_Analyte::analyteData ) ),
-                            SLOT  ( update_vbar ( US_Analyte::analyteData ) ) );
-   peptide_dialog->setWindowTitle( tr( "VBar Calculation" ) );
-   peptide_dialog->exec();
+   US_Analyte* dialog = new US_Analyte( investigator, true, analyte.guid );
+   connect( dialog, SIGNAL( valueChanged( US_Analyte::AnalyteData ) ),
+                    SLOT  ( update_vbar ( US_Analyte::AnalyteData ) ) );
+   dialog->exec();
 }
 
-void US_Predict1::update_vbar( const US_Analyte::analyteData ad )
+void US_Predict1::update_vbar( const US_Analyte::AnalyteData ad )
 {
-   analyte = ad;
-   d.vbar = ad.vbar;
-   le_vbar->setText( QString::number( d.vbar, 'f', 4 ) );
+   analyte       = ad;
+   mw            = ad.mw;
+   solution.vbar = ad.vbar;
 
-   US_Math::data_correction( temperature, d );
+   le_mw  ->setText( QString::number( (int) mw ) );
+   le_vbar->setText( QString::number( solution.vbar, 'f', 4 ) );
+
+   US_Math::data_correction( temperature, solution );
    update();
 }
 
 void US_Predict1::get_buffer( void )
 {
-   US_BufferGui* buffer_dialog = new US_BufferGui( investigator, true );
-   connect( buffer_dialog, SIGNAL( valueChanged ( US_Buffer ) ),
-                           SLOT  ( update_buffer( US_Buffer ) ) );
-   buffer_dialog->exec();
+   US_BufferGui* dialog = new US_BufferGui( investigator, true );
+   connect( dialog, SIGNAL( valueChanged ( US_Buffer ) ),
+                    SLOT  ( update_buffer( US_Buffer ) ) );
+   dialog->exec();
 }
 
 void US_Predict1::update_buffer( const US_Buffer b )
 {
    buffer = b;
-   d.density   = b.density;
-   d.viscosity = b.viscosity;
+   solution.density   = b.density;
+   solution.viscosity = b.viscosity;
 
-   le_density  ->setText( QString::number( d.density   ) );
-   le_viscosity->setText( QString::number( d.viscosity ) );
+   le_density  ->setText( QString::number( solution.density   ) );
+   le_viscosity->setText( QString::number( solution.viscosity ) );
 
-   US_Math::data_correction( temperature, d );
+   US_Math::data_correction( temperature, solution );
    update();
 }
 
 void US_Predict1::density( const QString& s )
 {
-   d.density = s.toDouble();
-   US_Math::data_correction( temperature, d );
+   solution.density = s.toDouble();
+   US_Math::data_correction( temperature, solution );
    update();
 }
 
 void US_Predict1::viscosity( const QString& s )
 {
-   d.viscosity = s.toDouble();
-   US_Math::data_correction( temperature, d );
+   solution.viscosity = s.toDouble();
+   US_Math::data_correction( temperature, solution );
    update();
 }
 
 void US_Predict1::vbar( const QString& s )
 {
-   d.vbar = s.toDouble();
-   US_Math::data_correction( temperature, d );
+   solution.vbar = s.toDouble();
+   US_Math::data_correction( temperature, solution );
    update();
 }
 
@@ -413,41 +452,38 @@ void US_Predict1::mouseU( const QwtDoublePoint& p )
 
    connect( le_axial, SIGNAL( textChanged ( const QString& ) ), 
                       SLOT  ( update_ratio( const QString& ) ) );
-   
    update();
 }
 
 void US_Predict1::update()
 {
    allparams.mw          = mw;
-   allparams.vbar        = d.vbar;
-   allparams.density     = d.density;
-   allparams.viscosity   = d.viscosity;
+   allparams.vbar        = solution.vbar;
+   allparams.density     = solution.density;
+   allparams.viscosity   = solution.viscosity;
    allparams.temperature = temperature;
    allparams.axial_ratio = ratio;
    
    int index = (int) ( ( ratio - 1.1 ) * 10.0 + 0.5 );
   
-   US_Math::data_correction( temperature, d );
+   US_Math::data_correction( temperature, solution );
 
    double t                = temperature + K0;
-   double vol_per_molecule = d.vbar * mw / AVOGADRO;
+   double vol_per_molecule = solution.vbar * mw / AVOGADRO;
    double rad_sphere       = 
                  pow( vol_per_molecule * 3.0 / ( 4.0 * M_PI ), 1.0 / 3.0 );
    
-   double f0               = rad_sphere * 6.0 * M_PI * d.viscosity_tb * 0.01;
+   double f0 = rad_sphere * 6.0 * M_PI * solution.viscosity_tb * 0.01;
 
    // Recaluclate volume to put into cubic angstroms:
-
    vol_per_molecule = ( 4.0 / 3.0 ) * M_PI * pow( rad_sphere * 1.0e+08, 3.0 );
 
    // Prolate ellipsoid, ratio = ap/bp  (a = semi-major axis)
-
    double ap = 1.0e+08 * ( rad_sphere * pow( ratio, 2.0 / 3.0 ) );
    double bp = ap / ratio;
    double fp = prolate[ index ] * f0;
-   double sp = mw * d.buoyancyb / ( AVOGADRO * fp );
-   double Dp = sp * R * t / ( mw * d.buoyancyb );
+   double sp = mw * solution.buoyancyb / ( AVOGADRO * fp );
+   double Dp = sp * R * t / ( mw * solution.buoyancyb );
    
    lb_prolate[ 1 ]->setText( QString::number( sp              , 'e', 4 ) );
    lb_prolate[ 2 ]->setText( QString::number( Dp              , 'e', 4 ) );
@@ -457,21 +493,20 @@ void US_Predict1::update()
    lb_prolate[ 6 ]->setText( QString::number( bp              , 'e', 4 ) );
    lb_prolate[ 7 ]->setText( QString::number( vol_per_molecule, 'e', 4 ) );
    
-   allparams.prolate.sedcoeff  = sp;
-   allparams.prolate.diffcoeff = Dp;
-   allparams.prolate.f         = fp;
-   allparams.prolate.f_f0      = prolate[ index ];
-   allparams.prolate.a         = ap;
-   allparams.prolate.b         = bp;
-   allparams.prolate.volume    = vol_per_molecule;
+   allparams.prolate.s      = sp;
+   allparams.prolate.D      = Dp;
+   allparams.prolate.f      = fp;
+   allparams.prolate.f_f0   = prolate[ index ];
+   allparams.prolate.a      = ap;
+   allparams.prolate.b      = bp;
+   allparams.prolate.volume = vol_per_molecule;
    
    // Oblate ellipsoid:
-
    double bo = 1.0e+08 * rad_sphere / pow( ratio, 2.0 / 3.0 );
    double ao = ratio * bo;
    double fo = oblate[ index ] * f0;
-   double so = mw * d.buoyancyb / ( AVOGADRO * fo );
-   double Do = so * R * t / ( mw * d.buoyancyb );
+   double so = mw * solution.buoyancyb / ( AVOGADRO * fo );
+   double Do = so * R * t / ( mw * solution.buoyancyb );
    
    lb_oblate[ 1 ]->setText( QString::number( so              , 'e', 4 ) );
    lb_oblate[ 2 ]->setText( QString::number( Do              , 'e', 4 ) );
@@ -481,21 +516,20 @@ void US_Predict1::update()
    lb_oblate[ 6 ]->setText( QString::number( bo              , 'e', 4 ) );
    lb_oblate[ 7 ]->setText( QString::number( vol_per_molecule, 'e', 4 ) );
    
-   allparams.oblate.sedcoeff  = so;
-   allparams.oblate.diffcoeff = Do;
-   allparams.oblate.f         = fo;
-   allparams.oblate.f_f0      = oblate[ index ];
-   allparams.oblate.a         = ao;
-   allparams.oblate.b         = bo;
-   allparams.oblate.volume    = vol_per_molecule;
+   allparams.oblate.s      = so;
+   allparams.oblate.D      = Do;
+   allparams.oblate.f      = fo;
+   allparams.oblate.f_f0   = oblate[ index ];
+   allparams.oblate.a      = ao;
+   allparams.oblate.b      = bo;
+   allparams.oblate.volume = vol_per_molecule;
 
    // Long rod:
-   
    double br = 1.0e+08 * pow( 2.0 / ( 3.0 * ratio ), 1.0 / 3.0 ) * rad_sphere;
    double ar = ratio * br;
    double fr = rod[ index ] * f0;
-   double sr = mw * d.buoyancyb / ( AVOGADRO * fr );
-   double Dr = sr * R * t / ( mw * d.buoyancyb );
+   double sr = mw * solution.buoyancyb / ( AVOGADRO * fr );
+   double Dr = sr * R * t / ( mw * solution.buoyancyb );
 
    lb_rod[ 1 ]->setText( QString::number( sr              , 'e', 4 ) );
    lb_rod[ 2 ]->setText( QString::number( Dr              , 'e', 4 ) );
@@ -505,18 +539,17 @@ void US_Predict1::update()
    lb_rod[ 6 ]->setText( QString::number( br              , 'e', 4 ) );
    lb_rod[ 7 ]->setText( QString::number( vol_per_molecule, 'e', 4 ) );
 
-   allparams.rod.sedcoeff  = sr;
-   allparams.rod.diffcoeff = Dr;
-   allparams.rod.f         = fr;
-   allparams.rod.f_f0      = rod[ index ];
-   allparams.rod.a         = ar;
-   allparams.rod.b         = br;
-   allparams.rod.volume    = vol_per_molecule;
+   allparams.rod.s      = sr;
+   allparams.rod.D      = Dr;
+   allparams.rod.f      = fr;
+   allparams.rod.f_f0   = rod[ index ];
+   allparams.rod.a      = ar;
+   allparams.rod.b      = br;
+   allparams.rod.volume = vol_per_molecule;
 
-// Sphere:
-
-   double ss = mw * d.buoyancyb / ( AVOGADRO * f0 );
-   double Ds = ss * R * t / ( mw * d.buoyancyb );
+   // Sphere:
+   double ss = mw * solution.buoyancyb / ( AVOGADRO * f0 );
+   double Ds = ss * R * t / ( mw * solution.buoyancyb );
 
    lb_sphere[ 1 ]->setText( QString::number( ss                  , 'e', 4 ) );
    lb_sphere[ 2 ]->setText( QString::number( Ds                  , 'e', 4 ) );
@@ -526,13 +559,13 @@ void US_Predict1::update()
    lb_sphere[ 6 ]->setText( QString::number( 1.0e+08 * rad_sphere, 'e', 4 ) );
    lb_sphere[ 7 ]->setText( QString::number( vol_per_molecule    , 'e', 4 ) );
    
-   allparams.sphere.sedcoeff  = ss;
-   allparams.sphere.diffcoeff = Ds;
-   allparams.sphere.f         = f0;
-   allparams.sphere.f_f0      = 1.0;
-   allparams.sphere.a         = 1.0e+08 * rad_sphere;
-   allparams.sphere.b         = 1.0e+08 * rad_sphere;
-   allparams.sphere.volume    = vol_per_molecule;
+   allparams.sphere.s      = ss;
+   allparams.sphere.D      = Ds;
+   allparams.sphere.f      = f0;
+   allparams.sphere.f_f0   = 1.0;
+   allparams.sphere.a      = 1.0e+08 * rad_sphere;
+   allparams.sphere.b      = 1.0e+08 * rad_sphere;
+   allparams.sphere.volume = vol_per_molecule;
    
-   emit changed();
+   if ( signal ) emit changed();
 }

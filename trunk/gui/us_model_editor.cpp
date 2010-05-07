@@ -496,29 +496,29 @@ void US_ModelEditor::update_shape( void )
    switch ( shape )
    {
       case PROLATE:
-         sc->s     = simcomp.prolate.sedcoeff;
-         sc->D     = simcomp.prolate.diffcoeff;
+         sc->s     = simcomp.prolate.s;
+         sc->D     = simcomp.prolate.D;
          sc->f_f0  = simcomp.prolate.f_f0;
          sc->shape = "prolate";
          break;
       
       case OBLATE:
-         sc->s     = simcomp.oblate.sedcoeff;
-         sc->D     = simcomp.oblate.diffcoeff;
+         sc->s     = simcomp.oblate.s;
+         sc->D     = simcomp.oblate.D;
          sc->f_f0  = simcomp.oblate.f_f0;
          sc->shape = "oblate";
          break;
 
       case ROD:
-         sc->s     = simcomp.rod.sedcoeff;
-         sc->D     = simcomp.rod.diffcoeff;
+         sc->s     = simcomp.rod.s;
+         sc->D     = simcomp.rod.D;
          sc->f_f0  = simcomp.rod.f_f0;
          sc->shape = "rod";
          break;
       case SPHERE:
 
-         sc->s     = simcomp.sphere.sedcoeff;
-         sc->D     = simcomp.sphere.diffcoeff;
+         sc->s     = simcomp.sphere.s;
+         sc->D     = simcomp.sphere.D;
          sc->f_f0  = simcomp.sphere.f_f0;
          sc->shape = "sphere";
          break;

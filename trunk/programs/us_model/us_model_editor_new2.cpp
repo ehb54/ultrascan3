@@ -232,8 +232,10 @@ void US_ModelEditor::manage_components( void )
       return;
    }
 
+   bool dbAccess = rb_db->isChecked();
+
    US_Properties* dialog = 
-      new US_Properties( buffer, model, investigator, rb_db->isChecked() );
+      new US_Properties( buffer, model, investigator, dbAccess );
    //connect( dialog, SIGNAL( valueChanged( US_Predict1::Hydrosim ) ),
    //                 SLOT  ( update_sim  ( US_Predict1::Hydrosim ) ) );
    dialog->exec();
@@ -309,12 +311,12 @@ void US_ModelEditor::get_vbar( void )
    US_Analyte* analyte = new US_Analyte( -1, true );
 
    connect( analyte, 
-         SIGNAL( valueChanged  ( struct US_Analyte::analyteData ) ),
-         SLOT  ( update_analyte( struct US_Analyte::analyteData ) ) );
+         SIGNAL( valueChanged  ( struct US_Analyte::AnalyteData ) ),
+         SLOT  ( update_analyte( struct US_Analyte::AnalyteData ) ) );
    analyte->exec();
 }
 
-void US_ModelEditor::update_analyte( struct US_Analyte::analyteData data )
+void US_ModelEditor::update_analyte( struct US_Analyte::AnalyteData data )
 {
    int index = lw_components->currentRow();
    if ( index < 0 ) return; 
@@ -474,29 +476,29 @@ void US_ModelEditor::update_shape( void )
    switch ( shape )
    {
       case US_FemGlobal_New::PROLATE:
-         sc->s     = h->prolate.sedcoeff;
-         sc->D     = h->prolate.diffcoeff;
+         sc->s     = h->prolate.s;
+         sc->D     = h->prolate.D;
          sc->f_f0  = h->prolate.f_f0;
          sc->shape = US_FemGlobal_New::PROLATE;
          break;
       
       case US_FemGlobal_New::OBLATE:
-         sc->s     = h->oblate.sedcoeff;
-         sc->D     = h->oblate.diffcoeff;
+         sc->s     = h->oblate.s;
+         sc->D     = h->oblate.D;
          sc->f_f0  = h->oblate.f_f0;
          sc->shape = US_FemGlobal_New::OBLATE;
          break;
 
       case US_FemGlobal_New::ROD:
-         sc->s     = h->rod.sedcoeff;
-         sc->D     = h->rod.diffcoeff;
+         sc->s     = h->rod.s;
+         sc->D     = h->rod.D;
          sc->f_f0  = h->rod.f_f0;
          sc->shape = US_FemGlobal_New::ROD;
          break;
 
       case US_FemGlobal_New::SPHERE:
-         sc->s     = h->sphere.sedcoeff;
-         sc->D     = h->sphere.diffcoeff;
+         sc->s     = h->sphere.s;
+         sc->D     = h->sphere.D;
          sc->f_f0  = h->sphere.f_f0;
          sc->shape = US_FemGlobal_New::SPHERE;
          break;
@@ -525,29 +527,29 @@ void US_ModelEditor::select_shape( int /*new_shape*/ )
    switch ( shape )
    {
       case US_FemGlobal_New::PROLATE:
-         sc->s     = h->prolate.sedcoeff;
-         sc->D     = h->prolate.diffcoeff;
+         sc->s     = h->prolate.s;
+         sc->D     = h->prolate.D;
          sc->f_f0  = h->prolate.f_f0;
          sc->shape = US_FemGlobal_New::PROLATE;
          break;
       
       case US_FemGlobal_New::OBLATE:
-         sc->s     = h->oblate.sedcoeff;
-         sc->D     = h->oblate.diffcoeff;
+         sc->s     = h->oblate.s;
+         sc->D     = h->oblate.D;
          sc->f_f0  = h->oblate.f_f0;
          sc->shape = US_FemGlobal_New::OBLATE;
          break;
 
       case US_FemGlobal_New::ROD:
-         sc->s     = h->rod.sedcoeff;
-         sc->D     = h->rod.diffcoeff;
+         sc->s     = h->rod.s;
+         sc->D     = h->rod.D;
          sc->f_f0  = h->rod.f_f0;
          sc->shape = US_FemGlobal_New::ROD;
          break;
 
       case US_FemGlobal_New::SPHERE:
-         sc->s     = h->sphere.sedcoeff;
-         sc->D     = h->sphere.diffcoeff;
+         sc->s     = h->sphere.s;
+         sc->D     = h->sphere.D;
          sc->f_f0  = h->sphere.f_f0;
          sc->shape = US_FemGlobal_New::SPHERE;
          break;

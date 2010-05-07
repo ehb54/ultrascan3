@@ -13,14 +13,20 @@
 
 #include <qwt_counter.h>
 
+//! A class to bring up a dialog that edits an analyte sequence
 class US_SequenceEditor : public US_WidgetsDialog
 {
    Q_OBJECT
    public:
+      //! Constructor
+      //! \param sequence - The sequence to edit
       US_SequenceEditor( const QString& );
 
    signals:
-      void sequenceChanged( QString );
+      //! A signal to indicate that sequence editing is done and
+      //! the change was accepted
+      //! \param new_sequence - The new sequence retruned with the signal
+      void sequenceChanged( QString new_sequence );
 
    private:
       US_Editor* edit;
@@ -29,35 +35,55 @@ class US_SequenceEditor : public US_WidgetsDialog
       void accept( void );
 };
 
+//! A class that manages analyte composition and characteristics
 class US_EXTERN US_Analyte : public US_WidgetsDialog
 {
 	Q_OBJECT
 
 	public:
+      //! Constructor.
+      //! \param invID  - The investigator ID in the database (-1 for unspecified)
+      //! \param signal - A flag to indicate that a signal is wanted
+      //! \param GUID   - The global identifier of the current analyte
+      //! \param access - A flag to indicate DB (true) or disk (false) access
 		US_Analyte( int             = -1, 
                   bool            = false, 
                   const QString&  = QString(),
-                  bool            = false,
-                  QWidget*        = 0, 
-                  Qt::WindowFlags = 0 );
+                  bool            = false );
 
-      enum analyte{ PROTEIN, DNA, RNA, CARBOHYDRATE };
+      //! The types of analytes currently defined
+      enum analyte_t { PROTEIN, DNA, RNA, CARBOHYDRATE };
       
-      class analyteData
+      //! A class to describe the analyte
+      class AnalyteData
       {
          public:
-         double                 vbar;
-         double                 mw;
-         QMap< double, double > extinction;
-         QMap< double, double > refraction;
-         QMap< double, double > fluorescence;
-         QString                description;
-         QString                guid;
-         analyte                type;
+         double                 vbar;         //!< vbar of the analyte
+         double                 mw;           //!< Molecular weight
+         QMap< double, double > extinction;   //!< extinction[ wavelength ] <=> value
+         QMap< double, double > refraction;   //!< refraction[ wavelength ] <=> value
+         QMap< double, double > fluorescence; //!< fluorescence[ wavelength ] <=> value
+         QString                description;  //!< Description of the analyte
+         QString                guid;         //!< Global identifier of the analyte
+         analyte_t              type;         //!< The type of analyte
+         AnalyteData()
+         {
+            vbar = 0.0;
+            mw   = 0.0;
+            extinction  .clear();
+            refraction  .clear();
+            fluorescence.clear();
+            description .clear();
+            guid        .clear();
+            type = PROTEIN;
+         };
       };
 
    signals:
-      void valueChanged( US_Analyte::analyteData );
+      //! A signal that indicates that the analyte data has been updated and
+      //! the screen is closing.
+      //! \param data - The updated analyte data
+      void valueChanged( US_Analyte::AnalyteData data );
 
    private:
       int           personID;
@@ -75,18 +101,18 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       uint          G;
       uint          U;
 
-      enum analyte  analyte_t;
+      analyte_t     analyte_type;
                    
       double        vbar;     
                    
       class AnalyteInfo
       {
          public:
-         QString description;
-         QString guid;
-         QString filename;
-         QString analyteID;
-         analyte type;
+         QString   description;
+         QString   guid;
+         QString   filename;
+         QString   analyteID;
+         analyte_t type;
       };
 
       QList< AnalyteInfo >    info;
@@ -171,7 +197,7 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       void    populate        ( void );
 
    private slots:
-      void analyte_type       ( int  );
+      void set_analyte_type   ( int  );
       void sel_investigator   ( void );
       void search             ( const QString& );
       void select_analyte     ( QListWidgetItem* );
