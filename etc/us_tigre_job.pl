@@ -47,6 +47,33 @@ sub check_is_resubmit {
     die "tigre job was resubmitted\n" if $is_resubmit == 1;
 }    
 
+sub ifbigcompress {
+    my $file = $_[0];
+    my $limit = 500;
+    return $file if !-e $file;
+
+    my $c = `ls -s $file`;
+    if ($c > $limit) {
+	print "too big, need compressed version\n" if $debug;
+	my $cfile = "$file.gz";
+	if ( -e $cfile ) {
+	    print "compressed version already exists\n" if $debug;
+	    return $cfile;
+	}
+	print "compressing\n" if $debug;
+	my $cmd = "gzip -c $file > $cfile\n";
+	print $cmd if $debug;
+	my $res = `$cmd`;
+	if ( !-e $cfile ) {
+	    print "tried to compress, didn't work!\n" if $debug;
+	    return $file;
+	}
+	return $cfile;
+    } 
+    print "file size ok, leave alone\n" if $debug;
+    $file;
+}
+
 sub failmsg {
 # email a message
     $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
@@ -84,15 +111,29 @@ $_[0]
     }
 
     if(-e "/lustre/tmp/us_job${id}.stderr") {
-	$msg->attach(Type     => 'TEXT',
-		     Path     => "/lustre/tmp/us_job${id}.stderr",
-		     Filename => "us_job${id}.stderr");
+	$fname = &ifbigcompress("/lustre/tmp/us_job${id}.stderr");
+	if ( $fname =~ /\.gz$/ ) {
+	    $msg->attach(Type     => 'application/x-gzip',
+			 Path     => "/lustre/tmp/us_job${id}.stderr.gz",
+			 Filename => "us_job${id}.stdout.gz");
+	} else {
+	    $msg->attach(Type     => 'TEXT',
+			 Path     => "/lustre/tmp/us_job${id}.stderr",
+			 Filename => "us_job${id}.stdout");
+	}
     }
 
     if(-e "/lustre/tmp/us_job${id}.stdout") {
-	$msg->attach(Type     => 'TEXT',
-		     Path     => "/lustre/tmp/us_job${id}.stdout",
-		     Filename => "us_job${id}.stdout");
+	$fname = &ifbigcompress("/lustre/tmp/us_job${id}.stdout");
+	if ( $fname =~ /\.gz$/ ) {
+	    $msg->attach(Type     => 'application/x-gzip',
+			 Path     => "/lustre/tmp/us_job${id}.stdout.gz",
+			 Filename => "us_job${id}.stdout.gz");
+	} else {
+	    $msg->attach(Type     => 'TEXT',
+			 Path     => "/lustre/tmp/us_job${id}.stdout",
+			 Filename => "us_job${id}.stdout");
+	}
     }
 
     $msg->send('smtp', 'smtp.uthscsa.edu');
