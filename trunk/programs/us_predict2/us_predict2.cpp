@@ -4,7 +4,7 @@
 #include "us_constants.h"
 #include "us_math.h"
 #include "us_buffer_gui.h"
-#include "us_analyte.h"
+#include "us_analyte_gui.h"
 
 US_Predict2::US_Predict2() : US_Widgets()
 {
@@ -679,11 +679,11 @@ void US_Predict2::get_peptide( void )
       return;
    }
 
-   US_Analyte* peptide_dialog = new US_Analyte( -1, true );
-   connect( peptide_dialog, SIGNAL( valueChanged( double ) ),
-                            SLOT  ( update_vbar ( double ) ) );
-   peptide_dialog->setWindowTitle( tr( "VBar Calculation" ) );
-   peptide_dialog->exec();
+   US_AnalyteGui* dialog = new US_AnalyteGui( -1, true );
+   connect( dialog, SIGNAL( valueChanged( double ) ),
+                    SLOT  ( update_vbar ( double ) ) );
+   dialog->setWindowTitle( tr( "VBar Calculation" ) );
+   dialog->exec();
 }
 
 void US_Predict2::update_vbar( double vbar )

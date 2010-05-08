@@ -1,4 +1,4 @@
-//! \file us_analyte.h
+//! \file us_analyte_gui.h
 #ifndef US_ANALYTE_H
 #define US_ANALYTE_H
 
@@ -10,6 +10,7 @@
 #include "us_math.h"
 #include "us_editor.h"
 #include "us_db2.h"
+#include "us_constants.h"
 
 #include <qwt_counter.h>
 
@@ -36,40 +37,47 @@ class US_SequenceEditor : public US_WidgetsDialog
 };
 
 //! A class that manages analyte composition and characteristics
-class US_EXTERN US_Analyte : public US_WidgetsDialog
+class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
 {
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
+   public:
       //! Constructor.
       //! \param invID  - The investigator ID in the database (-1 for unspecified)
       //! \param signal - A flag to indicate that a signal is wanted
       //! \param GUID   - The global identifier of the current analyte
       //! \param access - A flag to indicate DB (true) or disk (false) access
-		US_Analyte( int             = -1, 
-                  bool            = false, 
-                  const QString&  = QString(),
-                  bool            = false );
+      US_AnalyteGui( int             = -1, 
+                     bool            = false, 
+                     const QString&  = QString(),
+                     bool            = false );
 
       //! The types of analytes currently defined
       enum analyte_t { PROTEIN, DNA, RNA, CARBOHYDRATE };
-      
+
       //! A class to describe the analyte
       class AnalyteData
       {
          public:
          double                 vbar;         //!< vbar of the analyte
          double                 mw;           //!< Molecular weight
-         QMap< double, double > extinction;   //!< extinction[ wavelength ] <=> value
-         QMap< double, double > refraction;   //!< refraction[ wavelength ] <=> value
-         QMap< double, double > fluorescence; //!< fluorescence[ wavelength ] <=> value
+
+         //! extinction[ wavelength ] <=> value
+         QMap< double, double > extinction;
+
+         //! refraction[ wavelength ] <=> value
+         QMap< double, double > refraction;
+
+          //! fluorescence[ wavelength ] <=> value
+         QMap< double, double > fluorescence;
+
          QString                description;  //!< Description of the analyte
          QString                guid;         //!< Global identifier of the analyte
          analyte_t              type;         //!< The type of analyte
          AnalyteData()
          {
-            vbar = 0.0;
-            mw   = 0.0;
+            vbar = TYPICAL_VBAR;
+            mw   = 50000.0;
             extinction  .clear();
             refraction  .clear();
             fluorescence.clear();
@@ -83,7 +91,7 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       //! A signal that indicates that the analyte data has been updated and
       //! the screen is closing.
       //! \param data - The updated analyte data
-      void valueChanged( US_Analyte::AnalyteData data );
+      void valueChanged( US_AnalyteGui::AnalyteData data );
 
    private:
       int           personID;
@@ -102,9 +110,9 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       uint          U;
 
       analyte_t     analyte_type;
-                   
+
       double        vbar;     
-                   
+
       class AnalyteInfo
       {
          public:
@@ -132,11 +140,11 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       QString       sequence; 
       QString       description; 
       QString       analyteID;
-      
+
       US_Help       showHelp;
-                   
+
       QListWidget*  lw_analytes;
-                   
+
       QLineEdit*    le_investigator;
       QLineEdit*    le_search;
       QLineEdit*    le_description;
@@ -178,7 +186,7 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
 
       QwtCounter*   ct_sodium;
       QwtCounter*   ct_potassium;
-      QwtCounter*   ct_lithium;
+      QwtCounter*  ct_lithium;
       QwtCounter*   ct_magnesium;
       QwtCounter*   ct_calcium;
 
@@ -188,7 +196,7 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       bool    database_ok     ( US_DB2& );
       bool    data_ok         ( void );
       void    status_query    ( const QStringList& );
-      
+
       void    set_spectrum    ( US_DB2& );
       bool    analyte_path    ( QString& );
       QString get_filename    ( const QString&, const QString& );
@@ -230,4 +238,3 @@ class US_EXTERN US_Analyte : public US_WidgetsDialog
       void assign_investigator( int, const QString&, const QString& );
 };
 #endif
-

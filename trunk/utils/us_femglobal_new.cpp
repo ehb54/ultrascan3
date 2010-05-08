@@ -10,7 +10,7 @@ US_FemGlobal_New::SimulationComponent::SimulationComponent()
    molar_concentration  = 0.0;
    signal_concentration = 1.0;
    vbar20               = TYPICAL_VBAR;
-   mw                   = 0.0;
+   mw                   = 50000.0;
    s                    = 0.0;
    D                    = 0.0;
    f                    = 1.0;
