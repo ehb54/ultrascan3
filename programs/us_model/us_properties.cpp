@@ -26,7 +26,8 @@ US_Properties::US_Properties(
    setWindowTitle( tr( "Set Analyte Properties" ) );
    setAttribute( Qt::WA_DeleteOnClose );
 
-   oldRow = -1;
+   oldRow   = -1;
+   inUpdate = false;
 
    normal = US_GuiSettings::editColor();
 
@@ -59,9 +60,11 @@ US_Properties::US_Properties(
    connect( lw_components, SIGNAL( rightClick   ( void ) ),
                            SLOT  ( del_component( void ) ) );
 
+   connect( lw_components, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
+                           SLOT  ( edit_component   ( QListWidgetItem* ) ) );
+
    main->addWidget( lw_components, row, 0, 2, 4 );
    row += 4;
-   //update_lw();
 
    // Row
    QLabel* lb_guid = us_label( tr( "Global Identifier:" ) );
@@ -148,7 +151,7 @@ US_Properties::US_Properties(
 
    QButtonGroup* checks = new QButtonGroup();
    checks->setExclusive( false );
-   //connect( checks, SIGNAL( buttonClicked( int ) ), SLOT( checkbox( int ) ) );
+   connect( checks, SIGNAL( buttonClicked( int ) ), SLOT( checkbox( int ) ) );
 
    // Row
    QGridLayout* mw_layout = us_checkbox( tr( "Molecular Weight" ), cb_mw, true );
@@ -238,6 +241,8 @@ US_Properties::US_Properties(
 
 void US_Properties::co_sed( int new_state )
 {
+   if ( inUpdate ) return;
+
    if ( new_state == Qt::Checked )
    {
       int row = lw_components->currentRow();
@@ -264,6 +269,29 @@ void US_Properties::co_sed( int new_state )
    }
    else
       model.coSedSolute = -1;
+}
+
+void US_Properties::edit_component( QListWidgetItem* item )
+{
+   bool ok;
+   QString desc = QInputDialog::getText( this, 
+         tr( "Edit Analyte Description" ),
+         tr( "New Analyte Description:" ),
+         QLineEdit::Normal,
+         item->text(),
+         &ok );
+   
+   if ( ok && ! desc.isEmpty() )
+   {
+      int row = lw_components->currentRow();
+      lw_components->disconnect( SIGNAL( currentRowChanged( int ) ) );
+      delete item;
+      lw_components->insertItem( row, new QListWidgetItem( desc ) );
+      lw_components->setCurrentRow( row );
+
+      connect( lw_components, SIGNAL( currentRowChanged( int  ) ),
+                              SLOT  ( update           ( int  ) ) );
+   }
 }
 
 void US_Properties::load_c0( void )
@@ -356,6 +384,8 @@ void US_Properties::load_c0( void )
 
 void US_Properties::select_shape( int shape )
 {
+   if ( inUpdate ) return;
+
    switch ( shape )
    {
       case US_FemGlobal_New::PROLATE:
@@ -477,8 +507,6 @@ void US_Properties::set_molar( void )
    sc->wavelength          = le_wavelength->text().toDouble();
 
    le_molar->setText( QString::number( sc->molar_concentration, 'e', 4 ) );
-
-   
 }
 
 void US_Properties::update_lw( void )
@@ -497,46 +525,76 @@ void US_Properties::newAnalyte( void )
    int last = model.components.size() - 1;
    update_lw();
 
-   lw_components->setCurrentRow( last );
+   lw_components->setCurrentRow( last );  // Runs update() via signal
 }
 
 void US_Properties::update( int /* row */ )
 {
+qDebug() << "update";
    int index = lw_components->currentRow();
 
    if ( index < 0 ) return;
 
-   // Save current data
+   inUpdate = true;
+   US_FemGlobal_New::SimulationComponent* sc;
+
+   // Save current data   TODO
    if ( oldRow > -1 )
    {
+      sc = &model.components[ oldRow ];
    }
 
    oldRow = index;
 
    // Update to current data
-   US_FemGlobal_New::SimulationComponent sc = model.components[ index ];
+   sc = &model.components[ index ];
 
+   // Set guid
    char uuid[ 37 ];
    uuid[ 36 ] = 0;
-   uuid_unparse( sc.analyteGUID, uuid );
-   le_guid->setText( QString( uuid ) );
+   uuid_unparse( sc->analyteGUID, uuid );
+   
+   if ( uuid_is_null( sc->analyteGUID ) )
+      le_guid->clear(); 
+   else
+      le_guid->setText( QString( uuid ) );
 
-   le_mw   ->setText( QString::number( sc.mw   , 'f', 1 ) );
-   le_f_f0 ->setText( QString::number( sc.f_f0 , 'e', 3 ) );
-   le_s    ->setText( QString::number( sc.s    , 'e', 4 ) );
-   le_D    ->setText( QString::number( sc.D    , 'e', 4 ) );
-   le_f    ->setText( QString::number( sc.f    , 'e', 4 ) );
-   le_sigma->setText( QString::number( sc.sigma, 'e', 4 ) );
-   le_delta->setText( QString::number( sc.delta, 'e', 4 ) );
+   inUpdate = true;
 
-   le_wavelength->setText( QString::number( sc.wavelength, 'f', 1 ) );
-   le_extinction->setText( QString::number( sc.extinction, 'e', 4 ) );
+   // Set vbar
+   le_vbar->setText( QString::number( sc->vbar20, 'f', 4 ) );
 
+   // Set extinction and concentration   TODO
+   le_extinction ->setText( QString::number( sc->extinction,          'e', 4 ));
+   le_wavelength ->setText( QString::number( sc->wavelength,          'f', 1 ));
+   le_molar      ->setText( QString::number( sc->molar_concentration, 'e', 4 ));
+   le_analyteConc->setText( QString::number( sc->signal_concentration,'f', 1 ));
+   
+   // Set shape
+   switch ( sc->shape )
+   {
+      case US_FemGlobal_New::SPHERE : cmb_shape->setCurrentIndex( 0 ); break;
+      case US_FemGlobal_New::PROLATE: cmb_shape->setCurrentIndex( 1 ); break;
+      case US_FemGlobal_New::OBLATE : cmb_shape->setCurrentIndex( 2 ); break;
+      default:                        cmb_shape->setCurrentIndex( 3 ); break;
+   }
+
+   // Set characteristics
+   le_mw   ->setText( QString::number( sc->mw   , 'f', 1 ) );
+   le_f_f0 ->setText( QString::number( sc->f_f0 , 'e', 3 ) );
+   le_s    ->setText( QString::number( sc->s    , 'e', 4 ) );
+   le_D    ->setText( QString::number( sc->D    , 'e', 4 ) );
+   le_f    ->setText( QString::number( sc->f    , 'e', 4 ) );
+   le_sigma->setText( QString::number( sc->sigma, 'e', 4 ) );
+   le_delta->setText( QString::number( sc->delta, 'e', 4 ) );
+
+   // Set load_co indication
+   ( sc->c0.radius.size() > 0 )   ? pb_load_c0->setIcon( check )
+                                  : pb_load_c0->setIcon( QIcon() );
+   // Set co-setimenting solute
    ( index == model.coSedSolute ) ? cb_co_sed->setChecked( true  )
                                   : cb_co_sed->setChecked( false );
-
-   ( sc.c0.radius.size() > 0 ) ? pb_load_c0->setIcon( check )
-                               : pb_load_c0->setIcon( QIcon() );
+   inUpdate = false;
 }
 
 void US_Properties::simulate( void )
@@ -547,12 +605,12 @@ void US_Properties::simulate( void )
    US_Predict1* dialog = new US_Predict1( 
          working_data, investigator, analyte, true, true );
 
-   connect( dialog, SIGNAL( changed  ( US_Analyte::AnalyteData ) ), 
-                    SLOT  ( new_hydro( US_Analyte::AnalyteData ) ) );
+   connect( dialog, SIGNAL( changed  ( US_AnalyteGui::AnalyteData ) ), 
+                    SLOT  ( new_hydro( US_AnalyteGui::AnalyteData ) ) );
    dialog->exec();
 }
 
-void US_Properties::new_hydro( US_Analyte::AnalyteData ad )
+void US_Properties::new_hydro( US_AnalyteGui::AnalyteData ad )
 {
    hydro_data = working_data;
    analyte    = ad;
@@ -560,7 +618,7 @@ void US_Properties::new_hydro( US_Analyte::AnalyteData ad )
    // Set the name of the component
    if ( ! ad.description.isEmpty() )
    {
-      lw_components->disconnect();
+      lw_components->disconnect( SIGNAL( currentRowChanged( int ) ) );
       int row = lw_components->currentRow();
       delete lw_components->currentItem();
       lw_components->insertItem( row, new QListWidgetItem( ad.description ) );
@@ -667,12 +725,31 @@ void US_Properties::setInvalid( void )
 
 void US_Properties::del_component( void )
 {
-   qDebug() << "delste component";
+   int row = lw_components->currentRow();
+
+   if ( row < 0 ) return;
+
+   QListWidgetItem* item = lw_components->item( row );
+   int response = QMessageBox::question( this,
+         tr( "Delete Analyte?" ),
+         tr( "Delete the following analyte?\n" ) + item->text(),
+         QMessageBox::Yes, QMessageBox::No );
+
+   if ( response == QMessageBox::No ) return;
+
+   if ( model.coSedSolute == row ) model.coSedSolute = -1;
+
+   model.components.remove( row );
+   lw_components->setCurrentRow( -1 );
+   delete lw_components->takeItem( row );
 }
 
 void US_Properties::calculate( void )
 {
+   if ( inUpdate ) return;
+
 qDebug() << "calculate";
+
    // First do some sanity checking
    double vbar = le_vbar->text().toDouble();
    if ( vbar <= 0.0 ) return;
@@ -680,8 +757,7 @@ qDebug() << "calculate";
    // Exatly two checkboxes must be set
    if ( countChecks() != 2 ) return;
 
-   //double                t = le_temperature->text().toDouble();
-   double t = 20.0;
+   double                t = 20.0;  // Degrees C
    US_Math::SolutionData d;
 
    d.vbar      = vbar;

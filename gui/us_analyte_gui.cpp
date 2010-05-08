@@ -1,5 +1,5 @@
-//! \file us_analyte.cpp
-#include "us_analyte.h"
+//! \file us_analyte_gui.cpp
+#include "us_analyte_gui.h"
 #include "us_passwd.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
@@ -9,10 +9,10 @@
 
 #include <uuid/uuid.h>
 
-US_Analyte::US_Analyte( int             invID, 
-                        bool            signal, 
-                        const QString&  GUID,
-                        bool            access )
+US_AnalyteGui::US_AnalyteGui( int             invID, 
+                              bool            signal, 
+                              const QString&  GUID,
+                              bool            access )
    : US_WidgetsDialog( 0, 0 ), 
      personID     ( invID ), 
      signal_wanted( signal ),
@@ -431,7 +431,7 @@ US_Analyte::US_Analyte( int             invID,
       load_analyte();
 }
 
-void US_Analyte::load_analyte( void )
+void US_AnalyteGui::load_analyte( void )
 {
    // At this point we have a guid and whether to load from disk or DB
    if ( db_access ) // Load from DB
@@ -451,7 +451,7 @@ void US_Analyte::load_analyte( void )
    }
 }
 
-void US_Analyte::populate( void )
+void US_AnalyteGui::populate( void )
 {
    QFile file( filename );
 
@@ -598,7 +598,7 @@ void US_Analyte::populate( void )
    file.close();
 }
 
-void US_Analyte::set_analyte_type( int type )
+void US_AnalyteGui::set_analyte_type( int type )
 {
    switch ( type )
    {
@@ -629,7 +629,7 @@ void US_Analyte::set_analyte_type( int type )
 
    reset();
 }
-void US_Analyte::close( void )
+void US_AnalyteGui::close( void )
 {
    // Emit signal if requested
    if ( signal_wanted ) 
@@ -687,7 +687,7 @@ void US_Analyte::close( void )
    accept();
 }
 
-void US_Analyte::reset( void )
+void US_AnalyteGui::reset( void )
 {
    inReset = true;
    lw_analytes->clear();
@@ -751,7 +751,7 @@ void US_Analyte::reset( void )
    inReset = false;
 }
 
-void US_Analyte::temp_changed( const QString& text )
+void US_AnalyteGui::temp_changed( const QString& text )
 {
    double temperature = text.toDouble();
 
@@ -763,7 +763,7 @@ void US_Analyte::temp_changed( const QString& text )
    }
 }
 
-bool US_Analyte::analyte_path( QString& path )
+bool US_AnalyteGui::analyte_path( QString& path )
 {
    QDir dir;
    path = US_Settings::dataDir() + "/analytes";
@@ -783,7 +783,7 @@ bool US_Analyte::analyte_path( QString& path )
    return true;
 }
 
-void US_Analyte::read_analyte( void )
+void US_AnalyteGui::read_analyte( void )
 {
    QString path;
    if ( ! analyte_path( path ) ) return;
@@ -857,7 +857,7 @@ void US_Analyte::read_analyte( void )
    }
 }
 
-void US_Analyte::parse_dna( void )
+void US_AnalyteGui::parse_dna( void )
 {
    A = sequence.count( "a" );
    C = sequence.count( "c" );
@@ -866,7 +866,7 @@ void US_Analyte::parse_dna( void )
    U = sequence.count( "u" );
 }
 
-void US_Analyte::manage_sequence( void )
+void US_AnalyteGui::manage_sequence( void )
 {
 
    US_SequenceEditor* edit = new US_SequenceEditor( sequence );
@@ -875,7 +875,7 @@ void US_Analyte::manage_sequence( void )
    edit->exec();
 }
 
-void US_Analyte::update_sequence( QString seq )
+void US_AnalyteGui::update_sequence( QString seq )
 {
    seq = seq.toLower().remove( QRegExp( "\\s" ) );
    QString check = seq;
@@ -937,33 +937,33 @@ void US_Analyte::update_sequence( QString seq )
    pb_more   ->setEnabled( true );
 }
 
-void US_Analyte::update_stranded( bool checked )
+void US_AnalyteGui::update_stranded( bool checked )
 {
    if ( inReset ) return;
    if ( checked ) cb_mw_only->setChecked( false );
    update_nucleotide();
 }
 
-void US_Analyte::update_mw_only( bool checked )
+void US_AnalyteGui::update_mw_only( bool checked )
 {
    if ( inReset ) return;
    if ( checked ) cb_stranded->setChecked( false );
    update_nucleotide();
 }
 
-void US_Analyte::update_nucleotide( bool /* value */ )
+void US_AnalyteGui::update_nucleotide( bool /* value */ )
 {
    if ( inReset ) return;
    update_nucleotide();
 }
 
-void US_Analyte::update_nucleotide( double /* value */ )
+void US_AnalyteGui::update_nucleotide( double /* value */ )
 {
    if ( inReset ) return;
    update_nucleotide();
 }
 
-void US_Analyte::update_nucleotide( void )
+void US_AnalyteGui::update_nucleotide( void )
 {
    bool isDNA          = rb_dna       ->isChecked();
    bool doubleStranded = cb_stranded  ->isChecked();
@@ -1102,7 +1102,7 @@ void US_Analyte::update_nucleotide( void )
    }
 }
 
-QString US_Analyte::get_filename( const QString& path, const QString& guid )
+QString US_AnalyteGui::get_filename( const QString& path, const QString& guid )
 {
    QDir f( path );
    QStringList filter( "A???????.xml" );
@@ -1144,7 +1144,7 @@ QString US_Analyte::get_filename( const QString& path, const QString& guid )
    return path + "/A" + QString().sprintf( "%07i", number + 1 ) + ".xml";
 }
 
-QString US_Analyte::new_guid( void )
+QString US_AnalyteGui::new_guid( void )
 {
    uchar c[ 16 ];  // Binary
    char  u[ 37 ];  // String
@@ -1153,7 +1153,7 @@ QString US_Analyte::new_guid( void )
    return QString( u );
 }
 
-void US_Analyte::save_analyte( void )
+void US_AnalyteGui::save_analyte( void )
 {
    if ( ! data_ok() ) return;
 
@@ -1316,7 +1316,7 @@ void US_Analyte::save_analyte( void )
          tr( "Analyte " ) + s );
 }
 
-void US_Analyte::more_info( void )
+void US_AnalyteGui::more_info( void )
 {
    US_Math::Peptide p;
    double temperature =  le_protein_temp->text().toDouble();
@@ -1404,7 +1404,7 @@ void US_Analyte::more_info( void )
    edit->show();
 }
 
-void US_Analyte::search( const QString& text )
+void US_AnalyteGui::search( const QString& text )
 {
    lw_analytes->clear();
    info.clear();
@@ -1426,7 +1426,7 @@ void US_Analyte::search( const QString& text )
    }
 }
 
-void US_Analyte::sel_investigator( void )
+void US_AnalyteGui::sel_investigator( void )
 {
    reset();
    
@@ -1439,7 +1439,7 @@ void US_Analyte::sel_investigator( void )
    inv_dialog->exec();
 }
 
-void US_Analyte::assign_investigator( int invID,
+void US_AnalyteGui::assign_investigator( int invID,
       const QString& lname, const QString& fname)
 {
    le_investigator->setText( "InvID (" + QString::number( invID ) + "): " +
@@ -1449,7 +1449,7 @@ void US_Analyte::assign_investigator( int invID,
    if ( personID > 0 ) read_db();
 }
 
-void US_Analyte::spectrum( void )
+void US_AnalyteGui::spectrum( void )
 {
    QString   spectrum_type = cmb_optics->currentText();
    US_Table* dialog;
@@ -1467,13 +1467,13 @@ void US_Analyte::spectrum( void )
    dialog->exec();
 }
 
-void US_Analyte::connect_error( const QString& error )
+void US_AnalyteGui::connect_error( const QString& error )
 {
    QMessageBox::warning( this, tr( "Connection Problem" ),
       tr( "Could not connect to databasee\n" ) + error );
 }
 
-void US_Analyte::read_db( void )
+void US_AnalyteGui::read_db( void )
 {
    if ( rb_disk->isChecked() )
    {
@@ -1559,7 +1559,7 @@ void US_Analyte::read_db( void )
       le_search->setReadOnly( false );
 }
 
-bool US_Analyte::database_ok( US_DB2& db )
+bool US_AnalyteGui::database_ok( US_DB2& db )
 {
    if ( db.lastErrno() == 0 ) return true;
 
@@ -1570,7 +1570,7 @@ bool US_Analyte::database_ok( US_DB2& db )
    return false; 
 }
 
-bool US_Analyte::data_ok( void )
+bool US_AnalyteGui::data_ok( void )
 {
    // Check to see if a sequence is entered
    if ( sequence.isEmpty() )
@@ -1603,7 +1603,7 @@ bool US_Analyte::data_ok( void )
    return true;
 }
 
-void US_Analyte:: status_query( const QStringList& q )
+void US_AnalyteGui::status_query( const QStringList& q )
 {
    US_Passwd pw;
    US_DB2    db( pw.getPasswd() );
@@ -1626,7 +1626,7 @@ void US_Analyte:: status_query( const QStringList& q )
    }
 }
 
-void US_Analyte::select_analyte( QListWidgetItem* item )
+void US_AnalyteGui::select_analyte( QListWidgetItem* item )
 {
    if ( ! db_access )  // Read from disk
    {
@@ -1760,7 +1760,7 @@ void US_Analyte::select_analyte( QListWidgetItem* item )
    pb_more     ->setEnabled( true );
 }
 
-void US_Analyte::save_db( void )
+void US_AnalyteGui::save_db( void )
 {
    if ( rb_disk->isChecked() )
    {
@@ -1819,7 +1819,7 @@ void US_Analyte::save_db( void )
    read_db();
 }
 
-void US_Analyte::set_spectrum( US_DB2& db )
+void US_AnalyteGui::set_spectrum( US_DB2& db )
 {
    QStringList q;
 
@@ -1880,7 +1880,7 @@ void US_Analyte::set_spectrum( US_DB2& db )
    }
 }
 
-void US_Analyte::update_db( void )
+void US_AnalyteGui::update_db( void )
 {
    if ( ! data_ok() ) return;
    if ( ! db_access ) 
@@ -1933,7 +1933,7 @@ void US_Analyte::update_db( void )
       tr( "The analyte has been updated in the database." ) );
 }
 
-void US_Analyte::delete_db( void )
+void US_AnalyteGui::delete_db( void )
 {
    if ( rb_disk->isChecked() )
    {

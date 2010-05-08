@@ -6,7 +6,6 @@
 #include "us_editor.h"
 #include "us_math.h"
 #include "us_run_details.h"
-#include "us_analyte.h"
 #include "us_buffer_gui.h"
 #include "qwt_plot_marker.h"
 

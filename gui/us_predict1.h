@@ -9,7 +9,7 @@
 #include "us_math.h"
 #include "us_help.h"
 #include "us_buffer.h"
-#include "us_analyte.h"
+#include "us_analyte_gui.h"
 
 
 //! A class to present a graph of frictional ratio as a function of
@@ -18,9 +18,9 @@
 
 class US_EXTERN US_Predict1 : public US_WidgetsDialog
 {
-	Q_OBJECT
+   Q_OBJECT
 
-	public:
+   public:
       //!  A class to describe the characteristics of a molecule
       //!  assuming a particular shape
       class Hydrocomp
@@ -62,9 +62,9 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       //! \param disk_access - A value to pass to \ref US_Analyte to initial
       //!                      use disk or DB access
       //! \param signal_wanted - A value to indicate if signals are wanted.
-		US_Predict1( Hydrosim&, 
+      US_Predict1( Hydrosim&, 
                    int = -1, 
-                   US_Analyte::AnalyteData = US_Analyte::AnalyteData(),
+                   US_AnalyteGui::AnalyteData = US_AnalyteGui::AnalyteData(),
                    bool = true,
                    bool = false );
 
@@ -73,7 +73,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       //! \brief Return a data set of current analyte values.  This
       //!        also indicates that the class is done and the Hydrosim
       //!        reference has been updated.
-      void changed( US_Analyte::AnalyteData );
+      void changed( US_AnalyteGui::AnalyteData );
 
       //! \brief A signal to indicate that calculations have been updated.
       void changed( void );
@@ -84,17 +84,17 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
    private:
       Hydrosim&               allparams;
       int                     investigator;
-      US_Analyte::AnalyteData base_analyte;
+      US_AnalyteGui::AnalyteData base_analyte;
       bool                    access;
       bool                    signal;
 
       US_Math::SolutionData   solution;
-      
+
       US_Buffer               buffer;
-      US_Analyte::AnalyteData analyte;
+      US_AnalyteGui::AnalyteData analyte;
 
       static const int ARRAYSIZE = 999;
-      
+
       double         oblate [ ARRAYSIZE ];
       double         rod    [ ARRAYSIZE ];
       double         prolate[ ARRAYSIZE ];
@@ -118,7 +118,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       QLabel*        lb_prolate[ 8 ];
       QLabel*        lb_oblate [ 8 ];
       QLabel*        lb_rod    [ 8 ];
-                     
+
       US_Plot*       plotLayout;
       QwtPlot*       plot;
       QwtPlotPicker* pick;
@@ -146,7 +146,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       void complete     ( void                    );
 
       void update_buffer( const US_Buffer               );
-      void update_vbar  ( const US_Analyte::AnalyteData );
+      void update_vbar  ( const US_AnalyteGui::AnalyteData );
 
       void help         ( void )
       { showHelp.show_help( "manual/predict1.html" ); };

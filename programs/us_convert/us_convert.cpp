@@ -8,7 +8,7 @@
 #include "us_plot.h"
 #include "us_math.h"
 #include "us_buffer_gui.h"
-#include "us_analyte.h"
+#include "us_analyte_gui.h"
 #include "us_convert.h"
 #include "us_db2.h"
 #include "us_passwd.h"
@@ -1228,7 +1228,7 @@ void US_Convert::assignBuffer( const QString& bufferID )
 
 void US_Convert::selectAnalyte( void )
 {
-   US_Analyte* analyte_dialog = new US_Analyte( ExpData.invID, true );         // Ask for a signal
+   US_AnalyteGui* analyte_dialog = new US_AnalyteGui( ExpData.invID, true ); 
 
    connect( analyte_dialog, SIGNAL( valueAnalyteID ( const QString& ) ),
             this,           SLOT  ( assignAnalyte  ( const QString& ) ) );

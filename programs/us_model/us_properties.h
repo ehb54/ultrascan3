@@ -9,7 +9,7 @@
 #include "us_femglobal_new.h"
 //#include "us_help.h"
 #include "us_predict1.h"
-#include "us_analyte.h"
+#include "us_analyte_gui.h"
 #include "us_buffer.h"
 #include "us_model_editor_new2.h"
 
@@ -25,7 +25,7 @@ class US_Properties : public US_WidgetsDialog
       //! \param mod - The model to use
       //! \param optical_sys - The current optical system type
       //! \param invID - The investigator ID in the database (-1 if not defined)
-      //! \param access - A flag to bass on if analyte data access should be
+      //! \param access - A flag to determine if analyte data access should be
       //!          disk (false) or DB (true)
       US_Properties( const US_Buffer&, 
                      const US_FemGlobal_New::ModelSystem&,
@@ -43,8 +43,9 @@ class US_Properties : public US_WidgetsDialog
       int                           investigator;
       bool                          db_access;
 
+      bool                          inUpdate;
       int                           oldRow;
-      US_Analyte::AnalyteData       analyte;
+      US_AnalyteGui::AnalyteData       analyte;
 
       enum { MW, S, D, F, F_F0 } check_type;
 
@@ -85,25 +86,27 @@ class US_Properties : public US_WidgetsDialog
       QCheckBox*   cb_co_sed;
 
 
-      void setInvalid  ( void );
-      int  countChecks ( void );
-      void update_lw   ( void );
-      void enable      ( QLineEdit*, bool, const QPalette& );
+      void setInvalid    ( void );
+      int  countChecks   ( void );
+      void update_lw     ( void );
+      void enable        ( QLineEdit*, bool, const QPalette& );
 
 	private slots:
-      void newAnalyte  ( void );
-      void update      ( int );
-      void calculate   ( void );
-      void checkbox    ( int = 0 );
-      void acceptProp  ( void );
-      void simulate    ( void );
-      void new_hydro   ( US_Analyte::AnalyteData );
-      void lambda_up   ( void );
-      void lambda_down ( void );
-      void select_shape( int );
-      void load_c0     ( void );
-      void co_sed      ( int );
-      void set_molar   ( void );
-      void del_component( void );
+      void newAnalyte    ( void );
+      void update        ( int );
+      void calculate     ( void );
+      void checkbox      ( int = 0 );
+      void acceptProp    ( void );
+      void simulate      ( void );
+      void new_hydro     ( US_AnalyteGui::AnalyteData );
+      void lambda_up     ( void );
+      void lambda_down   ( void );
+      void select_shape  ( int );
+      void load_c0       ( void );
+      void co_sed        ( int );
+      void set_molar     ( void );
+
+      void del_component ( void );
+      void edit_component( QListWidgetItem* );
 };
 #endif

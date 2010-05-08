@@ -8,7 +8,7 @@
 #include "us_femglobal_new.h"
 #include "us_help.h"
 #include "us_predict1.h"
-#include "us_analyte.h"
+#include "us_analyte_gui.h"
 #include "us_buffer.h"
 
 //! \brief A window to edit a model for simulation
@@ -119,7 +119,7 @@ class US_ModelEditor : public US_Widgets
       
 		void manage_components ( void );
 		void get_vbar          ( void );
-      void update_analyte    ( struct US_Analyte::AnalyteData );
+      void update_analyte    ( struct US_AnalyteGui::AnalyteData );
       void change_optics     ( int  );
 		void delete_component  ( void );
       void change_component  ( int  );

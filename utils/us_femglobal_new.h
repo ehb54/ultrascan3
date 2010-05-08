@@ -88,7 +88,7 @@ class US_EXTERN US_FemGlobal_New
       ShapeType   shape;
       QString     name;
       int         analyte_type;
-      MfemInitial c0;      // The radius/concentration points for a user-defined 
+      MfemInitial c0;      // The radius/concentration points for a user-defined
                            // initial concentration grid
    };
 
@@ -116,7 +116,10 @@ class US_EXTERN US_FemGlobal_New
       double                         temperature;
       OpticsType                     optics;
       QString                        description;
-      int                            coSedSolute;  //!< An index of components (-1 means none)
+
+      //! An index of components (-1 means none)$
+      int                            coSedSolute;
+
       QVector< SimulationComponent > components;
       QVector< Association >         associations;
    };
