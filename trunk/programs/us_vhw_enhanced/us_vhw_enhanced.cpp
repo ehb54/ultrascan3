@@ -154,6 +154,7 @@ void US_vHW_Enhanced::load( void )
 
    files       = wdir.entryList( QStringList() << "*.*.*.*.*.*.xml",
          QDir::Files | QDir::Readable, QDir::Name );
+   files    = last_edit_files( files );
 
    for ( int ii = 0; ii < files.size(); ii++ )
    {  // load all data in directory; get triples
@@ -803,12 +804,7 @@ qDebug() << "save_data";
 void US_vHW_Enhanced::view_report( void )
 {
 qDebug() << "view_report";
-   US_WidgetsDialog* rdiag = new US_WidgetsDialog( (QWidget*)this, 0 );
-   QBoxLayout*       main  = new QVBoxLayout( rdiag );
-   QTextEdit*        tedit = new QTextEdit();
-   QPushButton*      okbtn = new QPushButton( tr( "OK" ) );
    QString           mtext;
-   QString           rline;
 
    // generate the report file
    write_res();
@@ -818,46 +814,29 @@ qDebug() << "view_report";
       + ".vhw_res." + d->cell + d->wavelength;
    QFile res_f( filename );
 
-   if ( !res_f.open( QIODevice::ReadOnly | QIODevice::Text ) )
-   {
-      return;
+   if ( res_f.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   { // build up text with the report contents
+      QTextStream ts( &res_f );
+      while ( !ts.atEnd() )
+         mtext.append( ts.readLine() + "\n" );
+      res_f.close();
    }
 
-   // fill the text dialog with the report contents
-   QTextStream ts( &res_f );
-
-   while ( !ts.atEnd() )
+   else
    {
-      mtext.append( ts.readLine() + "\n" );
+      mtext.append( "*ERROR* Unable to open file " + filename );
    }
-
-   res_f.close();
-
-   tedit->setText( mtext );
-   main->addWidget( tedit );
-   main->addWidget( okbtn );
-   connect( okbtn, SIGNAL( clicked() ),
-            rdiag, SLOT( close() ) );
 
    // display the report dialog
 
-   //rdiag->setFont( QFont( "Courier New", -1, QFont::DemiBold ) );
-   //rdiag->setFont( QFont( "DejaVu Sans Mono" ) );
-   //rdiag->setFont( QFont( "FreeMono", -1, QFont::DemiBold ) );
-   //rdiag->setFont( QFont( "Liberation Mono", -1, QFont::DemiBold ) );
-   //rdiag->setFont( QFont( "Liberation Mono" ) );
-   //rdiag->setFont( QFont( "Andale Mono" ) );
-   //rdiag->setFont( QFont( "Courier 10 Pitch" ) );
-   rdiag->setFont( fixed_font() );
-   rdiag->setWindowTitle( "View vHW Report" );
-   rdiag->setMinimumWidth( 400 );
-   rdiag->resize( 600, 600 );
-   rdiag->exec();
-qDebug() << "SPECIFIED rdiag font" << rdiag->font().toString();
-qDebug() << "ACTUAL rdiag font" << QFontInfo(rdiag->font()).family();
-qDebug() << " CALC rdiag font" << fixed_font().toString();
-   qApp->processEvents();
-   delete rdiag;
+   US_Editor* edit = new US_Editor( US_Editor::LOAD, true );
+   QPoint position = this->pos();
+   edit->setWindowTitle( "Results:  van Holde - Weischet Analysis" );
+   edit->move( position + QPoint( 100, 100 ) );
+   edit->resize( 600, 500 );
+   edit->e->setFont( fixed_font() );
+   edit->e->setText( mtext );
+   edit->show();
 }
 
 // alternate between selecting set-up and clearing vH-W groups
@@ -1558,8 +1537,9 @@ qDebug() << "WR: filename " << filename;
    ts << tr( "*    Enhanced van Holde - Weischet Analysis         *\n" );
    ts <<     "*****************************************************\n\n\n";
    ts << tr( "Data Report for Run \"" ) << d->runID
-      << tr( "\", Cell " ) << d->cell
-      << tr( ", Wavelength " ) << d->wavelength << "\n\n";
+      << tr( "\",\n Cell " ) << d->cell << ", Channel " << d->channel
+      << tr( ", Wavelength " ) << d->wavelength
+      << tr( ", Edited Dataset " ) << editID << "\n\n";
 
    ts << tr( "Detailed Run Information:\n\n" );
    ts << tr( "Cell Description:       " ) << d->description << "\n";
@@ -1863,8 +1843,9 @@ QString US_vHW_Enhanced::text_time( double seconds )
 QFont US_vHW_Enhanced::fixed_font()
 {
    //QFontDataBase database;
-   QFont         ffont( "Courier New" );
-   QFont         tfont( "Courier New" );
+   int           fsize  =  US_GuiSettings::fontSize();
+   QFont         ffont( "monospace", fsize );
+   QFont         tfont( "monospace", fsize );
    QFontInfo     finfo( tfont );
    QString       family;
    bool          fmatch;
@@ -1899,11 +1880,58 @@ qDebug() << family << " MATCH" << fmatch << " FIXED" << ffixed;
 
          if ( family.contains( "New" )  ||
               family.contains( "FreeM" ) )
-            ffont    = QFont( family, -1, QFont::DemiBold );
+            ffont    = QFont( family, fsize, QFont::DemiBold );
 
          break;
       }
    }
    return ffont;
+}
+
+
+// pare down files list by including only the last-edit versions
+QStringList US_vHW_Enhanced::last_edit_files( QStringList files )
+{
+   QStringList ofiles;
+   QStringList part;
+   QString     file;
+   QString     test;
+   QString     pfile;
+   QString     ptest;
+   int         nfi   = files.size();
+
+   // if only one in list, we need do no more
+   if ( nfi < 2 )
+   {
+      return files;
+   }
+
+   // make sure files list is in ascending alphabetical order
+   files.sort();
+
+   // get first file name and its non-editID parts
+   file    = files[ 0 ];
+   part    = file.split( "." );
+   test    = part[ 0 ] + part[ 3 ] + part[ 4 ] + part[ 5 ];
+
+   // skip all but last of any duplicates (differ only in editID)
+   for ( int ii = 1; ii < nfi; ii++ )
+   {
+      pfile   = file;
+      ptest   = test;
+      file    = files[ ii ];
+      part    = file.split( "." );
+      test    = part[ 0 ] + part[ 3 ] + part[ 4 ] + part[ 5 ];
+
+      if ( QString::compare( test, ptest ) != 0 )
+      {  // differs by more than just edit, so output previous
+         ofiles.append( pfile );
+      }
+   }
+
+   // output the final
+   ofiles.append( file );
+
+   return ofiles;
 }
 
