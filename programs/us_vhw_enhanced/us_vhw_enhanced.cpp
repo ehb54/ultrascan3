@@ -224,6 +224,10 @@ void US_vHW_Enhanced::load( void )
    pb_save   ->setEnabled( true );
    pb_view   ->setEnabled( true );
    pb_exclude->setEnabled( true );
+   connect( pb_save,    SIGNAL( clicked() ),
+            this,       SLOT(   save_data() ) );
+   connect( pb_view,    SIGNAL( clicked() ),
+            this,       SLOT(   view_report() ) );
 
    data_plot1->setCanvasBackground( Qt::black );
    data_plot2->setCanvasBackground( Qt::black );
@@ -558,6 +562,9 @@ qDebug() << "   +++ avgdif < avdthr (" << avgdif << avdthr << ") +++";
       iter++;
    }
 
+   for ( int ii = 0; ii < totalCount; ii++ )
+      pty[ ii ]   = -1.0;
+
    int     kk     = nexclude * divsCount; // index to sed. coeff. values
    int     kl     = 0;                    // index/count of live scans
 
@@ -622,7 +629,7 @@ qDebug() << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
    data_plot1->clear();
    us_grid( data_plot1 );
 
-   data_plot1->setTitle( tr( "Run " ) + d->runID + tr( ": Cell " ) + d->cell
+   data_plot1->setTitle( tr( "Run " ) + runID + tr( ": Cell " ) + d->cell
              + " (" + d->wavelength + tr( " nm) - vHW Extrapolation Plot" ) );
 
    data_plot1->setAxisTitle( QwtPlot::xBottom, tr( "(Time)^-0.5" ) );
@@ -767,6 +774,14 @@ qDebug() << " DP: xrN yrN " << x[count-1] << y[count-1];
 
    data_plot1->replot();
 
+   // save all sedcoeff values for report files
+   aseds.clear();
+
+   for ( int ii = 0; ii < totalCount; ii++ )
+   {
+      aseds.append( pty[ ii ] );
+   }
+
    delete [] x;                             // clean up
    delete [] y;
    delete [] ptx;
@@ -776,38 +791,76 @@ qDebug() << " DP: xrN yrN " << x[count-1] << y[count-1];
 // save the enhanced data
 void US_vHW_Enhanced::save_data( void )
 { 
-   QString filter = tr( "vHW data files (*.vHW.dat);;" )
-      + tr( "Any files (*)" );
-   QString fsufx = "." + cell + wavelength + ".vHW.dat";
-   QString fname = run_name + fsufx;
-   fname         = QFileDialog::getSaveFileName( this,
-      tr( "Save vHW Data File" ),
-      US_Settings::resultDir() + "/" + fname,
-      filter,
-      0, 0 );
+qDebug() << "save_data";
+
+   write_vhw();
+   write_dis();
+   write_res();
 
 }
 
-void US_vHW_Enhanced::print_data(  void ) {}
-void US_vHW_Enhanced::view_report( void ) {}
-void US_vHW_Enhanced::show_densi(  void ) {}
-void US_vHW_Enhanced::show_visco(  void ) {}
-
-void US_vHW_Enhanced::show_vbar(   void )
+// generate result report, pop up dialog and display the report
+void US_vHW_Enhanced::view_report( void )
 {
-   //this->get_vbar();
+qDebug() << "view_report";
+   US_WidgetsDialog* rdiag = new US_WidgetsDialog( (QWidget*)this, 0 );
+   QBoxLayout*       main  = new QVBoxLayout( rdiag );
+   QTextEdit*        tedit = new QTextEdit();
+   QPushButton*      okbtn = new QPushButton( tr( "OK" ) );
+   QString           mtext;
+   QString           rline;
+
+   // generate the report file
+   write_res();
+
+   // open it
+   QString filename = US_Settings::resultDir() + "/" + d->runID
+      + ".vhw_res." + d->cell + d->wavelength;
+   QFile res_f( filename );
+
+   if ( !res_f.open( QIODevice::ReadOnly | QIODevice::Text ) )
+   {
+      return;
+   }
+
+   // fill the text dialog with the report contents
+   QTextStream ts( &res_f );
+
+   while ( !ts.atEnd() )
+   {
+      mtext.append( ts.readLine() + "\n" );
+   }
+
+   res_f.close();
+
+   tedit->setText( mtext );
+   main->addWidget( tedit );
+   main->addWidget( okbtn );
+   connect( okbtn, SIGNAL( clicked() ),
+            rdiag, SLOT( close() ) );
+
+   // display the report dialog
+
+   //rdiag->setFont( QFont( "Courier New", -1, QFont::DemiBold ) );
+   //rdiag->setFont( QFont( "DejaVu Sans Mono" ) );
+   //rdiag->setFont( QFont( "FreeMono", -1, QFont::DemiBold ) );
+   //rdiag->setFont( QFont( "Liberation Mono", -1, QFont::DemiBold ) );
+   //rdiag->setFont( QFont( "Liberation Mono" ) );
+   //rdiag->setFont( QFont( "Andale Mono" ) );
+   //rdiag->setFont( QFont( "Courier 10 Pitch" ) );
+   rdiag->setFont( fixed_font() );
+   rdiag->setWindowTitle( "View vHW Report" );
+   rdiag->setMinimumWidth( 400 );
+   rdiag->resize( 600, 600 );
+   rdiag->exec();
+qDebug() << "SPECIFIED rdiag font" << rdiag->font().toString();
+qDebug() << "ACTUAL rdiag font" << QFontInfo(rdiag->font()).family();
+qDebug() << " CALC rdiag font" << fixed_font().toString();
+   qApp->processEvents();
+   delete rdiag;
 }
 
-// reset the GUI
-void US_vHW_Enhanced::reset_data( void )
-{
-   update( lw_triples->currentRow() );
-#if 0
-   data_plot1->detachItems( );
-   data_plot1->replot();
-#endif
-}
-
+// alternate between selecting set-up and clearing vH-W groups
 void US_vHW_Enhanced::sel_groups(  void )
 {
    if ( groupSel )
@@ -1268,11 +1321,17 @@ qDebug() << " div kscnu" << jj+1 << kscnu
       {
          dsed       = yy[ 0 ];
          slope      = 0.0;
+         sigma      = 0.0;
+         corre      = 0.0;
+         slope      = 0.0;
       }
 
       dseds.append( dsed );
 
       dslos.append( slope );
+      dsigs.append( sigma );
+      dcors.append( corre );
+      dpnts.append( kscnu );
 //if((jj&7)==0||jj==(divsCount-1))
 // qDebug() << "     div dsed dcon " << jj+1 << dsed << dcon;
 
@@ -1372,6 +1431,7 @@ qDebug() << "  bdiffc" << bdcoef << " = RT/(D1*sqrt(D2/D3))";
    return bdcoef;
 }
 
+// handle mouse clicks for selecting vH-W groups
 void US_vHW_Enhanced::groupClick( const QwtDoublePoint& p )
 {
    QwtPlotMarker* marker;
@@ -1427,17 +1487,18 @@ qDebug() << "groupClick: step" << groupstep
 qDebug() << "groupClick:  nxy val" << groupxy.size();
 }
 
+// add to selected group information
 void US_vHW_Enhanced::add_group_info( )
 {
    int     ngroup  = groupxy.size() / 4;
    int     jg      = ( ngroup - 1 ) * 4;
    GrpInfo grdat;
 
-   grdat.x1        = groupxy.at( jg     );
+   grdat.x1        = groupxy.at( jg     ); // save pick coordinates
    grdat.y1        = groupxy.at( jg + 1 );
    grdat.x2        = groupxy.at( jg + 2 );
    grdat.y2        = groupxy.at( jg + 3 );
-   grdat.sed       = 0.0;
+   grdat.sed       = 0.0;                  // initialize other variables
    grdat.percent   = 0.0;
    grdat.ndivs     = 0;
    grdat.idivs.clear();
@@ -1453,15 +1514,396 @@ void US_vHW_Enhanced::add_group_info( )
 
       if ( yh <= grdat.y1  &&  yl >= grdat.y2 )
       {  // line is in group:  add division to group
-         grdat.idivs.append( jj );
-         grdat.sed      += sed;
-         grdat.ndivs++;
+         grdat.idivs.append( jj );  // add to div index list
+         grdat.sed      += sed;     // accumulate sedcoeff sum for average
+         grdat.ndivs++;             // bump included divs count
       }
    }
+
+   // finish average-sed-coeff and percent calculations; add to groups list
    grdat.sed      /= (double)grdat.ndivs;
    grdat.percent   = ( (double)grdat.ndivs / (double)divsCount ) * 100.0;
 
    groupdat.append( grdat );
 }
 
+// write a file of vHW results
+void US_vHW_Enhanced::write_res()
+{
+   QString filename = US_Settings::resultDir() + "/" + d->runID
+      + ".vhw_res." + d->cell + d->wavelength;
+   QFile res_f( filename );
+
+   if ( !res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      return;
+   }
+qDebug() << "WR: filename " << filename;
+
+   s            = &d->scanData[ 0 ];
+   valueCount   = s->readings.size();
+   QString t20d = QString( "20" ) + QChar( 176 ) + "C";
+
+   US_Math::SolutionData sd;
+   sd.vbar      = vbar;
+   sd.vbar20    = vbar;
+   sd.density   = density;
+   sd.viscosity = viscosity;
+
+   US_Math::data_correction( tempera, sd );
+
+   QTextStream ts( &res_f );
+
+   ts <<     "*****************************************************\n";
+   ts << tr( "*    Enhanced van Holde - Weischet Analysis         *\n" );
+   ts <<     "*****************************************************\n\n\n";
+   ts << tr( "Data Report for Run \"" ) << d->runID
+      << tr( "\", Cell " ) << d->cell
+      << tr( ", Wavelength " ) << d->wavelength << "\n\n";
+
+   ts << tr( "Detailed Run Information:\n\n" );
+   ts << tr( "Cell Description:       " ) << d->description << "\n";
+   ts << tr( "Data Directory:         " ) << workingDir << "\n";
+   ts << tr( "Rotor Speed:            " ) << d->scanData[ 0 ].rpm << " rpm\n";
+   ts << tr( "Average Temperature:    " ) << le_temp->text() << "\n";
+   ts << tr( "Temperature Variation:  Within Tolerance\n" );
+   ts << tr( "Time Correction:        " )
+      << text_time( time_correction, 1 ) << "\n";
+   ts << tr( "Run Duration:           " )
+      << text_time( d->scanData[ scanCount - 1 ].seconds, 2 ) << "\n";
+   ts << tr( "Wavelength:             " ) << d->wavelength << " nm\n";
+   ts << tr( "Baseline Absorbance:    " ) << baseline << " OD\n";
+   ts << tr( "Meniscus Position:      " ) << d->meniscus << " cm\n";
+   ts << tr( "Edited Data starts at:  " )
+      << s->readings[ 0 ].d.radius << " cm\n";
+   ts << tr( "Edited Data stops at:   " )
+      << s->readings[ valueCount - 1 ].d.radius << " cm\n\n\n";
+
+   ts << tr( "Hydrodynamic Settings:\n\n" );
+   ts << tr( "Viscosity correction:   " ) << sd.viscosity << "\n";
+   ts << tr( "Viscosity (absolute):   " ) << sd.viscosity_tb << "\n";
+   ts << tr( "Density correction:     " ) << sd.density << " g/ccm\n";
+   ts << tr( "Density (absolute):     " ) << sd.density_tb << " g/ccm\n";
+   ts << tr( "Vbar:                   " ) << sd.vbar << " ccm/g\n";
+   ts << tr( "Vbar corrected for " ) << t20d << ":"
+      << sd.vbar20 << " ccm/g\n";
+   ts << tr( "Buoyancy (Water, " ) << t20d << "): " << sd.buoyancyw << "\n";
+   ts << tr( "Buoyancy (absolute):    " ) << sd.buoyancyb << "\n";
+   ts << tr( "Correction Factor:      " ) << correc*1.0e-13 << "\n\n\n";
+
+   ts << tr( "Data Analysis Settings:\n\n" );
+   ts << tr( "Divisions:              " ) << divsCount << "\n";
+   ts << tr( "Smoothing Frame:        " )
+      << QString::number( (int)ct_smoothing->value() ) << "\n";
+   ts << tr( "Analyzed Boundary:      " )
+      << QString::number( (int)ct_boundaryPercent->value() ) << " %\n";
+   ts << tr( "Boundary Position:      " )
+      << QString::number( (int)ct_boundaryPos->value() ) << " %\n";
+
+   ts << tr( "Selected Groups:\n\n" );
+   int ngrp = groupdat.size();
+
+   if ( ngrp == 0 )
+   {
+      ts << tr( "No groups were selected...\n\n\n" );
+   }
+
+   else
+   {
+      QString gline;
+      ts << tr( "Group: Average S: Relative Amount:\n\n" );
+
+      for ( int jj = 0; jj < ngrp; jj++ )
+      {
+         gline.sprintf( "%3d:    %6.2fs      (%5.2f",
+            jj + 1, groupdat.at( jj ).sed, groupdat.at( jj ).percent );
+         gline.append( " %)\n" );
+         ts << gline;
+      }
+      ts << "\n\n";
+
+      write_model();
+   }
+
+   ts << tr( "Average S:              " ) << Swavg*1.0e13 << "\n";
+   ts << tr( "Initial concentration from plateau fit: " )
+      << C0 << " OD/fringes\n\n\n";
+
+   double  sl;
+   double  ci;
+   double  sig;
+   double  cor;
+   double* x  = new double[ scanCount ];
+   double* y  = new double[ scanCount ];
+   QString tscn;
+   QString tpla;
+
+   ts << tr( "Scan Information:\n\n" );
+   ts << tr( "Scan:     Corrected Time:  Plateau Concentration:\n\n" );
+
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {  // accumulate time,plateau pairs for line fit
+      s            = &d->scanData[ ii ];
+      tscn.sprintf( "%3d:", ii + 1 );
+      tpla.sprintf( "%9.6f OD:", s->plateau );
+      ts << tscn << "     " << text_time( s->seconds - time_correction )
+         << "      " << tpla << "\n";
+      x[ ii ]      = s->seconds;
+      y[ ii ]      = s->plateau;
+   }
+
+   US_Math::linefit( &x, &y, &sl, &ci, &sig, &cor, scanCount );
+
+   ts << "\n";
+   ts << tr( "Initial Concentration:   " ) << ci << " OD\n";
+   ts << tr( "Correlation Coefficient: " ) << cor << "\n";
+   ts << tr( "Standard Deviation:      " ) << sig << "\n\n\n";
+   ts << tr( "Initial Concentration from exponential fit: " ) << C0 << " OD\n";
+
+   delete [] x;                             // clean up
+   delete [] y;
+
+   res_f.close();
+}
+
+// write a file of vHW extrapolation data
+void US_vHW_Enhanced::write_vhw()
+{
+   QString filename = US_Settings::resultDir() + "/" + d->runID
+      + ".vhw_ext." + d->cell + d->wavelength;
+
+   QFile   res_f( filename );
+   double  sedc;
+   int     lastDiv   = divsCount - 1;
+   int     kk        = 0;
+   QString control   = "\t";
+
+   if ( !res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      return;
+   }
+qDebug() << "WV: filename " << filename;
+
+   QTextStream ts( &res_f );
+
+   for ( int ii = 0; ii < scanCount; ii++ )
+   {
+      // each output line begins with reciprocal square root of scan time
+      control      = "\t";
+      ts << 1.0 / sqrt( d->scanData[ ii ].seconds - time_correction )
+         << control;
+
+      // balance of line is a list of sedimentation coefficient values for
+      //  the divisions in the scan 
+      for ( int jj = 0; jj < divsCount; jj++ )
+      {
+         sedc         = aseds.at( kk++ );
+
+         if ( jj == lastDiv )
+            control      = "\n";
+
+         if ( sedc > 0.0 )
+            ts << sedc << control;
+         else
+            ts << "      " << control;
+      }
+   }
+
+   res_f.close();
+}
+
+// write a file of vHW division distribution values
+void US_vHW_Enhanced::write_dis()
+{
+   QString filename = US_Settings::resultDir() + "/" + d->runID
+      + ".vhw_dis." + d->cell + d->wavelength;
+   QFile   res_f( filename );
+   double  pterm    = 100.0 * positPct;
+   double  bterm    = 100.0 * boundPct / (double)divsCount;
+   double  bfrac;
+   QString dline;
+
+   if ( !res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      return;
+   }
+qDebug() << "WD: filename " << filename;
+
+   // write the line-fit variables for each division
+   QTextStream ts( &res_f );
+   ts << tr( "%Boundary: Points:       Slope:   Intercept:"
+         "       Sigma: Correlation:\n" );
+
+   for ( int jj = 0; jj < divsCount; jj++ )
+   {
+      bfrac     = pterm + bterm * (double)( jj + 1 );
+
+      dline.sprintf( "%9.2f %7d %12.6f %12.6f %12.6f %12.6f\n", bfrac,
+         dpnts.at( jj ), dslos.at( jj ), dseds.at( jj ),
+         dsigs.at( jj ), dcors.at( jj ) );
+      ts << dline;
+   }
+
+   res_f.close();
+}
+
+// write a file of vHW detailed division group model data
+void US_vHW_Enhanced::write_model()
+{
+   QString filename = US_Settings::resultDir() + "/" + d->runID
+      + "." + d->cell + d->wavelength + ".fef_model";
+   QFile   res_f( filename );
+   int     groups   = groupdat.size();
+
+   if ( !res_f.open( QIODevice::WriteOnly | QIODevice::Text ) )
+   {
+      return;
+   }
+qDebug() << "WM: filename " << filename;
+
+   QTextStream ts( &res_f );
+
+   ts <<     "*************************************\n";
+   ts << tr( "*   Please do not edit this file!   *\n" );
+   ts <<     "*************************************\n\n\n";
+   ts << "3            " << tr( "\t# Fixed Molecular Weight Distribution\n" );
+   ts << groups << "           " << tr( "\t# Number of Components\n" );
+   ts << meniscus << "       " << tr( "\t# Meniscus in cm\n" );
+   ts << "0.01         " << tr( "\t# Meniscus range in cm\n" );
+   ts << "0            " << tr( "\t# Meniscus fitting control\n" );
+   ts << baseline << "     " << tr( "\t# Baseline in OD\n" );
+   ts << "0.01         " << tr( "\t# Baseline range in OD\n" );
+   ts << "1            " << tr( "\t# Baseline fitting control\n" );
+   ts << "0.0000       " << tr( "\t# Slope(r) Correction in OD\n" );
+   ts << "0.0000       " << tr( "\t# Slope(r) Correction range in OD\n" );
+   ts << "0            " << tr( "\t# Slope(r) Correction fitting control\n" );
+   ts << "0.0000       " << tr( "\t# Slope(c,r) Correction in OD\n" );
+   ts << "0.0000       " << tr( "\t# Slope(c,r) Correction range in OD\n" );
+   ts << "0            " << tr( "\t# Slope(c,r) Correction fitting control\n");
+   ts << "20           " << tr( "\t# Delta_t in seconds\n" );
+   ts << "0.001        " << tr( "\t# Delta_t in cm\n" );
+
+   QString line04 = "1            \t" +
+      tr( "# Sedimentation Coefficient fitting control\n" );
+   QString line05 = "7.00e-07     \t" +
+      tr( "# Diffusion Coefficient in D\n" );
+   QString line06 = "7.00e-08     \t" +
+      tr( "# Diffusion Coefficient range in D\n" );
+   QString line07 = "1            \t" +
+      tr( "# Diffusion Coefficient fitting control\n" );
+   QString line10 = "0            \t" +
+      tr( "# Partial Concentration fitting control\n" );
+   QString line11 = "0.0000       \t" + tr( "# Sigma\n" );
+   QString line12 = "0.0000       \t" + tr( "# Sigma range\n" );
+   QString line13 = "0            \t" + tr( "# Sigma fitting control\n" );
+   QString line14 = "0.0000       \t" + tr( "# Delta\n" );
+   QString line15 = "0.0000       \t" + tr( "# Delta range\n" );
+   QString line16 = "0            \t" + tr( "# Delta fitting control\n" );
+   QString line17 = "1            \t" +
+      tr( "# Molecular Weight fitting control\n" );
+   QString line18 = "0            \t" +
+      tr( "# Part. Spec. Volume fitting control\n" );
+   double  cterm  = ( C0 - baseline ) / 100.0;
+
+   for ( int ii = 0; ii < groups; ii++ )
+   {
+      double gsed = groupdat.at( ii ).sed * 1.0e-13;
+      double gcon = groupdat.at( ii ).percent * cterm;
+      ts << "\n";
+      ts << tr( "Parameters for Component " ) << ( ii + 1 ) << ":\n\n";
+      ts << gsed << "  "
+         << tr( "\t# Sedimentation Coefficient in s\n" );
+      ts << gsed / 10.0 << "  "
+         << tr( "\t# Sedimentation Coefficient range in s\n" );
+      ts << line04 << line05 << line06 << line07;
+      ts << gcon << "    "
+         << tr( "\t# Partial Concentration in OD\n" );
+      ts << gcon / 10.0 << "   "
+         << tr( "\t# Partial Concentration range in OD\n" );
+      ts << line10 << line11 << line12 << line13;
+      ts << line14 << line15 << line16 << line17 << line18;
+   }
+
+   res_f.close();
+}
+
+// text of minutes,seconds or hours,minutes for a given total seconds value
+QString US_vHW_Enhanced::text_time( double seconds, int type )
+{
+   int mins = (int)( seconds / 60.0 );
+   int secs = (int)( seconds - (double)mins * 60.0 );
+
+   if ( type == 0 )
+   {  // fixed-field mins,secs text
+      QString tmin = QString().sprintf( "%4d", mins );
+      QString tsec = QString().sprintf( "%3d", secs );
+      return  tr( "%1 min %2 sec" ).arg( tmin ).arg( tsec );
+   }
+
+   else if ( type == 1 )
+   {  // minutes,seconds text
+      return  tr( "%1 minutes(s) %2 second(s)" ).arg( mins ).arg( secs );
+   }
+
+   else
+   {  // hours,minutes text
+      int hrs  = (int)( seconds / 3600.0 );
+      mins     = qRound( ( seconds - (double)hrs * 3600.0 ) / 60.0 );
+      return  tr( "%1 hour(s) %2 minute(s)" ).arg( hrs ).arg( mins );
+   }
+}
+
+// text of minutes and seconds for a given total seconds value
+QString US_vHW_Enhanced::text_time( double seconds )
+{  // default mins,secs text
+   return  text_time( seconds, 0 );
+}
+
+// find this system's best fixedPitch font
+QFont US_vHW_Enhanced::fixed_font()
+{
+   //QFontDataBase database;
+   QFont         ffont( "Courier New" );
+   QFont         tfont( "Courier New" );
+   QFontInfo     finfo( tfont );
+   QString       family;
+   bool          fmatch;
+   bool          ffixed;
+   const char*   preffam[] = {
+      "Liberation Mono",
+      "FreeMono",
+      "DejaVu Sans Mono",
+      "DejaVu LGC San Mono",
+      "Monaco",
+      "Andale Mono",
+      "Nimbus Mono L",
+      "Luxi Mono",
+      "QuickType mono",
+      "Courier New",
+      "Courier 10 Pitch",
+      "Courier"
+   };
+   const int     pfsize = sizeof( preffam ) / sizeof( preffam[ 0 ] );
+
+   for ( int ii = 0; ii < pfsize; ii++ )
+   {
+      family   = QString( preffam[ ii ] );
+      tfont    = QFont( family );
+      finfo    = QFontInfo( tfont );
+      fmatch   = finfo.exactMatch();
+      ffixed   = finfo.fixedPitch();
+qDebug() << family << " MATCH" << fmatch << " FIXED" << ffixed;
+      if ( fmatch  &&  ffixed )
+      {
+         ffont    = tfont;
+
+         if ( family.contains( "New" )  ||
+              family.contains( "FreeM" ) )
+            ffont    = QFont( family, -1, QFont::DemiBold );
+
+         break;
+      }
+   }
+   return ffont;
+}
 

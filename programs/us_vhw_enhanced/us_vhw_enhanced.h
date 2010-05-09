@@ -53,18 +53,10 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
  
       QwtCounter*   ct_tolerance;
       QwtCounter*   ct_division;
-      QwtCounter*   ct_exsscn;
-      QwtCounter*   ct_exsrng;
 
-      QwtPlot*       edat_plot;
-      QwtPlot*       vdat_plot;
       QwtPlotCurve*  curve;
       QwtPlotCurve*  dcurve;
       US_PlotPicker* gpick;
-      QwtSymbol      fgSym;
-      QwtSymbol      bgSym;
-      QPen           bgPen;
-      QPen           fgPen;
 
       QPushButton*  pb_dstrpl;
       QPushButton*  pb_densit;
@@ -72,8 +64,6 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QPushButton*  pb_vbar;
       QPushButton*  pb_rsetda;
       QPushButton*  pb_selegr;
-      QPushButton*  pb_exsscn;
-      QPushButton*  pb_exsrng;
 
       double        boundPct;
       double        positPct;
@@ -105,43 +95,31 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       int           scanCount;
       int           valueCount;
       int           nexclude;
-      int           dsmooth;
-      int           pcbound;
-      int           boundpo;
-      int           esscan;
-      int           escrng;
 
-      bool          minmax;
       bool          haveZone;
-      bool          haveDiff;
       bool          groupSel;
 
       QString       run_name;
       QString       cell;
       QString       wavelength;
-      QString       method;
-      QString       ed_title;
-      QString       edx_title;
-      QString       edy_title;
-      QString       vd_title;
-      QString       vdx_title;
-      QString       vdy_title;
       QString       workingDir;
       QString       runID;
       QString       editID;
-      QString       dataType;
 
       QStringList   files;
       QStringList   triples;
 
-      QList< QList< double > > cpds;
-      QList< double >          sdifs;
-      QList< double >          dseds;
-      QList< double >          dslos;
-      QList< double >          bdrads;
-      QList< double >          bdcons;
-      QList< double >          groupxy;
-      QList< GrpInfo >         groupdat;
+      QList< QList< double > > cpds;       // Cpij lists, divs in scans
+      QList< double >          aseds;      // all division sedcoeff values
+      QList< double >          dseds;      // division sedcoeff intercepts
+      QList< double >          dslos;      // division slope values
+      QList< double >          dsigs;      // division sigma values
+      QList< double >          dcors;      // division correlation values
+      QList< int >             dpnts;      // division fitted line points
+      QList< double >          bdrads;     // back-diffusion radii
+      QList< double >          bdcons;     // back-diffusion concentrations
+      QList< double >          groupxy;    // group select pick coordinates
+      QList< GrpInfo >         groupdat;   // selected group info structures
 
       US_DataIO::editedData*   d;
       US_DataIO::scan*         s;
@@ -152,12 +130,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       void data_plot(   void );
       void distr_plot(  void );
       void save_data(   void );
-      void print_data(  void );
       void view_report( void );
-      void show_densi(  void );
-      void show_visco(  void );
-      void show_vbar(   void );
-      void reset_data(  void );
       void sel_groups(  void );
       void details(     void );
       void div_seds(    void );
@@ -179,6 +152,13 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       double back_diff_coeff( double );
       void groupClick( const QwtDoublePoint& );
       void add_group_info( void );
+      void write_vhw(      void );
+      void write_dis(      void );
+      void write_res(      void );
+      void write_model(    void );
+      QFont   fixed_font(  void );
+      QString text_time( double, int );
+      QString text_time( double );
 
       void help     ( void )
       { showHelp.show_help( "vHW_enhanced.html" ); };
