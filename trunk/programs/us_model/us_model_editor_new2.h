@@ -57,6 +57,7 @@ class US_ModelEditor : public US_Widgets
       QVector< bool                                  > hydrosim_valid;
       
       US_FemGlobal_New::ModelSystem                    model;
+      US_FemGlobal_New::ModelSystem                    working_model;
       US_FemGlobal_New::SimulationComponent            local_component;
       US_Predict1::Hydrosim                            simcomp;
       US_Buffer                                        buffer;
@@ -125,14 +126,15 @@ class US_ModelEditor : public US_Widgets
       void change_component  ( int  );
 
 		void update_shape      ( void );
-		void simulate_component( void );
+		//void simulate_component( void );
 
       void select_shape      ( int  );
 		void load_c0           ( void );
 		//void load_model        ( void );
 		//void save_model        ( void );
 		void accept_model      ( void );
-		void update_sim        ( US_Predict1::Hydrosim );
+		//void update_sim        ( US_Predict1::Hydrosim );
+		void update_sim        ( void );
 
       void get_person        ( void );
       void update_person     ( int, const QString&, const QString& );

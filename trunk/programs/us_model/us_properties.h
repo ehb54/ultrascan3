@@ -36,6 +36,10 @@ class US_Properties : public US_WidgetsDialog
       //! \param hydro - this will probably change soon
       void valueChanged( US_Predict1::Hydrosim hydro );
 
+      //! A signal that the class is complete and the passed model reference 
+      //! has been updated.
+      void done( void );
+
    private:
       // Passed parameters
       US_Buffer                     buffer;
@@ -69,7 +73,6 @@ class US_Properties : public US_WidgetsDialog
       QLineEdit*   le_D;
       QLineEdit*   le_f;
       QLineEdit*   le_f_f0;
-      QLineEdit*   le_temperature;
       QLineEdit*   le_extinction;
       QLineEdit*   le_wavelength;
       QLineEdit*   le_analyteConc;
@@ -90,6 +93,8 @@ class US_Properties : public US_WidgetsDialog
       int  countChecks   ( void );
       void update_lw     ( void );
       void enable        ( QLineEdit*, bool, const QPalette& );
+      void lambda        ( bool );
+      int   next          ( QList< double >, double, bool );
 
 	private slots:
       void newAnalyte    ( void );
@@ -105,7 +110,7 @@ class US_Properties : public US_WidgetsDialog
       void load_c0       ( void );
       void co_sed        ( int );
       void set_molar     ( void );
-
+           
       void del_component ( void );
       void edit_component( QListWidgetItem* );
 };
