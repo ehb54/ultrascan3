@@ -31,7 +31,7 @@ US_Predict1::Hydrosim::Hydrosim()
 
 US_Predict1::US_Predict1( Hydrosim&                     parm, 
                           int                           invID,
-                          const US_AnalyteGui::AnalyteData a_data,
+                          const US_Analyte a_data,
                           bool                          disk_access,
                           bool                          signal_wanted )
    : US_WidgetsDialog( 0, 0 ), 
@@ -337,12 +337,12 @@ void US_Predict1::degC( const QString& s )
 void US_Predict1::get_peptide( void )
 {
    US_AnalyteGui* dialog = new US_AnalyteGui( investigator, true, analyte.guid );
-   connect( dialog, SIGNAL( valueChanged( US_AnalyteGui::AnalyteData ) ),
-                    SLOT  ( update_vbar ( US_AnalyteGui::AnalyteData ) ) );
+   connect( dialog, SIGNAL( valueChanged( US_Analyte ) ),
+                    SLOT  ( update_vbar ( US_Analyte ) ) );
    dialog->exec();
 }
 
-void US_Predict1::update_vbar( const US_AnalyteGui::AnalyteData ad )
+void US_Predict1::update_vbar( const US_Analyte ad )
 {
    analyte       = ad;
    mw            = ad.mw;
