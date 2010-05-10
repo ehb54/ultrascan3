@@ -233,13 +233,28 @@ void US_ModelEditor::manage_components( void )
    }
 
    bool dbAccess = rb_db->isChecked();
+   working_model = model;
 
    US_Properties* dialog = 
-      new US_Properties( buffer, model, investigator, dbAccess );
+      new US_Properties( buffer, working_model, investigator, dbAccess );
+   
    //connect( dialog, SIGNAL( valueChanged( US_Predict1::Hydrosim ) ),
    //                 SLOT  ( update_sim  ( US_Predict1::Hydrosim ) ) );
+   connect( dialog, SIGNAL( done() ), SLOT( update_sim() ) );
+   
    dialog->exec();
 }
+
+//void US_ModelEditor::update_sim( US_Predict1::Hydrosim sim )
+void US_ModelEditor::update_sim( void )
+{
+   model = working_model;
+
+   //le_mw->setText( QString::number( sim.mw, 'e', 4 ) );
+
+}
+
+
 //////////////////////////////////////
 
 void US_ModelEditor::show_component( void )
@@ -431,7 +446,7 @@ void US_ModelEditor::accept_model( void )
    emit valueChanged( model );
    close();
 }
-
+/*
 void US_ModelEditor::simulate_component( void )
 {
    int index = lw_components->currentRow();
@@ -450,14 +465,7 @@ void US_ModelEditor::simulate_component( void )
    //                 SLOT  ( update_sim  ( US_Predict1::Hydrosim ) ) );
    //dialog->exec();
 }
-
-void US_ModelEditor::update_sim( US_Predict1::Hydrosim sim )
-{
-   le_mw->setText( QString::number( sim.mw, 'e', 4 ) );
-
-}
-
-
+*/
 
 void US_ModelEditor::update_shape( void )
 {

@@ -420,6 +420,35 @@ void US_Properties::select_shape( int shape )
 
 void US_Properties::lambda_down( void )
 {
+   lambda( true );
+}
+
+void US_Properties::lambda_up( void )
+{
+   lambda( false );
+}
+
+int US_Properties::next( QList< double > keys, double wavelength, bool down )
+{
+   if ( keys.isEmpty() )
+   {
+      le_wavelength->clear();
+      return -1;
+   }
+   
+   qSort( keys );
+
+   int index = keys.indexOf( wavelength );
+   
+   if (   down && ( index < 1               ) ) return -1;
+   if ( ! down && ( index > keys.size() - 2 ) ) return -1;
+   
+   ( down ) ? index-- : index++;
+   return index;
+}
+
+void US_Properties::lambda( bool down )
+{
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
 
@@ -434,11 +463,9 @@ void US_Properties::lambda_down( void )
          if ( analyte.extinction.size() > 0 )
          {
             keys = analyte.extinction.keys();
-            qSort( keys );
 
-            index = keys.indexOf( wavelength );
-            if ( index < 1 ) return;
-            index--;
+            index = next( keys, wavelength, down );
+            if ( index < 0 ) return;
 
             wavelength = keys[ index ];
             le_wavelength->setText( QString::number( wavelength, 'f', 1 ) );
@@ -452,11 +479,9 @@ void US_Properties::lambda_down( void )
          if ( analyte.refraction.size() > 0 )
          {
             keys = analyte.refraction.keys();
-            qSort( keys );
 
-            index = keys.indexOf( wavelength );
-            if ( index < 1 ) return;
-            index--;
+            index = next( keys, wavelength, down );
+            if ( index < 0 ) return;
 
             wavelength = keys[ index ];
             le_wavelength->setText( QString::number( wavelength, 'f', 1 ) );
@@ -470,11 +495,9 @@ void US_Properties::lambda_down( void )
          if ( analyte.fluorescence.size() > 0 )
          {
             keys = analyte.fluorescence.keys();
-            qSort( keys );
 
-            index = keys.indexOf( wavelength );
-            if ( index < 1 ) return;
-            index--;
+            index = next( keys, wavelength, down );
+            if ( index < 0 ) return;
 
             wavelength = keys[ index ];
             le_wavelength->setText( QString::number( wavelength, 'f', 1 ) );
@@ -485,12 +508,6 @@ void US_Properties::lambda_down( void )
          break;
    }
 
-   set_molar();
-}
-
-void US_Properties::lambda_up( void )
-{
-   qDebug() << "up";
    set_molar();
 }
 
@@ -530,7 +547,6 @@ void US_Properties::newAnalyte( void )
 
 void US_Properties::update( int /* row */ )
 {
-qDebug() << "update";
    int index = lw_components->currentRow();
 
    if ( index < 0 ) return;
@@ -538,10 +554,69 @@ qDebug() << "update";
    inUpdate = true;
    US_FemGlobal_New::SimulationComponent* sc;
 
-   // Save current data   TODO
+   char uuid[ 37 ];
+   uuid[ 36 ] = 0;
+
+   // Save current data 
    if ( oldRow > -1 )
    {
       sc = &model.components[ oldRow ];
+      
+      // Description
+      sc->name = lw_components->currentItem()->text(); 
+      
+      // guid
+      if ( le_guid->text().isEmpty() ) 
+         uuid_clear( sc->analyteGUID );
+      else
+      {
+         strncpy( uuid, le_guid->text().toAscii().data(), 36 );
+         uuid_parse( uuid, sc->analyteGUID );
+      }
+
+      // vbar
+      sc->vbar20 = le_vbar->text().toDouble();
+
+      // Extinction, Wavelength
+      sc->extinction = le_extinction->text().toDouble();
+      sc->wavelength = le_wavelength->text().toDouble();
+
+      // Molar concentration
+      sc->molar_concentration = le_molar->text().toDouble();
+      
+      //  Signal concentration
+      sc->signal_concentration = le_analyteConc->text().toDouble();
+
+      // Shape
+      switch ( cmb_shape->currentIndex() )
+      {
+         case US_FemGlobal_New::SPHERE : 
+            sc->shape = US_FemGlobal_New::SPHERE; break;
+         
+         case US_FemGlobal_New::PROLATE: 
+            sc->shape = US_FemGlobal_New::PROLATE; break;
+         
+         case US_FemGlobal_New::OBLATE : 
+            sc->shape = US_FemGlobal_New::OBLATE; break;
+         
+         default:                        
+            sc->shape = US_FemGlobal_New::ROD; break;
+      }
+     
+      int shape = cmb_shape->itemData( cmb_shape->currentIndex() ).toInt();
+      sc->shape = ( US_FemGlobal_New::ShapeType ) shape;
+      
+      // Characteristics
+      sc->mw    = le_mw   ->text().toDouble();
+      sc->s     = le_s    ->text().toDouble();
+      sc->D     = le_D    ->text().toDouble();
+      sc->f     = le_f    ->text().toDouble();
+      sc->f_f0  = le_f_f0 ->text().toDouble();
+      sc->sigma = le_sigma->text().toDouble();
+      sc->delta = le_delta->text().toDouble();
+
+      // c0 values are already set
+      // co-sed is already set
    }
 
    oldRow = index;
@@ -550,8 +625,6 @@ qDebug() << "update";
    sc = &model.components[ index ];
 
    // Set guid
-   char uuid[ 37 ];
-   uuid[ 36 ] = 0;
    uuid_unparse( sc->analyteGUID, uuid );
    
    if ( uuid_is_null( sc->analyteGUID ) )
@@ -564,9 +637,14 @@ qDebug() << "update";
    // Set vbar
    le_vbar->setText( QString::number( sc->vbar20, 'f', 4 ) );
 
-   // Set extinction and concentration   TODO
+   // Set extinction and concentration
    le_extinction ->setText( QString::number( sc->extinction,          'e', 4 ));
-   le_wavelength ->setText( QString::number( sc->wavelength,          'f', 1 ));
+
+   if ( sc->wavelength <= 0.0 )
+      le_wavelength->clear();
+   else
+      le_wavelength ->setText( QString::number( sc->wavelength,       'f', 1 ));
+
    le_molar      ->setText( QString::number( sc->molar_concentration, 'e', 4 ));
    le_analyteConc->setText( QString::number( sc->signal_concentration,'f', 1 ));
    
@@ -654,7 +732,7 @@ void US_Properties::new_hydro( US_Analyte ad )
    select_shape( shape );
 }
 
-void US_Properties::acceptProp( void )
+void US_Properties::acceptProp( void )  //TODO
 {
    // Need a sanity check here
 
@@ -664,7 +742,8 @@ void US_Properties::acceptProp( void )
    //data.f    = le_f   ->text().toDouble();
    //data.f_f0 = le_f_f0->text().toDouble();
 
-   emit valueChanged( hydro_data );
+   emit done();
+   //emit valueChanged( hydro_data );
    accept();
 }
 
@@ -747,8 +826,6 @@ void US_Properties::del_component( void )
 void US_Properties::calculate( void )
 {
    if ( inUpdate ) return;
-
-qDebug() << "calculate";
 
    // First do some sanity checking
    double vbar = le_vbar->text().toDouble();
@@ -979,5 +1056,8 @@ qDebug() << "calculate";
    le_s   ->setText( QString::number( s   , 'e', 4 ) );
    le_D   ->setText( QString::number( D   , 'e', 4 ) );
    le_f   ->setText( QString::number( f   , 'e', 4 ) );
+
+   // If there is a manual update, then the guid is invalidated
+   le_guid->clear();
 }
 
