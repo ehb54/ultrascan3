@@ -311,12 +311,12 @@ void US_ModelEditor::get_vbar( void )
    US_AnalyteGui* analyte = new US_AnalyteGui( -1, true );
 
    connect( analyte, 
-         SIGNAL( valueChanged  ( struct US_AnalyteGui::AnalyteData ) ),
-         SLOT  ( update_analyte( struct US_AnalyteGui::AnalyteData ) ) );
+         SIGNAL( valueChanged  ( US_Analyte ) ),
+         SLOT  ( update_analyte( US_Analyte ) ) );
    analyte->exec();
 }
 
-void US_ModelEditor::update_analyte( struct US_AnalyteGui::AnalyteData data )
+void US_ModelEditor::update_analyte( US_Analyte data )
 {
    int index = lw_components->currentRow();
    if ( index < 0 ) return; 

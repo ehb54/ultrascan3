@@ -41,10 +41,10 @@ class US_EXTERN US_Analyte
       //!                    return codes
       //! \param           - For DB access, and open database connection
       //! \returns         - A filled in analyte structure.
-      static US_Analyte load( bool, const QString&, int&, US_DB2& = 0 );
+      static US_Analyte load( bool, const QString&, int&, US_DB2* = 0 );
 
    private:
-      static US_Analyte load_db     ( const QString&, int&, US_DB2& = 0 );
+      static US_Analyte load_db     ( const QString&, int&, US_DB2* );
       static US_Analyte load_disk   ( const QString&, int& );
       static US_Analyte read_analyte( const QString&, int& );
       static bool       analyte_path( QString& );

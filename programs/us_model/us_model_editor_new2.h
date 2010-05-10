@@ -119,7 +119,7 @@ class US_ModelEditor : public US_Widgets
       
 		void manage_components ( void );
 		void get_vbar          ( void );
-      void update_analyte    ( struct US_AnalyteGui::AnalyteData );
+      void update_analyte    ( US_Analyte );
       void change_optics     ( int  );
 		void delete_component  ( void );
       void change_component  ( int  );
