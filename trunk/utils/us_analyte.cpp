@@ -26,13 +26,13 @@ US_Analyte US_Analyte::load(
       bool           db_access, 
       const QString& guid,
       int&           error,
-      US_DB2&        db )
+      US_DB2*        db )
 {
    if ( db_access ) return load_db  ( guid, error, db );
    else             return load_disk( guid, error );
 }
 
-US_Analyte US_Analyte::load_db( const QString& guid, int& error, US_DB2& db )
+US_Analyte US_Analyte::load_db( const QString& guid, int& error, US_DB2* db )
 {
    US_Analyte analyte;
 
@@ -42,26 +42,26 @@ US_Analyte US_Analyte::load_db( const QString& guid, int& error, US_DB2& db )
    QStringList q( "get_analyteID" );
    q << guid;
 
-   db.query( q );
-   error = db.lastErrno();
+   db->query( q );
+   error = db->lastErrno();
    if ( error != US_DB2::OK ) return analyte;
 
-   db.next();
-   QString analyteID = db.value( 0 ).toString();
+   db->next();
+   QString analyteID = db->value( 0 ).toString();
 
    // Get analyte info;
    q.clear();
    q << "get_analyte_info" << analyteID;
 
-   db.query( q );
-   error = db.lastErrno();
+   db->query( q );
+   error = db->lastErrno();
    if ( error != US_DB2::OK ) return analyte;
 
-   db.next();
+   db->next();
 
    analyte.guid     = guid;;
   
-   int type         = db.value( 1 ).toString().toInt();
+   int type         = db->value( 1 ).toString().toInt();
    
    switch ( type )
    {
@@ -71,42 +71,42 @@ US_Analyte US_Analyte::load_db( const QString& guid, int& error, US_DB2& db )
       case CARBOHYDRATE: analyte.type = CARBOHYDRATE;
    }
    
-   analyte.sequence    = db.value( 2 ).toString();
-   analyte.vbar        = db.value( 3 ).toString().toDouble();
-   analyte.description = db.value( 4 ).toString();
-   // We don't need spectrum  -- db.value( 5 ).toString();
-   analyte.mw          = db.value( 6 ).toString().toDouble();
-   analyte.invID       = db.value( 7 ).toString().toInt();
+   analyte.sequence    = db->value( 2 ).toString();
+   analyte.vbar        = db->value( 3 ).toString().toDouble();
+   analyte.description = db->value( 4 ).toString();
+   // We don't need spectrum  -- db->value( 5 ).toString();
+   analyte.mw          = db->value( 6 ).toString().toDouble();
+   analyte.invID       = db->value( 7 ).toString().toInt();
 
    q.clear();
    q << "get_spectrum" << analyteID << "Analyte" << "'Extinction";
 
-   db.query( q );
+   db->query( q );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      double lambda = db.value( 1 ).toDouble();
-      double coeff  = db.value( 2 ).toDouble();
+      double lambda = db->value( 1 ).toDouble();
+      double coeff  = db->value( 2 ).toDouble();
       analyte.extinction[ lambda ] = coeff;
    }
 
    q[ 3 ] = "Refraction";
-   db.query( q );
+   db->query( q );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      double lambda = db.value( 1 ).toDouble();
-      double coeff  = db.value( 2 ).toDouble();
+      double lambda = db->value( 1 ).toDouble();
+      double coeff  = db->value( 2 ).toDouble();
       analyte.refraction[ lambda ] = coeff;
    }
 
    q[ 3 ] = "Fluorescence";
-   db.query( q );
+   db->query( q );
 
-   while ( db.next() )
+   while ( db->next() )
    {
-      double lambda = db.value( 1 ).toDouble();
-      double coeff  = db.value( 2 ).toDouble();
+      double lambda = db->value( 1 ).toDouble();
+      double coeff  = db->value( 2 ).toDouble();
       analyte.fluorescence[ lambda ] = coeff;
    }
 
