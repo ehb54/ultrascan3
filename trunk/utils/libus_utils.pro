@@ -16,7 +16,8 @@ TRANSLATIONS = $${TARGET}_DE_de.ts
 # Consolidate us_femglobal and us_femglobal_new when development is 
 # progressed to a point where us_femglobal can be removed 
 
-HEADERS      = us_astfem_math.h \
+HEADERS      = us_analyte.h     \
+               us_astfem_math.h \
                us_astfem_rsa.h  \
                us_buffer.h      \
                us_constants.h   \
@@ -35,7 +36,8 @@ HEADERS      = us_astfem_math.h \
                us_stiffbase.h   \
                us_util.h
 
-SOURCES      = us_astfem_math.cpp \
+SOURCES      = us_analyte.cpp     \
+               us_astfem_math.cpp \
                us_astfem_rsa.cpp  \
                us_buffer.cpp      \
                us_constants.cpp   \

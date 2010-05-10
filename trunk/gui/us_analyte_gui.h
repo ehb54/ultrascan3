@@ -1,6 +1,6 @@
 //! \file us_analyte_gui.h
-#ifndef US_ANALYTE_H
-#define US_ANALYTE_H
+#ifndef US_ANALYTE_GUI_H
+#define US_ANALYTE_GUI_H
 
 #include <QtGui>
 
@@ -11,6 +11,7 @@
 #include "us_editor.h"
 #include "us_db2.h"
 #include "us_constants.h"
+#include "us_analyte.h"
 
 #include <qwt_counter.h>
 
@@ -52,46 +53,11 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
                      const QString&  = QString(),
                      bool            = false );
 
-      //! The types of analytes currently defined
-      enum analyte_t { PROTEIN, DNA, RNA, CARBOHYDRATE };
-
-      //! A class to describe the analyte
-      class AnalyteData
-      {
-         public:
-         double                 vbar;         //!< vbar of the analyte
-         double                 mw;           //!< Molecular weight
-
-         //! extinction[ wavelength ] <=> value
-         QMap< double, double > extinction;
-
-         //! refraction[ wavelength ] <=> value
-         QMap< double, double > refraction;
-
-          //! fluorescence[ wavelength ] <=> value
-         QMap< double, double > fluorescence;
-
-         QString                description;  //!< Description of the analyte
-         QString                guid;         //!< Global identifier of the analyte
-         analyte_t              type;         //!< The type of analyte
-         AnalyteData()
-         {
-            vbar = TYPICAL_VBAR;
-            mw   = 50000.0;
-            extinction  .clear();
-            refraction  .clear();
-            fluorescence.clear();
-            description .clear();
-            guid        .clear();
-            type = PROTEIN;
-         };
-      };
-
    signals:
       //! A signal that indicates that the analyte data has been updated and
       //! the screen is closing.
       //! \param data - The updated analyte data
-      void valueChanged( US_AnalyteGui::AnalyteData data );
+      void valueChanged( US_Analyte data );
 
    private:
       int           personID;
@@ -109,18 +75,18 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       uint          G;
       uint          U;
 
-      analyte_t     analyte_type;
+      US_Analyte::analyte_t analyte_type;
 
       double        vbar;     
 
       class AnalyteInfo
       {
          public:
-         QString   description;
-         QString   guid;
-         QString   filename;
-         QString   analyteID;
-         analyte_t type;
+         QString               description;
+         QString               guid;
+         QString               filename;
+         QString               analyteID;
+         US_Analyte::analyte_t type;
       };
 
       QList< AnalyteInfo >    info;
@@ -186,7 +152,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
 
       QwtCounter*   ct_sodium;
       QwtCounter*   ct_potassium;
-      QwtCounter*  ct_lithium;
+      QwtCounter*   ct_lithium;
       QwtCounter*   ct_magnesium;
       QwtCounter*   ct_calcium;
 
@@ -199,10 +165,11 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
 
       void    set_spectrum    ( US_DB2& );
       bool    analyte_path    ( QString& );
-      QString get_filename    ( const QString&, const QString& );
-      QString new_guid        ( void );
       void    load_analyte    ( void );
       void    populate        ( void );
+
+      QString get_filename    ( const QString&, const QString& );
+      QString new_guid        ( void );
 
    private slots:
       void set_analyte_type   ( int  );

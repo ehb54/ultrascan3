@@ -67,10 +67,10 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
    main->addLayout( radios, row++, 0, 1, 3 );
 
    QButtonGroup* typeButtons = new QButtonGroup( this );
-   typeButtons->addButton( rb_protein, PROTEIN );
-   typeButtons->addButton( rb_dna    , DNA );
-   typeButtons->addButton( rb_rna    , RNA );
-   typeButtons->addButton( rb_carb   , CARBOHYDRATE );
+   typeButtons->addButton( rb_protein, US_Analyte::PROTEIN );
+   typeButtons->addButton( rb_dna    , US_Analyte::DNA );
+   typeButtons->addButton( rb_rna    , US_Analyte::RNA );
+   typeButtons->addButton( rb_carb   , US_Analyte::CARBOHYDRATE );
    connect( typeButtons, SIGNAL( buttonClicked    ( int ) ),
                          SLOT  ( set_analyte_type ( int ) ) );
 
@@ -423,7 +423,7 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
 
    main->addLayout( buttons, row, 0, 1, 3 );
 
-   analyte_type = PROTEIN;
+   analyte_type = US_Analyte::PROTEIN;
 
    if ( guid.size() == 0 )
       reset();
@@ -602,27 +602,28 @@ void US_AnalyteGui::set_analyte_type( int type )
 {
    switch ( type )
    {
-      case PROTEIN:
+      case US_Analyte::PROTEIN:
          dna_widget    ->setVisible( false );
          carbs_widget  ->setVisible( false );
          protein_widget->setVisible( true );
-         analyte_type = PROTEIN;
+         analyte_type = US_Analyte::PROTEIN;
          resize( 0, 0 ); // Resize to minimum dimensions
          break;
 
-      case DNA:
-      case RNA:
+      case US_Analyte::DNA:
+      case US_Analyte::RNA:
          protein_widget->setVisible( false ); 
          carbs_widget  ->setVisible( false );
          dna_widget    ->setVisible( true );
-         analyte_type = ( type == DNA )? DNA : RNA;
+         analyte_type = ( type == US_Analyte::DNA )? US_Analyte::DNA 
+                                                   : US_Analyte::RNA;
          break;
 
-      case CARBOHYDRATE:
+      case US_Analyte::CARBOHYDRATE:
          protein_widget->setVisible( false ); 
          dna_widget    ->setVisible( false );
          carbs_widget  ->setVisible( true );
-         analyte_type = CARBOHYDRATE;
+         analyte_type = US_Analyte::CARBOHYDRATE;
          resize( 0, 0 ); // Resize to minimum dimensions
          break;
    }
@@ -649,7 +650,7 @@ void US_AnalyteGui::close( void )
          if ( b == QMessageBox::No ) return;
       }
 
-      AnalyteData data;
+      US_Analyte data;
 
       data.extinction   = extinction;
       data.refraction   = refraction;
@@ -660,7 +661,7 @@ void US_AnalyteGui::close( void )
 
       switch ( analyte_type )
       {
-         case PROTEIN:
+         case US_Analyte::PROTEIN:
          {
             US_Math::Peptide p;
             US_Math::calc_vbar( p, sequence, 20.0 );  // Always evaluate at 20C
@@ -669,13 +670,13 @@ void US_AnalyteGui::close( void )
             break;
          }
 
-         case DNA:
-         case RNA:
+         case US_Analyte::DNA:
+         case US_Analyte::RNA:
             data.mw   = le_nucle_mw  ->text().toDouble();
             data.vbar = le_nucle_vbar->text().toDouble();
             break;
 
-         case CARBOHYDRATE:
+         case US_Analyte::CARBOHYDRATE:
             data.mw   = 0.0;
             data.vbar = 0.0;
             break;
@@ -884,16 +885,16 @@ void US_AnalyteGui::update_sequence( QString seq )
 
    switch ( analyte_type )
    {
-      case PROTEIN:
+      case US_Analyte::PROTEIN:
          seq.remove( QRegExp( "[^a-z\\+\\-\\?\\@]" ) );
          break;
 
-      case DNA:
-      case RNA:
+      case US_Analyte::DNA:
+      case US_Analyte::RNA:
          seq.remove( QRegExp( "[^acgtu]" ) );
          break;
 
-      case CARBOHYDRATE:
+      case US_Analyte::CARBOHYDRATE:
          break;
    }
 
@@ -910,7 +911,7 @@ void US_AnalyteGui::update_sequence( QString seq )
 
    switch ( analyte_type )
    {
-      case PROTEIN:
+      case US_Analyte::PROTEIN:
          {
          US_Math::Peptide p;
          double temperature = le_protein_temp->text().toDouble();
@@ -923,13 +924,13 @@ void US_AnalyteGui::update_sequence( QString seq )
          }
          break;
 
-      case DNA:
-      case RNA:
+      case US_Analyte::DNA:
+      case US_Analyte::RNA:
          parse_dna();
          update_nucleotide();
          break;
 
-      case CARBOHYDRATE:
+      case US_Analyte::CARBOHYDRATE:
          break;
    }
 
@@ -1192,7 +1193,7 @@ void US_AnalyteGui::save_analyte( void )
 
    switch ( analyte_type )
    {
-      case PROTEIN:
+      case US_Analyte::PROTEIN:
       {
          US_Math::Peptide p;
          double temperature = le_protein_temp->text().toDouble();
@@ -1205,9 +1206,9 @@ void US_AnalyteGui::save_analyte( void )
       }
          break;
 
-      case DNA:
-      case RNA:
-         if ( analyte_type == DNA )
+      case US_Analyte::DNA:
+      case US_Analyte::RNA:
+         if ( analyte_type == US_Analyte::DNA )
             xml.writeAttribute( "type", "DNA" );
          else
             xml.writeAttribute( "type", "RNA" );
@@ -1242,7 +1243,7 @@ void US_AnalyteGui::save_analyte( void )
          xml.writeAttribute( "vbar",      le_nucle_vbar->text() );
          break;
 
-      case CARBOHYDRATE:
+      case US_Analyte::CARBOHYDRATE:
          xml.writeAttribute( "type", "CARB" );
          break;
    }
@@ -1533,10 +1534,10 @@ void US_AnalyteGui::read_db( void )
 
       QString a_type      = db.value( 2 ).toString();
 
-           if ( a_type == "Protein" ) current.type = PROTEIN;
-      else if ( a_type == "RNA"     ) current.type = RNA;
-      else if ( a_type == "DNA"     ) current.type = DNA;
-      else                            current.type = CARBOHYDRATE;
+           if ( a_type == "Protein" ) current.type = US_Analyte::PROTEIN;
+      else if ( a_type == "RNA"     ) current.type = US_Analyte::RNA;
+      else if ( a_type == "DNA"     ) current.type = US_Analyte::DNA;
+      else                            current.type = US_Analyte::CARBOHYDRATE;
 
       if ( current.type == analyte_type ) info << current;
    }
@@ -1592,7 +1593,7 @@ bool US_AnalyteGui::data_ok( void )
    }
 
    double vbar = le_protein_vbar->text().toDouble();
-   if ( analyte_type == PROTEIN  &&  ( vbar < 0.0  || vbar > 2.0 ) )
+   if ( analyte_type == US_Analyte::PROTEIN  &&  ( vbar < 0.0  || vbar > 2.0 ) )
    {
       QMessageBox::information( this,
          tr( "Attention" ), 
@@ -1724,7 +1725,7 @@ void US_AnalyteGui::select_analyte( QListWidgetItem* item )
    // Update the window
    switch ( analyte_type )
    {
-      case PROTEIN:
+      case US_Analyte::PROTEIN:
          {
             US_Math::Peptide p;
             US_Math::calc_vbar( p, sequence, 20.0 );
@@ -1741,13 +1742,13 @@ void US_AnalyteGui::select_analyte( QListWidgetItem* item )
 
          break;
 
-      case DNA:
-      case RNA:
+      case US_Analyte::DNA:
+      case US_Analyte::RNA:
          update_nucleotide();
          le_nucle_vbar->setText( QString::number( vbar, 'f', 4 ) );
          break;
 
-      case CARBOHYDRATE:
+      case US_Analyte::CARBOHYDRATE:
          break;
    }
 
@@ -1784,9 +1785,9 @@ void US_AnalyteGui::save_db( void )
 
    q << guid;
 
-   if      ( analyte_type == PROTEIN ) q << "Protein";
-   else if ( analyte_type == DNA     ) q << "DNA";
-   else if ( analyte_type == RNA     ) q << "RNA";
+   if      ( analyte_type == US_Analyte::PROTEIN ) q << "Protein";
+   else if ( analyte_type == US_Analyte::DNA     ) q << "DNA";
+   else if ( analyte_type == US_Analyte::RNA     ) q << "RNA";
    else                             q << "Other";
 
    q << sequence;
@@ -1797,8 +1798,8 @@ void US_AnalyteGui::save_db( void )
    q << spectrum;
 
    // Molecular weight
-        if ( analyte_type == PROTEIN )      q << le_protein_mw->text();
-   else if ( analyte_type == CARBOHYDRATE ) q << "0.0";
+        if ( analyte_type == US_Analyte::PROTEIN )      q << le_protein_mw->text();
+   else if ( analyte_type == US_Analyte::CARBOHYDRATE ) q << "0.0";
    else // DNA / RNA 
    { 
       double mw = le_nucle_mw->text().toDouble();
@@ -1902,9 +1903,9 @@ void US_AnalyteGui::update_db( void )
  
    q << analyteID;
 
-   if      ( analyte_type == PROTEIN ) q << "Protein";
-   else if ( analyte_type == DNA     ) q << "DNA";
-   else if ( analyte_type == RNA     ) q << "RNA";
+   if      ( analyte_type == US_Analyte::PROTEIN ) q << "Protein";
+   else if ( analyte_type == US_Analyte::DNA     ) q << "DNA";
+   else if ( analyte_type == US_Analyte::RNA     ) q << "RNA";
    else                                q << "Other";
 
    q << sequence;
@@ -1914,8 +1915,8 @@ void US_AnalyteGui::update_db( void )
    q << " "; // spectrum is not used
 
    // Molecular weight
-        if ( analyte_type == PROTEIN )      q << le_protein_mw->text();
-   else if ( analyte_type == CARBOHYDRATE ) q << "0.0";
+        if ( analyte_type == US_Analyte::PROTEIN )      q << le_protein_mw->text();
+   else if ( analyte_type == US_Analyte::CARBOHYDRATE ) q << "0.0";
    else // DNA / RNA 
    { 
       double mw = le_nucle_mw->text().toDouble();

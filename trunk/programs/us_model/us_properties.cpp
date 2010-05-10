@@ -605,12 +605,12 @@ void US_Properties::simulate( void )
    US_Predict1* dialog = new US_Predict1( 
          working_data, investigator, analyte, true, true );
 
-   connect( dialog, SIGNAL( changed  ( US_AnalyteGui::AnalyteData ) ), 
-                    SLOT  ( new_hydro( US_AnalyteGui::AnalyteData ) ) );
+   connect( dialog, SIGNAL( changed  ( US_Analyte ) ), 
+                    SLOT  ( new_hydro( US_Analyte ) ) );
    dialog->exec();
 }
 
-void US_Properties::new_hydro( US_AnalyteGui::AnalyteData ad )
+void US_Properties::new_hydro( US_Analyte ad )
 {
    hydro_data = working_data;
    analyte    = ad;

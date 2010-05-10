@@ -45,7 +45,7 @@ class US_Properties : public US_WidgetsDialog
 
       bool                          inUpdate;
       int                           oldRow;
-      US_AnalyteGui::AnalyteData       analyte;
+      US_Analyte       analyte;
 
       enum { MW, S, D, F, F_F0 } check_type;
 
@@ -98,7 +98,7 @@ class US_Properties : public US_WidgetsDialog
       void checkbox      ( int = 0 );
       void acceptProp    ( void );
       void simulate      ( void );
-      void new_hydro     ( US_AnalyteGui::AnalyteData );
+      void new_hydro     ( US_Analyte );
       void lambda_up     ( void );
       void lambda_down   ( void );
       void select_shape  ( int );
