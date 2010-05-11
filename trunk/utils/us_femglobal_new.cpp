@@ -19,6 +19,7 @@ US_FemGlobal_New::SimulationComponent::SimulationComponent()
    extinction           = 0.0;
    sigma                = 0.0;
    delta                = 0.0;
+   stoichiometry        = 1;
    shape                = SPHERE;
    analyte_type         = 0;  // Protein
    c0.radius       .clear();

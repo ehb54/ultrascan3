@@ -28,6 +28,7 @@ HEADERS      = us_analyte.h     \
                us_femglobal.h   \
                us_femglobal_new.h   \
                us_hardware.h    \ 
+               us_hydrosim.h    \ 
                us_http_post.h   \
                us_license_t.h   \
                us_math.h        \
@@ -47,6 +48,7 @@ SOURCES      = us_analyte.cpp     \
                us_femglobal_new.cpp   \
                us_femglobal.cpp   \
                us_hardware.cpp    \
+               us_hydrosim.cpp    \
                us_global.cpp      \
                us_http_post.cpp   \
                us_license_t.cpp   \

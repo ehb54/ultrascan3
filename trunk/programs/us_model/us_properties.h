@@ -7,7 +7,6 @@
 #include "us_widgets_dialog.h"
 #include "us_widgets.h"
 #include "us_femglobal_new.h"
-//#include "us_help.h"
 #include "us_predict1.h"
 #include "us_analyte_gui.h"
 #include "us_buffer.h"
@@ -34,7 +33,7 @@ class US_Properties : public US_WidgetsDialog
    signals:
       //! A signal that the class is complete
       //! \param hydro - this will probably change soon
-      void valueChanged( US_Predict1::Hydrosim hydro );
+      void valueChanged( US_Hydrosim hydro );
 
       //! A signal that the class is complete and the passed model reference 
       //! has been updated.
@@ -49,12 +48,12 @@ class US_Properties : public US_WidgetsDialog
 
       bool                          inUpdate;
       int                           oldRow;
-      US_Analyte       analyte;
+      US_Analyte                    analyte;
 
       enum { MW, S, D, F, F_F0 } check_type;
 
-      US_Predict1::Hydrosim hydro_data;
-      US_Predict1::Hydrosim working_data;
+      US_Hydrosim hydro_data;
+      US_Hydrosim working_data;
 
       QIcon        check;
                    
@@ -80,6 +79,7 @@ class US_Properties : public US_WidgetsDialog
       QLineEdit*   le_sigma;
       QLineEdit*   le_delta;
       QLineEdit*   le_guid;
+      QLineEdit*   le_description;
                   
       QCheckBox*   cb_mw;
       QCheckBox*   cb_s;
@@ -88,13 +88,16 @@ class US_Properties : public US_WidgetsDialog
       QCheckBox*   cb_f_f0;
       QCheckBox*   cb_co_sed;
 
+      QwtCounter*  ct_stoich;
 
       void setInvalid    ( void );
       int  countChecks   ( void );
       void update_lw     ( void );
       void enable        ( QLineEdit*, bool, const QPalette& );
       void lambda        ( bool );
-      int   next          ( QList< double >, double, bool );
+      int  next          ( QList< double >, double, bool );
+      void clear_guid    ( void );
+      void set_stoich    ( double );
 
 	private slots:
       void newAnalyte    ( void );
@@ -112,6 +115,8 @@ class US_Properties : public US_WidgetsDialog
       void set_molar     ( void );
            
       void del_component ( void );
-      void edit_component( QListWidgetItem* );
+      //void edit_component( QListWidgetItem* );
+      void edit_component( void );
+      void edit_vbar     ( void );
 };
 #endif

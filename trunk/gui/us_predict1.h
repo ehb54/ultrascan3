@@ -11,6 +11,7 @@
 #include "us_buffer.h"
 #include "us_analyte_gui.h"
 #include "us_analyte.h"
+#include "us_hydrosim.h"
 
 
 //! A class to present a graph of frictional ratio as a function of
@@ -22,40 +23,6 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      //!  A class to describe the characteristics of a molecule
-      //!  assuming a particular shape
-      class Hydrocomp
-      {
-         public:
-            Hydrocomp();
-            double s;          //!< Sedimentation coefficient
-            double D;          //!< Diffusion coefficient
-            double f;          //!< Frictional coefficient
-            double f_f0;       //!< Frictional ratio f/f0
-            double a;          //!< Major axis of the molecule
-            double b;          //!< Minor axis of the molecule
-            double volume;     //!< Volume of the molecule
-      };
-
-      //! A class describing the characteristics of a molecule
-      class Hydrosim
-      {
-         public:
-            Hydrosim();
-            double    mw;          //!< Molecular weight
-            double    density;     //!< Density
-            double    viscosity;   //!< Viscosity
-            double    vbar;        //!< vbar at temperature
-            double    temperature; //!< Temperature for current characteristics
-            double    axial_ratio; //!< Axial ratio of major and minor radii
-            QString   guid;        //!< Analyte GUID
-
-            Hydrocomp sphere;      //!< Spherical characteristics
-            Hydrocomp prolate;     //!< Prolate Ellipsoid
-            Hydrocomp oblate;      //!< Oblage Ellipsoid
-            Hydrocomp rod;         //!< Rod characteristics
-      };
-
       //! \brief Constructor.
       //! \param parm - Reference to molecular characteristics
       //! \param invID - The investigator ID for DB access.  -1 for unpecified.
@@ -63,7 +30,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       //! \param disk_access - A value to pass to \ref US_Analyte to initial
       //!                      use disk or DB access
       //! \param signal_wanted - A value to indicate if signals are wanted.
-      US_Predict1( Hydrosim&, 
+      US_Predict1( US_Hydrosim&, 
                    int = -1, 
                    US_Analyte = US_Analyte(),
                    bool = true,
@@ -83,7 +50,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       void done   ( void );
 
    private:
-      Hydrosim&               allparams;
+      US_Hydrosim&            allparams;
       int                     investigator;
       US_Analyte              base_analyte;
       bool                    access;
@@ -136,7 +103,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
    private slots:
       void new_value    ( const QwtDoublePoint&   );
       void mouseU       ( const QwtDoublePoint&   );
-      void update_ratio ( const QString&          );
+      void update_ratio ( void                    );
       void update_mw    ( const QString&          );
       void degC         ( const QString&          ); 
       void density      ( const QString&          );
@@ -145,6 +112,7 @@ class US_EXTERN US_Predict1 : public US_WidgetsDialog
       void get_buffer   ( void                    ); 
       void get_peptide  ( void                    ); 
       void complete     ( void                    );
+      void debug        ( void                    );
 
       void update_buffer( const US_Buffer         );
       void update_vbar  ( const US_Analyte        );

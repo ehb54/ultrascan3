@@ -182,7 +182,6 @@ US_Analyte US_Analyte::read_analyte( const QString& filename, int& error )
 
    double               freq;
    double               value;
-   double               temperature;
    QString              type;
    QXmlStreamReader     xml( &file );
    QXmlStreamAttributes a;
@@ -206,7 +205,6 @@ US_Analyte US_Analyte::read_analyte( const QString& filename, int& error )
             // Set type
             if ( type == "PROTEIN" )
             {
-               temperature  = a.value( "temperature" ).toString().toDouble();
                analyte.vbar = a.value( "vbar"        ).toString().toDouble();
                analyte.type = PROTEIN;
             }
@@ -214,7 +212,7 @@ US_Analyte US_Analyte::read_analyte( const QString& filename, int& error )
             else if ( type == "DNA"  ||  type == "RNA" )
             {
               analyte.type = ( type == "DNA" ) ? DNA : RNA;
-              analyte.vbar = a.value( "vbar" ).toString().toDouble();
+              analyte.vbar = a.value( "vbar20" ).toString().toDouble();
             }
 
             else
@@ -229,7 +227,7 @@ US_Analyte US_Analyte::read_analyte( const QString& filename, int& error )
             if ( type == "PROTEIN" )
             {
                US_Math::Peptide p;
-               US_Math::calc_vbar( p, analyte.sequence, temperature );
+               US_Math::calc_vbar( p, analyte.sequence, NORMAL_TEMP );
                analyte.mw = p.mw;
 
                // The sequence tag comes before the extinction extinction tag

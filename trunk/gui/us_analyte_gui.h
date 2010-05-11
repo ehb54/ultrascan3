@@ -48,10 +48,12 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       //! \param signal - A flag to indicate that a signal is wanted
       //! \param GUID   - The global identifier of the current analyte
       //! \param access - A flag to indicate DB (true) or disk (false) access
+      //! \param temp   - The the temperature of the simulation
       US_AnalyteGui( int             = -1, 
                      bool            = false, 
                      const QString&  = QString(),
-                     bool            = false );
+                     bool            = false,
+                     double          = NORMAL_TEMP );
 
    signals:
       //! A signal that indicates that the analyte data has been updated and
@@ -64,6 +66,7 @@ class US_EXTERN US_AnalyteGui : public US_WidgetsDialog
       bool          signal_wanted;
       QString       guid;
       bool          db_access;
+      double        temperature;
 
       int           widget_selection;
       bool          inReset;
