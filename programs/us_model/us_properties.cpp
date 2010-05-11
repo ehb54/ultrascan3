@@ -47,22 +47,24 @@ US_Properties::US_Properties(
 
    QPushButton* pb_new = us_pushbutton( tr( "New Analyte" ) );
    connect( pb_new, SIGNAL( clicked() ), SLOT( newAnalyte() ) );
-   main->addWidget( pb_new, row++, 0, 1, 2 );
+   main->addWidget( pb_new, row, 0 );
+
+   QPushButton* pb_delete = us_pushbutton( tr( "Remove Current Analyte" ) );
+   connect( pb_delete, SIGNAL( clicked() ), SLOT( del_component() ) );
+   main->addWidget( pb_delete, row++, 1 );
+
+   QLabel* lb_desc = us_label( tr( "Analyte Description:" ) );
+   main->addWidget( lb_desc, row, 0 );
+
+   le_description = us_lineedit( "" );
+   connect( le_description, SIGNAL( editingFinished() ), 
+                            SLOT  ( edit_component () ) );
+   main->addWidget( le_description, row++, 1 );
 
    // Components List Box
    lw_components = new US_ListWidget;
-   lw_components->setToolTip(
-         tr( "Double click to edit\nRight click to delete" ) );
-
    connect( lw_components, SIGNAL( currentRowChanged( int  ) ),
                            SLOT  ( update           ( int  ) ) );
-
-   connect( lw_components, SIGNAL( rightClick   ( void ) ),
-                           SLOT  ( del_component( void ) ) );
-
-   connect( lw_components, SIGNAL( itemDoubleClicked( QListWidgetItem* ) ),
-                           SLOT  ( edit_component   ( QListWidgetItem* ) ) );
-
    main->addWidget( lw_components, row, 0, 2, 4 );
    row += 4;
 
@@ -86,6 +88,8 @@ US_Properties::US_Properties(
    main->addWidget( lb_vbar, row, 0 );
 
    le_vbar = us_lineedit( "" );
+   connect( le_vbar, SIGNAL( editingFinished() ), 
+                     SLOT  ( edit_vbar      () ) );
    main->addWidget( le_vbar, row++, 1 );
 
    // Row
@@ -154,13 +158,24 @@ US_Properties::US_Properties(
    connect( checks, SIGNAL( buttonClicked( int ) ), SLOT( checkbox( int ) ) );
 
    // Row
-   QGridLayout* mw_layout = us_checkbox( tr( "Molecular Weight" ), cb_mw, true );
+   QGridLayout* mw_layout = us_checkbox( 
+         tr( "Molecular Wt/Stoichiometry" ), cb_mw, true );
    checks->addButton( cb_mw, MW );
    main->addLayout( mw_layout, row, 0 );
 
+   QHBoxLayout* mw_layout2 = new QHBoxLayout;
+
    le_mw = us_lineedit( "" );
    connect( le_mw, SIGNAL( editingFinished() ), SLOT( calculate() ) );
-   main->addWidget( le_mw, row++, 1 );
+   mw_layout2->addWidget( le_mw );
+
+   ct_stoich = us_counter( 1, 1.0, 10.0, 1.0 );
+   ct_stoich->setStep( 1.0 );
+   connect( ct_stoich, SIGNAL( valueChanged ( double ) ), 
+                       SLOT  ( set_stoich   ( double ) ) );
+   mw_layout2->addWidget( ct_stoich );
+
+   main->addLayout( mw_layout2, row++, 1 );
 
    // Row
    QGridLayout* f_f0_layout = 
@@ -236,7 +251,22 @@ US_Properties::US_Properties(
 
    QPushButton* pb_accept = us_pushbutton( tr( "Accept") );
    main->addWidget( pb_accept, row++, 1 );
-   //connect( pb_accept, SIGNAL( clicked() ), SLOT( acceptProp() ) );
+   connect( pb_accept, SIGNAL( clicked() ), SLOT( acceptProp() ) );
+}
+
+void US_Properties::set_stoich( double stoich )
+{
+   int row = lw_components->currentRow();
+   if ( row < 0 ) return;
+
+   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+
+   inUpdate = true;
+
+   sc->stoichiometry = (int) stoich;
+
+   calculate();
+   inUpdate = false;
 }
 
 void US_Properties::co_sed( int new_state )
@@ -271,27 +301,37 @@ void US_Properties::co_sed( int new_state )
       model.coSedSolute = -1;
 }
 
-void US_Properties::edit_component( QListWidgetItem* item )
+void US_Properties::edit_component( void )
 {
-   bool ok;
-   QString desc = QInputDialog::getText( this, 
-         tr( "Edit Analyte Description" ),
-         tr( "New Analyte Description:" ),
-         QLineEdit::Normal,
-         item->text(),
-         &ok );
-   
-   if ( ok && ! desc.isEmpty() )
-   {
-      int row = lw_components->currentRow();
-      lw_components->disconnect( SIGNAL( currentRowChanged( int ) ) );
-      delete item;
-      lw_components->insertItem( row, new QListWidgetItem( desc ) );
-      lw_components->setCurrentRow( row );
+   int row = lw_components->currentRow();
+   if ( row < 0 ) return;
 
-      connect( lw_components, SIGNAL( currentRowChanged( int  ) ),
-                              SLOT  ( update           ( int  ) ) );
-   }
+   lw_components->disconnect( SIGNAL( currentRowChanged( int ) ) );
+   delete lw_components->currentItem();
+   
+   QString desc = le_description->text();
+   lw_components->insertItem( row, new QListWidgetItem( desc ) );
+   lw_components->setCurrentRow( row );
+
+   model.components[ row ].name = desc;
+
+   connect( lw_components, SIGNAL( currentRowChanged( int  ) ),
+                           SLOT  ( update           ( int  ) ) );
+}
+
+void US_Properties::edit_vbar( void )
+{
+   // If there is a manual update, then the guid is invalidated
+   le_guid      ->clear();
+   le_wavelength->clear();
+
+   int row = lw_components->currentRow();
+   if ( row < 0 ) return;
+
+   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+
+   sc->vbar20 = le_vbar->text().toDouble();
+   calculate();
 }
 
 void US_Properties::load_c0( void )
@@ -508,7 +548,9 @@ void US_Properties::lambda( bool down )
          break;
    }
 
+   inUpdate = true;
    set_molar();
+   inUpdate = false;
 }
 
 void US_Properties::set_molar( void )
@@ -524,6 +566,19 @@ void US_Properties::set_molar( void )
    sc->wavelength          = le_wavelength->text().toDouble();
 
    le_molar->setText( QString::number( sc->molar_concentration, 'e', 4 ) );
+   
+   if ( ! inUpdate ) clear_guid();
+}
+
+void US_Properties::clear_guid( void )
+{
+   int row = lw_components->currentRow();
+   if ( row < 0 ) return;
+
+   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+
+   uuid_clear( sc->analyteGUID );
+   le_guid->clear();
 }
 
 void US_Properties::update_lw( void )
@@ -543,6 +598,7 @@ void US_Properties::newAnalyte( void )
    update_lw();
 
    lw_components->setCurrentRow( last );  // Runs update() via signal
+   calculate();
 }
 
 void US_Properties::update( int /* row */ )
@@ -623,6 +679,8 @@ void US_Properties::update( int /* row */ )
 
    // Update to current data
    sc = &model.components[ index ];
+
+   le_description->setText( sc->name );
 
    // Set guid
    uuid_unparse( sc->analyteGUID, uuid );
@@ -732,18 +790,10 @@ void US_Properties::new_hydro( US_Analyte ad )
    select_shape( shape );
 }
 
-void US_Properties::acceptProp( void )  //TODO
+void US_Properties::acceptProp( void ) 
 {
-   // Need a sanity check here
-
-   //data.mw   = le_mw  ->text().toDouble();
-   //data.s    = le_s   ->text().toDouble();
-   //data.D    = le_D   ->text().toDouble();
-   //data.f    = le_f   ->text().toDouble();
-   //data.f_f0 = le_f_f0->text().toDouble();
-
+   update( 0 );  // Parameter is ignored 
    emit done();
-   //emit valueChanged( hydro_data );
    accept();
 }
 
@@ -834,7 +884,7 @@ void US_Properties::calculate( void )
    // Exatly two checkboxes must be set
    if ( countChecks() != 2 ) return;
 
-   double                t = 20.0;  // Degrees C
+   double                t = model.temperature;  // Degrees C
    US_Math::SolutionData d;
 
    d.vbar      = vbar;
@@ -1058,6 +1108,20 @@ void US_Properties::calculate( void )
    le_f   ->setText( QString::number( f   , 'e', 4 ) );
 
    // If there is a manual update, then the guid is invalidated
-   le_guid->clear();
+   clear_guid();
+   le_wavelength->clear();
+
+   int row = lw_components->currentRow();
+   if ( row < 0 ) return;
+
+   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+
+   sc->mw   = mw;
+   sc->f_f0 = f_f0;
+   sc->f    = f;
+   sc->s    = s;
+   sc->D    = D;
+
+   sc->wavelength = 0.0;
 }
 

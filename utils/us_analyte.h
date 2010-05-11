@@ -14,6 +14,7 @@ class US_EXTERN US_Analyte
       //! An analyte constructor with default values.
       US_Analyte();
 
+      //! The types of analytes used in UltraScan III
       enum analyte_t { PROTEIN, DNA, RNA, CARBOHYDRATE };
 
       int                    invID;        //!< The analyte's investigator
@@ -37,9 +38,9 @@ class US_EXTERN US_Analyte
       //! \param db_access - A flag to indicate if the DB (true)  or disk (false)
       //!                    should be searched for the analyte
       //! \param guid      - The guid of the analyte to be loaded
-      //! \param error     - A reference to an return code.  See \ref dbStatus for 
+      //! \param error     - A reference to an return code.  See \ref US_DB2 for 
       //!                    return codes
-      //! \param           - For DB access, and open database connection
+      //! \param db        - For DB access, an open database connection
       //! \returns         - A filled in analyte structure.
       static US_Analyte load( bool, const QString&, int&, US_DB2* = 0 );
 

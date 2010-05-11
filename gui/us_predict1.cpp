@@ -6,34 +6,11 @@
 #include "us_buffer_gui.h"
 
 #include "qwt_legend.h"
-
-US_Predict1::Hydrocomp::Hydrocomp()
-{
-   s      = 0.0;
-   D      = 0.0;
-   f      = 0.0;
-   f_f0   = 1.0;
-   a      = 0.0;
-   b      = 0.0;
-   volume = 0.0;
-}
-
-US_Predict1::Hydrosim::Hydrosim()
-{
-   mw          = 50000.0;
-   density     = DENS_20W;
-   viscosity   = VISC_20W * 100.0;
-   vbar        = TYPICAL_VBAR;
-   temperature = 20.0;
-   axial_ratio = 10.0;
-   guid        = QString();
-}
-
-US_Predict1::US_Predict1( Hydrosim&                     parm, 
-                          int                           invID,
+US_Predict1::US_Predict1( US_Hydrosim&     parm, 
+                          int              invID,
                           const US_Analyte a_data,
-                          bool                          disk_access,
-                          bool                          signal_wanted )
+                          bool             disk_access,
+                          bool             signal_wanted )
    : US_WidgetsDialog( 0, 0 ), 
      allparams   ( parm ), 
      investigator( invID ),
@@ -150,9 +127,19 @@ US_Predict1::US_Predict1( Hydrosim&                     parm,
    controls->addWidget( lb_temperature, c_row, 0 );
 
    QLineEdit* le_temperature = us_lineedit();
-   le_temperature->setText( QString::number( NORMAL_TEMP, 'f', 1 ) );
-   connect( le_vbar, SIGNAL( textChanged( const QString& ) ), 
-                     SLOT  ( degC       ( const QString& ) ) );
+
+   if ( signal )
+   {
+      le_temperature->setText( QString::number( temperature, 'f', 1 ) );
+      le_temperature->setReadOnly( true );
+      le_temperature->setPalette( gray );
+   }
+   else
+   {
+      le_temperature->setText( QString::number( NORMAL_TEMP, 'f', 1 ) );
+      connect( le_vbar, SIGNAL( textChanged( const QString& ) ), 
+                        SLOT  ( degC       ( const QString& ) ) );
+   }
    controls->addWidget( le_temperature, c_row++, 1 );
 
    // Axial Ratio
@@ -161,8 +148,8 @@ US_Predict1::US_Predict1( Hydrosim&                     parm,
 
    le_axial = us_lineedit();
    le_axial->setText( QString::number( ratio, 'f', 1 ) );
-   connect( le_axial, SIGNAL( textChanged ( const QString& ) ), 
-                      SLOT  ( update_ratio( const QString& ) ) );
+   connect( le_axial, SIGNAL( editingFinished( void ) ), 
+                      SLOT  ( update_ratio   ( void ) ) );
    controls->addWidget( le_axial, c_row++, 1 );
 
    // Information
@@ -313,9 +300,9 @@ void US_Predict1::complete( void )
    close();
 }
 
-void US_Predict1::update_ratio( const QString& r )
+void US_Predict1::update_ratio( void )
 {
-   QwtDoublePoint p( r.toDouble(), 0.0 );
+   QwtDoublePoint p( le_axial->text().toDouble(), 0.0 );
    mouseU( p );
 }
 
@@ -369,8 +356,8 @@ void US_Predict1::update_buffer( const US_Buffer b )
    solution.density   = b.density;
    solution.viscosity = b.viscosity;
 
-   le_density  ->setText( QString::number( solution.density   ) );
-   le_viscosity->setText( QString::number( solution.viscosity ) );
+   le_density  ->setText( QString::number( solution.density,    'f', 4 ) );
+   le_viscosity->setText( QString::number( solution.viscosity , 'f', 4 ) );
 
    US_Math::data_correction( temperature, solution );
    update();
@@ -404,8 +391,8 @@ void US_Predict1::new_value( const QwtDoublePoint& p )
    le_axial ->disconnect();
    le_axial->setText( QString::number( ratio, 'f', 1 ) );
 
-   connect( le_axial, SIGNAL( textChanged ( const QString& ) ), 
-                      SLOT  ( update_ratio( const QString& ) ) );
+   connect( le_axial, SIGNAL( editingFinished( void ) ), 
+                      SLOT  ( update_ratio   ( void ) ) );
    update();
 }
 
@@ -450,9 +437,10 @@ void US_Predict1::mouseU( const QwtDoublePoint& p )
    
    le_axial->setText( QString::number( ratio, 'f', 1 ) );
 
-   connect( le_axial, SIGNAL( textChanged ( const QString& ) ), 
-                      SLOT  ( update_ratio( const QString& ) ) );
+   connect( le_axial, SIGNAL( editingFinished( void ) ), 
+                      SLOT  ( update_ratio   ( void ) ) );
    update();
+   //debug();
 }
 
 void US_Predict1::update()
@@ -464,108 +452,84 @@ void US_Predict1::update()
    allparams.temperature = temperature;
    allparams.axial_ratio = ratio;
    
-   int index = (int) ( ( ratio - 1.1 ) * 10.0 + 0.5 );
-  
-   US_Math::data_correction( temperature, solution );
+   allparams.calculate( temperature );
 
-   double t                = temperature + K0;
-   double vol_per_molecule = solution.vbar * mw / AVOGADRO;
-   double rad_sphere       = 
-                 pow( vol_per_molecule * 3.0 / ( 4.0 * M_PI ), 1.0 / 3.0 );
-   
-   double f0 = rad_sphere * 6.0 * M_PI * solution.viscosity_tb * 0.01;
+   lb_sphere[ 1 ] ->setText( QString::number( allparams.sphere.s      , 'e', 4 ) );
+   lb_sphere[ 2 ] ->setText( QString::number( allparams.sphere.D      , 'e', 4 ) );
+   lb_sphere[ 3 ] ->setText( QString::number( allparams.sphere.f      , 'e', 4 ) ); 
+   lb_sphere[ 4 ] ->setText( QString::number( allparams.sphere.f_f0   , 'e', 4 ) );
+   lb_sphere[ 5 ] ->setText( QString::number( allparams.sphere.a      , 'e', 4 ) );
+   lb_sphere[ 6 ] ->setText( QString::number( allparams.sphere.b      , 'e', 4 ) );
+   lb_sphere[ 7 ] ->setText( QString::number( allparams.sphere.volume , 'e', 4 ) );
 
-   // Recaluclate volume to put into cubic angstroms:
-   vol_per_molecule = ( 4.0 / 3.0 ) * M_PI * pow( rad_sphere * 1.0e+08, 3.0 );
+   lb_prolate[ 1 ]->setText( QString::number( allparams.prolate.s     , 'e', 4 ) );
+   lb_prolate[ 2 ]->setText( QString::number( allparams.prolate.D     , 'e', 4 ) );
+   lb_prolate[ 3 ]->setText( QString::number( allparams.prolate.f     , 'e', 4 ) ); 
+   lb_prolate[ 4 ]->setText( QString::number( allparams.prolate.f_f0  , 'e', 4 ) );
+   lb_prolate[ 5 ]->setText( QString::number( allparams.prolate.a     , 'e', 4 ) );
+   lb_prolate[ 6 ]->setText( QString::number( allparams.prolate.b     , 'e', 4 ) );
+   lb_prolate[ 7 ]->setText( QString::number( allparams.prolate.volume, 'e', 4 ) );
 
-   // Prolate ellipsoid, ratio = ap/bp  (a = semi-major axis)
-   double ap = 1.0e+08 * ( rad_sphere * pow( ratio, 2.0 / 3.0 ) );
-   double bp = ap / ratio;
-   double fp = prolate[ index ] * f0;
-   double sp = mw * solution.buoyancyb / ( AVOGADRO * fp );
-   double Dp = sp * R * t / ( mw * solution.buoyancyb );
-   
-   lb_prolate[ 1 ]->setText( QString::number( sp              , 'e', 4 ) );
-   lb_prolate[ 2 ]->setText( QString::number( Dp              , 'e', 4 ) );
-   lb_prolate[ 3 ]->setText( QString::number( fp              , 'e', 4 ) ); 
-   lb_prolate[ 4 ]->setText( QString::number( prolate[ index ], 'e', 4 ) );
-   lb_prolate[ 5 ]->setText( QString::number( ap              , 'e', 4 ) );
-   lb_prolate[ 6 ]->setText( QString::number( bp              , 'e', 4 ) );
-   lb_prolate[ 7 ]->setText( QString::number( vol_per_molecule, 'e', 4 ) );
-   
-   allparams.prolate.s      = sp;
-   allparams.prolate.D      = Dp;
-   allparams.prolate.f      = fp;
-   allparams.prolate.f_f0   = prolate[ index ];
-   allparams.prolate.a      = ap;
-   allparams.prolate.b      = bp;
-   allparams.prolate.volume = vol_per_molecule;
-   
-   // Oblate ellipsoid:
-   double bo = 1.0e+08 * rad_sphere / pow( ratio, 2.0 / 3.0 );
-   double ao = ratio * bo;
-   double fo = oblate[ index ] * f0;
-   double so = mw * solution.buoyancyb / ( AVOGADRO * fo );
-   double Do = so * R * t / ( mw * solution.buoyancyb );
-   
-   lb_oblate[ 1 ]->setText( QString::number( so              , 'e', 4 ) );
-   lb_oblate[ 2 ]->setText( QString::number( Do              , 'e', 4 ) );
-   lb_oblate[ 3 ]->setText( QString::number( fo              , 'e', 4 ) );
-   lb_oblate[ 4 ]->setText( QString::number( oblate[ index ] , 'e', 4 ) );
-   lb_oblate[ 5 ]->setText( QString::number( ao              , 'e', 4 ) );
-   lb_oblate[ 6 ]->setText( QString::number( bo              , 'e', 4 ) );
-   lb_oblate[ 7 ]->setText( QString::number( vol_per_molecule, 'e', 4 ) );
-   
-   allparams.oblate.s      = so;
-   allparams.oblate.D      = Do;
-   allparams.oblate.f      = fo;
-   allparams.oblate.f_f0   = oblate[ index ];
-   allparams.oblate.a      = ao;
-   allparams.oblate.b      = bo;
-   allparams.oblate.volume = vol_per_molecule;
+   lb_oblate[ 1 ] ->setText( QString::number( allparams.oblate.s      , 'e', 4 ) );
+   lb_oblate[ 2 ] ->setText( QString::number( allparams.oblate.D      , 'e', 4 ) );
+   lb_oblate[ 3 ] ->setText( QString::number( allparams.oblate.f      , 'e', 4 ) ); 
+   lb_oblate[ 4 ] ->setText( QString::number( allparams.oblate.f_f0   , 'e', 4 ) );
+   lb_oblate[ 5 ] ->setText( QString::number( allparams.oblate.a      , 'e', 4 ) );
+   lb_oblate[ 6 ] ->setText( QString::number( allparams.oblate.b      , 'e', 4 ) );
+   lb_oblate[ 7 ] ->setText( QString::number( allparams.oblate.volume , 'e', 4 ) );
 
-   // Long rod:
-   double br = 1.0e+08 * pow( 2.0 / ( 3.0 * ratio ), 1.0 / 3.0 ) * rad_sphere;
-   double ar = ratio * br;
-   double fr = rod[ index ] * f0;
-   double sr = mw * solution.buoyancyb / ( AVOGADRO * fr );
-   double Dr = sr * R * t / ( mw * solution.buoyancyb );
-
-   lb_rod[ 1 ]->setText( QString::number( sr              , 'e', 4 ) );
-   lb_rod[ 2 ]->setText( QString::number( Dr              , 'e', 4 ) );
-   lb_rod[ 3 ]->setText( QString::number( fr              , 'e', 4 ) );
-   lb_rod[ 4 ]->setText( QString::number( rod[ index ]    , 'e', 4 ) );
-   lb_rod[ 5 ]->setText( QString::number( ar              , 'e', 4 ) );
-   lb_rod[ 6 ]->setText( QString::number( br              , 'e', 4 ) );
-   lb_rod[ 7 ]->setText( QString::number( vol_per_molecule, 'e', 4 ) );
-
-   allparams.rod.s      = sr;
-   allparams.rod.D      = Dr;
-   allparams.rod.f      = fr;
-   allparams.rod.f_f0   = rod[ index ];
-   allparams.rod.a      = ar;
-   allparams.rod.b      = br;
-   allparams.rod.volume = vol_per_molecule;
-
-   // Sphere:
-   double ss = mw * solution.buoyancyb / ( AVOGADRO * f0 );
-   double Ds = ss * R * t / ( mw * solution.buoyancyb );
-
-   lb_sphere[ 1 ]->setText( QString::number( ss                  , 'e', 4 ) );
-   lb_sphere[ 2 ]->setText( QString::number( Ds                  , 'e', 4 ) );
-   lb_sphere[ 3 ]->setText( QString::number( f0                  , 'e', 4 ) );
-   lb_sphere[ 4 ]->setText( QString::number( 1.0                 , 'e', 4 ) );
-   lb_sphere[ 5 ]->setText( QString::number( 1.0e+08 * rad_sphere, 'e', 4 ) );
-   lb_sphere[ 6 ]->setText( QString::number( 1.0e+08 * rad_sphere, 'e', 4 ) );
-   lb_sphere[ 7 ]->setText( QString::number( vol_per_molecule    , 'e', 4 ) );
-   
-   allparams.sphere.s      = ss;
-   allparams.sphere.D      = Ds;
-   allparams.sphere.f      = f0;
-   allparams.sphere.f_f0   = 1.0;
-   allparams.sphere.a      = 1.0e+08 * rad_sphere;
-   allparams.sphere.b      = 1.0e+08 * rad_sphere;
-   allparams.sphere.volume = vol_per_molecule;
-   
+   lb_rod[ 1 ]    ->setText( QString::number( allparams.rod.s         , 'e', 4 ) );
+   lb_rod[ 2 ]    ->setText( QString::number( allparams.rod.D         , 'e', 4 ) );
+   lb_rod[ 3 ]    ->setText( QString::number( allparams.rod.f         , 'e', 4 ) ); 
+   lb_rod[ 4 ]    ->setText( QString::number( allparams.rod.f_f0      , 'e', 4 ) );
+   lb_rod[ 5 ]    ->setText( QString::number( allparams.rod.a         , 'e', 4 ) );
+   lb_rod[ 6 ]    ->setText( QString::number( allparams.rod.b         , 'e', 4 ) );
+   lb_rod[ 7 ]    ->setText( QString::number( allparams.rod.volume    , 'e', 4 ) );
    if ( signal ) emit changed();
+}
+
+void US_Predict1::debug( void )
+{
+   /*
+   US_Hydrosim sim;
+   sim.mw          = allparams.mw;
+   sim.density     = allparams.density;
+   sim.viscosity   = allparams.viscosity;
+   sim.vbar        = allparams.vbar;
+   sim.axial_ratio = allparams.axial_ratio;
+
+   sim.calculate( temperature );
+
+   qDebug() << "sphere" << sim.sphere.s 
+                        << sim.sphere.D
+                        << sim.sphere.f
+                        << sim.sphere.f_f0
+                        << sim.sphere.a
+                        << sim.sphere.b
+                        << sim.sphere.volume;
+
+   qDebug() << "prolate" << sim.prolate.s 
+                        << sim.prolate.D
+                        << sim.prolate.f
+                        << sim.prolate.f_f0
+                        << sim.prolate.a
+                        << sim.prolate.b
+                        << sim.prolate.volume;
+
+   qDebug() << "oblate" << sim.oblate.s 
+                        << sim.oblate.D
+                        << sim.oblate.f
+                        << sim.oblate.f_f0
+                        << sim.oblate.a
+                        << sim.oblate.b
+                        << sim.oblate.volume;
+
+   qDebug() << "rod" << sim.rod.s 
+                        << sim.rod.D
+                        << sim.rod.f
+                        << sim.rod.f_f0
+                        << sim.rod.a
+                        << sim.rod.b
+                        << sim.rod.volume;
+*/
 }

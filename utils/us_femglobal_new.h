@@ -85,6 +85,7 @@ class US_EXTERN US_FemGlobal_New
       double      extinction;
       double      sigma;   // Concentration dependency of s
       double      delta;   // concentration dependency of D
+      int         stoichiometry;
       ShapeType   shape;
       QString     name;
       int         analyte_type;

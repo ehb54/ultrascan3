@@ -61,8 +61,6 @@ US_ModelEditor::US_ModelEditor(
 
    // Models List Box
    lw_models = new US_ListWidget;
-   lw_models->setToolTip( 
-         tr( "Double click to edit description" ) );
 
    //connect( lw_models, SIGNAL( currentRowChanged( int  ) ),
    //                    SLOT  ( change_model     ( int  ) ) );
@@ -229,6 +227,14 @@ void US_ModelEditor::manage_components( void )
          tr( "Model not selected" ),
          tr( "Please select a model first.\n" 
              "If necessary, create a new model." ) );
+      return;
+   }
+
+   if ( le_density->text().isEmpty() )
+   {
+      QMessageBox::information( this,
+         tr( "Buffer not selected" ),
+         tr( "Please select a buffer first.\n" ) );
       return;
    }
 
@@ -473,7 +479,7 @@ void US_ModelEditor::update_shape( void )
    hydrosim_valid[ index ] = true;
    
    US_FemGlobal_New::SimulationComponent* sc = &components   [ index ];
-   US_Predict1::Hydrosim*                 h  = &hydrosim_maps[ index ];
+   US_Hydrosim*                           h  = &hydrosim_maps[ index ];
 
    int shape = cb_shape->itemData( cb_shape->currentIndex() ).toInt();
 
@@ -528,7 +534,7 @@ void US_ModelEditor::select_shape( int /*new_shape*/ )
    if ( ! hydrosim_valid[ index ] ) return;
    
    US_FemGlobal_New::SimulationComponent* sc = &components   [ index ];
-   US_Predict1::Hydrosim*                 h  = &hydrosim_maps[ index ];
+   US_Hydrosim*                           h  = &hydrosim_maps[ index ];
 
    int shape = cb_shape->currentIndex();
 

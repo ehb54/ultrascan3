@@ -53,13 +53,13 @@ class US_ModelEditor : public US_Widgets
       QVector< QMap< double, double >                > extinction_maps;
       QVector< QMap< double, double >                > refraction_maps;
       QVector< QMap< double, double >                > fluorescence_maps;
-      QVector< US_Predict1::Hydrosim                 > hydrosim_maps;
+      QVector< US_Hydrosim                           > hydrosim_maps;
       QVector< bool                                  > hydrosim_valid;
       
       US_FemGlobal_New::ModelSystem                    model;
       US_FemGlobal_New::ModelSystem                    working_model;
       US_FemGlobal_New::SimulationComponent            local_component;
-      US_Predict1::Hydrosim                            simcomp;
+      US_Hydrosim                                      simcomp;
       US_Buffer                                        buffer;
       
       QLabel*        lb_coeff;

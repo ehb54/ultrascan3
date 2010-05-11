@@ -19,7 +19,7 @@ class US_ModelEditor : public US_WidgetsDialog
       //! \param current_model - Location of model structure for editing
       //! \param p             - Parent widget, normally not specified
       //! \param f             - Window flags, normally not specified
-		US_ModelEditor( struct ModelSystem&, QWidget* = 0, 
+		US_ModelEditor( ModelSystem&, QWidget* = 0, 
             Qt::WindowFlags = 0 );
 
    private:
@@ -60,8 +60,8 @@ class US_ModelEditor : public US_WidgetsDialog
 
 		QString       c0_file;
 
-      struct ModelSystem&   model;
-      US_Predict1::Hydrosim simcomp;
+      ModelSystem&  model;
+      US_Hydrosim   simcomp;
       
 		void update_sD       ( void );
       bool verify_model    ( void );

@@ -7,7 +7,7 @@
 #include "us_analyte_gui.h"
 
 US_ModelEditor::US_ModelEditor( 
-      struct ModelSystem& current_model, 
+      ModelSystem& current_model, 
       QWidget* p, Qt::WindowFlags f ) 
    : US_WidgetsDialog( p, f ), model( current_model )
 {

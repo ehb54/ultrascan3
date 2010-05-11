@@ -12,12 +12,14 @@
 US_AnalyteGui::US_AnalyteGui( int             invID, 
                               bool            signal, 
                               const QString&  GUID,
-                              bool            access )
+                              bool            access,
+                              double          temp )
    : US_WidgetsDialog( 0, 0 ), 
      personID     ( invID ), 
      signal_wanted( signal ),
      guid         ( GUID ), 
-     db_access    ( access )
+     db_access    ( access ),
+     temperature  ( temp )
 {
    setWindowTitle( tr( "Analyte Management" ) );
    setPalette( US_GuiSettings::frameColor() );
@@ -215,9 +217,19 @@ US_AnalyteGui::US_AnalyteGui( int             invID,
          tr( "Temperature <small>(&deg;C)</small>:" ) );
    protein_info->addWidget( lb_protein_temp, prow, 0 );
 
-   le_protein_temp = us_lineedit( "" );
-   connect( le_protein_temp, SIGNAL( textChanged ( const QString& ) ), 
-                             SLOT  ( temp_changed( const QString& ) ) );
+   le_protein_temp = us_lineedit( QString::number( temperature, 'f', 1 ) );
+   
+   if ( signal )
+   {
+      le_protein_temp->setPalette ( gray );
+      le_protein_temp->setReadOnly( true );
+   }
+   else
+   {
+      connect( le_protein_temp, SIGNAL( textChanged ( const QString& ) ), 
+                                SLOT  ( temp_changed( const QString& ) ) );
+   }
+
    protein_info->addWidget( le_protein_temp, prow, 1 );
 
    QLabel* lb_protein_vbar = us_label( 
@@ -492,7 +504,6 @@ void US_AnalyteGui::populate( void )
             if ( type == "PROTEIN" )
             {
                rb_protein->setChecked( true );
-               le_protein_temp->setText( a.value( "temperature" ).toString() );
                le_protein_vbar->setText( a.value( "vbar"        ).toString() );
             }
 
@@ -1200,9 +1211,7 @@ void US_AnalyteGui::save_analyte( void )
          US_Math::calc_vbar( p, sequence, temperature );
 
          xml.writeAttribute( "type",        "PROTEIN" );
-         xml.writeAttribute( "temperature", 
-               QString::number( temperature, 'f', 1 ) );
-         xml.writeAttribute( "vbar",        le_protein_vbar->text() );
+         xml.writeAttribute( "vbar20", QString::number(  p.vbar20, 'e', 4 ) );
       }
          break;
 
