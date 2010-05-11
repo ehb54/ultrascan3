@@ -3,6 +3,7 @@
 
 #include "us_dataIO.h"
 #include "us_analysis_base.h"
+#include "us_distrib_plot.h"
 #include "us_editor.h"
 #include "us_math.h"
 #include "us_run_details.h"
