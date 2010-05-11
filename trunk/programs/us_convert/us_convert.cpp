@@ -1158,15 +1158,15 @@ void US_Convert::cancel_reference( void )
 
 void US_Convert::newExpInfo( void )
 {
-   getExpInfo( true );
+   getExpInfo( false );
 }
 
 void US_Convert:: editExpInfo( void )
 {
-   getExpInfo( false );
+   getExpInfo( true );
 }
 
-void US_Convert::getExpInfo( bool newInfo )
+void US_Convert::getExpInfo( bool editing )
 {
    ExpData.runID = le_runID -> text();
 
@@ -1182,9 +1182,39 @@ void US_Convert::getExpInfo( bool newInfo )
       count += raw.scanData.size();
    }
 
+   // Load information we're passing
    ExpData.runTemp = QString::number( sum / count );
+   strcpy( ExpData.opticalSystem, allData[ 0 ].type );
 
-   US_ExpInfo* expInfo = new US_ExpInfo( ExpData, newInfo );
+   // A list of unique rpms
+   ExpData.rpms.clear();
+   for ( int i = 0; i < allData.size(); i++ )
+   {
+      US_DataIO::rawData raw = allData[ i ];
+      for ( int j = 0; j < raw.scanData.size(); j++ )
+      {
+         if ( ! ExpData.rpms.contains( raw.scanData[ j ].rpm ) )
+            ExpData.rpms << raw.scanData[ j ].rpm;
+      }
+   }
+
+   // Now sort the rpm list.  Use a modified bubble sort;
+   // the list might already be almost ordered
+   bool done = false;
+   while ( !done )
+   {
+      done = true;
+      for ( int i = 0; i < ExpData.rpms.size() - 1; i++ )
+      {
+         if ( ExpData.rpms[ i ] > ExpData.rpms[ i + 1 ] )
+         {
+            ExpData.rpms.swap( i, i + 1 );
+            done = false;
+         }
+      }
+   }
+
+   US_ExpInfo* expInfo = new US_ExpInfo( ExpData, editing );
 
    connect( expInfo, SIGNAL( updateExpInfoSelection( US_ExpInfo::ExperimentInfo& ) ),
             this   , SLOT  ( updateExpInfo         ( US_ExpInfo::ExperimentInfo& ) ) );
@@ -1193,8 +1223,6 @@ void US_Convert::getExpInfo( bool newInfo )
             this   , SLOT  ( cancelExpInfo         () ) );
 
    expInfo->exec();
-   qApp->processEvents();
-   delete expInfo;
 }
 
 void US_Convert::updateExpInfo( US_ExpInfo::ExperimentInfo& d )

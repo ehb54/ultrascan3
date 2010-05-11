@@ -776,7 +776,7 @@ ENGINE = InnoDB;
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS us3.avivFluorescence ;
 
-CREATE  TABLE IF NOT EXISTS us3.avivfluorescence (
+CREATE  TABLE IF NOT EXISTS us3.avivFluorescence (
   avivFluorescenceID INT NOT NULL AUTO_INCREMENT ,
   opticalSystemSettingID INT NULL ,
   topRadius FLOAT NULL ,
@@ -787,7 +787,7 @@ CREATE  TABLE IF NOT EXISTS us3.avivfluorescence (
   nmEmission FLOAT NULL ,
   dateUpdated TIMESTAMP NULL ,
   PRIMARY KEY (avivFluorescenceID) ,
-  INDEX ndx_avivfluorescence_opticalSystemSettingID 
+  INDEX ndx_avivFluorescence_opticalSystemSettingID 
     (opticalSystemSettingID ASC) )
 ENGINE = InnoDB;
 

@@ -8,118 +8,7 @@
 #include "us_widgets.h"
 #include "us_widgets_dialog.h"
 #include "us_help.h"
-
-/*! \class US_DBControl
-           This is a base class that helps to provide the ability to 
-           create QWidgets that can populate themselves from the US3
-           database and then keep track of their contents. This
-           is intended for widgets like combo boxes and list widgets
-           that have a logical ID and an associated description to be
-           displayed in the widget for selection.
-*/
-class US_EXTERN US_DBControl
-{
-   public:
-      /*! \brief Generic constructor for the US_DBControl class. To 
-                 instantiate the class a calling function must
-                 provide information about which US3 stored procedure
-                 to use. 
-
-                 The US3 procedure must be of a certain type. It must
-                 return a multirow dataset containing the table
-                 ID and the name or other information to display in the
-                 widget.
-
-                 The procedure is not automatically called in this class.
-                 That way it can be called at the appropriate time in
-                 the derived class. To call the procedure, see the
-                 populate function.
-
-          \param query  The number of US3 stored procedure to execute,
-                        using the dbQueries enum below
-      */
-      US_DBControl             ( int = -1 );
-
-      //! A null destructor. 
-      ~US_DBControl            () {};
-
-      /*! \brief A function to call the US3 procedure and load widgetList
-                 with appropriate information
-
-                 Returns an error message, or an empty string if no error.
-      */
-      QString populate         ( void );
-
-      enum dbQueries
-      {
-         SQL_GET_PROJECTS    ,       //!< Query to get project descriptions
-         SQL_GET_LABS        ,       //!< Query to get lab names
-         SQL_GET_INSTRUMENTS ,       //!< Query to get instrument names
-         SQL_GET_PEOPLE      ,       //!< Query to get names of people
-         SQL_GET_ROTORS              //!< Query to get rotor names
-      };
-
-   protected:
-      struct listInfo
-      {
-         QString        ID;
-         QString        text;
-      };
-
-      QList< listInfo >        widgetList;
-
-      int                      query;
-};
-
-/*! \class US_DBComboBox
-           This class provides the ability to create a combo box that
-           can keep track of its contents. The ability to set the box
-           to display the contents associated with the logical ID (the 
-           ID from the database), and to retrieve the current logical 
-           ID are provided.
-*/
-class US_EXTERN US_DBComboBox : public QComboBox, US_DBControl
-{
-   public:
-      /*! \brief Generic constructor for the US_DBComboBox class. To 
-                 instantiate the class a calling function must
-                 provide information about which US3 stored procedure
-                 to use. 
-
-                 The US3 procedure must be of a certain type. It needs
-                 to return a multirow dataset containing the table
-                 ID and the name or other information to display in the
-                 combo box.
-
-          \param parent A reference to the parent dialog to which this 
-                        US_DBComboBox belongs, or 0 if no parent.
-          \param query  The number of the US3 stored procedure to execute,
-                        using the dbQueries enum in US_DBControl.
-      */
-      US_DBComboBox            ( QWidget* parent = 0, int = -1 );
-
-      //! A null destructor. 
-      ~US_DBComboBox           () {};
-
-      /*! \brief A function to reset the contents of the widget, from
-                 the information it reads in widgetList.
-      */
-      void reset               ( void );
-
-      /*! \brief A function to set the current index of the combo box
-                 to a logical ID, based on the ID of the record in the
-                 database
-
-          \param ID    The logical ID of the database record to set the
-                       current index to
-      */
-      void setComboBoxIndex    ( int  );
-
-      /*! \brief A function to retrieve the logical ID of the database
-                 record to which the combo box is currently pointing
-      */
-      int  getComboBoxID       ( void );
-};
+#include "us_selectbox.h"
 
 /*! \class US_ExpInfo
            This class provides the ability to associate raw data with
@@ -161,6 +50,8 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
          int              operatorID;         //!< The personID of the person who operated the centrifuge
          int              rotorID;            //!< The rotor that was used
          QString          expType;            //!< The type of experiment
+         char             opticalSystem[2];   //!< The type of optical system used
+         QList< double >  rpms;               //!< A list of rotor speeds observed during the experiment
          QString          runTemp;            //!< The run temperature
          QString          label;              //!< The experiment label, or identifying information
          QString          comments;           //!< Comments that were associated with the experiment
@@ -179,10 +70,10 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
 
           \param dataIn  A reference to a structure that contains
                          previously selected experiment data, if any.
-          \param newInfo A way to distinguish between a new db instance
+          \param editing A way to distinguish between a new db instance
                          or editing a previously existing one
       */
-      US_ExpInfo( ExperimentInfo&, bool newInfo = true );
+      US_ExpInfo( ExperimentInfo&, bool editing = false );
 
       //! A null destructor. 
       ~US_ExpInfo() {};
@@ -212,38 +103,40 @@ class US_EXTERN US_ExpInfo : public US_WidgetsDialog
       US_Help                showHelp;
 
       QStringList            experimentTypes;
-                          
-      US_DBComboBox*         cb_project;
-      US_DBComboBox*         cb_lab;
-      US_DBComboBox*         cb_instrument;
-      US_DBComboBox*         cb_operator;
-      US_DBComboBox*         cb_rotor;
       QComboBox*             cb_expType;
+
+      US_SelectBox*          cb_project;
+      US_SelectBox*          cb_lab;
+      US_SelectBox*          cb_instrument;
+      US_SelectBox*          cb_operator;
+      US_SelectBox*          cb_rotor;
                           
       QLineEdit*             le_investigator;
       QLineEdit*             le_runID;
       QLineEdit*             le_runTemp;
       QLineEdit*             le_label;
-
       QTextEdit*             te_comment;
                           
+      QListWidget*           lw_rotorSpeeds;
+
       QPushButton*           pb_accept;
 
   private slots:
       void reset             ( void );
+      bool load              ( void );
+      void reload            ( void );
       void runIDChanged      ( void );
+      int  checkRunID        ( void );
+      void change_lab        ( int  );
+      void change_instrument ( int  );
       void accept            ( void );
       void cancel            ( void );
+      void newExperiment     ( ExperimentInfo&  );
+      void updateExperiment  ( ExperimentInfo&  );
       void selectInvestigator( void );
       void assignInvestigator( int, const QString&, const QString& );
-      int  checkRunID        ( void );
-      void loadExperimentInfo( void );
-      void updateExperiment  ( ExperimentInfo&  );
-      void newExperiment     ( ExperimentInfo&  );
+      QComboBox* us_expTypeComboBox         ( void );
       void connect_error     ( const QString& );
-
-      QComboBox* us_expTypeComboBox   ( void );
-
       void help              ( void )
         { showHelp.show_help( "manual/us_convert.html" ); };
 };
