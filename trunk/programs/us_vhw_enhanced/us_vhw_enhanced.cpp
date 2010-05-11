@@ -249,6 +249,7 @@ void US_vHW_Enhanced::load( void )
             this,       SLOT(   details() ) );
    dataLoaded = true;
    pb_selegr->setEnabled( true );
+   pb_dstrpl->setEnabled( true );
    le_temp->setText( t );                            // set avg temp text
 }
 
@@ -257,6 +258,7 @@ void US_vHW_Enhanced::details( void )
 {
    US_RunDetails* dialog
       = new US_RunDetails( rawList, runID, workingDir, triples );
+   dialog->move( this->pos() + QPoint( 100, 100 ) );
    dialog->exec();
    qApp->processEvents();
    delete dialog;
@@ -265,6 +267,23 @@ void US_vHW_Enhanced::details( void )
 // distribution plot
 void US_vHW_Enhanced::distr_plot(  void )
 {
+   QList< double > bfracs;
+   double  pterm    = 100.0 * positPct;
+   double  bterm    = 100.0 * boundPct / (double)divsCount;
+   double  bfrac;
+
+   bfracs.clear();
+
+   for ( int jj = 0; jj < divsCount; jj++ )
+   {
+      bfrac     = pterm + bterm * (double)( jj + 1 );
+      bfracs.append( bfrac );
+   }
+
+   US_DistribPlot* dialog = new US_DistribPlot( bfracs, dseds );
+   dialog->move( this->pos() + QPoint( 100, 100 ) );
+   dialog->exec();
+   delete dialog;
 }
 
 // data plot
