@@ -83,6 +83,7 @@ class US_EXTERN US_FemGlobal_New
       double      f_f0;
       double      wavelength;
       double      extinction;
+      double      axial_ratio;
       double      sigma;   // Concentration dependency of s
       double      delta;   // concentration dependency of D
       int         stoichiometry;

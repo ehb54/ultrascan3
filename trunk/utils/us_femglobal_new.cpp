@@ -21,6 +21,7 @@ US_FemGlobal_New::SimulationComponent::SimulationComponent()
    delta                = 0.0;
    stoichiometry        = 1;
    shape                = SPHERE;
+   axial_ratio          = 10.0;
    analyte_type         = 0;  // Protein
    c0.radius       .clear();
    c0.concentration.clear();

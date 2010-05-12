@@ -50,10 +50,10 @@ class US_Properties : public US_WidgetsDialog
       int                           oldRow;
       US_Analyte                    analyte;
 
-      enum { MW, S, D, F, F_F0 } check_type;
+      enum { MW, S, D, F, F_F0 }    check_type;
 
-      US_Hydrosim hydro_data;
-      US_Hydrosim working_data;
+      US_Hydrosim  hydro_data;
+      US_Hydrosim  working_data;
 
       QIcon        check;
                    
@@ -97,7 +97,6 @@ class US_Properties : public US_WidgetsDialog
       void lambda        ( bool );
       int  next          ( QList< double >, double, bool );
       void clear_guid    ( void );
-      void set_stoich    ( double );
 
 	private slots:
       void newAnalyte    ( void );
@@ -113,6 +112,7 @@ class US_Properties : public US_WidgetsDialog
       void load_c0       ( void );
       void co_sed        ( int );
       void set_molar     ( void );
+      void set_stoich    ( double );
            
       void del_component ( void );
       //void edit_component( QListWidgetItem* );
