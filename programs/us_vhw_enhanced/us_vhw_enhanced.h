@@ -70,7 +70,6 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       double        positPct;
       double        baseline;
       double        plateau;
-      double        meniscus;
       double        correc;
       double        C0;
       double        c0term;
@@ -95,7 +94,6 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       int           divsCount;
       int           scanCount;
       int           valueCount;
-      int           nexclude;
 
       bool          haveZone;
       bool          groupSel;
