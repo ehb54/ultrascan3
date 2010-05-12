@@ -292,6 +292,7 @@ void US_vHW_Enhanced::data_plot( void )
    double  xmax        = 0.0;
    double  ymax        = 0.0;
    int     count       = 0;
+   int     nskip       = 0;
    int     totalCount;
 
    data_plot2->detachItems();
@@ -307,11 +308,9 @@ void US_vHW_Enhanced::data_plot( void )
    divsCount  = qRound( ct_division->value() );
    totalCount = scanCount * divsCount;
    divfac     = 1.0 / (double)divsCount;
-   nexclude   = 0;
    boundPct   = ct_boundaryPercent->value() / 100.0;
    positPct   = ct_boundaryPos    ->value() / 100.0;
    baseline   = calc_baseline();
-   meniscus   = d->meniscus;
    correc     = solution.correction * 1.0e13;
 	C0         = 0.0;
 	Swavg      = 0.0;
@@ -328,11 +327,11 @@ void US_vHW_Enhanced::data_plot( void )
       range      = plateau - baseline;
       basecut    = baseline + range * positPct;
       
-      if ( d->scanData[ ii ].readings[ 0 ].value > basecut ) nexclude++;
+      if ( d->scanData[ ii ].readings[ 0 ].value > basecut ) nskip++;
    }
 qDebug() << " valueCount  totalCount" << valueCount << totalCount;
 qDebug() << "  scanCount  divsCount" << scanCount << divsCount;
-   le_skipped->setText( QString::number( nexclude ) );
+   le_skipped->setText( QString::number( nskip ) );
 
    // Do first experimental plateau calcs based on horizontal zones
 
@@ -347,7 +346,7 @@ qDebug() << "  scanCount  divsCount" << scanCount << divsCount;
 
    if ( !haveZone )
    {  // accumulate reliable,unreliable scans and plateaus
-      for ( int ii = nexclude; ii < scanCount; ii++ )
+      for ( int ii = 0; ii < scanCount; ii++ )
       {
          s        = &d->scanData[ ii ];
 //qDebug() << "p: scan " << ii+1;
@@ -378,7 +377,7 @@ qDebug() << "  scanCount  divsCount" << scanCount << divsCount;
 
    else
    {  // had already found flat zones, so just set up to find Swavg,C0
-      for ( int ii = nexclude; ii < scanCount; ii++ )
+      for ( int ii = 0; ii < scanCount; ii++ )
       {
          plats.append( d->scanData[ ii ].plateau );
          isrel.append( ii );
@@ -440,12 +439,6 @@ qDebug() << " jj scan plateau " << jj << ii+1 << d->scanData[ii].plateau;
 
    for ( int ii = 0; ii < scanCount; ii++ )
    {
-      scpds.clear();                       // clear this scan's Cp list
-      if ( ii < nexclude  ||  excludedScans.contains( ii ) )
-      {
-         cpds << scpds;
-         continue;
-      }
       s          = &d->scanData[ ii ];
       valueCount = s->readings.size();
       range      = s->plateau - baseline;
@@ -461,6 +454,16 @@ qDebug() << " jj scan plateau " << jj << ii+1 << d->scanData[ii].plateau;
       oterm      = ( s->seconds - time_correction ) * omega * omega;
       eterm      = -2.0 * oterm / correc;
       c0term     = ( C0 - baseline ) * boundPct * divfac;
+
+      scpds.clear();                       // clear this scan's Cp list
+
+      if ( excludedScans.contains( ii ) )
+      {
+         for ( int jj = 0; jj < divsCount; jj++ )
+            scpds.append( cinc );
+         cpds << scpds;
+         continue;
+      }
 
       for ( int jj = 0; jj < divsCount; jj++ )
       {  // calculate partial plateaus
@@ -526,7 +529,7 @@ qDebug() << "iter mxiter " << iter << mxiter;
 
       for ( int ii = 0; ii < scanCount; ii++ )
       {
-         if ( ii < nexclude  ||  excludedScans.contains( ii ) )
+         if ( excludedScans.contains( ii ) )
             continue;
 
          s        = &d->scanData[ ii ];
@@ -585,12 +588,12 @@ qDebug() << "   +++ avgdif < avdthr (" << avgdif << avdthr << ") +++";
    for ( int ii = 0; ii < totalCount; ii++ )
       pty[ ii ]   = -1.0;
 
-   int     kk     = nexclude * divsCount; // index to sed. coeff. values
+   int     kk     = 0;                    // index to sed. coeff. values
    int     kl     = 0;                    // index/count of live scans
 
    // Calculate the corrected sedimentation coefficients
 
-   for ( int ii = nexclude; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < scanCount; ii++ )
    {
       s        = &d->scanData[ ii ];
 
@@ -614,6 +617,7 @@ qDebug() << "scn liv" << ii+1 << kl
       valueCount = s->readings.size();
       range      = s->plateau - baseline;
       cconc      = baseline + range * positPct; // initial conc for span
+      basecut    = baseline + range * positPct;
       omega      = s->rpm * M_PI / 30.0;
       oterm      = ( timev > 0.0 ) ? ( timev * omega * omega ) : -1.0;
       scpds      = cpds.at( ii );  // list of conc values of divs this scan
@@ -631,6 +635,9 @@ qDebug() << "scn liv" << ii+1 << kl
          if ( divrad < bdrad  ||  mconc < bdcon )
          {  // corresponding sedimentation coefficient
             sedc        = sed_coeff( mconc, oterm );
+if(sedc<0)
+qDebug() << " *excl* div" << jj+1 << " mconc conc0" << mconc
+   << s->readings[0].value;
          }
 
          else
@@ -666,11 +673,12 @@ qDebug() << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
    sym.setPen  ( QPen( Qt::blue ) );
    sym.setBrush( QBrush( Qt::white ) );
    sym.setSize ( 8 );
-   
-   kk         = nexclude * divsCount; // index to sed. coeff. values
+ 
+   kk         = 0;                    // index to sed. coeff. values
 
    // Set points for each division of each scan
-   for ( int ii = nexclude; ii < scanCount; ii++ )
+
+   for ( int ii = 0; ii < scanCount; ii++ )
    {
       if ( excludedScans.contains( ii ) )
       {
@@ -708,7 +716,8 @@ qDebug() << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
    for ( int jj = 0; jj < divsCount; jj++ )
    {  // walk thru divisions, fitting line to points from all scans
       count          = 0;
-      for ( int ii = nexclude; ii < scanCount; ii++ )
+
+      for ( int ii = 0; ii < scanCount; ii++ )
       {
          if ( excludedScans.contains( ii ) ) continue;
 
@@ -751,13 +760,14 @@ qDebug() << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
 
    count  = 0;
 
-   for ( int ii = nexclude; ii < scanCount; ii++ )
+   for ( int ii = 0; ii < scanCount; ii++ )
    {  // accumulate points of back-diffusion cutoff line
 
       if ( !excludedScans.contains( ii ) )
       {
          x[ count ] = bdrads.at( count );
          y[ count ] = bdcons.at( count );
+qDebug() << "   bd x y k " << x[count] << y[count] << count+1;
          count++;
       }
    }
@@ -767,7 +777,7 @@ qDebug() << " *excl* div" << jj+1 << " drad dcon " << divrad << mconc;
    dcurve->setPen( QPen( QBrush( Qt::red ), 3.0 ) );
    dcurve->setData( x, y, count );
 qDebug() << " DP: xr0 yr0 " << x[0]       << y[0];
-qDebug() << " DP: xrN yrN " << x[count-1] << y[count-1];
+qDebug() << " DP: xrN yrN " << x[count-1] << y[count-1] << count;
    data_plot2->replot();
 
    // plot any upper plot vertical excluded-scan line(s)
@@ -1172,7 +1182,7 @@ double US_vHW_Enhanced::sed_coeff( double cconc, double oterm )
 
    if ( rv0 > 0.0 )
    {  // use radius and other terms to get corrected sed. coeff. value
-      sedc        = correc * log( rv0 / meniscus ) / oterm;
+      sedc        = correc * log( rv0 / d->meniscus ) / oterm;
    }
    return sedc;
 }
@@ -1193,7 +1203,6 @@ void US_vHW_Enhanced::div_seds( )
    double  cconc;
    double  mconc;
    bdtoler          = ct_tolerance->value();
-   meniscus         = d->meniscus;
 
    dseds.clear();
    dslos.clear();
@@ -1218,7 +1227,7 @@ void US_vHW_Enhanced::div_seds( )
       if ( jj == 0 )
       {  // we only need to calculate x values, bcut the 1st time thru
 
-         for ( ii = nexclude; ii < scanCount; ii++ )
+         for ( ii = 0; ii < scanCount; ii++ )
          {
             if ( !excludedScans.contains( ii ) )
             {
@@ -1228,9 +1237,12 @@ void US_vHW_Enhanced::div_seds( )
                omegasq     = omega * omega;
                timecor     = s->seconds - time_correction;
                timesqr     = sqrt( timecor );
+               mconc       = s->readings[ 0 ].value;
+               pconc       = baseline + ( s->plateau - baseline) * positPct;
                xx[ nscnu ] = 1.0 / timesqr;
                ll[ nscnu ] = ii;
-               pp[ nscnu ] = baseline + ( s->plateau - baseline) * positPct;
+               pp[ nscnu ] = pconc;
+               pconc       = max( pconc, mconc );
 
                // accumulate limits based on back diffusion
 
@@ -1244,12 +1256,19 @@ void US_vHW_Enhanced::div_seds( )
                cpij        = cpds.at( ii ).at( jj );
                //mconc       = pp[ 0 ] + cpij * 0.5;
                //mconc       = baseline + cpij * 0.5;
-               mconc       = pp[ nscnu ] + cpij * 0.5;
-               dsed        = sed_coeff( mconc, oterm ) * 1.0e-13;
+               mconc       = pconc + cpij * 0.5;
+               dsed        = sed_coeff( mconc, oterm );
+//if ( dsed < 0.0 || ii == (scanCount-1) ) {
+if ( dsed < 0.0 ) {
+qDebug() << "    cpij mconc base" << cpij << mconc << pp[nscnu] << s->plateau;
+dsed=sed_coeff(baseline,oterm);
+}
+
+               dsed       *= 1.0e-13;
                //bdleft      = bdtoler * bdifsqr
-               //   / ( 2.0 * dsed * omegasq * ( bottom + meniscus ) / 2.0 );
+               //   / ( 2.0 * dsed * omegasq * ( bottom + d->meniscus ) / 2.0 );
                bdleft      = bdtoler * bdifsqr
-                  / ( dsed * omegasq * ( bottom + meniscus ) * timesqr );
+                  / ( dsed * omegasq * ( bottom + d->meniscus ) * timesqr );
                xbdleft     = find_root( bdleft );
                radD        = bottom - ( 2.0 * xbdleft * bdifsqr * timesqr );
 
@@ -1261,7 +1280,7 @@ void US_vHW_Enhanced::div_seds( )
 
                xr[ nscnu ] = radD;
                yr[ nscnu ] = s->readings[ mm ].value;
-qDebug() << "  bottom meniscus bdleft" << bottom << meniscus << bdleft;
+qDebug() << "  bottom meniscus bdleft" << bottom << d->meniscus << bdleft;
 qDebug() << "  dsed find_root toler" << dsed << xbdleft << bdtoler;
 qDebug() << "  bdiffc bdifsqr mm" << bdiffc << bdifsqr << mm << mmlast;
 qDebug() << "BD x,y " << nscnu+1 << radD << yr[nscnu];
@@ -1296,8 +1315,9 @@ qDebug() << "BD x,y " << nscnu+1 << radD << yr[nscnu];
          if ( radD > xr[ kk ]  &&  mconc > yr[ kk ] )
          {  // gone beyond back-diffusion cutoff: exit loop with truncated list
             kscnu      = kk;
-qDebug() << " div kscnu" << jj+1 << kscnu
-   << " radD xrkk" << radD << xr[kk] << " mconc yrkk" << mconc << yr[kk];
+//qDebug() << " div kscnu" << jj+1 << kscnu
+//   << " radD xrkk" << radD << xr[kk] << " mconc yrkk" << mconc << yr[kk];
+//if(kscnu==0) qDebug() << "   pc cc cpij mm" << pconc << cconc << cpij << mm;
             break;
          }
 //if ( kk < 2 || kk > (nscnu-3) )
@@ -1307,6 +1327,19 @@ qDebug() << " div kscnu" << jj+1 << kscnu
 //qDebug() << " nscnu pp0 yy0 ppn yyn " << nscnu << yy[0] << pp[0]
 //   << yy[nscnu-1] << pp[nscnu-1];
 
+      ii         = 0;
+      for ( int kk = 0; kk < kscnu; kk++ )
+      {  // remove any leading points below meniscus
+         if ( yy[ kk ] > 0.0 )
+         {
+            if ( kk > ii )
+               yy[ ii ] = yy[ kk ];
+            ii++;
+         }
+         else
+            qDebug() << "+++ SED<=0.0 div scn" << jj+1 << kk+1;
+      }
+      kscnu      = ii;
 
       if ( kscnu > 0 )
       {
@@ -1317,11 +1350,15 @@ qDebug() << " div kscnu" << jj+1 << kscnu
 
       else
       {
-         dsed       = yy[ 0 ];
+         ii         = nscnu / 2;
+         dsed       = yy[ ii ];
          slope      = 0.0;
          sigma      = 0.0;
          corre      = 0.0;
          slope      = 0.0;
+ii=(nscnu<1)?1:nscnu;
+qDebug() << "    nscnu" << nscnu << "pp0 yy0 ppn yyn " << pp[0] << yy[0]
+   << pp[ii-1] << yy[ii-1];
       }
 
       dseds.append( dsed );
@@ -1337,7 +1374,7 @@ qDebug() << " div kscnu" << jj+1 << kscnu
 qDebug() << " dsed[0] " << dseds.at(0);
 qDebug() << " dsed[L] " << dseds.at(divsCount-1);
 qDebug() << " D_S: xr0 yr0 " << xr[0] << yr[0];
-qDebug() << " D_S: xrN yrN " << xr[nscnu-1] << yr[nscnu-1];
+qDebug() << " D_S: xrN yrN " << xr[nscnu-1] << yr[nscnu-1] << nscnu;
 
    bdrads.clear();
    bdcons.clear();
@@ -1465,10 +1502,7 @@ qDebug() << "groupClick: step" << groupstep
          label.setText( gbanner );
          label.setFont( QFont( US_GuiSettings::fontFamily(),
                   -1, QFont::Bold ) );
-//qDebug() << "label.fontsiz " << label.font().pointSize();
-         //label.setColor( Qt::lightGray );
          label.setColor( Qt::magenta );
-         //label.setColor( Qt::red );
          label.setBackgroundBrush( QBrush( QColor( 8, 8, 8, 128 ) ) );
 
          marker->setValue( 0.0, cgrdata.sed );
@@ -1519,6 +1553,7 @@ void US_vHW_Enhanced::add_group_info( )
    }
 
    // finish average-sed-coeff and percent calculations; add to groups list
+   grdat.ndivs     = grdat.ndivs > 0 ? grdat.ndivs : 1;
    grdat.sed      /= (double)grdat.ndivs;
    grdat.percent   = ( (double)grdat.ndivs / (double)divsCount ) * 100.0;
 
@@ -1767,7 +1802,7 @@ qDebug() << "WM: filename " << filename;
    ts <<     "*************************************\n\n\n";
    ts << "3            " << tr( "\t# Fixed Molecular Weight Distribution\n" );
    ts << groups << "           " << tr( "\t# Number of Components\n" );
-   ts << meniscus << "       " << tr( "\t# Meniscus in cm\n" );
+   ts << d->meniscus << "       " << tr( "\t# Meniscus in cm\n" );
    ts << "0.01         " << tr( "\t# Meniscus range in cm\n" );
    ts << "0            " << tr( "\t# Meniscus fitting control\n" );
    ts << baseline << "     " << tr( "\t# Baseline in OD\n" );
