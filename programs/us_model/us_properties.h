@@ -64,8 +64,6 @@ class US_Properties : public US_WidgetsDialog
       QPushButton* pb_load_c0;
       QComboBox*   cmb_shape;
 
-      QLineEdit*   le_density;
-      QLineEdit*   le_viscosity;
       QLineEdit*   le_vbar;
       QLineEdit*   le_mw;
       QLineEdit*   le_s;
@@ -97,6 +95,7 @@ class US_Properties : public US_WidgetsDialog
       void lambda        ( bool );
       int  next          ( QList< double >, double, bool );
       void clear_guid    ( void );
+      void clear_entries ( void );
 
 	private slots:
       void newAnalyte    ( void );
