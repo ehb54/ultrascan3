@@ -34,7 +34,7 @@ US_Properties::US_Properties(
    // Very light gray
    gray = normal;
    gray.setColor( QPalette::Base, QColor( 0xe0, 0xe0, 0xe0 ) );
-
+   
    // Initialize the check icon
    check = QIcon( US_Settings::usHomeDir() + "/etc/check.png" );
 
@@ -240,7 +240,8 @@ US_Properties::US_Properties(
    connect( pb_load_c0, SIGNAL( clicked() ), SLOT( load_c0() ) );
    main->addWidget( pb_load_c0, row, 0 );
 
-   QGridLayout* co_sed_layout = us_checkbox( tr( "Co-sedimenting Solute" ), cb_co_sed );
+   QGridLayout* co_sed_layout = us_checkbox( tr( "Co-sedimenting Solute" ), 
+         cb_co_sed );
    connect( cb_co_sed, SIGNAL( stateChanged( int ) ), SLOT( co_sed( int ) ) );
    main->addLayout( co_sed_layout, row++, 1 );
    
@@ -263,9 +264,16 @@ void US_Properties::set_stoich( double stoich )
 
    inUpdate = true;
 
+   sc->mw /= sc->stoichiometry;  // Get monomer mw
+   sc->mw *= stoich;             // Now adjust for new stoichiometry
+
+   sc->molar_concentration /= sc->stoichiometry;
+   sc->molar_concentration  *= stoich;
+
    sc->stoichiometry = (int) stoich;
 
-   calculate();
+   update( 0 );   // Parameter is ignored
+   set_molar();
    inUpdate = false;
 }
 
@@ -282,8 +290,7 @@ void US_Properties::co_sed( int new_state )
          int response = QMessageBox::question( this,
             tr( "Change co-sedimenting solute?" ),
             tr( "Another component is marked as the co-sedimenting solute.\n"
-                "Change it to the current item?"
-                "Remove it?" ),
+                "Change it to the current analyte?" ),
             QMessageBox::Yes, QMessageBox::No );
 
          if ( response == QMessageBox::No )
@@ -321,10 +328,6 @@ void US_Properties::edit_component( void )
 
 void US_Properties::edit_vbar( void )
 {
-   // If there is a manual update, then the guid is invalidated
-   le_guid      ->clear();
-   le_wavelength->clear();
-
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
 
@@ -426,13 +429,27 @@ void US_Properties::select_shape( int shape )
 {
    if ( inUpdate ) return;
 
+   if ( le_guid->text().isEmpty() )
+   {
+      QMessageBox::information( this,
+            tr( "Manual Update" ),
+            tr( "The shape is not a valid selection "
+                "when a characteristic has been manually updated." ) );
+      return;
+   }
+
+   int row = lw_components->currentRow();
+   if ( row < 0 ) return;
+
+   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+
    switch ( shape )
    {
       case US_FemGlobal_New::PROLATE:
-         le_f_f0->setText(  QString::number( hydro_data.prolate.f_f0, 'f', 3 ) );
-         le_s   ->setText(  QString::number( hydro_data.prolate.s,    'e', 4 ) );
-         le_D   ->setText(  QString::number( hydro_data.prolate.D,    'e', 4 ) );
-         le_f   ->setText(  QString::number( hydro_data.prolate.f,    'e', 4 ) );
+         le_f_f0->setText(  QString::number( hydro_data.prolate.f_f0, 'f', 3 ));
+         le_s   ->setText(  QString::number( hydro_data.prolate.s,    'e', 4 ));
+         le_D   ->setText(  QString::number( hydro_data.prolate.D,    'e', 4 ));
+         le_f   ->setText(  QString::number( hydro_data.prolate.f,    'e', 4 ));
          break;
 
       case US_FemGlobal_New::OBLATE:
@@ -456,6 +473,11 @@ void US_Properties::select_shape( int shape )
          le_f   ->setText(  QString::number( hydro_data.sphere.f,    'e', 4 ) );
          break;
    }
+
+   sc->f_f0 = le_f_f0->text().toDouble();
+   sc->f    = le_f   ->text().toDouble();
+   sc->s    = le_s   ->text().toDouble();
+   sc->D    = le_D   ->text().toDouble();
 }
 
 void US_Properties::lambda_down( void )
@@ -683,12 +705,14 @@ void US_Properties::update( int /* row */ )
    le_description->setText( sc->name );
 
    // Set guid
-   uuid_unparse( sc->analyteGUID, uuid );
    
    if ( uuid_is_null( sc->analyteGUID ) )
       le_guid->clear(); 
    else
+   {
+      uuid_unparse( sc->analyteGUID, uuid );
       le_guid->setText( QString( uuid ) );
+   }
 
    inUpdate = true;
 
@@ -706,6 +730,15 @@ void US_Properties::update( int /* row */ )
    le_molar      ->setText( QString::number( sc->molar_concentration, 'e', 4 ));
    le_analyteConc->setText( QString::number( sc->signal_concentration,'f', 1 ));
    
+   // Update hydro data
+   hydro_data.mw          = sc->mw;
+   hydro_data.density     = buffer.density;
+   hydro_data.viscosity   = buffer.viscosity;
+   hydro_data.vbar        = sc->vbar20;
+   hydro_data.axial_ratio = sc->axial_ratio;
+
+   hydro_data.calculate( model.temperature );
+
    // Set shape
    switch ( sc->shape )
    {
@@ -751,20 +784,28 @@ void US_Properties::new_hydro( US_Analyte ad )
    hydro_data = working_data;
    analyte    = ad;
 
+   int row = lw_components->currentRow();
+   if ( row < 0 ) return;
+
+   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+
    // Set the name of the component
    if ( ! ad.description.isEmpty() )
    {
       lw_components->disconnect( SIGNAL( currentRowChanged( int ) ) );
-      int row = lw_components->currentRow();
       delete lw_components->currentItem();
       lw_components->insertItem( row, new QListWidgetItem( ad.description ) );
       lw_components->setCurrentRow( row );
 
       connect( lw_components, SIGNAL( currentRowChanged( int  ) ),
                               SLOT  ( update           ( int  ) ) );
+
+      sc->name = ad.description;
    }
+
    // Set guid
    le_guid->setText( ad.guid );
+   uuid_parse( ad.guid.toAscii().data(), sc->analyteGUID );
 
    // Set extinction
    if ( ad.extinction.size() > 0 )
@@ -781,13 +822,20 @@ void US_Properties::new_hydro( US_Analyte ad )
       le_extinction->setText( "0.0000" );
    }
 
+   sc->extinction = le_extinction->text().toDouble();
+
    // Set vbar(20), mw
    le_mw  ->setText( QString::number( hydro_data.mw,   'f', 1 ) );
    le_vbar->setText( QString::number( hydro_data.vbar, 'f', 4 ) );
+
+   sc->mw     = hydro_data.mw;
+   sc->vbar20 = hydro_data.vbar;
    
    // Set f/f0, s, D, and f for shape
    int shape = cmb_shape->itemData( cmb_shape->currentIndex() ).toInt();
    select_shape( shape );
+
+   set_molar();
 }
 
 void US_Properties::acceptProp( void ) 
@@ -855,7 +903,6 @@ void US_Properties::setInvalid( void )
 void US_Properties::del_component( void )
 {
    int row = lw_components->currentRow();
-
    if ( row < 0 ) return;
 
    QListWidgetItem* item = lw_components->item( row );
@@ -871,6 +918,9 @@ void US_Properties::del_component( void )
    model.components.remove( row );
    lw_components->setCurrentRow( -1 );
    delete lw_components->takeItem( row );
+
+   oldRow = -1;
+
 }
 
 void US_Properties::calculate( void )
@@ -1107,14 +1157,14 @@ void US_Properties::calculate( void )
    le_D   ->setText( QString::number( D   , 'e', 4 ) );
    le_f   ->setText( QString::number( f   , 'e', 4 ) );
 
-   // If there is a manual update, then the guid is invalidated
-   clear_guid();
-   le_wavelength->clear();
-
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
 
    US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+
+   // If there is a manual update, then the guid is invalidated
+   clear_guid();
+   le_wavelength->clear();
 
    sc->mw   = mw;
    sc->f_f0 = f_f0;
