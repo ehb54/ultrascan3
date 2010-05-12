@@ -253,6 +253,73 @@ US_Properties::US_Properties(
    QPushButton* pb_accept = us_pushbutton( tr( "Accept") );
    main->addWidget( pb_accept, row++, 1 );
    connect( pb_accept, SIGNAL( clicked() ), SLOT( acceptProp() ) );
+
+   clear_entries();
+}
+
+void US_Properties::clear_entries( void )
+{
+   le_guid       ->clear();
+   le_vbar       ->clear();
+   le_extinction ->clear();
+   le_wavelength ->clear();
+   le_molar      ->clear();
+   le_analyteConc->clear();
+   le_mw         ->clear();
+   le_s          ->clear();
+   le_D          ->clear();
+   le_f          ->clear();
+   le_f_f0       ->clear();
+   le_sigma      ->clear();
+   le_delta      ->clear();
+
+   cmb_shape ->setCurrentIndex( 0 );
+   ct_stoich ->setValue( 1.0 );
+   pb_load_c0->setIcon( QIcon() );
+   cb_co_sed ->setChecked( false );
+}
+
+void US_Properties::newAnalyte( void )
+{
+   US_FemGlobal_New::SimulationComponent sc;
+   model.components << sc;
+
+   int last = model.components.size() - 1;
+   update_lw();
+
+   lw_components->setCurrentRow( last );  // Runs update() via signal
+   calculate();
+}
+
+void US_Properties::del_component( void )
+{
+   int row = lw_components->currentRow();
+   if ( row < 0 ) return;
+
+   QListWidgetItem* item = lw_components->item( row );
+   int response = QMessageBox::question( this,
+         tr( "Delete Analyte?" ),
+         tr( "Delete the following analyte?\n" ) + item->text(),
+         QMessageBox::Yes, QMessageBox::No );
+
+   if ( response == QMessageBox::No ) return;
+
+   if ( model.coSedSolute == row ) model.coSedSolute = -1;
+
+   model.components.remove( row );
+   lw_components->setCurrentRow( -1 );
+   delete lw_components->takeItem( row );
+
+   oldRow = -1;
+   clear_entries();
+}
+
+void US_Properties::update_lw( void )
+{
+   lw_components->clear();
+
+   for ( int i = 0; i < model.components.size(); i++ )
+      lw_components->addItem( model.components[ i ].name );
 }
 
 void US_Properties::set_stoich( double stoich )
@@ -266,46 +333,25 @@ void US_Properties::set_stoich( double stoich )
 
    sc->mw /= sc->stoichiometry;  // Get monomer mw
    sc->mw *= stoich;             // Now adjust for new stoichiometry
+   le_mw->setText( QString::number( sc->mw, 'f', 1 ) );
 
-   sc->molar_concentration /= sc->stoichiometry;
-   sc->molar_concentration  *= stoich;
+   sc->extinction /= sc->stoichiometry;
+   sc->extinction *= stoich;
+   le_extinction->setText( QString::number( sc->extinction, 'f', 1 ) );
 
    sc->stoichiometry = (int) stoich;
 
-   update( 0 );   // Parameter is ignored
+   hydro_data.mw          = sc->mw;
+   hydro_data.density     = buffer.density;
+   hydro_data.viscosity   = buffer.viscosity;
+   hydro_data.vbar        = sc->vbar20;
+   hydro_data.axial_ratio = sc->axial_ratio;
+
+   hydro_data.calculate( model.temperature );
+
    set_molar();
    inUpdate = false;
-}
-
-void US_Properties::co_sed( int new_state )
-{
-   if ( inUpdate ) return;
-
-   if ( new_state == Qt::Checked )
-   {
-      int row = lw_components->currentRow();
-
-      if ( model.coSedSolute != -1 )
-      {
-         int response = QMessageBox::question( this,
-            tr( "Change co-sedimenting solute?" ),
-            tr( "Another component is marked as the co-sedimenting solute.\n"
-                "Change it to the current analyte?" ),
-            QMessageBox::Yes, QMessageBox::No );
-
-         if ( response == QMessageBox::No )
-         {
-             cb_co_sed->disconnect();
-             cb_co_sed->setChecked( false );
-             connect( cb_co_sed, SIGNAL( stateChanged( int ) ), 
-                                 SLOT  ( co_sed      ( int ) ) );
-             return;
-         }
-      }
-      model.coSedSolute = row;
-   }
-   else
-      model.coSedSolute = -1;
+   select_shape( sc->shape );
 }
 
 void US_Properties::edit_component( void )
@@ -428,15 +474,6 @@ void US_Properties::load_c0( void )
 void US_Properties::select_shape( int shape )
 {
    if ( inUpdate ) return;
-
-   if ( le_guid->text().isEmpty() )
-   {
-      QMessageBox::information( this,
-            tr( "Manual Update" ),
-            tr( "The shape is not a valid selection "
-                "when a characteristic has been manually updated." ) );
-      return;
-   }
 
    int row = lw_components->currentRow();
    if ( row < 0 ) return;
@@ -603,26 +640,6 @@ void US_Properties::clear_guid( void )
    le_guid->clear();
 }
 
-void US_Properties::update_lw( void )
-{
-   lw_components->clear();
-
-   for ( int i = 0; i < model.components.size(); i++ )
-      lw_components->addItem( model.components[ i ].name );
-}
-
-void US_Properties::newAnalyte( void )
-{
-   US_FemGlobal_New::SimulationComponent sc;
-   model.components << sc;
-
-   int last = model.components.size() - 1;
-   update_lw();
-
-   lw_components->setCurrentRow( last );  // Runs update() via signal
-   calculate();
-}
-
 void US_Properties::update( int /* row */ )
 {
    int index = lw_components->currentRow();
@@ -683,7 +700,7 @@ void US_Properties::update( int /* row */ )
      
       int shape = cmb_shape->itemData( cmb_shape->currentIndex() ).toInt();
       sc->shape = ( US_FemGlobal_New::ShapeType ) shape;
-      
+     
       // Characteristics
       sc->mw    = le_mw   ->text().toDouble();
       sc->s     = le_s    ->text().toDouble();
@@ -748,6 +765,8 @@ void US_Properties::update( int /* row */ )
       default:                        cmb_shape->setCurrentIndex( 3 ); break;
    }
 
+   ct_stoich->setValue( sc->stoichiometry );
+
    // Set characteristics
    le_mw   ->setText( QString::number( sc->mw   , 'f', 1 ) );
    le_f_f0 ->setText( QString::number( sc->f_f0 , 'e', 3 ) );
@@ -768,8 +787,12 @@ void US_Properties::update( int /* row */ )
 
 void US_Properties::simulate( void )
 {
-   if ( lw_components->currentRow() < 0 ) return;
-   working_data = hydro_data; // working_data will be updated
+   int row = lw_components->currentRow();
+   if ( row < 0 ) return;
+   US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+   
+   working_data     = hydro_data; // working_data will be updated
+   working_data.mw /= sc->stoichiometry;
 
    US_Predict1* dialog = new US_Predict1( 
          working_data, investigator, analyte, true, true );
@@ -781,13 +804,16 @@ void US_Properties::simulate( void )
 
 void US_Properties::new_hydro( US_Analyte ad )
 {
-   hydro_data = working_data;
-   analyte    = ad;
-
    int row = lw_components->currentRow();
-   if ( row < 0 ) return;
+   if ( row < 0 ) return;  // Should never happen
 
    US_FemGlobal_New::SimulationComponent* sc = &model.components[ row ];
+
+   hydro_data       = working_data;
+   working_data.mw *= sc->stoichiometry;
+   analyte          = ad;
+
+   hydro_data.calculate( model.temperature );
 
    // Set the name of the component
    if ( ! ad.description.isEmpty() )
@@ -813,12 +839,12 @@ void US_Properties::new_hydro( US_Analyte ad )
       QList< double > keys = ad.extinction.keys();
       le_wavelength->setText( QString::number( keys[ 0 ], 'f', 1 ) );
 
-      double value = ad.extinction[ keys[ 0 ] ];
+      double value = ad.extinction[ keys[ 0 ] ] * sc->stoichiometry;
       le_extinction->setText( QString::number( value,     'f', 1 ) );
    }
    else
    {
-      le_wavelength->setText( tr( "n/a" ) );
+      le_wavelength->clear();
       le_extinction->setText( "0.0000" );
    }
 
@@ -828,14 +854,17 @@ void US_Properties::new_hydro( US_Analyte ad )
    le_mw  ->setText( QString::number( hydro_data.mw,   'f', 1 ) );
    le_vbar->setText( QString::number( hydro_data.vbar, 'f', 4 ) );
 
-   sc->mw     = hydro_data.mw;
-   sc->vbar20 = hydro_data.vbar;
+   sc->mw          = hydro_data.mw;
+   sc->vbar20      = hydro_data.vbar;
+   sc->axial_ratio = hydro_data.axial_ratio;
    
    // Set f/f0, s, D, and f for shape
    int shape = cmb_shape->itemData( cmb_shape->currentIndex() ).toInt();
    select_shape( shape );
 
+   inUpdate = true;
    set_molar();
+   inUpdate = false;
 }
 
 void US_Properties::acceptProp( void ) 
@@ -900,27 +929,35 @@ void US_Properties::setInvalid( void )
    checkbox();
 }
 
-void US_Properties::del_component( void )
+void US_Properties::co_sed( int new_state )
 {
-   int row = lw_components->currentRow();
-   if ( row < 0 ) return;
+   if ( inUpdate ) return;
 
-   QListWidgetItem* item = lw_components->item( row );
-   int response = QMessageBox::question( this,
-         tr( "Delete Analyte?" ),
-         tr( "Delete the following analyte?\n" ) + item->text(),
-         QMessageBox::Yes, QMessageBox::No );
+   if ( new_state == Qt::Checked )
+   {
+      int row = lw_components->currentRow();
 
-   if ( response == QMessageBox::No ) return;
+      if ( model.coSedSolute != -1 )
+      {
+         int response = QMessageBox::question( this,
+            tr( "Change co-sedimenting solute?" ),
+            tr( "Another component is marked as the co-sedimenting solute.\n"
+                "Change it to the current analyte?" ),
+            QMessageBox::Yes, QMessageBox::No );
 
-   if ( model.coSedSolute == row ) model.coSedSolute = -1;
-
-   model.components.remove( row );
-   lw_components->setCurrentRow( -1 );
-   delete lw_components->takeItem( row );
-
-   oldRow = -1;
-
+         if ( response == QMessageBox::No )
+         {
+             cb_co_sed->disconnect();
+             cb_co_sed->setChecked( false );
+             connect( cb_co_sed, SIGNAL( stateChanged( int ) ), 
+                                 SLOT  ( co_sed      ( int ) ) );
+             return;
+         }
+      }
+      model.coSedSolute = row;
+   }
+   else
+      model.coSedSolute = -1;
 }
 
 void US_Properties::calculate( void )
