@@ -67,6 +67,6 @@ class US_EXTERN US_DistribPlot : public US_WidgetsDialog
       int  histo_data( double**, double** );
       int  envel_data( double**, double** );
       void help     ( void )
-      { showHelp.show_help( "vHW_distrib_plot.html" ); };
+      { showHelp.show_help( "vhw_distrib_plot.html" ); };
 };
 #endif

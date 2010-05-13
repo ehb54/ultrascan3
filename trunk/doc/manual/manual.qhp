@@ -31,6 +31,8 @@
             <keyword name="buffer"                      ref="us_buffer.html"/>
             <keyword name="pseudo3d-combine"            ref="pseudo3d_combine.html"/>
             <keyword name="ga-initialize"               ref="ga_initialize.html"/>
+            <keyword name="vhw-enhanced"                ref="vhw_enhanced.html"/>
+            <keyword name="vhw-distrib-plot"            ref="vhw_distrib_plot.html"/>
         </keywords>
         <files>
             <file>mainstyle.css</file>
@@ -73,6 +75,13 @@
 
             <file>ga_initialize.html</file>
             <file>images/ga_initialize.png</file>
+
+            <file>vhw_enhanced.html</file>
+            <file>images/vhw_enhanced.png</file>
+
+            <file>vhw_distrib_plot.html</file>
+            <file>images/vhw_distribution.png</file>
+            <file>images/vhw_histogram.png</file>
         </files>
     </filterSection>
 </QtHelpProject> 

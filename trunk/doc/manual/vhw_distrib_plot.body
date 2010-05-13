@@ -1,0 +1,54 @@
+[% INCLUDE header.us3/
+   title = 'UltraScan III vHW Distribution Plot'
+%]
+
+    <h2> <i>UltraScan</i> vHW Distribution Plot: </h2>
+
+    <p> In the van Holde - Weischet (vHW) Enhanced program, there is a Distribution Plot
+    option that brings up a dialog in which the vHW analysis data is displayed
+    as a distribution plot or a histogram plot. In either case, a clustering of data
+    around several sedimentation coefficient points indicates the presence of
+    multiple species in the solution.</p>
+
+    <img src="images/vhw_distribution.png" alt="vHW Distribution Plot"/>
+
+    <ul>
+            <li>
+              <b>Histogram</b> Click on this button to change the plot from
+              Distribution to Histogram.
+            </li>
+            
+            <li>
+              <b>Distribution</b> Click on this button to change the plot from
+              Histogram to Distribution. This is the alternate label to the same
+              button as above.
+            </li>
+            
+            <li>
+              <b>Hide Histogram</b> Select hiding the histogram, showing only an envelope.
+              The alternate label for this button is <b>Show Histogram</b>
+            </li>
+
+            <li>
+              <b>Hide Envelope</b> Select hiding the envelope, showing only a histogram.
+              The alternate label for this button is <b>Show Envelope</b>
+            </li>
+
+            <li>
+              <b>Sensitivity</b> Change the sensitivity factor up or down to primarily
+              affect the nature of the histogram.
+            </li>
+
+            <li>
+              <b>Smoothing</b> Change the smoothing factor up or down to primarily
+              affect the nature of the envelope.
+            </li>
+
+            <li>
+              <b>Help:</b> Display detailed vHW Distribution/Histogram Plot help.
+            </li>
+    </ul>
+
+    <img src="images/vhw_histogram.png" alt="vHW Histogram Plot"/>
+
+[% INCLUDE footer.us3 %]

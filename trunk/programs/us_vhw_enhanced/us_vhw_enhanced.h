@@ -161,7 +161,7 @@ class US_EXTERN US_vHW_Enhanced : public US_AnalysisBase
       QStringList last_edit_files( QStringList );
 
       void help     ( void )
-      { showHelp.show_help( "vHW_enhanced.html" ); };
+      { showHelp.show_help( "vhw_enhanced.html" ); };
 
 };
 #endif
