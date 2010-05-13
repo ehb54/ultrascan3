@@ -93,7 +93,7 @@ processing image files later on. You will be prompted to either create
 or select an existing directory for outputting the image files if you
 select this option before the movie is shown.  A string of image files
 can later be assembled into an mpeg movie. Under Linux, such a task can
-be accomplished like this:
+be accomplished like this (encoding into DVD/mpeg2 format):
 
 <p>
 <b>
@@ -104,11 +104,21 @@ mencoder mf://*.jpg -mf fps=10:type=jpg -o 3d-movie.mpg -ovc lavc -lavcopts vcod
 </pre>
 </b>
 <p>
-This command will assemble a 3D-surface image sequence into an mpeg movie 
-of original scale. The command will <!parse the first 20 input files starting
-with image 3D-surface00001.png and ending with 3D-surface00020.png,> 
+These commands will convert png images to jpg images, and assemble them from
+a 3D-surface image sequence into an mpeg movie 
+of original scale. The command will
 use a 10 fps frame rate for the movie, use no interlacing, and assemble the 
-images into a movie file called "3d-movie.m1v".
+images into a movie file called "3d-movie.mpg".
+<p>
+Another way to encode jpg images is using ffmpeg and converting into mp4 format:
+<b>
+<pre>
+ffmpeg -i %03d.jpg -sameq 3d-movie.mp4
+</pre>
+</b>
+Please note that the images should be sequentially named 001.jpg, 002.jpg, etc... for this command
+to work.
+<p>
 <p>
 For playback, use mplayer or xine. To slow the movie down, you can use:
 <b>
