@@ -568,6 +568,42 @@ CREATE TABLE IF NOT EXISTS us3.spectrum (
 ENGINE = InnoDB;
 
 -- -----------------------------------------------------
+-- Table us3.model
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.model ;
+
+CREATE  TABLE IF NOT EXISTS us3.model (
+  modelID INT NOT NULL AUTO_INCREMENT ,
+  GUID CHAR(36) NOT NULL UNIQUE ,
+  description TEXT NULL DEFAULT NULL ,
+  contents TEXT NULL DEFAULT NULL ,
+  PRIMARY KEY (modelID) )
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
+-- Table us3.modelPerson
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS us3.modelPerson ;
+
+CREATE  TABLE IF NOT EXISTS us3.modelPerson (
+  modelID INT NOT NULL ,
+  personID INT NOT NULL ,
+  PRIMARY KEY (modelID) ,
+  INDEX ndx_modelPerson_personID  (personID ASC) ,
+  INDEX ndx_modelPerson_modelID (modelID ASC) ,
+  CONSTRAINT fk_modelPerson_personID
+    FOREIGN KEY (personID )
+    REFERENCES us3.people (personID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE,
+  CONSTRAINT fk_modelPerson_modelID
+    FOREIGN KEY (modelID )
+    REFERENCES us3.model (modelID )
+    ON DELETE CASCADE
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+-- -----------------------------------------------------
 -- Table us3.solution
 -- -----------------------------------------------------
 DROP TABLE IF EXISTS us3.solution ;
