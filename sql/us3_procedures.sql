@@ -43,6 +43,7 @@ BEGIN
   SET @NO_ANALYTE     = 504;
   SET @NO_LAB         = 505;
   SET @NO_PERSON      = 506;
+  SET @NO_MODEL       = 507;
 
   -- Some user levels
   SET @US3_USER       = 0;
@@ -456,5 +457,6 @@ SOURCE us3_hardware_procs.sql
 SOURCE us3_hardware_data.sql
 SOURCE us3_buffer_components.sql
 SOURCE us3_spectrum_procs.sql
+SOURCE us3_model_procs.sql
 
 DELIMITER ;
