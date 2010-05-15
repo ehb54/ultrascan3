@@ -235,8 +235,6 @@ void US_vHW_Enhanced::load( void )
    data_plot1->setMinimumSize( 600, 500 );
    data_plot2->setMinimumSize( 600, 300 );
 
-   update( 0 );
-
    gpick      = new US_PlotPicker( data_plot1 );
    gpick->setSelectionFlags( QwtPicker::PointSelection
                            | QwtPicker::ClickSelection );
@@ -247,10 +245,13 @@ void US_vHW_Enhanced::load( void )
    pb_details->disconnect( );                        // reset details connect
    connect( pb_details, SIGNAL( clicked() ),
             this,       SLOT(   details() ) );
-   dataLoaded = true;
    pb_selegr->setEnabled( true );
    pb_dstrpl->setEnabled( true );
    le_temp->setText( t );                            // set avg temp text
+
+   dataLoaded = true;
+
+   update( 0 );
 }
 
 // details
@@ -294,6 +295,9 @@ void US_vHW_Enhanced::data_plot( void )
    int     count       = 0;
    int     nskip       = 0;
    int     totalCount;
+
+   if ( !dataLoaded )
+      return;
 
    data_plot2->detachItems();
 
@@ -413,6 +417,7 @@ qDebug() << "  scanCount  divsCount" << scanCount << divsCount;
    double  intcp;
    double  sigma;
    double  corre;
+   cpds.clear();
 
    US_Math::linefit( &ptx, &pty, &slope, &intcp, &sigma, &corre, nrelp );
 
@@ -1198,7 +1203,7 @@ void US_vHW_Enhanced::div_seds( )
    int*    ll       = new int   [ scanCount ];
    int     nscnu    = 0;  // number used (non-excluded) scans
    int     kscnu    = 0;  // count of scans of div not affected by diffusion
-   double  bdifsqr  = sqrt( bdiffc );
+   double  bdifsqr  = sqrt( bdiffc );  // sqrt( diff ) used below
    double  pconc;
    double  cconc;
    double  mconc;
@@ -1206,6 +1211,9 @@ void US_vHW_Enhanced::div_seds( )
 
    dseds.clear();
    dslos.clear();
+   dsigs.clear();
+   dcors.clear();
+   dpnts.clear();
 
    for ( int jj = 0; jj < divsCount; jj++ )
    {  // loop to fit points across scans in a division
@@ -1241,8 +1249,8 @@ void US_vHW_Enhanced::div_seds( )
                pconc       = baseline + ( s->plateau - baseline) * positPct;
                xx[ nscnu ] = 1.0 / timesqr;
                ll[ nscnu ] = ii;
-               pp[ nscnu ] = pconc;
-               pconc       = max( pconc, mconc );
+               pp[ nscnu ] = pconc;               // analysis baseline
+               pconc       = max( pconc, mconc ); // cleared of meniscus
 
                // accumulate limits based on back diffusion
 
@@ -1254,22 +1262,21 @@ void US_vHW_Enhanced::div_seds( )
                bottom      = s->readings[ valueCount - 1 ].d.radius;
                oterm       = timecor * omegasq;
                cpij        = cpds.at( ii ).at( jj );
-               //mconc       = pp[ 0 ] + cpij * 0.5;
-               //mconc       = baseline + cpij * 0.5;
+
                mconc       = pconc + cpij * 0.5;
                dsed        = sed_coeff( mconc, oterm );
-//if ( dsed < 0.0 || ii == (scanCount-1) ) {
-if ( dsed < 0.0 ) {
-qDebug() << "    cpij mconc base" << cpij << mconc << pp[nscnu] << s->plateau;
-dsed=sed_coeff(baseline,oterm);
-}
-
                dsed       *= 1.0e-13;
-               //bdleft      = bdtoler * bdifsqr
-               //   / ( 2.0 * dsed * omegasq * ( bottom + d->meniscus ) / 2.0 );
+
+               // left = tolerance * sqrt( diff )
+               //        / ( 2 * intercept[0] * omega^2
+               //            * ( bottom + meniscus ) / 2 * sqrt( time ) )
+
                bdleft      = bdtoler * bdifsqr
                   / ( dsed * omegasq * ( bottom + d->meniscus ) * timesqr );
                xbdleft     = find_root( bdleft );
+
+               // radD = bottom - ( 2 * find_root(left) * sqrt( diff * time ) )
+
                radD        = bottom - ( 2.0 * xbdleft * bdifsqr * timesqr );
 
                int mm      = 0;
@@ -1278,6 +1285,8 @@ dsed=sed_coeff(baseline,oterm);
                while ( s->readings[ mm ].d.radius < radD  &&  mm < mmlast )
                   mm++;
 
+               // accumulate for this scan of this division
+               //  the back diffusion limit radius and corresponding absorbance
                xr[ nscnu ] = radD;
                yr[ nscnu ] = s->readings[ mm ].value;
 qDebug() << "  bottom meniscus bdleft" << bottom << d->meniscus << bdleft;
@@ -1331,7 +1340,7 @@ qDebug() << "BD x,y " << nscnu+1 << radD << yr[nscnu];
       for ( int kk = 0; kk < kscnu; kk++ )
       {  // remove any leading points below meniscus
          if ( yy[ kk ] > 0.0 )
-         {
+         { // sed coeff value positive (not from below meniscus)
             if ( kk > ii )
                yy[ ii ] = yy[ kk ];
             ii++;
@@ -1368,7 +1377,7 @@ qDebug() << "    nscnu" << nscnu << "pp0 yy0 ppn yyn " << pp[0] << yy[0]
       dcors.append( corre );
       dpnts.append( kscnu );
 //if((jj&7)==0||jj==(divsCount-1))
-// qDebug() << "     div dsed dcon " << jj+1 << dsed << dcon;
+// qDebug() << "     div dsed slope " << jj+1 << dsed << slope;
 
    }
 qDebug() << " dsed[0] " << dseds.at(0);
