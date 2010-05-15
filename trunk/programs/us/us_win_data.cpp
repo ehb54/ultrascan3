@@ -11,8 +11,8 @@ namespace US_WinData
     P_EXIT   = 4,
     P_CONFIG = 300, P_EDIT,                // Edit Menu
     
-    P_SECOND,       P_DCDT,                // Velocity Menu
-    
+    P_SECOND,       P_DCDT,   P_VHWE,      // Velocity Menu
+                    P_GAINIT, 
     P_CONVERT,      P_FIT,    P_COLORGRAD, // Utilities menu
     
     P_ASTFEM,       P_EQUILTIMESIM,        // Simulation Menu
@@ -78,6 +78,16 @@ namespace US_WinData
     { P_DCDT,  0, 0, "us_dcdt",
       QObject::tr( "Loading Time Derivitive Analysis" ),
       QObject::tr( "Time Derivitive Analysis Program" )
+    },
+    
+    { P_VHWE,  0, 0, "us_vhw_enhanced",
+      QObject::tr( "Loading van Holde - Weischet Analysis" ),
+      QObject::tr( "van Holde - Weischet Analysis Program" )
+    },
+    
+    { P_GAINIT,  0, 0, "us_ga_init",
+      QObject::tr( "Loading Genetic Algorithm Initialize" ),
+      QObject::tr( "Genetic Algorithm Initialize Program" )
     },
     
     { P_CONVERT,  1, 0, "us_convert",

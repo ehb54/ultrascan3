@@ -141,6 +141,8 @@ US_Win::US_Win( QWidget* parent, Qt::WindowFlags flags )
   
   /////////////
   QMenu* velocity    = new QMenu( tr( "&Velocity" ), this );
+  addMenu(  P_VHWE  , tr( "&Enhanced van Holde - Weischet" ), velocity );
+  addMenu(  P_GAINIT, tr( "&Initialize Genetic Algorithm" ), velocity );
   addMenu(  P_SECOND, tr( "&Second Moment" ), velocity );
   addMenu(  P_DCDT  , tr( "&Time Derivitive" ), velocity );
   
