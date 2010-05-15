@@ -4,11 +4,11 @@
 
     <h2> <i>UltraScan</i> Genetic Algorithm Initialization: </h2>
 
-    <p> Solute distribution data can used to generate data for use with
+    <p> Solute distribution data can be used to generate data for use with
     Genetic Algorithm analysis programs. The output data results from choosing
     bins (or buckets) around solute points. These buckets can be modified for
-    better results. Once they are as desired, data for Genetic Algorithm can
-    be generated and output.</p>
+    better results. Once they are as desired, data for Genetic Algorithm
+    analysis can be generated and output.</p>
 
     <p> The input data may come in one of two flavors, each of which is treated
     differently. The data is either SA2D type or Monte Carlo. The SA2D is
