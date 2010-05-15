@@ -995,6 +995,8 @@ void US_ModelEditor::update_keq(const QString &newText)
              || ((*system).assoc_vector[i].stoichiometry1 == 0 && (*system).assoc_vector[i].stoichiometry2 == 0))  // hetero-association
          {
             (*system).assoc_vector[i].keq = newText.toDouble();
+            if ((*system).assoc_vector[i].keq <= 1.0e-3)
+               (*system).assoc_vector[i].keq = 1.0e-3;
          }
       }
    }
@@ -1053,6 +1055,8 @@ bool US_ModelEditor::verify_model()
    QString str1, str2;
    for (unsigned int i=0; i<(*system).assoc_vector.size(); i++)
    {
+      if ((*system).assoc_vector[i].keq <= 1.0e-3)
+         (*system).assoc_vector[i].keq = 1.0e-3;
       if ((*system).assoc_vector[i].stoichiometry2 > 0 && (*system).assoc_vector[i].stoichiometry3 != 1) // then we need to check if the MWs match
       {
          if (fabs   ((*system).component_vector[(*system).assoc_vector[i].component2].mw

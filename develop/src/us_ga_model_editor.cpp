@@ -366,10 +366,16 @@ bool US_GAModelEditor::verify_constraints()
          if ( (*ms).assoc_vector[i].keq - msc.assoc_vector_constraints[i].keq.low <= 0.0
             || msc.assoc_vector_constraints[i].keq.high - (*ms).assoc_vector[i].keq <= 0.0)
          {
+            (*ms).assoc_vector[i].keq = 1.0e-3;
+            QString s1;
+            update_keq(s1.sprintf("%6.4e", (*ms).assoc_vector[i].keq));
             cc_keq->update((*ms).assoc_vector[i].keq, (float) 0.9, &low, &high, 0.0);
             msc.assoc_vector_constraints[i].keq.low = low;
             msc.assoc_vector_constraints[i].keq.high = high;
             message += tr(str.sprintf("The constraints for the equilibrium constant of reaction %d\n", i+1));
+            le_keq->setText(str.sprintf("%6.4e", (*ms).assoc_vector[i].keq));
+            cc_keq->le_low->setText(str.sprintf("%6.4e", low));
+            cc_keq->le_high->setText(str.sprintf("%6.4e", high));
             flag = false;
          }
          if ( (*ms).assoc_vector[i].k_off - msc.assoc_vector_constraints[i].koff.low <= 0.0
@@ -378,6 +384,8 @@ bool US_GAModelEditor::verify_constraints()
             cc_koff->update((*ms).assoc_vector[i].k_off, (float) 0.99, &low, &high, 0.0);
             msc.assoc_vector_constraints[i].koff.low = low;
             msc.assoc_vector_constraints[i].koff.high = high;
+            cc_koff->le_low->setText(str.sprintf("%6.4e", low));
+            cc_koff->le_high->setText(str.sprintf("%6.4e", high));
             message += tr(str.sprintf("The constraints for the rate constant of reaction %d\n", i+1));
             flag = false;
          }
@@ -446,6 +454,12 @@ void US_GAModelEditor::keq_constraintChanged(struct constraint c)
    if (msc.assoc_vector_constraints.size() > 0)
    {
       msc.assoc_vector_constraints[current_assoc].keq.low = c.low;
+      if (msc.assoc_vector_constraints[current_assoc].keq.low <= 1.0e-3)
+      {
+         msc.assoc_vector_constraints[current_assoc].keq.low = 1.0e-3;
+         c.low = 1.0e-3;
+         
+      }
       msc.assoc_vector_constraints[current_assoc].keq.high = c.high;
       msc.assoc_vector_constraints[current_assoc].keq.fit = c.fit;
       //cout << "Set constraintChanged for comp. " << current_component << ", keq to " << c.low << ", " << c.high << ", " << c.fit << endl;
