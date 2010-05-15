@@ -3,6 +3,8 @@
 // determine residuals
 
 // #define DEBUG_HYDRO
+// #define DEBUG_HYDRO_RMSD
+// #define NAN_WARNING
 
 #include <mpi.h>
 
@@ -387,10 +389,22 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
 
    //  printf("rss: exit astfem_rsa_calculate %lu\n", getrss(0)); fflush(stdout);
 
+#if defined(DEBUG_HYDRO_RMSD)
+   printf("rmsd (0) %g\n", rmsd); fflush(stdout);
+#endif
+
    for (i = 0; i < experiment[0].scan.size(); i++)
    {
       for (j = 0; j < (experiment[0].radius.size()); j++)
       {
+#if defined(NAN_WARNING)
+         if ( isnan(org_experiment[0].scan[i].conc[j]) ||
+              isnan(experiment[0].scan[i].conc[j]) ) 
+         {
+            printf("nan in conc data: %d %d org exp %g sim exp %g\n",
+                   i, j, org_experiment[0].scan[i].conc[j], experiment[0].scan[i].conc[j]);
+         }
+#endif
          residuals[0].scan[i].conc[j] = org_experiment[0].scan[i].conc[j] - experiment[0].scan[i].conc[j];
          //   printf("%u %u %g %g %g\n", i, j, org_experiment[0].radius[j], org_experiment[0].scan[i].conc[j], experiment[0].scan[i].conc[j]);
          rmsd += residuals[0].scan[i].conc[j] * residuals[0].scan[i].conc[j];
@@ -398,9 +412,27 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
    }
 
    last_residuals = residuals;
+#if defined(DEBUG_HYDRO_RMSD)
+   printf("rmsd (3) %g\n", rmsd); fflush(stdout);
+   printf("rmsd (3) %g scan size %u radius size %u\n"
+          , rmsd
+          , experiment[0].scan.size()
+          , experiment[0].radius.size()
+          ); fflush(stdout);
+#endif
 
    rmsd /= experiment[0].scan.size() * (experiment[0].radius.size());
-  
+
+   if ( isnan(rmsd) )
+   {
+      printf("nan rmsd in ga_interacting: solute: ");
+      for ( unsigned int i = 0; i < solutes.size(); i++ ) 
+      {
+         printf("(%g,%g) ", solutes[i].s, solutes[i].k );
+      }
+      rmsd = 1e99;
+   }
+
    Simulation_values sv;
    vector<double> no_noise;
    vector<double> variances;
@@ -415,6 +447,8 @@ Simulation_values us_ga_interacting_calc(vector <struct mfem_data> experiment,
 
 #if defined(DEBUG_HYDRO)
    printf("rmsd %g\n", rmsd); fflush(stdout);
+#endif
+#if defined(DEBUG_HYDRO_ABORT)
    printf("debug hydro aborting\n"); fflush(stdout);
    MPI_Abort(MPI_COMM_WORLD, -9999);
    exit(-9999);
