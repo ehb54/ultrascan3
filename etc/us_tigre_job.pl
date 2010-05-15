@@ -115,11 +115,11 @@ $_[0]
 	if ( $fname =~ /\.gz$/ ) {
 	    $msg->attach(Type     => 'application/x-gzip',
 			 Path     => "/lustre/tmp/us_job${id}.stderr.gz",
-			 Filename => "us_job${id}.stdout.gz");
+			 Filename => "us_job${id}.stderr.gz");
 	} else {
 	    $msg->attach(Type     => 'TEXT',
 			 Path     => "/lustre/tmp/us_job${id}.stderr",
-			 Filename => "us_job${id}.stdout");
+			 Filename => "us_job${id}.stderr");
 	}
     }
 
