@@ -25,6 +25,9 @@ int main (int argc, char **argv)
       US_Hydrodyn *hydrodyn;
       vector < QString > batch_file;
       int argcbase = 1;
+#ifdef Q_WS_MAC
+      argcbase     = 2;
+#endif
       while ( a.argc() >= argcbase &&
            QString(a.argv()[argcbase]).contains(QRegExp("^-")) )
       {
