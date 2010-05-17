@@ -9,6 +9,7 @@
 #include "us_help.h"
 #include "us_plot.h"
 #include "us_dataIO.h"
+#include "us_analyte.h"
 #include "us_expinfo.h"
 
 class US_EXTERN US_Convert : public US_Widgets
@@ -134,7 +135,7 @@ class US_EXTERN US_Convert : public US_Widgets
       void selectBuffer    ( void );
       void assignBuffer    ( const QString&  );
       void selectAnalyte   ( void );
-      void assignAnalyte   ( const QString&  );
+      void assignAnalyte   ( US_Analyte  );
       bool centerpieceInfo ( void );
       void getCenterpieceIndex( int );
       int  findTripleIndex ( void );
