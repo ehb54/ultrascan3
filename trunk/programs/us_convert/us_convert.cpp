@@ -1258,15 +1258,15 @@ void US_Convert::selectAnalyte( void )
 {
    US_AnalyteGui* analyte_dialog = new US_AnalyteGui( ExpData.invID, true ); 
 
-   connect( analyte_dialog, SIGNAL( valueAnalyteID ( const QString& ) ),
-            this,           SLOT  ( assignAnalyte  ( const QString& ) ) );
+   connect( analyte_dialog, SIGNAL( valueChanged  ( US_Analyte ) ),
+            this,           SLOT  ( assignAnalyte ( US_Analyte ) ) );
 
    analyte_dialog->exec();
 }
 
-void US_Convert::assignAnalyte( const QString& analyteID )
+void US_Convert::assignAnalyte( US_Analyte data )
 {
-   ExpData.triples[ findTripleIndex() ].analyteID = analyteID.toInt();
+   ExpData.triples[ findTripleIndex() ].analyteID = data.invID;
 }
 
 bool US_Convert::centerpieceInfo( void )
