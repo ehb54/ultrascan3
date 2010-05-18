@@ -1901,7 +1901,7 @@ void US_ViewMWL::update(unsigned int time, QString imageDir)
    if (pngs)
    {
       //str.sprintf(imageDir + "/3D-surface%05d.png", time);
-      str.sprintf(imageDir + "/3D-surface%05d.png", time);
+      str.sprintf(imageDir + "/%05d.png", time);
       mainwindow->dumpImage(str, "PNG");
    }
    for (i=0; i<rows; i++)
