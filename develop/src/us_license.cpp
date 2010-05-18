@@ -249,15 +249,15 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    xpos = spacing;
    ypos += 2*buttonh + spacing;
 
-   lbl_platform = new QLabel(tr("Platform:"),this);
-   lbl_platform->setAlignment(AlignLeft|AlignVCenter);
-   lbl_platform->setGeometry(xpos, ypos, buttonw, buttonh);
+   //lbl_platform = new QLabel(tr("Platform:"),this);
+   //lbl_platform->setAlignment(AlignLeft|AlignVCenter);
+   //lbl_platform->setGeometry(xpos, ypos, buttonw, buttonh);
 
    xpos += buttonw + spacing;
 
-   rb_intel = new QRadioButton(tr("Intel"), this);
-   rb_intel->setGeometry(xpos, ypos, buttonw, buttonh);
-   connect(rb_intel, SIGNAL(clicked()), SLOT(update_intel_rb()));
+   //rb_intel = new QRadioButton(tr("Intel"), this);
+   //rb_intel->setGeometry(xpos, ypos, buttonw, buttonh);
+   //connect(rb_intel, SIGNAL(clicked()), SLOT(update_intel_rb()));
 
    xpos += spacing*4 + buttonw;
 
@@ -278,27 +278,27 @@ US_License::US_License(QWidget *parent, const char *name) : QDialog( parent, nam
    ypos += spacing + buttonh;
    xpos = buttonw + 2*spacing;
 
-   rb_sparc = new QRadioButton(tr("Sparc"), this);
-   rb_sparc->setGeometry(xpos, ypos, buttonw, buttonh);
-   connect(rb_sparc, SIGNAL(clicked()), SLOT(update_sparc_rb()));
+   //rb_sparc = new QRadioButton(tr("Sparc"), this);
+   //rb_sparc->setGeometry(xpos, ypos, buttonw, buttonh);
+   //connect(rb_sparc, SIGNAL(clicked()), SLOT(update_sparc_rb()));
 
    ypos += buttonh + spacing;
 
-   rb_mac = new QRadioButton(tr("Macintosh"), this);
-   rb_mac->setGeometry(xpos, ypos, buttonw, buttonh);
-   connect(rb_mac, SIGNAL(clicked()), SLOT(update_mac_rb()));
+   //rb_mac = new QRadioButton(tr("Macintosh"), this);
+   //rb_mac->setGeometry(xpos, ypos, buttonw, buttonh);
+   //connect(rb_mac, SIGNAL(clicked()), SLOT(update_mac_rb()));
 
    ypos += buttonh + spacing;
 
-   rb_opteron = new QRadioButton(tr("Opteron"), this);
-   rb_opteron->setGeometry(xpos, ypos, buttonw, buttonh);
-   connect(rb_opteron, SIGNAL(clicked()), SLOT(update_opteron_rb()));
+   //rb_opteron = new QRadioButton(tr("Opteron"), this);
+   //rb_opteron->setGeometry(xpos, ypos, buttonw, buttonh);
+   //connect(rb_opteron, SIGNAL(clicked()), SLOT(update_opteron_rb()));
 
    ypos += buttonh + spacing;
 
-   rb_sgi = new QRadioButton(tr("Silicon Graphics"), this);
-   rb_sgi->setGeometry(xpos, ypos, buttonw, buttonh);
-   connect(rb_sgi, SIGNAL(clicked()), SLOT(update_sgi_rb()));
+   //rb_sgi = new QRadioButton(tr("Silicon Graphics"), this);
+   //rb_sgi->setGeometry(xpos, ypos, buttonw, buttonh);
+   //connect(rb_sgi, SIGNAL(clicked()), SLOT(update_sgi_rb()));
 
 
    ypos += spacing + 2*buttonh;
@@ -595,24 +595,25 @@ void US_License::import()
          platform = ts.readLine();
          if (platform == "opteron")
          {
-            update_opteron_rb();
+            //update_opteron_rb();
          }
          if (platform == "intel")
          {
-            update_intel_rb();
+            //update_intel_rb();
          }
          if (platform == "sparc")
          {
-            update_sparc_rb();
+            //update_sparc_rb();
          }
          if (platform == "mac")
          {
-            update_mac_rb();
+            //update_mac_rb();
          }
          if (platform == "sgi")
          {
-            update_sgi_rb();
+            //update_sgi_rb();
          }
+
          if (!ts.atEnd())
          {
             os = ts.readLine();
@@ -908,57 +909,57 @@ void US_License::update_expiration(const QString &str)
 
 void US_License::update_opteron_rb()
 {
-   platform = "opteron";
+   //platform = "opteron";
 
-   rb_opteron->setChecked(true);
-   rb_intel->setChecked(false);
-   rb_sparc->setChecked(false);
-   rb_mac->setChecked(false);
-   rb_sgi->setChecked(false);
+   //rb_opteron->setChecked(true);
+   //rb_intel->setChecked(false);
+   //rb_sparc->setChecked(false);
+   //rb_mac->setChecked(false);
+   //rb_sgi->setChecked(false);
 }
 
 void US_License::update_intel_rb()
 {
-   platform = "intel";
+   //platform = "intel";
 
-   rb_opteron->setChecked(false);
-   rb_intel->setChecked(true);
-   rb_sparc->setChecked(false);
-   rb_mac->setChecked(false);
-   rb_sgi->setChecked(false);
+   //rb_opteron->setChecked(false);
+   //rb_intel->setChecked(true);
+   //rb_sparc->setChecked(false);
+   //rb_mac->setChecked(false);
+   //rb_sgi->setChecked(false);
 }
 
 void US_License::update_mac_rb()
 {
-   platform = "mac";
+   //platform = "mac";
 
-   rb_opteron->setChecked(false);
-   rb_intel->setChecked(false);
-   rb_sparc->setChecked(false);
-   rb_mac->setChecked(true);
-   rb_sgi->setChecked(false);
+   //rb_opteron->setChecked(false);
+   //rb_intel->setChecked(false);
+   //rb_sparc->setChecked(false);
+   //rb_mac->setChecked(true);
+   //rb_sgi->setChecked(false);
 }
 
 void US_License::update_sparc_rb()
 {
-   platform = "sparc";
+   //platform = "sparc";
 
-   rb_opteron->setChecked(false);
-   rb_intel->setChecked(false);
-   rb_sparc->setChecked(true);
-   rb_mac->setChecked(false);
-   rb_sgi->setChecked(false);
+   //rb_opteron->setChecked(false);
+   //rb_intel->setChecked(false);
+   //rb_sparc->setChecked(true);
+   //rb_mac->setChecked(false);
+   //rb_sgi->setChecked(false);
 }
 
 void US_License::update_sgi_rb()
 {
-   platform = "sgi";
+   //platform = "sgi";
 
-   rb_opteron->setChecked(false);
-   rb_intel->setChecked(false);
-   rb_sparc->setChecked(false);
-   rb_mac->setChecked(false);
-   rb_sgi->setChecked(true);
+   //rb_opteron->setChecked(false);
+   //rb_intel->setChecked(false);
+   //rb_sparc->setChecked(false);
+   //rb_mac->setChecked(false);
+   //rb_sgi->setChecked(true);
 }
 
 void US_License::update_os(int val)
