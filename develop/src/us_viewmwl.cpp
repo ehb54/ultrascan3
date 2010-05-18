@@ -859,7 +859,8 @@ void US_ViewMWL::movie()
       j = 1;
       for (i=min_time; i<=max_time; i++)
       {
-         update(i, imageDir);
+         //update(i, imageDir);
+         update(j, imageDir);
          progress->setProgress(j);
          j++;
       }
@@ -1899,6 +1900,7 @@ void US_ViewMWL::update(unsigned int time, QString imageDir)
 
    if (pngs)
    {
+      //str.sprintf(imageDir + "/3D-surface%05d.png", time);
       str.sprintf(imageDir + "/3D-surface%05d.png", time);
       mainwindow->dumpImage(str, "PNG");
    }

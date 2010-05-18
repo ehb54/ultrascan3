@@ -113,7 +113,7 @@ images into a movie file called "3d-movie.mpg".
 Another way to encode jpg images is using ffmpeg and converting into mp4 format:
 <b>
 <pre>
-ffmpeg -i %03d.jpg -sameq 3d-movie.mp4
+ffmpeg -i %05d.jpg -sameq 3d-movie.mpg
 </pre>
 </b>
 Please note that the images should be sequentially named 001.jpg, 002.jpg, etc... for this command
@@ -123,7 +123,7 @@ to work.
 For playback, use mplayer or xine. To slow the movie down, you can use:
 <b>
 <pre>
-mplayer -fps 10 wavelength.mpg
+mplayer -fps 10 3d-movie.mpg
 </pre>
 </b>
 This would slow the movie down to 10 frames per second.
