@@ -134,7 +134,8 @@ bool US_Register::read()
 #endif
 
 
-    if ( register_list.platform != PLATFORM )
+    if ( register_list.platform != PLATFORM  &&  
+         register_list.platform != "generic" )
     {
       str = 
         tr( "You are running UltraScan on a" TITLE " platform,\n"
