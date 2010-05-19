@@ -269,6 +269,39 @@ experiment $experiment
 solutes    $solutes
 ";
 
+$cmd = "us_cmdline_t check_limits $experiment";
+print "$cmd\n";
+$results = `$cmd`;
+
+if ( $results =~ /error/ ) {
+    print "error: $results";
+    $msg = MIME::Lite->new(From    => 'gridcontrol@ultrascan.uthscsa.edu',
+			   To      => "$email",
+			   Cc      =>  'emre@biochem.uthscsa.edu, jeremy@biochem.uthscsa.edu, demeler@biochem.uthscsa.edu',
+			   Subject =>  "GRID JOB COMPLETION FAILED on $default_system / DATA RANGE ERROR",
+			   Type    =>  'multipart/mixed');
+    $msg->attach(Type => 'TEXT',
+		 Data => "
+--------------------------------------------------------------------------------
+jobtype    $jobtype
+expname    $expname
+gcfile     $gcfile
+email      $email
+timestamp  $timestamp
+id         $id
+basedir    $basedir
+experiment $experiment
+solutes    $solutes
+--------------------------------------------------------------------------------
+$results
+"
+		 );
+    $msg->send('smtp', 'smtp.uthscsa.edu');
+    print `echo tigre_job_end $cwd/$eprfile > $ENV{'ULTRASCAN'}/etc/us_gridpipe`;
+    exit;
+} else {
+    print "ok\n";
+}
 
 $ULTRASCAN = $ENV{'ULTRASCAN'};
 if($default_system ne 'meta') {
