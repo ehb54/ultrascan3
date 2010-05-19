@@ -1,4 +1,5 @@
 #include "../include/us_femglobal.h"
+#include <qstringlist.h>
 #if defined(USE_MPI)
 # include "../include/us_version.h"
 #endif
@@ -1146,7 +1147,7 @@ int US_FemGlobal::read_model_data(vector <mfem_data> *model,
    double double_val;
 
    QFile f(filename);
-   QDataStream *ds;
+   QDataStream *ds = (QDataStream *)0;
 
    if ( ds_exist )
    {
@@ -1469,7 +1470,35 @@ int US_FemGlobal::read_mwl_model_data(vector <mfem_data> *model, QString filenam
    return no_of_models_loaded;
 }
 
-int US_FemGlobal::convert_analysis_data(QString infile, QString outfile)
+int US_FemGlobal::convert_analysis_data( QString infile, QString outfile )
+{
+   QStringList qsl;
+   int result;
+
+
+   if ( ( result = convert_analysis_data( infile, &qsl ) ) )
+   {
+      return result;
+   }
+   
+   QFile f2(outfile);
+   if (!f2.open(IO_WriteOnly))
+   {
+      cout << tr("Could not open data file: ") << infile <<
+         tr(" for output\n");
+      cout <<
+         tr
+         ("Please check the path, file name and read permissions...\n\n");
+      return -2;
+   }
+
+   QTextStream ts(&f2);
+   ts << qsl.join( "" ) << endl;
+   f2.close();
+   return 0;
+}
+
+int US_FemGlobal::convert_analysis_data( QString infile, QStringList *qsl )
 {
    QFile f(infile);
    if (!f.open(IO_ReadOnly))
@@ -1481,19 +1510,8 @@ int US_FemGlobal::convert_analysis_data(QString infile, QString outfile)
          ("Please check the path, file name and read permissions...\n\n");
       return -1;
    }
-   QFile f2(outfile);
-   if (!f2.open(IO_WriteOnly))
-   {
-      cout << tr("Could not open data file: ") << infile <<
-         tr(" for output\n");
-      cout <<
-         tr
-         ("Please check the path, file name and read permissions...\n\n");
-      return -2;
-   }
    QDataStream ds(&f);
-   QTextStream ts(&f2);
-   ts << "# ascii format of analysis data .dat file\n";
+   *qsl << "# ascii format of analysis data .dat file\n";
 
    QString analysis_type;
    QString str1;
@@ -1505,80 +1523,80 @@ int US_FemGlobal::convert_analysis_data(QString infile, QString outfile)
    float float_val;
    
    ds >> str1;
-   ts << str1 << "\t# email\n";
+   *qsl << str1 + "\t# email\n";
    ds >> analysis_type;
    if (analysis_type == "SA2D")
    {
       analysis_type = "2DSA";
    }
-   ts << analysis_type << "\t# analysis_type\n";
+   *qsl << analysis_type + "\t# analysis_type\n";
    ds >> int_val;
-   ts << int_val << "\t# fit_tinoise\n";
+   *qsl << QString("%1").arg(int_val) + "\t# fit_tinoise\n";
    ds >> int_val;
-   ts << int_val << "\t# fit_rinoise\n";
+   *qsl << QString("%1").arg(int_val) + "\t# fit_rinoise\n";
    ds >> int_val;
-   ts << int_val << "\t# union_results\n";
+   *qsl << QString("%1").arg(int_val) + "\t# union_results\n";
    ds >> float_val;
-   ts << float_val << "\t# meniscus range\n";
+   *qsl << QString("%1").arg(float_val) + "\t# meniscus range\n";
    ds >> int_val;
-   ts << int_val << "\t# fit_meniscus\n";
+   *qsl << QString("%1").arg(int_val) + "\t# fit_meniscus\n";
    ds >> unsigned_int_val;
-   ts << unsigned_int_val << "\t# meniscus_gridpoints\n";
+   *qsl << QString("%1").arg(unsigned_int_val) + "\t# meniscus_gridpoints\n";
    ds >> int_val;
-   ts << int_val << "\t# use_iterative\n";
+   *qsl << QString("%1").arg(int_val) + "\t# use_iterative\n";
    ds >> unsigned_int_val;
-   ts << unsigned_int_val << "\t# max_iterations\n";
+   *qsl << QString("%1").arg(unsigned_int_val) + "\t# max_iterations\n";
    ds >> float_val;
-   ts << float_val << "\t# regularization\n";
+   *qsl << QString("%1").arg(float_val) + "\t# regularization\n";
    ds >> unsigned_int_val;
-   ts << unsigned_int_val << "\t# no of experiments\n";
+   *qsl << QString("%1").arg(unsigned_int_val) + "\t# no of experiments\n";
    unsigned int no_of_exps = unsigned_int_val;
    if (analysis_type == "2DSA" ||
        analysis_type == "2DSA_RA" ||
        analysis_type == "2DSA_RA_MWL")
    {
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# monte_carlo\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# monte_carlo\n";
       ds >> float_val;
-      ts << float_val << "\t#ff0_min\n";
+      *qsl << QString("%1").arg(float_val) + "\t#ff0_min\n";
       ds >> float_val;
-      ts << float_val << "\t#ff0_max\n";
+      *qsl << QString("%1").arg(float_val) + "\t#ff0_max\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# ff0_resolution\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# ff0_resolution\n";
       ds >> float_val;
-      ts << float_val << "\t# s_min\n";
+      *qsl << QString("%1").arg(float_val) + "\t# s_min\n";
       ds >> float_val;
-      ts << float_val << "\t# s_max\n";
+      *qsl << QString("%1").arg(float_val) + "\t# s_max\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# s_resolution\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# s_resolution\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# uniform_grid_repetition\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# uniform_grid_repetition\n";
       if (analysis_type == "2DSA_RA" ||
           analysis_type == "2DSA_RA_MWL")
       {
          if (analysis_type == "2DSA_RA_MWL")
          {
             ds >> float_val;
-            ts << float_val << "\t#wavelength\n";
+            *qsl << QString("%1").arg(float_val) + "\t#wavelength\n";
          }
          for(unsigned int e = 0; e < no_of_exps; e++)
          {
             ds >> unsigned_int_val;
-            ts << unsigned_int_val << "\t# simpoints\n";
+            *qsl << QString("%1").arg(unsigned_int_val) + "\t# simpoints\n";
             ds >> double_val;
-            ts << double_val << "\t# band_volume\n";
+            *qsl << QString("%1").arg(double_val) + "\t# band_volume\n";
             ds >> unsigned_int_val;
-            ts << unsigned_int_val << "\t# radial_grid\n";
+            *qsl << QString("%1").arg(unsigned_int_val) + "\t# radial_grid\n";
             ds >> int_val;
-            ts << int_val << "\t# moving_grid\n";
+            *qsl << QString("%1").arg(int_val) + "\t# moving_grid\n";
             {
                unsigned int i, j;
                ds >> i;
-               ts << i << "\t# simulation_parameters lines\n";
+               *qsl << QString("%1").arg(i) + "\t# simulation_parameters lines\n";
                for (j = 0; j < i; j++)
                {
                   ds >> str1;
-                  ts << str1 << "\n";
+                  *qsl << QString("%1").arg(str1) + "\n";
                }
             }
          }
@@ -1588,44 +1606,44 @@ int US_FemGlobal::convert_analysis_data(QString infile, QString outfile)
        analysis_type == "2DSA_MW_RA")
    {
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# monte_carlo\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# monte_carlo\n";
       ds >> float_val;
-      ts << float_val << "\t# ff0_min\n";
+      *qsl << QString("%1").arg(float_val) + "\t# ff0_min\n";
       ds >> float_val;
-      ts << float_val << "\t# ff0_max\n";
+      *qsl << QString("%1").arg(float_val) + "\t# ff0_max\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# ff0_resolution\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# ff0_resolution\n";
       ds >> float_val;
-      ts << float_val << "\t# mw_min\n";
+      *qsl << QString("%1").arg(float_val) + "\t# mw_min\n";
       ds >> float_val;
-      ts << float_val << "\t# mw_max\n";
+      *qsl << QString("%1").arg(float_val) + "\t# mw_max\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# grid_resolution\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# grid_resolution\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# uniform_grid_repetition\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# uniform_grid_repetition\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# max_mer\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# max_mer\n";
 
       if (analysis_type == "2DSA_MW_RA")
       {
          for(unsigned int e = 0; e < no_of_exps; e++)
          {
             ds >> unsigned_int_val;
-            ts << unsigned_int_val << "\t# simpoints\n";
+            *qsl << QString("%1").arg(unsigned_int_val) + "\t# simpoints\n";
             ds >> double_val;
-            ts << double_val << "\t# band_volume\n";
+            *qsl << QString("%1").arg(double_val) + "\t# band_volume\n";
             ds >> unsigned_int_val;
-            ts << unsigned_int_val << "\t# radial_grid\n";
+            *qsl << QString("%1").arg(unsigned_int_val) + "\t# radial_grid\n";
             ds >> int_val;
-            ts << int_val << "\t# moving_grid\n";
+            *qsl << QString("%1").arg(int_val) + "\t# moving_grid\n";
             {
                unsigned int i, j;
                ds >> i;
-               ts << i << "\t# simulation_parameters lines\n";
+               *qsl << QString("%1").arg(i) + "\t# simulation_parameters lines\n";
                for (j = 0; j < i; j++)
                {
                   ds >> str1;
-                  ts << str1 << "\n";
+                  *qsl << QString("%1").arg(str1) + "\n";
                }
             }
          }
@@ -1636,63 +1654,63 @@ int US_FemGlobal::convert_analysis_data(QString infile, QString outfile)
        analysis_type == "GA_RA_MWL")
    {
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# monte_carlo\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# monte_carlo\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# demes\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# demes\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# generations\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# generations\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# crossover\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# crossover\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# mutation\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# mutation\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# plague\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# plague\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# elitism\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# elitism\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# migration_rate\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# migration_rate\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# genes\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# genes\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# initial_solutes\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# initial_solutes\n";
       unsigned int initial_solutes = unsigned_int_val;
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# random_seed\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# random_seed\n";
       for (count1 = 0; count1 < initial_solutes; count1++)
       {
          ds >> float_val;
-         ts << float_val << "\t# bucket.s\n";
+         *qsl << QString("%1").arg(float_val) + "\t# bucket.s\n";
          ds >> float_val;
-         ts << float_val << "\t# bucket.s_min\n";
+         *qsl << QString("%1").arg(float_val) + "\t# bucket.s_min\n";
          ds >> float_val;
-         ts << float_val << "\t# bucket.s_max\n";
+         *qsl << QString("%1").arg(float_val) + "\t# bucket.s_max\n";
          ds >> float_val;
-         ts << float_val << "\t# bucket.ff0\n";
+         *qsl << QString("%1").arg(float_val) + "\t# bucket.ff0\n";
          ds >> float_val;
-         ts << float_val << "\t# bucket.ff0_min\n";
+         *qsl << QString("%1").arg(float_val) + "\t# bucket.ff0_min\n";
          ds >> float_val;
-         ts << float_val << "\t# bucket.ff0_max\n";
+         *qsl << QString("%1").arg(float_val) + "\t# bucket.ff0_max\n";
       }
       if (analysis_type == "GA_RA")
       {
          for(unsigned int e = 0; e < no_of_exps; e++)
          {
             ds >> unsigned_int_val;
-            ts << unsigned_int_val << "\t# simpoints\n";
+            *qsl << QString("%1").arg(unsigned_int_val) + "\t# simpoints\n";
             ds >> double_val;
-            ts << double_val << "\t# band_volume\n";
+            *qsl << QString("%1").arg(double_val) + "\t# band_volume\n";
             ds >> unsigned_int_val;
-            ts << unsigned_int_val << "\t# radial_grid\n";
+            *qsl << QString("%1").arg(unsigned_int_val) + "\t# radial_grid\n";
             ds >> int_val;
-            ts << int_val << "\t# moving_grid\n";
+            *qsl << QString("%1").arg(int_val) + "\t# moving_grid\n";
             {
                unsigned int i, j;
                ds >> i;
-               ts << i << "\t# simulation_parameters lines\n";
+               *qsl << QString("%1").arg(i) + "\t# simulation_parameters lines\n";
                for (j = 0; j < i; j++)
                {
                   ds >> str1;
-                  ts << str1 << "\n";
+                  *qsl << QString("%1").arg(str1) + "\n";
                }
             }
          }
@@ -1700,15 +1718,15 @@ int US_FemGlobal::convert_analysis_data(QString infile, QString outfile)
       if (analysis_type == "GA_RA_MWL")
       {
          ds >> int_val;
-         ts << int_val << "\t# MWL scans to test\n";
+         *qsl << QString("%1").arg(int_val) + "\t# MWL scans to test\n";
          {
             unsigned int i, j;
             ds >> i;
-            ts << i << "\t# simulation_parameters lines\n";
+            *qsl << QString("%1").arg(i) + "\t# simulation_parameters lines\n";
             for (j = 0; j < i; j++)
             {
                ds >> str1;
-               ts << str1 << "\n";
+               *qsl << QString("%1").arg(str1) + "\n";
             }
          }
       }
@@ -1717,58 +1735,58 @@ int US_FemGlobal::convert_analysis_data(QString infile, QString outfile)
        analysis_type == "GA_MW_RA")
    {
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# monte_carlo\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# monte_carlo\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# demes\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# demes\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# generations\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# generations\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# crossover\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# crossover\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# mutation\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# mutation\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# plague\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# plague\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# elitism\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# elitism\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# migration_rate\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# migration_rate\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# genes\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# genes\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# largest_oligomer\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# largest_oligomer\n";
       ds >> str1;
-      ts << str1 << "\t# largest_oligomer_string\n";
+      *qsl << QString("%1").arg(str1) + "\t# largest_oligomer_string\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# random_seed\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# random_seed\n";
       ds >> float_val;
-      ts << float_val << "\t# mw_min\n";
+      *qsl << QString("%1").arg(float_val) + "\t# mw_min\n";
       ds >> float_val;
-      ts << float_val << "\t# mw_max\n";
+      *qsl << QString("%1").arg(float_val) + "\t# mw_max\n";
       ds >> float_val;
-      ts << float_val << "\t# ff0_min\n";
+      *qsl << QString("%1").arg(float_val) + "\t# ff0_min\n";
       ds >> float_val;
-      ts << float_val << "\t# ff0_max\n";
+      *qsl << QString("%1").arg(float_val) + "\t# ff0_max\n";
 
       if (analysis_type == "GA_MW_RA")
       {
          for(unsigned int e = 0; e < no_of_exps; e++)
          {
             ds >> unsigned_int_val;
-            ts << unsigned_int_val << "\t# simpoints\n";
+            *qsl << QString("%1").arg(unsigned_int_val) + "\t# simpoints\n";
             ds >> double_val;
-            ts << double_val << "\t# band_volume\n";
+            *qsl << QString("%1").arg(double_val) + "\t# band_volume\n";
             ds >> unsigned_int_val;
-            ts << unsigned_int_val << "\t# radial_grid\n";
+            *qsl << QString("%1").arg(unsigned_int_val) + "\t# radial_grid\n";
             ds >> int_val;
-            ts << int_val << "\t# moving_grid\n";
+            *qsl << QString("%1").arg(int_val) + "\t# moving_grid\n";
             {
                unsigned int i, j;
                ds >> i;
-               ts << i << "\t# simulation_parameters lines\n";
+               *qsl << QString("%1").arg(i) + "\t# simulation_parameters lines\n";
                for (j = 0; j < i; j++)
                {
                   ds >> str1;
-                  ts << str1 << "\n";
+                  *qsl << QString("%1").arg(str1) + "\n";
                }
             }
          }
@@ -1777,106 +1795,105 @@ int US_FemGlobal::convert_analysis_data(QString infile, QString outfile)
    if (analysis_type == "GA_SC")
    {
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# monte_carlo\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# monte_carlo\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# demes\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# demes\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# generations\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# generations\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# crossover\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# crossover\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# mutation\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# mutation\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# plague\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# plague\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# elitism\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# elitism\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# migration_rate\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# migration_rate\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# genes\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# genes\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# random_seed\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# random_seed\n";
 
       {
          unsigned int i, j;
          ds >> i;
-         ts << i << "\t# contraints lines\n";
+         *qsl << QString("%1").arg(i) + "\t# contraints lines\n";
          for (j = 0; j < i; j++)
          {
             ds >> str1;
-            ts << str1 << "\n";
+            *qsl << QString("%1").arg(str1) + "\n";
          }
       }
       {
          unsigned int i, j;
          ds >> i;
-         ts << i << "\t# simulation_parameters lines\n";
+         *qsl << QString("%1").arg(i) + "\t# simulation_parameters lines\n";
          for (j = 0; j < i; j++)
          {
             ds >> str1;
-            ts << str1 << "\n";
+            *qsl << QString("%1").arg(str1) + "\n";
          }
       }
    }
-   ts << "# Ascii dump of experimental data\n";
-   ts << no_of_exps << "\t# number of models\n";
+   *qsl << "# Ascii dump of experimental data\n";
+   *qsl << QString("%1").arg(no_of_exps) + "\t# number of models\n";
    for (unsigned int i = 0; i < no_of_exps; i++)
    {
       ds >> str1;
-      ts << str1 << "\t# experiment.id\n";
+      *qsl << QString("%1").arg(str1) + "\t# experiment.id\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# experiment.cell\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# experiment.cell\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# experiment.channel\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# experiment.channel\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# experiment.wavelength\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# experiment.wavelength\n";
       ds >> double_val;
-      ts << double_val << "\t# experiment.meniscus\n";
+      *qsl << QString("%1").arg(double_val) + "\t# experiment.meniscus\n";
       ds >> double_val;
-      ts << double_val << "\t# experiment.bottom\n";
+      *qsl << QString("%1").arg(double_val) + "\t# experiment.bottom\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# temp_experiment.rpm\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# temp_experiment.rpm\n";
       ds >> double_val;
-      ts << double_val << "\t# experiment.s20w_correction\n";
+      *qsl << QString("%1").arg(double_val) + "\t# experiment.s20w_correction\n";
       ds >> double_val;
-      ts << double_val << "\t# experiment.D20w_correction\n";
+      *qsl << QString("%1").arg(double_val) + "\t# experiment.D20w_correction\n";
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# radius points\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# radius points\n";
       unsigned int radius_pts = unsigned_int_val;
       for (unsigned int j = 0; j < radius_pts; j++)
       {
          ds >> double_val;
-         ts << double_val << "\t# radius value\n";
+         *qsl << QString("%1").arg(double_val) + "\t# radius value\n";
       }
       ds >> unsigned_int_val;
-      ts << unsigned_int_val << "\t# scans\n";
+      *qsl << QString("%1").arg(unsigned_int_val) + "\t# scans\n";
       unsigned int scans = unsigned_int_val;
       for (unsigned int j = 0; j < scans; j++)
       {
          ds >> double_val;
-         ts << double_val << "\t# scan.time\n";
+         *qsl << QString("%1").arg(double_val) + "\t# scan.time\n";
          ds >> double_val;
-         ts << double_val << "\t# scan.omega_t\n";
+         *qsl << QString("%1").arg(double_val) + "\t# scan.omega_t\n";
          for (unsigned int k = 0; k < radius_pts; k++)
          {
             ds >> double_val;
-            ts << double_val << "\t# conc[k]\n";
+            *qsl << QString("%1").arg(double_val) + "\t# conc[k]\n";
             //       ds >> short_int_val;
-            //       ts << short_int_val << "\t# ignore[k]\n";
+            //       *qsl << QString("%1").arg(short_int_val) + "\t# ignore[k]\n";
          }
       }
       ds >> double_val;
-      ts << double_val << "\t# experiment.viscosity\n";
+      *qsl << QString("%1").arg(double_val) + "\t# experiment.viscosity\n";
       ds >> double_val;
-      ts << double_val << "\t# experiment.density\n";
+      *qsl << QString("%1").arg(double_val) + "\t# experiment.density\n";
       ds >> double_val;
-      ts << double_val << "\t# experiment.vbar\n";
+      *qsl << QString("%1").arg(double_val) + "\t# experiment.vbar\n";
       ds >> double_val;
-      ts << double_val << "\t# experiment.vbar20\n";
+      *qsl << QString("%1").arg(double_val) + "\t# experiment.vbar20\n";
       ds >> double_val;
-      ts << double_val << "\t# experiment.avg_temperature\n";
+      *qsl << QString("%1").arg(double_val) + "\t# experiment.avg_temperature\n";
    }
    f.close();
-   f2.close();
    return 0;
 }

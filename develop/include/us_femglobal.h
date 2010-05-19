@@ -212,6 +212,7 @@ class US_EXTERN US_FemGlobal : public QObject
                            QString filename,
                            QDataStream *ds = (QDataStream *) NULL);  // set ds to append to existing stream
       int convert_analysis_data(QString infile, QString outfile);
+      int convert_analysis_data(QString infile, QStringList *qsl);
       int write_ascii_model_data(vector <mfem_data> *, QString filename);
       int accumulate_model_monte_carlo_data(vector <mfem_data> *accumulated_model, vector <mfem_data> *source_model, unsigned int monte_carlo_iterations);
       int read_mwl_model_data(vector <mfem_data> *, QString filenamebase);
