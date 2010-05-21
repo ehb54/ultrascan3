@@ -7,7 +7,7 @@
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
 #include "us_help.h"
-#include "us_dataIO.h"
+#include "us_dataIO2.h"
 #include "us_plot.h"
 
 class US_EXTERN US_EditScan : public US_WidgetsDialog
@@ -15,14 +15,16 @@ class US_EXTERN US_EditScan : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      US_EditScan( US_DataIO::scan&, double, double, double );
+      US_EditScan( US_DataIO2::Scan&, const QVector< US_DataIO2::XValue >&, 
+                   double, double, double );
 
    signals:
       void scan_updated( QList< QPointF > );
 
    private:
-      US_DataIO::scan  workingScan;
-      US_DataIO::scan& originalScan;
+      US_DataIO2::Scan  workingScan;
+      US_DataIO2::Scan& originalScan;
+      QVector< US_DataIO2::XValue > allRadii;
       double           invert;
       double           range_left;
       double           range_right;

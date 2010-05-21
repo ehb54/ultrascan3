@@ -1,5 +1,5 @@
-#ifndef US_EDVABS_H
-#define US_EDVABS_H
+#ifndef US_EDIT_H
+#define US_EDIT_H
 
 #include <QtGui>
 
@@ -9,29 +9,29 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
-#include "us_dataIO.h"
+#include "us_dataIO2.h"
 
-class US_EXTERN US_Edvabs : public US_Widgets
+class US_EXTERN US_Edit : public US_Widgets
 {
 	Q_OBJECT
 
 	public:
-		US_Edvabs();
+		US_Edit();
 
 	private:
 
       enum { MENISCUS, AIRGAP, RANGE, PLATEAU, BASELINE, FINISHED } step;
 
-      class edits
+      class Edits
       {
          public:
             int scan;
             QList< QPointF > changes;
       };
 
-      QList< edits >                changed_points;
-      US_DataIO::rawData            data;
-      QVector< US_DataIO::rawData > allData;
+      QList< Edits >                changed_points;
+      US_DataIO2::RawData            data;
+      QVector< US_DataIO2::RawData > allData;
 
       bool               changes_made;
       bool               spikes;
@@ -119,7 +119,7 @@ class US_EXTERN US_Edvabs : public US_Widgets
       
       void reset_excludes    ( void );
       void set_colors        ( const QList< int >& );
-      bool spike_check       ( const US_DataIO::scan&, int, int, int, double* );
+      bool spike_check       ( const US_DataIO2::Scan&, int, int, int, double* );
                           
 	private slots:         
       void load              ( void );

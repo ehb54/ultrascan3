@@ -4,11 +4,13 @@
 #include "us_settings.h"
 #include "us_gui_settings.h"
 
-US_EditScan::US_EditScan( US_DataIO::scan& s, 
+US_EditScan::US_EditScan( US_DataIO2::Scan& s, 
+                          const            QVector< US_DataIO2::XValue >& r,
                           double           invertValue,
                           double           left,
                           double           right )
-   : US_WidgetsDialog( 0, 0 ), originalScan( s ), invert( invertValue ), 
+   : US_WidgetsDialog( 0, 0 ), originalScan( s ), allRadii( r ), 
+                               invert( invertValue ), 
                                range_left( left ), range_right( right )
 {
    dragging    = false;
@@ -162,14 +164,14 @@ void US_EditScan::redraw( void )
    offset     = 0;
    int  count = 0;
 
-   int indexLeft  = US_DataIO::index( workingScan, range_left );
-   int indexRight = US_DataIO::index( workingScan, range_right );
+   int indexLeft  = US_DataIO2::index( workingScan, allRadii, range_left );
+   int indexRight = US_DataIO2::index( workingScan, allRadii, range_right );
    
    offset = indexLeft;
 
    for ( int j = indexLeft; j <= indexRight; j++ ) 
    { 
-      radii [ count ] = workingScan.readings[ j ].d.radius;
+      radii [ count ] = allRadii[ j ].radius;
       values[ count ] = workingScan.readings[ j ].value * invert;
       count++;
    }

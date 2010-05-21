@@ -5,7 +5,7 @@
 #include "us_gui_settings.h"
 #include "us_matrix.h"
 
-US_RiNoise::US_RiNoise( const US_DataIO::rawData& raw, 
+US_RiNoise::US_RiNoise( const US_DataIO2::RawData& raw, 
                         int&                      initial_order, 
                         QList< double >&          r )
   :US_WidgetsDialog( 0, 0 ), data( raw ), order( initial_order ), residuals( r )
@@ -86,7 +86,7 @@ void US_RiNoise::draw_fit( double new_order )
       // For now, all radii are spaces equally at 0.001 cm
       const double delta_r = 0.001;
 
-      const US_DataIO::scan* s = &data.scanData[ i ];
+      const US_DataIO2::Scan* s = &data.scanData[ i ];
       int value_count          = s->readings.size();
       
       // Integrate using trapezoid rule
@@ -151,7 +151,7 @@ void US_RiNoise::draw_fit( double new_order )
 
 
 // We want to be able to call this function from other places.
-void US_RiNoise::calc_residuals( const US_DataIO::rawData& data, 
+void US_RiNoise::calc_residuals( const US_DataIO2::RawData& data, 
                                  int                       order, 
                                  QList< double >&          residuals )
 {
@@ -173,7 +173,7 @@ void US_RiNoise::calc_residuals( const US_DataIO::rawData& data,
       // For now, all radii are spaces equally at 0.001 cm
       const double delta_r = 0.001;
 
-      const US_DataIO::scan* s = &data.scanData[ i ];
+      const US_DataIO2::Scan* s = &data.scanData[ i ];
       int value_count          = s->readings.size();
       
       // Integrate using trapezoid rule
