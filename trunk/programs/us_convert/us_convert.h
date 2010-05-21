@@ -8,7 +8,7 @@
 #include "us_widgets.h"
 #include "us_help.h"
 #include "us_plot.h"
-#include "us_dataIO.h"
+#include "us_dataIO2.h"
 #include "us_analyte.h"
 #include "us_expinfo.h"
 
@@ -73,9 +73,9 @@ class US_EXTERN US_Convert : public US_Widgets
 
       QComboBox*    cb_centerpiece;
 
-      QList< US_DataIO::beckmanRawScan > legacyData; // legacy data from file
-      QVector< US_DataIO::rawData >      allData;    // all the data, separated by c/c/w
-      QVector< US_DataIO::rawData >      RIData;     // to save RI data, after converting to RP
+      QList< US_DataIO2::BeckmanRawScan > legacyData; // legacy data from file
+      QVector< US_DataIO2::RawData >      allData;    // all the data, separated by c/c/w
+      QVector< US_DataIO2::RawData >      RIData;     // to save RI data, after converting to RP
       QString       saveDir;
       QString       saveDescription;
 

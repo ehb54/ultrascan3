@@ -1,5 +1,7 @@
 //! \file us_process_convert.cpp
 
+#include <uuid/uuid.h>
+
 #include "us_settings.h"
 #include "us_gui_settings.h"
 #include "us_math.h"
@@ -13,10 +15,10 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent ) : US_WidgetsDialog( pare
 
 // Constructor to use for reading data 
 US_ProcessConvert::US_ProcessConvert( 
-      QWidget*                            parent,
-      QString                             dir,
-      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
-      QString&                            runType ) 
+      QWidget*                             parent,
+      QString                              dir,
+      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+      QString&                             runType ) 
    : US_WidgetsDialog( parent, 0 )
 {
    if ( dir.isEmpty() ) return; 
@@ -66,8 +68,8 @@ US_ProcessConvert::US_ProcessConvert(
 
    for ( int i = 0; i < fileList.size(); i++ )
    {
-      US_DataIO::beckmanRawScan data;
-      US_DataIO::readLegacyFile( dir + fileList[ i ], data );
+      US_DataIO2::BeckmanRawScan data;
+      US_DataIO2::readLegacyFile( dir + fileList[ i ], data );
 
       // Add channel
       QChar c = fileList[ i ].at( 0 );  // Get 1st character
@@ -76,7 +78,7 @@ US_ProcessConvert::US_ProcessConvert(
 
       if ( runType == "RI" )                // Split out the two readings in RI data
       {
-         US_DataIO::beckmanRawScan data2 = data;  // Alter to store second dataset
+         US_DataIO2::BeckmanRawScan data2 = data;  // Alter to store second dataset
          for ( int j = 0; j < data.readings.size(); j++ )
          {
             data2.readings[ j ].value  = data2.readings[ j ].stdDev;   // Reading 2 in here for RI
@@ -113,13 +115,13 @@ US_ProcessConvert::US_ProcessConvert(
 
 // Constructor to use for converting data 
 US_ProcessConvert::US_ProcessConvert( 
-      QWidget*                            parent,
-      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
-      QVector< US_DataIO::rawData  >&     rawConvertedData,
-      QStringList&                        triples,
-      QString                             runType,
-      double                              tolerance,
-      QList< double >&                    ss_limits // For RA data
+      QWidget*                             parent,
+      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+      QVector< US_DataIO2::RawData  >&     rawConvertedData,
+      QStringList&                         triples,
+      QString                              runType,
+      double                               tolerance,
+      QList< double >&                     ss_limits // For RA data
   ) : US_WidgetsDialog( parent, 0 )
 {
    reset();
@@ -132,7 +134,7 @@ US_ProcessConvert::US_ProcessConvert(
 
    setTriples( rawLegacyData, triples, runType, tolerance );
 
-   US_DataIO::rawData newRawData;     // filtered legacy data in new raw format
+   US_DataIO2::RawData newRawData;     // filtered legacy data in new raw format
 
    if ( triples.size() > 3 )
       createDialog();
@@ -190,7 +192,7 @@ US_ProcessConvert::US_ProcessConvert(
 // Constructor to use for writing data 
 US_ProcessConvert::US_ProcessConvert( QWidget* parent,
                                       int& status,
-                                      QVector< US_DataIO::rawData >& rawConvertedData,
+                                      QVector< US_DataIO2::RawData >& rawConvertedData,
                                       US_ExpInfo::ExperimentInfo& ExpData,
                                       QStringList& triples,
                                       QString runType,
@@ -246,9 +248,14 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
                              + wavelength + ".auc";
       }
 
-      status = US_DataIO::writeRawData( dirname + filename, rawConvertedData[ i ] );
+      // Calculate and save the guid for this triple
+      uuid_t uuid;
+      uuid_generate( uuid );
+      strncpy( rawConvertedData[ i ].guid, (char*) uuid, 16 );
+      strncpy( ExpData.triples [ i ].guid, (char*) uuid, 16 );
+      status = US_DataIO2::writeRawData( dirname + filename, rawConvertedData[ i ] );
 
-      if ( status !=  US_DataIO::OK ) break;
+      if ( status !=  US_DataIO2::OK ) break;
       
       progress->setValue( i );
       qApp    ->processEvents();
@@ -273,11 +280,11 @@ US_ProcessConvert::US_ProcessConvert( QWidget* parent,
 }
 
 void US_ProcessConvert::convert( 
-      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
-      US_DataIO::rawData&                 newRawData,
-      QString                             triple,
-      QString                             runType,
-      double                              tolerance )
+      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+      US_DataIO2::RawData&                 newRawData,
+      QString                              triple,
+      QString                              runType,
+      double                               tolerance )
 {
    // Convert the data into the UltraScan3 data structure
    QStringList parts      = triple.split(" / ");
@@ -292,7 +299,7 @@ void US_ProcessConvert::convert(
             << wavelength;
    */
 
-   QList< US_DataIO::beckmanRawScan > ccwLegacyData;
+   QList< US_DataIO2::BeckmanRawScan > ccwLegacyData;
 
    // Get a list of the data that matches the cell / channel / wl
    ccwLegacyData.clear();
@@ -300,7 +307,7 @@ void US_ProcessConvert::convert(
 
    for ( int i = 0; i < rawLegacyData.size(); i++ )
    {
-      US_DataIO::beckmanRawScan data = rawLegacyData[ i ];
+      US_DataIO2::BeckmanRawScan data = rawLegacyData[ i ];
 
       if ( data.cell == cell       &&
            data.channel == channel &&
@@ -321,7 +328,7 @@ void US_ProcessConvert::convert(
    if ( ccwLegacyData.isEmpty() ) return ; 
 
    strncpy( newRawData.type, runType.toAscii().constData(), 2 );
-   // GUID is done by US_DataIO.
+   // GUID is done by US_DataIO2.
    newRawData.cell        = cell;
    newRawData.channel     = channel;
    newRawData.description = ccwLegacyData[ 0 ].description;
@@ -348,12 +355,21 @@ void US_ProcessConvert::convert(
       ? ( max_radius - min_radius ) / ( ccwLegacyData[ 0 ].readings.size() - 1 )
       : 0.001;
 
+   // Calculate the radius vector
+   int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
+   double radius = min_radius;
+   for ( int j = 0; j < radius_count; j++ )
+   {
+      newRawData.x << US_DataIO2::XValue( radius );
+      radius += delta_r;
+   }
+
    // qDebug() << "Current triple: " << triple << ' '
    //          << "delta_r: " << QString::number( delta_r, 'f', 6 );
 
    for ( int i = 0; i < ccwLegacyData.size(); i++ )
    {
-      US_DataIO::scan s;
+      US_DataIO2::Scan s;
       s.temperature = ccwLegacyData[ i ].temperature;
       s.rpm         = ccwLegacyData[ i ].rpm;
       s.seconds     = ccwLegacyData[ i ].seconds;
@@ -362,7 +378,6 @@ void US_ProcessConvert::convert(
       s.delta_r     = delta_r;
 
       // Readings here and interpolated array
-      int radius_count = (int) round( ( max_radius - min_radius ) / delta_r ) + 1;
       int bitmap_size = ( radius_count + 7 ) / 8;
       uchar* interpolated = new uchar[ bitmap_size ];
       bzero( interpolated, bitmap_size );
@@ -371,8 +386,7 @@ void US_ProcessConvert::convert(
       {
          for ( int j = 0; j < radius_count; j++ )
          {
-            US_DataIO::reading r;
-            r.d.radius = ccwLegacyData[ i ].readings[ j ].d.radius;
+            US_DataIO2::Reading r;
             r.value    = ccwLegacyData[ i ].readings[ j ].value;
             r.stdDev   = 0.0;
 
@@ -425,14 +439,12 @@ void US_ProcessConvert::convert(
          
          for ( int j = 0; j < radius_count; j++ )
          {
-            US_DataIO::reading r;
+            US_DataIO2::Reading r;
             double             dr = 0.0;
 
             if ( k < rCount )
                dr = radius - ccwLegacyData[ i ].readings[ k ].d.radius;
 
-            r.d.radius = radius;
-            
             if ( dr > -3.0e-4   &&  k < rCount ) // A value
             {
                r.value  = ccwLegacyData[ i ].readings[ k ].value;
@@ -477,28 +489,23 @@ void US_ProcessConvert::convert(
       newRawData.scanData <<  s ;
    }
 
-   // Delete the bitmaps we allocated
-
-   //for ( uint i = 0; i < newRawData.scanData.size(); i++ ) 
-   //   delete newRawData.scanData[ i ].interpolated;
-
 }
 
 void US_ProcessConvert::splitRAData( 
-      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
-      QList< double >&                    ss_limits )
+      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+      QList< double >&                     ss_limits )
 {
-   QList< US_DataIO::beckmanRawScan > temp = rawLegacyData;
+   QList< US_DataIO2::BeckmanRawScan > temp = rawLegacyData;
    rawLegacyData.clear();
 
    for ( int i = 0; i < temp.size(); i++ )
    {
-      US_DataIO::beckmanRawScan data = temp[ i ];
+      US_DataIO2::BeckmanRawScan data = temp[ i ];
 
       // We are subdividing the scans for RA data
-      US_DataIO::beckmanRawScan data2 = data;
+      US_DataIO2::BeckmanRawScan data2 = data;
    
-      US_DataIO::reading r;
+      US_DataIO2::RawReading r;
    
       for ( int x = 1; x < ss_limits.size(); x++ )
       {
@@ -526,10 +533,10 @@ void US_ProcessConvert::splitRAData(
 }
 
 void US_ProcessConvert::setTriples( 
-      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
-      QStringList&                        triples,
-      QString                             runType,
-      double                              tolerance )
+      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+      QStringList&                         triples,
+      QString                              runType,
+      double                               tolerance )
 {
    // Wavelength data is handled differently here
    if ( runType == "WA" )
@@ -540,9 +547,9 @@ void US_ProcessConvert::setTriples(
 }
 
 void US_ProcessConvert::setCcwTriples( 
-      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
-      QStringList&                        triples,
-      double                              tolerance )
+      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
+      QStringList&                         triples,
+      double                               tolerance )
 {
    // Most triples are ccw
    triples.clear();
@@ -638,7 +645,7 @@ void US_ProcessConvert::setCcwTriples(
 }
 
 void US_ProcessConvert::setCcrTriples( 
-      QList< US_DataIO::beckmanRawScan >& rawLegacyData,
+      QList< US_DataIO2::BeckmanRawScan >& rawLegacyData,
       QStringList&                        triples,
       double                              tolerance )
 {
@@ -793,8 +800,14 @@ int US_ProcessConvert::writeXmlFile( US_ExpInfo::ExperimentInfo& ExpData,
       xml.writeAttribute   ( "id", QString::number( ExpData.rotorID ) );
       xml.writeEndElement  ();
 
+      // Write out a new GUID for the experiment as a whole
+      uuid_t uuid;
+      char uuidc[ 37 ];
+
+      uuid_generate( uuid );
+      uuid_unparse( (unsigned char*)uuid, uuidc );
       xml.writeStartElement( "guid" );
-      xml.writeAttribute   ( "id", "replace with GUID" );
+      xml.writeAttribute   ( "id", QString( uuidc ) );
       xml.writeEndElement  ();
 
       // loop through the following for c/c/w combinations
@@ -814,8 +827,9 @@ int US_ProcessConvert::writeXmlFile( US_ExpInfo::ExperimentInfo& ExpData,
          xml.writeAttribute   ( "channel", channel );
          xml.writeAttribute   ( "wavelength", wl );
 
+            uuid_unparse( (unsigned char*)t.guid, uuidc );
             xml.writeStartElement( "guid" );
-            xml.writeAttribute   ( "id", "replace with GUID" );
+            xml.writeAttribute   ( "id", QString( uuidc ) );
             xml.writeEndElement  ();
 
             xml.writeStartElement( "centerpiece" );
