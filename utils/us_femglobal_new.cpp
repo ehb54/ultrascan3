@@ -44,6 +44,22 @@ US_FemGlobal_New::ModelSystem::ModelSystem()
    optics          = ABSORBANCE;
    description     = "New Model";
    coSedSolute     = -1;
+   bufferGUID  .clear();
+   guid        .clear();
    components  .clear();
    associations.clear();
+}
+
+bool US_FemGlobal_New::ModelSystem::read_from_disk( const QString& filename )
+{
+   QFile file( filename );
+
+   if ( ! file.open( QIODevice::ReadOnly | QIODevice::Text) )
+   {
+      qDebug() << "Cannot open file for reading: " << filename;
+      return false;
+   }
+
+   // TODO : finish
+   return true;
 }

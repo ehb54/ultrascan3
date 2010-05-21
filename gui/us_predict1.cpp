@@ -19,7 +19,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
      signal      ( signal_wanted )
 {
    analyte            = base_analyte;
-   temperature        = parm.temperature;
+   temperature        = NORMAL_TEMP;
    mw                 = parm.mw;  
    ratio              = parm.axial_ratio;
    solution.density   = parm.density;
@@ -67,6 +67,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       QLabel* lb_density = us_label( tr( "Density" ) );
       controls->addWidget( lb_density, c_row, 0 );
 
+      solution.density = DENS_20W;
       le_density = us_lineedit( QString::number( solution.density, 'f', 4 ) );
       le_density->setPalette( gray );
       le_density->setReadOnly( true );
@@ -75,6 +76,7 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
       QLabel* lb_viscosity = us_label( tr( "Viscosity" ) );
       controls->addWidget( lb_viscosity, c_row, 0 );
 
+      solution.viscosity = VISC_20W;
       le_viscosity = us_lineedit( QString::number( solution.viscosity, 'f', 4 ) );
       le_viscosity->setPalette( gray );
       le_viscosity->setReadOnly( true );
@@ -127,16 +129,15 @@ US_Predict1::US_Predict1( US_Hydrosim&     parm,
    controls->addWidget( lb_temperature, c_row, 0 );
 
    QLineEdit* le_temperature = us_lineedit();
+   le_temperature->setText( QString::number( temperature, 'f', 1 ) );
 
    if ( signal )
    {
-      le_temperature->setText( QString::number( temperature, 'f', 1 ) );
       le_temperature->setReadOnly( true );
       le_temperature->setPalette( gray );
    }
    else
    {
-      le_temperature->setText( QString::number( NORMAL_TEMP, 'f', 1 ) );
       connect( le_vbar, SIGNAL( textChanged( const QString& ) ), 
                         SLOT  ( degC       ( const QString& ) ) );
    }
