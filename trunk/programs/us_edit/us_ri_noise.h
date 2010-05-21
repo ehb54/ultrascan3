@@ -6,7 +6,7 @@
 
 #include "us_extern.h"
 #include "us_widgets_dialog.h"
-#include "us_dataIO.h"
+#include "us_dataIO2.h"
 #include "us_plot.h"
 
 class US_EXTERN US_RiNoise : public US_WidgetsDialog
@@ -14,13 +14,13 @@ class US_EXTERN US_RiNoise : public US_WidgetsDialog
    Q_OBJECT
 
    public:
-      US_RiNoise( const US_DataIO::rawData&, int&, QList< double >& );
+      US_RiNoise( const US_DataIO2::RawData&, int&, QList< double >& );
       
-      static void calc_residuals( const US_DataIO::rawData&, int, 
+      static void calc_residuals( const US_DataIO2::RawData&, int, 
                QList< double >& );
 
    private:
-      const US_DataIO::rawData& data;
+      const US_DataIO2::RawData& data;
 
       int&             order;
 

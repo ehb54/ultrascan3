@@ -1,14 +1,14 @@
 include( ../../gui.pri )
 
-TARGET        = us_edvabs
+TARGET        = us_edit
 QT           += xml
 
-HEADERS       = us_edvabs.h          \
+HEADERS       = us_edit.h          \
                 us_exclude_profile.h \
                 us_ri_noise.h        \
                 us_edit_scan.h
 
-SOURCES       = us_edvabs.cpp          \
+SOURCES       = us_edit.cpp          \
                 us_exclude_profile.cpp \
                 us_ri_noise.cpp        \
                 us_edit_scan.cpp
