@@ -24,6 +24,7 @@ HEADERS      = us_analyte.h     \
                us_crc.h         \
                us_crypto.h      \
                us_dataIO.h      \
+               us_dataIO2.h     \
                us_global.h      \
                us_femglobal.h   \
                us_femglobal_new.h   \
@@ -32,6 +33,7 @@ HEADERS      = us_analyte.h     \
                us_http_post.h   \
                us_license_t.h   \
                us_math.h        \
+               us_math2.h       \
                us_matrix.h      \
                us_settings.h    \
                us_stiffbase.h   \
@@ -45,6 +47,7 @@ SOURCES      = us_analyte.cpp     \
                us_crc.cpp         \
                us_crypto.cpp      \
                us_dataIO.cpp      \
+               us_dataIO2.cpp     \
                us_femglobal_new.cpp   \
                us_femglobal.cpp   \
                us_hardware.cpp    \
@@ -53,6 +56,7 @@ SOURCES      = us_analyte.cpp     \
                us_http_post.cpp   \
                us_license_t.cpp   \
                us_math.cpp        \
+               us_math2.cpp       \
                us_matrix.cpp      \
                us_settings.cpp    \
                us_stiffbase.cpp   \
