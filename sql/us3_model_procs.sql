@@ -273,14 +273,14 @@ BEGIN
       SELECT @OK AS status;
   
       IF ( p_ID > 0 ) THEN
-        SELECT   m.modelID, description
+        SELECT   m.modelID, GUID, description
         FROM     model m, modelPerson
         WHERE    m.modelID = modelPerson.modelID
         AND      modelPerson.personID = p_ID
         ORDER BY m.modelID DESC;
    
       ELSE
-        SELECT   m.modelID, description
+        SELECT   m.modelID, GUID, description
         FROM     model m, modelPerson
         WHERE    m.modelID = modelPerson.modelID
         ORDER BY m.modelID DESC;
@@ -307,7 +307,7 @@ BEGIN
       -- Ok, user wants his own info
       SELECT @OK AS status;
 
-      SELECT   m.modelID, description
+      SELECT   m.modelID, GUID, description
       FROM     model m, modelPerson
       WHERE    m.modelID = modelPerson.modelID
       AND      modelPerson.personID = @US3_ID
