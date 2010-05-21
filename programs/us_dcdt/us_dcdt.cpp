@@ -25,7 +25,7 @@ int main( int argc, char* argv[] )
    return application.exec();  //!< \memberof QApplication
 }
 
-US_Dcdt::US_Dcdt() : US_AnalysisBase()
+US_Dcdt::US_Dcdt() : US_AnalysisBase2()
 {
    setWindowTitle( tr( "Time Derivative - dC/dt Analysis" ) );
 
@@ -106,7 +106,7 @@ void US_Dcdt::subtract_bl( void )
 void US_Dcdt::reset( void )
 {
    if ( ! dataLoaded ) return;
-   US_AnalysisBase::reset();
+   US_AnalysisBase2::reset();
    ct_sValue->setValue( sMax );
    rb_radius->click();
    pb_baseline->setIcon( QIcon() );
@@ -127,10 +127,10 @@ void US_Dcdt::set_graph( int button )
 
 void US_Dcdt::data_plot( void )
 {
-   US_AnalysisBase::data_plot();
+   US_AnalysisBase2::data_plot();
 
    int                    index  = lw_triples->currentRow();
-   US_DataIO::editedData* d      = &dataList[ index ];
+   US_DataIO2::EditedData* d      = &dataList[ index ];
 
    int     scanCount   = d->scanData.size();
    int     skipped     = 0;
@@ -202,8 +202,8 @@ void US_Dcdt::data_plot( void )
    {
       if ( excludedScans.contains( i ) ) continue;
 
-      US_DataIO::scan* thisScan = &d->scanData[ i ];
-      US_DataIO::scan* prevScan = &d->scanData[ previous ];
+      US_DataIO2::Scan* thisScan = &d->scanData[ i ];
+      US_DataIO2::Scan* prevScan = &d->scanData[ previous ];
 
       double range       = thisScan->plateau - baseline;
       double lower_limit = baseline    + range * positionPct;
@@ -241,7 +241,8 @@ void US_Dcdt::data_plot( void )
          // We are really plotting g*(s) so -dC/dt is saved for the plots
          dcdt[ count ][ size ] = -dC / dt;
       
-         double radius = thisScan->readings[ j ].d.radius;
+         //double radius = d->x[ j ].radius;
+         double radius = d->radius( j );
 
          sValues[ count ][ size ] = 
             solution.correction * 1.0e13 * log( radius / meniscus ) /
@@ -354,7 +355,7 @@ next: avgDcdt[ j ] /= ( count - 1 );
             int end  = arraySizes[ i ] + arrayStart[ i ];
 
             for ( int j = arrayStart[ i ]; j < end; j++ ) 
-               x[ size++ ] = d->scanData[ 0 ].readings[ j ].d.radius;
+               x[ size++ ] = d->x[ j ].radius;
 
             curve = us_curve( data_plot1, 
                   tr( "Scan " ) + QString::number( i + skipped + 1 ) );
@@ -399,7 +400,7 @@ next: avgDcdt[ j ] /= ( count - 1 );
 void US_Dcdt::view( void )
 {
    int                    index  = lw_triples->currentRow();
-   US_DataIO::editedData* d      = &dataList[ index ];
+   US_DataIO2::EditedData* d      = &dataList[ index ];
 
    // Create US_Editor
    if ( te_results == NULL )
@@ -434,7 +435,7 @@ void US_Dcdt::view( void )
 void US_Dcdt::save( void )
 {
    int                    index  = lw_triples->currentRow();
-   US_DataIO::editedData* d      = &dataList[ index ];
+   US_DataIO2::EditedData* d      = &dataList[ index ];
    QString                dir    = US_Settings::reportDir();
 
    if ( ! mkdir( dir, d->runID ) ) return;
