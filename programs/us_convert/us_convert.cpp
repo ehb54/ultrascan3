@@ -4,9 +4,9 @@
 #include "us_license.h"
 #include "us_settings.h"
 #include "us_gui_settings.h"
-#include "us_run_details.h"
+#include "us_run_details2.h"
 #include "us_plot.h"
-#include "us_math.h"
+#include "us_math2.h"
 #include "us_buffer_gui.h"
 #include "us_analyte_gui.h"
 #include "us_convert.h"
@@ -314,7 +314,7 @@ void US_Convert::load( QString dir )
    // Display the data that was read
    for ( int i = 0; i < legacyData.size(); i++ )
    {
-      US_DataIO::beckmanRawScan d = legacyData[ i ];
+      US_DataIO2::beckmanRawScan d = legacyData[ i ];
 
       qDebug() << d.description;
       qDebug() << d.type         << " "
@@ -330,7 +330,7 @@ void US_Convert::load( QString dir )
       {
          if ( i != legacyData.size() - 1 ) continue;
 
-         US_DataIO::reading r = d.readings[ j ];
+         US_DataIO2::reading r = d.readings[ j ];
 
          QString line = QString::number(r.d.radius, 'f', 4 )    + " "
                       + QString::number(r.value, 'E', 5 )       + " "
@@ -529,8 +529,8 @@ bool US_Convert::convert( void )
 
 void US_Convert::details( void )
 {
-   US_RunDetails* dialog
-      = new US_RunDetails( allData, runID, saveDir, triples );
+   US_RunDetails2* dialog
+      = new US_RunDetails2( allData, runID, saveDir, triples );
    dialog->exec();
    qApp->processEvents();
    delete dialog;
@@ -632,7 +632,7 @@ int US_Convert::writeAll( void )
 
 void US_Convert::plot_current( void )
 {
-   US_DataIO::rawData currentData = allData[ currentTriple ];
+   US_DataIO2::RawData currentData = allData[ currentTriple ];
 
    if ( currentData.scanData.empty() ) return;
 
@@ -650,7 +650,7 @@ void US_Convert::plot_current( void )
 
 void US_Convert::plot_titles( void )
 {
-   US_DataIO::rawData currentData = allData[ currentTriple ];
+   US_DataIO2::RawData currentData = allData[ currentTriple ];
 
    QString triple         = triples[ currentTriple ];
    QStringList parts      = triple.split(" / ");
@@ -731,7 +731,7 @@ void US_Convert::init_includes( void )
 
 void US_Convert::plot_all( void )
 {
-   US_DataIO::rawData currentData = allData[ currentTriple ];
+   US_DataIO2::RawData currentData = allData[ currentTriple ];
 
    data_plot->detachItems();
    grid = us_grid( data_plot );
@@ -749,12 +749,13 @@ void US_Convert::plot_all( void )
    for ( int i = 0; i < currentData.scanData.size(); i++ )
    {
       if ( ! includes.contains( i ) ) continue;
-      US_DataIO::scan* s = &currentData.scanData[ i ];
+      US_DataIO2::Scan* s = &currentData.scanData[ i ];
 
       for ( int j = 0; j < size; j++ )
       {
-         r[ j ] = s->readings[ j ].d.radius;
-         v[ j ] = s->readings[ j ].value;
+         //r[ j ] = currentData.x[ j ].radius;
+         r[ j ] = currentData.radius( j );
+         v[ j ] = s->readings  [ j ].value;
 
          if ( v[ j ] > 1.0e99 )
          {
@@ -1084,20 +1085,22 @@ void US_Convert::RP_calc_avg( void )
 {
    if ( RP_averaged ) return;             // Average calculation has already been done
 
-   US_DataIO::rawData referenceData = allData[ currentTriple ];
+   US_DataIO2::RawData referenceData = allData[ currentTriple ];
    int ref_size = referenceData.scanData[ 0 ].readings.size();
 
    for ( int i = 0; i < referenceData.scanData.size(); i++ )
    {
-      US_DataIO::scan s = referenceData.scanData[ i ];
+      US_DataIO2::Scan s = referenceData.scanData[ i ];
 
       int j      = 0;
       int count  = 0;
       double sum = 0.0;
-      while ( s.readings[ j ].d.radius < reference_start && j < ref_size )
+      //while ( referenceData.x[ j ].radius < reference_start && j < ref_size )
+      while ( referenceData.radius( j ) < reference_start && j < ref_size )
          j++;
 
-      while ( s.readings[ j ].d.radius < reference_end && j < ref_size )
+      //while ( referenceData.x[ j ].radius < reference_end && j < ref_size )
+      while ( referenceData.radius( j ) < reference_end && j < ref_size )
       {
          sum += s.readings[ j ].value;
          count++;
@@ -1118,15 +1121,15 @@ void US_Convert::RP_calc_avg( void )
 
    for ( int i = 0; i < allData.size(); i++ )
    {
-      US_DataIO::rawData* currentData = &allData[ i ];
+      US_DataIO2::RawData* currentData = &allData[ i ];
 
       for ( int j = 0; j < currentData->scanData.size(); j++ )
       {
-         US_DataIO::scan* s = &currentData->scanData[ j ];
+         US_DataIO2::Scan* s = &currentData->scanData[ j ];
 
          for ( int k = 0; k < s->readings.size(); k++ )
          {
-            US_DataIO::reading* r = &s->readings[ k ];
+            US_DataIO2::Reading* r = &s->readings[ k ];
 
             r->value = log10(RP_averages[ j ] / r->value );
          }
@@ -1175,7 +1178,7 @@ void US_Convert::getExpInfo( bool editing )
    double count = 0.0;
    for ( int i = 0; i < allData.size(); i++ )
    {
-      US_DataIO::rawData raw = allData[ i ];
+      US_DataIO2::RawData raw = allData[ i ];
       for ( int j = 0; j < raw.scanData.size(); j++ )
          sum += raw.scanData[ j ].temperature;
 
@@ -1190,7 +1193,7 @@ void US_Convert::getExpInfo( bool editing )
    ExpData.rpms.clear();
    for ( int i = 0; i < allData.size(); i++ )
    {
-      US_DataIO::rawData raw = allData[ i ];
+      US_DataIO2::RawData raw = allData[ i ];
       for ( int j = 0; j < raw.scanData.size(); j++ )
       {
          if ( ! ExpData.rpms.contains( raw.scanData[ j ].rpm ) )
